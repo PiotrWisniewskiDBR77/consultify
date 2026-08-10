@@ -1828,5 +1828,164 @@ suite(
         });
       }
     }, 60_000);
+
+    // -------------------------------------------------------------------------
+    // 15. EPIC E6 AUTONOMY ENFORCEMENT AT THE MATERIAL STEP.
+    //
+    //     Reaching status APPROVED is NOT the same as being authorized to
+    //     execute. `minimalProposalInput` proposes a SENSITIVE_UPDATE, which
+    //     the classifier calls A3 (material) — so APPROVED -> EXECUTING now
+    //     demands an EXPLICIT control with a CONFIGURED authentication
+    //     assurance (06 §5: "a chat message alone is never material approval
+    //     truth").
+    //
+    //     Two proposals, identical in every respect except the approval's
+    //     `source` / `authenticationAssurance`, are driven to APPROVED and then
+    //     to EXECUTING. Both must be refused, the aggregate must be left
+    //     exactly where it was, and each refusal must leave a COMMITTED
+    //     `policy.denied` outbox row — a denial published inside a transaction
+    //     that then throws would be rolled back with the throw, which is the
+    //     failure mode that makes a refusal unprovable.
+    // -------------------------------------------------------------------------
+    it('refuses APPROVED -> EXECUTING for a material action approved only in chat, and for one approved without a configured step-up, and commits policy.denied for each', async () => {
+      const { orgId, projectId, caseId, actorId: actorA } = await seedOrgProjectCase('autonomy-gate');
+      const actorB = await seedMemberedUser(orgId, 'autonomy-gate-B');
+      const runId = `run-t15-${randomUUID()}`;
+      try {
+        await seedV8Run({ runId, organizationId: orgId });
+
+        /** Drives one proposal to APPROVED with a caller-chosen approval shape. */
+        async function approvedProposal(params: {
+          tag: string;
+          source: RecordApprovalDecisionInput['source'];
+          authenticationAssurance: string;
+        }) {
+          const created = await proposalApprovalService.createActionProposal(
+            minimalProposalInput({ caseId, runId, tag: params.tag, createdByActorId: actorA })
+          );
+          const submitted = await proposalApprovalService.submitActionProposalForReview(
+            created.actionProposalId,
+            { actorUserId: actorA },
+            created.version
+          );
+          const approved = await proposalApprovalService.recordApprovalDecision(
+            created.actionProposalId,
+            {
+              ...minimalDecisionInput({
+                tag: params.tag,
+                proposalVersion: submitted.proposalVersion,
+                payloadDigest: submitted.payloadDigest,
+                decision: 'APPROVE',
+                decidedByActorId: actorB,
+              }),
+              source: params.source,
+              authenticationAssurance: params.authenticationAssurance,
+            },
+            submitted.version
+          );
+          // The decision itself is recorded — the gate is at execution, not here.
+          expect(approved.proposal.status).toBe('APPROVED');
+          return approved.proposal;
+        }
+
+        const cases: Array<{
+          tag: string;
+          source: RecordApprovalDecisionInput['source'];
+          authenticationAssurance: string;
+          expectedCode: string;
+        }> = [
+          {
+            tag: 'autonomy-chat-approval',
+            source: 'CONVERSATIONAL',
+            authenticationAssurance: 'MFA',
+            expectedCode: 'autonomy_control_channel_not_explicit',
+          },
+          {
+            tag: 'autonomy-no-stepup',
+            source: 'BUTTON',
+            authenticationAssurance: 'NONE',
+            expectedCode: 'autonomy_step_up_assurance_not_configured',
+          },
+        ];
+
+        for (const testCase of cases) {
+          const proposal = await approvedProposal(testCase);
+          const beforeRows = await readOutboxRowsForAggregate(proposal.actionProposalId);
+
+          await expect(
+            proposalApprovalService.transitionProposalToExecuting(
+              proposal.actionProposalId,
+              { actorUserId: actorB },
+              proposal.version
+            )
+          ).rejects.toMatchObject({
+            name: 'AutonomyPolicyDeniedError',
+            code: testCase.expectedCode,
+          });
+
+          // The aggregate is EXACTLY where it was: not EXECUTING, not bumped.
+          const row = await readProposalRow(proposal.actionProposalId);
+          expect({ status: row?.status, version: row?.version }).toEqual({
+            status: 'APPROVED',
+            version: proposal.version,
+          });
+
+          // …and the refusal survived, read back out of band after COMMIT.
+          const afterRows = await readOutboxRowsForAggregate(proposal.actionProposalId);
+          expect(afterRows).toHaveLength(beforeRows.length + 1);
+          const denied = afterRows[afterRows.length - 1]!;
+          expect(denied.event_type).toBe('policy.denied');
+          expect(denied.aggregate_id).toBe(proposal.actionProposalId);
+          expect(denied.organization_id).toBe(orgId);
+          expect(denied.case_id).toBe(caseId);
+          expect(denied.run_id).toBe(runId);
+          expect(denied.actor_user_id).toBe(actorB);
+          expect(denied.redacted_summary).toMatchObject({
+            denialCode: testCase.expectedCode,
+            actionClass: 'A3',
+            requiredControl: 'EXPLICIT_CONTROL_WITH_STEP_UP',
+            // No org ceiling row exists for this fixture org, so the ceiling is
+            // the fail-closed default, not a permissive assumption.
+            organizationCeilingSource: 'UNCONFIGURED_FAIL_CLOSED_DEFAULT',
+            effectiveAutonomy: 'ASK_EACH_ACTION',
+            attemptedTransition: 'APPROVED->EXECUTING',
+          });
+          // §6 facts, not payloads: the digest travels, the payload does not.
+          expect(denied.redacted_summary.payloadDigest).toBe(proposal.payloadDigest);
+        }
+
+        // Control: the SAME material action, approved through the button with a
+        // configured assurance, still executes. Without this the two denials
+        // above would be consistent with a gate that simply blocks everything.
+        const allowed = await approvedProposal({
+          tag: 'autonomy-button-approval',
+          source: 'BUTTON',
+          authenticationAssurance: 'MFA',
+        });
+        const executing = await proposalApprovalService.transitionProposalToExecuting(
+          allowed.actionProposalId,
+          { actorUserId: actorB },
+          allowed.version
+        );
+        expect(executing.status).toBe('EXECUTING');
+        const executingRows = await readOutboxRowsForAggregate(allowed.actionProposalId);
+        const executingEvent = executingRows[executingRows.length - 1]!;
+        expect(executingEvent.event_type).toBe('proposal.executing');
+        // The authorizing decision is recorded ON the mutation event, so an
+        // auditor can see which level and which ceiling let it through.
+        expect(executingEvent.redacted_summary).toMatchObject({
+          actionClass: 'A3',
+          effectiveAutonomy: 'ASK_EACH_ACTION',
+          organizationCeilingSource: 'UNCONFIGURED_FAIL_CLOSED_DEFAULT',
+        });
+      } finally {
+        await teardown({
+          runIds: [runId],
+          orgIds: [orgId],
+          projectIds: [projectId],
+          userIds: [actorA, actorB],
+        });
+      }
+    }, 60_000);
   }
 );

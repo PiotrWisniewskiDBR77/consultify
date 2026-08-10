@@ -32,6 +32,7 @@ import casesRoutes from './cases.routes.js';
 import casePlanVersionsRoutes from './casePlanVersions.routes.js';
 import caseHistoryRoutes from './caseHistory.routes.js';
 import executionGraphRoutes from './executionGraph.routes.js';
+import intakeRoutes from './intake.routes.js';
 import migrationReadinessRoutes from './migrationReadiness.routes.js';
 import playRoutes from './play.routes.js';
 import runBindingsRoutes from './runBindings.routes.js';
@@ -50,5 +51,8 @@ router.use(playRoutes);
 router.use(artifactLinksRoutes);
 router.use(executionGraphRoutes);
 router.use(migrationReadinessRoutes);
+// Chat/Teresa -> Case intake (`/case-intake/*`). Mounted last; it shares no
+// path prefix with any router above, so ordering is not load-bearing.
+router.use(intakeRoutes);
 
 export default router;

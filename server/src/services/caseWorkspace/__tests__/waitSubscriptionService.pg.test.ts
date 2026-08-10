@@ -1376,4 +1376,347 @@ suite('waitSubscriptionService — Wait Subscription against a real PostgreSQL (
       });
     }
   }, 60_000);
+
+  // ==========================================================================
+  // SCHEDULER COMPLETION (doc 06 §8): heartbeat, and expired-lease recovery
+  // GUARDED BY A MANDATORY IDEMPOTENCY / RECONCILIATION CHECK.
+  //
+  // WHY THESE ARE SEPARATE FROM THE claimTimerWait TESTS ABOVE. Test 3 above
+  // proves claimTimerWait WILL take an expired lease — with no check of any
+  // kind. That is precisely what §8 forbids for abandoned work ("Expired leases
+  // are reclaimed only after idempotency or reconciliation checks"), so the
+  // recovery path is a DIFFERENT function with a mandatory callback, and these
+  // tests exist to prove the callback is genuinely consulted and genuinely
+  // decisive rather than decorative.
+  // ==========================================================================
+
+  /** Forces the lease into the past out of band — the only honest way to
+   *  observe expiry without sleeping through a real lease. */
+  async function expireClaimLease(waitId: string): Promise<void> {
+    await control.query(
+      `UPDATE case_workspace_waits
+          SET claim_lease_expires_at = (NOW() - interval '1 minute')::text
+        WHERE wait_id = $1`,
+      [waitId]
+    );
+  }
+
+  async function seedClaimedTimerWait(
+    label: string
+  ): Promise<{
+    orgId: string;
+    projectId: string;
+    caseId: string;
+    actorId: string;
+    runId: string;
+    waitId: string;
+    ownerToken: string;
+    fencingToken: number;
+  }> {
+    const { orgId, projectId, caseId, actorId } = await seedOrgProjectCase(label);
+    const runId = `run-${label}-${randomUUID()}`;
+    await seedV8Run({ runId, organizationId: orgId });
+    const actionProposalId = await seedActionProposal({ caseId, runId, actorId, tag: label });
+    const wait = await waitSubscriptionService.createWait(
+      {
+        caseId,
+        actionProposalId,
+        waitType: 'TIMER',
+        correlationKey: `corr-${label}-${randomUUID()}`,
+        dueAt: new Date(Date.now() - 60_000).toISOString(),
+      },
+      actorId
+    );
+    const claim = await waitSubscriptionService.claimTimerWait(wait.waitId, { leaseMs: 60_000 });
+    if (claim.outcome !== 'claimed') throw new Error('fixture claim failed');
+    return {
+      orgId,
+      projectId,
+      caseId,
+      actorId,
+      runId,
+      waitId: wait.waitId,
+      ownerToken: claim.ownerToken,
+      fencingToken: claim.fencingToken,
+    };
+  }
+
+  it('reclaimExpiredTimerWaitClaim consults the reconciliation check, and an already-applied verdict SATISFIES the wait from the readback instead of handing it to a new worker', async () => {
+    const fixture = await seedClaimedTimerWait('reclaim-applied');
+    try {
+      // A live lease must be refused outright — the check is not even reached,
+      // because taking a live lease is never correct.
+      let consulted = 0;
+      const live = await waitSubscriptionService.reclaimExpiredTimerWaitClaim(
+        fixture.waitId,
+        () => {
+          consulted += 1;
+          return { alreadyApplied: false };
+        }
+      );
+      expect(live.outcome).toBe('lease_active');
+      expect(consulted).toBe(0);
+
+      await expireClaimLease(fixture.waitId);
+
+      const outcome = await waitSubscriptionService.reclaimExpiredTimerWaitClaim(
+        fixture.waitId,
+        () => {
+          consulted += 1;
+          // The readback proves the dead worker's effect DID land.
+          return { alreadyApplied: true, satisfiedByEventId: 'vendor:readback-1' };
+        }
+      );
+      // The check ran exactly once, and it decided the outcome.
+      expect(consulted).toBe(1);
+      expect(outcome.outcome).toBe('already_applied');
+
+      const row = await readWaitRow(fixture.waitId);
+      expect(row?.status).toBe('SATISFIED');
+      expect(row?.satisfied_by_event_id).toBe('vendor:readback-1');
+      // No new lease was granted — that is what "not retried" means concretely.
+      expect(row?.claim_owner_token).toBeNull();
+      // The fencing token did NOT advance: nobody took the work.
+      expect(Number(row?.claim_fencing_token)).toBe(fixture.fencingToken);
+
+      const events = await readOutboxRowsForAggregate(fixture.waitId);
+      expect(events.map((e) => e.event_type)).toContain('wait.reconciled_already_applied');
+      // Not a claim — the wait was closed, not handed over.
+      expect(events.map((e) => e.event_type)).not.toContain('wait.claim_reclaimed');
+
+      // The callback is mandatory; there is no permissive default.
+      await expect(
+        // @ts-expect-error deliberately omitting the mandatory reconciliation check
+        waitSubscriptionService.reclaimExpiredTimerWaitClaim(fixture.waitId)
+      ).rejects.toThrow('wait_reconciliation_required');
+    } finally {
+      await teardown({
+        waitIds: [fixture.waitId],
+        runIds: [fixture.runId],
+        orgIds: [fixture.orgId],
+        projectIds: [fixture.projectId],
+        userIds: [fixture.actorId],
+      });
+    }
+  }, 60_000);
+
+  it('lets exactly one of two concurrent workers reclaim the same expired timer-wait lease', async () => {
+    const fixture = await seedClaimedTimerWait('reclaim-race');
+    try {
+      await expireClaimLease(fixture.waitId);
+
+      const results = await Promise.all([
+        waitSubscriptionService.reclaimExpiredTimerWaitClaim(fixture.waitId, () => ({
+          alreadyApplied: false,
+        })),
+        waitSubscriptionService.reclaimExpiredTimerWaitClaim(fixture.waitId, () => ({
+          alreadyApplied: false,
+        })),
+      ]);
+
+      const winners = results.filter((r) => r.outcome === 'reclaimed');
+      expect(winners).toHaveLength(1);
+      // The loser must not report success under another name.
+      expect(results.find((r) => r.outcome !== 'reclaimed')?.outcome).toBe('lease_active');
+
+      const row = await readWaitRow(fixture.waitId);
+      // Exactly ONE bump beyond the original claim — not two.
+      expect(Number(row?.claim_fencing_token)).toBe(fixture.fencingToken + 1);
+      const winner = winners[0];
+      if (winner.outcome !== 'reclaimed') throw new Error('unreachable');
+      expect(row?.claim_owner_token).toBe(winner.ownerToken);
+
+      // The superseded worker is fenced out of both the heartbeat and the
+      // satisfaction path.
+      expect(
+        await waitSubscriptionService.renewTimerWaitClaimLease(
+          fixture.waitId,
+          fixture.ownerToken,
+          fixture.fencingToken
+        )
+      ).toBe('fenced');
+      await expect(
+        waitSubscriptionService.resolveWait(
+          fixture.waitId,
+          {
+            satisfiedByEventId: 'zombie-effect',
+            timerClaim: { ownerToken: fixture.ownerToken, fencingToken: fixture.fencingToken },
+          },
+          Number(row?.version)
+        )
+      ).rejects.toThrow('wait_claim_fenced');
+      expect((await readWaitRow(fixture.waitId))?.status).toBe('ACTIVE');
+    } finally {
+      await teardown({
+        waitIds: [fixture.waitId],
+        runIds: [fixture.runId],
+        orgIds: [fixture.orgId],
+        projectIds: [fixture.projectId],
+        userIds: [fixture.actorId],
+      });
+    }
+  }, 60_000);
+
+  it('startTimerWaitClaimHeartbeat keeps a lease alive and reports loss of ownership exactly once when the claim is fenced', async () => {
+    const fixture = await seedClaimedTimerWait('heartbeat');
+    try {
+      const before = await readWaitRow(fixture.waitId);
+
+      // --- PHASE 1: the heartbeat genuinely keeps the lease alive. ---------
+      const keptAliveLosses: string[] = [];
+      const stopAlive = waitSubscriptionService.startTimerWaitClaimHeartbeat(
+        fixture.waitId,
+        fixture.ownerToken,
+        fixture.fencingToken,
+        { intervalMs: 250, leaseMs: 60_000, onLost: (outcome) => keptAliveLosses.push(outcome) }
+      );
+      try {
+        // POLL rather than sleep a fixed interval: under a loaded parallel
+        // suite a single heartbeat round-trip can take seconds, and a fixed
+        // 200ms window would measure the machine, not the heartbeat.
+        const baseline = Date.parse(String(before?.claim_lease_expires_at));
+        let during = before;
+        const deadline = Date.now() + 20_000;
+        while (Date.now() < deadline) {
+          during = await readWaitRow(fixture.waitId);
+          if (Date.parse(String(during?.claim_lease_expires_at)) > baseline) break;
+          await new Promise((resolve) => setTimeout(resolve, 100));
+        }
+        // Pushed forward, not merely "not erroring".
+        expect(Date.parse(String(during?.claim_lease_expires_at))).toBeGreaterThan(baseline);
+        expect(keptAliveLosses).toHaveLength(0);
+        // A heartbeat is liveness, not a domain transition: it must NOT bump the
+        // OCC version, or it would invalidate its own worker's pending write.
+        expect(Number(during?.version)).toBe(Number(before?.version));
+      } finally {
+        stopAlive();
+      }
+
+      // --- PHASE 2: ownership is lost, and the heartbeat notices. ----------
+      // The heartbeat is stopped FIRST on purpose: while it runs it keeps
+      // pushing the lease into the future, so a lease forced into the past
+      // would simply be renewed away before any reclaim could see it. That the
+      // takeover is only possible once the heartbeat stops is itself the proof
+      // that phase 1 was real work and not a no-op.
+      //
+      // stop() prevents FUTURE ticks but cannot un-issue a renewal already in
+      // flight, and under a loaded parallel suite that in-flight UPDATE can
+      // land after expireClaimLease(). The retry below absorbs exactly that
+      // scheduling artifact — it is bounded, and a genuine failure to reclaim
+      // still fails the test on the final assertion rather than looping.
+      const reclaim = await (async () => {
+        const deadline = Date.now() + 20_000;
+        let last = await waitSubscriptionService.reclaimExpiredTimerWaitClaim(
+          fixture.waitId,
+          () => ({ alreadyApplied: false })
+        );
+        while (last.outcome === 'lease_active' && Date.now() < deadline) {
+          await expireClaimLease(fixture.waitId);
+          last = await waitSubscriptionService.reclaimExpiredTimerWaitClaim(
+            fixture.waitId,
+            () => ({ alreadyApplied: false })
+          );
+        }
+        return last;
+      })();
+      expect(reclaim.outcome).toBe('reclaimed');
+
+      const lost: string[] = [];
+      const stopFenced = waitSubscriptionService.startTimerWaitClaimHeartbeat(
+        fixture.waitId,
+        fixture.ownerToken,
+        fixture.fencingToken,
+        { intervalMs: 250, leaseMs: 60_000, onLost: (outcome) => lost.push(outcome) }
+      );
+      try {
+        const deadline = Date.now() + 20_000;
+        while (lost.length === 0 && Date.now() < deadline) {
+          await new Promise((resolve) => setTimeout(resolve, 100));
+        }
+        // Give at least two further intervals a chance to fire, so "exactly
+        // once" is a real claim about the loop STOPPING and not just about timing.
+        await new Promise((resolve) => setTimeout(resolve, 900));
+        // Reported EXACTLY once, and the loop stopped: a heartbeat that kept
+        // retrying after being fenced would be worse than no heartbeat at all.
+        expect(lost).toEqual(['fenced']);
+      } finally {
+        stopFenced();
+      }
+    } finally {
+      await teardown({
+        waitIds: [fixture.waitId],
+        runIds: [fixture.runId],
+        orgIds: [fixture.orgId],
+        projectIds: [fixture.projectId],
+        userIds: [fixture.actorId],
+      });
+    }
+  }, 60_000);
+
+  it('listExpiredTimerWaitClaimsForRecovery returns abandoned claims and excludes both live leases and never-claimed waits', async () => {
+    const abandoned = await seedClaimedTimerWait('recovery-scan-abandoned');
+    const live = await seedClaimedTimerWait('recovery-scan-live');
+    const neverClaimed = await seedOrgProjectCase('recovery-scan-fresh');
+    const freshRunId = `run-recovery-fresh-${randomUUID()}`;
+    let freshWaitId = '';
+    try {
+      await seedV8Run({ runId: freshRunId, organizationId: neverClaimed.orgId });
+      const freshProposalId = await seedActionProposal({
+        caseId: neverClaimed.caseId,
+        runId: freshRunId,
+        actorId: neverClaimed.actorId,
+        tag: 'recovery-scan-fresh',
+      });
+      const freshWait = await waitSubscriptionService.createWait(
+        {
+          caseId: neverClaimed.caseId,
+          actionProposalId: freshProposalId,
+          waitType: 'TIMER',
+          correlationKey: `corr-recovery-fresh-${randomUUID()}`,
+          dueAt: new Date(Date.now() - 60_000).toISOString(),
+        },
+        neverClaimed.actorId
+      );
+      freshWaitId = freshWait.waitId;
+
+      await expireClaimLease(abandoned.waitId);
+
+      const candidates = await waitSubscriptionService.listExpiredTimerWaitClaimsForRecovery(
+        new Date(),
+        500
+      );
+      const ids = candidates.map((c) => c.waitId);
+      expect(ids).toContain(abandoned.waitId);
+      // A live lease is not abandoned work.
+      expect(ids).not.toContain(live.waitId);
+      // A never-claimed wait belongs to listDueTimerWaitsForClaim, not here —
+      // routing it through the recovery path would demand a pointless readback.
+      expect(ids).not.toContain(freshWaitId);
+      expect(await waitSubscriptionService.listDueTimerWaitsForClaim(new Date(), 500)).toEqual(
+        expect.arrayContaining([expect.objectContaining({ waitId: freshWaitId })])
+      );
+    } finally {
+      await teardown({
+        waitIds: [freshWaitId].filter(Boolean),
+        runIds: [freshRunId],
+        orgIds: [neverClaimed.orgId],
+        projectIds: [neverClaimed.projectId],
+        userIds: [neverClaimed.actorId],
+      });
+      await teardown({
+        waitIds: [abandoned.waitId],
+        runIds: [abandoned.runId],
+        orgIds: [abandoned.orgId],
+        projectIds: [abandoned.projectId],
+        userIds: [abandoned.actorId],
+      });
+      await teardown({
+        waitIds: [live.waitId],
+        runIds: [live.runId],
+        orgIds: [live.orgId],
+        projectIds: [live.projectId],
+        userIds: [live.actorId],
+      });
+    }
+  }, 90_000);
 });

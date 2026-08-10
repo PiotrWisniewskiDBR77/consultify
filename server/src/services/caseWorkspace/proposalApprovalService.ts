@@ -26,14 +26,20 @@
  * precedent) and opaque `policy_snapshot_ref`/`preview_ref` pointers are
  * stored, never the mutation payload or rendered diff itself.
  *
- * This packet deliberately does NOT build: the A0-A4 execution-class
- * classification logic for real capabilities (depends on CW-P03's registry
- * having real registered capabilities with effect classes — future work);
- * the three user AutonomyPolicy levels' enforcement (ASK_EACH_ACTION/
- * ASK_MATERIAL_ACTIONS/EXECUTE_APPROVED_PLAN — CW-01-018/019/020, DISTINCT
- * from the A0-A4 action classes this table's effect_class column carries —
- * do not conflate the two); or the Chat/Teresa integration (E8).
- * `effectClass` and `proposerType` are caller-supplied opaque inputs.
+ * SUPERSEDED PARAGRAPH (kept, corrected, because the original claim is now
+ * false and a stale header is how a phantom survives): this packet originally
+ * built neither the A0-A4 execution-class classification nor the three user
+ * AutonomyPolicy levels' enforcement. Both now exist in
+ * ./autonomyPolicyService.ts and are ENFORCED here at
+ * transitionProposalToExecuting — the material step. `effectClass` and
+ * `proposerType` remain caller-supplied inputs, but `effectClass` is no
+ * longer opaque: it is the primary A0-A4 classification input, and an
+ * unrecognized value escalates to A3 (fail-closed) rather than passing
+ * through. Still NOT built here: the Chat/Teresa integration (E8), and
+ * enforcement at any step other than the APPROVED -> EXECUTING transition
+ * (createActionProposal/submitActionProposalForReview are A1 "prepare" work
+ * by construction — they produce a DRAFT/PENDING_REVIEW proposal and mutate
+ * nothing outside this aggregate).
  *
  * req_id coverage (docs/product/case-workspace/acceptance/
  * FUNCTIONAL_REQUIREMENT_COVERAGE.csv, epics column contains "E6"):
@@ -187,6 +193,14 @@ import {
   queryOne,
   withPgTransaction,
 } from '../../utils/queryHelpers.js';
+import {
+  AutonomyPolicyDeniedError,
+  evaluateAutonomy,
+  publishPolicyDeniedEvent,
+  type ActionDescriptor,
+  type AutonomyEvaluation,
+  type ExplicitControlEvidence,
+} from './autonomyPolicyService.js';
 import type { CapabilityEffectClass } from './capabilityRegistryService.js';
 import { CaseWorkspaceAuthError, requireCaseAccess } from './caseWorkspaceAuthContext.js';
 import { publishEvent, redact } from './eventOutboxService.js';
@@ -375,6 +389,15 @@ interface CapabilityRegistryRefRow {
   capability_registry_id: string;
   lifecycle: string;
   health: string;
+  /**
+   * Optional risk attributes, read only by the autonomy gate (E6 wiring) so
+   * that a proposal bound to a registered capability is classified from that
+   * capability's OWN declared risk rather than from the proposal's effect
+   * class alone. Absent on the older two-field callers of
+   * computeProposalTargetValidity, which never look at them.
+   */
+  reversibility?: string | null;
+  data_classification?: string | null;
 }
 
 export interface ProposalTargetValidityResult {
@@ -1166,15 +1189,69 @@ export async function recordApprovalDecision(
 }
 
 /**
- * CW-RT-041, CW-RT-042, CW-RT-023, CW-RT-061, CW-00-020-INV11, CW-RT-053.
+ * The proposal's own approval record, reduced to the shape the autonomy gate
+ * reasons about. The LATEST APPROVE decision is the candidate control; whether
+ * it counts is decided by autonomyPolicyService (channel, binding to this
+ * exact proposal_version + payload_digest, self-approval, step-up assurance),
+ * never here.
+ */
+async function loadLatestApprovalControl(
+  client: PgTransactionClient,
+  actionProposalId: string,
+  proposalExpired: boolean
+): Promise<ExplicitControlEvidence | null> {
+  const result = await client.query<CaseWorkspaceActionProposalDecisionRow>(
+    `SELECT * FROM case_workspace_action_proposal_decisions
+      WHERE action_proposal_id = ? AND decision = 'APPROVE'
+      ORDER BY decided_at DESC, created_at DESC
+      LIMIT 1`,
+    [actionProposalId]
+  );
+  const row = result.rows[0];
+  if (!row) return null;
+  return {
+    channel: row.source,
+    approverActorId: row.decided_by_actor_id,
+    authenticationAssurance: row.authentication_assurance,
+    boundProposalVersion: Number(row.proposal_version),
+    boundPayloadDigest: row.payload_digest,
+    decidedAt: row.decided_at,
+    // §6 "Approval expires by time or event […] After expiry the action
+    // remains WAITING_FOR_APPROVAL; it must not execute." The approval
+    // inherits the proposal's validity window — an approval granted inside
+    // the window does not stay valid forever after it closes.
+    expired: proposalExpired,
+  };
+}
+
+/**
+ * CW-RT-041, CW-RT-042, CW-RT-023, CW-RT-061, CW-00-020-INV11, CW-RT-053,
+ * plus EPIC E6 AUTONOMY ENFORCEMENT (08_GOVERNANCE_AUTONOMY_APPROVALS.md
+ * §3, 06_SECURITY_EVENTS_OBSERVABILITY.md §5).
  *
- * APPROVED -> EXECUTING. Inside the same transaction, re-SELECTs the
- * referenced case_plan_versions row (if case_plan_version_id is set) and
- * case_workspace_capabilities row (if capability_registry_id is set) and
- * runs computeProposalTargetValidity() over them; throws
- * `proposal_target_stale:<reasons>` with no mutation if invalid. This is
- * the packet's concrete "invalidation" enforcement, scoped to the two FKs
- * it owns (open_question #4).
+ * APPROVED -> EXECUTING. This is the packet's MATERIAL action — the point at
+ * which a proposal stops being a description and starts being a mutation — so
+ * it is the point the autonomy policy is enforced at. Inside the same
+ * transaction, in this order:
+ *
+ *   1. re-SELECTs the referenced case_plan_versions row (if
+ *      case_plan_version_id is set) and case_workspace_capabilities row (if
+ *      capability_registry_id is set) and runs computeProposalTargetValidity()
+ *      over them; throws `proposal_target_stale:<reasons>` with no mutation if
+ *      invalid (target staleness is checked FIRST: an action aimed at a
+ *      superseded target is not a policy question, and pre-existing callers
+ *      already depend on that error);
+ *   2. classifies the action A0-A4 from the proposal's effect class plus the
+ *      bound capability's declared reversibility/data classification, resolves
+ *      the effective autonomy (Case policy under the ORGANIZATION CEILING) and
+ *      verifies the explicit control — see autonomyPolicyService.ts. A denial
+ *      commits a `policy.denied` outbox fact and then throws
+ *      AutonomyPolicyDeniedError with NO status mutation.
+ *
+ * The denial event is committed by returning a sentinel from the transaction
+ * body and throwing after the commit. Throwing from inside would roll the
+ * audit row back with the refusal, which is exactly the failure mode that
+ * makes a denial unprovable.
  */
 export async function transitionProposalToExecuting(
   actionProposalId: string,
@@ -1185,7 +1262,9 @@ export async function transitionProposalToExecuting(
   const actorUserId = requireNonBlank(actor?.actorUserId, 'proposal_actor_required');
   if (typeof expectedVersion !== 'number') throw new Error('proposal_expected_version_required');
 
-  return withPgTransaction(async (client) => {
+  const outcome = await withPgTransaction<
+    { denied: AutonomyEvaluation } | { proposal: CaseActionProposal }
+  >(async (client) => {
     const row = await loadForUpdate(client, id);
     await requireCaseAccess(actorUserId, row.case_id);
     if (!(ALLOWED_TRANSITIONS[row.status] ?? []).includes('EXECUTING')) {
@@ -1205,7 +1284,8 @@ export async function transitionProposalToExecuting(
     let capabilityRow: CapabilityRegistryRefRow | null = null;
     if (row.capability_registry_id) {
       const capabilityResult = await client.query<CapabilityRegistryRefRow>(
-        `SELECT capability_registry_id, lifecycle, health FROM case_workspace_capabilities
+        `SELECT capability_registry_id, lifecycle, health, reversibility, data_classification
+           FROM case_workspace_capabilities
           WHERE capability_registry_id = ?`,
         [row.capability_registry_id]
       );
@@ -1215,6 +1295,62 @@ export async function transitionProposalToExecuting(
     const validity = computeProposalTargetValidity(planVersionRow, capabilityRow);
     if (!validity.valid) {
       throw new Error(`proposal_target_stale:${validity.reasons.join(',')}`);
+    }
+
+    // ---- EPIC E6 autonomy gate -------------------------------------------
+    const proposalExpired = computeProposalExpiryState(mapRow(row)) === 'EXPIRED';
+    const action: ActionDescriptor = {
+      intent: 'EXECUTE',
+      effectClass: row.effect_class,
+      reversibility: capabilityRow?.reversibility ?? undefined,
+      dataClass: capabilityRow?.data_classification ?? undefined,
+      actionRef: row.capability_registry_id ?? row.action_proposal_id,
+    };
+    const evaluation = await evaluateAutonomy({
+      organizationId: row.organization_id,
+      caseId: row.case_id,
+      action,
+      control: await loadLatestApprovalControl(client, id, proposalExpired),
+      binding: {
+        proposalVersion: Number(row.proposal_version),
+        payloadDigest: row.payload_digest,
+        proposerActorId: row.created_by_actor_id,
+      },
+      planPolicy: planVersionRow
+        ? {
+            casePlanVersionId: planVersionRow.case_plan_version_id,
+            published: planVersionRow.status === 'PUBLISHED',
+          }
+        : null,
+      client,
+    });
+    if (!evaluation.allowed) {
+      // Commit the refusal (and nothing else); the throw happens after COMMIT.
+      await publishPolicyDeniedEvent(client, {
+        evaluation,
+        organizationId: row.organization_id,
+        projectId: row.project_id,
+        aggregateType: PROPOSAL_AGGREGATE_TYPE,
+        aggregateId: row.action_proposal_id,
+        aggregateVersion: Number(row.version),
+        caseId: row.case_id,
+        runId: row.run_id,
+        nodeRunId: row.node_run_id,
+        actorUserId,
+        eventId: deterministicEventId(
+          'policydenied',
+          id,
+          String(row.version),
+          evaluation.denialCode ?? 'unknown'
+        ),
+        payloadRef: row.policy_snapshot_ref,
+        summaryExtra: {
+          attemptedTransition: `${row.status}->EXECUTING`,
+          effectClass: row.effect_class,
+          payloadDigest: row.payload_digest,
+        },
+      });
+      return { denied: evaluation };
     }
 
     const now = new Date().toISOString();
@@ -1242,10 +1378,19 @@ export async function transitionProposalToExecuting(
         capabilityRegistryId: row.capability_registry_id,
         casePlanVersionId: row.case_plan_version_id,
         targetValidated: true,
+        // The autonomy decision that let this through, so an auditor can see
+        // WHICH level and WHICH control authorized the mutation.
+        actionClass: evaluation.actionClass,
+        effectiveAutonomy: evaluation.effectiveAutonomy,
+        organizationCeiling: evaluation.organizationCeiling,
+        organizationCeilingSource: evaluation.organizationCeilingSource,
       }),
     });
-    return mapRow(updated.rows[0]);
+    return { proposal: mapRow(updated.rows[0]) };
   });
+
+  if ('denied' in outcome) throw new AutonomyPolicyDeniedError(outcome.denied);
+  return outcome.proposal;
 }
 
 /**

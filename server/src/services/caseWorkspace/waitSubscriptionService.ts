@@ -862,6 +862,44 @@ async function resolveWaitCore(
     payloadRef?: string | null;
   }
 ): Promise<CaseWait> {
+  return withPgTransaction((client) =>
+    satisfyWaitOnClient(client, waitId, input, expectedVersion, event)
+  );
+}
+
+/**
+ * The same satisfaction body as resolveWaitCore, but running on a transaction
+ * client the CALLER already owns instead of opening its own.
+ *
+ * WHY THIS EXISTS AS A SEPARATE EXPORT. eventInboxService has to record an
+ * inbound external event AND satisfy the wait it correlates to in ONE
+ * transaction — that atomicity is the entire proof behind doc 06 §8's
+ * "duplicate or late events … do not reactivate completed/cancelled Runs" and
+ * "Wait satisfaction is atomic and unique". Calling the public resolveWait()
+ * from inside the inbox's transaction would open a SECOND connection
+ * (withPgTransaction always does), producing exactly the dual-write hole the
+ * outbox pattern exists to remove: the inbox row could commit while the wait
+ * flip rolled back, or the reverse. There is no way to close that from the
+ * caller's side, only by never opening it — hence this export rather than a
+ * clever wrapper.
+ *
+ * `client` MUST be an already-open transaction client from withPgTransaction.
+ * INTERNAL-ONLY / NOT ROUTE-EXPOSED — it performs no auth check of its own
+ * (same posture as resolveWait, whose DOMAIN_EVENT/EXTERNAL_CALLBACK paths
+ * have no end-user actor); the caller is responsible for the trust boundary.
+ */
+export async function satisfyWaitOnClient(
+  client: PgTransactionClient,
+  waitId: string,
+  input: ResolveWaitInput,
+  expectedVersion: number,
+  event: {
+    eventType: string;
+    actorUserId: string;
+    summary?: Record<string, unknown>;
+    payloadRef?: string | null;
+  }
+): Promise<CaseWait> {
   const id = requireNonBlank(waitId, 'wait_id_required');
   const satisfiedByEventId = requireNonBlank(
     input.satisfiedByEventId,
@@ -869,7 +907,7 @@ async function resolveWaitCore(
   );
   if (typeof expectedVersion !== 'number') throw new Error('wait_expected_version_required');
 
-  return withPgTransaction(async (client) => {
+  {
     const row = await loadForUpdate(client, id);
     if (!(ALLOWED_TRANSITIONS[row.status] ?? []).includes('SATISFIED')) {
       throw new Error(`wait_status_transition_not_allowed:${row.status}->SATISFIED`);
@@ -912,7 +950,7 @@ async function resolveWaitCore(
       payloadRef: event.payloadRef ?? null,
     });
     return mapRow(updated.rows[0]);
-  });
+  }
 }
 
 /**
@@ -1171,4 +1209,322 @@ export async function listDueTimerWaitsForClaim(
     [nowIso, nowIso, limit]
   );
   return rows.map(mapRow);
+}
+
+// ---------------------------------------------------------------------------
+// SCHEDULER COMPLETION (doc 06 §8) — heartbeats, expired-lease recovery with a
+// mandatory idempotency/reconciliation check, and the inbox's wait lookup.
+//
+// What was already here: claimTimerWait (atomic claim) and
+// renewTimerWaitClaimLease (a single CAS renewal). What was MISSING, and is
+// added below, is everything §8 actually requires around them:
+//   - "Worker claims use leases/heartbeats" — a single renewal primitive is not
+//     a heartbeat. startTimerWaitClaimHeartbeat is the loop, and critically it
+//     tells the caller the moment ownership is LOST, which is the only way a
+//     worker can stop before it collides with the new holder.
+//   - "Expired leases are reclaimed only after idempotency or reconciliation
+//     checks" — claimTimerWait happily takes an expired lease with no check at
+//     all. reclaimExpiredTimerWaitClaim is the guarded path.
+//   - "External effects without provider idempotency require readback
+//     reconciliation before retry" — the reconcile callback is mandatory, and
+//     an `alreadyApplied` verdict SATISFIES the wait from the readback instead
+//     of handing it to a new worker to do a second time.
+// ---------------------------------------------------------------------------
+
+/**
+ * §8's mandatory pre-reclaim check, as a verdict. `alreadyApplied: true` means
+ * a readback against the external system PROVED the previous claimant's effect
+ * landed; the wait must then be satisfied from that readback, never retried.
+ */
+export interface TimerWaitReconciliationVerdict {
+  alreadyApplied: boolean;
+  /** The event/effect id the readback found. Required when alreadyApplied. */
+  satisfiedByEventId?: string | null;
+  detail?: Record<string, unknown>;
+}
+
+export type ReclaimExpiredTimerWaitClaimOutcome =
+  | { outcome: 'reclaimed'; wait: CaseWait; ownerToken: string; fencingToken: number }
+  | { outcome: 'already_applied'; wait: CaseWait }
+  | { outcome: 'lease_active' }
+  | { outcome: 'not_reclaimable' }
+  | { outcome: 'not_found' };
+
+/**
+ * §8 "Worker claims use leases/heartbeats". A real heartbeat loop over
+ * renewTimerWaitClaimLease.
+ *
+ * Returns a stop function. `onLost` fires on the first non-'renewed' outcome —
+ * that is the signal for the worker to ABANDON the wait, because a 'fenced'
+ * result means someone else already owns it and any further action would be a
+ * double effect. A heartbeat that silently kept retrying after being fenced
+ * would be worse than no heartbeat at all.
+ *
+ * The interval defaults to a third of the lease so two consecutive heartbeats
+ * may be lost before the lease actually lapses. A transient DB error does NOT
+ * kill the loop (the lease still has time left); only genuine loss of
+ * ownership does. The timer is unref'd — a background heartbeat must never be
+ * the reason a process refuses to exit.
+ *
+ * INTERNAL-ONLY / NOT ROUTE-EXPOSED.
+ */
+export function startTimerWaitClaimHeartbeat(
+  waitId: string,
+  ownerToken: string,
+  fencingToken: number,
+  options: {
+    intervalMs?: number;
+    leaseMs?: number;
+    onLost?: (outcome: RenewTimerWaitClaimLeaseOutcome) => void;
+  } = {}
+): () => void {
+  const leaseMs = options.leaseMs ?? DEFAULT_TIMER_CLAIM_LEASE_MS;
+  const intervalMs = options.intervalMs ?? Math.max(1_000, Math.floor(leaseMs / 3));
+
+  let stopped = false;
+  const timer = setInterval(() => {
+    void (async () => {
+      if (stopped) return;
+      try {
+        const outcome = await renewTimerWaitClaimLease(waitId, ownerToken, fencingToken, leaseMs);
+        if (outcome !== 'renewed') {
+          stopped = true;
+          clearInterval(timer);
+          options.onLost?.(outcome);
+        }
+      } catch {
+        // Transient DB failure — the lease has not lapsed yet and the next tick
+        // may succeed. Real loss of ownership arrives as 'fenced', not a throw.
+      }
+    })();
+  }, intervalMs);
+  if (typeof timer.unref === 'function') timer.unref();
+
+  return () => {
+    stopped = true;
+    clearInterval(timer);
+  };
+}
+
+/**
+ * §8: "Expired leases are reclaimed only after idempotency or reconciliation
+ * checks." and "External effects without provider idempotency require readback
+ * reconciliation before retry."
+ *
+ * This is the ONLY sanctioned way to take over an EXPIRED timer-wait claim.
+ * Note that claimTimerWait() will also take an expired lease — it predates this
+ * rule and stays as-is for the never-claimed case; callers sweeping abandoned
+ * work must use THIS function, which is why listExpiredTimerWaitClaimsForRecovery
+ * below feeds it rather than feeding claimTimerWait.
+ *
+ * `reconcile` is MANDATORY and has no permissive default: a default would make
+ * the unsafe path the one every caller gets for free, and the failure it
+ * guards against (re-running an external effect that already committed, because
+ * the first worker died before recording it) is silent until it is expensive.
+ *
+ *   1. read the row; confirm the lease genuinely expired;
+ *   2. run the caller's readback;
+ *   3a. alreadyApplied -> SATISFY the wait from the readback, do NOT hand it to
+ *       a new worker. `satisfiedByEventId` is required here, because "it already
+ *       happened" with no evidence pointer is not a reconciliation;
+ *   3b. otherwise -> one conditional UPDATE re-checks the expiry guard and takes
+ *       the lease with a bumped fencing token.
+ *
+ * Two workers racing at step 3b serialize on the row lock; the loser's WHERE no
+ * longer matches (the winner pushed claim_lease_expires_at into the future) and
+ * it gets 'lease_active'. Both may run `reconcile` — that is inherent to a
+ * read-only external check, and is exactly why the decisive statement is still
+ * guarded. A throwing `reconcile` aborts the reclaim rather than being
+ * swallowed into a retry; the wait stays expired and recoverable.
+ *
+ * INTERNAL-ONLY / NOT ROUTE-EXPOSED.
+ */
+export async function reclaimExpiredTimerWaitClaim(
+  waitId: string,
+  reconcile: (wait: CaseWait) => Promise<TimerWaitReconciliationVerdict> | TimerWaitReconciliationVerdict,
+  params: { leaseMs?: number } = {}
+): Promise<ReclaimExpiredTimerWaitClaimOutcome> {
+  const id = requireNonBlank(waitId, 'wait_id_required');
+  if (typeof reconcile !== 'function') throw new Error('wait_reconciliation_required');
+  const leaseMs = params.leaseMs ?? DEFAULT_TIMER_CLAIM_LEASE_MS;
+
+  const current = await queryOne<CaseWorkspaceWaitRow>(
+    `SELECT * FROM case_workspace_waits WHERE wait_id = ?`,
+    [id]
+  );
+  if (!current) return { outcome: 'not_found' };
+  if (current.wait_type !== 'TIMER' || current.status !== 'ACTIVE') {
+    return { outcome: 'not_reclaimable' };
+  }
+  if (!current.claim_owner_token) return { outcome: 'not_reclaimable' };
+  if (
+    current.claim_lease_expires_at &&
+    Date.parse(current.claim_lease_expires_at) > Date.now()
+  ) {
+    return { outcome: 'lease_active' };
+  }
+
+  const verdict = await reconcile(mapRow(current));
+
+  if (verdict?.alreadyApplied) {
+    const satisfiedByEventId = requireNonBlank(
+      verdict.satisfiedByEventId,
+      'wait_reconciliation_satisfied_by_event_id_required'
+    );
+    return withPgTransaction(async (client) => {
+      const row = await loadForUpdate(client, id);
+      if (row.status !== 'ACTIVE') return { outcome: 'not_reclaimable' as const };
+      // Satisfied on the RECONCILED path, so the TIMER claim CAS in
+      // satisfyWaitOnClient is bypassed deliberately: the owner token being
+      // CAS-checked belongs to a worker that is provably gone. The evidence is
+      // the readback's own event id, carried into satisfied_by_event_id.
+      const satisfied = await client.query<CaseWorkspaceWaitRow>(
+        `UPDATE case_workspace_waits
+            SET status = 'SATISFIED', satisfied_at = ?, satisfied_by_event_id = ?,
+                claim_owner_token = NULL, claim_lease_expires_at = NULL,
+                version = version + 1, updated_at = ?
+          WHERE wait_id = ? AND version = ?
+          RETURNING *`,
+        [
+          new Date().toISOString(),
+          satisfiedByEventId,
+          new Date().toISOString(),
+          id,
+          Number(row.version),
+        ]
+      );
+      const satisfiedRow = satisfied.rows[0];
+      if (!satisfiedRow) throw new Error('wait_version_conflict');
+
+      await publishEvent(client, {
+        eventType: 'wait.reconciled_already_applied',
+        ...waitEventIdentity(satisfiedRow),
+        actorUserId: SYSTEM_ACTOR_WAIT_SCHEDULER,
+        redactedSummary: redact({
+          waitType: satisfiedRow.wait_type,
+          from: row.status,
+          to: 'SATISFIED',
+          previousLeaseExpired: true,
+          reconciliation: verdict.detail ?? {},
+        }),
+      });
+      return { outcome: 'already_applied' as const, wait: mapRow(satisfiedRow) };
+    });
+  }
+
+  return withPgTransaction(async (client) => {
+    const ownerToken = uuidv4();
+    const now = new Date().toISOString();
+    const reclaimed = await client.query<CaseWorkspaceWaitRow>(
+      `UPDATE case_workspace_waits
+          SET claim_owner_token = ?,
+              claim_fencing_token = claim_fencing_token + 1,
+              claim_lease_expires_at = (NOW() + (? || ' milliseconds')::interval)::text,
+              updated_at = ?
+        WHERE wait_id = ? AND wait_type = 'TIMER' AND status = 'ACTIVE'
+          AND claim_owner_token IS NOT NULL
+          AND claim_lease_expires_at IS NOT NULL
+          AND claim_lease_expires_at::timestamptz < NOW()
+        RETURNING *`,
+      [ownerToken, String(leaseMs), now, id]
+    );
+    const reclaimedRow = reclaimed.rows[0];
+    if (!reclaimedRow) {
+      const after = await client.query<CaseWorkspaceWaitRow>(
+        `SELECT * FROM case_workspace_waits WHERE wait_id = ?`,
+        [id]
+      );
+      const afterRow = after.rows[0];
+      if (!afterRow) return { outcome: 'not_found' as const };
+      if (afterRow.wait_type !== 'TIMER' || afterRow.status !== 'ACTIVE') {
+        return { outcome: 'not_reclaimable' as const };
+      }
+      return { outcome: 'lease_active' as const };
+    }
+
+    await publishEvent(client, {
+      eventType: 'wait.claim_reclaimed',
+      ...waitEventIdentity(reclaimedRow),
+      actorUserId: SYSTEM_ACTOR_TIMER_CLAIMER,
+      redactedSummary: redact({
+        waitType: reclaimedRow.wait_type,
+        // Deliberately not named `fencingToken` — see claimTimerWait.
+        claimFencingCounter: Number(reclaimedRow.claim_fencing_token),
+        leaseMs,
+        leaseExpiresAt: reclaimedRow.claim_lease_expires_at,
+        reconciliation: verdict?.detail ?? {},
+      }),
+    });
+
+    return {
+      outcome: 'reclaimed' as const,
+      wait: mapRow(reclaimedRow),
+      ownerToken,
+      fencingToken: Number(reclaimedRow.claim_fencing_token),
+    };
+  });
+}
+
+/**
+ * §8 expired-lease recovery candidates: ACTIVE timer waits that ARE claimed but
+ * whose lease has lapsed — i.e. abandoned work. Distinct from
+ * listDueTimerWaitsForClaim(), which also returns never-claimed waits; feeding
+ * abandoned work into claimTimerWait() would take the lease with no
+ * reconciliation at all, which is precisely what §8 forbids. Feed these into
+ * reclaimExpiredTimerWaitClaim() instead.
+ *
+ * "Report, don't decide": no claiming decision is made here.
+ * INTERNAL-ONLY / NOT ROUTE-EXPOSED (cross-case, cross-org by design).
+ */
+export async function listExpiredTimerWaitClaimsForRecovery(
+  now: Date = new Date(),
+  limit: number = 50
+): Promise<CaseWait[]> {
+  const nowIso = now.toISOString();
+  const rows = await queryAll<CaseWorkspaceWaitRow>(
+    `SELECT * FROM case_workspace_waits
+       WHERE wait_type = 'TIMER' AND status = 'ACTIVE'
+         AND claim_owner_token IS NOT NULL
+         AND claim_lease_expires_at IS NOT NULL
+         AND claim_lease_expires_at::timestamptz < ?::timestamptz
+       ORDER BY claim_lease_expires_at ASC
+       LIMIT ?`,
+    [nowIso, limit]
+  );
+  return rows.map(mapRow);
+}
+
+/**
+ * The inbox's wait lookup, on the CALLER's transaction client and with the row
+ * LOCKED (`FOR UPDATE`).
+ *
+ * It lives here, not in eventInboxService, for one reason: `case_workspace_waits`
+ * is this service's table, and letting another service issue its own locking
+ * SELECT against it is how two different lock orders end up in one codebase.
+ * The lock is taken as part of the inbox's single transaction so that
+ * "authenticate -> dedupe -> validate tenant -> satisfy" is one atomic step
+ * (doc 06 §8: an external callback must be validated for tenant/correlation
+ * BEFORE it may influence a wait, and wait satisfaction must be "atomic and
+ * unique").
+ *
+ * Returns null when no wait carries that correlation key. Deliberately does NOT
+ * filter by organization_id: the CALLER compares the wait's real
+ * organization_id against the claimed one and rejects a mismatch as a recorded
+ * TENANT_MISMATCH security event. Filtering here instead would collapse
+ * "wrong tenant" into "not found" and erase the attack signal.
+ *
+ * INTERNAL-ONLY / NOT ROUTE-EXPOSED.
+ */
+export async function loadWaitByCorrelationKeyOnClient(
+  client: PgTransactionClient,
+  correlationKey: string
+): Promise<CaseWait | null> {
+  const key = requireNonBlank(correlationKey, 'wait_correlation_key_required');
+  const result = await client.query<CaseWorkspaceWaitRow>(
+    `SELECT * FROM case_workspace_waits WHERE correlation_key = ?
+      ORDER BY created_at ASC LIMIT 1 FOR UPDATE`,
+    [key]
+  );
+  const row = result.rows[0];
+  return row ? mapRow(row) : null;
 }
