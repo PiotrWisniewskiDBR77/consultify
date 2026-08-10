@@ -31,7 +31,7 @@
 import { z } from 'zod';
 
 import type { BusinessVersionStatus, FinanceRole } from '../../services/finance/canonical/lifecycleService.js';
-import { CellRefSchema, type CellRef } from './CellRef.js';
+import { CellRefSchema, cellRefKey, type CellRef } from './CellRef.js';
 import { FinanceArtifactTypeSchema, type FinanceArtifactType } from './ArtifactRef.js';
 import { FinanceValueObjectSchema, type FinanceValue } from './financeValueSemantics.js';
 
@@ -241,12 +241,27 @@ export type ApplyOperationsBatchResult =
       currentWorkingRevisionId?: string | null;
     };
 
-/** Pure pre-flight check the client (and the executor, before touching the DB) can run: are any two operations in one batch targeting the identical cell? Not itself a correctness guarantee for the executor (it must still re-check under the DB transaction), but lets the UI reject an obviously-conflicting paste before a round trip. */
+/**
+ * Pure pre-flight check the client (and the executor, before touching the DB) can run: are any two
+ * operations in one batch targeting the identical cell? Not itself a correctness guarantee for the
+ * executor (it must still re-check under the DB transaction), but lets the UI reject an obviously-
+ * conflicting paste before a round trip.
+ *
+ * AP-02 bugfix (2026-08-10, Excel round-trip work package): the key used to previously be
+ * `${organizationId}|${businessVersionId}|${tableName}` — identical for EVERY cell in the same
+ * table/business-version, so this function flagged any batch with more than one cell touching the
+ * same table as "duplicate", regardless of whether the cells actually collided. That made the
+ * function unusable for its stated purpose (confirmed: no caller had ever exercised it before
+ * `financeImportService.ts` — a real multi-cell import batch always tripped the false positive).
+ * Fixed to key on the full cell identity via `cellRefKey()` (organizationId + businessVersionId +
+ * tableName + rowKey + columnKey), matching what `Operation.ts`'s own doc comment on this function
+ * always described the check as doing.
+ */
 export function findDuplicateTargetsInBatch(operations: readonly Operation[]): string[] {
   const seen = new Map<string, number>();
   for (const op of operations) {
     for (const target of operationTargets(op)) {
-      const key = `${target.organizationId}|${target.businessVersionId}|${target.tableName}`;
+      const key = cellRefKey(target);
       seen.set(key, (seen.get(key) ?? 0) + 1);
     }
   }
