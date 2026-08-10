@@ -58,13 +58,11 @@ export async function insertVisibilityPolicy(
   );
 }
 
-export async function insertOrganization(client: Client, organizationId: string, name: string): Promise<void> {
-  await client.query(
-    `INSERT INTO organizations (id, name, plan, status) VALUES ($1, $2, 'enterprise', 'active')
-     ON CONFLICT (id) DO NOTHING`,
-    [organizationId, name]
-  );
-}
+/** Re-exported under this epic's original name so ROI-E006's suites keep
+ * their existing import; the single implementation now lives in
+ * `roiRealdbOrgFixture.ts`, shared with every other ROI realdb suite
+ * (CLOSEOUT-CO5). */
+export { ensureRoiFixtureOrganization as insertOrganization } from './roiRealdbOrgFixture.js';
 
 /** Raw-SQL Variance insert — `recordVariance` (the real command) requires a
  * live Forecast/Actual snapshot to compute against, which none of this
