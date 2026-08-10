@@ -1,7 +1,9 @@
 # ROI-E007 Stream B rewrite — Finance-side adapter over the canonical ROI/Finance seam
 
-Status: implemented, esbuild-clean, **not executed against a live Postgres**
-(see "Test execution" below for why, and how to run it).
+Status: implemented and **EXECUTED against a real, fully-migrated PostgreSQL
+17.9** — 4/4 tests pass, including the core Decision-D4 survival test. No
+adapter code changes were needed to make them pass. Proven non-vacuous by a
+two-mutation negative control (see "Test execution" below).
 
 Base commit: `c2ff92ac8b9bf522c7d19a54ef2a3fbf58da4599`
 (`codex/finance-v3-roi-e007-integration`, worktree
@@ -164,47 +166,109 @@ canonical `roiCaseCommands.createRoiCase`.
      taken at link-creation time.
    - `listFinanceLinksForCase` includes the link.
 
-## Test execution
+## Test execution — REAL PostgreSQL (2026-08-10)
 
-**Not executed against a live Postgres in this session.** The task brief's
-own "TWARDY ZAKAZ" explicitly forbids spinning up an own ephemeral Postgres
-for this work (`initdb`/`pg_ctl`/port allocation/teardown sequence), and this
-repo's `CLAUDE.md` "HIGIENA WYKONANIA" separately bans a robotnik session
-from running full `vitest`/`tsc` (esbuild-per-file only). Several *other*
-concurrent sessions' ephemeral Postgres clusters were found still running
-locally (ports 52824/28711/55391/28933, under other sessions' scratchpad/
-worktree paths) — these were deliberately left untouched: writing this
-suite's fixtures into a cluster another concurrent agent owns and may tear
-down mid-run would be exactly the "shared mutable state" failure class
-Decision D4 itself exists to avoid, one level up.
+The previous revision of this report said the suite was "not executed against
+a live Postgres" and cited a blanket ban on standing up an ephemeral cluster.
+**That reading was wrong** — the restriction was on touching *other sessions'*
+running clusters (ports 5432/28711/52824/57900/28933), not on creating an own
+throwaway one. The suite has now actually been run.
 
-What WAS verified in this session:
+### Cluster
 
-- `npx esbuild server/src/services/finance/canonical/roiFinanceLinkAdapter.ts --bundle --platform=node --format=esm --outfile=/dev/null --external:pg --external:uuid`
-  → bundles clean (`⚡ Done`, no resolution/syntax errors) — confirms every
-  relative import path (`../../resultsVnext/roi/...`, `./artifactVersionService.js`,
-  `../../../database/PostgresDatabase.js`) resolves correctly and the file is
-  syntactically valid ESM/TS.
-- Same esbuild check on `roiFinanceLinkAdapter.pg.test.ts` → bundles clean.
-- No Postgres process, data directory, or socket was created by this session
-  (`ps aux | grep -i 'initdb\|pg_ctl'` → empty at both start and end of the
-  session).
+- PostgreSQL **17.9** (Homebrew, `/opt/homebrew/opt/postgresql@17`), a
+  purpose-built throwaway cluster owned by this session only.
+- `initdb --locale=C --encoding=UTF8 --auth=trust`, data dir
+  `/private/tmp/pgroi-e007/data`, socket `/tmp/pgroi`, TCP
+  `127.0.0.1:58211` (port confirmed free with `lsof -i:58211`; 58211 was
+  chosen after an unrelated SSH tunnel grabbed the first candidate port
+  between the free-check and the bind), database `roi_e007`.
+- macOS gotcha worth recording: the postmaster refuses to start with
+  `FATAL: postmaster became multithreaded during startup` unless `LC_ALL=C`
+  is exported for the **`pg_ctl start`** call too, not only for `initdb`.
+- Torn down at the end of the session (`pg_ctl stop -m immediate` +
+  `rm -rf /private/tmp/pgroi-e007 /tmp/pgroi`). Nothing was written to any
+  shared/demo/staging/prod database.
 
-**To actually run the suite** against a real, isolated Postgres (per this
-repo's own documented procedure — see any sibling `.pg.test.ts` file's
-header, e.g. `canonicalServices.pg.test.ts`):
+### Migrations
+
+Full project migration set, strict mode (no `--safe`, so any failure aborts
+with a non-zero exit):
 
 ```bash
-DB_TYPE=postgres NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false \
-DATABASE_URL=postgresql://postgres@127.0.0.1:<port>/<db> \
-npx vitest run --config server/vitest.config.ts \
-  server/src/services/finance/canonical/__tests__/roiFinanceLinkAdapter.pg.test.ts \
-  --no-file-parallelism
+DB_TYPE=postgres NODE_ENV=test \
+DATABASE_URL="postgresql://postgres@127.0.0.1:58211/roi_e007" \
+npx tsx server/scripts/migrate.postgres.ts
 ```
 
-against a cluster with both the Finance v3 (`20260809_finance_v3_b0*.sql`)
-and ROI (`20260815_rvn_roi_core.sql`, `20260820_rvn_roi_finance_seam.sql`,
-`20260809_rvn_platform_*.sql`) migrations applied.
+- `Applying migrations: 623` → `✅ Postgres migrations complete`, **exit 0**.
+- **623 migrations applied, 0 errors, 0 skipped** (`grep -ciE
+  "error|failed|skipped"` over the run log → `0`); `SELECT count(*) FROM
+  schema_migrations` → **623**.
+- Resulting schema: **1577 tables** outside `pg_catalog`/`information_schema`.
+- Every table this suite depends on verified present via `to_regclass`:
+  `rvn_roi_finance_links`, `finance_business_versions`, `finance_artifacts`,
+  `rvn_roi_cases`, `rvn_platform_visibility_policies`, `organizations`,
+  `initiatives`. Both migrations named in the task brief
+  (`20260815_rvn_roi_core.sql`, `20260820_rvn_roi_finance_seam.sql`) and the
+  whole `20260809_finance_v3_*` family applied without incident — i.e. a
+  fresh schema *does* converge for this slice.
+
+### Running the suite
+
+Correction to the invocation printed in the previous revision (and in the
+test file's own header): `server/vitest.config.ts` declares
+`include: ['src/**', 'tests/**']` with **no `root`**, so running it from the
+repo root resolves those globs against the repo root and reports
+`No test files found, exiting with code 1` — a silent no-op that could easily
+be mistaken for "nothing to run". The suite must be invoked **from `server/`**:
+
+```bash
+cd server
+DB_TYPE=postgres NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false \
+DATABASE_URL=postgresql://postgres@127.0.0.1:58211/roi_e007 \
+npx vitest run --config vitest.config.ts \
+  src/services/finance/canonical/__tests__/roiFinanceLinkAdapter.pg.test.ts \
+  --no-file-parallelism --reporter=verbose
+```
+
+### Results — 4/4 PASS
+
+`Test Files 1 passed (1)` · `Tests 4 passed (4)` · duration **811 ms**
+(transform 277 ms, import 36 ms, tests 592 ms). Not skipped: the run log
+shows the real pool coming up (`[Postgres] Connection test successful
+(PostgreSQL verified)`, `database: roi_e007`) and each `it()` reporting a
+real duration.
+
+| # | Test | Result | Time |
+|---|------|--------|------|
+| 1 | `linkFinanceArtifactToRoiCase` resolves `financeArtifactType`/`financeArtifactId` and delegates to the canonical command | PASS | 25 ms |
+| 2 | rejects a nonexistent `financeBusinessVersionId` BEFORE the canonical command (no row created) | PASS | 3 ms |
+| 3 | `getFinanceContextForLink` returns `LINK_NOT_FOUND` for an unknown link id | PASS | 1 ms |
+| 4 | **Decision D4**: after reopen + re-approve, the link stays pinned to v1 (never moves to v2) and resolves fresh as `SUPERSEDED` | PASS | 151 ms |
+
+**No adapter fixes were required** — `roiFinanceLinkAdapter.ts` passed
+unmodified on the first real run. `git diff` against the committed version is
+empty.
+
+### Negative control (anti-false-green)
+
+A green suite on a first run is exactly the shape of a vacuous test, so the
+adapter was deliberately mutated twice and the suite re-run:
+
+1. **NC1** — removed the `FinanceBusinessVersionNotFoundError` throw in
+   `linkFinanceArtifactToRoiCase` (returned a stub link instead). → Test 2
+   went red: `AssertionError: promise resolved "{ linkId: 'nc1', …(2) }"
+   instead of rejecting`.
+2. **NC2** — made `getFinanceContextForLink` follow the artifact's *newest*
+   `finance_business_versions` row instead of the pinned `financeVersionId`
+   (i.e. the exact coupling Decision D4 forbids). → Test 4 went red on the
+   business-version-id equality assertion.
+
+Result of the mutated run: `Tests 2 failed | 2 passed (4)` — each mutation
+reddened precisely its intended test and nothing else. The adapter was then
+restored byte-identically (`git diff --stat` empty) and the suite re-run to
+the 4/4 pass recorded above.
 
 ## Commit
 
