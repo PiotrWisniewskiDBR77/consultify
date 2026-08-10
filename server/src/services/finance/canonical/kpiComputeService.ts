@@ -197,6 +197,24 @@ async function loadCanonicalLineMap(organizationId: string): Promise<Map<string,
   return map;
 }
 
+/** RC-04 (REAL_COMPANY_PROOF_report.md §5) — `finance_stmt_lines.sign_convention` was written by
+ *  the mapping layer but never read here, so a real filed statement pack that carries its costs
+ *  with the as-filed negative sign (Apator FY2024 COGS = −913 065 tys. PLN, declared
+ *  `sign_convention='CONTRA'`) fed a NEGATIVE denominator into DIO/DPO, whose
+ *  `negative_denominator_policy='FORCE_NA'` then silenced both KPI as `NOT_APPLICABLE`. The
+ *  analyst's only escape was to physically flip the sign in the pack, destroying the "as filed"
+ *  value. `CONTRA` means exactly "this line is stored with the opposite sign to its natural
+ *  accounting direction", so applying it on read is the whole point of storing it — the same
+ *  reading the elimination-balance trigger already does in SQL
+ *  (`20260809_finance_v3_d01_statements_02_integrity.sql` §8.5:
+ *  `SUM(CASE WHEN sign_convention = 'CONTRA' THEN -value_decimal ELSE value_decimal END)`).
+ *  `value_status` is deliberately NOT recomputed: negating a value never turns a PRESENT_NONZERO
+ *  into a PRESENT_ZERO or a MISSING into anything. */
+function applySignConvention(value: number | null, signConvention: string | null): number | null {
+  if (value === null) return null;
+  return signConvention === 'CONTRA' ? -value : value;
+}
+
 async function loadStmtLineCells(sourceBusinessVersionId: string): Promise<Map<string, StmtLineCell>> {
   const rows = await withPinnedPostgresTransaction((tx) =>
     tx.queryAll<{
@@ -207,8 +225,10 @@ async function loadStmtLineCells(sourceBusinessVersionId: string): Promise<Map<s
       accumulation_basis: string;
       value_status: StmtLineCell['status'];
       value_decimal: string | null;
+      sign_convention: string | null;
     }>(
-      `SELECT entity_id, canonical_line_id, period_id, consolidation_scope, accumulation_basis, value_status, value_decimal
+      `SELECT entity_id, canonical_line_id, period_id, consolidation_scope, accumulation_basis, value_status, value_decimal,
+              sign_convention
          FROM finance_stmt_lines WHERE business_version_id = ?`,
       [sourceBusinessVersionId]
     )
@@ -222,7 +242,10 @@ async function loadStmtLineCells(sourceBusinessVersionId: string): Promise<Map<s
     if (!existing || rank < existing.basisPriority) {
       byKey.set(key, {
         basisPriority: rank,
-        cell: { status: r.value_status, value: r.value_decimal === null ? null : Number(r.value_decimal) },
+        cell: {
+          status: r.value_status,
+          value: applySignConvention(r.value_decimal === null ? null : Number(r.value_decimal), r.sign_convention),
+        },
       });
     }
   }
