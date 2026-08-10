@@ -5668,4 +5668,100 @@ zrobiono tego prewencyjnie w tej sesji, bo instrukcja zadania była
 jednoznaczna: fix tylko jeśli defekt faktycznie istnieje na zbadanej
 podstawie, a na zbadanej podstawie (świeża migracja) nie istnieje.
 
+## 51. Kontrakt-korekta: emerytura `decisions_projection`/`notifications_projection` (2026-08-10)
+
+Bounded task, wywołane audytem `EVENT_TYPE_CONSUMER_GROUPS`
+(`atomicWrite.ts`) po §49: mapa niosła komentarz rezerwujący dwie nazwy
+grup konsumenckich — `decisions_projection` i `notifications_projection` —
+jako "przyszłe". Zweryfikowane grepem przed jakąkolwiek zmianą: żaden z
+143 kluczy w `EVENT_TYPE_CONSUMER_GROUPS` nie routuje do żadnej z nich —
+obie nazwy istniały WYŁĄCZNIE w tym jednym komentarzu, zero realnego
+routingu.
+
+**Decyzja: obie emerytowane, nie budowane.** Budowa którejkolwiek byłaby
+spekulacją albo duplikacją, nie realną luką:
+- `decisions_projection` nie ma producenta. `DecisionController.ts`
+  (3019 linii, sprawdzone grepem) emituje ZERO wierszy
+  `rvn_platform_events` — nie ma nic na outboxie do konsumowania.
+  OKR-E006's `requestDecisionFromSupportRequest`
+  (`okrDecisionCommands.ts`) robi już synchroniczny, wewnątrztransakcyjny
+  `INSERT INTO decisions` — bardziej atomowy niż jakikolwiek async
+  konsument mógłby kiedykolwiek być, a `okrDecisionResolutionScanner.ts`
+  celowo odpytuje `okr_vnext_decision_links` bezpośrednio, nie przez
+  outbox (§16 Open Question #4 designu OKR-E006, potwierdzone przy tej
+  okazji). Żeby stała się realna: trzeba by zinstrumentować
+  `DecisionController.ts` do emisji `rvn_platform_events` przy zmianach
+  stanu decyzji — zmiana cross-modułowa w domenie Decisions, poza
+  zakresem tej warstwy platformowej.
+- `notifications_projection` zdublowałaby robotę już wykonaną w §49:
+  `myworkProjectionConsumer.ts` (jedyny żywy konsument, `mywork_projection`)
+  już wstawia do `notifications` na 4 typach zdarzeń — jednym z trzech
+  zahardkodowanych źródeł `inboxService.materializeInboxItems()`
+  (`tasks`/`decisions`/`notifications`). Drugi peer-konsument piszący do
+  tej samej tabeli ścigałby się z pierwszym, nie dodawał pokrycia.
+  Prawdziwa niezbudowana luka to NIE projekcja tylko event-driven
+  fan-out e-mail/Slack — miejsce na to jest WEWNĄTRZ handlerów
+  `mywork_projection`, wołających `NotificationOutboxService.enqueue(...)`
+  (`notificationOutboxService.ts`), nie w kolidującym peer-konsumencie.
+
+**Zmiany**:
+- `server/src/services/resultsVnext/platform/atomicWrite.ts` — stary
+  komentarz przy OKR-E006 (rezerwacja obu nazw) zastąpiony blokiem
+  "RETIRED VOCABULARY" z powyższym uzasadnieniem per nazwa. Zero żywych
+  wpisów routingu ruszonych.
+- `server/src/services/resultsVnext/platform/consumerRegistry.ts` —
+  nagłówek `CONSUMER_REGISTRY` przepisany: `mywork_projection` = LIVE,
+  `finance_projection` = PENDING (11 żywych typów zdarzeń / 13 kluczy
+  literalnych — liczba z `RN_G6_FINANCE_PROJECTION_DESIGN.md` §0, zamrożonego
+  równolegle w tym samym worktree przez inną sesję; MOJA pierwsza wersja tego
+  komentarza błędnie liczyła 13 zamiast 11 — poprawione po zauważeniu
+  rozjazdu z designem), oba retired-name RÓŻNE od pending (żadnego wpisu w
+  żadnej z dwóch map, celowo).
+- `tests/resultsVnext/platform/consumerGroupContract.test.ts` (NOWY,
+  `git add -f`) — 5 asercji: (1) każda grupa, do której realnie routuje
+  `EVENT_TYPE_CONSUMER_GROUPS`, jest albo w `CONSUMER_REGISTRY` albo w
+  `UNBUILT_CONSUMER_GROUPS` — to jest właściwa ochrona, bo czyni klasę
+  błędu "zdarzenie routowane w pustkę" strukturalnie niemożliwą do
+  powtórzenia; (2) sanity-check że mapa routingu nie jest trywialnie pusta
+  (>50 kluczy, `mywork_projection`/`finance_projection` obecne — broni
+  przed przejściem testu (1) pusto z niewłaściwego powodu); (3) pin
+  bezpośredni: `decisions_projection`/`notifications_projection` nigdy nie
+  pojawiają się jako cel routingu; (4)-(5) `finance_projection` PENDING,
+  `mywork_projection` LIVE.
+
+**Weryfikacja testu jako realnej ochrony**: tymczasowo dodany wpis
+`'okr_support.comment_posted': ['mywork_projection', 'decisions_projection']`
+do `atomicWrite.ts` (poza commitem, przywrócone zaraz po) — 2 z 5 asercji
+failują natychmiast, dokładnie ten scenariusz regresji, który test ma
+łapać. Bez tej zmiany 5/5 PASS.
+
+**Weryfikacja całości**: `npx tsc --noEmit` (`--max-old-space-size=8192`)
+czysto. `tests/resultsVnext/` na efemerycznym Postgresie 17
+(`initdb --locale=C`, TCP `127.0.0.1:55433`, rola/baza `iris`/`iris_test`
+— dokładna kopia CI-recipe z `.github/workflows/test-suite.yml`,
+`db:migrate:strict` 596 plików zero błędów) — **671 PASS, 33 FAIL, 8
+skip** (712 total, `--no-file-parallelism`). Wszystkie 33 fail to
+`initiatives_organization_id_fkey` w plikach ROI (`roiTrackingTransition`/
+`roiVariance`/`roiVisibilityJoin`/`roiForecastActualVisibilityJoin`
+realdb), PRZEDISTNIEJĄCE i NIE moje — ten sam defekt, który §37 już
+naprawił punktowo w 3 innych plikach (`kpiIdentityAcrossSurfaces`/
+`initiativeKpiImpactBaselineFreeze`/`kpiInitiativeImpactPerspectivesRoutesRealdb`),
+tu widoczny w plikach spoza tamtego fixa. Zero błędów `decimal.js` w tym
+przebiegu (nie znaczy że nie istnieją gdzie indziej — po prostu poza
+zakresem uruchomionego katalogu). Mój nowy plik testowy: 5/5 PASS,
+zero regresji.
+
+**Ryzyko współbieżności odnotowane, nie moje do naprawienia**: w trakcie
+tej sesji w TYM SAMYM worktree wylądował commit innej sesji
+(`090cfd9be6`, `docs(rn-g6): freeze finance_projection consumer design`) i
+sekcja §50 tego ledgera — dokładnie wzorzec ostrzegany w
+`orkiestracja-jeden-worktree-jeden-agent`. Skutek realny: moja pierwsza
+wersja komentarza w `consumerRegistry.ts` (13 zamiast 11 żywych typów
+zdarzeń) była błędna do czasu zauważenia zamrożonego designu §0 tej
+sesji — poprawione w tej samej sekcji. `finance_projection` prawdopodobnie
+przejdzie z `UNBUILT_CONSUMER_GROUPS` do `CONSUMER_REGISTRY` w kolejnym
+commicie tamtej sesji, dotykając te same dwa pliki (`atomicWrite.ts`,
+`consumerRegistry.ts`) które ta sekcja właśnie zmieniła — następna sesja
+powinna zweryfikować scalenie, nie zakładać czystego historii commitów.
+
 
