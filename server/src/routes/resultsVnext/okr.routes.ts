@@ -143,6 +143,10 @@ import {
 } from '../../services/resultsVnext/okr/okrSupportRepository.js';
 import { listOrganizationOkrAttention } from '../../services/resultsVnext/okr/okrAttentionRepository.js';
 import {
+  listMyOkrSets,
+  listOrganizationOkrTeamHealth,
+} from '../../services/resultsVnext/okr/okrPerspectivesRepository.js';
+import {
   getOkrSet,
   getOkrSetApprovedSnapshot,
   listOkrSetApprovedSnapshots,
@@ -181,6 +185,7 @@ import {
   CreateOkrProgramSchema,
   CreateOkrSetSchema,
   EditOkrProgramDraftSchema,
+  ListMyOkrSetsQuerySchema,
   ListOkrCheckInsQuerySchema,
   ListOkrCompanySetsQuerySchema,
   ListOkrCyclesQuerySchema,
@@ -902,6 +907,57 @@ router.get(
     }
   }
 );
+
+// ==========================================
+// GET /api/vnext/results/okr/my — listMyOkrSets (OKR-E008, OKR-F-028, D-OKR8-11/12)
+//
+// Set-level ownership (owner_user_id OR reviewer_user_id) only — see
+// okrPerspectivesRepository.ts's own header for the D-OKR8-12 scope note.
+// ==========================================
+
+router.get(
+  '/my',
+  validateQuery(ListMyOkrSetsQuerySchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const query = req.query as unknown as import('zod').infer<typeof ListMyOkrSetsQuerySchema>;
+      const sets = await listMyOkrSets({
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        limit: query.limit,
+        offset: query.offset,
+      });
+      res.status(200).json({ sets });
+    } catch (err) {
+      handleOkrRouteError(res, err, 'listMyOkrSets');
+    }
+  }
+);
+
+// ==========================================
+// GET /api/vnext/results/okr/team-health — listOrganizationOkrTeamHealth
+// (OKR-E008, OKR-F-028, D-OKR8-11/13/14)
+//
+// No query params (same shape as the existing GET /attention route
+// immediately below in this file) — an organizational aggregate over the
+// caller's management chain, not a filterable list.
+// ==========================================
+
+router.get('/team-health', async (req: AuthenticatedRequest, res: Response) => {
+  const auth = requireAuth(req, res);
+  if (!auth) return;
+  try {
+    const teamHealth = await listOrganizationOkrTeamHealth({
+      managerId: auth.userId,
+      organizationId: auth.organizationId,
+    });
+    res.status(200).json({ teamHealth });
+  } catch (err) {
+    handleOkrRouteError(res, err, 'listOrganizationOkrTeamHealth');
+  }
+});
 
 // ==========================================
 // GET /api/vnext/results/okr/sets/:setId — getOkrSet

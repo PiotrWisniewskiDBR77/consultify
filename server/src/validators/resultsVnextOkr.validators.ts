@@ -273,6 +273,15 @@ export const ListOkrCompanySetsQuerySchema = z.object({
 });
 
 // ==========================================
+// GET /api/vnext/results/okr/my — listMyOkrSets (OKR-E008, D-OKR8-11)
+// ==========================================
+
+export const ListMyOkrSetsQuerySchema = z.object({
+  limit: z.coerce.number().int().positive().max(500).optional(),
+  offset: z.coerce.number().int().nonnegative().optional(),
+});
+
+// ==========================================
 // PATCH /api/vnext/results/okr/sets/:setId/draft — updateOkrSetDraft
 // ==========================================
 
