@@ -107,6 +107,11 @@ export const EVENT_TYPE_CONSUMER_GROUPS: Readonly<Record<string, readonly string
   'kpi.measurement_corrected': ['mywork_projection'],
   'kpi.measurement_verified': ['mywork_projection'],
   'kpi.measurement_disputed': ['mywork_projection'],
+  // 'okr_set.published' was a pre-existing RN-G1 placeholder reserved for
+  // OKR-E002. OKR-E002 (docs/product/results-vnext/OKR_E002_DESIGN.md
+  // Decision D9) now REPURPOSES this exact key as `activateOkrSet`'s event
+  // (approved -> active) — no new/duplicate key added for it. See the
+  // OKR-E002 block below for the rest of that epic's events.
   'okr_set.published': ['mywork_projection'],
 
   // KPI-E003 (docs/product/results-vnext/KPI_E003_DESIGN.md §A/§B) — the
@@ -307,10 +312,10 @@ export const EVENT_TYPE_CONSUMER_GROUPS: Readonly<Record<string, readonly string
 
   // OKR-E001 (docs/product/results-vnext/OKR_E001_DESIGN.md §9) — Program &
   // Cycle. First real OKR domain events (`'okr_set.published'` above is a
-  // pre-existing RN-G1 placeholder reserved for OKR-E002, untouched by this
-  // epic). All fan out to 'mywork_projection' only, same default every
-  // other domain entry in this map uses — no OKR-specific consumer group
-  // exists yet.
+  // pre-existing RN-G1 placeholder that OKR-E002 repurposes — see that
+  // entry's own comment). All fan out to 'mywork_projection' only, same
+  // default every other domain entry in this map uses — no OKR-specific
+  // consumer group exists yet.
   'okr_program.created': ['mywork_projection'],
   'okr_program.draft_edited': ['mywork_projection'],
   'okr_program.published': ['mywork_projection'],
@@ -320,6 +325,20 @@ export const EVENT_TYPE_CONSUMER_GROUPS: Readonly<Record<string, readonly string
   'okr_cycle.review_opened': ['mywork_projection'],
   'okr_cycle.closed': ['mywork_projection'],
   'okr_cycle.cancelled': ['mywork_projection'],
+
+  // OKR-E002 (docs/product/results-vnext/OKR_E002_DESIGN.md §7, atomicWrite.ts
+  // edit list) — Materialized Set. `okr_set.published` (activateOkrSet's
+  // event, D9) is registered above, alongside the other pre-existing OKR-E001
+  // placeholder, not duplicated here. All fan out to 'mywork_projection'
+  // only, same default every other domain entry in this map uses.
+  'okr_set.created': ['mywork_projection'],
+  'okr_set.draft_edited': ['mywork_projection'],
+  'okr_set.visibility_narrowed': ['mywork_projection'],
+  'okr_set.submitted': ['mywork_projection'],
+  'okr_set.approved': ['mywork_projection'],
+  'okr_set.changes_requested': ['mywork_projection'],
+  'okr_set.cancelled': ['mywork_projection'],
+  'okr_set.material_change_recorded': ['mywork_projection'],
 };
 
 /**
