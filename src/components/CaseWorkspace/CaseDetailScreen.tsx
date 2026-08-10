@@ -60,10 +60,12 @@ import {
   governanceTierLabel,
   linkedTypeLabel,
   planVersionStatusLabel,
+  valueMeasurementStatusLabel,
 } from '@/utils/enumLabels';
 
 import {
   getCase,
+  getCaseIntakeSummary,
   getPlanGraph,
   listArtifactLinks,
   listHistoryEvents,
@@ -75,7 +77,11 @@ import {
   toFailure,
   validatePlanVersion,
 } from './api';
-import { rememberedListLocation, rememberOpenedCase } from './CasesListScreen';
+import {
+  nazwaZlecenia,
+  rememberedListLocation,
+  rememberOpenedCase,
+} from './CasesListScreen';
 import { PLAN_PROJECTIONS, type PlanProjection, PlanView } from './PlanView';
 import { RealizacjaView } from './RealizacjaView';
 import {
@@ -92,8 +98,10 @@ import type {
   CaseArtifactLink,
   CaseCoreView,
   CaseHistoryEvent,
+  CaseIntakeSummary,
   CasePlanVersion,
   CaseWait,
+  PlanGraphEnvelope,
   PlanValidationResult,
   ValueMeasurement,
 } from './types';
@@ -262,8 +270,46 @@ interface CaseBundle {
   measurements: ValueMeasurement[];
   artifactLinks: CaseArtifactLink[];
   history: CaseHistoryEvent[];
+  /**
+   * Cel i oczekiwany rezultat z potwierdzonego work ordera — JEDYNE realne
+   * źródło nazwy zlecenia (patrz komentarz przy `nazwaZlecenia`
+   * w `CasesListScreen.tsx`). `null`, gdy sprawa powstała bez intake.
+   */
+  intake: CaseIntakeSummary | null;
   failedSections: string[];
   blocked: boolean;
+}
+
+/**
+ * Przebieg zlecenia PO POLSKU, także dla zdarzeń, które backend generuje po
+ * angielsku.
+ *
+ * ★ ZOBACZONE NA ZRZUCIE (2026-08-10): akordeon „Historia" mieszał języki —
+ * obok polskich zdań („Plan zlecenia zatwierdzony przez sponsora") stało
+ * `Value measurement recorded for metric "…" (…): PARTIAL`. To NIE jest literówka
+ * w UI: `caseHistoryService.ts:916` składa ten napis po angielsku po stronie
+ * serwera, a serwer nie należy do tej zmiany.
+ *
+ * Dlatego zdanie SKŁADAMY z danych (`payload` — realne pole odpowiedzi), a nie
+ * tłumaczymy napisu. Nazwa wskaźnika żyje wyłącznie w `summary` (payload jej nie
+ * niesie), więc wyjmujemy ją z cudzysłowu — a gdy kształt się nie zgadza, wraca
+ * ORYGINALNY napis serwera. Nigdy nie zgadujemy treści zdarzenia.
+ */
+function opisZdarzenia(event: CaseHistoryEvent): string {
+  const surowy = event.summary || event.eventType;
+  if (event.eventType !== 'VALUE_MEASUREMENT_RECORDED') return surowy;
+
+  const payload = event.payload ?? {};
+  const nazwaZCudzyslowu = /"([^"]+)"/.exec(event.summary ?? '')?.[1]?.trim() || null;
+  const klucz = typeof payload.metricKey === 'string' ? payload.metricKey.trim() : '';
+  const wskaznik = nazwaZCudzyslowu || klucz || null;
+  const stan =
+    typeof payload.measurementStatus === 'string'
+      ? valueMeasurementStatusLabel(payload.measurementStatus, true)
+      : null;
+
+  if (!wskaznik || !stan) return surowy;
+  return `Zapisano pomiar wartości dla wskaźnika „${wskaznik}" — stan: ${stan}.`;
 }
 
 /** Kolejność, w jakiej szukamy „rezultatu do otwarcia" przyciskiem głównym. */
@@ -320,7 +366,7 @@ export const CaseDetailScreen: React.FC = () => {
       const failedSections: string[] = [];
       const blockedFlag = { blocked: false };
 
-      const [planVersions, waits, proposals, measurements, artifactLinks, history] =
+      const [planVersions, waits, proposals, measurements, artifactLinks, history, intake] =
         await Promise.all([
           settleSection(
             'plan',
@@ -364,6 +410,13 @@ export const CaseDetailScreen: React.FC = () => {
             failedSections,
             blockedFlag
           ),
+          settleSection<CaseIntakeSummary | null>(
+            'cel zlecenia',
+            getCaseIntakeSummary(caseId),
+            null,
+            failedSections,
+            blockedFlag
+          ),
         ]);
 
       // Wersja planu do pokazania: najpierw ta wskazana przez zlecenie,
@@ -377,13 +430,27 @@ export const CaseDetailScreen: React.FC = () => {
       let graph: CanonicalGraph | null = current?.semanticGraph ?? null;
       let validation: PlanValidationResult | null = null;
       if (current) {
-        graph = await settleSection(
+        /*
+         * ★ DEFEKT ZMIERZONY W PRZEGLĄDARCE (2026-08-10), nie w harnessie.
+         *
+         * Trasa `/plan-versions/:id/graph` oddaje KOPERTĘ
+         * `{ graphId, graphDigest, semanticGraph }`. Ta linia przypisywała
+         * kopertę wprost do `graph`, więc `graph.nodes` było `undefined` i
+         * PlanView pisał „Ten plan nie ma jeszcze kroków" dla planu
+         * PUBLISHED z dwoma węzłami — po tym, jak linijkę wyżej ustawiono
+         * już POPRAWNY graf z `current.semanticGraph`. Naprawa nadpisuje graf
+         * WYŁĄCZNIE wtedy, gdy koperta faktycznie niesie węzły; gdy odczyt
+         * padnie (settleSection zwróci `null`), zostaje graf z wersji planu i
+         * ekran dalej ma co pokazać.
+         */
+        const koperta = await settleSection<PlanGraphEnvelope | null>(
           'graf planu',
           getPlanGraph(current.casePlanVersionId),
-          graph,
+          null,
           failedSections,
           blockedFlag
         );
+        if (koperta?.semanticGraph) graph = koperta.semanticGraph;
         validation = await settleSection(
           'sprawdzenie planu',
           validatePlanVersion(current.casePlanVersionId),
@@ -403,6 +470,7 @@ export const CaseDetailScreen: React.FC = () => {
         measurements,
         artifactLinks,
         history,
+        intake,
         failedSections,
         blocked: blockedFlag.blocked,
       });
@@ -942,7 +1010,7 @@ export const CaseDetailScreen: React.FC = () => {
         <PreviewActivityStrip
           events={(bundle?.history ?? []).map((event) => ({
             id: event.eventId,
-            description: event.summary || event.eventType,
+            description: opisZdarzenia(event),
             timestamp: event.occurredAt,
             userName: event.actorId,
           }))}
@@ -984,7 +1052,20 @@ export const CaseDetailScreen: React.FC = () => {
     </div>
   );
 
-  const tytul = bundle?.caseItem.projectName || 'Zlecenie';
+  /*
+   * Tytuł zlecenia — ta sama kolejność źródeł, co na liście
+   * (`nazwaZlecenia`): cel z intake → nazwa projektu → uczciwy skrót sprawy.
+   * Wcześniej stało tu `projectName || 'Zlecenie'`, więc każde zlecenie bez
+   * projektu nazywało się dokładnie tak samo.
+   */
+  const tytul = bundle
+    ? nazwaZlecenia(bundle.caseItem, {
+        goal: bundle.intake?.goal ?? null,
+        expectedOutcome: bundle.intake?.expectedOutcome ?? null,
+        projectName: bundle.caseItem.projectName,
+        projectDescription: bundle.caseItem.projectDescription,
+      })
+    : 'Zlecenie';
   const stanZlecenia = bundle?.caseItem.caseStatus;
   const tonStatusu: 'draft' | 'review' | 'approved' | 'rejected' | 'neutral' =
     stanZlecenia === 'BLOCKED' || stanZlecenia === 'FAILED'
@@ -1027,7 +1108,18 @@ export const CaseDetailScreen: React.FC = () => {
           rezultatDoOtwarcia
             ? {
                 id: 'otworz-rezultat',
-                label: { en: 'Open result', pl: 'Otwórz rezultat' },
+                /*
+                 * ★ ZOBACZONE NA ZRZUCIE 1440 px: przycisk pisał „Open result"
+                 * w skądinąd polskim ekranie. Powód NIE jest w tym pliku:
+                 * `NModeHeader` wybiera wariant po `i18n.language`
+                 * (`NModeHeader.tsx:252,492`), a konto testowe miało język EN.
+                 * Ten moduł nie ma i nie planuje angielskiej wersji tekstów —
+                 * wszystkie pozostałe napisy ekranu są zaszyte po polsku —
+                 * więc oba warianty niosą TĘ SAMĄ polską treść. To usuwa
+                 * mieszankę językową w jednym pasku; pełne i18n modułu to
+                 * osobna praca (klucze tłumaczeń, poza tą zmianą).
+                 */
+                label: { en: 'Otwórz rezultat', pl: 'Otwórz rezultat' },
                 icon: ArrowUpRight,
                 onClick: () =>
                   otworzObiekt({
@@ -1042,7 +1134,7 @@ export const CaseDetailScreen: React.FC = () => {
                         : '',
                   }),
                 title: {
-                  en: 'Open the main result of this case',
+                  en: 'Otwórz najważniejszy rezultat tego zlecenia w jego module',
                   pl: 'Otwórz najważniejszy rezultat tego zlecenia w jego module',
                 },
               }

@@ -170,13 +170,21 @@
  *    is today a self-declared "heuristic stub (LLM call placeholder)" at
  *    `chatExecutionService.ts:132`). Putting a model call in here would make
  *    the digest non-deterministic and destroy the entire guarantee.
- * 5. Case REUSE is keyed on `project_id`, because that is the only uniqueness
- *    the schema gives. Confirming a SECOND, different work order against a
- *    project that already has a Case therefore returns that existing Case with
- *    `reuseReason: 'existing_case_for_project'` and records the new work order
- *    against it. Whether a genuinely different work order should instead be
- *    refused, or should open a second Case (which the UNIQUE constraint
- *    forbids), is a product decision this packet cannot make alone.
+ * 5. RESOLVED (was: "a product decision this packet cannot make alone").
+ *    Case REUSE is still keyed on `project_id`, because that is the only
+ *    uniqueness the schema gives — but reuse is now gated on PROVENANCE:
+ *    `confirmWorkOrder` hands back an existing Case ONLY when that Case
+ *    already carries THIS digest's confirmation event. A second, DIFFERENT
+ *    work order against a project that already has a Case is REFUSED with
+ *    `intake_existing_case_work_order_conflict` (409), because the previous
+ *    behaviour — returning the other work order's Case with
+ *    `reuseReason: 'existing_case_for_project'` — delivered a human something
+ *    other than what they confirmed, which is the exact failure CW-CANON-03
+ *    exists to prevent. Opening a SECOND Case instead is not available: the
+ *    UNIQUE constraint on `case_core.project_id` forbids it. See the
+ *    PROVENANCE GATE in `confirmWorkOrder` for the full argument.
+ *    `existing_case_for_project` therefore survives only as a declared enum
+ *    value (it is in the published OpenAPI schema) and is no longer reachable.
  * 6. No autonomy-level (A0–A4) enforcement — that mechanism does not exist
  *    anywhere in this codebase yet. `autonomyPolicy` is carried into the Case
  *    and into the digest, so the human confirms it, but nothing downstream
@@ -322,6 +330,13 @@ export interface ProposeWorkOrderResult {
 export type WorkOrderReuseReason =
   | 'none'
   | 'work_order_already_confirmed'
+  /**
+   * NO LONGER REACHABLE — kept because it is a declared value of the published
+   * `reuseReason` enum in docs/product/case-workspace/api/openapi.yaml.
+   * Reusing a Case that came from a DIFFERENT work order is now refused with
+   * `intake_existing_case_work_order_conflict`; see OPEN QUESTION #5 and the
+   * PROVENANCE GATE in `confirmWorkOrder`.
+   */
   | 'existing_case_for_project';
 
 export interface ConfirmWorkOrderResult {
@@ -668,6 +683,10 @@ const CASE_IDENTITY_COLUMNS = `case_id, project_id, organization_id, version, cr
  *       other than what is being asked for. This is a security refusal.
  *   `intake_project_not_found`           unknown / cross-tenant project.
  *   `intake_work_order_not_proposed`     self-consistent but never shown.
+ *   `intake_existing_case_work_order_conflict`  the project already has a
+ *       Case, and that Case did NOT come from this work order. Handing it back
+ *       would give the human a different Case than the one they confirmed.
+ *       See the PROVENANCE GATE below.
  *
  * Concurrency: two simultaneous confirmations of the same digest both reach
  * `INSERT … ON CONFLICT (project_id) DO NOTHING`. Postgres serializes them on
@@ -777,6 +796,49 @@ export async function confirmWorkOrder(input: {
       // a different org is a corrupted invariant, not a normal denial.
       if (caseRow.organization_id !== workOrder.organizationId) {
         throw new Error('intake_case_organization_mismatch');
+      }
+
+      // ===================================================================
+      // PROVENANCE GATE — reuse is allowed ONLY for THIS work order.
+      // ===================================================================
+      // Reuse is keyed on `project_id` because that is the only uniqueness the
+      // schema gives (OPEN QUESTION #5). Until this gate, that meant confirming
+      // a SECOND, DIFFERENT work order against a project that already had a
+      // Case answered 200 with `reuseReason: 'existing_case_for_project'` and
+      // handed back the OTHER work order's Case — a human who confirmed
+      // "Zestawienie faktur" received the Case for "Analiza kosztów", and the
+      // system then executed the second while the digest said the first. That
+      // destroys the one guarantee CW-CANON-03 exists to give: what runs is
+      // EXACTLY what was confirmed. A digest the human never saw must not be
+      // able to be satisfied by a Case they never asked for.
+      //
+      // The provenance record is the confirmation event, whose id is derived
+      // from the digest ALONE (`confirmedEventIdForDigest`). So: this Case may
+      // be reused iff THIS digest's confirmation event is already recorded
+      // against THIS case_id. That is true in exactly the two legitimate
+      // no-insert situations and false in the harmful one:
+      //   - idempotent replay of the same confirmation  -> row present, reuse;
+      //   - the loser of a concurrent race on the same digest -> its INSERT
+      //     blocked on the unique index until the winner COMMITTED, so after
+      //     that wait the winner's outbox row is visible to this fresh
+      //     statement snapshot (READ COMMITTED) -> reuse;
+      //   - a different work order (or a Case created through
+      //     caseCoreService.createCase, which writes no confirmation event at
+      //     all) -> no row -> REFUSED here, with zero Cases and zero events
+      //     written, because this all runs before any publishEvent below.
+      //
+      // REFUSE rather than "create a second Case": `case_core.project_id` is
+      // UNIQUE, so a second Case for the same project is not merely a product
+      // choice, it is impossible without a schema change. Between silently
+      // delivering the wrong Case and a stable, explicit refusal the caller can
+      // act on, CW-CANON-03 only permits the refusal.
+      const priorConfirmation = await client.query<{ event_id: string }>(
+        `SELECT event_id FROM ${OUTBOX_TABLE}
+          WHERE event_id = ? AND event_type = ? AND case_id = ? AND organization_id = ?`,
+        [confirmedEventId, EVENT_WORK_ORDER_CONFIRMED, caseRow.case_id, workOrder.organizationId]
+      );
+      if (!priorConfirmation.rows[0]) {
+        throw new Error('intake_existing_case_work_order_conflict');
       }
     }
 

@@ -40,7 +40,11 @@ import {
   queryOne,
   withPgTransaction,
 } from '../../utils/queryHelpers.js';
-import { requireCaseAccess, requireOrgMember } from './caseWorkspaceAuthContext.js';
+import {
+  CaseWorkspaceAuthError,
+  requireCaseAccess,
+  requireOrgMember,
+} from './caseWorkspaceAuthContext.js';
 import { publishEvent, redact } from './eventOutboxService.js';
 
 export type CaseProfile = 'LIGHT' | 'STANDARD' | 'TRANSFORMATION' | 'MONITORING';
@@ -425,7 +429,35 @@ export async function getCase(
         WHERE c.project_id = ?`,
       [requireNonBlank(lookup.projectId, 'project_id_required')]
     );
-    if (row) await requireOrgMember(actor, row.organization_id);
+    // SEC-009 / CW-DOD-D6 (enumeration oracle), fixed here rather than at the
+    // route. The previous `await requireOrgMember(actor, row.organization_id)`
+    // THREW `not_org_member` (HTTP 403) for a project that exists in another
+    // tenant, while a projectId with no Case at all fell through to `null` and
+    // the route's 404 — so the pair of answers told an attacker "this project
+    // exists somewhere else", which is exactly the oracle
+    // `requireCaseAccess(caseId)` already refuses to be for the caseId branch
+    // above.
+    //
+    // A non-member therefore now gets the SAME `null` a nonexistent project
+    // gets, and GET /cases/by-project/:projectId answers one indistinguishable
+    // `404 CASE_NOT_FOUND / "Case not found."` for: no such project, a project
+    // whose Case lives in another tenant, and a project whose Case the actor
+    // simply cannot see. That is also literally what
+    // docs/product/case-workspace/api/openapi.yaml declares for this operation
+    // ("reported as 404 CASE_NOT_FOUND, identically to a projectId that has no
+    // Case") and why that operation lists no 403 response at all.
+    //
+    // Only an authorization DENIAL collapses to null. Any other error (a bad
+    // actor id, a DB failure) still propagates — failing closed loudly beats
+    // reporting "not found" for a broken lookup.
+    if (row) {
+      try {
+        await requireOrgMember(actor, row.organization_id);
+      } catch (err) {
+        if (err instanceof CaseWorkspaceAuthError) return null;
+        throw err;
+      }
+    }
   }
   if (!row) return null;
   const core = mapRow(row);

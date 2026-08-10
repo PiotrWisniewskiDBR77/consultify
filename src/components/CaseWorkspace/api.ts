@@ -38,9 +38,12 @@ import type {
   CaseCommandResult,
   CaseCoreView,
   CaseHistoryEvent,
+  CaseIntakeSummary,
   CasePlanVersion,
   CaseStatus,
   CaseWait,
+  ConfirmedWorkOrderRecord,
+  PlanGraphEnvelope,
   PlanValidationResult,
   ValueMeasurement,
 } from './types';
@@ -103,8 +106,13 @@ export function listPlanVersions(caseId: string): Promise<CasePlanVersion[]> {
   return v8Get<CasePlanVersion[]>(`${BASE}/cases/${encodeURIComponent(caseId)}/plan-versions`);
 }
 
-export function getPlanGraph(planVersionId: string): Promise<CanonicalGraph> {
-  return v8Get<CanonicalGraph>(`${BASE}/plan-versions/${encodeURIComponent(planVersionId)}/graph`);
+/**
+ * Graf planu — trasa zwraca KOPERTĘ `{ graphId, graphDigest, semanticGraph }`,
+ * NIE goły `CanonicalGraph` (patrz `PlanGraphEnvelope` w `types.ts` po pełny
+ * dowód z handlera i serwisu). Kto chce węzłów, sięga po `.semanticGraph`.
+ */
+export function getPlanGraph(planVersionId: string): Promise<PlanGraphEnvelope> {
+  return v8Get<PlanGraphEnvelope>(`${BASE}/plan-versions/${encodeURIComponent(planVersionId)}/graph`);
 }
 
 export function validatePlanVersion(planVersionId: string): Promise<PlanValidationResult> {
@@ -135,6 +143,54 @@ export function listHistoryEvents(caseId: string, limit = 50): Promise<CaseHisto
   return v8Get<CaseHistoryEvent[]>(`${BASE}/cases/${encodeURIComponent(caseId)}/history-events`, {
     limit: String(limit),
   });
+}
+
+export function listConfirmedWorkOrders(caseId: string): Promise<ConfirmedWorkOrderRecord[]> {
+  return v8Get<ConfirmedWorkOrderRecord[]>(
+    `${BASE}/case-intake/cases/${encodeURIComponent(caseId)}/work-orders`
+  );
+}
+
+function tekstAlboNull(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  return trimmed ? trimmed : null;
+}
+
+/**
+ * Cel i oczekiwany rezultat zlecenia, odczytane z POTWIERDZONEGO work ordera.
+ *
+ * ★ DLACZEGO STĄD, a nie z `case_core`: tabela sprawy nie ma kolumny na nazwę
+ * ani cel (sprawdzone w `caseCoreService.ts` — `CaseCoreRow` ich nie zna).
+ * Cel i oczekiwany rezultat są zapisywane wyłącznie w ładunku zdarzenia intake
+ * (`caseIntakeService.ts:538-540`), a jedyną trasą, która ten ładunek oddaje
+ * klientowi, jest `GET /case-intake/cases/:caseId/work-orders`.
+ *
+ * Bierzemy NAJPÓŹNIEJ potwierdzony work order (sprawa może być potwierdzana
+ * ponownie), a każde pole normalizujemy jawnie: pusty string to brak danych,
+ * nie „nazwa, która jest pusta". Gdy sprawa powstała z pominięciem intake,
+ * funkcja zwraca `null` — i to jest UCZCIWE „nie ma czego pokazać", a nie
+ * wymyślona nazwa.
+ */
+export async function getCaseIntakeSummary(caseId: string): Promise<CaseIntakeSummary | null> {
+  const records = await listConfirmedWorkOrders(caseId);
+  if (!Array.isArray(records) || records.length === 0) return null;
+
+  const latest = [...records].sort((a, b) =>
+    String(a.confirmedAt ?? '').localeCompare(String(b.confirmedAt ?? ''))
+  )[records.length - 1];
+  const summary = (latest?.summary ?? {}) as Record<string, unknown>;
+
+  const scope = Array.isArray(summary.scope)
+    ? (summary.scope as unknown[]).map((s) => tekstAlboNull(s)).filter((s): s is string => !!s)
+    : [];
+
+  return {
+    goal: tekstAlboNull(summary.goal),
+    expectedOutcome: tekstAlboNull(summary.expectedOutcome),
+    scope,
+    confirmedAt: tekstAlboNull(latest?.confirmedAt),
+  };
 }
 
 /**

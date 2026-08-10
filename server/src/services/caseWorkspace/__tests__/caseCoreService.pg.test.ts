@@ -677,6 +677,89 @@ suite('caseCoreService — Case Core against a real PostgreSQL (CW-P01, E1)', ()
   }, 30_000);
 
   // -------------------------------------------------------------------------
+  // 10b. SEC-009 / GAP-E-03 — the projectId branch is the SAME oracle-free
+  //      shape as the caseId branch above.
+  //
+  //      It was not. `getCase({ projectId })` called requireOrgMember on the
+  //      row's org, which THREW `not_org_member` (HTTP 403) for a project that
+  //      exists in another tenant, while a projectId with no Case fell through
+  //      to `null` and the route's 404. Two different answers = an existence
+  //      oracle: an attacker enumerating project ids learns which ones are
+  //      real somewhere else. The published contract for
+  //      GET /cases/by-project/{projectId} says the opposite in as many words
+  //      ("reported as 404 CASE_NOT_FOUND, identically to a projectId that has
+  //      no Case") and declares no 403 response at all.
+  //
+  //      The assertion is deliberately on IDENTITY of outcomes, not on a
+  //      particular value: whatever a nonexistent project answers, a foreign
+  //      one must answer the same thing.
+  // -------------------------------------------------------------------------
+  it('getCase(projectId) answers identically for a nonexistent project and for a project whose Case belongs to another tenant, and still serves a real member', async () => {
+    const home = await seedOrgAndProject('auth-byproject-home');
+    const foreign = await seedOrgAndProject('auth-byproject-foreign');
+    const homeActor = await seedMemberedUser(home.orgId, 'auth-byproject-home');
+    const foreignActor = await seedMemberedUser(foreign.orgId, 'auth-byproject-foreign');
+    try {
+      // A REAL Case in the foreign tenant — the thing whose existence must not
+      // become observable.
+      const foreignCase = await caseCoreService.createCase({
+        projectId: foreign.projectId,
+        organizationId: foreign.orgId,
+        contractedClosureType: 'DELIVERY_COMPLETED',
+        createdByActorId: foreignActor,
+      });
+      expect(foreignCase.caseId).toBeTruthy();
+
+      let nonexistentOutcome: unknown;
+      try {
+        nonexistentOutcome = await caseCoreService.getCase(
+          { projectId: `case-core-project-absent-${randomUUID()}` },
+          homeActor
+        );
+      } catch (err) {
+        nonexistentOutcome = err;
+      }
+
+      let foreignOutcome: unknown;
+      try {
+        foreignOutcome = await caseCoreService.getCase({ projectId: foreign.projectId }, homeActor);
+      } catch (err) {
+        foreignOutcome = err;
+      }
+
+      // Neither may be an error at all: an error here is what became the 403.
+      expect(nonexistentOutcome).not.toBeInstanceOf(Error);
+      expect(foreignOutcome).not.toBeInstanceOf(Error);
+      expect(foreignOutcome).toEqual(nonexistentOutcome);
+      expect(foreignOutcome).toBeNull();
+
+      // NEGATIVE CONTROL — the fix must not have simply blinded the read.
+      // The foreign tenant's own member still sees their own Case, and a home
+      // member still sees a home Case.
+      const seenByOwner = await caseCoreService.getCase(
+        { projectId: foreign.projectId },
+        foreignActor
+      );
+      expect(seenByOwner?.caseId).toBe(foreignCase.caseId);
+
+      const homeCase = await caseCoreService.createCase({
+        projectId: home.projectId,
+        organizationId: home.orgId,
+        contractedClosureType: 'DELIVERY_COMPLETED',
+        createdByActorId: homeActor,
+      });
+      const seenByHome = await caseCoreService.getCase({ projectId: home.projectId }, homeActor);
+      expect(seenByHome?.caseId).toBe(homeCase.caseId);
+    } finally {
+      await teardown(
+        [home.orgId, foreign.orgId],
+        [home.projectId, foreign.projectId],
+        [homeActor, foreignActor]
+      );
+    }
+  }, 30_000);
+
+  // -------------------------------------------------------------------------
   // 11. EVENT OUTBOX (EVENT_TAXONOMY.md §2) — one committed event per mutating
   //     command, with the event_type the taxonomy names and a fully populated
   //     identity. Walks a whole Case lifecycle so the assertion is about the

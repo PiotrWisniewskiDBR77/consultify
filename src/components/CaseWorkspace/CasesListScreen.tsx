@@ -31,7 +31,17 @@ import {
   governanceTierLabel,
 } from '@/utils/enumLabels';
 
-import { cancelCase, listCases, newIdempotencyKey, pauseCase, resumeCase, startCase, toFailure } from './api';
+import {
+  cancelCase,
+  getCase,
+  getCaseIntakeSummary,
+  listCases,
+  newIdempotencyKey,
+  pauseCase,
+  resumeCase,
+  startCase,
+  toFailure,
+} from './api';
 import type { CaseCommandResult, CaseApiFailure, CaseCoreView } from './types';
 import {
   CaseStateBlock,
@@ -149,6 +159,82 @@ function nextActionOf(item: CaseCoreView): string {
   }
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+ * JAK NAZYWA SIĘ ZLECENIE — trzy realne źródła, żadnej zmyślonej nazwy.
+ *
+ * ★ PRZYCZYNA (zmierzona na żywym backendzie 2026-08-10): `case_core` NIE MA
+ * kolumny na nazwę ani cel. Lista zleceń pokazywała więc każdemu wierszowi ten
+ * sam napis „Zlecenie bez nazwy" — 14 zleceń nie do odróżnienia. Do tego trasa
+ * listy (`listCasesForOrganization`, `caseCoreService.ts:835`) czyta gołe
+ * `case_core` BEZ joina z `projects`, więc `projectName` w wierszu listy nie
+ * istnieje nawet jako `null` — pola po prostu nie ma w odpowiedzi (potwierdzone
+ * `curl`-em: klucz `projectName` nieobecny), choć trasa pojedynczego zlecenia
+ * (`getCase`, `caseCoreService.ts:405-437`) go zwraca.
+ *
+ * Kolejność źródeł — od najbardziej „ludzkiego" do najbardziej technicznego:
+ *  1. CEL z potwierdzonego work ordera (`getCaseIntakeSummary`) — to jest to,
+ *     co człowiek zamówił („Analiza kosztów operacyjnych"). Pokrycie zmierzone
+ *     na żywej bazie: 12 z 14 zleceń.
+ *  2. NAZWA PROJEKTU z `getCase` — pokrycie 14 z 14, ale to nazwa projektu,
+ *     nie zlecenia, więc jest druga w kolejce.
+ *  3. UCZCIWY IDENTYFIKATOR: skrót sprawy + rodzaj. Świadome odstępstwo od
+ *     zasady „case_id tylko w widoku eksperckim": ta gałąź odpala się dopiero,
+ *     gdy NIE MA żadnej nazwy, a wtedy alternatywą jest ten sam napis dla
+ *     wszystkich wierszy. Lepszy rozróżnialny skrót niż nierozróżnialna
+ *     etykieta.
+ *
+ * Czego tu NIE MA i nie będzie bez zmiany schematu: własnej nazwy zlecenia
+ * nadawanej przez użytkownika. To wymaga kolumny w `case_core` — UI jej nie
+ * podrobi.
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+export interface CaseNaming {
+  goal: string | null;
+  expectedOutcome: string | null;
+  projectName: string | null;
+  projectDescription: string | null;
+}
+
+/** Skrót sprawy do pokazania człowiekowi: `case-58d0820c-…` → `58D0820C`. */
+export function skrotZlecenia(caseId: string): string {
+  const dopasowanie = /^case-([0-9a-fA-F]{8})/.exec(String(caseId).trim());
+  if (dopasowanie) return dopasowanie[1].toUpperCase();
+  const gole = String(caseId).replace(/[^0-9a-zA-Z]/g, '');
+  return (gole.slice(-8) || String(caseId)).toUpperCase();
+}
+
+function niepusty(value: string | null | undefined): string | null {
+  const trimmed = String(value ?? '').trim();
+  return trimmed ? trimmed : null;
+}
+
+/** Nazwa zlecenia wg kolejności źródeł opisanej wyżej. Nigdy pusta. */
+export function nazwaZlecenia(item: CaseCoreView, naming?: CaseNaming | null): string {
+  const cel = niepusty(naming?.goal);
+  if (cel) return cel;
+  const projekt = niepusty(naming?.projectName ?? item.projectName);
+  if (projekt) return projekt;
+  return `Zlecenie ${skrotZlecenia(item.caseId)} · ${caseProfileLabel(item.caseProfile, true)}`;
+}
+
+/**
+ * Druga linia wiersza: projekt (rozróżnia zlecenia o IDENTYCZNYM celu — na
+ * żywej bazie „Zestawienie faktur" powtarza się w sześciu sprawach) plus
+ * oczekiwany rezultat. Pusty string, gdy nie ma czego napisać — wołający
+ * decyduje, co wtedy pokazać.
+ */
+export function podtytulZlecenia(item: CaseCoreView, naming?: CaseNaming | null): string {
+  const nazwa = nazwaZlecenia(item, naming);
+  const czesci: string[] = [];
+  const projekt = niepusty(naming?.projectName ?? item.projectName);
+  if (projekt && projekt !== nazwa) czesci.push(`Projekt: ${projekt}`);
+  const rezultat = niepusty(
+    naming?.expectedOutcome ?? naming?.projectDescription ?? item.projectDescription
+  );
+  if (rezultat) czesci.push(`Oczekiwany rezultat: ${rezultat}`);
+  return czesci.join(' · ');
+}
+
 function statusTone(
   status: CaseCoreView['caseStatus']
 ): 'critical' | 'warning' | 'success' | 'info' | 'neutral' {
@@ -194,6 +280,74 @@ export const CasesListScreen: React.FC = () => {
   useEffect(() => {
     load();
   }, [load]);
+
+  /*
+   * ── SKĄD LISTA BIERZE NAZWY ──────────────────────────────────────────────
+   *
+   * Trasa listy nie zwraca ani celu, ani nazwy projektu (dowód i kolejność
+   * źródeł: komentarz przy `nazwaZlecenia` wyżej). Dociągamy je więc PO
+   * wyrysowaniu listy — wiersze pojawiają się od razu z uczciwym skrótem, a
+   * nazwa wskakuje, gdy dojedzie.
+   *
+   * Trzy decyzje, nie kosmetyka:
+   *  1. RÓWNOLEGŁOŚĆ OGRANICZONA do `LIMIT_ROWNOLEGLYCH` — to N+1 na dwie
+   *     trasy, więc bez limitu lista 200 zleceń wysłałaby 400 żądań naraz.
+   *  2. RAZ NA ZLECENIE. `namingRef` trzyma to, co już pobrane; komenda
+   *     (start/pauza/anulowanie) podmienia wiersz w `items`, efekt odpala się
+   *     ponownie i BEZ tej straży pobierałby wszystko od nowa.
+   *  3. BŁĄD ≠ ZMYŚLONA NAZWA. Gdy oba odczyty padną, zapisujemy same `null`
+   *     i wiersz zostaje przy uczciwym identyfikatorze. Nie wpisujemy tam
+   *     niczego, czego backend nie powiedział.
+   */
+  const [naming, setNaming] = useState<Record<string, CaseNaming>>({});
+  const namingRef = useRef<Record<string, CaseNaming>>({});
+  namingRef.current = naming;
+
+  useEffect(() => {
+    const brakujace = (items ?? []).filter((item) => !(item.caseId in namingRef.current));
+    if (brakujace.length === 0) return undefined;
+
+    let anulowane = false;
+    const LIMIT_ROWNOLEGLYCH = 4;
+    const kolejka = [...brakujace];
+
+    const pobierzJedno = async (item: CaseCoreView): Promise<[string, CaseNaming]> => {
+      const [intake, rdzen] = await Promise.all([
+        getCaseIntakeSummary(item.caseId).catch(() => null),
+        // `projectName` bywa w wierszu listy NIEOBECNE (nie `null`) — wtedy i
+        // tylko wtedy dopytujemy trasę pojedynczego zlecenia.
+        item.projectName != null
+          ? Promise.resolve(item)
+          : getCase(item.caseId).catch(() => null),
+      ]);
+      return [
+        item.caseId,
+        {
+          goal: intake?.goal ?? null,
+          expectedOutcome: intake?.expectedOutcome ?? null,
+          projectName: rdzen?.projectName ?? item.projectName ?? null,
+          projectDescription: rdzen?.projectDescription ?? item.projectDescription ?? null,
+        },
+      ];
+    };
+
+    void (async () => {
+      while (kolejka.length > 0 && !anulowane) {
+        const partia = kolejka.splice(0, LIMIT_ROWNOLEGLYCH);
+        const wyniki = await Promise.all(partia.map(pobierzJedno));
+        if (anulowane) return;
+        setNaming((prev) => {
+          const next = { ...prev };
+          for (const [id, wartosc] of wyniki) next[id] = wartosc;
+          return next;
+        });
+      }
+    })();
+
+    return () => {
+      anulowane = true;
+    };
+  }, [items]);
 
   /*
    * ── KOMENDY NA LIŚCIE ────────────────────────────────────────────────────
@@ -283,8 +437,16 @@ export const CasesListScreen: React.FC = () => {
               // Nazwa albo nic — NIGDY surowy identyfikator techniczny
               // (warunek właściciela: `case_id` tylko w widoku eksperckim).
               text: `Zapisane. ${
-                result.value.projectName?.trim()
-                  ? `Zlecenie „${result.value.projectName.trim()}"`
+                niepusty(
+                  naming[result.value.caseId]?.goal ??
+                    naming[result.value.caseId]?.projectName ??
+                    result.value.projectName
+                )
+                  ? `Zlecenie „${niepusty(
+                      naming[result.value.caseId]?.goal ??
+                        naming[result.value.caseId]?.projectName ??
+                        result.value.projectName
+                    )}"`
                   : 'Zlecenie'
               } ma teraz status: ${caseStatusLabel(result.value.caseStatus, true)}.`,
             }
@@ -303,7 +465,9 @@ export const CasesListScreen: React.FC = () => {
     // Cudzysłów TYLKO wokół prawdziwej nazwy. Gdy nazwy nie ma, zdanie mówi
     // „to zlecenie" bez cudzysłowu — inaczej wygląda, jakby zlecenie
     // NAZYWAŁO SIĘ „to zlecenie".
-    const rawName = pending.item.projectName?.trim();
+    const rawName = niepusty(
+      naming[pending.item.caseId]?.goal ?? naming[pending.item.caseId]?.projectName ?? pending.item.projectName
+    );
     const subject = rawName ? `Zlecenie „${rawName}"` : 'To zlecenie';
     if (pending.kind === 'start') {
       return {
@@ -343,7 +507,7 @@ export const CasesListScreen: React.FC = () => {
         placeholder: 'np. klient wycofał zapotrzebowanie',
       },
     };
-  }, [pending]);
+  }, [pending, naming]);
 
   // Powrót ze zlecenia (Wstecz): filtr wraca sam z adresu, a fokus stawiamy na
   // wierszu, z którego użytkownik wyszedł. Bez tego czytnik ekranu i klawiatura
@@ -422,23 +586,33 @@ export const CasesListScreen: React.FC = () => {
     return bySavedView.filter((item) => {
       if (statusChip && statusChip !== 'wszystkie' && item.caseStatus !== statusChip) return false;
       if (!needle) return true;
-      const haystack = [item.projectName, item.projectDescription, item.caseId]
+      // Szukamy po tym, co użytkownik WIDZI (cel, projekt, rezultat), a nie po
+      // polach, których lista nigdy nie pokazała.
+      const info = naming[item.caseId];
+      const haystack = [
+        nazwaZlecenia(item, info),
+        podtytulZlecenia(item, info),
+        item.projectName,
+        item.projectDescription,
+        item.caseId,
+      ]
         .filter(Boolean)
         .join(' ')
         .toLowerCase();
       return haystack.includes(needle);
     });
-  }, [bySavedView, statusChip, query]);
+  }, [bySavedView, statusChip, query, naming]);
 
   const rows = useMemo(
     () =>
       visible.map((item) => {
         const progress = closureProgress(item);
         const attention = attentionOf(item);
+        const info = naming[item.caseId];
         return {
           id: item.caseId,
-          nazwa: item.projectName || 'Zlecenie bez nazwy',
-          rezultat: item.projectDescription || '',
+          nazwa: nazwaZlecenia(item, info),
+          rezultat: podtytulZlecenia(item, info),
           rodzaj: caseProfileLabel(item.caseProfile, true),
           status: caseStatusLabel(item.caseStatus, true),
           uwaga: attention.label,
@@ -450,7 +624,7 @@ export const CasesListScreen: React.FC = () => {
           raw: item,
         };
       }),
-    [visible]
+    [visible, naming]
   );
 
   /*
@@ -530,11 +704,15 @@ export const CasesListScreen: React.FC = () => {
             tabIndex={-1}
             className="min-w-0 outline-none focus-visible:ring-2 focus-visible:ring-c-focus rounded"
           >
-            <div className="truncate text-sm font-medium text-c-text">{String(row.nazwa)}</div>
+            <div className="truncate text-sm font-medium text-c-text" title={String(row.nazwa)}>
+              {String(row.nazwa)}
+            </div>
             {row.rezultat ? (
-              <div className="truncate text-xs text-c-text-muted">{String(row.rezultat)}</div>
+              <div className="truncate text-xs text-c-text-muted" title={String(row.rezultat)}>
+                {String(row.rezultat)}
+              </div>
             ) : (
-              <div className="text-xs text-c-text-muted">Oczekiwany rezultat nieopisany</div>
+              <div className="text-xs text-c-text-muted">Cel i rezultat nieopisane</div>
             )}
           </div>
         ),
@@ -874,7 +1052,7 @@ export const CasesListScreen: React.FC = () => {
               {selected ? (
                 <aside className="w-full shrink-0 border-t border-c-border bg-c-surface-raised p-3 lg:w-[400px] lg:border-l lg:border-t-0">
                   <StandardPreview
-                    title={selected.projectName || 'Zlecenie bez nazwy'}
+                    title={nazwaZlecenia(selected, naming[selected.caseId])}
                     onClose={() => setSelectedId(null)}
                     onOpenFull={() => openCase(selected.caseId)}
                     openLabel="Otwórz zlecenie"
@@ -892,7 +1070,8 @@ export const CasesListScreen: React.FC = () => {
                     }}
                     details={{
                       text:
-                        selected.projectDescription || 'Oczekiwany rezultat nie został opisany.',
+                        podtytulZlecenia(selected, naming[selected.caseId]) ||
+                        'Cel i oczekiwany rezultat nie zostały opisane.',
                       showWordCount: false,
                       propertyLabel: 'Właściwość',
                       valueLabel: 'Wartość',

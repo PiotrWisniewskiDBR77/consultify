@@ -268,6 +268,26 @@ export interface ResolveWaitInput {
   satisfiedByEventId: string;
   /** Required, and CAS-checked, when the target wait's wait_type is TIMER. */
   timerClaim?: { ownerToken: string; fencingToken: number };
+  /**
+   * THE ROUTE-EXPOSED SWITCH. Set ONLY by an HTTP caller acting on behalf of a
+   * real authenticated human (`waitSubscriptions.routes.ts`,
+   * `POST /waits/:waitId/resolve`).
+   *
+   * Present  -> `resolveWait` runs the authenticated satisfaction path:
+   *             case access is re-checked, the wait type must be one this
+   *             endpoint may satisfy, `satisfiedByEventId` must resolve to a
+   *             REAL inbox record for this tenant and this wait, and the
+   *             emitted `wait.satisfied` event is attributed to THIS user.
+   * Absent   -> the pre-existing INTERNAL scheduler/worker path, unchanged:
+   *             no evidence check, and the event is attributed to
+   *             `system:case-workspace-wait-resolver`, which is honest because
+   *             no human is involved.
+   *
+   * The distinction is the whole point: a machine that resolves a wait it
+   * itself scheduled is a system fact; a person who clicks "this arrived" is
+   * a human fact, and the outbox must not record the second as the first.
+   */
+  actorUserId?: string | null;
 }
 
 export interface ProvideHumanInputInput {
@@ -813,33 +833,230 @@ export async function renewTimerWaitClaimLease(
  * caller must not treat as success). UPDATE SET status='SATISFIED',
  * satisfied_at=?, satisfied_by_event_id=?, version=version+1, updated_at=?
  * WHERE wait_id=? AND version=expectedVersion RETURNING * (0 rows ->
- * wait_version_conflict). DOMAIN_EVENT/EXTERNAL_CALLBACK can call this path
- * today but nothing here authenticates or deduplicates the caller
- * (open_question #8).
+ * wait_version_conflict).
  *
- * NO signature change and no direct requireCaseAccess call in this function
- * itself (CW-P12 auth-retrofit decision). Used by both the HUMAN path (via
- * provideHumanInput, which performs its own check via getWait before
- * delegating here) and by TIMER/DOMAIN_EVENT/EXTERNAL_CALLBACK paths that
- * have no real end-user actor — a mandatory actor param here would be
- * meaningless for those paths. DOMAIN_EVENT/EXTERNAL_CALLBACK specifically
- * remain INTERNAL-ONLY / NOT ROUTE-EXPOSED pending a future
- * authentication/dedupe layer (open_question #8, unresolved by this
- * retrofit).
+ * =========================================================================
+ * TWO CALLERS, TWO POSTURES — decided by `input.actorUserId` (GAP-E-04)
+ * =========================================================================
+ * (1) NO `input.actorUserId` — the INTERNAL scheduler/worker path this
+ *     function has always been. Unchanged: no auth check, no evidence check,
+ *     event attributed to `system:case-workspace-wait-resolver`. That token
+ *     is honest here because no human is in the loop.
+ *
+ * (2) WITH `input.actorUserId` — the authenticated HTTP path
+ *     (`POST /waits/:waitId/resolve`). This function previously accepted that
+ *     call with NOTHING checked: any org member could satisfy a
+ *     DOMAIN_EVENT/EXTERNAL_CALLBACK wait by naming a `satisfiedByEventId`
+ *     that existed nowhere at all, and the outbox then blamed the SYSTEM for
+ *     it — an audit row that names the wrong actor is worse than no audit row,
+ *     because it reads as trustworthy. Both halves are closed here:
+ *
+ *       a. `assertSatisfyingEventIsReal` requires `satisfiedByEventId` to name
+ *          an event that REALLY HAPPENED in the wait's own organization —
+ *          looked up in `case_workspace_event_inbox` for EXTERNAL_CALLBACK
+ *          waits and in `case_workspace_event_outbox` for DOMAIN_EVENT waits
+ *          (see that function's header for why the two ledgers are not
+ *          interchangeable). "The thing you were waiting for happened" is now
+ *          a claim backed by a record, not by the claimant's say-so.
+ *       b. the emitted `wait.satisfied` event carries the REAL HTTP actor.
+ *
+ * WHY THE ROUTE WAS NOT SIMPLY DELETED (the other option on the table). This
+ * file's own header calls the DOMAIN_EVENT/EXTERNAL_CALLBACK paths
+ * "INTERNAL-ONLY / NOT ROUTE-EXPOSED", so deleting the route would have been
+ * the letter of that declaration. It was rejected because the route is a
+ * PUBLISHED contract: `docs/product/case-workspace/api/openapi.yaml` declares
+ * `POST /waits/{waitId}/resolve` (operationId `resolveWait`), and
+ * `openapiRouteParity.contract.test.ts` fails symmetrically on "a spec entry
+ * with no handler" — removing the handler without editing the spec turns the
+ * spec into fiction, and the spec is outside this change's scope. Supplying
+ * the missing authentication/evidence layer is what open_question #8 actually
+ * asked for; deleting the door would only have hidden the hole behind it.
+ *
+ * The HUMAN and TIMER types are refused on the HTTP path (see
+ * `ROUTE_RESOLVABLE_WAIT_TYPES`): HUMAN has its own command
+ * (`provideHumanInput`, taxonomy `wait.human_input_provided` — resolving one
+ * here would emit the wrong event type for a human submission), and TIMER
+ * satisfaction is CAS-gated on a claim token only the internal scheduler ever
+ * holds (`claimTimerWait` is not route-exposed).
  */
 export async function resolveWait(
   waitId: string,
   input: ResolveWaitInput,
   expectedVersion: number
 ): Promise<CaseWait> {
-  return resolveWaitCore(waitId, input, expectedVersion, {
+  const actorUserId = typeof input?.actorUserId === 'string' ? input.actorUserId.trim() : '';
+
+  if (!actorUserId) {
+    return resolveWaitCore(waitId, input, expectedVersion, {
+      eventType: 'wait.satisfied',
+      // No human is involved on this path (TIMER sweep / internal correlation);
+      // §1 permits a `system:<worker>` token, which is honest, whereas
+      // borrowing an unrelated user id would not be.
+      actorUserId: SYSTEM_ACTOR_WAIT_RESOLVER,
+      summary: { satisfiedByEventId: input.satisfiedByEventId },
+    });
+  }
+
+  const id = requireNonBlank(waitId, 'wait_id_required');
+  // getWait applies requireCaseAccess and collapses "no such wait" and "no
+  // access" into the same null (SEC-009), so this stays enumeration-safe.
+  const wait = await getWait(id, actorUserId);
+  if (!wait) throw new Error('wait_not_found');
+
+  // SEC-028 FIRST, before every other gate. A wait that is already EXPIRED,
+  // CANCELLED or SATISFIED must be refused AS TERMINAL — "you are too late" —
+  // whatever else is wrong with the request, because that is the answer the
+  // caller has to act on and the one the golden expiry case pins down. Same
+  // code the in-transaction guard raises; that guard, under FOR UPDATE, stays
+  // the authoritative one, so this ordering is presentation, not a new race.
+  if (!(ALLOWED_TRANSITIONS[wait.status] ?? []).includes('SATISFIED')) {
+    throw new Error(`wait_status_transition_not_allowed:${wait.status}->SATISFIED`);
+  }
+  if (!ROUTE_RESOLVABLE_WAIT_TYPES.includes(wait.waitType)) {
+    throw new Error(`wait_wrong_type_for_event_resolution:${wait.waitType}`);
+  }
+
+  const evidence = await assertSatisfyingEventIsReal(wait, input.satisfiedByEventId);
+
+  return resolveWaitCore(id, input, expectedVersion, {
     eventType: 'wait.satisfied',
-    // No actor exists in this signature by design (TIMER/DOMAIN_EVENT/
-    // EXTERNAL_CALLBACK paths have no end user); §1 permits a `system:<worker>`
-    // token, which is honest, whereas borrowing an unrelated user id would not be.
-    actorUserId: SYSTEM_ACTOR_WAIT_RESOLVER,
-    summary: { satisfiedByEventId: input.satisfiedByEventId },
+    // The person who actually performed the operation. Never the system token.
+    actorUserId,
+    summary: {
+      satisfiedByEventId: input.satisfiedByEventId,
+      // WHICH ledger the evidence was found in, so an auditor can re-check the
+      // claim without guessing where to look.
+      satisfiedByEventLedger: evidence.ledger,
+      ...(evidence.source ? { satisfiedBySource: evidence.source } : {}),
+      ...(evidence.inboxRecordId ? { satisfiedByInboxRecordId: evidence.inboxRecordId } : {}),
+    },
   });
+}
+
+/**
+ * Wait types `POST /waits/:waitId/resolve` may satisfy. HUMAN and TIMER are
+ * excluded on purpose — see resolveWait's header.
+ */
+const ROUTE_RESOLVABLE_WAIT_TYPES: readonly CaseWaitType[] = ['DOMAIN_EVENT', 'EXTERNAL_CALLBACK'];
+
+interface InboxEvidenceRow {
+  inbox_record_id: string;
+  source: string;
+  event_id: string;
+  event_type: string;
+  organization_id: string;
+  case_id: string | null;
+  wait_id: string | null;
+  correlation_key: string;
+}
+
+interface OutboxEvidenceRow {
+  event_id: string;
+  event_type: string;
+  organization_id: string;
+  case_id: string | null;
+}
+
+/**
+ * Proves that `satisfiedByEventId` names an event that REALLY HAPPENED, in
+ * THIS tenant, before a human is allowed to declare the wait satisfied by it.
+ *
+ * =========================================================================
+ * TWO WAIT TYPES, TWO EVIDENCE LEDGERS — they are not interchangeable
+ * =========================================================================
+ * EXTERNAL_CALLBACK waits are satisfied by something that ARRIVED FROM
+ * OUTSIDE, and the record of arrival is `case_workspace_event_inbox`. The id
+ * space is the one the automatic path already writes: eventInboxService
+ * satisfies a correlated wait with `satisfiedByEventId = "<source>:<eventId>"`
+ * over the inbox's own natural key `(source, event_id)`. A human re-driving a
+ * callback that arrived but was not applied therefore names the exact string
+ * the machine would have named. The inbox also carries the correlation key and
+ * (once bound) the wait/case, so the evidence can be tied to THIS wait — not
+ * merely to something real.
+ *
+ * DOMAIN_EVENT waits are satisfied by something that happened INSIDE this
+ * system — an `approval.approved`, a `run.completed` — and those live in
+ * `case_workspace_event_outbox`, keyed by a bare `event_id`. This is the shape
+ * the full-chain integration gate exercises end to end ("the resume is caused
+ * by something the audit trail already contains"), and it is why an
+ * inbox-only rule would have been wrong: it would have made the ordinary,
+ * correct internal resume impossible while calling that security.
+ *
+ * The outbox has no correlation key, so the binding available there is
+ * tenant + declared event type + Case scope. That is weaker than the inbox
+ * case, and deliberately recorded as such: it closes the reported defect (an
+ * id that exists NOWHERE) without pretending to more precision than the
+ * ledger actually offers. Narrowing it further needs a correlation column on
+ * the outbox, which is a schema change, not a check.
+ *
+ * Both tables are read with direct queries rather than through
+ * eventInboxService/eventOutboxService: eventInboxService imports
+ * `satisfyWaitOnClient` from THIS module, so importing it back would create a
+ * module cycle.
+ */
+async function assertSatisfyingEventIsReal(
+  wait: CaseWait,
+  rawSatisfiedByEventId: string
+): Promise<{ ledger: 'inbox' | 'outbox'; inboxRecordId: string | null; source: string | null }> {
+  const ref = requireNonBlank(rawSatisfiedByEventId, 'wait_satisfied_by_event_id_required');
+
+  if (wait.waitType === 'DOMAIN_EVENT') {
+    const row = await queryOne<OutboxEvidenceRow>(
+      `SELECT event_id, event_type, organization_id, case_id
+         FROM case_workspace_event_outbox
+        WHERE event_id = ? AND organization_id = ?`,
+      [ref, wait.organizationId]
+    );
+    // One code for "no such event" and "an event in another tenant": the org
+    // predicate is IN the query, so a cross-tenant event id is
+    // indistinguishable from one that never happened (requireCaseAccess's own
+    // posture, SEC-009).
+    if (!row) throw new Error('wait_satisfying_event_not_found');
+    if (row.case_id && row.case_id !== wait.caseId) {
+      // A real event, but about a different Case — not evidence for this wait.
+      throw new Error('wait_satisfying_event_case_mismatch');
+    }
+    if (wait.expectedEventType && row.event_type !== wait.expectedEventType) {
+      throw new Error('wait_satisfying_event_type_mismatch');
+    }
+    return { ledger: 'outbox', inboxRecordId: null, source: null };
+  }
+
+  const separator = ref.indexOf(':');
+  const source = separator > 0 ? ref.slice(0, separator).trim() : '';
+  const eventId = separator > 0 ? ref.slice(separator + 1).trim() : '';
+  if (!source || !eventId) {
+    // Shape, not existence — a 400, and it leaks nothing about what exists.
+    throw new Error('wait_satisfying_event_ref_invalid');
+  }
+
+  const row = await queryOne<InboxEvidenceRow>(
+    `SELECT inbox_record_id, source, event_id, event_type, organization_id,
+            case_id, wait_id, correlation_key
+       FROM case_workspace_event_inbox
+      WHERE source = ? AND event_id = ? AND organization_id = ?`,
+    [source, eventId, wait.organizationId]
+  );
+  if (!row) throw new Error('wait_satisfying_event_not_found');
+
+  // The correlation key is what binds an inbound event to a wait in the
+  // automatic path (loadWaitByCorrelationKeyOnClient); requiring it here means
+  // a real event for a DIFFERENT wait cannot be borrowed to close this one.
+  if (row.correlation_key !== wait.correlationKey) {
+    throw new Error('wait_satisfying_event_correlation_mismatch');
+  }
+  if (row.wait_id && row.wait_id !== wait.waitId) {
+    throw new Error('wait_satisfying_event_wait_mismatch');
+  }
+  if (row.case_id && row.case_id !== wait.caseId) {
+    throw new Error('wait_satisfying_event_case_mismatch');
+  }
+  // Same gate the inbox applies before it satisfies a wait itself.
+  if (wait.expectedEventType && row.event_type !== wait.expectedEventType) {
+    throw new Error('wait_satisfying_event_type_mismatch');
+  }
+
+  return { ledger: 'inbox', inboxRecordId: row.inbox_record_id, source: row.source };
 }
 
 /**

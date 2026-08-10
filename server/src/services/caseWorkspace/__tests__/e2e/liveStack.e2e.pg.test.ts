@@ -24,19 +24,28 @@
  *           confirmed work order; there is no plan to publish first", but the
  *           only run-binding route hard-requires a plan version. So the
  *           one-click promise stops at Case creation.
- * GAP-E-03  `GET /cases/by-project/:projectId` leaks existence across tenants.
- *           `caseCoreService.ts:428` calls `requireOrgMember` BEFORE the
- *           route's enumeration-safe 404 guard (`cases.routes.ts:98`) can run,
- *           so a foreign project WITH a Case answers 403 while a nonexistent
- *           one answers 404 — exactly the oracle SEC-009 exists to close.
- * GAP-E-04  `POST /waits/:waitId/resolve` is route-exposed for
- *           DOMAIN_EVENT/EXTERNAL_CALLBACK waits even though
- *           `waitSubscriptionService.ts` states those paths "remain
- *           INTERNAL-ONLY / NOT ROUTE-EXPOSED pending a future
- *           authentication/dedupe layer (open_question #8)". Any org member
- *           can satisfy such a wait with a `satisfiedByEventId` that exists
- *           nowhere, and the outbox attributes it to a system actor rather
- *           than to the human who really did it.
+ * GAP-E-03  CLOSED. `GET /cases/by-project/:projectId` used to leak existence
+ *           across tenants: `caseCoreService.getCase`'s projectId branch called
+ *           `requireOrgMember` BEFORE the route's enumeration-safe 404 guard,
+ *           so a foreign project WITH a Case answered 403 while a nonexistent
+ *           one answered 404. That branch now collapses a membership denial
+ *           into the same `null`, so both answer one identical
+ *           `404 CASE_NOT_FOUND` (SEC-009). The test below asserts the
+ *           IDENTITY of the two answers, plus a negative control proving the
+ *           owning tenant still reads its own Case.
+ * GAP-E-04  CLOSED. `POST /waits/:waitId/resolve` used to accept any
+ *           `satisfiedByEventId` — an org member could satisfy a
+ *           DOMAIN_EVENT/EXTERNAL_CALLBACK wait with an id that existed
+ *           nowhere, and the outbox then blamed a system actor instead of the
+ *           human. `resolveWait` now runs an authenticated path whenever an
+ *           actor is threaded through (the route always threads one): the id
+ *           must resolve to a REAL `case_workspace_event_inbox` record for
+ *           this tenant and this wait's correlation key, and the emitted
+ *           `wait.satisfied` carries the real HTTP actor. The route was kept
+ *           rather than deleted because it is declared in openapi.yaml and
+ *           `openapiRouteParity.contract.test.ts` fails on a spec entry with
+ *           no handler; the missing piece was the authentication/evidence
+ *           layer open_question #8 asked for, not the door.
  * GAP-E-05  `case_core` has no title/goal column, so the work order's `goal`
  *           and `expectedOutcome` — which the human signed in the digest —
  *           survive only inside the outbox event payload. The list screen
@@ -588,32 +597,82 @@ describe('5. Wait, external delivery, and survival across a restart', () => {
     expect(events.map((e) => e.event_type)).toContain('wait.registered');
   });
 
-  it('GAP-E-04: any member can satisfy the wait with an event that never existed', async () => {
+  it('GAP-E-04 CLOSED: a fabricated satisfiedByEventId is refused, a real inbox record satisfies the wait, and the trail names the HUMAN', async () => {
     requireStack();
-    const fabricated = `evt-never-existed-${SUFFIX}`;
+
+    // ---- 1. THE OLD EXPLOIT, verbatim ------------------------------------
+    // This exact call used to answer 200 SATISFIED. It now needs evidence.
+    const fabricated = `vendor:evt-never-existed-${SUFFIX}`;
+    const refused = await api(token, 'POST', `/case-workspace/waits/${state.waitId}/resolve`, {
+      satisfiedByEventId: fabricated,
+      expectedVersion: 1,
+    });
+    expect(refused.status).toBe(404);
+    expect((refused.body as { error?: { code?: string } }).error?.code).toBe(
+      'WAIT_SATISFYING_EVENT_NOT_FOUND'
+    );
+
+    // (b) the wait did not move, and no fabricated id was ever stamped on it
+    const stillActive = await db.one<{ status: string; satisfied_by_event_id: string | null }>(
+      `SELECT status, satisfied_by_event_id FROM case_workspace_waits WHERE wait_id = $1`,
+      [state.waitId]
+    );
+    expect(stillActive!.status).toBe('ACTIVE');
+    expect(stillActive!.satisfied_by_event_id).toBeNull();
+
+    // (c) a refusal is not a fact — nothing was written to the outbox
+    expect(
+      (await db.outboxForAggregate(state.waitId!)).map((e) => e.event_type)
+    ).not.toContain('wait.satisfied');
+
+    // ---- 2. THE LEGITIMATE PATH ------------------------------------------
+    // An event that REALLY arrived. Seeded out of band because
+    // `eventInboxService.receiveExternalEvent` still has no HTTP ingress (the
+    // very next test proves that) — the point here is the wait service's gate,
+    // not the inbox's own door.
+    const realEventId = `evt-really-arrived-${SUFFIX}`;
+    const inboxRecordId = `cwinbox-e2e-${SUFFIX}`;
+    await db.rows(
+      `INSERT INTO case_workspace_event_inbox
+         (inbox_record_id, event_id, source, event_type, organization_id, case_id,
+          correlation_key, status, payload_digest)
+       VALUES ($1, $2, 'vendor', 'vendor.invoice.delivered', $3, $4, $5, 'RECEIVED', $6)`,
+      [
+        inboxRecordId,
+        realEventId,
+        SEED_USER.organizationId,
+        state.caseId,
+        `cw-e2e-wait-${SUFFIX}`,
+        `sha256:e2e-${SUFFIX}`,
+      ]
+    );
 
     const resolved = await api<{ data: { status: string; satisfiedByEventId: string } }>(
       token,
       'POST',
       `/case-workspace/waits/${state.waitId}/resolve`,
-      { satisfiedByEventId: fabricated, expectedVersion: 1 }
+      { satisfiedByEventId: `vendor:${realEventId}`, expectedVersion: 1 }
     );
     expect(resolved.status).toBe(200);
     expect(resolved.body.data.status).toBe('SATISFIED');
+    expect(resolved.body.data.satisfiedByEventId).toBe(`vendor:${realEventId}`);
 
-    // (b) the wait is satisfied by an id that is in no inbox record anywhere
-    const inbox = await db.rows(
-      `SELECT event_id FROM case_workspace_event_inbox WHERE event_id = $1`,
-      [fabricated]
+    // (b) the database agrees
+    const satisfiedRow = await db.one<{ status: string; satisfied_by_event_id: string }>(
+      `SELECT status, satisfied_by_event_id FROM case_workspace_waits WHERE wait_id = $1`,
+      [state.waitId]
     );
-    expect(inbox).toHaveLength(0);
+    expect(satisfiedRow!.status).toBe('SATISFIED');
+    expect(satisfiedRow!.satisfied_by_event_id).toBe(`vendor:${realEventId}`);
 
-    // (c) and the trail blames a system actor, not the human who really did it
+    // (c) THE FIX'S POINT: the trail names the person who did it. It used to
+    // say `system:case-workspace-wait-resolver` — an audit row that names the
+    // wrong actor is worse than none, because it reads as trustworthy.
     const events = await db.outboxForAggregate(state.waitId!);
     const satisfied = events.find((e) => e.event_type === 'wait.satisfied');
     expect(satisfied).toBeDefined();
-    expect(satisfied!.actor_user_id).toBe('system:case-workspace-wait-resolver');
-    expect(satisfied!.actor_user_id).not.toBe(SEED_USER.userId);
+    expect(satisfied!.actor_user_id).toBe(SEED_USER.userId);
+    expect(satisfied!.actor_user_id).not.toBe('system:case-workspace-wait-resolver');
   });
 
   it('the event inbox has no HTTP ingress at all, so genuine external delivery is impossible', async () => {
@@ -873,23 +932,38 @@ describe('9. Cross-tenant and revoked membership', () => {
     expect(stillActive!.case_status).toBe('ACTIVE');
   });
 
-  it('GAP-E-03: /cases/by-project leaks whether a foreign project has a Case', async () => {
+  it('GAP-E-03 CLOSED: /cases/by-project answers identically for a foreign project and one that does not exist', async () => {
     requireStack();
-    // A foreign project that HAS a Case answers 403...
+    // A foreign project that HAS a Case...
     const foreign = await api(otherToken, 'GET', `/case-workspace/cases/by-project/${PROJECT_ID}`);
-    // ...while a project that does not exist at all answers 404.
+    // ...and a project that does not exist at all.
     const missing = await api(
       otherToken,
       'GET',
       `/case-workspace/cases/by-project/does-not-exist-${SUFFIX}`
     );
 
+    // Changed ON PURPOSE, as this test's previous version instructed: it used
+    // to assert the leak (`foreign` 403 vs `missing` 404) so the gap could not
+    // be closed silently. `caseCoreService.getCase`'s projectId branch now
+    // collapses a membership denial into the same `null` a nonexistent project
+    // produces, so both answers are byte-identical — no existence oracle
+    // (SEC-009, CW-DOD-D6), and exactly what openapi.yaml already promised for
+    // this operation.
     expect(missing.status).toBe(404);
-    // This asserts the CURRENT (leaky) behaviour so the gap cannot be closed
-    // silently. When it is fixed, `foreign` becomes 404 and this test must be
-    // changed to `expect(foreign.status).toBe(missing.status)` on purpose.
-    expect(foreign.status).toBe(403);
-    expect(foreign.status).not.toBe(missing.status);
+    expect(foreign.status).toBe(missing.status);
+    expect(foreign.body).toEqual(missing.body);
+    expect((foreign.body as { error?: { code?: string } }).error?.code).toBe('CASE_NOT_FOUND');
+
+    // NEGATIVE CONTROL — the read is refused, not broken: the owning tenant
+    // still gets its own Case through the very same endpoint.
+    const owner = await api<{ data: { caseId: string } }>(
+      token,
+      'GET',
+      `/case-workspace/cases/by-project/${PROJECT_ID}`
+    );
+    expect(owner.status).toBe(200);
+    expect(owner.body.data.caseId).toBe(state.caseId);
   });
 
   it('revoking membership mid-chain closes every door and writes nothing', async () => {

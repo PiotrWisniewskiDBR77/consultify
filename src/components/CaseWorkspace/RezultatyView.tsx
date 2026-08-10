@@ -404,19 +404,31 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
     {
       id: 'wskaznik',
       label: 'Co mierzymy',
-      width: '240px',
+      /*
+       * ★ SZEROKOŚCI DOBRANE POMIAREM, nie na oko. Suma zadeklarowanych
+       * szerokości JEST szerokością tabeli (`table-fixed`, `parsePx` w
+       * `FilterableTable.tsx:749`), więc samo zdjęcie `min-width: 980px`
+       * niczego nie dało: 240+140+120+120+180+140 = 940 px w kontenerze
+       * 700 px = 240 px nadal schowane. Nowa suma (135+100+90+90+175+95
+       * = 685) mieści się w środkowej kolumnie powłoki, a `w-full` rozciąga
+       * tabelę na szerszych ekranach. Pełne wartości bez skracania pokazuje
+       * podgląd po kliknięciu wiersza.
+       */
+      width: '135px',
       sortable: true,
       render: (row: Record<string, unknown>) => (
         <span className="text-sm font-medium text-c-text">{String(row.wskaznik)}</span>
       ),
     },
-    { id: 'punktWyjscia', label: 'Punkt wyjścia', width: '140px', align: 'right' },
-    { id: 'cel', label: 'Cel', width: '120px', align: 'right' },
-    { id: 'wynik', label: 'Wynik', width: '120px', align: 'right' },
+    { id: 'punktWyjscia', label: 'Punkt wyjścia', width: '100px', align: 'right' },
+    { id: 'cel', label: 'Cel', width: '90px', align: 'right' },
+    { id: 'wynik', label: 'Wynik', width: '90px', align: 'right' },
     {
       id: 'stan',
       label: 'Stan pomiaru',
-      width: '180px',
+      // Pigułka „Zmierzone częściowo” nie łamie się w linii — na zrzucie przy
+      // 120 px nachodziła na kolumnę daty. 175 px ją mieści.
+      width: '175px',
       filterable: true,
       render: (row: Record<string, unknown>) => (
         <StatusTag tone={row.stanTone as 'critical'}>{String(row.stan)}</StatusTag>
@@ -425,7 +437,7 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
     {
       id: 'pomiar',
       label: 'Data pomiaru',
-      width: '140px',
+      width: '95px',
       sortable: true,
       render: (row: Record<string, unknown>) => (
         <span className="text-sm text-c-text-secondary">{formatDate(String(row.pomiar))}</span>
@@ -435,20 +447,22 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
 
   const linkColumns: TableColumn[] = [
     {
+      // Suma szerokości = szerokość tabeli (patrz komentarz przy 'wskaznik'):
+      // 160+170+130+110+95 = 665 px mieści się w kolumnie 700 px.
       id: 'obiekt',
       label: 'Obiekt',
-      width: '200px',
+      width: '160px',
       sortable: true,
       filterable: true,
       render: (row: Record<string, unknown>) => (
         <span className="text-sm font-medium text-c-text">{String(row.obiekt)}</span>
       ),
     },
-    { id: 'rola', label: 'Rola w zleceniu', width: '220px', filterable: true },
+    { id: 'rola', label: 'Rola w zleceniu', width: '170px', filterable: true },
     {
       id: 'stan',
       label: 'Stan powiązania',
-      width: '170px',
+      width: '130px',
       render: (row: Record<string, unknown>) => (
         <StatusTag tone={row.stanTone as 'critical'}>{String(row.stan)}</StatusTag>
       ),
@@ -456,7 +470,7 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
     {
       id: 'dodane',
       label: 'Powiązane',
-      width: '150px',
+      width: '110px',
       sortable: true,
       render: (row: Record<string, unknown>) => (
         <span className="text-sm text-c-text-secondary">{formatDate(String(row.dodane))}</span>
@@ -465,7 +479,7 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
     {
       id: 'otwieralny',
       label: 'Otwórz',
-      width: '110px',
+      width: '95px',
       align: 'right',
       render: (row: Record<string, unknown>) => {
         const linkId = String(row.id);
@@ -543,6 +557,25 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
               selectedRowId={selection?.kind === 'pomiar' ? selection.id : null}
               onRowClick={(row) => setSelection({ kind: 'pomiar', id: String(row.id) })}
               rowDescription={() => null}
+              /*
+               * ★ ZMIERZONE W PRZEGLĄDARCE przy 1440 px (getComputedStyle):
+               * `StandardTable` wymusza domyślnie `min-width: 980px`
+               * (`FilterableTable.tsx:188`), a ta tabela stoi w środkowej
+               * kolumnie powłoki artefaktu szerokiej na 700 px. Efekt:
+               * scrollWidth 980 przy clientWidth 700, czyli 280 px tabeli
+               * (kolumna „Stan pomiaru" i „Data pomiaru") schowane za
+               * przewijaniem BEZ ŻADNEJ oznaki, że jest co przewijać —
+               * dokładnie ta pułapka, którą lista zleceń rozbroiła u siebie.
+               *
+               * `'columns'` tu NIE pomoże: znosi min-width dopiero przy ≤2
+               * kolumnach danych (`AUTO_MIN_WIDTH_COLUMN_THRESHOLD`), a mamy
+               * ich sześć. `'auto'` znosi wymuszenie, tabela (`table-fixed
+               * w-full`) zwęża się do kontenera i WSZYSTKIE kolumny są
+               * widoczne. Kanon nietknięty: moduł deklaruje próg, wygląd dalej
+               * narzuca komponent wspólny; pełne wartości i tak pokazuje
+               * podgląd po kliknięciu wiersza.
+               */
+              minTableWidth="auto"
               persistKey="caseWorkspace.results.measurements"
               density="compact"
               defaultSort={{ columnId: 'pomiar', direction: 'desc' }}
@@ -567,6 +600,8 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
               selectedRowId={selection?.kind === 'obiekt' ? selection.id : null}
               onRowClick={(row) => setSelection({ kind: 'obiekt', id: String(row.id) })}
               rowDescription={() => null}
+              // Ten sam pomiar co wyżej: 980 px wymuszone w kontenerze 700 px.
+              minTableWidth="auto"
               persistKey="caseWorkspace.results.links"
               density="compact"
               defaultSort={{ columnId: 'dodane', direction: 'desc' }}

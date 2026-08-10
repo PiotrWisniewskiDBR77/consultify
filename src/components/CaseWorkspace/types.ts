@@ -90,6 +90,28 @@ export interface CanonicalGraph {
   [key: string]: unknown;
 }
 
+/**
+ * Odpowiedź trasy `GET /plan-versions/:id/graph` — KOPERTA, nie goły graf.
+ *
+ * ★ ZMIERZONE NA ŻYWYM BACKENDZIE, nie założone. Handler
+ * (`server/src/routes/caseWorkspace/casePlanVersions.routes.ts:163-168`) woła
+ * `svc.getGraph`, a ten zwraca
+ * `{ graphId, graphDigest, semanticGraph }`
+ * (`server/src/services/caseWorkspace/casePlanVersionService.ts:1382-1393`) —
+ * po czym trasa pakuje to w `{ data }`. Klient rozpakowuje `{ data }`, więc
+ * dostaje DOKŁADNIE tę kopertę, a nie `CanonicalGraph`.
+ *
+ * Do 2026-08-10 `api.ts` deklarował tu `Promise<CanonicalGraph>` — deklaracja
+ * kłamała, a `graph.nodes` było `undefined`, więc opublikowany plan z dwoma
+ * krokami wyświetlał się jako „Ten plan nie ma jeszcze kroków". Typ jest teraz
+ * dopasowany do RZECZYWISTEJ odpowiedzi trasy, nie odwrotnie.
+ */
+export interface PlanGraphEnvelope {
+  graphId: string;
+  graphDigest: string;
+  semanticGraph: CanonicalGraph;
+}
+
 export type PlanVersionStatus = 'DRAFT' | 'IN_REVIEW' | 'PUBLISHED' | 'SUPERSEDED' | 'WITHDRAWN';
 
 export interface CasePlanVersion {
@@ -260,7 +282,53 @@ export interface CaseHistoryEvent {
   actorId: string;
   occurredAt: string;
   summary: string;
+  /**
+   * Ładunek zdarzenia — trasa `GET /cases/:id/history-events` ZWRACA to pole
+   * (`caseHistoryService.ts:206`), tylko UI go dotąd nie deklarowało. Potrzebne,
+   * żeby zdanie po polsku dało się ZŁOŻYĆ z danych, a nie tłumaczyć angielski
+   * napis na ślepo. Opcjonalne, bo starsze wiersze mogą go nie mieć.
+   */
+  payload?: Record<string, unknown> | null;
   globalSeq: number;
+}
+
+/**
+ * Potwierdzone zlecenie robocze (work order) stojące za sprawą — REALNY kształt
+ * `GET /case-intake/cases/:caseId/work-orders`
+ * (`server/src/routes/caseWorkspace/intake.routes.ts:126-133`, serwis
+ * `caseIntakeService.getConfirmedWorkOrders` → `ConfirmedWorkOrderRecord[]`,
+ * `caseIntakeService.ts:343-351`).
+ *
+ * `summary` jest po stronie serwera przepuszczone przez `redact()`, więc jest
+ * luźno typowanym workiem — dlatego `Record<string, unknown>`, a odczyt pól
+ * idzie przez jawną normalizację (`api.ts` → `getCaseIntakeSummary`), nigdy
+ * przez rzutowanie na wygodny typ.
+ */
+export interface ConfirmedWorkOrderRecord {
+  eventId: string;
+  caseId: string;
+  workOrderId: string;
+  workOrderDigest: string;
+  confirmedByActorId: string;
+  confirmedAt: string;
+  summary: Record<string, unknown>;
+}
+
+/**
+ * Cel i oczekiwany rezultat zlecenia — JEDYNE realne źródło nazwy sprawy
+ * dostępne dzisiaj przez API.
+ *
+ * `case_core` nie ma kolumny na nazwę ani cel; goal/expectedOutcome żyją
+ * wyłącznie w ładunku zdarzenia intake, a to zdarzenie wystawia trasa
+ * work-orders. Pola są `null`, gdy sprawa powstała z pominięciem intake
+ * (`POST /cases`) — wtedy ekran musi sięgnąć po nazwę projektu, a na końcu po
+ * uczciwy identyfikator. Nic tu nie jest zmyślane.
+ */
+export interface CaseIntakeSummary {
+  goal: string | null;
+  expectedOutcome: string | null;
+  scope: string[];
+  confirmedAt: string | null;
 }
 
 /**

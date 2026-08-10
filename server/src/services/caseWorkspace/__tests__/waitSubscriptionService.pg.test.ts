@@ -1719,4 +1719,361 @@ suite('waitSubscriptionService — Wait Subscription against a real PostgreSQL (
       });
     }
   }, 90_000);
+
+  // ==========================================================================
+  // GAP-E-04 — THE ROUTE-EXPOSED SATISFACTION PATH (`input.actorUserId` set).
+  //
+  // `POST /waits/:waitId/resolve` used to accept ANY `satisfiedByEventId`, so a
+  // member could declare an EXTERNAL_CALLBACK wait satisfied by an event that
+  // existed nowhere, and the outbox then attributed the act to
+  // `system:case-workspace-wait-resolver` rather than to the human who did it.
+  // Two separate lies: about the world, and about who spoke.
+  //
+  // These tests drive the SERVICE on the same input shape the route now sends
+  // (`{ satisfiedByEventId, actorUserId }`), and each asserts the DATABASE
+  // afterwards — the wait row and the outbox — never the return value alone.
+  // ==========================================================================
+
+  /**
+   * TEST-FIXTURE-ONLY direct INSERT into `case_workspace_event_inbox` via the
+   * out-of-band control Pool. It stands in for eventInboxService.
+   * receiveExternalEvent, which is the only production writer — deliberately
+   * NOT called here, so this suite proves the wait service's own gate rather
+   * than the inbox's.
+   */
+  async function seedInboxRecord(params: {
+    source: string;
+    eventId: string;
+    organizationId: string;
+    correlationKey: string;
+    eventType: string;
+    caseId?: string | null;
+    waitId?: string | null;
+  }): Promise<string> {
+    const inboxRecordId = `cwinbox-${randomUUID()}`;
+    await control.query(
+      `INSERT INTO case_workspace_event_inbox
+         (inbox_record_id, event_id, source, event_type, organization_id,
+          case_id, correlation_key, wait_id, status, payload_digest)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'RECEIVED', $9)`,
+      [
+        inboxRecordId,
+        params.eventId,
+        params.source,
+        params.eventType,
+        params.organizationId,
+        params.caseId ?? null,
+        params.correlationKey,
+        params.waitId ?? null,
+        `sha256:${randomUUID().replace(/-/g, '')}`,
+      ]
+    );
+    return inboxRecordId;
+  }
+
+  async function deleteInboxRecords(ids: string[]): Promise<void> {
+    if (ids.length === 0) return;
+    await control
+      .query(`DELETE FROM case_workspace_event_inbox WHERE inbox_record_id = ANY($1)`, [ids])
+      .catch(() => undefined);
+  }
+
+  it('GAP-E-04: the authenticated resolve path REFUSES a satisfiedByEventId that exists in no inbox record, and leaves the wait ACTIVE with no event', async () => {
+    const { orgId, projectId, caseId, actorId } = await seedOrgProjectCase('gap-e04-fabricated');
+    const runId = `run-gap-e04-fabricated-${randomUUID()}`;
+    let waitId = '';
+    try {
+      await seedV8Run({ runId, organizationId: orgId });
+      const actionProposalId = await seedActionProposal({
+        caseId,
+        runId,
+        actorId,
+        tag: 'gap-e04-fabricated',
+      });
+      const wait = await waitSubscriptionService.createWait(
+        {
+          caseId,
+          actionProposalId,
+          waitType: 'EXTERNAL_CALLBACK',
+          correlationKey: `corr-gap-e04-fabricated-${randomUUID()}`,
+          expectedEventType: 'vendor.invoice.delivered',
+        },
+        actorId
+      );
+      waitId = wait.waitId;
+
+      // The exact payload the live stack accepted before this fix.
+      await expect(
+        waitSubscriptionService.resolveWait(
+          waitId,
+          { satisfiedByEventId: `vendor:evt-never-existed-${randomUUID()}`, actorUserId: actorId },
+          wait.version
+        )
+      ).rejects.toThrow('wait_satisfying_event_not_found');
+
+      // A ref that is not even shaped like an inbox key is refused on shape,
+      // which leaks nothing about what does or does not exist.
+      await expect(
+        waitSubscriptionService.resolveWait(
+          waitId,
+          { satisfiedByEventId: 'evt-no-source-prefix', actorUserId: actorId },
+          wait.version
+        )
+      ).rejects.toThrow('wait_satisfying_event_ref_invalid');
+
+      // (b) THE DATABASE: nothing moved.
+      const row = await control.query<{ status: string; version: number; satisfied_by_event_id: string | null }>(
+        `SELECT status, version, satisfied_by_event_id FROM case_workspace_waits WHERE wait_id = $1`,
+        [waitId]
+      );
+      expect(row.rows[0].status).toBe('ACTIVE');
+      expect(Number(row.rows[0].version)).toBe(Number(wait.version));
+      expect(row.rows[0].satisfied_by_event_id).toBeNull();
+
+      // (c) THE TRAIL: a refusal is not a fact, so no satisfaction was recorded.
+      const events = await control.query<{ event_type: string }>(
+        `SELECT event_type FROM case_workspace_event_outbox WHERE aggregate_id = $1`,
+        [waitId]
+      );
+      expect(events.rows.map((e) => e.event_type)).not.toContain('wait.satisfied');
+    } finally {
+      await teardown({
+        waitIds: [waitId].filter(Boolean),
+        runIds: [runId],
+        orgIds: [orgId],
+        projectIds: [projectId],
+        userIds: [actorId],
+      });
+    }
+  }, 60_000);
+
+  it('GAP-E-04: a REAL inbox record for this tenant and this wait satisfies it, and the outbox names the HUMAN actor — never the system resolver', async () => {
+    const { orgId, projectId, caseId, actorId } = await seedOrgProjectCase('gap-e04-real');
+    const runId = `run-gap-e04-real-${randomUUID()}`;
+    const inboxIds: string[] = [];
+    let waitId = '';
+    try {
+      await seedV8Run({ runId, organizationId: orgId });
+      const actionProposalId = await seedActionProposal({
+        caseId,
+        runId,
+        actorId,
+        tag: 'gap-e04-real',
+      });
+      const correlationKey = `corr-gap-e04-real-${randomUUID()}`;
+      const wait = await waitSubscriptionService.createWait(
+        {
+          caseId,
+          actionProposalId,
+          waitType: 'EXTERNAL_CALLBACK',
+          correlationKey,
+          expectedEventType: 'vendor.invoice.delivered',
+        },
+        actorId
+      );
+      waitId = wait.waitId;
+
+      // A real event that arrived — but correlated to a DIFFERENT wait. Real
+      // existence alone must not be enough, or any member could borrow any
+      // event in their own tenant to close any wait they can see.
+      const foreignEventId = `evt-foreign-${randomUUID()}`;
+      inboxIds.push(
+        await seedInboxRecord({
+          source: 'vendor',
+          eventId: foreignEventId,
+          organizationId: orgId,
+          correlationKey: `corr-somebody-else-${randomUUID()}`,
+          eventType: 'vendor.invoice.delivered',
+        })
+      );
+      await expect(
+        waitSubscriptionService.resolveWait(
+          waitId,
+          { satisfiedByEventId: `vendor:${foreignEventId}`, actorUserId: actorId },
+          wait.version
+        )
+      ).rejects.toThrow('wait_satisfying_event_correlation_mismatch');
+
+      // The genuine article: same tenant, same correlation key, the event type
+      // the wait declared it was waiting for.
+      const eventId = `evt-real-${randomUUID()}`;
+      inboxIds.push(
+        await seedInboxRecord({
+          source: 'vendor',
+          eventId,
+          organizationId: orgId,
+          correlationKey,
+          eventType: 'vendor.invoice.delivered',
+          caseId,
+        })
+      );
+
+      const resolved = await waitSubscriptionService.resolveWait(
+        waitId,
+        { satisfiedByEventId: `vendor:${eventId}`, actorUserId: actorId },
+        wait.version
+      );
+      expect(resolved.status).toBe('SATISFIED');
+
+      // (b) THE DATABASE.
+      const row = await control.query<{ status: string; satisfied_by_event_id: string }>(
+        `SELECT status, satisfied_by_event_id FROM case_workspace_waits WHERE wait_id = $1`,
+        [waitId]
+      );
+      expect(row.rows[0].status).toBe('SATISFIED');
+      expect(row.rows[0].satisfied_by_event_id).toBe(`vendor:${eventId}`);
+
+      // (c) THE TRAIL — the point of the whole fix.
+      const events = await control.query<{ event_type: string; actor_user_id: string }>(
+        `SELECT event_type, actor_user_id FROM case_workspace_event_outbox
+          WHERE aggregate_id = $1 AND event_type = 'wait.satisfied'`,
+        [waitId]
+      );
+      expect(events.rows).toHaveLength(1);
+      expect(events.rows[0].actor_user_id).toBe(actorId);
+      expect(events.rows[0].actor_user_id).not.toBe('system:case-workspace-wait-resolver');
+    } finally {
+      await deleteInboxRecords(inboxIds);
+      await teardown({
+        waitIds: [waitId].filter(Boolean),
+        runIds: [runId],
+        orgIds: [orgId],
+        projectIds: [projectId],
+        userIds: [actorId],
+      });
+    }
+  }, 60_000);
+
+  it('GAP-E-04: a cross-tenant inbox record is indistinguishable from one that never arrived, and HUMAN/TIMER waits are refused on the authenticated path', async () => {
+    const victim = await seedOrgProjectCase('gap-e04-victim');
+    const intruderOrg = await seedOrgProjectCase('gap-e04-intruder');
+    const runId = `run-gap-e04-types-${randomUUID()}`;
+    const inboxIds: string[] = [];
+    const waitIds: string[] = [];
+    try {
+      await seedV8Run({ runId, organizationId: victim.orgId });
+      const actionProposalId = await seedActionProposal({
+        caseId: victim.caseId,
+        runId,
+        actorId: victim.actorId,
+        tag: 'gap-e04-types',
+      });
+      const correlationKey = `corr-gap-e04-types-${randomUUID()}`;
+      const callbackWait = await waitSubscriptionService.createWait(
+        {
+          caseId: victim.caseId,
+          actionProposalId,
+          waitType: 'EXTERNAL_CALLBACK',
+          correlationKey,
+        },
+        victim.actorId
+      );
+      waitIds.push(callbackWait.waitId);
+
+      // An event that DID arrive — for another organization. Same source, same
+      // correlation key; only the tenant differs.
+      const eventId = `evt-other-tenant-${randomUUID()}`;
+      inboxIds.push(
+        await seedInboxRecord({
+          source: 'vendor',
+          eventId,
+          organizationId: intruderOrg.orgId,
+          correlationKey,
+          eventType: 'vendor.invoice.delivered',
+        })
+      );
+      // The SAME code a nonexistent event gets — no oracle (SEC-009 posture).
+      await expect(
+        waitSubscriptionService.resolveWait(
+          callbackWait.waitId,
+          { satisfiedByEventId: `vendor:${eventId}`, actorUserId: victim.actorId },
+          callbackWait.version
+        )
+      ).rejects.toThrow('wait_satisfying_event_not_found');
+
+      // HUMAN has its own command (`provideHumanInput`, a different event type)
+      // and TIMER is CAS-gated on a scheduler-only claim token, so neither may
+      // travel this path at all.
+      const humanWait = await waitSubscriptionService.createWait(
+        {
+          caseId: victim.caseId,
+          actionProposalId,
+          waitType: 'HUMAN',
+          correlationKey: `corr-gap-e04-human-${randomUUID()}`,
+        },
+        victim.actorId
+      );
+      waitIds.push(humanWait.waitId);
+      await expect(
+        waitSubscriptionService.resolveWait(
+          humanWait.waitId,
+          { satisfiedByEventId: 'vendor:whatever', actorUserId: victim.actorId },
+          humanWait.version
+        )
+      ).rejects.toThrow('wait_wrong_type_for_event_resolution');
+
+      const timerWait = await waitSubscriptionService.createWait(
+        {
+          caseId: victim.caseId,
+          actionProposalId,
+          waitType: 'TIMER',
+          correlationKey: `corr-gap-e04-timer-${randomUUID()}`,
+          dueAt: new Date(Date.now() + 60_000).toISOString(),
+        },
+        victim.actorId
+      );
+      waitIds.push(timerWait.waitId);
+      await expect(
+        waitSubscriptionService.resolveWait(
+          timerWait.waitId,
+          { satisfiedByEventId: 'vendor:whatever', actorUserId: victim.actorId },
+          timerWait.version
+        )
+      ).rejects.toThrow('wait_wrong_type_for_event_resolution');
+
+      // NEGATIVE CONTROL — the INTERNAL path (no actorUserId) is untouched by
+      // any of this: the scheduler still satisfies its own TIMER wait, under
+      // the system token, with no inbox evidence required.
+      const claim = await waitSubscriptionService.claimTimerWait(timerWait.waitId);
+      if (claim.outcome !== 'claimed') throw new Error('fixture claim failed');
+      const internallyResolved = await waitSubscriptionService.resolveWait(
+        timerWait.waitId,
+        {
+          satisfiedByEventId: `scheduler:timer-${randomUUID()}`,
+          timerClaim: { ownerToken: claim.ownerToken, fencingToken: claim.fencingToken },
+        },
+        claim.wait.version
+      );
+      expect(internallyResolved.status).toBe('SATISFIED');
+      const systemEvent = await control.query<{ actor_user_id: string }>(
+        `SELECT actor_user_id FROM case_workspace_event_outbox
+          WHERE aggregate_id = $1 AND event_type = 'wait.satisfied'`,
+        [timerWait.waitId]
+      );
+      expect(systemEvent.rows[0].actor_user_id).toBe('system:case-workspace-wait-resolver');
+
+      // And the victim's callback wait never moved.
+      const untouched = await control.query<{ status: string }>(
+        `SELECT status FROM case_workspace_waits WHERE wait_id = $1`,
+        [callbackWait.waitId]
+      );
+      expect(untouched.rows[0].status).toBe('ACTIVE');
+    } finally {
+      await deleteInboxRecords(inboxIds);
+      await teardown({
+        waitIds,
+        runIds: [runId],
+        orgIds: [victim.orgId],
+        projectIds: [victim.projectId],
+        userIds: [victim.actorId],
+      });
+      await teardown({
+        waitIds: [],
+        runIds: [],
+        orgIds: [intruderOrg.orgId],
+        projectIds: [intruderOrg.projectId],
+        userIds: [intruderOrg.actorId],
+      });
+    }
+  }, 90_000);
 });

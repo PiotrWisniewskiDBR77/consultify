@@ -611,6 +611,97 @@ suite('caseIntakeService — conversation -> exactly one Case, on a real Postgre
       );
     }
   }, 120_000);
+
+  // -------------------------------------------------------------------------
+  // 6. PROVENANCE — confirming work order B must never hand back work order
+  //    A's Case (CW-CANON-03).
+  //
+  //    This is the digest guarantee's whole point. Case reuse is keyed on
+  //    `project_id` (the only uniqueness the schema has), so a SECOND, genuinely
+  //    DIFFERENT work order confirmed against a project that already had a Case
+  //    used to answer 200 with `reuseReason: 'existing_case_for_project'` and
+  //    return the OTHER order's Case: a human confirms "Zestawienie faktur" and
+  //    receives "Analiza kosztow". The digest is then a signature on a document
+  //    the system does not execute — worse than no digest, because it reassures.
+  //
+  //    The assertion below is the one the owner asked for literally: two
+  //    different work orders on the same project must NOT be able to return the
+  //    same Case.
+  // -------------------------------------------------------------------------
+  it('a SECOND, different work order on a project that already has a Case is refused — it never returns the first work order\'s Case, and writes nothing', async () => {
+    const { orgId, projectId } = await seedOrgAndProject('provenance');
+    const actorId = await seedMemberedUser(orgId, 'provenance');
+    try {
+      // Work order A — "Analiza kosztow". Confirmed; creates the Case.
+      const orderA = draft(orgId, projectId);
+      const proposalA = await intake.proposeWorkOrder({
+        workOrder: orderA,
+        proposedByActorId: actorId,
+      });
+      const confirmedA = await intake.confirmWorkOrder({
+        workOrder: orderA,
+        confirmedDigest: proposalA.workOrderDigest,
+        confirmedByActorId: actorId,
+      });
+      expect(confirmedA.caseCreated).toBe(true);
+
+      // Work order B — "Zestawienie faktur". A DIFFERENT order (different goal,
+      // scope and outcome), properly proposed and self-consistently confirmed:
+      // every pre-existing gate passes, which is exactly why this one is needed.
+      const orderB: intake.WorkOrderDraftInput = {
+        ...orderA,
+        goal: 'Przygotowac zestawienie faktur zakupowych za IV kwartal dla dzialu finansow.',
+        scope: ['Zebrac faktury zakupowe z IV kwartalu.', 'Uzgodnic sumy z ksiegami.'],
+        expectedOutcome: 'Zestawienie faktur uzgodnione z ksiegami.',
+      };
+      const proposalB = await intake.proposeWorkOrder({
+        workOrder: orderB,
+        proposedByActorId: actorId,
+      });
+      expect(proposalB.workOrderDigest).not.toBe(proposalA.workOrderDigest);
+
+      const refusal = await captureError(() =>
+        intake.confirmWorkOrder({
+          workOrder: orderB,
+          confirmedDigest: proposalB.workOrderDigest,
+          confirmedByActorId: actorId,
+        })
+      );
+      // A stable, explicit code — not a silent hand-over.
+      expect(refusal).toBe('intake_existing_case_work_order_conflict');
+
+      // THE PROPERTY: B cannot have been given A's Case, because B was given
+      // nothing at all, and no second Case appeared either.
+      expect(await countCasesForProject(projectId)).toBe(1);
+      const caseRows = await control.query<{ case_id: string }>(
+        `SELECT case_id FROM case_core WHERE project_id = $1`,
+        [projectId]
+      );
+      expect(caseRows.rows[0].case_id).toBe(confirmedA.caseId);
+
+      // The refusal left ZERO trace of a confirmation for B — the whole
+      // transaction rolled back before any publishEvent.
+      const confirmations = (await readOutboxForOrg(orgId)).filter(
+        (e) => e.event_type === 'case.intake.work_order_confirmed'
+      );
+      expect(confirmations).toHaveLength(1);
+      expect(confirmations[0].redacted_summary.workOrderDigest).toBe(proposalA.workOrderDigest);
+
+      // NEGATIVE CONTROL — the gate must reject only the DIFFERENT order, not
+      // idempotency. Replaying A still reuses A's Case, exactly as before.
+      const replayA = await intake.confirmWorkOrder({
+        workOrder: orderA,
+        confirmedDigest: proposalA.workOrderDigest,
+        confirmedByActorId: actorId,
+      });
+      expect(replayA.caseId).toBe(confirmedA.caseId);
+      expect(replayA.caseCreated).toBe(false);
+      expect(replayA.reuseReason).toBe('work_order_already_confirmed');
+      expect(await countCasesForProject(projectId)).toBe(1);
+    } finally {
+      await teardown([orgId], [projectId], [actorId]);
+    }
+  }, 120_000);
 });
 
 /** Returns the thrown error's message, or a marker if nothing was thrown —

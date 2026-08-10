@@ -145,7 +145,17 @@ router.post(
     const body = parseBody(resolveWaitBody, req.body);
     await requireCaseAccessForWait(actor, params.waitId);
     const { expectedVersion, ...input } = body;
-    const updated = await svc.resolveWait(params.waitId, input, expectedVersion);
+    // `actorUserId` is what turns this into the AUTHENTICATED satisfaction
+    // path inside the service (see resolveWait's header): the referenced
+    // `satisfiedByEventId` must resolve to a real inbox record for this
+    // tenant and this wait, and the resulting `wait.satisfied` outbox row is
+    // attributed to THIS human instead of `system:case-workspace-wait-resolver`.
+    // It comes from the authenticated v8 context only — never from the body.
+    const updated = await svc.resolveWait(
+      params.waitId,
+      { ...input, actorUserId: actor.actorUserId },
+      expectedVersion
+    );
     res.status(200).json({ data: updated });
   })
 );
