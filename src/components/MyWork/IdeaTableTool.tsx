@@ -64,6 +64,7 @@ import { createPortal } from 'react-dom';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { type ActionContext, runIdeaAction } from '@/actions/ideaActionRegistry';
 import { CanvasContextMenu } from '@/components/shared/CanvasContextMenu';
 import { usePortalSlot } from '@/hooks/usePortalSlot';
 import { useV8FeatureFlag } from '@/hooks/useV8FeatureFlag';
@@ -1702,20 +1703,43 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
   }, [open, usePlatform, nodesUndo.canUndo, nodesUndo.canRedo]);
 
   // ── Keyboard ───────────────────────────────────────────────────────────────
+  //
+  // Reconciliacja z Rejestrem Akcji (2026-08-10, E02 DoD) — patrz analogiczny
+  // komentarz w `IdeaMapWorkspace.tsx`/`IdeaWhiteboardTool.tsx`. `onEscape`/
+  // `onOpenAI`/`onShowShortcuts`/`onSwitchView`/`onToggleFilters`/
+  // `onToggleSummary` ŚWIADOMIE NIE przechodzą przez rejestr — czysta
+  // nawigacja/stan panelu UI, zero mutacji treści Tabeli (ta sama kategoria
+  // co Mapy myśli `onFocusSelection`).
+  const runTblKeyboardAction = useCallback(
+    (actionId: string, run: () => void) => {
+      const ctx: ActionContext = {
+        ideaId,
+        tool: 'table',
+        selection: EMPTY_SELECTION,
+        surface: 'context',
+        source: 'ui',
+        language: isPl ? 'pl' : 'en',
+        params: { run },
+      };
+      void runIdeaAction(actionId, ctx);
+    },
+    [ideaId, isPl]
+  );
+
   useTableKeyboard({
     rowCount: processedRowsWithRollups.length,
     colCount: _visCols.length,
-    onUndo: handlePlatformUndo,
-    onRedo: nodesUndo.redo,
-    onDelete: _bulkDel,
+    onUndo: () => runTblKeyboardAction('idea.canvas.undo', handlePlatformUndo),
+    onRedo: () => runTblKeyboardAction('idea.canvas.redo', nodesUndo.redo),
+    onDelete: () => runTblKeyboardAction('table.rows.bulk_delete', _bulkDel),
     onEscape: () => {
       setDetailNodeId(null);
       (usePlatform ? effectiveSetSelectedRowIds : setSelectedRowIds)(new Set());
       onSelectionChange?.(EMPTY_SELECTION);
       setShowKeyboardShortcuts(false);
     },
-    onSave: _save,
-    onAddRow: _addRow,
+    onSave: () => runTblKeyboardAction('idea.canvas.tbl_save', _save),
+    onAddRow: () => runTblKeyboardAction('table.rows.add_row', _addRow),
     onOpenAI: () => setShowAIAssistant(true),
     onShowShortcuts: () => setShowKeyboardShortcuts(true),
     onSwitchView: (v) => (usePlatform ? effectiveSetViewLayout : setViewLayout)(v as any),

@@ -22,6 +22,15 @@
 #   R8  każdy endpoint wołany z rejestru (przez `Api.*`) istnieje w routerze serwera
 #   R9  generator manifestu Teresy nadal produkuje kształt `ToolDefinition`
 #       (name/description/parameters) — inaczej Z4 przestaje się spinać z serwerem
+#   R10 (E02 DoD "machine check detects unregistered commands", 2026-08-10)
+#       companion scripts/check-action-coverage.sh — R1-R9 powyżej widzą TYLKO
+#       akcje JUŻ zadeklarowane w rejestrze; R10 skanuje src/components/MyWork/
+#       pod kątem onClick/onSelect z czasownikiem-komendą (create/delete/save/
+#       apply/...), Api.* albo CustomEvent, które NIE są traceable do rejestru
+#       (runIdeaAction/runAction) — dokładnie ten drift, którego R1-R9 nie widzą.
+#       Ratchet/baseline (jak check-list-canon.sh) w
+#       scripts/check-action-coverage.baseline.txt — SSOT heurystyki i jej
+#       false-positive story: scripts/check-action-coverage.awk (nagłówek).
 #
 # UWAGA — parsowanie: skrypt czyta rejestr awk-em wg KONTRAKTU FORMATU opisanego
 # w nagłówku `src/actions/ideaActionRegistry.ts`. Jeśli nie znajdzie ANI JEDNEJ
@@ -237,12 +246,36 @@ else
     || err "$MANIFEST nie czyta z IDEA_ACTION_REGISTRY — manifest musi być GENEROWANY z rejestru, nie pisany ręcznie (R9)."
 fi
 
+# ── R10: drift POZA rejestrem (companion, E02 DoD) ──────────────────────────
+# Domyślnie sprawdza tylko staged pliki w zakresie (szybko, jak reszta hooka);
+# `--verbose` tutaj przekłada się na pełny skan repo w companion skrypcie, bo
+# to jest tryb, w którym ktoś świadomie chce zobaczyć CAŁY stan R10, nie tylko
+# to, co akurat jest stagowane.
+COVERAGE_SCRIPT="scripts/check-action-coverage.sh"
+if [ -f "$COVERAGE_SCRIPT" ]; then
+  if [ "$VERBOSE" = "1" ]; then
+    COVERAGE_OUT=$(bash "$COVERAGE_SCRIPT" --all --report 2>&1)
+  else
+    COVERAGE_OUT=$(bash "$COVERAGE_SCRIPT" 2>&1)
+  fi
+  COVERAGE_RC=$?
+  if [ "$COVERAGE_RC" -ne 0 ]; then
+    printf '%s\n' "$COVERAGE_OUT" >&2
+    err "R10: check-action-coverage.sh znalazł NOWĄ akcjopodobną konstrukcję spoza rejestru (patrz wyżej)."
+  else
+    note "$COVERAGE_OUT"
+  fi
+else
+  err "brak $COVERAGE_SCRIPT — R10 (E02 DoD, machine check detects unregistered commands) nie ma czego uruchomić."
+fi
+
 # ── Podsumowanie ────────────────────────────────────────────────────────────
 if [ "$fail" -eq 1 ]; then
   echo "" >&2
   echo "  REJESTR AKCJI (docs/standards/idea-workspace/02_REJESTR_AKCJI.md, Z3):" >&2
-  echo "  akcja bez handlera/powierzchni, martwy event, endpoint bez routera albo" >&2
-  echo "  string akcji bez odbiornika w hooku = MARTWE KLIKNIĘCIE u klienta." >&2
+  echo "  akcja bez handlera/powierzchni, martwy event, endpoint bez routera, string" >&2
+  echo "  akcji bez odbiornika w hooku, albo (R10) onClick/onSelect z czasownikiem-" >&2
+  echo "  komendą bez traceability do rejestru = MARTWE/NIEZAREJESTROWANE KLIKNIĘCIE." >&2
   echo "  Napraw deklarację w $REGISTRY albo dorób odbiornik po stronie narzędzia." >&2
   exit 1
 fi

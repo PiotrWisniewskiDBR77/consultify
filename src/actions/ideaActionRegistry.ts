@@ -90,6 +90,18 @@ export type Tool = CanvasToolType;
  * Rozdz. 08 §5 „Docelowo" chce TAKŻE realnego menu kontekstowego toru obok
  * tych przycisków — poza zakresem tego wpisu (patrz `idea.lane.pf_*` niżej,
  * `source`), zalogowane jako osobne ustalenie, nie wymyślane tutaj na nowo.
+ *
+ * `keyboard` (2026-08-10, reconciliacja skrótów — E02 DoD „toolbar, rail,
+ * inspector, PPM, keyboard i Teresa wołają ten sam kontrakt") — dopisane dla
+ * garstki akcji, które SPRAWDZONO grepem jako niemające ŻADNEGO menu/przycisku
+ * gdziekolwiek w kodzie — jedyne wejście to globalny listener `keydown`
+ * (`useKeyboardShortcuts.ts`/`useIdeasToolKeyboard.ts`). Żadna z siedmiu
+ * istniejących wartości nie pasuje uczciwie: nie `context` (nie ma menu),
+ * nie `toolbar`/`rail`/`panel`/`menu1`/`menu3`/`floating`/`inline` (żaden
+ * nie opisuje "wyłącznie klawiatura, zero widocznego elementu"). R2
+ * strażnika (`scripts/check-actions.sh`) wymaga NIEPUSTEGO `surfaces`, więc
+ * `[]` nie jest opcją — to jedyna uczciwa alternatywa dla udawania istniejącej
+ * powierzchni, której akcja nie ma.
  */
 export type Surface =
   | 'menu1'
@@ -99,7 +111,8 @@ export type Surface =
   | 'context'
   | 'floating'
   | 'toolbar'
-  | 'inline';
+  | 'inline'
+  | 'keyboard';
 
 /** Nazwy ikon lucide-react używane dziś przez powierzchnie Idea Workspace. */
 export type IconName =
@@ -714,6 +727,31 @@ async function runMindmapPaneUiOnlyCallback(
       actionId,
       message:
         'Ta akcja działa dziś wyłącznie z menu kontekstowego (prawy klik na tło) Mapy myśli — nie mam jeszcze sposobu wywołania jej z czatu.',
+    };
+  }
+  (run as () => void)();
+  return { ok: true, actionId };
+}
+
+/**
+ * Akcje `surfaces: ['keyboard']` (reconciliacja skrótów, 2026-08-10) —
+ * SPRAWDZONE grepem PRZED użyciem, że akcja NIE ma żadnego menu/przycisku
+ * gdziekolwiek w kodzie (patrz komentarz przy typie `Surface` wyżej), więc
+ * jedyne wejście UI to `ctx.params.run` (oryginalny callback hooka skrótów,
+ * nietknięty — klawisz robi dokładnie to, co robił przed tym wpisem).
+ * Świadomie UI-only: bez zweryfikowanego, niespekulatywnego wejścia dla
+ * Teresy (żaden z tych czterech skrótów nie miał DOTĄD stringa runtime na
+ * ŻADNEJ szynie, więc nie ma czego reużyć bez pisania nowej infrastruktury
+ * na spekulację — ten sam ostrożny wybór co `runToolbarUiOnlyCallback`).
+ */
+async function runKeyboardOnlyCallback(actionId: string, ctx: ActionContext): Promise<ActionResult> {
+  const run = ctx.params?.run;
+  if (ctx.source !== 'ui' || typeof run !== 'function') {
+    return {
+      ok: false,
+      actionId,
+      message:
+        'Ta akcja działa dziś wyłącznie ze skrótu klawiszowego — nie mam jeszcze sposobu wywołania jej z czatu.',
     };
   }
   (run as () => void)();
@@ -1613,6 +1651,10 @@ const RUNTIME_INSERT_IMAGE: ToolActionMap = {
 const RUNTIME_INSERT_LINK: ToolActionMap = {
   whiteboard: 'wb_add_link',
 };
+/** WB-P2-03 "Tidy board" / "Auto arrange selection" — useWhiteboardNodes.tidyBoard. */
+const RUNTIME_TIDY_BOARD: ToolActionMap = {
+  whiteboard: 'wb_tidy_board',
+};
 
 /**
  * Cofnij/Ponów — WSPÓLNE dla wszystkich czterech reprezentacji (Z1), pierwsze
@@ -2363,6 +2405,11 @@ const IDEA_ACTIONS: ActionDef[] = [
     // (`autoLayout: handleAutoLayout` w opts hooka) — czysty reuse, zero
     // nowego kodu, zmienia się TYLKO lista powierzchni.
     surfaces: ['menu3', 'context', 'toolbar'],
+    // Skrót (2026-08-10, reconciliacja): `useIdeasToolKeyboard.ts`'s
+    // `onAutoLayout` (Ctrl/Cmd+L, Przepływ WYŁĄCZNIE — `useCanvasKeyboard`
+    // Mapy myśli nie istnieje, ten hook jest współdzielony tylko z Tablicą)
+    // woła DOKŁADNIE `handleAutoLayout` — ta sama funkcja co pasek/menu wyżej.
+    shortcut: '⌘L',
     handler: async (ctx) => {
       // Mapa myśli słucha szyny WĘZŁOWEJ, Przepływ ma własny silnik układu.
       // Dokładnie ten rozjazd był przyczyną martwego „Auto-układu" poza Mapą.
@@ -2651,7 +2698,15 @@ const IDEA_ACTIONS: ActionDef[] = [
         // ★ GRANICA NEGATYWNA (2026-07-24): na „ułóż tablicę automatycznie" dwa
         // z trzech modeli podstawiały tę akcję zamiast powiedzieć, że Tablica
         // nie ma auto-układu — zmierzone w żywej rundzie.
-        'Grupuje karteczki na Tablicy w tematy i proponuje ramkę dla każdego. Propozycje pokazuję do akceptacji — nic nie wskakuje samo. Grupuje TYLKO tematycznie; nie układa elementów na płótnie — Tablica nie ma automatycznego układu, więc na prośbę o ułożenie powiedz to wprost.',
+        // WB-P2-02: gated na semantyce etykiet — jeśli wszystkie karteczki w
+        // zakresie (zaznaczenie, albo cała tablica gdy nic nie zaznaczono)
+        // wciąż mają domyślną nazwę ("New note"/"Text"…), akcja ODMAWIA
+        // wygenerowania (toast „needsRealLabels") zamiast zwrócić generyczny
+        // wynik podany jako insight — patrz IdeaWhiteboardTool.tsx
+        // runWhiteboardAIAction. Jeśli Teresa dostanie to polecenie, a użytkownik
+        // nie nadał jeszcze żadnej karteczce realnej treści, powiedz to wprost
+        // zamiast próbować i zgłaszać sukces bez treści.
+        'Grupuje karteczki na Tablicy w tematy i proponuje ramkę dla każdego. Propozycje pokazuję do akceptacji — nic nie wskakuje samo. Grupuje TYLKO tematycznie; nie układa elementów na płótnie — Tablica nie ma automatycznego układu, więc na prośbę o ułożenie powiedz to wprost. Wymaga, żeby co najmniej jedna karteczka w zakresie miała realną, nie-domyślną nazwę — inaczej odmawiam z wyjaśnieniem, czego brakuje.',
     },
     runtime: RUNTIME_AI_FIND_THEMES,
     source:
@@ -3153,6 +3208,96 @@ const IDEA_ACTIONS: ActionDef[] = [
     runtime: RUNTIME_TBL_ROW_DELETE,
     source:
       'src/components/MyWork/IdeaTableTool.tsx rowContextMenu "table.row.delete" (~L4046) → effectiveHandleDeleteRow (~L511-513) → useTableRows.ts:236 (legacy) / useTablePlatformIntegration.ts:493 (platform)',
+  },
+  {
+    // NOWY wpis (2026-08-10, reconciliacja skrótów) — `useTableKeyboard.ts`'s
+    // `onDelete` (Delete/Backspace, poza polem edycji) woła `_bulkDel`
+    // (`effectiveHandleBulkDelete`/`handleBulkDelete`) — usuwa WSZYSTKIE DZIŚ
+    // ZAZNACZONE wiersze, NIE jeden wiersz po `rowId` jak `table.row.delete`
+    // wyżej (menu prawego kliku). ŚWIADOMIE osobny id, nie reużycie
+    // `table.row.delete` — inny mechanizm (bulk vs single-row-by-id), tak jak
+    // `idea.node.delete` (Tablica/Przepływ) ma odrębny scope od
+    // `table_row`-scoped wpisów. UWAGA (odkryte przy tym wpisie, nie
+    // naprawiane tu): `TableToolbar.tsx:1315` ma OSOBNY przycisk „Usuń"
+    // wołający `handleBulkDelete` BEZPOŚREDNIO (nie `effectiveHandleBulkDelete`)
+    // — w trybie platform ten przycisk NIE robi tego samego, co klawiatura;
+    // ten przycisk pozostaje niepodłączony do rejestru (poza zakresem —
+    // wykracza poza trzy hooki klawiaturowe tego zadania).
+    id: 'table.rows.bulk_delete',
+    label: { pl: 'Usuń zaznaczone wiersze', en: 'Delete selected rows' },
+    icon: 'Trash2',
+    scope: 'selected_items',
+    tools: ['table'],
+    surfaces: ['keyboard'],
+    shortcut: 'Del',
+    handler: (ctx) => runKeyboardOnlyCallback('table.rows.bulk_delete', ctx),
+    mutates: true,
+    requiresPreview: false,
+    destructive: true,
+    undo: {
+      kind: 'local_stack',
+      evidence:
+        'CZĘŚCIOWE (ta sama luka co `table.row.delete` wyżej): legacy `handleBulkDelete` → nodesUndo.push() (stos Ctrl+Z); platform `effectiveHandleBulkDelete` → bridge, BEZ stosu cofania.',
+    },
+    teresa: {
+      description:
+        'Usuwa WSZYSTKIE dziś zaznaczone wiersze Tabeli (nie pojedynczy `rowId` — patrz `table.row.delete` dla usunięcia jednego wiersza). Dziś dostępne WYŁĄCZNIE ze skrótu klawiszowego — Teresa tego jeszcze nie wywoła (operuje na zaznaczeniu w przeglądarce, nie na jawnym parametrze).',
+    },
+    source: 'src/components/MyWork/IdeaTableTool.tsx onDelete (~L1710, useTableKeyboard) → _bulkDel',
+  },
+  {
+    // NOWY wpis (2026-08-10, reconciliacja skrótów) — `useTableKeyboard.ts`'s
+    // `onSave` (Ctrl/Cmd+S) woła `_save` (`effectiveHandleSave`/`handleSave`,
+    // branchuje na `usePlatform`, ~L680). Bez żadnego przycisku „Zapisz"
+    // gdziekolwiek w UI Tabeli (SPRAWDZONE grepem) — wyłącznie klawiatura.
+    id: 'idea.canvas.tbl_save',
+    label: { pl: 'Zapisz', en: 'Save' },
+    icon: 'Save',
+    scope: 'current_view',
+    tools: ['table'],
+    surfaces: ['keyboard'],
+    shortcut: '⌘S',
+    handler: (ctx) => runKeyboardOnlyCallback('idea.canvas.tbl_save', ctx),
+    mutates: false,
+    requiresPreview: false,
+    teresa: {
+      description:
+        'Zapisuje bieżący stan Tabeli natychmiast (poza automatycznym zapisem w tle). Dziś dostępne WYŁĄCZNIE ze skrótu klawiszowego — Teresa tego jeszcze nie wywoła.',
+    },
+    source: 'src/components/MyWork/IdeaTableTool.tsx onSave (~L1718, useTableKeyboard) → _save',
+  },
+  {
+    // NOWY wpis (2026-08-10, reconciliacja skrótów) — `useTableKeyboard.ts`'s
+    // `onAddRow` (Ctrl/Cmd+N) woła `_addRow` (`effectiveHandleAddRow`/
+    // `handleAddRow`, branchuje na `usePlatform`, ~L674). ŚWIADOMIE osobny id
+    // od `idea.element.add` (runtime `tbl_add_row` dla Tabeli) — SPRAWDZONE:
+    // `idea.element.add`'s handler (`runByTool`) NIGDY nie sprawdza
+    // `ctx.params.run` (zawsze dispatchuje na szynę), a odbiornik
+    // `tbl_add_row` woła `handlers.handleAddRow` — bez pewności, że to TA SAMA
+    // funkcja co platform-aware `_addRow` (nie zweryfikowano do końca w
+    // czasie tej reconciliacji), więc reużycie byłoby ryzykiem zmiany
+    // zachowania w trybie platform. Ten wpis, przez `runKeyboardOnlyCallback`
+    // (WYŁĄCZNIE `ctx.params.run`), gwarantuje zero zmiany zachowania.
+    id: 'table.rows.add_row',
+    label: { pl: 'Dodaj wiersz', en: 'Add row' },
+    icon: 'Plus',
+    scope: 'current_view',
+    tools: ['table'],
+    surfaces: ['keyboard'],
+    shortcut: '⌘N',
+    handler: (ctx) => runKeyboardOnlyCallback('table.rows.add_row', ctx),
+    mutates: true,
+    requiresPreview: false,
+    undo: {
+      kind: 'local_stack',
+      evidence:
+        'CZĘŚCIOWE (ta sama luka co `table.row.delete`): legacy `handleAddRow` → nodesUndo.push(); platform `effectiveHandleAddRow` → bridge, BEZ stosu cofania.',
+    },
+    teresa: {
+      description:
+        'Dodaje nowy, pusty wiersz do otwartej Tabeli. Dziś dostępne WYŁĄCZNIE ze skrótu klawiszowego — Teresa tego jeszcze nie wywoła (dla Teresy istnieje `idea.element.add`, ale to OSOBNA ścieżka wykonania — patrz komentarz przy tym wpisie).',
+    },
+    source: 'src/components/MyWork/IdeaTableTool.tsx onAddRow (~L1719, useTableKeyboard) → _addRow',
   },
   // ── N9 (2026-08-10) — Tabela, menu komórki (`IdeaTableTool.tsx`'s
   // `cellContextMenu`, `CanvasContextMenu` na prawy klik pojedynczej komórki,
@@ -4845,6 +4990,12 @@ const IDEA_ACTIONS: ActionDef[] = [
     // runtime NIETKNIĘTE (ten sam `runToolbarBusAction`, ten sam dual-path co
     // już miał dla 'toolbar').
     surfaces: ['toolbar', 'rail'],
+    // Skrót (2026-08-10, reconciliacja): `useIdeasToolKeyboard.ts` (Tablica,
+    // Przepływ) i `useTableKeyboard.ts` (Tabela) wołają Ctrl/Cmd+Z → funkcję
+    // undo narzędzia wprost — genuine cross-tool reuse, ta sama semantyka co
+    // `RUNTIME_UNDO` już obsługuje. Mapa myśli ma DZIŚ WŁASNY, osobny listener
+    // (poza trzema hookami tej reconciliacji) — nietknięty tym wpisem.
+    shortcut: '⌘Z',
     handler: (ctx) => runToolbarBusAction('idea.canvas.undo', RUNTIME_UNDO, ctx),
     mutates: false,
     requiresPreview: false,
@@ -4864,6 +5015,8 @@ const IDEA_ACTIONS: ActionDef[] = [
     // Tier A rail wiring (2026-08-10) — patrz komentarz przy `idea.canvas.undo`
     // wyżej, ten sam rozumowanie (getUndoRedoSlots' 'redo' slot).
     surfaces: ['toolbar', 'rail'],
+    // Skrót (2026-08-10, reconciliacja) — patrz komentarz przy `idea.canvas.undo`.
+    shortcut: '⌘⇧Z',
     handler: (ctx) => runToolbarBusAction('idea.canvas.redo', RUNTIME_REDO, ctx),
     mutates: false,
     requiresPreview: false,
@@ -5074,12 +5227,49 @@ const IDEA_ACTIONS: ActionDef[] = [
     source: 'src/components/MyWork/whiteboard/WhiteboardToolbar.tsx:356-362 (overflow „…", bg-blank)',
   },
   {
+    // WB-P2-03 (08_P1_P3_EXECUTION_PLAN §6 Whiteboard) — "Tidy board" /
+    // "Auto arrange selection". Real bus receiver (`wb_tidy_board` →
+    // useWhiteboardQuickActions.ts → useWhiteboardNodes.tidyBoard), so —
+    // unlike `idea.canvas.save`/`idea.canvas.clear_drawings` above, which
+    // are UI-only echoes — this one uses `runByTool` and IS reachable from
+    // Teresa, exactly like `idea.ai.find_themes`.
+    id: 'idea.canvas.tidy_board',
+    label: { pl: 'Uporządkuj tablicę', en: 'Tidy board' },
+    icon: 'Wand2',
+    scope: 'current_view',
+    tools: ['whiteboard'],
+    surfaces: ['toolbar'],
+    handler: (ctx) => runByTool('idea.canvas.tidy_board', RUNTIME_TIDY_BOARD, ctx),
+    mutates: true,
+    requiresPreview: false,
+    undo: {
+      kind: 'local_stack',
+      evidence:
+        'useWhiteboardNodes.ts tidyBoard() → pushSnapshot() (IdeaWhiteboardTool.tsx pushUndoSnapshot) before setNodes, exactly like groupSelected/distributeNodes',
+    },
+    teresa: {
+      description:
+        'Porządkuje rozłożenie obiektów na Tablicy bez zmiany treści: gdy zaznaczone są 2+ odblokowane obiekty, porządkuje TYLKO zaznaczenie; w przeciwnym razie całą tablicę. Sekcje/ramki z zawartością przesuwane są razem jako jedna całość — ich wzajemny układ wewnątrz ramki się nie zmienia. Obiekty zablokowane nigdy nie są przesuwane. Odwracalne (Cofnij).',
+    },
+    source:
+      'src/components/MyWork/whiteboard/useWhiteboardNodes.ts tidyBoard + WhiteboardToolbar.tsx overflow „…" (tidy-board) + IdeaWhiteboardTool.tsx wbEditBarModel arrange group (selection variant)',
+  },
+  {
     id: 'idea.canvas.save',
     label: { pl: 'Zapisz', en: 'Save' },
     icon: 'Save',
     scope: 'current_view',
     tools: ['whiteboard'],
     surfaces: ['toolbar'],
+    // Skrót (2026-08-10, reconciliacja): `useIdeasToolKeyboard.ts`'s `onSave`
+    // (Ctrl/Cmd+S) na Tablicy woła DOKŁADNIE `handleSave` — ten sam prop co
+    // przycisk „Zapisz" wyżej (`WhiteboardToolbar.tsx`). Przepływ ma WŁASNY
+    // `handleSave` (inna funkcja, brak przycisku w pasku) — NIE rozszerzono
+    // `tools` tego wpisu o `process_flow`: komunikat odmowy
+    // `runToolbarUiOnlyCallback` mówi wprost „Tablicy", rozszerzenie
+    // wprowadziłoby nieuczciwy komunikat dla Przepływu — patrz osobny wpis
+    // `idea.canvas.pf_save` niżej zamiast tego.
+    shortcut: '⌘S',
     handler: (ctx) => runToolbarUiOnlyCallback('idea.canvas.save', ctx),
     // Zapisuje już-zmutowany stan (persystencja), nie tworzy nowej mutacji —
     // `mutates: false`, analogicznie do akcji „otwiera X" w tym rejestrze
@@ -5092,6 +5282,32 @@ const IDEA_ACTIONS: ActionDef[] = [
         'Zapisuje bieżący stan Tablicy natychmiast (poza automatycznym zapisem w tle). Dziś dostępne WYŁĄCZNIE z górnego paska narzędzi — Teresa tego jeszcze nie wywoła.',
     },
     source: 'src/components/MyWork/whiteboard/WhiteboardToolbar.tsx:375-393 (przycisk Zapisz)',
+  },
+  {
+    // NOWY wpis (2026-08-10, reconciliacja skrótów) — Przepływu Ctrl/Cmd+S
+    // (`useIdeasToolKeyboard.ts`'s `onSave` w `IdeaProcessFlowTool.tsx`) woła
+    // WŁASNY `handleSave` (~L2352) — SPRAWDZONE grepem: żaden przycisk paska
+    // (`ProcessFlowToolbar.tsx`) go nie wywołuje, wyłącznie klawiatura (plus
+    // druga, typing-safe kopia tego samego skrótu w PF-specific listenerze
+    // ~L2501-2505, poza zakresem tego wpisu — nie duplikuje mutacji, tylko
+    // pozwala skrótowi zadziałać z fokusem w polu tekstowym). Osobny id od
+    // `idea.canvas.save` (Tablicy) — inna funkcja, inna powierzchnia, zero
+    // dziś zweryfikowanego reuse.
+    id: 'idea.canvas.pf_save',
+    label: { pl: 'Zapisz', en: 'Save' },
+    icon: 'Save',
+    scope: 'current_view',
+    tools: ['process_flow'],
+    surfaces: ['keyboard'],
+    shortcut: '⌘S',
+    handler: (ctx) => runKeyboardOnlyCallback('idea.canvas.pf_save', ctx),
+    mutates: false,
+    requiresPreview: false,
+    teresa: {
+      description:
+        'Zapisuje bieżący stan Przepływu natychmiast (poza automatycznym zapisem w tle). Dziś dostępne WYŁĄCZNIE ze skrótu klawiszowego — Teresa tego jeszcze nie wywoła.',
+    },
+    source: 'src/components/MyWork/IdeaProcessFlowTool.tsx:2352 (handleSave) + useCanvasKeyboard onSave (~L2463)',
   },
   {
     // Destrukcyjne (trwałe usunięcie WSZYSTKICH rysunków odręcznych), z
@@ -5175,6 +5391,10 @@ const IDEA_ACTIONS: ActionDef[] = [
     scope: 'single_item',
     tools: ['whiteboard'],
     surfaces: ['context'],
+    // Skrót (2026-08-10, reconciliacja): `useIdeasToolKeyboard.ts`'s `onCopy`
+    // (Ctrl/Cmd+C, Tablica) woła DOKŁADNIE `copySelected()` — ta sama funkcja
+    // co ta pozycja menu (patrz `teresa.description` niżej).
+    shortcut: '⌘C',
     handler: (ctx) => runContextMenuUiOnlyCallback('idea.node.copy', ctx),
     mutates: false,
     requiresPreview: false,
@@ -5219,6 +5439,30 @@ const IDEA_ACTIONS: ActionDef[] = [
       'src/components/MyWork/IdeaCanvasContextMenu.tsx BASE_PANE_ACTIONS kind=paste + handleBaseAction (onPaste) + whiteboard/useWhiteboardNodes.ts pasteClipboard/clipboardRef (WB-CLIPBOARD-01 fix)',
   },
   {
+    // NOWY wpis (2026-08-10, reconciliacja skrótów) — `useIdeasToolKeyboard.ts`'s
+    // `onSelectAll` (Ctrl/Cmd+A, Tablica) woła inline `setNodes(nds => nds.map(
+    // n => ({...n, selected: true})))` — SPRAWDZONE grepem: bez żadnego
+    // menu/przycisku gdziekolwiek w kodzie Tablicy (w przeciwieństwie do Mapy
+    // myśli, gdzie `idea.view.select_all` już istnieje z realnym odbiornikiem
+    // na szynie). `mutates: false` — stan zaznaczenia, nie treść (ta sama
+    // konwencja co `idea.canvas.cursor_select`).
+    id: 'idea.canvas.wb_select_all',
+    label: { pl: 'Zaznacz wszystko', en: 'Select all' },
+    icon: 'Grid3X3',
+    scope: 'current_view',
+    tools: ['whiteboard'],
+    surfaces: ['keyboard'],
+    shortcut: '⌘A',
+    handler: (ctx) => runKeyboardOnlyCallback('idea.canvas.wb_select_all', ctx),
+    mutates: false,
+    requiresPreview: false,
+    teresa: {
+      description:
+        'Zaznacza wszystkie elementy na otwartej Tablicy. Dziś dostępne WYŁĄCZNIE ze skrótu klawiszowego — Teresa tego jeszcze nie wywoła (lokalny stan `nodes[].selected`, brak stringa runtime).',
+    },
+    source: 'src/components/MyWork/IdeaWhiteboardTool.tsx onSelectAll (~L3745, useCanvasKeyboard)',
+  },
+  {
     id: 'idea.node.duplicate',
     label: { pl: 'Duplikuj', en: 'Duplicate' },
     icon: 'Copy',
@@ -5241,6 +5485,10 @@ const IDEA_ACTIONS: ActionDef[] = [
     // ale tamten komponent podnosi WYŁĄCZNIE id, które sam wywołuje — dopisanie
     // powierzchni nie zmienia niczego po stronie Tablicy (sprawdzone).
     surfaces: ['context', 'floating', 'toolbar'],
+    // Skrót (2026-08-10, reconciliacja): `useIdeasToolKeyboard.ts`'s `onDuplicate`
+    // (Ctrl/Cmd+D) na OBU narzędziach woła DOKŁADNIE `duplicateSelected` — ta
+    // sama funkcja co pasek/menu wyżej.
+    shortcut: '⌘D',
     handler: (ctx) => runToolbarBusAction('idea.node.duplicate', RUNTIME_NODE_DUPLICATE, ctx),
     mutates: true,
     requiresPreview: false,
@@ -5342,6 +5590,10 @@ const IDEA_ACTIONS: ActionDef[] = [
     // menu węzła / pływający pasek / `idea.edge.pf_delete`. Uwaga o Tablicy
     // jak przy `idea.node.duplicate` wyżej.
     surfaces: ['context', 'floating', 'toolbar'],
+    // Skrót (2026-08-10, reconciliacja): `useIdeasToolKeyboard.ts`'s
+    // `onDeleteSelected` (Delete/Backspace) na OBU narzędziach woła DOKŁADNIE
+    // `deleteSelected` — ta sama funkcja co pasek/menu wyżej.
+    shortcut: 'Del',
     handler: (ctx) => runToolbarBusAction('idea.node.delete', RUNTIME_NODE_DELETE, ctx),
     mutates: true,
     requiresPreview: false,
@@ -5994,7 +6246,16 @@ const IDEA_ACTIONS: ActionDef[] = [
     scope: 'single_item',
     tools: ['mindmap'],
     surfaces: ['context'],
-    shortcut: 'Enter',
+    // POPRAWIONE (2026-08-10, reconciliacja skrótów): było 'Enter', przepisane
+    // z etykiety-podpowiedzi wewnątrz `NodeContextMenu.tsx:248` (statyczny
+    // tekst obok pozycji menu) — NIGDY nie zweryfikowane wobec realnego
+    // globalnego listenera. `useKeyboardShortcuts.ts`'s `onAddSibling` odpala
+    // WYŁĄCZNIE na `event.key === 'Enter' && event.shiftKey` — samo Enter jest
+    // zajęte przez `onOpen`/`onAddSibling`-owo-inne skróty w innych ekranach
+    // tego dzielonego hooka. Menu nadal POKAZUJE „Enter" (osobna, drobna
+    // nieścisłość UI w `NodeContextMenu.tsx`, poza zakresem tego wpisu —
+    // niedotknięta).
+    shortcut: 'Shift+Enter',
     handler: (ctx) =>
       runMindmapNodeBusAction('idea.node.mm_add_sibling', RUNTIME_MM_NODE_ADD_SIBLING, ctx),
     mutates: true,
@@ -6144,6 +6405,87 @@ const IDEA_ACTIONS: ActionDef[] = [
     },
     runtime: RUNTIME_MM_NODE_TOGGLE_COLLAPSE,
     source: 'src/components/MyWork/mindmap/NodeContextMenu.tsx:152 (ctx_toggle_collapse)',
+  },
+  {
+    // NOWY wpis (2026-08-10, reconciliacja skrótów) — `useKeyboardShortcuts.ts`'s
+    // `onGroup` (Ctrl/Cmd+G) dispatchuje `handleQuickAction('group')`, string
+    // BEZ żadnego menu/przycisku gdziekolwiek w kodzie (SPRAWDZONE grepem:
+    // jedyny wywołujący 'group'/'mm_group' to ten jeden skrót) — `surfaces:
+    // ['keyboard']`, patrz komentarz przy typie `Surface`. Realna mutacja:
+    // owija ≥2 zaznaczone węzły w nową ramkę (`type: 'group'`), wymaga min. 2
+    // zaznaczonych węzłów (inaczej toast, bez mutacji).
+    id: 'idea.node.mm_group_selected',
+    label: { pl: 'Grupuj zaznaczone', en: 'Group selected' },
+    icon: 'Layers',
+    scope: 'selected_items',
+    tools: ['mindmap'],
+    surfaces: ['keyboard'],
+    shortcut: '⌘G',
+    handler: (ctx) => runKeyboardOnlyCallback('idea.node.mm_group_selected', ctx),
+    mutates: true,
+    requiresPreview: false,
+    undo: {
+      kind: 'local_stack',
+      evidence: 'useMindMapQuickActions.ts:786 (blok "group"/"mm_group") → handlers.pushUndo()',
+    },
+    teresa: {
+      description:
+        'Owija co najmniej dwa zaznaczone węzły Mapy myśli we wspólną ramkę grupy. Dziś dostępne WYŁĄCZNIE ze skrótu klawiszowego — Teresa tego jeszcze nie wywoła; przy mniej niż 2 zaznaczonych węzłach po cichu nic nie robi (tylko komunikat toast), zachowanie identyczne jak przed tym wpisem.',
+    },
+    source:
+      'src/components/MyWork/IdeaMapWorkspace.tsx onGroup → handleQuickAction(\'group\') + useMindMapQuickActions.ts:786',
+  },
+  {
+    // NOWY wpis (2026-08-10, reconciliacja skrótów) — `useKeyboardShortcuts.ts`'s
+    // `onReparentPromote` (Alt+Shift+←), tak samo bez menu/przycisku
+    // gdziekolwiek (SPRAWDZONE grepem: jedyny caller `reparentSelectedPromote`
+    // to ten skrót). Realna mutacja: przenosi zaznaczony węzeł pod dziadka
+    // (`reparentNode` → `pushUndo()`), no-op gdy węzeł nie jest reparentowalny
+    // (korzeń/branch/zablokowany) albo nie ma dziadka.
+    id: 'idea.node.mm_reparent_promote',
+    label: { pl: 'Przenieś wyżej w hierarchii', en: 'Promote one level' },
+    icon: 'ChevronRight',
+    scope: 'single_item',
+    tools: ['mindmap'],
+    surfaces: ['keyboard'],
+    shortcut: 'Alt+Shift+←',
+    handler: (ctx) => runKeyboardOnlyCallback('idea.node.mm_reparent_promote', ctx),
+    mutates: true,
+    requiresPreview: false,
+    undo: {
+      kind: 'local_stack',
+      evidence:
+        'useMindMapNodes.tsx promoteNode → reparentNode:809 → pushUndo() (stos Ctrl+Z)',
+    },
+    teresa: {
+      description:
+        'Przenosi zaznaczony węzeł Mapy myśli o jeden poziom wyżej w hierarchii (pod dziadka). Dziś dostępne WYŁĄCZNIE ze skrótu klawiszowego — Teresa tego jeszcze nie wywoła. Bez zaznaczonego, reparentowalnego węzła (korzeń/gałąź/zablokowany/bez dziadka) po cichu nic nie robi — tak samo jak przed tym wpisem.',
+    },
+    source:
+      'src/components/MyWork/IdeaMapWorkspace.tsx onReparentPromote → handleQuickAction(\'mm_reparent_promote\') + useMindMapQuickActions.ts:339 + useMindMapNodes.tsx reparentSelectedPromote',
+  },
+  {
+    id: 'idea.node.mm_reparent_demote',
+    label: { pl: 'Przenieś niżej w hierarchii', en: 'Demote under previous sibling' },
+    icon: 'ChevronDown',
+    scope: 'single_item',
+    tools: ['mindmap'],
+    surfaces: ['keyboard'],
+    shortcut: 'Alt+Shift+→',
+    handler: (ctx) => runKeyboardOnlyCallback('idea.node.mm_reparent_demote', ctx),
+    mutates: true,
+    requiresPreview: false,
+    undo: {
+      kind: 'local_stack',
+      evidence:
+        'useMindMapNodes.tsx demoteNode → reparentNode:809 → pushUndo() (stos Ctrl+Z)',
+    },
+    teresa: {
+      description:
+        'Przenosi zaznaczony węzeł Mapy myśli pod poprzednie rodzeństwo (o jeden poziom niżej w hierarchii). Dziś dostępne WYŁĄCZNIE ze skrótu klawiszowego — Teresa tego jeszcze nie wywoła. Bez zaznaczonego, reparentowalnego węzła po cichu nic nie robi — tak samo jak przed tym wpisem.',
+    },
+    source:
+      'src/components/MyWork/IdeaMapWorkspace.tsx onReparentDemote → handleQuickAction(\'mm_reparent_demote\') + useMindMapQuickActions.ts:340 + useMindMapNodes.tsx reparentSelectedDemote',
   },
   {
     id: 'idea.node.mm_focus_subtree',
@@ -6658,6 +7000,19 @@ const IDEA_ACTIONS: ActionDef[] = [
     // identyczny) — świadomie WSPÓLNY wpis rejestru dla obu lokalnych id
     // (patrz `REGISTRY_ID_BY_LOCAL_ID` w `NodeContextMenu.tsx`), zamiast dwóch
     // wpisów udających, że to różne akcje.
+    //
+    // TRZECIE wejście (2026-08-10, reconciliacja skrótów): `useKeyboardShortcuts.ts`'s
+    // `onAIExpand` (Ctrl/Cmd+Shift+A) dispatchuje runtime string `mm_ai_expand_branch`
+    // — INNY string niż `RUNTIME_AI_EXPAND` (`mm_ai_expand`) tej akcji, ale
+    // SPRAWDZONE w `useMindMapQuickActions.ts:415`: oba stringi wołają
+    // DOSŁOWNIE `handlers.handleAIExpand(targetNodeId)` — ten sam kod, ta sama
+    // różnica "brak jawnego nodeId = bierz aktualne zaznaczenie" jak przy
+    // klawiaturowym Tab/`mm_add_child` wyżej. Skrót jest więc genuine reuse tej
+    // samej akcji, nie osobnym bytem — dopisany TYLKO jako `shortcut`, klik
+    // klawiszowy nadal woła własny `handleQuickAction('mm_ai_expand_branch')`
+    // przez `ctx.params.run` (patrz `runMindmapNodeBusAction` niżej), zero
+    // zmiany runtime stringa faktycznie wysyłanego przez klawiaturę.
+    shortcut: '⌘⇧A',
     handler: (ctx) =>
       runMindmapNodeBusAction('idea.node.mm_ai_expand_node', RUNTIME_AI_EXPAND, ctx),
     mutates: true,

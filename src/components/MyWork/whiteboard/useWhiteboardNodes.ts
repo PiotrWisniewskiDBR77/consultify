@@ -7,6 +7,12 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import type { Edge, Node } from 'reactflow';
 
+import {
+  computeTidyLayout,
+  rectOfWhiteboardNode,
+  type WhiteboardRect,
+} from './whiteboardPlacement';
+
 export interface UseWhiteboardNodesOpts {
   nodes: Node[];
   edges: Edge[];
@@ -351,12 +357,120 @@ export function useWhiteboardNodes(opts: UseWhiteboardNodesOpts) {
     [pushSnapshot, setNodes]
   );
 
+  /**
+   * WB-P2 "Tidy board" / "Auto arrange selection" (08_P1_P3_EXECUTION_PLAN
+   * §6 Whiteboard). One command, two names depending on context: 2+
+   * unlocked nodes selected → arranges only the selection ("Auto arrange
+   * selection"); otherwise arranges the whole board ("Tidy board"). Reuses
+   * `computeTidyLayout`/`resolveWhiteboardPlacement` (whiteboardPlacement.ts)
+   * for the actual math — see that file's header comment for why this is an
+   * explicit opt-in call pattern that does NOT weaken `createNode`'s default
+   * "automatic insertion never moves an existing object" guarantee.
+   *
+   * Grouping/frames: a `frameNode` and all of its current children always
+   * move together as ONE unit (same delta), so their relative arrangement
+   * inside the frame is preserved. A child whose parent frame is NOT part of
+   * this tidy pass (frame unselected during an "Auto arrange selection", or
+   * the frame itself locked) is left untouched rather than drifting out of
+   * its (unmoved) frame — it still counts as a fixed obstacle so tidied
+   * items route around it.
+   */
+  const tidyBoard = useCallback(() => {
+    if (locked) return;
+    const all = nodes as Node[];
+    const selected = all.filter((n) => n.selected && !isNodeLocked(n));
+    const pool = selected.length >= 2 ? selected : all;
+
+    const childrenByParent = new Map<string, Node[]>();
+    for (const n of all) {
+      const pid = (n as { parentId?: string }).parentId;
+      if (pid) {
+        const list = childrenByParent.get(pid) || [];
+        list.push(n);
+        childrenByParent.set(pid, list);
+      }
+    }
+
+    interface TidyUnit {
+      rect: WhiteboardRect;
+      memberIds: string[];
+    }
+    const units: TidyUnit[] = [];
+    const movingIds = new Set<string>();
+
+    for (const n of pool) {
+      if (isNodeLocked(n)) continue;
+      const pid = (n as { parentId?: string }).parentId;
+      // Children are folded into their parent frame's unit below (if that
+      // frame is itself eligible) — never placed as independent units.
+      if (pid) continue;
+      const memberIds = [n.id];
+      if (n.type === 'frameNode') {
+        for (const child of childrenByParent.get(n.id) || []) memberIds.push(child.id);
+      }
+      units.push({ rect: rectOfWhiteboardNode(n), memberIds });
+      memberIds.forEach((id) => movingIds.add(id));
+    }
+
+    // Nothing meaningful to reorganize — mirrors distributeNodes' silent
+    // no-op below its own minimum-selection threshold.
+    if (units.length < 2) return;
+
+    const fixedRects: WhiteboardRect[] = all
+      .filter((n) => !movingIds.has(n.id))
+      .map((n) => rectOfWhiteboardNode(n));
+
+    const sortedUnits = [...units].sort(
+      (a, b) => a.rect.y - b.rect.y || a.rect.x - b.rect.x || a.memberIds[0].localeCompare(b.memberIds[0])
+    );
+    const anchor = {
+      x: Math.min(...sortedUnits.map((u) => u.rect.x)),
+      y: Math.min(...sortedUnits.map((u) => u.rect.y)),
+    };
+
+    const layout = computeTidyLayout({
+      items: sortedUnits.map((u) => ({ id: u.memberIds[0], rect: u.rect })),
+      anchor,
+      fixedRects,
+      grid: 8,
+    });
+
+    const deltaByNodeId = new Map<string, { dx: number; dy: number }>();
+    for (const unit of sortedUnits) {
+      const newPos = layout.get(unit.memberIds[0]);
+      if (!newPos) continue;
+      const dx = newPos.x - unit.rect.x;
+      const dy = newPos.y - unit.rect.y;
+      if (dx === 0 && dy === 0) continue;
+      for (const id of unit.memberIds) deltaByNodeId.set(id, { dx, dy });
+    }
+    if (deltaByNodeId.size === 0) return; // already tidy — no undo entry, no toast
+
+    pushSnapshot?.();
+    setNodes((prev: Node[]) =>
+      prev.map((n) => {
+        const delta = deltaByNodeId.get(n.id);
+        if (!delta) return n;
+        return { ...n, position: { x: n.position.x + delta.dx, y: n.position.y + delta.dy } };
+      })
+    );
+    toast.success(
+      t(
+        selected.length >= 2
+          ? 'myWork.whiteboard.toast.tidiedSelection'
+          : 'myWork.whiteboard.toast.tidiedBoard'
+      ),
+      { duration: 600 }
+    );
+  }, [locked, nodes, pushSnapshot, setNodes, t]);
+
   return {
     deleteSelected,
     duplicateSelected,
     groupSelected,
     ungroupSelected,
     distributeNodes,
+    tidyBoard,
     copySelected,
     copyNodeById,
     pasteClipboard,

@@ -34,7 +34,9 @@ import {
   MoveRight,
   Palette,
   Plus,
+  GitBranch,
   Repeat,
+  Tag,
   Trash2,
   X,
 } from 'lucide-react';
@@ -58,6 +60,7 @@ import ReactFlow, {
   useUpdateNodeInternals,
 } from 'reactflow';
 
+import { type ActionContext, runIdeaAction } from '@/actions/ideaActionRegistry';
 import { ErrorState, SkeletonState } from '@/components/shared/states';
 import { Api } from '@/services/api';
 import {
@@ -98,6 +101,7 @@ import {
   ArrowDirectionPopover,
   ColorPalettePopover,
   MenuListPopover,
+  TextInputPopover,
 } from './canvas/ObjectEditBarPopovers';
 import { publishProcessFlowGridState } from './canvas/processFlowGridState';
 import { useCanvasSnappingRef } from './canvas/useCanvasSnapping';
@@ -156,6 +160,7 @@ import { GatewayNode } from './processflow/nodes/GatewayNode';
 import { PoolNode } from './processflow/nodes/PoolNode';
 import { SubprocessNode } from './processflow/nodes/SubprocessNode';
 import {
+  EDGE_CONDITIONS,
   getCanvasContextActions,
   getEdgeContextActions,
   getNodeContextActions,
@@ -406,6 +411,14 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
   const [lanes, setLanes] = useState<Lane[]>(DEFAULT_LANES);
+  // PF-P2-02: id of the lane just created via `addLane` — LaneSystem uses this
+  // to auto-enter inline naming (focus + select) for exactly one lane, then
+  // clears it via `onAutoEditConsumed` once the edit session starts. Cleared
+  // eagerly (not on commit/cancel) because it only gates the initial
+  // auto-focus trigger; the lane's own local `editing` state carries the rest
+  // of the session (Enter commits, Escape cancels — unchanged LaneSystem.tsx
+  // behavior).
+  const [newLaneId, setNewLaneId] = useState<string | null>(null);
   const [extensions, setExtensions] = useState<Record<string, unknown>>({});
   const [warnings, setWarnings] = useState<ValidationWarning[]>([]);
 
@@ -1950,6 +1963,8 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       collab.broadcastLanes(nextLanes); // F3: full Lane[] replacement
       return nextLanes;
     });
+    // PF-P2-02: hand focus straight to inline naming for the lane just created.
+    setNewLaneId(newLane.id);
   }, [collab, lanes.length, locked, pushUndo, t]);
 
   const insertAutomationTrigger = useCallback(() => {
@@ -2454,20 +2469,50 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
     addNode(shape);
   }, [addNode, flowMode]);
 
+  // Reconciliacja z Rejestrem Akcji (2026-08-10, E02 DoD) — patrz analogiczny
+  // komentarz w `IdeaMapWorkspace.tsx`/`IdeaWhiteboardTool.tsx`. `onDeselect`
+  // i `onFitView` ŚWIADOMIE NIE przechodzą przez rejestr (stan
+  // zaznaczenia/kamery, zero mutacji treści, ta sama kategoria co Mapy myśli
+  // `onFocusSelection`). `onAddChild`/`onAddSibling` (Tab/Enter →
+  // `addDefaultStep`) TEŻ ŚWIADOMIE NIE są routowane mimo że
+  // `idea.element.add` istnieje z runtime `pf_add_step` dla Przepływu —
+  // SPRAWDZONE w kodzie: `addDefaultStep` dobiera KSZTAŁT węzła wg
+  // `flowMode` (auto_trigger/vsm_process/action), a odbiornik `pf_add_step`
+  // (`useProcessFlowQuickActions.ts:158`) ZAWSZE tworzy `'action'` —
+  // realna różnica zachowania w trybach automation/vsm, nie genuine reuse
+  // (ta sama ostrożność co przy `idea.edge.insert_node`/`.delete`
+  // nie-reużytych między Mapą myśli a Przepływem).
+  const runPfKeyboardAction = useCallback(
+    (actionId: string, run: () => void) => {
+      const ctx: ActionContext = {
+        ideaId,
+        tool: 'process_flow',
+        selection: EMPTY_SELECTION,
+        surface: 'context',
+        source: 'ui',
+        language: isPl ? 'pl' : 'en',
+        params: { run },
+      };
+      void runIdeaAction(actionId, ctx);
+    },
+    [ideaId, isPl]
+  );
+
   // P3: shared grammar (Tab/Enter/F2/Delete/Escape/Ctrl+Z/S/D/L/0)
   useCanvasKeyboard({
     toolType: 'processflow',
     enabled: open,
     locked: locked || false,
     callbacks: {
-      onSave: handleSave,
-      onUndo: undo,
-      onRedo: redo,
-      onDuplicate: duplicateSelected,
-      onAutoLayout: handleAutoLayout,
+      onSave: () => runPfKeyboardAction('idea.canvas.pf_save', handleSave),
+      onUndo: () => runPfKeyboardAction('idea.canvas.undo', undo),
+      onRedo: () => runPfKeyboardAction('idea.canvas.redo', redo),
+      onDuplicate: () => runPfKeyboardAction('idea.node.duplicate', duplicateSelected),
+      onAutoLayout: () => runPfKeyboardAction('idea.view.auto_layout', handleAutoLayout),
       onFitView: () => reactFlowInstanceRef.current?.fitView({ padding: 0.15, duration: 300 }),
-      onEditSelected: () => setShowPropertiesPanel(true),
-      onDeleteSelected: deleteSelected,
+      onEditSelected: () =>
+        runPfKeyboardAction('idea.node.pf_properties', () => setShowPropertiesPanel(true)),
+      onDeleteSelected: () => runPfKeyboardAction('idea.node.delete', deleteSelected),
       onDeselect: () => {
         setNodes((nds) => nds.map((n) => ({ ...n, selected: false })));
         setEdges((eds) => eds.map((e) => ({ ...e, selected: false })));
@@ -2702,13 +2747,67 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
   const pfEditBarModel = useMemo(() => {
     if (!pfEditBarDocked) return null;
 
-    // ── KRAWĘDŹ: kolor linii · styl · strzałki · kierunek przepływu ──────────
+    // ── KRAWĘDŹ: etykieta · typ · kolor linii · styl · strzałki · kierunek ───
     if (pfEditBarTarget === 'edge' && selectedEdge) {
       const edgeId = selectedEdge.id;
       const edgeData = (selectedEdge.data || {}) as Record<string, any>;
+      // PF-P2-03: any selected edge must expose its CURRENT semantic label and
+      // condition type here, not only inside the click-positioned
+      // `EdgeStylePopover` (which only appears the instant you click — a
+      // Teresa-driven or keyboard selection never triggers it). Same
+      // underlying handlers as the right-click menu (`getEdgeContextActions`)
+      // and `EdgeStylePopover` — one mutation path, three surfaces.
+      const currentLabel = String(selectedEdge.label ?? edgeData.label ?? '');
+      const currentCondition = String(edgeData.conditionType ?? '');
+      const currentConditionEntry =
+        EDGE_CONDITIONS.find((c) => c.id === currentCondition) ?? EDGE_CONDITIONS[0];
+      const truncate = (s: string, max: number) =>
+        s.length > max ? `${s.slice(0, max - 1)}…` : s;
       return {
         title: t('canvasEditBar.titleEdge', 'Połączenie'),
         groups: [
+          {
+            id: 'edge-semantics',
+            controls: [
+              {
+                kind: 'popover' as const,
+                id: 'edge-label',
+                icon: Tag,
+                label: t('canvasEditBar.edgeLabel', 'Etykieta'),
+                text: currentLabel ? truncate(currentLabel, 14) : undefined,
+                align: 'center' as const,
+                render: (close: () => void) => (
+                  <TextInputPopover
+                    title={t('canvasEditBar.edgeLabel', 'Etykieta')}
+                    value={currentLabel}
+                    placeholder={t('processFlow.edgeStylePopover.label', 'Label')}
+                    onCommit={(next) => handleEdgeLabelChange(edgeId, next)}
+                    close={close}
+                  />
+                ),
+              },
+              {
+                kind: 'popover' as const,
+                id: 'edge-condition',
+                icon: GitBranch,
+                label: t('canvasEditBar.edgeCondition', 'Typ połączenia'),
+                text: isPl ? currentConditionEntry.pl : currentConditionEntry.en,
+                align: 'center' as const,
+                render: (close: () => void) => (
+                  <MenuListPopover
+                    title={t('canvasEditBar.edgeCondition', 'Typ połączenia')}
+                    close={close}
+                    items={EDGE_CONDITIONS.map((c) => ({
+                      id: c.id || 'none',
+                      label: isPl ? c.pl : c.en,
+                      active: (currentCondition ?? '') === c.id,
+                      onClick: () => handleEdgeConditionChange(edgeId, c.id),
+                    }))}
+                  />
+                ),
+              },
+            ],
+          },
           {
             id: 'edge-look',
             controls: [
@@ -2782,6 +2881,18 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
                 label: t('canvasEditBar.reverseFlow', 'Odwróć kierunek przepływu'),
                 onClick: () => handleEdgeReverse(edgeId),
               },
+              {
+                // PF-P2-03: safe delete for the selected edge, same
+                // `deleteSelected()` the right-click menu's "Delete
+                // connection" and Delete/Backspace already use — the edge is
+                // the live selection (`selectedEdge`), so no id needs passing.
+                kind: 'button' as const,
+                id: 'delete',
+                icon: Trash2,
+                label: t('processFlow.contextMenu.edgeDelete', 'Delete connection'),
+                tone: 'danger' as const,
+                onClick: () => deleteSelected(),
+              },
             ],
           },
         ],
@@ -2854,6 +2965,9 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
     selectedNode,
     locked,
     t,
+    isPl,
+    handleEdgeLabelChange,
+    handleEdgeConditionChange,
     handleEdgeColorChange,
     handleEdgeStyleOverrideChange,
     handleEdgeArrowChange,
@@ -3271,6 +3385,10 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
                 // on every pointer move and would flood the undo stack).
                 onResizeStart={() => pushUndo()}
                 dragOverLaneId={dragOverLaneId}
+                // PF-P2-02: the lane created by `addLane` above auto-enters
+                // inline naming once, then this clears itself.
+                autoEditLaneId={newLaneId}
+                onAutoEditConsumed={() => setNewLaneId(null)}
               />
             </div>
 

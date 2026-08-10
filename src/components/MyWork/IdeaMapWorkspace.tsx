@@ -23,6 +23,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
+import { type ActionContext, runIdeaAction } from '@/actions/ideaActionRegistry';
 import { LoadingState, SkeletonState } from '@/components/shared/states';
 import type { WorkspacePanelKey } from '@/components/shared/WorkspacePanelStrip';
 import { IdeaRightPanel } from '@/components/standard/IdeaRightPanel';
@@ -1726,6 +1727,36 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   // in the address bar for shareability.
 
   // ── V4-IDEA-07: Keyboard shortcuts ─────────────────────────────────────────
+  //
+  // Reconciliacja z Rejestrem Akcji (2026-08-10, E02 DoD "toolbar, rail,
+  // inspector, PPM, keyboard i Teresa wołają ten sam kontrakt"): każdy
+  // callback poniżej, dla którego istnieje wpis w `ideaActionRegistry.ts`,
+  // idzie teraz przez `runIdeaAction` z `ctx.params.run` ustawionym na
+  // DOKŁADNIE ten sam `handleQuickAction(...)`, który wołał przed tym
+  // wpisem — każdy z wywoływanych helperów (`runMindmapNodeBusAction`,
+  // `runToolbarBusAction`) wykonuje `run()` wprost dla `ctx.source==='ui'`,
+  // więc zachowanie klawisza jest bajtowo identyczne, zyskuje tylko wpis w
+  // rejestrze (shortcut recorded) i drugie, realne wejście dla Teresy przez
+  // ten sam string runtime. `onCancel`/`onSlashCommand`/`onFocusSelection`
+  // ŚWIADOMIE NIE przechodzą przez rejestr — czysta nawigacja/stan UI (jak
+  // `onFocusSelection`: `focusSelectedNode()` tylko przesuwa kamerę, zero
+  // mutacji), nie akcje w sensie rozdz. 02.
+  const runMindmapKeyboardAction = useCallback(
+    (actionId: string, run: () => void) => {
+      const ctx: ActionContext = {
+        ideaId: realId,
+        tool: 'mindmap',
+        selection,
+        surface: 'context',
+        source: 'ui',
+        language: isPolish ? 'pl' : 'en',
+        params: { run },
+      };
+      void runIdeaAction(actionId, ctx);
+    },
+    [isPolish, realId, selection]
+  );
+
   const {
     showHelp: shortcutsHelpOpen,
     setShowHelp: setShortcutsHelpOpen,
@@ -1740,15 +1771,52 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
       else if (focusMode !== 'full') handleExitFocus();
     },
     onSlashCommand: () => setSearchOpen(true),
-    onAddChild: () => handleQuickAction('mm_add_child'),
-    onAddSibling: () => handleQuickAction('mm_add_sibling'),
-    onGroup: () => handleQuickAction('group'),
-    onAIExpand: () => handleQuickAction('mm_ai_expand_branch'),
-    onToggleCollapse: () => handleQuickAction('mm_toggle_collapse'),
+    onAddChild: () =>
+      runMindmapKeyboardAction('idea.node.mm_add_child', () => handleQuickAction('mm_add_child')),
+    onAddSibling: () =>
+      runMindmapKeyboardAction('idea.node.mm_add_sibling', () =>
+        handleQuickAction('mm_add_sibling')
+      ),
+    onGroup: () =>
+      runMindmapKeyboardAction('idea.node.mm_group_selected', () => handleQuickAction('group')),
+    onAIExpand: () =>
+      runMindmapKeyboardAction('idea.node.mm_ai_expand_node', () =>
+        handleQuickAction('mm_ai_expand_branch')
+      ),
+    onToggleCollapse: () =>
+      runMindmapKeyboardAction('idea.node.mm_toggle_collapse', () =>
+        handleQuickAction('mm_toggle_collapse')
+      ),
+    // Nawigacja kamery (fitView na zaznaczonym węźle), zero mutacji danych —
+    // NIE jest akcją Rejestru (analogicznie do "focus movement" z ustaleń
+    // programu). Bez menu/przycisku gdziekolwiek w kodzie — czysto
+    // klawiaturowe, ale bez żadnego skutku poza kamerą, więc bez wpisu.
     onFocusSelection: () => handleQuickAction('mm_focus_selected'),
-    onReparentPromote: () => handleQuickAction('mm_reparent_promote'),
-    onReparentDemote: () => handleQuickAction('mm_reparent_demote'),
-    onSelectAll: () => handleQuickAction('selectAll'),
+    onReparentPromote: () =>
+      runMindmapKeyboardAction('idea.node.mm_reparent_promote', () =>
+        handleQuickAction('mm_reparent_promote')
+      ),
+    onReparentDemote: () =>
+      runMindmapKeyboardAction('idea.node.mm_reparent_demote', () =>
+        handleQuickAction('mm_reparent_demote')
+      ),
+    // ZASTRZEŻENIE (odkryte przy tej reconciliacji, NIE naprawiane tu):
+    // `handleQuickAction('selectAll')` dispatchuje string BEZ ŻADNEGO
+    // odbiornika (sprawdzone grepem: `useMindMapQuickActions.ts` nie ma
+    // gałęzi `'selectAll'`/`'clearSelection'`) — te dwa skróty są dziś
+    // wizualnie martwe TU, ale realny Ctrl+A/Ctrl+D na Mapie myśli i tak
+    // DZIAŁA dzięki NIEZALEŻNEMU, osobnemu listenerowi w
+    // `IdeaRecommendationMap.tsx` (~L3635-3682, `setNodes` wprost) — poza
+    // trzema hookami tego zadania, nietknięty. `onSelectAll` i tak dostaje
+    // wpis rejestru (istniejący `idea.view.select_all`, shortcut ⌘A) przez
+    // `ctx.params.run`, bez zmiany zachowania (`run()` wciąż woła martwy
+    // string — Teresa może wywołać TĘ SAMĄ akcję realnie, bo jej ścieżka
+    // idzie przez `mm_select_all`, nie przez ten skrót). `onClearSelection`
+    // NIE dostaje wpisu — nie ma nawet istniejącego rejestrowego id do
+    // podpięcia (żaden "clear selection" nie jest dziś zarejestrowany), a
+    // rejestrowanie akcji bez JAKIEGOKOLWIEK żywego odbiornika łamałoby Z3.
+    onSelectAll: () =>
+      runMindmapKeyboardAction('idea.view.select_all', () => handleQuickAction('selectAll')),
     onClearSelection: () => handleQuickAction('clearSelection'),
   });
 

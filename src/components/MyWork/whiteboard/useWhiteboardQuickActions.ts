@@ -32,6 +32,8 @@ export interface WhiteboardQuickActionHandlers {
   groupSelected: () => void;
   ungroupSelected: () => void;
   distributeNodes: (axis: 'horizontal' | 'vertical') => void;
+  /** WB-P2 "Tidy board" / "Auto arrange selection" — see useWhiteboardNodes.ts. */
+  tidyBoard?: () => void;
   setMode?: (mode: 'board' | 'draw') => void;
   /**
    * Z1 (rozdz. 06 §3): tryb kursora płótna z lewego raila. Rail wysyła
@@ -137,6 +139,7 @@ export function useWhiteboardQuickActions(opts: UseWhiteboardQuickActionsOpts): 
       handlers.addElement('sticky', { semanticType: 'action', label: 'Action' });
     if (action === 'wb_duplicate') handlers.duplicateSelected();
     if (action === 'wb_ungroup') handlers.ungroupSelected();
+    if (action === 'wb_tidy_board') handlers.tidyBoard?.();
     if (action === 'wb_delete') handlers.deleteSelected();
     if (action === 'wb_undo') handlers.undo?.();
     if (action === 'wb_redo') handlers.redo?.();

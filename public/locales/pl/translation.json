@@ -1829,6 +1829,8 @@
         "alignBottom": "Wyrównaj do dołu",
         "distributeH": "Rozłóż poziomo",
         "distributeV": "Rozłóż pionowo",
+        "tidyBoard": "Uporządkuj tablicę",
+        "tidySelection": "Uporządkuj zaznaczenie",
         "group": "Grupuj",
         "ungroup": "Rozgrupuj",
         "duplicate": "Duplikuj",
@@ -1863,7 +1865,8 @@
         "generating": "AI analizuje tablicę…",
         "generateFailed": "Generowanie AI nie powiodło się",
         "noProposals": "AI nie zwróciło propozycji dla tej tablicy",
-        "needsElements": "Najpierw dodaj elementy na tablicę"
+        "needsElements": "Najpierw dodaj elementy na tablicę",
+        "needsRealLabels": "Nadaj realną nazwę co najmniej jednej notatce lub blokowi tekstu przed szukaniem tematów — wszystko w zakresie ma wciąż domyślną nazwę typu „Nowa notatka” albo „Tekst”, więc AI nie ma czego pogrupować."
       },
       "errors": {
         "saveFailed": "Błąd zapisu",
@@ -1928,6 +1931,8 @@
         "pasted": "Wklejono",
         "grouped": "Zgrupowano",
         "ungrouped": "Rozgrupowano",
+        "tidiedBoard": "Uporządkowano tablicę",
+        "tidiedSelection": "Uporządkowano zaznaczenie",
         "quickStartBrainstorm": "Utworzono start do brainstormu",
         "quickStartAffinity": "Utworzono start do affinity map",
         "quickStartWorkshop": "Utworzono workshop wall",
@@ -1997,7 +2002,8 @@
         "bgBlank": "Puste",
         "saving": "Zapisuję…",
         "more": "Więcej",
-        "follow": "Śledź"
+        "follow": "Śledź",
+        "tidyBoard": "Uporządkuj tablicę"
       },
       "selectionBar": {
         "ariaLabel": "Akcje zaznaczenia",
@@ -29381,7 +29387,18 @@
       "redo": "Ponów",
       "clearDrawing": "Wyczyść rysunek",
       "closeDrawing": "Zamknij rysowanie",
-      "close": "Zamknij"
+      "close": "Zamknij",
+      "kbToggleLabel": "Rysuj klawiaturą",
+      "kbCanvasRole": "płótno do rysowania",
+      "kbCanvasLabel": "Płótno do rysowania. Strzałki przesuwają kursor, Spacja lub Enter rozpoczyna albo kończy pociągnięcie, Escape kończy je.",
+      "kbInstructions": "Tryb rysowania klawiaturą: strzałki przesuwają kursor rysowania, Spacja lub Enter włącza albo wyłącza pióro, Escape kończy bieżące pociągnięcie i dodaje je do płótna. Shift ze strzałką porusza większym krokiem.",
+      "kbModeEntered": "Tryb rysowania klawiaturą. Strzałki przesuwają kursor, Spacja lub Enter włącza albo wyłącza pióro, Escape kończy pociągnięcie.",
+      "kbPenDown": "Pióro opuszczone. Poruszaj strzałkami, aby rysować.",
+      "kbPenUp": "Pióro podniesione. Przesuń kursor lub naciśnij Escape, aby zakończyć pociągnięcie.",
+      "kbStrokeCompleted": "Pociągnięcie zakończone i dodane do płótna.",
+      "kbStrokeDiscarded": "Nic nie narysowano — brak elementu do dodania.",
+      "kbStatusPenDown": "Pióro opuszczone",
+      "kbStatusPenUp": "Pióro podniesione"
     },
     "pinnedCard": {
       "addTitle": "Dodaj tytuł",
@@ -30633,7 +30650,26 @@
       "actionNotSupported": "Akcja nieobsługiwana",
       "aiError": "Błąd AI",
       "commandPlaceholder": "Wpisz polecenie dla tabeli…",
-      "examples": "Przykłady"
+      "examples": "Przykłady",
+      "cancel": "Anuluj",
+      "cancelled": "Polecenie anulowane.",
+      "send": "Wyślij",
+      "closeAssistant": "Zamknij asystenta",
+      "commandRequired": "Wpisz polecenie przed wysłaniem.",
+      "columnNotFound": "Nie znaleziono kolumny „{{column}}” w tej tabeli.",
+      "noRowsToAdd": "AI nie zwróciło żadnych wierszy do dodania.",
+      "noChanges": "To polecenie nie odpowiada żadnej zmianie.",
+      "transportError": "Nie udało się połączyć z usługą AI. Sprawdź połączenie i spróbuj ponownie.",
+      "retry": "Ponów",
+      "edit": "Edytuj",
+      "historyLabel": "Historia poleceń",
+      "statusPending": "Pracuję nad tym…",
+      "statusApplied": "Zastosowano",
+      "statusProposal": "Propozycja gotowa",
+      "statusUnsupported": "Nieobsługiwane",
+      "statusValidation": "Nie udało się wykonać polecenia",
+      "statusTransport": "Problem z połączeniem",
+      "statusCancelled": "Anulowano"
     },
     "kanbanView": {
       "uncategorized": "Bez kategorii",
@@ -31250,9 +31286,16 @@
         "ai": "AI",
         "convert": "Konwersja",
         "convertBranch": "Konwertuj gałąź na...",
-        "styleData": "Wygląd i dane"
+        "styleData": "Wygląd i dane",
+        "data": "Dane",
+        "appearance": "Wygląd",
+        "expert": "Funkcje eksperckie",
+        "more": "Więcej"
       },
-      "ctx_ai_rewrite_node": "AI: Przeredaguj węzeł"
+      "ctx_ai_rewrite_node": "AI: Przeredaguj węzeł",
+      "scopeSelection": "Zaznaczenie",
+      "scopeBranch": "Gałąź",
+      "scopeDocument": "Dokument"
     },
     "health": {
       "gapsCount_one": "{{count}} brak do uzupełnienia",

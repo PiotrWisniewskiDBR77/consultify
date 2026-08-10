@@ -88,6 +88,15 @@ interface LaneBackgroundProps {
   isLast?: boolean;
   laneCount: number;
   isPl?: boolean;
+  /**
+   * PF-P2-02 (2026-08-10): true for exactly the lane that was just created via
+   * `addLane` — makes the header enter inline naming immediately instead of
+   * waiting for a double-click, so a fresh lane never sits under its
+   * placeholder default name un-noticed. Fires once per creation.
+   */
+  autoEdit?: boolean;
+  /** Called once the auto-edit trigger above has been consumed (editing started). */
+  onAutoEditConsumed?: (id: string) => void;
 }
 
 const LaneBackground: React.FC<LaneBackgroundProps> = ({
@@ -108,6 +117,8 @@ const LaneBackground: React.FC<LaneBackgroundProps> = ({
   isFirst,
   isLast,
   laneCount,
+  autoEdit,
+  onAutoEditConsumed,
 }) => {
   const { t } = useTranslation();
   const [editing, setEditing] = useState(false);
@@ -116,8 +127,28 @@ const LaneBackground: React.FC<LaneBackgroundProps> = ({
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (editing) inputRef.current?.focus();
+    if (editing) {
+      inputRef.current?.focus();
+      // PF-P2-02: select the default label so typing replaces it outright —
+      // matches the "name it now" intent of auto-entering edit mode, and is
+      // harmless for the manual double-click path too.
+      inputRef.current?.select();
+    }
   }, [editing]);
+
+  // PF-P2-02: the lane just created by `addLane` (IdeaProcessFlowTool.tsx)
+  // arrives with `autoEdit=true` on its FIRST render (new lane id ⇒ fresh
+  // `key`, fresh mount) — enter naming immediately instead of waiting for a
+  // double-click, then tell the parent the trigger was consumed so it clears
+  // `newLaneId` and doesn't re-arm on unrelated re-renders.
+  useEffect(() => {
+    if (autoEdit) {
+      setValue(lane.label);
+      setEditing(true);
+      onAutoEditConsumed?.(lane.id);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoEdit]);
 
   const commit = () => {
     setEditing(false);
@@ -314,6 +345,15 @@ export interface LaneSystemProps {
   onResizeStart?: (laneId: string) => void;
   dragOverLaneId: string | null;
   /**
+   * PF-P2-02 (2026-08-10): id of the lane that should auto-enter inline
+   * naming right now (set by `addLane` in `IdeaProcessFlowTool.tsx` when a
+   * lane is created; `null`/absent the rest of the time — existing
+   * double-click-to-rename behavior is untouched).
+   */
+  autoEditLaneId?: string | null;
+  /** Fired once the matching lane has entered edit mode, so the caller can clear `autoEditLaneId`. */
+  onAutoEditConsumed?: (laneId: string) => void;
+  /**
    * B2 2026-07-27: current ReactFlow viewport. Lane bands are laid out in FLOW
    * coordinates (same space as `node.position.y`, see `laneBandLayout` /
    * `laneIndexAtY`) but painted in a plain container that sits OUTSIDE the
@@ -337,6 +377,8 @@ export const LaneSystem: React.FC<LaneSystemProps> = ({
   onResize,
   onResizeStart,
   dragOverLaneId,
+  autoEditLaneId,
+  onAutoEditConsumed,
   viewport,
 }) => {
   const layout = laneBandLayout(lanes, LANE_HEIGHT);
@@ -374,6 +416,8 @@ export const LaneSystem: React.FC<LaneSystemProps> = ({
             isFirst={idx === 0}
             isLast={idx === lanes.length - 1}
             laneCount={lanes.length}
+            autoEdit={autoEditLaneId != null && autoEditLaneId === lane.id}
+            onAutoEditConsumed={onAutoEditConsumed}
           />
         );
       })}

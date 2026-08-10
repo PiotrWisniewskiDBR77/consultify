@@ -201,3 +201,93 @@ export function resolveWhiteboardPlacement(input: WhiteboardPlacementInput): {
 
 /** Default footprint for node kinds that don't compute an explicit initial style. */
 export const DEFAULT_WHITEBOARD_NODE_SIZE = { width: 200, height: 120 };
+
+/**
+ * Minimal structural shape this module needs from a canvas node to compute
+ * its rect — deliberately narrower than ReactFlow's `Node` so this file
+ * never imports `reactflow` (kept DOM/library-free, see file header).
+ */
+export interface WhiteboardRectSource {
+  position: { x: number; y: number };
+  width?: number | null;
+  height?: number | null;
+  style?: { width?: number; height?: number };
+}
+
+/** Same width/height fallback chain `IdeaWhiteboardTool.createNode` uses for its
+ * `occupiedRects` — exported so other callers (WB-P2 Tidy board) compute the
+ * exact same footprint instead of re-deriving their own formula. */
+export function rectOfWhiteboardNode(
+  node: WhiteboardRectSource,
+  fallback: { width: number; height: number } = DEFAULT_WHITEBOARD_NODE_SIZE
+): WhiteboardRect {
+  return {
+    x: node.position.x,
+    y: node.position.y,
+    width:
+      (typeof node.width === 'number' && node.width > 0 ? node.width : undefined) ??
+      (typeof node.style?.width === 'number' ? node.style.width : undefined) ??
+      fallback.width,
+    height:
+      (typeof node.height === 'number' && node.height > 0 ? node.height : undefined) ??
+      (typeof node.style?.height === 'number' ? node.style.height : undefined) ??
+      fallback.height,
+  };
+}
+
+/**
+ * WB-P2 "Tidy board" / "Auto arrange selection" — reuses
+ * `resolveWhiteboardPlacement` unmodified rather than a second layout
+ * algorithm. The difference from the normal insertion path (`createNode`,
+ * which calls `resolveWhiteboardPlacement` ONCE per brand-new object against
+ * every *existing* rect and never repositions anything already on the
+ * board) is purely in how the CALLER uses it here: every already-positioned
+ * item is offered to the same cascade/nearest-free-slot search as if it
+ * were being freshly inserted, one after another, into a board that only
+ * contains the items already placed earlier in this same batch (plus any
+ * `fixedRects` the caller wants respected as fixed obstacles). That is an
+ * explicit, opt-in, separate entry point — only the Tidy command calls this
+ * — so the default "automatic insertion never disturbs the user's layout"
+ * guarantee of `createNode`/`resolveWhiteboardPlacement`'s normal call
+ * pattern is completely untouched.
+ */
+export interface TidyLayoutItem {
+  /** Stable identifier the caller uses to read the result back out. */
+  id: string;
+  /** Current bounding rect (flow coords) of the item being relocated. */
+  rect: WhiteboardRect;
+}
+
+export interface TidyLayoutInput {
+  /** Items to relocate, in the order they should be offered to placement
+   * (determines cascade order — pass them pre-sorted, e.g. reading order). */
+  items: TidyLayoutItem[];
+  /** Shared cascade anchor every item is offered from. */
+  anchor: { x: number; y: number };
+  /** Rects that must not be overlapped but never receive a new position
+   * themselves (e.g. locked objects, or — for "Auto arrange selection" —
+   * everything outside the selection). */
+  fixedRects?: WhiteboardRect[];
+  viewport?: WhiteboardViewportBounds;
+  grid?: number;
+}
+
+export function computeTidyLayout(
+  input: TidyLayoutInput
+): Map<string, { x: number; y: number }> {
+  const { items, anchor, fixedRects = [], viewport, grid } = input;
+  const occupied: WhiteboardRect[] = [...fixedRects];
+  const result = new Map<string, { x: number; y: number }>();
+  for (const item of items) {
+    const position = resolveWhiteboardPlacement({
+      size: { width: item.rect.width, height: item.rect.height },
+      anchor,
+      occupiedRects: occupied,
+      viewport,
+      grid,
+    });
+    result.set(item.id, position);
+    occupied.push({ x: position.x, y: position.y, width: item.rect.width, height: item.rect.height });
+  }
+  return result;
+}

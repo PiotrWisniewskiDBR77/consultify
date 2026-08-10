@@ -82,8 +82,11 @@ fi
 #    akcja zadeklarowana bez odbiornika w hooku swojej reprezentacji = martwe
 #    kliknięcie u klienta. Dokładnie ta klasa dała ~40 martwych pozycji na
 #    reprezentację (naprawione 2026-07-23 punktowo; ten guard jest po to, żeby
-#    nie wróciło). Odpala się tylko gdy commit dotyka rejestru albo hooka akcji.
-STAGED_AKCJE=$(git diff --cached --name-only --diff-filter=ACM 2>/dev/null | grep -E '^src/actions/ideaActionRegistry\.ts$|use(MindMap|Whiteboard|ProcessFlow|Table)QuickActions\.ts$')
+#    nie wróciło). Odpala się gdy commit dotyka rejestru, hooka akcji, ALBO
+#    (2026-08-10, E02 DoD R10) dowolnej powierzchni src/components/MyWork/ —
+#    to jest dokładnie zakres, w którym R10 wykrywa akcjopodobne onClick/
+#    onSelect spoza rejestru (scripts/check-action-coverage.sh).
+STAGED_AKCJE=$(git diff --cached --name-only --diff-filter=ACM 2>/dev/null | grep -E '^src/actions/ideaActionRegistry\.ts$|use(MindMap|Whiteboard|ProcessFlow|Table)QuickActions\.ts$|^src/components/MyWork/.*\.tsx$')
 if [ -n "$STAGED_AKCJE" ]; then
   if ! bash scripts/check-actions.sh; then
     echo "" >&2

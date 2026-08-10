@@ -17,6 +17,7 @@ import {
   Trash2,
   TrendingUp,
   Undo2,
+  Wand2,
   Workflow,
 } from 'lucide-react';
 import React from 'react';
@@ -77,6 +78,12 @@ export interface WhiteboardToolbarProps {
   onSave: () => void;
   onUndo: () => void;
   onRedo: () => void;
+  /** WB-P2-03: "Tidy board" — arranges the whole board (or the current
+   *  selection, when 2+ unlocked objects are selected) with the same
+   *  collision-free placement service used for new inserts. Optional so
+   *  existing call sites/tests that don't pass it keep compiling; the
+   *  overflow item below no-ops via `?.()` when omitted. */
+  onTidyBoard?: () => void;
 }
 
 interface OverflowItem {
@@ -211,6 +218,7 @@ export const WhiteboardToolbar: React.FC<WhiteboardToolbarProps> = ({
   onSave,
   onUndo,
   onRedo,
+  onTidyBoard,
   hideSaveIndicator = false,
 }) => {
   const { t } = useTranslation();
@@ -379,6 +387,16 @@ export const WhiteboardToolbar: React.FC<WhiteboardToolbarProps> = ({
             onClick: () => runAction('idea.canvas.toggle_follow', onToggleFollow),
             disabled: locked,
             active: sessionState.followMe,
+          },
+          {
+            // WB-P2-03: "Tidy board" — whole-board entry point (the
+            // selection edit bar carries the "Auto arrange selection" one
+            // when there's an active selection; same underlying command).
+            id: 'tidy-board',
+            label: t('myWork.whiteboard.toolbarExtra.tidyBoard'),
+            icon: Wand2,
+            onClick: () => runAction('idea.canvas.tidy_board', () => onTidyBoard?.()),
+            disabled: locked,
           },
           {
             id: 'export',

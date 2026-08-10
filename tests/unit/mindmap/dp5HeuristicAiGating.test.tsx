@@ -99,11 +99,23 @@ describe('DP-5: NodeContextMenu comingSoonIds gating', () => {
     onAction: vi.fn(),
   };
 
+  // MM-P2 (2026-08-10): `ctx_dependencies`/`ctx_what_if`/`ctx_competitive`
+  // moved from the flat first level into the AI flyout submenu (PPM
+  // reduction, `08_P1_P3_EXECUTION_PLAN_FOR_CLAUDE.md` §6). They only exist
+  // in the DOM once that submenu is open — open it the same way a user
+  // would (click the `ctx_group_ai` trigger row) before asserting on them.
+  const openAiSubmenu = () => {
+    const trigger = document.querySelector<HTMLButtonElement>('[data-command-id="ctx_group_ai"]');
+    if (!trigger) throw new Error('AI submenu trigger not found');
+    fireEvent.click(trigger);
+  };
+
   it('renders ctx_dependencies disabled with "Coming soon" badge when listed', () => {
     const onAction = vi.fn();
     render(
       <NodeContextMenu {...baseProps} onAction={onAction} comingSoonIds={['ctx_dependencies']} />
     );
+    openAiSubmenu();
     const btn = document.querySelector<HTMLButtonElement>('[data-command-id="ctx_dependencies"]');
     expect(btn).toBeTruthy();
     expect(btn).toBeDisabled();
@@ -115,6 +127,7 @@ describe('DP-5: NodeContextMenu comingSoonIds gating', () => {
   it('leaves ctx_dependencies clickable when comingSoonIds is empty', () => {
     const onAction = vi.fn();
     render(<NodeContextMenu {...baseProps} onAction={onAction} comingSoonIds={[]} />);
+    openAiSubmenu();
     const btn = document.querySelector<HTMLButtonElement>('[data-command-id="ctx_dependencies"]');
     expect(btn).toBeTruthy();
     expect(btn).not.toBeDisabled();
@@ -125,10 +138,35 @@ describe('DP-5: NodeContextMenu comingSoonIds gating', () => {
 
   it('does not gate real-LLM context actions (What if, Competitors)', () => {
     render(<NodeContextMenu {...baseProps} comingSoonIds={['ctx_dependencies']} />);
+    openAiSubmenu();
     for (const commandId of ['ctx_what_if', 'ctx_competitive']) {
       const btn = document.querySelector<HTMLButtonElement>(`[data-command-id="${commandId}"]`);
       expect(btn, commandId).toBeTruthy();
       expect(btn, commandId).not.toBeDisabled();
+    }
+  });
+
+  it('MM-P2-03: every AI row exposes its real scope via the shortcut slot', () => {
+    render(<NodeContextMenu {...baseProps} comingSoonIds={[]} />);
+    openAiSubmenu();
+    const expectedScopeByCommandId: Record<string, string> = {
+      ctx_ai_rewrite_node: 'myWorkMindmap.ctxMenu.scopeSelection',
+      ctx_ai_expand: 'myWorkMindmap.ctxMenu.scopeBranch',
+      ctx_ai_deepen: 'myWorkMindmap.ctxMenu.scopeBranch',
+      ctx_what_if: 'myWorkMindmap.ctxMenu.scopeSelection',
+      ctx_summarize_branch: 'myWorkMindmap.ctxMenu.scopeBranch',
+      ctx_dependencies: 'myWorkMindmap.ctxMenu.scopeDocument',
+      ctx_priority: 'myWorkMindmap.ctxMenu.scopeDocument',
+      ctx_competitive: 'myWorkMindmap.ctxMenu.scopeDocument',
+      ai_suggest_links: 'myWorkMindmap.ctxMenu.scopeSelection',
+    };
+    for (const [commandId, expectedKey] of Object.entries(expectedScopeByCommandId)) {
+      const btn = document.querySelector<HTMLButtonElement>(`[data-command-id="${commandId}"]`);
+      expect(btn, commandId).toBeTruthy();
+      // The i18n mock in this file returns the raw key, so the rendered
+      // `<kbd>` text IS the translation key — asserting on it still proves
+      // each row asked for the right scope label, not just SOME label.
+      expect(btn?.querySelector('kbd')?.textContent, commandId).toBe(expectedKey);
     }
   });
 });

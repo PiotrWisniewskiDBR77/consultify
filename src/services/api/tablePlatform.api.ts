@@ -295,12 +295,14 @@ export async function generateSchemaProposal(
   message: string,
   existingSchema?: any,
   language?: string,
-  companyContext?: { workspaceName?: string; moduleName?: string; existingTableNames?: string[] }
+  companyContext?: { workspaceName?: string; moduleName?: string; existingTableNames?: string[] },
+  signal?: AbortSignal
 ): Promise<any> {
   const res = await fetchWithRetry(`${BASE_PATH}/schema/propose`, {
     method: 'POST',
     headers: getHeaders(),
     body: JSON.stringify({ workspaceId, message, existingSchema, language, ...companyContext }),
+    signal,
   });
   return handleResponse(res, 'Failed to generate schema proposal');
 }

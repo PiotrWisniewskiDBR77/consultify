@@ -8,7 +8,9 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  computeTidyLayout,
   DEFAULT_WHITEBOARD_NODE_SIZE,
+  rectOfWhiteboardNode,
   resolveWhiteboardPlacement,
   type WhiteboardRect,
 } from '../whiteboardPlacement';
@@ -216,5 +218,82 @@ describe('resolveWhiteboardPlacement', () => {
     expect(typeof pos.y).toBe('number');
     expect(Number.isFinite(pos.x)).toBe(true);
     expect(Number.isFinite(pos.y)).toBe(true);
+  });
+});
+
+describe('rectOfWhiteboardNode', () => {
+  it('prefers an explicit width/height over style, and style over the fallback default', () => {
+    expect(
+      rectOfWhiteboardNode({ position: { x: 1, y: 2 }, width: 50, height: 60, style: { width: 999, height: 999 } })
+    ).toEqual({ x: 1, y: 2, width: 50, height: 60 });
+    expect(
+      rectOfWhiteboardNode({ position: { x: 1, y: 2 }, style: { width: 70, height: 80 } })
+    ).toEqual({ x: 1, y: 2, width: 70, height: 80 });
+    expect(rectOfWhiteboardNode({ position: { x: 1, y: 2 } })).toEqual({
+      x: 1,
+      y: 2,
+      ...DEFAULT_WHITEBOARD_NODE_SIZE,
+    });
+  });
+
+  it('ignores a non-positive width/height and falls through to style/default', () => {
+    expect(
+      rectOfWhiteboardNode({ position: { x: 0, y: 0 }, width: 0, height: -5, style: { width: 40, height: 30 } })
+    ).toEqual({ x: 0, y: 0, width: 40, height: 30 });
+  });
+});
+
+describe('computeTidyLayout (WB-P2-03 "Tidy board" / "Auto arrange selection")', () => {
+  it('places every item without any overlap among them or with fixedRects, reusing resolveWhiteboardPlacement unmodified', () => {
+    const items = [
+      { id: 'a', rect: { x: 500, y: 500, width: 180, height: 100 } },
+      { id: 'b', rect: { x: 500, y: 500, width: 180, height: 100 } },
+      { id: 'c', rect: { x: 500, y: 500, width: 180, height: 100 } },
+    ];
+    const fixedRects: WhiteboardRect[] = [{ x: 100, y: 100, width: 180, height: 100 }];
+    const layout = computeTidyLayout({
+      items,
+      anchor: { x: 100, y: 100 },
+      fixedRects,
+      viewport: VIEWPORT,
+      grid: 8,
+    });
+
+    expect(layout.size).toBe(3);
+    const placedRects = items.map((it) => ({
+      ...layout.get(it.id)!,
+      width: it.rect.width,
+      height: it.rect.height,
+    }));
+    for (let i = 0; i < placedRects.length; i++) {
+      // Never overlaps the fixed obstacle.
+      expect(overlaps(placedRects[i], fixedRects[0])).toBe(false);
+      // Never overlaps an earlier-placed item.
+      for (let j = 0; j < i; j++) {
+        expect(overlaps(placedRects[i], placedRects[j])).toBe(false);
+      }
+    }
+  });
+
+  it('is deterministic: same items/anchor/fixedRects always produce the same layout', () => {
+    const items = [
+      { id: 'x', rect: { x: 10, y: 10, width: 100, height: 60 } },
+      { id: 'y', rect: { x: 10, y: 10, width: 100, height: 60 } },
+    ];
+    const input = { items, anchor: { x: 10, y: 10 }, grid: 8 };
+    const a = computeTidyLayout(input);
+    const b = computeTidyLayout(input);
+    expect(Array.from(a.entries())).toEqual(Array.from(b.entries()));
+  });
+
+  it('does not mutate the caller-supplied fixedRects (obstacles never move)', () => {
+    const fixedRects: WhiteboardRect[] = [{ x: 20, y: 20, width: 100, height: 60 }];
+    const snapshot = JSON.parse(JSON.stringify(fixedRects));
+    computeTidyLayout({
+      items: [{ id: 'only', rect: { x: 20, y: 20, width: 100, height: 60 } }],
+      anchor: { x: 20, y: 20 },
+      fixedRects,
+    });
+    expect(fixedRects).toEqual(snapshot);
   });
 });

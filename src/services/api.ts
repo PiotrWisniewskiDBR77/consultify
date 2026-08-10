@@ -4928,7 +4928,8 @@ export const Api = {
 
   getIdeaAITableAction: async (
     ideaId: string,
-    payload: { command: string; schema: any[]; language?: string }
+    payload: { command: string; schema: any[]; language?: string },
+    signal?: AbortSignal
   ): Promise<any> => {
     const res = await fetch(
       `${API_URL}/my-work/my-ideas/${encodeURIComponent(ideaId)}/ai-table-action`,
@@ -4936,6 +4937,7 @@ export const Api = {
         method: 'POST',
         headers: getHeaders(),
         body: JSON.stringify(payload),
+        signal,
       }
     );
     return handleResponse(res, 'Failed to process table action');

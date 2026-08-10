@@ -177,7 +177,11 @@ export function getNodeContextActions(opts: {
 // Kolejnosc warunkow krawedzi = ta sama lista co CONDITION_TYPES w
 // FlowEdgeComponent ('' | 'yes' | 'no' | 'default' | 'exception'). Etykieta
 // per jezyk; '' = krawedz sekwencyjna (bez warunku).
-const EDGE_CONDITIONS: Array<{ id: string; plKey: string; pl: string; en: string }> = [
+// Exported (PF-P2-03) so the selected-edge bar (`IdeaProcessFlowTool.tsx`'s
+// `pfEditBarModel`) lists the exact same 5 options in the exact same order
+// as this right-click menu — one source of truth, no drift between the two
+// surfaces that both let you set an edge's condition type.
+export const EDGE_CONDITIONS: Array<{ id: string; plKey: string; pl: string; en: string }> = [
   { id: '', plKey: 'condNone', pl: 'Bez warunku', en: 'No condition' },
   { id: 'yes', plKey: 'condYes', pl: 'Tak', en: 'Yes' },
   { id: 'no', plKey: 'condNo', pl: 'Nie', en: 'No' },

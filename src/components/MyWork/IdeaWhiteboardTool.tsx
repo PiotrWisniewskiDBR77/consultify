@@ -25,6 +25,7 @@ import {
   Rocket,
   Trash2,
   Ungroup,
+  Wand2,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
@@ -46,6 +47,7 @@ import ReactFlow, {
   useStore as useReactFlowStore,
 } from 'reactflow';
 
+import { type ActionContext, runIdeaAction } from '@/actions/ideaActionRegistry';
 import { SkeletonState } from '@/components/shared/states';
 import { Api } from '@/services/api';
 import { generateAIProposal } from '@/services/ideaAIGenerator';
@@ -748,6 +750,55 @@ function cloneCanvasSnapshot(snapshot: WhiteboardCanvasSnapshot): WhiteboardCanv
 
 function isNodeDataLocked(node: Node | null | undefined): boolean {
   return Boolean(node?.data?.locked);
+}
+
+// WB-P2-02 — "Find themes" must not present generic output as insight. The
+// i18n keys `createNode` stamps onto a brand-new, never-renamed sticky/text/
+// shape/frame/etc. — same list as `defaultLabelKeys` inside `createNode`.
+const GENERIC_WHITEBOARD_LABEL_I18N_KEYS = [
+  'defaultSticky',
+  'defaultText',
+  'defaultGroup',
+  'defaultShape',
+  'defaultFrame',
+  'defaultImage',
+  'defaultLink',
+  'defaultKpi',
+  'defaultScore',
+  'defaultProgress',
+  'defaultSummary',
+] as const;
+
+/**
+ * Builds the set of "still-default" labels in BOTH languages (not just the
+ * currently active one) — a board can mix content authored in either
+ * locale, and switching the UI language later must not make old default
+ * labels suddenly look "real". Uses the real `t` from the calling component
+ * (with an explicit `{ lng }` override) so this stays correct under the
+ * known pre-existing test-mock behavior where `t()` returns the raw key —
+ * in that case every entry collapses to the same raw key, which still
+ * matches because freshly-created nodes get their default label from that
+ * same `t()` call.
+ */
+export function collectGenericWhiteboardLabels(
+  t: (key: string, opts?: Record<string, unknown>) => string
+) {
+  const generic = new Set<string>();
+  for (const key of GENERIC_WHITEBOARD_LABEL_I18N_KEYS) {
+    for (const lng of ['en', 'pl']) {
+      const label = t(`myWork.whiteboard.nodes.${key}`, { lng });
+      if (typeof label === 'string' && label.trim()) generic.add(label.trim().toLowerCase());
+    }
+  }
+  return generic;
+}
+
+/** Empty/whitespace-only or matching a known default = not real semantic input yet. */
+export function isGenericWhiteboardLabel(label: unknown, generic: Set<string>): boolean {
+  if (typeof label !== 'string') return true;
+  const trimmed = label.trim();
+  if (!trimmed) return true;
+  return generic.has(trimmed.toLowerCase());
 }
 
 function normalizeVoteSummary(
@@ -2101,6 +2152,22 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
             )
           );
         },
+        // WB-P2-01: paired with `_isNew` below — StickyNoteNode/TextBlockNode
+        // open straight into inline naming for a brand-new object (no need to
+        // already know about double-click) and call this back once, on
+        // mount, to clear the flag. Without the clear, `_isNew` would sit in
+        // persisted node data forever and re-trigger edit mode on every
+        // later remount of the SAME node (e.g. its parent frame collapsing
+        // then expanding), not just the one moment right after creation.
+        onConsumeAutoEdit: () => {
+          setNodes((nds: Node[]) =>
+            nds.map((nd: Node) =>
+              nd.id === id && nd.data?._isNew
+                ? { ...nd, data: { ...nd.data, _isNew: false } }
+                : nd
+            )
+          );
+        },
         // B4: seed reactions wiring on freshly-created nodes too — otherwise a
         // node added mid-session (after the one-shot hydrate/flag-flip sync
         // effect ran) would silently lack `onToggleReaction`/`currentUserId`
@@ -2427,7 +2494,22 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
       }
 
       pushUndoSnapshot();
-      const newNode = createNode(kind, extraData, nodes.length);
+      // WB-P2-01: a brand-new sticky/text with no caller-supplied label yet
+      // (rail/toolbar "Add sticky"/"Add text" — the exact first-time-user
+      // path from the finding) opens straight into inline naming instead of
+      // requiring the user to already know about double-click. Skipped when
+      // the caller already provided real content (e.g. Teresa's
+      // `idea.element.add` with a label, or a semantic quick-add like
+      // wb_add_area) — that text is already meaningful, no need to
+      // interrupt with an editor.
+      const isNamableCreate = kind === 'sticky' || kind === 'text';
+      const hasExplicitLabel =
+        typeof extraData?.label === 'string' && extraData.label.trim().length > 0;
+      const newNode = createNode(
+        kind,
+        isNamableCreate && !hasExplicitLabel ? { ...extraData, _isNew: true } : extraData,
+        nodes.length
+      );
       setNodes((prev: Node[]) => [...prev, newNode]);
       collab.broadcastNodeAdd(newNode); // L-02: realtime add
       const semanticType =
@@ -2599,6 +2681,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
     groupSelected,
     ungroupSelected,
     distributeNodes,
+    tidyBoard,
     // WB-CLIPBOARD-01 fix: real object clipboard (node+edges), not the
     // OS-clipboard text copy `handleBaseAction` used to do.
     copySelected,
@@ -2642,6 +2725,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
       groupSelected,
       ungroupSelected,
       distributeNodes,
+      tidyBoard,
       setMode: setBoardMode,
       setCursorMode,
       cycleSessionRole,
@@ -3673,6 +3757,28 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
         toast.error(t('myWork.whiteboard.ai.needsElements'));
         return;
       }
+      // WB-P2-02: "Find themes" groups by LABEL SEMANTICS — if every object
+      // in scope is still an unrenamed default ("New note", "Text", …), the
+      // model has nothing real to cluster and would either fabricate themes
+      // from nothing or return generic noise presented as insight. Coach the
+      // missing input instead of running the generator (chapter 09 grounding
+      // rule: say what's missing rather than let AI improvise specificity it
+      // doesn't have). Scope matches what `context` below actually sends:
+      // the active selection when there is one, otherwise the whole board.
+      if (generatorType === 'wb_find_themes') {
+        const scopeNodes =
+          selectedNodeIds.length > 0
+            ? nodes.filter((n) => selectedNodeIds.includes(n.id))
+            : nodes;
+        const generic = collectGenericWhiteboardLabels(t);
+        const hasRealLabel = scopeNodes.some(
+          (n) => !isGenericWhiteboardLabel(n.data?.label, generic)
+        );
+        if (!hasRealLabel) {
+          toast.error(t('myWork.whiteboard.ai.needsRealLabels'), { duration: 5000 });
+          return;
+        }
+      }
       aiActionPendingRef.current = true;
       const toastId = toast.loading(t('myWork.whiteboard.ai.generating'));
       try {
@@ -3733,22 +3839,50 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
 
   // ── Keyboard shortcuts ────────────────────────────────────────────────────
 
+  // Reconciliacja z Rejestrem Akcji (2026-08-10, E02 DoD) — patrz analogiczny
+  // komentarz w `IdeaMapWorkspace.tsx` przy `runMindmapKeyboardAction`: każdy
+  // callback z wpisem w `ideaActionRegistry.ts` idzie przez `runIdeaAction`
+  // z `ctx.params.run` = DOKŁADNIE ta sama funkcja, którą wołał przed tym
+  // wpisem — zachowanie klawisza bajtowo identyczne, zyskuje tylko wpis w
+  // rejestrze i drugie wejście dla Teresy (tam, gdzie już istnieje odbiornik
+  // na szynie). `onFitView` ŚWIADOMIE NIE przechodzi przez rejestr — czysta
+  // nawigacja kamery, zero mutacji, bez menu/przycisku gdziekolwiek w kodzie
+  // Tablicy (ta sama kategoria co Mapy myśli `onFocusSelection`).
+  const runWbKeyboardAction = useCallback(
+    (actionId: string, run: () => void) => {
+      const ctx: ActionContext = {
+        ideaId,
+        tool: 'whiteboard',
+        selection: EMPTY_SELECTION,
+        surface: 'context',
+        source: 'ui',
+        language: isPl ? 'pl' : 'en',
+        params: { run },
+      };
+      void runIdeaAction(actionId, ctx);
+    },
+    [ideaId, isPl]
+  );
+
   // P3: shared grammar (Delete/Ctrl+Z/S/D/0/A/Shift+Z)
   useCanvasKeyboard({
     toolType: 'whiteboard',
     enabled: open,
     locked: locked || false,
     callbacks: {
-      onSave: handleSave,
-      onUndo: undoWhiteboard,
-      onRedo: redoWhiteboard,
-      onSelectAll: () => setNodes((nds) => nds.map((n) => ({ ...n, selected: true }))),
-      onDeleteSelected: deleteSelected,
-      onDuplicate: duplicateSelected,
+      onSave: () => runWbKeyboardAction('idea.canvas.save', handleSave),
+      onUndo: () => runWbKeyboardAction('idea.canvas.undo', undoWhiteboard),
+      onRedo: () => runWbKeyboardAction('idea.canvas.redo', redoWhiteboard),
+      onSelectAll: () =>
+        runWbKeyboardAction('idea.canvas.wb_select_all', () =>
+          setNodes((nds) => nds.map((n) => ({ ...n, selected: true })))
+        ),
+      onDeleteSelected: () => runWbKeyboardAction('idea.node.delete', deleteSelected),
+      onDuplicate: () => runWbKeyboardAction('idea.node.duplicate', duplicateSelected),
       // WB-CLIPBOARD-01 fix: Ctrl+C/Ctrl+V now drive the same real object
       // clipboard as the context menu's Copy/Paste (see useWhiteboardNodes).
-      onCopy: copySelected,
-      onPaste: () => pasteClipboard(),
+      onCopy: () => runWbKeyboardAction('idea.node.copy', copySelected),
+      onPaste: () => runWbKeyboardAction('idea.canvas.paste', () => pasteClipboard()),
       onFitView: () => {
         // Dispatch viewport event to fit-to-view (fitView is not available outside ReactFlowProvider)
         const rfContainer = document.querySelector('.react-flow');
@@ -4038,6 +4172,22 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
           ),
         },
         {
+          // WB-P2-03: "Tidy board" / "Auto arrange selection" — same command,
+          // label reflects what it will do given the current selection
+          // (>=2 unlocked selected → arranges just the selection; otherwise
+          // the whole board). See useWhiteboardNodes.tidyBoard for the
+          // collision-free layout + frame/group-preserving logic.
+          kind: 'button',
+          id: 'tidy',
+          icon: Wand2,
+          label:
+            selectedCount >= 2
+              ? t('myWork.whiteboard.selection.tidySelection')
+              : t('myWork.whiteboard.selection.tidyBoard'),
+          disabled: locked,
+          onClick: tidyBoard,
+        },
+        {
           kind: 'button',
           id: 'group',
           icon: Group,
@@ -4132,6 +4282,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
     handleSelectionStyleChange,
     alignNodes,
     distributeNodes,
+    tidyBoard,
     groupSelected,
     ungroupSelected,
     duplicateSelected,
@@ -4197,6 +4348,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
         onSave={handleSave}
         onUndo={undoWhiteboard}
         onRedo={redoWhiteboard}
+        onTidyBoard={tidyBoard}
       />
 
       {/* Canvas */}

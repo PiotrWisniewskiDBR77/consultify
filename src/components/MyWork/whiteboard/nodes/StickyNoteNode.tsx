@@ -22,7 +22,13 @@ export const StickyNoteNode: React.FC<NodeProps> = ({ id: nodeId, data, selected
   // Z15: per-element style overrides written by the floating style bar.
   const accentBg = resolveNodeAccentBg(data?.accentColor);
   const fontStyle = resolveNodeFontStyle(data);
-  const [editing, setEditing] = React.useState(false);
+  // WB-P2-01: a freshly-created note (`data._isNew`, set by
+  // IdeaWhiteboardTool.addElement for a rail/toolbar "Add sticky" with no
+  // caller-supplied label) opens straight into inline naming — a first-time
+  // user should never need to already know about double-click. Lazy
+  // initializer runs once per mount, so this only fires right after
+  // creation, not on every re-render.
+  const [editing, setEditing] = React.useState(() => Boolean(data?._isNew));
   const [editValue, setEditValue] = React.useState(String(data?.label || ''));
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
 
@@ -32,6 +38,15 @@ export const StickyNoteNode: React.FC<NodeProps> = ({ id: nodeId, data, selected
       textareaRef.current?.select();
     }
   }, [editing]);
+
+  // Clear `_isNew` once consumed so a later remount of this same node (e.g.
+  // its parent frame collapsing then expanding) doesn't reopen the editor.
+  React.useEffect(() => {
+    if (data?._isNew && typeof data?.onConsumeAutoEdit === 'function') {
+      data.onConsumeAutoEdit();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const commitEdit = () => {
     setEditing(false);

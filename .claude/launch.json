@@ -215,6 +215,19 @@
       "port": 3500
     },
     {
+      "name": "mm-ppm-measure",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "vite",
+        "--config",
+        "dev-render/vite.config.ts",
+        "--port",
+        "9531",
+        "--strictPort"
+      ],
+      "port": 9531
+    },
+    {
       "name": "ideas-transformation-baseline",
       "runtimeExecutable": "npx",
       "runtimeArgs": [

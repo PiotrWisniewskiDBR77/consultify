@@ -149,6 +149,7 @@ const IdeaTableTimelineStuckScreen = React.lazy(
 const WhiteboardWorkshopScreen = React.lazy(() => import('./screens/whiteboard-workshop'));
 const B2TemplateGalleryScreen = React.lazy(() => import('./screens/b2-template-gallery'));
 const MindmapI18nSmokeScreen = React.lazy(() => import('./screens/mindmap-i18n-smoke'));
+const MmPpmMeasureScreen = React.lazy(() => import('./screens/mm-ppm-measure'));
 const ModelCatalogTableScreen = React.lazy(() => import('./screens/model-catalog-table'));
 const NavDeclutterSidebarScreen = React.lazy(() => import('./screens/navdeclutter-sidebar'));
 const NotatnikCentrumMysliScreen = React.lazy(() => import('./screens/notatnik-centrum-mysli'));
@@ -691,6 +692,10 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'mindmap-i18n-smoke': {
     label: 'Smoke i18n fala 2 — M06 Mind Map modale (ideas.mindmap.*)',
     render: () => <MindmapI18nSmokeScreen />,
+  },
+  'mm-ppm-measure': {
+    label: 'MM-P2 (2026-08-10) — pomiar wysokości PPM węzła Mind Map (1280×800, do-usuniecia po odbiorze)',
+    render: () => <MmPpmMeasureScreen />,
   },
   'navdeclutter-sidebar': {
     label: 'ODB O5 — REALNY <Sidebar> (navDeclutterFlag, default OFF); &ff_navDeclutter=1 dla ON',

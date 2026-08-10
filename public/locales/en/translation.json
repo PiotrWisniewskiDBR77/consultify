@@ -2577,6 +2577,8 @@
         "alignBottom": "Align bottom",
         "distributeH": "Distribute horizontally",
         "distributeV": "Distribute vertically",
+        "tidyBoard": "Tidy board",
+        "tidySelection": "Auto arrange selection",
         "group": "Group",
         "ungroup": "Ungroup",
         "duplicate": "Duplicate",
@@ -2611,7 +2613,8 @@
         "generating": "AI is analyzing the board…",
         "generateFailed": "AI generation failed",
         "noProposals": "AI returned no proposals for this board",
-        "needsElements": "Add elements to the board first"
+        "needsElements": "Add elements to the board first",
+        "needsRealLabels": "Give at least one sticky or text note a real name before finding themes — everything in scope still has a default name like \"New note\" or \"Text\", so AI has nothing meaningful to group."
       },
       "errors": {
         "saveFailed": "Save failed",
@@ -2676,6 +2679,8 @@
         "pasted": "Pasted",
         "grouped": "Grouped",
         "ungrouped": "Ungrouped",
+        "tidiedBoard": "Board tidied",
+        "tidiedSelection": "Selection arranged",
         "quickStartBrainstorm": "Brainstorm starter created",
         "quickStartAffinity": "Affinity map starter created",
         "quickStartWorkshop": "Workshop wall created",
@@ -2745,7 +2750,8 @@
         "bgBlank": "Blank",
         "saving": "Saving…",
         "more": "More",
-        "follow": "Follow"
+        "follow": "Follow",
+        "tidyBoard": "Tidy board"
       },
       "selectionBar": {
         "ariaLabel": "Selection actions",
@@ -28252,7 +28258,18 @@
       "redo": "Redo",
       "clearDrawing": "Clear drawing",
       "closeDrawing": "Close drawing",
-      "close": "Close"
+      "close": "Close",
+      "kbToggleLabel": "Draw with keyboard",
+      "kbCanvasRole": "drawing canvas",
+      "kbCanvasLabel": "Drawing canvas. Use arrow keys to move the cursor, Space or Enter to start or stop a stroke, Escape to finish it.",
+      "kbInstructions": "Keyboard drawing mode: arrow keys move the drawing cursor, Space or Enter toggles the pen down or up, Escape finishes the current stroke and adds it to the canvas. Shift plus an arrow key moves in larger steps.",
+      "kbModeEntered": "Keyboard drawing mode. Arrow keys move the cursor, Space or Enter starts or stops the pen, Escape finishes the stroke.",
+      "kbPenDown": "Pen down. Move with arrow keys to draw.",
+      "kbPenUp": "Pen up. Move to reposition, or press Escape to finish the stroke.",
+      "kbStrokeCompleted": "Stroke completed and added to the canvas.",
+      "kbStrokeDiscarded": "No stroke drawn — nothing to add.",
+      "kbStatusPenDown": "Pen down",
+      "kbStatusPenUp": "Pen up"
     },
     "pinnedCard": {
       "addTitle": "Add a title",
@@ -29500,7 +29517,26 @@
       "actionNotSupported": "Action not supported",
       "aiError": "AI error",
       "commandPlaceholder": "Type a table command…",
-      "examples": "Examples"
+      "examples": "Examples",
+      "cancel": "Cancel",
+      "cancelled": "Command cancelled.",
+      "send": "Send",
+      "closeAssistant": "Close assistant",
+      "commandRequired": "Type a command before sending.",
+      "columnNotFound": "Column \"{{column}}\" was not found in this table.",
+      "noRowsToAdd": "The AI didn't return any rows to add.",
+      "noChanges": "This command didn't map to any change.",
+      "transportError": "Couldn't reach the AI service. Check your connection and retry.",
+      "retry": "Retry",
+      "edit": "Edit",
+      "historyLabel": "Command history",
+      "statusPending": "Working on it…",
+      "statusApplied": "Applied",
+      "statusProposal": "Proposal ready",
+      "statusUnsupported": "Not supported",
+      "statusValidation": "Couldn't run this command",
+      "statusTransport": "Connection problem",
+      "statusCancelled": "Cancelled"
     },
     "kanbanView": {
       "uncategorized": "Uncategorized",
@@ -30117,9 +30153,16 @@
         "ai": "AI",
         "convert": "Convert",
         "convertBranch": "Convert branch to...",
-        "styleData": "Style & data"
+        "styleData": "Style & data",
+        "data": "Data",
+        "appearance": "Appearance",
+        "expert": "Expert tools",
+        "more": "More"
       },
-      "ctx_ai_rewrite_node": "AI: Rewrite this node"
+      "ctx_ai_rewrite_node": "AI: Rewrite this node",
+      "scopeSelection": "Selection",
+      "scopeBranch": "Branch",
+      "scopeDocument": "Document"
     },
     "health": {
       "gapsCount_one": "{{count}} gap to fill",
