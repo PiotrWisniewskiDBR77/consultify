@@ -18,7 +18,7 @@ import type { StandardPreviewProps, StandardRowMenu, TableColumn } from '@/compo
 import { StatusChip } from '@/components/ui/primitives';
 
 import { HonestValueCell } from '../HonestValue';
-import { LifecycleLockBadge, lockedRowMenuAction } from '../LifecycleLockBadge';
+import { LifecycleLockBadge } from '../LifecycleLockBadge';
 import type { RoiCalculationRunSummary, RoiCaseListItem } from './roiApi';
 import {
   deriveIrrHonestValue,
@@ -32,10 +32,31 @@ import {
   humanizeActionType,
   irrNotCalculableReason,
   isRoiCaseLocked,
+  isRoiTransitionAllowedFromStatus,
   npvNotCalculableReason,
   ROI_STATUS_TONE,
+  ROI_TRANSITIONS,
   roiStatusLabel,
+  type RoiTransitionId,
 } from './roiRegistryMappers';
+
+/** Kebab display order for the 7 lifecycle transitions this package wires
+ * (RN_G2_UI_SCOPE.md §G #16 subset) — decision-zone actions first (approve/
+ * reject/request-changes), then the two-step "approved → revision" escape
+ * hatch, then the tracking-phase transitions (start-pir/close), with `cancel`
+ * last (broadest `fromStatuses`, most cases in the flow could theoretically
+ * show it eligible only very late — closest in spirit to an ending action,
+ * though it stays in the `statusTransitions` zone, not `destructive`, since
+ * it is a real lifecycle status, not a delete). */
+const ROI_TRANSITION_ORDER: RoiTransitionId[] = [
+  'approve',
+  'reject',
+  'request_changes',
+  'reopen_for_revision',
+  'start_pir',
+  'close',
+  'cancel',
+];
 
 // ==========================================
 // Table columns
@@ -224,14 +245,19 @@ export function buildRoiBenefitsRealizationColumns(isPolish: boolean): TableColu
 // ==========================================
 
 const NOT_BUILT_NOTE = {
-  pl: 'Pełne narzędzie sprawy ROI (edycja/przejścia) jeszcze nie zbudowane w tym pakiecie — rejestr jest list+preview.',
-  en: 'The full ROI Case tool (editing/transitions) is not built in this package yet — this is list+preview only.',
+  pl: 'Pełna edycja pól sprawy ROI (poza przejściami cyklu życia) jeszcze nie zbudowana w tym pakiecie.',
+  en: 'Full ROI case field editing (beyond lifecycle transitions) is not built in this package yet.',
 };
 
 export function buildRoiCaseRowMenu(
   row: RoiCaseListItem,
   isPolish: boolean,
-  handlers: { onPreview: (row: RoiCaseListItem) => void }
+  handlers: {
+    onPreview: (row: RoiCaseListItem) => void;
+    /** Opens `RoiTransitionDialog` for the given transition — the caller
+     * (live Hub or dev-render harness) owns the actual API call/mock. */
+    onTransition: (row: RoiCaseListItem, transitionId: RoiTransitionId) => void;
+  }
 ): StandardRowMenu {
   const locked = isRoiCaseLocked(row.status);
   const lock = getRoiCaseLockInfo(row.status);
@@ -246,17 +272,41 @@ export function buildRoiCaseRowMenu(
         onClick: () => handlers.onPreview(row),
       },
     ],
-    // A single representative lifecycle-transition slot — real transitions
-    // (submit/approve/reject/...) are a later package (RN_G2_UI_SCOPE.md §G
-    // #16), so this demonstrates the TWO distinct disabled-reasons a real
-    // build will need: a genuine business lock (`lockedRowMenuAction`, reason
-    // = why the STATE machine forbids it) vs. "not wired yet" (this package's
-    // own scope boundary) — never the same generic "disabled" with no reason.
-    statusTransitions: [
-      locked
-        ? lockedRowMenuAction({ id: 'advance', label: isPolish ? 'Zmień status' : 'Change status' }, lockReason!)
-        : { id: 'advance', label: isPolish ? 'Zmień status' : 'Change status', disabled: true, note: notBuiltReason },
-    ],
+    // Every one of the 7 wired lifecycle transitions is ALWAYS visible
+    // (TRIADA §C3: a disabled item stays visible with a reason, never
+    // hidden) — eligible ones (per `ROI_TRANSITIONS[id].fromStatuses`,
+    // copied verbatim from the server guard, see roiRegistryMappers.ts) are
+    // enabled; ineligible ones are disabled with the state-machine reason
+    // (`disabledReason`) — distinct in wording from `lockedRowMenuAction`'s
+    // business-lock reason below, since "wrong current status" and "editing
+    // frozen post-approval" are different facts even though both render as
+    // a disabled+note kebab entry.
+    statusTransitions: ROI_TRANSITION_ORDER.map((id) => {
+      const def = ROI_TRANSITIONS[id];
+      const label = isPolish ? def.label.pl : def.label.en;
+      const allowed = isRoiTransitionAllowedFromStatus(id, row.status);
+      // Menu-item id is namespaced `roi-<id>`, NOT the bare transition id —
+      // `src/components/shared/RowActionsMenu.tsx` `DANGER_IDS` (a shared,
+      // pre-existing, app-wide convention this package does not own) treats
+      // a bare `'reject'` action id as belonging to the danger zone
+      // REGARDLESS of which section declared it, silently splitting it out
+      // from its 6 sibling transitions into its own bottom group (confirmed
+      // live in the dev-render harness, RN-G2 create-package QA
+      // 2026-08-10). `reject` here is a normal lifecycle transition, not a
+      // delete — namespacing avoids the accidental collision without
+      // touching the shared component. `handlers.onTransition` still
+      // receives the real `RoiTransitionId` (`id`), unaffected by this.
+      const menuItemId = `roi-${id}`;
+      if (allowed) {
+        return { id: menuItemId, label, onClick: () => handlers.onTransition(row, id) };
+      }
+      return {
+        id: menuItemId,
+        label,
+        disabled: true,
+        note: isPolish ? def.disabledReason.pl : def.disabledReason.en,
+      };
+    }),
     universalHandlers: {
       preview: () => handlers.onPreview(row),
       editNote: locked ? lockReason : notBuiltReason,
@@ -391,13 +441,17 @@ export function buildRoiCasePreview(row: RoiCaseListItem, deps: RoiPreviewDeps):
       disabledTooltip: isPolish ? 'Wkrótce' : 'Coming soon',
     },
     relations: [],
-    // No `actions` block: this package is registry list + preview ONLY (see
-    // the `recommendation` line above / row-menu `editNote` for why) — a
-    // preview with no real capability wired shows NO action buttons rather
-    // than disabled ones with no visible reason (`StandardPreviewAction` has
-    // no `note`/tooltip slot for a disabled reason, unlike
-    // `StandardRowMenuAction.note`), so a fake button here would be worse
-    // than an honestly empty footer.
+    // No `actions` block: the 7 wired lifecycle transitions live in the ROW
+    // KEBAB only (`buildRoiCaseRowMenu` above), deliberately NOT duplicated
+    // here — `StandardPreviewAction` has no `note`/tooltip slot for a
+    // disabled reason (unlike `StandardRowMenuAction.note`), so a preview
+    // footer could only ever show the subset of transitions CURRENTLY
+    // eligible from `row.status`, silently hiding the rest — which would
+    // contradict TRIADA §C3 ("disabled stays visible with a reason, never
+    // hidden") the moment the two surfaces disagree on what's shown. The
+    // kebab is the one surface that can honor that rule for every
+    // transition, so it is the single source for this capability rather
+    // than splitting it across two possibly-inconsistent affordances.
   };
 }
 

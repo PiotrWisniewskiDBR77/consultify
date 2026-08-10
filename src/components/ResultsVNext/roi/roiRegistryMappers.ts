@@ -316,6 +316,156 @@ export function formatRoiDate(value: string | null, isPolish: boolean): string {
   }
 }
 
+// ==========================================
+// Lifecycle transition eligibility — RN-G2 quick-create+transitions package.
+// The 7 transitions this package is scoped to (RN_G2_UI_SCOPE.md §G #16
+// subset): approve/reject/request-changes/reopen-for-revision/cancel/
+// start-pir/close. EVERY "from" status below is copied verbatim from the
+// server's own status guard, NOT inferred/invented — citations point at the
+// exact guard line so a reviewer can diff this table against the code:
+//
+//  - approve            : status !== 'submitted_for_approval' → reject
+//                          `server/src/services/resultsVnext/roi/roiCaseApprovalCommands.ts` L347
+//  - reject              : status !== 'submitted_for_approval' → reject
+//                          same file L647
+//  - request-changes     : status !== 'submitted_for_approval' → reject
+//                          same file L747
+//  - reopen-for-revision : status !== 'approved' → reject
+//                          same file L849
+//  - cancel              : status not in ROI_TRACKING_ACTIVE_STATUSES → reject
+//                          `server/src/services/resultsVnext/roi/roiBenefitsRealizationCommands.ts` L244,
+//                          ROI_TRACKING_ACTIVE_STATUSES = ['tracking','benefits_realization',
+//                          'post_investment_review_due','post_investment_review']
+//                          (`server/src/services/resultsVnext/roi/roiCaseCommands.ts` L512-517)
+//  - start-pir           : status !== 'post_investment_review_due' → reject
+//                          `server/src/services/resultsVnext/roi/roiPirCommands.ts` L437
+//  - close               : status !== 'post_investment_review' → reject
+//                          same file L977
+//
+// Runtime-only guards this table CANNOT express (never fake them as a
+// status check): `approve` also 403s on self-approval (approver ===
+// submitted_by or created_by, roiCaseApprovalCommands.ts L336-344) — the
+// registry list payload carries neither field, so that denial can only be
+// surfaced honestly AFTER a real 403 response, never pre-computed here.
+// ==========================================
+
+export type RoiTransitionId =
+  | 'approve'
+  | 'reject'
+  | 'request_changes'
+  | 'reopen_for_revision'
+  | 'cancel'
+  | 'start_pir'
+  | 'close';
+
+export interface RoiTransitionDefinition {
+  id: RoiTransitionId;
+  label: { pl: string; en: string };
+  /** Statuses the server accepts this transition FROM — verbatim from the
+   * guard cited above, never widened/narrowed here. */
+  fromStatuses: readonly RoiCaseStatus[];
+  /** `true` ⇒ the reason/notes field is REQUIRED by the server schema
+   * (min-length-1 Zod field) and the UI must never submit it empty. */
+  reasonRequired: boolean;
+  /** Copy shown when disabled because the case's CURRENT status is not in
+   * `fromStatuses` — i.e. "the state machine doesn't allow this from here",
+   * distinct from a permissions denial. */
+  disabledReason: { pl: string; en: string };
+}
+
+/** Client-side mirror of `ROI_TRACKING_ACTIVE_STATUSES`
+ * (`server/src/services/resultsVnext/roi/roiCaseCommands.ts` L512-517) —
+ * copied verbatim, not re-derived, so a server-side change to that array is
+ * the only place this can silently drift from (same "mirrors the server
+ * array exactly" convention `ROI_LOCK_INFO` above already uses for
+ * `NON_EDITABLE_STATUSES`). */
+const ROI_TRACKING_ACTIVE_STATUSES_FOR_TRANSITIONS: readonly RoiCaseStatus[] = [
+  'tracking',
+  'benefits_realization',
+  'post_investment_review_due',
+  'post_investment_review',
+];
+
+export const ROI_TRANSITIONS: Record<RoiTransitionId, RoiTransitionDefinition> = {
+  approve: {
+    id: 'approve',
+    label: { pl: 'Zaakceptuj', en: 'Approve' },
+    fromStatuses: ['submitted_for_approval'],
+    reasonRequired: false,
+    disabledReason: {
+      pl: 'Akceptacja dostępna tylko dla sprawy złożonej do akceptacji.',
+      en: 'Approval is only available for a case submitted for approval.',
+    },
+  },
+  reject: {
+    id: 'reject',
+    label: { pl: 'Odrzuć', en: 'Reject' },
+    fromStatuses: ['submitted_for_approval'],
+    reasonRequired: true,
+    disabledReason: {
+      pl: 'Odrzucenie dostępne tylko dla sprawy złożonej do akceptacji.',
+      en: 'Rejection is only available for a case submitted for approval.',
+    },
+  },
+  request_changes: {
+    id: 'request_changes',
+    label: { pl: 'Poproś o poprawki', en: 'Request changes' },
+    fromStatuses: ['submitted_for_approval'],
+    reasonRequired: true,
+    disabledReason: {
+      pl: 'Prośba o poprawki dostępna tylko dla sprawy złożonej do akceptacji.',
+      en: 'Requesting changes is only available for a case submitted for approval.',
+    },
+  },
+  reopen_for_revision: {
+    id: 'reopen_for_revision',
+    label: { pl: 'Otwórz ponownie do rewizji', en: 'Reopen for revision' },
+    fromStatuses: ['approved'],
+    reasonRequired: true,
+    disabledReason: {
+      pl: 'Ponowne otwarcie do rewizji dostępne tylko dla sprawy zaakceptowanej.',
+      en: 'Reopening for revision is only available for an approved case.',
+    },
+  },
+  cancel: {
+    id: 'cancel',
+    label: { pl: 'Anuluj sprawę', en: 'Cancel case' },
+    fromStatuses: ROI_TRACKING_ACTIVE_STATUSES_FOR_TRANSITIONS,
+    reasonRequired: true,
+    disabledReason: {
+      pl: 'Anulowanie dostępne tylko dla sprawy, która rozpoczęła śledzenie realizacji.',
+      en: 'Cancellation is only available for a case that has started tracking.',
+    },
+  },
+  start_pir: {
+    id: 'start_pir',
+    label: { pl: 'Rozpocznij PIR', en: 'Start PIR' },
+    fromStatuses: ['post_investment_review_due'],
+    reasonRequired: false,
+    disabledReason: {
+      pl: 'Rozpoczęcie przeglądu poinwestycyjnego dostępne tylko, gdy PIR jest do wykonania.',
+      en: 'Starting the post-investment review is only available when a PIR is due.',
+    },
+  },
+  close: {
+    id: 'close',
+    label: { pl: 'Zamknij sprawę', en: 'Close case' },
+    fromStatuses: ['post_investment_review'],
+    reasonRequired: false,
+    disabledReason: {
+      pl: 'Zamknięcie dostępne tylko w trakcie przeglądu poinwestycyjnego.',
+      en: 'Closing is only available during the post-investment review.',
+    },
+  },
+};
+
+export function isRoiTransitionAllowedFromStatus(
+  transitionId: RoiTransitionId,
+  status: RoiCaseStatus
+): boolean {
+  return ROI_TRANSITIONS[transitionId].fromStatuses.includes(status);
+}
+
 /** Humanizes a free-form `next_action_type` slug (e.g. `conduct_post_investment_review`
  * → "Conduct post investment review") — no exhaustive translation table exists
  * server-side for this field (it's a status-machine side-effect string, not a

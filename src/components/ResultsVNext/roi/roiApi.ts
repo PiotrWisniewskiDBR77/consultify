@@ -1,20 +1,29 @@
 /**
- * RN-G2 P2 — ROI registry API client.
+ * RN-G2 P2/G2-create — ROI registry API client.
  *
  * Deliberately a HAND-WRITTEN, SMALL client for exactly the endpoints the
- * registry+preview package needs (3 reads) — NOT an attempt to wrap all
- * ~76 `/api/vnext/results/roi*` endpoints (RN_G2_UI_SCOPE.md §G Open
- * Question 4 flags that as a 200+-wrapper problem for a LATER package that
- * builds the full Case tool; the registry does not need it). Follows the
- * same `fetch` + `getHeaders()` + `API_URL` convention every other small
- * feature module in this codebase uses (see `Api.login` in
- * `src/services/api.ts` for the canonical shape) rather than adding to the
- * ~19k-line `Api` object for three endpoints.
+ * registry+preview+quick-create+lifecycle-transitions package needs — NOT
+ * an attempt to wrap all ~76 `/api/vnext/results/roi*` endpoints
+ * (RN_G2_UI_SCOPE.md §G Open Question 4 flags that as a 200+-wrapper
+ * problem for a LATER package that builds the full Case tool; this
+ * package's scope — quick create + 7 named lifecycle transitions — does not
+ * need it). Follows the same `fetch` + `getHeaders()` + `API_URL`
+ * convention every other small feature module in this codebase uses (see
+ * `Api.login` in `src/services/api.ts` for the canonical shape) rather than
+ * adding to the ~19k-line `Api` object for a handful of endpoints.
  *
  * Server source of truth for these shapes:
  *  - `server/src/services/resultsVnext/roi/roiTypes.ts` (`RoiCase`)
  *  - `server/src/services/resultsVnext/roi/roiEconomicModelTypes.ts` (`RoiCalculationRun`)
  *  - `server/src/services/resultsVnext/roi/roiOrgPerspectiveRepository.ts` (`OrganizationRoiBenefitsRealization`)
+ *  - `server/src/validators/resultsVnextRoi.validators.ts` (`CreateRoiCaseSchema`,
+ *    `RoiCaseTransitionSchema`, `RejectRoiCaseSchema`,
+ *    `RequestChangesOnRoiCaseSchema`, `ReopenApprovedRoiCaseForRevisionSchema`)
+ *  - `server/src/validators/resultsVnextRoiForecastActual.validators.ts`
+ *    (`RoiCaseCancellationSchema`)
+ *  - `server/src/validators/resultsVnextRoiPir.validators.ts` (`CloseRoiCaseSchema`)
+ *  - `server/src/routes/resultsVnext/roi.routes.ts` (exact paths/methods for
+ *    every write endpoint below — read directly, not guessed)
  * Server DTOs are already camelCase JSON on the wire (`to*` mapper
  * functions) — these client types mirror them 1:1, no re-mapping needed.
  */
@@ -128,12 +137,35 @@ export interface RoiOrgBenefitsRealization {
 export class RoiApiError extends Error {
   status: number;
   code?: string;
-  constructor(message: string, status: number, code?: string) {
+  /**
+   * Raw error-body fields beyond `error`/`code` — for a 409 `STALE_VERSION`
+   * conflict this carries `{currentVersion, expectedVersion}` verbatim
+   * (`handleRoiRouteError`, `roi.routes.ts` L349-352: `res.status(409).json({
+   * error, code, ...(err.details || {}) })` — the conflict's extra fields
+   * are spread top-level, not nested under a `details` key on the wire, but
+   * captured here under `details` client-side for a stable shape callers can
+   * read regardless of which specific fields a given error code carries).
+   */
+  details?: Record<string, unknown>;
+  constructor(message: string, status: number, code?: string, details?: Record<string, unknown>) {
     super(message);
     this.name = 'RoiApiError';
     this.status = status;
     this.code = code;
+    this.details = details;
   }
+}
+
+/** One fresh v4 UUID per user-initiated write ATTEMPT (create-case form open,
+ * or a lifecycle-transition dialog open) — same client convention already
+ * used across the app for `idempotencyKey` (e.g. `crypto.randomUUID()` in
+ * `RecoveryCardPanel.tsx`, `SpreadsheetArtifactStudio.tsx`). Callers must
+ * generate ONCE per attempt and reuse it across retries of that SAME attempt
+ * (not regenerate per click) — that is what makes a double-click or a
+ * network-retry idempotent instead of creating two cases/two transitions.
+ */
+export function newRoiIdempotencyKey(): string {
+  return crypto.randomUUID();
 }
 
 async function getJson<T>(path: string, params?: Record<string, string | number | boolean | undefined>): Promise<T> {
@@ -161,6 +193,45 @@ async function getJson<T>(path: string, params?: Record<string, string | number 
     throw new RoiApiError(body.error || `Request failed (${res.status})`, res.status, body.code);
   }
   return res.json() as Promise<T>;
+}
+
+/** POST/PATCH/PUT counterpart of `getJson` — same network-error/HTTP-error
+ * mapping, plus captures every non-`error`/`code` body field into
+ * `RoiApiError.details` (the 409 `STALE_VERSION` conflict's
+ * `currentVersion`/`expectedVersion`, in particular). */
+async function mutateJson<T>(
+  method: 'POST' | 'PATCH' | 'PUT',
+  path: string,
+  body: unknown
+): Promise<T> {
+  const url = `${API_URL}${path}`;
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      method,
+      headers: getHeaders(),
+      body: JSON.stringify(body),
+    });
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : String(e);
+    throw new RoiApiError(`Network error contacting ${url}: ${msg}`, 0);
+  }
+  let parsed: Record<string, unknown> = {};
+  try {
+    parsed = await res.json();
+  } catch {
+    // non-JSON body — fall through with a generic message/empty details
+  }
+  if (!res.ok) {
+    const { error, code, ...details } = parsed as { error?: string; code?: string; [k: string]: unknown };
+    throw new RoiApiError(
+      (typeof error === 'string' && error) || `Request failed (${res.status})`,
+      res.status,
+      typeof code === 'string' ? code : undefined,
+      Object.keys(details).length > 0 ? details : undefined
+    );
+  }
+  return parsed as T;
 }
 
 // ==========================================
@@ -211,4 +282,150 @@ export async function listOrgRoiBenefitsRealization(): Promise<RoiOrgBenefitsRea
     '/vnext/results/roi/org/benefits-realization'
   );
   return attention;
+}
+
+// ==========================================
+// POST /api/vnext/results/roi/cases — quick create
+// (`roi.routes.ts` L439-474, body = `CreateRoiCaseSchema`,
+// `resultsVnextRoi.validators.ts` L84-94)
+// ==========================================
+
+export interface CreateRoiCaseInput {
+  initiativeId: string;
+  title: string;
+  ownerUserId: string;
+  currency: string;
+  granularity?: RoiCaseGranularity;
+  analysisStart?: string | null;
+  analysisEnd?: string | null;
+  reason?: string | null;
+  idempotencyKey: string;
+}
+
+export interface CreateRoiCaseResponse {
+  outcome: 'applied' | 'duplicate';
+  case: RoiCaseListItem;
+  created: boolean;
+}
+
+export async function createRoiCase(input: CreateRoiCaseInput): Promise<CreateRoiCaseResponse> {
+  return mutateJson<CreateRoiCaseResponse>('POST', '/vnext/results/roi/cases', input);
+}
+
+// ==========================================
+// Lifecycle transitions (RN_G2_UI_SCOPE.md §G #16 subset — exactly the 7
+// endpoints this package is scoped to). Each mirrors its route's exact body
+// shape read from `roi.routes.ts`/the validator files cited in the file
+// header — no field invented beyond what the server schema declares.
+// ==========================================
+
+export interface RoiTransitionResult {
+  outcome: 'applied' | 'duplicate';
+  case: RoiCaseListItem;
+}
+
+/** POST .../transitions/approve — `RoiCaseTransitionSchema` (expectedVersion
+ * + optional reason). Response carries `{case, snapshot}`; only `case`
+ * matters to the registry (`roi.routes.ts` L1800-1832). */
+export async function approveRoiCase(
+  caseId: string,
+  input: { expectedVersion: number; reason?: string | null; idempotencyKey: string }
+): Promise<RoiTransitionResult> {
+  return mutateJson<RoiTransitionResult>(
+    'POST',
+    `/vnext/results/roi/cases/${encodeURIComponent(caseId)}/transitions/approve`,
+    input
+  );
+}
+
+/** POST .../transitions/reject — `RejectRoiCaseSchema`: expectedVersion +
+ * REQUIRED `rejectionReason` (`roi.routes.ts` L1836-1867). */
+export async function rejectRoiCase(
+  caseId: string,
+  input: { expectedVersion: number; rejectionReason: string; idempotencyKey: string }
+): Promise<RoiTransitionResult> {
+  return mutateJson<RoiTransitionResult>(
+    'POST',
+    `/vnext/results/roi/cases/${encodeURIComponent(caseId)}/transitions/reject`,
+    input
+  );
+}
+
+/** POST .../transitions/request-changes — `RequestChangesOnRoiCaseSchema`:
+ * expectedVersion + REQUIRED `changeRequestNotes` (`roi.routes.ts`
+ * L1871-1902). */
+export async function requestChangesOnRoiCase(
+  caseId: string,
+  input: { expectedVersion: number; changeRequestNotes: string; idempotencyKey: string }
+): Promise<RoiTransitionResult> {
+  return mutateJson<RoiTransitionResult>(
+    'POST',
+    `/vnext/results/roi/cases/${encodeURIComponent(caseId)}/transitions/request-changes`,
+    input
+  );
+}
+
+/** POST .../transitions/reopen-for-revision —
+ * `ReopenApprovedRoiCaseForRevisionSchema`: expectedVersion + REQUIRED
+ * `reason` (`roi.routes.ts` L1906-1937). Only valid from `approved` — NOT
+ * the same endpoint as `.../transitions/reopen-after-rejection` (from
+ * `rejected`), which is out of this package's scope. */
+export async function reopenRoiCaseForRevision(
+  caseId: string,
+  input: { expectedVersion: number; reason: string; idempotencyKey: string }
+): Promise<RoiTransitionResult> {
+  return mutateJson<RoiTransitionResult>(
+    'POST',
+    `/vnext/results/roi/cases/${encodeURIComponent(caseId)}/transitions/reopen-for-revision`,
+    input
+  );
+}
+
+/** POST .../transitions/cancel — `RoiCaseCancellationSchema`
+ * (`resultsVnextRoiForecastActual.validators.ts` L84-86): expectedVersion +
+ * REQUIRED `reason` (Decision D8). Only valid from
+ * `ROI_TRACKING_ACTIVE_STATUSES` (`roi.routes.ts` L2564-2595). */
+export async function cancelRoiCase(
+  caseId: string,
+  input: { expectedVersion: number; reason: string; idempotencyKey: string }
+): Promise<RoiTransitionResult> {
+  return mutateJson<RoiTransitionResult>(
+    'POST',
+    `/vnext/results/roi/cases/${encodeURIComponent(caseId)}/transitions/cancel`,
+    input
+  );
+}
+
+/** POST .../transitions/start-pir — `RoiCaseTransitionSchema` (expectedVersion
+ * + optional reason). Response carries `{case, pir}`; only `case` matters to
+ * the registry (`roi.routes.ts` L2676-2712). */
+export async function startPirRoiCase(
+  caseId: string,
+  input: { expectedVersion: number; reason?: string | null; idempotencyKey: string }
+): Promise<RoiTransitionResult> {
+  return mutateJson<RoiTransitionResult>(
+    'POST',
+    `/vnext/results/roi/cases/${encodeURIComponent(caseId)}/transitions/start-pir`,
+    input
+  );
+}
+
+/** POST .../transitions/close — `CloseRoiCaseSchema`
+ * (`resultsVnextRoiPir.validators.ts` L87-92): expectedVersion + optional
+ * `openVarianceWaiverReason` + optional `reason` (`roi.routes.ts`
+ * L2838-2861). */
+export async function closeRoiCase(
+  caseId: string,
+  input: {
+    expectedVersion: number;
+    openVarianceWaiverReason?: string | null;
+    reason?: string | null;
+    idempotencyKey: string;
+  }
+): Promise<RoiTransitionResult> {
+  return mutateJson<RoiTransitionResult>(
+    'POST',
+    `/vnext/results/roi/cases/${encodeURIComponent(caseId)}/transitions/close`,
+    input
+  );
 }
