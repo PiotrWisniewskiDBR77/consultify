@@ -259,6 +259,9 @@ const ResultsVNextRoiRegistryScreen = React.lazy(
 const ResultsVNextOkrRegistryScreen = React.lazy(
   () => import('./screens/results-vnext-okr-registry')
 );
+const ResultsVNextOkrObjectivesScreen = React.lazy(
+  () => import('./screens/results-vnext-okr-objectives')
+);
 const ResultsVNextKpiScorecardsScreen = React.lazy(
   () => import('./screens/results-vnext-kpi-scorecards')
 );
@@ -283,6 +286,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'RN-G2 P3 #23 — REALNY rejestr OKR (okrRegistryPresenters + ResultsVNextRegistryShell): Organization/My/Company tabs, honest progress/confidence, lock badges (draft-editable vs locked). &tab=org|my|company &state=ready|loading|empty|error &selected=<setId|none>',
     render: () => <ResultsVNextOkrRegistryScreen />,
+  },
+  'results-vnext-okr-objectives': {
+    label:
+      'RN-G2 §G #25 — REALNE Cele/Kluczowe Rezultaty/Check-iny OKR (drill-down breadcrumb pod /results/okr): honest 3-way progress via calc-reason, lock (draft-editable vs zamrożony), formularze create/edit/cancel/record/correct. &level=objectives|keyResults|checkIns &setStatus=<status> &krStatus=<status> &state=ready|loading|empty|error &selected=<id|none> &modal=none|create|edit|cancel|record|correct &modalState=idle|saving|error|conflict &suggestion=trend|no_history|loading|failed',
+    render: () => <ResultsVNextOkrObjectivesScreen />,
   },
   'results-vnext-kpi-scorecards': {
     label:

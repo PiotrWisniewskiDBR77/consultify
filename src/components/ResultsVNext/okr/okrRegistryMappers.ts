@@ -282,8 +282,37 @@ export function parseOkrProgress(value: string | null): HonestValue<number> {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
+/**
+ * BUG FOUND AND FIXED while building RN-G2 §G #25 (Objectives/Key
+ * Results/Check-ins): `progress` is a RAW, UNCLAMPED RATIO on the wire at
+ * every level of this domain, not a 0-100 percentage — proven by reading
+ * the calculation engine directly, not assumed:
+ *  - `okrProgressEngine.ts` §-IO item 2 (binding): "progress is the RAW
+ *    UNCLAMPED ratio... never clamped to [0,1]".
+ *  - The engine's own hand-verified known-answer suite
+ *    (`tests/resultsVnext/okr/okrProgressEngine.test.ts`) asserts e.g.
+ *    `expect(result.progress).toBe(0.5)` for a 50% case and `.toBe(1.5)`
+ *    for 150% overachievement — never `50`/`150`.
+ *  - The write path never rescales: `okrCheckInCommands.ts` L280-286 writes
+ *    `rollup.overallProgress` (from `computeSetRollup`, itself built on
+ *    `calculateObjectiveProgressRollup` — same ratio scale) straight into
+ *    `overall_progress` with no `* 100`; `okrObjectiveCommands.ts`/
+ *    `okrKeyResultCommands.ts` do the same for `progress`.
+ * This function previously did `value.toLocaleString(...) + '%'` with NO
+ * scaling — for a real API value of `0.5` (50%) it rendered "0.5%", 100x
+ * too small. The bug was invisible in this package's own dev-render mock
+ * (`results-vnext-okr-registry.tsx`), because that mock's `overallProgress`
+ * values (`'62.5'`, `'91'`, `'104'`, `'78'`) were themselves authored on a
+ * 0-100 assumption — the mock and the buggy formatter silently canceled
+ * each other out on screen, while a real `/sets`/`/my`/`/company` response
+ * would have shown every Set's progress two orders of magnitude too low.
+ * Fixed here (now multiplies by 100) AND in the mock (rescaled to true 0-1
+ * ratios, `okr-registry-2026-08-10` QA pass) — the rendered percentages on
+ * screen are byte-for-byte unchanged (62.5%/91%/104%/78%), so the
+ * "REGRESJA: niezmieniony rejestr zestawów OKR" QA axis holds.
+ */
 export function formatOkrProgressPercent(value: number, isPolish: boolean): string {
-  return `${value.toLocaleString(isPolish ? 'pl-PL' : 'en-US', { maximumFractionDigits: 1 })}%`;
+  return `${(value * 100).toLocaleString(isPolish ? 'pl-PL' : 'en-US', { maximumFractionDigits: 1 })}%`;
 }
 
 // ==========================================
