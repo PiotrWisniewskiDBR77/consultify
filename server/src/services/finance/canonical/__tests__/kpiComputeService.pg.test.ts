@@ -289,6 +289,239 @@ describe.skipIf(!REAL_PG)('WP-D04 kpiComputeService — real PostgreSQL known-an
     });
   });
 
+  /**
+   * W10 — KNOWN-ANSWER KPI, gate FC-04.3: bringing coverage from 6/18 (WP-D04) + 2/18
+   * (DIO/DPO, RC-04, added later on real Apator data) to the remaining 9 P0 KPI that
+   * compute a real number on GoldCo PARENT standalone FY2025/FY2024(restated) data, plus
+   * `DEBT_TO_EBITDA` (documented as structurally unavailable for an annual-only report, RC-09
+   * — see the module comment, `periodConventionResolver.ts`'s `LTM_SUM_4Q` branch: it requires
+   * `period_type='Q'`, and this fixture (like GoldCo's whole oracle) only has `FY` periods).
+   *
+   * Per this task's own discipline ("NIE używaj tego samego formulaAstEvaluator do wyliczenia
+   * oczekiwanej wartości"), every EXPECTED value below is plain arithmetic on the SAME raw
+   * PARENT FY2025 / FY2024_restated figures the existing "6 KPI" block above already transcribes
+   * from `goldco_oracle.ts` (see this file's header comment) — not a second call into
+   * `formulaAstEvaluator`/`kpiComputeService`, and not copied from any prior engine run.
+   *
+   *   PARENT FY2025 (raw, from goldco_oracle.ts `parent.FY2025`, restated where noted):
+   *     revenue=182,000,000  cogs=118,000,000  opex=34,000,000  depreciation=7,000,000
+   *     interest=2,000,000  taxExpense=3,990,000  cash=11,000,000  ar=26,000,000
+   *     inventory=19,500,000  fixedAssets=101,500,000  ap=17,500,000  longTermDebt=40,500,000
+   *     cfo=15,000,000  cfi=-9,000,000
+   *   PARENT FY2024_restated (revenue is UNCHANGED by the restatement — only cogs/inventory move):
+   *     revenue=165,000,000  inventory=18,000,000 (21,000,000 orig - 3,000,000 write-down)
+   *     ap=16,500,000  fixedAssets=96,500,000  cash=9,500,000  ar=24,000,000
+   *
+   *   Derived FY2025 (same `derivePL`/`deriveBS`/`withEquityPlug` oracle formulas, re-derived
+   *   here independently — identical to the existing "6 KPI" block's own header, repeated for
+   *   this block's self-containedness):
+   *     grossMargin  = revenue-cogs                          = 182,000,000-118,000,000 = 64,000,000
+   *     ebitda       = grossMargin-opex                      = 64,000,000-34,000,000   = 30,000,000
+   *     ebit         = ebitda-depreciation                   = 30,000,000-7,000,000    = 23,000,000
+   *     netIncome    = ((ebit-interest)-taxExpense)          = (23,000,000-2,000,000)-3,990,000 = 17,010,000
+   *     currentAssets= cash+ar+inventory                     = 11,000,000+26,000,000+19,500,000 = 56,500,000
+   *     totalAssets  = currentAssets+fixedAssets              = 56,500,000+101,500,000 = 158,000,000
+   *   Derived FY2024_restated:
+   *     totalAssets(restated) = (9,500,000+24,000,000+18,000,000)+96,500,000 = 148,000,000
+   *     (cross-checks the existing "6 KPI" block's own independently-stated equity(FY2024_restated)
+   *     = 89,500,000 = totalAssets(148,000,000) - totalLiabilities(58,500,000; ap 16,500,000 +
+   *     longTermDebt 42,000,000) — not re-derived here, only totalAssets is needed for ROA)
+   *
+   *   A DOCUMENTED SCOPE DECISION, flagged for reviewer awareness (not silently assumed):
+   *   `goldco_oracle.ts` does not model a `FCF`/`CAPEX` line at all (the oracle's own `parent.*`
+   *   objects carry `cfo`/`cfi`/`cff` only — see the file's own field list). `FCF_MARGIN`'s
+   *   formula (`..._03_kpi_p0_catalog.sql` row 15) reads `FCF` as a plain `cell_ref`, i.e. FCF is
+   *   a RAW reported statement line in this schema, not something the compute engine derives from
+   *   CFO/CAPEX — exactly the same way `OPERATING_CASH_FLOW_MARGIN`'s `CFO` is a raw given cell in
+   *   the existing "6 KPI" block above, not derived by this evaluator either. Since the oracle
+   *   gives no independent FCF figure, this test uses the standard identity FCF = CFO - CAPEX,
+   *   and — because GoldCo's oracle books no investing activity other than CAPEX (no M&A, no
+   *   securities) — CFI stands in for -CAPEX exactly: FCF = CFO + CFI = 15,000,000 + (-9,000,000)
+   *   = 6,000,000. This is an assumption ABOUT THE FIXTURE'S OWN INPUT DATA, not about the KPI
+   *   formula itself (which stays a plain `FCF / REVENUE` cell-ratio, verified byte-for-byte
+   *   against the DB-persisted `FCF` cell this test writes).
+   *
+   *   The 9 KPI this test computes (by hand, NOT via formulaAstEvaluator):
+   *     QUICK_RATIO       = (currentAssets-inventory)/currentLiabilities
+   *                        = (56,500,000-19,500,000)/17,500,000            = 2.1142857142857143
+   *     CASH_RATIO        = cash/currentLiabilities = 11,000,000/17,500,000 = 0.6285714285714286
+   *     EBITDA_MARGIN_PCT = ebitda/revenue = 30,000,000/182,000,000        = 0.16483516483516483
+   *     NET_MARGIN_PCT    = netIncome/revenue = 17,010,000/182,000,000     = 0.09346153846153846
+   *     INTEREST_COVERAGE = ebit/interest = 23,000,000/2,000,000           = 11.5
+   *     ROA               = netIncome/TOTAL_ASSETS_avg, TOTAL_ASSETS_avg=(158,000,000+148,000,000)/2=153,000,000
+   *                        -> 17,010,000/153,000,000                       = 0.1111764705882353
+   *     REVENUE_GROWTH_YOY= (revenue(FY2025)-revenue(FY2024))/revenue(FY2024)
+   *                        = (182,000,000-165,000,000)/165,000,000         = 0.10303030303030303
+   *     FCF_MARGIN        = FCF/revenue = 6,000,000/182,000,000            = 0.03296703296703297
+   *     CASH_CONVERSION_CYCLE = DSO+DIO-DPO, each AR/INVENTORY/AP_avg*365/{REVENUE|COGS}:
+   *       DSO = ((26,000,000+24,000,000)/2)*365/182,000,000                = 50.13736263736264 (matches the "6 KPI" block's own DSO)
+   *       DIO = ((19,500,000+18,000,000)/2)*365/118,000,000                = 57.9978813559322
+   *       DPO = ((17,500,000+16,500,000)/2)*365/118,000,000                = 52.58474576271186
+   *       CCC = 50.13736263736264+57.9978813559322-52.58474576271186      = 55.55049823058298
+   *
+   *   DEBT_TO_EBITDA (10th KPI in this block) is asserted SEPARATELY as a structural-unavailability
+   *   case (`status='MISSING'`, `value=null`) — never assigned a fabricated 18th number.
+   */
+  describe('W10 — 9 additional P0 KPI (known-answer) + 1 structurally-unavailable (DEBT_TO_EBITDA), GoldCo PARENT FY2025', () => {
+    it('QUICK_RATIO / CASH_RATIO / EBITDA_MARGIN_PCT / NET_MARGIN_PCT / INTEREST_COVERAGE / ROA / REVENUE_GROWTH_YOY / FCF_MARGIN / CASH_CONVERSION_CYCLE match hand-computed values', async () => {
+      const pack = await makeStatementPack();
+      const packBvId = pack.businessVersion.business_version_id;
+      const entityId = await makeEntity(packBvId, 'PARENT-W10');
+
+      // FY2025 (current) — raw + derived lines.
+      await writeLine(packBvId, entityId, fy2025PeriodId, 'REVENUE', 'P&L', 182_000_000);
+      await writeLine(packBvId, entityId, fy2025PeriodId, 'COGS', 'P&L', 118_000_000);
+      await writeLine(packBvId, entityId, fy2025PeriodId, 'EBITDA', 'P&L', 30_000_000);
+      await writeLine(packBvId, entityId, fy2025PeriodId, 'EBIT', 'P&L', 23_000_000);
+      await writeLine(packBvId, entityId, fy2025PeriodId, 'NET_INCOME', 'P&L', 17_010_000);
+      await writeLine(packBvId, entityId, fy2025PeriodId, 'INTEREST_EXPENSE', 'P&L', 2_000_000);
+      await writeLine(packBvId, entityId, fy2025PeriodId, 'CASH', 'BS', 11_000_000);
+      await writeLine(packBvId, entityId, fy2025PeriodId, 'AR', 'BS', 26_000_000);
+      await writeLine(packBvId, entityId, fy2025PeriodId, 'INVENTORY', 'BS', 19_500_000);
+      await writeLine(packBvId, entityId, fy2025PeriodId, 'AP', 'BS', 17_500_000);
+      await writeLine(packBvId, entityId, fy2025PeriodId, 'CURRENT_ASSETS', 'BS', 56_500_000);
+      await writeLine(packBvId, entityId, fy2025PeriodId, 'CURRENT_LIABILITIES', 'BS', 17_500_000);
+      await writeLine(packBvId, entityId, fy2025PeriodId, 'TOTAL_ASSETS', 'BS', 158_000_000);
+      await writeLine(packBvId, entityId, fy2025PeriodId, 'LONG_TERM_DEBT', 'BS', 40_500_000);
+      await writeLine(packBvId, entityId, fy2025PeriodId, 'CFO', 'CF', 15_000_000);
+      // FCF — see this block's header comment: FCF = CFO + CFI = 15,000,000 + (-9,000,000), since
+      // goldco_oracle.ts models no other investing cash flow (documented scope decision).
+      await writeLine(packBvId, entityId, fy2025PeriodId, 'FCF', 'CF', 6_000_000);
+
+      // FY2024 (prior, restated) — needed only for AVERAGE_BALANCE (ROA, DIO, DPO -> CCC) and
+      // PRIOR_YEAR_SAME_PERIOD (REVENUE_GROWTH_YOY) conventions.
+      await writeLine(packBvId, entityId, fy2024PeriodId, 'REVENUE', 'P&L', 165_000_000); // unaffected by the restatement
+      await writeLine(packBvId, entityId, fy2024PeriodId, 'AR', 'BS', 24_000_000);
+      await writeLine(packBvId, entityId, fy2024PeriodId, 'INVENTORY', 'BS', 18_000_000); // restated (21,000,000 - 3,000,000 write-down)
+      await writeLine(packBvId, entityId, fy2024PeriodId, 'AP', 'BS', 16_500_000);
+      await writeLine(packBvId, entityId, fy2024PeriodId, 'TOTAL_ASSETS', 'BS', 148_000_000); // restated
+
+      const analysis = await makeAnalysis();
+      const analysisBvId = analysis.businessVersion.business_version_id;
+
+      await withPinnedPostgresTransaction((tx) =>
+        tx.queryRun(
+          `INSERT INTO finance_analysis_definitions (
+             organization_id, business_version_id, purpose, analysis_type, entity_scope_mode, presentation_currency, unit, created_by
+           ) VALUES (?, ?, 'INTERNAL_REVIEW', 'STANDARD', 'GROUP_CONSOLIDATED', 'PLN', 'UNITS', ?)`,
+          [orgId, analysisBvId, preparerId]
+        )
+      );
+
+      const edge = await lineageService.insertEdge({
+        organizationId: orgId,
+        sourceVersionId: packBvId,
+        sourceArtifactType: 'STATEMENT_PACK',
+        targetVersionId: analysisBvId,
+        targetArtifactType: 'HISTORICAL_ANALYSIS',
+        edgeType: 'STATEMENT_TO_ANALYSIS',
+        transformationKind: 'MANUAL_LINK',
+        authorId: preparerId,
+      });
+      expect(edge.ok).toBe(true);
+
+      const kpiCodes = [
+        'QUICK_RATIO',
+        'CASH_RATIO',
+        'EBITDA_MARGIN_PCT',
+        'NET_MARGIN_PCT',
+        'INTEREST_COVERAGE',
+        'ROA',
+        'REVENUE_GROWTH_YOY',
+        'FCF_MARGIN',
+        'CASH_CONVERSION_CYCLE',
+        'DEBT_TO_EBITDA', // structurally unavailable — asserted separately below
+      ];
+      for (const code of kpiCodes) {
+        const catalogId = catalogIdByCode.get(code);
+        if (!catalogId) throw new Error(`catalog row not found for ${code}`);
+        await withPinnedPostgresTransaction((tx) =>
+          tx.queryRun(
+            `INSERT INTO finance_analysis_kpi_values (organization_id, business_version_id, kpi_catalog_id, entity_id, period_id)
+             VALUES (?, ?, ?, ?, ?)`,
+            [orgId, analysisBvId, catalogId, entityId, fy2025PeriodId]
+          )
+        );
+      }
+
+      const computed = await kpiComputeService.computeAnalysisKpis({
+        organizationId: orgId,
+        businessVersionId: analysisBvId,
+        requestedByUserId: preparerId,
+      });
+      expect(computed.ok).toBe(true);
+      if (!computed.ok) throw new Error('unreachable');
+      expect(computed.results).toHaveLength(10);
+
+      const byCode = new Map(computed.results.map((r) => [r.kpiCode, r]));
+
+      const EXPECTED: Record<string, number> = {
+        QUICK_RATIO: (56_500_000 - 19_500_000) / 17_500_000,
+        CASH_RATIO: 11_000_000 / 17_500_000,
+        EBITDA_MARGIN_PCT: 30_000_000 / 182_000_000,
+        NET_MARGIN_PCT: 17_010_000 / 182_000_000,
+        INTEREST_COVERAGE: 23_000_000 / 2_000_000,
+        ROA: 17_010_000 / ((158_000_000 + 148_000_000) / 2),
+        REVENUE_GROWTH_YOY: (182_000_000 - 165_000_000) / 165_000_000,
+        FCF_MARGIN: 6_000_000 / 182_000_000,
+        CASH_CONVERSION_CYCLE:
+          (((26_000_000 + 24_000_000) / 2) * 365) / 182_000_000 +
+          (((19_500_000 + 18_000_000) / 2) * 365) / 118_000_000 -
+          (((17_500_000 + 16_500_000) / 2) * 365) / 118_000_000,
+      };
+
+      for (const code of Object.keys(EXPECTED)) {
+        const result = byCode.get(code);
+        expect(result, `no compute result for ${code}`).toBeTruthy();
+        expect(result!.status, `${code} status`).toBe('PRESENT_NONZERO');
+        expect(result!.qualityFlag, `${code} qualityFlag`).toBeNull();
+        expect(result!.value, `${code} value`).toBeCloseTo(EXPECTED[code], 6);
+      }
+
+      // Confirm the DB rows themselves, not just the service's in-memory return value.
+      for (const code of Object.keys(EXPECTED)) {
+        const catalogId = catalogIdByCode.get(code)!;
+        const row = await withPinnedPostgresTransaction((tx) =>
+          tx.queryOne<{ value_status: string; value_decimal: string; quality_flag: string | null }>(
+            `SELECT value_status, value_decimal, quality_flag FROM finance_analysis_kpi_values
+              WHERE business_version_id = ? AND kpi_catalog_id = ?`,
+            [analysisBvId, catalogId]
+          )
+        );
+        expect(row?.value_status, `${code} DB value_status`).toBe('PRESENT_NONZERO');
+        expect(row?.quality_flag, `${code} DB quality_flag`).toBeNull();
+        expect(Number(row?.value_decimal), `${code} DB value_decimal`).toBeCloseTo(EXPECTED[code], 6);
+      }
+
+      // RC-09 — DEBT_TO_EBITDA (LONG_TERM_DEBT / EBITDA[LTM_SUM_4Q]) is structurally unavailable
+      // for an annual-only report: `periodConventionResolver.resolvePeriodOffset('LTM_SUM_4Q', ...)`
+      // requires `period_type='Q'` (this fixture, like GoldCo's whole oracle, only has FY periods)
+      // -> WRONG_PERIOD_TYPE_FOR_LTM -> the cell resolves to MISSING (not a DB-valid quality_flag,
+      // per formulaAstEvaluator.ts's own header note) -> the whole ratio propagates MISSING. This
+      // is NOT a defect: it is the correctly-documented absence of quarterly data, never a fabricated
+      // 18th number. A real LONG_TERM_DEBT value (40,500,000, written above) is present and PRESENT
+      // regardless — it is the EBITDA[LTM_SUM_4Q] side that cannot be resolved on FY-only data.
+      const debtToEbitda = byCode.get('DEBT_TO_EBITDA');
+      expect(debtToEbitda, 'no compute result for DEBT_TO_EBITDA').toBeTruthy();
+      expect(debtToEbitda!.status).toBe('MISSING');
+      expect(debtToEbitda!.value).toBeNull();
+      expect(debtToEbitda!.qualityFlag).toBeNull();
+      expect(debtToEbitda!.detail).toContain('WRONG_PERIOD_TYPE_FOR_LTM');
+
+      const debtToEbitdaCatalogId = catalogIdByCode.get('DEBT_TO_EBITDA')!;
+      const debtToEbitdaRow = await withPinnedPostgresTransaction((tx) =>
+        tx.queryOne<{ value_status: string; value_decimal: string | null; quality_flag: string | null }>(
+          `SELECT value_status, value_decimal, quality_flag FROM finance_analysis_kpi_values
+            WHERE business_version_id = ? AND kpi_catalog_id = ?`,
+          [analysisBvId, debtToEbitdaCatalogId]
+        )
+      );
+      expect(debtToEbitdaRow?.value_status).toBe('MISSING');
+      expect(debtToEbitdaRow?.value_decimal).toBeNull();
+      expect(debtToEbitdaRow?.quality_flag).toBeNull();
+    });
+  });
+
   describe('negative denominator — explicit quality_flag, never a misleading bare number', () => {
     it('DEBT_TO_EQUITY (SHOW_WITH_FLAG) with negative equity: keeps the correctly-signed value AND sets quality_flag=NEGATIVE_DENOMINATOR', async () => {
       const pack = await makeStatementPack();
