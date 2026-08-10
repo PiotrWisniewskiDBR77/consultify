@@ -115,10 +115,23 @@ export function assertFocusModeRegionPartition(): RegionPartitionCheck {
 // ---------------------------------------------------------------------------
 
 /**
- * The five things handoff section 11 names literally. Each maps onto a field
- * of AP-00's `FinanceWorkspaceState` (or, for `focus`, onto the session's own
+ * The five things handoff section 11 names literally (`selection`, `filters`,
+ * `scroll`, `focus`, `draft`) PLUS `activeView`. Each maps onto a field of
+ * AP-00's `FinanceWorkspaceState` (or, for `focus`, onto the session's own
  * focused-cell capture, which `WorkspaceState.selection.activeCell` already
  * carries).
+ *
+ * WHY `activeView` is here even though section 11 does not list it among the
+ * five: OWN-FIN-004 states the requirement in different words — "po aktywacji
+ * zostaje tylko Menu 1, **stan zakładki** i pracy jest zachowany". The "stan
+ * zakładki" IS the active view, and section 11's own retained-region list
+ * keeps `viewNavigation` on screen; a retained navigation that silently jumps
+ * back to view #1 would satisfy the letter of the region list and break the
+ * requirement. The active view is NOT a field of `FinanceWorkspaceState` (it
+ * lives in `WorkspaceBarViewNavigation.activeViewId`, AP-09's bar contract),
+ * so preserving it by carrying `workspaceState` through by reference is not
+ * enough — the session has to carry the id itself. See
+ * `FocusModeSession.activeViewId` and `assertFocusModePreservation`.
  */
 export const FOCUS_MODE_PRESERVED_STATE_KEYS = [
   'selection',
@@ -126,6 +139,7 @@ export const FOCUS_MODE_PRESERVED_STATE_KEYS = [
   'scroll',
   'focus',
   'draft',
+  'activeView',
 ] as const;
 export type FocusModePreservedStateKey = (typeof FOCUS_MODE_PRESERVED_STATE_KEYS)[number];
 
@@ -135,6 +149,7 @@ export const FOCUS_MODE_PRESERVED_STATE_SOURCE: Readonly<Record<FocusModePreserv
   scroll: 'FinanceWorkspaceState.scroll',
   focus: 'FinanceWorkspaceState.selection.activeCell (+ FocusModeSession.focusedCell)',
   draft: 'FinanceWorkspaceState.unsavedOperationStack + sourceWorkingRevisionId',
+  activeView: 'WorkspaceBarViewNavigation.activeViewId (+ FocusModeSession.activeViewId)',
 };
 
 /**
@@ -164,18 +179,35 @@ export interface FocusModeSession {
   /** The grid cell that had focus when the toggle happened; restored on exit. */
   focusedCell: CellRef | null;
   /**
+   * OWN-FIN-004 "stan zakładki ... jest zachowany": the
+   * `WorkspaceBarViewNavigation.activeViewId` at the moment the session was
+   * created, carried unchanged through every toggle. `null` only for a
+   * workspace whose bar has not reported a view yet (never legal in a built
+   * `WorkspaceBarConfig` — `validateWorkspaceBarConfig` rejects an unknown/
+   * empty active view — but representable so a caller cannot be forced to
+   * invent an id).
+   *
+   * ADDITIVE: `createFocusModeSession`'s second argument is optional, so every
+   * existing caller keeps compiling and gets `null`.
+   */
+  activeViewId: string | null;
+  /**
    * The live workspace state. Both `enterFocusMode` and `exitFocusMode` carry
    * this through BY REFERENCE — see the file header.
    */
   workspaceState: FinanceWorkspaceState;
 }
 
-export function createFocusModeSession(workspaceState: FinanceWorkspaceState): FocusModeSession {
+export function createFocusModeSession(
+  workspaceState: FinanceWorkspaceState,
+  options: { activeViewId?: string | null } = {}
+): FocusModeSession {
   return {
     active: false,
     enteredAt: null,
     restoreFocusToControlId: null,
     focusedCell: workspaceState.selection.activeCell,
+    activeViewId: options.activeViewId ?? null,
     workspaceState,
   };
 }
@@ -213,6 +245,8 @@ export function enterFocusMode(
     enteredAt: now(),
     restoreFocusToControlId: params.restoreFocusToControlId,
     focusedCell: session.workspaceState.selection.activeCell,
+    // Carried verbatim: entering focus mode must not re-select a view.
+    activeViewId: session.activeViewId,
     // Same reference — the whole point.
     workspaceState: session.workspaceState,
   };
@@ -240,6 +274,8 @@ export function exitFocusMode(
     enteredAt: null,
     restoreFocusToControlId: null,
     focusedCell: session.focusedCell,
+    // Carried verbatim: leaving focus mode must not re-select a view either.
+    activeViewId: session.activeViewId,
     workspaceState: session.workspaceState,
   };
   const effects: FocusModeEffect[] = FOCUS_MODE_HIDDEN_REGIONS.map((region) => ({
@@ -266,6 +302,80 @@ export function exitFocusMode(
  */
 export function focusModeDataEffects(): readonly never[] {
   return [];
+}
+
+// ---------------------------------------------------------------------------
+// Preservation check — the guarantee, as an assertable function.
+// ---------------------------------------------------------------------------
+
+export interface FocusModePreservationViolation {
+  key: FocusModePreservedStateKey;
+  detail: string;
+}
+
+export type FocusModePreservationCheck =
+  | { ok: true }
+  | { ok: false; violations: FocusModePreservationViolation[] };
+
+/**
+ * Compare the session BEFORE a toggle with the session AFTER it and prove
+ * every preserved key survived.
+ *
+ * Two different kinds of proof, deliberately:
+ *   - `selection`/`filters`/`scroll`/`draft` are fields of
+ *     `FinanceWorkspaceState`, which the toggle carries BY REFERENCE — so the
+ *     check is reference identity on `workspaceState`. A toggle that returned
+ *     a structurally-equal copy would have had to rebuild the state, which is
+ *     exactly the refetch this contract forbids; identity catches that, deep
+ *     equality would not.
+ *   - `focus` and `activeView` live on the session itself, so they are
+ *     compared by value (`focusedCell` by reference, since it is a `CellRef`
+ *     the caller owns and the toggle must not clone either).
+ *
+ * A no-op toggle returns the SAME session object, so this trivially passes —
+ * which is correct: a no-op preserved everything.
+ */
+export function assertFocusModePreservation(
+  before: FocusModeSession,
+  after: FocusModeSession
+): FocusModePreservationCheck {
+  const violations: FocusModePreservationViolation[] = [];
+  if (before.workspaceState !== after.workspaceState) {
+    for (const key of ['selection', 'filters', 'scroll', 'draft'] as const) {
+      violations.push({
+        key,
+        detail:
+          `FinanceWorkspaceState was replaced by the toggle (${FOCUS_MODE_PRESERVED_STATE_SOURCE[key]}). ` +
+          'Focus mode must carry the same object through — a new object means something rebuilt or refetched it.',
+      });
+    }
+  }
+  if (before.focusedCell !== after.focusedCell) {
+    violations.push({
+      key: 'focus',
+      detail: 'FocusModeSession.focusedCell changed across the toggle.',
+    });
+  }
+  if (before.activeViewId !== after.activeViewId) {
+    violations.push({
+      key: 'activeView',
+      detail:
+        `Active view changed across the toggle: "${String(before.activeViewId)}" -> "${String(after.activeViewId)}". ` +
+        'OWN-FIN-004 requires the open tab to survive entering/leaving focus mode.',
+    });
+  }
+  return violations.length === 0 ? { ok: true } : { ok: false, violations };
+}
+
+/**
+ * The `activeViewId` a Workspace Bar must render while `session` is live.
+ * A future component calls THIS rather than re-deriving a default from the
+ * adapter's view list — re-deriving is precisely how "focus mode reset my tab"
+ * bugs happen. `fallbackViewId` covers the session that was created before the
+ * bar knew its view (`activeViewId === null`).
+ */
+export function focusModeActiveViewId(session: FocusModeSession, fallbackViewId: string): string {
+  return session.activeViewId ?? fallbackViewId;
 }
 
 // ---------------------------------------------------------------------------

@@ -33,12 +33,15 @@ import {
   FINANCE_CHROME_REGIONS,
   FOCUS_MODE_HIDDEN_REGIONS,
   FOCUS_MODE_PRESERVED_STATE_KEYS,
+  FOCUS_MODE_PRESERVED_STATE_SOURCE,
   FOCUS_MODE_RETAINED_REGIONS,
+  assertFocusModePreservation,
   assertFocusModeRegionPartition,
   classifyViewport,
   createFocusModeSession,
   enterFocusMode,
   exitFocusMode,
+  focusModeActiveViewId,
   regionVisibilityInFocusMode,
   resolveEscapeKey,
   viewportCapability,
@@ -334,14 +337,25 @@ describe('AP-09 focusModeContract — state is preserved and nothing refetches',
     sourceWorkingRevisionId: 'wr-1',
   });
 
-  it('names the five preserved state keys the program requires', () => {
+  it('names the five preserved state keys the program requires, plus the active view', () => {
     expect([...FOCUS_MODE_PRESERVED_STATE_KEYS]).toEqual([
       'selection',
       'filters',
       'scroll',
       'focus',
       'draft',
+      'activeView',
     ]);
+    // Every key names where it actually lives — no key without a source.
+    for (const key of FOCUS_MODE_PRESERVED_STATE_KEYS) {
+      expect(FOCUS_MODE_PRESERVED_STATE_SOURCE[key]).toBeTruthy();
+    }
+    // The active view is the ONE preserved key that is not a WorkspaceState
+    // field — it comes from the bar contract, which is why the session has to
+    // carry it explicitly.
+    expect(FOCUS_MODE_PRESERVED_STATE_SOURCE.activeView).toContain(
+      'WorkspaceBarViewNavigation.activeViewId'
+    );
   });
 
   it('carries WorkspaceState through enter+exit BY REFERENCE (so it cannot have refetched)', () => {
@@ -380,6 +394,60 @@ describe('AP-09 focusModeContract — state is preserved and nothing refetches',
     const exited = exitFocusMode(entered.session, { trigger: 'escape-key' });
     const moveFocus = exited.effects.find((e) => e.kind === 'move-focus');
     expect(moveFocus).toMatchObject({ kind: 'move-focus', controlId: 'finance.analysis.fullscreen' });
+  });
+
+  it('keeps the open view across enter AND exit (OWN-FIN-004 "stan zakładki")', () => {
+    // A real, non-first view of a real module: Valuation's stepper, step 3.
+    const adapter = FINANCE_MODULE_ADAPTERS.valuation;
+    const openView = adapter.views[2];
+    expect(openView).toBeDefined();
+    const config = configFor(adapter);
+    const session = createFocusModeSession(baseState, { activeViewId: openView.id });
+
+    const entered = enterFocusMode(session, {
+      trigger: 'toggle-control',
+      restoreFocusToControlId: 'finance.valuation.fullscreen',
+    });
+    expect(entered.session.activeViewId).toBe(openView.id);
+    expect(assertFocusModePreservation(session, entered.session)).toEqual({ ok: true });
+
+    const exited = exitFocusMode(entered.session, { trigger: 'escape-key' });
+    expect(exited.session.activeViewId).toBe(openView.id);
+    expect(assertFocusModePreservation(entered.session, exited.session)).toEqual({ ok: true });
+
+    // And the bar renders that view, rather than re-deriving the adapter default.
+    expect(focusModeActiveViewId(exited.session, config.viewNavigation.views[0].id)).toBe(openView.id);
+    expect(openView.id).not.toBe(config.viewNavigation.views[0].id);
+  });
+
+  it('DETECTS a toggle that silently reset the open view (negative control)', () => {
+    const session = createFocusModeSession(baseState, { activeViewId: 'sensitivity' });
+    const entered = enterFocusMode(session, { trigger: 'toggle-control', restoreFocusToControlId: null });
+    // Simulate the bug this key exists to catch: focus mode re-mounts the
+    // workspace and the view navigation falls back to view #1.
+    const drifted = { ...entered.session, activeViewId: 'source' };
+    const check = assertFocusModePreservation(session, drifted);
+    expect(check.ok).toBe(false);
+    if (check.ok) throw new Error('unreachable');
+    expect(check.violations.map((v) => v.key)).toEqual(['activeView']);
+    expect(check.violations[0].detail).toContain('sensitivity');
+  });
+
+  it('DETECTS a toggle that rebuilt WorkspaceState instead of carrying it (negative control)', () => {
+    const session = createFocusModeSession(baseState, { activeViewId: 'source' });
+    const entered = enterFocusMode(session, { trigger: 'toggle-control', restoreFocusToControlId: null });
+    // Structurally identical, different object — i.e. something refetched.
+    const rebuilt = { ...entered.session, workspaceState: { ...baseState } };
+    const check = assertFocusModePreservation(session, rebuilt);
+    expect(check.ok).toBe(false);
+    if (check.ok) throw new Error('unreachable');
+    expect(check.violations.map((v) => v.key)).toEqual(['selection', 'filters', 'scroll', 'draft']);
+  });
+
+  it('defaults activeViewId to null for a caller that has not adopted the option (additive change)', () => {
+    const session = createFocusModeSession(baseState);
+    expect(session.activeViewId).toBeNull();
+    expect(focusModeActiveViewId(session, 'pnl')).toBe('pnl');
   });
 
   it('is a no-op when already in the requested state', () => {
