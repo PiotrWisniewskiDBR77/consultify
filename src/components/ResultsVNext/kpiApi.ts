@@ -25,6 +25,13 @@
  * Practical effect: this module cannot honestly resolve a KPI's display
  * *name* (only its `kpiCode`) or its target/current-value fields anywhere
  * except a lazily-fetched latest measurement's `actualValue`.
+ *
+ * -- RN-G2 §G #7 (2026-08-10): added the four measurement WRITE commands
+ * (`recordKpiMeasurement`/`correctKpiMeasurement`/`verifyKpiMeasurement`/
+ * `disputeKpiMeasurement`) alongside the pre-existing read-only
+ * `listKpiMeasurements`. See each function's own doc comment for the
+ * contract details (append-only supersession, no CAS, no role gate — all
+ * verified against the real router/commands, not assumed).
  */
 import { Api } from '@/services/api';
 
@@ -87,6 +94,10 @@ export interface KpiMeasurementDto {
 
 export interface HttpError extends Error {
   status?: number;
+  /** Raw JSON error body (`services/api.ts`'s `err.data`) — carries `.code`,
+   * e.g. `NO_CURRENT_VERSION`/`MEASUREMENT_NOT_FOUND` (kpi.routes.ts's
+   * `handleKpiRouteError`). Read this instead of string-matching `.message`. */
+  data?: { code?: string; error?: string; details?: Record<string, unknown> };
 }
 
 function isHttpError(err: unknown): err is HttpError {
@@ -95,6 +106,14 @@ function isHttpError(err: unknown): err is HttpError {
 
 export function isNotFoundError(err: unknown): boolean {
   return isHttpError(err) && err.status === 404;
+}
+
+/** `err.data.code` from the server's `handleKpiRouteError` mapping — used by
+ * the measurements package to distinguish `NO_CURRENT_VERSION` (409, a real
+ * precondition — see `recordMeasurement` route doc) from any other failure,
+ * without string-matching `.message`. */
+export function httpErrorCode(err: unknown): string | undefined {
+  return isHttpError(err) ? err.data?.code : undefined;
 }
 
 export interface ListKpisParams {
@@ -132,21 +151,151 @@ export async function getKpi(kpiId: string): Promise<KpiDefinitionDto | null> {
 
 export interface ListKpiMeasurementsParams {
   limit?: number;
+  offset?: number;
   includeSuperseded?: boolean;
+  periodStart?: string;
+  periodEnd?: string;
 }
 
-/** `GET /api/vnext/results/kpi/:kpiId/measurements` — newest period first. */
+/** `GET /api/vnext/results/kpi/:kpiId/measurements` — newest period first.
+ * `includeSuperseded` (default `false` server-side, per `ListMeasurementsQuerySchema`
+ * / `kpiRepository.ts`'s `listMeasurements` doc comment): `false` returns only
+ * "current" rows (latest per period — an original if never corrected/verified/
+ * disputed, otherwise the newest superseding row); `true` returns the FULL
+ * append-only history, every correction/verify/dispute row included. The RN-G2
+ * measurements panel (`./kpiMeasurements/ResultsKpiMeasurementsPanel.tsx`) uses
+ * both: `false` for its "Bieżące" tab, `true` for "Pełna historia". */
 export async function listKpiMeasurements(
   kpiId: string,
   params: ListKpiMeasurementsParams = {}
 ): Promise<KpiMeasurementDto[]> {
   const qs = new URLSearchParams();
   qs.set('limit', String(params.limit ?? 1));
+  if (params.offset) qs.set('offset', String(params.offset));
   if (params.includeSuperseded) qs.set('includeSuperseded', 'true');
+  if (params.periodStart) qs.set('periodStart', params.periodStart);
+  if (params.periodEnd) qs.set('periodEnd', params.periodEnd);
   const resp = await Api.get(
     `/vnext/results/kpi/${encodeURIComponent(kpiId)}/measurements?${qs.toString()}`
   );
   return (resp?.measurements ?? []) as KpiMeasurementDto[];
+}
+
+// ==========================================
+// RN-G2 §G #7 (2026-08-10) — measurement WRITE commands:
+// `POST .../measurements` (record) · `POST .../measurements/:id/corrections`
+// (correct) · `.../verify` · `.../dispute`. Contracts verified by reading the
+// real router (`server/src/routes/resultsVnext/kpi.routes.ts`) and commands
+// (`server/src/services/resultsVnext/kpi/kpiMeasurementCommands.ts`) before
+// writing this — NOT assumed from the task brief:
+//
+//  - `performanceStatus` is NEVER sent by the client — the route computes it
+//    server-side from the KPI's current definition-version bounds
+//    (`evaluatePerformanceStatus`) precisely so a self-reporting client can't
+//    fudge it (kpi.routes.ts file header, "DESIGN NOTE"). This module has no
+//    field for it on the write side at all.
+//  - None of the four commands takes `expectedVersion`/CAS — decyzja #12
+//    (kpiMeasurementCommands.ts file header): `rvn_kpi_measurements` is
+//    APPEND-ONLY (`REVOKE UPDATE, DELETE` on the table), so `correct`/`verify`/
+//    `dispute` each INSERT a NEW row referencing the original via
+//    `correctionOfMeasurementId` — NEVER an UPDATE of the original. The
+//    response's `original`/`measurement` pair reflects this: `original` is the
+//    unchanged prior row, `measurement` is the new superseding row.
+//  - NO role/self-check of any kind was found for correct/verify/dispute
+//    (grepped `kpiMeasurementCommands.ts` for `actorEffectiveRole`/role
+//    checks — none gate these three, unlike `kpiDefinitionCommands.ts`'s
+//    `SelfApprovalDeniedError` for definition-version approval). Any org
+//    member with API access can verify/dispute/correct any measurement of
+//    any KPI they can see. This is a real, current backend gap, not a UI
+//    omission — flagged in the task report, not silently hidden by graying
+//    out a button this package has no authority to invent a rule for.
+// ==========================================
+
+export interface RecordKpiMeasurementInput {
+  /** Omit to record against the KPI's current definition version (server
+   * resolves via `getKpi`) — this UI always omits it (no version picker). */
+  definitionVersionId?: string;
+  periodStart: string;
+  periodEnd: string;
+  /** `null` is a REAL, valid value here (`RecordMeasurementSchema.actualValue`
+   * is `.nullable()`, not `.optional()`) — "this period was measured and
+   * genuinely has no value", distinct from never recording the period at
+   * all. The record form's "no value" toggle sends `null`, never a
+   * fabricated `0`. */
+  actualValue: number | null;
+  source: string;
+  notes?: string | null;
+  reason?: string | null;
+}
+
+export async function recordKpiMeasurement(
+  kpiId: string,
+  input: RecordKpiMeasurementInput
+): Promise<KpiMeasurementDto> {
+  const resp = await Api.post(`/vnext/results/kpi/${encodeURIComponent(kpiId)}/measurements`, {
+    definitionVersionId: input.definitionVersionId,
+    periodStart: input.periodStart,
+    periodEnd: input.periodEnd,
+    actualValue: input.actualValue,
+    source: input.source,
+    notes: input.notes ?? null,
+    reason: input.reason ?? null,
+  });
+  return resp?.measurement as KpiMeasurementDto;
+}
+
+export interface KpiMeasurementSupersedeResult {
+  original: KpiMeasurementDto;
+  measurement: KpiMeasurementDto;
+}
+
+export interface CorrectKpiMeasurementInput {
+  actualValue: number | null;
+  correctionReason: string;
+}
+
+export async function correctKpiMeasurement(
+  kpiId: string,
+  measurementId: string,
+  input: CorrectKpiMeasurementInput
+): Promise<KpiMeasurementSupersedeResult> {
+  const resp = await Api.post(
+    `/vnext/results/kpi/${encodeURIComponent(kpiId)}/measurements/${encodeURIComponent(measurementId)}/corrections`,
+    { actualValue: input.actualValue, correctionReason: input.correctionReason }
+  );
+  return { original: resp?.original, measurement: resp?.measurement } as KpiMeasurementSupersedeResult;
+}
+
+export interface VerifyKpiMeasurementInput {
+  notes?: string | null;
+}
+
+export async function verifyKpiMeasurement(
+  kpiId: string,
+  measurementId: string,
+  input: VerifyKpiMeasurementInput = {}
+): Promise<KpiMeasurementSupersedeResult> {
+  const resp = await Api.post(
+    `/vnext/results/kpi/${encodeURIComponent(kpiId)}/measurements/${encodeURIComponent(measurementId)}/verify`,
+    { notes: input.notes ?? null }
+  );
+  return { original: resp?.original, measurement: resp?.measurement } as KpiMeasurementSupersedeResult;
+}
+
+export interface DisputeKpiMeasurementInput {
+  disputeReason: string;
+}
+
+export async function disputeKpiMeasurement(
+  kpiId: string,
+  measurementId: string,
+  input: DisputeKpiMeasurementInput
+): Promise<KpiMeasurementSupersedeResult> {
+  const resp = await Api.post(
+    `/vnext/results/kpi/${encodeURIComponent(kpiId)}/measurements/${encodeURIComponent(measurementId)}/dispute`,
+    { disputeReason: input.disputeReason }
+  );
+  return { original: resp?.original, measurement: resp?.measurement } as KpiMeasurementSupersedeResult;
 }
 
 export interface KpiLifecycleActionInput {
