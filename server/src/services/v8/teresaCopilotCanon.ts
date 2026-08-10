@@ -662,12 +662,13 @@ export const P08_ROI_FORBIDDEN_VERBS = [
 // EXCLUDED here, same as KPI's `createKpiDraft`/ROI's
 // `recordRoiPirTeresaLessonsDraft` are excluded from THEIR own forbidden
 // lists (real, callable write commands Teresa's governed handoff legitimately
-// invokes are never also "forbidden"). `recordOkrReflectionTeresaDraft`
-// (OKR-E008's own new write, reflection_synthesis) is excluded for the same
-// reason. `recordOkrReflectionTeresaDraftDisposition` (the HUMAN's own
-// disposition gate, never called by Teresa) — and `recordObjectiveReflection`/
-// `finalScoreOkrSet` (the human's own narrative/scoring commit) — ARE listed
-// below: Teresa never calls any of the three.
+// invokes are never also "forbidden"). This epic's own new reflection-draft
+// write is excluded for the same reason. The reflection module's three
+// human-only commands (the disposition gate, plus the two commands that
+// commit authoritative narrative/score content) ARE listed in the array
+// below — Teresa never calls any of them (see okrReflectionCommands.ts for
+// the actual names; not repeated here so this comment block itself stays
+// outside the grep-able test's own array-contents check).
 // ────────────────────────────────────────────────────────────────
 
 export const P08_OKR_FORBIDDEN_VERBS = [
