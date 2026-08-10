@@ -239,6 +239,30 @@ function buildKpiPayload() {
   };
 }
 
+// ROI-E008 — keeps the §11 dynamic `for (const target of
+// P08_HANDOFF_TARGET_MODULES)` loop below green for the new 'roi' target,
+// same convention buildKpiPayload above follows for 'kpi'.
+function buildRoiPayload() {
+  return {
+    roi_handoff_context: {
+      advisor_mode: 'pir_lessons_draft',
+      target_resource: { resource_type: 'roi_pir', resource_id: 'pir-1' },
+      case_id: 'case-1',
+      expected_version: 3,
+      pir_lessons_draft: {
+        draft_lessons_text: 'Automate the manual reconciliation step earlier in the rollout.',
+        evidence_breakdown: {
+          facts: [],
+          inference: [],
+          missing_evidence: [],
+          recommendation: 'automate reconciliation',
+        },
+      },
+    },
+    evidence_pointers: ['roi_pir:pir-1'],
+  };
+}
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -890,6 +914,7 @@ describe('P08-B §11 — Handoff context validation', () => {
         excele: buildExcelePayload,
         ideas: buildIdeasPayload,
         kpi: buildKpiPayload,
+        roi: buildRoiPayload,
       };
       const result = validateTargetPayload(target, payloadMap[target]());
       expect(result.valid).toBe(true);
