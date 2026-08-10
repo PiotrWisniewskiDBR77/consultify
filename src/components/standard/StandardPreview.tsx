@@ -474,18 +474,26 @@ export const StandardPreview: React.FC<StandardPreviewProps> = ({
               {details.properties?.length ? (
                 <ArtifactPropertiesTable
                   rows={details.properties}
-                  // R09-2a (2026-08-10, defekt P2a): `ArtifactPropertiesTable`
-                  // sam w sobie NIE ma zaszytych napisów — wymaga gotowych,
-                  // przetłumaczonych etykiet od wywołującego (patrz jego
-                  // własny docstring). Ekrany RN-G2 (i inne) nie podają
-                  // `details.propertyLabel/valueLabel`, więc lądowały tu, na
-                  // domyślnym literale 'Property'/'Value' — widoczne na
-                  // polskim ekranie ROI. Ten sam mechanizm co reszta
-                  // domyślnych etykiet w tym pliku (`common.copy` itd.).
-                  propertyLabel={
-                    details.propertyLabel ?? t('common.property', isPolish ? 'Właściwość' : 'Property')
-                  }
-                  valueLabel={details.valueLabel ?? t('common.value', isPolish ? 'Wartość' : 'Value')}
+                  // R09-2a correction (2026-08-10, per coordinator): reverted
+                  // to the original literal default. `ArtifactPropertiesTable`
+                  // itself has no hardcoded strings — it requires pre-
+                  // translated labels from the caller, and `propertyLabel`/
+                  // `valueLabel` ALREADY EXIST as `StandardPreviewDetails`
+                  // props (see the interface above) for exactly this. The
+                  // real defect is that no RN-G2 screen passes them yet — a
+                  // caller-side gap, not a missing mechanism here. Changing
+                  // THIS default would silently reshape every one of
+                  // StandardPreview's 100+ consumers at once; the correct,
+                  // minimal fix is each caller passing its own translated
+                  // `details.propertyLabel`/`valueLabel` (see
+                  // `ResultsVNextLegacyArchivePanel` for the pattern) — NOT a
+                  // change here. Flagged in the acceptance report as
+                  // follow-up work for the screens that don't yet do this
+                  // (`roiRegistryPresenters.tsx`, `ResultsKpiRegistryPage.tsx`,
+                  // `okrRegistryPresenters.tsx`, `kpiScorecardPresenters.tsx`)
+                  // — out of this package's scope, owned by other lanes.
+                  propertyLabel={details.propertyLabel ?? 'Property'}
+                  valueLabel={details.valueLabel ?? 'Value'}
                 />
               ) : null}
             </PreviewDetailsSection>
