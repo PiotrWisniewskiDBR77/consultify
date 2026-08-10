@@ -33,10 +33,10 @@
  * back. Only a committed row, seen from another connection, proves anything.
  *
  * Every test owns its own organization/project/users and tears them down in a
- * `finally` — never a shared `beforeEach`. `case_core.project_id` is UNIQUE,
- * so a shared fixture would let the concurrency test poison every test after
- * it. Ids are namespaced with `randomUUID()`, so this file is safe to run
- * concurrently with itself and with the other pg suites.
+ * `finally` — never a shared `beforeEach`, unconditionally, regardless of
+ * what any one column enforces. Ids are namespaced with `randomUUID()`, so
+ * this file is safe to run concurrently with itself and with the other pg
+ * suites.
  */
 
 import { randomUUID } from 'node:crypto';
@@ -60,7 +60,8 @@ async function canReachWithSchema(connectionString: string): Promise<boolean> {
     const caseCore = await probe.query(
       `SELECT count(*)::int AS present FROM information_schema.columns
         WHERE table_schema = 'public' AND table_name = 'case_core'
-          AND column_name IN ('case_id', 'project_id', 'organization_id', 'version')`
+          AND column_name IN ('case_id', 'project_id', 'organization_id', 'version',
+                               'case_name', 'intake_confirmation_key')`
     );
     const outbox = await probe.query(
       `SELECT count(*)::int AS present FROM information_schema.columns
@@ -73,20 +74,32 @@ async function canReachWithSchema(connectionString: string): Promise<boolean> {
         WHERE table_schema = 'public' AND table_name = 'organization_members'
           AND column_name IN ('organization_id', 'user_id', 'role', 'status')`
     );
-    // The UNIQUE (project_id) constraint is not decoration here — it IS the
-    // "exactly one Case" mechanism the concurrency test proves. If it were
-    // ever dropped, these tests must skip loudly rather than pass against a
-    // schema that cannot hold the invariant.
-    const unique = await probe.query(
+    // CW-T-A (20260810d_case_workspace_case_identity.sql): the OLD
+    // `UNIQUE (project_id)` constraint this gate used to require is GONE —
+    // that removal is the entire point of this packet (a project holds many
+    // Cases now). What replaces it as "the exactly-one-Case-per-confirmation
+    // mechanism" is the PARTIAL unique index on `intake_confirmation_key`
+    // (NULLs excluded, so direct/manual Cases never collide with each
+    // other). Gate on THAT being present instead — and just as importantly,
+    // gate on the OLD per-project uniqueness being ABSENT, so this suite
+    // skips loudly rather than silently proving the wrong invariant if a
+    // migration rollback or a stale DB ever brought it back.
+    const newUnique = await probe.query(
+      `SELECT count(*)::int AS present FROM pg_indexes
+        WHERE schemaname = 'public' AND tablename = 'case_core'
+          AND indexname = 'case_core_intake_confirmation_key_key'`
+    );
+    const oldUniqueGone = await probe.query(
       `SELECT count(*)::int AS present FROM pg_constraint
         WHERE conrelid = 'case_core'::regclass AND contype = 'u'
           AND pg_get_constraintdef(oid) = 'UNIQUE (project_id)'`
     );
     return (
-      Number(caseCore.rows[0]?.present ?? 0) === 4 &&
+      Number(caseCore.rows[0]?.present ?? 0) === 6 &&
       Number(outbox.rows[0]?.present ?? 0) === 7 &&
       Number(members.rows[0]?.present ?? 0) === 4 &&
-      Number(unique.rows[0]?.present ?? 0) === 1
+      Number(newUnique.rows[0]?.present ?? 0) === 1 &&
+      Number(oldUniqueGone.rows[0]?.present ?? 0) === 0
     );
   } catch {
     return false;
@@ -100,8 +113,9 @@ if (!REACHABLE) {
   console.warn(
     `[caseIntakeService pg suite SKIPPED — clean skip, NOT a pass] needs DB_TYPE=postgres ` +
       `NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false, a reachable DATABASE_URL, the case_core + ` +
-      `event_outbox migrations applied, and case_core's UNIQUE (project_id) constraint present. ` +
-      `requested=${REAL_DB_REQUESTED} reachable=${REACHABLE}`
+      `event_outbox migrations applied (INCLUDING 20260810d_case_workspace_case_identity.sql, ` +
+      `CW-T-A), case_core's OLD UNIQUE (project_id) constraint ABSENT, and its NEW partial unique ` +
+      `index on intake_confirmation_key present. requested=${REAL_DB_REQUESTED} reachable=${REACHABLE}`
   );
 }
 
@@ -187,11 +201,15 @@ suite('caseIntakeService — conversation -> exactly one Case, on a real Postgre
 
   /** A realistic, ordered work order. Content is deliberately Polish — this is
    * what a consultant actually confirms — and contains no email/token shapes
-   * that PiiRedactor would rewrite inside the stored summary. */
-  function draft(orgId: string, projectId: string): intake.WorkOrderDraftInput {
+   * that PiiRedactor would rewrite inside the stored summary. `caseName`
+   * (CW-T-A) defaults to a real, distinct title — never derived from `goal`
+   * by this helper, mirroring the product rule that goal is not a name
+   * substitute. */
+  function draft(orgId: string, projectId: string, caseName = 'Analiza kosztow operacyjnych'): intake.WorkOrderDraftInput {
     return {
       organizationId: orgId,
       projectId,
+      caseName,
       goal: 'Przygotowac rekomendacje optymalizacji kosztow zakupu energii dla zakladu w Plocku.',
       scope: [
         'Zebrac dane o zuzyciu energii z ostatnich 24 miesiecy.',
@@ -613,27 +631,32 @@ suite('caseIntakeService — conversation -> exactly one Case, on a real Postgre
   }, 120_000);
 
   // -------------------------------------------------------------------------
-  // 6. PROVENANCE — confirming work order B must never hand back work order
-  //    A's Case (CW-CANON-03).
+  // 6. CARDINALITY (CW-T-A) — confirming a SECOND, genuinely different work
+  //    order against a project that already has a Case must create a SECOND,
+  //    independent Case — never refuse, never hand back the FIRST order's
+  //    Case. This is the owner's binding, literal ruling (2026-08-10): "a
+  //    Case is a work order; one project MAY and MUST be able to hold many
+  //    independent Cases."
   //
-  //    This is the digest guarantee's whole point. Case reuse is keyed on
-  //    `project_id` (the only uniqueness the schema has), so a SECOND, genuinely
-  //    DIFFERENT work order confirmed against a project that already had a Case
-  //    used to answer 200 with `reuseReason: 'existing_case_for_project'` and
-  //    return the OTHER order's Case: a human confirms "Zestawienie faktur" and
-  //    receives "Analiza kosztow". The digest is then a signature on a document
-  //    the system does not execute — worse than no digest, because it reassures.
+  //    This test previously asserted the OPPOSITE (a PROVENANCE GATE
+  //    refusing B with `intake_existing_case_work_order_conflict`, on the
+  //    authority of the then-real `UNIQUE(project_id)` constraint). That
+  //    constraint is gone (20260810d_case_workspace_case_identity.sql); this
+  //    is the direct, intended, and literally-requested behavior change, not
+  //    a regression.
   //
-  //    The assertion below is the one the owner asked for literally: two
-  //    different work orders on the same project must NOT be able to return the
-  //    same Case.
+  //    What CW-CANON-03 still means, unchanged and asserted below: replaying
+  //    the SAME confirmation (A again) must still land ZERO new Cases and
+  //    reuse A's — the guarantee that moved off `project_id` now lives on
+  //    `intake_confirmation_key` (see caseIntakeService.ts's
+  //    `computeIntakeConfirmationKey`).
   // -------------------------------------------------------------------------
-  it('a SECOND, different work order on a project that already has a Case is refused — it never returns the first work order\'s Case, and writes nothing', async () => {
-    const { orgId, projectId } = await seedOrgAndProject('provenance');
-    const actorId = await seedMemberedUser(orgId, 'provenance');
+  it('a SECOND, different work order on a project that already has a Case creates a SECOND, independent Case with its own name — never returns the first order\'s Case (CW-T-A)', async () => {
+    const { orgId, projectId } = await seedOrgAndProject('cardinality');
+    const actorId = await seedMemberedUser(orgId, 'cardinality');
     try {
       // Work order A — "Analiza kosztow". Confirmed; creates the Case.
-      const orderA = draft(orgId, projectId);
+      const orderA = draft(orgId, projectId, 'Analiza kosztow operacyjnych');
       const proposalA = await intake.proposeWorkOrder({
         workOrder: orderA,
         proposedByActorId: actorId,
@@ -645,11 +668,12 @@ suite('caseIntakeService — conversation -> exactly one Case, on a real Postgre
       });
       expect(confirmedA.caseCreated).toBe(true);
 
-      // Work order B — "Zestawienie faktur". A DIFFERENT order (different goal,
-      // scope and outcome), properly proposed and self-consistently confirmed:
-      // every pre-existing gate passes, which is exactly why this one is needed.
+      // Work order B — "Zestawienie faktur". A DIFFERENT order (different
+      // name, goal, scope and outcome), properly proposed and
+      // self-consistently confirmed, against the SAME project.
       const orderB: intake.WorkOrderDraftInput = {
         ...orderA,
+        caseName: 'Zestawienie faktur zakupowych',
         goal: 'Przygotowac zestawienie faktur zakupowych za IV kwartal dla dzialu finansow.',
         scope: ['Zebrac faktury zakupowe z IV kwartalu.', 'Uzgodnic sumy z ksiegami.'],
         expectedOutcome: 'Zestawienie faktur uzgodnione z ksiegami.',
@@ -660,35 +684,42 @@ suite('caseIntakeService — conversation -> exactly one Case, on a real Postgre
       });
       expect(proposalB.workOrderDigest).not.toBe(proposalA.workOrderDigest);
 
-      const refusal = await captureError(() =>
-        intake.confirmWorkOrder({
-          workOrder: orderB,
-          confirmedDigest: proposalB.workOrderDigest,
-          confirmedByActorId: actorId,
-        })
-      );
-      // A stable, explicit code — not a silent hand-over.
-      expect(refusal).toBe('intake_existing_case_work_order_conflict');
+      const confirmedB = await intake.confirmWorkOrder({
+        workOrder: orderB,
+        confirmedDigest: proposalB.workOrderDigest,
+        confirmedByActorId: actorId,
+      });
 
-      // THE PROPERTY: B cannot have been given A's Case, because B was given
-      // nothing at all, and no second Case appeared either.
-      expect(await countCasesForProject(projectId)).toBe(1);
-      const caseRows = await control.query<{ case_id: string }>(
-        `SELECT case_id FROM case_core WHERE project_id = $1`,
+      // THE PROPERTY: B is a REAL, NEW, DIFFERENT Case — not A's.
+      expect(confirmedB.caseCreated).toBe(true);
+      expect(confirmedB.caseId).not.toBe(confirmedA.caseId);
+      expect(confirmedB.reuseReason).toBe('none');
+
+      expect(await countCasesForProject(projectId)).toBe(2);
+      const caseRows = await control.query<{ case_id: string; case_name: string }>(
+        `SELECT case_id, case_name FROM case_core WHERE project_id = $1 ORDER BY created_at ASC`,
         [projectId]
       );
-      expect(caseRows.rows[0].case_id).toBe(confirmedA.caseId);
+      expect(caseRows.rows.map((r) => r.case_id).sort()).toEqual(
+        [confirmedA.caseId, confirmedB.caseId].sort()
+      );
+      // THE UI-VISIBLE point of this whole packet: two distinct names for
+      // two Cases in one project.
+      expect(caseRows.rows.map((r) => r.case_name).sort()).toEqual(
+        ['Analiza kosztow operacyjnych', 'Zestawienie faktur zakupowych'].sort()
+      );
 
-      // The refusal left ZERO trace of a confirmation for B — the whole
-      // transaction rolled back before any publishEvent.
+      // Both confirmations left a real trace — no refusal, no rollback.
       const confirmations = (await readOutboxForOrg(orgId)).filter(
         (e) => e.event_type === 'case.intake.work_order_confirmed'
       );
-      expect(confirmations).toHaveLength(1);
-      expect(confirmations[0].redacted_summary.workOrderDigest).toBe(proposalA.workOrderDigest);
+      expect(confirmations).toHaveLength(2);
+      expect(confirmations.map((c) => c.case_id).sort()).toEqual(
+        [confirmedA.caseId, confirmedB.caseId].sort()
+      );
 
-      // NEGATIVE CONTROL — the gate must reject only the DIFFERENT order, not
-      // idempotency. Replaying A still reuses A's Case, exactly as before.
+      // NEGATIVE CONTROL — cardinality is not a loss of idempotency. Replaying
+      // A still reuses A's Case (not B's, not a third one).
       const replayA = await intake.confirmWorkOrder({
         workOrder: orderA,
         confirmedDigest: proposalA.workOrderDigest,
@@ -697,7 +728,17 @@ suite('caseIntakeService — conversation -> exactly one Case, on a real Postgre
       expect(replayA.caseId).toBe(confirmedA.caseId);
       expect(replayA.caseCreated).toBe(false);
       expect(replayA.reuseReason).toBe('work_order_already_confirmed');
-      expect(await countCasesForProject(projectId)).toBe(1);
+      expect(await countCasesForProject(projectId)).toBe(2);
+
+      // ...and replaying B still reuses B's Case.
+      const replayB = await intake.confirmWorkOrder({
+        workOrder: orderB,
+        confirmedDigest: proposalB.workOrderDigest,
+        confirmedByActorId: actorId,
+      });
+      expect(replayB.caseId).toBe(confirmedB.caseId);
+      expect(replayB.caseCreated).toBe(false);
+      expect(await countCasesForProject(projectId)).toBe(2);
     } finally {
       await teardown([orgId], [projectId], [actorId]);
     }

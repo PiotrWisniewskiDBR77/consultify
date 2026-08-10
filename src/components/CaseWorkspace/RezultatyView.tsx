@@ -27,8 +27,15 @@
  * „brak dowodu" jest osobny od „nieosiągnięte". UI tego nie spłaszcza.
  */
 
-import { AlertTriangle, ArrowUpRight, BarChart3, Link2, Unlink } from 'lucide-react';
-import React, { useCallback, useMemo, useState } from 'react';
+import {
+  AlertTriangle,
+  ArrowUpRight,
+  BarChart3,
+  ClipboardCheck,
+  Link2,
+  Unlink,
+} from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { StandardPreview } from '@/components/standard/StandardPreview';
 import { StandardTable, type TableColumn } from '@/components/standard/StandardTable';
@@ -46,11 +53,24 @@ import {
   closureTypeLabel,
   linkedTypeLabel,
   measurementConfidenceLabel,
+  planNodeTypeLabel,
   valueMeasurementStatusLabel,
 } from '@/utils/enumLabels';
 
-import type { CaseArtifactLink, CaseCoreView, ValueMeasurement } from './types';
-import { FOCUS_RING, formatDate, formatDateTime, StatusTag, TechnicalId } from './ui';
+import {
+  type CaseRunBinding,
+  deliverableRefFromSnapshot,
+  getRunBinding,
+  listNodeResultAcceptancesForCase,
+  nodeCompletionStateLabel,
+  type NodeResultAcceptance,
+  resultAcceptanceLabel,
+  resultAcceptanceTone,
+  summaryFromSnapshot,
+  toFailure,
+} from './apiResults';
+import type { CaseApiFailure, CaseArtifactLink, CaseCoreView, ValueMeasurement } from './types';
+import { CaseStateBlock, FOCUS_RING, formatDate, formatDateTime, StatusTag, TechnicalId } from './ui';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // OTWIERANIE OBIEKTÓW — jedno miejsce dla całego modułu
@@ -223,7 +243,49 @@ export interface OtwarcieZadanie {
 export type RezultatSelection =
   | { kind: 'pomiar'; id: string }
   | { kind: 'obiekt'; id: string }
+  /** `id` = `nodeRunId` — jedyny stabilny identyfikator wyniku kroku. */
+  | { kind: 'wynik-kroku'; id: string }
   | null;
+
+/** Stabilny klucz fokusu przycisku „Otwórz" wewnątrz podglądu wyniku kroku. */
+export function kluczFokusuRezultatuKroku(nodeRunId: string): string {
+  return `wynik-kroku:${nodeRunId}`;
+}
+
+/**
+ * Rozstrzyga, czy i jak otworzyć obiekt, na który wskazuje wynik kroku.
+ *
+ * Kolejność jest istotna, tak jak w `rozstrzygnijOtwarcie` wyżej: najpierw
+ * PRAWDA Z BACKENDU, dopiero potem heurystyka.
+ *  1. Gdy wyłuskany `typ:id` pasuje do JUŻ WCZYTANEGO, backendowo
+ *     zweryfikowanego `CaseArtifactLink` tego zlecenia (to samo `artifactType`
+ *     + `artifactId`) — używamy JEGO `rozstrzygnijOtwarcie`, czyli
+ *     PRAWDZIWEGO `linkStatus`/`isStale`, a nie zgadywania. To jedyny sposób,
+ *     w jaki „niedostępny/odpięty/nieaktualny" dla wyniku kroku może być
+ *     UCZCIWY, skoro `case_workspace_node_result_acceptances` samo w sobie
+ *     nie ma kolumny stanu powiązania (patrz nagłówek `apiResults.ts`).
+ *  2. Bez dopasowania spada na `rozstrzygnijOtwarcieDowodu` — tę samą,
+ *     słabszą ścieżkę „typ jest znany, więc otwieramy", której repo już
+ *     używa dla `evidenceRef` pomiaru wartości. Nie silniejszą, nie słabszą.
+ */
+function rozstrzygnijOtwarcieRezultatuKroku(
+  item: NodeResultAcceptance,
+  artifactLinks: CaseArtifactLink[]
+): OtwarcieObiektu | null {
+  const ref = deliverableRefFromSnapshot(item.acceptanceInputSnapshot);
+  if (!ref) return null;
+
+  const parsed = parseArtifactRef(ref);
+  if (parsed) {
+    const dopasowanie = artifactLinks.find(
+      (link) =>
+        String(link.artifactType).toLowerCase() === parsed.type.toLowerCase() &&
+        String(link.artifactId) === parsed.id
+    );
+    if (dopasowanie) return rozstrzygnijOtwarcie(dopasowanie);
+  }
+  return rozstrzygnijOtwarcieDowodu(ref);
+}
 
 export interface RezultatyViewProps {
   caseItem: CaseCoreView;
@@ -347,6 +409,46 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
     [onOpenDeliverable]
   );
 
+  // ═══════════════════════════════════════════════════════════════════════
+  // WYNIKI WYKONANIA KROKÓW (node-result-acceptances) — SAMODZIELNY odczyt.
+  //
+  // ★ DLACZEGO TEN WIDOK CZYTA SAM, a nie dostaje to przez propsy jak
+  // `measurements`/`artifactLinks`. `CaseDetailScreen.tsx` (właściciel
+  // `CaseBundle` i jedynego `load()`) jest w tym pakiecie ZAKAZANY do
+  // edycji — jest własnością równoległych prac A/C. Backend ma trasę
+  // (`GET /cases/:caseId/node-result-acceptances`), której `CaseDetailScreen`
+  // dziś nie woła; ten `useEffect` woła ją NIEZALEŻNIE, więc funkcja działa
+  // BEZ jakiejkolwiek zmiany w powłoce. Odczyt jest ZAWSZE realnym wywołaniem
+  // API przy montowaniu (i przy zmianie `caseItem.caseId`) — stąd „po
+  // odświeżeniu strony wynik nadal jest widoczny": nic tu nie stoi w
+  // fixture'ach ani w pamięci sesji.
+  // ═══════════════════════════════════════════════════════════════════════
+  const [nodeResults, setNodeResults] = useState<NodeResultAcceptance[]>([]);
+  const [nodeResultsStan, setNodeResultsStan] = useState<'ladowanie' | 'ok' | 'blad'>('ladowanie');
+  const [nodeResultsBlad, setNodeResultsBlad] = useState<CaseApiFailure | null>(null);
+  const [nodeResultsPonow, setNodeResultsPonow] = useState(0);
+
+  useEffect(() => {
+    let anulowano = false;
+    setNodeResultsStan('ladowanie');
+    setNodeResultsBlad(null);
+    listNodeResultAcceptancesForCase(caseItem.caseId)
+      .then((items) => {
+        if (anulowano) return;
+        setNodeResults(items);
+        setNodeResultsStan('ok');
+      })
+      .catch((error) => {
+        if (anulowano) return;
+        setNodeResults([]);
+        setNodeResultsBlad(toFailure(error));
+        setNodeResultsStan('blad');
+      });
+    return () => {
+      anulowano = true;
+    };
+  }, [caseItem.caseId, nodeResultsPonow]);
+
   const axes = useMemo(
     () => [
       { key: 'delivery', status: caseItem.deliveryStatus },
@@ -398,6 +500,28 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
         };
       }),
     [artifactLinks, otwarciaObiektow]
+  );
+
+  /**
+   * Wiersze tabeli wyników kroku. `krok` opisuje TYP węzła
+   * (`planNodeTypeLabel`), nie jego biznesową nazwę — ten widok nie dostaje
+   * grafu planu (nie jest mu przekazywany przez `CaseDetailScreen`), więc nie
+   * ma skąd wziąć nazwy kroku bez zmyślania jej. `akceptacja` czyta WYŁĄCZNIE
+   * `resultAcceptance` — nigdy licznika ostrzeżeń — zgodnie z kanonem
+   * (`04_DOMAIN_RUNTIME_AND_STATE_MACHINES.md:263`: „Częściowo zakończone
+   * derives from explicit PARTIAL, never from warnings or node counts").
+   */
+  const nodeResultRows = useMemo(
+    () =>
+      nodeResults.map((item) => ({
+        id: item.nodeRunId,
+        krok: planNodeTypeLabel(item.nodeType, true) || item.nodeType,
+        stan: nodeCompletionStateLabel(item.nodeCompletionState),
+        akceptacja: resultAcceptanceLabel(item.resultAcceptance),
+        akceptacjaTone: resultAcceptanceTone(item.resultAcceptance),
+        kiedy: item.occurredAt,
+      })),
+    [nodeResults]
   );
 
   const measurementColumns: TableColumn[] = [
@@ -498,6 +622,51 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
     },
   ];
 
+  /*
+   * Cztery kolumny, suma 220+100+180+110 = 610 px — mieści się bez
+   * przewijania w kolumnie 700 px (ten sam pomiar co przy tabelach wyżej;
+   * `minTableWidth="auto"` i tak zwęża tabelę do kontenera, licznik jest tu
+   * wyłącznie po to, żeby żadna kolumna nie łamała się w jednej linii przy
+   * pełnej szerokości).
+   */
+  const nodeResultColumns: TableColumn[] = [
+    {
+      id: 'krok',
+      label: 'Krok',
+      width: '220px',
+      sortable: true,
+      filterable: true,
+      render: (row: Record<string, unknown>) => (
+        <span
+          data-cw-focus={`wiersz-wyniku-kroku:${String(row.id)}`}
+          tabIndex={-1}
+          className="block rounded text-sm font-medium text-c-text outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+        >
+          {String(row.krok)}
+        </span>
+      ),
+    },
+    { id: 'stan', label: 'Stan zakończenia', width: '100px' },
+    {
+      id: 'akceptacja',
+      label: 'Status akceptacji',
+      width: '180px',
+      filterable: true,
+      render: (row: Record<string, unknown>) => (
+        <StatusTag tone={row.akceptacjaTone as 'critical'}>{String(row.akceptacja)}</StatusTag>
+      ),
+    },
+    {
+      id: 'kiedy',
+      label: 'Kiedy',
+      width: '110px',
+      sortable: true,
+      render: (row: Record<string, unknown>) => (
+        <span className="text-sm text-c-text-secondary">{formatDate(String(row.kiedy))}</span>
+      ),
+    },
+  ];
+
   const selectedMeasurement =
     selection?.kind === 'pomiar'
       ? (measurements.find((item) => item.measurementId === selection.id) ?? null)
@@ -506,10 +675,51 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
     selection?.kind === 'obiekt'
       ? (artifactLinks.find((item) => item.linkId === selection.id) ?? null)
       : null;
+  const selectedNodeResult =
+    selection?.kind === 'wynik-kroku'
+      ? (nodeResults.find((item) => item.nodeRunId === selection.id) ?? null)
+      : null;
   const selectedLinkOtwarcie = selectedLink ? otwarciaObiektow.get(selectedLink.linkId) : undefined;
   const selectedEvidence = selectedMeasurement
     ? rozstrzygnijOtwarcieDowodu(selectedMeasurement.evidenceRef)
     : null;
+  const selectedNodeResultOtwarcie = selectedNodeResult
+    ? rozstrzygnijOtwarcieRezultatuKroku(selectedNodeResult, artifactLinks)
+    : null;
+
+  // Kontekst źródłowego Run dla PODGLĄDU wyniku kroku — leniwie, dopiero gdy
+  // ktoś otworzy podgląd (patrz komentarz w `apiResults.ts` przy
+  // `getRunBinding`: bez tego każdy wiersz tabeli odpalałby własne
+  // zapytanie, którego nikt nie zobaczy).
+  const [zrodloRun, setZrodloRun] = useState<{
+    runId: string | null;
+    stan: 'ladowanie' | 'ok' | 'blad';
+    dane: CaseRunBinding | null;
+    blad: CaseApiFailure | null;
+  }>({ runId: null, stan: 'ladowanie', dane: null, blad: null });
+
+  useEffect(() => {
+    if (!selectedNodeResult) return undefined;
+    let anulowano = false;
+    setZrodloRun({ runId: selectedNodeResult.runId, stan: 'ladowanie', dane: null, blad: null });
+    getRunBinding(selectedNodeResult.runId)
+      .then((binding) => {
+        if (anulowano) return;
+        setZrodloRun({ runId: selectedNodeResult.runId, stan: 'ok', dane: binding, blad: null });
+      })
+      .catch((error) => {
+        if (anulowano) return;
+        setZrodloRun({
+          runId: selectedNodeResult.runId,
+          stan: 'blad',
+          dane: null,
+          blad: toFailure(error),
+        });
+      });
+    return () => {
+      anulowano = true;
+    };
+  }, [selectedNodeResult?.runId]);
 
   return (
     <div className="flex min-w-0 flex-col gap-4 lg:flex-row">
@@ -545,6 +755,42 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
             </p>
           ) : null}
         </div>
+
+        <section aria-labelledby="zlecenia-wyniki-krokow" className="min-w-0">
+          <h3 id="zlecenia-wyniki-krokow" className="mb-2 text-sm font-semibold text-c-text">
+            Wyniki wykonania kroków
+          </h3>
+          <div className="min-w-0 overflow-hidden rounded-xl border border-c-border bg-c-surface p-2 sm:p-3">
+            {nodeResultsStan !== 'ok' ? (
+              <CaseStateBlock
+                loading={nodeResultsStan === 'ladowanie'}
+                failure={nodeResultsStan === 'blad' ? nodeResultsBlad : null}
+                onRetry={() => setNodeResultsPonow((n) => n + 1)}
+                compact
+              />
+            ) : (
+              <StandardTable
+                columns={nodeResultColumns}
+                data={nodeResultRows}
+                selectedRowId={selection?.kind === 'wynik-kroku' ? selection.id : null}
+                onRowClick={(row) => setSelection({ kind: 'wynik-kroku', id: String(row.id) })}
+                rowDescription={() => null}
+                // Ten sam pomiar co reszta tego pliku: 980 px wymuszone w
+                // kontenerze 700 px chowa kolumny za przewijaniem bez śladu.
+                minTableWidth="auto"
+                persistKey="caseWorkspace.results.nodeResults"
+                density="compact"
+                defaultSort={{ columnId: 'kiedy', direction: 'desc' }}
+                empty={{
+                  icon: ClipboardCheck,
+                  title: 'Żaden krok nie ma jeszcze zapisanego wyniku',
+                  description:
+                    'Wynik pojawia się tu dopiero, gdy krok wykonania zostanie zakończony albo pominięty — to nie jest błąd.',
+                }}
+              />
+            )}
+          </div>
+        </section>
 
         <section aria-labelledby="zlecenia-wartosc" className="min-w-0">
           <h3 id="zlecenia-wartosc" className="mb-2 text-sm font-semibold text-c-text">
@@ -803,6 +1049,151 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
                 należy. Wrócisz tu tym samym zleceniem, w tej samej sekcji.
               </p>
             )}
+          </StandardPreview>
+        </aside>
+      ) : selectedNodeResult ? (
+        <aside className="w-full shrink-0 lg:w-[380px]">
+          <StandardPreview
+            title={
+              planNodeTypeLabel(selectedNodeResult.nodeType, true) || selectedNodeResult.nodeType
+            }
+            onClose={() => setSelection(null)}
+            /* Ten sam kanon co „Powiązane obiekty" wyżej: „Otwórz" w nagłówku
+               podglądu, WYŁĄCZNIE gdy naprawdę da się otworzyć. */
+            onOpenFull={
+              selectedNodeResultOtwarcie?.status === 'otwieralny'
+                ? () =>
+                    otworz({
+                      sciezka: selectedNodeResultOtwarcie.sciezka,
+                      kluczFokusu: kluczFokusuRezultatuKroku(selectedNodeResult.nodeRunId),
+                      etykieta: selectedNodeResultOtwarcie.etykieta,
+                    })
+                : undefined
+            }
+            openLabel="Otwórz rezultat"
+            meta={{
+              pills: [
+                {
+                  label: resultAcceptanceLabel(selectedNodeResult.resultAcceptance),
+                  tone:
+                    resultAcceptanceTone(selectedNodeResult.resultAcceptance) === 'critical'
+                      ? 'danger'
+                      : resultAcceptanceTone(selectedNodeResult.resultAcceptance),
+                },
+                { label: nodeCompletionStateLabel(selectedNodeResult.nodeCompletionState), tone: 'neutral' },
+              ],
+            }}
+            details={{
+              text: 'Wynik pojedynczego kroku wykonania tego zlecenia.',
+              showWordCount: false,
+              propertyLabel: 'Właściwość',
+              valueLabel: 'Wartość',
+              properties: [
+                { id: 'run', label: 'Źródłowy Run', value: <TechnicalId value={selectedNodeResult.runId} title="Run" /> },
+                {
+                  id: 'noderun',
+                  label: 'NodeRun',
+                  value: <TechnicalId value={selectedNodeResult.nodeRunId} title="NodeRun" />,
+                },
+                { id: 'zdarzylo', label: 'Zdarzyło się', value: formatDateTime(selectedNodeResult.occurredAt) },
+                { id: 'zapisano', label: 'Zapisano', value: formatDateTime(selectedNodeResult.recordedAt) },
+                ...(selectedNodeResult.nodeCompletionState === 'SKIPPED'
+                  ? [
+                      {
+                        id: 'pominiecie',
+                        label: 'Autoryzacja pominięcia',
+                        value:
+                          selectedNodeResult.skipAuthorizedByGraphCondition === true
+                            ? 'tak — warunek grafu'
+                            : selectedNodeResult.skipAuthorizedByGraphCondition === false
+                              ? 'nie potwierdzona'
+                              : 'nieznana',
+                      },
+                    ]
+                  : []),
+              ],
+            }}
+          >
+            {/* Źródłowy Run — dociągnięty leniwie, uczciwy o trzech stanach. */}
+            <div className="rounded-lg border border-c-border-subtle p-3">
+              <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-c-text-muted">
+                Kontekst Run
+              </div>
+              {zrodloRun.runId !== selectedNodeResult.runId || zrodloRun.stan === 'ladowanie' ? (
+                <p className="text-xs text-c-text-muted">Wczytywanie…</p>
+              ) : zrodloRun.stan === 'blad' ? (
+                <p className="text-xs text-c-text-secondary">
+                  {zrodloRun.blad?.kind === 'blocked'
+                    ? 'Nie masz uprawnień do szczegółów tego Run.'
+                    : zrodloRun.blad?.kind === 'notFound'
+                      ? 'Powiązanie z tym Run nie zostało znalezione — mogło zostać usunięte.'
+                      : 'Nie udało się wczytać szczegółów Run. Reszta tego wyniku pozostaje widoczna.'}
+                </p>
+              ) : zrodloRun.dane ? (
+                <dl className="space-y-1 text-xs text-c-text-secondary">
+                  <div>
+                    Wersja planu: <TechnicalId value={zrodloRun.dane.casePlanVersionId} />
+                  </div>
+                  <div>
+                    Skrót grafu: <TechnicalId value={zrodloRun.dane.graphDigest} />
+                  </div>
+                  <div>Powiązano z planem: {formatDateTime(zrodloRun.dane.createdAt)}</div>
+                </dl>
+              ) : null}
+            </div>
+
+            {/* Dowód — treść, na której oparto zapisaną akceptację. */}
+            <div className="mt-3 rounded-lg border border-c-border-subtle p-3">
+              <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-c-text-muted">
+                Dowód
+              </div>
+              {summaryFromSnapshot(selectedNodeResult.acceptanceInputSnapshot) ? (
+                <p className="text-xs text-c-text-secondary">
+                  {summaryFromSnapshot(selectedNodeResult.acceptanceInputSnapshot)}
+                </p>
+              ) : (
+                <p className="text-xs italic text-c-text-muted">
+                  Do tego kroku nie zapisano czytelnego opisu dowodu.
+                  {!expert ? ' Włącz widok ekspercki, by zobaczyć surowe dane.' : ''}
+                </p>
+              )}
+              {expert && selectedNodeResult.acceptanceInputSnapshot != null ? (
+                <pre className="mt-2 max-h-40 overflow-auto rounded-lg bg-c-surface-raised p-2 text-[11px] text-c-text-secondary">
+                  {JSON.stringify(selectedNodeResult.acceptanceInputSnapshot, null, 2)}
+                </pre>
+              ) : null}
+            </div>
+
+            {/* Gdy otworzyć NIE można — powód wprost, zamiast martwego przycisku. */}
+            <div className="mt-3">
+              {selectedNodeResultOtwarcie === null ? (
+                <p className="text-xs text-c-text-muted">
+                  Ten wynik nie wskazuje obiektu do otwarcia.
+                </p>
+              ) : selectedNodeResultOtwarcie.status !== 'otwieralny' ? (
+                <div className="flex items-start gap-2 rounded-lg border border-c-border bg-c-surface-raised px-3 py-2">
+                  {selectedNodeResultOtwarcie.status === 'odpiety' ? (
+                    <Unlink className="mt-0.5 h-4 w-4 shrink-0 text-c-text-muted" aria-hidden />
+                  ) : (
+                    <AlertTriangle
+                      className="mt-0.5 h-4 w-4 shrink-0 text-c-text-muted"
+                      aria-hidden
+                    />
+                  )}
+                  <div className="min-w-0">
+                    <p className="text-xs font-medium text-c-text">Tego obiektu nie otworzymy</p>
+                    <p className="mt-0.5 text-xs text-c-text-secondary">
+                      {selectedNodeResultOtwarcie.powod}
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-xs text-c-text-muted">
+                  „Otwórz rezultat" w nagłówku podglądu przeniesie Cię do modułu, do którego ten
+                  obiekt należy. Wrócisz tu tym samym zleceniem, w tej samej sekcji.
+                </p>
+              )}
+            </div>
           </StandardPreview>
         </aside>
       ) : null}

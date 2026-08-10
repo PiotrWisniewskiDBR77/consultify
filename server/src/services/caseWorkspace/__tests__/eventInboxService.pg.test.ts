@@ -179,6 +179,7 @@ suite('eventInboxService — durable inbound event boundary against a real Postg
     const created = await caseCoreService.createCase({
       projectId,
       organizationId: orgId,
+      caseName: `Inbox test case (${label})`,
       contractedClosureType: 'DELIVERY_COMPLETED',
       createdByActorId: actorId,
     });
@@ -273,6 +274,7 @@ suite('eventInboxService — durable inbound event boundary against a real Postg
     const created = await caseCoreService.createCase({
       projectId,
       organizationId: fixture.orgId,
+      caseName: `Inbox test case (${label})`,
       contractedClosureType: 'DELIVERY_COMPLETED',
       createdByActorId: fixture.actorId,
     });
@@ -926,6 +928,129 @@ suite('eventInboxService — durable inbound event boundary against a real Postg
       await control
         .query(`DELETE FROM projects WHERE id = $1`, [second.projectId])
         .catch(() => undefined);
+      await teardown({ ...fixture, source });
+    }
+  }, 90_000);
+
+  // =========================================================================
+  // CW-T-B additions: channel-wide eventType allowlist + delivery-timestamp
+  // tolerance, both exercised at the SERVICE layer (the HTTP layer is
+  // exercised end-to-end in integration/inboxIngress.pg.test.ts).
+  // =========================================================================
+
+  it('rejects a channel-disallowed eventType as PAYLOAD_INVALID with a durable row, and admits an allowed one', async () => {
+    const fixture = await seedBoundRun('evttype-allowlist');
+    const source = `vendor-evttype-${randomUUID()}`;
+    try {
+      const { waitId, correlationKey } = await seedExternalCallbackWait(fixture);
+      eventInboxService.registerInboxChannel({
+        source,
+        secret: CHANNEL_SECRET,
+        principal: `principal:${source}`,
+        allowedWaitTypes: ['EXTERNAL_CALLBACK'],
+        allowedEventTypes: ['vendor.signature.completed'],
+      });
+
+      const disallowed = await eventInboxService.receiveExternalEvent(
+        signedDelivery({
+          source,
+          eventId: `evt-${randomUUID()}`,
+          organizationId: fixture.orgId,
+          correlationKey,
+          eventType: 'vendor.something.unexpected',
+        })
+      );
+      expect(disallowed.outcome).toBe('rejected');
+      if (disallowed.outcome !== 'rejected') throw new Error('unreachable');
+      expect(disallowed.rejectionCode).toBe('PAYLOAD_INVALID');
+      expect((await readWait(waitId))?.status).toBe('ACTIVE');
+
+      const rows = await readInboxRows(source);
+      expect(rows).toHaveLength(1);
+      expect(rows[0].status).toBe('REJECTED');
+      expect(rows[0].rejection_code).toBe('PAYLOAD_INVALID');
+
+      const allowed = await eventInboxService.receiveExternalEvent(
+        signedDelivery({
+          source,
+          eventId: `evt-${randomUUID()}`,
+          organizationId: fixture.orgId,
+          correlationKey,
+        })
+      );
+      expect(allowed.outcome).toBe('applied');
+    } finally {
+      await teardown({ ...fixture, source });
+    }
+  }, 90_000);
+
+  it('isDeliveredAtWithinTolerance: fresh timestamps pass, stale and future-skewed ones fail, malformed input fails closed', () => {
+    const now = Date.parse('2026-08-10T12:00:00.000Z');
+    expect(
+      eventInboxService.isDeliveredAtWithinTolerance('2026-08-10T11:58:00.000Z', { nowMs: now })
+    ).toBe(true); // 2 min old, within the 5 min default
+    expect(
+      eventInboxService.isDeliveredAtWithinTolerance('2026-08-10T11:54:00.000Z', { nowMs: now })
+    ).toBe(false); // 6 min old, past the 5 min default
+    expect(
+      eventInboxService.isDeliveredAtWithinTolerance('2026-08-10T12:00:30.000Z', { nowMs: now })
+    ).toBe(true); // 30s in the future, within the 60s default skew
+    expect(
+      eventInboxService.isDeliveredAtWithinTolerance('2026-08-10T12:05:00.000Z', { nowMs: now })
+    ).toBe(false); // 5 min in the future, beyond the 60s default skew
+    expect(eventInboxService.isDeliveredAtWithinTolerance(undefined)).toBe(false);
+    expect(eventInboxService.isDeliveredAtWithinTolerance('not-a-date')).toBe(false);
+    expect(eventInboxService.isDeliveredAtWithinTolerance('')).toBe(false);
+  });
+
+  it('a channel wired to isDeliveredAtWithinTolerance rejects a stale payload.deliveredAt as PAYLOAD_INVALID (durable) and admits a fresh one', async () => {
+    const fixture = await seedBoundRun('ts-tolerance');
+    const source = `vendor-ts-${randomUUID()}`;
+    try {
+      const { waitId, correlationKey } = await seedExternalCallbackWait(fixture);
+      eventInboxService.registerInboxChannel({
+        source,
+        secret: CHANNEL_SECRET,
+        principal: `principal:${source}`,
+        allowedWaitTypes: ['EXTERNAL_CALLBACK'],
+        validatePayload: (payload) =>
+          eventInboxService.isDeliveredAtWithinTolerance((payload as Record<string, unknown>).deliveredAt),
+      });
+
+      const stalePayload = {
+        status: 'completed',
+        deliveredAt: new Date(Date.now() - 60 * 60 * 1000).toISOString(), // 1h old
+      };
+      const stale = await eventInboxService.receiveExternalEvent({
+        eventId: `evt-${randomUUID()}`,
+        source,
+        eventType: 'vendor.signature.completed',
+        organizationId: fixture.orgId,
+        correlationKey,
+        payload: stalePayload,
+        signature: eventInboxService.computeInboxSignature(CHANNEL_SECRET, stalePayload),
+      });
+      expect(stale.outcome).toBe('rejected');
+      if (stale.outcome !== 'rejected') throw new Error('unreachable');
+      expect(stale.rejectionCode).toBe('PAYLOAD_INVALID');
+      expect((await readWait(waitId))?.status).toBe('ACTIVE');
+
+      const freshPayload = { status: 'completed', deliveredAt: new Date().toISOString() };
+      const fresh = await eventInboxService.receiveExternalEvent({
+        eventId: `evt-${randomUUID()}`,
+        source,
+        eventType: 'vendor.signature.completed',
+        organizationId: fixture.orgId,
+        correlationKey,
+        payload: freshPayload,
+        signature: eventInboxService.computeInboxSignature(CHANNEL_SECRET, freshPayload),
+      });
+      expect(fresh.outcome).toBe('applied');
+      expect((await readWait(waitId))?.status).toBe('SATISFIED');
+
+      const rows = await readInboxRows(source);
+      expect(rows.map((r) => r.status).sort()).toEqual(['APPLIED', 'REJECTED']);
+    } finally {
       await teardown({ ...fixture, source });
     }
   }, 90_000);

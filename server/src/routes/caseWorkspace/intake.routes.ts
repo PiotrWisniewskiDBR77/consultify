@@ -60,6 +60,14 @@ const autonomyPolicyEnum = z.enum(['ASK_EACH_ACTION', 'ASK_MATERIAL_ACTIONS', 'E
  */
 const workOrderBody = z.object({
   projectId: z.string().trim().min(1),
+  // CW-T-A: the Case's own canonical name/title, distinct from `goal`. Not
+  // trimmed here for the same reason `goal`/`scope`/etc. below are not —
+  // normalization and digesting must be the SAME step, owned entirely by
+  // caseIntakeService.normalizeWorkOrder. Optional on the wire (the service
+  // derives an honest fallback from `goal` when omitted — see
+  // caseIntakeService.ts's WorkOrderDraftInput.caseName), but every real
+  // caller of this route should send one.
+  caseName: z.string().min(1).max(200).nullable().optional(),
   goal: z.string().min(1),
   scope: z.array(z.string()).min(1),
   expectedOutcome: z.string().min(1),
@@ -82,6 +90,14 @@ const confirmBody = z.object({
     .string()
     .trim()
     .regex(/^sha256:[0-9a-f]{64}$/, 'confirmedDigest must be sha256:<64 hex chars>'),
+  /**
+   * CW-T-A: an optional caller-minted token identifying THIS confirmation
+   * attempt — one factor of `computeIntakeConfirmationKey`
+   * (caseIntakeService.ts). Omit it and the service defaults to
+   * `confirmedDigest` itself, which reproduces the pre-CW-T-A idempotency
+   * behaviour (a retry of byte-identical content collapses to one Case).
+   */
+  confirmationIdempotencyKey: z.string().trim().min(1).max(200).nullable().optional(),
 });
 
 // POST /case-intake/work-orders/propose — CW-CANON-01: creates no Case, no Run.
@@ -114,6 +130,7 @@ router.post(
       workOrder: { ...body.workOrder, organizationId: actor.organizationId },
       confirmedDigest: body.confirmedDigest,
       confirmedByActorId: actor.actorUserId,
+      confirmationIdempotencyKey: body.confirmationIdempotencyKey ?? null,
       correlationId: actor.correlationId,
     });
     res.status(result.caseCreated ? 201 : 200).json({ data: result });

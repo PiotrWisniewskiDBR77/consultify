@@ -32,6 +32,7 @@ import {
   AlertTriangle,
   ArrowUpRight,
   BarChart3,
+  CheckCircle2,
   ClipboardList,
   Link2,
   ListChecks,
@@ -73,10 +74,12 @@ import {
   listProposals,
   listValueMeasurements,
   listWaits,
+  newIdempotencyKey,
   settleSection,
   toFailure,
   validatePlanVersion,
 } from './api';
+import { startLightOneClick } from './apiLightStart';
 import {
   nazwaZlecenia,
   rememberedListLocation,
@@ -338,6 +341,22 @@ export const CaseDetailScreen: React.FC = () => {
   const [komunikat, setKomunikat] = useState<string | null>(null);
 
   /*
+   * LIGHT one-click ("Zatwierdź i rozpocznij") — jedna akcja: Plan v1 →
+   * walidacja → publikacja → Run → NodeRun, atomowo po stronie backendu
+   * (`lightOneClickService.startLightOneClick`). `lightStartKeyRef` niesie
+   * TEN SAM klucz idempotencji przy ponowieniu tej samej intencji (podwójny
+   * klik, błąd sieci) — zerowany dopiero, gdy komenda faktycznie DOSZŁA do
+   * skutku (sukces ALBO świadoma odmowa), zgodnie z regułą z `api.ts`.
+   */
+  const [lightStart, setLightStart] = useState<
+    | { status: 'idle' }
+    | { status: 'pending' }
+    | { status: 'refused'; reasonDetail: string }
+    | { status: 'error'; message: string; refreshSuggested: boolean }
+  >({ status: 'idle' });
+  const lightStartKeyRef = useRef<string | null>(null);
+
+  /*
    * Migawkę powrotu czytamy SYNCHRONICZNIE, w pierwszym renderze — nie w efekcie.
    * Gdyby czytał ją efekt, sekcja Rezultaty zdążyłaby się już zamontować z pustym
    * zaznaczeniem, a przywrócony podgląd „doklejałby się" po chwili, zmieniając
@@ -485,6 +504,45 @@ export const CaseDetailScreen: React.FC = () => {
   useEffect(() => {
     void load();
   }, [load]);
+
+  /*
+   * "Zatwierdź i rozpocznij" — JEDNA akcja UI, JEDNO wywołanie backendu.
+   * `outcome: 'refused'` to NIE błąd sieci/serwera — backend świadomie nie
+   * uruchomił Runu i podał dokładny powód; ekran ma go POKAZAĆ, nie ukryć za
+   * generycznym `toFailure`. Po każdym wyniku (sukces, odmowa, błąd)
+   * odświeżamy `bundle` z serwera — nigdy nie malujemy stanu z pamięci.
+   */
+  const handleLightStart = useCallback(async () => {
+    if (!caseId) return;
+    setLightStart({ status: 'pending' });
+    if (!lightStartKeyRef.current) lightStartKeyRef.current = newIdempotencyKey();
+    const result = await startLightOneClick(caseId, { idempotencyKey: lightStartKeyRef.current });
+    if (!result.ok) {
+      setLightStart({
+        status: 'error',
+        message: result.failure.message,
+        refreshSuggested: result.failure.refreshSuggested,
+      });
+      setKomunikat(result.failure.message);
+      return;
+    }
+    // Komenda DOSZŁA do skutku (sukces albo świadoma odmowa) — kolejny klik
+    // to nowa intencja, więc dostaje nowy klucz idempotencji.
+    lightStartKeyRef.current = null;
+    if (result.value.outcome === 'refused') {
+      const powod = result.value.reasonDetail || 'Nieznany powód.';
+      setLightStart({ status: 'refused', reasonDetail: powod });
+      setKomunikat(`Zlecenie LIGHT nie zostało uruchomione: ${powod}`);
+    } else {
+      setLightStart({ status: 'idle' });
+      setKomunikat(
+        result.value.outcome === 'already_started'
+          ? 'Zlecenie LIGHT jest już zatwierdzone i uruchomione.'
+          : 'Zlecenie LIGHT zostało zatwierdzone i uruchomione.'
+      );
+    }
+    await load();
+  }, [caseId, load]);
 
   /*
    * Tożsamość `setParam` MUSI być stabilna, a nawigacja pomijana, gdy adres się
@@ -859,6 +917,23 @@ export const CaseDetailScreen: React.FC = () => {
     bundle?.blocked && bundle.failedSections.includes('powiązane obiekty')
   );
 
+  /*
+   * "Zatwierdź i rozpocznij" pokazuje się TYLKO dla zleceń LIGHT, które
+   * jeszcze nie mają opublikowanego planu (co w tym module znaczy: jeszcze
+   * nie uruchomiono dla nich Runu — patrz `lightOneClickService.ts`, LIGHT ma
+   * pułap dokładnie jednego Runu). Zamknięte/nieudane/anulowane zlecenia nie
+   * dostają przycisku — backend i tak by odmówił (`light_one_click_case_not_
+   * ready`), więc nie pokazujemy klikalnego przycisku, który zawsze odmawia.
+   */
+  const maPublikowanyPlanLight = (bundle?.planVersions ?? []).some((v) => v.status === 'PUBLISHED');
+  const stanZleceniaStartowalnyLight =
+    bundle?.caseItem.caseStatus === 'DRAFT' || bundle?.caseItem.caseStatus === 'ACTIVE';
+  const pokazZatwierdzIRozpocznij =
+    Boolean(bundle) &&
+    bundle!.caseItem.caseProfile === 'LIGHT' &&
+    stanZleceniaStartowalnyLight &&
+    !maPublikowanyPlanLight;
+
   const prawyPanel = {
     actions: {
       label: 'Akcje',
@@ -868,6 +943,25 @@ export const CaseDetailScreen: React.FC = () => {
           <span ref={znacznikPanuRef} aria-hidden className="sr-only" />
           <PreviewActionBar
             rows={[
+              ...(pokazZatwierdzIRozpocznij
+                ? [
+                    {
+                      buttons: [
+                        {
+                          label:
+                            lightStart.status === 'pending'
+                              ? 'Uruchamianie…'
+                              : 'Zatwierdź i rozpocznij',
+                          icon: CheckCircle2,
+                          colorScheme: 'primary' as const,
+                          flex: true,
+                          disabled: lightStart.status === 'pending',
+                          onClick: () => void handleLightStart(),
+                        },
+                      ],
+                    },
+                  ]
+                : []),
               {
                 buttons: [
                   {
@@ -888,9 +982,23 @@ export const CaseDetailScreen: React.FC = () => {
               },
             ]}
           />
+          {lightStart.status === 'refused' ? (
+            <div className="mt-2 rounded-lg border border-c-border-subtle bg-c-surface-raised px-3 py-2 text-xs text-c-text-secondary">
+              <span className="font-medium text-c-text">Zlecenie LIGHT nie zostało uruchomione.</span>{' '}
+              {lightStart.reasonDetail}
+            </div>
+          ) : null}
+          {lightStart.status === 'error' ? (
+            <div className="mt-2 rounded-lg border border-danger-300/40 bg-danger-50 px-3 py-2 text-xs text-danger-700 dark:border-danger-500/30 dark:bg-danger-500/10 dark:text-danger-200">
+              {lightStart.message}
+              {lightStart.refreshSuggested ? ' Odśwież dane i spróbuj ponownie.' : ''}
+            </div>
+          ) : null}
         </div>
       ),
-      actionIds: ['wczytaj-ponownie', 'wroc-do-listy'],
+      actionIds: pokazZatwierdzIRozpocznij
+        ? ['zatwierdz-i-rozpocznij', 'wczytaj-ponownie', 'wroc-do-listy']
+        : ['wczytaj-ponownie', 'wroc-do-listy'],
     },
     properties: {
       label: 'Właściwości',

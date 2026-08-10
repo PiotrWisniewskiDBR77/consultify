@@ -48,6 +48,14 @@ const caseIdParams = z.object({ caseId: z.string().trim().min(1) });
 // runs, and svc.createCase is always called with `actor.organizationId`.
 const createCaseBody = z.object({
   projectId: z.string().trim().min(1),
+  // CW-T-A: the Case's own canonical name/title, distinct from
+  // goal/expectedOutcome. OPTIONAL here on purpose: caseCoreService.createCase
+  // already derives an honest fallback ("Zlecenie <short id>") when no name is
+  // supplied, and the NOT NULL + non-blank CHECK on case_core.case_name is what
+  // actually guarantees no Case is ever nameless. Making it required at this
+  // route was stricter than the model and turned every existing caller — and 11
+  // real tests — into a 400.
+  caseName: z.string().trim().min(1).max(200).optional(),
   caseProfile: caseProfileEnum.optional(),
   governanceTier: governanceTierEnum.optional(),
   autonomyPolicy: autonomyPolicyEnum.optional(),

@@ -30,6 +30,17 @@ export interface CaseCoreView {
   caseId: string;
   projectId: string;
   organizationId: string;
+  /**
+   * Kanoniczna nazwa/tytuł zlecenia (CW-T-A, migracja
+   * `20260810d_case_workspace_case_identity.sql`) — własna kolumna
+   * `case_core.case_name`, ZAWSZE niepusta (NOT NULL + CHECK w bazie), osobna
+   * od `goal`/`expectedOutcome`. Backend zwraca ją teraz w KAŻDEJ trasie
+   * (`listCasesForOrganization`, `getCase`) — nie trzeba już dociągać jej
+   * asynchronicznie przez `getCaseIntakeSummary` (patrz komentarz przy
+   * `nazwaZlecenia` w CasesListScreen.tsx, który opisywał sytuację SPRZED tej
+   * kolumny).
+   */
+  caseName: string;
   caseProfile: CaseProfile;
   governanceTier: GovernanceTier;
   autonomyPolicy: AutonomyPolicy;

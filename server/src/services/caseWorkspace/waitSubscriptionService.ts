@@ -456,6 +456,14 @@ function classifyReason(reason: string): { reasonClass: string; reasonDigest: st
  * (`RETURNING *`), never from input and never from a second SELECT — so
  * `aggregateVersion` is always the POST-mutation OCC counter. `attemptId` has no
  * column on this aggregate and is deliberately absent rather than invented.
+ *
+ * `correlationKey` (CW-T-E): every event this service emits about ITS OWN
+ * wait is stamped with that wait's own case_workspace_waits.correlation_key,
+ * on the outbox's new correlation_key column (server/migrations/
+ * 20260810e_case_workspace_event_correlation.sql). This is what lets a
+ * DIFFERENT wait's DOMAIN_EVENT resolution use one of THIS wait's own events
+ * (e.g. wait.satisfied) as precise, Tier-1 evidence — a chained-wait scenario
+ * — without falling back to the weaker case/run/nodeRun scope check.
  */
 function waitEventIdentity(row: CaseWorkspaceWaitRow): {
   organizationId: string;
@@ -466,6 +474,7 @@ function waitEventIdentity(row: CaseWorkspaceWaitRow): {
   caseId: string;
   runId: string | null;
   nodeRunId: string | null;
+  correlationKey: string;
 } {
   return {
     organizationId: row.organization_id,
@@ -476,6 +485,7 @@ function waitEventIdentity(row: CaseWorkspaceWaitRow): {
     caseId: row.case_id,
     runId: row.run_id,
     nodeRunId: row.node_run_id,
+    correlationKey: row.correlation_key,
   };
 }
 
@@ -927,6 +937,11 @@ export async function resolveWait(
       // WHICH ledger the evidence was found in, so an auditor can re-check the
       // claim without guessing where to look.
       satisfiedByEventLedger: evidence.ledger,
+      // CW-T-E: WHICH binding tier proved it — 'correlation_key'/'wait_scope'
+      // is the precise per-step proof; 'case_scope'/'run_scope' names the
+      // (now Run/NodeRun-checked) fallback so a reviewer can see when the
+      // weaker tier was the one actually used.
+      satisfiedByBinding: evidence.boundVia,
       ...(evidence.source ? { satisfiedBySource: evidence.source } : {}),
       ...(evidence.inboxRecordId ? { satisfiedByInboxRecordId: evidence.inboxRecordId } : {}),
     },
@@ -955,6 +970,9 @@ interface OutboxEvidenceRow {
   event_type: string;
   organization_id: string;
   case_id: string | null;
+  run_id: string | null;
+  node_run_id: string | null;
+  correlation_key: string | null;
 }
 
 /**
@@ -982,12 +1000,31 @@ interface OutboxEvidenceRow {
  * inbox-only rule would have been wrong: it would have made the ordinary,
  * correct internal resume impossible while calling that security.
  *
- * The outbox has no correlation key, so the binding available there is
- * tenant + declared event type + Case scope. That is weaker than the inbox
- * case, and deliberately recorded as such: it closes the reported defect (an
- * id that exists NOWHERE) without pretending to more precision than the
- * ledger actually offers. Narrowing it further needs a correlation column on
- * the outbox, which is a schema change, not a check.
+ * CW-T-E STRENGTHENING (server/migrations/
+ * 20260810e_case_workspace_event_correlation.sql): the outbox now carries an
+ * OPTIONAL correlation_key column (mirroring the inbox's own), and this
+ * function's DOMAIN_EVENT branch checks it in two tiers:
+ *
+ *   1. STRICT — the outbox row carries a correlation_key. It must equal this
+ *      wait's own correlationKey exactly (same idiom as the inbox branch
+ *      below), plus a defense-in-depth case_id check when the row carries
+ *      one. This is precise, per-step binding: a producer that stamps the
+ *      target wait's correlation_key cannot accidentally satisfy a DIFFERENT
+ *      wait of the same event_type in the same Case.
+ *   2. FALLBACK — the row has no correlation_key (a producer that has not
+ *      adopted the column yet). Requires case_id to equal this wait's caseId
+ *      EXACTLY (previously only checked "if present", which let a caseless/
+ *      org-scoped event satisfy a Case-scoped wait), and — the specific gap
+ *      CW-T-E reported — if the wait itself targets one run and/or one
+ *      NodeRun, the outbox row's own run_id/node_run_id must match. This is
+ *      what stops "an event of this type happened for a DIFFERENT step of
+ *      the same Case" from resuming the wrong wait even before every
+ *      producer opts into correlation_key.
+ *
+ * Both tiers still end with the pre-existing expectedEventType check. Note
+ * what does NOT change: DOMAIN_EVENT resolution still reads ONLY the outbox
+ * — never case_workspace_event_inbox — so "internal DOMAIN_EVENT works with
+ * no inbox row" stays true.
  *
  * Both tables are read with direct queries rather than through
  * eventInboxService/eventOutboxService: eventInboxService imports
@@ -997,12 +1034,18 @@ interface OutboxEvidenceRow {
 async function assertSatisfyingEventIsReal(
   wait: CaseWait,
   rawSatisfiedByEventId: string
-): Promise<{ ledger: 'inbox' | 'outbox'; inboxRecordId: string | null; source: string | null }> {
+): Promise<{
+  ledger: 'inbox' | 'outbox';
+  inboxRecordId: string | null;
+  source: string | null;
+  /** CW-T-E audit trail: WHICH binding tier proved the evidence. */
+  boundVia: 'correlation_key' | 'run_scope' | 'case_scope' | 'wait_scope';
+}> {
   const ref = requireNonBlank(rawSatisfiedByEventId, 'wait_satisfied_by_event_id_required');
 
   if (wait.waitType === 'DOMAIN_EVENT') {
     const row = await queryOne<OutboxEvidenceRow>(
-      `SELECT event_id, event_type, organization_id, case_id
+      `SELECT event_id, event_type, organization_id, case_id, run_id, node_run_id, correlation_key
          FROM case_workspace_event_outbox
         WHERE event_id = ? AND organization_id = ?`,
       [ref, wait.organizationId]
@@ -1012,14 +1055,47 @@ async function assertSatisfyingEventIsReal(
     // indistinguishable from one that never happened (requireCaseAccess's own
     // posture, SEC-009).
     if (!row) throw new Error('wait_satisfying_event_not_found');
-    if (row.case_id && row.case_id !== wait.caseId) {
-      // A real event, but about a different Case — not evidence for this wait.
-      throw new Error('wait_satisfying_event_case_mismatch');
+
+    let boundVia: 'correlation_key' | 'run_scope' | 'case_scope';
+    if (row.correlation_key) {
+      // TIER 1 — STRICT. A producer that names a correlation_key is making a
+      // specific claim ("this is the fact THAT wait was waiting for"); a real
+      // key that names a DIFFERENT wait is not evidence for THIS one.
+      if (row.correlation_key !== wait.correlationKey) {
+        throw new Error('wait_satisfying_event_correlation_mismatch');
+      }
+      // Defense in depth: correlation_key alone does not prove Case scope
+      // (case_workspace_waits only enforces UNIQUE(case_id, correlation_key),
+      // so the SAME key string can legitimately exist for two different
+      // Cases) — the same posture the inbox branch below already takes.
+      if (row.case_id && row.case_id !== wait.caseId) {
+        throw new Error('wait_satisfying_event_case_mismatch');
+      }
+      boundVia = 'correlation_key';
+    } else {
+      // TIER 2 — FALLBACK for a producer that has not stamped correlation_key.
+      // case_id is now checked for EQUALITY, not merely "when present": an
+      // org-scoped event (case_id NULL) is no longer accepted as evidence for
+      // a Case-scoped wait.
+      if (row.case_id !== wait.caseId) {
+        throw new Error('wait_satisfying_event_case_mismatch');
+      }
+      // The exact gap CW-T-E reported: an event of the SAME type for a
+      // DIFFERENT step (a different Run, or a different NodeRun within the
+      // same Run) of the SAME Case must not resume this wait.
+      if (wait.runId && row.run_id !== wait.runId) {
+        throw new Error('wait_satisfying_event_run_mismatch');
+      }
+      if (wait.nodeRunId && row.node_run_id !== wait.nodeRunId) {
+        throw new Error('wait_satisfying_event_node_run_mismatch');
+      }
+      boundVia = 'case_scope';
     }
+
     if (wait.expectedEventType && row.event_type !== wait.expectedEventType) {
       throw new Error('wait_satisfying_event_type_mismatch');
     }
-    return { ledger: 'outbox', inboxRecordId: null, source: null };
+    return { ledger: 'outbox', inboxRecordId: null, source: null, boundVia };
   }
 
   const separator = ref.indexOf(':');
@@ -1056,7 +1132,12 @@ async function assertSatisfyingEventIsReal(
     throw new Error('wait_satisfying_event_type_mismatch');
   }
 
-  return { ledger: 'inbox', inboxRecordId: row.inbox_record_id, source: row.source };
+  return {
+    ledger: 'inbox',
+    inboxRecordId: row.inbox_record_id,
+    source: row.source,
+    boundVia: row.wait_id ? 'wait_scope' : 'correlation_key',
+  };
 }
 
 /**
@@ -1490,6 +1571,23 @@ export type ReclaimExpiredTimerWaitClaimOutcome =
  * ownership does. The timer is unref'd — a background heartbeat must never be
  * the reason a process refuses to exit.
  *
+ * CW-T-E FIX: `setInterval` does NOT wait for a slow tick's async body to
+ * finish before firing the next one. Under DB latency approaching
+ * `intervalMs` (a loaded database, a slow network hop — this is exactly the
+ * condition CW-T-E's own outboxWorker.ts tests reproduce, and this file's own
+ * `startTimerWaitClaimHeartbeat` test caught it under concurrent-suite load),
+ * TWO OR MORE ticks could be in flight together. Each independently observed
+ * the not-yet-stopped `stopped` flag, each called renewTimerWaitClaimLease,
+ * and each — once the ownership really was lost — got back 'fenced' and
+ * called `onLost` a SECOND (or third, ...) time. That breaks the very
+ * contract this function documents ("reports loss of ownership EXACTLY
+ * once"): a caller reacting to `onLost` by, say, handing the wait to a new
+ * worker must not be told twice that it lost ownership of two DIFFERENT
+ * things. `tickInFlight` below is the same single-flight guard
+ * outboxWorker.ts's own interval loop uses for the identical reason — at
+ * most one renewal call outstanding per heartbeat, so an overlapping tick
+ * skips itself instead of racing.
+ *
  * INTERNAL-ONLY / NOT ROUTE-EXPOSED.
  */
 export function startTimerWaitClaimHeartbeat(
@@ -1506,11 +1604,20 @@ export function startTimerWaitClaimHeartbeat(
   const intervalMs = options.intervalMs ?? Math.max(1_000, Math.floor(leaseMs / 3));
 
   let stopped = false;
+  // Single-flight guard: at most one renewTimerWaitClaimLease call outstanding
+  // for this heartbeat at a time. See this function's own header for why a
+  // plain `stopped` check alone is not enough under real DB latency.
+  let tickInFlight = false;
   const timer = setInterval(() => {
+    if (stopped || tickInFlight) return;
+    tickInFlight = true;
     void (async () => {
-      if (stopped) return;
       try {
         const outcome = await renewTimerWaitClaimLease(waitId, ownerToken, fencingToken, leaseMs);
+        // stop() may have been called externally while this renewal was still
+        // in flight — an external stop always wins, and must not be followed
+        // by a stale onLost from a renewal that started before it.
+        if (stopped) return;
         if (outcome !== 'renewed') {
           stopped = true;
           clearInterval(timer);
@@ -1519,6 +1626,8 @@ export function startTimerWaitClaimHeartbeat(
       } catch {
         // Transient DB failure — the lease has not lapsed yet and the next tick
         // may succeed. Real loss of ownership arrives as 'fenced', not a throw.
+      } finally {
+        tickInFlight = false;
       }
     })();
   }, intervalMs);

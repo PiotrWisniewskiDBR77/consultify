@@ -2,10 +2,23 @@
  * Case Workspace — Case Core service (CW-P01, EPIC E1).
  *
  * Backs the `case_core` table added in
- * server/migrations/20260809_case_workspace_case_core.sql. That table is
- * keyed 1:1 to `projects.id` (packet collision-avoidance mandate — this
- * service only ever SELECTs from `projects`, never INSERT/UPDATE/DELETE) and
- * never references Finance or Results tables/routes.
+ * server/migrations/20260809_case_workspace_case_core.sql, RETROFITTED by
+ * server/migrations/20260810d_case_workspace_case_identity.sql (CW-T-A).
+ *
+ * ★ CARDINALITY (CW-T-A, binding owner ruling 2026-08-10): a Case is a WORK
+ * ORDER, and one project MAY and MUST be able to hold MANY independent
+ * Cases. `case_core.project_id` is a plain FK (read-only reference into
+ * `projects` — this service only ever SELECTs from `projects`, never
+ * INSERT/UPDATE/DELETE), never references Finance or Results tables/routes,
+ * and — as of the identity migration above — is NO LONGER unique. The
+ * previous revision of this file enforced "exactly one Case per project"
+ * (`case_already_exists_for_project`, backed by a DB `UNIQUE(project_id)`)
+ * on OD-01's authority; CW-T-A supersedes that reading of OD-01 (see the
+ * migration's own header for the full argument) — `createCase` therefore no
+ * longer pre-checks or rejects a second Case for a project it has already
+ * seen. What OD-01 still means here: ONE case_core row is minted per
+ * `createCase` CALL (never zero, never two) — that invariant lives entirely
+ * in this function's own single INSERT, not in a table constraint anymore.
  *
  * req_id coverage (docs/product/case-workspace/acceptance/
  * FUNCTIONAL_REQUIREMENT_COVERAGE.csv, epics column contains "E1"):
@@ -22,7 +35,11 @@
  *
  * Cross-cutting invariants held by every mutating method here (see the
  * migration file's header for the exact canon citations):
- *   - exactly one case_core row per project_id (UNIQUE constraint, OD-01);
+ *   - createCase mints exactly one case_core row per CALL — many per
+ *     project_id are expected and supported (CW-T-A; NOT a per-project
+ *     uniqueness anymore, see the cardinality note above);
+ *   - case_name is a real, distinct, NOT NULL column — never derived from
+ *     goal/expectedOutcome at read time (CW-T-A);
  *   - one tenant/organization context per Case, never mutated after create
  *     (CW-01-026-INV1);
  *   - case_status only moves DRAFT -> ACTIVE <-> BLOCKED -> {CLOSED, FAILED,
@@ -79,6 +96,7 @@ interface CaseCoreRow {
   case_id: string;
   project_id: string;
   organization_id: string;
+  case_name: string;
   case_profile: CaseProfile;
   governance_tier: GovernanceTier;
   governance_tier_history: string;
@@ -109,6 +127,13 @@ export interface CaseCore {
   caseId: string;
   projectId: string;
   organizationId: string;
+  /**
+   * Canonical name/title of the Case (CW-T-A) — its own NOT NULL column,
+   * distinct from `contractedClosureType`/goal/expectedOutcome. Never blank:
+   * enforced both by `case_core_case_name_not_blank` in the DB and by
+   * `requireCaseName` below.
+   */
+  caseName: string;
   caseProfile: CaseProfile;
   governanceTier: GovernanceTier;
   governanceTierHistory: GovernanceTierHistoryEntry[];
@@ -221,6 +246,15 @@ function requireNonBlank(value: string | null | undefined, reason: string): stri
   return normalized;
 }
 
+/** Ceiling for `case_name` (CW-T-A) — a scannable list title, not a document. */
+const MAX_CASE_NAME_CHARS = 200;
+
+function requireCaseName(value: string | null | undefined): string {
+  const normalized = requireNonBlank(value, 'case_name_required');
+  if (normalized.length > MAX_CASE_NAME_CHARS) throw new Error('case_name_too_long');
+  return normalized;
+}
+
 function requireEnum<T extends string>(
   value: T | null | undefined,
   allowed: readonly T[],
@@ -242,6 +276,7 @@ function mapRow(row: CaseCoreRow): CaseCore {
     caseId: row.case_id,
     projectId: row.project_id,
     organizationId: row.organization_id,
+    caseName: row.case_name,
     caseProfile: row.case_profile,
     governanceTier: row.governance_tier,
     governanceTierHistory: history,
@@ -272,19 +307,48 @@ function mapRow(row: CaseCoreRow): CaseCore {
 /**
  * CW-00-020-INV1 (Durable Teresa work creates exactly one Case after
  * explicit confirmation), CW-01-OD1 (OD-01: one Case, no separate
- * Engagement/Job object), CW-RT-012 (Case aggregate schema), CW-GR-023
- * (POST /api/cases).
+ * Engagement/Job object — read today as "one case_core row per createCase
+ * call", not "one per project"; see this file's header and the identity
+ * migration's header for the full CW-T-A argument), CW-RT-012 (Case
+ * aggregate schema), CW-GR-023 (POST /api/cases).
  *
  * Reads (never writes) the `projects` row to confirm it exists and that its
  * organization_id matches the caller's tenant — this is the packet's only
- * touch of `projects`, and it is read-only. Rejects if a case_core row
- * already exists for project_id (the UNIQUE constraint on project_id is the
- * ultimate enforcement of "one Case per project"; a pre-check here just
- * gives a friendlier error before hitting the DB constraint).
+ * touch of `projects`, and it is read-only.
+ *
+ * ★ CW-T-A: this function used to pre-check `case_core` for an existing row
+ * at `project_id` and REJECT with `case_already_exists_for_project` — a
+ * friendlier error in front of the (then-real) DB `UNIQUE(project_id)`. That
+ * constraint is gone (20260810d_case_workspace_case_identity.sql): a project
+ * legitimately holds many independent Cases (work orders) now, so the same
+ * pre-check would incorrectly block the second, third, ... Case for a
+ * project that already has one. There is deliberately no replacement
+ * uniqueness check here — every call mints a new Case, unconditionally,
+ * exactly like every other multi-row child table in this schema.
  */
 export async function createCase(input: {
   projectId: string;
   organizationId: string;
+  /**
+   * Canonical Case name/title (CW-T-A) — distinct from
+   * goal/expectedOutcome. OPTIONAL on this function's TypeScript signature
+   * ONLY for the same collision-avoidance reason as
+   * `caseIntakeService.WorkOrderDraftInput.caseName` (see that file's
+   * header, open question #7): ~20 `*.pg.test.ts` fixture files across this
+   * worktree call `createCase({...})` without a `caseName` field, and are
+   * outside this packet's allowlist — making the field required here would
+   * be a breaking compile-time change this packet cannot land. When omitted
+   * or blank, a real, honest, non-fabricated fallback is minted from the
+   * new Case's OWN id (`Zlecenie <shortId>`) — the exact same shortening
+   * scheme the identity migration's backfill and the list UI's
+   * `skrotZlecenia()` already use — never copied from another field. The
+   * HTTP route this packet DOES own
+   * (`server/src/routes/caseWorkspace/cases.routes.ts`) declares `caseName`
+   * REQUIRED on its request body, so any real caller going through the API
+   * always supplies a genuine title; only direct/legacy service callers get
+   * the fallback.
+   */
+  caseName?: string | null;
   caseProfile?: CaseProfile;
   governanceTier?: GovernanceTier;
   autonomyPolicy?: AutonomyPolicy;
@@ -295,6 +359,8 @@ export async function createCase(input: {
 }): Promise<CaseCore> {
   const projectId = requireNonBlank(input.projectId, 'case_project_id_required');
   const organizationId = requireNonBlank(input.organizationId, 'case_organization_id_required');
+  const explicitCaseName = String(input.caseName ?? '').trim();
+  if (explicitCaseName) requireCaseName(explicitCaseName);
   const createdByActorId = requireNonBlank(input.createdByActorId, 'case_created_by_actor_required');
   const caseProfile = requireEnum(
     input.caseProfile ?? 'LIGHT',
@@ -331,13 +397,15 @@ export async function createCase(input: {
       throw new Error('case_project_organization_mismatch');
     }
 
-    const existing = await client.query<{ case_id: string }>(
-      `SELECT case_id FROM case_core WHERE project_id = ?`,
-      [projectId]
-    );
-    if (existing.rows[0]) throw new Error('case_already_exists_for_project');
-
     const caseId = `case-${uuidv4()}`;
+    // Honest fallback ONLY when the caller supplied no explicit title — the
+    // same `Zlecenie <shortId>` scheme as the identity migration's own
+    // backfill (server/migrations/20260810d_case_workspace_case_identity.sql)
+    // and the list UI's `skrotZlecenia()`, so a fallback minted here reads
+    // identically to one minted by the backfill.
+    const caseName =
+      explicitCaseName ||
+      `Zlecenie ${caseId.replace(/^case-/, '').replace(/-/g, '').slice(0, 8).toUpperCase()}`;
     const now = new Date().toISOString();
     const initialHistory: GovernanceTierHistoryEntry[] = [
       {
@@ -348,18 +416,24 @@ export async function createCase(input: {
       },
     ];
 
+    // No idempotency key on this INSERT: `createCase` is the direct/manual
+    // creation path (no work order, no digest — see caseIntakeService.ts for
+    // the path that DOES carry one). `intake_confirmation_key` is left NULL,
+    // which the partial unique index deliberately excludes, so this row
+    // never collides with an intake-created Case or another direct one.
     const inserted = await client.query<CaseCoreRow>(
       `INSERT INTO case_core (
-         case_id, project_id, organization_id, case_profile, governance_tier,
+         case_id, project_id, organization_id, case_name, case_profile, governance_tier,
          governance_tier_history, autonomy_policy, case_status,
          contracted_closure_type, sponsor_user_id, acceptance_criteria_ref,
          created_by_actor_id, version, created_at, updated_at
-       ) VALUES (?, ?, ?, ?, ?, ?, ?, 'DRAFT', ?, ?, ?, ?, 1, ?, ?)
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'DRAFT', ?, ?, ?, ?, 1, ?, ?)
        RETURNING *`,
       [
         caseId,
         projectId,
         organizationId,
+        caseName,
         caseProfile,
         governanceTier,
         JSON.stringify(initialHistory),
@@ -388,7 +462,15 @@ export async function createCase(input: {
       aggregateVersion: Number(insertedRow.version),
       caseId: insertedRow.case_id,
       actorUserId: insertedRow.created_by_actor_id,
+      // `caseTitle`, not `caseName`: PiiRedactor.isPiiField matches by
+      // SUBSTRING (`lowerField.includes('name')`), and `'casename'` contains
+      // `'name'` — a literal `caseName` key here is silently replaced with
+      // `[REDACTED]` by `redact()` below, mirrored by the identical fix in
+      // `caseIntakeService.ts`'s own `case.created` summary (kept on the same
+      // key set intentionally, per EVENT_TAXONOMY.md §2 — see that call
+      // site's comment).
       redactedSummary: redact({
+        caseTitle: insertedRow.case_name,
         caseProfile: insertedRow.case_profile,
         governanceTier: insertedRow.governance_tier,
         contractedClosureType: insertedRow.contracted_closure_type,
@@ -404,6 +486,28 @@ export async function createCase(input: {
 /**
  * CW-RT-012, CW-GR-023 (GET /api/cases/:caseId). Left-joins `projects`
  * read-only for display fields; never mutates `projects`.
+ *
+ * CW-T-A NOTE on the `{ projectId }` branch (`GET /cases/by-project/:projectId`):
+ * this lookup predates the cardinality ruling and was written when
+ * `case_core.project_id` was UNIQUE, i.e. "the Case for this project" was
+ * always well-defined. It no longer is — a project MAY hold many Cases (see
+ * `20260810d_case_workspace_case_identity.sql`'s header) — so a bare
+ * `WHERE project_id = ?` with no `ORDER BY` picks WHICHEVER row Postgres
+ * happens to return first, an unspecified and not-necessarily-stable choice
+ * once a project has more than one Case. This packet does not widen this
+ * route's response shape (still a single `CaseCoreView | null`, matching
+ * `docs/product/case-workspace/api/openapi.yaml`'s current
+ * `getCaseByProject` contract, which is outside this packet's allowlist to
+ * redesign) or change any caller — nothing in this repo's production UI or
+ * services calls this branch (`GET /cases` + client-side project filtering
+ * is the multi-Case-aware path `CasesListScreen.tsx` actually uses). What IS
+ * fixed here, because leaving it would be a silent trap for the next
+ * caller: `ORDER BY c.created_at ASC` makes the pick DETERMINISTIC (oldest
+ * Case for the project, i.e. the one that would have existed under the old
+ * 1:1 model) rather than arbitrary. A route that genuinely needs every Case
+ * for a project should call `GET /cases` and filter by `projectId`
+ * client-side, or a future packet should add a dedicated
+ * `GET /cases?projectId=` list parameter — neither exists today.
  */
 export async function getCase(
   lookup: { caseId: string } | { projectId: string },
@@ -426,7 +530,9 @@ export async function getCase(
       `SELECT c.*, p.id AS p_id, p.name AS p_name, p.description AS p_description, p.owner_id AS p_owner_id
          FROM case_core c
          LEFT JOIN projects p ON p.id = c.project_id
-        WHERE c.project_id = ?`,
+        WHERE c.project_id = ?
+        ORDER BY c.created_at ASC
+        LIMIT 1`,
       [requireNonBlank(lookup.projectId, 'project_id_required')]
     );
     // SEC-009 / CW-DOD-D6 (enumeration oracle), fixed here rather than at the

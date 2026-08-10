@@ -245,6 +245,16 @@ interface InboxChannel {
   validatePayload?: (payload: Record<string, unknown>) => boolean;
   /** Wait types this channel is permitted to satisfy. */
   allowedWaitTypes?: readonly string[];
+  /**
+   * CW-T-B allowlist of `eventType` values this channel may ever deliver.
+   * Checked AFTER dedup (so a disallowed type is still durably recorded —
+   * REJECTED/PAYLOAD_INVALID, not silently dropped) and BEFORE the
+   * correlation/tenant lookup. Omit to leave every eventType admissible at
+   * this gate (a channel with only one legitimate eventType should still set
+   * this — the per-wait `expectedEventType` check further down is a
+   * DIFFERENT, narrower gate scoped to one wait, not a channel-wide allowlist).
+   */
+  allowedEventTypes?: readonly string[];
 }
 
 /**
@@ -342,6 +352,43 @@ function signaturesMatch(expected: string, presented: string): boolean {
   const b = Buffer.from(presented, 'utf8');
   if (a.length !== b.length) return false;
   return timingSafeEqual(a, b);
+}
+
+// ---------------------------------------------------------------------------
+// CW-T-B: delivery-timestamp tolerance (replay defense-in-depth)
+// ---------------------------------------------------------------------------
+//
+// `computeInboxSignature` signs `payload` alone (see its own doc comment) —
+// that contract is load-bearing for existing callers
+// (newSurface.security.pg.test.ts, this file's own suite) and is NOT changed
+// here. What CAN be added without touching that contract: a sender-claimed
+// delivery timestamp carried INSIDE `payload` (conventionally
+// `payload.deliveredAt`, an ISO-8601 string) is therefore covered by the same
+// HMAC as the rest of the payload — a party without the channel secret cannot
+// forge a fresh `deliveredAt` onto a payload it captured, and a genuinely
+// captured (payload, signature) pair becomes unusable outside this window
+// even under a NEW eventId (dedup alone only stops a literal eventId replay).
+// A channel wires this in via `validatePayload` at registration time (see
+// eventInbox.routes.ts), which is why this is exported rather than baked into
+// receiveExternalEvent itself — an EXTERNAL_CALLBACK channel with no
+// meaningful delivery clock (or a test channel) is not forced to adopt it.
+export const DEFAULT_DELIVERY_TOLERANCE_PAST_MS = 5 * 60 * 1000; // 5 minutes stale
+export const DEFAULT_DELIVERY_TOLERANCE_FUTURE_MS = 60 * 1000; // 60s clock skew
+
+export function isDeliveredAtWithinTolerance(
+  deliveredAt: unknown,
+  options: { pastMs?: number; futureMs?: number; nowMs?: number } = {}
+): boolean {
+  if (typeof deliveredAt !== 'string' || !deliveredAt.trim()) return false;
+  const deliveredMs = Date.parse(deliveredAt);
+  if (!Number.isFinite(deliveredMs)) return false;
+  const nowMs = options.nowMs ?? Date.now();
+  const ageMs = nowMs - deliveredMs;
+  const pastMs = options.pastMs ?? DEFAULT_DELIVERY_TOLERANCE_PAST_MS;
+  const futureMs = options.futureMs ?? DEFAULT_DELIVERY_TOLERANCE_FUTURE_MS;
+  // ageMs > pastMs  -> too old (expired timestamp)
+  // ageMs < -futureMs -> claims to be from the future beyond allowed skew
+  return ageMs <= pastMs && ageMs >= -futureMs;
 }
 
 function normalizeTimestamp(value: Date | string | null): string | null {
@@ -540,6 +587,15 @@ export async function receiveExternalEvent(
 
     if (channel.validatePayload && !channel.validatePayload(payload)) {
       return reject('PAYLOAD_INVALID', {});
+    }
+
+    // CW-T-B channel-wide eventType allowlist. Distinct from the per-wait
+    // `expectedEventType` check further down: THAT one asks "is this the
+    // event type THIS wait is waiting for"; this one asks "is this channel
+    // even permitted to ever assert this event type, for any wait". A channel
+    // that omits allowedEventTypes leaves this gate open (unchanged default).
+    if (channel.allowedEventTypes && !channel.allowedEventTypes.includes(eventType)) {
+      return reject('PAYLOAD_INVALID', { disallowedEventType: eventType });
     }
 
     // THE TENANCY CHECK, made STRUCTURAL.

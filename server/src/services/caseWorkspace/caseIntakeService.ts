@@ -170,25 +170,70 @@
  *    is today a self-declared "heuristic stub (LLM call placeholder)" at
  *    `chatExecutionService.ts:132`). Putting a model call in here would make
  *    the digest non-deterministic and destroy the entire guarantee.
- * 5. RESOLVED (was: "a product decision this packet cannot make alone").
- *    Case REUSE is still keyed on `project_id`, because that is the only
- *    uniqueness the schema gives — but reuse is now gated on PROVENANCE:
- *    `confirmWorkOrder` hands back an existing Case ONLY when that Case
- *    already carries THIS digest's confirmation event. A second, DIFFERENT
- *    work order against a project that already has a Case is REFUSED with
- *    `intake_existing_case_work_order_conflict` (409), because the previous
- *    behaviour — returning the other work order's Case with
- *    `reuseReason: 'existing_case_for_project'` — delivered a human something
- *    other than what they confirmed, which is the exact failure CW-CANON-03
- *    exists to prevent. Opening a SECOND Case instead is not available: the
- *    UNIQUE constraint on `case_core.project_id` forbids it. See the
- *    PROVENANCE GATE in `confirmWorkOrder` for the full argument.
- *    `existing_case_for_project` therefore survives only as a declared enum
- *    value (it is in the published OpenAPI schema) and is no longer reachable.
+ * 5. SUPERSEDED (2026-08-10, CW-T-A — a binding owner ruling, not a "resolved
+ *    open question" anymore). The PROVENANCE GATE described in this section's
+ *    previous revision — refusing a second, different work order on a
+ *    project that already had a Case, because `case_core.project_id` was the
+ *    only uniqueness the schema gave and a second Case for one project was
+ *    literally impossible — is GONE. The owner's explicit ruling: a Case is
+ *    a WORK ORDER; a project MAY and MUST be able to hold many independent
+ *    Cases. `case_core.project_id` is no longer unique
+ *    (20260810d_case_workspace_case_identity.sql drops
+ *    `case_core_project_id_key`), so "a different work order in the same
+ *    project" is now the NORMAL, INTENDED case — CW-T-A's own acceptance
+ *    test is literally "two different work orders in one project produce two
+ *    different Cases".
+ *
+ *    What CW-CANON-03 ("exactly one Case, only after confirmation of an
+ *    exact, versioned digest") still means, unchanged: confirming the SAME
+ *    work order twice — a retry, a double-click, two browser tabs racing —
+ *    must never create a second Case for THAT confirmation. The uniqueness
+ *    that used to live on `project_id` now lives on
+ *    `case_core.intake_confirmation_key`
+ *    (`computeIntakeConfirmationKey`, below) — a value hashed from the FOUR
+ *    factors the packet brief specifies: tenant (organizationId) + the
+ *    actor/conversation scope this confirmation belongs to + a caller
+ *    idempotency key (defaults to the digest itself when the caller supplies
+ *    none — see `confirmWorkOrder`'s own doc comment) + the exact work-order
+ *    digest. Two confirmations of the SAME work order by the SAME
+ *    actor/conversation hash to the SAME key and collide on
+ *    `case_core_intake_confirmation_key_key`
+ *    (`ON CONFLICT (intake_confirmation_key) WHERE intake_confirmation_key IS
+ *    NOT NULL DO NOTHING`), exactly as
+ *    `ON CONFLICT (project_id)` used to. Two DIFFERENT work orders — even in
+ *    the identical project — hash to two DIFFERENT keys (the digest differs)
+ *    and both INSERTs simply succeed: two independent Cases, no conflict, no
+ *    refusal.
+ *
+ *    `intake_existing_case_work_order_conflict` and the `reuseReason` value
+ *    `'existing_case_for_project'` are REMOVED from this file (not merely
+ *    left unreachable): the scenario they existed to refuse — "a different
+ *    work order tries to reuse this project's one Case" — presupposes the
+ *    per-project uniqueness that no longer exists, so there is no longer a
+ *    coherent state for that code to describe. `existing_case_for_project`
+ *    is dropped from the published `reuseReason` enum in the same breath
+ *    (docs/product/case-workspace/api/openapi.yaml is a separate document,
+ *    outside this packet's allowlist, and needs the matching edit as a
+ *    follow-up — flagged here rather than silently left to drift).
  * 6. No autonomy-level (A0–A4) enforcement — that mechanism does not exist
  *    anywhere in this codebase yet. `autonomyPolicy` is carried into the Case
  *    and into the digest, so the human confirms it, but nothing downstream
  *    reads it back as a gate.
+ * 7. NEW (CW-T-A). `case_core.case_name` has no column of its own on the
+ *    DIGESTED work order's *input* shape (`WorkOrderDraftInput.caseName` is
+ *    OPTIONAL, not required) — deliberately, because this packet's allowlist
+ *    does not include `chat.routes.ts` / `teresa.routes.ts` (five other
+ *    agents are concurrently editing this worktree; see the top-level task
+ *    brief), and both already construct `WorkOrderDraftInput` object
+ *    literals with no `caseName` field. Making it a required TypeScript
+ *    property would be a breaking compile-time change to two files this
+ *    packet cannot touch. `normalizeWorkOrder` therefore derives an honest,
+ *    non-fabricated fallback (the goal's own text, truncated — see
+ *    `deriveFallbackCaseName`) ONLY when the caller omits an explicit name.
+ *    Both intake HTTP routes this packet DOES own
+ *    (`server/src/routes/caseWorkspace/intake.routes.ts`) declare `caseName`
+ *    on their body schema, so any caller going through them can — and
+ *    should — always send a real, distinct title.
  */
 
 import { createHash } from 'node:crypto';
@@ -213,8 +258,15 @@ import { publishEvent, redact } from './eventOutboxService.js';
  * Bumped ONLY when the canonical work-order shape changes incompatibly. It is
  * part of the digested payload on purpose: a work order proposed under v1 can
  * never silently satisfy a v2 confirmation, because the digest changes.
+ *
+ * v2 (CW-T-A, 2026-08-10): `CanonicalWorkOrder` gained `caseName`. A v1
+ * proposal event has no such field in its stored summary, so
+ * `reconstructWorkOrder`'s own version check
+ * (`intake_work_order_schema_version_unsupported`) refuses to silently
+ * re-read it under v2 rules — a v1 proposal must be re-proposed, never
+ * re-confirmed as if it had always carried a name it never had.
  */
-export const WORK_ORDER_SCHEMA_VERSION = 1;
+export const WORK_ORDER_SCHEMA_VERSION = 2;
 
 /** Aggregate name for the pre-Case proposal (no Case exists yet). */
 export const CASE_INTAKE_AGGREGATE_TYPE = 'CASE_INTAKE';
@@ -233,6 +285,8 @@ const MAX_GOAL_CHARS = 1200;
 const MAX_OUTCOME_CHARS = 1200;
 const MAX_LIST_ITEMS = 12;
 const MAX_LIST_ITEM_CHARS = 400;
+/** Mirrors caseCoreService.ts's own ceiling — a scannable title, not a document. */
+const MAX_CASE_NAME_CHARS = 200;
 
 /**
  * Aggregate ceiling on the canonical work order, checked BEFORE publishing.
@@ -270,6 +324,16 @@ const CLOSURE_TYPES: readonly ClosureType[] = [
 export interface WorkOrderDraftInput {
   organizationId: string;
   projectId: string;
+  /**
+   * Canonical Case name/title (CW-T-A) — a short, scannable, human-supplied
+   * title, distinct from `goal`. OPTIONAL here (see this file's header, open
+   * question #7) so `chat.routes.ts` / `teresa.routes.ts` — outside this
+   * packet's allowlist — keep compiling unmodified; `normalizeWorkOrder`
+   * falls back to a truncated `goal` ONLY when this is omitted or blank.
+   * Callers that go through `intake.routes.ts` (this packet's own route,
+   * which DOES declare the field) should always send a real one.
+   */
+  caseName?: string | null;
   /** The one sentence answering "what are we doing". */
   goal: string;
   /** Ordered — see the header: order is part of what the human read. */
@@ -296,6 +360,8 @@ export interface CanonicalWorkOrder {
   workOrderSchemaVersion: number;
   organizationId: string;
   projectId: string;
+  /** Always populated after normalization — caller-supplied, or a fallback derived from `goal`. See WorkOrderDraftInput.caseName. */
+  caseName: string;
   goal: string;
   scope: string[];
   expectedOutcome: string;
@@ -327,17 +393,15 @@ export interface ProposeWorkOrderResult {
   runCreated: false;
 }
 
-export type WorkOrderReuseReason =
-  | 'none'
-  | 'work_order_already_confirmed'
-  /**
-   * NO LONGER REACHABLE — kept because it is a declared value of the published
-   * `reuseReason` enum in docs/product/case-workspace/api/openapi.yaml.
-   * Reusing a Case that came from a DIFFERENT work order is now refused with
-   * `intake_existing_case_work_order_conflict`; see OPEN QUESTION #5 and the
-   * PROVENANCE GATE in `confirmWorkOrder`.
-   */
-  | 'existing_case_for_project';
+/**
+ * `'existing_case_for_project'` is GONE (CW-T-A, open question #5) — it
+ * described handing back a DIFFERENT work order's Case because
+ * `project_id` was unique; that scenario no longer exists (a project may
+ * hold many Cases), so there is nothing left for that value to mean. The
+ * published OpenAPI enum needs the matching edit as a follow-up (that file
+ * is outside this packet's allowlist).
+ */
+export type WorkOrderReuseReason = 'none' | 'work_order_already_confirmed';
 
 export interface ConfirmWorkOrderResult {
   caseId: string;
@@ -429,6 +493,31 @@ function optionalId(value: string | null | undefined): string | null {
   return normalized ? normalized : null;
 }
 
+/**
+ * CW-T-A `case_name` fallback — used ONLY when the caller omits
+ * `WorkOrderDraftInput.caseName` (see this file's header, open question #7).
+ * Collapses internal whitespace (a title is scanned on one line; `goal` is
+ * not) and truncates to `MAX_CASE_NAME_CHARS` with a trailing ellipsis. This
+ * is real text the human actually wrote as their goal — never invented —
+ * reused here only as a title stand-in, exactly like the identity
+ * migration's own backfill does for pre-existing rows.
+ */
+function deriveFallbackCaseName(goal: string): string {
+  const collapsed = goal.replace(/\s+/g, ' ').trim();
+  if (!collapsed) return 'Zlecenie bez nazwy';
+  return collapsed.length > MAX_CASE_NAME_CHARS
+    ? `${collapsed.slice(0, MAX_CASE_NAME_CHARS - 1)}…`
+    : collapsed;
+}
+
+/** Caller-supplied `caseName`, trimmed/NFC'd and length-checked; blank/absent is not an error here — the caller falls back below. */
+function normalizeOptionalCaseName(value: string | null | undefined): string {
+  const text = normalizeText(value);
+  if (!text) return '';
+  if (text.length > MAX_CASE_NAME_CHARS) throw new Error('intake_case_name_too_long');
+  return text;
+}
+
 // ---------------------------------------------------------------------------
 // Canonicalization + digest (mirrors casePlanVersionService.computeGraphDigest;
 // see the header for the one deliberate difference — arrays keep their order)
@@ -479,8 +568,73 @@ function proposedEventIdForDigest(digest: string): string {
   return `cwevt-intake-proposed-${digestHex(digest)}`;
 }
 
-function confirmedEventIdForDigest(digest: string): string {
-  return `cwevt-intake-confirmed-${digestHex(digest)}`;
+/**
+ * CW-T-A: the `case.intake.work_order_confirmed` event id is keyed by the
+ * `intake_confirmation_key` (below), NOT the digest alone. Two DIFFERENT
+ * confirmations (different actor/conversation and/or different caller
+ * idempotency key) that happen to share a digest — e.g. the same content
+ * confirmed by two people with no conversation binding — now legitimately
+ * create TWO Cases (see this file's header, open question #5), so they need
+ * TWO distinct confirmation events too; a digest-only event id would collide
+ * them and silently attribute the second Case's confirmation fact to the
+ * first Case's row.
+ */
+function confirmedEventIdForKey(intakeConfirmationKey: string): string {
+  return `cwevt-intake-confirmed-${intakeConfirmationKey}`;
+}
+
+/**
+ * THE key that replaces `case_core.project_id`'s old UNIQUE constraint
+ * (CW-T-A; see this file's header, open question #5, and the identity
+ * migration's own header). Deterministic sha256 over exactly the four
+ * factors the packet brief names, `|`-joined in a fixed order:
+ *
+ *   1. tenant            — organizationId (already inside the digest too;
+ *                           repeated here so the key alone, without
+ *                           re-deriving the digest, is legible in a DB dump).
+ *   2. actor/conversation — the conversation this confirmation belongs to
+ *      scope                when one exists (the conversation-bound flow,
+ *                           `confirmConversationWorkOrder`), else the
+ *                           confirming actor (the direct `confirmWorkOrder`
+ *                           machine-to-machine flow, which has no
+ *                           conversation concept at all).
+ *   3. confirmation       — a caller-supplied idempotency token for THIS
+ *      idempotency key       confirmation attempt (a double-click, a client
+ *                           retry). Defaults to the work-order digest itself
+ *                           when the caller supplies none — i.e. by default,
+ *                           two calls confirming byte-identical content are
+ *                           treated as the SAME confirmation attempt, which
+ *                           is the same behaviour this file had before this
+ *                           key existed (idempotent purely on digest).
+ *   4. work-order digest  — WHAT was confirmed; see computeWorkOrderDigest.
+ *
+ * `ick-` prefix so a value found in the `intake_confirmation_key` column is
+ * self-describing in a DB dump, mirroring the `wo-`/`cwevt-` conventions
+ * already used throughout this file.
+ */
+export function computeIntakeConfirmationKey(params: {
+  organizationId: string;
+  actorOrConversationScope: string;
+  confirmationIdempotencyKey: string;
+  workOrderDigest: string;
+}): string {
+  const raw = [
+    params.organizationId,
+    params.actorOrConversationScope,
+    params.confirmationIdempotencyKey,
+    params.workOrderDigest,
+  ].join('|');
+  return `ick-${createHash('sha256').update(raw, 'utf8').digest('hex')}`;
+}
+
+/** `conversation:<id>` when this confirmation is conversation-bound, else `actor:<id>` — factor 2 of `computeIntakeConfirmationKey`. */
+function intakeConfirmationScope(params: {
+  sourceConversationId: string | null;
+  confirmedByActorId: string;
+}): string {
+  return params.sourceConversationId
+    ? `conversation:${params.sourceConversationId}`
+    : `actor:${params.confirmedByActorId}`;
 }
 
 /**
@@ -491,11 +645,18 @@ function confirmedEventIdForDigest(digest: string): string {
 export function normalizeWorkOrder(input: WorkOrderDraftInput): CanonicalWorkOrder {
   if (!input || typeof input !== 'object') throw new Error('intake_work_order_required');
 
+  const goal = normalizeRequiredText(input.goal, MAX_GOAL_CHARS, 'intake_goal_required');
+  const explicitCaseName = normalizeOptionalCaseName(input.caseName);
+
   const canonical: CanonicalWorkOrder = {
     workOrderSchemaVersion: WORK_ORDER_SCHEMA_VERSION,
     organizationId: requireNonBlank(input.organizationId, 'intake_organization_id_required'),
     projectId: requireNonBlank(input.projectId, 'intake_project_id_required'),
-    goal: normalizeRequiredText(input.goal, MAX_GOAL_CHARS, 'intake_goal_required'),
+    // Explicit title wins; a caller that omits it (see WorkOrderDraftInput's
+    // own doc comment — chat.routes.ts / teresa.routes.ts today) gets an
+    // honest fallback derived from `goal`, never a blank/invented name.
+    caseName: explicitCaseName || deriveFallbackCaseName(goal),
+    goal,
     scope: normalizeList(input.scope, 'scope', { required: true }),
     expectedOutcome: normalizeRequiredText(
       input.expectedOutcome,
@@ -537,9 +698,20 @@ export function normalizeWorkOrder(input: WorkOrderDraftInput): CanonicalWorkOrd
  * The event summary shape shared by both events. `goal`/`expectedOutcome`/
  * `scope` are FACTS about the order, small by construction (the ceilings
  * above), and they are what makes the event stream readable by a human
- * auditor. Note the key names: none of them collide with
- * PiiRedactor.DEFAULT_PII_FIELDS (`name`, `email`, `token`, …), which would
- * otherwise silently replace the value with `[REDACTED]`.
+ * auditor. Note the key names: they must NOT collide with
+ * PiiRedactor.DEFAULT_PII_FIELDS (`name`, `email`, `token`, …) — collision
+ * silently replaces the value with `[REDACTED]`, PiiRedactor.isPiiField
+ * matches by SUBSTRING (`lowerField.includes(pii)`), not exact key equality.
+ * `caseName` LOOKS safe but is not: `'casename'.includes('name')` is true, so
+ * a naive `caseName: workOrder.caseName` here would silently redact the very
+ * field this packet exists to make readable — found by
+ * `caseCardinality.pg.test.ts`'s stale-digest scenario, which reconstructs a
+ * conversation's stored proposal and re-digests it: a `[REDACTED]` caseName
+ * reconstructs to a DIFFERENT canonical work order (a different digest),
+ * turning every conversation-bound confirmation into a spurious
+ * `intake_work_order_reconstruction_mismatch`, never just the actually-stale
+ * ones. Stored as `caseTitle` instead — `reconstructWorkOrder` reads it back
+ * under that same key.
  */
 function workOrderSummary(
   workOrder: CanonicalWorkOrder,
@@ -550,6 +722,7 @@ function workOrderSummary(
     workOrderId: workOrderIdForDigest(digest),
     workOrderDigest: digest,
     workOrderSchemaVersion: workOrder.workOrderSchemaVersion,
+    caseTitle: workOrder.caseName,
     goal: workOrder.goal,
     scope: workOrder.scope,
     expectedOutcome: workOrder.expectedOutcome,
@@ -664,18 +837,25 @@ interface CaseCoreIdentityRow {
   version: number;
   created_by_actor_id: string;
   case_status: string;
+  case_name: string;
   case_profile: string;
   governance_tier: string;
   autonomy_policy: string;
   contracted_closure_type: string;
+  intake_confirmation_key: string | null;
 }
 
 const CASE_IDENTITY_COLUMNS = `case_id, project_id, organization_id, version, created_by_actor_id,
-  case_status, case_profile, governance_tier, autonomy_policy, contracted_closure_type`;
+  case_status, case_name, case_profile, governance_tier, autonomy_policy, contracted_closure_type,
+  intake_confirmation_key`;
 
 /**
- * Creates — or reuses — EXACTLY ONE Case, and only for a work order whose
- * digest matches, bit for bit, the digest that was shown and confirmed.
+ * Creates — or reuses — EXACTLY ONE Case for THIS confirmation, for a work
+ * order whose digest matches, bit for bit, the digest that was shown and
+ * confirmed. As of CW-T-A (see this file's header, open question #5): a
+ * project may already hold any number of OTHER Cases from OTHER work orders
+ * — that is no longer a conflict, it is the normal case, and this function
+ * neither looks at nor cares how many.
  *
  * Refusals, in the order they are checked (each one leaves ZERO Cases behind):
  *   `intake_work_order_digest_mismatch`  the confirmed digest is not the
@@ -683,17 +863,24 @@ const CASE_IDENTITY_COLUMNS = `case_id, project_id, organization_id, version, cr
  *       other than what is being asked for. This is a security refusal.
  *   `intake_project_not_found`           unknown / cross-tenant project.
  *   `intake_work_order_not_proposed`     self-consistent but never shown.
- *   `intake_existing_case_work_order_conflict`  the project already has a
- *       Case, and that Case did NOT come from this work order. Handing it back
- *       would give the human a different Case than the one they confirmed.
- *       See the PROVENANCE GATE below.
  *
- * Concurrency: two simultaneous confirmations of the same digest both reach
- * `INSERT … ON CONFLICT (project_id) DO NOTHING`. Postgres serializes them on
- * the unique index — the second blocks until the first COMMITs and then gets
- * zero rows back, re-reads the committed row, and returns it with
- * `caseCreated: false`. Exactly one `case_core` row exists either way, and the
- * deterministic confirmed-event id collapses the second event too.
+ * Concurrency: two simultaneous confirmations that hash to the SAME
+ * `intake_confirmation_key` (same tenant, same actor/conversation scope,
+ * same caller idempotency key, same digest — see
+ * `computeIntakeConfirmationKey`) both reach
+ * `INSERT … ON CONFLICT (intake_confirmation_key) WHERE
+ * intake_confirmation_key IS NOT NULL DO NOTHING` (the `WHERE` must repeat
+ * the partial index's own predicate verbatim, or Postgres refuses to infer
+ * it as the conflict target at all). Postgres
+ * serializes them on the partial unique index — the second blocks until the
+ * first COMMITs, then gets zero rows back, re-reads the committed row by
+ * that SAME key, and returns it with `caseCreated: false`. Exactly one
+ * `case_core` row exists for that key either way, and the deterministic
+ * confirmed-event id (also keyed the same way) collapses the second event
+ * too. Two concurrent confirmations that hash to DIFFERENT keys (a
+ * different work order, or the same content confirmed by a different
+ * actor/conversation) simply both succeed — two independent Cases, which is
+ * CW-T-A's whole point.
  *
  * Creates NO Run (LIGHT policy). Nothing here touches `v8_execution_runs` or
  * `case_workspace_run_bindings`.
@@ -703,6 +890,16 @@ export async function confirmWorkOrder(input: {
   /** Exactly the `workOrderDigest` proposeWorkOrder returned and the UI showed. */
   confirmedDigest: string;
   confirmedByActorId: string;
+  /**
+   * A caller-supplied token identifying THIS confirmation attempt (factor 3
+   * of `computeIntakeConfirmationKey` — see that function's doc comment).
+   * Optional: when omitted, defaults to `confirmedDigest`, which reproduces
+   * this file's pre-CW-T-A behaviour exactly (idempotent purely on digest +
+   * scope). Supply an explicit, client-minted token (e.g. one per UI
+   * "Confirm" click) when the caller wants retry-safety that survives the
+   * caller re-deriving an otherwise-identical work order.
+   */
+  confirmationIdempotencyKey?: string | null;
   correlationId?: string | null;
 }): Promise<ConfirmWorkOrderResult> {
   const confirmedByActorId = requireNonBlank(input?.confirmedByActorId, 'intake_actor_required');
@@ -723,14 +920,32 @@ export async function confirmWorkOrder(input: {
 
   const workOrderId = workOrderIdForDigest(workOrderDigest);
   const proposedEventId = proposedEventIdForDigest(workOrderDigest);
-  const confirmedEventId = confirmedEventIdForDigest(workOrderDigest);
+
+  // THE KEY — tenant + actor/conversation scope + confirmation idempotency
+  // key + exact digest (CW-T-A). See computeIntakeConfirmationKey's own doc
+  // comment for what each factor means and why.
+  const confirmationScope = intakeConfirmationScope({
+    sourceConversationId: workOrder.sourceConversationId,
+    confirmedByActorId,
+  });
+  const confirmationIdempotencyKey = optionalId(input?.confirmationIdempotencyKey) ?? workOrderDigest;
+  const intakeConfirmationKey = computeIntakeConfirmationKey({
+    organizationId: workOrder.organizationId,
+    actorOrConversationScope: confirmationScope,
+    confirmationIdempotencyKey,
+    workOrderDigest,
+  });
+  const confirmedEventId = confirmedEventIdForKey(intakeConfirmationKey);
 
   return withPgTransaction(async (client) => {
     await requireProjectInOrg(client, workOrder.projectId, workOrder.organizationId);
 
     // WAS-SHOWN check. Tenant-scoped: a proposal recorded in another org can
     // never satisfy a confirmation here, even with an identical digest (the
-    // digest covers organizationId, so this is belt and braces).
+    // digest covers organizationId, so this is belt and braces). This check
+    // is purely about CONTENT ("was this order ever shown to anyone in this
+    // tenant") and stays digest-keyed — it is orthogonal to the
+    // confirmation-attempt identity above.
     const proposal = await client.query<{ event_id: string }>(
       `SELECT event_id FROM ${OUTBOX_TABLE}
         WHERE event_id = ? AND organization_id = ? AND event_type = ?`,
@@ -749,27 +964,35 @@ export async function confirmWorkOrder(input: {
       },
     ];
 
-    // The one write that decides everything. ON CONFLICT (project_id) DO
-    // NOTHING is what makes "exactly one Case" a database guarantee rather
-    // than a hopeful SELECT-then-INSERT.
+    // THE one write that decides everything.
+    // `ON CONFLICT (intake_confirmation_key) DO NOTHING` (the partial unique
+    // index — NULLs excluded — from
+    // 20260810d_case_workspace_case_identity.sql) is what makes "exactly one
+    // Case PER CONFIRMATION" a database guarantee rather than a hopeful
+    // SELECT-then-INSERT, and — unlike the old `ON CONFLICT (project_id)` —
+    // never blocks a genuinely different work order in the same project from
+    // landing its own row.
     const inserted = await client.query<CaseCoreIdentityRow>(
       `INSERT INTO case_core (
-         case_id, project_id, organization_id, case_profile, governance_tier,
+         case_id, project_id, organization_id, case_name, case_profile, governance_tier,
          governance_tier_history, autonomy_policy, case_status,
-         contracted_closure_type, created_by_actor_id, version, created_at, updated_at
-       ) VALUES (?, ?, ?, ?, ?, ?, ?, 'DRAFT', ?, ?, 1, ?, ?)
-       ON CONFLICT (project_id) DO NOTHING
+         contracted_closure_type, created_by_actor_id, intake_confirmation_key,
+         version, created_at, updated_at
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'DRAFT', ?, ?, ?, 1, ?, ?)
+       ON CONFLICT (intake_confirmation_key) WHERE intake_confirmation_key IS NOT NULL DO NOTHING
        RETURNING ${CASE_IDENTITY_COLUMNS}`,
       [
         candidateCaseId,
         workOrder.projectId,
         workOrder.organizationId,
+        workOrder.caseName,
         workOrder.caseProfile,
         workOrder.governanceTier,
         JSON.stringify(initialHistory),
         workOrder.autonomyPolicy,
         workOrder.contractedClosureType,
         confirmedByActorId,
+        intakeConfirmationKey,
         now,
         now,
       ]
@@ -779,12 +1002,14 @@ export async function confirmWorkOrder(input: {
     const caseCreated = Boolean(caseRow);
 
     if (!caseRow) {
-      // Lost the race, or a Case already existed for this project. Re-read the
-      // committed winner (READ COMMITTED: this statement takes a fresh
-      // snapshot, so the row the conflict blocked on is visible now).
+      // Lost the race, or this exact confirmation already landed earlier.
+      // Re-read the committed winner BY THE SAME KEY (READ COMMITTED: this
+      // statement takes a fresh snapshot, so the row the conflict blocked on
+      // is visible now) — never by project_id, which would now match every
+      // OTHER Case in this project too.
       const existing = await client.query<CaseCoreIdentityRow>(
-        `SELECT ${CASE_IDENTITY_COLUMNS} FROM case_core WHERE project_id = ?`,
-        [workOrder.projectId]
+        `SELECT ${CASE_IDENTITY_COLUMNS} FROM case_core WHERE intake_confirmation_key = ?`,
+        [intakeConfirmationKey]
       );
       caseRow = existing.rows[0] ?? null;
       // ON CONFLICT reported a conflict but the row is gone: structurally
@@ -792,53 +1017,13 @@ export async function confirmWorkOrder(input: {
       // `*_idempotency_record_not_found` is the existing convention for this
       // anomaly and maps to 500, never to a client-facing 404.
       if (!caseRow) throw new Error('intake_case_idempotency_record_not_found');
-      // CW-01-026-INV1: one org context per Case. A project whose Case sits in
-      // a different org is a corrupted invariant, not a normal denial.
+      // Defense in depth: the key already encodes organizationId, so this
+      // can only fire on a (practically impossible) sha256 collision — but
+      // an explicit, loud failure beats silently handing back a foreign
+      // tenant's Case, exactly like every other belt-and-braces check in
+      // this file.
       if (caseRow.organization_id !== workOrder.organizationId) {
         throw new Error('intake_case_organization_mismatch');
-      }
-
-      // ===================================================================
-      // PROVENANCE GATE — reuse is allowed ONLY for THIS work order.
-      // ===================================================================
-      // Reuse is keyed on `project_id` because that is the only uniqueness the
-      // schema gives (OPEN QUESTION #5). Until this gate, that meant confirming
-      // a SECOND, DIFFERENT work order against a project that already had a
-      // Case answered 200 with `reuseReason: 'existing_case_for_project'` and
-      // handed back the OTHER work order's Case — a human who confirmed
-      // "Zestawienie faktur" received the Case for "Analiza kosztów", and the
-      // system then executed the second while the digest said the first. That
-      // destroys the one guarantee CW-CANON-03 exists to give: what runs is
-      // EXACTLY what was confirmed. A digest the human never saw must not be
-      // able to be satisfied by a Case they never asked for.
-      //
-      // The provenance record is the confirmation event, whose id is derived
-      // from the digest ALONE (`confirmedEventIdForDigest`). So: this Case may
-      // be reused iff THIS digest's confirmation event is already recorded
-      // against THIS case_id. That is true in exactly the two legitimate
-      // no-insert situations and false in the harmful one:
-      //   - idempotent replay of the same confirmation  -> row present, reuse;
-      //   - the loser of a concurrent race on the same digest -> its INSERT
-      //     blocked on the unique index until the winner COMMITTED, so after
-      //     that wait the winner's outbox row is visible to this fresh
-      //     statement snapshot (READ COMMITTED) -> reuse;
-      //   - a different work order (or a Case created through
-      //     caseCoreService.createCase, which writes no confirmation event at
-      //     all) -> no row -> REFUSED here, with zero Cases and zero events
-      //     written, because this all runs before any publishEvent below.
-      //
-      // REFUSE rather than "create a second Case": `case_core.project_id` is
-      // UNIQUE, so a second Case for the same project is not merely a product
-      // choice, it is impossible without a schema change. Between silently
-      // delivering the wrong Case and a stable, explicit refusal the caller can
-      // act on, CW-CANON-03 only permits the refusal.
-      const priorConfirmation = await client.query<{ event_id: string }>(
-        `SELECT event_id FROM ${OUTBOX_TABLE}
-          WHERE event_id = ? AND event_type = ? AND case_id = ? AND organization_id = ?`,
-        [confirmedEventId, EVENT_WORK_ORDER_CONFIRMED, caseRow.case_id, workOrder.organizationId]
-      );
-      if (!priorConfirmation.rows[0]) {
-        throw new Error('intake_existing_case_work_order_conflict');
       }
     }
 
@@ -846,7 +1031,9 @@ export async function confirmWorkOrder(input: {
     if (caseCreated) {
       // Same event type, same aggregate, same summary keys caseCoreService's
       // createCase emits (EVENT_TAXONOMY.md §2), so a consumer cannot tell
-      // which door this Case came through.
+      // which door this Case came through. `caseTitle`, not `caseName` — see
+      // `workOrderSummary`'s own comment: `caseName` collides with
+      // PiiRedactor's substring PII match and silently becomes `[REDACTED]`.
       const created = await publishEvent(client, {
         eventType: EVENT_CASE_CREATED,
         organizationId: caseRow.organization_id,
@@ -859,6 +1046,7 @@ export async function confirmWorkOrder(input: {
         correlationId: input?.correlationId ?? null,
         causationId: proposedEventId,
         redactedSummary: redact({
+          caseTitle: caseRow.case_name,
           caseProfile: caseRow.case_profile,
           governanceTier: caseRow.governance_tier,
           contractedClosureType: caseRow.contracted_closure_type,
@@ -869,9 +1057,11 @@ export async function confirmWorkOrder(input: {
       caseCreatedEventId = created.eventId;
     }
 
-    // Deterministic id: a retry of this exact confirmation adds no second
-    // event, and the race loser's publish reports `deduplicated: true`, which
-    // is how the two reuse reasons are told apart below.
+    // Deterministic id (keyed by intake_confirmation_key, not the digest
+    // alone — see confirmedEventIdForKey's doc comment): a retry of this
+    // exact confirmation adds no second event, and the race loser's publish
+    // reports `deduplicated: true`, which is how "created" is told apart
+    // from "reused" below.
     const confirmed = await publishEvent(client, {
       eventId: confirmedEventId,
       eventType: EVENT_WORK_ORDER_CONFIRMED,
@@ -894,11 +1084,11 @@ export async function confirmWorkOrder(input: {
       }),
     });
 
-    const reuseReason: WorkOrderReuseReason = caseCreated
-      ? 'none'
-      : confirmed.deduplicated
-        ? 'work_order_already_confirmed'
-        : 'existing_case_for_project';
+    // Only ONE non-'none' reason remains reachable (CW-T-A open question #5):
+    // a retry/race of the identical confirmation. There is no longer a
+    // "different work order, same project, reused the wrong Case" branch —
+    // that scenario now creates its own Case instead of reaching here at all.
+    const reuseReason: WorkOrderReuseReason = caseCreated ? 'none' : 'work_order_already_confirmed';
 
     return {
       caseId: caseRow.case_id,
@@ -1130,6 +1320,9 @@ function stringList(value: unknown): string[] {
  * to the PII field list (or to `normalizeWorkOrder`'s defaults) could silently
  * hand back an order that differs from the one the human read. A mismatch is
  * therefore an integrity failure, never something to paper over.
+ *
+ * Reads `summary.caseTitle`, NOT `summary.caseName` — see `workOrderSummary`'s
+ * own comment for why the stored key is deliberately not `caseName`.
  */
 function reconstructWorkOrder(row: IntakeOutboxRow): {
   workOrder: CanonicalWorkOrder;
@@ -1146,6 +1339,12 @@ function reconstructWorkOrder(row: IntakeOutboxRow): {
   const workOrder = normalizeWorkOrder({
     organizationId: row.organization_id,
     projectId: String(row.project_id ?? ''),
+    // MUST be threaded through explicitly: normalizeWorkOrder derives a
+    // fallback from `goal` when caseName is omitted, and that fallback would
+    // NOT reproduce a caller's originally-supplied, digest-covered caseName
+    // — silently changing the reconstructed digest and tripping the
+    // mismatch check below on perfectly valid stored data.
+    caseName: (summary.caseTitle ?? null) as string | null,
     goal: String(summary.goal ?? ''),
     scope: stringList(summary.scope),
     expectedOutcome: String(summary.expectedOutcome ?? ''),
@@ -1261,9 +1460,14 @@ export async function getCurrentConversationWorkOrder(input: {
  *       confirmed something that is no longer what we would execute".
  *
  * Concurrency: two simultaneous confirmations read the same current proposal
- * and both call `confirmWorkOrder`, whose `ON CONFLICT (project_id) DO
- * NOTHING` lets exactly one INSERT win. The loser returns the winner's Case
- * with `caseCreated: false`. One Case, no error either side has to interpret.
+ * and both call `confirmWorkOrder`, whose
+ * `ON CONFLICT (intake_confirmation_key) WHERE intake_confirmation_key IS NOT
+ * NULL DO NOTHING` lets exactly one INSERT
+ * win (CW-T-A — see confirmWorkOrder's own doc comment; the key here is
+ * scoped to `conversation:<conversationId>`, since `current.workOrder`
+ * always carries this conversation's `sourceConversationId`). The loser
+ * returns the winner's Case with `caseCreated: false`. One Case, no error
+ * either side has to interpret.
  *
  * Creates NO Run, for every profile. `runStartPolicy` says what MAY happen
  * next; nothing here acts on it.
@@ -1273,6 +1477,8 @@ export async function confirmConversationWorkOrder(input: {
   organizationId: string;
   confirmedDigest: string;
   confirmedByActorId: string;
+  /** Passed straight through to confirmWorkOrder — see its own doc comment. */
+  confirmationIdempotencyKey?: string | null;
   correlationId?: string | null;
 }): Promise<ConversationConfirmResult> {
   const conversationId = requireNonBlank(input?.conversationId, 'intake_conversation_id_required');
@@ -1302,6 +1508,7 @@ export async function confirmConversationWorkOrder(input: {
     workOrder: current.workOrder,
     confirmedDigest: current.workOrderDigest,
     confirmedByActorId,
+    confirmationIdempotencyKey: input?.confirmationIdempotencyKey ?? null,
     correlationId: input?.correlationId ?? null,
   });
 

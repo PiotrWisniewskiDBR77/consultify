@@ -1,7 +1,9 @@
 /**
  * Case Workspace — Case Core service, proved against a REAL PostgreSQL
  * (CW-P01, EPIC E1). Exercises server/src/services/caseWorkspace/caseCoreService.ts
- * against the schema in server/migrations/20260809_case_workspace_case_core.sql.
+ * against the schema in server/migrations/20260809_case_workspace_case_core.sql,
+ * RETROFITTED by server/migrations/20260810d_case_workspace_case_identity.sql
+ * (CW-T-A).
  *
  * ===========================================================================
  * GATE — this suite touches a real database, never a mock
@@ -29,10 +31,12 @@
  * still running"): each `it()` below seeds its own minimal
  * organizations/projects fixture row(s) INSIDE the test body — never a shared
  * `beforeEach` — and tears them down itself in a `finally`.
- * `case_core.project_id` is UNIQUE (OD-01), so a fixture shared across tests
- * would make test 1 (which deliberately tries to violate that uniqueness)
- * poison every test that runs after it. Fixture ids are namespaced with
- * `randomUUID()` so this file is also safe to run concurrently with itself.
+ * `case_core.project_id` is NO LONGER unique (CW-T-A, 20260810d — a project
+ * legitimately holds many independent Cases now); the isolation rule above
+ * is kept anyway, unconditionally, because it is the right posture for
+ * concurrent-safe fixtures regardless of what any one column enforces.
+ * Fixture ids are namespaced with `randomUUID()` so this file is also safe
+ * to run concurrently with itself.
  *
  * All assertions read the actual `case_core` row back out of Postgres through
  * a dedicated, out-of-band `pg.Pool` (`control`) — never the service
@@ -73,9 +77,13 @@ async function canReachWithSchema(connectionString: string): Promise<boolean> {
     const result = await probe.query(
       `SELECT count(*)::int AS present FROM information_schema.columns
         WHERE table_schema = 'public' AND table_name = 'case_core'
-          AND column_name IN ('project_id', 'governance_tier_history', 'version', 'closure_type')`
+          AND column_name IN ('project_id', 'governance_tier_history', 'version', 'closure_type',
+                               'case_name', 'intake_confirmation_key')`
     );
-    const caseCoreOk = Number(result.rows[0]?.present ?? 0) === 4;
+    // 6, not 4: CW-T-A's identity migration (20260810d) must be applied too,
+    // or every assertion below about caseName / cardinality would silently
+    // run against columns that don't exist yet.
+    const caseCoreOk = Number(result.rows[0]?.present ?? 0) === 6;
 
     const orgMembersResult = await probe.query(
       `SELECT count(*)::int AS present FROM information_schema.columns
@@ -122,6 +130,7 @@ interface CaseCoreDbRow {
   case_id: string;
   project_id: string;
   organization_id: string;
+  case_name: string;
   case_status: string;
   governance_tier: string;
   governance_tier_history: string;
@@ -184,7 +193,7 @@ suite('caseCoreService — Case Core against a real PostgreSQL (CW-P01, E1)', ()
     return { orgId, projectId };
   }
 
-  /** A second project inside an org a test already owns (case_core.project_id is UNIQUE, so one org can back at most one case per project). */
+  /** A second project inside an org a test already owns — used by tests that want two Cases cleanly separated by project rather than exercising CW-T-A's same-project cardinality directly. */
   async function seedProjectInOrg(orgId: string, label: string): Promise<string> {
     const projectId = `case-core-project-${label}-${randomUUID()}`;
     await control.query(
@@ -297,11 +306,71 @@ suite('caseCoreService — Case Core against a real PostgreSQL (CW-P01, E1)', ()
   }
 
   // -------------------------------------------------------------------------
-  // 1. createCase — OD-01 uniqueness (exactly one case_core row per project).
+  // 1. createCase — CW-T-A cardinality: a project MAY and MUST be able to
+  //    hold MANY independent Cases (a Case is a work order). This test used
+  //    to assert the OPPOSITE — that a second createCase for the same
+  //    project_id was REJECTED with `case_already_exists_for_project`,
+  //    enforced by a DB `UNIQUE(project_id)` — on an OD-01 reading that
+  //    CW-T-A's binding owner ruling (2026-08-10) supersedes. See
+  //    server/migrations/20260810d_case_workspace_case_identity.sql and
+  //    caseCoreService.ts's own header for the full argument.
   // -------------------------------------------------------------------------
-  it('createCase inserts exactly one case_core row for a project; a second createCase for the SAME project_id is rejected (OD-01)', async () => {
-    const { orgId, projectId } = await seedOrgAndProject('od01');
-    const actorId = await seedMemberedUser(orgId, 'od01');
+  it('two createCase calls for the SAME project_id both succeed and land TWO independent case_core rows with distinct names (CW-T-A)', async () => {
+    const { orgId, projectId } = await seedOrgAndProject('cwta-cardinality');
+    const actorId = await seedMemberedUser(orgId, 'cwta-cardinality');
+    try {
+      const first = await caseCoreService.createCase({
+        projectId,
+        organizationId: orgId,
+        caseName: 'Analiza kosztow operacyjnych',
+        contractedClosureType: 'DELIVERY_COMPLETED',
+        createdByActorId: actorId,
+      });
+      expect(first.projectId).toBe(projectId);
+      expect(first.organizationId).toBe(orgId);
+      expect(first.caseStatus).toBe('DRAFT');
+      expect(first.caseName).toBe('Analiza kosztow operacyjnych');
+
+      const rowsAfterFirst = await readCaseCoreRowsForProject(projectId);
+      expect(rowsAfterFirst).toHaveLength(1);
+      expect(rowsAfterFirst[0].case_id).toBe(first.caseId);
+
+      // THE cardinality assertion: a second, genuinely different work order
+      // against the SAME project must SUCCEED, not be rejected.
+      const second = await caseCoreService.createCase({
+        projectId,
+        organizationId: orgId,
+        caseName: 'Zestawienie faktur zakupowych',
+        contractedClosureType: 'DECISION_COMPLETED',
+        createdByActorId: actorId,
+      });
+      expect(second.caseId).not.toBe(first.caseId);
+      expect(second.projectId).toBe(projectId);
+      expect(second.caseName).toBe('Zestawienie faktur zakupowych');
+
+      const rowsAfterSecond = await readCaseCoreRowsForProject(projectId);
+      expect(rowsAfterSecond).toHaveLength(2);
+      const idsAfterSecond = rowsAfterSecond.map((r) => r.case_id).sort();
+      expect(idsAfterSecond).toEqual([first.caseId, second.caseId].sort());
+      // The whole point: two DIFFERENT, DISTINGUISHABLE names for the two
+      // Cases in this one project.
+      const namesAfterSecond = rowsAfterSecond.map((r) => r.case_name).sort();
+      expect(namesAfterSecond).toEqual(
+        ['Analiza kosztow operacyjnych', 'Zestawienie faktur zakupowych'].sort()
+      );
+    } finally {
+      await teardown([orgId], [projectId], [actorId]);
+    }
+  }, 30_000);
+
+  // -------------------------------------------------------------------------
+  // 1b. createCase — case_name fallback for callers that omit it (this
+  //     function's own collision-avoidance compromise — see its own doc
+  //     comment for why caseName is optional here, unlike on the HTTP route).
+  // -------------------------------------------------------------------------
+  it('createCase without an explicit caseName still lands a real, non-blank, honest fallback name — never a blank column', async () => {
+    const { orgId, projectId } = await seedOrgAndProject('cwta-name-fallback');
+    const actorId = await seedMemberedUser(orgId, 'cwta-name-fallback');
     try {
       const created = await caseCoreService.createCase({
         projectId,
@@ -309,27 +378,11 @@ suite('caseCoreService — Case Core against a real PostgreSQL (CW-P01, E1)', ()
         contractedClosureType: 'DELIVERY_COMPLETED',
         createdByActorId: actorId,
       });
-      expect(created.projectId).toBe(projectId);
-      expect(created.organizationId).toBe(orgId);
-      expect(created.caseStatus).toBe('DRAFT');
+      expect(created.caseName.trim().length).toBeGreaterThan(0);
+      expect(created.caseName).toMatch(/^Zlecenie [0-9A-F]{8}$/);
 
-      const rowsAfterFirst = await readCaseCoreRowsForProject(projectId);
-      expect(rowsAfterFirst).toHaveLength(1);
-      expect(rowsAfterFirst[0].case_id).toBe(created.caseId);
-
-      await expect(
-        caseCoreService.createCase({
-          projectId,
-          organizationId: orgId,
-          contractedClosureType: 'DELIVERY_COMPLETED',
-          createdByActorId: actorId,
-        })
-      ).rejects.toThrow(/case_already_exists_for_project/);
-
-      // The rejected second attempt must not have landed a second row.
-      const rowsAfterSecond = await readCaseCoreRowsForProject(projectId);
-      expect(rowsAfterSecond).toHaveLength(1);
-      expect(rowsAfterSecond[0].case_id).toBe(created.caseId);
+      const row = await readCaseCoreRow(created.caseId);
+      expect(row?.case_name).toBe(created.caseName);
     } finally {
       await teardown([orgId], [projectId], [actorId]);
     }

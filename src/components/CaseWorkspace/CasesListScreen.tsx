@@ -160,32 +160,33 @@ function nextActionOf(item: CaseCoreView): string {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
- * JAK NAZYWA SIĘ ZLECENIE — trzy realne źródła, żadnej zmyślonej nazwy.
+ * JAK NAZYWA SIĘ ZLECENIE
  *
- * ★ PRZYCZYNA (zmierzona na żywym backendzie 2026-08-10): `case_core` NIE MA
- * kolumny na nazwę ani cel. Lista zleceń pokazywała więc każdemu wierszowi ten
- * sam napis „Zlecenie bez nazwy" — 14 zleceń nie do odróżnienia. Do tego trasa
- * listy (`listCasesForOrganization`, `caseCoreService.ts:835`) czyta gołe
- * `case_core` BEZ joina z `projects`, więc `projectName` w wierszu listy nie
- * istnieje nawet jako `null` — pola po prostu nie ma w odpowiedzi (potwierdzone
- * `curl`-em: klucz `projectName` nieobecny), choć trasa pojedynczego zlecenia
- * (`getCase`, `caseCoreService.ts:405-437`) go zwraca.
+ * ★ STAN SPRZED 2026-08-10 (CW-T-A), dla pamięci: `case_core` NIE MIAŁ
+ * kolumny na nazwę ani cel, więc lista pokazywała każdemu wierszowi ten sam
+ * napis „Zlecenie bez nazwy" i UI musiał doganiać nazwę asynchronicznie z
+ * `getCaseIntakeSummary`/`getCase` PO wyrysowaniu listy (kod tego doganiania
+ * niżej w tym pliku wciąż istnieje — teraz służy DRUGIEJ linii wiersza, nie
+ * pierwszej, patrz `podtytulZlecenia`).
  *
- * Kolejność źródeł — od najbardziej „ludzkiego" do najbardziej technicznego:
- *  1. CEL z potwierdzonego work ordera (`getCaseIntakeSummary`) — to jest to,
- *     co człowiek zamówił („Analiza kosztów operacyjnych"). Pokrycie zmierzone
- *     na żywej bazie: 12 z 14 zleceń.
- *  2. NAZWA PROJEKTU z `getCase` — pokrycie 14 z 14, ale to nazwa projektu,
- *     nie zlecenia, więc jest druga w kolejce.
- *  3. UCZCIWY IDENTYFIKATOR: skrót sprawy + rodzaj. Świadome odstępstwo od
- *     zasady „case_id tylko w widoku eksperckim": ta gałąź odpala się dopiero,
- *     gdy NIE MA żadnej nazwy, a wtedy alternatywą jest ten sam napis dla
- *     wszystkich wierszy. Lepszy rozróżnialny skrót niż nierozróżnialna
- *     etykieta.
- *
- * Czego tu NIE MA i nie będzie bez zmiany schematu: własnej nazwy zlecenia
- * nadawanej przez użytkownika. To wymaga kolumny w `case_core` — UI jej nie
- * podrobi.
+ * ★ OD MIGRACJI `20260810d_case_workspace_case_identity.sql`: `case_core` ma
+ * własną kolumnę `case_name` (NOT NULL, osobna od `goal`/`expectedOutcome` —
+ * cel NIE jest substytutem nazwy) i backend zwraca ją w KAŻDEJ trasie listy i
+ * pojedynczego zlecenia. `item.caseName` jest więc ZAWSZE obecne, ZAWSZE
+ * niepuste i jest teraz PIERWSZYM źródłem nazwy — bez czekania na drugie
+ * żądanie sieciowe. Kolejność źródeł, od najważniejszego:
+ *  1. WŁASNA NAZWA zlecenia (`item.caseName`) — realna kolumna DB, prawdziwy
+ *     tytuł tego zlecenia. To jest właśnie to, co odróżnia DWA zlecenia w
+ *     JEDNYM projekcie (CW-T-A: jeden projekt może mieć wiele niezależnych
+ *     zleceń) — dwa wiersze z tym samym `projectId` będą miały RÓŻNE
+ *     `caseName`.
+ *  2. CEL z potwierdzonego work ordera (`getCaseIntakeSummary`) — zachowany
+ *     jako pierwszy fallback dla (teoretycznego) przypadku, gdy backend
+ *     jeszcze nie niesie `caseName` (starsze wdrożenie bez tej migracji).
+ *  3. NAZWA PROJEKTU z `getCase` — trzeci fallback.
+ *  4. UCZCIWY IDENTYFIKATOR: skrót sprawy + rodzaj — gdy nie ma żadnej nazwy
+ *     w ogóle (nie powinno się zdarzyć po migracji, ale kolumna NOT NULL w
+ *     bazie nie chroni przed pustym stringiem z bardzo starego klienta API).
  * ═══════════════════════════════════════════════════════════════════════════ */
 
 export interface CaseNaming {
@@ -210,6 +211,8 @@ function niepusty(value: string | null | undefined): string | null {
 
 /** Nazwa zlecenia wg kolejności źródeł opisanej wyżej. Nigdy pusta. */
 export function nazwaZlecenia(item: CaseCoreView, naming?: CaseNaming | null): string {
+  const wlasna = niepusty(item.caseName);
+  if (wlasna) return wlasna;
   const cel = niepusty(naming?.goal);
   if (cel) return cel;
   const projekt = niepusty(naming?.projectName ?? item.projectName);
@@ -218,16 +221,20 @@ export function nazwaZlecenia(item: CaseCoreView, naming?: CaseNaming | null): s
 }
 
 /**
- * Druga linia wiersza: projekt (rozróżnia zlecenia o IDENTYCZNYM celu — na
- * żywej bazie „Zestawienie faktur" powtarza się w sześciu sprawach) plus
- * oczekiwany rezultat. Pusty string, gdy nie ma czego napisać — wołający
- * decyduje, co wtedy pokazać.
+ * Druga linia wiersza: projekt (od CW-T-A rozróżnia RÓWNIEŻ dwa zlecenia o
+ * IDENTYCZNYM projekcie ale RÓŻNYCH nazwach — oba dostaną tę samą linię
+ * „Projekt: X", co jest poprawne: to naprawdę ten sam projekt), cel (gdy
+ * różni się od nazwy — po CW-T-A `caseName` i `goal` to świadomie odrębne
+ * pola) i oczekiwany rezultat. Pusty string, gdy nie ma czego napisać —
+ * wołający decyduje, co wtedy pokazać.
  */
 export function podtytulZlecenia(item: CaseCoreView, naming?: CaseNaming | null): string {
   const nazwa = nazwaZlecenia(item, naming);
   const czesci: string[] = [];
   const projekt = niepusty(naming?.projectName ?? item.projectName);
   if (projekt && projekt !== nazwa) czesci.push(`Projekt: ${projekt}`);
+  const cel = niepusty(naming?.goal);
+  if (cel && cel !== nazwa) czesci.push(`Cel: ${cel}`);
   const rezultat = niepusty(
     naming?.expectedOutcome ?? naming?.projectDescription ?? item.projectDescription
   );

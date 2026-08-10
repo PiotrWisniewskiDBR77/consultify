@@ -263,6 +263,11 @@ suite('waitSubscriptionService — Wait Subscription against a real PostgreSQL (
     const created = await caseCoreService.createCase({
       projectId,
       organizationId: orgId,
+      // CW-T-A (server/migrations/20260810d_case_workspace_case_identity.sql):
+      // caseName became required on createCase concurrently with this packet's
+      // own work in this shared worktree — not something CW-T-E touches, just
+      // a fixture adaptation so this suite keeps compiling/running against it.
+      caseName: `Wait Subscription test case (${label})`,
       contractedClosureType: 'DELIVERY_COMPLETED',
       createdByActorId: actorId,
     });
@@ -331,8 +336,16 @@ suite('waitSubscriptionService — Wait Subscription against a real PostgreSQL (
 
   /**
    * Every outbox row this WAIT aggregate ever produced, oldest first, read out
-   * of band. `event_id` breaks ties because `created_at` defaults to `now()` =
-   * transaction start time.
+   * of band. Ordered by `sequence_number` (CW-T-E,
+   * server/migrations/20260810e_case_workspace_event_correlation.sql) — a
+   * real Postgres IDENTITY sequence assigned at INSERT time, hence true
+   * insertion order with NO possible tie. `created_at`/`event_id` were tried
+   * here before: `created_at` defaults to `now()` (transaction start time)
+   * and CAN tie under load between two genuinely sequential commands (e.g.
+   * this WAIT's own claim/renew pair, which also share an aggregate_version —
+   * neither bumps the OCC counter), and `event_id` is an opaque
+   * `cwevt-<uuid>` with no relationship to insertion order, so that tie-break
+   * could silently reorder two causally sequential events.
    */
   async function readOutboxRowsForAggregate(
     aggregateId: string
@@ -340,7 +353,7 @@ suite('waitSubscriptionService — Wait Subscription against a real PostgreSQL (
     const result = await control.query<CaseWorkspaceEventOutboxDbRow>(
       `SELECT * FROM case_workspace_event_outbox
          WHERE aggregate_id = $1
-         ORDER BY created_at ASC, event_id ASC`,
+         ORDER BY sequence_number ASC`,
       [aggregateId]
     );
     return result.rows;
@@ -1778,6 +1791,46 @@ suite('waitSubscriptionService — Wait Subscription against a real PostgreSQL (
       .catch(() => undefined);
   }
 
+  /**
+   * CW-T-E — TEST-FIXTURE-ONLY direct INSERT into `case_workspace_event_outbox`
+   * via the out-of-band control Pool, mirroring seedInboxRecord()'s own
+   * rationale exactly: a real producer would go through
+   * eventOutboxService.publishEvent(), but seeding directly here proves
+   * waitSubscriptionService.assertSatisfyingEventIsReal()'s OWN DOMAIN_EVENT
+   * gate, not any particular producer's behaviour. Leaves every column this
+   * gate reads (`case_id`/`run_id`/`node_run_id`/`correlation_key`) exactly
+   * as the caller specifies, including the deliberately-absent (NULL) ones
+   * the fallback-tier tests need.
+   */
+  async function seedOutboxEvent(params: {
+    eventId: string;
+    eventType: string;
+    organizationId: string;
+    caseId?: string | null;
+    runId?: string | null;
+    nodeRunId?: string | null;
+    correlationKey?: string | null;
+  }): Promise<void> {
+    await control.query(
+      `INSERT INTO case_workspace_event_outbox
+         (event_id, event_type, organization_id, aggregate_type, aggregate_id,
+          case_id, run_id, node_run_id, correlation_key, actor_user_id, correlation_id)
+       VALUES ($1, $2, $3, 'CAPABILITY_ADAPTER', $4, $5, $6, $7, $8, $9, $10)`,
+      [
+        params.eventId,
+        params.eventType,
+        params.organizationId,
+        `cwtest-agg-${randomUUID()}`,
+        params.caseId ?? null,
+        params.runId ?? null,
+        params.nodeRunId ?? null,
+        params.correlationKey ?? null,
+        `system:test-domain-event-producer`,
+        `corr-${randomUUID()}`,
+      ]
+    );
+  }
+
   it('GAP-E-04: the authenticated resolve path REFUSES a satisfiedByEventId that exists in no inbox record, and leaves the wait ACTIVE with no event', async () => {
     const { orgId, projectId, caseId, actorId } = await seedOrgProjectCase('gap-e04-fabricated');
     const runId = `run-gap-e04-fabricated-${randomUUID()}`;
@@ -2076,4 +2129,328 @@ suite('waitSubscriptionService — Wait Subscription against a real PostgreSQL (
       });
     }
   }, 90_000);
+
+  // ===========================================================================
+  // CW-T-E, Problem 1 — DOMAIN_EVENT correlation strengthening.
+  //
+  // Before this packet, assertSatisfyingEventIsReal's DOMAIN_EVENT branch
+  // proved evidence by (organization_id, case_id, event_type) alone. Two
+  // outbox events of the SAME type for two DIFFERENT steps of the SAME Case
+  // — two different NodeRuns, or an org-scoped event with no case_id at all —
+  // were indistinguishable evidence. These tests pin down the two-tier fix:
+  // a STRICT correlation_key match (Tier 1) when the producer supplies one,
+  // and a stricter CASE/RUN/NODE_RUN-scoped fallback (Tier 2) when it does
+  // not. See server/migrations/20260810e_case_workspace_event_correlation.sql
+  // and assertSatisfyingEventIsReal's own header for the full model.
+  // ===========================================================================
+
+  it('CW-T-E: DOMAIN_EVENT Tier 1 (correlation_key) — an exact key match resolves the wait; a real key naming a DIFFERENT wait does not, even though case/type would otherwise pass', async () => {
+    const { orgId, projectId, caseId, actorId } = await seedOrgProjectCase('cwte-tier1');
+    const runId = `run-cwte-tier1-${randomUUID()}`;
+    const outboxEventIds: string[] = [];
+    const waitIds: string[] = [];
+    try {
+      await seedV8Run({ runId, organizationId: orgId });
+      const actionProposalId = await seedActionProposal({
+        caseId,
+        runId,
+        actorId,
+        tag: 'cwte-tier1',
+      });
+      const correlationKey = `corr-cwte-tier1-${randomUUID()}`;
+      const wait = await waitSubscriptionService.createWait(
+        {
+          caseId,
+          actionProposalId,
+          waitType: 'DOMAIN_EVENT',
+          correlationKey,
+          expectedEventType: 'capability.completed',
+        },
+        actorId
+      );
+      waitIds.push(wait.waitId);
+
+      // A real event, in this tenant, this Case, right type — but its
+      // correlation_key names ANOTHER wait entirely. Tier 1 takes priority
+      // over the looser Tier 2 scope check: a correlation_key that fails to
+      // match must reject even though case/type alone would have passed.
+      const foreignKeyedEventId = `cwevt-${randomUUID()}`;
+      outboxEventIds.push(foreignKeyedEventId);
+      await seedOutboxEvent({
+        eventId: foreignKeyedEventId,
+        eventType: 'capability.completed',
+        organizationId: orgId,
+        caseId,
+        correlationKey: `corr-somebody-elses-wait-${randomUUID()}`,
+      });
+      await expect(
+        waitSubscriptionService.resolveWait(
+          wait.waitId,
+          { satisfiedByEventId: foreignKeyedEventId, actorUserId: actorId },
+          wait.version
+        )
+      ).rejects.toThrow('wait_satisfying_event_correlation_mismatch');
+
+      // The genuine article: same key, same Case.
+      const realEventId = `cwevt-${randomUUID()}`;
+      outboxEventIds.push(realEventId);
+      await seedOutboxEvent({
+        eventId: realEventId,
+        eventType: 'capability.completed',
+        organizationId: orgId,
+        caseId,
+        correlationKey,
+      });
+      const resolved = await waitSubscriptionService.resolveWait(
+        wait.waitId,
+        { satisfiedByEventId: realEventId, actorUserId: actorId },
+        wait.version
+      );
+      expect(resolved.status).toBe('SATISFIED');
+
+      const events = await control.query<{
+        actor_user_id: string;
+        redacted_summary: Record<string, unknown>;
+      }>(
+        `SELECT actor_user_id, redacted_summary FROM case_workspace_event_outbox
+          WHERE aggregate_id = $1 AND event_type = 'wait.satisfied'`,
+        [wait.waitId]
+      );
+      expect(events.rows).toHaveLength(1);
+      // Human actor — never the system resolver — same audit posture GAP-E-04
+      // already established for the EXTERNAL_CALLBACK path.
+      expect(events.rows[0].actor_user_id).toBe(actorId);
+      expect(events.rows[0].redacted_summary.satisfiedByBinding).toBe('correlation_key');
+
+      // REPLAY: a second resolveWait against the now-SATISFIED wait (even
+      // naming the SAME real event again) is refused as a terminal-state
+      // transition, and produces NO second wait.satisfied row — the effect is
+      // not repeated.
+      await expect(
+        waitSubscriptionService.resolveWait(
+          wait.waitId,
+          { satisfiedByEventId: realEventId, actorUserId: actorId },
+          resolved.version
+        )
+      ).rejects.toThrow('wait_status_transition_not_allowed:SATISFIED->SATISFIED');
+      const eventsAfterReplay = await control.query<{ event_type: string }>(
+        `SELECT event_type FROM case_workspace_event_outbox
+          WHERE aggregate_id = $1 AND event_type = 'wait.satisfied'`,
+        [wait.waitId]
+      );
+      expect(eventsAfterReplay.rows).toHaveLength(1);
+    } finally {
+      await teardown({
+        waitIds,
+        runIds: [runId],
+        orgIds: [orgId],
+        projectIds: [projectId],
+        userIds: [actorId],
+      });
+    }
+  }, 60_000);
+
+  it('CW-T-E: DOMAIN_EVENT Tier 1 correlation_key match is still Case-scoped (defense in depth against a key colliding across two Cases)', async () => {
+    const owner = await seedOrgProjectCase('cwte-tier1-case-scope');
+    const otherCase = await caseCoreService.createCase({
+      projectId: owner.projectId,
+      organizationId: owner.orgId,
+      caseName: 'cwte-tier1-case-scope second case',
+      contractedClosureType: 'DELIVERY_COMPLETED',
+      createdByActorId: owner.actorId,
+    });
+    const runId = `run-cwte-tier1-case-scope-${randomUUID()}`;
+    const outboxEventIds: string[] = [];
+    const waitIds: string[] = [];
+    try {
+      await seedV8Run({ runId, organizationId: owner.orgId });
+      const actionProposalId = await seedActionProposal({
+        caseId: owner.caseId,
+        runId,
+        actorId: owner.actorId,
+        tag: 'cwte-tier1-case-scope',
+      });
+      const correlationKey = `corr-cwte-collision-${randomUUID()}`;
+      const wait = await waitSubscriptionService.createWait(
+        {
+          caseId: owner.caseId,
+          actionProposalId,
+          waitType: 'DOMAIN_EVENT',
+          correlationKey,
+          expectedEventType: 'capability.completed',
+        },
+        owner.actorId
+      );
+      waitIds.push(wait.waitId);
+
+      // The SAME correlation_key string, legitimately reused by an event that
+      // belongs to the OTHER Case (case_workspace_waits' own uniqueness is
+      // only UNIQUE(case_id, correlation_key), so this is a real possibility,
+      // not a fabricated attack shape).
+      const collidingEventId = `cwevt-${randomUUID()}`;
+      outboxEventIds.push(collidingEventId);
+      await seedOutboxEvent({
+        eventId: collidingEventId,
+        eventType: 'capability.completed',
+        organizationId: owner.orgId,
+        caseId: otherCase.caseId,
+        correlationKey,
+      });
+      await expect(
+        waitSubscriptionService.resolveWait(
+          wait.waitId,
+          { satisfiedByEventId: collidingEventId, actorUserId: owner.actorId },
+          wait.version
+        )
+      ).rejects.toThrow('wait_satisfying_event_case_mismatch');
+
+      const untouched = await control.query<{ status: string }>(
+        `SELECT status FROM case_workspace_waits WHERE wait_id = $1`,
+        [wait.waitId]
+      );
+      expect(untouched.rows[0].status).toBe('ACTIVE');
+    } finally {
+      await teardown({
+        waitIds,
+        runIds: [runId],
+        orgIds: [owner.orgId],
+        projectIds: [owner.projectId],
+        userIds: [owner.actorId],
+      });
+    }
+  }, 60_000);
+
+  it('CW-T-E: DOMAIN_EVENT Tier 2 fallback (no correlation_key) — Case/NodeRun scoping. A same-type event for a DIFFERENT step of the SAME Case does not resume; a caseless (org-scoped) event does not resume', async () => {
+    const { orgId, projectId, caseId, actorId } = await seedOrgProjectCase('cwte-tier2');
+    const runId = `run-cwte-tier2-${randomUUID()}`;
+    const outboxEventIds: string[] = [];
+    const waitIds: string[] = [];
+    try {
+      await seedV8Run({ runId, organizationId: orgId });
+      const actionProposalId = await seedActionProposal({
+        caseId,
+        runId,
+        actorId,
+        tag: 'cwte-tier2',
+      });
+
+      // Two DOMAIN_EVENT waits in the SAME Case, waiting on the SAME
+      // event_type, but for two DIFFERENT steps (NodeRuns). This is the exact
+      // shape CW-T-E's Problem 1 named: "two events of the same type may
+      // belong to different waits in the same Case".
+      const nodeRunA = `node-run-cwte-tier2-a-${randomUUID()}`;
+      const nodeRunB = `node-run-cwte-tier2-b-${randomUUID()}`;
+      const waitA = await waitSubscriptionService.createWait(
+        {
+          caseId,
+          actionProposalId,
+          nodeRunId: nodeRunA,
+          waitType: 'DOMAIN_EVENT',
+          correlationKey: `corr-cwte-tier2-a-${randomUUID()}`,
+          expectedEventType: 'capability.completed',
+        },
+        actorId
+      );
+      waitIds.push(waitA.waitId);
+      const waitB = await waitSubscriptionService.createWait(
+        {
+          caseId,
+          actionProposalId,
+          nodeRunId: nodeRunB,
+          waitType: 'DOMAIN_EVENT',
+          correlationKey: `corr-cwte-tier2-b-${randomUUID()}`,
+          expectedEventType: 'capability.completed',
+        },
+        actorId
+      );
+      waitIds.push(waitB.waitId);
+
+      // No correlation_key stamped — the Tier 2 fallback path — and scoped to
+      // step B's NodeRun.
+      const eventForB = `cwevt-${randomUUID()}`;
+      outboxEventIds.push(eventForB);
+      await seedOutboxEvent({
+        eventId: eventForB,
+        eventType: 'capability.completed',
+        organizationId: orgId,
+        caseId,
+        nodeRunId: nodeRunB,
+      });
+
+      // Step A's wait must NOT be resumable by step B's event, even though
+      // organization, Case and event_type all match.
+      await expect(
+        waitSubscriptionService.resolveWait(
+          waitA.waitId,
+          { satisfiedByEventId: eventForB, actorUserId: actorId },
+          waitA.version
+        )
+      ).rejects.toThrow('wait_satisfying_event_node_run_mismatch');
+
+      // An org-scoped event with NO case_id at all is not evidence for a
+      // Case-scoped wait either (the "only checked when present" hole).
+      const caselessEventId = `cwevt-${randomUUID()}`;
+      outboxEventIds.push(caselessEventId);
+      await seedOutboxEvent({
+        eventId: caselessEventId,
+        eventType: 'capability.completed',
+        organizationId: orgId,
+        caseId: null,
+      });
+      await expect(
+        waitSubscriptionService.resolveWait(
+          waitA.waitId,
+          { satisfiedByEventId: caselessEventId, actorUserId: actorId },
+          waitA.version
+        )
+      ).rejects.toThrow('wait_satisfying_event_case_mismatch');
+
+      // Step B's own event correctly resolves step B's own wait.
+      const resolvedB = await waitSubscriptionService.resolveWait(
+        waitB.waitId,
+        { satisfiedByEventId: eventForB, actorUserId: actorId },
+        waitB.version
+      );
+      expect(resolvedB.status).toBe('SATISFIED');
+      const bindingB = await control.query<{ redacted_summary: Record<string, unknown> }>(
+        `SELECT redacted_summary FROM case_workspace_event_outbox
+          WHERE aggregate_id = $1 AND event_type = 'wait.satisfied'`,
+        [waitB.waitId]
+      );
+      expect(bindingB.rows[0].redacted_summary.satisfiedByBinding).toBe('case_scope');
+
+      // And step A's wait genuinely never moved — this is not a false pass
+      // where a later mutation happened to touch it too.
+      const stillActiveA = await control.query<{ status: string }>(
+        `SELECT status FROM case_workspace_waits WHERE wait_id = $1`,
+        [waitA.waitId]
+      );
+      expect(stillActiveA.rows[0].status).toBe('ACTIVE');
+
+      // Step A's own event (right NodeRun) correctly resolves it.
+      const eventForA = `cwevt-${randomUUID()}`;
+      outboxEventIds.push(eventForA);
+      await seedOutboxEvent({
+        eventId: eventForA,
+        eventType: 'capability.completed',
+        organizationId: orgId,
+        caseId,
+        nodeRunId: nodeRunA,
+      });
+      const resolvedA = await waitSubscriptionService.resolveWait(
+        waitA.waitId,
+        { satisfiedByEventId: eventForA, actorUserId: actorId },
+        waitA.version
+      );
+      expect(resolvedA.status).toBe('SATISFIED');
+    } finally {
+      await teardown({
+        waitIds,
+        runIds: [runId],
+        orgIds: [orgId],
+        projectIds: [projectId],
+        userIds: [actorId],
+      });
+    }
+  }, 60_000);
 });

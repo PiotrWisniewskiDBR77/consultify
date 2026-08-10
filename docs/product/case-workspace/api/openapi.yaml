@@ -113,6 +113,12 @@ tags:
     description: |
       caseIntakeService — the two-step propose/confirm contract the chat/Teresa
       layer calls to promote a conversation into exactly one Case.
+  - name: External event ingress
+    description: |
+      eventInboxService (CW-T-B) — the authenticated HTTP entry point for
+      external EXTERNAL_CALLBACK deliveries. Mounted OUTSIDE
+      /api/v8/case-workspace and outside bearer auth — see the operation's
+      own description.
 
 paths:
 
@@ -2594,6 +2600,179 @@ paths:
                   data: { $ref: '#/components/schemas/QuarantinedLegacyRecord' }
         '403': { $ref: '#/components/responses/OrgRoleDenied' }
         '404': { $ref: '#/components/responses/NotFound' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  # ===========================================================================
+  # eventInbox.routes.ts — eventInboxService (CW-T-B)
+  # ===========================================================================
+  # NOT mounted under /api/v8/case-workspace and NOT bearer-authenticated —
+  # see routes/caseWorkspace/eventInbox.routes.ts's own header comment for why
+  # (attachV8Context 403s any caller without a first-party JWT, which every
+  # external event sender is). Mounted directly in Gateway.ts, sibling to
+  # /api/webhooks/sellix and /api/webhooks/v8-sync — see this packet's report
+  # for the exact mount line. Hence the path-level `servers` override and the
+  # operation-level `security: []` below (overriding the file-global bearerAuth).
+  /{source}/deliveries:
+    servers:
+      - url: /api/webhooks/case-workspace
+        description: |
+          Public ingress mount (Gateway.ts, NOT routes/v8/index.ts — this path
+          is deliberately outside the v8Router/attachV8Context chain).
+    parameters:
+      - in: path
+        name: source
+        required: true
+        schema: { type: string, minLength: 1, maxLength: 200 }
+        description: |
+          The channel key. IS the allowlist: must name a channel a prior
+          `registerInboxChannel()` call registered (env-bootstrapped from
+          `CASE_WORKSPACE_INBOX_CHANNELS_JSON` in production — see the route
+          file). Anything else answers `401 UNAUTHENTICATED`.
+    post:
+      tags: [External event ingress]
+      operationId: receiveExternalEvent
+      security: []
+      summary: Authenticated delivery of one external event (EXTERNAL_CALLBACK).
+      description: |
+        The ONLY production entry point into `eventInboxService.
+        receiveExternalEvent`'s four-gate trust boundary (authenticate ->
+        deduplicate by `(source, eventId)` -> validate tenant/correlation/
+        eventType/timestamp -> apply). Every outcome below is FINAL and
+        durable except `unauthenticated`, which writes NOTHING (see the
+        service's own "step 1 is the single exception" reasoning) — an
+        unrecognized channel and a bad signature are answered with the SAME
+        generic body so a caller cannot tell "wrong secret" from "channel does
+        not exist".
+
+        **Authentication.** HMAC-SHA256 (`eventInboxService.
+        computeInboxSignature`) over the canonical-JSON form of `payload`
+        ONLY, under the channel's registered secret, compared in constant
+        time. `eventId`/`source`/`correlationKey`/`organizationId`/`caseId`
+        are NOT covered by the signature — see the route file's header
+        comment for the documented residual and why (a frozen 2-argument
+        signing contract other test suites already depend on).
+
+        **Timestamp tolerance / replay.** Every production-bootstrapped
+        channel requires `payload.deliveredAt` (ISO-8601) and rejects it as
+        `422 PAYLOAD_INVALID` when older than 5 minutes or more than 60
+        seconds in the future (`eventInboxService.
+        isDeliveredAtWithinTolerance`). Because `deliveredAt` lives INSIDE the
+        signed `payload`, a party without the channel secret cannot refresh it
+        on a captured delivery.
+
+        **Idempotency.** `eventId` is the sender's id; redelivering the exact
+        same `(source, eventId)` answers `200 duplicate` and produces NO
+        second effect, proved both sequentially and under genuine concurrency
+        — see `integration/inboxIngress.pg.test.ts`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [eventId, eventType, organizationId, correlationKey, payload, signature]
+              properties:
+                eventId: { type: string, minLength: 1, maxLength: 500 }
+                eventType: { type: string, minLength: 1, maxLength: 200 }
+                organizationId:
+                  type: string
+                  minLength: 1
+                  maxLength: 256
+                  description: The tenant the sender CLAIMS — verified against the resolved wait, never trusted on its own.
+                projectId: { type: string, nullable: true }
+                correlationKey: { type: string, minLength: 1, maxLength: 500 }
+                caseId: { type: string, nullable: true }
+                runId: { type: string, nullable: true }
+                nodeRunId: { type: string, nullable: true }
+                payload:
+                  type: object
+                  description: |
+                    Sender-defined domain content. `deliveredAt` (ISO-8601) is
+                    REQUIRED by every production channel — see this
+                    operation's description.
+                  additionalProperties: true
+                signature:
+                  type: string
+                  minLength: 1
+                  maxLength: 500
+                  description: Hex HMAC-SHA256 — see this operation's Authentication section.
+      responses:
+        '200':
+          description: Applied, or an idempotent duplicate of a previously applied/rejected delivery.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: object
+                    required: [received, outcome, inboxRecordId, waitId]
+                    properties:
+                      received: { type: boolean, enum: [true] }
+                      outcome: { type: string, enum: [applied] }
+                      inboxRecordId: { type: string }
+                      waitId: { type: string }
+                  - type: object
+                    required: [received, outcome, inboxRecordId, firstReceivedAt]
+                    properties:
+                      received: { type: boolean, enum: [true] }
+                      outcome: { type: string, enum: [duplicate] }
+                      inboxRecordId: { type: string }
+                      firstReceivedAt: { type: string, format: date-time }
+        '400':
+          description: Malformed request shape (zod).
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code: { type: string, enum: [VALIDATION_ERROR] }
+        '401':
+          description: |
+            Unrecognized channel OR bad/missing signature — deliberately
+            indistinguishable in the response body (see this operation's
+            description). NO row is written for this outcome.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  received: { type: boolean, enum: [false] }
+                  error:
+                    type: object
+                    properties:
+                      code: { type: string, enum: [UNAUTHENTICATED] }
+        '413':
+          description: Redacted payload exceeds the service's size ceiling (`inbox_redacted_payload_too_large`).
+        '422':
+          description: |
+            Authenticated and durably recorded, but not applied. `error.code`
+            is one of `TENANT_MISMATCH`, `CORRELATION_UNKNOWN`,
+            `CORRELATION_AMBIGUOUS`, `PAYLOAD_INVALID` (also covers: stale/
+            future `deliveredAt`, and an `eventType` outside the channel's
+            `allowedEventTypes`), `WAIT_NOT_ACTIVE`, `WAIT_TYPE_MISMATCH`.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [received, outcome, inboxRecordId, error]
+                properties:
+                  received: { type: boolean, enum: [true] }
+                  outcome: { type: string, enum: [rejected] }
+                  inboxRecordId: { type: string }
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        enum:
+                          - TENANT_MISMATCH
+                          - CORRELATION_UNKNOWN
+                          - CORRELATION_AMBIGUOUS
+                          - PAYLOAD_INVALID
+                          - WAIT_NOT_ACTIVE
+                          - WAIT_TYPE_MISMATCH
         '500': { $ref: '#/components/responses/InternalError' }
 
 # =============================================================================

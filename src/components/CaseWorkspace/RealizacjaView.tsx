@@ -24,8 +24,61 @@ import {
   proposalStatusLabel,
 } from '@/utils/enumLabels';
 
+import { listNodeResultAcceptancesForCase } from './apiResults';
 import type { CaseActionProposal, CaseCoreView, CaseHistoryEvent, CaseWait } from './types';
 import { formatDateTime, relativeDays, StatusTag, TechnicalId } from './ui';
+
+/**
+ * Zliczenie wyników wykonania kroków, do JEDNEGO zdania w karcie „Co się
+ * teraz dzieje".
+ *
+ * ★ DLACZEGO TU TYLKO LICZNIK, nie cała tabela. Pełna, klikalna projekcja
+ * wyników kroku (status akceptacji, źródłowy Run/NodeRun, dowód, otwarcie
+ * obiektu w jego module) jest w zakładce Rezultaty — TAM biegnie mechanizm
+ * powrotu (`onOpenDeliverable`/zapamiętane przewinięcie i fokus), którego ten
+ * plik nie dostaje z powłoki. Duplikowanie tej samej tabeli tutaj bez
+ * możliwości jej otwarcia byłoby atrapą interakcji, a nie funkcją — i
+ * łamałoby doktrynę gęstości (ta sama treść w dwóch zakładkach). Realizacja
+ * i tak MUSI umieć honest powiedzieć „częściowo zakończone" (kanon:
+ * `04_DOMAIN_RUNTIME_AND_STATE_MACHINES.md:276`, wiersz Realizacji) —
+ * dlatego czyta te same dane, tylko jako policzone podsumowanie.
+ */
+interface WynikiKrokowLiczby {
+  accepted: number;
+  partial: number;
+  rejected: number;
+}
+
+function useWynikiKrokowLiczby(caseId: string): WynikiKrokowLiczby | null {
+  const [liczby, setLiczby] = useState<WynikiKrokowLiczby | null>(null);
+  useEffect(() => {
+    let anulowano = false;
+    listNodeResultAcceptancesForCase(caseId)
+      .then((items) => {
+        if (anulowano) return;
+        const policzone = items.reduce<WynikiKrokowLiczby>(
+          (acc, item) => {
+            if (item.resultAcceptance === 'ACCEPTED') acc.accepted += 1;
+            else if (item.resultAcceptance === 'PARTIAL') acc.partial += 1;
+            else if (item.resultAcceptance === 'REJECTED') acc.rejected += 1;
+            return acc;
+          },
+          { accepted: 0, partial: 0, rejected: 0 }
+        );
+        setLiczby(policzone);
+      })
+      .catch(() => {
+        // Zdanie po prostu tego nie wspomni — to podsumowanie DODATKOWE, a
+        // pełny, uczciwy stan błędu (z przyciskiem „Spróbuj ponownie") ma
+        // sekcja „Wyniki wykonania kroków" w zakładce Rezultaty.
+        if (!anulowano) setLiczby(null);
+      });
+    return () => {
+      anulowano = true;
+    };
+  }, [caseId]);
+  return liczby;
+}
 
 export interface RealizacjaViewProps {
   caseItem: CaseCoreView;
@@ -140,6 +193,7 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
   expert,
 }) => {
   const [selection, setSelection] = useState<Selection>(null);
+  const wynikiKrokow = useWynikiKrokowLiczby(caseItem.caseId);
 
   // Karty obu tabel mierzą się SAME — patrz `useAvailableWidth`. Dwa osobne
   // pomiary, bo obie karty mogą kiedyś stanąć w różnych kolumnach układu.
@@ -504,7 +558,27 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
               : 'Nic nie jest w stanie oczekiwania.'}{' '}
             {pendingProposals.length
               ? `${pendingProposals.length} ${pendingProposals.length === 1 ? 'sprawa czeka' : 'sprawy czekają'} na Twoją decyzję.`
-              : 'Nic nie czeka na Twoją decyzję.'}
+              : 'Nic nie czeka na Twoją decyzję.'}{' '}
+            {/*
+             * ★ „Częściowo zakończone" tylko z JAWNEGO `resultAcceptance='PARTIAL'`
+             * zapisanego dla kroku (`case_workspace_node_result_acceptances`),
+             * NIGDY z licznika ostrzeżeń ani ze stanu Run — to dosłowny wymóg
+             * kanonu (`04_DOMAIN_RUNTIME_AND_STATE_MACHINES.md:263`). Zdanie
+             * pojawia się WYŁĄCZNIE gdy jest coś, co wymaga uwagi (częściowe
+             * lub odrzucone) — same akceptacje w komplecie nie zaśmiecają tego
+             * podsumowania. Pełna, klikalna lista jest w zakładce Rezultaty.
+             */}
+            {wynikiKrokow && (wynikiKrokow.partial > 0 || wynikiKrokow.rejected > 0)
+              ? `${
+                  wynikiKrokow.partial > 0
+                    ? `${wynikiKrokow.partial} ${wynikiKrokow.partial === 1 ? 'krok zakończony częściowo' : 'kroki zakończone częściowo'}`
+                    : ''
+                }${wynikiKrokow.partial > 0 && wynikiKrokow.rejected > 0 ? ', ' : ''}${
+                  wynikiKrokow.rejected > 0
+                    ? `${wynikiKrokow.rejected} ${wynikiKrokow.rejected === 1 ? 'odrzucony' : 'odrzucone'}`
+                    : ''
+                } — szczegóły w zakładce Rezultaty.`
+              : null}
           </p>
         </div>
 

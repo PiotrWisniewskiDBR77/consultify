@@ -499,7 +499,7 @@ suite('caseCoreService — adversarial security (Stream E, CW-P01/E1)', () => {
   //     is the correct behavior for this specific API shape.
   // =========================================================================
   describe('(E) duplicate request', () => {
-    it('two sequential createCase calls for the SAME project_id land exactly one case_core row; the second is rejected, not silently duplicated or merged', async () => {
+    it('two sequential createCase calls for the SAME project_id land TWO case_core rows — a project holds many Cases (CW-T-A cardinality ruling)', async () => {
       const orgId = await seedOrg('dup-sequential');
       const projectId = await seedProject(orgId, 'dup-sequential');
       // Post-Stream-A: createCase itself now calls
@@ -514,24 +514,35 @@ suite('caseCoreService — adversarial security (Stream E, CW-P01/E1)', () => {
           contractedClosureType: 'DELIVERY_COMPLETED',
           createdByActorId: actor1Id,
         });
-        await expect(
-          caseCoreService.createCase({
-            projectId,
-            organizationId: orgId,
-            contractedClosureType: 'DELIVERY_COMPLETED',
-            createdByActorId: actor2Id,
-          })
-        ).rejects.toThrow('case_already_exists_for_project');
+        // CW-T-A: a Case is a work order, so one project must be able to hold
+        // many independent Cases. This assertion used to require the second
+        // create to be REJECTED, which was correct only while
+        // case_core_project_id_key (UNIQUE on project_id) existed. The owner
+        // ruled that constraint a model defect; migration 20260810d drops it,
+        // and intake idempotency moved to
+        // (tenant, actor/conversation, confirmation key, work-order digest).
+        // Direct createCase has no work-order concept at all, so two direct
+        // creates are two genuinely different Cases, not a duplicate request.
+        const second = await caseCoreService.createCase({
+          projectId,
+          organizationId: orgId,
+          contractedClosureType: 'DELIVERY_COMPLETED',
+          createdByActorId: actor2Id,
+        });
+        expect(second.caseId).not.toBe(first.caseId);
 
-        const result = await control.query(`SELECT case_id FROM case_core WHERE project_id = $1`, [projectId]);
-        expect(result.rows).toHaveLength(1);
-        expect(result.rows[0].case_id).toBe(first.caseId);
+        const result = await control.query(
+          `SELECT case_id FROM case_core WHERE project_id = $1 ORDER BY created_at ASC`,
+          [projectId]
+        );
+        expect(result.rows).toHaveLength(2);
+        expect(result.rows.map((r) => r.case_id).sort()).toEqual([first.caseId, second.caseId].sort());
       } finally {
         await teardown({ orgIds: [orgId], projectIds: [projectId] });
       }
     }, 30_000);
 
-    it('two CONCURRENT createCase calls (Promise.allSettled) for the SAME project_id: exactly one succeeds, exactly one rejects, exactly one row ever lands', async () => {
+    it('two CONCURRENT createCase calls (Promise.allSettled) for the SAME project_id: BOTH succeed and two distinct rows land (CW-T-A cardinality ruling)', async () => {
       const orgId = await seedOrg('dup-concurrent');
       const projectId = await seedProject(orgId, 'dup-concurrent');
       // Post-Stream-A: same requireOrgMember gate as the sequential variant
@@ -556,11 +567,17 @@ suite('caseCoreService — adversarial security (Stream E, CW-P01/E1)', () => {
         const outcomes = [outcomeA, outcomeB];
         const fulfilled = outcomes.filter((o) => o.status === 'fulfilled');
         const rejected = outcomes.filter((o) => o.status === 'rejected');
-        expect(fulfilled).toHaveLength(1);
-        expect(rejected).toHaveLength(1);
+        // CW-T-A: with case_core_project_id_key dropped, two concurrent direct
+        // creates are two different work orders racing, not a duplicate
+        // request racing itself. Nothing should serialize them into one.
+        // Idempotency now lives on the intake path's own key
+        // (tenant + actor/conversation + confirmation key + digest), which is
+        // covered by integration/caseCardinality.pg.test.ts.
+        expect(rejected).toHaveLength(0);
+        expect(fulfilled).toHaveLength(2);
 
         const result = await control.query(`SELECT case_id FROM case_core WHERE project_id = $1`, [projectId]);
-        expect(result.rows).toHaveLength(1);
+        expect(result.rows).toHaveLength(2);
       } finally {
         await teardown({ orgIds: [orgId], projectIds: [projectId] });
       }

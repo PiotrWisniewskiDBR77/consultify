@@ -1,6 +1,20 @@
 /**
  * HARNESS ZRZUTOWY modułu Zlecenia (dev-only).
  *
+ * ★★★ TO JEST ATRAPA. NIE DOWÓD ŻYWEGO STOSU. ★★★
+ * Ten harness montuje realne komponenty React z podstawioną siecią —
+ * przydatny jako SZYBKI test komponentu (layout, i18n, motyw, stany
+ * brzegowe), ale sieć jest ręcznie napisaną atrapą (`trasuj()` niżej) i
+ * MOŻE się rozjechać z rzeczywistym kontraktem backendu bez ostrzeżenia.
+ * Dowodem, że coś działa na żywo, jest WYŁĄCZNIE test na realnym
+ * PostgreSQL (`*.pg.test.ts`, `RUN_DB_TESTS=1`) albo ręczna próba na
+ * żywym backendzie — nigdy ten plik. Historia: kontrakt koperty
+ * `/plan-versions/:id/graph` (patrz `trasuj()` niżej) rozjechał się z
+ * realną trasą i harness NIE złapał defektu P1, który zablokował całą
+ * ścieżkę użytkownika (odkryty dopiero w przeglądarce na żywym stosie,
+ * 2026-08-10). Napraw kontraktu tutaj NIE traktuj jako potwierdzenia, że
+ * produkcyjny kod jest poprawny — sprawdzaj oba niezależnie.
+ *
  * CLAUDE.md reguła #7: właściciel NIGDY nie jest pierwszym testerem wizualnym.
  * Ten plik montuje REALNE komponenty modułu (`CaseWorkspaceHub` → prawdziwe
  * `StandardModuleBar`/`StandardTable`/`StandardPreview`) z realnym arkuszem
@@ -32,7 +46,6 @@ import { CaseWorkspaceHub } from '../CaseWorkspaceHub';
 import {
   ARTIFACT_LINKS,
   CASES,
-  GRAPHS,
   HISTORY,
   MEASUREMENTS,
   PLAN_VERSIONS,
@@ -40,6 +53,7 @@ import {
   VALIDATIONS,
   WAITS,
 } from './daneProbne';
+import type { CasePlanVersion } from '../types';
 
 const params = new URLSearchParams(window.location.search);
 const startowaSciezka = params.get('sciezka') || '/zlecenia';
@@ -72,6 +86,14 @@ function blad(status: number, code: string, message: string): Odpowiedz {
   return { status, body: { error: { code, message } } };
 }
 
+function znajdzWersjePlanu(planVersionId: string): CasePlanVersion | undefined {
+  for (const wersje of Object.values(PLAN_VERSIONS)) {
+    const znaleziona = wersje.find((w) => w.casePlanVersionId === planVersionId);
+    if (znaleziona) return znaleziona;
+  }
+  return undefined;
+}
+
 function trasuj(sciezka: string): Odpowiedz {
   const bez = sciezka.replace('/api/v8/case-workspace', '');
 
@@ -84,8 +106,24 @@ function trasuj(sciezka: string): Odpowiedz {
 
   const planGraf = bez.match(/^\/plan-versions\/([^/]+)\/graph/);
   if (planGraf) {
-    const graf = GRAPHS[decodeURIComponent(planGraf[1])];
-    return graf ? ok(graf) : blad(404, 'NOT_FOUND', 'Nie znaleziono grafu planu.');
+    // KONTRAKT (CW-T-F1, naprawione 2026-08-10): realna trasa
+    // `GET /plan-versions/:id/graph` (server/src/routes/caseWorkspace/
+    // casePlanVersions.routes.ts:158-170) woła `svc.getGraph`, ktora
+    // zwraca KOPERTĘ `{ graphId, graphDigest, semanticGraph }`
+    // (casePlanVersionService.ts:1382-1393) — NIGDY goły `CanonicalGraph`.
+    // Ta atrapa musi oddawać dokładnie tę samą kopertę, bo to jej
+    // rozbieżność z rzeczywistością ukryła defekt P1 (patrz
+    // `liveStack.e2e.pg.test.ts` — „the response ENVELOPE of /graph is a
+    // wrapper, not the graph"): stary kod produkcyjny przypisywał kopertę
+    // wprost do `graph`, więc opublikowany plan z krokami renderował się
+    // jako pusty — a harness tego NIE łapał, bo serwował goły graf.
+    const wersja = znajdzWersjePlanu(decodeURIComponent(planGraf[1]));
+    if (!wersja) return blad(404, 'NOT_FOUND', 'Nie znaleziono grafu planu.');
+    return ok({
+      graphId: wersja.semanticGraph.graphId ?? wersja.casePlanVersionId,
+      graphDigest: wersja.graphDigest,
+      semanticGraph: wersja.semanticGraph,
+    });
   }
 
   const planWalidacja = bez.match(/^\/plan-versions\/([^/]+)\/validate/);
@@ -162,14 +200,44 @@ class Granica extends React.Component<{ children: React.ReactNode }, { error: Er
   }
 }
 
+// Widoczne oznaczenie atrapy — żeby nikt (Piotr, agent, kolejna sesja) nie
+// pomylił zrzutu z tego harnessu z dowodem żywego stosu. Celowo poza
+// systemem tokenów c-* produktu: to chrom narzędzia deweloperskiego, nie
+// część UI, które ocenia właściciel.
+function BanerAtrapy() {
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        zIndex: 999999,
+        background: '#b45309',
+        color: '#fff',
+        fontFamily: 'monospace',
+        fontSize: 12,
+        padding: '4px 12px',
+        textAlign: 'center',
+        letterSpacing: 0.3,
+      }}
+    >
+      ATRAPA SIECI (podglad/main.tsx) — harness komponentu, NIE dowód żywego backendu. Dowód = testy *.pg.test.ts na realnym PG.
+    </div>
+  );
+}
+
 createRoot(document.getElementById('podglad-root')!).render(
   <React.StrictMode>
     <Granica>
-      <MemoryRouter initialEntries={[startowaSciezka]}>
-        <Routes>
-          <Route path="/zlecenia/*" element={<CaseWorkspaceHub />} />
-        </Routes>
-      </MemoryRouter>
+      <BanerAtrapy />
+      <div style={{ paddingTop: 24 }}>
+        <MemoryRouter initialEntries={[startowaSciezka]}>
+          <Routes>
+            <Route path="/zlecenia/*" element={<CaseWorkspaceHub />} />
+          </Routes>
+        </MemoryRouter>
+      </div>
     </Granica>
   </React.StrictMode>
 );

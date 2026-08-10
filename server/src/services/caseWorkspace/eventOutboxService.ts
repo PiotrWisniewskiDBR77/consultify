@@ -166,6 +166,24 @@ export interface DomainEventEnvelope {
   correlationId?: string | null;
   /** §6 `causationId` — the event/command that caused this one. */
   causationId?: string | null;
+  /**
+   * CW-T-E, server/migrations/20260810e_case_workspace_event_correlation.sql.
+   * OPTIONAL, and a DIFFERENT concept from `correlationId` above:
+   * `correlationId` groups every event ONE triggering command/request
+   * produced (a trace id); `correlationKey` names the specific
+   * WaitSubscription (case_workspace_waits.correlation_key /
+   * CaseWait.correlationKey) this fact is meant to satisfy, when the
+   * producer knows one. Leave it unset for the overwhelming majority of
+   * events, which describe a fact with no wait attached — exactly like
+   * `caseId`/`runId`/`nodeRunId` stay unset for org-scoped facts.
+   *
+   * When set, waitSubscriptionService.assertSatisfyingEventIsReal()'s
+   * DOMAIN_EVENT branch treats it as the STRICT, per-step binding: the value
+   * must equal the target wait's own correlationKey exactly, closing the
+   * "same event_type, different step, same Case" gap a case_id-only check
+   * left open. See that migration's header for the full model.
+   */
+  correlationKey?: string | null;
   /** Business time. Defaults to now(). */
   occurredAt?: string | Date | null;
   /** Facts only. Redacted here before it is written. */
@@ -197,6 +215,17 @@ export interface OutboxEventRecord {
   actorUserId: string;
   correlationId: string;
   causationId: string | null;
+  /** CW-T-E — see DomainEventEnvelope.correlationKey's doc for what this is (and is not). */
+  correlationKey: string | null;
+  /**
+   * CW-T-E deterministic-ordering primitive. A real Postgres IDENTITY
+   * sequence (server/migrations/20260810e_case_workspace_event_correlation.sql)
+   * assigned at INSERT time — unlike `created_at`/`occurred_at`
+   * (TIMESTAMPTZ defaults that CAN tie under clock-resolution pressure), this
+   * is strictly monotonic per row and is what dispatchPendingEvents() and
+   * replayEventsForAggregate() both use as their final, unambiguous tie-break.
+   */
+  sequenceNumber: number;
   occurredAt: string;
   redactedSummary: Record<string, unknown>;
   payloadRef: string | null;
@@ -222,6 +251,8 @@ interface OutboxEventRow {
   actor_user_id: string;
   correlation_id: string;
   causation_id: string | null;
+  correlation_key: string | null;
+  sequence_number: number | string;
   occurred_at: Date | string;
   redacted_summary: Record<string, unknown> | string | null;
   payload_ref: string | null;
@@ -307,6 +338,8 @@ function mapRow(row: OutboxEventRow): OutboxEventRecord {
     actorUserId: row.actor_user_id,
     correlationId: row.correlation_id,
     causationId: row.causation_id,
+    correlationKey: row.correlation_key,
+    sequenceNumber: Number(row.sequence_number),
     occurredAt: normalizeTimestamp(row.occurred_at) as string,
     redactedSummary: parseSummary(row.redacted_summary),
     payloadRef: row.payload_ref,
@@ -319,8 +352,9 @@ function mapRow(row: OutboxEventRow): OutboxEventRecord {
 
 const SELECT_COLUMNS = `event_id, event_type, schema_version, organization_id, project_id,
   aggregate_type, aggregate_id, aggregate_version, case_id, run_id, node_run_id, attempt_id,
-  actor_user_id, correlation_id, causation_id, occurred_at, redacted_summary, payload_ref,
-  delivered_at, delivery_attempt_count, last_delivery_error, created_at`;
+  actor_user_id, correlation_id, causation_id, correlation_key, sequence_number, occurred_at,
+  redacted_summary, payload_ref, delivered_at, delivery_attempt_count, last_delivery_error,
+  created_at`;
 
 // ---------------------------------------------------------------------------
 // Redaction
@@ -412,14 +446,14 @@ export async function publishEvent(
        event_id, event_type, schema_version, organization_id, project_id,
        aggregate_type, aggregate_id, aggregate_version,
        case_id, run_id, node_run_id, attempt_id,
-       actor_user_id, correlation_id, causation_id,
+       actor_user_id, correlation_id, causation_id, correlation_key,
        occurred_at, redacted_summary, payload_ref
      ) VALUES (
        $1, $2, $3, $4, $5,
        $6, $7, $8,
        $9, $10, $11, $12,
-       $13, $14, $15,
-       $16, $17::jsonb, $18
+       $13, $14, $15, $16,
+       $17, $18::jsonb, $19
      )
      ON CONFLICT (event_id) DO NOTHING
      RETURNING event_id`,
@@ -439,6 +473,7 @@ export async function publishEvent(
       actorUserId,
       correlationId,
       optionalTrimmed(envelope.causationId),
+      optionalTrimmed(envelope.correlationKey),
       toIsoTimestamp(envelope.occurredAt),
       serializedSummary,
       optionalTrimmed(envelope.payloadRef),
@@ -521,7 +556,7 @@ export async function dispatchPendingEvents(
         WHERE delivered_at IS NULL
           AND delivery_attempt_count < $1
           AND ($2::text IS NULL OR organization_id = $2)
-        ORDER BY created_at
+        ORDER BY sequence_number
         LIMIT $3
         FOR UPDATE SKIP LOCKED`,
       [DEAD_LETTER_ATTEMPT_THRESHOLD, organizationId, batchSize]
@@ -578,10 +613,17 @@ export async function dispatchPendingEvents(
  * chain". Pure read: every event ever emitted about one aggregate, in
  * aggregate-version order.
  *
- * `aggregate_version NULLS LAST` then occurred_at then created_at: aggregates
- * without a version concept (see the migration's aggregate_version comment)
- * still come back in a stable, deterministic order, and created_at breaks ties
- * for two events sharing a business timestamp.
+ * `aggregate_version NULLS LAST` then occurred_at then created_at then
+ * sequence_number: aggregates without a version concept (see the migration's
+ * aggregate_version comment) still come back in a stable, deterministic
+ * order. `occurred_at`/`created_at` break most ties, but TWO events that
+ * share BOTH an aggregate_version (e.g. case_workspace_waits' claim/renew
+ * pair, neither of which bumps the OCC counter — see
+ * waitSubscriptionService.ts) AND a wall-clock instant (real, under load —
+ * see CW-T-E) need a tie-break with NO possible collision. `sequence_number`
+ * (server/migrations/20260810e_case_workspace_event_correlation.sql) is that:
+ * a Postgres IDENTITY sequence assigned at INSERT time, so it is true
+ * insertion order regardless of clock resolution.
  */
 export async function replayEventsForAggregate(
   aggregateType: string,
@@ -600,7 +642,7 @@ export async function replayEventsForAggregate(
       WHERE aggregate_type = $1
         AND aggregate_id = $2
         AND ($3::text IS NULL OR organization_id = $3)
-      ORDER BY aggregate_version ASC NULLS LAST, occurred_at ASC, created_at ASC
+      ORDER BY aggregate_version ASC NULLS LAST, occurred_at ASC, created_at ASC, sequence_number ASC
       ${limit === null ? '' : 'LIMIT $4'}`,
     limit === null ? [type, id, organizationId] : [type, id, organizationId, limit]
   );
@@ -640,6 +682,26 @@ export async function listDeadLetterEvents(
     [DEAD_LETTER_ATTEMPT_THRESHOLD, organizationId, limit]
   );
   return rows.map(mapRow);
+}
+
+/**
+ * CW-T-E worker diagnostics. Pure read, `count(*)` only — the cheap
+ * companion to listDeadLetterEvents() for a metrics/health snapshot that does
+ * not want to pull the rows themselves (outboxWorker.ts's tick metrics).
+ */
+export async function countDeadLetterEvents(
+  options: { organizationId?: string } = {}
+): Promise<number> {
+  const organizationId = optionalTrimmed(options.organizationId);
+  const rows = await queryAll<{ n: string | number }>(
+    `SELECT count(*)::int AS n
+       FROM ${OUTBOX_TABLE}
+      WHERE delivered_at IS NULL
+        AND delivery_attempt_count >= $1
+        AND ($2::text IS NULL OR organization_id = $2)`,
+    [DEAD_LETTER_ATTEMPT_THRESHOLD, organizationId]
+  );
+  return Number(rows[0]?.n ?? 0);
 }
 
 /**

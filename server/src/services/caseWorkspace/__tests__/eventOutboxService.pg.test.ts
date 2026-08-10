@@ -125,6 +125,8 @@ interface OutboxDbRow {
   actor_user_id: string;
   correlation_id: string;
   causation_id: string | null;
+  correlation_key: string | null;
+  sequence_number: number | string;
   occurred_at: Date;
   redacted_summary: Record<string, unknown>;
   payload_ref: string | null;
@@ -610,4 +612,134 @@ suite('eventOutboxService — transactional event outbox against a real PostgreS
       await teardown([orgId], [caseId]);
     }
   }, 60_000);
+
+  // =========================================================================
+  // 7. CW-T-E, Problem 1 — the correlation_key column persists exactly what
+  //    the producer supplies, and stays NULL when omitted (the common case).
+  // =========================================================================
+  it('correlationKey is persisted verbatim when supplied, and stays NULL when the producer does not supply one (CW-T-E, 20260810e migration)', async () => {
+    const { orgId, caseId } = scope('correlation-key');
+    const boundEventId = `cwevt-${randomUUID()}`;
+    const unboundEventId = `cwevt-${randomUUID()}`;
+    try {
+      await withPgTransaction((client) =>
+        eventOutboxService.publishEvent(
+          client,
+          envelope(orgId, caseId, {
+            eventId: boundEventId,
+            eventType: 'capability.completed',
+            correlationKey: 'corr-wait-binding-example',
+          })
+        )
+      );
+      await withPgTransaction((client) =>
+        eventOutboxService.publishEvent(
+          client,
+          envelope(orgId, caseId, { eventId: unboundEventId, eventType: 'case.activated' })
+        )
+      );
+
+      const bound = await readOutboxRow(boundEventId);
+      expect(bound?.correlation_key).toBe('corr-wait-binding-example');
+      const unbound = await readOutboxRow(unboundEventId);
+      expect(unbound?.correlation_key).toBeNull();
+
+      // Round-trips through the public read API too, camelCased.
+      const fetched = await eventOutboxService.getOutboxEvent(boundEventId);
+      expect(fetched?.correlationKey).toBe('corr-wait-binding-example');
+      const fetchedUnbound = await eventOutboxService.getOutboxEvent(unboundEventId);
+      expect(fetchedUnbound?.correlationKey).toBeNull();
+    } finally {
+      await teardown([orgId], [caseId]);
+    }
+  }, 30_000);
+
+  // =========================================================================
+  // 8. CW-T-E — sequence_number is a true, tie-free insertion order, and both
+  //    dispatchPendingEvents' claim order and replayEventsForAggregate's
+  //    tie-break use it.
+  // =========================================================================
+  it('sequence_number orders events by true insertion order, and dispatchPendingEvents claims (hence delivers) in that exact order (CW-T-E "kolejnosc deterministyczna")', async () => {
+    const { orgId, caseId } = scope('sequence-order');
+    try {
+      const eventIds: string[] = [];
+      // Published strictly sequentially (await-in-a-loop), so insertion order
+      // is unambiguous ground truth regardless of what created_at happens to
+      // read as under clock-resolution pressure.
+      for (let i = 0; i < 6; i += 1) {
+        const eventId = `cwevt-${randomUUID()}`;
+        eventIds.push(eventId);
+        await withPgTransaction((client) =>
+          eventOutboxService.publishEvent(
+            client,
+            envelope(orgId, caseId, { eventId, eventType: `case.step_${i}` })
+          )
+        );
+      }
+
+      const rows = await control.query<{ event_id: string; sequence_number: string }>(
+        `SELECT event_id, sequence_number FROM case_workspace_event_outbox
+          WHERE organization_id = $1 ORDER BY sequence_number ASC`,
+        [orgId]
+      );
+      expect(rows.rows.map((r) => r.event_id)).toEqual(eventIds);
+      // Strictly increasing, no ties — the entire point of the column.
+      const sequenceNumbers = rows.rows.map((r) => Number(r.sequence_number));
+      for (let i = 1; i < sequenceNumbers.length; i += 1) {
+        expect(sequenceNumbers[i]).toBeGreaterThan(sequenceNumbers[i - 1]);
+      }
+
+      const delivered: string[] = [];
+      eventOutboxService.subscribeToOutboxDelivery((event) => {
+        delivered.push(event.eventId);
+      });
+      const pass = await eventOutboxService.dispatchPendingEvents({
+        organizationId: orgId,
+        batchSize: eventIds.length,
+      });
+      expect(pass).toMatchObject({ claimed: eventIds.length, delivered: eventIds.length, failed: 0 });
+      // Delivered in EXACTLY insertion order — the claim query's own ORDER BY.
+      expect(delivered).toEqual(eventIds);
+    } finally {
+      await teardown([orgId], [caseId]);
+    }
+  }, 30_000);
+
+  // =========================================================================
+  // 9. countDeadLetterEvents — the cheap companion to listDeadLetterEvents,
+  //    proved to agree with it exactly (CW-T-E worker diagnostics).
+  // =========================================================================
+  it('countDeadLetterEvents agrees with listDeadLetterEvents, and both are empty before the threshold is crossed', async () => {
+    const { orgId, caseId } = scope('dead-letter-count');
+    const eventId = `cwevt-${randomUUID()}`;
+    try {
+      await withPgTransaction((client) =>
+        eventOutboxService.publishEvent(
+          client,
+          envelope(orgId, caseId, { eventId, eventType: 'case.step_permafail' })
+        )
+      );
+
+      const unsubscribe = eventOutboxService.subscribeToOutboxDelivery(() => {
+        throw new Error('cwt_e_permanent_failure');
+      });
+
+      for (let attempt = 0; attempt < eventOutboxService.DEAD_LETTER_ATTEMPT_THRESHOLD - 1; attempt += 1) {
+        await eventOutboxService.dispatchPendingEvents({ organizationId: orgId });
+        expect(await eventOutboxService.countDeadLetterEvents({ organizationId: orgId })).toBe(0);
+      }
+
+      // The Nth failure crosses the threshold.
+      await eventOutboxService.dispatchPendingEvents({ organizationId: orgId });
+      const count = await eventOutboxService.countDeadLetterEvents({ organizationId: orgId });
+      expect(count).toBe(1);
+      const rows = await eventOutboxService.listDeadLetterEvents({ organizationId: orgId });
+      expect(rows.map((r) => r.eventId)).toEqual([eventId]);
+      expect(rows).toHaveLength(count);
+
+      unsubscribe();
+    } finally {
+      await teardown([orgId], [caseId]);
+    }
+  }, 30_000);
 });
