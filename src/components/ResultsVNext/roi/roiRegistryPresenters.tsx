@@ -257,6 +257,17 @@ export function buildRoiCaseRowMenu(
     /** Opens `RoiTransitionDialog` for the given transition — the caller
      * (live Hub or dev-render harness) owns the actual API call/mock. */
     onTransition: (row: RoiCaseListItem, transitionId: RoiTransitionId) => void;
+    /**
+     * Opens `RoiCaseModelWorkspace` (RN_G2_UI_SCOPE.md §G #12-14 —
+     * baseline/calculation-policy/assumptions/cost+benefit lines) for this
+     * case. Optional: `roiRegistryPresenters.tsx` is also used by the
+     * pre-existing dev-render QA harness for the registry alone, which does
+     * not need this action wired. ALWAYS enabled, even on a locked case —
+     * modeling is read-only-with-honest-reason from the inside (every
+     * sub-view there disables Add/Edit/Delete itself), never hidden at this
+     * entry point.
+     */
+    onModel?: (row: RoiCaseListItem) => void;
   }
 ): StandardRowMenu {
   const locked = isRoiCaseLocked(row.status);
@@ -271,6 +282,15 @@ export function buildRoiCaseRowMenu(
         label: isPolish ? 'Otwórz' : 'Open',
         onClick: () => handlers.onPreview(row),
       },
+      ...(handlers.onModel
+        ? [
+            {
+              id: 'model',
+              label: isPolish ? 'Modeluj sprawę' : 'Model case',
+              onClick: () => handlers.onModel!(row),
+            },
+          ]
+        : []),
     ],
     // Every one of the 7 wired lifecycle transitions is ALWAYS visible
     // (TRIADA §C3: a disabled item stays visible with a reason, never
