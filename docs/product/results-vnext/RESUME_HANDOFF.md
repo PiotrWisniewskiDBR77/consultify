@@ -72,8 +72,42 @@ Two agents were running. **Check their worktrees before starting anything — do
 
 | Package | Where | State |
 |---|---|---|
-| **RN-G2 P1 — KPI registry** | main worktree, uncommitted (see §1) | Partially built: `kpiApi.ts`, `ResultsKpiRegistryPage.tsx`, a dev-render screen, and a QA screenshot dir all exist on disk, uncommitted. **Review before continuing — it was mid-flight, not finished.** |
+| **RN-G2 P1 — KPI registry** | main worktree | **COMPLETE and committed** after this handoff's first draft — see §3a. The files listed as "uncommitted, P1-owned" in §1 have since landed. |
 | **RN-G2 P2 — ROI registry** | isolated worktree (agent `a6d6ce91abb988955`) | Started fresh. Check `git worktree list` for `agent-a6d6ce91abb988955`, inspect its branch, merge if complete. |
+
+### 3a. RN-G2 P1 (KPI registry) — landed, with three real backend gaps found
+
+Built: `kpiApi.ts`, a real `ResultsKpiRegistryPage.tsx` (Standard components only,
+`persistKey: results-vnext.kpi-registry`, `HonestValueCell`, `LifecycleLockBadge`,
+deep-link forbidden state), and a dev-render screen. 11 QA screenshots in
+`docs/qa/screens/rn-g2-kpi-2026-08-10/`. All QA axes pass. `tsc` clean, both canon
+scripts pass (list-canon debt actually dropped by 1).
+
+**Three backend gaps it discovered by reading real route/repository code — the next
+packages will hit these too:**
+1. **No GET endpoint returns the joined `rvn_kpi_definition_versions` row.** `GET /kpi`
+   and `GET /kpi/:id` return only the bare `rvn_kpi_definitions` row. Name, unit, target
+   geometry and the version's `approvalStatus` are returned *only* as a side effect of
+   the create/approve/reject mutations. The registry therefore shows `kpiCode` as row
+   identity, not a human-readable name. **This is a real API gap, not a UI shortcut.**
+2. **`listMyKpis` / `listOrganizationKpiAttention` are not row lists** — the first is an
+   obligations/attention feed, the second an aggregate-stats view. Neither is usable as a
+   "My KPIs registry" data source despite what the names suggest.
+3. **404 collapses "not found" and "ABAC denied"** — `getKpi` returns null uniformly for
+   both via the visibility-scoped JOIN, so the forbidden state cannot show the true DENY
+   reason from `RN_G1_PLATFORM_DESIGN.md` §B. P1 defaults to `NO_VISIBILITY_RECORD` per
+   that doc's fail-closed convention and documents it as an assumption, not an API fact.
+
+**A bug class worth knowing before writing P2/P3**: `StandardTable`'s `TableRow` type
+requires an `id` field, but the domain DTOs use `kpiId`/`caseId`/`setId`. Passing rows
+through without mapping silently breaks both React row keys *and* row-click selection —
+no error, the click just does nothing. Map `{ ...row, id: row.<domainId> }` before handing
+data to the table.
+
+**Environment note**: `EmptyState`'s Framer Motion fade intermittently sticks mid-transition
+when driven live through the MCP browser tool on this loaded machine — reproduced on the
+already-committed P0 screen too, so it is pre-existing and environment-specific. The
+headless `dev-render/shot.mjs` path (3.5s settle) does not hit it; use that for QA shots.
 
 ---
 
