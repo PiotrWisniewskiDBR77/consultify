@@ -1,19 +1,599 @@
 /**
- * /results/kpi — RN-G2 P0 route entry. See ResultsVNextRegistryRouteBase.tsx
- * for what this renders; P1 (KPI vertical, RN_G2_UI_SCOPE.md §G) replaces the
- * empty `table`/`preview` here with real columns/data/rowMenu.
+ * /results/kpi — RN-G2 P1 KPI registry (real data, behind `kpiRegistry` flag,
+ * default OFF). See docs/product/results-vnext/RN_G2_UI_SCOPE.md §G item 5
+ * ("KPI registry list + preview") — this replaces the P0
+ * `ResultsVNextRegistryRouteBase` placeholder for the KPI domain only; ROI
+ * and OKR still render that generic empty shell until their own packages.
+ *
+ * Composes `ResultsVNextRegistryShell` (P0) with real
+ * `GET /api/vnext/results/kpi*` data (`./kpiApi.ts`). Every state is wired to
+ * real API behaviour — see the four state-management effects below (list
+ * fetch, deep-link resolve, lazy measurement fetch, lifecycle mutations) —
+ * none of it is mocked or hand-waved; the ONLY mock data anywhere is in the
+ * dev-render harness screen, which stubs `Api.get`/`Api.post`, never this
+ * component's logic.
+ *
+ * -- HONEST-DATA CAVEAT (see kpiApi.ts header for the full backend-gap
+ * writeup): `GET /kpi` returns `KpiDefinition` rows only — no KPI *name*, no
+ * target/current-value fields (those live on `rvn_kpi_definition_versions`,
+ * which has no GET endpoint anywhere in this backend surface today). This
+ * page therefore displays `kpiCode` as the row identity (never a fabricated
+ * "name"), and shows the KPI's *latest measurement* value (lazily fetched
+ * only for the selected row, honest `null` when none was ever recorded) in
+ * the preview pane instead of a table column — putting it in the table would
+ * mean either an N+1 fetch per visible row or a fabricated placeholder,
+ * neither acceptable per this program's honest-missing-value invariant.
+ *
+ * -- LOCKED/lifecycle treatment is derived from the KPI-level `status` only
+ * (draft/pending_approval/active/suspended/archived) — NOT from the current
+ * definition version's own `approvalStatus` (draft/submitted/approved/
+ * rejected), because that field is one of the fields this backend gap makes
+ * unreachable from any GET endpoint. `archived` is always locked (terminal);
+ * `draft`/`pending_approval` show a locked "Activate" (server enforces
+ * `NO_APPROVED_VERSION` — `activateKpi`'s own file-header doc comment in
+ * `kpi.routes.ts`) rather than guessing whether editing is currently valid.
+ *
+ * -- Deep link (§D "forbidden" state): `?kpiId=<id>` pre-selects/validates a
+ * specific record. The backend collapses "does not exist" and "visibility
+ * denied" into the SAME 404 (see kpiApi.ts) — there is no way to show the
+ * true ABAC deny reason for KPI today, so this page always renders
+ * `NO_VISIBILITY_RECORD` (RN_G1_PLATFORM_DESIGN.md §B's own documented
+ * fail-closed default) rather than inventing a reason the API never told it.
  */
-import React from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import toast from 'react-hot-toast';
 
-import { ResultsVNextRegistryRouteBase } from './ResultsVNextRegistryRouteBase';
+import { EmptyState } from '@/components/shared/states';
+import {
+  type StandardCounterChip,
+  type StandardPreviewProps,
+  type StandardRowMenu,
+  type TableColumn,
+} from '@/components/standard';
+import { StatusChip, type StatusTone } from '@/components/ui/primitives';
+import { useAppStore } from '@/store/useAppStore';
+import { Blocks } from 'lucide-react';
 
-export const ResultsKpiRegistryPage: React.FC = () => (
-  <ResultsVNextRegistryRouteBase
-    domain="kpi"
-    flag="kpiRegistry"
-    titlePl="Rejestr KPI"
-    titleEn="KPI registry"
-  />
-);
+import { HonestValueCell } from './HonestValue';
+import {
+  activateKpi,
+  archiveKpi,
+  type KpiDefinitionDto,
+  type KpiMeasurementDto,
+  KPI_STATUSES,
+  type KpiStatus,
+  listKpiMeasurements,
+  listKpis,
+  getKpi,
+  suspendKpi,
+} from './kpiApi';
+import { LifecycleLockBadge, lockedRowMenuAction } from './LifecycleLockBadge';
+import { isResultsVNextFlagEnabled } from './resultsVNextFeatureFlags';
+import type { ResultsVNextForbiddenDetail } from './types';
+import { ResultsVNextRegistryShell, type ResultsVNextTableProps } from './ResultsVNextRegistryShell';
+
+const STATUS_TONE: Record<KpiStatus, StatusTone> = {
+  draft: 'info',
+  pending_approval: 'warning',
+  active: 'success',
+  suspended: 'warning',
+  archived: 'neutral',
+};
+
+const STATUS_LABEL: Record<KpiStatus, { pl: string; en: string }> = {
+  draft: { pl: 'Szkic', en: 'Draft' },
+  pending_approval: { pl: 'Do zatwierdzenia', en: 'Pending approval' },
+  active: { pl: 'Aktywny', en: 'Active' },
+  suspended: { pl: 'Zawieszony', en: 'Suspended' },
+  archived: { pl: 'Zarchiwizowany', en: 'Archived' },
+};
+
+function statusLabel(status: KpiStatus, isPolish: boolean): string {
+  return isPolish ? STATUS_LABEL[status].pl : STATUS_LABEL[status].en;
+}
+
+function formatDate(iso: string | null | undefined, isPolish: boolean): string {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '—';
+  return d.toLocaleDateString(isPolish ? 'pl-PL' : 'en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  });
+}
+
+function shortId(id: string | null): string {
+  if (!id) return '—';
+  return id.length > 10 ? `${id.slice(0, 8)}…` : id;
+}
+
+function ownerDisplay(
+  ownerUserId: string | null,
+  currentUserId: string | null | undefined,
+  isPolish: boolean
+): string {
+  if (!ownerUserId) return '—';
+  if (currentUserId && ownerUserId === currentUserId) return isPolish ? 'Ty' : 'You';
+  return shortId(ownerUserId);
+}
+
+type PendingAction = { kpiId: string; action: 'activate' | 'suspend' | 'archive' } | null;
+
+interface RowMenuContext {
+  isPolish: boolean;
+  pending: PendingAction;
+  onOpen: (kpiId: string) => void;
+  onActivate: (row: KpiDefinitionDto) => void;
+  onSuspend: (row: KpiDefinitionDto) => void;
+  onArchive: (row: KpiDefinitionDto) => void;
+}
+
+function buildColumns(isPolish: boolean, currentUserId: string | null | undefined): TableColumn[] {
+  return [
+    {
+      id: 'kpiCode',
+      label: isPolish ? 'Kod KPI' : 'KPI code',
+      width: '260px',
+      render: (row: KpiDefinitionDto) => (
+        <span className="text-sm font-medium text-c-text" title={row.kpiId}>
+          {row.kpiCode}
+        </span>
+      ),
+    },
+    {
+      id: 'status',
+      label: 'Status',
+      width: '170px',
+      filterable: true,
+      filterOptions: KPI_STATUSES.map((s) => ({ value: s, label: statusLabel(s, isPolish) })),
+      render: (row: KpiDefinitionDto) => (
+        <StatusChip label={statusLabel(row.status, isPolish)} tone={STATUS_TONE[row.status]} />
+      ),
+    },
+    {
+      id: 'owner',
+      label: isPolish ? 'Właściciel' : 'Owner',
+      width: '150px',
+      render: (row: KpiDefinitionDto) => (
+        <span className="text-sm text-c-text-secondary">
+          {ownerDisplay(row.ownerUserId, currentUserId, isPolish)}
+        </span>
+      ),
+    },
+    {
+      id: 'primaryProcessId',
+      label: isPolish ? 'Proces' : 'Process',
+      width: '140px',
+      render: (row: KpiDefinitionDto) => (
+        <span className="text-sm text-c-text-muted">{shortId(row.primaryProcessId)}</span>
+      ),
+    },
+    {
+      id: 'updatedAt',
+      label: isPolish ? 'Zaktualizowano' : 'Updated',
+      width: '150px',
+      sortable: true,
+      render: (row: KpiDefinitionDto) => (
+        <span className="text-sm text-c-text-muted">{formatDate(row.updatedAt, isPolish)}</span>
+      ),
+    },
+  ];
+}
+
+function buildRowMenu(row: KpiDefinitionDto, ctx: RowMenuContext): StandardRowMenu {
+  const t = (pl: string, en: string) => (ctx.isPolish ? pl : en);
+  const isBusy = ctx.pending?.kpiId === row.kpiId;
+  const isArchived = row.status === 'archived';
+
+  const archivedReason = t(
+    'KPI zarchiwizowane — stan końcowy, tylko odczyt.',
+    'KPI archived — terminal state, read-only.'
+  );
+  const noApprovedVersionReason = t(
+    'Aktywacja wymaga zatwierdzonej wersji definicji KPI (brak GET dla wersji — sprawdzane przez serwer przy próbie).',
+    'Activation requires an approved KPI definition version (checked server-side — no GET exists for the version to verify this client-side).'
+  );
+
+  let statusTransitions: StandardRowMenu['statusTransitions'];
+  if (row.status === 'active') {
+    statusTransitions = [
+      { id: 'suspend', label: t('Zawieś', 'Suspend'), onClick: () => ctx.onSuspend(row), disabled: isBusy },
+    ];
+  } else if (row.status === 'suspended') {
+    statusTransitions = [
+      { id: 'activate', label: t('Aktywuj', 'Activate'), onClick: () => ctx.onActivate(row), disabled: isBusy },
+    ];
+  } else if (row.status === 'draft' || row.status === 'pending_approval') {
+    statusTransitions = [
+      lockedRowMenuAction({ id: 'activate', label: t('Aktywuj', 'Activate') }, noApprovedVersionReason),
+    ];
+  } else {
+    // archived — terminal, single locked entry so the action stays visible
+    // with a reason rather than disappearing (TRIADA §C3).
+    statusTransitions = [
+      lockedRowMenuAction({ id: 'activate', label: t('Aktywuj', 'Activate') }, archivedReason),
+    ];
+  }
+
+  return {
+    primary: [{ id: 'open', label: t('Otwórz', 'Open'), onClick: () => ctx.onOpen(row.kpiId) }],
+    statusTransitions,
+    universalHandlers: isArchived
+      ? { preview: () => ctx.onOpen(row.kpiId), archiveNote: archivedReason }
+      : {
+          preview: () => ctx.onOpen(row.kpiId),
+          archive: () => ctx.onArchive(row),
+        },
+    // No delete endpoint exists anywhere in kpi.routes.ts — never fabricate one.
+    destructive: undefined,
+  };
+}
+
+function buildPreview(
+  row: KpiDefinitionDto,
+  ctx: {
+    isPolish: boolean;
+    currentUserId: string | null | undefined;
+    measurement: KpiMeasurementDto | null | 'loading';
+    pending: PendingAction;
+    onClose: () => void;
+    onActivate: (row: KpiDefinitionDto) => void;
+    onSuspend: (row: KpiDefinitionDto) => void;
+    onArchive: (row: KpiDefinitionDto) => void;
+  }
+): StandardPreviewProps {
+  const t = (pl: string, en: string) => (ctx.isPolish ? pl : en);
+  const isBusy = ctx.pending?.kpiId === row.kpiId;
+  const isLoadingMeasurement = ctx.measurement === 'loading';
+  // Direct narrowing on `ctx.measurement` (not the `isLoadingMeasurement`
+  // alias) — TS's aliased-condition narrowing does not reliably cover a
+  // property access reused across two separate `const` declarations.
+  const measurement: KpiMeasurementDto | null =
+    ctx.measurement === 'loading' ? null : ctx.measurement;
+  const lang = ctx.isPolish ? 'pl-PL' : 'en-US';
+
+  const lockBadge =
+    row.status === 'archived' ? (
+      <LifecycleLockBadge
+        label={t('Zarchiwizowany', 'Archived')}
+        reason={t(
+          'KPI zarchiwizowane — stan końcowy, tylko odczyt.',
+          'KPI archived — terminal state, read-only.'
+        )}
+      />
+    ) : row.status === 'suspended' ? (
+      <LifecycleLockBadge
+        label={t('Zawieszony', 'Suspended')}
+        reason={t(
+          'KPI zawieszone — pomiary wstrzymane do wznowienia (Aktywuj).',
+          'KPI suspended — measurements paused until resumed (Activate).'
+        )}
+      />
+    ) : undefined;
+
+  return {
+    title: row.kpiCode,
+    onClose: ctx.onClose,
+    headerExtra: lockBadge,
+    meta: {
+      pills: [{ label: statusLabel(row.status, ctx.isPolish), tone: STATUS_TONE[row.status] }],
+      trailing: (
+        <span className="text-[11px] font-semibold text-c-text-secondary">
+          {formatDate(row.updatedAt, ctx.isPolish)}
+        </span>
+      ),
+    },
+    details: {
+      properties: [
+        {
+          id: 'owner',
+          label: t('Właściciel', 'Owner'),
+          value: ownerDisplay(row.ownerUserId, ctx.currentUserId, ctx.isPolish),
+        },
+        { id: 'process', label: t('Proces', 'Process'), value: shortId(row.primaryProcessId) },
+        { id: 'created', label: t('Utworzono', 'Created'), value: formatDate(row.createdAt, ctx.isPolish) },
+        {
+          id: 'measurement',
+          label: t('Ostatni pomiar', 'Latest measurement'),
+          value: isLoadingMeasurement ? (
+            <span className="text-c-text-muted">{t('Ładowanie…', 'Loading…')}</span>
+          ) : (
+            <HonestValueCell
+              value={measurement ? measurement.actualValue : null}
+              format={(v) => <span className="tabular-nums font-medium text-c-text">{v.toLocaleString(lang)}</span>}
+            />
+          ),
+        },
+        {
+          id: 'period',
+          label: t('Okres pomiaru', 'Measurement period'),
+          value: measurement
+            ? `${formatDate(measurement.periodStart, ctx.isPolish)} – ${formatDate(measurement.periodEnd, ctx.isPolish)}`
+            : '—',
+        },
+      ],
+    },
+    ai: {
+      hints: [],
+      disabled: true,
+      disabledTooltip: t('Wkrótce', 'Coming soon'),
+    },
+    relations: [],
+    actions:
+      row.status === 'archived'
+        ? {
+            informational: [
+              {
+                id: 'locked',
+                variant: 'neutral',
+                label: t('Zablokowane', 'Locked'),
+                onClick: () => {},
+                disabled: true,
+              },
+            ],
+          }
+        : {
+            resolutions:
+              row.status === 'suspended'
+                ? [
+                    {
+                      id: 'activate',
+                      variant: 'positive',
+                      label: t('Aktywuj', 'Activate'),
+                      onClick: () => ctx.onActivate(row),
+                      disabled: isBusy,
+                    },
+                  ]
+                : row.status === 'active'
+                  ? [
+                      {
+                        id: 'suspend',
+                        variant: 'neutral',
+                        label: t('Zawieś', 'Suspend'),
+                        onClick: () => ctx.onSuspend(row),
+                        disabled: isBusy,
+                      },
+                    ]
+                  : [],
+            informational: [
+              {
+                id: 'archive',
+                variant: 'neutral',
+                label: t('Archiwizuj', 'Archive'),
+                onClick: () => ctx.onArchive(row),
+                disabled: isBusy,
+              },
+            ],
+          },
+  };
+}
+
+export const ResultsKpiRegistryPage: React.FC = () => {
+  const { i18n } = useTranslation();
+  const isPolish = !!i18n.language?.startsWith('pl');
+  const currentUser = useAppStore((s) => s.currentUser);
+  const enabled = isResultsVNextFlagEnabled('kpiRegistry');
+
+  const [rows, setRows] = useState<KpiDefinitionDto[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [scope, setScope] = useState<'my' | 'org'>('my');
+  const [statusFilter, setStatusFilter] = useState<KpiStatus | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [measurement, setMeasurement] = useState<KpiMeasurementDto | null | 'loading'>(null);
+  const [pending, setPending] = useState<PendingAction>(null);
+  const [forbidden, setForbidden] = useState<ResultsVNextForbiddenDetail | null>(null);
+
+  const fetchRows = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const items = await listKpis({});
+      setRows(items);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!enabled) return;
+    void fetchRows();
+  }, [enabled, fetchRows]);
+
+  // Deep link (§D "forbidden") — ?kpiId=<id> pre-selects/validates a record.
+  useEffect(() => {
+    if (!enabled) return;
+    const deepLinkKpiId = new URLSearchParams(window.location.search).get('kpiId');
+    if (!deepLinkKpiId) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const kpi = await getKpi(deepLinkKpiId);
+        if (cancelled) return;
+        if (!kpi) {
+          setForbidden({ reason: 'NO_VISIBILITY_RECORD' });
+        } else {
+          setSelectedId(kpi.kpiId);
+        }
+      } catch {
+        if (!cancelled) setForbidden({ reason: 'NO_VISIBILITY_RECORD' });
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [enabled]);
+
+  // Lazy per-selection measurement fetch (§B "lazy detail fetch for the
+  // properties table" — never fetched for the whole visible page of rows).
+  useEffect(() => {
+    if (!selectedId) {
+      setMeasurement(null);
+      return;
+    }
+    let cancelled = false;
+    setMeasurement('loading');
+    listKpiMeasurements(selectedId, { limit: 1 })
+      .then((list) => {
+        if (!cancelled) setMeasurement(list[0] ?? null);
+      })
+      .catch(() => {
+        if (!cancelled) setMeasurement(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedId]);
+
+  const runLifecycleAction = useCallback(
+    async (row: KpiDefinitionDto, action: 'activate' | 'suspend' | 'archive') => {
+      setPending({ kpiId: row.kpiId, action });
+      try {
+        const runner = action === 'activate' ? activateKpi : action === 'suspend' ? suspendKpi : archiveKpi;
+        await runner({ kpiId: row.kpiId, expectedVersion: row.rowVersion });
+        await fetchRows();
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        toast.error(message);
+      } finally {
+        setPending(null);
+      }
+    },
+    [fetchRows]
+  );
+
+  const scopedRows = useMemo(() => {
+    if (scope === 'my' && currentUser?.id) {
+      return rows.filter((r) => r.ownerUserId === currentUser.id);
+    }
+    return rows;
+  }, [rows, scope, currentUser?.id]);
+
+  const visibleRows = useMemo(() => {
+    if (!statusFilter) return scopedRows;
+    return scopedRows.filter((r) => r.status === statusFilter);
+  }, [scopedRows, statusFilter]);
+
+  const chips: StandardCounterChip[] = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const s of KPI_STATUSES) counts[s] = 0;
+    for (const r of scopedRows) counts[r.status] = (counts[r.status] ?? 0) + 1;
+    return [
+      { id: 'all', label: isPolish ? 'Wszystkie' : 'All', count: scopedRows.length },
+      ...KPI_STATUSES.map((s) => ({ id: s, label: statusLabel(s, isPolish), count: counts[s] ?? 0 })),
+    ];
+  }, [scopedRows, isPolish]);
+
+  const columns = useMemo(() => buildColumns(isPolish, currentUser?.id), [isPolish, currentUser?.id]);
+
+  const selectedRow = visibleRows.find((r) => r.kpiId === selectedId) ?? null;
+
+  if (!enabled) {
+    return (
+      <div className="h-full flex items-center justify-center p-6" data-testid="results-vnext-kpi-disabled">
+        <EmptyState
+          variant="new"
+          icon={Blocks}
+          title={isPolish ? 'Rejestr KPI — jeszcze nie włączony' : 'KPI registry — not yet enabled'}
+          description={
+            isPolish
+              ? 'Ten rejestr jest w budowie. Wróć później albo poproś administratora o dostęp za flagą.'
+              : 'This registry is still being built. Check back later, or ask an administrator for flag access.'
+          }
+          compact
+        />
+      </div>
+    );
+  }
+
+  // `TableRow` requires an `id` field — the KPI DTO's PK is `kpiId`. Mapping
+  // it here (rather than casting past the mismatch) is what makes React's
+  // row keys and `StandardTable`'s row-click/selection identity correct;
+  // omitting this silently broke both (verified in the dev-render harness —
+  // every row's key collapsed to `undefined` and clicks never selected).
+  const tableRows = useMemo(
+    () => visibleRows.map((r) => ({ ...r, id: r.kpiId }) as unknown as Record<string, unknown> & { id: string }),
+    [visibleRows]
+  );
+
+  const table: ResultsVNextTableProps = {
+    columns,
+    data: tableRows,
+    persistKey: 'results-vnext.kpi-registry',
+    loading,
+    error,
+    onRetry: () => void fetchRows(),
+    empty:
+      !loading && !error && rows.length === 0
+        ? {
+            title: isPolish ? 'Brak zdefiniowanych KPI' : 'No KPIs defined yet',
+            description: isPolish
+              ? 'Utwórz pierwszy KPI, aby zacząć śledzić ten rejestr.'
+              : 'Create the first KPI to start tracking this registry.',
+          }
+        : undefined,
+    emptyMessage:
+      !loading && !error && rows.length > 0 && visibleRows.length === 0
+        ? isPolish
+          ? 'Brak wierszy pasujących do aktualnych filtrów.'
+          : 'No rows match the current filters.'
+        : undefined,
+    selectedRowId: selectedId,
+    onRowClick: (row) => setSelectedId(String(row.id)),
+    rowMenu: (row) =>
+      buildRowMenu(row as unknown as KpiDefinitionDto, {
+        isPolish,
+        pending,
+        onOpen: (kpiId) => setSelectedId(kpiId),
+        onActivate: (r) => void runLifecycleAction(r, 'activate'),
+        onSuspend: (r) => void runLifecycleAction(r, 'suspend'),
+        onArchive: (r) => void runLifecycleAction(r, 'archive'),
+      }),
+    defaultSort: { columnId: 'updatedAt', direction: 'desc' },
+  };
+
+  return (
+    <div className="h-full" data-testid="results-vnext-kpi-registry-page">
+      <ResultsVNextRegistryShell
+        domain="kpi"
+        moduleBar={{
+          tabs: [
+            { id: 'my', label: isPolish ? 'Moje' : 'My' },
+            { id: 'org', label: isPolish ? 'Organizacja' : 'Org' },
+          ],
+          activeTab: scope,
+          onTabChange: (id) => setScope(id === 'org' ? 'org' : 'my'),
+          showTabCounts: false,
+          viewModes: ['table'],
+          viewMode: 'table',
+          chips,
+          activeChip: statusFilter ?? 'all',
+          onChipChange: (id) => setStatusFilter(id === 'all' ? null : (id as KpiStatus)),
+        }}
+        table={table}
+        preview={
+          selectedRow
+            ? buildPreview(selectedRow, {
+                isPolish,
+                currentUserId: currentUser?.id,
+                measurement,
+                pending,
+                onClose: () => setSelectedId(null),
+                onActivate: (r) => void runLifecycleAction(r, 'activate'),
+                onSuspend: (r) => void runLifecycleAction(r, 'suspend'),
+                onArchive: (r) => void runLifecycleAction(r, 'archive'),
+              })
+            : null
+        }
+        forbidden={forbidden}
+        onForbiddenBack={() => setForbidden(null)}
+      />
+    </div>
+  );
+};
 
 export default ResultsKpiRegistryPage;

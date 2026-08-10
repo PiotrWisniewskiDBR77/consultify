@@ -250,12 +250,20 @@ const Mw007CalendarNarrowViewportScreen = React.lazy(
 const ResultsVNextRegistryShellScreen = React.lazy(
   () => import('./screens/results-vnext-registry-shell')
 );
+const ResultsVNextKpiRegistryScreen = React.lazy(
+  () => import('./screens/results-vnext-kpi-registry')
+);
 
 const SCREENS: Record<string, { label: string; render: () => React.ReactElement }> = {
   'results-vnext-registry-shell': {
     label:
       'RN-G2 P0 — REALNY <ResultsVNextRegistryShell> (KPI/ROI/OKR): loading/empty/error/forbidden + locked/honest-missing. &domain=kpi|roi|okr &state=ready|loading|empty|error|forbidden &reason=<deny> &selected=<id|none>',
     render: () => <ResultsVNextRegistryShellScreen />,
+  },
+  'results-vnext-kpi-registry': {
+    label:
+      'RN-G2 P1 — REALNY <ResultsKpiRegistryPage> (KPI registry, real GET/POST /vnext/results/kpi* stubbed): My/Org tabs, status chips, lifecycle kebab (activate/suspend/archive), lazy measurement preview, deep-link forbidden. &state=ready|loading|empty|error &kpiId=<id> &ff=off',
+    render: () => <ResultsVNextKpiRegistryScreen />,
   },
   'mw-007-calendar-narrow-viewport': {
     label:
