@@ -5765,3 +5765,226 @@ commicie tamtej sesji, dotykając te same dwa pliki (`atomicWrite.ts`,
 powinna zweryfikować scalenie, nie zakładać czystego historii commitów.
 
 
+## 52. RN-G6 `finance_projection` konsument — implementacja + odbiór, drugi realny konsument (2026-08-10)
+
+Design: `docs/product/results-vnext/RN_G6_FINANCE_PROJECTION_DESIGN.md`
+(FROZEN, 6 wiążących rulingów Integration Ownera IO-F1..IO-F6 w §1).
+Domyka największą pozostałą lukę RN-G6: 13 literałów zdarzeń (`roi.case_approved`
+i pokrewne) parkowało bez konsumenta od §49/§50. Dokładnie przewidziane w
+§51: `finance_projection` przeszedł z `UNBUILT_CONSUMER_GROUPS` do
+`CONSUMER_REGISTRY` w TYCH SAMYCH dwóch plikach (`consumerRegistry.ts`
+jedyny — `atomicWrite.ts` NIETKNIĘTY, zgodnie z §51's przewidywaniem że
+dispatcher/write-side nie musi się zmieniać). Dispatcher sam
+(`outboxDrain.ts`/`platformOutboxDrainCron.ts`) zmienił się o ZERO linii —
+dokładnie punkt wzorca rejestru.
+
+**Zbudowane**:
+- `server/migrations/20260830_rvn_roi_finance_projections.sql` — nowa
+  tabela `rvn_roi_finance_projections` (jeden wiersz per aktywny link), dwie
+  addytywne kolumny na `rvn_roi_finance_links` (`tracked_metric`/
+  `pinned_finance_value`, IO-F1: bez ownera w tej warstwie), partial unique
+  index `ux_rvn_roi_finance_reconciliations_one_open_per_link` na już
+  wylądowanej `rvn_roi_finance_reconciliations` (§5.3 race backstop).
+  **JEDNO udokumentowane odejście od dosłownego DDL §2**: `finance_link_id`
+  NIE ma twardego FK do `rvn_roi_finance_links(link_id)` — zweryfikowane
+  przez realny kod (nie transkrypcję), że taki FK zablokowałby
+  `removeRoiFinanceLink`'s prawdziwy hard `DELETE` w chwili gdy istnieje
+  wiersz projekcji dla usuwanego linku (zwykły przypadek po jednym
+  drenażu outboxa, nie edge case), a `ON DELETE CASCADE` złamałby §7's
+  jawne "is_link_active = false (history retained)". Postgres nie ma
+  trzeciej opcji FK ("nie blokuj, nie kasuj"). Rozwiązanie: kolumna
+  zostaje UUID PRIMARY KEY zasilana 1:1 z `link_id`, bez wymuszonego FK —
+  ten sam wzorzec "pinned reference, zero coupling" co
+  `finance_artifact_id` już stosuje wobec Finance. Analogiczne ryzyko
+  ISTNIEJE już w landed `rvn_roi_finance_reconciliations.finance_link_id`
+  (twardy FK, brak CASCADE) — przedistniejące, NIE naprawione tu (poza
+  zakresem, cudzy epik, migracja zamrożona).
+- `server/src/services/resultsVnext/platform/financeProjectionConsumer.ts`
+  — `dispatchFinanceProjection`. IO-F6's dwuwarstwowa transakcja (Layer 1:
+  claim + upsert projekcji na przekazanym `client`; Layer 2: TYLKO przy
+  rozjeździe, `openRoiFinanceReconciliation` na osobnym połączeniu,
+  własny idempotency-key `finance-projection-divergence:${event_id}:${link_id}`)
+  z uzasadnieniem zachowanym DOSŁOWNIE w nagłówku pliku, zgodnie z
+  literalnym wymogiem IO-F6. IO-F5 (priorytet seed actual>forecast>approved)
+  dla `roi.finance_link_created` — jedyne miejsce czytające BIEŻĄCE
+  wskaźniki case'a (`latest_approved_snapshot_id`/`current_forecast_version_id`/
+  `current_actual_snapshot_id`) zamiast id z payloadu zdarzenia, bo ten
+  konkretny event nie niesie żadnego id źródła. Wszystkie pozostałe zdarzenia
+  (`case_approved`/`forecast_published`/`actual_snapshot_published`) używają
+  WYŁĄCZNIE id z payloadu zdarzenia — nigdy świeżego lookupu wskaźnika,
+  zgodnie z zadaniem (źródła niemutowalne, id nigdy nie staje się nieaktualne,
+  brak wyścigu z późniejszym zdarzeniem). IO-F2: rozjazd liczony `IS DISTINCT
+  FROM` w SQL na NUMERIC, zero tolerancji, zero epsilon. IO-F3:
+  `semantic_unit` nigdzie nie czytany ani porównywany. IO-F4: brak
+  backfillu, brak parsowania `tracked_metric` z `link_purpose`.
+  `paybackPeriods` na źródle `actual` (brak kolumny w
+  `rvn_roi_actual_snapshots`) zwraca `null` zamiast rzucać — inaczej niż
+  `roiVarianceCommands.ts`'s synchroniczny throw do człowieka przez HTTP,
+  bo tu nie ma komu oddać 4xx; rzucenie dead-letterowałoby zdrowe zdarzenie
+  dla każdego case'u śledzącego akurat ten metryk.
+- `server/src/services/resultsVnext/roi/roiFinanceProjectionRepository.ts`
+  — repozytorium odczytu, ten sam wzorzec visibility-join co
+  `roiFinanceLinkRepository.ts` (`::text` cast obowiązkowy).
+- `server/src/routes/resultsVnext/roi.routes.ts` — `GET
+  /cases/:caseId/finance-projections`, cienka trasa nad
+  `listRoiFinanceProjections`.
+- `server/src/services/resultsVnext/platform/consumerRegistry.ts` —
+  `finance_projection: dispatchFinanceProjection` w `CONSUMER_REGISTRY`,
+  `UNBUILT_CONSUMER_GROUPS` teraz PUSTY.
+
+**★ Zweryfikowany realny konflikt kodu, niebędący w designie**:
+`createRoiFinanceLink` (ROI-E007, landed) jest bramkowany przez TEN SAM
+`NON_EDITABLE_STATUSES` co każda inna komenda przy modelu ekonomicznym —
+`'approved'`/`'tracking'` SĄ nieedytowalne (zweryfikowane kodem I realnym,
+już wylądowanym testem `roiFinanceLink.realdb.test.ts`). Link finansowy
+może więc powstać WYŁĄCZNIE przed submitem do akceptacji, nigdy po. Design's
+proof 2 opisuje kolejność "approve a case, link it" — realnie niewykonalne.
+Wszystkie fixture'y w nowym pakiecie testowym tworzą link NATYCHMIAST po
+`createRoiCase` (status `draft`), potem prowadzą TEN SAM case przez
+approval/tracking — udokumentowane w nagłówku pliku testowego, nie ukryte.
+
+**★ Odejście od dosłownego brzmienia IO-F6 (§5.4), zweryfikowane sygnaturą**:
+ruling mówi "wywołaj `openRoiFinanceReconciliation` z `actorUserId: null`" —
+ale `OpenRoiFinanceReconciliationInput.actorUserId` jest typowane `string`
+(nie `string | null`, w przeciwieństwie do precedensu `acknowledgeDecisionResolution`
+które faktycznie akceptuje `null` bo `okr_vnext_decision_links
+.resolution_acknowledged_by` jest `TEXT NULL`) i `rvn_roi_finance_reconciliations
+.opened_by` jest `TEXT NOT NULL` — dosłowny `null` albo nie przejdzie
+typecheckingu, albo (gdyby ktoś poszerzył typ) rzuci realnym NOT NULL
+violation w Postgresie. Rozwiązanie: przekazywany jest nazwany stały
+identyfikator systemowy `FINANCE_PROJECTION_CONSUMER_ACTOR =
+'system:finance_projection_consumer'` (ta sama stała, którą design SAM
+nazywa w tym samym akapicie) jako `actorUserId`, `actorEffectiveRole:
+'system'` zgodnie z rulingiem. Zero zmian w `roiFinanceReconciliationCommands.ts`
+— pełne "reuse unmodified".
+
+**Osiem dowodów odbioru + trzy wymagane testy negatywne + jeden dodatkowy
+(currency mismatch) — WSZYSTKIE PASS na realnym lokalnym Postgresie 17**
+(`tests/acceptance/rvn-outbox-finance-projection.e2e.test.ts`, 15/15,
+wzorzec `rvn-outbox-mywork-projection.e2e.test.ts`):
+1. Atomowy zapis event+outbox (`createRoiFinanceLink`) — PASS. Negatywna
+   kontrola: `createRoiFinanceLink` na case'ie już `approved` (realny,
+   już przetestowany guard `NON_EDITABLE_STATUSES`, nie sfabrykowany
+   throw) — zero wiersza linku, zero eventu, zero outboxa — PASS.
+2. Realny efekt konsumenta: case approved + link z pasującym
+   `pinned_finance_value` (`totalCosts`=1000, koszt 1000), jeden tick →
+   `roi_value`/`source_kind`='approval_snapshot'/`source_id`/
+   `source_sequence_number` poprawne, zero reconciliacji — PASS. Bonus:
+   `roi.tracking_started` synchronizuje `case_status` na TYM SAMYM wierszu
+   bez ruszania figury.
+3. Idempotencja: `dispatchFinanceProjection` wywołany DWA razy na tym
+   samym evencie → jeden wiersz `rvn_platform_consumer_processed`, jeden
+   wiersz projekcji, `updated_at` NIEZMIENIONY na drugim wywołaniu — PASS.
+4. Retry z backoff: zdarzenie z brakującym `payload.snapshotId`
+   (sfabrykowane przez `EVENT_INSERT_SQL`, jedyny świadomy wyjątek od
+   "tylko realne komendy" — klasa buga producenta, której żadna realna
+   komenda nie potrafi wyprodukować) → REALNY `requirePayloadString` w
+   konsumencie rzuca, dispatcher backoffuje `30s * 2^0`, status `failed` —
+   PASS.
+5. Dead-letter + realny alert: analogiczne zdarzenie zdriveowane do
+   `max_attempts` przez realny tick → `dead_letter`, dokładnie jedno
+   `sendSystemAlert` CRITICAL — PASS. Osobno: `finance_projection`
+   zweryfikowany jako zarejestrowany i NIE w `UNBUILT_CONSUMER_GROUPS` —
+   PASS. Osobno: wiersz sztucznie ustawiony na `status='parked'`
+   (symulacja stanu SPRZED tej sesji), po ręcznym `UPDATE ... SET
+   status='pending'` (backfill jednorazowy, patrz niżej) realny tick
+   dostarcza go poprawnie (`dispatched`) — PASS, dowodzi że wcześniej
+   zaparkowane wiersze SĄ replayable.
+6. Izolacja międzyorganizacyjna: dwa orgi, linki dzielące LITERALNY
+   `finance_artifact_id`/`finance_artifact_type` (realna kolizja Finance —
+   ich id nie są namespaced po vNext), różne `pinned_finance_value`
+   (1000 vs 2500) — zapytanie scoped do org B nigdy nie zwraca wiersza
+   org A i odwrotnie — PASS.
+7. Cold reopen/readback: `GET /cases/:caseId/finance-projections` przez
+   REALNĄ trasę HTTP (supertest, zamontowany prawdziwy `roi.routes.ts` za
+   prawdziwym `verifyToken`/`requireOrgAccess`/`demoContextMiddleware`,
+   token z `harness.ts`'s `mintToken`) — 200, poprawna treść. Potem
+   publikacja Actual snapshot rozjeżdżającego się (1800 vs pinned 1000) →
+   ponowny tick → projekcja aktualizuje lineage (`source_kind`='actual_snapshot'),
+   NOWA reconciliacja `open`, osiągalna przez `listRoiFinanceReconciliations`
+   — PASS.
+8. Brak cichej porażki: link finansowy usunięty z bazy RAW SQL między
+   utworzeniem eventu a dispatchem (realny, zamierzony guard
+   `handleFinanceLinkCreated`'s "not found", nie sfabrykowany
+   niepowiązany błąd) → `markFailed` z prawdziwym komunikatem zawierającym
+   `link_id` — PASS.
+
+**Trzy wymagane testy negatywne**:
+- **Zero zapisów do `financial_*`**: grep gate na źródle konsumenta (0
+  dopasowań PO naprawie — patrz niżej) + realna baza: hash+count każdej
+  tabeli `financial_*` identyczny przed/po pełnym ticku — PASS.
+- **Rozjazd nigdy nie nadpisuje żadnej strony**: po dowodzie 7,
+  `content_hash` snapshotu akceptacji, `pinned_finance_value` linku i
+  `total_actual_costs` snapshotu Actual zweryfikowane bit-identyczne
+  przed/po — PASS.
+- **Redelivery nigdy nie podwaja reconciliacji, TEŻ między różnymi
+  eventami**: (a) ten sam outbox row dwukrotnie → jedna reconciliacja
+  (warstwa claim) — PASS; (b) DWA RÓŻNE zdarzenia
+  (`forecast_published` potem `actual_snapshot_published`, różne figury:
+  1500 potem 1800, oba ≠ pinned 1000) dla tego samego wciąż-rozjeżdżającego
+  się linku → WCIĄŻ dokładnie jedna reconciliacja `open` — PASS, dowodzi
+  że guard §5.3 działa przez `event_id`, nie tylko przez literalną
+  redelivery (test, który złapałby prawdziwy bug — stos reconciliacji
+  za każdą nową figurą).
+
+**Bug złapany w PIERWSZYM przebiegu, naprawiony**: grep gate naiwnie
+dopasowywał podciąg `financial_` — false positive na LEGALNEJ nazwie
+kolumny `total_financial_benefits` (`rvn_roi_forecast_versions`/
+`rvn_roi_actual_snapshots`, nie tabela `financial_*`). Naprawione na
+lookbehind granicy słowa `(?<![a-zA-Z0-9_])financial_[a-zA-Z_]*`.
+
+**Dwa PRZEDISTNIEJĄCE testy zaktualizowane, nie zepsute przeze mnie**:
+`tests/resultsVnext/platform/consumerGroupContract.test.ts` i
+`tests/acceptance/rvn-outbox-mywork-projection.e2e.test.ts` (§49's IO-C
+demo) obie pinowały STAN SPRZED tej sesji ("finance_projection unbuilt/
+parked") jako regresję, którą chronią — dokładnie fakt, który to zadanie
+miało odwrócić. Zaktualizowane: pierwsza teraz asercjuje rejestrację +
+pusty `UNBUILT_CONSUMER_GROUPS`; druga demonstruje mechanizm parkowania
+(wciąż realny, nietknięty kod) przez syntetyczną nazwę grupy dodaną
+tymczasowo do (runtime-mutowalnego, tylko TS-readonly) Setu, nie przez
+`finance_projection`.
+
+**`npx tsc --noEmit` (`--max-old-space-size=8192`, `server/tsconfig.json`)
+czysty** poza dokładnie tymi samymi 18 przedistniejącymi błędami
+`decimal.js` w `roiCalculationEngine.ts` (plik nietknięty przez ten
+pakiet) — zero błędów w jakimkolwiek nowym/zmienionym pliku RN-G6.
+
+**Regresja `tests/resultsVnext/` na tym samym efemerycznym Postgresie 17
+(`RUN_DB_TESTS=1`)**: 672 PASS / 33 FAIL / 8 skip (713 total) — PRZED tą
+sesją (po naprawie dwóch stale-testów) TAKŻE 33 fail, wszystkie
+`initiatives_organization_id_fkey` w tych samych plikach ROI realdb co
+§49/§51 już udokumentowały (fixture-y innych plików nie wstawiają
+`organizations` przed `initiatives`) — zero nowych failurów, zero plików
+KPI/OKR w liście failed.
+
+**Otwarte, świadomie NIE rozstrzygnięte tutaj** (IO-F1/IO-F2/limit
+paybackPeriods — zapisane jako otwarte, nie ciche "rozwiązane"):
+- **IO-F1**: `tracked_metric`/`pinned_finance_value` mają kolumny, ZERO
+  ownera. Żaden UI-field, żadna komenda Finance-side nie istnieje w tym
+  pakiecie. Testy ustawiają je RAW SQL UPDATE po `createRoiFinanceLink`,
+  stojąc za nie-jeszcze-zbudowaną integracją. Kandydaci-ownerzy (z designu):
+  ręczny wpis analityka Finance, albo integracja push z systemu Finance —
+  decyzja produktowa, nie techniczna, poza zakresem tego pakietu.
+- **IO-F2**: próg tolerancji rozjazdu NIE ustawiony — `IS DISTINCT FROM`
+  dosłowny, zero epsilon, zero "within 1%". Jeśli kiedyś potrzebny próg,
+  to decyzja kogoś z uprawnieniem do jego ustawienia, nie do
+  odgadnięcia tutaj.
+- **Limit `paybackPeriods` na źródle Actual**: `rvn_roi_actual_snapshots`
+  nie ma i nigdy nie miała kolumny payback — link śledzący akurat ten
+  metryk NIGDY nie dostanie figury z Actual (dostanie z Forecast/Approved
+  jeśli dostępne, inaczej zostanie bez figury). Ten sam, przedistniejący
+  limit co `roiVarianceCommands.ts` już dokumentuje dla swojego własnego
+  przypadku.
+- **Backfill jednorazowy dla wcześniej zaparkowanych wierszy**: NIE
+  uruchomiony automatycznie przez tę migrację (świadomie — ryzyko dotknięcia
+  produkcyjnych wierszy bez nadzoru operacyjnego). Komenda do ręcznego
+  uruchomienia przez nadzorcę sesji głównej po wdrożeniu:
+  `UPDATE rvn_platform_outbox SET status='pending' WHERE consumer_group='finance_projection' AND status='parked';`
+  (`markParked` nigdy nie rusza `attempts`/`next_attempt_at`, więc wiersz
+  jest natychmiast klejmowalny po tym UPDATE).
+- **Analogiczne ryzyko FK co udokumentowane w migracji tego pakietu**:
+  `rvn_roi_finance_reconciliations.finance_link_id` (landed ROI-E007,
+  twardy FK, brak CASCADE) może już dziś blokować `removeRoiFinanceLink`
+  gdy istnieje reconciliacja dla usuwanego linku — przedistniejące, poza
+  zakresem, niezweryfikowane empirycznie w tej sesji (nie kontrola
+  negatywna, tylko obserwacja przy okazji).
