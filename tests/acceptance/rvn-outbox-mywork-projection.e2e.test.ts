@@ -1042,64 +1042,82 @@ describe('RN-G3 · outbox dispatcher + mywork_projection consumer (8 acceptance 
       expect(criticalCalls.length).toBe(1);
     }, 30_000);
 
-    it('IO-C: a finance_projection row parks (status=parked) with an INFO notice, never a CRITICAL dead-letter alert', async () => {
-      const kpiId = randomUUID();
-      const versionId = randomUUID();
-      await insertFixtureKpi(ORG_A, OWNER_A, kpiId, versionId);
-      const caseId = await openRealDeviationCase({
-        orgId: ORG_A,
-        ownerUserId: OWNER_A,
-        kpiId,
-        versionId,
-        idempotencyKey: `${MARKER}--proof6b--measure`,
-      });
-
-      expect(UNBUILT_CONSUMER_GROUPS.has('finance_projection')).toBe(true);
-      expect(CONSUMER_REGISTRY['finance_projection']).toBeUndefined();
-
-      const client = pgClient();
-      await client.connect();
-      let outboxId: string;
+    it('IO-C: a row for an UNBUILT_CONSUMER_GROUPS member parks (status=parked) with an INFO notice, never a CRITICAL dead-letter alert', async () => {
+      // UPDATED by RN-G6 (2026-08-10, docs/product/results-vnext/RN_G6_
+      // FINANCE_PROJECTION_DESIGN.md): 'finance_projection' — this test's
+      // ORIGINAL example group — graduated to a real, registered consumer;
+      // UNBUILT_CONSUMER_GROUPS is now empty. The IO-C PARKING MECHANISM
+      // itself (outboxDrain.ts's markParked, platformOutboxDrainCron.ts's
+      // dispatch-loop branch) is untouched by RN-G6 and still real,
+      // load-bearing code — this test now exercises it against a synthetic
+      // group name added to the (runtime-mutable, only TS-level-readonly)
+      // UNBUILT_CONSUMER_GROUPS Set for the duration of the test, removed
+      // in a `finally` so no other test observes the mutation.
+      const syntheticUnbuiltGroup = `${MARKER}--proof6b--synthetic-unbuilt-group`;
+      const mutableUnbuilt = UNBUILT_CONSUMER_GROUPS as unknown as Set<string>;
+      mutableUnbuilt.add(syntheticUnbuiltGroup);
       try {
-        const eventRow = await client.query<{ event_id: string }>(
-          `SELECT event_id FROM rvn_platform_events
-            WHERE organization_id = $1 AND aggregate_id = $2 AND event_type = 'kpi.deviation_opened'`,
-          [ORG_A, caseId]
+        const kpiId = randomUUID();
+        const versionId = randomUUID();
+        await insertFixtureKpi(ORG_A, OWNER_A, kpiId, versionId);
+        const caseId = await openRealDeviationCase({
+          orgId: ORG_A,
+          ownerUserId: OWNER_A,
+          kpiId,
+          versionId,
+          idempotencyKey: `${MARKER}--proof6b--measure`,
+        });
+
+        expect(UNBUILT_CONSUMER_GROUPS.has(syntheticUnbuiltGroup)).toBe(true);
+        expect(CONSUMER_REGISTRY[syntheticUnbuiltGroup]).toBeUndefined();
+
+        const client = pgClient();
+        await client.connect();
+        let outboxId: string;
+        try {
+          const eventRow = await client.query<{ event_id: string }>(
+            `SELECT event_id FROM rvn_platform_events
+              WHERE organization_id = $1 AND aggregate_id = $2 AND event_type = 'kpi.deviation_opened'`,
+            [ORG_A, caseId]
+          );
+          const inserted = await client.query<{ outbox_id: string }>(
+            `INSERT INTO rvn_platform_outbox (event_id, consumer_group, status)
+             VALUES ($1, $2, 'pending') RETURNING outbox_id`,
+            [eventRow.rows[0].event_id, syntheticUnbuiltGroup]
+          );
+          outboxId = inserted.rows[0].outbox_id;
+        } finally {
+          await client.end();
+        }
+
+        (sendSystemAlertMock as ReturnType<typeof vi.fn>).mockClear();
+        await runOutboxDispatchTick();
+
+        const readClient = pgClient();
+        await readClient.connect();
+        try {
+          const row = await readClient.query(
+            `SELECT status, attempts, last_error FROM rvn_platform_outbox WHERE outbox_id = $1`,
+            [outboxId]
+          );
+          expect(row.rows[0].status).toBe('parked');
+          expect(row.rows[0].attempts).toBe(0); // parking never counts as an attempt
+          expect(row.rows[0].last_error).toBe('CONSUMER_NOT_BUILT');
+        } finally {
+          await readClient.end();
+        }
+
+        const calls = (sendSystemAlertMock as ReturnType<typeof vi.fn>).mock.calls;
+        const criticalCalls = calls.filter(([arg]: [any]) => arg.severity === 'CRITICAL');
+        const infoParkedCalls = calls.filter(
+          ([arg]: [any]) =>
+            arg.severity === 'INFO' && arg.throttleKey === `outbox_parked:${syntheticUnbuiltGroup}`
         );
-        const inserted = await client.query<{ outbox_id: string }>(
-          `INSERT INTO rvn_platform_outbox (event_id, consumer_group, status)
-           VALUES ($1, 'finance_projection', 'pending') RETURNING outbox_id`,
-          [eventRow.rows[0].event_id]
-        );
-        outboxId = inserted.rows[0].outbox_id;
+        expect(criticalCalls.length).toBe(0);
+        expect(infoParkedCalls.length).toBe(1);
       } finally {
-        await client.end();
+        mutableUnbuilt.delete(syntheticUnbuiltGroup);
       }
-
-      (sendSystemAlertMock as ReturnType<typeof vi.fn>).mockClear();
-      await runOutboxDispatchTick();
-
-      const readClient = pgClient();
-      await readClient.connect();
-      try {
-        const row = await readClient.query(
-          `SELECT status, attempts, last_error FROM rvn_platform_outbox WHERE outbox_id = $1`,
-          [outboxId]
-        );
-        expect(row.rows[0].status).toBe('parked');
-        expect(row.rows[0].attempts).toBe(0); // parking never counts as an attempt
-        expect(row.rows[0].last_error).toBe('CONSUMER_NOT_BUILT');
-      } finally {
-        await readClient.end();
-      }
-
-      const calls = (sendSystemAlertMock as ReturnType<typeof vi.fn>).mock.calls;
-      const criticalCalls = calls.filter(([arg]: [any]) => arg.severity === 'CRITICAL');
-      const infoParkedCalls = calls.filter(
-        ([arg]: [any]) => arg.severity === 'INFO' && arg.throttleKey === 'outbox_parked:finance_projection'
-      );
-      expect(criticalCalls.length).toBe(0);
-      expect(infoParkedCalls.length).toBe(1);
     });
   });
 

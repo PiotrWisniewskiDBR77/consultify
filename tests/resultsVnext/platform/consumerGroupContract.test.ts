@@ -83,13 +83,25 @@ describe('resultsVnext/platform consumer-group contract', () => {
     expect(routedGroups.has('notifications_projection')).toBe(false);
   });
 
-  it('finance_projection is pending (unbuilt), not retired', () => {
-    expect(UNBUILT_CONSUMER_GROUPS.has('finance_projection')).toBe(true);
-    expect(CONSUMER_REGISTRY.finance_projection).toBeUndefined();
+  it('finance_projection is registered (RN-G6, 2026-08-10) — the second live consumer, no longer unbuilt', () => {
+    // Updated by RN-G6 (docs/product/results-vnext/RN_G6_FINANCE_PROJECTION_
+    // DESIGN.md): finance_projection graduated from UNBUILT_CONSUMER_GROUPS
+    // to CONSUMER_REGISTRY. This test previously pinned the OPPOSITE state
+    // (pending/unbuilt) as the regression it guarded against — that pin is
+    // now stale by construction, since flipping this exact pair of facts
+    // was RN-G6's whole deliverable.
+    expect(UNBUILT_CONSUMER_GROUPS.has('finance_projection')).toBe(false);
+    expect(typeof CONSUMER_REGISTRY.finance_projection).toBe('function');
   });
 
-  it('mywork_projection is the one live, registered consumer', () => {
+  it('mywork_projection and finance_projection are the two live, registered consumers', () => {
     expect(typeof CONSUMER_REGISTRY.mywork_projection).toBe('function');
     expect(UNBUILT_CONSUMER_GROUPS.has('mywork_projection')).toBe(false);
+    expect(typeof CONSUMER_REGISTRY.finance_projection).toBe('function');
+    expect(UNBUILT_CONSUMER_GROUPS.has('finance_projection')).toBe(false);
+  });
+
+  it('UNBUILT_CONSUMER_GROUPS is empty as of RN-G6 — finance_projection was its only member', () => {
+    expect(UNBUILT_CONSUMER_GROUPS.size).toBe(0);
   });
 });
