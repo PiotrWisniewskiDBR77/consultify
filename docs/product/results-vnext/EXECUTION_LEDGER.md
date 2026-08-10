@@ -3558,7 +3558,6 @@ testowej — nie zmiana kodu produkcyjnego.
 backendu domeny ROI DOMKNIĘTA.** UI Registry (RN-G2) i pozostałe domeny
 (KPI już zamknięta §30, OKR w toku) poza zakresem tego wpisu.
 
-||||||| 5fe1b647fd
 ## 40. OKR-E001 Program & Cycle — implementacja + odbiór (2026-08-10)
 
 **Pierwszy epik zupełnie nowej domeny OKR.** Zbudowano
@@ -3939,7 +3938,6 @@ ciche**:
 **Domena OKR: 2/8 epików zbudowanych. OKR-E003 Objective/KeyResult
 następny.**
 
-||||||| 615544e014
 ## 42. OKR-E008 Half C only (Legacy/Ops) — implementacja + odbiór (2026-08-10) — Halves A i B ODROCZONE
 
 **Ostatni epik domeny OKR, ale zbudowana WYŁĄCZNIE Połowa C (Legacy/Ops
