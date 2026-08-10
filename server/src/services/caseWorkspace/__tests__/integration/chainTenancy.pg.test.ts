@@ -631,7 +631,10 @@ suite('INTEGRATION GATE — cross-tenant and revoked membership across the whole
 
       // -- THE REVOCATION -----------------------------------------------------
       const revoked = await control.query(
-        `UPDATE organization_members SET status = 'ACTIVE'
+        // The whole point of this block: the actor must actually LOSE standing.
+        // This previously set status = 'ACTIVE', i.e. it revoked nothing, so every
+        // "denied" assertion below was being measured against a still-active member.
+        `UPDATE organization_members SET status = 'REVOKED'
           WHERE organization_id = $1 AND user_id = $2 RETURNING id`,
         [orgId, doomed]
       );
