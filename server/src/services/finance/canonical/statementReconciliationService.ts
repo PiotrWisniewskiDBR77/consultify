@@ -58,6 +58,41 @@ import type { MappedRowResult, ReconciliationBucket } from './statementMappingSe
 // Waterfall — pure, no DB (unit-testable per the task's explicit requirement)
 // ---------------------------------------------------------------------------
 
+/**
+ * RC-01 coverage — "how much of the real source statement actually reached the
+ * canonical model", counted in rows AND in absolute source value.
+ *
+ * Absolute (|x|) sums, not signed sums: a signed source total lets a +500 asset and
+ * a -500 contra line cancel to 0, which would report "0% of nothing lost" on a pack
+ * that lost both. Coverage is a completeness measure, so it counts magnitude.
+ */
+export interface CoverageMetrics {
+  totalRowCount: number;
+  /** MAPPED + RECLASS + ELIMINATION — rows whose value landed in `finance_stmt_lines`. */
+  mappedRowCount: number;
+  excludedRowCount: number;
+  unmappedRowCount: number;
+  duplicateRowCount: number;
+  /** UNMAPPED rows + EXCLUDED rows flagged `coverageLoss` (taxonomy gap, not analyst decision). */
+  coverageLossRowCount: number;
+  /** Sum of |sourceAmount| over every input row. */
+  absSourceTotal: number;
+  /** Sum of |sourceAmount| over rows that landed in the canonical model. */
+  absCoveredTotal: number;
+  /** Sum of |sourceAmount| over coverage-loss rows. */
+  absCoverageLossTotal: number;
+  /** `absCoveredTotal / absSourceTotal`; null when every source value is 0 (undefined, NOT 100%). */
+  sourceValueCoveragePct: number | null;
+  /** `mappedRowCount / totalRowCount`; null when there are no rows at all. */
+  sourceRowCoveragePct: number | null;
+  /**
+   * `absCoverageLossTotal / absSourceTotal`, falling back to the ROW share when every source
+   * value is 0 (a zero-valued line still occupies a taxonomy slot that does not exist).
+   * Never null — a caller must always be able to compare it against a threshold.
+   */
+  coverageLossSharePct: number;
+}
+
 export interface WaterfallTotals {
   sourceTotal: number;
   mappedTotal: number;
@@ -71,9 +106,12 @@ export interface WaterfallTotals {
   residual: number;
   /** `|residual| / |sourceTotal|`, or null when sourceTotal is 0 (percentage undefined, not zero). */
   residualPct: number | null;
+  /** RC-01 — completeness, a SEPARATE axis from the residual (see `determineReconciliationStatus`). */
+  coverage: CoverageMetrics;
 }
 
-export type WaterfallRow = Pick<MappedRowResult, 'bucket' | 'sourceAmount' | 'mappedAmount' | 'signConvention'>;
+export type WaterfallRow = Pick<MappedRowResult, 'bucket' | 'sourceAmount' | 'mappedAmount' | 'signConvention'> &
+  Partial<Pick<MappedRowResult, 'coverageLoss'>>;
 
 /** Below this absolute residual, treat as exactly balanced (floating-point dust, not a real discrepancy). */
 const RESIDUAL_ZERO_EPSILON = 1e-6;
@@ -87,9 +125,38 @@ export function computeWaterfall(rows: readonly WaterfallRow[]): WaterfallTotals
   let reclassNetTotal = 0;
   let eliminationNetTotal = 0;
 
+  let mappedRowCount = 0;
+  let excludedRowCount = 0;
+  let unmappedRowCount = 0;
+  let duplicateRowCount = 0;
+  let coverageLossRowCount = 0;
+  let absSourceTotal = 0;
+  let absCoveredTotal = 0;
+  let absCoverageLossTotal = 0;
+
   for (const row of rows) {
     sourceTotal += row.sourceAmount;
     const contribution = row.mappedAmount ?? 0;
+
+    const abs = Math.abs(row.sourceAmount);
+    absSourceTotal += abs;
+    // `coverageLoss` is optional on WaterfallRow so pure callers can pass a bare bucket;
+    // an UNMAPPED row is coverage loss by definition regardless of what the caller said.
+    const isCoverageLossRow = row.coverageLoss === true || row.bucket === 'UNMAPPED';
+    if (isCoverageLossRow) {
+      coverageLossRowCount += 1;
+      absCoverageLossTotal += abs;
+    }
+    if (row.bucket === 'MAPPED' || row.bucket === 'RECLASS' || row.bucket === 'ELIMINATION') {
+      mappedRowCount += 1;
+      absCoveredTotal += abs;
+    } else if (row.bucket === 'EXCLUDED') {
+      excludedRowCount += 1;
+    } else if (row.bucket === 'UNMAPPED') {
+      unmappedRowCount += 1;
+    } else if (row.bucket === 'DUPLICATE') {
+      duplicateRowCount += 1;
+    }
 
     switch (row.bucket) {
       case 'MAPPED':
@@ -128,16 +195,84 @@ export function computeWaterfall(rows: readonly WaterfallRow[]): WaterfallTotals
   const residual = sourceTotal - canonicalTotal - excludedTotal - unmappedTotal;
   const residualPct = sourceTotal === 0 ? null : Math.abs(residual) / Math.abs(sourceTotal);
 
-  return { sourceTotal, mappedTotal, excludedTotal, unmappedTotal, duplicateTotal, reclassNetTotal, eliminationNetTotal, canonicalTotal, residual, residualPct };
+  const totalRowCount = rows.length;
+  const coverage: CoverageMetrics = {
+    totalRowCount,
+    mappedRowCount,
+    excludedRowCount,
+    unmappedRowCount,
+    duplicateRowCount,
+    coverageLossRowCount,
+    absSourceTotal,
+    absCoveredTotal,
+    absCoverageLossTotal,
+    sourceValueCoveragePct: absSourceTotal === 0 ? null : absCoveredTotal / absSourceTotal,
+    sourceRowCoveragePct: totalRowCount === 0 ? null : mappedRowCount / totalRowCount,
+    coverageLossSharePct:
+      absSourceTotal > 0
+        ? absCoverageLossTotal / absSourceTotal
+        : totalRowCount > 0
+          ? coverageLossRowCount / totalRowCount
+          : 0,
+  };
+
+  return { sourceTotal, mappedTotal, excludedTotal, unmappedTotal, duplicateTotal, reclassNetTotal, eliminationNetTotal, canonicalTotal, residual, residualPct, coverage };
 }
 
 /** `finance_reconciliation_runs.status` CHECK values (WP-B05, already shipped). */
 export type ReconciliationRunStatus = 'CLEAN' | 'WITHIN_TOLERANCE' | 'EXCEEDS_MATERIALITY';
 
-export function determineReconciliationStatus(totals: WaterfallTotals, materialityThresholdPct: number): ReconciliationRunStatus {
+/** DEC-FIN-009's own vocabulary: "kazdy material ... rozroznia clean/conditional/provisional". */
+export type ReconciliationResultQuality = 'CLEAN' | 'CONDITIONAL' | 'PROVISIONAL';
+
+/** Residual-only status — the pre-RC-01 behaviour, kept as its own named function. */
+export function determineResidualStatus(totals: WaterfallTotals, materialityThresholdPct: number): ReconciliationRunStatus {
   if (Math.abs(totals.residual) < RESIDUAL_ZERO_EPSILON) return 'CLEAN';
   if (totals.residualPct === null) return 'EXCEEDS_MATERIALITY'; // non-zero residual against a zero source total: undefined %, cannot be "within" anything
   return totals.residualPct <= materialityThresholdPct ? 'WITHIN_TOLERANCE' : 'EXCEEDS_MATERIALITY';
+}
+
+/**
+ * BUGFIX RC-01 — the residual can be exactly 0 while three quarters of the real source
+ * statement never reached the canonical model, because `unmapped_total` (and the
+ * taxonomy-gap half of `excluded_total`) are SUBTRACTED in the residual formula. The
+ * number was already computed; it just never reached the status. That is the whole gap:
+ * "counted, but not consequential".
+ *
+ * Rule: any coverage loss forbids `CLEAN`. It does NOT escalate to
+ * `EXCEEDS_MATERIALITY` on its own, deliberately — `finance_stmt_readiness_check()`
+ * check #6 treats `EXCEEDS_MATERIALITY` as a hard block, and DEC-FIN-009 is explicit that
+ * a data-quality defect must not block creation/compute/export. The severity of the
+ * coverage loss is carried by `determineResultQuality()` (CONDITIONAL / PROVISIONAL) and
+ * by a `finance_exceptions` row, which are marks, not gates.
+ */
+export function determineReconciliationStatus(totals: WaterfallTotals, materialityThresholdPct: number): ReconciliationRunStatus {
+  const residualStatus = determineResidualStatus(totals, materialityThresholdPct);
+  if (residualStatus === 'CLEAN' && totals.coverage.coverageLossRowCount > 0) return 'WITHIN_TOLERANCE';
+  return residualStatus;
+}
+
+/**
+ * DEC-FIN-009 result quality. CRITICAL_DATA-grade defects (on either axis) produce
+ * `PROVISIONAL` — the addendum's "compute/export dozwolone, ale wynik ma status
+ * Provisional / Accepted with critical exceptions". Anything else that is not perfect is
+ * `CONDITIONAL` ("akceptacja analityka z uzasadnieniem").
+ *
+ * `periodJumpCount` (RC-05) marks but never escalates past CONDITIONAL — a WARNING-tier
+ * plausibility flag is not by itself grounds for calling the whole pack provisional.
+ */
+export function determineResultQuality(
+  totals: WaterfallTotals,
+  materialityThresholdPct: number,
+  periodJumpCount = 0
+): ReconciliationResultQuality {
+  const residualStatus = determineResidualStatus(totals, materialityThresholdPct);
+  const coverageLoss = totals.coverage.coverageLossRowCount > 0;
+  const coverageSeverity = coverageLoss ? severityForResidual(totals.coverage.coverageLossSharePct, materialityThresholdPct) : null;
+
+  if (residualStatus === 'EXCEEDS_MATERIALITY' || coverageSeverity === 'CRITICAL_DATA') return 'PROVISIONAL';
+  if (residualStatus === 'WITHIN_TOLERANCE' || coverageLoss || periodJumpCount > 0) return 'CONDITIONAL';
+  return 'CLEAN';
 }
 
 /**
@@ -161,6 +296,165 @@ export function severityForResidual(residualPct: number | null, materialityThres
 
 /** PROVISIONAL_PENDING_OWNER_DECISION — GATE_B_INTEGRATION_RECONCILIATION.md section 7. */
 export const PROVISIONAL_MATERIALITY_THRESHOLD_PCT = 0.05;
+
+// ---------------------------------------------------------------------------
+// BUGFIX RC-05 — period-over-period plausibility control for balance-sheet lines
+// ---------------------------------------------------------------------------
+
+/**
+ * Relative move that makes a MATERIAL balance-sheet position implausible without an
+ * explanation. 80% is a judgment call, and here is the reasoning rather than a number
+ * pulled from the air:
+ *
+ *  - Working-capital positions (AR/AP/inventory) track revenue; a group whose revenue
+ *    moved +8% y/y (Apator FY2024) does not move a payables balance by ±80% for an
+ *    operating reason. Empirically, a >80% single-year move in a material BS line is
+ *    either a corporate event (disposal/acquisition/refinancing) or a data defect —
+ *    both of which a human must SEE, which is exactly what a WARNING is for.
+ *  - Setting it lower (e.g. 30-50%) would fire on ordinary cash/debt swings and train
+ *    the analyst to ignore the flag, which is worse than no flag.
+ *  - The real defect this exists for (RC-05: Apator `AP` 93 591 -> 722, a 99.2% collapse)
+ *    clears 80% with an order of magnitude to spare, so the threshold is not tuned to
+ *    the sample.
+ *
+ * PROVISIONAL_PENDING_OWNER_DECISION, same status as the materiality placeholder above:
+ * overridable per call, never silently re-invented elsewhere.
+ */
+export const PERIOD_JUMP_RELATIVE_THRESHOLD_PCT = 0.8;
+
+/**
+ * Materiality floor for the jump control, expressed as a fraction of the LARGEST absolute
+ * balance-sheet position observed in the compared periods (in practice: total assets).
+ * 1% of total assets sits at the conventional lower edge of audit planning materiality
+ * (0.5-2% of total assets), so the control fires on positions a reader would notice and
+ * stays silent on rounding-scale lines that would otherwise flood the ledger — a 100%
+ * move on a 3-thousand line is noise, the same move on a 93-million line is not.
+ *
+ * Anchoring to the pack's own largest position (rather than an absolute currency amount)
+ * keeps the control unit-agnostic: it behaves identically whether the pack is filed in
+ * UNITS, THOUSANDS or MILLIONS.
+ */
+export const PERIOD_JUMP_MATERIALITY_ANCHOR_PCT = 0.01;
+
+/** One `finance_stmt_lines` cell, flattened for the pure detector. */
+export interface PeriodObservation {
+  entityId: string;
+  canonicalLineId: string;
+  lineCode: string | null;
+  statementType: string;
+  consolidationScope: string;
+  accumulationBasis: string;
+  periodId: string;
+  periodLabel: string;
+  /** ISO date used ONLY for chronological ordering within a series. */
+  periodEnd: string;
+  /** null for value_status MISSING/NA/NOT_APPLICABLE — never coerced to 0. */
+  value: number | null;
+}
+
+export interface PeriodJumpFinding {
+  entityId: string;
+  canonicalLineId: string;
+  lineCode: string | null;
+  statementType: string;
+  consolidationScope: string;
+  accumulationBasis: string;
+  priorPeriodId: string;
+  priorPeriodLabel: string;
+  priorValue: number;
+  currentPeriodId: string;
+  currentPeriodLabel: string;
+  currentValue: number;
+  /** Signed `(current - prior) / |prior|`. */
+  changePct: number;
+  /** `|changePct|`, the value compared against the threshold. */
+  absChangePct: number;
+  /** The absolute floor a position had to clear to be considered material for this run. */
+  materialityFloor: number;
+  direction: 'COLLAPSE' | 'SPIKE';
+  /** Human-readable, self-contained — goes verbatim into the exception evidence. */
+  description: string;
+}
+
+function seriesKey(o: PeriodObservation): string {
+  return [o.entityId, o.canonicalLineId, o.consolidationScope, o.accumulationBasis].join('::');
+}
+
+/**
+ * Pure, DB-free (RC-05). Groups observations into per-cell time series, walks consecutive
+ * period pairs, and reports every move that is BOTH material (the larger of the two values
+ * clears the floor) AND relatively extreme (>= the relative threshold).
+ *
+ * Deliberately does NOT flag:
+ *  - a series where either side is `null` (MISSING) — that is RC-06's finding (a coverage
+ *    gap), and reporting it here as a "100% change" would fabricate a number;
+ *  - a prior value of exactly 0 — the relative change is undefined, not infinite, and a
+ *    line appearing for the first time is ordinary (new lease, new instrument).
+ */
+export function detectPeriodOverPeriodJumps(
+  observations: readonly PeriodObservation[],
+  opts: { relativeThresholdPct?: number; materialityAnchorPct?: number } = {}
+): PeriodJumpFinding[] {
+  const relativeThresholdPct = opts.relativeThresholdPct ?? PERIOD_JUMP_RELATIVE_THRESHOLD_PCT;
+  const materialityAnchorPct = opts.materialityAnchorPct ?? PERIOD_JUMP_MATERIALITY_ANCHOR_PCT;
+
+  let anchor = 0;
+  for (const o of observations) {
+    if (o.value !== null) anchor = Math.max(anchor, Math.abs(o.value));
+  }
+  const materialityFloor = anchor * materialityAnchorPct;
+  if (materialityFloor <= 0) return [];
+
+  const series = new Map<string, PeriodObservation[]>();
+  for (const o of observations) {
+    const key = seriesKey(o);
+    const bucket = series.get(key);
+    if (bucket) bucket.push(o);
+    else series.set(key, [o]);
+  }
+
+  const findings: PeriodJumpFinding[] = [];
+  for (const bucket of series.values()) {
+    const ordered = [...bucket].sort((a, b) => (a.periodEnd < b.periodEnd ? -1 : a.periodEnd > b.periodEnd ? 1 : 0));
+    for (let i = 1; i < ordered.length; i++) {
+      const prior = ordered[i - 1];
+      const current = ordered[i];
+      if (prior.value === null || current.value === null) continue;
+      if (prior.value === 0) continue;
+      if (Math.max(Math.abs(prior.value), Math.abs(current.value)) < materialityFloor) continue;
+
+      const changePct = (current.value - prior.value) / Math.abs(prior.value);
+      const absChangePct = Math.abs(changePct);
+      if (absChangePct < relativeThresholdPct) continue;
+
+      const direction: 'COLLAPSE' | 'SPIKE' = changePct < 0 ? 'COLLAPSE' : 'SPIKE';
+      findings.push({
+        entityId: current.entityId,
+        canonicalLineId: current.canonicalLineId,
+        lineCode: current.lineCode,
+        statementType: current.statementType,
+        consolidationScope: current.consolidationScope,
+        accumulationBasis: current.accumulationBasis,
+        priorPeriodId: prior.periodId,
+        priorPeriodLabel: prior.periodLabel,
+        priorValue: prior.value,
+        currentPeriodId: current.periodId,
+        currentPeriodLabel: current.periodLabel,
+        currentValue: current.value,
+        changePct,
+        absChangePct,
+        materialityFloor,
+        direction,
+        description:
+          `${current.statementType} line ${current.lineCode ?? current.canonicalLineId} moved from ` +
+          `${prior.value} (${prior.periodLabel}) to ${current.value} (${current.periodLabel}) — ` +
+          `${(changePct * 100).toFixed(1)}% ${direction === 'COLLAPSE' ? 'collapse' : 'spike'} on a position ` +
+          `above the ${materialityFloor} materiality floor. Confirm this is a real corporate event and not an extraction defect.`,
+      });
+    }
+  }
+  return findings;
+}
 
 // ---------------------------------------------------------------------------
 // Persistence
@@ -188,6 +482,12 @@ export interface FinanceReconciliationRunRow {
   bucket_detail: unknown;
   created_at: string;
   created_by: string | null;
+  /** RC-01, additive column (20260810_finance_v3_d02_reconciliation_coverage.sql). */
+  result_quality: ReconciliationResultQuality | null;
+  /** RC-01, additive column — `absCoveredTotal / absSourceTotal` as stored NUMERIC. */
+  source_value_coverage_pct: string | null;
+  /** RC-01, additive column — FK to the coverage exception (distinct from the residual one). */
+  coverage_exception_id: string | null;
 }
 
 export interface FinanceStmtReconciliationRow {
@@ -236,6 +536,11 @@ export interface RunReconciliationParams {
   actorId?: string;
   role?: FinanceRole;
   expectedVersion?: number;
+  /** RC-05 — set false to skip the period-over-period plausibility control (default: run it). */
+  runPeriodJumpCheck?: boolean;
+  /** RC-05 overrides (defaults: `PERIOD_JUMP_RELATIVE_THRESHOLD_PCT` / `PERIOD_JUMP_MATERIALITY_ANCHOR_PCT`). */
+  periodJumpRelativeThresholdPct?: number;
+  periodJumpMaterialityAnchorPct?: number;
 }
 
 export interface RunReconciliationResult {
@@ -244,6 +549,14 @@ export interface RunReconciliationResult {
   totals: WaterfallTotals;
   materialityThresholdPct: number;
   exception: FinanceExceptionRow | null;
+  /** RC-01 — raised when any source row failed to reach the canonical model. */
+  coverageException: FinanceExceptionRow | null;
+  /** RC-01 — DEC-FIN-009 clean/conditional/provisional, persisted on the run row. */
+  resultQuality: ReconciliationResultQuality;
+  /** RC-05 — every implausible period-over-period move detected on this version's BS lines. */
+  periodJumps: PeriodJumpFinding[];
+  /** RC-05 — one WARNING `finance_exceptions` row per finding (deduplicated). */
+  periodJumpExceptions: FinanceExceptionRow[];
   readiness: {
     checked: boolean;
     ready: boolean;
@@ -258,6 +571,7 @@ export async function runReconciliation(params: RunReconciliationParams): Promis
   const materialityThresholdPct = params.materialityThresholdPct ?? PROVISIONAL_MATERIALITY_THRESHOLD_PCT;
   const totals = computeWaterfall(params.mappingResults);
   const status = determineReconciliationStatus(totals, materialityThresholdPct);
+  const provisionalResultQuality = determineResultQuality(totals, materialityThresholdPct, 0);
 
   const runId = uuidv4();
   const reconRowIds = params.mappingResults.map(() => uuidv4());
@@ -268,8 +582,8 @@ export async function runReconciliation(params: RunReconciliationParams): Promis
          id, organization_id, artifact_id, business_version_id, source_system,
          source_total, mapped_total, excluded_total, unmapped_total, duplicate_total,
          reclass_net_total, elimination_net_total, canonical_total, materiality_threshold_applied,
-         status, created_by
-       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         status, result_quality, source_value_coverage_pct, bucket_detail, created_by
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
        RETURNING *`,
       [
         runId,
@@ -287,6 +601,11 @@ export async function runReconciliation(params: RunReconciliationParams): Promis
         totals.canonicalTotal,
         materialityThresholdPct,
         status,
+        // Provisional at insert time: RC-05 jumps are only known after the lines are queried
+        // back below, and this row must never exist without SOME quality verdict on it.
+        provisionalResultQuality,
+        totals.coverage.sourceValueCoveragePct,
+        JSON.stringify({ coverage: totals.coverage }),
         params.createdBy,
       ]
     );
@@ -361,6 +680,118 @@ export async function runReconciliation(params: RunReconciliationParams): Promis
     finalRun = { ...run, linked_exception_id: exception.id };
   }
 
+  // --- BUGFIX RC-01: coverage exception. A row that never reached the canonical model is a
+  //     completeness defect on its own axis — it must be COUNTABLE (how many rows mapped, how
+  //     many were left, what share of source VALUE the mapped rows carry), not implied by a
+  //     residual that already subtracted it away. Non-blocking by DEC-FIN-009; the severity
+  //     rides on the exception and on result_quality, never on a gate. ---
+  let coverageException: FinanceExceptionRow | null = null;
+  if (totals.coverage.coverageLossRowCount > 0) {
+    const cov = totals.coverage;
+    const severity = severityForResidual(cov.coverageLossSharePct, materialityThresholdPct);
+    const raised = await exceptionLedgerService.raise({
+      organizationId: params.organizationId,
+      artifactId: params.artifactId,
+      businessVersionId: params.businessVersionId,
+      severity,
+      sourceRef: { kind: 'STATEMENT_RECONCILIATION_COVERAGE', reconciliationRunId: runId },
+      // "expected" = the whole source statement by magnitude; "observed" = what the canonical
+      // model actually carries. delta is the value that silently disappeared.
+      expected: cov.absSourceTotal,
+      observed: cov.absCoveredTotal,
+      delta: -cov.absCoverageLossTotal,
+      unit: null,
+      reasonCode: 'RECONCILIATION_SOURCE_COVERAGE_INCOMPLETE',
+      dedupKey: `coverage::${params.businessVersionId}::${runId}`,
+      raisedBy: params.createdBy,
+      evidence: {
+        coverage: cov,
+        materialityThresholdPct,
+        summary:
+          `${cov.mappedRowCount} of ${cov.totalRowCount} source rows reached the canonical model; ` +
+          `${cov.coverageLossRowCount} row(s) had no canonical target. Mapped rows carry ` +
+          `${cov.sourceValueCoveragePct === null ? 'an undefined share of' : `${(cov.sourceValueCoveragePct * 100).toFixed(1)}% of`} ` +
+          `the absolute source value.`,
+      },
+    });
+    if (!raised.ok) {
+      throw new Error(`Failed to raise reconciliation-coverage exception: ${raised.message}`);
+    }
+    coverageException = raised.exception;
+    await withPinnedPostgresTransaction((tx) =>
+      tx.queryRun(`UPDATE finance_reconciliation_runs SET coverage_exception_id = ? WHERE id = ?`, [coverageException!.id, runId])
+    );
+    finalRun = { ...finalRun, coverage_exception_id: coverageException.id };
+  }
+
+  // --- BUGFIX RC-05: period-over-period plausibility control on the balance sheet. ---
+  let periodJumps: PeriodJumpFinding[] = [];
+  const periodJumpExceptions: FinanceExceptionRow[] = [];
+  if (params.runPeriodJumpCheck !== false) {
+    const observations = await loadBalanceSheetObservations(params.businessVersionId);
+    periodJumps = detectPeriodOverPeriodJumps(observations, {
+      relativeThresholdPct: params.periodJumpRelativeThresholdPct,
+      materialityAnchorPct: params.periodJumpMaterialityAnchorPct,
+    });
+    for (const jump of periodJumps) {
+      const dedupKey = `period_jump::${params.businessVersionId}::${jump.entityId}::${jump.canonicalLineId}::${jump.priorPeriodId}::${jump.currentPeriodId}`;
+      const alreadyOpen = await withPinnedPostgresTransaction((tx) =>
+        tx.queryOne<{ id: string }>(`SELECT id FROM finance_exceptions WHERE dedup_key = ? LIMIT 1`, [dedupKey])
+      );
+      if (alreadyOpen) continue;
+      const raised = await exceptionLedgerService.raise({
+        organizationId: params.organizationId,
+        artifactId: params.artifactId,
+        businessVersionId: params.businessVersionId,
+        // WARNING by DEC-FIN-009: "akceptacja analityka z uzasadnieniem" — this MARKS the
+        // import, it never blocks it (a SECURITY severity would; WARNING does not).
+        severity: 'WARNING',
+        sourceRef: {
+          kind: 'STATEMENT_PERIOD_OVER_PERIOD_JUMP',
+          reconciliationRunId: runId,
+          entityId: jump.entityId,
+          canonicalLineId: jump.canonicalLineId,
+          lineCode: jump.lineCode,
+          statementType: jump.statementType,
+          priorPeriodId: jump.priorPeriodId,
+          currentPeriodId: jump.currentPeriodId,
+        },
+        expected: jump.priorValue,
+        observed: jump.currentValue,
+        delta: jump.currentValue - jump.priorValue,
+        unit: null,
+        reasonCode: 'PERIOD_OVER_PERIOD_JUMP',
+        dedupKey,
+        raisedBy: params.createdBy,
+        evidence: { jump },
+      });
+      if (!raised.ok) {
+        throw new Error(`Failed to raise period-over-period jump exception: ${raised.message}`);
+      }
+      periodJumpExceptions.push(raised.exception);
+    }
+  }
+
+  // --- Final DEC-FIN-009 verdict, now that RC-05 findings are known. ---
+  const resultQuality = determineResultQuality(totals, materialityThresholdPct, periodJumps.length);
+  if (resultQuality !== provisionalResultQuality) {
+    await withPinnedPostgresTransaction((tx) =>
+      tx.queryRun(`UPDATE finance_reconciliation_runs SET result_quality = ? WHERE id = ?`, [resultQuality, runId])
+    );
+  }
+  finalRun = { ...finalRun, result_quality: resultQuality };
+
+  // Propagate the verdict onto the Statement Pack itself so the artifact — not just the
+  // reconciliation run — carries clean/conditional/provisional (DEC-FIN-009: "kazdy material
+  // pokazuje jakosc ... rozroznia clean/conditional/provisional"). Scoped to DRAFT so the B01
+  // post-approval immutability trigger is never provoked.
+  await withPinnedPostgresTransaction((tx) =>
+    tx.queryRun(`UPDATE finance_business_versions SET result_quality = ? WHERE business_version_id = ? AND status = 'DRAFT'`, [
+      resultQuality,
+      params.businessVersionId,
+    ])
+  );
+
   // --- Readiness gate + optional DRAFT -> READY_FOR_REVIEW transition (WP-D01 section 7 /
   //     WP-B02 T2, both already shipped — this function only calls them). ---
   const readiness: RunReconciliationResult['readiness'] = { checked: false, ready: false, checks: [], transitionAttempted: false };
@@ -393,5 +824,63 @@ export async function runReconciliation(params: RunReconciliationParams): Promis
     }
   }
 
-  return { run: finalRun, reconciliationRows, totals, materialityThresholdPct, exception, readiness };
+  return {
+    run: finalRun,
+    reconciliationRows,
+    totals,
+    materialityThresholdPct,
+    exception,
+    coverageException,
+    resultQuality,
+    periodJumps,
+    periodJumpExceptions,
+    readiness,
+  };
+}
+
+/**
+ * RC-05 data access — every stored balance-sheet cell of one Statement Pack version, flattened
+ * for `detectPeriodOverPeriodJumps`. Only `value_status='PRESENT_*'` cells carry a number;
+ * MISSING/NA cells come back as `value: null` so the detector can skip them instead of reading
+ * a NULL as zero (which would manufacture a 100% "collapse" out of a missing row).
+ */
+async function loadBalanceSheetObservations(businessVersionId: string): Promise<PeriodObservation[]> {
+  const rows = await withPinnedPostgresTransaction((tx) =>
+    tx.queryAll<{
+      entity_id: string;
+      canonical_line_id: string;
+      line_code: string | null;
+      statement_type: string;
+      consolidation_scope: string;
+      accumulation_basis: string;
+      period_id: string;
+      period_label: string;
+      period_end: string;
+      value_decimal: string | null;
+      value_status: string;
+    }>(
+      `SELECT l.entity_id, l.canonical_line_id, fsl.line_code, l.statement_type,
+              l.consolidation_scope, l.accumulation_basis,
+              l.period_id, p.label AS period_label, p.period_end,
+              l.value_decimal, l.value_status
+         FROM finance_stmt_lines l
+         JOIN finance_stmt_periods p ON p.period_id = l.period_id
+         LEFT JOIN financial_statement_lines fsl ON fsl.id = l.canonical_line_id
+        WHERE l.business_version_id = ? AND l.statement_type = 'BS'`,
+      [businessVersionId]
+    )
+  );
+
+  return rows.map((r) => ({
+    entityId: r.entity_id,
+    canonicalLineId: r.canonical_line_id,
+    lineCode: r.line_code,
+    statementType: r.statement_type,
+    consolidationScope: r.consolidation_scope,
+    accumulationBasis: r.accumulation_basis,
+    periodId: r.period_id,
+    periodLabel: r.period_label,
+    periodEnd: typeof r.period_end === 'string' ? r.period_end : new Date(r.period_end as unknown as string).toISOString(),
+    value: r.value_decimal === null ? null : Number(r.value_decimal),
+  }));
 }

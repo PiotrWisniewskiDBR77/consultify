@@ -66,6 +66,40 @@ export interface RawStatementLine {
   sourceRef: Record<string, unknown>;
 }
 
+/**
+ * WHY an exclusion needs a KIND, not just a reason code (BUGFIX RC-01).
+ *
+ * `action='EXCLUDE'` conflates two things that must never be conflated:
+ *  - ANALYST_DECISION — "this real source line is deliberately kept out of the
+ *    canonical model" (one-off gain, non-recurring item, out-of-perimeter row).
+ *    The canonical pack is complete WITHOUT it; the exclusion is the answer.
+ *  - NO_CANONICAL_TARGET — "the canonical taxonomy has nowhere to put this real
+ *    source line". The canonical pack is INCOMPLETE because of it; the exclusion
+ *    is the problem, not the answer.
+ *
+ * Before this fix both landed in the EXCLUDED bucket, which the waterfall
+ * subtracts out of the residual — so a Statement Pack that dropped 76% of a real
+ * IFRS statement for lack of taxonomy targets reconciled with residual 0 and
+ * status CLEAN (REAL_COMPANY_PROOF_report.md, RC-01: 212 of 280 real Apator
+ * line-values). `excludeKind` makes the difference declarable, and
+ * `MappedRowResult.coverageLoss` carries it into the reconciliation waterfall.
+ */
+export type ExcludeKind = 'ANALYST_DECISION' | 'NO_CANONICAL_TARGET';
+
+/**
+ * Fallback recognition for callers that only set `excludeReasonCode` (the shape the
+ * Apator real-company harness actually emits) and never learned about `excludeKind`.
+ * A reason code in this set is treated as `excludeKind='NO_CANONICAL_TARGET'`.
+ * Exported so callers can assert against it instead of re-typing the strings.
+ */
+export const TAXONOMY_GAP_EXCLUSION_REASON_CODES: ReadonlySet<string> = new Set([
+  'NO_P0_CANONICAL_TARGET',
+  'NO_CANONICAL_TARGET',
+  'CANONICAL_TARGET_MISSING',
+  'CANONICAL_LINE_NOT_FOUND',
+  'TAXONOMY_GAP',
+]);
+
 export interface MappingRule {
   /** Matched against `RawStatementLine.lineItem` after normalization (trim/lowercase/collapse-whitespace). */
   sourceLabel: string;
@@ -75,6 +109,8 @@ export interface MappingRule {
   action?: 'MAP' | 'EXCLUDE' | 'RECLASS';
   /** Required (by this service, app-level) when action='EXCLUDE'. */
   excludeReasonCode?: string;
+  /** Default 'ANALYST_DECISION' (unless `excludeReasonCode` is in `TAXONOMY_GAP_EXCLUSION_REASON_CODES`). */
+  excludeKind?: ExcludeKind;
   /** Required when action='RECLASS' — the line this row is redirected TO. */
   reclassTargetLineCode?: string;
   reclassTargetStatementType?: StatementType;
@@ -119,6 +155,17 @@ export interface MappedRowResult {
   signConvention: SignConvention;
   reasonCode: string | null;
   duplicateOfRowIndex: number | null;
+  /**
+   * True when this row's source value never reached the canonical model AND that is a
+   * completeness defect rather than a deliberate answer: every UNMAPPED row, plus every
+   * EXCLUDED row whose exclusion is a taxonomy gap (`excludeKind='NO_CANONICAL_TARGET'`
+   * or a reason code in `TAXONOMY_GAP_EXCLUSION_REASON_CODES`).
+   *
+   * DUPLICATE is deliberately NOT coverage loss — the value IS in the canonical model
+   * (the first occurrence claimed the cell); the duplicate is a conflict, already caught
+   * as residual by the waterfall. See BUGFIX_RC01_RC05_report.md.
+   */
+  coverageLoss: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -143,13 +190,25 @@ function lineCodeKey(statementType: string, lineCode: string): string {
   return `${statementType}::${lineCode}`;
 }
 
+/**
+ * RC-01 classification: does this row's absence from the canonical model mean the
+ * canonical model is INCOMPLETE (coverage loss) or that it is COMPLETE BY DECISION?
+ */
+export function isCoverageLoss(bucket: ReconciliationBucket, reasonCode: string | null, excludeKind?: ExcludeKind): boolean {
+  if (bucket === 'UNMAPPED') return true;
+  if (bucket !== 'EXCLUDED') return false;
+  if (excludeKind === 'NO_CANONICAL_TARGET') return true;
+  if (excludeKind === 'ANALYST_DECISION') return false;
+  return reasonCode !== null && TAXONOMY_GAP_EXCLUSION_REASON_CODES.has(reasonCode);
+}
+
 function emptyResult(
   rowIndex: number,
   raw: RawStatementLine,
   bucket: ReconciliationBucket,
   overrides: Partial<MappedRowResult> = {}
 ): MappedRowResult {
-  return {
+  const base: MappedRowResult = {
     rowIndex,
     raw,
     bucket,
@@ -164,8 +223,12 @@ function emptyResult(
     signConvention: 'NATURAL',
     reasonCode: null,
     duplicateOfRowIndex: null,
+    coverageLoss: false,
     ...overrides,
   };
+  // Never let a caller-supplied override understate coverage loss for an UNMAPPED row.
+  if (base.bucket === 'UNMAPPED') base.coverageLoss = true;
+  return base;
 }
 
 // ---------------------------------------------------------------------------
@@ -230,12 +293,16 @@ export async function mapStatementLines(params: MapStatementLinesParams): Promis
       const ruleLineId = lineCodeIdMap.get(lineCodeKey(rule.statementType, rule.lineCode)) ?? null;
 
       if (rule.action === 'EXCLUDE') {
+        const excludeReasonCode = rule.excludeReasonCode ?? 'EXCLUDED_BY_RULE';
         results.push(
           emptyResult(rowIndex, raw, 'EXCLUDED', {
             canonicalLineId: ruleLineId,
             entityId: entityByCode.get(raw.entityCode) ?? null,
             signConvention: rule.signConvention ?? 'NATURAL',
-            reasonCode: rule.excludeReasonCode ?? 'EXCLUDED_BY_RULE',
+            reasonCode: excludeReasonCode,
+            // RC-01: an exclusion made because the taxonomy has no target is a coverage
+            // defect, not an analyst decision — it must not be netted away silently.
+            coverageLoss: isCoverageLoss('EXCLUDED', excludeReasonCode, rule.excludeKind),
           })
         );
         continue;
@@ -314,6 +381,7 @@ export async function mapStatementLines(params: MapStatementLinesParams): Promis
             signConvention: rule.signConvention ?? 'NATURAL',
             reasonCode: 'DUPLICATE_CELL_MAPPING',
             duplicateOfRowIndex: existingRowIndex,
+            coverageLoss: false, // conflict, not a gap — already surfaced as residual
           })
         );
         continue;
@@ -372,6 +440,7 @@ export async function mapStatementLines(params: MapStatementLinesParams): Promis
         signConvention: rule.signConvention ?? 'NATURAL',
         reasonCode: null,
         duplicateOfRowIndex: null,
+        coverageLoss: false,
       });
     }
 
