@@ -6121,3 +6121,136 @@ markerem tej sesji w `organizations`/`users`/`rvn_platform_events`/
 listy (IO-F1 ownera brak, IO-F2 próg tolerancji brak, `paybackPeriods` na
 Actual limit) — ten pakiet ich nie dotyka, tylko je dziedziczy przez
 `buildApprovedRoiCaseWithMatchingLink`'s IO-F1 stand-in.
+
+---
+
+## 54. RN-G2 warstwa UI — pakiety P0/P1/P2 (powłoka, rejestr KPI, rejestr ROI) (2026-08-10)
+
+Pierwsze trzy z ~20-26 pakietów RN-G2 (`RN_G2_UI_SCOPE.md` §G). Rejestr do §53
+prowadził wyłącznie backend i warstwę integracyjną; ta sekcja domyka lukę i
+czyni rejestr znów autorytatywnym także dla UI. Wszystkie trzy pakiety są ZA
+FLAGĄ, domyślnie WYŁĄCZONĄ. Nic nie wypchnięte, nic nie wdrożone.
+
+### P0 — wspólna powłoka (`203c73b64e`, `32eb92a3c7`)
+
+`src/components/ResultsVNext/`: powłoka rejestru złożona WYŁĄCZNIE ze
+`StandardModuleBar`/`StandardTable`/`StandardPreview` (CLAUDE.md reguła #1/#9),
+`HonestValue.tsx` (renderuje trójwartościową domenę `decimal|null|
+'not_calculable'` tak, żeby `null` i `not_calculable` były wizualnie
+ROZRÓŻNIALNE — to niezmiennik wymuszony przez ~23 epiki backendu, nie kosmetyka),
+`LifecycleLockBadge.tsx`, `ResultsVNextForbiddenState.tsx`,
+`resultsVNextFeatureFlags.ts` (flaga per domena, wszystkie domyślnie OFF),
+trasy `/results/kpi|roi|okr`. 16 zrzutów w `docs/qa/screens/rn-g2-shell-2026-08-10/`.
+
+Skutek uboczny o realnej wartości: P0 naprawił harness `dev-render/` — brakujący
+`dev-render/screens/tools-sesja-wyjscie.tsx` wywalał na 500 KAŻDY z ~150
+zarejestrowanych ekranów, nie tylko swój własny. To ta sama awaria, którą
+MEMORY notuje niezależnie w odbiorach M02-D/M03/M04/M06/M11/M12/M13.
+
+### P1 — rejestr KPI (`81f2af407f`)
+
+`kpiApi.ts` + realny `ResultsKpiRegistryPage.tsx` na żywych `GET/POST
+/vnext/results/kpi*`, `persistKey: results-vnext.kpi-registry`, `HonestValueCell`,
+`LifecycleLockBadge`, stan forbidden dla deep-linku. 11 zrzutów w
+`docs/qa/screens/rn-g2-kpi-2026-08-10/`.
+
+**Trzy realne luki backendu znalezione przez czytanie kodu tras/repozytoriów, nie
+przez testy** (kolejne pakiety trafią na nie tak samo):
+1. **Żaden `GET` nie zwraca złączonego wiersza `rvn_kpi_definition_versions`.**
+   `GET /kpi` i `GET /kpi/:id` oddają wyłącznie goły wiersz `rvn_kpi_definitions`.
+   Nazwa, jednostka, geometria celu i `approvalStatus` wersji wracają TYLKO jako
+   efekt uboczny mutacji create/approve/reject. Rejestr pokazuje więc `kpiCode`
+   jako tożsamość wiersza, nie czytelną nazwę. To luka API, nie skrót UI.
+2. **`listMyKpis`/`listOrganizationKpiAttention` nie są listami wierszy** —
+   pierwsza to feed zobowiązań/uwagi, druga widok statystyk zagregowanych. Mimo
+   nazw żadna nie nadaje się na źródło „rejestru moich KPI".
+3. **404 skleja „nie istnieje" z „ABAC odmówił"** — `getKpi` zwraca `null`
+   jednakowo dla obu przez złączenie ograniczone widocznością, więc stan
+   forbidden nie może pokazać prawdziwego powodu DENY z `RN_G1_PLATFORM_DESIGN.md`
+   §B. P1 przyjmuje fail-closed `NO_VISIBILITY_RECORD` i zapisuje to jako
+   ZAŁOŻENIE, nie jako fakt o API.
+
+**Klasa błędu warta zapamiętania**: typ `TableRow` w `StandardTable` wymaga pola
+`id`, a DTO domenowe niosą `kpiId`/`caseId`/`setId`. Przepuszczenie wiersza bez
+mapowania psuje CICHO i klucze Reacta, i zaznaczanie wiersza — żadnego błędu,
+klik po prostu nic nie robi. Mapuj `{...row, id: row.<domainId>}`.
+
+### P2 — rejestr ROI (`9d27454ac8` kod, `de48a5fdb6` odbiór wizualny)
+
+Ekran `/results/roi` = realny rejestr spraw ROI (lista + podgląd) na wspólnej
+powłoce P0. Świadomie NIE pełne narzędzie sprawy — 15 grup podzasobów to pakiety
+§G #12-21.
+
+- `roi/roiApi.ts` — mały, ręcznie pisany klient na DOKŁADNIE 3 odczyty, nie próba
+  owinięcia ~76 endpointów ROI (§G pytanie otwarte #4 słusznie traktuje to jako
+  problem 200+ wrapperów dla późniejszego pakietu). Kształty kopert
+  (`{cases}`, `{runs}`, `{attention}`) ZWERYFIKOWANE wobec realnych routerów, nie
+  założone.
+- `roi/roiRegistryMappers.ts` — etykiety i tony dla literalnego automatu 13 stanów
+  (`ROI_E001_DESIGN.md` L104-109); tablica blokad odwzorowuje serwerowe
+  `NON_EDITABLE_STATUSES` (`roiCaseCommands.ts` L492-506) **9/9, wpis po wpisie**;
+  wyprowadzenie uczciwych wartości, w którym `irrStatus !== 'computed'` oraz
+  przebieg `failed` dają `'not_calculable'`, a „nigdy nie było przebiegu" zostaje
+  `null` — te dwa stany NIGDY nie zlewają się w jeden znak.
+- `roi/roiRegistryPresenters.tsx` — czyste buildery kolumn/kebaba/podglądu,
+  współdzielone przez żywy Hub i harness QA, żeby zrzut pokazywał TEN SAM kod, co
+  produkcja, a nie drugą implementację, która może cicho odjechać.
+- `roi/ResultsRoiHub.tsx` — dwie zakładki na realnych endpointach, chipy Menu 3
+  kubełkujące realny automat stanów, JEDNO leniwe pobranie przebiegu kalkulacji
+  dla zaznaczonego wiersza (nie N+1 na wiersz widoczny).
+- `persistKey: results-vnext.roi-registry[.benefits]` — nigdy legacy
+  `results.roi-reviews` (T37), którego kolizja nadpisałaby realnym użytkownikom
+  zapisany układ kolumn.
+
+**Odbiór wizualny (17 zrzutów, `docs/qa/screens/rn-g2-roi-2026-08-10/`) — trzy
+defekty złapane OCZAMI, nie testami:**
+1. `truncate` na spanie `inline` nie działa; identyfikatory właścicieli wchodziły
+   w kolumnę waluty („user-anna-kowalskaPLN"). Dodane `block`.
+2. `formatRoiCurrency/Number/Percent` miały zaszyte `'en-US'`, podczas gdy
+   `formatRoiDate` w tym SAMYM pliku respektował `pl-PL`, a siostrzany rejestr KPI
+   (`ResultsKpiRegistryPage.tsx` L255/305) już przełączał się po `isPolish`.
+   Ujednolicone z konwencją repo: PL „512 000 zł"/„34,2%", EN „PLN 512,000"/„34.2%".
+3. Harness miał `isPolish` zaszyte na `true` i polskie literały w zakładkach/
+   chipach/stanach — czyli `&lang=en` NICZEGO nie dowodził. Teraz lustrzanie
+   odbija realny Hub. To jest ta sama klasa błędu co „zielony mock ≠ poprawny kod".
+
+Zweryfikowane wzrokiem, nie założone: `null` renderuje „—", `not_calculable`
+renderuje odrębny wyszarzony chip z powodem (sprawy `roi-case-3` vs `roi-case-4`);
+realny payback równy 0 nadal renderuje „0", nigdy „—"; stan loading zachowuje
+nagłówek i geometrię kolumn; wiersz zablokowany zachowuje KAŻDĄ pozycję kebaba
+widoczną i wyszarzoną.
+
+Ostrzeżenie hooka gęstości „hub ma 7 zakładek" — **fałszywy alarm potwierdzony
+wzrokiem**: Menu 2 ma 2 pigułki, Menu 3 ma 5 chipów, heurystyka zlicza je razem.
+
+**Bramki**: `tsc` frontendu 0 błędów; `check-list-canon.sh` i `check-artefakt.sh`
+przechodzą, żaden baseline nie urósł (dług kanonu list SPADŁ o 1).
+
+### Otwarte, świadomie NIE rozstrzygnięte w tych pakietach
+
+- **P-UI-1 (eskalowane z odbioru P2)**: `ResultsVNextRegistryShell` trzyma panel
+  podglądu jako sztywne `w-[400px]` wewnątrz `overflow-hidden` — przy powiększeniu
+  125% treść jest OBCINANA bez możliwości doscrollowania (`bodyScrollWidth ===
+  clientWidth`, brak reflow). Plik współdzielony z przyjętym już KPI P1 i przyszłym
+  OKR, więc naprawa nie należała do pakietu ROI. Dowód:
+  `docs/qa/screens/rn-g2-roi-2026-08-10/13-zoom125-light-pl-1440.png`.
+- **P-UI-2 (eskalowane z odbioru P2)**: `StandardTable` ma etykietę przycisku
+  ponowienia zaszytą po angielsku (ok. L532) dla KAŻDEGO ze 100+ konsumentów w repo.
+  Widoczne na `07-all-error-light-pl-1440.png` — polski ekran, angielski przycisk.
+- **P-UI-3**: aktywacja klawiszem Enter/Space na kebabie i pstryczku kolumn
+  pozostała NIEROZSTRZYGNIĘTA — automatyzacja nie wyzwalała natywnej aktywacji
+  nawet na przyciskach z jawnym `onClick`, identycznie na niepowiązanym przycisku
+  kontrolnym. To ograniczenie narzędzia, nie potwierdzony defekt produktu; wymaga
+  ręcznego sprawdzenia realną klawiaturą.
+- Pytania otwarte §E (co pokazuje gołe `/results` w okresie przejściowym), §G
+  pytanie #2 (archetyp/powłoka pełnych narzędzi KPI/ROI/OKR) i #3 (sprawy odchyleń
+  KPI: własny rejestr czy zakładka) NADAL nie są rozstrzygnięte przez żaden
+  dokument i NIE zostały rozstrzygnięte tutaj po cichu.
+
+### Uwaga procesowa
+
+Commit `bdbf6d518f` („P2 ROI registry was stopped mid-package") powstał w tym
+drzewie RÓWNOLEGLE do trwającej rundy QA i jego treść była nieaktualna już w
+chwili zapisu — pakiet P2 nie został przerwany, tylko domknięty w `de48a5fdb6`.
+To kolejny przypadek złamania mandatu „jeden worktree = jeden agent"; sam commit
+dotknął wyłącznie `RESUME_HANDOFF.md` i niczego nie nadpisał.

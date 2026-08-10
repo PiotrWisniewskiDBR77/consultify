@@ -15,12 +15,12 @@ authoritative history and every claim below traces to a numbered section there.*
 |---|---|
 | Worktree | `/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify-results-vnext-g0-20260809` |
 | Branch | `codex/results-vnext-g0-20260809` |
-| HEAD | `6123db4ebc069f932935f277ac9d5d8503a7845e` (`6123db4ebc`) |
-| Ahead of `origin/demo` | **277 commits** |
+| HEAD | `de48a5fdb6` (RN-G2 P2 ROI registry accepted; ledger §54 lands on top) |
+| Ahead of `origin/demo` | **283 commits** |
 | Pushed | **nothing, ever** |
 | Deployed | **nothing, ever** |
 | Reference tag | `rn-g3-gold-flow-reference` → `d463c32b8c` (the dispatcher slice, all 8 proofs green) |
-| Ledger high-water | **§53** — grep `^## ` live before writing a new one; sessions have collided on this three times |
+| Ledger high-water | **§54** — grep `^## ` live before writing a new one; sessions have collided on this three times |
 
 ### Dirty state at handoff — READ CAREFULLY, two different owners
 
@@ -34,12 +34,9 @@ authoritative history and every claim below traces to a numbered section there.*
 These have been left untouched for the entire session by explicit instruction and
 must stay that way. See §4 for why they matter.
 
-**Owned by the RN-G2 P1 agent that was still running at handoff** (see §3):
-- `dev-render/main.tsx` (M)
-- `src/components/ResultsVNext/ResultsKpiRegistryPage.tsx` (M)
-- `dev-render/screens/results-vnext-kpi-registry.tsx` (??)
-- `docs/qa/screens/rn-g2-kpi-2026-08-10/` (??)
-- `src/components/ResultsVNext/kpiApi.ts` (??)
+The second block that used to be listed here — the RN-G2 P1 (KPI) files — has
+since landed in `81f2af407f`. The working tree now holds only the five
+foreign-session files above.
 
 ---
 
@@ -72,8 +69,35 @@ Two agents were running. **Check their worktrees before starting anything — do
 
 | Package | Where | State |
 |---|---|---|
-| **RN-G2 P1 — KPI registry** | main worktree | **COMPLETE and committed** after this handoff's first draft — see §3a. The files listed as "uncommitted, P1-owned" in §1 have since landed. |
-| **RN-G2 P2 — ROI registry** | isolated worktree (agent `a6d6ce91abb988955`) | **STOPPED MID-PACKAGE** on branch `worktree-agent-a6d6ce91abb988955`. It was partway through i18n fixes (hardcoded empty-state strings) when halted — NOT finished, do NOT merge blind. Inspect its commits, then either finish the package there or rebuild P2 from scratch on the P0 shell. Uncommitted in-flight work was lost; committed work is safe on that branch. |
+| **RN-G2 P1 — KPI registry** | main worktree | **COMPLETE and committed** (`81f2af407f`) — see §3a. |
+| **RN-G2 P2 — ROI registry** | isolated worktree (agent `a6d6ce91abb988955`) | **COMPLETE and merged** — code `9d27454ac8`, visual QA `de48a5fdb6`. See ledger §54. |
+
+**Correction to a stale claim in this file's own history**: commit `bdbf6d518f`
+recorded P2 as "stopped mid-package". That was written by a parallel process
+while the QA round was still running and was already wrong when saved. P2 was
+not abandoned — it was finished, typechecked, canon-checked and accepted on 17
+screenshots. Do not act on that commit message.
+
+### 3b. Wave launched 2026-08-10 — four parallel lanes, all based on `de48a5fdb6`
+
+Each lane owns an isolated worktree under `/Users/piotrwisniewski/rn-g2-lanes/`
+with `node_modules` symlinked to this worktree's copy (a worktree without it
+makes vite die silently). One worktree, one agent — the mandate that four
+sessions have already broken. Verify a lane's base with `git log --oneline -1`
+before touching it.
+
+| Lane | Worktree / branch | Package | Owns these files |
+|---|---|---|---|
+| **okr** | `rn-g2-lanes/okr`, `rn-g2-lane-okr` | §G #23 OKR Sets registry + preview | `src/components/ResultsVNext/okr/**`, `ResultsOkrRegistryPage.tsx` |
+| **kpi-scorecards** | `rn-g2-lanes/kpi-scorecards`, `rn-g2-lane-kpi-scorecards` | §G #8 KPI Scorecards registry + detail | KPI scorecard files, `routeConfig.ts`/`AppRoutes.tsx` |
+| **roi-create** | `rn-g2-lanes/roi-create`, `rn-g2-lane-roi-create` | quick-create (master plan §9 Etap 3) + lifecycle transitions (§G #16 part) | `src/components/ResultsVNext/roi/**` |
+| **platform** | `rn-g2-lanes/platform`, `rn-g2-lane-platform` | P-UI-1 + P-UI-2 defects, shared legacy-archive panel | `src/components/standard/**`, `ResultsVNextRegistryShell.tsx`, `ResultsVNext/legacy/**` |
+
+Only the **platform** lane may touch shared components; the other three are
+forbidden from them and must escalate instead. Every lane conflicts on exactly
+three shared files — `src/components/ResultsVNext/index.ts`, `dev-render/main.tsx`,
+and (for kpi-scorecards) the route files. Those conflicts are additive and
+mechanical; resolve by keeping both sides, as was done when P2 met P1.
 
 ### 3a. RN-G2 P1 (KPI registry) — landed, with three real backend gaps found
 
@@ -181,6 +205,6 @@ Then, in order:
 
 - Domain backends (KPI/ROI/OKR) and the async integration layer are built and evidenced on real Postgres.
 - RN-G3, RN-G5 and RN-G6 have real end-to-end evidence for what has been built; each still carries named open items recorded in the ledger, not silently closed.
-- **RN-G2 is roughly 1 of 20–26 packages complete.**
+- **RN-G2 is 3 of 20–26 packages complete** (P0 shell, P1 KPI registry, P2 ROI registry), with four more in flight per §3b. Three named UI defects stay open as P-UI-1/2/3 in ledger §54 — two of them in shared components, one unresolved because the automation could not drive native keyboard activation and needs a human at a real keyboard.
 - **RN-G7 cannot start before RN-G2 finishes.**
 - Nothing has been pushed, merged to demo, or deployed. No terminal PASS has been self-declared — that is Codex's and the Founder's call, per this program's own contract.
