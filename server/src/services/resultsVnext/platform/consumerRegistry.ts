@@ -15,6 +15,7 @@ import type { PoolClient } from 'pg';
 import type { RvnOutboxRow } from './outboxDrain.js';
 
 import { dispatchMyWorkProjection } from './myworkProjectionConsumer.js';
+import { dispatchFinanceProjection } from './financeProjectionConsumer.js';
 
 /**
  * Minimal shape of an `rvn_platform_events` row the way the dispatcher's
@@ -45,36 +46,32 @@ export type ConsumerFn = (
 ) => Promise<void>;
 
 /**
- * `mywork_projection` is the ONE LIVE, built-and-registered consumer this
- * slice ships (`dispatchMyWorkProjection`, `myworkProjectionConsumer.ts`).
- * Everything else that has ever appeared as a routing target in
- * `atomicWrite.ts`'s `EVENT_TYPE_CONSUMER_GROUPS` falls into exactly one of
- * two other buckets, and the two must not be confused:
- *   - `finance_projection` is PENDING, not retired: 11 live event types (13
- *     literal string keys in `EVENT_TYPE_CONSUMER_GROUPS` — see
- *     `docs/product/results-vnext/RN_G6_FINANCE_PROJECTION_DESIGN.md` §0/§7
- *     for the exact catalog and the event-type-vs-literal-string count)
- *     across ROI-E003/E004/E005/E006/E007's finance-facing facts already
- *     route to it today. See `UNBUILT_CONSUMER_GROUPS` below — its rows PARK
- *     rather than being silently dropped.
- *   - `decisions_projection`/`notifications_projection` are RETIRED, not
- *     pending (2026-08-10 contract correction, EXECUTION_LEDGER.md §51; see
- *     `atomicWrite.ts`'s own "RETIRED VOCABULARY" comment for the full
- *     rationale). Neither ever routed a single event type — they existed
- *     only as a comment reserving the names. `decisions_projection` has no
- *     producer (`DecisionController.ts` emits no `rvn_platform_events`) and
- *     `notifications_projection` would duplicate `mywork_projection`'s own
- *     already-shipped `notifications` INSERT. Retired groups get NO entry in
- *     either map below — not `CONSUMER_REGISTRY`, not
- *     `UNBUILT_CONSUMER_GROUPS` — because no event ever routes to them; the
- *     contract test in
- *     `tests/resultsVnext/platform/consumerGroupContract.test.ts` asserts
- *     exactly that (every group `EVENT_TYPE_CONSUMER_GROUPS` actually routes
- *     to is registered-or-unbuilt, so a retired name silently regaining a
- *     routing entry would fail it, not fall into the void).
+ * RN-G6 (2026-08-10, docs/product/results-vnext/RN_G6_FINANCE_PROJECTION_
+ * DESIGN.md): `finance_projection` graduated from `UNBUILT_CONSUMER_GROUPS`
+ * to a real, registered consumer (`dispatchFinanceProjection`,
+ * `financeProjectionConsumer.ts`) — the second consumer built against this
+ * dispatcher, and proof the registry pattern needed zero dispatcher changes
+ * to add it (exactly the one line below + this file's other one-line diff).
+ * `mywork_projection` remains the first. Everything else that has ever
+ * appeared as a routing target in `atomicWrite.ts`'s
+ * `EVENT_TYPE_CONSUMER_GROUPS` is `decisions_projection`/
+ * `notifications_projection` — RETIRED, not pending (2026-08-10 contract
+ * correction, EXECUTION_LEDGER.md §51; see `atomicWrite.ts`'s own "RETIRED
+ * VOCABULARY" comment for the full rationale). Neither ever routed a single
+ * event type — they existed only as a comment reserving the names.
+ * `decisions_projection` has no producer (`DecisionController.ts` emits no
+ * `rvn_platform_events`) and `notifications_projection` would duplicate
+ * `mywork_projection`'s own already-shipped `notifications` INSERT. Retired
+ * groups get NO entry in either map below — not `CONSUMER_REGISTRY`, not
+ * `UNBUILT_CONSUMER_GROUPS` — because no event ever routes to them; the
+ * contract test in `tests/resultsVnext/platform/consumerGroupContract.test.ts`
+ * asserts exactly that (every group `EVENT_TYPE_CONSUMER_GROUPS` actually
+ * routes to is registered-or-unbuilt, so a retired name silently regaining a
+ * routing entry would fail it, not fall into the void).
  */
 export const CONSUMER_REGISTRY: Readonly<Record<string, ConsumerFn>> = {
   mywork_projection: dispatchMyWorkProjection,
+  finance_projection: dispatchFinanceProjection,
 };
 
 /**
@@ -83,17 +80,18 @@ export const CONSUMER_REGISTRY: Readonly<Record<string, ConsumerFn>> = {
  * built yet. Rows for these groups PARK (a distinct terminal status, see
  * `outboxDrain.ts`'s `markParked`) instead of following the default
  * unregistered-group path (`markFailed` -> eventually `dead_letter` ->
- * CRITICAL alert) — the design's original uniform treatment would fire a
- * CRITICAL Slack alert on every single ROI case approval (`roi.case_approved`
- * is one of `finance_projection`'s 11 live event types — see the header
- * comment above for the full catalog reference), which is an incident-shaped
- * response to what is actually known backlog. A group that is genuinely
- * unregistered and NOT in this set still hard-fails and dead-letters as
- * designed (see `platformOutboxDrainCron.ts`'s tick body).
+ * CRITICAL alert). A group that is genuinely unregistered and NOT in this
+ * set still hard-fails and dead-letters as designed (see
+ * `platformOutboxDrainCron.ts`'s tick body).
  *
- * `finance_projection` needs (§9, not built in this slice): the target
- * Finance read-model identified, a consumer function written and registered
- * above, then removed from this set. Until then its rows remain visible and
- * replayable, never silently dropped.
+ * Empty as of RN-G6 (2026-08-10) — `finance_projection` was the only member
+ * and is now registered above. Previously-parked `finance_projection` rows
+ * are replayable as-is: `markParked` never touched `attempts`/
+ * `next_attempt_at`, so the next drain tick claims them via the normal
+ * `status IN ('pending','failed')` predicate the moment their status is
+ * flipped back to `pending` (a one-time backfill, not built in this slice —
+ * see this package's EXECUTION_LEDGER.md closure entry for the exact
+ * UPDATE and why it is deliberately left as a manual/ops step rather than
+ * code this migration runs automatically).
  */
-export const UNBUILT_CONSUMER_GROUPS: ReadonlySet<string> = new Set(['finance_projection']);
+export const UNBUILT_CONSUMER_GROUPS: ReadonlySet<string> = new Set();
