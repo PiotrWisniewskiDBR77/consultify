@@ -3,10 +3,14 @@
  * Case registry list + preview (RN_G2_UI_SCOPE.md §G #11), quick-create
  * (§G #12, master plan §9 Etap 3 "quick create zapisujący prawdziwy Draft")
  * and 7 lifecycle transitions (§G #16 subset), built on the P0 shared shell
- * (`ResultsVNextRegistryShell`). Deliberately NOT the full 15-sub-resource
- * ROI Case tool (baseline/assumptions/cost+benefit lines/scenarios/forecast/
- * actuals/variances/PIR/finance links — §G #13-21, minus the transitions
- * slice of #16 this package DOES cover) — those stay later packages.
+ * (`ResultsVNextRegistryShell`). PLUS (added RN-G2 §G #12-14 model-setup
+ * package): the row-menu "Model case" action opens `RoiCaseModelWorkspace`
+ * — a case-scoped pod-widok for Baseline+calculation-policy/Assumptions/
+ * Cost lines/Benefit lines, switched by local state (`modelCase`), not a
+ * new route (see that file's header comment for the placement rationale).
+ * Deliberately NOT the rest of the 15-sub-resource ROI Case tool
+ * (scenarios/forecast/actuals/variances/PIR/finance links — §G #15-21) —
+ * those stay later packages.
  *
  * Two Menu 2 tabs, both real backend data, no fabricated rows:
  *  - "All cases"           → `GET /cases` (§C `roi.routes.ts`), the actual
@@ -47,6 +51,7 @@ import { InitiativeApi } from '@/services/api/initiatives.api';
 import { tokenService } from '@/services/tokenService';
 
 import { ResultsVNextRegistryShell } from '../ResultsVNextRegistryShell';
+import { RoiCaseModelWorkspace } from './RoiCaseModelWorkspace';
 import { RoiCaseCreateModal, type RoiCaseCreateFormValues, type RoiCaseCreateInitiativeOption } from './RoiCaseCreateModal';
 import { RoiTransitionDialog } from './RoiTransitionDialog';
 import {
@@ -159,6 +164,13 @@ export const ResultsRoiHub: React.FC = () => {
   const [casesLoading, setCasesLoading] = useState(false);
   const [selectedCaseId, setSelectedCaseId] = useState<string | null>(null);
   const [calculationRun, setCalculationRun] = useState<RoiCalculationRunSummary | null | undefined>(undefined);
+  // RN-G2 §G #12-14 — case-scoped model-setup pod-widok. Non-null ⇒ the
+  // whole screen renders `RoiCaseModelWorkspace` instead of the registry
+  // (see that component's header comment for why this is local state, not
+  // a route). Holds the already-loaded `RoiCaseListItem`, not just an id —
+  // the workspace needs `status`/`currency`/`rowVersion` immediately, no
+  // redundant `GET /cases/:caseId` refetch.
+  const [modelCase, setModelCase] = useState<RoiCaseListItem | null>(null);
 
   // "Benefits realization" tab state
   const [benefitsRows, setBenefitsRows] = useState<RoiOrgBenefitsRealizationRow[] | null>(null);
@@ -350,6 +362,15 @@ export const ResultsRoiHub: React.FC = () => {
     [benefitsRows, selectedBenefitsCaseId]
   );
 
+  // RN-G2 §G #12-14 — case-scoped model workspace takes over the WHOLE
+  // screen (its own breadcrumb/tabs/table/preview, via the same
+  // `ResultsVNextRegistryShell`) while a case is selected for modeling;
+  // placed AFTER every hook above (rules of hooks) but before the two
+  // registry-tab branches below, which it replaces entirely.
+  if (modelCase) {
+    return <RoiCaseModelWorkspace roiCase={modelCase} isPolish={isPolish} onBack={() => setModelCase(null)} />;
+  }
+
   const tabs: StandardModuleTab[] = [
     { id: 'all', label: isPolish ? 'Wszystkie sprawy' : 'All cases' },
     { id: 'benefits', label: isPolish ? 'Realizacja korzyści' : 'Benefits realization' },
@@ -502,6 +523,7 @@ export const ResultsRoiHub: React.FC = () => {
             buildRoiCaseRowMenu(row as unknown as RoiCaseListItem, isPolish, {
               onPreview: (r) => setSelectedCaseId(r.caseId),
               onTransition: (r, id) => openTransition(r, id),
+              onModel: (r) => setModelCase(r),
             }),
           defaultSort: { columnId: 'updatedAt', direction: 'desc' },
         }}

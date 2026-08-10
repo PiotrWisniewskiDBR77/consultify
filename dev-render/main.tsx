@@ -256,6 +256,9 @@ const ResultsVNextKpiRegistryScreen = React.lazy(
 const ResultsVNextRoiRegistryScreen = React.lazy(
   () => import('./screens/results-vnext-roi-registry')
 );
+const ResultsVNextRoiModelScreen = React.lazy(
+  () => import('./screens/results-vnext-roi-model')
+);
 const ResultsVNextOkrRegistryScreen = React.lazy(
   () => import('./screens/results-vnext-okr-registry')
 );
@@ -284,6 +287,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'RN-G2 P2 — REALNY rejestr ROI (roiRegistryPresenters + ResultsVNextRegistryShell): All cases + Benefits realization, honest NPV/IRR/payback, lock badges. &tab=all|benefits &state=ready|loading|empty|error &selected=<caseId|none> &calc=loading|ready',
     render: () => <ResultsVNextRoiRegistryScreen />,
+  },
+  'results-vnext-roi-model': {
+    label:
+      'RN-G2 §G #12-14 — REALNY pod-widok modelowania sprawy ROI (roiCaseDetailPresenters + ResultsVNextRegistryShell): Baseline+polityka (2-wierszowa tabela), Założenia/Koszty/Korzyści CRUD. &tab=settings|assumptions|cost-lines|benefit-lines &state=ready|loading|empty|error &selected=<id|none> &locked=1 &nullBaseline=1 &nullPolicy=1 &editBaseline=1 &editPolicy=1 &assumptionForm=create|edit &costLineForm=create|edit &benefitLineForm=create|edit &removeAssumption=1 &removeCostLine=1 &removeBenefitLine=1 &formState=idle|saving|error|conflict',
+    render: () => <ResultsVNextRoiModelScreen />,
   },
   'results-vnext-okr-registry': {
     label:

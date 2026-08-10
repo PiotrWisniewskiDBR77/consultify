@@ -168,7 +168,15 @@ export function newRoiIdempotencyKey(): string {
   return crypto.randomUUID();
 }
 
-async function getJson<T>(path: string, params?: Record<string, string | number | boolean | undefined>): Promise<T> {
+/**
+ * Exported (not just `listRoiCases` et al. above) so `roiCaseDetailApi.ts`
+ * (RN-G2 §G #12-14 — baseline/calculation-policy/assumptions/cost+benefit
+ * lines) reuses the SAME fetch/error-mapping plumbing instead of a second,
+ * silently-driftable copy — same "one family of files" convention this
+ * whole `roi/` folder already follows (`roiRegistryMappers.ts` shared by
+ * `roiRegistryPresenters.tsx` + the dev-render harness).
+ */
+export async function getJson<T>(path: string, params?: Record<string, string | number | boolean | undefined>): Promise<T> {
   const query = params
     ? Object.entries(params)
         .filter(([, v]) => v !== undefined && v !== null && v !== '')
@@ -195,12 +203,17 @@ async function getJson<T>(path: string, params?: Record<string, string | number 
   return res.json() as Promise<T>;
 }
 
-/** POST/PATCH/PUT counterpart of `getJson` — same network-error/HTTP-error
- * mapping, plus captures every non-`error`/`code` body field into
+/** POST/PATCH/PUT/DELETE counterpart of `getJson` — same network-error/
+ * HTTP-error mapping, plus captures every non-`error`/`code` body field into
  * `RoiApiError.details` (the 409 `STALE_VERSION` conflict's
- * `currentVersion`/`expectedVersion`, in particular). */
-async function mutateJson<T>(
-  method: 'POST' | 'PATCH' | 'PUT',
+ * `currentVersion`/`expectedVersion`, in particular). `DELETE` added for
+ * `roiCaseDetailApi.ts`'s assumption/cost-line/benefit-line removal — those
+ * three endpoints are `DELETE` requests that carry a JSON body
+ * (`{expectedVersion, reason, idempotencyKey}`, `roi.routes.ts` L989-1020 /
+ * L1158-1189 / L1335-1366), unlike a "plain" bodyless REST DELETE. Exported
+ * for the same reason as `getJson` above. */
+export async function mutateJson<T>(
+  method: 'POST' | 'PATCH' | 'PUT' | 'DELETE',
   path: string,
   body: unknown
 ): Promise<T> {
