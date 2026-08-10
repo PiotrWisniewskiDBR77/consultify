@@ -34,6 +34,23 @@ export interface IdeaDrawingLayerProps {
   onClose: () => void;
   paths: DrawingPath[];
   onPathsChange: (paths: DrawingPath[]) => void;
+  /**
+   * Undo/redo ownership (defect fix, 2026-08-10): this layer used to keep
+   * its OWN private undo/redo stack of `paths` snapshots, with its own
+   * document-level Ctrl+Z/Ctrl+Y listener active whenever `active` is true.
+   * That ran in parallel with the parent canvas's ALWAYS-ON Ctrl+Z listener
+   * (not gated on draw mode), so a single keypress fired both — two stacks
+   * disagreeing about "the last action", silently losing or duplicating
+   * strokes. The canvas-level stack now owns ALL undo/redo for drawn
+   * strokes (the parent wraps `onPathsChange` to push a canvas snapshot
+   * before every path mutation this layer makes); these props drive the
+   * toolbar's Undo/Redo buttons directly, and this layer keeps no undo
+   * state and no Ctrl+Z/Ctrl+Y listener of its own.
+   */
+  onUndo: () => void;
+  onRedo: () => void;
+  canUndo: boolean;
+  canRedo: boolean;
   viewportTransform?: { x: number; y: number; zoom: number };
 }
 
@@ -66,6 +83,10 @@ export const IdeaDrawingLayer: React.FC<IdeaDrawingLayerProps> = ({
   onClose,
   paths,
   onPathsChange,
+  onUndo,
+  onRedo,
+  canUndo,
+  canRedo,
   viewportTransform,
 }) => {
   const { t } = useTranslation();
@@ -76,8 +97,6 @@ export const IdeaDrawingLayer: React.FC<IdeaDrawingLayerProps> = ({
   const [strokeWidth, setStrokeWidth] = useState(3);
   const [drawing, setDrawing] = useState(false);
   const [currentPath, setCurrentPath] = useState('');
-  const [undoStack, setUndoStack] = useState<DrawingPath[][]>([]);
-  const [redoStack, setRedoStack] = useState<DrawingPath[][]>([]);
 
   // P1.5 (WB-P1-04) — keyboard drawing mode state. Freehand drawing was
   // pointer-drag-only, which fails "core work possible without raw-coordinate
@@ -114,8 +133,6 @@ export const IdeaDrawingLayer: React.FC<IdeaDrawingLayerProps> = ({
         const target = e.target as SVGElement;
         const pathId = target.getAttribute('data-path-id');
         if (pathId) {
-          setUndoStack((prev) => [...prev, paths]);
-          setRedoStack([]);
           onPathsChange(paths.filter((p) => p.id !== pathId));
         }
         return;
@@ -154,8 +171,6 @@ export const IdeaDrawingLayer: React.FC<IdeaDrawingLayerProps> = ({
         tool: tool as 'pen' | 'highlighter',
       };
 
-      setUndoStack((prev) => [...prev, paths]);
-      setRedoStack([]);
       onPathsChange([...paths, newPath]);
       return true;
     },
@@ -301,45 +316,24 @@ export const IdeaDrawingLayer: React.FC<IdeaDrawingLayerProps> = ({
     ]
   );
 
-  const handleUndo = useCallback(() => {
-    if (undoStack.length === 0) return;
-    const prev = undoStack[undoStack.length - 1];
-    setRedoStack((r) => [...r, paths]);
-    setUndoStack((u) => u.slice(0, -1));
-    onPathsChange(prev);
-  }, [onPathsChange, paths, undoStack]);
-
-  const handleRedo = useCallback(() => {
-    if (redoStack.length === 0) return;
-    const next = redoStack[redoStack.length - 1];
-    setUndoStack((u) => [...u, paths]);
-    setRedoStack((r) => r.slice(0, -1));
-    onPathsChange(next);
-  }, [onPathsChange, paths, redoStack]);
-
   const handleClear = useCallback(() => {
     if (paths.length === 0) return;
-    setUndoStack((prev) => [...prev, paths]);
-    setRedoStack([]);
     onPathsChange([]);
   }, [onPathsChange, paths]);
 
+  // Ctrl+Z/Ctrl+Y are intentionally NOT handled here — see `onUndo`/`onRedo`
+  // prop doc above. The parent canvas's `useCanvasKeyboard` listener is
+  // always attached (regardless of draw mode) and already fires
+  // `undoWhiteboard`/`redoWhiteboard` for these keys; a second listener here
+  // would double-handle every press against a second, disagreeing stack.
   useEffect(() => {
     if (!active) return;
     const handler = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
-      if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
-        e.preventDefault();
-        handleUndo();
-      }
-      if ((e.ctrlKey || e.metaKey) && e.key === 'y') {
-        e.preventDefault();
-        handleRedo();
-      }
     };
     document.addEventListener('keydown', handler);
     return () => document.removeEventListener('keydown', handler);
-  }, [active, handleRedo, handleUndo, onClose]);
+  }, [active, onClose]);
 
   const vpTransformStr = viewportTransform
     ? `translate(${viewportTransform.x}, ${viewportTransform.y}) scale(${viewportTransform.zoom})`
@@ -567,8 +561,8 @@ export const IdeaDrawingLayer: React.FC<IdeaDrawingLayerProps> = ({
 
           {/* Undo/Redo/Clear */}
           <button
-            onClick={handleUndo}
-            disabled={undoStack.length === 0}
+            onClick={onUndo}
+            disabled={!canUndo}
             aria-label={t('myWorkIdeas.drawingLayer.undo')}
             title={t('myWorkIdeas.drawingLayer.undo')}
             className="p-1.5 text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 disabled:opacity-30"
@@ -576,8 +570,8 @@ export const IdeaDrawingLayer: React.FC<IdeaDrawingLayerProps> = ({
             <Undo2 size={14} />
           </button>
           <button
-            onClick={handleRedo}
-            disabled={redoStack.length === 0}
+            onClick={onRedo}
+            disabled={!canRedo}
             aria-label={t('myWorkIdeas.drawingLayer.redo')}
             title={t('myWorkIdeas.drawingLayer.redo')}
             className="p-1.5 text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 disabled:opacity-30"

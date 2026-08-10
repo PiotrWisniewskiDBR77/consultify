@@ -210,7 +210,12 @@ interface WhiteboardCanvasProps {
   onExternalInsert?: (items: WhiteboardExternalInsert[]) => void;
   onFullscreenToggle?: () => void;
   isFullscreen?: boolean;
-  onContextMenu?: (e: React.MouseEvent, nodeId?: string, nodeData?: any) => void;
+  // WB-FRAME-01 (frame context menu, 2026-08-10): `rfNode` carries the RAW
+  // ReactFlow node (type/parentNode/parentId) — `nodeData` alone (`node.data`)
+  // never carried the ReactFlow node TYPE (`frameNode`/`groupNode`) or its
+  // containment fields, so the menu had no reliable way to tell a frame
+  // apart from any other node (see report: it fell back to a generic label).
+  onContextMenu?: (e: React.MouseEvent, nodeId?: string, nodeData?: any, rfNode?: Node) => void;
   // P2-6 (rozdz. 08 §4): prawy klik na krawędzi otwiera menu krawędzi.
   onEdgeContextMenu?: (e: React.MouseEvent, edgeId: string) => void;
   // Z15: patch a single node's style (accent/fontSize/fontWeight) onto node.data.
@@ -603,7 +608,7 @@ const WhiteboardCanvas = React.forwardRef<WhiteboardCanvasHandle, WhiteboardCanv
         }}
         onNodeContextMenu={(event: any, node: any) => {
           event.preventDefault();
-          externalOnContextMenu?.(event, node.id, node.data);
+          externalOnContextMenu?.(event, node.id, node.data, node);
         }}
         onEdgeContextMenu={(event: any, edge: any) => {
           event.preventDefault();
@@ -976,6 +981,14 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
     nodeLabel?: string;
     nodeType?: string;
     nodeLocked?: boolean;
+    // WB-FRAME-01 (frame context menu, 2026-08-10): raw ReactFlow node type
+    // (`frameNode`/`groupNode`/…) — distinct from `nodeType` above (the
+    // display-label semantic type), needed to reliably detect a frame.
+    nodeKind?: string;
+    // WB-FRAME-01: id of the containing frame, if any (checks BOTH
+    // `parentNode`/`parentId` — see `containingFrameId` in
+    // `useWhiteboardNodes.ts` for why there are two).
+    nodeParentId?: string;
   }>({});
   // P2-6 (rozdz. 08 §4): menu krawędzi — prawy klik na połączeniu.
   const [edgeContextMenu, setEdgeContextMenu] = useState<{
@@ -1131,6 +1144,36 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
     lastSnapshotRef.current = snapshot;
     emitUndoState();
   }, [drawingPaths, edges, emitUndoState, nodes, scenes]);
+
+  // Undo ownership for freehand strokes (defect fix, 2026-08-10): IdeaDrawingLayer
+  // used to keep its OWN private undo/redo stack (paths-only) and its own
+  // document-level Ctrl+Z/Ctrl+Y listener, active in parallel with this
+  // component's ALWAYS-ON `useCanvasKeyboard` Ctrl+Z listener (registered at
+  // mount, not gated on draw mode). Neither listener called stopPropagation,
+  // so a single Ctrl+Z press while drawing fired BOTH: this component's
+  // `undoWhiteboard` (restoring a stale full-canvas snapshot that predates
+  // every stroke drawn so far, since strokes never pushed onto this stack)
+  // AND the layer's own `handleUndo` (popping from ITS stack using the
+  // pre-update `paths` closure) — two disagreeing stacks racing to call
+  // `setDrawingPaths` on the same keypress, silently losing or duplicating
+  // strokes depending on which one "won".
+  //
+  // Fix: single source of truth. The canvas stack now SUBSUMES the layer's
+  // stack — every path mutation from the drawing layer (stroke commit,
+  // eraser delete, the layer's own Clear button) snapshots BEFORE applying,
+  // exactly like `onClearDrawings` below already did for the rail's Clear
+  // Drawings action. IdeaDrawingLayer no longer keeps any undo state of its
+  // own or its own Ctrl+Z listener (see IdeaDrawingLayer.tsx) — its
+  // Undo/Redo toolbar buttons are wired straight to `undoWhiteboard`/
+  // `redoWhiteboard` via props below, so there is exactly ONE Ctrl+Z
+  // listener and ONE undo stack, in both focus contexts (drawing or not).
+  const handleDrawingPathsChange = useCallback(
+    (paths: DrawingPath[]) => {
+      pushUndoSnapshot();
+      setDrawingPaths(paths);
+    },
+    [pushUndoSnapshot]
+  );
 
   const restoreSnapshot = useCallback(
     (snapshot: WhiteboardCanvasSnapshot) => {
@@ -2687,6 +2730,12 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
     copySelected,
     pasteClipboard,
     clipboardCount,
+    // WB-FRAME-01 (frame context menu, 2026-08-10)
+    selectFrameContents,
+    addSelectionToFrame,
+    removeFromFrame,
+    resizeFrameToFit,
+    deleteFrame,
   } = useWhiteboardNodes({
     nodes,
     edges,
@@ -2746,6 +2795,12 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
       cycleEdgeArrow: (edgeId) => cycleEdgeArrowRef.current(edgeId),
       cycleEdgeStyle: (edgeId) => cycleEdgeStyleRef.current(edgeId),
       deleteEdge: (edgeId) => deleteEdgeRef.current(edgeId),
+      // WB-FRAME-01 (frame context menu, 2026-08-10)
+      selectFrameContents,
+      addSelectionToFrame,
+      removeFromFrame,
+      resizeFrameToFit,
+      deleteFrame,
     },
   });
 
@@ -3330,7 +3385,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
 
   // ── Context menu handler ──────────────────────────────────────────────────
   const handleCanvasContextMenu = useCallback(
-    (e: React.MouseEvent, nodeId?: string, nodeData?: any) => {
+    (e: React.MouseEvent, nodeId?: string, nodeData?: any, rfNode?: Node) => {
       e.preventDefault();
       setContextMenuPos({ x: e.clientX, y: e.clientY });
       setContextMenuTarget(
@@ -3340,6 +3395,9 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
               nodeLabel: nodeData?.label,
               nodeType: nodeData?.semanticType || nodeData?.type,
               nodeLocked: Boolean(nodeData?.locked),
+              nodeKind: rfNode?.type,
+              nodeParentId:
+                (rfNode as any)?.parentNode || (rfNode as any)?.parentId || nodeData?.parentId,
             }
           : {}
       );
@@ -3390,6 +3448,8 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
           nodeLabel: node.data?.label,
           nodeType: node.data?.semanticType || node.data?.type,
           nodeLocked: Boolean(node.data?.locked),
+          nodeKind: node.type,
+          nodeParentId: (node as any)?.parentNode || (node as any)?.parentId || node.data?.parentId,
         });
         setNodes((nds: Node[]) => {
           const alreadySelected = nds.some((n) => n.id === target.nodeId && n.selected);
@@ -3763,8 +3823,20 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
       // from nothing or return generic noise presented as insight. Coach the
       // missing input instead of running the generator (chapter 09 grounding
       // rule: say what's missing rather than let AI improvise specificity it
-      // doesn't have). Scope matches what `context` below actually sends:
-      // the active selection when there is one, otherwise the whole board.
+      // doesn't have).
+      //
+      // SYS-P3-01 correction (this comment previously claimed the generator
+      // call below scopes to "the active selection when there is one,
+      // otherwise the whole board" — verified FALSE): `context.existingNodes`
+      // a few lines down is always `nodes.map(...)`, i.e. ALL board nodes,
+      // regardless of `selectedNodeIds`. `context.selection` is attached as
+      // metadata only; the server's `getScopedGeneratorContext`
+      // (`ideaAIGeneratorService.ts`) filters by it ONLY for
+      // `sticky_summarize`, not for `wb_find_themes`/`wb_name_clusters`/
+      // `wb_extract_actions`. `scopeNodes` right below is used ONLY for this
+      // generic-label gate, not for what actually reaches the model — the
+      // real target is always the whole board (see the "Document" scope chip
+      // on this action's context-menu entry, `IdeaCanvasContextMenu.tsx`).
       if (generatorType === 'wb_find_themes') {
         const scopeNodes =
           selectedNodeIds.length > 0
@@ -4537,6 +4609,11 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
             onCopySelected={copySelected}
             onPaste={() => pasteClipboard()}
             pasteDisabled={clipboardCount() === 0}
+            onSelectFrameContents={selectFrameContents}
+            onAddSelectionToFrame={addSelectionToFrame}
+            onResizeFrameToFit={resizeFrameToFit}
+            onRemoveFromFrame={removeFromFrame}
+            onDeleteFrame={deleteFrame}
           />
 
           {commentsPanelNodeId &&
@@ -4651,7 +4728,11 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
             active={whiteboardMode === 'draw'}
             onClose={() => setBoardMode('board')}
             paths={drawingPaths}
-            onPathsChange={setDrawingPaths}
+            onPathsChange={handleDrawingPathsChange}
+            onUndo={undoWhiteboard}
+            onRedo={redoWhiteboard}
+            canUndo={undoStackRef.current.length > 0}
+            canRedo={redoStackRef.current.length > 0}
             viewportTransform={viewportTransform}
           />
 

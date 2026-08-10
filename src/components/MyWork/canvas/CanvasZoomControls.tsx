@@ -5,7 +5,17 @@
  * Provides: zoom in/out, visible zoom level, fit view, fullscreen, optional focus/restore,
  * and a toggle link for opening the full-field mini map.
  */
-import { Focus, Grid3x3, Map, Maximize2, Minimize2, Minus, Plus, RotateCcw } from 'lucide-react';
+import {
+  Focus,
+  Grid3x3,
+  Map,
+  Maximize,
+  Maximize2,
+  Minimize2,
+  Minus,
+  Plus,
+  RotateCcw,
+} from 'lucide-react';
 import React, { useCallback } from 'react';
 // ★ Zawsze z barrela 'reactflow' — import z '@reactflow/core' podpina DRUGĄ
 //   instancję magazynu i płótno przestaje startować.
@@ -23,9 +33,18 @@ interface CanvasZoomControlsProps {
   className?: string;
   showMiniMap?: boolean;
   onToggleMiniMap?: () => void;
-  /** When provided, Maximize2 toggles fullscreen instead of fit view */
   onFullscreenToggle?: () => void;
   isFullscreen?: boolean;
+  /**
+   * PF-P3-01: override for the Fit view button's click handler. The default
+   * (`fitView()` from `useReactFlow`) only bounds actual React Flow nodes —
+   * Process Flow's swimlanes are painted OUTSIDE the node graph (see
+   * `LaneSystem`), so a plain `fitView()` can crop an empty/tall lane that
+   * has no nodes in it. Hosts with lane-aware (or otherwise custom) bounds
+   * pass their own handler here; hosts without one (Mind Map, Whiteboard)
+   * omit it and get the plain node-bounds behavior.
+   */
+  onFitView?: () => void;
   /**
    * M06 Fala 3.1 (mind map only): when `onToggleSnap` is provided, render a
    * snap-to-grid toggle button. Other canvases omit these props entirely, so
@@ -72,6 +91,7 @@ export const CanvasZoomControls: React.FC<CanvasZoomControlsProps> = ({
   isFullscreen = false,
   snapEnabled = false,
   onToggleSnap,
+  onFitView,
 }) => {
   const { zoomIn, zoomOut, fitView, setViewport } = useReactFlow();
   /**
@@ -100,8 +120,12 @@ export const CanvasZoomControls: React.FC<CanvasZoomControlsProps> = ({
   }, [zoomOut]);
 
   const handleFitView = useCallback(() => {
+    if (onFitView) {
+      onFitView();
+      return;
+    }
     fitView({ padding: FIT_PADDING, duration: ZOOM_DURATION + 80 });
-  }, [fitView]);
+  }, [fitView, onFitView]);
 
   const handleFocusSelected = useCallback(() => {
     if (!selectedNodeId) return;
@@ -145,7 +169,25 @@ export const CanvasZoomControls: React.FC<CanvasZoomControlsProps> = ({
           <Plus size={15} />
         </ZoomBtn>
         <Divider />
-        {onFullscreenToggle ? (
+        {/*
+         * PF-P3-01: Fit view MUST be its own, always-visible control next to
+         * zoom in/out — it was previously rendered only when the host did NOT
+         * pass `onFullscreenToggle`. All three canvas hosts (Mind Map,
+         * Whiteboard, Process Flow) always pass `onFullscreenToggle` (it
+         * falls back to an internal toggle when the host has no external
+         * one), so Fit view was DEAD — permanently replaced by the
+         * Fullscreen button, unreachable from this control cluster.
+         * `Shift+1` already exists per-canvas as the keyboard shortcut for
+         * fit-to-view; the tooltip now names it so the affordance is
+         * discoverable from the button itself.
+         */}
+        <ZoomBtn
+          onClick={handleFitView}
+          title={isPolish ? 'Dopasuj widok (Shift+1)' : 'Fit view (Shift+1)'}
+        >
+          <Maximize size={14} />
+        </ZoomBtn>
+        {onFullscreenToggle && (
           <ZoomBtn
             onClick={onFullscreenToggle}
             title={
@@ -159,10 +201,6 @@ export const CanvasZoomControls: React.FC<CanvasZoomControlsProps> = ({
             }
           >
             {isFullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
-          </ZoomBtn>
-        ) : (
-          <ZoomBtn onClick={handleFitView} title={isPolish ? 'Dopasuj widok' : 'Fit view'}>
-            <Maximize2 size={14} />
           </ZoomBtn>
         )}
         {selectedNodeId && (

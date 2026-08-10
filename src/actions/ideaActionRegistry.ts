@@ -214,7 +214,14 @@ export type IconName =
   // dzisiejszego wyglądu.
   | 'BarChart3'
   | 'AlertTriangle'
-  | 'ScanText';
+  | 'ScanText'
+  // WB-FRAME-01 (frame context menu, 2026-08-10) — `IdeaCanvasContextMenu.tsx`
+  // frame menu, 1:1 z ikonami już importowanymi tam z lucide-react.
+  | 'Boxes'
+  | 'FolderInput'
+  | 'FolderOutput'
+  | 'Maximize2'
+  | 'PackageOpen';
 // UWAGA (N8.2, 2026-08-10) — menu kolumny Tabeli ŚWIADOMIE nie dokłada tu nic
 // nowego (kandydowały 'ArrowUpDown'/'EyeOff'). Powód: `ICON_BY_NAME` w
 // `src/components/MyWork/ideaCanvasMelsChips.ts:226` jest zadeklarowane jako
@@ -759,6 +766,28 @@ async function runKeyboardOnlyCallback(actionId: string, ctx: ActionContext): Pr
 }
 
 /**
+ * Twin of `runToolbarUiOnlyCallback`/`runKeyboardOnlyCallback` for the right
+ * panel surface (Program D / epic E08, business-case section save — 2026-08-10).
+ * Same `ctx.params.run` bridge: the panel component owns the real save
+ * (network call + local state update), the registry only gives it a
+ * traceable id/undo/Teresa-manifest entry. No panel action reaches Teresa
+ * through this path yet — same honest gap as the toolbar/keyboard twins.
+ */
+async function runPanelUiOnlyCallback(actionId: string, ctx: ActionContext): Promise<ActionResult> {
+  const run = ctx.params?.run;
+  if (ctx.source !== 'ui' || typeof run !== 'function') {
+    return {
+      ok: false,
+      actionId,
+      message:
+        'Ta akcja działa dziś wyłącznie z prawego panelu — nie mam jeszcze sposobu wywołania jej z czatu.',
+    };
+  }
+  await (run as () => void | Promise<void>)();
+  return { ok: true, actionId };
+}
+
+/**
  * `idea.node.edit` (N7 kontynuacja, 2026-08-09) — jedyna pozycja menu węzła,
  * której realna mutacja NIE żyje na szynie `idea-workspace-quick-action`, tylko
  * na osobnym, już istniejącym evencie `idea-workspace-node-update`
@@ -865,13 +894,16 @@ async function runProcessFlowNodeUiOnlyCallback(
  * Jedna mapa PER akcja (nie jedna zbiorcza), z tego samego powodu co
  * `RUNTIME_EDGE_LABEL`/etc. wyżej — `scripts/check-actions.sh` (R6) parsuje
  * WYŁĄCZNIE `  tool: 'string',` per linia pod constem typu `ToolActionMap`.
- * Torowość jest DZIŚ pojęciem WYŁĄCZNIE Przepływu (Whiteboard ma "ramkę"
- * ale jej kontenerowe operacje same w sobie nie są jeszcze zaimplementowane —
- * rozdz. 08 §5, tabela „Menu kontenera": „Grupuj/Rozgrupuj tylko z paska
+ * W N6.3 torowość była pojęciem WYŁĄCZNIE Przepływu (Whiteboard miał "ramkę"
+ * ale jej kontenerowe operacje same w sobie NIE BYŁY jeszcze zaimplementowane
+ * — rozdz. 08 §5 dokumentował wprost „Grupuj/Rozgrupuj tylko z paska
  * zaznaczenia... brak dedykowanego menu prawego kliku «na ramce jako
- * kontenerze»" — nie ma więc NIC realnego po stronie Tablicy do porównania
- * mechanizmu z, Z1 poprawnie nie ma tu czego reużyć), stąd sześć map niżej
- * ma tylko jeden klucz każda.
+ * kontenerze»"), stąd sześć map niżej miało tylko jeden klucz każda.
+ * ZAKTUALIZOWANE (WB-FRAME-01, 2026-08-10): ta luka po stronie Tablicy jest
+ * teraz ZAMKNIĘTA — patrz `RUNTIME_FRAME_*` niżej, `tools: ['whiteboard']`,
+ * scope `lane_frame` (ten sam kontener-scope, teraz z realnym mechanizmem
+ * PO OBU stronach — Z1 reużycia i tak nie ma, bo Przepływu tor i Tablicy
+ * ramka to różne struktury danych, ale zakres pojęciowy jest ten sam).
  */
 const RUNTIME_LANE_RENAME: ToolActionMap = {
   process_flow: 'pf_lane_rename',
@@ -890,6 +922,34 @@ const RUNTIME_LANE_TOGGLE_COLLAPSE: ToolActionMap = {
 };
 const RUNTIME_LANE_DELETE: ToolActionMap = {
   process_flow: 'pf_lane_delete',
+};
+
+/**
+ * WB-FRAME-01 (frame context menu, 2026-08-10) — Whiteboard frame (`frameNode`/
+ * `groupNode`) container ops, scope `lane_frame` (same container-scope as the
+ * lane maps above — see the updated comment there for why this closes that
+ * documented gap). Receivers: `useWhiteboardQuickActions.ts` (`wb_frame_*`) →
+ * `useWhiteboardNodes.ts` (`selectFrameContents`/`addSelectionToFrame`/
+ * `resizeFrameToFit`/`deleteFrame`). `idea.frame.add_selection` has NO map
+ * here — it's UI-only (`runContextMenuUiOnlyCallback`), because it acts on
+ * whatever is CURRENTLY selected in the browser, the same honest boundary as
+ * `idea.node.copy`/`idea.canvas.paste` above (no coordinates for Teresa to
+ * reason about, and no meaningful "selection" outside a live canvas).
+ */
+const RUNTIME_FRAME_SELECT_CONTENTS: ToolActionMap = {
+  whiteboard: 'wb_frame_select_contents',
+};
+const RUNTIME_FRAME_RESIZE_TO_FIT: ToolActionMap = {
+  whiteboard: 'wb_frame_resize_to_fit',
+};
+const RUNTIME_FRAME_DELETE_WITH_CONTENTS: ToolActionMap = {
+  whiteboard: 'wb_frame_delete_with_contents',
+};
+const RUNTIME_FRAME_DELETE_RELEASE: ToolActionMap = {
+  whiteboard: 'wb_frame_delete_release',
+};
+const RUNTIME_NODE_REMOVE_FROM_FRAME: ToolActionMap = {
+  whiteboard: 'wb_node_remove_from_frame',
 };
 
 /**
@@ -1064,6 +1124,79 @@ async function runLaneParamCallback(
   }
   dispatchQuickAction(runtime, ctx, { laneId, ...(ctx.params || {}), ...(extra || {}) });
   return { ok: true, actionId, data: { runtime, laneId } };
+}
+
+/** Wskaźnik akcja RAMKI (frame) Tablicy → jej mapa runtime, ten sam kształt
+ * co `RUNTIME_LANE_ACTION_MAPS` wyżej. */
+const RUNTIME_FRAME_ACTION_MAPS: Partial<Record<string, ToolActionMap>> = {
+  'idea.frame.select_contents': RUNTIME_FRAME_SELECT_CONTENTS,
+  'idea.frame.resize_to_fit': RUNTIME_FRAME_RESIZE_TO_FIT,
+  'idea.frame.delete_with_contents': RUNTIME_FRAME_DELETE_WITH_CONTENTS,
+  'idea.frame.delete_release': RUNTIME_FRAME_DELETE_RELEASE,
+};
+
+/**
+ * WB-FRAME-01 (frame context menu, 2026-08-10) — dispatcher dla akcji
+ * `idea.frame.*` operujących na WSKAZANEJ ramce (`frameId`). Ten sam kształt
+ * co `runLaneParamCallback` wyżej: UI = `ctx.params.run` (oryginalny
+ * onSelect menu, wołający `useWhiteboardNodes.ts` bez zmian); Teresa = jawny
+ * `frameId` → szyna `idea-workspace-quick-action` →
+ * `useWhiteboardQuickActions.ts`.
+ */
+async function runFrameParamCallback(actionId: string, ctx: ActionContext): Promise<ActionResult> {
+  const run = ctx.params?.run;
+  if (ctx.source === 'ui' && typeof run === 'function') {
+    (run as () => void)();
+    return { ok: true, actionId };
+  }
+
+  const frameId =
+    typeof ctx.params?.frameId === 'string' && ctx.params.frameId ? ctx.params.frameId : undefined;
+  if (!frameId) {
+    return {
+      ok: false,
+      actionId,
+      message: 'Nie wiem, na której ramce Tablicy wykonać tę akcję — podaj `frameId`.',
+    };
+  }
+  const runtime = RUNTIME_FRAME_ACTION_MAPS[actionId]?.[ctx.tool];
+  if (!runtime) {
+    return {
+      ok: false,
+      actionId,
+      message: `Ta akcja nie istnieje w tej reprezentacji (${ctx.tool}).`,
+    };
+  }
+  dispatchQuickAction(runtime, ctx, { frameId });
+  return { ok: true, actionId, data: { runtime, frameId } };
+}
+
+/**
+ * WB-FRAME-01 — `idea.node.remove_from_frame`: ten sam kształt, ale kluczem
+ * jest `nodeId` DZIECKA opuszczającego ramkę, nie `frameId` samej ramki.
+ */
+async function runFrameNodeParamCallback(ctx: ActionContext): Promise<ActionResult> {
+  const actionId = 'idea.node.remove_from_frame';
+  const run = ctx.params?.run;
+  if (ctx.source === 'ui' && typeof run === 'function') {
+    (run as () => void)();
+    return { ok: true, actionId };
+  }
+  const nodeId =
+    typeof ctx.params?.nodeId === 'string' && ctx.params.nodeId
+      ? ctx.params.nodeId
+      : ctx.selection?.type === 'node' && typeof ctx.selection.primaryId === 'string'
+        ? ctx.selection.primaryId
+        : undefined;
+  if (!nodeId) {
+    return {
+      ok: false,
+      actionId,
+      message: 'Nie wiem, który element Tablicy zwolnić z ramki — podaj `nodeId`.',
+    };
+  }
+  dispatchQuickAction(RUNTIME_NODE_REMOVE_FROM_FRAME.whiteboard!, ctx, { nodeId });
+  return { ok: true, actionId, data: { nodeId } };
 }
 
 /**
@@ -2056,33 +2189,47 @@ async function runTableSavedViewDeleteCallback(ctx: ActionContext): Promise<Acti
  * `idea-workspace-quick-action` (`tbl_column_*`, NOWE odbiorniki w
  * `useTableQuickActions.ts`), adresowanie przez `colKey`.
  *
- * ─── ZNALEZIONY, UDOKUMENTOWANY, NIE NAPRAWIONY: ROZJAZD LEGACY/PLATFORMA ────
+ * ─── ZNALEZIONY, UDOKUMENTOWANY, NAPRAWIONY (2026-08-10) — ROZJAZD LEGACY/PLATFORMA ────
  * `IdeaTableTool.tsx` ma wszędzie wzorzec `usePlatform ? platformIntegration.X : X`.
- * Menu kolumny go ŁAMIE dla trzech z czterech pozycji:
- *  • "Sort" → `effectiveCycleSort` — POPRAWNE (dwutorowe).
+ * Menu kolumny go ŁAMAŁO dla trzech z czterech pozycji:
+ *  • "Sort" → `effectiveCycleSort` — było POPRAWNE (dwutorowe), bez zmian.
  *  • "Hide column" → goły LEGACY `toggleColumn` (L4009).
  *  • "Delete column" → goły LEGACY `deleteColumn` (L4018).
  *  • inline-rename nagłówka → goły LEGACY `renameColumn` (L3745/L3750).
  * Tymczasem nagłówki renderują `stretchedVisibleCols` ← `_visCols` ←
  * `usePlatform ? effectiveVisibleColumns : visibleColumns` (L654), a ten sam
  * `<table>` renderuje się w OBU trybach (gałąź `_vl`, nie `usePlatform`).
- * Skutek w trybie platformy: ukrycie/usunięcie/zmiana nazwy kolumny mutują
- * NIEUŻYWANY stan legacy — pozycje menu nie robią NIC widocznego, a "Delete
- * column" DODATKOWO pokazuje zielony toast „Column deleted" (kłamliwy sukces,
- * `IdeaTableTool.tsx` L4019). `platformIntegration` MA komplet odpowiedników
+ * Skutek w trybie platformy BYŁ: ukrycie/usunięcie/zmiana nazwy kolumny mutowały
+ * NIEUŻYWANY stan legacy — pozycje menu nie robiły NIC widocznego, a "Delete
+ * column" DODATKOWO pokazywał zielony toast „Column deleted" (kłamliwy sukces).
+ * `platformIntegration` MA komplet odpowiedników
  * (`useTablePlatformIntegration.ts` L319/L348/L359), przy czym `deleteColumn`
  * to REALNE serwerowe kasowanie pola (metoda `deleteField` z modułu
  * `TablePlatformApi`; zapisane rozłącznie, bo `check-actions.sh` R8 traktuje
  * zapis `Api.<metoda>` w TYM pliku jako deklarację realnego wywołania
  * endpointu — to tylko opis cudzego kodu) — INNY MECHANIZM niż
  * legacy `setColumns` w pamięci.
- * DECYZJA (świadoma, do sanity-checku człowieka): odbiorniki Teresy dostają te
- * SAME legacy funkcje co klik człowieka. Nie „naprawiam" ścieżki Teresy do
- * wersji platformowej, bo (a) zmieniłoby to akcję w DWA różne mechanizmy pod
- * jednym id — dokładnie to, co odrzuciliśmy przy `idea.node.pf_copy` i
- * `saved_view_*`; (b) dałoby Teresie TRWAŁE, SERWEROWE kasowanie kolumny tam,
- * gdzie człowiek tym samym menu nie kasuje nic. Preistniejący defekt UI należy
- * naprawić osobno, w obu ścieżkach naraz.
+ * NAPRAWA: `IdeaTableTool.tsx` dostał `effectiveToggleColumn`/
+ * `effectiveDeleteColumn`/`effectiveRenameColumn` (ten sam
+ * `usePlatform ? platformIntegration.X : X` wzorzec co reszta pliku) i
+ * WSZYSTKIE TRZY miejsca kliku człowieka (`colContextMenu` Hide/Delete +
+ * inline-rename nagłówka) teraz ich używają — menu przestało kłamać, w
+ * trybie platformy Hide/Rename/Delete robią to, co pokazują. "Delete column"
+ * dostał też `window.confirm` (destrukcyjne, bez pokrycia w Ctrl+Z — patrz
+ * `undo` niżej), zgodny z istniejącym wzorcem tego samego pliku (inne
+ * `window.confirm` już w `IdeaTableTool.tsx` L974).
+ * DECYZJA (uaktualniona): odbiorniki Teresy dostają te SAME `effective*`
+ * funkcje co klik człowieka — NIE osobną platformową ścieżkę. Poprzednia
+ * wersja tego komentarza (przed naprawą) świadomie trzymała Teresę na
+ * legacy, żeby nie tworzyć DWÓCH mechanizmów pod jednym id, gdy klik
+ * człowieka sam był legacy-only. Teraz, gdy klik człowieka jest dwutorowy,
+ * ten sam powód odwraca decyzję: dawanie Teresie legacy-only funkcji
+ * ZNOWU stworzyłoby dwa mechanizmy pod jednym id (klik = tryb aktywny,
+ * Teresa = zawsze legacy) — więc Teresa dostaje `effective*`, dokładnie jak
+ * klik. Skutek: w trybie platformy Teresa ma TRWAŁE, SERWEROWE kasowanie
+ * kolumny (`deleteField`) identyczne z tym, co robi wtedy klik człowieka —
+ * to jest ZAMIERZONE (menu przestało kłamać w obie strony), opisane wprost
+ * w `teresa.description` każdego z trzech wpisów.
  *
  * ─── UNDO ────────────────────────────────────────────────────────────────────
  * Żadna z czterech mutacji nie jest podłączona do JAKIEGOKOLWIEK stosu cofania.
@@ -2977,7 +3124,7 @@ const IDEA_ACTIONS: ActionDef[] = [
     },
     teresa: {
       description:
-        'Zmienia nazwę (nagłówek) kolumny Tabeli. Podaj `colKey` kolumny i nową `name`. UWAGA: pozycja "Rename" w menu prawego kliku otwiera człowiekowi tylko edytor nagłówka — zatwierdzeniem jest dopiero wpisanie nazwy; ta ścieżka wykonuje od razu cały, dokończony gest (tę samą funkcję, którą zapisuje edytor). Nie działa w trybie platformy tabel (zmiana trafia wtedy w nieużywany stan lokalny — znany defekt UI, ten sam co przy kliku człowieka).',
+        'Zmienia nazwę (nagłówek) kolumny Tabeli. Podaj `colKey` kolumny i nową `name`. UWAGA: pozycja "Rename" w menu prawego kliku otwiera człowiekowi tylko edytor nagłówka — zatwierdzeniem jest dopiero wpisanie nazwy; ta ścieżka wykonuje od razu cały, dokończony gest (tę samą funkcję, którą zapisuje edytor). Dwutorowa (naprawione 2026-08-10): w trybie platformy tabel woła realną `platformIntegration.renameColumn`, tak samo jak klik człowieka po tej samej naprawie — wcześniej obie ścieżki trafiały w nieużywany stan legacy.',
       parameters: {
         type: 'object',
         properties: {
@@ -2989,7 +3136,7 @@ const IDEA_ACTIONS: ActionDef[] = [
     },
     runtime: RUNTIME_TBL_COLUMN_RENAME,
     source:
-      'src/components/MyWork/IdeaTableTool.tsx colContextMenu "table.column.rename" (~L3992, setEditingHeaderKey) + inline-rename input nagłówka (~L3745/L3750) → useTableSchema.ts renameColumn',
+      'src/components/MyWork/IdeaTableTool.tsx colContextMenu "table.column.rename" (~L3992, setEditingHeaderKey) + inline-rename input nagłówka (~L3745/L3750) → effectiveRenameColumn (naprawione 2026-08-10: usePlatform ? platformIntegration.renameColumn : useTableSchema.ts renameColumn)',
   },
   {
     id: 'idea.column.sort',
@@ -3038,7 +3185,7 @@ const IDEA_ACTIONS: ActionDef[] = [
     },
     teresa: {
       description:
-        'PRZEŁĄCZA widoczność kolumny Tabeli (nie tylko ukrywa): kolumnę widoczną chowa, a już ukrytą pokaże z powrotem. Pozycja w menu nazywa się "Ukryj kolumnę", bo prawy klik jest możliwy wyłącznie na nagłówku kolumny WIDOCZNEJ — przez `colKey` osiągalny jest też kierunek odwrotny. Podaj `colKey`. Dane wierszy zostają nienaruszone. Nie działa w trybie platformy tabel (przełącza wtedy nieużywany stan lokalny — znany defekt UI, ten sam co przy kliku człowieka).',
+        'PRZEŁĄCZA widoczność kolumny Tabeli (nie tylko ukrywa): kolumnę widoczną chowa, a już ukrytą pokaże z powrotem. Pozycja w menu nazywa się "Ukryj kolumnę", bo prawy klik jest możliwy wyłącznie na nagłówku kolumny WIDOCZNEJ — przez `colKey` osiągalny jest też kierunek odwrotny. Podaj `colKey`. Dane wierszy zostają nienaruszone. Dwutorowa (naprawione 2026-08-10): w trybie platformy tabel przełącza realny `platformIntegration.toggleColumn`, tak samo jak klik człowieka po tej samej naprawie — wcześniej obie ścieżki przełączały nieużywany stan legacy, bez widocznego efektu.',
       parameters: {
         type: 'object',
         properties: {
@@ -3049,7 +3196,7 @@ const IDEA_ACTIONS: ActionDef[] = [
     },
     runtime: RUNTIME_TBL_COLUMN_HIDE,
     source:
-      'src/components/MyWork/IdeaTableTool.tsx colContextMenu "table.column.hide" (~L4006) → useTableSchema.ts toggleColumn (legacy)',
+      'src/components/MyWork/IdeaTableTool.tsx colContextMenu "table.column.hide" (~L4006) → effectiveToggleColumn (naprawione 2026-08-10: usePlatform ? platformIntegration.toggleColumn : useTableSchema.ts toggleColumn)',
   },
   {
     id: 'idea.column.delete',
@@ -3065,11 +3212,11 @@ const IDEA_ACTIONS: ActionDef[] = [
     undo: {
       kind: 'local_stack',
       evidence:
-        'BRAK: `deleteColumn` (`useTableSchema.ts` L130) to gołe `setColumns(prev.filter(...))`, poza stosem Ctrl+Z (ten śledzi `TableNode[]`, nie `ColumnDef[]`). Usunięcie jest natychmiastowe i bez dialogu potwierdzenia po stronie UI — jedyna ochrona to `confirmBeforeRun` niżej, dodana TU dla Teresy; klik człowieka nadal nie pyta. Odzyskanie = ręczne odtworzenie kolumny ("Nowa kolumna"), przy czym definicja (typ/szerokość/opcje) przepada.',
+        'BRAK: legacy `deleteColumn` (`useTableSchema.ts` L130) to gołe `setColumns(prev.filter(...))`, a platformowe `platformIntegration.deleteColumn` (serwerowe `deleteField`) też nie ma żadnego lokalnego cofnięcia — ani jedno nie trafia na stos Ctrl+Z (ten śledzi `TableNode[]`, nie `ColumnDef[]`). Naprawione 2026-08-10: klik człowieka teraz pyta `window.confirm` przed usunięciem (wcześniej usuwał od razu, bez pytania) — `confirmBeforeRun` niżej pozostaje jedyną ochroną po stronie Teresy. Odzyskanie = ręczne odtworzenie kolumny ("Nowa kolumna"), przy czym definicja (typ/szerokość/opcje) przepada; w trybie platformy odzyskanie wymaga też ponownego utworzenia pola po stronie serwera.',
     },
     teresa: {
       description:
-        'Usuwa kolumnę Tabeli wraz z jej definicją (typ, szerokość, opcje) — bez cofnięcia. Podaj `colKey`. Jeśli chodziło Ci tylko o schowanie kolumny z widoku, użyj zamiast tego akcji ukrycia kolumny. Nie działa w trybie platformy tabel (kasuje wtedy nieużywany stan lokalny, a interfejs i tak pokazuje zielone „Column deleted" — znany defekt UI, ten sam co przy kliku człowieka).',
+        'Usuwa kolumnę Tabeli wraz z jej definicją (typ, szerokość, opcje) — bez cofnięcia. Podaj `colKey`. Jeśli chodziło Ci tylko o schowanie kolumny z widoku, użyj zamiast tego akcji ukrycia kolumny. Dwutorowa (naprawione 2026-08-10): w trybie platformy tabel to REALNE, SERWEROWE kasowanie pola (`deleteField`) — TRWALSZE niż w trybie legacy (lokalna pamięć), nie kosmetyczny toast jak wcześniej. Klik człowieka po tej samej naprawie pyta o potwierdzenie (`window.confirm`) przed usunięciem w OBU trybach; ta ścieżka Teresy nie pyta sama — o to dba `confirmBeforeRun` niżej.',
       parameters: {
         type: 'object',
         properties: {
@@ -3081,7 +3228,7 @@ const IDEA_ACTIONS: ActionDef[] = [
     },
     runtime: RUNTIME_TBL_COLUMN_DELETE,
     source:
-      'src/components/MyWork/IdeaTableTool.tsx colContextMenu "table.column.delete" (~L4013) → useTableSchema.ts deleteColumn (legacy)',
+      'src/components/MyWork/IdeaTableTool.tsx colContextMenu "table.column.delete" (~L4013, now behind window.confirm) → effectiveDeleteColumn (naprawione 2026-08-10: usePlatform ? platformIntegration.deleteColumn (serwerowe deleteField) : useTableSchema.ts deleteColumn)',
   },
   // ── N8.2 (2026-08-10) — Tabela, menu wiersza (`IdeaTableTool.tsx`'s
   // `rowContextMenu`, `CanvasContextMenu` na prawy klik wiersza danych).
@@ -3499,6 +3646,37 @@ const IDEA_ACTIONS: ActionDef[] = [
       confirmBeforeRun: true,
     },
     source: 'src/services/api.ts:4619 (duplicateMyIdea) + IdeaMapWorkspace.tsx kebab „Duplikuj"',
+  },
+  {
+    // Program D / epic E08 (2026-08-10) — Przegląd → „Karta biznesowa"
+    // (`IdeaBusinessCaseSection.tsx`, za flagą `ff_ideaBusinessCase`, default
+    // OFF). Zapis JEDNEJ sekcji schematu §6.2 (problem/baseline, cele,
+    // interesariusze, alternatywy, rekomendacja, korzyści, koszty, wpływ
+    // operacyjny, ryzyka, kamienie milowe, KPI, pewność, decyzja) — sekcja
+    // „Dowody i założenia" NIE idzie tą ścieżką, bo czyta/pisze wprost do
+    // ISTNIEJĄCEGO Evidence Envelope (`idea.node.find_evidence` używa tego
+    // samego magazynu inną drogą — panel osadza `EvidencePanelSection`
+    // bezpośrednio, bez przechodzenia przez rejestr).
+    id: 'idea.workspace.business_case_save',
+    label: { pl: 'Zapisz sekcję karty biznesowej', en: 'Save business case section' },
+    icon: 'Save',
+    scope: 'workspace',
+    tools: 'all',
+    surfaces: ['panel'],
+    handler: (ctx) => runPanelUiOnlyCallback('idea.workspace.business_case_save', ctx),
+    mutates: true,
+    requiresPreview: false,
+    undo: {
+      kind: 'none',
+      evidence:
+        'Brak stosu cofania dla karty biznesowej (PUT /api/idea-business-case/:ideaId nadpisuje sekcję bezpośrednio, bez historii wersji) — uczciwie zgłoszony brak, nie ukryty. Zakładka Historia panelu dziś NIE nagrywa zmian karty biznesowej; przywrócenie poprzedniej treści wymaga ręcznego cofnięcia edycji przez użytkownika.',
+    },
+    teresa: {
+      description:
+        'Zapisuje jedną sekcję karty biznesowej Idei (np. problem i punkt odniesienia, alternatywy, ryzyka, KPI). Dziś dostępne WYŁĄCZNIE z prawego panelu — Teresa tego jeszcze nie wywoła.',
+    },
+    source:
+      'src/components/MyWork/panel/IdeaBusinessCaseSection.tsx (przycisk „Zapisz sekcję") + useIdeaBusinessCase.ts saveSection + server/src/routes/ideaBusinessCase.routes.ts PUT',
   },
   // ── scope='edge' (pilot Tablicy 2026-08-09, rozszerzenie na Mapę myśli
   // tego samego dnia) ─────────────────────────────────────────────────────
@@ -5886,6 +6064,185 @@ const IDEA_ACTIONS: ActionDef[] = [
     runtime: RUNTIME_WB_TO_TABLE,
     source:
       'src/components/MyWork/IdeaCanvasContextMenu.tsx EMPTY_ACTIONS id=wb_to_table:277-285 + useWhiteboardQuickActions.ts AI_ACTION_MAP',
+  },
+
+  // ── Tablica: menu RAMKI (frame), WB-FRAME-01 (2026-08-10) ────────────────
+  // Chapter 13's N7 package named "node/edge/frame" but frame was never
+  // implemented — right-clicking a `frameNode` fell through to the SAME
+  // generic node menu as any other element (only the header label differed,
+  // and even that fell back to a generic "Element" — `data.type` is never
+  // set on a plain frame, confirmed by reading `createNode`'s `kind ===
+  // 'frame'` branch before writing this). Data model check performed FIRST
+  // (see report): Whiteboard nodes DO carry real containment — `parentId`
+  // (this app's own bookkeeping, read by `tidyBoard`/collapse/select) AND,
+  // once a board round-trips through save/reload, ReactFlow's OWN
+  // `parentNode` field too (set by the hydrate step in
+  // `IdeaWhiteboardTool.tsx`, which makes `position` relative to the
+  // parent). `groupSelected`/`ungroupSelected` (WhiteboardSelectionBar) were
+  // the only existing container ops — no dedicated menu, no rename/select-
+  // contents/resize-to-fit/add-remove-from-frame, no explicit choice on
+  // delete (the frame's children were left with a dangling parent
+  // reference). All six below are genuinely new mechanism, not menu-only
+  // wiring around something that already worked.
+  //
+  // Rename is NOT a new entry — the frame's own menu reuses `idea.node.edit`
+  // above unchanged (its dispatch is generic over any node id/label, a frame
+  // already listens for the same `idea-workspace-node-update` event via
+  // `FrameNode.tsx`'s `onLabelChange`).
+  {
+    id: 'idea.frame.select_contents',
+    label: { pl: 'Zaznacz zawartość', en: 'Select contents' },
+    icon: 'Boxes',
+    scope: 'lane_frame',
+    tools: ['whiteboard'],
+    surfaces: ['context'],
+    handler: (ctx) => runFrameParamCallback('idea.frame.select_contents', ctx),
+    mutates: false,
+    requiresPreview: false,
+    teresa: {
+      description:
+        'Zaznacza na Tablicy wszystkie elementy zawarte we wskazanej ramce (sama ramka zostaje niezaznaczona). Podaj `frameId`. Bez zawartości — bez efektu.',
+      parameters: {
+        type: 'object',
+        properties: { frameId: { type: 'string', description: 'Id ramki na Tablicy.' } },
+        required: ['frameId'],
+      },
+    },
+    source:
+      'src/components/MyWork/whiteboard/useWhiteboardNodes.ts selectFrameContents (nowa funkcja, WB-FRAME-01) + IdeaCanvasContextMenu.tsx registryFrameItems',
+  },
+  {
+    id: 'idea.frame.add_selection',
+    label: { pl: 'Dodaj zaznaczenie do ramki', en: 'Add selection to frame' },
+    icon: 'FolderInput',
+    scope: 'lane_frame',
+    tools: ['whiteboard'],
+    surfaces: ['context'],
+    handler: (ctx) => runContextMenuUiOnlyCallback('idea.frame.add_selection', ctx),
+    mutates: true,
+    requiresPreview: false,
+    undo: {
+      kind: 'local_stack',
+      evidence: 'addSelectionToFrame() → pushSnapshot() w useWhiteboardNodes.ts (WB-FRAME-01).',
+    },
+    teresa: {
+      description:
+        'Przypisuje elementy DZIŚ zaznaczone w przeglądarce użytkownika (odblokowane, bez własnej ramki, same nie będące ramką) jako zawartość wskazanej ramki. UWAGA: działa WYŁĄCZNIE na to, co jest dziś zaznaczone na płótnie — Teresa nie ma współrzędnych ani listy zaznaczenia, więc dziś dostępne WYŁĄCZNIE z menu prawego kliku (ta sama uczciwa granica co „Kopiuj"/idea.node.copy).',
+    },
+    source:
+      'src/components/MyWork/whiteboard/useWhiteboardNodes.ts addSelectionToFrame (nowa funkcja, WB-FRAME-01) + IdeaCanvasContextMenu.tsx registryFrameItems',
+  },
+  {
+    id: 'idea.frame.resize_to_fit',
+    label: { pl: 'Dopasuj rozmiar do zawartości', en: 'Resize to fit contents' },
+    icon: 'Maximize2',
+    scope: 'lane_frame',
+    tools: ['whiteboard'],
+    surfaces: ['context'],
+    handler: (ctx) => runFrameParamCallback('idea.frame.resize_to_fit', ctx),
+    mutates: true,
+    requiresPreview: false,
+    undo: {
+      kind: 'local_stack',
+      evidence: 'resizeFrameToFit() → pushSnapshot() w useWhiteboardNodes.ts (WB-FRAME-01).',
+    },
+    teresa: {
+      description:
+        'Powiększa wskazaną ramkę tak, by mieściła całą swoją zawartość (nigdy nie zmniejsza, nigdy nie przesuwa lewego górnego rogu ramki — element leżący POWYŻEJ/NA LEWO od tego rogu zostaje częściowo poza ramką, świadome ograniczenie, nie cichy błąd). Podaj `frameId`.',
+      parameters: {
+        type: 'object',
+        properties: { frameId: { type: 'string', description: 'Id ramki na Tablicy.' } },
+        required: ['frameId'],
+      },
+    },
+    source:
+      'src/components/MyWork/whiteboard/useWhiteboardNodes.ts resizeFrameToFit (nowa funkcja, WB-FRAME-01) + IdeaCanvasContextMenu.tsx registryFrameItems',
+  },
+  {
+    id: 'idea.frame.delete_with_contents',
+    label: { pl: 'Usuń ramkę i zawartość', en: 'Delete frame and contents' },
+    icon: 'Trash2',
+    scope: 'lane_frame',
+    tools: ['whiteboard'],
+    surfaces: ['context'],
+    handler: (ctx) => runFrameParamCallback('idea.frame.delete_with_contents', ctx),
+    mutates: true,
+    requiresPreview: false,
+    undo: {
+      kind: 'local_stack',
+      evidence: 'deleteFrame(frameId,false) → pushSnapshot() w useWhiteboardNodes.ts (WB-FRAME-01).',
+    },
+    destructive: true,
+    teresa: {
+      description:
+        'Usuwa wskazaną ramkę WRAZ z całą jej zawartością (cofnięcie przez Ctrl+Z w tej samej sesji). Podaj `frameId`.',
+      parameters: {
+        type: 'object',
+        properties: { frameId: { type: 'string', description: 'Id ramki na Tablicy.' } },
+        required: ['frameId'],
+      },
+    },
+    source:
+      'src/components/MyWork/whiteboard/useWhiteboardNodes.ts deleteFrame (nowa funkcja, WB-FRAME-01) + IdeaCanvasContextMenu.tsx registryFrameItems',
+  },
+  {
+    id: 'idea.frame.delete_release',
+    label: { pl: 'Usuń ramkę, zwolnij zawartość', en: 'Delete frame, release contents' },
+    icon: 'PackageOpen',
+    scope: 'lane_frame',
+    tools: ['whiteboard'],
+    surfaces: ['context'],
+    handler: (ctx) => runFrameParamCallback('idea.frame.delete_release', ctx),
+    mutates: true,
+    requiresPreview: false,
+    undo: {
+      kind: 'local_stack',
+      evidence: 'deleteFrame(frameId,true) → pushSnapshot() w useWhiteboardNodes.ts (WB-FRAME-01).',
+    },
+    // Sama ramka znika trwale (poza cofnięciem Ctrl+Z) — ta sama konwencja co
+    // `idea.node.delete`/`idea.lane.pf_delete` (usunięcie WĘZŁA, niezależnie
+    // od tego, co dzieje się z jego zawartością). Zawartość PRZETRWA
+    // (konwertowana z powrotem na pozycję bezwzględną), stąd osobny wpis od
+    // `idea.frame.delete_with_contents` — to jawny wybór z §Delete, nie
+    // domyślne "Usuń".
+    destructive: true,
+    teresa: {
+      description:
+        'Usuwa wskazaną ramkę, ale ZWALNIA jej zawartość zamiast ją kasować — elementy zostają na Tablicy, przeliczone z powrotem na pozycję bezwzględną tak, by wizualnie nie „skoczyły". Podaj `frameId`.',
+      parameters: {
+        type: 'object',
+        properties: { frameId: { type: 'string', description: 'Id ramki na Tablicy.' } },
+        required: ['frameId'],
+      },
+    },
+    source:
+      'src/components/MyWork/whiteboard/useWhiteboardNodes.ts deleteFrame (nowa funkcja, WB-FRAME-01) + IdeaCanvasContextMenu.tsx registryFrameItems',
+  },
+  {
+    id: 'idea.node.remove_from_frame',
+    label: { pl: 'Usuń z ramki', en: 'Remove from frame' },
+    icon: 'FolderOutput',
+    scope: 'single_item',
+    tools: ['whiteboard'],
+    surfaces: ['context'],
+    handler: (ctx) => runFrameNodeParamCallback(ctx),
+    mutates: true,
+    requiresPreview: false,
+    undo: {
+      kind: 'local_stack',
+      evidence: 'removeFromFrame() → pushSnapshot() w useWhiteboardNodes.ts (WB-FRAME-01).',
+    },
+    teresa: {
+      description:
+        'Zwalnia wskazany element z jego ramki (element zostaje na Tablicy, poza kontenerem, przeliczony z powrotem na pozycję bezwzględną). Pokazuje się WYŁĄCZNIE w menu elementu, który już należy do jakiejś ramki. Podaj `nodeId`.',
+      parameters: {
+        type: 'object',
+        properties: { nodeId: { type: 'string', description: 'Id elementu na Tablicy.' } },
+        required: ['nodeId'],
+      },
+    },
+    source:
+      'src/components/MyWork/whiteboard/useWhiteboardNodes.ts removeFromFrame (nowa funkcja, WB-FRAME-01) + IdeaCanvasContextMenu.tsx registryChildFrameItems',
   },
 
   // ── Mapa myśli: menu tła (pane), N5 kontynuacja (2026-08-09) ─────────────

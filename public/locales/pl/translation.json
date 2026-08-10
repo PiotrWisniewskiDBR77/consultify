@@ -1936,7 +1936,15 @@
         "quickStartBrainstorm": "Utworzono start do brainstormu",
         "quickStartAffinity": "Utworzono start do affinity map",
         "quickStartWorkshop": "Utworzono workshop wall",
-        "phaseChanged": "Faza: {{phase}}"
+        "phaseChanged": "Faza: {{phase}}",
+        "frameEmpty": "Ramka jest pusta",
+        "frameNoSelection": "Najpierw zaznacz odblokowane elementy (poza tą ramką)",
+        "frameAdded": "Dodano do ramki",
+        "frameReleaseOne": "Usunięto z ramki",
+        "frameAlreadyFits": "Ramka już pasuje do zawartości",
+        "frameResized": "Dopasowano rozmiar ramki do zawartości",
+        "frameDeletedReleased": "Usunięto ramkę, zawartość zwolniona",
+        "frameDeletedWithContents": "Usunięto ramkę wraz z zawartością"
       },
       "history": {
         "insertLibraryFragment": "Wstawiono fragment z biblioteki",

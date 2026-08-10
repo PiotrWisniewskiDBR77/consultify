@@ -90,6 +90,13 @@ import {
   normalizeStageToV5,
 } from './ideaEntryTypes';
 import type { CanvasToolType, IdeaWorkspaceSelection } from './ideaSelectionTypes';
+import {
+  canAdvanceToStage,
+  deriveCanvasSignals,
+  evaluateIdeaMaturity,
+  type MaturityAttestations,
+  type MaturityStageId,
+} from './ideaMaturityModel';
 import { getIdeaWorkspaceToolLabel } from './IdeaWorkspaceToolbar';
 import { MapHealthScore } from './mindmap/MapHealthScore';
 import { MindmapInspector } from './mindmap/MindmapInspector';
@@ -98,16 +105,20 @@ import {
   IDEA_PANEL_6_LABELS_PL,
   IDEA_PANEL_AI_SLOT_ID,
   IDEA_PANEL_TOOL_SLOT_ID,
+  ideaPanel6ToolLabel,
   type IdeaPanel6SectionId,
   normalizujDoSzesciu,
 } from './panel/ideaPanel6Sections';
 import { isIdeaPanel6SectionsEnabled } from './panel/ideaPanel6SectionsFlag';
+import { IdeaBusinessCaseSection } from './panel/IdeaBusinessCaseSection';
 import { IdeaPanelActivity } from './panel/IdeaPanelActivity';
 import { IdeaPanelComments } from './panel/IdeaPanelComments';
 import { IdeaPanelHistory } from './panel/IdeaPanelHistory';
 import { isIdeaPanelVisualEnabled } from './panel/ideaPanelVisualFlag';
+import { isIdeaBusinessCaseEnabled } from '@/utils/ideaBusinessCaseSchemaFlag';
 import { ProcessFlowHealthScore } from './processflow/ProcessFlowHealthScore';
 import { ProcessFlowPropertiesPanel } from './processflow/ProcessFlowPropertiesPanel';
+import { IdeaMaturityGate } from './shared/IdeaMaturityGate';
 import { IdeaCompletenessWidget } from './table/IdeaCompletenessWidget';
 
 const FIELD_CLASS =
@@ -287,6 +298,21 @@ interface IdeaWorkspaceToolsProps {
   onAINodeAction?: (action: string, nodeId: string) => void;
   /** Rozszerzenia grafu (`graphRuntime.graph.extensions`) dla panelu kontekstu. */
   mapExtensions?: Record<string, any>;
+
+  /**
+   * E08 (idea maturity model, docs/qa/ideas-manual-audit-2026-08-09/09_...md
+   * §6.1) — real signals for `ideaMaturityModel.ts`'s stage-gate evaluator.
+   * All optional/best-effort: when a host doesn't pass them, the affected
+   * derived criteria simply read as unmet rather than crashing.
+   */
+  sourceType?: string | null;
+  evidenceRefsCount?: number;
+  promotedTo?: string | null;
+  /** Informational only — see ideaMaturityModel.ts header re: P0-1. */
+  partialConversionCount?: number;
+  maturityGates?: MaturityAttestations;
+  maturityGatesSupported?: boolean;
+  onAttestMaturity?: (criterionId: string, met: boolean, note: string) => void;
 }
 
 /* ── Collapsible section wrapper ── */
@@ -417,6 +443,13 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
   onInsertContextToCanvas,
   onAINodeAction,
   mapExtensions,
+  sourceType = null,
+  evidenceRefsCount = 0,
+  promotedTo = null,
+  partialConversionCount = 0,
+  maturityGates = {},
+  maturityGatesSupported = false,
+  onAttestMaturity,
 }) => {
   const { t, i18n } = useTranslation();
   const isPl = i18n.language === 'pl';
@@ -457,6 +490,69 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
     return -1;
   })();
   const canAdvance = nextVisibleStageIdx >= 0;
+
+  /**
+   * E08 — real stage-gate evaluation (ideaMaturityModel.ts), replacing the
+   * zero-criteria "is there a next bucket" check above for GATING purposes.
+   * `canAdvance`/`nextVisibleStageIdx` above are kept for the V5 label-jump
+   * math (which sub-stage to jump TO); `maturityReport` decides whether that
+   * jump is actually ALLOWED.
+   */
+  const maturityReport = useMemo(() => {
+    const canvasSignals = deriveCanvasSignals(graphNodes as Array<{ data?: Record<string, unknown> }>);
+    return evaluateIdeaMaturity(
+      {
+        title,
+        body: seedText,
+        seedText,
+        sourceType,
+        evidenceRefsCount,
+        evidenceLinkedNodeCount: evidenceCount,
+        promotedTo,
+        processFlowLaneCount: processFlowLanes?.length ?? 0,
+        partialConversionCount,
+        ...canvasSignals,
+      },
+      maturityGates,
+      stageBucket
+    );
+  }, [
+    graphNodes,
+    title,
+    seedText,
+    sourceType,
+    evidenceRefsCount,
+    evidenceCount,
+    promotedTo,
+    processFlowLanes,
+    partialConversionCount,
+    maturityGates,
+    stageBucket,
+  ]);
+
+  /** DoD (doc 11 E08): "stage gates enforce completeness" — never let a manual
+   * pick move the Idea past what its own criteria support. Moving backward
+   * (or re-picking the current bucket) is always allowed. */
+  const [blockedStageAttempt, setBlockedStageAttempt] = useState<{
+    bucket: IdeaStageListBucket;
+    missing: string[];
+  } | null>(null);
+  const attemptStageChange = useCallback(
+    (bucket: IdeaStageListBucket, representative: IdeaStageV5) => {
+      const gate = canAdvanceToStage(maturityReport, bucket as MaturityStageId);
+      if (!gate.allowed) {
+        setBlockedStageAttempt({
+          bucket,
+          missing: gate.missing.map((c) => (isPl ? c.label.pl : c.label.en)),
+        });
+        return;
+      }
+      setBlockedStageAttempt(null);
+      onStageChange?.(bucket === stageBucket ? v5Stage : representative);
+      setStageDropdownOpen(false);
+    },
+    [maturityReport, isPl, onStageChange, stageBucket, v5Stage]
+  );
 
   const [branchEditing, setBranchEditing] = useState(false);
   const [areaEditing, setAreaEditing] = useState(false);
@@ -840,7 +936,9 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
                   </div>
                 </div>
                 <span className="shrink-0 rounded-md bg-c-surface px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-c-text-muted">
-                  {etykieta6[sekcja6 ?? 'overview']}
+                  {sekcja6 === 'tool'
+                    ? ideaPanel6ToolLabel(activeTool, !!isPl)
+                    : etykieta6[sekcja6 ?? 'overview']}
                 </span>
               </div>
             )}
@@ -933,7 +1031,12 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
                       </button>
                       {canAdvance && onStageChange && v5Stage !== 'converted' && (
                         <button
-                          onClick={() => onStageChange(IDEA_STAGES_V5[nextVisibleStageIdx])}
+                          onClick={() =>
+                            attemptStageChange(
+                              bucketIdeaStageForList(IDEA_STAGES_V5[nextVisibleStageIdx]),
+                              IDEA_STAGES_V5[nextVisibleStageIdx]
+                            )
+                          }
                           className="ml-2 inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold text-c-info hover:bg-c-info/5 transition-colors"
                         >
                           →{' '}
@@ -953,33 +1056,63 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
                               ? IDEA_STAGE_BUCKET_LABELS[bucket].pl
                               : IDEA_STAGE_BUCKET_LABELS[bucket].en;
                             const isActive = bucket === stageBucket;
+                            // E08: mandatory criteria of every stage up to `bucket` must be
+                            // met before a forward jump is allowed — see canAdvanceToStage.
+                            const gate = canAdvanceToStage(maturityReport, bucket as MaturityStageId);
+                            const isBlocked = !isActive && !gate.allowed;
                             return (
                               <button
                                 key={bucket}
-                                onClick={() => {
-                                  // Re-picking the current bucket keeps today's granular
-                                  // V5 value (no silent regression to the bucket's first
-                                  // sub-stage); picking a different bucket jumps to it.
-                                  onStageChange?.(isActive ? v5Stage : representative);
-                                  setStageDropdownOpen(false);
-                                }}
+                                onClick={() => attemptStageChange(bucket, representative)}
+                                title={
+                                  isBlocked
+                                    ? (isPl ? 'Brakuje kryteriów — patrz "Model dojrzałości" poniżej.' : 'Missing criteria — see "Maturity model" below.')
+                                    : undefined
+                                }
                                 className={`w-full text-left px-3 py-1.5 text-[11px] transition-colors ${
                                   isActive
                                     ? 'font-semibold text-c-info bg-c-info/5'
-                                    : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/[0.03]'
+                                    : isBlocked
+                                      ? 'text-c-text-muted opacity-50'
+                                      : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/[0.03]'
                                 }`}
                               >
                                 <span
                                   className={`inline-block w-1.5 h-1.5 rounded-full mr-2 bg-gradient-to-r ${IDEA_STAGE_COLORS[representative].split(' ')[0]} ${IDEA_STAGE_COLORS[representative].split(' ')[1]}`}
                                 />
                                 {label}
+                                {isBlocked && ' 🔒'}
                               </button>
                             );
                           })}
                         </div>
                       )}
                     </div>
+                    {blockedStageAttempt && (
+                      <div className="mt-2 rounded-lg border border-c-warning/40 bg-c-warning/10 px-2 py-1.5">
+                        <p className="text-[10.5px] font-medium text-c-warning">
+                          {isPl
+                            ? `Nie można ustawić "${isPl ? IDEA_STAGE_BUCKET_LABELS[blockedStageAttempt.bucket].pl : IDEA_STAGE_BUCKET_LABELS[blockedStageAttempt.bucket].en}" — brakuje:`
+                            : `Cannot set "${IDEA_STAGE_BUCKET_LABELS[blockedStageAttempt.bucket].en}" — missing:`}
+                        </p>
+                        <ul className="mt-0.5 space-y-0.5">
+                          {blockedStageAttempt.missing.slice(0, 5).map((m) => (
+                            <li key={m} className="text-[10.5px] text-c-text-muted">
+                              • {m}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
                   </div>
+
+                  {/* E08: inspectable stage gates — WHY not the next stage, what's missing. */}
+                  <IdeaMaturityGate
+                    report={maturityReport}
+                    isPolish={isPl}
+                    attestationsSupported={maturityGatesSupported}
+                    onAttest={onAttestMaturity}
+                  />
 
                   {/* Save status + evidence */}
                   <div className="flex items-center gap-3 flex-wrap">
@@ -1146,6 +1279,34 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
                       </div>
                     ))}
                   </div>
+                </Section>
+              )}
+
+            {/*
+             * ── Przegląd · Karta biznesowa (Program D / epic E08, §6.2) ──
+             * Jedna karta więcej w tej samej zakładce Przegląd — nie szósta
+             * zakładka najwyższego poziomu (rozdział 07 kanonu ustala pięć:
+             * Przegląd · Właściwości · Powiązania · Komentarze · Historia).
+             * Karta biznesowa odpowiada dokładnie na pytanie „Czym jest ten
+             * obiekt jako całość?" na większej głębokości niż istniejące karty
+             * Problem/Status, więc mieszka obok nich. Poziom idei (bez
+             * zaznaczenia elementu) — ten sam warunek co Problem/Status wyżej.
+             * Za flagą `ff_ideaBusinessCase`, default OFF (CLAUDE.md #7).
+             */}
+            {pokaz('overview') &&
+              (!szesc || !maZaznaczenie) &&
+              isIdeaBusinessCaseEnabled() && (
+                <Section
+                  title={isPl ? 'Karta biznesowa' : 'Business case'}
+                  icon={<LayoutDashboard size={12} />}
+                >
+                  <IdeaBusinessCaseSection
+                    ideaId={ideaId}
+                    tool={activeTool}
+                    selection={selection}
+                    graphNodes={graphNodes ?? []}
+                    isPolish={isPl}
+                  />
                 </Section>
               )}
 
@@ -1574,8 +1735,8 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
                     'Select an element to see its fields.'
                   ),
                   pl6(
-                    'Ustawienia samej reprezentacji (styl, układ, motyw) są w sekcji „Narzędzie".',
-                    'Representation settings (style, layout, theme) live under “Tool”.'
+                    `Ustawienia samej reprezentacji (styl, układ, motyw) są w sekcji „${ideaPanel6ToolLabel(activeTool, !!isPl)}".`,
+                    `Representation settings (style, layout, theme) live under “${ideaPanel6ToolLabel(activeTool, !!isPl)}”.`
                   )
                 )}
               </Section>
@@ -1738,7 +1899,11 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
             {/* ── Narzędzie — opisuje NARZĘDZIE, nie element (stąd brak wariantu
              „element" w tabeli układu). ── */}
             {szesc && sekcja6 === 'tool' && (
-              <Section title={etykieta6.tool} icon={<Layers size={12} />} defaultOpen>
+              <Section
+                title={ideaPanel6ToolLabel(activeTool, !!isPl)}
+                icon={<Layers size={12} />}
+                defaultOpen
+              >
                 <div className="space-y-3 text-[11px]" data-testid="idea-panel6-tool">
                   {activeTool === 'mindmap' && (
                     // Ustawienia REPREZENTACJI (struktura / układ / motyw). Bez

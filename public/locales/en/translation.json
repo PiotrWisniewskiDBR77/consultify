@@ -2684,7 +2684,15 @@
         "quickStartBrainstorm": "Brainstorm starter created",
         "quickStartAffinity": "Affinity map starter created",
         "quickStartWorkshop": "Workshop wall created",
-        "phaseChanged": "Phase: {{phase}}"
+        "phaseChanged": "Phase: {{phase}}",
+        "frameEmpty": "Frame has no contents",
+        "frameNoSelection": "Select unlocked elements first (outside this frame)",
+        "frameAdded": "Added to frame",
+        "frameReleaseOne": "Removed from frame",
+        "frameAlreadyFits": "Frame already fits its contents",
+        "frameResized": "Frame resized to fit contents",
+        "frameDeletedReleased": "Frame deleted, contents released",
+        "frameDeletedWithContents": "Frame and its contents deleted"
       },
       "history": {
         "insertLibraryFragment": "Inserted library fragment",

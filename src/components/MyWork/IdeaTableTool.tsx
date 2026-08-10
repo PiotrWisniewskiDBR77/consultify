@@ -493,6 +493,18 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
   // platform persistence.
   const effectiveAddColumn = usePlatform ? platformIntegration.handleAddColumn : handleAddColumn;
   const effectiveDeleteColumn = usePlatform ? platformIntegration.deleteColumn : deleteColumn;
+  // Defect fix (2026-08-10, see ideaActionRegistry.ts N8.2 column-menu block):
+  // the column context menu's Hide/Delete/inline-rename called the LEGACY
+  // toggleColumn/deleteColumn/renameColumn unconditionally, breaking this
+  // file's own `usePlatform ? platformIntegration.X : X` convention that the
+  // rendered headers (`_visCols` above) already follow. In platform mode
+  // that mutated dead legacy state — Hide/Rename did nothing visible, and
+  // Delete additionally fired a lying "Column deleted" success toast.
+  // `effectiveDeleteColumn` above was already correct (reused by
+  // AddColumnDialog's onUndo); these two complete the same pattern for the
+  // other two mutations so all three follow the file-wide convention.
+  const effectiveToggleColumn = usePlatform ? platformIntegration.toggleColumn : toggleColumn;
+  const effectiveRenameColumn = usePlatform ? platformIntegration.renameColumn : renameColumn;
 
   // Platform override: rows
   const effectiveNodes = (usePlatform ? platformIntegration.nodes : nodes) ?? [];
@@ -1053,16 +1065,23 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
       updateSavedView,
       deleteSavedView,
       // N8.2 (2026-08-10) — menu kolumny. DOKŁADNIE te same referencje, które
-      // woła klik człowieka niżej w tym pliku (`colContextMenu`, ~L3990-4022,
-      // oraz inline-rename nagłówka, ~L3745/L3750) — menu zostaje nietknięte,
-      // a Teresa dostaje tę samą mutację. `effectiveCycleSort` jest dwutorowa
-      // sama w sobie; `toggleColumn`/`deleteColumn`/`renameColumn` są legacy —
-      // celowo, dla parytetu z klikiem (patrz `QuickActionHandlers` w
-      // useTableQuickActions.ts i `idea.column.hide` w rejestrze).
+      // woła klik człowieka niżej w tym pliku (`colContextMenu`, `_visCols`
+      // headers inline-rename). Defect fix (2026-08-10): the human click's
+      // Hide/Delete/Rename were LEGACY-only (dead in platform mode; Delete
+      // additionally lied with a success toast) while Teresa got the same
+      // legacy fns "for parity" — a deliberate stopgap documented in
+      // ideaActionRegistry.ts pending this exact fix. Now that the human
+      // click itself is dual-path (`effectiveToggleColumn`/
+      // `effectiveDeleteColumn`/`effectiveRenameColumn`, defined above,
+      // `usePlatform ? platformIntegration.X : X` like every other mutation
+      // in this file), Teresa is handed the SAME dual-path functions so the
+      // two dispatchers keep calling one real mechanism instead of
+      // re-diverging (Teresa legacy-only, click platform-aware).
+      // `effectiveCycleSort` was already dual-path.
       cycleSort: effectiveCycleSort,
-      toggleColumn,
-      deleteColumn,
-      renameColumn,
+      toggleColumn: effectiveToggleColumn,
+      deleteColumn: effectiveDeleteColumn,
+      renameColumn: effectiveRenameColumn,
       // N8.2 (2026-08-10) — row context menu ("Edit"/"Add note"/"Duplicate row"/
       // "Delete row"). `openRowEditPanel`/`openRowNotePanel` are the exact same
       // closures the JSX onSelect below calls (see comment above their
@@ -3838,12 +3857,15 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                                 )}
                                 className="w-full bg-c-surface border border-c-border-subtle rounded px-1 py-0.5 text-[10px] font-bold uppercase tracking-wider text-c-text-secondary outline-none"
                                 onBlur={(e) => {
-                                  renameColumn(col.key, e.target.value);
+                                  effectiveRenameColumn(col.key, e.target.value);
                                   setEditingHeaderKey(null);
                                 }}
                                 onKeyDown={(e) => {
                                   if (e.key === 'Enter') {
-                                    renameColumn(col.key, (e.target as HTMLInputElement).value);
+                                    effectiveRenameColumn(
+                                      col.key,
+                                      (e.target as HTMLInputElement).value
+                                    );
                                     setEditingHeaderKey(null);
                                   }
                                   if (e.key === 'Escape') setEditingHeaderKey(null);
@@ -4102,7 +4124,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                   id: 'table.column.hide',
                   label: t('ideas.table.hideColumn', 'Hide column'),
                   onSelect: () => {
-                    toggleColumn(colContextMenu.colKey);
+                    effectiveToggleColumn(colContextMenu.colKey);
                   },
                 },
                 {
@@ -4111,7 +4133,22 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                   danger: true,
                   separatorBefore: true,
                   onSelect: () => {
-                    deleteColumn(colContextMenu.colKey);
+                    // Destructive in both modes (column definition is gone,
+                    // no undo stack covers it — see registry undo.evidence),
+                    // and genuinely server-side in platform mode
+                    // (TablePlatformApi.deleteField via effectiveDeleteColumn)
+                    // rather than the previous no-op-with-a-lying-toast.
+                    if (
+                      !window.confirm(
+                        t(
+                          'ideas.table.areYouSureYouWantToDeleteThisColumn',
+                          'Are you sure you want to delete this column? This cannot be undone.'
+                        )
+                      )
+                    ) {
+                      return;
+                    }
+                    effectiveDeleteColumn(colContextMenu.colKey);
                     toast.success(t('ideas.table.columnDeleted', 'Column deleted'));
                   },
                 },

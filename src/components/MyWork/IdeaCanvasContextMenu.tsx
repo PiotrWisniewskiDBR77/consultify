@@ -8,11 +8,14 @@
  */
 import {
   BookOpen,
+  Boxes,
   Brain,
   BringToFront,
   Clipboard,
   ClipboardPaste,
   Copy,
+  FolderInput,
+  FolderOutput,
   GitBranch,
   Layers,
   Lightbulb,
@@ -20,8 +23,10 @@ import {
   ListChecks,
   Loader2,
   Lock,
+  Maximize2,
   MessageSquare,
   Network,
+  PackageOpen,
   Pencil,
   Search,
   SendToBack,
@@ -57,6 +62,11 @@ interface ContextMenuTarget {
   nodeLabel?: string;
   nodeType?: string;
   nodeLocked?: boolean;
+  /** WB-FRAME-01: raw ReactFlow node type (`frameNode`/`groupNode`/…) — distinct
+   * from `nodeType` above (the display-label semantic type). */
+  nodeKind?: string;
+  /** WB-FRAME-01: id of the containing frame, if this node is one of its children. */
+  nodeParentId?: string;
 }
 
 export interface IdeaCanvasContextMenuProps {
@@ -100,6 +110,18 @@ export interface IdeaCanvasContextMenuProps {
   onPaste?: () => void;
   /** Greys out "Paste" with a reason when the tool clipboard is empty. */
   pasteDisabled?: boolean;
+  /**
+   * WB-FRAME-01 (frame context menu, 2026-08-10) — container-aware ops shown
+   * ONLY when `target.nodeKind` is `frameNode`/`groupNode` (Whiteboard's
+   * frame). See `useWhiteboardNodes.ts` for what each one actually does and
+   * the honest scoping decisions behind them.
+   */
+  onSelectFrameContents?: (frameId: string) => void;
+  onAddSelectionToFrame?: (frameId: string) => void;
+  onResizeFrameToFit?: (frameId: string) => void;
+  /** Shown on a CHILD node's own menu (not the frame's) when it has a parent. */
+  onRemoveFromFrame?: (nodeId: string) => void;
+  onDeleteFrame?: (frameId: string, releaseContents: boolean) => void;
 }
 
 interface MenuItem {
@@ -398,6 +420,35 @@ const GENERATOR_ITEM_BY_ID: Partial<Record<string, MenuItem>> = Object.fromEntri
   [...NODE_ACTIONS, ...EMPTY_ACTIONS].map((item) => [item.id, item])
 );
 
+/**
+ * SYS-P3-01: three of these NODE-menu AI items are genuinely whole-board
+ * scope, not the clicked node/current selection their placement in a
+ * `nodeOnly` menu implies. Verified against the real request payload
+ * (`handleAction` above sends `existingNodes: graphNodes` — ALL board nodes,
+ * unfiltered by selection — and the server's `getScopedGeneratorContext` in
+ * `ideaAIGeneratorService.ts` only narrows context for `sticky_summarize`,
+ * not for `wb_find_themes`/`wb_name_clusters`/`wb_extract_actions`). Fixing
+ * the behavior (making these truly selection-aware) is out of scope for a
+ * P3 label pass — it would change what the LLM actually analyzes. Fixing the
+ * LABEL instead: same "Document" chip Mind Map's node AI menu already uses
+ * for its analogous whole-map-despite-node-menu items (`myWorkMindmap.
+ * ctxMenu.scopeDocument`, MM-P2-03), so the same scope word means the same
+ * target breadth on both tools (chapter 09 §8.3 canon).
+ */
+const NODE_MENU_DOCUMENT_SCOPE_IDS = new Set<string>([
+  'idea.node.ai_find_themes',
+  'idea.node.ai_name_clusters',
+  'idea.node.ai_extract_actions',
+]);
+/** Same three items, keyed by their local `MenuItem.id` — used by the
+ * non-registry fallback render path below (dead for whiteboard today, kept
+ * in sync defensively — see the comment above `REGISTRY_NODE_MENU_IDS`). */
+const NODE_MENU_DOCUMENT_SCOPE_LOCAL_IDS = new Set<string>([
+  'wb_find_themes',
+  'wb_name_clusters',
+  'wb_extract_actions',
+]);
+
 export const IdeaCanvasContextMenu: React.FC<IdeaCanvasContextMenuProps> = ({
   position,
   target,
@@ -425,10 +476,18 @@ export const IdeaCanvasContextMenu: React.FC<IdeaCanvasContextMenuProps> = ({
   onCopySelected,
   onPaste,
   pasteDisabled,
+  onSelectFrameContents,
+  onAddSelectionToFrame,
+  onResizeFrameToFit,
+  onRemoveFromFrame,
+  onDeleteFrame,
 }) => {
   const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
   const [loadingId, setLoadingId] = useState<string | null>(null);
+
+  /** SYS-P3-01 — same canon word/translation Mind Map uses for "Document". */
+  const documentScopeLabel = t('myWorkMindmap.ctxMenu.scopeDocument', 'Document');
 
   const handleAction = useCallback(
     async (item: MenuItem) => {
@@ -582,7 +641,19 @@ export const IdeaCanvasContextMenu: React.FC<IdeaCanvasContextMenuProps> = ({
     (item) => !item.tools || item.tools.includes(activeTool)
   );
 
-  const nodeHeaderTypeLabel = getCanvasNodeTypeLabel(target.nodeType, isPl);
+  // WB-FRAME-01 (frame context menu, 2026-08-10): a frame right-click used to
+  // flow through this SAME generic node menu, distinguished only by
+  // `target.nodeType`'s header label — and even that fell back to the
+  // generic "Element" label, because a plain frame's `node.data` never sets
+  // `semanticType`/`type` (confirmed by reading `createNode`'s `kind ===
+  // 'frame'` branch before writing this). `target.nodeKind` (the RAW
+  // ReactFlow node type, newly threaded through `handleCanvasContextMenu`)
+  // is what actually distinguishes a frame reliably.
+  const isFrameTarget = isOnNode && (target.nodeKind === 'frameNode' || target.nodeKind === 'groupNode');
+  const nodeHeaderTypeLabel = getCanvasNodeTypeLabel(
+    target.nodeType || (isFrameTarget ? 'frame' : undefined),
+    isPl
+  );
   const menuAriaLabel = isOnNode
     ? t('myWorkIdeas.canvasContextMenu.nodeMenuAriaLabel', {
         defaultValue: `${nodeHeaderTypeLabel} actions`,
@@ -626,8 +697,13 @@ export const IdeaCanvasContextMenu: React.FC<IdeaCanvasContextMenuProps> = ({
       )
     : null;
 
+  // WB-FRAME-01: a frame gets its OWN item list (`registryFrameItems` below)
+  // instead of this generic one — `!isFrameTarget` here and on the two other
+  // `isOnNode` blocks below (generator ids, destructive) is what actually
+  // stops a frame from also rendering "AI: Expand"/"Attach knowledge"/plain
+  // "Delete" alongside its container-aware items.
   const registryBaseItems =
-    useRegistry && isOnNode && registryById
+    useRegistry && isOnNode && !isFrameTarget && registryById
       ? REGISTRY_NODE_MENU_IDS.filter(
           (id) => REGISTRY_ID_TO_BASE_KIND[id] && id !== 'idea.node.delete'
         )
@@ -696,7 +772,9 @@ export const IdeaCanvasContextMenu: React.FC<IdeaCanvasContextMenuProps> = ({
 
   const registryGeneratorIds = useRegistry
     ? isOnNode
-      ? REGISTRY_NODE_MENU_IDS.filter((id) => REGISTRY_ID_TO_ITEM_ID[id])
+      ? isFrameTarget
+        ? []
+        : REGISTRY_NODE_MENU_IDS.filter((id) => REGISTRY_ID_TO_ITEM_ID[id])
       : REGISTRY_PANE_MENU_IDS
     : [];
   const registryGeneratorItems =
@@ -716,6 +794,9 @@ export const IdeaCanvasContextMenu: React.FC<IdeaCanvasContextMenuProps> = ({
               ) : (
                 <Icon size={14} className="text-c-info" />
               ),
+              // SYS-P3-01: honest scope chip for the 3 items that operate on
+              // the WHOLE board despite sitting in this node-only menu.
+              shortcut: NODE_MENU_DOCUMENT_SCOPE_IDS.has(def.id) ? documentScopeLabel : undefined,
               disabled: !isAccepted || !!loadingId,
               disabledReason: !isAccepted
                 ? t('myWorkIdeas.canvasContextMenu.acceptChallengeUnlockAi')
@@ -734,7 +815,7 @@ export const IdeaCanvasContextMenu: React.FC<IdeaCanvasContextMenuProps> = ({
       : [];
 
   const registryDestructiveItems =
-    useRegistry && isOnNode && registryById
+    useRegistry && isOnNode && !isFrameTarget && registryById
       ? (() => {
           const entry = registryById.get('idea.node.delete');
           if (!entry) return [];
@@ -752,6 +833,173 @@ export const IdeaCanvasContextMenu: React.FC<IdeaCanvasContextMenuProps> = ({
                 : undefined,
               separatorBefore: true,
               onSelect: () => runViaRegistry(def.id, () => handleBaseAction(item)),
+            },
+          ];
+        })()
+      : [];
+
+  // WB-FRAME-01 (frame context menu, 2026-08-10) — container-aware ops,
+  // shown ONLY when the right-clicked node is a real frame (`isFrameTarget`).
+  // Counts below read `graphNodes` directly (already passed in as a prop) —
+  // same fields (`parentNode`/`parentId`/`data.parentId`) `useWhiteboardNodes.ts`
+  // reads, duplicated here read-only to drive disabled/enabled state without
+  // a new prop just for two counts.
+  const frameChildCount = isFrameTarget
+    ? (graphNodes as any[]).filter((n) => {
+        const pid = n?.parentNode || n?.parentId || n?.data?.parentId;
+        return pid === target.nodeId;
+      }).length
+    : 0;
+  const frameAddableCount = isFrameTarget
+    ? (graphNodes as any[]).filter((n) => {
+        if (n?.id === target.nodeId || !n?.selected || n?.data?.locked) return false;
+        if (n?.parentNode || n?.parentId || n?.data?.parentId) return false;
+        return n?.type !== 'frameNode' && n?.type !== 'groupNode';
+      }).length
+    : 0;
+
+  const registryFrameItems =
+    useRegistry && isFrameTarget && registryById && target.nodeId
+      ? (() => {
+          const frameId = target.nodeId!;
+          const editEntry = registryById.get('idea.node.edit');
+          const selectEntry = registryById.get('idea.frame.select_contents');
+          const addEntry = registryById.get('idea.frame.add_selection');
+          const resizeEntry = registryById.get('idea.frame.resize_to_fit');
+          const deleteWithEntry = registryById.get('idea.frame.delete_with_contents');
+          const deleteReleaseEntry = registryById.get('idea.frame.delete_release');
+          const items: any[] = [];
+          if (editEntry) {
+            items.push({
+              id: editEntry.def.id,
+              label: isPl ? editEntry.def.label.pl : editEntry.def.label.en,
+              icon: <Pencil size={14} className="text-c-text-muted" />,
+              disabled: !!locked,
+              disabledReason: locked
+                ? t('myWorkIdeas.canvasContextMenu.canvasLocked', 'Canvas is locked')
+                : undefined,
+              onSelect: () =>
+                runViaRegistry(editEntry.def.id, () => handleBaseAction(BASE_ACTION_BY_KIND.edit!)),
+            });
+          }
+          if (selectEntry) {
+            items.push({
+              id: selectEntry.def.id,
+              label: isPl ? selectEntry.def.label.pl : selectEntry.def.label.en,
+              icon: <Boxes size={14} className="text-c-text-muted" />,
+              disabled: frameChildCount === 0,
+              disabledReason:
+                frameChildCount === 0
+                  ? t('myWorkIdeas.canvasContextMenu.frameEmpty', 'Frame has no contents')
+                  : undefined,
+              onSelect: () =>
+                runViaRegistry(selectEntry.def.id, () => {
+                  onSelectFrameContents?.(frameId);
+                  onClose();
+                }),
+            });
+          }
+          if (addEntry) {
+            items.push({
+              id: addEntry.def.id,
+              label: isPl ? addEntry.def.label.pl : addEntry.def.label.en,
+              icon: <FolderInput size={14} className="text-c-text-muted" />,
+              disabled: !!locked || frameAddableCount === 0,
+              disabledReason: locked
+                ? t('myWorkIdeas.canvasContextMenu.canvasLocked', 'Canvas is locked')
+                : frameAddableCount === 0
+                  ? t(
+                      'myWorkIdeas.canvasContextMenu.frameNoSelection',
+                      'Select unlocked elements first (outside this frame)'
+                    )
+                  : undefined,
+              onSelect: () =>
+                runViaRegistry(addEntry.def.id, () => {
+                  onAddSelectionToFrame?.(frameId);
+                  onClose();
+                }),
+            });
+          }
+          if (resizeEntry) {
+            items.push({
+              id: resizeEntry.def.id,
+              label: isPl ? resizeEntry.def.label.pl : resizeEntry.def.label.en,
+              icon: <Maximize2 size={14} className="text-c-text-muted" />,
+              disabled: !!locked || frameChildCount === 0,
+              disabledReason: locked
+                ? t('myWorkIdeas.canvasContextMenu.canvasLocked', 'Canvas is locked')
+                : frameChildCount === 0
+                  ? t('myWorkIdeas.canvasContextMenu.frameEmpty', 'Frame has no contents')
+                  : undefined,
+              onSelect: () =>
+                runViaRegistry(resizeEntry.def.id, () => {
+                  onResizeFrameToFit?.(frameId);
+                  onClose();
+                }),
+            });
+          }
+          if (deleteWithEntry) {
+            items.push({
+              id: deleteWithEntry.def.id,
+              label: isPl ? deleteWithEntry.def.label.pl : deleteWithEntry.def.label.en,
+              icon: <Trash2 size={14} />,
+              danger: true,
+              disabled: !!locked,
+              disabledReason: locked
+                ? t('myWorkIdeas.canvasContextMenu.canvasLocked', 'Canvas is locked')
+                : undefined,
+              separatorBefore: true,
+              onSelect: () =>
+                runViaRegistry(deleteWithEntry.def.id, () => {
+                  onDeleteFrame?.(frameId, false);
+                  onClose();
+                }),
+            });
+          }
+          if (deleteReleaseEntry) {
+            items.push({
+              id: deleteReleaseEntry.def.id,
+              label: isPl ? deleteReleaseEntry.def.label.pl : deleteReleaseEntry.def.label.en,
+              icon: <PackageOpen size={14} className="text-c-text-muted" />,
+              disabled: !!locked,
+              disabledReason: locked
+                ? t('myWorkIdeas.canvasContextMenu.canvasLocked', 'Canvas is locked')
+                : undefined,
+              onSelect: () =>
+                runViaRegistry(deleteReleaseEntry.def.id, () => {
+                  onDeleteFrame?.(frameId, true);
+                  onClose();
+                }),
+            });
+          }
+          return items;
+        })()
+      : [];
+
+  // WB-FRAME-01: "Remove from frame" — shown on a CHILD node's own menu
+  // (never on the frame's own menu above), only when this node actually has
+  // a parent (`target.nodeParentId`, threaded through `handleCanvasContextMenu`).
+  const registryChildFrameItems =
+    useRegistry && isOnNode && !isFrameTarget && target.nodeParentId && target.nodeId && registryById
+      ? (() => {
+          const entry = registryById.get('idea.node.remove_from_frame');
+          if (!entry) return [];
+          const { def } = entry;
+          const nodeId = target.nodeId!;
+          return [
+            {
+              id: def.id,
+              label: isPl ? def.label.pl : def.label.en,
+              icon: <FolderOutput size={14} className="text-c-text-muted" />,
+              disabled: !!locked,
+              disabledReason: locked
+                ? t('myWorkIdeas.canvasContextMenu.canvasLocked', 'Canvas is locked')
+                : undefined,
+              onSelect: () =>
+                runViaRegistry(def.id, () => {
+                  onRemoveFromFrame?.(nodeId);
+                  onClose();
+                }),
             },
           ];
         })()
@@ -784,7 +1032,9 @@ export const IdeaCanvasContextMenu: React.FC<IdeaCanvasContextMenuProps> = ({
       items={
         useRegistry
           ? [
+              ...registryFrameItems,
               ...registryBaseItems,
+              ...registryChildFrameItems,
               ...registryPaneBaseItems,
               ...registryGeneratorItems,
               ...registryDestructiveItems,
@@ -829,6 +1079,10 @@ export const IdeaCanvasContextMenu: React.FC<IdeaCanvasContextMenuProps> = ({
                   ) : (
                     <Icon size={14} className="text-c-info" />
                   ),
+                  // SYS-P3-01 (fallback path — see NODE_MENU_DOCUMENT_SCOPE_LOCAL_IDS).
+                  shortcut: NODE_MENU_DOCUMENT_SCOPE_LOCAL_IDS.has(item.id)
+                    ? documentScopeLabel
+                    : undefined,
                   disabled: !isAccepted || !!loadingId,
                   disabledReason: !isAccepted
                     ? t('myWorkIdeas.canvasContextMenu.acceptChallengeUnlockAi')

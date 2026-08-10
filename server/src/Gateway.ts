@@ -138,6 +138,7 @@ import helpRoutes from './routes/help.routes.js';
 import helpAnalyticsRoutes from './routes/helpAnalytics.routes.js';
 import helpChatRoutes from './routes/helpChat.routes.js';
 import helpFeedbackRoutes from './routes/helpFeedback.routes.js';
+import ideaBusinessCaseRoutes from './routes/ideaBusinessCase.routes.js';
 import inboxEnterpriseRoutes from './routes/inbox-enterprise.routes.js';
 import initiativeGeneratorRoutes from './routes/initiative-generator.routes.js';
 import initiativeGovernanceRoutes from './routes/initiative-governance.routes.js';
@@ -984,6 +985,9 @@ export class ApiGateway {
       app.use('/api/decisions', decisionsRoutes);
       // Evidence Layer (H1 Harvey-gap, kontrakt nr 1) — SSOT _KONCEPT_RDZEN_2026-07-10.md §3
       app.use('/api/evidence', evidenceRoutes);
+      // Idea business-case schema (Program D / epic E08) — SSOT
+      // docs/qa/ideas-manual-audit-2026-08-09/09_IDEAS_COMPLETE_TRANSFORMATION_PROGRAM_FOR_CLAUDE.md §6.2
+      app.use('/api/idea-business-case', ideaBusinessCaseRoutes);
       app.use('/api/stage-gates', stageGatesRoutes);
       // HP-7 (Harvey-Parity §Blok B, Workflow Engine) — REST wiring for
       // artifactApprovalService.ts (draft->review->approved/rejected on

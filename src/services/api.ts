@@ -4685,6 +4685,26 @@ export const Api = {
     return normalizeIdeaDisplayFields(await res.json());
   },
 
+  /**
+   * E08 (idea maturity model) — sets one user attestation for an `attested`
+   * stage-gate criterion. See src/components/MyWork/ideaMaturityModel.ts.
+   * `applied: false` in the response means the additive DB column hasn't
+   * been migrated yet — callers must reflect that honestly, never assume success.
+   */
+  setIdeaMaturityAttestation: async (
+    id: string,
+    criterionId: string,
+    met: boolean,
+    note?: string
+  ): Promise<{ success: boolean; applied: boolean; maturityGates: Record<string, unknown> }> => {
+    const res = await fetch(`${API_URL}/my-work/my-ideas/${id}/maturity-gates`, {
+      method: 'PATCH',
+      headers: getHeaders(),
+      body: JSON.stringify({ criterionId, met, note }),
+    });
+    return handleResponse(res, 'Failed to save maturity attestation');
+  },
+
   createMyIdea: async (idea: {
     title: string;
     body?: string;

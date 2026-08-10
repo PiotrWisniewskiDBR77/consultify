@@ -193,6 +193,7 @@ import { useProcessFlowValidation } from './processflow/useProcessFlowValidation
 import { validateFlowWarnings, type ValidationWarning } from './processflow/validateFlow';
 import { ValidationResultsPanel } from './processflow/ValidationResultsPanel';
 import {
+  computeLaneAwareFitBounds,
   normalizeProcessFlowViewState,
   processFlowViewportStorageKey,
   resolveHydrationViewport,
@@ -2498,6 +2499,25 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
     [ideaId, isPl]
   );
 
+  /**
+   * PF-P3-01: lane-aware "Fit view" — a plain `fitView()` only bounds actual
+   * ReactFlow nodes, but Process Flow's swimlanes are painted OUTSIDE the
+   * node graph (see `LaneSystem.tsx`), so it silently crops an empty or
+   * over-tall lane. `computeLaneAwareFitBounds` unions the node bounds with
+   * the FULL lane stack height so "Fit view" actually fits every lane and
+   * node, not just the nodes. Shared by BOTH entry points — the corner
+   * button (`CanvasZoomControls onFitView`) and the `Shift+1` keyboard
+   * shortcut — so they agree instead of drifting apart again.
+   */
+  const handleFitAllLanesAndNodes = useCallback(() => {
+    // Prefer the live instance's measured nodes (real rendered width/height
+    // via ResizeObserver) over the raw `nodes` state, which does not carry
+    // those dimensions — falls back to `nodes` before the instance mounts.
+    const measuredNodes = reactFlowInstanceRef.current?.getNodes?.() ?? nodes;
+    const bounds = computeLaneAwareFitBounds(measuredNodes, lanes, LANE_HEIGHT);
+    reactFlowInstanceRef.current?.fitBounds(bounds, { padding: 0.2, duration: 300 });
+  }, [nodes, lanes]);
+
   // P3: shared grammar (Tab/Enter/F2/Delete/Escape/Ctrl+Z/S/D/L/0)
   useCanvasKeyboard({
     toolType: 'processflow',
@@ -2509,7 +2529,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       onRedo: () => runPfKeyboardAction('idea.canvas.redo', redo),
       onDuplicate: () => runPfKeyboardAction('idea.node.duplicate', duplicateSelected),
       onAutoLayout: () => runPfKeyboardAction('idea.view.auto_layout', handleAutoLayout),
-      onFitView: () => reactFlowInstanceRef.current?.fitView({ padding: 0.15, duration: 300 }),
+      onFitView: handleFitAllLanesAndNodes,
       onEditSelected: () =>
         runPfKeyboardAction('idea.node.pf_properties', () => setShowPropertiesPanel(true)),
       onDeleteSelected: () => runPfKeyboardAction('idea.node.delete', deleteSelected),
@@ -2579,10 +2599,17 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
 
       if (isInput) return;
 
-      // A6: Shift+1 = zoom to fit (layout-independent via e.code)
+      // A6: Shift+1 = zoom to fit (layout-independent via e.code).
+      // PF-P3-01: was calling the RAW `fitView()` here — the exact plain,
+      // non-lane-aware call the corner button and Ctrl/Cmd+0 (both routed
+      // through `handleFitAllLanesAndNodes`, see its own doc comment above)
+      // were fixed to stop calling, because it crops an empty/over-tall
+      // trailing lane. This third entry point had silently drifted back to
+      // the buggy behavior — call the same lane-aware handler so all three
+      // (button, Ctrl/Cmd+0, Shift+1) agree.
       if (e.shiftKey && !e.metaKey && !e.ctrlKey && !e.altKey && e.code === 'Digit1') {
         e.preventDefault();
-        reactFlowInstanceRef.current?.fitView({ padding: 0.15, duration: 300 });
+        handleFitAllLanesAndNodes();
         return;
       }
 
@@ -2601,7 +2628,17 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [addNode, duplicateSelected, flowMode, handleSave, open, redo, runBackendValidation, undo]);
+  }, [
+    addNode,
+    duplicateSelected,
+    flowMode,
+    handleFitAllLanesAndNodes,
+    handleSave,
+    open,
+    redo,
+    runBackendValidation,
+    undo,
+  ]);
 
   // ── Graph update listener (from workspace proposals) ───────────────────
   useEffect(() => {
@@ -3594,6 +3631,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
                 onToggleMiniMap={() => setShowMiniMap((prev) => !prev)}
                 onFullscreenToggle={onFullscreenToggle}
                 isFullscreen={isFullscreen}
+                onFitView={handleFitAllLanesAndNodes}
               />
               {!locked && <CanvasSnapGuides threshold={6} />}
             </ReactFlow>

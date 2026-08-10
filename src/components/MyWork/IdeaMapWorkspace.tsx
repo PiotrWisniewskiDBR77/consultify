@@ -358,6 +358,15 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   const [area, setArea] = useState<string>('');
   const [priority, setPriority] = useState<number>(50);
 
+  // E08 (idea maturity model) — real signals for ideaMaturityModel.ts, read
+  // straight off the same `idea`/`created` objects already fetched below
+  // (no extra network calls). See IdeaWorkspaceTools.tsx's `maturityReport`.
+  const [ideaSourceType, setIdeaSourceType] = useState<string | null>(null);
+  const [ideaPromotedTo, setIdeaPromotedTo] = useState<string | null>(null);
+  const [ideaEvidenceRefsCount, setIdeaEvidenceRefsCount] = useState(0);
+  const [maturityGates, setMaturityGates] = useState<Record<string, any>>({});
+  const [maturityGatesSupported, setMaturityGatesSupported] = useState(false);
+
   const [saving, setSaving] = useState(false);
   const [dirty, setDirty] = useState(false);
   const [lastSavedAt, setLastSavedAt] = useState<number | null>(null);
@@ -1542,6 +1551,13 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         setBranch(String(created?.branch || ''));
         setArea(String(created?.area || ''));
         setPriority(Number.isFinite(Number(created?.priority)) ? Number(created.priority) : 50);
+        setIdeaSourceType((created as any)?.sourceType ?? null);
+        setIdeaPromotedTo((created as any)?.promotedTo ?? null);
+        setIdeaEvidenceRefsCount(
+          Array.isArray((created as any)?.evidenceRefs) ? (created as any).evidenceRefs.length : 0
+        );
+        setMaturityGates((created as any)?.maturityGates ?? {});
+        setMaturityGatesSupported(Boolean((created as any)?.maturityGatesSupported));
         onSaved(created as MyIdea);
         setDirty(true);
 
@@ -1604,6 +1620,11 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         setPriority(Number.isFinite(Number(idea?.priority)) ? Number(idea.priority) : 50);
         setDirty(false);
         setLastSavedAt(idea?.updatedAt ? new Date(idea.updatedAt).getTime() : null);
+        setIdeaSourceType(idea?.sourceType ?? null);
+        setIdeaPromotedTo(idea?.promotedTo ?? null);
+        setIdeaEvidenceRefsCount(Array.isArray(idea?.evidenceRefs) ? idea.evidenceRefs.length : 0);
+        setMaturityGates(idea?.maturityGates ?? {});
+        setMaturityGatesSupported(Boolean(idea?.maturityGatesSupported));
 
         try {
           const mapRes = await Api.getMyIdeaMap(String(idea?.id || ideaId), {
@@ -2259,6 +2280,34 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
       }
     },
     [isDraft, realId]
+  );
+
+  // E08 (idea maturity model) — persists ONE attested stage-gate criterion.
+  // Optimistic local update + real server confirmation of `applied`; if the
+  // additive migration hasn't run, the server honestly reports
+  // `applied:false` and we revert rather than pretend it saved (house rule:
+  // no silent no-op behind a success state).
+  const handleAttestMaturity = useCallback(
+    async (criterionId: string, met: boolean, note: string) => {
+      const previous = maturityGates;
+      setMaturityGates((prev) => ({
+        ...prev,
+        [criterionId]: { met, note, at: new Date().toISOString() },
+      }));
+      try {
+        const res = await Api.setIdeaMaturityAttestation(realId, criterionId, met, note);
+        if (res?.applied) {
+          setMaturityGates(res.maturityGates || {});
+          setMaturityGatesSupported(true);
+        } else {
+          setMaturityGates(previous);
+          setMaturityGatesSupported(false);
+        }
+      } catch {
+        setMaturityGates(previous);
+      }
+    },
+    [realId, maturityGates]
   );
 
   // ── Convert ─────────────────────────────────────────────────────────────────
@@ -3239,7 +3288,8 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
     // Układ SZEŚCIU sekcji (flaga `ff_ideaPanel6Sections`, default OFF) ma
     // własny, niezależny budowniczy paska — patrz `panel/ideaPanel6Sections.ts`.
     // Przy fladze OFF nie zmienia się nic: leci stary builder pięciu ikon.
-    if (panel6Enabled) return buildIdeaPanel6RailTools({ isPolish: Boolean(isPolish) });
+    if (panel6Enabled)
+      return buildIdeaPanel6RailTools({ isPolish: Boolean(isPolish), activeTool });
     const inspektorJest =
       activeTool === 'mindmap' || activeTool === 'whiteboard' || activeTool === 'process_flow';
     const kondycjaJest = activeTool === 'mindmap' || activeTool === 'process_flow';
@@ -3317,6 +3367,14 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
       graphNodes,
       graphEdges,
       evidenceCount: graphNodes.filter((n: any) => n?.data?.evidenceLinks?.length > 0).length,
+      // E08 (idea maturity model) — real signals + attestation handler, see
+      // ideaMaturityModel.ts and IdeaWorkspaceTools.tsx's `maturityReport`.
+      sourceType: ideaSourceType,
+      evidenceRefsCount: ideaEvidenceRefsCount,
+      promotedTo: ideaPromotedTo,
+      maturityGates,
+      maturityGatesSupported,
+      onAttestMaturity: handleAttestMaturity,
       // P1-1 (Z3): wiersz „Podsumuj AI / Rozwiń AI" w sekcji Status prawego
       // panelu wysyła mm_ai_summarize / mm_ai_expand — obsługuje je wyłącznie
       // useMindMapQuickActions (zamontowany tylko w Mapie myśli). Poza Mapą

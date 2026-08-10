@@ -382,9 +382,20 @@ const decorateIdeaLineage = (row: any) => ({
   creativeProposals:
     row?.creativeProposals != null ? parseJsonField(row.creativeProposals, []) : undefined,
   summaryData: row?.summaryData != null ? parseJsonField(row.summaryData, null) : undefined,
+  // E08 (idea maturity model, docs/qa/ideas-manual-audit-2026-08-09/09_...md §6.1):
+  // user attestations for the handful of stage-gate criteria that have no
+  // backing field anywhere else (recommendation / financial scenario /
+  // dependencies / unresolved assumptions / initial economics — see
+  // src/components/MyWork/ideaMaturityModel.ts). `undefined` when the
+  // additive column (server/migrations/20260810_idea_maturity_gates.sql,
+  // NOT applied yet) doesn't exist on this database — the row simply won't
+  // carry the raw key in that case (see `lineageSelect` guards below).
+  maturityGates:
+    row?.maturity_gates_json !== undefined ? parseJsonField(row.maturity_gates_json, {}) : {},
   action_contract_json: undefined,
   source_pack_json: undefined,
   evidence_refs_json: undefined,
+  maturity_gates_json: undefined,
 });
 
 const normalizeDecisionStatus = (status?: string | null) => String(status || '').toLowerCase();
@@ -2994,12 +3005,16 @@ router.get(
 
     const id = String(req.params.id || '').trim();
     const ideaColumns = await getTableColumns('my_ideas');
+    const hasMaturityGatesColumn = ideaColumns.has('maturity_gates_json');
     const lineageSelect = [
       ideaColumns.has('action_contract_json')
         ? 'action_contract_json'
         : "'{}' as action_contract_json",
       ideaColumns.has('source_pack_json') ? 'source_pack_json' : "'{}' as source_pack_json",
       ideaColumns.has('evidence_refs_json') ? 'evidence_refs_json' : "'[]' as evidence_refs_json",
+      // E08: only select the real column when the additive migration has run —
+      // never fabricate a fake "supported" value here (see maturityGatesSupported below).
+      hasMaturityGatesColumn ? 'maturity_gates_json' : "NULL as maturity_gates_json",
     ].join(',\n        ');
     const homeSelectDetail = [
       ideaColumns.has('folder_id') ? 'folder_id as "folderId"' : 'NULL as "folderId"',
@@ -3052,8 +3067,70 @@ router.get(
         ...row,
         tags: parseTagsArray((row as any)?.tags),
         isFavorite: !!(row as any)?.isFavorite,
+        // E08: explicit capability flag — never let the client infer "supported"
+        // from data shape alone (empty {} is ambiguous between "not run yet"
+        // and "run but nothing attested"). See ideaMaturityModel.ts header.
+        maturityGatesSupported: hasMaturityGatesColumn,
       })
     );
+  })
+);
+
+/**
+ * PATCH /api/my-work/my-ideas/:id/maturity-gates
+ *
+ * E08 (idea maturity model) — sets ONE user attestation for an `attested`
+ * stage-gate criterion (see src/components/MyWork/ideaMaturityModel.ts —
+ * initial economics / recommendation / financial scenario / dependencies /
+ * unresolved assumptions have no other backing field in the product).
+ *
+ * Honest degrade: if the additive `maturity_gates_json` column
+ * (server/migrations/20260810_idea_maturity_gates.sql) has not been applied
+ * on this database, responds `{ success: true, applied: false }` — NEVER a
+ * fake `applied: true` — so the client can show "not saved" instead of a
+ * false success toast (house rule: no silent no-op behind a success state).
+ */
+router.patch(
+  '/my-ideas/:id/maturity-gates',
+  requireAudit,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { userId, orgId } = identity;
+    if (!(await requireTables(res, ['my_ideas']))) return;
+
+    const id = String(req.params.id || '').trim();
+    const criterionId = String(req.body?.criterionId || '').trim();
+    if (!criterionId) {
+      return res.status(400).json({ error: 'criterionId is required' });
+    }
+    const met = Boolean(req.body?.met);
+    const note = req.body?.note ? String(req.body.note).trim().slice(0, 500) : undefined;
+
+    const ideaColumns = await getTableColumns('my_ideas');
+    if (!ideaColumns.has('maturity_gates_json')) {
+      return res.json({ success: true, applied: false, maturityGates: {} });
+    }
+
+    const existing = await queryHelpers.queryOne<{ maturity_gates_json: string | null }>(
+      `SELECT maturity_gates_json FROM my_ideas WHERE id = ? AND user_id = ? AND organization_id = ?`,
+      [id, userId, orgId]
+    );
+    if (!existing) return res.status(404).json({ error: 'Idea not found' });
+
+    const current = parseJsonField<Record<string, unknown>>(existing.maturity_gates_json, {});
+    const next = {
+      ...current,
+      [criterionId]: { met, note, byUserId: userId, at: new Date().toISOString() },
+    };
+
+    await queryHelpers.queryRun(
+      `UPDATE my_ideas SET maturity_gates_json = ?, updated_at = CURRENT_TIMESTAMP
+       WHERE id = ? AND user_id = ? AND organization_id = ?`,
+      [JSON.stringify(next), id, userId, orgId]
+    );
+
+    res.json({ success: true, applied: true, maturityGates: next });
   })
 );
 

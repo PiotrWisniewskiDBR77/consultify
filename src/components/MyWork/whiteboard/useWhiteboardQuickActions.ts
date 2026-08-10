@@ -71,6 +71,21 @@ export interface WhiteboardQuickActionHandlers {
   cycleEdgeArrow?: (edgeId: string) => void;
   cycleEdgeStyle?: (edgeId: string) => void;
   deleteEdge?: (edgeId: string) => void;
+
+  /**
+   * WB-FRAME-01 (frame context menu, 2026-08-10) — real receivers for the
+   * `idea.frame.*`/`idea.node.remove_from_frame` registry entries. Given
+   * ONLY an id (no closure over a specific menu instance), same "address a
+   * specific object without a human having right-clicked it" shape as the
+   * edge actions above — this is what lets Teresa call these, not just the
+   * context menu.
+   */
+  selectFrameContents?: (frameId: string) => void;
+  addSelectionToFrame?: (frameId: string) => void;
+  removeFromFrame?: (nodeId: string) => void;
+  resizeFrameToFit?: (frameId: string) => void;
+  /** `releaseContents: false` = delete frame + children; `true` = release children, delete only the frame. */
+  deleteFrame?: (frameId: string, releaseContents: boolean) => void;
 }
 
 export interface UseWhiteboardQuickActionsOpts {
@@ -186,6 +201,20 @@ export function useWhiteboardQuickActions(opts: UseWhiteboardQuickActionsOpts): 
       if (action === 'wb_edge_cycle_arrow') handlers.cycleEdgeArrow?.(edgeId);
       if (action === 'wb_edge_cycle_style') handlers.cycleEdgeStyle?.(edgeId);
       if (action === 'wb_edge_delete') handlers.deleteEdge?.(edgeId);
+    }
+
+    // ── Frame container actions (WB-FRAME-01, 2026-08-10) ─────────────────
+    const frameId = typeof detail?.frameId === 'string' ? detail.frameId : undefined;
+    if (frameId) {
+      if (action === 'wb_frame_select_contents') handlers.selectFrameContents?.(frameId);
+      if (action === 'wb_frame_add_selection') handlers.addSelectionToFrame?.(frameId);
+      if (action === 'wb_frame_resize_to_fit') handlers.resizeFrameToFit?.(frameId);
+      if (action === 'wb_frame_delete_with_contents') handlers.deleteFrame?.(frameId, false);
+      if (action === 'wb_frame_delete_release') handlers.deleteFrame?.(frameId, true);
+    }
+    const frameNodeId = typeof detail?.nodeId === 'string' ? detail.nodeId : undefined;
+    if (frameNodeId && action === 'wb_node_remove_from_frame') {
+      handlers.removeFromFrame?.(frameNodeId);
     }
   };
 
