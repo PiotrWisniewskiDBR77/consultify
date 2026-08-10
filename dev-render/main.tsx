@@ -256,6 +256,9 @@ const ResultsVNextKpiRegistryScreen = React.lazy(
 const ResultsVNextRoiRegistryScreen = React.lazy(
   () => import('./screens/results-vnext-roi-registry')
 );
+const ResultsVNextLegacyArchiveScreen = React.lazy(
+  () => import('./screens/results-vnext-legacy-archive')
+);
 
 const SCREENS: Record<string, { label: string; render: () => React.ReactElement }> = {
   'results-vnext-registry-shell': {
@@ -272,6 +275,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'RN-G2 P2 — REALNY rejestr ROI (roiRegistryPresenters + ResultsVNextRegistryShell): All cases + Benefits realization, honest NPV/IRR/payback, lock badges. &tab=all|benefits &state=ready|loading|empty|error &selected=<caseId|none> &calc=loading|ready',
     render: () => <ResultsVNextRoiRegistryScreen />,
+  },
+  'results-vnext-legacy-archive': {
+    label:
+      'RN-G2 R09-3 — REALNY <ResultsVNextLegacyArchivePanel> (kpi/roi/okr .../legacy index, tylko do odczytu, prep pod kolejną falę — NIEPODPIĘty do żadnego huba). &domain=kpi|roi|okr &state=ready|loading|empty|error',
+    render: () => <ResultsVNextLegacyArchiveScreen />,
   },
   'mw-007-calendar-narrow-viewport': {
     label:
