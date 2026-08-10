@@ -67,6 +67,50 @@ owner visual acceptance (owner decision 2026-08-09).
 
 This file is updated as the program proceeds; do not treat it as final until Program H closes.
 
+## Delivery package assembly — 2026-08-10 (§16 required artifacts)
+
+Written by the task that assembled the remaining §16 required artifacts (master program §16 —
+`docs/qa/ideas-manual-audit-2026-08-09/09_..._PROGRAM_FOR_CLAUDE.md`). This section records what
+was added, the naming-collision resolution, and nothing else — it does not perform new
+runtime/persistence verification and does not change any status stated elsewhere in this file.
+
+**Naming collision.** §16 numbers the per-epic acceptance reports `03`–`12`. Two of those numbers
+were already in use in this directory before this task ran: `03_CODEX_QUALITY_BACKLOG.md` (a live,
+actively-referenced QG-01..QG-06 backlog) and `04_ACTION_COVERAGE_INVENTORY.csv` (the QG-02
+row-by-row accounting both this file and the backlog cite by exact path). Overwriting either would
+have broken those references. **Resolution: the two new §16 reports that would have collided are
+filed with a `B` suffix** — `03B_DATA_AND_MIGRATION_REPORT.md` (§16 item 4) and
+`04B_SHARED_PLATFORM_ACCEPTANCE.md` (§16 item 5). Every other new file keeps its exact §16 number
+(`05`–`12`, `15`, `16`) because no prior file in this directory used those numbers.
+
+**Files added by this task:**
+
+| File | §16 item | Epic(s) | Built from |
+|---|---|---|---|
+| `03B_DATA_AND_MIGRATION_REPORT.md` | 4 | E08/E11/E12 (all 4 migrations) | Migration file headers re-read directly; one confidentiality contract test re-run (6/6 pass) |
+| `04B_SHARED_PLATFORM_ACCEPTANCE.md` | 5 | E02, E03 | `check-actions.sh` re-run (231 actions, R1–R10 clean); this file's own prior sections |
+| `05_MIND_MAP_ACCEPTANCE.md` | 6 | E04 | Commit bodies for N5.1–N5.5, MM-P1-01, registry entries read directly |
+| `06_WHITEBOARD_ACCEPTANCE.md` | 7 | E05 | Commit bodies + `02_EXECUTION_LEDGER.csv` (found WB-CLIPBOARD-01's ledger row is stale — see RISK-08 in `16_...`) |
+| `07_PROCESS_FLOW_ACCEPTANCE.md` | 8 | E06 | Commit bodies; restates the open lane-delete-silent-no-op defect from Wave 5 |
+| `08_TABLE_ACCEPTANCE.md` | 9 | E07 | Commit bodies; independently re-confirmed the RecordTemplateManager dead-mount finding by grep |
+| `09_BUSINESS_CASE_ACCEPTANCE.md` | 10 | E08 | Commit bodies; cross-references `03B` for migration status |
+| `10_FINANCIAL_CASE_ACCEPTANCE.md` | 11 | E09 | Commit bodies; independently confirmed the `engineAdapter.ts` mount and `ff_ideaFinancialCase` default-OFF flag by direct file read |
+| `11_AI_TERESA_ACCEPTANCE.md` | 12 | E10 | Commit bodies; independently re-ran `dp5HeuristicAiGating.test.tsx` (8/11 pass, 3 pre-existing i18n-mock failures, matching this file's own E00 root-cause) |
+| `12_CONVERSION_LINEAGE_ACCEPTANCE.md` | 13 | E11 | Commit bodies; independently confirmed `ConversionPreviewDialog` is mounted twice in `IdeaMapWorkspace.tsx` |
+| `15_ALL_ACTIONS_INVENTORY.csv` | 16 | E02 (all tools) | Generated programmatically (Python, block-scoped regex over `IDEA_ACTIONS`) from the live registry — 231/231 actions, cross-checked against `check-actions.sh`'s own count |
+| `16_OPEN_RISKS_AND_LIMITATIONS.csv` | 17 | all | 21 rows: 4 unapplied migrations, 1 dead-mount, 1 registry-monolith debt, 3 stale/unclosed ledger rows, 2 open functional defects, 6 named pre-existing test-failure classes, 1 unstarted epic (E15), 1 unrun visual matrix, 1 process-integrity note about this program's own two caught-and-reversed overclaims |
+
+**Not created by this task** (per its own scope, produced by sibling agents working concurrently):
+`13_VISUAL_ACCESSIBILITY_MATRIX.md`, `14_TEST_PERFORMANCE_SECURITY_RESULTS.md`, and
+`17_FINAL_ACCEPTANCE.md` (final handoff, which depends on all epic reports existing first). Their
+absence from this directory as of this task's completion is expected, not a gap in this task's work.
+
+**What this task explicitly did not do:** it did not apply any migration, did not run any code
+against demo/production, did not attempt the doc-11 §3.4/§3.7 runtime/persistence chain for any
+tool, and did not re-run the full test suite or `npm run type-check` (both reserved for the
+orchestrator per this task's own instructions). Every epic report above states plainly where its
+evidence stops.
+
 ## Independent control checkpoint — 2026-08-10
 
 Recorded while Claude had an active uncommitted wave; it describes only the last committed candidate.

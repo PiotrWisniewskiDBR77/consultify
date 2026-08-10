@@ -6339,6 +6339,16 @@ router.post(
     );
     if (!ownsGenerate) return res.status(404).json({ error: 'Idea not found' });
 
+    // E12 (10.4): a restricted Idea's content must never reach an LLM prompt.
+    // Body carries title/seedText/nodes/edges straight to generateIdeaAI() below —
+    // the same leak class as map/expand, map/ai-suggestions and map/gap-analysis,
+    // which this endpoint had not yet been gated the same way as.
+    if (await isIdeaRestricted(ideaId, orgId)) {
+      return res
+        .status(IDEA_CONFIDENTIALITY_BLOCKED_RESPONSE.status)
+        .json(IDEA_CONFIDENTIALITY_BLOCKED_RESPONSE.body);
+    }
+
     const { generatorType, tool, context } = parsed.data;
 
     try {
@@ -9735,6 +9745,13 @@ router.post(
     );
     if (!ownsSuggest) return res.status(404).json({ error: 'Idea not found' });
 
+    // E12 (10.4): a restricted Idea's content must never reach an LLM prompt.
+    if (await isIdeaRestricted(ideaId, orgId)) {
+      return res
+        .status(IDEA_CONFIDENTIALITY_BLOCKED_RESPONSE.status)
+        .json(IDEA_CONFIDENTIALITY_BLOCKED_RESPONSE.body);
+    }
+
     const context = req.body?.context || {};
     const mode = String(req.body?.mode || 'passive');
     const prompt = req.body?.prompt ? String(req.body.prompt) : undefined;
@@ -9791,6 +9808,13 @@ router.post(
     );
     if (!ownsAction) return res.status(404).json({ error: 'Idea not found' });
 
+    // E12 (10.4): a restricted Idea's content must never reach an LLM prompt.
+    if (await isIdeaRestricted(ideaId, orgId)) {
+      return res
+        .status(IDEA_CONFIDENTIALITY_BLOCKED_RESPONSE.status)
+        .json(IDEA_CONFIDENTIALITY_BLOCKED_RESPONSE.body);
+    }
+
     const tableSchema = Array.isArray(req.body?.schema) ? req.body.schema : [];
     const language = String(req.body?.language || 'en');
 
@@ -9837,6 +9861,13 @@ router.post(
     );
     if (!ownsFill) return res.status(404).json({ error: 'Idea not found' });
 
+    // E12 (10.4): a restricted Idea's content must never reach an LLM prompt.
+    if (await isIdeaRestricted(ideaId, orgId)) {
+      return res
+        .status(IDEA_CONFIDENTIALITY_BLOCKED_RESPONSE.status)
+        .json(IDEA_CONFIDENTIALITY_BLOCKED_RESPONSE.body);
+    }
+
     const rows = Array.isArray(req.body?.rows) ? req.body.rows : [];
     const language = String(req.body?.language || 'en');
 
@@ -9876,6 +9907,14 @@ router.get(
 
     const ideaId = String(req.params.id || '').trim();
     if (!ideaId) return res.status(400).json({ error: 'Invalid idea id' });
+
+    // E12 (10.4): a restricted Idea's content must never leave as an export file
+    // (same rule as the mind-map PPTX export). CSV export had no gate at all.
+    if (await isIdeaRestricted(ideaId, orgId)) {
+      return res
+        .status(IDEA_CONFIDENTIALITY_BLOCKED_RESPONSE.status)
+        .json(IDEA_CONFIDENTIALITY_BLOCKED_RESPONSE.body);
+    }
 
     try {
       // Read-side parity with GET /map (see resolveMapReadRow): shared mode reads
