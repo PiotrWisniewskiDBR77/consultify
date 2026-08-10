@@ -2523,7 +2523,14 @@ export async function initDb(): Promise<void> {
             area TEXT,
             summary TEXT,
             hypothesis TEXT,
-            status TEXT DEFAULT 'step3',
+            -- CLOSEOUT-08: DEFAULT must be a member of the canonical status list
+            -- (SSOT: server/src/constants/initiativeStatuses.ts). The historical
+            -- DEFAULT 'step3' is NOT one of the 13 canonical values, so once
+            -- initiatives_status_check exists (migration 20260624) every INSERT
+            -- INTO initiatives that omits status fails that CHECK. Migration
+            -- 20260821 repairs databases that run migrations; this line repairs
+            -- the thin-bootstrap path, where initDb() creates the table.
+            status TEXT DEFAULT 'DRAFT',
             current_stage TEXT,
             business_value TEXT,
             competencies_required TEXT,
