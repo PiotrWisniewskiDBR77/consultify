@@ -195,6 +195,24 @@ export const resultsVnextLegacyArchiveHitsTotal = new Counter({
   registers: [register],
 });
 
+/**
+ * ROI-E008 — Legacy Archive read-only adapter hit counter.
+ * Labels: source_table (analysis_financials | digitization_analyses |
+ *   initiative_benefits | roi_assumptions | roi_realized_values |
+ *   benefits_register | v8_roi_realization_entries)
+ *
+ * Design: docs/product/results-vnext/ROI_E008_DESIGN.md §3/B4. Minimal
+ * monitoring scope — one counter, incremented once per successful response
+ * in `roiLegacyArchive.routes.ts`. No dashboard, no alerting rule (mirrors
+ * KPI-E007's own minimal-monitoring precedent above).
+ */
+export const resultsVnextRoiLegacyArchiveHitsTotal = new Counter({
+  name: 'results_vnext_roi_legacy_archive_hits_total',
+  help: 'Requests served by the ROI legacy archive read-only adapter, by source table',
+  labelNames: ['source_table'],
+  registers: [register],
+});
+
 // ==========================================
 // THROUGHPUT METRICS
 // ==========================================

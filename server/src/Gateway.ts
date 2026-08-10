@@ -316,6 +316,12 @@ import resultsVnextRoiRoutes from './routes/resultsVnext/roi.routes.js';
 // the KPI-E005 precedent's ordering convention above, not because
 // correctness depends on it here.
 import resultsVnextRoiPerspectivesRoutes from './routes/resultsVnext/roiPerspectives.routes.js';
+// ROI-E008 Legacy Archive / Ops Exclusion — mounted at the MORE SPECIFIC
+// `/api/vnext/results/roi/legacy` prefix, registered BEFORE the generic
+// `/api/vnext/results/roi` mounts below, same "more-specific-prefix-first"
+// convention as resultsVnextKpiLegacyArchiveRoutes above (see
+// ROI_E008_DESIGN.md §3/B1 and roiLegacyArchive.routes.ts's own header).
+import resultsVnextRoiLegacyArchiveRoutes from './routes/resultsVnext/roiLegacyArchive.routes.js';
 import revenueRoutes from './routes/revenue.routes.js';
 import rolloutRoutes from './routes/rollout.routes.js';
 // M14 wiring — service route surfaces (mounted below)
@@ -1171,6 +1177,11 @@ export class ApiGateway {
       // import comment; correctness does not depend on this order here —
       // see roiPerspectives.routes.ts's own "MOUNT-ORDER CHECK").
       app.use('/api/vnext/results/roi', resultsVnextRoiPerspectivesRoutes);
+      // ROI-E008 Legacy Archive — also a MORE SPECIFIC prefix than the
+      // generic `/api/vnext/results/roi` mounts below, registered before
+      // them for the same reason (see roiLegacyArchive.routes.ts's own
+      // header comment and ROI_E008_DESIGN.md §3/B1).
+      app.use('/api/vnext/results/roi/legacy', resultsVnextRoiLegacyArchiveRoutes);
       // ROI-E001 (Case & Baseline) — own auth (verifyToken +
       // requireOrgAccess) applied inside the router, same convention as
       // resultsVnextKpiRoutes above.
