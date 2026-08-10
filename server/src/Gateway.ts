@@ -328,6 +328,13 @@ import resultsVnextRoiLegacyArchiveRoutes from './routes/resultsVnext/roiLegacyA
 // "MOUNT-ORDER NOTE" for the rule the NEXT OKR router (OKR-E002's
 // `/sets/*`) must follow.
 import resultsVnextOkrRoutes from './routes/resultsVnext/okr.routes.js';
+// OKR-E008 Half C Legacy Archive / Ops Exclusion — mounted at the MORE
+// SPECIFIC `/api/vnext/results/okr/legacy` prefix, registered BEFORE the
+// generic `/api/vnext/results/okr` mount below, same "more-specific-prefix-
+// first" convention as resultsVnextKpiLegacyArchiveRoutes /
+// resultsVnextRoiLegacyArchiveRoutes above (see OKR_E008_DESIGN.md §5.7 and
+// okrLegacyArchive.routes.ts's own header).
+import resultsVnextOkrLegacyArchiveRoutes from './routes/resultsVnext/okrLegacyArchive.routes.js';
 import revenueRoutes from './routes/revenue.routes.js';
 import rolloutRoutes from './routes/rollout.routes.js';
 // M14 wiring — service route surfaces (mounted below)
@@ -1192,6 +1199,11 @@ export class ApiGateway {
       // requireOrgAccess) applied inside the router, same convention as
       // resultsVnextKpiRoutes above.
       app.use('/api/vnext/results/roi', resultsVnextRoiRoutes);
+      // OKR-E008 Half C Legacy Archive — also a MORE SPECIFIC prefix than
+      // the generic `/api/vnext/results/okr` mount below, registered before
+      // it for the same reason (see okrLegacyArchive.routes.ts's own header
+      // comment and OKR_E008_DESIGN.md §5.7).
+      app.use('/api/vnext/results/okr/legacy', resultsVnextOkrLegacyArchiveRoutes);
       // OKR-E001 (Program & Cycle) — own auth (verifyToken +
       // requireOrgAccess, PLUS requireOrgRole on every write route —
       // design §7/Decision P2/P4) applied inside the router, same mounting

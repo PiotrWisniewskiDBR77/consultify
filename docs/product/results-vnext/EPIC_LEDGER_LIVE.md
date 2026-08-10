@@ -160,7 +160,19 @@ niezbudowany i bez właściciela.
 | Command/query/API | `POST .../advisor/draft`, `POST .../advisor/quality-review` | `POST .../advisor/check-in`, `POST .../advisor/manager-brief` | `POST .../advisor/reflection` | `GET .../okr/my`, `/team-health`, `/company` | brak nowych write-route dla legacy (celowo) |
 | Schema/migration/constraint | `okr_vnext_objectives` (Teresa provenance metadata) | `okr_vnext_checkins`, manager-brief read model | `okr_vnext_reflections` (proposed patch) | parity test na `id`/`current_version` w 3 projekcjach | **ZERO FK z `okr_vnext_*` do `okr_key_results`/`initiative_kpis`/`kpi_definition_versions`** |
 | Roles/visibility | Objective Owner (accept/reject) | KR Owner, Manager | Set/Objective Owner | wg scope | Auditor (read legacy), Program Admin |
-| Status | NOT_IMPLEMENTED | NOT_IMPLEMENTED | NOT_IMPLEMENTED | NOT_IMPLEMENTED | NOT_IMPLEMENTED |
+| Status | NOT_IMPLEMENTED | NOT_IMPLEMENTED | NOT_IMPLEMENTED | NOT_IMPLEMENTED | **IMPLEMENTED (Half C only)** |
+
+**OKR-F-029-AC-01 IMPLEMENTED 2026-08-10 — Half C (Legacy/Ops) only**, see
+`EXECUTION_LEDGER.md` closure entry "OKR-E008 Half C only". Halves A
+(Teresa, OKR-F-025..027) and B (Perspectives, OKR-F-028) remain
+NOT_IMPLEMENTED — deferred pending OKR-E003..E007 (Half A) / additionally
+OKR-E002 landing in this worktree (Half B). Half C shipped:
+`okrLegacyArchive.routes.ts` (9 GET-only endpoints), `okrLegacyArchiveRepository.ts`,
+`resultsVnextOkrLegacy.validators.ts`, `resultsVnextOkrLegacyArchiveHitsTotal`
+counter, Gateway mount, plus the D-OKR8-19 `warnings` array on `key-results`
+labelling the live `kpi_id`/`kpi_definition_version_id` D09 FKs. 43 new
+tests, all green (37 write-denial + 3 D09 static + 1 count sanity + 2
+real-Postgres isolation/correctness).
 
 ---
 
