@@ -15,12 +15,12 @@ authoritative history and every claim below traces to a numbered section there.*
 |---|---|
 | Worktree | `/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify-results-vnext-g0-20260809` |
 | Branch | `codex/results-vnext-g0-20260809` |
-| HEAD | `de48a5fdb6` (RN-G2 P2 ROI registry accepted; ledger §54 lands on top) |
-| Ahead of `origin/demo` | **283 commits** |
+| HEAD | `7ec58e800d` (eight-package parallel wave merged; ledger §55) |
+| Ahead of `origin/demo` | **316 commits** |
 | Pushed | **nothing, ever** |
 | Deployed | **nothing, ever** |
 | Reference tag | `rn-g3-gold-flow-reference` → `d463c32b8c` (the dispatcher slice, all 8 proofs green) |
-| Ledger high-water | **§54** — grep `^## ` live before writing a new one; sessions have collided on this three times |
+| Ledger high-water | **§55** — grep `^## ` live before writing a new one; sessions have collided on this three times |
 
 ### Dirty state at handoff — READ CAREFULLY, two different owners
 
@@ -205,6 +205,9 @@ Then, in order:
 
 - Domain backends (KPI/ROI/OKR) and the async integration layer are built and evidenced on real Postgres.
 - RN-G3, RN-G5 and RN-G6 have real end-to-end evidence for what has been built; each still carries named open items recorded in the ledger, not silently closed.
-- **RN-G2 is 3 of 20–26 packages complete** (P0 shell, P1 KPI registry, P2 ROI registry), with four more in flight per §3b. Three named UI defects stay open as P-UI-1/2/3 in ledger §54 — two of them in shared components, one unresolved because the automation could not drive native keyboard activation and needs a human at a real keyboard.
+- **RN-G2 is 11 of 20–26 packages complete.** Done: P0 shell, KPI registry, ROI registry, OKR Sets registry, KPI Scorecards (+ its own route), ROI quick-create + 7 lifecycle transitions, ROI modelling (baseline/policy/assumptions/cost+benefit lines), OKR Objectives/KRs/check-ins, KPI measurements (record/correct/verify/dispute), the shared read-only legacy-archive panel (built, exported, deliberately unwired), and the shared-shell defect fixes.
+- Evidence on the merged head: `tsc --noEmit` 0 errors, `vite build` green, `check-list-canon.sh` debt 408 against baseline 409 (it went DOWN), `check-artefakt.sh` 7/7 unchanged, **214 QA screenshots** across 11 `docs/qa/screens/rn-g2-*` directories, all 15 `persistKey`s in the `results-vnext.*` namespace, all three domain flags default OFF.
+- **Two packages were accepted and only later found to carry a real defect** — both are recorded that way in ledger §55, not smoothed over: the OKR registry shipped with a progress-scale bug the harness mock cancelled out, and the KPI registry shipped a rules-of-hooks crash on a tab no screenshot had ever clicked. Both are fixed now. The lesson is written into the ledger: a screenshot proves a screen renders, not that it can be clicked.
+- Eight UI questions stay open as OQ-UI-A…H in `RN_G2_OPEN_QUESTIONS_UI.md`, none of them silently resolved.
 - **RN-G7 cannot start before RN-G2 finishes.**
 - Nothing has been pushed, merged to demo, or deployed. No terminal PASS has been self-declared — that is Codex's and the Founder's call, per this program's own contract.
