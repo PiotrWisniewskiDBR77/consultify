@@ -7,6 +7,8 @@
  *   --w=1440 --h=900        rozmiar okna
  *   --click=<selektor>      klik po załadowaniu (może być wielokrotnie)
  *   --clickxy=x,y           klik we współrzędne
+ *   --hover=<selektor>      prawdziwy page.hover (aktywuje CSS :hover, w
+ *                           odróżnieniu od dispatchEvent w --eval)
  *   --wait=2000             dodatkowa pauza po akcjach
  *   --clip=0,0,1440,220     wycinek zrzutu
  *   --eval=<js>             wykonaj JS w stronie po akcjach
@@ -59,6 +61,14 @@ import { chromium } from 'playwright';
     const [x, y] = xy.split(',').map(Number);
     await page.mouse.click(x, y);
     await page.waitForTimeout(500);
+  }
+  for (const sel of all('hover')) {
+    try {
+      await page.locator(sel).first().hover({ timeout: 8000 });
+      await page.waitForTimeout(500);
+    } catch (e) {
+      console.log(`HOVER-BLAD ${sel}: ${String(e).split('\n')[0]}`);
+    }
   }
   // Klik „na siłę" — pasek edycji siedzi w rzędzie, który react-flow potrafi
   // przerysowywać, więc Playwright bywa, że nigdy nie uzna elementu za

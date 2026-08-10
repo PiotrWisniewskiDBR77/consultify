@@ -19,6 +19,7 @@
  *   &ff=off                            force the flag OFF (disabled panel)
  */
 import React from 'react';
+import { MemoryRouter } from 'react-router-dom';
 
 import { ResultsKpiRegistryPage } from '../../src/components/ResultsVNext/ResultsKpiRegistryPage';
 import { Api } from '../../src/services/api';
@@ -223,9 +224,17 @@ Api.post = (async (url: string, data: any) => {
   return realPost(url, data);
 }) as typeof Api.post;
 
+// sticky-defect1a (2026-08-11): `ResultsKpiRegistryPage` calls `useNavigate()`
+// internally, which throws outside a Router context — this screen never had
+// one (pre-existing gap, reproduced identically on unmodified HEAD via
+// `git stash`, unrelated to the FilterableTable sticky-column fix). Wrapping
+// only HERE (harness-only file) so the P2 regression screenshot can actually
+// render the page instead of the React error boundary.
 const ResultsVNextKpiRegistryScreen: React.FC = () => (
   <div className="h-screen bg-c-bg text-c-text">
-    <ResultsKpiRegistryPage />
+    <MemoryRouter>
+      <ResultsKpiRegistryPage />
+    </MemoryRouter>
   </div>
 );
 

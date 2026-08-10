@@ -1010,16 +1010,34 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                     {!hideRowActions ? (
                       // R09-1a — sam mirror nagłówka: kebab przypięty do prawej
                       // krawędzi, żeby nie wypadał poza widoczny obszar razem z
-                      // Settings2 (patrz komentarz przy `<th>` powyżej). Świadomy
-                      // kompromis: przypięta komórka ma STAŁE `bg-white/navy-900`
-                      // zamiast `bg-state-selected`/`bg-state-hover` zaznaczonego
-                      // wiersza — te dwa tła nie da się nałożyć jedną klasą
-                      // Tailwind, a rozjazd odcienia widać WYŁĄCZNIE gdy wiersz
-                      // jest zaznaczony/hover I tabela jest ręcznie przewinięta w
-                      // poziomie — poza tym stanem (czyli w każdym zaakceptowanym
-                      // zrzucie) wygląda identycznie jak dotąd.
+                      // Settings2 (patrz komentarz przy `<th>` powyżej).
+                      // sticky-defect1a (2026-08-11): baza `bg-white dark:bg-navy-900`
+                      // zostaje (musi być nieprzezroczysta — jedyna ochrona przed
+                      // przebijaniem przewiniętej treści spod przypiętej kolumny).
+                      // `background-color: inherit` z wiersza NIE działa tutaj: wiersz
+                      // w stanie domyślnym nie ma WŁASNEGO tła (przezroczysty, pokazuje
+                      // rozmyte tło karty przez `bg-white/70 backdrop-blur`), więc
+                      // odziedziczona wartość byłaby `transparent` — zniosłoby to
+                      // ochronę przed przewijaniem właśnie w stanie domyślnym.
+                      // Zamiast tego: stan wiersza (`--state-selected`/`--state-hover`,
+                      // te same tokeny co `bg-state-selected`/`hover:bg-state-hover`
+                      // na `<tr>`) nakładamy jako `box-shadow: inset` — to INNA
+                      // właściwość CSS niż `background-color`, więc nie ma konfliktu
+                      // "dwóch klas Tailwind na jednej właściwości" i tło + cień
+                      // przewijania + odcień stanu współistnieją bez wyliczania kolejnych
+                      // wariantów. Mirror warunku z `<tr>` (linia ~941) 1:1 — UWAGA:
+                      // musi być `group-hover:`, NIE `hover:` — hover trafia myszą
+                      // gdziekolwiek w wierszu (tekst tytułu po lewej), rzadko
+                      // bezpośrednio nad przypiętą komórką; `<tr>` już niesie klasę
+                      // `group` (patrz linia ~940), więc `group-hover:` na tej
+                      // komórce reaguje na hover CAŁEGO wiersza, tak jak `hover:` na
+                      // `<tr>` reaguje na siebie.
                       <td
-                        className={`${ROW_HEIGHT_CLASS} ${cellPadding} text-right sticky right-0 z-[11] bg-white dark:bg-navy-900 shadow-[-6px_0_6px_-6px_rgba(0,0,0,0.12)]`}
+                        className={`${ROW_HEIGHT_CLASS} ${cellPadding} text-right sticky right-0 z-[11] bg-white dark:bg-navy-900 ${
+                          row.id === selectedRowId
+                            ? 'shadow-[-6px_0_6px_-6px_rgba(0,0,0,0.12),inset_0_0_0_999px_var(--state-selected)]'
+                            : 'shadow-[-6px_0_6px_-6px_rgba(0,0,0,0.12)] group-hover:shadow-[-6px_0_6px_-6px_rgba(0,0,0,0.12),inset_0_0_0_999px_var(--state-hover)]'
+                        }`}
                       >
                         <div className="flex justify-end" onClick={(e) => e.stopPropagation()}>
                           {(() => {
