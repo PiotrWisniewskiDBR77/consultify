@@ -136,10 +136,17 @@ export type RunPreflightResult =
  * Never blocks assumption-building (DEC-FIN-004) — this function is purely additive/analytical.
  */
 export async function runPreflight(params: RunPreflightParams): Promise<RunPreflightResult> {
+  // W9-C-2 fix: org-scoped. Previously selected by business_version_id alone,
+  // so a cross-tenant businessVersionId let the function proceed into another
+  // org's scenario/assumption data; only a raw FK violation on the eventual
+  // INSERT (`fk_finance_prediction_preflight_runs_bv_org`) stopped the write.
+  // Now refuses HERE, typed, the same NO_SCENARIO_ROW shape this function
+  // already returns for a genuinely nonexistent scenario.
   const scenario = await withPinnedPostgresTransaction((tx) =>
     tx.queryOne<ScenarioRow>(
-      `SELECT business_version_id, organization_id, scenario_mode FROM finance_prediction_scenarios WHERE business_version_id = ?`,
-      [params.businessVersionId]
+      `SELECT business_version_id, organization_id, scenario_mode FROM finance_prediction_scenarios
+        WHERE business_version_id = ? AND organization_id = ?`,
+      [params.businessVersionId, params.organizationId]
     )
   );
   if (!scenario) {

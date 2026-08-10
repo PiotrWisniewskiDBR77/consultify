@@ -413,7 +413,7 @@ export type ComputeAnalysisKpisResult =
         businessVersion?: BusinessVersionRow;
       };
     }
-  | { ok: false; code: 'NO_SOURCE_STATEMENT_PACK_EDGE'; message: string };
+  | { ok: false; code: 'NO_SOURCE_STATEMENT_PACK_EDGE' | 'BUSINESS_VERSION_NOT_FOUND'; message: string };
 
 /** ADR section 8.1 point 3 — Analysis -> source Statement Pack Version, exclusively via `finance_lineage_edges`. */
 async function resolveSourceStatementPackVersion(businessVersionId: string): Promise<string | null> {
@@ -437,8 +437,21 @@ export async function computeAnalysisKpis(params: ComputeAnalysisKpisParams): Pr
     };
   }
 
+  // W9-C-6 fix (P2): this guard is already org-scoped (getBusinessVersion
+  // takes organizationId) — isolation held even before this fix, INCLUDING
+  // for a cross-tenant businessVersionId. But it used to throw a bare Error
+  // here instead of returning the typed {ok:false} shape every other failure
+  // mode of this function already used, so an HTTP layer mapped a tenant
+  // boundary refusal to a 500 instead of a 404. Now typed, consistent with
+  // NO_SOURCE_STATEMENT_PACK_EDGE above.
   const bv = await artifactVersionService.getBusinessVersion(params.organizationId, params.businessVersionId);
-  if (!bv) throw new Error(`kpiComputeService: business_version ${params.businessVersionId} not found`);
+  if (!bv) {
+    return {
+      ok: false,
+      code: 'BUSINESS_VERSION_NOT_FOUND',
+      message: `kpiComputeService: business_version ${params.businessVersionId} not found`,
+    };
+  }
 
   const [periodGraph, entityByCode, lineCodeToId, stmtLineCells, catalogByCode, kpiValueRows] = await Promise.all([
     loadPeriodGraph(params.organizationId),
@@ -478,7 +491,8 @@ export async function computeAnalysisKpis(params: ComputeAnalysisKpisParams): Pr
     results = await evaluateAllRows({ kpiValueRows, catalogById, periodGraph, periodLookup, entityByCode, lineCodeToId, stmtLineCells });
     await persistResults(results);
   } catch (error: any) {
-    if (runningJob.status === 'running') await computeJobService.failJob({ jobId: runningJob.id, error: String(error?.message || error) });
+    if (runningJob.status === 'running')
+      await computeJobService.failJob({ jobId: runningJob.id, organizationId: params.organizationId, error: String(error?.message || error) });
     throw error;
   }
 
@@ -541,7 +555,7 @@ export async function computeAnalysisKpis(params: ComputeAnalysisKpisParams): Pr
     }
   }
 
-  const finalJob = (await computeJobService.getJob(job.id)) ?? runningJob;
+  const finalJob = (await computeJobService.getJob(params.organizationId, job.id)) ?? runningJob;
   return { ok: true, job: finalJob, results, readiness: readinessOut };
 }
 

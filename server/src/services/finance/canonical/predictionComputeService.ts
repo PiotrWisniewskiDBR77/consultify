@@ -286,7 +286,7 @@ async function runStandardBase(params: RunPredictionComputeParams, baselineModel
     contentSemanticHash,
     computeRunId: runningJob.id,
   });
-  const finalJob = (await computeJobService.getJob(job.id)) ?? runningJob;
+  const finalJob = (await computeJobService.getJob(params.organizationId, job.id)) ?? runningJob;
 
   const passthroughRows = await withPinnedPostgresTransaction((tx) =>
     tx.queryAll<{ n: string }>(`SELECT count(*)::text AS n FROM finance_prediction_outputs_effective WHERE business_version_id = ?`, [params.businessVersionId])
@@ -684,7 +684,7 @@ async function runOverlayCompute(
     contentSemanticHash,
     computeRunId: runningJob.id,
   });
-  const finalJob = (await computeJobService.getJob(job.id)) ?? runningJob;
+  const finalJob = (await computeJobService.getJob(params.organizationId, job.id)) ?? runningJob;
 
   return { ok: true, mode: 'COMPUTED', job: finalJob, periodsComputed: periods.length, periods };
 }

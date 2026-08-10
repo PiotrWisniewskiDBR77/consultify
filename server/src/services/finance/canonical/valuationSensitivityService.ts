@@ -152,6 +152,19 @@ export interface WriteSensitivityGridParams {
   createdBy: string;
 }
 
+/**
+ * Typed refusal for the P0 W9-C-4 tenant-boundary guard below — distinguishable
+ * from the pre-existing `Error` this function already throws for internal
+ * inconsistency (cell-count/base-cell validation), so callers/tests can tell
+ * "you don't own this method/grid" apart from "malformed input".
+ */
+export class SensitivityGridAccessError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'SensitivityGridAccessError';
+  }
+}
+
 export async function writeSensitivityGrid(params: WriteSensitivityGridParams): Promise<{ gridId: string }> {
   if (params.cells.length !== 25) {
     throw new Error(`writeSensitivityGrid: expected exactly 25 cells, got ${params.cells.length}`);
@@ -163,21 +176,52 @@ export async function writeSensitivityGrid(params: WriteSensitivityGridParams): 
 
   const gridId = uuidv4();
   await withPinnedPostgresTransaction(async (tx) => {
+    // P0 W9-C-4 fix: verify the method itself belongs to this organization
+    // BEFORE touching the grid/cells tables at all. Without this, a caller
+    // that already has (or forged) another tenant's methodId — the exact
+    // vector W9-C-3 documented — could still reach the upsert/DELETE below.
+    // This is the primary defense; the composite FK added by the structural
+    // migration (W9-C-7) is the belt-and-suspenders backstop at the DB layer.
+    const method = await tx.queryOne<{ id: string }>(
+      `SELECT id FROM finance_valuation_methods WHERE id = ? AND organization_id = ?`,
+      [params.methodId, params.organizationId]
+    );
+    if (!method) {
+      throw new SensitivityGridAccessError(
+        `writeSensitivityGrid: method ${params.methodId} not found for organization ${params.organizationId}`
+      );
+    }
+
+    // Upsert scoped to (method_id, grid_label) — unchanged conflict target
+    // (the unique constraint is on those two columns), but the UPDATE branch
+    // now only fires when the existing row's organization_id already matches
+    // the caller's. Combined with the method-ownership check above, the
+    // conflict target can never legitimately resolve to another tenant's row.
     await tx.queryRun(
       `INSERT INTO finance_valuation_sensitivity_grids (
          id, organization_id, method_id, grid_label, row_axis_variable, column_axis_variable, grid_status, created_by
        ) VALUES (?, ?, ?, ?, ?, ?, 'DRAFT', ?)
        ON CONFLICT (method_id, grid_label) DO UPDATE SET
          row_axis_variable = EXCLUDED.row_axis_variable, column_axis_variable = EXCLUDED.column_axis_variable,
-         grid_status = 'DRAFT', updated_at = now()`,
-      [gridId, params.organizationId, params.methodId, params.gridLabel, params.rowAxisVariable, params.columnAxisVariable, params.createdBy]
+         grid_status = 'DRAFT', updated_at = now()
+       WHERE finance_valuation_sensitivity_grids.organization_id = ?`,
+      [gridId, params.organizationId, params.methodId, params.gridLabel, params.rowAxisVariable, params.columnAxisVariable, params.createdBy, params.organizationId]
     );
     const resolvedGridId = (
-      await tx.queryOne<{ id: string }>(`SELECT id FROM finance_valuation_sensitivity_grids WHERE method_id = ? AND grid_label = ?`, [params.methodId, params.gridLabel])
+      await tx.queryOne<{ id: string }>(
+        `SELECT id FROM finance_valuation_sensitivity_grids WHERE method_id = ? AND grid_label = ? AND organization_id = ?`,
+        [params.methodId, params.gridLabel, params.organizationId]
+      )
     )?.id;
-    if (!resolvedGridId) throw new Error('writeSensitivityGrid: grid row not found after upsert');
+    if (!resolvedGridId) {
+      // Either genuinely never inserted (should not happen given the guard
+      // above), OR the WHERE clause on the ON CONFLICT UPDATE just refused to
+      // touch a row owned by another organization — either way this must
+      // fail loudly, never silently proceed against someone else's grid.
+      throw new SensitivityGridAccessError('writeSensitivityGrid: grid row not found after upsert (organization mismatch or insert failure)');
+    }
 
-    await tx.queryRun(`DELETE FROM finance_valuation_sensitivity_cells WHERE grid_id = ?`, [resolvedGridId]);
+    await tx.queryRun(`DELETE FROM finance_valuation_sensitivity_cells WHERE grid_id = ? AND organization_id = ?`, [resolvedGridId, params.organizationId]);
     for (const cell of params.cells) {
       await tx.queryRun(
         `INSERT INTO finance_valuation_sensitivity_cells (

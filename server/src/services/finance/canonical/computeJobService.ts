@@ -221,13 +221,23 @@ export async function completeJobSuccess(params: CompleteJobSuccessParams): Prom
 
 export interface FailJobParams {
   jobId: string;
+  /**
+   * Required (P0 W9-C-5 fix). `failJob()` scopes its `SELECT ... FOR UPDATE`
+   * to this organization — a job belonging to another tenant is treated as
+   * not found (returns `null`), same convention as `getJob`/`cancelJob`
+   * below, never a raw Postgres error.
+   */
+  organizationId: string;
   error: string;
 }
 
 /** Fail an attempt; requeues with a linear backoff if attempts remain, else terminal `failed`. */
 export async function failJob(params: FailJobParams): Promise<ComputeJobRow | null> {
   return withPinnedPostgresTransaction(async (tx) => {
-    const job = await tx.queryOne<ComputeJobRow>(`SELECT * FROM compute_jobs WHERE id = ? FOR UPDATE`, [params.jobId]);
+    const job = await tx.queryOne<ComputeJobRow>(`SELECT * FROM compute_jobs WHERE id = ? AND organization_id = ? FOR UPDATE`, [
+      params.jobId,
+      params.organizationId,
+    ]);
     if (!job || job.status !== 'running') return null;
 
     const willRetry = job.attempt_count < job.max_attempts;
@@ -252,16 +262,25 @@ export async function failJob(params: FailJobParams): Promise<ComputeJobRow | nu
   });
 }
 
-export async function cancelJob(jobId: string, reason: string): Promise<ComputeJobRow | null> {
+/**
+ * Required `organizationId` (P0 W9-C-5 fix): a cross-tenant `jobId` now
+ * refuses the same way an unknown `jobId` always did — `null`, not a raw
+ * Postgres error and not another tenant's row. `claim()` is deliberately
+ * left cross-organizational (WP-B04 ADR, `canonicalServices.pg.test.ts`) —
+ * only the single-job read/mutate entry points below are org-scoped.
+ */
+export async function cancelJob(organizationId: string, jobId: string, reason: string): Promise<ComputeJobRow | null> {
   return withPinnedPostgresTransaction((tx) =>
     tx.queryOne<ComputeJobRow>(
       `UPDATE compute_jobs SET status = 'cancelled', cancel_requested_at = now(), cancel_reason = ?
-        WHERE id = ? AND status IN ('queued', 'running') RETURNING *`,
-      [reason, jobId]
+        WHERE id = ? AND organization_id = ? AND status IN ('queued', 'running') RETURNING *`,
+      [reason, jobId, organizationId]
     )
   );
 }
 
-export async function getJob(jobId: string): Promise<ComputeJobRow | null> {
-  return withPinnedPostgresTransaction((tx) => tx.queryOne<ComputeJobRow>(`SELECT * FROM compute_jobs WHERE id = ?`, [jobId]));
+export async function getJob(organizationId: string, jobId: string): Promise<ComputeJobRow | null> {
+  return withPinnedPostgresTransaction((tx) =>
+    tx.queryOne<ComputeJobRow>(`SELECT * FROM compute_jobs WHERE id = ? AND organization_id = ?`, [jobId, organizationId])
+  );
 }
