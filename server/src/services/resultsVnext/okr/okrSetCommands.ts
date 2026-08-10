@@ -43,6 +43,11 @@ import {
 import { createObligation } from '../platform/obligations.js';
 import { getActiveVisibilityPolicy } from '../platform/visibilityResolver.js';
 
+import {
+  buildObjectivesSnapshotFragment,
+  hasSufficientKeyResultCoverage,
+  resolveOkrCyclePinnedPolicySnapshot,
+} from './okrObjectiveCommands.js';
 import { OKR_EVENT_SOURCE, OKR_VISIBILITY_DOMAIN } from './okrProgramCommands.js';
 import type {
   OkrSetApprovalSnapshotPayload,
@@ -139,10 +144,17 @@ export class OkrSetVisibilityWideningDeniedError extends Error {
 export class OkrSetNotReadyForSubmissionError extends Error {
   code = 'NOT_READY_FOR_SUBMISSION';
   details: Record<string, unknown>;
-  constructor(setId: string, reason: string) {
+  /**
+   * OKR-E003 (design §11): `extraDetails` is an optional, backward-compatible
+   * third param — `hasSufficientKeyResultCoverage`'s richer per-Objective
+   * failure detail rides here without breaking this constructor's existing
+   * two-arg call sites (E002's own `isOkrSetReadyForSubmissionEligible`
+   * failure path above still calls it with just `(setId, reason)`).
+   */
+  constructor(setId: string, reason: string, extraDetails?: Record<string, unknown>) {
     super(`OKR Set ${setId} is not ready for submission: ${reason}`);
     this.name = 'OkrSetNotReadyForSubmissionError';
-    this.details = { setId, reason };
+    this.details = { setId, reason, ...(extraDetails ?? {}) };
   }
 }
 
@@ -786,9 +798,24 @@ export async function submitOkrSetForApproval(
         );
       }
 
+      // E002's own check (untouched body, wrapped not replaced) — a
+      // reviewer must be assigned.
       const check = isOkrSetReadyForSubmissionEligible(currentRow);
       if (!check.eligible) {
         throw new OkrSetNotReadyForSubmissionError(setId, check.reason ?? 'unspecified');
+      }
+
+      // OKR-E003 (design §11, D-E3-5, §-IO item 3): layered ON TOP of the
+      // check above — every non-cancelled Objective on the Set must have
+      // at least the Cycle's pinned kr_min_required non-cancelled KRs.
+      // Enforced PER-OBJECTIVE, no company/BU/team special-casing
+      // (§-IO item 6). `isOkrSetReadyForSubmissionEligible`'s own body
+      // above is provably untouched — this is the ONLY new call, not a
+      // replacement.
+      const { snapshot } = await resolveOkrCyclePinnedPolicySnapshot(client, setId, organizationId);
+      const krCoverage = await hasSufficientKeyResultCoverage(client, setId, organizationId, snapshot.krMinRequired);
+      if (!krCoverage.eligible) {
+        throw new OkrSetNotReadyForSubmissionError(setId, krCoverage.reason ?? 'unspecified', krCoverage.details);
       }
 
       beforeState = { set: toOkrSet(currentRow) };
@@ -854,16 +881,20 @@ export async function submitOkrSetForApproval(
 // buildOkrSetApprovalSnapshotPayload (D8) + approveOkrSet (design §4.5)
 // ==========================================
 
-/** D8: Set fields + `objectives: []` (empty placeholder array — Objectives/
- * KRs don't exist until OKR-E003). `client` param kept for signature
- * stability — exported as an explicit extension point OKR-E003 is expected
- * to widen (querying real Objective/KeyResult rows) rather than replace. */
+/** D8, widened by OKR-E003 (design §12): Set fields + the real,
+ * point-in-time `objectives` array (was an empty placeholder through E002,
+ * since Objectives/KRs didn't exist until this epic).
+ * `buildObjectivesSnapshotFragment` (okrObjectiveCommands.ts) only READS
+ * okr_vnext_objectives/okr_vnext_key_results on the SAME pinned client —
+ * the immutability contract this function's caller (`approveOkrSet`)
+ * already established (INSERT-only `okr_vnext_approved_snapshots`,
+ * `REVOKE UPDATE/DELETE`) is untouched. */
 export async function buildOkrSetApprovalSnapshotPayload(
   client: PoolClient,
   setRow: OkrSetRow
 ): Promise<OkrSetApprovalSnapshotPayload> {
-  void client;
-  return { set: toOkrSet(setRow), objectives: [] };
+  const objectives = await buildObjectivesSnapshotFragment(client, setRow.set_id, setRow.organization_id);
+  return { set: toOkrSet(setRow), objectives };
 }
 
 export interface ApproveOkrSetInput {

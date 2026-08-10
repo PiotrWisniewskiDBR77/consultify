@@ -74,6 +74,26 @@ import {
   OkrSetVisibilityWideningDeniedError,
   type OkrSetLifecycleTransitionSpec,
 } from '../../services/resultsVnext/okr/okrSetCommands.js';
+import {
+  cancelObjective,
+  createObjective,
+  updateObjective,
+  OkrObjectiveNotFoundError,
+  OkrObjectiveSetNotEditableError,
+  OkrObjectiveValidationError,
+} from '../../services/resultsVnext/okr/okrObjectiveCommands.js';
+import {
+  getKeyResult,
+  getObjective,
+  listObjectivesForSet,
+} from '../../services/resultsVnext/okr/okrObjectiveRepository.js';
+import {
+  cancelKeyResult,
+  createKeyResult,
+  updateKeyResult,
+  OkrKeyResultNotFoundError,
+  OkrKeyResultValidationError,
+} from '../../services/resultsVnext/okr/okrKeyResultCommands.js';
 import { recordOkrSetMaterialChange } from '../../services/resultsVnext/okr/okrSetMaterialChangeCommands.js';
 import {
   getOkrSet,
@@ -85,6 +105,8 @@ import type { AuthenticatedRequest } from '../../types/index.js';
 import logger from '../../utils/Logger.js';
 import {
   CreateOkrCycleSchema,
+  CreateOkrKeyResultSchema,
+  CreateOkrObjectiveSchema,
   CreateOkrProgramSchema,
   CreateOkrSetSchema,
   EditOkrProgramDraftSchema,
@@ -95,6 +117,10 @@ import {
   NarrowOkrSetVisibilitySchema,
   OkrCycleIdParamsSchema,
   OkrCycleTransitionSchema,
+  OkrKeyResultIdParamsSchema,
+  OkrKeyResultTransitionSchema,
+  OkrObjectiveIdParamsSchema,
+  OkrObjectiveTransitionSchema,
   OkrProgramIdParamsSchema,
   OkrSetApprovalSnapshotIdParamsSchema,
   OkrSetIdParamsSchema,
@@ -102,6 +128,8 @@ import {
   PublishOkrProgramSchema,
   RecordOkrSetMaterialChangeSchema,
   RequestChangesOnOkrSetSchema,
+  UpdateOkrKeyResultSchema,
+  UpdateOkrObjectiveSchema,
   UpdateOkrSetDraftSchema,
 } from '../../validators/resultsVnextOkr.validators.js';
 
@@ -196,6 +224,19 @@ function handleOkrRouteError(res: Response, err: unknown, op: string): void {
     return;
   }
   if (err instanceof OkrSetValidationError) {
+    res.status(409).json({ error: err.message, code: err.code, details: err.details });
+    return;
+  }
+  // OKR-E003 (design §14's error-mapping table).
+  if (err instanceof OkrObjectiveNotFoundError || err instanceof OkrKeyResultNotFoundError) {
+    res.status(404).json({ error: err.message, code: err.code, ...err.details });
+    return;
+  }
+  if (err instanceof OkrObjectiveSetNotEditableError) {
+    res.status(409).json({ error: err.message, code: err.code, ...err.details });
+    return;
+  }
+  if (err instanceof OkrObjectiveValidationError || err instanceof OkrKeyResultValidationError) {
     res.status(409).json({ error: err.message, code: err.code, details: err.details });
     return;
   }
@@ -1071,6 +1112,386 @@ router.get(
       res.status(200).json({ snapshot });
     } catch (err) {
       handleOkrRouteError(res, err, 'getOkrSetApprovedSnapshot');
+    }
+  }
+);
+
+// ==========================================
+// OKR-E003 (Objective & KeyResult) — HTTP layer (design §14).
+//
+// Same posture as the Set routes above: Objectives/KRs are ABAC resources
+// inherited via the parent Set (design §13, no independent visibility
+// row) — no requireAdminWrite gate here either, matching the Set block's
+// own documented precedent. Every mutating route pre-fetches the target
+// resource via the ABAC-scoped repository read before invoking the write
+// command, same "404 for both wrong-id and no-visibility" posture used
+// throughout this file.
+// ==========================================
+
+// ==========================================
+// POST /api/vnext/results/okr/sets/:setId/objectives — createObjective
+// ==========================================
+
+router.post(
+  '/sets/:setId/objectives',
+  validateParams(OkrSetIdParamsSchema),
+  validateBody(CreateOkrObjectiveSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { setId } = req.params as { setId: string };
+      const existingSet = await getOkrSet({ userId: auth.userId, organizationId: auth.organizationId, setId });
+      if (!existingSet) {
+        res.status(404).json({ error: 'OKR Set not found', code: 'NOT_FOUND' });
+        return;
+      }
+      const body = req.body as import('zod').infer<typeof CreateOkrObjectiveSchema>;
+      const outcome = await createObjective({
+        setId,
+        organizationId: auth.organizationId,
+        ownerUserId: body.ownerUserId,
+        title: body.title,
+        description: body.description ?? null,
+        rationale: body.rationale ?? null,
+        ambitionType: body.ambitionType,
+        createdBy: auth.userId,
+        actorEffectiveRole: auth.role,
+        idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
+        correlationId: getCorrelationId(req),
+        reason: body.reason ?? null,
+      });
+      res.status(outcome.outcome === 'applied' ? 201 : 200).json({
+        outcome: outcome.outcome,
+        eventId: outcome.eventId,
+        resultingVersion: outcome.resultingVersion,
+        objective: outcome.result,
+      });
+    } catch (err) {
+      handleOkrRouteError(res, err, 'createObjective');
+    }
+  }
+);
+
+// ==========================================
+// GET /api/vnext/results/okr/sets/:setId/objectives — listObjectivesForSet
+// (design §-IO item 10: getOkrSet returns a FLAT OkrSet with no nested
+// Objectives/KRs — re-verified against E002's actual landed
+// okrSetRepository.ts — this route is ADDITIVE, not duplicative.)
+// ==========================================
+
+router.get(
+  '/sets/:setId/objectives',
+  validateParams(OkrSetIdParamsSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { setId } = req.params as { setId: string };
+      const objectives = await listObjectivesForSet({ userId: auth.userId, organizationId: auth.organizationId, setId });
+      res.status(200).json({ objectives });
+    } catch (err) {
+      handleOkrRouteError(res, err, 'listObjectivesForSet');
+    }
+  }
+);
+
+// ==========================================
+// GET /api/vnext/results/okr/objectives/:objectiveId — getObjective
+// ==========================================
+
+router.get(
+  '/objectives/:objectiveId',
+  validateParams(OkrObjectiveIdParamsSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { objectiveId } = req.params as { objectiveId: string };
+      const objective = await getObjective({ userId: auth.userId, organizationId: auth.organizationId, objectiveId });
+      if (!objective) {
+        res.status(404).json({ error: 'OKR Objective not found', code: 'NOT_FOUND' });
+        return;
+      }
+      res.status(200).json({ objective });
+    } catch (err) {
+      handleOkrRouteError(res, err, 'getObjective');
+    }
+  }
+);
+
+// ==========================================
+// PATCH /api/vnext/results/okr/objectives/:objectiveId — updateObjective
+// ==========================================
+
+router.patch(
+  '/objectives/:objectiveId',
+  validateParams(OkrObjectiveIdParamsSchema),
+  validateBody(UpdateOkrObjectiveSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { objectiveId } = req.params as { objectiveId: string };
+      const existing = await getObjective({ userId: auth.userId, organizationId: auth.organizationId, objectiveId });
+      if (!existing) {
+        res.status(404).json({ error: 'OKR Objective not found', code: 'NOT_FOUND' });
+        return;
+      }
+      const body = req.body as import('zod').infer<typeof UpdateOkrObjectiveSchema>;
+      const outcome = await updateObjective({
+        objectiveId,
+        organizationId: auth.organizationId,
+        expectedVersion: body.expectedVersion,
+        title: body.title,
+        description: body.description,
+        rationale: body.rationale,
+        ambitionType: body.ambitionType,
+        ownerUserId: body.ownerUserId,
+        confidence: body.confidence,
+        confidenceNumericValue: body.confidenceNumericValue,
+        actorUserId: auth.userId,
+        actorEffectiveRole: auth.role,
+        idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
+        correlationId: getCorrelationId(req),
+        reason: body.reason ?? null,
+      });
+      res.status(200).json({
+        outcome: outcome.outcome,
+        eventId: outcome.eventId,
+        resultingVersion: outcome.resultingVersion,
+        objective: outcome.result,
+      });
+    } catch (err) {
+      handleOkrRouteError(res, err, 'updateObjective');
+    }
+  }
+);
+
+// ==========================================
+// POST /api/vnext/results/okr/objectives/:objectiveId/cancel — cancelObjective
+// (maps the plan's DELETE /objectives/:objectiveId to a guarded status
+// transition, design §6/§10.4's soft-delete precedent — no cascade to KRs,
+// §-IO item 8.)
+// ==========================================
+
+router.post(
+  '/objectives/:objectiveId/cancel',
+  validateParams(OkrObjectiveIdParamsSchema),
+  validateBody(OkrObjectiveTransitionSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { objectiveId } = req.params as { objectiveId: string };
+      const existing = await getObjective({ userId: auth.userId, organizationId: auth.organizationId, objectiveId });
+      if (!existing) {
+        res.status(404).json({ error: 'OKR Objective not found', code: 'NOT_FOUND' });
+        return;
+      }
+      const body = req.body as import('zod').infer<typeof OkrObjectiveTransitionSchema>;
+      const outcome = await cancelObjective({
+        objectiveId,
+        organizationId: auth.organizationId,
+        expectedVersion: body.expectedVersion,
+        actorUserId: auth.userId,
+        actorEffectiveRole: auth.role,
+        idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
+        correlationId: getCorrelationId(req),
+        reason: body.reason ?? null,
+      });
+      res.status(200).json({
+        outcome: outcome.outcome,
+        eventId: outcome.eventId,
+        resultingVersion: outcome.resultingVersion,
+        objective: outcome.result,
+      });
+    } catch (err) {
+      handleOkrRouteError(res, err, 'cancelObjective');
+    }
+  }
+);
+
+// ==========================================
+// POST /api/vnext/results/okr/objectives/:objectiveId/key-results — createKeyResult
+// ==========================================
+
+router.post(
+  '/objectives/:objectiveId/key-results',
+  validateParams(OkrObjectiveIdParamsSchema),
+  validateBody(CreateOkrKeyResultSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { objectiveId } = req.params as { objectiveId: string };
+      const existingObjective = await getObjective({ userId: auth.userId, organizationId: auth.organizationId, objectiveId });
+      if (!existingObjective) {
+        res.status(404).json({ error: 'OKR Objective not found', code: 'NOT_FOUND' });
+        return;
+      }
+      const body = req.body as import('zod').infer<typeof CreateOkrKeyResultSchema>;
+      const outcome = await createKeyResult({
+        objectiveId,
+        organizationId: auth.organizationId,
+        ownerUserId: body.ownerUserId,
+        title: body.title,
+        description: body.description ?? null,
+        measurementType: body.measurementType,
+        unit: body.unit ?? null,
+        currency: body.currency ?? null,
+        baselineValue: body.baselineValue ?? null,
+        targetValue: body.targetValue ?? null,
+        startValue: body.startValue ?? null,
+        currentValue: body.currentValue ?? null,
+        direction: body.direction,
+        rangeMin: body.rangeMin ?? null,
+        rangeMax: body.rangeMax ?? null,
+        confidence: body.confidence ?? null,
+        confidenceNumericValue: body.confidenceNumericValue ?? null,
+        sourceType: body.sourceType,
+        sourceReference: body.sourceReference ?? null,
+        weight: body.weight ?? null,
+        createdBy: auth.userId,
+        actorEffectiveRole: auth.role,
+        idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
+        correlationId: getCorrelationId(req),
+        reason: body.reason ?? null,
+      });
+      res.status(outcome.outcome === 'applied' ? 201 : 200).json({
+        outcome: outcome.outcome,
+        eventId: outcome.eventId,
+        resultingVersion: outcome.resultingVersion,
+        keyResult: outcome.result,
+      });
+    } catch (err) {
+      handleOkrRouteError(res, err, 'createKeyResult');
+    }
+  }
+);
+
+// ==========================================
+// GET /api/vnext/results/okr/key-results/:keyResultId — getKeyResult
+// ==========================================
+
+router.get(
+  '/key-results/:keyResultId',
+  validateParams(OkrKeyResultIdParamsSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { keyResultId } = req.params as { keyResultId: string };
+      const keyResult = await getKeyResult({ userId: auth.userId, organizationId: auth.organizationId, keyResultId });
+      if (!keyResult) {
+        res.status(404).json({ error: 'OKR KeyResult not found', code: 'NOT_FOUND' });
+        return;
+      }
+      res.status(200).json({ keyResult });
+    } catch (err) {
+      handleOkrRouteError(res, err, 'getKeyResult');
+    }
+  }
+);
+
+// ==========================================
+// PATCH /api/vnext/results/okr/key-results/:keyResultId — updateKeyResult
+// ==========================================
+
+router.patch(
+  '/key-results/:keyResultId',
+  validateParams(OkrKeyResultIdParamsSchema),
+  validateBody(UpdateOkrKeyResultSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { keyResultId } = req.params as { keyResultId: string };
+      const existing = await getKeyResult({ userId: auth.userId, organizationId: auth.organizationId, keyResultId });
+      if (!existing) {
+        res.status(404).json({ error: 'OKR KeyResult not found', code: 'NOT_FOUND' });
+        return;
+      }
+      const body = req.body as import('zod').infer<typeof UpdateOkrKeyResultSchema>;
+      const outcome = await updateKeyResult({
+        keyResultId,
+        organizationId: auth.organizationId,
+        expectedVersion: body.expectedVersion,
+        title: body.title,
+        description: body.description,
+        ownerUserId: body.ownerUserId,
+        measurementType: body.measurementType,
+        unit: body.unit,
+        currency: body.currency,
+        baselineValue: body.baselineValue,
+        targetValue: body.targetValue,
+        startValue: body.startValue,
+        currentValue: body.currentValue,
+        direction: body.direction,
+        rangeMin: body.rangeMin,
+        rangeMax: body.rangeMax,
+        confidence: body.confidence,
+        confidenceNumericValue: body.confidenceNumericValue,
+        status: body.status,
+        sourceType: body.sourceType,
+        sourceReference: body.sourceReference,
+        weight: body.weight,
+        actorUserId: auth.userId,
+        actorEffectiveRole: auth.role,
+        idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
+        correlationId: getCorrelationId(req),
+        reason: body.reason ?? null,
+      });
+      res.status(200).json({
+        outcome: outcome.outcome,
+        eventId: outcome.eventId,
+        resultingVersion: outcome.resultingVersion,
+        keyResult: outcome.result,
+      });
+    } catch (err) {
+      handleOkrRouteError(res, err, 'updateKeyResult');
+    }
+  }
+);
+
+// ==========================================
+// POST /api/vnext/results/okr/key-results/:keyResultId/cancel — cancelKeyResult
+// (maps the plan's DELETE /key-results/:keyResultId)
+// ==========================================
+
+router.post(
+  '/key-results/:keyResultId/cancel',
+  validateParams(OkrKeyResultIdParamsSchema),
+  validateBody(OkrKeyResultTransitionSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { keyResultId } = req.params as { keyResultId: string };
+      const existing = await getKeyResult({ userId: auth.userId, organizationId: auth.organizationId, keyResultId });
+      if (!existing) {
+        res.status(404).json({ error: 'OKR KeyResult not found', code: 'NOT_FOUND' });
+        return;
+      }
+      const body = req.body as import('zod').infer<typeof OkrKeyResultTransitionSchema>;
+      const outcome = await cancelKeyResult({
+        keyResultId,
+        organizationId: auth.organizationId,
+        expectedVersion: body.expectedVersion,
+        actorUserId: auth.userId,
+        actorEffectiveRole: auth.role,
+        idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
+        correlationId: getCorrelationId(req),
+        reason: body.reason ?? null,
+      });
+      res.status(200).json({
+        outcome: outcome.outcome,
+        eventId: outcome.eventId,
+        resultingVersion: outcome.resultingVersion,
+        keyResult: outcome.result,
+      });
+    } catch (err) {
+      handleOkrRouteError(res, err, 'cancelKeyResult');
     }
   }
 );
