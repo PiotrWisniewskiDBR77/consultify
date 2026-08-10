@@ -794,6 +794,128 @@ export async function recordRoiPirTeresaDraftDisposition(
 }
 
 // ==========================================
+// recordRoiPirTeresaLessonsDraft (ROI-E008, AC-01/AC-02/AC-06)
+// ==========================================
+
+export interface RecordRoiPirTeresaLessonsDraftInput {
+  pirId: string;
+  caseId: string;
+  organizationId: string;
+  expectedVersion: number;
+  draftPayload: Record<string, unknown>;
+  actorUserId: string;
+  actorEffectiveRole: string;
+  idempotencyKey: string;
+  correlationId?: string;
+  causationId?: string | null;
+  reason?: string | null;
+}
+
+/**
+ * ROI-E006 D13's deferred generation call — the ONE genuinely new piece of
+ * business logic ROI-E008 adds. CAS on the PIR row. Guard order (exact):
+ * (1) `case_id` match check; (2) `status === 'draft'` check; (3) Decision
+ * D6/D13's "block regeneration if a disposition was already recorded"
+ * check; THEN the write. This IS the literal AC-03 correctness guarantee:
+ * the `UPDATE ... SET` clause below writes ONLY
+ * `teresa_draft_lessons_payload`/`teresa_draft_generated_at`/`row_version`/
+ * `updated_by`/`updated_at` — never `lessons_learned` or any other
+ * narrative field. `lessons_learned` only ever changes via
+ * `recordRoiPirTeresaDraftDisposition` (ROI-E006), the other half of the
+ * 2-gate structure this epic never widens.
+ */
+export async function recordRoiPirTeresaLessonsDraft(
+  input: RecordRoiPirTeresaLessonsDraftInput
+): Promise<AtomicCommandOutcome<RoiPostInvestmentReview>> {
+  const {
+    pirId,
+    caseId,
+    organizationId,
+    expectedVersion,
+    draftPayload,
+    actorUserId,
+    actorEffectiveRole,
+    idempotencyKey,
+    correlationId,
+    causationId = null,
+    reason = null,
+  } = input;
+
+  let beforeState: Record<string, unknown> | null = null;
+
+  return executeAtomicCommand<RoiPostInvestmentReviewRow, RoiPostInvestmentReview>({
+    organizationId,
+    aggregateId: pirId,
+    expectedVersion,
+    loadForUpdate: loadRoiPirForUpdate,
+    getCurrentVersion: pirRowVersion,
+    applyMutation: async (client, currentRow, nextVersion) => {
+      if (currentRow.case_id !== caseId) {
+        throw new RoiPirNotFoundError(caseId);
+      }
+      if (currentRow.status !== 'draft') {
+        throw new RoiPirValidationError(
+          `PIR ${pirId} is "${currentRow.status}" — Teresa may only draft lessons while the PIR is a draft`,
+          'NOT_EDITABLE',
+          { pirId, status: currentRow.status }
+        );
+      }
+      // Decision D6/D13: block regeneration after a human already disposed of a prior draft.
+      if (currentRow.teresa_draft_disposition !== null) {
+        throw new RoiPirValidationError(
+          `PIR ${pirId} already has a recorded Teresa draft disposition ("${currentRow.teresa_draft_disposition}") — regenerating would silently invalidate a human decision`,
+          'DISPOSITION_ALREADY_RECORDED',
+          { pirId }
+        );
+      }
+
+      beforeState = { pir: toRoiPostInvestmentReview(currentRow) };
+
+      const updateResult = await client.query<RoiPostInvestmentReviewRow>(
+        `UPDATE rvn_roi_post_investment_reviews
+            SET teresa_draft_lessons_payload = $1, teresa_draft_generated_at = now(),
+                row_version = $2, updated_by = $3, updated_at = now()
+          WHERE pir_id = $4
+          RETURNING *`,
+        [JSON.stringify(draftPayload), nextVersion, actorUserId, pirId]
+      );
+      const updatedRow = updateResult.rows[0];
+      if (!updatedRow) {
+        throw new Error(`[recordRoiPirTeresaLessonsDraft] update returned no row for ${pirId}`);
+      }
+      return toRoiPostInvestmentReview(updatedRow);
+    },
+    buildEvent: ({ result, nextVersion }) => {
+      const afterState = { pir: result };
+      return {
+        schemaVersion: 1,
+        eventType: 'roi.pir_teresa_lessons_draft_recorded',
+        aggregateType: 'roi_case',
+        aggregateId: caseId,
+        organizationId,
+        actorUserId,
+        actorEffectiveRole,
+        commandId: randomUUID(),
+        correlationId: correlationId ?? randomUUID(),
+        causationId,
+        occurredAt: new Date().toISOString(),
+        policyVersion: '',
+        beforeState,
+        afterState,
+        stateHash: computeStateHash(afterState),
+        reason,
+        evidenceRefs: [],
+        source: ROI_EVENT_SOURCE,
+        idempotencyKey,
+        expectedVersion,
+        resultingVersion: nextVersion,
+        payload: { caseId, pirId },
+      } satisfies AtomicEventInput;
+    },
+  });
+}
+
+// ==========================================
 // closeRoiCase (AC-03, D6)
 // ==========================================
 

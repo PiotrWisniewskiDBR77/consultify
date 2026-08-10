@@ -37,6 +37,11 @@ import { submitRootCause } from '../resultsVnext/kpi/kpiDeviationCommands.js';
 import { getKpi, listKpis } from '../resultsVnext/kpi/kpiRepository.js';
 import { getDeviationCase } from '../resultsVnext/kpi/kpiDeviationRepository.js';
 import { AtomicWriteConflictError } from '../resultsVnext/platform/atomicWrite.js';
+// ROI-E008 — the only two ROI-domain functions imported anywhere in this
+// file (literal, grep-able proof for A3 of ROI_E008_DESIGN.md):
+//   grep -nE "from '\.\./resultsVnext/roi/" server/src/services/v8/teresaCopilotService.ts
+import { recordRoiPirTeresaLessonsDraft } from '../resultsVnext/roi/roiPirCommands.js';
+import { getRoiPostInvestmentReview } from '../resultsVnext/roi/roiPirRepository.js';
 import {
   type ActionEnvelopeState,
   type HandoffTargetModule,
@@ -47,6 +52,7 @@ import {
   P08_HANDOFF_TARGET_MODULES,
   resolveVoiceAvailability,
   type ResultsKpiHandoffContext,
+  type ResultsRoiHandoffContext,
   type TeresaHandoffContext,
   validateHandoffContext,
   validateTargetPayload,
@@ -1911,6 +1917,19 @@ export async function undoProposal(params: {
       409
     );
   }
+  if (row.target_module === 'roi') {
+    // Decision D7 (ROI_E008_DESIGN.md): undo is explicitly blocked for ROI
+    // handoffs, same shape/rationale as the 'kpi' block above.
+    // recordRoiPirTeresaDraftDisposition({ disposition: 'rejected' })
+    // already gives a clean discard path for an unwanted draft without ever
+    // promoting it to lessons_learned — a fabricated undo here would not
+    // cleanly reverse domain state.
+    throw new TeresaCopilotError(
+      'Undo is not supported for ROI handoffs (recordRoiPirTeresaDraftDisposition with disposition:"rejected" is the correct way to discard an unwanted draft).',
+      'P08_UNDO_NOT_SUPPORTED',
+      409
+    );
+  }
   if (row.target_module !== 'excele') {
     throw new TeresaCopilotError(
       'Undo is currently supported only for applied workbook mutations.',
@@ -2160,6 +2179,8 @@ async function performHandoff(params: {
       );
     case 'kpi':
       return handleResultsKpiHandoff(proposalId, organizationId, userId, handoffContext, targetPayload);
+    case 'roi':
+      return handleResultsRoiHandoff(proposalId, organizationId, userId, handoffContext, targetPayload);
     default:
       throw new TeresaCopilotError(`Unknown target module: ${targetModule}`, 'P08_UNKNOWN_TARGET');
   }
@@ -2973,6 +2994,126 @@ async function handleKpiReflectionRca(
     real_entity: true,
     outcome: outcome.outcome,
     evidence_breakdown: rca.evidence_breakdown,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// ROI-E008 — Results/ROI advisor handoff (one governed mode)
+// ---------------------------------------------------------------------------
+
+// DEVIATION FROM DESIGN: the design's own A2 snippet types this function's
+// return shape using a named `RoiPirReviewSnapshotPayload` import from
+// `roiPirTypes.js`. Doing so literally would add a THIRD `from
+// '../resultsVnext/roi/...'` import line to this file, which would fail
+// A3's own static proof #1 ("expect exactly the 2 import lines from A1,
+// nothing else") — a test the design itself specifies. Resolved by deriving
+// the same type structurally from the already-imported
+// `getRoiPostInvestmentReview` function's return type instead of adding a
+// third import; the resulting type is identical, only the derivation path
+// differs.
+type RoiPirSnapshotForAdvisor = NonNullable<Awaited<ReturnType<typeof getRoiPostInvestmentReview>>>;
+
+/**
+ * Runs BEFORE `createProposal` (while Teresa assembles the chat suggestion),
+ * mirroring `buildKpiDraftAdvisorContext`'s own calling convention. Literal
+ * **AC-01** mechanism: reads the already-frozen, versioned
+ * `review_snapshot_payload`/`review_snapshot_hash` — never a live/mutable
+ * ROI read. Returns `null` when the PIR does not exist, is not visible to
+ * this user, or is no longer in `'draft'` status (nothing to draft lessons
+ * for).
+ */
+export async function buildRoiPirLessonsAdvisorContext(params: {
+  userId: string;
+  organizationId: string;
+  caseId: string;
+  pirId: string;
+}): Promise<{
+  reviewSnapshotPayload: RoiPirSnapshotForAdvisor['reviewSnapshotPayload'];
+  reviewSnapshotHash: string;
+} | null> {
+  const { userId, organizationId, caseId, pirId } = params;
+  const pir = await getRoiPostInvestmentReview({ userId, organizationId, caseId, pirId });
+  if (!pir || pir.status !== 'draft') return null;
+  return { reviewSnapshotPayload: pir.reviewSnapshotPayload, reviewSnapshotHash: pir.reviewSnapshotHash };
+}
+
+/** Shared helper wrapping the `teresa_handoff_results` insert — same shape
+ * `recordTeresaKpiHandoffResult` uses, extracted per-domain since only one
+ * ROI advisor mode exists (no switch-of-modes need here). */
+async function recordTeresaRoiHandoffResult(
+  proposalId: string,
+  organizationId: string,
+  resultRef: string
+): Promise<void> {
+  await dbRun(
+    `INSERT INTO teresa_handoff_results (id, proposal_id, organization_id, target_module, result_ref, created_at)
+     VALUES (?, ?, ?, 'roi', ?, ?)`,
+    [randomUUID(), proposalId, organizationId, resultRef, new Date().toISOString()],
+    { fallback: true }
+  );
+}
+
+async function handleResultsRoiHandoff(
+  proposalId: string,
+  organizationId: string,
+  userId: string,
+  context: TeresaHandoffContext,
+  payload: Record<string, unknown>
+): Promise<Record<string, unknown>> {
+  const roiContext = payload.roi_handoff_context as ResultsRoiHandoffContext | undefined;
+  if (!roiContext?.advisor_mode) {
+    throw new TeresaCopilotError('roi_handoff_context.advisor_mode missing', 'P08_ROI_INVALID_PAYLOAD');
+  }
+  switch (roiContext.advisor_mode) {
+    case 'pir_lessons_draft':
+      return handleRoiPirLessonsDraft(proposalId, organizationId, userId, context, roiContext);
+    default: {
+      const _exhaustive: never = roiContext.advisor_mode;
+      throw new TeresaCopilotError(`Unknown ROI advisor mode: ${String(_exhaustive)}`, 'P08_ROI_UNKNOWN_MODE');
+    }
+  }
+}
+
+/** Mode 1 (only mode): `pir_lessons_draft` — ROI-E006 D13's deferred
+ * generation call. */
+async function handleRoiPirLessonsDraft(
+  proposalId: string,
+  organizationId: string,
+  userId: string,
+  context: TeresaHandoffContext,
+  roiContext: ResultsRoiHandoffContext
+): Promise<Record<string, unknown>> {
+  const draft = roiContext.pir_lessons_draft;
+  if (!draft) throw new TeresaCopilotError('pir_lessons_draft payload missing', 'P08_ROI_INVALID_PAYLOAD');
+  const { resource_id: pirId } = roiContext.target_resource;
+
+  const outcome = await recordRoiPirTeresaLessonsDraft({
+    pirId,
+    caseId: roiContext.case_id,
+    organizationId,
+    expectedVersion: roiContext.expected_version,
+    // `RoiPirLessonsDraftPayload` (a specific interface, no index
+    // signature) structurally satisfies `Record<string, unknown>` at
+    // runtime (it IS a plain object) but not always under every tsconfig's
+    // strictness — `server/tsconfig.json` (stricter than the root config)
+    // flags this without an explicit widening cast.
+    draftPayload: draft as unknown as Record<string, unknown>,
+    actorUserId: userId,
+    actorEffectiveRole: 'teresa_initiated',
+    idempotencyKey: proposalId,
+    correlationId: context.runtime_binding?.conversation_id ?? undefined,
+    reason: 'Teresa pir_lessons_draft, approved by user',
+  });
+  await recordTeresaRoiHandoffResult(proposalId, organizationId, outcome.result.pirId);
+  return {
+    handoff: 'roi',
+    advisor_mode: 'pir_lessons_draft',
+    pir_id: outcome.result.pirId,
+    case_id: outcome.result.caseId,
+    row_version: outcome.resultingVersion,
+    real_entity: true,
+    outcome: outcome.outcome,
+    draft,
   };
 }
 

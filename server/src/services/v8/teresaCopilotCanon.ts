@@ -215,6 +215,43 @@ export interface ResultsKpiHandoffContext {
   reflection_rca?: KpiReflectionRcaPayload;
 }
 
+// ────────────────────────────────────────────────────────────────
+// ROI-E008 — Results/ROI advisor handoff (one governed mode)
+// ────────────────────────────────────────────────────────────────
+
+export type ResultsRoiAdvisorMode =
+  | 'pir_lessons_draft'; // ROI-E006 D13's deferred generation call — the ONLY named ROI advisor need
+
+export interface RoiPirLessonsAdvisorEvidenceBreakdown {
+  facts: string[];
+  inference: string[];
+  missing_evidence: string[];
+  recommendation: string;
+}
+
+export interface RoiPirLessonsDraftPayload {
+  draft_lessons_text: string;
+  evidence_breakdown: RoiPirLessonsAdvisorEvidenceBreakdown;
+  // Deliberately NOT draft_outcome/draft_recommendation: those stay
+  // human-authored-only fields (the ROI-E006 PIR-draft-update command).
+  // AC-06 of ROI-E006 names only "a Teresa-drafted LESSONS text" — do not
+  // widen scope here.
+}
+
+export interface ResultsRoiHandoffContext {
+  advisor_mode: ResultsRoiAdvisorMode;
+  target_resource: {
+    resource_type: 'roi_pir';
+    resource_id: string; // pir_id — never null; the PIR must already exist
+                          // (started via the ROI-E006 PIR-start command)
+                          // before Teresa can draft lessons for it. No
+                          // create path, unlike KPI's draft_quality_review.
+  };
+  case_id: string;
+  expected_version: number; // PIR row_version — CAS, never null
+  pir_lessons_draft?: RoiPirLessonsDraftPayload;
+}
+
 export const P08_HANDOFF_TARGETS = {
   radar: {
     module: 'Radar' as const,
@@ -278,6 +315,18 @@ export const P08_HANDOFF_TARGETS = {
     required_common_payload: true,
     required_extra_fields: ['kpi_handoff_context', 'evidence_pointers'] as const,
   },
+  roi: {
+    module: 'ROI' as const,
+    contract_ref: 'ROI-E008',
+    description:
+      'Governed ROI advisor: Post-Investment-Review lessons-learned drafting ' +
+      'only, grounded in the already-frozen, versioned review_snapshot_payload ' +
+      '(AC-01). Teresa never creates/models/submits/approves/rejects/forecasts/' +
+      'records-actual/verifies/disputes/schedules/closes a Case or PIR — see ' +
+      'P08_ROI_FORBIDDEN_VERBS.',
+    required_common_payload: true,
+    required_extra_fields: ['roi_handoff_context', 'evidence_pointers'] as const,
+  },
   excele: {
     module: 'Excele' as const,
     contract_ref: 'P12',
@@ -319,6 +368,7 @@ export const P08_HANDOFF_TARGET_MODULES: HandoffTargetModule[] = [
   'documents',
   'presentations',
   'kpi', // KPI-E006, appended — existing 9 entries untouched
+  'roi', // ROI-E008, appended — existing 10 entries untouched
 ];
 
 // ────────────────────────────────────────────────────────────────
@@ -332,6 +382,77 @@ export const P08_KPI_FORBIDDEN_VERBS = [
   'suspendKpi', 'archiveKpi', 'verifyMeasurement', 'disputeMeasurement',
   'approvePlan', 'submitEffectivenessVerification', 'closeDeviationCase',
   'reopenDeviationCase',
+] as const;
+
+// ────────────────────────────────────────────────────────────────
+// ROI-E008 — forbidden verbs (documentation of an existing architectural
+// fact: Teresa never imports/calls any of these; see
+// tests/resultsVnext/teresa-roi-forbidden-verbs.test.ts for the real,
+// grep-able proof — the 2-name import whitelist in teresaCopilotService.ts
+// is what actually enforces this, this array is documentation only).
+//
+// Re-derived per Decision D16 by running, at implementation time:
+//   grep -nE "^export (async )?function [a-zA-Z]+" \
+//     server/src/services/resultsVnext/roi/*Commands.ts \
+//     server/src/services/resultsVnext/roi/roiEconomicModelFreeze.ts
+// Scoped to real write/state-transition verbs (every exported async command
+// function); pure read-side/type-conversion helpers with no state-mutation
+// semantics of their own (e.g. `isRoiCaseReadyForReviewEligible`,
+// `toDateOnlyString`, `assumptionRowToEngine`, `costLineRowToEngine`,
+// `benefitLineRowToEngine`, `policyStampObject`,
+// `computeCurrentEconomicModelHash`) are deliberately excluded — they are
+// not "verbs" Teresa could use to mutate ROI state, and including them
+// would dilute this list's documentation value without adding any real
+// coverage (the import whitelist below is what actually enforces the
+// boundary).
+// ────────────────────────────────────────────────────────────────
+
+export const P08_ROI_FORBIDDEN_VERBS = [
+  // roiCaseCommands.ts
+  'createRoiCase', 'updateRoiCaseDetails', 'archiveRoiCase', 'startModeling',
+  'markReadyForReview', 'reopenRejectedRoiCase',
+  // roiCaseApprovalCommands.ts
+  'submitRoiCaseForApproval', 'approveRoiCase', 'rejectRoiCase',
+  'requestChangesOnRoiCase', 'reopenApprovedRoiCaseForRevision',
+  // roiBaselineCommands.ts
+  'captureOrUpdateBaseline', 'freezeRoiBaseline', 'unfreezeRoiBaseline',
+  // roiBenefitsRealizationCommands.ts
+  'startRoiCaseBenefitsRealization', 'cancelRoiCase',
+  // roiPirCommands.ts (ROI-E006 + this epic's own recordRoiPirTeresaLessonsDraft is the ONE exception)
+  'scheduleRoiCasePostInvestmentReview', 'markRoiCasePostInvestmentReviewDue',
+  'startRoiCasePostInvestmentReview', 'updateRoiPostInvestmentReviewDraft',
+  'recordRoiPirTeresaDraftDisposition', 'closeRoiCase',
+  // roiActualEntryCommands.ts / roiActualSnapshotCommands.ts
+  'recordActualEntry', 'correctActualEntry', 'verifyActualEntry', 'disputeActualEntry',
+  'publishRoiActualSnapshot',
+  // roiVarianceCommands.ts
+  'recordVariance', 'updateVarianceStatus', 'addVarianceCause', 'removeVarianceCause',
+  // roiFinanceLinkCommands.ts / roiFinanceReconciliationCommands.ts (ROI-E007)
+  'createRoiFinanceLink', 'removeRoiFinanceLink', 'openRoiFinanceReconciliation',
+  'updateRoiFinanceReconciliationStatus',
+  // roiBenefitEvidenceLinkCommands.ts (ROI-E002 + E007's flagEvidenceLinkFreshnessCheck)
+  'addBenefitEvidenceLink', 'removeBenefitEvidenceLink', 'flagBenefitEvidenceLinkDisputed',
+  'flagEvidenceLinkFreshnessCheck',
+  // roiAssumptionCommands.ts
+  'addAssumption', 'updateAssumption', 'removeAssumption',
+  // roiBenefitLineCommands.ts
+  'addBenefitLine', 'updateBenefitLine', 'removeBenefitLine',
+  // roiCostLineCommands.ts
+  'addCostLine', 'updateCostLine', 'removeCostLine',
+  // roiCalculationRunCommands.ts (write verb only — see file-header note on
+  // excluded pure helpers)
+  'createRoiCalculationRun',
+  // roiCalculationPolicyCommands.ts
+  'captureOrUpdateCalculationPolicy',
+  // roiScenarioCommands.ts
+  'addScenario', 'updateScenario', 'removeScenario', 'setScenarioOverride',
+  'removeScenarioOverride',
+  // roiForecastVersionCommands.ts
+  'createRoiForecastVersion',
+  // roiTrackingCommands.ts
+  'startRoiCaseTracking',
+  // roiEconomicModelFreeze.ts
+  'freezeRoiEconomicModel', 'unfreezeRoiEconomicModel',
 ] as const;
 
 export const P08_COMMON_PAYLOAD_FIELDS = [

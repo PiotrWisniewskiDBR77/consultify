@@ -277,6 +277,17 @@ export const EVENT_TYPE_CONSUMER_GROUPS: Readonly<Record<string, readonly string
   'roi.pir_teresa_draft_disposition_recorded': ['mywork_projection'],
   'roi.case_closed': ['mywork_projection', 'finance_projection'],
 
+  // ROI-E008 (docs/product/results-vnext/ROI_E008_DESIGN.md §2/A2) — Teresa/
+  // Legacy/Ops. `roi.pir_teresa_lessons_draft_recorded` is the ONE new event
+  // type this epic's `recordRoiPirTeresaLessonsDraft` command builds — same
+  // advisory/in-flight-metadata classification as
+  // `roi.pir_teresa_draft_disposition_recorded` immediately above (a Teresa
+  // draft, not yet a human-dispositioned/finalized fact) — 'mywork_projection'
+  // only. The Legacy/Ops half (B1's GET-only archive router) writes nothing
+  // and therefore emits no event of its own; no other new event type exists
+  // in this epic.
+  'roi.pir_teresa_lessons_draft_recorded': ['mywork_projection'],
+
   // ROI-E007 (docs/product/results-vnext/ROI_E007_DESIGN.md §4/§6) —
   // Finance/KPI Seams. Finance-link create/remove and reconciliation-opened/
   // -resolved fan to BOTH 'mywork_projection' AND 'finance_projection' —
