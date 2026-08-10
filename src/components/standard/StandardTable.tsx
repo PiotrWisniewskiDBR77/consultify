@@ -526,11 +526,14 @@ export const StandardTable: React.FC<StandardTableProps> = ({
   if (error) {
     return (
       <div className={canvasClassName} data-testid="standard-table-error">
-        <EmptyState
-          variant="error"
-          title={error}
-          primaryAction={onRetry ? { label: 'Retry', onClick: onRetry } : undefined}
-        />
+        {/* R09-1 (2026-08-10, defekt P2): `primaryAction={{label:'Retry',...}}`
+            wpisywał angielski napis na sztywno niezależnie od języka konta —
+            widoczne na polskim ekranie z angielskim przyciskiem. `EmptyState`
+            ma gotową furtkę dokładnie po to: `onRetry` samo syntetyzuje
+            przetłumaczony CTA (`common.retry`, patrz
+            `src/components/shared/states/EmptyState.tsx`) zamiast wymuszać
+            etykietę z zewnątrz — więc podajemy handler, nie literał. */}
+        <EmptyState variant="error" title={error} onRetry={onRetry} />
       </div>
     );
   }

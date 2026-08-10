@@ -412,7 +412,13 @@ export const StandardPreview: React.FC<StandardPreviewProps> = ({
                   ? 'text-[var(--c-info)] bg-state-selected'
                   : 'text-c-text-muted hover:bg-state-hover'
               }`}
-              title={pinned ? 'Unpin' : 'Pin for comparison'}
+              // R09-2a (2026-08-10, defekt P2a): było na sztywno po angielsku
+              // niezależnie od języka konta — ten sam mechanizm co `common.retry`.
+              title={
+                pinned
+                  ? t('common.unpin', isPolish ? 'Odepnij' : 'Unpin')
+                  : t('common.pinForComparison', isPolish ? 'Przypnij do porównania' : 'Pin for comparison')
+              }
             >
               {pinned ? <PinOff size={13} /> : <Pin size={13} />}
             </button>
@@ -468,8 +474,18 @@ export const StandardPreview: React.FC<StandardPreviewProps> = ({
               {details.properties?.length ? (
                 <ArtifactPropertiesTable
                   rows={details.properties}
-                  propertyLabel={details.propertyLabel ?? 'Property'}
-                  valueLabel={details.valueLabel ?? 'Value'}
+                  // R09-2a (2026-08-10, defekt P2a): `ArtifactPropertiesTable`
+                  // sam w sobie NIE ma zaszytych napisów — wymaga gotowych,
+                  // przetłumaczonych etykiet od wywołującego (patrz jego
+                  // własny docstring). Ekrany RN-G2 (i inne) nie podają
+                  // `details.propertyLabel/valueLabel`, więc lądowały tu, na
+                  // domyślnym literale 'Property'/'Value' — widoczne na
+                  // polskim ekranie ROI. Ten sam mechanizm co reszta
+                  // domyślnych etykiet w tym pliku (`common.copy` itd.).
+                  propertyLabel={
+                    details.propertyLabel ?? t('common.property', isPolish ? 'Właściwość' : 'Property')
+                  }
+                  valueLabel={details.valueLabel ?? t('common.value', isPolish ? 'Wartość' : 'Value')}
                 />
               ) : null}
             </PreviewDetailsSection>
