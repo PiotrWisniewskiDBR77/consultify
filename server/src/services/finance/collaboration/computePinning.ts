@@ -55,27 +55,69 @@ export type EnqueueComputeForCurrentRevisionResult =
  * overwriting the old one; the old, now-stale, hash-pinned result is never
  * silently replaced.
  *
- * Requires the artifact to have been checkpointed at least once
- * (`content_semantic_hash IS NOT NULL`) — a brand-new Draft that has never
- * gone through `checkpointOperationStack` has nothing to pin to yet.
+ * Requires the artifact to have REAL content to pin to: either a real
+ * autosave/explicit-save/crash-recovery checkpoint (`checkpointOperationStack`),
+ * a real compute/reconciliation run (`stampWorkingRevisionComputeIdentity`),
+ * or a reopen's copy-on-write of a revision that itself had one of those
+ * (`reopenVersion`) must have touched the current working revision.
+ *
+ * W2-PINSEMANTICS fix (`docs/validation/finance-v3/generated/gate-d/
+ * W2_PIN_SEMANTICS_report.md`): this used to be a plain
+ * `content_semantic_hash IS NOT NULL` check. The W10-D01 fix made
+ * `artifactVersionService.createArtifact()` stamp a non-NULL hash onto
+ * revision_seq=1 AT BIRTH (to guarantee the column is never NULL all the way
+ * to an APPROVED business version — a real production gap, not a
+ * hypothetical one: `canonicalServices.pg.test.ts`'s "the full T2->T4
+ * transition chain..." test reaches APPROVED with zero checkpoint/compute
+ * calls in between), so a brand-new, still-empty Draft now also reads as
+ * "has a hash" and `IS NOT NULL` alone can no longer tell "never touched"
+ * apart from "has real content".
+ *
+ * The fix is NOT to compare the hash value against the specific "empty
+ * content" constant `createArtifact()` stamps
+ * (`canonicalPayloadHash({ unsavedOperationStack: [] })`,
+ * `contentHash.EMPTY_WORKING_REVISION_CONTENT_HASH`) — that constant is also
+ * the byte-identical hash of a genuine, intentional EXPLICIT_SAVE checkpoint
+ * whose operation stack happens to be empty (e.g. the user saves after
+ * undoing every change back to a no-op), which IS real, pinnable content:
+ * `concurrencyMatrix.pg.test.ts`'s A4 test does exactly this and expects the
+ * pin to succeed. Content-hash equality cannot distinguish "never checkpointed"
+ * from "checkpointed to a no-op state" because the hash function only ever
+ * sees the operation-stack payload, never WHO wrote the row or WHY.
+ *
+ * What actually distinguishes "the pristine `createArtifact()` row" from
+ * every other row in `finance_working_revisions` is structural, not
+ * content-based: `createArtifact()` is the ONLY writer that ever produces
+ * `revision_seq = 1` AND leaves `compute_run_id` NULL. Every other writer —
+ * `checkpointOperationStack()` (always INSERTs a NEW row, `revision_seq =
+ * previous + 1`), `stampWorkingRevisionComputeIdentity()` (always sets
+ * `compute_run_id`, at any `revision_seq`), and `reopenVersion()`'s
+ * copy-on-write (always INSERTs at `revision_seq > 1`, and copies forward
+ * whatever `compute_run_id` its source already had) — produces a row that
+ * fails at least one half of that pair. Checking `revision_seq > 1 OR
+ * compute_run_id IS NOT NULL` is therefore an exact structural test for "this
+ * row is not the birth row", with no risk of a coincidental hash collision.
  */
 export async function enqueueComputeForCurrentRevision(
   params: EnqueueComputeForCurrentRevisionParams
 ): Promise<EnqueueComputeForCurrentRevisionResult> {
   const current = await withPinnedPostgresTransaction((tx) =>
-    tx.queryOne<{ content_semantic_hash: string | null }>(
-      `SELECT content_semantic_hash FROM finance_working_revisions WHERE artifact_id = ? AND organization_id = ? AND is_current = true`,
+    tx.queryOne<{ content_semantic_hash: string | null; compute_run_id: string | null; revision_seq: string | number }>(
+      `SELECT content_semantic_hash, compute_run_id, revision_seq FROM finance_working_revisions WHERE artifact_id = ? AND organization_id = ? AND is_current = true`,
       [params.artifactId, params.organizationId]
     )
   );
   if (!current) {
     return { ok: false, code: 'NOT_FOUND', message: 'No current working revision for this artifact' };
   }
-  if (!current.content_semantic_hash) {
+  // BIGINT `revision_seq` comes back from `pg` as a string — `Number(...)` here, not a
+  // direct comparison (same pattern as `canonicalServices.pg.test.ts`'s own comment on this).
+  const hasRealContent = Number(current.revision_seq) > 1 || current.compute_run_id !== null;
+  if (!current.content_semantic_hash || !hasRealContent) {
     return {
       ok: false,
       code: 'NO_CONTENT_HASH',
-      message: 'Current working revision has no content_semantic_hash yet (never checkpointed) — nothing to pin compute to',
+      message: 'Current working revision has no content_semantic_hash yet (never checkpointed or computed) — nothing to pin compute to',
     };
   }
 

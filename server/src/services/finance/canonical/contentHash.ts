@@ -31,3 +31,29 @@ import { createHash } from 'node:crypto';
 export function canonicalPayloadHash(payload: unknown): string {
   return createHash('sha256').update(JSON.stringify(payload)).digest('hex');
 }
+
+/**
+ * W2-PINSEMANTICS fix (`docs/validation/finance-v3/generated/gate-d/W2_PIN_SEMANTICS_report.md`).
+ *
+ * The canonical hash of a working revision that has never had a single real
+ * edit applied — the exact payload `artifactVersionService.createArtifact()`
+ * stamps onto `revision_seq=1` (D01's fix for the "NULL hash on approved
+ * artifacts" defect: without this, the real production transition chain
+ * submit -> review -> approve can reach APPROVED with `content_semantic_hash`
+ * still NULL, since it never requires a `checkpointOperationStack()` call in
+ * between — see `canonicalServices.pg.test.ts`'s "the full T2->T4 transition
+ * chain..." test).
+ *
+ * Exported ONLY for tests/documentation purposes — do NOT use this constant
+ * for an identity comparison to detect "no real content yet" anywhere
+ * (`computePinning.ts` tried exactly that and it was wrong: this same value
+ * is also what a genuine, intentional `EXPLICIT_SAVE` checkpoint produces
+ * when its `unsavedOperationStack` happens to be empty — e.g. the user saves
+ * after undoing every change back to a no-op — which IS real, pinnable
+ * content per `concurrencyMatrix.pg.test.ts`'s A4 test. The hash function
+ * only ever sees the operation-stack payload, never WHO wrote the row or
+ * WHY, so content-hash equality cannot carry that distinction.
+ * `computePinning.ts` instead checks the structural fact "is this the
+ * `createArtifact()` birth row" — see that file's own comment.
+ */
+export const EMPTY_WORKING_REVISION_CONTENT_HASH: string = canonicalPayloadHash({ unsavedOperationStack: [] });
