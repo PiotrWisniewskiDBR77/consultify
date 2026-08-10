@@ -485,6 +485,14 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
     onTableContextChange,
   ]);
 
+  // TB-P1-02: the AddColumnDialog mounted below (legacy-mode "Add field")
+  // must call the SAME schema-mutation command every other creation path
+  // uses (Columns → New column, AI proposals, view-setup blockers) — the
+  // usePlatform switch, not a raw local handler that would silently miss
+  // platform persistence.
+  const effectiveAddColumn = usePlatform ? platformIntegration.handleAddColumn : handleAddColumn;
+  const effectiveDeleteColumn = usePlatform ? platformIntegration.deleteColumn : deleteColumn;
+
   // Platform override: rows
   const effectiveNodes = (usePlatform ? platformIntegration.nodes : nodes) ?? [];
   // RB-018: Edges view showed raw node ids for Source/Target — resolve to the
@@ -969,6 +977,34 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
     [isPl]
   );
 
+  // N8.2 (2026-08-10) — Row context menu "Edit"/"Add note" bodies, extracted
+  // out of the JSX onSelect so both the human right-click path AND the new
+  // Teresa bus receiver (useTableQuickActions.ts, tbl_row_edit/tbl_row_note)
+  // call the EXACT same code — not duplicated, not paraphrased. Extraction
+  // only; the logic itself is byte-identical to what was inline before.
+  const openRowEditPanel = useCallback(
+    (rowId: string) => {
+      setDetailInitialTab('properties');
+      if (usePlatform) {
+        setExpandedRecordId(rowId);
+      } else {
+        setDetailNodeId(rowId);
+        setDetailMode('full');
+      }
+    },
+    [usePlatform]
+  );
+  const openRowNotePanel = useCallback((rowId: string) => {
+    // "Add note" opens the record's Comments tab specifically. RecordExpandModal
+    // (the usePlatform "Edit" target) has no comment thread — RowDetailPanel does
+    // (TablePlatformApi.listRecordComments/addRecordComment, tab "comments" for both
+    // platform and legacy records) — so always route through it here, even when the
+    // table is in platform mode.
+    setDetailInitialTab('comments');
+    setDetailNodeId(rowId);
+    setDetailMode('full');
+  }, []);
+
   // ── Quick action listener (extracted to hook) ────────────────────────────────
   useTableQuickActions({
     ideaId,
@@ -986,6 +1022,10 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
     filters,
     groupBy,
     viewLayout,
+    // N9 (2026-08-10) — `tbl_cell_clear` guard (menu komórki) czyta ten sam
+    // `locked`, który `cellContextMenu`'s "Clear cell" onSelect już sprawdza
+    // (~L4157) — patrz `useTableQuickActions.ts`'s `UseTableQuickActionsOpts.locked`.
+    locked,
     handlers: {
       handleAddRow,
       setShowRowTemplatePicker,
@@ -1011,6 +1051,36 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
       onFieldFillProposal: setFieldFillProposal,
       updateSavedView,
       deleteSavedView,
+      // N8.2 (2026-08-10) — menu kolumny. DOKŁADNIE te same referencje, które
+      // woła klik człowieka niżej w tym pliku (`colContextMenu`, ~L3990-4022,
+      // oraz inline-rename nagłówka, ~L3745/L3750) — menu zostaje nietknięte,
+      // a Teresa dostaje tę samą mutację. `effectiveCycleSort` jest dwutorowa
+      // sama w sobie; `toggleColumn`/`deleteColumn`/`renameColumn` są legacy —
+      // celowo, dla parytetu z klikiem (patrz `QuickActionHandlers` w
+      // useTableQuickActions.ts i `idea.column.hide` w rejestrze).
+      cycleSort: effectiveCycleSort,
+      toggleColumn,
+      deleteColumn,
+      renameColumn,
+      // N8.2 (2026-08-10) — row context menu ("Edit"/"Add note"/"Duplicate row"/
+      // "Delete row"). `openRowEditPanel`/`openRowNotePanel` are the exact same
+      // closures the JSX onSelect below calls (see comment above their
+      // declaration). `effectiveHandleDuplicateRow`/`effectiveHandleDeleteRow`
+      // are the SAME dual legacy/platform-aware functions the row menu's
+      // "Duplicate row"/"Delete row" already call (declared ~line 511-516) —
+      // not new functions, just handed to the hook so Teresa reaches the same
+      // dispatch as a human right-click.
+      openRowEditPanel,
+      openRowNotePanel,
+      duplicateRow: effectiveHandleDuplicateRow,
+      deleteRow: (rowId: string) => {
+        effectiveHandleDeleteRow(rowId);
+        toast.success(t('ideas.table.rowDeleted', 'Row deleted'));
+      },
+      // N9 (2026-08-10) — `idea.cell.clear` (registry). DOKŁADNIE `_fieldChange`
+      // (dual-path selector zdefiniowany wyżej, ~L665) — ta sama funkcja, którą
+      // woła klik człowieka w cellContextMenu "Clear cell" (~L4169).
+      fieldChange: _fieldChange,
     },
   });
 
@@ -3162,10 +3232,11 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                           setShowColumnConfig(false);
                           setShowAddColumn(true);
                         }}
+                        data-testid="table-columns-add-field"
                         className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] font-semibold text-c-text-muted hover:bg-c-surface-raised transition-colors"
                       >
                         <Plus size={12} />
-                        {t('ideas.table.newColumn', 'New column')}
+                        {t('ideas.table.newColumn', 'Add field')}
                       </button>
                     </div>
                   </div>
@@ -3670,6 +3741,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                   onStartWithAI={() => setShowAIAssistant(true)}
                   onStartBlank={handleStartBlankTable}
                   onImportCSV={locked ? undefined : () => csvInputRef.current?.click()}
+                  onAddField={locked ? undefined : () => setShowAddColumn(true)}
                 />
               ) : (
                 <div
@@ -4035,31 +4107,12 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                 {
                   id: 'table.row.edit',
                   label: t('ideas.table.edit', 'Edit'),
-                  onSelect: () => {
-                    const rowId = rowContextMenu.rowId;
-                    setDetailInitialTab('properties');
-                    if (usePlatform) {
-                      setExpandedRecordId(rowId);
-                    } else {
-                      setDetailNodeId(rowId);
-                      setDetailMode('full');
-                    }
-                  },
+                  onSelect: () => openRowEditPanel(rowContextMenu.rowId),
                 },
                 {
                   id: 'table.row.note',
                   label: t('ideas.table.addNote', 'Add note'),
-                  onSelect: () => {
-                    const rowId = rowContextMenu.rowId;
-                    // "Add note" opens the record's Comments tab specifically. RecordExpandModal
-                    // (the usePlatform "Edit" target) has no comment thread — RowDetailPanel does
-                    // (TablePlatformApi.listRecordComments/addRecordComment, tab "comments" for both
-                    // platform and legacy records) — so always route through it here, even when the
-                    // table is in platform mode.
-                    setDetailInitialTab('comments');
-                    setDetailNodeId(rowId);
-                    setDetailMode('full');
-                  },
+                  onSelect: () => openRowNotePanel(rowContextMenu.rowId),
                 },
                 {
                   id: 'table.row.duplicate',
@@ -4236,11 +4289,15 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
         platformTableId={usePlatform ? (platformTableId ?? ideaId) : undefined}
       />
 
-      {/* Add Column Dialog */}
+      {/* Add Column Dialog — legacy-mode mount. Platform mode has its own
+          mount inside `TableToolbar`, wired to the same `ui.showAddColumn`
+          context flag; this one only opens from the legacy inline toolbar's
+          "Add field" trigger and TableStartEmptyState below. */}
       <AddColumnDialog
         open={showAddColumn}
         onClose={() => setShowAddColumn(false)}
-        onAdd={handleAddColumn}
+        onAdd={effectiveAddColumn}
+        onUndo={effectiveDeleteColumn}
         existingKeys={_cols.map((c) => c.key)}
       />
 

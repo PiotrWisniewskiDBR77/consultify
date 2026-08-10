@@ -2,7 +2,7 @@
  * useWhiteboardNodes — Extracted node CRUD, grouping, and distribution
  * for the Whiteboard component.
  */
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import type { Edge, Node } from 'reactflow';
@@ -160,6 +160,100 @@ export function useWhiteboardNodes(opts: UseWhiteboardNodesOpts) {
     toast.success(t('myWork.whiteboard.toast.duplicated'), { duration: 600 });
   }, [locked, nodes, pushSnapshot, setEdges, setNodes, t]);
 
+  /**
+   * WB-CLIPBOARD-01 fix (2026-08-10): real object clipboard — mirrors Process
+   * Flow's proven `schowekRef`/`kopiujWezly`/`pasteClipboard` pattern in
+   * `processflow/useProcessFlowNodes.ts`. A `useRef` (not state — its change
+   * shouldn't rerender) holds the copied node(s) plus the edges BETWEEN them;
+   * this is the tool's OWN clipboard, separate from `handlePaste` in
+   * `IdeaWhiteboardTool.tsx` (OS-clipboard image/text drop-paste — untouched).
+   */
+  const clipboardRef = useRef<{ nodes: Node[]; edges: Edge[] }>({ nodes: [], edges: [] });
+
+  const copyNodesToClipboard = useCallback(
+    (toCopy: Node[]) => {
+      if (toCopy.length === 0) return 0;
+      const ids = new Set(toCopy.map((node) => node.id));
+      clipboardRef.current = {
+        nodes: toCopy.map((node) => ({ ...node, selected: false })),
+        // Only edges with BOTH endpoints inside the copied set travel along —
+        // an edge to a node outside the selection would dangle after paste.
+        edges: edges.filter((edge) => ids.has(edge.source) && ids.has(edge.target)),
+      };
+      return toCopy.length;
+    },
+    [edges]
+  );
+
+  /** Ctrl+C / context-menu "Copy" — copies the current selection. */
+  const copySelected = useCallback(
+    () => copyNodesToClipboard(nodes.filter((node) => node.selected && !isNodeLocked(node))),
+    [copyNodesToClipboard, nodes]
+  );
+
+  /**
+   * Copies a single node by id, for callers outside the selection flow.
+   * Whiteboard's right-click handler (`handleCanvasContextMenu` in
+   * IdeaWhiteboardTool.tsx) already re-selects the clicked node before the
+   * context menu opens, so `copySelected()` also covers that path — this is
+   * kept as an explicit, selection-independent entry point.
+   */
+  const copyNodeById = useCallback(
+    (nodeId: string) => {
+      const node = nodes.find((n: Node) => n.id === nodeId);
+      return node ? copyNodesToClipboard([node]) : 0;
+    },
+    [copyNodesToClipboard, nodes]
+  );
+
+  /** Surfaces query this to grey out "Paste" when the clipboard is empty. */
+  const clipboardCount = useCallback(() => clipboardRef.current.nodes.length, []);
+
+  /**
+   * Pastes the clipboard contents as NEW elements (new ids, offset from the
+   * originals so they don't land exactly on top). Edges between copied nodes
+   * are recreated between their pasted counterparts; nothing outside the
+   * copied set is touched.
+   */
+  const pasteClipboard = useCallback(() => {
+    if (locked) return 0;
+    const { nodes: copiedNodes, edges: copiedEdges } = clipboardRef.current;
+    if (copiedNodes.length === 0) return 0;
+
+    const pasteStamp = Date.now();
+    const idMap = new Map<string, string>();
+    const newNodes: Node[] = copiedNodes.map((node, index) => {
+      const newId = `${node.id}-paste-${pasteStamp}-${index}`;
+      idMap.set(node.id, newId);
+      return {
+        ...node,
+        id: newId,
+        position: { x: node.position.x + 40, y: node.position.y + 40 },
+        selected: false,
+        data: cloneNodeData(node, newId),
+      };
+    });
+    const newEdges: Edge[] = copiedEdges.map((edge, index) => ({
+      ...edge,
+      id: `${edge.id}-paste-${pasteStamp}-${index}`,
+      source: idMap.get(edge.source) as string,
+      target: idMap.get(edge.target) as string,
+      selected: false,
+      data: {
+        ...(edge.data || {}),
+        duplicatedFrom: edge.id,
+      },
+    }));
+
+    pushSnapshot?.();
+    setNodes((prev: Node[]) => [...prev, ...newNodes]);
+    if (newEdges.length > 0) {
+      setEdges((prev: Edge[]) => [...prev, ...newEdges]);
+    }
+    toast.success(t('myWork.whiteboard.toast.pasted'), { duration: 600 });
+    return newNodes.length;
+  }, [locked, pushSnapshot, setEdges, setNodes, t]);
+
   const groupSelected = useCallback(() => {
     if (locked) return;
     const selected = (nodes as Node[]).filter((n: Node) => n.selected && !isNodeLocked(n));
@@ -263,5 +357,9 @@ export function useWhiteboardNodes(opts: UseWhiteboardNodesOpts) {
     groupSelected,
     ungroupSelected,
     distributeNodes,
+    copySelected,
+    copyNodeById,
+    pasteClipboard,
+    clipboardCount,
   };
 }

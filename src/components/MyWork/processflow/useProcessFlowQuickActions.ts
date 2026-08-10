@@ -33,6 +33,18 @@ export interface ProcessFlowQuickActionHandlers {
    */
   runProcessCoach: () => void;
   /**
+   * Action Registry — Process Flow TOOLBAR overflow (2026-08-10, N6.4,
+   * `idea.ai.pf_process_summary`). DOKŁADNIE ta sama funkcja, którą woła
+   * przycisk „Podsumowanie" w menu „Więcej" (`handleProcessSummary` w
+   * `IdeaProcessFlowTool.tsx`) — realne AI (`process_summary` generator →
+   * `llmService.callStructured`), wynik WYŁĄCZNIE do odczytu (panel), zero
+   * mutacji płótna. Jedyny genuinie nowy odbiornik tej fali: analiza
+   * (`pf_analyze` → AI Coach) miała już swój od dawna, podsumowanie nie
+   * miało ŻADNEGO, mimo że jest tą samą klasą akcji („AI tylko odczyt",
+   * rozdz. 09 §6).
+   */
+  generateSummary?: () => void;
+  /**
    * P1-1 (martwe kliknięcia powłoki): „Auto-układ" z Menu 3 wysyłał zdarzenie
    * Mapy myśli (`idea-mindmap-node-quick-action` / `pane_auto_layout`), którego
    * w Przepływie nikt nie słucha — przycisk nie robił NIC. Przepływ ma własny
@@ -222,6 +234,14 @@ export function useProcessFlowQuickActions(opts: UseProcessFlowQuickActionsOpts)
     // optimization analysis (same pipeline as the toolbar's AI Coach button).
     if (action === 'pf_analyze') {
       handlers.runProcessCoach();
+    }
+
+    // Action Registry — Process Flow TOOLBAR overflow (2026-08-10, N6.4).
+    // `pf_summary` = „Podsumowanie" z menu „Więcej" (realne AI, tylko odczyt —
+    // `idea.ai.pf_process_summary` w ideaActionRegistry.ts). Bliźniak
+    // `pf_analyze` wyżej, który taki odbiornik miał od dawna.
+    if (action === 'pf_summary') {
+      handlers.generateSummary?.();
     }
 
     // P1-1: „Auto-układ" (Menu 3) w reprezentacji Przepływ.

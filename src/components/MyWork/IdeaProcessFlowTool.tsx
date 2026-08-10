@@ -2242,6 +2242,11 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       runSavingsAnalysis,
       createFromPrompt,
       runProcessCoach: handleAICoach,
+      // Action Registry — N6.4 (2026-08-10): „Podsumowanie" z menu „Więcej"
+      // paska Przepływu (`idea.ai.pf_process_summary`, runtime `pf_summary`).
+      // TA SAMA funkcja, którą dostaje prop `generateSummary` toolbaru niżej —
+      // zero nowej ścieżki wykonania, tylko drugie (Teresy) wejście do niej.
+      generateSummary: handleProcessSummary,
       // P1-1: „Auto-układ" z Menu 3 → realny układ Przepływu (wcześniej Menu 3
       // wysyłało zdarzenie Mapy myśli, więc w Przepływie klik nie robił nic).
       autoLayout: handleAutoLayout,
@@ -2383,10 +2388,21 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
   // ── Chat integration ───────────────────────────────────────────────────
 
   const handleConvert = useCallback(
-    (action: string) => {
+    // E02-N6-NODE fix: accepts an optional explicit node-id list so a
+    // right-clicked node (which PF does NOT auto-select — see onCopy's
+    // "prawy klik go nie zaznacza" handling below) can be targeted precisely
+    // instead of falling back to whatever happens to be selected elsewhere
+    // in the workspace. The event field is `nodeIds` — matching the receiver
+    // (IdeaMapWorkspace's CONVERT_PREFIX_MAP branch reads eventDetail.nodeIds)
+    // and the same contract Whiteboard's wb_convert_* dispatches already use
+    // (WhiteboardSelectionBar's `selectedNodeIds` → `nodeIds`). The previous
+    // `selectedIds` key was never read by the receiver and was silently dead.
+    (action: string, explicitNodeIds?: string[]) => {
       if (onQuickAction) {
-        const selectedIds = nodes.filter((n) => n.selected).map((n) => n.id);
-        onQuickAction(action, { selectedIds, activeTool: 'process_flow' });
+        const nodeIds = explicitNodeIds?.length
+          ? explicitNodeIds
+          : nodes.filter((n) => n.selected).map((n) => n.id);
+        onQuickAction(action, { nodeIds, activeTool: 'process_flow' });
       }
     },
     [nodes, onQuickAction]
@@ -3829,7 +3845,18 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
                   onAutoLayout: () => handleAutoLayout(),
                   onAIRewriteStep: () => openStepRewrite(contextMenu.nodeId!),
                   onConvertInitiative: onQuickAction
-                    ? () => handleConvert('pf_convert_initiative')
+                    ? () => {
+                        // Same "prawy klik go nie zaznacza" reasoning as onCopy
+                        // above: convert the right-clicked node, or the whole
+                        // multi-selection only if the clicked node is part of it.
+                        const zazn = nodes.filter((n) => n.selected);
+                        const klikniety = contextMenu.nodeId!;
+                        const idsToConvert =
+                          zazn.length > 1 && zazn.some((n) => n.id === klikniety)
+                            ? zazn.map((n) => n.id)
+                            : [klikniety];
+                        handleConvert('pf_convert_initiative', idsToConvert);
+                      }
                     : undefined,
                 })
               : contextMenu.edgeId

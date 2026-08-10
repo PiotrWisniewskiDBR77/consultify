@@ -69,6 +69,7 @@ import {
 } from '@/components/ui/sheet';
 import * as TablePlatformApi from '@/services/api/tablePlatform.api';
 
+import { AddColumnDialog } from './AddColumnDialog';
 import { AITableAssistant } from './AITableAssistant';
 import { AITableProposal, type TableProposal } from './AITableProposal';
 import { useTableData } from './TableDataProvider';
@@ -222,6 +223,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
     selectedRowIds,
     handleAddRow,
     handleAddColumn,
+    deleteColumn,
     handleBulkDelete,
     handleSave,
     saving,
@@ -1231,9 +1233,10 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
                   setShowColumnConfig(false);
                   uiDispatch({ type: 'SET_PANEL', panel: 'showAddColumn', value: true });
                 }}
+                data-testid="table-toolbar-add-field"
                 className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] font-semibold text-c-text hover:bg-c-surface transition-colors"
               >
-                <Plus size={12} /> {t('ideas.table.newColumn', 'New column')}
+                <Plus size={12} /> {t('ideas.table.newColumn', 'Add field')}
               </button>
               {/* Field Manager button — wires the orphaned FieldManager component */}
               {usePlatform && (
@@ -1451,6 +1454,20 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
           </div>
         </SheetContent>
       </Sheet>
+
+      {/* TB-P1-02: the ONLY AddColumnDialog mount for the Table Platform
+          surface — the "New column" trigger above and EmptyStateView's
+          "Add field" (ViewRouter) both just flip `ui.showAddColumn` on this
+          shared context, so there is one dialog, one open path, no fork. */}
+      <AddColumnDialog
+        open={ui.showAddColumn}
+        onClose={() => uiDispatch({ type: 'SET_PANEL', panel: 'showAddColumn', value: false })}
+        onAdd={handleAddColumn}
+        onUndo={deleteColumn}
+        existingKeys={columns.map((c) => c.key)}
+        tableId={tableId ?? undefined}
+        tableFields={columns.map((c) => ({ id: c.key, name: c.header, fieldType: c.type }))}
+      />
     </div>
   );
 };

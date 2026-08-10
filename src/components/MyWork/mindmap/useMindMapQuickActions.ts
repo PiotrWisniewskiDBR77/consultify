@@ -1522,18 +1522,27 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
       const edge = edges.find((e) => e.id === edgeId);
       if (!edge) return;
       const styles = ['solid', 'dashed', 'dotted'];
-      const current = edge.style?.strokeDasharray
-        ? edge.style.strokeDasharray === '2 2'
-          ? 'dotted'
-          : 'dashed'
-        : 'solid';
+      // Canonical representation is data.edgeStyle — LabeledEdge.tsx renders
+      // strokeDasharray purely from data.edgeStyle. Edges saved before this
+      // fix may only carry the legacy style.strokeDasharray shape (which the
+      // renderer never read, hence "no visual change" bug), so fall back to
+      // deriving current state from it for a correct cycle on old maps too.
+      const legacyDasharray = (edge.style as { strokeDasharray?: string } | undefined)
+        ?.strokeDasharray;
+      const current =
+        typeof edge.data?.edgeStyle === 'string' && styles.includes(edge.data.edgeStyle)
+          ? edge.data.edgeStyle
+          : legacyDasharray
+            ? legacyDasharray === '2 2'
+              ? 'dotted'
+              : 'dashed'
+            : 'solid';
       const nextIdx = (styles.indexOf(current) + 1) % styles.length;
       const nextStyle = styles[nextIdx];
-      const dasharray = nextStyle === 'dashed' ? '5 5' : nextStyle === 'dotted' ? '2 2' : undefined;
       handlers.pushUndo();
       setters.setEdges((prev) =>
         prev.map((e) =>
-          e.id === edgeId ? { ...e, style: { ...e.style, strokeDasharray: dasharray } } : e
+          e.id === edgeId ? { ...e, data: { ...e.data, edgeStyle: nextStyle } } : e
         )
       );
       toast.success(

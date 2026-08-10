@@ -11,6 +11,7 @@ import {
   Brain,
   BringToFront,
   Clipboard,
+  ClipboardPaste,
   Copy,
   GitBranch,
   Layers,
@@ -87,6 +88,18 @@ export interface IdeaCanvasContextMenuProps {
   onLockNode?: () => void;
   onBringToFront?: () => void;
   onSendToBack?: () => void;
+  /**
+   * WB-CLIPBOARD-01 fix: real object copy (node + its internal edges) into
+   * the tool's own clipboard (`useWhiteboardNodes.ts` copySelected) — NOT the
+   * OS clipboard. Right-click already re-selects the clicked node before this
+   * menu opens (see `handleCanvasContextMenu`), so this operates on the same
+   * selection `onDuplicate` above does.
+   */
+  onCopySelected?: () => void;
+  /** Pastes the tool clipboard's contents as new elements (pane menu only). */
+  onPaste?: () => void;
+  /** Greys out "Paste" with a reason when the tool clipboard is empty. */
+  pasteDisabled?: boolean;
 }
 
 interface MenuItem {
@@ -116,7 +129,8 @@ type BaseActionKind =
   | 'delete'
   | 'lock'
   | 'bring_to_front'
-  | 'send_to_back';
+  | 'send_to_back'
+  | 'paste';
 
 interface BaseMenuItem {
   id: string;
@@ -155,6 +169,20 @@ const BASE_NODE_ACTIONS: BaseMenuItem[] = [
     labelEn: 'Layer: send to back',
   },
   { id: 'base_lock', kind: 'lock', icon: Lock, labelPl: 'Zablokuj', labelEn: 'Lock' },
+];
+
+// Pane (background) base op — WB-CLIPBOARD-01: pastes the tool clipboard
+// filled by `base_copy` above. Lives on the PANE menu (not the node menu),
+// same placement as Process Flow's own "Paste" in `getCanvasContextActions`
+// (`ProcessFlowContextMenu.tsx`).
+const BASE_PANE_ACTIONS: BaseMenuItem[] = [
+  {
+    id: 'base_paste',
+    kind: 'paste',
+    icon: ClipboardPaste,
+    labelPl: 'Wklej',
+    labelEn: 'Paste',
+  },
 ];
 
 const DESTRUCTIVE_NODE_ACTIONS: BaseMenuItem[] = [
@@ -341,9 +369,13 @@ const REGISTRY_ID_TO_BASE_KIND: Partial<Record<string, BaseActionKind>> = {
   'idea.node.send_to_back': 'send_to_back',
   'idea.node.lock': 'lock',
   'idea.node.delete': 'delete',
+  'idea.canvas.paste': 'paste',
 };
 const BASE_ACTION_BY_KIND: Partial<Record<BaseActionKind, BaseMenuItem>> = Object.fromEntries(
-  [...BASE_NODE_ACTIONS, ...DESTRUCTIVE_NODE_ACTIONS].map((item) => [item.kind, item])
+  [...BASE_NODE_ACTIONS, ...DESTRUCTIVE_NODE_ACTIONS, ...BASE_PANE_ACTIONS].map((item) => [
+    item.kind,
+    item,
+  ])
 );
 
 /** Registry id → original `MenuItem.id` in NODE_ACTIONS/EMPTY_ACTIONS (AI/collab items). */
@@ -390,6 +422,9 @@ export const IdeaCanvasContextMenu: React.FC<IdeaCanvasContextMenuProps> = ({
   onLockNode,
   onBringToFront,
   onSendToBack,
+  onCopySelected,
+  onPaste,
+  pasteDisabled,
 }) => {
   const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
@@ -478,7 +513,9 @@ export const IdeaCanvasContextMenu: React.FC<IdeaCanvasContextMenuProps> = ({
     (item: BaseMenuItem) => {
       if (locked) return;
       const nodeId = target.nodeId;
-      if (!nodeId) return;
+      // `paste` is the one base op that lives on the PANE menu (no node
+      // target) — every other kind still requires a clicked node.
+      if (item.kind !== 'paste' && !nodeId) return;
 
       switch (item.kind) {
         case 'edit': {
@@ -496,7 +533,13 @@ export const IdeaCanvasContextMenu: React.FC<IdeaCanvasContextMenuProps> = ({
           break;
         }
         case 'copy':
-          navigator.clipboard?.writeText(target.nodeLabel || '').catch(() => {});
+          // WB-CLIPBOARD-01 fix: real object copy (node + internal edges)
+          // into the tool clipboard — was `navigator.clipboard.writeText`
+          // (label text only, no object, no matching paste).
+          onCopySelected?.();
+          break;
+        case 'paste':
+          onPaste?.();
           break;
         case 'duplicate':
           onDuplicate?.();
@@ -521,9 +564,11 @@ export const IdeaCanvasContextMenu: React.FC<IdeaCanvasContextMenuProps> = ({
       locked,
       onBringToFront,
       onClose,
+      onCopySelected,
       onDeleteNode,
       onDuplicate,
       onLockNode,
+      onPaste,
       onSendToBack,
       target.nodeId,
       target.nodeLabel,
@@ -620,6 +665,35 @@ export const IdeaCanvasContextMenu: React.FC<IdeaCanvasContextMenuProps> = ({
           })
       : [];
 
+  // WB-CLIPBOARD-01 fix: pane (background) base ops — today just "Paste".
+  // Same shape as `registryBaseItems` above but gated `!isOnNode` (Paste has
+  // no node target) and disabled by an EMPTY CLIPBOARD, not canvas lock alone
+  // — matches Process Flow's `pasteDisabled` in `getCanvasContextActions`.
+  const registryPaneBaseItems =
+    useRegistry && !isOnNode && registryById
+      ? (() => {
+          const entry = registryById.get('idea.canvas.paste');
+          if (!entry) return [];
+          const { def } = entry;
+          const item = BASE_ACTION_BY_KIND.paste!;
+          const Icon = item.icon;
+          return [
+            {
+              id: def.id,
+              label: isPl ? def.label.pl : def.label.en,
+              icon: <Icon size={14} className="text-c-text-muted" />,
+              disabled: !!locked || !!pasteDisabled,
+              disabledReason: locked
+                ? t('myWorkIdeas.canvasContextMenu.canvasLocked', 'Canvas is locked')
+                : pasteDisabled
+                  ? t('myWorkIdeas.canvasContextMenu.clipboardEmpty', 'Clipboard is empty')
+                  : undefined,
+              onSelect: () => runViaRegistry(def.id, () => handleBaseAction(item)),
+            },
+          ];
+        })()
+      : [];
+
   const registryGeneratorIds = useRegistry
     ? isOnNode
       ? REGISTRY_NODE_MENU_IDS.filter((id) => REGISTRY_ID_TO_ITEM_ID[id])
@@ -648,7 +722,11 @@ export const IdeaCanvasContextMenu: React.FC<IdeaCanvasContextMenuProps> = ({
                 : loadingId
                   ? t('common.loading', 'Loading')
                   : undefined,
-              separatorBefore: isOnNode && index === 0,
+              // Separate the AI group from the base ops above it — node menu
+              // always has base ops ahead of it; pane menu only does once
+              // "Paste" (registryPaneBaseItems) is non-empty.
+              separatorBefore:
+                index === 0 && (isOnNode || registryPaneBaseItems.length > 0),
               closeOnSelect: false,
               onSelect: () => runViaRegistry(def.id, () => void handleAction(item)),
             };
@@ -705,7 +783,12 @@ export const IdeaCanvasContextMenu: React.FC<IdeaCanvasContextMenuProps> = ({
       }
       items={
         useRegistry
-          ? [...registryBaseItems, ...registryGeneratorItems, ...registryDestructiveItems]
+          ? [
+              ...registryBaseItems,
+              ...registryPaneBaseItems,
+              ...registryGeneratorItems,
+              ...registryDestructiveItems,
+            ]
           : [
               ...(isOnNode
                 ? BASE_NODE_ACTIONS.map((item) => {

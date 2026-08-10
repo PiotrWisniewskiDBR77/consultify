@@ -131,6 +131,13 @@ describe('Mind Map edge actions — real dispatch-bus receiver (E02 mindmap exte
   });
 
   it('idea.edge.cycle_style: edgeId alone cycles solid → dashed and calls pushUndo (no relation gate — applies to any edge)', async () => {
+    // Regression guard for the "Change line style" bug (E02-N5-EDGE ledger
+    // entry): the mutation used to write style.strokeDasharray, but
+    // LabeledEdge.tsx renders strokeDasharray purely from data.edgeStyle —
+    // so the toast said "Style: dashed" but the line never visually
+    // changed. Canonical representation is now data.edgeStyle; assert THAT
+    // field, not the dead style.strokeDasharray one, so this test would have
+    // caught the original bug.
     const h = makeHarness();
     render(<h.Harness initialEdges={[structuralEdge('edge-5')]} />);
 
@@ -140,7 +147,54 @@ describe('Mind Map edge actions — real dispatch-bus receiver (E02 mindmap exte
 
     expect(result.ok).toBe(true);
     expect(h.pushUndo).toHaveBeenCalledTimes(1);
-    expect(h.getEdges()[0].style.strokeDasharray).toBe('5 5');
+    expect(h.getEdges()[0].data.edgeStyle).toBe('dashed');
+  });
+
+  it('idea.edge.cycle_style: full solid → dashed → dotted → solid cycle updates data.edgeStyle each step', async () => {
+    const h = makeHarness();
+    // The harness closes over `edges` at each render, and the hook's event
+    // listener reads the latest `edges` via a ref reassigned every render
+    // (quickActionRef.current, see useMindMapQuickActions.ts:233) — so each
+    // subsequent action needs a `rerender` with the just-mutated edges fed
+    // back in, the same way the real IdeaRecommendationMap re-render would.
+    const { rerender } = render(<h.Harness initialEdges={[structuralEdge('edge-5b')]} />);
+
+    await act(async () =>
+      runIdeaAction('idea.edge.cycle_style', teresaCtx({ params: { edgeId: 'edge-5b' } }))
+    );
+    expect(h.getEdges()[0].data.edgeStyle).toBe('dashed');
+
+    rerender(<h.Harness initialEdges={h.getEdges()} />);
+    await act(async () =>
+      runIdeaAction('idea.edge.cycle_style', teresaCtx({ params: { edgeId: 'edge-5b' } }))
+    );
+    expect(h.getEdges()[0].data.edgeStyle).toBe('dotted');
+
+    rerender(<h.Harness initialEdges={h.getEdges()} />);
+    await act(async () =>
+      runIdeaAction('idea.edge.cycle_style', teresaCtx({ params: { edgeId: 'edge-5b' } }))
+    );
+    expect(h.getEdges()[0].data.edgeStyle).toBe('solid');
+  });
+
+  it('idea.edge.cycle_style: migration-safe — an edge persisted with only the legacy style.strokeDasharray shape still cycles from its real current state', async () => {
+    // Simulates an already-saved map from before this fix: the mutation had
+    // written style.strokeDasharray: '5 5' (dashed) but data.edgeStyle was
+    // never set. Cycling must read the legacy shape as "dashed" and advance
+    // to "dotted", not treat the edge as solid and restart the cycle.
+    const h = makeHarness();
+    render(
+      <h.Harness
+        initialEdges={[{ ...structuralEdge('edge-5c'), style: { strokeDasharray: '5 5' } }]}
+      />
+    );
+
+    const result = await act(async () =>
+      runIdeaAction('idea.edge.cycle_style', teresaCtx({ params: { edgeId: 'edge-5c' } }))
+    );
+
+    expect(result.ok).toBe(true);
+    expect(h.getEdges()[0].data.edgeStyle).toBe('dotted');
   });
 
   it('idea.edge.edit_label: explicit `label` param (Teresa-style) skips window.prompt, sets the label, and calls pushUndo', async () => {

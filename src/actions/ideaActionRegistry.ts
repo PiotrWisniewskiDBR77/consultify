@@ -189,7 +189,29 @@ export type IconName =
   // four, 1:1 z ikonami już importowanymi tam z lucide-react.
   | 'ArrowDownUp'
   | 'Palette'
-  | 'X';
+  | 'X'
+  // Process Flow TOOLBAR — pasek + menu „Więcej" (2026-08-10, N6.4), 1:1 z
+  // ikonami już importowanymi w `ProcessFlowToolbar.tsx` z lucide-react
+  // (`BarChart3` = KPI i Podsumowanie, `AlertTriangle` = Waliduj, `ScanText` =
+  // Odczyt zwrotny). Pozostałe pozycje tego paska reużywają nazw już obecnych
+  // wyżej ('Sparkles', 'LayoutGrid', 'Copy', 'Trash2', 'MessageSquare',
+  // 'Rocket', 'Workflow'). Trzy zakładki trybu (Klasyczny/Automatyzacja/
+  // Strumień wartości) NIE mają w UI żadnej ikony (czysty tekst) — dostają
+  // 'Workflow' jako najbliższą prawdę o tym, czym są, nie jako opis
+  // dzisiejszego wyglądu.
+  | 'BarChart3'
+  | 'AlertTriangle'
+  | 'ScanText';
+// UWAGA (N8.2, 2026-08-10) — menu kolumny Tabeli ŚWIADOMIE nie dokłada tu nic
+// nowego (kandydowały 'ArrowUpDown'/'EyeOff'). Powód: `ICON_BY_NAME` w
+// `src/components/MyWork/ideaCanvasMelsChips.ts:226` jest zadeklarowane jako
+// PEŁNE `Record<IconName, LucideIcon>`, a ma dziś tylko 13 z ~65 kluczy tej
+// unii — każda nowa wartość powiększa ten (PREISTNIEJĄCY, nie mój) dług
+// typów. Cztery wpisy `idea.column.*` mają `surfaces: ['context']`, więc
+// `ICON_BY_NAME` (mapa ikon Menu 3) i tak NIGDY ich nie czyta — ikona jest tu
+// czystą metadaną. Użyte wyłącznie wartości już istniejące: 'Pencil',
+// 'ArrowDownUp' (dosłownie pojęcie sortowania), 'FoldVertical' (ukrycie),
+// 'Trash2'.
 
 /** Minimalny JSON Schema — kształt zgodny z `parameters` w toolDefinitions.ts. */
 export interface JSONSchema {
@@ -844,6 +866,82 @@ const RUNTIME_PF_ADD_DECISION: ToolActionMap = {
 };
 
 /**
+ * Runtime stringi GÓRNEGO PASKA Przepływu (N6.4, 2026-08-10,
+ * `ProcessFlowToolbar.tsx`). Znowu JEDNA mapa PER akcja — `scripts/check-actions.sh`
+ * (R6) parsuje wyłącznie `  tool: 'string',` per linia pod constem typu
+ * `ToolActionMap` (jednolinijkowy literał jest dla niego niewidoczny).
+ *
+ * Trzy pierwsze (`pf_mode_*`) to LUKA W OKABLOWANIU, nie nowa infrastruktura:
+ * odbiorniki istniały w `useProcessFlowQuickActions.ts` (linie 157/158/160,
+ * `setters.setFlowMode(...)`) na długo przed tą falą i NIKT ich nie wołał —
+ * ani rejestr, ani `processFlowIntentDetector.ts`. Zakładki trybu w pasku
+ * wołały wyłącznie lokalny prop `setFlowMode`. Po tej zmianie klik człowieka
+ * IDZIE DOKŁADNIE TĄ SAMĄ ścieżką co przedtem (`ctx.params.run` = oryginalny
+ * `() => setFlowMode(mode)`), a Teresa dostaje żywe drugie wejście do tego
+ * samego `useState` settera (ten sam obiekt funkcji — `setters.setFlowMode`
+ * w `IdeaProcessFlowTool.tsx:2291` to ten sam `setFlowMode`, który dostaje
+ * prop paska w linii 2873; sprawdzone, nie założone).
+ */
+const RUNTIME_PF_MODE_CLASSIC: ToolActionMap = {
+  process_flow: 'pf_mode_classic',
+};
+const RUNTIME_PF_MODE_AUTOMATION: ToolActionMap = {
+  process_flow: 'pf_mode_automation',
+};
+const RUNTIME_PF_MODE_VSM: ToolActionMap = {
+  process_flow: 'pf_mode_vsm',
+};
+/**
+ * `pf_summary` — JEDYNY genuinie nowy odbiornik tej fali
+ * (`useProcessFlowQuickActions.ts`, dopisany w tej samej zmianie).
+ * Uzasadnienie dlaczego akurat ten, a nie KPI/Waliduj/Odczyt zwrotny/Propozycja
+ * AI (te zostają uczciwie UI-only): „Podsumowanie" to bliźniak AI Coacha —
+ * ta sama klasa akcji z rozdz. 09 §6 („AI tylko odczyt" Przepływu: `process_coach`
+ * i `process_summary`), ten sam realny generator LLM po tej samej trasie
+ * (`Api.generateIdeaAI` → `llmService.callStructured`), ten sam brak
+ * jakichkolwiek parametrów wejściowych i ten sam brak mutacji płótna. AI Coach
+ * MA odbiornik na szynie od dawna (`pf_analyze`), Podsumowanie nie miało
+ * żadnego — asymetria bez uzasadnienia w mechanizmie, więc uzupełniona.
+ */
+const RUNTIME_PF_PROCESS_SUMMARY: ToolActionMap = {
+  process_flow: 'pf_summary',
+};
+
+/**
+ * UI-only akcje GÓRNEGO PASKA Przepływu (N6.4, 2026-08-10,
+ * `ProcessFlowToolbar.tsx` — menu „Więcej"). Ten sam kształt co
+ * `runToolbarUiOnlyCallback` (Tablica) i `runProcessFlowPaneUiOnlyCallback`
+ * (menu tła Przepływu), osobna funkcja WYŁĄCZNIE dla uczciwego komunikatu:
+ * Teresa musi umieć odróżnić „to jest w menu Więcej paska Przepływu" od „to
+ * jest w menu prawego kliku", inaczej jej odmowa myli użytkownika co do tego,
+ * gdzie tej funkcji szukać ręcznie.
+ *
+ * Sprawdzone PRZED użyciem dla KAŻDEJ z czterech pozycji, które tę ścieżkę
+ * dostają (KPI, Waliduj, Odczyt zwrotny, Propozycja AI): żadna nie ma dziś
+ * ŻADNEGO stringa runtime na szynie `idea-workspace-quick-action`, żadnego
+ * wzorca w `processFlowIntentDetector.ts` i żadnego adresowalnego celu poza
+ * lokalnym `useState` panelu. Zgodnie z zasadą „bez spekulatywnej
+ * infrastruktury" (patrz `runToolbarUiOnlyCallback`) zostają UI-only z jawną
+ * odmową, zamiast dostać wymyśloną szynę.
+ */
+async function runProcessFlowToolbarUiOnlyCallback(
+  actionId: string,
+  ctx: ActionContext
+): Promise<ActionResult> {
+  const run = ctx.params?.run;
+  if (ctx.source !== 'ui' || typeof run !== 'function') {
+    return {
+      ok: false,
+      actionId,
+      message:
+        'Ta akcja działa dziś wyłącznie z górnego paska Przepływu (menu „Więcej") — nie mam jeszcze sposobu wywołania jej z czatu.',
+    };
+  }
+  (run as () => void)();
+  return { ok: true, actionId };
+}
+
+/**
  * UI-only akcje menu TŁA (kanwy) Przepływu (N6.3 kontynuacja, 2026-08-10,
  * `ProcessFlowContextMenu.tsx`'s `getCanvasContextActions`) — ten sam kształt
  * co `runProcessFlowNodeUiOnlyCallback`, osobna funkcja WYŁĄCZNIE dla
@@ -1033,6 +1131,110 @@ async function runProcessFlowConvertInitiativeCallback(ctx: ActionContext): Prom
     options: { language: ctx.language || 'pl', nodeIds: [nodeId] },
   });
   return { ok: true, actionId, data };
+}
+
+/**
+ * Konwersje Przepływu z GÓRNEGO PASKA (N6.4, 2026-08-10, `ProcessFlowToolbar.tsx`
+ * grupa „Konwertuj": Inicjatywa · Zestaw zadań · Raport · Analiza).
+ *
+ * MECHANIZM (sprawdzony, nie założony): wszystkie cztery pozycje wołają TĘ SAMĄ
+ * funkcję `handleConvert(action)` w `IdeaProcessFlowTool.tsx:2385`, co menu
+ * węzła dla „Konwertuj na inicjatywę" — dokładnie ten sam `onQuickAction(action,
+ * { selectedIds, activeTool })`. Dlatego pozycja „Inicjatywa" NIE dostaje
+ * nowego id, tylko rozszerza `surfaces` istniejącego
+ * `idea.node.pf_convert_initiative` o `'toolbar'` (reużycie po REALNYM
+ * mechanizmie, nie po etykiecie). Pozostałe trzy targety nie mają wpisu —
+ * dostają własne id, wzorem Mapy myśli, która też ma OSOBNE id per target
+ * (`idea.node.mm_convert_initiative`/`_decision`/`_tasks`).
+ *
+ * `scope: 'single_item'` i parametr `nodeId` — świadomie IDENTYCZNE jak w
+ * `idea.node.pf_convert_initiative` (wpis N6, 2026-08-09), żeby cztery
+ * konwersje Przepływu nie miały czterech różnych kontraktów dla tego samego
+ * mechanizmu. Uczciwa granica jest ta sama co tam: klik człowieka (z paska
+ * LUB z menu węzła) wysyła pole `selectedIds`, którego odbiornik w powłoce
+ * NIGDY nie czyta (`IdeaMapWorkspace.tsx:1040` czyta wyłącznie `nodeIds`),
+ * więc UI konwertuje bieżące zaznaczenie płótna; ścieżka Teresy omija tę
+ * wadliwą szynę i woła `Api.convertMyIdea` wprost z poprawnym `nodeIds`.
+ * PRZEDISTNIEJĄCY defekt nazwy pola, NIE naprawiany tutaj (UI nietknięte).
+ */
+async function runProcessFlowConvertTargetCallback(
+  actionId: string,
+  target: 'task_set' | 'report',
+  ctx: ActionContext
+): Promise<ActionResult> {
+  const run = ctx.params?.run;
+  if (ctx.source === 'ui' && typeof run === 'function') {
+    (run as () => void)();
+    return { ok: true, actionId };
+  }
+  const nodeId =
+    typeof ctx.params?.nodeId === 'string' && ctx.params.nodeId
+      ? ctx.params.nodeId
+      : ctx.selection?.type === 'node' && typeof ctx.selection.primaryId === 'string'
+        ? ctx.selection.primaryId
+        : undefined;
+  if (!nodeId) {
+    return {
+      ok: false,
+      actionId,
+      message: 'Nie wiem, który krok Przepływu skonwertować — podaj `nodeId`.',
+    };
+  }
+  if (!ctx.confirmed) {
+    return {
+      ok: false,
+      actionId,
+      message: 'Konwersja tworzy nowy, trwały obiekt — potrzebuję potwierdzenia.',
+    };
+  }
+  const data = await Api.convertMyIdea(ctx.ideaId, {
+    target,
+    options: { language: ctx.language || 'pl', nodeIds: [nodeId] },
+  });
+  return { ok: true, actionId, data };
+}
+
+/**
+ * `idea.node.pf_convert_analysis` (N6.4, 2026-08-10) — ★ POZYCJA MARTWA,
+ * ZALOGOWANA UCZCIWIE, NIE NAPRAWIONA I NIE UKRYTA.
+ *
+ * ŁAŃCUCH DOWODOWY (sprawdzony końcówka-do-końcówki, nie wnioskowany):
+ *   1. `ProcessFlowToolbar.tsx` renderuje pozycję „Analiza" → `onConvert('pf_convert_analysis')`.
+ *   2. `IdeaProcessFlowTool.handleConvert` → `onQuickAction('pf_convert_analysis', …)`.
+ *   3. `IdeaMapWorkspace.tsx:1032` `CONVERT_PREFIX_MAP` mapuje ją na target `'analysis'`.
+ *   4. `handleConvert(target)` (`IdeaMapWorkspace.tsx:2202`) sprawdza
+ *      `IDEA_CONVERT_TARGETS.some(t => t.id === target)` — a `'analysis'`
+ *      zostało z tej tablicy USUNIĘTE w audycie Z3 z 2026-07-24
+ *      (`ideaConvertTargets.ts`, komentarz w tablicy wprost wymienia
+ *      `analysis` jako jeden z sześciu skasowanych: serwer nie ma dla niego
+ *      handlera i zwróciłby surowe 400).
+ *   5. Efekt dla użytkownika: `toast.error('mindmap.thisConversionTargetIsNotYet')`.
+ *      Klik ZAWSZE kończy się czerwonym komunikatem o błędzie. Nigdy nie
+ *      konwertuje.
+ *
+ * To jest naruszenie Z3 („zero martwych kliknięć") żyjące dziś na paskach
+ * Przepływu — pozostałe trzy pozycje tej samej grupy działają, więc wygląda
+ * jak zwykła opcja. NIE usuwam jej z menu w tej zmianie (zakres: okablowanie
+ * rejestru, nie redesign paska; decyzja „usunąć czy dowieźć target `analysis`
+ * na serwerze" należy do właściciela). Rejestr opisuje ją TAKĄ, JAKA JEST:
+ * `mutates: false`, bo dzisiejsza akcja NIGDY niczego nie tworzy — zadeklarowanie
+ * `mutates: true` + `undo: manual_delete` byłoby opisem akcji, która nie
+ * istnieje. Klik człowieka zostaje BAJT W BAJT taki sam (ta sama ścieżka, ten
+ * sam toast), a Teresa dostaje jawną odmowę zamiast obietnicy.
+ */
+async function runProcessFlowConvertAnalysisCallback(ctx: ActionContext): Promise<ActionResult> {
+  const actionId = 'idea.node.pf_convert_analysis';
+  const run = ctx.params?.run;
+  if (ctx.source === 'ui' && typeof run === 'function') {
+    (run as () => void)();
+    return { ok: true, actionId };
+  }
+  return {
+    ok: false,
+    actionId,
+    message:
+      'Konwersja Przepływu na „Analizę" nie istnieje dziś w produkcie — target `analysis` został usunięty z listy konwersji (serwer nie ma dla niego obsługi), więc ta pozycja menu kończy się wyłącznie komunikatem o błędzie. Nie mogę jej wykonać; jeśli chodzi o analizę procesu, użyj „AI: analiza procesu" (wąskie gardła i luki, tylko odczyt).',
+  };
 }
 
 /**
@@ -1243,6 +1445,30 @@ const RUNTIME_AI_SUMMARIZE: ToolActionMap = {
   mindmap: 'mm_ai_summarize',
 };
 
+/**
+ * Rail tier B (2026-08-10, Program B/E02) — dwie pozycje popovera AI lewego
+ * raila (`AIActionsPopover.tsx` `GENERAL_GENERATORS`), które jako JEDYNE z
+ * sekcji „AI generators" Mapy myśli nie miały DOTĄD żadnego wpisu w rejestrze
+ * (`mm_ai_expand`/`mm_ai_summarize`/`mm_ai_suggest` już mają, `mm_ai_cluster`
+ * świadomie pominięty — patrz raport/komentarz przy `idea.ai.auto_connect`).
+ *
+ * UWAGA FORMATU: jedna para `tool: 'action',` PER LINIA — `scripts/check-actions.sh`
+ * R6 nie widzi jednolinijkowych literałów (ostrzeżenie z nagłówka pliku).
+ *
+ * Odbiorniki SPRAWDZONE grepem PRZED wpisem (nie zgadywane):
+ * `useMindMapQuickActions.ts:883` (`mm_ai_gap_analysis`) i `:1057`
+ * (`mm_ai_auto_connect`). OBA robią DOKŁADNIE JEDNO: składają prompt i wołają
+ * `handlers.onOpenChat(prompt)`. Żaden nie dotyka grafu — stąd `mutates: false`
+ * i opisy Teresy niżej mówiące to WPROST (etykieta „Auto cross-links" obiecuje
+ * więcej, niż kod robi — udokumentowane, nie „naprawione" po cichu).
+ */
+const RUNTIME_AI_GAP_ANALYSIS: ToolActionMap = {
+  mindmap: 'mm_ai_gap_analysis',
+};
+const RUNTIME_AI_AUTO_CONNECT: ToolActionMap = {
+  mindmap: 'mm_ai_auto_connect',
+};
+
 /** AI: znajdź tematy (Tablica) — generator `wb_find_themes` przez Propose→Accept. */
 const RUNTIME_AI_FIND_THEMES: ToolActionMap = {
   whiteboard: 'wb_ai_find_themes',
@@ -1296,6 +1522,66 @@ const RUNTIME_TBL_VIEW_UPDATE: ToolActionMap = {
 };
 const RUNTIME_TBL_VIEW_DELETE: ToolActionMap = {
   table: 'tbl_view_delete',
+};
+
+/**
+ * N8.2 (2026-08-10) — Tabela, menu kolumny (`IdeaTableTool.tsx`'s
+ * `colContextMenu`, prawy klik na nagłówku kolumny, `CanvasContextMenu`).
+ * Pełne uzasadnienie zakresu (co jest ścieżką legacy, a co dwutorową) —
+ * w komentarzu blokowym nad `tableColumnGuard` niżej.
+ * Cztery osobne mapy (nie jedna), z tego samego powodu co
+ * `RUNTIME_TBL_VIEW_*` wyżej (strażnik R6 parsuje wyłącznie
+ * `const X: ToolActionMap = { … }` z jedną parą na linię).
+ */
+const RUNTIME_TBL_COLUMN_RENAME: ToolActionMap = {
+  table: 'tbl_column_rename',
+};
+const RUNTIME_TBL_COLUMN_SORT: ToolActionMap = {
+  table: 'tbl_column_sort',
+};
+const RUNTIME_TBL_COLUMN_HIDE: ToolActionMap = {
+  table: 'tbl_column_hide',
+};
+const RUNTIME_TBL_COLUMN_DELETE: ToolActionMap = {
+  table: 'tbl_column_delete',
+};
+
+/**
+ * N8.2 (2026-08-10) — Tabela, menu wiersza (`IdeaTableTool.tsx`'s
+ * `rowContextMenu`, renderowane przez `CanvasContextMenu` na prawy klik
+ * wiersza danych). Cztery osobne mapy (nie jedna zbiorcza) z tego samego
+ * powodu co `RUNTIME_TBL_VIEW_*` wyżej — `scripts/check-actions.sh` (R6)
+ * parsuje TYLKO `const X: ToolActionMap = {…}` z jedną parą `tool: 'string',`
+ * na linię. Odbiornik: `useTableQuickActions.ts` `tbl_row_edit`/
+ * `tbl_row_note`/`tbl_row_duplicate`/`tbl_row_delete` (nowe, dopisane w tej
+ * samej zmianie).
+ */
+const RUNTIME_TBL_ROW_EDIT: ToolActionMap = {
+  table: 'tbl_row_edit',
+};
+const RUNTIME_TBL_ROW_NOTE: ToolActionMap = {
+  table: 'tbl_row_note',
+};
+const RUNTIME_TBL_ROW_DUPLICATE: ToolActionMap = {
+  table: 'tbl_row_duplicate',
+};
+const RUNTIME_TBL_ROW_DELETE: ToolActionMap = {
+  table: 'tbl_row_delete',
+};
+
+/**
+ * N9 (2026-08-10) — Tabela, menu komórki (`IdeaTableTool.tsx`'s
+ * `cellContextMenu`, `CanvasContextMenu` na prawy klik pojedynczej komórki,
+ * ~L4101-4183). Tylko JEDNA z czterech pozycji menu ma tu mapę runtime —
+ * `table.cell.clear` (`idea.cell.clear` niżej) — bo to jedyna z czterech,
+ * która jest czystą mutacją danych bez zależności od schowka
+ * przeglądarki/pozycji ekranu (patrz `runTableCellUiOnlyCallback` niżej dla
+ * `idea.cell.copy`/`.paste`/`.expand`, świadomie UI-only). Odbiornik:
+ * `useTableQuickActions.ts` `tbl_cell_clear` (nowy, dopisany w tej samej
+ * zmianie).
+ */
+const RUNTIME_TBL_CELL_CLEAR: ToolActionMap = {
+  table: 'tbl_cell_clear',
 };
 
 /**
@@ -1695,6 +1981,332 @@ async function runTableSavedViewDeleteCallback(ctx: ActionContext): Promise<Acti
   return runByTool(actionId, RUNTIME_TBL_VIEW_DELETE, ctx, { viewId });
 }
 
+/**
+ * N8.2 (2026-08-10) — Tabela, MENU KOLUMNY. Cztery pozycje z
+ * `IdeaTableTool.tsx`'s `colContextMenu` (`CanvasContextMenu` na prawy klik
+ * NAGŁÓWKA kolumny, `testId="idea-table-column-context-menu"`, ~L3990-4022):
+ * "Rename" / "Sort" / "Hide column" / "Delete column".
+ *
+ * ─── ZAKRES: DLACZEGO NOWE IDENTYFIKATORY, A NIE REUŻYCIE ────────────────────
+ * Sprawdzone PRZED wpisem, per akcja, po REALNYM MECHANIZMIE (nie po etykiecie):
+ *  • `tbl_sort` — ISTNIEJĄCY odbiornik w `useTableQuickActions.ts` (~L200) o
+ *    myląco podobnej nazwie. NIE jest tą samą akcją: nie przyjmuje ŻADNEGO
+ *    klucza kolumny (sortuje twardo po `'label'`, gdy nic nie jest posortowane),
+ *    jest DWUSTANOWY (asc↔desc), i pisze do LEGACY `setSort`. Menu kolumny woła
+ *    `effectiveCycleSort(colKey)` — konkretna kolumna, TRZY stany
+ *    (asc→desc→BRAK sortowania), i dwutorowo (platforma albo legacy). Inny
+ *    mechanizm → osobne `idea.column.sort`. (Osobne ustalenie, zgłoszone nie
+ *    naprawiane: `tbl_sort` NIE MA DZIŚ ŻADNEGO nadawcy w całym `src/` — ani
+ *    rejestr, ani żaden komponent go nie wysyła. To odbiornik-sierota,
+ *    preistniejący, poza zakresem tego zadania.)
+ *  • `idea.view.saved_view_*` (N8.1) — dotyczą ZAPISANEGO WIDOKU
+ *    (`SavedView[]`), nie definicji kolumn (`ColumnDef[]`). Zero pokrycia.
+ *  • Brak jakiegokolwiek istniejącego wpisu o zakresie `table_column` — te
+ *    cztery są pierwszymi użyciami tego (już zadeklarowanego) `ActionScope`,
+ *    analogicznie do tego, jak N6.3 pierwszy raz użył `lane_frame`.
+ *
+ * ─── DWIE ŚCIEŻKI ────────────────────────────────────────────────────────────
+ * `ctx.source === 'ui'` + `ctx.params.run` = dokładnie dotychczasowy klik
+ * (komponent NIETKNIĘTY — cztery `onSelect` w `colContextMenu` zostają
+ * bajt-identyczne; `ctx.params.run` istnieje dla spójności z resztą rejestru,
+ * ale żaden dzisiejszy caller go nie ustawia — Tabela nie importuje
+ * `runIdeaAction`, ten sam stan co po N8.1). Teresa: szyna
+ * `idea-workspace-quick-action` (`tbl_column_*`, NOWE odbiorniki w
+ * `useTableQuickActions.ts`), adresowanie przez `colKey`.
+ *
+ * ─── ZNALEZIONY, UDOKUMENTOWANY, NIE NAPRAWIONY: ROZJAZD LEGACY/PLATFORMA ────
+ * `IdeaTableTool.tsx` ma wszędzie wzorzec `usePlatform ? platformIntegration.X : X`.
+ * Menu kolumny go ŁAMIE dla trzech z czterech pozycji:
+ *  • "Sort" → `effectiveCycleSort` — POPRAWNE (dwutorowe).
+ *  • "Hide column" → goły LEGACY `toggleColumn` (L4009).
+ *  • "Delete column" → goły LEGACY `deleteColumn` (L4018).
+ *  • inline-rename nagłówka → goły LEGACY `renameColumn` (L3745/L3750).
+ * Tymczasem nagłówki renderują `stretchedVisibleCols` ← `_visCols` ←
+ * `usePlatform ? effectiveVisibleColumns : visibleColumns` (L654), a ten sam
+ * `<table>` renderuje się w OBU trybach (gałąź `_vl`, nie `usePlatform`).
+ * Skutek w trybie platformy: ukrycie/usunięcie/zmiana nazwy kolumny mutują
+ * NIEUŻYWANY stan legacy — pozycje menu nie robią NIC widocznego, a "Delete
+ * column" DODATKOWO pokazuje zielony toast „Column deleted" (kłamliwy sukces,
+ * `IdeaTableTool.tsx` L4019). `platformIntegration` MA komplet odpowiedników
+ * (`useTablePlatformIntegration.ts` L319/L348/L359), przy czym `deleteColumn`
+ * to REALNE serwerowe kasowanie pola (metoda `deleteField` z modułu
+ * `TablePlatformApi`; zapisane rozłącznie, bo `check-actions.sh` R8 traktuje
+ * zapis `Api.<metoda>` w TYM pliku jako deklarację realnego wywołania
+ * endpointu — to tylko opis cudzego kodu) — INNY MECHANIZM niż
+ * legacy `setColumns` w pamięci.
+ * DECYZJA (świadoma, do sanity-checku człowieka): odbiorniki Teresy dostają te
+ * SAME legacy funkcje co klik człowieka. Nie „naprawiam" ścieżki Teresy do
+ * wersji platformowej, bo (a) zmieniłoby to akcję w DWA różne mechanizmy pod
+ * jednym id — dokładnie to, co odrzuciliśmy przy `idea.node.pf_copy` i
+ * `saved_view_*`; (b) dałoby Teresie TRWAŁE, SERWEROWE kasowanie kolumny tam,
+ * gdzie człowiek tym samym menu nie kasuje nic. Preistniejący defekt UI należy
+ * naprawić osobno, w obu ścieżkach naraz.
+ *
+ * ─── UNDO ────────────────────────────────────────────────────────────────────
+ * Żadna z czterech mutacji nie jest podłączona do JAKIEGOKOLWIEK stosu cofania.
+ * `toggleColumn`/`renameColumn`/`deleteColumn` (`useTableSchema.ts` L99/L111/L130)
+ * to gołe `setColumns`, a jedyny stos Tabeli to `useUndoRedo<TableNode[]>`
+ * (`IdeaTableTool.tsx` L417) — śledzi WIERSZE, nie `ColumnDef[]`. Dorobienie
+ * cofania wymagałoby NOWEJ infrastruktury (osobny stos kolumn + wpięcie w
+ * Ctrl+Z), nie jednego `pushUndo()` — czyli nie „małej, bezpiecznej" naprawy
+ * przewidzianej regułą. Udokumentowane w `undo.evidence` każdego wpisu,
+ * świadomie NIE łatane po cichu.
+ */
+function tableColumnGuard(actionId: string, colKey: string | undefined): ActionResult | null {
+  if (!colKey) {
+    return {
+      ok: false,
+      actionId,
+      message: 'Podaj `colKey` (klucz kolumny Tabeli), na której mam to wykonać.',
+    };
+  }
+  return null;
+}
+
+async function runTableColumnRenameCallback(ctx: ActionContext): Promise<ActionResult> {
+  const actionId = 'idea.column.rename';
+  const run = ctx.params?.run;
+  if (ctx.source === 'ui' && typeof run === 'function') {
+    (run as () => void)();
+    return { ok: true, actionId };
+  }
+  const colKey = typeof ctx.params?.colKey === 'string' ? ctx.params.colKey : undefined;
+  const guard = tableColumnGuard(actionId, colKey);
+  if (guard) return guard;
+  const name = typeof ctx.params?.name === 'string' ? ctx.params.name.trim() : undefined;
+  if (!name) {
+    return { ok: false, actionId, message: 'Podaj nową `name` (nazwę) kolumny.' };
+  }
+  return runByTool(actionId, RUNTIME_TBL_COLUMN_RENAME, ctx, { colKey, name });
+}
+
+async function runTableColumnSortCallback(ctx: ActionContext): Promise<ActionResult> {
+  const actionId = 'idea.column.sort';
+  const run = ctx.params?.run;
+  if (ctx.source === 'ui' && typeof run === 'function') {
+    (run as () => void)();
+    return { ok: true, actionId };
+  }
+  const colKey = typeof ctx.params?.colKey === 'string' ? ctx.params.colKey : undefined;
+  const guard = tableColumnGuard(actionId, colKey);
+  if (guard) return guard;
+  return runByTool(actionId, RUNTIME_TBL_COLUMN_SORT, ctx, { colKey });
+}
+
+async function runTableColumnHideCallback(ctx: ActionContext): Promise<ActionResult> {
+  const actionId = 'idea.column.hide';
+  const run = ctx.params?.run;
+  if (ctx.source === 'ui' && typeof run === 'function') {
+    (run as () => void)();
+    return { ok: true, actionId };
+  }
+  const colKey = typeof ctx.params?.colKey === 'string' ? ctx.params.colKey : undefined;
+  const guard = tableColumnGuard(actionId, colKey);
+  if (guard) return guard;
+  return runByTool(actionId, RUNTIME_TBL_COLUMN_HIDE, ctx, { colKey });
+}
+
+async function runTableColumnDeleteCallback(ctx: ActionContext): Promise<ActionResult> {
+  const actionId = 'idea.column.delete';
+  const run = ctx.params?.run;
+  if (ctx.source === 'ui' && typeof run === 'function') {
+    (run as () => void)();
+    return { ok: true, actionId };
+  }
+  const colKey = typeof ctx.params?.colKey === 'string' ? ctx.params.colKey : undefined;
+  const guard = tableColumnGuard(actionId, colKey);
+  if (guard) return guard;
+  return runByTool(actionId, RUNTIME_TBL_COLUMN_DELETE, ctx, { colKey });
+}
+
+/**
+ * N8.2 (2026-08-10) — Tabela, menu wiersza (`table.row.*`). Cztery pozycje z
+ * `IdeaTableTool.tsx`'s `rowContextMenu` (`table.row.edit`/`table.row.note`/
+ * `table.row.duplicate`/`table.row.delete`, `CanvasContextMenu` na prawy klik
+ * wiersza danych).
+ *
+ * ZAKRES WYBORU (odbiór PRZED wpisem — KOREKTA 2026-08-10 po ponownej
+ * weryfikacji; pierwsza wersja tego komentarza twierdziła, że
+ * `handleDuplicateRow`/`handleDeleteRow` mają „dokładnie jedno miejsce
+ * wywołania" — to było FAŁSZ, obalone grepem `grep -rn "handleDuplicateRow\|
+ * handleDeleteRow" src`):
+ *  • `TableToolbar.tsx` — sprawdzone, NIE MA tu duplikatu menu wiersza (to był
+ *    precedens z `idea.view.saved_view_*`, gdzie duplikat faktycznie istnieje;
+ *    tutaj nie powtarza się).
+ *  • `ViewRouter.tsx` (P15/platform, `rowMenu` ~L973-1105) — MA własne,
+ *    ręcznie sklecone menu prawego kliku wiersza (nie `CanvasContextMenu`,
+ *    goły `<div>` z `<button>`ami), którego pozycje „Duplikuj wiersz" (L1051)
+ *    i „Usuń wiersz" (L1101) wołają `handleDuplicateRow`/`handleDeleteRow` z
+ *    `useTableData()` → `TableDataProvider.tsx:294-295` →
+ *    `integration.handleDuplicateRow`/`.handleDeleteRow`. A `integration` to
+ *    DOKŁADNIE TA SAMA instancja `platformIntegration`, którą
+ *    `IdeaTableTool.tsx:2164-2165` (`<TableDataProvider integration=
+ *    {platformIntegration}>`) wstrzykuje — czyli w trybie platform to TEN SAM
+ *    OBIEKT FUNKCJI co `effectiveHandleDuplicateRow`/`effectiveHandleDeleteRow`
+ *    tutaj. To REAL MECHANISM MATCH (odwrotnie niż przy saved-views, gdzie
+ *    sygnatury i instancje stanu były różne) → gdy przyjdzie fala na
+ *    `ViewRouter.tsx`, jego dwie pozycje mają REUŻYĆ `table.row.duplicate`/
+ *    `table.row.delete` (rozszerzenie `surfaces`), a NIE dostać nowych id.
+ *    Świadomie NIEOKABLOWANE tutaj — `ViewRouter.tsx` jest poza zakresem tego
+ *    zadania; udokumentowane, nie ukryte.
+ *
+ * OSIĄGALNOŚĆ (sprawdzone, ważne dla czytania `undo.evidence` niżej):
+ * `rowContextMenu` wisi na `renderRow` (`IdeaTableTool.tsx:1736-1740`), a
+ * `renderRow` jest wołane WYŁĄCZNIE w gałęzi legacy render-ternary
+ * (L3858/L3906) — przy `usePlatform === true` renderuje się zamiast tego
+ * `<P15ViewRouter>` (L3553-3557). Czyli CZŁOWIEK dociera do tych czterech
+ * pozycji tylko w trybie legacy (gałęzie `usePlatform` wewnątrz
+ * `openRowEditPanel` i wewnątrz `effective*` są z tej powierzchni martwe dla
+ * kliku; w trybie platform człowiek używa `rowMenu` z `ViewRouter.tsx` wyżej).
+ * TERESA dociera zawsze — hook `useTableQuickActions` montuje się niezależnie
+ * od `usePlatform` — więc dla niej gałąź platform JEST żywa i dlatego
+ * `undo.evidence` niżej opisuje OBIE gałęzie, nie tylko legacy.
+ *
+ * CROSS-TOOL REUSE (sprawdzone, nie zgadywane): `idea.node.duplicate`/
+ * `idea.node.delete` (Tablica/Przepływ, `scope: 'selected_items'`) operują na
+ * TYM, CO JEST DZIŚ ZAZNACZONE NA PŁÓTNIE — bez `nodeId`, przez
+ * `runToolbarBusAction` + canvas-selection state. Tabela NIE ma zaznaczenia
+ * płótna — `effectiveHandleDuplicateRow(rowId)`/`effectiveHandleDeleteRow(rowId)`
+ * (`useTableRows.ts`/`useTablePlatformIntegration.ts`) przyjmują JAWNE `id`
+ * z prostej tablicy `TableNode[]`/platform `nodes[]`, żadnego mechanizmu
+ * zaznaczenia canvasu pod spodem. RÓŻNY MECHANIZM (płaska tablica + jawne id
+ * vs. canvas-selection state) → NOWE id, nie rozszerzenie
+ * `idea.node.duplicate`/`.delete`.
+ *
+ * Dwie ścieżki (jak wszędzie): `ctx.source === 'ui'` + `ctx.params.run` =
+ * dokładnie dotychczasowy klik (komponent NIETKNIĘTY poza wyjęciem dwóch
+ * onSelect-body do nazwanych funkcji `openRowEditPanel`/`openRowNotePanel` —
+ * sama logika bajt-identyczna, patrz komentarz przy ich deklaracji w
+ * `IdeaTableTool.tsx`; `table.row.duplicate`/`.delete` w ogóle nie zostały
+ * dotknięte w JSX). Teresa: dispatch na szynę `idea-workspace-quick-action`
+ * (nowe odbiorniki w `useTableQuickActions.ts`).
+ *
+ * UNDO — CZĘŚCIOWE, udokumentowane honestly przy `table.row.duplicate`/
+ * `.delete` niżej (odkryte przy tym wpisie: `effectiveHandleDuplicateRow`/
+ * `effectiveHandleDeleteRow` branchują na `usePlatform` i tylko JEDNA z dwóch
+ * gałęzi ma realny stos cofania).
+ */
+function tableRowGuard(actionId: string, rowId: string | undefined): ActionResult | null {
+  if (!rowId) {
+    return {
+      ok: false,
+      actionId,
+      message: 'Podaj `rowId` wiersza Tabeli, na którym mam to wykonać.',
+    };
+  }
+  return null;
+}
+
+async function runTableRowEditCallback(ctx: ActionContext): Promise<ActionResult> {
+  const actionId = 'table.row.edit';
+  const run = ctx.params?.run;
+  if (ctx.source === 'ui' && typeof run === 'function') {
+    (run as () => void)();
+    return { ok: true, actionId };
+  }
+  const rowId = typeof ctx.params?.rowId === 'string' ? ctx.params.rowId : undefined;
+  const guard = tableRowGuard(actionId, rowId);
+  if (guard) return guard;
+  return runByTool(actionId, RUNTIME_TBL_ROW_EDIT, ctx, { rowId });
+}
+
+async function runTableRowNoteCallback(ctx: ActionContext): Promise<ActionResult> {
+  const actionId = 'table.row.note';
+  const run = ctx.params?.run;
+  if (ctx.source === 'ui' && typeof run === 'function') {
+    (run as () => void)();
+    return { ok: true, actionId };
+  }
+  const rowId = typeof ctx.params?.rowId === 'string' ? ctx.params.rowId : undefined;
+  const guard = tableRowGuard(actionId, rowId);
+  if (guard) return guard;
+  return runByTool(actionId, RUNTIME_TBL_ROW_NOTE, ctx, { rowId });
+}
+
+async function runTableRowDuplicateCallback(ctx: ActionContext): Promise<ActionResult> {
+  const actionId = 'table.row.duplicate';
+  const run = ctx.params?.run;
+  if (ctx.source === 'ui' && typeof run === 'function') {
+    (run as () => void)();
+    return { ok: true, actionId };
+  }
+  const rowId = typeof ctx.params?.rowId === 'string' ? ctx.params.rowId : undefined;
+  const guard = tableRowGuard(actionId, rowId);
+  if (guard) return guard;
+  return runByTool(actionId, RUNTIME_TBL_ROW_DUPLICATE, ctx, { rowId });
+}
+
+async function runTableRowDeleteCallback(ctx: ActionContext): Promise<ActionResult> {
+  const actionId = 'table.row.delete';
+  const run = ctx.params?.run;
+  if (ctx.source === 'ui' && typeof run === 'function') {
+    (run as () => void)();
+    return { ok: true, actionId };
+  }
+  const rowId = typeof ctx.params?.rowId === 'string' ? ctx.params.rowId : undefined;
+  const guard = tableRowGuard(actionId, rowId);
+  if (guard) return guard;
+  return runByTool(actionId, RUNTIME_TBL_ROW_DELETE, ctx, { rowId });
+}
+
+/**
+ * N9 (2026-08-10) — UI-only akcje menu komórki Tabeli (`IdeaTableTool.tsx`'s
+ * `cellContextMenu`) — ten sam kształt co `runContextMenuUiOnlyCallback`
+ * (Tablica) / `runMindmapPaneUiOnlyCallback` (Mapa myśli), z UCZCIWYM
+ * komunikatem dla menu komórki. Używane dla `idea.cell.copy`/`.paste`/
+ * `.expand` — sprawdzone PRZED użyciem, że żadna z trzech nie ma dziś
+ * sensownego wejścia dla Teresy (schowek SYSTEMOWY przeglądarki dla
+ * copy/paste, `DOMRect` zakotwiczenia popovera dla expand — patrz
+ * `teresa.description` każdego z trzech wpisów niżej dla pełnego
+ * uzasadnienia per-akcja), nie zgadywane.
+ */
+async function runTableCellUiOnlyCallback(
+  actionId: string,
+  ctx: ActionContext
+): Promise<ActionResult> {
+  const run = ctx.params?.run;
+  if (ctx.source !== 'ui' || typeof run !== 'function') {
+    return {
+      ok: false,
+      actionId,
+      message:
+        'Ta akcja działa dziś wyłącznie z menu kontekstowego (prawy klik) komórki Tabeli — nie mam jeszcze sposobu wywołania jej z czatu.',
+    };
+  }
+  (run as () => void)();
+  return { ok: true, actionId };
+}
+
+/**
+ * N9 (2026-08-10) — `idea.cell.clear` (jedyna z czterech pozycji menu komórki
+ * z realnym wejściem dla Teresy — patrz `RUNTIME_TBL_CELL_CLEAR` wyżej).
+ * Adresowanie po `rowId`+`colKey` (nie zaznaczenie), bo to menu POJEDYNCZEJ
+ * komórki (`scope: 'table_cell'`) — dokładnie to, co klik człowieka niesie w
+ * `cellContextMenu` state. Walidacja kolumny „type"/formuła (pochodna, nie do
+ * edycji — ta sama reguła co `cellContextMenu.editable` w `IdeaTableTool.tsx`)
+ * i `locked` dzieje się PO STRONIE odbiornika (`useTableQuickActions.ts`),
+ * gdzie żyje `columns`/`locked` — rejestr tu waliduje wyłącznie obecność
+ * parametrów, jak `tableSavedViewGuard` wyżej dla widoków.
+ */
+async function runTableCellClearCallback(ctx: ActionContext): Promise<ActionResult> {
+  const actionId = 'idea.cell.clear';
+  const run = ctx.params?.run;
+  if (ctx.source === 'ui' && typeof run === 'function') {
+    (run as () => void)();
+    return { ok: true, actionId };
+  }
+  const rowId = typeof ctx.params?.rowId === 'string' ? ctx.params.rowId : undefined;
+  const colKey = typeof ctx.params?.colKey === 'string' ? ctx.params.colKey : undefined;
+  if (!rowId || !colKey) {
+    return {
+      ok: false,
+      actionId,
+      message: 'Podaj `rowId` wiersza i `colKey` kolumny komórki Tabeli, którą mam wyczyścić.',
+    };
+  }
+  return runByTool(actionId, RUNTIME_TBL_CELL_CLEAR, ctx, { rowId, colKey });
+}
+
 // ──────────────────────────────── REJESTR ────────────────────────────────
 
 const IDEA_ACTIONS: ActionDef[] = [
@@ -1744,7 +2356,13 @@ const IDEA_ACTIONS: ActionDef[] = [
     icon: 'LayoutGrid',
     scope: 'current_view',
     tools: ['mindmap', 'process_flow'],
-    surfaces: ['menu3', 'context'],
+    // `toolbar` dopisane 2026-08-10 (N6.4): `ProcessFlowToolbar.tsx` menu
+    // „Więcej" → „Auto-rozmieść" woła prop `handleAutoLayout`, który w
+    // `IdeaProcessFlowTool.tsx:2868+` jest DOKŁADNIE tą samą funkcją
+    // `handleAutoLayout` co menu węzła/tła i co odbiornik `pf_auto_layout`
+    // (`autoLayout: handleAutoLayout` w opts hooka) — czysty reuse, zero
+    // nowego kodu, zmienia się TYLKO lista powierzchni.
+    surfaces: ['menu3', 'context', 'toolbar'],
     handler: async (ctx) => {
       // Mapa myśli słucha szyny WĘZŁOWEJ, Przepływ ma własny silnik układu.
       // Dokładnie ten rozjazd był przyczyną martwego „Auto-układu" poza Mapą.
@@ -1953,6 +2571,63 @@ const IDEA_ACTIONS: ActionDef[] = [
     runtime: RUNTIME_AI_SUMMARIZE,
     source: 'src/components/MyWork/mindmap/useMindMapQuickActions.ts:931 (delegacja do czatu)',
   },
+  // ── Rail tier B (2026-08-10) — dwie brakujące pozycje popovera AI ─────────
+  // Sąsiadują tu ze `idea.ai.summarize_map`, bo dzielą z nim MECHANIZM: żadna
+  // z trzech nie generuje niczego sama — wszystkie tylko wypełniają czat
+  // gotowym promptem (`handlers.onOpenChat`). To celowe: gdyby leżały przy
+  // `idea.ai.expand_map` (realne `Api.expandMyIdeaMap` + podgląd), czytający
+  // rejestr wziąłby je za akcje tej samej mocy.
+  {
+    id: 'idea.ai.gap_analysis',
+    label: {
+      pl: 'AI: analiza luk',
+      en: 'AI: gap analysis',
+    },
+    icon: 'Search',
+    scope: 'workspace',
+    tools: ['mindmap'],
+    surfaces: ['rail'],
+    handler: (ctx) => runToolbarBusAction('idea.ai.gap_analysis', RUNTIME_AI_GAP_ANALYSIS, ctx),
+    // Odbiornik NIE dotyka `nodes`/`edges` — składa listę do 20 etykiet i woła
+    // `onOpenChat(prompt)`. Zero mutacji, więc zero `undo` (R4 spełnione).
+    mutates: false,
+    requiresPreview: false,
+    teresa: {
+      description:
+        'Otwiera czat z gotowym pytaniem o luki w otwartej Mapie myśli (czego na niej brakuje). NIE analizuje sama i NIE dopisuje nic do mapy — to przygotowana prośba do rozmowy, odpowiedź trzeba dopiero wykorzystać ręcznie.',
+    },
+    runtime: RUNTIME_AI_GAP_ANALYSIS,
+    source:
+      'src/components/MyWork/mindmap/toolbar-popovers/AIActionsPopover.tsx GENERAL_GENERATORS (mm_ai_gap_analysis) → useMindMapQuickActions.ts:883 · rail wiring 2026-08-10 (tier B)',
+  },
+  {
+    id: 'idea.ai.auto_connect',
+    label: {
+      pl: 'AI: powiązania między gałęziami',
+      en: 'AI: auto cross-links',
+    },
+    icon: 'Target',
+    scope: 'workspace',
+    tools: ['mindmap'],
+    surfaces: ['rail'],
+    handler: (ctx) => runToolbarBusAction('idea.ai.auto_connect', RUNTIME_AI_AUTO_CONNECT, ctx),
+    // ROZJAZD ETYKIETA↔KOD, udokumentowany zamiast po cichu poprawiony (rail
+    // tier B, 2026-08-10): pozycja w popoverze nazywa się „Auto cross-links" /
+    // „Auto cross-links", co brzmi jak automatyczne wstawienie krawędzi-relacji.
+    // `useMindMapQuickActions.ts:1057` NIE tworzy ŻADNEJ krawędzi — cała gałąź
+    // to `onOpenChat(promptAutoConnect)`. Stąd `mutates: false`: deklaracja
+    // opisuje KOD, nie etykietę. Naprawa samej etykiety leży poza tym wiringiem
+    // (zmieniłaby widoczne zachowanie/treść UI) — zgłoszona osobno.
+    mutates: false,
+    requiresPreview: false,
+    teresa: {
+      description:
+        'Otwiera czat z gotowym pytaniem o możliwe powiązania między gałęziami otwartej Mapy myśli. UWAGA — wbrew nazwie NIE tworzy żadnych połączeń na mapie: dostajesz propozycje w rozmowie i nanosisz je sam. Jeśli użytkownik prosi o automatyczne połączenie węzłów, powiedz to wprost zamiast obiecywać wykonanie.',
+    },
+    runtime: RUNTIME_AI_AUTO_CONNECT,
+    source:
+      'src/components/MyWork/mindmap/toolbar-popovers/AIActionsPopover.tsx GENERAL_GENERATORS (mm_ai_auto_connect) → useMindMapQuickActions.ts:1057 · rail wiring 2026-08-10 (tier B)',
+  },
   {
     id: 'idea.ai.find_themes',
     label: {
@@ -2040,17 +2715,30 @@ const IDEA_ACTIONS: ActionDef[] = [
     icon: 'Lightbulb',
     scope: 'current_view',
     tools: ['process_flow'],
-    surfaces: ['rail', 'panel'],
-    handler: (ctx) => runByTool('idea.ai.process_analysis', RUNTIME_AI_PROCESS_ANALYSIS, ctx),
+    // `toolbar` dopisane 2026-08-10 (N6.4): pozycja „AI Coach" w menu „Więcej"
+    // paska Przepływu woła prop `runProcessCoach`, który w
+    // `IdeaProcessFlowTool.tsx:2885` jest tą samą funkcją `handleAICoach`, co
+    // odbiornik `pf_analyze` (`runProcessCoach: handleAICoach` w opts hooka) —
+    // reuse po REALNYM mechanizmie (jeden generator `process_coach`, jedno
+    // wywołanie LLM), nie po etykiecie. Handler zmieniony z `runByTool` na
+    // `runToolbarBusAction` (ten sam dual-path co `idea.canvas.cursor_select`),
+    // żeby klik człowieka z paska szedł ORYGINALNYM propem (`ctx.params.run`),
+    // a nie okrężnie przez szynę — bajt w bajt to samo zachowanie co przed
+    // podłączeniem. Teresa (bez `run`) nadal dispatchuje `pf_analyze`.
+    surfaces: ['rail', 'panel', 'toolbar'],
+    handler: (ctx) =>
+      runToolbarBusAction('idea.ai.process_analysis', RUNTIME_AI_PROCESS_ANALYSIS, ctx),
     mutates: false,
     requiresPreview: false,
     teresa: {
+      // Rozdz. 09 §6 wymaga wprost, żeby AI Coach i Podsumowanie Przepływu były
+      // oznaczone jako „AI (tylko odczyt)" i NIE sugerowały, że coś zmieniają.
       description:
-        'Sprawdza Przepływ pod kątem wąskich gardeł i luk. Wynik dostajesz jako listę spostrzeżeń — sam proces zostaje bez zmian.',
+        'Sprawdza Przepływ pod kątem wąskich gardeł i luk — REALNE AI (generator `process_coach`), wynik TYLKO DO ODCZYTU: lista spostrzeżeń w panelu. Nie dodaje, nie zmienia i nie usuwa ani jednego kroku — jeśli użytkownik chce, żeby AI zmieniła proces, to inne akcje (np. „Przeredaguj krok").',
     },
     runtime: RUNTIME_AI_PROCESS_ANALYSIS,
     source:
-      'src/components/MyWork/processflow/useProcessFlowQuickActions.ts:144 (pf_analyze → runProcessCoach)',
+      'src/components/MyWork/processflow/useProcessFlowQuickActions.ts:144 (pf_analyze → runProcessCoach) · REUSED (2026-08-10, N6.4) by ProcessFlowToolbar.tsx overflow „AI Coach" (prop runProcessCoach → IdeaProcessFlowTool.handleAICoach:2153 → ideaAIGenerator.runProcessCoach → Api.generateIdeaAI(process_coach) → llmService.callStructured — realny LLM zweryfikowany do serwera włącznie)',
   },
   {
     id: 'idea.ai.table_assistant',
@@ -2213,6 +2901,368 @@ const IDEA_ACTIONS: ActionDef[] = [
     },
     source:
       'src/components/MyWork/IdeaTableTool.tsx viewContextMenu "saved_view_delete" (~L2364) → useTableViews.ts deleteSavedView',
+  },
+  // N8.2 (2026-08-10) — menu KOLUMNY Tabeli. Pełne uzasadnienie (reużycie vs
+  // nowe id, rozjazd legacy/platforma, brak stosu cofania dla kolumn) w
+  // komentarzu blokowym nad `tableColumnGuard`.
+  {
+    id: 'idea.column.rename',
+    label: { pl: 'Zmień nazwę', en: 'Rename' },
+    icon: 'Pencil',
+    scope: 'table_column',
+    tools: ['table'],
+    surfaces: ['context'],
+    handler: (ctx) => runTableColumnRenameCallback(ctx),
+    mutates: true,
+    requiresPreview: false,
+    undo: {
+      kind: 'local_stack',
+      evidence:
+        'BRAK: `renameColumn` (`useTableSchema.ts` L111) to gołe `setColumns`, nigdy nie woła `nodesUndo.push`; jedyny stos Tabeli (`useUndoRedo<TableNode[]>`, `IdeaTableTool.tsx` L417) śledzi WIERSZE, nie `ColumnDef[]`. Zmiana nazwy kolumny NIE trafia na stos Ctrl+Z ani z inline-edytora nagłówka, ani z tej ścieżki Teresy. `local_stack` = najbliższa istniejąca rodzina mechanizmu (Tabela MA Ctrl+Z, po prostu nie obejmuje kolumn), NIE potwierdzone działanie.',
+    },
+    teresa: {
+      description:
+        'Zmienia nazwę (nagłówek) kolumny Tabeli. Podaj `colKey` kolumny i nową `name`. UWAGA: pozycja "Rename" w menu prawego kliku otwiera człowiekowi tylko edytor nagłówka — zatwierdzeniem jest dopiero wpisanie nazwy; ta ścieżka wykonuje od razu cały, dokończony gest (tę samą funkcję, którą zapisuje edytor). Nie działa w trybie platformy tabel (zmiana trafia wtedy w nieużywany stan lokalny — znany defekt UI, ten sam co przy kliku człowieka).',
+      parameters: {
+        type: 'object',
+        properties: {
+          colKey: { type: 'string', description: 'Klucz kolumny Tabeli (`ColumnDef.key`).' },
+          name: { type: 'string', description: 'Nowa nazwa (nagłówek) kolumny.' },
+        },
+        required: ['colKey', 'name'],
+      },
+    },
+    runtime: RUNTIME_TBL_COLUMN_RENAME,
+    source:
+      'src/components/MyWork/IdeaTableTool.tsx colContextMenu "table.column.rename" (~L3992, setEditingHeaderKey) + inline-rename input nagłówka (~L3745/L3750) → useTableSchema.ts renameColumn',
+  },
+  {
+    id: 'idea.column.sort',
+    label: { pl: 'Sortuj', en: 'Sort' },
+    icon: 'ArrowDownUp',
+    scope: 'table_column',
+    tools: ['table'],
+    surfaces: ['context'],
+    handler: (ctx) => runTableColumnSortCallback(ctx),
+    mutates: true,
+    requiresPreview: false,
+    undo: {
+      kind: 'none',
+      evidence:
+        'Brak i nie dotyczy: sortowanie to stan WIDOKU (`setSort`), nie zmiana danych — nie ma czego cofać poza ponownym przełączeniem. Kolejne wywołanie tej samej akcji cyklicznie wraca do stanu wyjściowego (asc→desc→brak sortowania).',
+    },
+    teresa: {
+      description:
+        'Przełącza sortowanie Tabeli po wskazanej kolumnie, CYKLICZNIE: rosnąco → malejąco → bez sortowania. Podaj `colKey`. Nie zmienia danych, tylko kolejność wyświetlania. Jako jedyna z akcji menu kolumny działa poprawnie także w trybie platformy tabel.',
+      parameters: {
+        type: 'object',
+        properties: {
+          colKey: { type: 'string', description: 'Klucz kolumny Tabeli (`ColumnDef.key`).' },
+        },
+        required: ['colKey'],
+      },
+    },
+    runtime: RUNTIME_TBL_COLUMN_SORT,
+    source:
+      'src/components/MyWork/IdeaTableTool.tsx colContextMenu "table.column.sort" (~L3999) + klik w nagłówek kolumny (~L3760) → effectiveCycleSort (~L518, dwutorowe)',
+  },
+  {
+    id: 'idea.column.hide',
+    label: { pl: 'Ukryj kolumnę', en: 'Hide column' },
+    icon: 'FoldVertical',
+    scope: 'table_column',
+    tools: ['table'],
+    surfaces: ['context'],
+    handler: (ctx) => runTableColumnHideCallback(ctx),
+    mutates: true,
+    requiresPreview: false,
+    undo: {
+      kind: 'local_stack',
+      evidence:
+        'BRAK: `toggleColumn` (`useTableSchema.ts` L99) to gołe `setColumns`, poza stosem Ctrl+Z Tabeli (ten śledzi `TableNode[]`, nie `ColumnDef[]`). Odwracalne w praktyce ręcznie — ponownym przełączeniem widoczności (menu "Kolumny" w pasku narzędzi), bo kolumna nie jest kasowana, tylko chowana.',
+    },
+    teresa: {
+      description:
+        'PRZEŁĄCZA widoczność kolumny Tabeli (nie tylko ukrywa): kolumnę widoczną chowa, a już ukrytą pokaże z powrotem. Pozycja w menu nazywa się "Ukryj kolumnę", bo prawy klik jest możliwy wyłącznie na nagłówku kolumny WIDOCZNEJ — przez `colKey` osiągalny jest też kierunek odwrotny. Podaj `colKey`. Dane wierszy zostają nienaruszone. Nie działa w trybie platformy tabel (przełącza wtedy nieużywany stan lokalny — znany defekt UI, ten sam co przy kliku człowieka).',
+      parameters: {
+        type: 'object',
+        properties: {
+          colKey: { type: 'string', description: 'Klucz kolumny Tabeli (`ColumnDef.key`).' },
+        },
+        required: ['colKey'],
+      },
+    },
+    runtime: RUNTIME_TBL_COLUMN_HIDE,
+    source:
+      'src/components/MyWork/IdeaTableTool.tsx colContextMenu "table.column.hide" (~L4006) → useTableSchema.ts toggleColumn (legacy)',
+  },
+  {
+    id: 'idea.column.delete',
+    label: { pl: 'Usuń kolumnę', en: 'Delete column' },
+    icon: 'Trash2',
+    scope: 'table_column',
+    tools: ['table'],
+    surfaces: ['context'],
+    handler: (ctx) => runTableColumnDeleteCallback(ctx),
+    mutates: true,
+    requiresPreview: false,
+    destructive: true,
+    undo: {
+      kind: 'local_stack',
+      evidence:
+        'BRAK: `deleteColumn` (`useTableSchema.ts` L130) to gołe `setColumns(prev.filter(...))`, poza stosem Ctrl+Z (ten śledzi `TableNode[]`, nie `ColumnDef[]`). Usunięcie jest natychmiastowe i bez dialogu potwierdzenia po stronie UI — jedyna ochrona to `confirmBeforeRun` niżej, dodana TU dla Teresy; klik człowieka nadal nie pyta. Odzyskanie = ręczne odtworzenie kolumny ("Nowa kolumna"), przy czym definicja (typ/szerokość/opcje) przepada.',
+    },
+    teresa: {
+      description:
+        'Usuwa kolumnę Tabeli wraz z jej definicją (typ, szerokość, opcje) — bez cofnięcia. Podaj `colKey`. Jeśli chodziło Ci tylko o schowanie kolumny z widoku, użyj zamiast tego akcji ukrycia kolumny. Nie działa w trybie platformy tabel (kasuje wtedy nieużywany stan lokalny, a interfejs i tak pokazuje zielone „Column deleted" — znany defekt UI, ten sam co przy kliku człowieka).',
+      parameters: {
+        type: 'object',
+        properties: {
+          colKey: { type: 'string', description: 'Klucz kolumny Tabeli (`ColumnDef.key`).' },
+        },
+        required: ['colKey'],
+      },
+      confirmBeforeRun: true,
+    },
+    runtime: RUNTIME_TBL_COLUMN_DELETE,
+    source:
+      'src/components/MyWork/IdeaTableTool.tsx colContextMenu "table.column.delete" (~L4013) → useTableSchema.ts deleteColumn (legacy)',
+  },
+  // ── N8.2 (2026-08-10) — Tabela, menu wiersza (`IdeaTableTool.tsx`'s
+  // `rowContextMenu`, `CanvasContextMenu` na prawy klik wiersza danych).
+  // Patrz komentarz przy `tableRowGuard` wyżej dla pełnego uzasadnienia
+  // (jeden UI surface pokrywający oba tryby legacy/platform, cross-tool
+  // reuse verdict wobec `idea.node.duplicate`/`.delete`).
+  {
+    id: 'table.row.edit',
+    label: { pl: 'Edytuj', en: 'Edit' },
+    icon: 'Pencil',
+    scope: 'table_row',
+    tools: ['table'],
+    surfaces: ['context'],
+    handler: (ctx) => runTableRowEditCallback(ctx),
+    // Otwiera panel edycji (RecordExpandModal w trybie platform, RowDetailPanel
+    // w trybie legacy) — sama akcja NIE zmienia żadnych danych, edycja komórek
+    // dzieje się wewnątrz panelu, poza tym wpisem.
+    mutates: false,
+    requiresPreview: false,
+    teresa: {
+      description:
+        'Otwiera panel edycji wskazanego wiersza Tabeli (zakładka "Właściwości"). Podaj `rowId` wiersza.',
+      parameters: {
+        type: 'object',
+        properties: {
+          rowId: { type: 'string', description: 'Id wiersza Tabeli do otwarcia.' },
+        },
+        required: ['rowId'],
+      },
+    },
+    runtime: RUNTIME_TBL_ROW_EDIT,
+    source:
+      'src/components/MyWork/IdeaTableTool.tsx openRowEditPanel (~L977, wołane z rowContextMenu "table.row.edit" ~L4081 i tbl_row_edit w useTableQuickActions.ts)',
+  },
+  {
+    id: 'table.row.note',
+    label: { pl: 'Dodaj notatkę', en: 'Add note' },
+    icon: 'MessageSquare',
+    scope: 'table_row',
+    tools: ['table'],
+    surfaces: ['context'],
+    handler: (ctx) => runTableRowNoteCallback(ctx),
+    mutates: false,
+    requiresPreview: false,
+    teresa: {
+      description:
+        // Celowe: RecordExpandModal (cel "Edit" w trybie platform) nie ma wątku
+        // komentarzy — ta akcja ZAWSZE otwiera RowDetailPanel, zakładkę
+        // "Komentarze", nawet gdy Tabela jest w trybie platform (patrz
+        // komentarz przy `openRowNotePanel` w IdeaTableTool.tsx). Nie zmieniaj
+        // tego routingu bez porozumienia z właścicielem — to świadoma decyzja
+        // istniejącego kodu, nie luka do naprawy.
+        'Otwiera panel wskazanego wiersza Tabeli na zakładce "Komentarze" — ZAWSZE ten sam panel, niezależnie od trybu Tabeli (nawet w trybie platform, gdzie "Edytuj" otwiera inny, mniejszy modal bez komentarzy). Podaj `rowId` wiersza.',
+      parameters: {
+        type: 'object',
+        properties: {
+          rowId: { type: 'string', description: 'Id wiersza Tabeli do otwarcia.' },
+        },
+        required: ['rowId'],
+      },
+    },
+    runtime: RUNTIME_TBL_ROW_NOTE,
+    source:
+      'src/components/MyWork/IdeaTableTool.tsx openRowNotePanel (~L982, wołane z rowContextMenu "table.row.note" ~L4034 i tbl_row_note w useTableQuickActions.ts)',
+  },
+  {
+    id: 'table.row.duplicate',
+    label: { pl: 'Duplikuj wiersz', en: 'Duplicate row' },
+    icon: 'Copy',
+    scope: 'table_row',
+    tools: ['table'],
+    surfaces: ['context'],
+    handler: (ctx) => runTableRowDuplicateCallback(ctx),
+    mutates: true,
+    requiresPreview: false,
+    undo: {
+      kind: 'local_stack',
+      evidence:
+        'CZĘŚCIOWE (odkryte przy tym wpisie, nie naprawiane tu): `effectiveHandleDuplicateRow` (IdeaTableTool.tsx:514-516) branchuje na `usePlatform`. Legacy: useTableRows.ts handleDuplicateRow:257-284 → nodesUndo.push() (realny stos Ctrl+Z). Platform (usePlatform=true, K1/Airtable parity): useTablePlatformIntegration.ts handleDuplicateRow:457-490 woła bridge.createRecord (serwer) i NIGDY nie trafia na nodesUndo ani żaden inny stos — duplikacja w trybie platform jest DZIŚ NIEODWRACALNA z UI (usuń ręcznie nowy wiersz). Ta sama luka istnieje już dla kliku człowieka (nie wprowadzona tym wpisem) — udokumentowana tu po raz pierwszy.',
+    },
+    teresa: {
+      description:
+        'Duplikuje wskazany wiersz Tabeli. Podaj `rowId` wiersza źródłowego. UWAGA: gdy Tabela jest zablokowana (locked), operacja po cichu nic nie zrobi — dokładnie tak samo jak klik człowieka na tej pozycji menu (przedistniejąca luka, niedotknięta tym wpisem). Sufiks "(copy)" w etykiecie pojawia się TYLKO w trybie legacy; w trybie platform pokazuje się na moment na wierszu tymczasowym, a po odpowiedzi serwera znika (`bridge.createRecord` dostaje surowe `source.data` bez sufiksu — useTablePlatformIntegration.ts:479) — przedistniejące zachowanie, nie wprowadzone tym wpisem. W trybie platform duplikat NIE trafia na stos cofania (patrz undo.evidence).',
+      parameters: {
+        type: 'object',
+        properties: {
+          rowId: { type: 'string', description: 'Id wiersza Tabeli do zduplikowania.' },
+        },
+        required: ['rowId'],
+      },
+    },
+    runtime: RUNTIME_TBL_ROW_DUPLICATE,
+    source:
+      'src/components/MyWork/IdeaTableTool.tsx rowContextMenu "table.row.duplicate" (~L4038) → effectiveHandleDuplicateRow (~L514-516) → useTableRows.ts:257 (legacy) / useTablePlatformIntegration.ts:457 (platform)',
+  },
+  {
+    id: 'table.row.delete',
+    label: { pl: 'Usuń wiersz', en: 'Delete row' },
+    icon: 'Trash2',
+    scope: 'table_row',
+    tools: ['table'],
+    surfaces: ['context'],
+    handler: (ctx) => runTableRowDeleteCallback(ctx),
+    mutates: true,
+    requiresPreview: false,
+    destructive: true,
+    undo: {
+      kind: 'local_stack',
+      evidence:
+        'CZĘŚCIOWE (odkryte przy tym wpisie, nie naprawiane tu): `effectiveHandleDeleteRow` (IdeaTableTool.tsx:511-513) branchuje na `usePlatform`. Legacy: useTableRows.ts handleDeleteRow:236-253 → nodesUndo.push() (realny stos Ctrl+Z). Platform (usePlatform=true, K1/Airtable parity): useTablePlatformIntegration.ts handleDeleteRow:493-512 woła bridge.deleteRecord (serwer) i NIGDY nie trafia na nodesUndo ani żaden inny stos — usunięcie w trybie platform jest DZIŚ NIEODWRACALNE z UI. Ta sama luka istnieje już dla kliku człowieka (nie wprowadzona tym wpisem) — udokumentowana tu po raz pierwszy.',
+    },
+    teresa: {
+      description:
+        'Usuwa wskazany wiersz Tabeli. Podaj `rowId` wiersza. UWAGA: gdy Tabela jest zablokowana (locked), operacja po cichu nic nie zrobi — dokładnie tak samo jak klik człowieka na tej pozycji menu (przedistniejąca luka, niedotknięta tym wpisem). W trybie platform usunięcie jest NIEODWRACALNE (patrz undo.evidence) — w legacy trybie cofniesz przez Ctrl+Z w tej samej sesji.',
+      parameters: {
+        type: 'object',
+        properties: {
+          rowId: { type: 'string', description: 'Id wiersza Tabeli do usunięcia.' },
+        },
+        required: ['rowId'],
+      },
+      confirmBeforeRun: true,
+    },
+    runtime: RUNTIME_TBL_ROW_DELETE,
+    source:
+      'src/components/MyWork/IdeaTableTool.tsx rowContextMenu "table.row.delete" (~L4046) → effectiveHandleDeleteRow (~L511-513) → useTableRows.ts:236 (legacy) / useTablePlatformIntegration.ts:493 (platform)',
+  },
+  // ── N9 (2026-08-10) — Tabela, menu komórki (`IdeaTableTool.tsx`'s
+  // `cellContextMenu`, `CanvasContextMenu` na prawy klik pojedynczej komórki,
+  // ~L4101-4183, komentarz ~L4095-4100 dokumentuje że „AI: uzupełnij"/„Wklej
+  // specjalnie" są ŚWIADOMIE NIEDODANE — Z3, nie luka do wypełnienia w tej
+  // zmianie; ten wpis ICH NIE DOPISUJE, bo rejestr ma odzwierciedlać menu,
+  // które istnieje, a nie życzenia wobec niego). Cztery pozycje w kolejności
+  // menu: copy → paste → expand → clear. `idea.cell.copy`/`.paste`/`.expand`
+  // = UI-only (patrz `runTableCellUiOnlyCallback` wyżej); `idea.cell.clear` =
+  // jedyna realnie wywoływalna przez Teresę (patrz
+  // `runTableCellClearCallback` wyżej).
+  {
+    id: 'idea.cell.copy',
+    label: { pl: 'Kopiuj wartość', en: 'Copy value' },
+    icon: 'ClipboardCopy',
+    scope: 'table_cell',
+    tools: ['table'],
+    surfaces: ['context'],
+    handler: (ctx) => runTableCellUiOnlyCallback('idea.cell.copy', ctx),
+    mutates: false,
+    requiresPreview: false,
+    teresa: {
+      description:
+        // TA SAMA klasa ograniczenia co Tablicy `idea.node.copy` (WB-CLIPBOARD-01):
+        // kopiuje WARTOŚĆ komórki jako goły TEKST do schowka SYSTEMOWEGO
+        // (obiekty przez JSON.stringify) — nie jest to kopia struktury komórki
+        // (typ kolumny/formatowanie), a `idea.cell.paste` niżej czyta ten sam
+        // schowek jako tekst, bez odtwarzania typu. Różnica od WB-CLIPBOARD-01:
+        // etykieta menu TU już jest uczciwa ("Kopiuj wartość", nie "Kopiuj"
+        // sugerujące pełny obiekt) — potwierdzone, nie po cichu zignorowane.
+        'Kopiuje wartość wskazanej komórki Tabeli do schowka systemowego jako TEKST (obiekty jako JSON.stringify) — to nie jest kopia typu/formatowania komórki. Dostępne tylko z menu prawego kliku — schowek systemowy to API przeglądarki użytkownika, bez odpowiednika po stronie czatu.',
+    },
+    source:
+      'src/components/MyWork/IdeaTableTool.tsx cellContextMenu "table.cell.copy" (~L4102-4113)',
+  },
+  {
+    id: 'idea.cell.paste',
+    label: { pl: 'Wklej', en: 'Paste' },
+    icon: 'Clipboard',
+    scope: 'table_cell',
+    tools: ['table'],
+    surfaces: ['context'],
+    handler: (ctx) => runTableCellUiOnlyCallback('idea.cell.paste', ctx),
+    mutates: true,
+    requiresPreview: false,
+    undo: {
+      kind: 'local_stack',
+      evidence:
+        'Ścieżka legacy (`usePlatform=false`, dzisiejszy klik człowieka gdy Tabela nie jest platformowa): `_fieldChange` → `handleFieldChange` (`useTableRows.ts:156-171`) → `nodesUndo.push(next)` — REALNE cofnięcie (Ctrl+Z). Ścieżka platform (`usePlatform=true`): `_fieldChange` → `platformIntegration.handleFieldChange` (`useTablePlatformIntegration.ts:392-412`) — async zapis na serwer, rewert TYLKO gdy zapis się nie powiedzie, nigdy na Ctrl+Z — BRAK stosu cofania. Ten sam dualizm co `idea.cell.clear` niżej i już udokumentowany w N8 dla widoków zapisanych.',
+    },
+    teresa: {
+      description:
+        'Wkleja zawartość schowka SYSTEMOWEGO do wskazanej komórki Tabeli jako TEKST (bez parsowania do typu kolumny). Dziś dostępne WYŁĄCZNIE z menu prawego kliku — `navigator.clipboard.readText()` czyta schowek przeglądarki UŻYTKOWNIKA, bez sensownego odpowiednika po stronie czatu.',
+    },
+    source:
+      'src/components/MyWork/IdeaTableTool.tsx cellContextMenu "table.cell.paste" (~L4115-4134) → _fieldChange',
+  },
+  {
+    id: 'idea.cell.expand',
+    label: { pl: 'Rozwiń komórkę', en: 'Expand cell' },
+    icon: 'Maximize',
+    scope: 'table_cell',
+    tools: ['table'],
+    surfaces: ['context'],
+    handler: (ctx) => runTableCellUiOnlyCallback('idea.cell.expand', ctx),
+    mutates: false,
+    requiresPreview: false,
+    teresa: {
+      description:
+        'Otwiera duży edytor wartości wskazanej komórki Tabeli (`CellExpandPopover`) — popover jest zakotwiczony w pozycji kliknięcia na ekranie (`DOMRect` przekazywany do `handleCellExpand`). Dziś dostępne WYŁĄCZNIE z menu prawego kliku — nie ma dziś sensownego miejsca na ekranie do zakotwiczenia popovera przy wywołaniu z czatu; wymyślanie sztywnej domyślnej pozycji byłoby zgadywaniem zdolności, nie realnym wejściem.',
+    },
+    source:
+      'src/components/MyWork/IdeaTableTool.tsx cellContextMenu "table.cell.expand" (~L4136-4150) → handleCellExpand → CellExpandPopover (~L4264-4298)',
+  },
+  {
+    id: 'idea.cell.clear',
+    label: { pl: 'Wyczyść komórkę', en: 'Clear cell' },
+    icon: 'Trash2',
+    scope: 'table_cell',
+    tools: ['table'],
+    surfaces: ['context'],
+    handler: (ctx) => runTableCellClearCallback(ctx),
+    mutates: true,
+    requiresPreview: false,
+    // Trwałe (w ramach sesji) wyczyszczenie wartości — ta sama logika co
+    // `idea.edge.delete`: `destructive` osobno od `undo`/`mutates`, bo undo
+    // ISTNIEJE (Ctrl+Z) na ścieżce legacy, ale wpis i tak trwale nadpisuje
+    // dane widoczne na ekranie do czasu cofnięcia. Klik człowieka też nie
+    // pyta o potwierdzenie (menu ma tylko `danger: true`, kolor, bez dialogu)
+    // — stąd brak `confirmBeforeRun` niżej, zgodnie z tym samym precedensem.
+    destructive: true,
+    undo: {
+      kind: 'local_stack',
+      evidence:
+        'Ścieżka legacy (`usePlatform=false`): `_fieldChange(rowId, colKey, \'\')` → `handleFieldChange` (`useTableRows.ts:156-171`) → `nodesUndo.push(next)` — REALNE cofnięcie (Ctrl+Z). Ścieżka platform (`usePlatform=true`): `_fieldChange` → `platformIntegration.handleFieldChange` (`useTablePlatformIntegration.ts:392-412`) — async zapis na serwer, rewert lokalny TYLKO przy błędzie zapisu, nigdy na Ctrl+Z — BRAK stosu cofania. Klik człowieka w obu trybach idzie przez ten sam `_fieldChange`, więc ta asymetria dotyczy DZIŚ już istniejącego kliku, nie tylko tej nowej ścieżki Teresy — udokumentowane, nie naprawiane tym wpisem (wielu wywołujących `platformIntegration.handleFieldChange`, ryzykowne do cichej zmiany).',
+    },
+    teresa: {
+      description:
+        'Czyści wartość wskazanej komórki Tabeli (ustawia puste pole). Podaj `rowId` wiersza i `colKey` kolumny. Nie działa na kolumnach pochodnych ("type", formuła) — te są tylko do odczytu, tak samo jak z menu prawego kliku (tam pozycja jest wtedy wyszarzona).',
+      parameters: {
+        type: 'object',
+        properties: {
+          rowId: { type: 'string', description: 'Id wiersza (rekordu) Tabeli.' },
+          colKey: { type: 'string', description: 'Klucz kolumny komórki do wyczyszczenia.' },
+        },
+        required: ['rowId', 'colKey'],
+      },
+    },
+    source:
+      'src/components/MyWork/IdeaTableTool.tsx cellContextMenu "table.cell.clear" (~L4152-4172) → _fieldChange(rowId, colKey, \'\')',
   },
   {
     id: 'idea.workspace.convert',
@@ -2452,7 +3502,7 @@ const IDEA_ACTIONS: ActionDef[] = [
     undo: {
       kind: 'local_stack',
       evidence:
-        'Tablica: IdeaWhiteboardTool.tsx handleEdgeCycleStyle:3178 → pushUndoSnapshot() przed zmianą data.edgeStyle. Mapa myśli: useMindMapQuickActions.ts mm_edge_cycle_style → handlers.pushUndo() przed zmianą style.strokeDasharray — DOPISANE 2026-08-09 (poprzednio brak Ctrl+Z, tak jak edit_label wyżej). UWAGA modelu danych (odbiór, poza zakresem naprawy tutaj): Mapa myśli cyklu 3 stanów (solid/dashed/dotted) przez `edge.style.strokeDasharray`; Tablica cyklu 4 stanów (+wavy) przez `data.edgeStyle`, semantyczne pole czytane przez jej renderer krawędzi. Mapa myśli MA WŁASNY renderer (`LabeledEdge.tsx`), który liczy `strokeDasharray` WYŁĄCZNIE z `data.edgeStyle` (linie 139-147) — `style.strokeDasharray` ustawiane przez tę akcję nigdy nie trafia na ekran, bo `<path>` nadpisuje je jawnie. Innymi słowy: dziś (przed I PO tej migracji, zachowanie 1:1 przeniesione bez zmian) klik „Zmień styl linii" na Mapie myśli pokazuje toast, ale linia wizualnie się NIE zmienia — pre-existing defekt renderowania, niezwiązany z wiring rejestru, NIE naprawiany w tym zadaniu.',
+        'Tablica: IdeaWhiteboardTool.tsx handleEdgeCycleStyle:3178 → pushUndoSnapshot() przed zmianą data.edgeStyle. Mapa myśli: useMindMapQuickActions.ts mm_edge_cycle_style → handlers.pushUndo() przed zmianą data.edgeStyle — DOPISANE 2026-08-09 (poprzednio brak Ctrl+Z, tak jak edit_label wyżej). NAPRAWIONE 2026-08-10 (E02-N5-EDGE): Mapa myśli pisała style.strokeDasharray, ale jej renderer (`mindmap/LabeledEdge.tsx`) liczył strokeDasharray WYŁĄCZNIE z `data.edgeStyle` — toast mówił „Style: dashed", linia wizualnie się nie zmieniała. Kanoniczna reprezentacja dla OBU narzędzi to teraz `data.edgeStyle` (Tablica już tak robiła). Mapa myśli cykluje 3 stany (solid/dashed/dotted), Tablica 4 (+wavy). Mind-mapowy renderer nadal akceptuje starą kształtkę `style.strokeDasharray` jako fallback tylko do odczytu (już zapisane mapy sprzed naprawy), żeby nie cofnąć ich wyglądu do „solid" — nowe zapisy zawsze idą przez `data.edgeStyle`.',
     },
     teresa: {
       description:
@@ -2813,13 +3863,16 @@ const IDEA_ACTIONS: ActionDef[] = [
   //    już zawiera `process_flow`) — `handleAutoLayout()` przestawia CAŁY
   //    widok, nie tylko kliknięty węzeł, więc pozycja menu węzła jest
   //    dosłownie tą samą akcją co pozycja menu tła/Menu 3, nie wariantem.
-  //  • copy DEKLINOWANE od `idea.node.copy` (Tablica): sprawdzone w
-  //    `useProcessFlowNodes.ts` (`schowekRef`/`kopiujWezly`/`pasteClipboard`)
-  //    — to REALNA kopia obiektu (węzeł+wewnętrzne krawędzie) do schowka
-  //    NARZĘDZIA, konsumowana przez „Wklej" na płótnie, W PRZECIWIEŃSTWIE do
-  //    Tablicy `idea.node.copy` (WB-CLIPBOARD-01: kopia SAMEGO TEKSTU do
-  //    schowka systemowego, bez wklejenia obiektu). Materialnie inny
-  //    mechanizm — nowe id, nie reuse.
+  //  • copy DEKLINOWANE od `idea.node.copy` (Tablica): w chwili pisania tego
+  //    wpisu (N6, przed naprawą WB-CLIPBOARD-01) Tablicy wersja kopiowała
+  //    WYŁĄCZNIE tekst etykiety do schowka systemowego, a Przepływ dostał
+  //    własny, REALNY schowek obiektu (`schowekRef`/`kopiujWezly`/
+  //    `pasteClipboard` w `useProcessFlowNodes.ts`). WB-CLIPBOARD-01
+  //    naprawione 2026-08-10 — Tablica ma teraz RÓWNIEŻ realny schowek
+  //    obiektu (`whiteboard/useWhiteboardNodes.ts` copySelected/
+  //    pasteClipboard) — ale to nadal DWIE OSOBNE implementacje (osobny ref,
+  //    osobny hook), nie współdzielony kod, więc decyzja „nowe id, nie
+  //    reuse" sprzed naprawy zostaje aktualna.
   //  • edit DEKLINOWANE od `idea.node.edit` (Tablica) i NIE tożsame z Mapy
   //    myśli `mm_edit` (osobne id per tool tam też) — sprawdzone: „Edit
   //    label" w Przepływie WYŁĄCZNIE bumpuje `editSignal` na węźle (przełącza
@@ -2919,14 +3972,15 @@ const IDEA_ACTIONS: ActionDef[] = [
     scope: 'single_item',
     tools: ['process_flow'],
     surfaces: ['context'],
-    // NIE reużyto `idea.node.copy` (Tablica, WB-CLIPBOARD-01: kopia SAMEGO
-    // TEKSTU do schowka systemowego, bez wklejenia obiektu) — SPRAWDZONE w
+    // NIE reużyto `idea.node.copy` (Tablica) — SPRAWDZONE w
     // `useProcessFlowNodes.ts`: `kopiujWezly`/`copyNodeById` kopiują węzeł
     // (i jego wewnętrzne krawędzie) do `schowekRef` — schowka NARZĘDZIA
     // (React ref, nie schowka przeglądarki) — a „Wklej" na płótnie
-    // (`pasteClipboard`) REALNIE wkleja te obiekty jako nowe elementy. To
-    // realna kopia obiektu, materialnie inny mechanizm niż Tablicy wersja —
-    // nowe id, nie reuse. Menu prawego kliku nie zaznacza klikniętego węzła
+    // (`pasteClipboard`) REALNIE wkleja te obiekty jako nowe elementy.
+    // Tablica ma dziś (od naprawy WB-CLIPBOARD-01, 2026-08-10) TEN SAM RODZAJ
+    // mechanizmu — ale OSOBNĄ implementację (`whiteboard/useWhiteboardNodes.ts`
+    // własny `clipboardRef`), więc to nadal nowe id, nie reuse. Menu prawego
+    // kliku nie zaznacza klikniętego węzła
     // (patrz `idea.node.pf_edit`), więc `onCopy` w `IdeaProcessFlowTool.tsx`
     // woła `copyNodeById(nodeId)` (po id z zamknięcia menu), NIE
     // `copySelected()` — jedyna z ośmiu pozycji tego menu, która świadomie
@@ -2978,7 +4032,12 @@ const IDEA_ACTIONS: ActionDef[] = [
     icon: 'Rocket',
     scope: 'single_item',
     tools: ['process_flow'],
-    surfaces: ['context'],
+    // `toolbar` dopisane 2026-08-10 (N6.4): grupa „Konwertuj" w menu „Więcej"
+    // paska ma pozycję „Inicjatywa" wołającą `onConvert('pf_convert_initiative')`
+    // → `handleConvert` — DOKŁADNIE tę samą funkcję i ten sam string co menu
+    // węzła (`onConvertInitiative`, IdeaProcessFlowTool.tsx:3831). Reuse, nie
+    // nowe id.
+    surfaces: ['context', 'toolbar'],
     handler: (ctx) => runProcessFlowConvertInitiativeCallback(ctx),
     mutates: true,
     requiresPreview: false,
@@ -3054,9 +4113,24 @@ const IDEA_ACTIONS: ActionDef[] = [
     id: 'idea.node.pf_open_chat',
     label: { pl: 'Zapytaj AI', en: 'Ask AI' },
     icon: 'MessageSquare',
+    // ★ ZALOGOWANE, NIE POPRAWIONE (N6.4, 2026-08-10): `scope: 'single_item'`
+    // jest NIEŚCISŁE i było takie już przy powstaniu tego wpisu (N6, pasek
+    // pływający). `handleOpenChatWithContext` (IdeaProcessFlowTool.tsx:2395)
+    // NIE przyjmuje żadnego id i buduje prompt z CAŁEGO widoku (tryb, liczba
+    // kroków, liczba torów, ostrzeżenia walidacji) + ewentualnych zaznaczonych
+    // węzłów — to zakres `current_view`, nie „jeden element". Zmiana `scope`
+    // istniejącego wpisu wpływa na filtrowanie powierzchni i na manifest
+    // Teresy, więc NIE robię jej przy okazji okablowania paska — zgłoszone do
+    // decyzji właściciela, nie ukryte.
     scope: 'single_item',
     tools: ['process_flow'],
-    surfaces: ['floating'],
+    // `toolbar` dopisane 2026-08-10 (N6.4): pozycja „Zapytaj AI o ten proces"
+    // w menu „Więcej" paska dostaje `onOpenChat={handleOpenChatWithContext}` —
+    // TEN SAM obiekt funkcji, co pływający pasek (`IdeaProcessFlowTool.tsx`
+    // linie 2912 i 3521, oba `onOpenChat ? handleOpenChatWithContext : undefined`).
+    // Reuse po realnym mechanizmie; etykieta paska jest dłuższa („o ten
+    // proces"), ale wywołanie identyczne.
+    surfaces: ['floating', 'toolbar'],
     handler: (ctx) => runProcessFlowNodeUiOnlyCallback('idea.node.pf_open_chat', ctx),
     mutates: false,
     requiresPreview: false,
@@ -3326,6 +4400,314 @@ const IDEA_ACTIONS: ActionDef[] = [
       },
     },
     source: 'src/components/MyWork/processflow/LaneSystem.tsx LaneBackground przycisk „Delete lane" → onDelete prop',
+  },
+  // ── N6.4 (2026-08-10) — Process Flow TOOLBAR: przełącznik trybu (3 zakładki)
+  // + menu „Więcej" (`ProcessFlowToolbar.tsx`, `surface: 'toolbar'` — ta sama
+  // powierzchnia co `WhiteboardToolbar.tsx` niżej). OSTATNI kawałek pakietu N6:
+  // krawędzie (N6.1), węzeł + pasek pływający (N6.2), tło + tory (N6.3) już są.
+  //
+  // Przejrzane 1:1 z tym, co pasek dziś renderuje. Podział:
+  //  A. REUŻYTE, ZERO nowych wpisów (5 pozycji) — mechanizm dosłownie ten sam
+  //     obiekt funkcji, co już zarejestrowana powierzchnia:
+  //       • „Auto-rozmieść" → `idea.view.auto_layout` (+`toolbar`)
+  //       • „Duplikuj" → `idea.node.duplicate` (+`toolbar`)
+  //       • „Usuń zaznaczone" → `idea.node.delete` (+`toolbar`)
+  //       • „Zapytaj AI o ten proces" → `idea.node.pf_open_chat` (+`toolbar`)
+  //       • „AI Coach" → `idea.ai.process_analysis` (+`toolbar`)
+  //       • „Konwertuj → Inicjatywa" → `idea.node.pf_convert_initiative` (+`toolbar`)
+  //  B. NOWE, z REALNĄ szyną (4): trzy tryby + Podsumowanie AI (niżej).
+  //  C. NOWE, uczciwie UI-only (4): KPI, Waliduj, Odczyt zwrotny, Propozycja AI.
+  //  D. NOWE, konwersje bez wpisu (3): Zestaw zadań, Raport, ★Analiza (MARTWA).
+  //
+  // POZA REJESTREM ŚWIADOMIE (nie przeoczenie): paleta kształtów, „Wstaw",
+  // „Podziel", Cofnij/Ponów i „Zapisz" z GŁÓWNEGO rzędu paska — to zakres
+  // osobnego, wspólnego dla czterech narzędzi kroku (rail/undo tier), a
+  // Cofnij/Ponów paska są dodatkowo za flagą `ff_canvasUndoInRailOnly`.
+  // Liczniki „Kroki/Tory/Ostrzeżenia" i linia podpowiedzi trybu to wskaźniki
+  // stanu, nie komendy — akcja Teresy typu „kliknij licznik" nie istnieje.
+  //
+  // ── m (weryfikacja zlecona przy tym pakiecie): „przeciek mm_" w Przepływie ──
+  // `useProcessFlowQuickActions.ts` obsługuje `mm_select_mode`/`mm_pan_mode`
+  // (linie 231-232). SPRAWDZONE: to NIE jest przeciek Mapy myśli, tylko
+  // WSPÓLNY runtime string trzech płócien — `RUNTIME_CURSOR_SELECT` (wyżej w
+  // tym pliku) mapuje `mindmap`/`whiteboard`/`process_flow` na TEN SAM
+  // `mm_select_mode` (nazwa historyczna), a `idea.canvas.cursor_select` ma już
+  // `tools: ['mindmap','whiteboard','process_flow']`. Nic do zrobienia,
+  // potwierdzone w kodzie 2026-08-10.
+  //
+  // ── B. Przełącznik trybu (3 zakładki `role="tab"`, linie ~273-296) ────────
+  // Luka w okablowaniu, NIE nowa infrastruktura: odbiorniki `pf_mode_*` żyły w
+  // hooku od dawna bez ani jednego wołającego (patrz `RUNTIME_PF_MODE_*` wyżej).
+  // `mutates: true` jest uczciwe — `flowMode` jest ZAPISYWANY do dokumentu
+  // (`extensions.processFlow.flowMode`, IdeaProcessFlowTool.tsx:649, autosave)
+  // i odtwarzany przy otwarciu (linia 1383), więc to nie jest ulotny stan
+  // widoku. `undo` opisany uczciwie: stos Ctrl+Z Przepływu
+  // (`useProcessFlowUndoRedo`) trzyma WYŁĄCZNIE `nodes`/`edges`/`lanes` —
+  // zmiana trybu NIE jest cofalna Ctrl+Z ani z tego paska, ani z czatu.
+  {
+    id: 'idea.view.pf_mode_classic',
+    label: { pl: 'Tryb: klasyczny przepływ', en: 'Mode: classic flow' },
+    icon: 'Workflow',
+    scope: 'current_view',
+    tools: ['process_flow'],
+    surfaces: ['toolbar'],
+    handler: (ctx) =>
+      runToolbarBusAction('idea.view.pf_mode_classic', RUNTIME_PF_MODE_CLASSIC, ctx),
+    mutates: true,
+    requiresPreview: false,
+    undo: {
+      kind: 'local_stack',
+      evidence:
+        'BRAK: `useProcessFlowUndoRedo` (`pushUndo`) zapisuje wyłącznie migawkę `{nodes, edges, lanes}` — `flowMode` nie wchodzi na stos, więc Ctrl+Z NIE cofa zmiany trybu (ani z paska, ani z czatu). Cofnięcie = ponowne przełączenie zakładki. `local_stack` podane jako najbliższa istniejąca rodzina mechanizmu (Przepływ MA stos Ctrl+Z, po prostu nie obejmuje tego pola), NIE jako potwierdzone działanie — ten sam uczciwy zapis co `idea.view.saved_view_rename`.',
+    },
+    teresa: {
+      description:
+        'Przełącza Przepływ w tryb klasyczny: paleta kroków to Start/Koniec/Akcja/Decyzja, a podpowiedź nad płótnem prowadzi przez mapowanie procesu „jak jest". Zmienia WYŁĄCZNIE tryb pracy i dostępne kształty — nie kasuje ani nie przerabia istniejących kroków (te dodane w innym trybie zostają). Tryb jest zapisywany razem z Ideą, ale NIE cofa się przez Ctrl+Z.',
+    },
+    runtime: RUNTIME_PF_MODE_CLASSIC,
+    source:
+      'src/components/MyWork/processflow/ProcessFlowToolbar.tsx role="tablist" (~linia 273-296, onClick → setFlowMode) + processflow/useProcessFlowQuickActions.ts pf_mode_classic:157 (odbiornik istniał bez wołającego)',
+  },
+  {
+    id: 'idea.view.pf_mode_automation',
+    label: { pl: 'Tryb: automatyzacja', en: 'Mode: automation' },
+    icon: 'Workflow',
+    scope: 'current_view',
+    tools: ['process_flow'],
+    surfaces: ['toolbar'],
+    handler: (ctx) =>
+      runToolbarBusAction('idea.view.pf_mode_automation', RUNTIME_PF_MODE_AUTOMATION, ctx),
+    mutates: true,
+    requiresPreview: false,
+    undo: {
+      kind: 'local_stack',
+      evidence:
+        'BRAK — jak `idea.view.pf_mode_classic` wyżej (`flowMode` poza migawką `pushUndo`).',
+    },
+    teresa: {
+      description:
+        'Przełącza Przepływ w tryb automatyzacji: paleta zyskuje wyzwalacz, wywołanie API i warunek, a podpowiedź prowadzi przez szukanie miejsc do bezpiecznego zautomatyzowania. Nie zmienia istniejących kroków. Tryb jest zapisywany razem z Ideą, ale NIE cofa się przez Ctrl+Z.',
+    },
+    runtime: RUNTIME_PF_MODE_AUTOMATION,
+    source:
+      'src/components/MyWork/processflow/ProcessFlowToolbar.tsx role="tablist" (~linia 273-296) + processflow/useProcessFlowQuickActions.ts pf_mode_automation:158',
+  },
+  {
+    id: 'idea.view.pf_mode_vsm',
+    label: { pl: 'Tryb: strumień wartości', en: 'Mode: value stream' },
+    icon: 'Workflow',
+    scope: 'current_view',
+    tools: ['process_flow'],
+    surfaces: ['toolbar'],
+    handler: (ctx) => runToolbarBusAction('idea.view.pf_mode_vsm', RUNTIME_PF_MODE_VSM, ctx),
+    mutates: true,
+    requiresPreview: false,
+    undo: {
+      kind: 'local_stack',
+      evidence:
+        'BRAK — jak `idea.view.pf_mode_classic` wyżej (`flowMode` poza migawką `pushUndo`).',
+    },
+    teresa: {
+      description:
+        'Przełącza Przepływ w tryb strumienia wartości (VSM): paleta zyskuje kształty Lean (proces, zapas, dostawca, klient, kaizen, pchnij/ciągnij, supermarket, FIFO), a podpowiedź prowadzi przez pokazanie przepływu end-to-end i czasów oczekiwania. Nie zmienia istniejących kroków. Tryb jest zapisywany razem z Ideą, ale NIE cofa się przez Ctrl+Z.',
+    },
+    runtime: RUNTIME_PF_MODE_VSM,
+    source:
+      'src/components/MyWork/processflow/ProcessFlowToolbar.tsx role="tablist" (~linia 273-296) + processflow/useProcessFlowQuickActions.ts pf_mode_vsm:160',
+  },
+  // ── C+B. Menu „Więcej", grupa „Analizuj i sprawdź" (linie ~468-567) ───────
+  {
+    id: 'idea.view.pf_toggle_kpi',
+    label: { pl: 'Wskaźniki KPI', en: 'KPI dashboard' },
+    icon: 'BarChart3',
+    scope: 'current_view',
+    tools: ['process_flow'],
+    surfaces: ['toolbar'],
+    handler: (ctx) => runProcessFlowToolbarUiOnlyCallback('idea.view.pf_toggle_kpi', ctx),
+    mutates: false,
+    requiresPreview: false,
+    teresa: {
+      description:
+        'Pokazuje/ukrywa panel wskaźników KPI wyliczonych z otwartego Przepływu (liczby z samego grafu, bez AI). Nie zmienia procesu. DZIŚ NIEDOSTĘPNE dla Teresy — czysty lokalny stan UI (`showKPIDashboard`), bez odbiornika na szynie.',
+    },
+    source:
+      'src/components/MyWork/processflow/ProcessFlowToolbar.tsx menu „Więcej" → setShowKPIDashboard (~linia 480) + IdeaProcessFlowTool.tsx showKPIDashboard:435/3476',
+  },
+  {
+    id: 'idea.view.pf_validate',
+    // ★ Rozdz. 09 §5 wprost: walidacja Przepływu to heurystyka bez LLM i NIE
+    // wolno jej nazwać „AI". Etykieta poniżej (i ta w pasku, `Validate`/
+    // „Waliduj") są z tym zgodne — sprawdzone, nie zakładane:
+    // `validateFlowWarnings` (`validateFlow.ts`) to czyste reguły na grafie.
+    label: { pl: 'Waliduj strukturę', en: 'Validate structure' },
+    icon: 'AlertTriangle',
+    scope: 'current_view',
+    tools: ['process_flow'],
+    surfaces: ['toolbar'],
+    handler: (ctx) => runProcessFlowToolbarUiOnlyCallback('idea.view.pf_validate', ctx),
+    mutates: false,
+    requiresPreview: false,
+    teresa: {
+      description:
+        'Sprawdza STRUKTURĘ otwartego Przepływu regułami (brak startu/końca, wiszące kroki, decyzja bez wyjść itp.) i pokazuje listę ostrzeżeń. To NIE jest AI — żadnego modelu językowego tu nie ma, to zwykłe reguły na grafie; nie myl z „AI: analiza procesu", która szuka wąskich gardeł modelem. Nic nie zmienia. DZIŚ NIEDOSTĘPNE dla Teresy — brak odbiornika na szynie (`runValidation` to lokalny callback).',
+    },
+    source:
+      'src/components/MyWork/processflow/ProcessFlowToolbar.tsx menu „Więcej" → runValidation (~linia 492) + IdeaProcessFlowTool.tsx runValidation:2131 → validateFlowWarnings (processflow/validateFlow.ts, heurystyka bez LLM)',
+  },
+  {
+    id: 'idea.ai.pf_process_summary',
+    label: { pl: 'AI: podsumowanie procesu (tylko odczyt)', en: 'AI: process summary (read-only)' },
+    icon: 'BarChart3',
+    scope: 'current_view',
+    tools: ['process_flow'],
+    surfaces: ['toolbar'],
+    handler: (ctx) =>
+      runToolbarBusAction('idea.ai.pf_process_summary', RUNTIME_PF_PROCESS_SUMMARY, ctx),
+    mutates: false,
+    requiresPreview: false,
+    teresa: {
+      // Rozdz. 09 §6 wymaga wprost oznaczenia „AI (tylko odczyt)" dla tej i dla
+      // AI Coacha — obie tam wymienione imiennie jako „nie modyfikują canvasu".
+      description:
+        'Generuje podsumowanie otwartego Przepływu REALNYM modelem (generator `process_summary`): liczba kroków i decyzji, tory, ścieżka krytyczna, szacowany czas, ryzyka i rekomendacje. Wynik jest TYLKO DO ODCZYTU — pokazuje się w panelu i NIE zmienia ani jednego kroku na płótnie, więc nie ma tu nic do zatwierdzania ani cofania. Nie myl z „Waliduj strukturę" (reguły, bez modelu).',
+    },
+    runtime: RUNTIME_PF_PROCESS_SUMMARY,
+    source:
+      'src/components/MyWork/processflow/ProcessFlowToolbar.tsx menu „Więcej" → generateSummary (~linia 523) + IdeaProcessFlowTool.tsx handleProcessSummary:2196 → ideaAIGenerator.generateProcessSummary → Api.generateIdeaAI(process_summary) → llmService.callStructured (realny LLM, zweryfikowane do serwera włącznie) + processflow/useProcessFlowQuickActions.ts pf_summary (NOWY odbiornik, 2026-08-10)',
+  },
+  {
+    id: 'idea.view.pf_readback',
+    label: { pl: 'Odczyt zwrotny', en: 'Readback' },
+    icon: 'ScanText',
+    scope: 'current_view',
+    tools: ['process_flow'],
+    surfaces: ['toolbar'],
+    handler: (ctx) => runProcessFlowToolbarUiOnlyCallback('idea.view.pf_readback', ctx),
+    mutates: false,
+    requiresPreview: false,
+    teresa: {
+      description:
+        'Otwiera „odczyt zwrotny" — opis otwartego Przepływu zdaniami, do przeczytania klientowi na potwierdzenie, że dobrze zrozumieliśmy proces. Powstaje LOKALNIE z grafu (deterministycznie, bez modelu językowego — mirror serwerowy został wycięty), więc etykieta słusznie nie mówi „AI". Nic nie zmienia. DZIŚ NIEDOSTĘPNE dla Teresy — brak odbiornika na szynie.',
+    },
+    source:
+      'src/components/MyWork/processflow/ProcessFlowToolbar.tsx menu „Więcej" → onOpenReadback (~linia 543) + IdeaProcessFlowTool.tsx setShowReadbackPanel+fetchReadback:2893 + processflow/useProcessFlowReadback.ts generateReadback (klient, bez LLM)',
+  },
+  {
+    id: 'idea.view.pf_open_ai_proposal',
+    // Etykieta nazywa RZECZYWISTY efekt (rozdz. 09 §2: zakaz ogólnego „AI"
+    // obiecującego więcej, niż akcja robi) — samo kliknięcie NIC nie generuje,
+    // tylko otwiera panel, w którym człowiek wpisuje polecenie i dopiero
+    // wtedy rusza generator z podglądem propozycji.
+    label: { pl: 'Otwórz panel propozycji AI', en: 'Open AI proposal panel' },
+    icon: 'Sparkles',
+    scope: 'current_view',
+    tools: ['process_flow'],
+    surfaces: ['toolbar'],
+    handler: (ctx) => runProcessFlowToolbarUiOnlyCallback('idea.view.pf_open_ai_proposal', ctx),
+    mutates: false,
+    requiresPreview: false,
+    teresa: {
+      description:
+        'Otwiera panel propozycji AI Przepływu. SAMO otwarcie nic nie generuje i nic nie zmienia — dopiero polecenie wpisane w panelu uruchamia generator, a jego wynik i tak trzeba zatwierdzić w podglądzie. DZIŚ NIEDOSTĘPNE dla Teresy — lokalny stan UI (`showAIPanel`), bez odbiornika na szynie; jeśli użytkownik chce, żeby AI coś zaproponowała, wywołaj właściwą akcję generującą zamiast otwierać panel.',
+    },
+    source:
+      'src/components/MyWork/processflow/ProcessFlowToolbar.tsx menu „Więcej" → onOpenAIProposal (~linia 557, za stałą AI_PROPOSAL_ENABLED) + IdeaProcessFlowTool.tsx setShowAIPanel:2898',
+  },
+  // ── D. Menu „Więcej", grupa „Konwertuj" (linie ~640-669) ──────────────────
+  // Pozycja „Inicjatywa" reużywa `idea.node.pf_convert_initiative` (wyżej,
+  // `surfaces` rozszerzone o `toolbar`). Trzy poniżej to nowe id per target —
+  // wzorem Mapy myśli, która też ma osobny wpis na każdy target konwersji.
+  {
+    id: 'idea.node.pf_convert_task_set',
+    label: { pl: 'Konwertuj na zestaw zadań', en: 'Convert to task set' },
+    icon: 'Rocket',
+    scope: 'single_item',
+    tools: ['process_flow'],
+    surfaces: ['toolbar'],
+    handler: (ctx) =>
+      runProcessFlowConvertTargetCallback('idea.node.pf_convert_task_set', 'task_set', ctx),
+    mutates: true,
+    requiresPreview: false,
+    undo: {
+      kind: 'manual_delete',
+      evidence:
+        'Api.convertMyIdea → nowe rekordy Task; brak automatycznego cofnięcia (ten sam wzorzec co idea.node.pf_convert_initiative / idea.workspace.convert).',
+    },
+    destructive: false,
+    teresa: {
+      description:
+        'Zamienia kroki Przepływu w zestaw zadań — tworzy nowe, trwałe rekordy zadań. Ta sama uczciwa uwaga co przy konwersji na Inicjatywę: klik człowieka w menu wysyła pole `selectedIds`, którego powłoka nigdy nie czyta, więc UI konwertuje bieżące zaznaczenie płótna; wywołanie z czatu omija tę wadliwą ścieżkę i używa `nodeId`, który podasz. Brak podglądu przed konwersją (przedistniejące, rozdz. 10 §2.2 wymaga go docelowo). Podaj `nodeId`.',
+      parameters: {
+        type: 'object',
+        properties: {
+          nodeId: { type: 'string', description: 'Id kroku Przepływu do konwersji.' },
+        },
+        required: ['nodeId'],
+      },
+      confirmBeforeRun: true,
+    },
+    source:
+      'src/components/MyWork/processflow/ProcessFlowToolbar.tsx grupa „Konwertuj" pozycja pf_convert_task_set (~linia 646) → onConvert → IdeaProcessFlowTool.handleConvert:2385 → IdeaMapWorkspace.tsx CONVERT_PREFIX_MAP:1030 (target task_set, `live` w ideaConvertTargets.ts) + Api.convertMyIdea (ścieżka Teresy, wprost)',
+  },
+  {
+    id: 'idea.node.pf_convert_report',
+    label: { pl: 'Konwertuj na raport', en: 'Convert to report' },
+    icon: 'Rocket',
+    scope: 'single_item',
+    tools: ['process_flow'],
+    surfaces: ['toolbar'],
+    handler: (ctx) =>
+      runProcessFlowConvertTargetCallback('idea.node.pf_convert_report', 'report', ctx),
+    mutates: true,
+    requiresPreview: false,
+    undo: {
+      kind: 'manual_delete',
+      evidence:
+        'Api.convertMyIdea → nowy rekord Report; brak automatycznego cofnięcia (jak wyżej).',
+    },
+    destructive: false,
+    teresa: {
+      description:
+        'Generuje raport z Przepływu — tworzy nowy, trwały dokument. Ta sama uczciwa uwaga o `selectedIds` co przy pozostałych konwersjach Przepływu. Brak podglądu przed konwersją. Podaj `nodeId`.',
+      parameters: {
+        type: 'object',
+        properties: {
+          nodeId: { type: 'string', description: 'Id kroku Przepływu do konwersji.' },
+        },
+        required: ['nodeId'],
+      },
+      confirmBeforeRun: true,
+    },
+    source:
+      'src/components/MyWork/processflow/ProcessFlowToolbar.tsx grupa „Konwertuj" pozycja pf_convert_report (~linia 650) → onConvert → IdeaProcessFlowTool.handleConvert:2385 → IdeaMapWorkspace.tsx CONVERT_PREFIX_MAP:1031 (target report, `live`) + Api.convertMyIdea (ścieżka Teresy, wprost)',
+  },
+  {
+    id: 'idea.node.pf_convert_analysis',
+    // ★ ZNALEZIONE PRZY OKABLOWANIU, ZALOGOWANE, NIE UKRYTE I NIE „POPRAWIONE
+    // PO CICHU": ta pozycja menu jest MARTWA — pełny łańcuch dowodowy przy
+    // `runProcessFlowConvertAnalysisCallback` wyżej. Klik ZAWSZE kończy się
+    // czerwonym toastem („ten cel konwersji jeszcze nie…"), bo target
+    // `analysis` został usunięty z `IDEA_CONVERT_TARGETS` w audycie Z3
+    // 2026-07-24, a `ProcessFlowToolbar.tsx` nigdy o tym nie usłyszał.
+    // Etykieta nazywa stan faktyczny, żeby nikt nie odczytał wpisu jako
+    // potwierdzenia, że funkcja działa.
+    label: { pl: 'Konwertuj na analizę (niedostępne)', en: 'Convert to analysis (unavailable)' },
+    icon: 'Rocket',
+    scope: 'single_item',
+    tools: ['process_flow'],
+    surfaces: ['toolbar'],
+    handler: (ctx) => runProcessFlowConvertAnalysisCallback(ctx),
+    // `mutates: false` = opis RZECZYWISTOŚCI, nie zamiaru: ta akcja dziś nigdy
+    // niczego nie tworzy ani nie zmienia (patrz łańcuch wyżej), więc nie ma
+    // czego cofać i deklarowanie `undo` byłoby opisem nieistniejącego skutku.
+    mutates: false,
+    requiresPreview: false,
+    teresa: {
+      description:
+        '★ NIE DZIAŁA — nie wywołuj tej akcji. Pozycja „Analiza" w menu Konwertuj paska Przepływu prowadzi do celu konwersji (`analysis`), który został wycofany z produktu (serwer nie ma dla niego obsługi), więc kliknięcie kończy się wyłącznie komunikatem o błędzie i niczego nie tworzy. Wpis istnieje w rejestrze po to, żeby ta martwa pozycja była WIDOCZNA jako defekt do naprawy, a nie żeby ją udostępniać. Jeśli użytkownik prosi o analizę procesu, użyj „AI: analiza procesu" (wąskie gardła i luki, tylko odczyt).',
+    },
+    source:
+      'src/components/MyWork/processflow/ProcessFlowToolbar.tsx grupa „Konwertuj" pozycja pf_convert_analysis (~linia 651) → onConvert → IdeaProcessFlowTool.handleConvert:2385 → IdeaMapWorkspace.tsx CONVERT_PREFIX_MAP:1032 (target `analysis`) → handleConvert:2202 `IDEA_CONVERT_TARGETS.some(...)` FALSE → toast.error. Target usunięty w ideaConvertTargets.ts (audyt Z3 2026-07-24, komentarz w tablicy wymienia `analysis` imiennie).',
   },
   // ── N7 kontynuacja (2026-08-09) — WhiteboardToolbar.tsx, surface='toolbar' ──
   // 18 pozycji = 1:1 z tym, co bar dziś renderuje (dropdown „Wstaw" ×5,
@@ -3798,14 +5180,43 @@ const IDEA_ACTIONS: ActionDef[] = [
     requiresPreview: false,
     teresa: {
       description:
-        // WB-CLIPBOARD-01 (docs/qa/ideas-complete-transformation-2026-08-09/02_EXECUTION_LEDGER.csv):
-        // to WYŁĄCZNIE kopia TEKSTU etykiety do schowka systemowego — NIE jest
-        // to kopia obiektu (brak wklejenia węzła/krawędzi). Świadomie
-        // nienaprawione tym wpisem (osobno logowany defekt P1).
-        'Kopiuje treść etykiety wskazanego elementu do schowka jako TEKST — to nie jest kopia obiektu (brak wklejenia całego elementu). Dostępne tylko z menu przeglądarki, nie z czatu.',
+        // WB-CLIPBOARD-01 NAPRAWIONE (2026-08-10, docs/qa/ideas-complete-
+        // transformation-2026-08-09/02_EXECUTION_LEDGER.csv): było WYŁĄCZNIE
+        // kopią TEKSTU etykiety do schowka systemowego. Teraz — jak
+        // `idea.node.pf_copy` Przepływu — kopiuje węzeł (i jego wewnętrzne
+        // krawędzie) do schowka NARZĘDZIA (`copySelected()` w
+        // `whiteboard/useWhiteboardNodes.ts`, ten sam ref-owy wzorzec co
+        // `schowekRef`/`kopiujWezly` Przepływu), konsumowanego przez nowe
+        // `idea.canvas.paste`. Prawy klik już zaznacza kliknięty węzeł
+        // (`handleCanvasContextMenu`), więc ta akcja kopiuje AKTUALNE
+        // zaznaczenie — nie osobny `copyNodeById`, w przeciwieństwie do
+        // Przepływu (tam prawy klik NIE zaznacza).
+        'Kopiuje wskazany element (i jego wewnętrzne połączenia) do schowka narzędzia — realna kopia obiektu, konsumowana przez „Wklej" na tle płótna (`idea.canvas.paste`), nie kopia samego tekstu. Dziś dostępne WYŁĄCZNIE z menu prawego kliku — schowek to zmienna w przeglądarce, bez odbiornika na szynie.',
     },
     source:
-      'src/components/MyWork/IdeaCanvasContextMenu.tsx BASE_NODE_ACTIONS kind=copy + handleBaseAction:417-419 (WB-CLIPBOARD-01)',
+      'src/components/MyWork/IdeaCanvasContextMenu.tsx BASE_NODE_ACTIONS kind=copy + handleBaseAction (onCopySelected) + whiteboard/useWhiteboardNodes.ts copySelected/copyNodeById/clipboardRef (WB-CLIPBOARD-01 fix)',
+  },
+  {
+    id: 'idea.canvas.paste',
+    label: { pl: 'Wklej', en: 'Paste' },
+    icon: 'ClipboardPaste',
+    scope: 'current_view',
+    tools: ['whiteboard'],
+    surfaces: ['context'],
+    shortcut: '⌘V',
+    handler: (ctx) => runContextMenuUiOnlyCallback('idea.canvas.paste', ctx),
+    mutates: true,
+    requiresPreview: false,
+    undo: {
+      kind: 'local_stack',
+      evidence: 'pasteClipboard() → pushSnapshot() w whiteboard/useWhiteboardNodes.ts.',
+    },
+    teresa: {
+      description:
+        'Wkleja zawartość schowka NARZĘDZIA Tablicy (element(y) + połączenia między nimi skopiowane przez „Kopiuj"/`idea.node.copy`) jako nowe elementy, przesunięte względem oryginałów. Dziś dostępne WYŁĄCZNIE z menu prawego kliku na tło — schowek żyje w `useRef` przeglądarki (nie na serwerze), Teresa tego jeszcze nie wywoła. Ta sama uczciwa granica co Przepływu `idea.view.pf_paste_at_point` i Mapy myśli `idea.view.paste_at_point`.',
+    },
+    source:
+      'src/components/MyWork/IdeaCanvasContextMenu.tsx BASE_PANE_ACTIONS kind=paste + handleBaseAction (onPaste) + whiteboard/useWhiteboardNodes.ts pasteClipboard/clipboardRef (WB-CLIPBOARD-01 fix)',
   },
   {
     id: 'idea.node.duplicate',
@@ -3822,7 +5233,14 @@ const IDEA_ACTIONS: ActionDef[] = [
     // `floating` dla tej akcji (ma `WhiteboardSelectionBar` używającą tej samej
     // funkcji, ale niepodłączoną do rejestru — poza zakresem tego wpisu).
     tools: ['whiteboard', 'process_flow'],
-    surfaces: ['context', 'floating'],
+    // `toolbar` dopisane 2026-08-10 (N6.4): menu „Więcej" paska Przepływu ma
+    // „Duplikuj (Ctrl+D)" wołające prop `duplicateSelected` — tę SAMĄ funkcję
+    // (`useProcessFlowNodes.duplicateSelected`), którą już reużywa menu węzła i
+    // pływający pasek. Powierzchnia `toolbar` jest dziś czytana także przez
+    // `WhiteboardToolbar.tsx` (`getActionsForSurface('toolbar', {tool:'whiteboard'})`),
+    // ale tamten komponent podnosi WYŁĄCZNIE id, które sam wywołuje — dopisanie
+    // powierzchni nie zmienia niczego po stronie Tablicy (sprawdzone).
+    surfaces: ['context', 'floating', 'toolbar'],
     handler: (ctx) => runToolbarBusAction('idea.node.duplicate', RUNTIME_NODE_DUPLICATE, ctx),
     mutates: true,
     requiresPreview: false,
@@ -3919,7 +5337,11 @@ const IDEA_ACTIONS: ActionDef[] = [
     // genuine reuse. `floating`: `ProcessFlowFloatingToolbar.tsx` ma przycisk
     // „Usuń" wołający TĘ SAMĄ funkcję (`onDelete={deleteSelected}`).
     tools: ['whiteboard', 'process_flow'],
-    surfaces: ['context', 'floating'],
+    // `toolbar` dopisane 2026-08-10 (N6.4): menu „Więcej" paska Przepływu ma
+    // „Usuń zaznaczone" wołające prop `deleteSelected` — ta sama funkcja co
+    // menu węzła / pływający pasek / `idea.edge.pf_delete`. Uwaga o Tablicy
+    // jak przy `idea.node.duplicate` wyżej.
+    surfaces: ['context', 'floating', 'toolbar'],
     handler: (ctx) => runToolbarBusAction('idea.node.delete', RUNTIME_NODE_DELETE, ctx),
     mutates: true,
     requiresPreview: false,
@@ -4169,7 +5591,11 @@ const IDEA_ACTIONS: ActionDef[] = [
     icon: 'Network',
     scope: 'current_view',
     tools: ['whiteboard'],
-    surfaces: ['context'],
+    // Rail tier B (2026-08-10) — REUŻYCIE po mechanizmie: popover AI lewego
+    // raila w Tablicy („Zamień na mapę myśli", `AIActionsPopover.tsx`
+    // TOOL_GENERATORS) wysyła ten sam `wb_ai_to_map` i wpada w tę samą pozycję
+    // `AI_ACTION_MAP` (`useWhiteboardQuickActions.ts`) co menu prawego kliku.
+    surfaces: ['context', 'rail'],
     handler: (ctx) => runToolbarBusAction('idea.canvas.to_mindmap', RUNTIME_WB_TO_MINDMAP, ctx),
     mutates: true,
     requiresPreview: true,
@@ -4191,7 +5617,9 @@ const IDEA_ACTIONS: ActionDef[] = [
     icon: 'Table2',
     scope: 'current_view',
     tools: ['whiteboard'],
-    surfaces: ['context'],
+    // Rail tier B (2026-08-10) — REUŻYCIE po mechanizmie, jak `to_mindmap` wyżej
+    // (`wb_ai_to_table`, ta sama `AI_ACTION_MAP`).
+    surfaces: ['context', 'rail'],
     handler: (ctx) => runToolbarBusAction('idea.canvas.to_table', RUNTIME_WB_TO_TABLE, ctx),
     mutates: true,
     requiresPreview: true,
@@ -4428,7 +5856,13 @@ const IDEA_ACTIONS: ActionDef[] = [
     icon: 'Sparkles',
     scope: 'current_view',
     tools: ['mindmap'],
-    surfaces: ['context'],
+    // Rail tier B (2026-08-10) — REUŻYCIE, nie nowe id. Popover AI lewego raila
+    // („Suggest branches", `AIActionsPopover.tsx` GENERAL_GENERATORS) wysyła
+    // DOKŁADNIE ten sam runtime string co pozycja menu tła (`mm_ai_suggest`,
+    // RUNTIME_PANE_AI_SUGGEST) i trafia w TEN SAM odbiornik
+    // (`useMindMapQuickActions.ts:875`) — dopasowanie po MECHANIZMIE, nie po
+    // etykiecie. Rozszerzenie `surfaces` wystarcza; handler/runtime bez zmian.
+    surfaces: ['context', 'rail'],
     handler: (ctx) => runToolbarBusAction('idea.ai.suggest_nodes', RUNTIME_PANE_AI_SUGGEST, ctx),
     mutates: false,
     requiresPreview: false,
@@ -4622,10 +6056,11 @@ const IDEA_ACTIONS: ActionDef[] = [
     shortcut: '⌘C',
     // NIE reużyto `idea.node.copy` (Tablica): implementacje schowka są
     // CAŁKOWICIE niezależne (Mapa: `_clipboard` — closure w
-    // `useMindMapNodes.tsx` serializująca podgraf węzeł+krawędzie; Tablica:
-    // WB-CLIPBOARD-01, kopia SAMEGO TEKSTU etykiety do schowka systemowego).
-    // Zero wspólnego runtime, oba już UI-only — konflacja id-ków nic by nie
-    // dała, tylko zmyliła który mechanizm faktycznie działa.
+    // `useMindMapNodes.tsx` serializująca podgraf węzeł+krawędzie; Tablica
+    // (od naprawy WB-CLIPBOARD-01, 2026-08-10): `clipboardRef` w
+    // `whiteboard/useWhiteboardNodes.ts`, ten sam RODZAJ mechanizmu, ale
+    // osobny hook/ref). Zero wspólnego runtime, oba już UI-only — konflacja
+    // id-ków nic by nie dała, tylko zmyliła który mechanizm faktycznie działa.
     handler: (ctx) => runMindmapNodeUiOnlyCallback('idea.node.mm_copy', ctx),
     mutates: false,
     requiresPreview: false,

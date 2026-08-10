@@ -468,6 +468,38 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
     return map;
   }, [activeTool, selection]);
 
+  /**
+   * Tier B rail wiring (2026-08-10, Program B/E02) — pozycje WEWNĄTRZ popoverów.
+   *
+   * Samo OTWARCIE popovera zostaje lokalnym pstryczkiem UI (patrz
+   * `handleSlotClick`) — „otwórz panel AI" nie jest poleceniem, które Teresa
+   * miałaby sensownie wykonać. Ale KAŻDA pozycja w środku jest osobną akcją i
+   * to ona należy do rejestru. Zamiast wypisywać tu ręcznie parę
+   * `runtime string → id akcji` (lista, która rozjedzie się przy pierwszym
+   * nowym wpisie rejestru), odwracamy mapowanie, które rejestr JUŻ deklaruje:
+   * bierzemy akcje wystawione na powierzchni `rail` w BIEŻĄCEJ reprezentacji i
+   * indeksujemy je po ich własnym `runtime[activeTool]`.
+   *
+   * Skutek: pozycja popovera, której runtime string pokrywa się z akcją
+   * rejestru dla tej reprezentacji, idzie przez `runIdeaAction` (z
+   * `ctx.params.run` = dotychczasowy `onAction(action)`, więc klik człowieka
+   * jest BAJT-IDENTYCZNY); każda inna leci starą ścieżką bez pośrednictwa (Z3:
+   * rejestr nie wycisza kliku, którego nie zna).
+   *
+   * „Pierwszy wygrywa" przy zbiegu dwóch wpisów na ten sam runtime string —
+   * dziś taki zbieg nie istnieje na powierzchni `rail` (sprawdzone przed
+   * zmianą), a cichy wybór losowego wpisu byłby gorszy niż stabilna kolejność
+   * rejestru.
+   */
+  const railActionIdByRuntime = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const entry of registryActionsById.values()) {
+      const runtimeAction = entry.def.runtime?.[activeTool];
+      if (runtimeAction && !map.has(runtimeAction)) map.set(runtimeAction, entry.def.id);
+    }
+    return map;
+  }, [registryActionsById, activeTool]);
+
   const runRailAction = useCallback(
     (id: string, run: () => void) => {
       if (!registryActionsById.has(id)) {
@@ -900,9 +932,18 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
 
   const handlePopoverAction = useCallback(
     (action: string) => {
-      onAction(action);
+      // Tier B (2026-08-10): jedno wejście dla WSZYSTKICH popoverów raila
+      // (AI / Szablony-przez-`onAction` / Dodaj węzeł / Wiedza / Import-Eksport
+      // / Więcej narzędzi) — patrz `railActionIdByRuntime` wyżej. Brak wpisu w
+      // rejestrze = dokładnie dotychczasowe `onAction(action)`.
+      const registryId = railActionIdByRuntime.get(action);
+      if (!registryId) {
+        onAction(action);
+        return;
+      }
+      runRailAction(registryId, () => onAction(action));
     },
-    [onAction]
+    [railActionIdByRuntime, onAction, runRailAction]
   );
 
   const closePopover = useCallback(() => {

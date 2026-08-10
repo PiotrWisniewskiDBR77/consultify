@@ -1518,6 +1518,11 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({ onCSVImport, onExpandRec
           onAddRow={handleAddRow}
           onImportCSV={() => csvInputRef.current?.click()}
           onUseAI={() => uiDispatch({ type: 'TOGGLE_PANEL', panel: 'showChatToSchema' })}
+          onAddField={
+            locked
+              ? undefined
+              : () => uiDispatch({ type: 'SET_PANEL', panel: 'showAddColumn', value: true })
+          }
         />
       </ViewErrorBoundary>
     ) : viewLayout === 'table' ? (

@@ -130,8 +130,13 @@ import {
   type WhiteboardNodeComment,
 } from './whiteboard/nodes/whiteboardNodeComments';
 import { WhiteboardNodeCommentThread } from './whiteboard/nodes/WhiteboardNodeCommentThread';
-import { STICKY_COLORS, useIsDark } from './whiteboard/nodes/whiteboardNodeHelpers';
+import { STICKY_COLORS, STICKY_SIZES, useIsDark } from './whiteboard/nodes/whiteboardNodeHelpers';
 import { usePortalSlot } from './whiteboard/usePortalSlot';
+import {
+  DEFAULT_WHITEBOARD_NODE_SIZE,
+  resolveWhiteboardPlacement,
+  type WhiteboardRect,
+} from './whiteboard/whiteboardPlacement';
 import { useWhiteboardCollab } from './whiteboard/useWhiteboardCollab';
 import { useWhiteboardNodes } from './whiteboard/useWhiteboardNodes';
 import {
@@ -217,10 +222,26 @@ interface WhiteboardCanvasProps {
   suppressFloatingStyleBar?: boolean;
 }
 
+// WB-P1-02: `createNode`/`addElement`/`handleExternalInsert` live in the
+// OUTER `IdeaWhiteboardTool` component, which renders OUTSIDE
+// `<ReactFlowProvider>` (see the `<ReactFlowProvider><WhiteboardCanvas/>` JSX
+// below) — so they have no `useReactFlow()` access of their own and can't
+// call `screenToFlowPosition` directly. This imperative handle is the pull
+// side of that gap: the outer component asks the mounted canvas for a live
+// viewport reading (flow coords) at the moment it needs to place a new node,
+// rather than trying to keep a push-synced copy (which would go stale
+// between `onMoveEnd` events and initial mount).
+export interface WhiteboardCanvasHandle {
+  /** Flow-space point at the visual center of the current viewport. */
+  getCenter: () => { x: number; y: number };
+  /** Visible viewport, in flow coords, at the current pan/zoom. */
+  getViewportRect: () => WhiteboardRect;
+}
+
 // Z15: node types that expose the floating per-element style bar.
 const STYLEABLE_WB_NODE_TYPES = new Set(['stickyNote', 'textBlock', 'shapeNode']);
 
-const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({
+const WhiteboardCanvas = React.forwardRef<WhiteboardCanvasHandle, WhiteboardCanvasProps>(({
   nodes,
   edges,
   locked,
@@ -239,7 +260,7 @@ const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({
   onEdgeContextMenu: externalOnEdgeContextMenu,
   onNodeStyleChange,
   suppressFloatingStyleBar,
-}) => {
+}, ref) => {
   const { screenToFlowPosition, setViewport, fitView } = useReactFlow();
   // Z15: subscribe to the live viewport transform so the floating style bar
   // tracks the node while panning/zooming (re-renders on [x,y,zoom] change).
@@ -371,6 +392,31 @@ const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({
       y: (containerRef.current?.clientHeight ?? 300) / 2,
     });
   }, [screenToFlowPosition]);
+
+  // WB-P1-02: visible viewport in flow coordinates, used by the placement
+  // service to clamp fresh inserts on-screen at any pan/zoom (including
+  // browser-level zoom, which scales clientWidth/Height the same way).
+  const getViewportRect = React.useCallback((): WhiteboardRect => {
+    const topLeft = screenToFlowPosition({ x: 0, y: 0 });
+    const bottomRight = screenToFlowPosition({
+      x: containerRef.current?.clientWidth ?? 400,
+      y: containerRef.current?.clientHeight ?? 300,
+    });
+    return {
+      x: topLeft.x,
+      y: topLeft.y,
+      width: Math.max(bottomRight.x - topLeft.x, 1),
+      height: Math.max(bottomRight.y - topLeft.y, 1),
+    };
+  }, [screenToFlowPosition]);
+
+  // WB-P1-02: expose both to the outer `IdeaWhiteboardTool`, which needs
+  // them for the shared placement service but renders outside
+  // `<ReactFlowProvider>` (see `WhiteboardCanvasHandle` doc above).
+  React.useImperativeHandle(ref, () => ({ getCenter, getViewportRect }), [
+    getCenter,
+    getViewportRect,
+  ]);
 
   const handlePaste = React.useCallback(
     (e: ClipboardEvent) => {
@@ -652,7 +698,8 @@ const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({
       </ReactFlow>
     </div>
   );
-};
+});
+WhiteboardCanvas.displayName = 'WhiteboardCanvas';
 
 // ── Main component ───────────────────────────────────────────────────────────
 
@@ -868,6 +915,10 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
   // listener (below, near handleEdgeContextMenu) to this tool's own region
   // instead of the whole document.
   const wbKeyboardMenuContainerRef = useRef<HTMLDivElement>(null);
+  // WB-P1-02: pull-based handle onto the mounted `WhiteboardCanvas` — see
+  // `WhiteboardCanvasHandle` doc — so `createNode` can read a live viewport
+  // reading despite this component rendering outside `<ReactFlowProvider>`.
+  const canvasApiRef = useRef<WhiteboardCanvasHandle>(null);
   const [contextMenuPos, setContextMenuPos] = useState<{ x: number; y: number } | null>(null);
   const [contextMenuTarget, setContextMenuTarget] = useState<{
     nodeId?: string;
@@ -1964,9 +2015,22 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
   // ── Add elements ─────────────────────────────────────────────────────────
 
   const createNode = useCallback(
-    (kind: WbNodeKind, extraData?: Record<string, unknown>, index = 0): Node => {
+    // `index` is kept for call-site compatibility (batch ordering) but no
+    // longer drives placement directly — see the placement service call
+    // below, which is collision-aware instead of a fixed per-index offset.
+    // `extraOccupiedRects` lets a caller building several nodes in one batch
+    // (paste, outline import, AI proposal apply) pass the rects of siblings
+    // it already created earlier in the *same* batch — those haven't reached
+    // `nodes` state yet, so without this a 12-item batch could still stack
+    // on itself even though each call is individually collision-checked
+    // against the canvas.
+    (
+      kind: WbNodeKind,
+      extraData?: Record<string, unknown>,
+      _index = 0,
+      extraOccupiedRects: WhiteboardRect[] = []
+    ): Node => {
       const id = `wb-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
-      const offset = index * 30;
       const explicitPosition = extraData?.position as { x: number; y: number } | undefined;
 
       const typeMap: Record<WbNodeKind, string> = {
@@ -2097,10 +2161,65 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
         };
       }
 
+      // WB-P1-02: single shared placement service for every insertion path
+      // (toolbar add, paste, drop, outline import, AI proposal apply, ghost
+      // card materialization all funnel through this `createNode`). Explicit
+      // callers keep their intended top-left anchor (e.g. a template layout
+      // or the exact cursor drop point) — the service only nudges it when it
+      // would collide with something already on the canvas. Callers with no
+      // opinion (plain toolbar clicks) anchor on the current viewport center
+      // so the new object appears where the user is looking, not at a fixed
+      // canvas-origin offset that ignores pan/zoom.
+      const placementSize = initialStyle
+        ? initialStyle
+        : kind === 'sticky'
+          ? {
+              width: (STICKY_SIZES[String(extraData?.size || 'm')] || STICKY_SIZES.m).w,
+              height: (STICKY_SIZES[String(extraData?.size || 'm')] || STICKY_SIZES.m).h,
+            }
+          : DEFAULT_WHITEBOARD_NODE_SIZE;
+      // `canvasApiRef` is the pull-based bridge to the mounted
+      // `WhiteboardCanvas` (see `WhiteboardCanvasHandle`) — it's the only way
+      // this outer component can read a live viewport reading, since it
+      // renders outside `<ReactFlowProvider>` itself. Falls back to a fixed
+      // guess if the canvas hasn't mounted yet (shouldn't happen in practice:
+      // every call site runs from a user interaction after the board is open).
+      const anchor =
+        explicitPosition ||
+        (() => {
+          const center = canvasApiRef.current?.getCenter() ?? { x: 400, y: 300 };
+          return {
+            x: center.x - placementSize.width / 2,
+            y: center.y - placementSize.height / 2,
+          };
+        })();
+      const occupiedRects: WhiteboardRect[] = nodes
+        .filter((n) => !n.hidden)
+        .map((n) => ({
+          x: n.position.x,
+          y: n.position.y,
+          width:
+            (typeof n.width === 'number' && n.width > 0 ? n.width : undefined) ??
+            (typeof n.style?.width === 'number' ? (n.style.width as number) : undefined) ??
+            DEFAULT_WHITEBOARD_NODE_SIZE.width,
+          height:
+            (typeof n.height === 'number' && n.height > 0 ? n.height : undefined) ??
+            (typeof n.style?.height === 'number' ? (n.style.height as number) : undefined) ??
+            DEFAULT_WHITEBOARD_NODE_SIZE.height,
+        }))
+        .concat(extraOccupiedRects);
+      const resolvedPosition = resolveWhiteboardPlacement({
+        size: placementSize,
+        anchor,
+        occupiedRects,
+        viewport: canvasApiRef.current?.getViewportRect(),
+        grid: 8,
+      });
+
       const newNode: Node = {
         id,
         type: nodeType,
-        position: explicitPosition || { x: 100 + offset, y: 100 + offset },
+        position: resolvedPosition,
         data: nodeData,
         draggable: !nodeData.locked,
         connectable: !nodeData.locked,
@@ -2133,7 +2252,14 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
       }
       return newNode;
     },
-    [currentUserId, handleToggleReaction, isPl, locked, setNodes]
+    [
+      currentUserId,
+      handleToggleReaction,
+      isPl,
+      locked,
+      nodes,
+      setNodes,
+    ]
   );
 
   const createOutcomeRecord = useCallback(
@@ -2178,9 +2304,24 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
     (items: WhiteboardExternalInsert[]) => {
       if (locked || items.length === 0) return;
       pushUndoSnapshot();
+      // WB-P1-02: accumulate each created node's rect as we go so a batch of
+      // several items (e.g. a multi-file drop or an outline import) never
+      // stacks on its own earlier siblings — `nodes` state doesn't see them
+      // until the single `setNodes` call below.
+      const batchRects: WhiteboardRect[] = [];
+      const pushBatchRect = (node: Node) => {
+        const style = node.style as { width?: number; height?: number } | undefined;
+        batchRects.push({
+          x: node.position.x,
+          y: node.position.y,
+          width: style?.width ?? DEFAULT_WHITEBOARD_NODE_SIZE.width,
+          height: style?.height ?? DEFAULT_WHITEBOARD_NODE_SIZE.height,
+        });
+      };
       const created = items.map((item, index) => {
+        let node: Node;
         if (item.kind === 'image') {
-          return createNode(
+          node = createNode(
             'image',
             {
               label: item.label,
@@ -2192,11 +2333,11 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
               position: item.position,
               semanticType: 'image',
             },
-            index
+            index,
+            batchRects
           );
-        }
-        if (item.kind === 'link') {
-          return createNode(
+        } else if (item.kind === 'link') {
+          node = createNode(
             'link',
             {
               label: item.label,
@@ -2204,19 +2345,24 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
               position: item.position,
               semanticType: 'link',
             },
-            index
+            index,
+            batchRects
+          );
+        } else {
+          node = createNode(
+            item.label.length > 100 ? 'text' : 'sticky',
+            {
+              label: item.label,
+              position: item.position,
+              colorIndex: item.colorIndex,
+              semanticType: item.label.length > 100 ? undefined : 'note',
+            },
+            index,
+            batchRects
           );
         }
-        return createNode(
-          item.label.length > 100 ? 'text' : 'sticky',
-          {
-            label: item.label,
-            position: item.position,
-            colorIndex: item.colorIndex,
-            semanticType: item.label.length > 100 ? undefined : 'note',
-          },
-          index
-        );
+        pushBatchRect(node);
+        return node;
       });
       setNodes((prev) => [...prev, ...created]);
       appendActivity(
@@ -2447,16 +2593,26 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
   );
 
   // ── Node CRUD, grouping, distribution (extracted to useWhiteboardNodes) ──
-  const { deleteSelected, duplicateSelected, groupSelected, ungroupSelected, distributeNodes } =
-    useWhiteboardNodes({
-      nodes,
-      edges,
-      setNodes,
-      setEdges,
-      locked: locked || false,
-      isPl,
-      pushSnapshot: pushUndoSnapshot,
-    });
+  const {
+    deleteSelected,
+    duplicateSelected,
+    groupSelected,
+    ungroupSelected,
+    distributeNodes,
+    // WB-CLIPBOARD-01 fix: real object clipboard (node+edges), not the
+    // OS-clipboard text copy `handleBaseAction` used to do.
+    copySelected,
+    pasteClipboard,
+    clipboardCount,
+  } = useWhiteboardNodes({
+    nodes,
+    edges,
+    setNodes,
+    setEdges,
+    locked: locked || false,
+    isPl,
+    pushSnapshot: pushUndoSnapshot,
+  });
 
   // ── Quick action listener (extracted to useWhiteboardQuickActions) ───────
   // AI runner is defined below (needs handleGenerateProposal); bridged via ref
@@ -3331,6 +3487,11 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
       pushUndoSnapshot();
       const idMap = new Map<string, string>();
       const created: Node[] = [];
+      // WB-P1-02: same batch-rect accumulation as handleExternalInsert — an
+      // accepted proposal can add several nodes at once, and without this
+      // they'd only be collision-checked against the pre-existing canvas,
+      // not against each other.
+      const batchRects: WhiteboardRect[] = [];
       addNodes.forEach((an, index) => {
         const node = createNode(
           toWbNodeKind(an.type),
@@ -3339,8 +3500,16 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
             ...(an.position && { position: an.position }),
             ...(an.data || {}),
           },
-          nodes.length + index
+          nodes.length + index,
+          batchRects
         );
+        const style = node.style as { width?: number; height?: number } | undefined;
+        batchRects.push({
+          x: node.position.x,
+          y: node.position.y,
+          width: style?.width ?? DEFAULT_WHITEBOARD_NODE_SIZE.width,
+          height: style?.height ?? DEFAULT_WHITEBOARD_NODE_SIZE.height,
+        });
         if (an.id) idMap.set(String(an.id), node.id);
         created.push(node);
       });
@@ -3576,6 +3745,10 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
       onSelectAll: () => setNodes((nds) => nds.map((n) => ({ ...n, selected: true }))),
       onDeleteSelected: deleteSelected,
       onDuplicate: duplicateSelected,
+      // WB-CLIPBOARD-01 fix: Ctrl+C/Ctrl+V now drive the same real object
+      // clipboard as the context menu's Copy/Paste (see useWhiteboardNodes).
+      onCopy: copySelected,
+      onPaste: () => pasteClipboard(),
       onFitView: () => {
         // Dispatch viewport event to fit-to-view (fitView is not available outside ReactFlowProvider)
         const rfContainer = document.querySelector('.react-flow');
@@ -4144,6 +4317,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
 
           <ReactFlowProvider>
             <WhiteboardCanvas
+              ref={canvasApiRef}
               nodes={canvasNodes}
               edges={displayEdges}
               locked={locked || whiteboardMode === 'draw'}
@@ -4208,6 +4382,9 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
             onLockNode={lockSelected}
             onBringToFront={bringSelectedToFront}
             onSendToBack={sendSelectedToBack}
+            onCopySelected={copySelected}
+            onPaste={() => pasteClipboard()}
+            pasteDisabled={clipboardCount() === 0}
           />
 
           {commentsPanelNodeId &&

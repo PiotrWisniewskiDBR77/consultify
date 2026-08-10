@@ -79,6 +79,20 @@ export const LabeledEdge: React.FC<EdgeProps> = ({
         .trim() || rawStroke
     : rawStroke;
   const strokeWidth = selected ? 3 : (style?.strokeWidth as number) || 2;
+  // Canonical line-style source is data.edgeStyle (set by
+  // useMindMapQuickActions.ts's mm_edge_cycle_style). Edges saved before that
+  // mutation was fixed may carry only the legacy style.strokeDasharray shape
+  // — accept it as a migration-safe fallback so already-persisted maps still
+  // render their chosen style instead of silently reverting to solid.
+  const legacyDasharray = (style as { strokeDasharray?: string } | undefined)?.strokeDasharray;
+  const effectiveEdgeStyle =
+    typeof data?.edgeStyle === 'string'
+      ? data.edgeStyle
+      : legacyDasharray
+        ? legacyDasharray === '2 2'
+          ? 'dotted'
+          : 'dashed'
+        : undefined;
   // Strzałka kierunku — wspólny model (canvas/edgeArrowMarkers.tsx). Kolor
   // grotu = już rozwiązany `strokeColor` (literał), nie gradient krawędzi.
   const arrowDirection = resolveArrowDirection(data?.arrowDirection, 'none');
@@ -137,11 +151,11 @@ export const LabeledEdge: React.FC<EdgeProps> = ({
         strokeWidth={strokeWidth}
         strokeLinecap="round"
         strokeDasharray={
-          data?.edgeStyle === 'dashed'
+          effectiveEdgeStyle === 'dashed'
             ? '8 4'
-            : data?.edgeStyle === 'dotted'
+            : effectiveEdgeStyle === 'dotted'
               ? '2 4'
-              : data?.edgeStyle === 'wavy'
+              : effectiveEdgeStyle === 'wavy'
                 ? '6 3 2 3'
                 : undefined
         }
