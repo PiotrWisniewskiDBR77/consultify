@@ -123,6 +123,27 @@ export const ROUTES = {
   KPI_OKR: '/kpi-okr',
   BENEFITS: '/benefits',
   RESULTS: '/results',
+  // RN-G2 (2026-08-10) — Results Next registries. Nested objects mirror the
+  // ROUTES.DISCOVERY_TOOLS pattern. These are NEW exact-path routes that live
+  // alongside (not instead of) the legacy `RESULTS` route above — React
+  // Router matches exact paths, so `/results` and `/results/kpi` are
+  // different routes and do not collide. Master plan §11 routing contract
+  // (docs/product/results-vnext/01_RESULTS_MASTER_IMPLEMENTATION_PLAN.md).
+  // Already auth-protected + already resolve to the Results sidebar mirror
+  // via the `normalized.startsWith(ROUTES.RESULTS)` prefix check below —
+  // zero RouterSync changes required (verified, see RN_G2_UI_SCOPE.md §E).
+  RESULTS_KPI: {
+    ROOT: '/results/kpi',
+    SCORECARD: '/results/kpi/scorecards/:scorecardId',
+  },
+  RESULTS_ROI: {
+    ROOT: '/results/roi',
+    CASE: '/results/roi/cases/:roiCaseId',
+  },
+  RESULTS_OKR: {
+    ROOT: '/results/okr',
+    SET: '/results/okr/sets/:okrSetId',
+  },
   CONCLUSIONS: '/conclusions',
   MCP_IRIS: '/mcp/iris',
   MCP_MARKETPLACE: '/mcp/marketplace',

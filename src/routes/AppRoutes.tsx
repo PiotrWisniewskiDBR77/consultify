@@ -94,6 +94,23 @@ const ExecutionHub = lazyWithRetry(() =>
 const ResultsHub = lazyWithRetry(() =>
   import('@/components/Results/ResultsHub').then((m) => ({ default: m.default }))
 );
+// RN-G2 (2026-08-10) — Results Next registry shells (P0). New routes ALONGSIDE
+// the legacy ResultsHub above, not instead of it — see RN_G2_UI_SCOPE.md §E.
+const ResultsKpiRegistryPage = lazyWithRetry(() =>
+  import('@/components/ResultsVNext/ResultsKpiRegistryPage').then((m) => ({
+    default: m.default,
+  }))
+);
+const ResultsRoiRegistryPage = lazyWithRetry(() =>
+  import('@/components/ResultsVNext/ResultsRoiRegistryPage').then((m) => ({
+    default: m.default,
+  }))
+);
+const ResultsOkrRegistryPage = lazyWithRetry(() =>
+  import('@/components/ResultsVNext/ResultsOkrRegistryPage').then((m) => ({
+    default: m.default,
+  }))
+);
 
 const ConclusionsHub = lazyWithRetry(() =>
   import('@/components/Conclusions/ConclusionsHub').then((m) => ({ default: m.default }))
@@ -2434,6 +2451,80 @@ export const AppRoutes: React.FC = () => {
                 >
                   <RouteErrorBoundary>
                     <ResultsHub />
+                  </RouteErrorBoundary>
+                </ProductionModuleGate>
+              </MainLayout>
+            </BetaGate>
+          }
+        />
+        {/* RN-G2 (2026-08-10) — Results Next registries: KPI / ROI / OKR.
+            EXACT-path routes new alongside the legacy `/results` route above
+            (React Router matches exact paths first, so no collision). Same
+            entitlement chain the legacy hub uses (BetaGate MODULE_BENEFITS +
+            ProductionModuleGate "Results") — reused, not reinvented, per
+            RN_G2_UI_SCOPE.md §E. Each page is internally gated OFF by its own
+            resultsVNextFeatureFlags.ts flag until its domain vertical ships
+            (P1/P2/P3) — see ResultsVNextRegistryRouteBase.tsx. */}
+        <Route
+          path={ROUTES.RESULTS_KPI.ROOT}
+          element={
+            <BetaGate moduleId="MODULE_BENEFITS">
+              <MainLayout
+                breadcrumbs={
+                  breadcrumbs || [t('sidebar.results', 'Results'), t('results.kpi', 'KPI')]
+                }
+                noPadding
+              >
+                <ProductionModuleGate
+                  enabled={!hideNonCoreModulesOnPublicProduction}
+                  moduleName="Results"
+                >
+                  <RouteErrorBoundary>
+                    <ResultsKpiRegistryPage />
+                  </RouteErrorBoundary>
+                </ProductionModuleGate>
+              </MainLayout>
+            </BetaGate>
+          }
+        />
+        <Route
+          path={ROUTES.RESULTS_ROI.ROOT}
+          element={
+            <BetaGate moduleId="MODULE_BENEFITS">
+              <MainLayout
+                breadcrumbs={
+                  breadcrumbs || [t('sidebar.results', 'Results'), t('results.roi', 'ROI')]
+                }
+                noPadding
+              >
+                <ProductionModuleGate
+                  enabled={!hideNonCoreModulesOnPublicProduction}
+                  moduleName="Results"
+                >
+                  <RouteErrorBoundary>
+                    <ResultsRoiRegistryPage />
+                  </RouteErrorBoundary>
+                </ProductionModuleGate>
+              </MainLayout>
+            </BetaGate>
+          }
+        />
+        <Route
+          path={ROUTES.RESULTS_OKR.ROOT}
+          element={
+            <BetaGate moduleId="MODULE_BENEFITS">
+              <MainLayout
+                breadcrumbs={
+                  breadcrumbs || [t('sidebar.results', 'Results'), t('results.okr', 'OKR')]
+                }
+                noPadding
+              >
+                <ProductionModuleGate
+                  enabled={!hideNonCoreModulesOnPublicProduction}
+                  moduleName="Results"
+                >
+                  <RouteErrorBoundary>
+                    <ResultsOkrRegistryPage />
                   </RouteErrorBoundary>
                 </ProductionModuleGate>
               </MainLayout>
