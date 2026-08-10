@@ -1154,8 +1154,8 @@ export async function reopenVersion(params: ReopenVersionParams): Promise<Reopen
       const newWorkingRevision = await tx.queryOne<WorkingRevisionRow>(
         `INSERT INTO finance_working_revisions (
            working_revision_id, artifact_id, organization_id, business_version_id,
-           source_business_version_id, revision_seq, content_semantic_hash, is_current, edited_by
-         ) VALUES (?, ?, ?, ?, ?, ?, ?, true, ?)
+           source_business_version_id, revision_seq, content_semantic_hash, compute_run_id, is_current, edited_by
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, true, ?)
          RETURNING *`,
         [
           newWorkingRevisionId,
@@ -1164,7 +1164,16 @@ export async function reopenVersion(params: ReopenVersionParams): Promise<Reopen
           newBusinessVersionId,
           vN.business_version_id,
           nextSeq,
+          // W10-D01 fix: this INSERT already copy-on-write's content_semantic_hash
+          // from the source revision (copy-on-write — content_semantic_hash
+          // describes the CONTENT, which is byte-identical), but used to drop
+          // compute_run_id (not in the original column list at all), leaving a
+          // reopened Draft with a real hash but a NULL run_id — the same
+          // "half-fixed" shape this whole fix exists to close. compute_run_id
+          // describes WHICH RUN produced that content, which is equally still
+          // true after a copy-on-write reopen (no new compute happened).
           sourceRevision?.content_semantic_hash ?? null,
+          sourceRevision?.compute_run_id ?? null,
           params.actorId,
         ]
       );
