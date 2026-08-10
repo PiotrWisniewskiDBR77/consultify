@@ -70,7 +70,15 @@ describe.skipIf(!REAL_PG)('AP-05 financeCompareService — real PostgreSQL', () 
   async function lineId(code: string): Promise<string> {
     const cached = lineIds.get(code);
     if (cached) return cached;
-    const row = await withPinnedPostgresTransaction((tx) => tx.queryOne<{ id: string }>(`SELECT id FROM financial_statement_lines WHERE line_code = ?`, [code]));
+    // W10 test-isolation fix — `financial_statement_lines` is a SHARED taxonomy table on the
+    // shared test database: the canonical seed rows carry `organization_id IS NULL`, while the
+    // same `line_code` may legitimately exist as an org-scoped override. Reading it unscoped
+    // makes the row this suite gets depend on what any other suite happens to hold at that
+    // moment. Pinned to the canonical seed row, same pattern `kpiComputeService.pg.test.ts`
+    // already uses for its own `writeLine` lookup.
+    const row = await withPinnedPostgresTransaction((tx) =>
+      tx.queryOne<{ id: string }>(`SELECT id FROM financial_statement_lines WHERE line_code = ? AND organization_id IS NULL LIMIT 1`, [code])
+    );
     if (!row) throw new Error(`financial_statement_lines has no line_code=${code}`);
     lineIds.set(code, row.id);
     return row.id;
