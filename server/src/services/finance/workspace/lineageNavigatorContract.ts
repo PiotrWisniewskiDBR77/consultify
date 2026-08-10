@@ -35,9 +35,16 @@
 
 import {
   FinanceArtifactTypeValues,
+  type ArtifactRef,
   type FinanceArtifactType,
 } from '../../../types/finance/ArtifactRef.js';
 import type { FinanceArtifactFreshness } from '../../../types/finance/financeValueSemantics.js';
+import type {
+  FinanceGridFilterState,
+  FinanceGridScrollState,
+  FinanceGridSelectionState,
+  FinanceWorkspaceState,
+} from '../../../types/finance/WorkspaceState.js';
 import { TERMINAL_STATUSES, type BusinessVersionStatus } from '../canonical/lifecycleService.js';
 import type { LineageEdgeRow, LineageEdgeType } from '../canonical/lineageService.js';
 import type { WorkspaceBarLabel } from './workspaceBarContract.js';
@@ -1086,6 +1093,306 @@ export const LINEAGE_FULL_GRAPH_VIEW = {
   rationale:
     'OWN-FIN-022 + addendum section 6.2 — the compact trail and the Related panel are the primary navigation; the graph is a fallback for genuinely branched cases.',
 } as const;
+
+// ---------------------------------------------------------------------------
+// Returning from a lineage jump: the restore point and the navigation stack.
+// ---------------------------------------------------------------------------
+
+/**
+ * WHY THIS IS NOT "ADD A FIELD TO WorkspaceState".
+ *
+ * `FinanceWorkspaceState` (AP-00) is PER ARTIFACT: it is keyed by
+ * `artifactRef`, and one blob describes one open artifact for one user. Every
+ * jump the navigator offers — a trail node, a Related row, `+ Nowy`, the full
+ * graph — leaves that artifact for a different one. So "keep my filters, my
+ * scroll and my selected row when I come back" cannot be satisfied by adding
+ * anything to the state of the artifact being LEFT: the question is about a
+ * relationship BETWEEN two workspace states, and neither of them owns it.
+ *
+ * Two candidate designs:
+ *
+ *   (a) Per-artifact retention: keep every visited artifact's WorkspaceState
+ *       alive and re-attach it on return. Necessary, but not sufficient — it
+ *       has no notion of "back". It cannot distinguish "returned from a
+ *       three-hop excursion" from "opened this artifact fresh from a list", and
+ *       with no ordering there is nothing to bound: retention becomes an
+ *       unbounded per-user cache of grid state.
+ *
+ *   (b) A NAVIGATION STACK owned above the per-artifact states. Chosen. It
+ *       carries the ORDER (so "back" means something), is explicitly bounded
+ *       (`LINEAGE_NAV_STACK_MAX_DEPTH`), and is tenant-scoped like everything
+ *       else in this file.
+ *
+ * The critical constraint on (b): a stack entry stores a RESTORE POINT — the
+ * view-level state only (selection, filters, scroll) plus the identity of the
+ * workspace it belongs to. It deliberately does NOT copy
+ * `unsavedOperationStack`. Duplicating uncommitted edits into a navigation
+ * entry would create a second, diverging copy of pending work, and AP-04 owns
+ * that stack and its crash-recovery replay. The entry points AT a workspace
+ * state; it does not shadow it.
+ *
+ * DEPENDENCY NOTE: staleness propagation after a source changes is NOT
+ * modelled here. It is owned by `lineageFreshnessService` (parallel stream,
+ * covered by its own Postgres-backed tests). A restored view can therefore be
+ * showing pre-change freshness, and the caller is expected to re-read
+ * freshness for the restored artifact rather than trust the restore point's
+ * copy — which is why a restore point carries no freshness at all.
+ */
+
+/** Identity of one per-artifact, per-user workspace state. */
+export function financeWorkspaceStateKey(params: {
+  organizationId: string;
+  userId: string;
+  artifactId: string;
+  businessVersionId: string;
+}): string {
+  return [params.organizationId, params.userId, params.artifactId, params.businessVersionId].join('::');
+}
+
+export interface LineageWorkspaceRestorePoint {
+  workspaceStateKey: string;
+  organizationId: string;
+  userId: string;
+  artifactRef: ArtifactRef;
+  /** Which module view (`pnl`, `bs`, …) was active. `null` when the caller does not track views. */
+  viewId: string | null;
+  selection: FinanceGridSelectionState;
+  filters: FinanceGridFilterState;
+  scroll: FinanceGridScrollState;
+  capturedAt: string;
+}
+
+/**
+ * Snapshot the parts of a workspace a user expects to find unchanged on
+ * return. Values are copied (a live reference would mutate under the stack as
+ * the user keeps working before jumping).
+ */
+export function captureWorkspaceRestorePoint(
+  state: FinanceWorkspaceState,
+  options: { viewId?: string | null; now?: () => string } = {}
+): LineageWorkspaceRestorePoint {
+  const now = options.now ?? (() => new Date().toISOString());
+  return {
+    workspaceStateKey: financeWorkspaceStateKey({
+      organizationId: state.organizationId,
+      userId: state.userId,
+      artifactId: state.artifactRef.artifactId,
+      businessVersionId: state.artifactRef.businessVersionId,
+    }),
+    organizationId: state.organizationId,
+    userId: state.userId,
+    artifactRef: state.artifactRef,
+    viewId: options.viewId ?? null,
+    selection: {
+      activeCell: state.selection.activeCell,
+      ranges: state.selection.ranges.map((range) => ({ ...range })),
+    },
+    filters: { raw: { ...state.filters.raw } },
+    scroll: { ...state.scroll },
+    capturedAt: now(),
+  };
+}
+
+export type LineageRestoreResult =
+  | { ok: true; state: FinanceWorkspaceState }
+  | { ok: false; code: 'RESTORE_POINT_MISMATCH' | 'RESTORE_POINT_FOREIGN_ORG'; message: string };
+
+/**
+ * Re-apply a restore point to a freshly loaded workspace state. Returns a NEW
+ * state; `unsavedOperationStack` and `sourceWorkingRevisionId` are carried
+ * through from the live state untouched, never from the snapshot.
+ */
+export function applyWorkspaceRestorePoint(
+  state: FinanceWorkspaceState,
+  restorePoint: LineageWorkspaceRestorePoint
+): LineageRestoreResult {
+  if (state.organizationId !== restorePoint.organizationId) {
+    return {
+      ok: false,
+      code: 'RESTORE_POINT_FOREIGN_ORG',
+      message: `restore point belongs to organization ${restorePoint.organizationId}, workspace is ${state.organizationId}`,
+    };
+  }
+  const key = financeWorkspaceStateKey({
+    organizationId: state.organizationId,
+    userId: state.userId,
+    artifactId: state.artifactRef.artifactId,
+    businessVersionId: state.artifactRef.businessVersionId,
+  });
+  if (key !== restorePoint.workspaceStateKey) {
+    return {
+      ok: false,
+      code: 'RESTORE_POINT_MISMATCH',
+      message: `restore point ${restorePoint.workspaceStateKey} does not describe workspace ${key}`,
+    };
+  }
+  return {
+    ok: true,
+    state: {
+      ...state,
+      selection: restorePoint.selection,
+      filters: restorePoint.filters,
+      scroll: restorePoint.scroll,
+    },
+  };
+}
+
+export type LineageNavigationVia = 'trail' | 'related-panel' | 'create-new' | 'full-graph';
+
+export interface LineageNavigationEntry {
+  restorePoint: LineageWorkspaceRestorePoint;
+  via: LineageNavigationVia;
+  /** The version the user jumped TO — so a caller can tell where a "back" came from. */
+  targetVersionId: string;
+}
+
+export interface LineageNavigationStack {
+  organizationId: string;
+  /** Oldest first; the top of the stack is the last element. */
+  entries: readonly LineageNavigationEntry[];
+}
+
+/**
+ * Bounded on purpose: unbounded navigation history is an unbounded copy of
+ * grid state per user. Ten hops is far past any real lineage excursion, and
+ * the oldest entry is dropped rather than the newest refused.
+ */
+export const LINEAGE_NAV_STACK_MAX_DEPTH = 10;
+
+export function createNavigationStack(organizationId: string): LineageNavigationStack {
+  return { organizationId, entries: [] };
+}
+
+export function pushNavigation(
+  stack: LineageNavigationStack,
+  entry: LineageNavigationEntry
+): LineageNavigationStack {
+  // Same tenant rule as everywhere else in this file: a stack is per organization.
+  if (entry.restorePoint.organizationId !== stack.organizationId) return stack;
+  const top = stack.entries[stack.entries.length - 1];
+  // Re-entering the same workspace (e.g. the user toggles between two artifacts)
+  // must refresh the snapshot in place, not grow the stack forever.
+  const entries =
+    top && top.restorePoint.workspaceStateKey === entry.restorePoint.workspaceStateKey
+      ? [...stack.entries.slice(0, -1), entry]
+      : [...stack.entries, entry];
+  return {
+    organizationId: stack.organizationId,
+    entries: entries.slice(Math.max(0, entries.length - LINEAGE_NAV_STACK_MAX_DEPTH)),
+  };
+}
+
+export function popNavigation(stack: LineageNavigationStack): {
+  stack: LineageNavigationStack;
+  entry: LineageNavigationEntry | null;
+} {
+  if (stack.entries.length === 0) return { stack, entry: null };
+  const entry = stack.entries[stack.entries.length - 1];
+  return {
+    stack: { organizationId: stack.organizationId, entries: stack.entries.slice(0, -1) },
+    entry,
+  };
+}
+
+export function peekNavigation(stack: LineageNavigationStack): LineageNavigationEntry | null {
+  return stack.entries[stack.entries.length - 1] ?? null;
+}
+
+// ---------------------------------------------------------------------------
+// The Related Artifacts DRAWER itself.
+// ---------------------------------------------------------------------------
+
+/**
+ * The panel DATA was complete; the drawer that shows it had no model at all —
+ * no open/closed state, no way in from the keyboard, and no statement of what
+ * closing it restores. The last one is what made this more than cosmetics: if
+ * the drawer is a route (or anything that unmounts the grid), then "close" is
+ * a remount and the user's filters, scroll and selected row are gone. Writing
+ * the drawer down as a NON-MODAL overlay that never unmounts the workspace is
+ * the design decision, and `restoreOnClose` is the fallback for the one case
+ * that can still lose it: a jump taken FROM the drawer, which really does
+ * leave the artifact (that is what the navigation stack above is for).
+ *
+ * AP-10 SCOPE NOTE: `moduleAdapters.ts` gives all five modules a `Powiązane`
+ * secondary action with `keyboardCommandId: null`. Adopting the shortcut is a
+ * ONE-LINE change in each adapter, deliberately NOT made here — AP-10 is out
+ * of scope for this task and no adapter is forced to change. The id below is
+ * declared so the adapters (and `KeyboardCommandRegistry`) have one agreed
+ * name to adopt when that work happens.
+ */
+export const LINEAGE_RELATED_DRAWER = {
+  id: 'finance.lineage.relatedDrawer',
+  label: { key: 'finance.related.open', pl: 'Powiązane' } as WorkspaceBarLabel,
+  /** Proposed command id for the AP-10 adapters' `Powiązane` action; not wired here. */
+  keyboardCommandId: 'finance.related',
+  /** The grid stays mounted and interactive underneath — see `restoreOnClose`. */
+  modality: 'non-modal',
+  placement: 'right',
+  /** Closing must return DOM focus to the control that opened it (a11y, handoff section 11). */
+  restoresDomFocus: true,
+  dismissOn: ['escape', 'toggle-command', 'outside-click'],
+} as const;
+
+export type LineageRelatedDrawerSection =
+  | 'trail'
+  | 'parents'
+  | 'indirectAncestors'
+  | 'children'
+  | 'indirectDescendants'
+  | 'siblings'
+  | 'createNew'
+  | 'fullGraph';
+
+export const LINEAGE_RELATED_DRAWER_DEFAULT_SECTION: LineageRelatedDrawerSection = 'trail';
+
+export interface LineageRelatedDrawerState {
+  open: boolean;
+  /** The version whose relations are shown; `null` while closed. */
+  focusVersionId: string | null;
+  activeSection: LineageRelatedDrawerSection;
+  /** Snapshot to hand back to the workspace if the drawer's close ends a jump. */
+  restoreOnClose: LineageWorkspaceRestorePoint | null;
+  /** Control that must regain DOM focus on close (the bar's `Powiązane` button, a trail node, …). */
+  returnFocusControlId: string | null;
+}
+
+export function createRelatedDrawerState(): LineageRelatedDrawerState {
+  return {
+    open: false,
+    focusVersionId: null,
+    activeSection: LINEAGE_RELATED_DRAWER_DEFAULT_SECTION,
+    restoreOnClose: null,
+    returnFocusControlId: null,
+  };
+}
+
+export function openRelatedDrawer(params: {
+  focusVersionId: string;
+  restorePoint: LineageWorkspaceRestorePoint;
+  returnFocusControlId: string;
+  section?: LineageRelatedDrawerSection;
+}): LineageRelatedDrawerState {
+  return {
+    open: true,
+    focusVersionId: params.focusVersionId,
+    activeSection: params.section ?? LINEAGE_RELATED_DRAWER_DEFAULT_SECTION,
+    restoreOnClose: params.restorePoint,
+    returnFocusControlId: params.returnFocusControlId,
+  };
+}
+
+/** Closing hands the caller back BOTH things a close has to settle: what to restore, and where focus goes. */
+export function closeRelatedDrawer(state: LineageRelatedDrawerState): {
+  state: LineageRelatedDrawerState;
+  restore: LineageWorkspaceRestorePoint | null;
+  returnFocusControlId: string | null;
+} {
+  return {
+    state: createRelatedDrawerState(),
+    restore: state.restoreOnClose,
+    returnFocusControlId: state.returnFocusControlId,
+  };
+}
 
 // ---------------------------------------------------------------------------
 // The port over the real service + the assembled model.

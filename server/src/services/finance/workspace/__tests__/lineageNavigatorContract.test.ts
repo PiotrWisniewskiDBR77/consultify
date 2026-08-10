@@ -18,21 +18,34 @@ import { stageRank } from '../../canonical/lineageService.js';
 import type { LineageEdgeRow } from '../../canonical/lineageService.js';
 import {
   LINEAGE_FULL_GRAPH_VIEW,
+  LINEAGE_NAV_STACK_MAX_DEPTH,
+  LINEAGE_RELATED_DRAWER,
   allowedDownstreamCreations,
+  applyWorkspaceRestorePoint,
   buildLineageTrail,
   buildRelatedPanel,
+  captureWorkspaceRestorePoint,
+  closeRelatedDrawer,
   computeDepths,
+  createNavigationStack,
+  createRelatedDrawerState,
   hasTenantAnomalies,
   isOrphaned,
   isTerminalVersionStatus,
   lineageStageRank,
   loadLineageNavigator,
+  openRelatedDrawer,
+  peekNavigation,
+  popNavigation,
+  pushNavigation,
   type LineageMetadataResolver,
+  type LineageNavigationEntry,
   type LineageNodeMetadata,
   type LineageServicePort,
   type LineageTrailNode,
 } from '../lineageNavigatorContract.js';
-import { ORG } from './workspaceTestFixtures.js';
+import { createEmptyWorkspaceState, type FinanceWorkspaceState } from '../../../../types/finance/WorkspaceState.js';
+import { ORG, artifactRef } from './workspaceTestFixtures.js';
 
 // ===========================================================================
 // AP-11 — lineage navigator
@@ -958,5 +971,171 @@ describe('AP-11 lineageNavigatorContract — indirect ancestors', () => {
       ['an2', 'bm4']
     );
     expect(panel.hiddenTerminalCount).toBe(1);
+  });
+});
+
+// ===========================================================================
+// AP-11 — the Related drawer and coming BACK from a lineage jump.
+// ===========================================================================
+
+function workspaceStateFixture(overrides: Partial<FinanceWorkspaceState> = {}): FinanceWorkspaceState {
+  const base = createEmptyWorkspaceState({
+    organizationId: ORG,
+    userId: 'user-1',
+    artifactRef: artifactRef({ artifactType: 'BASELINE_MODEL', artifactId: 'bm', businessVersionId: 'bm4' }),
+    sourceWorkingRevisionId: 'wr-1',
+    now: () => '2026-08-10T10:00:00.000Z',
+  });
+  return { ...base, ...overrides };
+}
+
+/** A workspace the user has actually worked in: filtered, scrolled, with a row selected. */
+function workedInState(): FinanceWorkspaceState {
+  return workspaceStateFixture({
+    selection: {
+      activeCell: { rowKey: 'revenue', columnKey: 'FY2025' } as never,
+      ranges: [],
+    },
+    filters: { raw: { onlyExceptions: true, segment: 'EMEA' } },
+    scroll: { scrollTop: 1200, scrollLeft: 0, firstVisibleRowKey: 'revenue' },
+    unsavedOperationStack: [],
+  });
+}
+
+describe('AP-11 lineageNavigatorContract — Related drawer', () => {
+  it('opens with a focus, a section and everything a close has to settle', () => {
+    const restorePoint = captureWorkspaceRestorePoint(workedInState(), { viewId: 'pnl' });
+    const closed = createRelatedDrawerState();
+    expect(closed.open).toBe(false);
+    expect(closed.focusVersionId).toBeNull();
+
+    const open = openRelatedDrawer({
+      focusVersionId: 'bm4',
+      restorePoint,
+      returnFocusControlId: 'finance.baseline.related',
+      section: 'children',
+    });
+    expect(open.open).toBe(true);
+    expect(open.focusVersionId).toBe('bm4');
+    expect(open.activeSection).toBe('children');
+
+    const { state, restore, returnFocusControlId } = closeRelatedDrawer(open);
+    expect(state).toEqual(createRelatedDrawerState()); // no leftover focus/section
+    expect(restore).toBe(restorePoint);
+    // a11y: focus goes back to the control that opened the drawer, not to <body>.
+    expect(returnFocusControlId).toBe('finance.baseline.related');
+    expect(LINEAGE_RELATED_DRAWER.restoresDomFocus).toBe(true);
+    expect(LINEAGE_RELATED_DRAWER.modality).toBe('non-modal');
+    // The shortcut the AP-10 adapters may adopt; deliberately not wired here.
+    expect(LINEAGE_RELATED_DRAWER.keyboardCommandId).toBe('finance.related');
+  });
+});
+
+describe('AP-11 lineageNavigatorContract — restore point', () => {
+  it('POSITIVE CONTROL — filters, scroll and selection survive a round trip', () => {
+    const before = workedInState();
+    const restorePoint = captureWorkspaceRestorePoint(before, { viewId: 'pnl' });
+    // The user comes back to a freshly loaded (empty) workspace for the same artifact.
+    const reloaded = workspaceStateFixture();
+    expect(reloaded.filters.raw).toEqual({});
+    const result = applyWorkspaceRestorePoint(reloaded, restorePoint);
+    expect(result.ok).toBe(true);
+    const restored = (result as { ok: true; state: FinanceWorkspaceState }).state;
+    expect(restored.filters.raw).toEqual({ onlyExceptions: true, segment: 'EMEA' });
+    expect(restored.scroll.scrollTop).toBe(1200);
+    expect(restored.scroll.firstVisibleRowKey).toBe('revenue');
+    expect(restored.selection.activeCell).toEqual({ rowKey: 'revenue', columnKey: 'FY2025' });
+  });
+
+  it('never carries uncommitted edits into the snapshot', () => {
+    // AP-04 owns unsavedOperationStack; a second copy inside a navigation entry
+    // would be a diverging source of truth for pending work.
+    const restorePoint = captureWorkspaceRestorePoint(workedInState());
+    expect(Object.keys(restorePoint)).not.toContain('unsavedOperationStack');
+    const live = workspaceStateFixture({ sourceWorkingRevisionId: 'wr-99' });
+    const result = applyWorkspaceRestorePoint(live, restorePoint);
+    expect((result as { ok: true; state: FinanceWorkspaceState }).state.sourceWorkingRevisionId).toBe('wr-99');
+  });
+
+  it('is decoupled from the live state — later edits do not mutate the snapshot', () => {
+    const state = workedInState();
+    const restorePoint = captureWorkspaceRestorePoint(state);
+    state.filters.raw.segment = 'APAC';
+    state.scroll.scrollTop = 5;
+    expect(restorePoint.filters.raw.segment).toBe('EMEA');
+    expect(restorePoint.scroll.scrollTop).toBe(1200);
+  });
+
+  it('POSITIVE CONTROL — refuses a snapshot from another artifact or another tenant', () => {
+    const restorePoint = captureWorkspaceRestorePoint(workedInState());
+    const otherArtifact = workspaceStateFixture({
+      artifactRef: artifactRef({ artifactType: 'VALUATION_CASE', artifactId: 'val', businessVersionId: 'val1' }),
+    });
+    expect(applyWorkspaceRestorePoint(otherArtifact, restorePoint)).toMatchObject({
+      ok: false,
+      code: 'RESTORE_POINT_MISMATCH',
+    });
+    const otherOrg = workspaceStateFixture({ organizationId: OTHER_ORG });
+    expect(applyWorkspaceRestorePoint(otherOrg, restorePoint)).toMatchObject({
+      ok: false,
+      code: 'RESTORE_POINT_FOREIGN_ORG',
+    });
+  });
+});
+
+describe('AP-11 lineageNavigatorContract — navigation stack', () => {
+  const entryFor = (
+    artifactId: string,
+    businessVersionId: string,
+    targetVersionId: string
+  ): LineageNavigationEntry => ({
+    restorePoint: captureWorkspaceRestorePoint(
+      workspaceStateFixture({
+        artifactRef: artifactRef({ artifactType: 'BASELINE_MODEL', artifactId, businessVersionId }),
+      })
+    ),
+    via: 'related-panel',
+    targetVersionId,
+  });
+
+  it('remembers the order of a multi-hop excursion', () => {
+    let stack = createNavigationStack(ORG);
+    stack = pushNavigation(stack, entryFor('bm', 'bm4', 'sc2'));
+    stack = pushNavigation(stack, entryFor('sc', 'sc2', 'val1'));
+    expect(stack.entries).toHaveLength(2);
+    expect(peekNavigation(stack)?.targetVersionId).toBe('val1');
+    const first = popNavigation(stack);
+    expect(first.entry?.targetVersionId).toBe('val1');
+    const second = popNavigation(first.stack);
+    expect(second.entry?.targetVersionId).toBe('sc2');
+    expect(popNavigation(second.stack).entry).toBeNull();
+  });
+
+  it('is bounded — the oldest hop is dropped, the newest is never refused', () => {
+    let stack = createNavigationStack(ORG);
+    for (let i = 0; i < LINEAGE_NAV_STACK_MAX_DEPTH + 3; i += 1) {
+      stack = pushNavigation(stack, entryFor(`a${i}`, `v${i}`, `t${i}`));
+    }
+    expect(stack.entries).toHaveLength(LINEAGE_NAV_STACK_MAX_DEPTH);
+    expect(peekNavigation(stack)?.targetVersionId).toBe(`t${LINEAGE_NAV_STACK_MAX_DEPTH + 2}`);
+    expect(stack.entries[0].targetVersionId).toBe('t3');
+  });
+
+  it('refreshes in place instead of growing when the same workspace is re-entered', () => {
+    let stack = createNavigationStack(ORG);
+    stack = pushNavigation(stack, entryFor('bm', 'bm4', 'sc2'));
+    stack = pushNavigation(stack, entryFor('bm', 'bm4', 'val1'));
+    expect(stack.entries).toHaveLength(1);
+    expect(peekNavigation(stack)?.targetVersionId).toBe('val1');
+  });
+
+  it('POSITIVE CONTROL — a stack refuses an entry from another tenant', () => {
+    const foreignEntry: LineageNavigationEntry = {
+      restorePoint: captureWorkspaceRestorePoint(workspaceStateFixture({ organizationId: OTHER_ORG })),
+      via: 'trail',
+      targetVersionId: 'bmX',
+    };
+    const stack = pushNavigation(createNavigationStack(ORG), foreignEntry);
+    expect(stack.entries).toEqual([]);
   });
 });
