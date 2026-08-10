@@ -17,7 +17,7 @@
  * rest of this package's UI-out-of-scope discipline.
  */
 
-import type { CommandContext, KeyboardCommand, Platform } from './commandTypes.js';
+import type { CommandContext, CommandScope, KeyboardCommand, Platform } from './commandTypes.js';
 import { describeCombo } from './commandTypes.js';
 
 export interface CommandPaletteEntry {
@@ -46,7 +46,9 @@ function tokenize(text: string): string[] {
 }
 
 function buildEntry(command: KeyboardCommand): CommandPaletteEntry {
-  const tokenSource = [command.id, command.label, command.description, command.category].join(' ');
+  // `scope` joins the token source so a user can type "workspace" and see every
+  // shell-level command — the level split is only useful if it is searchable.
+  const tokenSource = [command.id, command.label, command.description, command.category, command.scope].join(' ');
   const tokens = new Set<string>(tokenize(tokenSource));
   tokens.add(command.id.toLowerCase());
   return {
@@ -76,6 +78,11 @@ export class CommandPaletteIndex {
 
   byContext(context: CommandContext): readonly CommandPaletteEntry[] {
     return this.entries.filter((e) => e.command.context === context || e.command.context === 'global');
+  }
+
+  /** Level grouping — a palette renders "Siatka" and "Obszar roboczy" as separate sections rather than one flat list of 30 rows. */
+  byScope(scope: CommandScope): readonly CommandPaletteEntry[] {
+    return this.entries.filter((e) => e.command.scope === scope);
   }
 
   /**
