@@ -269,6 +269,32 @@ const EARLY_VERSION_OVERRIDES: Record<string, number> = {
   '20260802_int001_template_publication_versions.sql': 727.5,
 };
 
+// Explicit intra-day ordering for phase-1 (dated) migrations that share the
+// SAME calendar date and have a producer/consumer relationship the plain
+// filename tiebreaker inverts. This does not affect ordering relative to
+// OTHER dated files (those keep the filename tiebreaker unchanged) except
+// that entries here always sort before same-date files not listed, since
+// the synthetic numeric key starts with a digit — verified safe because
+// none of these 11 tables are referenced by any migration outside this list
+// (Case Workspace program collision-avoidance mandate: no other migration
+// FKs into case_workspace_*; the only external FKs these files carry point
+// to organizations/projects/v8_execution_runs, all from far earlier dates).
+// Root cause + fix verified via a genuinely fresh migration replay:
+// server/scripts/case-workspace-realdb-harness/EVIDENCE.md.
+const DATED_SAME_DAY_ORDER: Record<string, number> = {
+  '20260809_case_workspace_case_core.sql': 0, // sole producer `case_core` — every other file here FKs into it, directly or transitively
+  '20260809_case_workspace_capability_registry.sql': 1, // no case_workspace FK dependency; kept early
+  '20260809_case_workspace_case_plan_version.sql': 2, // FKs case_core
+  '20260809_case_workspace_run_binding.sql': 3, // FKs case_core, case_plan_versions, v8_execution_runs (v8_execution_runs is March-dated, unaffected)
+  '20260809_case_workspace_proposals_approvals.sql': 4, // FKs case_core, run_binding, case_plan_versions, capability_registry
+  '20260809_case_workspace_wait_subscription.sql': 5, // FKs case_core, run_binding, proposals_approvals
+  '20260809_case_workspace_history_value.sql': 6, // FKs case_core
+  '20260809_case_workspace_plays.sql': 7, // no FK into case_core/case_plan_versions by design (Plays are pre-Case)
+  '20260809_case_workspace_artifact_links.sql': 8, // FKs case_core — this was the file that originally exposed the bug (sorted alphabetically before case_core.sql)
+  '20260809_case_workspace_execution_graph.sql': 9, // FKs case_core, run_binding
+  '20260809_case_workspace_migration_readiness.sql': 10, // no FK into any other case_workspace table
+};
+
 function phaseAndKeyFor(m: Migration): { phase: number; key: string } {
   const f = m.filename;
   if (LATE_PHASE_SET.has(f)) {
@@ -290,7 +316,10 @@ function phaseAndKeyFor(m: Migration): { phase: number; key: string } {
   const dated = f.match(DATED_RE);
   if (dated) {
     const [, y, mo, d] = dated;
-    return { phase: 1, key: `${y}${mo}${d}_${f}` };
+    const tiebreaker = Object.prototype.hasOwnProperty.call(DATED_SAME_DAY_ORDER, f)
+      ? String(DATED_SAME_DAY_ORDER[f]).padStart(6, '0')
+      : f;
+    return { phase: 1, key: `${y}${mo}${d}_${tiebreaker}` };
   }
   return { phase: 3, key: f };
 }
