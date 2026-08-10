@@ -26,6 +26,17 @@ import {
 } from '../services/resultsVnext/okr/okrProgramTypes.js';
 import { OKR_CYCLE_STATUSES } from '../services/resultsVnext/okr/okrCycleTypes.js';
 import {
+  OKR_OBJECTIVE_AMBITION_TYPES,
+  OKR_OBJECTIVE_CONFIDENCE_VALUES,
+} from '../services/resultsVnext/okr/okrObjectiveTypes.js';
+import {
+  OKR_KEY_RESULT_CONFIDENCE_VALUES,
+  OKR_KEY_RESULT_DIRECTIONS,
+  OKR_KEY_RESULT_MEASUREMENT_TYPES,
+  OKR_KEY_RESULT_SOURCE_TYPES,
+  OKR_KEY_RESULT_STATUSES,
+} from '../services/resultsVnext/okr/okrKeyResultTypes.js';
+import {
   OKR_SET_ATTENTION_STATES,
   OKR_SET_SCOPE_TYPES,
   OKR_SET_STATUSES,
@@ -316,4 +327,154 @@ export const RecordOkrSetMaterialChangeSchema = z.object({
 export const OkrSetApprovalSnapshotIdParamsSchema = z.object({
   setId: z.string().uuid(),
   snapshotId: z.string().uuid(),
+});
+
+// ==========================================
+// OKR-E003 — Objective & KeyResult (design §14)
+// ==========================================
+
+export const OkrObjectiveAmbitionTypeEnum = z.enum(OKR_OBJECTIVE_AMBITION_TYPES);
+export const OkrObjectiveConfidenceEnum = z.enum(OKR_OBJECTIVE_CONFIDENCE_VALUES);
+export const OkrKeyResultMeasurementTypeEnum = z.enum(OKR_KEY_RESULT_MEASUREMENT_TYPES);
+export const OkrKeyResultDirectionEnum = z.enum(OKR_KEY_RESULT_DIRECTIONS);
+export const OkrKeyResultStatusEnum = z.enum(OKR_KEY_RESULT_STATUSES);
+export const OkrKeyResultSourceTypeEnum = z.enum(OKR_KEY_RESULT_SOURCE_TYPES);
+export const OkrKeyResultConfidenceEnum = z.enum(OKR_KEY_RESULT_CONFIDENCE_VALUES);
+
+const MAX_UNIT_CHARS = 100;
+const MAX_CURRENCY_CHARS = 10;
+const MAX_SOURCE_REFERENCE_CHARS = 500;
+
+export const OkrObjectiveIdParamsSchema = z.object({
+  objectiveId: z.string().uuid(),
+});
+
+export const OkrKeyResultIdParamsSchema = z.object({
+  keyResultId: z.string().uuid(),
+});
+
+// ==========================================
+// POST /api/vnext/results/okr/sets/:setId/objectives — createObjective
+// ==========================================
+
+export const CreateOkrObjectiveSchema = z.object({
+  ownerUserId: z.string().min(1),
+  title: z.string().min(1).max(MAX_NAME_CHARS),
+  description: z.string().max(MAX_REASON_CHARS).nullable().optional(),
+  rationale: z.string().max(MAX_REASON_CHARS).nullable().optional(),
+  ambitionType: OkrObjectiveAmbitionTypeEnum.optional(),
+  reason: nullableReasonField,
+  idempotencyKey: idempotencyKeyField,
+});
+
+// ==========================================
+// PATCH /api/vnext/results/okr/objectives/:objectiveId — updateObjective
+// ==========================================
+
+export const UpdateOkrObjectiveSchema = z.object({
+  expectedVersion: expectedVersionField,
+  title: z.string().min(1).max(MAX_NAME_CHARS).optional(),
+  description: z.string().max(MAX_REASON_CHARS).nullable().optional(),
+  rationale: z.string().max(MAX_REASON_CHARS).nullable().optional(),
+  ambitionType: OkrObjectiveAmbitionTypeEnum.optional(),
+  ownerUserId: z.string().min(1).optional(),
+  // D-E3-10: only accepted when the Cycle's pinned objective_confidence_model
+  // is 'owner_selected' — the command layer rejects otherwise.
+  confidence: OkrObjectiveConfidenceEnum.nullable().optional(),
+  confidenceNumericValue: z.number().nullable().optional(),
+  reason: nullableReasonField,
+  idempotencyKey: idempotencyKeyField,
+});
+
+// ==========================================
+// POST .../objectives/:objectiveId/cancel — cancelObjective
+// (maps the plan's DELETE /objectives/:objectiveId to a guarded status
+// transition, per design §6/§10.4's soft-delete precedent)
+// ==========================================
+
+export const OkrObjectiveTransitionSchema = z.object({
+  expectedVersion: expectedVersionField,
+  reason: nullableReasonField,
+  idempotencyKey: idempotencyKeyField,
+});
+
+// ==========================================
+// POST /api/vnext/results/okr/objectives/:objectiveId/key-results — createKeyResult
+// ==========================================
+
+export const CreateOkrKeyResultSchema = z
+  .object({
+    ownerUserId: z.string().min(1),
+    title: z.string().min(1).max(MAX_NAME_CHARS),
+    description: z.string().max(MAX_REASON_CHARS).nullable().optional(),
+    measurementType: OkrKeyResultMeasurementTypeEnum,
+    unit: z.string().max(MAX_UNIT_CHARS).nullable().optional(),
+    currency: z.string().max(MAX_CURRENCY_CHARS).nullable().optional(),
+    baselineValue: z.number().nullable().optional(),
+    targetValue: z.number().nullable().optional(),
+    startValue: z.number().nullable().optional(),
+    currentValue: z.number().nullable().optional(),
+    direction: OkrKeyResultDirectionEnum,
+    rangeMin: z.number().nullable().optional(),
+    rangeMax: z.number().nullable().optional(),
+    confidence: OkrKeyResultConfidenceEnum.nullable().optional(),
+    confidenceNumericValue: z.number().nullable().optional(),
+    sourceType: OkrKeyResultSourceTypeEnum.optional(),
+    // D09: opaque string only — never validated as a foreign key to any
+    // kpi_*/rvn_kpi_*/initiative_kpis id.
+    sourceReference: z.string().max(MAX_SOURCE_REFERENCE_CHARS).nullable().optional(),
+    weight: z.number().nullable().optional(),
+    reason: nullableReasonField,
+    idempotencyKey: idempotencyKeyField,
+  })
+  .refine((body) => body.measurementType !== 'currency' || !!body.currency, {
+    message: 'currency is required when measurementType is "currency"',
+    path: ['currency'],
+  })
+  .refine((body) => body.direction !== 'maintain_range' || (body.rangeMin != null && body.rangeMax != null), {
+    message: 'rangeMin and rangeMax are both required when direction is "maintain_range"',
+    path: ['rangeMin'],
+  });
+
+// ==========================================
+// PATCH /api/vnext/results/okr/key-results/:keyResultId — updateKeyResult
+// ==========================================
+
+export const UpdateOkrKeyResultSchema = z.object({
+  expectedVersion: expectedVersionField,
+  title: z.string().min(1).max(MAX_NAME_CHARS).optional(),
+  description: z.string().max(MAX_REASON_CHARS).nullable().optional(),
+  ownerUserId: z.string().min(1).optional(),
+  measurementType: OkrKeyResultMeasurementTypeEnum.optional(),
+  unit: z.string().max(MAX_UNIT_CHARS).nullable().optional(),
+  currency: z.string().max(MAX_CURRENCY_CHARS).nullable().optional(),
+  baselineValue: z.number().nullable().optional(),
+  targetValue: z.number().nullable().optional(),
+  startValue: z.number().nullable().optional(),
+  currentValue: z.number().nullable().optional(),
+  direction: OkrKeyResultDirectionEnum.optional(),
+  rangeMin: z.number().nullable().optional(),
+  rangeMax: z.number().nullable().optional(),
+  confidence: OkrKeyResultConfidenceEnum.nullable().optional(),
+  confidenceNumericValue: z.number().nullable().optional(),
+  // §-IO item 9: owner-declared only. 'cancelled' excluded — that
+  // transition is `cancelKeyResult`'s own guarded path, never a plain
+  // field edit.
+  status: OkrKeyResultStatusEnum.exclude(['cancelled']).optional(),
+  sourceType: OkrKeyResultSourceTypeEnum.optional(),
+  sourceReference: z.string().max(MAX_SOURCE_REFERENCE_CHARS).nullable().optional(),
+  weight: z.number().nullable().optional(),
+  reason: nullableReasonField,
+  idempotencyKey: idempotencyKeyField,
+});
+
+// ==========================================
+// POST .../key-results/:keyResultId/cancel — cancelKeyResult
+// (maps the plan's DELETE /key-results/:keyResultId)
+// ==========================================
+
+export const OkrKeyResultTransitionSchema = z.object({
+  expectedVersion: expectedVersionField,
+  reason: nullableReasonField,
+  idempotencyKey: idempotencyKeyField,
 });
