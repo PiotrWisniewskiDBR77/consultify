@@ -93,7 +93,10 @@ export function buildRoiCaseColumns(isPolish: boolean): TableColumn[] {
       label: isPolish ? 'Właściciel' : 'Owner',
       width: '150px',
       render: (row: RoiCaseListItem) => (
-        <span className="text-sm text-c-text-secondary font-mono truncate" title={row.ownerUserId}>
+        <span
+          className="block truncate text-sm text-c-text-secondary font-mono"
+          title={row.ownerUserId}
+        >
           {row.ownerUserId}
         </span>
       ),
@@ -174,7 +177,7 @@ export function buildRoiBenefitsRealizationColumns(isPolish: boolean): TableColu
         <HonestValueCell
           value={row.approvedFinancialBenefits}
           align="right"
-          format={(v) => <span className="tabular-nums text-sm text-c-text">{formatRoiNumber(v)}</span>}
+          format={(v) => <span className="tabular-nums text-sm text-c-text">{formatRoiNumber(v, isPolish)}</span>}
         />
       ),
     },
@@ -187,7 +190,7 @@ export function buildRoiBenefitsRealizationColumns(isPolish: boolean): TableColu
         <HonestValueCell
           value={row.actualFinancialBenefits}
           align="right"
-          format={(v) => <span className="tabular-nums text-sm text-c-text">{formatRoiNumber(v)}</span>}
+          format={(v) => <span className="tabular-nums text-sm text-c-text">{formatRoiNumber(v, isPolish)}</span>}
         />
       ),
     },
@@ -206,7 +209,7 @@ export function buildRoiBenefitsRealizationColumns(isPolish: boolean): TableColu
               : 'No approved benefits (zero denominator) or no actual value recorded yet.'
           }
           format={(v) => (
-            <span className="tabular-nums font-medium text-sm text-c-text">{formatRoiPercent(v)}</span>
+            <span className="tabular-nums font-medium text-sm text-c-text">{formatRoiPercent(v, isPolish)}</span>
           )}
         />
       ),
@@ -337,7 +340,7 @@ export function buildRoiCasePreview(row: RoiCaseListItem, deps: RoiPreviewDeps):
               value={npv}
               align="left"
               notCalculableReason={npvNotCalculableReason(run, isPolish)}
-              format={(v) => formatRoiCurrency(v, row.currency)}
+              format={(v) => formatRoiCurrency(v, row.currency, isPolish)}
             />
           ) : (
             <span className="text-c-text-muted text-sm">{isPolish ? 'Wczytywanie…' : 'Loading…'}</span>
@@ -351,7 +354,7 @@ export function buildRoiCasePreview(row: RoiCaseListItem, deps: RoiPreviewDeps):
               value={irr}
               align="left"
               notCalculableReason={irrNotCalculableReason(run, isPolish)}
-              format={(v) => formatRoiPercent(v)}
+              format={(v) => formatRoiPercent(v, isPolish)}
             />
           ) : (
             <span className="text-c-text-muted text-sm">{isPolish ? 'Wczytywanie…' : 'Loading…'}</span>
@@ -369,7 +372,7 @@ export function buildRoiCasePreview(row: RoiCaseListItem, deps: RoiPreviewDeps):
                   ? 'Ostatni przebieg kalkulacji zakończył się niepowodzeniem.'
                   : 'The latest calculation run failed.'
               }
-              format={(v) => `${v.toLocaleString('en-US', { maximumFractionDigits: 1 })} ${isPolish ? 'okr.' : 'periods'}`}
+              format={(v) => `${v.toLocaleString(isPolish ? 'pl-PL' : 'en-US', { maximumFractionDigits: 1 })} ${isPolish ? 'okr.' : 'periods'}`}
             />
           ) : (
             <span className="text-c-text-muted text-sm">{isPolish ? 'Wczytywanie…' : 'Loading…'}</span>
@@ -429,12 +432,12 @@ export function buildRoiBenefitsRealizationPreview(
         {
           id: 'approved',
           label: isPolish ? 'Zaakceptowane korzyści' : 'Approved benefits',
-          value: <HonestValueCell value={row.approvedFinancialBenefits} format={(v) => formatRoiNumber(v)} />,
+          value: <HonestValueCell value={row.approvedFinancialBenefits} format={(v) => formatRoiNumber(v, isPolish)} />,
         },
         {
           id: 'actual',
           label: isPolish ? 'Rzeczywiste korzyści' : 'Actual benefits',
-          value: <HonestValueCell value={row.actualFinancialBenefits} format={(v) => formatRoiNumber(v)} />,
+          value: <HonestValueCell value={row.actualFinancialBenefits} format={(v) => formatRoiNumber(v, isPolish)} />,
         },
         {
           id: 'pct',
@@ -447,7 +450,7 @@ export function buildRoiBenefitsRealizationPreview(
                   ? 'Brak korzyści zaakceptowanych (mianownik = 0) lub brak jeszcze rzeczywistej wartości.'
                   : 'No approved benefits (zero denominator) or no actual value recorded yet.'
               }
-              format={(v) => formatRoiPercent(v)}
+              format={(v) => formatRoiPercent(v, isPolish)}
             />
           ),
         },

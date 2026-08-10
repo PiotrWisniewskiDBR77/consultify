@@ -18,6 +18,7 @@
  *                                  interim state) vs resolved (default ready)
  */
 import React, { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { ResultsVNextRegistryShell } from '../../src/components/ResultsVNext/ResultsVNextRegistryShell';
 import type { RoiCalculationRunSummary, RoiCaseListItem, RoiOrgBenefitsRealizationRow } from '../../src/components/ResultsVNext/roi/roiApi';
@@ -300,7 +301,12 @@ const ResultsVNextRoiRegistryScreen: React.FC = () => {
     initialSelected === 'none' ? null : (initialSelected ?? MOCK_BENEFITS_ROWS[0]?.caseId ?? null)
   );
 
-  const isPolish = true;
+  // Mirrors the REAL `ResultsRoiHub.tsx` (L66-67): `isPolish` follows the
+  // harness's `&lang=` param via i18n, not a hardcoded constant — otherwise
+  // `&lang=en` silently has no effect on this screen's copy (RN-G2 P2 QA
+  // 2026-08-10 fix).
+  const { i18n } = useTranslation();
+  const isPolish = !!i18n.language?.startsWith('pl');
 
   const selectedCase = useMemo(
     () => MOCK_CASES.find((c) => c.caseId === selectedCaseId) ?? null,
@@ -311,12 +317,20 @@ const ResultsVNextRoiRegistryScreen: React.FC = () => {
     [selectedBenefitsCaseId]
   );
 
+  // Mirrors `ResultsRoiHub.tsx` L160-187 EXACTLY — tabs/chips/empty/error
+  // copy must localize via `isPolish` here too, or `&lang=en` QA runs give a
+  // false negative (harness shows Polish chrome the real Hub never would).
+  const tabs = [
+    { id: 'all', label: isPolish ? 'Wszystkie sprawy' : 'All cases' },
+    { id: 'benefits', label: isPolish ? 'Realizacja korzyści' : 'Benefits realization' },
+  ];
+
   const chips: StandardCounterChip[] = [
-    { id: 'all', label: 'Wszystkie', count: MOCK_CASES.length },
-    { id: 'in_progress', label: 'W toku', count: MOCK_CASES.filter((c) => ['not_started', 'draft', 'modeling', 'ready_for_review', 'changes_requested'].includes(c.status)).length },
-    { id: 'in_review', label: 'Do akceptacji', count: MOCK_CASES.filter((c) => c.status === 'submitted_for_approval').length },
-    { id: 'active', label: 'Aktywne', count: MOCK_CASES.filter((c) => ['approved', 'tracking', 'benefits_realization', 'post_investment_review_due', 'post_investment_review'].includes(c.status)).length },
-    { id: 'closed_out', label: 'Zamknięte / odrzucone', count: MOCK_CASES.filter((c) => ['closed', 'cancelled', 'rejected'].includes(c.status)).length },
+    { id: 'all', label: isPolish ? 'Wszystkie' : 'All', count: MOCK_CASES.length },
+    { id: 'in_progress', label: isPolish ? 'W toku' : 'In progress', count: MOCK_CASES.filter((c) => ['not_started', 'draft', 'modeling', 'ready_for_review', 'changes_requested'].includes(c.status)).length },
+    { id: 'in_review', label: isPolish ? 'Do akceptacji' : 'In review', count: MOCK_CASES.filter((c) => c.status === 'submitted_for_approval').length },
+    { id: 'active', label: isPolish ? 'Aktywne' : 'Active', count: MOCK_CASES.filter((c) => ['approved', 'tracking', 'benefits_realization', 'post_investment_review_due', 'post_investment_review'].includes(c.status)).length },
+    { id: 'closed_out', label: isPolish ? 'Zamknięte / odrzucone' : 'Closed / rejected', count: MOCK_CASES.filter((c) => ['closed', 'cancelled', 'rejected'].includes(c.status)).length },
   ];
 
   if (tab === 'benefits') {
@@ -326,10 +340,7 @@ const ResultsVNextRoiRegistryScreen: React.FC = () => {
         <ResultsVNextRegistryShell
           domain="roi"
           moduleBar={{
-            tabs: [
-              { id: 'all', label: 'Wszystkie sprawy' },
-              { id: 'benefits', label: 'Realizacja korzyści' },
-            ],
+            tabs,
             activeTab: 'benefits',
             onTabChange: (id) => setTab(id as 'all' | 'benefits'),
             showTabCounts: false,
@@ -341,11 +352,21 @@ const ResultsVNextRoiRegistryScreen: React.FC = () => {
             data: rows,
             persistKey: 'results-vnext.roi-registry.benefits',
             loading: state === 'loading',
-            error: state === 'error' ? 'Nie udało się wczytać realizacji korzyści — usługa zwróciła 503.' : null,
+            error:
+              state === 'error'
+                ? isPolish
+                  ? 'Nie udało się wczytać realizacji korzyści — usługa zwróciła 503.'
+                  : 'Failed to load benefits realization — the service returned 503.'
+                : null,
             onRetry: () => {},
             empty:
               state === 'empty'
-                ? { title: 'Brak spraw w realizacji', description: 'Żadna sprawa nie jest obecnie śledzona.' }
+                ? {
+                    title: isPolish ? 'Brak spraw w realizacji' : 'No cases in realization',
+                    description: isPolish
+                      ? 'Żadna sprawa nie jest obecnie śledzona.'
+                      : 'No case is currently being tracked.',
+                  }
                 : undefined,
             selectedRowId: selectedBenefitsCaseId,
             onRowClick: (row) => setSelectedBenefitsCaseId(String(row.caseId)),
@@ -373,10 +394,7 @@ const ResultsVNextRoiRegistryScreen: React.FC = () => {
       <ResultsVNextRegistryShell
         domain="roi"
         moduleBar={{
-          tabs: [
-            { id: 'all', label: 'Wszystkie sprawy' },
-            { id: 'benefits', label: 'Realizacja korzyści' },
-          ],
+          tabs,
           activeTab: 'all',
           onTabChange: (id) => setTab(id as 'all' | 'benefits'),
           showTabCounts: false,
@@ -391,11 +409,21 @@ const ResultsVNextRoiRegistryScreen: React.FC = () => {
           data: rows,
           persistKey: 'results-vnext.roi-registry',
           loading: state === 'loading',
-          error: state === 'error' ? 'Nie udało się wczytać rejestru ROI — usługa zwróciła 503.' : null,
+          error:
+            state === 'error'
+              ? isPolish
+                ? 'Nie udało się wczytać rejestru ROI — usługa zwróciła 503.'
+                : 'Failed to load the ROI registry — the service returned 503.'
+              : null,
           onRetry: () => {},
           empty:
             state === 'empty'
-              ? { title: 'Brak spraw ROI', description: 'W tej organizacji nie utworzono jeszcze żadnej sprawy ROI.' }
+              ? {
+                  title: isPolish ? 'Brak spraw ROI' : 'No ROI cases yet',
+                  description: isPolish
+                    ? 'W tej organizacji nie utworzono jeszcze żadnej sprawy ROI.'
+                    : 'No ROI case has been created in this organization yet.',
+                }
               : undefined,
           selectedRowId: selectedCaseId,
           onRowClick: (row) => setSelectedCaseId(String(row.caseId)),

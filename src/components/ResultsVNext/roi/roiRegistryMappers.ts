@@ -262,9 +262,19 @@ export function derivePaybackHonestValue(run: RoiCalculationRunSummary | null): 
 // Formatters
 // ==========================================
 
-export function formatRoiCurrency(value: number, currency: string): string {
+/**
+ * Locale follows `isPolish` — matches the repo convention already
+ * established by the sibling P1 KPI registry (`ResultsKpiRegistryPage.tsx`
+ * L255/L305: `const lang = ctx.isPolish ? 'pl-PL' : 'en-US'` /
+ * `v.toLocaleString(lang)`) and by `formatRoiDate` below in this very file.
+ * A hardcoded `'en-US'` here (pre-fix) meant PL sessions still saw
+ * "1,234" instead of "1 234" — silently inconsistent with every other
+ * RN-G2 number/date formatter (RN-G2 P2 QA 2026-08-10 fix).
+ */
+export function formatRoiCurrency(value: number, currency: string, isPolish: boolean): string {
+  const locale = isPolish ? 'pl-PL' : 'en-US';
   try {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat(locale, {
       style: 'currency',
       currency: currency || 'USD',
       maximumFractionDigits: 0,
@@ -272,7 +282,7 @@ export function formatRoiCurrency(value: number, currency: string): string {
   } catch {
     // Unknown/invalid ISO currency code from free-text case data — never throw
     // in a table cell over a formatting edge case.
-    return `${value.toLocaleString('en-US')} ${currency}`;
+    return `${value.toLocaleString(locale)} ${currency}`;
   }
 }
 
@@ -285,12 +295,12 @@ export function formatRoiCurrency(value: number, currency: string): string {
  * conflate a value from a DIFFERENT endpoint/query — this formatter is the
  * honest choice for that data source specifically.
  */
-export function formatRoiNumber(value: number): string {
-  return value.toLocaleString('en-US', { maximumFractionDigits: 0 });
+export function formatRoiNumber(value: number, isPolish: boolean): string {
+  return value.toLocaleString(isPolish ? 'pl-PL' : 'en-US', { maximumFractionDigits: 0 });
 }
 
-export function formatRoiPercent(value: number): string {
-  return `${value.toLocaleString('en-US', { maximumFractionDigits: 1 })}%`;
+export function formatRoiPercent(value: number, isPolish: boolean): string {
+  return `${value.toLocaleString(isPolish ? 'pl-PL' : 'en-US', { maximumFractionDigits: 1 })}%`;
 }
 
 export function formatRoiDate(value: string | null, isPolish: boolean): string {
