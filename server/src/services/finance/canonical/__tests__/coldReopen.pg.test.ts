@@ -715,9 +715,16 @@ describe.skipIf(!REAL_PG)('Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.
     if (!dcf.ok) throw new Error(`runDcfFcffValuation failed: ${JSON.stringify(dcf)}`);
     dcfEnterpriseValue = dcf.enterpriseValue;
 
-    const dcfMethod = await valuationComputeService.findOrCreateMethod({
+    // W9-C-3 fan-in: findOrCreateMethod() now returns a typed result union
+    // ({ok:true, method} | {ok:false, code}) instead of the bare row, because it
+    // verifies tenant ownership of the business version before touching anything.
+    // Unwrap it explicitly — reading `.id` off the union silently yielded
+    // `undefined` and pushed a NULL method_id straight into writeSensitivityGrid.
+    const dcfMethodResult = await valuationComputeService.findOrCreateMethod({
       organizationId: orgId, businessVersionId: ids.valuation!, methodType: 'DCF_FCFF', createdBy: preparerId,
     });
+    if (!dcfMethodResult.ok) throw new Error(`findOrCreateMethod failed: ${JSON.stringify(dcfMethodResult)}`);
+    const dcfMethod = dcfMethodResult.method;
     await valuationComputeService.setMethodBasket({ methodId: dcfMethod.id, isInRecommendationBasket: true, weightPct: 100 });
 
     const baseWacc = dcf.wacc.waccPct;
