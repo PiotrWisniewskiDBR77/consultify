@@ -386,6 +386,36 @@ export interface ComputedKpiResult {
   detail: string | null;
 }
 
+/**
+ * W3-determinism fix (`docs/validation/finance-v3/generated/gate-d/W3_COMPUTE_DETERMINISM_report.md`)
+ * — the ONLY change this report makes to this file's behavior.
+ *
+ * Builds the exact payload `canonicalPayloadHash()` hashes into `content_semantic_hash`, sorted by
+ * a VALUE-based key (`kpiCode::entityId::periodId` — this Analysis's own uniqueness key,
+ * `uq_finance_analysis_kpi_values_cell`, so it is collision-free by construction) rather than by
+ * whatever order the no-`ORDER BY` `SELECT * FROM finance_analysis_kpi_values` above happened to
+ * return. That SQL order is NOT stable across runs of this exact query for the exact same rows —
+ * proven empirically in the linked report (10 real-DB runs of the same Analysis via the codebase's
+ * own lease-expiry retry path, `faultMatrix.pg.test.ts`'s `reapExpiredLeases()` requeue mechanism,
+ * produced 6 DISTINCT `content_semantic_hash` values for byte-identical KPI content — no VACUUM, no
+ * forced index scan, no artificial trigger needed; plain `UPDATE` churn from `persistResults()`
+ * itself was enough). Returns a NEW array — `results` itself (returned to every caller of
+ * `computeAnalysisKpis`, and what `persistResults()` already wrote before this function runs) is
+ * NEVER reordered by this, so nothing downstream of this function's return value changes shape.
+ *
+ * This does NOT touch `contentHash.ts` (frozen — see that file's own header) — the algorithm is
+ * still `sha256(JSON.stringify(x))`; only WHICH `x` is handed to it changes, and only for this one
+ * producer. Kept separate from `ComputedKpiResult` output ordering by design — see the SQL query's
+ * own comment above for why `ORDER BY` in the SQL itself was rejected as the fix.
+ */
+export function hashPayloadFor(results: readonly ComputedKpiResult[]): ComputedKpiResult[] {
+  return [...results].sort((a, b) => {
+    const ka = `${a.kpiCode}::${a.entityId}::${a.periodId}`;
+    const kb = `${b.kpiCode}::${b.entityId}::${b.periodId}`;
+    return ka < kb ? -1 : ka > kb ? 1 : 0;
+  });
+}
+
 export interface ComputeAnalysisKpisParams {
   organizationId: string;
   /** The Analysis Definition Version (`finance_business_versions.business_version_id`, `artifact_type='HISTORICAL_ANALYSIS'`). */
@@ -478,16 +508,18 @@ export async function computeAnalysisKpis(params: ComputeAnalysisKpisParams): Pr
     loadStmtLineCells(sourceVersionId),
     loadActiveCatalogByCode(params.organizationId),
     withPinnedPostgresTransaction((tx) =>
-      // W3-hashconsol NOTE (deliberately NOT fixed — see W3_HASH_CONSOLIDATION_report.md
-      // "rozjazd w praktyce"): this row set has no ORDER BY, so its ITERATION order
-      // (evaluateAllRows below) — which becomes the `results` array order that
-      // canonicalPayloadHash(results) hashes into content_semantic_hash — is whatever
-      // Postgres's query plan happens to return, not a value this code pins. Adding
-      // `ORDER BY id` here would make it deterministic, but `id` is a random UUID
-      // (unrelated to insertion order), so pinning it would itself CHANGE the
-      // content_semantic_hash the very next time this compute runs for existing data —
-      // exactly the "changing what feeds the hash invalidates already-stored hashes"
-      // risk the report's owner-decision section is about. Left unfixed on purpose.
+      // W3-hashconsol NOTE / W3-determinism fix (see
+      // `docs/validation/finance-v3/generated/gate-d/W3_COMPUTE_DETERMINISM_report.md`):
+      // this row set STILL has no ORDER BY on purpose — adding `ORDER BY id` would pin a
+      // RANDOM UUID's order, which is not a meaningful sort key and would itself churn
+      // on every schema/storage change. `evaluateAllRows` below still iterates in
+      // whatever order Postgres returns (that iteration order is harmless — it only
+      // affects the UPDATE order in `persistResults`, and the delta-vs-prior computation
+      // reads by a `Map` keyed lookup, not array position). What DOES need a stable
+      // order is the payload fed to `canonicalPayloadHash()` for `content_semantic_hash`
+      // — see the `hashPayloadFor()` call below, which sorts a SEPARATE copy by a
+      // value-based key (kpiCode/entityId/periodId) immediately before hashing, never
+      // touching this query or the `results` array this function returns to callers.
       tx.queryAll<KpiValueRow>(`SELECT * FROM finance_analysis_kpi_values WHERE business_version_id = ?`, [params.businessVersionId])
     ),
   ]);
@@ -537,7 +569,7 @@ export async function computeAnalysisKpis(params: ComputeAnalysisKpisParams): Pr
   }
 
   if (runningJob.status === 'running') {
-    const contentSemanticHash = canonicalPayloadHash(results);
+    const contentSemanticHash = canonicalPayloadHash(hashPayloadFor(results));
     const outputWorkingRevisionId = bv.source_working_revision_id ?? params.businessVersionId;
     const completed = await computeJobService.completeJobSuccess({
       jobId: runningJob.id,
