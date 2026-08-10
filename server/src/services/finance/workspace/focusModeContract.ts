@@ -418,6 +418,245 @@ export function resolveEscapeKey(ctx: EscapeContext): EscapeConsumer {
 }
 
 // ---------------------------------------------------------------------------
+// THE ESCAPE BRIDGE TO AP-03 — one entry point, ownership as data.
+//
+// The problem this section closes: `ESCAPE_PRECEDENCE` above and AP-03's
+// `KeyboardCommandRegistry` were two unconnected owners of the same physical
+// key. The registry answered `Escape` in `'cell-editing'` (`grid.cancelEdit`)
+// and knew nothing about focus mode; this file knew the precedence and
+// nothing about the registry. A future hook wiring one of them would have
+// silently broken the other — Escape either exiting focus mode out from under
+// an open modal, or never exiting it at all.
+//
+// HOW THE TWO SIDES MEET, and why it is shaped this way:
+//   * AP-09 owns the ORDER (which consumer wins) and the fact that focus mode
+//     is the last resort. That is a layout/UX rule, not a keymap rule.
+//   * AP-03 owns the KEYMAP (which command id fires in which command context).
+//   * The join is by STRING ID, never by import. This file must not import
+//     `keyboard/**`: the command ids below are DATA, so AP-03 can register,
+//     rename or re-context its commands without a single edit here, and this
+//     package stays free of a dependency on the keyboard layer (the same
+//     discipline `WorkspaceBarPrimaryAction.keyboardCommandId` already uses).
+//
+// WHAT AP-03 (or the future keyboard hook) CALLS, in order:
+//   1. `resolveEscapeCommand(ctx)` — FIRST, before touching the registry.
+//   2. If `dispatchViaKeyboardRegistry` is false, the overlay layer closes its
+//      own modal/palette/popover and the registry is never consulted.
+//   3. If it is true, call `registry.resolve(escapeEvent, resolution
+//      .keyboardCommandContext, platform)` and assert the resolved command's
+//      id equals `resolution.keyboardCommandId`.
+//   4. `verifyEscapeRegistryCoverage(...)` in a test, to prove the registry
+//      actually carries every command this contract promises.
+// A caller that owns a `FocusModeSession` can skip 1..3 for the focus-mode
+// case and call `handleEscapeKey(session, ctx)`, which resolves AND performs
+// the exit in one step.
+// ---------------------------------------------------------------------------
+
+/** The `KeyboardEvent.key` value this whole section is about. Data, so a test can build the event without a magic string. */
+export const ESCAPE_KEY = 'Escape' as const;
+
+/**
+ * Mirror of AP-03's `CommandContext` ids (`keyboard/commandTypes.ts`), carried
+ * as data for the reason stated above. Kept as a const array so a drift test
+ * can compare it against the real `COMMAND_CONTEXTS` without this file
+ * importing it.
+ */
+export const FINANCE_COMMAND_CONTEXT_IDS = ['grid-focused', 'cell-editing', 'global'] as const;
+export type FinanceCommandContextId = (typeof FINANCE_COMMAND_CONTEXT_IDS)[number];
+
+/**
+ * The AP-03 `KeyboardCommand.id`s AP-09 depends on. Changing one of these is
+ * a coordinated, two-package change — which is exactly why they are named
+ * constants and not literals scattered through the file.
+ */
+export const FINANCE_FOCUS_MODE_COMMAND_IDS = {
+  /** Enter/leave focus mode from the keyboard (AP-03: `Mod+Shift+F`, context `global`). */
+  toggle: 'workspace.toggleFocusMode',
+  /** Leave focus mode with `Escape` — the command this precedence table hands the key to. */
+  exit: 'workspace.exitFocusMode',
+  /** The palette, listed because it outranks focus mode for `Escape`. */
+  commandPalette: 'workspace.commandPalette',
+  /** AP-03's pre-existing `Escape` owner, which outranks focus mode. */
+  cancelCellEdit: 'grid.cancelEdit',
+} as const;
+
+export type EscapeOwner = 'ui-overlay' | 'AP-03-keyboard' | 'AP-09-focus-mode';
+
+export interface EscapeConsumerBinding {
+  consumer: (typeof ESCAPE_PRECEDENCE)[number];
+  owner: EscapeOwner;
+  /** `null` when no keyboard command is involved (an overlay closes itself). */
+  keyboardCommandId: string | null;
+  /** AP-03 command contexts in which `keyboardCommandId` must be registered. */
+  keyboardCommandContexts: readonly FinanceCommandContextId[];
+  note: string;
+}
+
+export const ESCAPE_CONSUMER_BINDINGS: Readonly<
+  Record<(typeof ESCAPE_PRECEDENCE)[number], EscapeConsumerBinding>
+> = {
+  modal: {
+    consumer: 'modal',
+    owner: 'ui-overlay',
+    keyboardCommandId: null,
+    keyboardCommandContexts: [],
+    note: 'A modal traps focus and closes itself. The keyboard registry must NOT see this Escape at all — dispatching `grid.cancelEdit` or an exit-focus-mode command underneath an open dialog changes the layout the user is looking at.',
+  },
+  'command-palette': {
+    consumer: 'command-palette',
+    owner: 'ui-overlay',
+    keyboardCommandId: null,
+    keyboardCommandContexts: [],
+    note: 'The palette is OPENED by an AP-03 command (`workspace.commandPalette`) but CLOSED by itself: while it is open it owns the keyboard, so routing its Escape back through the registry would let the registry act on a grid the user is not looking at.',
+  },
+  popover: {
+    consumer: 'popover',
+    owner: 'ui-overlay',
+    keyboardCommandId: null,
+    keyboardCommandContexts: [],
+    note: 'Context popover / More menu / lifecycle menu. Same reasoning as a modal, one level lighter.',
+  },
+  'cell-editing': {
+    consumer: 'cell-editing',
+    owner: 'AP-03-keyboard',
+    keyboardCommandId: FINANCE_FOCUS_MODE_COMMAND_IDS.cancelCellEdit,
+    keyboardCommandContexts: ['cell-editing'],
+    note: 'AP-03 already owns this one; AP-09 only guarantees it is asked BEFORE focus mode, so Escape cancels the edit the user is in rather than tearing down the layout around it.',
+  },
+  'focus-mode': {
+    consumer: 'focus-mode',
+    owner: 'AP-09-focus-mode',
+    keyboardCommandId: FINANCE_FOCUS_MODE_COMMAND_IDS.exit,
+    keyboardCommandContexts: ['grid-focused'],
+    note: 'Handoff section 11 "`Esc` wychodzi" — the LAST resort. The command id is AP-03\'s dispatch handle; the state transition itself is `exitFocusMode` in this file, which AP-03 must call rather than reimplement.',
+  },
+};
+
+export interface EscapeResolution {
+  consumer: EscapeConsumer;
+  binding: EscapeConsumerBinding | null;
+  owner: EscapeOwner | 'none';
+  keyboardCommandId: string | null;
+  /** The AP-03 `CommandContext` `registry.resolve` must be called with, or `null` when the registry must not be consulted. */
+  keyboardCommandContext: FinanceCommandContextId | null;
+  /** `false` means: the overlay layer handles this Escape and the registry never sees it. */
+  dispatchViaKeyboardRegistry: boolean;
+}
+
+/**
+ * THE single entry point for an `Escape` keypress anywhere in a Finance
+ * workspace. Answers "who handles it, and does the keyboard registry get to
+ * see this keypress at all" in one call.
+ *
+ * The AP-03 command context is DERIVED from `ctx.cellEditing` rather than
+ * taken as a parameter: a caller that could pass its own context could pass
+ * one that contradicts the precedence table (claiming `'cell-editing'` while
+ * `cellEditing` is false), which is the drift this bridge exists to remove.
+ */
+export function resolveEscapeCommand(ctx: EscapeContext): EscapeResolution {
+  const consumer = resolveEscapeKey(ctx);
+  if (consumer === 'none') {
+    return {
+      consumer,
+      binding: null,
+      owner: 'none',
+      keyboardCommandId: null,
+      keyboardCommandContext: null,
+      dispatchViaKeyboardRegistry: false,
+    };
+  }
+  const binding = ESCAPE_CONSUMER_BINDINGS[consumer];
+  const dispatchViaKeyboardRegistry = binding.keyboardCommandId !== null;
+  return {
+    consumer,
+    binding,
+    owner: binding.owner,
+    keyboardCommandId: binding.keyboardCommandId,
+    keyboardCommandContext: dispatchViaKeyboardRegistry
+      ? ctx.cellEditing
+        ? 'cell-editing'
+        : 'grid-focused'
+      : null,
+    dispatchViaKeyboardRegistry,
+  };
+}
+
+/** Guard a future keyboard hook calls before letting `KeyboardCommandRegistry.resolve` see an `Escape`. */
+export function shouldKeyboardRegistryHandleEscape(ctx: EscapeContext): boolean {
+  return resolveEscapeCommand(ctx).dispatchViaKeyboardRegistry;
+}
+
+// --- Coverage: does AP-03's registry actually carry what AP-09 promises? ----
+
+export interface EscapeRegistryRegistration {
+  commandId: string;
+  context: FinanceCommandContextId;
+}
+
+export interface EscapeCoverageGap {
+  consumer: (typeof ESCAPE_PRECEDENCE)[number];
+  commandId: string;
+  context: FinanceCommandContextId;
+}
+
+export type EscapeCoverageResult = { ok: true } | { ok: false; missing: EscapeCoverageGap[] };
+
+/**
+ * Cross-check: every `(commandId, context)` pair the bindings above promise
+ * must exist in AP-03's registry. Takes the registrations as an ARGUMENT
+ * (rather than importing the registry) so this package keeps no dependency on
+ * `keyboard/**` — a test on either side supplies the real list.
+ *
+ * This is the function that turns "the two layers agree" from a claim in a
+ * report into something CI can fail on.
+ */
+export function verifyEscapeRegistryCoverage(
+  registered: readonly EscapeRegistryRegistration[]
+): EscapeCoverageResult {
+  const have = new Set(registered.map((r) => `${r.commandId}@${r.context}`));
+  const missing: EscapeCoverageGap[] = [];
+  for (const consumer of ESCAPE_PRECEDENCE) {
+    const binding = ESCAPE_CONSUMER_BINDINGS[consumer];
+    if (!binding.keyboardCommandId) continue;
+    for (const context of binding.keyboardCommandContexts) {
+      if (!have.has(`${binding.keyboardCommandId}@${context}`)) {
+        missing.push({ consumer, commandId: binding.keyboardCommandId, context });
+      }
+    }
+  }
+  return missing.length === 0 ? { ok: true } : { ok: false, missing };
+}
+
+// --- Resolve AND act, for a caller that holds the session -------------------
+
+/** The overlay half of `EscapeContext`; `focusModeActive` is not taken from the caller — it is read off the session. */
+export type EscapeOverlayContext = Omit<EscapeContext, 'focusModeActive'>;
+
+export interface EscapeHandlingResult {
+  resolution: EscapeResolution;
+  /** Non-`null` only when AP-09 itself consumed the key, i.e. `consumer === 'focus-mode'`. */
+  toggle: FocusModeToggleResult | null;
+  session: FocusModeSession;
+}
+
+/**
+ * One call: resolve the precedence AND, when focus mode is the winner, perform
+ * the exit. `focusModeActive` is read off `session.active` so a caller cannot
+ * desynchronise the two.
+ */
+export function handleEscapeKey(
+  session: FocusModeSession,
+  ctx: EscapeOverlayContext
+): EscapeHandlingResult {
+  const resolution = resolveEscapeCommand({ ...ctx, focusModeActive: session.active });
+  if (resolution.consumer !== 'focus-mode') {
+    return { resolution, toggle: null, session };
+  }
+  const toggle = exitFocusMode(session, { trigger: 'escape-key' });
+  return { resolution, toggle, session: toggle.session };
+}
+
+// ---------------------------------------------------------------------------
 // Viewport policy (handoff section 11) — needed here because focus mode is the
 // control that is offered/withheld per device class.
 // ---------------------------------------------------------------------------

@@ -29,8 +29,11 @@ import {
   FINANCE_MODULE_ADAPTER_LIST,
 } from '../moduleAdapters.js';
 import {
+  ESCAPE_KEY,
   ESCAPE_PRECEDENCE,
   FINANCE_CHROME_REGIONS,
+  FINANCE_COMMAND_CONTEXT_IDS,
+  FINANCE_FOCUS_MODE_COMMAND_IDS,
   FOCUS_MODE_HIDDEN_REGIONS,
   FOCUS_MODE_PRESERVED_STATE_KEYS,
   FOCUS_MODE_PRESERVED_STATE_SOURCE,
@@ -42,10 +45,19 @@ import {
   enterFocusMode,
   exitFocusMode,
   focusModeActiveViewId,
+  handleEscapeKey,
   regionVisibilityInFocusMode,
+  resolveEscapeCommand,
   resolveEscapeKey,
+  shouldKeyboardRegistryHandleEscape,
+  verifyEscapeRegistryCoverage,
   viewportCapability,
 } from '../focusModeContract.js';
+// AP-03, imported READ-ONLY: the bridge is joined by string id inside the
+// contract, but a test may look at both sides at once — that is the only way
+// to prove the two layers actually agree instead of asserting it in prose.
+import { COMMAND_CONTEXTS } from '../../keyboard/commandTypes.js';
+import { FINANCE_KEYBOARD_COMMANDS } from '../../keyboard/KeyboardCommandRegistry.js';
 import {
   ORG,
   allGatesSatisfied,
@@ -489,6 +501,138 @@ describe('AP-09 focusModeContract — Escape precedence', () => {
   it('consumes nothing when no consumer is active', () => {
     expect(resolveEscapeKey(ctx)).toBe('none');
     expect(ESCAPE_PRECEDENCE[ESCAPE_PRECEDENCE.length - 1]).toBe('focus-mode');
+  });
+});
+
+describe('AP-09 focusModeContract — the Escape bridge to AP-03', () => {
+  const ctx = {
+    modalOpen: false,
+    commandPaletteOpen: false,
+    popoverOpen: false,
+    cellEditing: false,
+    focusModeActive: false,
+  };
+
+  it('keeps the keyboard registry AWAY from Escape while an overlay is open', () => {
+    for (const overlay of ['modalOpen', 'commandPaletteOpen', 'popoverOpen'] as const) {
+      const resolution = resolveEscapeCommand({ ...ctx, focusModeActive: true, [overlay]: true });
+      expect(resolution.owner).toBe('ui-overlay');
+      expect(resolution.keyboardCommandId).toBeNull();
+      expect(resolution.keyboardCommandContext).toBeNull();
+      expect(resolution.dispatchViaKeyboardRegistry).toBe(false);
+      expect(shouldKeyboardRegistryHandleEscape({ ...ctx, focusModeActive: true, [overlay]: true })).toBe(false);
+    }
+  });
+
+  it('routes Escape to the AP-03 command id + context for each keyboard-owned consumer', () => {
+    const editing = resolveEscapeCommand({ ...ctx, focusModeActive: true, cellEditing: true });
+    expect(editing.owner).toBe('AP-03-keyboard');
+    expect(editing.keyboardCommandId).toBe(FINANCE_FOCUS_MODE_COMMAND_IDS.cancelCellEdit);
+    expect(editing.keyboardCommandContext).toBe('cell-editing');
+    expect(editing.dispatchViaKeyboardRegistry).toBe(true);
+
+    const focus = resolveEscapeCommand({ ...ctx, focusModeActive: true });
+    expect(focus.owner).toBe('AP-09-focus-mode');
+    expect(focus.keyboardCommandId).toBe(FINANCE_FOCUS_MODE_COMMAND_IDS.exit);
+    expect(focus.keyboardCommandContext).toBe('grid-focused');
+    expect(focus.dispatchViaKeyboardRegistry).toBe(true);
+
+    const nobody = resolveEscapeCommand(ctx);
+    expect(nobody).toMatchObject({ consumer: 'none', owner: 'none', dispatchViaKeyboardRegistry: false });
+  });
+
+  it('mirrors AP-03 command contexts as DATA that has not drifted from the real union', () => {
+    // The ids are joined by string on purpose (no import from `keyboard/**`
+    // in the contract itself) — this test is the tripwire that the mirror
+    // still matches the thing it mirrors.
+    expect([...FINANCE_COMMAND_CONTEXT_IDS]).toEqual([...COMMAND_CONTEXTS]);
+  });
+
+  it('exits focus mode through ONE entry point, with the real state transition', () => {
+    const session = createFocusModeSession(
+      createEmptyWorkspaceState({
+        organizationId: ORG,
+        userId: 'user-1',
+        artifactRef: artifactRef(),
+        sourceWorkingRevisionId: 'wr-1',
+      }),
+      { activeViewId: 'assumptions' }
+    );
+    const entered = enterFocusMode(session, {
+      trigger: 'toggle-control',
+      restoreFocusToControlId: 'finance.valuation.fullscreen',
+    }).session;
+
+    // Overlay open -> AP-09 does NOT touch the session.
+    const withPopover = handleEscapeKey(entered, { ...ctx, popoverOpen: true });
+    expect(withPopover.toggle).toBeNull();
+    expect(withPopover.session).toBe(entered);
+    expect(withPopover.session.active).toBe(true);
+
+    // Nothing else claims it -> focus mode exits, state intact.
+    const exited = handleEscapeKey(entered, ctx);
+    expect(exited.resolution.consumer).toBe('focus-mode');
+    expect(exited.toggle?.refetched).toBe(false);
+    expect(exited.session.active).toBe(false);
+    expect(assertFocusModePreservation(entered, exited.session)).toEqual({ ok: true });
+
+    // Escape on an inactive session is a no-op, not a spurious exit.
+    const idle = handleEscapeKey(exited.session, ctx);
+    expect(idle.resolution.consumer).toBe('none');
+    expect(idle.toggle).toBeNull();
+  });
+
+  it('DETECTS a registry that is missing a promised Escape command (negative control)', () => {
+    const complete = [
+      { commandId: FINANCE_FOCUS_MODE_COMMAND_IDS.cancelCellEdit, context: 'cell-editing' as const },
+      { commandId: FINANCE_FOCUS_MODE_COMMAND_IDS.exit, context: 'grid-focused' as const },
+    ];
+    expect(verifyEscapeRegistryCoverage(complete)).toEqual({ ok: true });
+
+    // Right command, WRONG context — the failure mode a naive "is the id
+    // registered anywhere" check would wave through.
+    const wrongContext = verifyEscapeRegistryCoverage([
+      { commandId: FINANCE_FOCUS_MODE_COMMAND_IDS.cancelCellEdit, context: 'cell-editing' },
+      { commandId: FINANCE_FOCUS_MODE_COMMAND_IDS.exit, context: 'global' },
+    ]);
+    expect(wrongContext.ok).toBe(false);
+    if (wrongContext.ok) throw new Error('unreachable');
+    expect(wrongContext.missing).toEqual([
+      { consumer: 'focus-mode', commandId: 'workspace.exitFocusMode', context: 'grid-focused' },
+    ]);
+
+    expect(verifyEscapeRegistryCoverage([]).ok).toBe(false);
+  });
+
+  it('reports the REAL AP-03 registry’s Escape coverage (no mock)', () => {
+    const escapeRegistrations = FINANCE_KEYBOARD_COMMANDS.filter(
+      (command) => command.combo.key === ESCAPE_KEY
+    ).map((command) => ({ commandId: command.id, context: command.context }));
+
+    // AP-03 has always owned Escape in `cell-editing`; that half must hold today.
+    expect(escapeRegistrations).toContainEqual({
+      commandId: FINANCE_FOCUS_MODE_COMMAND_IDS.cancelCellEdit,
+      context: 'cell-editing',
+    });
+
+    const coverage = verifyEscapeRegistryCoverage(escapeRegistrations);
+    const registryOwnsFocusModeExit = escapeRegistrations.some(
+      (r) => r.commandId === FINANCE_FOCUS_MODE_COMMAND_IDS.exit && r.context === 'grid-focused'
+    );
+    if (registryOwnsFocusModeExit) {
+      // AP-03's workspace-level commands have landed in this tree: the bridge
+      // is closed end to end.
+      expect(coverage).toEqual({ ok: true });
+    } else {
+      // They have not landed yet. This is the honest current state, recorded
+      // as an ASSERTED gap rather than a passing test that proves nothing:
+      // the only thing allowed to be missing is the focus-mode exit command.
+      expect(coverage.ok).toBe(false);
+      if (coverage.ok) throw new Error('unreachable');
+      expect(coverage.missing).toEqual([
+        { consumer: 'focus-mode', commandId: 'workspace.exitFocusMode', context: 'grid-focused' },
+      ]);
+    }
   });
 });
 
