@@ -2736,6 +2736,164 @@ udokumentowana w §33 — luka metodologii "minimalny zestaw", nie regresja
 tego epika). **Zero regresji w domenie ROI-E001/E002/E003 ani w reszcie KPI**
 — dowiedzione, nie zadeklarowane.
 
+---
+
+## 35. ROI-E005 Benefits Realization — implementacja + odbiór (2026-08-10)
+
+**Piąty epik domeny ROI, zero-migracyjny — czysto nowe komendy/odczyty nad
+schematem ROI-E001…E004, bez żadnej nowej tabeli/kolumny.** Zbudowano
+`ROI_E005_DESIGN.md` §2–§6 dosłownie (design FROZEN, 18-wierszowa tabela
+Decisions D1-D18): **Decyzja D5 (kluczowe ustalenie tego epika, potwierdzone
+CZYTANIEM, nie założone)** — `initiativeClosureService.ts` ma ZERO odwołań
+do jakiejkolwiek tabeli `rvn_*` i ZERO zapisów do `rvn_platform_obligations`
+— AC-02 ("MyWork obligations przetrwają zamknięcie Initiative") jest już
+STRUKTURALNIE spełnione; zadaniem tego epika na AC-02 był realny test
+dowodzący tego, nie nowy kod produkcyjny naprawiający coś, co nie jest
+zepsute.
+
+**Nowe pliki**: `roiBenefitsRealizationCommands.ts`
+(`startRoiCaseBenefitsRealization` — `'tracking'→'benefits_realization'`,
+ręczny `executeAtomicCommand` strukturalnie kopiujący
+`startRoiCaseTracking`, guard TYLKO na własnym `status` case'a, NIGDY nie
+czyta `initiatives.status` — literalny mechanizm AC-01; `cancelRoiCase` —
+`ROI_TRACKING_ACTIVE_STATUSES→'cancelled'`, `reason: string` obowiązkowy,
+funkcja dotyka WYŁĄCZNIE `rvn_roi_cases` — strukturalny dowód AC-04, nie
+tylko asercja testu), `roiBenefitsRealizationRepository.ts`
+(`getRoiCaseBenefitsRealizationView` — formuła D10:
+`(actual/approved)*100`, licznik = `currentActualSnapshotId`-owskazywany
+`total_actual_financial_benefits`, mianownik = `latestApprovedSnapshotId`
+-owskazywany `decisionCalculationRun.totalFinancialBenefits` [NIE Forecast
+— niezmienny z konstrukcji], `null` gdy mianownik = 0; 2-powodowy typowany
+slot re-używający `RoiCompareSlot` z `roiCompareRepository.ts`, nie
+przepisany), `roiOrgPerspectiveRepository.ts`
+(`buildScopedRoiCasesBase`/`listOrganizationRoiBenefitsRealization` —
+dokładne lustro `kpiPerspectivesRepository.ts`'s `buildScopedKpisBase`,
+`chain_members`/`scoped_cases` CTE, `resource_type='roi_case'`, filtr
+statusu do `ROI_TRACKING_ACTIVE_STATUSES` wpieczony we wspólną bazę bo ten
+plik ma JEDNEGO wywołującego, nie wieloraki orkiestrator jak plik KPI),
+`roiPerspectives.routes.ts` (nowy dedykowany router, `GET
+/org/benefits-realization`, `managerId` z tokena — nigdy od klienta).
+**Changed**: `roi.routes.ts` (3 nowe trasy: `POST .../transitions/
+start-benefits-realization` przez `mountTransitionRoute` — dokładnie ten sam
+kształt co `startRoiCaseTracking`; `POST .../transitions/cancel` — NIE przez
+`mountTransitionRoute` bo `reason` obowiązkowy wymaga własnego schematu, ten
+sam wzorzec co `/transitions/reject`; `GET .../benefits-realization` — bez
+ograniczenia statusu per D14, ten sam wzorzec co `GET .../compare`),
+`resultsVnextRoiForecastActual.validators.ts` (`RoiCaseCancellationSchema`
+= `RoiCaseTransitionSchema.extend({reason: wymagany string})`),
+`atomicWrite.ts` (2 nowe klucze zdarzeń
+`roi.benefits_realization_started`/`roi.case_cancelled` →
+`['mywork_projection','finance_projection']`), `Gateway.ts` (montaż nowego
+routera NA TYM SAMYM prefiksie `/api/vnext/results/roi` — sprawdzone
+dosłownie, nie założone: `roi.routes.ts` nie ma ANI JEDNEGO gołego
+top-level dynamicznego segmentu, każda jego trasa zaczyna się od literału
+`/cases`, więc `/org/...` nie koliduje niezależnie od kolejności montażu;
+zamontowany PRZED `roi.routes.ts` mimo to, dla spójności z konwencją
+KPI-E005).
+
+**AC-02 — dowiedzione realnym zamknięciem Initiative, nie skrótem SQL**:
+`roiObligationsSurviveInitiativeClosure.realdb.test.ts` tworzy case ROI
+(`start_roi_study`), startuje tracking (`track_roi_forecast_actuals`),
+startuje benefits realization (`confirm_benefits_realization`), po czym
+przepędza POWIĄZANĄ Initiative przez REALNY, produkcyjny workflow zamknięcia
+(`createClosureRequest`→`addEvidence`×2→`submitClosureRequest`→
+`approveClosureRequest` — te same eksportowane funkcje, które woła warstwa
+HTTP `initiativeClosure.routes.ts`, wywołane bezpośrednio, nie przez
+Express/supertest, ale wciąż realna ścieżka produkcyjna) aż do
+`initiatives.status='DONE'`, po czym asercjuje wszystkie trzy obligacje
+WCIĄŻ `status='open'`. **Napotkana i udokumentowana bramka SPOZA zakresu
+tego epika**: `initiativeTransitionService.ts`'s gałąź EXECUTING→DONE
+TERAZ (na tej gałęzi, po tym jak pisany był
+`execution-closure-evidence-gate.golden-flow.realdb.test.ts`) wymaga
+DODATKOWO aktualnej, zatwierdzonej `initiative_lifecycle_gate_decisions`
+(`pmoDomain='CLOSURE'`) — mechanizm gubernacyjny T01/A05 zupełnie
+niezwiązany z ROI. Przejście przez realne API (`recordInitiativeLifecycle
+GateDecision`) wymagałoby pełnego łańcucha `transformation_cases`+
+`v8_agent_proposal_versions`+`v8_agent_proposal_scope_reviews` — obce temu
+epikowi. Zasiane wprost SQL-em jako fixture testu (nie zmiana kodu
+produkcyjnego), udokumentowane w komentarzu testu. Ta tabela jest
+NIEUSUWALNA triggerem `BEFORE UPDATE OR DELETE` (immutable by design) — test
+cleanup świadomie NIE usuwa jej ani powiązanego łańcucha fixture'ów
+(`initiatives`/`users`/`transformation_cases`/`v8_agent_proposal_*`),
+udokumentowane w kodzie testu jako trwały, nieszkodliwy, unikalnie-otagowany
+osad.
+
+**AC-01 — dowiedzione dwoma wariantami tej samej transakcji, nie jednym**:
+`roiBenefitsRealizationTransition.realdb.test.ts` buduje dwa case'y
+tracking, jeden powiązany z Initiative pozostawioną `'EXECUTING'`, drugi z
+Initiative bezpośrednio ustawioną SQL-em na `'DONE'` — oba przejścia
+`startRoiCaseBenefitsRealization` kończą się identycznie sukcesem.
+
+**AC-03/AC-05 — formuła i org-perspective dowiedzione przeciw wartościom
+odczytanym z powrotem z bazy, nie zgadywanym**:
+`roiBenefitsRealizationView.realdb.test.ts` (4 testy: not_yet_approved,
+no_actual_recorded, dokładna formuła `(actual/approved)*100` przeciw
+`decisionCalculationRun.totalFinancialBenefits` odczytanemu wprost z JSONB
+snapshotu zatwierdzenia, `null` przy mianowniku=0 — potwierdzone, że silnik
+faktycznie policzył 0, nie null, dla case'a bez linii korzyści finansowych).
+`roiOrgBenefitsRealizationPerspective.realdb.test.ts` (2 testy: chain-scoping
++ PRIVATE non-leak lustro `organizationKpiAttention.realdb.test.ts`'s
+własnego wzorca; AC-05 potwierdzone CZYTANIEM źródła
+`roiOrgPerspectiveRepository.ts` po odsianiu komentarzy i asercją braku
+sześciu nazw tabel legacy).
+
+**AC-04 — dowiedzione porównaniem CAŁYCH wierszy, nie próbką kolumn**:
+`roiCaseCancellation.realdb.test.ts` (3 testy: guard scope D7, `reason`
+zapisany na evencie, oraz PEŁNE porównanie `SELECT *` z
+`rvn_roi_actual_entries`/`rvn_roi_actual_snapshots` sprzed i po anulowaniu —
+`toEqual` na całych wierszach, plus potwierdzenie że
+`current_actual_snapshot_id` case'a nie został wyczyszczony).
+
+**Testy**: 5 nowych plików w `tests/resultsVnext/roi/` (13 testów realDB) +
+1 w `server/src/routes/resultsVnext/__tests__/` (15 testów mockowanych) =
+**28 nowych testów, wszystkie PASS** na efemerycznym Postgresie 16
+(`initdb --locale=C`, TCP `127.0.0.1:28470`, PEŁNY zestaw 811 migracji przez
+`migrate.postgres.ts --safe` — nie minimalny 14/15-plikowy zestaw
+poprzednich epików, bo `roiObligationsSurviveInitiativeClosure` potrzebuje
+realnej tabeli `initiatives`/`initiative_closure_*`).
+
+**Regresja — KPI 100% zielone (144/144), warstwa route'ów 100% zielona
+(183/183, w tym 15 nowych)**. **ROI-E001…E004: 33 niepowodzenia w 15
+plikach, WSZYSTKIE ten sam pojedynczy przedistniejący kod błędu
+`initiatives_status_check`** — `initiatives.status DEFAULT 'step3'`
+(`000_z_core_baseline.sql`) łamie własne ograniczenie CHECK (tylko
+wielkoliterowe wartości enum: `DRAFT`/`EXECUTING`/`DONE`/...), już
+udokumentowane w §33/§34 jako przedistniejąca luka. Te 15 plików (m.in.
+`roiTrackingTransition.realdb.test.ts`, `roiVariance.realdb.test.ts`,
+`roiVisibilityJoin.realdb.test.ts`) NIE ustawiają `status` przy `INSERT INTO
+initiatives` (polegają na DEFAULT), więc walą się na KAŻDEJ w pełni
+zmigrowanej bazie, niezależnie od tego epika — potwierdzone `git status`:
+żaden z tych 15 plików, ani tabela `initiatives`, ani żadna migracja nie są
+dotknięte przez ten epik. Własne testy tego epika (i wszystkie poprzednie
+ROI-E004 testy odczytane jako wzorzec) ZAWSZE ustawiają `status` explicite —
+stąd nietknięte. **Zero regresji przypisywalnej temu epikowi** — dowiedzione
+identyfikacją wspólnego, jednego, przedistniejącego kodu błędu we
+WSZYSTKICH 33 niepowodzeniach, nie zadeklarowane.
+
+**`tsc --noEmit` clean na całym repo** (`NODE_OPTIONS=--max-old-space-size=
+8192 npx tsc --noEmit`, root `tsconfig.json`).
+
+**Poza zakresem, świadomie NIEZBUDOWANE (backlog notes per §5 designu)**:
+- **D7 (cancellation z wcześniejszych statusów)**: `cancelRoiCase`
+  celowo NIE obsługuje `draft`/`modeling`/`approved` — anulowanie case'a bez
+  danych Actual nie ma żadnego związku z AC-04; ogólne "porzuć na dowolnym
+  etapie" to inna, niezbudowana funkcja.
+- **D9 (obligacje nie anulowane automatycznie)**: `cancelRoiCase` nie dotyka
+  `rvn_platform_obligations` w ogóle — żadna AC tego nie nazywa, D5 już
+  ustaliło że nic w tej domenie nie zarządza automatycznie statusem
+  obligacji przy żadnym przejściu.
+- **D13 (warianty cost/ROI-realization)**: `benefitsRealizationPct` liczy
+  WYŁĄCZNIE financial benefits (AC-03 nazywa "realization %" w liczbie
+  pojedynczej) — cost-realization/ROI-realization to spekulacyjny scope
+  creep, tani do dobudowania identycznym wzorcem gdy realna potrzeba się
+  pojawi.
+- **Jawna flaga dla ROI-E006**: przejścia `benefits_realization`→
+  `post_investment_review_due` i finalne `→closed` pozostają zadaniem
+  ROI-E006 (PIR & Learning) — nie tknięte tutaj.
+
+**Domena ROI: 5/8 epików zbudowanych (E001, E002, E003, E004, E005).
+ROI-E006 PIR & Learning następny w kolejce.**
+
 **`tsc --noEmit` clean na całym repo** (root `tsconfig.json`, nie
 `server/tsconfig.json` — ten drugi ma przedistniejące błędy `decimal.js`
 niezwiązane z tym epikiem, poza zakresem tego pliku konfiguracyjnego).

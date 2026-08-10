@@ -392,7 +392,55 @@ Tracking/Forecast/Actual/Variance, E005 = przejście do `benefits_realization`
 + liczy realization % Z DANYCH E004 (wniosek z listy AC E005, nie
 bezpośrednio nazwane źródłowo — do zweryfikowania przy projektowaniu E005).
 
-**Domena ROI: 4/8 epików zbudowanych (E001, E002, E003, E004). ROI-E005
-Benefits Realization następny w kolejce.**
+**ROI-E005 Benefits Realization — Status: IMPLEMENTED 2026-08-10** (backend
+only; UI Registry to RN-G2, poza zakresem). **Zero-migracyjny epik** — brak
+nowej tabeli/kolumny. `docs/product/results-vnext/ROI_E005_DESIGN.md`
+(FROZEN) → `server/src/services/resultsVnext/roi/roiBenefitsRealization
+Commands.ts` (`startRoiCaseBenefitsRealization`/`cancelRoiCase`),
+`roiBenefitsRealizationRepository.ts` (`getRoiCaseBenefitsRealizationView`),
+`roiOrgPerspectiveRepository.ts`
+(`listOrganizationRoiBenefitsRealization`) → `server/src/routes/
+resultsVnext/roiPerspectives.routes.ts` (nowy router, `GET /org/
+benefits-realization`) + `roi.routes.ts` (3 nowe trasy, ten sam plik co
+E001-E004). 28 nowych testów, wszystkie PASS na efemerycznym Postgresie 16
+(PEŁNY zestaw 811 migracji, nie minimalny 14/15-plikowy — 5 w
+`tests/resultsVnext/roi/` realDB + 1 w `server/src/routes/resultsVnext/
+__tests__/roiBenefitsRealization.routes.test.ts` mockowane). Pięć AC z
+prozy §0 designu wszystkie zaadresowane: **AC-01** (przejście do benefits
+_realization niezależne od zamknięcia Initiative) dowiedzione dwoma
+Initiative — jedna `'EXECUTING'`, jedna bezpośrednio `'DONE'` — identyczny
+sukces obu; **AC-02** (obligacje MyWork przetrwają zamknięcie Initiative) —
+**Decyzja D5, kluczowe ustalenie: już strukturalnie spełnione** (zero
+odwołań `rvn_*`/obligacji w `initiativeClosureService.ts`, potwierdzone
+czytaniem), dowiedzione realnym `createClosureRequest`→`addEvidence`×2→
+`submitClosureRequest`→`approveClosureRequest` (te same funkcje co warstwa
+HTTP, wywołane bezpośrednio) aż do `initiatives.status='DONE'`, trzy
+obligacje (`start_roi_study`/`track_roi_forecast_actuals`/`confirm_benefits
+_realization`) wciąż `open`; **AC-03** (realization % z governed data) —
+formuła D10 `(actual/approved)*100` z `currentActualSnapshotId`/
+`latestApprovedSnapshotId`, dowiedziona przeciw wartościom odczytanym z
+powrotem z bazy, `null` przy mianowniku=0; **AC-04** (cancellation zachowuje
+Actual) — `cancelRoiCase` strukturalnie dotyka WYŁĄCZNIE `rvn_roi_cases`,
+dowiedzione pełnym porównaniem wierszy `rvn_roi_actual_entries`/
+`rvn_roi_actual_snapshots` sprzed/po (`toEqual` na całych wierszach);
+**AC-05** (org perspective tylko z governed data) — lustro
+`kpiPerspectivesRepository.ts`'s `buildScopedKpisBase`, dowiedzione
+chain-scoping + PRIVATE non-leak testem ORAZ czytaniem źródła repozytorium
+(brak sześciu nazw tabel legacy). Napotkana i udokumentowana bramka SPOZA
+zakresu (T01/A05 `initiative_lifecycle_gate_decisions` — landed na tej
+gałęzi po napisaniu EXE-08's własnego testu, zasiana SQL-em jako fixture,
+nie zmiana produkcyjna), szczegóły `EXECUTION_LEDGER.md` §35. Regresja: KPI
+100% zielone (144/144), route'y 100% zielone (183/183); ROI-E001-E004: 33
+niepowodzenia w 15 NIETKNIĘTYCH plikach, wszystkie ten sam przedistniejący
+`initiatives_status_check` (§33/§34) — zero regresji przypisywalnej temu
+epikowi. Poza zakresem, świadomie NIEZBUDOWANE (backlog notes, Decyzje
+D7/D9/D13): brak cancellation z przed-tracking statusów (D7), obligacje nie
+anulowane automatycznie przy cancellation (D9), brak wariantów cost/ROI
+-realization poza financial benefits (D13). Jawna flaga dla ROI-E006:
+przejścia `benefits_realization`→`post_investment_review_due` i finalne
+`→closed` pozostają jego zadaniem.
+
+**Domena ROI: 5/8 epików zbudowanych (E001, E002, E003, E004, E005).
+ROI-E006 PIR & Learning następny w kolejce.**
 
 Pełne tabele (wszystkie pola per AC): transkrypt agenta `a2714d65fd9b0df12`.
