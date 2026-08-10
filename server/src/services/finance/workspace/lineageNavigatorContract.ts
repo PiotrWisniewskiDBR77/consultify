@@ -38,7 +38,7 @@ import {
   type FinanceArtifactType,
 } from '../../../types/finance/ArtifactRef.js';
 import type { FinanceArtifactFreshness } from '../../../types/finance/financeValueSemantics.js';
-import type { BusinessVersionStatus } from '../canonical/lifecycleService.js';
+import { TERMINAL_STATUSES, type BusinessVersionStatus } from '../canonical/lifecycleService.js';
 import type { LineageEdgeRow, LineageEdgeType } from '../canonical/lineageService.js';
 import type { WorkspaceBarLabel } from './workspaceBarContract.js';
 
@@ -87,10 +87,23 @@ export const LINEAGE_EDGE_TOPOLOGY: readonly LineageEdgeTopology[] = [
  * (BASELINE_MODEL offers both PREDICTION_SCENARIO and VALUATION_CASE), and
  * Analysis is a parallel child of Statement Pack rather than a mandatory link
  * in a chain.
+ *
+ * `sourceStatus` is REQUIRED, and a terminal one (ARCHIVED / SUPERSEDED /
+ * INVALIDATED — `lifecycleService.TERMINAL_STATUSES`) yields NOTHING. Until
+ * this parameter existed the panel cheerfully offered `+ Nowy` on an archived
+ * or invalidated node: the type topology allowed it, and nobody asked about
+ * the lifecycle. Building a new valuation on an invalidated model is exactly
+ * the provenance error this whole module is meant to prevent, and the failure
+ * would have surfaced only as a write rejection deep in
+ * `artifactVersionService` — after the user had already filled the form.
+ * A required parameter (not an optional one defaulting to "allowed") is the
+ * point: every call site must state the status it is deciding on.
  */
 export function allowedDownstreamCreations(
-  sourceType: FinanceArtifactType
+  sourceType: FinanceArtifactType,
+  sourceStatus: BusinessVersionStatus
 ): readonly FinanceArtifactType[] {
+  if (isTerminalVersionStatus(sourceStatus)) return [];
   const sourceRank = lineageStageRank(sourceType);
   const out: FinanceArtifactType[] = [];
   for (const topology of LINEAGE_EDGE_TOPOLOGY) {
@@ -266,13 +279,27 @@ export function createTenantScopedResolver(
 // Stale badges.
 // ---------------------------------------------------------------------------
 
+/**
+ * Freshness-derived badges PLUS the three terminal lifecycle states.
+ *
+ * The terminal states were missing, and not only cosmetically: `ARCHIVED`,
+ * `SUPERSEDED` and `INVALIDATED` are real `BusinessVersionStatus` values
+ * (`lifecycleService.TERMINAL_STATUSES`) that a lineage node absolutely can be
+ * in — an archived model stays in the DAG forever, because deleting the edge
+ * would falsify the history the trail exists to show. Rendering it exactly like
+ * a live node was the bug: the user could not tell that the "Baseline model v4"
+ * in the trail is one nobody may build on any more.
+ */
 export type LineageStaleBadgeKind =
   | 'SOURCE_CHANGED'
   | 'ASSUMPTIONS_CHANGED'
   | 'DOWNSTREAM_STALE'
   | 'ORPHANED'
   | 'NEVER_COMPUTED'
-  | 'COMPUTE_FAILED';
+  | 'COMPUTE_FAILED'
+  | 'ARCHIVED'
+  | 'SUPERSEDED'
+  | 'INVALIDATED';
 
 export interface LineageStaleBadge {
   kind: LineageStaleBadgeKind;
@@ -311,6 +338,71 @@ const STALE_BADGES: Readonly<Record<LineageStaleBadgeKind, LineageStaleBadge>> =
     kind: 'COMPUTE_FAILED',
     label: { key: 'finance.lineage.badge.computeFailed', pl: 'Błąd przeliczenia' },
     severity: 'error',
+  },
+  ARCHIVED: {
+    kind: 'ARCHIVED',
+    label: { key: 'finance.lineage.badge.archived', pl: 'Zarchiwizowane' },
+    severity: 'info',
+  },
+  SUPERSEDED: {
+    kind: 'SUPERSEDED',
+    label: { key: 'finance.lineage.badge.superseded', pl: 'Zastąpione' },
+    severity: 'info',
+  },
+  INVALIDATED: {
+    kind: 'INVALIDATED',
+    label: { key: 'finance.lineage.badge.invalidated', pl: 'Unieważnione' },
+    severity: 'error',
+  },
+};
+
+// ---------------------------------------------------------------------------
+// Terminal lifecycle states — badge, dimming and the creation block.
+// ---------------------------------------------------------------------------
+
+/** Sourced from `lifecycleService` at RUNTIME (that module is pure, no DB), so the two lists cannot drift. */
+export function isTerminalVersionStatus(status: BusinessVersionStatus): boolean {
+  return TERMINAL_STATUSES.includes(status);
+}
+
+const TERMINAL_STATUS_BADGES: Readonly<Record<string, LineageStaleBadge>> = {
+  ARCHIVED: STALE_BADGES.ARCHIVED,
+  SUPERSEDED: STALE_BADGES.SUPERSEDED,
+  INVALIDATED: STALE_BADGES.INVALIDATED,
+};
+
+/** The lifecycle badge a node carries IN ADDITION to any freshness badge; `null` for live statuses. */
+export function lifecycleBadgeFromStatus(status: BusinessVersionStatus): LineageStaleBadge | null {
+  return TERMINAL_STATUS_BADGES[status] ?? null;
+}
+
+/**
+ * How the Related panel treats terminal (archived/superseded/invalidated)
+ * relatives. The TRAIL never hides them — a chain with a hole in it is a lie
+ * about provenance — it only dims them; the panel is a working list, so hiding
+ * is a legitimate user choice there.
+ */
+export type LineageTerminalVisibility = 'show' | 'dim' | 'hide';
+export const LINEAGE_TERMINAL_VISIBILITY_DEFAULT: LineageTerminalVisibility = 'dim';
+
+export const LINEAGE_TERMINAL_FILTER_LABEL: WorkspaceBarLabel = {
+  key: 'finance.lineage.filter.hideTerminal',
+  pl: 'Ukryj zarchiwizowane i unieważnione',
+};
+
+/** Why the panel offers no `+ Nowy` — the UI must say this, not just render an empty row. */
+export type LineageCreateNewBlockedReason = 'TERMINAL_SOURCE_STATUS' | 'NO_DOWNSTREAM_TYPE';
+
+export const LINEAGE_CREATE_NEW_BLOCKED_LABELS: Readonly<
+  Record<LineageCreateNewBlockedReason, WorkspaceBarLabel>
+> = {
+  TERMINAL_SOURCE_STATUS: {
+    key: 'finance.lineage.createNew.blocked.terminal',
+    pl: 'Ta wersja jest zamknięta — utwórz następnik z aktywnej wersji',
+  },
+  NO_DOWNSTREAM_TYPE: {
+    key: 'finance.lineage.createNew.blocked.noDownstream',
+    pl: 'Brak dozwolonego następnika dla tego typu',
   },
 };
 
@@ -380,6 +472,10 @@ export interface LineageTrailNode {
   /** The edge that leads FROM this node to the next one in the trail; `null` on the focus node. */
   outgoingEdgeType: LineageEdgeType | null;
   staleBadge: LineageStaleBadge | null;
+  /** ARCHIVED / SUPERSEDED / INVALIDATED — orthogonal to freshness, a node can carry both. */
+  stateBadge: LineageStaleBadge | null;
+  /** Terminal nodes stay in the chain (history must not have holes) but render subdued. */
+  isDimmed: boolean;
 }
 
 export interface LineageTrailCollapsed {
@@ -471,6 +567,8 @@ export function buildLineageTrail(params: BuildLineageTrailParams): LineageTrail
       isFocus: entry.versionId === params.focusVersionId,
       outgoingEdgeType: entry.outgoingEdgeType,
       staleBadge: staleBadgeFromFreshness(metadata.freshness),
+      stateBadge: lifecycleBadgeFromStatus(metadata.status),
+      isDimmed: isTerminalVersionStatus(metadata.status),
     });
   }
 
@@ -528,6 +626,9 @@ export interface LineageRelatedEntry {
   /** 1 = direct parent/child; >1 = indirect. */
   depth: number;
   staleBadge: LineageStaleBadge | null;
+  /** ARCHIVED / SUPERSEDED / INVALIDATED. */
+  stateBadge: LineageStaleBadge | null;
+  isDimmed: boolean;
 }
 
 export interface LineageRelatedGroup {
@@ -555,8 +656,15 @@ export interface LineageRelatedPanel {
   /** Other versions/variants of the SAME artifact, plus explicit variant edges. */
   siblings: readonly LineageRelatedEntry[];
   createNew: readonly LineageCreateNewAction[];
-  /** Focus-node badges: freshness-derived, plus `orphaned` and `downstream stale` which need the graph to compute. */
+  /** Why `createNew` is empty — so the UI can explain instead of showing a blank area. `null` when actions exist. */
+  createNewBlockedReason: LineageCreateNewBlockedReason | null;
+  createNewBlockedLabel: WorkspaceBarLabel | null;
+  /** Focus-node badges: freshness-derived, `orphaned`, `downstream stale`, plus the terminal lifecycle badge. */
   focusBadges: readonly LineageStaleBadge[];
+  /** Which terminal-visibility mode produced these lists. */
+  terminalVisibility: LineageTerminalVisibility;
+  /** How many relatives the `hide` mode removed — a filter that hides silently is a filter that lies. */
+  hiddenTerminalCount: number;
   /** Cross-tenant input the navigator refused to render. Empty on healthy data. */
   tenant: LineageTenantAnomalies;
 }
@@ -570,6 +678,8 @@ export interface BuildRelatedPanelParams {
   resolve: LineageMetadataResolver;
   /** Other business versions of the same artifact, resolved by the caller (`artifactVersionService`, not lineage). */
   siblingVersionIds?: readonly string[];
+  /** Default `dim`: terminal relatives stay listed but subdued. `hide` removes them and counts them. */
+  terminalVisibility?: LineageTerminalVisibility;
 }
 
 export function buildRelatedPanel(params: BuildRelatedPanelParams): LineageRelatedPanel | null {
@@ -617,13 +727,7 @@ export function buildRelatedPanel(params: BuildRelatedPanelParams): LineageRelat
     indirectEdges.map((edge) => {
       const metadata = scoped.resolve(edge.target_version_id);
       if (!metadata) return null;
-      return {
-        metadata,
-        displayName: lineageNodeDisplayName(metadata),
-        edgeType: edge.edge_type,
-        depth: descendantDepths.get(edge.target_version_id) ?? 2,
-        staleBadge: staleBadgeFromFreshness(metadata.freshness),
-      } satisfies LineageRelatedEntry;
+      return relatedEntry(metadata, edge.edge_type, descendantDepths.get(edge.target_version_id) ?? 2);
     })
   );
 
@@ -640,32 +744,35 @@ export function buildRelatedPanel(params: BuildRelatedPanelParams): LineageRelat
     [...siblingIds].map((versionId) => {
       const metadata = scoped.resolve(versionId);
       if (!metadata) return null;
-      return {
-        metadata,
-        displayName: lineageNodeDisplayName(metadata),
-        edgeType: 'VERSION_TO_MANAGEMENT_ADJUSTED_VARIANT' as LineageEdgeType,
-        depth: 0,
-        staleBadge: staleBadgeFromFreshness(metadata.freshness),
-      } satisfies LineageRelatedEntry;
+      return relatedEntry(metadata, 'VERSION_TO_MANAGEMENT_ADJUSTED_VARIANT' as LineageEdgeType, 0);
     })
   );
 
   const focusBadges: LineageStaleBadge[] = [];
   const ownBadge = staleBadgeFromFreshness(focus.freshness);
   if (ownBadge) focusBadges.push(ownBadge);
+  const focusStateBadge = lifecycleBadgeFromStatus(focus.status);
+  if (focusStateBadge) focusBadges.push(focusStateBadge);
   if (isOrphaned(focus.artifactType, incoming)) focusBadges.push(orphanBadge());
+  // Staleness of a terminal descendant is not actionable — nobody will recompute
+  // an archived version — so it must not raise "potomkowie nieaktualni" on a
+  // node whose only stale children are closed.
   const anyDescendantStale = [...childEntries, ...indirectEntries].some(
-    (entry) => entry.metadata.freshness !== 'CURRENT'
+    (entry) => entry.metadata.freshness !== 'CURRENT' && !entry.isDimmed
   );
   if (anyDescendantStale) focusBadges.push(downstreamStaleBadge());
 
-  return {
-    focus,
-    parents: groupByArtifactType(parentEntries),
-    children: groupByArtifactType(childEntries),
-    indirectDescendants: groupByArtifactType(indirectEntries),
-    siblings,
-    createNew: allowedDownstreamCreations(focus.artifactType).map((targetArtifactType) => ({
+  const terminalVisibility = params.terminalVisibility ?? LINEAGE_TERMINAL_VISIBILITY_DEFAULT;
+  let hiddenTerminalCount = 0;
+  const applyTerminalFilter = (entries: readonly LineageRelatedEntry[]): LineageRelatedEntry[] => {
+    if (terminalVisibility !== 'hide') return [...entries];
+    const kept = entries.filter((entry) => !entry.isDimmed);
+    hiddenTerminalCount += entries.length - kept.length;
+    return kept;
+  };
+
+  const createNew = allowedDownstreamCreations(focus.artifactType, focus.status).map(
+    (targetArtifactType) => ({
       targetArtifactType,
       label: {
         key: `finance.lineage.createNew.${targetArtifactType}`,
@@ -676,8 +783,29 @@ export function buildRelatedPanel(params: BuildRelatedPanelParams): LineageRelat
         artifactType: focus.artifactType,
         businessVersionId: focus.versionId,
       },
-    })),
+    })
+  );
+  const createNewBlockedReason: LineageCreateNewBlockedReason | null =
+    createNew.length > 0
+      ? null
+      : isTerminalVersionStatus(focus.status)
+        ? 'TERMINAL_SOURCE_STATUS'
+        : 'NO_DOWNSTREAM_TYPE';
+
+  return {
+    focus,
+    parents: groupByArtifactType(applyTerminalFilter(parentEntries)),
+    children: groupByArtifactType(applyTerminalFilter(childEntries)),
+    indirectDescendants: groupByArtifactType(applyTerminalFilter(indirectEntries)),
+    siblings: applyTerminalFilter(siblings),
+    createNew,
+    createNewBlockedReason,
+    createNewBlockedLabel: createNewBlockedReason
+      ? LINEAGE_CREATE_NEW_BLOCKED_LABELS[createNewBlockedReason]
+      : null,
     focusBadges,
+    terminalVisibility,
+    hiddenTerminalCount,
     tenant: { foreignEdgeIds, foreignVersionIds: scoped.foreignVersionIds },
   };
 }
@@ -691,6 +819,23 @@ export const ARTIFACT_TYPE_LABEL_PL: Readonly<Record<FinanceArtifactType, string
   REPORT_EXPORT: 'Raport / eksport',
 };
 
+/** Single construction point for a panel row, so badges/dimming cannot be forgotten in one branch. */
+function relatedEntry(
+  metadata: LineageNodeMetadata,
+  edgeType: LineageEdgeType,
+  depth: number
+): LineageRelatedEntry {
+  return {
+    metadata,
+    displayName: lineageNodeDisplayName(metadata),
+    edgeType,
+    depth,
+    staleBadge: staleBadgeFromFreshness(metadata.freshness),
+    stateBadge: lifecycleBadgeFromStatus(metadata.status),
+    isDimmed: isTerminalVersionStatus(metadata.status),
+  };
+}
+
 function toEntries(
   edges: readonly LineageEdgeRow[],
   pick: (edge: LineageEdgeRow) => string,
@@ -701,13 +846,7 @@ function toEntries(
     edges.map((edge) => {
       const metadata = resolve(pick(edge));
       if (!metadata) return null;
-      return {
-        metadata,
-        displayName: lineageNodeDisplayName(metadata),
-        edgeType: edge.edge_type,
-        depth,
-        staleBadge: staleBadgeFromFreshness(metadata.freshness),
-      } satisfies LineageRelatedEntry;
+      return relatedEntry(metadata, edge.edge_type, depth);
     })
   );
 }

@@ -373,20 +373,20 @@ describe('AP-11 lineageNavigatorContract — Related panel', () => {
 
 describe('AP-11 lineageNavigatorContract — downstream topology and the auxiliary graph', () => {
   it('derives the permitted "+ New" targets from the DAG rules', () => {
-    expect(allowedDownstreamCreations('STATEMENT_PACK')).toEqual([
+    expect(allowedDownstreamCreations('STATEMENT_PACK', 'APPROVED')).toEqual([
       'HISTORICAL_ANALYSIS',
       'BASELINE_MODEL',
       'REPORT_EXPORT',
     ]);
-    expect(allowedDownstreamCreations('HISTORICAL_ANALYSIS')).toEqual(['BASELINE_MODEL', 'REPORT_EXPORT']);
+    expect(allowedDownstreamCreations('HISTORICAL_ANALYSIS', 'APPROVED')).toEqual(['BASELINE_MODEL', 'REPORT_EXPORT']);
     // Addendum section 6.1: Scenario is OPTIONAL — a Model may go straight to Valuation.
-    expect(allowedDownstreamCreations('BASELINE_MODEL')).toEqual([
+    expect(allowedDownstreamCreations('BASELINE_MODEL', 'APPROVED')).toEqual([
       'PREDICTION_SCENARIO',
       'VALUATION_CASE',
       'REPORT_EXPORT',
     ]);
-    expect(allowedDownstreamCreations('VALUATION_CASE')).toEqual(['REPORT_EXPORT']);
-    expect(allowedDownstreamCreations('REPORT_EXPORT')).toEqual([]);
+    expect(allowedDownstreamCreations('VALUATION_CASE', 'APPROVED')).toEqual(['REPORT_EXPORT']);
+    expect(allowedDownstreamCreations('REPORT_EXPORT', 'APPROVED')).toEqual([]);
   });
 
   it('keeps the full graph an auxiliary, off-by-default view (OWN-FIN-022)', () => {
