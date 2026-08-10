@@ -21,8 +21,12 @@
 # nie komenda Idei).
 #
 # RATCHET / BASELINE (jak scripts/check-list-canon.sh i check-artefakt.sh —
-# ta sama konwencja w repo): dzisiejszy dlug (288 akcjopodobnych konstrukcji w
-# 134 plikach na 446 zeskanowanych, patrz --update i baseline) PRZECHODZI.
+# ta sama konwencja w repo): dzisiejszy dlug (194 akcjopodobnych konstrukcji w
+# 91 plikach na 455 zeskanowanych, stan po QG-02 2026-08-10 — pelny inwentarz
+# klasyfikujacy KAZDE trafienie: docs/qa/ideas-complete-transformation-2026-08-09/
+# 04_ACTION_COVERAGE_INVENTORY.csv; przed QG-02 bylo 264/127 — spadek to
+# poprawiona heurystyka Pass A3 w check-action-coverage.awk, nie usuniety kod,
+# patrz --update i baseline) PRZECHODZI.
 # Bramka FAILuje TYLKO gdy liczba w danym pliku ROSNIE ponad baseline, albo
 # plik spoza baseline (baseline=0) ma >0 trafien. Zero-tolerance od pierwszego
 # dnia zablokowalby caly istniejacy backlog (dokladnie ten sam blad co

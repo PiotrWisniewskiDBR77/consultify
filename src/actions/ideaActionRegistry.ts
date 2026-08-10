@@ -232,17 +232,34 @@ export type IconName =
   | 'Trophy'
   | 'Presentation'
   | 'Mic'
-  | 'Flame';
-// UWAGA (N8.2, 2026-08-10) — menu kolumny Tabeli ŚWIADOMIE nie dokłada tu nic
-// nowego (kandydowały 'ArrowUpDown'/'EyeOff'). Powód: `ICON_BY_NAME` w
-// `src/components/MyWork/ideaCanvasMelsChips.ts:226` jest zadeklarowane jako
-// PEŁNE `Record<IconName, LucideIcon>`, a ma dziś tylko 13 z ~65 kluczy tej
-// unii — każda nowa wartość powiększa ten (PREISTNIEJĄCY, nie mój) dług
-// typów. Cztery wpisy `idea.column.*` mają `surfaces: ['context']`, więc
-// `ICON_BY_NAME` (mapa ikon Menu 3) i tak NIGDY ich nie czyta — ikona jest tu
-// czystą metadaną. Użyte wyłącznie wartości już istniejące: 'Pencil',
-// 'ArrowDownUp' (dosłownie pojęcie sortowania), 'FoldVertical' (ukrycie),
-// 'Trash2'.
+  | 'Flame'
+  // Group B naprawa typów (2026-08-10) — pięć wartości UŻYWANYCH w kodzie od
+  // dawna (ikony menu kontekstowego, 1:1 z importami lucide-react w plikach
+  // źródłowych niżej), ale nigdy niedopisanych do tej unii — `tsc` łapał to
+  // jako TS2322 na polu `icon` każdego z pięciu wpisów. Wszystkie pięć mają
+  // `surfaces: ['context']` WYŁĄCZNIE, więc `ICON_BY_NAME` (mapa fallbacku
+  // Menu 3, patrz notatka niżej) i tak ich nie czyta — to czysta metadana
+  // identyczności ikony w menu prawego kliku.
+  | 'ClipboardPaste' // idea.canvas.paste — IdeaCanvasContextMenu.tsx
+  | 'FileText' // idea.node.mm_summarize_branch — mindmap/NodeContextMenu.tsx
+  | 'Globe' // idea.view.mm_ai_competitors — mindmap/PaneContextMenu.tsx
+  | 'UserPlus' // idea.node.mm_assign — mindmap/NodeContextMenu.tsx
+  | 'Share2'; // idea.node.mm_copy_link — mindmap/NodeContextMenu.tsx
+// UWAGA (N8.2, 2026-08-10, ZAKTUALIZOWANA przy naprawie Group B) — menu
+// kolumny Tabeli ŚWIADOMIE nie dokłada tu nic nowego (kandydowały
+// 'ArrowUpDown'/'EyeOff'). Powód: `ICON_BY_NAME` w
+// `src/components/MyWork/ideaCanvasMelsChips.ts:226` mapuje TYLKO ikony
+// akcji Menu 3 (fallback dla wpisów bez własnej `Menu3Presentation`) — reszta
+// tej unii (menu kontekstowe, toolbar, panel, rail…) jest poza jej domeną z
+// definicji, więc ta mapa NIE MUSI (i celowo nie jest) `Record<IconName,
+// LucideIcon>` PEŁNE. Od naprawy Group B jest jawnie `Partial<Record<IconName,
+// LucideIcon>>` z typowanym fallbackiem (`MENU3_FALLBACK_ICON` + ostrzeżenie
+// w konsoli, patrz ten plik) — więc nowa wartość tej unii nigdy nie zepsuje
+// kompilacji ICON_BY_NAME i nigdy nie wyrenderuje pustki. Cztery wpisy
+// `idea.column.*` mają `surfaces: ['context']`, więc `ICON_BY_NAME` i tak
+// NIGDY ich nie czyta — ikona jest tu czystą metadaną. Użyte wyłącznie
+// wartości już istniejące: 'Pencil', 'ArrowDownUp' (dosłownie pojęcie
+// sortowania), 'FoldVertical' (ukrycie), 'Trash2'.
 
 /** Minimalny JSON Schema — kształt zgodny z `parameters` w toolDefinitions.ts. */
 export interface JSONSchema {
@@ -316,20 +333,64 @@ export function outcomeFromResult(result: ActionResult): ActionOutcome {
 }
 
 /**
+ * DLACZEGO cofnięcie NIE istnieje dla wpisu `kind: 'no_undo'` — zamknięta
+ * lista, żeby "brak cofnięcia" był AUDYTOWALNY (grep po wartości), nie
+ * dowolną prozą, w którą można schować cokolwiek:
+ *   self_reversing  — akcja jest WŁASNĄ odwrotnością (ponowne wywołanie tej
+ *                      samej akcji lub jej sparowanego przeciwieństwa
+ *                      przywraca poprzedni stan) — np. cykliczne sortowanie,
+ *                      para dodaj/usuń powiązania w tym samym, niezapisanym
+ *                      draftcie. Nic trwałego nie ginie.
+ *   ephemeral_local — mutacja WYŁĄCZNIE lokalnego, niezapisanego stanu
+ *                      komponentu (nic nie poszło na serwer) — użytkownik
+ *                      cofa ręcznie w tym samym UI, zanim cokolwiek się
+ *                      utrwali (np. odświeżeniem panelu przed zapisem).
+ *   unrecoverable   — PRAWDZIWA luka: realna, serwerowa mutacja/kasowanie
+ *                      bez żadnej ścieżki odzyskania (brak historii wersji,
+ *                      brak kopii). Uczciwie przyznany brak, nie decyzja
+ *                      projektowa — kandydat do naprawy, nie do ukrycia.
+ */
+export type UndoUnsupportedReason = 'self_reversing' | 'ephemeral_local' | 'unrecoverable';
+
+/**
  * Jak cofnąć skutek akcji. Wymagany, gdy `mutates: true` (kryterium odbioru
  * rozdz. 02: „żadna akcja mutates nie wykonuje się bez możliwości cofnięcia").
+ *
+ * `kind: 'no_undo'` jest ŚWIADOMIE osobnym wariantem od pozostałych czterech
+ * (nie „piątą wartością tej samej rodziny") — wymaga WŁASNEGO, zamkniętego
+ * pola `reason` (patrz `UndoUnsupportedReason`), którego pozostałe cztery
+ * warianty NIE mają. Dzięki temu żadna powierzchnia UI, która obiecuje
+ * cofnięcie na podstawie samej OBECNOŚCI `undo`, nie może już pomylić „mam
+ * mechanizm" z „świadomie nie mam" — TypeScript wymusza rozróżnienie.
  */
-export interface UndoDescriptor {
-  /**
-   * local_stack   — stos undo narzędzia (Ctrl+Z, `*_undo` w hooku),
-   * proposal      — zmiana wchodzi dopiero po akceptacji podglądu (odrzucenie = brak zmiany),
-   * snapshot      — cofnięcie przez Historię (`/map/snapshots`),
-   * manual_delete — brak cofnięcia; skutkiem jest NOWY obiekt, który trzeba skasować ręcznie.
-   */
-  kind: 'local_stack' | 'proposal' | 'snapshot' | 'manual_delete';
-  /** Skąd bierze się cofnięcie — plik/mechanizm, żeby dało się zweryfikować. */
-  evidence: string;
-}
+export type UndoDescriptor =
+  | {
+      /** local_stack — stos undo narzędzia (Ctrl+Z, `*_undo` w hooku). */
+      kind: 'local_stack';
+      /** Skąd bierze się cofnięcie — plik/mechanizm, żeby dało się zweryfikować. */
+      evidence: string;
+    }
+  | {
+      /** proposal — zmiana wchodzi dopiero po akceptacji podglądu (odrzucenie = brak zmiany). */
+      kind: 'proposal';
+      evidence: string;
+    }
+  | {
+      /** snapshot — cofnięcie przez Historię (`/map/snapshots`). */
+      kind: 'snapshot';
+      evidence: string;
+    }
+  | {
+      /** manual_delete — brak automatycznego cofnięcia; skutkiem jest NOWY obiekt, który trzeba skasować ręcznie. */
+      kind: 'manual_delete';
+      evidence: string;
+    }
+  | {
+      /** no_undo — świadomie BEZ mechanizmu cofnięcia; `reason` mówi DLACZEGO to uczciwe (patrz `UndoUnsupportedReason`). */
+      kind: 'no_undo';
+      evidence: string;
+      reason: UndoUnsupportedReason;
+    };
 
 export interface TeresaSpec {
   /** Co akcja robi — JĘZYKIEM UŻYTKOWNIKA, po polsku. */
@@ -3353,9 +3414,10 @@ const IDEA_ACTIONS: ActionDef[] = [
     mutates: true,
     requiresPreview: false,
     undo: {
-      kind: 'none',
+      kind: 'no_undo',
+      reason: 'self_reversing',
       evidence:
-        'Brak i nie dotyczy: sortowanie to stan WIDOKU (`setSort`), nie zmiana danych — nie ma czego cofać poza ponownym przełączeniem. Kolejne wywołanie tej samej akcji cyklicznie wraca do stanu wyjściowego (asc→desc→brak sortowania).',
+        'Sortowanie to stan WIDOKU (`setSort`), nie zmiana danych — nie ma czego cofać poza ponownym przełączeniem. Kolejne wywołanie tej samej akcji cyklicznie wraca do stanu wyjściowego (asc→desc→brak sortowania), więc akcja jest własną odwrotnością.',
     },
     teresa: {
       description:
@@ -3813,9 +3875,9 @@ const IDEA_ACTIONS: ActionDef[] = [
     mutates: true,
     requiresPreview: false,
     undo: {
-      kind: 'none',
+      kind: 'manual_delete',
       evidence:
-        'Tworzy NOWY zapisany widok (`ctx.saveCurrentView` = `platformIntegration.saveCurrentView`, realny, asynchroniczny zapis serwerowy) — brak cofnięcia; odzyskanie to ręczne usunięcie widoku (patrz `idea.view.table_platform_saved_view_delete`).',
+        'Tworzy NOWY zapisany widok (`ctx.saveCurrentView` = `platformIntegration.saveCurrentView`, realny, asynchroniczny zapis serwerowy) — brak automatycznego cofnięcia; odzyskanie to ręczne usunięcie widoku (patrz `idea.view.table_platform_saved_view_delete`), dokładnie definicja `manual_delete`.',
     },
     teresa: {
       description:
@@ -3839,9 +3901,10 @@ const IDEA_ACTIONS: ActionDef[] = [
     mutates: true,
     requiresPreview: false,
     undo: {
-      kind: 'none',
+      kind: 'no_undo',
+      reason: 'unrecoverable',
       evidence:
-        '`ctx.updateSavedView` (`platformIntegration.updateSavedView`, `useTablePlatformViews.ts`) to realny, asynchroniczny zapis serwerowy bez historii wersji — brak cofnięcia, ani dla kliku człowieka, ani dla tej ścieżki Teresy.',
+        '`ctx.updateSavedView` (`platformIntegration.updateSavedView`, `useTablePlatformViews.ts`) to realny, asynchroniczny zapis serwerowy bez historii wersji — NADPISUJE nazwę istniejącego widoku (nie tworzy nowego obiektu, więc `manual_delete` nie pasuje: nie ma czego skasować, poprzednia nazwa po prostu ginie). Brak cofnięcia, ani dla kliku człowieka, ani dla tej ścieżki Teresy — uczciwie przyznana luka.',
     },
     teresa: {
       description:
@@ -3870,9 +3933,10 @@ const IDEA_ACTIONS: ActionDef[] = [
     mutates: true,
     requiresPreview: false,
     undo: {
-      kind: 'none',
+      kind: 'no_undo',
+      reason: 'unrecoverable',
       evidence:
-        '`ctx.updateSavedView` (jak wyżej) nadpisuje sort/filters/groupBy/layout/columns zapisanego widoku BIEŻĄCYM stanem platformy — realny, asynchroniczny zapis serwerowy, bez cofnięcia.',
+        '`ctx.updateSavedView` (jak wyżej) nadpisuje sort/filters/groupBy/layout/columns ISTNIEJĄCEGO zapisanego widoku BIEŻĄCYM stanem platformy — realny, asynchroniczny zapis serwerowy, poprzednia konfiguracja widoku ginie bezpowrotnie, bez cofnięcia.',
     },
     teresa: {
       description:
@@ -3893,9 +3957,10 @@ const IDEA_ACTIONS: ActionDef[] = [
     requiresPreview: false,
     destructive: true,
     undo: {
-      kind: 'none',
+      kind: 'no_undo',
+      reason: 'unrecoverable',
       evidence:
-        '`ctx.deleteSavedView` (`platformIntegration.deleteSavedView`) to realne, nieodwracalne serwerowe usunięcie widoku — brak cofnięcia, ani dla kliku człowieka, ani dla tej ścieżki Teresy.',
+        '`ctx.deleteSavedView` (`platformIntegration.deleteSavedView`) to realne, nieodwracalne serwerowe usunięcie widoku — efektem jest ZNIKNIĘCIE obiektu, nie powstanie nowego (odwrotność `manual_delete`, więc ten kind nie pasuje). Brak cofnięcia, ani dla kliku człowieka, ani dla tej ścieżki Teresy.',
     },
     teresa: {
       description:
@@ -4249,7 +4314,8 @@ const IDEA_ACTIONS: ActionDef[] = [
     mutates: true,
     requiresPreview: false,
     undo: {
-      kind: 'none',
+      kind: 'no_undo',
+      reason: 'unrecoverable',
       evidence:
         'Brak stosu cofania dla karty biznesowej (PUT /api/idea-business-case/:ideaId nadpisuje sekcję bezpośrednio, bez historii wersji) — uczciwie zgłoszony brak, nie ukryty. Zakładka Historia panelu dziś NIE nagrywa zmian karty biznesowej; przywrócenie poprzedniej treści wymaga ręcznego cofnięcia edycji przez użytkownika.',
     },
@@ -4284,9 +4350,10 @@ const IDEA_ACTIONS: ActionDef[] = [
     mutates: true,
     requiresPreview: false,
     undo: {
-      kind: 'none',
+      kind: 'no_undo',
+      reason: 'ephemeral_local',
       evidence:
-        'Mutacja WYŁĄCZNIE lokalnego draftu (`useState` w `IdeaBusinessCaseSection.tsx`, NIE zapisana na serwer) — cofnięcie dziś to ręczne usunięcie chipa (patrz `idea.workspace.business_case_lineage_remove` niżej) albo odświeżenie panelu przed zapisem sekcji.',
+        'Mutacja WYŁĄCZNIE lokalnego draftu (`useState` w `IdeaBusinessCaseSection.tsx`, NIE zapisana na serwer) — cofnięcie dziś to ręczne usunięcie chipa (patrz `idea.workspace.business_case_lineage_remove` niżej) albo odświeżenie panelu przed zapisem sekcji. Nic trwałego nie ginie, dopóki sekcja nie zostanie zapisana.',
     },
     teresa: {
       description:
@@ -4311,9 +4378,10 @@ const IDEA_ACTIONS: ActionDef[] = [
     requiresPreview: false,
     destructive: true,
     undo: {
-      kind: 'none',
+      kind: 'no_undo',
+      reason: 'ephemeral_local',
       evidence:
-        'Mutacja WYŁĄCZNIE lokalnego draftu (jak wyżej) — usunięcie chipa NIE trafia na serwer, dopóki sekcja nie zostanie zapisana; cofnięcie dziś to ręczne dodanie powiązania ponownie (`idea.workspace.business_case_lineage_add`) przed zapisem.',
+        'Mutacja WYŁĄCZNIE lokalnego draftu (jak wyżej) — usunięcie chipa NIE trafia na serwer, dopóki sekcja nie zostanie zapisana; cofnięcie dziś to ręczne dodanie powiązania ponownie (`idea.workspace.business_case_lineage_add`) przed zapisem. Nic trwałego nie ginie, dopóki sekcja nie zostanie zapisana.',
     },
     teresa: {
       description:

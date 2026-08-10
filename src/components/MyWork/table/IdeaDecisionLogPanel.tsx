@@ -30,6 +30,18 @@
  * supply one this panel uses `UNWIRED_FINANCIAL_FRESHNESS_PROVIDER` (honest
  * "unknown", never silently promoted to "fresh") — see `IdeaTableTool.tsx`
  * for whether/how a real provider is threaded in.
+ *
+ * The provider contract is SYNCHRONOUS (`ideaDecisionGovernance.ts`'s
+ * `FinancialFreshnessProvider` — see that file's header for why the union
+ * with `Promise<...>` was removed 2026-08-10: the one real caller derives
+ * the result from React state already lifted synchronously out of
+ * `FinancialCaseView.onStatusChange`, zero I/O at read time). `freshness`
+ * below is therefore a plain derived value, not resolved state — there is no
+ * loading gap to paper over. A provider that throws is still handled
+ * explicitly: it is mapped to a distinct `'error'` status that BLOCKS
+ * approval with a stated reason, never silently treated as `'unknown'`
+ * (which is a legitimate non-blocking "no financial case" state) or as
+ * `'fresh'`.
  */
 import { AlertTriangle, Plus, RotateCcw, Save, Scale, ShieldAlert, X } from 'lucide-react';
 import React, { useCallback, useMemo, useState } from 'react';
@@ -48,6 +60,7 @@ import {
   type DecisionRole,
   evaluateApprovalGate,
   type FinancialFreshnessProvider,
+  type FinancialFreshnessResult,
   getActiveDecisions,
   recordDecisionOutcome,
   reopenDecision,
@@ -110,12 +123,6 @@ export const IdeaDecisionLogPanel: React.FC<IdeaDecisionLogPanelProps> = ({
   const [draftEvidenceRefs, setDraftEvidenceRefs] = useState<string[]>([]);
   const [rationale, setRationale] = useState('');
   const [error, setError] = useState<string | null>(null);
-  // Always a resolved value in state, never the possibly-async provider's
-  // return type directly — `selectNode`/the mount effect below resolve any
-  // Promise before it ever reaches state.
-  const [freshness, setFreshness] = useState<ReturnType<typeof UNWIRED_FINANCIAL_FRESHNESS_PROVIDER>>(
-    () => ({ status: 'unknown', reason: 'Loading…' })
-  );
 
   const selectedNode = nodes.find((n) => n.id === selectedNodeId);
   const log: DecisionLogEntry[] = Array.isArray(selectedNode?.data?.decisionLog)
@@ -123,26 +130,32 @@ export const IdeaDecisionLogPanel: React.FC<IdeaDecisionLogPanelProps> = ({
     : [];
   const active = getActiveDecisions(log)[0] ?? null;
 
-  React.useEffect(() => {
-    let cancelled = false;
-    Promise.resolve(financialFreshnessProvider(selectedNodeId)).then((r) => {
-      if (!cancelled) setFreshness(r);
-    });
-    return () => {
-      cancelled = true;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open]);
+  // Synchronous by contract (`FinancialFreshnessProvider` in
+  // `ideaDecisionGovernance.ts`) — a plain derived value, not resolved
+  // state. A provider that throws is caught here and mapped to a distinct,
+  // BLOCKING 'error' status rather than defaulting to 'unknown' (which is a
+  // legitimate non-blocking "no financial case" state) or silently to
+  // 'fresh'.
+  const freshness: FinancialFreshnessResult = useMemo(() => {
+    try {
+      return financialFreshnessProvider(selectedNodeId);
+    } catch (err) {
+      return {
+        status: 'error',
+        reason: isPl
+          ? `Nie udało się odczytać świeżości karty finansowej: ${
+              err instanceof Error ? err.message : String(err)
+            }`
+          : `Could not read financial freshness: ${err instanceof Error ? err.message : String(err)}`,
+      };
+    }
+  }, [financialFreshnessProvider, selectedNodeId, isPl]);
 
-  const selectNode = useCallback(
-    (nodeId: string) => {
-      setSelectedNodeId(nodeId);
-      setError(null);
-      setRationale('');
-      Promise.resolve(financialFreshnessProvider(nodeId)).then(setFreshness);
-    },
-    [financialFreshnessProvider]
-  );
+  const selectNode = useCallback((nodeId: string) => {
+    setSelectedNodeId(nodeId);
+    setError(null);
+    setRationale('');
+  }, []);
 
   const handleCreateDraft = useCallback(() => {
     setError(null);
@@ -389,12 +402,22 @@ export const IdeaDecisionLogPanel: React.FC<IdeaDecisionLogPanelProps> = ({
                   <div>
                     {isPl ? 'Zatwierdzenie zablokowane: ' : 'Approval blocked: '}
                     {gate.blockers
-                      .map((b) =>
-                        b.type === 'missing-evidence'
-                          ? (isPl ? 'brak dowodów: ' : 'missing evidence: ') + b.missingKeys.join(', ')
-                          : (isPl ? 'nieaktualna karta finansowa' : 'stale financial case') +
+                      .map((b) => {
+                        if (b.type === 'missing-evidence') {
+                          return (isPl ? 'brak dowodów: ' : 'missing evidence: ') + b.missingKeys.join(', ');
+                        }
+                        if (b.type === 'stale-financials') {
+                          return (
+                            (isPl ? 'nieaktualna karta finansowa' : 'stale financial case') +
                             (b.reason ? ` (${b.reason})` : '')
-                      )
+                          );
+                        }
+                        return (
+                          (isPl
+                            ? 'błąd odczytu świeżości karty finansowej'
+                            : 'financial freshness check failed') + ` (${b.reason})`
+                        );
+                      })
                       .join(' · ')}
                   </div>
                 </div>

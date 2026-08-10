@@ -39,13 +39,18 @@
 #   - rozwijanie bare-identifier dziala tylko dla handlerow zdefiniowanych
 #     W TYM SAMYM pliku (nie podaza za importami);
 #   - fragment jest ciety do 100 linii bezpiecznika przed nieskonczona petla;
-#   - wykrywanie listy propsow (Pass A2 nizej) dziala tylko dla JEDNOLINIOWEJ
-#     destrukturyzacji `({ a, b, onX }) => {` / `({ a, b, onX }) {} — typowy
-#     styl tego repo dla komponentow lisci (patrz SubCard/NodeRefPicker/
-#     LineageChips ponizej). Wieloliniowa destrukturyzacja (np. glowny
-#     eksportowany komponent pliku, ktory bierze propsy z osobnych linii) NIE
-#     jest rozpoznawana — false negative w DRUGA strone (moze dalej falszywie
-#     zgloszic), nigdy false positive.
+#   - wykrywanie listy propsow dziala dla JEDNOLINIOWEJ destrukturyzacji
+#     `({ a, b, onX }) => {` / `({ a, b, onX }) {}` (Pass A2, typowy styl
+#     komponentow lisci — SubCard/NodeRefPicker/LineageChips ponizej) ORAZ dla
+#     WIELOLINIOWEJ destrukturyzacji `({\n  a,\n  b,\n  onX,\n}) => {` (Pass A3,
+#     dopisane 2026-08-10 po QG-02 — typowy styl glownego eksportowanego
+#     komponentu pliku, patrz ViewRouter.tsx PlatformGridView). Pass A3
+#     rozpoznaje TYLKO otwarcie konczace sie doslownie `({` na koncu linii i
+#     zamkniecie zaczynajace sie `}` na poczatku linii w oknie 200 linii —
+#     destrukturyzacje w INNYM stylu (np. `({ a, b,\n  onX }) => {` mieszane)
+#     nadal NIE sa rozpoznawane — false negative w DRUGA strone (moze dalej
+#     falszywie zgloszic), nigdy false positive (propNames tylko ODEJMUJE od
+#     wyniku, nigdy nie dodaje naruszen).
 #
 # ── Pass A2 — propsy odbierane przez komponent (`({ ..., onX, ... }) =>`) ──
 # `onClick={() => onAdd(ref)}` / `onClick={() => onRemove(idx)}` to NIE jest
@@ -167,6 +172,55 @@ END {
       }
       pos += RSTART + RLENGTH - 1
       if (RLENGTH == 0) pos++  # bezpiecznik przed petla zerowej dlugosci
+    }
+  }
+
+  # ── Pass A3 — propsy odbierane przez komponent, WIELOLINIOWA
+  # destrukturyzacja (QG-02, 2026-08-10): `export const X: React.FC<...> = ({`
+  # z kazdym propem we WLASNEJ linii, zamykane `}) => {` (albo `}: Props) => {`
+  # itd.) kilka/kilkanascie linii dalej — dokladny styl gl4wnego eksportowanego
+  # komponentu w tym repo (patrz ViewRouter.tsx PlatformGridView, NodeDetailDrawer.tsx,
+  # QG-02 inwentarz: docs/qa/ideas-complete-transformation-2026-08-09/
+  # 04_ACTION_COVERAGE_INVENTORY.csv, klasa (a) "heuristic-false-negative" —
+  # ta luka byla NAJWIEKSZYM pojedynczym zrodlem klasy (a): ~40/76 wpisow).
+  # Ten sam prog identyfikacji propsow co Pass A2 (`^on[A-Z]...`), TA SAMA
+  # gwarancja bezpieczenstwa (handlerBody wygrywa nad propNames w
+  # has_action_call) — jedyna roznica to WYKRYWANIE otwarcia/zamkniecia
+  # destrukturyzacji rozlozonej na wiele linii zamiast jednej.
+  # Uruchamiane TYLKO gdy linia otwierajaca konczy sie doslownie na `({` —
+  # jednoliniowe przypadki (z zawartoscia po `({`) zostaja Pass A2 (bez zmian,
+  # zero ryzyka kolizji/podwojnego liczenia — te dwa wzorce sie wykluczaja).
+  for (i = 1; i <= n; i++) {
+    line = lines[i]
+    if (line !~ /\([ \t]*\{[ \t]*$/) continue
+    # Zamkniecie: linia zaczynajaca sie (po bialych znakach) od `}`, dalej
+    # opcjonalnie `: Type`, `)`row, `=>` albo `{` — bezpiecznik 200 linii jak
+    # reszta pliku (Pass A / Pass B).
+    j = i + 1
+    closeIdx = 0
+    while (j <= n && j - i <= 200) {
+      if (lines[j] ~ /^[ \t]*\}/) { closeIdx = j; break }
+      j++
+    }
+    if (closeIdx == 0) continue  # brak zamkniecia w oknie — pomin, bezpiecznie (nie dodaje propsow)
+    for (k = i + 1; k < closeIdx; k++) {
+      p = lines[k]
+      gsub(/^[ \t]+/, "", p); gsub(/[ \t]+$/, "", p)
+      sub(/,[ \t]*$/, "", p)             # zdejmij koncowy przecinek
+      if (p == "" || p ~ /^\/\//) continue  # pusta linia / komentarz liniowy
+      if (p ~ /^\.\.\./) continue
+      sub(/=.*$/, "", p)                 # zdejmij wartosc domyslna: `x = false,`
+      gsub(/[ \t]+$/, "", p)
+      if (p ~ /:/) { sub(/^[^:]*:/, "", p); gsub(/^[ \t]+/, "", p) }  # `{ x: y }` -> lokalna nazwa `y`
+      # Pass A3 akceptuje DWIE konwencje nazywania propsow-callbackow: `onX`
+      # (jak Pass A2) ORAZ `handleX` — sprawdzone na ViewRouter.tsx
+      # PlatformGridViewProps (linie ~129-131): `handleDuplicateRow: (id:
+      # string) => void` w interfejsie propsow, jednoznacznie callback, nie
+      # lokalny handler tego pliku. Bezpieczne: handlerBody nadal wygrywa w
+      # has_action_call (jesli plik SAM DEFINIUJE `handleX` jako prawdziwa
+      # funkcje z cialem, to cialo i tak zostanie sprawdzone normalnie) —
+      # rozszerzenie tylko ODEJMUJE od wyniku (propNames), nigdy nie dodaje.
+      if (p ~ /^[A-Za-z_][A-Za-z0-9_]*$/ && (p ~ /^on[A-Z]/ || p ~ /^handle[A-Z]/)) propNames[p] = 1
     }
   }
 

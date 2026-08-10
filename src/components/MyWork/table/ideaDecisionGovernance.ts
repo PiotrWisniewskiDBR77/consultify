@@ -174,15 +174,15 @@ export function canReopenDecision(role: DecisionRole): boolean {
 // layer (§7 / master program, built by sibling agents in this program).
 // ─────────────────────────────────────────────────────────────────────────
 
-export type FinancialFreshnessStatus = 'fresh' | 'stale' | 'unknown';
+export type FinancialFreshnessStatus = 'fresh' | 'stale' | 'unknown' | 'error';
 
 export interface FinancialFreshnessResult {
   status: FinancialFreshnessStatus;
   /** ISO timestamp the underlying financial calculation was last computed,
    *  when known. */
   asOf?: string;
-  /** Human-readable explanation — required for 'stale'/'unknown' so the gate
-   *  (and the UI showing it) never has to invent a reason. */
+  /** Human-readable explanation — required for 'stale'/'unknown'/'error' so
+   *  the gate (and the UI showing it) never has to invent a reason. */
   reason?: string;
 }
 
@@ -192,15 +192,20 @@ export interface FinancialFreshnessResult {
  * function type (not a hard import) so this file has zero dependency on
  * however the financial layer ends up computed/stored.
  *
- * CONTRACT the orchestrator should wire at merge time: call the real
- * financial-freshness check for `ideaId` and return `'stale'` whenever that
- * layer's own staleness flag is set (see §7/E09 — "invalid/stale state
- * blocks approval" is that layer's own DoD line, this file only consumes the
- * result).
+ * SYNCHRONOUS BY CONTRACT (2026-08-10 — was previously typed as
+ * `FinancialFreshnessResult | Promise<FinancialFreshnessResult>`, an
+ * ambiguous union nothing in the codebase actually used). The one real
+ * caller, `IdeaTableTool.tsx`'s `financialFreshnessProvider`, derives the
+ * result from `financialCaseStatus` — React state already lifted
+ * SYNCHRONOUSLY out of `FinancialCaseView.onStatusChange` (see that
+ * component's header: "reports `fc.status` on every change"), with zero I/O
+ * at read time. `UNWIRED_FINANCIAL_FRESHNESS_PROVIDER` below is sync too.
+ * There is no genuine async source anywhere in this program — if one is
+ * ever wired in, it must resolve to a value BEFORE calling this provider
+ * (e.g. into the same kind of already-lifted state `IdeaTableTool` uses),
+ * not smuggle a Promise through this seam again.
  */
-export type FinancialFreshnessProvider = (
-  ideaId: string
-) => FinancialFreshnessResult | Promise<FinancialFreshnessResult>;
+export type FinancialFreshnessProvider = (ideaId: string) => FinancialFreshnessResult;
 
 /**
  * Honest default for when the financial layer is not wired in yet: treats
@@ -222,7 +227,12 @@ export const UNWIRED_FINANCIAL_FRESHNESS_PROVIDER: FinancialFreshnessProvider = 
 
 export type ApprovalBlockReason =
   | { type: 'missing-evidence'; missingKeys: string[] }
-  | { type: 'stale-financials'; asOf?: string; reason?: string };
+  | { type: 'stale-financials'; asOf?: string; reason?: string }
+  /** The freshness provider itself failed/threw rather than returning a real
+   *  status — distinct from 'unknown' (a legitimate "no financial case at
+   *  all" state, which does NOT block, see below) so a broken check can
+   *  never be silently read as "not blocking". */
+  | { type: 'financial-freshness-error'; reason: string };
 
 export interface ApprovalGateResult {
   blocked: boolean;
@@ -255,6 +265,16 @@ export function evaluateApprovalGate(
       type: 'stale-financials',
       asOf: opts.financialFreshness.asOf,
       reason: opts.financialFreshness.reason,
+    });
+  } else if (opts.financialFreshness.status === 'error') {
+    // The check itself failed — this must never be read as "not blocking".
+    // Distinct from 'unknown' (see that branch below): 'unknown' is a
+    // legitimate "no financial case exists" state, 'error' means the check
+    // could not be performed at all.
+    blockers.push({
+      type: 'financial-freshness-error',
+      reason:
+        opts.financialFreshness.reason ?? 'Financial freshness could not be verified for this idea.',
     });
   } else if (opts.financialFreshness.status === 'unknown') {
     warnings.push(

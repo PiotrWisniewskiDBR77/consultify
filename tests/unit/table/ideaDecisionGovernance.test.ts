@@ -103,7 +103,7 @@ describe('recordDecisionOutcome', () => {
         rationale: 'looks fine',
         decidedBy: 'contrib-1',
         role: 'contributor',
-        financialFreshness: UNWIRED_FINANCIAL_FRESHNESS_PROVIDER('idea-1') as any,
+        financialFreshness: UNWIRED_FINANCIAL_FRESHNESS_PROVIDER('idea-1'),
       })
     ).toThrow(ForbiddenOutcomeError);
   });
@@ -173,10 +173,37 @@ describe('recordDecisionOutcome', () => {
     }
   });
 
+  it('blocks approval when the freshness check itself errored (never read as non-blocking)', () => {
+    const entry = baseEntry(); // no required evidence — proves the block is from the error, not evidence
+    const gate = evaluateApprovalGate(entry, {
+      financialFreshness: { status: 'error', reason: 'financial layer threw: timeout' },
+    });
+    expect(gate.blocked).toBe(true);
+    expect(gate.blockers).toEqual([
+      { type: 'financial-freshness-error', reason: 'financial layer threw: timeout' },
+    ]);
+
+    try {
+      recordDecisionOutcome(entry, {
+        outcome: 'approved',
+        rationale: 'looks ready',
+        decidedBy: 'appr-1',
+        role: 'approver',
+        financialFreshness: { status: 'error', reason: 'financial layer threw: timeout' },
+      });
+      throw new Error('expected DecisionGateBlockedError');
+    } catch (err) {
+      expect(err).toBeInstanceOf(DecisionGateBlockedError);
+      expect((err as InstanceType<typeof DecisionGateBlockedError>).blockers).toEqual([
+        { type: 'financial-freshness-error', reason: 'financial layer threw: timeout' },
+      ]);
+    }
+  });
+
   it('unknown financial freshness does NOT block, but is surfaced as a warning', () => {
     const entry = baseEntry(); // no required evidence
     const gate = evaluateApprovalGate(entry, {
-      financialFreshness: UNWIRED_FINANCIAL_FRESHNESS_PROVIDER('idea-1') as any,
+      financialFreshness: UNWIRED_FINANCIAL_FRESHNESS_PROVIDER('idea-1'),
     });
     expect(gate.blocked).toBe(false);
     expect(gate.warnings.length).toBeGreaterThan(0);

@@ -239,6 +239,19 @@
         "--strictPort"
       ],
       "port": 3521
+    },
+    {
+      "name": "qg04-verify",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "vite",
+        "--config",
+        "dev-render/vite.config.ts",
+        "--port",
+        "3550",
+        "--strictPort"
+      ],
+      "port": 3550
     }
   ]
 }

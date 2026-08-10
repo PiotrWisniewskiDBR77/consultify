@@ -429,7 +429,16 @@ function RowList<T>({
 }: {
   rows: T[];
   onChange: (next: T[]) => void;
-  newRow: () => T;
+  // NoInfer keeps `rows: T[]` as the ONLY inference site for T. Without it,
+  // a `newRow` whose literal happens to be structurally compatible in both
+  // directions with the full row type (e.g. `{ metric: '' }` vs
+  // `BusinessCaseBaselineMetric`, where every other field is optional) lets
+  // TS pick that narrower fresh-literal shape for T instead of the full row
+  // type — silently dropping 'value'/'unit'/'source'/'impact' from every
+  // `update()` call's accepted patch shape (see
+  // __tests__/IdeaBusinessCaseSection.roundtrip.test.tsx for the round-trip
+  // coverage guarding this).
+  newRow: () => NoInfer<T>;
   renderRow: (row: T, update: (patch: Partial<T>) => void) => React.ReactNode;
   addLabel: string;
 }) {
