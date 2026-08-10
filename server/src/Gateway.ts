@@ -306,6 +306,16 @@ import resultsVnextKpiLegacyArchiveRoutes from './routes/resultsVnext/kpiLegacyA
 // above — separate path namespace entirely). See roi.routes.ts's own
 // "MOUNT-ORDER NOTE" for the rule the NEXT ROI router must follow.
 import resultsVnextRoiRoutes from './routes/resultsVnext/roi.routes.js';
+// ROI-E005 Benefits Realization — Organization perspective. SAME prefix as
+// resultsVnextRoiRoutes (`/api/vnext/results/roi`), owning `/org/
+// benefits-realization` as a direct child of it. Verified (roiPerspectives
+// .routes.ts's own header): roi.routes.ts owns zero bare top-level dynamic
+// segments (every one of its routes starts with the literal `/cases`
+// segment), so `/org/...` cannot collide with it regardless of registration
+// order — mounted before resultsVnextRoiRoutes anyway, for consistency with
+// the KPI-E005 precedent's ordering convention above, not because
+// correctness depends on it here.
+import resultsVnextRoiPerspectivesRoutes from './routes/resultsVnext/roiPerspectives.routes.js';
 import revenueRoutes from './routes/revenue.routes.js';
 import rolloutRoutes from './routes/rollout.routes.js';
 // M14 wiring — service route surfaces (mounted below)
@@ -1155,6 +1165,12 @@ export class ApiGateway {
       app.use('/api/vnext/results/kpi', resultsVnextKpiPerspectivesRoutes);
       app.use('/api/vnext/results/kpi', resultsVnextKpiRoutes);
       app.use('/api/vnext/results/initiatives', resultsVnextInitiativesKpiImpactsRoutes);
+      // ROI-E005 Perspectives — SAME prefix as resultsVnextRoiRoutes below
+      // (not a more-specific sub-prefix), registered BEFORE it for
+      // consistency with the KPI-E005 mount-order convention above (see the
+      // import comment; correctness does not depend on this order here —
+      // see roiPerspectives.routes.ts's own "MOUNT-ORDER CHECK").
+      app.use('/api/vnext/results/roi', resultsVnextRoiPerspectivesRoutes);
       // ROI-E001 (Case & Baseline) — own auth (verifyToken +
       // requireOrgAccess) applied inside the router, same convention as
       // resultsVnextKpiRoutes above.
