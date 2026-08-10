@@ -183,6 +183,19 @@ export interface GenerateCadenceOccurrencesInput {
 export interface GenerateCadenceOccurrencesResult {
   created: number;
   skippedExisting: number;
+  /**
+   * OKR-E004 addition (IO-6: additive, backward-compatible — no existing
+   * caller destructures an exact object shape that this would break). The
+   * design's own open question #8 flagged that the original
+   * `{created, skippedExisting}` shape only gives a COUNT, but E004's
+   * obligation-seeding function (`generateCadenceOccurrencesAndSeedCheckInObligations`,
+   * okrCheckInScheduler.ts) needs the actual new row ids to seed a
+   * `check_in` obligation per newly-opened window. Populated with the
+   * `cadence_occurrence_id` of every row this call itself inserted (the
+   * `RETURNING` from the `INSERT ... ON CONFLICT DO NOTHING` below) — never
+   * includes ids that already existed (those hit `skippedExisting`).
+   */
+  createdOccurrenceIds: string[];
 }
 
 /**
@@ -225,28 +238,31 @@ export async function generateCadenceOccurrences(
 
     const checkinFrequency = policyVersionRow.snapshot.checkinFrequency;
     if (checkinFrequency === 'custom') {
-      return { created: 0, skippedExisting: 0 };
+      return { created: 0, skippedExisting: 0, createdOccurrenceIds: [] };
     }
 
     const windows = computeCadenceWindows(cycleRow.active_start_at, cycleRow.final_update_due_at, checkinFrequency);
 
     let created = 0;
     let skippedExisting = 0;
+    const createdOccurrenceIds: string[] = [];
     for (const window of windows) {
-      const insertResult = await client.query(
+      const insertResult = await client.query<{ cadence_occurrence_id: string }>(
         `INSERT INTO okr_vnext_checkin_occurrences (organization_id, cycle_id, window_start, window_end)
          VALUES ($1, $2, $3, $4)
          ON CONFLICT (cycle_id, window_start) DO NOTHING
          RETURNING cadence_occurrence_id`,
         [organizationId, cycleId, window.start, window.end]
       );
-      if ((insertResult.rowCount ?? 0) > 0) {
+      const insertedRow = insertResult.rows[0];
+      if (insertedRow) {
         created += 1;
+        createdOccurrenceIds.push(insertedRow.cadence_occurrence_id);
       } else {
         skippedExisting += 1;
       }
     }
-    return { created, skippedExisting };
+    return { created, skippedExisting, createdOccurrenceIds };
   } finally {
     client.release();
   }

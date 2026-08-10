@@ -128,6 +128,21 @@ export interface CompleteObligationParams {
    * the domain command whose successful transition completed this
    * obligation, for audit/debugging (not a foreign key to anything). */
   completedViaCommand: string;
+  /**
+   * OKR-E004 addition (IO-6: additive, backward-compatible — omitted by
+   * every existing KPI-E003/ROI caller, so their behavior is byte-for-byte
+   * unchanged). Without this filter, `(organizationId, referenceType,
+   * referenceId, obligationType, status='open')` is NOT guaranteed unique:
+   * a single Key Result can have more than one open `check_in` obligation
+   * open at once (one per missed cadence window — see
+   * `okrCheckInScheduler.ts`'s `detectAndFlagMissedCheckIns`), so a plain
+   * `recordCheckIn` completion for THIS window's obligation would otherwise
+   * also complete an unrelated still-open obligation for a DIFFERENT
+   * window on the same KR (the `UPDATE` has no `LIMIT` and matches every
+   * row satisfying the WHERE clause). Passing this narrows the WHERE to the
+   * exact occurrence the caller is completing.
+   */
+  cadenceOccurrenceId?: string | null;
 }
 
 /**
@@ -140,7 +155,7 @@ export async function completeObligation(
   client: PoolClient,
   params: CompleteObligationParams
 ): Promise<Obligation | null> {
-  const { organizationId, referenceType, referenceId, obligationType, completedViaCommand } = params;
+  const { organizationId, referenceType, referenceId, obligationType, completedViaCommand, cadenceOccurrenceId } = params;
 
   const result = await client.query<ObligationRow>(
     `UPDATE rvn_platform_obligations
@@ -148,8 +163,9 @@ export async function completeObligation(
             row_version = row_version + 1, updated_at = now()
       WHERE organization_id = $1 AND reference_type = $2 AND reference_id = $3
         AND obligation_type = $4 AND status = 'open'
+        AND ($6::uuid IS NULL OR cadence_occurrence_id = $6::uuid)
       RETURNING *`,
-    [organizationId, referenceType, referenceId, obligationType, completedViaCommand]
+    [organizationId, referenceType, referenceId, obligationType, completedViaCommand, cadenceOccurrenceId ?? null]
   );
   const row = result.rows[0];
   return row ? toObligation(row) : null;

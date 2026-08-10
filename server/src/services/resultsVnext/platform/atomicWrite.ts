@@ -357,6 +357,16 @@ export const EVENT_TYPE_CONSUMER_GROUPS: Readonly<Record<string, readonly string
   'okr_key_result.created': ['mywork_projection'],
   'okr_key_result.updated': ['mywork_projection'],
   'okr_key_result.cancelled': ['mywork_projection'],
+
+  // OKR-E004 (docs/product/results-vnext/OKR_E004_DESIGN.md §7/§12) —
+  // Check-ins. `okr_checkin.recorded`/`okr_checkin.corrected` are the
+  // aggregate's own two commands (`recordCheckIn`/`correctCheckIn`,
+  // okrCheckInCommands.ts); both use `aggregateType='okr_set'` (the
+  // parent Set's identity), same convention OKR-E003 established for
+  // Objective/KeyResult child events. Fan out to 'mywork_projection' only,
+  // matching every other domain entry's default.
+  'okr_checkin.recorded': ['mywork_projection'],
+  'okr_checkin.corrected': ['mywork_projection'],
 };
 
 /**
