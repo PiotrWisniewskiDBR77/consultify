@@ -769,8 +769,20 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                   );
                 })}
                 {!hideRowActions ? (
+                  // R09-1a (2026-08-10): `sticky right-0` — na wąskim obszarze tabeli
+                  // (np. otwarty panel podglądu obok, TRIADA §C9) `table-fixed` NIE
+                  // kurczy kolumn (szerokości z pierwszego wiersza są sztywne, patrz
+                  // ColumnResizer — zmiana tylko ręczna), więc kolumna z Settings2
+                  // po prostu wypadała poza widoczny obszar bez paska przewijania w
+                  // linii wzroku. Ikona TRIADA B.16 jest OBOWIĄZKOWA na każdym
+                  // odbiorze — przypinamy ją do prawej krawędzi widocznego obszaru,
+                  // żeby nigdy nie wymagała przewijania. `bg-slate-50 dark:bg-navy-900`
+                  // (pełne, nie tłumaczone przez `thead`'s `/80` + blur) zapobiega
+                  // przebijaniu przewijanej treści spod przypiętej kolumny. Cień
+                  // po lewej krawędzi sygnalizuje, że to przypięty fragment, nie
+                  // zwykła kolumna — czytelne domknięcie zamiast twardej krawędzi.
                   <th
-                    className={`${ROW_HEIGHT_CLASS} ${cellPadding} text-right text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider w-20`}
+                    className={`${ROW_HEIGHT_CLASS} ${cellPadding} text-right text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider w-20 sticky right-0 z-[11] bg-slate-50 dark:bg-navy-900 shadow-[-6px_0_6px_-6px_rgba(0,0,0,0.12)]`}
                   >
                     {enableColumnSettings && rowDescription ? (
                       /* Triada standard: Settings2 → TableSettingsPopover
@@ -996,7 +1008,19 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                       </td>
                     ))}
                     {!hideRowActions ? (
-                      <td className={`${ROW_HEIGHT_CLASS} ${cellPadding} text-right`}>
+                      // R09-1a — sam mirror nagłówka: kebab przypięty do prawej
+                      // krawędzi, żeby nie wypadał poza widoczny obszar razem z
+                      // Settings2 (patrz komentarz przy `<th>` powyżej). Świadomy
+                      // kompromis: przypięta komórka ma STAŁE `bg-white/navy-900`
+                      // zamiast `bg-state-selected`/`bg-state-hover` zaznaczonego
+                      // wiersza — te dwa tła nie da się nałożyć jedną klasą
+                      // Tailwind, a rozjazd odcienia widać WYŁĄCZNIE gdy wiersz
+                      // jest zaznaczony/hover I tabela jest ręcznie przewinięta w
+                      // poziomie — poza tym stanem (czyli w każdym zaakceptowanym
+                      // zrzucie) wygląda identycznie jak dotąd.
+                      <td
+                        className={`${ROW_HEIGHT_CLASS} ${cellPadding} text-right sticky right-0 z-[11] bg-white dark:bg-navy-900 shadow-[-6px_0_6px_-6px_rgba(0,0,0,0.12)]`}
+                      >
                         <div className="flex justify-end" onClick={(e) => e.stopPropagation()}>
                           {(() => {
                             // PPM-mirror (ANEKS #3b): this row's context-menu

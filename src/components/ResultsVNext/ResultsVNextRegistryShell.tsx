@@ -29,6 +29,7 @@
 
 import React from 'react';
 
+import { PREVIEW_PANE_WIDTH } from '@/components/shared/PreviewPane/previewGeometry';
 import {
   StandardModuleBar,
   type StandardModuleBarProps,
@@ -96,7 +97,24 @@ export const ResultsVNextRegistryShell: React.FC<ResultsVNextRegistryShellProps>
               <StandardTable {...table} />
             </div>
             {preview ? (
-              <aside className="w-[400px] shrink-0 bg-slate-50 dark:bg-navy-950 p-3 overflow-hidden">
+              // R09-1 (2026-08-10, defekt P1): TRIADA §C9 przepisuje
+              // `clamp(340px, 28%, 480px)`, nie sztywny `w-[400px]`. Przy
+              // sztywnym pikselu panel nie zwężał się razem z dostępną
+              // szerokością (np. 125% zoom) — całość treści (właściwości,
+              // NPV/IRR, akcje) była obcinana przez `overflow-hidden`
+              // rodzica bez możliwości doscrollowania, bo panel po prostu
+              // nie mieścił się w wierszu. `clamp()` (ta sama stała co w
+              // `TableWithPreviewLayout`/`previewGeometry.ts`) skaluje
+              // szerokość panelu razem z kontenerem, więc wiersz zawsze się
+              // mieści; przy 1440px to ~403px — wizualnie nieodróżnialne od
+              // poprzedniego 400px. Skrolowanie treści w pionie już działa
+              // — `PreviewPaneShell` (pod `StandardPreview`) ma własny
+              // `flex-1 overflow-y-auto` na body, to `overflow-hidden` tutaj
+              // tnie tylko cień/róg karty, nie treść.
+              <aside
+                className="shrink-0 bg-slate-50 dark:bg-navy-950 p-3 overflow-hidden"
+                style={{ width: PREVIEW_PANE_WIDTH }}
+              >
                 <StandardPreview {...preview} />
               </aside>
             ) : null}

@@ -262,6 +262,9 @@ const ResultsVNextOkrRegistryScreen = React.lazy(
 const ResultsVNextKpiScorecardsScreen = React.lazy(
   () => import('./screens/results-vnext-kpi-scorecards')
 );
+const ResultsVNextLegacyArchiveScreen = React.lazy(
+  () => import('./screens/results-vnext-legacy-archive')
+);
 
 const SCREENS: Record<string, { label: string; render: () => React.ReactElement }> = {
   'results-vnext-registry-shell': {
@@ -288,6 +291,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'RN-G2 P1 #8 — REALNY rejestr Kart Wyników KPI (kpiScorecardPresenters + ResultsVNextRegistryShell): lista (zakładka Karty wyników) + szczegóły karty (Pozycje/Migawki), status GET .../status, lock NO_MEMBERS. &view=list|detail &tab=items|snapshots &state=ready|loading|empty|error|forbidden &selected=<id|none> &scorecard=sc-1|sc-2|sc-3|sc-4',
     render: () => <ResultsVNextKpiScorecardsScreen />,
+  },
+  'results-vnext-legacy-archive': {
+    label:
+      'RN-G2 R09-3 — REALNY <ResultsVNextLegacyArchivePanel> (kpi/roi/okr .../legacy index, tylko do odczytu, prep pod kolejną falę — NIEPODPIĘty do żadnego huba). &domain=kpi|roi|okr &state=ready|loading|empty|error',
+    render: () => <ResultsVNextLegacyArchiveScreen />,
   },
   'mw-007-calendar-narrow-viewport': {
     label:
