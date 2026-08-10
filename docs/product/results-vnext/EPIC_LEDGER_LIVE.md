@@ -100,7 +100,65 @@ niezbudowany i bez właściciela.
 | Command/query/API | `POST .../sets/:id/objectives`, `PATCH .../objectives/:id` | `POST .../objectives/:id/key-results`, `PATCH .../key-results/:id` | j.w. + `POST .../sets/:id/submit` (walidacja liczby KR) | wewnętrzne (brak osobnego route) | j.w. |
 | Schema/migration/constraint | `okr_vnext_objectives` | `okr_vnext_key_results` (measurement_type enum) | `okr_vnext_key_results`, policy `kr_min_required` | `okr_vnext_key_results.progress` + calc policy/version | j.w. |
 | Roles/visibility | Objective Owner, Set Owner | KR Owner, Objective Owner | KR Owner | Viewer, Contributor | Auditor (read-only policy trace) |
-| Status | NOT_IMPLEMENTED | NOT_IMPLEMENTED | NOT_IMPLEMENTED | NOT_IMPLEMENTED | NOT_IMPLEMENTED |
+| Status | IMPLEMENTED | IMPLEMENTED | IMPLEMENTED | IMPLEMENTED | IMPLEMENTED |
+
+**IMPLEMENTED 2026-08-10** (agent tej sesji, EXECUTION_LEDGER.md §43). Zbudowane
+wg `OKR_E003_DESIGN.md` §8-§14, ratyfikowane przez blok §-IO Integration
+Owner rulings na czele dokumentu (wiążący, nadpisuje sprzeczne fragmenty
+draftu poniżej) — po standing re-verification E001/E002's landed code
+(zero rozjazdów: `getOkrSet` faktycznie zwraca płaski `OkrSet` bez
+zagnieżdżonych Objectives/KRs, więc `GET /sets/:setId/objectives` jest
+addytywny, nie duplikat). Migracja `20260824_rvn_okr_objective_key_result.sql`
+(2 tabele `okr_vnext_objectives`/`okr_vnext_key_results`, D09: zero FK z
+`okr_vnext_key_results` do KPI/Initiative/ROI — dowiedzione bezpośrednią
+inspekcją `information_schema`, nie deklaracją designu). Silnik progresu
+`okrProgressEngine.ts` — czysta, bez-DB funkcja, 43-testowa suita
+known-answer z ręcznie zweryfikowanymi wartościami dla wszystkich 5
+geometrii + każdego przypadku degenerate (dowód: `not_calculable`, nigdy
+fabrykowane zero). §-IO rulings zaimplementowane dosłownie: `binary`
+achieved=1.0/not achieved=0.0, `maintain_range` in-range=1.0/out-of-range=0.0
+z magnitude w osobnej kolumnie `out_of_range_distance` (odrzucona własna
+propozycja draftu linear-falloff), surowy nieprzycięty ratio (bez clamp),
+`hasSufficientKeyResultCoverage` per-Objective bez specjalnego traktowania
+company/BU/team (§-IO #6), mixed confidence models w Objective →
+`not_calculable` bez ograniczenia schematu wymuszającego jednorodność
+(§-IO #5). `okrObjectiveCommands.ts`/`okrKeyResultCommands.ts` (6 komend,
+wszystkie z bezpośrednim testem na realnym Postgresie), `okrObjectiveRepository.ts`
+(3 funkcje odczytu, ABAC dziedziczone przez `set_id`, `::text` cast na
+każdym joinie — dowód realDB, nie deklaracja). Dokładnie dwa punkty
+styku w `okrSetCommands.ts` (E002, plik NIE własny tego epiku) — owinięcie
+`isOkrSetReadyForSubmissionEligible` (ciało nietknięte, dowód diff) i
+wypełnienie `buildOkrSetApprovalSnapshotPayload`'s `objectives: []`
+placeholder realną treścią. Zero cascade z cancelObjective do KeyResult
+(§-IO #8) — dowiedzione testem: KR w stanie `on_track`/`at_risk` przeżywa
+anulowanie rodzica z zerową zmianą własnego wiersza (ten sam `row_version`/
+`updated_at` przed i po). 9 nowych endpointów `/api/vnext/results/okr/*`.
+Progress/confidence calc policy resolved WYŁĄCZNIE przez przypięty
+`policy_version_id` Cyklu (D-E3-6) — dowiedzione testem: republish Programu
+tworzy v2 politykę, ale KR-owy `progress_calc_policy_version_id` pozostaje
+v1 nawet po recompute. **114 nowych testów w tym epiku** (43 silnik + 5
+createObjective + 9 createKeyResult + 5 KR-coverage + 2 approval-snapshot
++ 5 visibility-join + 3 objective-lifecycle + 29 route-contract + 13
+zaktualizowanych fixture'ów E002 dotkniętych nową bramką submission),
+wszystkie PASS na efemerycznym Postgresie 17. `tsc --noEmit` czysty (0
+błędów, weryfikowany wielokrotnie). Pełna suita OKR (21 plików/253 testy)
+i KPI (0 fail) PASS; ROI ma 33 pre-existing failures w 18 plikach —
+identyczny root cause do już udokumentowanego w EXECUTION_LEDGER.md §37
+(`initiatives_organization_id_fkey` — fixture'y ROI nigdy nie wstawiają
+swojego `ORG_ID` do `organizations` przed insertem do `initiatives`; §37
+naprawił ten sam wzorzec tylko dla 3 plików KPI, nigdy nie rozszerzony na
+ROI) — zero plików ROI dotkniętych tą sesją, więc przyczynowość wykluczona
+strukturalnie, nie tylko zaobserwowana.
+
+**Nadal otwarte, restated explicite (§16 draftu, nie ciche)**: (1) obie
+formuły progresu `maintain_range`/`binary` zostały rozstrzygnięte przez
+fiat Integration Ownera (§-IO), nie przez odnaleziony wiążący dokument
+źródłowy — jeśli Founder ma realną politykę firmy inną niż 1.0/0.0, trzeba
+ją podać i przemigrować; (2) `okr_vnext_key_result_source_bindings`
+(typed KR→KPI source binding) świadomie odroczone — `source_type`/
+`source_reference` to gołe TEXT bez FK, gotowe do rozbudowy przez późniejszy
+epik wg wzoru `rvn_roi_benefit_evidence_links` **z usuniętym FK** (D09
+correction).
 
 ### OKR-E004 Check-ins
 
