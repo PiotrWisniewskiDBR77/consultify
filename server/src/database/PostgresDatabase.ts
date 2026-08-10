@@ -517,9 +517,32 @@ export interface PinnedTransactionClient {
   queryRun(sql: string, params?: unknown[]): Promise<{ changes: number }>;
 }
 
+export interface PinnedTransactionOptions {
+  /**
+   * Tenant identity for this transaction. When provided, it is applied via
+   * `SELECT set_config('app.organization_id', $1, true)` — the third `true`
+   * argument makes this equivalent to `SET LOCAL`, i.e. the setting reverts
+   * automatically at COMMIT/ROLLBACK and never survives on the physical
+   * connection once it goes back to the shared `pg.Pool`. This is the ONLY
+   * safe way to set a per-tenant GUC on a pooled connection: a bare `SET`
+   * (session-scoped) would leak into whichever unrelated request the pool
+   * hands this connection to next.
+   *
+   * This does not enforce anything by itself — it is the identity source for
+   * `USING (organization_id = current_setting('app.organization_id', true))`
+   * RLS policies (see W2_RLS_TENANT_ENFORCEMENT_report.md). It is a no-op if
+   * no policy reads the GUC, and the GUC itself is a no-op for any RLS policy
+   * if the connecting role is a superuser or BYPASSRLS (also documented in
+   * that report) — set it anyway so the plumbing is correct the moment the
+   * connecting role changes; do not treat its presence as proof of isolation.
+   */
+  organizationId?: string;
+}
+
 /** Run a unit of work on one physical PostgreSQL connection. */
 export async function withPinnedPostgresTransaction<T>(
-  work: (tx: PinnedTransactionClient) => Promise<T>
+  work: (tx: PinnedTransactionClient) => Promise<T>,
+  options?: PinnedTransactionOptions
 ): Promise<T> {
   const client = await getPool().connect();
   const query = async <R extends QueryResultRow = any>(sql: string, params: unknown[] = []) => {
@@ -543,6 +566,11 @@ export async function withPinnedPostgresTransaction<T>(
 
   try {
     await client.query('BEGIN');
+    if (options?.organizationId) {
+      await client.query("SELECT set_config('app.organization_id', $1, true)", [
+        options.organizationId,
+      ]);
+    }
     const result = await work(tx);
     await client.query('COMMIT');
     return result;
