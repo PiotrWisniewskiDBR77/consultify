@@ -72,6 +72,15 @@ export interface RoiCaseRow {
   rejected_by: string | null;
   rejected_at: string | null;
   rejection_reason: string | null;
+  /** ROI-E003 §3 (D5): pins the calculation run the readiness guard
+   * validated as fresh at submit time — the "decision request pins a
+   * specific economic-model version under review" (AC-02). */
+  decision_calculation_run_id: string | null;
+  /** ROI-E003 §3 (D6): distinct from rejection — 'changes_requested' stays
+   * editable, these columns are never reused for a true rejection. */
+  changes_requested_by: string | null;
+  changes_requested_at: string | null;
+  changes_requested_reason: string | null;
   archived_at: string | null;
   archived_by: string | null;
   row_version: number;
@@ -106,6 +115,10 @@ export interface RoiCase {
   rejectedBy: string | null;
   rejectedAt: string | null;
   rejectionReason: string | null;
+  decisionCalculationRunId: string | null;
+  changesRequestedBy: string | null;
+  changesRequestedAt: string | null;
+  changesRequestedReason: string | null;
   archivedAt: string | null;
   archivedBy: string | null;
   rowVersion: number;
@@ -141,6 +154,10 @@ export function toRoiCase(row: RoiCaseRow): RoiCase {
     rejectedBy: row.rejected_by,
     rejectedAt: row.rejected_at,
     rejectionReason: row.rejection_reason,
+    decisionCalculationRunId: row.decision_calculation_run_id,
+    changesRequestedBy: row.changes_requested_by,
+    changesRequestedAt: row.changes_requested_at,
+    changesRequestedReason: row.changes_requested_reason,
     archivedAt: row.archived_at,
     archivedBy: row.archived_by,
     rowVersion: row.row_version,
