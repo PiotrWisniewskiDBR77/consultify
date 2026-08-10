@@ -20,6 +20,7 @@ import aiCoreRoutes from './ai-core.routes.js';
 import assessmentRoutes from './assessment.routes.js';
 import calendarRoutes from './calendar.routes.js';
 import calendarWebhookRoutes from './calendarWebhook.routes.js';
+import caseWorkspaceRoutes from '../caseWorkspace/index.js';
 import chatRoutes from './chat.routes.js';
 import executionRoutes from './execution.routes.js';
 import executionControlRoutes from './execution-control.routes.js';
@@ -96,6 +97,7 @@ v8Router.use('/chat', chatRoutes);
 v8Router.use('/ai-core', aiCoreRoutes);
 v8Router.use('/calendar', calendarRoutes);
 v8Router.use('/calendar/webhooks', calendarWebhookRoutes);
+v8Router.use('/case-workspace', caseWorkspaceRoutes);
 v8Router.use('/execution', executionRoutes);
 v8Router.use('/execution-control', executionControlRoutes);
 // Aliasy specyficzne PRZED catch-all '/finance' (Express dopasowuje prefiks w kolejności).
