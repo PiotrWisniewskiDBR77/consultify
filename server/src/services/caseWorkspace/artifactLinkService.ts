@@ -133,6 +133,7 @@ import {
   queryOne,
   withPgTransaction,
 } from '../../utils/queryHelpers.js';
+import { CaseWorkspaceAuthError, requireCaseAccess } from './caseWorkspaceAuthContext.js';
 
 // ---------------------------------------------------------------------------
 // Public types
@@ -398,6 +399,8 @@ export async function linkArtifactToCase(input: LinkArtifactToCaseInput): Promis
   const relation = requireEnum(input.relation, ARTIFACT_LINK_RELATIONS, 'artifact_link_relation_invalid');
   const artifactRevision = input.artifactRevision ?? null;
 
+  await requireCaseAccess(linkedByActorId, caseId);
+
   return withPgTransaction(async (client) => {
     const caseResult = await client.query<CaseCoreRefRow>(
       `SELECT case_id, organization_id, project_id FROM case_core WHERE case_id = ?`,
@@ -497,6 +500,7 @@ export async function pinArtifactRevision(
 
   return withPgTransaction(async (client) => {
     const row = await loadForUpdate(client, id);
+    await requireCaseAccess(actorUserId, row.case_id);
     requireActive(row);
 
     const now = new Date().toISOString();
@@ -552,6 +556,7 @@ export async function markLinkStale(
 
   return withPgTransaction(async (client) => {
     const row = await loadForUpdate(client, id);
+    await requireCaseAccess(actorUserId, row.case_id);
     requireActive(row);
 
     const now = new Date().toISOString();
@@ -595,6 +600,7 @@ export async function markLinkArtifactUnavailable(
 
   return withPgTransaction(async (client) => {
     const row = await loadForUpdate(client, id);
+    await requireCaseAccess(actorUserId, row.case_id);
     requireActive(row);
 
     const now = new Date().toISOString();
@@ -643,6 +649,7 @@ export async function unlinkArtifactFromCase(
 
   return withPgTransaction(async (client) => {
     const row = await loadForUpdate(client, id);
+    await requireCaseAccess(actorUserId, row.case_id);
     requireActive(row);
 
     const now = new Date().toISOString();
@@ -661,13 +668,24 @@ export async function unlinkArtifactFromCase(
 }
 
 /** CW-RT-024. Plain read, no lock, single row by link_id. */
-export async function getArtifactLink(linkId: string): Promise<CaseArtifactLink | null> {
+export async function getArtifactLink(
+  linkId: string,
+  actorUserId: string
+): Promise<CaseArtifactLink | null> {
   const id = requireNonBlank(linkId, 'artifact_link_id_required');
+  const actor = requireNonBlank(actorUserId, 'artifact_link_actor_required');
   const row = await queryOne<CaseWorkspaceArtifactLinkRow>(
     `SELECT * FROM case_workspace_artifact_links WHERE link_id = ?`,
     [id]
   );
-  return row ? mapRow(row) : null;
+  if (!row) return null;
+  try {
+    await requireCaseAccess(actor, row.case_id);
+  } catch (err) {
+    if (err instanceof CaseWorkspaceAuthError) return null;
+    throw err;
+  }
+  return mapRow(row);
 }
 
 /**
@@ -685,14 +703,18 @@ export async function getArtifactLink(linkId: string): Promise<CaseArtifactLink 
  */
 export async function listArtifactLinksForCase(
   caseId: string,
-  filters?: {
-    relation?: ArtifactLinkRelation;
-    artifactType?: string;
-    linkStatus?: ArtifactLinkStatus;
-    isStale?: boolean;
-  }
+  filters:
+    | {
+        relation?: ArtifactLinkRelation;
+        artifactType?: string;
+        linkStatus?: ArtifactLinkStatus;
+        isStale?: boolean;
+      }
+    | undefined,
+  actorUserId: string
 ): Promise<CaseArtifactLink[]> {
   const id = requireNonBlank(caseId, 'artifact_link_case_id_required');
+  await requireCaseAccess(requireNonBlank(actorUserId, 'artifact_link_actor_required'), id);
   const conditions = ['case_id = ?'];
   const params: unknown[] = [id];
 
@@ -750,9 +772,12 @@ export interface ArtifactLinkSetDigest {
  * which are visible via listArtifactLinksForCase()'s isStale filter
  * instead, not via this digest.
  */
-export async function computeArtifactLinkSetDigest(caseId: string): Promise<ArtifactLinkSetDigest> {
+export async function computeArtifactLinkSetDigest(
+  caseId: string,
+  actorUserId: string
+): Promise<ArtifactLinkSetDigest> {
   const id = requireNonBlank(caseId, 'artifact_link_case_id_required');
-  const activeLinks = await listArtifactLinksForCase(id, { linkStatus: 'ACTIVE' });
+  const activeLinks = await listArtifactLinksForCase(id, { linkStatus: 'ACTIVE' }, actorUserId);
 
   const sorted = [...activeLinks].sort((a, b) => {
     if (a.artifactType !== b.artifactType) return a.artifactType < b.artifactType ? -1 : 1;

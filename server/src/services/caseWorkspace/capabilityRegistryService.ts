@@ -127,6 +127,7 @@ import {
   withPgTransaction,
 } from '../../utils/queryHelpers.js';
 import { ApprovalClassValues, type ApprovalClass } from '../../types/executionSpine.js';
+import { CaseWorkspaceAuthError, requireOrgMember, requireOrgRole } from './caseWorkspaceAuthContext.js';
 
 // ---------------------------------------------------------------------------
 // Public types
@@ -435,7 +436,15 @@ async function loadForUpdate(
  * corrections require a NEW capability_version, never an in-place edit of a
  * shipped definition.
  */
-export async function registerCapability(input: RegisterCapabilityInput): Promise<CapabilityRegistryEntry> {
+export async function registerCapability(
+  input: RegisterCapabilityInput,
+  callerOrganizationId: string
+): Promise<CapabilityRegistryEntry> {
+  await requireOrgRole(
+    requireNonBlank(input.createdByActorId, 'capability_created_by_actor_required'),
+    requireNonBlank(callerOrganizationId, 'capability_caller_organization_id_required'),
+    'ADMIN'
+  );
   const capabilityId = requireNonBlank(input.capabilityId, 'capability_id_required');
   const capabilityVersion = requireNonBlank(input.capabilityVersion, 'capability_version_required');
   const ownerModule = requireNonBlank(input.ownerModule, 'capability_owner_module_required');
@@ -529,8 +538,12 @@ export async function registerCapability(input: RegisterCapabilityInput): Promis
  */
 export async function getCapabilityVersion(
   capabilityId: string,
-  capabilityVersion: string
+  capabilityVersion: string,
+  actorUserId: string,
+  organizationId: string
 ): Promise<CapabilityRegistryEntry | null> {
+  const actor = requireNonBlank(actorUserId, 'capability_actor_required');
+  const orgId = requireNonBlank(organizationId, 'capability_organization_id_required');
   const row = await queryOne<CapabilityRegistryRow>(
     `SELECT * FROM case_workspace_capabilities WHERE capability_id = ? AND capability_version = ?`,
     [
@@ -538,7 +551,14 @@ export async function getCapabilityVersion(
       requireNonBlank(capabilityVersion, 'capability_version_required'),
     ]
   );
-  return row ? mapRow(row) : null;
+  if (!row) return null;
+  try {
+    await requireOrgMember(actor, orgId);
+  } catch (err) {
+    if (err instanceof CaseWorkspaceAuthError) return null;
+    throw err;
+  }
+  return mapRow(row);
 }
 
 /**
@@ -547,13 +567,24 @@ export async function getCapabilityVersion(
  * route that already holds the row id.
  */
 export async function getCapabilityByRegistryId(
-  capabilityRegistryId: string
+  capabilityRegistryId: string,
+  actorUserId: string,
+  organizationId: string
 ): Promise<CapabilityRegistryEntry | null> {
+  const actor = requireNonBlank(actorUserId, 'capability_actor_required');
+  const orgId = requireNonBlank(organizationId, 'capability_organization_id_required');
   const row = await queryOne<CapabilityRegistryRow>(
     `SELECT * FROM case_workspace_capabilities WHERE capability_registry_id = ?`,
     [requireNonBlank(capabilityRegistryId, 'capability_registry_id_required')]
   );
-  return row ? mapRow(row) : null;
+  if (!row) return null;
+  try {
+    await requireOrgMember(actor, orgId);
+  } catch (err) {
+    if (err instanceof CaseWorkspaceAuthError) return null;
+    throw err;
+  }
+  return mapRow(row);
 }
 
 /**
@@ -563,11 +594,21 @@ export async function getCapabilityByRegistryId(
  * keyset on capability_registry_id. Platform-global, no tenant filter (see
  * open_questions #1).
  */
-export async function listCapabilities(filters?: {
-  ownerModule?: string;
-  lifecycle?: CapabilityLifecycle;
-  capabilityId?: string;
-}): Promise<CapabilityRegistryEntry[]> {
+export async function listCapabilities(
+  filters:
+    | {
+        ownerModule?: string;
+        lifecycle?: CapabilityLifecycle;
+        capabilityId?: string;
+      }
+    | undefined,
+  actorUserId: string,
+  organizationId: string
+): Promise<CapabilityRegistryEntry[]> {
+  await requireOrgMember(
+    requireNonBlank(actorUserId, 'capability_actor_required'),
+    requireNonBlank(organizationId, 'capability_organization_id_required')
+  );
   const conditions: string[] = [];
   const params: unknown[] = [];
 
@@ -604,10 +645,16 @@ export async function listCapabilities(filters?: {
  * columns at insert time; the adapter-presence half of CW-GR-016 is out of
  * this packet's scope, see open_questions #5).
  */
-export async function listActiveCapabilities(filters?: {
-  ownerModule?: string;
-}): Promise<CapabilityRegistryEntry[]> {
-  const all = await listCapabilities({ ownerModule: filters?.ownerModule, lifecycle: 'ACTIVE' });
+export async function listActiveCapabilities(
+  filters: { ownerModule?: string } | undefined,
+  actorUserId: string,
+  organizationId: string
+): Promise<CapabilityRegistryEntry[]> {
+  const all = await listCapabilities(
+    { ownerModule: filters?.ownerModule, lifecycle: 'ACTIVE' },
+    actorUserId,
+    organizationId
+  );
   return all.filter((entry) => entry.health !== 'UNHEALTHY');
 }
 
@@ -624,12 +671,19 @@ export async function markCapabilityHealth(
   health: CapabilityHealth,
   actor: CaseActor,
   detail: string | null,
-  expectedVersion: number
+  expectedVersion: number,
+  callerOrganizationId: string
 ): Promise<CapabilityRegistryEntry> {
   const id = requireNonBlank(capabilityRegistryId, 'capability_registry_id_required');
-  requireNonBlank(actor?.actorUserId, 'capability_actor_required');
+  const actorUserId = requireNonBlank(actor?.actorUserId, 'capability_actor_required');
   requireEnum(health, HEALTH_VALUES, 'capability_health_invalid');
   if (typeof expectedVersion !== 'number') throw new Error('capability_expected_version_required');
+
+  await requireOrgRole(
+    actorUserId,
+    requireNonBlank(callerOrganizationId, 'capability_caller_organization_id_required'),
+    'ADMIN'
+  );
 
   return withPgTransaction(async (client) => {
     // Confirms the row exists before attempting the OCC update, same
@@ -666,16 +720,21 @@ export async function markCapabilityHealth(
  * idempotency_key_conflict (fails closed rather than returning a stale
  * result for a different payload).
  */
-export async function recordIdempotencyKeyCheck(input: {
-  capabilityRegistryId: string;
-  idempotencyKey: string;
-  requestPayload: unknown;
-  actorId: string;
-}): Promise<RecordIdempotencyKeyCheckResult> {
+export async function recordIdempotencyKeyCheck(
+  input: {
+    capabilityRegistryId: string;
+    idempotencyKey: string;
+    requestPayload: unknown;
+    actorId: string;
+  },
+  organizationId: string
+): Promise<RecordIdempotencyKeyCheckResult> {
   const capabilityRegistryId = requireNonBlank(input.capabilityRegistryId, 'capability_registry_id_required');
   const idempotencyKey = requireNonBlank(input.idempotencyKey, 'capability_idempotency_key_required');
   const actorId = requireNonBlank(input.actorId, 'capability_actor_required');
   const requestDigest = computeRequestDigest(input.requestPayload);
+
+  await requireOrgMember(actorId, requireNonBlank(organizationId, 'capability_organization_id_required'));
 
   return withPgTransaction(async (client) => {
     const capabilityExists = await client.query<{ capability_registry_id: string }>(

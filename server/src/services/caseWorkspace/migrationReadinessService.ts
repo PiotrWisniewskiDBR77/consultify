@@ -158,6 +158,7 @@ import {
   queryOne,
   withPgTransaction,
 } from '../../utils/queryHelpers.js';
+import { CaseWorkspaceAuthError, requireOrgMember, requireOrgRole } from './caseWorkspaceAuthContext.js';
 
 // ---------------------------------------------------------------------------
 // Public types — Flag Definitions
@@ -407,12 +408,19 @@ function stableHashBucket(value: string): number {
  * (CW-DOD-J1).
  */
 export async function registerFlagDefinition(
-  input: RegisterFlagDefinitionInput
+  input: RegisterFlagDefinitionInput,
+  callerOrganizationId: string
 ): Promise<FlagDefinition> {
   const flagKey = requireNonBlank(input.flagKey, 'flag_definition_key_required');
   const description = requireNonBlank(input.description, 'flag_definition_description_required');
   const createdBy = requireNonBlank(input.createdBy, 'flag_definition_created_by_required');
   const parentFlagKey = input.parentFlagKey ?? null;
+
+  await requireOrgRole(
+    createdBy,
+    requireNonBlank(callerOrganizationId, 'flag_definition_caller_organization_id_required'),
+    'ADMIN'
+  );
 
   return withPgTransaction(async (client) => {
     const existingResult = await client.query<CaseWorkspaceFeatureFlagDefinitionRow>(
@@ -483,8 +491,16 @@ async function assertNoAncestorCycle(
 }
 
 /** CW-DOD-J3. Plain read, no lock. */
-export async function getFlagDefinition(flagKey: string): Promise<FlagDefinition | null> {
+export async function getFlagDefinition(
+  flagKey: string,
+  actorUserId: string,
+  organizationId: string
+): Promise<FlagDefinition | null> {
   const key = requireNonBlank(flagKey, 'flag_definition_key_required');
+  await requireOrgMember(
+    requireNonBlank(actorUserId, 'flag_definition_actor_required'),
+    requireNonBlank(organizationId, 'flag_definition_organization_id_required')
+  );
   const row = await queryOne<CaseWorkspaceFeatureFlagDefinitionRow>(
     `SELECT * FROM case_workspace_feature_flag_definitions WHERE flag_key = ?`,
     [key]
@@ -493,8 +509,16 @@ export async function getFlagDefinition(flagKey: string): Promise<FlagDefinition
 }
 
 /** CW-DOD-J3. Plain read, no lock — direct children only. */
-export async function listFlagChildren(parentFlagKey: string): Promise<FlagDefinition[]> {
+export async function listFlagChildren(
+  parentFlagKey: string,
+  actorUserId: string,
+  organizationId: string
+): Promise<FlagDefinition[]> {
   const key = requireNonBlank(parentFlagKey, 'flag_definition_parent_key_required');
+  await requireOrgMember(
+    requireNonBlank(actorUserId, 'flag_definition_actor_required'),
+    requireNonBlank(organizationId, 'flag_definition_organization_id_required')
+  );
   const rows = await queryAll<CaseWorkspaceFeatureFlagDefinitionRow>(
     `SELECT * FROM case_workspace_feature_flag_definitions WHERE parent_flag_key = ? ORDER BY flag_key ASC`,
     [key]
@@ -509,9 +533,15 @@ export async function listFlagChildren(parentFlagKey: string): Promise<FlagDefin
  * "who is beneath this flag in the rollout hierarchy".
  */
 export async function listFlagDescendants(
-  flagKey: string
+  flagKey: string,
+  actorUserId: string,
+  organizationId: string
 ): Promise<Array<FlagDefinition & { depth: number }>> {
   const key = requireNonBlank(flagKey, 'flag_definition_key_required');
+  await requireOrgMember(
+    requireNonBlank(actorUserId, 'flag_definition_actor_required'),
+    requireNonBlank(organizationId, 'flag_definition_organization_id_required')
+  );
   const rows = await queryAll<CaseWorkspaceFeatureFlagDefinitionRow & { depth: number | string }>(
     `WITH RECURSIVE descendants AS (
        SELECT flag_key, parent_flag_key, description, default_enabled, created_at,
@@ -563,6 +593,8 @@ export async function setOrgFlagState(input: SetOrgFlagStateInput): Promise<Feat
   const cohort = input.cohort ?? null;
   const allowList = Array.isArray(input.allowList) ? input.allowList : [];
 
+  await requireOrgRole(updatedBy, organizationId, 'ADMIN');
+
   return withPgTransaction(async (client) => {
     await requireFlagDefinitionExists(client, flagKey, 'feature_flag_definition_not_found');
 
@@ -599,10 +631,12 @@ export async function setOrgFlagState(input: SetOrgFlagStateInput): Promise<Feat
  */
 export async function getCurrentOrgFlagState(
   organizationId: string,
-  flagKey: string
+  flagKey: string,
+  actorUserId: string
 ): Promise<FeatureFlagState | null> {
   const orgId = requireNonBlank(organizationId, 'feature_flag_organization_id_required');
   const key = requireNonBlank(flagKey, 'feature_flag_key_required');
+  await requireOrgMember(requireNonBlank(actorUserId, 'feature_flag_actor_required'), orgId);
   const row = await queryOne<CaseWorkspaceFeatureFlagRow>(
     `SELECT * FROM case_workspace_feature_flags WHERE organization_id = ? AND flag_key = ?`,
     [orgId, key]
@@ -618,9 +652,11 @@ export async function getCurrentOrgFlagState(
  */
 export async function listCurrentOrgFlags(
   organizationId: string,
-  filters?: { cohort?: string }
+  filters: { cohort?: string } | undefined,
+  actorUserId: string
 ): Promise<FeatureFlagState[]> {
   const orgId = requireNonBlank(organizationId, 'feature_flag_organization_id_required');
+  await requireOrgMember(requireNonBlank(actorUserId, 'feature_flag_actor_required'), orgId);
   const conditions = ['organization_id = ?'];
   const params: unknown[] = [orgId];
   if (filters?.cohort) {
@@ -671,15 +707,18 @@ export function isFlagEnabledForEntity(
  */
 export async function findSmallestEnabledDescendant(
   organizationId: string,
-  rootFlagKey: string
+  rootFlagKey: string,
+  actorUserId: string
 ): Promise<Array<{ flagKey: string; depth: number }>> {
   const orgId = requireNonBlank(organizationId, 'feature_flag_organization_id_required');
   const rootKey = requireNonBlank(rootFlagKey, 'flag_definition_key_required');
+  const actor = requireNonBlank(actorUserId, 'feature_flag_actor_required');
+  await requireOrgMember(actor, orgId);
 
-  const rootDefinition = await getFlagDefinition(rootKey);
+  const rootDefinition = await getFlagDefinition(rootKey, actor, orgId);
   if (!rootDefinition) throw new Error('flag_definition_not_found');
 
-  const descendants = await listFlagDescendants(rootKey);
+  const descendants = await listFlagDescendants(rootKey, actor, orgId);
   const allNodes: Array<{ flagKey: string; parentFlagKey: string | null; depth: number }> = [
     { flagKey: rootDefinition.flagKey, parentFlagKey: rootDefinition.parentFlagKey, depth: 0 },
     ...descendants.map((d) => ({ flagKey: d.flagKey, parentFlagKey: d.parentFlagKey, depth: d.depth })),
@@ -687,7 +726,7 @@ export async function findSmallestEnabledDescendant(
 
   const statesByFlagKey = new Map<string, FeatureFlagState | null>();
   for (const node of allNodes) {
-    statesByFlagKey.set(node.flagKey, await getCurrentOrgFlagState(orgId, node.flagKey));
+    statesByFlagKey.set(node.flagKey, await getCurrentOrgFlagState(orgId, node.flagKey, actor));
   }
 
   const childrenByParent = new Map<string, string[]>();
@@ -736,7 +775,7 @@ export async function rollbackFlag(
   const key = requireNonBlank(flagKey, 'feature_flag_key_required');
   const actor = requireNonBlank(updatedBy, 'feature_flag_updated_by_required');
 
-  const current = await getCurrentOrgFlagState(orgId, key);
+  const current = await getCurrentOrgFlagState(orgId, key, actor);
   if (!current) throw new Error('feature_flag_state_not_found');
 
   return setOrgFlagState({
@@ -767,9 +806,11 @@ export async function rollbackFlag(
  * mapping that could not be established.
  */
 export async function recordQuarantinedLegacyRecord(
-  input: RecordQuarantinedLegacyRecordInput
+  input: RecordQuarantinedLegacyRecordInput,
+  actorUserId: string
 ): Promise<QuarantinedLegacyRecord> {
   const organizationId = requireNonBlank(input.organizationId, 'legacy_quarantine_organization_id_required');
+  await requireOrgMember(requireNonBlank(actorUserId, 'legacy_quarantine_actor_required'), organizationId);
   const rehearsalRunId = requireNonBlank(input.rehearsalRunId, 'legacy_quarantine_rehearsal_run_id_required');
   const sourceSystem = requireNonBlank(input.sourceSystem, 'legacy_quarantine_source_system_required');
   const sourceTable = requireNonBlank(input.sourceTable, 'legacy_quarantine_source_table_required');
@@ -839,14 +880,23 @@ export async function recordQuarantinedLegacyRecord(
 
 /** CW-DOD-J5. Plain read, no lock. */
 export async function getQuarantinedLegacyRecord(
-  quarantineId: string
+  quarantineId: string,
+  actorUserId: string
 ): Promise<QuarantinedLegacyRecord | null> {
   const id = requireNonBlank(quarantineId, 'legacy_quarantine_id_required');
+  const actor = requireNonBlank(actorUserId, 'legacy_quarantine_actor_required');
   const row = await queryOne<CaseWorkspaceLegacyQuarantineRow>(
     `SELECT * FROM case_workspace_legacy_quarantine WHERE quarantine_id = ?`,
     [id]
   );
-  return row ? mapLegacyQuarantineRow(row) : null;
+  if (!row) return null;
+  try {
+    await requireOrgMember(actor, row.organization_id);
+  } catch (err) {
+    if (err instanceof CaseWorkspaceAuthError) return null;
+    throw err;
+  }
+  return mapLegacyQuarantineRow(row);
 }
 
 /**
@@ -860,11 +910,17 @@ export async function getQuarantinedLegacyRecord(
  */
 export async function listQuarantinedLegacyRecordsForRehearsalRun(
   rehearsalRunId: string,
-  pagination?: { afterId?: string; limit?: number }
+  pagination: { afterId?: string; limit?: number } | undefined,
+  actorUserId: string,
+  callerOrganizationId: string
 ): Promise<QuarantinedLegacyRecord[]> {
   const runId = requireNonBlank(rehearsalRunId, 'legacy_quarantine_rehearsal_run_id_required');
-  const conditions = ['rehearsal_run_id = ?'];
-  const params: unknown[] = [runId];
+  await requireOrgMember(
+    requireNonBlank(actorUserId, 'legacy_quarantine_actor_required'),
+    requireNonBlank(callerOrganizationId, 'legacy_quarantine_caller_organization_id_required')
+  );
+  const conditions = ['rehearsal_run_id = ?', 'organization_id = ?'];
+  const params: unknown[] = [runId, callerOrganizationId];
 
   if (pagination?.afterId) {
     const afterId = requireNonBlank(pagination.afterId, 'legacy_quarantine_after_id_invalid');
@@ -899,15 +955,21 @@ export async function listQuarantinedLegacyRecordsForRehearsalRun(
  */
 export async function listQuarantinedLegacyRecordsForSource(
   sourceTable: string,
-  sourceId: string
+  sourceId: string,
+  actorUserId: string,
+  callerOrganizationId: string
 ): Promise<QuarantinedLegacyRecord[]> {
   const table = requireNonBlank(sourceTable, 'legacy_quarantine_source_table_required');
   const id = requireNonBlank(sourceId, 'legacy_quarantine_source_id_required');
+  await requireOrgMember(
+    requireNonBlank(actorUserId, 'legacy_quarantine_actor_required'),
+    requireNonBlank(callerOrganizationId, 'legacy_quarantine_caller_organization_id_required')
+  );
   const rows = await queryAll<CaseWorkspaceLegacyQuarantineRow>(
     `SELECT * FROM case_workspace_legacy_quarantine
-       WHERE source_table = ? AND source_id = ?
+       WHERE source_table = ? AND source_id = ? AND organization_id = ?
        ORDER BY recorded_at ASC`,
-    [table, id]
+    [table, id, callerOrganizationId]
   );
   return rows.map(mapLegacyQuarantineRow);
 }
@@ -919,16 +981,22 @@ export async function listQuarantinedLegacyRecordsForSource(
  * supplies evidence, it does not itself judge readiness.
  */
 export async function countQuarantinedByReasonCode(
-  rehearsalRunId: string
+  rehearsalRunId: string,
+  actorUserId: string,
+  callerOrganizationId: string
 ): Promise<Array<{ reasonCode: string; count: number }>> {
   const runId = requireNonBlank(rehearsalRunId, 'legacy_quarantine_rehearsal_run_id_required');
+  await requireOrgMember(
+    requireNonBlank(actorUserId, 'legacy_quarantine_actor_required'),
+    requireNonBlank(callerOrganizationId, 'legacy_quarantine_caller_organization_id_required')
+  );
   const rows = await queryAll<{ quarantine_reason_code: string; count: number | string }>(
     `SELECT quarantine_reason_code, COUNT(*) AS count
        FROM case_workspace_legacy_quarantine
-       WHERE rehearsal_run_id = ?
+       WHERE rehearsal_run_id = ? AND organization_id = ?
        GROUP BY quarantine_reason_code
        ORDER BY quarantine_reason_code ASC`,
-    [runId]
+    [runId, callerOrganizationId]
   );
   return rows.map((row) => ({ reasonCode: row.quarantine_reason_code, count: Number(row.count) }));
 }

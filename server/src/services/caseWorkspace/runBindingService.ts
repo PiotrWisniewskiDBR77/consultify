@@ -83,6 +83,7 @@ import {
   queryOne,
   withPgTransaction,
 } from '../../utils/queryHelpers.js';
+import { CaseWorkspaceAuthError, requireCaseAccess } from './caseWorkspaceAuthContext.js';
 
 // ---------------------------------------------------------------------------
 // Public types
@@ -217,6 +218,8 @@ export async function bindRunToPlanVersion(input: {
       throw new Error('plan_version_not_publishable_for_run');
     }
 
+    await requireCaseAccess(boundByActorId, planVersion.case_id);
+
     const caseResult = await client.query<CaseCoreRefRow>(
       `SELECT case_id, organization_id FROM case_core WHERE case_id = ?`,
       [planVersion.case_id]
@@ -256,13 +259,24 @@ export async function bindRunToPlanVersion(input: {
  * Plain read, no lock. Returns null if the Run has never been bound (e.g.
  * still in 'drafting'/'planning' state in v8_execution_runs).
  */
-export async function getRunBinding(runId: string): Promise<CaseRunBinding | null> {
+export async function getRunBinding(
+  runId: string,
+  actorUserId: string
+): Promise<CaseRunBinding | null> {
   const id = requireNonBlank(runId, 'run_binding_run_id_required');
+  const actor = requireNonBlank(actorUserId, 'run_binding_actor_required');
   const row = await queryOne<CaseWorkspaceRunBindingRow>(
     `SELECT * FROM case_workspace_run_bindings WHERE run_id = ?`,
     [id]
   );
-  return row ? mapRow(row) : null;
+  if (!row) return null;
+  try {
+    await requireCaseAccess(actor, row.case_id);
+  } catch (err) {
+    if (err instanceof CaseWorkspaceAuthError) return null;
+    throw err;
+  }
+  return mapRow(row);
 }
 
 /**
@@ -273,8 +287,12 @@ export async function getRunBinding(runId: string): Promise<CaseRunBinding | nul
  * status/state — callers combine this list with v8_execution_runs reads
  * themselves, keeping this service's read surface limited to what it owns.
  */
-export async function listRunBindingsForCase(caseId: string): Promise<CaseRunBinding[]> {
+export async function listRunBindingsForCase(
+  caseId: string,
+  actorUserId: string
+): Promise<CaseRunBinding[]> {
   const id = requireNonBlank(caseId, 'run_binding_case_id_required');
+  await requireCaseAccess(requireNonBlank(actorUserId, 'run_binding_actor_required'), id);
   const rows = await queryAll<CaseWorkspaceRunBindingRow>(
     `SELECT * FROM case_workspace_run_bindings WHERE case_id = ? ORDER BY created_at DESC`,
     [id]
@@ -291,9 +309,17 @@ export async function listRunBindingsForCase(caseId: string): Promise<CaseRunBin
  * requiring a new column on case_plan_versions itself.
  */
 export async function listRunBindingsForPlanVersion(
-  casePlanVersionId: string
+  casePlanVersionId: string,
+  actorUserId: string
 ): Promise<CaseRunBinding[]> {
   const id = requireNonBlank(casePlanVersionId, 'run_binding_case_plan_version_id_required');
+  const actor = requireNonBlank(actorUserId, 'run_binding_actor_required');
+  const planVersionRow = await queryOne<{ case_id: string }>(
+    `SELECT case_id FROM case_plan_versions WHERE case_plan_version_id = ?`,
+    [id]
+  );
+  if (!planVersionRow) throw new Error('plan_version_not_found');
+  await requireCaseAccess(actor, planVersionRow.case_id);
   const rows = await queryAll<CaseWorkspaceRunBindingRow>(
     `SELECT * FROM case_workspace_run_bindings WHERE case_plan_version_id = ? ORDER BY created_at DESC`,
     [id]

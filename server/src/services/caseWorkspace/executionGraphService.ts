@@ -176,6 +176,7 @@ import {
   queryOne,
   withPgTransaction,
 } from '../../utils/queryHelpers.js';
+import { CaseWorkspaceAuthError, requireCaseAccess } from './caseWorkspaceAuthContext.js';
 
 // ---------------------------------------------------------------------------
 // Public types
@@ -602,6 +603,7 @@ export async function recordGatewayEvaluation(
 
   return withPgTransaction(async (client) => {
     const scope = await resolveRunBindingScope(client, runId, 'run_binding_not_found');
+    await requireCaseAccess(recordedByActorId, scope.caseId);
 
     const now = new Date().toISOString();
     const inserted = await client.query<CaseWorkspaceGatewayEvaluationRow>(
@@ -660,13 +662,24 @@ export async function recordGatewayEvaluation(
 
 /** CW-GR-037. Plain read, no lock. Returns null if this node has never had a
  * gateway evaluation recorded. */
-export async function getGatewayEvaluation(nodeRunId: string): Promise<CaseGatewayEvaluation | null> {
+export async function getGatewayEvaluation(
+  nodeRunId: string,
+  actorUserId: string
+): Promise<CaseGatewayEvaluation | null> {
   const id = requireNonBlank(nodeRunId, 'gateway_evaluation_node_run_id_required');
+  const actor = requireNonBlank(actorUserId, 'gateway_evaluation_actor_required');
   const row = await queryOne<CaseWorkspaceGatewayEvaluationRow>(
     `SELECT * FROM case_workspace_gateway_evaluations WHERE node_run_id = ?`,
     [id]
   );
-  return row ? mapGatewayEvaluationRow(row) : null;
+  if (!row) return null;
+  try {
+    await requireCaseAccess(actor, row.case_id);
+  } catch (err) {
+    if (err instanceof CaseWorkspaceAuthError) return null;
+    throw err;
+  }
+  return mapGatewayEvaluationRow(row);
 }
 
 /**
@@ -674,8 +687,18 @@ export async function getGatewayEvaluation(nodeRunId: string): Promise<CaseGatew
  * gateway evaluations recorded under one bound Run, for a future
  * orchestrator/observability caller.
  */
-export async function listGatewayEvaluationsForRun(runId: string): Promise<CaseGatewayEvaluation[]> {
+export async function listGatewayEvaluationsForRun(
+  runId: string,
+  actorUserId: string
+): Promise<CaseGatewayEvaluation[]> {
   const id = requireNonBlank(runId, 'gateway_evaluation_run_id_required');
+  const actor = requireNonBlank(actorUserId, 'gateway_evaluation_actor_required');
+  const bindingRow = await queryOne<{ case_id: string }>(
+    `SELECT case_id FROM case_workspace_run_bindings WHERE run_id = ?`,
+    [id]
+  );
+  if (!bindingRow) return [];
+  await requireCaseAccess(actor, bindingRow.case_id);
   const rows = await queryAll<CaseWorkspaceGatewayEvaluationRow>(
     `SELECT * FROM case_workspace_gateway_evaluations WHERE run_id = ? ORDER BY recorded_at ASC`,
     [id]
@@ -687,8 +710,12 @@ export async function listGatewayEvaluationsForRun(runId: string): Promise<CaseG
  * CW-GR-037. Plain read, no lock, ordered by recorded_at. Enumerates a
  * Case's gateway evaluations across all its Runs.
  */
-export async function listGatewayEvaluationsForCase(caseId: string): Promise<CaseGatewayEvaluation[]> {
+export async function listGatewayEvaluationsForCase(
+  caseId: string,
+  actorUserId: string
+): Promise<CaseGatewayEvaluation[]> {
   const id = requireNonBlank(caseId, 'gateway_evaluation_case_id_required');
+  await requireCaseAccess(requireNonBlank(actorUserId, 'gateway_evaluation_actor_required'), id);
   const rows = await queryAll<CaseWorkspaceGatewayEvaluationRow>(
     `SELECT * FROM case_workspace_gateway_evaluations WHERE case_id = ? ORDER BY recorded_at ASC`,
     [id]
@@ -766,6 +793,7 @@ export async function recordNodeResultAcceptance(
 
   return withPgTransaction(async (client) => {
     const scope = await resolveRunBindingScope(client, runId, 'run_binding_not_found');
+    await requireCaseAccess(recordedByActorId, scope.caseId);
 
     const now = new Date().toISOString();
     const inserted = await client.query<CaseWorkspaceNodeResultAcceptanceRow>(
@@ -823,14 +851,23 @@ export async function recordNodeResultAcceptance(
 /** CW-RT-037. Plain read, no lock. Returns null if this node has never had a
  * result acceptance recorded (e.g. still RUNNING/WAITING_*). */
 export async function getNodeResultAcceptance(
-  nodeRunId: string
+  nodeRunId: string,
+  actorUserId: string
 ): Promise<CaseNodeResultAcceptance | null> {
   const id = requireNonBlank(nodeRunId, 'node_result_acceptance_node_run_id_required');
+  const actor = requireNonBlank(actorUserId, 'node_result_acceptance_actor_required');
   const row = await queryOne<CaseWorkspaceNodeResultAcceptanceRow>(
     `SELECT * FROM case_workspace_node_result_acceptances WHERE node_run_id = ?`,
     [id]
   );
-  return row ? mapNodeResultAcceptanceRow(row) : null;
+  if (!row) return null;
+  try {
+    await requireCaseAccess(actor, row.case_id);
+  } catch (err) {
+    if (err instanceof CaseWorkspaceAuthError) return null;
+    throw err;
+  }
+  return mapNodeResultAcceptanceRow(row);
 }
 
 /**
@@ -843,9 +880,17 @@ export async function getNodeResultAcceptance(
  */
 export async function listNodeResultAcceptancesForRun(
   runId: string,
-  filters?: { resultAcceptance?: CaseNodeResultAcceptanceValue }
+  filters: { resultAcceptance?: CaseNodeResultAcceptanceValue } | undefined,
+  actorUserId: string
 ): Promise<CaseNodeResultAcceptance[]> {
   const id = requireNonBlank(runId, 'node_result_acceptance_run_id_required');
+  const actor = requireNonBlank(actorUserId, 'node_result_acceptance_actor_required');
+  const bindingRow = await queryOne<{ case_id: string }>(
+    `SELECT case_id FROM case_workspace_run_bindings WHERE run_id = ?`,
+    [id]
+  );
+  if (!bindingRow) return [];
+  await requireCaseAccess(actor, bindingRow.case_id);
   const conditions = ['run_id = ?'];
   const params: unknown[] = [id];
   if (filters?.resultAcceptance) {
@@ -872,9 +917,11 @@ export async function listNodeResultAcceptancesForRun(
  * Case's node acceptance facts across all its Runs.
  */
 export async function listNodeResultAcceptancesForCase(
-  caseId: string
+  caseId: string,
+  actorUserId: string
 ): Promise<CaseNodeResultAcceptance[]> {
   const id = requireNonBlank(caseId, 'node_result_acceptance_case_id_required');
+  await requireCaseAccess(requireNonBlank(actorUserId, 'node_result_acceptance_actor_required'), id);
   const rows = await queryAll<CaseWorkspaceNodeResultAcceptanceRow>(
     `SELECT * FROM case_workspace_node_result_acceptances WHERE case_id = ? ORDER BY recorded_at ASC`,
     [id]

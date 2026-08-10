@@ -40,6 +40,7 @@ import {
   queryOne,
   withPgTransaction,
 } from '../../utils/queryHelpers.js';
+import { requireCaseAccess, requireOrgMember } from './caseWorkspaceAuthContext.js';
 
 export type CaseProfile = 'LIGHT' | 'STANDARD' | 'TRANSFORMATION' | 'MONITORING';
 export type GovernanceTier = 'LIGHTWEIGHT' | 'STANDARD' | 'CONTROLLED';
@@ -284,6 +285,8 @@ export async function createCase(input: {
     'case_contracted_closure_type_invalid'
   );
 
+  await requireOrgMember(createdByActorId, organizationId);
+
   return withPgTransaction(async (client) => {
     const projectResult = await client.query<ProjectRefRow>(
       `SELECT id, organization_id, name, description, owner_id
@@ -346,24 +349,31 @@ export async function createCase(input: {
  * read-only for display fields; never mutates `projects`.
  */
 export async function getCase(
-  lookup: { caseId: string } | { projectId: string }
+  lookup: { caseId: string } | { projectId: string },
+  actorUserId: string
 ): Promise<CaseCoreView | null> {
-  const row =
-    'caseId' in lookup
-      ? await queryOne<CaseCoreRow & ProjectRefRow>(
-          `SELECT c.*, p.id AS p_id, p.name AS p_name, p.description AS p_description, p.owner_id AS p_owner_id
-             FROM case_core c
-             LEFT JOIN projects p ON p.id = c.project_id
-            WHERE c.case_id = ?`,
-          [requireNonBlank(lookup.caseId, 'case_id_required')]
-        )
-      : await queryOne<CaseCoreRow & ProjectRefRow>(
-          `SELECT c.*, p.id AS p_id, p.name AS p_name, p.description AS p_description, p.owner_id AS p_owner_id
-             FROM case_core c
-             LEFT JOIN projects p ON p.id = c.project_id
-            WHERE c.project_id = ?`,
-          [requireNonBlank(lookup.projectId, 'project_id_required')]
-        );
+  const actor = requireNonBlank(actorUserId, 'case_actor_required');
+  let row: (CaseCoreRow & ProjectRefRow) | null;
+  if ('caseId' in lookup) {
+    const id = requireNonBlank(lookup.caseId, 'case_id_required');
+    await requireCaseAccess(actor, id);
+    row = await queryOne<CaseCoreRow & ProjectRefRow>(
+      `SELECT c.*, p.id AS p_id, p.name AS p_name, p.description AS p_description, p.owner_id AS p_owner_id
+         FROM case_core c
+         LEFT JOIN projects p ON p.id = c.project_id
+        WHERE c.case_id = ?`,
+      [id]
+    );
+  } else {
+    row = await queryOne<CaseCoreRow & ProjectRefRow>(
+      `SELECT c.*, p.id AS p_id, p.name AS p_name, p.description AS p_description, p.owner_id AS p_owner_id
+         FROM case_core c
+         LEFT JOIN projects p ON p.id = c.project_id
+        WHERE c.project_id = ?`,
+      [requireNonBlank(lookup.projectId, 'project_id_required')]
+    );
+    if (row) await requireOrgMember(actor, row.organization_id);
+  }
   if (!row) return null;
   const core = mapRow(row);
   return {
@@ -401,6 +411,8 @@ export async function transitionStatus(
   const id = requireNonBlank(caseId, 'case_id_required');
   const actorUserId = requireNonBlank(actor?.actorUserId, 'case_actor_required');
   requireEnum(targetStatus, ['DRAFT', 'ACTIVE', 'BLOCKED', 'CLOSED', 'FAILED', 'CANCELLED'], 'case_status_invalid');
+
+  await requireCaseAccess(actorUserId, id);
 
   return withPgTransaction(async (client) => {
     const row = await loadForUpdate(client, id);
@@ -450,6 +462,8 @@ export async function updateGovernanceTier(
   const changeReason = requireNonBlank(reason, 'case_governance_tier_reason_required');
   requireEnum(newTier, GOVERNANCE_TIERS, 'case_governance_tier_invalid');
 
+  await requireCaseAccess(actorUserId, id);
+
   return withPgTransaction(async (client) => {
     const row = await loadForUpdate(client, id);
     let history: GovernanceTierHistoryEntry[] = [];
@@ -497,9 +511,11 @@ export async function updateAutonomyPolicy(
   _orgMaxAutonomyPolicy?: AutonomyPolicy | null
 ): Promise<CaseCore> {
   const id = requireNonBlank(caseId, 'case_id_required');
-  requireNonBlank(actor?.actorUserId, 'case_actor_required');
+  const actorUserId = requireNonBlank(actor?.actorUserId, 'case_actor_required');
   requireEnum(newPolicy, AUTONOMY_POLICIES, 'case_autonomy_policy_invalid');
   void _orgMaxAutonomyPolicy;
+
+  await requireCaseAccess(actorUserId, id);
 
   return withPgTransaction(async (client) => {
     const row = await loadForUpdate(client, id);
@@ -540,12 +556,14 @@ export async function updateClosureAxisStatus(
   actor: CaseActor
 ): Promise<CaseCore> {
   const id = requireNonBlank(caseId, 'case_id_required');
-  requireNonBlank(actor?.actorUserId, 'case_actor_required');
+  const actorUserId = requireNonBlank(actor?.actorUserId, 'case_actor_required');
   const column = AXIS_COLUMN[axis];
   if (!column) throw new Error('case_closure_axis_invalid');
   const allowedValues: readonly string[] =
     axis === 'outcome' ? ['NOT_APPLICABLE', 'PENDING', 'VALIDATED'] : ['NOT_APPLICABLE', 'PENDING', 'COMPLETED'];
   if (!allowedValues.includes(status)) throw new Error('case_closure_axis_status_invalid');
+
+  await requireCaseAccess(actorUserId, id);
 
   return withPgTransaction(async (client) => {
     const row = await loadForUpdate(client, id);
@@ -585,6 +603,8 @@ export async function recordClosure(
   const id = requireNonBlank(caseId, 'case_id_required');
   const actorUserId = requireNonBlank(actor?.actorUserId, 'case_actor_required');
   requireEnum(closureType, CLOSURE_TYPES, 'case_closure_type_invalid');
+
+  await requireCaseAccess(actorUserId, id);
 
   return withPgTransaction(async (client) => {
     const row = await loadForUpdate(client, id);
@@ -642,9 +662,11 @@ export async function cancelCase(
  */
 export async function listCasesForOrganization(
   organizationId: string,
-  filters?: { caseStatus?: CaseStatus; caseProfile?: CaseProfile; governanceTier?: GovernanceTier }
+  filters: { caseStatus?: CaseStatus; caseProfile?: CaseProfile; governanceTier?: GovernanceTier } | undefined,
+  actorUserId: string
 ): Promise<CaseCore[]> {
   const orgId = requireNonBlank(organizationId, 'case_organization_id_required');
+  await requireOrgMember(requireNonBlank(actorUserId, 'case_actor_required'), orgId);
   const conditions: string[] = ['organization_id = ?'];
   const params: unknown[] = [orgId];
 

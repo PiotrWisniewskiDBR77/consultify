@@ -173,6 +173,7 @@ import {
   queryOne,
   withPgTransaction,
 } from '../../utils/queryHelpers.js';
+import { CaseWorkspaceAuthError, requireCaseAccess } from './caseWorkspaceAuthContext.js';
 
 // ---------------------------------------------------------------------------
 // Public types
@@ -428,10 +429,12 @@ export function computeWaitOverdueState(
  * returns the existing row unchanged (safe replay). Inserts with
  * status='ACTIVE', version=1, claim_fencing_token=0.
  */
-export async function createWait(input: CreateWaitInput): Promise<CaseWait> {
+export async function createWait(input: CreateWaitInput, actorUserId: string): Promise<CaseWait> {
   const caseId = requireNonBlank(input.caseId, 'wait_case_id_required');
   const correlationKey = requireNonBlank(input.correlationKey, 'wait_correlation_key_required');
   const waitType = requireEnum(input.waitType, WAIT_TYPES, 'wait_type_invalid');
+
+  await requireCaseAccess(requireNonBlank(actorUserId, 'wait_actor_required'), caseId);
 
   return withPgTransaction(async (client) => {
     const caseResult = await client.query<CaseCoreRefRow>(
@@ -537,6 +540,13 @@ export async function createWait(input: CreateWaitInput): Promise<CaseWait> {
  * non-expired lease held by someone else) -> 'active_elsewhere'.
  * Deliberately omits operationClaimService.
  * acquireOrReclaimOperationClaim's bounded-wait polling (open_question #4).
+ *
+ * INTERNAL-ONLY / NOT ROUTE-EXPOSED. This is a scheduler-sweep primitive
+ * with no human actor in its signature — deliberately NO
+ * requireCaseAccess/requireOrgMember call is performed here (CW-P12
+ * auth-retrofit decision). Must only ever be invoked from a trusted internal
+ * worker, gated at a service/system-credential layer if ever reachable from
+ * a route.
  */
 export async function claimTimerWait(
   waitId: string,
@@ -595,6 +605,10 @@ export async function claimTimerWait(
  * wrapper analogous to operationClaimService.startClaimHeartbeat() can be
  * layered on top by a future caller; not required as a separate exported
  * primitive by this packet.
+ *
+ * INTERNAL-ONLY / NOT ROUTE-EXPOSED. Same treatment as claimTimerWait — no
+ * human actor in its signature, deliberately NO
+ * requireCaseAccess/requireOrgMember call (CW-P12 auth-retrofit decision).
  */
 export async function renewTimerWaitClaimLease(
   waitId: string,
@@ -646,6 +660,16 @@ export async function renewTimerWaitClaimLease(
  * wait_version_conflict). DOMAIN_EVENT/EXTERNAL_CALLBACK can call this path
  * today but nothing here authenticates or deduplicates the caller
  * (open_question #8).
+ *
+ * NO signature change and no direct requireCaseAccess call in this function
+ * itself (CW-P12 auth-retrofit decision). Used by both the HUMAN path (via
+ * provideHumanInput, which performs its own check via getWait before
+ * delegating here) and by TIMER/DOMAIN_EVENT/EXTERNAL_CALLBACK paths that
+ * have no real end-user actor — a mandatory actor param here would be
+ * meaningless for those paths. DOMAIN_EVENT/EXTERNAL_CALLBACK specifically
+ * remain INTERNAL-ONLY / NOT ROUTE-EXPOSED pending a future
+ * authentication/dedupe layer (open_question #8, unresolved by this
+ * retrofit).
  */
 export async function resolveWait(
   waitId: string,
@@ -709,9 +733,9 @@ export async function provideHumanInput(
 ): Promise<CaseWait> {
   const id = requireNonBlank(waitId, 'wait_id_required');
   const inputRef = requireNonBlank(input.inputRef, 'wait_human_input_ref_required');
-  requireNonBlank(input.actorUserId, 'wait_human_input_actor_required');
+  const actorUserId = requireNonBlank(input.actorUserId, 'wait_human_input_actor_required');
 
-  const wait = await getWait(id);
+  const wait = await getWait(id, actorUserId);
   if (!wait) throw new Error('wait_not_found');
   if (wait.waitType !== 'HUMAN') throw new Error('wait_wrong_type_for_human_input');
 
@@ -728,6 +752,12 @@ export async function provideHumanInput(
  * mutation primitive — the timeout-detection sweep that decides WHEN to
  * call this is a future scheduler job, out of this packet's scope (mirrors
  * runBindingService.ts's open_question #1 pattern).
+ *
+ * INTERNAL-ONLY / NOT ROUTE-EXPOSED. Calls the shared
+ * applySimpleWaitTransition WITHOUT an actorUserId argument — a
+ * system/scheduler timeout-sweep primitive, deliberately left unguarded at
+ * this layer (CW-P12 auth-retrofit decision), same posture as
+ * claimTimerWait/renewTimerWaitClaimLease.
  */
 export async function expireWait(
   waitId: string,
@@ -752,9 +782,9 @@ export async function cancelWait(
   reason: string,
   expectedVersion: number
 ): Promise<CaseWait> {
-  requireNonBlank(actor?.actorUserId, 'wait_actor_required');
+  const actorUserId = requireNonBlank(actor?.actorUserId, 'wait_actor_required');
   requireNonBlank(reason, 'wait_cancel_reason_required');
-  return applySimpleWaitTransition(waitId, expectedVersion, 'CANCELLED');
+  return applySimpleWaitTransition(waitId, expectedVersion, 'CANCELLED', actorUserId);
 }
 
 /**
@@ -766,13 +796,17 @@ export async function cancelWait(
 async function applySimpleWaitTransition(
   waitId: string,
   expectedVersion: number,
-  nextStatus: CaseWaitStatus
+  nextStatus: CaseWaitStatus,
+  actorUserId?: string
 ): Promise<CaseWait> {
   const id = requireNonBlank(waitId, 'wait_id_required');
   if (typeof expectedVersion !== 'number') throw new Error('wait_expected_version_required');
 
   return withPgTransaction(async (client) => {
     const row = await loadForUpdate(client, id);
+    if (actorUserId) {
+      await requireCaseAccess(actorUserId, row.case_id);
+    }
     if (!(ALLOWED_TRANSITIONS[row.status] ?? []).includes(nextStatus)) {
       throw new Error(`wait_status_transition_not_allowed:${row.status}->${nextStatus}`);
     }
@@ -791,24 +825,41 @@ async function applySimpleWaitTransition(
 }
 
 /** CW-RT-020, CW-DOD-B5. Plain read, no lock. */
-export async function getWait(waitId: string): Promise<CaseWait | null> {
+export async function getWait(
+  waitId: string,
+  actorUserId: string
+): Promise<CaseWait | null> {
+  const actor = requireNonBlank(actorUserId, 'wait_actor_required');
   const row = await queryOne<CaseWorkspaceWaitRow>(
     `SELECT * FROM case_workspace_waits WHERE wait_id = ?`,
     [requireNonBlank(waitId, 'wait_id_required')]
   );
-  return row ? mapRow(row) : null;
+  if (!row) return null;
+  try {
+    await requireCaseAccess(actor, row.case_id);
+  } catch (err) {
+    if (err instanceof CaseWorkspaceAuthError) return null;
+    throw err;
+  }
+  return mapRow(row);
 }
 
 /**
  * CW-GR-026 (GET /api/runs/:runId/waits), CW-02-029. Plain read, no lock,
  * newest created_at first.
  */
-export async function listWaitsForRun(runId: string): Promise<CaseWait[]> {
+export async function listWaitsForRun(
+  runId: string,
+  actorUserId: string
+): Promise<CaseWait[]> {
   const id = requireNonBlank(runId, 'wait_run_id_required');
+  const actor = requireNonBlank(actorUserId, 'wait_actor_required');
   const rows = await queryAll<CaseWorkspaceWaitRow>(
     `SELECT * FROM case_workspace_waits WHERE run_id = ? ORDER BY created_at DESC`,
     [id]
   );
+  if (rows.length === 0) return [];
+  await requireCaseAccess(actor, rows[0].case_id);
   return rows.map(mapRow);
 }
 
@@ -818,9 +869,11 @@ export async function listWaitsForRun(runId: string): Promise<CaseWait[]> {
  */
 export async function listWaitsForCase(
   caseId: string,
-  filters?: { status?: CaseWaitStatus; waitType?: CaseWaitType }
+  filters: { status?: CaseWaitStatus; waitType?: CaseWaitType } | undefined,
+  actorUserId: string
 ): Promise<CaseWait[]> {
   const id = requireNonBlank(caseId, 'wait_case_id_required');
+  await requireCaseAccess(requireNonBlank(actorUserId, 'wait_actor_required'), id);
   const conditions = ['case_id = ?'];
   const params: unknown[] = [id];
   if (filters?.status) {
@@ -847,6 +900,12 @@ export async function listWaitsForCase(
  * readClaimRow()'s "report, don't decide" posture) — generates candidates
  * for the caller's own subsequent, individually-atomic claimTimerWait()
  * calls. Uses the (wait_type, status, due_at) index CW-RT-021 requires.
+ *
+ * INTERNAL-ONLY / NOT ROUTE-EXPOSED. Inherently a cross-case, cross-org
+ * scheduler-sweep read by design (candidates across the whole platform) —
+ * NO auth call is added here (CW-P12 auth-retrofit decision). Must never be
+ * exposed via any user-facing route; gate at the route layer with a
+ * system/service credential instead of an actor/org check.
  */
 export async function listDueTimerWaitsForClaim(
   now: Date = new Date(),

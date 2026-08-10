@@ -182,6 +182,12 @@ import {
 
 import { createPlanDraft } from './casePlanVersionService.js';
 import type { CanonicalGraph, CasePlanVersion } from './casePlanVersionService.js';
+import {
+  CaseWorkspaceAuthError,
+  requireCaseAccess,
+  requireOrgMember,
+  requireOrgRole,
+} from './caseWorkspaceAuthContext.js';
 
 // ---------------------------------------------------------------------------
 // Public types
@@ -565,11 +571,13 @@ async function loadVersionForUpdate(
 export async function isAuthorizedPublisher(actorUserId: string, organizationId: string): Promise<boolean> {
   const userId = requireNonBlank(actorUserId, 'process_actor_required');
   const orgId = requireNonBlank(organizationId, 'process_organization_id_required');
-  const row = await queryOne<{ role: string }>(
-    `SELECT role FROM organization_members WHERE organization_id = ? AND user_id = ? LIMIT 1`,
-    [orgId, userId]
-  );
-  return Boolean(row && AUTHORIZED_PUBLISHER_ROLES.includes(row.role));
+  try {
+    await requireOrgRole(userId, orgId, 'ADMIN');
+    return true;
+  } catch (err) {
+    if (err instanceof CaseWorkspaceAuthError) return false;
+    throw err;
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -595,6 +603,8 @@ export async function createProcessDefinition(input: {
   const ownerActorId = requireNonBlank(input.ownerActorId, 'process_definition_owner_actor_required');
   const createdByActorId = requireNonBlank(input.createdByActorId, 'process_definition_created_by_actor_required');
 
+  await requireOrgMember(createdByActorId, organizationId);
+
   const processDefinitionId = `procdef-${uuidv4()}`;
   const now = new Date().toISOString();
 
@@ -611,12 +621,18 @@ export async function createProcessDefinition(input: {
 }
 
 /** CW-RT-014, CW-GR-029. Plain read, no lock. */
-export async function getProcessDefinition(processDefinitionId: string): Promise<ProcessDefinition | null> {
+export async function getProcessDefinition(
+  processDefinitionId: string,
+  actorUserId: string
+): Promise<ProcessDefinition | null> {
+  const actor = requireNonBlank(actorUserId, 'process_actor_required');
   const row = await queryOne<ProcessDefinitionRow>(
     `SELECT * FROM process_definitions WHERE process_definition_id = ?`,
     [requireNonBlank(processDefinitionId, 'process_definition_id_required')]
   );
-  return row ? mapDefinitionRow(row) : null;
+  if (!row) return null;
+  await requireOrgMember(actor, row.organization_id);
+  return mapDefinitionRow(row);
 }
 
 /**
@@ -627,10 +643,12 @@ export async function getProcessDefinition(processDefinitionId: string): Promise
  */
 export async function listProcessDefinitions(
   organizationId: string,
-  filters?: { visibility?: ProcessDefinitionVisibility; ownerActorId?: string },
-  pagination?: { cursor?: string; limit?: number }
+  filters: { visibility?: ProcessDefinitionVisibility; ownerActorId?: string } | undefined,
+  pagination: { cursor?: string; limit?: number } | undefined,
+  actorUserId: string
 ): Promise<ProcessDefinitionListPage> {
   const orgId = requireNonBlank(organizationId, 'process_definition_organization_id_required');
+  await requireOrgMember(requireNonBlank(actorUserId, 'process_actor_required'), orgId);
 
   const conditions: string[] = ['organization_id = ?'];
   const params: unknown[] = [orgId];
@@ -743,7 +761,8 @@ export async function createProcessVersionDraft(input: {
   const semanticGraph = requireGraph(input.semanticGraph, 'process_version_semantic_graph_invalid');
 
   return withPgTransaction(async (client) => {
-    await loadDefinitionForUpdate(client, processDefinitionId);
+    const definitionRow = await loadDefinitionForUpdate(client, processDefinitionId);
+    await requireOrgMember(createdByActorId, definitionRow.organization_id);
 
     const versionNumberResult = await client.query<{ next_version_number: number }>(
       `SELECT COALESCE(MAX(version_number), 0) + 1 AS next_version_number
@@ -800,13 +819,20 @@ export async function updateProcessVersionDraft(
   actor: CaseActor
 ): Promise<ProcessVersion> {
   const id = requireNonBlank(processVersionId, 'process_version_id_required');
-  requireNonBlank(actor?.actorUserId, 'process_actor_required');
+  const actorUserId = requireNonBlank(actor?.actorUserId, 'process_actor_required');
   const semanticGraph = requireGraph(input.semanticGraph, 'process_version_semantic_graph_invalid');
   const expectedVersion = input.expectedVersion;
   if (typeof expectedVersion !== 'number') throw new Error('process_version_expected_version_required');
 
   return withPgTransaction(async (client) => {
     const row = await loadVersionForUpdate(client, id);
+    const definitionRow = await client.query<{ organization_id: string }>(
+      `SELECT organization_id FROM process_definitions WHERE process_definition_id = ?`,
+      [row.process_definition_id]
+    );
+    const organizationId = definitionRow.rows[0]?.organization_id;
+    if (!organizationId) throw new Error('process_definition_not_found');
+    await requireOrgMember(actorUserId, organizationId);
     if (row.status !== 'DRAFT') throw new Error('process_version_not_editable');
 
     const graphDigest = computeGraphDigest(semanticGraph);
@@ -835,12 +861,23 @@ export async function updateProcessVersionDraft(
 }
 
 /** CW-RT-014, CW-GR-029. Plain read, no lock. */
-export async function getProcessVersion(processVersionId: string): Promise<ProcessVersion | null> {
+export async function getProcessVersion(
+  processVersionId: string,
+  actorUserId: string
+): Promise<ProcessVersion | null> {
+  const actor = requireNonBlank(actorUserId, 'process_actor_required');
   const row = await queryOne<ProcessVersionRow>(
     `SELECT * FROM process_versions WHERE process_version_id = ?`,
     [requireNonBlank(processVersionId, 'process_version_id_required')]
   );
-  return row ? mapVersionRow(row) : null;
+  if (!row) return null;
+  const definitionRow = await queryOne<{ organization_id: string }>(
+    `SELECT organization_id FROM process_definitions WHERE process_definition_id = ?`,
+    [row.process_definition_id]
+  );
+  if (!definitionRow) throw new Error('process_definition_not_found');
+  await requireOrgMember(actor, definitionRow.organization_id);
+  return mapVersionRow(row);
 }
 
 /**
@@ -848,8 +885,13 @@ export async function getProcessVersion(processVersionId: string): Promise<Proce
  * GET /api/process-definitions/:definitionId/versions/:version address
  * space.
  */
-export async function listProcessVersionsForDefinition(processDefinitionId: string): Promise<ProcessVersion[]> {
+export async function listProcessVersionsForDefinition(
+  processDefinitionId: string,
+  actorUserId: string
+): Promise<ProcessVersion[]> {
   const id = requireNonBlank(processDefinitionId, 'process_version_definition_id_required');
+  const definition = await getProcessDefinition(id, actorUserId);
+  if (!definition) throw new Error('process_definition_not_found');
   const rows = await queryAll<ProcessVersionRow>(
     `SELECT * FROM process_versions WHERE process_definition_id = ? ORDER BY version_number DESC`,
     [id]
@@ -872,6 +914,13 @@ export async function proposeProcessVersion(
 
   return withPgTransaction(async (client) => {
     const row = await loadVersionForUpdate(client, id);
+    const definitionRow = await client.query<{ organization_id: string }>(
+      `SELECT organization_id FROM process_definitions WHERE process_definition_id = ?`,
+      [row.process_definition_id]
+    );
+    const organizationId = definitionRow.rows[0]?.organization_id;
+    if (!organizationId) throw new Error('process_definition_not_found');
+    await requireOrgMember(actorUserId, organizationId);
     if (!(ALLOWED_TRANSITIONS[row.status] ?? []).includes('IN_REVIEW')) {
       throw new Error(`process_version_status_transition_not_allowed:${row.status}->IN_REVIEW`);
     }
@@ -919,6 +968,13 @@ export async function reviewProcessVersion(
 
   return withPgTransaction(async (client) => {
     const row = await loadVersionForUpdate(client, id);
+    const definitionRow = await client.query<{ organization_id: string }>(
+      `SELECT organization_id FROM process_definitions WHERE process_definition_id = ?`,
+      [row.process_definition_id]
+    );
+    const organizationId = definitionRow.rows[0]?.organization_id;
+    if (!organizationId) throw new Error('process_definition_not_found');
+    await requireOrgMember(actorUserId, organizationId);
     if (row.status !== 'IN_REVIEW') throw new Error('process_version_not_in_review');
 
     const now = new Date().toISOString();
@@ -981,6 +1037,13 @@ export async function publishProcessVersion(
 
   return withPgTransaction(async (client) => {
     const row = await loadVersionForUpdate(client, id);
+    const definitionRow = await client.query<{ organization_id: string }>(
+      `SELECT organization_id FROM process_definitions WHERE process_definition_id = ?`,
+      [row.process_definition_id]
+    );
+    const organizationId = definitionRow.rows[0]?.organization_id;
+    if (!organizationId) throw new Error('process_definition_not_found');
+    await requireOrgMember(actorUserId, organizationId);
     if (!(ALLOWED_TRANSITIONS[row.status] ?? []).includes('PUBLISHED')) {
       throw new Error(`process_version_status_transition_not_allowed:${row.status}->PUBLISHED`);
     }
@@ -1025,6 +1088,13 @@ export async function deprecateProcessVersion(
 
   return withPgTransaction(async (client) => {
     const row = await loadVersionForUpdate(client, id);
+    const definitionRow = await client.query<{ organization_id: string }>(
+      `SELECT organization_id FROM process_definitions WHERE process_definition_id = ?`,
+      [row.process_definition_id]
+    );
+    const organizationId = definitionRow.rows[0]?.organization_id;
+    if (!organizationId) throw new Error('process_definition_not_found');
+    await requireOrgMember(actorUserId, organizationId);
     if (!(ALLOWED_TRANSITIONS[row.status] ?? []).includes('DEPRECATED')) {
       throw new Error(`process_version_status_transition_not_allowed:${row.status}->DEPRECATED`);
     }
@@ -1062,6 +1132,13 @@ export async function archiveProcessVersion(
 
   return withPgTransaction(async (client) => {
     const row = await loadVersionForUpdate(client, id);
+    const definitionRow = await client.query<{ organization_id: string }>(
+      `SELECT organization_id FROM process_definitions WHERE process_definition_id = ?`,
+      [row.process_definition_id]
+    );
+    const organizationId = definitionRow.rows[0]?.organization_id;
+    if (!organizationId) throw new Error('process_definition_not_found');
+    await requireOrgMember(actorUserId, organizationId);
     if (!(ALLOWED_TRANSITIONS[row.status] ?? []).includes('ARCHIVED')) {
       throw new Error(`process_version_status_transition_not_allowed:${row.status}->ARCHIVED`);
     }
@@ -1106,7 +1183,7 @@ export async function instantiateProcessVersion(
   const targetCaseId = requireNonBlank(caseId, 'process_version_instantiate_case_id_required');
   const actorUserId = requireNonBlank(actor?.actorUserId, 'process_actor_required');
 
-  const version = await getProcessVersion(id);
+  const version = await getProcessVersion(id, actorUserId);
   if (!version) throw new Error('process_version_not_found');
   if (version.status !== 'PUBLISHED') throw new Error('process_version_not_publishable');
 
@@ -1123,6 +1200,8 @@ export async function instantiateProcessVersion(
   if (caseRow.organization_id !== definition.organization_id) {
     throw new Error('process_version_case_organization_mismatch');
   }
+
+  await requireCaseAccess(actorUserId, targetCaseId);
 
   return createPlanDraft({
     caseId: targetCaseId,

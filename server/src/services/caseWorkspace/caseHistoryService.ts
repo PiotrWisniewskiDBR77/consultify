@@ -142,6 +142,7 @@ import {
   queryOne,
   withPgTransaction,
 } from '../../utils/queryHelpers.js';
+import { CaseWorkspaceAuthError, requireCaseAccess } from './caseWorkspaceAuthContext.js';
 
 // ---------------------------------------------------------------------------
 // Public types — Case History Events
@@ -614,17 +615,32 @@ export function computeMetricValueOutcomeState(
 export async function appendCaseHistoryEvent(
   input: AppendCaseHistoryEventInput
 ): Promise<CaseHistoryEvent> {
+  await requireCaseAccess(
+    requireNonBlank(input.actorId, 'history_event_actor_id_required'),
+    requireNonBlank(input.caseId, 'history_event_case_id_required')
+  );
   return withPgTransaction((client) => insertHistoryEvent(client, input));
 }
 
 /** CW-00-020-INV13. Plain read, no lock. */
-export async function getCaseHistoryEvent(eventId: string): Promise<CaseHistoryEvent | null> {
+export async function getCaseHistoryEvent(
+  eventId: string,
+  actorUserId: string
+): Promise<CaseHistoryEvent | null> {
   const id = requireNonBlank(eventId, 'history_event_id_required');
+  const actor = requireNonBlank(actorUserId, 'history_event_actor_id_required');
   const row = await queryOne<CaseWorkspaceHistoryEventRow>(
     `SELECT * FROM case_workspace_history_events WHERE event_id = ?`,
     [id]
   );
-  return row ? mapHistoryEventRow(row) : null;
+  if (!row) return null;
+  try {
+    await requireCaseAccess(actor, row.case_id);
+  } catch (err) {
+    if (err instanceof CaseWorkspaceAuthError) return null;
+    throw err;
+  }
+  return mapHistoryEventRow(row);
 }
 
 /**
@@ -635,15 +651,19 @@ export async function getCaseHistoryEvent(eventId: string): Promise<CaseHistoryE
  */
 export async function listCaseHistoryEventsForCase(
   caseId: string,
-  filters?: {
-    eventType?: string;
-    sourceTable?: string;
-    occurredSince?: string;
-    occurredUntil?: string;
-  },
-  pagination?: { afterSeq?: number; limit?: number }
+  filters:
+    | {
+        eventType?: string;
+        sourceTable?: string;
+        occurredSince?: string;
+        occurredUntil?: string;
+      }
+    | undefined,
+  pagination: { afterSeq?: number; limit?: number } | undefined,
+  actorUserId: string
 ): Promise<CaseHistoryEvent[]> {
   const id = requireNonBlank(caseId, 'history_event_case_id_required');
+  await requireCaseAccess(requireNonBlank(actorUserId, 'history_event_actor_id_required'), id);
   const conditions = ['case_id = ?'];
   const params: unknown[] = [id];
 
@@ -747,6 +767,8 @@ export async function recordValueMeasurement(
     throw new Error('value_measurement_evidence_ref_must_be_absent');
   }
 
+  await requireCaseAccess(measuredByActorId, caseId);
+
   return withPgTransaction(async (client) => {
     const caseResult = await client.query<CaseCoreRefRow>(
       `SELECT case_id, organization_id, project_id FROM case_core WHERE case_id = ?`,
@@ -844,13 +866,24 @@ export async function recordValueMeasurement(
 }
 
 /** CW-02-032. Plain read, no lock. */
-export async function getValueMeasurement(measurementId: string): Promise<ValueMeasurement | null> {
+export async function getValueMeasurement(
+  measurementId: string,
+  actorUserId: string
+): Promise<ValueMeasurement | null> {
   const id = requireNonBlank(measurementId, 'value_measurement_id_required');
+  const actor = requireNonBlank(actorUserId, 'value_measurement_actor_required');
   const row = await queryOne<CaseWorkspaceValueMeasurementRow>(
     `SELECT * FROM case_workspace_value_measurements WHERE measurement_id = ?`,
     [id]
   );
-  return row ? mapValueMeasurementRow(row) : null;
+  if (!row) return null;
+  try {
+    await requireCaseAccess(actor, row.case_id);
+  } catch (err) {
+    if (err instanceof CaseWorkspaceAuthError) return null;
+    throw err;
+  }
+  return mapValueMeasurementRow(row);
 }
 
 /**
@@ -860,9 +893,11 @@ export async function getValueMeasurement(measurementId: string): Promise<ValueM
  */
 export async function listValueMeasurementsForCase(
   caseId: string,
-  filters?: { metricKey?: string; status?: ValueMeasurementStatus }
+  filters: { metricKey?: string; status?: ValueMeasurementStatus } | undefined,
+  actorUserId: string
 ): Promise<ValueMeasurement[]> {
   const id = requireNonBlank(caseId, 'value_measurement_case_id_required');
+  await requireCaseAccess(requireNonBlank(actorUserId, 'value_measurement_actor_required'), id);
   const conditions = ['case_id = ?'];
   const params: unknown[] = [id];
   if (filters?.metricKey) {
@@ -890,10 +925,12 @@ export async function listValueMeasurementsForCase(
  */
 export async function listValueMeasurementsForMetric(
   caseId: string,
-  metricKey: string
+  metricKey: string,
+  actorUserId: string
 ): Promise<ValueMeasurement[]> {
   const id = requireNonBlank(caseId, 'value_measurement_case_id_required');
   const key = requireNonBlank(metricKey, 'value_measurement_metric_key_required');
+  await requireCaseAccess(requireNonBlank(actorUserId, 'value_measurement_actor_required'), id);
   const rows = await queryAll<CaseWorkspaceValueMeasurementRow>(
     `SELECT * FROM case_workspace_value_measurements
        WHERE case_id = ? AND metric_key = ?

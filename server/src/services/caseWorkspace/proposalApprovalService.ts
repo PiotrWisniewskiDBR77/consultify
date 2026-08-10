@@ -186,6 +186,7 @@ import {
   withPgTransaction,
 } from '../../utils/queryHelpers.js';
 import type { CapabilityEffectClass } from './capabilityRegistryService.js';
+import { CaseWorkspaceAuthError, requireCaseAccess } from './caseWorkspaceAuthContext.js';
 
 export type { CapabilityEffectClass };
 
@@ -635,6 +636,8 @@ export async function createActionProposal(
     'proposal_proposer_type_invalid'
   );
 
+  await requireCaseAccess(createdByActorId, caseId);
+
   return withPgTransaction(async (client) => {
     const caseResult = await client.query<CaseCoreRefRow>(
       `SELECT case_id, organization_id, project_id FROM case_core WHERE case_id = ? FOR UPDATE`,
@@ -762,11 +765,12 @@ export async function submitActionProposalForReview(
   expectedVersion: number
 ): Promise<CaseActionProposal> {
   const id = requireNonBlank(actionProposalId, 'proposal_id_required');
-  requireNonBlank(actor?.actorUserId, 'proposal_actor_required');
+  const actorUserId = requireNonBlank(actor?.actorUserId, 'proposal_actor_required');
   if (typeof expectedVersion !== 'number') throw new Error('proposal_expected_version_required');
 
   return withPgTransaction(async (client) => {
     const row = await loadForUpdate(client, id);
+    await requireCaseAccess(actorUserId, row.case_id);
     if (!(ALLOWED_TRANSITIONS[row.status] ?? []).includes('PENDING_REVIEW')) {
       throw new Error(`proposal_status_transition_not_allowed:${row.status}->PENDING_REVIEW`);
     }
@@ -846,6 +850,7 @@ export async function recordApprovalDecision(
 
   return withPgTransaction(async (client) => {
     const row = await loadForUpdate(client, id);
+    await requireCaseAccess(decidedByActorId, row.case_id);
     if (row.status !== 'PENDING_REVIEW') {
       throw new Error(`proposal_status_transition_not_allowed:${row.status}->decision`);
     }
@@ -979,11 +984,12 @@ export async function transitionProposalToExecuting(
   expectedVersion: number
 ): Promise<CaseActionProposal> {
   const id = requireNonBlank(actionProposalId, 'proposal_id_required');
-  requireNonBlank(actor?.actorUserId, 'proposal_actor_required');
+  const actorUserId = requireNonBlank(actor?.actorUserId, 'proposal_actor_required');
   if (typeof expectedVersion !== 'number') throw new Error('proposal_expected_version_required');
 
   return withPgTransaction(async (client) => {
     const row = await loadForUpdate(client, id);
+    await requireCaseAccess(actorUserId, row.case_id);
     if (!(ALLOWED_TRANSITIONS[row.status] ?? []).includes('EXECUTING')) {
       throw new Error(`proposal_status_transition_not_allowed:${row.status}->EXECUTING`);
     }
@@ -1062,11 +1068,12 @@ export async function retryProposalFromFailed(
   expectedVersion: number
 ): Promise<CaseActionProposal> {
   const id = requireNonBlank(actionProposalId, 'proposal_id_required');
-  requireNonBlank(actor?.actorUserId, 'proposal_actor_required');
+  const actorUserId = requireNonBlank(actor?.actorUserId, 'proposal_actor_required');
   if (typeof expectedVersion !== 'number') throw new Error('proposal_expected_version_required');
 
   return withPgTransaction(async (client) => {
     const row = await loadForUpdate(client, id);
+    await requireCaseAccess(actorUserId, row.case_id);
     if (!(ALLOWED_TRANSITIONS[row.status] ?? []).includes('APPROVED')) {
       throw new Error(`proposal_status_transition_not_allowed:${row.status}->APPROVED`);
     }
@@ -1149,11 +1156,12 @@ async function applySimpleTransition(
   nextStatus: ActionProposalStatus
 ): Promise<CaseActionProposal> {
   const id = requireNonBlank(actionProposalId, 'proposal_id_required');
-  requireNonBlank(actor?.actorUserId, 'proposal_actor_required');
+  const actorUserId = requireNonBlank(actor?.actorUserId, 'proposal_actor_required');
   if (typeof expectedVersion !== 'number') throw new Error('proposal_expected_version_required');
 
   return withPgTransaction(async (client) => {
     const row = await loadForUpdate(client, id);
+    await requireCaseAccess(actorUserId, row.case_id);
     if (!(ALLOWED_TRANSITIONS[row.status] ?? []).includes(nextStatus)) {
       throw new Error(`proposal_status_transition_not_allowed:${row.status}->${nextStatus}`);
     }
@@ -1173,21 +1181,32 @@ async function applySimpleTransition(
 
 /** CW-GR-027. Plain read, no lock. */
 export async function getActionProposal(
-  actionProposalId: string
+  actionProposalId: string,
+  actorUserId: string
 ): Promise<CaseActionProposal | null> {
+  const actor = requireNonBlank(actorUserId, 'proposal_actor_required');
   const row = await queryOne<CaseWorkspaceActionProposalRow>(
     `SELECT * FROM case_workspace_action_proposals WHERE action_proposal_id = ?`,
     [requireNonBlank(actionProposalId, 'proposal_id_required')]
   );
-  return row ? mapRow(row) : null;
+  if (!row) return null;
+  try {
+    await requireCaseAccess(actor, row.case_id);
+  } catch (err) {
+    if (err instanceof CaseWorkspaceAuthError) return null;
+    throw err;
+  }
+  return mapRow(row);
 }
 
 /** CW-RT-043. Plain read, no lock. Newest proposal_version first. */
 export async function listActionProposalsForCase(
   caseId: string,
-  filters?: { status?: ActionProposalStatus }
+  filters: { status?: ActionProposalStatus } | undefined,
+  actorUserId: string
 ): Promise<CaseActionProposal[]> {
   const id = requireNonBlank(caseId, 'proposal_case_id_required');
+  await requireCaseAccess(requireNonBlank(actorUserId, 'proposal_actor_required'), id);
   const conditions = ['case_id = ?'];
   const params: unknown[] = [id];
   if (filters?.status) {
@@ -1207,12 +1226,18 @@ export async function listActionProposalsForCase(
  * CW-GR-026 (GET /api/runs/:runId/proposals). Plain read, no lock, newest
  * proposal_version first.
  */
-export async function listActionProposalsForRun(runId: string): Promise<CaseActionProposal[]> {
+export async function listActionProposalsForRun(
+  runId: string,
+  actorUserId: string
+): Promise<CaseActionProposal[]> {
   const id = requireNonBlank(runId, 'proposal_run_id_required');
+  const actor = requireNonBlank(actorUserId, 'proposal_actor_required');
   const rows = await queryAll<CaseWorkspaceActionProposalRow>(
     `SELECT * FROM case_workspace_action_proposals WHERE run_id = ? ORDER BY proposal_version DESC`,
     [id]
   );
+  if (rows.length === 0) return [];
+  await requireCaseAccess(actor, rows[0].case_id);
   return rows.map(mapRow);
 }
 
@@ -1222,9 +1247,17 @@ export async function listActionProposalsForRun(runId: string): Promise<CaseActi
  * immutable receipt.
  */
 export async function listDecisionsForProposal(
-  actionProposalId: string
+  actionProposalId: string,
+  actorUserId: string
 ): Promise<ApprovalDecisionRecord[]> {
   const id = requireNonBlank(actionProposalId, 'proposal_id_required');
+  const actor = requireNonBlank(actorUserId, 'proposal_actor_required');
+  const proposalRow = await queryOne<{ case_id: string }>(
+    `SELECT case_id FROM case_workspace_action_proposals WHERE action_proposal_id = ?`,
+    [id]
+  );
+  if (!proposalRow) throw new Error('proposal_not_found');
+  await requireCaseAccess(actor, proposalRow.case_id);
   const rows = await queryAll<CaseWorkspaceActionProposalDecisionRow>(
     `SELECT * FROM case_workspace_action_proposal_decisions
        WHERE action_proposal_id = ?

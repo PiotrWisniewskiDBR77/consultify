@@ -115,6 +115,7 @@ import {
   queryOne,
   withPgTransaction,
 } from '../../utils/queryHelpers.js';
+import { requireCaseAccess } from './caseWorkspaceAuthContext.js';
 
 // ---------------------------------------------------------------------------
 // Canonical graph shape (CW-GR-008). Loosely typed on purpose — this packet
@@ -730,6 +731,8 @@ export async function createPlanDraft(input: {
   const createdByActorId = requireNonBlank(input.createdByActorId, 'plan_created_by_actor_required');
   const semanticGraph = requireGraph(input.semanticGraph, 'plan_semantic_graph_invalid');
 
+  await requireCaseAccess(createdByActorId, caseId);
+
   return withPgTransaction(async (client) => {
     const caseResult = await client.query<{ case_id: string }>(
       `SELECT case_id FROM case_core WHERE case_id = ? FOR UPDATE`,
@@ -800,13 +803,14 @@ export async function updatePlanDraft(
   actor: CaseActor
 ): Promise<CasePlanVersion> {
   const id = requireNonBlank(planVersionId, 'plan_version_id_required');
-  requireNonBlank(actor?.actorUserId, 'plan_actor_required');
+  const actorUserId = requireNonBlank(actor?.actorUserId, 'plan_actor_required');
   const semanticGraph = requireGraph(input.semanticGraph, 'plan_semantic_graph_invalid');
   const expectedVersion = input.expectedVersion;
   if (typeof expectedVersion !== 'number') throw new Error('plan_expected_version_required');
 
   return withPgTransaction(async (client) => {
     const row = await loadForUpdate(client, id);
+    await requireCaseAccess(actorUserId, row.case_id);
     if (row.status !== 'DRAFT') throw new Error('plan_version_not_editable');
 
     const graphDigest = computeGraphDigest(semanticGraph);
@@ -825,17 +829,27 @@ export async function updatePlanDraft(
 }
 
 /** CW-RT-016, CW-GR-024. Plain read, no lock. */
-export async function getPlanVersion(planVersionId: string): Promise<CasePlanVersion | null> {
+export async function getPlanVersion(
+  planVersionId: string,
+  actorUserId: string
+): Promise<CasePlanVersion | null> {
+  const actor = requireNonBlank(actorUserId, 'plan_actor_required');
   const row = await queryOne<CasePlanVersionRow>(
     `SELECT * FROM case_plan_versions WHERE case_plan_version_id = ?`,
     [requireNonBlank(planVersionId, 'plan_version_id_required')]
   );
-  return row ? mapRow(row) : null;
+  if (!row) return null;
+  await requireCaseAccess(actor, row.case_id);
+  return mapRow(row);
 }
 
 /** CW-RT-016, CW-RT-017. Newest plan_number first. */
-export async function listPlanVersionsForCase(caseId: string): Promise<CasePlanVersion[]> {
+export async function listPlanVersionsForCase(
+  caseId: string,
+  actorUserId: string
+): Promise<CasePlanVersion[]> {
   const id = requireNonBlank(caseId, 'plan_case_id_required');
+  await requireCaseAccess(requireNonBlank(actorUserId, 'plan_actor_required'), id);
   const rows = await queryAll<CasePlanVersionRow>(
     `SELECT * FROM case_plan_versions WHERE case_id = ? ORDER BY plan_number DESC`,
     [id]
@@ -851,13 +865,18 @@ export async function listPlanVersionsForCase(caseId: string): Promise<CasePlanV
  * EXTERNAL_DEPENDENT remainder is always reported as severity=
  * 'DEFERRED_EXTERNAL' (see open_question #3), never silently passing.
  */
-export async function validatePlanVersion(planVersionId: string): Promise<PlanValidationResult> {
+export async function validatePlanVersion(
+  planVersionId: string,
+  actorUserId: string
+): Promise<PlanValidationResult> {
   const id = requireNonBlank(planVersionId, 'plan_version_id_required');
+  const actor = requireNonBlank(actorUserId, 'plan_actor_required');
   const row = await queryOne<CasePlanVersionRow>(
     `SELECT * FROM case_plan_versions WHERE case_plan_version_id = ?`,
     [id]
   );
   if (!row) throw new Error('plan_version_not_found');
+  await requireCaseAccess(actor, row.case_id);
 
   const graph = parseGraph(row.semantic_graph);
   const blockers = computeValidationBlockers(graph);
@@ -876,6 +895,7 @@ export async function proposePlanVersion(
 
   return withPgTransaction(async (client) => {
     const row = await loadForUpdate(client, id);
+    await requireCaseAccess(actorUserId, row.case_id);
     if (!(ALLOWED_TRANSITIONS[row.status] ?? []).includes('IN_REVIEW')) {
       throw new Error(`plan_status_transition_not_allowed:${row.status}->IN_REVIEW`);
     }
@@ -916,6 +936,7 @@ export async function requestChangesOnPlanVersion(
 
   return withPgTransaction(async (client) => {
     const row = await loadForUpdate(client, id);
+    await requireCaseAccess(actorUserId, row.case_id);
     if (!(ALLOWED_TRANSITIONS[row.status] ?? []).includes('DRAFT')) {
       throw new Error(`plan_status_transition_not_allowed:${row.status}->DRAFT`);
     }
@@ -961,6 +982,7 @@ export async function publishPlanVersion(
 
   return withPgTransaction(async (client) => {
     const row = await loadForUpdate(client, id);
+    await requireCaseAccess(actorUserId, row.case_id);
     if (!(ALLOWED_TRANSITIONS[row.status] ?? []).includes('PUBLISHED')) {
       throw new Error(`plan_status_transition_not_allowed:${row.status}->PUBLISHED`);
     }
@@ -1028,6 +1050,7 @@ export async function withdrawPlanVersion(
 
   return withPgTransaction(async (client) => {
     const row = await loadForUpdate(client, id);
+    await requireCaseAccess(actorUserId, row.case_id);
     if (!(ALLOWED_TRANSITIONS[row.status] ?? []).includes('WITHDRAWN')) {
       throw new Error(`plan_status_transition_not_allowed:${row.status}->WITHDRAWN`);
     }
@@ -1053,9 +1076,10 @@ export async function withdrawPlanVersion(
 
 /** CW-GR-024, CW-GR-001. Thin graph-shaped projection over getPlanVersion. */
 export async function getGraph(
-  planVersionId: string
+  planVersionId: string,
+  actorUserId: string
 ): Promise<{ graphId: string; graphDigest: string; semanticGraph: CanonicalGraph } | null> {
-  const version = await getPlanVersion(planVersionId);
+  const version = await getPlanVersion(planVersionId, actorUserId);
   if (!version) return null;
   return {
     graphId: version.semanticGraph.graphId ?? version.casePlanVersionId,
@@ -1105,16 +1129,19 @@ function diffCollection<T extends Record<string, unknown>>(
 export async function diffPlanVersions(
   caseId: string,
   planVersionId: string,
-  options?: { against?: string }
+  options: { against?: string } | undefined,
+  actorUserId: string
 ): Promise<PlanVersionDiff> {
   const id = requireNonBlank(caseId, 'plan_case_id_required');
-  const target = await getPlanVersion(requireNonBlank(planVersionId, 'plan_version_id_required'));
+  const actor = requireNonBlank(actorUserId, 'plan_actor_required');
+  await requireCaseAccess(actor, id);
+  const target = await getPlanVersion(requireNonBlank(planVersionId, 'plan_version_id_required'), actor);
   if (!target || target.caseId !== id) throw new Error('plan_version_not_found');
 
   const baselineId = options?.against ?? target.supersedesPlanVersionId;
   if (!baselineId) throw new Error('plan_diff_no_baseline');
 
-  const baseline = await getPlanVersion(baselineId);
+  const baseline = await getPlanVersion(baselineId, actor);
   if (!baseline) throw new Error('plan_diff_baseline_not_found');
   if (baseline.caseId !== target.caseId) throw new Error('plan_diff_cross_case_forbidden');
 
@@ -1135,10 +1162,20 @@ export async function diffPlanVersions(
 /** CW-GR-005, CW-GR-024, CW-02-016. Plain read, no lock. */
 export async function getViewState(
   planVersionId: string,
-  viewType: ViewType
+  viewType: ViewType,
+  actorUserId: string
 ): Promise<PlanViewState | null> {
   const id = requireNonBlank(planVersionId, 'plan_version_id_required');
   const type = requireEnum(viewType, VIEW_TYPES, 'plan_view_type_invalid');
+  const actor = requireNonBlank(actorUserId, 'plan_actor_required');
+
+  const planRow = await queryOne<{ case_id: string }>(
+    `SELECT case_id FROM case_plan_versions WHERE case_plan_version_id = ?`,
+    [id]
+  );
+  if (!planRow) throw new Error('plan_version_not_found');
+  await requireCaseAccess(actor, planRow.case_id);
+
   const row = await queryOne<CasePlanViewStateRow>(
     `SELECT * FROM case_plan_view_state WHERE case_plan_version_id = ? AND view_type = ?`,
     [id, type]
@@ -1164,11 +1201,13 @@ export async function putViewState(
   const actorUserId = requireNonBlank(actor?.actorUserId, 'plan_actor_required');
 
   return withPgTransaction(async (client) => {
-    const planExists = await client.query<{ case_plan_version_id: string }>(
-      `SELECT case_plan_version_id FROM case_plan_versions WHERE case_plan_version_id = ?`,
+    const planExists = await client.query<{ case_plan_version_id: string; case_id: string }>(
+      `SELECT case_plan_version_id, case_id FROM case_plan_versions WHERE case_plan_version_id = ?`,
       [id]
     );
-    if (!planExists.rows[0]) throw new Error('plan_version_not_found');
+    const planRow = planExists.rows[0];
+    if (!planRow) throw new Error('plan_version_not_found');
+    await requireCaseAccess(actorUserId, planRow.case_id);
 
     const now = new Date().toISOString();
     const upserted = await client.query<CasePlanViewStateRow>(
