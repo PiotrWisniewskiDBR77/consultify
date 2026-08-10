@@ -253,6 +253,9 @@ const ResultsVNextRegistryShellScreen = React.lazy(
 const ResultsVNextKpiRegistryScreen = React.lazy(
   () => import('./screens/results-vnext-kpi-registry')
 );
+const ResultsVNextRoiRegistryScreen = React.lazy(
+  () => import('./screens/results-vnext-roi-registry')
+);
 
 const SCREENS: Record<string, { label: string; render: () => React.ReactElement }> = {
   'results-vnext-registry-shell': {
@@ -264,6 +267,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'RN-G2 P1 — REALNY <ResultsKpiRegistryPage> (KPI registry, real GET/POST /vnext/results/kpi* stubbed): My/Org tabs, status chips, lifecycle kebab (activate/suspend/archive), lazy measurement preview, deep-link forbidden. &state=ready|loading|empty|error &kpiId=<id> &ff=off',
     render: () => <ResultsVNextKpiRegistryScreen />,
+  },
+  'results-vnext-roi-registry': {
+    label:
+      'RN-G2 P2 — REALNY rejestr ROI (roiRegistryPresenters + ResultsVNextRegistryShell): All cases + Benefits realization, honest NPV/IRR/payback, lock badges. &tab=all|benefits &state=ready|loading|empty|error &selected=<caseId|none> &calc=loading|ready',
+    render: () => <ResultsVNextRoiRegistryScreen />,
   },
   'mw-007-calendar-narrow-viewport': {
     label:

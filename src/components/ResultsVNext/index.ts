@@ -25,6 +25,11 @@ export {
   type ResultsVNextTableProps,
 } from './ResultsVNextRegistryShell';
 export { ResultsRoiRegistryPage } from './ResultsRoiRegistryPage';
+// RN-G2 P2 — ROI vertical (registry list + preview). See `roi/` subfolder:
+// `roiApi.ts` (fetch client), `roiRegistryMappers.ts` (status/lock/honest-
+// value pure helpers), `roiRegistryPresenters.tsx` (StandardTable/Preview
+// builders shared by the live Hub and the dev-render QA harness).
+export { ResultsRoiHub } from './roi/ResultsRoiHub';
 export {
   isResultsVNextFlagEnabled,
   RESULTS_VNEXT_FLAG_KEYS,
