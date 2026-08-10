@@ -2378,3 +2378,200 @@ Decyzji D2 z E001.
 Approved jest następny w kolejce** — `freezeRoiBaseline` (E001) i
 `freezeRoiEconomicModel` (E002) już gotowe jako jego kontrakty.
 
+## 33. ROI-E003 Decision & Approved — implementacja + odbiór (2026-08-10)
+
+**Trzeci epik domeny ROI, pierwszy maker-checker approval flow w całym
+programie** (Submit → self-approval denial → Approve z immutable, content-
+hashed `ApprovalSnapshot` → freeze obu poprzednich epików wywołane
+JEDNOCZEŚNIE na tym samym pinned kliencie → Reject/Changes-Requested z
+audytem → Reopen-for-revision = nowa wersja OBOK starej, nigdy nadpisanie).
+Zbudowano `ROI_E003_DESIGN.md` §3–§9 dosłownie (design FROZEN, self-
+contained, 21-wierszowa tabela Decisions D1-D21, pełny DDL — bez zgadywania):
+migracja `20260817_rvn_roi_decision_approval.sql` (`rvn_roi_cases` ALTER: 4
+nowe kolumny — `decision_calculation_run_id`/`changes_requested_by`/`_at`/
+`_reason`; nowa tabela `rvn_roi_approval_snapshots`, immutable — brak
+`row_version`/UPDATE/triggera, ten sam wzorzec co `rvn_roi_calculation_runs`;
+3 nowe FK ALTERowane NA KOŃCU migracji na `original_approved_snapshot_id`/
+`latest_approved_snapshot_id`/`decision_calculation_run_id` — dokładnie ten
+ALTER, który komentarz migracji ROI-E001 forward-deklarował "epikowi, który
+stworzy referencyjną tabelę"; własne odstępstwo: `ADD CONSTRAINT` owinięte w
+`DO $$ ... IF NOT EXISTS (SELECT FROM pg_constraint) ... $$` zamiast gołego
+literalnego DDL z designu — idempotencja pod `--safe`/wielokrotny re-run, nie
+nowa decyzja projektowa), nowy plik komend `roiCaseApprovalCommands.ts`
+(`submitRoiCaseForApproval`/`approveRoiCase`/`rejectRoiCase`/
+`requestChangesOnRoiCase`/`reopenApprovedRoiCaseForRevision`/
+`RoiSelfApprovalDeniedError` — ręczne `executeAtomicCommand`, NIE generyczny
+helper, dokładnie jak `kpiDefinitionCommands.ts`'s `approveDefinitionVersion`;
+manualny insert eventów `roi.baseline_frozen`/`roi.economic_model_frozen`/
+`roi.baseline_unfrozen`/`roi.economic_model_unfrozen` na TYM SAMYM pinned
+kliencie co CAS case'a, wzorzec `insertManualDeviationEvent` z
+`kpiDeviationCommands.ts`), `roiCaseCommands.ts` (Changed: `NON_EDITABLE_
+STATUSES` +`'submitted_for_approval'` per Decyzja D3, nowy `reopenRejectedRoiCase`
+przez istniejący `runRoiCaseLifecycleTransition`), `roiBaselineCommands.ts`
+(Changed: nowy status-guard w `captureOrUpdateBaseline` per Decyzja D4 —
+plain `SELECT status` + `NON_EDITABLE_STATUSES` check, `unfreezeRoiBaseline`
+symetryczny do `freezeRoiBaseline`), `roiEconomicModelFreeze.ts` (Changed:
+`unfreezeRoiEconomicModel`, te same 5 tabel co `freezeRoiEconomicModel`),
+`roiTypes.ts` (Changed: 4 nowe pola `RoiCase`/`RoiCaseRow` + `toRoiCase`),
+2 nowe pliki typów/repozytorium `roiApprovalSnapshotTypes.ts`/
+`roiApprovalSnapshotRepository.ts` (`listRoiApprovalSnapshots`/
+`getRoiApprovalSnapshot` z dwuwarstwową D11 redakcją odczytu — re-derive
+widoczności KPI CZYTELNIKA za każdym razem, nigdy nie ufaj temu co zamrożone
+w JSONB, response-only, nigdy nie zmienia `content_hash`), 8 nowych route'ów
+`/api/vnext/results/roi/cases/:caseId/*` w `roi.routes.ts` (Changed: dopisane
+do istniejącego pliku, `handleRoiRouteError` dostaje branch
+`RoiSelfApprovalDeniedError -> 403` SPRAWDZANY JAKO PIERWSZY, przed
+generycznymi gałęziami 409), 3 nowe schematy Zod + schemat params w
+`resultsVnextRoi.validators.ts`, `atomicWrite.ts` (Changed: usunięty martwy
+placeholder `roi_case.decided` per Decyzja D15 — potwierdzone ZERO call
+sites w całym repo, zastąpiony 8 realnymi kluczami `roi.case_*`/
+`roi.*_unfrozen`; `roi.case_approved` faniuje do
+`['mywork_projection','finance_projection']` zachowując Finance-facing
+intencję usuniętego placeholdera, pozostałe 7 do samego `mywork_projection`).
+8 commitów osobnych (migracja → command layer → event catalog + routes +
+validators → testy mockowane self-approval → testy realDB happy-path →
+testy realDB reapproval/submit-guard/freeze → testy realDB visibility-join →
+testy route'ów).
+
+**Zero realnych bugów Postgresa w kodzie produkcyjnym** — inaczej niż E001
+(§31, kolumna `organization_id` na `rvn_platform_resource_acl`) i E002 (§32,
+DATE→JS-Date + brakujący trigger `scenarios`), które oba złapały swój
+pierwszy realny bug na PIERWSZYM uruchomieniu testów realDB. Design doc
+ROI-E003 sam z góry ostrzegł o dokładnie tym ryzyku (§2 "Legacy collision
+check" + jawne odesłanie do ROI-E001's forward-deklarowanego ALTER) i
+zweryfikowanie migracji na żywym Postgresie (opisane niżej) potwierdziło:
+`\d rvn_roi_approval_snapshots`/`\d rvn_roi_cases` po migracji pokazują
+wszystkie 3 nowe FK, wszystkie 4 nowe kolumny, dokładnie jak w designie —
+żadnej naprawy nie było potrzeba.
+
+**Jedno realne odkrycie środowiskowe (nie bug kodu), złapane WYŁĄCZNIE przez
+uruchomienie migracji na PEŁNYM łańcuchu migracji, nie tylko na minimalnym
+podzbiorze rvn_*/RN-G1/KPI/ROI**: uruchomienie `db:migrate` (strict, cały
+łańcuch ~250 plików) na świeżej efemerycznej bazie ujawniło, że prawdziwa
+tabela `initiatives` core-baseline'u ma `status TEXT DEFAULT 'step3'`, ale
+własny CHECK constraint (`initiatives_status_check`) NIE akceptuje
+`'step3'` jako legalnej wartości (tylko wielka litera enum:
+`'DRAFT'`/`'EXECUTING'`/...) — przedistniejący, niezwiązany z ROI-E003 bug w
+DEFAULT tej tabeli, poza łańcuchem migracji tego programu. Nie naprawiane
+(poza zakresem tego epika, tabela `initiatives` nie należy do domeny
+resultsVnext) — testy tego epika (jak wszystkie poprzednie ROI/KPI testy
+realDB) używają WYŁĄCZNIE minimalnego, udokumentowanego podzbioru 14
+migracji (4× `20260809_rvn_platform_*`, `20260810_rvn_kpi_core`,
+`20260811_rvn_kpi_deviation_loop`, `20260811_rvn_platform_obligations`,
+`20260812_rvn_kpi_scorecards`, `20260813_rvn_kpi_initiative_impacts`,
+`20260813_rvn_kpi_measurement_cadence`, `20260814_rvn_teresa_kpi_handoff_
+results`, `20260815_rvn_roi_core`, `20260816_rvn_roi_economic_model`,
+`20260817_rvn_roi_decision_approval` — nowa), z lokalnym minimalnym stand-in
+`initiatives`/`team_members` (ten sam wzorzec co §31/§32 już ustanowiły) —
+pod tym podzbiorem `initiatives` nie ma kolumny `status` w ogóle, więc bug
+nigdy się nie ujawnia. Udokumentowane tutaj jako ostrzeżenie dla przyszłego
+epika, który kiedykolwiek uruchomi te testy na PEŁNYM łańcuchu migracji.
+
+**Testy**: 6 nowych plików w `tests/resultsVnext/roi/` + 1 w
+`server/src/routes/resultsVnext/__tests__/` —
+`roiCaseApprovalSelfApproval.test.ts` (4 testy mockowane: self-approval
+odmówiona dla `submitted_by`, dla `created_by`, NIE odmówiona dla
+`owner_user_id` — Decyzja D13 — plus szczegóły błędu), `roiCaseApproval.
+realdb.test.ts` (1 test realDB: pełny happy path, snapshot wstawiony, oba
+kontrakty freeze wywołane — dowód: raw UPDATE po zatwierdzeniu nadal
+rzuca, oba wskaźniki poprawne, oba zdarzenia frozen w logu),
+`roiCaseReapproval.realdb.test.ts` (1 test realDB: PEŁNY cykl AC-06 —
+approve → reopen-for-revision → edycja baseline → resubmit → approve
+ponownie; `original_approved_snapshot_id` identyczny, `latest_approved_
+snapshot_id` przesunięty, `sequence_number` 1→2, **NAJWAŻNIEJSZA
+POJEDYNCZA ASERCJA W TYM PAKIECIE**: `content_hash` PIERWSZEGO snapshotu
+bajt-identyczny przed i po całym cyklu reopen/edit/resubmit/reapprove —
+PRZESZŁA), `roiCaseSubmitGuard.realdb.test.ts` (2 testy realDB: AC-01 —
+readiness złamana PO osiągnięciu `ready_for_review` złapana przy submit;
+edit-lock dla OBU połówek — `NON_EDITABLE_STATUSES` przez istniejące
+`roiCostLineCommands.ts` i NOWY guard D4 w `captureOrUpdateBaseline`),
+`roiApprovalSnapshotFreeze.realdb.test.ts` (3 testy realDB: raw UPDATE
+blokowany na wszystkich 5 mutowalnych tabelach E002 + baseline po
+approval; te same wiersze edytowalne ponownie po reopen; rejected i
+changes-requested case nigdy nic nie zamroziły), `roiApprovalSnapshotVisibilityJoin.
+realdb.test.ts` (1 test realDB: `::text` cast poprawny na nowym joinie,
+dwóch czytelników z różną widocznością KPI dostaje różne `kpiDetails` dla
+TEGO SAMEGO evidence linku, identyczny `contentHash` oba razy, prawdziwy
+outsider nie widzi nic), `roiCaseApproval.routes.test.ts` (22 testy HTTP-
+boundary mockowane: wszystkie 8 nowych endpointów, w tym `403` dla
+`RoiSelfApprovalDeniedError` sprawdzany PRZED generycznymi gałęziami 409).
+**Razem 34 nowe testy, wszystkie PASS** na efemerycznym Postgresie 17
+(`initdb --locale=C`, TCP `127.0.0.1:28733`) na TYM SAMYM minimalnym
+14-migracyjnym zestawie co §31/§32.
+
+**PRZED/PO przez `git stash -u`** (cała praca ROI-E003 była jeszcze
+niecommitowana w momencie pomiaru — uczciwy odpowiednik `git worktree` na
+starym SHA na TEJ SAMEJ efemerycznej bazie, ten sam pattern §31 już użył
+gdy commitowanie było w toku): **PRZED (bez kodu ROI-E003) =
+`tests/resultsVnext/` + `server/src/routes/resultsVnext/__tests__/` razem:
+32 pliki testowe, 307 testów — 303 PASS + 2 FAIL + 2 skip**, te same 2
+niepowiązane awarie co §32 już udokumentował (`kpiInitiativeImpactBaselineFreeze.
+realdb.test.ts`/`kpiInitiativeImpactPerspectivesRoutesRealdb.test.ts` —
+brakująca tabela `link_graph_edges`, poza łańcuchem migracji tego
+minimalnego zestawu, ORAZ duplicate-key na visibility policy w drugim z
+tych plików — kolejność efektu ubocznego pierwszego failure'a w tym samym
+pliku, nie osobny defekt). **PO (z całym kodem ROI-E003) = 39 plików
+testowych, 341 testów — 337 PASS + 2 FAIL + 2 skip, TE SAME 2 awarie z
+TYMI SAMYMI przyczynami.** Zero regresji; +34 zielonych testów to
+dokładnie nowy pakiet ROI-E003 (7 nowych plików testowych, wszystkie PASS).
+`npx tsc --noEmit` (`NODE_OPTIONS=--max-old-space-size=8192`) na całym repo
+— **0 błędów**, sprawdzone po `git stash pop` (stan finalny) i wcześniej po
+napisaniu każdego nowego/zmienionego pliku.
+
+**Zero testów ROI-E001/E002 wymagało aktualizacji tym razem** — inaczej niż
+ROI-E002 (§32), które musiało zaktualizować 4 testy ROI-E001 jako uczciwą
+konsekwencję rozszerzenia `roiCaseCommands.ts`. Ten epik też edytuje
+`roiCaseCommands.ts`/`roiBaselineCommands.ts`, ale oba dodatki (`NON_
+EDITABLE_STATUSES` +1 wartość, nowy `SELECT status` guard w `captureOrUpdate
+Baseline`) są addytywne i nie zmieniają zachowania żadnej ścieżki, którą
+istniejące testy ROI-E001/E002 wykonują — potwierdzone identycznym zestawem
+PASS w PRZED/PO powyżej (`roiCaseLifecycle.realdb.test.ts`/
+`roiBaselineFreeze.realdb.test.ts`/`roiEconomicModelFreeze.realdb.test.ts`
+wszystkie zielone w obu przebiegach).
+
+**Sześć AC z prozy §0 designu wszystkie zaadresowane**: AC-01 guard
+re-walidowany na granicy Ready-for-Review → Submitted, nie tylko ufany od
+momentu osiągnięcia `ready_for_review` (`submitRoiCaseForApproval` re-runs
+`isRoiCaseReadyForReviewEligibleWithEconomicModel`, Decyzja D1), AC-02
+decision request pinuje konkretną wersję modelu ekonomicznego
+(`decision_calculation_run_id`, Decyzja D5), AC-03 self-approval denial dla
+maker-checker (`RoiSelfApprovalDeniedError`, sprawdzane PRZED jakimkolwiek
+zapisem, Decyzja D13), AC-04 immutable content-hashed `ApprovalSnapshot`
+jako trwały rekord decyzji (`rvn_roi_approval_snapshots`, brak UPDATE path),
+AC-05 rejection i changes-requested oba audytowane (osobne kolumny
+`rejected_*`/`changes_requested_*`, Decyzja D6), AC-06 reapproval tworzy
+nową wersję OBOK starej, nigdy nadpisanie (`sequence_number` 1→2,
+`original_approved_snapshot_id` niezmienny, `latest_approved_snapshot_id`
+przesunięty, Decyzja D10 — dowiedzione bajt-identycznym `content_hash` w
+`roiCaseReapproval.realdb.test.ts`).
+
+**Poza zakresem tego epika, potwierdzone jako NIEZBUDOWANE, nie zapomniane
+(backlog notes, per Decyzje D17/D18/D20)**:
+- **Decyzja D17 (odroczona)**: mechanizm obligation/przypisania zatwierdzającego
+  — submit NIE tworzy żadnej powiadomienia/zadania MyWork dla konkretnego
+  zatwierdzającego. Żaden dokument źródłowy nie nazywa reguły przypisania
+  zatwierdzającego — wymyślanie jej byłoby fabrykowaniem zachowania.
+  Ustrukturyzowane tak, by dodanie tego później było jednolinijkowym
+  wywołaniem `createObligation` w istniejącej transakcji, nie przeprojektowaniem.
+- **Decyzja D18 (odroczona)**: `reopenApprovedRoiCaseForRevision` NIE
+  obsługuje reopeningu ze stanów Tracking/Benefits-Realization/PIR
+  (post-E004/E005/E006) — `fromStatuses: ['approved']` tylko. Czy przyszły
+  epik rozszerzy ten command, czy zbuduje własny (biorąc pod uwagę że
+  ROI-E004's Forecast/Actual reconciliation nie wie jeszcze jak obsłużyć
+  reopen) — to decyzja TEGO epika z pełnym kontekstem danych, które będą
+  wtedy istnieć. Spekulatywne projektowanie pod struktury danych, które
+  jeszcze nie istnieją, ryzykuje złym zgadnięciem.
+- **Decyzja D20 (odroczona)**: brak dedykowanego poziomu dostępu ACL
+  "approver" odróżnionego od `'contribute'` — maker-checker pozostaje CZYSTO
+  identity checkiem self-approval (Decyzja D13); ktokolwiek z dostępem
+  `'contribute'` kto nie jest submitterem/twórcą case'a może zatwierdzić.
+  Dokładnie ten sam precedens co KPI. To PRZEDISTNIEJĄCY zakres platformy
+  (sam model ACL, RN-G1), nie coś co ROI-E003 wprowadza lub powinien cicho
+  załatać — oznaczone jako świadomość wyższej stawki finansowej ROI, ale
+  naprawa granularności ACL platformy jest poza zakresem tego epika.
+
+**Domena ROI: 3/8 epików zbudowanych (E001, E002, E003). ROI-E004 Forecast &
+Actual jest następny w kolejce** — approval flow (Submit/Approve/Reject/
+Changes-Requested/Reopen, immutable `ApprovalSnapshot`) teraz kompletny;
+kolejny epik operuje na Forecast/Actual danych POZA zakresem tej epiki.
+

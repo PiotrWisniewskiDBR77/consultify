@@ -293,7 +293,52 @@ mirror (§9 simplification), `flagBenefitEvidenceLinkDisputed`'s route HTTP
 gotowy jako jego kontrakt), Tracking/Benefits Realization/PIR/Finance
 seam/Teresa (ROI-E005…E008).
 
-**Domena ROI: 2/8 epików zbudowanych (E001, E002). ROI-E003 Decision &
-Approved następny w kolejce.**
+**ROI-E003 Decision & Approved — Status: IMPLEMENTED 2026-08-10** (backend
+only; UI Registry to RN-G2, poza zakresem). `docs/product/results-vnext/
+ROI_E003_DESIGN.md` (FROZEN) → `server/migrations/20260817_rvn_roi_
+decision_approval.sql` (`rvn_roi_cases` ALTER: 4 nowe kolumny; nowa
+immutable tabela `rvn_roi_approval_snapshots`; 3 nowe FK ALTERowane na
+końcu, domykające forward-deklarację z migracji ROI-E001) →
+`server/src/services/resultsVnext/roi/roiCaseApprovalCommands.ts`
+(`submitRoiCaseForApproval`/`approveRoiCase`/`rejectRoiCase`/
+`requestChangesOnRoiCase`/`reopenApprovedRoiCaseForRevision`/
+`RoiSelfApprovalDeniedError`) + `roiApprovalSnapshotTypes.ts`/
+`roiApprovalSnapshotRepository.ts` (redakcja odczytu KPI per Decyzja D11) +
+Changed `roiCaseCommands.ts`/`roiBaselineCommands.ts`/
+`roiEconomicModelFreeze.ts`/`roiTypes.ts` → `server/src/routes/resultsVnext/
+roi.routes.ts` (8 nowych endpointów dopisanych, ten sam plik co E001/E002,
+`handleRoiRouteError` z nowym branchem `RoiSelfApprovalDeniedError -> 403`
+sprawdzanym jako pierwszy). 34 nowe testy, wszystkie PASS na efemerycznym
+Postgresie 17 (6 w `tests/resultsVnext/roi/` — 1 mockowany self-approval +
+5 realDB, + 22 w `server/src/routes/resultsVnext/__tests__/roiCaseApproval.
+routes.test.ts`, +1 realDB mieszany — patrz szczegółowe liczby
+`EXECUTION_LEDGER.md` §33). Zero realnych bugów Postgresa w kodzie
+produkcyjnym (inaczej niż E001/E002) — jedno środowiskowe odkrycie
+udokumentowane (real `initiatives.status DEFAULT 'step3'` łamie własny
+CHECK poza łańcuchem migracji tego programu, nieistotne pod minimalnym
+14-migracyjnym zestawem testów). PRZED/PO przez `git stash -u` na tej samej
+efemerycznej bazie (307→341 PASS, te same 2 pliki niepowiązane z tym
+epikiem failują identycznie w obu — szczegóły `EXECUTION_LEDGER.md` §33).
+Sześć AC z prozy §0 designu wszystkie zaadresowane: AC-01 guard
+re-walidowany na granicy submit (`submitRoiCaseForApproval` re-runs
+`isRoiCaseReadyForReviewEligibleWithEconomicModel`, Decyzja D1), AC-02
+decision request pinuje wersję modelu (`decision_calculation_run_id`,
+Decyzja D5), AC-03 self-approval denial (`RoiSelfApprovalDeniedError`,
+Decyzja D13), AC-04 immutable content-hashed `ApprovalSnapshot`
+(`rvn_roi_approval_snapshots`), AC-05 rejection/changes-requested oba
+audytowane (osobne kolumny, Decyzja D6), AC-06 reapproval = nowa wersja
+OBOK starej (sequence 1→2, `original_approved_snapshot_id` niezmienny,
+v1's `content_hash` bajt-identyczny przez cały cykl reopen/reapprove —
+dowiedzione w `roiCaseReapproval.realdb.test.ts`). Poza zakresem, świadomie
+NIEZBUDOWANE (backlog notes, Decyzje D17/D18/D20): brak mechanizmu
+obligation/przypisania zatwierdzającego (D17, żaden dokument źródłowy nie
+nazywa reguły przypisania), brak ścieżki reopen ze stanów Tracking/Benefits-
+Realization/PIR (D18, odroczone do ROI-E004/E005/E006 z pełnym kontekstem
+danych, które będą wtedy istnieć), brak dedykowanego poziomu ACL "approver"
+(D20, przedistniejący zakres platformy RN-G1, maker-checker pozostaje czystym
+identity checkiem jak w KPI).
+
+**Domena ROI: 3/8 epików zbudowanych (E001, E002, E003). ROI-E004 Forecast &
+Actual następny w kolejce.**
 
 Pełne tabele (wszystkie pola per AC): transkrypt agenta `a2714d65fd9b0df12`.
