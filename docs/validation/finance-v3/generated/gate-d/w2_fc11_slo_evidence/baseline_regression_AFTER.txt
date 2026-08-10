@@ -1,0 +1,18 @@
+Regresja finance/canonical PO zmianach W2 (perfSlo.pg.test.ts przykręcony do
+progów regresyjnych + perfSloThresholds.ts dodany).
+Ten sam efemeryczny klaster PG15, port 57701, DB fv3_slo.
+
+$ DB_TYPE=postgres NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false DATABASE_URL=postgresql://postgres@127.0.0.1:57701/fv3_slo \
+  npx vitest run --config vitest.config.ts src/services/finance/canonical --no-file-parallelism
+
+Wynik:
+ Test Files  1 failed | 30 passed (31)
+      Tests  418 passed | 4 skipped (422)      <- PRZED: 417 passed | 4 skipped (421)
+                                                   (+1 passed: nowy synchroniczny test
+                                                   "W2 (inverted #1-3): CI regression ceilings ARE now declared...")
+
+Jedyna awaria: TA SAMA co w BEFORE (coldReopen.pg.test.ts, SensitivityGridAccessError) --
+identyczny stack, identyczna przyczyna, poza moim zakresem. BEZ REGRESJI spowodowanej
+zmianami w perfSlo.pg.test.ts / perfSloThresholds.ts.
+
+uptime przy tym przebiegu: 22:09 up 13:35, load averages: 105.27 83.94 71.04
