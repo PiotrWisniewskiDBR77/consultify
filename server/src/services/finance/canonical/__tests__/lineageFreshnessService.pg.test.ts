@@ -60,6 +60,7 @@ describe.skipIf(!REAL_PG)('AP-11 pt 9 — lineage staleness propagation, real Po
   const orgB = `org-ap11-priority-${randomUUID()}`;
   const orgC = `org-ap11-tenant-${randomUUID()}`;
   const orgD = `org-ap11-depth-${randomUUID()}`;
+  const orgE = `org-ap11-invalidate-${randomUUID()}`;
 
   const preparerId = `user-preparer-${randomUUID()}`;
   const approverId = `user-approver-${randomUUID()}`;
@@ -327,6 +328,14 @@ describe.skipIf(!REAL_PG)('AP-11 pt 9 — lineage staleness propagation, real Po
   // Org D — a 5-level chain for the depth limit.
   let dNodes: Node[] = [];
 
+  // Org E — a two-level graph reserved for the `transition({action:
+  // 'invalidate'})` positive control. It lives apart from org B on purpose:
+  // the severity-ordering sequence below needs to run its OWN invalidation
+  // (step 2) against a descendant that is not yet SOURCE_INVALIDATED, so the
+  // positive control must not consume that escalation.
+  let eStatement: Node;
+  let eAnalysis: Node;
+
   beforeAll(async () => {
     ({ withPinnedPostgresTransaction } = await import('../../../../database/PostgresDatabase.js'));
     artifactVersionService = await import('../artifactVersionService.js');
@@ -337,6 +346,7 @@ describe.skipIf(!REAL_PG)('AP-11 pt 9 — lineage staleness propagation, real Po
     await createOrg(orgB, 'AP-11 priority org');
     await createOrg(orgC, 'AP-11 tenant-isolation org');
     await createOrg(orgD, 'AP-11 depth-limit org');
+    await createOrg(orgE, 'AP-11 invalidate org');
 
     // --- Org A -------------------------------------------------------------
     // The direct child is APPROVED on purpose: B01's immutability trigger
@@ -391,6 +401,14 @@ describe.skipIf(!REAL_PG)('AP-11 pt 9 — lineage staleness propagation, real Po
     await link(orgD, { node: dScenario, type: 'PREDICTION_SCENARIO' }, { node: dValuation, type: 'VALUATION_CASE' }, 'SCENARIO_TO_VALUATION', {
       hash: 'sha-ap11-d-3',
     });
+
+    // --- Org E -------------------------------------------------------------
+    // Both nodes APPROVED: the source because `invalidate` (T11) accepts no
+    // other `from` state, the descendant because an APPROVED row is the case
+    // the B01 immutability trigger is most likely to reject.
+    eStatement = await createApprovedNode(orgE, 'STATEMENT_PACK', 'ap11-e-statement');
+    eAnalysis = await createApprovedNode(orgE, 'HISTORICAL_ANALYSIS', 'ap11-e-analysis');
+    await link(orgE, { node: eStatement, type: 'STATEMENT_PACK' }, { node: eAnalysis, type: 'HISTORICAL_ANALYSIS' }, 'STATEMENT_TO_ANALYSIS');
   }, 180_000);
 
   afterAll(async () => {
@@ -403,7 +421,7 @@ describe.skipIf(!REAL_PG)('AP-11 pt 9 — lineage staleness propagation, real Po
     // taking the assertions' word for it.
     if (process.env.AP11_KEEP_LEDGER === '1') return;
     await withPinnedPostgresTransaction(async (tx) => {
-      for (const org of [orgA, orgB, orgC, orgD]) {
+      for (const org of [orgA, orgB, orgC, orgD, orgE]) {
         await tx.queryRun(`DELETE FROM finance_lineage_freshness_events WHERE organization_id = ?`, [org]);
       }
     });
@@ -590,68 +608,133 @@ describe.skipIf(!REAL_PG)('AP-11 pt 9 — lineage staleness propagation, real Po
   }, 120_000);
 
   /**
-   * PRE-EXISTING DEFECT, discovered by this work package and deliberately NOT
-   * fixed here (`artifactVersionService.transition()` is frozen-wave code and
-   * the fix belongs to WP-B02, not AP-11).
+   * POSITIVE CONTROL over what used to be a pinned defect.
    *
-   * `transition()` writes `SET status = ?, version = version + 1, ...` for
-   * EVERY action. `finance_bv_enforce_immutability()` (B01 migration §6)
-   * whitelists exactly `status, superseded_by_version_id, invalidated_reason,
-   * updated_at, archived_by, archived_at, superseded_at, freshness,
-   * freshness_reason, stale_since` for a row that is already APPROVED —
-   * `version` is NOT on that list. So the CAS bump itself trips the
-   * immutability trigger, and BOTH transitions whose only legal source state
-   * is APPROVED — T10 `archive` and T11 `invalidate` — throw a raw Postgres
-   * error against a real database, unconditionally. Verified directly in psql:
-   * the same UPDATE without `version = version + 1` succeeds.
+   * History, kept deliberately so the context is not lost: this test was
+   * originally written INVERTED — it asserted that `transition({action:
+   * 'invalidate'})` on an APPROVED version *throws* — because
+   * `transition()` wrote `SET status = ?, version = version + 1, ...` for
+   * every action while `finance_bv_enforce_immutability()` (B01 migration §6)
+   * does not allow-list `version` on an APPROVED row. Both transitions whose
+   * only legal `from` state is APPROVED (T10 `archive`, T11 `invalidate`) were
+   * therefore DEAD against a real database, and AP-11 pinned that blocker in a
+   * test rather than working around it silently. The `fix-transition` stream
+   * removed the increment (`versionSet` is empty for an APPROVED row;
+   * concurrency is guarded by `AND status = ?` instead), so the assertion is
+   * now the other way round: the transition must SUCCEED and must propagate.
    *
-   * Nothing caught this before because the only existing coverage of
-   * invalidate/archive is `lifecycleService.test.ts`, which unit-tests the
-   * PURE `validateTransition()` decision table and never reaches SQL.
-   *
-   * Consequence for AP-11: the `SOURCE_INVALIDATED` propagation IS wired into
-   * `transition()` (one additive call, same transaction) and is correct, but
-   * it cannot fire today because the statement before it throws. This test
-   * pins the blocker so it is visible rather than silently worked around —
-   * when WP-B02 fixes the version bump, this test goes red and the step-2 test
-   * below should be rewritten to drive the real `transition({action:
-   * 'invalidate'})` path again.
+   * Nothing caught the original defect because the only coverage of
+   * invalidate/archive was `lifecycleService.test.ts`, which unit-tests the
+   * PURE `validateTransition()` decision table and never reaches SQL — which
+   * is exactly why this control runs against real Postgres.
    */
-  it('BLOCKER (pre-existing, WP-B02): transition(invalidate) on an APPROVED version is rejected by the B01 immutability trigger', async () => {
-    await expect(
-      artifactVersionService.transition({
-        organizationId: orgB,
-        businessVersionId: bStatement1.bvId,
-        action: 'invalidate',
-        actorId: adminId,
-        role: 'finance_admin',
-        expectedVersion: bStatement1.version,
-        reason: 'AP-11 test — source found to be wrong',
-      })
-    ).rejects.toThrow(/is APPROVED; only status and its associated metadata columns may change/);
+  it('transition(invalidate) on an APPROVED version SUCCEEDS and propagates SOURCE_INVALIDATED to its descendants', async () => {
+    // Preconditions read from the database, not assumed.
+    const sourceBefore = await readVersion(eStatement.bvId);
+    expect(sourceBefore?.status).toBe('APPROVED');
+    const childBefore = await readVersion(eAnalysis.bvId);
+    expect(childBefore?.status).toBe('APPROVED');
+    expect(childBefore?.freshness).toBe('CURRENT');
+    expect(childBefore?.freshness_reason).toBeNull();
+    expect(childBefore?.stale_since).toBeNull();
+    expect(await ledgerFor(orgE)).toHaveLength(0);
 
-    // The failed transaction rolled back completely: the version is untouched,
-    // so nothing downstream was marked either.
-    const source = await readVersion(bStatement1.bvId);
-    expect(source?.status).toBe('APPROVED');
-    expect(source?.version).toBe(bStatement1.version);
-    const model = await readVersion(bModel.bvId);
-    expect(model?.freshness_reason).toBe('NEW_SOURCE_VERSION');
+    const result = await artifactVersionService.transition({
+      organizationId: orgE,
+      businessVersionId: eStatement.bvId,
+      action: 'invalidate',
+      actorId: adminId,
+      role: 'finance_admin',
+      expectedVersion: eStatement.version,
+      reason: 'AP-11 test — source found to be wrong',
+    });
+
+    // No raw Postgres error, and no typed refusal either.
+    if (!result.ok) throw new Error(`invalidate failed: ${result.code} ${result.message}`);
+    expect(result.businessVersion.status).toBe('INVALIDATED');
+    expect(result.businessVersion.invalidated_reason).toBe('AP-11 test — source found to be wrong');
+    // The load-bearing detail of the fix: the CAS counter of an APPROVED row
+    // is NOT bumped (that increment is what the immutability trigger rejected).
+    expect(result.businessVersion.version).toBe(eStatement.version);
+
+    // The wired-in propagation actually fired — it was unreachable before,
+    // because the UPDATE preceding it threw.
+    expect(result.freshnessPropagation).toBeTruthy();
+    expect(result.freshnessPropagation?.rootVersionId).toBe(eStatement.bvId);
+    expect(result.freshnessPropagation?.reasonCode).toBe('SOURCE_INVALIDATED');
+    expect(result.freshnessPropagation?.newState).toBe('STALE_SOURCE');
+    expect(result.freshnessPropagation?.visited).toBe(1);
+    expect(result.freshnessPropagation?.marked).toBe(1);
+    expect(result.freshnessPropagation?.eventsWritten).toBe(1);
+    expect(result.freshnessPropagation?.recomputeEnqueued).toBe(false);
+    expect(result.freshnessPropagation?.depthLimitReached).toBe(false);
+
+    // Physical read-back: the service's own return value is not the proof.
+    const source = await readVersion(eStatement.bvId);
+    expect(source?.status).toBe('INVALIDATED');
+    expect(source?.version).toBe(eStatement.version);
+    // An invalidated source is not itself "stale" — that is a different axis (§7.2).
+    expect(source?.freshness).toBe('CURRENT');
+
+    const child = await readVersion(eAnalysis.bvId);
+    expect(child?.freshness).toBe('STALE_SOURCE');
+    expect(child?.freshness_reason).toBe('SOURCE_INVALIDATED');
+    expect(instant(child?.stale_since)).not.toBeNull();
+    // ...and marking it moved NOTHING else on that approved row.
+    expect(child?.status).toBe('APPROVED');
+    expect(child?.version).toBe(childBefore?.version);
+    expect(child?.compute_snapshot_id).toBe(childBefore?.compute_snapshot_id);
+    expect(child?.content_semantic_hash).toBe(childBefore?.content_semantic_hash);
+    expect(child?.source_working_revision_id).toBe(childBefore?.source_working_revision_id);
+
+    // Exactly one append-only ledger row, blaming the real edge.
+    const events = await ledgerFor(orgE);
+    expect(events).toHaveLength(1);
+    expect(events[0].target_version_id).toBe(eAnalysis.bvId);
+    expect(events[0].triggering_version_id).toBe(eStatement.bvId);
+    expect(events[0].triggering_edge_id).toBeTruthy();
+    expect(events[0].previous_state).toBe('CURRENT');
+    expect(events[0].new_state).toBe('STALE_SOURCE');
+    expect(events[0].reason_code).toBe('SOURCE_INVALIDATED');
+
+    // Marking is the ENTIRE effect: no recompute was scheduled anywhere.
+    const footprint = await computeFootprint(orgE);
+    expect(footprint.computeJobs).toBe(0);
+    expect(footprint.computeJobOutputs).toBe(0);
+    expect(footprint.computeJobRuns).toBe(0);
   }, 120_000);
 
   it('step 2: a STRONGER reason (SOURCE_INVALIDATED) overrides the weaker one, keeping stale_since', async () => {
-    // Driven through the service API rather than `transition({action:
-    // 'invalidate'})` ONLY because of the blocker pinned by the test above —
-    // this is the exact same function, with the exact same arguments, that the
-    // wired-in trigger passes (`rootVersionId` = the invalidated version,
-    // `reasonCode: 'SOURCE_INVALIDATED'`).
-    const summary = await lineageFreshnessService.propagateStaleness({
+    // Driven end-to-end through the REAL production entry point
+    // `transition({action:'invalidate'})` — which is what wires
+    // `reasonCode: 'SOURCE_INVALIDATED'` with the invalidated version as the
+    // root. (Until the `fix-transition` repair this step had to call
+    // `propagateStaleness()` directly, because the transition threw.)
+    const modelBefore = await readVersion(bModel.bvId);
+    expect(modelBefore?.freshness).toBe('STALE_SOURCE');
+    expect(modelBefore?.freshness_reason).toBe('NEW_SOURCE_VERSION');
+    const ledgerBefore = await ledgerFor(orgB);
+
+    const result = await artifactVersionService.transition({
       organizationId: orgB,
-      rootVersionId: bStatement1.bvId,
-      reasonCode: 'SOURCE_INVALIDATED',
+      businessVersionId: bStatement1.bvId,
+      action: 'invalidate',
+      actorId: adminId,
+      role: 'finance_admin',
+      expectedVersion: bStatement1.version,
+      reason: 'AP-11 test — source found to be wrong',
     });
-    expect(summary.marked).toBe(1);
-    expect(summary.recomputeEnqueued).toBe(false);
+    if (!result.ok) throw new Error(`invalidate failed: ${result.code} ${result.message}`);
+    expect(result.businessVersion.status).toBe('INVALIDATED');
+
+    const summary = result.freshnessPropagation;
+    expect(summary?.rootVersionId).toBe(bStatement1.bvId);
+    expect(summary?.reasonCode).toBe('SOURCE_INVALIDATED');
+    expect(summary?.visited).toBe(1);
+    expect(summary?.marked).toBe(1);
+    expect(summary?.reasonSuppressed).toBe(0);
+    expect(summary?.unchanged).toBe(0);
+    expect(summary?.recomputeEnqueued).toBe(false);
 
     const model = await readVersion(bModel.bvId);
     expect(model?.freshness).toBe('STALE_SOURCE');
@@ -659,6 +742,20 @@ describe.skipIf(!REAL_PG)('AP-11 pt 9 — lineage staleness propagation, real Po
     // Escalating the reason must not reset how long this has been stale.
     expect(instant(model?.stale_since)).toBe(bModelStaleSinceAfterFirst);
     expect(bModelStaleSinceAfterFirst).not.toBeNull();
+
+    // The escalation is one physical ledger row: STALE_SOURCE -> STALE_SOURCE
+    // with the stronger reason, so the history shows WHY the reason changed.
+    const ledgerAfter = await ledgerFor(orgB);
+    expect(ledgerAfter).toHaveLength(ledgerBefore.length + 1);
+    const escalation = ledgerAfter[ledgerAfter.length - 1];
+    expect(escalation.target_version_id).toBe(bModel.bvId);
+    expect(escalation.triggering_version_id).toBe(bStatement1.bvId);
+    expect(escalation.previous_state).toBe('STALE_SOURCE');
+    expect(escalation.new_state).toBe('STALE_SOURCE');
+    expect(escalation.reason_code).toBe('SOURCE_INVALIDATED');
+
+    // The other two parents of the fan-in node are untouched by this.
+    expect((await readVersion(bStatement2.bvId))?.status).toBe('APPROVED');
   }, 120_000);
 
   it('step 3: a WEAKER reason arriving later does NOT overwrite it, but IS recorded in the ledger', async () => {

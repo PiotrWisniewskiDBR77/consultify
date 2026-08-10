@@ -545,7 +545,10 @@ describe('AP-11 lineageNavigatorContract — cross-tenant defence (adversarial)'
         .every((e) => e.metadata.organizationId === ORG)
     ).toBe(true);
     expect(panel.siblings).toEqual([]);
-    expect(panel.tenant.foreignEdgeIds.sort()).toEqual([foreignChild.id, foreignIndirect.id].sort());
+    // Copy before sorting: `foreignEdgeIds` is `readonly string[]`, so an
+    // in-place `.sort()` is both a type error and a mutation of the contract's
+    // own output.
+    expect([...panel.tenant.foreignEdgeIds].sort()).toEqual([foreignChild.id, foreignIndirect.id].sort());
     expect(panel.tenant.foreignVersionIds).toEqual(['sibX']);
   });
 

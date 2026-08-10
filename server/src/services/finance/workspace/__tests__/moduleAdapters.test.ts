@@ -199,8 +199,11 @@ describe('AP-10 moduleAdapters — Related targets agree with the lineage topolo
   it.each(FINANCE_MODULE_ADAPTER_LIST.map((a) => [a.moduleId, a] as const))(
     '%s declares exactly the downstream types the DAG permits',
     (_moduleId, adapter) => {
+      // `sourceStatus` is a REQUIRED parameter (a terminal status yields
+      // nothing); the adapter declares what a LIVE artifact may spawn, so the
+      // comparison is made against a non-terminal status.
       expect([...adapter.relatedDownstreamTypes]).toEqual([
-        ...allowedDownstreamCreations(adapter.artifactType),
+        ...allowedDownstreamCreations(adapter.artifactType, 'APPROVED'),
       ]);
     }
   );
