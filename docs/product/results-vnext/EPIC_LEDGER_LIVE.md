@@ -20,7 +20,27 @@ Wypełnione przez agenta `aa3fc90c059b0bf01` — 2026-08-09.
 | Command/query/API | `POST /api/vnext/results/okr/programs`, `PATCH .../draft`, `POST .../publish` | `POST .../cycles` (odrzuca przy `program.status != active`) | `POST .../cycles/:id/open-drafting`, `/activate`, `/open-review`, `/close` | (brak dedykowanej komendy — negatywny test) | scheduler job (wewnętrzny, wywołuje `/cycles/:id/*`) | jw. |
 | Schema/migration/constraint | `okr_vnext_programs`, `okr_vnext_program_policy_versions` | `okr_vnext_programs.status` + FK | `okr_vnext_cycles` (status enum, `policy_version_id`) | `okr_vnext_sets` (bez FK do `cycle_id` jako źródła tożsamości) | `okr_vnext_cycles` timestamps | `okr_vnext_checkin_occurrences` (`cadence_occurrence_id` unikalność) |
 | Roles/visibility | OKR Program Admin, OPEN_ORGANIZATION default | OKR Program Admin | OKR Program Admin, Org OKR Coach (read) | wszystkie role (constraint systemowy) | service actor | service actor |
-| Status | NOT_IMPLEMENTED | NOT_IMPLEMENTED | NOT_IMPLEMENTED | NOT_IMPLEMENTED | NOT_IMPLEMENTED | NOT_IMPLEMENTED |
+| Status | IMPLEMENTED | IMPLEMENTED | IMPLEMENTED | IMPLEMENTED | IMPLEMENTED | IMPLEMENTED |
+
+**IMPLEMENTED 2026-08-10** (agent `a9f7c2b75b0644aa3`, EXECUTION_LEDGER.md
+§39). Zbudowane dosłownie wg `OKR_E001_DESIGN.md` §4-§9: migracja
+`20260822_rvn_okr_program_cycle.sql` (4 tabele `okr_vnext_*`, Decyzja P1),
+`server/src/services/resultsVnext/okr/*` (Program/Cycle command layer +
+repository + scheduler), 13 endpointów `/api/vnext/results/okr/*`, nowy
+platformowy prymityw `publishVisibilityPolicy`. RBAC (`requireOrgRole`),
+nie ABAC, per Decyzja P2/P4 — Roles/visibility w tabeli powyżej opisuje
+intencję designu, nie mechanizm; realny mechanizm to `requireOrgRole
+('admin','superadmin')` na zapisie, `requireOrgAccess()` na odczycie,
+zero wierszy `rvn_platform_resource_visibility` dla Program/Cycle. 46
+nowych testów, wszystkie PASS na efemerycznym Postgresie 17 — literalny
+dowód OKR-F-001-AC-01 (policy-version immutability przez republikację),
+OKR-F-001-AC-02 (fail-closed guard przed INSERT), pełny pipeline 5
+przejść Cycle + cancel z każdego nieterminalnego stanu, dwuwywoławcza
+idempotencja obu funkcji schedulera, RBAC 403 na wszystkich 9 trasach
+zapisu. `tsc --noEmit` czysty (zero nowych błędów; 18 przedistniejących
+`decimal.js` błędów w ROI niezwiązanych z tym epikiem, identyczne
+przed/po). Pełne suity KPI+ROI (271 testów) zweryfikowane before/after
+na tej samej efemerycznej bazie — wynik bajt-identyczny, zero regresji.
 
 ### OKR-E002 Materialized Set
 

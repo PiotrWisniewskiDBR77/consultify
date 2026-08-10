@@ -322,6 +322,12 @@ import resultsVnextRoiPerspectivesRoutes from './routes/resultsVnext/roiPerspect
 // convention as resultsVnextKpiLegacyArchiveRoutes above (see
 // ROI_E008_DESIGN.md §3/B1 and roiLegacyArchive.routes.ts's own header).
 import resultsVnextRoiLegacyArchiveRoutes from './routes/resultsVnext/roiLegacyArchive.routes.js';
+// OKR-E001 Program & Cycle — first OKR vNext router, own prefix
+// `/api/vnext/results/okr` (no ordering interaction with the KPI/ROI mounts
+// above — separate path namespace entirely). See okr.routes.ts's own
+// "MOUNT-ORDER NOTE" for the rule the NEXT OKR router (OKR-E002's
+// `/sets/*`) must follow.
+import resultsVnextOkrRoutes from './routes/resultsVnext/okr.routes.js';
 import revenueRoutes from './routes/revenue.routes.js';
 import rolloutRoutes from './routes/rollout.routes.js';
 // M14 wiring — service route surfaces (mounted below)
@@ -1186,6 +1192,11 @@ export class ApiGateway {
       // requireOrgAccess) applied inside the router, same convention as
       // resultsVnextKpiRoutes above.
       app.use('/api/vnext/results/roi', resultsVnextRoiRoutes);
+      // OKR-E001 (Program & Cycle) — own auth (verifyToken +
+      // requireOrgAccess, PLUS requireOrgRole on every write route —
+      // design §7/Decision P2/P4) applied inside the router, same mounting
+      // convention as resultsVnextKpiRoutes/resultsVnextRoiRoutes above.
+      app.use('/api/vnext/results/okr', resultsVnextOkrRoutes);
       app.use('/api/realtime-v4', realtimePlatformRoutes);
       app.use('/api/inbox-v4', inboxEnterpriseRoutes);
       app.use('/api/assessments-v4', assessmentEnterpriseRoutes);

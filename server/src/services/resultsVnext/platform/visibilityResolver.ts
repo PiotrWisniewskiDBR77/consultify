@@ -259,6 +259,65 @@ export async function getActiveVisibilityPolicy(
   return { policyId: row.policy_id, policyVersion: String(row.policy_version) };
 }
 
+// ==========================================
+// publishVisibilityPolicy (OKR-E001 design §5, Decision P5)
+// ==========================================
+
+/**
+ * Write counterpart to `getActiveVisibilityPolicy` above — closes any
+ * currently active row for `(organizationId, domain)` and opens a new one,
+ * inside the CALLER's own transaction/pinned client (never opens its own).
+ * First real product-facing writer of `rvn_platform_visibility_policies` —
+ * KPI/ROI only ever had this table seeded by an out-of-band rollout script;
+ * OKR-E001's `publishProgram` is the first command that authors a row here
+ * itself (design §5, Decision P5).
+ *
+ * MUST run UPDATE-then-INSERT in that order on the SAME client, inside the
+ * caller's own `applyMutation` — the table's `EXCLUDE USING gist
+ * (organization_id WITH =, domain WITH =, tstzrange(effective_from,
+ * effective_to) WITH &&)` constraint (20260809_rvn_platform_visibility_core.sql)
+ * rejects an INSERT of a new open-ended row while the prior row's range
+ * still overlaps; closing the prior row first (setting `effective_to =
+ * now()`) narrows its range so the new row's range no longer overlaps.
+ * Same "helper called from inside another command's own transaction" shape
+ * as `openOrEscalateDeviationCase` being invoked from inside
+ * `recordMeasurement` (kpiDeviationCommands.ts).
+ */
+export async function publishVisibilityPolicy(
+  client: PoolClient,
+  input: { organizationId: string; domain: string; mode: string; publishedBy: string }
+): Promise<ActiveVisibilityPolicy> {
+  const { organizationId, domain, mode, publishedBy } = input;
+
+  await client.query(
+    `UPDATE rvn_platform_visibility_policies
+        SET effective_to = now()
+      WHERE organization_id = $1 AND domain = $2
+        AND is_active = true
+        AND (effective_to IS NULL OR effective_to > now())`,
+    [organizationId, domain]
+  );
+
+  const nextVersionResult = await client.query<{ next: number }>(
+    `SELECT COALESCE(MAX(policy_version), 0) + 1 AS next
+       FROM rvn_platform_visibility_policies
+      WHERE organization_id = $1 AND domain = $2`,
+    [organizationId, domain]
+  );
+  const nextVersion = nextVersionResult.rows[0].next;
+
+  const insertResult = await client.query<{ policy_id: string; policy_version: number }>(
+    `INSERT INTO rvn_platform_visibility_policies
+       (organization_id, domain, policy_version, visibility_mode, allow_narrowing_only,
+        default_scope_type, is_active, effective_from, created_by)
+     VALUES ($1, $2, $3, $4, true, NULL, true, now(), $5)
+     RETURNING policy_id, policy_version`,
+    [organizationId, domain, nextVersion, mode, publishedBy]
+  );
+  const row = insertResult.rows[0];
+  return { policyId: row.policy_id, policyVersion: String(row.policy_version) };
+}
+
 /**
  * -- DEVIATION FROM DESIGN: §B.3 names the existing membership tables for
  * SCOPE mode as "team_members/initiative_contributors". `team_members`
