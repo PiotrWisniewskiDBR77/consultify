@@ -62,6 +62,14 @@ const mockListCheckIns = vi.fn();
 const mockGetCheckIn = vi.fn();
 const mockSuggestNextCheckInValue = vi.fn();
 
+// OKR-E005
+const mockProposeAlignment = vi.fn();
+const mockAcceptAlignment = vi.fn();
+const mockRejectAlignment = vi.fn();
+const mockRemoveAlignment = vi.fn();
+const mockListAlignmentsForObjective = vi.fn();
+const mockGetAlignmentTreeUnderObjective = vi.fn();
+
 vi.mock('../../../middleware/auth.middleware.js', () => ({
   verifyToken: (req: any, _res: any, next: () => void) => {
     req.user = { id: 'user-1', organizationId: 'org-1', role: 'admin' };
@@ -190,6 +198,24 @@ vi.mock('../../../services/resultsVnext/okr/okrCheckInSuggestionService.js', () 
   suggestNextCheckInValue: (...args: unknown[]) => mockSuggestNextCheckInValue(...args),
 }));
 
+// OKR-E005
+vi.mock('../../../services/resultsVnext/okr/okrAlignmentCommands.js', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('../../../services/resultsVnext/okr/okrAlignmentCommands.js')>();
+  return {
+    ...actual,
+    proposeAlignment: (...args: unknown[]) => mockProposeAlignment(...args),
+    acceptAlignment: (...args: unknown[]) => mockAcceptAlignment(...args),
+    rejectAlignment: (...args: unknown[]) => mockRejectAlignment(...args),
+    removeAlignment: (...args: unknown[]) => mockRemoveAlignment(...args),
+  };
+});
+
+vi.mock('../../../services/resultsVnext/okr/okrAlignmentRepository.js', () => ({
+  listAlignmentsForObjective: (...args: unknown[]) => mockListAlignmentsForObjective(...args),
+  getAlignmentTreeUnderObjective: (...args: unknown[]) => mockGetAlignmentTreeUnderObjective(...args),
+}));
+
 const { OkrProgramValidationError } = await import('../../../services/resultsVnext/okr/okrProgramCommands.js');
 const { OkrCycleProgramNotActiveError, OkrCycleValidationError } = await import(
   '../../../services/resultsVnext/okr/okrCycleCommands.js'
@@ -214,6 +240,13 @@ const {
   OkrCheckInNotFoundError,
   OkrCheckInValidationError,
 } = await import('../../../services/resultsVnext/okr/okrCheckInCommands.js');
+const {
+  OkrAlignmentCycleDetectedError,
+  OkrAlignmentCycleMismatchError,
+  OkrAlignmentNotOwnerError,
+  OkrAlignmentValidationError,
+  OkrAlignmentVisibilityDeniedError,
+} = await import('../../../services/resultsVnext/okr/okrAlignmentCommands.js');
 
 const okrRoutes = (await import('../okr.routes.js')).default;
 
@@ -1182,6 +1215,36 @@ function keyResultFixture(overrides: Record<string, unknown> = {}) {
   };
 }
 
+// OKR-E005
+const ALIGNMENT_ID = '88888888-8888-4888-8888-888888888888';
+const SOURCE_OBJECTIVE_ID = OBJECTIVE_ID;
+const TARGET_OBJECTIVE_ID = '99999999-9999-4999-8999-999999999999';
+
+function alignmentFixture(overrides: Record<string, unknown> = {}) {
+  return {
+    alignmentId: ALIGNMENT_ID,
+    organizationId: 'org-1',
+    sourceObjectiveId: SOURCE_OBJECTIVE_ID,
+    targetObjectiveId: TARGET_OBJECTIVE_ID,
+    relation: 'contributes_to',
+    rationale: null,
+    status: 'proposed',
+    sourceCycleId: CYCLE_ID,
+    targetCycleId: CYCLE_ID,
+    proposedBy: 'user-1',
+    proposedAt: '2026-01-01T00:00:00.000Z',
+    respondedBy: null,
+    respondedAt: null,
+    responseReason: null,
+    removedBy: null,
+    removedAt: null,
+    rowVersion: 1,
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-01-01T00:00:00.000Z',
+    ...overrides,
+  };
+}
+
 // ==========================================
 // POST /sets/:setId/objectives + GET /sets/:setId/objectives — createObjective / listObjectivesForSet
 // ==========================================
@@ -1744,5 +1807,320 @@ describe('Mount order — GET /objectives/:objectiveId and /key-results/:keyResu
     expect(response.status).toBe(200);
     expect(mockListObjectivesForSet).toHaveBeenCalledTimes(1);
     expect(mockGetObjective).not.toHaveBeenCalled();
+  });
+});
+
+// ==========================================
+// OKR-E005 — Alignment routes (design §H)
+// ==========================================
+
+describe('POST /objectives/:objectiveId/alignments — proposeAlignment', () => {
+  it('proposes an alignment (201 when created:true) when the source Objective exists', async () => {
+    mockGetObjective.mockResolvedValue({ ...objectiveFixture(), keyResults: [] });
+    mockProposeAlignment.mockResolvedValue({
+      outcome: 'applied',
+      eventId: 'evt-align-1',
+      resultingVersion: 1,
+      result: { alignment: alignmentFixture(), created: true },
+    });
+
+    const response = await request(createApp())
+      .post(`/api/vnext/results/okr/objectives/${SOURCE_OBJECTIVE_ID}/alignments`)
+      .send({ targetObjectiveId: TARGET_OBJECTIVE_ID });
+    expect(response.status).toBe(201);
+    expect(response.body.alignment.alignmentId).toBe(ALIGNMENT_ID);
+    expect(response.body.created).toBe(true);
+    const callArgs = mockProposeAlignment.mock.calls[0][0];
+    expect(callArgs.sourceObjectiveId).toBe(SOURCE_OBJECTIVE_ID);
+    expect(callArgs.targetObjectiveId).toBe(TARGET_OBJECTIVE_ID);
+    expect(callArgs.proposedBy).toBe('user-1');
+    expect(callArgs.organizationId).toBe('org-1');
+  });
+
+  it('returns 200 (not 201) when a pre-existing edge is returned (created:false)', async () => {
+    mockGetObjective.mockResolvedValue({ ...objectiveFixture(), keyResults: [] });
+    mockProposeAlignment.mockResolvedValue({
+      outcome: 'applied',
+      eventId: 'evt-align-2',
+      resultingVersion: 1,
+      result: { alignment: alignmentFixture(), created: false },
+    });
+    const response = await request(createApp())
+      .post(`/api/vnext/results/okr/objectives/${SOURCE_OBJECTIVE_ID}/alignments`)
+      .send({ targetObjectiveId: TARGET_OBJECTIVE_ID });
+    expect(response.status).toBe(200);
+    expect(response.body.created).toBe(false);
+  });
+
+  it('404s when the source Objective does not exist/is not visible, without calling the command', async () => {
+    mockGetObjective.mockResolvedValue(null);
+    const response = await request(createApp())
+      .post(`/api/vnext/results/okr/objectives/${SOURCE_OBJECTIVE_ID}/alignments`)
+      .send({ targetObjectiveId: TARGET_OBJECTIVE_ID });
+    expect(response.status).toBe(404);
+    expect(mockProposeAlignment).not.toHaveBeenCalled();
+  });
+
+  it('400s when targetObjectiveId is missing (Zod validation)', async () => {
+    const response = await request(createApp())
+      .post(`/api/vnext/results/okr/objectives/${SOURCE_OBJECTIVE_ID}/alignments`)
+      .send({});
+    expect(response.status).toBe(400);
+    expect(mockProposeAlignment).not.toHaveBeenCalled();
+  });
+
+  it('maps OkrAlignmentValidationError (SELF_LOOP) to 409', async () => {
+    mockGetObjective.mockResolvedValue({ ...objectiveFixture(), keyResults: [] });
+    mockProposeAlignment.mockRejectedValue(
+      new OkrAlignmentValidationError('self-loop', 'SELF_LOOP', { objectiveId: SOURCE_OBJECTIVE_ID })
+    );
+    const response = await request(createApp())
+      .post(`/api/vnext/results/okr/objectives/${SOURCE_OBJECTIVE_ID}/alignments`)
+      .send({ targetObjectiveId: SOURCE_OBJECTIVE_ID });
+    expect(response.status).toBe(409);
+    expect(response.body.code).toBe('SELF_LOOP');
+  });
+
+  it('maps OkrAlignmentNotOwnerError (NOT_SOURCE_OWNER) to 403', async () => {
+    mockGetObjective.mockResolvedValue({ ...objectiveFixture(), keyResults: [] });
+    mockProposeAlignment.mockRejectedValue(
+      new OkrAlignmentNotOwnerError('not owner', 'NOT_SOURCE_OWNER', { objectiveId: SOURCE_OBJECTIVE_ID })
+    );
+    const response = await request(createApp())
+      .post(`/api/vnext/results/okr/objectives/${SOURCE_OBJECTIVE_ID}/alignments`)
+      .send({ targetObjectiveId: TARGET_OBJECTIVE_ID });
+    expect(response.status).toBe(403);
+    expect(response.body.code).toBe('NOT_SOURCE_OWNER');
+  });
+
+  it('maps OkrAlignmentVisibilityDeniedError to 403', async () => {
+    mockGetObjective.mockResolvedValue({ ...objectiveFixture(), keyResults: [] });
+    mockProposeAlignment.mockRejectedValue(
+      new OkrAlignmentVisibilityDeniedError(TARGET_OBJECTIVE_ID, SET_ID)
+    );
+    const response = await request(createApp())
+      .post(`/api/vnext/results/okr/objectives/${SOURCE_OBJECTIVE_ID}/alignments`)
+      .send({ targetObjectiveId: TARGET_OBJECTIVE_ID });
+    expect(response.status).toBe(403);
+    expect(response.body.code).toBe('VISIBILITY_DENIED');
+  });
+
+  it('maps OkrAlignmentCycleMismatchError to 409', async () => {
+    mockGetObjective.mockResolvedValue({ ...objectiveFixture(), keyResults: [] });
+    mockProposeAlignment.mockRejectedValue(new OkrAlignmentCycleMismatchError(CYCLE_ID, 'other-cycle-id'));
+    const response = await request(createApp())
+      .post(`/api/vnext/results/okr/objectives/${SOURCE_OBJECTIVE_ID}/alignments`)
+      .send({ targetObjectiveId: TARGET_OBJECTIVE_ID });
+    expect(response.status).toBe(409);
+    expect(response.body.code).toBe('CYCLE_MISMATCH');
+  });
+
+  it('maps OkrAlignmentCycleDetectedError to 409', async () => {
+    mockGetObjective.mockResolvedValue({ ...objectiveFixture(), keyResults: [] });
+    mockProposeAlignment.mockRejectedValue(
+      new OkrAlignmentCycleDetectedError(SOURCE_OBJECTIVE_ID, TARGET_OBJECTIVE_ID)
+    );
+    const response = await request(createApp())
+      .post(`/api/vnext/results/okr/objectives/${SOURCE_OBJECTIVE_ID}/alignments`)
+      .send({ targetObjectiveId: TARGET_OBJECTIVE_ID });
+    expect(response.status).toBe(409);
+    expect(response.body.code).toBe('CYCLE_DETECTED');
+  });
+});
+
+describe('GET /objectives/:objectiveId/alignments — listAlignmentsForObjective', () => {
+  it('lists alignments for the given direction', async () => {
+    mockListAlignmentsForObjective.mockResolvedValue([alignmentFixture()]);
+    const response = await request(createApp()).get(
+      `/api/vnext/results/okr/objectives/${SOURCE_OBJECTIVE_ID}/alignments?direction=outgoing`
+    );
+    expect(response.status).toBe(200);
+    expect(response.body.alignments).toHaveLength(1);
+    expect(mockListAlignmentsForObjective).toHaveBeenCalledWith({
+      userId: 'user-1',
+      organizationId: 'org-1',
+      objectiveId: SOURCE_OBJECTIVE_ID,
+      direction: 'outgoing',
+      status: undefined,
+    });
+  });
+
+  it('400s when direction is missing/invalid (Zod validation)', async () => {
+    const response = await request(createApp()).get(
+      `/api/vnext/results/okr/objectives/${SOURCE_OBJECTIVE_ID}/alignments`
+    );
+    expect(response.status).toBe(400);
+    expect(mockListAlignmentsForObjective).not.toHaveBeenCalled();
+  });
+});
+
+describe('GET /objectives/:objectiveId/alignment-tree — getAlignmentTreeUnderObjective', () => {
+  it('returns the alignment tree nodes', async () => {
+    mockGetAlignmentTreeUnderObjective.mockResolvedValue([{ alignment: alignmentFixture(), depth: 1 }]);
+    const response = await request(createApp()).get(
+      `/api/vnext/results/okr/objectives/${TARGET_OBJECTIVE_ID}/alignment-tree`
+    );
+    expect(response.status).toBe(200);
+    expect(response.body.nodes).toHaveLength(1);
+    expect(response.body.nodes[0].depth).toBe(1);
+  });
+});
+
+describe('POST /alignments/:alignmentId/accept — acceptAlignment', () => {
+  it('accepts and returns the alignment', async () => {
+    mockAcceptAlignment.mockResolvedValue({
+      outcome: 'applied',
+      eventId: 'evt-align-3',
+      resultingVersion: 2,
+      result: alignmentFixture({ status: 'accepted', respondedBy: 'user-1', rowVersion: 2 }),
+    });
+    const response = await request(createApp())
+      .post(`/api/vnext/results/okr/alignments/${ALIGNMENT_ID}/accept`)
+      .send({ expectedVersion: 1 });
+    expect(response.status).toBe(200);
+    expect(response.body.alignment.status).toBe('accepted');
+    expect(mockGetObjective).not.toHaveBeenCalled(); // no pre-fetch — Alignment is not an ABAC Set resource
+  });
+
+  it('maps OkrAlignmentNotOwnerError (NOT_TARGET_OWNER) to 403', async () => {
+    mockAcceptAlignment.mockRejectedValue(
+      new OkrAlignmentNotOwnerError('not target owner', 'NOT_TARGET_OWNER', { alignmentId: ALIGNMENT_ID })
+    );
+    const response = await request(createApp())
+      .post(`/api/vnext/results/okr/alignments/${ALIGNMENT_ID}/accept`)
+      .send({ expectedVersion: 1 });
+    expect(response.status).toBe(403);
+    expect(response.body.code).toBe('NOT_TARGET_OWNER');
+  });
+
+  it('maps OkrAlignmentValidationError (NOT_PROPOSED) to 409', async () => {
+    mockAcceptAlignment.mockRejectedValue(
+      new OkrAlignmentValidationError('not proposed', 'NOT_PROPOSED', { alignmentId: ALIGNMENT_ID })
+    );
+    const response = await request(createApp())
+      .post(`/api/vnext/results/okr/alignments/${ALIGNMENT_ID}/accept`)
+      .send({ expectedVersion: 1 });
+    expect(response.status).toBe(409);
+    expect(response.body.code).toBe('NOT_PROPOSED');
+  });
+
+  it('maps OkrAlignmentCycleDetectedError (accept-time re-check) to 409', async () => {
+    mockAcceptAlignment.mockRejectedValue(
+      new OkrAlignmentCycleDetectedError(SOURCE_OBJECTIVE_ID, TARGET_OBJECTIVE_ID)
+    );
+    const response = await request(createApp())
+      .post(`/api/vnext/results/okr/alignments/${ALIGNMENT_ID}/accept`)
+      .send({ expectedVersion: 1 });
+    expect(response.status).toBe(409);
+    expect(response.body.code).toBe('CYCLE_DETECTED');
+  });
+
+  it('maps AtomicWriteConflictError (STALE_VERSION) to 409', async () => {
+    mockAcceptAlignment.mockRejectedValue(
+      new AtomicWriteConflictError('stale', 'STALE_VERSION', { currentVersion: 2, expectedVersion: 1 })
+    );
+    const response = await request(createApp())
+      .post(`/api/vnext/results/okr/alignments/${ALIGNMENT_ID}/accept`)
+      .send({ expectedVersion: 1 });
+    expect(response.status).toBe(409);
+    expect(response.body.code).toBe('STALE_VERSION');
+  });
+
+  it('maps AtomicWriteAggregateNotFoundError to 404', async () => {
+    mockAcceptAlignment.mockRejectedValue(new AtomicWriteAggregateNotFoundError());
+    const response = await request(createApp())
+      .post(`/api/vnext/results/okr/alignments/${ALIGNMENT_ID}/accept`)
+      .send({ expectedVersion: 1 });
+    expect(response.status).toBe(404);
+  });
+
+  it('400s when expectedVersion is missing (Zod validation)', async () => {
+    const response = await request(createApp())
+      .post(`/api/vnext/results/okr/alignments/${ALIGNMENT_ID}/accept`)
+      .send({});
+    expect(response.status).toBe(400);
+    expect(mockAcceptAlignment).not.toHaveBeenCalled();
+  });
+});
+
+describe('POST /alignments/:alignmentId/reject — rejectAlignment', () => {
+  it('rejects and returns the alignment', async () => {
+    mockRejectAlignment.mockResolvedValue({
+      outcome: 'applied',
+      eventId: 'evt-align-4',
+      resultingVersion: 2,
+      result: alignmentFixture({ status: 'rejected', responseReason: 'no thanks', rowVersion: 2 }),
+    });
+    const response = await request(createApp())
+      .post(`/api/vnext/results/okr/alignments/${ALIGNMENT_ID}/reject`)
+      .send({ expectedVersion: 1, responseReason: 'no thanks' });
+    expect(response.status).toBe(200);
+    expect(response.body.alignment.status).toBe('rejected');
+    expect(response.body.alignment.responseReason).toBe('no thanks');
+  });
+
+  it('maps OkrAlignmentNotOwnerError (NOT_TARGET_OWNER) to 403', async () => {
+    mockRejectAlignment.mockRejectedValue(
+      new OkrAlignmentNotOwnerError('not target owner', 'NOT_TARGET_OWNER', { alignmentId: ALIGNMENT_ID })
+    );
+    const response = await request(createApp())
+      .post(`/api/vnext/results/okr/alignments/${ALIGNMENT_ID}/reject`)
+      .send({ expectedVersion: 1 });
+    expect(response.status).toBe(403);
+    expect(response.body.code).toBe('NOT_TARGET_OWNER');
+  });
+});
+
+describe('POST /alignments/:alignmentId/remove — removeAlignment', () => {
+  it('removes and returns the alignment', async () => {
+    mockRemoveAlignment.mockResolvedValue({
+      outcome: 'applied',
+      eventId: 'evt-align-5',
+      resultingVersion: 2,
+      result: alignmentFixture({ status: 'removed', removedBy: 'user-1', rowVersion: 2 }),
+    });
+    const response = await request(createApp())
+      .post(`/api/vnext/results/okr/alignments/${ALIGNMENT_ID}/remove`)
+      .send({ expectedVersion: 1 });
+    expect(response.status).toBe(200);
+    expect(response.body.alignment.status).toBe('removed');
+  });
+
+  it('maps OkrAlignmentNotOwnerError (NOT_OWNER) to 403', async () => {
+    mockRemoveAlignment.mockRejectedValue(
+      new OkrAlignmentNotOwnerError('not owner', 'NOT_OWNER', { alignmentId: ALIGNMENT_ID })
+    );
+    const response = await request(createApp())
+      .post(`/api/vnext/results/okr/alignments/${ALIGNMENT_ID}/remove`)
+      .send({ expectedVersion: 1 });
+    expect(response.status).toBe(403);
+    expect(response.body.code).toBe('NOT_OWNER');
+  });
+
+  it('maps OkrAlignmentValidationError (NOT_REMOVABLE) to 409', async () => {
+    mockRemoveAlignment.mockRejectedValue(
+      new OkrAlignmentValidationError('not removable', 'NOT_REMOVABLE', { alignmentId: ALIGNMENT_ID })
+    );
+    const response = await request(createApp())
+      .post(`/api/vnext/results/okr/alignments/${ALIGNMENT_ID}/remove`)
+      .send({ expectedVersion: 1 });
+    expect(response.status).toBe(409);
+    expect(response.body.code).toBe('NOT_REMOVABLE');
+  });
+});
+
+describe('Mount order — /alignments/:alignmentId/accept|reject|remove are reachable dynamic sub-paths', () => {
+  it('POST /alignments/:alignmentId/accept resolves to acceptAlignment, not a stray :alignmentId handler', async () => {
+    mockAcceptAlignment.mockResolvedValue({
+      outcome: 'applied',
+      eventId: 'evt-align-6',
+      resultingVersion: 2,
+      result: alignmentFixture({ status: 'accepted', rowVersion: 2 }),
+    });
+    const response = await request(createApp())
+      .post(`/api/vnext/results/okr/alignments/${ALIGNMENT_ID}/accept`)
+      .send({ expectedVersion: 1 });
+    expect(response.status).toBe(200);
+    expect(mockAcceptAlignment).toHaveBeenCalledTimes(1);
   });
 });

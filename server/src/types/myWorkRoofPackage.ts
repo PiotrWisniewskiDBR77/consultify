@@ -54,6 +54,10 @@ export const CanonicalObjectTypeValues = [
   // in sync with RVN_RESOURCE_TYPES (same duplication rationale as above).
   'okr_program',
   'okr_cycle',
+  // OKR-E005 (docs/product/results-vnext/OKR_E005_DESIGN.md) — Alignment.
+  // Appended, never reordered/removed relative to the values above. Stays
+  // in sync with RVN_RESOURCE_TYPES (same duplication rationale as above).
+  'okr_alignment',
 ] as const;
 export type CanonicalObjectType = (typeof CanonicalObjectTypeValues)[number];
 

@@ -225,10 +225,40 @@ checkin-u, zakładane że E006 czyta bezpośrednio, nigdy niepotwierdzone.
 | Decision ID | D09 | D09 | D09 | D09, D10 |
 | Requirement | `ObjectiveAlignment.relation=contributes_to` opcjonalna, cross-functional; brak wymuszonej czystości drzewa/klonowania treści. | **Utworzenie/akceptacja alignment NIE MUTUJE progress/confidence/roll-up celu docelowego** — bezpośrednie odrzucenie AS-IS `okr_objectives.parent_id` cascade rollup. | Cykle w grafie odrzucane na poziomie komendy; cross-cycle/cross-org niezgodność failuje walidację. | Ukryte/restricted Objectives nie przeciekają przez węzły/liczniki/search/analytics/Teresa — test negatywny na realDB. |
 | Aggregate/owner | ObjectiveAlignment | ObjectiveAlignment ↔ Objective (target) | ObjectiveAlignment validation service | ObjectiveAlignment read projection |
-| Command/query/API | `POST .../objectives/:id/alignments`, `DELETE .../alignments/:id` | j.w. (guard w accept) | j.w. (walidacja przy create) | `GET` alignment list/graph |
+| Command/query/API | `POST .../objectives/:id/alignments`, `POST .../alignments/:id/remove` | j.w. (guard w accept) | j.w. (walidacja przy create) | `GET .../objectives/:id/alignments`, `GET .../alignments-tree` |
 | Schema/migration/constraint | `okr_vnext_alignments` (status: proposed/accepted/rejected/removed) | `okr_vnext_objectives.progress/confidence` — **BRAK triggera/kaskady** | `okr_vnext_alignments` + cycle/org compat constraint | filtr autoryzacji PRZED agregacją |
 | Roles/visibility | Objective Owner (propose), target Owner (accept/reject) | wszystkie role | wszystkie role | RESTRICTED_ACL/PRIVATE — Auditor break-glass wyjątek |
-| Status | NOT_IMPLEMENTED | NOT_IMPLEMENTED | NOT_IMPLEMENTED | NOT_IMPLEMENTED |
+| Status | IMPLEMENTED | IMPLEMENTED | IMPLEMENTED | IMPLEMENTED |
+
+**IMPLEMENTED 2026-08-10** (agent równoległego worktree, EXECUTION_LEDGER.md
+§44 — numer sekcji może zostać przenumerowany przez orkiestratora przy
+scaleniu, treść pod nazwą "OKR-E005 Alignment"). Zbudowane wg
+`OKR_E005_DESIGN.md` §A-§J, ratyfikowane blokiem §-IO. **IO-1 rozjazd
+znaleziony i udokumentowany**: draft zakładał, że OKR-E003 zarejestruje
+nowy resource_type `'okr_objective'` — realnie wylądowany kod robi inaczej
+(Objectives/KeyResults dziedziczą widoczność WYŁĄCZNIE przez `set_id`
+rodzica-Setu, zero niezależnego resource_type); cała warstwa E005
+(komendy+repo) napisana przeciw temu REALNEMU kształtowi. `DELETE
+.../alignments/:id` z draftu zmapowany na guarded `POST
+.../alignments/:id/remove` (ten sam wzorzec co `cancelObjective`/
+`cancelKeyResult`), `GET alignment list/graph` rozbite na dwa konkretne
+endpointy (`.../alignments` i `.../alignment-tree`) — zmiany stated
+explicite, nie ciche. **Czteropoziomowy dowód "brak FK/roll-up
+inheritance" (serce epiku) wszystkie 4 warstwy zielone**: DDL bez triggera,
+static source-text proof (8/8), realDB full-row-equality PRZED/PO każdej
+komendy (5/5, bug fixture znaleziony i naprawiony —
+`objectiveRollupModel` domyślnie `'none'` czyniło `progress` trwale NULL),
+trigger-introspection (`information_schema.triggers` zero wierszy). Cycle
+detection: ogólna grafowa reachability (DAG), sprawdzana przy propose I
+przy accept (accept-time re-check dowiedziony bezpośrednio scenariuszem
+rasy z designu — dwie z osobna acykliczne propozycje razem zamykają cykl
+dopiero po obu akceptacjach). Cross-cycle: REALNY DB CHECK (dowiedziony
+bezpośrednim INSERT z pominięciem warstwy komend) + command-layer
+pre-check. Cross-visibility: podwójny join CTE (raz na endpoint), "absent,
+not redacted" dowiedzione dla wszystkich 4 kombinacji widoczności +
+semantyka "stop, don't skip" drzewa wyrównań. 88 nowych testów, wszystkie
+PASS na efemerycznym Postgresie 17; `tsc --noEmit` czysty. Szczegóły pełne:
+EXECUTION_LEDGER.md §44.
 
 ### OKR-E006 Support & Decisions
 

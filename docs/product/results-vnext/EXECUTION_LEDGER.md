@@ -4516,3 +4516,222 @@ przyczynowość wykluczona strukturalnie (grep potwierdza zero importu
    restated forward zamiast cicho założone, ten sam wzorzec co OKR-E002
    D13's `resolveScopeVisibility` gap.
 
+---
+
+## 45. OKR-E005 Alignment — implementacja + odbiór (2026-08-10)
+
+Piąty epik domeny OKR, budowany w IZOLOWANYM WORKTREE równolegle z OKR-E004
+(inny agent, inny worktree) — ten worktree zaczynał od `codex/results-vnext-g0-20260809`
+(zweryfikowane `git log --oneline -5` na starcie: E001/E002/E003 widoczne),
+NIE ma commitów E004 (inny agent, inny worktree — nie jest to regresja,
+tylko brak wglądu w równoległą pracę do scalenia przez orkiestratora).
+Zbudowane wg `OKR_E005_DESIGN.md` §A-§J, ratyfikowane przez blok §-IO na
+czele dokumentu.
+
+**IO-1 re-verification — RZECZYWISTY rozjazd znaleziony i udokumentowany**:
+draft designu (pisany, gdy E001-E004 nie istniały jeszcze jako kod) założył,
+że OKR-E003 zarejestruje NOWY resource_type `'okr_objective'`
+(`RVN_RESOURCE_TYPES`/`rvn_platform_resource_visibility`) dla Objectives, i
+że warstwa odczytu E005 będzie joinować bezpośrednio przeciw niemu.
+Bezpośrednie odczytanie WYLĄDOWANEGO `okrObjectiveRepository.ts`/
+`okrObjectiveCommands.ts`/`20260824_rvn_okr_objective_key_result.sql`
+pokazuje inny, prostszy wybór E003: Objectives/KeyResults NIE MAJĄ
+niezależnego resource_type — dziedziczą widoczność WYŁĄCZNIE przez `set_id`
+rodzica-Setu, jego własny wiersz `'okr_set'`. Cała warstwa E005 (komendy +
+repozytorium) napisana przeciw temu REALNEMU kształtowi, nie założeniu
+draftu — każdy join podwójnej widoczności w `okrAlignmentRepository.ts`
+łączy się przez `okr_vnext_objectives.set_id` do `'okr_set'`, nigdy do
+nieistniejącego `'okr_objective'`. Druga konsekwencja: `aggregateType`
+zdarzeń jest typowany na `RvnResourceType` (unia z `resourceTypes.ts`) —
+E003 rozwiązało to pożyczając tożsamość rodzica-Setu (`aggregateType:'okr_set'`,
+`aggregateId: setId`) dla zdarzeń Objective/KeyResult; Alignment nie ma
+JEDNEGO właściciela-Setu (dwa peer-endpointy, potencjalnie różne Sety), więc
+zamiast pożyczać cudzą tożsamość, dopisano `'okr_alignment'` do
+`RVN_RESOURCE_TYPES`/`CanonicalObjectTypeValues` — DODATKOWA, addytywna,
+wstecznie kompatybilna zmiana dozwolona wprost przez IO-6 ("permitted only
+when additive and strictly backward-compatible"), z komentarzem wprost
+mówiącym że to WYŁĄCZNIE dla tagowania zdarzeń, nie dla wiersza ABAC
+(`okr_vnext_alignments` nigdy nie dostaje własnego wiersza
+`rvn_platform_resource_visibility` — ten sam wzorzec co `'okr_program'`/`'okr_cycle'`).
+
+**Schema** (`server/migrations/20260825_rvn_okr_alignment.sql`): jedna
+nowa tabela `okr_vnext_alignments` — `source_objective_id`/`target_objective_id`
+(UUID FK do `okr_vnext_objectives`), `relation` (CHECK jeden legalny
+wariant `'contributes_to'` — "supports"/"depends-on" z brief zadania to
+spekulacja niepoparta żadnym AC, NIE zaimplementowane), `status`
+(`proposed|accepted|rejected|removed`), `source_cycle_id`/`target_cycle_id`
+zdenormalizowane (Postgres CHECK nie może odwoływać się do innej tabeli) z
+REALNYM `CHECK (source_cycle_id = target_cycle_id)` — OKR-F-016. Unique
+index częściowy `ux_okr_vnext_alignments_live_edge` na
+`(organization_id, source_objective_id, target_objective_id, relation)
+WHERE status IN ('proposed','accepted')` — rejected/removed zwalnia slot
+(ten sam wzorzec co D3 OKR-E002's `ux_okr_vnext_sets_one_per_scope_cycle_owner`).
+**Zero triggerów w tej migracji** — Layer 1 czteropoziomowego dowodu
+no-score-inheritance.
+
+**★ Serce epiku — czteropoziomowy dowód "brak FK/roll-up inheritance"
+(D09/OKR-F-015, dosłowny tekst acceptance-evidence z D09 w
+`01_RESULTS_MASTER_IMPLEMENTATION_PLAN.md` §2), WSZYSTKIE 4 warstwy
+ZIELONE**:
+1. **DDL absence** — migracja bez `CREATE TRIGGER`, potwierdzone statycznie
+   w Layer 2 i introspekcyjnie w Layer 4.
+2. **Static source-text proof** (`alignmentNoScoreMutation.static.test.ts`,
+   8/8 PASS) — wzorowane dosłownie na `teresa-kpi-forbidden-verbs.test.ts`
+   (KPI-E006): jedyny import z `okrObjectiveCommands.js` to
+   `OkrObjectiveNotFoundError` (czysta klasa błędu, nie funkcja mutująca);
+   ZERO importu z `okrKeyResultCommands.js` w ogóle; żaden z 7 zakazanych
+   czasowników (`updateObjective`/`cancelObjective`/`createObjective`/
+   `recomputeObjectiveRollup`/`createKeyResult`/`updateKeyResult`/
+   `cancelKeyResult`) nie występuje jako import ani jako wywołanie `verb(`
+   w kodzie nie-komentarzowym; żaden surowy SQL `UPDATE/INSERT/DELETE
+   okr_vnext_objectives|okr_vnext_key_results` nigdzie w
+   `okrAlignmentCommands.ts`/`okrAlignmentRepository.ts`.
+3. **realDB full-row-equality proof** (`alignmentNoScoreMutation.realdb.test.ts`,
+   5/5 PASS) — dwa Objectives z realnym, silnikiem policzonym `progress`
+   (via KeyResult pod każdym; **znaleziony i naprawiony bug fixture**:
+   `createProgram`'s domyślny `objectiveRollupModel='none'` czyni `progress`
+   trwale `not_calculable`/NULL niezależnie od KR — przypięte do
+   `'equal_average'`, inaczej test dowodziłby niczego). Po KAŻDEJ
+   pojedynczej komendzie (propose→accept; propose→reject;
+   propose→accept→remove) `SELECT *` obu Objectives porównany `toEqual`
+   PRZED i PO — nie tylko `progress`/`confidence`, CAŁY wiersz.
+4. **DB trigger-introspection proof** (ten sam plik) — `information_schema.triggers`
+   dla `okr_vnext_objectives`/`okr_vnext_key_results` ma DOSŁOWNIE ZERO
+   wierszy dzisiaj (silniejsza asercja), plus osobna asercja scoped do
+   "brak triggera z 'alignment' w nazwie/action_statement" (przetrwa
+   niezwiązaną przyszłą zmianę).
+
+**Cycle detection (OKR-F-016-AC-01)** — ogólna grafowa reachability (DAG,
+NIE algorytm łańcucha-jednego-rodzica z `managementChainMaintenance.ts` —
+alignment to many-to-many, Objective może mieć wiele wychodzących I
+przychodzących krawędzi). Bounded recursive CTE (`assertNoAlignmentCycle`),
+liczy WYŁĄCZNIE krawędzie `status='accepted'`. Sprawdzane PRZY PROPOSE
+(dosłowne "walidacja przy create" z AC) ORAZ przy ACCEPT (design dodatek,
+restated explicite, nie cichy) — `okrAlignmentCycleDetection.realdb.test.ts`
+(4/4 PASS) dowodzi bezpośredniego 2-węzłowego cyklu, transitywnego
+3-węzłowego, sanity-checku niepowiązanych krawędzi, ORAZ dokładnie
+scenariusza rasy z designu: `B→C` i `C→A` każdy z osobna acykliczny w
+momencie swojego propose (tylko `A→B` accepted), ale zaakceptowanie OBU
+zamyka `A→B→C→A` — propose-time checki tego NIE widzą, tylko accept-time
+re-check łapie DRUGĄ akceptację i zostawia wiersz nietknięty (`'proposed'`).
+
+**Cross-cycle/cross-org (OKR-F-016)** —
+`okrAlignmentCycleBoundary.realdb.test.ts` (4/4 PASS): command-layer
+pre-check (`OkrAlignmentCycleMismatchError`) ORAZ bezpośredni INSERT z
+pominięciem warstwy komend dowodzą, że `CHECK (source_cycle_id =
+target_cycle_id)` to REALNY constraint bazy, nie tylko walidacja
+app-code. Cross-org: każdy lookup w `proposeAlignment` jest
+organization_id-scoped z konstrukcji — Objective z innej org jest po
+prostu `OkrObjectiveNotFoundError`, bez osobnego specjalnego checku.
+
+**Cross-visibility "absent, not redacted" (OKR-F-017-AC-01)** —
+`okrAlignmentVisibilityJoin.realdb.test.ts` (9/9 PASS): KAŻDY odczyt w
+`okrAlignmentRepository.ts` joinuje CTE widoczności DWA razy (raz na
+endpoint, przez `set_id` każdego Objective — IO-1 divergence, nie
+nieistniejący `'okr_objective'`) — oba endpointy muszą przejść, inaczej
+krawędź jest CAŁKOWICIE nieobecna (żaden licznik/placeholder "1 ukryte
+wyrównanie"). Cztery wymagane minimum kombinacje (both-visible/
+source-hidden/target-hidden/both-hidden) dowiedzione dla
+`listAlignmentsForObjective` I `getAlignmentTreeUnderObjective`. §F "stop,
+don't skip" semantyka drzewa dowiedziona bezpośrednio: spacer w górę od
+widocznego węzła zatrzymuje się na pierwszym niewidocznym węźle, NIE
+pomija go by odsłonić dalszy widoczny węzeł za nim. `::text` cast
+dowiedziony bezpośrednio (surowe UUID=TEXT porównanie rzuca, wersja z
+castem wykonuje się). Break-glass Auditor: NIE zbudowany fixture (ten sam
+precedens co `okrSetVisibilityJoin.realdb.test.ts` E002 — emisja
+break-glass audit-event nie jest zbudowana nigdzie w tej platformie,
+restated, nie obejście na około).
+
+**Brak materialized closure table** (design §F) — 4 niezależne powody
+(alignment opcjonalny/many-to-many vs. management chain
+obowiązkowy/single-parent; alignment nie jest hot-pathem współdzielonym
+między 3 domenami; V2 dla interaktywnego grafu; cycle prevention już czyni
+graf acykliczny konstrukcyjnie) — bounded recursive CTE wystarcza.
+
+**Command layer** (`okrAlignmentCommands.ts`): `proposeAlignment`
+(executeAtomicCreate, SAVEPOINT dedupe wzorowany dosłownie na
+`createOkrSet`), `acceptAlignment`/`rejectAlignment`/`removeAlignment`
+(executeAtomicCommand, CAS na `alignment_id`). `OkrAlignmentNotOwnerError`
+wydzielony z generycznego `OkrAlignmentValidationError` PO sprawdzeniu
+własnej tabeli mapowania błędów designu §H: "ACL/Owner-check failure→403"
+to OSOBNA linia od "ObjectiveAlignmentValidationError→409 (self-loop, zła
+tranzycja)" — złożenie obu w jedną klasę dałoby zły status HTTP dla
+odmowy uprawnień (ten sam reżim co `OkrSetSelfApprovalDeniedError` vs
+`OkrSetValidationError`). `removeAlignment`: albo-endpoint-Owner (design
+§J item 5, considered default, restated jako niepotwierdzone). Naming:
+`OkrAlignment*Error` (nie `ObjectiveAlignment*Error` z draftu) — zgodne z
+REALNĄ konwencją lądowanego kodu (`OkrSet*`/`OkrObjective*`/`OkrCycle*`),
+deviation stated explicite.
+
+**Repository** (`okrAlignmentRepository.ts`): `listAlignmentsForObjective`,
+`getAlignmentTreeUnderObjective` — bug znaleziony i naprawiony PRZED
+commitem: rekurencyjne CTE wymaga `WITH RECURSIVE`, ale
+`wrapWithVisibilityScope` emituje wyłącznie zwykłe `WITH` — naprawione
+użyciem `buildVisibilityScopedCte` bezpośrednio i ręcznym sklejeniem CTE
+(udokumentowany alternatywny tryb użycia tej funkcji: "strip the leading
+'WITH ' and splice as one more comma-separated CTE").
+
+**HTTP layer**: 6 nowych routes na współdzielonym `okr.routes.ts`
+(`POST/GET .../objectives/:objectiveId/alignments`, `GET
+.../objectives/:objectiveId/alignment-tree`, `POST
+.../alignments/:alignmentId/{accept,reject,remove}`) — `DELETE` z designu
+zmapowany na guarded `POST .../remove`, ten sam wzorzec co
+`cancelObjective`/`cancelKeyResult` już w tym pliku. Brak
+`requireAdminWrite` — autoryzacja per-record (Owner check) w warstwie
+komend, ten sam reżim co Set/Objective bloki.
+
+**Liczby testów tego epiku**: 8 (static no-score) + 5 (realdb no-score) + 4
+(create: self-loop/owner/visibility/dedupe-race) + 4 (cycle detection) + 4
+(cycle boundary) + 9 (visibility-join) + 12 (lifecycle) + 21
+(route-contract, wliczone w 100/100 pliku) = **67 nowych testów** we
+własnych plikach + 21 route-contract = **88 nowych testów**, wszystkie PASS
+na efemerycznym Postgresie 17 (`initdb --locale=C`, TCP 127.0.0.1,
+`NODE_ENV=test`). `npx tsc --noEmit`
+(`NODE_OPTIONS=--max-old-space-size=8192`) czysty — 0 błędów.
+
+**Weryfikacja before/after pełnych suit**: `tests/resultsVnext/okr` (28
+plików łącznie z `okr.routes.test.ts` w `server/src/routes/`) —
+**324/324 PASS w 28 plikach** na tej samej efemerycznej bazie (baseline
+przed rozpoczęciem tego epiku w TYM worktree: E001+E002+E003+E008 landed,
+brak plików `okrAlignment*` — więc 88 nowych testów netto, zero regresji w
+21 istniejących plikach OKR). Pełna suita `tests/resultsVnext` (86 plików,
+578 testów): **509 PASS / 52 FAIL / 17 skip**. **ZERO** z 52 failing testów
+dotyczy pliku `okr`/`alignment` (zweryfikowane grep po pełnej liście 28
+failing plików) — wszystkie 28 failing plików to ROI/KPI/Teresa realdb
+testy padające na `initiatives_status_check`/`initiatives_organization_id_fkey`,
+DOKŁADNIE ten sam PRZEDISTNIEJĄCY defekt udokumentowany w §37/§43 tego
+dokumentu (fixture'y ROI/KPI nigdy nie wstawiają `ORG_ID` do
+`organizations` przed insertem do `initiatives`, lub insertują status
+`'step3'` którego `initiatives_status_check` nie akceptuje na świeżo
+zmigrowanej bazie) — przyczynowość wykluczona strukturalnie (brak importu
+`okr/*` w żadnym pliku ROI/KPI).
+
+**Nadal otwarte, restated explicite (design §J, NIE ciche) — 12 punktów z
+draftu, żaden nie rozstrzygnięty ciszej niż tam zapisano**:
+1. OKR-E004 (Check-ins) nie było widoczne w TYM worktree w chwili budowy
+   (inny agent, inny worktree, do scalenia przez orkiestratora) — design
+   E005 nie zakłada nic o Check-inach.
+2. Tylko `contributes_to` ma pokrycie AC — "supports"/"depends-on" to
+   spekulacja task briefu, NIE zbudowane.
+3. Reguła cross-cycle (§C: ten sam `cycle_id`) może być ZA OSTRA dla
+   `annual_direction_enabled` (roczne↔kwartalne wyrównanie) — niepotwierdzone,
+   wymaga modelu kadencji OKR-E003/E004.
+4. Self-accept (source Owner == target Owner) dozwolony bez
+   maker-checker — considered default z §J item 4 rozumowania "alignment
+   nigdy nie dotyka score", NIE potwierdzony żadnym AC.
+5. `removeAlignment`'s albo-endpoint-Owner authority — domyślny wybór, nie
+   potwierdzony AC.
+6-7. Propose-time target-visibility / accept-time source-re-visibility —
+   strukturalne dodatki designu §E, nie AC-sourced.
+8. `review_alignment_proposal` obligation — dodatek designu, nie AC-sourced
+   (niskiego ryzyka, `obligationType` to free-text).
+9. Strict "absent, no soft hint" — najostrzejsza obronna interpretacja
+   §7.4, real product mógłby chcieć miękkiej podpowiedzi "są ukryte
+   wyrównania"; nie rozstrzygnięte tutaj.
+10. `buildVisibilityScopedCte`'s PRIVATE-branch owner-bypass gap —
+    pre-existing platform-layer pytanie (`visibilityScopedQuery.ts`), poza
+    file ownership tego epiku.
+11. `maxDepth=6` dla drzewa wyrównań — arbitralny, niesourced z AC.
+12. Czy zamknięte/zarchiwizowane Cykle mogą przyjmować NOWE propozycje
+    wyrównania — nie adresowane przez żaden AC w tej rundzie.
+
