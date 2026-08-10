@@ -4,11 +4,20 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
+// Whole-module mock — see floatingNodeToolbar.test.tsx: an incomplete one makes the
+// file fail to COLLECT the moment the import graph reaches `src/i18n.ts`, which reads
+// as "0 test" and hides every test in the file. Shape copied from `tests/setup.ts`.
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     i18n: { language: 'en' },
     t: (key: string) => key,
   }),
+  initReactI18next: {
+    type: '3rdParty',
+    init: vi.fn(),
+  },
+  Trans: ({ children, i18nKey }: any) => children || i18nKey,
+  I18nextProvider: ({ children }: any) => children,
 }));
 
 import { MoreToolsPanel } from '@/components/MyWork/mindmap/toolbar-popovers/MoreToolsPanel';
