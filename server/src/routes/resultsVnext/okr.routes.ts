@@ -94,6 +94,21 @@ import {
   OkrKeyResultNotFoundError,
   OkrKeyResultValidationError,
 } from '../../services/resultsVnext/okr/okrKeyResultCommands.js';
+import {
+  acceptAlignment,
+  proposeAlignment,
+  rejectAlignment,
+  removeAlignment,
+  OkrAlignmentCycleDetectedError,
+  OkrAlignmentCycleMismatchError,
+  OkrAlignmentNotOwnerError,
+  OkrAlignmentValidationError,
+  OkrAlignmentVisibilityDeniedError,
+} from '../../services/resultsVnext/okr/okrAlignmentCommands.js';
+import {
+  getAlignmentTreeUnderObjective,
+  listAlignmentsForObjective,
+} from '../../services/resultsVnext/okr/okrAlignmentRepository.js';
 import { recordOkrSetMaterialChange } from '../../services/resultsVnext/okr/okrSetMaterialChangeCommands.js';
 import {
   getOkrSet,
@@ -131,6 +146,13 @@ import {
   UpdateOkrKeyResultSchema,
   UpdateOkrObjectiveSchema,
   UpdateOkrSetDraftSchema,
+  AcceptOkrAlignmentSchema,
+  GetOkrAlignmentTreeQuerySchema,
+  ListOkrAlignmentsForObjectiveQuerySchema,
+  OkrAlignmentIdParamsSchema,
+  ProposeOkrAlignmentSchema,
+  RejectOkrAlignmentSchema,
+  RemoveOkrAlignmentSchema,
 } from '../../validators/resultsVnextOkr.validators.js';
 
 const router = Router();
@@ -238,6 +260,19 @@ function handleOkrRouteError(res: Response, err: unknown, op: string): void {
   }
   if (err instanceof OkrObjectiveValidationError || err instanceof OkrKeyResultValidationError) {
     res.status(409).json({ error: err.message, code: err.code, details: err.details });
+    return;
+  }
+  // OKR-E005 (design §H's error-mapping table).
+  if (err instanceof OkrAlignmentVisibilityDeniedError || err instanceof OkrAlignmentNotOwnerError) {
+    res.status(403).json({ error: err.message, code: err.code, ...err.details });
+    return;
+  }
+  if (
+    err instanceof OkrAlignmentCycleMismatchError ||
+    err instanceof OkrAlignmentCycleDetectedError ||
+    err instanceof OkrAlignmentValidationError
+  ) {
+    res.status(409).json({ error: err.message, code: err.code, ...err.details });
     return;
   }
   logger.error(`[resultsVnext/okr.routes] ${op} failed`, {
@@ -1492,6 +1527,231 @@ router.post(
       });
     } catch (err) {
       handleOkrRouteError(res, err, 'cancelKeyResult');
+    }
+  }
+);
+
+// ==========================================
+// OKR-E005 (Alignment) — HTTP layer (design §H).
+//
+// Same posture as the Set/Objective blocks above: no requireAdminWrite
+// gate — the caller's specific authorization (source/target Objective
+// Owner) is a per-record fact checked INSIDE the command
+// (`OkrAlignmentNotOwnerError` -> 403), not a coarse RBAC role gate, same
+// as `approveOkrSet`'s self-approval denial (OKR-E002 §4.5's precedent).
+//
+// MOUNT-ORDER NOTE: `/alignments/:alignmentId`, `/alignments/:alignmentId/accept`,
+// `/alignments/:alignmentId/reject` and `/alignments/:alignmentId/remove` are
+// all dynamic single-segment-then-literal paths — no collision risk within
+// this epic's own routes, but any future literal-path sub-router under
+// `/alignments` must mount before these `:alignmentId` handlers (same class
+// of bug already fixed twice in the KPI domain).
+// ==========================================
+
+// ==========================================
+// POST /api/vnext/results/okr/objectives/:objectiveId/alignments — proposeAlignment
+// ==========================================
+
+router.post(
+  '/objectives/:objectiveId/alignments',
+  validateParams(OkrObjectiveIdParamsSchema),
+  validateBody(ProposeOkrAlignmentSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { objectiveId } = req.params as { objectiveId: string };
+      const existingSource = await getObjective({ userId: auth.userId, organizationId: auth.organizationId, objectiveId });
+      if (!existingSource) {
+        res.status(404).json({ error: 'OKR Objective not found', code: 'NOT_FOUND' });
+        return;
+      }
+      const body = req.body as import('zod').infer<typeof ProposeOkrAlignmentSchema>;
+      const outcome = await proposeAlignment({
+        organizationId: auth.organizationId,
+        sourceObjectiveId: objectiveId,
+        targetObjectiveId: body.targetObjectiveId,
+        rationale: body.rationale ?? null,
+        proposedBy: auth.userId,
+        actorEffectiveRole: auth.role,
+        idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
+        correlationId: getCorrelationId(req),
+        reason: body.reason ?? null,
+      });
+      res.status(outcome.outcome === 'applied' && outcome.result.created ? 201 : 200).json({
+        outcome: outcome.outcome,
+        eventId: outcome.eventId,
+        resultingVersion: outcome.resultingVersion,
+        alignment: outcome.result.alignment,
+        created: outcome.result.created,
+      });
+    } catch (err) {
+      handleOkrRouteError(res, err, 'proposeAlignment');
+    }
+  }
+);
+
+// ==========================================
+// GET /api/vnext/results/okr/objectives/:objectiveId/alignments — listAlignmentsForObjective
+// ==========================================
+
+router.get(
+  '/objectives/:objectiveId/alignments',
+  validateParams(OkrObjectiveIdParamsSchema),
+  validateQuery(ListOkrAlignmentsForObjectiveQuerySchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { objectiveId } = req.params as { objectiveId: string };
+      const query = req.query as unknown as import('zod').infer<typeof ListOkrAlignmentsForObjectiveQuerySchema>;
+      const alignments = await listAlignmentsForObjective({
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        objectiveId,
+        direction: query.direction,
+        status: query.status,
+      });
+      res.status(200).json({ alignments });
+    } catch (err) {
+      handleOkrRouteError(res, err, 'listAlignmentsForObjective');
+    }
+  }
+);
+
+// ==========================================
+// GET /api/vnext/results/okr/objectives/:objectiveId/alignment-tree — getAlignmentTreeUnderObjective
+// ==========================================
+
+router.get(
+  '/objectives/:objectiveId/alignment-tree',
+  validateParams(OkrObjectiveIdParamsSchema),
+  validateQuery(GetOkrAlignmentTreeQuerySchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { objectiveId } = req.params as { objectiveId: string };
+      const query = req.query as unknown as import('zod').infer<typeof GetOkrAlignmentTreeQuerySchema>;
+      const nodes = await getAlignmentTreeUnderObjective({
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        rootObjectiveId: objectiveId,
+        maxDepth: query.maxDepth,
+      });
+      res.status(200).json({ nodes });
+    } catch (err) {
+      handleOkrRouteError(res, err, 'getAlignmentTreeUnderObjective');
+    }
+  }
+);
+
+// ==========================================
+// POST /api/vnext/results/okr/alignments/:alignmentId/accept — acceptAlignment
+// ==========================================
+
+router.post(
+  '/alignments/:alignmentId/accept',
+  validateParams(OkrAlignmentIdParamsSchema),
+  validateBody(AcceptOkrAlignmentSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { alignmentId } = req.params as { alignmentId: string };
+      const body = req.body as import('zod').infer<typeof AcceptOkrAlignmentSchema>;
+      const outcome = await acceptAlignment({
+        alignmentId,
+        organizationId: auth.organizationId,
+        expectedVersion: body.expectedVersion,
+        actorUserId: auth.userId,
+        actorEffectiveRole: auth.role,
+        idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
+        correlationId: getCorrelationId(req),
+        reason: body.reason ?? null,
+      });
+      res.status(200).json({
+        outcome: outcome.outcome,
+        eventId: outcome.eventId,
+        resultingVersion: outcome.resultingVersion,
+        alignment: outcome.result,
+      });
+    } catch (err) {
+      handleOkrRouteError(res, err, 'acceptAlignment');
+    }
+  }
+);
+
+// ==========================================
+// POST /api/vnext/results/okr/alignments/:alignmentId/reject — rejectAlignment
+// ==========================================
+
+router.post(
+  '/alignments/:alignmentId/reject',
+  validateParams(OkrAlignmentIdParamsSchema),
+  validateBody(RejectOkrAlignmentSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { alignmentId } = req.params as { alignmentId: string };
+      const body = req.body as import('zod').infer<typeof RejectOkrAlignmentSchema>;
+      const outcome = await rejectAlignment({
+        alignmentId,
+        organizationId: auth.organizationId,
+        expectedVersion: body.expectedVersion,
+        actorUserId: auth.userId,
+        actorEffectiveRole: auth.role,
+        responseReason: body.responseReason ?? null,
+        idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
+        correlationId: getCorrelationId(req),
+      });
+      res.status(200).json({
+        outcome: outcome.outcome,
+        eventId: outcome.eventId,
+        resultingVersion: outcome.resultingVersion,
+        alignment: outcome.result,
+      });
+    } catch (err) {
+      handleOkrRouteError(res, err, 'rejectAlignment');
+    }
+  }
+);
+
+// ==========================================
+// POST /api/vnext/results/okr/alignments/:alignmentId/remove — removeAlignment
+// (maps the plan's DELETE /alignments/:alignmentId to a guarded status
+// transition, same soft-delete precedent as cancelObjective/cancelKeyResult)
+// ==========================================
+
+router.post(
+  '/alignments/:alignmentId/remove',
+  validateParams(OkrAlignmentIdParamsSchema),
+  validateBody(RemoveOkrAlignmentSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { alignmentId } = req.params as { alignmentId: string };
+      const body = req.body as import('zod').infer<typeof RemoveOkrAlignmentSchema>;
+      const outcome = await removeAlignment({
+        alignmentId,
+        organizationId: auth.organizationId,
+        expectedVersion: body.expectedVersion,
+        actorUserId: auth.userId,
+        actorEffectiveRole: auth.role,
+        idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
+        correlationId: getCorrelationId(req),
+        reason: body.reason ?? null,
+      });
+      res.status(200).json({
+        outcome: outcome.outcome,
+        eventId: outcome.eventId,
+        resultingVersion: outcome.resultingVersion,
+        alignment: outcome.result,
+      });
+    } catch (err) {
+      handleOkrRouteError(res, err, 'removeAlignment');
     }
   }
 );

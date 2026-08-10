@@ -42,6 +42,7 @@ import {
   OKR_SET_STATUSES,
   OKR_SET_VERSION_FIELD_NAMES,
 } from '../services/resultsVnext/okr/okrSetTypes.js';
+import { OKR_ALIGNMENT_STATUSES } from '../services/resultsVnext/okr/okrAlignmentTypes.js';
 
 export const OkrProgramStatusEnum = z.enum(OKR_PROGRAM_STATUSES);
 export const OkrCycleModelEnum = z.enum(OKR_CYCLE_MODELS);
@@ -477,4 +478,78 @@ export const OkrKeyResultTransitionSchema = z.object({
   expectedVersion: expectedVersionField,
   reason: nullableReasonField,
   idempotencyKey: idempotencyKeyField,
+});
+
+// ==========================================
+// OKR-E005 — Alignment (design §A/§H)
+// ==========================================
+
+export const OkrAlignmentStatusEnum = z.enum(OKR_ALIGNMENT_STATUSES);
+
+const MAX_RATIONALE_CHARS = 2000;
+const MAX_RESPONSE_REASON_CHARS = 2000;
+
+export const OkrAlignmentIdParamsSchema = z.object({
+  alignmentId: z.string().uuid(),
+});
+
+// ==========================================
+// POST /api/vnext/results/okr/objectives/:objectiveId/alignments — proposeAlignment
+// ==========================================
+
+export const ProposeOkrAlignmentSchema = z.object({
+  targetObjectiveId: z.string().uuid(),
+  rationale: z.string().max(MAX_RATIONALE_CHARS).nullable().optional(),
+  reason: nullableReasonField,
+  idempotencyKey: idempotencyKeyField,
+});
+
+// ==========================================
+// POST .../alignments/:alignmentId/accept — acceptAlignment
+// ==========================================
+
+export const AcceptOkrAlignmentSchema = z.object({
+  expectedVersion: expectedVersionField,
+  reason: nullableReasonField,
+  idempotencyKey: idempotencyKeyField,
+});
+
+// ==========================================
+// POST .../alignments/:alignmentId/reject — rejectAlignment
+// ==========================================
+
+export const RejectOkrAlignmentSchema = z.object({
+  expectedVersion: expectedVersionField,
+  responseReason: z.string().max(MAX_RESPONSE_REASON_CHARS).nullable().optional(),
+  idempotencyKey: idempotencyKeyField,
+});
+
+// ==========================================
+// DELETE /api/vnext/results/okr/alignments/:alignmentId — removeAlignment
+// (mapped to POST .../alignments/:alignmentId/remove, same DELETE-as-guarded
+// -POST convention this router already uses for cancelObjective/
+// cancelKeyResult)
+// ==========================================
+
+export const RemoveOkrAlignmentSchema = z.object({
+  expectedVersion: expectedVersionField,
+  reason: nullableReasonField,
+  idempotencyKey: idempotencyKeyField,
+});
+
+// ==========================================
+// GET /api/vnext/results/okr/objectives/:objectiveId/alignments — listAlignmentsForObjective
+// ==========================================
+
+export const ListOkrAlignmentsForObjectiveQuerySchema = z.object({
+  direction: z.enum(['outgoing', 'incoming']),
+  status: OkrAlignmentStatusEnum.optional(),
+});
+
+// ==========================================
+// GET /api/vnext/results/okr/objectives/:objectiveId/alignment-tree — getAlignmentTreeUnderObjective
+// ==========================================
+
+export const GetOkrAlignmentTreeQuerySchema = z.object({
+  maxDepth: z.coerce.number().int().positive().max(50).optional(),
 });

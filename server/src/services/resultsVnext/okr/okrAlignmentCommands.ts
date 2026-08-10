@@ -137,6 +137,24 @@ export class OkrAlignmentCycleDetectedError extends Error {
   }
 }
 
+/** Design §H's error-mapping table: "ACL/Owner-check failure->403" — a
+ * SEPARATE line from `ObjectiveAlignmentValidationError->409 (self-loop,
+ * wrong status transition)`. Own class, own HTTP mapping, matching this
+ * program's established one-class-per-condition discipline
+ * (`OkrSetSelfApprovalDeniedError` vs. `OkrSetValidationError` in
+ * `okrSetCommands.ts`) — ownership denial is never folded into the generic
+ * validation error above it. */
+export class OkrAlignmentNotOwnerError extends Error {
+  code: string;
+  details: Record<string, unknown>;
+  constructor(message: string, code: string, details: Record<string, unknown>) {
+    super(message);
+    this.name = 'OkrAlignmentNotOwnerError';
+    this.code = code;
+    this.details = details;
+  }
+}
+
 /** Design §E's structural addition: `proposeAlignment` requires the
  * proposer to currently have view-visibility into the TARGET Objective (via
  * its owning Set); `acceptAlignment` symmetrically re-confirms the
@@ -309,8 +327,8 @@ export interface ProposeAlignmentResult {
  *   1. source/target Objective both exist (else `OkrObjectiveNotFoundError`);
  *   2. no self-loop (else `OkrAlignmentValidationError` — the DB `CHECK` is
  *      defense in depth, not the primary guard);
- *   3. caller is the SOURCE Objective's Owner (else `OkrAlignmentValidationError`,
- *      code `NOT_SOURCE_OWNER`);
+ *   3. caller is the SOURCE Objective's Owner (else `OkrAlignmentNotOwnerError`,
+ *      code `NOT_SOURCE_OWNER`, mapped 403 per design §H);
  *   4. same-Cycle compatibility (else `OkrAlignmentCycleMismatchError`);
  *   5. caller has view-visibility into the TARGET Objective (else
  *      `OkrAlignmentVisibilityDeniedError` — design §E's stated addition);
@@ -367,7 +385,7 @@ export async function proposeAlignment(
       if (!target) throw new OkrObjectiveNotFoundError(targetObjectiveId);
 
       if (proposedBy !== source.ownerUserId) {
-        throw new OkrAlignmentValidationError(
+        throw new OkrAlignmentNotOwnerError(
           `User ${proposedBy} may not propose an alignment from Objective ${sourceObjectiveId}: not its Owner`,
           'NOT_SOURCE_OWNER',
           { objectiveId: sourceObjectiveId, ownerUserId: source.ownerUserId }
@@ -547,7 +565,7 @@ export async function acceptAlignment(input: AcceptAlignmentInput): Promise<Atom
       const target = await loadObjectiveContextForAlignment(client, currentRow.target_objective_id, organizationId);
       if (!target) throw new OkrObjectiveNotFoundError(currentRow.target_objective_id);
       if (actorUserId !== target.ownerUserId) {
-        throw new OkrAlignmentValidationError(
+        throw new OkrAlignmentNotOwnerError(
           `User ${actorUserId} may not accept alignment ${alignmentId}: not the target Objective's Owner`,
           'NOT_TARGET_OWNER',
           { alignmentId, ownerUserId: target.ownerUserId }
@@ -667,7 +685,7 @@ export async function rejectAlignment(input: RejectAlignmentInput): Promise<Atom
       const target = await loadObjectiveContextForAlignment(client, currentRow.target_objective_id, organizationId);
       if (!target) throw new OkrObjectiveNotFoundError(currentRow.target_objective_id);
       if (actorUserId !== target.ownerUserId) {
-        throw new OkrAlignmentValidationError(
+        throw new OkrAlignmentNotOwnerError(
           `User ${actorUserId} may not reject alignment ${alignmentId}: not the target Objective's Owner`,
           'NOT_TARGET_OWNER',
           { alignmentId, ownerUserId: target.ownerUserId }
@@ -782,7 +800,7 @@ export async function removeAlignment(input: RemoveAlignmentInput): Promise<Atom
       if (!target) throw new OkrObjectiveNotFoundError(currentRow.target_objective_id);
 
       if (actorUserId !== source.ownerUserId && actorUserId !== target.ownerUserId) {
-        throw new OkrAlignmentValidationError(
+        throw new OkrAlignmentNotOwnerError(
           `User ${actorUserId} may not remove alignment ${alignmentId}: not the source or target Objective's Owner`,
           'NOT_OWNER',
           { alignmentId, sourceOwnerUserId: source.ownerUserId, targetOwnerUserId: target.ownerUserId }
