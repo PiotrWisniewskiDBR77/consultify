@@ -25,6 +25,12 @@ import {
   OKR_VISIBILITY_DEFAULTS,
 } from '../services/resultsVnext/okr/okrProgramTypes.js';
 import { OKR_CYCLE_STATUSES } from '../services/resultsVnext/okr/okrCycleTypes.js';
+import {
+  OKR_SET_ATTENTION_STATES,
+  OKR_SET_SCOPE_TYPES,
+  OKR_SET_STATUSES,
+  OKR_SET_VERSION_FIELD_NAMES,
+} from '../services/resultsVnext/okr/okrSetTypes.js';
 
 export const OkrProgramStatusEnum = z.enum(OKR_PROGRAM_STATUSES);
 export const OkrCycleModelEnum = z.enum(OKR_CYCLE_MODELS);
@@ -35,6 +41,17 @@ export const OkrConfidenceModelEnum = z.enum(OKR_CONFIDENCE_MODELS);
 export const OkrObjectiveConfidenceModelEnum = z.enum(OKR_OBJECTIVE_CONFIDENCE_MODELS);
 export const OkrVisibilityDefaultEnum = z.enum(OKR_VISIBILITY_DEFAULTS);
 export const OkrCycleStatusEnum = z.enum(OKR_CYCLE_STATUSES);
+export const OkrSetScopeTypeEnum = z.enum(OKR_SET_SCOPE_TYPES);
+export const OkrSetStatusEnum = z.enum(OKR_SET_STATUSES);
+export const OkrSetAttentionStateEnum = z.enum(OKR_SET_ATTENTION_STATES);
+export const OkrSetVersionFieldNameEnum = z.enum(OKR_SET_VERSION_FIELD_NAMES);
+/** Same enum value set as `OkrVisibilityDefaultEnum` above
+ * (`rvn_platform_visibility_policies.visibility_mode`) — a per-record
+ * `narrowOkrSetVisibility` call targets the identical mode vocabulary the
+ * Program's own `visibilityDefault` field uses. Declared as its own const
+ * (not a re-export) matching this file's stated convention of not sharing
+ * field helpers across concern boundaries within the same file family. */
+export const OkrSetVisibilityModeEnum = z.enum(OKR_VISIBILITY_DEFAULTS);
 
 const MAX_IDEMPOTENCY_KEY_CHARS = 200;
 const MAX_REASON_CHARS = 2000;
@@ -178,4 +195,125 @@ export const OkrCycleTransitionSchema = z.object({
   expectedVersion: expectedVersionField,
   reason: nullableReasonField,
   idempotencyKey: idempotencyKeyField,
+});
+
+// ==========================================
+// OKR-E002 — Materialized Set (design §6)
+// ==========================================
+
+export const OkrSetIdParamsSchema = z.object({
+  setId: z.string().uuid(),
+});
+
+const MAX_SCOPE_ID_CHARS = 200;
+const MAX_CHANGE_NOTES_CHARS = 2000;
+
+// ==========================================
+// POST /api/vnext/results/okr/sets — createOkrSet
+// ==========================================
+
+export const CreateOkrSetSchema = z.object({
+  programId: z.string().uuid(),
+  cycleId: z.string().uuid(),
+  scopeType: OkrSetScopeTypeEnum,
+  // D4: TEXT, not UUID — for scope_type='company' the caller passes
+  // organizationId explicitly (never server-defaulted); for 'business_unit'
+  // an opaque caller-supplied identifier (D16); for 'team' a
+  // team_members.team_id; for 'individual' a user id.
+  scopeId: z.string().min(1).max(MAX_SCOPE_ID_CHARS),
+  ownerUserId: z.string().min(1),
+  reviewerUserId: z.string().min(1).nullable().optional(),
+  title: z.string().min(1).max(MAX_NAME_CHARS),
+  reason: nullableReasonField,
+  idempotencyKey: idempotencyKeyField,
+});
+
+// ==========================================
+// GET /api/vnext/results/okr/sets — listOkrSets
+// ==========================================
+
+export const ListOkrSetsQuerySchema = z.object({
+  cycleId: z.string().uuid().optional(),
+  scopeType: OkrSetScopeTypeEnum.optional(),
+  status: OkrSetStatusEnum.optional(),
+  attentionState: OkrSetAttentionStateEnum.optional(),
+  limit: z.coerce.number().int().positive().max(500).optional(),
+  offset: z.coerce.number().int().nonnegative().optional(),
+});
+
+// ==========================================
+// GET /api/vnext/results/okr/company — listOkrSets filtered scope_type='company'
+// ==========================================
+
+export const ListOkrCompanySetsQuerySchema = z.object({
+  cycleId: z.string().uuid().optional(),
+  status: OkrSetStatusEnum.optional(),
+  attentionState: OkrSetAttentionStateEnum.optional(),
+  limit: z.coerce.number().int().positive().max(500).optional(),
+  offset: z.coerce.number().int().nonnegative().optional(),
+});
+
+// ==========================================
+// PATCH /api/vnext/results/okr/sets/:setId/draft — updateOkrSetDraft
+// ==========================================
+
+export const UpdateOkrSetDraftSchema = z.object({
+  expectedVersion: expectedVersionField,
+  title: z.string().min(1).max(MAX_NAME_CHARS).optional(),
+  ownerUserId: z.string().min(1).optional(),
+  reviewerUserId: z.string().min(1).nullable().optional(),
+  reason: nullableReasonField,
+  idempotencyKey: idempotencyKeyField,
+});
+
+// ==========================================
+// PATCH /api/vnext/results/okr/sets/:setId/visibility — narrowOkrSetVisibility (D19)
+// ==========================================
+
+export const NarrowOkrSetVisibilitySchema = z.object({
+  expectedVersion: expectedVersionField,
+  visibilityMode: OkrSetVisibilityModeEnum,
+  reason: nullableReasonField,
+  idempotencyKey: idempotencyKeyField,
+});
+
+// ==========================================
+// POST .../sets/:setId/{submit|approve|activate|cancel}
+// ==========================================
+
+export const OkrSetTransitionSchema = z.object({
+  expectedVersion: expectedVersionField,
+  reason: nullableReasonField,
+  idempotencyKey: idempotencyKeyField,
+});
+
+// ==========================================
+// POST /api/vnext/results/okr/sets/:setId/request-changes — requestChangesOnOkrSet
+// ==========================================
+
+export const RequestChangesOnOkrSetSchema = z.object({
+  expectedVersion: expectedVersionField,
+  changeRequestNotes: z.string().min(1).max(MAX_CHANGE_NOTES_CHARS),
+  idempotencyKey: idempotencyKeyField,
+});
+
+// ==========================================
+// POST /api/vnext/results/okr/sets/:setId/request-revision — recordOkrSetMaterialChange
+// ==========================================
+
+export const RecordOkrSetMaterialChangeSchema = z.object({
+  expectedVersion: expectedVersionField,
+  fieldName: OkrSetVersionFieldNameEnum,
+  afterValue: z.string().min(1).max(MAX_NAME_CHARS),
+  reason: z.string().min(1).max(MAX_REASON_CHARS),
+  idempotencyKey: idempotencyKeyField,
+});
+
+// ==========================================
+// GET /api/vnext/results/okr/sets/:setId/approval-snapshots/:snapshotId
+// ==========================================
+
+export const OkrSetApprovalSnapshotIdParamsSchema = z.object({
+  setId: z.string().uuid(),
+  snapshotId: z.string().uuid(),
 });

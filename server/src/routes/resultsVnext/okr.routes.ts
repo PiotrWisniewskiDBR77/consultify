@@ -57,18 +57,52 @@ import {
   OkrProgramValidationError,
 } from '../../services/resultsVnext/okr/okrProgramCommands.js';
 import { getCycle, getProgram, listCycles, listPrograms } from '../../services/resultsVnext/okr/okrRepository.js';
+import {
+  OKR_SET_ACTIVATE_SPEC,
+  OKR_SET_CANCEL_SPEC,
+  approveOkrSet,
+  createOkrSet,
+  narrowOkrSetVisibility,
+  requestChangesOnOkrSet,
+  runOkrSetLifecycleTransition,
+  submitOkrSetForApproval,
+  updateOkrSetDraft,
+  OkrSetNoActiveVisibilityPolicyError,
+  OkrSetNotReadyForSubmissionError,
+  OkrSetSelfApprovalDeniedError,
+  OkrSetValidationError,
+  OkrSetVisibilityWideningDeniedError,
+  type OkrSetLifecycleTransitionSpec,
+} from '../../services/resultsVnext/okr/okrSetCommands.js';
+import { recordOkrSetMaterialChange } from '../../services/resultsVnext/okr/okrSetMaterialChangeCommands.js';
+import {
+  getOkrSet,
+  getOkrSetApprovedSnapshot,
+  listOkrSetApprovedSnapshots,
+  listOkrSets,
+} from '../../services/resultsVnext/okr/okrSetRepository.js';
 import type { AuthenticatedRequest } from '../../types/index.js';
 import logger from '../../utils/Logger.js';
 import {
   CreateOkrCycleSchema,
   CreateOkrProgramSchema,
+  CreateOkrSetSchema,
   EditOkrProgramDraftSchema,
+  ListOkrCompanySetsQuerySchema,
   ListOkrCyclesQuerySchema,
   ListOkrProgramsQuerySchema,
+  ListOkrSetsQuerySchema,
+  NarrowOkrSetVisibilitySchema,
   OkrCycleIdParamsSchema,
   OkrCycleTransitionSchema,
   OkrProgramIdParamsSchema,
+  OkrSetApprovalSnapshotIdParamsSchema,
+  OkrSetIdParamsSchema,
+  OkrSetTransitionSchema,
   PublishOkrProgramSchema,
+  RecordOkrSetMaterialChangeSchema,
+  RequestChangesOnOkrSetSchema,
+  UpdateOkrSetDraftSchema,
 } from '../../validators/resultsVnextOkr.validators.js';
 
 const router = Router();
@@ -142,6 +176,26 @@ function handleOkrRouteError(res: Response, err: unknown, op: string): void {
     return;
   }
   if (err instanceof OkrProgramValidationError) {
+    res.status(409).json({ error: err.message, code: err.code, details: err.details });
+    return;
+  }
+  if (err instanceof OkrSetSelfApprovalDeniedError) {
+    res.status(403).json({ error: err.message, code: err.code, ...err.details });
+    return;
+  }
+  if (err instanceof OkrSetVisibilityWideningDeniedError) {
+    res.status(409).json({ error: err.message, code: err.code, ...err.details });
+    return;
+  }
+  if (err instanceof OkrSetNoActiveVisibilityPolicyError) {
+    res.status(409).json({ error: err.message, code: err.code, ...err.details });
+    return;
+  }
+  if (err instanceof OkrSetNotReadyForSubmissionError) {
+    res.status(409).json({ error: err.message, code: err.code, ...err.details });
+    return;
+  }
+  if (err instanceof OkrSetValidationError) {
     res.status(409).json({ error: err.message, code: err.code, details: err.details });
     return;
   }
@@ -506,5 +560,475 @@ mountTransitionRoute('/cycles/:cycleId/activate', 'activateCycle', OKR_CYCLE_ACT
 mountTransitionRoute('/cycles/:cycleId/open-review', 'openReview', OKR_CYCLE_OPEN_REVIEW_SPEC);
 mountTransitionRoute('/cycles/:cycleId/close', 'closeCycle', OKR_CYCLE_CLOSE_SPEC);
 mountTransitionRoute('/cycles/:cycleId/cancel', 'cancelCycle', OKR_CYCLE_CANCEL_SPEC);
+
+// ==========================================
+// OKR-E002 (Materialized Set) — HTTP layer (design §6).
+//
+// Sets are ABAC resources (design §6, Decision D1) — unlike Program/Cycle
+// above, write routes here do NOT layer `requireAdminWrite` on top of the
+// router-wide `requireOrgAccess()`. Verified precedent: neither
+// `roi.routes.ts` nor `kpi.routes.ts` calls `requireOrgRole`/
+// `resolveVisibility()` at the route layer for their own ABAC-resource
+// write routes either (grep-confirmed) — authorization for those domains
+// comes entirely from `requireOrgAccess()` (org membership) plus the
+// command layer's own domain guards (e.g. self-approval denial -> 403).
+// This file matches that exact precedent for Sets. The design doc's error-
+// mapping table lists "ACL failure->403" as a possible outcome; no route in
+// this codebase currently implements a live per-route ACL gate check (a
+// real, stated gap — same class as D13's platform limitation), so that
+// branch is not reachable via any code path here, consistent with ROI/KPI.
+// ==========================================
+
+// ==========================================
+// POST /api/vnext/results/okr/sets — createOkrSet
+// ==========================================
+
+router.post(
+  '/sets',
+  validateBody(CreateOkrSetSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const body = req.body as import('zod').infer<typeof CreateOkrSetSchema>;
+      const outcome = await createOkrSet({
+        organizationId: auth.organizationId,
+        programId: body.programId,
+        cycleId: body.cycleId,
+        scopeType: body.scopeType,
+        scopeId: body.scopeId,
+        ownerUserId: body.ownerUserId,
+        reviewerUserId: body.reviewerUserId ?? null,
+        title: body.title,
+        createdBy: auth.userId,
+        actorEffectiveRole: auth.role,
+        idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
+        correlationId: getCorrelationId(req),
+        reason: body.reason ?? null,
+      });
+      res.status(outcome.outcome === 'applied' && outcome.result.created ? 201 : 200).json({
+        outcome: outcome.outcome,
+        eventId: outcome.eventId,
+        resultingVersion: outcome.resultingVersion,
+        set: outcome.result.set,
+        created: outcome.result.created,
+      });
+    } catch (err) {
+      handleOkrRouteError(res, err, 'createOkrSet');
+    }
+  }
+);
+
+// ==========================================
+// GET /api/vnext/results/okr/sets — listOkrSets
+// ==========================================
+
+router.get(
+  '/sets',
+  validateQuery(ListOkrSetsQuerySchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const query = req.query as unknown as import('zod').infer<typeof ListOkrSetsQuerySchema>;
+      const sets = await listOkrSets({
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        cycleId: query.cycleId,
+        scopeType: query.scopeType,
+        status: query.status,
+        attentionState: query.attentionState,
+        limit: query.limit,
+        offset: query.offset,
+      });
+      res.status(200).json({ sets });
+    } catch (err) {
+      handleOkrRouteError(res, err, 'listOkrSets');
+    }
+  }
+);
+
+// ==========================================
+// GET /api/vnext/results/okr/company — listOkrSets filtered scope_type='company'
+//
+// F-004-AC-02: "the company view is a projection, not a separate model" —
+// structurally guaranteed by calling the exact same `listOkrSets` repository
+// function every other list route uses, with `scopeType` pinned to
+// 'company' rather than reading the query, never a bespoke duplicate query.
+//
+// MOUNTED BEFORE `/sets/:setId` on purpose even though the two paths do not
+// literally collide (different top-level segments, `/company` vs `/sets`)
+// — kept adjacent to the Set routes it shares a repository function with,
+// per this file's own mount-order note above about literal-path routers
+// needing to precede a same-segment dynamic one.
+// ==========================================
+
+router.get(
+  '/company',
+  validateQuery(ListOkrCompanySetsQuerySchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const query = req.query as unknown as import('zod').infer<typeof ListOkrCompanySetsQuerySchema>;
+      const sets = await listOkrSets({
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        cycleId: query.cycleId,
+        scopeType: 'company',
+        status: query.status,
+        attentionState: query.attentionState,
+        limit: query.limit,
+        offset: query.offset,
+      });
+      res.status(200).json({ sets });
+    } catch (err) {
+      handleOkrRouteError(res, err, 'listOkrCompanySets');
+    }
+  }
+);
+
+// ==========================================
+// GET /api/vnext/results/okr/sets/:setId — getOkrSet
+// ==========================================
+
+router.get(
+  '/sets/:setId',
+  validateParams(OkrSetIdParamsSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { setId } = req.params as { setId: string };
+      const set = await getOkrSet({ userId: auth.userId, organizationId: auth.organizationId, setId });
+      if (!set) {
+        res.status(404).json({ error: 'OKR Set not found', code: 'NOT_FOUND' });
+        return;
+      }
+      res.status(200).json({ set });
+    } catch (err) {
+      handleOkrRouteError(res, err, 'getOkrSet');
+    }
+  }
+);
+
+// ==========================================
+// PATCH /api/vnext/results/okr/sets/:setId/draft — updateOkrSetDraft
+// ==========================================
+
+router.patch(
+  '/sets/:setId/draft',
+  validateParams(OkrSetIdParamsSchema),
+  validateBody(UpdateOkrSetDraftSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { setId } = req.params as { setId: string };
+      const body = req.body as import('zod').infer<typeof UpdateOkrSetDraftSchema>;
+      const outcome = await updateOkrSetDraft({
+        setId,
+        organizationId: auth.organizationId,
+        expectedVersion: body.expectedVersion,
+        title: body.title,
+        ownerUserId: body.ownerUserId,
+        reviewerUserId: body.reviewerUserId,
+        actorUserId: auth.userId,
+        actorEffectiveRole: auth.role,
+        idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
+        correlationId: getCorrelationId(req),
+        reason: body.reason ?? null,
+      });
+      res.status(200).json({
+        outcome: outcome.outcome,
+        eventId: outcome.eventId,
+        resultingVersion: outcome.resultingVersion,
+        set: outcome.result,
+      });
+    } catch (err) {
+      handleOkrRouteError(res, err, 'updateOkrSetDraft');
+    }
+  }
+);
+
+// ==========================================
+// PATCH /api/vnext/results/okr/sets/:setId/visibility — narrowOkrSetVisibility (D19)
+// ==========================================
+
+router.patch(
+  '/sets/:setId/visibility',
+  validateParams(OkrSetIdParamsSchema),
+  validateBody(NarrowOkrSetVisibilitySchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { setId } = req.params as { setId: string };
+      const body = req.body as import('zod').infer<typeof NarrowOkrSetVisibilitySchema>;
+      const outcome = await narrowOkrSetVisibility({
+        setId,
+        organizationId: auth.organizationId,
+        expectedVersion: body.expectedVersion,
+        visibilityMode: body.visibilityMode,
+        actorUserId: auth.userId,
+        actorEffectiveRole: auth.role,
+        idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
+        correlationId: getCorrelationId(req),
+        reason: body.reason ?? null,
+      });
+      res.status(200).json({
+        outcome: outcome.outcome,
+        eventId: outcome.eventId,
+        resultingVersion: outcome.resultingVersion,
+        set: outcome.result.set,
+        visibilityMode: outcome.result.visibilityMode,
+      });
+    } catch (err) {
+      handleOkrRouteError(res, err, 'narrowOkrSetVisibility');
+    }
+  }
+);
+
+// ==========================================
+// POST /api/vnext/results/okr/sets/:setId/submit — submitOkrSetForApproval
+// ==========================================
+
+router.post(
+  '/sets/:setId/submit',
+  validateParams(OkrSetIdParamsSchema),
+  validateBody(OkrSetTransitionSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { setId } = req.params as { setId: string };
+      const body = req.body as import('zod').infer<typeof OkrSetTransitionSchema>;
+      const outcome = await submitOkrSetForApproval({
+        setId,
+        organizationId: auth.organizationId,
+        expectedVersion: body.expectedVersion,
+        actorUserId: auth.userId,
+        actorEffectiveRole: auth.role,
+        idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
+        correlationId: getCorrelationId(req),
+        reason: body.reason ?? null,
+      });
+      res.status(200).json({
+        outcome: outcome.outcome,
+        eventId: outcome.eventId,
+        resultingVersion: outcome.resultingVersion,
+        set: outcome.result,
+      });
+    } catch (err) {
+      handleOkrRouteError(res, err, 'submitOkrSetForApproval');
+    }
+  }
+);
+
+// ==========================================
+// POST /api/vnext/results/okr/sets/:setId/approve — approveOkrSet
+// ==========================================
+
+router.post(
+  '/sets/:setId/approve',
+  validateParams(OkrSetIdParamsSchema),
+  validateBody(OkrSetTransitionSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { setId } = req.params as { setId: string };
+      const body = req.body as import('zod').infer<typeof OkrSetTransitionSchema>;
+      const outcome = await approveOkrSet({
+        setId,
+        organizationId: auth.organizationId,
+        expectedVersion: body.expectedVersion,
+        approverId: auth.userId,
+        actorEffectiveRole: auth.role,
+        idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
+        correlationId: getCorrelationId(req),
+        reason: body.reason ?? null,
+      });
+      res.status(200).json({
+        outcome: outcome.outcome,
+        eventId: outcome.eventId,
+        resultingVersion: outcome.resultingVersion,
+        set: outcome.result.set,
+        snapshot: outcome.result.snapshot,
+      });
+    } catch (err) {
+      handleOkrRouteError(res, err, 'approveOkrSet');
+    }
+  }
+);
+
+// ==========================================
+// POST /api/vnext/results/okr/sets/:setId/request-changes — requestChangesOnOkrSet
+// ==========================================
+
+router.post(
+  '/sets/:setId/request-changes',
+  validateParams(OkrSetIdParamsSchema),
+  validateBody(RequestChangesOnOkrSetSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { setId } = req.params as { setId: string };
+      const body = req.body as import('zod').infer<typeof RequestChangesOnOkrSetSchema>;
+      const outcome = await requestChangesOnOkrSet({
+        setId,
+        organizationId: auth.organizationId,
+        expectedVersion: body.expectedVersion,
+        actorUserId: auth.userId,
+        changeRequestNotes: body.changeRequestNotes,
+        actorEffectiveRole: auth.role,
+        idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
+        correlationId: getCorrelationId(req),
+      });
+      res.status(200).json({
+        outcome: outcome.outcome,
+        eventId: outcome.eventId,
+        resultingVersion: outcome.resultingVersion,
+        set: outcome.result,
+      });
+    } catch (err) {
+      handleOkrRouteError(res, err, 'requestChangesOnOkrSet');
+    }
+  }
+);
+
+// ==========================================
+// Set lifecycle transitions — activate / cancel (design §4.7/§6)
+// ==========================================
+
+function mountSetTransitionRoute(path: string, op: string, spec: OkrSetLifecycleTransitionSpec): void {
+  router.post(
+    path,
+    validateParams(OkrSetIdParamsSchema),
+    validateBody(OkrSetTransitionSchema),
+    async (req: AuthenticatedRequest, res: Response) => {
+      const auth = requireAuth(req, res);
+      if (!auth) return;
+      try {
+        const { setId } = req.params as { setId: string };
+        const body = req.body as import('zod').infer<typeof OkrSetTransitionSchema>;
+        const outcome = await runOkrSetLifecycleTransition(spec, {
+          setId,
+          organizationId: auth.organizationId,
+          expectedVersion: body.expectedVersion,
+          actorUserId: auth.userId,
+          actorEffectiveRole: auth.role,
+          idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
+          correlationId: getCorrelationId(req),
+          reason: body.reason ?? null,
+        });
+        res.status(200).json({
+          outcome: outcome.outcome,
+          eventId: outcome.eventId,
+          resultingVersion: outcome.resultingVersion,
+          set: outcome.result,
+        });
+      } catch (err) {
+        handleOkrRouteError(res, err, op);
+      }
+    }
+  );
+}
+
+mountSetTransitionRoute('/sets/:setId/activate', 'activateOkrSet', OKR_SET_ACTIVATE_SPEC);
+mountSetTransitionRoute('/sets/:setId/cancel', 'cancelOkrSet', OKR_SET_CANCEL_SPEC);
+
+// ==========================================
+// POST /api/vnext/results/okr/sets/:setId/request-revision — recordOkrSetMaterialChange
+// ==========================================
+
+router.post(
+  '/sets/:setId/request-revision',
+  validateParams(OkrSetIdParamsSchema),
+  validateBody(RecordOkrSetMaterialChangeSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { setId } = req.params as { setId: string };
+      const body = req.body as import('zod').infer<typeof RecordOkrSetMaterialChangeSchema>;
+      const outcome = await recordOkrSetMaterialChange({
+        setId,
+        organizationId: auth.organizationId,
+        expectedVersion: body.expectedVersion,
+        fieldName: body.fieldName,
+        afterValue: body.afterValue,
+        reason: body.reason,
+        requestedBy: auth.userId,
+        actorEffectiveRole: auth.role,
+        idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
+        correlationId: getCorrelationId(req),
+      });
+      res.status(200).json({
+        outcome: outcome.outcome,
+        eventId: outcome.eventId,
+        resultingVersion: outcome.resultingVersion,
+        set: outcome.result.set,
+        version: outcome.result.version,
+      });
+    } catch (err) {
+      handleOkrRouteError(res, err, 'recordOkrSetMaterialChange');
+    }
+  }
+);
+
+// ==========================================
+// GET /api/vnext/results/okr/sets/:setId/approval-snapshots — listOkrSetApprovedSnapshots
+// ==========================================
+
+router.get(
+  '/sets/:setId/approval-snapshots',
+  validateParams(OkrSetIdParamsSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { setId } = req.params as { setId: string };
+      const snapshots = await listOkrSetApprovedSnapshots({
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        setId,
+      });
+      res.status(200).json({ snapshots });
+    } catch (err) {
+      handleOkrRouteError(res, err, 'listOkrSetApprovedSnapshots');
+    }
+  }
+);
+
+// ==========================================
+// GET /api/vnext/results/okr/sets/:setId/approval-snapshots/:snapshotId — getOkrSetApprovedSnapshot
+// ==========================================
+
+router.get(
+  '/sets/:setId/approval-snapshots/:snapshotId',
+  validateParams(OkrSetApprovalSnapshotIdParamsSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { setId, snapshotId } = req.params as { setId: string; snapshotId: string };
+      const snapshot = await getOkrSetApprovedSnapshot({
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        setId,
+        snapshotId,
+      });
+      if (!snapshot) {
+        res.status(404).json({ error: 'OKR Set approval snapshot not found', code: 'NOT_FOUND' });
+        return;
+      }
+      res.status(200).json({ snapshot });
+    } catch (err) {
+      handleOkrRouteError(res, err, 'getOkrSetApprovedSnapshot');
+    }
+  }
+);
 
 export default router;
