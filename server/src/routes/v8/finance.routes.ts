@@ -3269,7 +3269,7 @@ router.post(
     if (!statements.some((row) => row.statement_type === 'P&L')) {
       return res.status(422).json({ error: 'A ready P&L statement is required for ratio export' });
     }
-    const values = statementIds.length
+    const rawValues = statementIds.length
       ? await dbAll<any>(
           `SELECT fsv.*, fsl.line_code, fsl.line_name, fs.statement_type, fs.period_label,
                   fs.currency, fs.scaling
@@ -3281,6 +3281,17 @@ router.post(
           [organizationId, packId]
         )
       : [];
+    // `financial_statement_values.value` is `numeric` (CO-9 precision fix,
+    // server/migrations/20260810_finance_v3_co9_statement_money_numeric.sql). node-pg has no
+    // type parser registered for numeric/OID 1700 anywhere in this repo, so it arrives as a
+    // STRING. These rows are handed straight to `addRowsSheet()`, which writes each field into
+    // an ExcelJS cell verbatim — a string would land as a TEXT cell, so the exported ratio
+    // workbook would show the amounts as "number stored as text" and every downstream SUM in
+    // that sheet would silently evaluate to 0. Coerce once, here, at the query boundary.
+    const values = rawValues.map((row: any) => ({
+      ...row,
+      value: row?.value === null || row?.value === undefined ? row?.value : Number(row.value),
+    }));
     const sources = statementIds.length
       ? await dbAll<any>(
           `SELECT a.*, fs.statement_type, fs.period_label
