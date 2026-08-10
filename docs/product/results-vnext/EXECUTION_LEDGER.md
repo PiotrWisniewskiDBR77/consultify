@@ -3397,3 +3397,145 @@ liczbą z innej, wcześniejszej sesji.
 **Domena ROI: 7/8 epików zbudowanych. ROI-E008 Teresa/Legacy/Ops następny i
 OSTATNI epik domeny ROI.**
 
+## 39. OKR-E001 Program & Cycle — implementacja + odbiór (2026-08-10)
+
+**Pierwszy epik zupełnie nowej domeny OKR.** Zbudowano
+`OKR_E001_DESIGN.md` §4–§9 dosłownie (design FROZEN, self-contained, full
+DDL): migracja `20260822_rvn_okr_program_cycle.sql` — Decyzja P1: nazwa
+pliku `rvn_okr_`, KAŻDA tabela w środku `okr_vnext_` (4 tabele:
+`okr_vnext_programs`, `okr_vnext_program_policy_versions` append-only z
+`REVOKE UPDATE, DELETE`, `okr_vnext_cycles` — REGRESSION GUARD OKR-F-002-
+AC-02 pilnowany: ZERO `dept_id`/`team_id`/`scope_type`/`scope_id`,
+`okr_vnext_checkin_occurrences` minimalna powłoka per Decyzja P11), okrężna
+FK `active_policy_version_id` rozwiązana tym samym idempotentnym wzorcem
+`DO $$ ... EXCEPTION WHEN duplicate_object` co
+`rvn_kpi_definitions.current_definition_version_id`, obydwa partial unique
+indexy (jeden aktywny Program per org, brak takiego ograniczenia dla
+Cycle per Decyzja P8).
+
+**Warstwa domenowa** (`server/src/services/resultsVnext/okr/`):
+`okrProgramCommands.ts` (`createProgram` — plain `executeAtomicCreate`,
+BRAK fail-closed lookup polityki widoczności, Program nie jest zasobem
+ABAC per Decyzja P2; `editProgramDraft` — CAS update dozwolony w
+`draft`/`active`; `publishProgram` — rdzeń OKR-F-001-AC-01: snapshot
+WSZYSTKICH pól polityki do `okr_vnext_program_policy_versions`, pin
+`active_policy_version_id`, `draft`→`active` przejście, oraz — Decyzja P5
+— PIERWSZY product-facing writer `rvn_platform_visibility_policies` przez
+nowy prymityw platformowy), `okrCycleCommands.ts` (`createCycle` — fail-
+closed guard OKR-F-001-AC-02 PRZED jakimkolwiek INSERT-em, blokuje na
+poziomie komendy gdy Program nie jest `active`, pinuje
+`policy_version_id` z `program.active_policy_version_id`;
+`runOkrCycleLifecycleTransition` eksportowany BEZPOŚREDNIO — świadome
+odejście od konwencji ROI/KPI, gdzie generyczny helper jest prywatny za
+nazwanymi funkcjami — routes konstruują literal spec per endpoint;
+`cancel` jako świadomy dodatek do zestawu z tabeli AC design'u, jawnie
+uzasadniony w komentarzu, nie cichy dopisek), `okrCycleScheduler.ts`
+(`proposeAndExecuteDueCycleTransitions`/`generateCadenceOccurrences` —
+czyste, w pełni testowane funkcje callable, ŻADNEGO wpięcia do crona per
+Decyzja P10, ten sam precedens co `outboxDrain.ts`), `okrRepository.ts`
+(plain `organization_id` scoping, ŻADNEGO `buildVisibilityScopedCte` —
+Program/Cycle nie mają wiersza ABAC per Decyzja P2). 13 endpointów
+`/api/vnext/results/okr/*` (`okr.routes.ts`, zamontowany w `Gateway.ts`),
+walidatory Zod (`resultsVnextOkr.validators.ts`), 9 nowych event type'ów w
+`EVENT_TYPE_CONSUMER_GROUPS` (`okr_set.published` — placeholder RN-G1
+zarezerwowany dla OKR-E002 — NIETKNIĘTY). `'okr_program'`/`'okr_cycle'`
+dopisane do `RVN_RESOURCE_TYPES` i `CanonicalObjectTypeValues` (Decyzja
+P3), `'okr_set'` nietknięty.
+
+**RBAC, nie ABAC — pierwsze genuine odejście od wzorca widoczności
+każdego poprzedniego epika** (Decyzja P2/P4): zapis chroniony
+`requireOrgRole('admin','superadmin')` na poziomie route'a, GET-y tylko
+`requireOrgAccess()`. Zero wywołań `resolveVisibility()` w całym pakiecie
+— Program/Cycle to org-wide konfiguracja, nie per-resource ABAC surface.
+
+**Nowy prymityw platformowy `publishVisibilityPolicy`**
+(`visibilityResolver.ts`, obok `getActiveVisibilityPolicy`) — UPDATE
+(`effective_to = now()` na dotychczasowym aktywnym wierszu) PRZED INSERT-
+em nowego, na TYM SAMYM pinned kliencie wewnątrz `publishProgram`'s
+`applyMutation` — kolejność wymuszona przez `EXCLUDE USING gist` na
+`rvn_platform_visibility_policies`
+(`20260809_rvn_platform_visibility_core.sql`); odwrotna kolejność
+naruszyłaby constraint. Zweryfikowane bezpośrednio na realnym Postgresie
+(patrz niżej) — druga publikacja poprawnie zamyka stary wiersz i otwiera
+nowy, NIGDY dwa nakładające się jednocześnie.
+
+**Testy — 46 nowych, WSZYSTKIE PASS na efemerycznym Postgresie 17**
+(`initdb --locale=C`, TCP `127.0.0.1:28553`, pełny `npm run db:migrate`
+— 84 pliki, zero błędów):
+- `okrProgramPublish.realdb.test.ts` (3) — **THE krytyczny test**:
+  publish v1 → `createCycle` (pinuje v1) → edit + republish v2 →
+  `Cycle.policyVersionId` WCIĄŻ v1, `snapshot` JSONB v1
+  bajt-identyczny sprzed istnienia v2. Literalny dowód OKR-F-001-AC-01.
+  Plus `publishVisibilityPolicy` zweryfikowany wprost przeciwko realnemu
+  `EXCLUDE` constraint, plus one-active-Program-per-org (drugi Program w
+  tym samym org dostaje `23505` przy próbie publikacji, zostaje w
+  `draft`).
+- `okrCycleLifecycle.realdb.test.ts` (10) — fail-closed guard przed
+  INSERT-em (draft/suspended/brak Programu), pełny pipeline 5 przejść,
+  cancel z każdego nieterminalnego stanu, odrzucenie z terminalnego.
+- `okrCycleScheduler.realdb.test.ts` (4) — dwuwywoławcza idempotencja
+  OBU funkcji schedulera (drugie wywołanie no-op, nie błąd, brak
+  duplikatu wiersza); deterministyczny hand-computed licznik okien
+  cadence (3 okna dla 28-dniowego okna biweekly) zweryfikowany
+  bezpośrednio.
+- `okrRbacGuard.test.ts` (11) — non-admin 403 na WSZYSTKICH 9 trasach
+  zapisu, komenda nigdy niewywołana; GET-y wciąż dostępne. Realny
+  `requireOrgRole`/`requireOrgAccess`, nie mock.
+- `okr.routes.test.ts` (18) — kontrakt HTTP: roundtrip create→get,
+  przepływ query params, 404-przed-komendą, walidacja Zod 400, mapowanie
+  błędów (STALE_VERSION/AtomicWriteConflictError→409,
+  AtomicWriteAggregateNotFoundError→404,
+  OkrCycleProgramNotActiveError→409, OkrCycleValidationError→409,
+  OkrProgramValidationError→409).
+
+**Odstępstwo znalezione i naprawione podczas pisania testów (nie w
+kodzie produkcyjnym, w SAMYM teście)**: pierwsza wersja
+`okrProgramPublish.realdb.test.ts` dzieliła jeden `organization_id`
+między blokami `it` — drugi/trzeci blok's `publishProgram` kolidował z
+`ux_okr_vnext_programs_one_active_per_org` z PIERWSZEGO bloku (dokładnie
+poprawne działanie P7, ale zepsuta izolacja testu) — ten sam wzorzec co
+§31's `roiCaseLifecycle.realdb.test.ts` INITIATIVE_ID lekcja. Naprawione
+świeżym `organization_id` per test. Druga poprawka: `afterAll` cleanup
+najpierw musi `NULL`-ować `active_policy_version_id` (okrężna FK
+`okr_vnext_programs` ↔ `okr_vnext_program_policy_versions`) przed DELETE
+na wersjach polityki.
+
+**Pre-existing środowiskowa usterka potwierdzona, NIE spowodowana tym
+epikiem** — dowiedzione bezpośrednim before/after porównaniem: pełny
+`tests/resultsVnext/kpi` + `tests/resultsVnext/roi` (271 testów, 53
+pliki) uruchomiony DWUKROTNIE na TEJ SAMEJ efemerycznej bazie — raz z
+4 współdzielonymi plikami platformowymi (`visibilityResolver.ts`/
+`resourceTypes.ts`/`myWorkRoofPackage.ts`/`atomicWrite.ts`/`Gateway.ts`)
+przywróconymi do wersji SPRZED tego epika (`git checkout 5fe1b647fd --
+...`), raz z moimi zmianami. Wynik IDENTYCZNY co do wiersza: 26 failed |
+27 passed (53 pliki), 49 failed | 205 passed | 17 skipped (271 testów),
+lista nazw failujących testów bajt-identyczna (`diff` pusty) w obu
+przebiegach. Root cause znaleziony i potwierdzony: `initiatives.status`
+DEFAULT `'step3'` (`000_z_core_baseline.sql:226/264`) narusza własny
+`initiatives_status_check` tabeli — DOKŁADNIE ten sam defekt, który §37
+JUŻ naprawił migracją `20260810_fix_initiatives_status_default.sql` na
+INNEJ gałęzi/sesji — tej migracji fizycznie NIE MA w drzewie migracji
+tego worktree (bazowany na commicie `5fe1b647fd`, sprzed tamtej naprawy).
+Nie jest to regresja tego epika — jest to znana, już-udokumentowana,
+jeszcze-nie-forward-portowana luka.
+
+**`tsc --noEmit`**: root (frontend) — czysty, 0 błędów. `server/` — 18
+przedistniejących błędów `decimal.js` w
+`roi/engine/roiCalculationEngine.ts` (IDENTYCZNE przed/po, plik
+całkowicie nietknięty przez ten epik, ta sama rodzina błędów co §38
+odnotował), ZERO błędów w jakimkolwiek nowym/zmienionym pliku OKR-E001.
+
+**Poza zakresem, świadomie NIEZBUDOWANE**: `okr_vnext_sets`/Objective/
+KeyResult/Alignment/CheckIn/Review/Reflection (OKR-E002…E008), suspend/
+retire Program commands (status osiągalny tylko przez bezpośrednią
+manipulację SQL — żadna komenda tego epika go nie tworzy, dowiedzione w
+`okrCycleLifecycle.realdb.test.ts`), realne wpięcie schedulera do crona
+(Decyzja P10), self-approval denial dla `publishProgram` (Decyzja P6 —
+brak konkretnego pola/AC/endpointu w źródle, nie fabrykowany).
+`reflection_required_for_close` domyślnie `false` jawnie oznaczone w
+komentarzu DDL jako fail-safe-do-decyzji-Foundera, NIE ostateczna
+polityka (design §2/§11, plan §20 EVIDENCE_NEEDED #3 wciąż otwarte).
+
+**Domena OKR: 1/8 epików zbudowanych. OKR-E002 Materialized Set
+następny.**
+
