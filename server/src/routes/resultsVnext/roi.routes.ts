@@ -185,6 +185,7 @@ import {
   RoiFinanceReconciliationNotFoundError,
   RoiFinanceReconciliationValidationError,
 } from '../../services/resultsVnext/roi/roiFinanceReconciliationCommands.js';
+import { listRoiFinanceProjections } from '../../services/resultsVnext/roi/roiFinanceProjectionRepository.js';
 import type { AuthenticatedRequest } from '../../types/index.js';
 import logger from '../../utils/Logger.js';
 import {
@@ -3053,6 +3054,28 @@ router.patch(
       });
     } catch (err) {
       handleRoiRouteError(res, err, 'updateRoiFinanceReconciliationStatus');
+    }
+  }
+);
+
+// ---------- GET .../finance-projections (RN-G6 design §9) ----------
+
+router.get(
+  '/cases/:caseId/finance-projections',
+  validateParams(RoiCaseIdParamsSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { caseId } = req.params as { caseId: string };
+      const financeProjections = await listRoiFinanceProjections({
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        caseId,
+      });
+      res.status(200).json({ financeProjections });
+    } catch (err) {
+      handleRoiRouteError(res, err, 'listRoiFinanceProjections');
     }
   }
 );
