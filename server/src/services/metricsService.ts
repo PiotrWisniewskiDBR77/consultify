@@ -213,6 +213,19 @@ export const resultsVnextRoiLegacyArchiveHitsTotal = new Counter({
   registers: [register],
 });
 
+/**
+ * OKR-E008 Half C — Legacy Archive minimal monitoring (design §5.6). Same
+ * shape/scope as the KPI/ROI counters above — one counter, incremented once
+ * per successful response in `okrLegacyArchive.routes.ts`. No dashboard, no
+ * alerting rule.
+ */
+export const resultsVnextOkrLegacyArchiveHitsTotal = new Counter({
+  name: 'results_vnext_okr_legacy_archive_hits_total',
+  help: 'Requests served by the OKR legacy archive read-only adapter, by source table',
+  labelNames: ['source_table'],
+  registers: [register],
+});
+
 // ==========================================
 // THROUGHPUT METRICS
 // ==========================================
