@@ -398,6 +398,24 @@ export const EVENT_TYPE_CONSUMER_GROUPS: Readonly<Record<string, readonly string
   'okr_set.review_changes_requested': ['mywork_projection'],
   'okr_set.review_comment_recorded': ['mywork_projection'],
   'okr_set.closed': ['mywork_projection'],
+
+  // OKR-E006 (docs/product/results-vnext/OKR_E006_DESIGN.md §8.2/§10.4) —
+  // Support & Decisions. Every event here uses aggregateType='okr_set' (the
+  // parent Set's identity), same convention OKR-E003/E004 established for
+  // child-entity events. All fan out to 'mywork_projection' only, same
+  // default every other domain entry in this map uses — no dedicated
+  // 'decisions_projection'/'notifications_projection' consumer exists yet
+  // (design §16 Open Question #4's scheduled-acknowledgement recommendation
+  // does not require one either — `okrDecisionResolutionScanner.ts` reads
+  // `okr_vnext_decision_links` directly, not the outbox).
+  'okr_support.comment_posted': ['mywork_projection'],
+  'okr_support.recognition_posted': ['mywork_projection'],
+  'okr_support.request_raised': ['mywork_projection'],
+  'okr_support.request_acknowledged': ['mywork_projection'],
+  'okr_support.request_resolved': ['mywork_projection'],
+  'okr_support.request_dismissed': ['mywork_projection'],
+  'okr_support.decision_requested': ['mywork_projection'],
+  'okr_support.decision_resolution_acknowledged': ['mywork_projection'],
 };
 
 /**

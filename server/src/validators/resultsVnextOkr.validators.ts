@@ -46,6 +46,10 @@ import { OKR_CHECKIN_CONFIDENCE_VALUES, OKR_CHECKIN_STATUS_VALUES } from '../ser
 import { OKR_ALIGNMENT_STATUSES } from '../services/resultsVnext/okr/okrAlignmentTypes.js';
 import { OKR_REFLECTION_DISPOSITIONS } from '../services/resultsVnext/okr/okrReflectionTypes.js';
 import { OKR_REVIEW_COMMENT_LEVELS, OKR_REVIEW_TYPES } from '../services/resultsVnext/okr/okrReviewTypes.js';
+import {
+  OKR_RECOGNITION_VISIBILITY_VALUES,
+  OKR_SUPPORT_REQUEST_KIND_VALUES,
+} from '../services/resultsVnext/okr/okrSupportTypes.js';
 
 export const OkrProgramStatusEnum = z.enum(OKR_PROGRAM_STATUSES);
 export const OkrCycleModelEnum = z.enum(OKR_CYCLE_MODELS);
@@ -744,4 +748,106 @@ export const CarryForwardOkrSetSchema = z.object({
 export const GetOkrSetHistoryQuerySchema = z.object({
   cursor: z.string().optional(),
   limit: z.coerce.number().int().positive().max(500).optional(),
+});
+
+// ==========================================
+// OKR-E006 — Support & Decisions (design §8/§10/§13)
+// ==========================================
+
+export const OkrSupportRequestKindEnum = z.enum(OKR_SUPPORT_REQUEST_KIND_VALUES);
+export const OkrRecognitionVisibilityEnum = z.enum(OKR_RECOGNITION_VISIBILITY_VALUES);
+
+const MAX_SUPPORT_BODY_CHARS = 4000;
+const MAX_RESOLUTION_NOTE_CHARS = 2000;
+const MAX_DISMISSED_REASON_CHARS = 2000;
+const MAX_REQUESTED_DECISION_CHARS = 2000;
+const MAX_IMPACT_OF_DELAY_CHARS = 2000;
+
+export const OkrSetObjectiveIdParamsSchema = z.object({
+  setId: z.string().uuid(),
+  objectiveId: z.string().uuid(),
+});
+
+export const OkrSetIdOnlyParamsSchema = z.object({
+  setId: z.string().uuid(),
+});
+
+export const OkrSupportRequestIdParamsSchema = z.object({
+  requestId: z.string().uuid(),
+});
+
+export const OkrDecisionLinkIdParamsSchema = z.object({
+  linkId: z.string().uuid(),
+});
+
+// POST .../sets/:setId/objectives/:objectiveId/comments — postComment
+export const PostOkrCommentSchema = z.object({
+  keyResultId: z.string().uuid().nullable().optional(),
+  body: z.string().min(1).max(MAX_SUPPORT_BODY_CHARS),
+  reason: nullableReasonField,
+  idempotencyKey: idempotencyKeyField,
+});
+
+// POST .../sets/:setId/objectives/:objectiveId/recognition — postRecognition
+export const PostOkrRecognitionSchema = z.object({
+  keyResultId: z.string().uuid().nullable().optional(),
+  body: z.string().min(1).max(MAX_SUPPORT_BODY_CHARS),
+  recognitionVisibility: OkrRecognitionVisibilityEnum,
+  reason: nullableReasonField,
+  idempotencyKey: idempotencyKeyField,
+});
+
+// POST .../sets/:setId/objectives/:objectiveId/support-requests — raiseSupportRequest
+export const RaiseOkrSupportRequestSchema = z.object({
+  keyResultId: z.string().uuid().nullable().optional(),
+  body: z.string().min(1).max(MAX_SUPPORT_BODY_CHARS),
+  assignedToUserId: z.string().min(1),
+  originCheckInId: z.string().uuid().nullable().optional(),
+  reason: nullableReasonField,
+  idempotencyKey: idempotencyKeyField,
+});
+
+// GET .../sets/:setId/support-requests — listSupportRequestsForSet
+export const ListOkrSupportRequestsQuerySchema = z.object({
+  kind: OkrSupportRequestKindEnum.optional(),
+});
+
+// POST .../support-requests/:requestId/acknowledge — acknowledgeSupportRequest
+export const AcknowledgeOkrSupportRequestSchema = z.object({
+  expectedVersion: expectedVersionField,
+  reason: nullableReasonField,
+  idempotencyKey: idempotencyKeyField,
+});
+
+// POST .../support-requests/:requestId/resolve — resolveSupportRequest
+export const ResolveOkrSupportRequestSchema = z.object({
+  expectedVersion: expectedVersionField,
+  resolutionNote: z.string().min(1).max(MAX_RESOLUTION_NOTE_CHARS),
+  reason: nullableReasonField,
+  idempotencyKey: idempotencyKeyField,
+});
+
+// POST .../support-requests/:requestId/dismiss — dismissSupportRequest
+export const DismissOkrSupportRequestSchema = z.object({
+  expectedVersion: expectedVersionField,
+  dismissedReason: z.string().min(1).max(MAX_DISMISSED_REASON_CHARS),
+  reason: nullableReasonField,
+  idempotencyKey: idempotencyKeyField,
+});
+
+// POST .../support-requests/:requestId/request-decision — requestDecisionFromSupportRequest
+export const RequestOkrDecisionSchema = z.object({
+  expectedVersion: expectedVersionField,
+  requestedDecision: z.string().min(1).max(MAX_REQUESTED_DECISION_CHARS),
+  impactOfDelay: z.string().min(1).max(MAX_IMPACT_OF_DELAY_CHARS),
+  desiredDate: z.string().nullable().optional(),
+  reason: nullableReasonField,
+  idempotencyKey: idempotencyKeyField,
+});
+
+// POST .../decision-links/:linkId/acknowledge-resolution — acknowledgeDecisionResolution
+export const AcknowledgeOkrDecisionResolutionSchema = z.object({
+  expectedVersion: expectedVersionField,
+  reason: nullableReasonField,
+  idempotencyKey: idempotencyKeyField,
 });
