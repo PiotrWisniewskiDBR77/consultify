@@ -335,19 +335,39 @@ EXECUTION_LEDGER.md §46.
 | Command/query/API | `POST .../advisor/draft`, `POST .../advisor/quality-review` | `POST .../advisor/check-in`, `POST .../advisor/manager-brief` | `POST .../advisor/reflection` | `GET .../okr/my`, `/team-health`, `/company` | brak nowych write-route dla legacy (celowo) |
 | Schema/migration/constraint | `okr_vnext_objectives` (Teresa provenance metadata) | `okr_vnext_checkins`, manager-brief read model | `okr_vnext_reflections` (proposed patch) | parity test na `id`/`current_version` w 3 projekcjach | **ZERO FK z `okr_vnext_*` do `okr_key_results`/`initiative_kpis`/`kpi_definition_versions`** |
 | Roles/visibility | Objective Owner (accept/reject) | KR Owner, Manager | Set/Objective Owner | wg scope | Auditor (read legacy), Program Admin |
-| Status | NOT_IMPLEMENTED | NOT_IMPLEMENTED | NOT_IMPLEMENTED | NOT_IMPLEMENTED | **IMPLEMENTED (Half C only)** |
+| Status | IMPLEMENTED | IMPLEMENTED | IMPLEMENTED | IMPLEMENTED | IMPLEMENTED |
 
 **OKR-F-029-AC-01 IMPLEMENTED 2026-08-10 — Half C (Legacy/Ops) only**, see
-`EXECUTION_LEDGER.md` closure entry "OKR-E008 Half C only". Halves A
-(Teresa, OKR-F-025..027) and B (Perspectives, OKR-F-028) remain
-NOT_IMPLEMENTED — deferred pending OKR-E003..E007 (Half A) / additionally
-OKR-E002 landing in this worktree (Half B). Half C shipped:
+`EXECUTION_LEDGER.md` closure entry "OKR-E008 Half C only". Half C shipped:
 `okrLegacyArchive.routes.ts` (9 GET-only endpoints), `okrLegacyArchiveRepository.ts`,
 `resultsVnextOkrLegacy.validators.ts`, `resultsVnextOkrLegacyArchiveHitsTotal`
 counter, Gateway mount, plus the D-OKR8-19 `warnings` array on `key-results`
 labelling the live `kpi_id`/`kpi_definition_version_id` D09 FKs. 43 new
 tests, all green (37 write-denial + 3 D09 static + 1 count sanity + 2
 real-Postgres isolation/correctness).
+
+**OKR-F-025/026/027/028-AC-01 IMPLEMENTED 2026-08-10 — Halves A (Teresa)
+and B (Perspectives)**, see `EXECUTION_LEDGER.md` §48. All 5 Half A
+advisor modes re-verified against the real, now-landed OKR-E001..E007 code
+(design was written when zero OKR vNext code existed) and built — none
+dropped: `objective_draft`, `objective_quality_review`, `check_in_assist`,
+`manager_brief`, `reflection_synthesis`. `teresaCopilotCanon.ts`/
+`teresaCopilotService.ts` wired (`'okr'` added to `HandoffTargetModule`,
+`P08_OKR_FORBIDDEN_VERBS` re-derived from a live grep of every
+`okr*Commands.ts` export), `okrReflectionCommands.ts` gained
+`recordOkrReflectionTeresaDraft`/`recordOkrReflectionTeresaDraftDisposition`
+(two-gate structure, new migration `20260827_rvn_okr_teresa_reflection_draft.sql`),
+`undoProposal` blocked for `'okr'`. Half B: new `okrPerspectivesRepository.ts`
+(`listMyOkrSets`, `listOrganizationOkrTeamHealth`) + `GET /my`/`GET
+/team-health` routes; `GET /okr/company` (OKR-E002) reused as-is; the
+`perspective=` query param on `GET /sets` stays reserved-and-unused per
+D-OKR8-4. 6 new test files, 54 new assertions (real-Postgres + mocked-DB +
+static), all green; full `tests/resultsVnext/okr` + `okr.routes.test.ts` +
+`okrReview.routes.test.ts` together: 489/489 pass (baseline 472). `npx tsc
+--noEmit` clean bar the same 28 pre-existing `decimal.js` errors in
+`roiCalculationEngine.ts` (untouched by this epic).
+
+**OKR domain backend complete: 8/8 epics (E001-E008) built and verified.**
 
 ---
 
