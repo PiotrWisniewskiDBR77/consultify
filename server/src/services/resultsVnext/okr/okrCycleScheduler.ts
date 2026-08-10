@@ -24,6 +24,8 @@ import {
   type OkrCycleLifecycleTransitionSpec,
 } from './okrCycleCommands.js';
 import type { OkrCycleRow, OkrCycleStatus } from './okrCycleTypes.js';
+import { OKR_SET_OPEN_REVIEW_SPEC, runOkrSetLifecycleTransition, OkrSetValidationError } from './okrSetCommands.js';
+import type { OkrSetRow } from './okrSetTypes.js';
 
 /** The platform's actual service-actor convention (design §6.6): nullable
  * `actorUserId` + a `'system:*'` role string — there is no separate
@@ -117,6 +119,75 @@ export async function proposeAndExecuteDueCycleTransitions(
         }
         throw err;
       }
+    }
+  }
+
+  return { transitioned };
+}
+
+// ==========================================
+// cascadeOkrSetsToReview (OKR-E007, design §4.6)
+// ==========================================
+
+export interface CascadeOkrSetsToReviewInput {
+  organizationId: string;
+  cycleId: string;
+}
+
+export interface CascadeOkrSetsToReviewResult {
+  transitioned: string[];
+}
+
+/**
+ * Called alongside (not instead of) the Cycle's own `review_open_at`-driven
+ * transition — for every `status='active'` Set under the Cycle, calls
+ * `runOkrSetLifecycleTransition(OKR_SET_OPEN_REVIEW_SPEC, ...)` as a
+ * service actor (`actorUserId=null`, `actorEffectiveRole=
+ * 'system:okr_cycle_scheduler'`, same convention `OKR_CYCLE_SCHEDULER_ACTOR_ROLE`
+ * already establishes for Cycle transitions). Idempotent by construction:
+ * the CAS'd `fromStatuses:['active']` guard rejects harmlessly on a second
+ * run once a Set has already moved to `review`. A single Set losing its
+ * CAS race (a concurrent manual `open-review` call) does not abort the
+ * whole pass, same "one bad tick never kills the process" discipline
+ * `proposeAndExecuteDueCycleTransitions` above already uses.
+ */
+export async function cascadeOkrSetsToReview(
+  input: CascadeOkrSetsToReviewInput
+): Promise<CascadeOkrSetsToReviewResult> {
+  const { organizationId, cycleId } = input;
+  const transitioned: string[] = [];
+
+  const client = await acquirePgClient();
+  let activeSets: OkrSetRow[];
+  try {
+    const result = await client.query<OkrSetRow>(
+      `SELECT * FROM okr_vnext_sets WHERE organization_id = $1 AND cycle_id = $2 AND status = 'active'`,
+      [organizationId, cycleId]
+    );
+    activeSets = result.rows;
+  } finally {
+    client.release();
+  }
+
+  for (const setRow of activeSets) {
+    try {
+      const outcome = await runOkrSetLifecycleTransition(OKR_SET_OPEN_REVIEW_SPEC, {
+        setId: setRow.set_id,
+        organizationId,
+        expectedVersion: setRow.row_version,
+        actorUserId: null,
+        actorEffectiveRole: OKR_CYCLE_SCHEDULER_ACTOR_ROLE,
+        idempotencyKey: `okr-cycle-scheduler-${OKR_SET_OPEN_REVIEW_SPEC.eventType}-${setRow.set_id}-${randomUUID()}`,
+        reason: 'Scheduled cascade — parent Cycle entered review',
+      });
+      if (outcome.outcome === 'applied') {
+        transitioned.push(setRow.set_id);
+      }
+    } catch (err) {
+      if (err instanceof OkrSetValidationError || err instanceof AtomicWriteConflictError) {
+        continue;
+      }
+      throw err;
     }
   }
 

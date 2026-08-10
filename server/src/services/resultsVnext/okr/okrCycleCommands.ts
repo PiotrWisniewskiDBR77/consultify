@@ -64,6 +64,27 @@ export class OkrCycleValidationError extends Error {
   }
 }
 
+/**
+ * OKR-E007 (Decision D9) — a genuine gap found by direct code read: this
+ * file's own `runOkrCycleLifecycleTransition` carried NO `guard` slot for
+ * `okr_cycle.closed`, unlike the generic-guard shape ROI's
+ * `runRoiCaseLifecycleTransition` already demonstrates working
+ * (`roiCaseCommands.ts`'s `markReadyForReview`). Without a guard, a Cycle
+ * could close while its Sets are still `active`/`review` — a foreseeable
+ * data-integrity hole the plan's own lifecycle diagram never coupled Cycle
+ * and Set state machines against. Thrown by the `guard` wired into
+ * `OKR_CYCLE_CLOSE_SPEC` below.
+ */
+export class OkrCycleHasOpenSetsError extends Error {
+  code = 'CYCLE_HAS_OPEN_SETS';
+  details: Record<string, unknown>;
+  constructor(cycleId: string, openSetIds: string[]) {
+    super(`OKR Cycle ${cycleId} cannot close: ${openSetIds.length} Set(s) are not closed/cancelled/not_required`);
+    this.name = 'OkrCycleHasOpenSetsError';
+    this.details = { cycleId, openSetIds };
+  }
+}
+
 // ==========================================
 // SHARED ROW LOADER
 // ==========================================
@@ -290,6 +311,16 @@ export interface OkrCycleLifecycleTransitionSpec {
   eventType: string;
   fromStatuses: readonly OkrCycleStatus[];
   toStatus: OkrCycleStatus;
+  /**
+   * OKR-E007 (D9) addition — optional, backward-compatible (IO-6: every
+   * pre-existing spec constant below omits it and is byte-for-byte
+   * unchanged). Evaluated against the pinned transactional client plus the
+   * locked Cycle row, AFTER the `fromStatuses` check and BEFORE the
+   * `UPDATE` — throw to abort the transition. Mirrors the shape (not the
+   * domain-specific signature) of ROI's own `RoiCaseLifecycleTransitionSpec.guard`
+   * (`roiCaseCommands.ts`).
+   */
+  guard?: (client: PoolClient, cycleRow: OkrCycleRow) => Promise<void>;
 }
 
 export interface RunOkrCycleLifecycleTransitionInput {
@@ -347,6 +378,10 @@ export async function runOkrCycleLifecycleTransition(
           'INVALID_TRANSITION',
           { cycleId, currentStatus: currentRow.status, toStatus: spec.toStatus }
         );
+      }
+
+      if (spec.guard) {
+        await spec.guard(client, currentRow);
       }
 
       beforeState = { cycle: toOkrCycle(currentRow) };
@@ -422,10 +457,27 @@ export const OKR_CYCLE_OPEN_REVIEW_SPEC: OkrCycleLifecycleTransitionSpec = {
   toStatus: 'review',
 };
 
+/** D9: guard added by OKR-E007 — a Cycle cannot close while any of its
+ * Sets are still open (`NOT IN ('closed','cancelled','not_required')`).
+ * `not_required` is included in the allowed set deliberately — a Set the
+ * Program itself marked as never needing one (E002's reserved-but-unbuilt
+ * `not_required` status, D2) is not "open" in any meaningful sense. */
 export const OKR_CYCLE_CLOSE_SPEC: OkrCycleLifecycleTransitionSpec = {
   eventType: 'okr_cycle.closed',
   fromStatuses: ['review'],
   toStatus: 'closed',
+  guard: async (client, cycleRow) => {
+    const openSets = await client.query<{ set_id: string }>(
+      `SELECT set_id FROM okr_vnext_sets WHERE cycle_id = $1 AND status NOT IN ('closed','cancelled','not_required')`,
+      [cycleRow.cycle_id]
+    );
+    if (openSets.rows.length > 0) {
+      throw new OkrCycleHasOpenSetsError(
+        cycleRow.cycle_id,
+        openSets.rows.map((r) => r.set_id)
+      );
+    }
+  },
 };
 
 export const OKR_CYCLE_CANCEL_SPEC: OkrCycleLifecycleTransitionSpec = {

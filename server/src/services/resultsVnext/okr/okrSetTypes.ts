@@ -69,6 +69,11 @@ export interface OkrSetRow {
   attention_state: OkrSetAttentionState;
   last_checkin_at: string | null;
   next_checkin_due_at: string | null;
+  /** OKR-E007 (D15): lineage pointer to the closed source Set this one was
+   * carried forward from (`carryForwardOkrSet`) — NULL for every Set
+   * created any other way. Additive column, reserved by this epic's own
+   * migration. */
+  carried_from_set_id: string | null;
   row_version: number;
   created_by: string;
   created_at: string;
@@ -104,6 +109,7 @@ export interface OkrSet {
   attentionState: OkrSetAttentionState;
   lastCheckinAt: string | null;
   nextCheckinDueAt: string | null;
+  carriedFromSetId: string | null;
   rowVersion: number;
   createdBy: string;
   createdAt: string;
@@ -138,6 +144,7 @@ export function toOkrSet(row: OkrSetRow): OkrSet {
     attentionState: row.attention_state,
     lastCheckinAt: row.last_checkin_at,
     nextCheckinDueAt: row.next_checkin_due_at,
+    carriedFromSetId: row.carried_from_set_id,
     rowVersion: row.row_version,
     createdBy: row.created_by,
     createdAt: row.created_at,

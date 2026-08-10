@@ -380,6 +380,24 @@ export const EVENT_TYPE_CONSUMER_GROUPS: Readonly<Record<string, readonly string
   'okr_alignment.accepted': ['mywork_projection'],
   'okr_alignment.rejected': ['mywork_projection'],
   'okr_alignment.removed': ['mywork_projection'],
+
+  // OKR-E007 (docs/product/results-vnext/OKR_E007_DESIGN.md §4/§7) — Review
+  // & Learning. Every event here uses aggregateType='okr_set' (D12,
+  // confirmed by direct read of the landed `roiPirCommands.ts`: every one
+  // of its 6 commands emits aggregateType='roi_case' even when only a
+  // child table is touched) — never a new 'okr_reflection'/'okr_review'
+  // peer aggregate type. `okr_cycle.closed`'s event KEY is unchanged (only
+  // its transition spec gained a `guard`, D9) — not repeated here, already
+  // registered under OKR-E001 above. All fan out to 'mywork_projection'
+  // only, same default every other domain entry in this map uses.
+  'okr_set.final_scored': ['mywork_projection'],
+  'okr_set.objective_reflection_recorded': ['mywork_projection'],
+  'okr_set.review_opened': ['mywork_projection'],
+  'okr_set.review_submitted': ['mywork_projection'],
+  'okr_set.review_approved': ['mywork_projection'],
+  'okr_set.review_changes_requested': ['mywork_projection'],
+  'okr_set.review_comment_recorded': ['mywork_projection'],
+  'okr_set.closed': ['mywork_projection'],
 };
 
 /**

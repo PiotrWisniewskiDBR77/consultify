@@ -203,6 +203,11 @@ export interface CreateOkrSetInput {
   ownerUserId: string;
   reviewerUserId?: string | null;
   title: string;
+  /** OKR-E007 (D17): non-null only when this Set is being created by
+   * `carryForwardOkrSet` — the lineage pointer to the closed source Set.
+   * Optional, backward-compatible addition (IO-6) — every existing E002
+   * caller omits it and gets byte-for-byte identical behavior (NULL). */
+  carriedFromSetId?: string | null;
   createdBy: string;
   actorEffectiveRole: string;
   idempotencyKey: string;
@@ -255,6 +260,7 @@ export async function createOkrSet(
     ownerUserId,
     reviewerUserId = null,
     title,
+    carriedFromSetId = null,
     createdBy,
     actorEffectiveRole,
     idempotencyKey,
@@ -329,10 +335,10 @@ export async function createOkrSet(
         const insertResult = await client.query<OkrSetRow>(
           `INSERT INTO okr_vnext_sets
              (organization_id, program_id, cycle_id, scope_type, scope_id,
-              owner_user_id, reviewer_user_id, title, created_by)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+              owner_user_id, reviewer_user_id, title, carried_from_set_id, created_by)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
            RETURNING *`,
-          [organizationId, programId, cycleId, scopeType, scopeId, ownerUserId, reviewerUserId, title, createdBy]
+          [organizationId, programId, cycleId, scopeType, scopeId, ownerUserId, reviewerUserId, title, carriedFromSetId, createdBy]
         );
         const inserted = insertResult.rows[0];
         if (!inserted) {
@@ -1262,3 +1268,225 @@ export const OKR_SET_CANCEL_SPEC: OkrSetLifecycleTransitionSpec = {
   fromStatuses: ['draft', 'submitted', 'changes_requested', 'approved', 'active'],
   toStatus: 'cancelled',
 };
+
+/** OKR-E007 (design §4.4, OKR-F-021/022). Called explicitly (Set Owner/
+ * Program Admin) AND by the Cycle scheduler's `cascadeOkrSetsToReview`
+ * (okrCycleScheduler.ts) when the parent Cycle transitions to `review` —
+ * never implicitly inferred from the Cycle's own state alone (a Set
+ * transition is always its own explicit command, matching every other
+ * Cycle/Set coupling in this program). */
+export const OKR_SET_OPEN_REVIEW_SPEC: OkrSetLifecycleTransitionSpec = {
+  eventType: 'okr_set.review_opened',
+  fromStatuses: ['active'],
+  toStatus: 'review',
+};
+
+// ==========================================
+// closeOkrSet (OKR-E007, OKR-F-021/022, D9-D11)
+// ==========================================
+
+export interface CloseOkrSetInput {
+  setId: string;
+  organizationId: string;
+  expectedVersion: number;
+  actorUserId: string;
+  actorEffectiveRole: string;
+  idempotencyKey: string;
+  correlationId?: string;
+  causationId?: string | null;
+  reason?: string | null;
+}
+
+interface CloseGateReflectionRow {
+  objective_id: string;
+  status: string;
+  final_score: string | null;
+  scoring_model_unsupported: boolean;
+  what_worked: string | null;
+  what_did_not_work: string | null;
+  why: string | null;
+  learning: string | null;
+  next_cycle_change: string | null;
+  disposition: string | null;
+}
+
+/**
+ * Design §4.5, exact step ordering: (1) guard `status==='review'`; (2) load
+ * the Cycle's PINNED policy snapshot (D11 — never the Program's live
+ * current row); (3) `manager_review_required` gate; (4)
+ * `self_review_required` gate; (5) `reflection_required_for_close` gate
+ * (lists every offending Objective, not just the first); (6) finalize every
+ * `status='draft'` reflection row for this Set in the SAME transaction;
+ * (7) close the Set. **No self-close denial** (D10 — deliberate divergence
+ * from ROI-E006's `RoiPirSelfCloseDeniedError`: OKR already has
+ * `manager_review_required` feeding a real maker-checker gate
+ * (`OkrManagerReviewSelfApprovalDeniedError`) directly into step 3 above —
+ * when that policy is on, self-closing is already structurally blocked;
+ * when it is off, the Program has explicitly opted out of that protection
+ * and a parallel un-opt-outable check would silently override it).
+ *
+ * Imports from `okrReviewCommands.ts`/`okrReflectionCommands.ts` below
+ * create a circular module reference back to THIS file (both of those
+ * files import `OkrSetValidationError`/`OKR_SET_RESOURCE_TYPE` from here) —
+ * safe under native ESM (this repo's `"type":"module"`, confirmed
+ * `package.json`): every reference is used only inside function bodies,
+ * never at module-evaluation time, so by the time any of these commands
+ * actually runs the whole module graph has already finished loading.
+ */
+export async function closeOkrSet(input: CloseOkrSetInput): Promise<AtomicCommandOutcome<{ set: OkrSet }>> {
+  const {
+    setId,
+    organizationId,
+    expectedVersion,
+    actorUserId,
+    actorEffectiveRole,
+    idempotencyKey,
+    correlationId,
+    causationId = null,
+    reason = null,
+  } = input;
+
+  // Deferred imports (not top-level) purely to keep the circular-import
+  // note above visibly true at the exact call sites that rely on it — a
+  // normal top-level import would work identically under ESM's live-
+  // binding semantics, this is a readability choice, not a requirement.
+  const { OkrSetManagerReviewRequiredError, OkrSetSelfReviewRequiredError } = await import('./okrReviewCommands.js');
+  const { OkrSetReflectionRequiredError } = await import('./okrReflectionCommands.js');
+
+  let beforeState: Record<string, unknown> | null = null;
+
+  return executeAtomicCommand<OkrSetRow, { set: OkrSet }>({
+    organizationId,
+    aggregateId: setId,
+    expectedVersion,
+    loadForUpdate: loadOkrSetForUpdate,
+    getCurrentVersion: setRowVersion,
+    applyMutation: async (client, currentRow, nextVersion) => {
+      // Step 1.
+      if (currentRow.status !== 'review') {
+        throw new OkrSetValidationError(
+          `OKR Set ${setId} is "${currentRow.status}" — only a Set "review" may be closed`,
+          'NOT_IN_REVIEW',
+          { setId, status: currentRow.status }
+        );
+      }
+
+      // Step 2 (D11) — pinned policy, never the Program's live row.
+      const { snapshot } = await resolveOkrCyclePinnedPolicySnapshot(client, setId, organizationId);
+
+      // Step 3.
+      if (snapshot.managerReviewRequired) {
+        const managerReview = await client.query<{ status: string }>(
+          `SELECT status FROM okr_vnext_reviews WHERE set_id = $1 AND organization_id = $2 AND review_type = 'manager'`,
+          [setId, organizationId]
+        );
+        const row = managerReview.rows[0];
+        if (!row || row.status !== 'approved') {
+          throw new OkrSetManagerReviewRequiredError(setId);
+        }
+      }
+
+      // Step 4.
+      if (snapshot.selfReviewRequired) {
+        const selfReview = await client.query<{ status: string }>(
+          `SELECT status FROM okr_vnext_reviews WHERE set_id = $1 AND organization_id = $2 AND review_type = 'self'`,
+          [setId, organizationId]
+        );
+        const row = selfReview.rows[0];
+        if (!row || row.status !== 'submitted') {
+          throw new OkrSetSelfReviewRequiredError(setId);
+        }
+      }
+
+      // Step 5.
+      if (snapshot.reflectionRequiredForClose) {
+        const objectivesResult = await client.query<{ objective_id: string }>(
+          `SELECT objective_id FROM okr_vnext_objectives WHERE set_id = $1 AND organization_id = $2 AND status <> 'cancelled'`,
+          [setId, organizationId]
+        );
+        const reflectionsResult = await client.query<CloseGateReflectionRow>(
+          `SELECT objective_id, status, final_score, scoring_model_unsupported, what_worked, what_did_not_work,
+                  why, learning, next_cycle_change, disposition
+             FROM okr_vnext_reflections WHERE set_id = $1 AND organization_id = $2`,
+          [setId, organizationId]
+        );
+        const reflectionByObjective = new Map(reflectionsResult.rows.map((r) => [r.objective_id, r]));
+        const missingObjectiveIds: string[] = [];
+        for (const objectiveRow of objectivesResult.rows) {
+          const reflection = reflectionByObjective.get(objectiveRow.objective_id);
+          const scoreComplete = !!reflection && (reflection.final_score !== null || reflection.scoring_model_unsupported);
+          const narrativeComplete =
+            !!reflection &&
+            reflection.what_worked !== null &&
+            reflection.what_did_not_work !== null &&
+            reflection.why !== null &&
+            reflection.learning !== null &&
+            reflection.next_cycle_change !== null &&
+            reflection.disposition !== null;
+          if (!scoreComplete || !narrativeComplete) {
+            missingObjectiveIds.push(objectiveRow.objective_id);
+          }
+        }
+        if (missingObjectiveIds.length > 0) {
+          throw new OkrSetReflectionRequiredError(setId, missingObjectiveIds);
+        }
+      }
+
+      beforeState = { set: toOkrSet(currentRow) };
+
+      // Step 6 — finalize every draft reflection for this Set, even if
+      // `reflection_required_for_close=false` and some rows are incomplete
+      // (an incomplete-but-existing reflection still finalizes; its NULL
+      // fields simply stay NULL forever, matching D4's "frozen from
+      // whatever state it was in at close").
+      await client.query(
+        `UPDATE okr_vnext_reflections
+            SET status = 'finalized', finalized_by = $1, finalized_at = now(), row_version = row_version + 1
+          WHERE set_id = $2 AND status = 'draft'`,
+        [actorUserId, setId]
+      );
+
+      // Step 7.
+      const updateResult = await client.query<OkrSetRow>(
+        `UPDATE okr_vnext_sets
+            SET status = 'closed', row_version = $1, updated_by = $2, updated_at = now()
+          WHERE set_id = $3
+          RETURNING *`,
+        [nextVersion, actorUserId, setId]
+      );
+      const updatedRow = updateResult.rows[0];
+      if (!updatedRow) {
+        throw new Error(`[closeOkrSet] update returned no row for ${setId}`);
+      }
+
+      return { set: toOkrSet(updatedRow) };
+    },
+    buildEvent: ({ result, nextVersion }) => {
+      const afterState: Record<string, unknown> = { set: result.set };
+      return {
+        schemaVersion: 1,
+        eventType: 'okr_set.closed',
+        aggregateType: 'okr_set',
+        aggregateId: setId,
+        organizationId,
+        actorUserId,
+        actorEffectiveRole,
+        commandId: randomUUID(),
+        correlationId: correlationId ?? randomUUID(),
+        causationId,
+        occurredAt: new Date().toISOString(),
+        policyVersion: '',
+        beforeState,
+        afterState,
+        stateHash: computeStateHash(afterState),
+        reason,
+        evidenceRefs: [],
+        source: OKR_EVENT_SOURCE,
+        idempotencyKey,
+        expectedVersion,
+        resultingVersion: nextVersion,
+        payload: { setId },
+      } satisfies AtomicEventInput;
+    },
+  });
+}
