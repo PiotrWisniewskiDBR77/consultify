@@ -30,6 +30,20 @@ const mockListPrograms = vi.fn();
 const mockGetCycle = vi.fn();
 const mockListCycles = vi.fn();
 
+const mockCreateOkrSet = vi.fn();
+const mockUpdateOkrSetDraft = vi.fn();
+const mockNarrowOkrSetVisibility = vi.fn();
+const mockSubmitOkrSetForApproval = vi.fn();
+const mockApproveOkrSet = vi.fn();
+const mockRequestChangesOnOkrSet = vi.fn();
+const mockRunOkrSetLifecycleTransition = vi.fn();
+const mockRecordOkrSetMaterialChange = vi.fn();
+
+const mockGetOkrSet = vi.fn();
+const mockListOkrSets = vi.fn();
+const mockListOkrSetApprovedSnapshots = vi.fn();
+const mockGetOkrSetApprovedSnapshot = vi.fn();
+
 vi.mock('../../../middleware/auth.middleware.js', () => ({
   verifyToken: (req: any, _res: any, next: () => void) => {
     req.user = { id: 'user-1', organizationId: 'org-1', role: 'admin' };
@@ -78,10 +92,48 @@ vi.mock('../../../services/resultsVnext/okr/okrRepository.js', () => ({
   listCycles: (...args: unknown[]) => mockListCycles(...args),
 }));
 
+vi.mock('../../../services/resultsVnext/okr/okrSetCommands.js', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('../../../services/resultsVnext/okr/okrSetCommands.js')>();
+  return {
+    ...actual,
+    createOkrSet: (...args: unknown[]) => mockCreateOkrSet(...args),
+    updateOkrSetDraft: (...args: unknown[]) => mockUpdateOkrSetDraft(...args),
+    narrowOkrSetVisibility: (...args: unknown[]) => mockNarrowOkrSetVisibility(...args),
+    submitOkrSetForApproval: (...args: unknown[]) => mockSubmitOkrSetForApproval(...args),
+    approveOkrSet: (...args: unknown[]) => mockApproveOkrSet(...args),
+    requestChangesOnOkrSet: (...args: unknown[]) => mockRequestChangesOnOkrSet(...args),
+    runOkrSetLifecycleTransition: (...args: unknown[]) => mockRunOkrSetLifecycleTransition(...args),
+  };
+});
+
+vi.mock('../../../services/resultsVnext/okr/okrSetMaterialChangeCommands.js', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('../../../services/resultsVnext/okr/okrSetMaterialChangeCommands.js')>();
+  return {
+    ...actual,
+    recordOkrSetMaterialChange: (...args: unknown[]) => mockRecordOkrSetMaterialChange(...args),
+  };
+});
+
+vi.mock('../../../services/resultsVnext/okr/okrSetRepository.js', () => ({
+  getOkrSet: (...args: unknown[]) => mockGetOkrSet(...args),
+  listOkrSets: (...args: unknown[]) => mockListOkrSets(...args),
+  listOkrSetApprovedSnapshots: (...args: unknown[]) => mockListOkrSetApprovedSnapshots(...args),
+  getOkrSetApprovedSnapshot: (...args: unknown[]) => mockGetOkrSetApprovedSnapshot(...args),
+}));
+
 const { OkrProgramValidationError } = await import('../../../services/resultsVnext/okr/okrProgramCommands.js');
 const { OkrCycleProgramNotActiveError, OkrCycleValidationError } = await import(
   '../../../services/resultsVnext/okr/okrCycleCommands.js'
 );
+const {
+  OkrSetNoActiveVisibilityPolicyError,
+  OkrSetNotReadyForSubmissionError,
+  OkrSetSelfApprovalDeniedError,
+  OkrSetValidationError,
+  OkrSetVisibilityWideningDeniedError,
+} = await import('../../../services/resultsVnext/okr/okrSetCommands.js');
 const { AtomicWriteConflictError, AtomicWriteAggregateNotFoundError } =
   await import('../../../services/resultsVnext/platform/atomicWrite.js');
 
@@ -450,5 +502,530 @@ describe('POST /cycles/:cycleId/{open-drafting|activate|open-review|close|cancel
       .send({ expectedVersion: 1 });
     expect(response.status).toBe(404);
     expect(mockRunOkrCycleLifecycleTransition).not.toHaveBeenCalled();
+  });
+});
+
+// ==========================================
+// OKR-E002 — Materialized Set (design §6, 14 routes)
+// ==========================================
+
+const SET_ID = '44444444-4444-4444-8444-444444444444';
+const SNAPSHOT_ID = '55555555-5555-4555-8555-555555555555';
+
+function setFixture(overrides: Record<string, unknown> = {}) {
+  return {
+    setId: SET_ID,
+    organizationId: 'org-1',
+    programId: PROGRAM_ID,
+    cycleId: CYCLE_ID,
+    scopeType: 'individual',
+    scopeId: 'user-owner',
+    ownerUserId: 'user-owner',
+    reviewerUserId: 'user-reviewer',
+    title: 'Set title',
+    status: 'draft',
+    submittedBy: null,
+    submittedAt: null,
+    approvedBy: null,
+    approvedAt: null,
+    changesRequestedBy: null,
+    changesRequestedAt: null,
+    changesRequestedReason: null,
+    currentVersion: 1,
+    approvedVersion: null,
+    latestApprovedSnapshotId: null,
+    overallProgress: null,
+    overallConfidence: null,
+    attentionState: 'none',
+    lastCheckinAt: null,
+    nextCheckinDueAt: null,
+    rowVersion: 1,
+    createdBy: 'user-1',
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedBy: null,
+    updatedAt: '2026-01-01T00:00:00.000Z',
+    ...overrides,
+  };
+}
+
+function snapshotSummaryFixture(overrides: Record<string, unknown> = {}) {
+  return {
+    snapshotId: SNAPSHOT_ID,
+    setId: SET_ID,
+    sequenceNumber: 1,
+    approvedBy: 'user-reviewer',
+    approvedAt: '2026-01-03T00:00:00.000Z',
+    contentHash: 'abc123',
+    ...overrides,
+  };
+}
+
+// ==========================================
+// create -> get roundtrip (Set)
+// ==========================================
+
+describe('POST /sets + GET /sets/:setId — create -> get roundtrip', () => {
+  it('creates a Set (created:true -> 201) and the same id is fetchable via GET', async () => {
+    const set = setFixture();
+    mockCreateOkrSet.mockResolvedValue({
+      outcome: 'applied',
+      eventId: 'evt-set-1',
+      resultingVersion: 1,
+      result: { set, created: true },
+    });
+    mockGetOkrSet.mockResolvedValue(set);
+
+    const createResponse = await request(createApp())
+      .post('/api/vnext/results/okr/sets')
+      .send({
+        programId: PROGRAM_ID,
+        cycleId: CYCLE_ID,
+        scopeType: 'individual',
+        scopeId: 'user-owner',
+        ownerUserId: 'user-owner',
+        title: 'Set title',
+      });
+    expect(createResponse.status).toBe(201);
+    expect(createResponse.body.set.setId).toBe(SET_ID);
+    expect(createResponse.body.created).toBe(true);
+    expect(mockCreateOkrSet).toHaveBeenCalledTimes(1);
+    const createArgs = mockCreateOkrSet.mock.calls[0][0];
+    expect(createArgs.organizationId).toBe('org-1');
+    expect(createArgs.createdBy).toBe('user-1');
+    expect(typeof createArgs.idempotencyKey).toBe('string');
+
+    const getResponse = await request(createApp()).get(`/api/vnext/results/okr/sets/${SET_ID}`);
+    expect(getResponse.status).toBe(200);
+    expect(getResponse.body.set.setId).toBe(SET_ID);
+  });
+
+  it('D3 found-existing branch (created:false) returns 200, not 201', async () => {
+    mockCreateOkrSet.mockResolvedValue({
+      outcome: 'applied',
+      eventId: 'evt-set-2',
+      resultingVersion: 1,
+      result: { set: setFixture(), created: false },
+    });
+    const response = await request(createApp())
+      .post('/api/vnext/results/okr/sets')
+      .send({
+        programId: PROGRAM_ID,
+        cycleId: CYCLE_ID,
+        scopeType: 'individual',
+        scopeId: 'user-owner',
+        ownerUserId: 'user-owner',
+        title: 'Set title',
+      });
+    expect(response.status).toBe(200);
+    expect(response.body.created).toBe(false);
+  });
+
+  it('404s GET for a Set the repository does not return', async () => {
+    mockGetOkrSet.mockResolvedValue(null);
+    const response = await request(createApp()).get(`/api/vnext/results/okr/sets/${SET_ID}`);
+    expect(response.status).toBe(404);
+    expect(response.body.code).toBe('NOT_FOUND');
+  });
+
+  it('400s create when required fields are missing (Zod validation)', async () => {
+    const response = await request(createApp()).post('/api/vnext/results/okr/sets').send({});
+    expect(response.status).toBe(400);
+    expect(mockCreateOkrSet).not.toHaveBeenCalled();
+  });
+
+  it('maps OkrSetNoActiveVisibilityPolicyError to 409', async () => {
+    mockCreateOkrSet.mockRejectedValue(new OkrSetNoActiveVisibilityPolicyError('org-1', 'okr'));
+    const response = await request(createApp())
+      .post('/api/vnext/results/okr/sets')
+      .send({
+        programId: PROGRAM_ID,
+        cycleId: CYCLE_ID,
+        scopeType: 'individual',
+        scopeId: 'user-owner',
+        ownerUserId: 'user-owner',
+        title: 'Set title',
+      });
+    expect(response.status).toBe(409);
+    expect(response.body.code).toBe('NO_ACTIVE_VISIBILITY_POLICY');
+  });
+});
+
+// ==========================================
+// GET /sets — list
+// ==========================================
+
+describe('GET /sets — listOkrSets', () => {
+  it('passes cycleId/scopeType/status/attentionState/limit/offset through to the repository', async () => {
+    mockListOkrSets.mockResolvedValue([setFixture()]);
+    const response = await request(createApp()).get(
+      `/api/vnext/results/okr/sets?cycleId=${CYCLE_ID}&scopeType=individual&status=draft&attentionState=none&limit=10&offset=5`
+    );
+    expect(response.status).toBe(200);
+    expect(response.body.sets).toHaveLength(1);
+    expect(mockListOkrSets).toHaveBeenCalledWith({
+      userId: 'user-1',
+      organizationId: 'org-1',
+      cycleId: CYCLE_ID,
+      scopeType: 'individual',
+      status: 'draft',
+      attentionState: 'none',
+      limit: 10,
+      offset: 5,
+    });
+  });
+});
+
+// ==========================================
+// GET /company — listOkrSets filtered scope_type='company'
+// ==========================================
+
+describe('GET /company — listOkrSets pinned to scope_type company', () => {
+  it('always passes scopeType:"company", regardless of query', async () => {
+    mockListOkrSets.mockResolvedValue([setFixture({ scopeType: 'company' })]);
+    const response = await request(createApp()).get('/api/vnext/results/okr/company');
+    expect(response.status).toBe(200);
+    expect(mockListOkrSets).toHaveBeenCalledWith(
+      expect.objectContaining({ organizationId: 'org-1', scopeType: 'company' })
+    );
+  });
+});
+
+// ==========================================
+// PATCH /sets/:setId/draft — updateOkrSetDraft
+// ==========================================
+
+describe('PATCH /sets/:setId/draft — updateOkrSetDraft', () => {
+  it('404s when the Set does not exist, without calling the command', async () => {
+    mockGetOkrSet.mockResolvedValue(null);
+    const response = await request(createApp())
+      .patch(`/api/vnext/results/okr/sets/${SET_ID}/draft`)
+      .send({ expectedVersion: 1, title: 'New title' });
+    expect(response.status).toBe(404);
+    expect(mockUpdateOkrSetDraft).not.toHaveBeenCalled();
+  });
+
+  it('edits and maps STALE_VERSION to 409', async () => {
+    mockGetOkrSet.mockResolvedValue(setFixture());
+    mockUpdateOkrSetDraft.mockRejectedValue(
+      new AtomicWriteConflictError('Aggregate was modified since it was last read', 'STALE_VERSION', {
+        currentVersion: 3,
+        expectedVersion: 1,
+      })
+    );
+    const response = await request(createApp())
+      .patch(`/api/vnext/results/okr/sets/${SET_ID}/draft`)
+      .send({ expectedVersion: 1, title: 'New title' });
+    expect(response.status).toBe(409);
+    expect(response.body.code).toBe('STALE_VERSION');
+  });
+
+  it('maps OkrSetValidationError (NOT_EDITABLE) to 409', async () => {
+    mockGetOkrSet.mockResolvedValue(setFixture({ status: 'active' }));
+    mockUpdateOkrSetDraft.mockRejectedValue(
+      new OkrSetValidationError('not editable', 'NOT_EDITABLE', { setId: SET_ID })
+    );
+    const response = await request(createApp())
+      .patch(`/api/vnext/results/okr/sets/${SET_ID}/draft`)
+      .send({ expectedVersion: 1, title: 'New title' });
+    expect(response.status).toBe(409);
+    expect(response.body.code).toBe('NOT_EDITABLE');
+  });
+});
+
+// ==========================================
+// PATCH /sets/:setId/visibility — narrowOkrSetVisibility (D19)
+// ==========================================
+
+describe('PATCH /sets/:setId/visibility — narrowOkrSetVisibility', () => {
+  it('narrows and returns the new visibilityMode', async () => {
+    mockGetOkrSet.mockResolvedValue(setFixture());
+    mockNarrowOkrSetVisibility.mockResolvedValue({
+      outcome: 'applied',
+      eventId: 'evt-narrow-1',
+      resultingVersion: 2,
+      result: { set: setFixture({ rowVersion: 2 }), visibilityMode: 'RESTRICTED_ACL' },
+    });
+    const response = await request(createApp())
+      .patch(`/api/vnext/results/okr/sets/${SET_ID}/visibility`)
+      .send({ expectedVersion: 1, visibilityMode: 'RESTRICTED_ACL' });
+    expect(response.status).toBe(200);
+    expect(response.body.visibilityMode).toBe('RESTRICTED_ACL');
+  });
+
+  it('maps OkrSetVisibilityWideningDeniedError to 409', async () => {
+    mockGetOkrSet.mockResolvedValue(setFixture());
+    mockNarrowOkrSetVisibility.mockRejectedValue(
+      new OkrSetVisibilityWideningDeniedError(SET_ID, 'OPEN_ORG', 'SCOPE')
+    );
+    const response = await request(createApp())
+      .patch(`/api/vnext/results/okr/sets/${SET_ID}/visibility`)
+      .send({ expectedVersion: 1, visibilityMode: 'OPEN_ORG' });
+    expect(response.status).toBe(409);
+    expect(response.body.code).toBe('VISIBILITY_WIDENING_DENIED');
+  });
+
+  it('400s on an invalid visibilityMode (Zod enum)', async () => {
+    mockGetOkrSet.mockResolvedValue(setFixture());
+    const response = await request(createApp())
+      .patch(`/api/vnext/results/okr/sets/${SET_ID}/visibility`)
+      .send({ expectedVersion: 1, visibilityMode: 'NOT_A_REAL_MODE' });
+    expect(response.status).toBe(400);
+    expect(mockNarrowOkrSetVisibility).not.toHaveBeenCalled();
+  });
+});
+
+// ==========================================
+// POST /sets/:setId/submit — submitOkrSetForApproval
+// ==========================================
+
+describe('POST /sets/:setId/submit — submitOkrSetForApproval', () => {
+  it('submits: 200 on success', async () => {
+    mockGetOkrSet.mockResolvedValue(setFixture());
+    mockSubmitOkrSetForApproval.mockResolvedValue({
+      outcome: 'applied',
+      eventId: 'evt-submit-1',
+      resultingVersion: 2,
+      result: setFixture({ status: 'submitted', rowVersion: 2 }),
+    });
+    const response = await request(createApp())
+      .post(`/api/vnext/results/okr/sets/${SET_ID}/submit`)
+      .send({ expectedVersion: 1 });
+    expect(response.status).toBe(200);
+    expect(response.body.set.status).toBe('submitted');
+  });
+
+  it('maps OkrSetNotReadyForSubmissionError to 409', async () => {
+    mockGetOkrSet.mockResolvedValue(setFixture());
+    mockSubmitOkrSetForApproval.mockRejectedValue(
+      new OkrSetNotReadyForSubmissionError(SET_ID, 'reviewer_not_assigned')
+    );
+    const response = await request(createApp())
+      .post(`/api/vnext/results/okr/sets/${SET_ID}/submit`)
+      .send({ expectedVersion: 1 });
+    expect(response.status).toBe(409);
+    expect(response.body.code).toBe('NOT_READY_FOR_SUBMISSION');
+  });
+
+  it('404s when the Set does not exist, without calling the command', async () => {
+    mockGetOkrSet.mockResolvedValue(null);
+    const response = await request(createApp())
+      .post(`/api/vnext/results/okr/sets/${SET_ID}/submit`)
+      .send({ expectedVersion: 1 });
+    expect(response.status).toBe(404);
+    expect(mockSubmitOkrSetForApproval).not.toHaveBeenCalled();
+  });
+});
+
+// ==========================================
+// POST /sets/:setId/approve — approveOkrSet
+// ==========================================
+
+describe('POST /sets/:setId/approve — approveOkrSet', () => {
+  it('approves and returns set + snapshot', async () => {
+    mockGetOkrSet.mockResolvedValue(setFixture({ status: 'submitted' }));
+    mockApproveOkrSet.mockResolvedValue({
+      outcome: 'applied',
+      eventId: 'evt-approve-1',
+      resultingVersion: 2,
+      result: {
+        set: setFixture({ status: 'approved', approvedVersion: 1, rowVersion: 2 }),
+        snapshot: snapshotSummaryFixture(),
+      },
+    });
+    const response = await request(createApp())
+      .post(`/api/vnext/results/okr/sets/${SET_ID}/approve`)
+      .send({ expectedVersion: 1 });
+    expect(response.status).toBe(200);
+    expect(response.body.set.status).toBe('approved');
+    expect(response.body.snapshot.sequenceNumber).toBe(1);
+  });
+
+  it('maps OkrSetSelfApprovalDeniedError to 403', async () => {
+    mockGetOkrSet.mockResolvedValue(setFixture({ status: 'submitted' }));
+    mockApproveOkrSet.mockRejectedValue(new OkrSetSelfApprovalDeniedError(SET_ID, 'user-1', 'submitted_by'));
+    const response = await request(createApp())
+      .post(`/api/vnext/results/okr/sets/${SET_ID}/approve`)
+      .send({ expectedVersion: 1 });
+    expect(response.status).toBe(403);
+    expect(response.body.code).toBe('SELF_APPROVAL_DENIED');
+  });
+});
+
+// ==========================================
+// POST /sets/:setId/request-changes — requestChangesOnOkrSet
+// ==========================================
+
+describe('POST /sets/:setId/request-changes — requestChangesOnOkrSet', () => {
+  it('requests changes: 200 on success', async () => {
+    mockGetOkrSet.mockResolvedValue(setFixture({ status: 'submitted' }));
+    mockRequestChangesOnOkrSet.mockResolvedValue({
+      outcome: 'applied',
+      eventId: 'evt-changes-1',
+      resultingVersion: 2,
+      result: setFixture({ status: 'changes_requested', rowVersion: 2 }),
+    });
+    const response = await request(createApp())
+      .post(`/api/vnext/results/okr/sets/${SET_ID}/request-changes`)
+      .send({ expectedVersion: 1, changeRequestNotes: 'please clarify' });
+    expect(response.status).toBe(200);
+    expect(response.body.set.status).toBe('changes_requested');
+  });
+
+  it('400s when changeRequestNotes is missing (Zod validation)', async () => {
+    mockGetOkrSet.mockResolvedValue(setFixture({ status: 'submitted' }));
+    const response = await request(createApp())
+      .post(`/api/vnext/results/okr/sets/${SET_ID}/request-changes`)
+      .send({ expectedVersion: 1 });
+    expect(response.status).toBe(400);
+    expect(mockRequestChangesOnOkrSet).not.toHaveBeenCalled();
+  });
+});
+
+// ==========================================
+// Set transitions — activate / cancel
+// ==========================================
+
+describe('POST /sets/:setId/{activate|cancel}', () => {
+  it('activate: 200 on success', async () => {
+    mockGetOkrSet.mockResolvedValue(setFixture({ status: 'approved' }));
+    mockRunOkrSetLifecycleTransition.mockResolvedValue({
+      outcome: 'applied',
+      eventId: 'evt-activate-1',
+      resultingVersion: 2,
+      result: setFixture({ status: 'active', rowVersion: 2 }),
+    });
+    const response = await request(createApp())
+      .post(`/api/vnext/results/okr/sets/${SET_ID}/activate`)
+      .send({ expectedVersion: 1 });
+    expect(response.status).toBe(200);
+    expect(response.body.set.status).toBe('active');
+  });
+
+  it('cancel: maps OkrSetValidationError to 409', async () => {
+    mockGetOkrSet.mockResolvedValue(setFixture({ status: 'closed' }));
+    mockRunOkrSetLifecycleTransition.mockRejectedValue(
+      new OkrSetValidationError('cannot cancel a closed Set', 'INVALID_TRANSITION', { setId: SET_ID })
+    );
+    const response = await request(createApp())
+      .post(`/api/vnext/results/okr/sets/${SET_ID}/cancel`)
+      .send({ expectedVersion: 1 });
+    expect(response.status).toBe(409);
+    expect(response.body.code).toBe('INVALID_TRANSITION');
+  });
+
+  it('404s when the Set does not exist, without calling the command', async () => {
+    mockGetOkrSet.mockResolvedValue(null);
+    const response = await request(createApp())
+      .post(`/api/vnext/results/okr/sets/${SET_ID}/activate`)
+      .send({ expectedVersion: 1 });
+    expect(response.status).toBe(404);
+    expect(mockRunOkrSetLifecycleTransition).not.toHaveBeenCalled();
+  });
+});
+
+// ==========================================
+// POST /sets/:setId/request-revision — recordOkrSetMaterialChange
+// ==========================================
+
+describe('POST /sets/:setId/request-revision — recordOkrSetMaterialChange', () => {
+  it('records a material change: 200 on success', async () => {
+    mockGetOkrSet.mockResolvedValue(setFixture({ status: 'active' }));
+    mockRecordOkrSetMaterialChange.mockResolvedValue({
+      outcome: 'applied',
+      eventId: 'evt-matchange-1',
+      resultingVersion: 2,
+      result: {
+        set: setFixture({ status: 'active', currentVersion: 2, rowVersion: 2, title: 'Revised title' }),
+        version: {
+          versionId: '66666666-6666-4666-8666-666666666666',
+          setId: SET_ID,
+          organizationId: 'org-1',
+          versionNumber: 2,
+          fieldName: 'title',
+          beforeValue: 'Set title',
+          afterValue: 'Revised title',
+          reason: 'feedback',
+          requestedBy: 'user-1',
+          requestedAt: '2026-01-05T00:00:00.000Z',
+          reviewerUserId: null,
+          recommitStatus: null,
+          recommitBy: null,
+          recommitAt: null,
+          createdAt: '2026-01-05T00:00:00.000Z',
+        },
+      },
+    });
+    const response = await request(createApp())
+      .post(`/api/vnext/results/okr/sets/${SET_ID}/request-revision`)
+      .send({ expectedVersion: 1, fieldName: 'title', afterValue: 'Revised title', reason: 'feedback' });
+    expect(response.status).toBe(200);
+    expect(response.body.set.title).toBe('Revised title');
+    expect(response.body.version.versionNumber).toBe(2);
+  });
+
+  it('maps OkrSetValidationError (NOT_ACTIVE) to 409', async () => {
+    mockGetOkrSet.mockResolvedValue(setFixture({ status: 'draft' }));
+    mockRecordOkrSetMaterialChange.mockRejectedValue(
+      new OkrSetValidationError('not active', 'NOT_ACTIVE', { setId: SET_ID })
+    );
+    const response = await request(createApp())
+      .post(`/api/vnext/results/okr/sets/${SET_ID}/request-revision`)
+      .send({ expectedVersion: 1, fieldName: 'title', afterValue: 'Revised title', reason: 'feedback' });
+    expect(response.status).toBe(409);
+    expect(response.body.code).toBe('NOT_ACTIVE');
+  });
+
+  it('400s on an invalid fieldName (Zod enum)', async () => {
+    mockGetOkrSet.mockResolvedValue(setFixture({ status: 'active' }));
+    const response = await request(createApp())
+      .post(`/api/vnext/results/okr/sets/${SET_ID}/request-revision`)
+      .send({ expectedVersion: 1, fieldName: 'status', afterValue: 'cancelled', reason: 'feedback' });
+    expect(response.status).toBe(400);
+    expect(mockRecordOkrSetMaterialChange).not.toHaveBeenCalled();
+  });
+});
+
+// ==========================================
+// GET /sets/:setId/approval-snapshots(/:snapshotId)
+// ==========================================
+
+describe('GET /sets/:setId/approval-snapshots(/:snapshotId)', () => {
+  it('lists approval snapshots', async () => {
+    mockListOkrSetApprovedSnapshots.mockResolvedValue([snapshotSummaryFixture()]);
+    const response = await request(createApp()).get(`/api/vnext/results/okr/sets/${SET_ID}/approval-snapshots`);
+    expect(response.status).toBe(200);
+    expect(response.body.snapshots).toHaveLength(1);
+    expect(mockListOkrSetApprovedSnapshots).toHaveBeenCalledWith({
+      userId: 'user-1',
+      organizationId: 'org-1',
+      setId: SET_ID,
+    });
+  });
+
+  it('gets a single approval snapshot', async () => {
+    mockGetOkrSetApprovedSnapshot.mockResolvedValue({
+      snapshotId: SNAPSHOT_ID,
+      setId: SET_ID,
+      sequenceNumber: 1,
+      approvedBy: 'user-reviewer',
+      approvedAt: '2026-01-03T00:00:00.000Z',
+      contentHash: 'abc123',
+      payload: { set: setFixture(), objectives: [] },
+      createdAt: '2026-01-03T00:00:00.000Z',
+    });
+    const response = await request(createApp()).get(
+      `/api/vnext/results/okr/sets/${SET_ID}/approval-snapshots/${SNAPSHOT_ID}`
+    );
+    expect(response.status).toBe(200);
+    expect(response.body.snapshot.snapshotId).toBe(SNAPSHOT_ID);
+    expect(response.body.snapshot.payload.objectives).toEqual([]);
+  });
+
+  it('404s when the snapshot is not found/visible', async () => {
+    mockGetOkrSetApprovedSnapshot.mockResolvedValue(null);
+    const response = await request(createApp()).get(
+      `/api/vnext/results/okr/sets/${SET_ID}/approval-snapshots/${SNAPSHOT_ID}`
+    );
+    expect(response.status).toBe(404);
   });
 });
