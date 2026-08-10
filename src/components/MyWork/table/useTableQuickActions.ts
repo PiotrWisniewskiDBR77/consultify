@@ -14,7 +14,7 @@ import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import type { FieldFillProposal, FieldFillRowChange } from './AITableFieldProposal';
 import { downloadCSV, exportToCSV } from './csvUtils';
 import { isTableFieldProposalEnabled } from './tableFieldProposalFlag';
-import type { ColumnDef, TableNode } from './tableTypes';
+import type { ColumnDef, FilterGroup, SavedView, SortConfig, TableNode } from './tableTypes';
 import type { ViewLayout } from './useTableViews';
 import type { UseUndoRedoReturn } from './useUndoRedo';
 
@@ -76,6 +76,17 @@ export interface QuickActionHandlers {
    * pisać prosto do komórek. Ustawiane tylko gdy flaga `ff_tableFieldProposal` = ON.
    */
   onFieldFillProposal?: (proposal: FieldFillProposal) => void;
+  /**
+   * N8 (2026-08-10) — legacy (non-platform) widok zapisany. Te same funkcje,
+   * które `IdeaTableTool.tsx`'s `viewContextMenu` ("Rename"/"Update"/"Delete")
+   * i inline-rename input już wołają — dodane tu jako drugi wywołujący, nie
+   * duplikowane. Sync, `useTableViews.ts`'s `updateSavedView`/`deleteSavedView`
+   * (nie mylić z platform `TableDataProvider`'s async wersją tych samych nazw,
+   * którą TableToolbar.tsx woła przez `useTableData()` — INNY mechanizm,
+   * patrz `ideaActionRegistry.ts` przy `idea.view.saved_view_*`).
+   */
+  updateSavedView: (viewId: string, patch: Partial<SavedView>) => void;
+  deleteSavedView: (viewId: string) => void;
 }
 
 export interface UseTableQuickActionsOpts {
@@ -86,10 +97,35 @@ export interface UseTableQuickActionsOpts {
   nodesUndo: UseUndoRedoReturn<TableNode[]>;
   selectedRowIds: Set<string>;
   handlers: QuickActionHandlers;
+  /**
+   * N8 (2026-08-10) — bieżący stan widoku, potrzebny WYŁĄCZNIE do zbudowania
+   * payloadu `tbl_view_update` (dokładnie ten sam kształt, co
+   * `viewContextMenu`'s "Update" item w `IdeaTableTool.tsx`: `sort`/`filters`/
+   * `groupBy`/`layout`/`columns` migawka BIEŻĄCEGO stanu tabeli w momencie
+   * wywołania — stąd wartości, nie settery, i osobne od `handlers` powyżej).
+   */
+  savedViews: SavedView[];
+  sort: SortConfig | null;
+  filters: FilterGroup;
+  groupBy: string | null;
+  viewLayout: ViewLayout;
 }
 
 export function useTableQuickActions(opts: UseTableQuickActionsOpts): void {
-  const { ideaId, isPl, columns, nodes, nodesUndo, selectedRowIds, handlers } = opts;
+  const {
+    ideaId,
+    isPl,
+    columns,
+    nodes,
+    nodesUndo,
+    selectedRowIds,
+    handlers,
+    savedViews,
+    sort,
+    filters,
+    groupBy,
+    viewLayout,
+  } = opts;
 
   useEffect(() => {
     const handler = async (e: Event) => {
@@ -372,6 +408,50 @@ export function useTableQuickActions(opts: UseTableQuickActionsOpts): void {
         return;
       }
 
+      // N8 (2026-08-10) — saved-view menu (`idea.view.saved_view_*` w
+      // ideaActionRegistry.ts). Teresa-only ścieżka: klik człowieka (menu
+      // kontekstowe PRAWEGO klika na zakładce widoku + inline-rename input,
+      // `IdeaTableTool.tsx`) NIE przechodzi przez tę szynę — woła
+      // `updateSavedView`/`deleteSavedView` bezpośrednio, nietknięte tym
+      // wpisem. Te trzy gałęzie istnieją, żeby ta sama, realna mutacja była
+      // osiągalna też z czatu.
+      if (action === 'tbl_view_rename' || action === 'tbl_view_update' || action === 'tbl_view_delete') {
+        const viewId = typeof detail?.viewId === 'string' ? detail.viewId : undefined;
+        // Uczciwa reakcja zamiast cichego no-opu, gdy Teresa poda nieistniejące
+        // (lub już usunięte) `viewId` — `updateSavedView`/`deleteSavedView`
+        // (useTableViews.ts) same by po cichu nic nie zrobiły (prev.map/filter
+        // bez dopasowania).
+        const view = viewId ? savedViews.find((v) => v.id === viewId) : undefined;
+        if (!viewId || !view) {
+          toast.error(
+            i18n.t('ideas.table.quickActions.viewNotFound', 'View not found: {{viewId}}', {
+              viewId: viewId ?? '?',
+            })
+          );
+          return;
+        }
+        if (action === 'tbl_view_rename') {
+          const name = typeof detail?.name === 'string' ? detail.name.trim() : undefined;
+          if (name) handlers.updateSavedView(viewId, { name });
+          return;
+        }
+        if (action === 'tbl_view_update') {
+          handlers.updateSavedView(viewId, {
+            sort: sort ? [sort] : undefined,
+            filters,
+            groupBy: groupBy ?? undefined,
+            layout: viewLayout,
+            columns: columns.map((c) => ({ key: c.key, visible: c.visible !== false, width: c.width })),
+          });
+          toast.success(i18n.t('ideas.table.viewUpdated', 'View updated'));
+          return;
+        }
+        // tbl_view_delete
+        handlers.deleteSavedView(viewId);
+        toast.success(i18n.t('ideas.table.viewDeleted', 'View deleted'));
+        return;
+      }
+
       // Link artifact to row
       if (action === 'tbl_link_artifact_to_row') {
         if (selectedRowIds.size > 0) {
@@ -393,5 +473,18 @@ export function useTableQuickActions(opts: UseTableQuickActionsOpts): void {
     window.addEventListener('idea-workspace-quick-action', handler);
     return () => window.removeEventListener('idea-workspace-quick-action', handler);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [columns, ideaId, isPl, nodes, nodesUndo, selectedRowIds, handlers.handleAddRow]);
+  }, [
+    columns,
+    ideaId,
+    isPl,
+    nodes,
+    nodesUndo,
+    selectedRowIds,
+    handlers.handleAddRow,
+    savedViews,
+    sort,
+    filters,
+    groupBy,
+    viewLayout,
+  ]);
 }

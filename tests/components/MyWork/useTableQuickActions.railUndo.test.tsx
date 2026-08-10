@@ -45,6 +45,9 @@ function makeHandlers(over: Partial<QuickActionHandlers> = {}): QuickActionHandl
     setShowHeatmap: noop,
     onUndo: vi.fn(),
     onRedo: vi.fn(),
+    // N8 (2026-08-10) — saved-view menu (tbl_view_rename/update/delete).
+    updateSavedView: vi.fn(),
+    deleteSavedView: vi.fn(),
     ...over,
   };
 }
@@ -59,7 +62,21 @@ const nodesUndo = {
   canRedo: false,
 } as any;
 
-function render(handlers: QuickActionHandlers) {
+const DEFAULT_SAVED_VIEWS = [
+  { id: 'default', name: 'Default' },
+  { id: 'triage', name: 'Triage', groupBy: 'status' },
+];
+
+function render(
+  handlers: QuickActionHandlers,
+  viewOpts: {
+    savedViews?: typeof DEFAULT_SAVED_VIEWS;
+    sort?: { key: string; direction: 'asc' | 'desc' } | null;
+    filters?: { logic: 'and' | 'or'; rules: unknown[] };
+    groupBy?: string | null;
+    viewLayout?: 'table' | 'kanban' | 'timeline' | 'calendar' | 'matrix' | 'grid' | 'sticky';
+  } = {}
+) {
   return renderHook(() =>
     useTableQuickActions({
       ideaId: 'idea-1',
@@ -69,12 +86,19 @@ function render(handlers: QuickActionHandlers) {
       nodesUndo,
       selectedRowIds: new Set<string>(),
       handlers,
-    })
+      savedViews: viewOpts.savedViews ?? DEFAULT_SAVED_VIEWS,
+      sort: viewOpts.sort ?? null,
+      filters: viewOpts.filters ?? { logic: 'and', rules: [] },
+      groupBy: viewOpts.groupBy ?? null,
+      viewLayout: viewOpts.viewLayout ?? 'table',
+    } as any)
   );
 }
 
-function emit(action: string) {
-  window.dispatchEvent(new CustomEvent('idea-workspace-quick-action', { detail: { action } }));
+function emit(action: string, extra: Record<string, unknown> = {}) {
+  window.dispatchEvent(
+    new CustomEvent('idea-workspace-quick-action', { detail: { action, ...extra } })
+  );
 }
 
 afterEach(() => vi.clearAllMocks());
@@ -108,5 +132,57 @@ describe('useTableQuickActions — rail undo/redo', () => {
     render(handlers);
     emit('tbl_add_row');
     expect(handlers.handleAddRow).toHaveBeenCalledTimes(1);
+  });
+});
+
+// N8 (2026-08-10) — idea.view.saved_view_rename/update/delete Teresa bus path
+// (ideaActionRegistry.ts). The UI click path (viewContextMenu's onSelect +
+// inline-rename input in IdeaTableTool.tsx) is untouched and not exercised
+// here — this covers only the new tbl_view_* receivers this change adds.
+describe('useTableQuickActions — saved view menu (tbl_view_*)', () => {
+  it('routes tbl_view_rename to updateSavedView with a name-only patch', () => {
+    const handlers = makeHandlers();
+    render(handlers);
+    emit('tbl_view_rename', { viewId: 'triage', name: 'Renamed' });
+    expect(handlers.updateSavedView).toHaveBeenCalledTimes(1);
+    expect(handlers.updateSavedView).toHaveBeenCalledWith('triage', { name: 'Renamed' });
+    expect(handlers.deleteSavedView).not.toHaveBeenCalled();
+  });
+
+  it('routes tbl_view_update to updateSavedView with the current view-state snapshot', () => {
+    const handlers = makeHandlers();
+    render(handlers, {
+      sort: { key: 'score', direction: 'desc' },
+      groupBy: 'status',
+      viewLayout: 'kanban',
+    });
+    emit('tbl_view_update', { viewId: 'triage' });
+    expect(handlers.updateSavedView).toHaveBeenCalledTimes(1);
+    expect(handlers.updateSavedView).toHaveBeenCalledWith('triage', {
+      sort: [{ key: 'score', direction: 'desc' }],
+      filters: { logic: 'and', rules: [] },
+      groupBy: 'status',
+      layout: 'kanban',
+      columns: [],
+    });
+  });
+
+  it('routes tbl_view_delete to deleteSavedView', () => {
+    const handlers = makeHandlers();
+    render(handlers);
+    emit('tbl_view_delete', { viewId: 'triage' });
+    expect(handlers.deleteSavedView).toHaveBeenCalledTimes(1);
+    expect(handlers.deleteSavedView).toHaveBeenCalledWith('triage');
+    expect(handlers.updateSavedView).not.toHaveBeenCalled();
+  });
+
+  it('does not silently no-op: an unknown viewId calls neither mutation', () => {
+    const handlers = makeHandlers();
+    render(handlers);
+    emit('tbl_view_rename', { viewId: 'does-not-exist', name: 'X' });
+    emit('tbl_view_update', { viewId: 'does-not-exist' });
+    emit('tbl_view_delete', { viewId: 'does-not-exist' });
+    expect(handlers.updateSavedView).not.toHaveBeenCalled();
+    expect(handlers.deleteSavedView).not.toHaveBeenCalled();
   });
 });

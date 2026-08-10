@@ -7,6 +7,17 @@ import { EMPTY_SELECTION } from '../../../src/components/MyWork/ideaSelectionTyp
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({ i18n: { language: 'en' }, t: (key: string) => key }),
+  initReactI18next: { type: '3rdParty', init: () => undefined },
+}));
+
+// Tier A rail wiring (2026-08-10): CanvasLeftToolbar.tsx now imports
+// `@/actions/ideaActionRegistry`, which pulls in `@/services/api` (→ `src/i18n.ts`,
+// which needs a real `initReactI18next`, added above) — mocked here the same way
+// `tests/unit/mindmap/dp5HeuristicAiGating.test.tsx` already does for the same
+// transitive chain, to keep this test hermetic.
+vi.mock('@/services/api', () => ({
+  API_URL: 'http://localhost/test-api',
+  getHeaders: () => ({}),
 }));
 
 // The popovers are irrelevant to the floating-geometry contract; stub them out so the

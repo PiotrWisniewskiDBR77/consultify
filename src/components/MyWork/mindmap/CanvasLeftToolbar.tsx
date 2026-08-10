@@ -27,10 +27,11 @@ import {
   Upload,
   Workflow,
 } from 'lucide-react';
-import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 
+import { type ActionContext, getActionsForSurface, runIdeaAction } from '@/actions/ideaActionRegistry';
 import { useFullscreenPortalTarget } from '@/hooks/useFullscreenPortalTarget';
 
 import {
@@ -428,6 +429,7 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
   interactionMode = 'select',
   selection,
   isAccepted,
+  ideaId,
   canUndo = true,
   canRedo = true,
   heuristicAiEnabled = false,
@@ -445,6 +447,46 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
   const toolbarRef = useRef<HTMLDivElement>(null);
   /** Cel portalu: `body` normalnie, element pełnoekranowy w pełnym ekranie. */
   const portalTarget = useFullscreenPortalTarget();
+
+  /**
+   * Tier A rail wiring (2026-08-10, Program B/E02) — `idea.canvas.undo`/
+   * `.redo`/`idea.canvas.cursor_select` są teraz `surface: 'rail'`. Ten sam
+   * kształt co `WhiteboardToolbar.tsx`'s `registryActionsById`/`runAction`
+   * (N7, commit 3a6ea7cd51-owa rodzina): sprawdzamy PRZED wywołaniem, czy
+   * rejestr w ogóle zna tę akcję na tej powierzchni/reprezentacji — brak
+   * wpisu = oryginalny callback leci bez pośrednictwa (Z3: rejestr nigdy nie
+   * wycisza kliku, którego jeszcze nie zna). Rail obsługuje 4 reprezentacje w
+   * JEDNYM montażu, więc — w przeciwieństwie do `WhiteboardToolbar`'s
+   * jednotoolowego memo — ta lista jest przeliczana przy zmianie `activeTool`/
+   * `selection`.
+   */
+  const registryActionsById = useMemo(() => {
+    const map = new Map<string, ReturnType<typeof getActionsForSurface>[number]>();
+    for (const entry of getActionsForSurface('rail', { tool: activeTool, selection })) {
+      map.set(entry.def.id, entry);
+    }
+    return map;
+  }, [activeTool, selection]);
+
+  const runRailAction = useCallback(
+    (id: string, run: () => void) => {
+      if (!registryActionsById.has(id)) {
+        run();
+        return;
+      }
+      const ctx: ActionContext = {
+        ideaId: ideaId || '',
+        tool: activeTool,
+        selection,
+        surface: 'rail',
+        source: 'ui',
+        language: isPl ? 'pl' : 'en',
+        params: { run },
+      };
+      void runIdeaAction(id, ctx);
+    },
+    [registryActionsById, ideaId, activeTool, selection, isPl]
+  );
 
   /**
    * B3 (2026-07-27) — popover NIE MOŻE być dzieckiem kolumny raila.
@@ -836,12 +878,24 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
       } else if (activeTool === 'mindmap' && slot.id === 'connect') {
         onAction(getMindmapConnectToolbarAction(interactionMode));
         setOpenPopover(null);
+      } else if (slot.id === 'undo' || slot.id === 'redo') {
+        // Tier A rail wiring (2026-08-10) — `idea.canvas.undo`/`.redo`,
+        // `surface: 'rail'`. `slot.action` STAYS the existing `${prefix}_undo`/
+        // `${prefix}_redo` string (getUndoRedoSlots, byte-identical); the
+        // registry layer only decides WHETHER to route through
+        // `runIdeaAction` first (Teresa entry point, same runtime map) — the
+        // human click still ends up calling `onAction(slot.action)` exactly
+        // as before via `ctx.params.run`.
+        runRailAction(slot.id === 'undo' ? 'idea.canvas.undo' : 'idea.canvas.redo', () => {
+          if (slot.action) onAction(slot.action);
+        });
+        setOpenPopover(null);
       } else if (slot.action) {
         onAction(slot.action);
         setOpenPopover(null);
       }
     },
-    [activeTool, interactionMode, onAction, openPopover]
+    [activeTool, interactionMode, onAction, openPopover, runRailAction]
   );
 
   const handlePopoverAction = useCallback(
@@ -860,9 +914,17 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
     // Z zaznaczania → przesuwanie; z KAŻDEGO innego trybu (przesuwanie,
     // łączenie, rysowanie w Tablicy) → powrót do zaznaczania.
     const next = effectiveMode === 'select' ? 'pan' : 'select';
-    onAction(next === 'select' ? 'mm_select_mode' : 'mm_pan_mode');
+    const action = next === 'select' ? 'mm_select_mode' : 'mm_pan_mode';
+    // Tier A rail wiring (2026-08-10) — `idea.canvas.cursor_select`,
+    // `surface: 'rail'`. This is a two-state TOGGLE, but the registry id
+    // models the single well-defined Teresa action "switch to select mode"
+    // (its `teresa.description`) — the UI click still ends up calling
+    // `onAction(action)` byte-identically via `ctx.params.run`, for EITHER
+    // direction (the registry's own runtime map is only consulted for the
+    // non-UI/Teresa path, which always means "select mode", never "pan").
+    runRailAction('idea.canvas.cursor_select', () => onAction(action));
     setOpenPopover(null);
-  }, [effectiveMode, onAction]);
+  }, [effectiveMode, onAction, runRailAction]);
 
   const pointerTooltip =
     effectiveMode === 'draw'

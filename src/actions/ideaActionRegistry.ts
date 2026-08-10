@@ -1216,8 +1216,21 @@ const RUNTIME_AUTO_LAYOUT: ToolActionMap = {
 };
 
 /** Tryb kursora — stan wyłącznie Mapy myśli (obsługa: IdeaMapWorkspace.tsx:1060). */
+/**
+ * Tier A rail wiring (2026-08-10) — CanvasLeftToolbar.tsx's `pointer_toggle`
+ * slot (SHARED_TOP, ~linia 144-159) jest ŻYWY w TRZECH reprezentacjach
+ * (`liveIn: ['mindmap', 'whiteboard', 'process_flow']`), nie tylko w Mapie
+ * myśli — Tabela ma wyszarzony powód (siatka danych, nie płótno). Runtime
+ * string `mm_select_mode` (nazwa historyczna) ma REALNY odbiornik też w
+ * `useWhiteboardQuickActions.ts:147` i `useProcessFlowQuickActions.ts:216`
+ * (`handlers.setCursorMode?.('select')`, weryfikowane grepem PRZED
+ * rozszerzeniem — nie zgadywane), więc rozszerzenie mapy to REUSE, nie
+ * spekulacja.
+ */
 const RUNTIME_CURSOR_SELECT: ToolActionMap = {
   mindmap: 'mm_select_mode',
+  whiteboard: 'mm_select_mode',
+  process_flow: 'mm_select_mode',
 };
 
 /** AI: rozwiń (Mapa) — `/map/expand` + AIProposalDiffModal. */
@@ -1263,6 +1276,26 @@ const RUNTIME_AI_TABLE_CATEGORIZE: ToolActionMap = {
 /** AI: generator frameworka (Tabela) — otwiera FrameworkGenerator. */
 const RUNTIME_AI_TABLE_FRAMEWORK: ToolActionMap = {
   table: 'tbl_framework',
+};
+
+/**
+ * N8 (2026-08-10) — Tabela, menu widoku zapisanego (`IdeaTableTool.tsx`'s
+ * `viewContextMenu`, renderowane przez `CanvasContextMenu`, WYŁĄCZNIE ścieżka
+ * legacy/non-platform — patrz komentarz przy `idea.view.saved_view_rename`
+ * niżej dla pełnego uzasadnienia). Trzy osobne mapy (nie jedna zbiorcza), bo
+ * `scripts/check-actions.sh` (R6) parsuje TYLKO `const X: ToolActionMap = {…}`
+ * z jedną parą `tool: 'string',` na linię (ostrzeżenie na górze pliku).
+ * Odbiornik: `useTableQuickActions.ts` `tbl_view_rename`/`tbl_view_update`/
+ * `tbl_view_delete` (nowe, dopisane w tej samej zmianie).
+ */
+const RUNTIME_TBL_VIEW_RENAME: ToolActionMap = {
+  table: 'tbl_view_rename',
+};
+const RUNTIME_TBL_VIEW_UPDATE: ToolActionMap = {
+  table: 'tbl_view_update',
+};
+const RUNTIME_TBL_VIEW_DELETE: ToolActionMap = {
+  table: 'tbl_view_delete',
 };
 
 /**
@@ -1536,6 +1569,132 @@ const RUNTIME_MM_NODE_AI_SUGGEST_LINKS: ToolActionMap = {
   mindmap: 'ai_suggest_links',
 };
 
+/**
+ * N8 (2026-08-10) — Tabela, menu widoku zapisanego. Trzy pozycje z
+ * `IdeaTableTool.tsx`'s `viewContextMenu` (`saved_view_rename`/
+ * `saved_view_update`/`saved_view_delete`, `CanvasContextMenu` na prawy klik
+ * zakładki widoku) + inline-rename `<input>` obok (sam commit "Rename" woła tę
+ * samą `updateSavedView`).
+ *
+ * ZAKRES WYBORU (odbiór PRZED wpisem — dwie hand-rolled implementacje
+ * potwierdzone jako RÓŻNE MECHANIZMY, nie ta sama akcja pod dwiema
+ * powierzchniami):
+ *  • `IdeaTableTool.tsx`'s `viewContextMenu` (ta migracja) woła legacy
+ *    `updateSavedView`/`deleteSavedView` z `useTableViews.ts` — SYNCHRONICZNE
+ *    settery `useState<SavedView[]>`, zero persystencji poza pamięcią
+ *    komponentu, zero wywołania API.
+ *  • `TableToolbar.tsx` (renderowany zamiast tego bloku, gdy `usePlatform`)
+ *    ma WŁASNĄ, osobno napisaną kopię TEGO SAMEGO UI (linie ~496-549,
+ *    identyczny układ trzech pozycji + identyczny kształt payloadu "Update"),
+ *    ale przez `useTableData()` → `TableDataProvider.tsx` (linie ~299-311)
+ *    czyta `integration.savedViews`/`.updateSavedView`/`.deleteSavedView` —
+ *    czyli `platformIntegration`, ASYNCHRONICZNE (`Promise<void>`), realnie
+ *    zapisujące na serwer. SPRAWDZONE (nie zgadywane): sygnatury się różnią
+ *    (`void` vs `Promise<void>`), a stan źródłowy to DWIE OSOBNE instancje
+ *    hooka (`useTableViews()` w `IdeaTableTool.tsx` vs `useTablePlatform`-owa
+ *    integracja przekazana do `TableDataProvider`) — identyczne UI, różny
+ *    silnik pod spodem, dokładnie ten wzorzec, który Przepływ już świadomie
+ *    odrzucił dla `idea.node.pf_copy` (REAL MECHANISM MATCH, nie etykieta).
+ *  Decyzja: wpisy niżej okablowują WYŁĄCZNIE ścieżkę `IdeaTableTool.tsx`
+ *  (legacy). `TableToolbar.tsx`'s osobna, zduplikowana implementacja
+ *  ŚWIADOMIE zostaje NIEOKABLOWANA — udokumentowana tu i w raporcie, sprawa
+ *  kolejnej fali (poza zakresem: dotknięcie `TableToolbar.tsx` nie było
+ *  celem tego zadania).
+ *
+ * Dwie ścieżki (jak wszędzie): `ctx.source === 'ui'` + `ctx.params.run` =
+ * dokładnie dotychczasowy klik (komponent NIETKNIĘTY — `onSelect` w
+ * `viewContextMenu` i `onBlur`/`onKeyDown` inline-rename inputa zostają
+ * bajt-identyczne; `ctx.params.run` istnieje w handlerach niżej dla spójności
+ * z resztą rejestru, ale żaden dzisiejszy caller go dziś nie ustawia — Tabela
+ * nie importuje `runIdeaAction`, taki sam stan jak `ProcessFlowContextMenu.tsx`
+ * po N6). Teresa: dispatch na szynę `idea-workspace-quick-action`
+ * (`tbl_view_rename`/`tbl_view_update`/`tbl_view_delete`, NOWE odbiorniki w
+ * `useTableQuickActions.ts`) — realna, id-adresowalna mutacja
+ * (`updateSavedView(viewId, patch)`/`deleteSavedView(viewId)`), zweryfikowana
+ * PRZED wpisem jako osiągalna (nie wymyślona).
+ *
+ * Widok `'default'` (zawsze pierwszy, tworzony na sztywno w
+ * `useTableViews.ts`) NIE MA menu prawego kliku w ogóle (`IdeaTableTool.tsx`:
+ * `if (v.id !== 'default') setViewContextMenu(...)`) — wszystkie trzy handlery
+ * niżej powtarzają tę samą blokadę dla Teresy, żeby nie dać jej robić czegoś,
+ * czego człowiek fizycznie nie może kliknąć.
+ *
+ * UNDO: żadna z trzech mutacji nie jest dziś podłączona do JAKIEGOKOLWIEK
+ * stosu cofania — `updateSavedView`/`deleteSavedView` (`useTableViews.ts`)
+ * to gołe `setSavedViews`, nigdy nie wołają `nodesUndo.push` (który i tak
+ * śledzi WYŁĄCZNIE `TableNode[]`, nie `SavedView[]`) — udokumentowane
+ * honestly w `undo.evidence` każdego wpisu (nie naprawiane tu: `updateSavedView`
+ * ma DWÓCH wywołujących w tym samym pliku — context menu I inline-rename —
+ * współdzielona funkcja, ryzykowna do cichej zmiany w tym zadaniu; `deleteSavedView`
+ * nieodwracalne bez backupu, stąd `manual_delete`-podobne ostrzeżenie mimo
+ * braku nowego obiektu do skasowania).
+ */
+function tableSavedViewGuard(actionId: string, viewId: string | undefined): ActionResult | null {
+  if (!viewId) {
+    return {
+      ok: false,
+      actionId,
+      message: 'Podaj `viewId` zapisanego widoku Tabeli, na którym mam to wykonać.',
+    };
+  }
+  if (viewId === 'default') {
+    return {
+      ok: false,
+      actionId,
+      message:
+        'Domyślny widok Tabeli nie jest edytowalny — to samo ograniczenie, co w menu prawego kliku (nie pokazuje się dla niego).',
+    };
+  }
+  return null;
+}
+
+async function runTableSavedViewRenameCallback(ctx: ActionContext): Promise<ActionResult> {
+  const actionId = 'idea.view.saved_view_rename';
+  const run = ctx.params?.run;
+  if (ctx.source === 'ui' && typeof run === 'function') {
+    (run as () => void)();
+    return { ok: true, actionId };
+  }
+  const viewId = typeof ctx.params?.viewId === 'string' ? ctx.params.viewId : undefined;
+  const guard = tableSavedViewGuard(actionId, viewId);
+  if (guard) return guard;
+  const name = typeof ctx.params?.name === 'string' ? ctx.params.name.trim() : undefined;
+  if (!name) {
+    return { ok: false, actionId, message: 'Podaj nową `name` (nazwę) widoku.' };
+  }
+  return runByTool(actionId, RUNTIME_TBL_VIEW_RENAME, ctx, { viewId, name });
+}
+
+async function runTableSavedViewUpdateCallback(ctx: ActionContext): Promise<ActionResult> {
+  const actionId = 'idea.view.saved_view_update';
+  const run = ctx.params?.run;
+  if (ctx.source === 'ui' && typeof run === 'function') {
+    (run as () => void)();
+    return { ok: true, actionId };
+  }
+  const viewId = typeof ctx.params?.viewId === 'string' ? ctx.params.viewId : undefined;
+  const guard = tableSavedViewGuard(actionId, viewId);
+  if (guard) return guard;
+  // Payload budowany PO STRONIE odbiornika (`useTableQuickActions.ts`) z
+  // bieżącego stanu komponentu (sort/filters/groupBy/viewLayout/columns) —
+  // dokładnie jak klik człowieka na "Update" — nie tutaj, rejestr nie ma
+  // dostępu do stanu płótna.
+  return runByTool(actionId, RUNTIME_TBL_VIEW_UPDATE, ctx, { viewId });
+}
+
+async function runTableSavedViewDeleteCallback(ctx: ActionContext): Promise<ActionResult> {
+  const actionId = 'idea.view.saved_view_delete';
+  const run = ctx.params?.run;
+  if (ctx.source === 'ui' && typeof run === 'function') {
+    (run as () => void)();
+    return { ok: true, actionId };
+  }
+  const viewId = typeof ctx.params?.viewId === 'string' ? ctx.params.viewId : undefined;
+  const guard = tableSavedViewGuard(actionId, viewId);
+  if (guard) return guard;
+  return runByTool(actionId, RUNTIME_TBL_VIEW_DELETE, ctx, { viewId });
+}
+
 // ──────────────────────────────── REJESTR ────────────────────────────────
 
 const IDEA_ACTIONS: ActionDef[] = [
@@ -1622,25 +1781,52 @@ const IDEA_ACTIONS: ActionDef[] = [
     },
     icon: 'MousePointer2',
     scope: 'current_view',
-    tools: ['mindmap'],
+    // Tier A rail wiring (2026-08-10): CanvasLeftToolbar.tsx's `pointer_toggle`
+    // slot (SHARED_TOP, ~linia 144-159) jest ŻYWY w Mapie myśli/Tablicy/
+    // Przepływie (`liveIn`), NIE tylko w Mapie — rozszerzone z `['mindmap']`
+    // na wszystkie trzy, zgodnie z realnym stanem raila (sprawdzonym w
+    // useWhiteboardQuickActions.ts/useProcessFlowQuickActions.ts przed zmianą,
+    // patrz RUNTIME_CURSOR_SELECT wyżej). Tabela zostaje jedyną wyłączoną —
+    // patrz `disabledReason` niżej.
+    tools: ['mindmap', 'whiteboard', 'process_flow'],
     surfaces: ['rail'],
-    handler: (ctx) => runByTool('idea.canvas.cursor_select', RUNTIME_CURSOR_SELECT, ctx),
+    // Handler ZMIENIONY z `runByTool` na `runToolbarBusAction` (2026-08-10,
+    // tier A): ten wpis nie miał DOTĄD żadnego realnego wywołującego (rail nie
+    // był podłączony do rejestru), więc `runByTool`'s zawsze-dispatch-na-szynę
+    // był martwy w praktyce. Prawdziwy klik w `CanvasLeftToolbar.tsx`'s
+    // `handlePointerToggle` (~linia 859) woła `onAction(...)`, co w
+    // `IdeaMapWorkspace.tsx`'s `handleQuickAction` (Mapa myśli) ROBI DWIE
+    // RZECZY naraz: `handleMindMapInteractionModeChange(...)` (lokalny stan
+    // React używany przez sam rail do wyboru ikony) ORAZ dispatch tej samej
+    // szyny `idea-workspace-quick-action` (którą odbierają
+    // use{Whiteboard,ProcessFlow}QuickActions.ts). Gdyby handler dispatchował
+    // WYŁĄCZNIE przez szynę (jak `runByTool`), Mapa myśli zgubiłaby pierwszy z
+    // tych dwóch efektów dla kliku UI — `runToolbarBusAction` (ten sam dual-path
+    // co `idea.canvas.undo`/`.redo`) zachowuje klik BEZ ZMIAN (`ctx.params.run`
+    // = dokładnie `() => onAction(...)`), i dopiero dla Teresy (brak
+    // `ctx.params.run`) dispatchuje samą szynę — uczciwe wobec braku lokalnego
+    // stanu Mapy myśli po stronie Teresy (analogiczna asymetria jak przy innych
+    // wpisach tego rejestru, NIE naprawiana tutaj, bo poza zakresem tej zmiany).
+    handler: (ctx) => runToolbarBusAction('idea.canvas.cursor_select', RUNTIME_CURSOR_SELECT, ctx),
     mutates: false,
     requiresPreview: false,
     teresa: {
       description:
-        'Przełącza kursor w tryb zaznaczania na płótnie Mapy myśli (alternatywa dla przesuwania widoku).',
+        'Przełącza kursor w tryb zaznaczania na otwartym płótnie (Mapa myśli/Tablica/Przepływ) — alternatywa dla trybu przesuwania widoku (rączka).',
     },
     // Rail jest wspólny dla czterech reprezentacji, więc slot POKAZUJE się wszędzie
-    // — poza Mapą wyszarzony z podanym powodem (konwencja f5d0271992/e2ad0cc85b).
+    // — poza trzema płótnami wyszarzony z podanym powodem (konwencja f5d0271992/e2ad0cc85b).
     showsDisabled: true,
+    // Tekst 1:1 z rail's own `powodWylaczenia()`/`offReasonPl`
+    // (CanvasLeftToolbar.tsx ~linia 157) — ta sama informacja, nie
+    // sparafrazowana ponownie.
     disabledReason: (ctx) =>
-      ctx.tool === 'mindmap'
+      ctx.tool === 'mindmap' || ctx.tool === 'whiteboard' || ctx.tool === 'process_flow'
         ? null
-        : 'Tryb kursora to stan Mapy myśli. W tej reprezentacji zaznaczasz i przesuwasz bezpośrednio na płótnie.',
+        : 'tryb kursora dotyczy płótna — Tabela to siatka danych, nie płótno',
     runtime: RUNTIME_CURSOR_SELECT,
     source:
-      'src/components/MyWork/IdeaMapWorkspace.tsx:1060 (mm_select_mode) + CanvasLeftToolbar.tsx (f5d0271992)',
+      'src/components/MyWork/mindmap/CanvasLeftToolbar.tsx:859 (handlePointerToggle) + IdeaMapWorkspace.tsx:1090-1091 (mm_select_mode/mm_pan_mode) + useWhiteboardQuickActions.ts:147 + useProcessFlowQuickActions.ts:216 · rail wiring 2026-08-10 (tier A)',
   },
   {
     id: 'idea.ai.expand_map',
@@ -1930,6 +2116,103 @@ const IDEA_ACTIONS: ActionDef[] = [
     },
     runtime: RUNTIME_AI_TABLE_FRAMEWORK,
     source: 'src/components/MyWork/table/useTableQuickActions.ts:82',
+  },
+  // ── N8 (2026-08-10) — Tabela, menu widoku zapisanego (`IdeaTableTool.tsx`'s
+  // `viewContextMenu`, `CanvasContextMenu` na prawy klik zakładki widoku,
+  // legacy/non-platform ścieżka WYŁĄCZNIE — patrz komentarz przy
+  // `runTableSavedViewRenameCallback` wyżej dla pełnego uzasadnienia decyzji
+  // (TableToolbar.tsx ma osobną, zduplikowaną implementację przez INNY
+  // mechanizm — `platformIntegration`'s async `updateSavedView`/
+  // `deleteSavedView` — świadomie NIEOKABLOWANĄ tutaj).
+  {
+    id: 'idea.view.saved_view_rename',
+    label: { pl: 'Zmień nazwę', en: 'Rename' },
+    icon: 'Pencil',
+    scope: 'current_view',
+    tools: ['table'],
+    surfaces: ['context'],
+    handler: (ctx) => runTableSavedViewRenameCallback(ctx),
+    mutates: true,
+    requiresPreview: false,
+    undo: {
+      kind: 'local_stack',
+      evidence:
+        'BRAK: `updateSavedView` (`useTableViews.ts`) to goły `setSavedViews`, nigdy nie woła `nodesUndo.push` (który i tak śledzi wyłącznie `TableNode[]`, nie `SavedView[]`) — zmiana nazwy widoku NIE trafia dziś na stos Ctrl+Z, ani z menu prawego kliku, ani z inline-rename inputa (ta sama funkcja, dwóch wywołujących), ani z tej nowej ścieżki Teresy. `local_stack` zadeklarowany jako najbliższa istniejąca rodzina mechanizmu (Tabela MA stos Ctrl+Z — `nodesUndo` — po prostu nie objęty tym stanem), nie potwierdzone działanie.',
+    },
+    teresa: {
+      description:
+        'Zmienia nazwę zapisanego widoku Tabeli. Podaj `viewId` widoku i nową `name`. Nie działa na widoku domyślnym (nie da się go zmienić także z menu prawego kliku).',
+      parameters: {
+        type: 'object',
+        properties: {
+          viewId: { type: 'string', description: 'Id zapisanego widoku Tabeli.' },
+          name: { type: 'string', description: 'Nowa nazwa widoku.' },
+        },
+        required: ['viewId', 'name'],
+      },
+    },
+    source:
+      'src/components/MyWork/IdeaTableTool.tsx viewContextMenu "saved_view_rename" (~L2335) + inline-rename input (~L2223-2243) → useTableViews.ts updateSavedView',
+  },
+  {
+    id: 'idea.view.saved_view_update',
+    label: { pl: 'Aktualizuj', en: 'Update' },
+    icon: 'Save',
+    scope: 'current_view',
+    tools: ['table'],
+    surfaces: ['context'],
+    handler: (ctx) => runTableSavedViewUpdateCallback(ctx),
+    mutates: true,
+    requiresPreview: false,
+    undo: {
+      kind: 'local_stack',
+      evidence:
+        'BRAK: jak `saved_view_rename` wyżej — `updateSavedView` nigdy nie woła `nodesUndo.push`. Nadpisanie sort/filters/groupBy/layout/columns zapisanego widoku bieżącym stanem tabeli NIE trafia dziś na stos Ctrl+Z (ani klik człowieka, ani ta ścieżka Teresy).',
+    },
+    teresa: {
+      description:
+        'Nadpisuje zapisany widok Tabeli BIEŻĄCYM stanem tabeli (sortowanie, filtry, grupowanie, układ, widoczność/szerokość kolumn) — dokładnie to, co widzisz teraz na ekranie. Podaj `viewId` widoku do zaktualizowania. Nie działa na widoku domyślnym.',
+      parameters: {
+        type: 'object',
+        properties: {
+          viewId: { type: 'string', description: 'Id zapisanego widoku Tabeli do zaktualizowania.' },
+        },
+        required: ['viewId'],
+      },
+    },
+    source:
+      'src/components/MyWork/IdeaTableTool.tsx viewContextMenu "saved_view_update" (~L2346) → useTableViews.ts updateSavedView',
+  },
+  {
+    id: 'idea.view.saved_view_delete',
+    label: { pl: 'Usuń', en: 'Delete' },
+    icon: 'Trash2',
+    scope: 'current_view',
+    tools: ['table'],
+    surfaces: ['context'],
+    handler: (ctx) => runTableSavedViewDeleteCallback(ctx),
+    mutates: true,
+    requiresPreview: false,
+    destructive: true,
+    undo: {
+      kind: 'local_stack',
+      evidence:
+        'BRAK: `deleteSavedView` (`useTableViews.ts`) to goły `setSavedViews` filter, nigdy nie woła `nodesUndo.push`. Usunięcie widoku jest natychmiastowe i trwałe (bez dialogu potwierdzenia po stronie UI — jedyna ochrona to `confirmBeforeRun` niżej, dodana TU dla Teresy; klik człowieka w menu nadal nie pyta) — jedyny sposób odzyskania to ręczne odtworzenie widoku ("Zapisz widok" od nowa).',
+    },
+    teresa: {
+      description:
+        'Usuwa zapisany widok Tabeli na trwałe (brak cofnięcia). Podaj `viewId` widoku do usunięcia. Nie działa na widoku domyślnym.',
+      parameters: {
+        type: 'object',
+        properties: {
+          viewId: { type: 'string', description: 'Id zapisanego widoku Tabeli do usunięcia.' },
+        },
+        required: ['viewId'],
+      },
+      confirmBeforeRun: true,
+    },
+    source:
+      'src/components/MyWork/IdeaTableTool.tsx viewContextMenu "saved_view_delete" (~L2364) → useTableViews.ts deleteSavedView',
   },
   {
     id: 'idea.workspace.convert',
@@ -3173,7 +3456,13 @@ const IDEA_ACTIONS: ActionDef[] = [
     // jedną z nich.
     scope: 'current_view',
     tools: 'all',
-    surfaces: ['toolbar'],
+    // Tier A rail wiring (2026-08-10): CanvasLeftToolbar.tsx's getUndoRedoSlots
+    // (~linia 405) renderuje TEN SAM przycisk (action: `${prefix}_undo`, gdzie
+    // prefix = mm/wb/pf/tbl — dokładnie RUNTIME_UNDO powyżej) na wszystkich
+    // czterech reprezentacjach. `surfaces` rozszerzone o 'rail' — id/handler/
+    // runtime NIETKNIĘTE (ten sam `runToolbarBusAction`, ten sam dual-path co
+    // już miał dla 'toolbar').
+    surfaces: ['toolbar', 'rail'],
     handler: (ctx) => runToolbarBusAction('idea.canvas.undo', RUNTIME_UNDO, ctx),
     mutates: false,
     requiresPreview: false,
@@ -3181,7 +3470,8 @@ const IDEA_ACTIONS: ActionDef[] = [
       description: 'Cofa ostatnią zmianę w otwartej reprezentacji (Ctrl/Cmd+Z).',
     },
     runtime: RUNTIME_UNDO,
-    source: 'src/components/MyWork/whiteboard/WhiteboardToolbar.tsx:273-279 (undo) — wspólne dla 4 narzędzi',
+    source:
+      'src/components/MyWork/whiteboard/WhiteboardToolbar.tsx:273-279 (undo) — wspólne dla 4 narzędzi · REUSED (2026-08-10, rail tier A) by CanvasLeftToolbar.tsx getUndoRedoSlots (~linia 405-423)',
   },
   {
     id: 'idea.canvas.redo',
@@ -3189,7 +3479,9 @@ const IDEA_ACTIONS: ActionDef[] = [
     icon: 'Redo2',
     scope: 'current_view',
     tools: 'all',
-    surfaces: ['toolbar'],
+    // Tier A rail wiring (2026-08-10) — patrz komentarz przy `idea.canvas.undo`
+    // wyżej, ten sam rozumowanie (getUndoRedoSlots' 'redo' slot).
+    surfaces: ['toolbar', 'rail'],
     handler: (ctx) => runToolbarBusAction('idea.canvas.redo', RUNTIME_REDO, ctx),
     mutates: false,
     requiresPreview: false,
@@ -3197,7 +3489,8 @@ const IDEA_ACTIONS: ActionDef[] = [
       description: 'Ponawia cofniętą zmianę w otwartej reprezentacji (Ctrl/Cmd+Shift+Z).',
     },
     runtime: RUNTIME_REDO,
-    source: 'src/components/MyWork/whiteboard/WhiteboardToolbar.tsx:280-286 (redo) — wspólne dla 4 narzędzi',
+    source:
+      'src/components/MyWork/whiteboard/WhiteboardToolbar.tsx:280-286 (redo) — wspólne dla 4 narzędzi · REUSED (2026-08-10, rail tier A) by CanvasLeftToolbar.tsx getUndoRedoSlots (~linia 405-423)',
   },
   {
     id: 'idea.canvas.toggle_voting',

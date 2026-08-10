@@ -977,6 +977,15 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
     nodes,
     nodesUndo,
     selectedRowIds,
+    // N8 (2026-08-10) — te cztery to dokładnie te same wartości, które
+    // `viewContextMenu`'s "Update" item (poniżej w tym pliku) czyta z domknięcia
+    // komponentu; przekazane też do hooka, żeby `tbl_view_update` (Teresa) budował
+    // IDENTYCZNY payload co klik człowieka.
+    savedViews,
+    sort,
+    filters,
+    groupBy,
+    viewLayout,
     handlers: {
       handleAddRow,
       setShowRowTemplatePicker,
@@ -1000,6 +1009,8 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
       onUndo: () => platformUndoRef.current(),
       onRedo: () => nodesUndo.redo(),
       onFieldFillProposal: setFieldFillProposal,
+      updateSavedView,
+      deleteSavedView,
     },
   });
 
