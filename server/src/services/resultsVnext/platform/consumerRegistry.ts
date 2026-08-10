@@ -58,7 +58,7 @@ export type ConsumerFn = (
  *     route to it today. See `UNBUILT_CONSUMER_GROUPS` below — its rows PARK
  *     rather than being silently dropped.
  *   - `decisions_projection`/`notifications_projection` are RETIRED, not
- *     pending (2026-08-10 contract correction, EXECUTION_LEDGER.md §50; see
+ *     pending (2026-08-10 contract correction, EXECUTION_LEDGER.md §51; see
  *     `atomicWrite.ts`'s own "RETIRED VOCABULARY" comment for the full
  *     rationale). Neither ever routed a single event type — they existed
  *     only as a comment reserving the names. `decisions_projection` has no

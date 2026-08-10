@@ -6,7 +6,7 @@ import { CONSUMER_REGISTRY, UNBUILT_CONSUMER_GROUPS } from '../../../server/src/
 /**
  * RN-G3 Outbox Dispatcher — consumer-group contract test.
  *
- * Design: EXECUTION_LEDGER.md §50 (2026-08-10 contract correction).
+ * Design: EXECUTION_LEDGER.md §51 (2026-08-10 contract correction).
  *
  * The bug class this guards against: `atomicWrite.ts`'s
  * `EVENT_TYPE_CONSUMER_GROUPS` (the write-side routing map) and

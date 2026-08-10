@@ -409,7 +409,7 @@ export const EVENT_TYPE_CONSUMER_GROUPS: Readonly<Record<string, readonly string
   // `okr_vnext_decision_links` directly, not the outbox).
   //
   // RETIRED VOCABULARY (2026-08-10 contract correction — see
-  // EXECUTION_LEDGER.md §50): this map used to carry a comment reserving
+  // EXECUTION_LEDGER.md §51): this map used to carry a comment reserving
   // 'decisions_projection' and 'notifications_projection' as future
   // consumer-group names. Neither was ever used as a routing target above —
   // grep this file for the literal strings and the only hit left is this
