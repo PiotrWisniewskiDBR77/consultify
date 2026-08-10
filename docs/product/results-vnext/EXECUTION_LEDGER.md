@@ -2575,3 +2575,195 @@ Actual jest następny w kolejce** — approval flow (Submit/Approve/Reject/
 Changes-Requested/Reopen, immutable `ApprovalSnapshot`) teraz kompletny;
 kolejny epik operuje na Forecast/Actual danych POZA zakresem tej epiki.
 
+## 34. ROI-E004 Forecast & Actual — implementacja + odbiór (2026-08-10)
+
+**Czwarty epik domeny ROI, zamyka OBIE zarezerwowane kolumny wskaźnikowe
+ROI-E001 (`current_forecast_version_id`/`current_actual_snapshot_id`) i
+wprowadza PIERWSZE w tym case'ie przejście do statusu `'tracking'`.**
+Zbudowano `ROI_E004_DESIGN.md` §3–§8 dosłownie (design FROZEN, self-
+contained, 20-wierszowa tabela Decisions D1-D20, jedna jawna decyzja
+OVERRIDE — D10 — wobec własnej rekomendacji draftu; pełny DDL — bez
+zgadywania): migracja `20260818_rvn_roi_forecast_actual.sql` (5 nowych
+tabel — `rvn_roi_forecast_versions` immutable, `rvn_roi_actual_entries`
+append-only z generated `line_key`, partial unique index i `REVOKE UPDATE,
+DELETE FROM PUBLIC`, `rvn_roi_actual_snapshots` immutable rollup,
+`rvn_roi_variances`/`rvn_roi_variance_causes` stored z fact-protection
+triggerem; 2 FK ALTERowane NA KOŃCU zamykające obie rezerwacje ROI-E001 —
+własne odstępstwo, ten sam wzorzec co ROI-E003: `ADD CONSTRAINT` owinięte w
+`DO $$ ... IF NOT EXISTS (SELECT FROM pg_constraint) ... $$` zamiast gołego
+literalnego DDL z designu, idempotencja pod `--safe`/wielokrotny re-run, nie
+nowa decyzja projektowa), Changed `roiCaseCommands.ts` (`ROI_TRACKING_
+ACTIVE_STATUSES` wyeksportowany), Changed `roiCalculationRunCommands.ts`
+(5 funkcji wyeksportowanych per Decyzja D5 — `toDateOnlyString`/
+`assumptionRowToEngine`/`costLineRowToEngine`/`benefitLineRowToEngine`/
+`policyStampObject`, zero zmiany zachowania), 10 nowych plików komend/
+repozytoriów (`roiTrackingCommands.ts` — `startRoiCaseTracking` ręcznym
+`executeAtomicCommand`, ten sam wzorzec "commands with side effects" co
+`roiCaseApprovalCommands.ts`; `roiForecastVersionCommands.ts`/`Repository.ts`
+— `createRoiForecastVersion` woła `roiCalculationEngine.ts` BEZ ŻADNEJ
+zmiany silnika per Decyzja D4; `roiActualEntryCommands.ts`/`Repository.ts` —
+mirror `kpiMeasurementCommands.ts`'s `recordMeasurement`/`correctMeasurement`/
+`verifyMeasurement`/`disputeMeasurement` dokładnie, plus D10 walk-back (niżej);
+`roiActualSnapshotCommands.ts`/`Repository.ts`; `roiCompareRepository.ts` —
+`getRoiCaseCompareView`, czysty odczyt live, trzy typowane sloty per metryka;
+`roiVarianceCommands.ts`/`Repository.ts`) + `roiForecastActualTypes.ts`, 20
+nowych endpointów w `roi.routes.ts` (Changed, ten sam plik co E001/E002/E003;
+`handleRoiRouteError` dostaje `RoiActualSelfVerificationDeniedError -> 403`
+(D10) i `RoiActualEntryNotFoundError`/`RoiVarianceNotFoundError -> 404`
+SPRAWDZANE PRZED generyczną gałęzią 409, dokładnie ten sam wzorzec co
+`RoiSelfApprovalDeniedError` w ROI-E003), nowy plik walidatorów
+`resultsVnextRoiForecastActual.validators.ts` (dedykowany plik, ten sam
+precedens co ROI-E002/E003), `atomicWrite.ts` (Changed: 9 nowych kluczy
+zdarzeń `roi.tracking_started`/`roi.forecast_published`/`roi.actual_recorded`/
+`roi.actual_corrected`/`roi.actual_snapshot_published` →
+`['mywork_projection','finance_projection']`, `roi.actual_verified`/
+`roi.actual_disputed`/`roi.material_variance_detected`/
+`roi.variance_status_updated`/`roi.variance_cause_added` →
+`['mywork_projection']`).
+
+**Decyzja D10 (jedyna prawdziwie nowa logika biznesowa tego epika) —
+zaimplementowana i UDOWODNIONA testem realDB**: `verifyActualEntry` odmawia
+weryfikacji, gdy weryfikujący JEST oryginalnym rejestrującym całego łańcucha
+korekt, nie tylko bezpośrednio poprzedniego wiersza. `resolveOriginalActualEntry
+Recorder` (w `roiActualEntryCommands.ts`) idzie WSTECZ po
+`correction_of_actual_entry_id` jedną rekurencyjną CTE (`WITH RECURSIVE`) aż
+do wiersza-korzenia, zamiast pętli aplikacyjnej — jeden round-trip. Scenariusz
+z designu §4/§7 dosłownie zreprodukowany i PRZESZEDŁ na realnym Postgresie:
+rejestrujący A tworzy wpis, B koryguje, A próbuje zweryfikować KOREKTĘ B —
+odmówione (`RoiActualSelfVerificationDeniedError`, 403), bo A wciąż jest
+oryginalnym rejestrującym łańcucha; C (ani A, ani B) MOŻE zweryfikować tę samą
+korektę — dowodzi, że odmowa jest specyficzna dla oryginalnego rejestrującego,
+nie ślepą regułą "obcy tylko". Test asercjuje też, że odmówiona próba NIE
+wstawiła żadnego wiersza (łańcuch pozostaje dokładnie 2 głęboki) —
+`roiActualEntryAppendOnly.realdb.test.ts`.
+
+**AC-01 (forecast nigdy nie mutuje Approved) — dowiedzione dosłownie, w stylu
+`roiCaseReapproval.realdb.test.ts`**: `roiForecastVersion.realdb.test.ts`
+tworzy forecast Z override'em (cost line 1000→1500 w SAMYM forecaście), po
+czym odczytuje ponownie oryginalny `content_hash`/pełny payload
+`rvn_roi_approval_snapshots` ORAZ same wiersze `rvn_roi_assumptions`/
+`rvn_roi_cost_lines`/`rvn_roi_benefit_lines` — wszystkie bajt-identyczne
+przed i po. Zamrożony wiersz cost-line'a wciąż ma `amount = '1000'`
+(oryginał) — override żyje WYŁĄCZNIE w `input_overrides`/`input_snapshot`
+forecastu, nigdy nie jest zapisywany z powrotem na leżący pod spodem wiersz.
+PRZESZEDŁ.
+
+**Dwa realne bugi znalezione i naprawione — oba we WŁASNYCH testach tego
+epika, nie w kodzie produkcyjnym**: (1) `has_table_privilege('PUBLIC', ...)`
+jest NIEPRAWIDŁOWYM wywołaniem — `'PUBLIC'` to zarezerwowane słowo kluczowe
+GRANT/REVOKE, nie odpytywalna nazwa roli (Postgres 42704 "role PUBLIC does
+not exist"); co ważniejsze, połączenie testu jest superuserem/właścicielem —
+`has_table_privilege` dla tej roli zwróciłoby `true` NIEZALEŻNIE od REVOKE
+(superuser omija sprawdzanie ACL całkowicie), dokładnie ten obejście, które
+komentarz nagłówka migracji już dokumentuje. Naprawa: świeża rola `NOLOGIN`
+bez własnych grantów (dziedziczy WYŁĄCZNIE to, co ma PUBLIC), `SET ROLE` w
+tej samej sesji, próba UPDATE/DELETE — poprawnie rzuca 42501 (insufficient_
+privilege) `roiActualEntryAppendOnly.realdb.test.ts`. (2) Zapytania o liczbę
+obligacji w `roiTrackingTransition.realdb.test.ts` filtrowały tylko po
+`reference_id`, nie po `obligation_type` — `createRoiCase` (pierwszy krok
+fixture'u) TAKŻE tworzy własną obligację `start_roi_study` dla tego samego
+`reference_id`, więc zapytanie widziało 2 wiersze zamiast 1; naprawione
+dodaniem `AND obligation_type = 'track_roi_forecast_actuals'`.
+
+**Jedno świadome odstępstwo formuły, udokumentowane w kodzie, nie
+przemilczane**: design doc nazywa pola `rvn_roi_actual_snapshots` (§3), ale
+nie podaje dokładnej formuły agregacji (inaczej niż §4.3 ROI-E002 dla
+silnika). `total_actual_costs`/`total_actual_financial_benefits`/
+`actual_simple_roi` są policzone wprost mirror'ując silnik
+(`roiCalculationEngine.ts`'s `simpleRoiDecimal`); `actual_npv` zostaje `null`
+— wpisy Actual nie mają stałej siatki okresów jak `periodSeries`
+CalculationRun/ForecastVersion (mogą lądować na dowolnych, nawet
+zachodzących na siebie zakresach `period_start`/`period_end`), a żaden
+dokument źródłowy nie precyzuje dyskontowania nieregularnych przepływów —
+sfabrykowanie siatki okresów tutaj ryzykowałoby cicho błędną liczbę, ta sama
+zasada "honest missing zamiast fabrykowanego", którą program już ustanowił
+dla `RoiBaseline`'s nullable pól. Ten sam powód sprawia, że slot ACTUAL
+metryki `paybackPeriods` w `getRoiCaseCompareView` ZAWSZE zwraca
+`not_yet_available`/`no_actual_recorded`, nawet gdy actual snapshot istnieje
+— tabela nie ma kolumny `payback_periods` w ogóle. Oba udokumentowane w
+kodzie (`roiActualSnapshotCommands.ts`/`roiCompareRepository.ts` nagłówki) i
+niżej jako backlog dla ROI-E005/E006.
+
+**Testy**: 7 nowych plików w `tests/resultsVnext/roi/` + 1 w
+`server/src/routes/resultsVnext/__tests__/` — `roiTrackingTransition.
+realdb.test.ts` (3 testy: happy path + obligacja D2, guard odrzuca
+non-approved, idempotencja deduplication key obligacji), `roiForecastVersion.
+realdb.test.ts` (4 testy: AC-01 hash-stability z override'em — opisany
+wyżej, drugi forecast sequence 1→2 D6, `CASE_NOT_TRACKABLE`,
+`OVERRIDE_TARGET_NOT_FOUND`), `roiActualEntryAppendOnly.realdb.test.ts` (3
+testy: PEŁNY łańcuch record→correct→verify→dispute z DOWODEM D10 opisanym
+wyżej, `RoiActualEntryNotFoundError`, raw UPDATE/DELETE zablokowany —
+dowiedzione przez świeżą rolę `NOLOGIN`, nie przez `has_table_privilege`),
+`roiActualSnapshot.realdb.test.ts` (2 testy: rollup z verified/unverified/
+disputed counts + `entry_ids_included`, drugi snapshot sequence 1→2),
+`roiCompareView.realdb.test.ts` (1 test: WSZYSTKIE trzy stany
+missing-reason w jednej progresji — not_yet_approved → no_forecast_published
+→ no_actual_recorded → wszystko available poza payback/actual), `roiVariance.
+realdb.test.ts` (4 testy: `recordVariance` snapshotuje baseline/comparison +
+liczy amount/pct, `updateVarianceStatus` CAS na WŁASNYM `row_version`
+wariancji, `addVarianceCause`/`removeVarianceCause`, AC-05 fact-protection —
+raw UPDATE na faktach rzuca `/immutable/i` przez trigger DZIAŁAJĄCY nawet
+dla tego superuser połączenia testowego, status/owner nadal edytowalne),
+`roiForecastActualVisibilityJoin.realdb.test.ts` (4 testy: `::text` cast na
+wszystkich 5 nowych tabelach, RESTRICTED_ACL grantee widzi / outsider nie
+widzi, dla każdej z `listRoiForecastVersions`/`getRoiForecastVersion`/
+`listActualEntries`/`getActualEntry`/`listRoiActualSnapshots`/
+`getRoiActualSnapshot`/`listVariances`/`getVariance` łącznie z joinem
+`variance_causes`), `roiForecastActual.routes.test.ts` (27 testów HTTP-
+boundary mockowanych: wszystkich 20 nowych endpointów, w tym `403` dla
+`RoiActualSelfVerificationDeniedError` (D10) i `404` dla
+`RoiActualEntryNotFoundError`/`RoiVarianceNotFoundError` sprawdzane PRZED
+generycznymi gałęziami 409). **Razem 48 nowych testów, wszystkie PASS** na
+efemerycznym Postgresie 17 (`initdb --locale=C`, TCP `127.0.0.1:28546`), na
+TYM SAMYM minimalnym zestawie migracji co §31/§32/§33 (14 plików +
+`20260818_rvn_roi_forecast_actual.sql` = 15).
+
+**Regresja KPI + ROI-E001/E002/E003 — PRZED/PO przez `git stash` na TEJ
+SAMEJ efemerycznej bazie**: pełny zestaw `tests/resultsVnext/kpi/` +
+`tests/resultsVnext/roi/` + 4 pliki route'ów (`roi.routes.test.ts`/
+`roiCaseApproval.routes.test.ts`/`roiEconomicModel.routes.test.ts`/
+`roiForecastActual.routes.test.ts`) = 41 plików, 297 testów: **293 PASS, 2
+FAIL, 2 skip zarówno PRZED (kod ROI-E003, `git stash` na 4 zmienionych
+plikach) jak i PO** (kod ROI-E004) — identyczne dwa niepowiązane pliki
+zawodzą w obu: `kpiIdentityAcrossSurfaces.realdb.test.ts`/
+`kpiInitiativeImpactPerspectivesRoutesRealdb.test.ts`/`legacyIsolation.
+realdb.test.ts`/`initiativeKpiImpactBaselineFreeze.realdb.test.ts` (KPI-E005/
+E007, nieistniejące tabele `link_graph_edges`/`kpi_definitions` — obie
+pochodzą z migracji SPRZED tego programu, `20260303_link_graph_v3.sql` i
+legacy, poza minimalnym 14/15-plikowym zestawem ROI/KPI-`rvn_*`; ten sam
+rodzaj przedistniejącej luki co `initiatives.status DEFAULT 'step3'`
+udokumentowana w §33 — luka metodologii "minimalny zestaw", nie regresja
+tego epika). **Zero regresji w domenie ROI-E001/E002/E003 ani w reszcie KPI**
+— dowiedzione, nie zadeklarowane.
+
+**`tsc --noEmit` clean na całym repo** (root `tsconfig.json`, nie
+`server/tsconfig.json` — ten drugi ma przedistniejące błędy `decimal.js`
+niezwiązane z tym epikiem, poza zakresem tego pliku konfiguracyjnego).
+
+**Poza zakresem, świadomie NIEZBUDOWANE (backlog notes per §7 designu)**:
+- **D11/D15 (odroczone, bez zmian od ROI-E003's D18)**: brak
+  `reopenFromTrackingRoiCase` — teraz JESZCZE bardziej konsekwentna decyzja
+  niż w E003 (realne dane Forecast/Actual/Variance teraz istnieją, więc
+  pytanie "co się dzieje z istniejącymi danymi trackingu przy reopen"
+  poważniejsze, nie mniej). Żadna z 6 AC tego epika tego nie nazywa.
+- **D19**: brak typed KPI-evidence link na Actual entries — `evidence_refs
+  JSONB` free-text, ten sam kształt co KPI measurements. Prawdziwa możliwa
+  przyszła potrzeba (evidence_link do benefit line'a już daje KPI backing
+  dla ZATWIERDZONEGO modelu), niezbudowana bo żadna AC jej nie nazywa.
+- **D20**: brak przedłużenia horyzontu prognozy poza zatwierdzone okno —
+  `analysisStart`/`analysisEnd`/`currency`/`granularity` forecast'u zawsze
+  NIEZMIENIONE z wiersza case'a (Decyzja D7). Utrzymuje Approved/Forecast/
+  Actual porównywalne na tej samej siatce okresów.
+- **D14 (potwierdzenie granicy E004/E005, NIE decyzja tego epika — flaga dla
+  projektującego ROI-E005)**: E004 posiada mechanikę Tracking/Forecast/
+  Actual/Variance; E005 (Benefits Realization) posiada przejście
+  `'tracking'→'benefits_realization'` i liczy "realization %" Z DANYCH TEGO
+  EPIKA — nie buduje własnych nowych prymitywów Forecast/Actual/Variance.
+  To WNIOSKOWANIE z listy AC E005 (niezależność od zamknięcia Initiative,
+  obligacje przetrwają zamknięcie, realization % "z governed data"
+  zakładają, że dane E004 już istnieją do liczenia z nich) — NIE
+  bezpośrednio nazwane źródłowo. Jawnie oznaczone tutaj dla ROI-E005.
+
+**Domena ROI: 4/8 epików zbudowanych (E001, E002, E003, E004). ROI-E005
+Benefits Realization następny w kolejce.**
+

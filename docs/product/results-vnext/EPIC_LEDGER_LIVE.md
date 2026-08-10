@@ -338,7 +338,61 @@ danych, które będą wtedy istnieć), brak dedykowanego poziomu ACL "approver"
 (D20, przedistniejący zakres platformy RN-G1, maker-checker pozostaje czystym
 identity checkiem jak w KPI).
 
-**Domena ROI: 3/8 epików zbudowanych (E001, E002, E003). ROI-E004 Forecast &
-Actual następny w kolejce.**
+**ROI-E004 Forecast & Actual — Status: IMPLEMENTED 2026-08-10** (backend
+only; UI Registry to RN-G2, poza zakresem). `docs/product/results-vnext/
+ROI_E004_DESIGN.md` (FROZEN) → `server/migrations/20260818_rvn_roi_
+forecast_actual.sql` (5 nowych tabel: `rvn_roi_forecast_versions` immutable,
+`rvn_roi_actual_entries` append-only z generated `line_key`+partial unique
+index+`REVOKE`, `rvn_roi_actual_snapshots` immutable rollup,
+`rvn_roi_variances`/`rvn_roi_variance_causes` stored z fact-protection
+triggerem; 2 FK ALTERowane na końcu domykające OBIE rezerwacje ROI-E001) →
+`server/src/services/resultsVnext/roi/*` (`roiTrackingCommands.ts`/
+`roiForecastVersionCommands.ts`/`Repository.ts`/`roiActualEntryCommands.ts`/
+`Repository.ts`/`roiActualSnapshotCommands.ts`/`Repository.ts`/
+`roiCompareRepository.ts`/`roiVarianceCommands.ts`/`Repository.ts`/
+`roiForecastActualTypes.ts`; Changed `roiCaseCommands.ts`/
+`roiCalculationRunCommands.ts`) → `server/src/routes/resultsVnext/
+roi.routes.ts` (20 nowych endpointów dopisanych, ten sam plik co E001/E002/
+E003). 48 nowych testów, wszystkie PASS na efemerycznym Postgresie 17 (7 w
+`tests/resultsVnext/roi/` — 7 realDB + 1 w `server/src/routes/resultsVnext/
+__tests__/roiForecastActual.routes.test.ts` — 27 mockowane). Dwa realne
+bugi znalezione i naprawione — oba we WŁASNYCH testach tego epika, nie w
+kodzie produkcyjnym (`has_table_privilege('PUBLIC',...)` nie działa jak
+zamierzone pod superuser połączeniem; zapytanie o obligacje bez filtra typu
+łapało obligację `start_roi_study` z `createRoiCase`) — szczegóły, dowód
+PRZED/PO przez `git stash` na tej samej efemerycznej bazie (293→293 PASS
+identycznie w obu, te same 4 pliki niepowiązane z tym epikiem — KPI-E005/
+E007, luka metodologii "minimalny zestaw migracji" — failują identycznie w
+obu): `EXECUTION_LEDGER.md` §34. Sześć AC z prozy §0 designu wszystkie
+zaadresowane: AC-01 forecast nigdy nie mutuje Approved (dowiedzione
+dosłownie — override w forecaście zostawia `content_hash`/payload
+approval snapshotu I same wiersze assumption/cost-line/benefit-line
+bajt-identyczne), AC-02 append-only Actual z correction-reference (mirror
+`kpiMeasurementCommands.ts`), AC-03 Actual Verifier rola (Decyzja D10 —
+**jedyna prawdziwie nowa logika biznesowa tego epika**: `verifyActualEntry`
+odmawia gdy weryfikujący to ORYGINALNY rejestrujący całego łańcucha korekt,
+znaleziony przez `WITH RECURSIVE` wstecz po `correction_of_actual_entry_id`
+do wiersza-korzenia, nie tylko bezpośrednio poprzedniego wiersza — scenariusz
+"A tworzy, B koryguje, A próbuje zweryfikować korektę B → wciąż odmówione"
+dowiedziony na realnym Postgresie), AC-04 compare view z osobnymi stanami
+missing (`getRoiCaseCompareView`, trzy typowane sloty per metryka —
+`not_yet_approved`/`no_forecast_published`/`no_actual_recorded`, nigdy goły
+`number | null`), AC-05 Variance ze strukturą cause+contribution
+(`rvn_roi_variances`/`rvn_roi_variance_causes`, fact-protection trigger
+działa nawet dla superuser połączenia — inaczej niż append-only tabel pod
+`REVOKE`), AC-06 disputed evidence nigdy nie nadpisuje Actual (dispute
+zostawia amount/currency niezmienione od oryginału). Poza zakresem,
+świadomie NIEZBUDOWANE (backlog notes, Decyzje D11/D15/D19/D20 + D14
+potwierdzenie granicy dla ROI-E005): brak `reopenFromTrackingRoiCase`
+(D11/D15, teraz konsekwentniejsza decyzja niż w E003 bo realne dane
+istnieją), brak typed KPI-evidence link na Actual entries (D19, free-text
+`evidence_refs` wystarcza), brak przedłużenia horyzontu prognozy poza
+zatwierdzone okno (D20), oraz jawna flaga dla ROI-E005: E004 = mechanika
+Tracking/Forecast/Actual/Variance, E005 = przejście do `benefits_realization`
++ liczy realization % Z DANYCH E004 (wniosek z listy AC E005, nie
+bezpośrednio nazwane źródłowo — do zweryfikowania przy projektowaniu E005).
+
+**Domena ROI: 4/8 epików zbudowanych (E001, E002, E003, E004). ROI-E005
+Benefits Realization następny w kolejce.**
 
 Pełne tabele (wszystkie pola per AC): transkrypt agenta `a2714d65fd9b0df12`.
