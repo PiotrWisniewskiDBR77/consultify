@@ -25,7 +25,7 @@
 import { v4 as uuidv4 } from 'uuid';
 
 import { withPinnedPostgresTransaction } from '../../../database/PostgresDatabase.js';
-import { canonicalPayloadHash } from './contentHash.js';
+import { EMPTY_WORKING_REVISION_CONTENT_HASH } from './contentHash.js';
 import type { FinanceArtifactType } from './lifecycleService.js';
 import {
   propagateStalenessInTransaction,
@@ -205,18 +205,28 @@ export async function createArtifact(params: CreateArtifactParams): Promise<Crea
 
     // W10-D01 fix (`docs/validation/finance-v3/generated/gate-d/W10_D01_SEMANTIC_HASH_FIX_report.md`):
     // revision_seq=1 must not start life with a NULL `content_semantic_hash` —
-    // `computePinning.ts`'s `enqueueComputeForCurrentRevision()` requires a
-    // non-null hash to pin to, and a Draft that goes straight to compute
-    // without ever being autosave-checkpointed first (every one of the five
-    // GOLDCO artifact types: STATEMENT_PACK/HISTORICAL_ANALYSIS/BASELINE_MODEL/
-    // PREDICTION_SCENARIO/VALUATION_CASE) used to hit exactly that gap. The
-    // value here is the SAME `canonicalPayloadHash()` primitive
-    // `checkpointOperationStack()` (`autosaveService.ts`) uses, applied to the
-    // same "no edits yet" shape an empty first checkpoint would produce — so a
-    // brand-new artifact's initial hash is byte-identical to what an
-    // immediate no-op autosave would compute, not a second, divergent
-    // convention.
-    const initialContentSemanticHash = canonicalPayloadHash({ unsavedOperationStack: [] });
+    // the real production transition chain (submit -> review -> approve) never
+    // requires a `checkpointOperationStack()` call in between (see
+    // `canonicalServices.pg.test.ts`'s "the full T2->T4 transition chain..."
+    // test), so a Draft that reaches APPROVED without ever being
+    // autosave-checkpointed or compute-stamped first used to freeze a NULL
+    // hash onto `finance_business_versions`/`finance_compute_snapshots` —
+    // exactly the D01 defect. Stamping unconditionally at creation closes that
+    // gap for good: from this INSERT onward, `content_semantic_hash` is never
+    // NULL again for the lifetime of the revision (only ever overwritten with
+    // a REAL hash by `stampWorkingRevisionComputeIdentity()`/
+    // `checkpointOperationStack()`).
+    //
+    // W2-PINSEMANTICS fix (`docs/validation/finance-v3/generated/gate-d/W2_PIN_SEMANTICS_report.md`):
+    // this value is deliberately the well-known "no real content yet" sentinel
+    // (`EMPTY_WORKING_REVISION_CONTENT_HASH`, `contentHash.ts`), NOT a second
+    // divergent hash convention. It exists so `computePinning.ts`'s
+    // `enqueueComputeForCurrentRevision()` can still refuse to pin a compute
+    // job to an artifact nobody has actually put content into yet — the OTHER
+    // guarantee this column is relied on for, which a plain `IS NOT NULL`
+    // check can no longer express once this stamp exists. See that module's
+    // own comment for why identity-comparing against the sentinel is safe.
+    const initialContentSemanticHash = EMPTY_WORKING_REVISION_CONTENT_HASH;
 
     const workingRevision = await tx.queryOne<WorkingRevisionRow>(
       `INSERT INTO finance_working_revisions (
