@@ -16,6 +16,19 @@
  * `buildVisibilityScopedCte({ resourceType: 'kpi' })` — a caller without
  * KPI access still sees the link's own fields (pinned id/version/purpose/
  * dispute_status) but gets `kpiDetails: null` instead of the KPI's content.
+ *
+ * ROI-E007 §4/Decision D7: `isStale` is added to that same hydration path —
+ * computed at read time only (`pinned_kpi_definition_version_id <>
+ * rvn_kpi_definitions.current_definition_version_id`), never stored. Treated
+ * as KPI content for visibility purposes (it reveals whether the KPI's
+ * definition has moved since pinning) — gated behind the SAME
+ * `hydrateKpiDetails`/KPI-visibility check as `kpiDetails`, resolving to
+ * `null` (not `false`) whenever `kpiDetails` itself is `null`.
+ *
+ * ROI-E007 §4/Decision D2: `listRoiEvidenceLinksByKpi` is the reverse
+ * KPI->ROI read — same two-layer visibility, but the OUTER scope is the
+ * roi_case (link rows), the INNER scope is the single known `kpiId`'s own
+ * visibility (kpiDetails/isStale).
  */
 import type { PoolClient, QueryResultRow } from 'pg';
 
@@ -250,6 +263,17 @@ export interface ListBenefitEvidenceLinksParams extends CaseScopedParams {
 
 export interface RoiBenefitEvidenceLinkWithKpiDetails extends RoiBenefitEvidenceLink {
   kpiDetails: { kpiId: string; kpiCode: string; status: string } | null;
+  /** ROI-E007 Decision D7: `null` whenever `kpiDetails` is `null` (either
+   * `hydrateKpiDetails` was false, or the viewer lacks KPI visibility) —
+   * never guessed/defaulted to `false`. */
+  isStale: boolean | null;
+}
+
+interface KpiHydrationRow {
+  kpi_id: string;
+  kpi_code: string;
+  status: string;
+  current_definition_version_id: string | null;
 }
 
 export async function listBenefitEvidenceLinks(
@@ -276,17 +300,18 @@ export async function listBenefitEvidenceLinks(
   const rows = await withReadClient((client) => queryRows<RoiBenefitEvidenceLinkRow>(client, wrapped.sql, values));
 
   if (!hydrateKpiDetails || rows.length === 0) {
-    return rows.map((row) => ({ ...toRoiBenefitEvidenceLink(row), kpiDetails: null }));
+    return rows.map((row) => ({ ...toRoiBenefitEvidenceLink(row), kpiDetails: null, isStale: null }));
   }
 
   // KPI's own visibility-scoped CTE, joined against rvn_kpi_definitions —
-  // a link whose kpi_id is not in this set gets kpiDetails: null, never a
-  // raw unscoped SELECT against rvn_kpi_definitions.
+  // a link whose kpi_id is not in this set gets kpiDetails: null (and
+  // isStale: null), never a raw unscoped SELECT against
+  // rvn_kpi_definitions.
   const kpiCte = await buildVisibilityScopedCte({ userId, organizationId, resourceType: 'kpi' });
   const kpiIds = rows.map((r) => r.kpi_id);
   const kpiQuerySql = `
     ${kpiCte.sql}
-    SELECT kd.kpi_id, kd.kpi_code, kd.status
+    SELECT kd.kpi_id, kd.kpi_code, kd.status, kd.current_definition_version_id
       FROM rvn_kpi_definitions kd
       INNER JOIN rvn_visible_resources vr
               ON vr.resource_type = 'kpi' AND vr.resource_id = kd.kpi_id::text
@@ -294,14 +319,84 @@ export async function listBenefitEvidenceLinks(
        AND kd.kpi_id = ANY($${VISIBILITY_CTE_PARAM_COUNT + 1}::uuid[])
   `;
   const kpiValues = [...kpiCte.values, kpiIds];
-  const kpiRows = await withReadClient((client) =>
-    queryRows<{ kpi_id: string; kpi_code: string; status: string }>(client, kpiQuerySql, kpiValues)
-  );
-  const kpiDetailsById = new Map(kpiRows.map((k) => [k.kpi_id, { kpiId: k.kpi_id, kpiCode: k.kpi_code, status: k.status }]));
+  const kpiRows = await withReadClient((client) => queryRows<KpiHydrationRow>(client, kpiQuerySql, kpiValues));
+  const kpiRowById = new Map(kpiRows.map((k) => [k.kpi_id, k]));
+
+  return rows.map((row) => {
+    const kpiRow = kpiRowById.get(row.kpi_id);
+    return {
+      ...toRoiBenefitEvidenceLink(row),
+      kpiDetails: kpiRow ? { kpiId: kpiRow.kpi_id, kpiCode: kpiRow.kpi_code, status: kpiRow.status } : null,
+      isStale: kpiRow ? row.pinned_kpi_definition_version_id !== kpiRow.current_definition_version_id : null,
+    };
+  });
+}
+
+// ==========================================
+// listRoiEvidenceLinksByKpi (ROI-E007 §4, Decision D2) — reverse KPI->ROI
+// read across ALL of the caller's visible cases, not scoped to one case.
+// ==========================================
+
+export interface ListRoiEvidenceLinksByKpiParams {
+  userId: string;
+  organizationId: string;
+  kpiId: string;
+}
+
+export async function listRoiEvidenceLinksByKpi(
+  params: ListRoiEvidenceLinksByKpiParams
+): Promise<RoiBenefitEvidenceLinkWithKpiDetails[]> {
+  const { userId, organizationId, kpiId } = params;
+
+  // Outer visibility layer: the roi_case scope decides which LINK ROWS are
+  // visible at all — same shape every other case-scoped read in this file
+  // uses, just without a case_id filter (this read spans every case the
+  // viewer can see).
+  const baseQuerySql = `
+    SELECT bel.*
+      FROM rvn_roi_benefit_evidence_links bel
+      INNER JOIN rvn_visible_resources vr
+              ON vr.resource_type = '${ROI_RESOURCE_TYPE}' AND vr.resource_id = bel.case_id::text
+     WHERE bel.organization_id = $1
+       AND bel.kpi_id = $${VISIBILITY_CTE_PARAM_COUNT + 1}
+     ORDER BY bel.linked_at, bel.link_id
+  `;
+  const wrapped = await wrapWithVisibilityScope(baseQuerySql, {
+    userId,
+    organizationId,
+    resourceType: ROI_RESOURCE_TYPE,
+  });
+  const values = [...wrapped.values, kpiId];
+  const rows = await withReadClient((client) => queryRows<RoiBenefitEvidenceLinkRow>(client, wrapped.sql, values));
+
+  if (rows.length === 0) {
+    return [];
+  }
+
+  // Inner visibility layer (Decision D14, reused per D2): the SAME single
+  // `kpiId` is hydrated through KPI's own visibility scope. Every returned
+  // link row shares this one kpiId (the caller passed it in), so a single
+  // lookup — not a per-row map — decides kpiDetails/isStale for the whole
+  // result set.
+  const kpiCte = await buildVisibilityScopedCte({ userId, organizationId, resourceType: 'kpi' });
+  const kpiQuerySql = `
+    ${kpiCte.sql}
+    SELECT kd.kpi_id, kd.kpi_code, kd.status, kd.current_definition_version_id
+      FROM rvn_kpi_definitions kd
+      INNER JOIN rvn_visible_resources vr
+              ON vr.resource_type = 'kpi' AND vr.resource_id = kd.kpi_id::text
+     WHERE kd.organization_id = $1
+       AND kd.kpi_id = $${VISIBILITY_CTE_PARAM_COUNT + 1}
+  `;
+  const kpiValues = [...kpiCte.values, kpiId];
+  const kpiRows = await withReadClient((client) => queryRows<KpiHydrationRow>(client, kpiQuerySql, kpiValues));
+  const kpiRow = kpiRows[0];
+  const kpiDetails = kpiRow ? { kpiId: kpiRow.kpi_id, kpiCode: kpiRow.kpi_code, status: kpiRow.status } : null;
 
   return rows.map((row) => ({
     ...toRoiBenefitEvidenceLink(row),
-    kpiDetails: kpiDetailsById.get(row.kpi_id) ?? null,
+    kpiDetails,
+    isStale: kpiRow ? row.pinned_kpi_definition_version_id !== kpiRow.current_definition_version_id : null,
   }));
 }
 

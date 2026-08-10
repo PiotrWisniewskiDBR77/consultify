@@ -12,6 +12,20 @@
  * only a repository read that HYDRATES the link into display-ready KPI
  * content must pass through KPI's own visibility scope —
  * `roiEconomicModelRepository.ts` owns that hydration rule).
+ *
+ * ROI-E007 §4/Decision D7 (Changed file): `flagEvidenceLinkFreshnessCheck`
+ * appended below — a human acknowledgment that a link's staleness (computed
+ * read-time only by `roiEconomicModelRepository.ts`'s `isStale`, never
+ * stored) has been reviewed. Sets `freshness_checked_at=now()` and NOTHING
+ * else — this command MUST NEVER write to any `rvn_kpi_*` table (AC-05's
+ * "does not auto-propagate values"), verified by a dedicated static
+ * source-text test (design §7). Unlike `addBenefitEvidenceLink`/
+ * `removeBenefitEvidenceLink`, it goes through `executeAtomicCreate` (not
+ * CAS'd `executeAtomicCommand`) — same rationale `verifyActualEntry`
+ * (ROI-E004) uses for a low-stakes acknowledgment action: the row is locked
+ * `FOR UPDATE` inside one transaction, so no lost-update race is possible,
+ * without requiring the caller to first fetch and resupply the link's
+ * current `row_version`.
  */
 import { randomUUID } from 'node:crypto';
 
@@ -383,6 +397,102 @@ export async function flagBenefitEvidenceLinkDisputed(
         idempotencyKey,
         expectedVersion,
         resultingVersion: nextVersion,
+        payload: { caseId, linkId },
+      } satisfies AtomicEventInput;
+    },
+  });
+}
+
+// ==========================================
+// flagEvidenceLinkFreshnessCheck (ROI-E007 §4, Decision D7)
+// ==========================================
+
+export interface FlagEvidenceLinkFreshnessCheckInput {
+  linkId: string;
+  caseId: string;
+  organizationId: string;
+  actorUserId: string;
+  actorEffectiveRole: string;
+  idempotencyKey: string;
+  correlationId?: string;
+  causationId?: string | null;
+  reason?: string | null;
+}
+
+/** Not gated by `NON_EDITABLE_STATUSES`/case-editable, same rationale as
+ * `flagBenefitEvidenceLinkDisputed` above — acknowledging staleness is an
+ * evidence-quality signal, legitimately raised at any point in the case's
+ * lifecycle. Touches ONLY `freshness_checked_at`/`row_version`/`updated_at`
+ * on `rvn_roi_benefit_evidence_links` — no other column, no other table.
+ * Never reads or writes any `rvn_kpi_*` table: `isStale` is computed
+ * separately, read-time-only, by `roiEconomicModelRepository.ts`; this
+ * command does not need to know the value to record that a human checked
+ * it. */
+export async function flagEvidenceLinkFreshnessCheck(
+  input: FlagEvidenceLinkFreshnessCheckInput
+): Promise<AtomicCommandOutcome<RoiBenefitEvidenceLink>> {
+  const {
+    linkId,
+    caseId,
+    organizationId,
+    actorUserId,
+    actorEffectiveRole,
+    idempotencyKey,
+    correlationId,
+    causationId = null,
+    reason = null,
+  } = input;
+
+  let beforeState: Record<string, unknown> | null = null;
+
+  return executeAtomicCreate<RoiBenefitEvidenceLink>({
+    organizationId,
+    applyMutation: async (client) => {
+      const currentRow = await loadEvidenceLinkForUpdate(client, linkId, organizationId);
+      if (!currentRow || currentRow.case_id !== caseId) {
+        throw new RoiBenefitEvidenceLinkValidationError(
+          `Benefit evidence link ${linkId} not found on case ${caseId}`,
+          'BENEFIT_EVIDENCE_LINK_NOT_FOUND',
+          { linkId, caseId }
+        );
+      }
+      beforeState = { link: toRoiBenefitEvidenceLink(currentRow) };
+
+      const updateResult = await client.query<RoiBenefitEvidenceLinkRow>(
+        `UPDATE rvn_roi_benefit_evidence_links
+            SET freshness_checked_at = now(), row_version = row_version + 1, updated_at = now()
+          WHERE link_id = $1
+          RETURNING *`,
+        [linkId]
+      );
+      const updatedRow = updateResult.rows[0];
+      if (!updatedRow) throw new Error(`[flagEvidenceLinkFreshnessCheck] update returned no row for ${linkId}`);
+      return toRoiBenefitEvidenceLink(updatedRow);
+    },
+    buildEvent: ({ result }) => {
+      const afterState = { link: result };
+      return {
+        schemaVersion: 1,
+        eventType: 'roi.evidence_link_freshness_flagged',
+        aggregateType: 'roi_case',
+        aggregateId: caseId,
+        organizationId,
+        actorUserId,
+        actorEffectiveRole,
+        commandId: randomUUID(),
+        correlationId: correlationId ?? randomUUID(),
+        causationId,
+        occurredAt: new Date().toISOString(),
+        policyVersion: '',
+        beforeState,
+        afterState,
+        stateHash: computeStateHash(afterState),
+        reason,
+        evidenceRefs: [],
+        source: ROI_EVENT_SOURCE,
+        idempotencyKey,
+        expectedVersion: null,
+        resultingVersion: result.rowVersion,
         payload: { caseId, linkId },
       } satisfies AtomicEventInput;
     },
