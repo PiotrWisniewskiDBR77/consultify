@@ -102,7 +102,12 @@ export class RoiCalculationRunValidationError extends Error {
  * the one boundary (`roiCalculationRunCommands.ts`) that actually does date
  * arithmetic on these columns.
  */
-function toDateOnlyString(value: unknown): string | null {
+// ROI-E004 §4 (design doc), Decision D5: exported (was module-private) so
+// roiForecastVersionCommands.ts can build a RoiCalculationEngineInput from
+// live case data without re-deriving the DATE-deserialization fix or
+// row-mapping logic — zero behavior change, purely an export-visibility
+// widening.
+export function toDateOnlyString(value: unknown): string | null {
   if (value === null || value === undefined) return null;
   if (value instanceof Date) {
     const year = value.getFullYear();
@@ -114,7 +119,8 @@ function toDateOnlyString(value: unknown): string | null {
   return null;
 }
 
-function assumptionRowToEngine(row: RoiAssumptionRow): RoiEngineAssumption {
+// ROI-E004 §4, Decision D5: exported — see toDateOnlyString's comment above.
+export function assumptionRowToEngine(row: RoiAssumptionRow): RoiEngineAssumption {
   return {
     id: row.assumption_id,
     category: row.category,
@@ -125,7 +131,8 @@ function assumptionRowToEngine(row: RoiAssumptionRow): RoiEngineAssumption {
   };
 }
 
-function costLineRowToEngine(row: RoiCostLineRow): RoiEngineCostLine {
+// ROI-E004 §4, Decision D5: exported — see toDateOnlyString's comment above.
+export function costLineRowToEngine(row: RoiCostLineRow): RoiEngineCostLine {
   return {
     id: row.cost_line_id,
     amount: Number(row.amount),
@@ -138,7 +145,8 @@ function costLineRowToEngine(row: RoiCostLineRow): RoiEngineCostLine {
   };
 }
 
-function benefitLineRowToEngine(row: RoiBenefitLineRow): RoiEngineBenefitLine {
+// ROI-E004 §4, Decision D5: exported — see toDateOnlyString's comment above.
+export function benefitLineRowToEngine(row: RoiBenefitLineRow): RoiEngineBenefitLine {
   return {
     id: row.benefit_line_id,
     isFinancial: row.is_financial,
@@ -167,7 +175,8 @@ function scenarioOverrideRowToEngine(row: RoiScenarioOverrideRow): RoiEngineScen
 /** Fixed-key-order object hashed for `policy_version_stamp` — the policy
  * row's BUSINESS fields only (never `row_version`/`created_at`/`updated_at`,
  * which would make the stamp change on every no-op bookkeeping write). */
-function policyStampObject(row: RoiCalculationPolicyRow): Record<string, unknown> {
+// ROI-E004 §4, Decision D5: exported — see toDateOnlyString's comment above.
+export function policyStampObject(row: RoiCalculationPolicyRow): Record<string, unknown> {
   return {
     discountRatePct: toNullableNumber(row.discount_rate_pct),
     taxTreatment: row.tax_treatment,

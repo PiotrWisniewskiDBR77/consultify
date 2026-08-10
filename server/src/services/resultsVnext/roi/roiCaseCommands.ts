@@ -505,6 +505,17 @@ export const NON_EDITABLE_STATUSES: readonly RoiCaseStatus[] = [
   'cancelled',
 ];
 
+// ROI-E004 §4 (design doc), Decision D3: forecast/actual/variance writes
+// require the case to be in one of these statuses specifically — not merely
+// 'approved' (the frozen-but-not-yet-tracking state). Additive export, same
+// placement pattern as NON_EDITABLE_STATUSES above.
+export const ROI_TRACKING_ACTIVE_STATUSES: readonly RoiCaseStatus[] = [
+  'tracking',
+  'benefits_realization',
+  'post_investment_review_due',
+  'post_investment_review',
+];
+
 export interface UpdateRoiCaseDetailsInput {
   caseId: string;
   organizationId: string;
