@@ -99,6 +99,7 @@ import {
   buildKpiScorecardPreview,
   buildKpiScorecardRowMenu,
 } from './kpiScorecards/kpiScorecardPresenters';
+import { ResultsKpiMeasurementsPanel } from './kpiMeasurements/ResultsKpiMeasurementsPanel';
 
 const STATUS_TONE: Record<KpiStatus, StatusTone> = {
   draft: 'info',
@@ -152,6 +153,7 @@ interface RowMenuContext {
   isPolish: boolean;
   pending: PendingAction;
   onOpen: (kpiId: string) => void;
+  onOpenMeasurements: (row: KpiDefinitionDto) => void;
   onActivate: (row: KpiDefinitionDto) => void;
   onSuspend: (row: KpiDefinitionDto) => void;
   onArchive: (row: KpiDefinitionDto) => void;
@@ -245,7 +247,12 @@ function buildRowMenu(row: KpiDefinitionDto, ctx: RowMenuContext): StandardRowMe
   }
 
   return {
-    primary: [{ id: 'open', label: t('Otwórz', 'Open'), onClick: () => ctx.onOpen(row.kpiId) }],
+    primary: [
+      { id: 'open', label: t('Otwórz', 'Open'), onClick: () => ctx.onOpen(row.kpiId) },
+      // RN-G2 §G #7 — sub-view entry point (see ResultsKpiMeasurementsPanel.tsx
+      // header for the "why here, not a new tab/route" placement decision).
+      { id: 'measurements', label: t('Pomiary', 'Measurements'), onClick: () => ctx.onOpenMeasurements(row) },
+    ],
     statusTransitions,
     universalHandlers: isArchived
       ? { preview: () => ctx.onOpen(row.kpiId), archiveNote: archivedReason }
@@ -266,6 +273,7 @@ function buildPreview(
     measurement: KpiMeasurementDto | null | 'loading';
     pending: PendingAction;
     onClose: () => void;
+    onOpenMeasurements: (row: KpiDefinitionDto) => void;
     onActivate: (row: KpiDefinitionDto) => void;
     onSuspend: (row: KpiDefinitionDto) => void;
     onArchive: (row: KpiDefinitionDto) => void;
@@ -352,6 +360,19 @@ function buildPreview(
       row.status === 'archived'
         ? {
             informational: [
+              // RN-G2 §G #7 — always reachable, even for an archived KPI:
+              // verified in `kpi.routes.ts` that NONE of
+              // recordMeasurement/correctMeasurement/verifyMeasurement/
+              // disputeMeasurement check `kpi.status` — only
+              // `currentDefinitionVersionId` presence (for recording) and the
+              // measurement's own existence. Never inventing a lock this
+              // package's own reading of the server found no evidence for.
+              {
+                id: 'measurements',
+                variant: 'neutral',
+                label: t('Otwórz pomiary', 'Open measurements'),
+                onClick: () => ctx.onOpenMeasurements(row),
+              },
               {
                 id: 'locked',
                 variant: 'neutral',
@@ -385,6 +406,12 @@ function buildPreview(
                     ]
                   : [],
             informational: [
+              {
+                id: 'measurements',
+                variant: 'neutral',
+                label: t('Otwórz pomiary', 'Open measurements'),
+                onClick: () => ctx.onOpenMeasurements(row),
+              },
               {
                 id: 'archive',
                 variant: 'neutral',
@@ -429,6 +456,14 @@ export const ResultsKpiRegistryPage: React.FC = () => {
   const [scorecardsError, setScorecardsError] = useState<string | null>(null);
   const [selectedScorecardId, setSelectedScorecardId] = useState<string | null>(null);
   const [scorecardPending, setScorecardPending] = useState(false);
+
+  // RN-G2 §G #7 — "Pomiary" sub-view of a selected KPI (see
+  // ResultsKpiMeasurementsPanel.tsx header for the "why a sub-view, not a
+  // tab/route" placement decision). Holds the full row (not just an id) so
+  // the panel has `kpiCode`/`currentDefinitionVersionId` without a second
+  // fetch — entered from either the row menu or the preview pane, on the
+  // 'my'/'org' branch only (Scorecards rows are a different DTO entirely).
+  const [measurementsKpi, setMeasurementsKpi] = useState<KpiDefinitionDto | null>(null);
 
   const fetchRows = useCallback(async () => {
     setLoading(true);
@@ -572,6 +607,25 @@ export const ResultsKpiRegistryPage: React.FC = () => {
 
   const selectedRow = visibleRows.find((r) => r.kpiId === selectedId) ?? null;
 
+  // RULES-OF-HOOKS FIX (RN-G2 §G #7, 2026-08-10): this `useMemo` used to sit
+  // AFTER the `!enabled`/`tab === 'scorecards'` early returns below — a real,
+  // pre-existing "Rendered fewer hooks than expected" crash the moment a
+  // user actually clicked the live "Karty wyników" tab inside THIS page
+  // (never caught before because the Scorecards dev-render QA round used a
+  // separate, non-router-wrapped reimplementation screen —
+  // `results-vnext-kpi-scorecards.tsx` — that never exercised this exact
+  // component's own tab switch; see that screen's own header for why it
+  // doesn't mount the real page). Discovered here because the NEW
+  // `measurementsKpi` early return this package adds hit the same bug from
+  // a different angle (`docs/qa/screens/rn-g2-kpi-measurements-2026-08-10/`
+  // — before/after crash screenshots). Every hook must run on every render
+  // regardless of which branch below ultimately returns — moved above all
+  // early returns, same discipline as `selectedRow`/`columns` above it.
+  const tableRows = useMemo(
+    () => visibleRows.map((r) => ({ ...r, id: r.kpiId }) as unknown as Record<string, unknown> & { id: string }),
+    [visibleRows]
+  );
+
   if (!enabled) {
     return (
       <div className="h-full flex items-center justify-center p-6" data-testid="results-vnext-kpi-disabled">
@@ -585,6 +639,22 @@ export const ResultsKpiRegistryPage: React.FC = () => {
               : 'This registry is still being built. Check back later, or ask an administrator for flag access.'
           }
           compact
+        />
+      </div>
+    );
+  }
+
+  if (measurementsKpi) {
+    // RN-G2 §G #7 — see ResultsKpiMeasurementsPanel.tsx header for the
+    // placement decision. Same route (`/results/kpi`), same flag, different
+    // internal state branch — exactly like the `tab === 'scorecards'` branch
+    // below swaps in a different registry without a URL change.
+    return (
+      <div className="h-full" data-testid="results-vnext-kpi-registry-page">
+        <ResultsKpiMeasurementsPanel
+          kpi={measurementsKpi}
+          isPolish={isPolish}
+          onBack={() => setMeasurementsKpi(null)}
         />
       </div>
     );
@@ -666,16 +736,6 @@ export const ResultsKpiRegistryPage: React.FC = () => {
     );
   }
 
-  // `TableRow` requires an `id` field — the KPI DTO's PK is `kpiId`. Mapping
-  // it here (rather than casting past the mismatch) is what makes React's
-  // row keys and `StandardTable`'s row-click/selection identity correct;
-  // omitting this silently broke both (verified in the dev-render harness —
-  // every row's key collapsed to `undefined` and clicks never selected).
-  const tableRows = useMemo(
-    () => visibleRows.map((r) => ({ ...r, id: r.kpiId }) as unknown as Record<string, unknown> & { id: string }),
-    [visibleRows]
-  );
-
   const table: ResultsVNextTableProps = {
     columns,
     data: tableRows,
@@ -705,6 +765,7 @@ export const ResultsKpiRegistryPage: React.FC = () => {
         isPolish,
         pending,
         onOpen: (kpiId) => setSelectedId(kpiId),
+        onOpenMeasurements: (r) => setMeasurementsKpi(r),
         onActivate: (r) => void runLifecycleAction(r, 'activate'),
         onSuspend: (r) => void runLifecycleAction(r, 'suspend'),
         onArchive: (r) => void runLifecycleAction(r, 'archive'),
@@ -740,6 +801,7 @@ export const ResultsKpiRegistryPage: React.FC = () => {
                 measurement,
                 pending,
                 onClose: () => setSelectedId(null),
+                onOpenMeasurements: (r) => setMeasurementsKpi(r),
                 onActivate: (r) => void runLifecycleAction(r, 'activate'),
                 onSuspend: (r) => void runLifecycleAction(r, 'suspend'),
                 onArchive: (r) => void runLifecycleAction(r, 'archive'),
