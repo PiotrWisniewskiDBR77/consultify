@@ -278,7 +278,7 @@ async function runStandardBase(params: RunPredictionComputeParams, baselineModel
     outputWorkingRevisionId: scenarioWorkingRevision.source_working_revision_id,
     contentSemanticHash, // identical derivation from the SAME baseline job's own monthlyResults — proves bit-for-bit equivalence at the job-output level, not just the DB-row level
   });
-  const finalJob = (await computeJobService.getJob(job.id)) ?? runningJob;
+  const finalJob = (await computeJobService.getJob(params.organizationId, job.id)) ?? runningJob;
 
   const passthroughRows = await withPinnedPostgresTransaction((tx) =>
     tx.queryAll<{ n: string }>(`SELECT count(*)::text AS n FROM finance_prediction_outputs_effective WHERE business_version_id = ?`, [params.businessVersionId])
@@ -669,7 +669,7 @@ async function runOverlayCompute(
     outputWorkingRevisionId: scenarioArtifactEarly.source_working_revision_id,
     contentSemanticHash,
   });
-  const finalJob = (await computeJobService.getJob(job.id)) ?? runningJob;
+  const finalJob = (await computeJobService.getJob(params.organizationId, job.id)) ?? runningJob;
 
   return { ok: true, mode: 'COMPUTED', job: finalJob, periodsComputed: periods.length, periods };
 }

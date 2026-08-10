@@ -607,7 +607,7 @@ export async function runBaselineCompute(params: RunBaselineComputeParams): Prom
       }
     });
   } catch (error: any) {
-    await computeJobService.failJob({ jobId: runningJob.id, error: String(error?.message || error) });
+    await computeJobService.failJob({ jobId: runningJob.id, organizationId: params.organizationId, error: String(error?.message || error) });
     if (error instanceof BaselineNonConvergenceError) {
       return {
         ok: false,
@@ -638,7 +638,7 @@ export async function runBaselineCompute(params: RunBaselineComputeParams): Prom
     contentSemanticHash,
   });
 
-  const finalJob = (await computeJobService.getJob(job.id)) ?? runningJob;
+  const finalJob = (await computeJobService.getJob(params.organizationId, job.id)) ?? runningJob;
   return { ok: true, job: finalJob, periodsComputed: monthlyResults.length, monthlyResults };
 }
 

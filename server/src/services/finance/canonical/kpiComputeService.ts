@@ -477,7 +477,8 @@ export async function computeAnalysisKpis(params: ComputeAnalysisKpisParams): Pr
     results = await evaluateAllRows({ kpiValueRows, catalogById, periodGraph, periodLookup, entityByCode, lineCodeToId, stmtLineCells });
     await persistResults(results);
   } catch (error: any) {
-    if (runningJob.status === 'running') await computeJobService.failJob({ jobId: runningJob.id, error: String(error?.message || error) });
+    if (runningJob.status === 'running')
+      await computeJobService.failJob({ jobId: runningJob.id, organizationId: params.organizationId, error: String(error?.message || error) });
     throw error;
   }
 
@@ -532,7 +533,7 @@ export async function computeAnalysisKpis(params: ComputeAnalysisKpisParams): Pr
     }
   }
 
-  const finalJob = (await computeJobService.getJob(job.id)) ?? runningJob;
+  const finalJob = (await computeJobService.getJob(params.organizationId, job.id)) ?? runningJob;
   return { ok: true, job: finalJob, results, readiness: readinessOut };
 }
 

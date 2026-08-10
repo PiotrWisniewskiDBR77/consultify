@@ -349,7 +349,7 @@ export async function runDcfFcffValuation(params: RunDcfFcffValuationParams): Pr
     outputWorkingRevisionId: bv.source_working_revision_id,
     contentSemanticHash,
   });
-  const finalJob = completed.ok ? completed.job : ((await computeJobService.getJob(job.id)) ?? runningJob);
+  const finalJob = completed.ok ? completed.job : ((await computeJobService.getJob(params.organizationId, job.id)) ?? runningJob);
 
   return {
     ok: true,

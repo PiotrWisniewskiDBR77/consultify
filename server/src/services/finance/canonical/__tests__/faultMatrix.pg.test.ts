@@ -295,7 +295,7 @@ describe.skipIf(!REAL_PG)('W9-B — compute queue fault injection (real PostgreS
       // The dead worker's job is still `running` (nothing reaps it — see B1),
       // so the retry has to be driven by an explicit failJob, which IS
       // implemented and IS what a supervising caller would do.
-      const failed = await jobs.failJob({ jobId: job.id, error: 'worker killed mid-commit' });
+      const failed = await jobs.failJob({ jobId: job.id, organizationId: orgId, error: 'worker killed mid-commit' });
       expect(failed).not.toBeNull();
       expect(failed!.status).toBe('queued'); // attempts remain -> requeued
 
@@ -456,7 +456,7 @@ describe.skipIf(!REAL_PG)('W9-B — compute queue fault injection (real PostgreS
       expect(claimed.id).toBe(job.id);
       expect((await readJob(job.id))!.status).toBe('running');
 
-      const cancelled = await jobs.cancelJob(job.id, 'user pressed Cancel');
+      const cancelled = await jobs.cancelJob(orgId, job.id, 'user pressed Cancel');
       expect(cancelled).not.toBeNull();
       expect(cancelled!.status).toBe('cancelled');
 
@@ -491,7 +491,7 @@ describe.skipIf(!REAL_PG)('W9-B — compute queue fault injection (real PostgreS
       const jobType = `w9b4b_${randomUUID()}`;
       const { job } = await enqueueOne(jobType);
       await jobs.claim({ workerId: 'w9b4b-worker', jobTypes: [jobType], limit: 1 });
-      await jobs.cancelJob(job.id, 'cancel bookkeeping probe');
+      await jobs.cancelJob(orgId, job.id, 'cancel bookkeeping probe');
 
       const physical = await readJob(job.id);
       expect(physical!.status).toBe('cancelled');
@@ -507,7 +507,7 @@ describe.skipIf(!REAL_PG)('W9-B — compute queue fault injection (real PostgreS
     it('a cancelled job is NOT resurrected by a later claim()', async () => {
       const jobType = `w9b4c_${randomUUID()}`;
       const { job } = await enqueueOne(jobType);
-      const cancelled = await jobs.cancelJob(job.id, 'cancelled while still queued');
+      const cancelled = await jobs.cancelJob(orgId, job.id, 'cancelled while still queued');
       expect(cancelled!.status).toBe('cancelled');
 
       const claimed = await jobs.claim({ workerId: 'w9b4c-worker', jobTypes: [jobType], limit: 5 });
@@ -537,7 +537,7 @@ describe.skipIf(!REAL_PG)('W9-B — compute queue fault injection (real PostgreS
 
       // Attempt 1 fails -> requeued.
       await jobs.claim({ workerId: 'dlq-w1', jobTypes: [jobType], limit: 1 });
-      const after1 = await jobs.failJob({ jobId, error: 'boom 1' });
+      const after1 = await jobs.failJob({ jobId, organizationId: orgId, error: 'boom 1' });
       expect(after1!.status).toBe('queued');
       expect((await readJob(jobId))!.attempt_count).toBe(1);
 
@@ -547,7 +547,7 @@ describe.skipIf(!REAL_PG)('W9-B — compute queue fault injection (real PostgreS
 
       // Attempt 2 fails -> terminal failed (attempt_count == max_attempts).
       await jobs.claim({ workerId: 'dlq-w2', jobTypes: [jobType], limit: 1 });
-      const after2 = await jobs.failJob({ jobId, error: 'boom 2' });
+      const after2 = await jobs.failJob({ jobId, organizationId: orgId, error: 'boom 2' });
       expect(after2!.status).toBe('failed');
 
       const terminal = await readJob(jobId);
@@ -584,7 +584,7 @@ describe.skipIf(!REAL_PG)('W9-B — compute queue fault injection (real PostgreS
       const jobId = enqueued.job.id;
 
       await jobs.claim({ workerId: 'dlq2-w1', jobTypes: [jobType], limit: 1 });
-      const dead = await jobs.failJob({ jobId, error: 'terminal failure' });
+      const dead = await jobs.failJob({ jobId, organizationId: orgId, error: 'terminal failure' });
       expect(dead!.status).toBe('failed');
 
       // `failJob()` does not touch the exception ledger. Proven, not assumed:
