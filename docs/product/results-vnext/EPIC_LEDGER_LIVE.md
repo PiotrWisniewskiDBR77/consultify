@@ -440,7 +440,51 @@ anulowane automatycznie przy cancellation (D9), brak wariantów cost/ROI
 przejścia `benefits_realization`→`post_investment_review_due` i finalne
 `→closed` pozostają jego zadaniem.
 
-**Domena ROI: 5/8 epików zbudowanych (E001, E002, E003, E004, E005).
-ROI-E006 PIR & Learning następny w kolejce.**
+**ROI-E006 PIR & Learning — Status: IMPLEMENTED 2026-08-10** (backend only;
+UI Registry to RN-G2, poza zakresem). **Szósty i OSTATNI nowo-treściowy epik
+domeny ROI** — zamyka pełny cykl życia Case'a (`benefits_realization →
+post_investment_review_due → post_investment_review → closed`).
+`docs/product/results-vnext/ROI_E006_DESIGN.md` (FROZEN) →
+`server/migrations/20260819_rvn_roi_pir_learning.sql` (jedna nowa tabela
+`rvn_roi_post_investment_reviews`, dwustopniowy trigger zamrażający — fakty
+od stworzenia, narracja dopiero po finalize) → `server/src/services/
+resultsVnext/roi/roiPirTypes.ts`/`roiPirCommands.ts` (6 komend:
+`scheduleRoiCasePostInvestmentReview`/`markRoiCasePostInvestmentReviewDue`/
+`startRoiCasePostInvestmentReview`/`updateRoiPostInvestmentReviewDraft`/
+`recordRoiPirTeresaDraftDisposition`/`closeRoiCase`)/`roiPirRepository.ts` →
+Changed `roiOrgPerspectiveRepository.ts` (`listOrganizationRoiPirOutcomes`,
+`buildScopedRoiCasesBase` rozszerzone o parametr `statuses`) →
+`server/src/routes/resultsVnext/roi.routes.ts` (8 nowych tras) +
+`roiPerspectives.routes.ts` (`GET /org/pir-outcomes`). 50 nowych testów,
+wszystkie PASS na efemerycznym Postgresie 17 (7 w `tests/resultsVnext/roi/`
+realDB + 1 w `server/src/routes/resultsVnext/__tests__/` mockowany — 26
+testy). **Decyzja D5 — jedyny prawdziwy architektoniczny pierwszy raz w tym
+programie**: `markRoiCasePostInvestmentReviewDue` jest PIERWSZYM realnym
+wywołującym `completeObligation` w całym programie (kontrakt istniał od
+KPI-E003, nigdy nie wywołany). Sześć AC z prozy §0 designu wszystkie
+zaadresowane: AC-01 schedule/trigger→PIR Due (D5's podwójny efekt obligacji,
+dowiedzione realnym `completed_via_command`), AC-02 frozen review snapshot
+przy starcie reviewera (dowiedzione mutacją NA ŻYWO po zamrożeniu — nowa
+Variance po starcie NIE zmienia już zapisanego hash/payload), AC-03 closure
+wymaga review/evidence lub waiver (wszystkie cztery gałęzie bramy dowiedzione
++ D6 self-close denial), AC-04 cold reopen identyczny final snapshot
+(dowiedzione GENUINE osobnym połączeniem `pg.Client`, nie ponownym
+zapytaniem na tej samej sesji), AC-05 portfolio metrics tylko governed
+(chain-scoping + czytanie wygenerowanego SQL, zero nazw tabel legacy), AC-06
+Teresa draft lessons wymaga explicit accept (`'rejected'` nigdy nie dotyka
+`lessons_learned`, dowiedzione precyzyjnie). Regresja: PRZED/PO `git stash -u`
+na tej samej efemerycznej bazie — 21 plików/33 testy failed identycznie w
+obu (przedistniejący `initiatives_status_check`, §33/§34/§35), 371→421
+passed (+50, wszystkie nowe). `tsc --noEmit` clean (root 0 błędów;
+`server/tsconfig.json` 28 przedistniejących błędów `decimal.js` w
+`roiCalculationEngine.ts`, identyczne PRZED/PO, nietknięty przez ten epik).
+Szczegóły: `EXECUTION_LEDGER.md` §36. Poza zakresem, świadomie NIEZBUDOWANE
+(backlog, Decyzje D16/D19/D13): brak cross-case Learning entity (D16), brak
+roli PMO/governance napędzającej AC-01 (D19), generacja Teresy odroczona do
+ROI-E008 (D13), brak ścieżki reopen z `post_investment_review`/`closed`.
+
+**Domena ROI: 6/8 epików zbudowanych (E001, E002, E003, E004, E005, E006).
+Cała mechanika backendu ROI-E001…E006 domknięta. ROI-E007 Finance/KPI Seams
+następny w kolejce.**
 
 Pełne tabele (wszystkie pola per AC): transkrypt agenta `a2714d65fd9b0df12`.

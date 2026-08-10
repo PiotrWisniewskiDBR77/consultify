@@ -2925,3 +2925,228 @@ niezwiązane z tym epikiem, poza zakresem tego pliku konfiguracyjnego).
 **Domena ROI: 4/8 epików zbudowanych (E001, E002, E003, E004). ROI-E005
 Benefits Realization następny w kolejce.**
 
+> DOKUMENTACYJNA USTERKA ZASTANA (nie moja, nie naprawiona tutaj): powyższe
+> dwa akapity od "`tsc --noEmit` clean na całym repo" (linia ~2897) do końca
+> pliku są DOSŁOWNYM DUPLIKATEM końcówki §34 (ROI-E004) — treść "Poza
+> zakresem... D11/D15/D19/D20" opisuje decyzje ROI-E004, nie ROI-E005, mimo
+> że siedzi fizycznie pod nagłówkiem "## 35." Nie numeracja koliduje (§0-§35
+> unikalne, zweryfikowane `grep -oE '^## [0-9]+\.' | sort -n | uniq -d` =
+> pusto) — to duplikacja TREŚCI wewnątrz jednej sekcji, prawdopodobnie
+> wynik nieudanego scalenia z poprzedniej sesji. Zgłoszone jako osobne
+> zadanie porządkowe (zobacz spawn_task tej sesji), nie naprawione tutaj —
+> poza zakresem ROI-E006, ryzykowne przepisywanie cudzej historii bez
+> pełnego kontekstu tamtej sesji.
+
+## 36. ROI-E006 PIR & Learning — implementacja + odbiór (2026-08-10)
+
+**Szósty i OSTATNI nowo-treściowy epik domeny ROI — zamyka pełny cykl życia
+Case'a** (`benefits_realization → post_investment_review_due →
+post_investment_review → closed`). Zbudowano `ROI_E006_DESIGN.md` §1-§9
+dosłownie (design FROZEN, 19-wierszowa tabela Decisions D1-D19, w tym pięć
+rozwiązanych open questions D15-D19). **Decyzja D5 — jedyny prawdziwy
+architektoniczny pierwszy raz w tym programie**: `markRoiCasePostInvestment
+ReviewDue` jest PIERWSZYM realnym wywołującym `completeObligation`
+(`platform/obligations.ts`) w całym programie — funkcja istniała jako gotowy,
+ale nigdy nie wywołany kontrakt od KPI-E003. Sygnatura potwierdzona
+CZYTANIEM przed użyciem (`CompleteObligationParams`:
+`organizationId`/`referenceType`/`referenceId`/`obligationType`/
+`completedViaCommand`), nie zgadnięta.
+
+**Nowe pliki**: `roiPirTypes.ts` (Row/DTO split + `RoiPirReviewSnapshotPayload`
+— Decyzja D8: pointer IDs + zamrożona kopia compare/benefits-realization
+view + wszystkich Variances, NIGDY pełny wielo-KB payload ApprovalSnapshot),
+`roiPirCommands.ts` (6 komend: `scheduleRoiCasePostInvestmentReview` —
+metadane doradcze, brak zmiany statusu, D3/D4; `markRoiCasePostInvestment
+ReviewDue` — AC-01, D5's podwójny efekt obligacji; `startRoiCasePostInvestment
+Review` — AC-02, zamraża snapshot NA STARCIE reviewera przez ponowne użycie
+`getRoiCaseCompareView`/`getRoiCaseBenefitsRealizationView`/`listVariances`
+dosłownie [nie przepisane]; `updateRoiPostInvestmentReviewDraft` — CAS na
+WŁASNEJ wersji wiersza PIR, ten sam kształt co `updateVarianceStatus`;
+`recordRoiPirTeresaDraftDisposition` — AC-06, literalny mechanizm: `'rejected'`
+NIGDY nie dotyka `lessons_learned`; `closeRoiCase` — AC-03/D6, dokładna
+kolejność kroków §4.6: guard statusu case'a → `SELECT...FOR UPDATE` aktywnego
+draftu PIR → **odmowa self-close PRZED jakimkolwiek zapisem** →
+brama open-variance z waiverem → brama kompletności PIR → finalize PIR →
+`completeObligation` → zamknięcie case'a, wszystko na JEDNYM przypiętym
+kliencie/transakcji `executeAtomicCommand`), `roiPirRepository.ts`
+(`listRoiPostInvestmentReviews`/`getRoiPostInvestmentReview`, standardowy
+join `resource_type='roi_case'` z obowiązkowym `::text`),
+`resultsVnextRoiPir.validators.ts` (Zod, wzorzec ROI-E004/E005). **Changed**:
+`roiOrgPerspectiveRepository.ts` (`buildScopedRoiCasesBase` rozszerzone o
+OPCJONALNY trzeci parametr `statuses` z domyślną `ROI_TRACKING_ACTIVE
+_STATUSES` — zachowuje istniejące wywołanie
+`listOrganizationRoiBenefitsRealization` bez zmian, `listOrganizationRoiPir
+Outcomes` przekazuje własny zestaw `('post_investment_review','closed')` —
+Decyzja D14 dosłownie: ROZSZERZENIE, nie duplikat pliku), `roiPerspectives
+.routes.ts` (`GET /org/pir-outcomes`), `roi.routes.ts` (8 nowych tras,
+`handleRoiRouteError` +3 gałęzie: `RoiPirSelfCloseDeniedError`→403 przed
+ogólnymi 409, `RoiPirNotFoundError`→404, `RoiPirValidationError`→409),
+`atomicWrite.ts` (6 nowych kluczy zdarzeń — pięć do `['mywork_projection']`,
+`roi.case_closed` do `['mywork_projection','finance_projection']` jak
+`roi.case_approved`/`roi.case_cancelled`).
+
+**Migracja**: `20260819_rvn_roi_pir_learning.sql` — jedna nowa tabela
+`rvn_roi_post_investment_reviews`, dwustopniowy trigger zamrażający
+(`rvn_roi_pir_protect_frozen`): fakty bezwarunkowe [`started_by`/
+`started_at`/`review_snapshot_payload`/`review_snapshot_hash`/`case_id`/
+`created_by`] zamrożone OD STWORZENIA; treść narracyjna [`outcome`/
+`lessons_learned`/`recommendation`/`open_variance_waiver_reason`/
+`teresa_draft_disposition`] zamrożona DOPIERO gdy `status='finalized'` —
+`teresa_draft_lessons_payload`/`teresa_draft_generated_at` CELOWO NIE są na
+liście finalized-lock (świadoma decyzja designu: przyszły wywołujący
+ROI-E008 może potrzebować zapisać je niezależnie od własnego kroku finalize
+tego epika) — DDL przepisane z §3 co do litery, zweryfikowane realnym
+Postgresem (`\d rvn_roi_post_investment_reviews`, `psql` na efemerycznej
+bazie), nie tylko odczytane z pliku. Zero `ALTER TABLE rvn_roi_cases` —
+każda kolumna, do której ten epik pisze, była zarezerwowana od ROI-E001.
+
+**AC-01 — dowiedzione realną obligacją, nie samym statusem**:
+`roiPirScheduleAndDue.realdb.test.ts` (5 testów: guard scope schedule
+[`'tracking'`/`'benefits_realization'` akceptowane, `'approved'` odrzucone],
+guard mark-due [`'benefits_realization'` tylko], **D5's podwójny efekt**:
+`confirm_benefits_realization` → `status='completed'`, nowa
+`conduct_post_investment_review` → `status='open'`, `assignee_user_id`=
+właściciel case'a, `due_at`=dokładnie `next_review_at` odczytane z powrotem z
+bazy).
+
+**AC-02 — dowiedzione mutacją NA ŻYWO po zamrożeniu, nie samym istnieniem
+hash'a**: `roiPirStart.realdb.test.ts` (3 testy: guard, zamrożony payload
+zgadza się z ręcznie zweryfikowanymi wartościami [pointer ID-ki + compare
+view + benefits-realization view + jedna Variance zapisana PRZED startem],
+**kluczowy test**: nowa Variance zapisana PO zamrożeniu NIE zmienia już
+zapisanego `review_snapshot_hash`/`review_snapshot_payload` — potwierdzone
+DWOMA niezależnymi odczytami tego samego wiersza [przed/po mutacji], plus
+bezpośrednia próba `UPDATE` na zamrożonym polu odrzucona przez trigger DB
+nawet POZA warstwą komend).
+
+**AC-03 — dowiedzione WSZYSTKIMI czterema gałęziami bramy zamknięcia**:
+`roiPirClose.realdb.test.ts` (6 testów: guard statusu case'a, blokada
+open-variance bez waivera [`code: 'OPEN_VARIANCES_UNRESOLVED'`], waiver
+pozwala zamknąć mimo open-variance, blokada niekompletnego PIR [`code:
+'PIR_INCOMPLETE'`], **D6 self-close denial** [ten sam aktor co `started_by`
+odrzucony, case zostaje `'post_investment_review'`], happy path z INNYM
+aktorem: `completeObligation` faktycznie odpala
+[`completed_via_command='closeRoiCase'`], `next_action_type`/
+`next_action_due_at` wyczyszczone na `NULL`, `next_review_at` PRZETRWAŁ
+zamknięcie niezmieniony [Decyzja D4 — rekord historyczny]).
+
+**AC-04 (kluczowy dowód epika) — cold reopen przez GENUINE osobne połączenie,
+nie ponowne zapytanie na tym samym kliencie**: `roiPirColdReopen.realdb.test.ts`
+(1 test: finalizuje PIR, po czym odczytuje go z powrotem przez ŚWIEŻY `pg
+.Client` [nowe połączenie TCP, nie ta sama sesja co zapis] — `review_snapshot
+_hash` i `review_snapshot_payload` bajt-identyczne z tym, co zamrożone na
+starcie reviewera; potwierdzone zarówno surowym SQL jak i realną funkcją
+repozytorium `getRoiPostInvestmentReview`).
+
+**METODOLOGICZNA PUŁAPKA znaleziona i udokumentowana (nie bug produkcyjny —
+pułapka we WŁASNEJ metodologii testowej tego epika, naprawiona zanim
+dotarła do jakiegokolwiek asercji)**: Postgres `jsonb` NIE zachowuje
+oryginalnej kolejności kluczy JSON z tekstu podanego przy INSERT (dokumentacja
+Postgresa: jsonb "does not preserve... the order of object keys"). Naiwny
+test AC-04, który odczytałby payload z powrotem z `jsonb`, przeliczyłby
+`computeStateHash` w JS na nowo i porównał z hashem policzonym PRZED
+insertem, prawie na pewno by się NIE zgodził — nie dlatego, że coś jest
+zepsute, ale dlatego, że JSON.stringify kolejność kluczy zależy od
+konstrukcji obiektu w JS, a jsonb ma WŁASNĄ, znormalizowaną kolejność
+wyjściową, inną. `startRoiCasePostInvestmentReview` liczy `review_snapshot
+_hash` DOKŁADNIE RAZ, w JS, PRZED insertem, i zapisuje jako zwykłą kolumnę
+TEXT właśnie dlatego, żeby to było nieistotne dla warstwy komend (hash NIGDY
+nie jest przeliczany z powrotem z jsonb w kodzie produkcyjnym). Testy tego
+epika trzymają tę samą dyscyplinę: porównują DWA ODCZYTY tego samego już
+zapisanego, chronionego triggerem wiersza [w chwili zamrożenia vs. cold
+reopen] — nigdy świeże przeliczenie hash'a z payloadu odczytanego z
+Postgresa vs. wartość oryginalna sprzed insertu. Udokumentowane w nagłówku
+`roiPirColdReopen.realdb.test.ts`.
+
+**AC-05 — dowiedzione chain-scopingiem I czytaniem wygenerowanego SQL**:
+`roiOrgPirOutcomes.realdb.test.ts` (2 testy: manager widzi zamknięty case
+bezpośredniego podwładnego, case w trakcie [`status='post_investment_review'`,
+`pirOutcome: null`] też widoczny [design §6: zakres obejmuje OBA statusy],
+case niepowiązanego właściciela NIEwidoczny, portfolioTotals liczy WYŁĄCZNIE
+zamknięte case'y w łańcuchu; drugi test woła `buildScopedRoiCasesBase`
+bezpośrednio i asercjuje brak wszystkich sześciu nazw tabel legacy w
+wygenerowanym tekście SQL — czytanie źródła, nie zgadywanie).
+
+**AC-06 — dowiedzione dokładnym scenariuszem z designu**:
+`roiPirTeresaDisposition.realdb.test.ts` (5 testów: `'rejected'` zostawia
+ISTNIEJĄCĄ wartość `lessons_learned` KOMPLETNIE nietkniętą [nie tylko `null`
+pozostaje `null` — realna wcześniej zapisana treść przetrwała], `'accepted'`
+i `'edited_then_accepted'` OBA kopiują `finalLessonsText` do autorytatywnej
+kolumny, `disposition≠'rejected'` bez `finalLessonsText` odrzucone
+[`FINAL_LESSONS_TEXT_REQUIRED`], guard `status==='draft'`, surowy `UPDATE`
+na `teresa_draft_disposition` po finalize odrzucony przez trigger).
+
+**`::text` cast**: `roiPirVisibilityJoin.realdb.test.ts` (2 testy: właściciel
+case'a widzi PIR przez obie funkcje odczytu; outsider bez grantu ACL na
+case'ie w trybie `PRIVATE` [najsurowsza gałąź] widzi ZERO wierszy PIR mimo
+że wiersz REALNIE istnieje w bazie — sanity-check potwierdza że join jest
+faktycznie load-bearing, nie no-opem, który przeszedłby nawet bez castu).
+
+**Testy**: 7 nowych plików realDB w `tests/resultsVnext/roi/` (24 testy) + 1
+plik pomocniczy fixture NIE-testowy (`roiPirRealdbFixtures.ts` — świadome
+odejście od konwencji "każdy plik realDB duplikuje własny setup": do tego
+epika łańcuch "zbuduj case do statusu X" ma już DZIESIĘĆ komend głębokości
+przez pięć poprzednich epików, więc powielenie go siedem razy byłoby ~1000
+linii czystego kopiuj-wklej; udokumentowane w nagłówku pliku) + 1 w
+`server/src/routes/resultsVnext/__tests__/` (26 testów mockowanych) =
+**50 nowych testów, wszystkie PASS** na efemerycznym Postgresie 17
+(`initdb --locale=C`, TCP `127.0.0.1:55440`, PEŁNY zestaw migracji przez
+`migrate.postgres.ts` [bez `--safe`] — ten sam "pełny, nie minimalny" zestaw
+co ROI-E005; `pgvector` wymagał Postgresa 15/17/18 — Postgres 16 z Homebrew
+NIE ma zbudowanego rozszerzenia `vector`, przełączono na 17 po jednym
+nieudanym `initdb`, udokumentowane jako środowiskowe odkrycie tej sesji, nie
+błąd produkcyjny).
+
+**Deviation (test-only, znaleziona i naprawiona podczas pisania testów, nie
+błąd produkcyjny)**: `recordVariance` (prawdziwa komenda) wymaga ŻYWEGO
+Forecast LUB Actual snapshotu do policzenia `comparisonType`, którego żaden
+z łańcuchów fixture'ów tego epika nie tworzy (epik zaczyna się jeden krok ZA
+`'tracking'`, nigdy nie publikuje Forecast/Actual). `roiPirStart.realdb
+.test.ts`/`roiPirClose.realdb.test.ts` używają zamiast tego surowego
+`INSERT INTO rvn_roi_variances` (`insertRawVariance` w pliku fixture) — testy
+tego epika potrzebują tylko ISTNIENIA wiersza Variance, nie pełnej semantyki
+`recordVariance`; udokumentowane w komentarzu funkcji fixture.
+
+**Regresja — dowiedzione `git stash -u` PRZED/PO na tej samej efemerycznej
+bazie, ten sam pełny zestaw `tests/resultsVnext` + `server/src/routes/
+resultsVnext/__tests__`**: PRZED (bez kodu ROI-E006): 21 plików / 33 testy
+failed, 371 passed, 13 skipped (417 razem). PO (z kodem ROI-E006): 21 plików
+/ 33 testy failed [DOKŁADNIE te same], 421 passed [+50, wszystkie nowe], 13
+skipped (467 razem). Wszystkie 33 niepowodzenia to ten sam przedistniejący
+`initiatives_status_check` już udokumentowany w §33/§34/§35
+(`initiatives.status DEFAULT 'step3'` łamie własne ograniczenie CHECK) —
+żaden z 21 nietkniętych plików nie ma związku z ROI-E006. **Zero regresji
+przypisywalnej temu epikowi** — dowiedzione identycznością liczby
+niepowodzeń PRZED/PO, nie zadeklarowane.
+
+**`tsc --noEmit` clean**: root `tsconfig.json` (frontend, wyklucza `server/`)
+— 0 błędów, czysto. `server/tsconfig.json` — 28 błędów, WSZYSTKIE w
+`roiCalculationEngine.ts` (typowanie `decimal.js`), potwierdzone
+IDENTYCZNE PRZED/PO przez `git stash -u` (`diff` dwóch przebiegów pusty) —
+przedistniejące, niezwiązane z tym epikiem, plik nietknięty przez ROI-E006.
+
+**Poza zakresem, świadomie NIEZBUDOWANE (backlog notes per §10 designu)**:
+- **D16 (brak cross-case Learning entity)**: "Learning" rozwiązuje się do
+  własnego pola narracyjnego PIR plus governed portfolio-metrics rollup —
+  żaden istniejący wzorzec "biblioteki lekcji" nie istnieje nigdzie w
+  `resultsVnext`; spekulacyjna cross-case knowledge base to inna, niezbudowana
+  funkcja, jeśli produktowa intencja rzeczywiście tego wymaga — nazwane
+  wprost jako luka, nie milcząco założone.
+- **D19 (brak roli PMO/governance napędzającej AC-01)**: właściciel case'a
+  sam obsługuje `schedule`/`mark-due` — warstwa governance PMO (lustrząca
+  `initiative_lifecycle_gate_decisions` odkrytą przez ROI-E005) to
+  materialnie większa, nienazwana integracja, żadna AC jej nie wymaga.
+- **D13 (generacja Teresy odroczona do ROI-E008)**: ten epik dostarcza
+  WYŁĄCZNIE kształt danych odbiorczych (`teresa_draft_lessons_payload`,
+  kolumny dyspozycji) i bramę dyspozycji (AC-06) — ROI-E008 (Teresa/Legacy/
+  Ops) jest właścicielem realnego wywołania generacji, ten sam wzorzec co
+  `freezeRoiBaseline` między ROI-E001 a ROI-E003.
+- **Brak ścieżki reopen z `post_investment_review`/`closed`**: żadna AC tego
+  epika tego nie nazywa; case zamknięty pozostaje zamknięty.
+
+**Domena ROI: 6/8 epików zbudowanych (E001, E002, E003, E004, E005, E006).
+Cała mechanika backendu ROI-E001…E006 domknięta. ROI-E007 Finance/KPI Seams
+następny w kolejce — epik integracyjny [pinned koperta, zero-nadpisania,
+reconciliation record, typed KPI evidence, freshness event bez auto-
+-propagacji wartości], nie nowa treść domenowa jak E001-E006.**
+
