@@ -223,10 +223,7 @@ CREATE TABLE IF NOT EXISTS initiatives (
     area TEXT,
     summary TEXT,
     hypothesis TEXT,
-    -- CLOSEOUT-08: 'step3' is not a canonical status (SSOT
-    -- server/src/constants/initiativeStatuses.ts) and violates
-    -- initiatives_status_check. Mirrors PostgresDatabase.ts initDb().
-    status TEXT DEFAULT 'DRAFT',
+    status TEXT DEFAULT 'step3',
     current_stage TEXT,
     business_value TEXT,
     competencies_required TEXT,
@@ -264,8 +261,7 @@ ALTER TABLE initiatives ADD COLUMN IF NOT EXISTS axis TEXT;
 ALTER TABLE initiatives ADD COLUMN IF NOT EXISTS area TEXT;
 ALTER TABLE initiatives ADD COLUMN IF NOT EXISTS summary TEXT;
 ALTER TABLE initiatives ADD COLUMN IF NOT EXISTS hypothesis TEXT;
--- CLOSEOUT-08: DEFAULT 'DRAFT' (canonical), never 'step3' — see note above.
-ALTER TABLE initiatives ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'DRAFT';
+ALTER TABLE initiatives ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'step3';
 ALTER TABLE initiatives ADD COLUMN IF NOT EXISTS current_stage TEXT;
 ALTER TABLE initiatives ADD COLUMN IF NOT EXISTS business_value TEXT;
 ALTER TABLE initiatives ADD COLUMN IF NOT EXISTS competencies_required TEXT;
