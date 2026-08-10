@@ -631,6 +631,22 @@ export const CasesListScreen: React.FC = () => {
                     isNarrow ? 'caseWorkspace.cases.list.mobile' : 'caseWorkspace.cases.list'
                   }
                   density="compact"
+                  /*
+                   * ★ ZMIERZONE przy 320 px: tabela dostawała zahardkodowane
+                   * 980 px w kontenerze 244 px → 736 px poziomego przewijania
+                   * UKRYTEGO wewnątrz tabeli. Metryka strony była czysta
+                   * (`documentElement.scrollWidth === innerWidth`), ale nazwa
+                   * zlecenia i status urywały się w połowie („Elkomtech — wybór
+                   * dostawcy system…"). Litera warunku właściciela spełniona,
+                   * duch złamany.
+                   *
+                   * `'columns'` (nie `'auto'`) — próg liczy WIDOCZNE kolumny
+                   * danych: telefon deklaruje jedną → min-width znika; widok
+                   * szeroki ma ich sześć → 980 px zostaje bez zmian. Kanon
+                   * `StandardTable` nietknięty: moduł deklaruje treść i próg,
+                   * komponent dalej narzuca wygląd.
+                   */
+                  minTableWidth="columns"
                   empty={{
                     icon: FolderOpen,
                     title: 'Brak zleceń w tym widoku',

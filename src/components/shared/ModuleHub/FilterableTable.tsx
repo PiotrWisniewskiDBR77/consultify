@@ -150,7 +150,48 @@ interface FilterableTableProps {
    * Omit for zero visual change (default undefined → no-op).
    */
   rowClassName?: string | ((row: TableRow) => string);
+  /**
+   * ── Minimalna szerokość elementu `table` (opt-in) ─────────────────────────
+   *
+   * (W komentarzach tego pliku NIE piszemy znacznika `table` w ostrych
+   * nawiasach — `scripts/check-list-canon.sh` szuka go tekstowo i uznałby
+   * wzmiankę w prozie za drugą, nieoznaczoną tabelę, przez co znacznik
+   * §27-exempt przestałby obejmować `thead`/`tbody` niżej.)
+   *
+   * Do tej pory element `table` miał ZAHARDKODOWANE `min-width: 980px` bez żadnego
+   * wyjścia. Na telefonie (kontener ~244 px przy oknie 320 px) oznaczało to
+   * 736 px poziomego przewijania UKRYTEGO wewnątrz `overflow-x-auto` — metryka
+   * strony zostawała czysta (`documentElement.scrollWidth === innerWidth`),
+   * a treść wiersza i tak była ucięta. Moduł, który świadomie deklaruje na
+   * wąskim ekranie JEDNĄ kolumnę, nie miał jak tego wyłączyć.
+   *
+   * Prop jest ADDYTYWNY. Domyślna wartość odtwarza dotychczasowe 980 px
+   * co do piksela, więc ~100 istniejących list (My Work, Audits, Interview,
+   * Initiatives, Execution, Results, Finance, Materiały, Meeting, Admin…)
+   * zachowuje się identycznie jak przed zmianą.
+   *
+   *  · `number`    → dokładnie ta wartość w px (domyślnie `DEFAULT_MIN_TABLE_WIDTH`),
+   *  · `'auto'`    → BEZ `min-width`; tabela zwęża się do kontenera,
+   *  · `'columns'` → wariant wyliczany: gdy widocznych kolumn danych jest
+   *                  ≤ `AUTO_MIN_WIDTH_COLUMN_THRESHOLD`, `min-width` znika;
+   *                  powyżej — wraca `DEFAULT_MIN_TABLE_WIDTH`. Kolumna
+   *                  zaznaczenia (`type: 'select'`) i strukturalna kolumna
+   *                  akcji NIE liczą się jako kolumny danych.
+   */
+  minTableWidth?: number | 'auto' | 'columns';
 }
+
+/**
+ * Dotychczasowa, zahardkodowana wartość — teraz jawna domyślka propa
+ * `minTableWidth`. Zmiana tej stałej zmienia KAŻDĄ listę w produkcie.
+ */
+export const DEFAULT_MIN_TABLE_WIDTH = 980;
+
+/**
+ * Próg dla `minTableWidth="columns"`: przy jednej lub dwóch kolumnach danych
+ * wymuszanie 980 px nie daje nic poza ukrytym przewijaniem.
+ */
+export const AUTO_MIN_WIDTH_COLUMN_THRESHOLD = 2;
 
 // True when a regular cell value should render as an em-dash placeholder
 // (null / undefined / empty-or-whitespace string).
@@ -344,6 +385,7 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
   defaultSort = null,
   rowDescription,
   rowClassName,
+  minTableWidth = DEFAULT_MIN_TABLE_WIDTH,
 }) => {
   const { t } = useTranslation();
   /**
@@ -488,6 +530,23 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
       .filter((c) => byId.get(c.id)?.visible !== false)
       .sort((a, b) => (byId.get(a.id)?.order ?? 0) - (byId.get(b.id)?.order ?? 0));
   }, [columns, columnConfigs]);
+
+  /**
+   * Rozwiązanie `minTableWidth` → konkretna wartość `style.minWidth` albo
+   * `undefined` (brak wymuszenia). `undefined` jest tu ZAMIERZONE: React
+   * pomija właściwość, więc tabela (`w-full table-fixed`) zwęża się do
+   * kontenera i poziome przewijanie wewnątrz `overflow-x-auto` znika.
+   */
+  const resolvedMinTableWidth = useMemo<number | undefined>(() => {
+    if (minTableWidth === 'auto') return undefined;
+    if (minTableWidth === 'columns') {
+      const dataColumnCount = visibleColumns.filter((c) => c.type !== 'select').length;
+      return dataColumnCount <= AUTO_MIN_WIDTH_COLUMN_THRESHOLD
+        ? undefined
+        : DEFAULT_MIN_TABLE_WIDTH;
+    }
+    return minTableWidth;
+  }, [minTableWidth, visibleColumns]);
 
   // First data (non-select) column hosts the optional row-description line.
   const firstDataColumnId = useMemo(
@@ -680,7 +739,8 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
         <div className="w-full overflow-x-auto">
           <table
             /* §27-exempt: to JEST kanoniczny komponent FilterableTable (§2 SSOT) — surowy <table> tutaj to jego implementacja, nie luka */ className="w-full table-fixed"
-            style={{ minWidth: 980 }}
+            data-min-table-width={resolvedMinTableWidth ?? 'auto'}
+            style={{ minWidth: resolvedMinTableWidth }}
           >
             <thead className="sticky top-0 z-10 bg-slate-50/80 dark:bg-navy-900/50 backdrop-blur-hig">
               <tr>

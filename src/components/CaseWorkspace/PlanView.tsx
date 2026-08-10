@@ -287,6 +287,15 @@ export const PlanView: React.FC<PlanViewProps> = ({
             rowDescription={() => null}
             persistKey={narrow ? 'caseWorkspace.plan.steps.mobile' : 'caseWorkspace.plan.steps'}
             density="compact"
+            /*
+             * Ten sam defekt co na liście zleceń: tabela dostawała 980 px
+             * min-width niezależnie od tego, ile kolumn moduł zadeklarował,
+             * więc jednokolumnowy widok telefonu i tak chował treść za
+             * przewijaniem WEWNĄTRZ tabeli. `'columns'` znosi min-width przy
+             * ≤2 kolumnach danych (telefon: 1) i zostawia 980 px dla widoku
+             * szerokiego (4 kolumny) — bez zmiany dla innych modułów.
+             */
+            minTableWidth="columns"
             empty={{ title: 'Plan nie ma kroków' }}
           />
         </div>

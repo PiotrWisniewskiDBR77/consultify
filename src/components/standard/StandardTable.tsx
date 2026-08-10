@@ -221,6 +221,16 @@ export interface StandardTableProps {
 
   density?: 'comfortable' | 'compact';
   canvasClassName?: string;
+  /**
+   * Minimalna szerokość tabeli — przekazywane 1:1 do `FilterableTable`.
+   *
+   * ADDYTYWNE: pominięcie propa daje dokładnie dotychczasowe 980 px, więc
+   * żaden istniejący ekran listowy nie zmienia geometrii. Ekran, który na
+   * wąskim widoku deklaruje jedną/dwie kolumny, może podać `'auto'` (albo
+   * `'columns'` — próg liczony z liczby widocznych kolumn danych), żeby
+   * zamiast ukrytego przewijania poziomego pokazać komplet treści.
+   */
+  minTableWidth?: number | 'auto' | 'columns';
 }
 
 const readStoredFlag = (key: string | null): boolean => {
@@ -255,6 +265,7 @@ export const StandardTable: React.FC<StandardTableProps> = ({
   selection,
   density = 'comfortable',
   canvasClassName = 'p-4',
+  minTableWidth,
 }) => {
   const { t, i18n } = useTranslation();
   const isPolish = !!i18n.language?.startsWith('pl');
@@ -563,6 +574,9 @@ export const StandardTable: React.FC<StandardTableProps> = ({
       persistKey={effectivePersistKey}
       selection={selectionDriver}
       rowClassName={rowClassName}
+      /* `undefined` → domyślka `FilterableTable` (980 px). Zero zmiany dla
+         ekranów, które tego propa nie podają. */
+      minTableWidth={minTableWidth}
     />
   );
 };
