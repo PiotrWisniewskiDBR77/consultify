@@ -256,6 +256,44 @@ D3 ACL grants). Poza zakresem, świadomie NIEZBUDOWANE: economic model
 gotowy jako jego kontrakt), Tracking/Benefits Realization/PIR/Finance
 seam/Teresa (ROI-E005…E008), `/cases/:caseId/history`.
 
-**Domena ROI: 1/8 epików zbudowanych (E001). ROI-E002 następny w kolejce.**
+**ROI-E002 Economic Model — Status: IMPLEMENTED 2026-08-10** (backend only;
+UI Registry to RN-G2, poza zakresem). `docs/product/results-vnext/
+ROI_E002_DESIGN.md` (FROZEN) → `server/migrations/20260816_rvn_roi_
+economic_model.sql` (7 nowych tabel, freeze-protection na wszystkich pięciu
+mutowalnych: policy/assumptions/cost_lines/benefit_lines/scenarios — jeden
+trigger, dla scenarios, dodany ponad literalny DDL designu, żeby dotrzymać
+jego własnej prozy §3) → `server/src/services/resultsVnext/roi/engine/
+roiCalculationEngine.ts` (czysty silnik, `decimal.js` ściśle w tym pliku) →
+7 plików komend + `roiEconomicModelReadiness.ts` + `roiEconomicModelFreeze.ts`
++ `roiEconomicModelRepository.ts` → `server/src/routes/resultsVnext/
+roi.routes.ts` (11 grup endpointów dopisanych, ten sam plik co E001). 33
+nowych testów, wszystkie PASS na efemerycznym Postgresie 17 (12 known-
+answer + 4 realDB calc-run/readiness + 2 realDB visibility-join + 1 realDB
+freeze + 14 route mock). Dwa realne bugi Postgresa znalezione i naprawione
+(DATE→JS-Date deserializacja node-postgres, brakujący trigger scenarios w
+designie) — szczegóły, dowód PRZED/PO przez `git worktree` (268→301 PASS,
+te same 5 plików nie-związanych z tym epikiem failują identycznie w obu):
+`EXECUTION_LEDGER.md` §32. Sześć AC z prozy §0 designu wszystkie
+zaadresowane: AC-01 pełny model Assumption (`rvn_roi_assumptions`, 12
+pól), AC-02 typed `BenefitEvidenceLink` (`rvn_roi_benefit_evidence_links`,
+FK do `rvn_kpi_definitions`/`rvn_kpi_definition_versions`, nigdy luźny
+`kpi_id`), AC-03 unresolved `double_counting_group` blokuje Ready-for-Review
+(`scanDoubleCounting` w silniku + `isRoiCaseReadyForReviewEligibleWith
+EconomicModel`), AC-04 Scenario = input override (Decyzja D10: kanoniczne
+downside/upside czytają `downside_value`/`upside_value` assumption wprost,
+custom przez `rvn_roi_scenario_overrides`, nigdy ręcznie wpisany headline),
+AC-05 known-answer #1 (`toBeCloseTo(70985.8136, 3)`, hand-computed
+niezależną pętlą) + mixed-currency hard-fail, AC-06 `CalculationRun`
+immutable z pinned `engine_version`/`policy_version_stamp`/`input_hash`.
+Poza zakresem, świadomie NIEZBUDOWANE: `ROIPolicyVersion`/`ROIWorkingRevision`
+(Decyzja D9), formula-linking dla scenario podmiany poza prostym value-
+mirror (§9 simplification), `flagBenefitEvidenceLinkDisputed`'s route HTTP
+(command zbudowany, nie podpięty — §7's tabela nie wymienia PATCH dla tej
+ścieżki), Submit/Approve/Reject (ROI-E003 — `freezeRoiEconomicModel` już
+gotowy jako jego kontrakt), Tracking/Benefits Realization/PIR/Finance
+seam/Teresa (ROI-E005…E008).
+
+**Domena ROI: 2/8 epików zbudowanych (E001, E002). ROI-E003 Decision &
+Approved następny w kolejce.**
 
 Pełne tabele (wszystkie pola per AC): transkrypt agenta `a2714d65fd9b0df12`.

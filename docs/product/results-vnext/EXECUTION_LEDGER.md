@@ -2213,3 +2213,168 @@ endpoint.
 **Domena ROI: 1/8 epików zbudowanych (E001).** ROI-E002 jest następny w
 kolejce per `EPIC_LEDGER_LIVE.md`'s epic split.
 
+## 32. ROI-E002 Economic Model — implementacja + odbiór (2026-08-10)
+
+**Drugi epik domeny ROI, pierwszy DETERMINISTYCZNY SILNIK KALKULACYJNY w
+całym programie** (każdy wcześniejszy epik to CRUD+lifecycle). Zbudowano
+`ROI_E002_DESIGN.md` §3–§9 dosłownie (design FROZEN, self-contained, full
+DDL — bez zgadywania): migracja `20260816_rvn_roi_economic_model.sql` (7
+nowych tabel: `rvn_roi_calculation_policy`/`assumptions`/`cost_lines`/
+`benefit_lines`/`benefit_evidence_links`/`scenarios`+`scenario_overrides`/
+`calculation_runs`, wszystkie triggery freeze-protection, `chk_rvn_roi_
+benefit_lines_financial_amount`), czysty silnik `roiCalculationEngine.ts`
+(zero importów `pg`/`express`/`platform/*`, Decyzja D12: `decimal.js`
+ściśle w tym jednym pliku — cała sumacja period-series w `Decimal`,
+NPV/IRR/payback delegowane do zaimportowanego `investmentAppraisalService.ts`
+per Decyzja D1, plain `number` na granicy), 7 plików komend (`roiCalculation
+PolicyCommands`/`roiAssumptionCommands`/`roiCostLineCommands`/`roiBenefit
+LineCommands`/`roiBenefitEvidenceLinkCommands`/`roiScenarioCommands`/
+`roiCalculationRunCommands`, wzorzec add/update/remove(soft-delete) z
+`kpiCorrectiveActionCommands.ts`), `roiEconomicModelReadiness.ts`
+(`isRoiCaseReadyForReviewEligibleWithEconomicModel` OPAKOWUJE, nigdy nie
+zastępuje E001's `isRoiCaseReadyForReviewEligible` — dokładnie jak nakazała
+Decyzja D2 z E001), `roiEconomicModelFreeze.ts` (`freezeRoiEconomicModel`,
+cross-epic kontrakt dla przyszłego `approveRoiCase` z ROI-E003),
+`roiEconomicModelRepository.ts` (10 funkcji odczytu, `::text` cast na
+KAŻDYM joinie, hydratacja KPI-evidence-link per Decyzja D14), 11 grup
+endpointów `/api/vnext/results/roi/cases/:caseId/*` (`roi.routes.ts`,
+rozszerzony, nie nowy plik), walidatory Zod, 18 nowych event type'ów w
+`EVENT_TYPE_CONSUMER_GROUPS` (`roi_case.decided` NIETKNIĘTY per Decyzja
+D7). Dwie realne zmiany w już-wysłanym `roiCaseCommands.ts` (§4.1: insert
+shellu calculation-policy w `createRoiCase`; §5: `guard` w
+`RoiCaseLifecycleTransitionSpec` poszerzony z synchronicznego na
+`async (client, caseRow, baselineRow) => Promise<check>`) — nazwane
+uczciwie jako "Changed file", nie ukryte jako sama rozbudowa punktu
+rozszerzenia. 9 commitów osobnych (schema → silnik → testy silnika →
+command layer → wpięcie do roiCaseCommands+event catalog → repository+HTTP
+→ testy route'ów mockowane → testy realDB → naprawa 4 testów E001).
+
+**Decyzja D13 (dyskontowanie) zweryfikowana ręcznie, nie tylko przez
+własne testy silnika**: `periodRate = (1+annualRate/100)^(1/periodsPerYear)
+- 1` (compounding efektywnej stopy, NIE naiwne dzielenie przez 12).
+KA-1 (wymagany przez AC-05): $100 000 koszt jednorazowy w okresie 0, $8000/
+mies. przez 24 okresy, 12% roczna stopa dyskonta → `periodRate ≈
+0,9488792934583046%` miesięcznie → **NPV = 70985,81355681579** (policzone
+niezależną pętlą w komentarzu testu, NIE przez wywołanie silnika ani
+`investmentAppraisalService`), payback = 12,5 okresu — silnik zwraca
+DOKŁADNIE tę samą wartość (potwierdzone `toBeCloseTo` z wysoką precyzją).
+Wszystkie 12 testów known-answer (§9) przechodzi, w tym KA-8 (mixed-
+currency hard-fail: `status:'failed'`, zero policzonych metryk) i KA-12
+(spy na zaimportowaną funkcję `irr()` potwierdza zero wywołań gdy
+`requiredMetrics` jej nie wymaga).
+
+**Jedna udokumentowana własna interpretacja niejednoznaczności designu
+(nie cichy strzał)**: DDL `rvn_roi_cost_lines`/`rvn_roi_benefit_lines` NIE
+MA żadnej kolumny łączącej linię z `rvn_roi_assumptions` — a design §4.3
+mówi tylko, że downside/upside "podmienia wartość linii, jeśli linia
+referencjonuje assumption" bez mechanizmu tej referencji. Design's własny
+§9 simplification note nazywa dokładnie JEDEN wspierany przypadek: "linia,
+której wartość WPROST odzwierciedla wartość assumption". Silnik implementuje
+to dosłownie: linia, której `amount` jest DOKŁADNIE równe `baseValue` jakiejś
+assumption, zostaje podmieniona na `downsideValue`/`upsideValue` tej
+assumption dla scenariuszy kanonicznych — udokumentowane wprost w nagłówku
+`roiCalculationEngine.ts` i w teście KA-3 (monotoniczność downside < base <
+upside).
+
+**Dwa realne bugi Postgresa, znalezione WYŁĄCZNIE przez uruchomienie na
+prawdziwym Postgresie (nie przez czytanie kodu ani `tsc`)**:
+1. `node-postgres` parsuje kolumny `DATE` (`analysis_start`/`analysis_end`,
+   `one_time_period_date`, `recurrence_start_date`/`recurrence_end_date`)
+   na obiekty JS `Date`, NIE na stringi `YYYY-MM-DD`, które deklaruje każdy
+   typ `*Row` w tym pakiecie — ten repo nie ustawia żadnego custom
+   `pg.types.setTypeParser` dla oid 1082. Żaden wcześniejszy komenda/test
+   ROI-E001 nigdy nie robił arytmetyki dat na tych kolumnach, więc problem
+   nigdy się nie ujawnił przed silnikiem ROI-E002. Naprawa: `toDateOnlyString()`
+   w `roiCalculationRunCommands.ts`, konwersja przez LOKALNE gettery
+   (`getFullYear`/`getMonth`/`getDate`), CELOWO nie `toISOString()` (które
+   konwertuje na UTC i może przesunąć datę kalendarzową o jeden dzień
+   zależnie od strefy czasowej hosta — to byłby dokładnie ten sam bug w innej
+   postaci).
+2. Design doc's własna proza §3 mówi "every mutable table below... gets a
+   BEFORE UPDATE trigger", ale jego dosłowny DDL nigdy nie zawierał
+   `rvn_roi_scenarios_protect_frozen` (tylko 4 z 5 mutowalnych tabel
+   dostały trigger). `freezeRoiEconomicModel` mroziła `frozen_at` scenariusza
+   identycznie jak pozostałe cztery tabele, ale bez triggera surowy UPDATE
+   po zamrożeniu przechodziłby bez ostrzeżenia — złapane przez
+   `roiEconomicModelFreeze.realdb.test.ts`'s pierwsze uruchomienie (scenario
+   UPDATE po freeze "resolved" zamiast rzucić błąd). Naprawiono dodaniem
+   triggera identycznego kształtu do pozostałych czterech, udokumentowane w
+   samym pliku migracji jako DEVIATION dopasowująca własną intencję designu,
+   nie nowa decyzja.
+
+**Trzecia, mniejsza decyzja niestwierdzona wprost przez design**: `rvn_roi_
+cases.analysis_start`/`analysis_end` są nullable (Decyzja honest-missing z
+E001) — `createRoiCalculationRun` na case bez ustawionego okna analizy nie
+ma sensownego fallbacku do sfabrykowania (dowolny epoch/dzisiejsza data
+dałaby błędną liczbę bez ostrzeżenia). Naprawiono/zdecydowano: fail-closed
+z typed `ANALYSIS_WINDOW_MISSING` errorem zamiast cichego domyślnego okna —
+złapane przez `roiCalculationRun.realdb.test.ts`'s pierwsze uruchomienie
+(totalCosts=0 zamiast 10000, bo linia kosztowa w 2026 lądowała poza
+jednoelementowym oknem 1970-01-01..1970-01-01 domyślnym).
+
+**Testy**: 5 nowych plików w `tests/resultsVnext/roi/` + 1 w
+`server/src/routes/resultsVnext/__tests__/` — `roiCalculationEngine.
+knownAnswer.test.ts` (12 testów, pure, no DB), `roiCalculationRun.
+realdb.test.ts` (4 testy realDB: assemblacja silnika z realnych wierszy +
+trzy gałęzie odmowy `isRoiCaseReadyForReviewEligibleWithEconomicModel` +
+happy path), `roiEconomicModelVisibilityJoin.realdb.test.ts` (2 testy
+realDB: `::text` join na wszystkich 7 nowych tabelach + hydratacja KPI
+Decyzja D14), `roiEconomicModelFreeze.realdb.test.ts` (1 test realDB:
+wszystkie 5 triggerów freeze + `double_counting_resolution_note` edytowalne
+post-freeze przez raw UPDATE I przez `updateBenefitLine`),
+`roiEconomicModel.routes.test.ts` (14 testów HTTP-boundary mockowane).
+**Razem 33 nowe testy, wszystkie PASS** na efemerycznym Postgresie 17
+(`initdb --locale=C`, TCP `127.0.0.1:5544` — ta sama uwaga co §30/§31).
+Migracje zaaplikowane: te same jak §31 + `20260816_rvn_roi_economic_model`
+(nowa).
+
+**PRZED/PO przez `git worktree` na starym SHA `30e5aa140d`** (commit
+"docs(results-vnext): freeze ROI-E002 Economic Model design", ostatni PRZED
+tym epikiem), na osobnej efemerycznej bazie z tym samym minimalnym zestawem
+migracji: **PRZED = 268 PASS + 2 skip, 5 plików failuje** (`initiativeKpi
+ImpactBaselineFreeze.realdb.test.ts`/`kpiIdentityAcrossSurfaces.realdb.
+test.ts`/`kpiInitiativeImpactPerspectivesRoutesRealdb.test.ts` — brakująca
+tabela `link_graph_edges`, poza łańcuchem migracji tego minimalnego
+zestawu; `legacyIsolation.realdb.test.ts` — ta sama luka; `teresa-kpi-
+e2e-no-silent-approval.test.ts` — `P08_PROPOSAL_NOT_FOUND`, znana
+przedistniejąca luka środowiska z §12 mojej pamięci). **PO (z całym kodem
+ROI-E002 + 4 naprawionymi testami ROI-E001) = 301 PASS + 2 skip, TE SAME 5
+plików failuje z TYMI SAMYMI przyczynami.** Zero regresji; +33 zielonych
+testów to dokładnie nowy pakiet ROI-E002. `npx tsc --noEmit`
+(`NODE_OPTIONS=--max-old-space-size=8192`) na całym repo — **0 błędów**,
+sprawdzone po każdym commicie.
+
+**4 testy ROI-E001 zaktualizowane jako uczciwa, przewidziana konsekwencja
+rozszerzenia `roiCaseCommands.ts`, NIE regresja**: `roiCaseCreate.test.ts`
+(mock) potrzebował odpowiedzi fake-klienta na nowy INSERT/SELECT calculation-
+policy; `roiBaselineFreeze`/`roiCaseLifecycle`/`roiVisibilityJoin.realdb.
+test.ts` potrzebowały DELETE z `rvn_roi_calculation_policy` przed DELETE z
+`rvn_roi_cases` w `afterAll` (nowy FK); `roiCaseLifecycle.realdb.test.ts`'s
+"ready once baseline is complete" test potrzebował jednego udanego
+calculation run przed `markReadyForReview`, bo guard został rozszerzony
+przez E002 §5 dokładnie zgodnie z własnym kontraktem "wrap, don't replace"
+Decyzji D2 z E001.
+
+**Poza zakresem tego epika, potwierdzone jako NIEZBUDOWANE, nie zapomniane
+(backlog notes)**:
+- **Decyzja D9 (odroczona)**: w pełni zarządzany, wersjonowany
+  `ROIPolicyVersion` (org-wide, maker-checker) i `ROIWorkingRevision`
+  (autosave/undo) — `rvn_roi_calculation_policy` to prosty shell per-case,
+  nie rejestr organizacyjny. Jeśli przyszły epik potrzebuje "każdy nowy
+  Case dziedziczy domyślną stopę dyskonta organizacji" — to prawdziwa,
+  uznana luka, nie cicho pominięta.
+- **§9 formula-linking simplification**: podmiana scenariuszowa
+  downside/upside działa WYŁĄCZNIE przez dokładne dopasowanie wartości
+  liczbowej (linia.amount === assumption.baseValue) — nie ma języka formuł
+  łączącego "ta linia kosztowa wynika z tej assumption" (np. linia =
+  assumption × stawka jednostkowa). Bogatszy system formuł jest poza
+  zakresem tego epika i nie blokowany przez żaden z 6 AC, ale to prawdziwa
+  luka produktowa warta nazwania.
+- `flagBenefitEvidenceLinkDisputed` (zbudowana w `roiBenefitEvidenceLink
+  Commands.ts` per §4) nie ma jeszcze podpiętego route'u HTTP — §7's
+  tabela wymienia dla tej ścieżki tylko GET/POST/DELETE, nie PATCH.
+
+**Domena ROI: 2/8 epików zbudowanych (E001, E002). ROI-E003 Decision &
+Approved jest następny w kolejce** — `freezeRoiBaseline` (E001) i
+`freezeRoiEconomicModel` (E002) już gotowe jako jego kontrakty.
+
