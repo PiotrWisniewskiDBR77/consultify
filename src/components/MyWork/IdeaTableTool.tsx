@@ -3286,7 +3286,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                   onClick={() => setShowCopilot(true)}
                   className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-c-text-secondary hover:bg-c-surface-raised min-h-[44px]"
                 >
-                  <Brain size={14} /> AI Copilot
+                  <Brain size={14} /> {t('ideas.table.aiCopilot.label', 'AI Copilot')}
                 </button>
                 <button
                   onClick={() => setShowVoiceInput(true)}
@@ -3329,7 +3329,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                     onClick={() => setShowFrameworkGen(true)}
                     className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-c-text-secondary hover:bg-c-surface-raised min-h-[44px]"
                   >
-                    <LayoutGrid size={14} /> Framework
+                    <LayoutGrid size={14} /> {t('ideas.table.framework', 'Framework')}
                   </button>
                 )}
                 {!locked && (

@@ -318,7 +318,11 @@ export const VoiceImageInput: React.FC<VoiceImageInputProps> = ({
             >
               {imagePreview ? (
                 <div className="relative">
-                  <img src={imagePreview} alt="Preview" className="max-h-40 mx-auto rounded-lg" />
+                  <img
+                    src={imagePreview}
+                    alt={t('myWorkTable.voiceImageInput.previewAlt', 'Preview')}
+                    className="max-h-40 mx-auto rounded-lg"
+                  />
                   <button
                     onClick={() => setImagePreview(null)}
                     className="absolute top-1 right-1 p-1 rounded-full bg-black/50 text-white hover:bg-black/70"

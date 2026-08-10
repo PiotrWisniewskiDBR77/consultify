@@ -175,7 +175,7 @@ export const MindMap3DView: React.FC<MindMap3DViewProps> = ({
         <button
           onClick={resetView}
           className="p-2 rounded-lg text-c-text-secondary hover:text-c-text hover:bg-c-surface-raised transition-colors"
-          title="Reset view"
+          title={t('ideas.mindmap.resetView', 'Reset view')}
         >
           <RotateCcw size={14} />
         </button>

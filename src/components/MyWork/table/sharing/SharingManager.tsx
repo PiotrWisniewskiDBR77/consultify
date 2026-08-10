@@ -326,7 +326,9 @@ export const SharingManager: React.FC<SharingManagerProps> = ({ baseId, views = 
           {showInvite && (
             <div className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-4 mb-4 space-y-3">
               <div>
-                <label className="block text-xs font-medium text-c-text-muted mb-1">Email</label>
+                <label className="block text-xs font-medium text-c-text-muted mb-1">
+                  {t('ideas.table.email', 'Email')}
+                </label>
                 <input
                   type="email"
                   value={inviteEmail}
@@ -489,7 +491,9 @@ export const SharingManager: React.FC<SharingManagerProps> = ({ baseId, views = 
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-c-text-muted mb-1">Base ID</label>
+              <label className="block text-xs font-medium text-c-text-muted mb-1">
+                {t('myWorkTable.connectorWizard.baseId', 'Base ID')}
+              </label>
               <div className="flex items-center gap-2">
                 <code className="flex-1 rounded-lg border border-c-border-subtle bg-c-bg px-3 py-2 text-xs text-c-text-muted font-mono truncate">
                   {baseId}

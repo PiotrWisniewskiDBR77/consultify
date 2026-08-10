@@ -117,7 +117,9 @@ export const TextBlockNode: React.FC<NodeProps> = ({ id: nodeId, data, selected 
                 })
               );
             }}
-            title={`${data.artifactLinks.length} linked artifact${data.artifactLinks.length !== 1 ? 's' : ''}`}
+            title={t('myWork.whiteboard.linkedArtifactsCount', {
+              count: data.artifactLinks.length,
+            })}
           >
             🔗
           </div>
@@ -125,7 +127,7 @@ export const TextBlockNode: React.FC<NodeProps> = ({ id: nodeId, data, selected 
         {data?._converted && (
           <div
             className="absolute top-1 right-1 z-10 flex items-center justify-center w-4 h-4 rounded-full bg-success-500 text-white text-[8px] shadow-sm"
-            title={t('ideas.mindmap.converted', 'Converted')}
+            title={t('myWork.whiteboard.convertedBadge', 'Converted')}
           >
             ✓
           </div>

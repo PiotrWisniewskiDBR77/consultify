@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { summarizeReactions, WHITEBOARD_REACTION_EMOJIS } from '../whiteboardReactions';
 
@@ -35,6 +36,7 @@ export const WhiteboardNodeReactions: React.FC<WhiteboardNodeReactionsProps> = (
   selected,
   onToggle,
 }) => {
+  const { t } = useTranslation();
   const [trayOpen, setTrayOpen] = React.useState(false);
 
   if (!enabled) return null;
@@ -64,7 +66,11 @@ export const WhiteboardNodeReactions: React.FC<WhiteboardNodeReactionsProps> = (
               ? 'bg-c-info/15 border-c-info text-c-text'
               : 'bg-c-surface border-c-border-subtle text-c-text-muted hover:bg-c-surface-raised'
           }`}
-          title={s.reactedByMe ? 'Remove your reaction' : 'Add your reaction'}
+          title={
+            s.reactedByMe
+              ? t('myWork.whiteboard.reactions.removeReaction', 'Remove your reaction')
+              : t('myWork.whiteboard.reactions.addReaction', 'Add your reaction')
+          }
           onClick={(e) => {
             e.stopPropagation();
             fire(s.emoji);
@@ -92,7 +98,7 @@ export const WhiteboardNodeReactions: React.FC<WhiteboardNodeReactionsProps> = (
                   type="button"
                   data-testid={`wb-reaction-add-${emoji}`}
                   className="flex items-center justify-center w-4 h-4 rounded-full text-[11px] leading-none hover:bg-c-surface-raised transition-colors"
-                  title={`React ${emoji}`}
+                  title={t('myWork.whiteboard.reactions.reactWith', 'React {{emoji}}', { emoji })}
                   onClick={(e) => {
                     e.stopPropagation();
                     fire(emoji);
@@ -108,7 +114,7 @@ export const WhiteboardNodeReactions: React.FC<WhiteboardNodeReactionsProps> = (
               type="button"
               data-testid="wb-reaction-toggle"
               className="flex items-center justify-center w-5 h-5 rounded-full border border-slate-200/60 dark:border-white/[0.03] bg-c-surface text-[10px] text-c-text-muted shadow-sm hover:bg-c-surface-raised transition-colors"
-              title="Add reaction"
+              title={t('myWork.whiteboard.reactions.openTray', 'Add reaction')}
               onClick={(e) => {
                 e.stopPropagation();
                 setTrayOpen(true);

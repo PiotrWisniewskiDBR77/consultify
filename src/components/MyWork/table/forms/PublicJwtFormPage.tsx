@@ -25,6 +25,7 @@
 
 import { AlertCircle, CheckCircle2, Loader2, ShieldAlert } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router-dom';
 
 import {
@@ -81,6 +82,7 @@ export function PublicJwtFormPage({
   testInitialContext,
   testInitialForm,
 }: PublicJwtFormPageProps = {}) {
+  const { t } = useTranslation();
   const params = useParams<{ token: string }>();
   const token = testToken ?? params.token ?? '';
 
@@ -268,14 +270,15 @@ export function PublicJwtFormPage({
         <div className="max-w-md rounded-2xl border border-c-success bg-c-surface p-8 text-center shadow-sm">
           <CheckCircle2 className="mx-auto mb-3 h-10 w-10 text-c-success" />
           <h2 className="mb-2 text-lg font-semibold text-c-text">
-            {form.config?.submitMessage || 'Response recorded!'}
+            {form.config?.submitMessage ||
+              t('ideas.table.publicForm.responseRecorded', 'Response recorded!')}
           </h2>
           {form.config?.allowMultiple && (
             <button
               onClick={handleSubmitAnother}
               className="mt-4 rounded-xl bg-c-info px-6 py-2.5 text-sm font-medium text-c-text transition-colors hover:bg-c-info"
             >
-              Submit another response
+              {t('ideas.table.publicForm.submitAnother', 'Submit another response')}
             </button>
           )}
         </div>
@@ -301,7 +304,9 @@ export function PublicJwtFormPage({
             className="mb-4 rounded-xl border border-c-warning bg-c-warning px-4 py-2 text-xs text-c-warning"
             data-testid="public-jwt-form-expiry-warning"
           >
-            This private link expires {new Date(context.publicLinkExpiresAt).toLocaleString()}.
+            {t('ideas.table.publicForm.linkExpires', 'This private link expires {{date}}.', {
+              date: new Date(context.publicLinkExpiresAt).toLocaleString(),
+            })}
           </p>
         ) : null}
 
@@ -317,7 +322,10 @@ export function PublicJwtFormPage({
         <div className="space-y-5">
           {visibleFieldConfigs.length === 0 ? (
             <p className="text-sm text-c-text-muted">
-              The sender hasn&apos;t shared any fields with you yet.
+              {t(
+                'ideas.table.publicForm.noFieldsShared',
+                "The sender hasn't shared any fields with you yet."
+              )}
             </p>
           ) : null}
           {visibleFieldConfigs.map((fc) => {
@@ -350,12 +358,15 @@ export function PublicJwtFormPage({
           data-testid="public-jwt-form-submit"
         >
           {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
-          Submit
+          {t('ideas.table.publicForm.submit', 'Submit')}
         </button>
       </form>
 
       <p className="mt-4 text-center text-xs text-c-text-secondary">
-        Powered by Consultify Table Platform · Private link
+        {t(
+          'ideas.table.publicForm.poweredByPrivate',
+          'Powered by Consultify Table Platform · Private link'
+        )}
       </p>
     </div>
   );

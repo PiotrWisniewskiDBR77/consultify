@@ -459,7 +459,7 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
                 {(channel === 'slack' || channel === 'teams') && (
                   <div>
                     <label className="mb-1 block text-[11px] font-medium text-c-text-muted">
-                      Webhook URL
+                      {t('ideas.table.webhookUrl', 'Webhook URL')}
                     </label>
                     <input
                       type="url"
@@ -473,7 +473,7 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
                 {channel === 'webhook' && (
                   <div>
                     <label className="mb-1 block text-[11px] font-medium text-c-text-muted">
-                      Webhook URL
+                      {t('ideas.table.webhookUrl', 'Webhook URL')}
                     </label>
                     <input
                       type="url"

@@ -577,11 +577,11 @@ export const ViewConfigPanel: React.FC<ViewConfigPanelProps> = ({
                     }
                     className="w-full h-8 px-2 rounded-lg text-[11px] bg-c-surface-raised border border-c-border-subtle text-c-text outline-none focus:ring-2 focus:ring-c-focus"
                   >
-                    <option value="count">Count</option>
-                    <option value="sum">Sum</option>
-                    <option value="avg">Average</option>
-                    <option value="min">Min</option>
-                    <option value="max">Max</option>
+                    <option value="count">{t('myWorkTable.chartConfigPanel.aggCount', 'Count')}</option>
+                    <option value="sum">{t('myWorkTable.chartConfigPanel.aggSum', 'Sum')}</option>
+                    <option value="avg">{t('myWorkTable.chartConfigPanel.aggAverage', 'Average')}</option>
+                    <option value="min">{t('myWorkTable.chartConfigPanel.aggMin', 'Min')}</option>
+                    <option value="max">{t('myWorkTable.chartConfigPanel.aggMax', 'Max')}</option>
                   </select>
                 </div>
               </div>

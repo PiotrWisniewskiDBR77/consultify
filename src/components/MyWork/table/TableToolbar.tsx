@@ -1110,7 +1110,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
           onClick={() => runAction('idea.ai.table_copilot', props.onShowCopilot)}
           className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-c-text hover:bg-c-surface-raised min-h-[44px]"
         >
-          <Brain size={14} /> AI Copilot
+          <Brain size={14} /> {t('ideas.table.aiCopilot.label', 'AI Copilot')}
         </button>
         <button
           onClick={() => runAction('idea.view.table_voice_input', props.onShowVoiceInput)}
@@ -1153,7 +1153,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
             onClick={() => runAction('idea.ai.table_framework', props.onShowFrameworkGen)}
             className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-c-text hover:bg-c-surface-raised min-h-[44px]"
           >
-            <LayoutGrid size={14} /> Framework
+            <LayoutGrid size={14} /> {t('ideas.table.framework', 'Framework')}
           </button>
         )}
         {!locked && (

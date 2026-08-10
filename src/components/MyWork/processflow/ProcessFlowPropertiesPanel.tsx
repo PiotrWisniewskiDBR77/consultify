@@ -393,8 +393,7 @@ export const ProcessFlowPropertiesPanel: React.FC<ProcessFlowPropertiesPanelProp
           <label className="block">
             <span className="mb-1 flex items-center gap-1 text-xs font-medium text-c-text-secondary">
               <Server size={14} className="opacity-70" />
-              {/* "System" — identical in both locales in the original, not translated */}
-              System
+              {t('processFlow.propertiesPanel.systemLabel', 'System')}
             </span>
             <input
               className={inputClass}
@@ -451,8 +450,7 @@ export const ProcessFlowPropertiesPanel: React.FC<ProcessFlowPropertiesPanelProp
                 }}
               >
                 <option value="h">{t('processFlow.propertiesPanel.unitHour', 'h')}</option>
-                {/* "min" — identical in both locales in the original, not translated */}
-                <option value="min">min</option>
+                <option value="min">{t('processFlow.propertiesPanel.unitMin', 'min')}</option>
                 <option value="d">{t('processFlow.propertiesPanel.unitDay', 'd')}</option>
               </select>
             </label>

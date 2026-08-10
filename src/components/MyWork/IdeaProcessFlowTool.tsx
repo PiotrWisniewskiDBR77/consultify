@@ -4179,7 +4179,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
                 />
               </label>
               <label className="text-[11px] text-slate-600 dark:text-slate-300">
-                <div className="mb-1">FTE</div>
+                <div className="mb-1">{t('processFlow.propertiesPanel.fteField', 'FTE count')}</div>
                 <input
                   value={metricsDraft.fteCount || ''}
                   onChange={(e) =>

@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface ExtensionHostProps {
   extensionId: string;
@@ -34,6 +35,7 @@ export const ExtensionHost: React.FC<ExtensionHostProps> = ({
   config,
   onClose,
 }) => {
+  const { t } = useTranslation();
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [isReady, setIsReady] = useState(false);
   const [notification, setNotification] = useState<{ message: string; kind: string } | null>(null);
@@ -180,17 +182,23 @@ export const ExtensionHost: React.FC<ExtensionHostProps> = ({
   return (
     <div className="relative flex flex-col h-full border rounded-lg overflow-hidden">
       <div className="flex items-center justify-between px-3 py-2 bg-c-surface-raised border-b">
-        <span className="text-sm font-medium text-c-text-secondary">Extension</span>
+        <span className="text-sm font-medium text-c-text-secondary">
+          {t('myWorkTable.extensionHost.extension', 'Extension')}
+        </span>
         <div className="flex items-center gap-2">
-          {!isReady && <span className="text-xs text-c-text-secondary">Loading...</span>}
+          {!isReady && (
+            <span className="text-xs text-c-text-secondary">
+              {t('myWorkTable.extensionHost.loading', 'Loading...')}
+            </span>
+          )}
           <span className="text-xs text-c-text-secondary">
-            {scopes.length} scope{scopes.length !== 1 ? 's' : ''}
+            {t('myWorkTable.extensionHost.scopeCount', { count: scopes.length })}
           </span>
           {onClose && (
             <button
               onClick={onClose}
               className="text-c-text-secondary hover:text-c-text-secondary text-sm leading-none"
-              aria-label="Close extension"
+              aria-label={t('myWorkTable.extensionHost.closeExtension', 'Close extension')}
             >
               &times;
             </button>
@@ -217,7 +225,7 @@ export const ExtensionHost: React.FC<ExtensionHostProps> = ({
         src={sourceUrl}
         sandbox="allow-scripts allow-forms allow-same-origin"
         className="flex-1 w-full border-0"
-        title="Extension"
+        title={t('myWorkTable.extensionHost.extension', 'Extension')}
       />
     </div>
   );

@@ -1841,7 +1841,10 @@
         "title": "Pusta tablica",
         "subtitle": "Dodaj notatki, kształty lub tekst z paska narzędzi",
         "quickStart": "Szybki start z szablonu",
-        "addSticky": "Dodaj pustą notatkę"
+        "addSticky": "Dodaj pustą notatkę",
+        "affinityMap": "Mapa powiązań",
+        "brainstorm": "Burza mózgów",
+        "workshopWall": "Ściana warsztatowa"
       },
       "facilitation": {
         "start": "Start",
@@ -2050,7 +2053,25 @@
           "parkingLot": "Parking pomysłów"
         }
       },
-      "facilitationError": "Sesja facylitacji niedostępna"
+      "facilitationError": "Sesja facylitacji niedostępna",
+      "styleBar": {
+        "ariaLabel": "Styl elementu",
+        "color": "Ustaw kolor",
+        "clearColor": "Przywróć domyślny kolor",
+        "fontSize": "Rozmiar czcionki {{step}}",
+        "bold": "Pogrubienie"
+      },
+      "reactions": {
+        "removeReaction": "Usuń swoją reakcję",
+        "addReaction": "Dodaj swoją reakcję",
+        "reactWith": "Zareaguj {{emoji}}",
+        "openTray": "Dodaj reakcję"
+      },
+      "linkedArtifactsCount_one": "{{count}} powiązany artefakt",
+      "linkedArtifactsCount_few": "{{count}} powiązane artefakty",
+      "linkedArtifactsCount_many": "{{count}} powiązanych artefaktów",
+      "linkedArtifactsCount_other": "{{count}} powiązanego artefaktu",
+      "convertedBadge": "Skonwertowano"
     },
     "notebook": {
       "title": "Notebook",
@@ -4486,7 +4507,19 @@
       "toastInputRequested": "Prośba o opinię wysłana",
       "toastCoDecisionRequested": "Prośba o współdecyzję wysłana"
     },
-    "closeOpenDocument": "Zamknij: {{nazwa}}"
+    "closeOpenDocument": "Zamknij: {{nazwa}}",
+    "knowledge": {
+      "cardNodes": {
+        "evidenceDefault": "Dowód",
+        "idPrefix": "ID: {{id}}",
+        "knowledgeDefault": "Wiedza",
+        "noteBadge": "Notatka",
+        "typeArtifact": "Artefakt",
+        "typeDocument": "Dokument",
+        "typeNote": "Notatka",
+        "typeUrl": "URL"
+      }
+    }
   },
   "step1": {
     "title": "Krok 1",
@@ -26510,7 +26543,44 @@
   "formBuilder": {
     "published": "Opublikowano",
     "draft": "Szkic",
-    "delete": "Usuń"
+    "delete": "Usuń",
+    "title": "Kreator formularza",
+    "tabFields": "Pola",
+    "tabSettings": "Ustawienia",
+    "tabPreview": "Podgląd",
+    "fieldListHint": "Przeciągnij, aby zmienić kolejność. Przełączaj widoczność i konfiguruj każde pole.",
+    "moveUp": "Przesuń w górę",
+    "moveDown": "Przesuń w dół",
+    "toggleRequired": "Przełącz wymagane",
+    "required": "Wymagane",
+    "optional": "Opcjonalne",
+    "showField": "Pokaż pole",
+    "hideField": "Ukryj pole",
+    "customLabel": "Własna etykieta",
+    "helpText": "Tekst pomocniczy",
+    "helpTextPlaceholder": "Wskazówki dotyczące tego pola...",
+    "defaultValue": "Wartość domyślna",
+    "conditionalVisibility": "Widoczność warunkowa",
+    "selectField": "Wybierz pole...",
+    "opEquals": "równa się",
+    "opNotEquals": "różne od",
+    "opIsEmpty": "jest puste",
+    "opIsNotEmpty": "nie jest puste",
+    "condValue": "Wartość...",
+    "formName": "Nazwa formularza",
+    "formDescription": "Opis",
+    "slug": "Slug adresu URL",
+    "submitMessage": "Komunikat powodzenia",
+    "redirectUrl": "Adres przekierowania (opcjonalnie)",
+    "notificationEmail": "E-mail powiadomień (opcjonalnie)",
+    "notificationEmailHint": "Otrzymuj e-mail przy każdym nowym zgłoszeniu",
+    "allowMultiple": "Zezwól na wielokrotne zgłoszenia",
+    "requireAuth": "Wymagaj zalogowania",
+    "submit": "Wyślij",
+    "save": "Zapisz",
+    "shareLink": "Link do udostępnienia",
+    "copied": "Skopiowano!",
+    "submissions": "zgłoszeń"
   },
   "formsIndex": {
     "active": "Aktywny",
@@ -26518,13 +26588,59 @@
     "backToList": "Wróć do listy",
     "saved": "Zapisane",
     "cancel": "Anuluj",
-    "delete": "Usuń"
+    "delete": "Usuń",
+    "title": "Formularze",
+    "createForm": "Utwórz formularz",
+    "newFormName": "Nowy formularz",
+    "createError": "Nie udało się utworzyć formularza",
+    "deleted": "Formularz usunięty",
+    "deleteError": "Nie udało się usunąć formularza",
+    "shareUpdated": "Zaktualizowano udostępnianie",
+    "shareError": "Nie udało się zaktualizować udostępniania",
+    "loadError": "Nie udało się wczytać formularzy",
+    "emptyTitle": "Utwórz formularz, aby zbierać dane",
+    "emptyDescription": "Formularze pozwalają zbierać ustrukturyzowane dane od dowolnej osoby — formularze publiczne nie wymagają logowania.",
+    "created": "Utworzono",
+    "responses": "odpowiedzi",
+    "copied": "Skopiowano!",
+    "copyLink": "Kopiuj link",
+    "sharing": "Udostępnianie",
+    "sharePublic": "Publiczny",
+    "shareOrg": "Tylko organizacja",
+    "shareAuth": "Zalogowani użytkownicy",
+    "preview": "Podgląd",
+    "manageIntake": "Zarządzaj przyjmowaniem zgłoszeń (link prywatny)",
+    "edit": "Edytuj",
+    "confirmDelete": "Potwierdź"
   },
   "interfacesIndex": {
     "backToList": "Wróć do listy",
     "saved": "Zapisane",
     "cancel": "Anuluj",
-    "delete": "Usuń"
+    "delete": "Usuń",
+    "title": "Interfejsy",
+    "createInterface": "Utwórz interfejs",
+    "chooseTemplate": "Wybierz szablon",
+    "createError": "Nie udało się utworzyć interfejsu",
+    "deleted": "Interfejs usunięty",
+    "deleteError": "Nie udało się usunąć interfejsu",
+    "saveError": "Nie udało się zapisać interfejsu",
+    "emptyTitle": "Zbuduj własne widoki danych",
+    "emptyDescription": "Interfejsy pozwalają tworzyć dashboardy, widoki szczegółowe i własne układy.",
+    "lastModified": "Ostatnia modyfikacja",
+    "blocks": "bloków",
+    "copied": "Skopiowano!",
+    "share": "Udostępnij",
+    "edit": "Edytuj",
+    "confirmDelete": "Potwierdź",
+    "tplBlank": "Pusty",
+    "tplBlankDesc": "Puste płótno",
+    "tplDashboard": "Dashboard",
+    "tplDashboardDesc": "Wstępnie skonfigurowany z blokami wykresów",
+    "tplFormView": "Widok formularza",
+    "tplFormViewDesc": "Zoptymalizowany pod wprowadzanie danych",
+    "tplRecordDetail": "Szczegóły rekordu",
+    "tplRecordDetailDesc": "Widok pojedynczego rekordu ze wszystkimi polami"
   },
   "onboarding": {
     "toast": {
@@ -27708,7 +27824,16 @@
         "mustBeValidEmail": "{{label}} musi być poprawnym adresem email",
         "mustBeValidUrl": "{{label}} musi być poprawnym adresem URL",
         "tooLongMax30": "{{label}} jest za długie (maks. 30 znaków)",
-        "mustBeValidDate": "{{label}} musi być poprawną datą"
+        "mustBeValidDate": "{{label}} musi być poprawną datą",
+        "linkExpires": "Ten prywatny link wygasa {{date}}.",
+        "noFieldsShared": "Nadawca nie udostępnił Ci jeszcze żadnych pól.",
+        "noOptionsConfigured": "Brak skonfigurowanych opcji",
+        "poweredBy": "Obsługiwane przez Consultify Table Platform",
+        "poweredByPrivate": "Obsługiwane przez Consultify Table Platform · Link prywatny",
+        "responseRecorded": "Odpowiedź zapisana!",
+        "selectOption": "Wybierz...",
+        "submitAnother": "Wyślij kolejną odpowiedź",
+        "uploadFile": "Prześlij plik"
       },
       "fileNumbered": "Plik {{n}}",
       "recordTemplates": {
@@ -27795,7 +27920,12 @@
         "refreshedFields": "Odświeżono {{count}} pól",
         "noChangesToApply": "Brak zmian do zastosowania",
         "refreshFailed": "Odświeżanie nie powiodło się",
-        "selectRowFirst": "Najpierw zaznacz wiersz"
+        "selectRowFirst": "Najpierw zaznacz wiersz",
+        "viewNotFound": "Nie znaleziono widoku: {{viewId}}",
+        "columnNotFound": "Nie znaleziono kolumny: {{colKey}}",
+        "columnNameRequired": "Podaj nową nazwę kolumny, aby ją zmienić.",
+        "rowIdRequired": "Podaj rowId wiersza Tabeli.",
+        "cellTargetMissing": "Brak wskazanej komórki"
       },
       "smartSuggestions": {
         "incompleteRowsTitle": "Niekompletne wiersze",
@@ -27841,7 +27971,9 @@
         "sum": "Suma",
         "aiNarrative": "Narracja AI",
         "generating": "Generuję...",
-        "generateAiSummary": "Generuj podsumowanie AI"
+        "generateAiSummary": "Generuj podsumowanie AI",
+        "max": "Maks.",
+        "min": "Min."
       },
       "toolbar": {
         "aiViewName": "Widok AI",
@@ -27885,7 +28017,16 @@
         "notes": "Notatki",
         "viewLayout": "Układ widoku",
         "record": "Rekord",
-        "filter": "Filtr"
+        "filter": "Filtr",
+        "densityCompact": "Kompakt",
+        "densityNormal": "Normalny",
+        "densityComfortable": "Luźny",
+        "rowDensity": "Gęstość wierszy",
+        "filterColumn": "Filtruj…",
+        "filterColumnAria": "Filtruj wg",
+        "resizeColumn": "Zmień szerokość kolumny",
+        "sortColumn": "Sortuj wg {{name}}",
+        "selectRow": "Zaznacz wiersz"
       },
       "viewSwitcher": {
         "views": "Widoki",
@@ -28098,7 +28239,82 @@
         "sectionMore": "Więcej",
         "sectionPlatform": "Platforma",
         "title": "Więcej narzędzi"
-      }
+      },
+      "alreadyEmpty": "Komórka jest już pusta",
+      "areYouSureYouWantToDeleteThisColumn": "Czy na pewno chcesz usunąć tę kolumnę? Tej operacji nie można cofnąć.",
+      "cellActions": "Akcje komórki",
+      "columnActions": "Akcje kolumny",
+      "edgeKind": "Rodzaj",
+      "groupBy": "Grupuj wg",
+      "lockedReason": "Tabela jest zablokowana",
+      "noGrouping": "Bez grupowania",
+      "readOnlyCell": "Komórka jest tylko do odczytu",
+      "rowActions": "Akcje wiersza",
+      "savedViewActions": "Akcje zapisanego widoku",
+      "typeCannotExpand": "Komórki typu nie można rozwinąć",
+      "emptyFilterState": {
+        "headline": "Brak wyników dla filtra",
+        "description": "Żaden rekord nie pasuje do aktywnych filtrów. Wyczyść filtry, aby zobaczyć wszystkie rekordy.",
+        "clearFilters": "Wyczyść filtry"
+      },
+      "email": "E-mail",
+      "provenanceRecordId": "Rekord: {{id}}…",
+      "provenanceRunId": "Przebieg: {{id}}…",
+      "validationBadgeAdmin": "admin",
+      "webhookUrl": "Adres URL webhooka",
+      "intakeJwt": {
+        "failedToLoad": "Nie udało się wczytać kontekstu przyjmowania zgłoszeń",
+        "subjectRequired": "Temat/adresat jest wymagany",
+        "subjectTooLong": "Temat może mieć maks. {{max}} znaków",
+        "linkIssued": "Link wygenerowany",
+        "failedToIssue": "Nie udało się wygenerować linku: {{message}}",
+        "unknown": "nieznany błąd",
+        "failedToCopy": "Nie udało się skopiować do schowka",
+        "allowListSaved": "Lista dozwolonych pól zapisana",
+        "failedToSaveAllowList": "Nie udało się zapisać listy dozwolonych pól: {{message}}",
+        "panelAriaLabel": "Ustawienia przyjmowania zgłoszeń formularza",
+        "panelTitle": "Przyjmowanie zgłoszeń (link prywatny)",
+        "closePanel": "Zamknij panel przyjmowania",
+        "loadingContext": "Wczytywanie kontekstu…",
+        "summaryAriaLabel": "Podsumowanie przyjmowania",
+        "summary": "Podsumowanie",
+        "targetTable": "Tabela docelowa",
+        "allowList": "Lista dozwolonych pól",
+        "allConfiguredFields": "Wszystkie skonfigurowane pola",
+        "hardExpiry": "Twardy termin wygaśnięcia",
+        "none": "Brak",
+        "status": "Status",
+        "published": "Opublikowano",
+        "draftWontVerify": "Szkic (linki nie przejdą weryfikacji)",
+        "allowListEditorAriaLabel": "Edytor listy dozwolonych pól",
+        "fieldAllowList": "Lista dozwolonych pól",
+        "selectAll": "Zaznacz wszystkie",
+        "clearAllowList": "Wyczyść listę (użyj pól formularza)",
+        "clear": "Wyczyść",
+        "allowListHint": "Pusta lista dozwolonych pól oznacza wszystkie skonfigurowane pola formularza. Wybranie podzbioru zawęża, co mogą przesłać odbiorcy.",
+        "noConfiguredFields": "Formularz nie ma jeszcze skonfigurowanych pól.",
+        "saveAllowList": "Zapisz listę dozwolonych pól",
+        "issueLinkAriaLabel": "Wygeneruj link",
+        "issuePrivateLink": "Wygeneruj link prywatny",
+        "recipientSubject": "Temat/adresat (e-mail lub etykieta)",
+        "recipientSubjectAriaLabel": "Temat/adresat",
+        "expiresIn": "Wygasa za",
+        "issueLink": "Wygeneruj link",
+        "publishFirst": "Najpierw opublikuj formularz — linki prywatne nie zadziałają dla szkicu.",
+        "copied": "Skopiowano",
+        "copyUrl": "Kopiuj adres URL",
+        "expires": "Wygasa {{date}}",
+        "copyToken": "Kopiuj token",
+        "ttl1Day": "1 dzień",
+        "ttl7Days": "7 dni",
+        "ttl30Days": "30 dni",
+        "ttl90Days": "90 dni",
+        "fieldCount_one": "{{count}} pole",
+        "fieldCount_few": "{{count}} pola",
+        "fieldCount_many": "{{count}} pól",
+        "fieldCount_other": "{{count}} pola"
+      },
+      "recordDetails": "Szczegóły rekordu"
     },
     "mindmap": {
       "addNodeTab": "Dodaj węzeł (Tab)",
@@ -28498,7 +28714,84 @@
       "summaryUnavailable": "Nie udało się przygotować podsumowania tej gałęzi. Spróbuj ponownie.",
       "branchHasNoChildren": "Ten węzeł nie ma podgałęzi — nie ma czego podsumować.",
       "tryAgain": "Spróbuj ponownie",
-      "arrowDirectionBranch": "Strzałki w gałęzi"
+      "arrowDirectionBranch": "Strzałki w gałęzi",
+      "resetView": "Przywróć widok"
+    },
+    "financial": {
+      "dialogTitle": "Case finansowy",
+      "costDrivers": "Czynniki kosztowe",
+      "benefitDrivers": "Czynniki korzyści",
+      "addCost": "Dodaj czynnik kosztowy",
+      "addBenefit": "Dodaj czynnik korzyści",
+      "collapsePeriods": "Zwiń okresy miesięczne",
+      "expandPeriods": "Edytuj okresy miesięczne",
+      "col": {
+        "label": "Czynnik",
+        "type": "Typ",
+        "category": "Kategoria",
+        "unit": "Jednostka",
+        "total": "Suma",
+        "confidence": "Pewność",
+        "evidence": "Dowody"
+      },
+      "monthlyValues": "Wartości miesięczne",
+      "months": "mies.",
+      "labelPlaceholder": "Czynnik bez nazwy",
+      "categoryPlaceholder": "Kategoria",
+      "confidenceHigh": "Wysoka",
+      "confidenceMedium": "Średnia",
+      "confidenceLow": "Niska",
+      "removeDriver": "Usuń czynnik",
+      "noDriversYet": "Brak czynników.",
+      "currency": "Waluta",
+      "horizon": "Horyzont",
+      "discountRate": "Stopa dyskontowa",
+      "scenarioMultipliers": "Mnożnik scenariusza (vs bazowy)",
+      "recompute": "Przelicz",
+      "lastComputed": "Ostatnie przeliczenie",
+      "evidenceHealth": "Kondycja dowodów",
+      "evidenceNeeded": "Wymagane dowody",
+      "evidenceMissingFor": "Brakujące dowody: {{list}}",
+      "driverCounts": "Czynniki",
+      "minimumsNotMet": "Wymaga ≥{{min}} każdego typu, aby case spełniał kryteria akceptacji",
+      "engineNotWired": "Silnik obliczeniowy nie jest podłączony w tej wersji — żadne liczby nie są zmyślane.",
+      "convert": {
+        "reasonStale": "Najpierw przelicz case — nieaktualnego case’a nie można skonwertować.",
+        "reasonNotBuilt": "Konwersja do zarządzanego artefaktu docelowego nie jest jeszcze zbudowana w tej wersji (epik E11)."
+      },
+      "analytics": "Analityka",
+      "cost": "Koszt",
+      "benefit": "Korzyść",
+      "costShort": "koszt",
+      "benefitShort": "korzyść",
+      "chart": {
+        "cashFlow": {
+          "title": "Skumulowany przepływ pieniężny",
+          "subtitle": "Kiedy case przekracza zero (zwrot z inwestycji)?"
+        },
+        "composition": {
+          "title": "Struktura korzyści / kosztów",
+          "subtitle": "Co napędza każdy okres (scenariusz bazowy)?"
+        },
+        "range": {
+          "title": "Zakres scenariuszy (NPV)",
+          "subtitle": "Bazowy vs optymistyczny vs pesymistyczny",
+          "subtitleSpread": "Rozrzut między scenariuszami: {{spread}}"
+        },
+        "sensitivity": {
+          "title": "Wrażliwość",
+          "subtitle": "Które założenie najbardziej wpływa na NPV (±20%)?",
+          "low": "-20%",
+          "high": "+20%"
+        },
+        "noResult": "Przelicz, aby zobaczyć ten wykres.",
+        "noSensitivity": "Silnik nie zwrócił jeszcze wierszy analizy wrażliwości."
+      },
+      "evidenceCount_one": "{{count}} źródło",
+      "evidenceCount_few": "{{count}} źródła",
+      "evidenceCount_many": "{{count}} źródeł",
+      "evidenceCount_other": "{{count}} źródła",
+      "staleLabel": "nieaktualne"
     }
   },
   "notebook": {
@@ -29192,7 +29485,20 @@
       "validationFailedRetry": "Walidacja przepływu nie powiodła się. Spróbuj ponownie.",
       "deleteNodesConfirm": "Zostaną usunięte {{value}} węzły i ich połączenia. Możesz cofnąć przez Ctrl+Z.",
       "warningsCount": "{{value}} ostrzeżeń",
-      "laneDefaultName": "Tor {{index}}"
+      "laneDefaultName": "Tor {{index}}",
+      "aiRewriteStep": "AI: przepisz krok",
+      "nodeTooltip": {
+        "accept": "Akceptuj",
+        "automation": "Automatyzacja: {{level}}",
+        "cost": "Koszt:",
+        "duration": "Czas trwania:",
+        "owner": "Właściciel:",
+        "status": "Status:",
+        "attachmentCount_one": "{{count}} załącznik",
+        "attachmentCount_few": "{{count}} załączniki",
+        "attachmentCount_many": "{{count}} załączników",
+        "attachmentCount_other": "{{count}} załącznika"
+      }
     },
     "nodeDetailDrawer": {
       "failedAddComment": "Nie udało się dodać komentarza",
@@ -29616,7 +29922,8 @@
       "convertInitiative": "Inicjatywa",
       "convertTaskSet": "Zadania",
       "convertReport": "Raport",
-      "convertAnalysis": "Analiza"
+      "convertAnalysis": "Analiza",
+      "aiCoach": "Trener AI"
     },
     "propertiesPanel": {
       "emptyState": "Zaznacz węzeł lub krawędź, aby zobaczyć właściwości",
@@ -29645,7 +29952,9 @@
       "unitHour": "godz.",
       "unitDay": "dni",
       "costField": "Koszt",
-      "fteField": "Liczba FTE"
+      "fteField": "Liczba FTE",
+      "systemLabel": "System",
+      "unitMin": "min"
     },
     "aiProposalPanel": {
       "title": "Propozycja AI",
@@ -29741,7 +30050,8 @@
       "edgeInsertNode": "Wstaw węzeł na połączeniu",
       "edgeReverse": "Odwróć kierunek",
       "edgeCondition": "Warunek",
-      "edgeDelete": "Usuń połączenie"
+      "edgeDelete": "Usuń połączenie",
+      "menuAriaLabel": "Akcje procesu"
     },
     "laneSystem": {
       "expandLane": "Rozwiń tor",
@@ -29949,7 +30259,11 @@
       "stepSources": "Źródła",
       "stepKpis": "KPI",
       "stepDimensions": "Wymiary",
-      "stepTrust": "Zaufanie"
+      "stepTrust": "Zaufanie",
+      "formulaAvg": "ŚREDNIA",
+      "formulaCount": "LICZBA",
+      "formulaExpression": "Wyrażenie",
+      "formulaSum": "SUMA"
     },
     "viewConfigPanel": {
       "viewConfiguration": "Konfiguracja widoku",
@@ -30042,7 +30356,17 @@
       "next": "Dalej",
       "createConnector": "Utwórz konektor",
       "newDataConnector": "Nowy konektor danych",
-      "importDataFromAnExternal": "Importuj dane z zewnętrznego źródła"
+      "importDataFromAnExternal": "Importuj dane z zewnętrznego źródła",
+      "apiKey": "Klucz API",
+      "apiToken": "Token API",
+      "baseId": "ID bazy",
+      "database": "Baza danych",
+      "email": "E-mail",
+      "host": "Host",
+      "jqlLabel": "JQL ({{optional}})",
+      "port": "Port",
+      "schema": "Schemat",
+      "spreadsheetId": "ID arkusza"
     },
     "fieldManager": {
       "failedToReorderFields": "Nie udało się zmienić kolejności",
@@ -30735,6 +31059,116 @@
       "promoteTo": "Promuj do: {{stage}}",
       "meetCriteriaFirst": "Spełnij wszystkie kryteria",
       "clickStageHint": "Kliknij etap aby zobaczyć pomysły i kryteria"
+    },
+    "fieldProposal": {
+      "refreshTitle": "Odświeżenie z artefaktów",
+      "autofillTitle": "Autofill z artefaktów",
+      "summary": "{{rows}} wierszy · {{cells}} pól do zmiany",
+      "selectAll": "Zaznacz wszystkie",
+      "deselectAll": "Odznacz wszystkie",
+      "dismiss": "Odrzuć",
+      "empty": "(puste)",
+      "reject": "Odrzuć",
+      "apply": "Zastosuj ({{count}})",
+      "applied": "Zastosowano {{count}} pól",
+      "fieldCount_one": "{{count}} pole",
+      "fieldCount_few": "{{count}} pola",
+      "fieldCount_many": "{{count}} pól",
+      "fieldCount_other": "{{count}} pola"
+    },
+    "aiCell": {
+      "pending": "AI w toku…",
+      "promptTooltip": "Prompt AI: {{template}}"
+    },
+    "cellEditor": {
+      "list": "Lista"
+    },
+    "chartConfigPanel": {
+      "aggAverage": "Średnia",
+      "aggCount": "Liczba",
+      "aggMax": "Maks.",
+      "aggMin": "Min.",
+      "aggregation": "Agregacja",
+      "aggSum": "Suma",
+      "chartType": "Typ wykresu",
+      "chartTypeBar": "Słupkowy",
+      "chartTypeDonut": "Pierścieniowy",
+      "chartTypeLine": "Liniowy",
+      "chartTypePie": "Kołowy",
+      "noneCountOnly": "Brak (tylko liczba)",
+      "selectField": "Wybierz pole...",
+      "title": "Tytuł",
+      "titlePlaceholder": "Tytuł wykresu...",
+      "xAxisField": "Pole osi X",
+      "yAxisField": "Pole osi Y",
+      "yAxisFieldHint": "(liczbowe, opcjonalnie)"
+    },
+    "extensionHost": {
+      "closeExtension": "Zamknij rozszerzenie",
+      "extension": "Rozszerzenie",
+      "loading": "Wczytywanie...",
+      "scopeCount_one": "{{count}} zakres",
+      "scopeCount_few": "{{count}} zakresy",
+      "scopeCount_many": "{{count}} zakresów",
+      "scopeCount_other": "{{count}} zakresu"
+    },
+    "extensionMarketplace": {
+      "browseMarketplace": "Przeglądaj sklep z rozszerzeniami",
+      "byAuthor": "autor: {{author}}",
+      "categoryAll": "Wszystkie",
+      "categoryAutomation": "Automatyzacja",
+      "categoryIntegration": "Integracja",
+      "categoryUtility": "Narzędzie",
+      "categoryVisualization": "Wizualizacja",
+      "checkBackLater": "Zajrzyj tu później albo zarejestruj własne.",
+      "install": "Zainstaluj",
+      "installedCount": "Zainstalowane ({{count}})",
+      "installing": "Instalowanie...",
+      "loadingExtensions": "Wczytywanie rozszerzeń...",
+      "marketplace": "Sklep z rozszerzeniami",
+      "noneAvailable": "Brak dostępnych rozszerzeń.",
+      "noneInstalled": "Brak zainstalowanych rozszerzeń.",
+      "open": "Otwórz",
+      "scopeMetadataRead": "Odczyt schematu",
+      "scopeMetadataWrite": "Modyfikacja schematu",
+      "scopeNetwork": "Dostęp do sieci",
+      "scopeRecordsRead": "Odczyt rekordów",
+      "scopeRecordsWrite": "Zapis rekordów",
+      "scopeUi": "Kontrolki interfejsu",
+      "uninstall": "Odinstaluj",
+      "installCount_one": "{{count}} instalacja",
+      "installCount_few": "{{count}} instalacje",
+      "installCount_many": "{{count}} instalacji",
+      "installCount_other": "{{count}} instalacji"
+    },
+    "offlineIndicator": {
+      "hoursAgo": "{{count}}g temu",
+      "justNow": "przed chwilą",
+      "lastSync": "Ostatnia synchronizacja: {{time}}",
+      "minutesAgo": "{{count}} min temu",
+      "offline": "Offline",
+      "syncing": "Synchronizowanie...",
+      "syncNow": "Synchronizuj teraz",
+      "pendingChanges_one": "{{count}} oczekująca zmiana",
+      "pendingChanges_few": "{{count}} oczekujące zmiany",
+      "pendingChanges_many": "{{count}} oczekujących zmian",
+      "pendingChanges_other": "{{count}} oczekującej zmiany"
+    },
+    "sourceReferenceCell": {
+      "blocked": "Zablokowane",
+      "externalBlocked": "Zewnętrzne źródła są niedozwolone dla tego pola",
+      "internalSource": "Źródło wewnętrzne {{id}}",
+      "invalidLength": "Nieprawidłowa wartość source_reference (długość {{length}})",
+      "invalidShape": "Wartość source_reference ma nierozpoznany kształt",
+      "noSource": "Brak źródła",
+      "source": "Źródło"
+    },
+    "syncManager": {
+      "csvUrl": "Adres URL pliku CSV",
+      "googleSheetsUrl": "Adres URL arkusza Google"
+    },
+    "voiceImageInput": {
+      "previewAlt": "Podgląd"
     }
   },
   "myWorkNotebook": {
@@ -36407,7 +36841,9 @@
       "end": "W przód",
       "start": "W tył",
       "both": "Obustronna"
-    }
+    },
+    "edgeLabel": "Etykieta",
+    "edgeCondition": "Typ połączenia"
   },
   "statusChip": {
     "onboarding": "Onboarding",

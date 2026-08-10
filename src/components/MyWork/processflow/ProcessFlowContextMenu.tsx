@@ -14,6 +14,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { CanvasContextMenu } from '@/components/shared/CanvasContextMenu';
 import i18n from '@/i18n';
@@ -52,12 +53,13 @@ export const ProcessFlowContextMenu: React.FC<ProcessFlowContextMenuProps> = ({
   actions,
   onClose,
 }) => {
+  const { t } = useTranslation();
   return (
     <CanvasContextMenu
       x={x}
       y={y}
       onClose={onClose}
-      ariaLabel="Process Flow actions"
+      ariaLabel={t('processFlow.contextMenu.menuAriaLabel', 'Process Flow actions')}
       testId="process-flow-context-menu"
       items={actions.map((action) => ({
         id: action.id,

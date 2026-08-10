@@ -309,7 +309,9 @@ export const SyncManager: React.FC<SyncManagerProps> = ({
 
               {sourceType === 'csv_url' && (
                 <div className="space-y-2">
-                  <label className="block text-xs font-medium text-c-text-muted">CSV URL</label>
+                  <label className="block text-xs font-medium text-c-text-muted">
+                    {t('myWorkTable.syncManager.csvUrl', 'CSV URL')}
+                  </label>
                   <input
                     type="url"
                     value={sourceTableId}
@@ -323,7 +325,7 @@ export const SyncManager: React.FC<SyncManagerProps> = ({
               {sourceType === 'google_sheets' && (
                 <div className="space-y-2">
                   <label className="block text-xs font-medium text-c-text-muted">
-                    Google Sheets URL
+                    {t('myWorkTable.syncManager.googleSheetsUrl', 'Google Sheets URL')}
                   </label>
                   <input
                     type="url"

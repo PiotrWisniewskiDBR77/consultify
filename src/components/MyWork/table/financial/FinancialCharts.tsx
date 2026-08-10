@@ -80,6 +80,7 @@ function ChartCard({
   children: React.ReactNode;
   emptyLabel: string;
 }) {
+  const { t } = useTranslation();
   return (
     <div className="border border-c-border rounded-lg bg-c-surface p-3 relative">
       <div className="mb-2">
@@ -96,7 +97,7 @@ function ChartCard({
       {hasData && isStale && (
         <div className="absolute inset-x-3 bottom-3 flex items-center gap-1 text-[10px] font-medium text-c-warning bg-c-surface/90 border border-c-warning/30 rounded-md px-1.5 py-1">
           <AlertTriangle size={11} />
-          <span>stale</span>
+          <span>{t('ideas.financial.staleLabel', 'stale')}</span>
         </div>
       )}
     </div>

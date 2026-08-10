@@ -384,7 +384,9 @@ export const FlowNodeComponent: React.FC<NodeProps> = ({ id, data, selected }) =
                 ? 'bg-c-warning text-white'
                 : 'bg-c-text-muted text-white'
           }`}
-          title={`Automation: ${data.automationPotential || 'low'}`}
+          title={t('myWorkIdeas.processFlowTool.nodeTooltip.automation', 'Automation: {{level}}', {
+            level: data.automationPotential || 'low',
+          })}
         >
           A
         </div>
@@ -423,30 +425,46 @@ export const FlowNodeComponent: React.FC<NodeProps> = ({ id, data, selected }) =
           <div className="bg-c-text text-c-bg rounded-lg px-2.5 py-1.5 shadow-lg text-[9px] max-w-[200px] whitespace-normal">
             {data?.owner && (
               <div>
-                <span className="font-bold">Owner:</span> {data.owner}
+                <span className="font-bold">
+                  {t('myWorkIdeas.processFlowTool.nodeTooltip.owner', 'Owner:')}
+                </span>{' '}
+                {data.owner}
               </div>
             )}
             {data?.duration && (
               <div>
-                <span className="font-bold">Duration:</span> {data.duration}
+                <span className="font-bold">
+                  {t('myWorkIdeas.processFlowTool.nodeTooltip.duration', 'Duration:')}
+                </span>{' '}
+                {data.duration}
                 {data.durationUnit || 'h'}
               </div>
             )}
             {data?.cost && (
               <div>
-                <span className="font-bold">Cost:</span> ${data.cost}
+                <span className="font-bold">
+                  {t('myWorkIdeas.processFlowTool.nodeTooltip.cost', 'Cost:')}
+                </span>{' '}
+                ${data.cost}
               </div>
             )}
             {data?.status && data.status !== 'todo' && (
               <div>
-                <span className="font-bold">Status:</span> {data.status.replace('_', ' ')}
+                <span className="font-bold">
+                  {t('myWorkIdeas.processFlowTool.nodeTooltip.status', 'Status:')}
+                </span>{' '}
+                {data.status.replace('_', ' ')}
               </div>
             )}
             {data?.description && (
               <div className="mt-0.5 opacity-80 line-clamp-2">{data.description}</div>
             )}
             {hasAttachments && (
-              <div className="mt-0.5 opacity-60">{data.attachments.length} attachment(s)</div>
+              <div className="mt-0.5 opacity-60">
+                {t('myWorkIdeas.processFlowTool.nodeTooltip.attachmentCount', {
+                  count: data.attachments.length,
+                })}
+              </div>
             )}
           </div>
         </div>

@@ -405,10 +405,18 @@ function CreateModelWizard({
                         setWiz((p) => ({ ...p, kpis }));
                       }}
                     >
-                      <option value="field_sum">SUM</option>
-                      <option value="field_avg">AVG</option>
-                      <option value="field_count">COUNT</option>
-                      <option value="expression">Expression</option>
+                      <option value="field_sum">
+                        {t('myWorkTable.governedModels.formulaSum', 'SUM')}
+                      </option>
+                      <option value="field_avg">
+                        {t('myWorkTable.governedModels.formulaAvg', 'AVG')}
+                      </option>
+                      <option value="field_count">
+                        {t('myWorkTable.governedModels.formulaCount', 'COUNT')}
+                      </option>
+                      <option value="expression">
+                        {t('myWorkTable.governedModels.formulaExpression', 'Expression')}
+                      </option>
                     </select>
                     <input
                       className={inputCls}
