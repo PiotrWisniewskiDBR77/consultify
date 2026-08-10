@@ -170,7 +170,53 @@ correction).
 | Command/query/API | `GET/POST .../key-results/:id/check-ins` | `GET .../sets/:id` (agregacja 4 wymiarów) | wewnętrzny — typed optional reference, NIE strukturalny odczyt | MyWork completion handler → `POST .../check-ins` |
 | Schema/migration/constraint | `okr_vnext_checkin_occurrences`, `okr_vnext_checkins` | `okr_vnext_sets.attention_state` osobna kolumna | **BRAK FK z `okr_vnext_*` do `kpi_*`** | MyWork item (`reference_type/reference_id`) |
 | Roles/visibility | KR Owner, Manager | wszystkie autoryzowane wg visibility Set | KR Owner (widzi sugestię, nie źródło KPI) | KR Owner |
-| Status | NOT_IMPLEMENTED | NOT_IMPLEMENTED | NOT_IMPLEMENTED | NOT_IMPLEMENTED |
+| Status | IMPLEMENTED | IMPLEMENTED | IMPLEMENTED | IMPLEMENTED |
+
+**IMPLEMENTED 2026-08-10** (agent tej sesji, EXECUTION_LEDGER.md §44). Zbudowane
+wg `OKR_E004_DESIGN.md` §6-§11, ratyfikowane przez blok §-IO Integration
+Owner rulings. IO-1 re-verification na w pełni wylądowanym E001/E002/E003
+(design pisany zanim E003 wylądował) — jedna nazwa kolumny dopasowana do
+lądowanej konwencji E003 (`confidence`/`confidence_numeric_value`, nie
+draftu `confidence_label`/`confidence_numeric`). Migracja
+`server/migrations/20260825_rvn_okr_checkin.sql` (przemianowana z
+kolidującej `20260824_...`) — jedna tabela `okr_vnext_checkins`, zero
+ALTER na `okr_vnext_checkin_occurrences` (E001 P11) i zero ALTER na
+`okr_vnext_sets` (E002's 5 zarezerwowanych kolumn) — dotrzymana obietnica
+obu poprzednich epików. Kompozytowy `UNIQUE(key_result_id,
+cadence_occurrence_id) WHERE correction_of_checkin_id IS NULL` — design's
+własna "landmine" (occurrence jest Cycle-scoped, dzielony przez KR-e).
+`recordCheckIn`/`correctCheckIn` reużywają E003's `recomputeObjectiveRollup`/
+`resolveOkrCyclePinnedPolicySnapshot`/`calculateKeyResultProgress`
+bezpośrednio (nie reimplementują) — `okrSetRollupCalculator.ts`'s
+`computeSetRollup` reużywa E003's Objective-rollup silnik jeden poziom
+wyżej. Znaleziona i naprawiona realna luka w `platform/obligations.ts::
+completeObligation` (brak filtra `cadence_occurrence_id` — jeden
+check-in zamykał WSZYSTKIE otwarte obligation KR-u, nie tylko bieżące
+okno) — addytywny opcjonalny parametr, dowiedziony testem. `attention_state`
+ograniczone do `'none'`/`'watch'` (IO-2/IO-5 — brak progu polityki,
+`'action_required'`/`'escalated'` to nazwana otwarta luka, nie cicha
+degradacja). AC-012 dowiedzione dwuwarstwowo (statyczny comment-stripped
+import-check + behawioralny) — naprawiło fałszywy pozytyw w
+pre-istniejącym `okrD09ZeroFkIsolation.test.ts` (E008) dodaniem tego
+samego wzorca wyjątku co `okrLegacyArchiveRepository.ts`. Brak
+auto-zapisu do autorytatywnego `status` KR-u (otwarte pytanie #4 designu,
+restated, nie ciche) — `system_suggested_status` wypełniane wyłącznie dla
+definicyjnie wymuszonego przypadku `binary`. Brak self-verification-denial
+(D12 — żaden AC nie używa słowa "verifier"). **61 nowych testów** (16
+pure rollup + 7 AC-012 + 5 append-only/idempotency + 7 rollup write-through
++ 4 visibility-join + 5 scheduler + 17 route-contract), plus 2
+pre-existing testy zaktualizowane dla addytywnych zmian tego epiku. Pełna
+suita OKR (26 plików/223 testy) i KPI (0 fail) PASS, zero regresji w 20
+pre-existing plikach OKR; ROI ma te same 33 pre-existing failures w 18
+plikach co §37/§43 (`initiatives_organization_id_fkey`, zero plików ROI
+dotkniętych tą sesją). `tsc --noEmit` czysty.
+
+**Nadal otwarte, restated explicite (design §14, nie ciche)**: (1)
+`attention_state`'s `'action_required'`/`'escalated'` progi — brak pola
+polityki, Founder decyzja potrzebna; (2) auto-zapis `status` KR-u vs tylko
+doradczy `system_suggested_status` — nierozstrzygnięte żadnym AC; (3)
+granica `support_requested`/`blocker` → OKR-E006 — zapisane na wierszu
+checkin-u, zakładane że E006 czyta bezpośrednio, nigdy niepotwierdzone.
 
 ### OKR-E005 Alignment
 

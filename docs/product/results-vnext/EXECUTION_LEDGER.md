@@ -4268,3 +4268,251 @@ progi polityki — żadna z 5 ACs epiku nie wspomina `status`, automatyczna
 sugestia to najpewniej terytorium OKR-E004 (`system_suggested_status` w
 planowym `OKRCheckIn` YAML).
 
+---
+
+## 44. OKR-E004 Check-ins — implementacja + odbiór (2026-08-10)
+
+Czwarty epik domeny OKR, pierwszy piszący WSTECZ do treści zbudowanej
+przez E003 — check-in to jedyny mechanizm w całej domenie, który realnie
+PORUSZA `current_value`/`progress`/`confidence` na Key Result i
+`overall_progress`/`overall_confidence`/`attention_state`/`last_checkin_at`/
+`next_checkin_due_at` na Set. Zbudowane wg `OKR_E004_DESIGN.md` §6-§11,
+ratyfikowane przez blok §-IO (Integration Owner rulings) na czele
+dokumentu — dokument sam stwierdza, że ten blok jest wiążący i nadpisuje
+sprzeczne fragmenty draftu poniżej niego.
+
+**IO-1 re-verification (obowiązkowy pierwszy krok)**: design E004 był
+pisany W CZASIE gdy E003 jeszcze nie lądował — draft explicite oznaczał
+FK targets/sygnaturę silnika progresu/kształt `generateCadenceOccurrences`
+jako "best-effort projections", największe ryzyko całego dokumentu. Do
+czasu implementacji E001/E002/E003 WSZYSTKIE wylądowały w tym worktree.
+Wynik re-weryfikacji na żywym kodzie, nie na deklaracji designu:
+- `okr_vnext_key_results`/`okr_vnext_objectives` (migracja
+  `20260824_rvn_okr_objective_key_result.sql`) — kolumny/typy zgodne z
+  projekcją designu, z JEDNĄ realną różnicą: landed schema używa
+  `confidence`/`confidence_numeric_value` (nie `confidence_label`/
+  `confidence_numeric` jak proponował draft) — nazwy kolumn checkin-a
+  dopasowane do lądowanej konwencji E003 zamiast do słownictwa draftu,
+  bo to jest dokładnie kolumna docelowa write-through (D6).
+- `okrProgressEngine.ts::calculateKeyResultProgress`/
+  `calculateObjectiveProgressRollup`/`calculateObjectiveConfidenceRollup` —
+  realny, czysty, bez-DB eksport potwierdzony bezpośrednim odczytem. Ten
+  epik REUŻYWA obie funkcje rollup Objective-owego bezpośrednio dla
+  własnego Set-owego rollupu (`okrSetRollupCalculator.ts`'s
+  `computeSetRollup`), traktując Objectives jak jeden poziom wyżej "KR-e"
+  — zero duplikacji formuły equal/weighted-average/lowest_kr.
+- `okrObjectiveCommands.ts::recomputeObjectiveRollup`/
+  `resolveOkrCyclePinnedPolicySnapshot` — oba REUŻYTE bezpośrednio przez
+  `recordCheckIn`/`correctCheckIn` (nie reimplementowane) — gwarantuje, że
+  ten epik nigdy nie rozjedzie się z semantyką rollupu E003.
+- `okrCycleScheduler.ts::generateCadenceOccurrences` zwracał TYLKO
+  `{created, skippedExisting}` — dokładnie luka, którą draft's open
+  question #8 przewidział. Rozwiązane addytywną zmianą (IO-6): nowe pole
+  `createdOccurrenceIds: string[]`, wstecznie kompatybilne (żaden
+  istniejący caller go nie czyta), własny commit, `okrCycleScheduler.realdb.test.ts`'s
+  jeden test z `toEqual` na pełnym kształcie zaktualizowany.
+
+**Druga realna luka znaleziona podczas implementacji (nie w designie)**:
+`platform/obligations.ts::completeObligation`'s `UPDATE ... WHERE
+organization_id=$1 AND reference_type=$2 AND reference_id=$3 AND
+obligation_type=$4 AND status='open'` nie filtrował po
+`cadence_occurrence_id` — dla KR z WIĘCEJ NIŻ jednym otwartym
+`check_in` obligation naraz (przegapione okno + nowe okno), jeden
+`recordCheckIn` zamykał WSZYSTKIE pasujące wiersze, nie tylko to jedno
+okno. Naprawione addytywnym opcjonalnym parametrem `cadenceOccurrenceId`
+(własny commit, IO-6) — dowiedzione bezpośrednio testem w
+`okrCheckInRollup.realdb.test.ts`: dwa ręcznie zaseedowane otwarte
+obligation dla TEGO SAMEGO KR na RÓŻNYCH oknach, `recordCheckIn` dla okna
+A zamyka WYŁĄCZNIE okno A, okno B zostaje `open`.
+
+**Schema** (`server/migrations/20260825_rvn_okr_checkin.sql` — draft
+proponował nazwę `20260824_...` co KOLIDUJE z faktycznie wylądowanym
+plikiem E003 o tej samej dacie; przemianowane na kolejną wolną datę,
+zgodnie z własną instrukcją draftu "verify no collision"). Jedna nowa
+tabela `okr_vnext_checkins`, czysto addytywna — **zero ALTER** na
+`okr_vnext_checkin_occurrences` (dotrzymana obietnica E001 Decision P11:
+"adds its own okr_vnext_checkins table with a real FK to this one — no
+ALTER on this table required later") i **zero ALTER** na
+`okr_vnext_sets` (E002 zarezerwowało 5 kolumn `overall_progress`/
+`overall_confidence`/`attention_state`/`last_checkin_at`/
+`next_checkin_due_at` explicite dla E003/E004 — potwierdzone verbatim w
+`20260823_rvn_okr_set.sql`, ten epik jest dosłownie wypłatą tej dyscypliny
+"reserve now, no ALTER later"). Kompozytowy unique index `UNIQUE
+(key_result_id, cadence_occurrence_id) WHERE correction_of_checkin_id IS
+NULL` — D2/D3, design's własna "landmine": `okr_vnext_checkin_occurrences`
+jest scoped na Cycle (jeden wiersz per okno, DZIELONY przez wszystkie KR
+w Cyklu), więc idempotencja SAMEGO `cadence_occurrence_id` dałaby
+fałszywy negatyw (jeden KR blokowałby check-in innego KR w tym samym
+oknie) — kompozyt jest jedynym poprawnym kluczem. `REVOKE UPDATE, DELETE
+... FROM PUBLIC` (append-only, ten sam disclaimer co `rvn_kpi_measurements`/
+`rvn_roi_actual_entries` o superuser bypass).
+
+**Command layer** (`okrCheckInCommands.ts`): `recordCheckIn`/
+`correctCheckIn`, oba przez `executeAtomicCreate` (KPI decision #12 —
+NIGDY `executeAtomicCommand` z CAS na własnym agregacie checkin-u, bo
+checkin nie ma poprzedniego stanu do CAS-owania). D4: drugi `recordCheckIn`
+dla TEGO SAMEGO (KR, occurrence) jest ODRZUCONY 409
+(`OkrCheckInAlreadyExistsForOccurrenceError`, nazywa istniejący
+`checkin_id`), NIGDY po cichu skonwertowany na korektę — SAVEPOINT-wrapped
+INSERT (wzorzec `createOkrSet` verbatim), catch `23505`, `ROLLBACK TO
+SAVEPOINT`, re-SELECT istniejącego wiersza, throw. D6: write-through do
+KR — `SELECT ... FOR UPDATE` (ROI-E004 D6's "pointer-update" shape, nie
+CAS z `expectedVersion` od callera, bo check-in zawsze wygrywa nad tym co
+jest), `calculateKeyResultProgress` w TEJ SAMEJ transakcji, `UPDATE
+okr_vnext_key_results SET current_value/progress/progress_calc_reason/
+out_of_range_distance/confidence/confidence_numeric_value/row_version+1`.
+D8-D10: Set-level rollup, eager, ta sama transakcja —
+`recomputeObjectiveRollup` (REUŻYTE) dla Objective, potem
+`computeSetRollup` (własna, pure) dla Setu, agregując WSZYSTKIE
+non-cancelled Objectives Setu (nie tylko dotknięty). `applySetRollupUpdate`
+eksportowane, dzielone przez `recordCheckIn`/`correctCheckIn` I
+scheduler (`detectAndFlagMissedCheckIns`) — jedna formuła, nie
+duplikat.
+
+**Otwarte pytanie designu #4 rozstrzygnięte konserwatywnie, restated
+explicite (zgodnie z instrukcją zadania — NIE ciche rozstrzygnięcie)**:
+czy check-in ma auto-pisać do autorytatywnego `okr_vnext_key_results.status`,
+czy tylko wypełniać `system_suggested_status` jako doradcze? **Ta
+implementacja NIGDY nie pisze do autorytatywnego `status`** — żaden AC nie
+nazywa tej zdolności (IO-3), a E003's własny closure entry (§43 tego
+dokumentu) już przewidział to pytanie jako terytorium E004.
+`system_suggested_status` na wierszu checkin-u jest wypełniane WYŁĄCZNIE
+dla przypadku definicyjnie wymuszonego przez silnik (geometria `binary`:
+progress 1.0→'achieved', 0.0→'not_achieved') — każda inna geometria
+wymagałaby wynalezionego progu progress→status (IO-5), więc zostaje
+`null`. `owner_declared_status` zapisywane verbatim, też nigdy
+auto-aplikowane do `status`. **To pytanie pozostaje otwarte dla
+Foundera/kolejnej decyzji produktowej.**
+
+**`attention_state` — IO-2 + IO-5 zastosowane bardziej restrykcyjnie niż
+własny draft designu**: draft's własna propozycja `'action_required'`
+wymagała progu wariancji progress-vs-oczekiwana-trajektoria — DWÓCH
+wynalezionych wolnych parametrów (próg I model liniowej oczekiwanej
+trajektorii), których żadne źródło nie precyzuje. Ta implementacja NIE
+próbuje tego wcale: `computeSetRollup` zwraca WYŁĄCZNIE `'none'`/`'watch'`,
+decydowane przez dwa czysto boolowskie, definicyjnie wymuszone fakty (
+istnieje wartość confidence dosłownie równa `'low'`; check-in jest
+dosłownie przeterminowany) — zero progu do strojenia.
+`'action_required'`/`'escalated'` NIGDY nie są zwracane przez tę funkcję
+— `'escalated'` była zawsze zarezerwowana dla akcji człowieka/managera
+(prawdopodobnie OKR-E006), `'action_required'` to NAZWANA, OTWARTA LUKA
+(nie po cichu zdegradowana do `'watch'` i zapomniana) — realna decyzja
+Foundera potrzebna na polu progu w polityce Programu.
+
+**AC-012 (izolujący AC) — `okrCheckInSuggestionService.ts`**: bezpośrednia
+naprawa AS-IS naruszenia D09 (`okrService.ts::getSuggestedValueForKeyResult`
+czyta `kpi_time_series` bezpośrednio i importuje `kpiDefinitionService.js`).
+Dowód DWUWARSTWOWY: (1) statyczny test źródła (comment-stripped) —
+zero importu z `kpiDefinitionService.js`/`resultsVnext/kpi/*`, zero
+`SELECT`/`client.query`/importu `pg` w kodzie (nie w komentarzach — plik
+MUSI dyskutować zakazane nazwy w prozie, to jest cała jego rola); (2)
+behawioralny — czysta funkcja `suggestNextCheckInValue` czyta WYŁĄCZNIE
+`OkrCheckIn[]` podany przez callera, naiwny liniowy trend z ≥2 punktów,
+`no_history` dla <2. **Skutek uboczny**: pre-istniejący test
+`okrD09ZeroFkIsolation.test.ts` (E008, już wylądowany na tej gałęzi) robi
+całoplikowy skan tekstu bez stripowania komentarzy — złapał WŁASNE
+komentarze dokumentacyjne tego pliku jako fałszywy pozytyw. Naprawione
+dodaniem `okrCheckInSuggestionService.ts` do TEGO SAMEGO wzorca
+wyjątku, który test już miał dla `okrLegacyArchiveRepository.ts`
+("legitimately documents these names in prose") — dodany osobny,
+comment-stripped re-check dla nowego pliku, mirror sibling'a.
+
+**Scheduler** (`okrCheckInScheduler.ts`, NIE modyfikuje
+`okrCycleScheduler.ts` poza addytywnym polem opisanym wyżej):
+`generateCadenceOccurrencesAndSeedCheckInObligations` — seeduje
+`check_in` obligation per (KR, nowo-utworzone occurrence), WYŁĄCZNIE dla
+Setów `status='active'` (KR pod jeszcze-nie-aktywnym Setem nie ma ścieżki
+do realnego wypełnienia check-inu — `recordCheckIn`'s własny
+`SET_NOT_ACTIVE` guard by go odrzucił). `detectAndFlagMissedCheckIns` —
+to jest MECHANIZM, który realnie spełnia AC-011's "brak check-in →
+stale/attention, NIGDY syntetyczne 0%" dla Setów bez ŻADNEJ aktywności
+check-in: bez tej funkcji `attention_state` aktualizowałby się WYŁĄCZNIE
+reaktywnie (gdy JAKIŚ check-in się zdarzy na KTÓRYMKOLWIEK KR Setu),
+nigdy niezależnie nie zauważając "całe okno się zamknęło bez niczego".
+Jedna transakcja PER Set (nie jedna gigantyczna per Cykl) — pojedynczy
+Set przegrywający lock-race jest złapany i pominięty, reszta przebiegu
+kontynuuje (ten sam wzorzec co `proposeAndExecuteDueCycleTransitions`).
+Żadna z dwóch funkcji nie jest podpięta pod żywy cron (P10 postawa E001).
+
+**Brak self-verification-denial (D12, świadoma decyzja NIE budowania)**:
+ROI-E004's D10 dodał taki check bo AC-03 explicite nazywa rolę "Actual
+Verifier". Żaden AC OKR-E004 nie używa słowa "verifier" — komórka
+Roles/visibility AC-010 nazywa "KR Owner, Manager", co czyta się jako
+respond/escalate (plan §7.3: "manager responds rather than overwriting
+owner evidence"), nie countersignature. Zastosowanie tej samej metodyki
+analitycznej co ROI-E004 D9/D10 (czytaj dosłowne słowa AC, nie klonuj
+strukturalnie silniejszą postawę siostrzanej domeny) → brak checku.
+
+**Brak wymuszenia własności KR** (`submittedBy` nie musi równać się
+`keyResult.ownerUserId`) — komórka "KR Owner, Manager" w AC traktowana
+jako oczekiwanie UI/UX, nie server-side gate — zgodne z KAŻDĄ inną
+komendą w wylądowanej domenie OKR (`createKeyResult`/`updateKeyResult`/
+`createObjective` żadna nie wymusza "tylko właściciel może wywołać");
+realną bramką w całej domenie jest ABAC przez visibility Setu.
+
+**API** (`okr.routes.ts`, ten sam plik co E001-E003): 4 nowe endpointy —
+`GET/POST .../key-results/:id/check-ins`, `POST .../check-ins/:id/correct`,
+`GET .../key-results/:id/suggested-next-check-in-value`. Ostatni
+odbiega od designu §11's tabeli, która zagnieżdżała suggestion pod
+ISTNIEJĄCYM `:checkinId` — sugestia dla NASTĘPNEGO, jeszcze
+niezłożonego check-inu nie ma realnej zależności od żadnego istniejącego
+wiersza; potraktowane jako prawdopodobny błąd redakcyjny draftu, nie
+ciche przeinterpretowanie (skomentowane inline). Brak `requireAdminWrite`
+— ta sama postawa co routy KeyResult E003.
+
+**Testy — 61 nowych**: 16 (`okrSetRollupCalculator.test.ts`, pure, każda
+kombinacja `objective_rollup_model`/`objective_confidence_model`) + 7
+(`okrCheckInSuggestion.test.ts`, AC-012 statyczny+behawioralny) + 5
+(`okrCheckInAppendOnly.realdb.test.ts`, kompozytowa idempotencja + D4 409
++ append-only chain + NOLOGIN role) + 7 (`okrCheckInRollup.realdb.test.ts`,
+KR/Objective/Set write-through + zero-checkin null-nie-0 + low-confidence
+obligation + `cadenceOccurrenceId` filter fix) + 4
+(`okrCheckInVisibilityJoin.realdb.test.ts`, `::text` cast OPEN_ORG/
+RESTRICTED_ACL/PRIVATE + currentOnly) + 5
+(`okrCheckInScheduler.realdb.test.ts`, seeding idempotency + missed-window
+detection idempotency + active-only) + 17 (route-contract, `okr.routes.test.ts`
+rozszerzony, 91/91 PASS łącznie z 74 pre-existing). Plus 2 pre-existing
+testy zaktualizowane (nie nowa asercja, fixture/exemption update dla
+addytywnych zmian tego epiku): `okrCycleScheduler.realdb.test.ts`'s
+`toEqual` na pełnym kształcie `generateCadenceOccurrences`,
+`okrD09ZeroFkIsolation.test.ts`'s exemption list.
+
+Wszystkie testy PASS na efemerycznym Postgresie 17 (`initdb --locale=C`,
+TCP 127.0.0.1, wolny port, `NODE_ENV=test`). `npx tsc --noEmit`
+(`NODE_OPTIONS=--max-old-space-size=8192`) czysty — 0 błędów, zweryfikowany
+dwukrotnie (po command layer + routes, i po dodaniu wszystkich testów).
+
+**Weryfikacja before/after pełnych suit**: `tests/resultsVnext/okr` — PRZED
+tym epikiem 20 plików (niezmienione, wszystkie nadal PASS), PO tym epiku
+26 plików/223 testy, **0 fail, 0 regresji** w żadnym z 20 pre-existing
+plików. `tests/resultsVnext/kpi` — 0 fail (pełna suita zielona,
+niedotknięta tym epikiem). `tests/resultsVnext/roi` — **33 testy failują w
+18 plikach**, IDENTYCZNY pre-existing root cause już udokumentowany w §37
+i ponownie w §43: `initiatives_organization_id_fkey` — fixture'y ROI
+nigdy nie wstawiają swojego `ORG_ID` do `organizations` przed insertem do
+`initiatives`. Ta sesja nie dotknęła ŻADNEGO pliku w
+`server/src/services/resultsVnext/roi/` ani `tests/resultsVnext/roi/` —
+przyczynowość wykluczona strukturalnie (grep potwierdza zero importu
+`okr/*` w jakimkolwiek pliku ROI), nie tylko zaobserwowana zerowym diffem.
+`server/src/routes/resultsVnext/__tests__/okr.routes.test.ts` — 91/91 PASS
+(17 nowych, 74 pre-existing nietknięte).
+
+**Nadal otwarte, restated explicite (design §14, NIE ciche)**:
+1. `attention_state`'s heuristic `'action_required'`/`'escalated'` progi
+   (IO-2/IO-5) — brak pola polityki na `okr_vnext_programs`, brak
+   wynalezionego progu; obecnie funkcja NIGDY nie zwraca tych dwóch
+   wartości. Realna decyzja Foundera potrzebna: czy nowe nullable pole
+   polityki (koszt: ALTER na być może już zamieszkanej tabeli), czy
+   hardcoded fallback dla MVP z polem zarezerwowanym na później.
+2. Czy check-in ma auto-pisać `okr_vnext_key_results.status`
+   (autorytatywny), czy tylko `system_suggested_status` (doradczy,
+   obecny wybór tej implementacji)? Żaden AC nie rozstrzyga — design's
+   open question #4, E003's własny closure entry już to przewidział jako
+   terytorium E004, nadal otwarte.
+3. Granica `support_requested`/`blocker` → OKR-E006: ta implementacja
+   zapisuje oba pola WYŁĄCZNIE na wierszu checkin-u (free-text), zakłada,
+   że E006 będzie je czytać bezpośrednio z `okr_vnext_checkins` (bez FK w
+   żadną stronę, zgodnie z D09) — nigdy nie potwierdzone żadnym AC,
+   restated forward zamiast cicho założone, ten sam wzorzec co OKR-E002
+   D13's `resolveScopeVisibility` gap.
+
