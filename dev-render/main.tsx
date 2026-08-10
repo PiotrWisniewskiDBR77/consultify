@@ -256,6 +256,9 @@ const ResultsVNextKpiRegistryScreen = React.lazy(
 const ResultsVNextRoiRegistryScreen = React.lazy(
   () => import('./screens/results-vnext-roi-registry')
 );
+const ResultsVNextOkrRegistryScreen = React.lazy(
+  () => import('./screens/results-vnext-okr-registry')
+);
 
 const SCREENS: Record<string, { label: string; render: () => React.ReactElement }> = {
   'results-vnext-registry-shell': {
@@ -272,6 +275,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'RN-G2 P2 — REALNY rejestr ROI (roiRegistryPresenters + ResultsVNextRegistryShell): All cases + Benefits realization, honest NPV/IRR/payback, lock badges. &tab=all|benefits &state=ready|loading|empty|error &selected=<caseId|none> &calc=loading|ready',
     render: () => <ResultsVNextRoiRegistryScreen />,
+  },
+  'results-vnext-okr-registry': {
+    label:
+      'RN-G2 P3 #23 — REALNY rejestr OKR (okrRegistryPresenters + ResultsVNextRegistryShell): Organization/My/Company tabs, honest progress/confidence, lock badges (draft-editable vs locked). &tab=org|my|company &state=ready|loading|empty|error &selected=<setId|none>',
+    render: () => <ResultsVNextOkrRegistryScreen />,
   },
   'mw-007-calendar-narrow-viewport': {
     label:

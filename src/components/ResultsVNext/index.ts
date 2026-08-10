@@ -30,6 +30,12 @@ export { ResultsRoiRegistryPage } from './ResultsRoiRegistryPage';
 // value pure helpers), `roiRegistryPresenters.tsx` (StandardTable/Preview
 // builders shared by the live Hub and the dev-render QA harness).
 export { ResultsRoiHub } from './roi/ResultsRoiHub';
+// RN-G2 P3 #23 — OKR vertical (Sets registry list + preview). See `okr/`
+// subfolder: `okrApi.ts` (fetch client), `okrRegistryMappers.ts` (status/
+// lock/honest-value pure helpers), `okrRegistryPresenters.tsx`
+// (StandardTable/Preview builders shared by the live Hub and the dev-render
+// QA harness). Mirrors the `roi/` subfolder exactly.
+export { ResultsOkrHub } from './okr/ResultsOkrHub';
 export {
   isResultsVNextFlagEnabled,
   RESULTS_VNEXT_FLAG_KEYS,
