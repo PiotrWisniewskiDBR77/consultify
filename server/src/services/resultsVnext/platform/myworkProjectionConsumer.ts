@@ -137,9 +137,13 @@ async function upsertCanonicalObjectState(
  * Insert one `notifications` row for the real, already-shipped
  * `materializeInboxItems()` pull path (`inboxService.ts` reads
  * `WHERE user_id = ? AND COALESCE(read, 0) = 0`) — `read`/`is_read` both left
- * at their unread defaults (0/false) so the row is picked up immediately.
- * `organization_id`/`entity_type`/`entity_id` are set so a later
- * `kpi.deviation_closed` can find and resolve this exact row (IO-E).
+ * at their unread defaults (`0`) so the row is picked up immediately. Both
+ * columns are `INTEGER` on the real, fully-migrated table (verified against
+ * a real Postgres — `000_initdb_core_tables.sql`'s own `BOOLEAN` declaration
+ * for `is_read` is superseded by a later migration; there is no boolean
+ * notifications column at all), so this writes `0`/`1`, never JS
+ * `true`/`false`. `organization_id`/`entity_type`/`entity_id` are set so a
+ * later `kpi.deviation_closed` can find and resolve this exact row (IO-E).
  */
 async function insertNotification(
   client: PoolClient,
@@ -159,7 +163,7 @@ async function insertNotification(
        id, user_id, organization_id, type, title, message, priority,
        entity_type, entity_id, read, is_read, created_at
      ) VALUES (
-       gen_random_uuid()::text, $1, $2, $3, $4, $5, $6, $7, $8, 0, false, now()
+       gen_random_uuid()::text, $1, $2, $3, $4, $5, $6, $7, $8, 0, 0, now()
      )`,
     [
       params.userId,
@@ -188,7 +192,7 @@ async function resolveStaleNotifications(
 ): Promise<void> {
   await client.query(
     `UPDATE notifications
-        SET read = 1, is_read = true, read_at = now()
+        SET read = 1, is_read = 1, read_at = now()
       WHERE organization_id = $1 AND entity_type = $2 AND entity_id = $3
         AND COALESCE(read, 0) = 0`,
     [params.organizationId, params.entityType, params.entityId]
