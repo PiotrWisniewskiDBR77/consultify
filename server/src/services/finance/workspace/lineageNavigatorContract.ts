@@ -19,6 +19,26 @@
  *   4. the FULL GRAPH declared explicitly as an AUXILIARY view, off by default
  *      ("pełny graf tylko jako widok pomocniczy").
  *
+ * Five things were added after the first round of this contract was reviewed,
+ * each with its own section below and its own rationale in place:
+ *
+ *   - TENANT ISOLATION enforced HERE, not only in the SQL one layer down
+ *     (`organization_id` is a required parameter of every entry point, and
+ *     foreign edges/versions are refused AND reported);
+ *   - TERMINAL LIFECYCLE STATES (archived / superseded / invalidated): badge,
+ *     dimming, a panel filter, and — the real defect — no `+ Nowy` from a
+ *     closed version;
+ *   - CYCLES REPORTED rather than silently ending a walk (the DB trigger
+ *     stays the enforcement);
+ *   - INDIRECT ANCESTORS, mirroring indirect descendants, so the upstream
+ *     routes the single-parent trail cannot show are not lost;
+ *   - the RELATED DRAWER plus the navigation stack / restore point that
+ *     brings filters, scroll and the selected row back after a jump.
+ *
+ * NOT IN SCOPE HERE: propagating staleness when a source changes. That is
+ * `lineageFreshnessService` (its own service, its own Postgres-backed tests);
+ * this module only DISPLAYS the freshness it is handed.
+ *
  * SCOPE: pure logic plus one injectable port. No React, no DOM. The DB access
  * is reached only through `LineageServicePort`, so every function here is
  * testable against mocked `lineageService` results with no database — see the
@@ -35,10 +55,17 @@
 
 import {
   FinanceArtifactTypeValues,
+  type ArtifactRef,
   type FinanceArtifactType,
 } from '../../../types/finance/ArtifactRef.js';
 import type { FinanceArtifactFreshness } from '../../../types/finance/financeValueSemantics.js';
-import type { BusinessVersionStatus } from '../canonical/lifecycleService.js';
+import type {
+  FinanceGridFilterState,
+  FinanceGridScrollState,
+  FinanceGridSelectionState,
+  FinanceWorkspaceState,
+} from '../../../types/finance/WorkspaceState.js';
+import { TERMINAL_STATUSES, type BusinessVersionStatus } from '../canonical/lifecycleService.js';
 import type { LineageEdgeRow, LineageEdgeType } from '../canonical/lineageService.js';
 import type { WorkspaceBarLabel } from './workspaceBarContract.js';
 
@@ -87,10 +114,23 @@ export const LINEAGE_EDGE_TOPOLOGY: readonly LineageEdgeTopology[] = [
  * (BASELINE_MODEL offers both PREDICTION_SCENARIO and VALUATION_CASE), and
  * Analysis is a parallel child of Statement Pack rather than a mandatory link
  * in a chain.
+ *
+ * `sourceStatus` is REQUIRED, and a terminal one (ARCHIVED / SUPERSEDED /
+ * INVALIDATED — `lifecycleService.TERMINAL_STATUSES`) yields NOTHING. Until
+ * this parameter existed the panel cheerfully offered `+ Nowy` on an archived
+ * or invalidated node: the type topology allowed it, and nobody asked about
+ * the lifecycle. Building a new valuation on an invalidated model is exactly
+ * the provenance error this whole module is meant to prevent, and the failure
+ * would have surfaced only as a write rejection deep in
+ * `artifactVersionService` — after the user had already filled the form.
+ * A required parameter (not an optional one defaulting to "allowed") is the
+ * point: every call site must state the status it is deciding on.
  */
 export function allowedDownstreamCreations(
-  sourceType: FinanceArtifactType
+  sourceType: FinanceArtifactType,
+  sourceStatus: BusinessVersionStatus
 ): readonly FinanceArtifactType[] {
+  if (isTerminalVersionStatus(sourceStatus)) return [];
   const sourceRank = lineageStageRank(sourceType);
   const out: FinanceArtifactType[] = [];
   for (const topology of LINEAGE_EDGE_TOPOLOGY) {
@@ -135,6 +175,12 @@ export const LINEAGE_REQUIRED_PARENT_EDGES: Readonly<
  * pure transformation.
  */
 export interface LineageNodeMetadata {
+  /**
+   * The tenant this version belongs to. REQUIRED, and checked on every node the
+   * navigator renders — see the "Tenant isolation" section below for why the
+   * SQL-level filter one layer down was not enough.
+   */
+  organizationId: string;
   versionId: string;
   artifactId: string;
   artifactType: FinanceArtifactType;
@@ -158,16 +204,129 @@ export function lineageNodeDisplayName(metadata: LineageNodeMetadata): string {
 }
 
 // ---------------------------------------------------------------------------
+// Tenant isolation — the navigator's OWN guard, not the SQL layer's.
+// ---------------------------------------------------------------------------
+
+/**
+ * `lineageService.getAncestors`/`getDescendants` already filter on
+ * `organization_id` in SQL and every `LineageEdgeRow` carries the column — but
+ * that was, until this section existed, the ONLY defence. No function in this
+ * module read the field. `loadLineageNavigator` took an `organizationId` purely
+ * to forward it to the port. So the navigator would faithfully render whatever
+ * it was handed:
+ *
+ *   - a caller that merged two edge sets, or a cache keyed on `version_id`
+ *     alone (version ids are UUIDs, so nothing about the KEY says which tenant
+ *     it belongs to);
+ *   - a `LineageMetadataResolver` that reached another tenant's version — the
+ *     resolver is caller-supplied and completely untyped with respect to org;
+ *   - a future batch/preload path that fetches edges without the org predicate.
+ *
+ * Relying on the layer below is exactly the "ochrona, której nie ma" pattern:
+ * the guarantee exists in a place the reader of THIS file cannot see, and
+ * disappears the moment someone assembles the inputs differently. The
+ * navigator therefore re-establishes the boundary itself, on both inputs it
+ * accepts (edges AND resolved metadata), and REPORTS what it dropped instead of
+ * hiding it — a silent filter would turn a tenant-leak bug into a
+ * "mysteriously short trail".
+ *
+ * Defence in depth, not a replacement: the SQL predicate stays authoritative
+ * for what is fetched; this is the presentation layer refusing to render
+ * anything that does not belong to the organization it was asked about.
+ */
+export interface LineageTenantAnomalies {
+  /** Edge ids dropped because `organization_id` did not match — never traversed. */
+  foreignEdgeIds: readonly string[];
+  /** Version ids whose resolved metadata belonged to another organization — never rendered. */
+  foreignVersionIds: readonly string[];
+}
+
+export const EMPTY_TENANT_ANOMALIES: LineageTenantAnomalies = Object.freeze({
+  foreignEdgeIds: Object.freeze([]) as readonly string[],
+  foreignVersionIds: Object.freeze([]) as readonly string[],
+});
+
+export function hasTenantAnomalies(anomalies: LineageTenantAnomalies): boolean {
+  return anomalies.foreignEdgeIds.length > 0 || anomalies.foreignVersionIds.length > 0;
+}
+
+/** Splits an edge set into "this organization's" and "everything else", by id. */
+export function partitionEdgesByOrganization(
+  edges: readonly LineageEdgeRow[],
+  organizationId: string
+): { own: LineageEdgeRow[]; foreignEdgeIds: string[] } {
+  const own: LineageEdgeRow[] = [];
+  const foreignEdgeIds: string[] = [];
+  for (const edge of edges) {
+    if (edge.organization_id === organizationId) own.push(edge);
+    else foreignEdgeIds.push(edge.id);
+  }
+  return { own, foreignEdgeIds };
+}
+
+export interface LineageTenantScopedResolver {
+  /** Same shape as the caller's resolver, but returns `undefined` for a foreign version. */
+  resolve: LineageMetadataResolver;
+  /** Accumulates while the traversal runs; read it after building. */
+  foreignVersionIds: readonly string[];
+  isForeign(versionId: string): boolean;
+}
+
+/**
+ * Wraps a caller-supplied resolver so a version belonging to another
+ * organization can never enter a trail, a panel group, a sibling list or a
+ * `+ Nowy` preselected source. Memoized per version id so the same lookup is
+ * not charged twice and the anomaly is reported once.
+ */
+export function createTenantScopedResolver(
+  resolve: LineageMetadataResolver,
+  organizationId: string
+): LineageTenantScopedResolver {
+  const foreign = new Set<string>();
+  const foreignVersionIds: string[] = [];
+  return {
+    resolve: (versionId: string) => {
+      const metadata = resolve(versionId);
+      if (!metadata) return undefined;
+      if (metadata.organizationId !== organizationId) {
+        if (!foreign.has(versionId)) {
+          foreign.add(versionId);
+          foreignVersionIds.push(versionId);
+        }
+        return undefined;
+      }
+      return metadata;
+    },
+    foreignVersionIds,
+    isForeign: (versionId: string) => foreign.has(versionId),
+  };
+}
+
+// ---------------------------------------------------------------------------
 // Stale badges.
 // ---------------------------------------------------------------------------
 
+/**
+ * Freshness-derived badges PLUS the three terminal lifecycle states.
+ *
+ * The terminal states were missing, and not only cosmetically: `ARCHIVED`,
+ * `SUPERSEDED` and `INVALIDATED` are real `BusinessVersionStatus` values
+ * (`lifecycleService.TERMINAL_STATUSES`) that a lineage node absolutely can be
+ * in — an archived model stays in the DAG forever, because deleting the edge
+ * would falsify the history the trail exists to show. Rendering it exactly like
+ * a live node was the bug: the user could not tell that the "Baseline model v4"
+ * in the trail is one nobody may build on any more.
+ */
 export type LineageStaleBadgeKind =
   | 'SOURCE_CHANGED'
   | 'ASSUMPTIONS_CHANGED'
   | 'DOWNSTREAM_STALE'
   | 'ORPHANED'
   | 'NEVER_COMPUTED'
-  | 'COMPUTE_FAILED';
+  | 'COMPUTE_FAILED'
+  | 'ARCHIVED'
+  | 'SUPERSEDED'
+  | 'INVALIDATED';
 
 export interface LineageStaleBadge {
   kind: LineageStaleBadgeKind;
@@ -206,6 +365,71 @@ const STALE_BADGES: Readonly<Record<LineageStaleBadgeKind, LineageStaleBadge>> =
     kind: 'COMPUTE_FAILED',
     label: { key: 'finance.lineage.badge.computeFailed', pl: 'Błąd przeliczenia' },
     severity: 'error',
+  },
+  ARCHIVED: {
+    kind: 'ARCHIVED',
+    label: { key: 'finance.lineage.badge.archived', pl: 'Zarchiwizowane' },
+    severity: 'info',
+  },
+  SUPERSEDED: {
+    kind: 'SUPERSEDED',
+    label: { key: 'finance.lineage.badge.superseded', pl: 'Zastąpione' },
+    severity: 'info',
+  },
+  INVALIDATED: {
+    kind: 'INVALIDATED',
+    label: { key: 'finance.lineage.badge.invalidated', pl: 'Unieważnione' },
+    severity: 'error',
+  },
+};
+
+// ---------------------------------------------------------------------------
+// Terminal lifecycle states — badge, dimming and the creation block.
+// ---------------------------------------------------------------------------
+
+/** Sourced from `lifecycleService` at RUNTIME (that module is pure, no DB), so the two lists cannot drift. */
+export function isTerminalVersionStatus(status: BusinessVersionStatus): boolean {
+  return TERMINAL_STATUSES.includes(status);
+}
+
+const TERMINAL_STATUS_BADGES: Readonly<Record<string, LineageStaleBadge>> = {
+  ARCHIVED: STALE_BADGES.ARCHIVED,
+  SUPERSEDED: STALE_BADGES.SUPERSEDED,
+  INVALIDATED: STALE_BADGES.INVALIDATED,
+};
+
+/** The lifecycle badge a node carries IN ADDITION to any freshness badge; `null` for live statuses. */
+export function lifecycleBadgeFromStatus(status: BusinessVersionStatus): LineageStaleBadge | null {
+  return TERMINAL_STATUS_BADGES[status] ?? null;
+}
+
+/**
+ * How the Related panel treats terminal (archived/superseded/invalidated)
+ * relatives. The TRAIL never hides them — a chain with a hole in it is a lie
+ * about provenance — it only dims them; the panel is a working list, so hiding
+ * is a legitimate user choice there.
+ */
+export type LineageTerminalVisibility = 'show' | 'dim' | 'hide';
+export const LINEAGE_TERMINAL_VISIBILITY_DEFAULT: LineageTerminalVisibility = 'dim';
+
+export const LINEAGE_TERMINAL_FILTER_LABEL: WorkspaceBarLabel = {
+  key: 'finance.lineage.filter.hideTerminal',
+  pl: 'Ukryj zarchiwizowane i unieważnione',
+};
+
+/** Why the panel offers no `+ Nowy` — the UI must say this, not just render an empty row. */
+export type LineageCreateNewBlockedReason = 'TERMINAL_SOURCE_STATUS' | 'NO_DOWNSTREAM_TYPE';
+
+export const LINEAGE_CREATE_NEW_BLOCKED_LABELS: Readonly<
+  Record<LineageCreateNewBlockedReason, WorkspaceBarLabel>
+> = {
+  TERMINAL_SOURCE_STATUS: {
+    key: 'finance.lineage.createNew.blocked.terminal',
+    pl: 'Ta wersja jest zamknięta — utwórz następnik z aktywnej wersji',
+  },
+  NO_DOWNSTREAM_TYPE: {
+    key: 'finance.lineage.createNew.blocked.noDownstream',
+    pl: 'Brak dozwolonego następnika dla tego typu',
   },
 };
 
@@ -275,6 +499,10 @@ export interface LineageTrailNode {
   /** The edge that leads FROM this node to the next one in the trail; `null` on the focus node. */
   outgoingEdgeType: LineageEdgeType | null;
   staleBadge: LineageStaleBadge | null;
+  /** ARCHIVED / SUPERSEDED / INVALIDATED — orthogonal to freshness, a node can carry both. */
+  stateBadge: LineageStaleBadge | null;
+  /** Terminal nodes stay in the chain (history must not have holes) but render subdued. */
+  isDimmed: boolean;
 }
 
 export interface LineageTrailCollapsed {
@@ -294,6 +522,13 @@ export interface LineageTrail {
   hasAlternatePaths: boolean;
   /** Version ids the resolver could not describe — surfaced instead of silently dropped. */
   unresolvedVersionIds: readonly string[];
+  /** Cross-tenant input the navigator refused to render. Empty on healthy data. */
+  tenant: LineageTenantAnomalies;
+  /**
+   * Version ids at which a cycle closes in the supplied edges. Empty on healthy
+   * data — see `detectCycleVersionIds` for why this is reported and not enforced.
+   */
+  cycleVersionIds: readonly string[];
 }
 
 /** Minimum that still shows root + ellipsis + focus. */
@@ -301,6 +536,8 @@ export const LINEAGE_TRAIL_MIN_NODES = 3;
 export const LINEAGE_TRAIL_DEFAULT_MAX_NODES = 5;
 
 export interface BuildLineageTrailParams {
+  /** REQUIRED tenant scope — every edge and every resolved node is checked against it. */
+  organizationId: string;
   focusVersionId: string;
   /** Whatever `lineageService.getAncestors` returned (flat, de-duplicated, unordered). */
   ancestorEdges: readonly LineageEdgeRow[];
@@ -311,8 +548,14 @@ export interface BuildLineageTrailParams {
 export function buildLineageTrail(params: BuildLineageTrailParams): LineageTrail {
   const maxNodes = Math.max(params.maxNodes ?? LINEAGE_TRAIL_DEFAULT_MAX_NODES, LINEAGE_TRAIL_MIN_NODES);
 
+  const { own: ownEdges, foreignEdgeIds } = partitionEdgesByOrganization(
+    params.ancestorEdges,
+    params.organizationId
+  );
+  const scoped = createTenantScopedResolver(params.resolve, params.organizationId);
+
   const parentsByTarget = new Map<string, LineageEdgeRow[]>();
-  for (const edge of params.ancestorEdges) {
+  for (const edge of ownEdges) {
     if (LINEAGE_SIBLING_EDGE_TYPES.includes(edge.edge_type)) continue;
     const list = parentsByTarget.get(edge.target_version_id);
     if (list) list.push(edge);
@@ -324,6 +567,7 @@ export function buildLineageTrail(params: BuildLineageTrailParams): LineageTrail
   const visited = new Set<string>();
   let hasAlternatePaths = false;
 
+  const cycleVersionIds: string[] = [];
   let currentVersionId: string | null = params.focusVersionId;
   let edgeToChild: LineageEdgeType | null = null;
   while (currentVersionId && !visited.has(currentVersionId)) {
@@ -333,8 +577,22 @@ export function buildLineageTrail(params: BuildLineageTrailParams): LineageTrail
     if (candidates.length > 1) hasAlternatePaths = true;
     const primary = pickPrimaryParent(candidates);
     if (!primary) break;
+    // Stepping onto a node already IN the chain is a loop in the data. It has
+    // to be checked here, on the step, not after the loop: reaching a root and
+    // breaking also leaves `currentVersionId` inside `visited`, and treating
+    // that as a cycle reported every healthy trail's root as corrupt (the
+    // diamond negative control caught exactly that).
+    if (visited.has(primary.source_version_id)) {
+      cycleVersionIds.push(primary.source_version_id);
+      break;
+    }
     edgeToChild = primary.edge_type;
     currentVersionId = primary.source_version_id;
+  }
+  // A cycle off the chosen path is just as corrupt, so the whole reachable
+  // ancestor set is checked too, not only the single primary-parent chain.
+  for (const versionId of detectCycleVersionIds(ownEdges, params.focusVersionId, 'upstream')) {
+    if (!cycleVersionIds.includes(versionId)) cycleVersionIds.push(versionId);
   }
 
   // `chain` is FOCUS → ROOT; the trail reads ROOT → FOCUS.
@@ -342,9 +600,11 @@ export function buildLineageTrail(params: BuildLineageTrailParams): LineageTrail
 
   const nodes: LineageTrailNode[] = [];
   for (const entry of chain) {
-    const metadata = params.resolve(entry.versionId);
+    const metadata = scoped.resolve(entry.versionId);
     if (!metadata) {
-      unresolvedVersionIds.push(entry.versionId);
+      // A foreign node is NOT "unresolved" — it resolved fine and was refused.
+      // Keeping the two apart stops a tenant leak from being read as bad data.
+      if (!scoped.isForeign(entry.versionId)) unresolvedVersionIds.push(entry.versionId);
       continue;
     }
     nodes.push({
@@ -354,6 +614,8 @@ export function buildLineageTrail(params: BuildLineageTrailParams): LineageTrail
       isFocus: entry.versionId === params.focusVersionId,
       outgoingEdgeType: entry.outgoingEdgeType,
       staleBadge: staleBadgeFromFreshness(metadata.freshness),
+      stateBadge: lifecycleBadgeFromStatus(metadata.status),
+      isDimmed: isTerminalVersionStatus(metadata.status),
     });
   }
 
@@ -362,6 +624,8 @@ export function buildLineageTrail(params: BuildLineageTrailParams): LineageTrail
     totalNodeCount: nodes.length,
     hasAlternatePaths,
     unresolvedVersionIds,
+    tenant: { foreignEdgeIds, foreignVersionIds: scoped.foreignVersionIds },
+    cycleVersionIds,
   };
 }
 
@@ -410,6 +674,9 @@ export interface LineageRelatedEntry {
   /** 1 = direct parent/child; >1 = indirect. */
   depth: number;
   staleBadge: LineageStaleBadge | null;
+  /** ARCHIVED / SUPERSEDED / INVALIDATED. */
+  stateBadge: LineageStaleBadge | null;
+  isDimmed: boolean;
 }
 
 export interface LineageRelatedGroup {
@@ -430,6 +697,17 @@ export interface LineageRelatedPanel {
   focus: LineageNodeMetadata;
   /** Direct parents (depth 1 upstream), grouped by artifact type. */
   parents: readonly LineageRelatedGroup[];
+  /**
+   * Indirect ancestors (depth >= 2) — the mirror of `indirectDescendants`.
+   *
+   * Its absence was an asymmetry with a cost: the compact trail deliberately
+   * follows ONE parent per node (`pickPrimaryParent`), so for a node with
+   * several routes upstream every route but the chosen one existed nowhere in
+   * the navigator except the auxiliary full graph — which is off by default.
+   * `hasAlternatePaths` said "there is more to see" and then the panel had
+   * nowhere to see it.
+   */
+  indirectAncestors: readonly LineageRelatedGroup[];
   /** Direct children (depth 1 downstream). */
   children: readonly LineageRelatedGroup[];
   /** Indirect descendants (depth >= 2) — the "pośrednich potomków" of OWN-FIN-022. */
@@ -437,40 +715,107 @@ export interface LineageRelatedPanel {
   /** Other versions/variants of the SAME artifact, plus explicit variant edges. */
   siblings: readonly LineageRelatedEntry[];
   createNew: readonly LineageCreateNewAction[];
-  /** Focus-node badges: freshness-derived, plus `orphaned` and `downstream stale` which need the graph to compute. */
+  /** Why `createNew` is empty — so the UI can explain instead of showing a blank area. `null` when actions exist. */
+  createNewBlockedReason: LineageCreateNewBlockedReason | null;
+  createNewBlockedLabel: WorkspaceBarLabel | null;
+  /** Focus-node badges: freshness-derived, `orphaned`, `downstream stale`, plus the terminal lifecycle badge. */
   focusBadges: readonly LineageStaleBadge[];
+  /** Which terminal-visibility mode produced these lists. */
+  terminalVisibility: LineageTerminalVisibility;
+  /** How many relatives the `hide` mode removed — a filter that hides silently is a filter that lies. */
+  hiddenTerminalCount: number;
+  /** Cross-tenant input the navigator refused to render. Empty on healthy data. */
+  tenant: LineageTenantAnomalies;
+  /** Version ids where a cycle closes, upstream or downstream. Empty on healthy data. */
+  cycleVersionIds: readonly string[];
 }
 
 export interface BuildRelatedPanelParams {
+  /** REQUIRED tenant scope — every edge and every resolved node is checked against it. */
+  organizationId: string;
   focusVersionId: string;
   ancestorEdges: readonly LineageEdgeRow[];
   descendantEdges: readonly LineageEdgeRow[];
   resolve: LineageMetadataResolver;
   /** Other business versions of the same artifact, resolved by the caller (`artifactVersionService`, not lineage). */
   siblingVersionIds?: readonly string[];
+  /** Default `dim`: terminal relatives stay listed but subdued. `hide` removes them and counts them. */
+  terminalVisibility?: LineageTerminalVisibility;
 }
 
 export function buildRelatedPanel(params: BuildRelatedPanelParams): LineageRelatedPanel | null {
-  const focus = params.resolve(params.focusVersionId);
+  const ancestors = partitionEdgesByOrganization(params.ancestorEdges, params.organizationId);
+  const descendants = partitionEdgesByOrganization(params.descendantEdges, params.organizationId);
+  const foreignEdgeIds = [...ancestors.foreignEdgeIds, ...descendants.foreignEdgeIds];
+  const scoped = createTenantScopedResolver(params.resolve, params.organizationId);
+
+  // A focus node from another tenant is not a degraded panel, it is a refusal:
+  // there is nothing legitimate to show and no partial answer worth rendering.
+  const focus = scoped.resolve(params.focusVersionId);
   if (!focus) return null;
 
-  const incoming = params.ancestorEdges.filter((e) => e.target_version_id === params.focusVersionId);
+  const ancestorEdges = ancestors.own;
+  const descendantEdges = descendants.own;
+
+  const incoming = ancestorEdges.filter((e) => e.target_version_id === params.focusVersionId);
 
   const parentEntries = toEntries(
     incoming.filter((e) => !LINEAGE_SIBLING_EDGE_TYPES.includes(e.edge_type)),
     (edge) => edge.source_version_id,
     1,
-    params.resolve
+    scoped.resolve
   );
 
-  const descendantDepths = computeDepths(params.descendantEdges, params.focusVersionId, 'downstream');
-  const directChildEdges = params.descendantEdges.filter(
+  const directParentIds = new Set(
+    incoming
+      .filter((e) => !LINEAGE_SIBLING_EDGE_TYPES.includes(e.edge_type))
+      .map((e) => e.source_version_id)
+  );
+  const ancestorDepths = computeDepths({
+    edges: ancestorEdges,
+    rootVersionId: params.focusVersionId,
+    direction: 'upstream',
+    organizationId: params.organizationId,
+  }).depths;
+  const indirectAncestorEntries = dedupeByVersionId(
+    ancestorEdges
+      .filter(
+        (e) =>
+          !LINEAGE_SIBLING_EDGE_TYPES.includes(e.edge_type) &&
+          e.source_version_id !== params.focusVersionId &&
+          !directParentIds.has(e.source_version_id) &&
+          // Reachability is checked explicitly, not assumed from "it was in the
+          // edge set": a caller may hand us a wider slice of the graph (a cached
+          // page, one query serving several focus nodes), and a node that is not
+          // upstream of the focus is not its ancestor — it could even be a
+          // DESCENDANT, which is how this filter first went wrong.
+          ancestorDepths.has(e.source_version_id)
+      )
+      .map((edge) => {
+        const metadata = scoped.resolve(edge.source_version_id);
+        if (!metadata) return null;
+        return relatedEntry(metadata, edge.edge_type, ancestorDepths.get(edge.source_version_id) ?? 2);
+      })
+  );
+
+  const descendantComputation = computeDepths({
+    edges: descendantEdges,
+    rootVersionId: params.focusVersionId,
+    direction: 'downstream',
+    organizationId: params.organizationId,
+  });
+  const descendantDepths = descendantComputation.depths;
+  const cycleVersionIds = [...descendantComputation.cycleVersionIds];
+  for (const versionId of detectCycleVersionIds(ancestorEdges, params.focusVersionId, 'upstream')) {
+    if (!cycleVersionIds.includes(versionId)) cycleVersionIds.push(versionId);
+  }
+  const directChildEdges = descendantEdges.filter(
     (e) => e.source_version_id === params.focusVersionId && !LINEAGE_SIBLING_EDGE_TYPES.includes(e.edge_type)
   );
-  const childEntries = toEntries(directChildEdges, (edge) => edge.target_version_id, 1, params.resolve);
+  const childEntries = toEntries(directChildEdges, (edge) => edge.target_version_id, 1, scoped.resolve);
 
   const directChildIds = new Set(directChildEdges.map((e) => e.target_version_id));
-  const indirectEdges = params.descendantEdges.filter(
+  const indirectEdges = descendantEdges.filter(
     (e) =>
       !LINEAGE_SIBLING_EDGE_TYPES.includes(e.edge_type) &&
       e.target_version_id !== params.focusVersionId &&
@@ -478,19 +823,13 @@ export function buildRelatedPanel(params: BuildRelatedPanelParams): LineageRelat
   );
   const indirectEntries = dedupeByVersionId(
     indirectEdges.map((edge) => {
-      const metadata = params.resolve(edge.target_version_id);
+      const metadata = scoped.resolve(edge.target_version_id);
       if (!metadata) return null;
-      return {
-        metadata,
-        displayName: lineageNodeDisplayName(metadata),
-        edgeType: edge.edge_type,
-        depth: descendantDepths.get(edge.target_version_id) ?? 2,
-        staleBadge: staleBadgeFromFreshness(metadata.freshness),
-      } satisfies LineageRelatedEntry;
+      return relatedEntry(metadata, edge.edge_type, descendantDepths.get(edge.target_version_id) ?? 2);
     })
   );
 
-  const variantEdges = [...params.ancestorEdges, ...params.descendantEdges].filter((e) =>
+  const variantEdges = [...ancestorEdges, ...descendantEdges].filter((e) =>
     LINEAGE_SIBLING_EDGE_TYPES.includes(e.edge_type)
   );
   const siblingIds = new Set<string>(params.siblingVersionIds ?? []);
@@ -501,34 +840,37 @@ export function buildRelatedPanel(params: BuildRelatedPanelParams): LineageRelat
   siblingIds.delete(params.focusVersionId);
   const siblings = dedupeByVersionId(
     [...siblingIds].map((versionId) => {
-      const metadata = params.resolve(versionId);
+      const metadata = scoped.resolve(versionId);
       if (!metadata) return null;
-      return {
-        metadata,
-        displayName: lineageNodeDisplayName(metadata),
-        edgeType: 'VERSION_TO_MANAGEMENT_ADJUSTED_VARIANT' as LineageEdgeType,
-        depth: 0,
-        staleBadge: staleBadgeFromFreshness(metadata.freshness),
-      } satisfies LineageRelatedEntry;
+      return relatedEntry(metadata, 'VERSION_TO_MANAGEMENT_ADJUSTED_VARIANT' as LineageEdgeType, 0);
     })
   );
 
   const focusBadges: LineageStaleBadge[] = [];
   const ownBadge = staleBadgeFromFreshness(focus.freshness);
   if (ownBadge) focusBadges.push(ownBadge);
+  const focusStateBadge = lifecycleBadgeFromStatus(focus.status);
+  if (focusStateBadge) focusBadges.push(focusStateBadge);
   if (isOrphaned(focus.artifactType, incoming)) focusBadges.push(orphanBadge());
+  // Staleness of a terminal descendant is not actionable — nobody will recompute
+  // an archived version — so it must not raise "potomkowie nieaktualni" on a
+  // node whose only stale children are closed.
   const anyDescendantStale = [...childEntries, ...indirectEntries].some(
-    (entry) => entry.metadata.freshness !== 'CURRENT'
+    (entry) => entry.metadata.freshness !== 'CURRENT' && !entry.isDimmed
   );
   if (anyDescendantStale) focusBadges.push(downstreamStaleBadge());
 
-  return {
-    focus,
-    parents: groupByArtifactType(parentEntries),
-    children: groupByArtifactType(childEntries),
-    indirectDescendants: groupByArtifactType(indirectEntries),
-    siblings,
-    createNew: allowedDownstreamCreations(focus.artifactType).map((targetArtifactType) => ({
+  const terminalVisibility = params.terminalVisibility ?? LINEAGE_TERMINAL_VISIBILITY_DEFAULT;
+  let hiddenTerminalCount = 0;
+  const applyTerminalFilter = (entries: readonly LineageRelatedEntry[]): LineageRelatedEntry[] => {
+    if (terminalVisibility !== 'hide') return [...entries];
+    const kept = entries.filter((entry) => !entry.isDimmed);
+    hiddenTerminalCount += entries.length - kept.length;
+    return kept;
+  };
+
+  const createNew = allowedDownstreamCreations(focus.artifactType, focus.status).map(
+    (targetArtifactType) => ({
       targetArtifactType,
       label: {
         key: `finance.lineage.createNew.${targetArtifactType}`,
@@ -539,8 +881,32 @@ export function buildRelatedPanel(params: BuildRelatedPanelParams): LineageRelat
         artifactType: focus.artifactType,
         businessVersionId: focus.versionId,
       },
-    })),
+    })
+  );
+  const createNewBlockedReason: LineageCreateNewBlockedReason | null =
+    createNew.length > 0
+      ? null
+      : isTerminalVersionStatus(focus.status)
+        ? 'TERMINAL_SOURCE_STATUS'
+        : 'NO_DOWNSTREAM_TYPE';
+
+  return {
+    focus,
+    parents: groupByArtifactType(applyTerminalFilter(parentEntries)),
+    indirectAncestors: groupByArtifactType(applyTerminalFilter(indirectAncestorEntries)),
+    children: groupByArtifactType(applyTerminalFilter(childEntries)),
+    indirectDescendants: groupByArtifactType(applyTerminalFilter(indirectEntries)),
+    siblings: applyTerminalFilter(siblings),
+    createNew,
+    createNewBlockedReason,
+    createNewBlockedLabel: createNewBlockedReason
+      ? LINEAGE_CREATE_NEW_BLOCKED_LABELS[createNewBlockedReason]
+      : null,
     focusBadges,
+    terminalVisibility,
+    hiddenTerminalCount,
+    tenant: { foreignEdgeIds, foreignVersionIds: scoped.foreignVersionIds },
+    cycleVersionIds,
   };
 }
 
@@ -553,6 +919,23 @@ export const ARTIFACT_TYPE_LABEL_PL: Readonly<Record<FinanceArtifactType, string
   REPORT_EXPORT: 'Raport / eksport',
 };
 
+/** Single construction point for a panel row, so badges/dimming cannot be forgotten in one branch. */
+function relatedEntry(
+  metadata: LineageNodeMetadata,
+  edgeType: LineageEdgeType,
+  depth: number
+): LineageRelatedEntry {
+  return {
+    metadata,
+    displayName: lineageNodeDisplayName(metadata),
+    edgeType,
+    depth,
+    staleBadge: staleBadgeFromFreshness(metadata.freshness),
+    stateBadge: lifecycleBadgeFromStatus(metadata.status),
+    isDimmed: isTerminalVersionStatus(metadata.status),
+  };
+}
+
 function toEntries(
   edges: readonly LineageEdgeRow[],
   pick: (edge: LineageEdgeRow) => string,
@@ -563,13 +946,7 @@ function toEntries(
     edges.map((edge) => {
       const metadata = resolve(pick(edge));
       if (!metadata) return null;
-      return {
-        metadata,
-        displayName: lineageNodeDisplayName(metadata),
-        edgeType: edge.edge_type,
-        depth,
-        staleBadge: staleBadgeFromFreshness(metadata.freshness),
-      } satisfies LineageRelatedEntry;
+      return relatedEntry(metadata, edge.edge_type, depth);
     })
   );
 }
@@ -605,11 +982,26 @@ function groupByArtifactType(entries: readonly LineageRelatedEntry[]): LineageRe
  * here — and recovering it from the edge set is cheaper and less brittle than
  * changing a shipped, tested SQL query that other callers depend on.
  */
-export function computeDepths(
+export interface ComputeDepthsParams {
+  edges: readonly LineageEdgeRow[];
+  rootVersionId: string;
+  direction: 'upstream' | 'downstream';
+  /** REQUIRED tenant scope — foreign edges are dropped before the walk, and reported. */
+  organizationId: string;
+}
+
+export interface LineageDepthComputation {
+  depths: Map<string, number>;
+  /** Edge ids dropped because they belong to another organization. */
+  foreignEdgeIds: readonly string[];
+  /** Version ids at which a cycle closes. Empty on healthy data. */
+  cycleVersionIds: readonly string[];
+}
+
+function buildLineageAdjacency(
   edges: readonly LineageEdgeRow[],
-  rootVersionId: string,
   direction: 'upstream' | 'downstream'
-): Map<string, number> {
+): Map<string, string[]> {
   const adjacency = new Map<string, string[]>();
   for (const edge of edges) {
     if (LINEAGE_SIBLING_EDGE_TYPES.includes(edge.edge_type)) continue;
@@ -619,6 +1011,68 @@ export function computeDepths(
     if (list) list.push(to);
     else adjacency.set(from, [to]);
   }
+  return adjacency;
+}
+
+/**
+ * Version ids where a cycle CLOSES, walking from `rootVersionId`.
+ *
+ * The navigator was already cycle-SAFE — `buildLineageTrail`'s `visited` set and
+ * `computeDepths`' `depths.has(next)` both stop it from hanging — but it was
+ * cycle-SILENT: a corrupt graph produced a short trail and a shrunken panel with
+ * nothing to tell the user, or the log, that the data was the reason. That is
+ * the same failure mode as swallowing an unresolvable version, which this module
+ * already refuses to do (`unresolvedVersionIds`).
+ *
+ * Reporting, NOT enforcing: the prohibition lives in the database
+ * (`finance_lineage_prevent_cycle` + the rank rule mirrored in
+ * `lineageService.validateEdgeRank`), and duplicating it here would create a
+ * second definition of "legal edge" that can drift from the trigger. This
+ * function answers a strictly weaker question — "did the rows I was handed
+ * contain a loop?" — which a presentation layer is entitled to ask about ANY
+ * input, including input that never went through `insertEdge`.
+ *
+ * "Already seen" is deliberately NOT the test: a DAG diamond (bm4 -> sc2 -> val1
+ * alongside bm4 -> val1) revisits `val1` and is perfectly legal. This is an
+ * iterative DFS tracking the nodes currently ON THE STACK, so only genuine back
+ * edges are reported.
+ */
+export function detectCycleVersionIds(
+  edges: readonly LineageEdgeRow[],
+  rootVersionId: string,
+  direction: 'upstream' | 'downstream'
+): string[] {
+  const adjacency = buildLineageAdjacency(edges, direction);
+  const finished = new Set<string>();
+  const onStack = new Set<string>([rootVersionId]);
+  const found: string[] = [];
+  const stack: Array<{ node: string; next: number }> = [{ node: rootVersionId, next: 0 }];
+  while (stack.length > 0) {
+    const frame = stack[stack.length - 1];
+    const neighbours = adjacency.get(frame.node) ?? [];
+    if (frame.next < neighbours.length) {
+      const next = neighbours[frame.next];
+      frame.next += 1;
+      if (onStack.has(next)) {
+        if (!found.includes(next)) found.push(next); // back edge = the loop closes here
+        continue;
+      }
+      if (finished.has(next)) continue; // cross edge into a closed subtree = diamond, legal
+      onStack.add(next);
+      stack.push({ node: next, next: 0 });
+    } else {
+      onStack.delete(frame.node);
+      finished.add(frame.node);
+      stack.pop();
+    }
+  }
+  return found;
+}
+
+export function computeDepths(params: ComputeDepthsParams): LineageDepthComputation {
+  const { rootVersionId, direction } = params;
+  const { own, foreignEdgeIds } = partitionEdgesByOrganization(params.edges, params.organizationId);
+  const adjacency = buildLineageAdjacency(own, direction);
   const depths = new Map<string, number>([[rootVersionId, 0]]);
   const queue: string[] = [rootVersionId];
   while (queue.length > 0) {
@@ -631,7 +1085,11 @@ export function computeDepths(
     }
   }
   depths.delete(rootVersionId);
-  return depths;
+  return {
+    depths,
+    foreignEdgeIds,
+    cycleVersionIds: detectCycleVersionIds(own, rootVersionId, direction),
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -657,6 +1115,306 @@ export const LINEAGE_FULL_GRAPH_VIEW = {
 } as const;
 
 // ---------------------------------------------------------------------------
+// Returning from a lineage jump: the restore point and the navigation stack.
+// ---------------------------------------------------------------------------
+
+/**
+ * WHY THIS IS NOT "ADD A FIELD TO WorkspaceState".
+ *
+ * `FinanceWorkspaceState` (AP-00) is PER ARTIFACT: it is keyed by
+ * `artifactRef`, and one blob describes one open artifact for one user. Every
+ * jump the navigator offers — a trail node, a Related row, `+ Nowy`, the full
+ * graph — leaves that artifact for a different one. So "keep my filters, my
+ * scroll and my selected row when I come back" cannot be satisfied by adding
+ * anything to the state of the artifact being LEFT: the question is about a
+ * relationship BETWEEN two workspace states, and neither of them owns it.
+ *
+ * Two candidate designs:
+ *
+ *   (a) Per-artifact retention: keep every visited artifact's WorkspaceState
+ *       alive and re-attach it on return. Necessary, but not sufficient — it
+ *       has no notion of "back". It cannot distinguish "returned from a
+ *       three-hop excursion" from "opened this artifact fresh from a list", and
+ *       with no ordering there is nothing to bound: retention becomes an
+ *       unbounded per-user cache of grid state.
+ *
+ *   (b) A NAVIGATION STACK owned above the per-artifact states. Chosen. It
+ *       carries the ORDER (so "back" means something), is explicitly bounded
+ *       (`LINEAGE_NAV_STACK_MAX_DEPTH`), and is tenant-scoped like everything
+ *       else in this file.
+ *
+ * The critical constraint on (b): a stack entry stores a RESTORE POINT — the
+ * view-level state only (selection, filters, scroll) plus the identity of the
+ * workspace it belongs to. It deliberately does NOT copy
+ * `unsavedOperationStack`. Duplicating uncommitted edits into a navigation
+ * entry would create a second, diverging copy of pending work, and AP-04 owns
+ * that stack and its crash-recovery replay. The entry points AT a workspace
+ * state; it does not shadow it.
+ *
+ * DEPENDENCY NOTE: staleness propagation after a source changes is NOT
+ * modelled here. It is owned by `lineageFreshnessService` (parallel stream,
+ * covered by its own Postgres-backed tests). A restored view can therefore be
+ * showing pre-change freshness, and the caller is expected to re-read
+ * freshness for the restored artifact rather than trust the restore point's
+ * copy — which is why a restore point carries no freshness at all.
+ */
+
+/** Identity of one per-artifact, per-user workspace state. */
+export function financeWorkspaceStateKey(params: {
+  organizationId: string;
+  userId: string;
+  artifactId: string;
+  businessVersionId: string;
+}): string {
+  return [params.organizationId, params.userId, params.artifactId, params.businessVersionId].join('::');
+}
+
+export interface LineageWorkspaceRestorePoint {
+  workspaceStateKey: string;
+  organizationId: string;
+  userId: string;
+  artifactRef: ArtifactRef;
+  /** Which module view (`pnl`, `bs`, …) was active. `null` when the caller does not track views. */
+  viewId: string | null;
+  selection: FinanceGridSelectionState;
+  filters: FinanceGridFilterState;
+  scroll: FinanceGridScrollState;
+  capturedAt: string;
+}
+
+/**
+ * Snapshot the parts of a workspace a user expects to find unchanged on
+ * return. Values are copied (a live reference would mutate under the stack as
+ * the user keeps working before jumping).
+ */
+export function captureWorkspaceRestorePoint(
+  state: FinanceWorkspaceState,
+  options: { viewId?: string | null; now?: () => string } = {}
+): LineageWorkspaceRestorePoint {
+  const now = options.now ?? (() => new Date().toISOString());
+  return {
+    workspaceStateKey: financeWorkspaceStateKey({
+      organizationId: state.organizationId,
+      userId: state.userId,
+      artifactId: state.artifactRef.artifactId,
+      businessVersionId: state.artifactRef.businessVersionId,
+    }),
+    organizationId: state.organizationId,
+    userId: state.userId,
+    artifactRef: state.artifactRef,
+    viewId: options.viewId ?? null,
+    selection: {
+      activeCell: state.selection.activeCell,
+      ranges: state.selection.ranges.map((range) => ({ ...range })),
+    },
+    filters: { raw: { ...state.filters.raw } },
+    scroll: { ...state.scroll },
+    capturedAt: now(),
+  };
+}
+
+export type LineageRestoreResult =
+  | { ok: true; state: FinanceWorkspaceState }
+  | { ok: false; code: 'RESTORE_POINT_MISMATCH' | 'RESTORE_POINT_FOREIGN_ORG'; message: string };
+
+/**
+ * Re-apply a restore point to a freshly loaded workspace state. Returns a NEW
+ * state; `unsavedOperationStack` and `sourceWorkingRevisionId` are carried
+ * through from the live state untouched, never from the snapshot.
+ */
+export function applyWorkspaceRestorePoint(
+  state: FinanceWorkspaceState,
+  restorePoint: LineageWorkspaceRestorePoint
+): LineageRestoreResult {
+  if (state.organizationId !== restorePoint.organizationId) {
+    return {
+      ok: false,
+      code: 'RESTORE_POINT_FOREIGN_ORG',
+      message: `restore point belongs to organization ${restorePoint.organizationId}, workspace is ${state.organizationId}`,
+    };
+  }
+  const key = financeWorkspaceStateKey({
+    organizationId: state.organizationId,
+    userId: state.userId,
+    artifactId: state.artifactRef.artifactId,
+    businessVersionId: state.artifactRef.businessVersionId,
+  });
+  if (key !== restorePoint.workspaceStateKey) {
+    return {
+      ok: false,
+      code: 'RESTORE_POINT_MISMATCH',
+      message: `restore point ${restorePoint.workspaceStateKey} does not describe workspace ${key}`,
+    };
+  }
+  return {
+    ok: true,
+    state: {
+      ...state,
+      selection: restorePoint.selection,
+      filters: restorePoint.filters,
+      scroll: restorePoint.scroll,
+    },
+  };
+}
+
+export type LineageNavigationVia = 'trail' | 'related-panel' | 'create-new' | 'full-graph';
+
+export interface LineageNavigationEntry {
+  restorePoint: LineageWorkspaceRestorePoint;
+  via: LineageNavigationVia;
+  /** The version the user jumped TO — so a caller can tell where a "back" came from. */
+  targetVersionId: string;
+}
+
+export interface LineageNavigationStack {
+  organizationId: string;
+  /** Oldest first; the top of the stack is the last element. */
+  entries: readonly LineageNavigationEntry[];
+}
+
+/**
+ * Bounded on purpose: unbounded navigation history is an unbounded copy of
+ * grid state per user. Ten hops is far past any real lineage excursion, and
+ * the oldest entry is dropped rather than the newest refused.
+ */
+export const LINEAGE_NAV_STACK_MAX_DEPTH = 10;
+
+export function createNavigationStack(organizationId: string): LineageNavigationStack {
+  return { organizationId, entries: [] };
+}
+
+export function pushNavigation(
+  stack: LineageNavigationStack,
+  entry: LineageNavigationEntry
+): LineageNavigationStack {
+  // Same tenant rule as everywhere else in this file: a stack is per organization.
+  if (entry.restorePoint.organizationId !== stack.organizationId) return stack;
+  const top = stack.entries[stack.entries.length - 1];
+  // Re-entering the same workspace (e.g. the user toggles between two artifacts)
+  // must refresh the snapshot in place, not grow the stack forever.
+  const entries =
+    top && top.restorePoint.workspaceStateKey === entry.restorePoint.workspaceStateKey
+      ? [...stack.entries.slice(0, -1), entry]
+      : [...stack.entries, entry];
+  return {
+    organizationId: stack.organizationId,
+    entries: entries.slice(Math.max(0, entries.length - LINEAGE_NAV_STACK_MAX_DEPTH)),
+  };
+}
+
+export function popNavigation(stack: LineageNavigationStack): {
+  stack: LineageNavigationStack;
+  entry: LineageNavigationEntry | null;
+} {
+  if (stack.entries.length === 0) return { stack, entry: null };
+  const entry = stack.entries[stack.entries.length - 1];
+  return {
+    stack: { organizationId: stack.organizationId, entries: stack.entries.slice(0, -1) },
+    entry,
+  };
+}
+
+export function peekNavigation(stack: LineageNavigationStack): LineageNavigationEntry | null {
+  return stack.entries[stack.entries.length - 1] ?? null;
+}
+
+// ---------------------------------------------------------------------------
+// The Related Artifacts DRAWER itself.
+// ---------------------------------------------------------------------------
+
+/**
+ * The panel DATA was complete; the drawer that shows it had no model at all —
+ * no open/closed state, no way in from the keyboard, and no statement of what
+ * closing it restores. The last one is what made this more than cosmetics: if
+ * the drawer is a route (or anything that unmounts the grid), then "close" is
+ * a remount and the user's filters, scroll and selected row are gone. Writing
+ * the drawer down as a NON-MODAL overlay that never unmounts the workspace is
+ * the design decision, and `restoreOnClose` is the fallback for the one case
+ * that can still lose it: a jump taken FROM the drawer, which really does
+ * leave the artifact (that is what the navigation stack above is for).
+ *
+ * AP-10 SCOPE NOTE: `moduleAdapters.ts` gives all five modules a `Powiązane`
+ * secondary action with `keyboardCommandId: null`. Adopting the shortcut is a
+ * ONE-LINE change in each adapter, deliberately NOT made here — AP-10 is out
+ * of scope for this task and no adapter is forced to change. The id below is
+ * declared so the adapters (and `KeyboardCommandRegistry`) have one agreed
+ * name to adopt when that work happens.
+ */
+export const LINEAGE_RELATED_DRAWER = {
+  id: 'finance.lineage.relatedDrawer',
+  label: { key: 'finance.related.open', pl: 'Powiązane' } as WorkspaceBarLabel,
+  /** Proposed command id for the AP-10 adapters' `Powiązane` action; not wired here. */
+  keyboardCommandId: 'finance.related',
+  /** The grid stays mounted and interactive underneath — see `restoreOnClose`. */
+  modality: 'non-modal',
+  placement: 'right',
+  /** Closing must return DOM focus to the control that opened it (a11y, handoff section 11). */
+  restoresDomFocus: true,
+  dismissOn: ['escape', 'toggle-command', 'outside-click'],
+} as const;
+
+export type LineageRelatedDrawerSection =
+  | 'trail'
+  | 'parents'
+  | 'indirectAncestors'
+  | 'children'
+  | 'indirectDescendants'
+  | 'siblings'
+  | 'createNew'
+  | 'fullGraph';
+
+export const LINEAGE_RELATED_DRAWER_DEFAULT_SECTION: LineageRelatedDrawerSection = 'trail';
+
+export interface LineageRelatedDrawerState {
+  open: boolean;
+  /** The version whose relations are shown; `null` while closed. */
+  focusVersionId: string | null;
+  activeSection: LineageRelatedDrawerSection;
+  /** Snapshot to hand back to the workspace if the drawer's close ends a jump. */
+  restoreOnClose: LineageWorkspaceRestorePoint | null;
+  /** Control that must regain DOM focus on close (the bar's `Powiązane` button, a trail node, …). */
+  returnFocusControlId: string | null;
+}
+
+export function createRelatedDrawerState(): LineageRelatedDrawerState {
+  return {
+    open: false,
+    focusVersionId: null,
+    activeSection: LINEAGE_RELATED_DRAWER_DEFAULT_SECTION,
+    restoreOnClose: null,
+    returnFocusControlId: null,
+  };
+}
+
+export function openRelatedDrawer(params: {
+  focusVersionId: string;
+  restorePoint: LineageWorkspaceRestorePoint;
+  returnFocusControlId: string;
+  section?: LineageRelatedDrawerSection;
+}): LineageRelatedDrawerState {
+  return {
+    open: true,
+    focusVersionId: params.focusVersionId,
+    activeSection: params.section ?? LINEAGE_RELATED_DRAWER_DEFAULT_SECTION,
+    restoreOnClose: params.restorePoint,
+    returnFocusControlId: params.returnFocusControlId,
+  };
+}
+
+/** Closing hands the caller back BOTH things a close has to settle: what to restore, and where focus goes. */
+export function closeRelatedDrawer(state: LineageRelatedDrawerState): {
+  state: LineageRelatedDrawerState;
+  restore: LineageWorkspaceRestorePoint | null;
+  returnFocusControlId: string | null;
+} {
+  return {
+    state: createRelatedDrawerState(),
+    restore: state.restoreOnClose,
+    returnFocusControlId: state.returnFocusControlId,
+  };
+}
+
+// ---------------------------------------------------------------------------
 // The port over the real service + the assembled model.
 // ---------------------------------------------------------------------------
 
@@ -680,6 +1438,13 @@ export interface LineageNavigatorModel {
   fullGraph: typeof LINEAGE_FULL_GRAPH_VIEW;
 }
 
+/**
+ * `organizationId` is used TWICE on purpose: once as the SQL predicate the port
+ * applies, and once as the navigator's own guard over whatever came back (plus
+ * over whatever the caller's `resolve` produces, which the port never sees).
+ * The second use is the one that survives a caller assembling the inputs by
+ * hand — see the "Tenant isolation" section.
+ */
 export async function loadLineageNavigator(params: {
   port: LineageServicePort;
   organizationId: string;
@@ -695,12 +1460,14 @@ export async function loadLineageNavigator(params: {
   ]);
   return {
     trail: buildLineageTrail({
+      organizationId: params.organizationId,
       focusVersionId: params.focusVersionId,
       ancestorEdges,
       resolve: params.resolve,
       maxNodes: params.maxTrailNodes,
     }),
     related: buildRelatedPanel({
+      organizationId: params.organizationId,
       focusVersionId: params.focusVersionId,
       ancestorEdges,
       descendantEdges,
