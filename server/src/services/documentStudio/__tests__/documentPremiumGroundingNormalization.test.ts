@@ -108,10 +108,25 @@ describe('premium document grounding and canonical shapes — DOC-DBR77-20260806
         audience: ['Zarząd'],
       },
       outline: {
+        // DocumentOutline requires these four; they were omitted. `documentType`
+        // mirrors the intake so the fallback path is unchanged.
+        documentType: 'board_report',
         title: 'Raport',
-        sections: [{ title: 'Status programu', level: 1, purpose: 'Status' }],
+        sections: [
+          {
+            title: 'Status programu',
+            level: 1,
+            purpose: 'Status',
+            expectedLengthHint: 'short',
+          },
+        ],
+        recommendedDensity: 'standard',
+        recommendedRegister: 'executive',
+        recommendedLanguageStyle: 'consulting',
       },
-      sourceRefs: [{ sourceId: 'source-1', sourceType: 'organization', title: 'DBR77' }],
+      // `DocumentSourceRef` spells the label `sourceTitle`; `title` was silently
+      // dropped, so the ref carried no human-readable name.
+      sourceRefs: [{ sourceId: 'source-1', sourceType: 'organization', sourceTitle: 'DBR77' }],
     });
 
     expect(schema.sections[0]?.blocks[0]?.isAssumption).toBe(false);

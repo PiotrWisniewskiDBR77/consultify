@@ -738,6 +738,7 @@ describe('B3 — sekcja Źródła w artefakcie', () => {
     await flushBackgroundWork();
 
     const contentPatch = updateDraftMock.mock.calls.find((c) => 'content' in c[0].patch);
+    if (!contentPatch) throw new Error('expected an updateDraft call carrying a content patch');
     expect(contentPatch[0].patch.content).toContain('## Źródła');
     expect(contentPatch[0].patch.content).toContain('Inicjatywa: Automatyzacja magazynu');
   });
@@ -746,6 +747,7 @@ describe('B3 — sekcja Źródła w artefakcie', () => {
     await startDoc({ generationId: 'draft-1', setup: {}, organizationId: ORG, userId: USER });
     await flushBackgroundWork();
     const contentPatch = updateDraftMock.mock.calls.find((c) => 'content' in c[0].patch);
+    if (!contentPatch) throw new Error('expected an updateDraft call carrying a content patch');
     expect(contentPatch[0].patch.content).not.toContain('## Źródła');
   });
 });
