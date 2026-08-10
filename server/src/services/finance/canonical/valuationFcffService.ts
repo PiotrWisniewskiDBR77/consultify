@@ -53,8 +53,9 @@ export type ValuationSourceType = 'BASELINE' | 'PREDICTION';
 
 const SOURCE_EDGE_TYPES: readonly LineageEdgeType[] = ['MODEL_TO_VALUATION', 'SCENARIO_TO_VALUATION'];
 
-interface CellRow {
+export interface CellRow {
   canonical_line_id: string;
+  period_id: string;
   value_status: string;
   value_decimal: string | null;
   presentation_currency: string;
@@ -200,19 +201,42 @@ async function loadCells(
   if (periodIds.length === 0) return [];
   const table = sourceType === 'BASELINE' ? 'finance_baseline_outputs' : 'finance_prediction_outputs_effective';
   return tx.queryAll<CellRow>(
-    `SELECT canonical_line_id, value_status, value_decimal, presentation_currency, unit, multiplier
+    `SELECT canonical_line_id, period_id, value_status, value_decimal, presentation_currency, unit, multiplier
        FROM ${table}
       WHERE business_version_id = ? AND entity_id = ? AND period_id = ANY(?) AND consolidation_scope = 'CONSOLIDATED'`,
     [sourceBusinessVersionId, entityId, [...periodIds]]
   );
 }
 
-/** Sum a flow line (EBIT/DEPRECIATION/CAPEX) across a year's periods. `null` if any period is missing a present value OR has no row at all. */
-function sumFlow(cells: CellRow[], lineId: string, periodIdsExpected: number): { value: number | null; presentCount: number } {
+/**
+ * Sum a flow line (EBIT/DEPRECIATION/CAPEX) across a year's periods. `null` if any period is
+ * missing a present value OR has no row at all.
+ *
+ * W3-determinism fix (`docs/validation/finance-v3/generated/gate-d/W3_COMPUTE_DETERMINISM_report.md`):
+ * `loadCells()`'s SQL has no `ORDER BY` (same reasoning as `kpiComputeService.ts`'s own
+ * no-`ORDER BY` query — see that file's comment), so `cells` arrives in whatever order Postgres's
+ * query plan happens to return, which is NOT guaranteed stable even for the exact same underlying
+ * rows (empirically reproduced on real Postgres: as `finance_baseline_outputs` grows across
+ * independent compute runs, the planner's chosen scan/row order shifts). Floating-point addition
+ * is not associative, so summing `rowsForLine` in THAT order made `sumFlow`'s result — and
+ * therefore `enterpriseValueComputed` — differ on the last significant digit between runs of
+ * byte-identical monthly EBIT/D&A/CAPEX inputs (proven: the 12 stored monthly values were
+ * bit-identical across 10 independent runs; only the SUMMED total varied, in 3 distinct bit
+ * patterns). `orderedPeriodIds` is the CALLER's own canonical (chronological)
+ * `FcffYearInput.periodIds` order — sorting `rowsForLine` to match it before summing makes the
+ * arithmetic order deterministic without touching the SQL query or the row SET being summed.
+ */
+export function sumFlow(
+  cells: CellRow[],
+  lineId: string,
+  orderedPeriodIds: readonly string[]
+): { value: number | null; presentCount: number } {
   const rowsForLine = cells.filter((c) => c.canonical_line_id === lineId);
-  if (rowsForLine.length < periodIdsExpected) return { value: null, presentCount: rowsForLine.length };
+  if (rowsForLine.length < orderedPeriodIds.length) return { value: null, presentCount: rowsForLine.length };
+  const periodRank = new Map(orderedPeriodIds.map((pid, idx) => [pid, idx]));
+  const sorted = [...rowsForLine].sort((a, b) => (periodRank.get(a.period_id) ?? 0) - (periodRank.get(b.period_id) ?? 0));
   let sum = 0;
-  for (const r of rowsForLine) {
+  for (const r of sorted) {
     const v = toFullUnitValue(r);
     if (v === null) return { value: null, presentCount: rowsForLine.length };
     sum += v;
@@ -266,9 +290,9 @@ export async function computeFcffSeries(params: ComputeFcffSeriesParams): Promis
       }
     }
 
-    const ebit = sumFlow(cells, ebitId, year.periodIds.length);
-    const da = sumFlow(cells, daId, year.periodIds.length);
-    const capex = sumFlow(cells, capexId, year.periodIds.length);
+    const ebit = sumFlow(cells, ebitId, year.periodIds);
+    const da = sumFlow(cells, daId, year.periodIds);
+    const capex = sumFlow(cells, capexId, year.periodIds);
     const closingPeriodId = year.periodIds[year.periodIds.length - 1];
     const closingWcCells = cells.filter((c) => c.canonical_line_id === wcId);
     // WORKING_CAPITAL is a BS (stock) line — for a monthly year, only the LAST period's row is the
