@@ -44,6 +44,17 @@ const mockListOkrSets = vi.fn();
 const mockListOkrSetApprovedSnapshots = vi.fn();
 const mockGetOkrSetApprovedSnapshot = vi.fn();
 
+// OKR-E003
+const mockCreateObjective = vi.fn();
+const mockUpdateObjective = vi.fn();
+const mockCancelObjective = vi.fn();
+const mockCreateKeyResult = vi.fn();
+const mockUpdateKeyResult = vi.fn();
+const mockCancelKeyResult = vi.fn();
+const mockListObjectivesForSet = vi.fn();
+const mockGetObjective = vi.fn();
+const mockGetKeyResult = vi.fn();
+
 vi.mock('../../../middleware/auth.middleware.js', () => ({
   verifyToken: (req: any, _res: any, next: () => void) => {
     req.user = { id: 'user-1', organizationId: 'org-1', role: 'admin' };
@@ -123,6 +134,35 @@ vi.mock('../../../services/resultsVnext/okr/okrSetRepository.js', () => ({
   getOkrSetApprovedSnapshot: (...args: unknown[]) => mockGetOkrSetApprovedSnapshot(...args),
 }));
 
+// OKR-E003
+vi.mock('../../../services/resultsVnext/okr/okrObjectiveCommands.js', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('../../../services/resultsVnext/okr/okrObjectiveCommands.js')>();
+  return {
+    ...actual,
+    createObjective: (...args: unknown[]) => mockCreateObjective(...args),
+    updateObjective: (...args: unknown[]) => mockUpdateObjective(...args),
+    cancelObjective: (...args: unknown[]) => mockCancelObjective(...args),
+  };
+});
+
+vi.mock('../../../services/resultsVnext/okr/okrKeyResultCommands.js', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('../../../services/resultsVnext/okr/okrKeyResultCommands.js')>();
+  return {
+    ...actual,
+    createKeyResult: (...args: unknown[]) => mockCreateKeyResult(...args),
+    updateKeyResult: (...args: unknown[]) => mockUpdateKeyResult(...args),
+    cancelKeyResult: (...args: unknown[]) => mockCancelKeyResult(...args),
+  };
+});
+
+vi.mock('../../../services/resultsVnext/okr/okrObjectiveRepository.js', () => ({
+  listObjectivesForSet: (...args: unknown[]) => mockListObjectivesForSet(...args),
+  getObjective: (...args: unknown[]) => mockGetObjective(...args),
+  getKeyResult: (...args: unknown[]) => mockGetKeyResult(...args),
+}));
+
 const { OkrProgramValidationError } = await import('../../../services/resultsVnext/okr/okrProgramCommands.js');
 const { OkrCycleProgramNotActiveError, OkrCycleValidationError } = await import(
   '../../../services/resultsVnext/okr/okrCycleCommands.js'
@@ -136,6 +176,12 @@ const {
 } = await import('../../../services/resultsVnext/okr/okrSetCommands.js');
 const { AtomicWriteConflictError, AtomicWriteAggregateNotFoundError } =
   await import('../../../services/resultsVnext/platform/atomicWrite.js');
+const { OkrObjectiveNotFoundError, OkrObjectiveSetNotEditableError, OkrObjectiveValidationError } = await import(
+  '../../../services/resultsVnext/okr/okrObjectiveCommands.js'
+);
+const { OkrKeyResultNotFoundError, OkrKeyResultValidationError } = await import(
+  '../../../services/resultsVnext/okr/okrKeyResultCommands.js'
+);
 
 const okrRoutes = (await import('../okr.routes.js')).default;
 
@@ -1027,5 +1073,424 @@ describe('GET /sets/:setId/approval-snapshots(/:snapshotId)', () => {
       `/api/vnext/results/okr/sets/${SET_ID}/approval-snapshots/${SNAPSHOT_ID}`
     );
     expect(response.status).toBe(404);
+  });
+});
+
+// ==========================================
+// OKR-E003 — Objective & KeyResult (design §14, 9 routes)
+// ==========================================
+
+const OBJECTIVE_ID = '66666666-6666-4666-8666-666666666666';
+const KEY_RESULT_ID = '77777777-7777-4777-8777-777777777777';
+
+function objectiveFixture(overrides: Record<string, unknown> = {}) {
+  return {
+    objectiveId: OBJECTIVE_ID,
+    setId: SET_ID,
+    organizationId: 'org-1',
+    ownerUserId: 'user-owner',
+    title: 'Objective title',
+    description: null,
+    rationale: null,
+    ambitionType: 'standard',
+    status: 'draft',
+    progress: null,
+    progressCalcPolicyVersionId: null,
+    progressCalcReason: null,
+    confidence: null,
+    confidenceNumericValue: null,
+    confidenceCalcPolicyVersionId: null,
+    confidenceCalcReason: null,
+    sortOrder: 1,
+    rowVersion: 1,
+    createdBy: 'user-1',
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedBy: null,
+    updatedAt: '2026-01-01T00:00:00.000Z',
+    approvedAt: null,
+    ...overrides,
+  };
+}
+
+function keyResultFixture(overrides: Record<string, unknown> = {}) {
+  return {
+    keyResultId: KEY_RESULT_ID,
+    objectiveId: OBJECTIVE_ID,
+    setId: SET_ID,
+    organizationId: 'org-1',
+    ownerUserId: 'user-owner',
+    title: 'KeyResult title',
+    description: null,
+    measurementType: 'numeric',
+    unit: null,
+    currency: null,
+    baselineValue: null,
+    targetValue: '10',
+    startValue: null,
+    currentValue: '5',
+    direction: 'reach',
+    rangeMin: null,
+    rangeMax: null,
+    progress: '0.5',
+    progressCalcPolicyVersionId: POLICY_VERSION_ID,
+    progressCalcReason: 'reach: current_value / target_value',
+    outOfRangeDistance: null,
+    confidence: null,
+    confidenceNumericValue: null,
+    status: 'not_started',
+    sourceType: 'manual',
+    sourceReference: null,
+    weight: null,
+    rowVersion: 1,
+    createdBy: 'user-1',
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedBy: null,
+    updatedAt: '2026-01-01T00:00:00.000Z',
+    ...overrides,
+  };
+}
+
+// ==========================================
+// POST /sets/:setId/objectives + GET /sets/:setId/objectives — createObjective / listObjectivesForSet
+// ==========================================
+
+describe('POST /sets/:setId/objectives + GET /sets/:setId/objectives — createObjective / listObjectivesForSet', () => {
+  it('creates an Objective (201) when the Set exists', async () => {
+    mockGetOkrSet.mockResolvedValue(setFixture());
+    const objective = objectiveFixture();
+    mockCreateObjective.mockResolvedValue({
+      outcome: 'applied',
+      eventId: 'evt-obj-1',
+      resultingVersion: 1,
+      result: objective,
+    });
+
+    const response = await request(createApp())
+      .post(`/api/vnext/results/okr/sets/${SET_ID}/objectives`)
+      .send({ ownerUserId: 'user-owner', title: 'Objective title' });
+    expect(response.status).toBe(201);
+    expect(response.body.objective.objectiveId).toBe(OBJECTIVE_ID);
+    expect(mockCreateObjective).toHaveBeenCalledTimes(1);
+    const createArgs = mockCreateObjective.mock.calls[0][0];
+    expect(createArgs.setId).toBe(SET_ID);
+    expect(createArgs.organizationId).toBe('org-1');
+    expect(createArgs.createdBy).toBe('user-1');
+  });
+
+  it('404s when the Set does not exist/is not visible, without calling the command', async () => {
+    mockGetOkrSet.mockResolvedValue(null);
+    const response = await request(createApp())
+      .post(`/api/vnext/results/okr/sets/${SET_ID}/objectives`)
+      .send({ ownerUserId: 'user-owner', title: 'Objective title' });
+    expect(response.status).toBe(404);
+    expect(mockCreateObjective).not.toHaveBeenCalled();
+  });
+
+  it('400s create when required fields are missing (Zod validation)', async () => {
+    const response = await request(createApp()).post(`/api/vnext/results/okr/sets/${SET_ID}/objectives`).send({});
+    expect(response.status).toBe(400);
+    expect(mockCreateObjective).not.toHaveBeenCalled();
+  });
+
+  it('maps AMBITION_TYPE_DISABLED (OkrObjectiveValidationError) to 409', async () => {
+    mockGetOkrSet.mockResolvedValue(setFixture());
+    mockCreateObjective.mockRejectedValue(
+      new OkrObjectiveValidationError('ambition_type disabled', 'AMBITION_TYPE_DISABLED', { ambitionType: 'committed' })
+    );
+    const response = await request(createApp())
+      .post(`/api/vnext/results/okr/sets/${SET_ID}/objectives`)
+      .send({ ownerUserId: 'user-owner', title: 'Objective title', ambitionType: 'committed' });
+    expect(response.status).toBe(409);
+    expect(response.body.code).toBe('AMBITION_TYPE_DISABLED');
+  });
+
+  it('maps OkrObjectiveSetNotEditableError to 409', async () => {
+    mockGetOkrSet.mockResolvedValue(setFixture());
+    mockCreateObjective.mockRejectedValue(new OkrObjectiveSetNotEditableError(SET_ID, 'approved'));
+    const response = await request(createApp())
+      .post(`/api/vnext/results/okr/sets/${SET_ID}/objectives`)
+      .send({ ownerUserId: 'user-owner', title: 'Objective title' });
+    expect(response.status).toBe(409);
+    expect(response.body.code).toBe('SET_NOT_EDITABLE');
+  });
+
+  it('lists Objectives with nested KeyResults for the Set', async () => {
+    mockListObjectivesForSet.mockResolvedValue([{ ...objectiveFixture(), keyResults: [keyResultFixture()] }]);
+    const response = await request(createApp()).get(`/api/vnext/results/okr/sets/${SET_ID}/objectives`);
+    expect(response.status).toBe(200);
+    expect(response.body.objectives).toHaveLength(1);
+    expect(response.body.objectives[0].keyResults).toHaveLength(1);
+    expect(mockListObjectivesForSet).toHaveBeenCalledWith({ userId: 'user-1', organizationId: 'org-1', setId: SET_ID });
+  });
+});
+
+// ==========================================
+// GET /objectives/:objectiveId + PATCH + cancel
+// ==========================================
+
+describe('GET /objectives/:objectiveId — getObjective', () => {
+  it('returns the Objective with nested KeyResults', async () => {
+    mockGetObjective.mockResolvedValue({ ...objectiveFixture(), keyResults: [keyResultFixture()] });
+    const response = await request(createApp()).get(`/api/vnext/results/okr/objectives/${OBJECTIVE_ID}`);
+    expect(response.status).toBe(200);
+    expect(response.body.objective.objectiveId).toBe(OBJECTIVE_ID);
+    expect(response.body.objective.keyResults).toHaveLength(1);
+  });
+
+  it('404s when not found/visible', async () => {
+    mockGetObjective.mockResolvedValue(null);
+    const response = await request(createApp()).get(`/api/vnext/results/okr/objectives/${OBJECTIVE_ID}`);
+    expect(response.status).toBe(404);
+  });
+});
+
+describe('PATCH /objectives/:objectiveId — updateObjective', () => {
+  it('404s when the Objective does not exist, without calling the command', async () => {
+    mockGetObjective.mockResolvedValue(null);
+    const response = await request(createApp())
+      .patch(`/api/vnext/results/okr/objectives/${OBJECTIVE_ID}`)
+      .send({ expectedVersion: 1, title: 'New title' });
+    expect(response.status).toBe(404);
+    expect(mockUpdateObjective).not.toHaveBeenCalled();
+  });
+
+  it('updates and returns the Objective', async () => {
+    mockGetObjective.mockResolvedValue({ ...objectiveFixture(), keyResults: [] });
+    mockUpdateObjective.mockResolvedValue({
+      outcome: 'applied',
+      eventId: 'evt-obj-2',
+      resultingVersion: 2,
+      result: objectiveFixture({ title: 'New title', rowVersion: 2 }),
+    });
+    const response = await request(createApp())
+      .patch(`/api/vnext/results/okr/objectives/${OBJECTIVE_ID}`)
+      .send({ expectedVersion: 1, title: 'New title' });
+    expect(response.status).toBe(200);
+    expect(response.body.objective.title).toBe('New title');
+  });
+
+  it('maps CONFIDENCE_NOT_OWNER_EDITABLE (OkrObjectiveValidationError) to 409', async () => {
+    mockGetObjective.mockResolvedValue({ ...objectiveFixture(), keyResults: [] });
+    mockUpdateObjective.mockRejectedValue(
+      new OkrObjectiveValidationError('confidence not owner editable', 'CONFIDENCE_NOT_OWNER_EDITABLE', {})
+    );
+    const response = await request(createApp())
+      .patch(`/api/vnext/results/okr/objectives/${OBJECTIVE_ID}`)
+      .send({ expectedVersion: 1, confidence: 'high' });
+    expect(response.status).toBe(409);
+    expect(response.body.code).toBe('CONFIDENCE_NOT_OWNER_EDITABLE');
+  });
+
+  it('maps STALE_VERSION to 409', async () => {
+    mockGetObjective.mockResolvedValue({ ...objectiveFixture(), keyResults: [] });
+    mockUpdateObjective.mockRejectedValue(
+      new AtomicWriteConflictError('Aggregate was modified since it was last read', 'STALE_VERSION', {
+        currentVersion: 2,
+        expectedVersion: 1,
+      })
+    );
+    const response = await request(createApp())
+      .patch(`/api/vnext/results/okr/objectives/${OBJECTIVE_ID}`)
+      .send({ expectedVersion: 1, title: 'New title' });
+    expect(response.status).toBe(409);
+    expect(response.body.code).toBe('STALE_VERSION');
+  });
+});
+
+describe('POST /objectives/:objectiveId/cancel — cancelObjective', () => {
+  it('404s when the Objective does not exist, without calling the command', async () => {
+    mockGetObjective.mockResolvedValue(null);
+    const response = await request(createApp())
+      .post(`/api/vnext/results/okr/objectives/${OBJECTIVE_ID}/cancel`)
+      .send({ expectedVersion: 1 });
+    expect(response.status).toBe(404);
+    expect(mockCancelObjective).not.toHaveBeenCalled();
+  });
+
+  it('cancels and returns the Objective', async () => {
+    mockGetObjective.mockResolvedValue({ ...objectiveFixture(), keyResults: [] });
+    mockCancelObjective.mockResolvedValue({
+      outcome: 'applied',
+      eventId: 'evt-obj-3',
+      resultingVersion: 2,
+      result: objectiveFixture({ status: 'cancelled', rowVersion: 2 }),
+    });
+    const response = await request(createApp())
+      .post(`/api/vnext/results/okr/objectives/${OBJECTIVE_ID}/cancel`)
+      .send({ expectedVersion: 1 });
+    expect(response.status).toBe(200);
+    expect(response.body.objective.status).toBe('cancelled');
+  });
+});
+
+// ==========================================
+// POST /objectives/:objectiveId/key-results — createKeyResult
+// ==========================================
+
+describe('POST /objectives/:objectiveId/key-results — createKeyResult', () => {
+  it('creates a KeyResult (201) when the Objective exists', async () => {
+    mockGetObjective.mockResolvedValue({ ...objectiveFixture(), keyResults: [] });
+    const keyResult = keyResultFixture();
+    mockCreateKeyResult.mockResolvedValue({
+      outcome: 'applied',
+      eventId: 'evt-kr-1',
+      resultingVersion: 1,
+      result: keyResult,
+    });
+
+    const response = await request(createApp())
+      .post(`/api/vnext/results/okr/objectives/${OBJECTIVE_ID}/key-results`)
+      .send({
+        ownerUserId: 'user-owner',
+        title: 'KeyResult title',
+        measurementType: 'numeric',
+        direction: 'reach',
+        targetValue: 10,
+        currentValue: 5,
+      });
+    expect(response.status).toBe(201);
+    expect(response.body.keyResult.keyResultId).toBe(KEY_RESULT_ID);
+    expect(mockCreateKeyResult).toHaveBeenCalledTimes(1);
+    expect(mockCreateKeyResult.mock.calls[0][0].objectiveId).toBe(OBJECTIVE_ID);
+  });
+
+  it('404s when the Objective does not exist, without calling the command', async () => {
+    mockGetObjective.mockResolvedValue(null);
+    const response = await request(createApp())
+      .post(`/api/vnext/results/okr/objectives/${OBJECTIVE_ID}/key-results`)
+      .send({ ownerUserId: 'user-owner', title: 'KR title', measurementType: 'numeric', direction: 'reach', targetValue: 10, currentValue: 5 });
+    expect(response.status).toBe(404);
+    expect(mockCreateKeyResult).not.toHaveBeenCalled();
+  });
+
+  it('400s when currency is missing for measurementType="currency" (Zod refine)', async () => {
+    const response = await request(createApp())
+      .post(`/api/vnext/results/okr/objectives/${OBJECTIVE_ID}/key-results`)
+      .send({ ownerUserId: 'user-owner', title: 'KR title', measurementType: 'currency', direction: 'reach', targetValue: 10, currentValue: 5 });
+    expect(response.status).toBe(400);
+    expect(mockCreateKeyResult).not.toHaveBeenCalled();
+  });
+
+  it('400s when range_min/range_max are missing for direction="maintain_range" (Zod refine)', async () => {
+    const response = await request(createApp())
+      .post(`/api/vnext/results/okr/objectives/${OBJECTIVE_ID}/key-results`)
+      .send({ ownerUserId: 'user-owner', title: 'KR title', measurementType: 'numeric', direction: 'maintain_range' });
+    expect(response.status).toBe(400);
+    expect(mockCreateKeyResult).not.toHaveBeenCalled();
+  });
+
+  it('maps MEASUREMENT_TYPE_NOT_IMPLEMENTED (OkrKeyResultValidationError) to 409', async () => {
+    mockGetObjective.mockResolvedValue({ ...objectiveFixture(), keyResults: [] });
+    mockCreateKeyResult.mockRejectedValue(
+      new OkrKeyResultValidationError('not implemented', 'MEASUREMENT_TYPE_NOT_IMPLEMENTED', { measurementType: 'milestone' })
+    );
+    const response = await request(createApp())
+      .post(`/api/vnext/results/okr/objectives/${OBJECTIVE_ID}/key-results`)
+      .send({ ownerUserId: 'user-owner', title: 'KR title', measurementType: 'milestone', direction: 'reach' });
+    expect(response.status).toBe(409);
+    expect(response.body.code).toBe('MEASUREMENT_TYPE_NOT_IMPLEMENTED');
+  });
+});
+
+// ==========================================
+// GET /key-results/:keyResultId + PATCH + cancel
+// ==========================================
+
+describe('GET /key-results/:keyResultId — getKeyResult', () => {
+  it('returns the KeyResult', async () => {
+    mockGetKeyResult.mockResolvedValue(keyResultFixture());
+    const response = await request(createApp()).get(`/api/vnext/results/okr/key-results/${KEY_RESULT_ID}`);
+    expect(response.status).toBe(200);
+    expect(response.body.keyResult.keyResultId).toBe(KEY_RESULT_ID);
+  });
+
+  it('404s when not found/visible', async () => {
+    mockGetKeyResult.mockResolvedValue(null);
+    const response = await request(createApp()).get(`/api/vnext/results/okr/key-results/${KEY_RESULT_ID}`);
+    expect(response.status).toBe(404);
+  });
+});
+
+describe('PATCH /key-results/:keyResultId — updateKeyResult', () => {
+  it('404s when the KeyResult does not exist, without calling the command', async () => {
+    mockGetKeyResult.mockResolvedValue(null);
+    const response = await request(createApp())
+      .patch(`/api/vnext/results/okr/key-results/${KEY_RESULT_ID}`)
+      .send({ expectedVersion: 1, currentValue: 7 });
+    expect(response.status).toBe(404);
+    expect(mockUpdateKeyResult).not.toHaveBeenCalled();
+  });
+
+  it('updates and returns the KeyResult', async () => {
+    mockGetKeyResult.mockResolvedValue(keyResultFixture());
+    mockUpdateKeyResult.mockResolvedValue({
+      outcome: 'applied',
+      eventId: 'evt-kr-2',
+      resultingVersion: 2,
+      result: keyResultFixture({ currentValue: '7', progress: '0.7', rowVersion: 2 }),
+    });
+    const response = await request(createApp())
+      .patch(`/api/vnext/results/okr/key-results/${KEY_RESULT_ID}`)
+      .send({ expectedVersion: 1, currentValue: 7 });
+    expect(response.status).toBe(200);
+    expect(response.body.keyResult.currentValue).toBe('7');
+  });
+
+  it('rejects status="cancelled" via plain update (Zod excludes it — use the cancel route instead)', async () => {
+    const response = await request(createApp())
+      .patch(`/api/vnext/results/okr/key-results/${KEY_RESULT_ID}`)
+      .send({ expectedVersion: 1, status: 'cancelled' });
+    expect(response.status).toBe(400);
+    expect(mockUpdateKeyResult).not.toHaveBeenCalled();
+  });
+});
+
+describe('POST /key-results/:keyResultId/cancel — cancelKeyResult', () => {
+  it('404s when the KeyResult does not exist, without calling the command', async () => {
+    mockGetKeyResult.mockResolvedValue(null);
+    const response = await request(createApp())
+      .post(`/api/vnext/results/okr/key-results/${KEY_RESULT_ID}/cancel`)
+      .send({ expectedVersion: 1 });
+    expect(response.status).toBe(404);
+    expect(mockCancelKeyResult).not.toHaveBeenCalled();
+  });
+
+  it('cancels and returns the KeyResult', async () => {
+    mockGetKeyResult.mockResolvedValue(keyResultFixture());
+    mockCancelKeyResult.mockResolvedValue({
+      outcome: 'applied',
+      eventId: 'evt-kr-3',
+      resultingVersion: 2,
+      result: keyResultFixture({ status: 'cancelled', rowVersion: 2 }),
+    });
+    const response = await request(createApp())
+      .post(`/api/vnext/results/okr/key-results/${KEY_RESULT_ID}/cancel`)
+      .send({ expectedVersion: 1 });
+    expect(response.status).toBe(200);
+    expect(response.body.keyResult.status).toBe('cancelled');
+  });
+
+  it('maps AtomicWriteAggregateNotFoundError to 404', async () => {
+    mockGetKeyResult.mockResolvedValue(keyResultFixture());
+    mockCancelKeyResult.mockRejectedValue(new AtomicWriteAggregateNotFoundError());
+    const response = await request(createApp())
+      .post(`/api/vnext/results/okr/key-results/${KEY_RESULT_ID}/cancel`)
+      .send({ expectedVersion: 1 });
+    expect(response.status).toBe(404);
+  });
+});
+
+// ==========================================
+// Mount-order sanity: /objectives/:objectiveId and /key-results/:keyResultId
+// are single dynamic segments — a literal-path GET must not be swallowed.
+// ==========================================
+
+describe('Mount order — GET /objectives/:objectiveId and /key-results/:keyResultId are reachable without swallowing sibling routes', () => {
+  it('GET /sets/:setId/objectives still resolves to the Set-scoped list route, not the single-Objective route', async () => {
+    mockListObjectivesForSet.mockResolvedValue([]);
+    const response = await request(createApp()).get(`/api/vnext/results/okr/sets/${SET_ID}/objectives`);
+    expect(response.status).toBe(200);
+    expect(mockListObjectivesForSet).toHaveBeenCalledTimes(1);
+    expect(mockGetObjective).not.toHaveBeenCalled();
   });
 });
