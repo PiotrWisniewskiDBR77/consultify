@@ -68,6 +68,44 @@ let OkrSetVisibilityWideningDeniedError: SetCommandsModule['OkrSetVisibilityWide
 let VISIBILITY_NARROWNESS_RANK: SetCommandsModule['VISIBILITY_NARROWNESS_RANK'];
 let closePgPool: (() => Promise<void>) | undefined;
 
+type ObjectiveCommandsModule = typeof import('../../../server/src/services/resultsVnext/okr/okrObjectiveCommands.js');
+type KeyResultCommandsModule = typeof import('../../../server/src/services/resultsVnext/okr/okrKeyResultCommands.js');
+let createObjective: ObjectiveCommandsModule['createObjective'];
+let createKeyResult: KeyResultCommandsModule['createKeyResult'];
+
+/**
+ * OKR-E003: `submitOkrSetForApproval` now also requires
+ * `hasSufficientKeyResultCoverage` (>=2 non-cancelled KRs per non-cancelled
+ * Objective) — this fixture helper gives a draft Set exactly that minimum
+ * before the D19 "narrowing while active" test submits it.
+ */
+async function addSufficientKeyResultCoverage(setId: string, organizationId: string, ownerUserId: string): Promise<void> {
+  const objective = await createObjective({
+    setId,
+    organizationId,
+    ownerUserId,
+    title: 'Narrowing fixture Objective',
+    createdBy: ownerUserId,
+    actorEffectiveRole: 'member',
+    idempotencyKey: `fixture-objective-${randomUUID()}`,
+  });
+  for (let i = 0; i < 2; i += 1) {
+    await createKeyResult({
+      objectiveId: objective.result.objectiveId,
+      organizationId,
+      ownerUserId,
+      title: `Narrowing fixture KR ${i + 1}`,
+      measurementType: 'numeric',
+      direction: 'reach',
+      targetValue: 10,
+      currentValue: 5,
+      createdBy: ownerUserId,
+      actorEffectiveRole: 'member',
+      idempotencyKey: `fixture-kr-${i}-${randomUUID()}`,
+    });
+  }
+}
+
 const ALL_MODES = ['OPEN_ORG', 'SCOPE', 'MANAGEMENT_CHAIN', 'RESTRICTED_ACL', 'PRIVATE'] as const;
 
 function baseCycleTimes() {
@@ -174,6 +212,16 @@ describe('OKR-E002 narrowOkrSetVisibility — every narrowing accepted, every wi
     OkrSetVisibilityWideningDeniedError = setCommands.OkrSetVisibilityWideningDeniedError;
     VISIBILITY_NARROWNESS_RANK = setCommands.VISIBILITY_NARROWNESS_RANK;
 
+    const objectiveCommands: ObjectiveCommandsModule = await import(
+      '../../../server/src/services/resultsVnext/okr/okrObjectiveCommands.js'
+    );
+    createObjective = objectiveCommands.createObjective;
+
+    const keyResultCommands: KeyResultCommandsModule = await import(
+      '../../../server/src/services/resultsVnext/okr/okrKeyResultCommands.js'
+    );
+    createKeyResult = keyResultCommands.createKeyResult;
+
     const pgModule: PgModule = await import('../../../server/src/database/PostgresDatabase.js');
     closePgPool = (pgModule as unknown as { closePool?: () => Promise<void> }).closePool;
   }, 30_000);
@@ -189,6 +237,11 @@ describe('OKR-E002 narrowOkrSetVisibility — every narrowing accepted, every wi
       `UPDATE okr_vnext_sets SET latest_approved_snapshot_id = NULL WHERE organization_id LIKE $1`,
       [orgLike]
     );
+    // OKR-E003: okr_vnext_key_results/okr_vnext_objectives REFERENCE
+    // okr_vnext_sets — must be deleted before the Set rows below, or the
+    // FK constraint blocks the DELETE.
+    await client.query(`DELETE FROM okr_vnext_key_results WHERE organization_id LIKE $1`, [orgLike]);
+    await client.query(`DELETE FROM okr_vnext_objectives WHERE organization_id LIKE $1`, [orgLike]);
     await client.query(`DELETE FROM okr_vnext_approved_snapshots WHERE organization_id LIKE $1`, [orgLike]);
     await client.query(`DELETE FROM rvn_platform_resource_visibility WHERE organization_id LIKE $1 AND resource_type = 'okr_set'`, [
       orgLike,
@@ -287,6 +340,7 @@ describe('OKR-E002 narrowOkrSetVisibility — every narrowing accepted, every wi
     'D19: narrowing is accepted while the Set is "active" (a widening attempt in the same state is still rejected)',
     async () => {
       const { organizationId, setId, rowVersion } = await createOrgWithCeilingAndDraftSet('OPEN_ORG');
+      await addSufficientKeyResultCoverage(setId, organizationId, USER_OWNER);
 
       const submitted = await submitOkrSetForApproval({
         setId,
@@ -341,6 +395,7 @@ describe('OKR-E002 narrowOkrSetVisibility — every narrowing accepted, every wi
       // while active.
       const { organizationId: scopeOrgId, setId: scopeSetId, rowVersion: scopeRowVersion } =
         await createOrgWithCeilingAndDraftSet('SCOPE');
+      await addSufficientKeyResultCoverage(scopeSetId, scopeOrgId, USER_OWNER);
       const scopeSubmitted = await submitOkrSetForApproval({
         setId: scopeSetId,
         organizationId: scopeOrgId,
