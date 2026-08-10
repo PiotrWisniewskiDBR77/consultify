@@ -4735,3 +4735,223 @@ draftu, żaden nie rozstrzygnięty ciszej niż tam zapisano**:
 12. Czy zamknięte/zarchiwizowane Cykle mogą przyjmować NOWE propozycje
     wyrównania — nie adresowane przez żaden AC w tej rundzie.
 
+## 46. OKR-E007 Review & Learning — implementacja + odbiór (2026-08-10)
+
+Siódmy, terminal-lifecycle epik domeny OKR — analogon ROI-E006 (PIR &
+Learning), zamyka cykl Set/Cycle: `active → review → closed`, plus
+mechanizm carry-forward bez analogu w ROI/KPI. Budowany wg
+`OKR_E007_DESIGN.md` §-IO→§9, ratyfikowany blokiem §-IO na czele
+dokumentu. **IO-1 (mandatory)**: E001-E005 wylądowały PRZED rozpoczęciem
+tej pracy (E004+E005 scalone chwilę wcześniej, zweryfikowane razem na
+385 testach) — każde cross-referencyjne założenie designu zweryfikowane
+bezpośrednim czytaniem wylądowanego kodu, nie dokumentów draftowych.
+
+**Rozjazdy IO-1 znalezione i udokumentowane (zgodnie z briefem — dwa
+oczekiwane, plus jeden dodatkowy)**:
+1. **E003 NIE zarejestrowało `'okr_objective'` jako resource_type** —
+   Objectives/KeyResults (a przez dziedziczenie: Reflections/Reviews tego
+   epiku) mają widoczność WYŁĄCZNIE przez `set_id` rodzica-Setu, zero
+   niezależnego wiersza ABAC. Ten sam wzorzec E005 już potwierdziło —
+   trzecie niezależne potwierdzenie tego samego faktu w tym worktree.
+2. **Kolumny confidence E003 to `confidence`/`confidence_numeric_value`**
+   (nie zgadywane wcześniej nazwy) — potwierdzone bezpośrednim odczytem
+   `okrObjectiveTypes.ts`/`okrKeyResultTypes.ts`.
+3. **DODATKOWY, nieoczekiwany rozjazd**: `okr_vnext_objectives`' kolumna
+   FK do rodzica-Setu to `set_id`, NIE `okr_set_id` jak zapisał szkic DDL
+   designu w §3 (przeniesione 1:1 z draftu bez re-weryfikacji na etapie
+   pisania dokumentu). Cała warstwa komend tego epiku (finalScoreOkrSet,
+   closeOkrSet, guard reflection-completeness) czyta/pisze przez REALNĄ
+   nazwę `set_id`.
+4. **IO-2 okazało się nie dotyczyć niczego w praktyce** — design zakładał
+   możliwy brak kolumn polityki na `okr_vnext_programs`
+   (`scoring_model`/`manager_review_required`/`self_review_required`/
+   `reflection_required_for_close`); bezpośredni odczyt
+   `okrProgramTypes.ts` potwierdza, że WSZYSTKIE cztery już istnieją
+   (wylądowane przez E001) — zero ALTER na tej tabeli był kiedykolwiek
+   potrzebny.
+5. **Guard slot NIE istniał** w wylądowanym
+   `OkrCycleLifecycleTransitionSpec`/`runOkrCycleLifecycleTransition`
+   (design D9 zakładał, że istnieje, powołując się na analogiczny slot
+   ROI) — dodany w tym epiku jako addytywne, wstecznie kompatybilne
+   rozszerzenie (IO-6), zero zmiany zachowania dla `OKR_CYCLE_OPEN_DRAFTING_SPEC`/
+   `OKR_CYCLE_ACTIVATE_SPEC`/`OKR_CYCLE_OPEN_REVIEW_SPEC`/`OKR_CYCLE_CANCEL_SPEC`
+   (żaden nie ustawia `guard`).
+
+**Schema** (`server/migrations/20260826_rvn_okr_review_reflection.sql`):
+`okr_vnext_reflections` — jeden wiersz na Objective (D3), dwóch pisarzy
+(finalScoreOkrSet zamraża pole score, recordObjectiveReflection pisze
+narrację), dwustopniowe zamrożenie (D4) przez
+`okr_vnext_reflection_protect_frozen` (trigger, ERRCODE 23001, dowiedziony
+realnym UPDATE na realnym Postgresie — 23001 na próbie dotknięcia
+chronionego pola, sukces na no-op UPDATE spoza chronionej listy).
+`okr_vnext_reviews` — jeden wiersz na `(set_id, review_type)` (D5),
+`comments` JSONB append-only array. `okr_vnext_sets.carried_from_set_id`
+— addytywny ALTER (D15), nowa kolumna nullable + partial index. **Zero
+nowej tabeli zdarzeń** — D14 potwierdzone: `rvn_platform_events` (RN-G1)
+to jedyny realny ledger, `okr_vnext_events` nigdy nie istniało jako
+tabela.
+
+**Command layer** (`okrReflectionCommands.ts`/`okrReviewCommands.ts`/
+`okrCarryForwardCommands.ts`, extends `okrSetCommands.ts`/
+`okrCycleCommands.ts`/`okrCycleScheduler.ts`):
+- `finalScoreOkrSet` — batch Set-level, `executeAtomicCommand` CAS'owany
+  na `okr_vnext_sets.row_version`, guard `status==='review'`, czyta
+  PINNED policy snapshot Cyklu (D11), `applyOkrScoringModel` (D2):
+  `zero_to_one`/`percentage` przepuszczają `objective.progress` (surowy,
+  nieklampowany ratio z silnika E003, potwierdzone bezpośrednim odczytem
+  `okrProgressEngine.ts`'s własnej reguły §-IO) bez rekalkulacji;
+  `categories`/`custom` **honestly stubbed** — `final_score=NULL`,
+  `scoring_model_unsupported=true`, ZERO wymyślonego progu (IO-5) —
+  potwierdzone testem że żadna wartość liczbowa nigdy nie ląduje dla tych
+  dwóch modeli. Upsert `ON CONFLICT (objective_id) DO UPDATE ... WHERE
+  status='draft'` — rerun aktualizuje TEN SAM wiersz, nigdy duplikat
+  (dowiedzione bezpośrednim `COUNT(*)`).
+- `recordObjectiveReflection` — **ręcznie skręcony** BEGIN/mutacja/event
+  (idempotency-guarded via `EVENT_INSERT_SQL`)/outbox/COMMIT, bo
+  `executeAtomicCommand` zakłada istniejący wiersz, a ta komenda musi
+  wspierać "jeszcze nie istnieje" (Owner może refleksować przed
+  finalScoreOkrSet). Konwencja `expectedVersion=0` = create,
+  `expectedVersion>=1` = CAS istniejącego — udokumentowana explicite w
+  nagłówku pliku jako rozszerzenie tego pliku, nie wzorzec platformowy.
+- `okrReviewCommands.ts` — 5 komend + `listOkrSetReviews`.
+  `OkrManagerReviewSelfApprovalDeniedError` (D6, **nigdy
+  `SelfReviewDenied*`** — terminologia `self_review_required` [flaga
+  polityki, plain eligibility check] vs "self-review denial" [maker-checker
+  na MANAGER review] to dwa niepowiązane pojęcia, nazwane rozdzielnie
+  explicite) sprawdzany PRZED jakimkolwiek zapisem, na DWÓCH osobnych
+  gałęziach (`submitted_by`, `owner_user_id`/`created_by`) — obie
+  dowiedzione OSOBNYMI testami na realnym Postgresie, żeby nie dało się
+  przypadkiem pokryć tylko jednej. `submitOkrSetSelfReview`'s "musi być
+  Ownerem" to PLAIN guard (`OkrReviewValidationError`), nie denial —
+  Program PROSI Ownera o self-review, wymaganie inaczej zaprzeczałoby
+  funkcji.
+- `closeOkrSet` (extends `okrSetCommands.ts`) — dokładna kolejność §4.5:
+  (1) guard `status==='review'`; (2) PINNED policy snapshot (D11, nigdy
+  żywy odczyt Programu — dowiedzione: publikacja nowej wersji polityki po
+  utworzeniu Cyklu nie zmienia wymagań już-aktywnego Cyklu, bo to
+  dziedziczy się z E001's fundamentu); (3) manager-review gate; (4)
+  self-review gate; (5) reflection-completeness gate (listuje KAŻDY
+  brakujący Objective, nie tylko pierwszy — dowiedzione testem z dwoma
+  Objectives, jednym kompletnym); (6) finalizuje WSZYSTKIE `status='draft'`
+  reflections dla Setu w TEJ SAMEJ transakcji, nawet niekompletne (D4);
+  (7) zamyka Set. **Brak self-close check** (D10, świadome odejście od
+  ROI-E006's `RoiPirSelfCloseDeniedError`) — dowiedzione bezpośrednio:
+  Owner=created_by zamyka WŁASNY Set z każdą bramką WYŁĄCZONĄ i to
+  SUKCES, bo OKR (w przeciwieństwie do ROI) ma już
+  `manager_review_required` dającą tę samą ochronę transytywnie gdy
+  włączona; wyłączona = Program świadomie zrezygnował z ochrony.
+- `okrCycleCommands.ts` — nowy `guard?:` slot na
+  `OkrCycleLifecycleTransitionSpec`, wywoływany PO sprawdzeniu
+  `fromStatuses` a PRZED UPDATE. `OKR_CYCLE_CLOSE_SPEC` dostaje realny
+  guard: `SELECT set_id FROM okr_vnext_sets WHERE cycle_id=$1 AND status
+  NOT IN ('closed','cancelled','not_required')` — niepusty wynik rzuca
+  `OkrCycleHasOpenSetsError` PRZED jakimkolwiek zapisem (dowiedzione: Cykl
+  zostaje w `'review'`, nie `'closed'`, po odrzuconej próbie).
+- `okrCycleScheduler.ts` — `cascadeOkrSetsToReview` (nowa), ten sam
+  wzorzec service-actor (`actorUserId=null`,
+  `actorEffectiveRole='system:okr_cycle_scheduler'`) co istniejące
+  `proposeAndExecuteDueCycleTransitions`.
+- `carryForwardOkrSet` (D8/D17) — cienki wrapper wokół E002's
+  `createOkrSet` (dedupe SAVEPOINT ponownie użyty, nie
+  reimplementowany), guard źródło `status==='closed'`, guard cel
+  `status IN ('planned','drafting')`. **D8 dowiedzione bezpośrednio**:
+  carried Set ma ZERO wierszy `okr_vnext_objectives` (COUNT=0) — żadna
+  treść nie kopiuje się, tylko `carried_from_set_id` wskaźnik. D16
+  (`carried_from_objective_id` na `okr_vnext_objectives`) restated
+  forward dla przyszłej sesji E003/E008 — E003 nie zarezerwowało tej
+  kolumny, więc "carried Objective = nowy wiersz z pointerem, nigdy
+  przeniesienie" pozostaje wymaganiem nieukończonym poza tym epikiem.
+- `okrSetHistoryRepository.ts` — `getOkrSetHistory` (D12-D14): jedno
+  zapytanie `rvn_platform_events WHERE aggregate_type='okr_set' AND
+  aggregate_id=$setId`, keyset pagination po `sequence`, scalone w
+  aplikacji z `okr_vnext_set_versions` (E002's OKRMaterialChange — tylko
+  na PIERWSZEJ stronie, świadomy, udokumentowany tradeoff unikający
+  duplikacji przy paginacji). Autoryzacja: ten sam gate co `getOkrSet`,
+  sprawdzony RAZ na starcie — outsider dostaje pustą stronę, nie błąd.
+
+**HTTP layer**: 11 nowych routes na współdzielonym `okr.routes.ts`
+(`open-review` reużywa generyczny helper Setu z nowym spec-iem;
+`final-score`/`objectives/:id/reflection`/`reviews/self/submit`/
+`reviews/manager/{submit,approve,request-changes}`/
+`reviews/:reviewType/comments`/`GET reviews`/`close`/`carry-forward`/
+`GET history` — ręcznie wpięte). Error-mapping: `OkrManagerReviewSelfApprovalDeniedError`→403,
+`OkrSetManagerReviewRequiredError`/`OkrSetSelfReviewRequiredError`/
+`OkrSetReflectionRequiredError`/`OkrCycleHasOpenSetsError`→409 (spread
+`details`), `OkrReviewNotFoundError`/`OkrReflectionNotFoundError`→404.
+
+**Real gap znaleziony i FLAGOWANY (nie ukrywany) — brak GET route dla
+treści Reflection**: design's §6 API table nazywa `POST
+.../objectives/:id/reflection` (write) ale ŻADEN `GET` dla odczytu treści
+refleksji — divergence od "every writable aggregate ma matching read
+path" konwencji tego programu. Zgodnie z IO-3 ("no capability without an
+AC naming it") — NIE zbudowano nieautoryzowanego route'u żeby "naprawić"
+to po cichu. `okrReflectionVisibilityJoin.realdb.test.ts` (wymagany przez
+§7 pliku designu) zamiast tego dowodzi kształt joina (`::text` cast,
+PRIVATE-mode denial) bezpośrednim SQL, imitując realny join, jaki
+przyszła funkcja odczytu by użyła — nie wymyślając nieroutowanej
+funkcji repozytorium żeby test przeszedł.
+
+**Liczby testów tego epiku**: 7 (finalScoreOkrSet: dispatch/upsert/guard)
++ 6 (reflection lifecycle + protect-frozen trigger + close-gate) + 8
+(manager/self review: submit/D6 oba branch/approve/request-changes/resubmit/comment)
++ 5 (closeOkrSet: trzy bramki + D10 + not-review guard) + 3 (Cycle-close
+guard D9) + 4 (carryForward: lineage/dedupe/oba guardy) + 3
+(getOkrSetHistory: merged/visibility/pagination) + 2 (visibility-join:
+reviews realny + reflections direct-proof) + 27 (route-contract,
+`okrReview.routes.test.ts`) = **65 nowych testów**, wszystkie PASS na
+efemerycznym Postgresie 17 (`initdb --locale=C`, TCP `127.0.0.1:28791`,
+`NODE_ENV=test`, gniazdo w `/private/tmp`). `npx tsc --noEmit`
+(`NODE_OPTIONS=--max-old-space-size=8192`, `server/tsconfig.json`) —
+**0 błędów związanych z OKR** (28 przedistniejących błędów
+`roiCalculationEngine.ts`/decimal.js, zero powiązania z tym epikiem,
+plik nigdy nietknięty w tym worktree, potwierdzone `git diff` puste).
+
+**Weryfikacja before/after pełnych suit**: `tests/resultsVnext/okr` (33
+plików) + `okr.routes.test.ts` + `okrReview.routes.test.ts` (2 pliki w
+`server/src/routes/`) = **43 pliki, 450/450 PASS** na tej samej
+efemerycznej bazie (baseline przed rozpoczęciem tego epiku: 385 testów w
+34 plikach po scaleniu E004+E005 — więc 65 nowych testów netto, **zero
+regresji** w 34 istniejących plikach OKR, uruchomionych RAZEM w jednym
+przebiegu, nie osobno). `tests/resultsVnext/roi` + `tests/resultsVnext/kpi`
+razem: **299 PASS / 33 FAIL / 8 skip** — wszystkie 33 failing to
+DOKŁADNIE ten sam PRZEDISTNIEJĄCY defekt `initiatives_organization_id_fkey`
+udokumentowany w §37 tego dokumentu (i restated w brief zadania tej
+sesji), NIE regresja tego epiku — żaden plik ROI/KPI nie importuje
+`okr/*`.
+
+**Nadal otwarte, restated explicite (design §9, NIE ciche) — 8 punktów**:
+1. **Carried verbatim z `OKR_E001_DESIGN.md` §2**:
+   `reflection_required_for_close` domyślnie `false` (fail-safe) do
+   decyzji Founder-a (plan §20 EVIDENCE_NEEDED #3) — TEN epik jest
+   PIERWSZYM, który realnie EGZEKWUJE tę flagę (E001 ją tylko
+   przechowywało) — pytanie przestaje być czysto teoretyczne od teraz,
+   bo realnie gate'uje zamknięcia Setów.
+2. `scoring_model:'categories'` — brak jakiegokolwiek źródła definiującego
+   granice kategorii; `final_score` zostaje `NULL`/
+   `scoring_model_unsupported=true` do decyzji produktowej.
+3. `scoring_model:'custom'` — z definicji niesprecyzowane bez konkretnego
+   wymagania organizacji; stubbed identycznie jak `categories`.
+4. E003 powinno zarezerwować `carried_from_objective_id` na
+   `okr_vnext_objectives` przy WŁASNYM tworzeniu (D16) — nie zrobione
+   dotąd, restated dla przyszłej sesji E003/E008.
+5. `carried_from_set_id` placement (D15) — ten epik wybrał własny
+   addytywny ALTER zamiast retroaktywnej edycji zamrożonego
+   `OKR_E002_DESIGN.md` §3; Integration Owner może zdecydować inaczej,
+   ten dokument nie rozstrzyga jednostronnie.
+6. Ledger's literalny zapis OKR-F-022 ("brak dedykowanej trasy poza
+   approve/request-changes") odczytany jako "ten sam maker-checker
+   PATTERN co E002, nowa tabela/routes" (druga, odrzucona interpretacja:
+   dosłowne przeużycie E002's `/sets/:id/approve` dla cyklicznego
+   review) — flagowane dla Integration Owner do potwierdzenia.
+7. Czy `closeOkrSet` kaskaduje status Objective/KeyResult do wartości
+   terminalnej (`'closed'`/`'achieved'`) — świadomie NIE
+   zaimplementowane (wymyślenie progu bez AC/polityki byłoby dokładnie
+   tym błędem fabrykowanej reguły biznesowej, który dyscyplina tego
+   programu ma zapobiegać).
+8. **NOWY, znaleziony w tej sesji**: brak `GET` route dla treści
+   Reflection (patrz sekcja "Real gap" wyżej) — §6 designu nazywa tylko
+   write-route; odczyt istnieje dziś wyłącznie przez side-effect
+   `finalScoreOkrSet`/`recordObjectiveReflection`'s własny response body,
+   nigdy przez dedykowany GET. Restated dla Integration Owner, nie
+   rozstrzygnięte jednostronnie w tym epiku (IO-3).
+

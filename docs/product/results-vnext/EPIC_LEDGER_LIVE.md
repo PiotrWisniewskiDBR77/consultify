@@ -279,10 +279,39 @@ EXECUTION_LEDGER.md §44.
 | Decision ID | D11 | D11 | D08 | D01, D08 |
 | Requirement | `OKRReflection` (co zadziałało/nie/dlaczego/nauka/zmiana/dyspozycja); `reflection_required_for_close` = przełącznik polityki (EVIDENCE_NEEDED #3). | Manager review, gdy wymagany, nie może być wykonany przez autora (self-review denial, D11). | Carry-forward tworzy draft na nowy cykl z widoczną linią rodowodu do zamkniętego Set; nigdy nie nadpisuje zatwierdzonego snapshotu. | `GET .../sets/:id/history` rekonstruuje historię z `OKRAuditEvent`+`OKRMaterialChange`, wystarczające do cold-reopen. |
 | Aggregate/owner | OKRReflection | OKRReview (reviewer≠author) | OKRSet (carry-forward target) | OKRAuditEvent/OKRMaterialChange (append-only) |
-| Command/query/API | `POST .../sets/:id/final-score`, `POST .../objectives/:id/reflection` | brak dedykowanej trasy poza approve/request-changes z rolą reviewer≠author | `POST .../sets/:id/carry-forward` | `GET .../sets/:id/history` |
-| Schema/migration/constraint | `okr_vnext_reflections` | `okr_vnext_reviews` (reviewer≠author constraint) | nowy `id` + `carried_from_set_id` | `okr_vnext_events` (append-only envelope) |
-| Roles/visibility | Set/Objective Owner, Manager | Manager (≠author) | Set Owner, Program Admin | Auditor (read-only), Set Owner |
-| Status | NOT_IMPLEMENTED | NOT_IMPLEMENTED | NOT_IMPLEMENTED | NOT_IMPLEMENTED |
+| Command/query/API | `POST .../sets/:id/final-score`, `POST .../objectives/:id/reflection` | `POST .../sets/:id/reviews/{self,manager}/submit`, `POST .../reviews/manager/{approve,request-changes}`, `POST .../reviews/:type/comments`, `GET .../reviews` | `POST .../sets/:id/carry-forward` | `GET .../sets/:id/history` |
+| Schema/migration/constraint | `okr_vnext_reflections` (two-stage freeze trigger) | `okr_vnext_reviews` (one row per set_id+review_type) | `okr_vnext_sets.carried_from_set_id` (additive ALTER, D15) | `rvn_platform_events` (RN-G1, aggregate_type='okr_set') + `okr_vnext_set_versions` — **no `okr_vnext_events` table, D14 naming-drift resolved** |
+| Roles/visibility | Set/Objective Owner, Manager — inherited via parent Set's `okr_set` visibility row (no independent resource_type, confirmed 3rd time in this worktree after E003/E005) | Manager (≠author, `OkrManagerReviewSelfApprovalDeniedError`) | Set Owner, Program Admin | Auditor (read-only), Set Owner — same visibility gate as `getOkrSet` |
+| Status | IMPLEMENTED | IMPLEMENTED | IMPLEMENTED | IMPLEMENTED |
+
+**IMPLEMENTED 2026-08-10.** Zbudowane wg `OKR_E007_DESIGN.md` §-IO→§9,
+ratyfikowane blokiem §-IO. **IO-1 re-verification**: E001-E005 landed
+przed startem tej pracy (E004+E005 scalone chwilę wcześniej, 385 testów).
+Rozjazdy IO-1 znalezione: (1) E003 nie zarejestrowało `'okr_objective'`
+resource_type (potwierdzone 3. raz w tym worktree); (2) E003's kolumny
+confidence to `confidence`/`confidence_numeric_value`; (3) **nowy,
+nieoczekiwany**: `okr_vnext_objectives`' FK do rodzica to `set_id`, NIE
+`okr_set_id` jak zapisał szkic DDL designu; (4) IO-2 okazało się moot —
+wszystkie 4 kolumny polityki (`scoring_model`/`manager_review_required`/
+`self_review_required`/`reflection_required_for_close`) już istniały na
+`okr_vnext_programs` (E001); (5) `runOkrCycleLifecycleTransition` nie
+miało `guard` slotu (design D9 zakładał, że ma) — dodane addytywnie
+(IO-6). D2 (`categories`/`custom` scoring — `final_score=NULL`,
+`scoring_model_unsupported=true`, ZERO fabrykowanego progu, IO-5), D6
+(`OkrManagerReviewSelfApprovalDeniedError`, nigdy `SelfReviewDenied*`,
+obie gałęzie `submitted_by`/`owner_user_id` dowiedzione osobno), D9
+(nowy guard na `okr_cycle.closed` — Cykl nie zamyka się z otwartymi
+Setami, dowiedzione realnym testem), D10 (brak self-close check — Owner
+zamyka własny Set z bramkami wyłączonymi, sukces dowiedziony wprost), D8
+(carry-forward = zero content copied, COUNT Objectives=0 dowiedzione).
+**Real gap znaleziony i flagowany, nie ukryty**: §6 designu nie nazywa
+GET route dla treści Reflection — zgodnie z IO-3 nie zbudowano
+nieautoryzowanej trasy; `okrReflectionVisibilityJoin.realdb.test.ts`
+dowodzi kształt joina bezpośrednim SQL zamiast wymyślać funkcję
+repozytorium bez callera. 65 nowych testów, wszystkie PASS na
+efemerycznym Postgresie 17; pełna suita OKR (43 pliki) 450/450 PASS,
+zero regresji. `tsc --noEmit` czysty (0 błędów OKR). Szczegóły pełne:
+EXECUTION_LEDGER.md §46.
 
 ### OKR-E008 Teresa, Perspectives, Legacy
 
