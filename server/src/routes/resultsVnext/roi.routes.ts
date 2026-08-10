@@ -118,6 +118,40 @@ import {
   RoiScenarioFrozenError,
   RoiScenarioValidationError,
 } from '../../services/resultsVnext/roi/roiScenarioCommands.js';
+import { startRoiCaseTracking } from '../../services/resultsVnext/roi/roiTrackingCommands.js';
+import {
+  createRoiForecastVersion,
+  RoiForecastVersionValidationError,
+} from '../../services/resultsVnext/roi/roiForecastVersionCommands.js';
+import {
+  getRoiForecastVersion,
+  listRoiForecastVersions,
+} from '../../services/resultsVnext/roi/roiForecastVersionRepository.js';
+import { getRoiCaseCompareView } from '../../services/resultsVnext/roi/roiCompareRepository.js';
+import {
+  correctActualEntry,
+  disputeActualEntry,
+  recordActualEntry,
+  verifyActualEntry,
+  RoiActualEntryNotFoundError,
+  RoiActualEntryValidationError,
+  RoiActualSelfVerificationDeniedError,
+} from '../../services/resultsVnext/roi/roiActualEntryCommands.js';
+import { getActualEntry, listActualEntries } from '../../services/resultsVnext/roi/roiActualEntryRepository.js';
+import { publishRoiActualSnapshot } from '../../services/resultsVnext/roi/roiActualSnapshotCommands.js';
+import {
+  getRoiActualSnapshot,
+  listRoiActualSnapshots,
+} from '../../services/resultsVnext/roi/roiActualSnapshotRepository.js';
+import {
+  addVarianceCause,
+  recordVariance,
+  removeVarianceCause,
+  updateVarianceStatus,
+  RoiVarianceNotFoundError,
+  RoiVarianceValidationError,
+} from '../../services/resultsVnext/roi/roiVarianceCommands.js';
+import { getVariance, listVariances } from '../../services/resultsVnext/roi/roiVarianceRepository.js';
 import type { AuthenticatedRequest } from '../../types/index.js';
 import logger from '../../utils/Logger.js';
 import {
@@ -164,6 +198,24 @@ import {
   UpdateCostLineSchema,
   UpdateScenarioSchema,
 } from '../../validators/resultsVnextRoiEconomicModel.validators.js';
+import {
+  AddVarianceCauseSchema,
+  CorrectActualEntrySchema,
+  CreateRoiForecastVersionSchema,
+  DisputeActualEntrySchema,
+  ListActualEntriesQuerySchema,
+  PublishRoiActualSnapshotSchema,
+  RecordActualEntrySchema,
+  RecordVarianceSchema,
+  RemoveVarianceCauseSchema,
+  RoiActualEntryParamsSchema,
+  RoiActualSnapshotParamsSchema,
+  RoiForecastVersionParamsSchema,
+  RoiVarianceCauseParamsSchema,
+  RoiVarianceParamsSchema,
+  UpdateVarianceStatusSchema,
+  VerifyActualEntrySchema,
+} from '../../validators/resultsVnextRoiForecastActual.validators.js';
 
 const router = Router();
 
@@ -268,6 +320,28 @@ function handleRoiRouteError(res: Response, err: unknown, op: string): void {
     err instanceof RoiScenarioFrozenError ||
     err instanceof RoiScenarioValidationError ||
     err instanceof RoiCalculationRunValidationError
+  ) {
+    res.status(409).json({ error: err.message, code: err.code, details: err.details });
+    return;
+  }
+  // ROI-E004 §6: RoiActualSelfVerificationDeniedError checked ahead of the
+  // generic 409 validation branch — Decision D10's self-verification denial
+  // is a 403 (authorization), same character as RoiSelfApprovalDeniedError
+  // above, not a 409 (state-conflict). RoiActualEntryNotFoundError is a 404
+  // (referenced actual_entry_id does not exist), also checked ahead of the
+  // generic 409 branch for the same "more specific status code first" reason.
+  if (err instanceof RoiActualSelfVerificationDeniedError) {
+    res.status(403).json({ error: err.message, code: err.code, details: err.details });
+    return;
+  }
+  if (err instanceof RoiActualEntryNotFoundError || err instanceof RoiVarianceNotFoundError) {
+    res.status(404).json({ error: err.message, code: err.code, details: err.details });
+    return;
+  }
+  if (
+    err instanceof RoiForecastVersionValidationError ||
+    err instanceof RoiActualEntryValidationError ||
+    err instanceof RoiVarianceValidationError
   ) {
     res.status(409).json({ error: err.message, code: err.code, details: err.details });
     return;
@@ -1825,6 +1899,560 @@ router.get(
       res.status(200).json({ snapshot });
     } catch (err) {
       handleRoiRouteError(res, err, 'getRoiApprovalSnapshot');
+    }
+  }
+);
+
+// ==========================================================================
+// ROI-E004 — Forecast & Actual routes (design §6)
+// ==========================================================================
+
+// ---------- POST .../transitions/start-tracking — startRoiCaseTracking ----------
+// Reuses mountTransitionRoute — startRoiCaseTracking's input shape is
+// RunRoiCaseLifecycleTransitionInput-compatible (caseId/organizationId/
+// expectedVersion/actorUserId/actorEffectiveRole/idempotencyKey/
+// correlationId/causationId/reason), same as submitRoiCaseForApproval/
+// reopenRejectedRoiCase above.
+
+mountTransitionRoute('/cases/:caseId/transitions/start-tracking', 'startRoiCaseTracking', startRoiCaseTracking);
+
+// ---------- POST/GET .../forecast-versions[/:forecastVersionId] ----------
+
+router.post(
+  '/cases/:caseId/forecast-versions',
+  validateParams(RoiCaseIdParamsSchema),
+  validateBody(CreateRoiForecastVersionSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { caseId } = req.params as { caseId: string };
+      if (!(await requireExistingRoiCase(auth, caseId, res))) return;
+      const body = req.body as import('zod').infer<typeof CreateRoiForecastVersionSchema>;
+      const outcome = await createRoiForecastVersion({
+        caseId,
+        organizationId: auth.organizationId,
+        expectedVersion: body.expectedVersion,
+        reason: body.reason,
+        overrides: body.overrides,
+        actorUserId: auth.userId,
+        actorEffectiveRole: auth.role,
+        idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
+        correlationId: getCorrelationId(req),
+      });
+      res.status(outcome.outcome === 'applied' ? 201 : 200).json({
+        outcome: outcome.outcome,
+        eventId: outcome.eventId,
+        resultingVersion: outcome.resultingVersion,
+        forecastVersion: outcome.result,
+      });
+    } catch (err) {
+      handleRoiRouteError(res, err, 'createRoiForecastVersion');
+    }
+  }
+);
+
+router.get(
+  '/cases/:caseId/forecast-versions',
+  validateParams(RoiCaseIdParamsSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { caseId } = req.params as { caseId: string };
+      const forecastVersions = await listRoiForecastVersions({ userId: auth.userId, organizationId: auth.organizationId, caseId });
+      res.status(200).json({ forecastVersions });
+    } catch (err) {
+      handleRoiRouteError(res, err, 'listRoiForecastVersions');
+    }
+  }
+);
+
+router.get(
+  '/cases/:caseId/forecast-versions/:forecastVersionId',
+  validateParams(RoiForecastVersionParamsSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { caseId, forecastVersionId } = req.params as { caseId: string; forecastVersionId: string };
+      const forecastVersion = await getRoiForecastVersion({
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        caseId,
+        forecastVersionId,
+      });
+      if (!forecastVersion) {
+        res.status(404).json({ error: 'ROI forecast version not found', code: 'NOT_FOUND' });
+        return;
+      }
+      res.status(200).json({ forecastVersion });
+    } catch (err) {
+      handleRoiRouteError(res, err, 'getRoiForecastVersion');
+    }
+  }
+);
+
+// ---------- GET .../compare — getRoiCaseCompareView (AC-04) ----------
+
+router.get(
+  '/cases/:caseId/compare',
+  validateParams(RoiCaseIdParamsSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { caseId } = req.params as { caseId: string };
+      const compareView = await getRoiCaseCompareView({ userId: auth.userId, organizationId: auth.organizationId, caseId });
+      if (!compareView) {
+        res.status(404).json({ error: 'ROI case not found', code: 'NOT_FOUND' });
+        return;
+      }
+      res.status(200).json({ compare: compareView });
+    } catch (err) {
+      handleRoiRouteError(res, err, 'getRoiCaseCompareView');
+    }
+  }
+);
+
+// ---------- GET/POST .../actuals ; GET .../actuals/:entryId ----------
+
+router.get(
+  '/cases/:caseId/actuals',
+  validateParams(RoiCaseIdParamsSchema),
+  validateQuery(ListActualEntriesQuerySchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { caseId } = req.params as { caseId: string };
+      const query = req.query as unknown as import('zod').infer<typeof ListActualEntriesQuerySchema>;
+      const entries = await listActualEntries({
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        caseId,
+        includeSuperseded: query.includeSuperseded,
+        limit: query.limit,
+        offset: query.offset,
+      });
+      res.status(200).json({ entries });
+    } catch (err) {
+      handleRoiRouteError(res, err, 'listActualEntries');
+    }
+  }
+);
+
+router.post(
+  '/cases/:caseId/actuals',
+  validateParams(RoiCaseIdParamsSchema),
+  validateBody(RecordActualEntrySchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { caseId } = req.params as { caseId: string };
+      if (!(await requireExistingRoiCase(auth, caseId, res))) return;
+      const body = req.body as import('zod').infer<typeof RecordActualEntrySchema>;
+      const outcome = await recordActualEntry({
+        caseId,
+        organizationId: auth.organizationId,
+        entryType: body.entryType,
+        costLineId: body.costLineId,
+        benefitLineId: body.benefitLineId,
+        periodStart: body.periodStart,
+        periodEnd: body.periodEnd,
+        amount: body.amount,
+        currency: body.currency,
+        source: body.source,
+        evidenceRefs: body.evidenceRefs,
+        notes: body.notes,
+        recordedBy: auth.userId,
+        actorEffectiveRole: auth.role,
+        idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
+        correlationId: getCorrelationId(req),
+        reason: body.reason ?? null,
+      });
+      res.status(outcome.outcome === 'applied' ? 201 : 200).json({
+        outcome: outcome.outcome,
+        eventId: outcome.eventId,
+        resultingVersion: outcome.resultingVersion,
+        actualEntry: outcome.result,
+      });
+    } catch (err) {
+      handleRoiRouteError(res, err, 'recordActualEntry');
+    }
+  }
+);
+
+router.get(
+  '/cases/:caseId/actuals/:entryId',
+  validateParams(RoiActualEntryParamsSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { caseId, entryId } = req.params as { caseId: string; entryId: string };
+      const entry = await getActualEntry({ userId: auth.userId, organizationId: auth.organizationId, caseId, actualEntryId: entryId });
+      if (!entry) {
+        res.status(404).json({ error: 'ROI actual entry not found', code: 'NOT_FOUND' });
+        return;
+      }
+      res.status(200).json({ actualEntry: entry });
+    } catch (err) {
+      handleRoiRouteError(res, err, 'getActualEntry');
+    }
+  }
+);
+
+// ---------- POST .../actuals/:entryId/corrections | /verify | /dispute ----------
+
+router.post(
+  '/cases/:caseId/actuals/:entryId/corrections',
+  validateParams(RoiActualEntryParamsSchema),
+  validateBody(CorrectActualEntrySchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { entryId } = req.params as { caseId: string; entryId: string };
+      const body = req.body as import('zod').infer<typeof CorrectActualEntrySchema>;
+      const outcome = await correctActualEntry({
+        actualEntryId: entryId,
+        organizationId: auth.organizationId,
+        amount: body.amount,
+        currency: body.currency,
+        correctionReason: body.correctionReason,
+        recordedBy: auth.userId,
+        actorEffectiveRole: auth.role,
+        idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
+        correlationId: getCorrelationId(req),
+      });
+      res.status(outcome.outcome === 'applied' ? 201 : 200).json({
+        outcome: outcome.outcome,
+        eventId: outcome.eventId,
+        resultingVersion: outcome.resultingVersion,
+        actualEntry: outcome.result.superseding,
+      });
+    } catch (err) {
+      handleRoiRouteError(res, err, 'correctActualEntry');
+    }
+  }
+);
+
+router.post(
+  '/cases/:caseId/actuals/:entryId/verify',
+  validateParams(RoiActualEntryParamsSchema),
+  validateBody(VerifyActualEntrySchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { entryId } = req.params as { caseId: string; entryId: string };
+      const body = req.body as import('zod').infer<typeof VerifyActualEntrySchema>;
+      const outcome = await verifyActualEntry({
+        actualEntryId: entryId,
+        organizationId: auth.organizationId,
+        verifierId: auth.userId,
+        actorEffectiveRole: auth.role,
+        idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
+        correlationId: getCorrelationId(req),
+        notes: body.notes,
+      });
+      res.status(outcome.outcome === 'applied' ? 201 : 200).json({
+        outcome: outcome.outcome,
+        eventId: outcome.eventId,
+        resultingVersion: outcome.resultingVersion,
+        actualEntry: outcome.result.superseding,
+      });
+    } catch (err) {
+      handleRoiRouteError(res, err, 'verifyActualEntry');
+    }
+  }
+);
+
+router.post(
+  '/cases/:caseId/actuals/:entryId/dispute',
+  validateParams(RoiActualEntryParamsSchema),
+  validateBody(DisputeActualEntrySchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { entryId } = req.params as { caseId: string; entryId: string };
+      const body = req.body as import('zod').infer<typeof DisputeActualEntrySchema>;
+      const outcome = await disputeActualEntry({
+        actualEntryId: entryId,
+        organizationId: auth.organizationId,
+        disputedBy: auth.userId,
+        disputeReason: body.disputeReason,
+        actorEffectiveRole: auth.role,
+        idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
+        correlationId: getCorrelationId(req),
+      });
+      res.status(outcome.outcome === 'applied' ? 201 : 200).json({
+        outcome: outcome.outcome,
+        eventId: outcome.eventId,
+        resultingVersion: outcome.resultingVersion,
+        actualEntry: outcome.result.superseding,
+      });
+    } catch (err) {
+      handleRoiRouteError(res, err, 'disputeActualEntry');
+    }
+  }
+);
+
+// ---------- POST/GET .../actual-snapshots[/:actualSnapshotId] ----------
+
+router.post(
+  '/cases/:caseId/actual-snapshots',
+  validateParams(RoiCaseIdParamsSchema),
+  validateBody(PublishRoiActualSnapshotSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { caseId } = req.params as { caseId: string };
+      if (!(await requireExistingRoiCase(auth, caseId, res))) return;
+      const body = req.body as import('zod').infer<typeof PublishRoiActualSnapshotSchema>;
+      const outcome = await publishRoiActualSnapshot({
+        caseId,
+        organizationId: auth.organizationId,
+        expectedVersion: body.expectedVersion,
+        asOfPeriodEnd: body.asOfPeriodEnd,
+        publishedBy: auth.userId,
+        actorEffectiveRole: auth.role,
+        idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
+        correlationId: getCorrelationId(req),
+        reason: body.reason ?? null,
+      });
+      res.status(outcome.outcome === 'applied' ? 201 : 200).json({
+        outcome: outcome.outcome,
+        eventId: outcome.eventId,
+        resultingVersion: outcome.resultingVersion,
+        actualSnapshot: outcome.result,
+      });
+    } catch (err) {
+      handleRoiRouteError(res, err, 'publishRoiActualSnapshot');
+    }
+  }
+);
+
+router.get(
+  '/cases/:caseId/actual-snapshots',
+  validateParams(RoiCaseIdParamsSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { caseId } = req.params as { caseId: string };
+      const actualSnapshots = await listRoiActualSnapshots({ userId: auth.userId, organizationId: auth.organizationId, caseId });
+      res.status(200).json({ actualSnapshots });
+    } catch (err) {
+      handleRoiRouteError(res, err, 'listRoiActualSnapshots');
+    }
+  }
+);
+
+router.get(
+  '/cases/:caseId/actual-snapshots/:actualSnapshotId',
+  validateParams(RoiActualSnapshotParamsSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { caseId, actualSnapshotId } = req.params as { caseId: string; actualSnapshotId: string };
+      const actualSnapshot = await getRoiActualSnapshot({
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        caseId,
+        actualSnapshotId,
+      });
+      if (!actualSnapshot) {
+        res.status(404).json({ error: 'ROI actual snapshot not found', code: 'NOT_FOUND' });
+        return;
+      }
+      res.status(200).json({ actualSnapshot });
+    } catch (err) {
+      handleRoiRouteError(res, err, 'getRoiActualSnapshot');
+    }
+  }
+);
+
+// ---------- GET/POST .../variances ; GET/PATCH .../variances/:varianceId ----------
+
+router.get(
+  '/cases/:caseId/variances',
+  validateParams(RoiCaseIdParamsSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { caseId } = req.params as { caseId: string };
+      const variances = await listVariances({ userId: auth.userId, organizationId: auth.organizationId, caseId });
+      res.status(200).json({ variances });
+    } catch (err) {
+      handleRoiRouteError(res, err, 'listVariances');
+    }
+  }
+);
+
+router.post(
+  '/cases/:caseId/variances',
+  validateParams(RoiCaseIdParamsSchema),
+  validateBody(RecordVarianceSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { caseId } = req.params as { caseId: string };
+      if (!(await requireExistingRoiCase(auth, caseId, res))) return;
+      const body = req.body as import('zod').infer<typeof RecordVarianceSchema>;
+      const outcome = await recordVariance({
+        caseId,
+        organizationId: auth.organizationId,
+        comparisonType: body.comparisonType,
+        metric: body.metric,
+        referenceApprovalSnapshotId: body.referenceApprovalSnapshotId,
+        referenceForecastVersionId: body.referenceForecastVersionId,
+        referenceActualSnapshotId: body.referenceActualSnapshotId,
+        ownerUserId: body.ownerUserId,
+        createdBy: auth.userId,
+        actorEffectiveRole: auth.role,
+        idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
+        correlationId: getCorrelationId(req),
+        reason: body.reason ?? null,
+      });
+      res.status(outcome.outcome === 'applied' ? 201 : 200).json({
+        outcome: outcome.outcome,
+        eventId: outcome.eventId,
+        resultingVersion: outcome.resultingVersion,
+        variance: outcome.result,
+      });
+    } catch (err) {
+      handleRoiRouteError(res, err, 'recordVariance');
+    }
+  }
+);
+
+router.get(
+  '/cases/:caseId/variances/:varianceId',
+  validateParams(RoiVarianceParamsSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { caseId, varianceId } = req.params as { caseId: string; varianceId: string };
+      const variance = await getVariance({ userId: auth.userId, organizationId: auth.organizationId, caseId, varianceId });
+      if (!variance) {
+        res.status(404).json({ error: 'ROI variance not found', code: 'NOT_FOUND' });
+        return;
+      }
+      res.status(200).json({ variance });
+    } catch (err) {
+      handleRoiRouteError(res, err, 'getVariance');
+    }
+  }
+);
+
+router.patch(
+  '/cases/:caseId/variances/:varianceId',
+  validateParams(RoiVarianceParamsSchema),
+  validateBody(UpdateVarianceStatusSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { caseId, varianceId } = req.params as { caseId: string; varianceId: string };
+      const body = req.body as import('zod').infer<typeof UpdateVarianceStatusSchema>;
+      const outcome = await updateVarianceStatus({
+        varianceId,
+        caseId,
+        organizationId: auth.organizationId,
+        expectedVersion: body.expectedVersion,
+        status: body.status,
+        ownerUserId: body.ownerUserId,
+        actorUserId: auth.userId,
+        actorEffectiveRole: auth.role,
+        idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
+        correlationId: getCorrelationId(req),
+        reason: body.reason ?? null,
+      });
+      res.status(200).json({
+        outcome: outcome.outcome,
+        eventId: outcome.eventId,
+        resultingVersion: outcome.resultingVersion,
+        variance: outcome.result,
+      });
+    } catch (err) {
+      handleRoiRouteError(res, err, 'updateVarianceStatus');
+    }
+  }
+);
+
+// ---------- POST .../variances/:varianceId/causes ; DELETE .../causes/:causeId ----------
+
+router.post(
+  '/cases/:caseId/variances/:varianceId/causes',
+  validateParams(RoiVarianceParamsSchema),
+  validateBody(AddVarianceCauseSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { varianceId } = req.params as { caseId: string; varianceId: string };
+      const body = req.body as import('zod').infer<typeof AddVarianceCauseSchema>;
+      const outcome = await addVarianceCause({
+        varianceId,
+        organizationId: auth.organizationId,
+        causeCategory: body.causeCategory,
+        contributionPct: body.contributionPct,
+        narrative: body.narrative,
+        createdBy: auth.userId,
+        actorEffectiveRole: auth.role,
+        idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
+        correlationId: getCorrelationId(req),
+        reason: body.reason ?? null,
+      });
+      res.status(outcome.outcome === 'applied' ? 201 : 200).json({
+        outcome: outcome.outcome,
+        eventId: outcome.eventId,
+        resultingVersion: outcome.resultingVersion,
+        varianceCause: outcome.result,
+      });
+    } catch (err) {
+      handleRoiRouteError(res, err, 'addVarianceCause');
+    }
+  }
+);
+
+router.delete(
+  '/cases/:caseId/variances/:varianceId/causes/:causeId',
+  validateParams(RoiVarianceCauseParamsSchema),
+  validateBody(RemoveVarianceCauseSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { varianceId, causeId } = req.params as { caseId: string; varianceId: string; causeId: string };
+      const body = req.body as import('zod').infer<typeof RemoveVarianceCauseSchema>;
+      const outcome = await removeVarianceCause({
+        causeId,
+        varianceId,
+        organizationId: auth.organizationId,
+        actorUserId: auth.userId,
+        actorEffectiveRole: auth.role,
+        idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
+        correlationId: getCorrelationId(req),
+        reason: body.reason ?? null,
+      });
+      res.status(200).json({
+        outcome: outcome.outcome,
+        eventId: outcome.eventId,
+        resultingVersion: outcome.resultingVersion,
+        causeId: outcome.result.causeId,
+      });
+    } catch (err) {
+      handleRoiRouteError(res, err, 'removeVarianceCause');
     }
   }
 );

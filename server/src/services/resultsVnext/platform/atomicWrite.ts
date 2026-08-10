@@ -233,6 +233,25 @@ export const EVENT_TYPE_CONSUMER_GROUPS: Readonly<Record<string, readonly string
   'roi.case_reopened_from_rejected': ['mywork_projection'],
   'roi.baseline_unfrozen': ['mywork_projection'],
   'roi.economic_model_unfrozen': ['mywork_projection'],
+
+  // ROI-E004 (docs/product/results-vnext/ROI_E004_DESIGN.md §6) — Forecast &
+  // Actual. `roi.tracking_started`/`roi.forecast_published`/
+  // `roi.actual_recorded`/`roi.actual_corrected`/
+  // `roi.actual_snapshot_published` fan to both 'mywork_projection' AND
+  // 'finance_projection' (same rationale ROI-E003's `roi.case_approved` used
+  // — these represent financially-relevant facts reaching a durable
+  // outcome); `roi.actual_verified`/`roi.actual_disputed` and the Variance
+  // trio fan to 'mywork_projection' only, per design §6's literal table.
+  'roi.tracking_started': ['mywork_projection', 'finance_projection'],
+  'roi.forecast_published': ['mywork_projection', 'finance_projection'],
+  'roi.actual_recorded': ['mywork_projection', 'finance_projection'],
+  'roi.actual_corrected': ['mywork_projection', 'finance_projection'],
+  'roi.actual_verified': ['mywork_projection'],
+  'roi.actual_disputed': ['mywork_projection'],
+  'roi.actual_snapshot_published': ['mywork_projection', 'finance_projection'],
+  'roi.material_variance_detected': ['mywork_projection'],
+  'roi.variance_status_updated': ['mywork_projection'],
+  'roi.variance_cause_added': ['mywork_projection'],
 };
 
 /**
