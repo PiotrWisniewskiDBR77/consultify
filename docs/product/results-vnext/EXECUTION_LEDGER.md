@@ -5514,6 +5514,14 @@ niedomknięta decyzja #3 z §7 tego rejestru, restated tu dla RN-G3
 konkretnie — jeśli demo faktycznie czyta `v8.v8_canonical_object_states`,
 ten konsument pisze do martwej kopii).
 
+**AKTUALIZACJA (§50, 2026-08-10): na świeżo zmigrowanym Postgresie 17
+zweryfikowano kodem + realną bazą, że `search_path` runnera (`public, v8`)
+resolvuje na `public.v8_canonical_object_states`, czyli na kopię Z
+rozszerzonym CHECK — konsument PRZECHODZI na świeżej migracji. Realny
+defekt NIE istnieje na tej podstawie; migracja NIE została zmieniona.
+Status demo POZOSTAJE nieznany (ta sesja nie miała dostępu do demo) —
+patrz §50 po dokładną komendę do uruchomienia przez człowieka.**
+
 **Dwa martwe placeholdery w routing mapie (IO-B), pozostawione bez zmian**:
 `decisions_projection`/`notifications_projection` w `atomicWrite.ts`'s
 `EVENT_TYPE_CONSUMER_GROUPS` mają ZERO producentów (żaden `event_type` nie
@@ -5539,5 +5547,125 @@ event+outbox (atomowo) → dispatcher → konsument → MyWork (stan kanoniczny)
 + Inbox (notyfikacja realnie widoczna przez istniejący pull path), z retry/
 backoff/dead-letter/park i izolacją multi-tenant, dowiedzione na realnym
 Postgresie, nie na docach.**
+
+## 50. IO-D — rozstrzygnięcie schema-resolution dla `v8_canonical_object_states` (2026-08-10)
+
+Bounded follow-up na blocker IO-D z §49. Pytanie: czy RN-G3 `mywork_projection`
+consumer (`server/src/services/resultsVnext/platform/myworkProjectionConsumer.ts`)
+zapisuje do kopii `v8_canonical_object_states`, której CHECK `object_type`
+NIE został rozszerzony przez `20260809_rvn_platform_canonical_object_type_extend.sql`
+(ten plik dotyka wyłącznie `public.v8_canonical_object_states`, jawnie NIE
+rusza kopii w schemacie `v8` utworzonej przez `20260719_baseline_gap.sql`).
+
+**1. Kod — obie strony piszą bez kwalifikacji schematu, polegają na `search_path`.**
+`myworkProjectionConsumer.ts:116` (`upsertCanonicalObjectState`) i
+`myWorkRoofService.ts:183` (`setCanonicalObjectState`, wołane przez `dbRun`/
+`DbPromise`→`Database.js`→`PostgresDatabase.ts`) obie robią
+`INSERT INTO v8_canonical_object_states (...)` bez `public.`/`v8.` — więc
+która kopia realnie przyjmuje zapis zależy w 100% od `search_path` puli
+połączeń. `PostgresDatabase.ts:470` (`pool.on('connect', ...)`) i
+`PostgresDatabase.ts:609` (read replica) oraz `queryHelpers.ts:242` WSZYSTKIE
+trzy ustawiają identycznie: `SET search_path TO public, v8` — `public`
+PIERWSZY. Dla niekwalifikowanej nazwy Postgres bierze pierwszy schemat z
+`search_path`, w którym tabela istnieje → **`public.v8_canonical_object_states`
+wygrywa zawsze, gdy oba schematy mają tabelę i to ustawienie search_path
+faktycznie zadziałało na danym połączeniu.**
+
+**2. Efemeryczny Postgres 17, pełny łańcuch migracji, zero mocków.**
+`initdb --locale=C` (Homebrew `postgresql@17`, `LC_ALL=C` wymagane inaczej
+`FATAL: postmaster became multithreaded during startup`), TCP
+`127.0.0.1:28546`, baza `consultify_iod`. Uruchomiono
+`DATABASE_URL="postgres://postgres@127.0.0.1:28546/consultify_iod" NODE_ENV=test DB_TYPE=postgres npx tsx server/scripts/migrate.postgres.ts`
+(bez `--safe` — strict mode, ten sam runner co `STRICT_SCHEMA_REPAIR_REPORT.md`;
+`NODE_ENV=test` wymagane, bo `databaseTargetResolver.ts` blokuje localhost
+poza testami/CI). Wynik: **608 migracji, exit 0, ZERO błędów/skipów** (grep
+po `error|fail|skip` na pełnym logu — pusto). `server/migrations-v2/` NIE
+jest częścią tego łańcucha (ani `migrate.postgres.ts`, ani
+`runTablePlatformMigrations()` w `DatabaseInitializer.ts` go nie czytają —
+to osobny, ręcznie odpalany baseline-dump, nie automatyczny runner) —
+oba schematy i obie kopie tabeli w tym teście pochodzą z `server/migrations/`
+samego: `20260323_v8_mywork_roof.sql` (niekwalifikowany `CREATE TABLE`
+→ `public`, stary 8-wartościowy CHECK) i `20260719_baseline_gap.sql`
+(`create schema if not exists v8;` + jawne `"v8"."v8_canonical_object_states"`,
+własny CHECK, też stary 8-wartościowy) + `20260809_rvn_platform_canonical_object_type_extend.sql`
+(rozszerza WYŁĄCZNIE `public.`).
+
+Zapytania na świeżo zmigrowanej bazie:
+```sql
+SELECT table_schema, table_name FROM information_schema.tables
+ WHERE table_name = 'v8_canonical_object_states' ORDER BY table_schema;
+-- public | v8_canonical_object_states
+-- v8     | v8_canonical_object_states   (OBA schematy mają tabelę)
+
+SELECT n.nspname AS schema, pg_get_constraintdef(c.oid) AS definition
+  FROM pg_constraint c JOIN pg_class t ON t.oid = c.conrelid
+  JOIN pg_namespace n ON n.oid = t.relnamespace
+ WHERE t.relname = 'v8_canonical_object_states' AND c.contype = 'c';
+-- public: CHECK (object_type = ANY (ARRAY['task','decision','initiative','milestone',
+--         'approval','ai_proposal','notification','signal','kpi','roi_case',
+--         'okr_set','deviation_case']))                          <- ROZSZERZONY
+-- v8:     CHECK (object_type = ANY (ARRAY['task','decision','initiative','milestone',
+--         'approval','ai_proposal','notification','signal']))    <- STARY, 8 wartości
+
+SET search_path TO public, v8;
+SELECT (SELECT n.nspname FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace
+         WHERE c.oid = 'v8_canonical_object_states'::regclass) AS resolved_schema;
+-- resolved_schema = public
+```
+Funkcjonalny dowód (pozytywny + kontrola negatywna, oba posprzątane —
+`consultify_iod` to jednorazowa efemeryczna baza, nie demo): z
+`search_path=public,v8` (dokładnie to, co ustawia pula appki) `INSERT ...
+object_type='kpi'` **przechodzi** (`INSERT 0 1`); z odwróconym
+`search_path=v8,public` ten sam INSERT **rzuca**
+`violates check constraint "v8_canonical_object_states_object_type_check"`
+— potwierdza, że asymetria CHECK jest realna, ale że kierunek `search_path`
+appki (public pierwszy) omija ją.
+
+**3. Werdykt: konsument PRZECHODZI na świeżo zmigrowanej bazie. Realnego
+defektu (widened CHECK na schemacie, który NIE jest resolvowany) NIE
+znaleziono na tej podstawie — migracja `20260809_rvn_platform_canonical_object_type_extend.sql`
+NIE została zmieniona, zgodnie z poleceniem „jeśli nie ma defektu, nic nie
+ruszaj". `myworkProjectionConsumer.ts` i `myWorkRoofService.ts` też NIE
+zostały zmienione — kwalifikacja schematu nie jest tu potrzebna, dopóki
+`search_path` appki zostaje `public, v8` (public pierwszy).**
+
+**4. Twarde ograniczenie — TO NIE JEST DOWÓD DLA DEMO.** Ta sesja nie miała
+dostępu do żywej bazy demo/prod (mandat wprost tego zakazuje). Świeżo
+zmigrowana efemeryczna baza dowodzi, co się stanie na KAŻDYM nowym
+środowisku zbudowanym dzisiejszym `server/migrations/` — NIE dowodzi nic o
+stanie demo, które mogło powstać innym torem (dump `migrations-v2/`,
+ręczne `v8-migrate.ts`, częściowo zastosowany `--safe` run z pominiętymi
+plikami — patrz MEMORY „MASTER audyt bazy danych 2026-08-06": demo ma 1144
+tabel vs 1290 w kanonie, `--safe` cicho pomija nieudane migracje). Human
+MUSI potwierdzić na demo przed promocją tego pakietu, dokładnie tym
+zapytaniem (bezpieczne, tylko SELECT, do wklejenia 1:1 przez
+`psql $DEMO_DATABASE_URL` lub panel Railway):
+
+```sql
+-- 1) Które schematy mają tabelę i czy oba CHECK-i się różnią:
+SELECT n.nspname AS schema, pg_get_constraintdef(c.oid) AS check_definition
+  FROM pg_constraint c
+  JOIN pg_class t ON t.oid = c.conrelid
+  JOIN pg_namespace n ON n.oid = t.relnamespace
+ WHERE t.relname = 'v8_canonical_object_states' AND c.contype = 'c'
+ ORDER BY n.nspname;
+
+-- 2) Efektywny search_path dokładnie tego użytkownika/roli, którym łączy się appka:
+SHOW search_path;
+
+-- 3) Który schemat REALNIE resolvuje niekwalifikowana nazwa na tym połączeniu:
+SELECT (SELECT nspname FROM pg_namespace n JOIN pg_class c ON c.relnamespace = n.oid
+         WHERE c.oid = 'v8_canonical_object_states'::regclass) AS resolved_schema;
+```
+Jeśli `resolved_schema` na demo wyjdzie `v8` (nie `public`), IO-D jest
+realnym, aktywnym blockerem na demo mimo czystego wyniku na świeżej bazie —
+wtedy trzeba dopiero uruchomić fix: additive migration rozszerzająca
+`v8.v8_canonical_object_states_object_type_check` tym samym wzorcem
+(`DROP CONSTRAINT IF EXISTS` + `ADD CONSTRAINT ... NOT VALID` + `VALIDATE`,
+opakowane w `DO $$ ... EXCEPTION WHEN undefined_table THEN NULL; END $$`
+jak `20260809_rvn_platform_canonical_object_type_extend.sql`) — NIE
+zrobiono tego prewencyjnie w tej sesji, bo instrukcja zadania była
+jednoznaczna: fix tylko jeśli defekt faktycznie istnieje na zbadanej
+podstawie, a na zbadanej podstawie (świeża migracja) nie istnieje.
 
 
