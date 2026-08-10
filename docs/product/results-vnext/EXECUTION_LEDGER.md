@@ -3701,3 +3701,149 @@ polityka (design §2/§11, plan §20 EVIDENCE_NEEDED #3 wciąż otwarte).
 **Domena OKR: 1/8 epików zbudowanych. OKR-E002 Materialized Set
 następny.**
 
+## 41. OKR-E008 Half C only (Legacy/Ops) — implementacja + odbiór (2026-08-10) — Halves A i B ODROCZONE
+
+**Ostatni epik domeny OKR, ale zbudowana WYŁĄCZNIE Połowa C (Legacy/Ops
+Exclusion, OKR-F-029) — świadomy podział zlecony przez orkiestratora.**
+Połowa A (Teresa, OKR-F-025..027) i Połowa B (Perspectives, OKR-F-028) NIE
+zbudowane w tej sesji — obie zależą od OKR-E003…E007 (Połowa A) i częściowo
+od OKR-E002 obecnego w tym worktree (Połowa B), które orkiestrator zlecił
+osobnym, późniejszym pakietem. `OKR_E008_DESIGN.md` §7 open question #2 już
+wcześniej flagował dokładnie ten podział jako realną opcję ("E008a:
+Legacy+Perspectives buildable now" / "E008b: Teresa blocked") — ten pakiet
+realizuje `E008a`'s Legacy-only wycinek, nie całość.
+
+**Środowisko tej sesji było ~4400 commitów ZA `codex/results-vnext-g0-
+20260809`** (worktree stworzony z wcześniejszego punktu w historii, przed
+scaleniem OKR-E001 i całej reszty programu Results Next) — brak design
+docu, brak `readOnlyGuard.middleware.ts`, brak KPI/ROI legacy archive
+routerów, brak `okrRepository.ts`. Naprawione fast-forward mergem do
+`codex/results-vnext-g0-20260809` (branch worktree'a nie miał ŻADNYCH
+własnych commitów, więc to był czysty ff, zero konfliktów) PRZED
+rozpoczęciem pracy — bez tego kroku zadanie było fizycznie niewykonalne
+(design doc §5 HALF C, na którym to zadanie się opiera, fizycznie nie
+istniał w drzewie).
+
+**Re-weryfikacja inwentarza legacy OKR (bezpośredni grep, nie zaufanie
+designowi)** — potwierdza `OKR_E008_DESIGN.md` §2.1/§2.2 co do joty, ZERO
+korekt do zgłoszenia ponad te, które sam design doc już udokumentował:
+4 tabele (`okr_cycles`, `okr_objectives`, `okr_key_results`,
+`okr_check_ins`), wszystkie `organization_id TEXT NOT NULL` bezpośrednio
+(`server/migrations/914_okr_management.sql` linie 41-101 — potwierdzone
+odczytem, nie domysłem), `id TEXT PRIMARY KEY` (`okr_objectives`/
+`okr_key_results`) lub `TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text`
+(`okr_cycles`/`okr_check_ins`). Dwa D09 FK na `okr_key_results` potwierdzone
+w DWÓCH osobnych plikach migracji: `kpi_id → initiative_kpis` (914, linia
+161-163) i `kpi_definition_version_id → kpi_definition_versions`
+(`20260803_res009_okr_key_result_definition_version.sql`, linia 16-18) —
+oba `ON DELETE SET NULL`/fail-soft, oba żywe. `okrRepository.ts` (OKR-E001,
+jedyne wylądowane repo vNext OKR w tym worktree) czyta WYŁĄCZNIE
+`okr_vnext_programs`/`okr_vnext_cycles` — zero referencji do jakiejkolwiek
+z 4 tabel legacy, potwierdzone bezpośrednim grep przed napisaniem
+jakiegokolwiek kodu.
+
+**Zbudowane** (dosłownie wg `OKR_E008_DESIGN.md` §5, wzorowane na
+LANDED `kpiLegacyArchive.routes.ts`/`roiLegacyArchive.routes.ts`, nie na
+ich własnych design docach):
+- `server/src/routes/resultsVnext/okrLegacyArchive.routes.ts` — 9
+  endpointów GET-only (1 index + 4 tabele × list/get), `denyMutations`
+  PIERWSZY w łańcuchu middleware (przed auth), pojedynczy bucket etykiet
+  `okr_legacy_live` (Decyzja D-OKR8-17 — wszystkie 4 tabele należą do JEDNEJ
+  żywej powierzchni: `resultsStrategic.routes.ts` + `okrService.ts`, w
+  przeciwieństwie do ROI-E008's 3 genuinie osobnych systemów). Label text
+  "live, external to Results vNext" (D-OKR8-18), NIE "archive — read-only"
+  (system jest ŻYWY: `requireProjectCapability(..., {shadow:true})`,
+  shadow-only dopóki `CAPABILITY_ENFORCE != 'enforce'`).
+- **Element unikalny dla tego epiku (D-OKR8-19)**: `key-results`'owy
+  list/get response niesie dodatkową tablicę `warnings` etykietującą
+  `kpi_id`/`kpi_definition_version_id` jako żywe, cross-domenowe FK,
+  informacyjne od 2026-07-12 (D7/Piotr), nigdy nieużywane do scoringu —
+  ani KPI-E007, ani ROI-E008 tego nie potrzebowały (żadna z ich tabel
+  legacy nie niosła żywego FK wskazującego w inną domenę). Repozytorium
+  nadal `SELECT *`-uje obie kolumny (D-OKR8-19: etykieta na warstwie
+  ROUTE, nie ukrywanie na warstwie repo).
+- `server/src/services/resultsVnext/okr/okrLegacyArchiveRepository.ts` —
+  read-only, zero importów z jakiegokolwiek `*Commands.ts`, nazwa tabeli
+  hardcoded per funkcja (nigdy interpolowana z argumentu runtime).
+- `server/src/validators/resultsVnextOkrLegacy.validators.ts` —
+  `legacyId` permisywny non-UUID string (legacy PK to TEXT).
+- `server/src/services/metricsService.ts` (edycja) —
+  `resultsVnextOkrLegacyArchiveHitsTotal`, ten sam kształt co
+  KPI/ROI-owe liczniki, zero dashboardu.
+- `server/src/Gateway.ts` (edycja) — `/api/vnext/results/okr/legacy`
+  zamontowany PRZED generycznym `/api/vnext/results/okr` (ten sam
+  "more-specific-prefix-first" konwencja co KPI-E007/ROI-E008).
+
+**Testy — 43 nowe, WSZYSTKIE PASS** (37 write-denial + 3 D09 static + 1
+count-sanity uruchomione bez bazy; 2 real-Postgres na efemerycznym
+Postgresie 17 lokalnym — `initdb --locale=C`, krótki socket dir `/tmp/
+okre008pg` (pełna ścieżka scratchpad przekracza limit 103 bajtów na
+Unix-domain socket na macOS — pierwsza próba na `pgdata/` katalogu
+FAILOWAŁA właśnie na tym), `NODE_ENV=test` żeby ominąć
+`databaseTargetResolver.ts`'s guard przeciw `127.0.0.1` poza testami,
+strict `db:migrate` bez `--safe`):
+- `okrLegacyArchive.routes.test.ts` (37) — 9 tras × 4 czasowniki mutujące
+  → 405 `LEGACY_ARCHIVE_READ_ONLY` (36), plus statyczny regex zero
+  `router.(post|put|patch|delete)(`.
+- `okrD09ZeroFkIsolation.test.ts` (3) — NOWY kształt dowodu, którego
+  KPI-E007/ROI-E008 nie potrzebowały: zero `REFERENCES` do
+  `okr_key_results`/`initiative_kpis`/`kpi_definition_versions`/
+  `kpi_time_series` w jakimkolwiek `*rvn_okr*.sql`/`*okr_vnext*.sql`
+  pliku migracji; zero referencji `kpiDefinitionService`/`kpi_time_series`
+  w jakimkolwiek pliku `server/src/services/resultsVnext/okr/*.ts` poza
+  samym `okrLegacyArchiveRepository.ts` (który je dokumentuje w
+  komentarzach prozy, nigdy w kodzie wykonywalnym — zweryfikowane osobnym
+  testem z filtrem linii komentarza).
+- `legacyIsolation.realdb.test.ts` (2) — poison wszystkich 4 tabel legacy
+  + kontrolny Program przez prawdziwą komendę `createProgram` (OKR-E001);
+  `okrRepository.listPrograms`/`getProgram`/`listCycles` nigdy nie
+  zwracają zatrutego wiersza, kontrolny Program NAPRAWDĘ się pojawia
+  (dowód nie-wakuowy), bezpośredni dowód poprawności KAŻDEJ funkcji
+  `okrLegacyArchiveRepository.ts` (znajduje dokładnie swój zatruty
+  wiersz), plus statyczny grep zero referencji do 4 nazw tabel legacy w
+  jakimkolwiek `okr/*Repository.ts` poza samym plikiem archiwum.
+  **Notatka dla następcy (OKR-E002+)**: statyczna połowa testu skanuje
+  katalog w runtime — automatycznie obejmie `okrSetRepository.ts` i inne,
+  gdy wylądują, BEZ edycji tego pliku. Behawioralna połowa (realDB) WYMAGA
+  ręcznego dopisania nowych funkcji read-modelu do tego samego bloku
+  poison/control/assert — udokumentowane w nagłówku pliku.
+
+**`tsc --noEmit`**: root (frontend, `tsconfig.json`) — czysty, 0 błędów.
+`server/tsconfig.json` — 18 przedistniejących błędów `decimal.js` w
+`server/src/services/resultsVnext/roi/engine/roiCalculationEngine.ts`
+(plik CAŁKOWICIE nietknięty przez ten epik, identyczna rodzina błędów co
+§39/§40 już odnotowały — `Cannot use namespace 'Decimal' as a type`/`This
+expression is not constructable`/brakujące `ROUND_HALF_EVEN`/
+`ROUND_HALF_UP`), ZERO błędów poza tym jednym pliku, w tym ZERO błędów w
+jakimkolwiek nowym/zmienionym pliku OKR-E008 Half C (`okrLegacyArchive
+.routes.ts`, `okrLegacyArchiveRepository.ts`,
+`resultsVnextOkrLegacy.validators.ts`, `Gateway.ts`, `metricsService.ts`).
+**Środowiskowa uwaga dla następcy**: `server/tsconfig.json`'s
+`typeRoots: ["../node_modules/@types", ...]` zakłada, że katalog worktree'a
+leży DOKŁADNIE jeden poziom nad `server/` w stosunku do prawdziwego
+`node_modules` monorepo — fałszywe dla worktree'a zagnieżdżonego pod
+`.claude/worktrees/<nazwa>/` (dwa dodatkowe poziomy), co dawało fałszywy
+`error TS2688: Cannot find type definition file for 'node'` niezwiązany z
+KODEM. Naprawione lokalnym symlinkiem `node_modules/@types` → prawdziwy
+`consultify/node_modules/@types` (nie commitowane — `node_modules/` jest
+gitignored, symlink żyje tylko w tym worktree jako narzędzie do
+weryfikacji).
+
+**Poza zakresem, świadomie NIEZBUDOWANE (odroczone, nie zapomniane)**:
+Połowa A (Teresa: `objective_draft`/`objective_quality_review`/
+`check_in_assist`/`manager_brief`/`reflection_synthesis`, 5 trybów
+adwizora, `HandoffTargetModule` union + `teresaCopilotCanon.ts`/
+`teresaCopilotService.ts` edycje) — blokowana na OKR-E003/E004/E006/E007,
+żadna z nich nie istnieje w tym worktree. Połowa B (Perspectives:
+`okrPerspectivesRepository.ts`, `/okr/my`, `/okr/team-health`, parity test
+z `/okr/company`) — blokowana na `okrSetRepository.ts`/`okr_vnext_sets`
+(OKR-E002), które orkiestrator buduje RÓWNOLEGLE w innym worktree i
+świadomie NIE istnieją w tym drzewie (zgodnie z poleceniem zadania).
+`server/migrations/<date>_rvn_okr_reflection_teresa_draft.sql` (design
+§3.9) — NIE zbudowane, celowo: kolumna docelowa (`okr_vnext_reflections`,
+OKR-E007) nie istnieje.
+
+**Domena OKR: 1/8 epików w pełni zbudowanych (OKR-E001), 1/8 epików
+CZĘŚCIOWO zbudowanych (OKR-E008, tylko Połowa C — OKR-F-029). Połowy A i B
+OKR-E008 oraz OKR-E002…E007 w całości pozostają NOT_IMPLEMENTED.**
+
