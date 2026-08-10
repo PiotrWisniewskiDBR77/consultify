@@ -261,6 +261,168 @@ describe.skipIf(!REAL_PG)('Finance v3 canonical services — real PostgreSQL', (
     });
   });
 
+  describe('artifactVersionService.createComputeSnapshot — IF-19 fix (Advisor pre-approval sequencing)', () => {
+    // Regression coverage for IF-19 (GOLDCO_FULL_DAG_END_TO_END_REPORT.md section 4,
+    // BUGFIX_IF19_ADVISOR_SEQUENCING_report.md): before this fix, the ONLY code path that ever
+    // inserted a `finance_compute_snapshots` row was `approveVersion()` step (b), which runs
+    // strictly AFTER `finance_valuation_advisor_outputs_no_new_after_approval()` (WP-D09b)
+    // already forbids new Advisor rows for that business_version_id — a real deadlock. These
+    // tests would have been IMPOSSIBLE to write against the pre-fix code (the INSERT below would
+    // have needed a compute_snapshot_id that could only be minted by an act — approval — that
+    // simultaneously forbids the very INSERT it is meant to unblock).
+    it('creates a pre-approval snapshot while DRAFT, and a real Advisor row can be written against it before approval', async () => {
+      const created = await artifactVersionService.createArtifact({
+        organizationId: orgId,
+        artifactType: 'VALUATION_CASE',
+        createdBy: preparerId,
+      });
+      const bvId = created.businessVersion.business_version_id;
+
+      const snap = await artifactVersionService.createComputeSnapshot({
+        organizationId: orgId,
+        businessVersionId: bvId,
+        actorId: preparerId,
+      });
+      expect(snap.ok).toBe(true);
+      if (!snap.ok) throw new Error('unreachable');
+      expect(snap.computeSnapshotId).toBeTruthy();
+      expect(snap.reused).toBe(false);
+
+      // The actual IF-19 proof: finance_valuation_advisor_outputs.compute_snapshot_id is NOT NULL
+      // REFERENCES finance_compute_snapshots — this INSERT would have been unsatisfiable before
+      // the fix (no snapshot could ever exist this early). The business_version is still DRAFT.
+      await withPinnedPostgresTransaction((tx) =>
+        tx.queryRun(
+          `INSERT INTO finance_valuation_advisor_outputs (
+             organization_id, business_version_id, compute_snapshot_id, output_kind, title, narrative,
+             evidence_ref, ai_provider, ai_model, ai_prompt_version, ai_no_training_commitment, ai_evidence_digest, created_by
+           ) VALUES (?, ?, ?, 'FACT', 'IF-19 regression', 'Pre-approval Advisor write', ?, 'MANUAL_PROGRAMMATIC', 'test', 'v1', true, ?, ?)`,
+          [orgId, bvId, snap.computeSnapshotId, JSON.stringify({ source: 'test' }), 'sha256:if19-regression', preparerId]
+        )
+      );
+
+      const rows = await withPinnedPostgresTransaction((tx) =>
+        tx.queryAll<{ is_frozen: boolean; compute_snapshot_id: string }>(
+          `SELECT is_frozen, compute_snapshot_id FROM finance_valuation_advisor_outputs WHERE business_version_id = ?`,
+          [bvId]
+        )
+      );
+      expect(rows.length).toBe(1);
+      expect(rows[0].is_frozen).toBe(false); // not yet approved
+      expect(rows[0].compute_snapshot_id).toBe(snap.computeSnapshotId);
+    });
+
+    it('a second call for the SAME current working revision reuses the existing snapshot (no duplicate row)', async () => {
+      const created = await artifactVersionService.createArtifact({
+        organizationId: orgId,
+        artifactType: 'VALUATION_CASE',
+        createdBy: preparerId,
+      });
+      const bvId = created.businessVersion.business_version_id;
+
+      const first = await artifactVersionService.createComputeSnapshot({ organizationId: orgId, businessVersionId: bvId, actorId: preparerId });
+      expect(first.ok).toBe(true);
+      if (!first.ok) throw new Error('unreachable');
+      expect(first.reused).toBe(false);
+
+      const second = await artifactVersionService.createComputeSnapshot({ organizationId: orgId, businessVersionId: bvId, actorId: preparerId });
+      expect(second.ok).toBe(true);
+      if (!second.ok) throw new Error('unreachable');
+      expect(second.reused).toBe(true);
+      expect(second.computeSnapshotId).toBe(first.computeSnapshotId);
+    });
+
+    it('is rejected once the business_version is APPROVED (mirrors the DB trigger it exists to satisfy)', async () => {
+      const created = await artifactVersionService.createArtifact({
+        organizationId: orgId,
+        artifactType: 'HISTORICAL_ANALYSIS',
+        createdBy: preparerId,
+      });
+      let bvId = created.businessVersion.business_version_id;
+      let version = created.businessVersion.version;
+
+      const submitted = await artifactVersionService.transition({ organizationId: orgId, businessVersionId: bvId, action: 'submit_for_review', actorId: preparerId, role: 'preparer', expectedVersion: version });
+      if (!submitted.ok) throw new Error('unreachable');
+      version = submitted.businessVersion.version;
+      const started = await artifactVersionService.transition({ organizationId: orgId, businessVersionId: bvId, action: 'start_review', actorId: approverId, role: 'approver', expectedVersion: version });
+      if (!started.ok) throw new Error('unreachable');
+      version = started.businessVersion.version;
+      await withPinnedPostgresTransaction((tx) => tx.queryRun(`UPDATE finance_business_versions SET freshness = 'CURRENT' WHERE business_version_id = ?`, [bvId]));
+
+      const approved = await artifactVersionService.approveVersion({ organizationId: orgId, businessVersionId: bvId, actorId: approverId, role: 'approver', expectedVersion: version });
+      expect(approved.ok).toBe(true);
+      if (!approved.ok) throw new Error('unreachable');
+
+      const rejected = await artifactVersionService.createComputeSnapshot({ organizationId: orgId, businessVersionId: bvId, actorId: approverId });
+      expect(rejected.ok).toBe(false);
+      if (rejected.ok) throw new Error('unreachable');
+      expect(rejected.code).toBe('INVALID_STATUS');
+      expect(rejected.currentStatus).toBe('APPROVED');
+    });
+
+    it('approveVersion() reuses a pre-approval snapshot for the SAME working revision instead of creating a second one', async () => {
+      const created = await artifactVersionService.createArtifact({
+        organizationId: orgId,
+        artifactType: 'HISTORICAL_ANALYSIS',
+        createdBy: preparerId,
+      });
+      let bvId = created.businessVersion.business_version_id;
+      let version = created.businessVersion.version;
+
+      // Pre-approval snapshot, exactly like a future AdvisorGenerationService would create.
+      const preSnap = await artifactVersionService.createComputeSnapshot({ organizationId: orgId, businessVersionId: bvId, actorId: preparerId });
+      expect(preSnap.ok).toBe(true);
+      if (!preSnap.ok) throw new Error('unreachable');
+
+      const submitted = await artifactVersionService.transition({ organizationId: orgId, businessVersionId: bvId, action: 'submit_for_review', actorId: preparerId, role: 'preparer', expectedVersion: version });
+      if (!submitted.ok) throw new Error('unreachable');
+      version = submitted.businessVersion.version;
+      const started = await artifactVersionService.transition({ organizationId: orgId, businessVersionId: bvId, action: 'start_review', actorId: approverId, role: 'approver', expectedVersion: version });
+      if (!started.ok) throw new Error('unreachable');
+      version = started.businessVersion.version;
+      await withPinnedPostgresTransaction((tx) => tx.queryRun(`UPDATE finance_business_versions SET freshness = 'CURRENT' WHERE business_version_id = ?`, [bvId]));
+
+      const approved = await artifactVersionService.approveVersion({ organizationId: orgId, businessVersionId: bvId, actorId: approverId, role: 'approver', expectedVersion: version });
+      expect(approved.ok).toBe(true);
+      if (!approved.ok) throw new Error('unreachable');
+      // The load-bearing assertion: approval did NOT mint a second snapshot for the same working
+      // revision — it reused the one createComputeSnapshot() already created pre-approval.
+      expect(approved.computeSnapshotId).toBe(preSnap.computeSnapshotId);
+
+      const snapshotCount = await withPinnedPostgresTransaction((tx) =>
+        tx.queryOne<{ count: string }>(
+          `SELECT COUNT(*)::text AS count FROM finance_compute_snapshots WHERE working_revision_id = ?`,
+          [created.workingRevision.working_revision_id]
+        )
+      );
+      expect(Number(snapshotCount?.count)).toBe(1);
+    });
+
+    it('approveVersion() still creates its OWN fresh snapshot when no pre-approval snapshot exists (STATEMENT_PACK-style callers, unchanged fallback)', async () => {
+      const created = await artifactVersionService.createArtifact({
+        organizationId: orgId,
+        artifactType: 'STATEMENT_PACK',
+        createdBy: preparerId,
+      });
+      let bvId = created.businessVersion.business_version_id;
+      let version = created.businessVersion.version;
+
+      const submitted = await artifactVersionService.transition({ organizationId: orgId, businessVersionId: bvId, action: 'submit_for_review', actorId: preparerId, role: 'preparer', expectedVersion: version });
+      if (!submitted.ok) throw new Error('unreachable');
+      version = submitted.businessVersion.version;
+      const started = await artifactVersionService.transition({ organizationId: orgId, businessVersionId: bvId, action: 'start_review', actorId: approverId, role: 'approver', expectedVersion: version });
+      if (!started.ok) throw new Error('unreachable');
+      version = started.businessVersion.version;
+      await withPinnedPostgresTransaction((tx) => tx.queryRun(`UPDATE finance_business_versions SET freshness = 'CURRENT' WHERE business_version_id = ?`, [bvId]));
+
+      // No createComputeSnapshot() call at all — this is today's STATEMENT_PACK path, unchanged.
+      const approved = await artifactVersionService.approveVersion({ organizationId: orgId, businessVersionId: bvId, actorId: approverId, role: 'approver', expectedVersion: version });
+      expect(approved.ok).toBe(true);
+      if (!approved.ok) throw new Error('unreachable');
+      expect(approved.computeSnapshotId).toBeTruthy();
+    });
+  });
+
   describe('artifactVersionService.reopenVersion — WP-B02 §6, non-mutating', () => {
     async function createApprovedVersion() {
       const created = await artifactVersionService.createArtifact({

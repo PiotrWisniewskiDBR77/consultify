@@ -327,6 +327,138 @@ export async function transition(params: TransitionParams): Promise<TransitionSe
 }
 
 // ---------------------------------------------------------------------------
+// T8a — createComputeSnapshot: pre-approval compute snapshot (IF-19 fix,
+// 2026-08-10, see docs/validation/finance-v3/generated/gate-d/
+// BUGFIX_IF19_ADVISOR_SEQUENCING_report.md).
+// ---------------------------------------------------------------------------
+
+export interface ComputeSnapshotRow {
+  compute_snapshot_id: string;
+  artifact_id: string;
+  organization_id: string;
+  working_revision_id: string;
+  compute_run_id: string | null;
+  engine_manifest_id: string;
+  as_of: string;
+  content_semantic_hash: string | null;
+  created_by: string | null;
+  created_at: string;
+}
+
+export type CreateComputeSnapshotErrorCode = 'NOT_FOUND' | 'INVALID_STATUS' | 'WORKING_REVISION_NOT_FOUND';
+
+export type CreateComputeSnapshotResult =
+  | { ok: true; computeSnapshotId: string; snapshot: ComputeSnapshotRow; reused: boolean }
+  | { ok: false; code: CreateComputeSnapshotErrorCode; message: string; currentStatus?: BusinessVersionStatus };
+
+export interface CreateComputeSnapshotParams {
+  organizationId: string;
+  businessVersionId: string;
+  actorId: string;
+}
+
+const CREATE_SNAPSHOT_FORBIDDEN_STATUSES: readonly BusinessVersionStatus[] = [
+  'APPROVED',
+  'SUPERSEDED',
+  'ARCHIVED',
+  'INVALIDATED',
+];
+
+/**
+ * IF-19 fix. `finance_valuation_advisor_outputs.compute_snapshot_id` is
+ * `NOT NULL REFERENCES finance_compute_snapshots(compute_snapshot_id)`, and
+ * `finance_valuation_advisor_outputs_no_new_after_approval()` (WP-D09b)
+ * forbids new Advisor rows once the SAME `business_version_id` reaches
+ * `APPROVED` ("Advisor is pre-approval by definition" — see the D09
+ * migration's own section-9 comment: "Freshness anchor is compute_snapshot_id
+ * ... NOT business_version_id directly"). Before this function existed, the
+ * ONLY code path that ever inserted a `finance_compute_snapshots` row was
+ * `approveVersion()` step (b) below — which runs strictly AFTER the point
+ * where new Advisor writes become forbidden. No real caller could ever
+ * satisfy both constraints (`GOLDCO_FULL_DAG_END_TO_END_REPORT.md` section 4,
+ * finding IF-19).
+ *
+ * This function is the missing production code path: it lets a caller (a
+ * future `AdvisorGenerationService`, or any other pre-approval compute
+ * writer) freeze a `finance_compute_snapshots` row for the artifact's
+ * current, still-open working revision WHILE the business_version is still
+ * DRAFT/READY_FOR_REVIEW/IN_REVIEW/NEEDS_CHANGES — i.e. on a "fresh computed
+ * candidate", per DEC-FIN-006. Same INSERT shape as `approveVersion()` step
+ * (b) below, verbatim (same columns, same source) — not a second, divergent
+ * definition of what a snapshot is.
+ *
+ * Deliberately additive: this does NOT change what `approveVersion()` does
+ * for artifact types that never call this function first (e.g.
+ * `STATEMENT_PACK` via `statementReconciliationService.ts`, which has no
+ * compute-job/pre-approval-snapshot path at all today) — those keep getting
+ * a fresh snapshot created inside `approveVersion()` itself, exactly as
+ * before. `approveVersion()` step (b) now checks for an existing snapshot
+ * against the SAME `working_revision_id` first and reuses it if one exists
+ * (a working revision's content is immutable once created — copy-on-write,
+ * see `reopenVersion()` — so reusing it is never stale), falling back to its
+ * own fresh INSERT otherwise. See that function's own comment for why reuse
+ * is safe.
+ */
+export async function createComputeSnapshot(params: CreateComputeSnapshotParams): Promise<CreateComputeSnapshotResult> {
+  return withPinnedPostgresTransaction(async (tx) => {
+    const current = await tx.queryOne<BusinessVersionRow>(
+      `SELECT * FROM finance_business_versions WHERE business_version_id = ? AND organization_id = ?`,
+      [params.businessVersionId, params.organizationId]
+    );
+    if (!current) return { ok: false, code: 'NOT_FOUND', message: 'Business version not found' };
+
+    if (CREATE_SNAPSHOT_FORBIDDEN_STATUSES.includes(current.status)) {
+      return {
+        ok: false,
+        code: 'INVALID_STATUS',
+        message: `Cannot create a pre-approval compute snapshot: version is in status ${current.status}`,
+        currentStatus: current.status,
+      };
+    }
+
+    const workingRevision = await tx.queryOne<WorkingRevisionRow>(
+      `SELECT * FROM finance_working_revisions WHERE artifact_id = ? AND organization_id = ? AND is_current = true`,
+      [current.artifact_id, params.organizationId]
+    );
+    if (!workingRevision) {
+      return { ok: false, code: 'WORKING_REVISION_NOT_FOUND', message: 'No current working revision to snapshot' };
+    }
+
+    const existing = await tx.queryOne<ComputeSnapshotRow>(
+      `SELECT * FROM finance_compute_snapshots
+        WHERE artifact_id = ? AND organization_id = ? AND working_revision_id = ?
+        ORDER BY created_at DESC LIMIT 1`,
+      [current.artifact_id, params.organizationId, workingRevision.working_revision_id]
+    );
+    if (existing) {
+      return { ok: true, computeSnapshotId: existing.compute_snapshot_id, snapshot: existing, reused: true };
+    }
+
+    const computeSnapshotId = uuidv4();
+    const snapshot = await tx.queryOne<ComputeSnapshotRow>(
+      `INSERT INTO finance_compute_snapshots (
+         compute_snapshot_id, artifact_id, organization_id, working_revision_id, compute_run_id,
+         engine_manifest_id, as_of, content_semantic_hash, created_by
+       ) VALUES (?, ?, ?, ?, ?, ?, now(), ?, ?)
+       RETURNING *`,
+      [
+        computeSnapshotId,
+        current.artifact_id,
+        params.organizationId,
+        workingRevision.working_revision_id,
+        workingRevision.compute_run_id,
+        current.engine_manifest_id,
+        workingRevision.content_semantic_hash,
+        params.actorId,
+      ]
+    );
+    if (!snapshot) throw new Error('finance_compute_snapshots insert returned no row');
+
+    return { ok: true, computeSnapshotId, snapshot, reused: false };
+  });
+}
+
+// ---------------------------------------------------------------------------
 // T8 — approve: the atomic 4-step transaction (WP-B02 §5)
 // ---------------------------------------------------------------------------
 
@@ -476,7 +608,23 @@ export async function approveVersion(params: ApproveVersionParams): Promise<Appr
       };
     }
 
-    // (b) freeze compute snapshot — INSERT, never UPDATE.
+    // (b) freeze compute snapshot — INSERT, never UPDATE. IF-19 fix
+    // (2026-08-10): reuse an existing snapshot for this EXACT working
+    // revision if one was already created pre-approval via
+    // `createComputeSnapshot()` above (e.g. by a future
+    // `AdvisorGenerationService` writing Advisor findings against a fresh
+    // computed candidate before submit/review/approve). A working revision's
+    // content is immutable once created (copy-on-write — `reopenVersion()`
+    // is the only place a NEW working_revision_id is ever minted, and
+    // nothing in this codebase UPDATEs an existing `finance_working_revisions`
+    // row's content), so a snapshot taken earlier for the SAME
+    // working_revision_id can never be stale relative to this approval — see
+    // `createComputeSnapshot()`'s own comment and
+    // docs/validation/finance-v3/generated/gate-d/BUGFIX_IF19_ADVISOR_SEQUENCING_report.md.
+    // Falls back to a fresh INSERT exactly as before for artifact types that
+    // never call `createComputeSnapshot()` first (e.g. `STATEMENT_PACK` via
+    // `statementReconciliationService.ts`, which has no pre-approval
+    // snapshot path at all) — zero behavior change for those.
     const workingRevision = await tx.queryOne<WorkingRevisionRow>(
       `SELECT * FROM finance_working_revisions WHERE artifact_id = ? AND organization_id = ? AND is_current = true`,
       [current.artifact_id, params.organizationId]
@@ -485,25 +633,37 @@ export async function approveVersion(params: ApproveVersionParams): Promise<Appr
       return { ok: false, code: 'WORKING_REVISION_NOT_FOUND', message: 'No current working revision to freeze' };
     }
 
-    const computeSnapshotId = uuidv4();
-    const snapshot = await tx.queryOne<{ compute_snapshot_id: string }>(
-      `INSERT INTO finance_compute_snapshots (
-         compute_snapshot_id, artifact_id, organization_id, working_revision_id, compute_run_id,
-         engine_manifest_id, as_of, content_semantic_hash, created_by
-       ) VALUES (?, ?, ?, ?, ?, ?, now(), ?, ?)
-       RETURNING compute_snapshot_id`,
-      [
-        computeSnapshotId,
-        current.artifact_id,
-        params.organizationId,
-        workingRevision.working_revision_id,
-        workingRevision.compute_run_id,
-        current.engine_manifest_id,
-        workingRevision.content_semantic_hash,
-        params.actorId,
-      ]
+    const existingSnapshot = await tx.queryOne<{ compute_snapshot_id: string }>(
+      `SELECT compute_snapshot_id FROM finance_compute_snapshots
+        WHERE artifact_id = ? AND organization_id = ? AND working_revision_id = ?
+        ORDER BY created_at DESC LIMIT 1`,
+      [current.artifact_id, params.organizationId, workingRevision.working_revision_id]
     );
-    if (!snapshot) throw new Error('finance_compute_snapshots insert returned no row');
+
+    let computeSnapshotId: string;
+    if (existingSnapshot) {
+      computeSnapshotId = existingSnapshot.compute_snapshot_id;
+    } else {
+      computeSnapshotId = uuidv4();
+      const snapshot = await tx.queryOne<{ compute_snapshot_id: string }>(
+        `INSERT INTO finance_compute_snapshots (
+           compute_snapshot_id, artifact_id, organization_id, working_revision_id, compute_run_id,
+           engine_manifest_id, as_of, content_semantic_hash, created_by
+         ) VALUES (?, ?, ?, ?, ?, ?, now(), ?, ?)
+         RETURNING compute_snapshot_id`,
+        [
+          computeSnapshotId,
+          current.artifact_id,
+          params.organizationId,
+          workingRevision.working_revision_id,
+          workingRevision.compute_run_id,
+          current.engine_manifest_id,
+          workingRevision.content_semantic_hash,
+          params.actorId,
+        ]
+      );
+      if (!snapshot) throw new Error('finance_compute_snapshots insert returned no row');
+    }
 
     // T9 — supersede the parent (if any) BEFORE the child's own status flip to
     // APPROVED (BUG-GOLDCO-03 fix, 2026-08-09). `uq_finance_bv_one_approved`
