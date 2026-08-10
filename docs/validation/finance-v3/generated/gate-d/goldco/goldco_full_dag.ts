@@ -1101,47 +1101,27 @@ async function main() {
   markPhase('VALUATION_COMPUTE');
 
   // --- Advisor outputs (freeze/staleness mechanism, D09b) — MUST be written BEFORE approval.
-  // INTEGRATION FINDING (IF-19, see below): `finance_valuation_advisor_outputs` requires a
-  // `compute_snapshot_id` FK to an EXISTING `finance_compute_snapshots` row, but the only code
-  // path in the whole canonical service layer that INSERTs a `finance_compute_snapshots` row is
-  // `artifactVersionService.approveVersion()` step (b) — and `finance_advisor_outputs_no_new_
-  // after_approval()` (WP-D09b) forbids new Advisor rows once the SAME business_version_id is
-  // APPROVED. As shipped, there is no code path where a real caller can ever satisfy both
-  // constraints at once: by the time a snapshot exists, new Advisor writes are already forbidden.
-  // No Advisor-generation service exists yet (WP-D10 report section 8, "entirely schema-only") to
-  // have caught this. Per this task's own instruction ("jeśli znalazłeś integration bug, napraw
-  // minimalnie i udokumentuj, wzorem BUGFIX_GOLDCO_01_02_03") — this integration script works
-  // around it the way a future AdvisorGenerationService legitimately would: it inserts its OWN
-  // pre-approval `finance_compute_snapshots` row (same shape as `approveVersion()`'s own INSERT,
-  // no service file modified) referencing the artifact's current, still-open working revision,
-  // BEFORE running the maker-checker approval flow below — proving the freeze trigger itself (not
-  // the missing generation service) works correctly with real data once that precondition is met.
-  const workingRevisionForAdvisor = await withPinnedPostgresTransaction((tx: Tx) =>
-    tx.queryOne<{ working_revision_id: string; compute_run_id: string | null; content_semantic_hash: string | null }>(
-      `SELECT working_revision_id, compute_run_id, content_semantic_hash FROM finance_working_revisions WHERE artifact_id = ? AND organization_id = ? AND is_current = true`,
-      [baselineVariant.art.businessVersion.artifact_id, orgId]
-    )
-  );
+  // IF-19 FIXED (2026-08-10, see BUGFIX_IF19_ADVISOR_SEQUENCING_report.md): `finance_valuation_
+  // advisor_outputs` requires a `compute_snapshot_id` FK to an EXISTING `finance_compute_snapshots`
+  // row. Previously the ONLY code path that ever inserted one was `artifactVersionService.
+  // approveVersion()` step (b) — which runs strictly AFTER the point where `finance_advisor_
+  // outputs_no_new_after_approval()` (WP-D09b) already forbids new Advisor rows for that SAME
+  // business_version_id, a real deadlock for any pre-approval Advisor caller. Fixed by adding
+  // `artifactVersionService.createComputeSnapshot()` — callable while the business_version is
+  // still DRAFT/READY_FOR_REVIEW/IN_REVIEW/NEEDS_CHANGES — which this script now calls directly
+  // (no more raw INSERT workaround), proving the real production code path end-to-end.
+  const preSnap = await artifactVersionService.createComputeSnapshot({
+    organizationId: orgId,
+    businessVersionId: baselineVariant.bvId,
+    actorId: preparerId,
+  });
   let preApprovalSnapshotId: string | null = null;
-  if (!workingRevisionForAdvisor) {
-    flag('IF-19a', `No current finance_working_revisions row found for the Valuation variant's artifact — cannot demonstrate the Advisor pre-approval workaround.`);
+  if (!preSnap.ok) {
+    flag('IF-19a', `artifactVersionService.createComputeSnapshot() failed unexpectedly for the Valuation variant's business version: ${JSON.stringify(preSnap)}`);
   } else {
-    const snap = await withPinnedPostgresTransaction((tx: Tx) =>
-      tx.queryOne<{ compute_snapshot_id: string }>(
-        `INSERT INTO finance_compute_snapshots (
-           compute_snapshot_id, artifact_id, organization_id, working_revision_id, compute_run_id,
-           engine_manifest_id, as_of, content_semantic_hash, created_by
-         ) VALUES (?, ?, ?, ?, ?, ?, now(), ?, ?) RETURNING compute_snapshot_id`,
-        [
-          randomUUID(), baselineVariant.art.businessVersion.artifact_id, orgId, workingRevisionForAdvisor.working_revision_id,
-          workingRevisionForAdvisor.compute_run_id, engineManifestId, workingRevisionForAdvisor.content_semantic_hash, preparerId,
-        ]
-      )
-    );
-    preApprovalSnapshotId = snap.compute_snapshot_id;
-    record(`[Advisor] pre-approval finance_compute_snapshots row created directly (workaround for IF-19): ${preApprovalSnapshotId}`);
+    preApprovalSnapshotId = preSnap.computeSnapshotId;
+    record(`[Advisor] pre-approval finance_compute_snapshots row created via artifactVersionService.createComputeSnapshot() (IF-19 fix): ${preApprovalSnapshotId} (reused=${preSnap.reused})`);
   }
-  flag('IF-19', `finance_valuation_advisor_outputs requires compute_snapshot_id referencing an EXISTING finance_compute_snapshots row, but the ONLY code path that inserts one is artifactVersionService.approveVersion() step (b) — and finance_advisor_outputs_no_new_after_approval() (WP-D09b) forbids new Advisor rows once that SAME business_version is APPROVED. As shipped, no real caller can satisfy both constraints: worked around here by inserting the pre-approval snapshot directly (same INSERT shape as approveVersion()'s own step (b)), not by modifying any committed service file. A real fix belongs in a future AdvisorGenerationService (not yet built, per WP-D10 report section 8) or in artifactVersionService.ts exposing a small createComputeSnapshot() helper callable pre-approval.`);
 
   const advisorOutputsDraft = [
     { kind: 'FACT', title: 'WACC and Enterprise Value', narrative: `Baseline case WACC computed at ${dcfBaseline.wacc.waccPct.toFixed(2)}%, Enterprise Value PLN ${dcfBaseline.enterpriseValue.toFixed(0)}.`, driverRef: 'DCF_FCFF', impact: dcfBaseline.enterpriseValue, confidence: 'HIGH' },
@@ -1217,9 +1197,10 @@ async function main() {
   markPhase('MAKER_CHECKER');
 
   // --- Advisor freeze verification (D09b) — the Advisor rows were written PRE-approval above
-  // (IF-19 workaround); now that the business_version_id is APPROVED, confirm the freeze-on-
-  // approval trigger (trg_finance_bv_freeze_advisor_on_approval) actually flipped is_frozen=true
-  // on all of them, and that a further write attempt is rejected (immutability once frozen).
+  // (via the fixed createComputeSnapshot() path, IF-19); now that the business_version_id is
+  // APPROVED, confirm the freeze-on-approval trigger (trg_finance_bv_freeze_advisor_on_approval)
+  // actually flipped is_frozen=true on all of them, and that a further write attempt is rejected
+  // (immutability once frozen).
   if (preApprovalSnapshotId) {
     const frozenCheck = await withPinnedPostgresTransaction((tx: Tx) =>
       tx.queryAll<{ output_kind: string; is_frozen: boolean; frozen_at: string | null }>(`SELECT output_kind, is_frozen, frozen_at FROM finance_valuation_advisor_outputs WHERE business_version_id = ?`, [baselineVariant.bvId])
