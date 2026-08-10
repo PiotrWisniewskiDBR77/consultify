@@ -8,6 +8,35 @@ Control checkpoint: 2026-08-10, independent inspection of candidate HEAD `5d8016
 - Evidence: `src/actions/ideaActionRegistry.ts` reached 7,593 lines and 177 registered actions at committed HEAD `5d80167c5b`.
 - Required outcome: split definitions by tool/domain while retaining one public registry API and stable action IDs.
 - DoD: identical before/after action inventory; unchanged behavior, labels, scopes, permissions, undo, Teresa and analytics contracts; no circular imports; all action checks and focused routing tests pass.
+- **Status: RESOLVED (2026-08-10, SHA `4afa10c31b`).** The 10,696-line monolith is now a 404-line
+  barrel plus `src/actions/registry/{types,runtimeHelpers,mindmapActions,whiteboardActions,
+  processFlowActions,tableActions,sharedActions}.ts`. Import path unchanged for all 47 consumers.
+  DoD evidence, each item measured by the orchestrator rather than taken from the implementing
+  stream's report: action inventory **231 before / 231 after, identical set, zero duplicates**;
+  **all 231 action bodies byte-identical** across the split (object literals extracted from both
+  sides and diffed); Teresa manifest **byte-identical** (sha256 `4ac76f8c…2f3a32f9` unchanged);
+  public export surface **21 → 21, zero lost**, and all 11 distinct named imports across the 47
+  consumer files resolve; runtime maps intact (**108** `RUNTIME_*`, **124** runtime pair lines,
+  before == after); **no circular imports** — the graph is a DAG with `types.ts` as a leaf and
+  nothing under `registry/` importing the barrel; `npm run type-check` **exit 0, 0 errors**
+  (captured bare, not through a pipe); all five guards rc=0 with `check-actions` reporting the
+  same **231 actions / 124 runtime strings / 7 events / 4 API methods** as before the split.
+  **Two defects the stream did not report, found while verifying and fixed here:**
+  (1) `TS2304: Cannot find name 'ActionResult'` — `export * from './registry/types'` re-exports to
+  consumers but does not bring names into local scope, so the barrel as delivered **did not
+  type-check**; (2) menu order could silently drift — `getActionsForSurface` preserves registry
+  order, and the split reconstructs it via `ORIGINAL_ORDER` (verified equal to the pre-split order
+  position by position), but the sort fell back to `?? 0`, so a future action added without an
+  `ORIGINAL_ORDER` entry would have jumped to the **top** of Menu 3 and the context menu with no
+  signal at all. Fallback is now `MAX_SAFE_INTEGER` (worst case: last, not first) and the real fix
+  is a new guard rule **R11** in `scripts/check-actions.sh`: `ORIGINAL_ORDER` must be a permutation
+  of the parsed action set — no missing id, no orphan, no duplicate. Proven by negative control in
+  both directions (removed id → R11 names it, rc=1; bogus id → R11 names it as orphaned, rc=1), and
+  the guard was separately proven to still *see* the split files rather than merely exit 0 (broke a
+  handler in `mindmapActions.ts` → R1 fired; broke a runtime string in `runtimeHelpers.ts` → R6
+  fired with the correct file:line).
+  **Not verified:** menu order is proven identical in the SOURCE data, not yet on screen — no
+  before/after screenshot of Menu 3 or the context menu exists for this change.
 
 ## QG-02 — Replace the coverage ratchet with an accounted inventory
 
@@ -118,10 +147,37 @@ separately open.
 
 
 
+## QG-03 — Prove the runtime and persistence chain
+
+(The `## QG-03` heading was missing in earlier revisions of this file — the block below was
+orphaned under QG-02's accounting. Restored 2026-08-10.)
+
 - Priority: P1 / release gate
-- Current state: NOT VERIFIED.
+- Current state: **PARTIAL.** Schema gate and E12 server-side enforcement are PASS on an isolated
+  local database; the per-tool persistence chain is still EVIDENCE_MISSING. Full evidence:
+  `13_RUNTIME_GATE_EVIDENCE.md`.
 - Required chain: committed SHA -> mounted runtime badge -> authenticated real backend/DB -> mutation -> save -> refresh -> cold reopen -> readback.
 - DoD: all four tools pass that chain on one environment and SHA; evidence is indexed; mocks remain labelled component-only; two clean acceptance rounds produce no new P0/P1.
+- **Done (2026-08-10, owner-authorised isolated local Postgres only — never demo, never production):**
+  the four `20260810_idea_*` migrations were reviewed against four conditions and then applied.
+  Additive-only, idempotent (exit 0 on three separate full runs), no backfill, and every object
+  matches what the code actually queries — verified through `information_schema`/`pg_constraint`,
+  **not** through the migration runner's report, whose `--safe` mode reports a failure as `skipped`
+  with exit 0. CHECK constraint proven to bind by negative control (SQLSTATE 23514); probe rows
+  deleted and the deletion confirmed by count query.
+  E12 server-side enforcement is proven at runtime on a 1011-table real Postgres: five previously
+  **ungated** endpoints (`ai-generate`, `ai-suggestions`, `ai-table-action`, `ai-fill`, CSV export)
+  plus three regression endpoints all return 403 `IDEA_CONFIDENTIALITY_BLOCKED` for a `restricted`
+  Idea, with a `standard` Idea as a same-request negative control. The suite's green was itself
+  validated: deleting the CSV-export gate turned it red with `expected 404 to be 403`, and restoring
+  the gate turned it green again — so the pass is not vacuous.
+- **Still missing before this may say PASS:** save → refresh → **cold reopen** → readback per tool
+  (Mind Map, Whiteboard, Process Flow, Table) and per Wave 4/5 feature, each confirmed by a direct
+  database query; and any runtime evidence on a browser surface. Both are EVIDENCE_MISSING.
+- **Known limitation, recorded not hidden:** full-repo schema convergence remains broken (583
+  pending migrations on a fresh database via one runner; 172 of 787 files never applied via the
+  other). Pre-existing, out of this program's scope, and it means "the schema builds" must never be
+  claimed on the strength of the evidence above.
 
 ## QG-04 — Remove duplicate React keys in Whiteboard drawing UI
 
