@@ -44,6 +44,7 @@
 
 import type { ArtifactRef, FinanceArtifactType } from '../../../types/finance/ArtifactRef.js';
 import type { FinanceArtifactFreshness } from '../../../types/finance/financeValueSemantics.js';
+import type { FinanceChromeRegion } from './focusModeContract.js';
 import type {
   BusinessVersionStatus,
   FinanceRole,
@@ -481,7 +482,90 @@ export interface WorkspaceBarConfig {
   identity: WorkspaceBarIdentity;
   viewNavigation: WorkspaceBarViewNavigation;
   actions: WorkspaceBarActions;
+  /**
+   * What chrome the module renders around the bar in NORMAL (non-focus) mode.
+   * OPTIONAL and defaulting to `DEFAULT_WORKSPACE_CHROME_DECLARATION`, so the
+   * five AP-10 adapters keep compiling and validating unchanged — see the
+   * "one document identity" section below for why the default is
+   * bar-only-and-compliant and what that costs.
+   */
+  chrome?: WorkspaceChromeDeclaration | null;
 }
+
+// ---------------------------------------------------------------------------
+// ONE DOCUMENT IDENTITY — the rule OUTSIDE focus mode.
+//
+// `focusModeContract.ts` hides `financeModuleHeader` & co. when focus mode is
+// on. That covers a mode the user is rarely in and says nothing about the
+// normal screen — yet the requirement is about the normal screen:
+//
+//   OWN-FIN-011: "Nazwa projektu/analizy i informacje kontekstowe są
+//   powtarzane w kilku piętrach nagłówka, co zabiera znaczną część obszaru
+//   roboczego. ... Usunąć duplikaty tytułu i osobny konkurencyjny nagłówek."
+//   OWN-FIN-005 already ordered the separate status lines merged into the bar.
+//
+// So the bar is not merely "a place where the name may appear" — it is the
+// ONLY place. This section makes that a validated rule, in the same spirit as
+// `TOO_MANY_DIRECT_RIGHT_CONTROLS`: a module DECLARES its chrome and an
+// illegal declaration is rejected at contract level.
+//
+// WHAT THIS DOES NOT DO, stated plainly so a green test is not mistaken for a
+// clean screen: this validates a DECLARATION, not a rendered page. The five
+// existing `src/components/finance/Financial*Workspace.tsx` components know
+// nothing about this contract and are not covered by it. Visual proof that no
+// duplicate header survives stays EVIDENCE_MISSING (see the AP-09 report) and
+// requires a screenshot at 1280 px per CLAUDE.md rule 7.
+// ---------------------------------------------------------------------------
+
+/** The elements that, together, ARE the document's identity. Any of them outside the bar is a duplicate title. */
+export const DOCUMENT_IDENTITY_ELEMENTS = [
+  'name',
+  'version',
+  'status',
+  'freshness',
+  'contextMetadata',
+  'backToList',
+] as const;
+export type DocumentIdentityElement = (typeof DOCUMENT_IDENTITY_ELEMENTS)[number];
+
+/** The one region allowed to carry them. */
+export const DOCUMENT_IDENTITY_REGION: FinanceChromeRegion = 'workspaceBar';
+
+/**
+ * Regions a Finance workspace may not render AT ALL in normal mode, whatever
+ * they claim to contain: OWN-FIN-011 removed the competing header outright and
+ * OWN-FIN-005 merged the status strip into the bar. Keeping them out by name
+ * (rather than only checking their contents) is deliberate — a "header" that
+ * currently holds nothing identity-shaped is one commit away from holding the
+ * title again, and it is already costing the vertical space the register
+ * complained about.
+ */
+export const FORBIDDEN_NORMAL_MODE_REGIONS: readonly FinanceChromeRegion[] = [
+  'financeModuleHeader',
+  'financeStatusStrip',
+];
+
+export interface WorkspaceChromeDeclaration {
+  /** Chrome regions the module renders in NORMAL mode, besides the bar itself. */
+  regionsRendered: readonly FinanceChromeRegion[];
+  /** Identity elements carried per region. A region absent from the map carries none. */
+  identityElementsByRegion: Readonly<Partial<Record<FinanceChromeRegion, readonly DocumentIdentityElement[]>>>;
+}
+
+/**
+ * The compliant declaration: the bar carries the whole identity and the module
+ * adds no header of its own. Used as the default for a config that does not
+ * declare — which means an undeclared module PASSES. That is a knowingly weak
+ * default, chosen because tightening it would require editing the five AP-10
+ * adapters (out of scope for this wave); `requireChromeDeclaration` below is
+ * the switch AP-10 flips once the adapters declare explicitly.
+ */
+export const DEFAULT_WORKSPACE_CHROME_DECLARATION: WorkspaceChromeDeclaration = {
+  regionsRendered: [],
+  identityElementsByRegion: {
+    workspaceBar: DOCUMENT_IDENTITY_ELEMENTS,
+  },
+};
 
 /** Every control the bar renders DIRECTLY on the right (menu contents excluded — a menu is one control). */
 export function directRightControls(actions: WorkspaceBarActions): WorkspaceBarControlKind[] {
@@ -517,7 +601,12 @@ export type WorkspaceBarValidationCode =
   | 'ARTIFACT_TYPE_MISMATCH'
   | 'DESTRUCTIVE_WITHOUT_CONFIRMATION'
   | 'DUPLICATE_LIFECYCLE_TRANSITION'
-  | 'EMPTY_CONTEXT_FIELDS';
+  | 'EMPTY_CONTEXT_FIELDS'
+  | 'DUPLICATE_DOCUMENT_IDENTITY'
+  | 'COMPETING_MODULE_HEADER'
+  | 'IDENTITY_REGION_NOT_RENDERED'
+  | 'BAR_CARRIES_NO_IDENTITY'
+  | 'MISSING_CHROME_DECLARATION';
 
 export interface WorkspaceBarValidationError {
   code: WorkspaceBarValidationCode;
@@ -539,9 +628,96 @@ export type WorkspaceBarValidationResult =
  * more than `WORKSPACE_BAR_MAX_DIRECT_RIGHT_CONTROLS` direct right-hand
  * controls is REJECTED.
  */
-export function validateWorkspaceBarConfig(config: WorkspaceBarConfig): WorkspaceBarValidationResult {
+export interface WorkspaceBarValidationOptions {
+  /**
+   * Reject a config that does not declare its chrome, instead of assuming the
+   * compliant default. Off by default so the AP-10 adapters (which predate the
+   * field) keep passing; AP-10 turns it on when every adapter declares.
+   */
+  requireChromeDeclaration?: boolean;
+}
+
+/**
+ * The "one document identity" half of the validator, split out so it can be
+ * called on a bare declaration (e.g. from a component test) without building a
+ * whole `WorkspaceBarConfig`.
+ */
+export function validateDocumentIdentity(
+  chrome: WorkspaceChromeDeclaration,
+  pathPrefix = 'chrome'
+): WorkspaceBarValidationError[] {
+  const errors: WorkspaceBarValidationError[] = [];
+
+  for (const region of chrome.regionsRendered) {
+    if (FORBIDDEN_NORMAL_MODE_REGIONS.includes(region)) {
+      errors.push({
+        code: 'COMPETING_MODULE_HEADER',
+        path: `${pathPrefix}.regionsRendered`,
+        message:
+          `Region "${region}" must not be rendered at all — OWN-FIN-011 removed the competing header and ` +
+          'OWN-FIN-005 merged the status lines into the Workspace Bar. Move its content into the bar or the workspace.',
+      });
+    }
+  }
+
+  const barElements = chrome.identityElementsByRegion[DOCUMENT_IDENTITY_REGION] ?? [];
+  if (barElements.length === 0) {
+    errors.push({
+      code: 'BAR_CARRIES_NO_IDENTITY',
+      path: `${pathPrefix}.identityElementsByRegion.${DOCUMENT_IDENTITY_REGION}`,
+      message:
+        'The Workspace Bar must carry the document identity (name/version/status). A declaration that gives it ' +
+        'none has moved the title somewhere else, which is the duplication OWN-FIN-011 exists to end.',
+    });
+  }
+
+  for (const [region, elements] of Object.entries(chrome.identityElementsByRegion) as Array<
+    [FinanceChromeRegion, readonly DocumentIdentityElement[] | undefined]
+  >) {
+    if (region === DOCUMENT_IDENTITY_REGION || !elements || elements.length === 0) continue;
+    errors.push({
+      code: 'DUPLICATE_DOCUMENT_IDENTITY',
+      path: `${pathPrefix}.identityElementsByRegion.${region}`,
+      message:
+        `Region "${region}" declares document identity element(s) [${elements.join(', ')}], but only ` +
+        `"${DOCUMENT_IDENTITY_REGION}" may carry them (OWN-FIN-011: "Usunąć duplikaty tytułu i osobny ` +
+        'konkurencyjny nagłówek"). This rule applies in NORMAL mode, not only in focus mode.',
+    });
+    if (!chrome.regionsRendered.includes(region)) {
+      errors.push({
+        code: 'IDENTITY_REGION_NOT_RENDERED',
+        path: `${pathPrefix}.identityElementsByRegion.${region}`,
+        message:
+          `Region "${region}" carries identity elements but is not listed in regionsRendered — the declaration ` +
+          'contradicts itself, so neither half can be trusted.',
+      });
+    }
+  }
+
+  return errors;
+}
+
+export function validateWorkspaceBarConfig(
+  config: WorkspaceBarConfig,
+  options: WorkspaceBarValidationOptions = {}
+): WorkspaceBarValidationResult {
   const errors: WorkspaceBarValidationError[] = [];
   const { actions, viewNavigation, identity } = config;
+
+  // --- One document identity, in NORMAL mode --------------------------------
+  if (config.chrome == null) {
+    if (options.requireChromeDeclaration) {
+      errors.push({
+        code: 'MISSING_CHROME_DECLARATION',
+        path: 'chrome',
+        message:
+          'This module must declare which chrome it renders in normal mode, so "one document identity" can be ' +
+          'checked rather than assumed.',
+      });
+    }
+  } else {
+    errors.push(...validateDocumentIdentity(config.chrome));
+  }
 
   // --- Right-hand control budget -------------------------------------------
   const directCount = countDirectRightControls(actions);
