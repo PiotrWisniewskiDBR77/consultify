@@ -49,6 +49,11 @@ export const CanonicalObjectTypeValues = [
   // server/src/services/resultsVnext/platform/resourceTypes.ts (same
   // duplication rationale as the RN-G1 block above).
   'kpi_scorecard',
+  // OKR-E001 (docs/product/results-vnext/OKR_E001_DESIGN.md §7, Decision P3)
+  // — appended, never reordered/removed relative to the values above. Stays
+  // in sync with RVN_RESOURCE_TYPES (same duplication rationale as above).
+  'okr_program',
+  'okr_cycle',
 ] as const;
 export type CanonicalObjectType = (typeof CanonicalObjectTypeValues)[number];
 

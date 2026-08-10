@@ -293,6 +293,22 @@ export const EVENT_TYPE_CONSUMER_GROUPS: Readonly<Record<string, readonly string
   'roi.finance_reconciliation_resolved': ['mywork_projection', 'finance_projection'],
   'roi.finance_reconciliation_status_updated': ['mywork_projection'],
   'roi.evidence_link_freshness_flagged': ['mywork_projection'],
+
+  // OKR-E001 (docs/product/results-vnext/OKR_E001_DESIGN.md §9) — Program &
+  // Cycle. First real OKR domain events (`'okr_set.published'` above is a
+  // pre-existing RN-G1 placeholder reserved for OKR-E002, untouched by this
+  // epic). All fan out to 'mywork_projection' only, same default every
+  // other domain entry in this map uses — no OKR-specific consumer group
+  // exists yet.
+  'okr_program.created': ['mywork_projection'],
+  'okr_program.draft_edited': ['mywork_projection'],
+  'okr_program.published': ['mywork_projection'],
+  'okr_cycle.created': ['mywork_projection'],
+  'okr_cycle.drafting_opened': ['mywork_projection'],
+  'okr_cycle.activated': ['mywork_projection'],
+  'okr_cycle.review_opened': ['mywork_projection'],
+  'okr_cycle.closed': ['mywork_projection'],
+  'okr_cycle.cancelled': ['mywork_projection'],
 };
 
 /**

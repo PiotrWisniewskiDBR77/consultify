@@ -24,6 +24,15 @@ export const RVN_RESOURCE_TYPES = [
   // KPI-E004 (docs/product/results-vnext/KPI_E004_DESIGN.md prerequisite) —
   // appended, never reordered/removed relative to the values above.
   'kpi_scorecard',
+  // OKR-E001 (docs/product/results-vnext/OKR_E001_DESIGN.md §7, Decision P3)
+  // — appended, never reordered/removed relative to the values above. NOT
+  // for ABAC rows (Program/Cycle use plain organization_id scoping, per
+  // Decision P2) — only because PlatformEventEnvelope.aggregateType is
+  // typed to this union and every event OKR-E001 writes needs a value from
+  // it. 'okr_set' (already present above) stays untouched, reserved for
+  // OKR-E002.
+  'okr_program',
+  'okr_cycle',
 ] as const;
 
 export type RvnResourceType = (typeof RVN_RESOURCE_TYPES)[number];
