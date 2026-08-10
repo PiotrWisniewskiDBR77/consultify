@@ -177,18 +177,18 @@
             <div class="card">
               <div class="section-title">Domknięcie kontraktu (closure axes)</div>
               <div class="closure-grid">
-                <div class="kpi-tile"><span class="l5">Delivery</span><span class="status-chip status-chip--warning"><span class="status-chip__dot"></span>Pending</span></div>
-                <div class="kpi-tile"><span class="l5">Decision</span><span class="status-chip status-chip--success"><span class="status-chip__dot"></span>Completed</span></div>
-                <div class="kpi-tile"><span class="l5">Implementation</span><span class="status-chip status-chip--warning"><span class="status-chip__dot"></span>Pending</span></div>
-                <div class="kpi-tile"><span class="l5">Outcome</span><span class="status-chip status-chip--neutral"><span class="status-chip__dot"></span>Not applicable</span></div>
+                <div class="kpi-tile"><span class="l5">Delivery</span><span class="status-chip status-chip--warning"><span class="status-chip__dot"></span><span data-i18n="status_pending">Oczekuje</span></span></div>
+                <div class="kpi-tile"><span class="l5">Decision</span><span class="status-chip status-chip--success"><span class="status-chip__dot"></span><span data-i18n="status_completed">Zakończone</span></span></div>
+                <div class="kpi-tile"><span class="l5">Implementation</span><span class="status-chip status-chip--warning"><span class="status-chip__dot"></span><span data-i18n="status_pending">Oczekuje</span></span></div>
+                <div class="kpi-tile"><span class="l5">Outcome</span><span class="status-chip status-chip--neutral"><span class="status-chip__dot"></span><span data-i18n="status_not_applicable">Nie dotyczy</span></span></div>
               </div>
-              <div class="l5" style="margin-top:10px;">Kontraktowe domknięcie: <strong class="l4" style="color:var(--c-text)">Implementation completed</strong> · Profil: Transformation · Governance: Standard</div>
+              <div class="l5" style="margin-top:10px;">Kontraktowe domknięcie: <strong class="l4" style="color:var(--c-text)" data-i18n="closure_implementation_completed">Wdrożenie zakończone</strong> · Profil: <span data-i18n="profile_transformation">Transformacja</span> · <span data-i18n="field_governance_short">Nadzór</span>: <span data-i18n="gov_standard">Standardowy</span></div>
             </div>
             <div class="card">
               <div class="section-title">Ostatnia aktywność</div>
               <div class="timeline-item"><div class="timeline-dot"></div><div class="l3">Plan v3 opublikowany przez Martę Kowalską <span class="l5">— 2 dni temu</span></div></div>
-              <div class="timeline-item"><div class="timeline-dot"></div><div class="l3">Decyzja o wdrożeniu redukcji kosztów zakupowych: APPROVE <span class="l5">— 3 dni temu</span></div></div>
-              <div class="timeline-item"><div class="timeline-dot"></div><div class="l3">Governance tier zmieniony na Standard <span class="l5">— 5 dni temu</span></div></div>
+              <div class="timeline-item"><div class="timeline-dot"></div><div class="l3">Decyzja o wdrożeniu redukcji kosztów zakupowych: <span data-i18n="status_approve" data-i18n-upper>ZATWIERDZONO</span> <span class="l5">— 3 dni temu</span></div></div>
+              <div class="timeline-item"><div class="timeline-dot"></div><div class="l3"><span data-i18n="field_governance_tier">Poziom nadzoru</span> zmieniony na <span data-i18n="gov_standard">Standardowy</span> <span class="l5">— 5 dni temu</span></div></div>
               <button class="pill pill--neutral pill--sm" data-tab-btn="activity" style="margin-top:8px;">Zobacz pełną aktywność →</button>
             </div>
           </div>
@@ -201,7 +201,7 @@
             <button class="underline-tab" data-plan-view-btn="ekspercki">Ekspercki</button>
             <button class="underline-tab" data-plan-view-btn="lista">Lista</button>
             <div class="menu3__right" style="margin-left:auto; padding-right:16px; display:flex; gap:8px; align-items:center;">
-              <span class="l5">Plan v3 · Published · digest sha256:9f2c1a…</span>
+              <span class="l5">Plan v3 · <span data-i18n="plan_status_published">Opublikowany</span> · digest sha256:9f2c1a…</span>
             </div>
           </div>
           <div class="center-pad" style="padding-top:16px;">
@@ -269,23 +269,23 @@
               </div>
               <!-- LISTA -->
               <div data-plan-view-panel="lista" style="display:none;">
-                <div class="l5" style="margin-bottom:12px;">Widok listy — te same węzły jako płaska tabela (StandardTable-owy wygląd), bez topologii grafu.</div>
+                <div class="l5" style="margin-bottom:12px;">Widok listy — te same węzły jako płaska tabela (StandardTable-owy wygląd), bez topologii grafu. Kolejność, status, wykonawca, wynik i następne działanie widoczne w każdym wierszu (także na mobile — patrz karty poniżej 768px).</div>
                 <div class="table-wrap" style="max-height:520px;">
-                  <table class="std-table">
-                    <thead><tr><th>Node ID</th><th>Typ</th><th>Nazwa</th><th>Stan</th><th>Akceptacja wyniku</th></tr></thead>
+                  <table class="std-table plan-lista-table">
+                    <thead><tr><th>Kolejność</th><th>Węzeł</th><th>Status</th><th>Wykonawca</th><th>Wynik</th><th>Następne działanie</th></tr></thead>
                     <tbody>
-                      <tr><td class="l4">n0</td><td class="l4">START</td><td class="row-title">start</td><td><span class="status-chip status-chip--success"><span class="status-chip__dot"></span>Completed</span></td><td class="l4 empty-cell">—</td></tr>
-                      <tr><td class="l4">n1</td><td class="l4">CAPABILITY</td><td class="row-title">Zbierz dane finansowe</td><td><span class="status-chip status-chip--success"><span class="status-chip__dot"></span>Completed</span></td><td class="l4">Accepted</td></tr>
-                      <tr><td class="l4">n2</td><td class="l4">HUMAN_TASK</td><td class="row-title">Wywiad z zespołem operacyjnym</td><td><span class="status-chip status-chip--success"><span class="status-chip__dot"></span>Completed</span></td><td class="l4">Accepted</td></tr>
-                      <tr><td class="l4">n3</td><td class="l4">DECISION_GATEWAY</td><td class="row-title">Próg oszczędności?</td><td><span class="status-chip status-chip--success"><span class="status-chip__dot"></span>Branch selected</span></td><td class="l4 empty-cell">—</td></tr>
-                      <tr><td class="l4">n4</td><td class="l4">CAPABILITY</td><td class="row-title">Wygeneruj rekomendacje</td><td><span class="status-chip status-chip--success"><span class="status-chip__dot"></span>Completed</span></td><td class="l4">Partial</td></tr>
-                      <tr><td class="l4">n5</td><td class="l4">APPROVAL</td><td class="row-title">Zatwierdzenie planu oszczędności</td><td><span class="status-chip status-chip--warning"><span class="status-chip__dot"></span>Pending review</span></td><td class="l4 empty-cell">—</td></tr>
-                      <tr><td class="l4">n6</td><td class="l4">PARALLEL_SPLIT</td><td class="row-title">split</td><td><span class="status-chip status-chip--info"><span class="status-chip__dot"></span>Split activated</span></td><td class="l4 empty-cell">—</td></tr>
-                      <tr><td class="l4">n7</td><td class="l4">CAPABILITY</td><td class="row-title">Wdróż redukcję kosztów zakupowych</td><td><span class="status-chip status-chip--danger"><span class="status-chip__dot"></span>Blocked</span></td><td class="l4 empty-cell">—</td></tr>
-                      <tr><td class="l4">n8</td><td class="l4">TIMER_WAIT</td><td class="row-title">Oczekiwanie na raport Q3</td><td><span class="status-chip status-chip--warning"><span class="status-chip__dot"></span>Active · overdue</span></td><td class="l4 empty-cell">—</td></tr>
-                      <tr><td class="l4">n9</td><td class="l4">PARALLEL_JOIN</td><td class="row-title">join</td><td><span class="status-chip status-chip--warning"><span class="status-chip__dot"></span>Join pending</span></td><td class="l4 empty-cell">—</td></tr>
-                      <tr><td class="l4">n10</td><td class="l4">CAPABILITY</td><td class="row-title">Zmierz wartość oszczędności</td><td><span class="status-chip status-chip--neutral"><span class="status-chip__dot"></span>Not started</span></td><td class="l4 empty-cell">—</td></tr>
-                      <tr><td class="l4">n11</td><td class="l4">END</td><td class="row-title">end</td><td><span class="status-chip status-chip--neutral"><span class="status-chip__dot"></span>Not started</span></td><td class="l4 empty-cell">—</td></tr>
+                      <tr><td class="num" data-th="Kolejność">1</td><td data-th="Węzeł"><div class="row-title">start</div><div class="row-sub">n0 · START</div></td><td data-th="Status"><span class="status-chip status-chip--success"><span class="status-chip__dot"></span><span data-i18n="status_completed">Zakończone</span></span></td><td class="l4" data-th="Wykonawca">system</td><td class="l4 empty-cell" data-th="Wynik">—</td><td class="l4 empty-cell" data-th="Następne działanie">—</td></tr>
+                      <tr><td class="num" data-th="Kolejność">2</td><td data-th="Węzeł"><div class="row-title">Zbierz dane finansowe</div><div class="row-sub">n1 · CAPABILITY</div></td><td data-th="Status"><span class="status-chip status-chip--success"><span class="status-chip__dot"></span><span data-i18n="status_completed">Zakończone</span></span></td><td class="l4" data-th="Wykonawca">AGENT</td><td class="l4" data-th="Wynik"><span data-i18n="status_accepted">Zaakceptowane</span></td><td class="l4 empty-cell" data-th="Następne działanie">—</td></tr>
+                      <tr><td class="num" data-th="Kolejność">3</td><td data-th="Węzeł"><div class="row-title">Wywiad z zespołem operacyjnym</div><div class="row-sub">n2 · HUMAN_TASK</div></td><td data-th="Status"><span class="status-chip status-chip--success"><span class="status-chip__dot"></span><span data-i18n="status_completed">Zakończone</span></span></td><td class="l4" data-th="Wykonawca">Marta Kowalska</td><td class="l4" data-th="Wynik"><span data-i18n="status_accepted">Zaakceptowane</span></td><td class="l4 empty-cell" data-th="Następne działanie">—</td></tr>
+                      <tr><td class="num" data-th="Kolejność">4</td><td data-th="Węzeł"><div class="row-title">Próg oszczędności?</div><div class="row-sub">n3 · DECISION_GATEWAY</div></td><td data-th="Status"><span class="status-chip status-chip--success"><span class="status-chip__dot"></span><span data-i18n="status_branch_selected">Gałąź wybrana</span></span></td><td class="l4" data-th="Wykonawca">system</td><td class="l4 empty-cell" data-th="Wynik">—</td><td class="l4 empty-cell" data-th="Następne działanie">—</td></tr>
+                      <tr><td class="num" data-th="Kolejność">5</td><td data-th="Węzeł"><div class="row-title">Wygeneruj rekomendacje</div><div class="row-sub">n4 · CAPABILITY</div></td><td data-th="Status"><span class="status-chip status-chip--success"><span class="status-chip__dot"></span><span data-i18n="status_completed">Zakończone</span></span></td><td class="l4" data-th="Wykonawca">AGENT</td><td class="l4" data-th="Wynik"><span data-i18n="status_partial">Częściowe</span></td><td class="l4 empty-cell" data-th="Następne działanie">—</td></tr>
+                      <tr><td class="num" data-th="Kolejność">6</td><td data-th="Węzeł"><div class="row-title">Zatwierdzenie planu oszczędności</div><div class="row-sub">n5 · APPROVAL</div></td><td data-th="Status"><span class="status-chip status-chip--warning"><span class="status-chip__dot"></span><span data-i18n="status_pending_review">Oczekuje na przegląd</span></span></td><td class="l4" data-th="Wykonawca">Marta Kowalska</td><td class="l4 empty-cell" data-th="Wynik">—</td><td class="l4" data-th="Następne działanie">Zatwierdź lub odrzuć propozycję</td></tr>
+                      <tr><td class="num" data-th="Kolejność">7</td><td data-th="Węzeł"><div class="row-title">split</div><div class="row-sub">n6 · PARALLEL_SPLIT</div></td><td data-th="Status"><span class="status-chip status-chip--info"><span class="status-chip__dot"></span><span data-i18n="status_split_activated">Podział aktywowany</span></span></td><td class="l4" data-th="Wykonawca">system</td><td class="l4 empty-cell" data-th="Wynik">—</td><td class="l4 empty-cell" data-th="Następne działanie">—</td></tr>
+                      <tr><td class="num" data-th="Kolejność">8</td><td data-th="Węzeł"><div class="row-title">Wdróż redukcję kosztów zakupowych</div><div class="row-sub">n7 · CAPABILITY</div></td><td data-th="Status"><span class="status-chip status-chip--danger"><span class="status-chip__dot"></span><span data-i18n="status_blocked">Zablokowane</span></span></td><td class="l4" data-th="Wykonawca">AGENT</td><td class="l4 empty-cell" data-th="Wynik">—</td><td class="l4" data-th="Następne działanie">Czeka na raport Q3 (przeterm.)</td></tr>
+                      <tr><td class="num" data-th="Kolejność">9</td><td data-th="Węzeł"><div class="row-title">Oczekiwanie na raport Q3</div><div class="row-sub">n8 · TIMER_WAIT</div></td><td data-th="Status"><span class="status-chip status-chip--warning"><span class="status-chip__dot"></span><span data-i18n="status_active_overdue">Aktywne · po terminie</span></span></td><td class="l4" data-th="Wykonawca">system</td><td class="l4 empty-cell" data-th="Wynik">—</td><td class="l4" data-th="Następne działanie">Eskaluj do klienta</td></tr>
+                      <tr><td class="num" data-th="Kolejność">10</td><td data-th="Węzeł"><div class="row-title">join</div><div class="row-sub">n9 · PARALLEL_JOIN</div></td><td data-th="Status"><span class="status-chip status-chip--warning"><span class="status-chip__dot"></span><span data-i18n="status_join_pending">Oczekuje na złączenie</span></span></td><td class="l4" data-th="Wykonawca">system</td><td class="l4 empty-cell" data-th="Wynik">—</td><td class="l4" data-th="Następne działanie">Czeka na gałąź zakupową</td></tr>
+                      <tr><td class="num" data-th="Kolejność">11</td><td data-th="Węzeł"><div class="row-title">Zmierz wartość oszczędności</div><div class="row-sub">n10 · CAPABILITY</div></td><td data-th="Status"><span class="status-chip status-chip--neutral"><span class="status-chip__dot"></span><span data-i18n="status_not_started">Nie rozpoczęte</span></span></td><td class="l4 empty-cell" data-th="Wykonawca">—</td><td class="l4 empty-cell" data-th="Wynik">—</td><td class="l4" data-th="Następne działanie">Rozpocznie się po n9</td></tr>
+                      <tr><td class="num" data-th="Kolejność">12</td><td data-th="Węzeł"><div class="row-title">end</div><div class="row-sub">n11 · END</div></td><td data-th="Status"><span class="status-chip status-chip--neutral"><span class="status-chip__dot"></span><span data-i18n="status_not_started">Nie rozpoczęte</span></span></td><td class="l4 empty-cell" data-th="Wykonawca">—</td><td class="l4 empty-cell" data-th="Wynik">—</td><td class="l4 empty-cell" data-th="Następne działanie">—</td></tr>
                     </tbody>
                   </table>
                 </div>
@@ -316,11 +316,11 @@
             <div class="node-list" style="margin-bottom:16px;">
               <div class="approval-card">
                 <div class="approval-card__head">
-                  <span class="approval-card__title">Zatwierdzenie planu oszczędności zakupowych</span>
-                  <span class="status-chip status-chip--warning"><span class="status-chip__dot"></span>Pending review</span>
+                  <span class=”approval-card__title”>Zatwierdzenie planu oszczędności zakupowych</span>
+                  <span class=”status-chip status-chip--warning”><span class=”status-chip__dot”></span><span data-i18n=”status_pending_review”>Oczekuje na przegląd</span></span>
                 </div>
-                <div class="l4">Proponujący: AGENT · Klasa efektu: MATERIAL · Wygasa: za 22 godz.</div>
-                <div class="l3" style="margin-top:6px;">Redukcja budżetu zakupowego o 8% w 3 kategoriach dostawców. Wymaga akceptacji zgodnie z polityką „Ask material actions”.</div>
+                <div class=”l4”>Proponujący: AGENT · Klasa efektu: MATERIAL · Wygasa: za 22 godz.</div>
+                <div class=”l3” style=”margin-top:6px;”>Redukcja budżetu zakupowego o 8% w 3 kategoriach dostawców. Wymaga akceptacji zgodnie z polityką „<span data-i18n=”autonomy_ask_material”>Wymaga potwierdzenia dla istotnych działań</span>”.</div>
                 <div class="approval-actions">
                   <button class="pill pill--positive pill--sm">✓ Zatwierdź</button>
                   <button class="pill pill--destructive pill--sm">✕ Odrzuć</button>
@@ -347,25 +347,25 @@
                 <div class="wait-icon">⏳</div>
                 <div class="node-body">
                   <div class="node-title">TIMER — Oczekiwanie na raport Q3 od klienta</div>
-                  <div class="node-sub">Termin: 08-08 · Przeterminowane o 1 dzień · koreluje z węzłem n8</div>
+                  <div class=”node-sub”>Termin: 08-08 · Przeterminowane o 1 dzień · koreluje z węzłem n8</div>
                 </div>
-                <span class="status-chip status-chip--danger"><span class="status-chip__dot"></span>Overdue</span>
+                <span class=”status-chip status-chip--danger”><span class=”status-chip__dot”></span><span data-i18n=”status_overdue”>Po terminie</span></span>
               </div>
-              <div class="wait-card">
-                <div class="wait-icon">👤</div>
-                <div class="node-body">
-                  <div class="node-title">HUMAN — Zatwierdzenie cennika przez klienta</div>
-                  <div class="node-sub">Bez terminu · aktywne od 3 dni</div>
+              <div class=”wait-card”>
+                <div class=”wait-icon”>👤</div>
+                <div class=”node-body”>
+                  <div class=”node-title”>HUMAN — Zatwierdzenie cennika przez klienta</div>
+                  <div class=”node-sub”>Bez terminu · aktywne od 3 dni</div>
                 </div>
-                <span class="status-chip status-chip--neutral"><span class="status-chip__dot"></span>No deadline</span>
+                <span class=”status-chip status-chip--neutral”><span class=”status-chip__dot”></span><span data-i18n=”status_no_deadline”>Bez terminu</span></span>
               </div>
-              <div class="wait-card">
-                <div class="wait-icon">⑂</div>
-                <div class="node-body">
-                  <div class="node-title">JOIN — Parallel join „n9” oczekuje na gałąź zakupową</div>
-                  <div class="node-sub">1 z 2 gałęzi ukończona · polityka ALL</div>
+              <div class=”wait-card”>
+                <div class=”wait-icon”>⑂</div>
+                <div class=”node-body”>
+                  <div class=”node-title”>JOIN — Parallel join „n9” oczekuje na gałąź zakupową</div>
+                  <div class=”node-sub”>1 z 2 gałęzi ukończona · polityka ALL</div>
                 </div>
-                <span class="status-chip status-chip--warning"><span class="status-chip__dot"></span>Join pending</span>
+                <span class=”status-chip status-chip--warning”><span class=”status-chip__dot”></span><span data-i18n=”status_join_pending”>Oczekuje na złączenie</span></span>
               </div>
             </div>
 
@@ -374,10 +374,10 @@
               <table class="std-table">
                 <thead><tr><th>Węzeł</th><th>Typ</th><th>Ukończono</th><th>Akceptacja</th></tr></thead>
                 <tbody>
-                  <tr><td class="row-title">Zbierz dane finansowe</td><td class="l4">CAPABILITY</td><td class="l4">6 dni temu</td><td><span class="status-chip status-chip--success"><span class="status-chip__dot"></span>Accepted</span></td></tr>
-                  <tr><td class="row-title">Wywiad z zespołem operacyjnym</td><td class="l4">HUMAN_TASK</td><td class="l4">5 dni temu</td><td><span class="status-chip status-chip--success"><span class="status-chip__dot"></span>Accepted</span></td></tr>
-                  <tr><td class="row-title">Wygeneruj rekomendacje oszczędności</td><td class="l4">CAPABILITY</td><td class="l4">3 dni temu</td><td><span class="status-chip status-chip--warning"><span class="status-chip__dot"></span>Partial</span></td></tr>
-                  <tr data-partial-row><td class="row-title">Analiza ryzyka dostawców</td><td class="l4">CAPABILITY</td><td class="l4">2 dni temu</td><td class="l4 empty-cell">— (oczekuje na acceptance)</td></tr>
+                  <tr><td class="row-title">Zbierz dane finansowe</td><td class="l4">CAPABILITY</td><td class="l4">6 dni temu</td><td><span class="status-chip status-chip--success"><span class="status-chip__dot"></span><span data-i18n="status_accepted">Zaakceptowane</span></span></td></tr>
+                  <tr><td class="row-title">Wywiad z zespołem operacyjnym</td><td class="l4">HUMAN_TASK</td><td class="l4">5 dni temu</td><td><span class="status-chip status-chip--success"><span class="status-chip__dot"></span><span data-i18n="status_accepted">Zaakceptowane</span></span></td></tr>
+                  <tr><td class="row-title">Wygeneruj rekomendacje oszczędności</td><td class="l4">CAPABILITY</td><td class="l4">3 dni temu</td><td><span class="status-chip status-chip--warning"><span class="status-chip__dot"></span><span data-i18n="status_partial">Częściowe</span></span></td></tr>
+                  <tr data-partial-row><td class="row-title">Analiza ryzyka dostawców</td><td class="l4">CAPABILITY</td><td class="l4">2 dni temu</td><td class="l4 empty-cell">— (oczekuje na akceptację)</td></tr>
                 </tbody>
               </table>
             </div>
@@ -418,7 +418,7 @@
               </div>
               <div class="deliverable-card" style="opacity:.6; cursor:default;" data-state-only="stale">
                 <div class="deliverable-icon">⚠️</div>
-                <div><div class="deliverable-title">Model finansowy oszczędności.xlsx</div><div class="deliverable-sub">document · link status: UNAVAILABLE (źródło usunięte)</div></div>
+                <div><div class="deliverable-title">Model finansowy oszczędności.xlsx</div><div class="deliverable-sub">document · <span data-i18n="field_link_status">status linku</span>: <span data-i18n="status_unavailable" data-i18n-upper>NIEDOSTĘPNY</span> (źródło usunięte)</div></div>
               </div>
               <div class="deliverable-card" data-open-deliverable>
                 <div class="deliverable-icon">🎯</div>
@@ -430,15 +430,15 @@
             <div class="card">
               <div class="value-row">
                 <div class="value-metric"><div class="l3" style="color:var(--c-text)">Koszty operacyjne (roczne)</div><div class="value-nums">baza: 12.4M PLN → cel: 10.5M PLN → aktualnie: 11.1M PLN</div></div>
-                <span class="status-chip status-chip--warning"><span class="status-chip__dot"></span>Partial</span>
+                <span class="status-chip status-chip--warning"><span class="status-chip__dot"></span><span data-i18n="status_partial">Częściowe</span></span>
               </div>
               <div class="value-row">
                 <div class="value-metric"><div class="l3" style="color:var(--c-text)">Koszty zakupowe (kwartalne)</div><div class="value-nums">baza: 3.1M PLN → cel: 2.7M PLN → aktualnie: —</div></div>
-                <span class="status-chip status-chip--neutral"><span class="status-chip__dot"></span>Unmeasured</span>
+                <span class="status-chip status-chip--neutral"><span class="status-chip__dot"></span><span data-i18n="status_unmeasured">Niezmierzone</span></span>
               </div>
               <div class="value-row">
                 <div class="value-metric"><div class="l3" style="color:var(--c-text)">Satysfakcja zespołu operacyjnego</div><div class="value-nums">baza: 6.1/10 → cel: 7.5/10 → aktualnie: 7.6/10</div></div>
-                <span class="status-chip status-chip--success"><span class="status-chip__dot"></span>Confirmed</span>
+                <span class="status-chip status-chip--success"><span class="status-chip__dot"></span><span data-i18n="status_confirmed">Potwierdzone</span></span>
               </div>
             </div>
           </div>
@@ -450,12 +450,12 @@
             <table class="std-table">
               <thead><tr><th>Artefakt</th><th>Typ</th><th>Relacja</th><th>Status linku</th></tr></thead>
               <tbody>
-                <tr><td class="row-title">🎯 Redukcja SG&amp;A</td><td class="l4">initiative</td><td class="l4">OUTPUT</td><td><span class="status-chip status-chip--success"><span class="status-chip__dot"></span>Active</span></td></tr>
-                <tr><td class="row-title">📄 Raport rekomendacji oszczędności</td><td class="l4">document</td><td class="l4">DELIVERABLE</td><td><span class="status-chip status-chip--success"><span class="status-chip__dot"></span>Active</span></td></tr>
-                <tr><td class="row-title">⚖️ Decyzja: renegocjacja umowy z dostawcą X</td><td class="l4">decision</td><td class="l4">DECISION_BASIS</td><td><span class="status-chip status-chip--success"><span class="status-chip__dot"></span>Active</span></td></tr>
-                <tr><td class="row-title">📈 Dane finansowe źródłowe.xlsx</td><td class="l4">document</td><td class="l4">INPUT</td><td><span class="status-chip status-chip--success"><span class="status-chip__dot"></span>Active</span></td></tr>
-                <tr><td class="row-title">🗒 Notatki z wywiadów</td><td class="l4">document</td><td class="l4">EVIDENCE</td><td><span class="status-chip status-chip--success"><span class="status-chip__dot"></span>Active</span></td></tr>
-                <tr><td class="row-title">⚠️ Model finansowy oszczędności.xlsx</td><td class="l4">document</td><td class="l4">DELIVERABLE</td><td><span class="status-chip status-chip--danger"><span class="status-chip__dot"></span>Unavailable</span></td></tr>
+                <tr><td class="row-title">🎯 Redukcja SG&amp;A</td><td class="l4" data-i18n="linked_type_initiative">inicjatywa</td><td class="l4">OUTPUT</td><td><span class="status-chip status-chip--success"><span class="status-chip__dot"></span><span data-i18n="status_active">Aktywny</span></span></td></tr>
+                <tr><td class="row-title">📄 Raport rekomendacji oszczędności</td><td class="l4" data-i18n="linked_type_document">dokument</td><td class="l4">DELIVERABLE</td><td><span class="status-chip status-chip--success"><span class="status-chip__dot"></span><span data-i18n="status_active">Aktywny</span></span></td></tr>
+                <tr><td class="row-title">⚖️ Decyzja: renegocjacja umowy z dostawcą X</td><td class="l4" data-i18n="linked_type_decision">decyzja</td><td class="l4">DECISION_BASIS</td><td><span class="status-chip status-chip--success"><span class="status-chip__dot"></span><span data-i18n="status_active">Aktywny</span></span></td></tr>
+                <tr><td class="row-title">📈 Dane finansowe źródłowe.xlsx</td><td class="l4" data-i18n="linked_type_document">dokument</td><td class="l4">INPUT</td><td><span class="status-chip status-chip--success"><span class="status-chip__dot"></span><span data-i18n="status_active">Aktywny</span></span></td></tr>
+                <tr><td class="row-title">🗒 Notatki z wywiadów</td><td class="l4" data-i18n="linked_type_document">dokument</td><td class="l4">EVIDENCE</td><td><span class="status-chip status-chip--success"><span class="status-chip__dot"></span><span data-i18n="status_active">Aktywny</span></span></td></tr>
+                <tr><td class="row-title">⚠️ Model finansowy oszczędności.xlsx</td><td class="l4" data-i18n="linked_type_document">dokument</td><td class="l4">DELIVERABLE</td><td><span class="status-chip status-chip--danger"><span class="status-chip__dot"></span><span data-i18n="status_unavailable">Niedostępny</span></span></td></tr>
               </tbody>
             </table>
           </div>
@@ -464,13 +464,13 @@
         <!-- TAB: Aktywność -->
         <div class="center-pad" data-tab-panel="activity" style="display:none;">
           <div class="card">
-            <div class="timeline-item"><div class="timeline-dot"></div><div class="l3" style="color:var(--c-text)">PLAN_VERSION_PUBLISHED — Plan v3 opublikowany <span class="l5">Marta Kowalska · 2 dni temu</span></div></div>
-            <div class="timeline-item"><div class="timeline-dot"></div><div class="l3" style="color:var(--c-text)">ACTION_PROPOSAL_DECIDED — APPROVE: renegocjacja umowy z dostawcą X <span class="l5">Adam Sosnowski · 3 dni temu</span></div></div>
-            <div class="timeline-item"><div class="timeline-dot"></div><div class="l3" style="color:var(--c-text)">VALUE_MEASUREMENT_RECORDED — Satysfakcja zespołu: CONFIRMED (7.6/10) <span class="l5">system · 3 dni temu</span></div></div>
-            <div class="timeline-item"><div class="timeline-dot"></div><div class="l3" style="color:var(--c-text)">WAIT_RESOLVED — HUMAN „Zatwierdzenie zakresu” satisfied <span class="l5">Piotr Wiśniewski · 4 dni temu</span></div></div>
-            <div class="timeline-item"><div class="timeline-dot"></div><div class="l3" style="color:var(--c-text)">GOVERNANCE_TIER_CHANGED — Lightweight → Standard <span class="l5">Marta Kowalska · 5 dni temu</span></div></div>
-            <div class="timeline-item"><div class="timeline-dot"></div><div class="l3" style="color:var(--c-text)">RUN_BOUND — Run r-88f2 powiązany z Case <span class="l5">system · 6 dni temu</span></div></div>
-            <div class="timeline-item"><div class="timeline-dot"></div><div class="l3" style="color:var(--c-text)">CASE_STATUS_CHANGED — DRAFT → ACTIVE <span class="l5">Marta Kowalska · 6 dni temu</span></div></div>
+            <div class=”timeline-item”><div class=”timeline-dot”></div><div class=”l3” style=”color:var(--c-text)”><span data-i18n=”evt_plan_version_published” data-event-code=”PLAN_VERSION_PUBLISHED”>Wersja planu opublikowana</span> — Plan v3 opublikowany <span class=”l5”>Marta Kowalska · 2 dni temu</span></div></div>
+            <div class=”timeline-item”><div class=”timeline-dot”></div><div class=”l3” style=”color:var(--c-text)”><span data-i18n=”evt_action_proposal_decided” data-event-code=”ACTION_PROPOSAL_DECIDED”>Decyzja w sprawie propozycji akcji</span> — <span data-i18n=”status_approve” data-i18n-upper>ZATWIERDZONO</span>: renegocjacja umowy z dostawcą X <span class=”l5”>Adam Sosnowski · 3 dni temu</span></div></div>
+            <div class=”timeline-item”><div class=”timeline-dot”></div><div class=”l3” style=”color:var(--c-text)”><span data-i18n=”evt_value_measurement_recorded” data-event-code=”VALUE_MEASUREMENT_RECORDED”>Zarejestrowano pomiar wartości</span> — Satysfakcja zespołu: <span data-i18n=”status_confirmed” data-i18n-upper>POTWIERDZONE</span> (7.6/10) <span class=”l5”>system · 3 dni temu</span></div></div>
+            <div class=”timeline-item”><div class=”timeline-dot”></div><div class=”l3” style=”color:var(--c-text)”><span data-i18n=”evt_wait_resolved” data-event-code=”WAIT_RESOLVED”>Oczekiwanie rozwiązane</span> — HUMAN „Zatwierdzenie zakresu” <span data-i18n=”status_satisfied”>spełnione</span> <span class=”l5”>Piotr Wiśniewski · 4 dni temu</span></div></div>
+            <div class=”timeline-item”><div class=”timeline-dot”></div><div class=”l3” style=”color:var(--c-text)”><span data-i18n=”evt_governance_tier_changed” data-event-code=”GOVERNANCE_TIER_CHANGED”>Zmieniono poziom nadzoru</span> — <span data-i18n=”gov_lightweight”>Lekki</span> → <span data-i18n=”gov_standard”>Standardowy</span> <span class=”l5”>Marta Kowalska · 5 dni temu</span></div></div>
+            <div class=”timeline-item”><div class=”timeline-dot”></div><div class=”l3” style=”color:var(--c-text)”><span data-i18n=”evt_run_bound” data-event-code=”RUN_BOUND”>Powiązano przebieg (Run)</span> — Run r-88f2 powiązany ze Zleceniem <span class=”l5”>system · 6 dni temu</span></div></div>
+            <div class=”timeline-item”><div class=”timeline-dot”></div><div class=”l3” style=”color:var(--c-text)”><span data-i18n=”evt_case_status_changed” data-event-code=”CASE_STATUS_CHANGED”>Zmieniono status zlecenia</span> — <span data-i18n=”case_status_draft”>Wersja robocza</span> → <span data-i18n=”case_status_active”>Aktywne</span> <span class=”l5”>Marta Kowalska · 6 dni temu</span></div></div>
           </div>
         </div>
 
@@ -492,11 +492,11 @@
       <div class="acc-section is-open">
         <button class="acc-header"><span class="acc-header__label">Właściwości</span><span class="acc-chevron">⌄</span></button>
         <div class="acc-body">
-          <div class="pv-kv"><span class="pv-kv__label">Case profile</span><span class="pv-kv__value">Transformation</span></div>
-          <div class="pv-kv"><span class="pv-kv__label">Governance tier</span><span class="pv-kv__value">Standard</span></div>
-          <div class="pv-kv"><span class="pv-kv__label">Polityka autonomii</span><span class="pv-kv__value">Ask material actions</span></div>
+          <div class="pv-kv"><span class="pv-kv__label" data-i18n="field_case_profile">Profil zlecenia</span><span class="pv-kv__value" data-i18n="profile_transformation">Transformacja</span></div>
+          <div class="pv-kv"><span class="pv-kv__label" data-i18n="field_governance_tier">Poziom nadzoru</span><span class="pv-kv__value" data-i18n="gov_standard">Standardowy</span></div>
+          <div class="pv-kv"><span class="pv-kv__label">Polityka autonomii</span><span class="pv-kv__value" data-i18n="autonomy_ask_material">Wymaga potwierdzenia dla istotnych działań</span></div>
           <div class="pv-kv"><span class="pv-kv__label">Sponsor</span><span class="pv-kv__value">Marta Kowalska</span></div>
-          <div class="pv-kv"><span class="pv-kv__label">Kontraktowe domknięcie</span><span class="pv-kv__value">Implementation completed</span></div>
+          <div class="pv-kv"><span class="pv-kv__label">Kontraktowe domknięcie</span><span class="pv-kv__value" data-i18n="closure_implementation_completed">Wdrożenie zakończone</span></div>
           <div class="pv-kv"><span class="pv-kv__label">Utworzono</span><span class="pv-kv__value">2026-08-04</span></div>
           <div class="pv-kv"><span class="pv-kv__label">Case ID</span><span class="pv-kv__value l5">CASE-2026-0142</span></div>
         </div>
@@ -547,6 +547,7 @@
   </div>
 </div>
 
+<script src="../js/labels.js"></script>
 <script src="../js/app.js"></script>
 <script>
   function applyCaseState(state) {

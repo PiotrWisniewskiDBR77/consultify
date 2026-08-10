@@ -35,7 +35,7 @@
   <div class="menu1">
     <div class="menu1__title">Zlecenia</div>
     <div class="menu1__right">
-      <span class="menu1__meta">Aug 10, 2026 · GPT-Teresa-4</span>
+      <span class="menu1__meta">10.08.2026 · GPT-Teresa-4</span>
       <div class="menu1__avatar">PW</div>
     </div>
   </div>
@@ -77,7 +77,7 @@
       <div data-state-view="loading" style="display:none;">
         <div class="table-wrap">
           <table class="std-table">
-            <thead><tr><th></th><th>Zlecenie</th><th>Status</th><th>Profil</th><th>Governance</th><th>Plan</th><th>Postęp</th><th>Sponsor</th><th>Zaktualizowano</th><th></th></tr></thead>
+            <thead><tr><th></th><th>Zlecenie</th><th>Status</th><th>Profil</th><th><span data-i18n="field_governance_short">Nadzór</span></th><th>Plan</th><th>Postęp</th><th>Sponsor</th><th>Zaktualizowano</th><th></th></tr></thead>
             <tbody>
               <tr class="skeleton-row"><td><span class="skel" style="width:16px"></span></td><td><span class="skel" style="width:180px"></span></td><td><span class="skel" style="width:70px"></span></td><td><span class="skel" style="width:60px"></span></td><td><span class="skel" style="width:70px"></span></td><td><span class="skel" style="width:50px"></span></td><td><span class="skel" style="width:60px"></span></td><td><span class="skel" style="width:60px"></span></td><td><span class="skel" style="width:70px"></span></td><td></td></tr>
               <tr class="skeleton-row"><td><span class="skel" style="width:16px"></span></td><td><span class="skel" style="width:210px"></span></td><td><span class="skel" style="width:70px"></span></td><td><span class="skel" style="width:60px"></span></td><td><span class="skel" style="width:70px"></span></td><td><span class="skel" style="width:50px"></span></td><td><span class="skel" style="width:60px"></span></td><td><span class="skel" style="width:60px"></span></td><td><span class="skel" style="width:70px"></span></td><td></td></tr>
@@ -131,7 +131,7 @@
             <div>⛔</div>
             <div class="state-banner__text">
               <div class="state-banner__title">2 zlecenia zablokowane — wymagają uwagi</div>
-              Widok przefiltrowany do zleceń w statusie BLOCKED. Wyczyść filtr, aby zobaczyć wszystkie.
+              Widok przefiltrowany do zleceń w statusie Zablokowane. Wyczyść filtr, aby zobaczyć wszystkie.
             </div>
             <button class="pill pill--sm pill--neutral">Wyczyść filtr</button>
           </div>
@@ -145,7 +145,7 @@
                 <th><span class="th-inner">Zlecenie ▾</span></th>
                 <th><span class="th-inner">Status</span></th>
                 <th><span class="th-inner">Profil</span></th>
-                <th><span class="th-inner">Governance</span></th>
+                <th><span class="th-inner" data-i18n="field_governance_short">Nadzór</span></th>
                 <th><span class="th-inner">Plan</span></th>
                 <th><span class="th-inner">Postęp</span></th>
                 <th><span class="th-inner">Sponsor</span></th>
@@ -158,12 +158,12 @@
                 <td><input type="checkbox" data-no-select /></td>
                 <td>
                   <div class="row-title">Redukcja kosztów operacyjnych — Fabryka Wrocław</div>
-                  <div class="row-sub">CASE-2026-0142 · TRANSFORMATION</div>
+                  <div class="row-sub">CASE-2026-0142 · <span data-i18n="profile_transformation" data-i18n-upper>TRANSFORMACJA</span></div>
                 </td>
                 <td><span class="status-chip status-chip--info"><span class="status-chip__dot"></span>Aktywne</span></td>
-                <td class="l4">Transformation</td>
-                <td class="l4">Standard</td>
-                <td class="l4">Plan v3 · Published</td>
+                <td class="l4" data-i18n="profile_transformation">Transformacja</td>
+                <td class="l4" data-i18n="gov_standard">Standardowy</td>
+                <td class="l4">Plan v3 · <span data-i18n="plan_status_published">Opublikowany</span></td>
                 <td class="num">64%</td>
                 <td><span class="row-avatar">MK</span></td>
                 <td class="l4">2 godz. temu</td>
@@ -173,12 +173,12 @@
                 <td><input type="checkbox" data-no-select /></td>
                 <td>
                   <div class="row-title">Wdrożenie modelu cenowego SaaS</div>
-                  <div class="row-sub">CASE-2026-0139 · STANDARD</div>
+                  <div class="row-sub">CASE-2026-0139 · <span data-i18n="profile_standard" data-i18n-upper>STANDARDOWY</span></div>
                 </td>
                 <td><span class="status-chip status-chip--danger"><span class="status-chip__dot"></span>Zablokowane</span></td>
-                <td class="l4">Standard</td>
-                <td class="l4">Controlled</td>
-                <td class="l4">Plan v2 · Published</td>
+                <td class="l4" data-i18n="profile_standard">Standardowy</td>
+                <td class="l4" data-i18n="gov_controlled">Kontrolowany</td>
+                <td class="l4">Plan v2 · <span data-i18n="plan_status_published">Opublikowany</span></td>
                 <td class="num">38%</td>
                 <td><span class="row-avatar">AS</span></td>
                 <td class="l4">wczoraj</td>
@@ -188,12 +188,12 @@
                 <td><input type="checkbox" data-no-select /></td>
                 <td>
                   <div class="row-title">Audyt zgodności RODO — Grupa Kapitałowa</div>
-                  <div class="row-sub">CASE-2026-0137 · STANDARD</div>
+                  <div class="row-sub">CASE-2026-0137 · <span data-i18n="profile_standard" data-i18n-upper>STANDARDOWY</span></div>
                 </td>
                 <td><span class="status-chip status-chip--success"><span class="status-chip__dot"></span>Zamknięte</span></td>
-                <td class="l4">Standard</td>
-                <td class="l4">Controlled</td>
-                <td class="l4">Plan v1 · Superseded</td>
+                <td class="l4" data-i18n="profile_standard">Standardowy</td>
+                <td class="l4" data-i18n="gov_controlled">Kontrolowany</td>
+                <td class="l4">Plan v1 · <span data-i18n="plan_status_superseded">Zastąpiony</span></td>
                 <td class="num">100%</td>
                 <td><span class="row-avatar">JN</span></td>
                 <td class="l4">4 dni temu</td>
@@ -203,11 +203,11 @@
                 <td><input type="checkbox" data-no-select /></td>
                 <td>
                   <div class="row-title">Strategia wejścia na rynek DACH</div>
-                  <div class="row-sub">CASE-2026-0145 · LIGHT</div>
+                  <div class="row-sub">CASE-2026-0145 · <span data-i18n="profile_light" data-i18n-upper>LEKKI</span></div>
                 </td>
                 <td><span class="status-chip status-chip--neutral"><span class="status-chip__dot"></span>Wersja robocza</span></td>
-                <td class="l4">Light</td>
-                <td class="l4">Lightweight</td>
+                <td class="l4" data-i18n="profile_light">Lekki</td>
+                <td class="l4" data-i18n="gov_lightweight">Lekki</td>
                 <td class="l4 empty-cell">—</td>
                 <td class="num empty-cell">—</td>
                 <td><span class="row-avatar">PW</span></td>
@@ -218,10 +218,10 @@
                 <td><input type="checkbox" data-no-select /></td>
                 <td>
                   <div class="row-title">Monitoring wdrożenia systemu WMS</div>
-                  <div class="row-sub">CASE-2026-0098 · MONITORING</div>
+                  <div class="row-sub">CASE-2026-0098 · <span data-i18n="profile_monitoring" data-i18n-upper>MONITORING</span></div>
                 </td>
                 <td><span class="status-chip status-chip--info"><span class="status-chip__dot"></span>Aktywne</span></td>
-                <td class="l4">Monitoring</td>
+                <td class="l4" data-i18n="profile_monitoring">Monitoring</td>
                 <td class="l4 empty-cell" data-partial-blank>—</td>
                 <td class="l4 empty-cell" data-partial-blank>—</td>
                 <td class="num">n/d</td>
@@ -233,12 +233,12 @@
                 <td><input type="checkbox" data-no-select /></td>
                 <td>
                   <div class="row-title">Restrukturyzacja łańcucha dostaw EMEA</div>
-                  <div class="row-sub">CASE-2026-0151 · TRANSFORMATION</div>
+                  <div class="row-sub">CASE-2026-0151 · <span data-i18n="profile_transformation" data-i18n-upper>TRANSFORMACJA</span></div>
                 </td>
                 <td><span class="status-chip status-chip--danger"><span class="status-chip__dot"></span>Zablokowane</span></td>
-                <td class="l4">Transformation</td>
-                <td class="l4">Controlled</td>
-                <td class="l4">Plan v1 · In review</td>
+                <td class="l4" data-i18n="profile_transformation">Transformacja</td>
+                <td class="l4" data-i18n="gov_controlled">Kontrolowany</td>
+                <td class="l4">Plan v1 · <span data-i18n="plan_status_in_review">W przeglądzie</span></td>
                 <td class="num">12%</td>
                 <td><span class="row-avatar">AS</span></td>
                 <td class="l4">6 godz. temu</td>
@@ -269,15 +269,15 @@
         </div>
         <div class="pv-card">
           <div class="pv-details-head">
-            <span class="pv-details-head__label">Details</span>
+            <span class="pv-details-head__label" data-i18n="field_details">Szczegóły</span>
             <span class="pv-details-head__count">5 właściwości</span>
             <span style="margin-left:auto"><button class="pv-icon-btn" title="Więcej">⋮</button></span>
           </div>
-          <div class="pv-kv"><span class="pv-kv__label">Profil</span><span class="pv-kv__value">Transformation</span></div>
-          <div class="pv-kv"><span class="pv-kv__label">Governance tier</span><span class="pv-kv__value">Standard</span></div>
-          <div class="pv-kv"><span class="pv-kv__label">Polityka autonomii</span><span class="pv-kv__value">Ask material actions</span></div>
+          <div class="pv-kv"><span class="pv-kv__label">Profil</span><span class="pv-kv__value" data-i18n="profile_transformation">Transformacja</span></div>
+          <div class="pv-kv"><span class="pv-kv__label" data-i18n="field_governance_tier">Poziom nadzoru</span><span class="pv-kv__value" data-i18n="gov_standard">Standardowy</span></div>
+          <div class="pv-kv"><span class="pv-kv__label">Polityka autonomii</span><span class="pv-kv__value" data-i18n="autonomy_ask_material">Wymaga potwierdzenia dla istotnych działań</span></div>
           <div class="pv-kv"><span class="pv-kv__label">Sponsor</span><span class="pv-kv__value">Marta Kowalska</span></div>
-          <div class="pv-kv"><span class="pv-kv__label">Kontraktowe domknięcie</span><span class="pv-kv__value">Implementation completed</span></div>
+          <div class="pv-kv"><span class="pv-kv__label">Kontraktowe domknięcie</span><span class="pv-kv__value" data-i18n="closure_implementation_completed">Wdrożenie zakończone</span></div>
         </div>
         <div class="pv-card">
           <div class="pv-details-head"><span class="pv-details-head__label">AI</span></div>
@@ -287,7 +287,7 @@
           </div>
         </div>
         <div class="pv-card">
-          <div class="pv-details-head"><span class="pv-details-head__label">Relations</span></div>
+          <div class="pv-details-head"><span class="pv-details-head__label" data-i18n="field_relations">Powiązania</span></div>
           <div class="pv-relations">
             <span class="pv-relation-pill">🎯 Inicjatywa: Redukcja SG&amp;A</span>
             <span class="pv-relation-pill">📄 Kontrakt zlecenia</span>
@@ -320,16 +320,16 @@
           <div class="pv-reco">Oczekuje na decyzję klienta (wait typu HUMAN, termin przekroczony o 1 dzień). Realizacja wstrzymana na węźle „Zatwierdzenie cennika”.</div>
         </div>
         <div class="pv-card">
-          <div class="pv-details-head"><span class="pv-details-head__label">Details</span><span class="pv-details-head__count">5 właściwości</span></div>
-          <div class="pv-kv"><span class="pv-kv__label">Profil</span><span class="pv-kv__value">Standard</span></div>
-          <div class="pv-kv"><span class="pv-kv__label">Governance tier</span><span class="pv-kv__value">Controlled</span></div>
-          <div class="pv-kv"><span class="pv-kv__label">Polityka autonomii</span><span class="pv-kv__value">Ask each action</span></div>
+          <div class="pv-details-head"><span class="pv-details-head__label" data-i18n="field_details">Szczegóły</span><span class="pv-details-head__count">5 właściwości</span></div>
+          <div class="pv-kv"><span class="pv-kv__label">Profil</span><span class="pv-kv__value" data-i18n="profile_standard">Standardowy</span></div>
+          <div class="pv-kv"><span class="pv-kv__label" data-i18n="field_governance_tier">Poziom nadzoru</span><span class="pv-kv__value" data-i18n="gov_controlled">Kontrolowany</span></div>
+          <div class="pv-kv"><span class="pv-kv__label">Polityka autonomii</span><span class="pv-kv__value" data-i18n="autonomy_ask_each">Wymaga potwierdzenia dla każdej akcji</span></div>
           <div class="pv-kv"><span class="pv-kv__label">Sponsor</span><span class="pv-kv__value">Adam Sosnowski</span></div>
           <div class="pv-kv"><span class="pv-kv__label">Powód blokady</span><span class="pv-kv__value">Oczekiwanie HUMAN — przeterminowane</span></div>
         </div>
         <div class="pv-card">
-          <div class="pv-details-head"><span class="pv-details-head__label">Relations</span></div>
-          <div class="pv-no-relations">No relations</div>
+          <div class="pv-details-head"><span class="pv-details-head__label" data-i18n="field_relations">Powiązania</span></div>
+          <div class="pv-no-relations" data-i18n="field_no_relations">Brak powiązań</div>
         </div>
         <div class="pv-card">
           <div class="pv-actions-grid">
@@ -343,6 +343,7 @@
   </div>
 </div>
 
+<script src="../js/labels.js"></script>
 <script src="../js/app.js"></script>
 <script>
   // list-specific: apply row/banner visibility per state (extends shared app.js)
