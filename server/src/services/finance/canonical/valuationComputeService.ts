@@ -24,6 +24,7 @@ import { createHash, randomUUID as uuidv4 } from 'node:crypto';
 
 import { withPinnedPostgresTransaction } from '../../../database/PostgresDatabase.js';
 import { stampWorkingRevisionComputeIdentity } from './artifactVersionService.js';
+import { canonicalPayloadHash } from './contentHash.js';
 import * as computeJobService from './computeJobService.js';
 import type { ComputeJobRow } from './computeJobService.js';
 import { computeFcffSeries, type FcffYearInput, type FcffYearResult } from './valuationFcffService.js';
@@ -394,7 +395,7 @@ export async function runDcfFcffValuation(params: RunDcfFcffValuationParams): Pr
   }
   const runningJob = claimed;
 
-  const contentSemanticHash = createHash('sha256').update(JSON.stringify({ enterpriseValue: discounted.enterpriseValue, fcff: fcff.years })).digest('hex');
+  const contentSemanticHash = canonicalPayloadHash({ enterpriseValue: discounted.enterpriseValue, fcff: fcff.years });
   const completed = await computeJobService.completeJobSuccess({
     jobId: runningJob.id,
     organizationId: params.organizationId,

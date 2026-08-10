@@ -53,6 +53,7 @@ import { createHash, randomUUID as uuidv4 } from 'node:crypto';
 
 import { withPinnedPostgresTransaction } from '../../../database/PostgresDatabase.js';
 import * as artifactVersionService from './artifactVersionService.js';
+import { canonicalPayloadHash } from './contentHash.js';
 import { stampWorkingRevisionComputeIdentity } from './artifactVersionService.js';
 import type { BusinessVersionRow, TransitionServiceResult } from './artifactVersionService.js';
 import * as computeJobService from './computeJobService.js';
@@ -477,6 +478,16 @@ export async function computeAnalysisKpis(params: ComputeAnalysisKpisParams): Pr
     loadStmtLineCells(sourceVersionId),
     loadActiveCatalogByCode(params.organizationId),
     withPinnedPostgresTransaction((tx) =>
+      // W3-hashconsol NOTE (deliberately NOT fixed — see W3_HASH_CONSOLIDATION_report.md
+      // "rozjazd w praktyce"): this row set has no ORDER BY, so its ITERATION order
+      // (evaluateAllRows below) — which becomes the `results` array order that
+      // canonicalPayloadHash(results) hashes into content_semantic_hash — is whatever
+      // Postgres's query plan happens to return, not a value this code pins. Adding
+      // `ORDER BY id` here would make it deterministic, but `id` is a random UUID
+      // (unrelated to insertion order), so pinning it would itself CHANGE the
+      // content_semantic_hash the very next time this compute runs for existing data —
+      // exactly the "changing what feeds the hash invalidates already-stored hashes"
+      // risk the report's owner-decision section is about. Left unfixed on purpose.
       tx.queryAll<KpiValueRow>(`SELECT * FROM finance_analysis_kpi_values WHERE business_version_id = ?`, [params.businessVersionId])
     ),
   ]);
@@ -526,7 +537,7 @@ export async function computeAnalysisKpis(params: ComputeAnalysisKpisParams): Pr
   }
 
   if (runningJob.status === 'running') {
-    const contentSemanticHash = createHash('sha256').update(JSON.stringify(results)).digest('hex');
+    const contentSemanticHash = canonicalPayloadHash(results);
     const outputWorkingRevisionId = bv.source_working_revision_id ?? params.businessVersionId;
     const completed = await computeJobService.completeJobSuccess({
       jobId: runningJob.id,
