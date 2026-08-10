@@ -497,6 +497,11 @@ export interface LineageTrail {
   unresolvedVersionIds: readonly string[];
   /** Cross-tenant input the navigator refused to render. Empty on healthy data. */
   tenant: LineageTenantAnomalies;
+  /**
+   * Version ids at which a cycle closes in the supplied edges. Empty on healthy
+   * data — see `detectCycleVersionIds` for why this is reported and not enforced.
+   */
+  cycleVersionIds: readonly string[];
 }
 
 /** Minimum that still shows root + ellipsis + focus. */
@@ -535,6 +540,7 @@ export function buildLineageTrail(params: BuildLineageTrailParams): LineageTrail
   const visited = new Set<string>();
   let hasAlternatePaths = false;
 
+  const cycleVersionIds: string[] = [];
   let currentVersionId: string | null = params.focusVersionId;
   let edgeToChild: LineageEdgeType | null = null;
   while (currentVersionId && !visited.has(currentVersionId)) {
@@ -544,8 +550,22 @@ export function buildLineageTrail(params: BuildLineageTrailParams): LineageTrail
     if (candidates.length > 1) hasAlternatePaths = true;
     const primary = pickPrimaryParent(candidates);
     if (!primary) break;
+    // Stepping onto a node already IN the chain is a loop in the data. It has
+    // to be checked here, on the step, not after the loop: reaching a root and
+    // breaking also leaves `currentVersionId` inside `visited`, and treating
+    // that as a cycle reported every healthy trail's root as corrupt (the
+    // diamond negative control caught exactly that).
+    if (visited.has(primary.source_version_id)) {
+      cycleVersionIds.push(primary.source_version_id);
+      break;
+    }
     edgeToChild = primary.edge_type;
     currentVersionId = primary.source_version_id;
+  }
+  // A cycle off the chosen path is just as corrupt, so the whole reachable
+  // ancestor set is checked too, not only the single primary-parent chain.
+  for (const versionId of detectCycleVersionIds(ownEdges, params.focusVersionId, 'upstream')) {
+    if (!cycleVersionIds.includes(versionId)) cycleVersionIds.push(versionId);
   }
 
   // `chain` is FOCUS → ROOT; the trail reads ROOT → FOCUS.
@@ -578,6 +598,7 @@ export function buildLineageTrail(params: BuildLineageTrailParams): LineageTrail
     hasAlternatePaths,
     unresolvedVersionIds,
     tenant: { foreignEdgeIds, foreignVersionIds: scoped.foreignVersionIds },
+    cycleVersionIds,
   };
 }
 
@@ -667,6 +688,8 @@ export interface LineageRelatedPanel {
   hiddenTerminalCount: number;
   /** Cross-tenant input the navigator refused to render. Empty on healthy data. */
   tenant: LineageTenantAnomalies;
+  /** Version ids where a cycle closes, upstream or downstream. Empty on healthy data. */
+  cycleVersionIds: readonly string[];
 }
 
 export interface BuildRelatedPanelParams {
@@ -705,12 +728,17 @@ export function buildRelatedPanel(params: BuildRelatedPanelParams): LineageRelat
     scoped.resolve
   );
 
-  const descendantDepths = computeDepths({
+  const descendantComputation = computeDepths({
     edges: descendantEdges,
     rootVersionId: params.focusVersionId,
     direction: 'downstream',
     organizationId: params.organizationId,
-  }).depths;
+  });
+  const descendantDepths = descendantComputation.depths;
+  const cycleVersionIds = [...descendantComputation.cycleVersionIds];
+  for (const versionId of detectCycleVersionIds(ancestorEdges, params.focusVersionId, 'upstream')) {
+    if (!cycleVersionIds.includes(versionId)) cycleVersionIds.push(versionId);
+  }
   const directChildEdges = descendantEdges.filter(
     (e) => e.source_version_id === params.focusVersionId && !LINEAGE_SIBLING_EDGE_TYPES.includes(e.edge_type)
   );
@@ -807,6 +835,7 @@ export function buildRelatedPanel(params: BuildRelatedPanelParams): LineageRelat
     terminalVisibility,
     hiddenTerminalCount,
     tenant: { foreignEdgeIds, foreignVersionIds: scoped.foreignVersionIds },
+    cycleVersionIds,
   };
 }
 
@@ -894,13 +923,16 @@ export interface LineageDepthComputation {
   depths: Map<string, number>;
   /** Edge ids dropped because they belong to another organization. */
   foreignEdgeIds: readonly string[];
+  /** Version ids at which a cycle closes. Empty on healthy data. */
+  cycleVersionIds: readonly string[];
 }
 
-export function computeDepths(params: ComputeDepthsParams): LineageDepthComputation {
-  const { rootVersionId, direction } = params;
-  const { own, foreignEdgeIds } = partitionEdgesByOrganization(params.edges, params.organizationId);
+function buildLineageAdjacency(
+  edges: readonly LineageEdgeRow[],
+  direction: 'upstream' | 'downstream'
+): Map<string, string[]> {
   const adjacency = new Map<string, string[]>();
-  for (const edge of own) {
+  for (const edge of edges) {
     if (LINEAGE_SIBLING_EDGE_TYPES.includes(edge.edge_type)) continue;
     const from = direction === 'downstream' ? edge.source_version_id : edge.target_version_id;
     const to = direction === 'downstream' ? edge.target_version_id : edge.source_version_id;
@@ -908,6 +940,68 @@ export function computeDepths(params: ComputeDepthsParams): LineageDepthComputat
     if (list) list.push(to);
     else adjacency.set(from, [to]);
   }
+  return adjacency;
+}
+
+/**
+ * Version ids where a cycle CLOSES, walking from `rootVersionId`.
+ *
+ * The navigator was already cycle-SAFE — `buildLineageTrail`'s `visited` set and
+ * `computeDepths`' `depths.has(next)` both stop it from hanging — but it was
+ * cycle-SILENT: a corrupt graph produced a short trail and a shrunken panel with
+ * nothing to tell the user, or the log, that the data was the reason. That is
+ * the same failure mode as swallowing an unresolvable version, which this module
+ * already refuses to do (`unresolvedVersionIds`).
+ *
+ * Reporting, NOT enforcing: the prohibition lives in the database
+ * (`finance_lineage_prevent_cycle` + the rank rule mirrored in
+ * `lineageService.validateEdgeRank`), and duplicating it here would create a
+ * second definition of "legal edge" that can drift from the trigger. This
+ * function answers a strictly weaker question — "did the rows I was handed
+ * contain a loop?" — which a presentation layer is entitled to ask about ANY
+ * input, including input that never went through `insertEdge`.
+ *
+ * "Already seen" is deliberately NOT the test: a DAG diamond (bm4 -> sc2 -> val1
+ * alongside bm4 -> val1) revisits `val1` and is perfectly legal. This is an
+ * iterative DFS tracking the nodes currently ON THE STACK, so only genuine back
+ * edges are reported.
+ */
+export function detectCycleVersionIds(
+  edges: readonly LineageEdgeRow[],
+  rootVersionId: string,
+  direction: 'upstream' | 'downstream'
+): string[] {
+  const adjacency = buildLineageAdjacency(edges, direction);
+  const finished = new Set<string>();
+  const onStack = new Set<string>([rootVersionId]);
+  const found: string[] = [];
+  const stack: Array<{ node: string; next: number }> = [{ node: rootVersionId, next: 0 }];
+  while (stack.length > 0) {
+    const frame = stack[stack.length - 1];
+    const neighbours = adjacency.get(frame.node) ?? [];
+    if (frame.next < neighbours.length) {
+      const next = neighbours[frame.next];
+      frame.next += 1;
+      if (onStack.has(next)) {
+        if (!found.includes(next)) found.push(next); // back edge = the loop closes here
+        continue;
+      }
+      if (finished.has(next)) continue; // cross edge into a closed subtree = diamond, legal
+      onStack.add(next);
+      stack.push({ node: next, next: 0 });
+    } else {
+      onStack.delete(frame.node);
+      finished.add(frame.node);
+      stack.pop();
+    }
+  }
+  return found;
+}
+
+export function computeDepths(params: ComputeDepthsParams): LineageDepthComputation {
+  const { rootVersionId, direction } = params;
+  const { own, foreignEdgeIds } = partitionEdgesByOrganization(params.edges, params.organizationId);
+  const adjacency = buildLineageAdjacency(own, direction);
   const depths = new Map<string, number>([[rootVersionId, 0]]);
   const queue: string[] = [rootVersionId];
   while (queue.length > 0) {
@@ -920,7 +1014,11 @@ export function computeDepths(params: ComputeDepthsParams): LineageDepthComputat
     }
   }
   depths.delete(rootVersionId);
-  return { depths, foreignEdgeIds };
+  return {
+    depths,
+    foreignEdgeIds,
+    cycleVersionIds: detectCycleVersionIds(own, rootVersionId, direction),
+  };
 }
 
 // ---------------------------------------------------------------------------

@@ -775,3 +775,114 @@ describe('AP-11 lineageNavigatorContract — terminal versions', () => {
     expect(hidden.parents.flatMap((g) => g.entries).every((e) => e.isDimmed === false)).toBe(true);
   });
 });
+
+// ===========================================================================
+// AP-11 — a cycle in the DATA is an anomaly to REPORT, not to swallow.
+//
+// The DB trigger `finance_lineage_prevent_cycle` and the rank rule in
+// lineageService are the enforcement; these tests are about what the navigator
+// does when it is nevertheless handed a loop (a hand-assembled edge set, a
+// restored dump, a regression in the trigger). It used to end the walk in
+// total silence.
+// ===========================================================================
+
+describe('AP-11 lineageNavigatorContract — cycle anomalies', () => {
+  /**
+   * val1 -> bm4 closes the loop bm4 -> sc2 -> val1. The row is nonsense by the
+   * rank rule (that is the point: only corrupt data can look like this), so it
+   * is spelled out explicitly rather than produced by any legal path.
+   */
+  const BACK_EDGE = edge(
+    'val1',
+    'VALUATION_CASE',
+    'bm4',
+    'BASELINE_MODEL',
+    'STATEMENT_TO_MODEL',
+    '2026-08-02T00:00:00.000Z'
+  );
+  const CYCLIC_ANCESTORS: LineageEdgeRow[] = [
+    edge('bm4', 'BASELINE_MODEL', 'sc2', 'PREDICTION_SCENARIO', 'MODEL_TO_SCENARIO'),
+    edge('sc2', 'PREDICTION_SCENARIO', 'val1', 'VALUATION_CASE', 'SCENARIO_TO_VALUATION'),
+    BACK_EDGE,
+  ];
+
+  it('POSITIVE CONTROL — buildLineageTrail terminates AND reports the loop', () => {
+    const trail = buildLineageTrail({
+      organizationId: ORG,
+      focusVersionId: 'val1',
+      ancestorEdges: CYCLIC_ANCESTORS,
+      resolve,
+    });
+    // Still terminates (it always did) ...
+    expect(trail.totalNodeCount).toBeGreaterThan(0);
+    // ... but no longer silently: the anomaly is in the result, next to
+    // unresolvedVersionIds, for a caller to log or badge.
+    expect(trail.cycleVersionIds).toContain('val1');
+    // No node is rendered twice despite the loop.
+    const ids = trail.items
+      .filter((i): i is LineageTrailNode => i.kind === 'node')
+      .map((n) => n.metadata.versionId);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it('POSITIVE CONTROL — computeDepths and the Related panel report it too', () => {
+    const down = computeDepths({
+      edges: CYCLIC_ANCESTORS,
+      rootVersionId: 'bm4',
+      direction: 'downstream',
+      organizationId: ORG,
+    });
+    expect(down.cycleVersionIds).toContain('bm4');
+    expect(down.depths.has('bm4')).toBe(false); // the root is still stripped
+
+    const panel = buildRelatedPanel({
+      organizationId: ORG,
+      focusVersionId: 'bm4',
+      ancestorEdges: [],
+      descendantEdges: CYCLIC_ANCESTORS,
+      resolve,
+    })!;
+    expect(panel.cycleVersionIds).toContain('bm4');
+  });
+
+  it('NEGATIVE CONTROL — a DAG DIAMOND is not a cycle', () => {
+    // sp3 feeds both an2 and bm4, and an2 also feeds bm4: bm4 is reached twice.
+    // "Already visited" would call this a cycle; the on-stack test does not.
+    const trail = buildLineageTrail({
+      organizationId: ORG,
+      focusVersionId: 'val1',
+      ancestorEdges: ANCESTOR_EDGES,
+      resolve,
+    });
+    expect(trail.cycleVersionIds).toEqual([]);
+    expect(trail.hasAlternatePaths).toBe(true); // the diamond IS there, just legal
+
+    const diamondDown = computeDepths({
+      edges: [
+        edge('bm4', 'BASELINE_MODEL', 'sc2', 'PREDICTION_SCENARIO', 'MODEL_TO_SCENARIO'),
+        edge('bm4', 'BASELINE_MODEL', 'val1', 'VALUATION_CASE', 'MODEL_TO_VALUATION'),
+        edge('sc2', 'PREDICTION_SCENARIO', 'val1', 'VALUATION_CASE', 'SCENARIO_TO_VALUATION'),
+      ],
+      rootVersionId: 'bm4',
+      direction: 'downstream',
+      organizationId: ORG,
+    });
+    expect(diamondDown.cycleVersionIds).toEqual([]);
+    expect(diamondDown.depths.get('val1')).toBe(1);
+  });
+
+  it('NEGATIVE CONTROL — a self-referencing FOREIGN edge is dropped, not reported as our cycle', () => {
+    // Tenant guard runs first: a loop that is not ours is not our anomaly.
+    const trail = buildLineageTrail({
+      organizationId: ORG,
+      focusVersionId: 'val1',
+      ancestorEdges: [
+        ...ANCESTOR_EDGES,
+        { ...BACK_EDGE, id: 'foreign-back-edge', organization_id: 'org-intruder' },
+      ],
+      resolve,
+    });
+    expect(trail.cycleVersionIds).toEqual([]);
+    expect(trail.tenant.foreignEdgeIds).toEqual(['foreign-back-edge']);
+  });
+});
