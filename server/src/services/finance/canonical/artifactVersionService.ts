@@ -304,17 +304,67 @@ export async function transition(params: TransitionParams): Promise<TransitionSe
     const invalidatedSet = params.action === 'invalidate' ? `, invalidated_reason = ?` : '';
     const invalidatedParams = params.action === 'invalidate' ? [params.reason ?? null] : [];
 
+    // BUG-APWAVE-TRANSITION fix (2026-08-10) — T10 `archive` / T11 `invalidate`
+    // were DEAD in production: they are the only two transitions whose `from`
+    // is `APPROVED` (lifecycleService.TRANSITIONS), and `trg_finance_bv_immutability`
+    // (`finance_bv_enforce_immutability`, 20260809_finance_v3_b01_core_artifacts.sql:231)
+    // rejects ANY column outside its allow-list changing on a row whose OLD.status
+    // is `APPROVED`. `version` is not on that allow-list, so `version = version + 1`
+    // made every archive/invalidate raise, unconditionally:
+    //   P0001 "finance_business_versions: <id> is APPROVED; only status and its
+    //          associated metadata columns may change"
+    // The same UPDATE without the increment succeeds — see the report at
+    // docs/validation/finance-v3/generated/gate-d/FIX_TRANSITION_TERMINAL_ACTIONS_report.md.
+    //
+    // WHY drop the increment instead of widening the trigger's allow-list: T9
+    // (supersede-the-parent inside `approveVersion` below, ~line 700) is the
+    // OTHER `APPROVED` -> terminal UPDATE in this file and the one that has
+    // always worked in production. It deliberately does not touch `version`
+    // either, and guards concurrency with `AND status = 'APPROVED'` instead.
+    // This makes T10/T11 behave exactly like the transition that already works,
+    // and keeps the approved row's immutability envelope untouched (widening
+    // the DB-level allow-list would loosen it for every writer, forever, to buy
+    // a counter this path does not need — see below).
+    //
+    // CAS IS NOT SILENTLY DROPPED. The optimistic check `current.version !==
+    // params.expectedVersion` above still runs, and the UPDATE keeps
+    // `AND version = ?`. What the missing increment costs is the *post*-write
+    // signal, and the `AND status = ?` guard added here replaces it exactly, in
+    // the T9 idiom: `ARCHIVED`/`INVALIDATED` are TERMINAL_STATUSES with zero
+    // outgoing transitions, so once the winner commits, every racing caller
+    // re-reads the row under `FOR UPDATE` and is rejected by `validateTransition`
+    // with a typed `STATE_PRECONDITION_FAILED` — never a raw Postgres error, and
+    // never a lost update. (`version` was in any case never a complete change
+    // counter for an APPROVED row: the allow-listed `freshness`/`stale_since`
+    // propagation writes move that row without incrementing it, for the very
+    // same trigger reason.)
+    const versionSet = current.status === 'APPROVED' ? '' : ', version = version + 1';
+
     const updated = await tx.queryOne<BusinessVersionRow>(
       `UPDATE finance_business_versions
-          SET status = ?, version = version + 1${extraSet}${invalidatedSet}
-        WHERE business_version_id = ? AND organization_id = ? AND version = ?
+          SET status = ?${versionSet}${extraSet}${invalidatedSet}
+        WHERE business_version_id = ? AND organization_id = ? AND version = ? AND status = ?
         RETURNING *`,
-      [decision.toStatus, ...extraParams, ...invalidatedParams, params.businessVersionId, params.organizationId, params.expectedVersion]
+      [
+        decision.toStatus,
+        ...extraParams,
+        ...invalidatedParams,
+        params.businessVersionId,
+        params.organizationId,
+        params.expectedVersion,
+        current.status,
+      ]
     );
     if (!updated) {
       // Lost the race between the SELECT FOR UPDATE and here is not possible
       // within one transaction/connection, but keep the guard for safety.
-      return { ok: false, code: 'VERSION_CONFLICT', message: 'Version conflict', currentStatus: current.status };
+      return {
+        ok: false,
+        code: 'VERSION_CONFLICT',
+        message: `Version conflict: ${params.businessVersionId} is no longer at version ${params.expectedVersion}/${current.status}`,
+        currentVersion: current.version,
+        currentStatus: current.status,
+      };
     }
 
     await tx.queryRun(
