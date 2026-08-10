@@ -25,13 +25,12 @@
  * to it).
  *
  * STATUS (P0_TENANT_ISOLATION_FIX, this same work package, 2026-08-10): every
- * `DEFECT W9-C-n` assertion below that pinned a real leak (W9-C-1 through
- * W9-C-5, plus the structural W9-C-7 table list) has been INVERTED to assert
- * the fix instead — tests now labelled `FIXED W9-C-n`, still describing what
- * they used to prove in a comment, per the same "cannot be lost" discipline:
- * a red test here means the boundary regressed, not that a defect
- * reappeared. `W9-C-6` (untyped throw on a tenant-boundary refusal, P2) is
- * left as-is — out of scope for this P0/P1/structural pass.
+ * `DEFECT W9-C-n` assertion below that pinned a real leak or a signal-quality
+ * gap (W9-C-1 through W9-C-6, plus the structural W9-C-7 table list) has been
+ * INVERTED to assert the fix instead — tests now labelled `FIXED W9-C-n`,
+ * still describing what they used to prove in a comment, per the same
+ * "cannot be lost" discipline: a red test here means the boundary
+ * regressed, not that a defect reappeared.
  *
  * There are no RLS policies and no `SET LOCAL app.current_org` in this schema
  * (0 policies exist), so nothing below can be delegated to the database's own
@@ -513,19 +512,22 @@ describe.skipIf(!REAL_PG)('W9-C — tenant isolation matrix (real PostgreSQL)', 
       expect(rows).toHaveLength(0);
     });
 
-    it('service level: computeAnalysisKpis(orgA, bvB) fails closed (but with an UNTYPED throw — W9-C-6)', async () => {
+    it('FIXED W9-C-6 (P2): computeAnalysisKpis(orgA, bvB) fails closed with a TYPED result (was: DEFECT — untyped throw)', async () => {
       // `computeAnalysisKpis` guards on `getBusinessVersion(organizationId, ...)`
-      // returning null, which IS org-scoped — isolation holds. It then throws a
-      // bare `Error` instead of returning a typed `{ ok: false }` like every
-      // other failure mode of the same function, so an HTTP layer maps a tenant
-      // violation to a 500 rather than a 404. Behaviour pinned here.
-      await expect(
-        kpi.computeAnalysisKpis({
-          organizationId: A.orgId,
-          businessVersionId: B.anaBvId,
-          requestedByUserId: A.userId,
-        })
-      ).rejects.toThrow(/business_version .* not found/);
+      // returning null, which IS org-scoped — isolation held even before this
+      // fix. BEFORE the fix it threw a bare `Error` instead of returning a
+      // typed `{ok:false}` like every other failure mode of the same
+      // function, so an HTTP layer mapped a tenant-boundary refusal to a 500
+      // rather than a 404. Now returns `{ok:false, code:'BUSINESS_VERSION_NOT_FOUND'}`
+      // — a resolved Promise, not a rejection.
+      const result = await kpi.computeAnalysisKpis({
+        organizationId: A.orgId,
+        businessVersionId: B.anaBvId,
+        requestedByUserId: A.userId,
+      });
+      expect(result.ok).toBe(false);
+      if (result.ok) throw new Error('unreachable');
+      expect(result.code).toBe('BUSINESS_VERSION_NOT_FOUND');
 
       // No KPI value of B's was recomputed or overwritten.
       const bValue = await t((tx) =>
