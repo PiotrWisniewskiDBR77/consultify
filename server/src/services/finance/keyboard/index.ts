@@ -8,6 +8,7 @@
  */
 
 export * from './commandTypes.js';
+export * from './CommandAvailability.js';
 export * from './FocusRestoreContract.js';
 export * from './KeyboardCommandRegistry.js';
 export * from './CommandPaletteIndex.js';

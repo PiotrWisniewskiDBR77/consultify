@@ -29,6 +29,7 @@
 import type { CellRef } from '../../../types/finance/CellRef.js';
 import type { FinanceGridSelectionState } from '../../../types/finance/WorkspaceState.js';
 import { operationTargets, type Operation } from '../../../types/finance/Operation.js';
+import type { FocusModeEffect, FocusModeSession } from '../workspace/focusModeContract.js';
 
 // ---------------------------------------------------------------------------
 // Reasons a focus-restore decision is being made — one entry per command (or
@@ -47,6 +48,8 @@ export const FOCUS_RESTORE_REASONS = [
   'editConfirm',
   'editCancel',
   'commandPaletteInvoke',
+  /** Added with the workspace-level commands: leaving focus mode returns focus to the cell AP-09's `FocusModeSession` was holding. See the AP-09 bridge at the bottom of this file. */
+  'focusModeExit',
 ] as const;
 export type FocusRestoreReason = (typeof FOCUS_RESTORE_REASONS)[number];
 
@@ -152,4 +155,59 @@ export function applyFocusRestoreToSelection(
     activeCell: patch.activeCell,
     ranges: [{ topLeft: patch.activeCell, bottomRight: patch.activeCell }],
   };
+}
+
+// ---------------------------------------------------------------------------
+// BRIDGE TO AP-09's FOCUS MODE — added 2026-08-10.
+//
+// Before this section the codebase carried TWO unrelated descriptions of "who
+// had focus and where does it go back to":
+//
+//   AP-03 (this file)      `FocusSnapshot.activeCell` + `resolveFocusRestorePatch`
+//   AP-09 (focusModeContract) `FocusModeSession.focusedCell` +
+//                             `.restoreFocusToControlId`, returned as a
+//                             `{ kind: 'move-focus' }` effect
+//
+// Nothing connected them and nothing tested that they agreed, so they could
+// drift silently: AP-09 restoring focus to cell A while AP-03's snapshot said
+// cell B would be invisible to every existing test in either package. These
+// two functions are the connection, and `KeyboardCommandRegistry.test.ts`
+// asserts the round trip.
+//
+// Direction of authority, stated so the bridge is not mistaken for a merge:
+// AP-09 owns focus mode's own capture (it must, since entering focus mode is
+// not a keyboard command's outcome — it can be a mouse click on the bar's
+// fullscreen control). AP-03 owns what the GRID does with a restored cell.
+// The bridge converts, it does not duplicate state.
+// ---------------------------------------------------------------------------
+
+/** Read AP-09's session as an AP-03 snapshot. Used when a keyboard command runs while focus mode is active and needs the pre-existing focus target. */
+export function focusSnapshotFromFocusModeSession(
+  session: Pick<FocusModeSession, 'focusedCell'>,
+  reason: FocusRestoreReason,
+  now?: () => string
+): FocusSnapshot {
+  return captureFocusSnapshot({ activeCell: session.focusedCell, reason, ...(now ? { now } : {}) });
+}
+
+/**
+ * Convert the `move-focus` effect AP-09 emits from `exitFocusMode` into the
+ * patch this contract applies to `FinanceWorkspaceState.selection`.
+ *
+ * `null` when the effect carries no cell (focus returns to the bar control
+ * that opened focus mode, which is a DOM concern, not a selection one) or
+ * when no `move-focus` effect is present at all — a no-op exit. Returning
+ * `null` rather than inventing a target is deliberate: guessing a cell here
+ * would move the user's selection on a toggle that AP-09 guarantees changes
+ * nothing.
+ */
+export function focusRestorePatchFromFocusModeEffects(
+  effects: readonly FocusModeEffect[]
+): FocusRestorePatch | null {
+  const moveFocus = effects.find((e): e is Extract<FocusModeEffect, { kind: 'move-focus' }> => e.kind === 'move-focus');
+  if (!moveFocus || moveFocus.cell === null) return null;
+  // 'focusModeExit' never collapses: AP-09's contract is that the toggle
+  // preserves selection, filters, scroll, focus and draft. Collapsing the
+  // selection here would break that guarantee from the other side.
+  return resolveFocusRestorePatch('focusModeExit', moveFocus.cell);
 }
