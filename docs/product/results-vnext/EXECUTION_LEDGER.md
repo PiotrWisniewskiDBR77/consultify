@@ -5136,4 +5136,236 @@ listy plików draftu) POMINIĘTY świadomie — zadanie explicite priorytetuje
 "DIRECT real-Postgres test" nad mockowanym testem route'a; 22 realne
 asercje przeciw prawdziwemu Postgresowi uznane za wystarczający dowód.
 
+## 48. OKR-E008 Połowy A i B (Teresa + Perspectives) — implementacja + odbiór, DOMENA OKR ZAMKNIĘTA 8/8 (2026-08-10)
+
+Domyka OKR-E008 rozpoczęte w §42 (Połowa C, Legacy/Ops — już wylądowana,
+NIE dotknięta ani zduplikowana tutaj). §42's "poza zakresem, świadomie
+niezbudowane" lista (Połowa A blokowana na E003/E004/E006/E007, Połowa B
+blokowana na E002) jest teraz NIEAKTUALNA — cały łańcuch E001-E007 wylądował
+na tej gałęzi (§40-§47) od czasu tamtego zapisu. IO-1 re-weryfikacja
+(obowiązkowa wg bloku §-IO na czele `OKR_E008_DESIGN.md`) wykonana wprost
+przeciw REALNEMU, wylądowanemu kodowi, nie przeciw draftowi — design był
+pisany gdy zero kodu OKR vNext istniało (§0/§2.3 designu to stwierdzają
+explicite), więc każda nazwa komendy/kolumny w draftowej Połowie A była
+prospektywnym zgadywaniem.
+
+### Połowa A (Teresa) — 5 trybów, WSZYSTKIE zbudowane, ŻADEN nieporzucony
+
+Design (D-OKR8-1) postawił pytanie wprost: 5 trybów (po jednym na
+literalnie nazwaną trasę w tabeli AC) czy mniej (jak KPI 5→3, ROI →1)?
+Zadanie kazało zweryfikować KAŻDY z 5 osobno przeciw realnej tabeli AC, nie
+ufać założeniu draftu. Weryfikacja (§0 designu, tabela OKR-E008, kolumna
+"Command/query/API"): OKR-F-025 nazywa DWIE trasy (`/advisor/draft`,
+`/advisor/quality-review`), OKR-F-026 nazywa DWIE trasy (`/advisor/check-in`,
+`/advisor/manager-brief`), OKR-F-027 nazywa JEDNĄ trasę
+(`/advisor/reflection`) — 5 realnie, literalnie nazwanych tras, nie 3 i nie
+1. Wszystkie 5 przeżyły re-weryfikację i zostały zbudowane:
+`objective_draft`, `objective_quality_review`, `check_in_assist`,
+`manager_brief`, `reflection_synthesis`. Zero trybu porzuconego —
+inaczej niż KPI/ROI, gdzie kolaps liczby trybów wynikał z WŁASNEJ,
+węższej tabeli AC tamtych domen, nie z arbitralnej decyzji.
+
+**`teresaCopilotCanon.ts`**: `'okr'` dodane do `HandoffTargetModule` union
+(jedyne realne odstępstwo od wzorca kpi/roi — obie były pre-zarezerwowane
+przez RN-G1, `'okr'` nigdy nie było, potwierdzone bezpośrednim czytaniem
+unii przed edycją). 5 nowych typów payloadu + `ResultsOkrHandoffContext`,
+`P08_HANDOFF_TARGETS.okr`, `P08_HANDOFF_TARGET_MODULES` append.
+`P08_OKR_FORBIDDEN_VERBS` **re-derived bezpośrednim grepem** `^export
+(async )?function` przez wszystkie `okr*Commands.ts` (design's własna
+placeholder-lista z §3.6 explicite mówiła "CANNOT be finalized today" —
+teraz mogła, bo E001-E007 wylądowały) — 42 realne top-level komendy
+znalezione, z czego funkcje pomocnicze przyjmujące `client: PoolClient`
+jako pierwszy parametr (nie samodzielnie wywoływalne bez otwartej
+transakcji, której warstwa Teresy nigdy nie ma) i czyste funkcje
+obliczeniowe/odczytowe świadomie wykluczone z listy (ta sama konwencja co
+ROI-E008 D16). Własny test (`teresa-okr-forbidden-verbs.test.ts`) **złapał
+realnego buga we WŁASNYM nagłówku-komentarzu pliku** — proza nad tablicą
+`P08_OKR_FORBIDDEN_VERBS` wymieniała `finalScoreOkrSet`/
+`recordObjectiveReflection` po nazwie POZA deklaracją tablicy, co statyczny
+test #7 (self-reference check, wzorowany 1:1 na KPI/ROI) słusznie
+zaczerwienił — naprawione przeformułowaniem prozy bez literalnych nazw
+czasowników.
+
+**`teresaCopilotService.ts`**: 6 linii importu z `resultsVnext/okr/`
+(`getOkrSet`, `createObjective`, `getObjective`/`listObjectivesForSet`/
+`getKeyResult`, `recordCheckIn`, `listOrganizationOkrAttention`,
+`recordOkrReflectionTeresaDraft`) — 8 nazw łącznie, wszystkie
+udowodnione grepem w teście. `case 'okr':` w `performHandoff`, 5 funkcji
+`handleOkr*`, `recordTeresaOkrHandoffResult`, blok `undoProposal`
+(`P08_UNDO_NOT_SUPPORTED`, ta sama pozycja co kpi/roi — TRZECI blok w
+sekwencji if-chain, nie switch, zgodnie z realną, niedesignową strukturą
+pliku już odnotowaną przez ROI-E008).
+
+**Odstępstwa OD REALNEGO kodu (nie od designu — design był prospektywny)**:
+1. `recordCheckIn` (`okrCheckInCommands.ts`, OKR-E004) **nie ma pola
+   `expectedVersion` w ogóle** — check-in jest append-only, nigdy CAS'owany
+   na własnym wierszu KR. `check_in_assist` świadomie IGNORUJE
+   `okr_handoff_context.expected_version` (jedyny tryb, który to robi) —
+   udokumentowane w kodzie i w unit teście.
+2. `check_in_assist`'owy payload wymaga `cadence_occurrence_id` (realny,
+   wymagany parametr `RecordOkrCheckInSchema`/`RecordCheckInInput`) — design
+   go całkowicie pominął (pisany przed OKR-E004).
+3. `reflection_synthesis`'owy payload wymaga `set_id` (design miał tylko
+   `objective_id`) — `okr_vnext_reflections.set_id` jest `NOT NULL`, a
+   ścieżka create-jeśli-nie-istnieje (patrz niżej) potrzebuje go od
+   pierwszego wywołania.
+4. E003 **nie zarejestrował** `'okr_objective'` jako `resource_type` ABAC
+   (potwierdzone ponownie, ta sama linia co OKR-E005/E006/E007 już
+   ustaliły) — Objectives/KeyResults dziedziczą widoczność wyłącznie przez
+   `set_id`/`'okr_set'`. `target_resource.resource_type` w payloadzie
+   Teresy jest czystym deskryptorem UI, nie ABAC lookup key.
+5. E003's kolumny confidence to `confidence`/`confidence_numeric_value`
+   (potwierdzone, zgodnie z ostrzeżeniem orkiestratora).
+6. `okr_vnext_objectives`'owy FK do rodzica to `set_id`, nie `okr_set_id`
+   (potwierdzone, zgodnie z ostrzeżeniem orkiestratora).
+
+**`okrReflectionCommands.ts` — nowa funkcjonalność (D-OKR8-7/D-OKR8-8)**:
+OKR-E007's `okr_vnext_reflections` wylądowało BEZ zarezerwowanych kolumn
+draftu Teresy (inaczej niż ROI-E006's PIR, które je pre-zarezerwowało dla
+ROI-E008) — nowa migracja `20260827_rvn_okr_teresa_reflection_draft.sql`
+dodaje `teresa_draft_reflection_payload`/`teresa_draft_generated_at`/
+`teresa_draft_disposition(_by/_at)`, rozszerza
+`okr_vnext_reflection_protect_frozen()` (`CREATE OR REPLACE FUNCTION`,
+bez nowego triggera — istniejący `trg_okr_vnext_reflection_protect_frozen`
+podłącza się automatycznie). Dwie nowe komendy, obie w tym samym pliku co
+`recordObjectiveReflection`/`finalScoreOkrSet` (ta sama lokalizacja co
+ROI-E008 wybrało dla własnych PIR-draft funkcji):
+- `recordOkrReflectionTeresaDraft` — jedyna ścieżka zapisu Teresy. Hand-rolled
+  BEGIN/mutate/event/outbox/COMMIT (NIE `executeAtomicCommand`) — mirror
+  `recordObjectiveReflection`'s WŁASNEJ konwencji `expectedVersion=0`
+  ("brak wiersza jeszcze") / `>=1` (CAS istniejącego), bo wiersz reflection
+  może nie istnieć gdy Teresa pierwszy raz draftuje. `UPDATE`/`INSERT`
+  dotyka WYŁĄCZNIE `teresa_draft_reflection_payload`/
+  `teresa_draft_generated_at` — nigdy żadnej narracyjnej/scoringowej
+  kolumny. Guard: Set `status IN ('active','review')`. Guard: regeneracja
+  zablokowana gdy `teresa_draft_disposition IS NOT NULL` (analog D6/D13
+  ROI-E008).
+- `recordOkrReflectionTeresaDraftDisposition` — jedyna brama dyspozycji
+  człowieka. `executeAtomicCommand` (wiersz gwarantowany istnieć w tym
+  punkcie). **Realna, jawnie stwierdzona różnica od ROI**: ROI's analog
+  KOPIUJE tekst do `lessons_learned` (jedno pole narracyjne). OKR's
+  reflection ma PIĘĆ osobnych pól narracyjnych
+  (`what_worked`/`what_did_not_work`/`why`/`learning`/`next_cycle_change`)
+  plus `disposition` — nie ma jednego "finalnego tekstu" do skopiowania.
+  Ta komenda zapisuje WYŁĄCZNIE `teresa_draft_disposition`/`_by`/`_at`
+  (blokuje dalszą regenerację, ujawnia decyzję człowieka UI) — NIGDY
+  żadnego z pięciu pól narracyjnych. Istniejąca `recordObjectiveReflection`
+  (bez zmian) pozostaje JEDYNĄ ścieżką, która kiedykolwiek je zapisuje —
+  dokładnie zgodnie z literalnym tekstem designu ("human still calls
+  POST .../objectives/:id/reflection to commit").
+
+### Połowa B (Perspectives) — `/okr/my`, `/okr/team-health`, `/okr/company` reużyty
+
+D-OKR8-4 rekoncyliacja (design § już to rozstrzygnął, potwierdzone
+bezpośrednim czytaniem realnego kodu OKR-E002 przed pisaniem czegokolwiek):
+`GET /sets`'owy `perspective=` query param jest ZADEKLAROWANY w Zod
+schemacie ale **zero kodu go czyta** (`okrSetRepository.ts`'s własny
+komentarz nagłówkowy to potwierdza: "no `perspective` filter is
+implemented here") — pozostaje zarezerwowany-a-nieużywany, ZGODNIE z
+decyzją designu, nie odblokowany tutaj żadną wymyśloną semantyką.
+`GET /okr/company` **już istnieje** (OKR-E002, `listOkrSets({scopeType:
+'company'})`) — REUŻYTY jak jest, NIE przebudowany. Nowe: `okrPerspectivesRepository.ts`
+(`listMyOkrSets`, `listOrganizationOkrTeamHealth`) + 2 nowe trasy
+`GET /my`/`GET /team-health` w `okr.routes.ts`.
+
+**Odstępstwo od draftu #1 (znalezisko, nie zgadywanie)**: design §4.1
+D-OKR8-14 zakładał, że `attention_state`/`last_checkin_at`/
+`next_checkin_due_at` na `okr_vnext_sets` będą czytać `NULL`/`'none'` dla
+KAŻDEGO Setu, bo OKR-E002's własny komentarz DDL mówił "reserved, NOT
+populated". **To założenie jest NIEAKTUALNE** — OKR-E004's
+`applySetRollupUpdate` (`okrCheckInCommands.ts`, wylądowane po designie)
+TERAZ populuje wszystkie trzy kolumny przy każdym check-inie. `/okr/team-health`
+zwraca REALNE, bieżące dane, nie honest-null passthrough jak design
+zakładał — stwierdzone explicite w kodzie i w tym zapisie, nie ukryte.
+
+**Odstępstwo od draftu #2 (naprawiona luka strukturalna)**: design's §4.2
+szkic `listOrganizationOkrTeamHealth` zwracał WYŁĄCZNIE 3 agregaty
+liczbowe (`countsByStatus`/`countsByScopeType`/`attentionBreakdown`) —
+ŻADNEGO `set_id`/`current_version` nigdzie. To strukturalnie
+UNIEMOŻLIWIA literalny wymóg parity OKR-F-028'ego ("personal/team-BU/company
+projections return the SAME Set IDs and versions") — nie da się dowieść
+identyczności ID/wersji z funkcji, która nie zwraca ID/wersji. Naprawione
+dodaniem 4. równoległego query (ten sam `scoped_okr_sets` CTE) zwracającego
+`sets: {setId, currentVersion, status, scopeType}[]` — to właśnie sprawdza
+`okrPerspectivesParity.realdb.test.ts` (D-OKR8-15) przeciw
+`listMyOkrSets`/`listOkrSets(scopeType:'company')`.
+
+**`listCompanyOkrSets` wrapper (§4.2 designu) NIE zbudowany** — design's
+własny placeholder rzucał `new Error('delegates to okrSetRepository
+.listOkrSets')`; budowanie realnego wrappera, który tylko przekazuje do
+już-publicznej funkcji, dodałoby warstwę pośredniczącą bez własnego
+zachowania. Istniejąca trasa `/company` (E002) reużyta bezpośrednio.
+
+**Dwuwarstwowe skalowanie** (D-OKR8-13): `buildScopedOkrSetsBase`
+zadeklarowane LOKALNIE w `okrPerspectivesRepository.ts` (nie importowane z
+`okrAttentionRepository.ts`, mimo identycznego kształtu) — ta sama
+konwencja "brak współdzielonych helperów między plikami w tej domenie"
+co `okrObjectiveRepository.ts`'s własny nagłówek już stwierdza.
+ACKNOWLEDGED, UNFIXED GAP restated (nie naprawiony, nie ukryty): brak
+realnego `getManagementChain(userId)` gdziekolwiek w platformie —
+`chain_members` query'uje `rvn_platform_management_chain_closure`
+bezpośrednio (self ∪ descendant).
+
+### Testy — 6 nowych plików, 54 nowe asercje, WSZYSTKIE PASS
+
+Real-Postgres (efemeryczny Postgres 17, `initdb --locale=C`, TCP
+127.0.0.1, port losowy, krótki socket dir `/tmp/pg-okr-e008-sock`,
+`LC_ALL=C` przy starcie serwera, strict `db:migrate` bez `--safe`):
+- `okrPerspectives.realdb.test.ts` (7) — owner/reviewer inclusion,
+  unrelated-user exclusion, self-inclusion przez `chain_members` UNION,
+  cross-manager isolation (T3 non-leak), identity match `listMyOkrSets` vs
+  `listOrganizationOkrTeamHealth`.
+- `okrPerspectivesParity.realdb.test.ts` (2) — D-OKR8-15 literalny dowód:
+  jeden company-scope Set, identyczny `setId`/`currentVersion` z trzech
+  perspektyw; drugi test dowodzi żywego widoku (nie snapshotu) przez realny
+  zapis (`updateOkrSetDraft`) i odczyt bumped `rowVersion` identycznie z
+  trzech perspektyw.
+- `okrReflectionTeresaDraft.realdb.test.ts` (6) — create/regenerate/stale-CAS/
+  disposition/regeneracja-zablokowana-po-dyspozycji/człowiek-niezależny —
+  end-to-end dowód całego mechanizmu D-OKR8-7.
+
+Mocked-DB (unit, DB layer + 6-liniowy whitelist importu zamockowane):
+- `tests/v8/teresa-okr-handoff.test.ts` (14) — wszystkie 5 trybów, happy
+  path + visibility-stale re-check failure per tryb, missing advisor_mode,
+  truth-preserving domain rejection (nigdy nie połknięty, zero receipt),
+  undoProposal zablokowany.
+
+Static (zero DB):
+- `tests/resultsVnext/teresa-okr-forbidden-verbs.test.ts` (9) — import
+  whitelist, forbidden-verb grep (import + call-site), self-reference check
+  (złapał realnego buga, patrz wyżej), statyczny UPDATE-clause check na OBU
+  nowych komendach reflection-draft.
+
+Route-contract (mocked, dodane do istniejącego pliku): `okr.routes.test.ts`
++2 (`GET /my`, `GET /team-health`) — 118/118 pass (116 baseline + 2 nowe).
+
+**Regresja — pełen katalog `tests/resultsVnext/okr` + `okr.routes.test.ts` +
+`okrReview.routes.test.ts` razem: 489/489 pass** (baseline 472 + 17 nowych
+w tym uruchomieniu; +54 licząc też pliki poza tym trzema ścieżkami —
+`teresa-okr-forbidden-verbs.test.ts`/`teresa-okr-handoff.test.ts` — oba
+osobno zweryfikowane zielone). Zero regresji na istniejących testach E001-E007.
+
+**`npx tsc --noEmit` (`--max-old-space-size=8192`, `server/tsconfig.json`)
+czysty** poza tymi samymi 28 przedistniejącymi błędami `decimal.js` w
+`roiCalculationEngine.ts` (plik całkowicie nietknięty przez ten epik,
+identyczna rodzina błędów co §39/§40/§42 już odnotowały). Zero błędów w
+jakimkolwiek nowym/zmienionym pliku OKR-E008 Połowy A/B.
+
+**Świadomie NIEZBUDOWANE / poza zakresem, restated z designu**:
+`manager_brief`'owy `scope:'organization'` — OKR-F-026's Roles cell
+wymienia tylko "KR Owner, Manager", nie rolę organization-wide; wartość
+zachowana w unii typu dla symetrii z KPI, ale jej granica autoryzacji nie
+ma potwierdzenia w żadnym OKR-specific AC (design's własne Open Question
+#6, restated nie rozstrzygnięte tutaj). `/okr/team-health` vs OKR-E006's
+`/okr/attention` — traktowane jako DWIE różne perspektywy (team-health =
+zagregowane statystyki zdrowia, attention = worklist akcyjny), design's
+własne Open Question #7 nie wyklucza konsolidacji — warte sprawdzenia
+produktowego przed oboma wejściem na produkcję równolegle, nierozstrzygnięte
+tutaj.
+
+**Domena OKR backend complete: 8/8 epików (E001-E008) zbudowanych i
+zweryfikowanych.**
+
+**OKR domain backend complete: 8/8 epics (E001-E008) built and verified.**
+
 
