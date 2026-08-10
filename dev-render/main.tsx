@@ -247,8 +247,16 @@ const Exe002004UiAuditScreen = React.lazy(() => import('./screens/exe-002-004-ui
 const Mw007CalendarNarrowViewportScreen = React.lazy(
   () => import('./screens/mw-007-calendar-narrow-viewport')
 );
+const ResultsVNextRegistryShellScreen = React.lazy(
+  () => import('./screens/results-vnext-registry-shell')
+);
 
 const SCREENS: Record<string, { label: string; render: () => React.ReactElement }> = {
+  'results-vnext-registry-shell': {
+    label:
+      'RN-G2 P0 — REALNY <ResultsVNextRegistryShell> (KPI/ROI/OKR): loading/empty/error/forbidden + locked/honest-missing. &domain=kpi|roi|okr &state=ready|loading|empty|error|forbidden &reason=<deny> &selected=<id|none>',
+    render: () => <ResultsVNextRegistryShellScreen />,
+  },
   'mw-007-calendar-narrow-viewport': {
     label:
       'MW-07 Codex FINAL UX FIX_REQUIRED — REALNY <CalendarView>: sidebar nie nachodzi na grid poniżej breakpointu mobile (useIsMobile + Drawer)',
