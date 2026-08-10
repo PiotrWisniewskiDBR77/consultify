@@ -70,6 +70,46 @@ let OkrSetNotReadyForSubmissionError: SetCommandsModule['OkrSetNotReadyForSubmis
 let OkrSetValidationError: SetCommandsModule['OkrSetValidationError'];
 let closePgPool: (() => Promise<void>) | undefined;
 
+type ObjectiveCommandsModule = typeof import('../../../server/src/services/resultsVnext/okr/okrObjectiveCommands.js');
+type KeyResultCommandsModule = typeof import('../../../server/src/services/resultsVnext/okr/okrKeyResultCommands.js');
+let createObjective: ObjectiveCommandsModule['createObjective'];
+let createKeyResult: KeyResultCommandsModule['createKeyResult'];
+
+/**
+ * OKR-E003: `submitOkrSetForApproval` now also requires
+ * `hasSufficientKeyResultCoverage` (>=2 non-cancelled KRs per non-cancelled
+ * Objective) — this fixture helper gives a draft Set exactly that minimum
+ * so this file's pre-existing lifecycle-focused assertions keep exercising
+ * submit/approve/activate/cancel, not blocked earlier by the new
+ * submission guard.
+ */
+async function addSufficientKeyResultCoverage(setId: string, organizationId: string, ownerUserId: string): Promise<void> {
+  const objective = await createObjective({
+    setId,
+    organizationId,
+    ownerUserId,
+    title: 'Lifecycle fixture Objective',
+    createdBy: ownerUserId,
+    actorEffectiveRole: 'member',
+    idempotencyKey: `fixture-objective-${randomUUID()}`,
+  });
+  for (let i = 0; i < 2; i += 1) {
+    await createKeyResult({
+      objectiveId: objective.result.objectiveId,
+      organizationId,
+      ownerUserId,
+      title: `Lifecycle fixture KR ${i + 1}`,
+      measurementType: 'numeric',
+      direction: 'reach',
+      targetValue: 10,
+      currentValue: 5,
+      createdBy: ownerUserId,
+      actorEffectiveRole: 'member',
+      idempotencyKey: `fixture-kr-${i}-${randomUUID()}`,
+    });
+  }
+}
+
 function baseCycleTimes(): {
   startDate: string;
   endDate: string;
@@ -170,6 +210,16 @@ describe('OKR-E002 Set lifecycle — submission guard, full pipeline, cancel, D3
     OkrSetNotReadyForSubmissionError = setCommands.OkrSetNotReadyForSubmissionError;
     OkrSetValidationError = setCommands.OkrSetValidationError;
 
+    const objectiveCommands: ObjectiveCommandsModule = await import(
+      '../../../server/src/services/resultsVnext/okr/okrObjectiveCommands.js'
+    );
+    createObjective = objectiveCommands.createObjective;
+
+    const keyResultCommands: KeyResultCommandsModule = await import(
+      '../../../server/src/services/resultsVnext/okr/okrKeyResultCommands.js'
+    );
+    createKeyResult = keyResultCommands.createKeyResult;
+
     const pgModule: PgModule = await import('../../../server/src/database/PostgresDatabase.js');
     closePgPool = (pgModule as unknown as { closePool?: () => Promise<void> }).closePool;
   }, 30_000);
@@ -185,6 +235,11 @@ describe('OKR-E002 Set lifecycle — submission guard, full pipeline, cancel, D3
       `UPDATE okr_vnext_sets SET latest_approved_snapshot_id = NULL WHERE organization_id LIKE $1`,
       [orgLike]
     );
+    // OKR-E003: okr_vnext_key_results/okr_vnext_objectives REFERENCE
+    // okr_vnext_sets — must be deleted before the Set rows below, or the
+    // FK constraint blocks the DELETE.
+    await client.query(`DELETE FROM okr_vnext_key_results WHERE organization_id LIKE $1`, [orgLike]);
+    await client.query(`DELETE FROM okr_vnext_objectives WHERE organization_id LIKE $1`, [orgLike]);
     await client.query(`DELETE FROM okr_vnext_approved_snapshots WHERE organization_id LIKE $1`, [orgLike]);
     await client.query(`DELETE FROM rvn_platform_resource_acl WHERE resource_id IN (SELECT set_id::text FROM okr_vnext_sets WHERE organization_id LIKE $1)`, [orgLike]);
     await client.query(`DELETE FROM rvn_platform_resource_visibility WHERE organization_id LIKE $1 AND resource_type = 'okr_set'`, [orgLike]);
@@ -286,6 +341,7 @@ describe('OKR-E002 Set lifecycle — submission guard, full pipeline, cancel, D3
         })
       ).rejects.toBeInstanceOf(OkrSetValidationError);
 
+      await addSufficientKeyResultCoverage(setId, organizationId, USER_OWNER);
       const submitted = await submitOkrSetForApproval({
         setId,
         organizationId,
@@ -380,6 +436,7 @@ describe('OKR-E002 Set lifecycle — submission guard, full pipeline, cancel, D3
         })
       ).rejects.toBeInstanceOf(OkrSetValidationError);
 
+      await addSufficientKeyResultCoverage(setId, organizationId, USER_OWNER);
       const submitted = await submitOkrSetForApproval({
         setId,
         organizationId,
@@ -459,6 +516,7 @@ describe('OKR-E002 Set lifecycle — submission guard, full pipeline, cancel, D3
       actorEffectiveRole: 'admin',
       idempotencyKey: `create-set-cancel-submitted-${randomUUID()}`,
     });
+    await addSufficientKeyResultCoverage(s1.result.set.setId, organizationId, `${USER_OWNER}-s1`);
     const submitted1 = await submitOkrSetForApproval({
       setId: s1.result.set.setId,
       organizationId,
@@ -491,6 +549,7 @@ describe('OKR-E002 Set lifecycle — submission guard, full pipeline, cancel, D3
       actorEffectiveRole: 'admin',
       idempotencyKey: `create-set-cancel-approved-${randomUUID()}`,
     });
+    await addSufficientKeyResultCoverage(s2.result.set.setId, organizationId, `${USER_OWNER}-s2`);
     const submitted2 = await submitOkrSetForApproval({
       setId: s2.result.set.setId,
       organizationId,
@@ -531,6 +590,7 @@ describe('OKR-E002 Set lifecycle — submission guard, full pipeline, cancel, D3
       actorEffectiveRole: 'admin',
       idempotencyKey: `create-set-cancel-active-${randomUUID()}`,
     });
+    await addSufficientKeyResultCoverage(s3.result.set.setId, organizationId, `${USER_OWNER}-s3`);
     const submitted3 = await submitOkrSetForApproval({
       setId: s3.result.set.setId,
       organizationId,
