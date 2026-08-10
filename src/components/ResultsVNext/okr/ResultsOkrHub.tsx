@@ -1,9 +1,21 @@
 /**
  * ResultsOkrHub — RN-G2 P3 #23, the real "/results/okr" screen: OKR Set
- * registry list + preview (RN_G2_UI_SCOPE.md §G #23). Deliberately NOT the
- * full Set/Objective/Key-Result/check-in/alignment/review/closing tool
- * (§G #24-#29) — those are later packages. Mirrors `../roi/ResultsRoiHub.tsx`
- * exactly.
+ * registry list + preview (RN_G2_UI_SCOPE.md §G #23), PLUS (RN-G2 §G #25,
+ * added 2026-08-11) a breadcrumb drill-down into Objectives → Key Results →
+ * Check-ins for whichever Set the user opens. Deliberately NOT the full
+ * alignment/review/closing tool (§G #26-#29) — those are later packages.
+ * Mirrors `../roi/ResultsRoiHub.tsx` exactly for the Sets-tab part.
+ *
+ * ── §G #25 drill-down (Objectives/Key Results/Check-ins) ────────────────
+ * See `OkrObjectivesView.tsx`'s header for the full routing-decision
+ * writeup (breadcrumb drill under this SAME `/results/okr` route, not new
+ * tabs, not new routes — every level below Sets is structurally scoped to
+ * exactly one parent, which is what breadcrumbs are for). This Hub owns the
+ * drill NAVIGATION STATE (`drill`) and computes each level's `breadcrumbs`
+ * array so a click at any point in the chain jumps straight back — the
+ * `OkrObjectivesView`/`OkrKeyResultsView`/`OkrCheckInsView` components
+ * themselves only render whichever `breadcrumbs` array they're handed, they
+ * never build their own.
  *
  * Three Menu 2 tabs, all real backend data, no fabricated rows:
  *  - "Organization" → `GET /sets` (§C `okr.routes.ts` `/sets`), every Set
@@ -42,7 +54,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import type { StandardCounterChip, StandardModuleTab, TableRow } from '@/components/standard';
+import type { StandardBreadcrumb, StandardCounterChip, StandardModuleTab, TableRow } from '@/components/standard';
 
 import { ResultsVNextRegistryShell } from '../ResultsVNextRegistryShell';
 import type { ResultsVNextForbiddenDetail } from '../types';
@@ -59,9 +71,22 @@ import {
   type OkrSetStatusBucket,
 } from './okrRegistryMappers';
 import { buildOkrSetColumns, buildOkrSetPreview, buildOkrSetRowMenu } from './okrRegistryPresenters';
+import type { OkrKeyResultDto, OkrObjectiveWithKeyResultsDto } from './okrObjectiveApi';
+import { OkrObjectivesView } from './OkrObjectivesView';
+import { OkrKeyResultsView } from './OkrKeyResultsView';
+import { OkrCheckInsView } from './OkrCheckInsView';
 
 type OkrTab = 'org' | 'my' | 'company';
 const OKR_SETS_FETCH_LIMIT = 200;
+
+// ==========================================
+// RN-G2 §G #25 — drill-down navigation state (see file header).
+// ==========================================
+
+type OkrDrill =
+  | { level: 'objectives'; set: OkrSetDto }
+  | { level: 'keyResults'; set: OkrSetDto; objective: OkrObjectiveWithKeyResultsDto }
+  | { level: 'checkIns'; set: OkrSetDto; objective: OkrObjectiveWithKeyResultsDto; keyResult: OkrKeyResultDto };
 
 function withId<T extends { setId: string }>(row: T): T & { id: string } {
   return { ...row, id: row.setId };
@@ -79,6 +104,12 @@ export const ResultsOkrHub: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [selectedSetId, setSelectedSetId] = useState<string | null>(null);
   const [forbidden, setForbidden] = useState<ResultsVNextForbiddenDetail | null>(null);
+
+  // RN-G2 §G #25 — drill-down (see file header). `null` = showing the Sets
+  // registry (unchanged §G #23 behaviour).
+  const [drill, setDrill] = useState<OkrDrill | null>(null);
+
+  const setsLabel = isPolish ? 'Zestawy OKR' : 'OKR sets';
 
   const loadSets = useCallback((activeTab: OkrTab) => {
     setLoading(true);
@@ -206,6 +237,65 @@ export const ResultsOkrHub: React.FC = () => {
     },
   }[tab];
 
+  // RN-G2 §G #25 — breadcrumb chains for each drill level. Every crumb
+  // except the current (last) one is clickable, jumping straight back —
+  // `undefined onClick` on the last crumb is `StandardModuleBar`'s own
+  // "current page, not a link" convention (`StandardBreadcrumb.onClick` is
+  // optional; the facade renders the last crumb un-clickable regardless,
+  // this just avoids wiring a handler that would never fire).
+  if (drill?.level === 'objectives') {
+    const breadcrumbs: StandardBreadcrumb[] = [
+      { label: setsLabel, onClick: () => setDrill(null) },
+      { label: drill.set.title },
+    ];
+    return (
+      <OkrObjectivesView
+        set={drill.set}
+        isPolish={isPolish}
+        breadcrumbs={breadcrumbs}
+        onOpenKeyResults={(objective, set) => setDrill({ level: 'keyResults', set, objective })}
+      />
+    );
+  }
+
+  if (drill?.level === 'keyResults') {
+    const breadcrumbs: StandardBreadcrumb[] = [
+      { label: setsLabel, onClick: () => setDrill(null) },
+      { label: drill.set.title, onClick: () => setDrill({ level: 'objectives', set: drill.set }) },
+      { label: drill.objective.title },
+    ];
+    return (
+      <OkrKeyResultsView
+        set={drill.set}
+        objectiveId={drill.objective.objectiveId}
+        isPolish={isPolish}
+        breadcrumbs={breadcrumbs}
+        onOpenCheckIns={(keyResult, objective, set) => setDrill({ level: 'checkIns', set, objective, keyResult })}
+      />
+    );
+  }
+
+  if (drill?.level === 'checkIns') {
+    const breadcrumbs: StandardBreadcrumb[] = [
+      { label: setsLabel, onClick: () => setDrill(null) },
+      { label: drill.set.title, onClick: () => setDrill({ level: 'objectives', set: drill.set }) },
+      {
+        label: drill.objective.title,
+        onClick: () => setDrill({ level: 'keyResults', set: drill.set, objective: drill.objective }),
+      },
+      { label: drill.keyResult.title },
+    ];
+    return (
+      <OkrCheckInsView
+        set={drill.set}
+        objective={drill.objective}
+        keyResult={drill.keyResult}
+        isPolish={isPolish}
+        breadcrumbs={breadcrumbs}
+      />
+    );
+  }
+
   return (
     <ResultsVNextRegistryShell
       domain="okr"
@@ -241,6 +331,7 @@ export const ResultsOkrHub: React.FC = () => {
         rowMenu: (row) =>
           buildOkrSetRowMenu(row as unknown as OkrSetDto, isPolish, {
             onPreview: (r) => setSelectedSetId(r.setId),
+            onOpenObjectives: (r) => setDrill({ level: 'objectives', set: r }),
           }),
         defaultSort: { columnId: 'updatedAt', direction: 'desc' },
       }}
@@ -249,6 +340,7 @@ export const ResultsOkrHub: React.FC = () => {
           ? buildOkrSetPreview(selectedSet, {
               isPolish,
               onClose: () => setSelectedSetId(null),
+              onOpenObjectives: (r) => setDrill({ level: 'objectives', set: r }),
             })
           : null
       }

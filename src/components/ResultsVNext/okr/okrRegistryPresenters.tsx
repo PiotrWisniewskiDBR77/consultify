@@ -170,7 +170,18 @@ const NOT_BUILT_NOTE = {
 export function buildOkrSetRowMenu(
   row: OkrSetDto,
   isPolish: boolean,
-  handlers: { onPreview: (row: OkrSetDto) => void }
+  handlers: {
+    onPreview: (row: OkrSetDto) => void;
+    /**
+     * RN-G2 §G #25 (Objectives/Key Results/Check-ins) — optional so this
+     * function keeps working, byte-for-byte, for any caller that predates
+     * that package (addytywne). Navigates INTO the Set's Objectives
+     * registry (`OkrObjectivesView.tsx`) — a read-only drill, never gated
+     * by the Set's own lock (viewing is always allowed; only CREATE/EDIT of
+     * children is lock-gated, enforced one level down).
+     */
+    onOpenObjectives?: (row: OkrSetDto) => void;
+  }
 ): StandardRowMenu {
   const locked = isOkrSetLocked(row.status);
   const lock = getOkrSetLockInfo(row.status);
@@ -184,6 +195,15 @@ export function buildOkrSetRowMenu(
         label: isPolish ? 'Otwórz' : 'Open',
         onClick: () => handlers.onPreview(row),
       },
+      ...(handlers.onOpenObjectives
+        ? [
+            {
+              id: 'open-objectives',
+              label: isPolish ? 'Cele (Objectives)' : 'Objectives',
+              onClick: () => handlers.onOpenObjectives!(row),
+            },
+          ]
+        : []),
     ],
     // A single representative lifecycle-transition slot — same rationale as
     // ROI's own row menu: demonstrates the TWO distinct disabled-reasons a
@@ -209,10 +229,13 @@ export function buildOkrSetRowMenu(
 export interface OkrSetPreviewDeps {
   isPolish: boolean;
   onClose: () => void;
+  /** RN-G2 §G #25 — optional, same addytywne posture as
+   * `buildOkrSetRowMenu`'s own `onOpenObjectives`. */
+  onOpenObjectives?: (row: OkrSetDto) => void;
 }
 
 export function buildOkrSetPreview(row: OkrSetDto, deps: OkrSetPreviewDeps): StandardPreviewProps {
-  const { isPolish, onClose } = deps;
+  const { isPolish, onClose, onOpenObjectives } = deps;
   const lock = getOkrSetLockInfo(row.status);
   const progress = parseOkrProgress(row.overallProgress);
 
@@ -246,6 +269,15 @@ export function buildOkrSetPreview(row: OkrSetDto, deps: OkrSetPreviewDeps): Sta
     },
     details: {
       showWordCount: false,
+      // OQ-UI-D point 2 (`RN_G2_OPEN_QUESTIONS_UI.md`): `StandardPreview`
+      // already supports translated column headers via
+      // `propertyLabel`/`valueLabel` (L122-123/L471-472) — the raw English
+      // "Property"/"Value" on Polish screenshots was this call site never
+      // supplying them, not a missing mechanism. Fixed here while extending
+      // this same file for RN-G2 §G #25 (Objectives/KRs/Check-ins reuse this
+      // exact fix in their own presenter files).
+      propertyLabel: isPolish ? 'Właściwość' : 'Property',
+      valueLabel: isPolish ? 'Wartość' : 'Value',
       properties: [
         { id: 'owner', label: isPolish ? 'Właściciel' : 'Owner', value: row.ownerUserId, mono: true },
         {
@@ -295,9 +327,26 @@ export function buildOkrSetPreview(row: OkrSetDto, deps: OkrSetPreviewDeps): Sta
       disabledTooltip: isPolish ? 'Wkrótce' : 'Coming soon',
     },
     relations: [],
-    // No `actions` block — same rationale as `roiRegistryPresenters.tsx`:
-    // this package is registry list + preview ONLY, no real capability is
-    // wired, and `StandardPreviewAction` has no disabled-reason slot, so a
-    // fake button here would be worse than an honestly empty footer.
+    // RN-G2 §G #25 (Objectives/Key Results/Check-ins): the ONE real,
+    // navigational action this package adds — "Cele" drills into the Set's
+    // Objectives registry (read-only navigation, never gated by the Set's
+    // own lock; only child CREATE/EDIT is lock-gated, one level down in
+    // `OkrObjectivesView.tsx`). Every other action this preview could offer
+    // (submit/approve/request-changes/activate) is still genuinely not
+    // wired in this package — same "no fake button" rationale
+    // `roiRegistryPresenters.tsx` states, now narrowed to exactly the one
+    // capability that IS real.
+    actions: onOpenObjectives
+      ? {
+          informational: [
+            {
+              id: 'open-objectives',
+              variant: 'neutral',
+              label: isPolish ? 'Cele (Objectives)' : 'Objectives',
+              onClick: () => onOpenObjectives(row),
+            },
+          ],
+        }
+      : undefined,
   };
 }

@@ -36,6 +36,16 @@
  * predates this package's verified wire shapes and is illustrative of the
  * `HonestValueCell` component generically, not of this package's real data.
  * See the acceptance report for the full citation trail.
+ *
+ * ── FIXED 2026-08-10 (RN-G2 §G #25 pass) — progress SCALE bug ───────────
+ * `overallProgress` values below were rescaled from a 0-100 assumption
+ * (`'62.5'`/`'91'`/`'104'`/`'78'`) to the REAL 0-1 unclamped-ratio wire
+ * scale (`'0.625'`/`'0.91'`/`'1.04'`/`'0.78'`) — `okrRegistryMappers.ts`'s
+ * `formatOkrProgressPercent` was fixed in the same pass to multiply by 100
+ * (see that function's own doc comment for the full proof). The two fixes
+ * cancel out visually: this screen renders the identical 62.5%/91%/104%/78%
+ * on screen before and after, so this is a data-model correction, not a
+ * visual regression.
  */
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -208,7 +218,7 @@ const MOCK_SETS: OkrSetDto[] = [
     currentVersion: 1,
     approvedVersion: 1,
     latestApprovedSnapshotId: 'snap-5-v1',
-    overallProgress: '62.5',
+    overallProgress: '0.625',
     overallConfidence: 'medium',
     attentionState: 'watch',
     lastCheckinAt: '2026-08-05T09:00:00Z',
@@ -241,7 +251,7 @@ const MOCK_SETS: OkrSetDto[] = [
     currentVersion: 1,
     approvedVersion: 1,
     latestApprovedSnapshotId: 'snap-6-v1',
-    overallProgress: '91',
+    overallProgress: '0.91',
     overallConfidence: 'high',
     attentionState: 'none',
     lastCheckinAt: '2026-08-07T09:00:00Z',
@@ -274,7 +284,7 @@ const MOCK_SETS: OkrSetDto[] = [
     currentVersion: 1,
     approvedVersion: 1,
     latestApprovedSnapshotId: 'snap-7-v1',
-    overallProgress: '104',
+    overallProgress: '1.04',
     overallConfidence: 'high',
     attentionState: 'none',
     lastCheckinAt: '2026-07-28T09:00:00Z',
@@ -307,7 +317,7 @@ const MOCK_SETS: OkrSetDto[] = [
     currentVersion: 1,
     approvedVersion: 1,
     latestApprovedSnapshotId: 'snap-8-v1',
-    overallProgress: '78',
+    overallProgress: '0.78',
     overallConfidence: 'medium',
     attentionState: 'none',
     lastCheckinAt: '2025-12-20T09:00:00Z',
