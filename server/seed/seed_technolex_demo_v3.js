@@ -689,7 +689,7 @@ async function seedInitiatives() {
       project: IDS.PROJ_DRD,
       name: 'AI-Powered Quality Inspection',
       axis: 'aiMaturity',
-      status: 'step4_pilot',
+      status: 'EXECUTING',
       value: 'Critical',
       owner: IDS.USER_INNOVATION,
       summary:
@@ -702,7 +702,7 @@ async function seedInitiatives() {
       project: IDS.PROJ_DRD,
       name: 'Enterprise Data Lake',
       axis: 'dataManagement',
-      status: 'step4_pilot',
+      status: 'EXECUTING',
       value: 'High',
       owner: IDS.USER_CFO,
       summary:
@@ -715,7 +715,7 @@ async function seedInitiatives() {
       project: IDS.PROJ_DRD,
       name: 'Cloud ERP Migration',
       axis: 'processes',
-      status: 'step3_list',
+      status: 'PLANNING',
       value: 'High',
       owner: IDS.USER_COO,
       summary:
@@ -728,7 +728,7 @@ async function seedInitiatives() {
       project: IDS.PROJ_DRD,
       name: 'Digital Product Catalog',
       axis: 'digitalProducts',
-      status: 'step5_full',
+      status: 'DONE',
       value: 'Medium',
       owner: IDS.USER_PM,
       summary:
@@ -741,7 +741,7 @@ async function seedInitiatives() {
       project: IDS.PROJ_DRD,
       name: 'Zero Trust Security Framework',
       axis: 'cybersecurity',
-      status: 'step4_pilot',
+      status: 'EXECUTING',
       value: 'Critical',
       owner: IDS.USER_ADMIN,
       summary:
@@ -754,7 +754,7 @@ async function seedInitiatives() {
       project: IDS.PROJ_DRD,
       name: 'Customer Self-Service Portal',
       axis: 'businessModels',
-      status: 'step3_list',
+      status: 'PLANNING',
       value: 'Medium',
       owner: IDS.USER_INNOVATION,
       summary:
@@ -767,7 +767,7 @@ async function seedInitiatives() {
       project: IDS.PROJ_DRD,
       name: 'Data Governance Framework',
       axis: 'dataManagement',
-      status: 'step2_assess',
+      status: 'DRAFT',
       value: 'High',
       owner: IDS.USER_ANALYST,
       summary:
@@ -780,7 +780,7 @@ async function seedInitiatives() {
       project: IDS.PROJ_DRD,
       name: 'Innovation Culture Program',
       axis: 'culture',
-      status: 'step5_full',
+      status: 'DONE',
       value: 'Medium',
       owner: IDS.USER_INNOVATION,
       summary:
@@ -794,7 +794,7 @@ async function seedInitiatives() {
       project: IDS.PROJ_LEAN,
       name: 'Production Line Kaizen',
       axis: 'processes',
-      status: 'step4_pilot',
+      status: 'EXECUTING',
       value: 'High',
       owner: IDS.USER_PM,
       summary:
@@ -807,7 +807,7 @@ async function seedInitiatives() {
       project: IDS.PROJ_LEAN,
       name: 'Kanban Implementation',
       axis: 'processes',
-      status: 'step3_list',
+      status: 'PLANNING',
       value: 'Medium',
       owner: IDS.USER_COO,
       summary:
@@ -820,7 +820,7 @@ async function seedInitiatives() {
       project: IDS.PROJ_LEAN,
       name: 'Gemba Walk Program',
       axis: 'culture',
-      status: 'step2_assess',
+      status: 'DRAFT',
       value: 'Medium',
       owner: IDS.USER_PM,
       summary:
@@ -833,7 +833,7 @@ async function seedInitiatives() {
       project: IDS.PROJ_LEAN,
       name: 'Visual Factory Dashboard',
       axis: 'technology',
-      status: 'step5_full',
+      status: 'DONE',
       value: 'High',
       owner: IDS.USER_ANALYST,
       summary:
