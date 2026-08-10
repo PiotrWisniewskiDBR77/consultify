@@ -415,20 +415,29 @@ export type ComputeAnalysisKpisResult =
     }
   | { ok: false; code: 'NO_SOURCE_STATEMENT_PACK_EDGE' | 'BUSINESS_VERSION_NOT_FOUND'; message: string };
 
-/** ADR section 8.1 point 3 — Analysis -> source Statement Pack Version, exclusively via `finance_lineage_edges`. */
-async function resolveSourceStatementPackVersion(businessVersionId: string): Promise<string | null> {
+/**
+ * ADR section 8.1 point 3 — Analysis -> source Statement Pack Version, exclusively via `finance_lineage_edges`.
+ *
+ * NEW-2 fix: org-scoped. This is the ACTUAL first read against
+ * caller-supplied businessVersionId in computeAnalysisKpis() — it runs
+ * before the W9-C-6 org-scoped getBusinessVersion() guard below, so that
+ * fix's own comment ("already org-scoped") never actually covered this call.
+ * finance_lineage_edges has a NOT NULL organization_id (migration
+ * 20260809_finance_v3_b03_lineage_freshness.sql).
+ */
+async function resolveSourceStatementPackVersion(organizationId: string, businessVersionId: string): Promise<string | null> {
   const row = await withPinnedPostgresTransaction((tx) =>
     tx.queryOne<{ source_version_id: string }>(
       `SELECT source_version_id FROM finance_lineage_edges
-        WHERE edge_type = 'STATEMENT_TO_ANALYSIS' AND target_version_id = ?`,
-      [businessVersionId]
+        WHERE edge_type = 'STATEMENT_TO_ANALYSIS' AND target_version_id = ? AND organization_id = ?`,
+      [businessVersionId, organizationId]
     )
   );
   return row?.source_version_id ?? null;
 }
 
 export async function computeAnalysisKpis(params: ComputeAnalysisKpisParams): Promise<ComputeAnalysisKpisResult> {
-  const sourceVersionId = await resolveSourceStatementPackVersion(params.businessVersionId);
+  const sourceVersionId = await resolveSourceStatementPackVersion(params.organizationId, params.businessVersionId);
   if (!sourceVersionId) {
     return {
       ok: false,
@@ -483,8 +492,20 @@ export async function computeAnalysisKpis(params: ComputeAnalysisKpisParams): Pr
     requestedByUserId: params.requestedByUserId,
     requestId: params.requestId ?? null,
   });
-  const [claimed] = await computeJobService.claim({ workerId: `kpiComputeService:${uuidv4()}`, jobTypes: ['ANALYSIS_KPI_COMPUTE'], limit: 1 });
-  const runningJob = claimed && claimed.id === job.id ? claimed : job;
+  // NEW-3 fix: self-claim the EXACT row just enqueued (by id, org-scoped) —
+  // never the globally-oldest queued ANALYSIS_KPI_COMPUTE job across every
+  // organization (see computeJobService.claimById doc comment).
+  const claimed = await computeJobService.claimById({
+    organizationId: params.organizationId,
+    jobId: job.id,
+    workerId: `kpiComputeService:${uuidv4()}`,
+  });
+  if (!claimed) {
+    throw new Error(
+      `kpiComputeService: failed to self-claim just-enqueued job ${job.id} (organization ${params.organizationId}) — row is no longer 'queued' (concurrent claim or already terminal)`
+    );
+  }
+  const runningJob = claimed;
 
   let results: ComputedKpiResult[];
   try {

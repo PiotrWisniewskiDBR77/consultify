@@ -370,8 +370,20 @@ export async function runDcfFcffValuation(params: RunDcfFcffValuationParams): Pr
     requestedByUserId: params.requestedByUserId,
     requestId: params.requestId ?? null,
   });
-  const [claimed] = await computeJobService.claim({ workerId: `valuationComputeService:${uuidv4()}`, jobTypes: ['VALUATION_COMPUTE'], limit: 1 });
-  const runningJob = claimed && claimed.id === job.id ? claimed : job;
+  // NEW-3 fix: self-claim the EXACT row just enqueued (by id, org-scoped) —
+  // never the globally-oldest queued VALUATION_COMPUTE job across every
+  // organization (see computeJobService.claimById doc comment).
+  const claimed = await computeJobService.claimById({
+    organizationId: params.organizationId,
+    jobId: job.id,
+    workerId: `valuationComputeService:${uuidv4()}`,
+  });
+  if (!claimed) {
+    throw new Error(
+      `valuationComputeService: failed to self-claim just-enqueued job ${job.id} (organization ${params.organizationId}) — row is no longer 'queued' (concurrent claim or already terminal)`
+    );
+  }
+  const runningJob = claimed;
 
   const contentSemanticHash = createHash('sha256').update(JSON.stringify({ enterpriseValue: discounted.enterpriseValue, fcff: fcff.years })).digest('hex');
   const completed = await computeJobService.completeJobSuccess({
