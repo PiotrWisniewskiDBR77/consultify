@@ -41,6 +41,8 @@ import {
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { useDialogA11y } from '@/components/ui/primitives/useDialogA11y';
+
 import { CellRenderer } from './CellRenderer';
 import { FormulaEditor } from './FormulaEditor';
 import { getPropertyGroups, getPropertySpec } from './PropertyRegistry';
@@ -277,17 +279,32 @@ export const AddColumnDialog: React.FC<AddColumnDialogProps> = ({
     onClose();
   }, [onClose, reset]);
 
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useDialogA11y({
+    open,
+    onClose: handleDialogClose,
+    containerRef: dialogRef,
+    initialFocusRef: nameInputRef,
+  });
+
   if (!open) return null;
 
   const groups = getPropertyGroups();
 
   return (
     <div className="fixed inset-0 z-context-menu flex items-center justify-center bg-black/30 backdrop-blur-sm">
-      <div className="w-[480px] max-h-[85vh] overflow-auto rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-2xl">
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="add-column-dialog-title"
+        tabIndex={-1}
+        className="w-[480px] max-h-[85vh] overflow-auto rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-2xl outline-none"
+      >
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-c-border-subtle">
           <div>
-            <h3 className="text-sm font-bold text-c-text">
+            <h3 id="add-column-dialog-title" className="text-sm font-bold text-c-text">
               {t('myWorkTable.addColumnDialog.addColumn')}
             </h3>
             {sessionAdded.length > 0 && (
@@ -330,7 +347,6 @@ export const AddColumnDialog: React.FC<AddColumnDialogProps> = ({
                   ? 'border-red-400 focus:ring-red-400/30'
                   : 'border-slate-200/60 dark:border-white/[0.03] focus:ring-blue-500/30'
               }`}
-              autoFocus
             />
             {error ? (
               <p role="alert" className="mt-1.5 flex items-start gap-1.5 text-[10px] text-red-600 dark:text-red-400">

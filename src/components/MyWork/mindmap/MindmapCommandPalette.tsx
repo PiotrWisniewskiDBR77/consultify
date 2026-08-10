@@ -8,6 +8,7 @@ import ReactDOM from 'react-dom';
 import { useTranslation } from 'react-i18next';
 
 import { useFullscreenPortalTarget } from '@/hooks/useFullscreenPortalTarget';
+import { useDialogA11y } from '@/components/ui/primitives/useDialogA11y';
 
 interface CommandItem {
   id: string;
@@ -298,8 +299,10 @@ export const MindmapCommandPalette: React.FC<MindmapCommandPaletteProps> = ({
   const [selectedIdx, setSelectedIdx] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
   /** 2026-07-28: paleta musi być widoczna także w pełnym ekranie płótna. */
   const portalTarget = useFullscreenPortalTarget();
+  useDialogA11y({ open, onClose, containerRef: dialogRef, initialFocusRef: inputRef });
 
   useEffect(() => {
     if (open) {
@@ -376,7 +379,14 @@ export const MindmapCommandPalette: React.FC<MindmapCommandPaletteProps> = ({
     <>
       <div className="fixed inset-0 bg-c-bg backdrop-blur-sm z-context-menu" onClick={onClose} />
       <div className="fixed top-[14%] left-1/2 -translate-x-1/2 w-full max-w-md z-context-menu">
-        <div className="bg-c-surface-raised dark:bg-c-surface rounded-xl shadow-2xl border border-c-border-subtle dark:border-c-border-subtle overflow-hidden">
+        <div
+          ref={dialogRef}
+          role="dialog"
+          aria-modal="true"
+          aria-label={t('ideas.mindmap.commandPalette', 'Command palette')}
+          tabIndex={-1}
+          className="bg-c-surface-raised dark:bg-c-surface rounded-xl shadow-2xl border border-c-border-subtle dark:border-c-border-subtle overflow-hidden outline-none"
+        >
           <div className="flex items-center gap-2.5 px-3.5 py-2.5 border-b border-c-border-subtle dark:border-c-border-subtle">
             <Search size={16} className="text-c-text-secondary shrink-0" />
             <input

@@ -7,6 +7,8 @@ import { Edit3, History, Loader2, Sparkles, X } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { useDialogA11y } from '@/components/ui/primitives/useDialogA11y';
+
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
@@ -46,6 +48,8 @@ export const RefineDialog: React.FC<RefineDialogProps> = ({
   const [showHistory, setShowHistory] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useDialogA11y({ open: true, onClose, containerRef: dialogRef, initialFocusRef: textareaRef });
 
   useEffect(() => {
     textareaRef.current?.focus();
@@ -101,7 +105,14 @@ export const RefineDialog: React.FC<RefineDialogProps> = ({
       onClick={handleOverlayClick}
       className="fixed inset-0 z-overlay flex items-center justify-center bg-black/40 dark:bg-black/60 backdrop-blur-sm transition-opacity duration-200"
     >
-      <div className="w-full max-w-lg mx-4 rounded-2xl border border-c-border bg-c-surface shadow-2xl overflow-hidden transition-all duration-200 animate-in fade-in zoom-in-95">
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="refine-dialog-title"
+        tabIndex={-1}
+        className="w-full max-w-lg mx-4 rounded-2xl border border-c-border bg-c-surface shadow-2xl overflow-hidden transition-all duration-200 animate-in fade-in zoom-in-95 outline-none"
+      >
         {/* Header */}
         <div className="flex items-center justify-between gap-2 px-5 py-4 border-b border-c-border-subtle">
           <div className="flex items-center gap-2">
@@ -109,7 +120,7 @@ export const RefineDialog: React.FC<RefineDialogProps> = ({
               <Edit3 size={16} className="text-sky-600 dark:text-sky-400" />
             </div>
             <div>
-              <h3 className="text-sm font-semibold text-c-text">
+              <h3 id="refine-dialog-title" className="text-sm font-semibold text-c-text">
                 {t('ideas.table.refineDialog.refineProposal', 'Refine Proposal')}
               </h3>
               <p className="text-[10px] text-c-text-secondary">

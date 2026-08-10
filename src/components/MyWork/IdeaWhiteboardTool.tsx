@@ -594,6 +594,21 @@ const WhiteboardCanvas = React.forwardRef<WhiteboardCanvasHandle, WhiteboardCanv
     return () => el.removeEventListener('paste', handlePaste);
   }, [handlePaste]);
 
+  // Perf measurement (docs/qa/ideas-complete-transformation-2026-08-09/
+  // 17_PERFORMANCE_MEASUREMENT.md): the whiteboard mounted every node's DOM
+  // unconditionally (no `onlyRenderVisibleElements`), unlike Mind Map which
+  // gates the same ReactFlow prop behind `mindmapVirtualization`
+  // (M06 Fala 3.3, threshold 300 — see mindmap/virtualization.ts). Manual
+  // "Add element" already hard-blocks at 500 nodes (see `addElement` P13
+  // limit enforcement above), so this only ever engages in the narrow
+  // 300–500 band that path can reach — paste/import/AI-batch paths are NOT
+  // confirmed to share that cap and could exceed it. Threshold matches Mind
+  // Map's for consistency. Deliberately NOT behind a new feature flag (kept
+  // inside this file per the fix's scope) — per CLAUDE.md rule #7/#9 this
+  // still needs a screenshot-acceptance pass before it ships to demo, since
+  // it changes what's mounted in the DOM.
+  const onlyRenderVisibleElements = nodes.length >= 300;
+
   return (
     <div
       ref={containerRef}
@@ -618,6 +633,7 @@ const WhiteboardCanvas = React.forwardRef<WhiteboardCanvasHandle, WhiteboardCanv
         onConnect={onConnect}
         onNodeDrag={locked ? undefined : onSnapNodeDrag}
         onNodeDragStop={locked ? undefined : handleNodeDragStop}
+        {...(onlyRenderVisibleElements ? { onlyRenderVisibleElements: true } : {})}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
         onNodeDoubleClick={(_event: any, node: any) => {

@@ -3039,6 +3039,18 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
 
   if (!open) return null;
 
+  // Perf measurement (docs/qa/ideas-complete-transformation-2026-08-09/
+  // 17_PERFORMANCE_MEASUREMENT.md): Process Flow mounted every node's DOM
+  // unconditionally (no `onlyRenderVisibleElements`) AND — unlike Whiteboard
+  // (500-node hard block in `addElement`) or Mind Map (500-node warning
+  // banner) — has no product-level node-count ceiling at all. Threshold
+  // matches Mind Map's (M06 Fala 3.3, mindmap/virtualization.ts) for
+  // consistency. Deliberately NOT behind a new feature flag (kept inside
+  // this file per the fix's scope) — per CLAUDE.md rule #7/#9 this still
+  // needs a screenshot-acceptance pass before it ships to demo, since it
+  // changes what's mounted in the DOM.
+  const onlyRenderVisibleElements = nodes.length >= 300;
+
   return (
     <div
       className="w-full h-full flex flex-col bg-c-bg relative"
@@ -3529,6 +3541,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
               // Z14 (Fala 3): snapping + alignment guides during node drag.
               onNodeDrag={locked ? undefined : onSnapNodeDrag}
               onNodeDragStop={locked ? undefined : onSnapNodeDragStop}
+              {...(onlyRenderVisibleElements ? { onlyRenderVisibleElements: true } : {})}
               nodeTypes={nodeTypes}
               edgeTypes={edgeTypes}
               // react-flow v11 prop names (v12 renamed these to edgesReconnectable/onReconnect).

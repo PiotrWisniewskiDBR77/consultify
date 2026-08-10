@@ -28,8 +28,10 @@
  * a fake "Saved" toast.
  */
 import { Calculator, X } from 'lucide-react';
-import React from 'react';
+import React, { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+
+import { useDialogA11y } from '@/components/ui/primitives/useDialogA11y';
 
 import { FinancialCaseView } from './FinancialCaseView';
 import type { FinancialCaseStatus } from './financialTypes';
@@ -49,6 +51,9 @@ export const FinancialCaseDialog: React.FC<FinancialCaseDialogProps> = ({
   onStatusChange,
 }) => {
   const { t } = useTranslation();
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useDialogA11y({ open, onClose, containerRef: dialogRef });
+
   if (!open) return null;
 
   return (
@@ -57,12 +62,17 @@ export const FinancialCaseDialog: React.FC<FinancialCaseDialogProps> = ({
       onClick={onClose}
     >
       <div
-        className="w-[1040px] max-w-[95vw] h-[85vh] rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-2xl overflow-hidden flex flex-col"
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="financial-case-dialog-title"
+        tabIndex={-1}
+        className="w-[1040px] max-w-[95vw] h-[85vh] rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-2xl overflow-hidden flex flex-col outline-none"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center gap-2 px-5 py-3.5 border-b border-c-border-subtle shrink-0">
           <Calculator size={16} className="text-c-text-secondary" />
-          <span className="text-sm font-bold text-c-text">
+          <span id="financial-case-dialog-title" className="text-sm font-bold text-c-text">
             {t('ideas.financial.dialogTitle', 'Financial case')}
           </span>
           <div className="flex-1" />

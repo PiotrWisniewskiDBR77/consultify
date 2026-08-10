@@ -1,7 +1,9 @@
 import { AlertTriangle, Check, GitBranch, Plus, Trash2, X } from 'lucide-react';
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Edge, Node } from 'reactflow';
+
+import { useDialogA11y } from '@/components/ui/primitives/useDialogA11y';
 
 type AIMapProposal = {
   add: { nodes: Node[]; edges: Edge[] };
@@ -36,6 +38,8 @@ export const AIProposalDiffModal: React.FC<AIProposalDiffModalProps> = ({
   const [selectedAddIdx, setSelectedAddIdx] = useState<Record<number, boolean>>(() =>
     Object.fromEntries(proposal.add.nodes.map((_, idx) => [idx, true]))
   );
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useDialogA11y({ open: true, onClose: onReject, containerRef: dialogRef });
 
   const ops = useMemo<DiffOp[]>(() => {
     const result: DiffOp[] = [];
@@ -78,11 +82,21 @@ export const AIProposalDiffModal: React.FC<AIProposalDiffModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-modal flex items-center justify-center p-4 bg-c-bg">
-      <div className="w-full max-w-2xl rounded-hig-2xl bg-c-surface-raised dark:bg-c-surface backdrop-blur-xl shadow-hig-xl overflow-hidden">
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="ai-proposal-diff-modal-title"
+        tabIndex={-1}
+        className="w-full max-w-2xl rounded-hig-2xl bg-c-surface-raised dark:bg-c-surface backdrop-blur-xl shadow-hig-xl overflow-hidden outline-none"
+      >
         {/* Header */}
         <div className="flex items-start justify-between px-5 py-4 border-b border-c-border-subtle dark:border-c-border-subtle">
           <div>
-            <h3 className="text-sm font-semibold text-c-text dark:text-c-text flex items-center gap-2">
+            <h3
+              id="ai-proposal-diff-modal-title"
+              className="text-sm font-semibold text-c-text dark:text-c-text flex items-center gap-2"
+            >
               <GitBranch size={15} className="text-c-text-secondary" />
               {t('ideas.mindmap.aiProposalChangePreview', 'AI Proposal — Change Preview')}
             </h3>

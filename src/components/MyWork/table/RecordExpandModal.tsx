@@ -12,9 +12,10 @@
  * - Close via X, Escape, click outside
  */
 import { Calculator, Clock, Edit3, Eye, FileText, Image, Link2, Loader2, X } from 'lucide-react';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { useDialogA11y } from '@/components/ui/primitives/useDialogA11y';
 import * as TablePlatformApi from '@/services/api/tablePlatform.api';
 import type { FieldType } from '@/types/tablePlatform';
 
@@ -251,16 +252,8 @@ export const RecordExpandModal: React.FC<RecordExpandModalProps> = React.memo(
     const [editedData, setEditedData] = useState<Record<string, unknown>>({});
     const [saving, setSaving] = useState(false);
     const [resolvedTableName, setResolvedTableName] = useState(tableName ?? '');
-
-    // Escape key handler
-    useEffect(() => {
-      if (!open) return;
-      const handler = (e: KeyboardEvent) => {
-        if (e.key === 'Escape') onClose();
-      };
-      document.addEventListener('keydown', handler);
-      return () => document.removeEventListener('keydown', handler);
-    }, [open, onClose]);
+    const dialogRef = useRef<HTMLDivElement>(null);
+    useDialogA11y({ open, onClose, containerRef: dialogRef });
 
     // Load record and table metadata
     useEffect(() => {
@@ -353,7 +346,12 @@ export const RecordExpandModal: React.FC<RecordExpandModalProps> = React.memo(
         onClick={onClose}
       >
         <div
-          className="flex h-full w-[560px] max-w-[90vw] flex-col overflow-hidden bg-c-surface shadow-2xl animate-in slide-in-from-right duration-200"
+          ref={dialogRef}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="record-expand-modal-title"
+          tabIndex={-1}
+          className="flex h-full w-[560px] max-w-[90vw] flex-col overflow-hidden bg-c-surface shadow-2xl animate-in slide-in-from-right duration-200 outline-none"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Accent bar */}
@@ -366,7 +364,9 @@ export const RecordExpandModal: React.FC<RecordExpandModalProps> = React.memo(
                 <div className="h-6 w-48 animate-pulse rounded bg-c-surface-raised" />
               ) : (
                 <>
-                  <h2 className="truncate text-base font-bold text-c-text">{primaryValue}</h2>
+                  <h2 id="record-expand-modal-title" className="truncate text-base font-bold text-c-text">
+                    {primaryValue}
+                  </h2>
                   {resolvedTableName && (
                     <p className="mt-0.5 text-[10px] font-medium uppercase tracking-wider text-c-text-muted">
                       {resolvedTableName}

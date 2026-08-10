@@ -365,7 +365,17 @@ const Section: React.FC<{
         </span>
       )}
       <span className={iconCls}>{icon}</span>
-      <span className={labelCls}>{title}</span>
+      {/* `data-idea-section-header` marks a TOP-LEVEL inspector section, and only that.
+          The density guard (UI-L16, „at most 5 top-level sections") used to count
+          `button > span.uppercase.tracking-wide`, which is a shape — not a meaning — and
+          E08's maturity gate legitimately renders five NESTED collapsible stage rows
+          inside the Status section using the same shape. The guard therefore read 10 and
+          flagged a regression that was not one. Counting this attribute measures what the
+          rule is actually about, and stays correct however many nested accordions any
+          future section grows. */}
+      <span className={labelCls} data-idea-section-header="">
+        {title}
+      </span>
       {badge}
     </>
   );
