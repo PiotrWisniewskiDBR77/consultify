@@ -11,6 +11,10 @@ import { describe, expect, it } from 'vitest';
 import { createEmptyWorkspaceState } from '../../../../types/finance/WorkspaceState.js';
 import {
   DEFAULT_WORKSPACE_BAR_METRICS,
+  DEFAULT_WORKSPACE_CHROME_DECLARATION,
+  DOCUMENT_IDENTITY_ELEMENTS,
+  DOCUMENT_IDENTITY_REGION,
+  FORBIDDEN_NORMAL_MODE_REGIONS,
   WORKSPACE_BAR_MAX_DIRECT_RIGHT_CONTROLS,
   WORKSPACE_BAR_NAME_LAYOUT_BUDGET_CHARS,
   WORKSPACE_BAR_NAME_MAX_CHARS,
@@ -19,6 +23,7 @@ import {
   estimateWorkspaceBarLayout,
   mergeFreshnessIntoPrimaryLabel,
   resolveControlState,
+  validateDocumentIdentity,
   validateWorkspaceBarConfig,
   validateWorkspaceName,
   type WorkspaceBarConfig,
@@ -162,6 +167,94 @@ describe('AP-09 workspaceBarContract — the five-control budget', () => {
     expect(result.ok).toBe(false);
     if (result.ok) throw new Error('unreachable');
     expect(result.errors.map((e) => e.code)).toContain('VIEW_PLACEMENT_MISMATCH');
+  });
+});
+
+describe('AP-09 workspaceBarContract — one document identity OUTSIDE focus mode', () => {
+  const base = configFor(FINANCE_MODULE_ADAPTERS.analysis);
+
+  it('ACCEPTS a bar-only declaration (positive control)', () => {
+    const compliant: WorkspaceBarConfig = {
+      ...base,
+      chrome: {
+        // Breadcrumbs and the list rail are legitimate in normal mode — they
+        // are hidden only in focus mode — as long as they carry no identity.
+        regionsRendered: ['financeBreadcrumbs', 'financeListRail'],
+        identityElementsByRegion: { workspaceBar: DOCUMENT_IDENTITY_ELEMENTS },
+      },
+    };
+    expect(validateWorkspaceBarConfig(compliant)).toEqual({ ok: true });
+    expect(validateDocumentIdentity(DEFAULT_WORKSPACE_CHROME_DECLARATION)).toEqual([]);
+  });
+
+  it('REJECTS a module that repeats the title in its own header (negative control)', () => {
+    const duplicated: WorkspaceBarConfig = {
+      ...base,
+      chrome: {
+        regionsRendered: ['financeModuleHeader'],
+        identityElementsByRegion: {
+          workspaceBar: DOCUMENT_IDENTITY_ELEMENTS,
+          financeModuleHeader: ['name', 'status'],
+        },
+      },
+    };
+    const result = validateWorkspaceBarConfig(duplicated);
+    expect(result.ok).toBe(false);
+    if (result.ok) throw new Error('unreachable');
+    const codes = result.errors.map((e) => e.code);
+    // Two distinct faults: the region exists at all, and it carries the title.
+    expect(codes).toContain('COMPETING_MODULE_HEADER');
+    expect(codes).toContain('DUPLICATE_DOCUMENT_IDENTITY');
+    expect(result.errors.find((e) => e.code === 'DUPLICATE_DOCUMENT_IDENTITY')?.message).toContain('name, status');
+  });
+
+  it('REJECTS a status strip and a self-contradicting declaration', () => {
+    const stripped = validateDocumentIdentity({
+      regionsRendered: ['financeStatusStrip'],
+      identityElementsByRegion: { workspaceBar: ['name'] },
+    });
+    expect(stripped.map((e) => e.code)).toEqual(['COMPETING_MODULE_HEADER']);
+
+    // Identity declared for a region the module says it does not render.
+    const contradiction = validateDocumentIdentity({
+      regionsRendered: [],
+      identityElementsByRegion: { workspaceBar: ['name'], financeSecondaryNav: ['version'] },
+    });
+    expect(contradiction.map((e) => e.code)).toEqual([
+      'DUPLICATE_DOCUMENT_IDENTITY',
+      'IDENTITY_REGION_NOT_RENDERED',
+    ]);
+  });
+
+  it('REJECTS a bar that carries no identity at all', () => {
+    const hollow = validateDocumentIdentity({
+      regionsRendered: ['financeBreadcrumbs'],
+      identityElementsByRegion: {},
+    });
+    expect(hollow.map((e) => e.code)).toEqual(['BAR_CARRIES_NO_IDENTITY']);
+  });
+
+  it('treats an undeclared module as compliant by default, and can be made strict', () => {
+    // The five AP-10 adapters do not declare chrome yet: they must keep
+    // passing (this wave may not touch moduleAdapters.ts), so the default is
+    // permissive — a knowingly weak default, recorded in the report.
+    expect(base.chrome).toBeUndefined();
+    expect(validateWorkspaceBarConfig(base)).toEqual({ ok: true });
+
+    const strict = validateWorkspaceBarConfig(base, { requireChromeDeclaration: true });
+    expect(strict.ok).toBe(false);
+    if (strict.ok) throw new Error('unreachable');
+    expect(strict.errors.map((e) => e.code)).toContain('MISSING_CHROME_DECLARATION');
+  });
+
+  it('agrees with focus mode about which regions exist (no parallel region list)', () => {
+    for (const region of FORBIDDEN_NORMAL_MODE_REGIONS) {
+      expect(FINANCE_CHROME_REGIONS).toContain(region);
+      // Everything forbidden in normal mode is, a fortiori, hidden in focus mode.
+      expect(FOCUS_MODE_HIDDEN_REGIONS).toContain(region);
+    }
+    expect(FINANCE_CHROME_REGIONS).toContain(DOCUMENT_IDENTITY_REGION);
+    expect(FOCUS_MODE_RETAINED_REGIONS).toContain(DOCUMENT_IDENTITY_REGION);
   });
 });
 
