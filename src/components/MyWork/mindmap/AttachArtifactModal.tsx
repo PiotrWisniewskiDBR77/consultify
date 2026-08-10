@@ -72,6 +72,7 @@ export const AttachArtifactModal: React.FC<AttachArtifactModalProps> = ({
           </div>
           <button
             onClick={onClose}
+            aria-label={t('common.close', 'Close')}
             className="text-c-text-secondary hover:text-c-text-secondary dark:hover:text-c-text-muted"
           >
             <X size={16} />

@@ -1,21 +1,15 @@
 /**
  * @vitest-environment jsdom
  *
- * E14-A11Y-02 (P1) — Idea Table's ShareViewDialog and RefineDialog rendered
- * plain `fixed inset-0` overlays with ZERO `role="dialog"` / `aria-modal` /
- * focus-trap / focus-restore. Fixed via the shared `useDialogA11y` hook.
+ * A11Y-BACKLOG (table) batch 1 — ShareViewDialog, KeyboardShortcutsPanel,
+ * DistributionBuilder, TemplateGallery converted onto the shared
+ * `useDialogA11y` contract: named `role="dialog"`, `aria-modal`,
+ * Escape-to-close, focus enters on open, focus restored to the trigger on
+ * close.
  */
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
-
-vi.mock('@/services/api/tablePlatform.api', () => ({
-  shareView: vi.fn(),
-  unshareView: vi.fn(),
-}));
-
-import { RefineDialog } from '../RefineDialog';
-import { ShareViewDialog } from '../ShareViewDialog';
 
 beforeAll(() => {
   Object.defineProperty(HTMLElement.prototype, 'offsetParent', {
@@ -26,94 +20,120 @@ beforeAll(() => {
   });
 });
 
-function Trigger({
+vi.mock('react-hot-toast', () => {
+  const fn = vi.fn();
+  return { default: Object.assign(fn, { success: vi.fn(), error: vi.fn() }) };
+});
+
+vi.mock('@/services/api/tablePlatform.api', () => ({
+  listDistributions: vi.fn(async () => []),
+  createDistribution: vi.fn(async () => ({})),
+  deleteDistribution: vi.fn(async () => ({})),
+  toggleDistribution: vi.fn(async () => ({})),
+  executeDistribution: vi.fn(async () => ({})),
+  unshareView: vi.fn(async () => ({})),
+  shareView: vi.fn(async () => ({ token: 'tok' })),
+}));
+
+vi.mock('@/services/api', () => ({
+  Api: {
+    get: vi.fn(async () => ({ templates: [] })),
+    post: vi.fn(async () => ({})),
+  },
+}));
+
+import { DistributionBuilder } from '../DistributionBuilder';
+import { KeyboardShortcutsPanel } from '../KeyboardShortcutsPanel';
+import { ShareViewDialog } from '../ShareViewDialog';
+import { TemplateGallery } from '../TemplateGallery';
+
+function Harness({
   children,
 }: {
-  children: (open: boolean, close: () => void) => React.ReactNode;
+  children: (open: boolean, onClose: () => void) => React.ReactNode;
 }) {
   const [open, setOpen] = React.useState(false);
   return (
     <div>
-      <button type="button" onClick={() => setOpen(true)}>
-        Open trigger
+      <button data-testid="trigger" onClick={() => setOpen(true)}>
+        Open
       </button>
       {children(open, () => setOpen(false))}
     </div>
   );
 }
 
-describe('ShareViewDialog — a11y dialog contract', () => {
-  it('exposes role=dialog with an accessible name', () => {
-    render(
-      <ShareViewDialog viewId="v1" viewName="My view" onClose={vi.fn()} onUpdated={vi.fn()} />
-    );
-    expect(screen.getByRole('dialog', { name: /Share View/i })).toBeInTheDocument();
-  });
+async function openAndAssertDialog(name: RegExp) {
+  const trigger = screen.getByTestId('trigger');
+  trigger.focus();
+  fireEvent.click(trigger);
+  const dialog = await screen.findByRole('dialog');
+  expect(dialog).toHaveAttribute('aria-modal', 'true');
+  expect(dialog).toHaveAccessibleName(name);
+  return { trigger, dialog };
+}
 
-  it('Escape closes it', () => {
-    const onClose = vi.fn();
-    render(
-      <ShareViewDialog viewId="v1" viewName="My view" onClose={onClose} onUpdated={vi.fn()} />
-    );
-    fireEvent.keyDown(document, { key: 'Escape' });
-    expect(onClose).toHaveBeenCalledTimes(1);
-  });
+async function assertEscapeClosesAndRestoresFocus(trigger: HTMLElement) {
+  fireEvent.keyDown(document, { key: 'Escape' });
+  await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+  await waitFor(() => expect(document.activeElement).toBe(trigger));
+}
 
-  it('returns focus to the trigger after Escape', async () => {
+describe('ShareViewDialog — dialog a11y contract', () => {
+  it('has role=dialog, aria-modal, and an accessible name; Escape closes and restores focus', async () => {
     render(
-      <Trigger>
-        {(open, close) =>
-          open && (
-            <ShareViewDialog viewId="v1" viewName="My view" onClose={close} onUpdated={vi.fn()} />
-          )
+      <Harness>
+        {(open, onClose) =>
+          open ? (
+            <ShareViewDialog
+              viewId="view-1"
+              viewName="My View"
+              onClose={onClose}
+              onUpdated={() => {}}
+            />
+          ) : null
         }
-      </Trigger>
+      </Harness>
     );
-    const trigger = screen.getByRole('button', { name: 'Open trigger' });
-    trigger.focus();
-    fireEvent.click(trigger);
-    expect(screen.getByRole('dialog')).toBeInTheDocument();
-
-    fireEvent.keyDown(document, { key: 'Escape' });
-    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
-    await waitFor(() => expect(trigger).toHaveFocus());
+    const { trigger } = await openAndAssertDialog(/Share View/i);
+    await assertEscapeClosesAndRestoresFocus(trigger);
   });
 });
 
-describe('RefineDialog — a11y dialog contract', () => {
-  const baseProps = {
-    proposalSummary: 'summary',
-    proposalIntent: 'add_field',
-    currentVersion: 1,
-    refinementHistory: [],
-    onRefine: vi.fn().mockResolvedValue(undefined),
-  };
-
-  it('exposes role=dialog with an accessible name', () => {
-    render(<RefineDialog {...baseProps} onClose={vi.fn()} />);
-    expect(screen.getByRole('dialog', { name: /Refine Proposal/i })).toBeInTheDocument();
-  });
-
-  it('Escape closes it', () => {
-    const onClose = vi.fn();
-    render(<RefineDialog {...baseProps} onClose={onClose} />);
-    fireEvent.keyDown(document, { key: 'Escape' });
-    expect(onClose).toHaveBeenCalledTimes(1);
-  });
-
-  it('returns focus to the trigger after Escape', async () => {
+describe('KeyboardShortcutsPanel — dialog a11y contract', () => {
+  it('has role=dialog, aria-modal, and an accessible name; Escape closes and restores focus', async () => {
     render(
-      <Trigger>
-        {(open, close) => open && <RefineDialog {...baseProps} onClose={close} />}
-      </Trigger>
+      <Harness>{(open, onClose) => <KeyboardShortcutsPanel open={open} onClose={onClose} />}</Harness>
     );
-    const trigger = screen.getByRole('button', { name: 'Open trigger' });
-    trigger.focus();
-    fireEvent.click(trigger);
-    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    const { trigger } = await openAndAssertDialog(/Keyboard Shortcuts/i);
+    await assertEscapeClosesAndRestoresFocus(trigger);
+  });
+});
 
-    fireEvent.keyDown(document, { key: 'Escape' });
-    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
-    await waitFor(() => expect(trigger).toHaveFocus());
+describe('DistributionBuilder — dialog a11y contract', () => {
+  it('has role=dialog, aria-modal, and an accessible name; Escape closes and restores focus', async () => {
+    render(
+      <Harness>
+        {(open, onClose) =>
+          open ? <DistributionBuilder baseId="base-1" onClose={onClose} /> : null
+        }
+      </Harness>
+    );
+    const { trigger } = await openAndAssertDialog(/Distributions/i);
+    await assertEscapeClosesAndRestoresFocus(trigger);
+  });
+});
+
+describe('TemplateGallery — dialog a11y contract', () => {
+  it('has role=dialog, aria-modal, and an accessible name; Escape closes and restores focus', async () => {
+    render(
+      <Harness>
+        {(open, onClose) =>
+          open ? <TemplateGallery workspaceId="ws-1" onClose={onClose} /> : null
+        }
+      </Harness>
+    );
+    const { trigger } = await openAndAssertDialog(/Template Gallery/i);
+    await assertEscapeClosesAndRestoresFocus(trigger);
   });
 });

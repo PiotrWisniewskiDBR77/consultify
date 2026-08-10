@@ -318,11 +318,32 @@ export const CanvasContextMenu: React.FC<CanvasContextMenuProps> = ({
     const onPointerDown = (event: MouseEvent) => {
       if (!isInsideAnyMenuSurface(event.target)) closeAndRestore();
     };
+    // Escape from OUTSIDE the menu surface.
+    //
+    // The `onKeyDown` on the menu div below is a React synthetic handler, so it only
+    // sees keys whose target is inside the menu. That covers the normal path, because
+    // the menu focuses its first item on open. It does NOT cover the case where focus
+    // has since moved elsewhere — and before the context menus were unified onto this
+    // shared component, each tool's own menu listened on `document` and closed on
+    // Escape from anywhere. That robustness was silently lost for all seven consumers
+    // (Mind Map pane/node/edge, Whiteboard edge, Process Flow, Idea canvas, Table).
+    // Caught by `processflow-panels.test.tsx > closes on Escape key`, which passed at
+    // `origin/demo` and failed on the candidate.
+    //
+    // Guarded on the target being OUTSIDE any menu surface, so this never double-fires
+    // with the React handler — each Escape is handled by exactly one of the two.
+    const onDocumentKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      if (isInsideAnyMenuSurface(event.target)) return;
+      event.preventDefault();
+      closeAndRestore();
+    };
     const onViewportChange = (event: Event) => {
       if (isInsideAnyMenuSurface(event.target)) return;
       closeAndRestore();
     };
     window.addEventListener('mousedown', onPointerDown, true);
+    document.addEventListener('keydown', onDocumentKeyDown);
     // Focus acquisition of a tall, scrollable menu can itself emit a delayed
     // scroll event. Arm viewport dismissal after that settling window so the
     // menu does not close immediately after keyboard opening.
@@ -332,6 +353,7 @@ export const CanvasContextMenu: React.FC<CanvasContextMenuProps> = ({
     );
     return () => {
       window.removeEventListener('mousedown', onPointerDown, true);
+      document.removeEventListener('keydown', onDocumentKeyDown);
       window.clearTimeout(scrollArmTimer);
       window.removeEventListener('scroll', onViewportChange, true);
     };

@@ -201,16 +201,43 @@ export function IdeaViewSwitcher({
         }
       }
       const compactCanvas = r.width < 720 || r.height < 260;
+      let compactBox = { left: Math.max(0, r.left + 12), top: Math.max(0, r.top + 8) };
+      if (compactCanvas) {
+        // At 200% zoom the bottom controls and the canvas empty state
+        // occupy the same narrow band, so the top-left corner is the safe
+        // area for the switcher — EXCEPT Whiteboard and Process Flow mount
+        // their own in-canvas toolbar (mode tabs / tool label / •••) as the
+        // first child INSIDE the tool's root (`mels-canvas-content`'s own
+        // first child is always the tool's full-height `w-full h-full` root,
+        // so the toolbar strip itself is one level deeper — its FIRST child),
+        // flush with the canvas top edge. Sitting at `r.top + 8` put the pill
+        // directly on top of that toolbar row
+        // (docs/qa/ideas-complete-transformation-2026-08-09/screenshots/
+        // g4__whiteboard__zoom200reflow…, g4__processflow__zoom200reflow…).
+        // Mind Map's canvas has no such strip — its first child is either the
+        // full-bleed graph surface (flush top, but full-height, filtered out
+        // below) or an absolute-positioned corner cluster (not flush) — so
+        // this only ever moves the pill for the two tools that actually have
+        // chrome to collide with.
+        const canvasContent = document.querySelector('[data-testid="mels-canvas-content"]');
+        const toolRoot = canvasContent?.firstElementChild as HTMLElement | null;
+        const topChrome = toolRoot?.firstElementChild as HTMLElement | null;
+        const topChromeRect = topChrome?.getBoundingClientRect();
+        const isSlimTopStrip =
+          topChromeRect &&
+          topChromeRect.height > 0 &&
+          topChromeRect.top <= r.top + 4 &&
+          topChromeRect.height < r.height * 0.6;
+        if (topChromeRect && isSlimTopStrip) {
+          compactBox = {
+            left: Math.max(0, r.left + 12),
+            top: Math.max(0, topChromeRect.bottom + 8),
+          };
+        }
+      }
       setBox(
         compactCanvas
-          ? {
-              // At 200% zoom the bottom controls and the canvas empty state
-              // occupy the same narrow band. Keep the representation switcher
-              // actionable in the top-left safe area instead of stacking it
-              // over tool CTAs.
-              left: Math.max(0, r.left + 12),
-              top: Math.max(0, r.top + 8),
-            }
+          ? compactBox
           : {
               right: Math.max(0, rightOffset),
               bottom: Math.max(0, bottomOffset),

@@ -687,35 +687,27 @@ describe('GATE 3 — persistence: save / refresh / cold reopen / direct-SQL read
   );
 
   // -------------------------------------------------------------------------
-  // 5. Wave 4/5 feature: confidentiality — PERSISTENCE ONLY.
+  // 5. Wave 4/5 feature: confidentiality
+  //    PUT /api/my-work/my-ideas/:id  { confidentiality } → my_ideas.confidentiality
+  //    GET /api/my-work/my-ideas/:id                       (feature-detected via getTableColumns)
   //
-  //    FINDING (not a pass): there is NO HTTP route anywhere in
-  //    server/src/routes that lets a client SET my_ideas.confidentiality.
-  //    - POST /api/my-work/my-ideas (create) does not accept a confidentiality
-  //      field (see my-work.routes.ts ~L2837-2923: insertColumns never
-  //      includes 'confidentiality').
-  //    - PUT /api/my-work/my-ideas/:id (update) does not accept one either
-  //      (~L3142-3216: the `set(...)` calls enumerate title/body/tags/branch/
-  //      area/priority/stage/is_favorite/folder_id — never confidentiality).
-  //    - GET /api/my-work/my-ideas/:id does not even SELECT the column back
-  //      (~L3031-3061 lineageSelect has no confidentiality entry) — so even
-  //      if it were set by some other path, the API would never expose it.
-  //    - The ONLY writer in the whole server tree is
-  //      server/src/services/ideaConfidentiality.ts's READER (getIdeaConfidentiality)
-  //      — there is no companion setter/service. The E12 suite itself sets
-  //      the column with a raw SQL UPDATE via its test harness, not through
-  //      any product route (tests/integration/e12-collab-security.realdb.test.ts
-  //      `setConfidentiality()`).
+  //    Previously EVIDENCE_MISSING at HTTP level: there was no HTTP route
+  //    anywhere in server/src/routes that let a client SET
+  //    my_ideas.confidentiality, and GET didn't select it back either — see
+  //    the E12 suite's own setConfidentiality() raw-SQL test helper
+  //    (tests/integration/e12-collab-security.realdb.test.ts), which existed
+  //    precisely because no product route did this.
   //
-  //    So the HTTP-level save→refresh→cold-reopen→readback chain the task
-  //    asks for CANNOT be executed for this feature — there is nothing to
-  //    call. What follows only proves the COLUMN itself survives a real
-  //    cold reopen when written directly (i.e. rules out a DB-level bug);
-  //    it does NOT prove the feature is usable from the product.
+  //    That gap is now closed: PUT /api/my-work/my-ideas/:id validates and
+  //    persists `confidentiality` (my-work.routes.ts ~L3217-3230, against the
+  //    closed IDEA_CONFIDENTIALITY_LEVELS set — 400 before the value can ever
+  //    reach the DB CHECK constraint), and GET /api/my-work/my-ideas/:id
+  //    feature-detects and returns the column (~L3019/L3032). This chain now
+  //    exercises the full HTTP path like every other feature chain above.
   // -------------------------------------------------------------------------
 
   itDB(
-    '[feature: confidentiality] EVIDENCE_MISSING for the HTTP chain; DB-column-only cold-reopen check',
+    '[feature: confidentiality] save → refresh → cold reopen → direct-SQL readback, plus invalid-value rejection',
     async (h) => {
       if (!h.hasConfidentialityColumn) {
         emitSkipOnce('my_ideas.confidentiality column missing');
@@ -726,40 +718,84 @@ describe('GATE 3 — persistence: save / refresh / cold reopen / direct-SQL read
       const token = makeE2EToken(h.userId, h.orgId);
       const ideaId = await createIdea(app, token, 'Gate3 confidentiality idea', h);
 
-      // No HTTP route exists to do this — direct SQL only, exactly like the
-      // E12 suite's own setConfidentiality() helper.
-      const writeClient = await newSqlClient();
-      try {
-        await writeClient.query(`UPDATE my_ideas SET confidentiality = $1 WHERE id = $2`, [
-          'confidential',
-          ideaId,
-        ]);
-      } finally {
-        await writeClient.end();
-      }
+      // --- 1. save: set via the real HTTP route (not raw SQL) ---
+      const putRestricted = await request(app)
+        .put(`/api/my-work/my-ideas/${ideaId}`)
+        .set('Authorization', `Bearer ${token}`)
+        .send({ confidentiality: 'restricted' });
+      expect(putRestricted.status, JSON.stringify(putRestricted.body)).toBe(200);
+      expect(putRestricted.body.confidentiality).toBe('restricted');
 
-      // "Refresh" via the real API is a documented no-op: the field isn't selected.
+      // --- 2. warm refresh: re-GET through the same app ---
       const getWarm = await request(app)
         .get(`/api/my-work/my-ideas/${ideaId}`)
         .set('Authorization', `Bearer ${token}`);
       expect(getWarm.status).toBe(200);
-      expect(
-        Object.prototype.hasOwnProperty.call(getWarm.body, 'confidentiality'),
-        'documenting the gap: GET /my-ideas/:id must NOT expose confidentiality (no route reads it back)'
-      ).toBe(false);
+      expect(getWarm.body.confidentiality).toBe('restricted');
 
-      // Cold-reopen DB-column check only (not an HTTP chain).
+      // --- 3. COLD REOPEN: kill the pg Pool + build a brand-new Express app ---
       await resetDbConnection();
-      const sql = await newSqlClient();
+      const coldApp = buildApp();
+      const getCold = await request(coldApp)
+        .get(`/api/my-work/my-ideas/${ideaId}`)
+        .set('Authorization', `Bearer ${token}`);
+      expect(getCold.status).toBe(200);
+      expect(getCold.body.confidentiality).toBe('restricted');
+
+      // --- 4. readback confirmed by DIRECT SQL against the physical row ---
+      const sqlAfterRestricted = await newSqlClient();
       try {
-        const row = await sql.query<{ confidentiality: string }>(
+        const row = await sqlAfterRestricted.query<{ confidentiality: string }>(
           `SELECT confidentiality FROM my_ideas WHERE id = $1 AND organization_id = $2 LIMIT 1`,
           [ideaId, h.orgId]
         );
         expect(row.rowCount).toBe(1);
-        expect(row.rows[0].confidentiality).toBe('confidential');
+        expect(row.rows[0].confidentiality).toBe('restricted');
       } finally {
-        await sql.end();
+        await sqlAfterRestricted.end();
+      }
+
+      // --- 5. round-trip back to 'standard' through the API, re-verify by direct SQL ---
+      const putStandard = await request(coldApp)
+        .put(`/api/my-work/my-ideas/${ideaId}`)
+        .set('Authorization', `Bearer ${token}`)
+        .send({ confidentiality: 'standard' });
+      expect(putStandard.status, JSON.stringify(putStandard.body)).toBe(200);
+      expect(putStandard.body.confidentiality).toBe('standard');
+
+      const sqlAfterStandard = await newSqlClient();
+      try {
+        const row = await sqlAfterStandard.query<{ confidentiality: string }>(
+          `SELECT confidentiality FROM my_ideas WHERE id = $1 AND organization_id = $2 LIMIT 1`,
+          [ideaId, h.orgId]
+        );
+        expect(row.rowCount).toBe(1);
+        expect(row.rows[0].confidentiality).toBe('standard');
+      } finally {
+        await sqlAfterStandard.end();
+      }
+
+      // --- 6. invalid value: rejected with 400, and the DB row is UNCHANGED ---
+      const putInvalid = await request(coldApp)
+        .put(`/api/my-work/my-ideas/${ideaId}`)
+        .set('Authorization', `Bearer ${token}`)
+        .send({ confidentiality: 'top-secret-nonsense' });
+      expect(putInvalid.status, JSON.stringify(putInvalid.body)).toBe(400);
+      expect(String(putInvalid.body.error || '')).toContain('confidentiality must be one of');
+
+      const sqlAfterInvalid = await newSqlClient();
+      try {
+        const row = await sqlAfterInvalid.query<{ confidentiality: string }>(
+          `SELECT confidentiality FROM my_ideas WHERE id = $1 AND organization_id = $2 LIMIT 1`,
+          [ideaId, h.orgId]
+        );
+        expect(row.rowCount).toBe(1);
+        expect(
+          row.rows[0].confidentiality,
+          'DB row must remain unchanged after a rejected invalid confidentiality value'
+        ).toBe('standard');
+      } finally {
+        await sqlAfterInvalid.end();
       }
     }
   );

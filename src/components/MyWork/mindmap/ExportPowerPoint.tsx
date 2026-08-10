@@ -3,9 +3,11 @@
  * downloadable HTML presentation. Each branch becomes a slide.
  */
 import { Download, FileText, Loader2, Presentation, X } from 'lucide-react';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+
+import { useDialogA11y } from '@/components/ui/primitives/useDialogA11y';
 
 import { Api } from '@/services/api';
 
@@ -152,17 +154,27 @@ export const ExportPowerPoint: React.FC<ExportPowerPointProps> = ({
     }
   }, [branches, ideaTitle]);
 
+  const containerRef = useRef<HTMLDivElement>(null);
+  useDialogA11y({ open, onClose, containerRef });
+
   if (!open) return null;
 
   const totalIdeas = branches.reduce((s, b) => s + b.nodes.length, 0);
 
   return (
     <div className="fixed inset-0 z-modal flex items-center justify-center p-4 bg-c-bg">
-      <div className="w-full max-w-md rounded-2xl bg-c-surface-raised dark:bg-c-surface backdrop-blur-xl shadow-2xl overflow-hidden">
+      <div
+        ref={containerRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="export-power-point-modal-heading"
+        tabIndex={-1}
+        className="w-full max-w-md rounded-2xl bg-c-surface-raised dark:bg-c-surface backdrop-blur-xl shadow-2xl overflow-hidden outline-none"
+      >
         <div className="flex items-start justify-between px-5 py-4 border-b border-c-border-subtle dark:border-c-border-subtle">
           <div className="flex items-center gap-2">
             <Presentation size={16} className="text-c-info" />
-            <h3 className="text-sm font-bold text-c-text dark:text-c-text">
+            <h3 className="text-sm font-bold text-c-text dark:text-c-text" id="export-power-point-modal-heading">
               {t('ideas.mindmap.exportPresentation', 'Export Presentation')}
             </h3>
           </div>

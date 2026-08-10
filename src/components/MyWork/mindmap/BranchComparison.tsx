@@ -3,8 +3,10 @@
  * with stats: count, avg priority, status distribution, depth.
  */
 import { ArrowLeftRight, ChevronLeft, X } from 'lucide-react';
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+
+import { useDialogA11y } from '@/components/ui/primitives/useDialogA11y';
 
 interface BranchComparisonProps {
   open: boolean;
@@ -87,6 +89,9 @@ export const BranchComparison: React.FC<BranchComparisonProps> = ({
 
   const leftStats = useMemo(() => computeStats(leftBranch), [computeStats, leftBranch]);
   const rightStats = useMemo(() => computeStats(rightBranch), [computeStats, rightBranch]);
+
+  const containerRef = useRef<HTMLDivElement>(null);
+  useDialogA11y({ open, onClose, containerRef });
 
   if (!open) return null;
 
@@ -177,7 +182,14 @@ export const BranchComparison: React.FC<BranchComparisonProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-modal bg-c-surface-raised dark:bg-c-surface backdrop-blur-xl flex flex-col">
+    <div
+        ref={containerRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="branch-comparison-view-heading"
+        tabIndex={-1}
+        className="fixed inset-0 z-modal bg-c-surface-raised dark:bg-c-surface backdrop-blur-xl flex flex-col outline-none"
+      >
       <div className="flex items-center gap-3 px-6 py-4 border-b border-c-border-subtle dark:border-c-border-subtle">
         <button
           onClick={onClose}
@@ -186,7 +198,7 @@ export const BranchComparison: React.FC<BranchComparisonProps> = ({
           <ChevronLeft size={16} />
         </button>
         <ArrowLeftRight size={16} className="text-c-info" />
-        <h2 className="text-sm font-bold text-c-text dark:text-c-text">
+        <h2 className="text-sm font-bold text-c-text dark:text-c-text" id="branch-comparison-view-heading">
           {t('ideas.mindmap.branchComparison', 'Branch Comparison')}
         </h2>
       </div>

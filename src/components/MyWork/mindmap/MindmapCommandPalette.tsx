@@ -7,8 +7,8 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import ReactDOM from 'react-dom';
 import { useTranslation } from 'react-i18next';
 
-import { useFullscreenPortalTarget } from '@/hooks/useFullscreenPortalTarget';
 import { useDialogA11y } from '@/components/ui/primitives/useDialogA11y';
+import { useFullscreenPortalTarget } from '@/hooks/useFullscreenPortalTarget';
 
 interface CommandItem {
   id: string;
@@ -304,13 +304,16 @@ export const MindmapCommandPalette: React.FC<MindmapCommandPaletteProps> = ({
   const portalTarget = useFullscreenPortalTarget();
   useDialogA11y({ open, onClose, containerRef: dialogRef, initialFocusRef: inputRef });
 
+  // Focus entry (initialFocusRef), Escape-to-close, Tab-trap, and focus
+  // restore to the trigger on close are all owned by useDialogA11y now —
+  // this effect only resets the query/selection state on open.
   useEffect(() => {
     if (open) {
       setQuery('');
       setSelectedIdx(0);
-      setTimeout(() => inputRef.current?.focus(), 60);
     }
   }, [open]);
+
 
   const filtered = useMemo(() => {
     if (!query.trim()) return COMMANDS;

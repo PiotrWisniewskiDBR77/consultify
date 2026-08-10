@@ -6,6 +6,8 @@ import { Box, ChevronLeft, RotateCcw } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { useDialogA11y } from '@/components/ui/primitives/useDialogA11y';
+
 interface MindMap3DViewProps {
   open: boolean;
   onClose: () => void;
@@ -146,19 +148,25 @@ export const MindMap3DView: React.FC<MindMap3DViewProps> = ({
     setZoom(1);
   }, []);
 
-  useEffect(() => {
-    if (!open) return;
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
-  }, [onClose, open]);
+  // Escape-to-close, focus trap, and focus restore are handled by
+  // useDialogA11y below (this used to be a bespoke window keydown listener
+  // that duplicated that behavior without the trap/restore parts). Named
+  // `dialogContainerRef` — distinct from the pre-existing `containerRef`
+  // above, which bounds the 3D drag/perspective viewport, not the dialog.
+  const dialogContainerRef = useRef<HTMLDivElement>(null);
+  useDialogA11y({ open, onClose, containerRef: dialogContainerRef });
 
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-modal bg-c-surface flex flex-col overflow-hidden">
+    <div
+        ref={dialogContainerRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="mindmap-3d-view-heading"
+        tabIndex={-1}
+        className="fixed inset-0 z-modal bg-c-surface flex flex-col overflow-hidden outline-none"
+      >
       <div className="flex items-center gap-3 px-6 py-3 bg-c-surface border-b border-c-border-subtle">
         <button
           onClick={onClose}
@@ -167,7 +175,7 @@ export const MindMap3DView: React.FC<MindMap3DViewProps> = ({
           <ChevronLeft size={16} />
         </button>
         <Box size={16} className="text-c-text-muted" />
-        <h2 className="text-sm font-bold text-c-text">{t('ideas.mindmap.n3dView', '3D View')}</h2>
+        <h2 className="text-sm font-bold text-c-text" id="mindmap-3d-view-heading">{t('ideas.mindmap.n3dView', '3D View')}</h2>
         <span className="text-[10px] text-c-text-secondary ml-2">
           {t('ideas.mindmap.dragRotate', 'Drag to rotate')}
         </span>

@@ -44,8 +44,10 @@
  * `'fresh'`.
  */
 import { AlertTriangle, Plus, RotateCcw, Save, Scale, ShieldAlert, X } from 'lucide-react';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+
+import { useDialogA11y } from '@/components/ui/primitives/useDialogA11y';
 
 import { useUserCan } from '@/hooks/useUserCan';
 
@@ -251,6 +253,9 @@ export const IdeaDecisionLogPanel: React.FC<IdeaDecisionLogPanelProps> = ({
 
   const canReopen = canReopenDecision(role);
 
+  const containerRef = useRef<HTMLDivElement>(null);
+  useDialogA11y({ open, onClose, containerRef });
+
   if (!open) return null;
 
   return (
@@ -259,12 +264,17 @@ export const IdeaDecisionLogPanel: React.FC<IdeaDecisionLogPanelProps> = ({
       onClick={onClose}
     >
       <div
-        className="w-[640px] max-w-[92vw] max-h-[88vh] rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-2xl overflow-hidden flex flex-col"
+        ref={containerRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="idea-decision-log-panel-heading"
+        tabIndex={-1}
+        className="w-[640px] max-w-[92vw] max-h-[88vh] rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-2xl overflow-hidden flex flex-col outline-none"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center gap-2 px-5 py-3.5 border-b border-c-border-subtle shrink-0">
           <Scale size={16} className="text-c-text-secondary" />
-          <span className="text-sm font-bold text-c-text">
+          <span id="idea-decision-log-panel-heading" className="text-sm font-bold text-c-text">
             {isPl ? 'Log decyzji' : 'Decision log'}
           </span>
           <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-c-surface-raised text-c-text-muted uppercase">

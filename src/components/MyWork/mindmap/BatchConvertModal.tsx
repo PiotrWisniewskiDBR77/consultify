@@ -81,6 +81,7 @@ export const BatchConvertModal: React.FC<BatchConvertModalProps> = ({
     [onClose, onConvert, selected, t]
   );
 
+
   if (!open) return null;
 
   return (

@@ -15,13 +15,14 @@ import {
   Trash2,
   X,
 } from 'lucide-react';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { type ActionContext, runIdeaAction } from '@/actions/ideaActionRegistry';
-import { EmptyState, LoadingState } from '@/components/shared/states';
 import { EMPTY_SELECTION } from '@/components/MyWork/ideaSelectionTypes';
+import { EmptyState, LoadingState } from '@/components/shared/states';
+import { useDialogA11y } from '@/components/ui/primitives/useDialogA11y';
 import * as TablePlatformApi from '@/services/api/tablePlatform.api';
 
 interface DistributionBuilderProps {
@@ -218,25 +219,34 @@ export function DistributionBuilder({ baseId, onClose }: DistributionBuilderProp
     }));
   };
 
+  const containerRef = useRef<HTMLDivElement>(null);
+  useDialogA11y({ open: true, onClose, containerRef });
+
   return (
     <div
       className="fixed inset-0 z-[150] flex items-center justify-center bg-black/20 backdrop-blur-[2px]"
       onClick={onClose}
     >
       <div
-        className="w-[600px] max-w-[95vw] max-h-[85vh] bg-c-surface rounded-2xl border border-slate-200/60 dark:border-white/[0.03] shadow-2xl overflow-hidden flex flex-col"
+        ref={containerRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="distribution-builder-heading"
+        tabIndex={-1}
+        className="w-[600px] max-w-[95vw] max-h-[85vh] bg-c-surface rounded-2xl border border-slate-200/60 dark:border-white/[0.03] shadow-2xl overflow-hidden flex flex-col outline-none"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-c-border-subtle">
           <div className="flex items-center gap-2">
             <Send size={16} className="text-blue-600 dark:text-blue-400" />
-            <h2 className="text-sm font-semibold text-c-text">
+            <h2 id="distribution-builder-heading" className="text-sm font-semibold text-c-text">
               {t('myWorkTable.distributionBuilder.distributions')}
             </h2>
           </div>
           <button
             onClick={onClose}
+            aria-label={t('common.close', 'Close')}
             className="p-1 rounded-lg text-c-text-secondary hover:text-c-text-secondary transition-colors"
           >
             <X size={16} />

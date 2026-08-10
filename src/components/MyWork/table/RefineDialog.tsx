@@ -4,7 +4,7 @@
  * loading state, and version history.
  */
 import { Edit3, History, Loader2, Sparkles, X } from 'lucide-react';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useDialogA11y } from '@/components/ui/primitives/useDialogA11y';
@@ -51,9 +51,9 @@ export const RefineDialog: React.FC<RefineDialogProps> = ({
   const dialogRef = useRef<HTMLDivElement>(null);
   useDialogA11y({ open: true, onClose, containerRef: dialogRef, initialFocusRef: textareaRef });
 
-  useEffect(() => {
-    textareaRef.current?.focus();
-  }, []);
+  // The bespoke mount-focus effect that used to live here was removed: it raced the
+  // `initialFocusRef` above (same class as the native `autoFocus` trap) and, once
+  // `useEffect` was no longer imported, threw "useEffect is not defined" at render.
 
   const handleOverlayClick = useCallback(
     (e: React.MouseEvent) => {
@@ -69,17 +69,16 @@ export const RefineDialog: React.FC<RefineDialogProps> = ({
     setMessage('');
   }, [message, loading, onRefine]);
 
+  // Escape is now handled document-wide by useDialogA11y; this only owns
+  // the Cmd/Ctrl+Enter submit shortcut.
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
       if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
         handleSubmit();
       }
-      if (e.key === 'Escape') {
-        onClose();
-      }
     },
-    [handleSubmit, onClose]
+    [handleSubmit]
   );
 
   const autoResize = useCallback(() => {

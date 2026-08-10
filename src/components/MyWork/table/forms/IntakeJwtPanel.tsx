@@ -34,7 +34,7 @@ import {
   Trash2,
   X,
 } from 'lucide-react';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 // `TFunction` is exported by `i18next`, not by `react-i18next` — importing it from the
 // latter compiles under esbuild (which strips types without checking them) and fails
@@ -44,6 +44,7 @@ import { useTranslation } from 'react-i18next';
 
 import { type ActionContext, runIdeaAction } from '@/actions/ideaActionRegistry';
 import { EMPTY_SELECTION } from '@/components/MyWork/ideaSelectionTypes';
+import { useDialogA11y } from '@/components/ui/primitives/useDialogA11y';
 import {
   type FormIntakeContext,
   getFormIntakeContext,
@@ -89,6 +90,9 @@ export const IntakeJwtPanel: React.FC<IntakeJwtPanelProps> = ({
   const [context, setContext] = useState<FormIntakeContext | null>(testInitialContext ?? null);
   const [loading, setLoading] = useState(testInitialContext === undefined);
   const [error, setError] = useState<string | null>(null);
+
+  const containerRef = useRef<HTMLDivElement>(null);
+  useDialogA11y({ open: true, onClose, containerRef });
 
   const [subject, setSubject] = useState('');
   const [ttlSeconds, setTtlSeconds] = useState<number>(DEFAULT_TTL_SECONDS);
@@ -242,7 +246,11 @@ export const IntakeJwtPanel: React.FC<IntakeJwtPanelProps> = ({
       data-testid="intake-jwt-panel-overlay"
     >
       <section
-        className="flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-c-border-subtle bg-c-surface shadow-2xl border-c-border-subtle bg-c-surface-raised"
+        ref={containerRef}
+        role="dialog"
+        aria-modal="true"
+        tabIndex={-1}
+        className="flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-c-border-subtle bg-c-surface shadow-2xl border-c-border-subtle bg-c-surface-raised outline-none"
         data-testid="intake-jwt-panel"
         aria-label={t('ideas.table.intakeJwt.panelAriaLabel', 'Form intake settings')}
       >

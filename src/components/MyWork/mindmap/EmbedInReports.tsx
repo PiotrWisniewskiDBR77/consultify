@@ -3,9 +3,11 @@
  * that can be inserted into reports and presentations.
  */
 import { CheckCircle2, ClipboardCopy, Code, FileText, Image, X } from 'lucide-react';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+
+import { useDialogA11y } from '@/components/ui/primitives/useDialogA11y';
 
 interface EmbedInReportsProps {
   open: boolean;
@@ -118,6 +120,9 @@ export const EmbedInReports: React.FC<EmbedInReportsProps> = ({
       });
   }, [embedContent]);
 
+  const containerRef = useRef<HTMLDivElement>(null);
+  useDialogA11y({ open, onClose, containerRef });
+
   if (!open) return null;
 
   const formats: { id: EmbedFormat; label: string; icon: React.ComponentType<any> }[] = [
@@ -128,11 +133,18 @@ export const EmbedInReports: React.FC<EmbedInReportsProps> = ({
 
   return (
     <div className="fixed inset-0 z-modal flex items-center justify-center p-4 bg-c-bg">
-      <div className="w-full max-w-lg rounded-2xl bg-c-surface-raised dark:bg-c-surface backdrop-blur-xl shadow-2xl overflow-hidden">
+      <div
+        ref={containerRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="embed-in-reports-modal-heading"
+        tabIndex={-1}
+        className="w-full max-w-lg rounded-2xl bg-c-surface-raised dark:bg-c-surface backdrop-blur-xl shadow-2xl overflow-hidden outline-none"
+      >
         <div className="flex items-start justify-between px-5 py-4 border-b border-c-border-subtle dark:border-c-border-subtle">
           <div className="flex items-center gap-2">
             <Code size={16} className="text-c-info" />
-            <h3 className="text-sm font-bold text-c-text dark:text-c-text">
+            <h3 className="text-sm font-bold text-c-text dark:text-c-text" id="embed-in-reports-modal-heading">
               {t('ideas.mindmap.embedReport', 'Embed in Report')}
             </h3>
           </div>

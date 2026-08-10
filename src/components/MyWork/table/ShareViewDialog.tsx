@@ -62,6 +62,7 @@ export const ShareViewDialog: React.FC<ShareViewDialogProps> = ({
     setTimeout(() => setCopied(false), 2000);
   }, [shareUrl]);
 
+
   return (
     <div
       className="fixed inset-0 z-context-menu flex items-center justify-center bg-black/20 backdrop-blur-[2px]"
@@ -84,7 +85,11 @@ export const ShareViewDialog: React.FC<ShareViewDialogProps> = ({
               {t('ideas.table.shareView.title', 'Share View')}
             </h3>
           </div>
-          <button onClick={onClose} className="p-1 rounded hover:bg-c-surface-raised">
+          <button
+            onClick={onClose}
+            aria-label={t('common.close', 'Close')}
+            className="p-1 rounded hover:bg-c-surface-raised"
+          >
             <X size={14} />
           </button>
         </div>
