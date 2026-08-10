@@ -44,6 +44,8 @@ import {
 } from '../services/resultsVnext/okr/okrSetTypes.js';
 import { OKR_CHECKIN_CONFIDENCE_VALUES, OKR_CHECKIN_STATUS_VALUES } from '../services/resultsVnext/okr/okrCheckInTypes.js';
 import { OKR_ALIGNMENT_STATUSES } from '../services/resultsVnext/okr/okrAlignmentTypes.js';
+import { OKR_REFLECTION_DISPOSITIONS } from '../services/resultsVnext/okr/okrReflectionTypes.js';
+import { OKR_REVIEW_COMMENT_LEVELS, OKR_REVIEW_TYPES } from '../services/resultsVnext/okr/okrReviewTypes.js';
 
 export const OkrProgramStatusEnum = z.enum(OKR_PROGRAM_STATUSES);
 export const OkrCycleModelEnum = z.enum(OKR_CYCLE_MODELS);
@@ -626,4 +628,120 @@ export const ListOkrAlignmentsForObjectiveQuerySchema = z.object({
 
 export const GetOkrAlignmentTreeQuerySchema = z.object({
   maxDepth: z.coerce.number().int().positive().max(50).optional(),
+});
+
+// ==========================================
+// OKR-E007 — Review & Learning (design §-see OKR_E007_DESIGN.md §6)
+// ==========================================
+
+export const OkrReflectionDispositionEnum = z.enum(OKR_REFLECTION_DISPOSITIONS);
+export const OkrReviewTypeEnum = z.enum(OKR_REVIEW_TYPES);
+export const OkrReviewCommentLevelEnum = z.enum(OKR_REVIEW_COMMENT_LEVELS);
+
+const MAX_REFLECTION_TEXT_CHARS = 4000;
+const MAX_REVIEW_COMMENT_CHARS = 2000;
+
+// ==========================================
+// POST /api/vnext/results/okr/sets/:setId/open-review — openOkrSetReview
+// POST /api/vnext/results/okr/sets/:setId/final-score — finalScoreOkrSet
+// POST /api/vnext/results/okr/sets/:setId/close — closeOkrSet
+// (all three: expectedVersion CAS on the Set's own row_version — same
+// shape as OkrSetTransitionSchema, redeclared per this file's own stated
+// convention of not sharing schema objects across unrelated endpoints even
+// when structurally identical)
+// ==========================================
+
+export const OkrSetReviewLifecycleTransitionSchema = z.object({
+  expectedVersion: expectedVersionField,
+  reason: nullableReasonField,
+  idempotencyKey: idempotencyKeyField,
+});
+
+// ==========================================
+// POST /api/vnext/results/okr/objectives/:objectiveId/reflection — recordObjectiveReflection
+// ==========================================
+
+export const RecordOkrObjectiveReflectionSchema = z.object({
+  setId: z.string().uuid(),
+  // 0 = create path (no reflection row exists yet for this Objective);
+  // >=1 = CAS an existing row's own row_version. See
+  // okrReflectionCommands.ts file header.
+  expectedVersion: z.number().int().nonnegative(),
+  whatWorked: z.string().max(MAX_REFLECTION_TEXT_CHARS).nullable().optional(),
+  whatDidNotWork: z.string().max(MAX_REFLECTION_TEXT_CHARS).nullable().optional(),
+  why: z.string().max(MAX_REFLECTION_TEXT_CHARS).nullable().optional(),
+  learning: z.string().max(MAX_REFLECTION_TEXT_CHARS).nullable().optional(),
+  nextCycleChange: z.string().max(MAX_REFLECTION_TEXT_CHARS).nullable().optional(),
+  disposition: OkrReflectionDispositionEnum.nullable().optional(),
+  reason: nullableReasonField,
+  idempotencyKey: idempotencyKeyField,
+});
+
+// ==========================================
+// POST .../sets/:setId/reviews/self/submit — submitOkrSetSelfReview
+// POST .../sets/:setId/reviews/manager/submit — submitOkrSetForManagerReview
+// (both: 0 = create path, >=1 = CAS an existing row)
+// ==========================================
+
+export const SubmitOkrSetReviewSchema = z.object({
+  expectedVersion: z.number().int().nonnegative(),
+  reason: nullableReasonField,
+  idempotencyKey: idempotencyKeyField,
+});
+
+// ==========================================
+// POST .../sets/:setId/reviews/manager/approve — approveOkrSetManagerReview
+// ==========================================
+
+export const ApproveOkrSetManagerReviewSchema = z.object({
+  expectedVersion: expectedVersionField,
+  outcome: z.string().max(MAX_NAME_CHARS).nullable().optional(),
+  reason: nullableReasonField,
+  idempotencyKey: idempotencyKeyField,
+});
+
+// ==========================================
+// POST .../sets/:setId/reviews/manager/request-changes — requestChangesOnOkrSetManagerReview
+// ==========================================
+
+export const RequestChangesOnOkrSetManagerReviewSchema = z.object({
+  expectedVersion: expectedVersionField,
+  changeRequestNotes: z.string().max(MAX_REASON_CHARS).nullable().optional(),
+  idempotencyKey: idempotencyKeyField,
+});
+
+// ==========================================
+// POST .../sets/:setId/reviews/:reviewType/comments — recordOkrSetReviewComment
+// ==========================================
+
+export const OkrReviewTypeParamsSchema = z.object({
+  setId: z.string().uuid(),
+  reviewType: OkrReviewTypeEnum,
+});
+
+export const RecordOkrSetReviewCommentSchema = z.object({
+  expectedVersion: expectedVersionField,
+  level: OkrReviewCommentLevelEnum,
+  targetId: z.string().min(1).max(MAX_NAME_CHARS),
+  text: z.string().min(1).max(MAX_REVIEW_COMMENT_CHARS),
+  idempotencyKey: idempotencyKeyField,
+});
+
+// ==========================================
+// POST /api/vnext/results/okr/sets/:setId/carry-forward — carryForwardOkrSet
+// ==========================================
+
+export const CarryForwardOkrSetSchema = z.object({
+  targetCycleId: z.string().uuid(),
+  reason: nullableReasonField,
+  idempotencyKey: idempotencyKeyField,
+});
+
+// ==========================================
+// GET /api/vnext/results/okr/sets/:setId/history — getOkrSetHistory
+// ==========================================
+
+export const GetOkrSetHistoryQuerySchema = z.object({
+  cursor: z.string().optional(),
+  limit: z.coerce.number().int().positive().max(500).optional(),
 });
