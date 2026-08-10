@@ -45,12 +45,32 @@ export type ConsumerFn = (
 ) => Promise<void>;
 
 /**
- * The ONE built consumer this slice ships. Everything else that has ever
- * appeared in `EVENT_TYPE_CONSUMER_GROUPS` either has zero producers (§9,
- * IO-B — `decisions_projection`/`notifications_projection`, left as dead
- * placeholders, no registry entry added for either) or is known-unbuilt
- * backlog (`finance_projection`, IO-C — see `UNBUILT_CONSUMER_GROUPS` below,
- * NOT registered here).
+ * `mywork_projection` is the ONE LIVE, built-and-registered consumer this
+ * slice ships (`dispatchMyWorkProjection`, `myworkProjectionConsumer.ts`).
+ * Everything else that has ever appeared as a routing target in
+ * `atomicWrite.ts`'s `EVENT_TYPE_CONSUMER_GROUPS` falls into exactly one of
+ * two other buckets, and the two must not be confused:
+ *   - `finance_projection` is PENDING, not retired: 13 live event types
+ *     (ROI-E003/E004/E005/E006/E007's finance-facing facts —
+ *     `roi.case_approved`, the tracking/actual quartet, `roi.case_cancelled`,
+ *     `roi.case_closed`, the finance-link/reconciliation pair) already route
+ *     to it today with zero consumer built. See `UNBUILT_CONSUMER_GROUPS`
+ *     below — its rows PARK rather than being silently dropped.
+ *   - `decisions_projection`/`notifications_projection` are RETIRED, not
+ *     pending (2026-08-10 contract correction, EXECUTION_LEDGER.md §50; see
+ *     `atomicWrite.ts`'s own "RETIRED VOCABULARY" comment for the full
+ *     rationale). Neither ever routed a single event type — they existed
+ *     only as a comment reserving the names. `decisions_projection` has no
+ *     producer (`DecisionController.ts` emits no `rvn_platform_events`) and
+ *     `notifications_projection` would duplicate `mywork_projection`'s own
+ *     already-shipped `notifications` INSERT. Retired groups get NO entry in
+ *     either map below — not `CONSUMER_REGISTRY`, not
+ *     `UNBUILT_CONSUMER_GROUPS` — because no event ever routes to them; the
+ *     contract test in
+ *     `tests/resultsVnext/platform/consumerGroupContract.test.ts` asserts
+ *     exactly that (every group `EVENT_TYPE_CONSUMER_GROUPS` actually routes
+ *     to is registered-or-unbuilt, so a retired name silently regaining a
+ *     routing entry would fail it, not fall into the void).
  */
 export const CONSUMER_REGISTRY: Readonly<Record<string, ConsumerFn>> = {
   mywork_projection: dispatchMyWorkProjection,
@@ -64,10 +84,11 @@ export const CONSUMER_REGISTRY: Readonly<Record<string, ConsumerFn>> = {
  * unregistered-group path (`markFailed` -> eventually `dead_letter` ->
  * CRITICAL alert) — the design's original uniform treatment would fire a
  * CRITICAL Slack alert on every single ROI case approval (`roi.case_approved`
- * is one of `finance_projection`'s 11 live event types), which is an
- * incident-shaped response to what is actually known backlog. A group that
- * is genuinely unregistered and NOT in this set still hard-fails and
- * dead-letters as designed (see `platformOutboxDrainCron.ts`'s tick body).
+ * is one of `finance_projection`'s 13 live event types — see the header
+ * comment above for the full list), which is an incident-shaped response to
+ * what is actually known backlog. A group that is genuinely unregistered and
+ * NOT in this set still hard-fails and dead-letters as designed (see
+ * `platformOutboxDrainCron.ts`'s tick body).
  *
  * `finance_projection` needs (§9, not built in this slice): the target
  * Finance read-model identified, a consumer function written and registered

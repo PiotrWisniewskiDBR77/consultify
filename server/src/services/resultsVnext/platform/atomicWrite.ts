@@ -403,11 +403,41 @@ export const EVENT_TYPE_CONSUMER_GROUPS: Readonly<Record<string, readonly string
   // Support & Decisions. Every event here uses aggregateType='okr_set' (the
   // parent Set's identity), same convention OKR-E003/E004 established for
   // child-entity events. All fan out to 'mywork_projection' only, same
-  // default every other domain entry in this map uses — no dedicated
-  // 'decisions_projection'/'notifications_projection' consumer exists yet
-  // (design §16 Open Question #4's scheduled-acknowledgement recommendation
-  // does not require one either — `okrDecisionResolutionScanner.ts` reads
+  // default every other domain entry in this map uses (design §16 Open
+  // Question #4's scheduled-acknowledgement recommendation does not require
+  // a dedicated group either — `okrDecisionResolutionScanner.ts` reads
   // `okr_vnext_decision_links` directly, not the outbox).
+  //
+  // RETIRED VOCABULARY (2026-08-10 contract correction — see
+  // EXECUTION_LEDGER.md §50): this map used to carry a comment reserving
+  // 'decisions_projection' and 'notifications_projection' as future
+  // consumer-group names. Neither was ever used as a routing target above —
+  // grep this file for the literal strings and the only hit left is this
+  // comment. Both are retired from the vocabulary, not "not built yet":
+  //   - 'decisions_projection' cannot become a real consumer without a
+  //     producer first. `DecisionController.ts` emits ZERO
+  //     `rvn_platform_events` rows — nothing exists on the outbox for it to
+  //     consume. OKR-E006's `requestDecisionFromSupportRequest`
+  //     (okrDecisionCommands.ts) already does a synchronous, in-transaction
+  //     `INSERT INTO decisions`, which is MORE atomic than any async
+  //     consumer reconstructing that row later could be, and
+  //     `okrDecisionResolutionScanner.ts` deliberately polls
+  //     `okr_vnext_decision_links` directly rather than draining the
+  //     outbox. To become real: instrument `DecisionController.ts` itself
+  //     to emit `rvn_platform_events` on decision state changes — a
+  //     cross-module change to the Decisions domain, out of this platform
+  //     layer's own scope.
+  //   - 'notifications_projection' would duplicate work already shipped:
+  //     `myworkProjectionConsumer.ts` (the live `mywork_projection`
+  //     consumer) already INSERTs into `notifications` on 4 event types,
+  //     which is one of `inboxService.materializeInboxItems()`'s three
+  //     hardcoded sources (`tasks`/`decisions`/`notifications`). A second
+  //     peer consumer group writing the same table would race the first,
+  //     not add coverage. The genuine unbuilt gap is NOT a projection at
+  //     all — it is event-driven email/Slack fan-out, which belongs inside
+  //     `mywork_projection`'s own handlers calling
+  //     `NotificationOutboxService.enqueue(...)` (notificationOutboxService.ts),
+  //     not in a colliding peer consumer group.
   'okr_support.comment_posted': ['mywork_projection'],
   'okr_support.recognition_posted': ['mywork_projection'],
   'okr_support.request_raised': ['mywork_projection'],
