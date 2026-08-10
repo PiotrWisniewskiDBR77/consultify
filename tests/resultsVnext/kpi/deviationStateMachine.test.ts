@@ -120,7 +120,7 @@ function baseCase(overrides: Record<string, unknown> = {}): Record<string, unkno
   };
 }
 
-function baseCommandInput(overrides: Record<string, unknown> = {}) {
+function baseCommandInput<T extends Record<string, unknown>>(overrides: T = {} as T) {
   return {
     caseId: 'case-1',
     organizationId: 'org-1',
