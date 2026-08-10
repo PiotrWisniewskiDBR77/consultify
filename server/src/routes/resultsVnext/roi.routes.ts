@@ -157,6 +157,18 @@ import {
   RoiVarianceValidationError,
 } from '../../services/resultsVnext/roi/roiVarianceCommands.js';
 import { getVariance, listVariances } from '../../services/resultsVnext/roi/roiVarianceRepository.js';
+import {
+  closeRoiCase,
+  markRoiCasePostInvestmentReviewDue,
+  recordRoiPirTeresaDraftDisposition,
+  scheduleRoiCasePostInvestmentReview,
+  startRoiCasePostInvestmentReview,
+  updateRoiPostInvestmentReviewDraft,
+  RoiPirNotFoundError,
+  RoiPirSelfCloseDeniedError,
+  RoiPirValidationError,
+} from '../../services/resultsVnext/roi/roiPirCommands.js';
+import { getRoiPostInvestmentReview, listRoiPostInvestmentReviews } from '../../services/resultsVnext/roi/roiPirRepository.js';
 import type { AuthenticatedRequest } from '../../types/index.js';
 import logger from '../../utils/Logger.js';
 import {
@@ -222,6 +234,13 @@ import {
   UpdateVarianceStatusSchema,
   VerifyActualEntrySchema,
 } from '../../validators/resultsVnextRoiForecastActual.validators.js';
+import {
+  CloseRoiCaseSchema,
+  RecordRoiPirTeresaDraftDispositionSchema,
+  RoiPirParamsSchema,
+  ScheduleRoiCasePostInvestmentReviewSchema,
+  UpdateRoiPostInvestmentReviewDraftSchema,
+} from '../../validators/resultsVnextRoiPir.validators.js';
 
 const router = Router();
 
@@ -284,6 +303,23 @@ function handleRoiRouteError(res: Response, err: unknown, op: string): void {
   // (state-conflict).
   if (err instanceof RoiSelfApprovalDeniedError) {
     res.status(403).json({ error: err.message, code: err.code, details: err.details });
+    return;
+  }
+  // ROI-E006 §9: RoiPirSelfCloseDeniedError checked ahead of the generic
+  // 409 branches, same "authorization, not state-conflict" reasoning as
+  // RoiSelfApprovalDeniedError/RoiActualSelfVerificationDeniedError above.
+  // RoiPirNotFoundError is a 404 (internal-invariant "no active draft PIR"),
+  // also checked ahead of the generic 409 branch.
+  if (err instanceof RoiPirSelfCloseDeniedError) {
+    res.status(403).json({ error: err.message, code: err.code, details: err.details });
+    return;
+  }
+  if (err instanceof RoiPirNotFoundError) {
+    res.status(404).json({ error: err.message, code: err.code, details: err.details });
+    return;
+  }
+  if (err instanceof RoiPirValidationError) {
+    res.status(409).json({ error: err.message, code: err.code, details: err.details });
     return;
   }
   if (err instanceof AtomicWriteConflictError) {
@@ -2541,6 +2577,256 @@ router.get(
       res.status(200).json({ benefitsRealization: view });
     } catch (err) {
       handleRoiRouteError(res, err, 'getRoiCaseBenefitsRealizationView');
+    }
+  }
+);
+
+// ==========================================================================
+// ROI-E006 — PIR & Learning routes (design §9)
+// ==========================================================================
+
+// ---------- PUT .../post-investment-review-schedule — scheduleRoiCasePostInvestmentReview ----------
+
+router.put(
+  '/cases/:caseId/post-investment-review-schedule',
+  validateParams(RoiCaseIdParamsSchema),
+  validateBody(ScheduleRoiCasePostInvestmentReviewSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { caseId } = req.params as { caseId: string };
+      if (!(await requireExistingRoiCase(auth, caseId, res))) return;
+      const body = req.body as import('zod').infer<typeof ScheduleRoiCasePostInvestmentReviewSchema>;
+      const outcome = await scheduleRoiCasePostInvestmentReview({
+        caseId,
+        organizationId: auth.organizationId,
+        expectedVersion: body.expectedVersion,
+        nextReviewAt: body.nextReviewAt,
+        actorUserId: auth.userId,
+        actorEffectiveRole: auth.role,
+        idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
+        correlationId: getCorrelationId(req),
+        reason: body.reason ?? null,
+      });
+      res.status(200).json({
+        outcome: outcome.outcome,
+        eventId: outcome.eventId,
+        resultingVersion: outcome.resultingVersion,
+        case: outcome.result,
+      });
+    } catch (err) {
+      handleRoiRouteError(res, err, 'scheduleRoiCasePostInvestmentReview');
+    }
+  }
+);
+
+// ---------- POST .../transitions/mark-pir-due — markRoiCasePostInvestmentReviewDue ----------
+// Reuses mountTransitionRoute — MarkRoiCasePostInvestmentReviewDueInput is
+// structurally RunRoiCaseLifecycleTransitionInput-compatible.
+
+mountTransitionRoute(
+  '/cases/:caseId/transitions/mark-pir-due',
+  'markRoiCasePostInvestmentReviewDue',
+  markRoiCasePostInvestmentReviewDue
+);
+
+// ---------- POST .../transitions/start-pir — startRoiCasePostInvestmentReview ----------
+// NOT routed through mountTransitionRoute — the result shape is
+// { case, pir }, not a bare RoiCase.
+
+router.post(
+  '/cases/:caseId/transitions/start-pir',
+  validateParams(RoiCaseIdParamsSchema),
+  validateBody(RoiCaseTransitionSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { caseId } = req.params as { caseId: string };
+      if (!(await requireExistingRoiCase(auth, caseId, res))) return;
+      const body = req.body as import('zod').infer<typeof RoiCaseTransitionSchema>;
+      const outcome = await startRoiCasePostInvestmentReview({
+        caseId,
+        organizationId: auth.organizationId,
+        expectedVersion: body.expectedVersion,
+        actorUserId: auth.userId,
+        actorEffectiveRole: auth.role,
+        idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
+        correlationId: getCorrelationId(req),
+        reason: body.reason ?? null,
+      });
+      res.status(200).json({
+        outcome: outcome.outcome,
+        eventId: outcome.eventId,
+        resultingVersion: outcome.resultingVersion,
+        case: outcome.result.case,
+        pir: outcome.result.pir,
+      });
+    } catch (err) {
+      handleRoiRouteError(res, err, 'startRoiCasePostInvestmentReview');
+    }
+  }
+);
+
+// ---------- GET .../post-investment-reviews[/:pirId] ----------
+
+router.get(
+  '/cases/:caseId/post-investment-reviews',
+  validateParams(RoiCaseIdParamsSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { caseId } = req.params as { caseId: string };
+      const postInvestmentReviews = await listRoiPostInvestmentReviews({
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        caseId,
+      });
+      res.status(200).json({ postInvestmentReviews });
+    } catch (err) {
+      handleRoiRouteError(res, err, 'listRoiPostInvestmentReviews');
+    }
+  }
+);
+
+router.get(
+  '/cases/:caseId/post-investment-reviews/:pirId',
+  validateParams(RoiPirParamsSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { caseId, pirId } = req.params as { caseId: string; pirId: string };
+      const postInvestmentReview = await getRoiPostInvestmentReview({
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        caseId,
+        pirId,
+      });
+      if (!postInvestmentReview) {
+        res.status(404).json({ error: 'ROI post-investment review not found', code: 'NOT_FOUND' });
+        return;
+      }
+      res.status(200).json({ postInvestmentReview });
+    } catch (err) {
+      handleRoiRouteError(res, err, 'getRoiPostInvestmentReview');
+    }
+  }
+);
+
+// ---------- PATCH .../post-investment-reviews/:pirId — updateRoiPostInvestmentReviewDraft ----------
+
+router.patch(
+  '/cases/:caseId/post-investment-reviews/:pirId',
+  validateParams(RoiPirParamsSchema),
+  validateBody(UpdateRoiPostInvestmentReviewDraftSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { caseId, pirId } = req.params as { caseId: string; pirId: string };
+      const body = req.body as import('zod').infer<typeof UpdateRoiPostInvestmentReviewDraftSchema>;
+      const outcome = await updateRoiPostInvestmentReviewDraft({
+        pirId,
+        caseId,
+        organizationId: auth.organizationId,
+        expectedVersion: body.expectedVersion,
+        outcome: body.outcome,
+        lessonsLearned: body.lessonsLearned,
+        recommendation: body.recommendation,
+        actorUserId: auth.userId,
+        actorEffectiveRole: auth.role,
+        idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
+        correlationId: getCorrelationId(req),
+        reason: body.reason ?? null,
+      });
+      res.status(200).json({
+        outcome: outcome.outcome,
+        eventId: outcome.eventId,
+        resultingVersion: outcome.resultingVersion,
+        postInvestmentReview: outcome.result,
+      });
+    } catch (err) {
+      handleRoiRouteError(res, err, 'updateRoiPostInvestmentReviewDraft');
+    }
+  }
+);
+
+// ---------- POST .../post-investment-reviews/:pirId/teresa-draft-disposition — recordRoiPirTeresaDraftDisposition (AC-06) ----------
+
+router.post(
+  '/cases/:caseId/post-investment-reviews/:pirId/teresa-draft-disposition',
+  validateParams(RoiPirParamsSchema),
+  validateBody(RecordRoiPirTeresaDraftDispositionSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { caseId, pirId } = req.params as { caseId: string; pirId: string };
+      const body = req.body as import('zod').infer<typeof RecordRoiPirTeresaDraftDispositionSchema>;
+      const outcome = await recordRoiPirTeresaDraftDisposition({
+        pirId,
+        caseId,
+        organizationId: auth.organizationId,
+        expectedVersion: body.expectedVersion,
+        disposition: body.disposition,
+        finalLessonsText: body.finalLessonsText,
+        actorUserId: auth.userId,
+        actorEffectiveRole: auth.role,
+        idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
+        correlationId: getCorrelationId(req),
+        reason: body.reason ?? null,
+      });
+      res.status(200).json({
+        outcome: outcome.outcome,
+        eventId: outcome.eventId,
+        resultingVersion: outcome.resultingVersion,
+        postInvestmentReview: outcome.result,
+      });
+    } catch (err) {
+      handleRoiRouteError(res, err, 'recordRoiPirTeresaDraftDisposition');
+    }
+  }
+);
+
+// ---------- POST .../transitions/close — closeRoiCase (AC-03, D6) ----------
+// NOT routed through mountTransitionRoute — openVarianceWaiverReason is an
+// extra optional field CloseRoiCaseSchema carries, and the result shape is
+// { case, pir }, not a bare RoiCase.
+
+router.post(
+  '/cases/:caseId/transitions/close',
+  validateParams(RoiCaseIdParamsSchema),
+  validateBody(CloseRoiCaseSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { caseId } = req.params as { caseId: string };
+      if (!(await requireExistingRoiCase(auth, caseId, res))) return;
+      const body = req.body as import('zod').infer<typeof CloseRoiCaseSchema>;
+      const outcome = await closeRoiCase({
+        caseId,
+        organizationId: auth.organizationId,
+        expectedVersion: body.expectedVersion,
+        openVarianceWaiverReason: body.openVarianceWaiverReason,
+        actorUserId: auth.userId,
+        actorEffectiveRole: auth.role,
+        idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
+        correlationId: getCorrelationId(req),
+        reason: body.reason ?? null,
+      });
+      res.status(200).json({
+        outcome: outcome.outcome,
+        eventId: outcome.eventId,
+        resultingVersion: outcome.resultingVersion,
+        case: outcome.result.case,
+        pir: outcome.result.pir,
+      });
+    } catch (err) {
+      handleRoiRouteError(res, err, 'closeRoiCase');
     }
   }
 );

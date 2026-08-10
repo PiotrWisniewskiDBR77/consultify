@@ -38,7 +38,10 @@ import { verifyToken } from '../../middleware/auth.middleware.js';
 import { demoContextMiddleware } from '../../middleware/demoGuard.middleware.js';
 import { apiAuthRateLimiter } from '../../middleware/rateLimiting.middleware.js';
 import { requireOrgAccess } from '../../middleware/rbac.middleware.js';
-import { listOrganizationRoiBenefitsRealization } from '../../services/resultsVnext/roi/roiOrgPerspectiveRepository.js';
+import {
+  listOrganizationRoiBenefitsRealization,
+  listOrganizationRoiPirOutcomes,
+} from '../../services/resultsVnext/roi/roiOrgPerspectiveRepository.js';
 import type { AuthenticatedRequest } from '../../types/index.js';
 import logger from '../../utils/Logger.js';
 
@@ -90,6 +93,25 @@ router.get('/org/benefits-realization', async (req: AuthenticatedRequest, res: R
     res.status(200).json({ attention });
   } catch (err) {
     handleRoiPerspectivesRouteError(res, err, 'listOrganizationRoiBenefitsRealization');
+  }
+});
+
+// ==========================================
+// GET /api/vnext/results/roi/org/pir-outcomes —
+// listOrganizationRoiPirOutcomes (ROI-E006 §6, AC-05)
+// ==========================================
+
+router.get('/org/pir-outcomes', async (req: AuthenticatedRequest, res: Response) => {
+  const auth = requireAuth(req, res);
+  if (!auth) return;
+  try {
+    const outcomes = await listOrganizationRoiPirOutcomes({
+      managerId: auth.userId,
+      organizationId: auth.organizationId,
+    });
+    res.status(200).json({ outcomes });
+  } catch (err) {
+    handleRoiPerspectivesRouteError(res, err, 'listOrganizationRoiPirOutcomes');
   }
 });
 

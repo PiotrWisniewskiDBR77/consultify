@@ -261,6 +261,21 @@ export const EVENT_TYPE_CONSUMER_GROUPS: Readonly<Record<string, readonly string
   // just a MyWork-facing one.
   'roi.benefits_realization_started': ['mywork_projection', 'finance_projection'],
   'roi.case_cancelled': ['mywork_projection', 'finance_projection'],
+
+  // ROI-E006 (docs/product/results-vnext/ROI_E006_DESIGN.md §9) — PIR &
+  // Learning. `roi.case_closed` fans to BOTH 'mywork_projection' AND
+  // 'finance_projection' — the Case's terminal act, same rationale
+  // ROI-E003's `roi.case_approved`/ROI-E004's tracking-lifecycle events/
+  // ROI-E005's `roi.case_cancelled` above all used (a durable financial
+  // -facing fact, not just a MyWork-facing one). The other five PIR events
+  // are advisory/in-flight metadata (schedule/due/started/draft-edit/Teresa
+  // -disposition) — 'mywork_projection' only, per design §9's literal table.
+  'roi.post_investment_review_scheduled': ['mywork_projection'],
+  'roi.post_investment_review_due': ['mywork_projection'],
+  'roi.post_investment_review_started': ['mywork_projection'],
+  'roi.post_investment_review_draft_updated': ['mywork_projection'],
+  'roi.pir_teresa_draft_disposition_recorded': ['mywork_projection'],
+  'roi.case_closed': ['mywork_projection', 'finance_projection'],
 };
 
 /**
