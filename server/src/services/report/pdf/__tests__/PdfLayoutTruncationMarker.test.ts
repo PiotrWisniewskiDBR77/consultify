@@ -12,7 +12,7 @@ import {
   buildPdfLayoutTruncationMarker,
   type PdfDocumentLike,
   type PdfPageDimensions,
-} from '../PdfLayoutTruncationMarker';
+} from '../PdfLayoutTruncationMarker.js';
 
 const A4_PORTRAIT: PdfPageDimensions = { width: 595, height: 842, margin: 48 };
 

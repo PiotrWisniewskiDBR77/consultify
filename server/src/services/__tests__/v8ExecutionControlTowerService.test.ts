@@ -25,7 +25,11 @@ describe('v8ExecutionControlTowerService', () => {
     vi.clearAllMocks();
     vi.mocked(detectDelaySignals).mockResolvedValue([]);
     vi.mocked(getOverloadAlerts).mockResolvedValue([]);
-    vi.mocked(dbAll).mockImplementation(async (sql: string) => {
+    // `DbPromise.all` is overloaded; `vi.mocked` resolves to the last overload
+    // `(db, sql, params?, options?)`, while the control-tower service calls the
+    // `(sql, params?)` form. Narrow to the overload actually exercised so the
+    // stub's first parameter really is the SQL string.
+    vi.mocked(dbAll as (sql: string, params?: unknown[]) => Promise<unknown[]>).mockImplementation(async (sql: string) => {
       if (
         sql.includes('FROM initiatives') &&
         !sql.includes('JOIN initiatives i ON i.id = t.initiative_id')
@@ -71,9 +75,11 @@ describe('v8ExecutionControlTowerService', () => {
         name: 'Busy',
         capacityHours: 40,
         allocatedHours: 60,
+        backlogHours: 0,
         overloadHours: 20,
         severity: 'warning',
         suggestion: 'Review',
+        window: 'week',
       },
     ]);
 

@@ -2,7 +2,7 @@ import { PDFParse } from 'pdf-parse';
 import PDFDocument from 'pdfkit';
 import { describe, expect, it } from 'vitest';
 
-import { drawPresentationPdfFooter } from '../presentationPdfLayoutService';
+import { drawPresentationPdfFooter } from '../presentationPdfLayoutService.js';
 
 async function buildTenSlidePdf(): Promise<Buffer> {
   const doc = new PDFDocument({ margin: 48, size: 'A4' });

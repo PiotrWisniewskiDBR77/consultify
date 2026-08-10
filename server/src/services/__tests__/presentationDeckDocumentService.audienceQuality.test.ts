@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   deckDocumentFromUnifiedJson,
   normalizeAudienceFacingSlide,
-} from '../presentationDeckDocumentService';
+} from '../presentationDeckDocumentService.js';
 
 const source = {
   artifact_id: 'initiative-42',

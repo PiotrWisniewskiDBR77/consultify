@@ -15,6 +15,7 @@
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { Mock } from 'vitest';
 
 import {
   __resetDocumentCommentsForTests,
@@ -36,7 +37,7 @@ const ARTIFACT = 'artifact-cmt-1';
 const USER = 'user-cmt-1';
 const REVIEWER = 'reviewer-cmt-1';
 
-let auditPumpSpy: ReturnType<typeof vi.fn>;
+let auditPumpSpy: Mock<(entry: DocumentAuditEntry) => void>;
 
 beforeEach(() => {
   __resetDocumentCommentsForTests();

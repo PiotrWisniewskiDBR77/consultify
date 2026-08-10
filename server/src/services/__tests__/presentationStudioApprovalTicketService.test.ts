@@ -14,7 +14,7 @@ import {
   computePayloadFingerprint,
   consumeApprovalTicket,
   mintApprovalTicket,
-} from '../presentationStudioApprovalTicketService';
+} from '../presentationStudioApprovalTicketService.js';
 
 describe('presentationStudioApprovalTicketService', () => {
   beforeEach(() => {

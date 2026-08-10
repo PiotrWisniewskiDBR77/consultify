@@ -18,6 +18,7 @@
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { Mock } from 'vitest';
 
 import type { DocumentAuditEntry, DocumentSchema, DocumentStatus } from '../documentStudioTypes.js';
 import {
@@ -68,7 +69,7 @@ function fakeSchema(overrides: Partial<DocumentSchema> = {}): DocumentSchema {
   };
 }
 
-let auditPumpSpy: ReturnType<typeof vi.fn>;
+let auditPumpSpy: Mock<(entry: DocumentAuditEntry) => void>;
 
 beforeEach(() => {
   __resetDocumentVersionSnapshotsForTests();

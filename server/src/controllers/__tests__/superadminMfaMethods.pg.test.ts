@@ -72,11 +72,16 @@ describe.skipIf(!REAL_DB)('Super Admin MFA methods — real PostgreSQL', () => {
     }
 
     const { default: config } = await import('../../config/Config.js');
+    // `Config` does not declare JWT_ISSUER / JWT_AUDIENCE, but
+    // `superAdmin.middleware.ts:39` reads them as optional strings off the same
+    // object. Mirror that declared shape so the token this suite signs stays in
+    // sync with what the guard verifies.
+    const jwtClaims = config as unknown as { JWT_ISSUER?: string; JWT_AUDIENCE?: string };
     const sign = (id: string, role: string) =>
       jwt.sign({ id, role, organizationId: orgId }, config.JWT_SECRET, {
         expiresIn: '10m',
-        ...(config.JWT_ISSUER ? { issuer: config.JWT_ISSUER } : {}),
-        ...(config.JWT_AUDIENCE ? { audience: config.JWT_AUDIENCE } : {}),
+        ...(jwtClaims.JWT_ISSUER ? { issuer: jwtClaims.JWT_ISSUER } : {}),
+        ...(jwtClaims.JWT_AUDIENCE ? { audience: jwtClaims.JWT_AUDIENCE } : {}),
       });
     superAdminToken = sign(superAdminId, 'SUPERADMIN');
     plainUserToken = sign(plainUserId, 'user');

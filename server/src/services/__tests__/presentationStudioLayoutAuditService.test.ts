@@ -9,21 +9,21 @@
 
 import { afterEach, describe, expect, it } from 'vitest';
 
-import type { OutlineItem } from '../presentationGeneratorService';
+import type { OutlineItem } from '../presentationGeneratorService.js';
 import {
   _familyAliasByDeckTypeForTests,
   _pdfSupportedIntentsForTests,
   _pptxSupportedIntentsForTests,
   _templateFamilyOverridesForTests,
   auditPresentationStudioOutlineLayout,
-} from '../presentationStudioLayoutAuditService';
+} from '../presentationStudioLayoutAuditService.js';
 import {
   applyOverrides as applyCapacityOverrides,
   resetToDefaults as resetCapacityRegistry,
-} from '../presentationStudioLayoutCapacityRegistryService';
+} from '../presentationStudioLayoutCapacityRegistryService.js';
 // Type-only import: the canonical SlideIntent union we want to keep in
 // sync with the audit's PPTX-supported set.
-import type { SlideIntent } from '../report/pptx/types';
+import type { SlideIntent } from '../report/pptx/types.js';
 
 function slide(partial: Partial<OutlineItem>): OutlineItem {
   return {

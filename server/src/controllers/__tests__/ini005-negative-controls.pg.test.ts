@@ -87,7 +87,7 @@ function mockReqRes(opts: {
   return { req, res };
 }
 
-async function call(handler: (req: any, res: any, next: any) => Promise<void>, opts: any) {
+async function call(handler: (req: any, res: any, next: any) => Promise<unknown>, opts: any) {
   const { req, res } = mockReqRes(opts);
   await handler(req, res, () => {});
   return res;
