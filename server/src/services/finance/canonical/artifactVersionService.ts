@@ -27,6 +27,10 @@ import { v4 as uuidv4 } from 'uuid';
 import { withPinnedPostgresTransaction } from '../../../database/PostgresDatabase.js';
 import type { FinanceArtifactType } from './lifecycleService.js';
 import {
+  propagateStalenessInTransaction,
+  type FreshnessPropagationSummary,
+} from './lineageFreshnessService.js';
+import {
   checkSelfApproval,
   defaultRiskTierForArtifactType,
   validateTransition,
@@ -235,7 +239,16 @@ export type TransitionErrorCode =
   | 'REASON_REQUIRED';
 
 export type TransitionServiceResult =
-  | { ok: true; businessVersion: BusinessVersionRow }
+  | {
+      ok: true;
+      businessVersion: BusinessVersionRow;
+      /**
+       * AP-11 point 9 — present only for `invalidate` (WP-B03 §6.2 row 2), the
+       * one transition in this function that changes what downstream artifacts
+       * were built on. `null` for every other action, exactly as before.
+       */
+      freshnessPropagation?: FreshnessPropagationSummary | null;
+    }
   | {
       ok: false;
       code: TransitionErrorCode;
@@ -322,7 +335,20 @@ export async function transition(params: TransitionParams): Promise<TransitionSe
       ]
     );
 
-    return { ok: true, businessVersion: updated };
+    // AP-11 point 9 / WP-B03 §6.2 row 2: an ancestor becoming INVALIDATED makes
+    // its descendants STALE_SOURCE with the HIGHEST-severity reason. Additive:
+    // one call, same transaction, no other action's behaviour changes. It marks
+    // only — no recompute is scheduled (§6.3).
+    let freshnessPropagation: FreshnessPropagationSummary | null = null;
+    if (params.action === 'invalidate') {
+      freshnessPropagation = await propagateStalenessInTransaction(tx, {
+        organizationId: params.organizationId,
+        rootVersionId: params.businessVersionId,
+        reasonCode: 'SOURCE_INVALIDATED',
+      });
+    }
+
+    return { ok: true, businessVersion: updated, freshnessPropagation };
   });
 }
 
@@ -476,6 +502,17 @@ export type ApproveResult =
       businessVersion: BusinessVersionRow;
       computeSnapshotId: string;
       idempotentReplay: boolean;
+      /**
+       * AP-11 point 9 — what this approval did to downstream freshness
+       * (WP-B03 §6.2 row 1). `null` when the approved version supersedes
+       * nothing (a first approval has no old version whose children could go
+       * stale) and on an idempotent replay (the propagation already happened
+       * in the original call and is idempotent by construction, but replaying
+       * it would be work with no effect). Surfaced rather than swallowed so a
+       * caller can see `depthLimitReached` — requirement "obsłuż przekroczenie
+       * jawnie, nie po cichu".
+       */
+      freshnessPropagation?: FreshnessPropagationSummary | null;
     }
   | {
       ok: false;
@@ -744,7 +781,31 @@ export async function approveVersion(params: ApproveVersionParams): Promise<Appr
       ]
     );
 
-    return { ok: true, businessVersion: approved, computeSnapshotId, idempotentReplay: false };
+    // (e) AP-11 point 9 / WP-B03 §6.2 row 1 — a NEW approved version supersedes
+    // the previous one, so everything built on THE OLD VERSION is now stale.
+    // The propagation root is therefore `current.parent_version_id` (the row
+    // just demoted to SUPERSEDED above), not the freshly approved version:
+    // lineage edges point at concrete, immutable version ids (§1.2), so it is
+    // the old id that downstream artifacts reference. A first approval has no
+    // parent and nothing downstream to invalidate — the `if` keeps that path
+    // byte-identical to the pre-AP-11 behaviour.
+    //
+    // Same transaction as (a)-(d) on purpose: freshness must not be able to
+    // disagree with the approval that caused it, and a rolled-back approve
+    // must roll back its own consequences. It MARKS only — nothing here
+    // enqueues a compute job (§6.3 "świadomie brak auto-recompute"); see
+    // `lineageFreshnessService.ts`'s header for why the ADR's asynchronous
+    // phase-2 job was deliberately not used (no worker drains `compute_jobs`).
+    let freshnessPropagation: FreshnessPropagationSummary | null = null;
+    if (current.parent_version_id) {
+      freshnessPropagation = await propagateStalenessInTransaction(tx, {
+        organizationId: params.organizationId,
+        rootVersionId: current.parent_version_id,
+        reasonCode: 'NEW_SOURCE_VERSION',
+      });
+    }
+
+    return { ok: true, businessVersion: approved, computeSnapshotId, idempotentReplay: false, freshnessPropagation };
   });
 }
 
