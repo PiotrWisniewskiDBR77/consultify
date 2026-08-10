@@ -150,9 +150,26 @@ export interface InsertEdgeParams {
   computeRunId?: string | null;
 }
 
+/**
+ * `ASSUMPTION_SNAPSHOT_HASH_FORBIDDEN` is part of this union for the same reason it is part of
+ * `EdgeRankValidation`: `validateEdgeRank` can grow that rejection under a future stricter B03
+ * amendment, and `insertEdge` forwards pre-check rejections verbatim. It is NOT produced today
+ * (see the explicit fall-through in `insertEdge`), so callers exhaustively switching on `code`
+ * gain a branch, not a behaviour change. Keeping the two unions in sync is what makes that
+ * forward-compat comment true rather than aspirational — before this, forwarding the value did
+ * not even type-check (`tsc -p server/tsconfig.json` TS2322 at the `return preCheck`).
+ */
 export type InsertEdgeResult =
   | { ok: true; edge: LineageEdgeRow }
-  | { ok: false; code: 'LINEAGE_CYCLE_REJECTED' | 'ASSUMPTION_SNAPSHOT_HASH_REQUIRED' | 'DUPLICATE_EDGE'; message: string };
+  | {
+      ok: false;
+      code:
+        | 'LINEAGE_CYCLE_REJECTED'
+        | 'ASSUMPTION_SNAPSHOT_HASH_REQUIRED'
+        | 'ASSUMPTION_SNAPSHOT_HASH_FORBIDDEN'
+        | 'DUPLICATE_EDGE';
+      message: string;
+    };
 
 /**
  * Insert one lineage edge. Pre-validates rank/hash rules app-side for a fast,
