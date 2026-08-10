@@ -19,7 +19,29 @@ import { runDocumentQa } from '../documentQaService.js';
 import type { DocumentSchema, DocumentTemplate } from '../documentStudioTypes.js';
 import { DEFAULT_CONSULTING_FORMATTING_SCHEMA } from '../documentStudioTypes.js';
 
-function makeSchema(overrides: Partial<DocumentSchema> = {}): DocumentSchema {
+/**
+ * Section literals in this suite are authored without the (required)
+ * `orderIndex` field; the QA service derives ordering from array position.
+ * `makeSchema` therefore accepts order-free section inputs and stamps the
+ * positional index, keeping the fixtures type-correct without changing what
+ * the assertions exercise.
+ */
+type SectionInput = Omit<DocumentSchema['sections'][number], 'orderIndex'> & {
+  orderIndex?: number;
+};
+type SchemaOverrides = Partial<Omit<DocumentSchema, 'sections'>> & {
+  sections?: SectionInput[];
+};
+
+function withOrderIndex(sections: SectionInput[]): DocumentSchema['sections'] {
+  return sections.map((section, index) => ({
+    ...section,
+    orderIndex: section.orderIndex ?? index,
+  }));
+}
+
+function makeSchema(overrides: SchemaOverrides = {}): DocumentSchema {
+  const { sections, ...rest } = overrides;
   return {
     documentId: 'doc-completeness-1',
     artifactId: 'artifact-completeness-1',
@@ -33,11 +55,11 @@ function makeSchema(overrides: Partial<DocumentSchema> = {}): DocumentSchema {
     languageStyle: 'consulting',
     confidentiality: 'internal',
     formattingSchema: { ...DEFAULT_CONSULTING_FORMATTING_SCHEMA },
-    sections: [],
     sourceRefs: [],
     createdAt: '2026-01-01T00:00:00.000Z',
     updatedAt: '2026-01-01T00:00:00.000Z',
-    ...overrides,
+    ...rest,
+    sections: withOrderIndex(sections ?? ([] satisfies SectionInput[])),
   };
 }
 

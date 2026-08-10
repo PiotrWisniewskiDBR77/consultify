@@ -257,7 +257,7 @@ describe('Document QA — Language QA category', () => {
     const language = runDocumentQa(schema).categories.find(
       (category) => category.category === 'language'
     );
-    expect(language?.findings.filter((finding) => finding.code.includes('density'))).toEqual([]);
+    expect(language?.findings.filter((finding) => (finding.code ?? '').includes('density'))).toEqual([]);
     expect(language?.blocking).toBe(false);
   });
 
