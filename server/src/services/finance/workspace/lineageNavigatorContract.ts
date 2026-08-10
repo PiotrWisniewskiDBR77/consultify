@@ -670,6 +670,17 @@ export interface LineageRelatedPanel {
   focus: LineageNodeMetadata;
   /** Direct parents (depth 1 upstream), grouped by artifact type. */
   parents: readonly LineageRelatedGroup[];
+  /**
+   * Indirect ancestors (depth >= 2) — the mirror of `indirectDescendants`.
+   *
+   * Its absence was an asymmetry with a cost: the compact trail deliberately
+   * follows ONE parent per node (`pickPrimaryParent`), so for a node with
+   * several routes upstream every route but the chosen one existed nowhere in
+   * the navigator except the auxiliary full graph — which is off by default.
+   * `hasAlternatePaths` said "there is more to see" and then the panel had
+   * nowhere to see it.
+   */
+  indirectAncestors: readonly LineageRelatedGroup[];
   /** Direct children (depth 1 downstream). */
   children: readonly LineageRelatedGroup[];
   /** Indirect descendants (depth >= 2) — the "pośrednich potomków" of OWN-FIN-022. */
@@ -726,6 +737,38 @@ export function buildRelatedPanel(params: BuildRelatedPanelParams): LineageRelat
     (edge) => edge.source_version_id,
     1,
     scoped.resolve
+  );
+
+  const directParentIds = new Set(
+    incoming
+      .filter((e) => !LINEAGE_SIBLING_EDGE_TYPES.includes(e.edge_type))
+      .map((e) => e.source_version_id)
+  );
+  const ancestorDepths = computeDepths({
+    edges: ancestorEdges,
+    rootVersionId: params.focusVersionId,
+    direction: 'upstream',
+    organizationId: params.organizationId,
+  }).depths;
+  const indirectAncestorEntries = dedupeByVersionId(
+    ancestorEdges
+      .filter(
+        (e) =>
+          !LINEAGE_SIBLING_EDGE_TYPES.includes(e.edge_type) &&
+          e.source_version_id !== params.focusVersionId &&
+          !directParentIds.has(e.source_version_id) &&
+          // Reachability is checked explicitly, not assumed from "it was in the
+          // edge set": a caller may hand us a wider slice of the graph (a cached
+          // page, one query serving several focus nodes), and a node that is not
+          // upstream of the focus is not its ancestor — it could even be a
+          // DESCENDANT, which is how this filter first went wrong.
+          ancestorDepths.has(e.source_version_id)
+      )
+      .map((edge) => {
+        const metadata = scoped.resolve(edge.source_version_id);
+        if (!metadata) return null;
+        return relatedEntry(metadata, edge.edge_type, ancestorDepths.get(edge.source_version_id) ?? 2);
+      })
   );
 
   const descendantComputation = computeDepths({
@@ -823,6 +866,7 @@ export function buildRelatedPanel(params: BuildRelatedPanelParams): LineageRelat
   return {
     focus,
     parents: groupByArtifactType(applyTerminalFilter(parentEntries)),
+    indirectAncestors: groupByArtifactType(applyTerminalFilter(indirectAncestorEntries)),
     children: groupByArtifactType(applyTerminalFilter(childEntries)),
     indirectDescendants: groupByArtifactType(applyTerminalFilter(indirectEntries)),
     siblings: applyTerminalFilter(siblings),

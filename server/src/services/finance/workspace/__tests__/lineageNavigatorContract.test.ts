@@ -886,3 +886,77 @@ describe('AP-11 lineageNavigatorContract — cycle anomalies', () => {
     expect(trail.tenant.foreignEdgeIds).toEqual(['foreign-back-edge']);
   });
 });
+
+// ===========================================================================
+// AP-11 — ancestors/descendants symmetry.
+// ===========================================================================
+
+describe('AP-11 lineageNavigatorContract — indirect ancestors', () => {
+  it('POSITIVE CONTROL — the upstream routes the trail did not take are in the panel', () => {
+    // val1's trail is sc2 -> bm4 -> an2 -> sp3 (one primary parent per node);
+    // sp3 -> bm4 is a second route upstream that the trail cannot show.
+    const panel = buildRelatedPanel({
+      organizationId: ORG,
+      focusVersionId: 'val1',
+      ancestorEdges: ANCESTOR_EDGES,
+      descendantEdges: [],
+      resolve,
+    })!;
+    expect(panel.parents.map((g) => [g.artifactType, g.count])).toEqual([['PREDICTION_SCENARIO', 1]]);
+    const indirect = panel.indirectAncestors.flatMap((g) => g.entries);
+    expect(indirect.map((e) => e.metadata.versionId).sort()).toEqual(['an2', 'bm4', 'sp3']);
+    // Depths are real BFS distances, not a flat "2".
+    expect(indirect.find((e) => e.metadata.versionId === 'bm4')!.depth).toBe(2);
+    expect(indirect.find((e) => e.metadata.versionId === 'an2')!.depth).toBe(3);
+    expect(indirect.find((e) => e.metadata.versionId === 'sp3')!.depth).toBe(3);
+    // Grouped in stage order, exactly like every other group in the panel.
+    expect(panel.indirectAncestors.map((g) => g.artifactType)).toEqual([
+      'STATEMENT_PACK',
+      'HISTORICAL_ANALYSIS',
+      'BASELINE_MODEL',
+    ]);
+  });
+
+  it('never lists a DIRECT parent again as an indirect ancestor', () => {
+    // sp3 is both a direct parent of bm4 and an indirect one (via an2).
+    const panel = buildRelatedPanel({
+      organizationId: ORG,
+      focusVersionId: 'bm4',
+      ancestorEdges: ANCESTOR_EDGES,
+      descendantEdges: [],
+      resolve,
+    })!;
+    expect(panel.parents.flatMap((g) => g.entries).map((e) => e.metadata.versionId).sort()).toEqual([
+      'an2',
+      'sp3',
+    ]);
+    expect(panel.indirectAncestors).toEqual([]);
+  });
+
+  it('NEGATIVE CONTROL — a node with only a direct parent has no indirect ancestors', () => {
+    const panel = buildRelatedPanel({
+      organizationId: ORG,
+      focusVersionId: 'an2',
+      ancestorEdges: [edge('sp3', 'STATEMENT_PACK', 'an2', 'HISTORICAL_ANALYSIS', 'STATEMENT_TO_ANALYSIS')],
+      descendantEdges: [],
+      resolve,
+    })!;
+    expect(panel.parents.map((g) => g.artifactType)).toEqual(['STATEMENT_PACK']);
+    expect(panel.indirectAncestors).toEqual([]);
+  });
+
+  it('applies the terminal filter to indirect ancestors like every other group', () => {
+    const panel = buildRelatedPanel({
+      organizationId: ORG,
+      focusVersionId: 'val1',
+      ancestorEdges: ANCESTOR_EDGES,
+      descendantEdges: [],
+      resolve: (id) => (id === 'sp3' ? { ...NODES.sp3, status: 'ARCHIVED' } : NODES[id]),
+      terminalVisibility: 'hide',
+    })!;
+    expect(panel.indirectAncestors.flatMap((g) => g.entries).map((e) => e.metadata.versionId).sort()).toEqual(
+      ['an2', 'bm4']
+    );
+    expect(panel.hiddenTerminalCount).toBe(1);
+  });
+});
