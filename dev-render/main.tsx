@@ -256,6 +256,9 @@ const ResultsVNextKpiRegistryScreen = React.lazy(
 const ResultsVNextRoiRegistryScreen = React.lazy(
   () => import('./screens/results-vnext-roi-registry')
 );
+const ResultsVNextKpiScorecardsScreen = React.lazy(
+  () => import('./screens/results-vnext-kpi-scorecards')
+);
 
 const SCREENS: Record<string, { label: string; render: () => React.ReactElement }> = {
   'results-vnext-registry-shell': {
@@ -272,6 +275,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'RN-G2 P2 — REALNY rejestr ROI (roiRegistryPresenters + ResultsVNextRegistryShell): All cases + Benefits realization, honest NPV/IRR/payback, lock badges. &tab=all|benefits &state=ready|loading|empty|error &selected=<caseId|none> &calc=loading|ready',
     render: () => <ResultsVNextRoiRegistryScreen />,
+  },
+  'results-vnext-kpi-scorecards': {
+    label:
+      'RN-G2 P1 #8 — REALNY rejestr Kart Wyników KPI (kpiScorecardPresenters + ResultsVNextRegistryShell): lista (zakładka Karty wyników) + szczegóły karty (Pozycje/Migawki), status GET .../status, lock NO_MEMBERS. &view=list|detail &tab=items|snapshots &state=ready|loading|empty|error|forbidden &selected=<id|none> &scorecard=sc-1|sc-2|sc-3|sc-4',
+    render: () => <ResultsVNextKpiScorecardsScreen />,
   },
   'mw-007-calendar-narrow-viewport': {
     label:

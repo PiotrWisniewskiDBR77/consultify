@@ -111,6 +111,16 @@ const ResultsOkrRegistryPage = lazyWithRetry(() =>
     default: m.default,
   }))
 );
+// RN-G2 P1 #8 (2026-08-10) — KPI Scorecards detail route
+// (`/results/kpi/scorecards/:scorecardId`, master plan §11). List-only
+// surface (items + review snapshots as StandardTable tabs) inside the same
+// ResultsVNextRegistryShell the KPI registry uses — see the component's own
+// header comment for the deliberate archetype deferral.
+const ResultsKpiScorecardDetailPage = lazyWithRetry(() =>
+  import('@/components/ResultsVNext/kpiScorecards/ResultsKpiScorecardDetailPage').then((m) => ({
+    default: m.default,
+  }))
+);
 
 const ConclusionsHub = lazyWithRetry(() =>
   import('@/components/Conclusions/ConclusionsHub').then((m) => ({ default: m.default }))
@@ -2481,6 +2491,37 @@ export const AppRoutes: React.FC = () => {
                 >
                   <RouteErrorBoundary>
                     <ResultsKpiRegistryPage />
+                  </RouteErrorBoundary>
+                </ProductionModuleGate>
+              </MainLayout>
+            </BetaGate>
+          }
+        />
+        {/* RN-G2 P1 #8 (2026-08-10) — KPI Scorecards detail. Same entitlement
+            chain as ROUTES.RESULTS_KPI.ROOT above (reused, not reinvented);
+            internally gated by the SAME `kpiRegistry` flag (one flag per
+            domain, not per screen — resultsVNextFeatureFlags.ts's own
+            documented convention). */}
+        <Route
+          path={ROUTES.RESULTS_KPI.SCORECARD}
+          element={
+            <BetaGate moduleId="MODULE_BENEFITS">
+              <MainLayout
+                breadcrumbs={
+                  breadcrumbs || [
+                    t('sidebar.results', 'Results'),
+                    t('results.kpi', 'KPI'),
+                    t('results.kpiScorecard', 'Scorecard'),
+                  ]
+                }
+                noPadding
+              >
+                <ProductionModuleGate
+                  enabled={!hideNonCoreModulesOnPublicProduction}
+                  moduleName="Results"
+                >
+                  <RouteErrorBoundary>
+                    <ResultsKpiScorecardDetailPage />
                   </RouteErrorBoundary>
                 </ProductionModuleGate>
               </MainLayout>

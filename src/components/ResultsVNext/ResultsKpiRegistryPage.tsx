@@ -39,9 +39,23 @@
  * true ABAC deny reason for KPI today, so this page always renders
  * `NO_VISIBILITY_RECORD` (RN_G1_PLATFORM_DESIGN.md §B's own documented
  * fail-closed default) rather than inventing a reason the API never told it.
+ *
+ * -- RN-G2 P1 #8 (2026-08-10) — "Scorecards" is a THIRD Menu 2 pill added
+ * alongside the pre-existing "My"/"Org" pair (task: "Lista kart wyników —
+ * jako NOWA zakładka Menu 2 na istniejącym ekranie /results/kpi"). Unlike
+ * My/Org (which filter the SAME KPI-definition table by owner scope), the
+ * Scorecards pill swaps the entire table+preview to a DIFFERENT registry
+ * (`GET /kpi/scorecards`, `./kpiScorecards/kpiScorecardApi.ts`) — same
+ * "Menu 2 tab = different registry" pattern `../roi/ResultsRoiHub.tsx`
+ * already establishes for "All cases"/"Benefits realization". See
+ * `./kpiScorecards/kpiScorecardPresenters.tsx` for the columns/rowMenu/
+ * preview builders and `./kpiScorecards/ResultsKpiScorecardDetailPage.tsx`
+ * for the `/results/kpi/scorecards/:scorecardId` full-record route this tab
+ * links into ("Otwórz kartę"/"Otwórz pełną kartę").
  */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 
 import { EmptyState } from '@/components/shared/states';
@@ -53,6 +67,7 @@ import {
 } from '@/components/standard';
 import { StatusChip, type StatusTone } from '@/components/ui/primitives';
 import { useAppStore } from '@/store/useAppStore';
+import { ROUTES } from '@/routes/routeConfig';
 import { Blocks } from 'lucide-react';
 
 import { HonestValueCell } from './HonestValue';
@@ -72,6 +87,18 @@ import { LifecycleLockBadge, lockedRowMenuAction } from './LifecycleLockBadge';
 import { isResultsVNextFlagEnabled } from './resultsVNextFeatureFlags';
 import type { ResultsVNextForbiddenDetail } from './types';
 import { ResultsVNextRegistryShell, type ResultsVNextTableProps } from './ResultsVNextRegistryShell';
+import {
+  activateKpiScorecard,
+  archiveKpiScorecard,
+  listKpiScorecards,
+  suspendKpiScorecard,
+  type KpiScorecardDto,
+} from './kpiScorecards/kpiScorecardApi';
+import {
+  buildKpiScorecardColumns,
+  buildKpiScorecardPreview,
+  buildKpiScorecardRowMenu,
+} from './kpiScorecards/kpiScorecardPresenters';
 
 const STATUS_TONE: Record<KpiStatus, StatusTone> = {
   draft: 'info',
@@ -376,15 +403,32 @@ export const ResultsKpiRegistryPage: React.FC = () => {
   const currentUser = useAppStore((s) => s.currentUser);
   const enabled = isResultsVNextFlagEnabled('kpiRegistry');
 
+  const navigate = useNavigate();
   const [rows, setRows] = useState<KpiDefinitionDto[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [scope, setScope] = useState<'my' | 'org'>('my');
+  // RN-G2 P1 #8 — third value 'scorecards' added alongside the pre-existing
+  // 'my'/'org' pair (see file header). `scope` below stays scoped to ONLY
+  // the my/org KPI-filtering meaning it always had — renamed nowhere, kept
+  // separate from `tab` so the scorecards branch never touches KPI-scope
+  // logic.
+  const [tab, setTab] = useState<'my' | 'org' | 'scorecards'>('my');
+  const scope: 'my' | 'org' = tab === 'org' ? 'org' : 'my';
   const [statusFilter, setStatusFilter] = useState<KpiStatus | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [measurement, setMeasurement] = useState<KpiMeasurementDto | null | 'loading'>(null);
   const [pending, setPending] = useState<PendingAction>(null);
   const [forbidden, setForbidden] = useState<ResultsVNextForbiddenDetail | null>(null);
+
+  // RN-G2 P1 #8 — Scorecards tab state (own fetch, own selection, own
+  // pending-action tracking; entirely separate from the KPI-definition
+  // rows/selection above — no shared identity between a `KpiDefinitionDto`
+  // and a `KpiScorecardDto`).
+  const [scorecardRows, setScorecardRows] = useState<KpiScorecardDto[]>([]);
+  const [scorecardsLoading, setScorecardsLoading] = useState(false);
+  const [scorecardsError, setScorecardsError] = useState<string | null>(null);
+  const [selectedScorecardId, setSelectedScorecardId] = useState<string | null>(null);
+  const [scorecardPending, setScorecardPending] = useState(false);
 
   const fetchRows = useCallback(async () => {
     setLoading(true);
@@ -466,6 +510,42 @@ export const ResultsKpiRegistryPage: React.FC = () => {
     [fetchRows]
   );
 
+  const fetchScorecardRows = useCallback(async () => {
+    setScorecardsLoading(true);
+    setScorecardsError(null);
+    try {
+      const items = await listKpiScorecards({});
+      setScorecardRows(items);
+    } catch (err) {
+      setScorecardsError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setScorecardsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!enabled || tab !== 'scorecards') return;
+    void fetchScorecardRows();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [enabled, tab]);
+
+  const runScorecardLifecycleAction = useCallback(
+    async (row: KpiScorecardDto, action: 'activate' | 'suspend' | 'archive') => {
+      setScorecardPending(true);
+      try {
+        const runner =
+          action === 'activate' ? activateKpiScorecard : action === 'suspend' ? suspendKpiScorecard : archiveKpiScorecard;
+        await runner({ scorecardId: row.scorecardId, expectedVersion: row.rowVersion });
+        await fetchScorecardRows();
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : String(err));
+      } finally {
+        setScorecardPending(false);
+      }
+    },
+    [fetchScorecardRows]
+  );
+
   const scopedRows = useMemo(() => {
     if (scope === 'my' && currentUser?.id) {
       return rows.filter((r) => r.ownerUserId === currentUser.id);
@@ -505,6 +585,82 @@ export const ResultsKpiRegistryPage: React.FC = () => {
               : 'This registry is still being built. Check back later, or ask an administrator for flag access.'
           }
           compact
+        />
+      </div>
+    );
+  }
+
+  if (tab === 'scorecards') {
+    // RN-G2 P1 #8 — see file header. Entirely separate table/preview wiring
+    // from the KPI-definition branch below (different DTO, different
+    // `persistKey` — `results-vnext.kpi-scorecards`, NEVER the legacy
+    // `results.kpi-scorecards` T36 key, see kpiScorecardApi.ts/task brief).
+    const scorecardTableRows = scorecardRows.map(
+      (r) => ({ ...r, id: r.scorecardId }) as unknown as Record<string, unknown> & { id: string }
+    );
+    const selectedScorecard = scorecardRows.find((r) => r.scorecardId === selectedScorecardId) ?? null;
+    const openDetail = (scorecardId: string) =>
+      navigate(ROUTES.RESULTS_KPI.SCORECARD.replace(':scorecardId', scorecardId));
+
+    return (
+      <div className="h-full" data-testid="results-vnext-kpi-registry-page">
+        <ResultsVNextRegistryShell
+          domain="kpi"
+          moduleBar={{
+            tabs: [
+              { id: 'my', label: isPolish ? 'Moje' : 'My' },
+              { id: 'org', label: isPolish ? 'Organizacja' : 'Org' },
+              { id: 'scorecards', label: isPolish ? 'Karty wyników' : 'Scorecards' },
+            ],
+            activeTab: tab,
+            onTabChange: (id) => setTab(id === 'org' ? 'org' : id === 'scorecards' ? 'scorecards' : 'my'),
+            showTabCounts: false,
+            viewModes: ['table'],
+            viewMode: 'table',
+          }}
+          table={{
+            columns: buildKpiScorecardColumns(isPolish, currentUser?.id),
+            data: scorecardTableRows,
+            persistKey: 'results-vnext.kpi-scorecards',
+            loading: scorecardsLoading,
+            error: scorecardsError,
+            onRetry: () => void fetchScorecardRows(),
+            empty:
+              !scorecardsLoading && !scorecardsError && scorecardRows.length === 0
+                ? {
+                    title: isPolish ? 'Brak kart wyników' : 'No scorecards yet',
+                    description: isPolish
+                      ? 'Utwórz pierwszą kartę wyników, aby zacząć grupować KPI.'
+                      : 'Create the first scorecard to start grouping KPIs.',
+                  }
+                : undefined,
+            selectedRowId: selectedScorecardId,
+            onRowClick: (row) => setSelectedScorecardId(String(row.id)),
+            rowMenu: (row) =>
+              buildKpiScorecardRowMenu(row as unknown as KpiScorecardDto, {
+                isPolish,
+                busy: scorecardPending,
+                onOpenDetail: openDetail,
+                onActivate: (r) => void runScorecardLifecycleAction(r, 'activate'),
+                onSuspend: (r) => void runScorecardLifecycleAction(r, 'suspend'),
+                onArchive: (r) => void runScorecardLifecycleAction(r, 'archive'),
+              }),
+            defaultSort: { columnId: 'updatedAt', direction: 'desc' },
+          }}
+          preview={
+            selectedScorecard
+              ? buildKpiScorecardPreview(selectedScorecard, {
+                  isPolish,
+                  currentUserId: currentUser?.id,
+                  busy: scorecardPending,
+                  onOpenDetail: openDetail,
+                  onActivate: (r) => void runScorecardLifecycleAction(r, 'activate'),
+                  onSuspend: (r) => void runScorecardLifecycleAction(r, 'suspend'),
+                  onArchive: (r) => void runScorecardLifecycleAction(r, 'archive'),
+                  onClose: () => setSelectedScorecardId(null),
+                })
+              : null
+          }
         />
       </div>
     );
@@ -564,9 +720,10 @@ export const ResultsKpiRegistryPage: React.FC = () => {
           tabs: [
             { id: 'my', label: isPolish ? 'Moje' : 'My' },
             { id: 'org', label: isPolish ? 'Organizacja' : 'Org' },
+            { id: 'scorecards', label: isPolish ? 'Karty wyników' : 'Scorecards' },
           ],
-          activeTab: scope,
-          onTabChange: (id) => setScope(id === 'org' ? 'org' : 'my'),
+          activeTab: tab,
+          onTabChange: (id) => setTab(id === 'org' ? 'org' : id === 'scorecards' ? 'scorecards' : 'my'),
           showTabCounts: false,
           viewModes: ['table'],
           viewMode: 'table',
