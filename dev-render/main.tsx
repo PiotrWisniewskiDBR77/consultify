@@ -259,6 +259,9 @@ const ResultsVNextRoiRegistryScreen = React.lazy(
 const ResultsVNextOkrRegistryScreen = React.lazy(
   () => import('./screens/results-vnext-okr-registry')
 );
+const ResultsVNextKpiScorecardsScreen = React.lazy(
+  () => import('./screens/results-vnext-kpi-scorecards')
+);
 
 const SCREENS: Record<string, { label: string; render: () => React.ReactElement }> = {
   'results-vnext-registry-shell': {
@@ -280,6 +283,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'RN-G2 P3 #23 — REALNY rejestr OKR (okrRegistryPresenters + ResultsVNextRegistryShell): Organization/My/Company tabs, honest progress/confidence, lock badges (draft-editable vs locked). &tab=org|my|company &state=ready|loading|empty|error &selected=<setId|none>',
     render: () => <ResultsVNextOkrRegistryScreen />,
+  },
+  'results-vnext-kpi-scorecards': {
+    label:
+      'RN-G2 P1 #8 — REALNY rejestr Kart Wyników KPI (kpiScorecardPresenters + ResultsVNextRegistryShell): lista (zakładka Karty wyników) + szczegóły karty (Pozycje/Migawki), status GET .../status, lock NO_MEMBERS. &view=list|detail &tab=items|snapshots &state=ready|loading|empty|error|forbidden &selected=<id|none> &scorecard=sc-1|sc-2|sc-3|sc-4',
+    render: () => <ResultsVNextKpiScorecardsScreen />,
   },
   'mw-007-calendar-narrow-viewport': {
     label:

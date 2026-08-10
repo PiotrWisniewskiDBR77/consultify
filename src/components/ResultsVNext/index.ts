@@ -36,6 +36,13 @@ export { ResultsRoiHub } from './roi/ResultsRoiHub';
 // (StandardTable/Preview builders shared by the live Hub and the dev-render
 // QA harness). Mirrors the `roi/` subfolder exactly.
 export { ResultsOkrHub } from './okr/ResultsOkrHub';
+// RN-G2 P1 #8 — KPI Scorecards (registry tab on ResultsKpiRegistryPage +
+// its own `/results/kpi/scorecards/:scorecardId` detail route). See
+// `kpiScorecards/` subfolder: `kpiScorecardApi.ts` (fetch client),
+// `kpiScorecardMappers.ts` (status/lock/label pure helpers),
+// `kpiScorecardPresenters.tsx` (StandardTable/Preview builders shared by the
+// live screens and the dev-render QA harness).
+export { ResultsKpiScorecardDetailPage } from './kpiScorecards/ResultsKpiScorecardDetailPage';
 export {
   isResultsVNextFlagEnabled,
   RESULTS_VNEXT_FLAG_KEYS,
