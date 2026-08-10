@@ -248,7 +248,16 @@ export type RunDcfFcffValuationResult =
         | 'WACC_COMPUTE_FAILED'
         | 'FCFF_NOT_FULLY_PRESENT'
         | 'TERMINAL_G_MUST_BE_LESS_THAN_WACC'
-        | 'BUSINESS_VERSION_NOT_FOUND';
+        | 'BUSINESS_VERSION_NOT_FOUND'
+        // W9-B-2 fix: `completeJobSuccess()` reported `NOT_RUNNING` (job
+        // cancelled/lease-expired/already terminal before we could commit its
+        // output) — never report success for a run whose compute_job_outputs
+        // commit did not happen. See W2_FALSE_SUCCESS_W9B2_report.md. Before
+        // this fix, `completed.ok` was checked ONLY to pick `finalJob` — the
+        // function still unconditionally returned `{ ok: true, ... }` even
+        // when `completed.ok === false`. That was the canonical instance of
+        // this defect.
+        | 'JOB_NOT_RUNNING';
       message: string;
     };
 
@@ -382,6 +391,22 @@ export async function runDcfFcffValuation(params: RunDcfFcffValuationParams): Pr
     outputWorkingRevisionId: bv.source_working_revision_id,
     contentSemanticHash,
   });
+  // W9-B-2 fix: `completed.ok` used to be checked ONLY to decide `finalJob`
+  // below — this function still unconditionally returned `{ ok: true, ... }`
+  // even when completeJobSuccess() reported NOT_RUNNING (job cancelled/
+  // lease-expired/already terminal), the canonical "false success" instance
+  // of this defect. Now: NOT_RUNNING is propagated as a typed failure and we
+  // stop here — never report success for a run whose compute_job_outputs
+  // commit did not happen. OUTPUT_ALREADY_COMMITTED is treated as an
+  // idempotent-safe outcome — see report §"NOT_RUNNING vs
+  // OUTPUT_ALREADY_COMMITTED".
+  if (!completed.ok && completed.code === 'NOT_RUNNING') {
+    return {
+      ok: false,
+      code: 'JOB_NOT_RUNNING',
+      message: `runDcfFcffValuation: completeJobSuccess reported NOT_RUNNING for job ${runningJob.id}: ${completed.message}`,
+    };
+  }
   // W10-D01 fix — see baselineComputeService.ts's identical call for the full rationale.
   await stampWorkingRevisionComputeIdentity({
     organizationId: params.organizationId,
