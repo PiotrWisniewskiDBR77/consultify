@@ -497,7 +497,7 @@ suite('caseCoreService — Case Core against a real PostgreSQL (CW-P01, E1)', ()
           contractedClosureType: 'DELIVERY_COMPLETED',
           createdByActorId: noMembershipActor,
         })
-      ).rejects.toThrow(/not_org_member/);
+      ).rejects.toMatchObject({ code: 'not_org_member' });
 
       await expect(
         caseCoreService.createCase({
@@ -506,7 +506,7 @@ suite('caseCoreService — Case Core against a real PostgreSQL (CW-P01, E1)', ()
           contractedClosureType: 'DELIVERY_COMPLETED',
           createdByActorId: revokedActor,
         })
-      ).rejects.toThrow(/not_org_member/);
+      ).rejects.toMatchObject({ code: 'not_org_member' });
 
       const rows = await readCaseCoreRowsForProject(projectId);
       expect(rows).toHaveLength(0);
@@ -539,7 +539,7 @@ suite('caseCoreService — Case Core against a real PostgreSQL (CW-P01, E1)', ()
 
       await expect(
         caseCoreService.transitionStatus(created.caseId, 'ACTIVE', { actorUserId: outsiderActor })
-      ).rejects.toThrow(/case_access_denied/);
+      ).rejects.toMatchObject({ code: 'case_access_denied' });
 
       const row = await readCaseCoreRow(created.caseId);
       expect(row?.case_status).toBe('DRAFT');
@@ -557,7 +557,7 @@ suite('caseCoreService — Case Core against a real PostgreSQL (CW-P01, E1)', ()
     try {
       await expect(
         caseCoreService.listCasesForOrganization(orgId, undefined, noMembershipActor)
-      ).rejects.toThrow(/not_org_member/);
+      ).rejects.toMatchObject({ code: 'not_org_member' });
     } finally {
       await teardown([orgId], [], [noMembershipActor]);
     }
@@ -596,7 +596,7 @@ suite('caseCoreService — Case Core against a real PostgreSQL (CW-P01, E1)', ()
       expect(nonexistentError).not.toBeNull();
       expect(deniedError).not.toBeNull();
       expect(nonexistentError?.message).toBe(deniedError?.message);
-      expect(nonexistentError?.message).toMatch(/case_access_denied/);
+      expect((nonexistentError as { code?: string } | null)?.code).toBe('case_access_denied');
 
       // A properly-membered actor succeeds.
       const found = await caseCoreService.getCase({ caseId: created.caseId }, ownerActor);

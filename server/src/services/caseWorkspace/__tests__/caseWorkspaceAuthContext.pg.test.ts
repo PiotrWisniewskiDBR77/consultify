@@ -149,11 +149,16 @@ suite('caseWorkspaceAuthContext — Authorization Context against a real Postgre
   ): Promise<{ orgId: string; projectId: string; caseId: string }> {
     const orgId = await seedOrg(label);
     const projectId = await seedProject(orgId, label);
+    // caseCoreService.createCase now requires the creator to be an active org
+    // member (CW-P12 retrofit) — seed one instead of using a bare, unmembered
+    // actor id, which createCase would now reject with not_org_member.
+    const creatorUserId = await seedUser(orgId, `case-creator-${label}`);
+    await seedMember(orgId, creatorUserId, 'MEMBER');
     const created = await caseCoreService.createCase({
       projectId,
       organizationId: orgId,
       contractedClosureType: 'DELIVERY_COMPLETED',
-      createdByActorId: `actor-authctx-case-${label}`,
+      createdByActorId: creatorUserId,
     });
     return { orgId, projectId, caseId: created.caseId };
   }

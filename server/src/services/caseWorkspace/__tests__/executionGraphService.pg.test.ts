@@ -939,7 +939,7 @@ suite('executionGraphService — Execution Graph against a real PostgreSQL (CW-P
           evaluatedAt: new Date().toISOString(),
           recordedByActorId: noMembershipActor,
         })
-      ).rejects.toThrow(/case_access_denied/);
+      ).rejects.toMatchObject({ code: 'case_access_denied' });
       expect(await readGatewayEvaluationRows(gatewayNodeRunId)).toHaveLength(0);
 
       const acceptanceNodeRunId = `node-auth-create-acc-${randomUUID()}`;
@@ -954,7 +954,7 @@ suite('executionGraphService — Execution Graph against a real PostgreSQL (CW-P
           occurredAt: new Date().toISOString(),
           recordedByActorId: noMembershipActor,
         })
-      ).rejects.toThrow(/case_access_denied/);
+      ).rejects.toMatchObject({ code: 'case_access_denied' });
       expect(await readNodeResultAcceptanceRows(acceptanceNodeRunId)).toHaveLength(0);
     } finally {
       await teardown({

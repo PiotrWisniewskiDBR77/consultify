@@ -630,7 +630,7 @@ suite('caseHistoryService — Case History & Value Measurements against a real P
           occurredAt: new Date().toISOString(),
           summary: 'should not land',
         })
-      ).rejects.toThrow(/case_access_denied/);
+      ).rejects.toMatchObject({ code: 'case_access_denied' });
 
       await expect(
         caseHistoryService.appendCaseHistoryEvent({
@@ -641,7 +641,7 @@ suite('caseHistoryService — Case History & Value Measurements against a real P
           occurredAt: new Date().toISOString(),
           summary: 'should not land either',
         })
-      ).rejects.toThrow(/case_access_denied/);
+      ).rejects.toMatchObject({ code: 'case_access_denied' });
 
       const rows = await readHistoryEventRowsForCase(caseId);
       expect(rows).toHaveLength(0);

@@ -963,7 +963,7 @@ suite(
               createdByActorId: noMembershipActor,
             })
           )
-        ).rejects.toThrow(/case_access_denied/);
+        ).rejects.toMatchObject({ code: 'case_access_denied' });
 
         const rowsAfterFailedCreate = await readProposalRowsForCase(caseId);
         expect(rowsAfterFailedCreate).toHaveLength(0);
@@ -996,7 +996,7 @@ suite(
             }),
             submitted.version
           )
-        ).rejects.toThrow(/case_access_denied/);
+        ).rejects.toMatchObject({ code: 'case_access_denied' });
 
         const row = await readProposalRow(created.actionProposalId);
         expect(row?.status).toBe('PENDING_REVIEW');

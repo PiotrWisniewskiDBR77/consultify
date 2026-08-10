@@ -778,7 +778,7 @@ suite('waitSubscriptionService — Wait Subscription against a real PostgreSQL (
           },
           noMembershipActor
         )
-      ).rejects.toThrow(/case_access_denied/);
+      ).rejects.toMatchObject({ code: 'case_access_denied' });
 
       const rows = await control.query<CaseWorkspaceWaitDbRow>(
         `SELECT * FROM case_workspace_waits WHERE case_id = $1`,

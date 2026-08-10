@@ -608,14 +608,14 @@ suite('capabilityRegistryService — Capability Registry against a real PostgreS
     try {
       await expect(
         capabilityRegistryService.registerCapability(buildRegisterInput(`${tag}-member`, memberActorId), orgId)
-      ).rejects.toThrow(/insufficient_org_role/);
+      ).rejects.toMatchObject({ code: 'insufficient_org_role' });
 
       await expect(
         capabilityRegistryService.registerCapability(
           buildRegisterInput(`${tag}-outsider`, noMembershipActorId),
           orgId
         )
-      ).rejects.toThrow(/not_org_member/);
+      ).rejects.toMatchObject({ code: 'not_org_member' });
 
       const rows = await control.query<CapabilityRegistryDbRow>(
         `SELECT * FROM case_workspace_capabilities WHERE capability_id LIKE $1`,
@@ -640,7 +640,7 @@ suite('capabilityRegistryService — Capability Registry against a real PostgreS
           registered.version,
           orgId
         )
-      ).rejects.toThrow(/insufficient_org_role/);
+      ).rejects.toMatchObject({ code: 'insufficient_org_role' });
 
       const rowAfter = await readCapabilityRow(registered.capabilityRegistryId);
       expect(rowAfter?.health).toBe('UNKNOWN');

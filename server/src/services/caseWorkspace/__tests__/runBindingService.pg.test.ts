@@ -712,7 +712,7 @@ suite('runBindingService — Run Binding against a real PostgreSQL (CW-P04, E4)'
           casePlanVersionId: published.casePlanVersionId,
           boundByActorId: noMembershipActor,
         })
-      ).rejects.toThrow(/case_access_denied/);
+      ).rejects.toMatchObject({ code: 'case_access_denied' });
 
       const row = await readBindingRow(runId);
       expect(row).toBeNull();

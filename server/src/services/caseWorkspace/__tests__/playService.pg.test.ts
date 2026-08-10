@@ -381,8 +381,15 @@ suite('playService — Play (reusable Process) against a real PostgreSQL (CW-P08
     const memberUserId = await seedUser(orgId, 'member-role');
     const adminUserId = await seedUser(orgId, 'admin-role');
     try {
-      // The definition's own owner_actor_id/created_by_actor_id is
-      // ownerUserId, but ownerUserId has NO organization_members row at all.
+      // createProcessDefinition now requires the creator to be an active org
+      // member (CW-P12 retrofit) — seed ownerUserId as a member first so
+      // creation itself succeeds, then REVOKE that membership before the
+      // share-gate assertions below, so (a) still proves "having been the
+      // definition's own owner/creator is not sufficient without CURRENT
+      // membership" — the same point the test originally made via a
+      // never-membered actor, now via a since-revoked one, since the create
+      // path itself is no longer reachable without membership at all.
+      await seedMember(orgId, ownerUserId, 'MEMBER');
       const definition = await playService.createProcessDefinition({
         organizationId: orgId,
         name: 'Share gate play',
@@ -396,8 +403,15 @@ suite('playService — Play (reusable Process) against a real PostgreSQL (CW-P08
       // published-version gate.
       await createPublishedVersion(definition.processDefinitionId, ownerUserId, 'share-gate-v1');
 
+      // Revoke ownerUserId's membership now that creation is done — (a)
+      // below must still reject, proving ownership alone never suffices.
+      await control.query(`DELETE FROM organization_members WHERE organization_id = $1 AND user_id = $2`, [
+        orgId,
+        ownerUserId,
+      ]);
+
       // (a) ownerUserId (the definition's own owner/creator) has NO
-      // organization_members row for this org at all.
+      // organization_members row for this org anymore (revoked above).
       await expect(
         playService.shareProcessDefinition(definition.processDefinitionId, 'ORGANIZATION', { actorUserId: ownerUserId }, definition.version)
       ).rejects.toThrow(/process_definition_share_not_authorized/);
@@ -766,7 +780,7 @@ suite('playService — Play (reusable Process) against a real PostgreSQL (CW-P08
           ownerActorId: noMembershipActor,
           createdByActorId: noMembershipActor,
         })
-      ).rejects.toThrow(/not_org_member/);
+      ).rejects.toMatchObject({ code: 'not_org_member' });
 
       const definition = await playService.createProcessDefinition({
         organizationId: orgId,
@@ -782,7 +796,7 @@ suite('playService — Play (reusable Process) against a real PostgreSQL (CW-P08
           semanticGraph: validGraph('auth-create-no-membership'),
           createdByActorId: noMembershipActor,
         })
-      ).rejects.toThrow(/not_org_member/);
+      ).rejects.toMatchObject({ code: 'not_org_member' });
 
       const versions = await playService.listProcessVersionsForDefinition(
         definition.processDefinitionId,

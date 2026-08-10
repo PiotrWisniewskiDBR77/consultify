@@ -651,7 +651,7 @@ suite(
             relation: 'EVIDENCE',
             linkedByActorId: noMembershipActor,
           })
-        ).rejects.toThrow(/case_access_denied/);
+        ).rejects.toMatchObject({ code: 'case_access_denied' });
 
         const link = await artifactLinkService.linkArtifactToCase({
           caseId,

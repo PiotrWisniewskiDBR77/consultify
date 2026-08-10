@@ -610,7 +610,7 @@ suite('casePlanVersionService — Case Plan Version against a real PostgreSQL (C
           semanticGraph: validGraph('auth-create'),
           createdByActorId: noMembershipActor,
         })
-      ).rejects.toThrow(/case_access_denied/);
+      ).rejects.toMatchObject({ code: 'case_access_denied' });
 
       const rows = await readPlanVersionRowsForCase(caseId);
       expect(rows).toHaveLength(0);
@@ -641,7 +641,7 @@ suite('casePlanVersionService — Case Plan Version against a real PostgreSQL (C
           { actorUserId: suspendedActor },
           draft.version
         )
-      ).rejects.toThrow(/case_access_denied/);
+      ).rejects.toMatchObject({ code: 'case_access_denied' });
 
       const row = await readPlanVersionRow(draft.casePlanVersionId);
       expect(row?.status).toBe('DRAFT');
@@ -667,11 +667,11 @@ suite('casePlanVersionService — Case Plan Version against a real PostgreSQL (C
 
       await expect(
         casePlanVersionService.getPlanVersion(draft.casePlanVersionId, noMembershipActor)
-      ).rejects.toThrow(/case_access_denied/);
+      ).rejects.toMatchObject({ code: 'case_access_denied' });
 
       await expect(
         casePlanVersionService.listPlanVersionsForCase(caseId, noMembershipActor)
-      ).rejects.toThrow(/case_access_denied/);
+      ).rejects.toMatchObject({ code: 'case_access_denied' });
 
       // A properly-membered actor succeeds on both.
       const found = await casePlanVersionService.getPlanVersion(draft.casePlanVersionId, actorId);

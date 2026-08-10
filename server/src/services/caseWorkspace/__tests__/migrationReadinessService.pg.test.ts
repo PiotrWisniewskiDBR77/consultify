@@ -831,14 +831,14 @@ suite(
             { flagKey, description: 'Should not register (MEMBER)', createdBy: memberActorId },
             orgId
           )
-        ).rejects.toThrow(/insufficient_org_role/);
+        ).rejects.toMatchObject({ code: 'insufficient_org_role' });
 
         await expect(
           migrationReadinessService.registerFlagDefinition(
             { flagKey, description: 'Should not register (no membership)', createdBy: noMembershipActorId },
             orgId
           )
-        ).rejects.toThrow(/not_org_member/);
+        ).rejects.toMatchObject({ code: 'not_org_member' });
 
         const rows = await control.query<FeatureFlagDefinitionDbRow>(
           `SELECT * FROM case_workspace_feature_flag_definitions WHERE flag_key = $1`,
@@ -860,7 +860,7 @@ suite(
             enabled: true,
             updatedBy: memberActorId,
           })
-        ).rejects.toThrow(/insufficient_org_role/);
+        ).rejects.toMatchObject({ code: 'insufficient_org_role' });
 
         const flagRow = await readFeatureFlagRow(orgId, flagKey);
         expect(flagRow).toBeNull();
