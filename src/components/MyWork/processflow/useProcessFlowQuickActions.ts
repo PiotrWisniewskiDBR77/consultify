@@ -97,6 +97,21 @@ export interface ProcessFlowQuickActionHandlers {
    * proposal review) AND immediately generates with her instruction.
    */
   startAIRewriteStep?: (nodeId: string, instruction: string) => void;
+  /**
+   * Action Registry — Process Flow LANE (tor) controls (2026-08-10,
+   * `LaneSystem.tsx` header buttons, `idea.lane.pf_*`, `scope: 'lane_frame'`).
+   * All six forward to the EXACT SAME handler functions the UI buttons
+   * already call (`handleLaneRename`/`handleLaneMoveUp`/`handleLaneMoveDown`/
+   * `handleLaneColorChange`/`handleLaneDelete` in `useProcessFlowNodes.ts`,
+   * `handleLaneToggleCollapse` in `IdeaProcessFlowTool.tsx`) — component
+   * (`LaneSystem.tsx`) untouched, same pattern as the node/edge menu passes.
+   */
+  renameLane?: (laneId: string, label: string) => void;
+  moveLaneUp?: (laneId: string) => void;
+  moveLaneDown?: (laneId: string) => void;
+  setLaneColor?: (laneId: string, color: string) => void;
+  toggleLaneCollapse?: (laneId: string) => void;
+  deleteLane?: (laneId: string) => void;
 }
 
 export interface ProcessFlowQuickActionSetters {
@@ -256,6 +271,52 @@ export function useProcessFlowQuickActions(opts: UseProcessFlowQuickActionsOpts)
       const nodeId = typeof detail?.nodeId === 'string' ? detail.nodeId : undefined;
       const instruction = typeof detail?.instruction === 'string' ? detail.instruction : undefined;
       if (nodeId && instruction) handlers.startAIRewriteStep?.(nodeId, instruction);
+    }
+
+    // Action Registry — Process Flow CANVAS (background) menu (2026-08-10,
+    // `ProcessFlowContextMenu.tsx`'s `getCanvasContextActions`). "Add action"
+    // (`idea.element.add`, runtime `pf_add_step` above, existing/reused) and
+    // "Auto-layout" (`idea.view.auto_layout`, runtime `pf_auto_layout` above,
+    // existing/reused) already covered — `pf_add_decision`
+    // is the one canvas-menu item with NO prior runtime string at all
+    // (`idea.view.pf_add_decision`, new this pass). "Paste" stays UI-only
+    // (`idea.view.pf_paste_at_point`, local tool clipboard — no bus receiver,
+    // same reasoning as Mind Map's `idea.view.paste_at_point`).
+    if (action === 'pf_add_decision') handlers.addNode('decision');
+
+    // Action Registry — Process Flow LANE (tor) controls (2026-08-10,
+    // `LaneSystem.tsx` header buttons — inline, always-visible, no menu to
+    // intercept; `idea.lane.pf_*`, scope `lane_frame`). All six forward
+    // `detail.laneId` (+ the one extra field each op needs) to the SAME
+    // handler functions the UI buttons already call directly
+    // (`handleLaneRename`/etc. in `IdeaProcessFlowTool.tsx` /
+    // `useProcessFlowNodes.ts`, all already `pushUndo()`'d — see
+    // `idea.lane.pf_*` registry entries for the per-action evidence).
+    if (action === 'pf_lane_rename') {
+      const laneId = typeof detail?.laneId === 'string' ? detail.laneId : undefined;
+      const label = typeof detail?.label === 'string' ? detail.label : undefined;
+      if (laneId && label) handlers.renameLane?.(laneId, label);
+    }
+    if (action === 'pf_lane_move_up') {
+      const laneId = typeof detail?.laneId === 'string' ? detail.laneId : undefined;
+      if (laneId) handlers.moveLaneUp?.(laneId);
+    }
+    if (action === 'pf_lane_move_down') {
+      const laneId = typeof detail?.laneId === 'string' ? detail.laneId : undefined;
+      if (laneId) handlers.moveLaneDown?.(laneId);
+    }
+    if (action === 'pf_lane_color') {
+      const laneId = typeof detail?.laneId === 'string' ? detail.laneId : undefined;
+      const color = typeof detail?.color === 'string' ? detail.color : undefined;
+      if (laneId && color) handlers.setLaneColor?.(laneId, color);
+    }
+    if (action === 'pf_lane_toggle_collapse') {
+      const laneId = typeof detail?.laneId === 'string' ? detail.laneId : undefined;
+      if (laneId) handlers.toggleLaneCollapse?.(laneId);
+    }
+    if (action === 'pf_lane_delete') {
+      const laneId = typeof detail?.laneId === 'string' ? detail.laneId : undefined;
+      if (laneId) handlers.deleteLane?.(laneId);
     }
   };
 

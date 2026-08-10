@@ -75,6 +75,15 @@ interface LaneBackgroundProps {
   onToggleCollapse?: (id: string) => void;
   /** F5a A3: commit a new band height (px) after a resize drag. */
   onResize?: (id: string, height: number) => void;
+  /**
+   * N6.3 (2026-08-10): fired ONCE per drag, on `pointerdown`, BEFORE the
+   * first `onResize` call — real bug found while wiring lane controls to the
+   * Action Registry: `handleLaneResize` (IdeaProcessFlowTool.tsx) never
+   * called `pushUndo()`, so Ctrl+Z could not undo a lane resize. Snapshotting
+   * once per drag (not per `onResize` call, which fires on every pointer
+   * move) avoids flooding the undo stack with near-identical frames.
+   */
+  onResizeStart?: (id: string) => void;
   isFirst?: boolean;
   isLast?: boolean;
   laneCount: number;
@@ -95,6 +104,7 @@ const LaneBackground: React.FC<LaneBackgroundProps> = ({
   onMoveDown,
   onToggleCollapse,
   onResize,
+  onResizeStart,
   isFirst,
   isLast,
   laneCount,
@@ -125,6 +135,9 @@ const LaneBackground: React.FC<LaneBackgroundProps> = ({
     if (locked || collapsed || !onResize) return;
     ev.preventDefault();
     ev.stopPropagation();
+    // N6.3: one undo snapshot for the WHOLE drag, taken before the first
+    // height mutation — see `onResizeStart` doc above.
+    onResizeStart?.(lane.id);
     const startY = ev.clientY;
     const startH = flowHeight;
     const safeZoom = zoom > 0 ? zoom : 1;
@@ -297,6 +310,8 @@ export interface LaneSystemProps {
   onToggleCollapse?: (laneId: string) => void;
   /** F5a A3: commit a resized lane height (px). */
   onResize?: (laneId: string, height: number) => void;
+  /** N6.3: fired once per resize drag, before the first `onResize` call. */
+  onResizeStart?: (laneId: string) => void;
   dragOverLaneId: string | null;
   /**
    * B2 2026-07-27: current ReactFlow viewport. Lane bands are laid out in FLOW
@@ -320,6 +335,7 @@ export const LaneSystem: React.FC<LaneSystemProps> = ({
   onMoveDown,
   onToggleCollapse,
   onResize,
+  onResizeStart,
   dragOverLaneId,
   viewport,
 }) => {
@@ -354,6 +370,7 @@ export const LaneSystem: React.FC<LaneSystemProps> = ({
             onMoveDown={onMoveDown}
             onToggleCollapse={onToggleCollapse}
             onResize={onResize}
+            onResizeStart={onResizeStart}
             isFirst={idx === 0}
             isLast={idx === lanes.length - 1}
             laneCount={lanes.length}

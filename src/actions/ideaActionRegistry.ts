@@ -77,8 +77,29 @@ export type Tool = CanvasToolType;
  * nie używa dziś `rail`/`panel`/`floating`, więc zero ryzyka kolizji), ale
  * właściciel powinien ocenić, czy ten pasek docelowo scala się z Menu 3 zamiast
  * mieć własną powierzchnię — nierozstrzygnięte tutaj (wyłącznie wiring, nie redesign).
+ *
+ * `inline` (2026-08-10, N6.3) — dopisane dla `LaneSystem.tsx` (nagłówek toru
+ * Przepływu: zmień nazwę/przesuń górę/dół/kolor/zwiń/usuń). Znowu ŻADNA z
+ * istniejących wartości nie pasuje uczciwie: to nie `context` (rozdz. 08 §5
+ * dokumentuje wprost, że dziś NIE ISTNIEJE menu kontekstowe toru — operacje
+ * żyją jako stałe, zawsze widoczne przyciski w nagłówku; oznaczenie ich jako
+ * `context` udawałoby menu, którego nie ma), nie `floating` (pasek
+ * zaznaczenia — inny mechanizm wyzwolenia: zaznaczenie elementów, nie
+ * hover nad kontenerem), nie `rail`/`toolbar`/`panel`/`menu1`/`menu3`
+ * (żaden nie opisuje kontrolek wbudowanych bezpośrednio w treść płótna).
+ * Rozdz. 08 §5 „Docelowo" chce TAKŻE realnego menu kontekstowego toru obok
+ * tych przycisków — poza zakresem tego wpisu (patrz `idea.lane.pf_*` niżej,
+ * `source`), zalogowane jako osobne ustalenie, nie wymyślane tutaj na nowo.
  */
-export type Surface = 'menu1' | 'menu3' | 'rail' | 'panel' | 'context' | 'floating' | 'toolbar';
+export type Surface =
+  | 'menu1'
+  | 'menu3'
+  | 'rail'
+  | 'panel'
+  | 'context'
+  | 'floating'
+  | 'toolbar'
+  | 'inline';
 
 /** Nazwy ikon lucide-react używane dziś przez powierzchnie Idea Workspace. */
 export type IconName =
@@ -161,7 +182,14 @@ export type IconName =
   // otwórz właściwości) i `ProcessFlowFloatingToolbar.tsx` ('MessageCircle' —
   // komentarze węzła, odróżnione od 'MessageSquare' użytego dla „Zapytaj AI").
   | 'Settings'
-  | 'MessageCircle';
+  | 'MessageCircle'
+  // Process Flow canvas (background) menu + lane controls (2026-08-10) —
+  // `getCanvasContextActions` reuses 'GitBranch'/'Clipboard'/'LayoutGrid'/
+  // 'Plus' already in this union; `LaneSystem.tsx` header buttons add these
+  // four, 1:1 z ikonami już importowanymi tam z lucide-react.
+  | 'ArrowDownUp'
+  | 'Palette'
+  | 'X';
 
 /** Minimalny JSON Schema — kształt zgodny z `parameters` w toolDefinitions.ts. */
 export interface JSONSchema {
@@ -770,6 +798,136 @@ async function runProcessFlowNodeUiOnlyCallback(
   }
   (run as () => void)();
   return { ok: true, actionId };
+}
+
+/**
+ * Runtime stringi TORU (lane) Przepływu (N6.3, 2026-08-10, `LaneSystem.tsx`).
+ * Jedna mapa PER akcja (nie jedna zbiorcza), z tego samego powodu co
+ * `RUNTIME_EDGE_LABEL`/etc. wyżej — `scripts/check-actions.sh` (R6) parsuje
+ * WYŁĄCZNIE `  tool: 'string',` per linia pod constem typu `ToolActionMap`.
+ * Torowość jest DZIŚ pojęciem WYŁĄCZNIE Przepływu (Whiteboard ma "ramkę"
+ * ale jej kontenerowe operacje same w sobie nie są jeszcze zaimplementowane —
+ * rozdz. 08 §5, tabela „Menu kontenera": „Grupuj/Rozgrupuj tylko z paska
+ * zaznaczenia... brak dedykowanego menu prawego kliku «na ramce jako
+ * kontenerze»" — nie ma więc NIC realnego po stronie Tablicy do porównania
+ * mechanizmu z, Z1 poprawnie nie ma tu czego reużyć), stąd sześć map niżej
+ * ma tylko jeden klucz każda.
+ */
+const RUNTIME_LANE_RENAME: ToolActionMap = {
+  process_flow: 'pf_lane_rename',
+};
+const RUNTIME_LANE_MOVE_UP: ToolActionMap = {
+  process_flow: 'pf_lane_move_up',
+};
+const RUNTIME_LANE_MOVE_DOWN: ToolActionMap = {
+  process_flow: 'pf_lane_move_down',
+};
+const RUNTIME_LANE_COLOR: ToolActionMap = {
+  process_flow: 'pf_lane_color',
+};
+const RUNTIME_LANE_TOGGLE_COLLAPSE: ToolActionMap = {
+  process_flow: 'pf_lane_toggle_collapse',
+};
+const RUNTIME_LANE_DELETE: ToolActionMap = {
+  process_flow: 'pf_lane_delete',
+};
+
+/**
+ * `idea.view.pf_add_decision` (N6.3, 2026-08-10) — canvas menu „Add
+ * decision". `pf_add_decision` już miał odbiornik w
+ * `useProcessFlowQuickActions.ts` (linia 136, `handlers.addNode('decision')`)
+ * od wcześniejszej fali, po prostu bez wołającego z rejestru — nie NOWA
+ * infrastruktura, tylko brakujące podłączenie.
+ */
+const RUNTIME_PF_ADD_DECISION: ToolActionMap = {
+  process_flow: 'pf_add_decision',
+};
+
+/**
+ * UI-only akcje menu TŁA (kanwy) Przepływu (N6.3 kontynuacja, 2026-08-10,
+ * `ProcessFlowContextMenu.tsx`'s `getCanvasContextActions`) — ten sam kształt
+ * co `runProcessFlowNodeUiOnlyCallback`, osobna funkcja WYŁĄCZNIE dla
+ * uczciwego komunikatu („menu tła", nie „menu węzła" — Teresa nie ma dziś
+ * ŻADNEGO sposobu odróżnienia tych dwóch odmów bez precyzyjnego tekstu).
+ * Użyta wyłącznie dla `idea.view.pf_paste_at_point` (schowek narzędzia jest
+ * stanem przeglądarki `useRef`, dokładnie ta sama sytuacja co Mapy myśli
+ * `idea.view.paste_at_point` i węzłowe `idea.node.pf_copy` — sprawdzone PRZED
+ * użyciem, nie zgadywane).
+ */
+async function runProcessFlowPaneUiOnlyCallback(
+  actionId: string,
+  ctx: ActionContext
+): Promise<ActionResult> {
+  const run = ctx.params?.run;
+  if (ctx.source !== 'ui' || typeof run !== 'function') {
+    return {
+      ok: false,
+      actionId,
+      message:
+        'Ta akcja działa dziś wyłącznie z menu tła (prawy klik na puste miejsce) Przepływu — nie mam jeszcze sposobu wywołania jej z czatu.',
+    };
+  }
+  (run as () => void)();
+  return { ok: true, actionId };
+}
+
+/** Wskaźnik akcja TORU (lane) → jej mapa runtime, ten sam kształt co
+ * `RUNTIME_EDGE_ACTION_MAPS` (N6.3, 2026-08-10, `LaneSystem.tsx` — przyciski
+ * stałe w nagłówku toru, BEZ tablicy `ActionDef[]`/menu do przechwycenia). */
+const RUNTIME_LANE_ACTION_MAPS: Partial<Record<string, ToolActionMap>> = {
+  'idea.lane.pf_rename': RUNTIME_LANE_RENAME,
+  'idea.lane.pf_move_up': RUNTIME_LANE_MOVE_UP,
+  'idea.lane.pf_move_down': RUNTIME_LANE_MOVE_DOWN,
+  'idea.lane.pf_color': RUNTIME_LANE_COLOR,
+  'idea.lane.pf_toggle_collapse': RUNTIME_LANE_TOGGLE_COLLAPSE,
+  'idea.lane.pf_delete': RUNTIME_LANE_DELETE,
+};
+
+/**
+ * Przekaźnik dla akcji `scope: 'lane_frame'` (N6.3, 2026-08-10) — ten sam
+ * kształt co `runEdgeParamCallback`, przystosowany do toru: `LaneSystem.tsx`
+ * NIE jest budowane z rejestru (przyciski stałe w nagłówku, NIETKNIĘTE —
+ * dokładnie ten sam wybór co dla węzła/krawędzi Przepływu w tej fali:
+ * „komponent zostaje, tylko obiekt handlerów przekazywany do hooka rośnie"),
+ * więc `ctx.params.run` w praktyce NIGDY nie jest ustawiane przez Przepływ —
+ * ścieżka niżej istnieje dla ewentualnych przyszłych wywołujących z realnym
+ * zamknięciem (ten sam powód co w `runEdgeParamCallback`). Realna ścieżka
+ * dziś to zawsze szyna z jawnym `laneId`.
+ */
+async function runLaneParamCallback(
+  actionId: string,
+  ctx: ActionContext,
+  extra?: Record<string, unknown>
+): Promise<ActionResult> {
+  const run = ctx.params?.run;
+  if (ctx.source === 'ui' && typeof run === 'function') {
+    (run as () => void)();
+    return { ok: true, actionId };
+  }
+
+  const laneId =
+    typeof ctx.params?.laneId === 'string' && ctx.params.laneId
+      ? ctx.params.laneId
+      : ctx.selection?.type === 'lane' && typeof ctx.selection.primaryId === 'string'
+        ? ctx.selection.primaryId
+        : undefined;
+  if (!laneId) {
+    return {
+      ok: false,
+      actionId,
+      message: 'Nie wiem, na którym torze Przepływu wykonać tę akcję — podaj `laneId` albo zaznacz go najpierw.',
+    };
+  }
+  const runtime = RUNTIME_LANE_ACTION_MAPS[actionId]?.[ctx.tool];
+  if (!runtime) {
+    return {
+      ok: false,
+      actionId,
+      message: `Ta akcja nie istnieje w tej reprezentacji (${ctx.tool}).`,
+    };
+  }
+  dispatchQuickAction(runtime, ctx, { laneId, ...(ctx.params || {}), ...(extra || {}) });
+  return { ok: true, actionId, data: { runtime, laneId } };
 }
 
 /**
@@ -2625,6 +2783,266 @@ const IDEA_ACTIONS: ActionDef[] = [
     },
     source:
       'src/components/MyWork/processflow/ProcessFlowFloatingToolbar.tsx onClick → onOpenChat (~linia 145) + IdeaProcessFlowTool.tsx handleOpenChatWithContext:2371',
+  },
+  // ── N6.3 (2026-08-10) — Process Flow CANVAS (tło) menu
+  // (`ProcessFlowContextMenu.tsx`'s `getCanvasContextActions`, 4 pozycje) +
+  // LANE (tor) controls (`LaneSystem.tsx` header, 6 stałych przycisków, BEZ
+  // menu do przechwycenia — `scope: 'lane_frame'`, rozdz. 01 §3). Kolejność
+  // deklaracji = kolejność w `getCanvasContextActions`, potem torowe.
+  //
+  // Canvas menu, 4/4 przejrzane:
+  //  • "add-action" → REUŻYWA `idea.element.add` WYŻEJ (runtime `pf_add_step`
+  //    już tworzy dokładnie węzeł kształtu 'action' — ten sam mechanizm co
+  //    Menu 3 "Dodaj element" w Przepływie, potwierdzone w
+  //    `useProcessFlowQuickActions.ts` komentarzem "same shape as
+  //    pf_add_action"). Zero nowego wpisu.
+  //  • "add-decision" → `idea.view.pf_add_decision` NIŻEJ, NOWY id: kształt
+  //    'decision' nie ma odpowiednika w `idea.element.add` (ten dodaje
+  //    WYŁĄCZNIE 'action'), więc to NIE jest ta sama akcja mimo sąsiedztwa w
+  //    menu — `pf_add_decision` już miał gotowy, nieużywany odbiornik w
+  //    `useProcessFlowQuickActions.ts` (linia 136 sprzed tej fali).
+  //  • "paste" → `idea.view.pf_paste_at_point` NIŻEJ, NOWY id, UI-only:
+  //    `pasteClipboard()` (weryfikacja PRZED wpisem, `useProcessFlowNodes.ts`)
+  //    to REALNY schowek obiektów (nodes+edges w `schowekRef`, ta sama
+  //    infrastruktura co `idea.node.pf_copy`) — nie atrapa. Deklarowane NIE
+  //    reużywać Mapy myśli `idea.view.paste_at_point` (ta sama decyzja co
+  //    `idea.node.pf_copy` vs `idea.node.copy`: osobny schowek, osobna
+  //    implementacja, ten sam próg co reszta tego rejestru).
+  //  • "layout" → REUŻYWA `idea.view.auto_layout` WYŻEJ (już `tools:
+  //    ['mindmap', 'process_flow']`, już `surfaces: ['menu3', 'context']` —
+  //    dokładnie ten sam `handleAutoLayout()`, co node-menu i Menu 3 wołają).
+  //    Zero nowego wpisu.
+  //
+  // Lane controls, scope `lane_frame` (PIERWSZE użycie w rejestrze — rozdz.
+  // 01 §3 „tor, ramka, obszar, sekcja"; rozdz. 08 §5 potwierdza `lane_frame`
+  // jako zakres kontenera Przepływu). Whiteboard ma pojęcie "ramki" (frame),
+  // ale rozdz. 08 §5 dokumentuje, że jej WŁASNE operacje kontenerowe
+  // (Rozgrupuj/Zmień kolor obszaru/Usuń ramkę) same w sobie NIE są dziś
+  // zaimplementowane ("Grupuj/Rozgrupuj tylko z paska zaznaczenia... brak
+  // dedykowanego menu") — nie ma więc PO DRUGIEJ STRONIE nic realnego z
+  // pasującym mechanizmem do porównania, więc wszystkie sześć poniżej są
+  // `tools: ['process_flow']` bez prób reużycia, świadomie (Z1: reużycie
+  // wymaga PASUJĄCEGO mechanizmu, nie samej etykiety).
+  //
+  // Resize (7. operacja toru — przeciąganie dolnej krawędzi pasma) ŚWIADOMIE
+  // BEZ wpisu w rejestrze: to ciągły gest wskaźnika (`onPointerMove` co klatkę
+  // podczas przeciągania), nie dyskretna komenda — "akcja" Teresy typu
+  // `idea.lane.pf_resize({ laneId, height })` byłaby wymyśloną z powietrza
+  // zdolnością (Teresa nigdy nie przeciąga myszką), nie odzwierciedleniem
+  // istniejącego kliku, więc pominięta zgodnie z zasadą „bez spekulatywnej
+  // infrastruktury" już stosowaną gdzie indziej w tym pliku (patrz
+  // `runToolbarUiOnlyCallback`). PRZY OKAZJI złapany prawdziwy, osobny defekt:
+  // `handleLaneResize` (IdeaProcessFlowTool.tsx) w ogóle NIE wołało
+  // `pushUndo()` — Ctrl+Z nie cofał zmiany wysokości toru. NAPRAWIONE w tej
+  // fali (nie tylko udokumentowane): `LaneSystem.tsx`'s `startResize` dostał
+  // nowy, opcjonalny prop `onResizeStart`, wołany RAZ na `pointerdown`, PRZED
+  // pierwszym `onResize` — jeden snapshot na przeciągnięcie, nie jeden na
+  // klatkę (co zalałoby stos cofania). Nie jest to wpis rejestru (gest, nie
+  // komenda), ale jest to prawdziwa naprawa bezpieczeństwa danych.
+  {
+    id: 'idea.view.pf_add_decision',
+    label: { pl: 'Dodaj decyzję', en: 'Add decision' },
+    icon: 'GitBranch',
+    scope: 'current_view',
+    tools: ['process_flow'],
+    surfaces: ['context'],
+    handler: (ctx) => runByTool('idea.view.pf_add_decision', RUNTIME_PF_ADD_DECISION, ctx),
+    mutates: true,
+    requiresPreview: false,
+    undo: {
+      kind: 'local_stack',
+      evidence: 'addNode() → pushUndo() w IdeaProcessFlowTool.tsx:1536 (ta sama funkcja co „Dodaj akcję").',
+    },
+    teresa: {
+      description:
+        'Dodaje nowy węzeł typu Decyzja (romb) do otwartego Przepływu. Klik człowieka z menu tła umieszcza węzeł DOKŁADNIE w miejscu prawego kliku — Teresa (bez współrzędnych ekranu) dostaje to samo `addNode(\'decision\')` BEZ pozycji, więc węzeł ląduje w domyślnym miejscu układu, nie precyzyjnie tam, gdzie „powinien" wg rozmowy. Ta sama, już istniejąca luka co Menu 3 „Dodaj element" (`idea.element.add`) — nie nowa.',
+    },
+    source:
+      'src/components/MyWork/processflow/ProcessFlowContextMenu.tsx getCanvasContextActions „add-decision" (`onAddNode(\'decision\')`) + processflow/useProcessFlowQuickActions.ts pf_add_decision (odbiornik istniał już przed tą falą, bez wołającego z rejestru)',
+  },
+  {
+    id: 'idea.view.pf_paste_at_point',
+    label: { pl: 'Wklej elementy', en: 'Paste elements' },
+    icon: 'Clipboard',
+    scope: 'current_view',
+    tools: ['process_flow'],
+    surfaces: ['context'],
+    shortcut: '⌘V',
+    handler: (ctx) => runProcessFlowPaneUiOnlyCallback('idea.view.pf_paste_at_point', ctx),
+    mutates: true,
+    requiresPreview: false,
+    undo: {
+      kind: 'local_stack',
+      evidence: 'pasteClipboard() → wstawKopie() → pushUndo() w useProcessFlowNodes.ts:129.',
+    },
+    teresa: {
+      description:
+        'Wkleja zawartość schowka NARZĘDZIA Przepływu (kroki + połączenia między nimi skopiowane przez „Kopiuj"/`idea.node.pf_copy`) w miejscu kliknięcia, jako nowe elementy. Dziś dostępne WYŁĄCZNIE z menu prawego kliku na tło — schowek żyje w `useRef` przeglądarki (nie na serwerze), Teresa tego jeszcze nie wywoła. Ta sama uczciwa granica co Mapy myśli „Wklej węzły" (`idea.view.paste_at_point`).',
+    },
+    source:
+      'src/components/MyWork/processflow/ProcessFlowContextMenu.tsx getCanvasContextActions „paste" (`onPaste` → `pasteClipboard()`) + useProcessFlowNodes.ts pasteClipboard/schowekRef',
+  },
+  {
+    id: 'idea.lane.pf_rename',
+    label: { pl: 'Zmień nazwę toru', en: 'Rename lane' },
+    icon: 'Pencil',
+    scope: 'lane_frame',
+    tools: ['process_flow'],
+    surfaces: ['inline'],
+    handler: (ctx) => runLaneParamCallback('idea.lane.pf_rename', ctx, { label: ctx.params?.label }),
+    mutates: true,
+    requiresPreview: false,
+    undo: {
+      kind: 'local_stack',
+      evidence: 'handleLaneRename() → pushUndo() w useProcessFlowNodes.ts:281.',
+    },
+    teresa: {
+      description:
+        'Zmienia etykietę wskazanego toru Przepływu. W UI: podwójny klik na nazwę toru w nagłówku pasma. Podaj `laneId` i nową `label`.',
+      parameters: {
+        type: 'object',
+        properties: {
+          laneId: { type: 'string', description: 'Id toru Przepływu.' },
+          label: { type: 'string', description: 'Nowa nazwa toru.' },
+        },
+        required: ['laneId', 'label'],
+      },
+    },
+    source: 'src/components/MyWork/processflow/LaneSystem.tsx LaneBackground onDoubleClick → onRename prop',
+  },
+  {
+    id: 'idea.lane.pf_move_up',
+    label: { pl: 'Przesuń tor w górę', en: 'Move lane up' },
+    icon: 'ArrowDownUp',
+    scope: 'lane_frame',
+    tools: ['process_flow'],
+    surfaces: ['inline'],
+    handler: (ctx) => runLaneParamCallback('idea.lane.pf_move_up', ctx),
+    mutates: true,
+    requiresPreview: false,
+    undo: {
+      kind: 'local_stack',
+      evidence: 'handleLaneMoveUp() → pushUndo() w useProcessFlowNodes.ts:348.',
+    },
+    teresa: {
+      description:
+        'Przesuwa wskazany tor o jedną pozycję w górę w kolejności torów Przepływu. Wyszarzone/bez efektu, gdy tor jest już pierwszy (tak jak dziś w nagłówku pasma). Podaj `laneId`.',
+      parameters: {
+        type: 'object',
+        properties: { laneId: { type: 'string', description: 'Id toru Przepływu.' } },
+        required: ['laneId'],
+      },
+    },
+    source: 'src/components/MyWork/processflow/LaneSystem.tsx LaneBackground przycisk „Move up" → onMoveUp prop',
+  },
+  {
+    id: 'idea.lane.pf_move_down',
+    label: { pl: 'Przesuń tor w dół', en: 'Move lane down' },
+    icon: 'ArrowDownUp',
+    scope: 'lane_frame',
+    tools: ['process_flow'],
+    surfaces: ['inline'],
+    handler: (ctx) => runLaneParamCallback('idea.lane.pf_move_down', ctx),
+    mutates: true,
+    requiresPreview: false,
+    undo: {
+      kind: 'local_stack',
+      evidence: 'handleLaneMoveDown() → pushUndo() w useProcessFlowNodes.ts:364.',
+    },
+    teresa: {
+      description:
+        'Przesuwa wskazany tor o jedną pozycję w dół w kolejności torów Przepływu. Wyszarzone/bez efektu, gdy tor jest już ostatni (tak jak dziś w nagłówku pasma). Podaj `laneId`.',
+      parameters: {
+        type: 'object',
+        properties: { laneId: { type: 'string', description: 'Id toru Przepływu.' } },
+        required: ['laneId'],
+      },
+    },
+    source: 'src/components/MyWork/processflow/LaneSystem.tsx LaneBackground przycisk „Move down" → onMoveDown prop',
+  },
+  {
+    id: 'idea.lane.pf_color',
+    label: { pl: 'Zmień kolor toru', en: 'Change lane color' },
+    icon: 'Palette',
+    scope: 'lane_frame',
+    tools: ['process_flow'],
+    surfaces: ['inline'],
+    handler: (ctx) => runLaneParamCallback('idea.lane.pf_color', ctx, { color: ctx.params?.color }),
+    mutates: true,
+    requiresPreview: false,
+    undo: {
+      kind: 'local_stack',
+      evidence: 'handleLaneColorChange() → pushUndo() w useProcessFlowNodes.ts:324.',
+    },
+    teresa: {
+      description:
+        'Ustawia kolor tła wskazanego toru Przepływu na jeden z 10 gotowych odcieni palety (`LANE_COLORS` w `LaneSystem.tsx`, hex). Podaj `laneId` i `color` (hex, np. „#dbeafe" — wartość spoza tej dziesiątki też się zapisze, ale w UI nie będzie zaznaczona jako aktywny swatch).',
+      parameters: {
+        type: 'object',
+        properties: {
+          laneId: { type: 'string', description: 'Id toru Przepływu.' },
+          color: { type: 'string', description: 'Kolor tła toru (hex).' },
+        },
+        required: ['laneId', 'color'],
+      },
+    },
+    source:
+      'src/components/MyWork/processflow/LaneSystem.tsx LaneBackground selektor kolorów → onColorChange prop',
+  },
+  {
+    id: 'idea.lane.pf_toggle_collapse',
+    label: { pl: 'Zwiń/rozwiń tor', en: 'Collapse/expand lane' },
+    icon: 'ChevronDown',
+    scope: 'lane_frame',
+    tools: ['process_flow'],
+    surfaces: ['inline'],
+    handler: (ctx) => runLaneParamCallback('idea.lane.pf_toggle_collapse', ctx),
+    mutates: true,
+    requiresPreview: false,
+    undo: {
+      kind: 'local_stack',
+      evidence: 'handleLaneToggleCollapse() → pushUndo() w IdeaProcessFlowTool.tsx:2107 (F5a A3).',
+    },
+    teresa: {
+      description:
+        'Przełącza wskazany tor Przepływu między pełnym a zwiniętym pasmem (`lanes[].collapsed`). Jeden klik = jedno przełączenie w drugą stronę — kolejne wywołanie cofa. Podaj `laneId`.',
+      parameters: {
+        type: 'object',
+        properties: { laneId: { type: 'string', description: 'Id toru Przepływu.' } },
+        required: ['laneId'],
+      },
+    },
+    source:
+      'src/components/MyWork/processflow/LaneSystem.tsx LaneBackground przycisk zwiń/rozwiń → onToggleCollapse prop',
+  },
+  {
+    id: 'idea.lane.pf_delete',
+    label: { pl: 'Usuń tor', en: 'Delete lane' },
+    icon: 'X',
+    scope: 'lane_frame',
+    tools: ['process_flow'],
+    surfaces: ['inline'],
+    handler: (ctx) => runLaneParamCallback('idea.lane.pf_delete', ctx),
+    mutates: true,
+    requiresPreview: false,
+    undo: {
+      kind: 'local_stack',
+      evidence: 'handleLaneDelete() → pushUndo() w useProcessFlowNodes.ts:294 (przed reasygnacją węzłów + usunięciem toru).',
+    },
+    // Trwałe usunięcie toru z grafu (i przeniesienie/odpięcie jego węzłów —
+    // patrz `handleLaneDelete` w `useProcessFlowNodes.ts`). Undo lokalny
+    // (Ctrl+Z), stąd `destructive` osobno od `undo`, jak przy `idea.edge.delete`.
+    destructive: true,
+    teresa: {
+      description:
+        'Usuwa wskazany tor Przepływu na trwałe (jego węzły przechodzą na kolejny pozostały tor, nie znikają; cofnięcie tylko przez Ctrl+Z w tej samej sesji przeglądarki). ZNANA LUKA (sprawdzona w kodzie, nie naprawiana w tym wpisie — poza zakresem wiringu rejestru): `handleLaneDelete` na JEDYNYM pozostałym torze wychodzi wcześnie i nic nie robi, BEZ żadnego komunikatu (`useProcessFlowNodes.ts:293`, `if (locked || lanes.length <= 1) return;`) — cichy brak reakcji, dokładnie to, czego zakazuje rozdz. 01 §3 pkt 8. W UI przycisk jest wtedy ukryty (`laneCount > 1` w `LaneSystem.tsx`), więc człowiek nigdy tego nie zobaczy — ale Teresa, wywołując po `laneId` bezpośrednio, dostanie fałszywe „ok" bez żadnej zmiany. Podaj `laneId`.',
+      parameters: {
+        type: 'object',
+        properties: { laneId: { type: 'string', description: 'Id toru Przepływu.' } },
+        required: ['laneId'],
+      },
+    },
+    source: 'src/components/MyWork/processflow/LaneSystem.tsx LaneBackground przycisk „Delete lane" → onDelete prop',
   },
   // ── N7 kontynuacja (2026-08-09) — WhiteboardToolbar.tsx, surface='toolbar' ──
   // 18 pozycji = 1:1 z tym, co bar dziś renderuje (dropdown „Wstaw" ×5,

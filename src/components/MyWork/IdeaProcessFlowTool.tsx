@@ -2274,6 +2274,18 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
         setShowAIPanel(true);
         createStepRewriteProposal({ nodeId, instruction });
       },
+      // Action Registry — Process Flow LANE controls (2026-08-10): bus path
+      // for Teresa's `idea.lane.pf_*` (see ideaActionRegistry.ts). The UI
+      // path — `LaneSystem.tsx` header buttons via the `onRename`/`onMoveUp`/
+      // `onMoveDown`/`onColorChange`/`onToggleCollapse`/`onDelete` props below
+      // (`<LaneSystemViewportLayer>`) — is untouched, calling these exact
+      // same functions directly.
+      renameLane: handleLaneRename,
+      moveLaneUp: handleLaneMoveUp,
+      moveLaneDown: handleLaneMoveDown,
+      setLaneColor: handleLaneColorChange,
+      toggleLaneCollapse: handleLaneToggleCollapse,
+      deleteLane: handleLaneDelete,
     },
     setters: {
       setFlowMode,
@@ -3234,6 +3246,14 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
                 onMoveDown={handleLaneMoveDown}
                 onToggleCollapse={handleLaneToggleCollapse}
                 onResize={handleLaneResize}
+                // N6.3 (2026-08-10): real bug found while wiring lane
+                // controls to the Action Registry — `handleLaneResize` never
+                // called `pushUndo()`, so Ctrl+Z could not undo a lane
+                // resize. Fixed here (not just documented): one snapshot at
+                // drag start (`LaneSystem.tsx`'s `startResize`, on
+                // `pointerdown`), not one per `onResize` call (which fires
+                // on every pointer move and would flood the undo stack).
+                onResizeStart={() => pushUndo()}
                 dragOverLaneId={dragOverLaneId}
               />
             </div>
