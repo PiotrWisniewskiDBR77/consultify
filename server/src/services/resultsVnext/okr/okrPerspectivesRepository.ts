@@ -146,6 +146,13 @@ scoped_okr_sets AS (
   return { sql, values };
 }
 
+export interface OrganizationOkrTeamHealthSetSummary {
+  setId: string;
+  currentVersion: number;
+  status: string;
+  scopeType: string;
+}
+
 export interface OrganizationOkrTeamHealth {
   countsByStatus: Array<{ status: string; count: number }>;
   countsByScopeType: Array<{ scopeType: string; count: number }>;
@@ -154,6 +161,15 @@ export interface OrganizationOkrTeamHealth {
    * on every check-in — this is REAL, current data, not a reserved-but-
    * unpopulated passthrough as the original design draft assumed. */
   attentionBreakdown: Array<{ attentionState: string; count: number }>;
+  /** OKR-E008 addition over the design draft's own sketch (§4.2): the
+   * design's aggregate-only shape (3 count breakdowns, no per-Set data)
+   * cannot satisfy OKR-F-028's own literal parity requirement — "personal/
+   * team-BU/company projections return the SAME Set IDs and versions" is
+   * unprovable without at least one of the three perspectives exposing
+   * `set_id`/`current_version` at all. This field is what
+   * `okrPerspectivesParity.realdb.test.ts` (D-OKR8-15) checks against
+   * `listMyOkrSets`/`listOkrSets(scopeType:'company')`. */
+  sets: OrganizationOkrTeamHealthSetSummary[];
 }
 
 export interface ListOrganizationOkrTeamHealthParams {
@@ -164,17 +180,18 @@ export interface ListOrganizationOkrTeamHealthParams {
 /**
  * D-OKR8-14: honest reporting of whatever OKR-E002/E004's real, landed
  * schema populates — counts by `status`, by `scope_type`, by
- * `attention_state` (now real, see above). An orchestrator over 3
- * independent queries (`Promise.all`), same style
- * `listOrganizationKpiAttention`/`listOrganizationOkrAttention` both use —
- * each query resolves its own scope from scratch via `buildScopedOkrSetsBase`
- * (T3: filter before aggregate, no shared "already filtered" intermediate).
+ * `attention_state` (now real, see above), plus the underlying Set list
+ * (see `sets` field doc above). An orchestrator over 4 independent queries
+ * (`Promise.all`), same style `listOrganizationKpiAttention`/
+ * `listOrganizationOkrAttention` both use — each query resolves its own
+ * scope from scratch via `buildScopedOkrSetsBase` (T3: filter before
+ * aggregate, no shared "already filtered" intermediate).
  */
 export async function listOrganizationOkrTeamHealth(
   params: ListOrganizationOkrTeamHealthParams
 ): Promise<OrganizationOkrTeamHealth> {
   const { managerId, organizationId } = params;
-  const [byStatus, byScope, byAttention] = await Promise.all([
+  const [byStatus, byScope, byAttention, sets] = await Promise.all([
     (async () => {
       const base = await buildScopedOkrSetsBase(managerId, organizationId);
       const sql = `${base.sql}
@@ -193,12 +210,26 @@ SELECT scope_type, COUNT(*)::int AS count FROM scoped_okr_sets GROUP BY scope_ty
 SELECT attention_state, COUNT(*)::int AS count FROM scoped_okr_sets GROUP BY attention_state`;
       return withReadClient((client) => queryRows<{ attention_state: string; count: number }>(client, sql, base.values));
     })(),
+    (async () => {
+      const base = await buildScopedOkrSetsBase(managerId, organizationId);
+      const sql = `${base.sql}
+SELECT set_id, current_version, status, scope_type FROM scoped_okr_sets ORDER BY updated_at DESC`;
+      return withReadClient((client) =>
+        queryRows<{ set_id: string; current_version: number; status: string; scope_type: string }>(client, sql, base.values)
+      );
+    })(),
   ]);
 
   return {
     countsByStatus: byStatus.map((r) => ({ status: r.status, count: Number(r.count) })),
     countsByScopeType: byScope.map((r) => ({ scopeType: r.scope_type, count: Number(r.count) })),
     attentionBreakdown: byAttention.map((r) => ({ attentionState: r.attention_state, count: Number(r.count) })),
+    sets: sets.map((r) => ({
+      setId: r.set_id,
+      currentVersion: Number(r.current_version),
+      status: r.status,
+      scopeType: r.scope_type,
+    })),
   };
 }
 
