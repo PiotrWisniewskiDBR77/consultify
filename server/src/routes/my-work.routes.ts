@@ -29,6 +29,7 @@ import auditEventsService from '../services/AuditEventsService.js';
 import {
   getIdeaConfidentiality,
   IDEA_CONFIDENTIALITY_BLOCKED_RESPONSE,
+  IDEA_CONFIDENTIALITY_LEVELS,
   isIdeaRestricted,
 } from '../services/ideaConfidentiality.js';
 import { createIdeaMapSnapshot } from '../services/ideaMapSnapshotService.js';
@@ -2677,6 +2678,10 @@ router.get(
         : "'{}' as action_contract_json",
       ideaColumns.has('source_pack_json') ? 'source_pack_json' : "'{}' as source_pack_json",
       ideaColumns.has('evidence_refs_json') ? 'evidence_refs_json' : "'[]' as evidence_refs_json",
+      // E12: same feature-detect pattern as the JSON columns above — degrade
+      // honestly to the implicit default on a database where the additive
+      // 20260810_idea_confidentiality.sql migration hasn't run yet.
+      ideaColumns.has('confidentiality') ? 'confidentiality' : "'standard' as confidentiality",
     ].join(',\n          ');
 
     // Home-shell columns (folders / favorites / recents). Guarded so the list
@@ -3011,6 +3016,7 @@ router.get(
     const id = String(req.params.id || '').trim();
     const ideaColumns = await getTableColumns('my_ideas');
     const hasMaturityGatesColumn = ideaColumns.has('maturity_gates_json');
+    const hasConfidentialityColumn = ideaColumns.has('confidentiality');
     const lineageSelect = [
       ideaColumns.has('action_contract_json')
         ? 'action_contract_json'
@@ -3020,6 +3026,10 @@ router.get(
       // E08: only select the real column when the additive migration has run —
       // never fabricate a fake "supported" value here (see maturityGatesSupported below).
       hasMaturityGatesColumn ? 'maturity_gates_json' : "NULL as maturity_gates_json",
+      // E12: same honest-degrade pattern — a database without the
+      // 20260810_idea_confidentiality.sql migration reports the implicit
+      // default rather than 500ing or fabricating a "gate applied" signal.
+      hasConfidentialityColumn ? 'confidentiality' : "'standard' as confidentiality",
     ].join(',\n        ');
     const homeSelectDetail = [
       ideaColumns.has('folder_id') ? 'folder_id as "folderId"' : 'NULL as "folderId"',
@@ -3076,6 +3086,10 @@ router.get(
         // from data shape alone (empty {} is ambiguous between "not run yet"
         // and "run but nothing attested"). See ideaMaturityModel.ts header.
         maturityGatesSupported: hasMaturityGatesColumn,
+        // E12: same explicit capability flag for the confidentiality gate —
+        // lets a future UI distinguish "this idea is 'standard'" from "this
+        // database can't persist a level at all yet".
+        confidentialitySupported: hasConfidentialityColumn,
       })
     );
   })
@@ -3149,8 +3163,16 @@ router.put(
     if (!(await requireTables(res, ['my_ideas']))) return;
 
     const id = String(req.params.id || '').trim();
+    // `confidentiality` is feature-detected like every other additive column on this
+    // table: without it the audit event below would silently record `undefined ->
+    // undefined` for the one field on this route that is a security classification.
+    const ideaColumnsForExisting = await getTableColumns('my_ideas');
     const existing = await queryHelpers.queryOne<any>(
-      `SELECT id, title, body, tags, stage, branch, area, priority FROM my_ideas WHERE id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
+      `SELECT id, title, body, tags, stage, branch, area, priority, ${
+        ideaColumnsForExisting.has('confidentiality')
+          ? 'confidentiality'
+          : "'standard' as confidentiality"
+      } FROM my_ideas WHERE id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
       [id, userId, orgId]
     );
     if (!existing) {
@@ -3183,6 +3205,28 @@ router.put(
     }
     if (req.body?.folderId !== undefined && ideaColumns.has('folder_id')) {
       set('folder_id', req.body.folderId ? String(req.body.folderId) : null);
+    }
+
+    // E12: confidentiality gate (server/src/services/ideaConfidentiality.ts).
+    // Validated against the closed value set BEFORE it ever reaches the
+    // query — the column has a CHECK constraint, and letting a bad value
+    // through would surface as an opaque 500 instead of a clear 400.
+    // Feature-detected the same way as the home-shell fields above so a
+    // database without the additive 20260810_idea_confidentiality.sql
+    // migration silently no-ops the persist instead of erroring.
+    if (req.body?.confidentiality !== undefined) {
+      const requestedConfidentiality = String(req.body.confidentiality).trim().toLowerCase();
+      if (
+        !(IDEA_CONFIDENTIALITY_LEVELS as readonly string[]).includes(requestedConfidentiality)
+      ) {
+        res.status(400).json({
+          error: `confidentiality must be one of: ${IDEA_CONFIDENTIALITY_LEVELS.join(', ')}`,
+        });
+        return;
+      }
+      if (ideaColumns.has('confidentiality')) {
+        set('confidentiality', requestedConfidentiality);
+      }
     }
 
     if (setParts.length === 0) {
@@ -3238,6 +3282,7 @@ router.put(
         ${ideaColumns.has('folder_id') ? 'folder_id as "folderId"' : 'NULL as "folderId"'},
         ${ideaColumns.has('is_favorite') ? 'is_favorite as "isFavorite"' : '0 as "isFavorite"'},
         ${ideaColumns.has('last_opened_at') ? 'last_opened_at as "lastOpenedAt"' : 'NULL as "lastOpenedAt"'},
+        ${ideaColumns.has('confidentiality') ? 'confidentiality' : "'standard' as confidentiality"},
         created_at as "createdAt",
         updated_at as "updatedAt"
       FROM my_ideas
@@ -3261,12 +3306,20 @@ router.put(
           branch: existing.branch,
           area: existing.area,
           priority: existing.priority,
+          // Security classification — the ONE field on this route whose change is a
+          // security event rather than an edit. Downgrading `restricted` -> `standard`
+          // re-opens all eight AI/export endpoints on the very next request (the gate
+          // re-reads the column per call, by design — it is a live classification, not
+          // a one-way lock). Without this pair, a downgrade-then-exfiltrate sequence is
+          // indistinguishable from someone fixing a typo in the title.
+          confidentiality: existing.confidentiality,
         },
         after: {
           title: (row as any)?.title,
           body: (row as any)?.body,
           tags: (row as any)?.tags,
           stage: (row as any)?.stage,
+          confidentiality: (row as any)?.confidentiality,
         },
         metadata: { fromAI: Boolean(req.body?.fromAI) },
       })

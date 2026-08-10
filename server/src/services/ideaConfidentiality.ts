@@ -28,7 +28,17 @@ import * as queryHelpers from '../utils/queryHelpers.js';
 
 export type IdeaConfidentiality = 'standard' | 'confidential' | 'restricted';
 
-const VALID: ReadonlySet<string> = new Set(['standard', 'confidential', 'restricted']);
+// Single source of truth for the closed value set — mirrors the CHECK
+// constraint in server/migrations/20260810_idea_confidentiality.sql. Routes
+// that accept `confidentiality` on write should validate against this array
+// (not re-declare their own list) so the two can never drift.
+export const IDEA_CONFIDENTIALITY_LEVELS: readonly IdeaConfidentiality[] = [
+  'standard',
+  'confidential',
+  'restricted',
+];
+
+const VALID: ReadonlySet<string> = new Set(IDEA_CONFIDENTIALITY_LEVELS);
 
 /**
  * Reads `my_ideas.confidentiality` for one idea, org-scoped. Returns

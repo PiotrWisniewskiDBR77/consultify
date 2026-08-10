@@ -421,6 +421,99 @@ describe('E12 — collaboration/security server-side enforcement (real Postgres,
   );
 
   // -------------------------------------------------------------------------
+  // 1b. Confidentiality gate — the write path (RISK-22: previously nothing
+  //     could ever set the column, so the gate above was provably dormant).
+  // -------------------------------------------------------------------------
+
+  itDB(
+    '[confidentiality] PUT sets restricted -> GET reflects it -> AI endpoint 403s; PUT sets it back to standard -> GET reflects it -> AI endpoint no longer 403s',
+    async (h) => {
+      const app = buildApp();
+      const token = makeE2EToken(h.userAId, h.orgAId);
+      const ideaId = await createIdea(app, token, 'Confidentiality write round-trip probe');
+
+      // Freshly created idea is 'standard' by default (both column default
+      // and the pre-migration fallback path).
+      const getInitial = await request(app)
+        .get(`/api/my-work/my-ideas/${ideaId}`)
+        .set('Authorization', `Bearer ${token}`);
+      expect(getInitial.status).toBe(200);
+      expect(getInitial.body?.confidentiality).toBe('standard');
+      expect(getInitial.body?.confidentialitySupported).toBe(true);
+
+      // --- set to restricted via the real PUT route ---
+      const putRestricted = await request(app)
+        .put(`/api/my-work/my-ideas/${ideaId}`)
+        .set('Authorization', `Bearer ${token}`)
+        .send({ confidentiality: 'restricted' });
+      expect(putRestricted.status).toBe(200);
+      expect(putRestricted.body?.confidentiality).toBe('restricted');
+
+      const getRestricted = await request(app)
+        .get(`/api/my-work/my-ideas/${ideaId}`)
+        .set('Authorization', `Bearer ${token}`);
+      expect(getRestricted.status).toBe(200);
+      expect(getRestricted.body?.confidentiality).toBe('restricted');
+
+      const fillBlockedRes = await request(app)
+        .post(`/api/my-work/my-ideas/${ideaId}/ai-fill`)
+        .set('Authorization', `Bearer ${token}`)
+        .send({ prompt: 'summarize', rows: [{ id: 'r1' }] });
+      expect(fillBlockedRes.status).toBe(403);
+      expect(fillBlockedRes.body?.code).toBe('IDEA_CONFIDENTIALITY_BLOCKED');
+
+      // --- set back to standard via the real PUT route ---
+      const putStandard = await request(app)
+        .put(`/api/my-work/my-ideas/${ideaId}`)
+        .set('Authorization', `Bearer ${token}`)
+        .send({ confidentiality: 'standard' });
+      expect(putStandard.status).toBe(200);
+      expect(putStandard.body?.confidentiality).toBe('standard');
+
+      const getStandard = await request(app)
+        .get(`/api/my-work/my-ideas/${ideaId}`)
+        .set('Authorization', `Bearer ${token}`);
+      expect(getStandard.status).toBe(200);
+      expect(getStandard.body?.confidentiality).toBe('standard');
+
+      const fillAllowedRes = await request(app)
+        .post(`/api/my-work/my-ideas/${ideaId}/ai-fill`)
+        .set('Authorization', `Bearer ${token}`)
+        .send({ prompt: 'summarize', rows: [{ id: 'r1' }] });
+      expect(fillAllowedRes.status).not.toBe(403);
+      expect(fillAllowedRes.body?.code).not.toBe('IDEA_CONFIDENTIALITY_BLOCKED');
+    }
+  );
+
+  itDB(
+    '[confidentiality] PUT rejects an invalid confidentiality value with 400 and leaves the stored row unchanged',
+    async (h) => {
+      const app = buildApp();
+      const token = makeE2EToken(h.userAId, h.orgAId);
+      const ideaId = await createIdea(app, token, 'Confidentiality invalid-value probe');
+
+      const before = await h.client.query(
+        `SELECT confidentiality FROM my_ideas WHERE id = $1`,
+        [ideaId]
+      );
+      expect(before.rows[0]?.confidentiality).toBe('standard');
+
+      const putInvalid = await request(app)
+        .put(`/api/my-work/my-ideas/${ideaId}`)
+        .set('Authorization', `Bearer ${token}`)
+        .send({ confidentiality: 'top-secret' });
+      expect(putInvalid.status).toBe(400);
+      expect(String(putInvalid.body?.error || '')).toMatch(/confidentiality/i);
+
+      const after = await h.client.query(
+        `SELECT confidentiality FROM my_ideas WHERE id = $1`,
+        [ideaId]
+      );
+      expect(after.rows[0]?.confidentiality).toBe('standard');
+    }
+  );
+
+  // -------------------------------------------------------------------------
   // 2. Facilitation "workshop role" control
   // -------------------------------------------------------------------------
 
