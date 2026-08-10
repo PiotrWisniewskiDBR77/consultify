@@ -53,6 +53,13 @@ import crypto from 'crypto';
 
 import { Pool, type PoolClient } from 'pg';
 
+// F-1 fix (docs/validation/finance-v3/generated/gate-d/W3_BACKFILL_LOCK_EXPORT_HASH_report.md):
+// the ONE content_semantic_hash primitive in this codebase — reused here rather than
+// re-implementing the identical sha256(JSON.stringify(x)) expression a second time (see that
+// file's own header comment for why this codebase treats duplicate hash implementations as a
+// defect class in themselves, not a style nitpick).
+import { canonicalPayloadHash } from '../src/services/finance/canonical/contentHash';
+
 // ---------------------------------------------------------------------------------------------
 // CLI plumbing
 // ---------------------------------------------------------------------------------------------
@@ -1774,7 +1781,46 @@ async function phaseExports(pool: Pool, ctx: RunCtx, valuationArtifacts: Map<str
       crashState: ctx.crashState,
       fetchRows: async () => [{ id: org }],
       processChunk: async (client) => {
-        const hash = sha256({ t: 'export', org, bv: approved.currentBusinessVersionId });
+        // F-1 fix: this used to be sha256({ t: 'export', org, bv: approved.currentBusinessVersionId })
+        // — a hash of a RANDOM gen_random_uuid() value (the business version's own id), not of any
+        // business content. Two exports of byte-identical content produced different hashes every
+        // time, defeating the whole point of a "content_semantic_hash"/"file_hash_sha256" pair
+        // (WP-B06's reproducibility intent). Fixed to hash the actual content instead: the source
+        // business version's own content_semantic_hash (itself derived from real legacy business
+        // data — see phaseValuation's `sha256({ t: 'valuations', ... snapshot: historyRow?.snapshot_data ... })`
+        // — already proven deterministic across independent runs in the W2 report §4) plus the
+        // artifact's deterministic legacy-derived identity (natural_key/artifact_type) and the
+        // export's own fixed presentation parameters. No random id anywhere in the payload.
+        const sourceRes = await client.query(
+          `SELECT fa.natural_key, fa.artifact_type, fbv.version_no, fbv.status, fbv.content_semantic_hash
+             FROM finance_business_versions fbv
+             JOIN finance_artifacts fa ON fa.artifact_id = fbv.artifact_id
+            WHERE fbv.business_version_id = $1`,
+          [approved.currentBusinessVersionId]
+        );
+        const source = sourceRes.rows[0] as
+          | { natural_key: string | null; artifact_type: string; version_no: number; status: string; content_semantic_hash: string | null }
+          | undefined;
+        if (!source?.content_semantic_hash) {
+          throw new Error(
+            `Export manifest source business version ${approved.currentBusinessVersionId} (org ${org}) has no ` +
+              `content_semantic_hash — cannot compute a content-derived export hash (F-1 fix requires real content).`
+          );
+        }
+        const hash = canonicalPayloadHash({
+          t: 'export',
+          organizationId: org,
+          artifactType: source.artifact_type,
+          artifactNaturalKey: source.natural_key,
+          versionNo: source.version_no,
+          status: source.status,
+          businessVersionContentHash: source.content_semantic_hash,
+          format: 'PDF',
+          locale: 'pl-PL',
+          timezone: 'Europe/Warsaw',
+          unit: 'PLN',
+          roundingConvention: 'BANKERS_ROUNDING_2DP',
+        });
         const res = await client.query(
           `INSERT INTO finance_export_manifests
              (organization_id, export_format, status, primary_artifact_id, primary_business_version_id,
