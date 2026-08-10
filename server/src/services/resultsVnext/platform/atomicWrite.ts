@@ -357,6 +357,19 @@ export const EVENT_TYPE_CONSUMER_GROUPS: Readonly<Record<string, readonly string
   'okr_key_result.created': ['mywork_projection'],
   'okr_key_result.updated': ['mywork_projection'],
   'okr_key_result.cancelled': ['mywork_projection'],
+
+  // OKR-E005 (docs/product/results-vnext/OKR_E005_DESIGN.md §I) —
+  // Alignment. aggregateType='okr_alignment' (resourceTypes.ts, appended for
+  // this epic) + aggregateId=alignmentId — unlike OKR-E003's Objective/
+  // KeyResult events (which borrow the parent Set's 'okr_set' identity),
+  // an alignment edge has TWO peer Objective endpoints with no single
+  // owning Set, so it gets its own aggregate identity instead. All fan out
+  // to 'mywork_projection' only, same default every other domain entry in
+  // this map uses.
+  'okr_alignment.proposed': ['mywork_projection'],
+  'okr_alignment.accepted': ['mywork_projection'],
+  'okr_alignment.rejected': ['mywork_projection'],
+  'okr_alignment.removed': ['mywork_projection'],
 };
 
 /**

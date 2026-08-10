@@ -33,6 +33,19 @@ export const RVN_RESOURCE_TYPES = [
   // OKR-E002.
   'okr_program',
   'okr_cycle',
+  // OKR-E005 (docs/product/results-vnext/OKR_E005_DESIGN.md) — Alignment.
+  // Appended, never reordered/removed relative to the values above. Same
+  // posture as 'okr_program'/'okr_cycle' immediately above: NOT for ABAC
+  // rows — okr_vnext_alignments never gets its own
+  // rvn_platform_resource_visibility row (its visibility is DERIVED at read
+  // time from both endpoint Objectives, inherited via their own set_id, per
+  // design §G) — only because PlatformEventEnvelope.aggregateType is typed
+  // to this union and okrAlignmentCommands.ts's events need a value from it
+  // that identifies the alignment aggregate itself (an edge with two peer
+  // Objective endpoints has no single owning Set the way an Objective's own
+  // events borrow 'okr_set' + the parent setId, per okrObjectiveCommands.ts's
+  // own landed precedent).
+  'okr_alignment',
 ] as const;
 
 export type RvnResourceType = (typeof RVN_RESOURCE_TYPES)[number];
