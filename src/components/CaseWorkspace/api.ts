@@ -37,7 +37,11 @@ import type {
 const BASE = '/case-workspace';
 
 export function toFailure(error: unknown): CaseApiFailure {
-  const anyError = error as { status?: number; message?: string; data?: { error?: { code?: string } } };
+  const anyError = error as {
+    status?: number;
+    message?: string;
+    data?: { error?: { code?: string } };
+  };
   const status = typeof anyError?.status === 'number' ? anyError.status : undefined;
   const code = anyError?.data?.error?.code;
   const message = String(anyError?.message || '').trim();

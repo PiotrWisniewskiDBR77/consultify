@@ -166,6 +166,7 @@ export enum AppView {
   PROJECTS = 'PROJECTS', // Zwornik (#78): project stakeholder registry + finance rollup
   CLIENT_VAULT = 'CLIENT_VAULT', // HP-22 Harvey-Parity: org-scoped client document vault (gated, ff.client_vault)
   AGENT_PLAN = 'AGENT_PLAN', // HP-4 F3 Harvey-Parity: run-agent workspace entry (gated, ff.agent_plan)
+  CASE_WORKSPACE = 'CASE_WORKSPACE', // Zlecenia (Case Workspace E7/E8) — gated: MODULE_CASE_WORKSPACE + ff.caseWorkspace (default OFF)
 
   // Initiative Lifecycle Management
   INITIATIVE_MANAGEMENT = 'INITIATIVE_MANAGEMENT', // @deprecated - use PORTFOLIO_ROADMAP

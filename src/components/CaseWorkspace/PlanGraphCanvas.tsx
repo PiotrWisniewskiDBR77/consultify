@@ -80,7 +80,10 @@ export function layoutGraph(graph: CanonicalGraph): {
   for (const node of nodes) indegree.set(node.nodeId, 0);
   for (const edge of edges) {
     if (!indegree.has(edge.targetNodeId) || !indegree.has(edge.sourceNodeId)) continue;
-    outgoing.set(edge.sourceNodeId, [...(outgoing.get(edge.sourceNodeId) ?? []), edge.targetNodeId]);
+    outgoing.set(edge.sourceNodeId, [
+      ...(outgoing.get(edge.sourceNodeId) ?? []),
+      edge.targetNodeId,
+    ]);
     indegree.set(edge.targetNodeId, (indegree.get(edge.targetNodeId) ?? 0) + 1);
   }
 
@@ -151,7 +154,10 @@ export interface PlanGraphCanvasProps {
   selectedNodeId: string | null;
   onSelectNode: (nodeId: string) => void;
   /** Nakładka stanów wykonania (Realizacja) — nieobecny klucz = brak stanu. */
-  runtimeStateByNodeId?: Record<string, { label: string; tone: 'active' | 'waiting' | 'blocked' | 'done' }>;
+  runtimeStateByNodeId?: Record<
+    string,
+    { label: string; tone: 'active' | 'waiting' | 'blocked' | 'done' }
+  >;
 }
 
 export const PlanGraphCanvas: React.FC<PlanGraphCanvasProps> = ({
@@ -163,13 +169,20 @@ export const PlanGraphCanvas: React.FC<PlanGraphCanvasProps> = ({
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const [viewport, setViewport] = useState({ width: 0, height: 0 });
   const [transform, setTransform] = useState({ k: 1, x: 0, y: 0 });
-  const dragRef = useRef<{ pointerId: number; startX: number; startY: number; originX: number; originY: number } | null>(
-    null
-  );
+  const dragRef = useRef<{
+    pointerId: number;
+    startX: number;
+    startY: number;
+    originX: number;
+    originY: number;
+  } | null>(null);
   const didInitialFit = useRef(false);
 
   const layout = useMemo(() => layoutGraph(graph), [graph]);
-  const edges: GraphEdge[] = useMemo(() => (Array.isArray(graph?.edges) ? graph.edges : []), [graph]);
+  const edges: GraphEdge[] = useMemo(
+    () => (Array.isArray(graph?.edges) ? graph.edges : []),
+    [graph]
+  );
   const positionById = useMemo(() => {
     const map = new Map<string, PositionedNode>();
     for (const item of layout.nodes) map.set(item.node.nodeId, item);
@@ -224,26 +237,29 @@ export const PlanGraphCanvas: React.FC<PlanGraphCanvasProps> = ({
     [viewport.width, viewport.height]
   );
 
-  const onWheel = useCallback(
-    (event: React.WheelEvent<HTMLDivElement>) => {
-      event.preventDefault();
-      const rect = wrapperRef.current?.getBoundingClientRect();
-      const cx = rect ? event.clientX - rect.left : undefined;
-      const cy = rect ? event.clientY - rect.top : undefined;
-      zoomBy(event.deltaY < 0 ? 1.12 : 1 / 1.12, cx, cy);
-    },
-    [zoomBy]
-  );
-
-  // `preventDefault` w Reactowym onWheel nie działa na pasywnych listenerach —
-  // rejestrujemy własny, nie-pasywny, żeby kółko nie przewijało strony.
+  /*
+   * Kółko myszy obsługuje WYŁĄCZNIE natywny listener poniżej — świadomie BEZ
+   * Reactowego `onWheel`.
+   *
+   * ★ ZMIERZONE NA ŻYWYM PŁÓTNIE (nie z lektury kodu): dopóki oba handlery
+   * istniały naraz, jeden obrót kółka wywoływał zoom DWA razy
+   * (0,510 → 0,571 → 0,639; wskaźnik skakał 51% → 64% zamiast 51% → 57%),
+   * a React montuje `wheel` jako listener PASYWNY, więc jego
+   * `event.preventDefault()` tylko wypisywał do konsoli
+   * „Unable to preventDefault inside passive event listener invocation"
+   * i NIE blokował przewijania strony. Jeden listener = jedna reguła.
+   */
   useEffect(() => {
     const element = wrapperRef.current;
     if (!element) return undefined;
     const handler = (event: WheelEvent) => {
       event.preventDefault();
       const rect = element.getBoundingClientRect();
-      zoomBy(event.deltaY < 0 ? 1.12 : 1 / 1.12, event.clientX - rect.left, event.clientY - rect.top);
+      zoomBy(
+        event.deltaY < 0 ? 1.12 : 1 / 1.12,
+        event.clientX - rect.left,
+        event.clientY - rect.top
+      );
     };
     element.addEventListener('wheel', handler, { passive: false });
     return () => element.removeEventListener('wheel', handler);
@@ -329,7 +345,6 @@ export const PlanGraphCanvas: React.FC<PlanGraphCanvasProps> = ({
         onPointerMove={onPointerMove}
         onPointerUp={endDrag}
         onPointerCancel={endDrag}
-        onWheel={onWheel}
         onKeyDown={onKeyDown}
         data-testid="plan-plotno"
         className={`h-full w-full cursor-grab touch-none active:cursor-grabbing ${FOCUS_RING}`}
@@ -436,7 +451,9 @@ export const PlanGraphCanvas: React.FC<PlanGraphCanvasProps> = ({
                       {item.label}
                     </span>
                     <span className="flex items-center justify-between gap-2">
-                      <span className="truncate text-[11px] text-c-text-muted">{item.typeLabel}</span>
+                      <span className="truncate text-[11px] text-c-text-muted">
+                        {item.typeLabel}
+                      </span>
                       {runtime ? (
                         <span
                           className={`shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-medium ${

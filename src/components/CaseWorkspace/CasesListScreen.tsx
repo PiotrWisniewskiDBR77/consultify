@@ -72,7 +72,12 @@ const SAVED_VIEWS: Array<{ id: SavedView; label: string; description: string }> 
 
 /** Osie zamknięcia, które realnie dotyczą zlecenia (bez „nie dotyczy"). */
 function closureProgress(item: CaseCoreView): { done: number; total: number } {
-  const axes = [item.deliveryStatus, item.decisionStatus, item.implementationStatus, item.outcomeStatus];
+  const axes = [
+    item.deliveryStatus,
+    item.decisionStatus,
+    item.implementationStatus,
+    item.outcomeStatus,
+  ];
   const applicable = axes.filter((axis) => axis !== 'NOT_APPLICABLE');
   const done = applicable.filter((axis) => axis === 'COMPLETED' || axis === 'VALIDATED').length;
   return { done, total: applicable.length };
@@ -84,9 +89,14 @@ function closureProgress(item: CaseCoreView): { done: number; total: number } {
  * zatwierdzenia, więc UI nie udaje, że je zna — mówi tylko to, co wynika ze
  * statusu zlecenia i osi zamknięcia.
  */
-function attentionOf(item: CaseCoreView): { label: string; tone: 'critical' | 'warning' | 'neutral' } {
-  if (item.caseStatus === 'BLOCKED') return { label: 'Zablokowane — potrzebna decyzja', tone: 'critical' };
-  if (item.caseStatus === 'FAILED') return { label: 'Nieudane — potrzebna reakcja', tone: 'critical' };
+function attentionOf(item: CaseCoreView): {
+  label: string;
+  tone: 'critical' | 'warning' | 'neutral';
+} {
+  if (item.caseStatus === 'BLOCKED')
+    return { label: 'Zablokowane — potrzebna decyzja', tone: 'critical' };
+  if (item.caseStatus === 'FAILED')
+    return { label: 'Nieudane — potrzebna reakcja', tone: 'critical' };
   if (item.caseStatus === 'DRAFT') return { label: 'Plan niezatwierdzony', tone: 'warning' };
   return { label: 'Nic nie czeka na Ciebie', tone: 'neutral' };
 }
@@ -110,7 +120,9 @@ function nextActionOf(item: CaseCoreView): string {
   }
 }
 
-function statusTone(status: CaseCoreView['caseStatus']): 'critical' | 'warning' | 'success' | 'info' | 'neutral' {
+function statusTone(
+  status: CaseCoreView['caseStatus']
+): 'critical' | 'warning' | 'success' | 'info' | 'neutral' {
   if (status === 'BLOCKED' || status === 'FAILED') return 'critical';
   if (status === 'DRAFT') return 'warning';
   if (status === 'CLOSED') return 'success';
@@ -380,7 +392,10 @@ export const CasesListScreen: React.FC = () => {
         sortable: true,
         sortAccessor: (row: Record<string, unknown>) => String(row.aktywnosc ?? ''),
         render: (row: Record<string, unknown>) => (
-          <span className="text-sm text-c-text-secondary" title={formatDateTime(String(row.aktywnosc))}>
+          <span
+            className="text-sm text-c-text-secondary"
+            title={formatDateTime(String(row.aktywnosc))}
+          >
             {relativeDays(String(row.aktywnosc))}
           </span>
         ),
@@ -417,6 +432,98 @@ export const CasesListScreen: React.FC = () => {
     [statusCounts]
   );
 
+  /*
+   * ★ DANE POZA JSX — świadoma decyzja, nie kosmetyka.
+   *
+   * Pasek modułu ma DOKŁADNIE 3 zakładki (`SAVED_VIEWS`) i 5 pigułek statusu,
+   * czyli mieści się w limicie ≤6 z Doktryny Gęstości §4. Strażnik
+   * `scripts/check-gestosc.sh` liczył jednak 12: jego heurystyka otwiera
+   * „strefę zakładek" na pierwszej linii z propem zakładek i zamyka ją
+   * dopiero na linii `]`, a potem dolicza KAŻDE `id: '…'` po drodze. Przy
+   * tablicach wpisanych wprost w JSX (wiersze podglądu, akcje kebaba, „Co
+   * dalej") do zakładek doliczały się elementy podglądu.
+   *
+   * Deklaracje danych stoją więc PRZED `return`, gdzie i tak jest ich miejsce:
+   * pomiar strażnika zgadza się z rzeczywistością (3 zakładki), a JSX pokazuje
+   * układ zamiast treści. To zmiana kolejności deklaracji — zero zmian
+   * zachowania, żadna funkcja nie znika.
+   */
+  const barTabs = useMemo(
+    () => visibleViews.map((view) => ({ id: view.id, label: view.label })),
+    [visibleViews]
+  );
+
+  const rowMenu = useCallback(
+    (row: Record<string, unknown>) => ({
+      primary: [
+        {
+          id: 'otworz',
+          label: 'Otwórz zlecenie',
+          icon: ArrowRight,
+          onClick: () => openCase(String(row.id)),
+        },
+      ],
+      universalHandlers: {
+        preview: () => setSelectedId(String(row.id)),
+      },
+    }),
+    [openCase]
+  );
+
+  /** Wiersze „właściwość → wartość" w podglądzie. Wszystkie po polsku. */
+  const previewProperties = useMemo(() => {
+    if (!selected) return [];
+    return [
+      {
+        id: 'zamkniecie',
+        label: 'Umówiony sposób zamknięcia',
+        value: closureTypeLabel(selected.contractedClosureType, true),
+      },
+      { id: 'nadzor', label: 'Nadzór', value: governanceTierLabel(selected.governanceTier, true) },
+      {
+        id: 'samodzielnosc',
+        label: 'Samodzielność systemu',
+        value: autonomyPolicyLabel(selected.autonomyPolicy, true),
+      },
+      {
+        id: 'dostarczenie',
+        label: 'Dostarczenie',
+        value: closureAxisStatusLabel(selected.deliveryStatus, true),
+      },
+      {
+        id: 'decyzja',
+        label: 'Decyzja',
+        value: closureAxisStatusLabel(selected.decisionStatus, true),
+      },
+      {
+        id: 'wdrozenie',
+        label: 'Wdrożenie',
+        value: closureAxisStatusLabel(selected.implementationStatus, true),
+      },
+      { id: 'efekt', label: 'Efekt', value: closureAxisStatusLabel(selected.outcomeStatus, true) },
+      { id: 'zmiana', label: 'Ostatnia zmiana', value: formatDateTime(selected.updatedAt) },
+    ];
+  }, [selected]);
+
+  /** „Co dalej" — wejście na wybraną zakładkę zlecenia. */
+  const previewNextItems = useMemo(() => {
+    if (!selected) return [];
+    const go = (query: string) => () => {
+      rememberOpenedCase(selected.caseId);
+      navigate(`/zlecenia/${encodeURIComponent(selected.caseId)}?${query}`);
+    };
+    return [
+      {
+        id: 'plan',
+        label: 'Plan',
+        icon: ListChecks,
+        onClick: go('zakladka=plan&widok-planu=prosty'),
+      },
+      { id: 'realizacja', label: 'Realizacja', onClick: go('zakladka=realizacja') },
+      { id: 'rezultaty', label: 'Rezultaty', onClick: go('zakladka=rezultaty') },
+    ];
+  }, [selected, navigate]);
+
   const stateBlock = (
     <CaseStateBlock
       loading={loading}
@@ -442,7 +549,7 @@ export const CasesListScreen: React.FC = () => {
   return (
     <div className="h-full min-w-0" data-testid="zlecenia-lista">
       <StandardModuleBar
-        tabs={visibleViews.map((view) => ({ id: view.id, label: view.label }))}
+        tabs={barTabs}
         activeTab={visibleViews.some((v) => v.id === savedView) ? savedView : visibleViews[0]?.id}
         onTabChange={(id) => setParam('widok', id)}
         onSearch={handleSearch}
@@ -480,26 +587,16 @@ export const CasesListScreen: React.FC = () => {
                   defaultSort={{ columnId: 'aktywnosc', direction: 'desc' }}
                   // Osobny klucz na telefon — inny zestaw kolumn nie może
                   // dziedziczyć zapamiętanego układu z widoku szerokiego.
-                  persistKey={isNarrow ? 'caseWorkspace.cases.list.mobile' : 'caseWorkspace.cases.list'}
+                  persistKey={
+                    isNarrow ? 'caseWorkspace.cases.list.mobile' : 'caseWorkspace.cases.list'
+                  }
                   density="compact"
                   empty={{
                     icon: FolderOpen,
                     title: 'Brak zleceń w tym widoku',
                     description: 'Zmień zakładkę albo wyczyść filtry.',
                   }}
-                  rowMenu={(row) => ({
-                    primary: [
-                      {
-                        id: 'otworz',
-                        label: 'Otwórz zlecenie',
-                        icon: ArrowRight,
-                        onClick: () => openCase(String(row.id)),
-                      },
-                    ],
-                    universalHandlers: {
-                      preview: () => setSelectedId(String(row.id)),
-                    },
-                  })}
+                  rowMenu={rowMenu}
                 />
               </div>
               {selected ? (
@@ -522,85 +619,17 @@ export const CasesListScreen: React.FC = () => {
                       recommendation: nextActionOf(selected),
                     }}
                     details={{
-                      text: selected.projectDescription || 'Oczekiwany rezultat nie został opisany.',
+                      text:
+                        selected.projectDescription || 'Oczekiwany rezultat nie został opisany.',
                       showWordCount: false,
                       propertyLabel: 'Właściwość',
                       valueLabel: 'Wartość',
-                      properties: [
-                        {
-                          id: 'zamkniecie',
-                          label: 'Umówiony sposób zamknięcia',
-                          value: closureTypeLabel(selected.contractedClosureType, true),
-                        },
-                        {
-                          id: 'nadzor',
-                          label: 'Nadzór',
-                          value: governanceTierLabel(selected.governanceTier, true),
-                        },
-                        {
-                          id: 'samodzielnosc',
-                          label: 'Samodzielność systemu',
-                          value: autonomyPolicyLabel(selected.autonomyPolicy, true),
-                        },
-                        {
-                          id: 'dostarczenie',
-                          label: 'Dostarczenie',
-                          value: closureAxisStatusLabel(selected.deliveryStatus, true),
-                        },
-                        {
-                          id: 'decyzja',
-                          label: 'Decyzja',
-                          value: closureAxisStatusLabel(selected.decisionStatus, true),
-                        },
-                        {
-                          id: 'wdrozenie',
-                          label: 'Wdrożenie',
-                          value: closureAxisStatusLabel(selected.implementationStatus, true),
-                        },
-                        {
-                          id: 'efekt',
-                          label: 'Efekt',
-                          value: closureAxisStatusLabel(selected.outcomeStatus, true),
-                        },
-                        { id: 'zmiana', label: 'Ostatnia zmiana', value: formatDateTime(selected.updatedAt) },
-                      ],
+                      properties: previewProperties,
                     }}
                     whatsNext={{
                       label: 'Co dalej',
                       note: 'Otwiera zlecenie na wybranej zakładce.',
-                      items: [
-                        {
-                          id: 'plan',
-                          label: 'Plan',
-                          icon: ListChecks,
-                          onClick: () => {
-                            rememberOpenedCase(selected.caseId);
-                            navigate(
-                              `/zlecenia/${encodeURIComponent(selected.caseId)}?zakladka=plan&widok-planu=prosty`
-                            );
-                          },
-                        },
-                        {
-                          id: 'realizacja',
-                          label: 'Realizacja',
-                          onClick: () => {
-                            rememberOpenedCase(selected.caseId);
-                            navigate(
-                              `/zlecenia/${encodeURIComponent(selected.caseId)}?zakladka=realizacja`
-                            );
-                          },
-                        },
-                        {
-                          id: 'rezultaty',
-                          label: 'Rezultaty',
-                          onClick: () => {
-                            rememberOpenedCase(selected.caseId);
-                            navigate(
-                              `/zlecenia/${encodeURIComponent(selected.caseId)}?zakladka=rezultaty`
-                            );
-                          },
-                        },
-                      ],
+                      items: previewNextItems,
                     }}
                   />
                 </aside>

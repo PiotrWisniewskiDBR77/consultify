@@ -117,6 +117,27 @@ const LINKED_TYPE_LABELS: Record<string, Bilingual> = {
   document: { en: 'Document', pl: 'Dokument' },
   external: { en: 'External link', pl: 'Link zewnętrzny' },
   item: { en: 'Item', pl: 'Obiekt' },
+  // ── Uzupełnienie 2026-08-10 (Zlecenia / Case Workspace) ──────────────────
+  // `case_workspace_artifact_links.artifact_type` to w backendzie ZWYKŁY
+  // string (`artifactLinks.routes.ts:59` → `z.string().trim().min(1)`), więc
+  // każdy typ spoza tego słownika spada do `humanizeEnum` i wychodzi po
+  // ANGIELSKU. Zobaczone na zrzucie „Rezultaty → Powiązane obiekty": kolumna
+  // pokazywała „Table" obok polskich „Dokument"/„Prezentacja". To łamie
+  // warunek właściciela o polskim nazewnictwie, więc dopisujemy rodziny
+  // artefaktów, które Consultify realnie produkuje.
+  table: { en: 'Table', pl: 'Tabela' },
+  workbook: { en: 'Workbook', pl: 'Arkusz' },
+  spreadsheet: { en: 'Spreadsheet', pl: 'Arkusz' },
+  deck: { en: 'Presentation', pl: 'Prezentacja' },
+  whiteboard: { en: 'Whiteboard', pl: 'Tablica' },
+  mindmap: { en: 'Mind map', pl: 'Mapa myśli' },
+  process_flow: { en: 'Process flow', pl: 'Przepływ procesu' },
+  canvas: { en: 'Canvas', pl: 'Płótno' },
+  audit: { en: 'Audit', pl: 'Audyt' },
+  meeting: { en: 'Meeting', pl: 'Spotkanie' },
+  kpi: { en: 'KPI', pl: 'Wskaźnik' },
+  measurement: { en: 'Measurement', pl: 'Pomiar' },
+  file: { en: 'File', pl: 'Plik' },
 };
 
 export function linkedTypeLabel(raw: string | null | undefined, isPolish: boolean): string {
@@ -190,7 +211,10 @@ export function governanceTierLabel(raw: string | null | undefined, isPolish: bo
 
 const AUTONOMY_POLICY_LABELS: Record<string, Bilingual> = {
   ASK_EACH_ACTION: { en: 'Ask before every action', pl: 'Pytaj przed każdą czynnością' },
-  ASK_MATERIAL_ACTIONS: { en: 'Ask before important actions', pl: 'Pytaj przed ważnymi czynnościami' },
+  ASK_MATERIAL_ACTIONS: {
+    en: 'Ask before important actions',
+    pl: 'Pytaj przed ważnymi czynnościami',
+  },
   EXECUTE_APPROVED_PLAN: { en: 'Run the approved plan', pl: 'Wykonuj zatwierdzony plan' },
 };
 

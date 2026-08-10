@@ -49,7 +49,9 @@ function waitTone(wait: CaseWait): 'critical' | 'warning' | 'success' | 'neutral
   return 'neutral';
 }
 
-function proposalTone(status: CaseActionProposal['status']): 'critical' | 'warning' | 'success' | 'neutral' {
+function proposalTone(
+  status: CaseActionProposal['status']
+): 'critical' | 'warning' | 'success' | 'neutral' {
   if (status === 'FAILED' || status === 'REJECTED') return 'critical';
   if (status === 'PENDING_REVIEW' || status === 'REQUESTED_CHANGES') return 'warning';
   if (status === 'EXECUTED' || status === 'AUDITED') return 'success';
@@ -144,7 +146,9 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
       sortable: true,
       render: (row: Record<string, unknown>) =>
         row.termin ? (
-          <span className="text-sm text-c-text-secondary">{formatDateTime(String(row.termin))}</span>
+          <span className="text-sm text-c-text-secondary">
+            {formatDateTime(String(row.termin))}
+          </span>
         ) : (
           <span className="text-sm text-c-text-muted">bez terminu</span>
         ),
@@ -184,10 +188,12 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
   ];
 
   const selectedWait =
-    selection?.kind === 'oczekiwanie' ? waits.find((w) => w.waitId === selection.id) ?? null : null;
+    selection?.kind === 'oczekiwanie'
+      ? (waits.find((w) => w.waitId === selection.id) ?? null)
+      : null;
   const selectedProposal =
     selection?.kind === 'propozycja'
-      ? proposals.find((p) => p.actionProposalId === selection.id) ?? null
+      ? (proposals.find((p) => p.actionProposalId === selection.id) ?? null)
       : null;
 
   return (
@@ -286,7 +292,9 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
             meta={{
               pills: [{ label: caseWaitStatusLabel(selectedWait.status, true), tone: 'info' }],
               trailing: (
-                <span className="text-xs text-c-text-muted">{relativeDays(selectedWait.createdAt)}</span>
+                <span className="text-xs text-c-text-muted">
+                  {relativeDays(selectedWait.createdAt)}
+                </span>
               ),
             }}
             details={{
@@ -321,7 +329,9 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
                 {
                   id: 'rozwiazane',
                   label: 'Doczekało się',
-                  value: selectedWait.satisfiedAt ? formatDateTime(selectedWait.satisfiedAt) : 'jeszcze nie',
+                  value: selectedWait.satisfiedAt
+                    ? formatDateTime(selectedWait.satisfiedAt)
+                    : 'jeszcze nie',
                 },
               ],
             }}

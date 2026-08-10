@@ -43,7 +43,9 @@ function axisTone(status: string): 'success' | 'warning' | 'neutral' {
   return 'neutral';
 }
 
-function measurementTone(status: ValueMeasurement['measurementStatus']): 'success' | 'warning' | 'critical' | 'neutral' {
+function measurementTone(
+  status: ValueMeasurement['measurementStatus']
+): 'success' | 'warning' | 'critical' | 'neutral' {
   if (status === 'CONFIRMED') return 'success';
   if (status === 'NOT_ACHIEVED') return 'critical';
   if (status === 'PARTIAL' || status === 'EVIDENCE_MISSING') return 'warning';
@@ -169,11 +171,11 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
 
   const selectedMeasurement =
     selection?.kind === 'pomiar'
-      ? measurements.find((item) => item.measurementId === selection.id) ?? null
+      ? (measurements.find((item) => item.measurementId === selection.id) ?? null)
       : null;
   const selectedLink =
     selection?.kind === 'obiekt'
-      ? artifactLinks.find((item) => item.linkId === selection.id) ?? null
+      ? (artifactLinks.find((item) => item.linkId === selection.id) ?? null)
       : null;
 
   return (
@@ -188,7 +190,10 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
           </div>
           <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
             {axes.map((axis) => (
-              <div key={axis.key} className="rounded-lg border border-c-border bg-c-surface-raised px-3 py-2">
+              <div
+                key={axis.key}
+                className="rounded-lg border border-c-border bg-c-surface-raised px-3 py-2"
+              >
                 <div className="text-xs uppercase tracking-wide text-c-text-muted">
                   {closureAxisLabel(axis.key, true)}
                 </div>
@@ -283,17 +288,26 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
                 {
                   id: 'baza',
                   label: 'Punkt wyjścia',
-                  value: formatValue(selectedMeasurement.baselineValue, selectedMeasurement.baselineUnit),
+                  value: formatValue(
+                    selectedMeasurement.baselineValue,
+                    selectedMeasurement.baselineUnit
+                  ),
                 },
                 {
                   id: 'cel',
                   label: 'Cel',
-                  value: formatValue(selectedMeasurement.targetValue, selectedMeasurement.targetUnit),
+                  value: formatValue(
+                    selectedMeasurement.targetValue,
+                    selectedMeasurement.targetUnit
+                  ),
                 },
                 {
                   id: 'wynik',
                   label: 'Wynik',
-                  value: formatValue(selectedMeasurement.actualValue, selectedMeasurement.actualUnit),
+                  value: formatValue(
+                    selectedMeasurement.actualValue,
+                    selectedMeasurement.actualUnit
+                  ),
                 },
                 {
                   id: 'data',

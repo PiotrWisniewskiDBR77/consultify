@@ -61,6 +61,11 @@ export const ROUTES = {
   // HP-4 F3 Harvey-Parity: run-agent workspace entry point (AgentPlanWorkspace).
   // Gated by agentPlanFlag (default OFF) — see AppRoutes.tsx registration.
   AGENT_PLAN: '/agent-plan',
+  // Zlecenia (Case Workspace). DOUBLE-gated: BetaGate `MODULE_CASE_WORKSPACE`
+  // ('closed') + runtime flag `isCaseWorkspaceEnabled()` (default OFF) —
+  // `BETA_ADMINS_EXEMPT=true` means the beta gate alone would still show the
+  // module to every admin/owner. See AppRoutes.tsx registration.
+  CASE_WORKSPACE: '/zlecenia',
   DASHBOARD: '/chat', // DEPRECATED: Dashboard removed, redirects to Chat
 
   // Assessment Module
@@ -297,6 +302,7 @@ export const APP_VIEW_TO_ROUTE: Record<AppView, string> = {
   [AppView.PROJECTS]: ROUTES.PROJECTS,
   [AppView.CLIENT_VAULT]: ROUTES.CLIENT_VAULT,
   [AppView.AGENT_PLAN]: ROUTES.AGENT_PLAN,
+  [AppView.CASE_WORKSPACE]: ROUTES.CASE_WORKSPACE,
   [AppView.DASHBOARD]: ROUTES.AI_CHAT, // DEPRECATED: redirects to Chat
   [AppView.USER_DASHBOARD]: ROUTES.AI_CHAT, // DEPRECATED: redirects to Chat
   [AppView.DASHBOARD_OVERVIEW]: ROUTES.AI_CHAT, // DEPRECATED: redirects to Chat
@@ -684,6 +690,8 @@ export function getAppViewFromPath(path: string): AppView | null {
   if (normalized.startsWith(ROUTES.PROJECTS)) return AppView.PROJECTS;
   if (normalized.startsWith(ROUTES.CLIENT_VAULT)) return AppView.CLIENT_VAULT;
   if (normalized.startsWith(ROUTES.AGENT_PLAN)) return AppView.AGENT_PLAN;
+  // /zlecenia oraz /zlecenia/:caseId → jeden moduł (powłoka trzyma zakładki w adresie).
+  if (normalized.startsWith(ROUTES.CASE_WORKSPACE)) return AppView.CASE_WORKSPACE;
   if (normalized.startsWith(ROUTES.INITIATIVES)) return AppView.FULL_STEP2_INITIATIVES;
   if (normalized.startsWith(ROUTES.PORTFOLIO) || normalized.startsWith(ROUTES.ROADMAP)) {
     return AppView.PORTFOLIO_ROADMAP;

@@ -24,6 +24,7 @@ import { caseStatusLabel } from '@/utils/enumLabels';
 
 import {
   getCase,
+  getPlanGraph,
   listArtifactLinks,
   listHistoryEvents,
   listPlanVersions,
@@ -32,12 +33,11 @@ import {
   listWaits,
   settleSection,
   toFailure,
-  getPlanGraph,
   validatePlanVersion,
 } from './api';
-import { PlanView, PLAN_PROJECTIONS, type PlanProjection } from './PlanView';
-import { RealizacjaView } from './RealizacjaView';
 import { rememberOpenedCase } from './CasesListScreen';
+import { PLAN_PROJECTIONS, type PlanProjection, PlanView } from './PlanView';
+import { RealizacjaView } from './RealizacjaView';
 import { RezultatyView } from './RezultatyView';
 import type {
   CanonicalGraph,
@@ -65,7 +65,11 @@ type Tab = 'plan' | 'realizacja' | 'rezultaty';
 const TABS: Array<{ id: Tab; label: string; description: string }> = [
   { id: 'plan', label: 'Plan', description: 'Co i w jakiej kolejności ma się wydarzyć.' },
   { id: 'realizacja', label: 'Realizacja', description: 'Co się dzieje teraz i na co czekamy.' },
-  { id: 'rezultaty', label: 'Rezultaty', description: 'Co powstało i czy efekt został potwierdzony.' },
+  {
+    id: 'rezultaty',
+    label: 'Rezultaty',
+    description: 'Co powstało i czy efekt został potwierdzony.',
+  },
 ];
 
 interface CaseBundle {
@@ -111,12 +115,48 @@ export const CaseDetailScreen: React.FC = () => {
 
       const [planVersions, waits, proposals, measurements, artifactLinks, history] =
         await Promise.all([
-          settleSection('plan', listPlanVersions(caseId), [] as CasePlanVersion[], failedSections, blockedFlag),
-          settleSection('oczekiwania', listWaits(caseId), [] as CaseWait[], failedSections, blockedFlag),
-          settleSection('sprawy do zatwierdzenia', listProposals(caseId), [] as CaseActionProposal[], failedSections, blockedFlag),
-          settleSection('pomiary wartości', listValueMeasurements(caseId), [] as ValueMeasurement[], failedSections, blockedFlag),
-          settleSection('powiązane obiekty', listArtifactLinks(caseId), [] as CaseArtifactLink[], failedSections, blockedFlag),
-          settleSection('przebieg zlecenia', listHistoryEvents(caseId), [] as CaseHistoryEvent[], failedSections, blockedFlag),
+          settleSection(
+            'plan',
+            listPlanVersions(caseId),
+            [] as CasePlanVersion[],
+            failedSections,
+            blockedFlag
+          ),
+          settleSection(
+            'oczekiwania',
+            listWaits(caseId),
+            [] as CaseWait[],
+            failedSections,
+            blockedFlag
+          ),
+          settleSection(
+            'sprawy do zatwierdzenia',
+            listProposals(caseId),
+            [] as CaseActionProposal[],
+            failedSections,
+            blockedFlag
+          ),
+          settleSection(
+            'pomiary wartości',
+            listValueMeasurements(caseId),
+            [] as ValueMeasurement[],
+            failedSections,
+            blockedFlag
+          ),
+          settleSection(
+            'powiązane obiekty',
+            listArtifactLinks(caseId),
+            [] as CaseArtifactLink[],
+            failedSections,
+            blockedFlag
+          ),
+          settleSection(
+            'przebieg zlecenia',
+            listHistoryEvents(caseId),
+            [] as CaseHistoryEvent[],
+            failedSections,
+            blockedFlag
+          ),
         ]);
 
       // Wersja planu do pokazania: najpierw ta wskazana przez zlecenie,
@@ -130,7 +170,13 @@ export const CaseDetailScreen: React.FC = () => {
       let graph: CanonicalGraph | null = current?.semanticGraph ?? null;
       let validation: PlanValidationResult | null = null;
       if (current) {
-        graph = await settleSection('graf planu', getPlanGraph(current.casePlanVersionId), graph, failedSections, blockedFlag);
+        graph = await settleSection(
+          'graf planu',
+          getPlanGraph(current.casePlanVersionId),
+          graph,
+          failedSections,
+          blockedFlag
+        );
         validation = await settleSection(
           'sprawdzenie planu',
           validatePlanVersion(current.casePlanVersionId),
@@ -263,7 +309,12 @@ export const CaseDetailScreen: React.FC = () => {
 
   const body = (() => {
     const state = (
-      <CaseStateBlock loading={loading} failure={failure} onRetry={() => void load()} onBack={goToList} />
+      <CaseStateBlock
+        loading={loading}
+        failure={failure}
+        onRetry={() => void load()}
+        onBack={goToList}
+      />
     );
     if (loading || failure || !bundle) {
       return <div className="rounded-xl border border-c-border bg-c-surface">{state}</div>;
@@ -359,7 +410,8 @@ export const CaseDetailScreen: React.FC = () => {
             {bundle ? (
               <StatusTag
                 tone={
-                  bundle.caseItem.caseStatus === 'BLOCKED' || bundle.caseItem.caseStatus === 'FAILED'
+                  bundle.caseItem.caseStatus === 'BLOCKED' ||
+                  bundle.caseItem.caseStatus === 'FAILED'
                     ? 'critical'
                     : bundle.caseItem.caseStatus === 'CLOSED'
                       ? 'success'

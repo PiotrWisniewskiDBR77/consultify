@@ -33,8 +33,16 @@ export type PlanProjection = 'prosty' | 'ekspercki' | 'lista';
 
 export const PLAN_PROJECTIONS: Array<{ id: PlanProjection; label: string; description: string }> = [
   { id: 'prosty', label: 'Prosty', description: 'Kroki po kolei, bez szczegółów technicznych.' },
-  { id: 'ekspercki', label: 'Ekspercki', description: 'Płótno przepływu z identyfikatorami technicznymi.' },
-  { id: 'lista', label: 'Lista', description: 'Tabela kroków — najlepsza na telefonie i dla czytnika ekranu.' },
+  {
+    id: 'ekspercki',
+    label: 'Ekspercki',
+    description: 'Płótno przepływu z identyfikatorami technicznymi.',
+  },
+  {
+    id: 'lista',
+    label: 'Lista',
+    description: 'Tabela kroków — najlepsza na telefonie i dla czytnika ekranu.',
+  },
 ];
 
 export interface PlanViewProps {
@@ -132,7 +140,8 @@ export const PlanView: React.FC<PlanViewProps> = ({
           </StatusTag>
           {planVersion ? (
             <StatusTag tone={planVersion.status === 'PUBLISHED' ? 'success' : 'warning'}>
-              Plan: {planVersionStatusLabel(planVersion.status, true)} (wersja {planVersion.planNumber})
+              Plan: {planVersionStatusLabel(planVersion.status, true)} (wersja{' '}
+              {planVersion.planNumber})
             </StatusTag>
           ) : null}
         </div>
@@ -285,7 +294,9 @@ export const PlanView: React.FC<PlanViewProps> = ({
                   onClick={() => onSelectNode(isSelected ? null : item.node.nodeId)}
                   aria-pressed={isSelected}
                   className={`flex w-full items-start gap-3 rounded-xl border bg-c-surface px-3 py-2.5 text-left transition focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus ${
-                    isSelected ? 'border-c-border-strong' : 'border-c-border hover:border-c-border-strong'
+                    isSelected
+                      ? 'border-c-border-strong'
+                      : 'border-c-border hover:border-c-border-strong'
                   }`}
                 >
                   <span className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-c-surface-raised text-xs font-semibold tabular-nums text-c-text-secondary">
@@ -326,11 +337,7 @@ export const PlanView: React.FC<PlanViewProps> = ({
        * przy oknie 812). Dolny próg pilnuje wyłącznie `useRemainingHeight`,
        * żeby istniała jedna reguła wysokości, a nie dwie sprzeczne.
        */}
-      <div
-        ref={canvasSlotRef}
-        className="min-w-0"
-        style={{ height: `${canvasHeight ?? 320}px` }}
-      >
+      <div ref={canvasSlotRef} className="min-w-0" style={{ height: `${canvasHeight ?? 320}px` }}>
         <PlanGraphCanvas
           graph={graph}
           selectedNodeId={selectedNodeId}
@@ -384,7 +391,8 @@ export const PlanView: React.FC<PlanViewProps> = ({
       ) : null}
       {planVersion ? (
         <p className="text-xs text-c-text-muted">
-          Wersja planu {planVersion.planNumber} · ostatnia zmiana {formatDateTime(planVersion.updatedAt)}
+          Wersja planu {planVersion.planNumber} · ostatnia zmiana{' '}
+          {formatDateTime(planVersion.updatedAt)}
           <TechnicalId value={planVersion.graphDigest?.slice(0, 12)} title="Odcisk grafu planu" />
         </p>
       ) : null}

@@ -300,13 +300,10 @@ export const MoreTabsMenu: React.FC<MoreTabsMenuProps> = ({
   const itemRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const menuId = useId();
 
-  const close = useCallback(
-    (returnFocus: boolean) => {
-      setOpen(false);
-      if (returnFocus) buttonRef.current?.focus();
-    },
-    []
-  );
+  const close = useCallback((returnFocus: boolean) => {
+    setOpen(false);
+    if (returnFocus) buttonRef.current?.focus();
+  }, []);
 
   useEffect(() => {
     if (!open) return undefined;
@@ -379,7 +376,16 @@ export const MoreTabsMenu: React.FC<MoreTabsMenuProps> = ({
       <button
         ref={buttonRef}
         type="button"
-        onClick={() => (open ? close(false) : openAt(Math.max(0, items.findIndex((i) => i.id === activeId))))}
+        onClick={() =>
+          open
+            ? close(false)
+            : openAt(
+                Math.max(
+                  0,
+                  items.findIndex((i) => i.id === activeId)
+                )
+              )
+        }
         onKeyDown={onButtonKeyDown}
         aria-haspopup="menu"
         aria-expanded={open}
@@ -389,7 +395,11 @@ export const MoreTabsMenu: React.FC<MoreTabsMenuProps> = ({
         className={`inline-flex h-9 items-center gap-1.5 whitespace-nowrap rounded-full border border-c-border px-3 text-sm font-medium text-c-text-secondary hover:bg-c-surface-raised ${FOCUS_RING}`}
       >
         <span>{label}</span>
-        <ChevronDown size={14} aria-hidden className={open ? 'rotate-180 transition' : 'transition'} />
+        <ChevronDown
+          size={14}
+          aria-hidden
+          className={open ? 'rotate-180 transition' : 'transition'}
+        />
       </button>
       {open ? (
         <div
@@ -419,7 +429,9 @@ export const MoreTabsMenu: React.FC<MoreTabsMenuProps> = ({
                   close(true);
                 }}
                 className={`block w-full px-3 py-2.5 text-left text-sm hover:bg-c-surface-raised ${FOCUS_RING} ${
-                  checked ? 'bg-c-surface-raised font-semibold text-c-text' : 'text-c-text-secondary'
+                  checked
+                    ? 'bg-c-surface-raised font-semibold text-c-text'
+                    : 'text-c-text-secondary'
                 }`}
               >
                 <span className="block">{item.label}</span>
