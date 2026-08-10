@@ -38,6 +38,17 @@
  * a dedicated, out-of-band `pg.Pool` (`control`) — never the service
  * function's return value alone — because the return value only proves what
  * the service THINKS it wrote, not what actually landed.
+ *
+ * ===========================================================================
+ * AUTHORIZATION (CW-P12 retrofit) — every actor is a real, membered user
+ * ===========================================================================
+ * caseCoreService.ts now gates every method through
+ * caseWorkspaceAuthContext.ts's requireOrgMember/requireCaseAccess. Every
+ * actor id used below is therefore a real `users` row with a matching
+ * ACTIVE `organization_members` row for the org under test — seeded here via
+ * direct INSERTs on the out-of-band pool (seedUser/seedMember), a
+ * test-fixture-only direct insert, not a production code path. No
+ * caseCoreService function itself writes to users/organization_members.
  */
 
 import { randomUUID } from 'node:crypto';
@@ -64,7 +75,16 @@ async function canReachWithSchema(connectionString: string): Promise<boolean> {
         WHERE table_schema = 'public' AND table_name = 'case_core'
           AND column_name IN ('project_id', 'governance_tier_history', 'version', 'closure_type')`
     );
-    return Number(result.rows[0]?.present ?? 0) === 4;
+    const caseCoreOk = Number(result.rows[0]?.present ?? 0) === 4;
+
+    const orgMembersResult = await probe.query(
+      `SELECT count(*)::int AS present FROM information_schema.columns
+        WHERE table_schema = 'public' AND table_name = 'organization_members'
+          AND column_name IN ('organization_id', 'user_id', 'role', 'status')`
+    );
+    const orgMembersOk = Number(orgMembersResult.rows[0]?.present ?? 0) === 4;
+
+    return caseCoreOk && orgMembersOk;
   } catch {
     return false;
   } finally {
@@ -143,12 +163,47 @@ suite('caseCoreService — Case Core against a real PostgreSQL (CW-P01, E1)', ()
     return projectId;
   }
 
-  async function teardown(orgIds: string[], projectIds: string[]): Promise<void> {
+  /** A fresh users row, unattached to organization_members unless seedMember() is also called for it. */
+  async function seedUser(orgId: string, label: string): Promise<string> {
+    const userId = `case-core-user-${label}-${randomUUID()}`;
+    await control.query(`INSERT INTO users (id, organization_id, email) VALUES ($1, $2, $3)`, [
+      userId,
+      orgId,
+      `${userId}@example.test`,
+    ]);
+    return userId;
+  }
+
+  /** An organization_members row for an existing user, at the given role/status — a test-fixture-only direct insert. */
+  async function seedMember(
+    orgId: string,
+    userId: string,
+    role: 'OWNER' | 'ADMIN' | 'MEMBER' | 'CONSULTANT',
+    status: 'ACTIVE' | 'REVOKED' | 'SUSPENDED' = 'ACTIVE'
+  ): Promise<void> {
+    await control.query(
+      `INSERT INTO organization_members (id, organization_id, user_id, role, status)
+         VALUES ($1, $2, $3, $4, $5)`,
+      [`case-core-member-${randomUUID()}`, orgId, userId, role, status]
+    );
+  }
+
+  /** Convenience: seed a user AND an ACTIVE membership at MEMBER role in one call. */
+  async function seedMemberedUser(orgId: string, label: string): Promise<string> {
+    const userId = await seedUser(orgId, label);
+    await seedMember(orgId, userId, 'MEMBER');
+    return userId;
+  }
+
+  async function teardown(orgIds: string[], projectIds: string[], userIds: string[] = []): Promise<void> {
     for (const projectId of projectIds) {
       await control
         .query(`DELETE FROM case_core WHERE project_id = $1`, [projectId])
         .catch(() => undefined);
       await control.query(`DELETE FROM projects WHERE id = $1`, [projectId]).catch(() => undefined);
+    }
+    for (const userId of userIds) {
+      await control.query(`DELETE FROM users WHERE id = $1`, [userId]).catch(() => undefined);
     }
     for (const orgId of orgIds) {
       await control.query(`DELETE FROM organizations WHERE id = $1`, [orgId]).catch(() => undefined);
@@ -176,12 +231,13 @@ suite('caseCoreService — Case Core against a real PostgreSQL (CW-P01, E1)', ()
   // -------------------------------------------------------------------------
   it('createCase inserts exactly one case_core row for a project; a second createCase for the SAME project_id is rejected (OD-01)', async () => {
     const { orgId, projectId } = await seedOrgAndProject('od01');
+    const actorId = await seedMemberedUser(orgId, 'od01');
     try {
       const created = await caseCoreService.createCase({
         projectId,
         organizationId: orgId,
         contractedClosureType: 'DELIVERY_COMPLETED',
-        createdByActorId: 'actor-od01',
+        createdByActorId: actorId,
       });
       expect(created.projectId).toBe(projectId);
       expect(created.organizationId).toBe(orgId);
@@ -196,7 +252,7 @@ suite('caseCoreService — Case Core against a real PostgreSQL (CW-P01, E1)', ()
           projectId,
           organizationId: orgId,
           contractedClosureType: 'DELIVERY_COMPLETED',
-          createdByActorId: 'actor-od01-second',
+          createdByActorId: actorId,
         })
       ).rejects.toThrow(/case_already_exists_for_project/);
 
@@ -205,7 +261,7 @@ suite('caseCoreService — Case Core against a real PostgreSQL (CW-P01, E1)', ()
       expect(rowsAfterSecond).toHaveLength(1);
       expect(rowsAfterSecond[0].case_id).toBe(created.caseId);
     } finally {
-      await teardown([orgId], [projectId]);
+      await teardown([orgId], [projectId], [actorId]);
     }
   }, 30_000);
 
@@ -215,16 +271,17 @@ suite('caseCoreService — Case Core against a real PostgreSQL (CW-P01, E1)', ()
   it('transitionStatus allows DRAFT->ACTIVE and rejects DRAFT->CLOSED without a recorded closure, leaving case_status unchanged in the DB', async () => {
     const { orgId, projectId: projectIdActive } = await seedOrgAndProject('rt026-active');
     const projectIdIllegal = await seedProjectInOrg(orgId, 'rt026-illegal');
+    const actorId = await seedMemberedUser(orgId, 'rt026');
     try {
       // -- Legal edge: DRAFT -> ACTIVE.
       const activeCase = await caseCoreService.createCase({
         projectId: projectIdActive,
         organizationId: orgId,
         contractedClosureType: 'DELIVERY_COMPLETED',
-        createdByActorId: 'actor-rt026',
+        createdByActorId: actorId,
       });
       const activated = await caseCoreService.transitionStatus(activeCase.caseId, 'ACTIVE', {
-        actorUserId: 'actor-rt026',
+        actorUserId: actorId,
       });
       expect(activated.caseStatus).toBe('ACTIVE');
       const afterActivate = await readCaseCoreRow(activeCase.caseId);
@@ -235,14 +292,14 @@ suite('caseCoreService — Case Core against a real PostgreSQL (CW-P01, E1)', ()
         projectId: projectIdIllegal,
         organizationId: orgId,
         contractedClosureType: 'DELIVERY_COMPLETED',
-        createdByActorId: 'actor-rt026-illegal',
+        createdByActorId: actorId,
       });
       const beforeIllegal = await readCaseCoreRow(illegalCase.caseId);
       expect(beforeIllegal?.case_status).toBe('DRAFT');
 
       await expect(
         caseCoreService.transitionStatus(illegalCase.caseId, 'CLOSED', {
-          actorUserId: 'actor-rt026-illegal',
+          actorUserId: actorId,
         })
       ).rejects.toThrow(/case_closure_not_recorded/);
 
@@ -250,7 +307,7 @@ suite('caseCoreService — Case Core against a real PostgreSQL (CW-P01, E1)', ()
       expect(afterIllegal?.case_status).toBe('DRAFT');
       expect(afterIllegal?.version).toBe(beforeIllegal?.version);
     } finally {
-      await teardown([orgId], [projectIdActive, projectIdIllegal]);
+      await teardown([orgId], [projectIdActive, projectIdIllegal], [actorId]);
     }
   }, 30_000);
 
@@ -259,12 +316,13 @@ suite('caseCoreService — Case Core against a real PostgreSQL (CW-P01, E1)', ()
   // -------------------------------------------------------------------------
   it('updateGovernanceTier appends to governance_tier_history rather than overwriting it; two calls leave both entries, in order', async () => {
     const { orgId, projectId } = await seedOrgAndProject('govhist');
+    const actorId = await seedMemberedUser(orgId, 'govhist');
     try {
       const created = await caseCoreService.createCase({
         projectId,
         organizationId: orgId,
         contractedClosureType: 'DELIVERY_COMPLETED',
-        createdByActorId: 'actor-govhist',
+        createdByActorId: actorId,
       });
 
       const initialRow = await readCaseCoreRow(created.caseId);
@@ -275,7 +333,7 @@ suite('caseCoreService — Case Core against a real PostgreSQL (CW-P01, E1)', ()
       await caseCoreService.updateGovernanceTier(
         created.caseId,
         'STANDARD',
-        { actorUserId: 'actor-govhist' },
+        { actorUserId: actorId },
         'first escalation'
       );
       const afterFirst = await readCaseCoreRow(created.caseId);
@@ -286,7 +344,7 @@ suite('caseCoreService — Case Core against a real PostgreSQL (CW-P01, E1)', ()
       await caseCoreService.updateGovernanceTier(
         created.caseId,
         'CONTROLLED',
-        { actorUserId: 'actor-govhist' },
+        { actorUserId: actorId },
         'second escalation'
       );
       const afterSecond = await readCaseCoreRow(created.caseId);
@@ -300,7 +358,7 @@ suite('caseCoreService — Case Core against a real PostgreSQL (CW-P01, E1)', ()
       expect(historyAfterSecond[1]).toMatchObject({ tier: 'STANDARD', reason: 'first escalation' });
       expect(historyAfterSecond[2]).toMatchObject({ tier: 'CONTROLLED', reason: 'second escalation' });
     } finally {
-      await teardown([orgId], [projectId]);
+      await teardown([orgId], [projectId], [actorId]);
     }
   }, 30_000);
 
@@ -309,23 +367,24 @@ suite('caseCoreService — Case Core against a real PostgreSQL (CW-P01, E1)', ()
   // -------------------------------------------------------------------------
   it('recordClosure sets closure_type once; a second recordClosure call is rejected and the original closure_type/closed_at are unchanged', async () => {
     const { orgId, projectId } = await seedOrgAndProject('rt027');
+    const actorId = await seedMemberedUser(orgId, 'rt027');
     try {
       const created = await caseCoreService.createCase({
         projectId,
         organizationId: orgId,
         contractedClosureType: 'IMPLEMENTATION_COMPLETED',
-        createdByActorId: 'actor-rt027',
+        createdByActorId: actorId,
       });
 
       // recordClosure cross-checks the closure type against its backing axis
       // (CW-RT-027) — IMPLEMENTATION_COMPLETED requires implementation_status
       // = 'COMPLETED' first.
       await caseCoreService.updateClosureAxisStatus(created.caseId, 'implementation', 'COMPLETED', {
-        actorUserId: 'actor-rt027',
+        actorUserId: actorId,
       });
 
       await caseCoreService.recordClosure(created.caseId, 'IMPLEMENTATION_COMPLETED', {
-        actorUserId: 'actor-rt027',
+        actorUserId: actorId,
       });
 
       const afterFirst = await readCaseCoreRow(created.caseId);
@@ -334,7 +393,7 @@ suite('caseCoreService — Case Core against a real PostgreSQL (CW-P01, E1)', ()
 
       await expect(
         caseCoreService.recordClosure(created.caseId, 'IMPLEMENTATION_COMPLETED', {
-          actorUserId: 'actor-rt027-second',
+          actorUserId: actorId,
         })
       ).rejects.toThrow(/case_closure_already_recorded/);
 
@@ -343,7 +402,7 @@ suite('caseCoreService — Case Core against a real PostgreSQL (CW-P01, E1)', ()
       expect(afterSecond?.closed_at).toBe(afterFirst?.closed_at);
       expect(afterSecond?.version).toBe(afterFirst?.version);
     } finally {
-      await teardown([orgId], [projectId]);
+      await teardown([orgId], [projectId], [actorId]);
     }
   }, 30_000);
 
@@ -352,18 +411,19 @@ suite('caseCoreService — Case Core against a real PostgreSQL (CW-P01, E1)', ()
   // -------------------------------------------------------------------------
   it('two sequential mutating calls on the same case increment version by exactly 1 each time (CW-RT-044)', async () => {
     const { orgId, projectId } = await seedOrgAndProject('rt044');
+    const actorId = await seedMemberedUser(orgId, 'rt044');
     try {
       const created = await caseCoreService.createCase({
         projectId,
         organizationId: orgId,
         contractedClosureType: 'DELIVERY_COMPLETED',
-        createdByActorId: 'actor-rt044',
+        createdByActorId: actorId,
       });
       const afterCreate = await readCaseCoreRow(created.caseId);
       expect(afterCreate?.version).toBe(1);
 
       await caseCoreService.updateAutonomyPolicy(created.caseId, 'EXECUTE_APPROVED_PLAN', {
-        actorUserId: 'actor-rt044',
+        actorUserId: actorId,
       });
       const afterFirstMutation = await readCaseCoreRow(created.caseId);
       expect(afterFirstMutation?.version).toBe((afterCreate?.version ?? 0) + 1);
@@ -371,13 +431,13 @@ suite('caseCoreService — Case Core against a real PostgreSQL (CW-P01, E1)', ()
       await caseCoreService.updateGovernanceTier(
         created.caseId,
         'STANDARD',
-        { actorUserId: 'actor-rt044' },
+        { actorUserId: actorId },
         'version check'
       );
       const afterSecondMutation = await readCaseCoreRow(created.caseId);
       expect(afterSecondMutation?.version).toBe((afterFirstMutation?.version ?? 0) + 1);
     } finally {
-      await teardown([orgId], [projectId]);
+      await teardown([orgId], [projectId], [actorId]);
     }
   }, 30_000);
 
@@ -387,34 +447,162 @@ suite('caseCoreService — Case Core against a real PostgreSQL (CW-P01, E1)', ()
   it('listCasesForOrganization only returns cases for the queried organization_id, not another org', async () => {
     const fixtureA = await seedOrgAndProject('tenant-a');
     const fixtureB = await seedOrgAndProject('tenant-b');
+    const actorA = await seedMemberedUser(fixtureA.orgId, 'tenant-a');
+    const actorB = await seedMemberedUser(fixtureB.orgId, 'tenant-b');
     try {
       const caseA = await caseCoreService.createCase({
         projectId: fixtureA.projectId,
         organizationId: fixtureA.orgId,
         contractedClosureType: 'DELIVERY_COMPLETED',
-        createdByActorId: 'actor-tenant-a',
+        createdByActorId: actorA,
       });
       const caseB = await caseCoreService.createCase({
         projectId: fixtureB.projectId,
         organizationId: fixtureB.orgId,
         contractedClosureType: 'DELIVERY_COMPLETED',
-        createdByActorId: 'actor-tenant-b',
+        createdByActorId: actorB,
       });
 
-      const listForA = await caseCoreService.listCasesForOrganization(fixtureA.orgId);
+      const listForA = await caseCoreService.listCasesForOrganization(fixtureA.orgId, undefined, actorA);
       expect(listForA.map((c) => c.caseId)).toContain(caseA.caseId);
       expect(listForA.map((c) => c.caseId)).not.toContain(caseB.caseId);
       expect(listForA.every((c) => c.organizationId === fixtureA.orgId)).toBe(true);
 
-      const listForB = await caseCoreService.listCasesForOrganization(fixtureB.orgId);
+      const listForB = await caseCoreService.listCasesForOrganization(fixtureB.orgId, undefined, actorB);
       expect(listForB.map((c) => c.caseId)).toContain(caseB.caseId);
       expect(listForB.map((c) => c.caseId)).not.toContain(caseA.caseId);
       expect(listForB.every((c) => c.organizationId === fixtureB.orgId)).toBe(true);
     } finally {
       await teardown(
         [fixtureA.orgId, fixtureB.orgId],
-        [fixtureA.projectId, fixtureB.projectId]
+        [fixtureA.projectId, fixtureB.projectId],
+        [actorA, actorB]
       );
+    }
+  }, 30_000);
+
+  // -------------------------------------------------------------------------
+  // 7. AUTHORIZATION (CW-P12) — createCase (create class).
+  // -------------------------------------------------------------------------
+  it('createCase rejects an actor with no organization_members row, and an actor with a REVOKED membership row, creating no case_core row for either attempt', async () => {
+    const { orgId, projectId } = await seedOrgAndProject('auth-create');
+    const noMembershipActor = await seedUser(orgId, 'no-membership');
+    const revokedActor = await seedUser(orgId, 'revoked');
+    await seedMember(orgId, revokedActor, 'MEMBER', 'REVOKED');
+    try {
+      await expect(
+        caseCoreService.createCase({
+          projectId,
+          organizationId: orgId,
+          contractedClosureType: 'DELIVERY_COMPLETED',
+          createdByActorId: noMembershipActor,
+        })
+      ).rejects.toThrow(/not_org_member/);
+
+      await expect(
+        caseCoreService.createCase({
+          projectId,
+          organizationId: orgId,
+          contractedClosureType: 'DELIVERY_COMPLETED',
+          createdByActorId: revokedActor,
+        })
+      ).rejects.toThrow(/not_org_member/);
+
+      const rows = await readCaseCoreRowsForProject(projectId);
+      expect(rows).toHaveLength(0);
+    } finally {
+      await teardown([orgId], [projectId], [noMembershipActor, revokedActor]);
+    }
+  }, 30_000);
+
+  // -------------------------------------------------------------------------
+  // 8. AUTHORIZATION (CW-P12) — transitionStatus (update class), wrong-org
+  //    membership collapses into the SAME case_access_denied as a missing
+  //    membership (enumeration-safety, SEC-009).
+  // -------------------------------------------------------------------------
+  it('transitionStatus rejects an actor who is a member of a DIFFERENT organization with case_access_denied, leaving case_status unchanged', async () => {
+    const { orgId, projectId } = await seedOrgAndProject('auth-wrong-org');
+    const ownerActor = await seedMemberedUser(orgId, 'owner');
+    const otherOrgId = `case-core-org-other-${randomUUID()}`;
+    await control.query(`INSERT INTO organizations (id, name) VALUES ($1, $2)`, [
+      otherOrgId,
+      'Other org (wrong-org test)',
+    ]);
+    const outsiderActor = await seedMemberedUser(otherOrgId, 'outsider');
+    try {
+      const created = await caseCoreService.createCase({
+        projectId,
+        organizationId: orgId,
+        contractedClosureType: 'DELIVERY_COMPLETED',
+        createdByActorId: ownerActor,
+      });
+
+      await expect(
+        caseCoreService.transitionStatus(created.caseId, 'ACTIVE', { actorUserId: outsiderActor })
+      ).rejects.toThrow(/case_access_denied/);
+
+      const row = await readCaseCoreRow(created.caseId);
+      expect(row?.case_status).toBe('DRAFT');
+    } finally {
+      await teardown([orgId, otherOrgId], [projectId], [ownerActor, outsiderActor]);
+    }
+  }, 30_000);
+
+  // -------------------------------------------------------------------------
+  // 9. AUTHORIZATION (CW-P12) — listCasesForOrganization (read/list class).
+  // -------------------------------------------------------------------------
+  it('listCasesForOrganization rejects an actor with no organization_members row for the queried org', async () => {
+    const { orgId } = await seedOrgAndProject('auth-list');
+    const noMembershipActor = await seedUser(orgId, 'auth-list-no-membership');
+    try {
+      await expect(
+        caseCoreService.listCasesForOrganization(orgId, undefined, noMembershipActor)
+      ).rejects.toThrow(/not_org_member/);
+    } finally {
+      await teardown([orgId], [], [noMembershipActor]);
+    }
+  }, 30_000);
+
+  // -------------------------------------------------------------------------
+  // 10. AUTHORIZATION (CW-P12) — getCase (read class), caseId branch collapses
+  //     "not found" and "not authorized" into the same case_access_denied.
+  // -------------------------------------------------------------------------
+  it('getCase(caseId) throws the identical case_access_denied error for a nonexistent caseId and for a real caseId the actor cannot access', async () => {
+    const { orgId, projectId } = await seedOrgAndProject('auth-getcase');
+    const ownerActor = await seedMemberedUser(orgId, 'auth-getcase-owner');
+    const noMembershipActor = await seedUser(orgId, 'auth-getcase-outsider');
+    try {
+      const created = await caseCoreService.createCase({
+        projectId,
+        organizationId: orgId,
+        contractedClosureType: 'DELIVERY_COMPLETED',
+        createdByActorId: ownerActor,
+      });
+
+      let nonexistentError: Error | null = null;
+      try {
+        await caseCoreService.getCase({ caseId: `case-${randomUUID()}` }, noMembershipActor);
+      } catch (err) {
+        nonexistentError = err as Error;
+      }
+
+      let deniedError: Error | null = null;
+      try {
+        await caseCoreService.getCase({ caseId: created.caseId }, noMembershipActor);
+      } catch (err) {
+        deniedError = err as Error;
+      }
+
+      expect(nonexistentError).not.toBeNull();
+      expect(deniedError).not.toBeNull();
+      expect(nonexistentError?.message).toBe(deniedError?.message);
+      expect(nonexistentError?.message).toMatch(/case_access_denied/);
+
+      // A properly-membered actor succeeds.
+      const found = await caseCoreService.getCase({ caseId: created.caseId }, ownerActor);
+      expect(found?.caseId).toBe(created.caseId);
+    } finally {
+      await teardown([orgId], [projectId], [ownerActor, noMembershipActor]);
     }
   }, 30_000);
 });

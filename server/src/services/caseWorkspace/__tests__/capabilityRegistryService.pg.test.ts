@@ -26,23 +26,37 @@
  * ===========================================================================
  * ISOLATION — every test registers its own uniquely-named capability
  * ===========================================================================
- * Unlike caseCoreService/casePlanVersionService, this registry is
- * platform-global (no org_id/case_id FK — see the service's and migration's
- * "Scope/tenancy note"), so there is no org/project/case seed helper here.
- * Each test mints its own random tag and builds capability_id/owner_module
- * values namespaced with that tag, so concurrent/sequential test runs never
- * collide with each other or with rows left by unrelated code. Every test
- * seeds its own fixture inside the test body (never a shared beforeEach) and
- * deletes exactly the rows it created itself in a `finally`
- * (case_workspace_capability_idempotency_keys rows cascade off
- * case_workspace_capabilities via ON DELETE CASCADE, so deleting the
- * capability row is enough to clean up both tables).
+ * The registry ROWS themselves are platform-global (no org_id/case_id FK on
+ * case_workspace_capabilities — see the service's and migration's
+ * "Scope/tenancy note"), so there is no org/project/case seed helper for the
+ * capability rows themselves. Each test mints its own random tag and builds
+ * capability_id/owner_module values namespaced with that tag, so
+ * concurrent/sequential test runs never collide with each other or with rows
+ * left by unrelated code. Every test seeds its own fixture inside the test
+ * body (never a shared beforeEach) and deletes exactly the rows it created
+ * itself in a `finally` (case_workspace_capability_idempotency_keys rows
+ * cascade off case_workspace_capabilities via ON DELETE CASCADE, so deleting
+ * the capability row is enough to clean up both tables).
  *
  * All assertions read the actual `case_workspace_capabilities`/
  * `case_workspace_capability_idempotency_keys` rows back out of Postgres
  * through a dedicated, out-of-band `pg.Pool` (`control`) — never the service
  * function's return value alone — because the return value only proves what
  * the service THINKS it wrote, not what actually landed.
+ *
+ * ===========================================================================
+ * AUTHORIZATION (CW-P12 retrofit) — governed by the CALLER's own org role
+ * ===========================================================================
+ * The registry rows are platform-global, but every method is now gated by
+ * the CALLING actor's own organization_members standing (there is no
+ * resource-owning tenant to check against): registerCapability/
+ * markCapabilityHealth require requireOrgRole(actor, callerOrganizationId,
+ * 'ADMIN'); the reads and recordIdempotencyKeyCheck require plain
+ * requireOrgMember. Every actor id used below is therefore a real `users`
+ * row with a matching `organization_members` row for a freshly-seeded org,
+ * seeded here via direct INSERTs on the out-of-band pool
+ * (seedOrg/seedUser/seedMember) — a test-fixture-only direct insert, not a
+ * production code path.
  */
 
 import { randomUUID } from 'node:crypto';
@@ -86,7 +100,14 @@ async function canReachWithSchema(connectionString: string): Promise<boolean> {
     );
     const idempotencyOk = Number(idempotencyResult.rows[0]?.present ?? 0) === 5;
 
-    return capabilitiesOk && idempotencyOk;
+    const orgMembersResult = await probe.query(
+      `SELECT count(*)::int AS present FROM information_schema.columns
+        WHERE table_schema = 'public' AND table_name = 'organization_members'
+          AND column_name IN ('organization_id', 'user_id', 'role', 'status')`
+    );
+    const orgMembersOk = Number(orgMembersResult.rows[0]?.present ?? 0) === 4;
+
+    return capabilitiesOk && idempotencyOk && orgMembersOk;
   } catch {
     return false;
   } finally {
@@ -143,6 +164,68 @@ suite('capabilityRegistryService — Capability Registry against a real PostgreS
   // Fixture helpers — every test calls these itself, never a shared hook.
   // -------------------------------------------------------------------------
 
+  /** A fresh, uniquely-named organization row. */
+  async function seedOrg(label: string): Promise<string> {
+    const orgId = `capreg-org-${label}-${randomUUID()}`;
+    await control.query(`INSERT INTO organizations (id, name) VALUES ($1, $2) ON CONFLICT (id) DO NOTHING`, [
+      orgId,
+      `Capability Registry test org (${label})`,
+    ]);
+    return orgId;
+  }
+
+  /** A fresh users row, unattached to organization_members unless seedMember() is also called for it. */
+  async function seedUser(orgId: string, label: string): Promise<string> {
+    const userId = `capreg-user-${label}-${randomUUID()}`;
+    await control.query(`INSERT INTO users (id, organization_id, email) VALUES ($1, $2, $3)`, [
+      userId,
+      orgId,
+      `${userId}@example.test`,
+    ]);
+    return userId;
+  }
+
+  /** An organization_members row for an existing user, at the given role/status. */
+  async function seedMember(
+    orgId: string,
+    userId: string,
+    role: 'OWNER' | 'ADMIN' | 'MEMBER' | 'CONSULTANT',
+    status: 'ACTIVE' | 'REVOKED' | 'SUSPENDED' = 'ACTIVE'
+  ): Promise<void> {
+    await control.query(
+      `INSERT INTO organization_members (id, organization_id, user_id, role, status)
+         VALUES ($1, $2, $3, $4, $5)`,
+      [`capreg-member-${randomUUID()}`, orgId, userId, role, status]
+    );
+  }
+
+  /** Convenience: seed a user AND an ACTIVE membership at the given role in one call. */
+  async function seedMemberedUser(
+    orgId: string,
+    label: string,
+    role: 'OWNER' | 'ADMIN' | 'MEMBER' | 'CONSULTANT' = 'ADMIN'
+  ): Promise<string> {
+    const userId = await seedUser(orgId, label);
+    await seedMember(orgId, userId, role);
+    return userId;
+  }
+
+  /** Full org + ADMIN-membered actor fixture (registerCapability/markCapabilityHealth need ADMIN). */
+  async function seedAdminFixture(label: string): Promise<{ orgId: string; actorId: string }> {
+    const orgId = await seedOrg(label);
+    const actorId = await seedMemberedUser(orgId, label, 'ADMIN');
+    return { orgId, actorId };
+  }
+
+  async function teardownUsers(orgIds: string[], userIds: string[] = []): Promise<void> {
+    for (const userId of userIds) {
+      await control.query(`DELETE FROM users WHERE id = $1`, [userId]).catch(() => undefined);
+    }
+    for (const orgId of orgIds) {
+      await control.query(`DELETE FROM organizations WHERE id = $1`, [orgId]).catch(() => undefined);
+    }
+  }
+
   /**
    * A minimal, valid RegisterCapabilityInput namespaced by `tag` so
    * concurrent/sequential tests never collide on (capability_id,
@@ -152,6 +235,7 @@ suite('capabilityRegistryService — Capability Registry against a real PostgreS
    */
   function buildRegisterInput(
     tag: string,
+    createdByActorId: string,
     overrides: Partial<RegisterCapabilityInput> = {}
   ): RegisterCapabilityInput {
     return {
@@ -169,7 +253,7 @@ suite('capabilityRegistryService — Capability Registry against a real PostgreS
       idempotencyStrategy: 'none',
       reversibility: 'not_applicable',
       approvalRecommendation: 'auto_executable',
-      createdByActorId: `actor-${tag}`,
+      createdByActorId,
       ...overrides,
     };
   }
@@ -205,9 +289,11 @@ suite('capabilityRegistryService — Capability Registry against a real PostgreS
     const capabilityId = `test.capability.lookup.${tag}`;
     const capabilityVersion = '1.0.0';
     const createdIds: string[] = [];
+    const { orgId, actorId } = await seedAdminFixture('lookup');
     try {
       const registered = await capabilityRegistryService.registerCapability(
-        buildRegisterInput(tag, { capabilityId, capabilityVersion })
+        buildRegisterInput(tag, actorId, { capabilityId, capabilityVersion }),
+        orgId
       );
       createdIds.push(registered.capabilityRegistryId);
       expect(registered.capabilityId).toBe(capabilityId);
@@ -217,7 +303,9 @@ suite('capabilityRegistryService — Capability Registry against a real PostgreS
       expect(registered.health).toBe('UNKNOWN');
 
       const byRegistryId = await capabilityRegistryService.getCapabilityByRegistryId(
-        registered.capabilityRegistryId
+        registered.capabilityRegistryId,
+        actorId,
+        orgId
       );
       expect(byRegistryId).not.toBeNull();
       expect(byRegistryId).toMatchObject({
@@ -228,7 +316,12 @@ suite('capabilityRegistryService — Capability Registry against a real PostgreS
         operation: registered.operation,
       });
 
-      const byVersion = await capabilityRegistryService.getCapabilityVersion(capabilityId, capabilityVersion);
+      const byVersion = await capabilityRegistryService.getCapabilityVersion(
+        capabilityId,
+        capabilityVersion,
+        actorId,
+        orgId
+      );
       expect(byVersion).not.toBeNull();
       expect(byVersion).toMatchObject({
         capabilityRegistryId: registered.capabilityRegistryId,
@@ -247,6 +340,7 @@ suite('capabilityRegistryService — Capability Registry against a real PostgreS
       expect(Number(dbRow?.version)).toBe(1);
     } finally {
       await teardownCapabilities(createdIds);
+      await teardownUsers([orgId], [actorId]);
     }
   }, 30_000);
 
@@ -259,9 +353,11 @@ suite('capabilityRegistryService — Capability Registry against a real PostgreS
     const capabilityId = `test.capability.duplicate.${tag}`;
     const capabilityVersion = '1.0.0';
     const createdIds: string[] = [];
+    const { orgId, actorId } = await seedAdminFixture('duplicate');
     try {
       const first = await capabilityRegistryService.registerCapability(
-        buildRegisterInput(tag, { capabilityId, capabilityVersion, operation: 'op.original' })
+        buildRegisterInput(tag, actorId, { capabilityId, capabilityVersion, operation: 'op.original' }),
+        orgId
       );
       createdIds.push(first.capabilityRegistryId);
 
@@ -270,12 +366,13 @@ suite('capabilityRegistryService — Capability Registry against a real PostgreS
       // it must be rejected before it can overwrite anything.
       await expect(
         capabilityRegistryService.registerCapability(
-          buildRegisterInput(`${tag}-dup-attempt`, {
+          buildRegisterInput(`${tag}-dup-attempt`, actorId, {
             capabilityId,
             capabilityVersion,
             operation: 'op.should-not-land',
             ownerModule: 'owner-should-not-land',
-          })
+          }),
+          orgId
         )
       ).rejects.toThrow(/capability_already_registered/);
 
@@ -290,6 +387,7 @@ suite('capabilityRegistryService — Capability Registry against a real PostgreS
       expect(Number(rows.rows[0].version)).toBe(1);
     } finally {
       await teardownCapabilities(createdIds);
+      await teardownUsers([orgId], [actorId]);
     }
   }, 30_000);
 
@@ -301,9 +399,11 @@ suite('capabilityRegistryService — Capability Registry against a real PostgreS
   it('markCapabilityHealth updates health/health_detail/health_checked_at and bumps the OCC version by exactly 1; a stale expectedVersion is rejected and the DB row is unchanged', async () => {
     const tag = randomUUID();
     const createdIds: string[] = [];
+    const { orgId, actorId } = await seedAdminFixture('health');
     try {
       const registered = await capabilityRegistryService.registerCapability(
-        buildRegisterInput(tag, { health: 'UNKNOWN' })
+        buildRegisterInput(tag, actorId, { health: 'UNKNOWN' }),
+        orgId
       );
       createdIds.push(registered.capabilityRegistryId);
       expect(registered.health).toBe('UNKNOWN');
@@ -312,9 +412,10 @@ suite('capabilityRegistryService — Capability Registry against a real PostgreS
       const updated = await capabilityRegistryService.markCapabilityHealth(
         registered.capabilityRegistryId,
         'HEALTHY',
-        { actorUserId: `actor-health-${tag}` },
+        { actorUserId: actorId },
         'synthetic probe passed',
-        1
+        1,
+        orgId
       );
       expect(updated.health).toBe('HEALTHY');
       expect(updated.healthDetail).toBe('synthetic probe passed');
@@ -333,9 +434,10 @@ suite('capabilityRegistryService — Capability Registry against a real PostgreS
         capabilityRegistryService.markCapabilityHealth(
           registered.capabilityRegistryId,
           'DEGRADED',
-          { actorUserId: `actor-health-${tag}` },
+          { actorUserId: actorId },
           'should-not-land',
-          1
+          1,
+          orgId
         )
       ).rejects.toThrow(/capability_version_conflict/);
 
@@ -346,6 +448,7 @@ suite('capabilityRegistryService — Capability Registry against a real PostgreS
       expect(Number(rowAfterRejected?.version)).toBe(2);
     } finally {
       await teardownCapabilities(createdIds);
+      await teardownUsers([orgId], [actorId]);
     }
   }, 30_000);
 
@@ -357,35 +460,40 @@ suite('capabilityRegistryService — Capability Registry against a real PostgreS
     const tag = randomUUID();
     const ownerModule = `test-owner-active-${tag}`;
     const createdIds: string[] = [];
+    const { orgId, actorId } = await seedAdminFixture('active-list');
     try {
       // A: ACTIVE + HEALTHY -> must appear in the list.
       const healthyActive = await capabilityRegistryService.registerCapability(
-        buildRegisterInput(`${tag}-healthy`, { ownerModule, lifecycle: 'ACTIVE', health: 'HEALTHY' })
+        buildRegisterInput(`${tag}-healthy`, actorId, { ownerModule, lifecycle: 'ACTIVE', health: 'HEALTHY' }),
+        orgId
       );
       createdIds.push(healthyActive.capabilityRegistryId);
 
       // B: registered ACTIVE + HEALTHY, then marked UNHEALTHY -> must be
       // excluded despite lifecycle still being ACTIVE.
       const unhealthyActive = await capabilityRegistryService.registerCapability(
-        buildRegisterInput(`${tag}-unhealthy`, { ownerModule, lifecycle: 'ACTIVE', health: 'HEALTHY' })
+        buildRegisterInput(`${tag}-unhealthy`, actorId, { ownerModule, lifecycle: 'ACTIVE', health: 'HEALTHY' }),
+        orgId
       );
       createdIds.push(unhealthyActive.capabilityRegistryId);
       const markedUnhealthy = await capabilityRegistryService.markCapabilityHealth(
         unhealthyActive.capabilityRegistryId,
         'UNHEALTHY',
-        { actorUserId: `actor-active-${tag}` },
+        { actorUserId: actorId },
         'synthetic failure',
-        unhealthyActive.version
+        unhealthyActive.version,
+        orgId
       );
       expect(markedUnhealthy.health).toBe('UNHEALTHY');
 
       // C: DEPRECATED + HEALTHY -> must be excluded, lifecycle isn't ACTIVE.
       const deprecatedHealthy = await capabilityRegistryService.registerCapability(
-        buildRegisterInput(`${tag}-deprecated`, { ownerModule, lifecycle: 'DEPRECATED', health: 'HEALTHY' })
+        buildRegisterInput(`${tag}-deprecated`, actorId, { ownerModule, lifecycle: 'DEPRECATED', health: 'HEALTHY' }),
+        orgId
       );
       createdIds.push(deprecatedHealthy.capabilityRegistryId);
 
-      const active = await capabilityRegistryService.listActiveCapabilities({ ownerModule });
+      const active = await capabilityRegistryService.listActiveCapabilities({ ownerModule }, actorId, orgId);
       const activeIds = active.map((entry) => entry.capabilityRegistryId);
 
       expect(activeIds).toContain(healthyActive.capabilityRegistryId);
@@ -403,6 +511,7 @@ suite('capabilityRegistryService — Capability Registry against a real PostgreS
       expect(dbRows.rows).toHaveLength(1);
     } finally {
       await teardownCapabilities(createdIds);
+      await teardownUsers([orgId], [actorId]);
     }
   }, 30_000);
 
@@ -414,44 +523,57 @@ suite('capabilityRegistryService — Capability Registry against a real PostgreS
   it('recordIdempotencyKeyCheck: first call succeeds; same key with a different payload is rejected with a conflict; same key with the same payload does not error', async () => {
     const tag = randomUUID();
     const createdIds: string[] = [];
+    const { orgId, actorId } = await seedAdminFixture('idem');
+    // recordIdempotencyKeyCheck only requires requireOrgMember, not ADMIN —
+    // exercised with a plain MEMBER-role actor distinct from the
+    // ADMIN-registering actor, proving the gate is genuinely membership-only.
+    const memberActorId = await seedMemberedUser(orgId, 'idem-member', 'MEMBER');
     try {
-      const registered = await capabilityRegistryService.registerCapability(buildRegisterInput(tag));
+      const registered = await capabilityRegistryService.registerCapability(buildRegisterInput(tag, actorId), orgId);
       createdIds.push(registered.capabilityRegistryId);
 
       const idempotencyKey = `idem-${tag}`;
       const payload = { action: 'do-thing', amount: 42, nested: { ok: true } };
-      const actorId = `actor-idem-${tag}`;
 
-      const first = await capabilityRegistryService.recordIdempotencyKeyCheck({
-        capabilityRegistryId: registered.capabilityRegistryId,
-        idempotencyKey,
-        requestPayload: payload,
-        actorId,
-      });
+      const first = await capabilityRegistryService.recordIdempotencyKeyCheck(
+        {
+          capabilityRegistryId: registered.capabilityRegistryId,
+          idempotencyKey,
+          requestPayload: payload,
+          actorId: memberActorId,
+        },
+        orgId
+      );
       expect(first.isDuplicate).toBe(false);
       expect(first.recordedAt).toBeTruthy();
 
       // Same key, DIFFERENT payload -> rejected, fails closed.
       const differentPayload = { action: 'do-thing', amount: 999, nested: { ok: true } };
       await expect(
-        capabilityRegistryService.recordIdempotencyKeyCheck({
-          capabilityRegistryId: registered.capabilityRegistryId,
-          idempotencyKey,
-          requestPayload: differentPayload,
-          actorId,
-        })
+        capabilityRegistryService.recordIdempotencyKeyCheck(
+          {
+            capabilityRegistryId: registered.capabilityRegistryId,
+            idempotencyKey,
+            requestPayload: differentPayload,
+            actorId: memberActorId,
+          },
+          orgId
+        )
       ).rejects.toThrow(/idempotency_key_conflict/);
 
       // Same key, SAME payload (even with keys in a different declaration
       // order — computeRequestDigest canonicalizes before hashing) -> safe
       // retry, no error, isDuplicate=true, same recordedAt as the first call.
       const sameShapeDifferentKeyOrder = { nested: { ok: true }, amount: 42, action: 'do-thing' };
-      const safeRetry = await capabilityRegistryService.recordIdempotencyKeyCheck({
-        capabilityRegistryId: registered.capabilityRegistryId,
-        idempotencyKey,
-        requestPayload: sameShapeDifferentKeyOrder,
-        actorId,
-      });
+      const safeRetry = await capabilityRegistryService.recordIdempotencyKeyCheck(
+        {
+          capabilityRegistryId: registered.capabilityRegistryId,
+          idempotencyKey,
+          requestPayload: sameShapeDifferentKeyOrder,
+          actorId: memberActorId,
+        },
+        orgId
+      );
       expect(safeRetry.isDuplicate).toBe(true);
       expect(safeRetry.recordedAt).toBe(first.recordedAt);
 
@@ -465,9 +587,115 @@ suite('capabilityRegistryService — Capability Registry against a real PostgreS
       );
       expect(rows.rows).toHaveLength(1);
       expect(rows.rows[0].request_digest).toBe(capabilityRegistryService.computeRequestDigest(payload));
-      expect(rows.rows[0].actor_id).toBe(actorId);
+      expect(rows.rows[0].actor_id).toBe(memberActorId);
     } finally {
       await teardownCapabilities(createdIds);
+      await teardownUsers([orgId], [actorId, memberActorId]);
+    }
+  }, 30_000);
+
+  // -------------------------------------------------------------------------
+  // 6. AUTHORIZATION (CW-P12) — registerCapability/markCapabilityHealth
+  //    (create/update class) require ADMIN; a plain MEMBER is rejected.
+  // -------------------------------------------------------------------------
+  it('registerCapability and markCapabilityHealth reject a plain MEMBER-role actor with insufficient_org_role, and an actor with no membership at all with not_org_member', async () => {
+    const tag = randomUUID();
+    const orgId = await seedOrg('auth-admin-floor');
+    const memberActorId = await seedMemberedUser(orgId, 'auth-admin-floor-member', 'MEMBER');
+    const noMembershipActorId = await seedUser(orgId, 'auth-admin-floor-outsider');
+    const adminActorId = await seedMemberedUser(orgId, 'auth-admin-floor-admin', 'ADMIN');
+    const createdIds: string[] = [];
+    try {
+      await expect(
+        capabilityRegistryService.registerCapability(buildRegisterInput(`${tag}-member`, memberActorId), orgId)
+      ).rejects.toThrow(/insufficient_org_role/);
+
+      await expect(
+        capabilityRegistryService.registerCapability(
+          buildRegisterInput(`${tag}-outsider`, noMembershipActorId),
+          orgId
+        )
+      ).rejects.toThrow(/not_org_member/);
+
+      const rows = await control.query<CapabilityRegistryDbRow>(
+        `SELECT * FROM case_workspace_capabilities WHERE capability_id LIKE $1`,
+        [`test.capability.${tag}%`]
+      );
+      expect(rows.rows).toHaveLength(0);
+
+      // A real registered row exists, created by the ADMIN actor — now prove
+      // markCapabilityHealth also rejects the MEMBER-role actor.
+      const registered = await capabilityRegistryService.registerCapability(
+        buildRegisterInput(tag, adminActorId),
+        orgId
+      );
+      createdIds.push(registered.capabilityRegistryId);
+
+      await expect(
+        capabilityRegistryService.markCapabilityHealth(
+          registered.capabilityRegistryId,
+          'HEALTHY',
+          { actorUserId: memberActorId },
+          'should-not-land',
+          registered.version,
+          orgId
+        )
+      ).rejects.toThrow(/insufficient_org_role/);
+
+      const rowAfter = await readCapabilityRow(registered.capabilityRegistryId);
+      expect(rowAfter?.health).toBe('UNKNOWN');
+      expect(Number(rowAfter?.version)).toBe(1);
+    } finally {
+      await teardownCapabilities(createdIds);
+      await teardownUsers([orgId], [memberActorId, noMembershipActorId, adminActorId]);
+    }
+  }, 30_000);
+
+  // -------------------------------------------------------------------------
+  // 7. AUTHORIZATION (CW-P12) — getCapabilityVersion/getCapabilityByRegistryId
+  //    (read class, SEC-009 hardening): an unauthorized caller sees the
+  //    identical null a nonexistent id would produce, not a thrown error.
+  // -------------------------------------------------------------------------
+  it('getCapabilityVersion and getCapabilityByRegistryId return null (not throw) for an actor with no membership in the queried org, identical to a nonexistent capability', async () => {
+    const tag = randomUUID();
+    const { orgId, actorId } = await seedAdminFixture('auth-read-null');
+    const noMembershipActorId = await seedUser(orgId, 'auth-read-null-outsider');
+    const createdIds: string[] = [];
+    try {
+      const registered = await capabilityRegistryService.registerCapability(buildRegisterInput(tag, actorId), orgId);
+      createdIds.push(registered.capabilityRegistryId);
+
+      const byRegistryIdDenied = await capabilityRegistryService.getCapabilityByRegistryId(
+        registered.capabilityRegistryId,
+        noMembershipActorId,
+        orgId
+      );
+      const byRegistryIdMissing = await capabilityRegistryService.getCapabilityByRegistryId(
+        `cwcap-${randomUUID()}`,
+        noMembershipActorId,
+        orgId
+      );
+      expect(byRegistryIdDenied).toBeNull();
+      expect(byRegistryIdMissing).toBeNull();
+
+      const byVersionDenied = await capabilityRegistryService.getCapabilityVersion(
+        registered.capabilityId,
+        registered.capabilityVersion,
+        noMembershipActorId,
+        orgId
+      );
+      expect(byVersionDenied).toBeNull();
+
+      // A properly-membered actor sees the real row.
+      const byRegistryIdAllowed = await capabilityRegistryService.getCapabilityByRegistryId(
+        registered.capabilityRegistryId,
+        actorId,
+        orgId
+      );
+      expect(byRegistryIdAllowed?.capabilityRegistryId).toBe(registered.capabilityRegistryId);
+    } finally {
+      await teardownCapabilities(createdIds);
+      await teardownUsers([orgId], [actorId, noMembershipActorId]);
     }
   }, 30_000);
 });

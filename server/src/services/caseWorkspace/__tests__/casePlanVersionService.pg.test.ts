@@ -39,6 +39,16 @@
  * (`control`) — never the service function's return value alone — because
  * the return value only proves what the service THINKS it wrote, not what
  * actually landed.
+ *
+ * ===========================================================================
+ * AUTHORIZATION (CW-P12 retrofit) — every actor is a real, membered user
+ * ===========================================================================
+ * casePlanVersionService.ts now gates every method through
+ * caseWorkspaceAuthContext.ts's requireCaseAccess. Every actor id used below
+ * is a real `users` row with a matching ACTIVE `organization_members` row
+ * for the Case's org — seeded here via direct INSERTs on the out-of-band
+ * pool (seedUser/seedMember), a test-fixture-only direct insert, not a
+ * production code path.
  */
 
 import { randomUUID } from 'node:crypto';
@@ -77,7 +87,14 @@ async function canReachWithSchema(connectionString: string): Promise<boolean> {
     );
     const viewStateOk = Number(viewStateResult.rows[0]?.present ?? 0) === 3;
 
-    return versionsOk && viewStateOk;
+    const orgMembersResult = await probe.query(
+      `SELECT count(*)::int AS present FROM information_schema.columns
+        WHERE table_schema = 'public' AND table_name = 'organization_members'
+          AND column_name IN ('organization_id', 'user_id', 'role', 'status')`
+    );
+    const orgMembersOk = Number(orgMembersResult.rows[0]?.present ?? 0) === 4;
+
+    return versionsOk && viewStateOk && orgMembersOk;
   } catch {
     return false;
   } finally {
@@ -127,38 +144,77 @@ suite('casePlanVersionService — Case Plan Version against a real PostgreSQL (C
   // Fixture helpers — every test calls these itself, never a shared hook.
   // -------------------------------------------------------------------------
 
+  /** A fresh, uniquely-named organization row. */
+  async function seedOrg(label: string): Promise<string> {
+    const orgId = `case-planv-org-${label}-${randomUUID()}`;
+    await control.query(`INSERT INTO organizations (id, name) VALUES ($1, $2) ON CONFLICT (id) DO NOTHING`, [
+      orgId,
+      `Case Plan Version test org (${label})`,
+    ]);
+    return orgId;
+  }
+
+  /** A fresh users row, unattached to organization_members unless seedMember() is also called for it. */
+  async function seedUser(orgId: string, label: string): Promise<string> {
+    const userId = `case-planv-user-${label}-${randomUUID()}`;
+    await control.query(`INSERT INTO users (id, organization_id, email) VALUES ($1, $2, $3)`, [
+      userId,
+      orgId,
+      `${userId}@example.test`,
+    ]);
+    return userId;
+  }
+
+  /** An organization_members row for an existing user, at the given role/status. */
+  async function seedMember(
+    orgId: string,
+    userId: string,
+    role: 'OWNER' | 'ADMIN' | 'MEMBER' | 'CONSULTANT',
+    status: 'ACTIVE' | 'REVOKED' | 'SUSPENDED' = 'ACTIVE'
+  ): Promise<void> {
+    await control.query(
+      `INSERT INTO organization_members (id, organization_id, user_id, role, status)
+         VALUES ($1, $2, $3, $4, $5)`,
+      [`case-planv-member-${randomUUID()}`, orgId, userId, role, status]
+    );
+  }
+
+  /** Convenience: seed a user AND an ACTIVE membership at MEMBER role in one call. */
+  async function seedMemberedUser(orgId: string, label: string): Promise<string> {
+    const userId = await seedUser(orgId, label);
+    await seedMember(orgId, userId, 'MEMBER');
+    return userId;
+  }
+
   /**
-   * A fresh organization + project + case_core row, all uniquely named.
-   * Bundles caseCoreService.pg.test.ts's seedOrgAndProject() with
+   * A fresh organization + project + case_core row, all uniquely named, plus
+   * a real membered actor to create the Case with. Bundles
+   * caseCoreService.pg.test.ts's seedOrgAndProject() with
    * caseCoreService.createCase(), since case_plan_versions FKs to
    * case_core(case_id) and every test here needs a real Case to hang a plan
    * version off of.
    */
   async function seedOrgProjectCase(
     label: string
-  ): Promise<{ orgId: string; projectId: string; caseId: string }> {
-    const suffix = randomUUID();
-    const orgId = `case-planv-org-${label}-${suffix}`;
-    const projectId = `case-planv-project-${label}-${suffix}`;
-    await control.query(
-      `INSERT INTO organizations (id, name) VALUES ($1, $2) ON CONFLICT (id) DO NOTHING`,
-      [orgId, `Case Plan Version test org (${label})`]
-    );
+  ): Promise<{ orgId: string; projectId: string; caseId: string; actorId: string }> {
+    const orgId = await seedOrg(label);
+    const projectId = `case-planv-project-${label}-${randomUUID()}`;
     await control.query(
       `INSERT INTO projects (id, organization_id, name) VALUES ($1, $2, $3)
          ON CONFLICT (id) DO NOTHING`,
       [projectId, orgId, `Case Plan Version test project (${label})`]
     );
+    const actorId = await seedMemberedUser(orgId, label);
     const created = await caseCoreService.createCase({
       projectId,
       organizationId: orgId,
       contractedClosureType: 'DELIVERY_COMPLETED',
-      createdByActorId: `actor-planv-${label}`,
+      createdByActorId: actorId,
     });
-    return { orgId, projectId, caseId: created.caseId };
+    return { orgId, projectId, caseId: created.caseId, actorId };
   }
 
-  async function teardown(orgIds: string[], projectIds: string[]): Promise<void> {
+  async function teardown(orgIds: string[], projectIds: string[], userIds: string[] = []): Promise<void> {
     for (const projectId of projectIds) {
       // case_plan_versions/case_plan_view_state cascade off case_core via
       // ON DELETE CASCADE — deleting case_core is enough to clean both up.
@@ -166,6 +222,9 @@ suite('casePlanVersionService — Case Plan Version against a real PostgreSQL (C
         .query(`DELETE FROM case_core WHERE project_id = $1`, [projectId])
         .catch(() => undefined);
       await control.query(`DELETE FROM projects WHERE id = $1`, [projectId]).catch(() => undefined);
+    }
+    for (const userId of userIds) {
+      await control.query(`DELETE FROM users WHERE id = $1`, [userId]).catch(() => undefined);
     }
     for (const orgId of orgIds) {
       await control.query(`DELETE FROM organizations WHERE id = $1`, [orgId]).catch(() => undefined);
@@ -211,12 +270,12 @@ suite('casePlanVersionService — Case Plan Version against a real PostgreSQL (C
   // 1. createPlanDraft — plan_number ordinal, not a collision (CW-RT-016/017).
   // -------------------------------------------------------------------------
   it('createPlanDraft creates a DRAFT row with plan_number=1; a second createPlanDraft for the same case gets plan_number=2', async () => {
-    const { orgId, projectId, caseId } = await seedOrgProjectCase('ordinal');
+    const { orgId, projectId, caseId, actorId } = await seedOrgProjectCase('ordinal');
     try {
       const first = await casePlanVersionService.createPlanDraft({
         caseId,
         semanticGraph: validGraph('first'),
-        createdByActorId: 'actor-ordinal',
+        createdByActorId: actorId,
       });
       expect(first.status).toBe('DRAFT');
       expect(first.planNumber).toBe(1);
@@ -224,7 +283,7 @@ suite('casePlanVersionService — Case Plan Version against a real PostgreSQL (C
       const second = await casePlanVersionService.createPlanDraft({
         caseId,
         semanticGraph: validGraph('second'),
-        createdByActorId: 'actor-ordinal',
+        createdByActorId: actorId,
       });
       expect(second.status).toBe('DRAFT');
       expect(second.planNumber).toBe(2);
@@ -237,7 +296,7 @@ suite('casePlanVersionService — Case Plan Version against a real PostgreSQL (C
       expect(rows.find((r) => r.case_plan_version_id === second.casePlanVersionId)?.plan_number).toBe(2);
       expect(rows.every((r) => r.status === 'DRAFT')).toBe(true);
     } finally {
-      await teardown([orgId], [projectId]);
+      await teardown([orgId], [projectId], [actorId]);
     }
   }, 30_000);
 
@@ -245,12 +304,12 @@ suite('casePlanVersionService — Case Plan Version against a real PostgreSQL (C
   // 2. updatePlanDraft — mutable only while DRAFT (CW-01-010/CW-GR-025/044).
   // -------------------------------------------------------------------------
   it('updatePlanDraft succeeds on DRAFT (graph_digest changes) but is rejected once the row is IN_REVIEW, leaving the DB row unchanged', async () => {
-    const { orgId, projectId, caseId } = await seedOrgProjectCase('draft-mutability');
+    const { orgId, projectId, caseId, actorId } = await seedOrgProjectCase('draft-mutability');
     try {
       const draft = await casePlanVersionService.createPlanDraft({
         caseId,
         semanticGraph: validGraph('v1'),
-        createdByActorId: 'actor-draft-mut',
+        createdByActorId: actorId,
       });
       const rowAfterCreate = await readPlanVersionRow(draft.casePlanVersionId);
       const digestAfterCreate = rowAfterCreate?.graph_digest;
@@ -261,7 +320,7 @@ suite('casePlanVersionService — Case Plan Version against a real PostgreSQL (C
       const updated = await casePlanVersionService.updatePlanDraft(
         draft.casePlanVersionId,
         { semanticGraph: validGraph('v2'), expectedVersion: draft.version },
-        { actorUserId: 'actor-draft-mut' }
+        { actorUserId: actorId }
       );
       expect(updated.status).toBe('DRAFT');
       expect(updated.graphDigest).not.toBe(digestAfterCreate);
@@ -275,7 +334,7 @@ suite('casePlanVersionService — Case Plan Version against a real PostgreSQL (C
       // -- Propose: DRAFT -> IN_REVIEW.
       const proposed = await casePlanVersionService.proposePlanVersion(
         draft.casePlanVersionId,
-        { actorUserId: 'actor-draft-mut' },
+        { actorUserId: actorId },
         updated.version
       );
       expect(proposed.status).toBe('IN_REVIEW');
@@ -285,7 +344,7 @@ suite('casePlanVersionService — Case Plan Version against a real PostgreSQL (C
         casePlanVersionService.updatePlanDraft(
           draft.casePlanVersionId,
           { semanticGraph: validGraph('v3-should-not-land'), expectedVersion: proposed.version },
-          { actorUserId: 'actor-draft-mut' }
+          { actorUserId: actorId }
         )
       ).rejects.toThrow(/plan_version_not_editable/);
 
@@ -296,7 +355,7 @@ suite('casePlanVersionService — Case Plan Version against a real PostgreSQL (C
       expect(rowAfterRejectedUpdate?.semantic_graph).toBe(semanticGraphBeforeRejectedCall);
       expect(rowAfterRejectedUpdate?.status).toBe('IN_REVIEW');
     } finally {
-      await teardown([orgId], [projectId]);
+      await teardown([orgId], [projectId], [actorId]);
     }
   }, 30_000);
 
@@ -305,22 +364,22 @@ suite('casePlanVersionService — Case Plan Version against a real PostgreSQL (C
   //    (CW-00-020-INV5/INV6, CW-RT-029, CW-CANON-06, CW-DOD-B3/B4).
   // -------------------------------------------------------------------------
   it('publishPlanVersion permanently fixes semantic_graph/graph_digest and atomically supersedes the prior PUBLISHED row for the same case', async () => {
-    const { orgId, projectId, caseId } = await seedOrgProjectCase('publish-supersede');
+    const { orgId, projectId, caseId, actorId } = await seedOrgProjectCase('publish-supersede');
     try {
       // -- Version A: draft -> propose -> publish.
       const draftA = await casePlanVersionService.createPlanDraft({
         caseId,
         semanticGraph: validGraph('a1'),
-        createdByActorId: 'actor-publish',
+        createdByActorId: actorId,
       });
       const proposedA = await casePlanVersionService.proposePlanVersion(
         draftA.casePlanVersionId,
-        { actorUserId: 'actor-publish' },
+        { actorUserId: actorId },
         draftA.version
       );
       const publishedA = await casePlanVersionService.publishPlanVersion(
         draftA.casePlanVersionId,
-        { actorUserId: 'actor-publish' },
+        { actorUserId: actorId },
         proposedA.version
       );
       expect(publishedA.status).toBe('PUBLISHED');
@@ -334,7 +393,7 @@ suite('casePlanVersionService — Case Plan Version against a real PostgreSQL (C
         casePlanVersionService.updatePlanDraft(
           draftA.casePlanVersionId,
           { semanticGraph: validGraph('a2-should-not-land'), expectedVersion: publishedA.version },
-          { actorUserId: 'actor-publish' }
+          { actorUserId: actorId }
         )
       ).rejects.toThrow(/plan_version_not_editable/);
       const rowA_afterRejectedMutation = await readPlanVersionRow(draftA.casePlanVersionId);
@@ -346,17 +405,17 @@ suite('casePlanVersionService — Case Plan Version against a real PostgreSQL (C
         caseId,
         semanticGraph: validGraph('b1'),
         supersedesPlanVersionId: publishedA.casePlanVersionId,
-        createdByActorId: 'actor-publish',
+        createdByActorId: actorId,
       });
       expect(draftB.planNumber).toBe(2);
       const proposedB = await casePlanVersionService.proposePlanVersion(
         draftB.casePlanVersionId,
-        { actorUserId: 'actor-publish' },
+        { actorUserId: actorId },
         draftB.version
       );
       const publishedB = await casePlanVersionService.publishPlanVersion(
         draftB.casePlanVersionId,
-        { actorUserId: 'actor-publish' },
+        { actorUserId: actorId },
         proposedB.version
       );
       expect(publishedB.status).toBe('PUBLISHED');
@@ -376,7 +435,7 @@ suite('casePlanVersionService — Case Plan Version against a real PostgreSQL (C
       expect(publishedRows.rows).toHaveLength(1);
       expect(publishedRows.rows[0].case_plan_version_id).toBe(draftB.casePlanVersionId);
     } finally {
-      await teardown([orgId], [projectId]);
+      await teardown([orgId], [projectId], [actorId]);
     }
   }, 30_000);
 
@@ -385,12 +444,12 @@ suite('casePlanVersionService — Case Plan Version against a real PostgreSQL (C
   //    semantic_graph/graph_digest (CW-GR-005/006/025/045).
   // -------------------------------------------------------------------------
   it('putViewState/getViewState changes do not alter graph_digest of the associated plan version', async () => {
-    const { orgId, projectId, caseId } = await seedOrgProjectCase('view-state-isolation');
+    const { orgId, projectId, caseId, actorId } = await seedOrgProjectCase('view-state-isolation');
     try {
       const draft = await casePlanVersionService.createPlanDraft({
         caseId,
         semanticGraph: validGraph('view-state'),
-        createdByActorId: 'actor-view-state',
+        createdByActorId: actorId,
       });
       const rowBeforeViewState = await readPlanVersionRow(draft.casePlanVersionId);
       const digestBeforeViewState = rowBeforeViewState?.graph_digest;
@@ -401,11 +460,11 @@ suite('casePlanVersionService — Case Plan Version against a real PostgreSQL (C
         draft.casePlanVersionId,
         'SIMPLE',
         { viewport: { x: 12, y: 34, zoom: 1.5 }, collapsedGroups: ['g1'], selectedStepId: 'n1' },
-        { actorUserId: 'actor-view-state' }
+        { actorUserId: actorId }
       );
       expect(putResult.viewType).toBe('SIMPLE');
 
-      const getResult = await casePlanVersionService.getViewState(draft.casePlanVersionId, 'SIMPLE');
+      const getResult = await casePlanVersionService.getViewState(draft.casePlanVersionId, 'SIMPLE', actorId);
       expect(getResult).not.toBeNull();
       expect(getResult?.viewState).toMatchObject({ viewport: { x: 12, y: 34, zoom: 1.5 } });
 
@@ -416,7 +475,7 @@ suite('casePlanVersionService — Case Plan Version against a real PostgreSQL (C
       expect(rowAfterViewState?.graph_digest).toBe(digestBeforeViewState);
       expect(rowAfterViewState?.semantic_graph).toBe(semanticGraphBeforeViewState);
     } finally {
-      await teardown([orgId], [projectId]);
+      await teardown([orgId], [projectId], [actorId]);
     }
   }, 30_000);
 
@@ -424,24 +483,25 @@ suite('casePlanVersionService — Case Plan Version against a real PostgreSQL (C
   // 5. review_history — append-only, never overwritten (canon invariant #13).
   // -------------------------------------------------------------------------
   it('review_history is append-only: propose, requestChanges, propose again leaves 3 entries in order', async () => {
-    const { orgId, projectId, caseId } = await seedOrgProjectCase('review-history');
+    const { orgId, projectId, caseId, actorId } = await seedOrgProjectCase('review-history');
+    const reviewerId = await seedMemberedUser(orgId, 'review-history-reviewer');
     try {
       const draft = await casePlanVersionService.createPlanDraft({
         caseId,
         semanticGraph: validGraph('review-history'),
-        createdByActorId: 'actor-review-history',
+        createdByActorId: actorId,
       });
 
       const proposed1 = await casePlanVersionService.proposePlanVersion(
         draft.casePlanVersionId,
-        { actorUserId: 'actor-review-history' },
+        { actorUserId: actorId },
         draft.version
       );
       expect(proposed1.status).toBe('IN_REVIEW');
 
       const changesRequested = await casePlanVersionService.requestChangesOnPlanVersion(
         draft.casePlanVersionId,
-        { actorUserId: 'actor-review-history-reviewer' },
+        { actorUserId: reviewerId },
         'needs another pass on node n2',
         proposed1.version
       );
@@ -449,7 +509,7 @@ suite('casePlanVersionService — Case Plan Version against a real PostgreSQL (C
 
       const proposed2 = await casePlanVersionService.proposePlanVersion(
         draft.casePlanVersionId,
-        { actorUserId: 'actor-review-history' },
+        { actorUserId: actorId },
         changesRequested.version
       );
       expect(proposed2.status).toBe('IN_REVIEW');
@@ -464,15 +524,15 @@ suite('casePlanVersionService — Case Plan Version against a real PostgreSQL (C
       ]);
       // None overwritten: the CHANGES_REQUESTED entry keeps its own reason,
       // distinct from the two PROPOSED entries around it.
-      expect(history[0]).toMatchObject({ event: 'PROPOSED', actorId: 'actor-review-history' });
+      expect(history[0]).toMatchObject({ event: 'PROPOSED', actorId });
       expect(history[1]).toMatchObject({
         event: 'CHANGES_REQUESTED',
-        actorId: 'actor-review-history-reviewer',
+        actorId: reviewerId,
         reason: 'needs another pass on node n2',
       });
-      expect(history[2]).toMatchObject({ event: 'PROPOSED', actorId: 'actor-review-history' });
+      expect(history[2]).toMatchObject({ event: 'PROPOSED', actorId });
     } finally {
-      await teardown([orgId], [projectId]);
+      await teardown([orgId], [projectId], [actorId, reviewerId]);
     }
   }, 30_000);
 
@@ -481,7 +541,7 @@ suite('casePlanVersionService — Case Plan Version against a real PostgreSQL (C
   //    SPECIFIC defect, not just "some" failure.
   // -------------------------------------------------------------------------
   it('validatePlanVersion reports a specific DANGLING_EDGE (and downstream NO_TERMINAL_PATH) blocker for a graph whose edge references a nonexistent node', async () => {
-    const { orgId, projectId, caseId } = await seedOrgProjectCase('validation-defect');
+    const { orgId, projectId, caseId, actorId } = await seedOrgProjectCase('validation-defect');
     try {
       const brokenGraph: CanonicalGraph = {
         schemaVersion: '1',
@@ -503,10 +563,10 @@ suite('casePlanVersionService — Case Plan Version against a real PostgreSQL (C
       const draft = await casePlanVersionService.createPlanDraft({
         caseId,
         semanticGraph: brokenGraph,
-        createdByActorId: 'actor-validation-defect',
+        createdByActorId: actorId,
       });
 
-      const result = await casePlanVersionService.validatePlanVersion(draft.casePlanVersionId);
+      const result = await casePlanVersionService.validatePlanVersion(draft.casePlanVersionId, actorId);
       expect(result.valid).toBe(false);
 
       const codes = result.blockers.map((b) => b.code);
@@ -523,15 +583,103 @@ suite('casePlanVersionService — Case Plan Version against a real PostgreSQL (C
       const goodDraft = await casePlanVersionService.createPlanDraft({
         caseId,
         semanticGraph: validGraph('validation-control'),
-        createdByActorId: 'actor-validation-defect',
+        createdByActorId: actorId,
       });
-      const goodResult = await casePlanVersionService.validatePlanVersion(goodDraft.casePlanVersionId);
+      const goodResult = await casePlanVersionService.validatePlanVersion(goodDraft.casePlanVersionId, actorId);
       const goodCodes = goodResult.blockers.map((b) => b.code);
       expect(goodCodes).not.toContain('DANGLING_EDGE');
       expect(goodCodes).not.toContain('NO_TERMINAL_PATH');
       expect(goodCodes).not.toContain('UNREACHABLE_NODE');
     } finally {
-      await teardown([orgId], [projectId]);
+      await teardown([orgId], [projectId], [actorId]);
+    }
+  }, 30_000);
+
+  // -------------------------------------------------------------------------
+  // 7. AUTHORIZATION (CW-P12) — createPlanDraft (create class): no
+  //    membership, and wrong-org membership, both fail closed with the
+  //    caseId never learnable from the error shape.
+  // -------------------------------------------------------------------------
+  it('createPlanDraft rejects an actor with no organization_members row for the Case\'s org, creating no case_plan_versions row', async () => {
+    const { orgId, projectId, caseId } = await seedOrgProjectCase('auth-create');
+    const noMembershipActor = await seedUser(orgId, 'auth-create-outsider');
+    try {
+      await expect(
+        casePlanVersionService.createPlanDraft({
+          caseId,
+          semanticGraph: validGraph('auth-create'),
+          createdByActorId: noMembershipActor,
+        })
+      ).rejects.toThrow(/case_access_denied/);
+
+      const rows = await readPlanVersionRowsForCase(caseId);
+      expect(rows).toHaveLength(0);
+    } finally {
+      await teardown([orgId], [projectId], [noMembershipActor]);
+    }
+  }, 30_000);
+
+  // -------------------------------------------------------------------------
+  // 8. AUTHORIZATION (CW-P12) — updatePlanDraft/proposePlanVersion/
+  //    publishPlanVersion (update/execute class): a SUSPENDED membership
+  //    fails closed exactly like a missing one.
+  // -------------------------------------------------------------------------
+  it('proposePlanVersion rejects an actor whose organization_members row is SUSPENDED, leaving status unchanged', async () => {
+    const { orgId, projectId, caseId, actorId } = await seedOrgProjectCase('auth-suspended');
+    const suspendedActor = await seedUser(orgId, 'auth-suspended-actor');
+    await seedMember(orgId, suspendedActor, 'MEMBER', 'SUSPENDED');
+    try {
+      const draft = await casePlanVersionService.createPlanDraft({
+        caseId,
+        semanticGraph: validGraph('auth-suspended'),
+        createdByActorId: actorId,
+      });
+
+      await expect(
+        casePlanVersionService.proposePlanVersion(
+          draft.casePlanVersionId,
+          { actorUserId: suspendedActor },
+          draft.version
+        )
+      ).rejects.toThrow(/case_access_denied/);
+
+      const row = await readPlanVersionRow(draft.casePlanVersionId);
+      expect(row?.status).toBe('DRAFT');
+      expect(row?.version).toBe(draft.version);
+    } finally {
+      await teardown([orgId], [projectId], [actorId, suspendedActor]);
+    }
+  }, 30_000);
+
+  // -------------------------------------------------------------------------
+  // 9. AUTHORIZATION (CW-P12) — getPlanVersion/listPlanVersionsForCase
+  //    (read/list class).
+  // -------------------------------------------------------------------------
+  it('getPlanVersion and listPlanVersionsForCase both reject an actor with no membership in the Case\'s org', async () => {
+    const { orgId, projectId, caseId, actorId } = await seedOrgProjectCase('auth-read');
+    const noMembershipActor = await seedUser(orgId, 'auth-read-outsider');
+    try {
+      const draft = await casePlanVersionService.createPlanDraft({
+        caseId,
+        semanticGraph: validGraph('auth-read'),
+        createdByActorId: actorId,
+      });
+
+      await expect(
+        casePlanVersionService.getPlanVersion(draft.casePlanVersionId, noMembershipActor)
+      ).rejects.toThrow(/case_access_denied/);
+
+      await expect(
+        casePlanVersionService.listPlanVersionsForCase(caseId, noMembershipActor)
+      ).rejects.toThrow(/case_access_denied/);
+
+      // A properly-membered actor succeeds on both.
+      const found = await casePlanVersionService.getPlanVersion(draft.casePlanVersionId, actorId);
+      expect(found?.casePlanVersionId).toBe(draft.casePlanVersionId);
+      const list = await casePlanVersionService.listPlanVersionsForCase(caseId, actorId);
+      expect(list.map((v) => v.casePlanVersionId)).toContain(draft.casePlanVersionId);
+    } finally {
+      await teardown([orgId], [projectId], [actorId, noMembershipActor]);
     }
   }, 30_000);
 });

@@ -58,6 +58,20 @@
  * Postgres through a dedicated, out-of-band `pg.Pool` (`control`) — never the
  * service function's return value alone — because the return value only
  * proves what the service THINKS it wrote, not what actually landed.
+ *
+ * ===========================================================================
+ * AUTHORIZATION (CW-P12 retrofit) — every human-facing actor is a real,
+ * membered user; system/scheduler paths stay deliberately unguarded
+ * ===========================================================================
+ * createWait/getWait/listWaitsForRun/listWaitsForCase/provideHumanInput/
+ * cancelWait now gate through caseWorkspaceAuthContext.ts's
+ * requireCaseAccess — every actor id used for those below is a real `users`
+ * row with a matching ACTIVE `organization_members` row for the Case's org.
+ * claimTimerWait/renewTimerWaitClaimLease/expireWait/
+ * listDueTimerWaitsForClaim and resolveWait's own direct call remain
+ * deliberately unguarded (INTERNAL-ONLY / NOT ROUTE-EXPOSED, system/
+ * scheduler primitives) — those calls below intentionally use NO actor
+ * fixture, proving the CW-P12 retrofit did not accidentally tighten them.
  */
 
 import { randomUUID } from 'node:crypto';
@@ -105,7 +119,14 @@ async function canReachWithSchema(connectionString: string): Promise<boolean> {
     );
     const runsOk = Number(runsResult.rows[0]?.present ?? 0) === 6;
 
-    return waitsOk && proposalsOk && runsOk;
+    const orgMembersResult = await probe.query(
+      `SELECT count(*)::int AS present FROM information_schema.columns
+        WHERE table_schema = 'public' AND table_name = 'organization_members'
+          AND column_name IN ('organization_id', 'user_id', 'role', 'status')`
+    );
+    const orgMembersOk = Number(orgMembersResult.rows[0]?.present ?? 0) === 4;
+
+    return waitsOk && proposalsOk && runsOk && orgMembersOk;
   } catch {
     return false;
   } finally {
@@ -160,14 +181,47 @@ suite('waitSubscriptionService — Wait Subscription against a real PostgreSQL (
   // Fixture helpers — every test calls these itself, never a shared hook.
   // -------------------------------------------------------------------------
 
+  /** A fresh users row, unattached to organization_members unless seedMember() is also called for it. */
+  async function seedUser(orgId: string, label: string): Promise<string> {
+    const userId = `case-wait-user-${label}-${randomUUID()}`;
+    await control.query(`INSERT INTO users (id, organization_id, email) VALUES ($1, $2, $3)`, [
+      userId,
+      orgId,
+      `${userId}@example.test`,
+    ]);
+    return userId;
+  }
+
+  /** An organization_members row for an existing user, at the given role/status. */
+  async function seedMember(
+    orgId: string,
+    userId: string,
+    role: 'OWNER' | 'ADMIN' | 'MEMBER' | 'CONSULTANT',
+    status: 'ACTIVE' | 'REVOKED' | 'SUSPENDED' = 'ACTIVE'
+  ): Promise<void> {
+    await control.query(
+      `INSERT INTO organization_members (id, organization_id, user_id, role, status)
+         VALUES ($1, $2, $3, $4, $5)`,
+      [`case-wait-member-${randomUUID()}`, orgId, userId, role, status]
+    );
+  }
+
+  /** Convenience: seed a user AND an ACTIVE membership at MEMBER role in one call. */
+  async function seedMemberedUser(orgId: string, label: string): Promise<string> {
+    const userId = await seedUser(orgId, label);
+    await seedMember(orgId, userId, 'MEMBER');
+    return userId;
+  }
+
   /**
-   * A fresh organization + project + case_core row, all uniquely named.
-   * Same bundle as runBindingService.pg.test.ts's/casePlanVersionService.pg.
-   * test.ts's own seedOrgProjectCase().
+   * A fresh organization + project + case_core row, all uniquely named, plus
+   * a real membered actor to create the Case with. Same bundle as
+   * runBindingService.pg.test.ts's/casePlanVersionService.pg.test.ts's own
+   * seedOrgProjectCase().
    */
   async function seedOrgProjectCase(
     label: string
-  ): Promise<{ orgId: string; projectId: string; caseId: string }> {
+  ): Promise<{ orgId: string; projectId: string; caseId: string; actorId: string }> {
     const suffix = randomUUID();
     const orgId = `case-wait-org-${label}-${suffix}`;
     const projectId = `case-wait-project-${label}-${suffix}`;
@@ -180,13 +234,14 @@ suite('waitSubscriptionService — Wait Subscription against a real PostgreSQL (
          ON CONFLICT (id) DO NOTHING`,
       [projectId, orgId, `Wait Subscription test project (${label})`]
     );
+    const actorId = await seedMemberedUser(orgId, label);
     const created = await caseCoreService.createCase({
       projectId,
       organizationId: orgId,
       contractedClosureType: 'DELIVERY_COMPLETED',
-      createdByActorId: `actor-wait-${label}`,
+      createdByActorId: actorId,
     });
-    return { orgId, projectId, caseId: created.caseId };
+    return { orgId, projectId, caseId: created.caseId, actorId };
   }
 
   /**
@@ -216,7 +271,9 @@ suite('waitSubscriptionService — Wait Subscription against a real PostgreSQL (
    * lightest legitimate way to satisfy waitSubscriptionService.createWait()'s
    * wait_target_required check (run_id on a wait needs a case_workspace_run_
    * bindings row, which this suite avoids standing up; action_proposal_id
-   * only needs a bare v8_execution_runs row underneath it).
+   * only needs a bare v8_execution_runs row underneath it). `actorId` must be
+   * a real membered user in the Case's org — createActionProposal is itself
+   * now case-access-gated (CW-P12).
    */
   async function seedActionProposal(params: {
     caseId: string;
@@ -252,14 +309,15 @@ suite('waitSubscriptionService — Wait Subscription against a real PostgreSQL (
    * clause on their case_core/case_workspace_action_proposals FKs (RESTRICT/
    * NO ACTION — see the migration file's header), so waits must be deleted
    * first, then the action_proposals, then the v8_execution_runs rows they
-   * referenced, then case_core (which cascades to case_plan_versions), then
-   * projects, then organizations.
+   * referenced, then users, then case_core (which cascades to
+   * case_plan_versions), then projects, then organizations.
    */
   async function teardown(params: {
     waitIds: string[];
     runIds: string[];
     orgIds: string[];
     projectIds: string[];
+    userIds?: string[];
   }): Promise<void> {
     if (params.waitIds.length > 0) {
       await control
@@ -282,6 +340,9 @@ suite('waitSubscriptionService — Wait Subscription against a real PostgreSQL (
         .catch(() => undefined);
       await control.query(`DELETE FROM projects WHERE id = $1`, [projectId]).catch(() => undefined);
     }
+    for (const userId of params.userIds ?? []) {
+      await control.query(`DELETE FROM users WHERE id = $1`, [userId]).catch(() => undefined);
+    }
     for (const orgId of params.orgIds) {
       await control.query(`DELETE FROM organizations WHERE id = $1`, [orgId]).catch(() => undefined);
     }
@@ -294,7 +355,7 @@ suite('waitSubscriptionService — Wait Subscription against a real PostgreSQL (
   //    constraint + ON CONFLICT DO NOTHING idiom).
   // -------------------------------------------------------------------------
   it('createWait + getWait round-trip, and a duplicate createWait for the same (case_id, correlation_key) returns the original row without creating a second one', async () => {
-    const { orgId, projectId, caseId } = await seedOrgProjectCase('idempotent-create');
+    const { orgId, projectId, caseId, actorId } = await seedOrgProjectCase('idempotent-create');
     const runId = `run-t1-${randomUUID()}`;
     const waitIds: string[] = [];
     try {
@@ -302,33 +363,39 @@ suite('waitSubscriptionService — Wait Subscription against a real PostgreSQL (
       const actionProposalId = await seedActionProposal({
         caseId,
         runId,
-        actorId: 'actor-idempotent-create',
+        actorId,
         tag: 'idempotent-create',
       });
       const correlationKey = `corr-idempotent-create-${randomUUID()}`;
 
-      const first = await waitSubscriptionService.createWait({
-        caseId,
-        actionProposalId,
-        waitType: 'HUMAN',
-        correlationKey,
-      });
+      const first = await waitSubscriptionService.createWait(
+        {
+          caseId,
+          actionProposalId,
+          waitType: 'HUMAN',
+          correlationKey,
+        },
+        actorId
+      );
       waitIds.push(first.waitId);
       expect(first.status).toBe('ACTIVE');
       expect(first.correlationKey).toBe(correlationKey);
       expect(first.version).toBe(1);
 
-      const fetched = await waitSubscriptionService.getWait(first.waitId);
+      const fetched = await waitSubscriptionService.getWait(first.waitId, actorId);
       expect(fetched).not.toBeNull();
       expect(fetched?.waitId).toBe(first.waitId);
       expect(fetched?.actionProposalId).toBe(actionProposalId);
 
-      const second = await waitSubscriptionService.createWait({
-        caseId,
-        actionProposalId,
-        waitType: 'HUMAN',
-        correlationKey,
-      });
+      const second = await waitSubscriptionService.createWait(
+        {
+          caseId,
+          actionProposalId,
+          waitType: 'HUMAN',
+          correlationKey,
+        },
+        actorId
+      );
       expect(second.waitId).toBe(first.waitId);
 
       const rows = await control.query<CaseWorkspaceWaitDbRow>(
@@ -338,7 +405,7 @@ suite('waitSubscriptionService — Wait Subscription against a real PostgreSQL (
       expect(rows.rows).toHaveLength(1);
       expect(rows.rows[0]?.wait_id).toBe(first.waitId);
     } finally {
-      await teardown({ waitIds, runIds: [runId], orgIds: [orgId], projectIds: [projectId] });
+      await teardown({ waitIds, runIds: [runId], orgIds: [orgId], projectIds: [projectId], userIds: [actorId] });
     }
   }, 30_000);
 
@@ -347,10 +414,12 @@ suite('waitSubscriptionService — Wait Subscription against a real PostgreSQL (
   //    claim_owner_token/claim_lease_expires_at and bumps claim_fencing_token
   //    by exactly 1; a second attempt with a different owner token while the
   //    first claim's lease is still live is rejected and the DB row stays
-  //    owned by the first claimer (CW-RT-021, CW-CANON-11).
+  //    owned by the first claimer (CW-RT-021, CW-CANON-11). claimTimerWait
+  //    is a deliberately unguarded system/scheduler primitive (CW-P12) — no
+  //    actor fixture is used for it.
   // -------------------------------------------------------------------------
   it('claimTimerWait claims an unclaimed TIMER wait and bumps the fencing token by 1; a second concurrent attempt is rejected and leaves the row unchanged', async () => {
-    const { orgId, projectId, caseId } = await seedOrgProjectCase('claim-live-lease');
+    const { orgId, projectId, caseId, actorId } = await seedOrgProjectCase('claim-live-lease');
     const runId = `run-t2-${randomUUID()}`;
     const waitIds: string[] = [];
     try {
@@ -358,17 +427,20 @@ suite('waitSubscriptionService — Wait Subscription against a real PostgreSQL (
       const actionProposalId = await seedActionProposal({
         caseId,
         runId,
-        actorId: 'actor-claim-live-lease',
+        actorId,
         tag: 'claim-live-lease',
       });
 
-      const wait = await waitSubscriptionService.createWait({
-        caseId,
-        actionProposalId,
-        waitType: 'TIMER',
-        correlationKey: `corr-claim-live-lease-${randomUUID()}`,
-        dueAt: new Date(Date.now() - 60_000).toISOString(),
-      });
+      const wait = await waitSubscriptionService.createWait(
+        {
+          caseId,
+          actionProposalId,
+          waitType: 'TIMER',
+          correlationKey: `corr-claim-live-lease-${randomUUID()}`,
+          dueAt: new Date(Date.now() - 60_000).toISOString(),
+        },
+        actorId
+      );
       waitIds.push(wait.waitId);
       expect(wait.claimOwnerToken).toBeNull();
       expect(wait.claimFencingToken).toBe(0);
@@ -400,7 +472,7 @@ suite('waitSubscriptionService — Wait Subscription against a real PostgreSQL (
         rowAfterFirstClaim?.claim_lease_expires_at
       );
     } finally {
-      await teardown({ waitIds, runIds: [runId], orgIds: [orgId], projectIds: [projectId] });
+      await teardown({ waitIds, runIds: [runId], orgIds: [orgId], projectIds: [projectId], userIds: [actorId] });
     }
   }, 30_000);
 
@@ -411,7 +483,7 @@ suite('waitSubscriptionService — Wait Subscription against a real PostgreSQL (
   //    again (CW-RT-021, CW-CANON-11).
   // -------------------------------------------------------------------------
   it('claimTimerWait reclaims a wait whose lease has expired, minting a new owner token and incrementing the fencing token again', async () => {
-    const { orgId, projectId, caseId } = await seedOrgProjectCase('reclaim-after-expiry');
+    const { orgId, projectId, caseId, actorId } = await seedOrgProjectCase('reclaim-after-expiry');
     const runId = `run-t3-${randomUUID()}`;
     const waitIds: string[] = [];
     try {
@@ -419,17 +491,20 @@ suite('waitSubscriptionService — Wait Subscription against a real PostgreSQL (
       const actionProposalId = await seedActionProposal({
         caseId,
         runId,
-        actorId: 'actor-reclaim-after-expiry',
+        actorId,
         tag: 'reclaim-after-expiry',
       });
 
-      const wait = await waitSubscriptionService.createWait({
-        caseId,
-        actionProposalId,
-        waitType: 'TIMER',
-        correlationKey: `corr-reclaim-after-expiry-${randomUUID()}`,
-        dueAt: new Date(Date.now() - 60_000).toISOString(),
-      });
+      const wait = await waitSubscriptionService.createWait(
+        {
+          caseId,
+          actionProposalId,
+          waitType: 'TIMER',
+          correlationKey: `corr-reclaim-after-expiry-${randomUUID()}`,
+          dueAt: new Date(Date.now() - 60_000).toISOString(),
+        },
+        actorId
+      );
       waitIds.push(wait.waitId);
 
       const firstClaim = await waitSubscriptionService.claimTimerWait(wait.waitId, {
@@ -459,7 +534,7 @@ suite('waitSubscriptionService — Wait Subscription against a real PostgreSQL (
       expect(rowAfterReclaim?.claim_owner_token).toBe(reclaim.ownerToken);
       expect(Number(rowAfterReclaim?.claim_fencing_token)).toBe(2);
     } finally {
-      await teardown({ waitIds, runIds: [runId], orgIds: [orgId], projectIds: [projectId] });
+      await teardown({ waitIds, runIds: [runId], orgIds: [orgId], projectIds: [projectId], userIds: [actorId] });
     }
   }, 30_000);
 
@@ -467,10 +542,12 @@ suite('waitSubscriptionService — Wait Subscription against a real PostgreSQL (
   // 4. resolveWait transitions ACTIVE -> SATISFIED and sets satisfied_at/
   //    satisfied_by_event_id; a second resolveWait (and an expireWait/
   //    cancelWait) attempt on the now-terminal row is rejected, DB row
-  //    unchanged (CW-RT-020, CW-RT-021, CW-01-026-INV8).
+  //    unchanged (CW-RT-020, CW-RT-021, CW-01-026-INV8). resolveWait/
+  //    expireWait are deliberately unguarded system primitives (CW-P12) —
+  //    only cancelWait's actor needs a real membership.
   // -------------------------------------------------------------------------
   it('resolveWait transitions ACTIVE to SATISFIED and stamps satisfied_at/satisfied_by_event_id; further transition attempts on the terminal row are rejected and leave it unchanged', async () => {
-    const { orgId, projectId, caseId } = await seedOrgProjectCase('resolve-terminal');
+    const { orgId, projectId, caseId, actorId } = await seedOrgProjectCase('resolve-terminal');
     const runId = `run-t4-${randomUUID()}`;
     const waitIds: string[] = [];
     try {
@@ -478,16 +555,19 @@ suite('waitSubscriptionService — Wait Subscription against a real PostgreSQL (
       const actionProposalId = await seedActionProposal({
         caseId,
         runId,
-        actorId: 'actor-resolve-terminal',
+        actorId,
         tag: 'resolve-terminal',
       });
 
-      const wait = await waitSubscriptionService.createWait({
-        caseId,
-        actionProposalId,
-        waitType: 'HUMAN',
-        correlationKey: `corr-resolve-terminal-${randomUUID()}`,
-      });
+      const wait = await waitSubscriptionService.createWait(
+        {
+          caseId,
+          actionProposalId,
+          waitType: 'HUMAN',
+          correlationKey: `corr-resolve-terminal-${randomUUID()}`,
+        },
+        actorId
+      );
       waitIds.push(wait.waitId);
       expect(wait.version).toBe(1);
 
@@ -524,7 +604,7 @@ suite('waitSubscriptionService — Wait Subscription against a real PostgreSQL (
       await expect(
         waitSubscriptionService.cancelWait(
           wait.waitId,
-          { actorUserId: 'actor-resolve-terminal' },
+          { actorUserId: actorId },
           'no longer needed',
           2
         )
@@ -535,7 +615,7 @@ suite('waitSubscriptionService — Wait Subscription against a real PostgreSQL (
       expect(rowAfterRejectedAttempts?.satisfied_by_event_id).toBe('evt-resolve-terminal');
       expect(Number(rowAfterRejectedAttempts?.version)).toBe(2);
     } finally {
-      await teardown({ waitIds, runIds: [runId], orgIds: [orgId], projectIds: [projectId] });
+      await teardown({ waitIds, runIds: [runId], orgIds: [orgId], projectIds: [projectId], userIds: [actorId] });
     }
   }, 30_000);
 
@@ -545,7 +625,7 @@ suite('waitSubscriptionService — Wait Subscription against a real PostgreSQL (
   //    (CW-RT-043, CW-RT-052, CW-RT-062, CW-DOD-C5, CW-02-029).
   // -------------------------------------------------------------------------
   it('expireWait and cancelWait each transition their own fresh ACTIVE wait to EXPIRED/CANCELLED respectively', async () => {
-    const { orgId, projectId, caseId } = await seedOrgProjectCase('expire-and-cancel');
+    const { orgId, projectId, caseId, actorId } = await seedOrgProjectCase('expire-and-cancel');
     const runId = `run-t5-${randomUUID()}`;
     const waitIds: string[] = [];
     try {
@@ -553,24 +633,30 @@ suite('waitSubscriptionService — Wait Subscription against a real PostgreSQL (
       const actionProposalId = await seedActionProposal({
         caseId,
         runId,
-        actorId: 'actor-expire-and-cancel',
+        actorId,
         tag: 'expire-and-cancel',
       });
 
-      const waitToExpire = await waitSubscriptionService.createWait({
-        caseId,
-        actionProposalId,
-        waitType: 'HUMAN',
-        correlationKey: `corr-to-expire-${randomUUID()}`,
-      });
+      const waitToExpire = await waitSubscriptionService.createWait(
+        {
+          caseId,
+          actionProposalId,
+          waitType: 'HUMAN',
+          correlationKey: `corr-to-expire-${randomUUID()}`,
+        },
+        actorId
+      );
       waitIds.push(waitToExpire.waitId);
 
-      const waitToCancel = await waitSubscriptionService.createWait({
-        caseId,
-        actionProposalId,
-        waitType: 'HUMAN',
-        correlationKey: `corr-to-cancel-${randomUUID()}`,
-      });
+      const waitToCancel = await waitSubscriptionService.createWait(
+        {
+          caseId,
+          actionProposalId,
+          waitType: 'HUMAN',
+          correlationKey: `corr-to-cancel-${randomUUID()}`,
+        },
+        actorId
+      );
       waitIds.push(waitToCancel.waitId);
 
       const expired = await waitSubscriptionService.expireWait(waitToExpire.waitId, 1);
@@ -579,7 +665,7 @@ suite('waitSubscriptionService — Wait Subscription against a real PostgreSQL (
 
       const cancelled = await waitSubscriptionService.cancelWait(
         waitToCancel.waitId,
-        { actorUserId: 'actor-expire-and-cancel' },
+        { actorUserId: actorId },
         'superseded by a newer wait',
         1
       );
@@ -598,16 +684,17 @@ suite('waitSubscriptionService — Wait Subscription against a real PostgreSQL (
       // touched the other, and vice versa.
       expect(expiredRow?.wait_id).not.toBe(cancelledRow?.wait_id);
     } finally {
-      await teardown({ waitIds, runIds: [runId], orgIds: [orgId], projectIds: [projectId] });
+      await teardown({ waitIds, runIds: [runId], orgIds: [orgId], projectIds: [projectId], userIds: [actorId] });
     }
   }, 30_000);
 
   // -------------------------------------------------------------------------
   // 6. listDueTimerWaitsForClaim only returns TIMER-type, ACTIVE-status
-  //    waits whose due_at has passed (CW-RT-021, CW-DOD-I6).
+  //    waits whose due_at has passed (CW-RT-021, CW-DOD-I6). Deliberately
+  //    unguarded system/scheduler read (CW-P12) — no actor fixture is used.
   // -------------------------------------------------------------------------
   it('listDueTimerWaitsForClaim returns only the past-due, ACTIVE, TIMER wait — not the future-due TIMER wait nor the past-due HUMAN wait', async () => {
-    const { orgId, projectId, caseId } = await seedOrgProjectCase('list-due-timers');
+    const { orgId, projectId, caseId, actorId } = await seedOrgProjectCase('list-due-timers');
     const runId = `run-t6-${randomUUID()}`;
     const waitIds: string[] = [];
     try {
@@ -615,35 +702,44 @@ suite('waitSubscriptionService — Wait Subscription against a real PostgreSQL (
       const actionProposalId = await seedActionProposal({
         caseId,
         runId,
-        actorId: 'actor-list-due-timers',
+        actorId,
         tag: 'list-due-timers',
       });
 
-      const pastDueTimer = await waitSubscriptionService.createWait({
-        caseId,
-        actionProposalId,
-        waitType: 'TIMER',
-        correlationKey: `corr-past-due-timer-${randomUUID()}`,
-        dueAt: new Date(Date.now() - 60_000).toISOString(),
-      });
+      const pastDueTimer = await waitSubscriptionService.createWait(
+        {
+          caseId,
+          actionProposalId,
+          waitType: 'TIMER',
+          correlationKey: `corr-past-due-timer-${randomUUID()}`,
+          dueAt: new Date(Date.now() - 60_000).toISOString(),
+        },
+        actorId
+      );
       waitIds.push(pastDueTimer.waitId);
 
-      const futureDueTimer = await waitSubscriptionService.createWait({
-        caseId,
-        actionProposalId,
-        waitType: 'TIMER',
-        correlationKey: `corr-future-due-timer-${randomUUID()}`,
-        dueAt: new Date(Date.now() + 3_600_000).toISOString(),
-      });
+      const futureDueTimer = await waitSubscriptionService.createWait(
+        {
+          caseId,
+          actionProposalId,
+          waitType: 'TIMER',
+          correlationKey: `corr-future-due-timer-${randomUUID()}`,
+          dueAt: new Date(Date.now() + 3_600_000).toISOString(),
+        },
+        actorId
+      );
       waitIds.push(futureDueTimer.waitId);
 
-      const pastDueHuman = await waitSubscriptionService.createWait({
-        caseId,
-        actionProposalId,
-        waitType: 'HUMAN',
-        correlationKey: `corr-past-due-human-${randomUUID()}`,
-        dueAt: new Date(Date.now() - 60_000).toISOString(),
-      });
+      const pastDueHuman = await waitSubscriptionService.createWait(
+        {
+          caseId,
+          actionProposalId,
+          waitType: 'HUMAN',
+          correlationKey: `corr-past-due-human-${randomUUID()}`,
+          dueAt: new Date(Date.now() - 60_000).toISOString(),
+        },
+        actorId
+      );
       waitIds.push(pastDueHuman.waitId);
 
       const due = await waitSubscriptionService.listDueTimerWaitsForClaim(new Date(), 200);
@@ -655,7 +751,90 @@ suite('waitSubscriptionService — Wait Subscription against a real PostgreSQL (
       expect(dueForThisCase[0]?.waitType).toBe('TIMER');
       expect(dueForThisCase[0]?.status).toBe('ACTIVE');
     } finally {
-      await teardown({ waitIds, runIds: [runId], orgIds: [orgId], projectIds: [projectId] });
+      await teardown({ waitIds, runIds: [runId], orgIds: [orgId], projectIds: [projectId], userIds: [actorId] });
+    }
+  }, 30_000);
+
+  // -------------------------------------------------------------------------
+  // 7. AUTHORIZATION (CW-P12) — createWait (create class): an actor with no
+  //    organization_members row for the Case's org is rejected, creating no
+  //    wait row.
+  // -------------------------------------------------------------------------
+  it('createWait rejects an actor with no organization_members row for the Case\'s org, creating no wait row', async () => {
+    const { orgId, projectId, caseId, actorId } = await seedOrgProjectCase('auth-create');
+    const noMembershipActor = await seedUser(orgId, 'auth-create-outsider');
+    const runId = `run-t7-${randomUUID()}`;
+    try {
+      await seedV8Run({ runId, organizationId: orgId });
+      const actionProposalId = await seedActionProposal({ caseId, runId, actorId, tag: 'auth-create' });
+
+      await expect(
+        waitSubscriptionService.createWait(
+          {
+            caseId,
+            actionProposalId,
+            waitType: 'HUMAN',
+            correlationKey: `corr-auth-create-${randomUUID()}`,
+          },
+          noMembershipActor
+        )
+      ).rejects.toThrow(/case_access_denied/);
+
+      const rows = await control.query<CaseWorkspaceWaitDbRow>(
+        `SELECT * FROM case_workspace_waits WHERE case_id = $1`,
+        [caseId]
+      );
+      expect(rows.rows).toHaveLength(0);
+    } finally {
+      await teardown({
+        waitIds: [],
+        runIds: [runId],
+        orgIds: [orgId],
+        projectIds: [projectId],
+        userIds: [actorId, noMembershipActor],
+      });
+    }
+  }, 30_000);
+
+  // -------------------------------------------------------------------------
+  // 8. AUTHORIZATION (CW-P12) — getWait (read class, SEC-009 hardening): a
+  //    nonexistent wait_id and a real wait the actor cannot access both
+  //    return null.
+  // -------------------------------------------------------------------------
+  it('getWait returns null for both a nonexistent wait_id and a real wait the actor cannot access', async () => {
+    const { orgId, projectId, caseId, actorId } = await seedOrgProjectCase('auth-read-null');
+    const noMembershipActor = await seedUser(orgId, 'auth-read-null-outsider');
+    const runId = `run-t8-${randomUUID()}`;
+    const waitIds: string[] = [];
+    try {
+      await seedV8Run({ runId, organizationId: orgId });
+      const actionProposalId = await seedActionProposal({ caseId, runId, actorId, tag: 'auth-read-null' });
+      const wait = await waitSubscriptionService.createWait(
+        {
+          caseId,
+          actionProposalId,
+          waitType: 'HUMAN',
+          correlationKey: `corr-auth-read-null-${randomUUID()}`,
+        },
+        actorId
+      );
+      waitIds.push(wait.waitId);
+
+      const missing = await waitSubscriptionService.getWait(`cwwait-${randomUUID()}`, noMembershipActor);
+      const denied = await waitSubscriptionService.getWait(wait.waitId, noMembershipActor);
+      expect(missing).toBeNull();
+      expect(denied).toBeNull();
+
+      const allowed = await waitSubscriptionService.getWait(wait.waitId, actorId);
+      expect(allowed?.waitId).toBe(wait.waitId);
+    } finally {
+      await teardown({
+        waitIds,
+        runIds: [runId],
+        orgIds: [orgId],
+        projectIds: [projectId],
+        userIds: [actorId, noMembershipActor],
+      });
     }
   }, 30_000);
 });

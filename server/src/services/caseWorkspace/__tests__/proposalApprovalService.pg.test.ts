@@ -58,6 +58,16 @@
  * security-governance-critical code (self-approval, expiry, staleness,
  * target-invalidation), so every negative case below also asserts the DB was
  * left untouched, not merely that the promise rejected.
+ *
+ * ===========================================================================
+ * AUTHORIZATION (CW-P12 retrofit) — every actor is a real, membered user
+ * ===========================================================================
+ * proposalApprovalService.ts now gates every method through
+ * caseWorkspaceAuthContext.ts's requireCaseAccess. Every actor id used below
+ * (actor-A the proposer, actor-B the decider, actor-executor, etc.) is
+ * therefore a real `users` row with a matching ACTIVE `organization_members`
+ * row for the Case's org — seeded here via direct INSERTs on the
+ * out-of-band pool (seedUser/seedMember), a test-fixture-only direct insert.
  */
 
 import { randomUUID } from 'node:crypto';
@@ -112,7 +122,14 @@ async function canReachWithSchema(connectionString: string): Promise<boolean> {
     );
     const runsOk = Number(runsResult.rows[0]?.present ?? 0) === 6;
 
-    return proposalsOk && decisionsOk && runsOk;
+    const orgMembersResult = await probe.query(
+      `SELECT count(*)::int AS present FROM information_schema.columns
+        WHERE table_schema = 'public' AND table_name = 'organization_members'
+          AND column_name IN ('organization_id', 'user_id', 'role', 'status')`
+    );
+    const orgMembersOk = Number(orgMembersResult.rows[0]?.present ?? 0) === 4;
+
+    return proposalsOk && decisionsOk && runsOk && orgMembersOk;
   } catch {
     return false;
   } finally {
@@ -175,13 +192,46 @@ suite(
     // Fixture helpers — every test calls these itself, never a shared hook.
     // -----------------------------------------------------------------------
 
+    /** A fresh users row, unattached to organization_members unless seedMember() is also called for it. */
+    async function seedUser(orgId: string, label: string): Promise<string> {
+      const userId = `case-propapp-user-${label}-${randomUUID()}`;
+      await control.query(`INSERT INTO users (id, organization_id, email) VALUES ($1, $2, $3)`, [
+        userId,
+        orgId,
+        `${userId}@example.test`,
+      ]);
+      return userId;
+    }
+
+    /** An organization_members row for an existing user, at the given role/status. */
+    async function seedMember(
+      orgId: string,
+      userId: string,
+      role: 'OWNER' | 'ADMIN' | 'MEMBER' | 'CONSULTANT',
+      status: 'ACTIVE' | 'REVOKED' | 'SUSPENDED' = 'ACTIVE'
+    ): Promise<void> {
+      await control.query(
+        `INSERT INTO organization_members (id, organization_id, user_id, role, status)
+           VALUES ($1, $2, $3, $4, $5)`,
+        [`case-propapp-member-${randomUUID()}`, orgId, userId, role, status]
+      );
+    }
+
+    /** Convenience: seed a user AND an ACTIVE membership at MEMBER role in one call. */
+    async function seedMemberedUser(orgId: string, label: string): Promise<string> {
+      const userId = await seedUser(orgId, label);
+      await seedMember(orgId, userId, 'MEMBER');
+      return userId;
+    }
+
     /**
-     * A fresh organization + project + case_core row, all uniquely named.
-     * Same bundle as runBindingService.pg.test.ts's seedOrgProjectCase().
+     * A fresh organization + project + case_core row, all uniquely named,
+     * plus a real membered actor to create the Case with. Same bundle as
+     * runBindingService.pg.test.ts's seedOrgProjectCase().
      */
     async function seedOrgProjectCase(
       label: string
-    ): Promise<{ orgId: string; projectId: string; caseId: string }> {
+    ): Promise<{ orgId: string; projectId: string; caseId: string; actorId: string }> {
       const suffix = randomUUID();
       const orgId = `case-propapp-org-${label}-${suffix}`;
       const projectId = `case-propapp-project-${label}-${suffix}`;
@@ -194,13 +244,14 @@ suite(
            ON CONFLICT (id) DO NOTHING`,
         [projectId, orgId, `Proposal Approval test project (${label})`]
       );
+      const actorId = await seedMemberedUser(orgId, label);
       const created = await caseCoreService.createCase({
         projectId,
         organizationId: orgId,
         contractedClosureType: 'DELIVERY_COMPLETED',
-        createdByActorId: `actor-propapp-${label}`,
+        createdByActorId: actorId,
       });
-      return { orgId, projectId, caseId: created.caseId };
+      return { orgId, projectId, caseId: created.caseId, actorId };
     }
 
     /**
@@ -285,7 +336,7 @@ suite(
       caseId: string;
       runId: string;
       tag: string;
-      createdByActorId?: string;
+      createdByActorId: string;
       idempotencyKey?: string;
       payloadDigest?: string;
       expiresAt?: string | null;
@@ -302,7 +353,7 @@ suite(
         previewRef: `preview-${params.tag}`,
         expiresAt: params.expiresAt ?? null,
         proposerType: 'AGENT',
-        createdByActorId: params.createdByActorId ?? `actor-A-${params.tag}`,
+        createdByActorId: params.createdByActorId,
         idempotencyKey: params.idempotencyKey ?? `idem-${params.tag}-${randomUUID()}`,
       };
     }
@@ -368,14 +419,15 @@ suite(
      * Teardown order matters: decisions cascade off proposals (ON DELETE
      * CASCADE), but proposals themselves have no ON DELETE clause on either
      * their case_core or v8_execution_runs FK (RESTRICT/NO ACTION), so
-     * proposals must be deleted first, then v8_execution_runs, then case_core
-     * (deleted via project cascade — see caseCoreService's own migration),
-     * then projects, then organizations.
+     * proposals must be deleted first, then v8_execution_runs, then users,
+     * then case_core (deleted via project cascade — see caseCoreService's own
+     * migration), then projects, then organizations.
      */
     async function teardown(params: {
       runIds: string[];
       orgIds: string[];
       projectIds: string[];
+      userIds?: string[];
     }): Promise<void> {
       if (params.runIds.length > 0) {
         await control
@@ -393,6 +445,9 @@ suite(
           .catch(() => undefined);
         await control.query(`DELETE FROM projects WHERE id = $1`, [projectId]).catch(() => undefined);
       }
+      for (const userId of params.userIds ?? []) {
+        await control.query(`DELETE FROM users WHERE id = $1`, [userId]).catch(() => undefined);
+      }
       for (const orgId of params.orgIds) {
         await control.query(`DELETE FROM organizations WHERE id = $1`, [orgId]).catch(() => undefined);
       }
@@ -405,7 +460,7 @@ suite(
     //    idempotency_key_conflict (CW-RT-060, CW-GR-021).
     // -------------------------------------------------------------------------
     it('createActionProposal + getActionProposal round-trip; replays safely on matching digest; rejects idempotency_key_conflict on mismatched digest', async () => {
-      const { orgId, projectId, caseId } = await seedOrgProjectCase('round-trip');
+      const { orgId, projectId, caseId, actorId } = await seedOrgProjectCase('round-trip');
       const runId = `run-t1-${randomUUID()}`;
       try {
         await seedV8Run({ runId, organizationId: orgId });
@@ -415,6 +470,7 @@ suite(
           caseId,
           runId,
           tag: 'round-trip',
+          createdByActorId: actorId,
           idempotencyKey,
           payloadDigest: 'sha256:round-trip-payload',
         });
@@ -425,7 +481,7 @@ suite(
         expect(created.status).toBe('DRAFT');
         expect(created.version).toBe(1);
 
-        const fetched = await proposalApprovalService.getActionProposal(created.actionProposalId);
+        const fetched = await proposalApprovalService.getActionProposal(created.actionProposalId, actorId);
         expect(fetched).not.toBeNull();
         expect(fetched?.actionProposalId).toBe(created.actionProposalId);
         expect(fetched?.payloadDigest).toBe('sha256:round-trip-payload');
@@ -444,6 +500,7 @@ suite(
           caseId,
           runId,
           tag: 'round-trip',
+          createdByActorId: actorId,
           idempotencyKey,
           payloadDigest: 'sha256:a-different-payload',
         });
@@ -456,7 +513,7 @@ suite(
         expect(rowsAfterConflict).toHaveLength(1);
         expect(rowsAfterConflict[0]?.payload_digest).toBe('sha256:round-trip-payload');
       } finally {
-        await teardown({ runIds: [runId], orgIds: [orgId], projectIds: [projectId] });
+        await teardown({ runIds: [runId], orgIds: [orgId], projectIds: [projectId], userIds: [actorId] });
       }
     }, 30_000);
 
@@ -468,7 +525,7 @@ suite(
     //    governance bypass).
     // -------------------------------------------------------------------------
     it('rejects self-approval (APPROVE) with no DB decision row and unchanged status, but allows self-reject (REJECT) by the same actor', async () => {
-      const { orgId, projectId, caseId } = await seedOrgProjectCase('self-approval');
+      const { orgId, projectId, caseId, actorId: actorA } = await seedOrgProjectCase('self-approval');
       const runId = `run-t2-${randomUUID()}`;
       try {
         await seedV8Run({ runId, organizationId: orgId });
@@ -478,12 +535,12 @@ suite(
             caseId,
             runId,
             tag: 'self-approval',
-            createdByActorId: 'actor-A',
+            createdByActorId: actorA,
           })
         );
         const submitted = await proposalApprovalService.submitActionProposalForReview(
           created.actionProposalId,
-          { actorUserId: 'actor-A' },
+          { actorUserId: actorA },
           created.version
         );
         expect(submitted.status).toBe('PENDING_REVIEW');
@@ -497,7 +554,7 @@ suite(
               proposalVersion: submitted.proposalVersion,
               payloadDigest: submitted.payloadDigest,
               decision: 'APPROVE',
-              decidedByActorId: 'actor-A',
+              decidedByActorId: actorA,
             }),
             submitted.version
           )
@@ -518,12 +575,12 @@ suite(
             proposalVersion: submitted.proposalVersion,
             payloadDigest: submitted.payloadDigest,
             decision: 'REJECT',
-            decidedByActorId: 'actor-A',
+            decidedByActorId: actorA,
           }),
           submitted.version
         );
         expect(rejectResult.proposal.status).toBe('REJECTED');
-        expect(rejectResult.decision.decidedByActorId).toBe('actor-A');
+        expect(rejectResult.decision.decidedByActorId).toBe(actorA);
         expect(rejectResult.decision.decision).toBe('REJECT');
 
         const rowAfterSelfReject = await readProposalRow(created.actionProposalId);
@@ -531,10 +588,10 @@ suite(
 
         const decisionsAfterSelfReject = await readDecisionRows(created.actionProposalId);
         expect(decisionsAfterSelfReject).toHaveLength(1);
-        expect(decisionsAfterSelfReject[0]?.decided_by_actor_id).toBe('actor-A');
+        expect(decisionsAfterSelfReject[0]?.decided_by_actor_id).toBe(actorA);
         expect(decisionsAfterSelfReject[0]?.decision).toBe('REJECT');
       } finally {
-        await teardown({ runIds: [runId], orgIds: [orgId], projectIds: [projectId] });
+        await teardown({ runIds: [runId], orgIds: [orgId], projectIds: [projectId], userIds: [actorA] });
       }
     }, 30_000);
 
@@ -544,7 +601,8 @@ suite(
     //    actor-B as the decider.
     // -------------------------------------------------------------------------
     it('a different actor (actor-B) approving actor-A proposal succeeds, transitions to APPROVED, and records actor-B on the decision row', async () => {
-      const { orgId, projectId, caseId } = await seedOrgProjectCase('cross-actor-approve');
+      const { orgId, projectId, caseId, actorId: actorA } = await seedOrgProjectCase('cross-actor-approve');
+      const actorB = await seedMemberedUser(orgId, 'cross-actor-approve-B');
       const runId = `run-t3-${randomUUID()}`;
       try {
         await seedV8Run({ runId, organizationId: orgId });
@@ -554,12 +612,12 @@ suite(
             caseId,
             runId,
             tag: 'cross-actor-approve',
-            createdByActorId: 'actor-A',
+            createdByActorId: actorA,
           })
         );
         const submitted = await proposalApprovalService.submitActionProposalForReview(
           created.actionProposalId,
-          { actorUserId: 'actor-A' },
+          { actorUserId: actorA },
           created.version
         );
 
@@ -570,14 +628,14 @@ suite(
             proposalVersion: submitted.proposalVersion,
             payloadDigest: submitted.payloadDigest,
             decision: 'APPROVE',
-            decidedByActorId: 'actor-B',
+            decidedByActorId: actorB,
           }),
           submitted.version
         );
 
         expect(result.proposal.status).toBe('APPROVED');
         expect(result.proposal.version).toBe(submitted.version + 1);
-        expect(result.decision.decidedByActorId).toBe('actor-B');
+        expect(result.decision.decidedByActorId).toBe(actorB);
         expect(result.decision.decision).toBe('APPROVE');
 
         const row = await readProposalRow(created.actionProposalId);
@@ -585,10 +643,15 @@ suite(
 
         const decisions = await readDecisionRows(created.actionProposalId);
         expect(decisions).toHaveLength(1);
-        expect(decisions[0]?.decided_by_actor_id).toBe('actor-B');
+        expect(decisions[0]?.decided_by_actor_id).toBe(actorB);
         expect(decisions[0]?.decision).toBe('APPROVE');
       } finally {
-        await teardown({ runIds: [runId], orgIds: [orgId], projectIds: [projectId] });
+        await teardown({
+          runIds: [runId],
+          orgIds: [orgId],
+          projectIds: [projectId],
+          userIds: [actorA, actorB],
+        });
       }
     }, 30_000);
 
@@ -598,7 +661,8 @@ suite(
     //    with no DB change.
     // -------------------------------------------------------------------------
     it('rejects a decision whose proposalVersion/payloadDigest do not match the live row with proposal_stale and leaves the DB unchanged', async () => {
-      const { orgId, projectId, caseId } = await seedOrgProjectCase('stale');
+      const { orgId, projectId, caseId, actorId: actorA } = await seedOrgProjectCase('stale');
+      const actorB = await seedMemberedUser(orgId, 'stale-B');
       const runId = `run-t4-${randomUUID()}`;
       try {
         await seedV8Run({ runId, organizationId: orgId });
@@ -608,13 +672,13 @@ suite(
             caseId,
             runId,
             tag: 'stale',
-            createdByActorId: 'actor-A',
+            createdByActorId: actorA,
             payloadDigest: 'sha256:stale-live-digest',
           })
         );
         const submitted = await proposalApprovalService.submitActionProposalForReview(
           created.actionProposalId,
-          { actorUserId: 'actor-A' },
+          { actorUserId: actorA },
           created.version
         );
 
@@ -627,7 +691,7 @@ suite(
               proposalVersion: submitted.proposalVersion,
               payloadDigest: 'sha256:not-the-live-digest',
               decision: 'APPROVE',
-              decidedByActorId: 'actor-B',
+              decidedByActorId: actorB,
             }),
             submitted.version
           )
@@ -642,7 +706,7 @@ suite(
               proposalVersion: submitted.proposalVersion + 99,
               payloadDigest: submitted.payloadDigest,
               decision: 'APPROVE',
-              decidedByActorId: 'actor-B',
+              decidedByActorId: actorB,
             }),
             submitted.version
           )
@@ -655,7 +719,12 @@ suite(
         const decisions = await readDecisionRows(created.actionProposalId);
         expect(decisions).toHaveLength(0);
       } finally {
-        await teardown({ runIds: [runId], orgIds: [orgId], projectIds: [projectId] });
+        await teardown({
+          runIds: [runId],
+          orgIds: [orgId],
+          projectIds: [projectId],
+          userIds: [actorA, actorB],
+        });
       }
     }, 30_000);
 
@@ -665,7 +734,8 @@ suite(
     //    unchanged.
     // -------------------------------------------------------------------------
     it('rejects recordApprovalDecision against a DRAFT proposal (never submitted for review) and leaves status unchanged', async () => {
-      const { orgId, projectId, caseId } = await seedOrgProjectCase('illegal-transition');
+      const { orgId, projectId, caseId, actorId: actorA } = await seedOrgProjectCase('illegal-transition');
+      const actorB = await seedMemberedUser(orgId, 'illegal-transition-B');
       const runId = `run-t5-${randomUUID()}`;
       try {
         await seedV8Run({ runId, organizationId: orgId });
@@ -675,7 +745,7 @@ suite(
             caseId,
             runId,
             tag: 'illegal-transition',
-            createdByActorId: 'actor-A',
+            createdByActorId: actorA,
           })
         );
         expect(created.status).toBe('DRAFT');
@@ -688,7 +758,7 @@ suite(
               proposalVersion: created.proposalVersion,
               payloadDigest: created.payloadDigest,
               decision: 'APPROVE',
-              decidedByActorId: 'actor-B',
+              decidedByActorId: actorB,
             }),
             created.version
           )
@@ -701,7 +771,12 @@ suite(
         const decisions = await readDecisionRows(created.actionProposalId);
         expect(decisions).toHaveLength(0);
       } finally {
-        await teardown({ runIds: [runId], orgIds: [orgId], projectIds: [projectId] });
+        await teardown({
+          runIds: [runId],
+          orgIds: [orgId],
+          projectIds: [projectId],
+          userIds: [actorA, actorB],
+        });
       }
     }, 30_000);
 
@@ -712,7 +787,8 @@ suite(
     //    documented scope (open_question #5 in the service).
     // -------------------------------------------------------------------------
     it('rejects APPROVE on an expired proposal with proposal_review_window_expired, but allows REJECT on the same expired proposal', async () => {
-      const { orgId, projectId, caseId } = await seedOrgProjectCase('expiry');
+      const { orgId, projectId, caseId, actorId: actorA } = await seedOrgProjectCase('expiry');
+      const actorB = await seedMemberedUser(orgId, 'expiry-B');
       const runId = `run-t6-${randomUUID()}`;
       try {
         await seedV8Run({ runId, organizationId: orgId });
@@ -723,7 +799,7 @@ suite(
             caseId,
             runId,
             tag: 'expiry',
-            createdByActorId: 'actor-A',
+            createdByActorId: actorA,
             expiresAt: pastExpiry,
           })
         );
@@ -731,7 +807,7 @@ suite(
 
         const submitted = await proposalApprovalService.submitActionProposalForReview(
           created.actionProposalId,
-          { actorUserId: 'actor-A' },
+          { actorUserId: actorA },
           created.version
         );
         expect(submitted.status).toBe('PENDING_REVIEW');
@@ -748,7 +824,7 @@ suite(
               proposalVersion: submitted.proposalVersion,
               payloadDigest: submitted.payloadDigest,
               decision: 'APPROVE',
-              decidedByActorId: 'actor-B',
+              decidedByActorId: actorB,
             }),
             submitted.version
           )
@@ -770,7 +846,7 @@ suite(
             proposalVersion: submitted.proposalVersion,
             payloadDigest: submitted.payloadDigest,
             decision: 'REJECT',
-            decidedByActorId: 'actor-B',
+            decidedByActorId: actorB,
           }),
           submitted.version
         );
@@ -779,7 +855,12 @@ suite(
         const rowAfterReject = await readProposalRow(created.actionProposalId);
         expect(rowAfterReject?.status).toBe('REJECTED');
       } finally {
-        await teardown({ runIds: [runId], orgIds: [orgId], projectIds: [projectId] });
+        await teardown({
+          runIds: [runId],
+          orgIds: [orgId],
+          projectIds: [projectId],
+          userIds: [actorA, actorB],
+        });
       }
     }, 30_000);
 
@@ -790,7 +871,9 @@ suite(
     //    enforcement (CW-RT-023, CW-RT-061, CW-00-020-INV11).
     // -------------------------------------------------------------------------
     it('transitionProposalToExecuting rejects with proposal_target_stale once the targeted plan version has been superseded', async () => {
-      const { orgId, projectId, caseId } = await seedOrgProjectCase('target-stale');
+      const { orgId, projectId, caseId, actorId: actorA } = await seedOrgProjectCase('target-stale');
+      const actorB = await seedMemberedUser(orgId, 'target-stale-B');
+      const actorExecutor = await seedMemberedUser(orgId, 'target-stale-executor');
       const runId = `run-t7-${randomUUID()}`;
       try {
         await seedV8Run({ runId, organizationId: orgId });
@@ -798,7 +881,7 @@ suite(
         const planVersionA = await publishedPlanVersion({
           caseId,
           tag: 'target-stale-a',
-          actorId: 'actor-plan-owner',
+          actorId: actorA,
         });
 
         const created = await proposalApprovalService.createActionProposal(
@@ -806,13 +889,13 @@ suite(
             caseId,
             runId,
             tag: 'target-stale',
-            createdByActorId: 'actor-A',
+            createdByActorId: actorA,
             casePlanVersionId: planVersionA.casePlanVersionId,
           })
         );
         const submitted = await proposalApprovalService.submitActionProposalForReview(
           created.actionProposalId,
-          { actorUserId: 'actor-A' },
+          { actorUserId: actorA },
           created.version
         );
         const approved = await proposalApprovalService.recordApprovalDecision(
@@ -822,7 +905,7 @@ suite(
             proposalVersion: submitted.proposalVersion,
             payloadDigest: submitted.payloadDigest,
             decision: 'APPROVE',
-            decidedByActorId: 'actor-B',
+            decidedByActorId: actorB,
           }),
           submitted.version
         );
@@ -833,7 +916,7 @@ suite(
         const planVersionB = await publishedPlanVersion({
           caseId,
           tag: 'target-stale-b',
-          actorId: 'actor-plan-owner',
+          actorId: actorA,
           supersedesPlanVersionId: planVersionA.casePlanVersionId,
         });
         expect(planVersionB.casePlanVersionId).not.toBe(planVersionA.casePlanVersionId);
@@ -841,7 +924,7 @@ suite(
         await expect(
           proposalApprovalService.transitionProposalToExecuting(
             created.actionProposalId,
-            { actorUserId: 'actor-executor' },
+            { actorUserId: actorExecutor },
             approved.proposal.version
           )
         ).rejects.toThrow(/proposal_target_stale/);
@@ -850,7 +933,120 @@ suite(
         expect(row?.status).toBe('APPROVED');
         expect(row?.version).toBe(approved.proposal.version);
       } finally {
-        await teardown({ runIds: [runId], orgIds: [orgId], projectIds: [projectId] });
+        await teardown({
+          runIds: [runId],
+          orgIds: [orgId],
+          projectIds: [projectId],
+          userIds: [actorA, actorB, actorExecutor],
+        });
+      }
+    }, 30_000);
+
+    // -------------------------------------------------------------------------
+    // 8. AUTHORIZATION (CW-P12) — createActionProposal (create class) and
+    //    recordApprovalDecision (approve class): an actor with no membership
+    //    in the Case's org is rejected with case_access_denied for both.
+    // -------------------------------------------------------------------------
+    it('createActionProposal and recordApprovalDecision both reject an actor with no organization_members row for the Case\'s org', async () => {
+      const { orgId, projectId, caseId, actorId: actorA } = await seedOrgProjectCase('auth-no-membership');
+      const noMembershipActor = await seedUser(orgId, 'auth-no-membership-outsider');
+      const runId = `run-t8-${randomUUID()}`;
+      try {
+        await seedV8Run({ runId, organizationId: orgId });
+
+        await expect(
+          proposalApprovalService.createActionProposal(
+            minimalProposalInput({
+              caseId,
+              runId,
+              tag: 'auth-no-membership-create',
+              createdByActorId: noMembershipActor,
+            })
+          )
+        ).rejects.toThrow(/case_access_denied/);
+
+        const rowsAfterFailedCreate = await readProposalRowsForCase(caseId);
+        expect(rowsAfterFailedCreate).toHaveLength(0);
+
+        // A properly-membered actor creates and submits a real proposal, then
+        // the no-membership actor's decision attempt is rejected too.
+        const created = await proposalApprovalService.createActionProposal(
+          minimalProposalInput({
+            caseId,
+            runId,
+            tag: 'auth-no-membership-decision',
+            createdByActorId: actorA,
+          })
+        );
+        const submitted = await proposalApprovalService.submitActionProposalForReview(
+          created.actionProposalId,
+          { actorUserId: actorA },
+          created.version
+        );
+
+        await expect(
+          proposalApprovalService.recordApprovalDecision(
+            created.actionProposalId,
+            minimalDecisionInput({
+              tag: 'auth-no-membership-decision',
+              proposalVersion: submitted.proposalVersion,
+              payloadDigest: submitted.payloadDigest,
+              decision: 'APPROVE',
+              decidedByActorId: noMembershipActor,
+            }),
+            submitted.version
+          )
+        ).rejects.toThrow(/case_access_denied/);
+
+        const row = await readProposalRow(created.actionProposalId);
+        expect(row?.status).toBe('PENDING_REVIEW');
+        const decisions = await readDecisionRows(created.actionProposalId);
+        expect(decisions).toHaveLength(0);
+      } finally {
+        await teardown({
+          runIds: [runId],
+          orgIds: [orgId],
+          projectIds: [projectId],
+          userIds: [actorA, noMembershipActor],
+        });
+      }
+    }, 30_000);
+
+    // -------------------------------------------------------------------------
+    // 9. AUTHORIZATION (CW-P12) — getActionProposal (read class, SEC-009
+    //    hardening): a nonexistent id and a real id the actor cannot access
+    //    both return null.
+    // -------------------------------------------------------------------------
+    it('getActionProposal returns null for both a nonexistent action_proposal_id and a real proposal the actor cannot access', async () => {
+      const { orgId, projectId, caseId, actorId: actorA } = await seedOrgProjectCase('auth-read-null');
+      const noMembershipActor = await seedUser(orgId, 'auth-read-null-outsider');
+      const runId = `run-t9-${randomUUID()}`;
+      try {
+        await seedV8Run({ runId, organizationId: orgId });
+        const created = await proposalApprovalService.createActionProposal(
+          minimalProposalInput({ caseId, runId, tag: 'auth-read-null', createdByActorId: actorA })
+        );
+
+        const missing = await proposalApprovalService.getActionProposal(
+          `cwprop-${randomUUID()}`,
+          noMembershipActor
+        );
+        const denied = await proposalApprovalService.getActionProposal(
+          created.actionProposalId,
+          noMembershipActor
+        );
+        expect(missing).toBeNull();
+        expect(denied).toBeNull();
+
+        const allowed = await proposalApprovalService.getActionProposal(created.actionProposalId, actorA);
+        expect(allowed?.actionProposalId).toBe(created.actionProposalId);
+      } finally {
+        await teardown({
+          runIds: [runId],
+          orgIds: [orgId],
+          projectIds: [projectId],
+          userIds: [actorA, noMembershipActor],
+        });
       }
     }, 30_000);
   }

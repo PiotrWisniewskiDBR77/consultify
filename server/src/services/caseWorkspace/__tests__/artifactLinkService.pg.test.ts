@@ -42,6 +42,15 @@
  * landed.
  *
  * ===========================================================================
+ * AUTHORIZATION (CW-P12 retrofit) — every actor is a real, membered user
+ * ===========================================================================
+ * artifactLinkService.ts now gates every method through
+ * caseWorkspaceAuthContext.ts's requireCaseAccess. Every actor id used below
+ * is a real `users` row with a matching ACTIVE `organization_members` row
+ * for the Case's org, seeded via seedMemberedUser() — a test-fixture-only
+ * direct insert on the out-of-band pool.
+ *
+ * ===========================================================================
  * STRUCTURAL no-DELETE check (test 6) runs UNCONDITIONALLY, not gated
  * ===========================================================================
  * "There is no SQL DELETE against case_workspace_artifact_links anywhere in
@@ -94,7 +103,14 @@ async function canReachWithSchema(connectionString: string): Promise<boolean> {
     );
     const indexOk = Number(indexResult.rows[0]?.present ?? 0) === 1;
 
-    return columnsOk && indexOk;
+    const orgMembersResult = await probe.query(
+      `SELECT count(*)::int AS present FROM information_schema.columns
+        WHERE table_schema = 'public' AND table_name = 'organization_members'
+          AND column_name IN ('organization_id', 'user_id', 'role', 'status')`
+    );
+    const orgMembersOk = Number(orgMembersResult.rows[0]?.present ?? 0) === 4;
+
+    return columnsOk && indexOk && orgMembersOk;
   } catch {
     return false;
   } finally {
@@ -160,15 +176,48 @@ suite(
     // Fixture helpers — every test calls these itself, never a shared hook.
     // -----------------------------------------------------------------------
 
+    /** A fresh users row, unattached to organization_members unless seedMember() is also called for it. */
+    async function seedUser(orgId: string, label: string): Promise<string> {
+      const userId = `case-alink-user-${label}-${randomUUID()}`;
+      await control.query(`INSERT INTO users (id, organization_id, email) VALUES ($1, $2, $3)`, [
+        userId,
+        orgId,
+        `${userId}@example.test`,
+      ]);
+      return userId;
+    }
+
+    /** An organization_members row for an existing user, at the given role/status. */
+    async function seedMember(
+      orgId: string,
+      userId: string,
+      role: 'OWNER' | 'ADMIN' | 'MEMBER' | 'CONSULTANT',
+      status: 'ACTIVE' | 'REVOKED' | 'SUSPENDED' = 'ACTIVE'
+    ): Promise<void> {
+      await control.query(
+        `INSERT INTO organization_members (id, organization_id, user_id, role, status)
+           VALUES ($1, $2, $3, $4, $5)`,
+        [`case-alink-member-${randomUUID()}`, orgId, userId, role, status]
+      );
+    }
+
+    /** Convenience: seed a user AND an ACTIVE membership at MEMBER role in one call. */
+    async function seedMemberedUser(orgId: string, label: string): Promise<string> {
+      const userId = await seedUser(orgId, label);
+      await seedMember(orgId, userId, 'MEMBER');
+      return userId;
+    }
+
     /**
-     * A fresh organization + project + real case_core row, exactly like
-     * caseHistoryService.pg.test.ts's own seedOrgProjectCase() — required
+     * A fresh organization + project + real case_core row, plus a real
+     * membered actor to create the Case with — exactly like
+     * caseHistoryService.pg.test.ts's own seedOrgProjectCase(). Required
      * because case_workspace_artifact_links.case_id DOES FK into
      * case_core(case_id).
      */
     async function seedOrgProjectCase(
       label: string
-    ): Promise<{ orgId: string; projectId: string; caseId: string }> {
+    ): Promise<{ orgId: string; projectId: string; caseId: string; actorId: string }> {
       const suffix = randomUUID();
       const orgId = `case-alink-org-${label}-${suffix}`;
       const projectId = `case-alink-project-${label}-${suffix}`;
@@ -181,20 +230,29 @@ suite(
            ON CONFLICT (id) DO NOTHING`,
         [projectId, orgId, `Artifact Link test project (${label})`]
       );
+      const actorId = await seedMemberedUser(orgId, label);
       const created = await caseCoreService.createCase({
         projectId,
         organizationId: orgId,
         contractedClosureType: 'DELIVERY_COMPLETED',
-        createdByActorId: `actor-alink-${label}`,
+        createdByActorId: actorId,
       });
-      return { orgId, projectId, caseId: created.caseId };
+      return { orgId, projectId, caseId: created.caseId, actorId };
     }
 
-    /** Teardown: links first (FK into case_core), then case_core, project, org. */
-    async function teardownCase(orgId: string, projectId: string, caseId: string): Promise<void> {
+    /** Teardown: links first (FK into case_core), then users, then case_core, project, org. */
+    async function teardownCase(
+      orgId: string,
+      projectId: string,
+      caseId: string,
+      userIds: string[] = []
+    ): Promise<void> {
       await control
         .query(`DELETE FROM case_workspace_artifact_links WHERE case_id = $1`, [caseId])
         .catch(() => undefined);
+      for (const userId of userIds) {
+        await control.query(`DELETE FROM users WHERE id = $1`, [userId]).catch(() => undefined);
+      }
       await control.query(`DELETE FROM case_core WHERE case_id = $1`, [caseId]).catch(() => undefined);
       await control.query(`DELETE FROM projects WHERE id = $1`, [projectId]).catch(() => undefined);
       await control.query(`DELETE FROM organizations WHERE id = $1`, [orgId]).catch(() => undefined);
@@ -228,7 +286,7 @@ suite(
     //    ACTIVE row exists afterward.
     // -------------------------------------------------------------------------
     it('linkArtifactToCase creates an ACTIVE row; a second linkArtifactToCase for the same (case_id, artifact_type, artifact_id, relation) while the first is still ACTIVE is rejected, leaving only one ACTIVE row', async () => {
-      const { orgId, projectId, caseId } = await seedOrgProjectCase('dup');
+      const { orgId, projectId, caseId, actorId } = await seedOrgProjectCase('dup');
       const artifactType = 'document';
       const artifactId = `doc-dup-${randomUUID()}`;
       try {
@@ -237,7 +295,7 @@ suite(
           artifactType,
           artifactId,
           relation: 'EVIDENCE',
-          linkedByActorId: 'actor-dup-1',
+          linkedByActorId: actorId,
         });
 
         expect(first.linkStatus).toBe('ACTIVE');
@@ -260,7 +318,7 @@ suite(
             artifactType,
             artifactId,
             relation: 'EVIDENCE',
-            linkedByActorId: 'actor-dup-2',
+            linkedByActorId: actorId,
           });
         } catch (err) {
           secondCallError = err;
@@ -277,7 +335,7 @@ suite(
         expect(activeRows[0].link_id).toBe(first.linkId);
         expect(rowsForTuple).toHaveLength(1);
       } finally {
-        await teardownCase(orgId, projectId, caseId);
+        await teardownCase(orgId, projectId, caseId, [actorId]);
       }
     }, 30_000);
 
@@ -286,7 +344,7 @@ suite(
     //    tuple creates a new row, old row survives untouched as history.
     // -------------------------------------------------------------------------
     it('unlinkArtifactFromCase sets link_status=UNLINKED but the row still exists (proving CW-RT-025); a fresh linkArtifactToCase for the same tuple then succeeds, creating a new ACTIVE row while the old UNLINKED row is untouched', async () => {
-      const { orgId, projectId, caseId } = await seedOrgProjectCase('unlink');
+      const { orgId, projectId, caseId, actorId } = await seedOrgProjectCase('unlink');
       const artifactType = 'decision';
       const artifactId = `dec-unlink-${randomUUID()}`;
       try {
@@ -295,18 +353,18 @@ suite(
           artifactType,
           artifactId,
           relation: 'DECISION_BASIS',
-          linkedByActorId: 'actor-unlink-1',
+          linkedByActorId: actorId,
         });
 
         const unlinked = await artifactLinkService.unlinkArtifactFromCase(
           original.linkId,
-          { actorUserId: 'actor-unlink-2' },
+          { actorUserId: actorId },
           'no longer relevant'
         );
 
         expect(unlinked.linkStatus).toBe('UNLINKED');
         expect(unlinked.unlinkedAt).not.toBeNull();
-        expect(unlinked.unlinkedByActorId).toBe('actor-unlink-2');
+        expect(unlinked.unlinkedByActorId).toBe(actorId);
         expect(unlinked.unlinkReason).toBe('no longer relevant');
 
         // The row still EXISTS (SELECT count still 1) — unlinking never
@@ -316,7 +374,7 @@ suite(
         expect(rowsAfterUnlink[0].link_id).toBe(original.linkId);
         expect(rowsAfterUnlink[0].link_status).toBe('UNLINKED');
         expect(rowsAfterUnlink[0].unlinked_at).not.toBeNull();
-        expect(rowsAfterUnlink[0].unlinked_by_actor_id).toBe('actor-unlink-2');
+        expect(rowsAfterUnlink[0].unlinked_by_actor_id).toBe(actorId);
 
         // A FRESH linkArtifactToCase for the SAME tuple now succeeds
         // (allowed because the old row is no longer ACTIVE, so it falls
@@ -326,7 +384,7 @@ suite(
           artifactType,
           artifactId,
           relation: 'DECISION_BASIS',
-          linkedByActorId: 'actor-unlink-3',
+          linkedByActorId: actorId,
         });
         expect(relinked.linkId).not.toBe(original.linkId);
         expect(relinked.linkStatus).toBe('ACTIVE');
@@ -345,14 +403,14 @@ suite(
         // right after the unlink call.
         expect(oldRow?.link_status).toBe('UNLINKED');
         expect(oldRow?.unlinked_at).toBe(rowsAfterUnlink[0].unlinked_at);
-        expect(oldRow?.unlinked_by_actor_id).toBe('actor-unlink-2');
+        expect(oldRow?.unlinked_by_actor_id).toBe(actorId);
         expect(oldRow?.unlink_reason).toBe('no longer relevant');
 
         // New row is a genuinely fresh ACTIVE row.
         expect(newRow?.link_status).toBe('ACTIVE');
         expect(newRow?.unlinked_at).toBeNull();
       } finally {
-        await teardownCase(orgId, projectId, caseId);
+        await teardownCase(orgId, projectId, caseId, [actorId]);
       }
     }, 30_000);
 
@@ -361,7 +419,7 @@ suite(
     //    survives across calls, in order) and clears is_stale on re-pin.
     // -------------------------------------------------------------------------
     it('pinArtifactRevision appends an entry to revision_pin_history and updates artifact_revision; called twice, both entries survive in order; calling it after markLinkStale clears is_stale back to false', async () => {
-      const { orgId, projectId, caseId } = await seedOrgProjectCase('pin');
+      const { orgId, projectId, caseId, actorId } = await seedOrgProjectCase('pin');
       const artifactType = 'kpi';
       const artifactId = `kpi-pin-${randomUUID()}`;
       try {
@@ -370,7 +428,7 @@ suite(
           artifactType,
           artifactId,
           relation: 'OUTCOME_MEASUREMENT',
-          linkedByActorId: 'actor-pin-1',
+          linkedByActorId: actorId,
           // no artifactRevision at link time — revision_pin_history starts empty
         });
         expect(link.revisionPinHistory).toHaveLength(0);
@@ -379,28 +437,28 @@ suite(
         const pinned1 = await artifactLinkService.pinArtifactRevision(
           link.linkId,
           'rev-1',
-          { actorUserId: 'actor-pin-2' },
+          { actorUserId: actorId },
           'first pin'
         );
         expect(pinned1.artifactRevision).toBe('rev-1');
         expect(pinned1.revisionPinHistory).toHaveLength(1);
         expect(pinned1.revisionPinHistory[0]).toMatchObject({
           revision: 'rev-1',
-          pinnedByActorId: 'actor-pin-2',
+          pinnedByActorId: actorId,
           reason: 'first pin',
         });
 
         const pinned2 = await artifactLinkService.pinArtifactRevision(
           link.linkId,
           'rev-2',
-          { actorUserId: 'actor-pin-3' },
+          { actorUserId: actorId },
           'second pin'
         );
         expect(pinned2.artifactRevision).toBe('rev-2');
         // Array grew by exactly one — append-only, prior entry preserved.
         expect(pinned2.revisionPinHistory).toHaveLength(2);
-        expect(pinned2.revisionPinHistory[0]).toMatchObject({ revision: 'rev-1', pinnedByActorId: 'actor-pin-2' });
-        expect(pinned2.revisionPinHistory[1]).toMatchObject({ revision: 'rev-2', pinnedByActorId: 'actor-pin-3' });
+        expect(pinned2.revisionPinHistory[0]).toMatchObject({ revision: 'rev-1', pinnedByActorId: actorId });
+        expect(pinned2.revisionPinHistory[1]).toMatchObject({ revision: 'rev-2', pinnedByActorId: actorId });
 
         // Independently, out-of-band, confirm both entries survive in
         // order and artifact_revision reflects the latest pin.
@@ -413,7 +471,7 @@ suite(
         // Mark stale, then pin again — is_stale must clear back to false.
         const staled = await artifactLinkService.markLinkStale(
           link.linkId,
-          { actorUserId: 'actor-pin-4' },
+          { actorUserId: actorId },
           'upstream moved'
         );
         expect(staled.isStale).toBe(true);
@@ -421,7 +479,7 @@ suite(
         const pinned3 = await artifactLinkService.pinArtifactRevision(
           link.linkId,
           'rev-3',
-          { actorUserId: 'actor-pin-5' },
+          { actorUserId: actorId },
           'resolves staleness'
         );
         expect(pinned3.isStale).toBe(false);
@@ -441,7 +499,7 @@ suite(
           'rev-3',
         ]);
       } finally {
-        await teardownCase(orgId, projectId, caseId);
+        await teardownCase(orgId, projectId, caseId, [actorId]);
       }
     }, 30_000);
 
@@ -450,7 +508,7 @@ suite(
     //    and revision_pin_history are untouched.
     // -------------------------------------------------------------------------
     it('markLinkStale sets is_stale=true plus stale_marked_at/stale_marked_by_actor_id/stale_reason, WITHOUT touching artifact_revision or revision_pin_history', async () => {
-      const { orgId, projectId, caseId } = await seedOrgProjectCase('stale');
+      const { orgId, projectId, caseId, actorId } = await seedOrgProjectCase('stale');
       const artifactType = 'initiative';
       const artifactId = `init-stale-${randomUUID()}`;
       try {
@@ -460,7 +518,7 @@ suite(
           artifactId,
           artifactRevision: 'rev-baseline',
           relation: 'INPUT',
-          linkedByActorId: 'actor-stale-1',
+          linkedByActorId: actorId,
           pinReason: 'seeded at link time',
         });
         expect(link.artifactRevision).toBe('rev-baseline');
@@ -473,19 +531,19 @@ suite(
 
         const staled = await artifactLinkService.markLinkStale(
           link.linkId,
-          { actorUserId: 'actor-stale-2' },
+          { actorUserId: actorId },
           'source moved to a newer revision'
         );
 
         expect(staled.isStale).toBe(true);
         expect(staled.staleMarkedAt).not.toBeNull();
-        expect(staled.staleMarkedByActorId).toBe('actor-stale-2');
+        expect(staled.staleMarkedByActorId).toBe(actorId);
         expect(staled.staleReason).toBe('source moved to a newer revision');
 
         const after = await readLinkRow(link.linkId);
         expect(after?.is_stale).toBe(true);
         expect(after?.stale_marked_at).not.toBeNull();
-        expect(after?.stale_marked_by_actor_id).toBe('actor-stale-2');
+        expect(after?.stale_marked_by_actor_id).toBe(actorId);
         expect(after?.stale_reason).toBe('source moved to a newer revision');
 
         // ONLY the staleness fields changed — artifact_revision and
@@ -497,7 +555,7 @@ suite(
         expect(historyAfter).toHaveLength(1);
         expect(historyAfter[0].revision).toBe('rev-baseline');
       } finally {
-        await teardownCase(orgId, projectId, caseId);
+        await teardownCase(orgId, projectId, caseId, [actorId]);
       }
     }, 30_000);
 
@@ -522,18 +580,18 @@ suite(
           artifactType: artifactTypeA,
           artifactId: artifactIdA1,
           relation: 'EVIDENCE',
-          linkedByActorId: 'actor-digest-a1',
+          linkedByActorId: caseA.actorId,
         });
         await artifactLinkService.linkArtifactToCase({
           caseId: caseB.caseId,
           artifactType: artifactTypeB,
           artifactId: artifactIdB1,
           relation: 'EVIDENCE',
-          linkedByActorId: 'actor-digest-b1',
+          linkedByActorId: caseB.actorId,
         });
 
-        const digestA1 = await artifactLinkService.computeArtifactLinkSetDigest(caseA.caseId);
-        const digestB1 = await artifactLinkService.computeArtifactLinkSetDigest(caseB.caseId);
+        const digestA1 = await artifactLinkService.computeArtifactLinkSetDigest(caseA.caseId, caseA.actorId);
+        const digestB1 = await artifactLinkService.computeArtifactLinkSetDigest(caseB.caseId, caseB.actorId);
         expect(digestA1.caseId).toBe(caseA.caseId);
         expect(digestA1.linkCount).toBe(1);
         expect(digestB1.linkCount).toBe(1);
@@ -544,11 +602,11 @@ suite(
           artifactType: artifactTypeA,
           artifactId: artifactIdA2,
           relation: 'OUTPUT',
-          linkedByActorId: 'actor-digest-a2',
+          linkedByActorId: caseA.actorId,
         });
 
-        const digestA2 = await artifactLinkService.computeArtifactLinkSetDigest(caseA.caseId);
-        const digestB2 = await artifactLinkService.computeArtifactLinkSetDigest(caseB.caseId);
+        const digestA2 = await artifactLinkService.computeArtifactLinkSetDigest(caseA.caseId, caseA.actorId);
+        const digestB2 = await artifactLinkService.computeArtifactLinkSetDigest(caseB.caseId, caseB.actorId);
 
         expect(digestA2.digest).not.toBe(digestA1.digest);
         expect(digestA2.linkCount).toBe(2);
@@ -560,20 +618,58 @@ suite(
         await artifactLinkService.pinArtifactRevision(
           linkA1.linkId,
           'rev-repin',
-          { actorUserId: 'actor-digest-a3' },
+          { actorUserId: caseA.actorId },
           'repin for digest test'
         );
 
-        const digestA3 = await artifactLinkService.computeArtifactLinkSetDigest(caseA.caseId);
-        const digestB3 = await artifactLinkService.computeArtifactLinkSetDigest(caseB.caseId);
+        const digestA3 = await artifactLinkService.computeArtifactLinkSetDigest(caseA.caseId, caseA.actorId);
+        const digestB3 = await artifactLinkService.computeArtifactLinkSetDigest(caseB.caseId, caseB.actorId);
 
         expect(digestA3.digest).not.toBe(digestA2.digest);
         // Case B's digest is still unchanged, across both of case A's
         // mutations.
         expect(digestB3.digest).toBe(digestB1.digest);
       } finally {
-        await teardownCase(caseA.orgId, caseA.projectId, caseA.caseId);
-        await teardownCase(caseB.orgId, caseB.projectId, caseB.caseId);
+        await teardownCase(caseA.orgId, caseA.projectId, caseA.caseId, [caseA.actorId]);
+        await teardownCase(caseB.orgId, caseB.projectId, caseB.caseId, [caseB.actorId]);
+      }
+    }, 30_000);
+
+    // -------------------------------------------------------------------------
+    // 7. AUTHORIZATION (CW-P12) — linkArtifactToCase (link class) and
+    //    getArtifactLink (read class, SEC-009 hardening).
+    // -------------------------------------------------------------------------
+    it('linkArtifactToCase rejects an actor with no membership; getArtifactLink returns null for both a nonexistent link and one the actor cannot access', async () => {
+      const { orgId, projectId, caseId, actorId } = await seedOrgProjectCase('auth');
+      const noMembershipActor = await seedUser(orgId, 'auth-outsider');
+      try {
+        await expect(
+          artifactLinkService.linkArtifactToCase({
+            caseId,
+            artifactType: 'document',
+            artifactId: `doc-auth-${randomUUID()}`,
+            relation: 'EVIDENCE',
+            linkedByActorId: noMembershipActor,
+          })
+        ).rejects.toThrow(/case_access_denied/);
+
+        const link = await artifactLinkService.linkArtifactToCase({
+          caseId,
+          artifactType: 'document',
+          artifactId: `doc-auth-ok-${randomUUID()}`,
+          relation: 'EVIDENCE',
+          linkedByActorId: actorId,
+        });
+
+        const missing = await artifactLinkService.getArtifactLink(`cwlink-${randomUUID()}`, noMembershipActor);
+        const denied = await artifactLinkService.getArtifactLink(link.linkId, noMembershipActor);
+        expect(missing).toBeNull();
+        expect(denied).toBeNull();
+
+        const allowed = await artifactLinkService.getArtifactLink(link.linkId, actorId);
+        expect(allowed?.linkId).toBe(link.linkId);
+      } finally {
+        await teardownCase(orgId, projectId, caseId, [actorId, noMembershipActor]);
       }
     }, 30_000);
   }

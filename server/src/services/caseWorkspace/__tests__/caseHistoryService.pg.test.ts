@@ -23,29 +23,44 @@
  *   npx vitest run server/src/services/caseWorkspace/__tests__/caseHistoryService.pg.test.ts
  *
  * ===========================================================================
- * ISOLATION — every test owns its own case_id (and, for value-measurement
- * tests, its own organization/project/case_core row)
+ * ISOLATION — every test owns its own organization/project/case_core row
  * ===========================================================================
- * `case_workspace_history_events.case_id` deliberately carries NO FK (see the
- * migration's header) — it exists purely to let this table log events about
- * ANY source, so the history-event tests below (1 and 2) use a plain,
- * uniquely-namespaced `randomUUID()`-suffixed string as case_id and never
- * create a real case_core row for them.
- *
- * `case_workspace_value_measurements.case_id` DOES carry a real FK into
- * `case_core(case_id)` (permitted per this packet's own task scope, unlike
- * the generic history log's FK-less case_id) — so the value-measurement
- * tests (3 and 4) bundle `seedOrgAndProject()` + `caseCoreService.createCase`
- * into `seedOrgProjectCase()`, exactly like casePlanVersionService.pg.test.ts
- * does for `case_plan_versions`. Every test seeds its own fixture inside the
- * test body (never a shared beforeEach) and tears it down itself in a
- * `finally`, so no test can observe, reset, or race another test's rows.
+ * `case_workspace_history_events.case_id` itself carries NO FK (see the
+ * migration's header) — the table can log an event about ANY source. But per
+ * the CW-P12 auth retrofit below, appendCaseHistoryEvent() now ALSO calls
+ * requireCaseAccess(input.actorId, input.caseId), which DOES require
+ * input.caseId to resolve to a real case_core row (a documented behavior
+ * change — see the "AUTHORIZATION" section below and
+ * caseHistoryService.ts's own open_questions #4). So every test in this file
+ * — history-event-only tests included — now seeds a real
+ * organization/project/case_core row via `seedOrgProjectCase()`, exactly like
+ * casePlanVersionService.pg.test.ts does. Every test seeds its own fixture
+ * inside the test body (never a shared beforeEach) and tears it down itself
+ * in a `finally`, so no test can observe, reset, or race another test's
+ * rows.
  *
  * All assertions read the actual `case_workspace_history_events`/
  * `case_workspace_value_measurements` rows back out of Postgres through a
  * dedicated, out-of-band `pg.Pool` (`control`) — never the service
  * function's return value alone — because the return value only proves what
  * the service THINKS it wrote, not what actually landed.
+ *
+ * ===========================================================================
+ * AUTHORIZATION (CW-P12 retrofit) — every actor is a real, membered user;
+ * appendCaseHistoryEvent's caseId must now resolve to a real Case
+ * ===========================================================================
+ * caseHistoryService.ts now gates appendCaseHistoryEvent/recordValueMeasurement
+ * (create class) and getCaseHistoryEvent/listCaseHistoryEventsForCase/
+ * getValueMeasurement/listValueMeasurementsForCase/
+ * listValueMeasurementsForMetric (read/list class) through
+ * caseWorkspaceAuthContext.ts's requireCaseAccess. Every actor id used below
+ * is a real `users` row with a matching ACTIVE `organization_members` row
+ * for the Case's org, seeded here via direct INSERTs on the out-of-band pool
+ * (seedUser/seedMember) — a test-fixture-only direct insert. This is a
+ * documented behavior change versus the pre-retrofit design's "case_id has
+ * no FK, never SELECTs case_core here" intent for the generic log (see the
+ * service's own open_questions #4): a history event can no longer be logged
+ * against a caseId that does not map to a live case_core row.
  *
  * ===========================================================================
  * STRUCTURAL append-only check (test 5) runs UNCONDITIONALLY, not gated
@@ -95,7 +110,14 @@ async function canReachWithSchema(connectionString: string): Promise<boolean> {
     );
     const valueOk = Number(valueResult.rows[0]?.present ?? 0) === 5;
 
-    return historyOk && valueOk;
+    const orgMembersResult = await probe.query(
+      `SELECT count(*)::int AS present FROM information_schema.columns
+        WHERE table_schema = 'public' AND table_name = 'organization_members'
+          AND column_name IN ('organization_id', 'user_id', 'role', 'status')`
+    );
+    const orgMembersOk = Number(orgMembersResult.rows[0]?.present ?? 0) === 4;
+
+    return historyOk && valueOk && orgMembersOk;
   } catch {
     return false;
   } finally {
@@ -163,24 +185,50 @@ suite('caseHistoryService — Case History & Value Measurements against a real P
   // Fixture helpers — every test calls these itself, never a shared hook.
   // -------------------------------------------------------------------------
 
-  /**
-   * A plain, uniquely-namespaced case_id string with NO backing case_core
-   * row — legal for case_workspace_history_events because that table's
-   * case_id deliberately carries no FK (see the migration's header).
-   */
-  function freshCaseId(label: string): string {
-    return `case-hist-${label}-${randomUUID()}`;
+  /** A fresh users row, unattached to organization_members unless seedMember() is also called for it. */
+  async function seedUser(orgId: string, label: string): Promise<string> {
+    const userId = `case-hist-user-${label}-${randomUUID()}`;
+    await control.query(`INSERT INTO users (id, organization_id, email) VALUES ($1, $2, $3)`, [
+      userId,
+      orgId,
+      `${userId}@example.test`,
+    ]);
+    return userId;
+  }
+
+  /** An organization_members row for an existing user, at the given role/status. */
+  async function seedMember(
+    orgId: string,
+    userId: string,
+    role: 'OWNER' | 'ADMIN' | 'MEMBER' | 'CONSULTANT',
+    status: 'ACTIVE' | 'REVOKED' | 'SUSPENDED' = 'ACTIVE'
+  ): Promise<void> {
+    await control.query(
+      `INSERT INTO organization_members (id, organization_id, user_id, role, status)
+         VALUES ($1, $2, $3, $4, $5)`,
+      [`case-hist-member-${randomUUID()}`, orgId, userId, role, status]
+    );
+  }
+
+  /** Convenience: seed a user AND an ACTIVE membership at MEMBER role in one call. */
+  async function seedMemberedUser(orgId: string, label: string): Promise<string> {
+    const userId = await seedUser(orgId, label);
+    await seedMember(orgId, userId, 'MEMBER');
+    return userId;
   }
 
   /**
-   * A fresh organization + project + real case_core row, exactly like
-   * casePlanVersionService.pg.test.ts's seedOrgProjectCase() — required
-   * because case_workspace_value_measurements.case_id DOES FK into
-   * case_core(case_id).
+   * A fresh organization + project + real case_core row, plus a real
+   * membered actor to create the Case with — exactly like
+   * casePlanVersionService.pg.test.ts's seedOrgProjectCase(). Required for
+   * EVERY test in this file now (not just the value-measurement ones): the
+   * CW-P12 retrofit's requireCaseAccess call inside appendCaseHistoryEvent
+   * means even the FK-less history-event log now needs a real Case + a real
+   * membered actor to write against.
    */
   async function seedOrgProjectCase(
     label: string
-  ): Promise<{ orgId: string; projectId: string; caseId: string }> {
+  ): Promise<{ orgId: string; projectId: string; caseId: string; actorId: string }> {
     const suffix = randomUUID();
     const orgId = `case-hist-org-${label}-${suffix}`;
     const projectId = `case-hist-project-${label}-${suffix}`;
@@ -193,37 +241,29 @@ suite('caseHistoryService — Case History & Value Measurements against a real P
          ON CONFLICT (id) DO NOTHING`,
       [projectId, orgId, `Case History test project (${label})`]
     );
+    const actorId = await seedMemberedUser(orgId, label);
     const created = await caseCoreService.createCase({
       projectId,
       organizationId: orgId,
       contractedClosureType: 'DELIVERY_COMPLETED',
-      createdByActorId: `actor-hist-${label}`,
+      createdByActorId: actorId,
     });
-    return { orgId, projectId, caseId: created.caseId };
-  }
-
-  /** Teardown for the FK-less history-event-only tests (1 and 2). */
-  async function teardownHistoryOnly(caseIds: string[]): Promise<void> {
-    for (const caseId of caseIds) {
-      await control
-        .query(`DELETE FROM case_workspace_history_events WHERE case_id = $1`, [caseId])
-        .catch(() => undefined);
-    }
+    return { orgId, projectId, caseId: created.caseId, actorId };
   }
 
   /**
-   * Teardown for the value-measurement tests (3 and 4): measurements first
-   * (FK into case_core, no ON DELETE CASCADE, so case_core cannot be deleted
-   * while they exist), then the history events recordValueMeasurement()
-   * appended (FK-less, so they never cascade off case_core), then case_core
-   * itself, then projects/organizations.
+   * Teardown: value-measurement rows first (FK into case_core, no ON DELETE
+   * CASCADE, so case_core cannot be deleted while they exist), then the
+   * history events (FK-less, so they never cascade off case_core), then
+   * users, then case_core itself, then projects/organizations.
    */
-  async function teardownValueMeasurement(
-    orgIds: string[],
-    projectIds: string[],
-    caseIds: string[]
-  ): Promise<void> {
-    for (const caseId of caseIds) {
+  async function teardown(params: {
+    orgIds: string[];
+    projectIds: string[];
+    caseIds: string[];
+    userIds?: string[];
+  }): Promise<void> {
+    for (const caseId of params.caseIds) {
       await control
         .query(`DELETE FROM case_workspace_value_measurements WHERE case_id = $1`, [caseId])
         .catch(() => undefined);
@@ -231,13 +271,16 @@ suite('caseHistoryService — Case History & Value Measurements against a real P
         .query(`DELETE FROM case_workspace_history_events WHERE case_id = $1`, [caseId])
         .catch(() => undefined);
     }
-    for (const projectId of projectIds) {
+    for (const projectId of params.projectIds) {
       await control
         .query(`DELETE FROM case_core WHERE project_id = $1`, [projectId])
         .catch(() => undefined);
       await control.query(`DELETE FROM projects WHERE id = $1`, [projectId]).catch(() => undefined);
     }
-    for (const orgId of orgIds) {
+    for (const userId of params.userIds ?? []) {
+      await control.query(`DELETE FROM users WHERE id = $1`, [userId]).catch(() => undefined);
+    }
+    for (const orgId of params.orgIds) {
       await control.query(`DELETE FROM organizations WHERE id = $1`, [orgId]).catch(() => undefined);
     }
   }
@@ -274,29 +317,29 @@ suite('caseHistoryService — Case History & Value Measurements against a real P
   // 1. Monotonic global_seq — three sequential appends, read back in order.
   // -------------------------------------------------------------------------
   it('appendCaseHistoryEvent assigns strictly-increasing global_seq for three sequential events on the same case_id, read back in order via listCaseHistoryEventsForCase', async () => {
-    const caseId = freshCaseId('seq');
+    const { orgId, projectId, caseId, actorId } = await seedOrgProjectCase('seq');
     try {
       const first = await caseHistoryService.appendCaseHistoryEvent({
-        organizationId: 'org-seq',
+        organizationId: orgId,
         caseId,
         eventType: 'CASE_STATUS_CHANGED',
-        actorId: 'actor-seq',
+        actorId,
         occurredAt: new Date().toISOString(),
         summary: 'first event',
       });
       const second = await caseHistoryService.appendCaseHistoryEvent({
-        organizationId: 'org-seq',
+        organizationId: orgId,
         caseId,
         eventType: 'GOVERNANCE_TIER_CHANGED',
-        actorId: 'actor-seq',
+        actorId,
         occurredAt: new Date().toISOString(),
         summary: 'second event',
       });
       const third = await caseHistoryService.appendCaseHistoryEvent({
-        organizationId: 'org-seq',
+        organizationId: orgId,
         caseId,
         eventType: 'CLOSURE_RECORDED',
-        actorId: 'actor-seq',
+        actorId,
         occurredAt: new Date().toISOString(),
         summary: 'third event',
       });
@@ -306,7 +349,7 @@ suite('caseHistoryService — Case History & Value Measurements against a real P
       expect(second.globalSeq).toBeLessThan(third.globalSeq);
 
       // Read back through the service's own list method, in DB order.
-      const listed = await caseHistoryService.listCaseHistoryEventsForCase(caseId);
+      const listed = await caseHistoryService.listCaseHistoryEventsForCase(caseId, undefined, undefined, actorId);
       expect(listed.map((e) => e.eventId)).toEqual([first.eventId, second.eventId, third.eventId]);
       expect(listed.map((e) => e.globalSeq)).toEqual([first.globalSeq, second.globalSeq, third.globalSeq]);
       expect(listed[0].globalSeq).toBeLessThan(listed[1].globalSeq);
@@ -320,7 +363,7 @@ suite('caseHistoryService — Case History & Value Measurements against a real P
       expect(seqs[0]).toBeLessThan(seqs[1]);
       expect(seqs[1]).toBeLessThan(seqs[2]);
     } finally {
-      await teardownHistoryOnly([caseId]);
+      await teardown({ orgIds: [orgId], projectIds: [projectId], caseIds: [caseId], userIds: [actorId] });
     }
   }, 30_000);
 
@@ -328,15 +371,15 @@ suite('caseHistoryService — Case History & Value Measurements against a real P
   // 2. dedupe_key idempotency.
   // -------------------------------------------------------------------------
   it('appendCaseHistoryEvent called twice with the SAME dedupe_key is a no-op returning the original row; a different dedupe_key creates a second, distinct row', async () => {
-    const caseId = freshCaseId('dedupe');
+    const { orgId, projectId, caseId, actorId } = await seedOrgProjectCase('dedupe');
     const dedupeKeyA = `dedupe-a-${randomUUID()}`;
     const dedupeKeyB = `dedupe-b-${randomUUID()}`;
     try {
       const firstCall = await caseHistoryService.appendCaseHistoryEvent({
-        organizationId: 'org-dedupe',
+        organizationId: orgId,
         caseId,
         eventType: 'CASE_STATUS_CHANGED',
-        actorId: 'actor-dedupe',
+        actorId,
         occurredAt: new Date().toISOString(),
         summary: 'dedupe test event A',
         dedupeKey: dedupeKeyA,
@@ -346,10 +389,10 @@ suite('caseHistoryService — Case History & Value Measurements against a real P
       // row unchanged (per the service's own documented idempotent-replay
       // contract), not throw and not create a second row.
       const secondCall = await caseHistoryService.appendCaseHistoryEvent({
-        organizationId: 'org-dedupe',
+        organizationId: orgId,
         caseId,
         eventType: 'CASE_STATUS_CHANGED',
-        actorId: 'actor-dedupe',
+        actorId,
         occurredAt: new Date().toISOString(),
         summary: 'dedupe test event A',
         dedupeKey: dedupeKeyA,
@@ -366,10 +409,10 @@ suite('caseHistoryService — Case History & Value Measurements against a real P
       // A DIFFERENT dedupe_key, same case_id and otherwise-identical fields:
       // must create a second, distinct row.
       const thirdCall = await caseHistoryService.appendCaseHistoryEvent({
-        organizationId: 'org-dedupe',
+        organizationId: orgId,
         caseId,
         eventType: 'CASE_STATUS_CHANGED',
-        actorId: 'actor-dedupe',
+        actorId,
         occurredAt: new Date().toISOString(),
         summary: 'dedupe test event A',
         dedupeKey: dedupeKeyB,
@@ -389,7 +432,7 @@ suite('caseHistoryService — Case History & Value Measurements against a real P
         [firstCall.eventId, thirdCall.eventId].sort()
       );
     } finally {
-      await teardownHistoryOnly([caseId]);
+      await teardown({ orgIds: [orgId], projectIds: [projectId], caseIds: [caseId], userIds: [actorId] });
     }
   }, 30_000);
 
@@ -398,7 +441,7 @@ suite('caseHistoryService — Case History & Value Measurements against a real P
   //    atomically; repeat calls append, never update.
   // -------------------------------------------------------------------------
   it('recordValueMeasurement creates a measurement row AND a linked history event in one call; calling it again for the same metric_key creates a SECOND measurement row, not an update', async () => {
-    const { orgId, projectId, caseId } = await seedOrgProjectCase('record');
+    const { orgId, projectId, caseId, actorId } = await seedOrgProjectCase('record');
     try {
       const firstMeasurement = await caseHistoryService.recordValueMeasurement({
         caseId,
@@ -412,7 +455,7 @@ suite('caseHistoryService — Case History & Value Measurements against a real P
         confidence: 'HIGH',
         attribution: 'Directly attributable to the procurement renegotiation workstream',
         evidenceRef: 'evidence-doc-1',
-        measuredByActorId: 'actor-record-1',
+        measuredByActorId: actorId,
       });
 
       // -- Both the measurement row and its linked history event genuinely
@@ -448,7 +491,7 @@ suite('caseHistoryService — Case History & Value Measurements against a real P
         confidence: 'HIGH',
         attribution: 'Second measurement window, procurement workstream sustained',
         evidenceRef: 'evidence-doc-2',
-        measuredByActorId: 'actor-record-2',
+        measuredByActorId: actorId,
       });
 
       expect(secondMeasurement.measurementId).not.toBe(firstMeasurement.measurementId);
@@ -484,7 +527,7 @@ suite('caseHistoryService — Case History & Value Measurements against a real P
       const secondPayload = JSON.parse(secondHistoryRow?.payload ?? '{}');
       expect(secondPayload.measurementId).toBe(secondMeasurement.measurementId);
     } finally {
-      await teardownValueMeasurement([orgId], [projectId], [caseId]);
+      await teardown({ orgIds: [orgId], projectIds: [projectId], caseIds: [caseId], userIds: [actorId] });
     }
   }, 30_000);
 
@@ -493,7 +536,7 @@ suite('caseHistoryService — Case History & Value Measurements against a real P
   //    derivable from a later CONFIRMED row without touching the earlier one.
   // -------------------------------------------------------------------------
   it('listValueMeasurementsForMetric returns the series for one case+metric_key in chronological order, and computeMetricValueOutcomeState reads SUSTAINED from a later CONFIRMED row without needing to touch the earlier rows', async () => {
-    const { orgId, projectId, caseId } = await seedOrgProjectCase('series');
+    const { orgId, projectId, caseId, actorId } = await seedOrgProjectCase('series');
     try {
       const partial = await caseHistoryService.recordValueMeasurement({
         caseId,
@@ -503,7 +546,7 @@ suite('caseHistoryService — Case History & Value Measurements against a real P
         measurementDate: '2026-01-01',
         confidence: 'LOW',
         attribution: 'Early partial evidence from pilot cohort',
-        measuredByActorId: 'actor-series-1',
+        measuredByActorId: actorId,
       });
       const firstConfirmed = await caseHistoryService.recordValueMeasurement({
         caseId,
@@ -515,7 +558,7 @@ suite('caseHistoryService — Case History & Value Measurements against a real P
         confidence: 'MEDIUM',
         attribution: 'Full rollout measurement, first confirmed window',
         evidenceRef: 'evidence-adoption-1',
-        measuredByActorId: 'actor-series-2',
+        measuredByActorId: actorId,
       });
       const secondConfirmed = await caseHistoryService.recordValueMeasurement({
         caseId,
@@ -527,10 +570,10 @@ suite('caseHistoryService — Case History & Value Measurements against a real P
         confidence: 'HIGH',
         attribution: 'Second consecutive confirmed window, benefit sustained',
         evidenceRef: 'evidence-adoption-2',
-        measuredByActorId: 'actor-series-3',
+        measuredByActorId: actorId,
       });
 
-      const series = await caseHistoryService.listValueMeasurementsForMetric(caseId, 'adoption-rate');
+      const series = await caseHistoryService.listValueMeasurementsForMetric(caseId, 'adoption-rate', actorId);
 
       // Chronological order (measurement_date ASC), oldest first.
       expect(series.map((m) => m.measurementId)).toEqual([
@@ -564,7 +607,110 @@ suite('caseHistoryService — Case History & Value Measurements against a real P
       expect(series[1].measurementStatus).toBe('CONFIRMED');
       expect(series[1].actualValue).toBe(62);
     } finally {
-      await teardownValueMeasurement([orgId], [projectId], [caseId]);
+      await teardown({ orgIds: [orgId], projectIds: [projectId], caseIds: [caseId], userIds: [actorId] });
+    }
+  }, 30_000);
+
+  // -------------------------------------------------------------------------
+  // 6. AUTHORIZATION (CW-P12) — appendCaseHistoryEvent (create class): an
+  //    actor with no membership in the Case's org is rejected, creating no
+  //    row; the same applies to a caseId that does not resolve to any real
+  //    case_core row at all (open_questions #4's documented consequence).
+  // -------------------------------------------------------------------------
+  it('appendCaseHistoryEvent rejects an actor with no organization_members row for the Case\'s org, and rejects a caseId with no backing case_core row at all', async () => {
+    const { orgId, projectId, caseId, actorId } = await seedOrgProjectCase('auth-create');
+    const noMembershipActor = await seedUser(orgId, 'auth-create-outsider');
+    try {
+      await expect(
+        caseHistoryService.appendCaseHistoryEvent({
+          organizationId: orgId,
+          caseId,
+          eventType: 'CASE_STATUS_CHANGED',
+          actorId: noMembershipActor,
+          occurredAt: new Date().toISOString(),
+          summary: 'should not land',
+        })
+      ).rejects.toThrow(/case_access_denied/);
+
+      await expect(
+        caseHistoryService.appendCaseHistoryEvent({
+          organizationId: orgId,
+          caseId: `case-${randomUUID()}`,
+          eventType: 'CASE_STATUS_CHANGED',
+          actorId,
+          occurredAt: new Date().toISOString(),
+          summary: 'should not land either',
+        })
+      ).rejects.toThrow(/case_access_denied/);
+
+      const rows = await readHistoryEventRowsForCase(caseId);
+      expect(rows).toHaveLength(0);
+    } finally {
+      await teardown({
+        orgIds: [orgId],
+        projectIds: [projectId],
+        caseIds: [caseId],
+        userIds: [actorId, noMembershipActor],
+      });
+    }
+  }, 30_000);
+
+  // -------------------------------------------------------------------------
+  // 7. AUTHORIZATION (CW-P12) — getCaseHistoryEvent/getValueMeasurement
+  //    (read class, SEC-009 hardening): a nonexistent id and a real id the
+  //    actor cannot access both return null.
+  // -------------------------------------------------------------------------
+  it('getCaseHistoryEvent and getValueMeasurement both return null for an actor with no membership, identical to a nonexistent id', async () => {
+    const { orgId, projectId, caseId, actorId } = await seedOrgProjectCase('auth-read-null');
+    const noMembershipActor = await seedUser(orgId, 'auth-read-null-outsider');
+    try {
+      const event = await caseHistoryService.appendCaseHistoryEvent({
+        organizationId: orgId,
+        caseId,
+        eventType: 'CASE_STATUS_CHANGED',
+        actorId,
+        occurredAt: new Date().toISOString(),
+        summary: 'read-null test event',
+      });
+      const measurement = await caseHistoryService.recordValueMeasurement({
+        caseId,
+        metricKey: 'auth-read-null-metric',
+        metricName: 'Auth read-null metric',
+        measurementStatus: 'UNMEASURED',
+        measurementDate: '2026-01-01',
+        confidence: 'LOW',
+        attribution: 'auth read-null test',
+        measuredByActorId: actorId,
+      });
+
+      const eventMissing = await caseHistoryService.getCaseHistoryEvent(
+        `cwhist-${randomUUID()}`,
+        noMembershipActor
+      );
+      const eventDenied = await caseHistoryService.getCaseHistoryEvent(event.eventId, noMembershipActor);
+      expect(eventMissing).toBeNull();
+      expect(eventDenied).toBeNull();
+
+      const measurementMissing = await caseHistoryService.getValueMeasurement(
+        `cwvm-${randomUUID()}`,
+        noMembershipActor
+      );
+      const measurementDenied = await caseHistoryService.getValueMeasurement(
+        measurement.measurementId,
+        noMembershipActor
+      );
+      expect(measurementMissing).toBeNull();
+      expect(measurementDenied).toBeNull();
+
+      const eventAllowed = await caseHistoryService.getCaseHistoryEvent(event.eventId, actorId);
+      expect(eventAllowed?.eventId).toBe(event.eventId);
+    } finally {
+      await teardown({
+        orgIds: [orgId],
+        projectIds: [projectId],
+        caseIds: [caseId],
+        userIds: [actorId, noMembershipActor],
+      });
     }
   }, 30_000);
 });

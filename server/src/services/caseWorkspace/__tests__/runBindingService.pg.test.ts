@@ -49,6 +49,15 @@
  * of Postgres through a dedicated, out-of-band `pg.Pool` (`control`) — never
  * the service function's return value alone — because the return value only
  * proves what the service THINKS it wrote, not what actually landed.
+ *
+ * ===========================================================================
+ * AUTHORIZATION (CW-P12 retrofit) — every actor is a real, membered user
+ * ===========================================================================
+ * runBindingService.ts now gates every method through
+ * caseWorkspaceAuthContext.ts's requireCaseAccess. Every actor id used below
+ * is a real `users` row with a matching ACTIVE `organization_members` row
+ * for the Case's org — seeded here via direct INSERTs on the out-of-band
+ * pool (seedUser/seedMember), a test-fixture-only direct insert.
  */
 
 import { randomUUID } from 'node:crypto';
@@ -89,7 +98,14 @@ async function canReachWithSchema(connectionString: string): Promise<boolean> {
     );
     const runsOk = Number(runsResult.rows[0]?.present ?? 0) === 6;
 
-    return bindingsOk && runsOk;
+    const orgMembersResult = await probe.query(
+      `SELECT count(*)::int AS present FROM information_schema.columns
+        WHERE table_schema = 'public' AND table_name = 'organization_members'
+          AND column_name IN ('organization_id', 'user_id', 'role', 'status')`
+    );
+    const orgMembersOk = Number(orgMembersResult.rows[0]?.present ?? 0) === 4;
+
+    return bindingsOk && runsOk && orgMembersOk;
   } catch {
     return false;
   } finally {
@@ -135,13 +151,46 @@ suite('runBindingService — Run Binding against a real PostgreSQL (CW-P04, E4)'
   // Fixture helpers — every test calls these itself, never a shared hook.
   // -------------------------------------------------------------------------
 
+  /** A fresh users row, unattached to organization_members unless seedMember() is also called for it. */
+  async function seedUser(orgId: string, label: string): Promise<string> {
+    const userId = `case-runbind-user-${label}-${randomUUID()}`;
+    await control.query(`INSERT INTO users (id, organization_id, email) VALUES ($1, $2, $3)`, [
+      userId,
+      orgId,
+      `${userId}@example.test`,
+    ]);
+    return userId;
+  }
+
+  /** An organization_members row for an existing user, at the given role/status. */
+  async function seedMember(
+    orgId: string,
+    userId: string,
+    role: 'OWNER' | 'ADMIN' | 'MEMBER' | 'CONSULTANT',
+    status: 'ACTIVE' | 'REVOKED' | 'SUSPENDED' = 'ACTIVE'
+  ): Promise<void> {
+    await control.query(
+      `INSERT INTO organization_members (id, organization_id, user_id, role, status)
+         VALUES ($1, $2, $3, $4, $5)`,
+      [`case-runbind-member-${randomUUID()}`, orgId, userId, role, status]
+    );
+  }
+
+  /** Convenience: seed a user AND an ACTIVE membership at MEMBER role in one call. */
+  async function seedMemberedUser(orgId: string, label: string): Promise<string> {
+    const userId = await seedUser(orgId, label);
+    await seedMember(orgId, userId, 'MEMBER');
+    return userId;
+  }
+
   /**
-   * A fresh organization + project + case_core row, all uniquely named.
-   * Same bundle as casePlanVersionService.pg.test.ts's seedOrgProjectCase().
+   * A fresh organization + project + case_core row, all uniquely named, plus
+   * a real membered actor to create the Case with. Same bundle as
+   * casePlanVersionService.pg.test.ts's seedOrgProjectCase().
    */
   async function seedOrgProjectCase(
     label: string
-  ): Promise<{ orgId: string; projectId: string; caseId: string }> {
+  ): Promise<{ orgId: string; projectId: string; caseId: string; actorId: string }> {
     const suffix = randomUUID();
     const orgId = `case-runbind-org-${label}-${suffix}`;
     const projectId = `case-runbind-project-${label}-${suffix}`;
@@ -154,13 +203,14 @@ suite('runBindingService — Run Binding against a real PostgreSQL (CW-P04, E4)'
          ON CONFLICT (id) DO NOTHING`,
       [projectId, orgId, `Run Binding test project (${label})`]
     );
+    const actorId = await seedMemberedUser(orgId, label);
     const created = await caseCoreService.createCase({
       projectId,
       organizationId: orgId,
       contractedClosureType: 'DELIVERY_COMPLETED',
-      createdByActorId: `actor-runbind-${label}`,
+      createdByActorId: actorId,
     });
-    return { orgId, projectId, caseId: created.caseId };
+    return { orgId, projectId, caseId: created.caseId, actorId };
   }
 
   /**
@@ -289,14 +339,15 @@ suite('runBindingService — Run Binding against a real PostgreSQL (CW-P04, E4)'
    * DELETE clause on either their v8_execution_runs FK or their
    * case_core/case_plan_versions FKs (RESTRICT/NO ACTION — see the migration
    * file's header), so bindings must be deleted first, then the
-   * v8_execution_runs rows they referenced, then case_core (which cascades
-   * to case_plan_versions/case_plan_view_state), then projects, then
-   * organizations.
+   * v8_execution_runs rows they referenced, then users, then case_core
+   * (which cascades to case_plan_versions/case_plan_view_state), then
+   * projects, then organizations.
    */
   async function teardown(params: {
     runIds: string[];
     orgIds: string[];
     projectIds: string[];
+    userIds?: string[];
   }): Promise<void> {
     if (params.runIds.length > 0) {
       await control
@@ -312,6 +363,9 @@ suite('runBindingService — Run Binding against a real PostgreSQL (CW-P04, E4)'
         .catch(() => undefined);
       await control.query(`DELETE FROM projects WHERE id = $1`, [projectId]).catch(() => undefined);
     }
+    for (const userId of params.userIds ?? []) {
+      await control.query(`DELETE FROM users WHERE id = $1`, [userId]).catch(() => undefined);
+    }
     for (const orgId of params.orgIds) {
       await control.query(`DELETE FROM organizations WHERE id = $1`, [orgId]).catch(() => undefined);
     }
@@ -322,18 +376,18 @@ suite('runBindingService — Run Binding against a real PostgreSQL (CW-P04, E4)'
   //    (CW-01-011); a DRAFT target is rejected and leaves no DB row.
   // -------------------------------------------------------------------------
   it('bindRunToPlanVersion succeeds against a PUBLISHED plan version and is rejected (no DB row) against a DRAFT plan version', async () => {
-    const { orgId, projectId, caseId } = await seedOrgProjectCase('published-vs-draft');
+    const { orgId, projectId, caseId, actorId } = await seedOrgProjectCase('published-vs-draft');
     const runIds: string[] = [];
     try {
       const published = await publishedPlanVersion({
         caseId,
         tag: 'published-target',
-        actorId: 'actor-published-vs-draft',
+        actorId,
       });
       const draftOnly = await draftOnlyPlanVersion({
         caseId,
         tag: 'draft-target',
-        actorId: 'actor-published-vs-draft',
+        actorId,
       });
 
       const runForPublished = `run-t1-published-${randomUUID()}`;
@@ -343,7 +397,7 @@ suite('runBindingService — Run Binding against a real PostgreSQL (CW-P04, E4)'
       const binding = await runBindingService.bindRunToPlanVersion({
         runId: runForPublished,
         casePlanVersionId: published.casePlanVersionId,
-        boundByActorId: 'actor-published-vs-draft',
+        boundByActorId: actorId,
       });
       expect(binding.casePlanVersionId).toBe(published.casePlanVersionId);
 
@@ -360,14 +414,14 @@ suite('runBindingService — Run Binding against a real PostgreSQL (CW-P04, E4)'
         runBindingService.bindRunToPlanVersion({
           runId: runForDraft,
           casePlanVersionId: draftOnly.casePlanVersionId,
-          boundByActorId: 'actor-published-vs-draft',
+          boundByActorId: actorId,
         })
       ).rejects.toThrow(/plan_version_not_publishable_for_run/);
 
       const draftAttemptRow = await readBindingRow(runForDraft);
       expect(draftAttemptRow).toBeNull();
     } finally {
-      await teardown({ runIds, orgIds: [orgId], projectIds: [projectId] });
+      await teardown({ runIds, orgIds: [orgId], projectIds: [projectId], userIds: [actorId] });
     }
   }, 30_000);
 
@@ -378,13 +432,13 @@ suite('runBindingService — Run Binding against a real PostgreSQL (CW-P04, E4)'
   //    (CW-00-020-INV6).
   // -------------------------------------------------------------------------
   it('a second bindRunToPlanVersion for the same run_id is rejected with run_already_bound and leaves the original binding unchanged', async () => {
-    const { orgId, projectId, caseId } = await seedOrgProjectCase('already-bound');
+    const { orgId, projectId, caseId, actorId } = await seedOrgProjectCase('already-bound');
     const runIds: string[] = [];
     try {
       const versionA = await publishedPlanVersion({
         caseId,
         tag: 'already-bound-a',
-        actorId: 'actor-already-bound',
+        actorId,
       });
 
       const runId = `run-t2-${randomUUID()}`;
@@ -394,7 +448,7 @@ suite('runBindingService — Run Binding against a real PostgreSQL (CW-P04, E4)'
       const firstBinding = await runBindingService.bindRunToPlanVersion({
         runId,
         casePlanVersionId: versionA.casePlanVersionId,
-        boundByActorId: 'actor-already-bound',
+        boundByActorId: actorId,
       });
       expect(firstBinding.casePlanVersionId).toBe(versionA.casePlanVersionId);
 
@@ -404,7 +458,7 @@ suite('runBindingService — Run Binding against a real PostgreSQL (CW-P04, E4)'
       const versionB = await publishedPlanVersion({
         caseId,
         tag: 'already-bound-b',
-        actorId: 'actor-already-bound',
+        actorId,
         supersedesPlanVersionId: versionA.casePlanVersionId,
       });
       expect(versionB.casePlanVersionId).not.toBe(versionA.casePlanVersionId);
@@ -413,7 +467,7 @@ suite('runBindingService — Run Binding against a real PostgreSQL (CW-P04, E4)'
         runBindingService.bindRunToPlanVersion({
           runId,
           casePlanVersionId: versionB.casePlanVersionId,
-          boundByActorId: 'actor-already-bound-second-attempt',
+          boundByActorId: actorId,
         })
       ).rejects.toThrow(/run_already_bound/);
 
@@ -421,9 +475,9 @@ suite('runBindingService — Run Binding against a real PostgreSQL (CW-P04, E4)'
       expect(row).not.toBeNull();
       expect(row?.case_plan_version_id).toBe(versionA.casePlanVersionId);
       expect(row?.graph_digest).toBe(versionA.graphDigest);
-      expect(row?.bound_by_actor_id).toBe('actor-already-bound');
+      expect(row?.bound_by_actor_id).toBe(actorId);
     } finally {
-      await teardown({ runIds, orgIds: [orgId], projectIds: [projectId] });
+      await teardown({ runIds, orgIds: [orgId], projectIds: [projectId], userIds: [actorId] });
     }
   }, 30_000);
 
@@ -433,13 +487,13 @@ suite('runBindingService — Run Binding against a real PostgreSQL (CW-P04, E4)'
   //    same case (CW-01-012).
   // -------------------------------------------------------------------------
   it('graph_digest on the binding row stays fixed after a later plan version is published for the same case, and is not retroactively changed by binding a second run to that later version', async () => {
-    const { orgId, projectId, caseId } = await seedOrgProjectCase('digest-fixed');
+    const { orgId, projectId, caseId, actorId } = await seedOrgProjectCase('digest-fixed');
     const runIds: string[] = [];
     try {
       const versionA = await publishedPlanVersion({
         caseId,
         tag: 'digest-fixed-a',
-        actorId: 'actor-digest-fixed',
+        actorId,
       });
 
       const runFirst = `run-t3-first-${randomUUID()}`;
@@ -449,7 +503,7 @@ suite('runBindingService — Run Binding against a real PostgreSQL (CW-P04, E4)'
       const firstBinding = await runBindingService.bindRunToPlanVersion({
         runId: runFirst,
         casePlanVersionId: versionA.casePlanVersionId,
-        boundByActorId: 'actor-digest-fixed',
+        boundByActorId: actorId,
       });
       expect(firstBinding.graphDigest).toBe(versionA.graphDigest);
 
@@ -462,7 +516,7 @@ suite('runBindingService — Run Binding against a real PostgreSQL (CW-P04, E4)'
       const versionB = await publishedPlanVersion({
         caseId,
         tag: 'digest-fixed-b',
-        actorId: 'actor-digest-fixed',
+        actorId,
         supersedesPlanVersionId: versionA.casePlanVersionId,
       });
       expect(versionB.graphDigest).not.toBe(versionA.graphDigest);
@@ -475,7 +529,7 @@ suite('runBindingService — Run Binding against a real PostgreSQL (CW-P04, E4)'
       const secondBinding = await runBindingService.bindRunToPlanVersion({
         runId: runSecond,
         casePlanVersionId: versionB.casePlanVersionId,
-        boundByActorId: 'actor-digest-fixed',
+        boundByActorId: actorId,
       });
       expect(secondBinding.graphDigest).toBe(versionB.graphDigest);
 
@@ -490,7 +544,7 @@ suite('runBindingService — Run Binding against a real PostgreSQL (CW-P04, E4)'
       expect(rowForSecond?.graph_digest).toBe(versionB.graphDigest);
       expect(rowForSecond?.case_plan_version_id).toBe(versionB.casePlanVersionId);
     } finally {
-      await teardown({ runIds, orgIds: [orgId], projectIds: [projectId] });
+      await teardown({ runIds, orgIds: [orgId], projectIds: [projectId], userIds: [actorId] });
     }
   }, 30_000);
 
@@ -499,13 +553,13 @@ suite('runBindingService — Run Binding against a real PostgreSQL (CW-P04, E4)'
   //    organization_id must match the resolved Case's organization_id.
   // -------------------------------------------------------------------------
   it('bindRunToPlanVersion is rejected with run_case_organization_mismatch when the run and the Case belong to different organizations', async () => {
-    const { orgId, projectId, caseId } = await seedOrgProjectCase('org-mismatch');
+    const { orgId, projectId, caseId, actorId } = await seedOrgProjectCase('org-mismatch');
     const runIds: string[] = [];
     try {
       const published = await publishedPlanVersion({
         caseId,
         tag: 'org-mismatch',
-        actorId: 'actor-org-mismatch',
+        actorId,
       });
 
       // Deliberately different organization_id on the seeded run than the
@@ -521,14 +575,14 @@ suite('runBindingService — Run Binding against a real PostgreSQL (CW-P04, E4)'
         runBindingService.bindRunToPlanVersion({
           runId,
           casePlanVersionId: published.casePlanVersionId,
-          boundByActorId: 'actor-org-mismatch',
+          boundByActorId: actorId,
         })
       ).rejects.toThrow(/run_case_organization_mismatch/);
 
       const row = await readBindingRow(runId);
       expect(row).toBeNull();
     } finally {
-      await teardown({ runIds, orgIds: [orgId], projectIds: [projectId] });
+      await teardown({ runIds, orgIds: [orgId], projectIds: [projectId], userIds: [actorId] });
     }
   }, 30_000);
 
@@ -547,7 +601,7 @@ suite('runBindingService — Run Binding against a real PostgreSQL (CW-P04, E4)'
       const versionA1 = await publishedPlanVersion({
         caseId: case1.caseId,
         tag: 'list-scope-1-a1',
-        actorId: 'actor-list-scope-1',
+        actorId: case1.actorId,
       });
       const runX = `run-t5-x-${randomUUID()}`;
       runIds.push(runX);
@@ -555,13 +609,13 @@ suite('runBindingService — Run Binding against a real PostgreSQL (CW-P04, E4)'
       await runBindingService.bindRunToPlanVersion({
         runId: runX,
         casePlanVersionId: versionA1.casePlanVersionId,
-        boundByActorId: 'actor-list-scope-1',
+        boundByActorId: case1.actorId,
       });
 
       const versionA2 = await publishedPlanVersion({
         caseId: case1.caseId,
         tag: 'list-scope-1-a2',
-        actorId: 'actor-list-scope-1',
+        actorId: case1.actorId,
         supersedesPlanVersionId: versionA1.casePlanVersionId,
       });
       const runY = `run-t5-y-${randomUUID()}`;
@@ -570,14 +624,14 @@ suite('runBindingService — Run Binding against a real PostgreSQL (CW-P04, E4)'
       await runBindingService.bindRunToPlanVersion({
         runId: runY,
         casePlanVersionId: versionA2.casePlanVersionId,
-        boundByActorId: 'actor-list-scope-1',
+        boundByActorId: case1.actorId,
       });
 
       // Case 2: one plan version, one run bound.
       const versionB1 = await publishedPlanVersion({
         caseId: case2.caseId,
         tag: 'list-scope-2-b1',
-        actorId: 'actor-list-scope-2',
+        actorId: case2.actorId,
       });
       const runZ = `run-t5-z-${randomUUID()}`;
       runIds.push(runZ);
@@ -585,35 +639,38 @@ suite('runBindingService — Run Binding against a real PostgreSQL (CW-P04, E4)'
       await runBindingService.bindRunToPlanVersion({
         runId: runZ,
         casePlanVersionId: versionB1.casePlanVersionId,
-        boundByActorId: 'actor-list-scope-2',
+        boundByActorId: case2.actorId,
       });
 
       // -- listRunBindingsForCase scoping.
-      const case1Bindings = await runBindingService.listRunBindingsForCase(case1.caseId);
+      const case1Bindings = await runBindingService.listRunBindingsForCase(case1.caseId, case1.actorId);
       expect(case1Bindings.map((b) => b.runId).sort()).toEqual([runX, runY].sort());
       expect(case1Bindings.every((b) => b.caseId === case1.caseId)).toBe(true);
       expect(case1Bindings.some((b) => b.runId === runZ)).toBe(false);
 
-      const case2Bindings = await runBindingService.listRunBindingsForCase(case2.caseId);
+      const case2Bindings = await runBindingService.listRunBindingsForCase(case2.caseId, case2.actorId);
       expect(case2Bindings.map((b) => b.runId)).toEqual([runZ]);
       expect(case2Bindings.some((b) => b.runId === runX || b.runId === runY)).toBe(false);
 
       // -- listRunBindingsForPlanVersion scoping: distinguishes A1 from A2
       //    even though both belong to the same case.
       const a1Bindings = await runBindingService.listRunBindingsForPlanVersion(
-        versionA1.casePlanVersionId
+        versionA1.casePlanVersionId,
+        case1.actorId
       );
       expect(a1Bindings.map((b) => b.runId)).toEqual([runX]);
       expect(a1Bindings.some((b) => b.runId === runY || b.runId === runZ)).toBe(false);
 
       const a2Bindings = await runBindingService.listRunBindingsForPlanVersion(
-        versionA2.casePlanVersionId
+        versionA2.casePlanVersionId,
+        case1.actorId
       );
       expect(a2Bindings.map((b) => b.runId)).toEqual([runY]);
       expect(a2Bindings.some((b) => b.runId === runX || b.runId === runZ)).toBe(false);
 
       const b1Bindings = await runBindingService.listRunBindingsForPlanVersion(
-        versionB1.casePlanVersionId
+        versionB1.casePlanVersionId,
+        case2.actorId
       );
       expect(b1Bindings.map((b) => b.runId)).toEqual([runZ]);
       expect(b1Bindings.some((b) => b.runId === runX || b.runId === runY)).toBe(false);
@@ -629,6 +686,79 @@ suite('runBindingService — Run Binding against a real PostgreSQL (CW-P04, E4)'
         runIds,
         orgIds: [case1.orgId, case2.orgId],
         projectIds: [case1.projectId, case2.projectId],
+        userIds: [case1.actorId, case2.actorId],
+      });
+    }
+  }, 30_000);
+
+  // -------------------------------------------------------------------------
+  // 6. AUTHORIZATION (CW-P12) — bindRunToPlanVersion (execute class): an
+  //    actor with no membership in the Case's org is rejected, no row lands.
+  // -------------------------------------------------------------------------
+  it('bindRunToPlanVersion rejects an actor with no organization_members row for the Case\'s org, creating no binding row', async () => {
+    const { orgId, projectId, caseId } = await seedOrgProjectCase('auth-bind');
+    const noMembershipActor = await seedUser(orgId, 'auth-bind-outsider');
+    const ownerActor = await seedMemberedUser(orgId, 'auth-bind-owner');
+    const runIds: string[] = [];
+    try {
+      const published = await publishedPlanVersion({ caseId, tag: 'auth-bind', actorId: ownerActor });
+      const runId = `run-t6-${randomUUID()}`;
+      runIds.push(runId);
+      await seedV8Run({ runId, organizationId: orgId });
+
+      await expect(
+        runBindingService.bindRunToPlanVersion({
+          runId,
+          casePlanVersionId: published.casePlanVersionId,
+          boundByActorId: noMembershipActor,
+        })
+      ).rejects.toThrow(/case_access_denied/);
+
+      const row = await readBindingRow(runId);
+      expect(row).toBeNull();
+    } finally {
+      await teardown({
+        runIds,
+        orgIds: [orgId],
+        projectIds: [projectId],
+        userIds: [noMembershipActor, ownerActor],
+      });
+    }
+  }, 30_000);
+
+  // -------------------------------------------------------------------------
+  // 7. AUTHORIZATION (CW-P12) — getRunBinding (read class, SEC-009
+  //    hardening): a nonexistent run_id and a real run_id the actor cannot
+  //    access both return null, never distinguishable via control flow.
+  // -------------------------------------------------------------------------
+  it('getRunBinding returns null for both a nonexistent run_id and a real binding the actor cannot access, and returns the real row for a properly-membered actor', async () => {
+    const { orgId, projectId, caseId, actorId } = await seedOrgProjectCase('auth-get');
+    const noMembershipActor = await seedUser(orgId, 'auth-get-outsider');
+    const runIds: string[] = [];
+    try {
+      const published = await publishedPlanVersion({ caseId, tag: 'auth-get', actorId });
+      const runId = `run-t7-${randomUUID()}`;
+      runIds.push(runId);
+      await seedV8Run({ runId, organizationId: orgId });
+      await runBindingService.bindRunToPlanVersion({
+        runId,
+        casePlanVersionId: published.casePlanVersionId,
+        boundByActorId: actorId,
+      });
+
+      const missing = await runBindingService.getRunBinding(`run-nonexistent-${randomUUID()}`, noMembershipActor);
+      const denied = await runBindingService.getRunBinding(runId, noMembershipActor);
+      expect(missing).toBeNull();
+      expect(denied).toBeNull();
+
+      const allowed = await runBindingService.getRunBinding(runId, actorId);
+      expect(allowed?.runId).toBe(runId);
+    } finally {
+      await teardown({
+        runIds,
+        orgIds: [orgId],
+        projectIds: [projectId],
+        userIds: [actorId, noMembershipActor],
       });
     }
   }, 30_000);

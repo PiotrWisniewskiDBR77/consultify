@@ -190,16 +190,17 @@ suite('playService — Play (reusable Process) against a real PostgreSQL (CW-P08
   /** A fresh organization + project + case_core row (mirrors casePlanVersionService.pg.test.ts's seedOrgProjectCase). */
   async function seedOrgProjectCase(
     label: string
-  ): Promise<{ orgId: string; projectId: string; caseId: string }> {
+  ): Promise<{ orgId: string; projectId: string; caseId: string; actorId: string }> {
     const orgId = await seedOrg(label);
     const projectId = await seedProject(orgId, label);
+    const actorId = await seedMemberedUser(orgId, `case-${label}`);
     const created = await caseCoreService.createCase({
       projectId,
       organizationId: orgId,
       contractedClosureType: 'DELIVERY_COMPLETED',
-      createdByActorId: `actor-play-case-${label}`,
+      createdByActorId: actorId,
     });
-    return { orgId, projectId, caseId: created.caseId };
+    return { orgId, projectId, caseId: created.caseId, actorId };
   }
 
   /** A fresh users row, unattached to organization_members unless seedMember() is also called for it. */
@@ -220,6 +221,21 @@ suite('playService — Play (reusable Process) against a real PostgreSQL (CW-P08
          VALUES ($1, $2, $3, $4, 'ACTIVE')`,
       [`play-member-${randomUUID()}`, orgId, userId, role]
     );
+  }
+
+  /**
+   * Convenience: seed a user AND an ACTIVE membership at MEMBER role in one
+   * call — the CW-P12 retrofit gates createProcessDefinition/
+   * createProcessVersionDraft/proposeProcessVersion/reviewProcessVersion/
+   * publishProcessVersion/instantiateProcessVersion at plain requireOrgMember,
+   * so every actor exercising the normal (non-authorization-focused) flows
+   * below needs at least MEMBER-level standing to avoid an unrelated
+   * not_org_member/case_access_denied failure.
+   */
+  async function seedMemberedUser(orgId: string, label: string): Promise<string> {
+    const userId = await seedUser(orgId, label);
+    await seedMember(orgId, userId, 'MEMBER');
+    return userId;
   }
 
   /**
@@ -328,7 +344,7 @@ suite('playService — Play (reusable Process) against a real PostgreSQL (CW-P08
   // -------------------------------------------------------------------------
   it('createProcessDefinition always creates a PRIVATE row regardless of any visibility-like input', async () => {
     const orgId = await seedOrg('force-private');
-    const userId = await seedUser(orgId, 'force-private');
+    const userId = await seedMemberedUser(orgId, 'force-private');
     try {
       // Attempt to smuggle a widened visibility / already-shared-looking
       // input past the public type via a cast — the service must ignore it
@@ -469,7 +485,7 @@ suite('playService — Play (reusable Process) against a real PostgreSQL (CW-P08
   // -------------------------------------------------------------------------
   it('publishProcessVersion is rejected for an IN_REVIEW version with no reviewProcessVersion call recorded, leaving the DB row unchanged', async () => {
     const orgId = await seedOrg('publish-needs-review');
-    const userId = await seedUser(orgId, 'publish-needs-review');
+    const userId = await seedMemberedUser(orgId, 'publish-needs-review');
     try {
       const definition = await playService.createProcessDefinition({
         organizationId: orgId,
@@ -511,8 +527,8 @@ suite('playService — Play (reusable Process) against a real PostgreSQL (CW-P08
   // -------------------------------------------------------------------------
   it('a CHANGES_REQUESTED review sends the version back to DRAFT and resets review_decision/reviewed_by_actor_id/reviewed_at to NULL, then a redo propose/review/publish cycle succeeds', async () => {
     const orgId = await seedOrg('changes-requested-reset');
-    const authorId = await seedUser(orgId, 'author');
-    const reviewerId = await seedUser(orgId, 'reviewer');
+    const authorId = await seedMemberedUser(orgId, 'author');
+    const reviewerId = await seedMemberedUser(orgId, 'reviewer');
     try {
       const definition = await playService.createProcessDefinition({
         organizationId: orgId,
@@ -616,8 +632,8 @@ suite('playService — Play (reusable Process) against a real PostgreSQL (CW-P08
   // 6. instantiateProcessVersion — rejects DRAFT and IN_REVIEW versions.
   // -------------------------------------------------------------------------
   it('instantiateProcessVersion rejects a DRAFT process_version and an IN_REVIEW process_version, creating no case_plan_versions row for either attempt', async () => {
-    const { orgId, projectId, caseId } = await seedOrgProjectCase('instantiate-not-published');
-    const userId = await seedUser(orgId, 'instantiate-not-published');
+    const { orgId, projectId, caseId, actorId: caseActorId } = await seedOrgProjectCase('instantiate-not-published');
+    const userId = await seedMemberedUser(orgId, 'instantiate-not-published');
     try {
       const definition = await playService.createProcessDefinition({
         organizationId: orgId,
@@ -653,7 +669,7 @@ suite('playService — Play (reusable Process) against a real PostgreSQL (CW-P08
       const rowsAfterInReviewAttempt = await readCasePlanVersionRowsForCase(caseId);
       expect(rowsAfterInReviewAttempt).toHaveLength(0);
     } finally {
-      await teardown({ orgIds: [orgId], projectIds: [projectId], userIds: [userId] });
+      await teardown({ orgIds: [orgId], projectIds: [projectId], userIds: [userId, caseActorId] });
     }
   }, 30_000);
 
@@ -662,10 +678,13 @@ suite('playService — Play (reusable Process) against a real PostgreSQL (CW-P08
   // -------------------------------------------------------------------------
   it('instantiateProcessVersion rejects with process_version_case_organization_mismatch when the target case belongs to a different organization than the Play, creating no case_plan_versions row', async () => {
     const playOrgId = await seedOrg('instantiate-cross-tenant-play');
-    const playUserId = await seedUser(playOrgId, 'instantiate-cross-tenant-play');
-    const { orgId: caseOrgId, projectId: caseProjectId, caseId } = await seedOrgProjectCase(
-      'instantiate-cross-tenant-case'
-    );
+    const playUserId = await seedMemberedUser(playOrgId, 'instantiate-cross-tenant-play');
+    const {
+      orgId: caseOrgId,
+      projectId: caseProjectId,
+      caseId,
+      actorId: caseActorId,
+    } = await seedOrgProjectCase('instantiate-cross-tenant-case');
     try {
       expect(caseOrgId).not.toBe(playOrgId);
 
@@ -686,7 +705,7 @@ suite('playService — Play (reusable Process) against a real PostgreSQL (CW-P08
       expect(rows).toHaveLength(0);
     } finally {
       await teardown({ orgIds: [playOrgId], userIds: [playUserId] });
-      await teardown({ orgIds: [caseOrgId], projectIds: [caseProjectId] });
+      await teardown({ orgIds: [caseOrgId], projectIds: [caseProjectId], userIds: [caseActorId] });
     }
   }, 30_000);
 
@@ -695,8 +714,8 @@ suite('playService — Play (reusable Process) against a real PostgreSQL (CW-P08
   //    row, verified directly against Postgres.
   // -------------------------------------------------------------------------
   it('a successful instantiateProcessVersion (matching orgs, PUBLISHED version) creates a DRAFT case_plan_versions row whose source_process_version_id and semantic_graph match the ProcessVersion, verified by reading Postgres directly', async () => {
-    const { orgId, projectId, caseId } = await seedOrgProjectCase('instantiate-success');
-    const userId = await seedUser(orgId, 'instantiate-success');
+    const { orgId, projectId, caseId, actorId: caseActorId } = await seedOrgProjectCase('instantiate-success');
+    const userId = await seedMemberedUser(orgId, 'instantiate-success');
     try {
       const definition = await playService.createProcessDefinition({
         organizationId: orgId,
@@ -725,7 +744,57 @@ suite('playService — Play (reusable Process) against a real PostgreSQL (CW-P08
       expect(versionRow).not.toBeNull();
       expect(JSON.parse(row.semantic_graph)).toEqual(JSON.parse(versionRow!.semantic_graph));
     } finally {
-      await teardown({ orgIds: [orgId], projectIds: [projectId], userIds: [userId] });
+      await teardown({ orgIds: [orgId], projectIds: [projectId], userIds: [userId, caseActorId] });
+    }
+  }, 30_000);
+
+  // -------------------------------------------------------------------------
+  // 9. AUTHORIZATION (CW-P12) — createProcessDefinition/
+  //    createProcessVersionDraft (create class): a plain not_org_member
+  //    rejection for an actor with no membership at all.
+  // -------------------------------------------------------------------------
+  it('createProcessDefinition and createProcessVersionDraft both reject an actor with no organization_members row', async () => {
+    const orgId = await seedOrg('auth-create-no-membership');
+    const noMembershipActor = await seedUser(orgId, 'auth-create-no-membership');
+    const ownerActor = await seedMemberedUser(orgId, 'auth-create-no-membership-owner');
+    const createdDefinitionIds: string[] = [];
+    try {
+      await expect(
+        playService.createProcessDefinition({
+          organizationId: orgId,
+          name: 'Should not be created',
+          ownerActorId: noMembershipActor,
+          createdByActorId: noMembershipActor,
+        })
+      ).rejects.toThrow(/not_org_member/);
+
+      const definition = await playService.createProcessDefinition({
+        organizationId: orgId,
+        name: 'Owned by a real member',
+        ownerActorId: ownerActor,
+        createdByActorId: ownerActor,
+      });
+      createdDefinitionIds.push(definition.processDefinitionId);
+
+      await expect(
+        playService.createProcessVersionDraft({
+          processDefinitionId: definition.processDefinitionId,
+          semanticGraph: validGraph('auth-create-no-membership'),
+          createdByActorId: noMembershipActor,
+        })
+      ).rejects.toThrow(/not_org_member/);
+
+      const versions = await playService.listProcessVersionsForDefinition(
+        definition.processDefinitionId,
+        ownerActor
+      );
+      expect(versions).toHaveLength(0);
+    } finally {
+      await teardown({
+        orgIds: [orgId],
+        userIds: [noMembershipActor, ownerActor],
+        processDefinitionIds: createdDefinitionIds,
+      });
     }
   }, 30_000);
 });

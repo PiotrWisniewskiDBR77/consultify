@@ -24,17 +24,22 @@
  *   npx vitest run server/src/services/caseWorkspace/__tests__/migrationReadinessService.pg.test.ts
  *
  * ===========================================================================
- * ISOLATION — no case_core/org/project fixture chain needed
+ * ISOLATION — no case_core/project fixture chain needed, but a REAL
+ * organizations row is now required for every org id used (CW-P12)
  * ===========================================================================
  * Unlike executionGraphService.pg.test.ts/runBindingService.pg.test.ts, none
  * of the three tables this packet added
  * (case_workspace_feature_flag_definitions, case_workspace_feature_flags,
  * case_workspace_legacy_quarantine) are FK'd to case_core — see the
  * migration file's own header ("flags and quarantine records are not FK'd to
- * case_core"). Tests use plain, uniquely `randomUUID()`-suffixed string
- * organization/flag/rehearsal-run identifiers directly, exactly the same
- * FK-less convention caseHistoryService.pg.test.ts's history-event tests use
- * for case_id. The one real FK inside this packet's own schema is
+ * case_core"). Flag/rehearsal-run identifiers are still plain,
+ * uniquely-`randomUUID()`-suffixed strings. BUT the CW-P12 auth retrofit
+ * gates every method through caseWorkspaceAuthContext.ts's
+ * requireOrgMember/requireOrgRole, which reads a REAL `organization_members`
+ * row (FK'd to a REAL `organizations` row) — so every orgId used below now
+ * gets a real `organizations` row via `seedOrg()`, and every actor gets a
+ * real `users` row + `organization_members` row via `seedMemberedUser()`.
+ * The one real FK inside this packet's own schema is
  * case_workspace_feature_flags.flag_key ->
  * case_workspace_feature_flag_definitions.flag_key (plus
  * parent_flag_key's self-reference on the definitions table) — every test
@@ -61,6 +66,20 @@
  * — never the service function's return value alone — because the return
  * value only proves what the service THINKS it wrote, not what actually
  * landed.
+ *
+ * ===========================================================================
+ * AUTHORIZATION (CW-P12 retrofit)
+ * ===========================================================================
+ * registerFlagDefinition/setOrgFlagState/rollbackFlag (mutation class) are
+ * gated at requireOrgRole(actor, organizationId, 'ADMIN') — every actor
+ * exercising those below is seeded at ADMIN role. getCurrentOrgFlagState/
+ * listFlagDescendants/findSmallestEnabledDescendant (read class) need only
+ * requireOrgMember, but reuse the same ADMIN-role actor for simplicity where
+ * both classes are exercised in one test. recordQuarantinedLegacyRecord
+ * (create class) is gated at plain requireOrgMember (coordinator decision:
+ * case_workspace_legacy_quarantine's real organization_id column is used
+ * directly, not ADMIN-gated) — exercised with a plain MEMBER-role actor to
+ * prove that.
  */
 
 import { randomUUID } from 'node:crypto';
@@ -113,7 +132,14 @@ async function canReachWithSchema(connectionString: string): Promise<boolean> {
     );
     const quarantineOk = Number(quarantineResult.rows[0]?.present ?? 0) === 14;
 
-    return definitionsOk && flagsOk && quarantineOk;
+    const orgMembersResult = await probe.query(
+      `SELECT count(*)::int AS present FROM information_schema.columns
+        WHERE table_schema = 'public' AND table_name = 'organization_members'
+          AND column_name IN ('organization_id', 'user_id', 'role', 'status')`
+    );
+    const orgMembersOk = Number(orgMembersResult.rows[0]?.present ?? 0) === 4;
+
+    return definitionsOk && flagsOk && quarantineOk && orgMembersOk;
   } catch {
     return false;
   } finally {
@@ -188,8 +214,50 @@ suite(
     // Fixture helpers — every test calls these itself, never a shared hook.
     // -----------------------------------------------------------------------
 
-    function uniqueOrgId(label: string): string {
-      return `case-migreadiness-org-${label}-${randomUUID()}`;
+    /** A fresh, real organizations row (required now: organization_members.organization_id FKs into it). */
+    async function seedOrg(label: string): Promise<string> {
+      const orgId = `case-migreadiness-org-${label}-${randomUUID()}`;
+      await control.query(`INSERT INTO organizations (id, name) VALUES ($1, $2) ON CONFLICT (id) DO NOTHING`, [
+        orgId,
+        `Migration Readiness test org (${label})`,
+      ]);
+      return orgId;
+    }
+
+    /** A fresh users row, unattached to organization_members unless seedMember() is also called for it. */
+    async function seedUser(orgId: string, label: string): Promise<string> {
+      const userId = `case-migreadiness-user-${label}-${randomUUID()}`;
+      await control.query(`INSERT INTO users (id, organization_id, email) VALUES ($1, $2, $3)`, [
+        userId,
+        orgId,
+        `${userId}@example.test`,
+      ]);
+      return userId;
+    }
+
+    /** An organization_members row for an existing user, at the given role/status. */
+    async function seedMember(
+      orgId: string,
+      userId: string,
+      role: 'OWNER' | 'ADMIN' | 'MEMBER' | 'CONSULTANT',
+      status: 'ACTIVE' | 'REVOKED' | 'SUSPENDED' = 'ACTIVE'
+    ): Promise<void> {
+      await control.query(
+        `INSERT INTO organization_members (id, organization_id, user_id, role, status)
+           VALUES ($1, $2, $3, $4, $5)`,
+        [`case-migreadiness-member-${randomUUID()}`, orgId, userId, role, status]
+      );
+    }
+
+    /** Convenience: seed a user AND an ACTIVE membership at the given role in one call (default ADMIN — most flows here mutate flag state). */
+    async function seedMemberedUser(
+      orgId: string,
+      label: string,
+      role: 'OWNER' | 'ADMIN' | 'MEMBER' | 'CONSULTANT' = 'ADMIN'
+    ): Promise<string> {
+      const userId = await seedUser(orgId, label);
+      await seedMember(orgId, userId, role);
+      return userId;
     }
 
     function uniqueFlagKey(label: string): string {
@@ -239,11 +307,14 @@ suite(
      * no ON DELETE clause). `flagKeysDeepestFirst` must list child flags
      * before their parents (e.g. [grandchild, child, root]) so each
      * individual DELETE never leaves a dangling parent_flag_key reference.
+     * users/organizations are deleted last (organization_members cascades
+     * off both via ON DELETE CASCADE).
      */
     async function teardown(params: {
       orgIds: string[];
       flagKeysDeepestFirst: string[];
       rehearsalRunIds?: string[];
+      userIds?: string[];
     }): Promise<void> {
       if (params.orgIds.length > 0) {
         await control
@@ -269,12 +340,19 @@ suite(
           .query(`DELETE FROM case_workspace_feature_flag_definitions WHERE flag_key = $1`, [flagKey])
           .catch(() => undefined);
       }
+      for (const userId of params.userIds ?? []) {
+        await control.query(`DELETE FROM users WHERE id = $1`, [userId]).catch(() => undefined);
+      }
+      for (const orgId of params.orgIds) {
+        await control.query(`DELETE FROM organizations WHERE id = $1`, [orgId]).catch(() => undefined);
+      }
     }
 
     // -------------------------------------------------------------------------
     // 1. DB CHECK: case_workspace_feature_flag_definitions_default_off rejects
     //    a raw INSERT with default_enabled=TRUE. The constraint's actual name
-    //    is read from pg_catalog first, never assumed.
+    //    is read from pg_catalog first, never assumed. Raw SQL bypasses the
+    //    service entirely, so no actor fixture is needed.
     // -------------------------------------------------------------------------
     it('DB CHECK rejects a raw INSERT into case_workspace_feature_flag_definitions with default_enabled=TRUE, using the constraint name read from pg_catalog', async () => {
       const flagKey = uniqueFlagKey('check-default-off');
@@ -326,20 +404,24 @@ suite(
     //    it to enabled and a second read observes that.
     // -------------------------------------------------------------------------
     it('getCurrentOrgFlagState reads a never-written pair as disabled (null), with no implicit-enable fallback; setOrgFlagState then creates the row and a second read observes enabled=true', async () => {
-      const orgId = uniqueOrgId('never-written');
+      const orgId = await seedOrg('never-written');
+      const actorId = await seedMemberedUser(orgId, 'never-written');
       const flagKey = uniqueFlagKey('never-written');
       try {
-        await migrationReadinessService.registerFlagDefinition({
-          flagKey,
-          description: 'Flag for never-written-state test',
-          createdBy: 'actor-never-written',
-        });
+        await migrationReadinessService.registerFlagDefinition(
+          {
+            flagKey,
+            description: 'Flag for never-written-state test',
+            createdBy: actorId,
+          },
+          orgId
+        );
 
         // No case_workspace_feature_flags row has ever been written for this
         // (organizationId, flagKey) pair -> must read as null/disabled, not
         // fall back to enabled=true the way v8_feature_flags' non-production
         // zero-rows-means-enabled path does.
-        const beforeState = await migrationReadinessService.getCurrentOrgFlagState(orgId, flagKey);
+        const beforeState = await migrationReadinessService.getCurrentOrgFlagState(orgId, flagKey, actorId);
         expect(beforeState).toBeNull();
 
         const dbRowBefore = await readFeatureFlagRow(orgId, flagKey);
@@ -349,13 +431,13 @@ suite(
           organizationId: orgId,
           flagKey,
           enabled: true,
-          updatedBy: 'actor-never-written-writer',
+          updatedBy: actorId,
         });
         expect(written.enabled).toBe(true);
         expect(written.organizationId).toBe(orgId);
         expect(written.flagKey).toBe(flagKey);
 
-        const afterState = await migrationReadinessService.getCurrentOrgFlagState(orgId, flagKey);
+        const afterState = await migrationReadinessService.getCurrentOrgFlagState(orgId, flagKey, actorId);
         expect(afterState).not.toBeNull();
         expect(afterState?.enabled).toBe(true);
         expect(afterState?.flagId).toBe(written.flagId);
@@ -364,7 +446,7 @@ suite(
         expect(dbRowAfter).not.toBeNull();
         expect(dbRowAfter?.enabled).toBe(true);
       } finally {
-        await teardown({ orgIds: [orgId], flagKeysDeepestFirst: [flagKey] });
+        await teardown({ orgIds: [orgId], flagKeysDeepestFirst: [flagKey], userIds: [actorId] });
       }
     }, 30_000);
 
@@ -374,33 +456,43 @@ suite(
     //    grandchild -> child wins. Disable child too -> root wins.
     // -------------------------------------------------------------------------
     it('findSmallestEnabledDescendant returns the deepest enabled flag in a 3-level hierarchy, and re-evaluates correctly as descendants are disabled one at a time', async () => {
-      const orgId = uniqueOrgId('smallest-descendant');
+      const orgId = await seedOrg('smallest-descendant');
+      const actorId = await seedMemberedUser(orgId, 'smallest-descendant');
       const suffix = randomUUID();
       const rootKey = `case_workspace.migreadiness.hier.root.${suffix}`;
       const childKey = `case_workspace.migreadiness.hier.child.${suffix}`;
       const grandchildKey = `case_workspace.migreadiness.hier.grandchild.${suffix}`;
       try {
-        await migrationReadinessService.registerFlagDefinition({
-          flagKey: rootKey,
-          description: 'Root of 3-level hierarchy',
-          createdBy: 'actor-hierarchy',
-        });
-        await migrationReadinessService.registerFlagDefinition({
-          flagKey: childKey,
-          parentFlagKey: rootKey,
-          description: 'Child of root',
-          createdBy: 'actor-hierarchy',
-        });
-        await migrationReadinessService.registerFlagDefinition({
-          flagKey: grandchildKey,
-          parentFlagKey: childKey,
-          description: 'Grandchild of root, child of child',
-          createdBy: 'actor-hierarchy',
-        });
+        await migrationReadinessService.registerFlagDefinition(
+          {
+            flagKey: rootKey,
+            description: 'Root of 3-level hierarchy',
+            createdBy: actorId,
+          },
+          orgId
+        );
+        await migrationReadinessService.registerFlagDefinition(
+          {
+            flagKey: childKey,
+            parentFlagKey: rootKey,
+            description: 'Child of root',
+            createdBy: actorId,
+          },
+          orgId
+        );
+        await migrationReadinessService.registerFlagDefinition(
+          {
+            flagKey: grandchildKey,
+            parentFlagKey: childKey,
+            description: 'Grandchild of root, child of child',
+            createdBy: actorId,
+          },
+          orgId
+        );
 
         // listFlagDescendants must reflect the real self-referencing FK
         // hierarchy, not a naming convention.
-        const descendants = await migrationReadinessService.listFlagDescendants(rootKey);
+        const descendants = await migrationReadinessService.listFlagDescendants(rootKey, actorId, orgId);
         expect(descendants.map((d) => d.flagKey).sort()).toEqual([childKey, grandchildKey].sort());
 
         for (const key of [rootKey, childKey, grandchildKey]) {
@@ -408,7 +500,7 @@ suite(
             organizationId: orgId,
             flagKey: key,
             enabled: true,
-            updatedBy: 'actor-hierarchy-enable-all',
+            updatedBy: actorId,
           });
         }
 
@@ -416,7 +508,8 @@ suite(
         // root and child are excluded because each has an enabled child.
         const allEnabledResult = await migrationReadinessService.findSmallestEnabledDescendant(
           orgId,
-          rootKey
+          rootKey,
+          actorId
         );
         expect(allEnabledResult).toHaveLength(1);
         expect(allEnabledResult[0].flagKey).toBe(grandchildKey);
@@ -428,11 +521,12 @@ suite(
           organizationId: orgId,
           flagKey: grandchildKey,
           enabled: false,
-          updatedBy: 'actor-hierarchy-disable-grandchild',
+          updatedBy: actorId,
         });
         const grandchildDisabledResult = await migrationReadinessService.findSmallestEnabledDescendant(
           orgId,
-          rootKey
+          rootKey,
+          actorId
         );
         expect(grandchildDisabledResult).toHaveLength(1);
         expect(grandchildDisabledResult[0].flagKey).toBe(childKey);
@@ -444,11 +538,12 @@ suite(
           organizationId: orgId,
           flagKey: childKey,
           enabled: false,
-          updatedBy: 'actor-hierarchy-disable-child',
+          updatedBy: actorId,
         });
         const childDisabledResult = await migrationReadinessService.findSmallestEnabledDescendant(
           orgId,
-          rootKey
+          rootKey,
+          actorId
         );
         expect(childDisabledResult).toHaveLength(1);
         expect(childDisabledResult[0].flagKey).toBe(rootKey);
@@ -458,6 +553,7 @@ suite(
         await teardown({
           orgIds: [orgId],
           flagKeysDeepestFirst: [grandchildKey, childKey, rootKey],
+          userIds: [actorId],
         });
       }
     }, 30_000);
@@ -471,20 +567,27 @@ suite(
     //    organization id.
     // -------------------------------------------------------------------------
     it('rollbackFlag disables exactly the target flag row, leaves a sibling flag row untouched, and touches no other table', async () => {
-      const orgId = uniqueOrgId('rollback');
+      const orgId = await seedOrg('rollback');
+      const actorId = await seedMemberedUser(orgId, 'rollback');
       const targetFlagKey = uniqueFlagKey('rollback-target');
       const siblingFlagKey = uniqueFlagKey('rollback-sibling');
       try {
-        await migrationReadinessService.registerFlagDefinition({
-          flagKey: targetFlagKey,
-          description: 'Target flag for rollback test',
-          createdBy: 'actor-rollback',
-        });
-        await migrationReadinessService.registerFlagDefinition({
-          flagKey: siblingFlagKey,
-          description: 'Sibling flag, must be unaffected by rollback of the target',
-          createdBy: 'actor-rollback',
-        });
+        await migrationReadinessService.registerFlagDefinition(
+          {
+            flagKey: targetFlagKey,
+            description: 'Target flag for rollback test',
+            createdBy: actorId,
+          },
+          orgId
+        );
+        await migrationReadinessService.registerFlagDefinition(
+          {
+            flagKey: siblingFlagKey,
+            description: 'Sibling flag, must be unaffected by rollback of the target',
+            createdBy: actorId,
+          },
+          orgId
+        );
 
         await migrationReadinessService.setOrgFlagState({
           organizationId: orgId,
@@ -493,13 +596,13 @@ suite(
           cohort: 'internal',
           rolloutPercentage: 42,
           allowList: ['entity-1'],
-          updatedBy: 'actor-rollback-enable-target',
+          updatedBy: actorId,
         });
         const siblingBefore = await migrationReadinessService.setOrgFlagState({
           organizationId: orgId,
           flagKey: siblingFlagKey,
           enabled: true,
-          updatedBy: 'actor-rollback-enable-sibling',
+          updatedBy: actorId,
         });
 
         const scopedCountsBefore = await countScopedRows({
@@ -509,11 +612,7 @@ suite(
         });
         expect(scopedCountsBefore).toEqual({ history: 0, value: 0, caseCore: 0 });
 
-        const rolledBack = await migrationReadinessService.rollbackFlag(
-          orgId,
-          targetFlagKey,
-          'actor-rollback-executor'
-        );
+        const rolledBack = await migrationReadinessService.rollbackFlag(orgId, targetFlagKey, actorId);
         expect(rolledBack.enabled).toBe(false);
         expect(rolledBack.flagKey).toBe(targetFlagKey);
         // rollbackFlag carries cohort/rolloutPercentage/allowList through
@@ -532,7 +631,7 @@ suite(
         expect(siblingRowAfter).not.toBeNull();
         expect(siblingRowAfter?.enabled).toBe(true);
         expect(siblingRowAfter?.updated_at).toBe(siblingBefore.updatedAt);
-        expect(siblingRowAfter?.updated_by).toBe('actor-rollback-enable-sibling');
+        expect(siblingRowAfter?.updated_by).toBe(actorId);
 
         // Exactly one case_workspace_feature_flags row per flag_key for this
         // org — rollbackFlag never inserts a second row or writes to another
@@ -551,7 +650,11 @@ suite(
         expect(scopedCountsAfter).toEqual({ history: 0, value: 0, caseCore: 0 });
         expect(scopedCountsAfter).toEqual(scopedCountsBefore);
       } finally {
-        await teardown({ orgIds: [orgId], flagKeysDeepestFirst: [targetFlagKey, siblingFlagKey] });
+        await teardown({
+          orgIds: [orgId],
+          flagKeysDeepestFirst: [targetFlagKey, siblingFlagKey],
+          userIds: [actorId],
+        });
       }
     }, 30_000);
 
@@ -561,26 +664,31 @@ suite(
     //    entity even at rollout_percentage=0.
     // -------------------------------------------------------------------------
     it('isFlagEnabledForEntity is deterministic across repeated calls, and force-includes an allow-listed entity even at rollout_percentage=0', async () => {
-      const orgId = uniqueOrgId('entity-determinism');
+      const orgId = await seedOrg('entity-determinism');
+      const actorId = await seedMemberedUser(orgId, 'entity-determinism');
       const flagKey = uniqueFlagKey('entity-determinism');
       const entityId = `entity-${randomUUID()}`;
       try {
-        await migrationReadinessService.registerFlagDefinition({
-          flagKey,
-          description: 'Flag for entity-rollout determinism test',
-          createdBy: 'actor-entity-determinism',
-        });
+        await migrationReadinessService.registerFlagDefinition(
+          {
+            flagKey,
+            description: 'Flag for entity-rollout determinism test',
+            createdBy: actorId,
+          },
+          orgId
+        );
 
         await migrationReadinessService.setOrgFlagState({
           organizationId: orgId,
           flagKey,
           enabled: true,
           rolloutPercentage: 50,
-          updatedBy: 'actor-entity-determinism-50pct',
+          updatedBy: actorId,
         });
         const state50: FeatureFlagState | null = await migrationReadinessService.getCurrentOrgFlagState(
           orgId,
-          flagKey
+          flagKey,
+          actorId
         );
         expect(state50).not.toBeNull();
 
@@ -605,9 +713,9 @@ suite(
           enabled: true,
           rolloutPercentage: 0,
           allowList: [entityId],
-          updatedBy: 'actor-entity-determinism-allowlist',
+          updatedBy: actorId,
         });
-        const stateAllowListed = await migrationReadinessService.getCurrentOrgFlagState(orgId, flagKey);
+        const stateAllowListed = await migrationReadinessService.getCurrentOrgFlagState(orgId, flagKey, actorId);
         expect(stateAllowListed).not.toBeNull();
         expect(stateAllowListed?.rolloutPercentage).toBe(0);
         expect(stateAllowListed?.allowList).toEqual([entityId]);
@@ -622,31 +730,37 @@ suite(
           migrationReadinessService.isFlagEnabledForEntity(stateAllowListed, otherEntityId)
         ).toBe(false);
       } finally {
-        await teardown({ orgIds: [orgId], flagKeysDeepestFirst: [flagKey] });
+        await teardown({ orgIds: [orgId], flagKeysDeepestFirst: [flagKey], userIds: [actorId] });
       }
     }, 30_000);
 
     // -------------------------------------------------------------------------
     // 6a. recordQuarantinedLegacyRecord creates a row with the required
-    //     reason/detail/recovery-path fields (DB-gated).
+    //     reason/detail/recovery-path fields (DB-gated). Gated at plain
+    //     requireOrgMember (not ADMIN) — exercised with a plain MEMBER-role
+    //     actor to prove that.
     // -------------------------------------------------------------------------
     it('recordQuarantinedLegacyRecord creates a row carrying the required reason/detail/recovery-path fields', async () => {
-      const orgId = uniqueOrgId('quarantine');
+      const orgId = await seedOrg('quarantine');
+      const actorId = await seedMemberedUser(orgId, 'quarantine', 'MEMBER');
       const rehearsalRunId = `rehearsal-${randomUUID()}`;
       try {
         const detectedAt = new Date().toISOString();
-        const created = await migrationReadinessService.recordQuarantinedLegacyRecord({
-          organizationId: orgId,
-          rehearsalRunId,
-          sourceSystem: 'legacy_agent_plan',
-          sourceTable: 'legacy_plan_steps',
-          sourceId: `legacy-row-${randomUUID()}`,
-          quarantineReasonCode: 'NO_CASE_MATCH',
-          quarantineReasonDetail: 'No case_core row could be matched for this legacy record.',
-          recoveryPathRef: 'runbook://migration/manual-reconcile#no-case-match',
-          sourceRecordSnapshot: { legacyField: 'value' },
-          detectedAt,
-        });
+        const created = await migrationReadinessService.recordQuarantinedLegacyRecord(
+          {
+            organizationId: orgId,
+            rehearsalRunId,
+            sourceSystem: 'legacy_agent_plan',
+            sourceTable: 'legacy_plan_steps',
+            sourceId: `legacy-row-${randomUUID()}`,
+            quarantineReasonCode: 'NO_CASE_MATCH',
+            quarantineReasonDetail: 'No case_core row could be matched for this legacy record.',
+            recoveryPathRef: 'runbook://migration/manual-reconcile#no-case-match',
+            sourceRecordSnapshot: { legacyField: 'value' },
+            detectedAt,
+          },
+          actorId
+        );
 
         expect(created.organizationId).toBe(orgId);
         expect(created.rehearsalRunId).toBe(rehearsalRunId);
@@ -674,20 +788,88 @@ suite(
         // Missing/blank required fields must be rejected by the service
         // itself, before ever reaching the DB.
         await expect(
-          migrationReadinessService.recordQuarantinedLegacyRecord({
-            organizationId: orgId,
-            rehearsalRunId,
-            sourceSystem: 'legacy_agent_plan',
-            sourceTable: 'legacy_plan_steps',
-            sourceId: `legacy-row-${randomUUID()}`,
-            quarantineReasonCode: 'NO_CASE_MATCH',
-            quarantineReasonDetail: '   ',
-            recoveryPathRef: 'runbook://migration/manual-reconcile#no-case-match',
-            detectedAt,
-          })
+          migrationReadinessService.recordQuarantinedLegacyRecord(
+            {
+              organizationId: orgId,
+              rehearsalRunId,
+              sourceSystem: 'legacy_agent_plan',
+              sourceTable: 'legacy_plan_steps',
+              sourceId: `legacy-row-${randomUUID()}`,
+              quarantineReasonCode: 'NO_CASE_MATCH',
+              quarantineReasonDetail: '   ',
+              recoveryPathRef: 'runbook://migration/manual-reconcile#no-case-match',
+              detectedAt,
+            },
+            actorId
+          )
         ).rejects.toThrow(/legacy_quarantine_reason_detail_required/);
       } finally {
-        await teardown({ orgIds: [orgId], flagKeysDeepestFirst: [], rehearsalRunIds: [rehearsalRunId] });
+        await teardown({
+          orgIds: [orgId],
+          flagKeysDeepestFirst: [],
+          rehearsalRunIds: [rehearsalRunId],
+          userIds: [actorId],
+        });
+      }
+    }, 30_000);
+
+    // -------------------------------------------------------------------------
+    // 6c. AUTHORIZATION (CW-P12) — registerFlagDefinition/setOrgFlagState
+    //     (mutation class): a plain MEMBER-role actor is rejected with
+    //     insufficient_org_role; an actor with no membership is rejected with
+    //     not_org_member.
+    // -------------------------------------------------------------------------
+    it('registerFlagDefinition and setOrgFlagState reject a plain MEMBER-role actor with insufficient_org_role, and an actor with no membership with not_org_member', async () => {
+      const orgId = await seedOrg('auth-admin-floor');
+      const memberActorId = await seedMemberedUser(orgId, 'auth-admin-floor-member', 'MEMBER');
+      const noMembershipActorId = await seedUser(orgId, 'auth-admin-floor-outsider');
+      const adminActorId = await seedMemberedUser(orgId, 'auth-admin-floor-admin', 'ADMIN');
+      const flagKey = uniqueFlagKey('auth-admin-floor');
+      try {
+        await expect(
+          migrationReadinessService.registerFlagDefinition(
+            { flagKey, description: 'Should not register (MEMBER)', createdBy: memberActorId },
+            orgId
+          )
+        ).rejects.toThrow(/insufficient_org_role/);
+
+        await expect(
+          migrationReadinessService.registerFlagDefinition(
+            { flagKey, description: 'Should not register (no membership)', createdBy: noMembershipActorId },
+            orgId
+          )
+        ).rejects.toThrow(/not_org_member/);
+
+        const rows = await control.query<FeatureFlagDefinitionDbRow>(
+          `SELECT * FROM case_workspace_feature_flag_definitions WHERE flag_key = $1`,
+          [flagKey]
+        );
+        expect(rows.rows).toHaveLength(0);
+
+        // A real definition, created by the ADMIN actor — now prove
+        // setOrgFlagState also rejects the MEMBER-role actor.
+        await migrationReadinessService.registerFlagDefinition(
+          { flagKey, description: 'Real definition for setOrgFlagState gate test', createdBy: adminActorId },
+          orgId
+        );
+
+        await expect(
+          migrationReadinessService.setOrgFlagState({
+            organizationId: orgId,
+            flagKey,
+            enabled: true,
+            updatedBy: memberActorId,
+          })
+        ).rejects.toThrow(/insufficient_org_role/);
+
+        const flagRow = await readFeatureFlagRow(orgId, flagKey);
+        expect(flagRow).toBeNull();
+      } finally {
+        await teardown({
+          orgIds: [orgId],
+          flagKeysDeepestFirst: [flagKey],
+          userIds: [memberActorId, noMembershipActorId, adminActorId],
+        });
       }
     }, 30_000);
   }
