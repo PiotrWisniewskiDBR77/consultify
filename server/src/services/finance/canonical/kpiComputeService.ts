@@ -53,6 +53,7 @@ import { createHash, randomUUID as uuidv4 } from 'node:crypto';
 
 import { withPinnedPostgresTransaction } from '../../../database/PostgresDatabase.js';
 import * as artifactVersionService from './artifactVersionService.js';
+import { stampWorkingRevisionComputeIdentity } from './artifactVersionService.js';
 import type { BusinessVersionRow, TransitionServiceResult } from './artifactVersionService.js';
 import * as computeJobService from './computeJobService.js';
 import type { ComputeJobRow } from './computeJobService.js';
@@ -483,13 +484,21 @@ export async function computeAnalysisKpis(params: ComputeAnalysisKpisParams): Pr
 
   if (runningJob.status === 'running') {
     const contentSemanticHash = createHash('sha256').update(JSON.stringify(results)).digest('hex');
+    const outputWorkingRevisionId = bv.source_working_revision_id ?? params.businessVersionId;
     await computeJobService.completeJobSuccess({
       jobId: runningJob.id,
       organizationId: params.organizationId,
       outputArtifactId: bv.artifact_id,
       outputBusinessVersionId: params.businessVersionId,
-      outputWorkingRevisionId: bv.source_working_revision_id ?? params.businessVersionId,
+      outputWorkingRevisionId,
       contentSemanticHash,
+    });
+    // W10-D01 fix — see baselineComputeService.ts's identical call for the full rationale.
+    await stampWorkingRevisionComputeIdentity({
+      organizationId: params.organizationId,
+      workingRevisionId: outputWorkingRevisionId,
+      contentSemanticHash,
+      computeRunId: runningJob.id,
     });
   }
 

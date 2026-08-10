@@ -46,9 +46,11 @@ import { v4 as uuidv4 } from 'uuid';
 import { withPinnedPostgresTransaction } from '../../../database/PostgresDatabase.js';
 import {
   transition,
+  stampWorkingRevisionComputeIdentity,
   type BusinessVersionRow,
   type TransitionServiceResult,
 } from './artifactVersionService.js';
+import { canonicalPayloadHash } from './contentHash.js';
 import * as exceptionLedgerService from './exceptionLedgerService.js';
 import type { ExceptionSeverity, FinanceExceptionRow } from './exceptionLedgerService.js';
 import type { FinanceRole } from './lifecycleService.js';
@@ -648,6 +650,30 @@ export async function runReconciliation(params: RunReconciliationParams): Promis
 
     return { run: insertedRun, reconciliationRows: rows };
   });
+
+  // W10-D01 fix (`docs/validation/finance-v3/generated/gate-d/W10_D01_SEMANTIC_HASH_FIX_report.md`):
+  // Statement Pack has no `compute_jobs` row at all (unlike Baseline/Prediction/
+  // Valuation/KPI) — this reconciliation run (`runId`, `finance_reconciliation_runs.id`
+  // above) IS the "real run" for this artifact type, so it is what `compute_run_id`
+  // points at. The hash uses the SAME `canonicalPayloadHash()` primitive every other
+  // engine now uses (`./contentHash.ts`), applied to this run's own totals + row
+  // count — the smallest deterministic fingerprint of "what this reconciliation run
+  // produced", mirroring `batchContentHash()`'s "hash the run's own output, not a
+  // full domain re-read" convention in `financeImportService.ts`.
+  const reconciliationWorkingRevision = await withPinnedPostgresTransaction((tx) =>
+    tx.queryOne<{ working_revision_id: string }>(
+      `SELECT working_revision_id FROM finance_working_revisions WHERE artifact_id = ? AND organization_id = ? AND is_current = true`,
+      [params.artifactId, params.organizationId]
+    )
+  );
+  if (reconciliationWorkingRevision) {
+    await stampWorkingRevisionComputeIdentity({
+      organizationId: params.organizationId,
+      workingRevisionId: reconciliationWorkingRevision.working_revision_id,
+      contentSemanticHash: canonicalPayloadHash({ totals, reconciliationRowCount: reconciliationRows.length }),
+      computeRunId: runId,
+    });
+  }
 
   // --- Exception on over-threshold residual (task: "Residual > materiality placeholder -> tworzy
   //     finance_exceptions z severity odpowiednim do wielkości residuala"). ---

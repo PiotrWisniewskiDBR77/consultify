@@ -23,6 +23,7 @@
 import { createHash, randomUUID as uuidv4 } from 'node:crypto';
 
 import { withPinnedPostgresTransaction } from '../../../database/PostgresDatabase.js';
+import { stampWorkingRevisionComputeIdentity } from './artifactVersionService.js';
 import * as computeJobService from './computeJobService.js';
 import type { ComputeJobRow } from './computeJobService.js';
 import { computeFcffSeries, type FcffYearInput, type FcffYearResult } from './valuationFcffService.js';
@@ -348,6 +349,13 @@ export async function runDcfFcffValuation(params: RunDcfFcffValuationParams): Pr
     outputBusinessVersionId: params.valuationBusinessVersionId,
     outputWorkingRevisionId: bv.source_working_revision_id,
     contentSemanticHash,
+  });
+  // W10-D01 fix — see baselineComputeService.ts's identical call for the full rationale.
+  await stampWorkingRevisionComputeIdentity({
+    organizationId: params.organizationId,
+    workingRevisionId: bv.source_working_revision_id,
+    contentSemanticHash,
+    computeRunId: runningJob.id,
   });
   const finalJob = completed.ok ? completed.job : ((await computeJobService.getJob(job.id)) ?? runningJob);
 

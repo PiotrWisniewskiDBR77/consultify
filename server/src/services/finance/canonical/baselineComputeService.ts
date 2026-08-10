@@ -50,6 +50,7 @@ import {
   lookupScheduledAmortization,
 } from './baselineScheduleEngine.js';
 import { solvePeriod, type CircularityPeriodResult } from './baselineCircularitySolver.js';
+import { stampWorkingRevisionComputeIdentity } from './artifactVersionService.js';
 import * as computeJobService from './computeJobService.js';
 import type { ComputeJobRow } from './computeJobService.js';
 import * as exceptionLedgerService from './exceptionLedgerService.js';
@@ -636,6 +637,17 @@ export async function runBaselineCompute(params: RunBaselineComputeParams): Prom
     outputBusinessVersionId: params.businessVersionId,
     outputWorkingRevisionId: ctx.sourceWorkingRevisionId,
     contentSemanticHash,
+  });
+  // W10-D01 fix: stamp the SAME hash + the compute job that produced it onto
+  // the working revision itself — before this, `content_semantic_hash` only
+  // ever reached `compute_job_outputs`, never `finance_working_revisions`, so
+  // compute pinning (`computePinning.ts`) and the approve-time snapshot
+  // freeze (`approveVersion()` step (b)) always saw NULL.
+  await stampWorkingRevisionComputeIdentity({
+    organizationId: params.organizationId,
+    workingRevisionId: ctx.sourceWorkingRevisionId,
+    contentSemanticHash,
+    computeRunId: runningJob.id,
   });
 
   const finalJob = (await computeJobService.getJob(job.id)) ?? runningJob;

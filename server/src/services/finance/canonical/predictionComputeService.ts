@@ -62,6 +62,7 @@ import {
   type RunBaselineComputeParams,
 } from './baselineComputeService.js';
 import { impactChainEffectiveFraction } from './predictionPreflightService.js';
+import { stampWorkingRevisionComputeIdentity } from './artifactVersionService.js';
 import * as computeJobService from './computeJobService.js';
 import type { ComputeJobRow } from './computeJobService.js';
 
@@ -277,6 +278,13 @@ async function runStandardBase(params: RunPredictionComputeParams, baselineModel
     outputBusinessVersionId: params.businessVersionId, // the SCENARIO's own bv, for job-output audit trail — no finance_prediction_outputs row exists or ever will for this scenario_mode
     outputWorkingRevisionId: scenarioWorkingRevision.source_working_revision_id,
     contentSemanticHash, // identical derivation from the SAME baseline job's own monthlyResults — proves bit-for-bit equivalence at the job-output level, not just the DB-row level
+  });
+  // W10-D01 fix — see baselineComputeService.ts's identical call for the full rationale.
+  await stampWorkingRevisionComputeIdentity({
+    organizationId: params.organizationId,
+    workingRevisionId: scenarioWorkingRevision.source_working_revision_id,
+    contentSemanticHash,
+    computeRunId: runningJob.id,
   });
   const finalJob = (await computeJobService.getJob(job.id)) ?? runningJob;
 
@@ -668,6 +676,13 @@ async function runOverlayCompute(
     outputBusinessVersionId: params.businessVersionId,
     outputWorkingRevisionId: scenarioArtifactEarly.source_working_revision_id,
     contentSemanticHash,
+  });
+  // W10-D01 fix — see baselineComputeService.ts's identical call for the full rationale.
+  await stampWorkingRevisionComputeIdentity({
+    organizationId: params.organizationId,
+    workingRevisionId: scenarioArtifactEarly.source_working_revision_id,
+    contentSemanticHash,
+    computeRunId: runningJob.id,
   });
   const finalJob = (await computeJobService.getJob(job.id)) ?? runningJob;
 

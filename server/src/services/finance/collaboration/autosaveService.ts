@@ -25,11 +25,10 @@
  * `fallback: true` default.
  */
 
-import { createHash } from 'node:crypto';
-
 import { v4 as uuidv4 } from 'uuid';
 
 import { withPinnedPostgresTransaction } from '../../../database/PostgresDatabase.js';
+import { canonicalPayloadHash } from '../canonical/contentHash.js';
 import type { FinanceUnsavedOperationStackEntry } from '../../../types/finance/WorkspaceState.js';
 
 // ---------------------------------------------------------------------------
@@ -105,11 +104,6 @@ export type CheckpointResult =
       currentRevisionSeq: number;
     }
   | { ok: false; state: 'SYNCING'; code: 'NOT_FOUND'; message: string };
-
-/** Deterministic content hash of the checkpoint payload — this checkpoint's own `content_semantic_hash`. Not the domain-value hash a real compute/apply executor would derive from `finance_stmt_lines` rows (that executor is out of this work package's scope, see AP-00 ADR section 6.2); this hash's job is narrower: let `computePinning.ts` and freshness checks detect "the working revision changed" without a byte-diff. */
-function canonicalPayloadHash(payload: CheckpointPayload): string {
-  return createHash('sha256').update(JSON.stringify(payload)).digest('hex');
-}
 
 export async function checkpointOperationStack(params: CheckpointOperationStackParams): Promise<CheckpointResult> {
   return withPinnedPostgresTransaction(async (tx) => {

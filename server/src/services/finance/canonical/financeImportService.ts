@@ -54,8 +54,6 @@
  * 5k x 60 = 300k-cell size target this work package tests against.
  */
 
-import { createHash } from 'node:crypto';
-
 import { v4 as uuidv4 } from 'uuid';
 import ExcelJS from 'exceljs';
 import { Readable } from 'stream';
@@ -85,6 +83,7 @@ import {
   type RestatementClass,
   type VersionKind,
 } from './artifactVersionService.js';
+import { canonicalPayloadHash } from './contentHash.js';
 import type { BusinessVersionStatus, FinanceRole } from './lifecycleService.js';
 import {
   FINANCE_EXCEL_SHEET_NAMES,
@@ -705,10 +704,12 @@ async function executeStmtLinesOperations(tx: PinnedTransactionClient, operation
 }
 
 function batchContentHash(operations: readonly Operation[]): string {
-  // A batch-content hash (mirrors `autosaveService.ts`'s `canonicalPayloadHash` —
-  // hashes the OPERATIONS applied, not a full re-read of every row in the
-  // business version, which would be needlessly expensive for a large pack).
-  return createHash('sha256').update(JSON.stringify(operations)).digest('hex');
+  // W10-D01 fix: was its own second `sha256(JSON.stringify(...))` implementation;
+  // now a thin named wrapper over the ONE canonical hash primitive
+  // (`./contentHash.ts`) — hashes the OPERATIONS applied, not a full re-read of
+  // every row in the business version, which would be needlessly expensive for
+  // a large pack.
+  return canonicalPayloadHash(operations);
 }
 
 /**
