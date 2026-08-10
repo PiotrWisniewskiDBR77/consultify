@@ -3397,3 +3397,164 @@ liczbą z innej, wcześniejszej sesji.
 **Domena ROI: 7/8 epików zbudowanych. ROI-E008 Teresa/Legacy/Ops następny i
 OSTATNI epik domeny ROI.**
 
+## 39. ROI-E008 Teresa/Legacy/Ops — implementacja + odbiór, 8/8 domena ROI ZAMKNIĘTA (2026-08-10)
+
+**Ósmy i OSTATNI epik domeny ROI.** `docs/product/results-vnext/
+ROI_E008_DESIGN.md` (FROZEN, 17 decyzji D1-D17, D12-D17 rozwiązują
+6 otwartych pytań draftu). Backend only; UI Registry to RN-G2, poza
+zakresem.
+
+**Poprzednia próba przerwana bez commitu — czysty retry, nie kontynuacja.**
+Wejściowy `git status --short` pokazał KOMPLETNY, ale nieocommitowany
+kod obu połówek (Half A Teresa + Half B Legacy/Ops) pozostawiony przez
+martwego agenta z wcześniejszej sesji (padnięcie sieci w trakcie pracy,
+nie błąd logiczny). Każdy plik przeczytany w całości i skonfrontowany
+KRYTYCZNIE, zdanie po zdaniu, z designem — nie założono poprawności z
+samego faktu istnienia (ta sama dyscyplina co §38 dla ROI-E007). Wynik:
+cały odziedziczony kod poprawny i zgodny z designem co do joty, WŁĄCZNIE
+z `P08_ROI_FORBIDDEN_VERBS` (55 zablokowanych verbs) — zweryfikowane
+bezpośrednim re-grepem `grep -nE "^export (async )?function [a-zA-Z]+"
+server/src/services/resultsVnext/roi/*Commands.ts roiEconomicModelFreeze
+.ts` przeciw liście w kodzie: **identyczny zestaw**, żaden verb nie
+brakuje, żaden nie jest nadmiarowy, wyłączenia pure-helperów
+(`isRoiCaseReadyForReviewEligible`/`toDateOnlyString`/itd.) uzasadnione
+i poprawne.
+
+**Jedna realna luka znaleziona i naprawiona: brakujący event type w
+`atomicWrite.ts`.** Zadanie z góry oznaczyło to jako PODEJRZANĄ lukę do
+zweryfikowania — potwierdzona. `EVENT_TYPE_CONSUMER_GROUPS` (design §2/A2
+buduje event `roi.pir_teresa_lessons_draft_recorded` w
+`recordRoiPirTeresaLessonsDraft`) nie miał wpisu dla tego klucza —
+niezarejestrowany event type degraduje się CICHO do pustego outbox
+fan-out (tylko zalogowane ostrzeżenie, `resolveConsumerGroups` nie
+rzuca), więc to NIE zawiodłoby głośno samo z siebie. Naprawione: dopisany
+wpis `'roi.pir_teresa_lessons_draft_recorded': ['mywork_projection']`,
+ta sama klasyfikacja advisory/in-flight-metadata co sąsiedni
+`roi.pir_teresa_draft_disposition_recorded` (ROI-E006). Zweryfikowane, że
+to JEDYNY nowy event type tego epika — Half B (legacy archive) jest
+GET-only, zero zapisów, zero eventów.
+
+**Half A — Teresa integration (AC-01/02/03).** `teresaCopilotCanon.ts`:
+`ResultsRoiAdvisorMode`/`ResultsRoiHandoffContext`/
+`RoiPirLessonsDraftPayload` (jeden governed mode: `pir_lessons_draft`),
+`P08_HANDOFF_TARGETS.roi`, `P08_HANDOFF_TARGET_MODULES` +`'roi'`,
+`P08_ROI_FORBIDDEN_VERBS` (55 verbs, re-derived per D16). Migracja
+`20260821_rvn_roi_pir_teresa_draft_freeze.sql` (`CREATE OR REPLACE
+FUNCTION` na `rvn_roi_pir_protect_frozen()`, bez `DROP`/`CREATE TRIGGER`)
+zamraża `teresa_draft_lessons_payload`/`teresa_draft_generated_at` po
+finalizacji PIR (D8) — zweryfikowana na realnej efemerycznej bazie.
+`roiPirCommands.ts`: nowy eksport `recordRoiPirTeresaLessonsDraft` —
+CAS-guarded, kolejność guardów (case_id match → status='draft' →
+`teresa_draft_disposition IS NULL` D6/D13), `UPDATE ... SET` klauzula
+pisze WYŁĄCZNIE `teresa_draft_lessons_payload`/`teresa_draft_generated_at`/
+`row_version`/`updated_by`/`updated_at` — nigdy `lessons_learned` (AC-03
+literalny dowód, statyczny regex test). `teresaCopilotService.ts`:
+`buildRoiPirLessonsAdvisorContext` (AC-01 — czyta zamrożony
+`review_snapshot_payload`/`review_snapshot_hash`, nigdy live re-query),
+`performHandoff`'s `case 'roi':`, `undoProposal`'s `P08_UNDO_NOT_SUPPORTED`
+blok (D7). **Udokumentowane odejście od designu, poprawne**: A2's własny
+przykład typuje zwrotny kształt `buildRoiPirLessonsAdvisorContext` przez
+NAZWANY import `RoiPirReviewSnapshotPayload` z `roiPirTypes.js` — zrobione
+dosłownie dodałoby TRZECI `from '../resultsVnext/roi/...'` import, co
+złamałoby A3's własny statyczny dowód ("dokładnie 2 linie importu, nic
+więcej"). Odziedziczony kod rozwiązuje to strukturalnie
+(`NonNullable<Awaited<ReturnType<typeof getRoiPostInvestmentReview>>>`),
+identyczny typ, inna ścieżka wyprowadzenia — zweryfikowane jako poprawne,
+nie obejście.
+
+**Half B — Legacy/Ops (AC-04/05).** `roiLegacyArchive.routes.ts` (15 tras
+GET-only: 1 index + 7 tabel × list/get), `denyMutations` PIERWSZY w
+łańcuchu middleware (przed auth/rate-limit), dokładnie skopiowany kształt
+z rzeczywiście wylądowanego `kpiLegacyArchive.routes.ts` (Express 5
+`router.use(denyMutations)`, nie `router.all('*', ...)` z ilustracyjnego
+pseudokodu designu). `roiLegacyArchiveRepository.ts` (7 tabel, nazwy
+tabel NIGDY interpolowane z argumentu runtime). `resultsVnextRoiLegacy
+.validators.ts` (permisywny non-UUID `legacyId` — kilka PK to TEXT, nie
+UUID). **Dwie realne dewiacje znalezione na prawdziwym Postgresie,
+udokumentowane w nagłówkach plików, przeze mnie zweryfikowane jako
+prawdziwe**: (1) `analysis_financials`/`digitization_analyses` mają
+`organization_id` typu **INTEGER**, nie TEXT jak `organizations.id` —
+potwierdzone bezpośrednio w `068_economics_analysis_financials.sql`
+(`organization_id INTEGER NOT NULL`) i `060_digitization_analyses.sql`
+(to samo) — repozytorium rzutuje `::text` zamiast wiązać bezpośrednio;
+(2) `v8_roi_realization_entries` odpytywana bez kwalifikacji schematu
+(D9) — istnieje w `public.` I `v8.`, dopasowuje się do `search_path`
+żywego pisarza (`resultsROIService.ts:501`). Gateway.ts: montaż
+`/api/vnext/results/roi/legacy` PRZED generycznym `/api/vnext/results/
+roi` (ten sam porządek co KPI-E007). `metricsService.ts`: jeden nowy
+licznik `resultsVnextRoiLegacyArchiveHitsTotal`.
+
+**Testy — 84 nowe, wszystkie PASS na efemerycznym Postgresie 17
+(`initdb --locale=C`, TCP `127.0.0.1:28461`, pełny zestaw migracji przez
+`migrate.postgres.ts` bez `--safe`).** `teresa-roi-forbidden-verbs.test.ts`
+(7): import whitelist dokładnie 2 linie z A1; zero z 55 forbidden verbs
+zaimportowanych/wywołanych; statyczny UPDATE-clause check (AC-03).
+`teresaPirLessonsDraft.realdb.test.ts` (5, dokładnie designu własne 5
+scenariuszy): pełny P08 handoff pisze tylko 2 kolumny Teresy;
+dyspozycja NASTĘPNIE aktualizuje `lessons_learned` (dowód struktury
+2-bramkowej); `closeRoiCase` nadal wymaga dyspozycji
+(`PIR_INCOMPLETE`); regeneracja zablokowana po zapisanej dyspozycji
+(D6/D13, `DISPOSITION_ALREADY_RECORDED`); guard finalized-PIR.
+`legacyIsolation.realdb.test.ts` (2): jeden realny Case + 7 zatrutych
+wierszy legacy (ten sam `organization_id`) nigdy nie przeciekają do
+modeli odczytu vNext; statyczny zero-legacy-table-reference check.
+`roiLegacyArchive.routes.test.ts` (62 = 60 behawioralnych 405/
+`LEGACY_ARCHIVE_READ_ONLY` [15 ścieżek × 4 czasowniki mutujące] + 1
+path-count + 1 statyczny). `teresa-roi-handoff.test.ts` (8, mockowany):
+happy path, truth-preserving failure, `buildRoiPirLessonsAdvisorContext`
+bezpośrednio (AC-01), `undoProposal` blocked.
+
+**AC-02 grep gate uruchomiony REALNIE**: `grep -rn
+"financial_roi_links\|financial_models\|financial_statement"
+server/src/services/resultsVnext/roi/` → **zero trafień** (dosłowny
+output pusty, exit 1).
+
+**`tsc --noEmit` clean** (root `tsconfig.json`, `NODE_OPTIONS
+=--max-old-space-size=8192`, przed I po przywróceniu plików po
+before/after regresji — identyczne exit 0).
+
+**Regresja — dowiedziona PRZED/PO, izolując DOKŁADNIE ten epik (7
+zmienionych plików trackowanych + 9 nowych), NIE pełny `git stash`
+(worktree współdzielony z inną żywą sesją: `PostgresDatabase.ts` + 3
+pliki KPI realDB + migracja §37 — żadnego nie dotyka ten epik, żaden nie
+tknięty).** Metoda: `git diff` → plik patcha 7 śledzonych plików →
+`git apply -R` (reverse) + 9 nowych plików przeniesionych POZA drzewo
+(nie usunięte), na TEJ SAMEJ efemerycznej bazie, ten sam pełny zestaw
+`tests/resultsVnext/roi` + `tests/resultsVnext/kpi` +
+`p08-teresa-service.test.ts` + forbidden-verbs/handoff testy obu domen.
+PRZED (bez kodu ROI-E008): 19 plików/35 testów failed, 303 passed, 8
+skipped (346 razem). PO (z kodem ROI-E008): 19 plików/35 testów failed,
+388 passed [+85], 8 skipped (431 razem). Lista NAZW niepowodzących
+testów PRZED/PO — `diff` **pusty, bajt w bajt identyczna**. Wszystkie 35
+przedistniejących niepowodzeń to: (a) już udokumentowany w §38
+`initiatives_organization_id_fkey` w piętnastu plikach realDB
+ROI-E001…E004 (żaden z nich nie jest plikiem tego epika); (b)
+przedistniejący brak `documents`/`presentations` w `payloadMap`
+w `p08-teresa-service.test.ts` — udokumentowany we WŁASNYM komentarzu
+tego pliku z ery KPI-E006 ("fixing those two is a separate, unrelated
+pre-existing debt out of this package's scope") — **NIE naprawiane tu**,
+świadomie poza zakresem ROI-E008, zgodnie z tym samym osądem, jaki
+KPI-E006 już wydał. **Zero regresji przypisywalnej temu epikowi.** Pliki
+przywrócone do stanu identycznego jak przed eksperymentem (zweryfikowane
+`git apply` + ręczne `mv` z powrotem, `tsc --noEmit` ponownie czysty po
+przywróceniu).
+
+**Realna pułapka narzędziowa znaleziona i obejście udokumentowane (nie
+błąd produkcyjny)**: pierwsza próba uruchomienia
+`teresaPirLessonsDraft.realdb.test.ts` dała fałszywy czerwony —
+`recordRoiPirTeresaLessonsDraft` (droga przez `acquirePgClient`/
+`executeAtomicCommand`, bezpośrednio przez pulę pg) pisała poprawnie na
+realnym Postgresie, ale audytowy insert do `teresa_handoff_results`
+(droga przez `dbRun`/`DbPromise.js`) był niewidoczny dla świeżego
+połączenia. Przyczyna: `NODE_ENV=test` BEZ `RUN_DB_TESTS=1` cicho
+podstawia w `Database.ts`/`createDatabase()` DB-mock w pamięci (ten sam
+wzorzec co ★★★★★ audyt bazy danych 2026-08-06 z pamięci sesji) —
+`DbPromise` idzie przez tę warstwę, `acquirePgClient` NIE (bezpośredni
+`getPool()`), więc dwie ścieżki zapisu w TYM SAMYM teście trafiały w dwie
+różne bazy. Rozwiązanie: `RUN_DB_TESTS=1 MOCK_DB=false` w komendzie
+testowej — nie zmiana kodu produkcyjnego.
+
+**Domena ROI: 8/8 epików zbudowanych (E001…E008). Cała mechanika
+backendu domeny ROI DOMKNIĘTA.** UI Registry (RN-G2) i pozostałe domeny
+(KPI już zamknięta §30, OKR w toku) poza zakresem tego wpisu.
+
