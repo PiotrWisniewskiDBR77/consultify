@@ -73,7 +73,7 @@ Two agents were running. **Check their worktrees before starting anything — do
 | Package | Where | State |
 |---|---|---|
 | **RN-G2 P1 — KPI registry** | main worktree | **COMPLETE and committed** after this handoff's first draft — see §3a. The files listed as "uncommitted, P1-owned" in §1 have since landed. |
-| **RN-G2 P2 — ROI registry** | isolated worktree (agent `a6d6ce91abb988955`) | Started fresh. Check `git worktree list` for `agent-a6d6ce91abb988955`, inspect its branch, merge if complete. |
+| **RN-G2 P2 — ROI registry** | isolated worktree (agent `a6d6ce91abb988955`) | **STOPPED MID-PACKAGE** on branch `worktree-agent-a6d6ce91abb988955`. It was partway through i18n fixes (hardcoded empty-state strings) when halted — NOT finished, do NOT merge blind. Inspect its commits, then either finish the package there or rebuild P2 from scratch on the P0 shell. Uncommitted in-flight work was lost; committed work is safe on that branch. |
 
 ### 3a. RN-G2 P1 (KPI registry) — landed, with three real backend gaps found
 
