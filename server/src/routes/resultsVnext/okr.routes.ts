@@ -577,6 +577,15 @@ mountTransitionRoute('/cycles/:cycleId/cancel', 'cancelCycle', OKR_CYCLE_CANCEL_
 // this codebase currently implements a live per-route ACL gate check (a
 // real, stated gap — same class as D13's platform limitation), so that
 // branch is not reachable via any code path here, consistent with ROI/KPI.
+//
+// Every mutating route below that targets an EXISTING setId pre-fetches it
+// via `getOkrSet` (the same ABAC-scoped repository function the GET routes
+// use) before invoking the write command — matching the verified precedent
+// in both `roi.routes.ts` (every mutating route pre-fetches `getRoiCase`)
+// and this file's own Program/Cycle routes above. For an ABAC resource this
+// is more than a cosmetic 404: a caller who lacks visibility gets the same
+// "not found" response as a caller whose id is simply wrong, never a
+// different error that would leak the resource's existence.
 // ==========================================
 
 // ==========================================
@@ -725,6 +734,11 @@ router.patch(
     if (!auth) return;
     try {
       const { setId } = req.params as { setId: string };
+      const existing = await getOkrSet({ userId: auth.userId, organizationId: auth.organizationId, setId });
+      if (!existing) {
+        res.status(404).json({ error: 'OKR Set not found', code: 'NOT_FOUND' });
+        return;
+      }
       const body = req.body as import('zod').infer<typeof UpdateOkrSetDraftSchema>;
       const outcome = await updateOkrSetDraft({
         setId,
@@ -764,6 +778,11 @@ router.patch(
     if (!auth) return;
     try {
       const { setId } = req.params as { setId: string };
+      const existing = await getOkrSet({ userId: auth.userId, organizationId: auth.organizationId, setId });
+      if (!existing) {
+        res.status(404).json({ error: 'OKR Set not found', code: 'NOT_FOUND' });
+        return;
+      }
       const body = req.body as import('zod').infer<typeof NarrowOkrSetVisibilitySchema>;
       const outcome = await narrowOkrSetVisibility({
         setId,
@@ -802,6 +821,11 @@ router.post(
     if (!auth) return;
     try {
       const { setId } = req.params as { setId: string };
+      const existing = await getOkrSet({ userId: auth.userId, organizationId: auth.organizationId, setId });
+      if (!existing) {
+        res.status(404).json({ error: 'OKR Set not found', code: 'NOT_FOUND' });
+        return;
+      }
       const body = req.body as import('zod').infer<typeof OkrSetTransitionSchema>;
       const outcome = await submitOkrSetForApproval({
         setId,
@@ -838,6 +862,11 @@ router.post(
     if (!auth) return;
     try {
       const { setId } = req.params as { setId: string };
+      const existing = await getOkrSet({ userId: auth.userId, organizationId: auth.organizationId, setId });
+      if (!existing) {
+        res.status(404).json({ error: 'OKR Set not found', code: 'NOT_FOUND' });
+        return;
+      }
       const body = req.body as import('zod').infer<typeof OkrSetTransitionSchema>;
       const outcome = await approveOkrSet({
         setId,
@@ -875,6 +904,11 @@ router.post(
     if (!auth) return;
     try {
       const { setId } = req.params as { setId: string };
+      const existing = await getOkrSet({ userId: auth.userId, organizationId: auth.organizationId, setId });
+      if (!existing) {
+        res.status(404).json({ error: 'OKR Set not found', code: 'NOT_FOUND' });
+        return;
+      }
       const body = req.body as import('zod').infer<typeof RequestChangesOnOkrSetSchema>;
       const outcome = await requestChangesOnOkrSet({
         setId,
@@ -912,6 +946,11 @@ function mountSetTransitionRoute(path: string, op: string, spec: OkrSetLifecycle
       if (!auth) return;
       try {
         const { setId } = req.params as { setId: string };
+        const existing = await getOkrSet({ userId: auth.userId, organizationId: auth.organizationId, setId });
+        if (!existing) {
+          res.status(404).json({ error: 'OKR Set not found', code: 'NOT_FOUND' });
+          return;
+        }
         const body = req.body as import('zod').infer<typeof OkrSetTransitionSchema>;
         const outcome = await runOkrSetLifecycleTransition(spec, {
           setId,
@@ -952,6 +991,11 @@ router.post(
     if (!auth) return;
     try {
       const { setId } = req.params as { setId: string };
+      const existing = await getOkrSet({ userId: auth.userId, organizationId: auth.organizationId, setId });
+      if (!existing) {
+        res.status(404).json({ error: 'OKR Set not found', code: 'NOT_FOUND' });
+        return;
+      }
       const body = req.body as import('zod').infer<typeof RecordOkrSetMaterialChangeSchema>;
       const outcome = await recordOkrSetMaterialChange({
         setId,
