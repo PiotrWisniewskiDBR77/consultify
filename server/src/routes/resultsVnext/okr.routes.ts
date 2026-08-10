@@ -105,6 +105,27 @@ import { getCheckIn, listCheckIns } from '../../services/resultsVnext/okr/okrChe
 import { suggestNextCheckInValue } from '../../services/resultsVnext/okr/okrCheckInSuggestionService.js';
 import { recordOkrSetMaterialChange } from '../../services/resultsVnext/okr/okrSetMaterialChangeCommands.js';
 import {
+  acknowledgeDecisionResolution,
+  requestDecisionFromSupportRequest,
+  OkrDecisionNotYetResolvedError,
+} from '../../services/resultsVnext/okr/okrDecisionCommands.js';
+import {
+  acknowledgeSupportRequest,
+  dismissSupportRequest,
+  postComment,
+  postRecognition,
+  raiseSupportRequest,
+  resolveSupportRequest,
+  OkrRecognitionDisabledError,
+  OkrSupportRequestValidationError,
+} from '../../services/resultsVnext/okr/okrSupportCommands.js';
+import {
+  getDecisionLinkForSupportRequest,
+  getSupportRequest,
+  listSupportRequestsForSet,
+} from '../../services/resultsVnext/okr/okrSupportRepository.js';
+import { listOrganizationOkrAttention } from '../../services/resultsVnext/okr/okrAttentionRepository.js';
+import {
   getOkrSet,
   getOkrSetApprovedSnapshot,
   listOkrSetApprovedSnapshots,
@@ -145,6 +166,19 @@ import {
   UpdateOkrKeyResultSchema,
   UpdateOkrObjectiveSchema,
   UpdateOkrSetDraftSchema,
+  AcknowledgeOkrDecisionResolutionSchema,
+  AcknowledgeOkrSupportRequestSchema,
+  DismissOkrSupportRequestSchema,
+  ListOkrSupportRequestsQuerySchema,
+  OkrDecisionLinkIdParamsSchema,
+  OkrSetIdOnlyParamsSchema,
+  OkrSetObjectiveIdParamsSchema,
+  OkrSupportRequestIdParamsSchema,
+  PostOkrCommentSchema,
+  PostOkrRecognitionSchema,
+  RaiseOkrSupportRequestSchema,
+  RequestOkrDecisionSchema,
+  ResolveOkrSupportRequestSchema,
 } from '../../validators/resultsVnextOkr.validators.js';
 
 const router = Router();
@@ -264,6 +298,19 @@ function handleOkrRouteError(res: Response, err: unknown, op: string): void {
     return;
   }
   if (err instanceof OkrCheckInValidationError) {
+    res.status(409).json({ error: err.message, code: err.code, details: err.details });
+    return;
+  }
+  // OKR-E006 (design §13's error-mapping table).
+  if (err instanceof OkrRecognitionDisabledError) {
+    res.status(409).json({ error: err.message, code: err.code, ...err.details });
+    return;
+  }
+  if (err instanceof OkrDecisionNotYetResolvedError) {
+    res.status(409).json({ error: err.message, code: err.code, ...err.details });
+    return;
+  }
+  if (err instanceof OkrSupportRequestValidationError) {
     res.status(409).json({ error: err.message, code: err.code, details: err.details });
     return;
   }
@@ -1696,5 +1743,441 @@ router.get(
     }
   }
 );
+
+// ==========================================
+// OKR-E006 (Support & Decisions) — HTTP layer (design §13).
+//
+// Same ABAC-gate precedent as every OKR-E002+ write route above: every
+// mutating route pre-fetches its parent resource via the ABAC-scoped
+// repository function before invoking the write command — a caller who
+// cannot see the Set/Objective/support-request gets 404, never a different
+// error that would leak the resource's existence. No live "contribute-vs-
+// view" ACL gate exists in this codebase (same disclosed gap OKR-E002's own
+// header names) — authorization here is org membership + visibility only.
+// ==========================================
+
+// ==========================================
+// POST /api/vnext/results/okr/sets/:setId/objectives/:objectiveId/comments — postComment
+// ==========================================
+
+router.post(
+  '/sets/:setId/objectives/:objectiveId/comments',
+  validateParams(OkrSetObjectiveIdParamsSchema),
+  validateBody(PostOkrCommentSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { setId, objectiveId } = req.params as { setId: string; objectiveId: string };
+      const objective = await getObjective({ userId: auth.userId, organizationId: auth.organizationId, objectiveId });
+      if (!objective || objective.setId !== setId) {
+        res.status(404).json({ error: 'OKR Objective not found', code: 'NOT_FOUND' });
+        return;
+      }
+      const body = req.body as import('zod').infer<typeof PostOkrCommentSchema>;
+      const outcome = await postComment({
+        setId,
+        objectiveId,
+        keyResultId: body.keyResultId ?? null,
+        organizationId: auth.organizationId,
+        body: body.body,
+        createdBy: auth.userId,
+        actorEffectiveRole: auth.role,
+        idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
+        correlationId: getCorrelationId(req),
+        reason: body.reason ?? null,
+      });
+      res.status(outcome.outcome === 'applied' ? 201 : 200).json({
+        outcome: outcome.outcome,
+        eventId: outcome.eventId,
+        resultingVersion: outcome.resultingVersion,
+        supportRequest: outcome.result,
+      });
+    } catch (err) {
+      handleOkrRouteError(res, err, 'postComment');
+    }
+  }
+);
+
+// ==========================================
+// POST /api/vnext/results/okr/sets/:setId/objectives/:objectiveId/recognition — postRecognition
+// ==========================================
+
+router.post(
+  '/sets/:setId/objectives/:objectiveId/recognition',
+  validateParams(OkrSetObjectiveIdParamsSchema),
+  validateBody(PostOkrRecognitionSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { setId, objectiveId } = req.params as { setId: string; objectiveId: string };
+      const objective = await getObjective({ userId: auth.userId, organizationId: auth.organizationId, objectiveId });
+      if (!objective || objective.setId !== setId) {
+        res.status(404).json({ error: 'OKR Objective not found', code: 'NOT_FOUND' });
+        return;
+      }
+      const body = req.body as import('zod').infer<typeof PostOkrRecognitionSchema>;
+      const outcome = await postRecognition({
+        setId,
+        objectiveId,
+        keyResultId: body.keyResultId ?? null,
+        organizationId: auth.organizationId,
+        body: body.body,
+        recognitionVisibility: body.recognitionVisibility,
+        createdBy: auth.userId,
+        actorEffectiveRole: auth.role,
+        idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
+        correlationId: getCorrelationId(req),
+        reason: body.reason ?? null,
+      });
+      res.status(outcome.outcome === 'applied' ? 201 : 200).json({
+        outcome: outcome.outcome,
+        eventId: outcome.eventId,
+        resultingVersion: outcome.resultingVersion,
+        supportRequest: outcome.result,
+      });
+    } catch (err) {
+      handleOkrRouteError(res, err, 'postRecognition');
+    }
+  }
+);
+
+// ==========================================
+// POST /api/vnext/results/okr/sets/:setId/objectives/:objectiveId/support-requests — raiseSupportRequest
+// ==========================================
+
+router.post(
+  '/sets/:setId/objectives/:objectiveId/support-requests',
+  validateParams(OkrSetObjectiveIdParamsSchema),
+  validateBody(RaiseOkrSupportRequestSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { setId, objectiveId } = req.params as { setId: string; objectiveId: string };
+      const objective = await getObjective({ userId: auth.userId, organizationId: auth.organizationId, objectiveId });
+      if (!objective || objective.setId !== setId) {
+        res.status(404).json({ error: 'OKR Objective not found', code: 'NOT_FOUND' });
+        return;
+      }
+      const body = req.body as import('zod').infer<typeof RaiseOkrSupportRequestSchema>;
+      const outcome = await raiseSupportRequest({
+        setId,
+        objectiveId,
+        keyResultId: body.keyResultId ?? null,
+        organizationId: auth.organizationId,
+        body: body.body,
+        assignedToUserId: body.assignedToUserId,
+        originCheckInId: body.originCheckInId ?? null,
+        createdBy: auth.userId,
+        actorEffectiveRole: auth.role,
+        idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
+        correlationId: getCorrelationId(req),
+        reason: body.reason ?? null,
+      });
+      res.status(outcome.outcome === 'applied' ? 201 : 200).json({
+        outcome: outcome.outcome,
+        eventId: outcome.eventId,
+        resultingVersion: outcome.resultingVersion,
+        supportRequest: outcome.result,
+      });
+    } catch (err) {
+      handleOkrRouteError(res, err, 'raiseSupportRequest');
+    }
+  }
+);
+
+// ==========================================
+// GET /api/vnext/results/okr/sets/:setId/support-requests — listSupportRequestsForSet
+// ==========================================
+
+router.get(
+  '/sets/:setId/support-requests',
+  validateParams(OkrSetIdOnlyParamsSchema),
+  validateQuery(ListOkrSupportRequestsQuerySchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { setId } = req.params as { setId: string };
+      const set = await getOkrSet({ userId: auth.userId, organizationId: auth.organizationId, setId });
+      if (!set) {
+        res.status(404).json({ error: 'OKR Set not found', code: 'NOT_FOUND' });
+        return;
+      }
+      const query = req.query as unknown as import('zod').infer<typeof ListOkrSupportRequestsQuerySchema>;
+      const supportRequests = await listSupportRequestsForSet({
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        setId,
+        kind: query.kind,
+      });
+      res.status(200).json({ supportRequests });
+    } catch (err) {
+      handleOkrRouteError(res, err, 'listSupportRequestsForSet');
+    }
+  }
+);
+
+// ==========================================
+// POST /api/vnext/results/okr/support-requests/:requestId/acknowledge — acknowledgeSupportRequest
+// ==========================================
+
+router.post(
+  '/support-requests/:requestId/acknowledge',
+  validateParams(OkrSupportRequestIdParamsSchema),
+  validateBody(AcknowledgeOkrSupportRequestSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { requestId } = req.params as { requestId: string };
+      const existing = await getSupportRequest({ userId: auth.userId, organizationId: auth.organizationId, requestId });
+      if (!existing) {
+        res.status(404).json({ error: 'OKR Support request not found', code: 'NOT_FOUND' });
+        return;
+      }
+      const body = req.body as import('zod').infer<typeof AcknowledgeOkrSupportRequestSchema>;
+      const outcome = await acknowledgeSupportRequest({
+        requestId,
+        organizationId: auth.organizationId,
+        expectedVersion: body.expectedVersion,
+        actorUserId: auth.userId,
+        actorEffectiveRole: auth.role,
+        idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
+        correlationId: getCorrelationId(req),
+        reason: body.reason ?? null,
+      });
+      res.status(200).json({
+        outcome: outcome.outcome,
+        eventId: outcome.eventId,
+        resultingVersion: outcome.resultingVersion,
+        supportRequest: outcome.result,
+      });
+    } catch (err) {
+      handleOkrRouteError(res, err, 'acknowledgeSupportRequest');
+    }
+  }
+);
+
+// ==========================================
+// POST /api/vnext/results/okr/support-requests/:requestId/resolve — resolveSupportRequest
+// ==========================================
+
+router.post(
+  '/support-requests/:requestId/resolve',
+  validateParams(OkrSupportRequestIdParamsSchema),
+  validateBody(ResolveOkrSupportRequestSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { requestId } = req.params as { requestId: string };
+      const existing = await getSupportRequest({ userId: auth.userId, organizationId: auth.organizationId, requestId });
+      if (!existing) {
+        res.status(404).json({ error: 'OKR Support request not found', code: 'NOT_FOUND' });
+        return;
+      }
+      const body = req.body as import('zod').infer<typeof ResolveOkrSupportRequestSchema>;
+      const outcome = await resolveSupportRequest({
+        requestId,
+        organizationId: auth.organizationId,
+        expectedVersion: body.expectedVersion,
+        resolutionNote: body.resolutionNote,
+        actorUserId: auth.userId,
+        actorEffectiveRole: auth.role,
+        idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
+        correlationId: getCorrelationId(req),
+        reason: body.reason ?? null,
+      });
+      res.status(200).json({
+        outcome: outcome.outcome,
+        eventId: outcome.eventId,
+        resultingVersion: outcome.resultingVersion,
+        supportRequest: outcome.result,
+      });
+    } catch (err) {
+      handleOkrRouteError(res, err, 'resolveSupportRequest');
+    }
+  }
+);
+
+// ==========================================
+// POST /api/vnext/results/okr/support-requests/:requestId/dismiss — dismissSupportRequest
+// ==========================================
+
+router.post(
+  '/support-requests/:requestId/dismiss',
+  validateParams(OkrSupportRequestIdParamsSchema),
+  validateBody(DismissOkrSupportRequestSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { requestId } = req.params as { requestId: string };
+      const existing = await getSupportRequest({ userId: auth.userId, organizationId: auth.organizationId, requestId });
+      if (!existing) {
+        res.status(404).json({ error: 'OKR Support request not found', code: 'NOT_FOUND' });
+        return;
+      }
+      const body = req.body as import('zod').infer<typeof DismissOkrSupportRequestSchema>;
+      const outcome = await dismissSupportRequest({
+        requestId,
+        organizationId: auth.organizationId,
+        expectedVersion: body.expectedVersion,
+        dismissedReason: body.dismissedReason,
+        actorUserId: auth.userId,
+        actorEffectiveRole: auth.role,
+        idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
+        correlationId: getCorrelationId(req),
+        reason: body.reason ?? null,
+      });
+      res.status(200).json({
+        outcome: outcome.outcome,
+        eventId: outcome.eventId,
+        resultingVersion: outcome.resultingVersion,
+        supportRequest: outcome.result,
+      });
+    } catch (err) {
+      handleOkrRouteError(res, err, 'dismissSupportRequest');
+    }
+  }
+);
+
+// ==========================================
+// POST /api/vnext/results/okr/support-requests/:requestId/request-decision — requestDecisionFromSupportRequest
+// ==========================================
+
+router.post(
+  '/support-requests/:requestId/request-decision',
+  validateParams(OkrSupportRequestIdParamsSchema),
+  validateBody(RequestOkrDecisionSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { requestId } = req.params as { requestId: string };
+      const existing = await getSupportRequest({ userId: auth.userId, organizationId: auth.organizationId, requestId });
+      if (!existing) {
+        res.status(404).json({ error: 'OKR Support request not found', code: 'NOT_FOUND' });
+        return;
+      }
+      const body = req.body as import('zod').infer<typeof RequestOkrDecisionSchema>;
+      const outcome = await requestDecisionFromSupportRequest({
+        requestId,
+        organizationId: auth.organizationId,
+        expectedVersion: body.expectedVersion,
+        requestedDecision: body.requestedDecision,
+        impactOfDelay: body.impactOfDelay,
+        desiredDate: body.desiredDate ?? null,
+        requestedBy: auth.userId,
+        actorEffectiveRole: auth.role,
+        idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
+        correlationId: getCorrelationId(req),
+        reason: body.reason ?? null,
+      });
+      res.status(outcome.outcome === 'applied' ? 201 : 200).json({
+        outcome: outcome.outcome,
+        eventId: outcome.eventId,
+        resultingVersion: outcome.resultingVersion,
+        supportRequest: outcome.result.supportRequest,
+        decisionLink: outcome.result.decisionLink,
+      });
+    } catch (err) {
+      handleOkrRouteError(res, err, 'requestDecisionFromSupportRequest');
+    }
+  }
+);
+
+// ==========================================
+// GET /api/vnext/results/okr/support-requests/:requestId/decision-link — getDecisionLinkForSupportRequest
+// ==========================================
+
+router.get(
+  '/support-requests/:requestId/decision-link',
+  validateParams(OkrSupportRequestIdParamsSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { requestId } = req.params as { requestId: string };
+      const decisionLink = await getDecisionLinkForSupportRequest({
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        requestId,
+      });
+      if (!decisionLink) {
+        res.status(404).json({ error: 'OKR Decision link not found', code: 'NOT_FOUND' });
+        return;
+      }
+      res.status(200).json({ decisionLink });
+    } catch (err) {
+      handleOkrRouteError(res, err, 'getDecisionLinkForSupportRequest');
+    }
+  }
+);
+
+// ==========================================
+// POST /api/vnext/results/okr/decision-links/:linkId/acknowledge-resolution — acknowledgeDecisionResolution
+//
+// MOUNT-ORDER NOTE (design §13): `/decision-links/:linkId/...` is a separate
+// literal-prefix family from `/support-requests/:requestId/...` — no
+// ordering conflict with any route above.
+// ==========================================
+
+router.post(
+  '/decision-links/:linkId/acknowledge-resolution',
+  validateParams(OkrDecisionLinkIdParamsSchema),
+  validateBody(AcknowledgeOkrDecisionResolutionSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { linkId } = req.params as { linkId: string };
+      const body = req.body as import('zod').infer<typeof AcknowledgeOkrDecisionResolutionSchema>;
+      const outcome = await acknowledgeDecisionResolution({
+        linkId,
+        organizationId: auth.organizationId,
+        expectedVersion: body.expectedVersion,
+        actorUserId: auth.userId,
+        actorEffectiveRole: auth.role,
+        idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
+        correlationId: getCorrelationId(req),
+        reason: body.reason ?? null,
+      });
+      res.status(200).json({
+        outcome: outcome.outcome,
+        eventId: outcome.eventId,
+        resultingVersion: outcome.resultingVersion,
+        decisionLink: outcome.result.decisionLink,
+        decisionStatus: outcome.result.decisionStatus,
+        decisionRationale: outcome.result.decisionRationale,
+        decisionDecidedAt: outcome.result.decisionDecidedAt,
+      });
+    } catch (err) {
+      handleOkrRouteError(res, err, 'acknowledgeDecisionResolution');
+    }
+  }
+);
+
+// ==========================================
+// GET /api/vnext/results/okr/attention — listOrganizationOkrAttention
+//
+// Top-level organizational read-model route, NOT nested under /sets/:setId
+// (design §2 §8.3: "Attention Queue... named organizational views over Set
+// truth, not content of one Set tool").
+// ==========================================
+
+router.get('/attention', async (req: AuthenticatedRequest, res: Response) => {
+  const auth = requireAuth(req, res);
+  if (!auth) return;
+  try {
+    const attention = await listOrganizationOkrAttention({ managerId: auth.userId, organizationId: auth.organizationId });
+    res.status(200).json({ attention });
+  } catch (err) {
+    handleOkrRouteError(res, err, 'listOrganizationOkrAttention');
+  }
+});
 
 export default router;
