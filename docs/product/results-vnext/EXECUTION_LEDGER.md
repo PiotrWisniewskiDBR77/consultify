@@ -5988,3 +5988,136 @@ paybackPeriods — zapisane jako otwarte, nie ciche "rozwiązane"):
   gdy istnieje reconciliacja dla usuwanego linku — przedistniejące, poza
   zakresem, niezweryfikowane empirycznie w tej sesji (nie kontrola
   negatywna, tylko obserwacja przy okazji).
+
+## 53. RN-G0 cross-domain gold-flow — jedna ciągła akceptacja spinająca KPI+ROI+outbox jako jeden produkt (2026-08-10)
+
+Zadanie: crossem cutting acceptance test dowodzący, że trzy domeny (KPI/ROI/OKR)
+plus maszyneria outboxa (§49 `mywork_projection`, §52 `finance_projection`)
+zachowują się jak JEDEN produkt, nie jak zbiór poprawnych osobno części. §49 i
+§52 dowodzą każdego konsumenta W IZOLACJI (swój własny plik, swoje własne
+fixture'y) — żaden dotychczasowy test nie prowadzi jednej, ciągłej osi czasu
+przez oba konsumenty naraz z realną izolacją międzyorganizacyjną i realnym
+dowodem braku cichej porażki na końcu.
+
+**Zbudowane**: `tests/acceptance/rvn-cross-domain-gold-flow.e2e.test.ts` — 10
+kroków (`it` w jednym `describe`, świadomie SEKWENCYJNIE zależne od siebie,
+udokumentowane w komentarzu jako jedyny plik w tym repo, gdzie to jest
+zamierzone, nie przypadkowe), zero hand-inserted wierszy event/outbox (w
+przeciwieństwie do §49's proof 8 i §52's proofs 4/5/6, które świadomie
+manufakturują kolizję/malformed payload — ten plik nigdy nie musiał tego
+zrobić, bo scenariusz nigdy nie schodzi na adwersaryjną ścieżkę, tylko
+przechodzi realną, szczęśliwą, międzydomenową ścieżkę od początku do końca):
+
+1. Realna komenda `recordMeasurement` (KPI, `performanceStatus:'critical'`)
+   → `openOrEscalateDeviationCase` na TYM SAMYM połączeniu → dokładnie jeden
+   `kpi.measurement_recorded` + dokładnie jeden `kpi.deviation_opened`,
+   każdy z własnym wierszem outboxa `pending`/`mywork_projection` — PASS.
+2. Jeden tick dispatchera → `v8_canonical_object_states`
+   (`NEEDS_ATTENTION`/`deviation_case`) + notyfikacja, której `user_id`
+   zweryfikowany jako pochodzący z REALNEGO, `open`
+   `rvn_platform_obligations` wiersza (nie tylko przypadkowo pasujący id) —
+   PASS.
+3. `materializeInboxItems`/`getInboxItems` → wiersz genuinie widoczny w
+   `canonical_inbox_items` — PASS.
+4. `closeRealDeviationCase` (identyczny ośmiokrokowy realny łańcuch komend
+   co §49's precedens: acknowledge→root cause→corrective action→plan→
+   approve→activate→verify→close) → `kpi.deviation_closed` → tick →
+   notyfikacja `read=1`/`is_read=1` (rozwiązana, NIE pozostawiona wisząca),
+   stan kanoniczny `RESOLVED`, re-materializacja pokazuje `resolved` — PASS.
+5. Niezależnie: ROI case tworzony→modeling→baseline→cost/benefit→calc
+   run→ready→submit→approve, z finance linkiem utworzonym NATYCHMIAST po
+   `createRoiCase` (ten sam `NON_EDITABLE_STATUSES` guard co §52
+   udokumentował — link może powstać wyłącznie w `draft`) i
+   `pinned_finance_value` PASUJĄCYM do realnego `totalCosts` (1000=1000) →
+   tick → `rvn_roi_finance_projections` z poprawnym pinned lineage
+   (`sourceKind='approval_snapshot'`, `sourceId`=prawdziwy
+   `approvalSnapshotId`), ZERO reconciliacji — PASS.
+6. `startRoiCaseTracking` → realny `recordActualEntry`(1800)→
+   `publishRoiActualSnapshot` (rozjazd vs pinned 1000) → tick → dokładnie
+   jedna reconciliacja `open`. **Dowód nienaruszalności**: hash+count
+   trzech niemutowalnych tabel źródłowych ROI (`rvn_roi_approval_snapshots`/
+   `rvn_roi_forecast_versions`/`rvn_roi_actual_snapshots`, scoped do case'a)
+   + `pinned_finance_value` linku, wzięte PO realnym zapisie Actual ale
+   PRZED tickem rozjazdu, bit-identyczne PO ticku — dowodzi, że sam
+   konsument `finance_projection` nigdy nie mutuje źródeł, które czyta,
+   tylko pochodne wiersze projekcji/reconciliacji — PASS.
+7. Cold reopen: fresh wywołania `materializeInboxItems`/`getInboxItems`/
+   `listRoiFinanceProjections`/`listRoiFinanceReconciliations` (bez
+   założenia stanu w pamięci) potwierdzają WSZYSTKIE powyższe roszczenia
+   nadal prawdziwe — PASS.
+8. Izolacja międzyorganizacyjna PRZEZ PUBLICZNĄ ŚCIEŻKĘ (nie bezpośrednie
+   zapytanie do tabeli): druga organizacja z WŁASNYM realnym KPI-deviation
+   i WŁASNYM approved ROI case'em (pasujący pin, zero rozjazdu), jeden
+   WSPÓLNY tick dispatchera dla obu orgów naraz → `getInboxItems`/
+   `listRoiFinanceProjections`/`listRoiFinanceReconciliations` dla org B
+   nigdy nie zwracają danych org A i odwrotnie (assert po `organizationId`
+   na KAŻDYM zwróconym wierszu, nie tylko po długości) — PASS.
+9. Brak cichej porażki: zero wierszy `rvn_platform_outbox` dla fixture'ów
+   tej sesji w stanie `failed`/`dead_letter`/`parked` LUB wciąż `pending`
+   na końcu przebiegu, zero wywołań `sendSystemAlert` CRITICAL,
+   `UNBUILT_CONSUMER_GROUPS` puste — PASS.
+10. Log zdarzeń kompletny i uporządkowany: dla KAŻDEGO śledzonego wywołania
+    komendy (osobna tablica `eventLog` wypełniana obok wywołań, nigdy nie
+    ufana bez ponownego odczytu z bazy) — dokładnie jeden wiersz
+    `rvn_platform_events`, wiersz outboxa `dispatched` (nie tylko
+    `pending`) dla KAŻDEJ grupy konsumenta z `resolveConsumerGroups`, oraz
+    pełna sekwencja `event_type` dla obu "bohaterskich" agregatów
+    (deviation case org A, ROI case org A) czytana `ORDER BY sequence`
+    zgadza się DOKŁADNIE z kolejnością realnych wywołań komend — PASS.
+
+**Realny defekt złapany przez WŁASNY test tego pakietu, nie założony z
+czytania kodu**: pierwszy przebieg Step 10 czerwony — `approveRoiCase`
+okazał się komendą złożoną: zamraża baseline i model ekonomiczny (`roi
+.baseline_frozen`/`roi.economic_model_frozen`, własne zdarzenia, ta sama
+transakcja) PRZED zapisem `roi.case_approved`, i `checkAndOpenDivergence`'s
+Layer 2 (`openRoiFinanceReconciliation`) pisze WŁASNE `roi
+.finance_reconciliation_opened` zdarzenie — żadne z trzech nie było w
+pierwotnej liście oczekiwanej kolejności, zbudowanej z czytania samych
+plików komend w izolacji. Naprawione dopisaniem realnej kolejności
+zaobserwowanej z bazy, nie z domysłu.
+
+**Zero hand-inserted wierszy** — potwierdzone: cały scenariusz przechodzi
+wyłącznie przez realne, eksportowane komendy domenowe
+(`recordMeasurement`/`kpiDeviationCommands.*`/`kpiCorrectiveActionCommands.*`/
+`roiCaseCommands.*`/`roiBaselineCommands.*`/`roiCostLineCommands.*`/
+`roiBenefitLineCommands.*`/`roiCalculationRunCommands.*`/
+`roiCaseApprovalCommands.*`/`roiTrackingCommands.*`/`roiActualEntryCommands.*`/
+`roiActualSnapshotCommands.*`/`roiFinanceLinkCommands.*`) — jedyny bezpośredni
+`UPDATE` SQL to IO-F1's udokumentowany stand-in (`tracked_metric`/
+`pinned_finance_value`, ten sam gap co §52 już opisało — brak ownera w tej
+warstwie), identyczny wzorzec co §52's własny plik testowy.
+
+**`npx tsc --noEmit` (`--max-old-space-size=8192`) czysty w CAŁYM
+repozytorium** — zero błędów, zero mentions `rvn-cross-domain-gold-flow` w
+outpucie (plik nie generuje ŻADNEGO błędu typów), zero z 18
+przedistniejących `decimal.js` (nie wystąpiły w tym konkretnym przebiegu tej
+gałęzi — możliwe że powiązana z uncommitted zmianą `PostgresDatabase.ts`
+innej sesji w tym worktree; nietknięte przez ten pakiet, poza zakresem).
+
+**Regresja na tym samym efemerycznym Postgresie 17 (`initdb --locale=C`,
+`LC_ALL=C`, TCP `127.0.0.1`, pełny łańcuch migracji, `RUN_DB_TESTS=1`)**:
+- `tests/acceptance/rvn-outbox-mywork-projection.e2e.test.ts` +
+  `rvn-outbox-finance-projection.e2e.test.ts` +
+  `rvn-cross-domain-gold-flow.e2e.test.ts` razem: **35/35 PASS**, zero
+  interferencji między plikami (marker-prefiksowane fixture'y, `afterAll`
+  sprząta do zera — zweryfikowane bezpośrednim `SELECT count(*)` po
+  przebiegu na każdej dotkniętej tabeli).
+- `tests/resultsVnext/`: 672 PASS / 33 FAIL / 8 skip (713 total) —
+  DOKŁADNIE te same 33 `initiatives_organization_id_fkey` w tych samych 18
+  plików ROI realdb co §52 już udokumentowało (przedistniejące w tym
+  worktree, powiązane z uncommitted `server/migrations/20260810_fix
+  _initiatives_status_default.sql` innej równoległej sesji — plik z listy
+  "nie dotykać" tego zadania). Zero nowych failurów, zero plików
+  KPI/OKR/RN-G0 w liście failed.
+
+**Sprzątanie**: `afterAll` kasuje w kolejności bezpiecznej dla FK (platform
+tabele współdzielone → domena KPI → domena ROI → fixture'y wspólne),
+zweryfikowane bezpośrednim zapytaniem po przebiegu — zero wierszy z
+markerem tej sesji w `organizations`/`users`/`rvn_platform_events`/
+`rvn_platform_outbox`/`rvn_kpi_deviation_cases`/`rvn_roi_cases`/
+`notifications`/`canonical_inbox_items`.
+
+**Otwarte, świadomie NIE rozstrzygnięte tutaj**: identyczne do §52's własnej
+listy (IO-F1 ownera brak, IO-F2 próg tolerancji brak, `paybackPeriods` na
+Actual limit) — ten pakiet ich nie dotyka, tylko je dziedziczy przez
+`buildApprovedRoiCaseWithMatchingLink`'s IO-F1 stand-in.
