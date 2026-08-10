@@ -1,0 +1,380 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Zlecenia — prototyp W2-V0 (SPEC-L)</title>
+<link rel="stylesheet" href="../css/tokens.css" />
+<link rel="stylesheet" href="../css/shell.css" />
+<style>
+  /* screen-specific tweaks only */
+  .lockicon { opacity: .5; }
+</style>
+</head>
+<body data-default-tab="">
+<div class="proto-bar">
+  <span class="proto-bar__label">PROTOTYP — nieprodukcyjny mockup</span>
+  <a class="proto-link" href="../index.html">← Indeks</a>
+  <span class="proto-spacer"></span>
+  <span>Motyw:</span>
+  <button data-proto-theme-btn="light">Light</button>
+  <button data-proto-theme-btn="dark">Dark</button>
+  <span style="width:1px;height:16px;background:rgba(255,255,255,.4)"></span>
+  <span>Stan:</span>
+  <button data-proto-state-btn="default">Domyślny</button>
+  <button data-proto-state-btn="empty">Pusty</button>
+  <button data-proto-state-btn="loading">Ładowanie</button>
+  <button data-proto-state-btn="error">Błąd</button>
+  <button data-proto-state-btn="stale">Nieaktualne</button>
+  <button data-proto-state-btn="partial">Częściowe</button>
+  <button data-proto-state-btn="blocked">Zablokowane</button>
+</div>
+
+<div class="app-frame">
+  <!-- MENU 1 (module) -->
+  <div class="menu1">
+    <div class="menu1__title">Zlecenia</div>
+    <div class="menu1__right">
+      <span class="menu1__meta">Aug 10, 2026 · GPT-Teresa-4</span>
+      <div class="menu1__avatar">PW</div>
+    </div>
+  </div>
+
+  <!-- MENU 2 (module pills) -->
+  <div class="menu2">
+    <div class="menu2__tabs">
+      <button class="menu2__tab is-active">Zlecenia</button>
+      <button class="menu2__tab">Szablony</button>
+      <button class="menu2__tab">Archiwum</button>
+    </div>
+    <div class="menu2__right">
+      <button class="pill pill--primary">+ Nowe zlecenie</button>
+      <div class="view-switch">
+        <button class="is-active" title="Lista">☰</button>
+        <button title="Kanban">▦</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MENU 3 (filters / bulk / AI) -->
+  <div class="menu3">
+    <div class="menu3__search">🔍 Szukaj zlecenia…</div>
+    <div class="chip is-active">Wszystkie <span class="chip__count">18</span></div>
+    <div class="chip">Aktywne <span class="chip__count">11</span></div>
+    <div class="chip">Zablokowane <span class="chip__count">2</span></div>
+    <div class="chip">Wersja robocza <span class="chip__count">3</span></div>
+    <div class="chip">Zamknięte <span class="chip__count">2</span></div>
+    <div class="menu3__right">
+      <button class="chip">✦ AI Priorities</button>
+      <button class="col-settings-btn" title="Widoczne kolumny">⚙</button>
+    </div>
+  </div>
+
+  <div class="body-row">
+    <div class="center-col">
+
+      <!-- STATE: loading -->
+      <div data-state-view="loading" style="display:none;">
+        <div class="table-wrap">
+          <table class="std-table">
+            <thead><tr><th></th><th>Zlecenie</th><th>Status</th><th>Profil</th><th>Governance</th><th>Plan</th><th>Postęp</th><th>Sponsor</th><th>Zaktualizowano</th><th></th></tr></thead>
+            <tbody>
+              <tr class="skeleton-row"><td><span class="skel" style="width:16px"></span></td><td><span class="skel" style="width:180px"></span></td><td><span class="skel" style="width:70px"></span></td><td><span class="skel" style="width:60px"></span></td><td><span class="skel" style="width:70px"></span></td><td><span class="skel" style="width:50px"></span></td><td><span class="skel" style="width:60px"></span></td><td><span class="skel" style="width:60px"></span></td><td><span class="skel" style="width:70px"></span></td><td></td></tr>
+              <tr class="skeleton-row"><td><span class="skel" style="width:16px"></span></td><td><span class="skel" style="width:210px"></span></td><td><span class="skel" style="width:70px"></span></td><td><span class="skel" style="width:60px"></span></td><td><span class="skel" style="width:70px"></span></td><td><span class="skel" style="width:50px"></span></td><td><span class="skel" style="width:60px"></span></td><td><span class="skel" style="width:60px"></span></td><td><span class="skel" style="width:70px"></span></td><td></td></tr>
+              <tr class="skeleton-row"><td><span class="skel" style="width:16px"></span></td><td><span class="skel" style="width:150px"></span></td><td><span class="skel" style="width:70px"></span></td><td><span class="skel" style="width:60px"></span></td><td><span class="skel" style="width:70px"></span></td><td><span class="skel" style="width:50px"></span></td><td><span class="skel" style="width:60px"></span></td><td><span class="skel" style="width:60px"></span></td><td><span class="skel" style="width:70px"></span></td><td></td></tr>
+              <tr class="skeleton-row"><td><span class="skel" style="width:16px"></span></td><td><span class="skel" style="width:190px"></span></td><td><span class="skel" style="width:70px"></span></td><td><span class="skel" style="width:60px"></span></td><td><span class="skel" style="width:70px"></span></td><td><span class="skel" style="width:50px"></span></td><td><span class="skel" style="width:60px"></span></td><td><span class="skel" style="width:60px"></span></td><td><span class="skel" style="width:70px"></span></td><td></td></tr>
+              <tr class="skeleton-row"><td><span class="skel" style="width:16px"></span></td><td><span class="skel" style="width:170px"></span></td><td><span class="skel" style="width:70px"></span></td><td><span class="skel" style="width:60px"></span></td><td><span class="skel" style="width:70px"></span></td><td><span class="skel" style="width:50px"></span></td><td><span class="skel" style="width:60px"></span></td><td><span class="skel" style="width:60px"></span></td><td><span class="skel" style="width:70px"></span></td><td></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- STATE: error -->
+      <div data-state-view="error" style="display:none;">
+        <div class="error-state">
+          <div>⚠️</div>
+          <div class="error-state__title">Nie udało się wczytać listy zleceń</div>
+          <div class="error-state__sub">Serwer zwrócił błąd 500 przy pobieraniu case_core. Spróbuj ponownie za chwilę — jeśli problem się powtarza, zgłoś do zespołu platformy.</div>
+          <button class="pill pill--neutral">↻ Spróbuj ponownie</button>
+        </div>
+      </div>
+
+      <!-- STATE: empty -->
+      <div data-state-view="empty" style="display:none;">
+        <div class="empty-state">
+          <div class="empty-state__icon">🗂️</div>
+          <div class="empty-state__title">Brak zleceń w tej organizacji</div>
+          <div class="empty-state__sub">Utwórz pierwsze Zlecenie, aby rozpocząć pracę doradczą — kontrakt, plan i realizacja będą widoczne tutaj.</div>
+          <button class="pill pill--primary">+ Nowe zlecenie</button>
+        </div>
+      </div>
+
+      <!-- STATE: default / stale / partial / blocked share the loaded table, banner differs -->
+      <div data-state-view="default,stale,partial,blocked">
+        <div style="padding: 0 24px;">
+          <div class="state-banner state-banner--stale" data-banner-for="stale">
+            <div>⏱</div>
+            <div class="state-banner__text">
+              <div class="state-banner__title">Dane mogą być nieaktualne</div>
+              Ostatnia udana synchronizacja: 12 minut temu (08:41). Odśwież, aby zobaczyć najnowsze zmiany statusów.
+            </div>
+            <button class="pill pill--sm pill--neutral">Odśwież</button>
+          </div>
+          <div class="state-banner state-banner--partial" data-banner-for="partial">
+            <div>◐</div>
+            <div class="state-banner__text">
+              <div class="state-banner__title">Część rekordów wczytana częściowo</div>
+              3 z 18 zleceń nie zwróciły danych governance/planu (timeout capability registry). Kolumny tych wierszy pokazują „—”; reszta danych jest aktualna.
+            </div>
+          </div>
+          <div class="state-banner state-banner--blocked" data-banner-for="blocked">
+            <div>⛔</div>
+            <div class="state-banner__text">
+              <div class="state-banner__title">2 zlecenia zablokowane — wymagają uwagi</div>
+              Widok przefiltrowany do zleceń w statusie BLOCKED. Wyczyść filtr, aby zobaczyć wszystkie.
+            </div>
+            <button class="pill pill--sm pill--neutral">Wyczyść filtr</button>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table class="std-table">
+            <thead>
+              <tr>
+                <th style="width:40px"><input type="checkbox" data-no-select /></th>
+                <th><span class="th-inner">Zlecenie ▾</span></th>
+                <th><span class="th-inner">Status</span></th>
+                <th><span class="th-inner">Profil</span></th>
+                <th><span class="th-inner">Governance</span></th>
+                <th><span class="th-inner">Plan</span></th>
+                <th><span class="th-inner">Postęp</span></th>
+                <th><span class="th-inner">Sponsor</span></th>
+                <th><span class="th-inner">Zaktualizowano</span></th>
+                <th style="width:40px"></th>
+              </tr>
+            </thead>
+            <tbody id="case-rows">
+              <tr data-row-select="case-1" class="is-selected" data-row-class="default,stale,partial">
+                <td><input type="checkbox" data-no-select /></td>
+                <td>
+                  <div class="row-title">Redukcja kosztów operacyjnych — Fabryka Wrocław</div>
+                  <div class="row-sub">CASE-2026-0142 · TRANSFORMATION</div>
+                </td>
+                <td><span class="status-chip status-chip--info"><span class="status-chip__dot"></span>Aktywne</span></td>
+                <td class="l4">Transformation</td>
+                <td class="l4">Standard</td>
+                <td class="l4">Plan v3 · Published</td>
+                <td class="num">64%</td>
+                <td><span class="row-avatar">MK</span></td>
+                <td class="l4">2 godz. temu</td>
+                <td data-no-select><button class="kebab-btn">⋮</button></td>
+              </tr>
+              <tr data-row-select="case-2" data-row-class="default,stale,partial,blocked">
+                <td><input type="checkbox" data-no-select /></td>
+                <td>
+                  <div class="row-title">Wdrożenie modelu cenowego SaaS</div>
+                  <div class="row-sub">CASE-2026-0139 · STANDARD</div>
+                </td>
+                <td><span class="status-chip status-chip--danger"><span class="status-chip__dot"></span>Zablokowane</span></td>
+                <td class="l4">Standard</td>
+                <td class="l4">Controlled</td>
+                <td class="l4">Plan v2 · Published</td>
+                <td class="num">38%</td>
+                <td><span class="row-avatar">AS</span></td>
+                <td class="l4">wczoraj</td>
+                <td data-no-select><button class="kebab-btn">⋮</button></td>
+              </tr>
+              <tr data-row-select="case-3" data-row-class="default,stale">
+                <td><input type="checkbox" data-no-select /></td>
+                <td>
+                  <div class="row-title">Audyt zgodności RODO — Grupa Kapitałowa</div>
+                  <div class="row-sub">CASE-2026-0137 · STANDARD</div>
+                </td>
+                <td><span class="status-chip status-chip--success"><span class="status-chip__dot"></span>Zamknięte</span></td>
+                <td class="l4">Standard</td>
+                <td class="l4">Controlled</td>
+                <td class="l4">Plan v1 · Superseded</td>
+                <td class="num">100%</td>
+                <td><span class="row-avatar">JN</span></td>
+                <td class="l4">4 dni temu</td>
+                <td data-no-select><button class="kebab-btn">⋮</button></td>
+              </tr>
+              <tr data-row-select="case-4" data-row-class="default,stale">
+                <td><input type="checkbox" data-no-select /></td>
+                <td>
+                  <div class="row-title">Strategia wejścia na rynek DACH</div>
+                  <div class="row-sub">CASE-2026-0145 · LIGHT</div>
+                </td>
+                <td><span class="status-chip status-chip--neutral"><span class="status-chip__dot"></span>Wersja robocza</span></td>
+                <td class="l4">Light</td>
+                <td class="l4">Lightweight</td>
+                <td class="l4 empty-cell">—</td>
+                <td class="num empty-cell">—</td>
+                <td><span class="row-avatar">PW</span></td>
+                <td class="l4">15 min temu</td>
+                <td data-no-select><button class="kebab-btn">⋮</button></td>
+              </tr>
+              <tr data-row-select="case-5" data-row-class="default,stale,partial">
+                <td><input type="checkbox" data-no-select /></td>
+                <td>
+                  <div class="row-title">Monitoring wdrożenia systemu WMS</div>
+                  <div class="row-sub">CASE-2026-0098 · MONITORING</div>
+                </td>
+                <td><span class="status-chip status-chip--info"><span class="status-chip__dot"></span>Aktywne</span></td>
+                <td class="l4">Monitoring</td>
+                <td class="l4 empty-cell" data-partial-blank>—</td>
+                <td class="l4 empty-cell" data-partial-blank>—</td>
+                <td class="num">n/d</td>
+                <td><span class="row-avatar">MK</span></td>
+                <td class="l4">3 godz. temu</td>
+                <td data-no-select><button class="kebab-btn">⋮</button></td>
+              </tr>
+              <tr data-row-select="case-6" data-row-class="default,stale,blocked">
+                <td><input type="checkbox" data-no-select /></td>
+                <td>
+                  <div class="row-title">Restrukturyzacja łańcucha dostaw EMEA</div>
+                  <div class="row-sub">CASE-2026-0151 · TRANSFORMATION</div>
+                </td>
+                <td><span class="status-chip status-chip--danger"><span class="status-chip__dot"></span>Zablokowane</span></td>
+                <td class="l4">Transformation</td>
+                <td class="l4">Controlled</td>
+                <td class="l4">Plan v1 · In review</td>
+                <td class="num">12%</td>
+                <td><span class="row-avatar">AS</span></td>
+                <td class="l4">6 godz. temu</td>
+                <td data-no-select><button class="kebab-btn">⋮</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- PREVIEW PANE -->
+    <div class="preview-pane" id="preview-pane">
+      <div data-preview-for="case-1" class="pv-set">
+        <div class="pv-card pv-header">
+          <div class="pv-header__title">Redukcja kosztów operacyjnych — Fabryka Wrocław</div>
+          <button class="pv-icon-btn" title="Przypnij">📌</button>
+          <button class="pv-open-btn" onclick="location.href='zlecenie.html?case=case-1'">Otwórz ↗</button>
+          <button class="pv-icon-btn" title="Zamknij">✕</button>
+        </div>
+        <div class="pv-card">
+          <div class="pv-meta-row">
+            <span class="status-chip status-chip--info"><span class="status-chip__dot"></span>Aktywne</span>
+            <span class="priority priority--high"><span class="priority__dot"></span>Wysoki priorytet</span>
+            <span class="due">Zamknięcie: Q4 2026</span>
+          </div>
+          <div class="pv-reco">Plan v3 opublikowany 2 dni temu. 3 propozycje akcji oczekują decyzji — sprawdź zakładkę Realizacja.</div>
+        </div>
+        <div class="pv-card">
+          <div class="pv-details-head">
+            <span class="pv-details-head__label">Details</span>
+            <span class="pv-details-head__count">5 właściwości</span>
+            <span style="margin-left:auto"><button class="pv-icon-btn" title="Więcej">⋮</button></span>
+          </div>
+          <div class="pv-kv"><span class="pv-kv__label">Profil</span><span class="pv-kv__value">Transformation</span></div>
+          <div class="pv-kv"><span class="pv-kv__label">Governance tier</span><span class="pv-kv__value">Standard</span></div>
+          <div class="pv-kv"><span class="pv-kv__label">Polityka autonomii</span><span class="pv-kv__value">Ask material actions</span></div>
+          <div class="pv-kv"><span class="pv-kv__label">Sponsor</span><span class="pv-kv__value">Marta Kowalska</span></div>
+          <div class="pv-kv"><span class="pv-kv__label">Kontraktowe domknięcie</span><span class="pv-kv__value">Implementation completed</span></div>
+        </div>
+        <div class="pv-card">
+          <div class="pv-details-head"><span class="pv-details-head__label">AI</span></div>
+          <div class="pv-ai-row">
+            <button class="chip">✦ Podsumuj status</button>
+            <button class="chip">✦ Zaproponuj kolejny krok</button>
+          </div>
+        </div>
+        <div class="pv-card">
+          <div class="pv-details-head"><span class="pv-details-head__label">Relations</span></div>
+          <div class="pv-relations">
+            <span class="pv-relation-pill">🎯 Inicjatywa: Redukcja SG&amp;A</span>
+            <span class="pv-relation-pill">📄 Kontrakt zlecenia</span>
+            <span class="pv-relation-pill">+2</span>
+          </div>
+        </div>
+        <div class="pv-card">
+          <div class="pv-actions-grid">
+            <button class="pill pill--positive">✓ Zatwierdź i rozpocznij</button>
+            <button class="pill pill--neutral">✎ Edytuj</button>
+            <button class="pill pill--warning">⛔ Oznacz zablokowane</button>
+            <button class="pill pill--neutral">🗄 Archiwizuj</button>
+          </div>
+        </div>
+      </div>
+
+      <div data-preview-for="case-2" class="pv-set" style="display:none;">
+        <div class="pv-card pv-header">
+          <div class="pv-header__title">Wdrożenie modelu cenowego SaaS</div>
+          <button class="pv-icon-btn">📌</button>
+          <button class="pv-open-btn" onclick="location.href='zlecenie.html?case=case-2&amp;state=blocked'">Otwórz ↗</button>
+          <button class="pv-icon-btn">✕</button>
+        </div>
+        <div class="pv-card">
+          <div class="pv-meta-row">
+            <span class="status-chip status-chip--danger"><span class="status-chip__dot"></span>Zablokowane</span>
+            <span class="priority priority--critical"><span class="priority__dot"></span>Krytyczny</span>
+            <span class="due">Blokada od: 08-09</span>
+          </div>
+          <div class="pv-reco">Oczekuje na decyzję klienta (wait typu HUMAN, termin przekroczony o 1 dzień). Realizacja wstrzymana na węźle „Zatwierdzenie cennika”.</div>
+        </div>
+        <div class="pv-card">
+          <div class="pv-details-head"><span class="pv-details-head__label">Details</span><span class="pv-details-head__count">5 właściwości</span></div>
+          <div class="pv-kv"><span class="pv-kv__label">Profil</span><span class="pv-kv__value">Standard</span></div>
+          <div class="pv-kv"><span class="pv-kv__label">Governance tier</span><span class="pv-kv__value">Controlled</span></div>
+          <div class="pv-kv"><span class="pv-kv__label">Polityka autonomii</span><span class="pv-kv__value">Ask each action</span></div>
+          <div class="pv-kv"><span class="pv-kv__label">Sponsor</span><span class="pv-kv__value">Adam Sosnowski</span></div>
+          <div class="pv-kv"><span class="pv-kv__label">Powód blokady</span><span class="pv-kv__value">Oczekiwanie HUMAN — przeterminowane</span></div>
+        </div>
+        <div class="pv-card">
+          <div class="pv-details-head"><span class="pv-details-head__label">Relations</span></div>
+          <div class="pv-no-relations">No relations</div>
+        </div>
+        <div class="pv-card">
+          <div class="pv-actions-grid">
+            <button class="pill pill--warning">🔔 Przypomnij klientowi</button>
+            <button class="pill pill--neutral">✎ Edytuj</button>
+            <button class="pill pill--destructive">✕ Anuluj zlecenie</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="../js/app.js"></script>
+<script>
+  // list-specific: apply row/banner visibility per state (extends shared app.js)
+  function applyListState(state) {
+    document.querySelectorAll('[data-state-view]').forEach(function (el) {
+      var states = el.getAttribute('data-state-view').split(',');
+      el.style.display = states.indexOf(state) > -1 ? '' : 'none';
+    });
+    var previewPane = document.getElementById('preview-pane');
+    if (previewPane) {
+      previewPane.style.display = (state === 'loading' || state === 'error' || state === 'empty') ? 'none' : '';
+    }
+    document.querySelectorAll('[data-row-class]').forEach(function (row) {
+      var classes = row.getAttribute('data-row-class').split(',');
+      var show = classes.indexOf(state) > -1 || state === 'default';
+      row.style.display = show ? '' : 'none';
+    });
+    document.querySelectorAll('[data-banner-for]').forEach(function (b) {
+      b.style.display = b.getAttribute('data-banner-for') === state ? '' : 'none';
+    });
+    document.querySelectorAll('[data-partial-blank]').forEach(function (c) {
+      c.style.display = state === 'partial' ? '' : (c.style.display);
+    });
+  }
+  document.addEventListener('DOMContentLoaded', function () {
+    var params = new URLSearchParams(window.location.search);
+    var state = params.get('state') || 'default';
+    applyListState(state);
+    document.querySelectorAll('[data-proto-state-btn]').forEach(function (btn) {
+      btn.addEventListener('click', function () { applyListState(btn.dataset.protoStateBtn); });
+    });
+  });
+</script>
+</body>
+</html>
