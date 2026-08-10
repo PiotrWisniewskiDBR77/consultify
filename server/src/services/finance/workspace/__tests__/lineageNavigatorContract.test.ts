@@ -22,6 +22,7 @@ import {
   buildLineageTrail,
   buildRelatedPanel,
   computeDepths,
+  hasTenantAnomalies,
   isOrphaned,
   lineageStageRank,
   loadLineageNavigator,
@@ -422,5 +423,206 @@ describe('AP-11 lineageNavigatorContract — wraps lineageService through an inj
     ).toEqual(['Statement pack v3', 'Analysis v2', 'Baseline model v4', 'Scenario Bull v2', 'Valuation v1']);
     expect(model.related?.children[0]).toMatchObject({ artifactType: 'REPORT_EXPORT', count: 1 });
     expect(model.fullGraph.defaultVisible).toBe(false);
+  });
+});
+// ===========================================================================
+// AP-11 — ADVERSARIAL: cross-tenant isolation at the NAVIGATOR level.
+//
+// These tests do not ask "does the SQL filter work" (canonicalServices.pg.test.ts
+// answers that against a real Postgres). They ask the opposite question: if the
+// navigator is HANDED contaminated input — because a caller merged two edge
+// sets, a cache was keyed on version id alone, or the metadata resolver reached
+// another tenant — does it still refuse to render it? Before this contract
+// existed the answer was no: nothing in the module read organization_id.
+// ===========================================================================
+
+/** Same edge, re-stamped as another tenant's row (what a merged/cached edge set looks like). */
+function crossTenantEdge(row: LineageEdgeRow): LineageEdgeRow {
+  return { ...row, id: `foreign:${row.id}`, organization_id: OTHER_ORG };
+}
+
+describe('AP-11 lineageNavigatorContract — cross-tenant defence (adversarial)', () => {
+  /**
+   * The intruder is built to WIN the primary-parent tie-break: same artifact
+   * type as bm4 (so equal stage rank), same edge type (so equal priority), but
+   * created later — `pickPrimaryParent` sorts newest-first. Without the tenant
+   * guard this edge, not bm4, is what the trail would show.
+   */
+  const INTRUDER_PARENT_EDGE = crossTenantEdge(
+    edge('bmX', 'BASELINE_MODEL', 'sc2', 'PREDICTION_SCENARIO', 'MODEL_TO_SCENARIO', '2026-08-09T00:00:00.000Z')
+  );
+  const POISONED_ANCESTORS: LineageEdgeRow[] = [...ANCESTOR_EDGES, INTRUDER_PARENT_EDGE];
+  /** A resolver that happily describes the intruder — the caller has no org-awareness at all. */
+  const poisonedResolve: LineageMetadataResolver = (versionId) =>
+    versionId === 'bmX' ? foreignNode({ versionId: 'bmX' }) : NODES[versionId];
+
+  it('POSITIVE CONTROL — a foreign edge that would win the parent tie-break is refused and reported', () => {
+    const trail = buildLineageTrail({
+      organizationId: ORG,
+      focusVersionId: 'val1',
+      ancestorEdges: POISONED_ANCESTORS,
+      resolve: poisonedResolve,
+    });
+    const names = trail.items
+      .filter((i): i is LineageTrailNode => i.kind === 'node')
+      .map((n) => n.displayName);
+    // The intruder is nowhere in the rendered chain...
+    expect(names).not.toContain('Konkurencja — model v9');
+    expect(names.some((n) => n.includes('Konkurencja'))).toBe(false);
+    // ...and the chain is exactly the clean one, i.e. bm4 kept its place.
+    expect(names).toEqual([
+      'Statement pack v3',
+      'Analysis v2',
+      'Baseline model v4',
+      'Scenario Bull v2',
+      'Valuation v1',
+    ]);
+    // The drop is reported, not silent.
+    expect(trail.tenant.foreignEdgeIds).toEqual([INTRUDER_PARENT_EDGE.id]);
+    expect(hasTenantAnomalies(trail.tenant)).toBe(true);
+  });
+
+  it('POSITIVE CONTROL — a resolver returning another tenant\'s version is dropped, and is NOT reported as unresolved', () => {
+    // Edges are clean here: the ONLY contamination is the resolver, which the
+    // SQL layer cannot see at all.
+    const trail = buildLineageTrail({
+      organizationId: ORG,
+      focusVersionId: 'val1',
+      ancestorEdges: ANCESTOR_EDGES,
+      resolve: (versionId) => (versionId === 'an2' ? foreignNode({ versionId: 'an2' }) : NODES[versionId]),
+    });
+    const names = trail.items
+      .filter((i): i is LineageTrailNode => i.kind === 'node')
+      .map((n) => n.displayName);
+    expect(names).toEqual(['Statement pack v3', 'Baseline model v4', 'Scenario Bull v2', 'Valuation v1']);
+    expect(trail.tenant.foreignVersionIds).toEqual(['an2']);
+    // A tenant leak must not be mistaken for missing data.
+    expect(trail.unresolvedVersionIds).toEqual([]);
+  });
+
+  it('POSITIVE CONTROL — the Related panel drops foreign children, indirect descendants and siblings', () => {
+    const cleanDescendants = [
+      edge('bm4', 'BASELINE_MODEL', 'sc2', 'PREDICTION_SCENARIO', 'MODEL_TO_SCENARIO'),
+      edge('sc2', 'PREDICTION_SCENARIO', 'val1', 'VALUATION_CASE', 'SCENARIO_TO_VALUATION'),
+    ];
+    const foreignChild = crossTenantEdge(
+      edge('bm4', 'BASELINE_MODEL', 'valX', 'VALUATION_CASE', 'MODEL_TO_VALUATION')
+    );
+    const foreignIndirect = crossTenantEdge(
+      edge('valX', 'VALUATION_CASE', 'repX', 'REPORT_EXPORT', 'VERSION_TO_REPORT')
+    );
+    const panel = buildRelatedPanel({
+      organizationId: ORG,
+      focusVersionId: 'bm4',
+      ancestorEdges: ANCESTOR_EDGES,
+      descendantEdges: [...cleanDescendants, foreignChild, foreignIndirect],
+      // The caller also hands us a sibling id from the other tenant.
+      siblingVersionIds: ['sibX'],
+      resolve: (versionId) =>
+        versionId === 'valX' || versionId === 'repX' || versionId === 'sibX'
+          ? foreignNode({ versionId })
+          : NODES[versionId],
+    })!;
+    expect(panel.children.map((g) => g.artifactType)).toEqual(['PREDICTION_SCENARIO']);
+    expect(panel.indirectDescendants.map((g) => g.artifactType)).toEqual(['VALUATION_CASE']);
+    expect(
+      [...panel.children, ...panel.indirectDescendants]
+        .flatMap((g) => g.entries)
+        .every((e) => e.metadata.organizationId === ORG)
+    ).toBe(true);
+    expect(panel.siblings).toEqual([]);
+    expect(panel.tenant.foreignEdgeIds.sort()).toEqual([foreignChild.id, foreignIndirect.id].sort());
+    expect(panel.tenant.foreignVersionIds).toEqual(['sibX']);
+  });
+
+  it('POSITIVE CONTROL — a focus version from another tenant yields no panel at all', () => {
+    expect(
+      buildRelatedPanel({
+        organizationId: ORG,
+        focusVersionId: 'bmX',
+        ancestorEdges: [],
+        descendantEdges: [],
+        resolve: poisonedResolve,
+      })
+    ).toBeNull();
+  });
+
+  it('POSITIVE CONTROL — computeDepths never walks a foreign edge', () => {
+    const result = computeDepths({
+      edges: [
+        edge('bm4', 'BASELINE_MODEL', 'sc2', 'PREDICTION_SCENARIO', 'MODEL_TO_SCENARIO'),
+        crossTenantEdge(edge('sc2', 'PREDICTION_SCENARIO', 'valX', 'VALUATION_CASE', 'SCENARIO_TO_VALUATION')),
+      ],
+      rootVersionId: 'bm4',
+      direction: 'downstream',
+      organizationId: ORG,
+    });
+    expect(result.depths.get('sc2')).toBe(1);
+    expect(result.depths.has('valX')).toBe(false);
+    expect(result.foreignEdgeIds).toHaveLength(1);
+  });
+
+  it('POSITIVE CONTROL — a port that ignores its org argument cannot leak through loadLineageNavigator', async () => {
+    // This is the realistic regression: a future batch/cached implementation of
+    // the port that forgets the predicate. The navigator must still hold.
+    const leakyPort: LineageServicePort = {
+      async getAncestors() {
+        return POISONED_ANCESTORS;
+      },
+      async getDescendants() {
+        return [crossTenantEdge(edge('val1', 'VALUATION_CASE', 'repX', 'REPORT_EXPORT', 'VERSION_TO_REPORT'))];
+      },
+    };
+    const model = await loadLineageNavigator({
+      port: leakyPort,
+      organizationId: ORG,
+      focusVersionId: 'val1',
+      resolve: (versionId) =>
+        versionId === 'repX' ? foreignNode({ versionId, artifactType: 'REPORT_EXPORT' }) : poisonedResolve(versionId),
+    });
+    expect(
+      model.trail.items.filter((i): i is LineageTrailNode => i.kind === 'node').map((n) => n.displayName)
+    ).toEqual(['Statement pack v3', 'Analysis v2', 'Baseline model v4', 'Scenario Bull v2', 'Valuation v1']);
+    expect(model.related?.children).toEqual([]);
+    expect(hasTenantAnomalies(model.trail.tenant)).toBe(true);
+    expect(hasTenantAnomalies(model.related!.tenant)).toBe(true);
+  });
+
+  it('NEGATIVE CONTROL — clean single-tenant data reports no anomalies and is unchanged', () => {
+    const trail = buildLineageTrail({
+      organizationId: ORG,
+      focusVersionId: 'val1',
+      ancestorEdges: ANCESTOR_EDGES,
+      resolve,
+    });
+    expect(trail.tenant).toEqual({ foreignEdgeIds: [], foreignVersionIds: [] });
+    expect(hasTenantAnomalies(trail.tenant)).toBe(false);
+    expect(trail.totalNodeCount).toBe(5);
+
+    const panel = buildRelatedPanel({
+      organizationId: ORG,
+      focusVersionId: 'bm4',
+      ancestorEdges: ANCESTOR_EDGES,
+      descendantEdges: [edge('bm4', 'BASELINE_MODEL', 'sc2', 'PREDICTION_SCENARIO', 'MODEL_TO_SCENARIO')],
+      resolve,
+    })!;
+    expect(hasTenantAnomalies(panel.tenant)).toBe(false);
+    expect(panel.children.map((g) => g.count)).toEqual([1]);
+  });
+
+  it('NEGATIVE CONTROL — the guard is scoped to the org asked for, not to a hard-coded one', () => {
+    // The very same edges/nodes, viewed AS the other tenant, render fine — the
+    // rule is "must match the caller's organization", not "must match ORG".
+    const otherOrgEdges = ANCESTOR_EDGES.map(crossTenantEdge);
+    const otherOrgResolve: LineageMetadataResolver = (versionId) =>
+      NODES[versionId] ? { ...NODES[versionId], organizationId: OTHER_ORG } : undefined;
+    const trail = buildLineageTrail({
+      organizationId: OTHER_ORG,
+      focusVersionId: 'val1',
+      ancestorEdges: otherOrgEdges,
+      resolve: otherOrgResolve,
+    });
+    expect(trail.totalNodeCount).toBe(5);
+    expect(hasTenantAnomalies(trail.tenant)).toBe(false);
   });
 });
