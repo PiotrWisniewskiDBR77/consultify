@@ -276,6 +276,23 @@ export const EVENT_TYPE_CONSUMER_GROUPS: Readonly<Record<string, readonly string
   'roi.post_investment_review_draft_updated': ['mywork_projection'],
   'roi.pir_teresa_draft_disposition_recorded': ['mywork_projection'],
   'roi.case_closed': ['mywork_projection', 'finance_projection'],
+
+  // ROI-E007 (docs/product/results-vnext/ROI_E007_DESIGN.md §4/§6) —
+  // Finance/KPI Seams. Finance-link create/remove and reconciliation-opened/
+  // -resolved fan to BOTH 'mywork_projection' AND 'finance_projection' —
+  // same rationale every other durable financial-facing fact above uses
+  // (Decision D5: 'finance_projection' stays pull-based/write-only
+  // scaffolding this epic, per outboxDrain.ts's own instruction not to build
+  // a consumer yet). A non-terminal reconciliation-status transition (i.e.
+  // into 'investigating') and the evidence-link freshness acknowledgment are
+  // both lighter, MyWork-only facts (Decision D1/D7) — 'mywork_projection'
+  // only, matching `roi.variance_status_updated`'s own precedent above.
+  'roi.finance_link_created': ['mywork_projection', 'finance_projection'],
+  'roi.finance_link_removed': ['mywork_projection', 'finance_projection'],
+  'roi.finance_reconciliation_opened': ['mywork_projection', 'finance_projection'],
+  'roi.finance_reconciliation_resolved': ['mywork_projection', 'finance_projection'],
+  'roi.finance_reconciliation_status_updated': ['mywork_projection'],
+  'roi.evidence_link_freshness_flagged': ['mywork_projection'],
 };
 
 /**

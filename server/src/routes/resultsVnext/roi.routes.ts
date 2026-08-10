@@ -46,6 +46,7 @@ import {
 } from '../../services/resultsVnext/roi/roiAssumptionCommands.js';
 import {
   addBenefitEvidenceLink,
+  flagEvidenceLinkFreshnessCheck,
   removeBenefitEvidenceLink,
   RoiBenefitEvidenceLinkValidationError,
 } from '../../services/resultsVnext/roi/roiBenefitEvidenceLinkCommands.js';
@@ -169,20 +170,42 @@ import {
   RoiPirValidationError,
 } from '../../services/resultsVnext/roi/roiPirCommands.js';
 import { getRoiPostInvestmentReview, listRoiPostInvestmentReviews } from '../../services/resultsVnext/roi/roiPirRepository.js';
+import {
+  createRoiFinanceLink,
+  removeRoiFinanceLink,
+} from '../../services/resultsVnext/roi/roiFinanceLinkCommands.js';
+import {
+  listRoiFinanceLinks,
+  listRoiFinanceReconciliations,
+} from '../../services/resultsVnext/roi/roiFinanceLinkRepository.js';
+import {
+  openRoiFinanceReconciliation,
+  updateRoiFinanceReconciliationStatus,
+  RoiFinanceLinkNotFoundError,
+  RoiFinanceReconciliationNotFoundError,
+  RoiFinanceReconciliationValidationError,
+} from '../../services/resultsVnext/roi/roiFinanceReconciliationCommands.js';
 import type { AuthenticatedRequest } from '../../types/index.js';
 import logger from '../../utils/Logger.js';
 import {
   ArchiveRoiCaseSchema,
   CaptureOrUpdateBaselineSchema,
   CreateRoiCaseSchema,
+  CreateRoiFinanceLinkSchema,
+  FreshnessCheckSchema,
   ListRoiCasesQuerySchema,
+  OpenRoiFinanceReconciliationSchema,
   RejectRoiCaseSchema,
+  RemoveRoiFinanceLinkSchema,
   ReopenApprovedRoiCaseForRevisionSchema,
   RequestChangesOnRoiCaseSchema,
   RoiApprovalSnapshotParamsSchema,
   RoiCaseIdParamsSchema,
   RoiCaseTransitionSchema,
+  RoiFinanceLinkParamsSchema,
+  RoiFinanceReconciliationParamsSchema,
   UpdateRoiCaseDetailsSchema,
+  UpdateRoiFinanceReconciliationStatusSchema,
 } from '../../validators/resultsVnextRoi.validators.js';
 import {
   AddAssumptionSchema,
@@ -385,6 +408,20 @@ function handleRoiRouteError(res: Response, err: unknown, op: string): void {
     err instanceof RoiActualEntryValidationError ||
     err instanceof RoiVarianceValidationError
   ) {
+    res.status(409).json({ error: err.message, code: err.code, details: err.details });
+    return;
+  }
+  // ROI-E007 §6: RoiFinanceLinkNotFoundError/RoiFinanceReconciliationNotFoundError
+  // are 404s (a referenced financeLinkId/reconciliationId does not exist on
+  // this case), same "more specific status code first" placement every other
+  // *NotFoundError above uses. RoiFinanceReconciliationValidationError is a
+  // 409, matching every other typed precondition-failure error in this
+  // router.
+  if (err instanceof RoiFinanceLinkNotFoundError || err instanceof RoiFinanceReconciliationNotFoundError) {
+    res.status(404).json({ error: err.message, code: err.code, details: err.details });
+    return;
+  }
+  if (err instanceof RoiFinanceReconciliationValidationError) {
     res.status(409).json({ error: err.message, code: err.code, details: err.details });
     return;
   }
@@ -2827,6 +2864,229 @@ router.post(
       });
     } catch (err) {
       handleRoiRouteError(res, err, 'closeRoiCase');
+    }
+  }
+);
+
+// ==========================================================================
+// ROI-E007 — Finance/KPI Seams routes (design §6)
+// ==========================================================================
+
+// ---------- GET/POST .../finance-links ; DELETE .../finance-links/:linkId ----------
+
+router.get(
+  '/cases/:caseId/finance-links',
+  validateParams(RoiCaseIdParamsSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { caseId } = req.params as { caseId: string };
+      const financeLinks = await listRoiFinanceLinks({ userId: auth.userId, organizationId: auth.organizationId, caseId });
+      res.status(200).json({ financeLinks });
+    } catch (err) {
+      handleRoiRouteError(res, err, 'listRoiFinanceLinks');
+    }
+  }
+);
+
+router.post(
+  '/cases/:caseId/finance-links',
+  validateParams(RoiCaseIdParamsSchema),
+  validateBody(CreateRoiFinanceLinkSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { caseId } = req.params as { caseId: string };
+      if (!(await requireExistingRoiCase(auth, caseId, res))) return;
+      const body = req.body as import('zod').infer<typeof CreateRoiFinanceLinkSchema>;
+      const outcome = await createRoiFinanceLink({
+        caseId,
+        organizationId: auth.organizationId,
+        financeArtifactType: body.financeArtifactType,
+        financeArtifactId: body.financeArtifactId,
+        financeVersionId: body.financeVersionId,
+        mappingVersion: body.mappingVersion,
+        source: body.source,
+        asOf: body.asOf,
+        semanticUnit: body.semanticUnit,
+        currency: body.currency,
+        linkPurpose: body.linkPurpose,
+        actorUserId: auth.userId,
+        actorEffectiveRole: auth.role,
+        idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
+        correlationId: getCorrelationId(req),
+        reason: body.reason ?? null,
+      });
+      res.status(outcome.outcome === 'applied' ? 201 : 200).json({
+        outcome: outcome.outcome,
+        eventId: outcome.eventId,
+        resultingVersion: outcome.resultingVersion,
+        financeLink: outcome.result,
+      });
+    } catch (err) {
+      handleRoiRouteError(res, err, 'createRoiFinanceLink');
+    }
+  }
+);
+
+router.delete(
+  '/cases/:caseId/finance-links/:linkId',
+  validateParams(RoiFinanceLinkParamsSchema),
+  validateBody(RemoveRoiFinanceLinkSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { caseId, linkId } = req.params as { caseId: string; linkId: string };
+      const body = req.body as import('zod').infer<typeof RemoveRoiFinanceLinkSchema>;
+      const outcome = await removeRoiFinanceLink({
+        linkId,
+        caseId,
+        organizationId: auth.organizationId,
+        expectedVersion: body.expectedVersion,
+        actorUserId: auth.userId,
+        actorEffectiveRole: auth.role,
+        idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
+        correlationId: getCorrelationId(req),
+        reason: body.reason ?? null,
+      });
+      res.status(200).json({
+        outcome: outcome.outcome,
+        eventId: outcome.eventId,
+        resultingVersion: outcome.resultingVersion,
+        financeLink: outcome.result,
+      });
+    } catch (err) {
+      handleRoiRouteError(res, err, 'removeRoiFinanceLink');
+    }
+  }
+);
+
+// ---------- GET/POST .../finance-reconciliations ; PATCH .../finance-reconciliations/:reconciliationId ----------
+
+router.get(
+  '/cases/:caseId/finance-reconciliations',
+  validateParams(RoiCaseIdParamsSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { caseId } = req.params as { caseId: string };
+      const financeReconciliations = await listRoiFinanceReconciliations({
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        caseId,
+      });
+      res.status(200).json({ financeReconciliations });
+    } catch (err) {
+      handleRoiRouteError(res, err, 'listRoiFinanceReconciliations');
+    }
+  }
+);
+
+router.post(
+  '/cases/:caseId/finance-reconciliations',
+  validateParams(RoiCaseIdParamsSchema),
+  validateBody(OpenRoiFinanceReconciliationSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { caseId } = req.params as { caseId: string };
+      if (!(await requireExistingRoiCase(auth, caseId, res))) return;
+      const body = req.body as import('zod').infer<typeof OpenRoiFinanceReconciliationSchema>;
+      const outcome = await openRoiFinanceReconciliation({
+        caseId,
+        organizationId: auth.organizationId,
+        financeLinkId: body.financeLinkId,
+        roiValue: body.roiValue,
+        financeValue: body.financeValue,
+        divergenceReason: body.divergenceReason,
+        actorUserId: auth.userId,
+        actorEffectiveRole: auth.role,
+        idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
+        correlationId: getCorrelationId(req),
+        reason: body.reason ?? null,
+      });
+      res.status(outcome.outcome === 'applied' ? 201 : 200).json({
+        outcome: outcome.outcome,
+        eventId: outcome.eventId,
+        resultingVersion: outcome.resultingVersion,
+        financeReconciliation: outcome.result,
+      });
+    } catch (err) {
+      handleRoiRouteError(res, err, 'openRoiFinanceReconciliation');
+    }
+  }
+);
+
+router.patch(
+  '/cases/:caseId/finance-reconciliations/:reconciliationId',
+  validateParams(RoiFinanceReconciliationParamsSchema),
+  validateBody(UpdateRoiFinanceReconciliationStatusSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { caseId, reconciliationId } = req.params as { caseId: string; reconciliationId: string };
+      const body = req.body as import('zod').infer<typeof UpdateRoiFinanceReconciliationStatusSchema>;
+      const outcome = await updateRoiFinanceReconciliationStatus({
+        reconciliationId,
+        caseId,
+        organizationId: auth.organizationId,
+        expectedVersion: body.expectedVersion,
+        status: body.status,
+        resolutionNotes: body.resolutionNotes,
+        actorUserId: auth.userId,
+        actorEffectiveRole: auth.role,
+        idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
+        correlationId: getCorrelationId(req),
+        reason: body.reason ?? null,
+      });
+      res.status(200).json({
+        outcome: outcome.outcome,
+        eventId: outcome.eventId,
+        resultingVersion: outcome.resultingVersion,
+        financeReconciliation: outcome.result,
+      });
+    } catch (err) {
+      handleRoiRouteError(res, err, 'updateRoiFinanceReconciliationStatus');
+    }
+  }
+);
+
+// ---------- POST .../kpi-evidence-links/:linkId/freshness-check ----------
+
+router.post(
+  '/cases/:caseId/benefit-lines/:benefitLineId/kpi-evidence-links/:linkId/freshness-check',
+  validateParams(RoiBenefitEvidenceLinkParamsSchema),
+  validateBody(FreshnessCheckSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { caseId, linkId } = req.params as { caseId: string; benefitLineId: string; linkId: string };
+      const body = req.body as import('zod').infer<typeof FreshnessCheckSchema>;
+      const outcome = await flagEvidenceLinkFreshnessCheck({
+        linkId,
+        caseId,
+        organizationId: auth.organizationId,
+        actorUserId: auth.userId,
+        actorEffectiveRole: auth.role,
+        idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
+        correlationId: getCorrelationId(req),
+        reason: body.reason ?? null,
+      });
+      res.status(200).json({
+        outcome: outcome.outcome,
+        eventId: outcome.eventId,
+        resultingVersion: outcome.resultingVersion,
+        link: outcome.result,
+      });
+    } catch (err) {
+      handleRoiRouteError(res, err, 'flagEvidenceLinkFreshnessCheck');
     }
   }
 );

@@ -20,6 +20,7 @@ import {
   ROI_CASE_GRANULARITIES,
   ROI_CASE_STATUSES,
 } from '../services/resultsVnext/roi/roiTypes.js';
+import { ROI_FINANCE_RECONCILIATION_STATUSES } from '../services/resultsVnext/roi/roiFinanceSeamTypes.js';
 
 export const RoiCaseStatusEnum = z.enum(ROI_CASE_STATUSES);
 export const RoiCaseGranularityEnum = z.enum(ROI_CASE_GRANULARITIES);
@@ -62,6 +63,18 @@ export const RoiCaseIdParamsSchema = z.object({
 export const RoiApprovalSnapshotParamsSchema = z.object({
   caseId: z.string().uuid(),
   snapshotId: z.string().uuid(),
+});
+
+// ROI-E007 §6: DELETE .../finance-links/:linkId ; PATCH
+// .../finance-reconciliations/:reconciliationId.
+export const RoiFinanceLinkParamsSchema = z.object({
+  caseId: z.string().uuid(),
+  linkId: z.string().uuid(),
+});
+
+export const RoiFinanceReconciliationParamsSchema = z.object({
+  caseId: z.string().uuid(),
+  reconciliationId: z.string().uuid(),
 });
 
 // ==========================================
@@ -178,5 +191,64 @@ export const RequestChangesOnRoiCaseSchema = z.object({
 export const ReopenApprovedRoiCaseForRevisionSchema = z.object({
   expectedVersion: expectedVersionField,
   reason: z.string().min(1).max(MAX_REASON_CHARS),
+  idempotencyKey: idempotencyKeyField,
+});
+
+// ==========================================
+// ROI-E007 §6 — Finance/KPI Seams
+// ==========================================
+
+export const RoiFinanceReconciliationStatusEnum = z.enum(ROI_FINANCE_RECONCILIATION_STATUSES);
+
+// POST .../cases/:caseId/finance-links — createRoiFinanceLink. Decision D4:
+// financeArtifactType/financeArtifactId/financeVersionId are plain, bounded
+// TEXT — no enum, no existence check, no coupling to Finance's own schema.
+export const CreateRoiFinanceLinkSchema = z.object({
+  financeArtifactType: z.string().min(1).max(MAX_SHORT_ID_CHARS),
+  financeArtifactId: z.string().min(1).max(MAX_SHORT_ID_CHARS),
+  financeVersionId: z.string().min(1).max(MAX_SHORT_ID_CHARS),
+  mappingVersion: z.number().int().positive().optional(),
+  source: z.string().min(1).max(MAX_SHORT_ID_CHARS),
+  asOf: isoDateTimeString,
+  semanticUnit: nullableShortStringField,
+  currency: z.string().min(1).max(MAX_CURRENCY_CHARS).nullable().optional(),
+  linkPurpose: z.string().min(1).max(MAX_SHORT_ID_CHARS),
+  reason: nullableReasonField,
+  idempotencyKey: idempotencyKeyField,
+});
+
+// DELETE .../cases/:caseId/finance-links/:linkId — removeRoiFinanceLink.
+export const RemoveRoiFinanceLinkSchema = z.object({
+  expectedVersion: expectedVersionField,
+  reason: nullableReasonField,
+  idempotencyKey: idempotencyKeyField,
+});
+
+// POST .../cases/:caseId/finance-reconciliations — openRoiFinanceReconciliation.
+export const OpenRoiFinanceReconciliationSchema = z.object({
+  financeLinkId: z.string().uuid(),
+  roiValue: z.number().finite(),
+  financeValue: z.number().finite(),
+  divergenceReason: nullableReasonField,
+  reason: nullableReasonField,
+  idempotencyKey: idempotencyKeyField,
+});
+
+// PATCH .../cases/:caseId/finance-reconciliations/:reconciliationId —
+// updateRoiFinanceReconciliationStatus (Decision D1).
+export const UpdateRoiFinanceReconciliationStatusSchema = z.object({
+  expectedVersion: expectedVersionField,
+  status: RoiFinanceReconciliationStatusEnum,
+  resolutionNotes: nullableReasonField,
+  reason: nullableReasonField,
+  idempotencyKey: idempotencyKeyField,
+});
+
+// POST .../kpi-evidence-links/:linkId/freshness-check —
+// flagEvidenceLinkFreshnessCheck (Decision D7). Empty body — no domain
+// field, only the shared reason/idempotencyKey plumbing every write route
+// accepts.
+export const FreshnessCheckSchema = z.object({
+  reason: nullableReasonField,
   idempotencyKey: idempotencyKeyField,
 });
