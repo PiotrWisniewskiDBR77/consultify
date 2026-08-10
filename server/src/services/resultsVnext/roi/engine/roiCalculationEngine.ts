@@ -50,7 +50,19 @@
  * mirror-matching at all — they apply `rvn_roi_scenario_overrides` rows by
  * `target_id`, an unambiguous explicit reference (Decision D10).
  */
-import Decimal from 'decimal.js';
+// NAMED import (not default) is required here: `server/tsconfig.json` uses
+// `module`/`moduleResolution: NodeNext` and `server/package.json` declares
+// `"type": "module"`, so this file is ESM. `decimal.js` ships CJS-format types
+// (`decimal.d.ts`, package has no `"type": "module"`), and under Node's
+// ESM->CJS interop a default import binds to `module.exports` itself — i.e.
+// the module namespace, not the class — which makes `Decimal` unusable as a
+// type/constructor and hides the static `ROUND_*` constants. The class is also
+// published as a named export at runtime in BOTH builds
+// (`decimal.js`: `Decimal.Decimal = Decimal`; `decimal.mjs`: `export var
+// Decimal`), so this is the same object with identical behaviour. The upstream
+// `decimal.d.ts` header documents `import {Decimal} from "decimal.js"` as the
+// primary supported form.
+import { Decimal } from 'decimal.js';
 
 import {
   discountedPayback,
