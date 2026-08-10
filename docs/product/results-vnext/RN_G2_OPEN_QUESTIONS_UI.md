@@ -179,3 +179,28 @@ zaliczone jako sprawdzone.
    parametrami URL, `onClose` jest w nim pusty; sam mechanizm `Modal.tsx` jest
    używany w 25+ miejscach aplikacji i został sprawdzony czytaniem kodu, ale nie
    przejechany end-to-end. Do domknięcia na realnym `/results/roi` za flagą.
+
+---
+
+## OQ-UI-H — `persistKey` OKR jest budowany z identyfikatora rekordu, nie powierzchni
+
+Wszystkie 15 kluczy RN-G2 są poprawnie w przestrzeni `results-vnext.*` (zero
+kolizji z żywymi ekranami legacy T36/T37/T38 — to było twarde wymaganie i jest
+spełnione). Ale trzy klucze OKR zawierają identyfikator rekordu:
+
+```
+results-vnext.okr-objectives.${setId}
+results-vnext.okr-key-results.${objectiveId}
+results-vnext.okr-check-ins.${keyResultId}
+```
+
+Dwa skutki, oba do świadomej decyzji, żaden nie jest awarią:
+1. Układ kolumn **nie przenosi się między rekordami** — użytkownik, który ustawił
+   sobie kolumny Celów dla jednego zestawu, zobaczy domyślne przy następnym.
+   Zwykle układ kolumn należy do POWIERZCHNI, nie do rekordu.
+2. Liczba kluczy w pamięci przeglądarki rośnie z liczbą rekordów, bez górnej
+   granicy i bez sprzątania.
+
+**Czego potrzeba**: decyzji, czy to zamierzone (np. bo kolumny check-inów mogą
+realnie różnić się per Kluczowy Rezultat), czy klucz ma być per powierzchnia.
+Zmiana jest jednoliniowa w każdym z trzech miejsc.

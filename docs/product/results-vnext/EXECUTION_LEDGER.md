@@ -6254,3 +6254,110 @@ drzewie RÓWNOLEGLE do trwającej rundy QA i jego treść była nieaktualna już
 chwili zapisu — pakiet P2 nie został przerwany, tylko domknięty w `de48a5fdb6`.
 To kolejny przypadek złamania mandatu „jeden worktree = jeden agent"; sam commit
 dotknął wyłącznie `RESUME_HANDOFF.md` i niczego nie nadpisał.
+
+---
+
+## 55. RN-G2 fala równoległa — 8 pakietów UI, 2 naprawy narzędzi, 3 realne błędy złapane oczami (2026-08-11)
+
+Fala prowadzona przez orkiestratora z ośmioma izolowanymi worktree (mandat „jeden
+worktree = jeden agent", `/Users/piotrwisniewski/rn-g2-lanes/*`, `node_modules`
+przez dowiązanie — worktree bez niego zabija vite po cichu). Wszystko za flagami,
+wszystkie trzy domyślnie WYŁĄCZONE. Nic nie wypchnięte, nic nie wdrożone.
+
+### Dowiezione pakiety
+
+| Pakiet | Zakres |
+|---|---|
+| Rejestr zestawów OKR (§G #23) | 3 perspektywy, chipy na realnym automacie stanów |
+| Karty wyników KPI (§G #8) | lista jako zakładka + trasa `/results/kpi/scorecards/:id` |
+| Tworzenie ROI + przejścia | quick-create (plan §9 Etap 3) + 7 przejść cyklu życia |
+| Model ekonomiczny ROI (§G #12-14) | baseline, polityka kalkulacji, założenia, linie kosztów i korzyści |
+| Cele/KR/check-iny OKR (§G #25) | drill-down przez breadcrumbs, formularze, korekty |
+| Pomiary KPI (§G #7) | rejestracja, korekta, weryfikacja, spór |
+| Panel archiwum legacy | wspólny, tylko do odczytu, wyeksportowany i świadomie NIEPODPIĘTY |
+| Defekty powłoki | szerokość podglądu, osiągalność kolumny akcji, polskie „Spróbuj ponownie" |
+
+**Dowody na finalnym SHA**: `tsc --noEmit` **0 błędów**; `vite build` **zielony**
+(34,2 s); `check-list-canon.sh` **408 przy baseline 409 — dług SPADŁ**;
+`check-artefakt.sh` 7/7 bez zmian; **214 zrzutów** w 11 katalogach
+`docs/qa/screens/rn-g2-*`. Wszystkie 15 `persistKey` w przestrzeni
+`results-vnext.*` — zero kolizji z legacy T36/T37/T38.
+
+### Trzy realne błędy, których nie znalazłby żaden test
+
+**1. Skala postępu OKR — dwa błędy znosiły się na ekranie.** `progress` przychodzi
+na drucie jako surowy ułamek 0–1 na KAŻDYM poziomie (dowód: własny test silnika,
+`okrProgressEngine.test.ts` — `expect(result.progress).toBe(0.5)` dla 50%).
+`formatOkrProgressPercent` nigdy nie mnożyła przez 100, ale mock w harnessie był
+wykalibrowany na 0–100 — więc zrzut pokazywał poprawne „62,5%", a realne dane dałyby
+„0,6%". **Rejestr zestawów OKR został przez orkiestratora odebrany z tą wadą.** To
+dokładnie wzorzec „zielony mock ≠ poprawny kod" i argument, żeby harness karmić
+danymi o kształcie z serwera, nie o kształcie wygodnym dla oka.
+
+**2. Złamanie zasad hooków w rejestrze KPI — awaria na żywym ekranie.** `useMemo`
+stał ZA wczesnymi zwrotami; kliknięcie nowej zakładki „Karty wyników" wywalało
+ekran („Rendered fewer hooks than expected") nie tylko w harnessie, ale na
+produkcyjnej trasie. **Pakiet kart wyników został odebrany z tym błędem**, bo ekran
+harnessu KPI padał wcześniej na braku Routera — zakładka nigdy nie została kliknięta
+na żadnym z zaakceptowanych zrzutów. Zrzut dowodzi, że ekran się RENDERUJE; nie
+dowodzi, że da się go KLIKAĆ.
+
+**3. Szew w przyklejonej kolumnie akcji.** Pierwsza naprawa osiągalności kolumny
+akcji zostawiła jasny prostokąt przecinający podświetlenie zaznaczonego wiersza —
+stan domyślny po kliknięciu w cokolwiek, nie przypadek brzegowy. Domknięte
+nakładaniem odcienia stanu przez `box-shadow` zamiast tła: `background: inherit` ODRZUCONE po próbie, bo wiersz w tym repo nie ma własnego tła (daje je kontener
+wyżej), więc dziedziczenie przywróciłoby przebijanie treści spod przewiniętej
+kolumny. Wymagał też `group-hover:`, nie `hover:` — mysz rzadko stoi nad samym
+kebabem; ustalone pomiarem, nie rozumowaniem.
+
+### Dwie naprawy narzędzi pomiarowych
+
+**`check-gestosc.sh` mierzył nieprawdę.** `\s` to rozszerzenie GNU awk; macOS ma
+BSD awk, gdzie reguły zamykające strefę nigdy nie odpalały — licznik sumował
+Menu 2 z Menu 3 i zgłaszał „7-8 zakładek" dla hubów mających 2 pigułki i 5 chipów.
+Naprawione i sprawdzone w OBIE strony: sztuczny hub z 8 zakładkami ostrzega, ten sam
+przycięty do 6 milczy. Bramka, która odpala na poprawnym kodzie, jest gorsza niż jej
+brak — ludzie uczą się ją przewijać.
+
+**Luka fikstur ROI: naprawa poprawna, ale niewidoczna w licznikach.** 18 plików
+`tests/resultsVnext/roi/*.realdb.test.ts` nie wstawiało `organizations` przed
+`initiatives`. Naprawione (`d6d54f3e1c`), ale liczniki nie drgnęły: `initiatives.status`
+ma `DEFAULT 'step3'` łamiący własny CHECK, a Postgres sprawdza CHECK PRZED kluczem
+obcym — testy umierały na `23514`, nie docierając do `23503`. Dowiedzione w izolacji
+(cherry-pick istniejącego `f99016b632`, realny Postgres 17, pełne migracje):
+
+| Domena | Przed | Po zdjęciu maski |
+|---|---|---|
+| ROI | 129 / 48 / 12 | **189 / 0 / 0** |
+| KPI | 146 / 0 / 5 | bez zmian |
+| OKR | 344 / 0 / 0 | bez zmian |
+
+Sumy zgodne (684 = 684) — żaden test nie zniknął. Kontrola negatywna przeszła.
+**Po zdjęciu maski w ROI i OKR nie zostaje ani jedna porażka z przyczyny produktowej.**
+Naprawa NIE scalona: `PostgresDatabase.ts` należy do równoległej sesji. Szczegóły i
+rekomendacja: `RN_G2_OPEN_QUESTIONS_UI.md` OQ-UI-E.
+
+### Czego tory świadomie NIE zrobiły
+
+Trzy pakiety mogły zbudować trasy pełnych narzędzi (`/results/roi/cases/:id`,
+`/results/okr/sets/:id`) — plan je przewiduje. Żaden tego nie zrobił, bo archetyp
+pełnego narzędzia to jawnie nierozstrzygnięte pytanie §G #2, a zbudowanie trasy
+przesądziłoby je po cichu. Wszystkie trzy zrobiły pod-widoki w istniejących trasach
+i uzasadniły to w nagłówkach plików.
+
+Podobnie: pakiet kart wyników **nie renderuje treści payloadu migawek przeglądu**,
+bo `listReviewSnapshots` nie re-filtruje go pod czytelnika (OQ-UI-B); pakiet OKR
+**nie generuje losowego `cadenceOccurrenceId`**, mimo że pole jest wymagane a żaden
+`GET` go nie eksponuje — losowy UUID zapisałby korupcję jako prawdziwy check-in.
+
+### Pytania otwarte
+
+Siedem pozycji w `docs/product/results-vnext/RN_G2_OPEN_QUESTIONS_UI.md` (OQ-UI-A…G),
+w tym sprzeczność decyzji R01 z literalnym zapisem TRIADA §C3 — znaleziona
+niezależnie przez trzy tory, czyli trafi na nią każdy przyszły ekran listowy.
+Dodatkowo: brak reguły ról i zakazu samo-weryfikacji dla `verify`/`dispute`/`correct`
+pomiaru KPI (w odróżnieniu od zatwierdzania definicji, gdzie taki zakaz istnieje) —
+UI tego nie zasłania fałszywym wyszarzeniem.
+
+Osie, których automat nie potrafi sprawdzić (aktywacja Enter/Space, pełny cykl Esc z
+powrotem fokusu), zostają jawnie NIEZWERYFIKOWANE — nie zaliczone jako sprawdzone.
