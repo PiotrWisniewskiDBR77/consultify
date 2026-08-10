@@ -167,16 +167,25 @@ log "  linii wyjścia tsc: $(wc -l < "$RAW/07.log" | tr -d ' ') (oczekiwane 0)"
 # --- 8. Typy plików testowych (tsconfig ich WYKLUCZA — mierzymy osobno) -----
 # server/tsconfig.json wyklucza **/*.test.ts, a vitest używa esbuilda,
 # który nie sprawdza typów → pliki testowe nie są typecheckowane przez NIC.
+# UWAGA — dwie pułapki, obie zaliczone przy pierwszym przebiegu:
+# 1. bez `rootDir: "."` dziedziczy się `rootDir: server` -> 2274x TS6059,
+#    czysty artefakt konfiguracji udający regresję;
+# 2. bez `--max-old-space-size` tsc pada z exit 134 (SIGABRT/OOM) i przy
+#    zerze błędów WYGLĄDA na sukces. Zawsze sprawdzaj kod wyjścia.
+# 3. ta konfiguracja NIE ładuje globali vitest, więc wynik NIE jest
+#    porównywalny z zakresowanymi pomiarami per-pakiet. Traktuj jako
+#    orientacyjny licznik, nie jako bramkę.
 cat > /tmp/tsconfig.evidence.$TAG.json <<'JSON'
 {
   "extends": "./server/tsconfig.json",
+  "compilerOptions": { "rootDir": ".", "noEmit": true },
   "include": ["server/src/**/*.ts", "tests/**/*.ts"],
   "exclude": ["node_modules", "dist"]
 }
 JSON
 cp /tmp/tsconfig.evidence.$TAG.json "$REPO/tsconfig.evidence.$TAG.json"
-step 08 "Typy plików TESTOWYCH (pomiar długu, nie bramka)" \
-  "npx tsc --noEmit -p tsconfig.evidence.$TAG.json"
+step 08 "Typy plików TESTOWYCH (pomiar orientacyjny, NIE bramka, NIE porównywalny)" \
+  "NODE_OPTIONS=--max-old-space-size=12288 npx tsc --noEmit -p tsconfig.evidence.$TAG.json"
 TESTTYPE_ERRS=$(grep -cE 'error TS' "$RAW/08.log" 2>/dev/null || echo 0)
 TESTTYPE_FILES=$(grep -oE '^[^(]+\(' "$RAW/08.log" 2>/dev/null | sort -u | wc -l | tr -d ' ')
 log "  błędów typów w plikach testowych: $TESTTYPE_ERRS w $TESTTYPE_FILES plikach"
