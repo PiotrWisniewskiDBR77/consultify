@@ -193,23 +193,27 @@ describe.skipIf(!REAL_PG)('Finance v3 CO-9 — statement money columns are exact
     });
 
     it('BEFORE: a real column cannot hold a P&L reported in units', async () => {
-      await raw.query(`INSERT INTO ${probe} (as_real, as_numeric) VALUES ($1, $1)`, [
-        REVENUE_IN_UNITS,
-      ]);
-      const res = await raw.query<{ stored: string; matches: boolean }>(
-        `SELECT as_real::text::numeric::text AS stored,
-                (as_real::float8 = $1::float8) AS matches
-           FROM ${probe}`,
+      // Both columns are fed the same literal; the casts are explicit because a
+      // bare $1 shared by a `real` and a `numeric` column makes the driver fail
+      // with "inconsistent types deduced for parameter $1".
+      await raw.query(
+        `INSERT INTO ${probe} (as_real, as_numeric) VALUES ($1::numeric, $1::numeric)`,
         [REVENUE_IN_UNITS]
       );
 
-      // The float4 nearest to 1 227 799 000 is 1 227 799 040 — off by 40 PLN.
-      const storedAsFloat = await raw.query<{ exact: string }>(
-        `SELECT (as_real::float8)::numeric::text AS exact FROM ${probe}`
+      // What the column ACTUALLY stores. `::float8` widens the float4 without
+      // re-rounding, so this is the true binary value, not its prettified
+      // shortest-round-trip form: the float4 nearest 1 227 799 000 is
+      // 1 227 799 040 — the client's revenue, overstated by 40 PLN.
+      const stored = await raw.query<{ exact: string; matches: boolean }>(
+        `SELECT (as_real::float8)::numeric::text            AS exact,
+                (as_real::float8 = $1::float8)              AS matches
+           FROM ${probe}`,
+        [REVENUE_IN_UNITS]
       );
-      expect(storedAsFloat.rows[0].exact).toBe('1227799040');
+      expect(stored.rows[0].exact).toBe('1227799040');
       expect(
-        res.rows[0].matches,
+        stored.rows[0].matches,
         'a real column round-tripped the amount exactly — the premise of CO-9 no longer holds'
       ).toBe(false);
     });
@@ -265,8 +269,14 @@ describe.skipIf(!REAL_PG)('Finance v3 CO-9 — statement money columns are exact
 
       // And confirm the `real` verdict this case claims, so the table above
       // cannot drift into fiction.
+      //
+      // The comparison goes through `::float8`, NOT `::text`. Widening float4 to
+      // float8 exposes the value actually held in the 24-bit significand;
+      // `float4out` would instead print the shortest decimal that round-trips to
+      // those same bits, which for 1227799000 is the input string itself — i.e.
+      // the text form HIDES the damage that the stored bits contain.
       const viaReal = await raw.query<{ same: boolean }>(
-        `SELECT ($1::numeric = $1::numeric::real::text::numeric) AS same`,
+        `SELECT ($1::numeric = $1::numeric::real::float8::numeric) AS same`,
         [amount]
       );
       expect(
@@ -290,9 +300,13 @@ describe.skipIf(!REAL_PG)('Finance v3 CO-9 — statement money columns are exact
            (1, 12345.67), (2, 1227799000), (3, 1234567.89), (4, 16777215), (5, 0.1)`
       );
       // What the application observes today: node-pg receives float4out's
-      // shortest round-trip form, which is what `::text` reproduces.
+      // shortest round-trip form, which is what `::text` reproduces. It is
+      // snapshotted as NUMERIC, not as raw text, because `real` renders large
+      // values in scientific notation ("1.227799e+09") while `numeric` renders
+      // them plainly ("1227799000") — comparing the two text forms would fail on
+      // formatting alone and say nothing about whether the VALUE was preserved.
       const before = await raw.query<{ id: number; v: string }>(
-        `SELECT id, value::text AS v FROM ${legacy} ORDER BY id`
+        `SELECT id, value::text::numeric::text AS v FROM ${legacy} ORDER BY id`
       );
 
       await raw.query(`SET extra_float_digits = 3`);
