@@ -112,6 +112,25 @@ function chunk<T>(arr: T[], size: number): T[][] {
   return out;
 }
 
+/**
+ * FC-02.2 determinism fix (W2, 2026-08-10): `seed()` previously called bare `Math.random()` for
+ * synthetic statement-value amounts, which made the *seed data itself* non-reproducible across two
+ * independent invocations — a prerequisite for proving backfill determinism ("same input twice ->
+ * same output") is a same, byte-identical input. Fixed-seed mulberry32 PRNG: same seed constant ->
+ * same output sequence on every process/machine, no wall-clock or OS entropy involved.
+ * See docs/validation/finance-v3/generated/gate-d/W2_BACKFILL_DETERMINISM_report.md.
+ */
+function mulberry32(seed: number): () => number {
+  let a = seed >>> 0;
+  return () => {
+    a |= 0;
+    a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
 const ACTOR = 'finance-v3-backfill-dry-run:WP-C03';
 const NOW = () => new Date();
 
@@ -590,6 +609,16 @@ async function seed(pool: Pool) {
 
   let uid = 0;
   const id = (prefix: string) => `${prefix}-${(++uid).toString(36)}`;
+  // Fixed seed — see mulberry32() doc comment. Any two independent `seed` invocations against two
+  // fresh databases must produce byte-identical legacy data; a bare Math.random() here would make
+  // that impossible and confound determinism testing of the backfill itself with non-determinism
+  // in the *test fixture*.
+  const rng = mulberry32(0xf1a3ce5d);
+  // Same reasoning as `rng` above: legacy `approved_at` timestamps must be reproducible across two
+  // independent `seed` invocations, not wall-clock-dependent (`new Date()` would make seed run A
+  // and seed run B differ by however many ms/seconds elapsed between the two invocations, polluting
+  // the source-row checksums this script itself computes per chunk).
+  const SEED_APPROVED_AT = new Date('2026-01-15T00:00:00.000Z');
 
   for (const org of orgs) {
     // ---- Statements: financial_statement_packs (AUTO_MIGRATE) + children (MIGRATE_WITH_WARNING) ----
@@ -627,7 +656,7 @@ async function seed(pool: Pool) {
           await pool.query(
             `INSERT INTO financial_statement_values (id, statement_id, original_label, value, mapping_status)
              VALUES ($1,$2,$3,$4,'auto')`,
-            [id('val'), stId, `Line ${i}`, i === 3 ? null : Math.round(Math.random() * 1_000_000) / 100, ]
+            [id('val'), stId, `Line ${i}`, i === 3 ? null : Math.round(rng() * 1_000_000) / 100, ]
           );
         }
         for (let v = 1; v <= 2; v++) {
@@ -701,7 +730,7 @@ async function seed(pool: Pool) {
           status,
           modelVersion,
           status === 'approved' ? 'backfill-seed' : null,
-          status === 'approved' ? new Date() : null,
+          status === 'approved' ? SEED_APPROVED_AT : null,
           status === 'approved' && !approvedWithoutSnapshot ? JSON.stringify({ snapshot: true }) : null,
         ]
       );
@@ -780,7 +809,7 @@ async function seed(pool: Pool) {
       await pool.query(
         `INSERT INTO valuations (id, organization_id, title, status, source_type, version, approved_by, approved_at)
          VALUES ($1,$2,$3,$4,'manual',$5,$6,$7)`,
-        [valId, org, `${org} Valuation ${v}`, status, 2, status === 'APPROVED' ? 'backfill-seed' : null, status === 'APPROVED' ? new Date() : null]
+        [valId, org, `${org} Valuation ${v}`, status, 2, status === 'APPROVED' ? 'backfill-seed' : null, status === 'APPROVED' ? SEED_APPROVED_AT : null]
       );
       const snapVersions = v === 1 ? [1, 2, 2] : [1, 2]; // duplicate on v=1
       for (const sv of snapVersions) {
