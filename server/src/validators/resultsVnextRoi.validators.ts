@@ -58,6 +58,12 @@ export const RoiCaseIdParamsSchema = z.object({
   caseId: z.string().uuid(),
 });
 
+// ROI-E003 §7: GET .../approval-snapshots/:snapshotId.
+export const RoiApprovalSnapshotParamsSchema = z.object({
+  caseId: z.string().uuid(),
+  snapshotId: z.string().uuid(),
+});
+
 // ==========================================
 // POST /api/vnext/results/roi/cases — createRoiCase
 // ==========================================
@@ -140,5 +146,37 @@ export const CaptureOrUpdateBaselineSchema = z.object({
   confidence: RoiBaselineConfidenceEnum.nullable().optional(),
   ownerUserId: nullableShortStringField,
   reason: nullableReasonField,
+  idempotencyKey: idempotencyKeyField,
+});
+
+// ==========================================
+// ROI-E003 §7 — Decision & Approved
+// ==========================================
+
+// POST .../transitions/submit-for-approval | .../transitions/approve |
+// .../transitions/reopen-after-rejection — reuse RoiCaseTransitionSchema's
+// shape (expectedVersion/optional reason/idempotencyKey); approver identity
+// comes from auth.userId, not the body, so `approve` needs no extra field.
+
+// POST .../transitions/reject — expectedVersion + REQUIRED rejectionReason.
+export const RejectRoiCaseSchema = z.object({
+  expectedVersion: expectedVersionField,
+  rejectionReason: z.string().min(1).max(MAX_REASON_CHARS),
+  idempotencyKey: idempotencyKeyField,
+});
+
+// POST .../transitions/request-changes — expectedVersion + REQUIRED
+// changeRequestNotes.
+export const RequestChangesOnRoiCaseSchema = z.object({
+  expectedVersion: expectedVersionField,
+  changeRequestNotes: z.string().min(1).max(MAX_REASON_CHARS),
+  idempotencyKey: idempotencyKeyField,
+});
+
+// POST .../transitions/reopen-for-revision — expectedVersion + REQUIRED
+// reason (unlike every other command's optional reason — design §4.5).
+export const ReopenApprovedRoiCaseForRevisionSchema = z.object({
+  expectedVersion: expectedVersionField,
+  reason: z.string().min(1).max(MAX_REASON_CHARS),
   idempotencyKey: idempotencyKeyField,
 });

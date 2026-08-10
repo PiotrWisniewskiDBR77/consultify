@@ -69,12 +69,25 @@ import {
   archiveRoiCase,
   createRoiCase,
   markReadyForReview,
+  reopenRejectedRoiCase,
   RoiCaseNoActiveVisibilityPolicyError,
   RoiCaseNotReadyForReviewError,
   RoiCaseValidationError,
   startModeling,
   updateRoiCaseDetails,
 } from '../../services/resultsVnext/roi/roiCaseCommands.js';
+import {
+  approveRoiCase,
+  rejectRoiCase,
+  reopenApprovedRoiCaseForRevision,
+  requestChangesOnRoiCase,
+  RoiSelfApprovalDeniedError,
+  submitRoiCaseForApproval,
+} from '../../services/resultsVnext/roi/roiCaseApprovalCommands.js';
+import {
+  getRoiApprovalSnapshot,
+  listRoiApprovalSnapshots,
+} from '../../services/resultsVnext/roi/roiApprovalSnapshotRepository.js';
 import {
   addCostLine,
   removeCostLine,
@@ -112,6 +125,10 @@ import {
   CaptureOrUpdateBaselineSchema,
   CreateRoiCaseSchema,
   ListRoiCasesQuerySchema,
+  RejectRoiCaseSchema,
+  ReopenApprovedRoiCaseForRevisionSchema,
+  RequestChangesOnRoiCaseSchema,
+  RoiApprovalSnapshotParamsSchema,
   RoiCaseIdParamsSchema,
   RoiCaseTransitionSchema,
   UpdateRoiCaseDetailsSchema,
@@ -204,6 +221,13 @@ function resolveIdempotencyKey(bodyKey: string | undefined | null): string {
  * `approveRoiCase`, not here.
  */
 function handleRoiRouteError(res: Response, err: unknown, op: string): void {
+  // ROI-E003 §7: checked FIRST, ahead of the generic conflict/validation 409
+  // branches — self-approval denial is a 403 (authorization), not a 409
+  // (state-conflict).
+  if (err instanceof RoiSelfApprovalDeniedError) {
+    res.status(403).json({ error: err.message, code: err.code, details: err.details });
+    return;
+  }
   if (err instanceof AtomicWriteConflictError) {
     res.status(409).json({ error: err.message, code: err.code, ...(err.details || {}) });
     return;
@@ -1589,6 +1613,218 @@ router.get(
       res.status(200).json({ run });
     } catch (err) {
       handleRoiRouteError(res, err, 'getCalculationRun');
+    }
+  }
+);
+
+// ==========================================================================
+// ROI-E003 — Decision & Approved routes (design §7)
+// ==========================================================================
+
+// ---------- POST .../transitions/submit-for-approval | reopen-after-rejection ----------
+// Both submitRoiCaseForApproval/reopenRejectedRoiCase have the identical
+// RunRoiCaseLifecycleTransitionInput-compatible signature startModeling/
+// markReadyForReview already have — reuse mountTransitionRoute rather than
+// hand-rolling an identical handler a third/fourth time.
+
+mountTransitionRoute(
+  '/cases/:caseId/transitions/submit-for-approval',
+  'submitRoiCaseForApproval',
+  submitRoiCaseForApproval
+);
+mountTransitionRoute(
+  '/cases/:caseId/transitions/reopen-after-rejection',
+  'reopenRejectedRoiCase',
+  reopenRejectedRoiCase
+);
+
+// ---------- POST .../transitions/approve ----------
+// Not routed through mountTransitionRoute — approveRoiCase's input uses
+// `approverId` (not `actorUserId`) and returns { case, snapshot }, not a
+// bare RoiCase.
+
+router.post(
+  '/cases/:caseId/transitions/approve',
+  validateParams(RoiCaseIdParamsSchema),
+  validateBody(RoiCaseTransitionSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { caseId } = req.params as { caseId: string };
+      if (!(await requireExistingRoiCase(auth, caseId, res))) return;
+      const body = req.body as import('zod').infer<typeof RoiCaseTransitionSchema>;
+      const outcome = await approveRoiCase({
+        caseId,
+        organizationId: auth.organizationId,
+        expectedVersion: body.expectedVersion,
+        approverId: auth.userId,
+        actorEffectiveRole: auth.role,
+        idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
+        correlationId: getCorrelationId(req),
+        reason: body.reason ?? null,
+      });
+      res.status(200).json({
+        outcome: outcome.outcome,
+        eventId: outcome.eventId,
+        resultingVersion: outcome.resultingVersion,
+        case: outcome.result.case,
+        snapshot: outcome.result.snapshot,
+      });
+    } catch (err) {
+      handleRoiRouteError(res, err, 'approveRoiCase');
+    }
+  }
+);
+
+// ---------- POST .../transitions/reject ----------
+
+router.post(
+  '/cases/:caseId/transitions/reject',
+  validateParams(RoiCaseIdParamsSchema),
+  validateBody(RejectRoiCaseSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { caseId } = req.params as { caseId: string };
+      if (!(await requireExistingRoiCase(auth, caseId, res))) return;
+      const body = req.body as import('zod').infer<typeof RejectRoiCaseSchema>;
+      const outcome = await rejectRoiCase({
+        caseId,
+        organizationId: auth.organizationId,
+        expectedVersion: body.expectedVersion,
+        rejectedBy: auth.userId,
+        rejectionReason: body.rejectionReason,
+        actorEffectiveRole: auth.role,
+        idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
+        correlationId: getCorrelationId(req),
+      });
+      res.status(200).json({
+        outcome: outcome.outcome,
+        eventId: outcome.eventId,
+        resultingVersion: outcome.resultingVersion,
+        case: outcome.result,
+      });
+    } catch (err) {
+      handleRoiRouteError(res, err, 'rejectRoiCase');
+    }
+  }
+);
+
+// ---------- POST .../transitions/request-changes ----------
+
+router.post(
+  '/cases/:caseId/transitions/request-changes',
+  validateParams(RoiCaseIdParamsSchema),
+  validateBody(RequestChangesOnRoiCaseSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { caseId } = req.params as { caseId: string };
+      if (!(await requireExistingRoiCase(auth, caseId, res))) return;
+      const body = req.body as import('zod').infer<typeof RequestChangesOnRoiCaseSchema>;
+      const outcome = await requestChangesOnRoiCase({
+        caseId,
+        organizationId: auth.organizationId,
+        expectedVersion: body.expectedVersion,
+        actorUserId: auth.userId,
+        changeRequestNotes: body.changeRequestNotes,
+        actorEffectiveRole: auth.role,
+        idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
+        correlationId: getCorrelationId(req),
+      });
+      res.status(200).json({
+        outcome: outcome.outcome,
+        eventId: outcome.eventId,
+        resultingVersion: outcome.resultingVersion,
+        case: outcome.result,
+      });
+    } catch (err) {
+      handleRoiRouteError(res, err, 'requestChangesOnRoiCase');
+    }
+  }
+);
+
+// ---------- POST .../transitions/reopen-for-revision ----------
+
+router.post(
+  '/cases/:caseId/transitions/reopen-for-revision',
+  validateParams(RoiCaseIdParamsSchema),
+  validateBody(ReopenApprovedRoiCaseForRevisionSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { caseId } = req.params as { caseId: string };
+      if (!(await requireExistingRoiCase(auth, caseId, res))) return;
+      const body = req.body as import('zod').infer<typeof ReopenApprovedRoiCaseForRevisionSchema>;
+      const outcome = await reopenApprovedRoiCaseForRevision({
+        caseId,
+        organizationId: auth.organizationId,
+        expectedVersion: body.expectedVersion,
+        actorUserId: auth.userId,
+        actorEffectiveRole: auth.role,
+        reason: body.reason,
+        idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
+        correlationId: getCorrelationId(req),
+      });
+      res.status(200).json({
+        outcome: outcome.outcome,
+        eventId: outcome.eventId,
+        resultingVersion: outcome.resultingVersion,
+        case: outcome.result,
+      });
+    } catch (err) {
+      handleRoiRouteError(res, err, 'reopenApprovedRoiCaseForRevision');
+    }
+  }
+);
+
+// ---------- GET .../approval-snapshots ; GET .../approval-snapshots/:snapshotId ----------
+
+router.get(
+  '/cases/:caseId/approval-snapshots',
+  validateParams(RoiCaseIdParamsSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { caseId } = req.params as { caseId: string };
+      const snapshots = await listRoiApprovalSnapshots({
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        caseId,
+      });
+      res.status(200).json({ snapshots });
+    } catch (err) {
+      handleRoiRouteError(res, err, 'listRoiApprovalSnapshots');
+    }
+  }
+);
+
+router.get(
+  '/cases/:caseId/approval-snapshots/:snapshotId',
+  validateParams(RoiApprovalSnapshotParamsSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { caseId, snapshotId } = req.params as { caseId: string; snapshotId: string };
+      const snapshot = await getRoiApprovalSnapshot({
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        caseId,
+        snapshotId,
+      });
+      if (!snapshot) {
+        res.status(404).json({ error: 'ROI approval snapshot not found', code: 'NOT_FOUND' });
+        return;
+      }
+      res.status(200).json({ snapshot });
+    } catch (err) {
+      handleRoiRouteError(res, err, 'getRoiApprovalSnapshot');
     }
   }
 );
