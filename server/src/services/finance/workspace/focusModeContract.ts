@@ -27,7 +27,7 @@
  * refetched, cannot have reset scroll, and cannot have dropped a draft.
  */
 
-import type { CellRef } from '../../../types/finance/CellRef.js';
+import { cellRefsEqual, type CellRef } from '../../../types/finance/CellRef.js';
 import type { FinanceWorkspaceState } from '../../../types/finance/WorkspaceState.js';
 
 // ---------------------------------------------------------------------------
@@ -654,6 +654,134 @@ export function handleEscapeKey(
   }
   const toggle = exitFocusMode(session, { trigger: 'escape-key' });
   return { resolution, toggle, session: toggle.session };
+}
+
+// ---------------------------------------------------------------------------
+// THE FOCUS-MODEL BRIDGE TO AP-03.
+//
+// The codebase carries two descriptions of "who had focus and where does it go
+// back to":
+//
+//   AP-03  `FocusSnapshot { activeCell, reason, capturedAt }` +
+//          `resolveFocusRestorePatch(reason, cell) -> { activeCell, collapseSelection }`
+//   AP-09  `FocusModeSession.focusedCell` + `.restoreFocusToControlId`,
+//          surfaced as the `{ kind: 'move-focus' }` effect of `exitFocusMode`
+//
+// They are not duplicates — they answer different questions (AP-09: which cell
+// and which BAR CONTROL was focused when the layout changed; AP-03: what the
+// GRID should do with a restored cell) — but nothing proved they were talking
+// about the same cell, so they could drift invisibly.
+//
+// Direction of authority: AP-09 CAPTURES (entering focus mode can be a mouse
+// click on the fullscreen control, so it is not a keyboard command's outcome);
+// AP-03 decides what the grid does with the captured cell. This section
+// converts between the two; it does not merge them.
+// ---------------------------------------------------------------------------
+
+/**
+ * The members of this file's types that AP-03 reads. Load-bearing: renaming or
+ * retyping any of them breaks the keyboard package, which imports
+ * `FocusModeSession`/`FocusModeEffect` structurally. Additive fields (like
+ * `activeViewId`) are safe — AP-03 reads through `Pick<>`.
+ */
+export const FOCUS_MODEL_BRIDGE_SURFACE = [
+  'FocusModeSession.focusedCell',
+  'FocusModeSession.restoreFocusToControlId',
+  "FocusModeEffect { kind: 'move-focus'; controlId; cell }",
+] as const;
+
+/**
+ * The `FocusRestoreReason` id AP-09 asks AP-03 to use when focus returns after
+ * leaving focus mode. AP-03 added exactly this literal to
+ * `FOCUS_RESTORE_REASONS` alongside its workspace-level commands.
+ */
+export const FOCUS_MODE_FOCUS_RESTORE_REASON = 'focusModeExit' as const;
+
+/**
+ * The reason to use while `focusModeExit` is not yet present in the consuming
+ * tree. `commandPaletteInvoke` is the semantically closest PRE-EXISTING reason:
+ * both are non-mutating focus returns, and AP-03 classifies both as
+ * non-collapsing — which is the property that actually matters here (see
+ * `FOCUS_MODE_MUST_NOT_COLLAPSE_SELECTION`).
+ */
+export const FOCUS_MODE_FOCUS_RESTORE_REASON_FALLBACK = 'commandPaletteInvoke' as const;
+
+/**
+ * Non-negotiable, and the reason this bridge is worth having: restoring focus
+ * after focus mode must NOT collapse the grid selection. Focus mode's whole
+ * contract is that the toggle preserves `selection`; a focus-restore patch
+ * with `collapseSelection: true` would honour AP-03's model and silently
+ * violate AP-09's.
+ */
+export const FOCUS_MODE_MUST_NOT_COLLAPSE_SELECTION = true as const;
+
+/**
+ * Pick the reason id to hand `resolveFocusRestorePatch`, given the reasons the
+ * consuming tree's AP-03 actually knows. Takes the list as an argument for the
+ * same no-import reason as the Escape bridge.
+ */
+export function focusRestoreReasonForExit(
+  supportedReasons: readonly string[]
+): typeof FOCUS_MODE_FOCUS_RESTORE_REASON | typeof FOCUS_MODE_FOCUS_RESTORE_REASON_FALLBACK {
+  return supportedReasons.includes(FOCUS_MODE_FOCUS_RESTORE_REASON)
+    ? FOCUS_MODE_FOCUS_RESTORE_REASON
+    : FOCUS_MODE_FOCUS_RESTORE_REASON_FALLBACK;
+}
+
+/**
+ * An AP-03 `FocusSnapshot`, structurally. Generic in the reason so the value
+ * this file produces is assignable to AP-03's `FocusSnapshot` (whose `reason`
+ * is a narrow union) without this file importing that union.
+ */
+export interface FocusModeFocusSnapshot<R extends string = string> {
+  activeCell: CellRef | null;
+  reason: R;
+  /** ISO-8601. */
+  capturedAt: string;
+}
+
+/** Read an AP-09 session as an AP-03-shaped snapshot. */
+export function focusModeFocusSnapshot<R extends string>(
+  session: Pick<FocusModeSession, 'focusedCell'>,
+  reason: R,
+  now: () => string = () => new Date().toISOString()
+): FocusModeFocusSnapshot<R> {
+  return { activeCell: session.focusedCell, reason, capturedAt: now() };
+}
+
+/** Everything the UI needs to put focus back after an exit: a DOM control id and/or a grid cell. */
+export interface FocusModeRestoreTarget {
+  controlId: string | null;
+  cell: CellRef | null;
+}
+
+export function focusRestoreTargetOnExit(session: FocusModeSession): FocusModeRestoreTarget {
+  return { controlId: session.restoreFocusToControlId, cell: session.focusedCell };
+}
+
+export type FocusModelAgreement =
+  | { ok: true; cell: CellRef | null }
+  | { ok: false; reason: 'CELL_MISMATCH' | 'NULLNESS_MISMATCH'; ap09: CellRef | null; ap03: CellRef | null };
+
+/**
+ * Prove the two models are describing the same focus. Compared by
+ * `cellRefsEqual` (AP-00's own canonical-key equality), not by reference: a
+ * snapshot that travelled through serialization is still the same cell.
+ */
+export function assertFocusModelsAgree(
+  session: Pick<FocusModeSession, 'focusedCell'>,
+  snapshot: Pick<FocusModeFocusSnapshot, 'activeCell'>
+): FocusModelAgreement {
+  const ap09 = session.focusedCell;
+  const ap03 = snapshot.activeCell;
+  if (ap09 === null || ap03 === null) {
+    return ap09 === ap03
+      ? { ok: true, cell: null }
+      : { ok: false, reason: 'NULLNESS_MISMATCH', ap09, ap03 };
+  }
+  return cellRefsEqual(ap09, ap03)
+    ? { ok: true, cell: ap09 }
+    : { ok: false, reason: 'CELL_MISMATCH', ap09, ap03 };
 }
 
 // ---------------------------------------------------------------------------

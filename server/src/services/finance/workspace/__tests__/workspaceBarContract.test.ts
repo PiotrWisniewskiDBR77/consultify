@@ -34,10 +34,14 @@ import {
   FINANCE_CHROME_REGIONS,
   FINANCE_COMMAND_CONTEXT_IDS,
   FINANCE_FOCUS_MODE_COMMAND_IDS,
+  FOCUS_MODEL_BRIDGE_SURFACE,
+  FOCUS_MODE_FOCUS_RESTORE_REASON_FALLBACK,
+  FOCUS_MODE_MUST_NOT_COLLAPSE_SELECTION,
   FOCUS_MODE_HIDDEN_REGIONS,
   FOCUS_MODE_PRESERVED_STATE_KEYS,
   FOCUS_MODE_PRESERVED_STATE_SOURCE,
   FOCUS_MODE_RETAINED_REGIONS,
+  assertFocusModelsAgree,
   assertFocusModePreservation,
   assertFocusModeRegionPartition,
   classifyViewport,
@@ -45,6 +49,9 @@ import {
   enterFocusMode,
   exitFocusMode,
   focusModeActiveViewId,
+  focusModeFocusSnapshot,
+  focusRestoreReasonForExit,
+  focusRestoreTargetOnExit,
   handleEscapeKey,
   regionVisibilityInFocusMode,
   resolveEscapeCommand,
@@ -58,6 +65,15 @@ import {
 // to prove the two layers actually agree instead of asserting it in prose.
 import { COMMAND_CONTEXTS } from '../../keyboard/commandTypes.js';
 import { FINANCE_KEYBOARD_COMMANDS } from '../../keyboard/KeyboardCommandRegistry.js';
+import {
+  FOCUS_RESTORE_REASONS,
+  applyFocusRestoreToSelection,
+  captureFocusSnapshot,
+  resolveFocusRestorePatch,
+  type FocusRestoreReason,
+  type FocusSnapshot,
+} from '../../keyboard/FocusRestoreContract.js';
+import { financeStmtLinesCellRef } from '../../../../types/finance/CellRef.js';
 import {
   ORG,
   allGatesSatisfied,
@@ -633,6 +649,135 @@ describe('AP-09 focusModeContract — the Escape bridge to AP-03', () => {
         { consumer: 'focus-mode', commandId: 'workspace.exitFocusMode', context: 'grid-focused' },
       ]);
     }
+  });
+});
+
+describe('AP-09 focusModeContract — the focus-model bridge to AP-03', () => {
+  const cell = financeStmtLinesCellRef({
+    organizationId: ORG,
+    businessVersionId: 'version-1',
+    entityId: 'entity-1',
+    canonicalLineId: 'revenue',
+    consolidationScope: 'CONSOLIDATED',
+    periodId: '2024-Q4',
+    accumulationBasis: 'YTD',
+  });
+  const otherCell = financeStmtLinesCellRef({
+    organizationId: ORG,
+    businessVersionId: 'version-1',
+    entityId: 'entity-1',
+    canonicalLineId: 'ebitda',
+    consolidationScope: 'CONSOLIDATED',
+    periodId: '2024-Q4',
+    accumulationBasis: 'YTD',
+  });
+  const stateWithFocus = {
+    ...createEmptyWorkspaceState({
+      organizationId: ORG,
+      userId: 'user-1',
+      artifactRef: artifactRef(),
+      sourceWorkingRevisionId: 'wr-1',
+    }),
+    selection: { activeCell: cell, ranges: [{ topLeft: cell, bottomRight: otherCell }] },
+  };
+
+  it('produces a value AP-03 accepts as a FocusSnapshot (compile-time + runtime)', () => {
+    const session = createFocusModeSession(stateWithFocus, { activeViewId: 'pnl' });
+    // The type annotation IS the assertion: if AP-09's snapshot shape ever
+    // stops satisfying AP-03's, this file no longer compiles.
+    const snapshot: FocusSnapshot = focusModeFocusSnapshot(
+      session,
+      FOCUS_MODE_FOCUS_RESTORE_REASON_FALLBACK,
+      () => '2026-08-10T00:00:00.000Z'
+    );
+    expect(snapshot).toEqual({
+      activeCell: cell,
+      reason: 'commandPaletteInvoke',
+      capturedAt: '2026-08-10T00:00:00.000Z',
+    });
+    // ...and AP-03's own capture of the same session agrees with it.
+    expect(captureFocusSnapshot({ activeCell: session.focusedCell, reason: snapshot.reason }).activeCell).toBe(
+      cell
+    );
+  });
+
+  it('agrees with AP-03 about WHICH cell had focus, and detects a disagreement', () => {
+    const session = createFocusModeSession(stateWithFocus);
+    const snapshot = focusModeFocusSnapshot(session, FOCUS_MODE_FOCUS_RESTORE_REASON_FALLBACK);
+    expect(assertFocusModelsAgree(session, snapshot)).toEqual({ ok: true, cell });
+
+    // Same cell, rebuilt object — canonical-key equality, not reference.
+    expect(
+      assertFocusModelsAgree(session, {
+        activeCell: financeStmtLinesCellRef({
+          organizationId: ORG,
+          businessVersionId: 'version-1',
+          entityId: 'entity-1',
+          canonicalLineId: 'revenue',
+          consolidationScope: 'CONSOLIDATED',
+          periodId: '2024-Q4',
+          accumulationBasis: 'YTD',
+        }),
+      }).ok
+    ).toBe(true);
+
+    // Negative controls: a different cell, and one side holding nothing.
+    expect(assertFocusModelsAgree(session, { activeCell: otherCell })).toMatchObject({
+      ok: false,
+      reason: 'CELL_MISMATCH',
+    });
+    expect(assertFocusModelsAgree(session, { activeCell: null })).toMatchObject({
+      ok: false,
+      reason: 'NULLNESS_MISMATCH',
+    });
+    expect(assertFocusModelsAgree({ focusedCell: null }, { activeCell: null })).toEqual({ ok: true, cell: null });
+  });
+
+  it('restores focus WITHOUT collapsing the selection focus mode promised to keep', () => {
+    const session = createFocusModeSession(stateWithFocus, { activeViewId: 'pnl' });
+    const entered = enterFocusMode(session, {
+      trigger: 'toggle-control',
+      restoreFocusToControlId: 'finance.statements.fullscreen',
+    }).session;
+    const exited = exitFocusMode(entered, { trigger: 'escape-key' });
+
+    const target = focusRestoreTargetOnExit(entered);
+    expect(target).toEqual({ controlId: 'finance.statements.fullscreen', cell });
+    // The move-focus effect and the restore target are the same statement.
+    expect(exited.effects).toContainEqual({ kind: 'move-focus', controlId: target.controlId, cell: target.cell });
+
+    // Whatever reason id this tree's AP-03 supports, the patch must not
+    // collapse — otherwise exiting focus mode would destroy the multi-cell
+    // selection FOCUS_MODE_PRESERVED_STATE_KEYS promises to preserve.
+    const reason = focusRestoreReasonForExit(FOCUS_RESTORE_REASONS);
+    expect(FOCUS_RESTORE_REASONS).toContain(reason);
+    const patch = resolveFocusRestorePatch(reason as FocusRestoreReason, target.cell!);
+    expect(FOCUS_MODE_MUST_NOT_COLLAPSE_SELECTION).toBe(true);
+    expect(patch.collapseSelection).toBe(false);
+
+    // Applied to the real selection: the active cell returns, the ranges live.
+    const restored = applyFocusRestoreToSelection(stateWithFocus.selection, patch);
+    expect(restored.activeCell).toBe(cell);
+    expect(restored.ranges).toEqual(stateWithFocus.selection.ranges);
+  });
+
+  it('prefers focusModeExit once AP-03 knows it, and falls back honestly until then', () => {
+    expect(focusRestoreReasonForExit(['undo', 'commandPaletteInvoke', 'focusModeExit'])).toBe('focusModeExit');
+    expect(focusRestoreReasonForExit(['undo', 'commandPaletteInvoke'])).toBe('commandPaletteInvoke');
+    // Against the REAL list in this tree — either answer is legitimate, but it
+    // must be one AP-03 can actually consume.
+    expect(FOCUS_RESTORE_REASONS).toContain(focusRestoreReasonForExit(FOCUS_RESTORE_REASONS));
+  });
+
+  it('names the bridge surface AP-03 reads, so a rename here cannot be silent', () => {
+    expect([...FOCUS_MODEL_BRIDGE_SURFACE]).toEqual([
+      'FocusModeSession.focusedCell',
+      'FocusModeSession.restoreFocusToControlId',
+      "FocusModeEffect { kind: 'move-focus'; controlId; cell }",
+    ]);
+    const session = createFocusModeSession(stateWithFocus);
+    expect(session).toHaveProperty('focusedCell');
+    expect(session).toHaveProperty('restoreFocusToControlId');
   });
 });
 
