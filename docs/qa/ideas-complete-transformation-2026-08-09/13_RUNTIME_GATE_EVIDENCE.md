@@ -128,3 +128,74 @@ streams. Teardown commands are recorded in
 `/tmp/claude-501/ideas-qg03-pg/CONNECTION.md` and
 `/tmp/claude-501/ideas-e12-pg/CONNECTION.md`. Nothing outside `/tmp` was touched
 and no non-local database was contacted at any point.
+
+---
+
+## UPDATE 2026-08-10 (later the same session) — the persistence matrix is 8/8
+
+§4 above said the per-tool chain was EVIDENCE_MISSING and in flight. It has since
+landed, and the eighth chain — the one that could not exist — landed with it.
+
+### Chains
+
+| Chain | save | refresh | cold reopen | direct-SQL readback | Verdict |
+|---|---|---|---|---|---|
+| Mind Map | ✓ | ✓ | ✓ | ✓ | PASS |
+| Whiteboard | ✓ | ✓ | ✓ | ✓ | PASS |
+| Process Flow | ✓ | ✓ | ✓ | ✓ | PASS |
+| Table | ✓ | ✓ | ✓ | ✓ | PASS |
+| Maturity gates | ✓ | ✓ | ✓ | ✓ | PASS |
+| Business case | ✓ | ✓ | ✓ | ✓ | PASS |
+| Conversion `mapping_version` | ✓ | ✓ | ✓ | ✓ | PASS |
+| **Confidentiality** | ✓ | ✓ | ✓ | ✓ | **PASS** |
+
+`Tests 8 passed (8)`, exit 0, re-run independently by the orchestrator.
+
+### Why the cold reopen is genuine
+
+Each step calls `resetConnection()` — a real `pool.end()` TCP teardown that nulls
+the module-level pool — then builds a brand-new express app, so the next query
+opens new sockets. `getTableColumns` caches column NAMES (static shape), not row
+data, so it cannot mask a data bug.
+
+### The eighth chain, and why it was blocked
+
+Confidentiality had no HTTP chain to test because **no write route existed**
+(RISK-22). The suite documented that absence rather than faking a save path. Once
+`PUT /my-ideas/:id` gained the field, the chain became real: set `restricted`
+over HTTP → warm refresh → cold reopen → direct SQL → round-trip to `standard` →
+invalid value rejected 400 with the row unchanged.
+
+### Negative controls — including one that had to be redesigned
+
+Five sabotages across the suite, plus one by the orchestrator (neutering
+`edges_json` → `warm refresh (process flow) missing mutateMark`, exit 1).
+
+Two are worth recording because of what they nearly hid:
+
+- **`mapping_version` — first attempt VACUOUS.** Omitting the write left the suite
+  GREEN, because the column carries a Postgres `DEFAULT 'v1'`. The stream reported
+  that instead of banking the pass, and the assertion was rewritten to sabotage
+  the written constant. Recorded as RISK-23: the same trap applies to every column
+  in this schema with a non-null default.
+- **Confidentiality — designed around the same trap.** `my_ideas.confidentiality`
+  is `NOT NULL DEFAULT 'standard'`, so a sabotage that merely omits the write
+  could read back `'standard'` and pass. The sabotage therefore targeted the
+  TRANSITION: set `restricted` first, then drop only the downgrade write. Failed
+  precisely, at the round-trip step: `expected undefined to be 'standard'`.
+
+### A defect this update itself caused, caught by an independent stream
+
+Adding the write route made the old test — which asserted `GET` does NOT expose
+`confidentiality` — contradict the code. The suite went 7 passed / 1 failed and
+the failure was, briefly, mine. It was found by a stream re-running the suite
+rather than reading the commit body, and is closed by the chain above. Worth
+recording: a documentation-only stream caught an implementation defect that the
+implementer's own commit message had asserted away.
+
+### Still NOT VERIFIED at this gate
+
+- Any browser-surface evidence. Everything here is server-side.
+- Behaviour with a real LLM provider configured — proven only that the gate
+  intercepts BEFORE any LLM call is attempted.
+- Full-repo schema convergence, still broken (RISK-24).

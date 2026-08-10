@@ -153,9 +153,16 @@ separately open.
 orphaned under QG-02's accounting. Restored 2026-08-10.)
 
 - Priority: P1 / release gate
-- Current state: **PARTIAL.** Schema gate and E12 server-side enforcement are PASS on an isolated
-  local database; the per-tool persistence chain is still EVIDENCE_MISSING. Full evidence:
-  `13_RUNTIME_GATE_EVIDENCE.md`.
+- Current state: **RESOLVED for everything an agent can verify (2026-08-10, SHA `c5b1b6e6b9`).**
+  Schema gate PASS, E12 server-side enforcement PASS, and the persistence matrix is **8/8** —
+  every tool and every Wave 4/5 feature passes save -> refresh -> **cold reopen** -> readback
+  confirmed by a direct database query, on an isolated local Postgres. Full evidence:
+  `13_RUNTIME_GATE_EVIDENCE.md` (including its dated UPDATE section).
+  **The one part of the DoD still outstanding is the mounted-runtime-badge / browser-surface leg**,
+  which is gate 4 and needs the owner's acceptance under rule #7 — not something this program may
+  sign off on its own. Everything server-side is done and falsifiability-checked: six sabotages
+  across the two suites, one of which came back VACUOUS (a column DEFAULT was papering over an
+  omitted write) and was reported and redesigned rather than banked.
 - Required chain: committed SHA -> mounted runtime badge -> authenticated real backend/DB -> mutation -> save -> refresh -> cold reopen -> readback.
 - DoD: all four tools pass that chain on one environment and SHA; evidence is indexed; mocks remain labelled component-only; two clean acceptance rounds produce no new P0/P1.
 - **Done (2026-08-10, owner-authorised isolated local Postgres only — never demo, never production):**

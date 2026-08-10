@@ -264,3 +264,52 @@ rewritten (RISK-23).
 the visual/CX and a11y matrices; E15's two clean rounds; full-repo schema
 convergence (broken by both runners — RISK-24). This candidate is **NOT**
 `READY_FOR_CODEX_REVIEW`.
+
+---
+
+## FINAL UPDATE 2026-08-10 (overnight session, HEAD `c5b1b6e6b9`)
+
+### Gate board
+
+| Gate | State | Evidence |
+|---|---|---|
+| 1 — full type-check | **PASS** | exit 0 / 0 errors, client and server |
+| 2 — QG backlog | **QG-01…QG-06 all RESOLVED** | `03_CODEX_QUALITY_BACKLOG.md` |
+| 3 — runtime + persistence | **PASS on isolated local DB, 8/8 chains** | `13_RUNTIME_GATE_EVIDENCE.md` |
+| 4 — visual + CX + a11y | **EVIDENCE COMPLETE, OWNER ACCEPTANCE PENDING** | `19_VISUAL_CX_MATRIX.md`, `14_A11Y_LOCALE_PERF_REPORT.md` |
+| E15 — two clean rounds | **PASS** | `20_E15_TWO_CLEAN_ROUNDS.md` |
+
+### Why this is still not `READY_FOR_CODEX_REVIEW`
+
+Exactly one thing is missing, and it is deliberately not something an agent may
+supply: **the owner's visual acceptance under CLAUDE.md rule #7.** The evidence is
+prepared — 60+ screenshots, a reviewed matrix, before/after shots for both fixed
+visual defects — but "I looked at the screenshots and they seem fine" is not
+acceptance, and this program does not get to grant itself the one sign-off the
+rule reserves for Piotr.
+
+### Still open, stated plainly
+
+- 20 modal overlays without dialog semantics (listed by file and line).
+- Table has no virtualization and no row cap; it OOMs at N=5,000 with an 8 GB
+  heap. Process Flow has no node cap. Both P1, both structural, both deliberately
+  not attempted.
+- de/ar/jp/es did not receive the 210 new locale keys.
+- Full-repo schema convergence is broken (RISK-24); the 1011-table database used
+  for all runtime evidence is a PARTIAL schema.
+- No full-repo test run; E15's scope is the Idea Workspace surface.
+
+### What changed in how this program measures itself
+
+Three methodological upgrades, each bought with a defect that got past the
+previous method:
+
+1. **Compare test COUNTS per file, not just pass/fail.** An already-red file
+   silently dropped from 7 collected tests to 0 and no red/green diff noticed.
+2. **Every green must be attacked before it is accepted** — and a sabotage that
+   leaves the suite green means the assertion is vacuous, not that the code is
+   fine. One sabotage came back vacuous because a Postgres column `DEFAULT` was
+   papering over an omitted write.
+3. **Ask "harness or product?" before fixing anything seen in a screenshot.** A
+   P1 filed against a production layout turned out to be a dev-render composition
+   the product never uses.
