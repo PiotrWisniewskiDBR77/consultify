@@ -1,14 +1,26 @@
 /**
- * W9 FAULT/CONCURRENCY/TENANT MATRIX — part D: PERFORMANCE MEASUREMENT (FC-11 SLO).
+ * W2 FC-11 — PERFORMANCE MEASUREMENT + DECLARED REGRESSION CEILINGS.
  *
- * This file MEASURES. It does not declare a pass/fail against a latency
- * threshold, because no numeric threshold exists to measure against: gate
+ * Originally (W9, part D) this file only MEASURED: it asserted nothing but a
+ * generous 30s sanity ceiling, because no numeric threshold existed to
+ * measure against. W2 (this revision) adds DECLARED REGRESSION CEILINGS —
+ * see `perfSloThresholds.ts` — derived from two independent own n=20 runs
+ * plus the two W9 runs cited below. These ceilings are a CI drift-detection
+ * gate, NOT the production SLO gate FC-11 asks for: that remains
+ * EVIDENCE_MISSING (see the three EVIDENCE_MISSING assertions at the bottom
+ * of this file, and
+ * `docs/validation/finance-v3/generated/gate-d/W2_FC11_SLO_report.md` for the
+ * full reasoning — in short, this machine's run-to-run p50 varied by up to
+ * ~9.3x with zero code changes, so no number measured here can honestly be
+ * called a production budget).
+ *
+ * Original W9 framing, still true for the production-SLO half of the gate:
  * FC-11 in
  * `docs/validation/finance-v3/FINANCE_COMPLETE_PROGRAM_CLAUDE_HANDOFF_2026-08-09.md`
- * §18 requires "declared SLO p50/p95/p99" and NO number is declared anywhere
- * in the program documents or the code. That gap is reported as
- * EVIDENCE_MISSING; the numbers produced here are the BASELINE a future SLO
- * can be declared against.
+ * §18 requires "declared SLO p50/p95/p99" and NO such number is declared
+ * anywhere in the program documents or the schema. That gap is reported as
+ * EVIDENCE_MISSING; the numbers produced here are a CI regression baseline,
+ * not a production SLO.
  *
  * WHAT IS MEASURED (three compute paths named in the Fala 9 brief):
  *   D1  full Baseline compute — monthly, GoldCo's own 12-month FY2026 horizon,
@@ -51,7 +63,26 @@ import { appendFileSync } from 'node:fs';
 
 import { beforeAll, describe, expect, it } from 'vitest';
 
+import { PERF_REGRESSION_THRESHOLDS } from './perfSloThresholds.js';
+
 const CONNECTION_STRING = process.env.DATABASE_URL ?? '';
+
+/**
+ * NEGATIVE-CONTROL HOOK ONLY — must be 0 (unset) on every real run. Set only
+ * by the W2 FC-11 report's negative-control procedure to prove the
+ * regression ceilings actually trip red on a slowdown, and to measure how
+ * little slowdown it takes to trip them. Injected INSIDE the timed window of
+ * the named path so it measures the gate, not the compute service (this file
+ * does not touch computeJobService.ts or the four compute services — those
+ * belong to other in-flight work).
+ */
+const INJECT_DELAY_MS = Number(process.env.W2_PERF_NEGATIVE_CONTROL_INJECT_MS ?? 0);
+const INJECT_PATH = process.env.W2_PERF_NEGATIVE_CONTROL_PATH ?? '';
+async function maybeInjectDelay(pathName: string): Promise<void> {
+  if (INJECT_DELAY_MS > 0 && INJECT_PATH === pathName) {
+    await new Promise((resolve) => setTimeout(resolve, INJECT_DELAY_MS));
+  }
+}
 const REAL_PG_REQUESTED =
   process.env.RUN_DB_TESTS === '1' &&
   process.env.MOCK_DB === 'false' &&
@@ -417,6 +448,7 @@ describe.skipIf(!REAL_PG)('W9-D — compute performance baseline (real PostgreSQ
         const bvId = await makeBaselineVersion();
 
         const started = performance.now();
+        await maybeInjectDelay('D1');
         const result = await baselineSvc.runBaselineCompute({
           organizationId: orgId,
           businessVersionId: bvId,
@@ -445,8 +477,14 @@ describe.skipIf(!REAL_PG)('W9-D — compute performance baseline (real PostgreSQ
       const s = stats(samples);
       report(`D1 Baseline compute — 12 monthly periods, ${lastRowsWritten} output rows/run, ${lastPeriodsComputed} periods`, s);
 
-      // Sanity ceiling only — no declared SLO exists to hold this to.
-      expect(s.p95Ms).toBeLessThan(30_000);
+      // Declared CI regression ceiling (NOT a production SLO — see
+      // perfSloThresholds.ts and the W2 FC-11 report for derivation).
+      const T = PERF_REGRESSION_THRESHOLDS.D1_BASELINE;
+      expect(
+        s.p95Ms,
+        `D1 Baseline p95=${s.p95Ms}ms exceeds regression ceiling ${T.ceilingMs}ms ` +
+          `(= ${T.observedMaxP95Ms}ms observed-max-p95 × ${T.multiplier}). Basis: ${T.basis}.`
+      ).toBeLessThan(T.ceilingMs);
     },
     600_000
   );
@@ -470,6 +508,7 @@ describe.skipIf(!REAL_PG)('W9-D — compute performance baseline (real PostgreSQ
         expect(seededRows).toBe(18); // physical pre-state: 18 rows waiting to be evaluated
 
         const started = performance.now();
+        await maybeInjectDelay('D2');
         const result = await kpiSvc.computeAnalysisKpis({
           organizationId: orgId,
           businessVersionId: bvId,
@@ -487,7 +526,13 @@ describe.skipIf(!REAL_PG)('W9-D — compute performance baseline (real PostgreSQ
 
       const s = stats(samples);
       report(`D2 Analysis KPI compute — ${lastComputed} of 18 catalog KPIs evaluated per run`, s);
-      expect(s.p95Ms).toBeLessThan(30_000);
+
+      const T = PERF_REGRESSION_THRESHOLDS.D2_KPI;
+      expect(
+        s.p95Ms,
+        `D2 KPI compute p95=${s.p95Ms}ms exceeds regression ceiling ${T.ceilingMs}ms ` +
+          `(= ${T.observedMaxP95Ms}ms observed-max-p95 × ${T.multiplier}). Basis: ${T.basis}.`
+      ).toBeLessThan(T.ceilingMs);
     },
     600_000
   );
@@ -578,6 +623,7 @@ describe.skipIf(!REAL_PG)('W9-D — compute performance baseline (real PostgreSQ
         const valuationBvId = await makeValuationVersion(baselineBvId);
 
         const dcfStarted = performance.now();
+        await maybeInjectDelay('D3A');
         const dcf = await valuationSvc.runDcfFcffValuation({
           organizationId: orgId,
           valuationBusinessVersionId: valuationBvId,
@@ -609,6 +655,7 @@ describe.skipIf(!REAL_PG)('W9-D — compute performance baseline (real PostgreSQ
         expect(grid.cells).toHaveLength(25);
 
         const gridStarted = performance.now();
+        await maybeInjectDelay('D3B');
         const written = await sensSvc.writeSensitivityGrid({
           organizationId: orgId,
           methodId: dcf.methodId,
@@ -641,26 +688,87 @@ describe.skipIf(!REAL_PG)('W9-D — compute performance baseline (real PostgreSQ
       report('D3b Sensitivity grid persist — 5x5 = 25 cells', gridStats);
       report('D3  Valuation compute WITH the 5x5 sensitivity grid (D3a + D3b)', combined);
 
-      expect(combined.p95Ms).toBeLessThan(30_000);
+      // Individual sub-path ceilings, so a regression localized to just the
+      // DCF solve or just the grid persist is not diluted by summing them.
+      const dcfT = PERF_REGRESSION_THRESHOLDS.D3A_VALUATION_DCF;
+      expect(
+        dcfStats.p95Ms,
+        `D3a Valuation DCF p95=${dcfStats.p95Ms}ms exceeds regression ceiling ${dcfT.ceilingMs}ms ` +
+          `(= ${dcfT.observedMaxP95Ms}ms observed-max-p95 × ${dcfT.multiplier}). Basis: ${dcfT.basis}.`
+      ).toBeLessThan(dcfT.ceilingMs);
+
+      const gridT = PERF_REGRESSION_THRESHOLDS.D3B_SENSITIVITY_GRID;
+      expect(
+        gridStats.p95Ms,
+        `D3b Sensitivity grid p95=${gridStats.p95Ms}ms exceeds regression ceiling ${gridT.ceilingMs}ms ` +
+          `(= ${gridT.observedMaxP95Ms}ms observed-max-p95 × ${gridT.multiplier}). Basis: ${gridT.basis}.`
+      ).toBeLessThan(gridT.ceilingMs);
+
+      const combinedT = PERF_REGRESSION_THRESHOLDS.D3_VALUATION_WITH_GRID;
+      expect(
+        combined.p95Ms,
+        `D3 Valuation+grid p95=${combined.p95Ms}ms exceeds regression ceiling ${combinedT.ceilingMs}ms ` +
+          `(= ${combinedT.observedMaxP95Ms}ms observed-max-p95 × ${combinedT.multiplier}). Basis: ${combinedT.basis}.`
+      ).toBeLessThan(combinedT.ceilingMs);
     },
     900_000
   );
 
   // =========================================================================
-  // EVIDENCE_MISSING — there is no declared SLO to compare any of this against
+  // W2 FC-11 — inverted: three sub-claims that used to pin "nothing is
+  // declared" now split into "regression ceilings ARE declared (in code)"
+  // vs. "a PRODUCTION SLO is still NOT declared (in the schema)". See
+  // docs/validation/finance-v3/generated/gate-d/W2_FC11_SLO_report.md §8 for
+  // the full before/after narrative and the schema decision's rationale.
   // =========================================================================
-  it('EVIDENCE_MISSING: no numeric compute SLO is declared anywhere in the program', async () => {
-    // FC-11 requires "declared SLO p50/p95/p99". The only numeric performance
-    // target in the whole handoff document is a UI one (grid rendering:
-    // ">=45 FPS, input p95<100 ms", §"10k x 120 logical cells"), which is not a
-    // compute SLO. Nothing in the schema stores one either — asserted here so
-    // that the day someone adds a threshold table/config, this test turns red
-    // and the measurement above gets compared against it.
-    // The ONE SLO table that exists, `observability_slos`, is an AVAILABILITY
-    // construct (`target_percentage`, `window_days`, `budget_remaining`) with
-    // no latency column at all — and it is EMPTY. So there is neither a
-    // latency budget shape nor a single declared row of any SLO to compare
-    // the D1/D2/D3 measurements against.
+  it('W2 (inverted #1-3): CI regression ceilings ARE now declared in code, paired with the schema facts they replace', () => {
+    // #1 BEFORE (W9): no threshold table OR config existed anywhere in the
+    //     codebase for any compute path — the only gate was a blanket 30s
+    //     sanity ceiling, unable to tell a 20% regression from a healthy run.
+    //   AFTER (W2): `perfSloThresholds.ts` declares five path-specific
+    //     regression ceilings, each with a numeric basis (observed p95 ×
+    //     multiplier) and a documented derivation. This is the literal
+    //     inversion of the old "no threshold table/config" pin.
+    const paths = Object.values(PERF_REGRESSION_THRESHOLDS);
+    expect(paths).toHaveLength(5);
+
+    // #2 BEFORE (W9): `expect(latencyColumns).toEqual([])` — no numeric
+    //     shape (ms, p50, p95, p99) existed to hold a threshold anywhere.
+    //   AFTER (W2): every declared threshold has a concrete positive
+    //     millisecond ceiling — the numeric shape now exists, in code.
+    for (const p of paths) {
+      expect(p.ceilingMs).toBeGreaterThan(0);
+      expect(p.observedMaxP95Ms).toBeGreaterThan(0);
+    }
+
+    // #3 BEFORE (W9): the only ceiling anywhere was a flat, un-derived 30s
+    //     sanity check identical for every path (couldn't catch a real
+    //     regression short of ~100x).
+    //   AFTER (W2): every declared ceiling is materially tighter than that
+    //     flat 30s — each is path-specific and derived from measurement, not
+    //     a round number picked for convenience.
+    for (const p of paths) {
+      expect(p.ceilingMs).toBeLessThan(30_000);
+    }
+  });
+
+  it('EVIDENCE_MISSING: a PRODUCTION compute SLO is still not declared in the schema', async () => {
+    // FC-11 requires "declared SLO p50/p95/p99" as a PRODUCTION budget. The
+    // only numeric performance target in the whole handoff document is a UI
+    // one (grid rendering: ">=45 FPS, input p95<100 ms", §"10k x 120 logical
+    // cells"), which is not a compute SLO.
+    //
+    // These three assertions are UNCHANGED in value from the W9 version —
+    // deliberately. The W2 SCHEMA DECISION (see report §8) is NOT to extend
+    // `observability_slos` or add a new latency-SLO table: there is no
+    // honestly-measured production number to put in it (this machine's own
+    // back-to-back n=20 runs disagreed by up to ~9.3x on p50 — see report
+    // §5-6), and an empty-but-present schema row would be exactly the kind
+    // of "table exists, zero real adoption" artifact this program has
+    // repeatedly flagged elsewhere as a false signal of completeness. The CI
+    // regression ceilings this file now enforces (test above) deliberately
+    // live in code, not here: a CI gate is a build-time concept, and does
+    // not need a database round-trip to fail a build.
     const sloTables = await t((tx) =>
       tx.queryAll<{ table_name: string }>(
         `SELECT table_name FROM information_schema.tables
