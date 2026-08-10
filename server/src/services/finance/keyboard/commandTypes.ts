@@ -92,6 +92,21 @@ export function combosEqual(a: KeyCombo, b: KeyCombo): boolean {
 }
 
 /**
+ * True iff the combo requires a deliberate modifier chord — i.e. it CANNOT be
+ * fired by brushing one key.
+ *
+ * `shift` deliberately does NOT count. Shift is the selection modifier on this
+ * very grid (`grid.extendUp/Down/Left/Right`), so a user extending a range
+ * with shift+arrows is already holding it down; "Shift+Delete" would fire from
+ * exactly the hand position the dangerous case starts from. Windows Explorer
+ * makes the same key mean "delete permanently, skip the recycle bin", which is
+ * the opposite of a safety guard. Only `mod` (Ctrl/Cmd) and `alt` count.
+ */
+export function comboHasGuardModifier(combo: KeyCombo): boolean {
+  return (combo.mod ?? false) || (combo.alt ?? false);
+}
+
+/**
  * True iff `event` satisfies `combo` on `platform`. `mod` resolves to
  * `ctrlKey` on Windows and `metaKey` on macOS; a combo with `mod: true`
  * deliberately does NOT also require the other platform's modifier key to be
@@ -220,7 +235,51 @@ export type CommandEngineBinding = FunctionEngineBinding | InlineContractEngineB
 
 import type { FocusRestoreReason } from './FocusRestoreContract.js';
 
-export interface KeyboardCommand {
+// ---------------------------------------------------------------------------
+// Destructiveness — the SAME vocabulary AP-09's `workspaceBarContract.ts`
+// already uses for the mouse-driven half of the same product
+// (`WorkspaceBarMoreMenuItem.destructive` / `.requiresConfirmation`, and its
+// validator's `DESTRUCTIVE_WITHOUT_CONFIRMATION` rule: OWN-FIN-012
+// "wymagają potwierdzenia dla operacji destrukcyjnych"). Two models, one
+// language — a reviewer reading either file sees the same two words mean the
+// same thing.
+//
+// WHY the keyboard layer needs a THIRD field the bar does not: a bar menu
+// item's blast radius is fixed by the item itself, while a keyboard command's
+// blast radius is whatever the user happened to have selected. `Delete` on one
+// cell and `Delete` on 400 cells extended with shift+arrows are the same
+// keystroke; only the selection differs. `confirmAboveTargetCount` is the
+// field that lets the contract say "immediate below this many targets, confirm
+// above it" instead of forcing a single all-or-nothing answer to a question
+// that genuinely depends on scale.
+// ---------------------------------------------------------------------------
+
+export interface CommandDestructivenessPolicy {
+  /**
+   * The command DESTROYS committed content — it removes value/provenance
+   * rather than replacing it with something the user just supplied. Same
+   * meaning as `WorkspaceBarMoreMenuItem.destructive`.
+   *
+   * Judgment call, stated so it can be argued with: `grid.paste` is NOT
+   * destructive under this definition even though it overwrites cells. Paste
+   * substitutes content the user explicitly provided, is a `paste` Operation
+   * with a full inverse on the AP-04 stack, and is universally non-confirmed
+   * in every spreadsheet this program is modeled on. CLEAR is different: it
+   * forces `value_status = MISSING`, i.e. it manufactures absence of data in
+   * an artifact whose whole purpose is auditable presence of data.
+   */
+  destructive: boolean;
+  /** Confirm ALWAYS, at any target count. Same meaning as `WorkspaceBarMoreMenuItem.requiresConfirmation`. */
+  requiresConfirmation: boolean;
+  /**
+   * Confirm when the command would touch MORE than this many cells. `null` =
+   * no count-based guard. Ignored when `requiresConfirmation` is already
+   * `true` (that is the stricter rule).
+   */
+  confirmAboveTargetCount: number | null;
+}
+
+export interface KeyboardCommand extends CommandDestructivenessPolicy {
   /** Stable, dotted id (`'grid.copy'`, `'finance.compute'`) — never reused across a rename; a future UI may persist this id (e.g. in a user's custom-binding override), so it is the identity, not `label`. */
   id: string;
   combo: KeyCombo;

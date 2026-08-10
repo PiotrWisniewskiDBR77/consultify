@@ -29,6 +29,7 @@ import {
 } from '../FocusRestoreContract.js';
 import {
   COMMAND_CONTEXTS,
+  comboHasGuardModifier,
   comboMatchesEvent,
   describeCombo,
   type KeyboardEventLike,
@@ -36,8 +37,13 @@ import {
 import {
   FINANCE_KEYBOARD_COMMANDS,
   KeyboardCommandRegistry,
+  MAX_UNCONFIRMED_BARE_KEY_TARGETS,
+  assertDestructiveCommandsAreGuarded,
   assertNoComboCollisions,
   findComboCollisions,
+  findDestructiveGuardViolations,
+  requiresConfirmationBeforeExecuting,
+  type CommandDispatchContext,
 } from '../KeyboardCommandRegistry.js';
 import { CommandPaletteIndex } from '../CommandPaletteIndex.js';
 
@@ -104,6 +110,11 @@ function event(partial: Partial<KeyboardEventLike> & { key: string }): KeyboardE
   return { ctrlKey: false, metaKey: false, shiftKey: false, altKey: false, ...partial };
 }
 
+/** A grid-focused, single-cell, Windows dispatch context — the ordinary case every test varies from. */
+function baseDispatchContext(): CommandDispatchContext {
+  return { context: 'grid-focused', platform: 'windows', selectedCellCount: 1 };
+}
+
 // ---------------------------------------------------------------------------
 // 1. Registry shape / collision-freedom / typed handlers (task scope item 5)
 // ---------------------------------------------------------------------------
@@ -120,6 +131,10 @@ describe('AP-03 KeyboardCommandRegistry — registry shape', () => {
       'grid.redo',
       'grid.find',
       'grid.save',
+      // Deliberately still present, and deliberately still on the bare keys: the
+      // 2026-08-10 destructiveness fix guards them with `confirmAboveTargetCount: 1`
+      // rather than moving or removing them (see the DESTRUCTIVE describe block
+      // below, and CLEAR_DESTRUCTIVENESS's comment for why a modifier was rejected).
       'grid.clearDelete',
       'grid.clearBackspace',
       'grid.navigateUp',
@@ -180,6 +195,9 @@ describe('AP-03 KeyboardCommandRegistry — registry shape', () => {
         description: 'Open the inline editor for the active cell.',
         engineBinding: { kind: 'keyboard-owned' as const, note: 'test fixture only' },
         focusRestoreReason: null,
+        destructive: false,
+        requiresConfirmation: false,
+        confirmAboveTargetCount: null,
       },
     ];
     // grid.confirmEdit already uses combo 'Enter' but in context 'cell-editing' — different context, so no collision.
@@ -276,6 +294,125 @@ describe('AP-03 KeyboardCommandRegistry — registry shape', () => {
     const copy = FINANCE_KEYBOARD_COMMANDS.find((c) => c.id === 'grid.copy')!;
     expect(comboMatchesEvent(copy.combo, event({ key: 'c', ctrlKey: true }), 'windows')).toBe(true);
     expect(comboMatchesEvent(copy.combo, event({ key: 'c', ctrlKey: true, shiftKey: true }), 'windows')).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 1b. Destructive-command guards (2026-08-10 data-safety fix).
+//
+// The defect these tests lock down: `Delete` and `Backspace` were bare,
+// unmodified, unconfirmed bindings onto BulkOpsEngine's CLEAR, so one keystroke
+// after a shift+arrow range extension forced value_status = MISSING on every
+// selected cell — with focusRestoreReason: null, so the user was not even
+// returned to the damage.
+// ---------------------------------------------------------------------------
+
+describe('AP-03 destructive command guards', () => {
+  it('the shipped registry has zero destructive-guard violations, and the constructor enforces it', () => {
+    expect(findDestructiveGuardViolations(FINANCE_KEYBOARD_COMMANDS)).toEqual([]);
+    expect(() => assertDestructiveCommandsAreGuarded(FINANCE_KEYBOARD_COMMANDS)).not.toThrow();
+    expect(() => new KeyboardCommandRegistry(FINANCE_KEYBOARD_COMMANDS)).not.toThrow();
+  });
+
+  it('CLEAR is declared destructive on both keys, with identical guards (Delete/Backspace must never drift apart)', () => {
+    const registry = new KeyboardCommandRegistry();
+    const del = registry.findById('grid.clearDelete')!;
+    const back = registry.findById('grid.clearBackspace')!;
+    for (const command of [del, back]) {
+      expect(command.destructive).toBe(true);
+      expect(command.confirmAboveTargetCount).toBe(MAX_UNCONFIRMED_BARE_KEY_TARGETS);
+      // The whole point of the fix: the user is returned to the damage.
+      expect(command.focusRestoreReason).toBe('bulkOp');
+    }
+    expect(del.confirmAboveTargetCount).toBe(back.confirmAboveTargetCount);
+    expect(del.requiresConfirmation).toBe(back.requiresConfirmation);
+  });
+
+  it('THE REGRESSION ITSELF: clearing one cell fires immediately, clearing a shift+arrow range demands confirmation', () => {
+    const registry = new KeyboardCommandRegistry();
+    const clear = registry.resolve(event({ key: 'Delete' }), 'grid-focused', 'windows')!;
+    expect(clear.id).toBe('grid.clearDelete');
+
+    // Blast radius 1 — instant, undoable with Mod+Z.
+    expect(requiresConfirmationBeforeExecuting(clear, 1)).toBe(false);
+    // Blast radius 2..N — the case the old registry executed silently.
+    expect(requiresConfirmationBeforeExecuting(clear, 2)).toBe(true);
+    expect(requiresConfirmationBeforeExecuting(clear, 400)).toBe(true);
+  });
+
+  it('the single entry point refuses to execute an unconfirmed bulk clear', () => {
+    const registry = new KeyboardCommandRegistry();
+    const bulk = registry.dispatch(event({ key: 'Delete' }), {
+      ...baseDispatchContext(),
+      selectedCellCount: 40,
+    });
+    expect(bulk.status).toBe('needs-confirmation');
+    if (bulk.status !== 'needs-confirmation') throw new Error('unreachable');
+    expect(bulk.command.id).toBe('grid.clearDelete');
+    expect(bulk.targetCount).toBe(40);
+    expect(bulk.message.pl).toContain('40');
+
+    const single = registry.dispatch(event({ key: 'Delete' }), {
+      ...baseDispatchContext(),
+      selectedCellCount: 1,
+    });
+    expect(single.status).toBe('execute');
+  });
+
+  it('NEGATIVE CONTROL — the validator actually rejects each way of reintroducing the defect', () => {
+    const clear = FINANCE_KEYBOARD_COMMANDS.find((c) => c.id === 'grid.clearDelete')!;
+
+    // (a) exactly the pre-fix declaration: bare key, no confirmation, no threshold.
+    const preFix = { ...clear, requiresConfirmation: false, confirmAboveTargetCount: null };
+    const preFixViolations = findDestructiveGuardViolations([preFix]);
+    expect(preFixViolations.map((v) => v.code)).toContain('DESTRUCTIVE_WITHOUT_CONFIRMATION');
+    expect(() => new KeyboardCommandRegistry([preFix])).toThrow(/destructive-command guard violation/);
+
+    // (b) a threshold so high it is not a guard.
+    const looseThreshold = { ...clear, confirmAboveTargetCount: 500 };
+    expect(findDestructiveGuardViolations([looseThreshold]).map((v) => v.code)).toContain(
+      'DESTRUCTIVE_BARE_KEY_THRESHOLD_TOO_HIGH'
+    );
+
+    // (c) destructive but no focus restore — the user cannot see what was destroyed.
+    const noFocus = { ...clear, focusRestoreReason: null };
+    expect(findDestructiveGuardViolations([noFocus]).map((v) => v.code)).toContain(
+      'DESTRUCTIVE_WITHOUT_FOCUS_RESTORE'
+    );
+
+    // (d) half-declared policy on a non-destructive command.
+    const copy = FINANCE_KEYBOARD_COMMANDS.find((c) => c.id === 'grid.copy')!;
+    expect(findDestructiveGuardViolations([{ ...copy, requiresConfirmation: true }]).map((v) => v.code)).toContain(
+      'GUARD_ON_NON_DESTRUCTIVE_COMMAND'
+    );
+  });
+
+  it('a modifier IS accepted as a guard, but Shift alone is NOT (shift is the range-extension key on this very grid)', () => {
+    const clear = FINANCE_KEYBOARD_COMMANDS.find((c) => c.id === 'grid.clearDelete')!;
+    expect(comboHasGuardModifier({ key: 'Delete' })).toBe(false);
+    expect(comboHasGuardModifier({ key: 'Delete', shift: true })).toBe(false);
+    expect(comboHasGuardModifier({ key: 'Delete', mod: true })).toBe(true);
+    expect(comboHasGuardModifier({ key: 'Delete', alt: true })).toBe(true);
+
+    // Shift+Delete with a loose threshold stays a violation...
+    expect(
+      findDestructiveGuardViolations([
+        { ...clear, id: 'x.shiftDelete', combo: { key: 'Delete', shift: true }, confirmAboveTargetCount: 500 },
+      ]).map((v) => v.code)
+    ).toContain('DESTRUCTIVE_BARE_KEY_THRESHOLD_TOO_HIGH');
+    // ...while a real modifier chord may carry a larger threshold.
+    expect(
+      findDestructiveGuardViolations([
+        { ...clear, id: 'x.modDelete', combo: { key: 'Delete', mod: true }, confirmAboveTargetCount: 500 },
+      ])
+    ).toEqual([]);
+  });
+
+  it('paste is deliberately NOT classified destructive (documented judgment call, asserted so a silent flip is visible)', () => {
+    const paste = FINANCE_KEYBOARD_COMMANDS.find((c) => c.id === 'grid.paste')!;
+    expect(paste.destructive).toBe(false);
+    const destructiveIds = FINANCE_KEYBOARD_COMMANDS.filter((c) => c.destructive).map((c) => c.id);
+    expect(destructiveIds.sort()).toEqual(['grid.clearBackspace', 'grid.clearDelete']);
   });
 });
 
