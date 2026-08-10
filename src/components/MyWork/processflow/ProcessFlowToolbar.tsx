@@ -588,7 +588,7 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
                   ) : (
                     <TeresaMark size={14} />
                   )}
-                  AI Coach
+                  {t('myWork.aiCoachPanel.aICoach', 'AI Coach')}
                 </button>
                 <button
                   type="button"

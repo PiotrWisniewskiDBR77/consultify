@@ -2522,7 +2522,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                             setRenamingViewId(null);
                           }
                         }}
-                        className="px-2 py-1 rounded-lg text-[10px] font-bold bg-c-surface border border-c-border-strong outline-none w-20"
+                        className="px-2 py-1 rounded-lg text-[10px] font-bold bg-c-surface border border-c-border-strong outline-none focus:border-c-focus w-20"
                       />
                     ) : (
                       <button
@@ -4054,7 +4054,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                                     column: col.header,
                                   }
                                 )}
-                                className="w-full bg-c-surface border border-c-border-subtle rounded px-1 py-0.5 text-[10px] font-bold uppercase tracking-wider text-c-text-secondary outline-none"
+                                className="w-full bg-c-surface border border-c-border-subtle rounded px-1 py-0.5 text-[10px] font-bold uppercase tracking-wider text-c-text-secondary outline-none focus:border-c-focus"
                                 onBlur={(e) => {
                                   effectiveRenameColumn(col.key, e.target.value);
                                   setEditingHeaderKey(null);

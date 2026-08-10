@@ -759,7 +759,7 @@ export const PlatformGridView: React.FC<PlatformGridViewProps> = ({
           checked={selectedRowIds.has(row.id)}
           disabled={locked}
           onChange={() => toggleRowSelection(row.id)}
-          aria-label="Select row"
+          aria-label={t('myWorkTable.gridView.selectRow', 'Select row')}
         />
       </td>
       {visibleColumns.map((col) => {

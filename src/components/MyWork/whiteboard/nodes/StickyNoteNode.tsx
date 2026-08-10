@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Handle, type NodeProps, Position } from 'reactflow';
 
 import { commentCountOf, CommentPinBadge } from './CommentPinBadge';
@@ -14,6 +15,7 @@ import {
 import { WhiteboardNodeReactions } from './WhiteboardNodeReactions';
 
 export const StickyNoteNode: React.FC<NodeProps> = ({ id: nodeId, data, selected }) => {
+  const { t } = useTranslation();
   const isDark = useIsDark();
   const colorIdx = (data?.colorIndex ?? 0) % STICKY_COLORS.length;
   const color = STICKY_COLORS[colorIdx];
@@ -165,7 +167,7 @@ export const StickyNoteNode: React.FC<NodeProps> = ({ id: nodeId, data, selected
       {data?._converted && (
         <div
           className="absolute top-1 right-1 z-10 flex items-center justify-center w-4 h-4 rounded-full bg-success-500 text-white text-[8px] shadow-sm"
-          title="Converted"
+          title={t('ideas.mindmap.converted', 'Converted')}
         >
           ✓
         </div>

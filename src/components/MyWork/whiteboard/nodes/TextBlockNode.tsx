@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Handle, type NodeProps, NodeResizer, Position } from 'reactflow';
 
 import { commentCountOf, CommentPinBadge } from './CommentPinBadge';
@@ -10,6 +11,7 @@ import {
 } from './whiteboardNodeHelpers';
 
 export const TextBlockNode: React.FC<NodeProps> = ({ id: nodeId, data, selected }) => {
+  const { t } = useTranslation();
   // Z15: per-element style overrides written by the floating style bar.
   const accentBg = resolveNodeAccentBg(data?.accentColor);
   const fontStyle = resolveNodeFontStyle(data);
@@ -123,7 +125,7 @@ export const TextBlockNode: React.FC<NodeProps> = ({ id: nodeId, data, selected 
         {data?._converted && (
           <div
             className="absolute top-1 right-1 z-10 flex items-center justify-center w-4 h-4 rounded-full bg-success-500 text-white text-[8px] shadow-sm"
-            title="Converted"
+            title={t('ideas.mindmap.converted', 'Converted')}
           >
             ✓
           </div>

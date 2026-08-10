@@ -18,6 +18,7 @@ import {
   Zap,
 } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import type { NodeProps } from 'reactflow';
 import { Handle, Position } from 'reactflow';
 
@@ -119,6 +120,7 @@ export const HANDLE_CLASS =
   '!w-2.5 !h-2.5 !bg-c-border-strong !border !border-c-bg opacity-0 group-hover:opacity-100 transition-opacity duration-150';
 
 export const FlowNodeComponent: React.FC<NodeProps> = ({ id, data, selected }) => {
+  const { t } = useTranslation();
   const shape: FlowShape = data?.shape || 'action';
   const laneColor: string = data?.laneColor || DEFAULT_LANE_COLOR;
   const isGhost = Boolean(data?._isGhost);
@@ -313,7 +315,7 @@ export const FlowNodeComponent: React.FC<NodeProps> = ({ id, data, selected }) =
             data?.onAcceptGhost?.(id);
           }}
           className="absolute -top-2 -right-2 z-10 w-5 h-5 rounded-full bg-c-success text-white flex items-center justify-center shadow-md hover:brightness-110 transition-all text-[10px] font-bold"
-          title="Accept"
+          title={t('processFlow.aiProposalPanel.accept', 'Accept')}
         >
           +
         </button>

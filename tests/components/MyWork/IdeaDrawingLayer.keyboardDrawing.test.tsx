@@ -20,9 +20,33 @@
  */
 import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { IdeaDrawingLayer, type DrawingPath } from '../../../src/components/MyWork/IdeaDrawingLayer';
+
+/**
+ * QG-04 regression guard (2026-08-10): the color swatch toolbar used to map
+ * over a COLORS array that contained '#3b82f6' twice (see COLORS in
+ * IdeaDrawingLayer.tsx), so `key={c}` collided and React warned
+ * "Encountered two children with the same key" on every mount that rendered
+ * the toolbar — which is every test in this file. Spying on console.error
+ * here, across the whole suite, means ANY future reintroduction of a
+ * duplicate key (in this or any other list this component renders) turns
+ * every test in the file red instead of passing silently with a warning
+ * buried in stdout.
+ */
+let consoleErrorSpy: ReturnType<typeof vi.spyOn>;
+
+beforeEach(() => {
+  consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+});
+
+afterEach(() => {
+  const allWarnings = consoleErrorSpy.mock.calls.map((args) => String(args[0] ?? ''));
+  consoleErrorSpy.mockRestore();
+  const keyWarnings = allWarnings.filter((msg) => /same key|Each child in a list/i.test(msg));
+  expect(keyWarnings).toEqual([]);
+});
 
 function Harness({ onClose }: { onClose?: () => void }) {
   const [paths, setPaths] = React.useState<DrawingPath[]>([]);
@@ -169,6 +193,27 @@ describe('IdeaDrawingLayer — keyboard drawing mode (WB-P1-04)', () => {
     fireEvent.keyDown(svg, { key: 'ArrowDown' });
     fireEvent.keyDown(svg, { key: 'Escape' });
     expect(live.textContent).toBe('myWorkIdeas.drawingLayer.kbStrokeCompleted');
+  });
+
+  it('renders every color swatch with a unique key/aria-label and no duplicate-key warning (QG-04)', () => {
+    const { container } = render(<Harness />);
+    const swatches = Array.from(
+      container.querySelectorAll('button[aria-label^="myWorkIdeas.drawingLayer.color "]')
+    );
+    const hexValues = swatches.map((el) => el.getAttribute('title'));
+
+    // No option was lost or silently merged by the fix: the toolbar must
+    // still expose exactly as many clickable swatches as the palette
+    // declares, and every one must be a distinct color (the duplicate
+    // '#3b82f6' entry was a genuine data bug — the second slot was fixed by
+    // giving it a real, previously-missing color, not by deleting a slot).
+    expect(hexValues.length).toBe(10);
+    expect(new Set(hexValues).size).toBe(hexValues.length);
+
+    const duplicateKeyWarnings = consoleErrorSpy.mock.calls.filter((args) =>
+      /same key|Each child in a list/i.test(String(args[0] ?? ''))
+    );
+    expect(duplicateKeyWarnings).toEqual([]);
   });
 
   it('discards a too-short keyboard stroke on Escape (pen down, no movement) without crashing', () => {

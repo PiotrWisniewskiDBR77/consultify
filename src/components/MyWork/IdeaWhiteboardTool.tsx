@@ -4717,7 +4717,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
                   value={outlineImportValue}
                   onChange={(event) => setOutlineImportValue(event.target.value)}
                   rows={8}
-                  className="mt-3 w-full rounded-xl border border-c-border-subtle bg-c-surface-raised px-3 py-2 text-sm text-c-text outline-none focus:border-c-border-strong"
+                  className="mt-3 w-full rounded-xl border border-c-border-subtle bg-c-surface-raised px-3 py-2 text-sm text-c-text outline-none focus:border-c-focus"
                   placeholder={t('myWork.whiteboard.outlineImport.placeholder')}
                 />
                 <div className="mt-3 flex items-center justify-end gap-2">
