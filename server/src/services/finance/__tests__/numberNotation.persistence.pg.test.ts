@@ -69,7 +69,7 @@ describe.skipIf(!REAL_PG)('RC-00 — corrected magnitudes survive the real finan
     });
   });
 
-  it('confirms the column really is float4 — the reason this gate exists', async () => {
+  it('confirms the column is numeric — the float4 hazard this gate was built for is closed', async () => {
     const row = await withPinnedPostgresTransaction((tx) =>
       tx.queryOne<{ data_type: string }>(
         `SELECT data_type FROM information_schema.columns
@@ -78,7 +78,18 @@ describe.skipIf(!REAL_PG)('RC-00 — corrected magnitudes survive the real finan
       )
     );
     // Read from the live catalogue, not from the migration file — a mock cannot answer this.
-    expect(row?.data_type).toBe('real');
+    //
+    // This assertion used to read `.toBe('real')`: it CHARACTERISED the hazard that made this
+    // whole suite necessary — the column was float4, so a parser fix that multiplies figures by
+    // 1000 could be silently undone by the storage. CLOSEOUT CO-9
+    // (server/migrations/20260810_finance_v3_co9_statement_money_numeric.sql) converted the column
+    // to `numeric`, so the hazard is gone and the assertion now pins the FIX rather than the bug.
+    //
+    // The round-trip test below is deliberately kept and is now stronger, not redundant: it proves
+    // the corrected magnitudes survive storage, and on `numeric` it will keep proving that for
+    // figures far above 2^24 — Apator's 1 227 799 becomes 1 227 799 000 the moment that statement
+    // is filed in units instead of thousands.
+    expect(row?.data_type).toBe('numeric');
   });
 
   it('round-trips every corrected real figure without loss', async () => {
