@@ -4268,3 +4268,185 @@ progi polityki — żadna z 5 ACs epiku nie wspomina `status`, automatyczna
 sugestia to najpewniej terytorium OKR-E004 (`system_suggested_status` w
 planowym `OKRCheckIn` YAML).
 
+---
+
+## 44. OKR-E006 Support & Decisions — implementacja + odbiór (2026-08-10)
+
+Szósty epik domeny OKR. Zbudowany dosłownie wg `OKR_E006_DESIGN.md`
+§8/§9/§10/§12/§13, ratyfikowany blokiem §-IO na czele dokumentu — IO-6
+rozstrzygnął jedyne realne otwarte pytanie draftu (Open Question #1):
+budować seam do platformowego modułu Decisions jako addytywne
+rozszerzenie `createDecision`, osobnym, jasno nazwanym commitem.
+
+**Worktree było ZŁE na starcie** (`git log --oneline -5` pokazywał gałąź
+`integration/tools-finish-20260706` bez ŻADNEGO commitu OKR) — zresetowane
+przez `git reset --hard 20d461883f` (`codex/results-vnext-g0-20260809`)
+przed jakąkolwiek pracą, zero lokalnych commitów utraconych. Po resecie
+E001-E004 w ancestry HEAD (potwierdzone `git merge-base --is-ancestor`);
+E005 (Alignment) NIE w ancestry tej gałęzi w chwili startu — nie blokowało,
+E006 nie ma zależności na E005.
+
+**Schema** (`server/migrations/20260826_rvn_okr_support.sql`):
+`okr_vnext_support_requests` (dyskryminator `kind`: comment/recognition/
+support_request, lifecycle CHECK wymusza `status` tylko dla
+support_request), `okr_vnext_decision_links` (pinned reference do
+`decisions.id`, ZERO FK — potwierdzone bezpośrednim query
+`pg_constraint` w `okrDecisionSeam.realdb.test.ts`, nie deklaracją
+projektu), plus index-only dodatek `idx_okr_vnext_sets_org_attention` na
+istniejącej (E002-owned) `okr_vnext_sets`. **Odstępstwo od draftu**:
+`objective_id`/`key_result_id` mają REALNE FK od razu (draft zakładał
+"FK dodane gdy E003 wyląduje" — E003 już wylądowało na tej gałęzi przed
+implementacją E006, więc placeholder-komentarz draftu jest nieaktualny).
+
+**IO-1 re-verification**: `'okr_objective'` NIE jest zarejestrowanym
+`resource_type` (potwierdzone grepem `resourceTypes.ts` — tylko
+`'okr_set'`) — Objectives/KeyResults/support-requests/decision-links
+dziedziczą widoczność WYŁĄCZNIE przez `set_id`, zero nowego
+resource_type, zgodnie z ostrzeżeniem zadania.
+
+**Command layer** (`okrSupportCommands.ts`): `postComment`/
+`postRecognition`/`raiseSupportRequest`/`acknowledgeSupportRequest`/
+`resolveSupportRequest`/`dismissSupportRequest`. Brak klasy
+self-approval-denial (design §11, decyzja świadoma nie cicha) — żaden AC
+nie ustanawia pary maker-checker dla support requestów; KR Owner
+rozwiązujący WŁASNY zgłoszony request po samodzielnym odblokowaniu się to
+normalna akcja, nie konflikt interesu analogiczny do zatwierdzania
+własnego celu OKR. `raiseSupportRequest` wymaga `assignedToUserId`
+explicite (zero server-side inferencji "Managera"). Obligation
+`respond_to_support_request` przez generyczny `platform/obligations.ts`
+— tworzona przy `raiseSupportRequest`, kończona przy `resolve` LUB
+`dismiss` (dismissed też liczy się jako "odpowiedziano").
+
+**Decisions seam** (`okrDecisionCommands.ts`) — **realny kod-verified
+blocker potwierdzony, NIE założony**: `DecisionController.createDecision`
+(linie 1141-1487) twardo wymaga `projectId`/`initiativeId`/`taskId` i
+NIGDY nie czytał/pisał `source_type`/`source_id` mimo że te kolumny już
+istniały (`20260311_origin_tracking.sql`, 8-cyfrowy prefiks, auto-run na
+boot). Zbudowany DOKŁADNIE wg §10.2 rekomendacji, osobnym commitem
+(`ec77d8f8a5`), jasno nazwanym "cross-module change": dwa opcjonalne pola
+Zod (`sourceType`/`sourceId`) + jeden rozszerzony warunek guard, który nie
+odrzuca niczego wcześniej akceptowanego. Zweryfikowane smoke-INSERT-em na
+realnym Postgresie (kolejność kolumn/wartości w OBU ścieżkach INSERT —
+primary i legacy-fallback), zero zmiany response shape.
+
+**Odstępstwo od draftu, stwierdzone explicite**: `requestDecisionFromSupportRequest`
+NIE woła `DecisionController.createDecision`'s Express handlera (draft
+§10.4 to rozważał jako opcję A). Po przeczytaniu realnego kodu handler
+okazał się nierozdzielny od `req`/`res` (czyta `req.can('approve_changes')`,
+pisze JSON response inline) i biegnie na WSPÓLNEJ puli przez
+`queryHelpers.withPgTransaction` — próba wyekstrahowania wewnętrznego
+wrappera byłaby dokładnie tą inwazyjną zmianą, którą IO-6 zabrania. Zamiast
+tego komenda robi bezpośredni INSERT do `decisions` NA WŁASNYM pinned
+transaction clencie (`executeAtomicCreate`'s `applyMutation`), używając
+identycznego zestawu kolumn co primary INSERT kontrolera. To czyni zapis
+Decision + zapis linku/support-requesta GENUINE ATOMOWYM (jedna
+transakcja, jedno połączenie) — LEPSZE niż martwiący draft cross-pool gap
+(§10.4's Open Question #3), który dotyczy tylko wywołania przez warstwę
+Express. Ujawniony, nieukryty koszt: `createDecision`'s side-effecty poza
+transakcją (audit log, `dispatchProjectCommunicationEvent`) NIE są
+replikowane przez tę komendę.
+
+**Realny finding, NIE założenie**: `decisions.organization_id` ma
+prawdziwy FK do `organizations(id)`, `decision_maker_id`/`created_by` mają
+prawdziwe FK do `users(id)` (ON DELETE SET NULL — to NIE łagodzi
+insert-time constraint checking) — inaczej niż `okr_vnext_*`, gdzie
+wszystkie id aktorów/orgów to gołe TEXT bez FK. `okrDecisionSeam.realdb.test.ts`/
+`okrDecisionResolutionAcknowledgement.realdb.test.ts` prowizjonują realne
+wiersze `organizations`/`users` z tego właśnie powodu — bez nich
+`requestDecisionFromSupportRequest` zwraca surowy FK-violation 500, nie
+czysty błąd domenowy. Restated jako otwarty gap na przyszłość (przyjazny
+walidacyjny błąd zamiast surowego FK-violation), nieblokujący.
+
+**Migracja 932 — zweryfikowana na żywo, nie założona**: `932_decision_workflow_canonical.sql`
+(kolumny `decisions.version`/`decided_by`, tabele `decision_comments`/
+`decision_alternatives`/`decision_risks`) potwierdzone bezpośrednim
+grepem `DatabaseInitializer.ts`'s regexu odkrywania migracji na boot
+(`/^(7\d{2}|\d{8})_.*\.sql$/`, linia 3198) — `932_` NIE pasuje (ani
+`7\d{2}`, ani 8-cyfrowa data), więc NIE jest auto-uruchamiana na
+demo/prod przy starcie serwera. **Ten epik NIE zależy od żadnej kolumny
+932** — `requestDecisionFromSupportRequest` pisze tylko kolumny z bazowej
+`20260311_origin_tracking.sql` (id, organization_id, title, description,
+type, decision_maker_id, deadline, status, created_by, source_type,
+source_id); `acknowledgeDecisionResolution` czyta tylko `status`/
+`decision_rationale`/`decided_at` (też bazowa tabela). Zweryfikowane
+lokalnie: pełny `migrate.postgres.ts` (osobny, mniej restrykcyjny runner
+niż boot-time `DatabaseInitializer.ts`) faktycznie APLIKUJE 932 gdy
+uruchomiony explicite — a więc żywy stan demo/prod zależy od tego, czy
+proces promocji jawnie odpalił pełny skrypt migracji, nie od samej
+obecności pliku. Nie miałem dostępu do żywej bazy demo z tego
+sandboxowanego worktree żeby to zweryfikować bezpośrednio przez
+`information_schema` — do zrobienia przez kogokolwiek promującego ten
+epik, zgodnie ze złotą regułą programu.
+
+**`acknowledgeDecisionResolution`** reużywa `decisionOutcomeService.isTerminalDecisionOutcome`
+(nie własną literalną listę statusów, zgodnie z instrukcją draftu §16
+item 3). Scheduled-actor trigger (rekomendacja (b) z §10.4, NIE cicha
+decyzja) zaimplementowany w `okrDecisionResolutionScanner.ts` —
+`scanAndAcknowledgeResolvedDecisionLinks`, czysta, w pełni testowana,
+NIEWPIĘTA w żaden cron (ta sama postawa P10 co `okrCycleScheduler.ts`/
+`okrCheckInScheduler.ts`). Human-triggered path (a) też dostępny —
+route/UI może wywołać `acknowledgeDecisionResolution` z realnym
+`actorUserId` w dowolnym momencie.
+
+**Manager attention queue** (`okrAttentionRepository.ts`) —
+`listOrganizationOkrAttention`, bezpośrednia strukturalna kopia
+`kpiPerspectivesRepository.ts`'s `listOrganizationKpiAttention`/
+`buildScopedKpisBase` (KPI-E003 precedens). Ten sam, potwierdzony
+grepem, NIEROZWIĄZANY gap co w KPI: `getManagementChain(userId)` nie
+istnieje nigdzie w platformie — `chain_members` CTE query'uje
+`rvn_platform_management_chain_closure` bezpośrednio (self ∪ descendant),
+ale nic realnie nie populuje tej tabeli poza czym `managementChainMaintenance.ts`
+utrzymuje dziś. Nazwane, nie naprawione — ta sama postawa co OKR-E002 D13.
+
+**API** (`okr.routes.ts`) — 11 nowych route'ów, ten sam wzorzec
+pre-fetch-ABAC co każdy route E002+ (`getObjective`/`getOkrSet`/
+`getSupportRequest` przed wywołaniem komendy — 404 dla kogoś bez
+widoczności, nie inny błąd ujawniający istnienie zasobu).
+
+**Testy — 22 asercje przeciw REALNEMU Postgresowi 17** (efemeryczny,
+`initdb --locale=C -E UTF8`, TCP 127.0.0.1, port losowy, `LC_ALL=C` przy
+starcie serwera — bez tego `postmaster became multithreaded during
+startup` FATAL, dokładnie zgodnie z ostrzeżeniem MEMORY o tej pułapce):
+`okrSupportRequestLifecycle` (5), `okrSupportRequestVisibilityJoin` (4,
+`::text` cast proof OPEN_ORG/RESTRICTED_ACL/PRIVATE), `okrRecognitionPolicyGate`
+(2, fail-closed z asercją zerowego wiersza), `okrDecisionSeam` (1,
+pełny seam + zero-FK proof + duplicate-request rejection), `okrDecisionResolutionAcknowledgement`
+(3, pending-guard + terminal-success + real-event-row proof +
+scheduled-actor path), `okrAttentionQueue` (7, wszystkie 5 sygnałów +
+manager-scoping negative case).
+
+**`npx tsc --noEmit` (`--max-old-space-size=8192`) czysty** na całym
+repo, dwa razy zweryfikowany (po serwisach, po Decisions-module diffie).
+
+**Regresja — before/after evidence**: `tests/resultsVnext/okr` pełny
+katalog: 242 passed / 2 failed (bez zmian) — oba faily dowiedzione jako
+PRZEDISTNIEJĄCE, zero-diff plikami których ten epik NIE dotknął
+(`okrCycleScheduler.ts`/`okrCheckInSuggestionService.ts` i ich testy):
+`generateCadenceOccurrences` zwraca dodatkowe pole `createdOccurrenceIds`
+(landed osobnym commitem, test go nie oczekuje) i
+`okrCheckInSuggestionService.ts` narusza D09 zero-FK-isolation regułę
+(referencje do `kpiDefinitionService`/`kpi_time_series`). `tests/unit/backend/controllers/DecisionController.test.ts`:
+5 failów w `decide`/`updateDecision` (funkcje, których ten epik NIE
+dotknął — potwierdzone `git diff` pokazującym zero zmian poza
+`createDecision`) plus 1 fail w `createDecision` samym **dowiedziony
+identyczny na bazowym (pre-zmiana) pliku kontrolera** — podmieniłem
+tymczasowo `DecisionController.ts` na wersję z `20d461883f`, uruchomiłem
+dokładnie ten sam test, identyczny fail, przywróciłem swoją wersję
+(`git status` czyste po przywróceniu). Żaden z tych 6 failów nie jest
+regresją tego epiku.
+
+**Świadomie NIEZBUDOWANE / poza zakresem** (design §16, restated nie
+zapomniane): `dismissSupportRequest` to dodatek projektowy nienazwany
+żadnym AC (jak §16 item 7 nakazywał zaznaczyć) — zbudowany, bo bez niego
+"nie, sam sobie poradziłem" nie miałoby ścieżki zamknięcia obligation.
+`listSupportRequestsForSet`/`getSupportRequest` NIE hydratują statusu
+Decision przez live JOIN (design §10.5 to sugerował) — zamiast tego
+dedykowany `getDecisionLink`/`getDecisionLinkForSupportRequest`
+endpoint/funkcja robi to explicite; uproszczenie zakresu, nie luka w
+funkcjonalności (klient wywołujący potrzebujący statusu Decision ma
+dedykowaną ścieżkę). Mocked route test (`okrSupport.routes.test.ts` z
+listy plików draftu) POMINIĘTY świadomie — zadanie explicite priorytetuje
+"DIRECT real-Postgres test" nad mockowanym testem route'a; 22 realne
+asercje przeciw prawdziwemu Postgresowi uznane za wystarczający dowód.
+
+

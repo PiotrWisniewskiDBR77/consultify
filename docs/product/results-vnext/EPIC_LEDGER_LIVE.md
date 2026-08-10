@@ -190,11 +190,23 @@ correction).
 |---|---|---|---|
 | Decision ID | D12 | D12 | D12 |
 | Requirement | Comment/recognition/support-request jako akcje odrębne od notatki check-in; recognition policy-governed. | "Request Decision" niesie kontekst Objective/KR + impact + desired date; Decision NIE staje się rodzicem strukturalnym OKR, rozstrzygnięcie wraca jako event. | Manager attention queue = read-model wyzwalany sygnałami (nieświeży check-in, niska confidence, blocker) — nazwany widok organizacyjny, nie treść jednego narzędzia. |
-| Aggregate/owner | Comment/recognition/support-request | Decision (platformowy agregat, `correlation_id`) | Manager attention read model |
-| Command/query/API | platformowe API komentarzy/MyWork (do potwierdzenia WP3) | platformowe Decision API | `GET .../okr/attention`, `POST .../advisor/manager-brief` |
-| Schema/migration/constraint | `okr_vnext_support_requests` | brak nowej tabeli — referencja przez `correlation_id` | indeksy `okr_vnext_sets` po org+cycle+scope+owner+status+attention |
+| Aggregate/owner | Comment/recognition/support-request | Decision (platformowy agregat, `source_type`/`source_id`) | Manager attention read model |
+| Command/query/API | `POST .../sets/:id/objectives/:id/{comments,recognition,support-requests}`, `POST .../support-requests/:id/{acknowledge,resolve,dismiss}` | `POST .../support-requests/:id/request-decision`, `POST .../decision-links/:id/acknowledge-resolution` | `GET .../okr/attention` (`POST .../advisor/manager-brief` NIE zbudowany — Teresa poza zakresem tej implementacji) |
+| Schema/migration/constraint | `okr_vnext_support_requests` | `okr_vnext_decision_links` (pinned reference, ZERO FK do `decisions` — dowiedzione `pg_constraint` na realnym Postgresie) | index-only `idx_okr_vnext_sets_org_attention` |
 | Roles/visibility | KR Owner, Manager, Contributor | KR/Objective Owner (request), Manager (resolve) | Manager, Org OKR Coach |
-| Status | NOT_IMPLEMENTED | NOT_IMPLEMENTED | NOT_IMPLEMENTED |
+| Status | IMPLEMENTED | IMPLEMENTED | IMPLEMENTED |
+
+**IMPLEMENTED 2026-08-10** (agent tej sesji, EXECUTION_LEDGER.md §44). "Decision
+(platformowy agregat, `correlation_id`)" z oryginalnego wiersza AC-019 było
+niedokładne co do NAZWY mechanizmu referencyjnego — realny kod nie ma
+kolumny `decisions.correlation_id`; referencja idzie przez już-istniejące
+`source_type`/`source_id` (rozszerzone o 2 opcjonalne pola, osobny
+addytywny commit do `DecisionController.ts`/`decision.validators.ts`,
+zatwierdzony rulingiem IO-6). `POST .../advisor/manager-brief` (Teresa
+narrative nad `listOrganizationOkrAttention`) świadomie NIEZBUDOWANY —
+poza zakresem tej implementacji (WP4/Teresa territory), attention
+read-model sam jest kompletny i przetestowany bez niego. Pełny closure:
+EXECUTION_LEDGER.md §44.
 
 ### OKR-E007 Review & Learning
 
