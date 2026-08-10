@@ -50,6 +50,7 @@ import {
   lookupScheduledAmortization,
 } from './baselineScheduleEngine.js';
 import { solvePeriod, type CircularityPeriodResult } from './baselineCircularitySolver.js';
+import { canonicalPayloadHash } from './contentHash.js';
 import { stampWorkingRevisionComputeIdentity } from './artifactVersionService.js';
 import * as computeJobService from './computeJobService.js';
 import type { ComputeJobRow } from './computeJobService.js';
@@ -667,7 +668,7 @@ export async function runBaselineCompute(params: RunBaselineComputeParams): Prom
       `baselineComputeService: finance_business_versions.source_working_revision_id is not set for ${params.businessVersionId} — compute_job_outputs requires a real finance_working_revisions row (WP-B04 schema), same requirement kpiComputeService.ts already documents`
     );
   }
-  const contentSemanticHash = createHash('sha256').update(JSON.stringify(monthlyResults)).digest('hex');
+  const contentSemanticHash = canonicalPayloadHash(monthlyResults);
   const completed = await computeJobService.completeJobSuccess({
     jobId: runningJob.id,
     organizationId: params.organizationId,

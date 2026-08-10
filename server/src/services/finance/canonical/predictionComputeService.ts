@@ -50,6 +50,7 @@ import {
   lookupScheduledAmortization,
 } from './baselineScheduleEngine.js';
 import { solvePeriod } from './baselineCircularitySolver.js';
+import { canonicalPayloadHash } from './contentHash.js';
 import {
   loadContext,
   requireAssumption,
@@ -254,7 +255,7 @@ async function runStandardBase(params: RunPredictionComputeParams, baselineModel
     baselineContentHashSource = { passthroughOf: baselineResult.job.id, monthlyResults: baselineResult.monthlyResults };
   }
 
-  const contentSemanticHash = createHash('sha256').update(JSON.stringify(baselineContentHashSource)).digest('hex');
+  const contentSemanticHash = canonicalPayloadHash(baselineContentHashSource);
 
   const baselineModelArtifact = await withPinnedPostgresTransaction((tx) =>
     tx.queryOne<{ artifact_id: string }>(`SELECT artifact_id FROM finance_business_versions WHERE business_version_id = ?`, [baselineModelVersionId])
@@ -716,7 +717,7 @@ async function runOverlayCompute(
   if (!scenarioArtifactEarly.source_working_revision_id) {
     throw new Error(`predictionComputeService: finance_business_versions.source_working_revision_id is not set for the Prediction Scenario ${params.businessVersionId}`);
   }
-  const contentSemanticHash = createHash('sha256').update(JSON.stringify(periods)).digest('hex');
+  const contentSemanticHash = canonicalPayloadHash(periods);
   const completed = await computeJobService.completeJobSuccess({
     jobId: runningJob.id,
     organizationId: params.organizationId,
