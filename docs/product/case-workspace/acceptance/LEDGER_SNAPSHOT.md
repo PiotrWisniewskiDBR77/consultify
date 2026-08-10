@@ -2,7 +2,7 @@
 
 > Wygenerowane automatycznie przez `scripts/case-workspace/ledger-report.mjs`.
 > NIE edytowac recznie — kazdy przebieg nadpisuje ten plik od zera.
-> Wygenerowano: 2026-08-10T20:01:51.077Z
+> Wygenerowano: 2026-08-10T22:12:19.436Z
 
 ## Jak uruchomic
 
@@ -28,26 +28,26 @@ jest liczony podwojnie) i liczy rozklad statusow po wierszach **efektywnych**.
 | CUSTOMER_JOURNEY_LEDGER.csv | 37 | tak | row_id | tak |
 | EPIC_DOD_COVERAGE.csv | 357 | tak | row_id | tak |
 | FUNCTIONAL_REQUIREMENT_COVERAGE.csv | 901 | tak | row_id | tak |
-| GOLDEN_CASE_EVIDENCE_LEDGER.csv | 81 | tak | row_id | tak |
-| LEGACY_MIGRATION_PARITY.csv | 30 | tak | row_id | tak |
+| GOLDEN_CASE_EVIDENCE_LEDGER.csv | 82 | tak | row_id | tak |
+| LEGACY_MIGRATION_PARITY.csv | 31 | tak | row_id | tak |
 | RESPONSIVE_ACCESSIBILITY_LEDGER.csv | 32 | tak | row_id | tak |
-| SECURITY_RESILIENCE_MATRIX.csv | 92 | tak | row_id | tak |
+| SECURITY_RESILIENCE_MATRIX.csv | 98 | tak | row_id | tak |
 | TRACEABILITY_AUTH_ROUTES.csv | 177 | tak | requirement_id | brak |
 | VISUAL_TRIADA_SPEC_A_LEDGER.csv | 235 | tak | row_id | tak |
 
 ## LACZNY rozklad statusow — WIERSZE EFEKTYWNE (po rozwiazaniu supersedes_row_id)
 
-Suma wierszy surowych (wszystkie pliki, wliczajac te bez kolumny status): **2053**
+Suma wierszy surowych (wszystkie pliki, wliczajac te bez kolumny status): **2061**
 
 Suma wierszy efektywnych (po deduplikacji lancuchow supersedes, tylko pliki z kolumna status): **1682**
 
-NOT_IMPLEMENTED: **1280**, PARTIAL: **196**, IMPLEMENTED_AND_PROVEN: **184**, EVIDENCE_MISSING: **17**, OUT_OF_SCOPE_THIS_WAVE: **5**
+NOT_IMPLEMENTED: **1273**, PARTIAL: **201**, IMPLEMENTED_AND_PROVEN: **187**, EVIDENCE_MISSING: **16**, OUT_OF_SCOPE_THIS_WAVE: **5**
 
-**GAP != 0.** Statusy niedomkniete obecne w wierszach efektywnych: PARTIAL=196, EVIDENCE_MISSING=17, NOT_IMPLEMENTED=1280 (razem **1493** wierszy). Nie mozna deklarowac "zero GAP".
+**GAP != 0.** Statusy niedomkniete obecne w wierszach efektywnych: PARTIAL=201, EVIDENCE_MISSING=16, NOT_IMPLEMENTED=1273 (razem **1490** wierszy). Nie mozna deklarowac "zero GAP".
 
 ### (dla porownania) rozklad surowy — WSZYSTKIE wiersze, bez dedup supersedes
 
-NOT_IMPLEMENTED: **1479**, PARTIAL: **254**, IMPLEMENTED_AND_PROVEN: **188**, BLOCKED_ON_UI: **44**, EVIDENCE_MISSING: **34**, OUT_OF_SCOPE_THIS_WAVE: **5**
+NOT_IMPLEMENTED: **1479**, PARTIAL: **259**, IMPLEMENTED_AND_PROVEN: **191**, BLOCKED_ON_UI: **44**, EVIDENCE_MISSING: **34**, OUT_OF_SCOPE_THIS_WAVE: **5**
 
 ## Rozbicie per plik
 
@@ -104,20 +104,21 @@ NOT_IMPLEMENTED: **1479**, PARTIAL: **254**, IMPLEMENTED_AND_PROVEN: **188**, BL
 
 ### GOLDEN_CASE_EVIDENCE_LEDGER.csv
 
-- Wiersze surowe: **81**
-- Z tego zastapione przez nowszy wiersz (supersedes_row_id, wylaczone z rozkladu efektywnego): **3**
+- Wiersze surowe: **82**
+- Z tego zastapione przez nowszy wiersz (supersedes_row_id, wylaczone z rozkladu efektywnego): **4**
 - Wiersze efektywne: **78**
-- Rozklad statusow (efektywne): NOT_IMPLEMENTED: **31**, PARTIAL: **30**, IMPLEMENTED_AND_PROVEN: **13**, EVIDENCE_MISSING: **4**
-- Rozklad statusow (surowe, przed dedup): PARTIAL: **32**, NOT_IMPLEMENTED: **31**, IMPLEMENTED_AND_PROVEN: **13**, EVIDENCE_MISSING: **5**
-- Wiersze efektywne bez dowodu (pusty test_ref lub pusty evidence_ref): **33**
+- Rozklad statusow (efektywne): NOT_IMPLEMENTED: **31**, PARTIAL: **30**, IMPLEMENTED_AND_PROVEN: **14**, EVIDENCE_MISSING: **3**
+- Rozklad statusow (surowe, przed dedup): PARTIAL: **32**, NOT_IMPLEMENTED: **31**, IMPLEMENTED_AND_PROVEN: **14**, EVIDENCE_MISSING: **5**
+- Wiersze efektywne bez dowodu (pusty test_ref lub pusty evidence_ref): **32**
 
 ### LEGACY_MIGRATION_PARITY.csv
 
-- Wiersze surowe: **30**
-- Z tego zastapione przez nowszy wiersz (supersedes_row_id, wylaczone z rozkladu efektywnego): **0**
+- Wiersze surowe: **31**
+- Z tego zastapione przez nowszy wiersz (supersedes_row_id, wylaczone z rozkladu efektywnego): **1**
 - Wiersze efektywne: **30**
-- Rozklad statusow (efektywne): NOT_IMPLEMENTED: **30**
-- Wiersze efektywne bez dowodu (pusty test_ref lub pusty evidence_ref): **30**
+- Rozklad statusow (efektywne): NOT_IMPLEMENTED: **29**, PARTIAL: **1**
+- Rozklad statusow (surowe, przed dedup): NOT_IMPLEMENTED: **30**, PARTIAL: **1**
+- Wiersze efektywne bez dowodu (pusty test_ref lub pusty evidence_ref): **29**
 
 ### RESPONSIVE_ACCESSIBILITY_LEDGER.csv
 
@@ -129,11 +130,12 @@ NOT_IMPLEMENTED: **1479**, PARTIAL: **254**, IMPLEMENTED_AND_PROVEN: **188**, BL
 
 ### SECURITY_RESILIENCE_MATRIX.csv
 
-- Wiersze surowe: **92**
-- Z tego zastapione przez nowszy wiersz (supersedes_row_id, wylaczone z rozkladu efektywnego): **0**
+- Wiersze surowe: **98**
+- Z tego zastapione przez nowszy wiersz (supersedes_row_id, wylaczone z rozkladu efektywnego): **6**
 - Wiersze efektywne: **92**
-- Rozklad statusow (efektywne): NOT_IMPLEMENTED: **92**
-- Wiersze efektywne bez dowodu (pusty test_ref lub pusty evidence_ref): **92**
+- Rozklad statusow (efektywne): NOT_IMPLEMENTED: **86**, PARTIAL: **4**, IMPLEMENTED_AND_PROVEN: **2**
+- Rozklad statusow (surowe, przed dedup): NOT_IMPLEMENTED: **92**, PARTIAL: **4**, IMPLEMENTED_AND_PROVEN: **2**
+- Wiersze efektywne bez dowodu (pusty test_ref lub pusty evidence_ref): **86**
 
 ### TRACEABILITY_AUTH_ROUTES.csv
 
@@ -153,7 +155,7 @@ NOT_IMPLEMENTED: **1479**, PARTIAL: **254**, IMPLEMENTED_AND_PROVEN: **188**, BL
 
 ## Wiersze bez dowodu, ktore NIE MOGA byc PASS/IMPLEMENTED_AND_PROVEN
 
-Laczna liczba wierszy efektywnych z pustym `test_ref` LUB pustym `evidence_ref`: **1287**.
+Laczna liczba wierszy efektywnych z pustym `test_ref` LUB pustym `evidence_ref`: **1279**.
 
 Rozklad tej liczby jest zdominowany przez wiersze o statusie `NOT_IMPLEMENTED` (naturalne — nic
 nie zostalo zaimplementowane, wiec nie ma dowodu). Kluczowe pytanie kontrolne to: czy ktorys z tych

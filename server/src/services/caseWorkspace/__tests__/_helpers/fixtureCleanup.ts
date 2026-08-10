@@ -99,7 +99,7 @@ export async function cleanupSuiteFixtures(
  * the existing test files are ALREADY correctly scoped and do not need
  * this).
  */
-export async function readOutboxRowsForOrganizations<T = Record<string, unknown>>(
+export async function readOutboxRowsForOrganizations<T extends Record<string, unknown> = Record<string, unknown>>(
   client: Queryable,
   organizationIds: string[]
 ): Promise<T[]> {

@@ -288,7 +288,7 @@ suite('CONTRACT — idempotency, pagination and intake over real Postgres', () =
    * When that lands, both halves below start returning 201 and this test
    * becomes the happy-path registration test it was originally written as.
    */
-  it('KNOWN DEFECT CW-API-CAP-ENUM-01 — POST /capabilities is unreachable (route enum ≠ service enum)', async () => {
+  it('CW-API-CAP-ENUM-01 FIXED — POST /capabilities is reachable with the canonical database vocabulary', async () => {
     const fx = new ContractFixtures(control);
     try {
       const f = await fx.seedFixture('cap-enum');
@@ -315,26 +315,32 @@ suite('CONTRACT — idempotency, pagination and intake over real Postgres', () =
         reversibility: 'NOT_APPLICABLE',
       };
 
-      // Half 1: the value the ROUTE's zod enum allows — rejected by the service.
+      // CW-API-CAP-ENUM-01 is FIXED. The route's zod enum invented
+      // AUTO | NOTIFY_ONLY | REQUIRE_APPROVAL — words that appear neither in
+      // the service nor in the CHECK constraint on
+      // case_workspace_capabilities.approval_recommendation — which made this
+      // endpoint unreachable in both directions. The database owns the
+      // vocabulary, so the route now speaks it.
+
+      // Half 1: the invented value is now correctly refused as invalid input.
       const routeShaped = await request(adminApp)
         .post(`${BASE}/capabilities`)
         .send({ ...base, approvalRecommendation: 'AUTO' });
       expect(routeShaped.status).toBe(400);
-      expect(routeShaped.body.error.code).toBe('CAPABILITY_APPROVAL_RECOMMENDATION_INVALID');
+      expect(routeShaped.body.error.code).toBe('VALIDATION_ERROR');
 
-      // Half 2: the value the SERVICE accepts — rejected by the route's zod.
+      // Half 2: the canonical value now REACHES the service and registers.
       const serviceShaped = await request(adminApp)
         .post(`${BASE}/capabilities`)
         .send({ ...base, approvalRecommendation: 'auto_executable' });
-      expect(serviceShaped.status).toBe(400);
-      expect(serviceShaped.body.error.code).toBe('VALIDATION_ERROR');
+      expect(serviceShaped.status).toBe(201);
 
-      // Nothing was registered by either attempt.
+      // Exactly the second attempt registered.
       const rows = await control.query(
         `SELECT capability_registry_id FROM case_workspace_capabilities WHERE capability_id = $1`,
         [base.capabilityId]
       );
-      expect(rows.rowCount).toBe(0);
+      expect(rows.rowCount).toBe(1);
     } finally {
       await fx.teardown();
     }

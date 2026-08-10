@@ -41,7 +41,14 @@ const effectClassEnum = z.enum([
   'DESTRUCTIVE',
   'GOVERNANCE_TRANSITION',
 ]);
-const approvalClassEnum = z.enum(['AUTO', 'NOTIFY_ONLY', 'REQUIRE_APPROVAL']);
+// The vocabulary is owned by the database, not by this route: the CHECK on
+// case_workspace_capabilities.approval_recommendation
+// (20260809_case_workspace_capability_registry.sql:185) allows exactly these
+// three values, and RegisterCapabilityInput declares the same. This enum
+// previously read AUTO | NOTIFY_ONLY | REQUIRE_APPROVAL — words that appear
+// nowhere in the schema or the service — so any caller reaching this route
+// would have been rejected by the CHECK constraint.
+const approvalClassEnum = z.enum(['auto_executable', 'policy_approvable', 'requires_human_approval']);
 const healthEnum = z.enum(['HEALTHY', 'DEGRADED', 'UNHEALTHY', 'UNKNOWN']);
 const lifecycleEnum = z.enum(['ACTIVE', 'DEPRECATED', 'UNAVAILABLE']);
 

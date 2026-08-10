@@ -55,7 +55,7 @@ const VALID_CAPABILITY = {
   dataClassification: 'internal',
   idempotencyStrategy: 'natural-key',
   reversibility: 'reversible',
-  approvalRecommendation: 'AUTO',
+  approvalRecommendation: 'auto_executable',
 };
 
 function createApp(): Express {

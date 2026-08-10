@@ -41,9 +41,23 @@ const canonicalGraphSchema = z
     graphId: z.string().optional(),
     entryNodeIds: z.array(z.string()),
     terminalNodeIds: z.array(z.string()),
-    nodes: z.array(z.record(z.string(), z.unknown())),
-    edges: z.array(z.record(z.string(), z.unknown())),
-    variables: z.array(z.record(z.string(), z.unknown())).optional(),
+    // Identity fields are REQUIRED here, not merely passed through: GraphNode
+    // needs nodeId, GraphEdge needs edgeId/sourceNodeId/targetNodeId and
+    // GraphVariable needs name. Validating them at the boundary turns a
+    // malformed graph into a clear 400 instead of an obscure failure deeper
+    // in the service, and makes the parsed value genuinely a CanonicalGraph
+    // rather than something cast into one.
+    nodes: z.array(z.object({ nodeId: z.string().trim().min(1) }).passthrough()),
+    edges: z.array(
+      z
+        .object({
+          edgeId: z.string().trim().min(1),
+          sourceNodeId: z.string().trim().min(1),
+          targetNodeId: z.string().trim().min(1),
+        })
+        .passthrough()
+    ),
+    variables: z.array(z.object({ name: z.string().trim().min(1) }).passthrough()).optional(),
     inputSchemaRef: z.string().nullable().optional(),
     outputSchemaRef: z.string().nullable().optional(),
     limits: z.record(z.string(), z.unknown()).optional(),

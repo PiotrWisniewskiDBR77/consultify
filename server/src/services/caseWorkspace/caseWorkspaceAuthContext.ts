@@ -221,7 +221,11 @@ interface OrganizationMemberRow {
   role: OrgRole;
   status: string | null;
   invited_by_user_id: string | null;
-  created_at: string;
+  // TIMESTAMPTZ: node-postgres hands this back as a native Date, not a string,
+  // which is exactly why mapMembershipRow normalizes it below. Typed as the
+  // union it actually is, so that normalization type-checks instead of
+  // tripping "instanceof on a non-object type".
+  created_at: string | Date;
 }
 
 interface CaseCoreOrgRefRow {

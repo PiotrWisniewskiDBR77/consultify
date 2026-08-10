@@ -513,7 +513,11 @@ async function assertNoAncestorCycle(
     if (cursor === candidateFlagKey) throw new Error('flag_definition_cycle_detected');
     if (seen.has(cursor)) break;
     seen.add(cursor);
-    const result = await client.query<{ parent_flag_key: string | null }>(
+    // Explicit annotation: `cursor` is reassigned from `result` below, so
+    // without it TypeScript reports result as circularly self-referential.
+    const result: { rows: { parent_flag_key: string | null }[] } = await client.query<{
+      parent_flag_key: string | null;
+    }>(
       `SELECT parent_flag_key FROM case_workspace_feature_flag_definitions WHERE flag_key = ?`,
       [cursor]
     );
