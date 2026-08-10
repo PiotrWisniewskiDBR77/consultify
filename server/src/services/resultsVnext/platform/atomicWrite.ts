@@ -339,6 +339,24 @@ export const EVENT_TYPE_CONSUMER_GROUPS: Readonly<Record<string, readonly string
   'okr_set.changes_requested': ['mywork_projection'],
   'okr_set.cancelled': ['mywork_projection'],
   'okr_set.material_change_recorded': ['mywork_projection'],
+
+  // OKR-E003 (docs/product/results-vnext/OKR_E003_DESIGN.md §10, D-E3-8) —
+  // Objective & KeyResult. Every event here uses aggregateType='okr_set'
+  // (the PARENT Set's identity, never a new 'okr_objective'/'okr_key_result'
+  // peer aggregate type — mirrors roiCostLineCommands.ts/roiBenefitLineCommands.ts
+  // using the parent Case's identity for child-line events). All fan out
+  // to 'mywork_projection' only, same default every other domain entry in
+  // this map uses. 'okr_objective.progress_recalculated' is emitted as a
+  // SECOND event riding along a KeyResult create/update/cancel's own
+  // primary event (insertManualOkrEvent, okrObjectiveCommands.ts) — never a
+  // standalone top-level command.
+  'okr_objective.created': ['mywork_projection'],
+  'okr_objective.updated': ['mywork_projection'],
+  'okr_objective.cancelled': ['mywork_projection'],
+  'okr_objective.progress_recalculated': ['mywork_projection'],
+  'okr_key_result.created': ['mywork_projection'],
+  'okr_key_result.updated': ['mywork_projection'],
+  'okr_key_result.cancelled': ['mywork_projection'],
 };
 
 /**
