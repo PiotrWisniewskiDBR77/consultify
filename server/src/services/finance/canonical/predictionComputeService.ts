@@ -271,8 +271,20 @@ async function runStandardBase(params: RunPredictionComputeParams, baselineModel
     requestedByUserId: params.requestedByUserId,
     requestId: params.requestId ?? null,
   });
-  const [claimed] = await computeJobService.claim({ workerId: `predictionComputeService:${uuidv4()}`, jobTypes: ['PREDICTION_COMPUTE'], limit: 1 });
-  const runningJob = claimed && claimed.id === job.id ? claimed : job;
+  // NEW-3 fix: self-claim the EXACT row just enqueued (by id, org-scoped) —
+  // never the globally-oldest queued PREDICTION_COMPUTE job across every
+  // organization (see computeJobService.claimById doc comment).
+  const claimed = await computeJobService.claimById({
+    organizationId: params.organizationId,
+    jobId: job.id,
+    workerId: `predictionComputeService:${uuidv4()}`,
+  });
+  if (!claimed) {
+    throw new Error(
+      `predictionComputeService: failed to self-claim just-enqueued job ${job.id} (organization ${params.organizationId}) — row is no longer 'queued' (concurrent claim or already terminal)`
+    );
+  }
+  const runningJob = claimed;
 
   const scenarioWorkingRevision = await withPinnedPostgresTransaction((tx) =>
     tx.queryOne<{ source_working_revision_id: string | null }>(`SELECT source_working_revision_id FROM finance_business_versions WHERE business_version_id = ?`, [
@@ -473,8 +485,20 @@ async function runOverlayCompute(
     requestedByUserId: params.requestedByUserId,
     requestId: params.requestId ?? null,
   });
-  const [claimed] = await computeJobService.claim({ workerId: `predictionComputeService:${uuidv4()}`, jobTypes: ['PREDICTION_COMPUTE'], limit: 1 });
-  const runningJob = claimed && claimed.id === job.id ? claimed : job;
+  // NEW-3 fix: self-claim the EXACT row just enqueued (by id, org-scoped) —
+  // never the globally-oldest queued PREDICTION_COMPUTE job across every
+  // organization (see computeJobService.claimById doc comment).
+  const claimed = await computeJobService.claimById({
+    organizationId: params.organizationId,
+    jobId: job.id,
+    workerId: `predictionComputeService:${uuidv4()}`,
+  });
+  if (!claimed) {
+    throw new Error(
+      `predictionComputeService: failed to self-claim just-enqueued job ${job.id} (organization ${params.organizationId}) — row is no longer 'queued' (concurrent claim or already terminal)`
+    );
+  }
+  const runningJob = claimed;
 
   const other = (code: CanonicalCode) => ctx.openingCells.get(code) ?? 0;
   let priorFixedAssets = other('FIXED_ASSETS');

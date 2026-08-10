@@ -261,6 +261,86 @@ export async function heartbeat(params: HeartbeatParams): Promise<HeartbeatResul
   });
 }
 
+export interface ClaimByIdParams {
+  organizationId: string;
+  jobId: string;
+  workerId: string;
+  leaseDurationSeconds?: number;
+}
+
+/**
+ * NEW-3 fix (W2 self-claim tenant mutation,
+ * docs/validation/finance-v3/generated/gate-d/W2_SELF_CLAIM_TENANT_FIX_report.md).
+ * Claim ONE specific, already-known job id, scoped to `organizationId` — the
+ * "self-claim" counterpart to `claim()` above.
+ *
+ * Every self-claim call site (baselineComputeService.ts,
+ * kpiComputeService.ts, predictionComputeService.ts x2,
+ * valuationComputeService.ts) calls `enqueue()` and then immediately wants to
+ * claim the EXACT row it just got back — it already has that row's `id`. The
+ * old code instead called `claim()`, which — correctly, per its own doc
+ * comment and the WP-B04 ADR — claims "the oldest queued job of this
+ * `job_type` across the WHOLE table, any organization", because that is the
+ * semantics a real future worker POOL needs. Self-claim has no business
+ * asking for that: it wants its own row, nothing else. Reusing `claim()`'s
+ * cross-org query from a single-job self-claim call site meant one
+ * organization's self-claim could silently claim-and-mutate (lease_owner,
+ * status='running', attempt_count++, a `compute_job_runs` row) another
+ * organization's queued job under ordinary concurrent use — no exploit
+ * needed. `claim()` itself is NOT changed by this fix (must stay
+ * cross-organizational for the worker-pool future) — only the caller was
+ * wrong.
+ *
+ * Same `FOR UPDATE SKIP LOCKED` + lease + `attempt_count++` +
+ * `compute_job_runs` bookkeeping as `claim()`, scoped to a single
+ * `(id, organization_id)` row instead of an `ORDER BY ... LIMIT n` scan.
+ *
+ * Returns `null` (never throws) when the row cannot be claimed: wrong
+ * `organizationId`, wrong `jobId`, or the row is no longer `status='queued'`
+ * (already running/succeeded/failed/cancelled — e.g. a concurrent duplicate
+ * request, or a lease taken a moment earlier by another caller that also had
+ * this exact job id). Callers MUST treat `null` as a hard failure and refuse
+ * to proceed — they must NOT fall back to using the un-claimed, still-queued
+ * row as if it were running (that fallback pattern is exactly what the old
+ * self-claim code did, and it was unsafe on its own even before the
+ * cross-tenant angle: a still-`queued` row's `id` handed to
+ * `completeJobSuccess()` fails its `status !== 'running'` guard and returns
+ * `{ok:false, code:'NOT_RUNNING'}`, which none of the five old call sites
+ * checked — so `compute_job_outputs` and the `succeeded` transition were
+ * silently skipped while the caller still reported success upstream).
+ */
+export async function claimById(params: ClaimByIdParams): Promise<ComputeJobRow | null> {
+  const leaseSeconds = params.leaseDurationSeconds ?? 300;
+
+  return withPinnedPostgresTransaction(async (tx) => {
+    const claimed = await tx.queryOne<ComputeJobRow>(
+      `UPDATE compute_jobs
+          SET status = 'running',
+              lease_owner = ?,
+              lease_expires_at = now() + (? || ' seconds')::interval,
+              started_at = COALESCE(started_at, now()),
+              attempt_count = attempt_count + 1
+        WHERE id IN (
+          SELECT id FROM compute_jobs
+           WHERE id = ? AND organization_id = ? AND status = 'queued' AND next_attempt_at <= now()
+           FOR UPDATE SKIP LOCKED
+           LIMIT 1
+        )
+        RETURNING *`,
+      [params.workerId, String(leaseSeconds), params.jobId, params.organizationId]
+    );
+
+    if (claimed) {
+      await tx.queryRun(
+        `INSERT INTO compute_job_runs (id, job_id, attempt_number, worker_id) VALUES (?, ?, ?, ?)`,
+        [uuidv4(), claimed.id, claimed.attempt_count, params.workerId]
+      );
+    }
+
+    return claimed;
+  });
+}
+
 export interface CompleteJobSuccessParams {
   jobId: string;
   organizationId: string;

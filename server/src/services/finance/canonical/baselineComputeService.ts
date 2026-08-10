@@ -142,12 +142,22 @@ export const DRIVING_SCHEDULE_TYPE: Partial<Record<CanonicalCode, string>> = {
 // Loaders
 // ---------------------------------------------------------------------------
 
-async function resolveSourceStatementPackVersion(businessVersionId: string): Promise<string | null> {
+// NEW-2 fix: this is the ACTUAL first read against caller-supplied
+// businessVersionId — it runs before the "W9-C-1 fix" org-scoped reads
+// below, so that comment's "every read below is now scoped" never covered
+// this one. finance_lineage_edges has a NOT NULL organization_id (migration
+// 20260809_finance_v3_b03_lineage_freshness.sql); a cross-tenant
+// businessVersionId must refuse HERE too, not just for the finance_baseline_models
+// row fetched afterward — never eligible for exploitation via this function's
+// typed return shape (loadContext still eventually checks organizationId
+// against finance_baseline_models), but reading another org's row here was
+// unnecessary and un-scoped.
+async function resolveSourceStatementPackVersion(organizationId: string, businessVersionId: string): Promise<string | null> {
   const row = await withPinnedPostgresTransaction((tx) =>
     tx.queryOne<{ source_version_id: string }>(
       `SELECT source_version_id FROM finance_lineage_edges
-        WHERE edge_type = 'STATEMENT_TO_MODEL' AND target_version_id = ?`,
-      [businessVersionId]
+        WHERE edge_type = 'STATEMENT_TO_MODEL' AND target_version_id = ? AND organization_id = ?`,
+      [businessVersionId, organizationId]
     )
   );
   return row?.source_version_id ?? null;
@@ -189,7 +199,7 @@ export async function loadContext(params: RunBaselineComputeParams): Promise<
   | { ok: true; ctx: LoadedContext }
   | { ok: false; code: 'NO_SOURCE_STATEMENT_PACK_EDGE' | 'NO_BASELINE_MODEL_ROW'; message: string }
 > {
-  const sourceStatementPackVersionId = await resolveSourceStatementPackVersion(params.businessVersionId);
+  const sourceStatementPackVersionId = await resolveSourceStatementPackVersion(params.organizationId, params.businessVersionId);
   if (!sourceStatementPackVersionId) {
     return {
       ok: false,
@@ -425,8 +435,20 @@ export async function runBaselineCompute(params: RunBaselineComputeParams): Prom
     requestedByUserId: params.requestedByUserId,
     requestId: params.requestId ?? null,
   });
-  const [claimed] = await computeJobService.claim({ workerId: `baselineComputeService:${uuidv4()}`, jobTypes: ['BASELINE_COMPUTE'], limit: 1 });
-  const runningJob = claimed && claimed.id === job.id ? claimed : job;
+  // NEW-3 fix: self-claim the EXACT row just enqueued (by id, org-scoped) —
+  // never the globally-oldest queued BASELINE_COMPUTE job across every
+  // organization (see computeJobService.claimById doc comment).
+  const claimed = await computeJobService.claimById({
+    organizationId: params.organizationId,
+    jobId: job.id,
+    workerId: `baselineComputeService:${uuidv4()}`,
+  });
+  if (!claimed) {
+    throw new Error(
+      `baselineComputeService: failed to self-claim just-enqueued job ${job.id} (organization ${params.organizationId}) — row is no longer 'queued' (concurrent claim or already terminal)`
+    );
+  }
+  const runningJob = claimed;
 
   // --- prior-period state, seeded from the opening (actual) balance sheet ---
   const other = (code: CanonicalCode) => ctx.openingCells.get(code) ?? 0;
