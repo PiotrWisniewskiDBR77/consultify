@@ -859,14 +859,29 @@ export async function approveVersion(params: ApproveVersionParams): Promise<Appr
       );
     }
 
-    // (c) status transition — compute_snapshot_id in the SAME statement as the status flip.
+    // (c) status transition — compute_snapshot_id in the SAME statement as the
+    // status flip. W10-D01 fix: also copy content_semantic_hash/compute_run_id
+    // from the working revision being frozen onto the business_version row
+    // itself — `finance_business_versions` has its own copies of both columns
+    // (`20260809_finance_v3_b01_core_artifacts.sql` lines 104-106), and before
+    // this fix this statement only ever set `compute_snapshot_id`, leaving the
+    // business_version's own hash/run_id NULL even once the working revision
+    // and the frozen snapshot both had real values.
     const approved = await tx.queryOne<BusinessVersionRow>(
       `UPDATE finance_business_versions
           SET status = 'APPROVED', version = version + 1, approved_by = ?, approved_at = now(),
-              compute_snapshot_id = ?
+              compute_snapshot_id = ?, content_semantic_hash = ?, compute_run_id = ?
         WHERE business_version_id = ? AND organization_id = ? AND version = ?
         RETURNING *`,
-      [params.actorId, computeSnapshotId, params.businessVersionId, params.organizationId, params.expectedVersion]
+      [
+        params.actorId,
+        computeSnapshotId,
+        workingRevision.content_semantic_hash,
+        workingRevision.compute_run_id,
+        params.businessVersionId,
+        params.organizationId,
+        params.expectedVersion,
+      ]
     );
     if (!approved) {
       return {

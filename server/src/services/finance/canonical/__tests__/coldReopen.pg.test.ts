@@ -106,6 +106,48 @@ const ORACLE_PATH = path.join(
 const evidence: Record<string, unknown> = {};
 const EVIDENCE_PATH = process.env.W10_EVIDENCE_PATH ?? '';
 
+/**
+ * W10-D01 fix verification. Before the fix, `content_semantic_hash` and
+ * `compute_run_id` were NULL on every approved artifact — the hot==cold
+ * digest equality checks below still passed, but VACUOUSLY: they compared
+ * NULL to NULL. This helper is the assertion that closes that gap: every one
+ * of the three places these values live (the `finance_business_versions` row
+ * itself, EVERY `finance_working_revisions` row, EVERY frozen
+ * `finance_compute_snapshots` row) must carry a real, non-empty value — not
+ * merely "equal to whatever the other side of the cold boundary saw".
+ * `not.toBeNull()` AND `not.toBe('')` on purpose: a hash that came back as an
+ * empty string would satisfy a bare truthiness check's evil twin
+ * (`expect(x).toBeTruthy()` on `'0'`-like values) far less obviously than it
+ * satisfies this pair, and empty-string was a real failure shape considered
+ * during this fix (an artifact type with no compute engine at all, e.g.
+ * Statement Pack, easily degrades to `''` instead of a real hash if a caller
+ * forgets to guard).
+ */
+function expectRealComputeIdentity(payload: {
+  businessVersion: { content_semantic_hash: unknown; compute_run_id: unknown };
+  workingRevisions: Array<{ content_semantic_hash: unknown; compute_run_id: unknown }>;
+  computeSnapshots: Array<{ content_semantic_hash: unknown; compute_run_id: unknown }>;
+}) {
+  for (const value of [payload.businessVersion.content_semantic_hash, payload.businessVersion.compute_run_id]) {
+    expect(value).not.toBeNull();
+    expect(value).not.toBe('');
+  }
+  expect(payload.workingRevisions.length).toBeGreaterThan(0);
+  for (const wr of payload.workingRevisions) {
+    expect(wr.content_semantic_hash).not.toBeNull();
+    expect(wr.content_semantic_hash).not.toBe('');
+    expect(wr.compute_run_id).not.toBeNull();
+    expect(wr.compute_run_id).not.toBe('');
+  }
+  expect(payload.computeSnapshots.length).toBeGreaterThan(0);
+  for (const snap of payload.computeSnapshots) {
+    expect(snap.content_semantic_hash).not.toBeNull();
+    expect(snap.content_semantic_hash).not.toBe('');
+    expect(snap.compute_run_id).not.toBeNull();
+    expect(snap.compute_run_id).not.toBe('');
+  }
+}
+
 describe.skipIf(!REAL_PG)('Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4', () => {
   let withPinnedPostgresTransaction: typeof import('../../../../database/PostgresDatabase.js').withPinnedPostgresTransaction;
   let db: any;
@@ -799,6 +841,12 @@ describe.skipIf(!REAL_PG)('Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.
     );
     expect(bv.status).toBe('APPROVED');
     expect(bv.compute_snapshot_id).toBeTruthy();
+    // W10-D01 fix verification — FC-05.8 names the semantic sum as something
+    // that must survive the cold reopen; before the fix it "survived" only
+    // because both sides were NULL. Assert it is a real value on THIS side
+    // directly, not just equal to whatever the cold side also has.
+    expect(bv.content_semantic_hash).not.toBeNull();
+    expect(bv.content_semantic_hash).not.toBe('');
 
     const hotStart = Date.now();
     const hot = await hotRead('baseline');
@@ -807,6 +855,10 @@ describe.skipIf(!REAL_PG)('Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.
     // Sanity: the fixture really did compute a full monthly grid, so the
     // comparison below is not comparing two empty payloads.
     expect((hot as any).outputCount).toBeGreaterThan(100);
+    // W10-D01 fix verification (hot side): the working revision(s) AND the
+    // frozen compute snapshot(s) all carry a real content_semantic_hash and a
+    // real compute_run_id — not the vacuous NULL-vs-NULL this bug produced.
+    expectRealComputeIdentity(hot as any);
 
     const { writerPids, proof, child } = await coldCycle('baseline');
 
@@ -817,6 +869,10 @@ describe.skipIf(!REAL_PG)('Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.
     expect(firstDifference(canonicalize(hot), child.canonical)).toBe('(identical)');
     expect(child.digest).toBe(digest(hot));
     expect(child.witnessDigest).toBe(digest(hotWitness));
+    // W10-D01 fix verification (cold side, independently — not inferred from
+    // the digest equality above): the SEPARATE OS PROCESS's own read also
+    // sees real, non-empty hashes.
+    expectRealComputeIdentity(JSON.parse(child.canonical));
 
     evidence.fc05_8 = {
       hotMs, hotDigest: digest(hot), coldDigest: child.digest,
@@ -844,6 +900,8 @@ describe.skipIf(!REAL_PG)('Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.
     expect(hot.methods.some((m: any) => m.method_type === 'DCF_FCFF' && m.is_in_recommendation_basket === true)).toBe(true);
     expect(hot.advisorOutputs.length).toBeGreaterThan(0);
     expect(hot.advisorOutputs.every((a: any) => a.is_frozen === true)).toBe(true);
+    // W10-D01 fix verification (hot side) — see FC-05.8's identical call for the full rationale.
+    expectRealComputeIdentity(hot);
 
     const { writerPids, proof, child } = await coldCycle('valuation');
     expect(proof.beforeClose.length).toBeGreaterThan(1);
@@ -860,6 +918,8 @@ describe.skipIf(!REAL_PG)('Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.
     expect(cold.sensitivityCells).toHaveLength(25);
     expect(cold.advisorOutputs.every((a: any) => a.is_frozen === true && a.is_stale === false)).toBe(true);
     expect(cold.bridge.enterprise_value_decimal).toBe(hot.bridge.enterprise_value_decimal);
+    // W10-D01 fix verification (cold side, independently).
+    expectRealComputeIdentity(cold);
 
     evidence.fc07_9 = {
       hotMs, hotDigest: digest(hot), coldDigest: child.digest,
@@ -891,6 +951,15 @@ describe.skipIf(!REAL_PG)('Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.
     for (const stage of ['statement', 'analysis', 'baseline', 'prediction', 'valuation'] as const) {
       expect(hot[stage].businessVersion.status).toBe('APPROVED');
     }
+    // W10-D01 fix verification (hot side) — ALL FIVE artifact types, including
+    // STATEMENT_PACK and HISTORICAL_ANALYSIS which have no `compute_jobs`
+    // engine path at all (Statement Pack goes through reconciliation, not a
+    // compute job) and were therefore the easiest to miss when wiring this
+    // fix. Every stage must carry a real content_semantic_hash/compute_run_id
+    // on its business version, working revision(s) and frozen snapshot(s).
+    for (const stage of ['statement', 'analysis', 'baseline', 'prediction', 'valuation'] as const) {
+      expectRealComputeIdentity(hot[stage]);
+    }
     // Each stage must actually carry values, otherwise the digest comparison
     // below could be satisfied by five identically empty payloads. The
     // Prediction stage is checked on `effectiveOutputCount`, not
@@ -914,6 +983,11 @@ describe.skipIf(!REAL_PG)('Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.
     expect(child.witnessDigest).toBe(digest(hotWitness));
 
     const cold = JSON.parse(child.canonical);
+
+    // W10-D01 fix verification (cold side, independently) — same five stages.
+    for (const stage of ['statement', 'analysis', 'baseline', 'prediction', 'valuation'] as const) {
+      expectRealComputeIdentity(cold[stage]);
+    }
 
     // Lineage navigable BACKWARDS from the Valuation, after the cold reopen,
     // through the shipping `lineageService.getAncestors` traversal.
