@@ -178,6 +178,19 @@ export interface ExplicitControlEvidence {
   decidedAt?: string | null;
   /** Caller-computed (the caller owns the expiry clock for its aggregate). */
   expired?: boolean;
+  /**
+   * SEC-004 / CW-DOD-D6, re-checked AT EXECUTION TIME by the caller: "execution
+   * still checks current authority; revocation after approval blocks
+   * execution". An approval is evidence that an authorized human pressed the
+   * button THEN; it is not evidence that they are still authorized NOW. The
+   * caller re-reads the approver's CURRENT standing (membership/role) at the
+   * moment of the material action and sets this to `true` when that standing is
+   * gone. This gate cannot read it itself: the standing lives in
+   * `organization_members`, which is the auth context's table, not this
+   * service's, and the caller already owns the transaction the check must be
+   * consistent with.
+   */
+  approverStandingRevoked?: boolean;
 }
 
 /** What the control MUST bind to for this specific action. */
@@ -229,8 +242,10 @@ export type AutonomyDenialCode =
   | 'autonomy_explicit_control_required'
   | 'autonomy_control_channel_not_explicit'
   | 'autonomy_control_not_bound_to_action'
+  | 'autonomy_control_binding_evidence_missing'
   | 'autonomy_control_expired'
   | 'autonomy_control_self_approved'
+  | 'autonomy_control_approver_standing_revoked'
   | 'autonomy_step_up_assurance_not_configured'
   | 'autonomy_plan_policy_path_closed';
 
@@ -607,21 +622,39 @@ export async function resolveEffectiveAutonomy(
   const client = options?.client ?? null;
   const reasons: string[] = [];
 
+  // THE CEILING IS A MINIMUM OPERATION, NOT AN ASSIGNMENT.
+  //
+  // A caller-supplied ceiling used to REPLACE the stored one, which made
+  // `organizationCeiling` a privilege-RAISING parameter: a caller passing
+  // EXECUTE_APPROVED_PLAN under a stored ceiling of ASK_EACH_ACTION got the
+  // permissive level, re-opening the A2 plan-policy path the organization had
+  // deliberately closed. The stored row is ALWAYS read and the two are combined
+  // by restrictiveness, so a supplied value can only ever narrow authority.
+  // `UNCONFIGURED_FAIL_CLOSED_DEFAULT` participates in that minimum as itself
+  // (ASK_EACH_ACTION): an absent org policy is the strictest fact, so a caller
+  // cannot manufacture a ceiling where the organization configured none.
   const suppliedCeiling = asAutonomyPolicy(options?.organizationCeiling);
+  const stored = orgId ? await readOrganizationAutonomyCeiling(orgId, client) : null;
+  const storedCeiling: AutonomyPolicy = stored ?? FAIL_CLOSED_AUTONOMY;
+  const storedCeilingSource: OrganizationCeilingSource = stored
+    ? 'ORG_POLICY_ROW'
+    : 'UNCONFIGURED_FAIL_CLOSED_DEFAULT';
+  if (!stored) reasons.push('organization_ceiling_not_configured');
+
   let ceiling: AutonomyPolicy;
   let ceilingSource: OrganizationCeilingSource;
-  if (suppliedCeiling) {
+  if (suppliedCeiling && AUTONOMY_RANK[suppliedCeiling] <= AUTONOMY_RANK[storedCeiling]) {
+    // The supplied value is at least as restrictive as what is stored — it
+    // wins, and is labelled as the source so an auditor sees who narrowed it.
     ceiling = suppliedCeiling;
     ceilingSource = 'CALLER_SUPPLIED';
   } else {
-    const stored = orgId ? await readOrganizationAutonomyCeiling(orgId, client) : null;
-    if (stored) {
-      ceiling = stored;
-      ceilingSource = 'ORG_POLICY_ROW';
-    } else {
-      ceiling = FAIL_CLOSED_AUTONOMY;
-      ceilingSource = 'UNCONFIGURED_FAIL_CLOSED_DEFAULT';
-      reasons.push('organization_ceiling_not_configured');
+    ceiling = storedCeiling;
+    ceilingSource = storedCeilingSource;
+    if (suppliedCeiling) {
+      reasons.push(
+        `caller_supplied_ceiling_capped_by_organization:${suppliedCeiling}->${storedCeiling}`
+      );
     }
   }
 
@@ -684,6 +717,16 @@ function assuranceIsConfigured(assurance: string | null | undefined): boolean {
 /**
  * Is this control an EXPLICIT, BOUND human control for THIS action?
  * Returns the denial code when it is not; null when it qualifies.
+ *
+ * FAIL-CLOSED ON MISSING EVIDENCE (the trap this function used to fall into):
+ * every binding check below is conditional on the corresponding field being
+ * PRESENT. Read naively that means an A3/A4 action supplying no `binding` at
+ * all — no proposer identity, no version, no digest — skipped the self-approval
+ * ceiling (GOV-022) AND the control-to-action binding (06 §4) and came out
+ * `allowed`. Absence of evidence was being read as evidence of compliance,
+ * which is the exact inversion the rest of this file exists to prevent. For the
+ * classes that require a human (A3/A4) the binding evidence is therefore now
+ * MANDATORY, checked before the field-by-field comparisons.
  */
 function disqualifyControl(
   control: ExplicitControlEvidence | null | undefined,
@@ -691,11 +734,36 @@ function disqualifyControl(
   requiredControl: RequiredControl
 ): AutonomyDenialCode | null {
   if (!control) return 'autonomy_explicit_control_required';
+  // SEC-004: authority at APPROVAL time is not authority at EXECUTION time.
+  // Checked first — a control pressed by someone who no longer has standing is
+  // void whatever else is right about it.
+  if (control.approverStandingRevoked === true) {
+    return 'autonomy_control_approver_standing_revoked';
+  }
   if (control.channel !== 'BUTTON') return 'autonomy_control_channel_not_explicit';
   if (control.expired === true) return 'autonomy_control_expired';
 
   const approver = String(control.approverActorId ?? '').trim();
   if (!approver) return 'autonomy_explicit_control_required';
+
+  if (requiredControl === 'EXPLICIT_CONTROL_WITH_STEP_UP') {
+    // A3/A4. 06 §4 requires the decision to bind
+    // `proposal_id + exact_version + material_hash + approver_role`; without a
+    // proposer identity GOV-022's self-approval ceiling cannot be evaluated at
+    // all. Any of these missing means the control cannot be PROVEN bound to
+    // this action, and an unprovable binding is a refusal, not a pass.
+    const boundVersionKnown =
+      control.boundProposalVersion !== null && control.boundProposalVersion !== undefined;
+    const requiredVersionKnown =
+      binding?.proposalVersion !== null && binding?.proposalVersion !== undefined;
+    const missing =
+      !String(binding?.proposerActorId ?? '').trim() ||
+      !requiredVersionKnown ||
+      !boundVersionKnown ||
+      !String(binding?.payloadDigest ?? '').trim() ||
+      !String(control.boundPayloadDigest ?? '').trim();
+    if (missing) return 'autonomy_control_binding_evidence_missing';
+  }
 
   const proposer = String(binding?.proposerActorId ?? '').trim();
   if (proposer && proposer === approver) return 'autonomy_control_self_approved';

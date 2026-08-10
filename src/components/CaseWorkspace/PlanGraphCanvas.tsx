@@ -476,9 +476,37 @@ export const PlanGraphCanvas: React.FC<PlanGraphCanvasProps> = ({
         </svg>
       </div>
 
-      {/* Sterowanie widokiem — neutralne, nigdy crimson (crimson = krytyczne). */}
-      <div className="pointer-events-none absolute bottom-3 right-3 flex flex-wrap justify-end gap-1.5">
-        <div className="pointer-events-auto flex items-center gap-1 rounded-xl border border-c-border bg-c-surface p-1 shadow-sm">
+      {/*
+       * DOLNY PAS PŁÓTNA — podpowiedź i sterowanie w JEDNYM kontenerze.
+       *
+       * ★ ZMIERZONE, nie ocenione okiem: dopóki podpowiedź i pasek powiększania
+       * były dwiema NIEZALEŻNYMI warstwami `absolute` (jedna `bottom-3 left-3`,
+       * druga `bottom-3 right-3`), na wąskim ekranie pasek rozrastał się w lewo
+       * (320 px: pasek x13 w282) i wchodził pod tekst podpowiedzi (x25 w132
+       * h76) — prostokąty nachodziły na siebie na 320, 375 I 430, czyli napis
+       * z procentem powiększenia był przekreślony podpowiedzią. Dwie warstwy
+       * `absolute` nie wiedzą o sobie nawzajem, więc żadne marginesy tego nie
+       * naprawiają na stałe.
+       *
+       * Jeden kontener flex rozwiązuje to strukturalnie: poniżej 768 px (ten
+       * sam próg co `isNarrow` w module) elementy stoją w kolumnie — podpowiedź
+       * nad paskiem, pasek przy dolnej krawędzi, w zasięgu kciuka. Od 768 px
+       * wracają do układu „podpowiedź z lewej, sterowanie z prawej".
+       *
+       * Na wąskim ekranie podpowiedź jest krótsza: pełne zdanie zajmowało tam
+       * 76 px z ~220 px wysokości płótna. Nic nie ginie — komplet instrukcji
+       * (w tym klawiatura) siedzi w `aria-label` płótna, a pełną treść planu
+       * daje projekcja „Lista".
+       */}
+      <div className="pointer-events-none absolute inset-x-3 bottom-3 flex flex-col gap-1.5 md:flex-row md:items-end md:justify-between md:gap-3">
+        <p className="min-w-0 text-[11px] leading-snug text-c-text-muted md:max-w-[45%]">
+          <span className="md:hidden">Przeciągnij, aby przesunąć. Kółko przybliża.</span>
+          <span className="hidden md:inline">
+            Przeciągnij, aby przesunąć. Kółko myszy przybliża. Strzałka pokazuje kolejność kroków.
+          </span>
+        </p>
+        {/* Sterowanie widokiem — neutralne, nigdy crimson (crimson = krytyczne). */}
+        <div className="pointer-events-auto flex flex-wrap items-center justify-end gap-1 self-end rounded-xl border border-c-border bg-c-surface p-1 shadow-sm">
           <button
             type="button"
             onClick={() => zoomBy(1 / 1.2)}
@@ -505,10 +533,17 @@ export const PlanGraphCanvas: React.FC<PlanGraphCanvasProps> = ({
             type="button"
             onClick={fitToView}
             data-testid="plan-dopasuj"
+            // Pełna nazwa zostaje dla czytnika ekranu ZAWSZE — na wąskim
+            // ekranie skraca się wyłącznie napis widoczny. Zmierzone: pełne
+            // „Dopasuj do ekranu" rozpychało pasek do 282 px przy 270 px
+            // dostępnych, więc pasek łamał się na dwie linie (78 px wysokości)
+            // i zjadał połowę płótna. Skrót mieści cały rząd w jednej linii.
+            aria-label="Dopasuj do ekranu"
             className={`inline-flex h-8 items-center gap-1.5 rounded-lg px-2 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised ${FOCUS_RING}`}
           >
             <Maximize2 size={14} aria-hidden />
-            Dopasuj do ekranu
+            <span className="md:hidden">Dopasuj</span>
+            <span className="hidden md:inline">Dopasuj do ekranu</span>
           </button>
           <button
             type="button"
@@ -520,10 +555,6 @@ export const PlanGraphCanvas: React.FC<PlanGraphCanvasProps> = ({
           </button>
         </div>
       </div>
-
-      <p className="pointer-events-none absolute bottom-3 left-3 max-w-[45%] text-[11px] leading-snug text-c-text-muted">
-        Przeciągnij, aby przesunąć. Kółko myszy przybliża. Strzałka pokazuje kolejność kroków.
-      </p>
     </div>
   );
 };

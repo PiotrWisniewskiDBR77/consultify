@@ -6,10 +6,20 @@
  *
  * Written in ATTACK mode: every `it()` below states the attack, and the
  * assertions encode the SECURE expectation. A red test here is a real hole,
- * not an authoring defect. Where a hole is confirmed, the test is written to
- * PASS while documenting the insecure observed behaviour explicitly (so the
- * suite stays green in CI and the finding lives in the assertion text), and
- * the secure expectation is stated in the comment above it.
+ * not an authoring defect.
+ *
+ * HISTORY (read this before trusting a green run): five of these tests
+ * originally documented CONFIRMED HOLES — they asserted the insecure observed
+ * behaviour as fact so the suite stayed green while the finding lived in the
+ * assertion text. Those five (ATTACK 7-11: the caller-raisable organization
+ * ceiling, the unbound self-approved A3 control, the revoked approver still
+ * authorizing execution, and the two globally-resolved correlation-key holes)
+ * have since been FIXED in the services, and their assertions are inverted to
+ * state the secure behaviour. Each fix was verified by reverting it and
+ * confirming the corresponding test turns red. Every one of the five also
+ * carries a NEGATIVE CONTROL in the same test — the same operation, one field
+ * changed, still succeeding — because a gate that refuses everything proves
+ * nothing about the specific hole it claims to close.
  *
  * Runs only against a real Postgres:
  *   DB_TYPE=postgres LC_ALL=C NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false \
@@ -378,16 +388,18 @@ suite('NEW SURFACE — adversarial security (intake / autonomy / inbox)', () => 
   }, 60_000);
 
   // ===================================================================
-  // ATTACK 7 (HOLE) — AUTONOMY: the organization ceiling can be RAISED
-  // by a caller-supplied value.
+  // ATTACK 7 (WAS A HOLE — FIXED) — AUTONOMY: the organization ceiling
+  // must not be RAISABLE by a caller-supplied value.
   //
-  // SECURE EXPECTATION: the docstring of resolveEffectiveAutonomy says
+  // The docstring of resolveEffectiveAutonomy says
   // "effective = min(casePolicy, organizationCeiling)" and "the ceiling
-  // ALWAYS wins". A caller-supplied ceiling must therefore never be able
-  // to exceed the stored one — it should be min(supplied, stored).
-  // OBSERVED: `organizationCeiling` REPLACES the stored row entirely.
+  // ALWAYS wins". `organizationCeiling` used to REPLACE the stored row
+  // entirely, so a caller could hand itself EXECUTE_APPROVED_PLAN under a
+  // stored ceiling of ASK_EACH_ACTION and re-open the A2 plan-policy path
+  // the organization had deliberately closed. It is now a real min() over
+  // the restrictiveness order, with the stored row always read.
   // ===================================================================
-  it('HOLE/autonomy: a caller-supplied organizationCeiling overrides a STRICTER stored ceiling', async () => {
+  it('FIXED/autonomy: a caller-supplied organizationCeiling can only NARROW, never raise, the stored ceiling', async () => {
     const t = await seedTenant('aut1');
 
     // Org hard maximum, in the database: the most restrictive level.
@@ -409,29 +421,57 @@ suite('NEW SURFACE — adversarial security (intake / autonomy / inbox)', () => 
     expect(honest.organizationCeilingSource).toBe('ORG_POLICY_ROW');
     expect(honest.effectiveAutonomy).toBe('ASK_EACH_ACTION'); // ceiling wins — correct
 
-    const bypassed = await autonomyPolicyService.resolveEffectiveAutonomy(t.orgId, t.caseId, 'A2', {
+    const attempted = await autonomyPolicyService.resolveEffectiveAutonomy(t.orgId, t.caseId, 'A2', {
       organizationCeiling: 'EXECUTE_APPROVED_PLAN',
     });
 
-    // CONFIRMED HOLE: the stored ASK_EACH_ACTION ceiling is discarded.
-    expect(bypassed.organizationCeilingSource).toBe('CALLER_SUPPLIED');
-    expect(bypassed.effectiveAutonomy).toBe('EXECUTE_APPROVED_PLAN');
-    // ...and the raised level opens the pre-authorization path for A2 that the
-    // org's own ceiling had deliberately closed.
+    // The stored ASK_EACH_ACTION ceiling survives the caller's looser claim.
+    expect(attempted.organizationCeilingSource).toBe('ORG_POLICY_ROW');
+    expect(attempted.organizationCeiling).toBe('ASK_EACH_ACTION');
+    expect(attempted.effectiveAutonomy).toBe('ASK_EACH_ACTION');
+    expect(attempted.reasons).toContain(
+      'caller_supplied_ceiling_capped_by_organization:EXECUTE_APPROVED_PLAN->ASK_EACH_ACTION'
+    );
+    // ...so the A2 pre-authorization path the org closed stays closed.
+    expect(attempted.requirement?.planPolicyPathOpen).toBe(false);
     expect(honest.requirement ?? { planPolicyPathOpen: false }).toBeDefined();
-    expect(bypassed.requirement?.planPolicyPathOpen).toBe(true);
+
+    // NEGATIVE CONTROL — the parameter is capped, not dead. With a PERMISSIVE
+    // stored ceiling, a STRICTER caller-supplied value still takes effect and
+    // is still labelled CALLER_SUPPLIED. Without this, the assertions above
+    // would also hold for an implementation that simply ignores the argument.
+    await control.query(
+      `INSERT INTO organization_ai_policy (organization_id, policy)
+       VALUES ($1, $2::jsonb)
+       ON CONFLICT (organization_id) DO UPDATE SET policy = EXCLUDED.policy`,
+      [t.orgId, JSON.stringify({ caseWorkspaceMaxAutonomyPolicy: 'EXECUTE_APPROVED_PLAN' })]
+    );
+    const narrowed = await autonomyPolicyService.resolveEffectiveAutonomy(t.orgId, t.caseId, 'A2', {
+      organizationCeiling: 'ASK_EACH_ACTION',
+    });
+    expect(narrowed.organizationCeilingSource).toBe('CALLER_SUPPLIED');
+    expect(narrowed.effectiveAutonomy).toBe('ASK_EACH_ACTION');
+    expect(narrowed.requirement?.planPolicyPathOpen).toBe(false);
+
+    // ...and with NO caller-supplied value the same permissive stored ceiling
+    // does open that path — proving the closure above came from the cap.
+    const permissive = await autonomyPolicyService.resolveEffectiveAutonomy(t.orgId, t.caseId, 'A2');
+    expect(permissive.organizationCeilingSource).toBe('ORG_POLICY_ROW');
+    expect(permissive.effectiveAutonomy).toBe('EXECUTE_APPROVED_PLAN');
+    expect(permissive.requirement?.planPolicyPathOpen).toBe(true);
   }, 60_000);
 
   // ===================================================================
-  // ATTACK 8 (HOLE) — AUTONOMY: omitting `binding` disables BOTH the
-  // self-approval ceiling and the control-to-action binding for a
-  // MATERIAL (A3) action.
+  // ATTACK 8 (WAS A HOLE — FIXED) — AUTONOMY: omitting `binding` used to
+  // disable BOTH the self-approval ceiling and the control-to-action
+  // binding for a MATERIAL (A3) action, because every one of those checks
+  // was conditional on the evidence being present. Absence of evidence
+  // was being read as evidence of compliance.
   //
-  // SECURE EXPECTATION: an A3 action with no binding evidence cannot be
-  // proven bound to any control -> fail closed (deny).
-  // OBSERVED: allowed, and the proposer may be the approver.
+  // An A3 action with no binding evidence cannot be proven bound to any
+  // control -> fail closed (deny).
   // ===================================================================
-  it('HOLE/autonomy: with no `binding`, an unbound self-approved control authorizes a MATERIAL A3 action', async () => {
+  it('FIXED/autonomy: with no `binding`, an unbound self-approved control is REFUSED for a MATERIAL A3 action', async () => {
     const t = await seedTenant('aut2');
     await control.query(`UPDATE case_core SET autonomy_policy='ASK_EACH_ACTION' WHERE case_id=$1`, [
       t.caseId,
@@ -456,12 +496,14 @@ suite('NEW SURFACE — adversarial security (intake / autonomy / inbox)', () => 
 
     expect(evaluation.actionClass).toBe('A3');
     expect(autonomyPolicyService.isMaterialActionClass(evaluation.actionClass)).toBe(true);
-    // CONFIRMED HOLE: allowed, despite the control binding to no version and
-    // no payload digest, and despite the approver being the proposer.
-    expect(evaluation.allowed).toBe(true);
-    expect(evaluation.denialCode).toBeNull();
+    // The control binds to no version and no payload digest, and there is no
+    // proposer identity to evaluate GOV-022 against: unprovable, therefore
+    // refused.
+    expect(evaluation.allowed).toBe(false);
+    expect(evaluation.denialCode).toBe('autonomy_control_binding_evidence_missing');
 
-    // Control: supply the binding and the same control is correctly refused.
+    // Supplying the binding still refuses THIS control, now for the reason a
+    // human would name: the approver is the proposer.
     const withBinding = await autonomyPolicyService.evaluateAutonomy({
       organizationId: t.orgId,
       caseId: t.caseId,
@@ -470,25 +512,68 @@ suite('NEW SURFACE — adversarial security (intake / autonomy / inbox)', () => 
         channel: 'BUTTON',
         approverActorId: sameActor,
         authenticationAssurance: 'MFA',
-        boundProposalVersion: null,
-        boundPayloadDigest: null,
+        boundProposalVersion: 1,
+        boundPayloadDigest: 'sha256:deadbeef',
       },
       binding: { proposerActorId: sameActor, proposalVersion: 1, payloadDigest: 'sha256:deadbeef' },
     });
     expect(withBinding.allowed).toBe(false);
     expect(withBinding.denialCode).toBe('autonomy_control_self_approved');
+
+    // NEGATIVE CONTROL — the same MATERIAL A3 action, fully bound and approved
+    // by someone OTHER than the proposer, is still ALLOWED. Without this the
+    // two refusals above would be consistent with a gate that blocks every A3.
+    const properlyBound = await autonomyPolicyService.evaluateAutonomy({
+      organizationId: t.orgId,
+      caseId: t.caseId,
+      action: { intent: 'EXECUTE', effectClass: 'DESTRUCTIVE' },
+      control: {
+        channel: 'BUTTON',
+        approverActorId: 'adv-actor-independent-approver',
+        authenticationAssurance: 'MFA',
+        boundProposalVersion: 1,
+        boundPayloadDigest: 'sha256:deadbeef',
+      },
+      binding: { proposerActorId: sameActor, proposalVersion: 1, payloadDigest: 'sha256:deadbeef' },
+    });
+    expect(properlyBound.actionClass).toBe('A3');
+    expect(properlyBound.allowed).toBe(true);
+    expect(properlyBound.denialCode).toBeNull();
+
+    // ...and dropping ONE piece of that binding evidence (the digest) flips it
+    // back to a refusal — the mandatory-evidence rule is per field, not a
+    // blanket "binding object present" check.
+    const digestless = await autonomyPolicyService.evaluateAutonomy({
+      organizationId: t.orgId,
+      caseId: t.caseId,
+      action: { intent: 'EXECUTE', effectClass: 'DESTRUCTIVE' },
+      control: {
+        channel: 'BUTTON',
+        approverActorId: 'adv-actor-independent-approver',
+        authenticationAssurance: 'MFA',
+        boundProposalVersion: 1,
+        boundPayloadDigest: null,
+      },
+      binding: { proposerActorId: sameActor, proposalVersion: 1, payloadDigest: 'sha256:deadbeef' },
+    });
+    expect(digestless.allowed).toBe(false);
+    expect(digestless.denialCode).toBe('autonomy_control_binding_evidence_missing');
   }, 60_000);
 
   // ===================================================================
-  // ATTACK 9 (HOLE) — REVOKED MEMBERSHIP: an approval granted by an
-  // actor whose membership is later REVOKED still authorizes execution
-  // of a MATERIAL action.
+  // ATTACK 9 (WAS A HOLE — FIXED) — REVOKED MEMBERSHIP: an approval
+  // granted by an actor whose membership is later REVOKED must NOT
+  // authorize execution of a MATERIAL action.
   //
-  // SECURE EXPECTATION (SEC-004, CW-DOD-D6, and caseWorkspaceAuthContext's
-  // own RETROFIT NOTE #2): "execution still checks current authority;
-  // revocation after approval blocks execution".
+  // SEC-004, CW-DOD-D6, and caseWorkspaceAuthContext's own RETROFIT
+  // NOTE #2: "execution still checks current authority; revocation after
+  // approval blocks execution". transitionProposalToExecuting checked
+  // requireCaseAccess only for the actor DOING the transition; the
+  // standing of the actor whose approval was being SPENT was never
+  // re-read, so a revoked ADMIN's decision row stayed redeemable by any
+  // remaining member.
   // ===================================================================
-  it('HOLE/autonomy: a REVOKED approver still authorizes APPROVED -> EXECUTING on a material action', async () => {
+  it('FIXED/autonomy: a REVOKED approver no longer authorizes APPROVED -> EXECUTING on a material action', async () => {
     const t = await seedTenant('aut3');
     const proposer = await seedActor(t.orgId, 'aut3-proposer', 'MEMBER');
     const approver = await seedActor(t.orgId, 'aut3-approver', 'ADMIN');
@@ -497,41 +582,48 @@ suite('NEW SURFACE — adversarial security (intake / autonomy / inbox)', () => 
     const runId = `adv-run-${randomUUID()}`;
     await seedV8Run(runId, t.orgId);
 
-    const created = await proposalApprovalService.createActionProposal({
-      caseId: t.caseId,
-      runId,
-      nodeRunId: `adv-noderun-${randomUUID()}`,
-      payloadDigest: `sha256:${'a'.repeat(64)}`,
-      policySnapshotRef: 'policy-ref-1',
-      previewRef: 'preview-ref-1',
-      effectClass: 'SENSITIVE_UPDATE', // -> A3, material
-      proposerType: 'HUMAN',
-      createdByActorId: proposer,
-      idempotencyKey: `adv-idem-${randomUUID()}`,
-    });
+    async function approvedMaterialProposal(approverActorId: string) {
+      const created = await proposalApprovalService.createActionProposal({
+        caseId: t.caseId,
+        runId,
+        nodeRunId: `adv-noderun-${randomUUID()}`,
+        payloadDigest: `sha256:${'a'.repeat(64)}`,
+        policySnapshotRef: 'policy-ref-1',
+        previewRef: 'preview-ref-1',
+        effectClass: 'SENSITIVE_UPDATE', // -> A3, material
+        proposerType: 'HUMAN',
+        createdByActorId: proposer,
+        idempotencyKey: `adv-idem-${randomUUID()}`,
+      });
+      const submitted = await proposalApprovalService.submitActionProposalForReview(
+        created.actionProposalId,
+        { actorUserId: proposer },
+        created.version
+      );
+      const decided = await proposalApprovalService.recordApprovalDecision(
+        created.actionProposalId,
+        {
+          proposalVersion: submitted.proposalVersion,
+          payloadDigest: submitted.payloadDigest,
+          decision: 'APPROVE',
+          decidedByActorId: approverActorId,
+          source: 'BUTTON',
+          authenticationAssurance: 'MFA',
+          approvalChannelPolicy: 'BUTTON_ONLY',
+          policyVersion: 'v1',
+          idempotencyKey: `adv-dec-${randomUUID()}`,
+        },
+        submitted.version
+      );
+      expect(decided.proposal.status).toBe('APPROVED');
+      return decided.proposal;
+    }
 
-    const submitted = await proposalApprovalService.submitActionProposalForReview(
-      created.actionProposalId,
-      { actorUserId: proposer },
-      created.version
-    );
-
-    const decided = await proposalApprovalService.recordApprovalDecision(
-      created.actionProposalId,
-      {
-        proposalVersion: submitted.proposalVersion,
-        payloadDigest: submitted.payloadDigest,
-        decision: 'APPROVE',
-        decidedByActorId: approver,
-        source: 'BUTTON',
-        authenticationAssurance: 'MFA',
-        approvalChannelPolicy: 'BUTTON_ONLY',
-        policyVersion: 'v1',
-        idempotencyKey: `adv-dec-${randomUUID()}`,
-      },
-      submitted.version
-    );
-    expect(decided.proposal.status).toBe('APPROVED');
+    const revokedApproval = await approvedMaterialProposal(approver);
+    // A second, identical packet approved by an actor who KEEPS their standing.
+    // Approved BEFORE the revocation so the two differ in exactly one thing:
+    // whose approval is being spent.
+    const intactApproval = await approvedMaterialProposal(t.owner);
 
     // The approver loses all standing in the organization.
     await revokeMembership(t.orgId, approver);
@@ -540,46 +632,77 @@ suite('NEW SURFACE — adversarial security (intake / autonomy / inbox)', () => 
 
     const outcome = await proposalApprovalService
       .transitionProposalToExecuting(
-        created.actionProposalId,
+        revokedApproval.actionProposalId,
         { actorUserId: executor },
-        decided.proposal.version
+        revokedApproval.version
       )
       .then((p) => ({ executed: true as const, status: p.status }))
       .catch((e: Error) => ({ executed: false as const, error: e.message }));
 
-    // CONFIRMED HOLE: the material action proceeds on a revoked approver's
-    // authority. The secure result would be `executed: false`.
-    expect(outcome.executed).toBe(true);
-    expect((outcome as { status: string }).status).toBe('EXECUTING');
+    // The material action is REFUSED on the revoked approver's authority.
+    expect(outcome.executed).toBe(false);
+    expect((outcome as { error: string }).error).toContain(
+      'autonomy_control_approver_standing_revoked'
+    );
 
-    // Evidence the autonomy gate DID run and DID allow it.
-    const evt = await control.query<{ redacted_summary: unknown }>(
-      `SELECT redacted_summary FROM case_workspace_event_outbox
-        WHERE aggregate_id=$1 AND event_type='proposal.executing'`,
-      [created.actionProposalId]
-    );
-    expect(evt.rowCount).toBe(1);
-    const denied = await control.query(
+    // Nothing moved: no execution event, and the aggregate is exactly where it
+    // was — not EXECUTING, version not bumped.
+    const executingEvents = await control.query(
       `SELECT count(*)::int AS n FROM case_workspace_event_outbox
-        WHERE aggregate_id=$1 AND event_type='policy.denied'`,
-      [created.actionProposalId]
+        WHERE aggregate_id=$1 AND event_type='proposal.executing'`,
+      [revokedApproval.actionProposalId]
     );
-    expect(denied.rows[0].n).toBe(0);
+    expect(executingEvents.rows[0].n).toBe(0);
+    const row = await control.query<{ status: string; version: number }>(
+      `SELECT status, version FROM case_workspace_action_proposals WHERE action_proposal_id=$1`,
+      [revokedApproval.actionProposalId]
+    );
+    expect({ status: row.rows[0]!.status, version: Number(row.rows[0]!.version) }).toEqual({
+      status: 'APPROVED',
+      version: revokedApproval.version,
+    });
+
+    // The refusal is DURABLE and names the reason — read back out of band,
+    // after the transaction that raised the error committed it.
+    const denied = await control.query<{ redacted_summary: Record<string, unknown> }>(
+      `SELECT redacted_summary FROM case_workspace_event_outbox
+        WHERE aggregate_id=$1 AND event_type='policy.denied'`,
+      [revokedApproval.actionProposalId]
+    );
+    expect(denied.rowCount).toBe(1);
+    expect(denied.rows[0]!.redacted_summary).toMatchObject({
+      denialCode: 'autonomy_control_approver_standing_revoked',
+      actionClass: 'A3',
+      attemptedTransition: 'APPROVED->EXECUTING',
+    });
+
+    // NEGATIVE CONTROL — the SAME material action, same executor, same moment,
+    // approved by an actor whose membership is intact, still executes. Without
+    // this the refusal above would be consistent with a gate that has simply
+    // stopped letting anything through.
+    const allowed = await proposalApprovalService.transitionProposalToExecuting(
+      intactApproval.actionProposalId,
+      { actorUserId: executor },
+      intactApproval.version
+    );
+    expect(allowed.status).toBe('EXECUTING');
   }, 90_000);
 
   // ===================================================================
-  // ATTACK 10 (HOLE) — INBOX: correlation keys are unique only per CASE
-  // (UNIQUE (case_id, correlation_key)), but the inbox resolves them
-  // GLOBALLY with `ORDER BY created_at ASC LIMIT 1`. The OLDEST wait
-  // anywhere in the database captures the key.
+  // ATTACK 10 (WAS A HOLE — FIXED) — INBOX: correlation keys are unique
+  // only per CASE (UNIQUE (case_id, correlation_key)), but the inbox
+  // resolved them GLOBALLY with `ORDER BY created_at ASC LIMIT 1`, so the
+  // OLDEST wait anywhere in the database captured the key. A tenant that
+  // registered a wait with someone else's key FIRST squatted it
+  // permanently: the victim's authentic delivery hit the squatter's row,
+  // came back TENANT_MISMATCH, and the victim's own wait stayed ACTIVE
+  // forever — cross-tenant denial of service with no secret required.
   //
-  // SECURE EXPECTATION: an inbound delivery for tenant B's correlation
-  // key resolves tenant B's wait.
-  // OBSERVED: it resolves the oldest wait with that key — another
-  // tenant's — and is rejected TENANT_MISMATCH, so tenant B's wait can
-  // never be satisfied by its own callback.
+  // The lookup is now scoped to the claimed organization (and Case, when
+  // one is named): an inbound delivery for tenant B's correlation key
+  // resolves tenant B's wait.
   // ===================================================================
-  it('HOLE/inbox: an older wait in ANOTHER tenant captures a shared correlation key', async () => {
+  it('FIXED/inbox: an older wait in ANOTHER tenant can no longer capture a shared correlation key', async () => {
     const squatter = await seedTenant('inb-squatter');
     const victim = await seedTenant('inb-victim');
 
@@ -647,25 +770,55 @@ suite('NEW SURFACE — adversarial security (intake / autonomy / inbox)', () => 
       signature,
     });
 
-    // CONFIRMED HOLE: it resolves the SQUATTER's older wait, so the victim's
-    // authentic delivery is rejected as a tenant mismatch.
-    expect(result.outcome).toBe('rejected');
-    expect((result as { rejectionCode: string }).rejectionCode).toBe('TENANT_MISMATCH');
+    // It resolves the VICTIM's own wait, despite the squatter's older row.
+    expect(result.outcome).toBe('applied');
+    expect((result as { waitId: string }).waitId).toBe(victimWaitId);
 
-    const victimWait = await control.query<{ status: string }>(
-      `SELECT status FROM case_workspace_waits WHERE wait_id=$1`,
-      [victimWaitId]
+    const statuses = await control.query<{ wait_id: string; status: string }>(
+      `SELECT wait_id, status FROM case_workspace_waits WHERE wait_id = ANY($1::text[])`,
+      [[victimWaitId, squatterWaitId]]
     );
-    // The victim's wait never satisfies — a permanent cross-tenant stall.
-    expect(victimWait.rows[0].status).toBe('ACTIVE');
+    const byId = Object.fromEntries(statuses.rows.map((r) => [r.wait_id, r.status]));
+    expect(byId[victimWaitId]).toBe('SATISFIED');
+    // The squatter's wait is untouched — the two tenants use the key
+    // independently, which is exactly what the per-Case unique index allows.
+    expect(byId[squatterWaitId]).toBe('ACTIVE');
+
+    // NEGATIVE CONTROL — the tenancy gate did not simply stop mattering. A
+    // delivery for the same key claiming a THIRD organization resolves nothing
+    // and is still recorded with the attack-naming code, not disguised as a
+    // missing correlation.
+    const foreign = await eventInboxService.receiveExternalEvent({
+      eventId: `adv-evt-${randomUUID()}`,
+      source,
+      eventType: 'callback.completed',
+      organizationId: `adv-org-unrelated-${randomUUID()}`,
+      correlationKey: sharedKey,
+      payload,
+      signature,
+    });
+    expect(foreign.outcome).toBe('rejected');
+    expect((foreign as { rejectionCode: string }).rejectionCode).toBe('TENANT_MISMATCH');
+
+    const afterForeign = await control.query<{ wait_id: string; status: string }>(
+      `SELECT wait_id, status FROM case_workspace_waits WHERE wait_id=$1`,
+      [squatterWaitId]
+    );
+    expect(afterForeign.rows[0]!.status).toBe('ACTIVE');
   }, 90_000);
 
   // ===================================================================
-  // ATTACK 11 (HOLE, same root cause) — the SAME-ORG variant is worse:
-  // a delivery that omits `caseId` (it is optional) satisfies the OLDEST
-  // wait with that key, which may belong to a DIFFERENT CASE.
+  // ATTACK 11 (WAS A HOLE, same root cause — FIXED) — the SAME-ORG
+  // variant was worse: a delivery that omits `caseId` (it is optional)
+  // satisfied the OLDEST wait with that key, which may belong to a
+  // DIFFERENT CASE. The cross-case guard was gated on
+  // `if (claimedCaseId)`, so a sender that simply omitted it skipped the
+  // check entirely.
+  //
+  // WHICH wait an ambiguous key denotes was never established, and an
+  // unestablished fact is neither yes nor no: nothing is satisfied.
   // ===================================================================
-  it('HOLE/inbox: a callback with no caseId satisfies another CASE\'s wait in the same org', async () => {
+  it('FIXED/inbox: a callback with no caseId is ambiguous and satisfies NO case\'s wait', async () => {
     const t = await seedTenant('inb2-a');
     const projectB = await seedProject(t.orgId, 'inb2-b');
     const caseB = await caseCoreService.createCase({
@@ -725,17 +878,56 @@ suite('NEW SURFACE — adversarial security (intake / autonomy / inbox)', () => 
       signature,
     });
 
-    expect(result.outcome).toBe('applied');
-    // CONFIRMED HOLE: case A's wait is satisfied by case B's callback.
-    expect((result as { waitId: string }).waitId).toBe(waitOnCaseA);
+    // Case A's wait is NOT quietly picked because it happens to be older.
+    expect(result.outcome).toBe('rejected');
+    expect((result as { rejectionCode: string }).rejectionCode).toBe('CORRELATION_UNKNOWN');
 
     const statuses = await control.query<{ wait_id: string; status: string }>(
       `SELECT wait_id, status FROM case_workspace_waits WHERE wait_id = ANY($1::text[])`,
       [[waitOnCaseA, waitOnCaseB]]
     );
     const byId = Object.fromEntries(statuses.rows.map((r) => [r.wait_id, r.status]));
-    expect(byId[waitOnCaseA]).toBe('SATISFIED');
+    expect(byId[waitOnCaseA]).toBe('ACTIVE');
     expect(byId[waitOnCaseB]).toBe('ACTIVE');
+
+    // The audit fact says AMBIGUITY, not absence — an operator can tell the
+    // two apart even though they share a durable rejection_code (the column's
+    // CHECK constraint owns that vocabulary).
+    const rejectedEvent = await control.query<{ redacted_summary: Record<string, unknown> }>(
+      `SELECT redacted_summary FROM case_workspace_event_outbox
+        WHERE aggregate_id=$1 AND event_type='inbox.event_rejected'`,
+      [(result as { inboxRecordId: string }).inboxRecordId]
+    );
+    expect(rejectedEvent.rowCount).toBe(1);
+    expect(rejectedEvent.rows[0]!.redacted_summary).toMatchObject({
+      rejectionCode: 'CORRELATION_UNKNOWN',
+      ambiguousCandidates: 2,
+    });
+
+    // NEGATIVE CONTROL — naming the Case removes the ambiguity and the SAME
+    // delivery lands, on exactly the intended wait and no other. Without this
+    // the rejection above would be consistent with an inbox that has stopped
+    // resolving anything.
+    const targeted = await eventInboxService.receiveExternalEvent({
+      eventId: `adv-evt-${randomUUID()}`,
+      source,
+      eventType: 'callback.completed',
+      organizationId: t.orgId,
+      caseId: caseB.caseId,
+      correlationKey: sharedKey,
+      payload,
+      signature,
+    });
+    expect(targeted.outcome).toBe('applied');
+    expect((targeted as { waitId: string }).waitId).toBe(waitOnCaseB);
+
+    const afterTargeted = await control.query<{ wait_id: string; status: string }>(
+      `SELECT wait_id, status FROM case_workspace_waits WHERE wait_id = ANY($1::text[])`,
+      [[waitOnCaseA, waitOnCaseB]]
+    );
+    const afterById = Object.fromEntries(afterTargeted.rows.map((r) => [r.wait_id, r.status]));
+    expect(afterById[waitOnCaseB]).toBe('SATISFIED');
+    expect(afterById[waitOnCaseA]).toBe('ACTIVE');
   }, 90_000);
 
   // ===================================================================

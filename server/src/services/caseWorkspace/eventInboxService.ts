@@ -31,9 +31,11 @@
  *      concurrency (a simultaneous second INSERT blocks on the index until the
  *      first transaction commits, then finds the conflict).
  *   3. VALIDATE TENANT + CORRELATION. The wait is resolved by correlation key
- *      and its REAL organization_id is compared with the claimed one. A
- *      mismatch is recorded as a REJECTED row with rejection_code
- *      'TENANT_MISMATCH' and influences nothing.
+ *      WITHIN the claimed scope (organization, plus Case when the delivery
+ *      names one) — never globally, because the key is unique only per Case.
+ *      A key that exists outside that scope is recorded as a REJECTED row with
+ *      rejection_code 'TENANT_MISMATCH'; a key matching several waits in scope
+ *      is ambiguous and satisfies none. Either way it influences nothing.
  *   4. APPLY. Only now may the wait be satisfied — on the SAME transaction
  *      client, so the inbox row and the wait flip commit together.
  *
@@ -500,26 +502,68 @@ export async function receiveExternalEvent(
       return reject('PAYLOAD_INVALID', {});
     }
 
-    // Locks the wait row for the rest of this transaction, so the tenancy check
+    // THE TENANCY CHECK, made STRUCTURAL.
+    //
+    // A correlation key is unique only per CASE (UNIQUE (case_id,
+    // correlation_key)), so resolving it globally and checking the tenant
+    // afterwards was checking the wrong row: the oldest wait in the whole
+    // database won the key, which let a foreign tenant capture a key
+    // permanently and let a caseId-less delivery satisfy a different Case's
+    // wait in the same org. The scope is now applied IN the lookup — a row the
+    // caller has no claim to is never a candidate in the first place — and the
+    // candidate rows are locked for the rest of this transaction so the checks
     // and the satisfaction below cannot be split by a concurrent writer.
-    const wait = await loadWaitByCorrelationKeyOnClient(client, correlationKey);
-    if (!wait) return reject('CORRELATION_UNKNOWN', {});
+    const claimedCaseId = optionalTrimmed(input.caseId);
+    const lookup = await loadWaitByCorrelationKeyOnClient(client, correlationKey, {
+      organizationId: claimedOrganizationId,
+      caseId: claimedCaseId,
+    });
 
-    // THE TENANCY CHECK. The wait's own organization_id is the authority; the
-    // caller's claim is only a claim. Note the deliberate ordering: the wait is
-    // looked up WITHOUT an org filter precisely so that a cross-tenant attempt
-    // lands here as TENANT_MISMATCH rather than being disguised as
-    // CORRELATION_UNKNOWN — a rejection that names the real reason is the only
-    // one an operator can act on.
+    if (lookup.outcome === 'UNKNOWN') return reject('CORRELATION_UNKNOWN', {});
+
+    if (lookup.outcome === 'OUT_OF_SCOPE') {
+      // The key exists, but outside what this caller claims. Still reported as
+      // TENANT_MISMATCH rather than CORRELATION_UNKNOWN: a rejection that names
+      // the real reason is the only one an operator can act on, and that signal
+      // is why the pre-fix code looked the wait up unscoped at all. It is
+      // preserved here WITHOUT the foreign row ever becoming actionable.
+      logger.warn(
+        `[eventInbox] TENANT MISMATCH: source=${source} claimed scope does not contain this correlation key`
+      );
+      return reject('TENANT_MISMATCH', {});
+    }
+
+    if (lookup.outcome === 'AMBIGUOUS') {
+      // Several waits in the claimed org carry this key and the delivery named
+      // no Case. WHICH wait the sender meant is a fact that was never
+      // established, and §9's rule is that an unestablished fact is neither yes
+      // nor no — so nothing is satisfied. Reported under the existing
+      // CORRELATION_UNKNOWN code (the durable `rejection_code` vocabulary is a
+      // DB CHECK constraint; inventing a value the constraint does not know
+      // would turn every ambiguous delivery into a 500 with NO audit row, which
+      // is worse than a slightly coarse code) with the count carried in the
+      // audit summary so an operator can see it was ambiguity, not absence.
+      logger.warn(
+        `[eventInbox] AMBIGUOUS correlation key: source=${source} matched ${lookup.candidateCount} waits in the claimed organization with no caseId to disambiguate`
+      );
+      return reject('CORRELATION_UNKNOWN', {
+        ambiguousCandidates: lookup.candidateCount,
+        caseIdSupplied: false,
+      });
+    }
+
+    const wait = lookup.wait;
+
+    // Defence in depth. Both conditions are now unreachable by construction —
+    // the lookup filtered on exactly these columns — and they stay as executable
+    // assertions so a future change to the lookup cannot silently reopen the
+    // hole without this failing closed.
     if (wait.organizationId !== claimedOrganizationId) {
       logger.warn(
         `[eventInbox] TENANT MISMATCH: source=${source} claimed org differs from the wait's org`
       );
       return reject('TENANT_MISMATCH', {});
     }
-
-    // A cross-CASE claim is the same class of error one level down.
-    const claimedCaseId = optionalTrimmed(input.caseId);
     if (claimedCaseId && claimedCaseId !== wait.caseId) {
       return reject('TENANT_MISMATCH', {});
     }

@@ -17,7 +17,7 @@
 
 import { ArrowRight, FolderOpen, ListChecks } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
 import { StandardModuleBar } from '@/components/standard/StandardModuleBar';
 import { StandardPreview } from '@/components/standard/StandardPreview';
@@ -46,8 +46,34 @@ import {
 // globalny store: dotyczy wyłącznie tej listy i nie ma sensu poza sesją karty.
 let lastOpenedCaseId: string | null = null;
 
-export function rememberOpenedCase(caseId: string | null): void {
+/*
+ * Adres listy, z której użytkownik wszedł na zlecenie — RAZEM z filtrem
+ * (`?widok=&status=&q=`).
+ *
+ * ★ ZMIERZONE, nie założone: powrót opierał się na `navigate(-1)`, czyli
+ * „cofnij o JEDEN wpis historii". Tymczasem wewnątrz zlecenia przełączenie
+ * zakładki i projekcji planu DODAJE wpis (`setParam` z `replace: false` — i tak
+ * ma być, żeby przeglądarkowe Wstecz wracało na poprzednią zakładkę). Efekt
+ * zmierzony na żywym ekranie: po jednym kliknięciu „Ekspercki" przycisk „Wróć
+ * do listy zleceń" NIE wracał do listy, tylko do poprzedniej projekcji TEGO
+ * SAMEGO zlecenia (`onList: false`) — trzeba go było kliknąć tyle razy, ile
+ * rzeczy użytkownik po drodze przełączył. Deep link do zlecenia wyprowadzał
+ * `navigate(-1)` całkiem poza moduł.
+ *
+ * Zapamiętany adres zamienia „cofnij o N" na „idź DOKŁADNIE tam": jedno
+ * kliknięcie, właściwa zakładka, właściwy filtr, niezależnie od tego, co się
+ * działo w środku zlecenia.
+ */
+let lastListLocation = '/zlecenia';
+
+export function rememberOpenedCase(caseId: string | null, listLocation?: string): void {
   lastOpenedCaseId = caseId;
+  if (listLocation) lastListLocation = listLocation;
+}
+
+/** Adres listy do powrotu ze zlecenia (z filtrem). Fallback: goła lista. */
+export function rememberedListLocation(): string {
+  return lastListLocation;
 }
 
 type SavedView = 'wszystkie' | 'uwaga' | 'zakonczone';
@@ -132,6 +158,7 @@ function statusTone(
 
 export const CasesListScreen: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const viewportWidth = useViewportWidth();
   const isNarrow = viewportWidth < 768;
@@ -273,9 +300,22 @@ export const CasesListScreen: React.FC = () => {
     [visible]
   );
 
+  /*
+   * Aktualny adres listy trzymamy w refie, a nie w zależnościach `useCallback`.
+   * Powód jest ten sam co przy `setParam` wyżej: `openCase` wędruje do
+   * `StandardTable`/`rowMenu`, a niestabilna tożsamość handlera w tym module
+   * już raz wywołała pętlę renderowania. Ref daje świeżą wartość bez zmiany
+   * tożsamości funkcji.
+   */
+  const listUrlRef = useRef(`${location.pathname}${location.search}`);
+  listUrlRef.current = `${location.pathname}${location.search}`;
+
   const openCase = useCallback(
     (caseId: string) => {
-      rememberOpenedCase(caseId);
+      // Zapamiętujemy JEDNOCZEŚNIE wiersz (fokus po powrocie) i adres listy
+      // z filtrem (właściwa lista po powrocie). Jedno bez drugiego nie spełnia
+      // warunku właściciela #4.
+      rememberOpenedCase(caseId, listUrlRef.current);
       navigate(`/zlecenia/${encodeURIComponent(caseId)}?zakladka=plan&widok-planu=prosty`);
     },
     [navigate]
@@ -509,7 +549,7 @@ export const CasesListScreen: React.FC = () => {
   const previewNextItems = useMemo(() => {
     if (!selected) return [];
     const go = (query: string) => () => {
-      rememberOpenedCase(selected.caseId);
+      rememberOpenedCase(selected.caseId, listUrlRef.current);
       navigate(`/zlecenia/${encodeURIComponent(selected.caseId)}?${query}`);
     };
     return [

@@ -1198,6 +1198,7 @@ export async function recordApprovalDecision(
 async function loadLatestApprovalControl(
   client: PgTransactionClient,
   actionProposalId: string,
+  caseId: string,
   proposalExpired: boolean
 ): Promise<ExplicitControlEvidence | null> {
   const result = await client.query<CaseWorkspaceActionProposalDecisionRow>(
@@ -1221,7 +1222,45 @@ async function loadLatestApprovalControl(
     // inherits the proposal's validity window — an approval granted inside
     // the window does not stay valid forever after it closes.
     expired: proposalExpired,
+    // SEC-004 / CW-DOD-D6, and caseWorkspaceAuthContext's own RETROFIT NOTE #2:
+    // "execution still checks current authority; revocation after approval
+    // blocks execution". See approverStandingRevoked() below.
+    approverStandingRevoked: await approverStandingRevoked(row.decided_by_actor_id, caseId),
   };
+}
+
+/**
+ * SEC-004 / CW-DOD-D6. Re-reads the APPROVER's standing at the moment the
+ * material action is about to run.
+ *
+ * The transition already calls requireCaseAccess for the ACTOR performing it,
+ * which proves nothing about the person whose approval is being spent: a
+ * revoked ADMIN's approval row sits in
+ * `case_workspace_action_proposal_decisions` forever, and any remaining member
+ * could redeem it. Consent is not a bearer token — it is only valid while the
+ * consenting party still holds the authority they consented with.
+ *
+ * One extra read (case_core + organization_members via the canonical,
+ * enumeration-safe primitive), deliberately reusing requireCaseAccess rather
+ * than open-coding a membership SELECT here, so there is exactly one definition
+ * of "has standing on this Case" in this domain. Returns `true` only for a
+ * definite authorization failure; genuine infrastructure errors still throw
+ * rather than being read as "revoked".
+ */
+async function approverStandingRevoked(
+  approverActorId: string | null | undefined,
+  caseId: string
+): Promise<boolean> {
+  const approver = String(approverActorId ?? '').trim();
+  // No identifiable approver is itself an absence of standing, not a pass.
+  if (!approver) return true;
+  try {
+    await requireCaseAccess(approver, caseId);
+    return false;
+  } catch (err) {
+    if (err instanceof CaseWorkspaceAuthError) return true;
+    throw err;
+  }
 }
 
 /**
@@ -1246,7 +1285,15 @@ async function loadLatestApprovalControl(
  *      the effective autonomy (Case policy under the ORGANIZATION CEILING) and
  *      verifies the explicit control — see autonomyPolicyService.ts. A denial
  *      commits a `policy.denied` outbox fact and then throws
- *      AutonomyPolicyDeniedError with NO status mutation.
+ *      AutonomyPolicyDeniedError with NO status mutation;
+ *   3. re-verifies the APPROVER's CURRENT standing on the Case (SEC-004,
+ *      CW-DOD-D6: "execution still checks current authority; revocation after
+ *      approval blocks execution"). requireCaseAccess on the acting caller is
+ *      not enough — the authority being SPENT here is the approver's, and a
+ *      membership revoked between APPROVE and EXECUTING must void it. The
+ *      revocation is fed into the autonomy gate as control evidence
+ *      (approverStandingRevoked), so the refusal takes the same audited
+ *      `policy.denied` path as every other denial rather than a bare throw.
  *
  * The denial event is committed by returning a sentinel from the transaction
  * body and throwing after the commit. Throwing from inside would roll the
@@ -1310,7 +1357,7 @@ export async function transitionProposalToExecuting(
       organizationId: row.organization_id,
       caseId: row.case_id,
       action,
-      control: await loadLatestApprovalControl(client, id, proposalExpired),
+      control: await loadLatestApprovalControl(client, id, row.case_id, proposalExpired),
       binding: {
         proposalVersion: Number(row.proposal_version),
         payloadDigest: row.payload_digest,

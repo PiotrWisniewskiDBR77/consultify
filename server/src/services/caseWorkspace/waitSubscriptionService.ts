@@ -337,6 +337,13 @@ function requireEnum<T extends string>(
   return value;
 }
 
+/** Blank-or-absent collapses to null, so an empty string never narrows a scope. */
+function optionalTrimmed(value: string | null | undefined): string | null {
+  if (value === null || value === undefined) return null;
+  const normalized = String(value).trim();
+  return normalized ? normalized : null;
+}
+
 function mapRow(row: CaseWorkspaceWaitRow): CaseWait {
   return {
     waitId: row.wait_id,
@@ -1494,9 +1501,34 @@ export async function listExpiredTimerWaitClaimsForRecovery(
   return rows.map(mapRow);
 }
 
+/** The scope a correlation key MUST be resolved within. See below. */
+export interface WaitCorrelationScope {
+  /** Required. The tenant the delivery is claimed for. */
+  organizationId: string;
+  /** Optional, and the only thing that makes the key unambiguous by schema. */
+  caseId?: string | null;
+}
+
 /**
- * The inbox's wait lookup, on the CALLER's transaction client and with the row
- * LOCKED (`FOR UPDATE`).
+ * The outcome of a scoped correlation-key resolution. Four distinct facts,
+ * because collapsing them is how a security signal gets lost:
+ *   RESOLVED     — exactly one wait in scope carries the key.
+ *   AMBIGUOUS    — several do; WHICH one the sender meant was never
+ *                  established, so nothing may be satisfied.
+ *   OUT_OF_SCOPE — the key exists, but not inside the claimed scope. This is
+ *                  the cross-tenant / cross-case attempt, and the caller must
+ *                  record it as such.
+ *   UNKNOWN      — no wait anywhere carries the key.
+ */
+export type WaitCorrelationLookup =
+  | { outcome: 'RESOLVED'; wait: CaseWait }
+  | { outcome: 'AMBIGUOUS'; candidateCount: number }
+  | { outcome: 'OUT_OF_SCOPE' }
+  | { outcome: 'UNKNOWN' };
+
+/**
+ * The inbox's wait lookup, on the CALLER's transaction client and with the
+ * candidate rows LOCKED (`FOR UPDATE`).
  *
  * It lives here, not in eventInboxService, for one reason: `case_workspace_waits`
  * is this service's table, and letting another service issue its own locking
@@ -1507,24 +1539,71 @@ export async function listExpiredTimerWaitClaimsForRecovery(
  * BEFORE it may influence a wait, and wait satisfaction must be "atomic and
  * unique").
  *
- * Returns null when no wait carries that correlation key. Deliberately does NOT
- * filter by organization_id: the CALLER compares the wait's real
- * organization_id against the claimed one and rejects a mismatch as a recorded
- * TENANT_MISMATCH security event. Filtering here instead would collapse
- * "wrong tenant" into "not found" and erase the attack signal.
+ * ===========================================================================
+ * WHY THE LOOKUP IS SCOPED (and why an unscoped one was a real hole)
+ * ===========================================================================
+ * The uniqueness this table actually guarantees is
+ * `UNIQUE (case_id, correlation_key)` — PER CASE. This function used to resolve
+ * the key GLOBALLY with `ORDER BY created_at ASC LIMIT 1`, i.e. "the oldest
+ * wait anywhere in the database wins". Two consequences, both reachable by a
+ * sender who holds nothing but a legitimate channel secret:
+ *
+ *   - a delivery that simply OMITS the optional caseId satisfied another CASE's
+ *     wait in the same organization (the caller's cross-case guard was gated on
+ *     `if (claimedCaseId)`, so not sending one skipped it entirely);
+ *   - a tenant that registered a wait with some other tenant's correlation key
+ *     FIRST captured that key permanently: the victim's authentic callback
+ *     resolved the squatter's older row and was refused TENANT_MISMATCH, while
+ *     the victim's own wait stayed ACTIVE forever. Cross-tenant denial of
+ *     service with no secret on the attacker's side.
+ *
+ * Resolution is therefore always constrained to the claimed organization, and
+ * to the claimed Case when one is supplied. "Several candidates in scope" is
+ * AMBIGUOUS, never "the oldest one": ordering by age is a guess, and a guess
+ * that satisfies the wrong Case's wait is exactly the failure being fixed.
+ *
+ * OUT_OF_SCOPE is reported separately from UNKNOWN precisely so the caller can
+ * still record a cross-tenant attempt as TENANT_MISMATCH rather than disguising
+ * it as "not found" — the reason the original unscoped read existed at all.
+ * That signal is preserved WITHOUT letting the foreign row be acted upon.
  *
  * INTERNAL-ONLY / NOT ROUTE-EXPOSED.
  */
 export async function loadWaitByCorrelationKeyOnClient(
   client: PgTransactionClient,
-  correlationKey: string
-): Promise<CaseWait | null> {
+  correlationKey: string,
+  scope: WaitCorrelationScope
+): Promise<WaitCorrelationLookup> {
   const key = requireNonBlank(correlationKey, 'wait_correlation_key_required');
-  const result = await client.query<CaseWorkspaceWaitRow>(
-    `SELECT * FROM case_workspace_waits WHERE correlation_key = ?
-      ORDER BY created_at ASC LIMIT 1 FOR UPDATE`,
+  const organizationId = requireNonBlank(
+    scope?.organizationId,
+    'wait_correlation_scope_organization_id_required'
+  );
+  const caseId = optionalTrimmed(scope?.caseId);
+
+  const scoped = await client.query<CaseWorkspaceWaitRow>(
+    `SELECT * FROM case_workspace_waits
+      WHERE correlation_key = ?
+        AND organization_id = ?
+        AND (?::text IS NULL OR case_id = ?)
+      ORDER BY created_at ASC, wait_id ASC
+      FOR UPDATE`,
+    [key, organizationId, caseId, caseId]
+  );
+
+  if (scoped.rows.length === 1) {
+    return { outcome: 'RESOLVED', wait: mapRow(scoped.rows[0]!) };
+  }
+  if (scoped.rows.length > 1) {
+    return { outcome: 'AMBIGUOUS', candidateCount: scoped.rows.length };
+  }
+
+  // Nothing in scope. Does the key exist AT ALL? Read-only, unlocked, and
+  // returns no attributes of the foreign row — just enough to tell a
+  // cross-tenant/cross-case attempt from a key nobody ever registered.
+  const anywhere = await client.query<{ exists_flag: number }>(
+    `SELECT 1 AS exists_flag FROM case_workspace_waits WHERE correlation_key = ? LIMIT 1`,
     [key]
   );
-  const row = result.rows[0];
-  return row ? mapRow(row) : null;
+  return anywhere.rows.length > 0 ? { outcome: 'OUT_OF_SCOPE' } : { outcome: 'UNKNOWN' };
 }

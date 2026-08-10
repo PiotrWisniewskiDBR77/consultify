@@ -134,7 +134,24 @@ export const PlanView: React.FC<PlanViewProps> = ({
               'Oczekiwany rezultat nie został jeszcze opisany w projekcie.'}
           </p>
         </div>
-        <div className="flex shrink-0 flex-wrap items-center gap-1.5">
+        {/*
+         * ★ ZMIERZONE NA 320 px, nie ocenione okiem: z `shrink-0` ten rząd
+         * pigułek nie schodził poniżej swojej szerokości maksymalnej (370,8 px)
+         * mimo `flex-wrap` — a `flex-wrap` zawija to, co JEST W ŚRODKU, dopiero
+         * gdy zwęzi się KONTENER. Rodzic dawał 270 px, więc pigułka
+         * „Plan: Zatwierdzony (wersja 3)" kończyła się na 395,8 px przy oknie
+         * 320 px. Strona nie przewijała się w poziomie (pomiar `documentElement`
+         * czysty), bo przepełnienie pochłaniał kontener modułu
+         * (`flex-1 min-h-0 overflow-auto`) — czyli LITERA warunku #4 spełniona,
+         * DUCH złamany: treść była ucięta, a poziome przewijanie schowane
+         * wewnątrz modułu (zmierzone: scrollLeft 0 → 76).
+         *
+         * `min-w-0` + domyślne kurczenie: kontener zwęża się do dostępnych
+         * 270 px, a `flex-wrap` robi wtedy to, po co tu jest — kładzie pigułki
+         * w dwóch liniach. Na szerokim ekranie nic się nie zmienia, bo tam
+         * miejsca nie brakuje.
+         */}
+        <div className="flex min-w-0 flex-wrap items-center gap-1.5">
           <StatusTag tone="neutral">
             Zamknięcie: {closureTypeLabel(caseItem.contractedClosureType, true)}
           </StatusTag>

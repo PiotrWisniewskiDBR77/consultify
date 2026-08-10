@@ -35,7 +35,7 @@ import {
   toFailure,
   validatePlanVersion,
 } from './api';
-import { rememberOpenedCase } from './CasesListScreen';
+import { rememberedListLocation, rememberOpenedCase } from './CasesListScreen';
 import { PLAN_PROJECTIONS, type PlanProjection, PlanView } from './PlanView';
 import { RealizacjaView } from './RealizacjaView';
 import { RezultatyView } from './RezultatyView';
@@ -241,9 +241,25 @@ export const CaseDetailScreen: React.FC = () => {
     [setSearchParams]
   );
 
+  /*
+   * Powrót do listy — JEDNO kliknięcie, właściwa lista, zachowany filtr, fokus
+   * na wierszu, z którego użytkownik wyszedł (warunek właściciela #4).
+   *
+   * ★ ZMIERZONE NA ŻYWYM EKRANIE, nie wywnioskowane z kodu: wcześniejsze
+   * `navigate(-1)` cofało o JEDEN wpis historii, a przełączanie zakładek
+   * i projekcji planu wpisy DODAJE (`setParam` z `replace: false` — celowo,
+   * żeby przeglądarkowe Wstecz wracało na poprzednią zakładkę, a nie od razu
+   * do listy). Pomiar: po kliknięciu „Ekspercki" jedno kliknięcie „Wróć do
+   * listy zleceń" dawało `onList: false` — użytkownik zostawał w tym samym
+   * zleceniu. Przy wejściu z linku `navigate(-1)` wyprowadzało poza moduł.
+   *
+   * Teraz idziemy WPROST pod zapamiętany adres listy (z filtrem). Historia
+   * przeglądarki zostaje nietknięta, więc przeglądarkowe Wstecz dalej działa
+   * po swojemu — zmienia się tylko zachowanie JAWNEGO przycisku powrotu.
+   */
   const goToList = useCallback(() => {
     rememberOpenedCase(caseId);
-    navigate(-1);
+    navigate(rememberedListLocation());
   }, [caseId, navigate]);
 
   const currentPlanVersion = useMemo(() => {
