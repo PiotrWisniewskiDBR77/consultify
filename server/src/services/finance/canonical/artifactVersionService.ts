@@ -589,6 +589,23 @@ export async function approveVersion(params: ApproveVersionParams): Promise<Appr
       return { ok: false, code: 'APPROVAL_BLOCKED', message: 'Blocking SECURITY exception is still OPEN' };
     }
 
+    // (a3b) no unresolved blocking comment (AP-06 — FINANCE_CRITICAL_REVIEW_ADDENDUM_2026-08-09.md
+    // section 3 point 6 "blocking flag"). Same shape/placement as the (a3) SECURITY-exception
+    // check directly above: read-only SELECT inside this same pinned transaction, additive, does
+    // not touch any other step. `commentService.ts` exposes the identical predicate as
+    // `hasUnresolvedBlockingComments()` for callers outside this transaction (e.g. a UI preflight)
+    // but is deliberately NOT called from here — this check must run on the SAME connection/
+    // transaction as the rest of the atomic approve, not a separate round-trip.
+    const blockingComment = await tx.queryOne<{ id: string }>(
+      `SELECT id FROM finance_comments
+        WHERE organization_id = ? AND business_version_id = ? AND is_blocking = true AND resolved_at IS NULL
+        LIMIT 1`,
+      [params.organizationId, params.businessVersionId]
+    );
+    if (blockingComment) {
+      return { ok: false, code: 'APPROVAL_BLOCKED', message: 'Unresolved blocking comment(s) present' };
+    }
+
     // (a4) SoD self-approval gate (WP-B02 §7.2.6).
     const riskTier = (current.risk_tier ?? 'LOW') as RiskTier;
     const sod = checkSelfApproval({
