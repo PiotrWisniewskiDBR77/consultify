@@ -25,6 +25,7 @@
 import { v4 as uuidv4 } from 'uuid';
 
 import { withPinnedPostgresTransaction } from '../../../database/PostgresDatabase.js';
+import { canonicalPayloadHash } from './contentHash.js';
 import type { FinanceArtifactType } from './lifecycleService.js';
 import {
   propagateStalenessInTransaction,
@@ -202,12 +203,27 @@ export async function createArtifact(params: CreateArtifactParams): Promise<Crea
     );
     if (!businessVersion) throw new Error('finance_business_versions insert returned no row');
 
+    // W10-D01 fix (`docs/validation/finance-v3/generated/gate-d/W10_D01_SEMANTIC_HASH_FIX_report.md`):
+    // revision_seq=1 must not start life with a NULL `content_semantic_hash` —
+    // `computePinning.ts`'s `enqueueComputeForCurrentRevision()` requires a
+    // non-null hash to pin to, and a Draft that goes straight to compute
+    // without ever being autosave-checkpointed first (every one of the five
+    // GOLDCO artifact types: STATEMENT_PACK/HISTORICAL_ANALYSIS/BASELINE_MODEL/
+    // PREDICTION_SCENARIO/VALUATION_CASE) used to hit exactly that gap. The
+    // value here is the SAME `canonicalPayloadHash()` primitive
+    // `checkpointOperationStack()` (`autosaveService.ts`) uses, applied to the
+    // same "no edits yet" shape an empty first checkpoint would produce — so a
+    // brand-new artifact's initial hash is byte-identical to what an
+    // immediate no-op autosave would compute, not a second, divergent
+    // convention.
+    const initialContentSemanticHash = canonicalPayloadHash({ unsavedOperationStack: [] });
+
     const workingRevision = await tx.queryOne<WorkingRevisionRow>(
       `INSERT INTO finance_working_revisions (
-         working_revision_id, artifact_id, organization_id, business_version_id, revision_seq, is_current, edited_by
-       ) VALUES (?, ?, ?, ?, 1, true, ?)
+         working_revision_id, artifact_id, organization_id, business_version_id, revision_seq, content_semantic_hash, is_current, edited_by
+       ) VALUES (?, ?, ?, ?, 1, ?, true, ?)
        RETURNING *`,
-      [workingRevisionId, artifactId, params.organizationId, businessVersionId, params.createdBy]
+      [workingRevisionId, artifactId, params.organizationId, businessVersionId, initialContentSemanticHash, params.createdBy]
     );
     if (!workingRevision) throw new Error('finance_working_revisions insert returned no row');
 
@@ -225,6 +241,54 @@ export async function createArtifact(params: CreateArtifactParams): Promise<Crea
 
     return { artifact, businessVersion: { ...businessVersion, source_working_revision_id: workingRevisionId }, workingRevision };
   });
+}
+
+// ---------------------------------------------------------------------------
+// W10-D01 fix — stampWorkingRevisionComputeIdentity: the ONE place every
+// compute engine (baselineComputeService/predictionComputeService/
+// valuationComputeService/kpiComputeService) and the Statement Pack
+// reconciliation run (`statementReconciliationService.runReconciliation()`)
+// write `content_semantic_hash` + `compute_run_id` onto the working revision
+// their output belongs to. Centralised here (rather than five copies of the
+// same UPDATE) so there is exactly one SQL statement to audit, not five
+// potentially-divergent ones.
+//
+// Safe to run as a plain UPDATE (not a new `finance_working_revisions` row):
+// `finance_working_revisions` rows are not protected by a DB-level
+// immutability trigger (unlike `finance_compute_snapshots`, which has
+// `trg_finance_compute_snapshots_deny_update`) and every caller of this
+// function runs it strictly BEFORE any `finance_compute_snapshots` row is
+// frozen for that working revision (`createComputeSnapshot()`/
+// `approveVersion()` step (b) both read `content_semantic_hash`/
+// `compute_run_id` off the CURRENT working revision at freeze time) — so by
+// the time a snapshot copies these values, they are already final. Ordering
+// is a property of each call site (compute happens before submit/review/
+// approve in every real caller, and in the GOLDCO DAG this fix's own tests
+// exercise), not of this function.
+// ---------------------------------------------------------------------------
+
+export interface StampWorkingRevisionComputeIdentityParams {
+  organizationId: string;
+  workingRevisionId: string;
+  /** The SAME value the caller already computed/persisted elsewhere (`compute_job_outputs.content_semantic_hash`, or the Statement Pack reconciliation run's own fingerprint) — this function never derives a hash itself. */
+  contentSemanticHash: string;
+  /** `compute_jobs.id` for the four compute-job-backed engines; `finance_reconciliation_runs.id` for Statement Pack (which has no `compute_jobs` row at all — see `statementReconciliationService.ts`). Column has no FK (`20260809_finance_v3_b01_core_artifacts.sql` — "forward reference to WP-B04, no FK yet"), so both are valid referents. */
+  computeRunId: string;
+}
+
+/** Returns the updated row, or `null` if no `finance_working_revisions` row matched (caller's `workingRevisionId` is stale/wrong — treated as a caller bug, not silently swallowed). */
+export async function stampWorkingRevisionComputeIdentity(
+  params: StampWorkingRevisionComputeIdentityParams
+): Promise<WorkingRevisionRow | null> {
+  return withPinnedPostgresTransaction((tx) =>
+    tx.queryOne<WorkingRevisionRow>(
+      `UPDATE finance_working_revisions
+          SET content_semantic_hash = ?, compute_run_id = ?
+        WHERE working_revision_id = ? AND organization_id = ?
+        RETURNING *`,
+      [params.contentSemanticHash, params.computeRunId, params.workingRevisionId, params.organizationId]
+    )
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -795,14 +859,29 @@ export async function approveVersion(params: ApproveVersionParams): Promise<Appr
       );
     }
 
-    // (c) status transition — compute_snapshot_id in the SAME statement as the status flip.
+    // (c) status transition — compute_snapshot_id in the SAME statement as the
+    // status flip. W10-D01 fix: also copy content_semantic_hash/compute_run_id
+    // from the working revision being frozen onto the business_version row
+    // itself — `finance_business_versions` has its own copies of both columns
+    // (`20260809_finance_v3_b01_core_artifacts.sql` lines 104-106), and before
+    // this fix this statement only ever set `compute_snapshot_id`, leaving the
+    // business_version's own hash/run_id NULL even once the working revision
+    // and the frozen snapshot both had real values.
     const approved = await tx.queryOne<BusinessVersionRow>(
       `UPDATE finance_business_versions
           SET status = 'APPROVED', version = version + 1, approved_by = ?, approved_at = now(),
-              compute_snapshot_id = ?
+              compute_snapshot_id = ?, content_semantic_hash = ?, compute_run_id = ?
         WHERE business_version_id = ? AND organization_id = ? AND version = ?
         RETURNING *`,
-      [params.actorId, computeSnapshotId, params.businessVersionId, params.organizationId, params.expectedVersion]
+      [
+        params.actorId,
+        computeSnapshotId,
+        workingRevision.content_semantic_hash,
+        workingRevision.compute_run_id,
+        params.businessVersionId,
+        params.organizationId,
+        params.expectedVersion,
+      ]
     );
     if (!approved) {
       return {
@@ -1075,8 +1154,8 @@ export async function reopenVersion(params: ReopenVersionParams): Promise<Reopen
       const newWorkingRevision = await tx.queryOne<WorkingRevisionRow>(
         `INSERT INTO finance_working_revisions (
            working_revision_id, artifact_id, organization_id, business_version_id,
-           source_business_version_id, revision_seq, content_semantic_hash, is_current, edited_by
-         ) VALUES (?, ?, ?, ?, ?, ?, ?, true, ?)
+           source_business_version_id, revision_seq, content_semantic_hash, compute_run_id, is_current, edited_by
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, true, ?)
          RETURNING *`,
         [
           newWorkingRevisionId,
@@ -1085,7 +1164,16 @@ export async function reopenVersion(params: ReopenVersionParams): Promise<Reopen
           newBusinessVersionId,
           vN.business_version_id,
           nextSeq,
+          // W10-D01 fix: this INSERT already copy-on-write's content_semantic_hash
+          // from the source revision (copy-on-write — content_semantic_hash
+          // describes the CONTENT, which is byte-identical), but used to drop
+          // compute_run_id (not in the original column list at all), leaving a
+          // reopened Draft with a real hash but a NULL run_id — the same
+          // "half-fixed" shape this whole fix exists to close. compute_run_id
+          // describes WHICH RUN produced that content, which is equally still
+          // true after a copy-on-write reopen (no new compute happened).
           sourceRevision?.content_semantic_hash ?? null,
+          sourceRevision?.compute_run_id ?? null,
           params.actorId,
         ]
       );
