@@ -40,7 +40,10 @@ function setDbFixture(fixture: {
   fixtureTaskCounts = fixture.taskCounts ?? [];
 }
 
-function expectManagerProblemShape(row: Record<string, unknown>) {
+/** `ManagerProblemRow` is not exported; derive it from the service's return type. */
+type ManagerProblemRow = Awaited<ReturnType<typeof getManagerProblems>>[number];
+
+function expectManagerProblemShape(row: ManagerProblemRow) {
   expect(row).toMatchObject({
     id: expect.any(String),
     severity: expect.stringMatching(/^(critical|warning|info)$/),
@@ -48,8 +51,8 @@ function expectManagerProblemShape(row: Record<string, unknown>) {
     sourceEntityType: expect.stringMatching(/^(INITIATIVE|TASK|DECISION|RAID_ITEM|PERSON)$/),
   });
   expect(Array.isArray(row.actions)).toBe(true);
-  expect((row.actions as unknown[]).length).toBeGreaterThan(0);
-  for (const a of row.actions as Array<Record<string, unknown>>) {
+  expect(row.actions.length).toBeGreaterThan(0);
+  for (const a of row.actions) {
     expect(a).toMatchObject({ id: expect.any(String), label: expect.any(String) });
   }
 }
@@ -105,7 +108,7 @@ describe('getManagerProblems', () => {
     expect(rows.length).toBeGreaterThan(0);
     expect(rows.some((r) => r.problemType === 'overdue_task')).toBe(true);
     expect(rows.some((r) => r.problemType === 'overdue_decision')).toBe(true);
-    rows.forEach((r) => expectManagerProblemShape(r as Record<string, unknown>));
+    rows.forEach((r) => expectManagerProblemShape(r));
   });
 
   it('decisions lane returns pending and overdue decisions', async () => {
@@ -142,7 +145,7 @@ describe('getManagerProblems', () => {
     expect(rows.length).toBeGreaterThan(0);
     expect(rows.some((r) => r.problemType === 'pending_decision')).toBe(true);
     expect(rows.some((r) => r.problemType === 'overdue_decision')).toBe(true);
-    rows.forEach((r) => expectManagerProblemShape(r as Record<string, unknown>));
+    rows.forEach((r) => expectManagerProblemShape(r));
   });
 
   it('blockers lane returns blocked initiatives, blocked tasks, and dependency RAID items', async () => {
@@ -205,7 +208,7 @@ describe('getManagerProblems', () => {
     expect(rows.some((r) => r.problemType === 'blocked_initiative')).toBe(true);
     expect(rows.some((r) => r.problemType === 'blocked_task')).toBe(true);
     expect(rows.some((r) => r.problemType === 'dependency_block')).toBe(true);
-    rows.forEach((r) => expectManagerProblemShape(r as Record<string, unknown>));
+    rows.forEach((r) => expectManagerProblemShape(r));
   });
 
   it('workload lane returns overloaded owners and unassigned tasks', async () => {
@@ -245,7 +248,7 @@ describe('getManagerProblems', () => {
     expect(rows.length).toBeGreaterThan(0);
     expect(rows.some((r) => r.problemType === 'overloaded_person')).toBe(true);
     expect(rows.some((r) => r.problemType === 'unassigned_task')).toBe(true);
-    rows.forEach((r) => expectManagerProblemShape(r as Record<string, unknown>));
+    rows.forEach((r) => expectManagerProblemShape(r));
   });
 
   it('risk lane returns RAID risks and initiative risk signals', async () => {
@@ -294,7 +297,7 @@ describe('getManagerProblems', () => {
       rows.some((r) => r.sourceEntityType === 'RAID_ITEM' && r.title.startsWith('Risk:'))
     ).toBe(true);
     expect(rows.some((r) => r.problemType === 'missing_baseline')).toBe(true);
-    rows.forEach((r) => expectManagerProblemShape(r as Record<string, unknown>));
+    rows.forEach((r) => expectManagerProblemShape(r));
   });
 
   it('people-change lane returns bus-factor and related concentration signals', async () => {
@@ -336,6 +339,6 @@ describe('getManagerProblems', () => {
     const rows = await getManagerProblems(ORG_ID, 'people-change');
     expect(rows.length).toBeGreaterThan(0);
     expect(rows.some((r) => r.problemType === 'bus_factor')).toBe(true);
-    rows.forEach((r) => expectManagerProblemShape(r as Record<string, unknown>));
+    rows.forEach((r) => expectManagerProblemShape(r));
   });
 });

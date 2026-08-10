@@ -109,6 +109,11 @@ describe('agentContextGroundingService', () => {
       candidates,
     });
     expect(result.decision).toBe('allowed');
+    // The service returns a union: the blocked_snapshot short-circuit carries no
+    // working-memory set. Narrow before reading it.
+    if (!('admitted' in result)) {
+      throw new Error('expected an admitted working-memory set on an allowed decision');
+    }
     expect(result.admitted.map((item) => item.sourceRef)).toEqual(['assessment:c', 'vault:a']);
     expect(runMock).toHaveBeenCalledTimes(3);
   });

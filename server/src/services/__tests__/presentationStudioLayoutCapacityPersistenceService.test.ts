@@ -27,7 +27,7 @@ import {
   restorePersistedOverrides,
   savePersistedOverrides,
   teardownLayoutCapacityPersistence,
-} from '../presentationStudioLayoutCapacityPersistenceService';
+} from '../presentationStudioLayoutCapacityPersistenceService.js';
 import {
   applyOverrides,
   getCurrentRegistrySnapshot,
@@ -35,7 +35,7 @@ import {
   resetToDefaults,
   setRegistryHooks,
   setRegistryLoadWarning,
-} from '../presentationStudioLayoutCapacityRegistryService';
+} from '../presentationStudioLayoutCapacityRegistryService.js';
 
 // ---------------------------------------------------------------------------
 // In-memory mock driver

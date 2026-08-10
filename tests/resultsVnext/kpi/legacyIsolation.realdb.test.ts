@@ -292,7 +292,13 @@ describe('KPI-E007 legacy isolation (real Postgres)', () => {
       );
       poisonedTpKpiId = tpKpiResult.rows[0]!.kpi_id;
 
-      const poisonedIds = new Set([poisonedKpisId, poisonedKpiDefinitionsId, poisonedV8Id, poisonedTpKpiId]);
+      // `listMyKpis` rows carry a nullable kpiId; widen the probe set accordingly.
+      const poisonedIds = new Set<string | null>([
+        poisonedKpisId,
+        poisonedKpiDefinitionsId,
+        poisonedV8Id,
+        poisonedTpKpiId,
+      ]);
 
       // ---- 3. Negative assertion: none of the 3 vNext read models ever
       // surface a poisoned row, by id or by the shared code. ----

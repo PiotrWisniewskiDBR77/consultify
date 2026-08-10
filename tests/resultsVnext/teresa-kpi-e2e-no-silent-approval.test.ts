@@ -480,6 +480,9 @@ describe('KPI-E006 — Teresa KPI handoff, no silent approval (real Postgres)', 
           caseId,
           organizationId: ORG_ID,
           expectedVersion: newVersion,
+          // Required by BaseCaseCommandInput; approvePlan records approverId as
+          // the actor and never reads actorUserId.
+          actorUserId: OWNER_USER_ID,
           approverId: OWNER_USER_ID,
           actorEffectiveRole: 'consultant',
           idempotencyKey: randomUUID(),

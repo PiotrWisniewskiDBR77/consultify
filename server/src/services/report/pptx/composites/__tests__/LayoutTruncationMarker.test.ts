@@ -16,7 +16,7 @@
 
 import { describe, expect, it, vi } from 'vitest';
 
-import type { DesignTokens, UnifiedSlide } from '../../types';
+import type { DesignTokens, UnifiedSlide } from '../../types.js';
 import {
   _highPriorityFlagsForTests,
   _knownFlagsForTests,
@@ -24,7 +24,7 @@ import {
   _markerPositionForTests,
   buildLayoutTruncationMarker,
   decideLayoutTruncationMarker,
-} from '../LayoutTruncationMarker';
+} from '../LayoutTruncationMarker.js';
 
 function slide(partial: Partial<UnifiedSlide> & Pick<UnifiedSlide, 'intent'>): UnifiedSlide {
   return {

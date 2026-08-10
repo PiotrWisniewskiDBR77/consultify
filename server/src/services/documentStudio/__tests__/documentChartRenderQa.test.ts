@@ -223,7 +223,7 @@ describe('Slice E17.charts.qa — Format category', () => {
   it('passes a fully-specified chart with no findings', () => {
     const schema = makeSchema([chartBlock('blk-good')]);
     const fmt = getFormatCategory(schema);
-    const chartFindings = fmt.findings.filter((f) => f.code.startsWith('format_chart_'));
+    const chartFindings = fmt.findings.filter((f) => (f.code ?? '').startsWith('format_chart_'));
     expect(chartFindings).toHaveLength(0);
   });
 
@@ -236,7 +236,7 @@ describe('Slice E17.charts.qa — Format category', () => {
       },
     ]);
     const fmt = getFormatCategory(schema);
-    const chartFindings = fmt.findings.filter((f) => f.code.startsWith('format_chart_'));
+    const chartFindings = fmt.findings.filter((f) => (f.code ?? '').startsWith('format_chart_'));
     expect(chartFindings).toHaveLength(0);
   });
 });

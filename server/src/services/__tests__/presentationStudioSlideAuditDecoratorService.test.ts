@@ -9,10 +9,10 @@
 
 import { describe, expect, it } from 'vitest';
 
-import type { OutlineItem } from '../presentationGeneratorService';
-import type { PresentationStudioOutlineLayoutAudit } from '../presentationStudioLayoutAuditService';
-import { decorateSlidesWithAuditFlags } from '../presentationStudioSlideAuditDecoratorService';
-import type { UnifiedSlide } from '../report/pptx/types';
+import type { OutlineItem } from '../presentationGeneratorService.js';
+import type { PresentationStudioOutlineLayoutAudit } from '../presentationStudioLayoutAuditService.js';
+import { decorateSlidesWithAuditFlags } from '../presentationStudioSlideAuditDecoratorService.js';
+import type { UnifiedSlide } from '../report/pptx/types.js';
 
 function outlineEntry(partial: Partial<OutlineItem> & Pick<OutlineItem, 'intent'>): OutlineItem {
   return {

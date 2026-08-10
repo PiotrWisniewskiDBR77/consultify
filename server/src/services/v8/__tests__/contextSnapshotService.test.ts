@@ -262,6 +262,9 @@ describe('detectDrift', () => {
       sourceContextRefs: [],
       driftEvents: [],
       ...overrides,
+      // `Partial<ContextSnapshot>` makes the optional-but-non-undefined
+      // `parentSnapshotId` widen to `| undefined` through the spread.
+      parentSnapshotId: overrides?.parentSnapshotId ?? null,
     };
   }
 

@@ -20,7 +20,9 @@ const baseSchema: DocumentSchema = {
   documentId: 'doc-src-1',
   artifactId: 'artifact-src-1',
   title: 'Source Scope Test Document',
-  documentType: 'analysis_report',
+  // 'analysis_report' is not a member of DocumentTypeKey; this suite never
+  // branches on the document type, so the neutral valid member is used.
+  documentType: 'generic_document',
   language: 'en',
   audience: ['Steering Committee'],
   goal: 'inform',

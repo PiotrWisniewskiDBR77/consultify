@@ -39,7 +39,16 @@ describe('mergeBusinessCaseOutlineRequirements', () => {
   });
 
   it('does not change non-business-case outlines', () => {
-    const outline = { documentType: 'generic_document', title: 'Memo', sections: [] } as DocumentOutline;
+    // The merge short-circuits for non-business-case types and returns the same
+    // object, but DocumentOutline still requires the three recommendation fields.
+    const outline: DocumentOutline = {
+      documentType: 'generic_document',
+      title: 'Memo',
+      sections: [],
+      recommendedDensity: 'standard',
+      recommendedRegister: 'professional',
+      recommendedLanguageStyle: 'consulting',
+    };
     const intake = {
       description: 'Memo',
       documentType: 'generic_document',

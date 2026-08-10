@@ -33,6 +33,7 @@ import {
   listDocumentContentBlocks,
   updateDocumentContentBlock,
 } from '../documentContentBlockService.js';
+import type { DocumentTypeKey } from '../documentStudioTypes.js';
 
 const ORG_A = 'org-A';
 const ORG_B = 'org-B';
@@ -61,7 +62,15 @@ describe('Content Block Service — draft', () => {
         name: '  Standard Intro  ',
         description: 'Used at the top of every memo',
         tags: [' compliance ', 'compliance', 'standard_intro', '', 'STANDARD_INTRO'],
-        documentTypes: [' executive_memo ', 'executive_memo', 'board_report'],
+        // Deliberately untrimmed / duplicated: this asserts that
+        // `normalizeDocumentTypes` (which accepts `unknown`) trims and dedupes.
+        // The declared input type is the narrow key union, so the probe value is
+        // fed through the looser runtime contract the assertion exercises.
+        documentTypes: [
+          ' executive_memo ',
+          'executive_memo',
+          'board_report',
+        ] as unknown as DocumentTypeKey[],
         languageScope: 'en',
         block: SAMPLE_PARAGRAPH,
         notes: 'Reviewed by legal',

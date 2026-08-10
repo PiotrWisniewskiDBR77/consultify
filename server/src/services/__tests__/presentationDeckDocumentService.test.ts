@@ -10,8 +10,8 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { deckDocumentFromUnifiedJson } from '../presentationDeckDocumentService';
-import type { UnifiedReportJSON, UnifiedSlide } from '../report/pptx/types';
+import { deckDocumentFromUnifiedJson } from '../presentationDeckDocumentService.js';
+import type { UnifiedReportJSON, UnifiedSlide } from '../report/pptx/types.js';
 
 function makeUnifiedJson(slides: UnifiedSlide[]): UnifiedReportJSON {
   return {

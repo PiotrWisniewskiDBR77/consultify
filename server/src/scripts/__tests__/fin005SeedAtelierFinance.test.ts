@@ -89,6 +89,7 @@ import {
   SNAPSHOT_TABLES,
   WRITE_PATH_IDENTITY_FIELDS,
 } from '../../../scripts/fin005-seed-atelier-finance.js';
+import type { SeedRecoveryManifest } from '../../../scripts/fin005-seed-atelier-finance.js';
 import {
   ATELIER_CANONICAL_MODEL_NAME_EN,
   ATELIER_FINANCE_CURRENCY,
@@ -1265,12 +1266,11 @@ dbSuite('FIN-005 seed — against a real local PostgreSQL', () => {
 
       // The recovery manifest exists, was written before the first mutation and
       // records the tenant as empty beforehand.
-      const manifest = JSON.parse(fs.readFileSync(first.manifestPath as string, 'utf8')) as {
-        status: string;
-        absentBefore: Record<string, string[]>;
-        priorRows: Record<string, unknown[]>;
-        postFixtureDigest?: string;
-      };
+      // Use the exported manifest contract instead of a hand-rolled subset that
+      // omitted `target` (read a few lines below).
+      const manifest = JSON.parse(
+        fs.readFileSync(first.manifestPath as string, 'utf8')
+      ) as SeedRecoveryManifest;
       expect(manifest.status).toBe('COMPLETED');
       expect(manifest.postFixtureDigest).toBe(first.fixtureDigestAfter);
       expect(manifest.priorRows.financial_statement_packs).toEqual([]);

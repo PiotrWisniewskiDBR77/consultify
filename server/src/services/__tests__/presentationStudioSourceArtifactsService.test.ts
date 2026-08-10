@@ -11,7 +11,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   _setSourceArtifactsDependenciesForTests,
   listPresentationStudioSourceArtifacts,
-} from '../presentationStudioSourceArtifactsService';
+} from '../presentationStudioSourceArtifactsService.js';
 
 describe('presentationStudioSourceArtifactsService', () => {
   beforeEach(() => {

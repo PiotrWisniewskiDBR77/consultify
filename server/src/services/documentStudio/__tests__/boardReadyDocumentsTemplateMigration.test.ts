@@ -21,6 +21,26 @@ const formulaRepairSql = fs.readFileSync(
   'utf8'
 );
 
+/** Authoring brief carried by every Word section in the migration payload. */
+interface WordSectionBrief {
+  level: number;
+  title: string;
+  purpose: string;
+  keyMessage?: string;
+  contentHints?: unknown[];
+  dataNeeded?: unknown[];
+  suggestedEvidence?: unknown;
+}
+
+/** Slide brief carried by every presentation outline in the migration payload. */
+interface PresentationSlideBrief {
+  intent: string;
+  title: string;
+  keyMessage?: string;
+  dataNeeded?: unknown[];
+  suggestedVisual?: unknown;
+}
+
 describe('board-ready Documents template migration', () => {
   it('contains the exact 3 Word, 3 workbook and 3 presentation qualification targets', () => {
     for (const id of [
@@ -88,13 +108,14 @@ describe('board-ready Documents template migration', () => {
         payload.every((item) => item && item.level && item.title && item.purpose)
     );
     expect(wordBlueprints).toHaveLength(3);
-    for (const blueprint of wordBlueprints) {
+    // `jsonPayloads` is JSON.parse output (`any`); name the shape the assertions read.
+    for (const blueprint of wordBlueprints as WordSectionBrief[][]) {
       expect(
         blueprint.every(
           (section) =>
             section.keyMessage &&
-            section.contentHints?.length >= 2 &&
-            section.dataNeeded?.length >= 3 &&
+            (section.contentHints?.length ?? 0) >= 2 &&
+            (section.dataNeeded?.length ?? 0) >= 3 &&
             section.suggestedEvidence
         )
       ).toBe(true);
@@ -109,10 +130,10 @@ describe('board-ready Documents template migration', () => {
         payload.every((item) => item && item.intent && item.title)
     );
     expect(presentationOutlines).toHaveLength(3);
-    for (const outline of presentationOutlines) {
+    for (const outline of presentationOutlines as PresentationSlideBrief[][]) {
       expect(
         outline.every(
-          (slide) => slide.keyMessage && slide.dataNeeded?.length >= 3 && slide.suggestedVisual
+          (slide) => slide.keyMessage && (slide.dataNeeded?.length ?? 0) >= 3 && slide.suggestedVisual
         )
       ).toBe(true);
     }

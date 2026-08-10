@@ -27,7 +27,7 @@ import {
   normalizeTemplateFamily,
   resetToDefaults,
   resolveSlotCapacity,
-} from '../presentationStudioLayoutCapacityRegistryService';
+} from '../presentationStudioLayoutCapacityRegistryService.js';
 
 describe('presentationStudioLayoutCapacityRegistryService', () => {
   beforeEach(() => {

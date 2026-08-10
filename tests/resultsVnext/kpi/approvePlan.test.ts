@@ -106,11 +106,14 @@ function baseCase(overrides: Record<string, unknown> = {}): Record<string, unkno
   };
 }
 
-function baseInput(overrides: Record<string, unknown> = {}) {
+function baseInput<T extends Record<string, unknown>>(overrides: T = {} as T) {
   return {
     caseId: 'case-1',
     organizationId: 'org-1',
     expectedVersion: 2,
+    // Required by BaseCaseCommandInput. `approvePlan` records `approverId` as
+    // the actor and never reads `actorUserId`, so this is inert at runtime.
+    actorUserId: 'user-approver',
     approverId: 'user-approver',
     actorEffectiveRole: 'admin',
     idempotencyKey: 'idem-1',

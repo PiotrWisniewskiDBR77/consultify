@@ -122,7 +122,7 @@ describe('Document Studio Mode 1', () => {
         language: 'pl',
       });
       const outline = {
-        documentType: 'generic_document',
+        documentType: 'generic_document' as const,
         title: 'Nowy dokument',
         sections: [
           {

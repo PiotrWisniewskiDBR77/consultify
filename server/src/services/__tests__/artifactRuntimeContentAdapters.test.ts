@@ -41,7 +41,9 @@ function reportSection(overrides: Record<string, unknown> = {}) {
     order_index: 1,
     content_format: 'markdown',
     generated_content: 'Generated content',
-    edited_content: null,
+    // Reassigned to a string later in the suite; the literal would otherwise
+    // infer the `null` type.
+    edited_content: null as string | null,
     updated_at: '2026-07-31T10:00:00.000Z',
     ...overrides,
   };
