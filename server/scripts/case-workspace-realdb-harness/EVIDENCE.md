@@ -376,3 +376,48 @@ credentials. All fixture identifiers are synthetic
 `@example.test`.
 
 **Task 6 verdict: PASS.**
+
+---
+
+## Coordinator addendum (2026-08-10) — Task 1 blocker fixed and re-verified
+
+The real bug found above (11 same-day `20260809_case_workspace_*.sql` files
+sorting alphabetically instead of by dependency) is fixed in
+`server/scripts/migrate.postgres.ts` (commit `35afcbe28c`): a new
+`DATED_SAME_DAY_ORDER` map gives these 11 files an explicit
+dependency-respecting intra-day tiebreaker
+(`case_core → capability_registry → case_plan_version → run_binding →
+proposals_approvals → wait_subscription → history_value → plays →
+artifact_links → execution_graph → migration_readiness`), consulted only
+for entries present in it — every other same-date migration's relative
+order is unchanged.
+
+Re-ran Task 1 literally as originally specified, no `--only` workaround,
+against a second fresh throwaway database
+(`case_workspace_realdb_c2`, since dropped):
+
+```
+DB_TYPE=postgres LC_ALL=C NODE_ENV=test \
+DATABASE_URL=postgresql://case_workspace:case_workspace@127.0.0.1:55432/case_workspace_realdb_c2 \
+npm run db:migrate:strict   # (root package.json script — server/ has no own db:migrate:strict)
+```
+
+All 11 `case_workspace_*` files applied, in the correct order, in the same
+pass as the ~275 other pending migrations, exit 0, `✅ Postgres migrations
+complete`. Immediate rerun of the identical command: `Applying migrations: 0`
+— idempotent replay confirmed.
+
+**Literal container restart + readback** (upgrading Task 4's
+independent-process proxy to an actual restart, now that no other
+concurrent verification work was in flight on this container): inserted
+the same marker `case_core`/`case_plan_versions` rows into
+`case_workspace_realdb_c2`, ran `docker restart case-workspace-test-pg`,
+waited for `pg_isready`, then read the marker rows back from a fresh `tsx`
+process/pool (PID 44798, independent of the insert process) — all fields
+matched. The shared `case_workspace_test` database was also confirmed
+intact post-restart (`caseWorkspaceAuthContext.pg.test.ts`: 6/6 passed).
+Both throwaway databases (`case_workspace_realdb_c`, `case_workspace_realdb_c2`)
+dropped after; only `case_workspace_test` remains.
+
+**Task 1 verdict, updated: PASS** (was BLOCKED-then-worked-around; the
+underlying bug is now fixed and the literal command passes unaided).
