@@ -55,6 +55,13 @@ const mockListObjectivesForSet = vi.fn();
 const mockGetObjective = vi.fn();
 const mockGetKeyResult = vi.fn();
 
+// OKR-E004
+const mockRecordCheckIn = vi.fn();
+const mockCorrectCheckIn = vi.fn();
+const mockListCheckIns = vi.fn();
+const mockGetCheckIn = vi.fn();
+const mockSuggestNextCheckInValue = vi.fn();
+
 vi.mock('../../../middleware/auth.middleware.js', () => ({
   verifyToken: (req: any, _res: any, next: () => void) => {
     req.user = { id: 'user-1', organizationId: 'org-1', role: 'admin' };
@@ -163,6 +170,26 @@ vi.mock('../../../services/resultsVnext/okr/okrObjectiveRepository.js', () => ({
   getKeyResult: (...args: unknown[]) => mockGetKeyResult(...args),
 }));
 
+// OKR-E004
+vi.mock('../../../services/resultsVnext/okr/okrCheckInCommands.js', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('../../../services/resultsVnext/okr/okrCheckInCommands.js')>();
+  return {
+    ...actual,
+    recordCheckIn: (...args: unknown[]) => mockRecordCheckIn(...args),
+    correctCheckIn: (...args: unknown[]) => mockCorrectCheckIn(...args),
+  };
+});
+
+vi.mock('../../../services/resultsVnext/okr/okrCheckInRepository.js', () => ({
+  listCheckIns: (...args: unknown[]) => mockListCheckIns(...args),
+  getCheckIn: (...args: unknown[]) => mockGetCheckIn(...args),
+}));
+
+vi.mock('../../../services/resultsVnext/okr/okrCheckInSuggestionService.js', () => ({
+  suggestNextCheckInValue: (...args: unknown[]) => mockSuggestNextCheckInValue(...args),
+}));
+
 const { OkrProgramValidationError } = await import('../../../services/resultsVnext/okr/okrProgramCommands.js');
 const { OkrCycleProgramNotActiveError, OkrCycleValidationError } = await import(
   '../../../services/resultsVnext/okr/okrCycleCommands.js'
@@ -182,6 +209,11 @@ const { OkrObjectiveNotFoundError, OkrObjectiveSetNotEditableError, OkrObjective
 const { OkrKeyResultNotFoundError, OkrKeyResultValidationError } = await import(
   '../../../services/resultsVnext/okr/okrKeyResultCommands.js'
 );
+const {
+  OkrCheckInAlreadyExistsForOccurrenceError,
+  OkrCheckInNotFoundError,
+  OkrCheckInValidationError,
+} = await import('../../../services/resultsVnext/okr/okrCheckInCommands.js');
 
 const okrRoutes = (await import('../okr.routes.js')).default;
 
@@ -1477,6 +1509,226 @@ describe('POST /key-results/:keyResultId/cancel — cancelKeyResult', () => {
       .post(`/api/vnext/results/okr/key-results/${KEY_RESULT_ID}/cancel`)
       .send({ expectedVersion: 1 });
     expect(response.status).toBe(404);
+  });
+});
+
+// ==========================================
+// OKR-E004 — Check-ins
+// ==========================================
+
+const CHECKIN_ID = '88888888-8888-4888-8888-888888888888';
+const OCCURRENCE_ID = '99999999-9999-4999-8999-999999999999';
+
+function checkInFixture(overrides: Record<string, unknown> = {}) {
+  return {
+    checkInId: CHECKIN_ID,
+    organizationId: 'org-1',
+    keyResultId: KEY_RESULT_ID,
+    objectiveId: OBJECTIVE_ID,
+    setId: SET_ID,
+    cadenceOccurrenceId: OCCURRENCE_ID,
+    previousValue: '5',
+    newValue: '7',
+    calculatedProgress: '0.7',
+    ownerDeclaredStatus: null,
+    systemSuggestedStatus: null,
+    confidence: null,
+    confidenceNumericValue: null,
+    note: 'progress update',
+    blocker: null,
+    supportRequested: null,
+    evidenceRefs: [],
+    correctionOfCheckInId: null,
+    correctionReason: null,
+    submittedBy: 'user-1',
+    submittedAt: '2026-01-08T00:00:00.000Z',
+    ...overrides,
+  };
+}
+
+describe('GET /key-results/:keyResultId/check-ins — listCheckIns', () => {
+  it('404s when the KeyResult does not exist/visible, without calling listCheckIns', async () => {
+    mockGetKeyResult.mockResolvedValue(null);
+    const response = await request(createApp()).get(`/api/vnext/results/okr/key-results/${KEY_RESULT_ID}/check-ins`);
+    expect(response.status).toBe(404);
+    expect(mockListCheckIns).not.toHaveBeenCalled();
+  });
+
+  it('returns the check-in list', async () => {
+    mockGetKeyResult.mockResolvedValue(keyResultFixture());
+    mockListCheckIns.mockResolvedValue([checkInFixture()]);
+    const response = await request(createApp()).get(`/api/vnext/results/okr/key-results/${KEY_RESULT_ID}/check-ins`);
+    expect(response.status).toBe(200);
+    expect(response.body.checkIns).toHaveLength(1);
+    expect(response.body.checkIns[0].checkInId).toBe(CHECKIN_ID);
+  });
+
+  it('passes currentOnly=false through to the repository when requested', async () => {
+    mockGetKeyResult.mockResolvedValue(keyResultFixture());
+    mockListCheckIns.mockResolvedValue([]);
+    const response = await request(createApp()).get(
+      `/api/vnext/results/okr/key-results/${KEY_RESULT_ID}/check-ins?currentOnly=false`
+    );
+    expect(response.status).toBe(200);
+    expect(mockListCheckIns).toHaveBeenCalledWith(expect.objectContaining({ currentOnly: false }));
+  });
+});
+
+describe('POST /key-results/:keyResultId/check-ins — recordCheckIn', () => {
+  it('404s when the KeyResult does not exist/visible, without calling the command', async () => {
+    mockGetKeyResult.mockResolvedValue(null);
+    const response = await request(createApp())
+      .post(`/api/vnext/results/okr/key-results/${KEY_RESULT_ID}/check-ins`)
+      .send({ cadenceOccurrenceId: OCCURRENCE_ID, newValue: 7, note: 'progress update' });
+    expect(response.status).toBe(404);
+    expect(mockRecordCheckIn).not.toHaveBeenCalled();
+  });
+
+  it('400s when note is missing (required field)', async () => {
+    mockGetKeyResult.mockResolvedValue(keyResultFixture());
+    const response = await request(createApp())
+      .post(`/api/vnext/results/okr/key-results/${KEY_RESULT_ID}/check-ins`)
+      .send({ cadenceOccurrenceId: OCCURRENCE_ID, newValue: 7 });
+    expect(response.status).toBe(400);
+    expect(mockRecordCheckIn).not.toHaveBeenCalled();
+  });
+
+  it('400s when confidence="numeric" is sent without confidenceNumericValue', async () => {
+    mockGetKeyResult.mockResolvedValue(keyResultFixture());
+    const response = await request(createApp())
+      .post(`/api/vnext/results/okr/key-results/${KEY_RESULT_ID}/check-ins`)
+      .send({ cadenceOccurrenceId: OCCURRENCE_ID, newValue: 7, note: 'x', confidence: 'numeric' });
+    expect(response.status).toBe(400);
+    expect(mockRecordCheckIn).not.toHaveBeenCalled();
+  });
+
+  it('records and returns the check-in (201 on applied)', async () => {
+    mockGetKeyResult.mockResolvedValue(keyResultFixture());
+    mockRecordCheckIn.mockResolvedValue({
+      outcome: 'applied',
+      eventId: 'evt-checkin-1',
+      resultingVersion: 1,
+      result: { checkIn: checkInFixture(), keyResult: keyResultFixture({ currentValue: '7', progress: '0.7' }), set: { setId: SET_ID, overallProgress: '0.7' } },
+    });
+    const response = await request(createApp())
+      .post(`/api/vnext/results/okr/key-results/${KEY_RESULT_ID}/check-ins`)
+      .send({ cadenceOccurrenceId: OCCURRENCE_ID, newValue: 7, note: 'progress update' });
+    expect(response.status).toBe(201);
+    expect(response.body.checkIn.checkInId).toBe(CHECKIN_ID);
+    expect(response.body.keyResult.currentValue).toBe('7');
+    expect(mockRecordCheckIn).toHaveBeenCalledWith(
+      expect.objectContaining({ keyResultId: KEY_RESULT_ID, cadenceOccurrenceId: OCCURRENCE_ID, newValue: 7, note: 'progress update' })
+    );
+  });
+
+  it('maps OkrCheckInAlreadyExistsForOccurrenceError to 409', async () => {
+    mockGetKeyResult.mockResolvedValue(keyResultFixture());
+    mockRecordCheckIn.mockRejectedValue(
+      new OkrCheckInAlreadyExistsForOccurrenceError(KEY_RESULT_ID, OCCURRENCE_ID, CHECKIN_ID)
+    );
+    const response = await request(createApp())
+      .post(`/api/vnext/results/okr/key-results/${KEY_RESULT_ID}/check-ins`)
+      .send({ cadenceOccurrenceId: OCCURRENCE_ID, newValue: 7, note: 'duplicate' });
+    expect(response.status).toBe(409);
+    expect(response.body.code).toBe('CHECKIN_ALREADY_EXISTS_FOR_OCCURRENCE');
+    expect(response.body.existingCheckInId).toBe(CHECKIN_ID);
+  });
+
+  it('maps OkrCheckInValidationError to 409', async () => {
+    mockGetKeyResult.mockResolvedValue(keyResultFixture());
+    mockRecordCheckIn.mockRejectedValue(new OkrCheckInValidationError('Set not active', 'SET_NOT_ACTIVE'));
+    const response = await request(createApp())
+      .post(`/api/vnext/results/okr/key-results/${KEY_RESULT_ID}/check-ins`)
+      .send({ cadenceOccurrenceId: OCCURRENCE_ID, newValue: 7, note: 'x' });
+    expect(response.status).toBe(409);
+    expect(response.body.code).toBe('SET_NOT_ACTIVE');
+  });
+});
+
+describe('POST /key-results/:keyResultId/check-ins/:checkinId/correct — correctCheckIn', () => {
+  it('404s when the KeyResult does not exist/visible, without calling the command', async () => {
+    mockGetKeyResult.mockResolvedValue(null);
+    const response = await request(createApp())
+      .post(`/api/vnext/results/okr/key-results/${KEY_RESULT_ID}/check-ins/${CHECKIN_ID}/correct`)
+      .send({ newValue: 8, correctionReason: 'fix' });
+    expect(response.status).toBe(404);
+    expect(mockCorrectCheckIn).not.toHaveBeenCalled();
+  });
+
+  it('404s when the CheckIn does not exist/visible, without calling the command', async () => {
+    mockGetKeyResult.mockResolvedValue(keyResultFixture());
+    mockGetCheckIn.mockResolvedValue(null);
+    const response = await request(createApp())
+      .post(`/api/vnext/results/okr/key-results/${KEY_RESULT_ID}/check-ins/${CHECKIN_ID}/correct`)
+      .send({ newValue: 8, correctionReason: 'fix' });
+    expect(response.status).toBe(404);
+    expect(mockCorrectCheckIn).not.toHaveBeenCalled();
+  });
+
+  it('400s when correctionReason is missing (required field)', async () => {
+    mockGetKeyResult.mockResolvedValue(keyResultFixture());
+    mockGetCheckIn.mockResolvedValue(checkInFixture());
+    const response = await request(createApp())
+      .post(`/api/vnext/results/okr/key-results/${KEY_RESULT_ID}/check-ins/${CHECKIN_ID}/correct`)
+      .send({ newValue: 8 });
+    expect(response.status).toBe(400);
+    expect(mockCorrectCheckIn).not.toHaveBeenCalled();
+  });
+
+  it('corrects and returns original + superseding rows', async () => {
+    mockGetKeyResult.mockResolvedValue(keyResultFixture());
+    mockGetCheckIn.mockResolvedValue(checkInFixture());
+    mockCorrectCheckIn.mockResolvedValue({
+      outcome: 'applied',
+      eventId: 'evt-checkin-2',
+      resultingVersion: 1,
+      result: {
+        original: checkInFixture(),
+        superseding: checkInFixture({ checkInId: 'corrected-id', newValue: '8', correctionOfCheckInId: CHECKIN_ID }),
+        keyResult: keyResultFixture({ currentValue: '8' }),
+        set: { setId: SET_ID },
+      },
+    });
+    const response = await request(createApp())
+      .post(`/api/vnext/results/okr/key-results/${KEY_RESULT_ID}/check-ins/${CHECKIN_ID}/correct`)
+      .send({ newValue: 8, correctionReason: 'fixed a typo' });
+    expect(response.status).toBe(201);
+    expect(response.body.original.checkInId).toBe(CHECKIN_ID);
+    expect(response.body.checkIn.checkInId).toBe('corrected-id');
+    expect(response.body.checkIn.correctionOfCheckInId).toBe(CHECKIN_ID);
+  });
+
+  it('maps OkrCheckInNotFoundError to 404', async () => {
+    mockGetKeyResult.mockResolvedValue(keyResultFixture());
+    mockGetCheckIn.mockResolvedValue(checkInFixture());
+    mockCorrectCheckIn.mockRejectedValue(new OkrCheckInNotFoundError(CHECKIN_ID));
+    const response = await request(createApp())
+      .post(`/api/vnext/results/okr/key-results/${KEY_RESULT_ID}/check-ins/${CHECKIN_ID}/correct`)
+      .send({ newValue: 8, correctionReason: 'fix' });
+    expect(response.status).toBe(404);
+  });
+});
+
+describe('GET /key-results/:keyResultId/suggested-next-check-in-value — suggestNextCheckInValue', () => {
+  it('404s when the KeyResult does not exist/visible', async () => {
+    mockGetKeyResult.mockResolvedValue(null);
+    const response = await request(createApp()).get(
+      `/api/vnext/results/okr/key-results/${KEY_RESULT_ID}/suggested-next-check-in-value`
+    );
+    expect(response.status).toBe(404);
+    expect(mockSuggestNextCheckInValue).not.toHaveBeenCalled();
+  });
+
+  it('returns the pure suggestion computed from listCheckIns history', async () => {
+    mockGetKeyResult.mockResolvedValue(keyResultFixture());
+    mockListCheckIns.mockResolvedValue([checkInFixture()]);
+    mockSuggestNextCheckInValue.mockReturnValue({ suggestedValue: null, basis: 'no_history', reason: 'no_history: ...' });
+    const response = await request(createApp()).get(
+      `/api/vnext/results/okr/key-results/${KEY_RESULT_ID}/suggested-next-check-in-value`
+    );
+    expect(response.status).toBe(200);
+    expect(response.body.suggestion.basis).toBe('no_history');
+    expect(mockSuggestNextCheckInValue).toHaveBeenCalledWith([checkInFixture()], keyResultFixture());
   });
 });
 
