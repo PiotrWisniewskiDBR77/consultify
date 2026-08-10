@@ -42,6 +42,7 @@ import {
   OKR_SET_STATUSES,
   OKR_SET_VERSION_FIELD_NAMES,
 } from '../services/resultsVnext/okr/okrSetTypes.js';
+import { OKR_CHECKIN_CONFIDENCE_VALUES, OKR_CHECKIN_STATUS_VALUES } from '../services/resultsVnext/okr/okrCheckInTypes.js';
 
 export const OkrProgramStatusEnum = z.enum(OKR_PROGRAM_STATUSES);
 export const OkrCycleModelEnum = z.enum(OKR_CYCLE_MODELS);
@@ -478,3 +479,76 @@ export const OkrKeyResultTransitionSchema = z.object({
   reason: nullableReasonField,
   idempotencyKey: idempotencyKeyField,
 });
+
+// ==========================================
+// OKR-E004 — Check-ins
+// ==========================================
+
+export const OkrCheckInStatusEnum = z.enum(OKR_CHECKIN_STATUS_VALUES);
+export const OkrCheckInConfidenceEnum = z.enum(OKR_CHECKIN_CONFIDENCE_VALUES);
+
+const MAX_NOTE_CHARS = 4000;
+const MAX_BLOCKER_CHARS = 2000;
+const MAX_SUPPORT_REQUESTED_CHARS = 2000;
+const MAX_CORRECTION_REASON_CHARS = 2000;
+
+export const OkrCheckInIdParamsSchema = z.object({
+  keyResultId: z.string().uuid(),
+});
+
+export const OkrCheckInIdWithCheckInParamsSchema = z.object({
+  keyResultId: z.string().uuid(),
+  checkinId: z.string().uuid(),
+});
+
+// ==========================================
+// GET .../key-results/:keyResultId/check-ins — listCheckIns
+// ==========================================
+
+export const ListOkrCheckInsQuerySchema = z.object({
+  currentOnly: z
+    .union([z.literal('true'), z.literal('false')])
+    .optional()
+    .transform((value) => (value === undefined ? undefined : value === 'true')),
+});
+
+// ==========================================
+// POST .../key-results/:keyResultId/check-ins — recordCheckIn
+// ==========================================
+
+export const RecordOkrCheckInSchema = z
+  .object({
+    cadenceOccurrenceId: z.string().uuid(),
+    newValue: z.number().nullable(),
+    ownerDeclaredStatus: OkrCheckInStatusEnum.nullable().optional(),
+    confidence: OkrCheckInConfidenceEnum.nullable().optional(),
+    confidenceNumericValue: z.number().nullable().optional(),
+    note: z.string().min(1).max(MAX_NOTE_CHARS),
+    blocker: z.string().max(MAX_BLOCKER_CHARS).nullable().optional(),
+    supportRequested: z.string().max(MAX_SUPPORT_REQUESTED_CHARS).nullable().optional(),
+    evidenceRefs: z.array(z.unknown()).optional(),
+    reason: nullableReasonField,
+    idempotencyKey: idempotencyKeyField,
+  })
+  .refine((body) => body.confidence !== 'numeric' || body.confidenceNumericValue != null, {
+    message: 'confidenceNumericValue is required when confidence is "numeric"',
+    path: ['confidenceNumericValue'],
+  });
+
+// ==========================================
+// POST .../key-results/:keyResultId/check-ins/:checkinId/correct — correctCheckIn
+// ==========================================
+
+export const CorrectOkrCheckInSchema = z
+  .object({
+    newValue: z.number().nullable().optional(),
+    ownerDeclaredStatus: OkrCheckInStatusEnum.nullable().optional(),
+    confidence: OkrCheckInConfidenceEnum.nullable().optional(),
+    confidenceNumericValue: z.number().nullable().optional(),
+    correctionReason: z.string().min(1).max(MAX_CORRECTION_REASON_CHARS),
+    idempotencyKey: idempotencyKeyField,
+  })
+  .refine((body) => body.confidence !== 'numeric' || body.confidenceNumericValue != null, {
+    message: 'confidenceNumericValue is required when confidence is "numeric"',
+    path: ['confidenceNumericValue'],
+  });

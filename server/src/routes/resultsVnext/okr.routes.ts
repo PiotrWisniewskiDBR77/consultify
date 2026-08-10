@@ -94,6 +94,15 @@ import {
   OkrKeyResultNotFoundError,
   OkrKeyResultValidationError,
 } from '../../services/resultsVnext/okr/okrKeyResultCommands.js';
+import {
+  correctCheckIn,
+  recordCheckIn,
+  OkrCheckInAlreadyExistsForOccurrenceError,
+  OkrCheckInNotFoundError,
+  OkrCheckInValidationError,
+} from '../../services/resultsVnext/okr/okrCheckInCommands.js';
+import { getCheckIn, listCheckIns } from '../../services/resultsVnext/okr/okrCheckInRepository.js';
+import { suggestNextCheckInValue } from '../../services/resultsVnext/okr/okrCheckInSuggestionService.js';
 import { recordOkrSetMaterialChange } from '../../services/resultsVnext/okr/okrSetMaterialChangeCommands.js';
 import {
   getOkrSet,
@@ -104,17 +113,21 @@ import {
 import type { AuthenticatedRequest } from '../../types/index.js';
 import logger from '../../utils/Logger.js';
 import {
+  CorrectOkrCheckInSchema,
   CreateOkrCycleSchema,
   CreateOkrKeyResultSchema,
   CreateOkrObjectiveSchema,
   CreateOkrProgramSchema,
   CreateOkrSetSchema,
   EditOkrProgramDraftSchema,
+  ListOkrCheckInsQuerySchema,
   ListOkrCompanySetsQuerySchema,
   ListOkrCyclesQuerySchema,
   ListOkrProgramsQuerySchema,
   ListOkrSetsQuerySchema,
   NarrowOkrSetVisibilitySchema,
+  OkrCheckInIdParamsSchema,
+  OkrCheckInIdWithCheckInParamsSchema,
   OkrCycleIdParamsSchema,
   OkrCycleTransitionSchema,
   OkrKeyResultIdParamsSchema,
@@ -126,6 +139,7 @@ import {
   OkrSetIdParamsSchema,
   OkrSetTransitionSchema,
   PublishOkrProgramSchema,
+  RecordOkrCheckInSchema,
   RecordOkrSetMaterialChangeSchema,
   RequestChangesOnOkrSetSchema,
   UpdateOkrKeyResultSchema,
@@ -237,6 +251,19 @@ function handleOkrRouteError(res: Response, err: unknown, op: string): void {
     return;
   }
   if (err instanceof OkrObjectiveValidationError || err instanceof OkrKeyResultValidationError) {
+    res.status(409).json({ error: err.message, code: err.code, details: err.details });
+    return;
+  }
+  // OKR-E004 (design §11's error-mapping table).
+  if (err instanceof OkrCheckInAlreadyExistsForOccurrenceError) {
+    res.status(409).json({ error: err.message, code: err.code, ...err.details });
+    return;
+  }
+  if (err instanceof OkrCheckInNotFoundError) {
+    res.status(404).json({ error: err.message, code: err.code, ...err.details });
+    return;
+  }
+  if (err instanceof OkrCheckInValidationError) {
     res.status(409).json({ error: err.message, code: err.code, details: err.details });
     return;
   }
@@ -1492,6 +1519,180 @@ router.post(
       });
     } catch (err) {
       handleOkrRouteError(res, err, 'cancelKeyResult');
+    }
+  }
+);
+
+// ==========================================
+// OKR-E004 — Check-ins (design §11)
+// ==========================================
+
+// ==========================================
+// GET /api/vnext/results/okr/key-results/:keyResultId/check-ins — listCheckIns
+// ==========================================
+
+router.get(
+  '/key-results/:keyResultId/check-ins',
+  validateParams(OkrCheckInIdParamsSchema),
+  validateQuery(ListOkrCheckInsQuerySchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { keyResultId } = req.params as { keyResultId: string };
+      const existing = await getKeyResult({ userId: auth.userId, organizationId: auth.organizationId, keyResultId });
+      if (!existing) {
+        res.status(404).json({ error: 'OKR KeyResult not found', code: 'NOT_FOUND' });
+        return;
+      }
+      const query = req.query as import('zod').infer<typeof ListOkrCheckInsQuerySchema>;
+      const checkIns = await listCheckIns({
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        keyResultId,
+        currentOnly: query.currentOnly,
+      });
+      res.status(200).json({ checkIns });
+    } catch (err) {
+      handleOkrRouteError(res, err, 'listCheckIns');
+    }
+  }
+);
+
+// ==========================================
+// POST /api/vnext/results/okr/key-results/:keyResultId/check-ins — recordCheckIn
+// ==========================================
+
+router.post(
+  '/key-results/:keyResultId/check-ins',
+  validateParams(OkrCheckInIdParamsSchema),
+  validateBody(RecordOkrCheckInSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { keyResultId } = req.params as { keyResultId: string };
+      const existing = await getKeyResult({ userId: auth.userId, organizationId: auth.organizationId, keyResultId });
+      if (!existing) {
+        res.status(404).json({ error: 'OKR KeyResult not found', code: 'NOT_FOUND' });
+        return;
+      }
+      const body = req.body as import('zod').infer<typeof RecordOkrCheckInSchema>;
+      const outcome = await recordCheckIn({
+        keyResultId,
+        organizationId: auth.organizationId,
+        cadenceOccurrenceId: body.cadenceOccurrenceId,
+        newValue: body.newValue,
+        ownerDeclaredStatus: body.ownerDeclaredStatus ?? null,
+        confidence: body.confidence ?? null,
+        confidenceNumericValue: body.confidenceNumericValue ?? null,
+        note: body.note,
+        blocker: body.blocker ?? null,
+        supportRequested: body.supportRequested ?? null,
+        evidenceRefs: body.evidenceRefs ?? [],
+        submittedBy: auth.userId,
+        actorEffectiveRole: auth.role,
+        idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
+        correlationId: getCorrelationId(req),
+        reason: body.reason ?? null,
+      });
+      res.status(outcome.outcome === 'applied' ? 201 : 200).json({
+        outcome: outcome.outcome,
+        eventId: outcome.eventId,
+        resultingVersion: outcome.resultingVersion,
+        checkIn: outcome.result.checkIn,
+        keyResult: outcome.result.keyResult,
+        set: outcome.result.set,
+      });
+    } catch (err) {
+      handleOkrRouteError(res, err, 'recordCheckIn');
+    }
+  }
+);
+
+// ==========================================
+// POST /api/vnext/results/okr/key-results/:keyResultId/check-ins/:checkinId/correct — correctCheckIn
+// ==========================================
+
+router.post(
+  '/key-results/:keyResultId/check-ins/:checkinId/correct',
+  validateParams(OkrCheckInIdWithCheckInParamsSchema),
+  validateBody(CorrectOkrCheckInSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { keyResultId, checkinId } = req.params as { keyResultId: string; checkinId: string };
+      const existing = await getKeyResult({ userId: auth.userId, organizationId: auth.organizationId, keyResultId });
+      if (!existing) {
+        res.status(404).json({ error: 'OKR KeyResult not found', code: 'NOT_FOUND' });
+        return;
+      }
+      const existingCheckIn = await getCheckIn({ userId: auth.userId, organizationId: auth.organizationId, checkInId: checkinId });
+      if (!existingCheckIn) {
+        res.status(404).json({ error: 'OKR CheckIn not found', code: 'NOT_FOUND' });
+        return;
+      }
+      const body = req.body as import('zod').infer<typeof CorrectOkrCheckInSchema>;
+      const outcome = await correctCheckIn({
+        checkInId: checkinId,
+        organizationId: auth.organizationId,
+        newValue: body.newValue,
+        ownerDeclaredStatus: body.ownerDeclaredStatus,
+        confidence: body.confidence,
+        confidenceNumericValue: body.confidenceNumericValue,
+        correctionReason: body.correctionReason,
+        submittedBy: auth.userId,
+        actorEffectiveRole: auth.role,
+        idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
+        correlationId: getCorrelationId(req),
+      });
+      res.status(outcome.outcome === 'applied' ? 201 : 200).json({
+        outcome: outcome.outcome,
+        eventId: outcome.eventId,
+        resultingVersion: outcome.resultingVersion,
+        original: outcome.result.original,
+        checkIn: outcome.result.superseding,
+        keyResult: outcome.result.keyResult,
+        set: outcome.result.set,
+      });
+    } catch (err) {
+      handleOkrRouteError(res, err, 'correctCheckIn');
+    }
+  }
+);
+
+// ==========================================
+// GET /api/vnext/results/okr/key-results/:keyResultId/suggested-next-check-in-value
+// — suggestNextCheckInValue. The frozen design's own §11 table nests this
+// under a specific "/check-ins/:checkinId/suggested-next-value" path — a
+// suggestion for the KR's NEXT (not-yet-submitted) check-in has no real
+// dependency on any EXISTING checkin_id, so that nesting looks like a
+// drafting slip rather than an intentional per-checkin scope. Kept KR-scoped
+// instead (no AC names either exact shape — design §11 itself flags this
+// route as "not AC-mandated ... added for a plausible real UI need, flagged
+// not silently assumed" — this is that same flag applied one level
+// further).
+// ==========================================
+
+router.get(
+  '/key-results/:keyResultId/suggested-next-check-in-value',
+  validateParams(OkrCheckInIdParamsSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { keyResultId } = req.params as { keyResultId: string };
+      const keyResult = await getKeyResult({ userId: auth.userId, organizationId: auth.organizationId, keyResultId });
+      if (!keyResult) {
+        res.status(404).json({ error: 'OKR KeyResult not found', code: 'NOT_FOUND' });
+        return;
+      }
+      const priorCheckIns = await listCheckIns({ userId: auth.userId, organizationId: auth.organizationId, keyResultId });
+      const suggestion = suggestNextCheckInValue(priorCheckIns, keyResult);
+      res.status(200).json({ suggestion });
+    } catch (err) {
+      handleOkrRouteError(res, err, 'suggestNextCheckInValue');
     }
   }
 );
