@@ -377,9 +377,13 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
               {t('processFlow.toolbar.stepsCount', 'Steps {{value}}', { value: stepCount })}
             </span>
             <span className="inline-flex items-center rounded-full bg-c-surface px-2 py-0.5 text-[10px] font-medium text-c-text-secondary">
-              {/* Both locales render the same "Lanes N" string (term kept in EN
-                  intentionally in the original code) — no translation needed. */}
-              {`Lanes ${laneCount}`}
+              {/* Was a hardcoded `Lanes ${laneCount}` justified in-code as "term kept
+                  in EN intentionally". Found on a PL screenshot (2026-08-10): the chip
+                  immediately to the left IS translated, so a Polish consultant saw
+                  „Kroki 4 | Lanes 1" — half the pair localized, half not, side by side.
+                  „Ścieżki" is the term this repo already uses for swimlanes elsewhere
+                  (myWorkIdeas.processFlowTool.lanes = „Ścieżek"). */}
+              {t('processFlow.toolbar.lanesCount', 'Lanes {{value}}', { value: laneCount })}
             </span>
             <span
               className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium ${

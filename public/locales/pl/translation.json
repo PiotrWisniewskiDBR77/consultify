@@ -29582,6 +29582,7 @@
       "flowModeAriaLabel": "Tryb przepływu",
       "kitTitle": "Zestaw notacji ustawiony z czatu",
       "stepsCount": "Kroki {{value}}",
+      "lanesCount": "Ścieżki {{value}}",
       "warningsCount": "Ostrzeżenia {{value}}",
       "noWarnings": "Brak ostrzeżeń",
       "buildFlow": "Budowanie procesu",

@@ -28449,6 +28449,7 @@
       "flowModeAriaLabel": "Flow mode",
       "kitTitle": "Notation kit set from chat",
       "stepsCount": "Steps {{value}}",
+      "lanesCount": "Lanes {{value}}",
       "warningsCount": "Warnings {{value}}",
       "noWarnings": "No warnings",
       "buildFlow": "Build flow",
