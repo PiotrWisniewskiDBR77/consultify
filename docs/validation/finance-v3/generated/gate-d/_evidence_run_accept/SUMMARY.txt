@@ -1,0 +1,68 @@
+[00:28:31] 
+[00:28:31] --- [1/9] Stawiam efemeryczny klaster PG15 na porcie 57811 ---
+[00:28:32] Klaster gotowy (PG 15.15).
+[00:28:32] 
+[00:28:32] --- [02] Migracje STRICT, świeża baza ---
+[00:28:37] exit=0
+→ 20260719_red_ai_audit_logs_success_columns.sql
+[00:28:37] Tabele (information_schema, nie schema_migrations):
+     public       |  1459
+     v8           |   121
+    
+[00:28:42] Baza testowa zmigrowana: exit=0
+[00:28:42] 
+[00:28:42] --- [03] Finance — src/services/finance ---
+[00:29:08] exit=0
+[00:29:08]   Test Files  47 passed (47)
+[00:29:08]   Tests  722 passed (722)
+[00:29:08] 
+[00:29:08] --- [03b] KONTROLA NEGATYWNA — Finance bez bramki (ma być skipped) ---
+[00:29:15] exit=0
+[00:29:15]   Test Files  19 passed | 28 skipped (47)
+[00:29:15]   Tests  403 passed | 319 skipped (722)
+[00:29:15] 
+[00:29:15] --- [04] canonical — src/services/finance/canonical ---
+[00:29:44] exit=0
+[00:29:44]   Test Files  37 passed (37)
+[00:29:44]   Tests  454 passed (454)
+[00:29:44] 
+[00:29:44] --- [05] ROI — tests/resultsVnext/roi ---
+[00:30:10] exit=0
+[00:30:10]   Test Files  37 passed (37)
+[00:30:10]   Tests  120 passed (120)
+[00:30:10] 
+[00:30:10] --- [06] Results vNext — tests/resultsVnext ---
+[00:30:45] exit=0
+[00:30:45]   Test Files  55 passed (55)
+[00:30:45]   Tests  278 passed (278)
+[00:30:45] 
+[00:30:45] --- [07] Backend tsc (server/tsconfig.json) ---
+[00:30:51] exit=0
+[00:30:51]   linii wyjścia tsc: 0 (oczekiwane 0)
+[00:30:51] 
+[00:30:51] --- [08] Typy plików TESTOWYCH (pomiar orientacyjny, NIE bramka, NIE porównywalny) ---
+[00:31:47] exit=2
+[00:31:47]   błędów typów w plikach testowych: 7224 w 1272 plikach
+[00:31:47]   (punkt odniesienia na starcie fali: 353 błędów w 97 plikach)
+[00:31:47] 
+[00:31:47] ==========================================================
+[00:31:47] PODSUMOWANIE — WSZYSTKO NA SHA 4489fdcab8
+[00:31:47] ==========================================================
+[00:31:47] 02 | Migracje STRICT, świeża baza | exit=0 | – | –
+[00:31:47] 03 | Finance — src/services/finance | exit=0 | Test Files  47 passed (47) | Tests  722 passed (722)
+[00:31:47] 03b | KONTROLA NEGATYWNA — Finance bez bramki (ma być skipped) | exit=0 | Test Files  19 passed | 28 skipped (47) | Tests  403 passed | 319 skipped (722)
+[00:31:47] 04 | canonical — src/services/finance/canonical | exit=0 | Test Files  37 passed (37) | Tests  454 passed (454)
+[00:31:47] 05 | ROI — tests/resultsVnext/roi | exit=0 | Test Files  37 passed (37) | Tests  120 passed (120)
+[00:31:47] 06 | Results vNext — tests/resultsVnext | exit=0 | Test Files  55 passed (55) | Tests  278 passed (278)
+[00:31:47] 07 | Backend tsc (server/tsconfig.json) | exit=0 | – | –
+[00:31:47] 08 | Typy plików TESTOWYCH (pomiar orientacyjny, NIE bramka, NIE porównywalny) | exit=2 | – | –
+[00:31:47] 
+[00:31:47] Surowe logi: /Users/piotrwisniewski/consultify-wt/fv3-fanin2/docs/validation/finance-v3/generated/gate-d/_evidence_run_accept/raw
+[00:31:47] 
+[00:31:47] ZAKRES: warstwy 1-3 protokołu §16A.
+[00:31:47] Warstwa 4 (Playwright E2E) i 5 (odbiór CFO/QA/design) — NIEOSIĄGALNE:
+[00:31:47] brak warstwy UI, brak zewnętrznego recenzenta. To stan programu, nie luka skryptu.
+[00:31:47] Bramki FC-09, FC-10, FC-12 pozostają BLOCKED niezależnie od tego przebiegu.
+[00:31:47] 
+[00:31:47] --- Sprzątanie klastra ---
+[00:31:49] Klaster usunięty.

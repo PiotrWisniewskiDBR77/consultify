@@ -23,8 +23,13 @@ Zakazy obowiązują bezterminowo do odwołania przez właściciela.
 
 ## 2. CANDIDATE SHA — punkt startu dla następnej sesji
 
-**`8db62fa385`** na gałęzi `codex/finance-v3-wave2-fanin2`.
+**`4489fdcab8`** na gałęzi `codex/finance-v3-wave2-fanin2`.
 Worktree: `~/consultify-wt/fv3-fanin2`.
+
+> **Uwaga:** poniższa tabela §2 to przebieg z **`8db62fa385`** (koniec fali 2).
+> Po nim doszła **fala 3** (§3A) i wykonano **drugi, finalny przebieg na `4489fdcab8`**
+> — jego liczby są w §2A. Oba przebiegi w całości zielone; finalnym candidate SHA
+> jest **`4489fdcab8`**.
 
 Raport dowodowy leży commitem **dokumentacyjnym** nad nim (`dadc595955`) — ten sam
 wzorzec, co na gałęzi zamrożonej. Zweryfikowane: między `8db62fa385` a `dadc595955`
@@ -65,6 +70,82 @@ Protokół §16A ma **pięć warstw**. Ten przebieg domyka **warstwy 1–3**
 design-system) są NIEOSIĄGALNE** — nie ma warstwy UI i nie ma zewnętrznego recenzenta.
 To nie jest luka tego przebiegu, tylko stan programu. **FC-09, FC-10 i FC-12 —
 23 warunki — pozostają `BLOCKED` niezależnie od tego, jak zielony jest ten przebieg.**
+
+---
+
+## 2A. FINALNY PRZEBIEG — candidate SHA `4489fdcab8`
+
+Wykonany po fali 3, na maszynie bez równoległych agentów. Surowe logi:
+`_evidence_run_accept/raw/`.
+
+| # | Co | Wynik |
+|---|---|---|
+| 02 | Migracje STRICT, świeża baza (bez `--safe`) | **exit 0**, 637, **1580 tabel** (public 1459 + v8 121) |
+| 03 | `src/services/finance` | **47 plików / 722 testy**, exit 0 |
+| 03b | **Kontrola negatywna bramki DB** | 19 passed \| 28 skipped → **319 z 722 to testy realnej bazy** |
+| 04 | `src/services/finance/canonical` | **37 plików / 454 testy**, exit 0 |
+| 05 | `tests/resultsVnext/roi` | **37 plików / 120 testów**, exit 0 |
+| 06 | `tests/resultsVnext` | **55 plików / 278 testów**, exit 0 |
+| 07 | `tsc --noEmit -p server/tsconfig.json` | **exit 0, zero linii** |
+| 08 | Dług typów w plikach testowych | `EVIDENCE_MISSING` — patrz §6 |
+
+**Pełna droga sesji:** `finance` 638 → **722** · `canonical` 416 → **454** ·
+migracje 632 → **637**. Pakiety ROI-E007 (`roi` 120, `resultsVnext` 278) **bez
+zmian przez całą sesję** — zaakceptowana praca właściciela nietknięta.
+
+---
+
+## 3A. FALA 3 — dwa defekty powtarzalności, oba potwierdzone i naprawione
+
+To najważniejsze znalezisko po fali 2. Wyszło ubocznie, z zadania o konsolidację hashy.
+
+**Kontekst, dlaczego to groźne:** `content_semantic_hash` jest liczony z **wyniku
+obliczeń** i na nim stoi przypinanie compute, unikalność zamrożonych snapshotów
+i ślad „który przebieg wyprodukował te liczby". Cały mechanizm zakłada, że te same
+wejścia dają ten sam wynik. **Nie dawały.**
+
+**Zgłoszenie 1 — `kpiComputeService`, brak `ORDER BY`. POTWIERDZONE.**
+Rozjazd osiągalny **bez żadnych sztuczek**: zwykły `UPDATE` z `persistResults()` sam
+przestawia fizyczną kolejność wierszy w 1–3 iteracjach. Dowód end-to-end przez publiczne
+API: **10 przebiegów tej samej, niezmienionej Analysis dało 6–7 RÓŻNYCH
+`content_semantic_hash`.** Naprawa: sortowanie w pamięci tuż przed hashowaniem,
+bez zmiany SQL i bez zmiany kolejności zwracanej użytkownikowi. Po naprawie: 10/10 identycznych.
+
+**Zgłoszenie 2 — Wycena FCFF, niedeterminizm zmiennoprzecinkowy. POTWIERDZONE,
+ten sam pierwiastek.** 10 pełnych przebiegów dało **3 różne bity `enterpriseValueComputed`**,
+mimo że 12 miesięcznych wartości EBIT zapisanych do bazy było **bajtowo identycznych**.
+Źródło: kolejność sumowania w `sumFlow()` — **dodawanie float nie jest łączne**,
+a dane szły z zapytania bez `ORDER BY`. Naprawa: sortowanie do kanonicznej kolejności
+chronologicznej przed sumowaniem.
+
+**Waga biznesowa: zero** (różnica ~1e-9 względnie, poniżej progu zaokrąglenia walutowego).
+**Waga dowodowa: wysoka** — bez tego hash semantyczny był niedeterministyczny, więc
+mechanizm z W10-D01 działał tylko pozornie.
+
+**Rozstrzygnięcie deklaracji programu:** „DCF 0,000000% do oracle" to twierdzenie
+o **dokładności jednego przebiegu**, nie o **powtarzalności między przebiegami**.
+Pozostaje prawdziwe i nienaruszone — to były dwie różne własności, mylone ze sobą.
+
+### Reszta fali 3
+
+- **F-2 (P1) — backfill niebezpieczny przy równoległym uruchomieniu: ZAMKNIĘTE.**
+  Ciche zdublowanie, wcześniej tylko **wnioskowane**, zostało **zreprodukowane**:
+  pełny skrypt zawsze sam się broni (pada na innym ograniczeniu i wycofuje transakcję),
+  więc trzeba było wyizolować samą wrażliwą sekwencję `SELECT`→`INSERT` w dwóch
+  surowych sesjach `psql` z `pg_sleep` — **oba `COMMIT`, dwa wiersze z identycznym
+  kluczem, zero błędu.** Naprawa dwuwarstwowa, każda warstwa udowodniona niezależnie:
+  `pg_try_advisory_lock` (typowana odmowa zamiast nieodróżnialnego zawieszenia) +
+  częściowy indeks unikalny `(organization_id, natural_key) WHERE natural_key IS NOT NULL`.
+- **F-1 (P2) — hash manifestu eksportu liczony z losowego UUID: naprawione.**
+  **Sprostowanie do wagi:** `finance_export_manifests` **nie ma ŻADNEGO pisarza
+  w `server/src`** — jedynym miejscem jest skrypt backfillu. To był defekt skryptowy,
+  nie produkcyjny; cel WP-B06 „reproducibility" nie ma dziś produkcyjnego wykonawcy.
+  Kolejny przypadek wzorca „kod jest, podłączeń nie ma".
+- **Konsolidacja hashy: 4 silniki na wspólny prymityw, 5 miejsc świadomie zostawionych**
+  (inna rola: klucz idempotencji, odcisk zestawu założeń, digest dowodowy AI,
+  fingerprint lineage). **Algorytm NIE zmieniony** — sortowanie kluczy odrzucone po
+  analizie ryzyka (unieważniłoby wszystkie zapisane hashe), dopisano ostrzeżenie w JSDoc.
+  Dodano **strażnika**, który zaczerwieni się, gdy ktoś znów wklei inline `createHash`.
 
 ---
 
@@ -169,7 +250,11 @@ złamała test z innego strumienia i **`tsc` tego nie zauważył**.
 
 | Gałąź | SHA | Zawartość |
 |---|---|---|
-| **`codex/finance-v3-wave2-fanin2`** | **`8db62fa385`** (+ docs `dadc595955`) | **candidate SHA — wszystko poniżej** |
+| **`codex/finance-v3-wave2-fanin2`** | **`4489fdcab8`** | **FINALNY candidate SHA — wszystko poniżej** |
+| ↳ ten sam, koniec fali 2 | `8db62fa385` (+ docs `dadc595955`) | pierwszy pełny przebieg |
+| `codex/finance-v3-w3-determinizm` | `f38eea968c` | **ORDER BY + float w Wycenie** |
+| `codex/finance-v3-w3-backfilllock` | `5a6f98d78f` | F-2 blokada + indeks, F-1 hash eksportu |
+| `codex/finance-v3-w3-hashconsol` | `038cf1ea9e` | konsolidacja hashy + strażnik |
 | `codex/finance-v3-wave2-fanin` | `403d430520` | fan-in fali 1 + naprawa defektu interakcji |
 | `codex/finance-v3-p0tenant` | `177eb7b515` | P0 ×2 + P1 ×3 + P2 + migracja FK |
 | `codex/finance-v3-d01hash` | `eb13cd36dd` | W10-D01 + 2 bugi |
@@ -208,15 +293,23 @@ Dziewięć z `SESSION_HANDOFF_2026-08-10.md` §5 obowiązuje bez zmian. Nowe:
 0. **Decyzja właściciela o warstwie UI** — nadal największy pojedynczy odblokowany
    zakres (**16 warunków FC naraz**). Wymaga procesu z regułą #7 CLAUDE.md:
    agent renderuje i robi zrzut, właściciel akceptuje ekran po ekranie, **nigdy hurtem**.
-1. **F-2** — zabezpieczyć backfill `pg_advisory_lock` i dołożyć ograniczenie unikalności
-   na `finance_artifacts.natural_key`, zanim ktokolwiek podepnie go pod orkiestrator.
-2. **Least-privileged rola DB** — bez niej RLS pozostaje dekoracją. Wymaga dostępu do
+1. **Audyt braku `ORDER BY` w całym Finance v3.** Fala 3 znalazła DWA takie miejsca
+   i oba realnie łamały powtarzalność. **Trzecie prawie na pewno istnieje.** Każde
+   zapytanie, którego wynik trafia do hasha, do sumowania float albo do serializacji,
+   musi mieć deterministyczną kolejność. To jest teraz najtańszy sposób na znalezienie
+   kolejnego defektu tej klasy.
+2. **Wpływ naprawy determinizmu na istniejące hashe** — `EVIDENCE_MISSING`, bo nie ma
+   dostępu do demo/prod. Przed jakimkolwiek wdrożeniem trzeba ustalić, czy zapisane
+   `content_semantic_hash` wymagają backfillu. Finance v3 ma ~0 podłączeń produkcyjnych,
+   więc ryzyko jest dziś teoretyczne — ale przestanie takie być przy pierwszym wdrożeniu.
+3. **Least-privileged rola DB** — bez niej RLS pozostaje dekoracją. Wymaga dostępu do
    infrastruktury Railway.
-3. **Typecheck testów w CI** — dziś nic ich nie sprawdza, a to już raz kosztowało
+4. **Typecheck testów w CI** — dziś nic ich nie sprawdza, a to już raz kosztowało
    defekt interakcji w tej sesji.
-4. EM-5 (pula workerów) — najpierw decyzja o kolumnie payloadu w `compute_jobs`.
-5. Konsolidacja czterech inline'owych hashy silników do `canonicalPayloadHash`
-   (+ rozstrzygnąć, czy „canonical" ma sortować klucze).
+5. EM-5 (pula workerów) — najpierw decyzja o kolumnie payloadu w `compute_jobs`.
+6. `artifactVersionService.createArtifact()` — czy produkcyjny pisarz potrzebuje
+   własnej blokady aplikacyjnej (nowy indeks unikalny chroni go niezależnie, ale
+   samo to nie było audytowane).
 
 **Nadal nieosiągalne bez zasobów zewnętrznych:** Gate C04–C06 (shadow parity, cutover,
 rollback) — prawdziwy staging · FC-12 — recenzent CFO · FC-09/FC-10 — wyrenderowane UI ·
