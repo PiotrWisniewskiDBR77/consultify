@@ -30,6 +30,8 @@ import { randomUUID } from 'node:crypto';
 import { Client, type ClientConfig } from 'pg';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
+import { ensureRoiFixtureOrganization } from './roiRealdbOrgFixture.js';
+
 function buildClientConfig(): ClientConfig | null {
   const raw = process.env.DATABASE_URL;
   const url = typeof raw === 'string' && raw.trim() && !raw.includes('${{') ? raw.trim() : null;
@@ -217,6 +219,11 @@ describe('ROI-E003 submit guard (AC-01) + edit-lock (D3/D4) — real Postgres', 
            PRIMARY KEY (team_id, user_id)
          )`
       );
+      // `initiatives.organization_id` carries a real FK to `organizations(id)`
+      // on a fully-migrated schema, which makes the defensive
+      // `CREATE TABLE IF NOT EXISTS initiatives` below a no-op rather than the
+      // stub it looks like — so the organization row has to exist first.
+      await ensureRoiFixtureOrganization(client, ORG_ID, 'roiCaseSubmitGuard realdb fixture org');
       await client.query(
         `CREATE TABLE IF NOT EXISTS initiatives (
            id TEXT PRIMARY KEY,
@@ -302,6 +309,7 @@ describe('ROI-E003 submit guard (AC-01) + edit-lock (D3/D4) — real Postgres', 
     await client.query(`DELETE FROM rvn_platform_resource_visibility WHERE organization_id = $1`, [ORG_ID]);
     await client.query(`DELETE FROM rvn_platform_visibility_policies WHERE organization_id = $1`, [ORG_ID]);
     await client.query(`DELETE FROM initiatives WHERE organization_id = $1`, [ORG_ID]);
+    await client.query(`DELETE FROM organizations WHERE id = $1`, [ORG_ID]);
     await client.end();
     if (closePgPool) await closePgPool();
   }, 30_000);
