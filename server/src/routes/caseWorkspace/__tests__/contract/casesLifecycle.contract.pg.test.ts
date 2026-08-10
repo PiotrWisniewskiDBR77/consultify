@@ -124,7 +124,16 @@ suite('CONTRACT — Case lifecycle over the real router and real Postgres', () =
     }
   }, 30_000);
 
-  it('a second Case for the same project is 409, and no second row appears', async () => {
+  // CARDINALITY (CW-T-A, binding owner ruling 2026-08-10): a Case is a WORK
+  // ORDER, and one project MAY and MUST be able to hold MANY independent
+  // Cases — migration 20260810d dropped the prior `UNIQUE(project_id)` on
+  // `case_core`. This test used to assert the OPPOSITE (a second Case for
+  // the same project was 409 CASE_ALREADY_EXISTS_FOR_PROJECT); that
+  // assertion pinned the pre-ruling 1:1 model, which the owner has since
+  // explicitly overturned — see caseCoreService.ts's own header comment.
+  // Reversed here to match reality: a second Case for the same project must
+  // SUCCEED with its own row, not conflict.
+  it('a second Case for the same project succeeds and produces a second, independent row', async () => {
     const fx = new ContractFixtures(control);
     try {
       const f = await fx.seedFixture('dup');
@@ -140,11 +149,17 @@ suite('CONTRACT — Case lifecycle over the real router and real Postgres', () =
       expect(first.status).toBe(201);
 
       const second = await request(app).post(`${BASE}/cases`).send(body);
-      expect(second.status).toBe(409);
-      expect(second.body.error.code).toBe('CASE_ALREADY_EXISTS_FOR_PROJECT');
+      expect(second.status).toBe(201);
+      expect(second.body.data.caseId).not.toBe(first.body.data.caseId);
 
-      const rows = await control.query(`SELECT case_id FROM case_core WHERE project_id = $1`, [f.projectId]);
-      expect(rows.rowCount).toBe(1);
+      const rows = await control.query(
+        `SELECT case_id FROM case_core WHERE project_id = $1 ORDER BY created_at`,
+        [f.projectId]
+      );
+      expect(rows.rowCount).toBe(2);
+      expect(rows.rows.map((r: { case_id: string }) => r.case_id).sort()).toEqual(
+        [first.body.data.caseId, second.body.data.caseId].sort()
+      );
     } finally {
       await fx.teardown();
     }

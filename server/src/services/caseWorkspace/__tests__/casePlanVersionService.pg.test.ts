@@ -690,8 +690,18 @@ suite('casePlanVersionService — Case Plan Version against a real PostgreSQL (C
   // 8. AUTHORIZATION (CW-P12) — updatePlanDraft/proposePlanVersion/
   //    publishPlanVersion (update/execute class): a SUSPENDED membership
   //    fails closed exactly like a missing one.
+  //
+  // proposePlanVersion (like every other by-id mutating method in this
+  // service) loads the case_plan_versions row FIRST and only then checks
+  // access, so — per the SEC-009/CW-DOD-D6 enumeration-oracle fix in
+  // planVersionEnumeration.security.pg.test.ts — a denied actor on an
+  // EXISTING plan version must see the identical `plan_version_not_found`
+  // a genuinely nonexistent planVersionId throws, not the distinct
+  // `case_access_denied` a bare requireCaseAccess() throw would produce:
+  // two different observable outcomes for "no" is exactly the oracle this
+  // packet closes.
   // -------------------------------------------------------------------------
-  it('proposePlanVersion rejects an actor whose organization_members row is SUSPENDED, leaving status unchanged', async () => {
+  it('proposePlanVersion rejects (as plan_version_not_found, not case_access_denied) an actor whose organization_members row is SUSPENDED, leaving status unchanged', async () => {
     const { orgId, projectId, caseId, actorId } = await seedOrgProjectCase('auth-suspended');
     const suspendedActor = await seedUser(orgId, 'auth-suspended-actor');
     await seedMember(orgId, suspendedActor, 'MEMBER', 'SUSPENDED');
@@ -708,7 +718,7 @@ suite('casePlanVersionService — Case Plan Version against a real PostgreSQL (C
           { actorUserId: suspendedActor },
           draft.version
         )
-      ).rejects.toMatchObject({ code: 'case_access_denied' });
+      ).rejects.toThrow('plan_version_not_found');
 
       const row = await readPlanVersionRow(draft.casePlanVersionId);
       expect(row?.status).toBe('DRAFT');
@@ -721,8 +731,21 @@ suite('casePlanVersionService — Case Plan Version against a real PostgreSQL (C
   // -------------------------------------------------------------------------
   // 9. AUTHORIZATION (CW-P12) — getPlanVersion/listPlanVersionsForCase
   //    (read/list class).
+  //
+  // getPlanVersion's own not-found branch RETURNS NULL for a missing row
+  // (its declared `CasePlanVersion | null` contract) rather than throwing,
+  // so — per the SEC-009/CW-DOD-D6 enumeration-oracle fix in
+  // planVersionEnumeration.security.pg.test.ts — an authorization denial on
+  // an existing-but-inaccessible plan version must collapse to that same
+  // `null`, not a distinct `case_access_denied` throw: two different
+  // observable outcomes for "no" is exactly the oracle. This is intentional
+  // divergence from listPlanVersionsForCase below, which takes a caseId
+  // directly (no separate row-existence check ahead of the access check) and
+  // so has no second oracle to close — it keeps throwing case_access_denied,
+  // identical to what requireCaseAccess(caseId) already throws for a
+  // caseId that does not exist at all.
   // -------------------------------------------------------------------------
-  it('getPlanVersion and listPlanVersionsForCase both reject an actor with no membership in the Case\'s org', async () => {
+  it('getPlanVersion resolves null (not a throw) for an actor with no membership in the plan version\'s Case org; listPlanVersionsForCase still rejects', async () => {
     const { orgId, projectId, caseId, actorId } = await seedOrgProjectCase('auth-read');
     const noMembershipActor = await seedUser(orgId, 'auth-read-outsider');
     try {
@@ -734,7 +757,7 @@ suite('casePlanVersionService — Case Plan Version against a real PostgreSQL (C
 
       await expect(
         casePlanVersionService.getPlanVersion(draft.casePlanVersionId, noMembershipActor)
-      ).rejects.toMatchObject({ code: 'case_access_denied' });
+      ).resolves.toBeNull();
 
       await expect(
         casePlanVersionService.listPlanVersionsForCase(caseId, noMembershipActor)

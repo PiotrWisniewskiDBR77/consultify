@@ -148,13 +148,17 @@ observed via `pg_stat_activity`) their own fresh-schema Postgres migrations
 against the **same physical Postgres server** for large stretches of this
 session. Directly observed evidence of contention:
 
-- an isolated, uncontended timing test of a fresh-schema migration
-  (`server/scripts/migrate.postgres.ts`, 812 files) took **~50 seconds**;
-  the same migration, run moments later while other agents' migrations were
-  active, took **~215 seconds** on the same machine;
+- an isolated, uncontended timing test of the exact same fresh-schema
+  migration (`server/scripts/migrate.postgres.ts`, 812 files) run once on its
+  own, before this section's three profile runs, took **~50 seconds**; the
+  precisely-instrumented figure from the actual profile run 1 (§3,
+  `migrationDurationMs` in the orchestrator's own summary JSON, not a manual
+  clock reading) was **164.7 seconds** for the identical migration on the
+  identical machine — a **3.3× slowdown** between an idle moment and a
+  contended one, measured, not estimated;
 - `pg_stat_activity` showed this harness's own migration connection blocked
   on `wait_event_type=IO, wait_event=DataFileImmediateSync` (fsync
-  contention) for tens of seconds at a time during a contended window.
+  contention) for tens of seconds at a time during that contended window.
 
 **Conclusion**: the raw p95/heap numbers below are real, reproducible-shaped
 evidence of *this codebase's own query/heap behavior at 1,000/250/500/10,000
@@ -456,15 +460,32 @@ approximated:
 
 **What this packet DID instead, as a clearly-labeled, clearly-insufficient
 supplement**, is available via `CW_PERF_SOAK_MS` on the same harness (a
-bounded server-side soak: repeated `listCasesForOrganization` calls against
-the fully-seeded 1,000-Case database, sampling this Node process's heap on an
-interval) — see `lib/runProfile.ts`'s `runSoak()`. <!-- SOAK_PLACEHOLDER -->
-This is **explicitly not** a substitute for `CW-DOD-I4` — it exercises a
-different runtime (Node backend, not a browser tab), a different growth
-mechanism (repeated identical read calls, not a live user session with
-DOM/event accumulation), and a different duration. It is included only
-because building it was cheap once the harness existed, not because it closes
-the gap.
+bounded server-side soak: repeated real `listCasesForOrganization` calls
+against a freshly-seeded 300-Case / 250-node-500-edge-Plan / 1,201-outbox-row
+database, sampling this Node process's heap every ~25 s) — see
+`lib/runProfile.ts`'s `runSoak()`. One 5-minute run was actually executed
+(not merely described):
+
+| Field | Value |
+|---|---:|
+| Duration requested / actual | 300,000 ms / 300,000.78 ms |
+| `listCasesForOrganization` calls completed | **70,753** (≈236/s — this instance ran with comparatively little cross-agent contention, see §1.3) |
+| `listCasesForOrganization` p50 / p95 / p99 (ms) | 3.56 / 6.92 / 18.56 |
+| Heap used (MB), sampled every ~25 s over the 5 minutes | oscillated 16.08 → 57.84 → 18.56 → 52.54 → 19.96 → 47.74 (min 16.08, max 57.84) |
+| RSS (MB) | rose from 188.9 to a plateau around 290-343, no further growth in the back half of the window |
+
+The heap trace shows normal GC sawtooth behavior (repeated rises and falls,
+same order of magnitude throughout, 70,753 identical calls producing no
+monotonic climb) — **not** the unbounded-growth shape `CW-DOD-I4` is
+guarding against. This is genuinely reassuring about this one code path
+(`listCasesForOrganization`, called in a tight loop) not leaking on the
+Node/backend side. It is **explicitly not** a substitute for `CW-DOD-I4`:
+it exercises a different runtime (Node backend, not a browser tab), a
+different growth mechanism (one repeated read call, not a live user session
+accumulating DOM nodes/event listeners/subscriptions across many distinct
+interactions), and a fixed 5, not 30, minutes. It is included only because
+running it was cheap once the harness existed, not because it closes the
+`CW-DOD-I4` gap.
 
 **What closing this gap for real requires**: the live stack per
 `docs/product/case-workspace/LIVE_STACK_RUNBOOK.md`, a browser automation

@@ -89,6 +89,13 @@ security:
 tags:
   - name: Cases
     description: caseCoreService — the Case aggregate.
+  - name: Light one-click
+    description: |
+      lightOneClickService — "Zatwierdź i rozpocznij" for a LIGHT Case: one
+      semantic operation from DRAFT/ACTIVE to a published minimal canonical
+      Plan v1 with exactly one bound Run, or an honest, typed refusal. Calls
+      into caseCoreService/casePlanVersionService/runBindingService/
+      nodeRunService rather than owning any table of its own.
   - name: Plan versions
     description: casePlanVersionService — Case plan drafts, review and publication.
   - name: Capabilities
@@ -253,9 +260,22 @@ paths:
       summary: Create a Case.
       description: |
         `organizationId` is forced to the authenticated org; `createdByActorId`
-        to the authenticated user. `case_core.project_id` is UNIQUE, so a
-        second Case for the same project fails with
-        `409 CASE_ALREADY_EXISTS_FOR_PROJECT`.
+        to the authenticated user.
+
+        ★ CARDINALITY (CW-T-A, binding owner ruling 2026-08-10): a Case is a
+        WORK ORDER, and one project MAY and MUST be able to hold MANY
+        independent Cases. `case_core.project_id` is a plain FK, NOT unique
+        (`server/migrations/20260810d_case_workspace_case_identity.sql`
+        dropped the prior `UNIQUE(project_id)`) — a second, third, … Case for
+        the same project succeeds with its own `201` and its own `caseId`,
+        it does not conflict. The previous revision of this file documented a
+        `409 CASE_ALREADY_EXISTS_FOR_PROJECT` here; that error code is no
+        longer thrown anywhere in `caseCoreService.createCase` (confirmed by
+        reading the function body) and is REMOVED from this operation's
+        responses below — it survives only as a now-unreachable entry in
+        `_shared/errors.ts`'s status-override table, kept there for backward
+        compatibility with any stored payload that still carries the old
+        code, not because this route can still produce it.
       requestBody:
         required: true
         content:
@@ -265,7 +285,7 @@ paths:
         '201': { $ref: '#/components/responses/CaseCreated' }
         '400': { $ref: '#/components/responses/ValidationError' }
         '403': { $ref: '#/components/responses/OrgRoleDenied' }
-        '409': { $ref: '#/components/responses/Conflict' }
+        '404': { $ref: '#/components/responses/NotFound' }
         '422': { $ref: '#/components/responses/Unprocessable' }
         '500': { $ref: '#/components/responses/InternalError' }
     get:
@@ -479,6 +499,97 @@ paths:
         '400': { $ref: '#/components/responses/ValidationError' }
         '404': { $ref: '#/components/responses/NotFound' }
         '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  # ===========================================================================
+  # lightStart.routes.ts — lightOneClickService
+  # ===========================================================================
+
+  /cases/{caseId}/light-start:
+    parameters:
+      - $ref: '#/components/parameters/CaseId'
+    post:
+      tags: [Light one-click]
+      operationId: startLightOneClick
+      summary: "\"Zatwierdź i rozpocznij\" for a LIGHT Case — one-click plan + Run."
+      description: |
+        Takes no request body. Always responds `200`: the service's own
+        discriminated `data.outcome` (`started` | `already_started` |
+        `refused`) is the caller-facing decision, not an HTTP status — a
+        `refused` result is a well-formed, typed answer with an exact reason
+        and `blockers[]`, never an error the client must catch.
+
+        Idempotent and safe to double-click: a repeat call for a Case that
+        already completed returns `already_started` with the SAME
+        `casePlanVersionId`/`runId`, creating nothing new (see the service's
+        own header comment for the advisory-lock + resumable-steps design).
+        Only a missing/inaccessible Case, an actor identity problem, or a
+        genuinely wrong Case profile/status/plan-validation failure is
+        reported — the first as `404`/`409`, the rest as the `refused`
+        outcome in the `200` body.
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKeyHeader'
+      responses:
+        '200':
+          description: |
+            `started` (fresh Run created), `already_started` (idempotent
+            replay of a prior completion) or `refused` (zero Run, exact
+            reason — see `reasonCode`/`reasonDetail`/`blockers`).
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    oneOf:
+                      - type: object
+                        required:
+                          [outcome, alreadyStarted, caseId, case,
+                           casePlanVersionId, planVersion, runId, nodeRunIds]
+                        properties:
+                          outcome: { type: string, enum: [started] }
+                          alreadyStarted: { type: boolean, enum: [false] }
+                          caseId: { type: string }
+                          case: { $ref: '#/components/schemas/CaseCore' }
+                          casePlanVersionId: { type: string }
+                          planVersion: { $ref: '#/components/schemas/CasePlanVersion' }
+                          runId: { type: string }
+                          nodeRunIds: { type: array, items: { type: string } }
+                      - type: object
+                        required:
+                          [outcome, alreadyStarted, caseId, case,
+                           casePlanVersionId, planVersion, runId, nodeRunIds]
+                        properties:
+                          outcome: { type: string, enum: [already_started] }
+                          alreadyStarted: { type: boolean, enum: [true] }
+                          caseId: { type: string }
+                          case: { $ref: '#/components/schemas/CaseCore' }
+                          casePlanVersionId: { type: string }
+                          planVersion: { $ref: '#/components/schemas/CasePlanVersion' }
+                          runId: { type: string }
+                          nodeRunIds: { type: array, items: { type: string } }
+                      - type: object
+                        required: [outcome, alreadyStarted, caseId, case, reasonCode, reasonDetail, blockers]
+                        properties:
+                          outcome: { type: string, enum: [refused] }
+                          alreadyStarted: { type: boolean, enum: [false] }
+                          caseId: { type: string }
+                          case: { $ref: '#/components/schemas/CaseCore' }
+                          reasonCode: { type: string }
+                          reasonDetail: { type: string }
+                          blockers:
+                            type: array
+                            items:
+                              type: object
+                              required: [code, detail, severity]
+                              properties:
+                                code: { type: string }
+                                detail: { type: string }
+                                severity: { type: string, enum: [BLOCKING, DEFERRED_EXTERNAL] }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/Unprocessable' }
         '500': { $ref: '#/components/responses/InternalError' }
 
   # ===========================================================================

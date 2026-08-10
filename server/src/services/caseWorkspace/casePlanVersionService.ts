@@ -118,7 +118,7 @@ import {
   queryOne,
   withPgTransaction,
 } from '../../utils/queryHelpers.js';
-import { requireCaseAccess } from './caseWorkspaceAuthContext.js';
+import { CaseWorkspaceAuthError, requireCaseAccess } from './caseWorkspaceAuthContext.js';
 import { publishEvent, redact } from './eventOutboxService.js';
 
 // ---------------------------------------------------------------------------
@@ -346,6 +346,41 @@ function requireGraph(value: CanonicalGraph | null | undefined, reason: string):
     throw new Error(reason);
   }
   return value;
+}
+
+/**
+ * SEC-009 / CW-DOD-D6 enumeration-oracle collapse for every by-id method
+ * below (getPlanVersion excepted — see its own inline comment). Every one
+ * of these methods loads the case_plan_versions row FIRST (to learn its
+ * case_id), and only then checks access via requireCaseAccess — the
+ * opposite order from requireCaseAccess(caseId) itself, which resolves
+ * organization_id and denial in one place and already collapses
+ * "case doesn't exist" and "case exists, actor denied" into one
+ * `case_access_denied`. Loading the row first before that check reopens the
+ * exact oracle requireCaseAccess exists to close: a planVersionId belonging
+ * to another tenant's Case reaches this point and throws
+ * `case_access_denied` (a DIFFERENT thrown error, with a different message,
+ * than the `plan_version_not_found` a genuinely missing planVersionId
+ * throws earlier in the same method), letting an attacker distinguish
+ * "exists elsewhere" from "doesn't exist" purely from the error shape.
+ *
+ * Mirrors caseCoreService.getCase's projectId branch (same collapse, same
+ * "only an authorization DENIAL collapses; any other error still
+ * propagates" rule) and caseWorkspaceAuthContext.requireCaseAccess's own
+ * design note. `getPlanVersion` needs its own copy of this (returning
+ * `null` instead of throwing) because it is a `T | null` reader whose
+ * missing-row branch already returns `null`, not throws — every other
+ * by-id method in this file throws `plan_version_not_found` on a missing
+ * row, so a caught CaseWorkspaceAuthError here throws the identical error
+ * to match.
+ */
+async function requireCaseAccessOrPlanVersionNotFound(actorUserId: string, caseId: string): Promise<void> {
+  try {
+    await requireCaseAccess(actorUserId, caseId);
+  } catch (err) {
+    if (err instanceof CaseWorkspaceAuthError) throw new Error('plan_version_not_found');
+    throw err;
+  }
 }
 
 function parseReviewHistory(raw: string): PlanReviewHistoryEntry[] {
@@ -954,7 +989,7 @@ export async function updatePlanDraft(
 
   return withPgTransaction(async (client) => {
     const row = await loadForUpdate(client, id);
-    await requireCaseAccess(actorUserId, row.case_id);
+    await requireCaseAccessOrPlanVersionNotFound(actorUserId, row.case_id);
     if (row.status !== 'DRAFT') throw new Error('plan_version_not_editable');
 
     const graphDigest = computeGraphDigest(semanticGraph);
@@ -998,7 +1033,22 @@ export async function updatePlanDraft(
   });
 }
 
-/** CW-RT-016, CW-GR-024. Plain read, no lock. */
+/**
+ * CW-RT-016, CW-GR-024. Plain read, no lock.
+ *
+ * SEC-009 / CW-DOD-D6: a planVersionId belonging to another tenant's Case
+ * must be indistinguishable from a planVersionId that does not exist at
+ * all — both resolve to `null` here. Without this, a cross-tenant id would
+ * reach requireCaseAccess and throw `case_access_denied` while a missing id
+ * resolves to `null` two lines above, letting a caller learn "this
+ * planVersionId exists, just not in your org" purely from whether the call
+ * threw. This is the same collapse-to-null caseCoreService.getCase's
+ * projectId branch already performs; every other by-id method in this file
+ * uses requireCaseAccessOrPlanVersionNotFound instead because it throws
+ * rather than returning null on a missing row. Only an authorization DENIAL
+ * collapses — any other error (a bad actor id, a DB failure) still
+ * propagates.
+ */
 export async function getPlanVersion(
   planVersionId: string,
   actorUserId: string
@@ -1009,7 +1059,12 @@ export async function getPlanVersion(
     [requireNonBlank(planVersionId, 'plan_version_id_required')]
   );
   if (!row) return null;
-  await requireCaseAccess(actor, row.case_id);
+  try {
+    await requireCaseAccess(actor, row.case_id);
+  } catch (err) {
+    if (err instanceof CaseWorkspaceAuthError) return null;
+    throw err;
+  }
   return mapRow(row);
 }
 
@@ -1046,7 +1101,7 @@ export async function validatePlanVersion(
     [id]
   );
   if (!row) throw new Error('plan_version_not_found');
-  await requireCaseAccess(actor, row.case_id);
+  await requireCaseAccessOrPlanVersionNotFound(actor, row.case_id);
 
   const graph = parseGraph(row.semantic_graph);
   const blockers = computeValidationBlockers(graph);
@@ -1065,7 +1120,7 @@ export async function proposePlanVersion(
 
   return withPgTransaction(async (client) => {
     const row = await loadForUpdate(client, id);
-    await requireCaseAccess(actorUserId, row.case_id);
+    await requireCaseAccessOrPlanVersionNotFound(actorUserId, row.case_id);
     if (!(ALLOWED_TRANSITIONS[row.status] ?? []).includes('IN_REVIEW')) {
       throw new Error(`plan_status_transition_not_allowed:${row.status}->IN_REVIEW`);
     }
@@ -1140,7 +1195,7 @@ export async function requestChangesOnPlanVersion(
 
   return withPgTransaction(async (client) => {
     const row = await loadForUpdate(client, id);
-    await requireCaseAccess(actorUserId, row.case_id);
+    await requireCaseAccessOrPlanVersionNotFound(actorUserId, row.case_id);
     if (!(ALLOWED_TRANSITIONS[row.status] ?? []).includes('DRAFT')) {
       throw new Error(`plan_status_transition_not_allowed:${row.status}->DRAFT`);
     }
@@ -1208,7 +1263,7 @@ export async function publishPlanVersion(
 
   return withPgTransaction(async (client) => {
     const row = await loadForUpdate(client, id);
-    await requireCaseAccess(actorUserId, row.case_id);
+    await requireCaseAccessOrPlanVersionNotFound(actorUserId, row.case_id);
     if (!(ALLOWED_TRANSITIONS[row.status] ?? []).includes('PUBLISHED')) {
       throw new Error(`plan_status_transition_not_allowed:${row.status}->PUBLISHED`);
     }
@@ -1332,7 +1387,7 @@ export async function withdrawPlanVersion(
 
   return withPgTransaction(async (client) => {
     const row = await loadForUpdate(client, id);
-    await requireCaseAccess(actorUserId, row.case_id);
+    await requireCaseAccessOrPlanVersionNotFound(actorUserId, row.case_id);
     if (!(ALLOWED_TRANSITIONS[row.status] ?? []).includes('WITHDRAWN')) {
       throw new Error(`plan_status_transition_not_allowed:${row.status}->WITHDRAWN`);
     }
@@ -1478,7 +1533,7 @@ export async function getViewState(
     [id]
   );
   if (!planRow) throw new Error('plan_version_not_found');
-  await requireCaseAccess(actor, planRow.case_id);
+  await requireCaseAccessOrPlanVersionNotFound(actor, planRow.case_id);
 
   const row = await queryOne<CasePlanViewStateRow>(
     `SELECT * FROM case_plan_view_state WHERE case_plan_version_id = ? AND view_type = ?`,
@@ -1511,7 +1566,7 @@ export async function putViewState(
     );
     const planRow = planExists.rows[0];
     if (!planRow) throw new Error('plan_version_not_found');
-    await requireCaseAccess(actorUserId, planRow.case_id);
+    await requireCaseAccessOrPlanVersionNotFound(actorUserId, planRow.case_id);
 
     const now = new Date().toISOString();
     const upserted = await client.query<CasePlanViewStateRow>(

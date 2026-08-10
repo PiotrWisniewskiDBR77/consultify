@@ -1,0 +1,13 @@
+{
+  "widthBeforeAttr": "360",
+  "widthAfterGrow": "420",
+  "widthAfterShiftLeft": "372",
+  "widthAfterEscape": "360",
+  "widthBeforeHome": "360",
+  "minWidthAttr": "200",
+  "widthAfterHome": "200",
+  "consoleErrors": [
+    "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+    "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+  ]
+}

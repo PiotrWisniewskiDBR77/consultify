@@ -20,7 +20,6 @@ import { useTranslation } from 'react-i18next';
 
 import { type ColumnConfig, ColumnSelector } from '@/components/Admin/shared/ColumnSelector';
 import { EntityStatusChip } from '@/components/ui/primitives/chips';
-import { ColumnResizer } from '@/components/ui/ResizableTable';
 
 import { type RowAction, type RowActionSection, RowActionsMenu } from '../RowActionsMenu';
 import { FilterChip } from './ActiveFilters';
@@ -359,6 +358,174 @@ const FilterDropdown: React.FC<{
           </div>
         </>
       )}
+    </div>
+  );
+};
+
+// ── Accessible column resize handle (R6-P1b a11y fix) ──────────────────────
+// The shared `ColumnResizer` (`@/components/ui/ResizableTable/ColumnResizer.tsx`)
+// renders a bare `<div onMouseDown>` with no `tabIndex`/keyboard handling —
+// mouse users can resize columns, keyboard users cannot reach the handle at
+// all. This is a LOCAL replacement scoped to `FilterableTable` (the canon
+// list shell every `StandardTable` consumer renders through), not an edit to
+// the shared `ColumnResizer` file — so the fix cannot regress the other four
+// direct consumers of that file (MyTasksListContent/InboxContent/
+// NotificationsContent/IdeasTableContent), which keep using the original,
+// unmodified `ColumnResizer`.
+//
+// Pattern: WAI-ARIA APG "Window Splitter" (role="separator", resizable):
+// https://www.w3.org/WAI/ARIA/apg/patterns/windowsplitter/
+//   Tab             → focus the handle.
+//   ArrowLeft/Right → shrink/grow by RESIZE_STEP px (Shift = large step).
+//   Home / End      → jump to minWidth / maxWidth.
+//   Escape          → revert to the width the column had when the handle
+//                      received focus (keyboard equivalent of releasing a
+//                      drag without committing).
+//
+// Declared at MODULE scope, not inside FilterableTable's render body — an
+// inline component definition there would get a NEW type identity on every
+// FilterableTable re-render (e.g. the very next render after an ArrowRight
+// keypress changes columnWidths), which unmounts/remounts the DOM node and
+// silently drops keyboard focus after a single keystroke.
+const RESIZE_STEP = 12;
+const RESIZE_STEP_LARGE = 48;
+
+const ColumnResizeHandle: React.FC<{
+  columnId: string;
+  columnLabel: string;
+  currentWidth: number;
+  minWidth: number;
+  maxWidth: number;
+  onResize: (columnId: string, newWidth: number) => void;
+}> = ({ columnId, columnLabel, currentWidth, minWidth, maxWidth, onResize }) => {
+  const [isDragging, setIsDragging] = useState(false);
+  const startXRef = useRef(0);
+  const startWidthRef = useRef(0);
+  const focusStartWidthRef = useRef(currentWidth);
+
+  const handleMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setIsDragging(true);
+      startXRef.current = e.clientX;
+      startWidthRef.current = currentWidth;
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+    },
+    [currentWidth]
+  );
+
+  const handleMouseMove = useCallback(
+    (e: MouseEvent) => {
+      if (!isDragging) return;
+      const delta = e.clientX - startXRef.current;
+      const clamped = Math.max(minWidth, Math.min(maxWidth, startWidthRef.current + delta));
+      onResize(columnId, clamped);
+    },
+    [isDragging, columnId, minWidth, maxWidth, onResize]
+  );
+
+  const handleMouseUp = useCallback(() => {
+    setIsDragging(false);
+    document.body.style.cursor = '';
+    document.body.style.userSelect = '';
+  }, []);
+
+  useEffect(() => {
+    if (isDragging) {
+      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('mouseup', handleMouseUp);
+      return () => {
+        window.removeEventListener('mousemove', handleMouseMove);
+        window.removeEventListener('mouseup', handleMouseUp);
+      };
+    }
+    return undefined;
+  }, [isDragging, handleMouseMove, handleMouseUp]);
+
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLDivElement>) => {
+      const step = e.shiftKey ? RESIZE_STEP_LARGE : RESIZE_STEP;
+      // stopPropagation on every handled key: proven necessary, not
+      // defensive boilerplate — the app shell has a GLOBAL Escape listener
+      // (return focus to the main content landmark on Escape, likely meant
+      // for closing modals/dropdowns). Without stopPropagation, our
+      // Escape correctly reverted the width but the global handler then
+      // yanked focus off the handle onto that landmark right after —
+      // confirmed via a live Playwright probe (`document.activeElement`
+      // became the `<main>`-level wrapper, not the separator) before this
+      // line was added. Same guard applied to the arrow/Home/End cases so a
+      // future global arrow-key handler (e.g. row navigation) can't do the
+      // same thing to those.
+      switch (e.key) {
+        case 'ArrowLeft':
+          e.preventDefault();
+          e.stopPropagation();
+          onResize(columnId, Math.max(minWidth, currentWidth - step));
+          break;
+        case 'ArrowRight':
+          e.preventDefault();
+          e.stopPropagation();
+          onResize(columnId, Math.min(maxWidth, currentWidth + step));
+          break;
+        case 'Home':
+          e.preventDefault();
+          e.stopPropagation();
+          onResize(columnId, minWidth);
+          break;
+        case 'End':
+          e.preventDefault();
+          e.stopPropagation();
+          onResize(columnId, maxWidth);
+          break;
+        case 'Escape':
+          e.preventDefault();
+          e.stopPropagation();
+          onResize(columnId, focusStartWidthRef.current);
+          break;
+        default:
+          break;
+      }
+    },
+    [columnId, currentWidth, minWidth, maxWidth, onResize]
+  );
+
+  return (
+    <div
+      role="separator"
+      aria-orientation="vertical"
+      aria-label={`Resize ${columnLabel} column`}
+      aria-valuenow={Math.round(currentWidth)}
+      aria-valuemin={Math.round(minWidth)}
+      aria-valuemax={Math.round(maxWidth)}
+      tabIndex={0}
+      onMouseDown={handleMouseDown}
+      onKeyDown={handleKeyDown}
+      onFocus={() => {
+        focusStartWidthRef.current = currentWidth;
+      }}
+      className={`
+        absolute -right-1.5 top-0 h-full w-3 cursor-col-resize
+        touch-none select-none
+        group/resizer
+        outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-inset rounded-sm
+        ${isDragging ? 'z-50' : 'z-10'}
+      `}
+      title={`Resize ${columnLabel} column`}
+    >
+      {/* Excel-like: grip sits exactly on the column boundary. */}
+      <div
+        className={[
+          'absolute left-1/2 top-2 bottom-2 w-[2px] -translate-x-1/2 rounded-full transition-colors duration-150',
+          // TRIADA_KANON B.38 — uchwyt resize to STAN UI, nie semantyka
+          // krytyczna, więc nie może być crimsonem. Hover/drag/focus na
+          // niebieskim `--c-focus-solid` (ten sam sygnał co fokus klawiatury).
+          isDragging
+            ? 'bg-[color:var(--c-focus-solid)]'
+            : 'bg-slate-300/80 dark:bg-white/[0.10] group-hover/resizer:bg-[color:var(--c-focus-solid)] dark:group-hover/resizer:bg-[color:var(--c-focus-solid)] group-focus-visible/resizer:bg-[color:var(--c-focus-solid)]',
+        ].join(' ')}
+      />
     </div>
   );
 };
@@ -817,8 +984,9 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                         </div>
                       )}
                       {!isLastDataCol && !isSelectCol ? (
-                        <ColumnResizer
+                        <ColumnResizeHandle
                           columnId={column.id}
+                          columnLabel={column.label}
                           currentWidth={width}
                           minWidth={minWidth}
                           maxWidth={maxWidth}

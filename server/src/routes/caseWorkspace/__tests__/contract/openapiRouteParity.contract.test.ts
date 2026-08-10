@@ -35,6 +35,27 @@ const OPENAPI_PATH = path.resolve(
 
 const HTTP_METHODS = ['get', 'post', 'put', 'delete', 'patch'] as const;
 
+/**
+ * Operations that are declared in the spec but deliberately NOT mounted on
+ * `server/src/routes/caseWorkspace/index.ts` (the router object this suite
+ * walks) — mounted directly in `server/src/Gateway.ts` instead, outside the
+ * `/api/v8` aggregator entirely, because `attachV8Context` would 403 any
+ * caller without a first-party JWT, which every external event sender is.
+ *
+ * `POST /{source}/deliveries` (eventInboxService's CW-T-B ingress,
+ * `routes/caseWorkspace/eventInbox.routes.ts`) is mounted at
+ * `app.use('/api/webhooks/case-workspace', caseWorkspaceEventInboxRoutes)`
+ * (Gateway.ts, sibling to `/api/webhooks/sellix` and `/api/webhooks/v8-sync`
+ * — verified by reading that mount line) and authenticates callers with an
+ * HMAC signature instead of a bearer token. The spec documents this with its
+ * own path-level `servers` override and operation-level `security: []` — see
+ * that operation's own comment block for the full reasoning. This is the ONE
+ * intended, permanent asymmetry between "mounted here" and "declared in the
+ * spec"; every other declared operation must have a matching handler on this
+ * router, and vice versa (see the two symmetric parity tests below).
+ */
+const EXTERNALLY_MOUNTED_OPERATIONS = ['POST /{source}/deliveries'];
+
 interface ExpressLayer {
   route?: { path: string | string[]; methods: Record<string, boolean> };
   handle?: { stack?: ExpressLayer[] };
@@ -92,19 +113,35 @@ describe('CONTRACT — OpenAPI ↔ mounted router parity', () => {
     expect(missingFromSpec).toEqual([]);
   });
 
-  it('every OpenAPI operation has a mounted handler (spec is not fiction)', () => {
-    const missingFromRouter = declared.filter((r) => !mounted.includes(r));
+  it('every OpenAPI operation has a mounted handler on this router, except the documented external mount', () => {
+    const missingFromRouter = declared.filter(
+      (r) => !mounted.includes(r) && !EXTERNALLY_MOUNTED_OPERATIONS.includes(r)
+    );
     expect(missingFromRouter).toEqual([]);
   });
 
-  it('the router mounts 109 operations and the spec declares the same count', () => {
+  it('EXTERNALLY_MOUNTED_OPERATIONS is exactly the declared-but-not-here set (no silent growth)', () => {
+    // Guards the exception list itself: if a FUTURE route is mounted outside
+    // this aggregator too, it must be added to EXTERNALLY_MOUNTED_OPERATIONS
+    // deliberately (with its own reasoning), not fall through the two parity
+    // tests above unnoticed because the exception list already "covers" it.
+    const declaredNotMounted = declared.filter((r) => !mounted.includes(r));
+    expect(declaredNotMounted.sort()).toEqual([...EXTERNALLY_MOUNTED_OPERATIONS].sort());
+  });
+
+  it('the router mounts 110 operations and the spec declares those plus the 1 external mount', () => {
     // Pinned deliberately: a new route added without a spec entry (or the
     // reverse) must fail loudly here, not drift silently. This pin has already
     // earned its keep once — it caught `intake.routes.ts` (3 operations, added
     // by a parallel stream after the first 106 were transcribed) before those
-    // endpoints reached the spec.
-    expect(mounted.length).toBe(109);
-    expect(declared.length).toBe(109);
+    // endpoints reached the spec. Bumped from 109 to 110 for
+    // `POST /cases/{caseId}/light-start` (lightStart.routes.ts, now mounted
+    // here and now documented). The spec's count is 1 higher than the
+    // router's because it ALSO declares `POST /{source}/deliveries`, which
+    // this router deliberately does not mount (see EXTERNALLY_MOUNTED_OPERATIONS).
+    expect(mounted.length).toBe(110);
+    expect(declared.length).toBe(mounted.length + EXTERNALLY_MOUNTED_OPERATIONS.length);
+    expect(declared.length).toBe(111);
   });
 
   it('every $ref in the spec resolves to a component that exists', () => {
@@ -153,7 +190,7 @@ describe('CONTRACT — OpenAPI ↔ mounted router parity', () => {
         if (item[method]?.operationId) ids.push(item[method].operationId);
       }
     }
-    expect(ids.length).toBe(109);
-    expect(new Set(ids).size).toBe(109);
+    expect(ids.length).toBe(111);
+    expect(new Set(ids).size).toBe(111);
   });
 });

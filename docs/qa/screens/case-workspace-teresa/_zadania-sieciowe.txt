@@ -1,0 +1,75 @@
+R4-P1 — realne zadania HTTP na ŻYWYM stosie (backend :3001, realny PostgreSQL
+127.0.0.1:55432/case_workspace_test, realny POST /api/auth/login, bez
+ENABLE_TEST_AUTH_BYPASS/E2E_MODE — patrz scripts/dev/case-workspace-local-backend.sh).
+
+Aktor: cw.local@local.test (cw-local-org / cw-local-user, ADMIN)
+Konwersacja: conv-live-1786396851
+Projekt: cw-stream-a-project
+
+=== 1) POST /api/auth/login ===
+> POST http://127.0.0.1:3001/api/auth/login
+< 200 OK
+< {"user":{"id":"cw-local-user","organizationId":"cw-local-org","role":"ADMIN",...},"token":"eyJhbGci..."}
+
+=== 2) POST /api/v10/teresa/case-intake/conversations/conv-live-1786396851/summary ===
+(trasa produkcyjna — server/src/routes/v10/teresa.routes.ts, jedyny Teresa-router
+zamontowany w Gateway.ts:1246)
+> Authorization: Bearer <token cw-local-user>
+> {"projectId":"cw-stream-a-project","goal":"Przygotowac plan wdrozenia nowego
+>  systemu raportowania finansowego.","scope":[...3 pozycje...],
+>  "expectedOutcome":"Zatwierdzony plan wdrozenia z harmonogramem i budzetem.",
+>  "contractedClosureType":"DECISION_COMPLETED","caseProfile":"STANDARD",...}
+< 200 OK
+< {"data":{"conversationId":"conv-live-1786396851",
+<   "workOrderId":"wo-f5b5817928102b2891faf050ed7d1ec0ebf44d8219ca7ad2d2af643e0db7919b",
+<   "workOrderDigest":"sha256:f5b5817928102b2891faf050ed7d1ec0ebf44d8219ca7ad2d2af643e0db7919b",
+<   "alreadyProposed":false,"caseCreated":false,"runCreated":false},
+<  "meta":{"version":"v10","action":"case_intake_work_order_proposed"}}
+   → CW-CANON-01 trzyma: 200 (nie 201), caseCreated:false, runCreated:false.
+
+=== 3) POST /api/v10/teresa/case-intake/conversations/conv-live-1786396851/confirm (PIERWSZE kliknięcie "Potwierdź") ===
+> {"confirmedDigest":"sha256:f5b5817928102b2891faf050ed7d1ec0ebf44d8219ca7ad2d2af643e0db7919b"}
+< 201 Created
+< {"data":{"caseId":"case-009780fb-3a25-4397-b11c-efbc6726cb33",
+<   "caseCreated":true,"reused":false,"reuseReason":"none",
+<   "confirmedEventId":"cwevt-intake-confirmed-ick-e7e9adeb2c01daba78eb8d023188692a163d4accf6a16157a7dedcd8ffd50800",
+<   "confirmedEventDeduplicated":false,"runCreated":false},
+<  "meta":{"version":"v10","action":"case_intake_work_order_confirmed"}}
+
+=== 4) POST .../confirm PONOWNIE (symulacja: refresh strony / podwójny klik / retry) ===
+> {"confirmedDigest":"sha256:f5b5817928102b2891faf050ed7d1ec0ebf44d8219ca7ad2d2af643e0db7919b"}
+< 200 OK   (nie 201 — nic nowego nie powstało)
+< {"data":{"caseId":"case-009780fb-3a25-4397-b11c-efbc6726cb33",   ← TEN SAM caseId
+<   "caseCreated":false,"reused":true,"reuseReason":"work_order_already_confirmed",
+<   "confirmedEventId":"cwevt-intake-confirmed-ick-e7e9adeb2c01daba78eb8d023188692a163d4accf6a16157a7dedcd8ffd50800",  ← TEN SAM event
+<   "confirmedEventDeduplicated":true,"runCreated":false},
+<  "meta":{"version":"v10","action":"case_intake_work_order_confirmed"}}
+
+=== 5) GET /api/v10/teresa/case-intake/conversations/conv-live-1786396851/case ===
+< 200 OK
+< {"data":{"caseId":"case-009780fb-3a25-4397-b11c-efbc6726cb33",
+<   "conversationId":"conv-live-1786396851",
+<   "confirmedByActorId":"cw-local-user",
+<   "confirmedAt":"2026-08-10T21:21:03.283Z"}, "meta":{"version":"v10",...}}
+
+=== 6) GET /api/v10/teresa/case-intake/cases/case-009780fb-3a25-4397-b11c-efbc6726cb33/conversation ===
+< 200 OK
+< {"data":{"caseId":"case-009780fb-3a25-4397-b11c-efbc6726cb33",
+<   "conversationId":"conv-live-1786396851", ...}}   ← odwrotny link zwraca DOKŁADNIE tę samą rozmowę
+
+=== 7) GET /api/v8/chat/conversations/conv-live-1786396851/case-intake/work-order (INNA trasa, TEN SAM serwis) ===
+< 200 OK
+< {"data":{"conversationId":"conv-live-1786396851",
+<   "workOrderDigest":"sha256:f5b5817928102b2891faf050ed7d1ec0ebf44d8219ca7ad2d2af643e0db7919b",  ← IDENTYCZNY digest co z /v10/teresa
+<   "workOrder":{...ten sam goal/scope/expectedOutcome...},
+<   "proposedEventId":"cwevt-intake-proposed-f5b5817928102b2891faf050ed7d1ec0ebf44d8219ca7ad2d2af643e0db7919b"},
+<  "meta":{"version":"v8"}}
+   → DOWÓD, że /api/v10/teresa i /api/v8/chat czytają/piszą TEN SAM work order
+     (jeden mechanizm, nie dwa) — patrz teresaProductionIntake.pg.test.ts test #3.
+
+=== KONTROLA NEGATYWNA (opisana w raporcie, wykonana przed przywróceniem poprawki) ===
+Cofnięto server/src/routes/v10/teresa.routes.ts do stanu z HEAD (bez bloku case-intake)
+i uruchomiono teresaProductionIntake.pg.test.ts:
+  → 7/7 testów CZERWONYCH (404 na wszystkich trasach case-intake pod /api/v10/teresa).
+Przywrócono poprawkę:
+  → 7/7 testów ZIELONYCH.

@@ -37,6 +37,7 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
+import { getDocumentStudioArtifact } from '@/components/DocumentStudio/api';
 import { StandardPreview } from '@/components/standard/StandardPreview';
 import { StandardTable, type TableColumn } from '@/components/standard/StandardTable';
 import {
@@ -193,6 +194,70 @@ export function rozstrzygnijOtwarcie(link: CaseArtifactLink): OtwarcieObiektu {
     sciezka: getArtifactPath(typ, link.artifactId),
     etykieta: etykietaTypu,
   };
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// WERYFIKACJA ISTNIENIA — dogania klasyfikację o fakt z modułu docelowego
+// ═══════════════════════════════════════════════════════════════════════════
+//
+// ★ ZMIERZONE NA ŻYWEJ BAZIE (2026-08-10, `case_workspace_test`): 0 z 70
+// powiązań typu „document" w `case_workspace_artifact_links` wskazuje realny
+// wiersz w `wave5_artifacts` (tabeli, z której czyta `GET
+// /api/document-studio/:artifactId`). Powód jest udokumentowany wprost w
+// `artifactLinkService.ts:432` — `linkArtifactToCase` świadomie NIE
+// sprawdza, czy `artifactId` istnieje w swoim module przy powiązaniu.
+// `rozstrzygnijOtwarcie` wyżej klasyfikuje WYŁĄCZNIE po znanym typie +
+// `link_status` — to jedyne dane, jakie ma; „otwieralny" nie jest więc
+// dowodem, że cel istnieje, tylko że NIC dotąd nie powiedziało, że nie
+// istnieje. Zaobserwowane na żywo: `cwlink-doc-otwieralny` (relacja
+// DELIVERABLE, pierwszeństwo w Menu 1 „Otwórz rezultat") renderował się jako
+// aktywny przycisk, a kliknięcie kończyło się na „Nie znaleziono tego
+// dokumentu" w Document Studio — poprawny routing, martwa dana.
+//
+// Doganiamy to JEDNYM bezpiecznym odczytem (ten sam GET, którego Document
+// Studio i tak wywołuje przy zwykłym otwarciu — brak efektów ubocznych poza
+// normalną ścieżką odczytu), z cache per `artifactId`, żeby dziesięć wierszy
+// tej samej tabeli nie odpalało dziesięciu identycznych zapytań. Zasięg:
+// WYŁĄCZNIE typ 'report' (Dokument/Document Studio) — to jedyny typ, dla
+// którego luka została tu zmierzona; inne typy (prezentacja, arkusz, decyzja…)
+// zostają przy klasyfikacji z samego linku, bo weryfikacja każdego z nich
+// wymagałaby osobnego, nieprzetestowanego wywołania API cudzego modułu.
+const weryfikacjaDokumentowCache = new Map<string, Promise<boolean>>();
+
+/**
+ * `true` = dokument realnie istnieje w Document Studio; `false` = potwierdzone
+ * 404; `true` też przy błędzie NIEJEDNOZNACZNYM (sieć/401/500/timeout) — nie
+ * zgadujemy „nie istnieje" z powodu chwilowej awarii, bo wtedy wyłączylibyśmy
+ * DZIAŁAJĄCY przycisk. Jedyny pewny sygnał do wyłączenia to potwierdzone 404.
+ */
+export function weryfikujIstnienieDokumentu(artifactId: string): Promise<boolean> {
+  let cached = weryfikacjaDokumentowCache.get(artifactId);
+  if (!cached) {
+    cached = getDocumentStudioArtifact(artifactId)
+      .then(() => true)
+      .catch((error: unknown) => {
+        const status = (error as { status?: number } | undefined)?.status;
+        return status !== 404;
+      });
+    weryfikacjaDokumentowCache.set(artifactId, cached);
+  }
+  return cached;
+}
+
+/**
+ * Czy powiązanie wskazuje obiekt typu Dokument (Document Studio).
+ *
+ * ★ PUŁAPKA, w którą sam pierwotnie wpadłem przy tej naprawie: `link.artifactType`
+ * to SUROWA wartość z bazy (`'document'`/`'DOCUMENT'`), a `'report'` jest
+ * WEWNĘTRZNYM kluczem `ArtifactType`, na który `TYP_OBIEKTU_NA_MODUL` ją
+ * dopiero tłumaczy (`getArtifactPath`/`rozstrzygnijOtwarcie` wyżej). Prosto
+ * porównanie `link.artifactType.toLowerCase() === 'report'` jest więc ZAWSZE
+ * fałszywe — weryfikacja nigdy by się nie odpaliła. Idziemy przez TĘ SAMĄ
+ * mapę, której używa klasyfikacja, żeby nie rozjechać definicji „typ Dokument"
+ * na dwa niezależne miejsca.
+ */
+export function jestPowiazaniemDokumentu(link: Pick<CaseArtifactLink, 'artifactType'>): boolean {
+  return TYP_OBIEKTU_NA_MODUL[String(link.artifactType ?? '').toLowerCase()] === 'report';
 }
 
 /**
@@ -459,12 +524,48 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
     [caseItem]
   );
 
+  // Nadpisania „otwieralny" → „niedostępny" po potwierdzonym 404 z modułu
+  // docelowego — patrz komentarz przy `weryfikujIstnienieDokumentu` wyżej.
+  // Ta sama zasada co w CaseDetailScreen.tsx (Menu 1/„Powiązania"): start
+  // zawsze z `rozstrzygnijOtwarcie` (bez flashu złego stanu), nadpisanie
+  // tylko DOKŁADA ostrożność, nigdy jej nie zdejmuje.
+  const [nadpisaniaWeryfikacji, setNadpisaniaWeryfikacji] = useState<
+    Record<string, OtwarcieObiektu>
+  >({});
+
+  useEffect(() => {
+    let anulowano = false;
+    artifactLinks
+      .filter(jestPowiazaniemDokumentu)
+      .filter((link) => rozstrzygnijOtwarcie(link).status === 'otwieralny')
+      .forEach((link) => {
+        weryfikujIstnienieDokumentu(link.artifactId).then((istnieje) => {
+          if (anulowano || istnieje) return;
+          setNadpisaniaWeryfikacji((prev) => ({
+            ...prev,
+            [link.linkId]: {
+              status: 'niedostepny',
+              powod:
+                'Ten dokument nie istnieje w module Dokumenty (mógł zostać usunięty albo ' +
+                'nigdy nie powstał mimo aktywnego powiązania). Sprawdzone na żywo przy ' +
+                'otwarciu tego zlecenia.',
+            },
+          }));
+        });
+      });
+    return () => {
+      anulowano = true;
+    };
+  }, [artifactLinks]);
+
   /** Stan otwarcia liczony RAZ per obiekt — tabela i podgląd czytają to samo. */
   const otwarciaObiektow = useMemo(() => {
     const mapa = new Map<string, OtwarcieObiektu>();
-    artifactLinks.forEach((link) => mapa.set(link.linkId, rozstrzygnijOtwarcie(link)));
+    artifactLinks.forEach((link) =>
+      mapa.set(link.linkId, nadpisaniaWeryfikacji[link.linkId] ?? rozstrzygnijOtwarcie(link))
+    );
     return mapa;
-  }, [artifactLinks]);
+  }, [artifactLinks, nadpisaniaWeryfikacji]);
 
   const measurementRows = useMemo(
     () =>

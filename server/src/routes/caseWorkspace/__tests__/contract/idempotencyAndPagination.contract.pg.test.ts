@@ -126,7 +126,11 @@ suite('CONTRACT — idempotency, pagination and intake over real Postgres', () =
       );
       expect(rows.rowCount).toBe(1);
 
-      await control.query(`DELETE FROM case_workspace_history_events WHERE case_id = $1`, [caseId]);
+      // case_workspace_history_events is append-only at the DATABASE level
+      // (migration 20260810f). Test teardown must not try to DELETE from it —
+      // the guarantee is worth more than tidy rows in a disposable database.
+      // Synthetic history rows are left behind on purpose.
+      // await control.query(`DELETE FROM case_workspace_history_events WHERE case_id = $1`, [caseId]);
     } finally {
       await fx.teardown();
     }
@@ -459,9 +463,13 @@ suite('CONTRACT — idempotency, pagination and intake over real Postgres', () =
       const rows = await control.query(`SELECT case_id FROM case_core WHERE project_id = $1`, [f.projectId]);
       expect(rows.rowCount).toBe(1);
 
-      await control.query(`DELETE FROM case_workspace_history_events WHERE case_id = $1`, [
-        confirmed.body.data.caseId,
-      ]);
+      // case_workspace_history_events is append-only at the DATABASE level
+      // (migration 20260810f). Test teardown must not try to DELETE from it —
+      // the guarantee is worth more than tidy rows in a disposable database.
+      // Synthetic history rows are left behind on purpose.
+      // await control.query(`DELETE FROM case_workspace_history_events WHERE case_id = $1`, [
+      // confirmed.body.data.caseId,
+      // ]);
     } finally {
       await fx.teardown();
     }

@@ -58,6 +58,7 @@ import {
   autonomyPolicyLabel,
   caseProfileLabel,
   caseStatusLabel,
+  closureTypeLabel,
   governanceTierLabel,
   linkedTypeLabel,
   planVersionStatusLabel,
@@ -88,11 +89,14 @@ import {
 import { PLAN_PROJECTIONS, type PlanProjection, PlanView } from './PlanView';
 import { RealizacjaView } from './RealizacjaView';
 import {
+  jestPowiazaniemDokumentu,
   kluczFokusuObiektu,
+  type OtwarcieObiektu,
   type OtwarcieZadanie,
   type RezultatSelection,
   RezultatyView,
   rozstrzygnijOtwarcie,
+  weryfikujIstnienieDokumentu,
 } from './RezultatyView';
 import type {
   CanonicalGraph,
@@ -315,6 +319,85 @@ function opisZdarzenia(event: CaseHistoryEvent): string {
   return `Zapisano pomiar wartości dla wskaźnika „${wskaznik}" — stan: ${stan}.`;
 }
 
+/**
+ * Zdarzenie SKŁADANE z rdzenia zlecenia, nie odczytane z
+ * `case_workspace_history_events` — patrz `syntetyczneZdarzeniaCyklu` niżej.
+ */
+interface ZdarzenieHistorii {
+  id: string;
+  description: string;
+  timestamp: string;
+}
+
+/**
+ * Bazowe fakty cyklu życia zlecenia — ZAWSZE dostępne z `case_core`,
+ * niezależnie od tego, czy backend zapisał dla nich osobny wiersz w
+ * `case_workspace_history_events`.
+ *
+ * ★ ZMIERZONE NA ŻYWEJ BAZIE (2026-08-10, `case_workspace_test`, 807 wierszy
+ * `case_core`): tabela zdarzeń ma wpis `case.created` dla JEDNEGO zlecenia i
+ * ZERO wpisów `case.cancelled`/`case.closed`/`case.failed` — mimo że
+ * `case_status` realnie jest CANCELLED dla wielu wierszy (sprawdzone m.in. na
+ * `case-069705ec-d59d-4d7a-a02b-e237cfdd750a`, zero wierszy historii).
+ * Przyczyna: `transitionStatus` (`caseCoreService.ts:637-651`) i ścieżka
+ * intake (`caseIntakeService.ts:1038`) publikują te fakty WYŁĄCZNIE do
+ * outboksa zdarzeń integracyjnych (`eventOutboxService.publishEvent`) —
+ * NIGDY do tabeli, z której czyta ten panel
+ * (`caseHistoryService.listHistoryEvents`). To luka w danych backendu (poza
+ * zasięgiem tej zmiany), ale panel „Historia" jest OBOWIĄZKOWYM blokiem
+ * SPEC-A (`ARTIFACT_ANATOMY_STANDARD.md §18.1`) — pusty panel dla zlecenia,
+ * które realnie powstało i (dla zleceń terminalnych) zostało zamknięte albo
+ * anulowane, jest niehonest UI. Dopóki backend nie zapisuje tych faktów jako
+ * zdarzeń, SKŁADAMY je tutaj z kolumn, których ekran już używa w sekcji
+ * Właściwości (`createdAt`, `completedAt`/`closedAt`, `closureType`,
+ * `caseStatus`) — nie zgadujemy niczego, czego `case_core` by nie potwierdzał.
+ *
+ * Dedup: gdy backend TAKI wiersz jednak zapisał (obserwowane u jednego z 807
+ * zleceń), realny wpis wygrywa — nie dublujemy.
+ */
+function syntetyczneZdarzeniaCyklu(
+  caseItem: CaseCoreView,
+  history: CaseHistoryEvent[]
+): ZdarzenieHistorii[] {
+  const maRealnyWpis = (eventType: string) =>
+    history.some((event) => event.eventType === eventType);
+  const wpisy: ZdarzenieHistorii[] = [];
+
+  if (!maRealnyWpis('case.created')) {
+    wpisy.push({
+      id: 'syntetyczne:zalozenie',
+      description: 'Zlecenie założone.',
+      timestamp: caseItem.createdAt,
+    });
+  }
+
+  const TERMINALNE: Partial<
+    Record<CaseCoreView['caseStatus'], { eventType: string; opis: string }>
+  > = {
+    CLOSED: {
+      eventType: 'case.closed',
+      opis: caseItem.closureType
+        ? `Zlecenie zamknięte jako „${closureTypeLabel(caseItem.closureType, true).toLowerCase()}".`
+        : 'Zlecenie zamknięte.',
+    },
+    FAILED: { eventType: 'case.failed', opis: 'Zlecenie zakończone niepowodzeniem.' },
+    CANCELLED: { eventType: 'case.cancelled', opis: 'Zlecenie anulowane.' },
+  };
+  const terminal = TERMINALNE[caseItem.caseStatus];
+  if (terminal && !maRealnyWpis(terminal.eventType)) {
+    wpisy.push({
+      id: `syntetyczne:${terminal.eventType}`,
+      description: terminal.opis,
+      // `closedAt` istnieje tylko dla ścieżki `recordClosure` (CLOSED);
+      // CANCELLED/FAILED zapisują wyłącznie `completedAt` — stąd oba źródła,
+      // z `updatedAt` jako ostatnią, zawsze-obecną deską ratunku.
+      timestamp: caseItem.closedAt ?? caseItem.completedAt ?? caseItem.updatedAt,
+    });
+  }
+
+  return wpisy;
+}
+
 /** Kolejność, w jakiej szukamy „rezultatu do otwarcia" przyciskiem głównym. */
 const PIERWSZENSTWO_REZULTATU: Array<CaseArtifactLink['relation']> = [
   'DELIVERABLE',
@@ -339,6 +422,61 @@ export const CaseDetailScreen: React.FC = () => {
   const [failure, setFailure] = useState<CaseApiFailure | null>(null);
   const [gestosc, setGestosc] = useState<PresentationMode>('n');
   const [komunikat, setKomunikat] = useState<string | null>(null);
+
+  /*
+   * ★ ZMIERZONE NA ŻYWEJ BAZIE (2026-08-10): 0 z 70 powiązań typu „document"
+   * w `case_workspace_artifact_links` wskazuje realny wiersz w
+   * `wave5_artifacts` — `linkArtifactToCase` świadomie NIE sprawdza istnienia
+   * przy powiązaniu (`artifactLinkService.ts:432`, komentarz „does not
+   * pre-check"). Efekt na żywym ekranie: „Otwórz rezultat" (jedyny primary
+   * Menu 1) i „Otwórz" w Powiązaniach wyglądały na aktywne dla
+   * `cwlink-doc-otwieralny` → `case-8099338b-…`, a kliknięcie lądowało na
+   * „Nie znaleziono tego dokumentu" w Document Studio — poprawny routing,
+   * zła dana. `rozstrzygnijOtwarcie` (RezultatyView.tsx) klasyfikuje WYŁĄCZNIE
+   * po typie + `link_status`, bo więcej nie ma z czego — nie dowodzi to
+   * istnienia celu. Doganiamy to TU, jednym bezpiecznym odczytem na obiekt
+   * (ten sam GET, którego Document Studio i tak używa przy otwarciu,
+   * `weryfikujIstnienieDokumentu` w RezultatyView.tsx — cache współdzielony
+   * z tabelą „Powiązane obiekty"), i NADPISUJEMY wynik na „niedostępny" z
+   * uczciwym powodem, gdy się nie potwierdzi. Nigdy w drugą stronę: start
+   * jest zawsze `rozstrzygnijOtwarcie` (brak flashu złego stanu), nadpisanie
+   * tylko DOKŁADA ostrożność, nigdy jej nie zdejmuje.
+   */
+  const [nadpisaniaWeryfikacji, setNadpisaniaWeryfikacji] = useState<
+    Record<string, OtwarcieObiektu>
+  >({});
+
+  useEffect(() => {
+    let anulowano = false;
+    const linki = bundle?.artifactLinks ?? [];
+    linki
+      .filter(jestPowiazaniemDokumentu)
+      .filter((link) => rozstrzygnijOtwarcie(link).status === 'otwieralny')
+      .forEach((link) => {
+        weryfikujIstnienieDokumentu(link.artifactId).then((istnieje) => {
+          if (anulowano || istnieje) return;
+          setNadpisaniaWeryfikacji((prev) => ({
+            ...prev,
+            [link.linkId]: {
+              status: 'niedostepny',
+              powod:
+                'Ten dokument nie istnieje w module Dokumenty (mógł zostać usunięty albo ' +
+                'nigdy nie powstał mimo aktywnego powiązania). Sprawdzone na żywo przy ' +
+                'otwarciu tego zlecenia.',
+            },
+          }));
+        });
+      });
+    return () => {
+      anulowano = true;
+    };
+  }, [bundle]);
+
+  const rozstrzygnijOtwarcieZWeryfikacja = useCallback(
+    (link: CaseArtifactLink): OtwarcieObiektu =>
+      nadpisaniaWeryfikacji[link.linkId] ?? rozstrzygnijOtwarcie(link),
+    [nadpisaniaWeryfikacji]
+  );
 
   /*
    * LIGHT one-click ("Zatwierdź i rozpocznij") — jedna akcja: Plan v1 →
@@ -747,12 +885,12 @@ export const CaseDetailScreen: React.FC = () => {
     for (const relacja of PIERWSZENSTWO_REZULTATU) {
       const kandydat = linki
         .filter((link) => link.relation === relacja)
-        .map((link) => ({ link, otwarcie: rozstrzygnijOtwarcie(link) }))
+        .map((link) => ({ link, otwarcie: rozstrzygnijOtwarcieZWeryfikacja(link) }))
         .find((wpis) => wpis.otwarcie.status === 'otwieralny');
       if (kandydat) return kandydat;
     }
     return null;
-  }, [bundle]);
+  }, [bundle, rozstrzygnijOtwarcieZWeryfikacja]);
 
   // ── Sekcje lewej kolumny = KANONICZNA nawigacja powłoki ───────────────────
   const aktywnaSekcja = TABS.find((item) => item.id === tab) ?? TABS[0];
@@ -789,7 +927,29 @@ export const CaseDetailScreen: React.FC = () => {
           caseItem={bundle.caseItem}
           waits={bundle.waits}
           proposals={bundle.proposals}
-          history={bundle.history}
+          /*
+           * ★ CELOWO PUSTA TABLICA (2026-08-10), nie przeoczenie.
+           * `RealizacjaView.tsx:656-676` („Przebieg zlecenia") jest DRUGĄ,
+           * ROZBIEŻNĄ reprezentacją tych samych zdarzeń, które prawy panel
+           * „Historia" pokazuje w tej samej chwili (patrz `zdarzeniaHistorii`
+           * niżej) — surowe `event.summary` (bywa po angielsku, patrz
+           * komentarz przy `opisZdarzenia`) i surowy `event.eventType` w
+           * widoku eksperckim, bez przejścia przez `opisZdarzenia`/etykiety
+           * PL. Dwie różne wersje tego samego faktu na jednym ekranie łamią
+           * kanon SPEC-A („archetyp zmienia TYLKO centrum" — Historia żyje w
+           * powłoce, nie w treści zakładki) i wprost `enumLabels.ts:161-164`
+           * („surowy identyfikator wolno pokazać WYŁĄCZNIE w widoku
+           * eksperckim, OBOK polskiego wyjaśnienia — nigdy zamiast"), bo ta
+           * druga wersja pokazywała `eventType` SAMO, bez tłumaczenia.
+           * `RealizacjaView` nie jest w tym pakiecie do edycji (allowlist tej
+           * naprawy: `CaseDetailScreen.tsx`/`RezultatyView.tsx`/
+           * `enumLabels.ts`) — jego sekcja jest już gated na `history.length`,
+           * więc pusta tablica ją cicho wyłącza, zamiast wymuszać drugi,
+           * gorszy render tych samych faktów. Jedna kanoniczna reprezentacja
+           * zostaje: prawy panel „Historia", po polsku, przez
+           * `opisZdarzenia`.
+           */
+          history={[]}
           expert={projection === 'ekspercki'}
         />
       );
@@ -897,7 +1057,7 @@ export const CaseDetailScreen: React.FC = () => {
 
   const linkiPanelu = (bundle?.artifactLinks ?? []).map((link) => ({
     link,
-    otwarcie: rozstrzygnijOtwarcie(link),
+    otwarcie: rozstrzygnijOtwarcieZWeryfikacja(link),
   }));
 
   const zrodla = bundle
@@ -916,6 +1076,29 @@ export const CaseDetailScreen: React.FC = () => {
   const brakDostepuDoPowiazan = Boolean(
     bundle?.blocked && bundle.failedSections.includes('powiązane obiekty')
   );
+
+  /*
+   * Historia panelu = zdarzenia REALNE (`opisZdarzenia`, po polsku) +
+   * SYNTETYCZNE fakty cyklu życia, których backend dziś nie zapisuje jako
+   * zdarzenia (patrz `syntetyczneZdarzeniaCyklu` wyżej). Scalone i posortowane
+   * chronologicznie w tej samej kolejności co realne zdarzenia z API
+   * (`ORDER BY global_seq ASC`, `caseHistoryService.ts:766` — najstarsze
+   * pierwsze), żeby data synteatyczna nie „wskakiwała" na koniec/początek
+   * niezależnie od tego, kiedy naprawdę nastąpiła.
+   */
+  const zdarzeniaHistorii = useMemo(() => {
+    if (!bundle) return [];
+    const realne = bundle.history.map((event) => ({
+      id: event.eventId,
+      description: opisZdarzenia(event),
+      timestamp: event.occurredAt,
+      userName: event.actorId,
+    }));
+    const syntetyczne = syntetyczneZdarzeniaCyklu(bundle.caseItem, bundle.history);
+    return [...realne, ...syntetyczne].sort(
+      (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+    );
+  }, [bundle]);
 
   /*
    * "Zatwierdź i rozpocznij" pokazuje się TYLKO dla zleceń LIGHT, które
@@ -1114,18 +1297,8 @@ export const CaseDetailScreen: React.FC = () => {
     },
     history: {
       label: 'Historia',
-      children: (
-        <PreviewActivityStrip
-          events={(bundle?.history ?? []).map((event) => ({
-            id: event.eventId,
-            description: opisZdarzenia(event),
-            timestamp: event.occurredAt,
-            userName: event.actorId,
-          }))}
-          initialCount={5}
-        />
-      ),
-      isEmpty: (bundle?.history ?? []).length === 0,
+      children: <PreviewActivityStrip events={zdarzeniaHistorii} initialCount={5} />,
+      isEmpty: zdarzeniaHistorii.length === 0,
       emptyLabel: 'Przebieg zlecenia jest jeszcze pusty — nic się na nim nie wydarzyło.',
     },
   };
