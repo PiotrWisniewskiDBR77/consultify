@@ -490,6 +490,11 @@ export async function createRoiCase(
 // roiScenarioCommands.ts can guard on the same "case is pre-approval,
 // author-editable only" set rather than re-declaring it.
 export const NON_EDITABLE_STATUSES: readonly RoiCaseStatus[] = [
+  // ROI-E003 Decision D3: a case is locked the instant it is submitted for
+  // approval — 'ready_for_review' itself stays OUT of this list (AC-01's
+  // whole point is that reaching ready_for_review does NOT itself freeze
+  // editability; only submitting does).
+  'submitted_for_approval',
   'approved',
   'rejected',
   'tracking',
@@ -919,6 +924,26 @@ export function markReadyForReview(
       guard: (client, caseRow, baselineRow) =>
         isRoiCaseReadyForReviewEligibleWithEconomicModel(client, caseRow, baselineRow),
     },
+    input
+  );
+}
+
+// ==========================================
+// reopenRejectedRoiCase (ROI-E003 §4.7, Decision D8)
+// ==========================================
+
+/**
+ * `'rejected' -> 'modeling'`. Rejection audit columns (`rejected_by`/
+ * `rejected_at`/`rejection_reason`) are left UNTOUCHED — the rejection stays
+ * in the case's history, this is a separate, explicitly-auditable revival
+ * act (Decision D8), not an undo. No guard — reopening a rejected case for
+ * another modeling pass has no readiness precondition of its own.
+ */
+export function reopenRejectedRoiCase(
+  input: RunRoiCaseLifecycleTransitionInput
+): Promise<AtomicCommandOutcome<RoiCase>> {
+  return runRoiCaseLifecycleTransition(
+    { eventType: 'roi.case_reopened_from_rejected', fromStatuses: ['rejected'], toStatus: 'modeling' },
     input
   );
 }

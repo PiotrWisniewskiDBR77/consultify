@@ -73,3 +73,64 @@ export async function freezeRoiEconomicModel(client: PoolClient, params: FreezeR
     [caseId, organizationId, frozenBy]
   );
 }
+
+// ==========================================
+// unfreezeRoiEconomicModel (ROI-E003 §4.6 — symmetric counterpart, first
+// called by ROI-E003's reopenApprovedRoiCaseForRevision)
+// ==========================================
+
+export interface UnfreezeRoiEconomicModelParams {
+  caseId: string;
+  organizationId: string;
+}
+
+/**
+ * Called by ROI-E003's `reopenApprovedRoiCaseForRevision`, on the SAME
+ * pinned client, inside the SAME transaction as the case's approved ->
+ * modeling CAS, immediately AFTER `unfreezeRoiBaseline` — same contract
+ * shape as `freezeRoiEconomicModel` above (no own transaction, no own
+ * status check, caller's responsibility). Unfreezes the SAME five tables
+ * `freezeRoiEconomicModel` freezes, each `UPDATE ... WHERE frozen_at IS NOT
+ * NULL` idempotent.
+ */
+export async function unfreezeRoiEconomicModel(
+  client: PoolClient,
+  params: UnfreezeRoiEconomicModelParams
+): Promise<void> {
+  const { caseId, organizationId } = params;
+
+  await client.query(
+    `UPDATE rvn_roi_calculation_policy
+        SET frozen_at = NULL, frozen_by = NULL, row_version = row_version + 1, updated_at = now()
+      WHERE case_id = $1 AND organization_id = $2 AND frozen_at IS NOT NULL`,
+    [caseId, organizationId]
+  );
+
+  await client.query(
+    `UPDATE rvn_roi_assumptions
+        SET frozen_at = NULL, frozen_by = NULL, row_version = row_version + 1, updated_at = now()
+      WHERE case_id = $1 AND organization_id = $2 AND frozen_at IS NOT NULL`,
+    [caseId, organizationId]
+  );
+
+  await client.query(
+    `UPDATE rvn_roi_cost_lines
+        SET frozen_at = NULL, frozen_by = NULL, row_version = row_version + 1, updated_at = now()
+      WHERE case_id = $1 AND organization_id = $2 AND frozen_at IS NOT NULL`,
+    [caseId, organizationId]
+  );
+
+  await client.query(
+    `UPDATE rvn_roi_benefit_lines
+        SET frozen_at = NULL, frozen_by = NULL, row_version = row_version + 1, updated_at = now()
+      WHERE case_id = $1 AND organization_id = $2 AND frozen_at IS NOT NULL`,
+    [caseId, organizationId]
+  );
+
+  await client.query(
+    `UPDATE rvn_roi_scenarios
+        SET frozen_at = NULL, frozen_by = NULL, row_version = row_version + 1, updated_at = now()
+      WHERE case_id = $1 AND organization_id = $2 AND frozen_at IS NOT NULL`,
+    [caseId, organizationId]
+  );
+}

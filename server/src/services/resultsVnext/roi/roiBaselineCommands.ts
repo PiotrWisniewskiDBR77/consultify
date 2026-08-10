@@ -15,13 +15,14 @@ import {
   type AtomicEventInput,
 } from '../platform/atomicWrite.js';
 
-import { ROI_EVENT_SOURCE } from './roiCaseCommands.js';
+import { NON_EDITABLE_STATUSES, ROI_EVENT_SOURCE, RoiCaseValidationError } from './roiCaseCommands.js';
 import {
   toRoiBaseline,
   type RoiBaseline,
   type RoiBaselineConfidence,
   type RoiBaselineProjectionMethod,
   type RoiBaselineRow,
+  type RoiCaseStatus,
 } from './roiTypes.js';
 
 const POLICY_VERSION_NOT_TRACKED = '';
@@ -132,6 +133,24 @@ export async function captureOrUpdateBaseline(
     applyMutation: async (client, currentRow, nextVersion) => {
       if (currentRow.frozen_at !== null) {
         throw new RoiBaselineFrozenError(caseId, currentRow.baseline_id);
+      }
+
+      // ROI-E003 Decision D4: the baseline table was never wired to the
+      // shared NON_EDITABLE_STATUSES constant by E001/E002 — a plain
+      // status read closes that gap (e.g. a case in 'submitted_for_approval'
+      // must not have its baseline edited even though `frozen_at` is still
+      // NULL at that point — freezing only happens on actual approval).
+      const caseStatusResult = await client.query<{ status: RoiCaseStatus }>(
+        `SELECT status FROM rvn_roi_cases WHERE case_id = $1 AND organization_id = $2`,
+        [caseId, organizationId]
+      );
+      const caseStatus = caseStatusResult.rows[0]?.status;
+      if (caseStatus && NON_EDITABLE_STATUSES.includes(caseStatus)) {
+        throw new RoiCaseValidationError(
+          `ROI case ${caseId} is "${caseStatus}" — baseline may not be edited from this status`,
+          'NOT_EDITABLE',
+          { caseId, status: caseStatus }
+        );
       }
 
       beforeState = { baseline: toRoiBaseline(currentRow) };
@@ -262,5 +281,31 @@ export async function freezeRoiBaseline(
      SET frozen_at = now(), frozen_by = $3, row_version = row_version + 1, updated_at = now()
      WHERE case_id = $1 AND organization_id = $2 AND frozen_at IS NULL`,
     [params.caseId, params.organizationId, params.frozenBy]
+  );
+}
+
+// ==========================================
+// unfreezeRoiBaseline (ROI-E003 §4.6 — symmetric counterpart to
+// freezeRoiBaseline, cross-epic contract owned by E001, first called by
+// ROI-E003's reopenApprovedRoiCaseForRevision)
+// ==========================================
+
+/**
+ * Called by ROI-E003's `reopenApprovedRoiCaseForRevision`, on the SAME
+ * pinned client, inside the SAME transaction as the case's approved ->
+ * modeling CAS — same "no own transaction, no own status check, caller's
+ * responsibility" contract shape as `freezeRoiBaseline` above. Idempotent:
+ * a baseline that is not currently frozen is left untouched (`WHERE
+ * frozen_at IS NOT NULL`).
+ */
+export async function unfreezeRoiBaseline(
+  client: PoolClient,
+  params: { caseId: string; organizationId: string }
+): Promise<void> {
+  await client.query(
+    `UPDATE rvn_roi_baselines
+     SET frozen_at = NULL, frozen_by = NULL, row_version = row_version + 1, updated_at = now()
+     WHERE case_id = $1 AND organization_id = $2 AND frozen_at IS NOT NULL`,
+    [params.caseId, params.organizationId]
   );
 }
