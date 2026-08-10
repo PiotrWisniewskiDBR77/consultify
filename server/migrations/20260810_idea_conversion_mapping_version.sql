@@ -1,0 +1,26 @@
+-- E11 (Conversion, import, export and templates) — completes the
+-- `my_idea_conversions` lineage record shape required by
+-- docs/qa/ideas-manual-audit-2026-08-09/09_IDEAS_COMPLETE_TRANSFORMATION_PROGRAM_FOR_CLAUDE.md
+-- §9 and docs/standards/idea-workspace/10_KONWERSJA_EKSPORT_IMPORT_SZABLONY.md
+-- §2.3: `{conversionId, targetType, targetId, scope, sourceElementIds,
+-- createdAt, createdBy, mappingVersion, sourceLink}`.
+--
+-- ★★★ NOT APPLIED. This subagent has no deploy/DB authority (task's DATABASE
+-- SAFETY rule: additive only, never run against any database). The
+-- orchestrator must run this explicitly. Until it runs, server/src/routes/
+-- my-work.routes.ts's convert route feature-detects the column
+-- (getTableColumns) and degrades honestly — it does NOT fabricate a mapping
+-- version for rows that predate this migration.
+--
+-- Context: `my_idea_conversions` itself already exists (see
+-- 20260723_idea_conversion_history.sql — P0-1, applied well before this
+-- task) with id/idea_id/organization_id/target/entity_id/scope/
+-- node_ids_json/source_link_json/created_by/created_at. Only `mappingVersion`
+-- from the §9 shape was missing; `sourceLink` (source_link_json) already had
+-- a column but the INSERT never populated it — see the accompanying code
+-- change in my-work.routes.ts's `promote()`, which now writes a real value.
+--
+-- ADDITIVE ONLY: one nullable column with a default, zero ALTER on existing
+-- columns, zero DROP, zero NOT NULL, zero type changes.
+
+ALTER TABLE my_idea_conversions ADD COLUMN IF NOT EXISTS mapping_version TEXT DEFAULT 'v1';

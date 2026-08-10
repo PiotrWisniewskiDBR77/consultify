@@ -221,7 +221,18 @@ export type IconName =
   | 'FolderInput'
   | 'FolderOutput'
   | 'Maximize2'
-  | 'PackageOpen';
+  | 'PackageOpen'
+  // N10 (2026-08-10) — TableToolbar.tsx (powierzchnia platform, `surfaces:
+  // ['toolbar']`), 1:1 z ikonami już importowanymi tam z lucide-react
+  // ('Trophy' = Scoring Model, 'Presentation' = Export to Presentation,
+  // 'Mic' = Voice/Image, 'Flame' = Heatmap). Ten sam PREISTNIEJĄCY dług
+  // `ICON_BY_NAME` co notatka N8.2 niżej — wszystkie cztery wpisy mają
+  // `surfaces: ['toolbar']`, więc `ICON_BY_NAME` (mapa Menu 3) i tak ich nie
+  // czyta.
+  | 'Trophy'
+  | 'Presentation'
+  | 'Mic'
+  | 'Flame';
 // UWAGA (N8.2, 2026-08-10) — menu kolumny Tabeli ŚWIADOMIE nie dokłada tu nic
 // nowego (kandydowały 'ArrowUpDown'/'EyeOff'). Powód: `ICON_BY_NAME` w
 // `src/components/MyWork/ideaCanvasMelsChips.ts:226` jest zadeklarowane jako
@@ -573,12 +584,20 @@ const RUNTIME_EDGE_ACTION_MAPS: Partial<Record<string, ToolActionMap>> = {
  * `idea.ai.expand_map`'s `nodeId`; `EdgeContextMenu.tsx` na Mapie myśli też
  * ZAWSZE go podaje jawnie, bo menu zna edgeId z własnego propa), z fallbackiem
  * na `ctx.selection` (gdy `type === 'edge'`, konwencja `IdeaWorkspaceSelection`
- * z `ideaSelectionTypes.ts`) dla przyszłych wywołań opartych na zaznaczeniu UI.
- * UWAGA (odbiór): dziś `UnifiedChatPanel.tsx` woła `executeTeresaTool` z
- * `selection: EMPTY_SELECTION` na sztywno (linie ~1988/2039) — fallback na
- * `ctx.selection` jest więc martwy dla Teresy, dopóki ta osobna, poza zakresem
- * tego zadania, luka nie zostanie naprawiona. Żywa ścieżka dla Teresy dziś to
- * `ctx.params.edgeId`.
+ * z `ideaSelectionTypes.ts`) dla wywołań opartych na zaznaczeniu UI.
+ * NAPRAWIONE (E10, 2026-08-10): ten fallback BYŁ martwy — `UnifiedChatPanel.tsx`
+ * wołał `executeTeresaTool` z `selection: EMPTY_SELECTION` na sztywno (linie
+ * ~1988/2039 przed naprawą). Teraz `IdeaMapWorkspace.tsx` nadaje żywe
+ * zaznaczenie na `idea-workspace-active-selection` (dokładnie ten sam stan,
+ * którego shell już używał dla własnego panelu Narzędzi), a
+ * `UnifiedChatPanel.tsx` odbiera je i przekazuje realnie, z walidacją
+ * ideaId+tool przeciw nieaktualnemu zdarzeniu z zamkniętego/przełączonego
+ * workspace'u (`getLiveTeresaSelection`). Weryfikacja: `ctx.selection` jest
+ * teraz realny w `executeTeresaTool` — NIE zweryfikowano końca-do-końca
+ * poprzez faktyczne kliknięcie w UI + realne polecenie do Teresy (poza
+ * zakresem tego audytu, brak środowiska do żywego testu czatu), tylko przez
+ * przegląd kodu obu stron przewodu (nadawca→odbiorca) i esbuild/testy
+ * jednostkowe niezmienione przez tę zmianę.
  */
 async function runEdgeParamCallback(
   actionId: string,
@@ -1413,40 +1432,37 @@ async function runProcessFlowConvertAnalysisCallback(ctx: ActionContext): Promis
  * — `NodeContextMenu.tsx` grupy Convert/„Convert branch to…" + dual-surface
  * `FloatingNodeToolbar.tsx` „Convert branch"). Klik człowieka (`ctx.params.run`)
  * idzie DOKŁADNIE dotychczasową ścieżką (`onAction(item.id)` →
- * `handleContextAction`/lokalny `SUBTREE_MAP` w `IdeaRecommendationMap.tsx` —
- * OBA wołają TĘ SAMĄ funkcję `convertBranch(target, nodeId)`,
- * `IdeaRecommendationMap.tsx:4822`), NIETKNIĘTĄ.
+ * `handleContextAction` w `IdeaRecommendationMap.tsx`).
  *
- * UCZCIWOŚĆ (rozdz. 10 „Konwersja, Eksport, Import, Szablony" §2.2/§7,
- * sprawdzone PRZED tym wpisem, nie zgadywane):
- *  - `convertBranch()` ZAWSZE zbiera potomków (`collectDescendants`),
- *    NIEZALEŻNIE od tego, czy wywołano ją z grupy „Convert" (etykieta
- *    sugeruje POJEDYNCZY węzeł, BEZ potomków) czy „Convert branch to…" — to
- *    jest DOKUMENTOWANA, PRZEDISTNIEJĄCA rozbieżność (rozdz. 10 §7: „«Convert»
- *    (bez sufiksu, węzeł Mind Map) | Zawsze konwertuje CAŁĄ gałąź, mimo
- *    etykiety sugerującej element"), NIE coś wprowadzone lub naprawione tym
- *    wpisem. `scope: 'single_item'` opisuje kotwicę (JEDEN węzeł, na którym
- *    otwarto menu) — kaskada do potomków jest opisana uczciwie w
- *    `teresa.description` każdego wpisu niżej, ten sam wybór co
- *    `idea.node.mm_duplicate_branch` wyżej (Structure group, druga fala).
- *  - Rozdz. 10 §2.2 WYMAGA podglądu treści docelowego artefaktu PRZED
- *    wykonaniem konwersji. DZIŚ go nie ma (tylko toast PO fakcie —
- *    `IdeaMapWorkspace.tsx handleConvert`) — `requiresPreview: false` jest
- *    uczciwe wobec STANU DZISIEJSZEGO, nie wobec docelowego standardu (ten sam
- *    wybór co istniejący `idea.workspace.convert` wyżej).
- *  - Backend zapisuje link zwrotny jako `outputLinks[]` w `extensions` grafu
- *    (addytywne) + krawędź LinkGraph, ale TEŻ nadpisuje `promoted_to`/
- *    `promoted_entity_id`/`stage='promoted'` na CAŁEJ Idei bezwarunkowo
- *    (`POST .../my-ideas/:id/convert`, opisane w rozdz. 10 §2.3 jako defekt
- *    DO naprawy: druga konwersja innej gałęzi kasuje ślad pierwszej). To NIE
- *    jest append-only `conversions[]` z audytu 09 §9
- *    (`{conversionId,targetType,targetId,scope,sourceElementIds,createdAt,
- *    createdBy,mappingVersion,sourceLink}`) — brak takiej struktury dziś w
- *    ogóle. `undo.kind: 'manual_delete'` (jak `idea.workspace.convert`) jest
- *    jedyną uczciwą odpowiedzią: nie ma czego automatycznie cofnąć, i nie ma
- *    historii wielu konwersji do przywrócenia z. Rozdz. 10 §2.3/audyt 09 §9 to
- *    osobny, większy epik (E11 — lineage/konwersja) — NIE naprawiane tym
- *    wpisem, tylko uczciwie nie deklarowane jako coś więcej niż jest.
+ * E11 UPDATE (2026-08-10, docs/standards/idea-workspace/10_*, §2.1/§2.2 —
+ * checked against real code before changing anything, per house rule):
+ *  - FIXED: the plain "Convert" group (`idea.node.mm_convert_initiative`/
+ *    `_decision`/`_tasks`, single-item label) used to route through
+ *    `convertBranch()` — the SAME function as "Convert branch to…" — so it
+ *    always cascaded to every descendant despite the label. It now calls a
+ *    separate `convertSingleNode()` (exactly one nodeId, RUNTIME_MM_NODE_
+ *    CONVERT_SINGLE / bus action `mm_convert_single`) — see those three
+ *    entries below. "Convert branch to…" (this block, `RUNTIME_MM_NODE_
+ *    CONVERT_BRANCH`) is unchanged: it is SUPPOSED to cascade, and still does.
+ *  - FIXED: a mandatory preview (`ConversionPreviewDialog`, gating
+ *    `IdeaMapWorkspace.handleConvert`) now runs before any of these actions
+ *    persists anything — `requiresPreview: true` below reflects that.
+ *  - CORRECTED, not new: a prior version of this comment claimed the backend
+ *    "unconditionally overwrites promoted_to/promoted_entity_id/stage on the
+ *    WHOLE Idea" for every conversion. Re-verified directly against
+ *    `server/src/routes/my-work.routes.ts`'s `promote()` (POST .../convert):
+ *    that claim is FALSE at this HEAD — the P0-1 fix (`f319307019`, 2026-07-
+ *    23, predates this comment) already inserts an append-only row into
+ *    `my_idea_conversions` for EVERY conversion and only flips `promoted_to`/
+ *    `stage='promoted'` when `scope==='workspace'` (no nodeIds). Correcting
+ *    the record here rather than propagating a stale claim.
+ *  - STILL OPEN: `my_idea_conversions` does not yet carry `mappingVersion`
+ *    (audyt 09 §9's `{conversionId,targetType,targetId,scope,
+ *    sourceElementIds,createdAt,createdBy,mappingVersion,sourceLink}` shape)
+ *    — additive migration `20260810_idea_conversion_mapping_version.sql`
+ *    adds the column (NOT run against any database, per DB SAFETY).
+ *    `undo.kind: 'manual_delete'` stays honest: no automatic undo of the
+ *    created downstream record exists.
  *
  * ZASTRZEŻENIE target `process_flow` — SPRAWDZONE, NIE spekulacja (pierwsza
  * lektura tego wpisu podejrzewała pętlę re-dispatchu; obalone przez
@@ -1474,7 +1490,14 @@ async function runMindmapNodeConvertAction(
   actionId: string,
   target: string,
   map: ToolActionMap,
-  ctx: ActionContext
+  ctx: ActionContext,
+  // E11 fix (2026-08-10): `cascades` distinguishes the plain "Convert" items
+  // (RUNTIME_MM_NODE_CONVERT_SINGLE, cascades:false — single node only) from
+  // "Convert branch" (RUNTIME_MM_NODE_CONVERT_BRANCH, default true — node +
+  // all descendants). Purely affects the confirm-prompt wording below; the
+  // actual scope is enforced FE-side by which handler `map` points at
+  // (convertSingleNode vs convertBranch never collects descendants/does).
+  opts: { cascades: boolean } = { cascades: true }
 ): Promise<ActionResult> {
   const run = ctx.params?.run;
   if (ctx.source === 'ui' && typeof run === 'function') {
@@ -1491,15 +1514,18 @@ async function runMindmapNodeConvertAction(
     return {
       ok: false,
       actionId,
-      message: 'Podaj `nodeId` węzła (kotwicy poddrzewa) do konwersji.',
+      message: opts.cascades
+        ? 'Podaj `nodeId` węzła (kotwicy poddrzewa) do konwersji.'
+        : 'Podaj `nodeId` węzła do konwersji.',
     };
   }
   if (!ctx.confirmed) {
     return {
       ok: false,
       actionId,
-      message:
-        'Konwersja tworzy nowy, trwały obiekt w innym module (i obejmuje CAŁE poddrzewo tego węzła) — potrzebuję potwierdzenia.',
+      message: opts.cascades
+        ? 'Konwersja tworzy nowy, trwały obiekt w innym module (i obejmuje CAŁE poddrzewo tego węzła) — potrzebuję potwierdzenia.'
+        : 'Konwersja tworzy nowy, trwały obiekt w innym module (WYŁĄCZNIE ten jeden węzeł, bez potomków) — potrzebuję potwierdzenia.',
     };
   }
   return runByTool(actionId, map, ctx, { nodeId, target });
@@ -1756,6 +1782,71 @@ const RUNTIME_TBL_CELL_CLEAR: ToolActionMap = {
 };
 
 /**
+ * N10 (2026-08-10) — `TableToolbar.tsx` (powierzchnia PLATFORM WYŁĄCZNIE —
+ * ten plik renderuje się TYLKO gdy `IdeaTableTool.tsx`'s `usePlatform` jest
+ * `true`, patrz `IdeaTableTool.tsx` „{usePlatform ? <P15TableToolbar …/> :
+ * …}" ~L2242 — więc `ctx`'y z `useTableData()` czytane w tym pliku SĄ zawsze
+ * `platformIntegration`, nigdy legacy). Siedem runtime stringów poniżej
+ * AKTYWUJE dotychczas SIEROCE odbiorniki `useTableQuickActions.ts`'s
+ * `toggleMap` (`tbl_scoring`/`tbl_export_pptx`/`tbl_pipeline`/`tbl_copilot`/
+ * `tbl_voice`/`tbl_cross_relations`/`tbl_heatmap` — SPRAWDZONE grepem PRZED
+ * wpisem: zero nadawców w całym `src/` przed tą zmianą, dokładnie ta sama
+ * klasa jak `tbl_sort`, patrz decyzja przy nim niżej). ZWERYFIKOWANE per
+ * pozycja (nie zgadywane): odbiornik woła DOKŁADNIE ten sam `setShowX`
+ * state-setter z `IdeaTableTool.tsx`, który `TableToolbar.tsx`'s prop
+ * (`props.onShowScoringModel` itd.) już woła dziś przy kliku — REALNY reuse
+ * mechanizmu, nie etykiety. `tbl_heatmap` jest wyjątkiem: klik człowieka jest
+ * PRZEŁĄCZNIKIEM (`props.onToggleHeatmap` = `() => setShowHeatmap((p) =>
+ * !p)`), a odbiornik zawsze USTAWIA `true` — `runToolbarBusAction` niżej
+ * zachowuje to uczciwie (UI woła oryginalny toggle 1:1 przez `ctx.params.run`,
+ * Teresa dostaje wyłącznie „otwórz", udokumentowane w `teresa.description`).
+ */
+const RUNTIME_TBL_SCORING: ToolActionMap = {
+  table: 'tbl_scoring',
+};
+const RUNTIME_TBL_EXPORT_PPTX: ToolActionMap = {
+  table: 'tbl_export_pptx',
+};
+const RUNTIME_TBL_PIPELINE: ToolActionMap = {
+  table: 'tbl_pipeline',
+};
+const RUNTIME_TBL_COPILOT: ToolActionMap = {
+  table: 'tbl_copilot',
+};
+const RUNTIME_TBL_VOICE: ToolActionMap = {
+  table: 'tbl_voice',
+};
+const RUNTIME_TBL_CROSS_RELATIONS: ToolActionMap = {
+  table: 'tbl_cross_relations',
+};
+const RUNTIME_TBL_HEATMAP: ToolActionMap = {
+  table: 'tbl_heatmap',
+};
+
+/**
+ * N10 (2026-08-10) — `TableToolbar.tsx`'s widok zapisany (menu prawego
+ * kliku na zakładce widoku, ~L502-555), ścieżka PLATFORM: `ctx.updateSavedView`/
+ * `.deleteSavedView` z `useTableData()` = REALNE, asynchroniczne
+ * `platformIntegration.updateSavedView`/`.deleteSavedView`
+ * (`useTablePlatformViews.ts`) — INNY mechanizm niż `idea.view.saved_view_*`
+ * wyżej, które wołają WYŁĄCZNIE legacy `useTableViews.ts` (patrz uzasadnienie
+ * przy `runTableSavedViewRenameCallback` powyżej: `TableToolbar.tsx` była
+ * wtedy ŚWIADOMIE NIEOKABLOWANA, „sprawa kolejnej fali" — to jest ta fala).
+ * Tylko Rename i Delete dostają tu realny odbiornik Teresy — Update wymaga
+ * migawki BIEŻĄCEGO stanu widoku platformy (sort/filters/groupBy/layout/
+ * columns z `platformIntegration`, dziś NIEPRZEKAZANEJ do
+ * `useTableQuickActions.ts`), więc zostaje UI-only (patrz
+ * `idea.view.table_platform_saved_view_update` niżej) — dopisanie tego
+ * payloadu bez zgadywania kształtu wymaga osobnego zadania.
+ */
+const RUNTIME_TBL_VIEW_RENAME_PLATFORM: ToolActionMap = {
+  table: 'tbl_view_rename_platform',
+};
+const RUNTIME_TBL_VIEW_DELETE_PLATFORM: ToolActionMap = {
+  table: 'tbl_view_delete_platform',
+};
+
+/**
  * `WhiteboardToolbar.tsx` (2026-08-09, N7 kontynuacja) — pięć wariantów
  * dropdownu „Wstaw" (dawniej hardkodowana tablica `items` w komponencie).
  * Runtime stringi `wb_add_shape_*`/`wb_add_image`/`wb_add_link` JUŻ MAJĄ
@@ -1980,6 +2071,19 @@ const RUNTIME_MM_NODE_CONVERT_BRANCH: ToolActionMap = {
   mindmap: 'mm_convert_branch',
 };
 /**
+ * E11 fix (2026-08-10, docs/standards/idea-workspace/10_*, §2.1 „Element"):
+ * separate runtime string for the THREE plain "Convert" node items
+ * (`idea.node.mm_convert_initiative`/`_decision`/`_tasks`). These used to
+ * share `RUNTIME_MM_NODE_CONVERT_BRANCH` with the five real "Convert branch"
+ * items — meaning a single-node label always cascaded to every descendant
+ * (E02-N5-CONVERT honesty finding). `useMindMapQuickActions.ts`'s
+ * `mm_convert_single` handler calls `handlers.convertSingleNode`
+ * (`IdeaRecommendationMap.tsx`), which dispatches exactly one nodeId.
+ */
+const RUNTIME_MM_NODE_CONVERT_SINGLE: ToolActionMap = {
+  mindmap: 'mm_convert_single',
+};
+/**
  * N5 czwarta fala (2026-08-09) — grupa AI węzła Mapy myśli. Reużywa
  * ISTNIEJĄCY runtime string `mm_ai_expand` (RUNTIME_AI_EXPAND wyżej, dziś
  * używany przez `idea.ai.expand_map` w zasięgu `workspace`, rail/panel) —
@@ -2157,6 +2261,87 @@ async function runTableSavedViewDeleteCallback(ctx: ActionContext): Promise<Acti
 }
 
 /**
+ * N10 (2026-08-10) — `TableToolbar.tsx` (powierzchnia PLATFORM WYŁĄCZNIE,
+ * patrz komentarz przy `RUNTIME_TBL_SCORING` i grupie RUNTIME_TBL_* powyżej).
+ * Ten sam kształt co `runToolbarUiOnlyCallback` (Tablica) / `runContextMenuUiOnlyCallback`
+ * (menu PPM Tablicy), z UCZCIWYM komunikatem dla górnego paska Tabeli.
+ * Sprawdzone PRZED użyciem per pozycja (patrz komentarz przy każdym `id:`
+ * niżej, który jej używa), że nie istnieje dziś żaden bezpieczny,
+ * zweryfikowany punkt wejścia dla Teresy.
+ */
+async function runTableToolbarUiOnlyCallback(
+  actionId: string,
+  ctx: ActionContext
+): Promise<ActionResult> {
+  const run = ctx.params?.run;
+  if (ctx.source !== 'ui' || typeof run !== 'function') {
+    return {
+      ok: false,
+      actionId,
+      message:
+        'Ta akcja działa dziś wyłącznie z górnego paska narzędzi Tabeli (widok platformowy) — nie mam jeszcze sposobu wywołania jej z czatu.',
+    };
+  }
+  (run as () => void)();
+  return { ok: true, actionId };
+}
+
+/**
+ * Jak `runKeyboardOnlyCallback`, ale dla trzech akcji Tabeli, które od tej
+ * zmiany (N10, 2026-08-10) mają DWA realne wejścia UI (skrót klawiszowy I
+ * przycisk `TableToolbar.tsx`) — żadne z nich nie ma dziś wejścia dla Teresy,
+ * więc komunikat odmowy musi być uczciwy wobec OBU, nie tylko klawiatury
+ * (stąd nie reużyto wspólnego `runKeyboardOnlyCallback`, którego treść
+ * mówiłaby "wyłącznie ze skrótu" — nieprawda po tej zmianie).
+ */
+async function runTableToolbarOrKeyboardCallback(
+  actionId: string,
+  ctx: ActionContext
+): Promise<ActionResult> {
+  const run = ctx.params?.run;
+  if (ctx.source !== 'ui' || typeof run !== 'function') {
+    return {
+      ok: false,
+      actionId,
+      message:
+        'Ta akcja działa dziś wyłącznie z klawiatury lub górnego paska narzędzi Tabeli — nie mam jeszcze sposobu wywołania jej z czatu.',
+    };
+  }
+  (run as () => void)();
+  return { ok: true, actionId };
+}
+
+async function runTablePlatformSavedViewRenameCallback(ctx: ActionContext): Promise<ActionResult> {
+  const actionId = 'idea.view.table_platform_saved_view_rename';
+  const run = ctx.params?.run;
+  if (ctx.source === 'ui' && typeof run === 'function') {
+    (run as () => void)();
+    return { ok: true, actionId };
+  }
+  const viewId = typeof ctx.params?.viewId === 'string' ? ctx.params.viewId : undefined;
+  const guard = tableSavedViewGuard(actionId, viewId);
+  if (guard) return guard;
+  const name = typeof ctx.params?.name === 'string' ? ctx.params.name.trim() : undefined;
+  if (!name) {
+    return { ok: false, actionId, message: 'Podaj nową `name` (nazwę) widoku.' };
+  }
+  return runByTool(actionId, RUNTIME_TBL_VIEW_RENAME_PLATFORM, ctx, { viewId, name });
+}
+
+async function runTablePlatformSavedViewDeleteCallback(ctx: ActionContext): Promise<ActionResult> {
+  const actionId = 'idea.view.table_platform_saved_view_delete';
+  const run = ctx.params?.run;
+  if (ctx.source === 'ui' && typeof run === 'function') {
+    (run as () => void)();
+    return { ok: true, actionId };
+  }
+  const viewId = typeof ctx.params?.viewId === 'string' ? ctx.params.viewId : undefined;
+  const guard = tableSavedViewGuard(actionId, viewId);
+  if (guard) return guard;
+  return runByTool(actionId, RUNTIME_TBL_VIEW_DELETE_PLATFORM, ctx, { viewId });
+}
+
+/**
  * N8.2 (2026-08-10) — Tabela, MENU KOLUMNY. Cztery pozycje z
  * `IdeaTableTool.tsx`'s `colContextMenu` (`CanvasContextMenu` na prawy klik
  * NAGŁÓWKA kolumny, `testId="idea-table-column-context-menu"`, ~L3990-4022):
@@ -2164,16 +2349,20 @@ async function runTableSavedViewDeleteCallback(ctx: ActionContext): Promise<Acti
  *
  * ─── ZAKRES: DLACZEGO NOWE IDENTYFIKATORY, A NIE REUŻYCIE ────────────────────
  * Sprawdzone PRZED wpisem, per akcja, po REALNYM MECHANIZMIE (nie po etykiecie):
- *  • `tbl_sort` — ISTNIEJĄCY odbiornik w `useTableQuickActions.ts` (~L200) o
- *    myląco podobnej nazwie. NIE jest tą samą akcją: nie przyjmuje ŻADNEGO
- *    klucza kolumny (sortuje twardo po `'label'`, gdy nic nie jest posortowane),
- *    jest DWUSTANOWY (asc↔desc), i pisze do LEGACY `setSort`. Menu kolumny woła
- *    `effectiveCycleSort(colKey)` — konkretna kolumna, TRZY stany
- *    (asc→desc→BRAK sortowania), i dwutorowo (platforma albo legacy). Inny
- *    mechanizm → osobne `idea.column.sort`. (Osobne ustalenie, zgłoszone nie
- *    naprawiane: `tbl_sort` NIE MA DZIŚ ŻADNEGO nadawcy w całym `src/` — ani
- *    rejestr, ani żaden komponent go nie wysyła. To odbiornik-sierota,
- *    preistniejący, poza zakresem tego zadania.)
+ *  • `tbl_sort` — DAWNIEJ istniał tu jako odbiornik w `useTableQuickActions.ts`
+ *    (~L200) o myląco podobnej nazwie. NIE była to ta sama akcja: nie
+ *    przyjmowała ŻADNEGO klucza kolumny (sortowała twardo po `'label'`, gdy
+ *    nic nie było posortowane), była DWUSTANOWA (asc↔desc), i pisała do
+ *    LEGACY `setSort`. Menu kolumny woła `effectiveCycleSort(colKey)` —
+ *    konkretna kolumna, TRZY stany (asc→desc→BRAK sortowania), i dwutorowo
+ *    (platforma albo legacy). Inny mechanizm → osobne `idea.column.sort`.
+ *    DECYZJA (N10, 2026-08-10, program wiring `TableToolbar.tsx`):
+ *    `tbl_sort` NIE MIAŁ ŻADNEGO nadawcy w całym `src/` (ani rejestr, ani
+ *    żaden komponent go nie wysyłał — SPRAWDZONE grepem, w tym
+ *    `TableToolbar.tsx`, który nie ma osobnego przycisku „Sort") ani żadnego
+ *    naturalnego dispatchera do dopisania — USUNIĘTY z `useTableQuickActions.ts`
+ *    (martwa gałąź), nie zostawiony jako sierota. Sortowanie Tabeli ma dziś
+ *    wyłącznie `idea.column.sort` (per-kolumna, opisane wyżej).
  *  • `idea.view.saved_view_*` (N8.1) — dotyczą ZAPISANEGO WIDOKU
  *    (`SavedView[]`), nie definicji kolumn (`ColumnDef[]`). Zero pokrycia.
  *  • Brak jakiegokolwiek istniejącego wpisu o zakresie `table_column` — te
@@ -2973,8 +3162,17 @@ const IDEA_ACTIONS: ActionDef[] = [
     icon: 'GitMerge',
     scope: 'current_view',
     tools: ['table'],
-    surfaces: ['rail', 'panel'],
-    handler: (ctx) => runByTool('idea.ai.table_categorize', RUNTIME_AI_TABLE_CATEGORIZE, ctx),
+    // N10 (2026-08-10) — `'toolbar'` dopisane: `TableToolbar.tsx`'s More-menu
+    // (`props.onShowAICategorize`) i Mobile-menu wołają DOKŁADNIE ten sam
+    // `setShowAICategorize` state-setter (`IdeaTableTool.tsx`), który
+    // odbiornik `tbl_categorize` już woła — ZWERYFIKOWANE PRZED zmianą
+    // (grep + odczyt obu callsite'ów), nie zgadywane. `runToolbarBusAction`
+    // zamiast `runByTool` (bez zmiany zachowania — bus i tak dispatchowałby
+    // to samo), żeby UI-klik nadal wołał `props.onShowAICategorize`
+    // BEZPOŚREDNIO (kontrakt komponentu kontrolowanego, testowany przez
+    // `TableToolbar.moreToolsAndAi.test.tsx`-owy wzorzec asercji na propsach).
+    surfaces: ['rail', 'panel', 'toolbar'],
+    handler: (ctx) => runToolbarBusAction('idea.ai.table_categorize', RUNTIME_AI_TABLE_CATEGORIZE, ctx),
     mutates: false,
     requiresPreview: false,
     teresa: {
@@ -2985,7 +3183,8 @@ const IDEA_ACTIONS: ActionDef[] = [
         'Otwiera kategoryzację AI dla Tabeli — proponuje pogrupowanie WIERSZY tej Tabeli, każdą grupę zatwierdzasz osobno. Nie dotyczy karteczek Tablicy ani gałęzi Mapy myśli — jeśli użytkownik prosi o nie, powiedz wprost, że tej akcji nie ma w Tabeli.',
     },
     runtime: RUNTIME_AI_TABLE_CATEGORIZE,
-    source: 'src/components/MyWork/table/useTableQuickActions.ts:85',
+    source:
+      'src/components/MyWork/table/useTableQuickActions.ts:85 + TableToolbar.tsx More/Mobile menu "AI Categorize" (N10, 2026-08-10)',
   },
   {
     id: 'idea.ai.table_framework',
@@ -2996,8 +3195,12 @@ const IDEA_ACTIONS: ActionDef[] = [
     icon: 'Lightbulb',
     scope: 'current_view',
     tools: ['table'],
-    surfaces: ['rail', 'panel'],
-    handler: (ctx) => runByTool('idea.ai.table_framework', RUNTIME_AI_TABLE_FRAMEWORK, ctx),
+    // N10 (2026-08-10) — `'toolbar'` dopisane: TE SAME `setShowFrameworkGen`
+    // (`IdeaTableTool.tsx`) między `TableToolbar.tsx`'s `props.onShowFrameworkGen`
+    // (More/Mobile menu) i odbiornikiem `tbl_framework` — zweryfikowane grepem
+    // PRZED zmianą.
+    surfaces: ['rail', 'panel', 'toolbar'],
+    handler: (ctx) => runToolbarBusAction('idea.ai.table_framework', RUNTIME_AI_TABLE_FRAMEWORK, ctx),
     mutates: false,
     requiresPreview: false,
     teresa: {
@@ -3005,7 +3208,8 @@ const IDEA_ACTIONS: ActionDef[] = [
         'Otwiera generator frameworka Tabeli — podpowiada gotową strukturę kolumn dla wybranej metody pracy.',
     },
     runtime: RUNTIME_AI_TABLE_FRAMEWORK,
-    source: 'src/components/MyWork/table/useTableQuickActions.ts:82',
+    source:
+      'src/components/MyWork/table/useTableQuickActions.ts:82 + TableToolbar.tsx More/Mobile menu "Framework Generator" (N10, 2026-08-10)',
   },
   // ── N8 (2026-08-10) — Tabela, menu widoku zapisanego (`IdeaTableTool.tsx`'s
   // `viewContextMenu`, `CanvasContextMenu` na prawy klik zakładki widoku,
@@ -3364,54 +3568,65 @@ const IDEA_ACTIONS: ActionDef[] = [
     // wyżej (menu prawego kliku). ŚWIADOMIE osobny id, nie reużycie
     // `table.row.delete` — inny mechanizm (bulk vs single-row-by-id), tak jak
     // `idea.node.delete` (Tablica/Przepływ) ma odrębny scope od
-    // `table_row`-scoped wpisów. UWAGA (odkryte przy tym wpisie, nie
-    // naprawiane tu): `TableToolbar.tsx:1315` ma OSOBNY przycisk „Usuń"
-    // wołający `handleBulkDelete` BEZPOŚREDNIO (nie `effectiveHandleBulkDelete`)
-    // — w trybie platform ten przycisk NIE robi tego samego, co klawiatura;
-    // ten przycisk pozostaje niepodłączony do rejestru (poza zakresem —
-    // wykracza poza trzy hooki klawiaturowe tego zadania).
+    // `table_row`-scoped wpisów. `'toolbar'` dopisane (N10, 2026-08-10):
+    // `TableToolbar.tsx`'s przycisk „Usuń" (bulk actions, ~L1249) woła
+    // `handleBulkDelete` Z `useTableData()` = `integration.handleBulkDelete`
+    // = `platformIntegration.handleBulkDelete` — TableToolbar.tsx renderuje
+    // się WYŁĄCZNIE gdy `usePlatform` jest `true` (patrz `IdeaTableTool.tsx`
+    // ~L2242), więc `_bulkDel` (`effectiveHandleBulkDelete`, ten sam warunek)
+    // wskazuje na TĘ SAMĄ funkcję — ZWERYFIKOWANE (nie zgadywane, obie
+    // referencje prześledzone do jednej instancji `platformIntegration`),
+    // wcześniejsza obawa w tym komentarzu (przycisk „NIE robi tego samego co
+    // klawiatura") była błędna dla trybu platform — jedynego, w którym ten
+    // przycisk w ogóle się renderuje.
     id: 'table.rows.bulk_delete',
     label: { pl: 'Usuń zaznaczone wiersze', en: 'Delete selected rows' },
     icon: 'Trash2',
     scope: 'selected_items',
     tools: ['table'],
-    surfaces: ['keyboard'],
+    surfaces: ['keyboard', 'toolbar'],
     shortcut: 'Del',
-    handler: (ctx) => runKeyboardOnlyCallback('table.rows.bulk_delete', ctx),
+    handler: (ctx) => runTableToolbarOrKeyboardCallback('table.rows.bulk_delete', ctx),
     mutates: true,
     requiresPreview: false,
     destructive: true,
     undo: {
       kind: 'local_stack',
       evidence:
-        'CZĘŚCIOWE (ta sama luka co `table.row.delete` wyżej): legacy `handleBulkDelete` → nodesUndo.push() (stos Ctrl+Z); platform `effectiveHandleBulkDelete` → bridge, BEZ stosu cofania.',
+        'CZĘŚCIOWE (ta sama luka co `table.row.delete` wyżej): legacy `handleBulkDelete` → nodesUndo.push() (stos Ctrl+Z); platform `effectiveHandleBulkDelete`/`ctx.handleBulkDelete` → bridge, BEZ stosu cofania.',
     },
     teresa: {
       description:
-        'Usuwa WSZYSTKIE dziś zaznaczone wiersze Tabeli (nie pojedynczy `rowId` — patrz `table.row.delete` dla usunięcia jednego wiersza). Dziś dostępne WYŁĄCZNIE ze skrótu klawiszowego — Teresa tego jeszcze nie wywoła (operuje na zaznaczeniu w przeglądarce, nie na jawnym parametrze).',
+        'Usuwa WSZYSTKIE dziś zaznaczone wiersze Tabeli (nie pojedynczy `rowId` — patrz `table.row.delete` dla usunięcia jednego wiersza). Dziś dostępne WYŁĄCZNIE z klawiatury lub górnego paska narzędzi Tabeli — Teresa tego jeszcze nie wywoła (operuje na zaznaczeniu w przeglądarce, nie na jawnym parametrze).',
     },
-    source: 'src/components/MyWork/IdeaTableTool.tsx onDelete (~L1710, useTableKeyboard) → _bulkDel',
+    source:
+      'src/components/MyWork/IdeaTableTool.tsx onDelete (~L1710, useTableKeyboard) → _bulkDel + TableToolbar.tsx bulk-actions "Usuń" (~L1249, N10 2026-08-10)',
   },
   {
     // NOWY wpis (2026-08-10, reconciliacja skrótów) — `useTableKeyboard.ts`'s
     // `onSave` (Ctrl/Cmd+S) woła `_save` (`effectiveHandleSave`/`handleSave`,
-    // branchuje na `usePlatform`, ~L680). Bez żadnego przycisku „Zapisz"
-    // gdziekolwiek w UI Tabeli (SPRAWDZONE grepem) — wyłącznie klawiatura.
+    // branchuje na `usePlatform`, ~L680). `'toolbar'` dopisane (N10,
+    // 2026-08-10): `TableToolbar.tsx`'s przycisk „Zapisz" (~L1303) woła
+    // `handleSave` z `useTableData()` = `integration.handleSave` =
+    // `platformIntegration.handleSave` — ta sama funkcja co `_save`, bo
+    // TableToolbar.tsx renderuje się wyłącznie gdy `usePlatform` jest
+    // `true` (zweryfikowane jak przy `table.rows.bulk_delete` wyżej).
     id: 'idea.canvas.tbl_save',
     label: { pl: 'Zapisz', en: 'Save' },
     icon: 'Save',
     scope: 'current_view',
     tools: ['table'],
-    surfaces: ['keyboard'],
+    surfaces: ['keyboard', 'toolbar'],
     shortcut: '⌘S',
-    handler: (ctx) => runKeyboardOnlyCallback('idea.canvas.tbl_save', ctx),
+    handler: (ctx) => runTableToolbarOrKeyboardCallback('idea.canvas.tbl_save', ctx),
     mutates: false,
     requiresPreview: false,
     teresa: {
       description:
-        'Zapisuje bieżący stan Tabeli natychmiast (poza automatycznym zapisem w tle). Dziś dostępne WYŁĄCZNIE ze skrótu klawiszowego — Teresa tego jeszcze nie wywoła.',
+        'Zapisuje bieżący stan Tabeli natychmiast (poza automatycznym zapisem w tle). Dziś dostępne WYŁĄCZNIE z klawiatury lub górnego paska narzędzi Tabeli — Teresa tego jeszcze nie wywoła.',
     },
-    source: 'src/components/MyWork/IdeaTableTool.tsx onSave (~L1718, useTableKeyboard) → _save',
+    source:
+      'src/components/MyWork/IdeaTableTool.tsx onSave (~L1718, useTableKeyboard) → _save + TableToolbar.tsx przycisk "Zapisz" (N10, 2026-08-10)',
   },
   {
     // NOWY wpis (2026-08-10, reconciliacja skrótów) — `useTableKeyboard.ts`'s
@@ -3423,28 +3638,34 @@ const IDEA_ACTIONS: ActionDef[] = [
     // `tbl_add_row` woła `handlers.handleAddRow` — bez pewności, że to TA SAMA
     // funkcja co platform-aware `_addRow` (nie zweryfikowano do końca w
     // czasie tej reconciliacji), więc reużycie byłoby ryzykiem zmiany
-    // zachowania w trybie platform. Ten wpis, przez `runKeyboardOnlyCallback`
-    // (WYŁĄCZNIE `ctx.params.run`), gwarantuje zero zmiany zachowania.
+    // zachowania w trybie platform. `'toolbar'` dopisane (N10, 2026-08-10):
+    // `TableToolbar.tsx`'s zwykły przycisk „Row" (~L1276, NIE chevron
+    // "z szablonu" — patrz `idea.view.table_add_row_with_template` niżej dla
+    // TEGO) woła `handleAddRow()` z `useTableData()` =
+    // `integration.handleAddRow` = `platformIntegration.handleAddRow` — ta
+    // sama funkcja co `_addRow` w trybie platform (jedynym, w którym
+    // `TableToolbar.tsx` się renderuje).
     id: 'table.rows.add_row',
     label: { pl: 'Dodaj wiersz', en: 'Add row' },
     icon: 'Plus',
     scope: 'current_view',
     tools: ['table'],
-    surfaces: ['keyboard'],
+    surfaces: ['keyboard', 'toolbar'],
     shortcut: '⌘N',
-    handler: (ctx) => runKeyboardOnlyCallback('table.rows.add_row', ctx),
+    handler: (ctx) => runTableToolbarOrKeyboardCallback('table.rows.add_row', ctx),
     mutates: true,
     requiresPreview: false,
     undo: {
       kind: 'local_stack',
       evidence:
-        'CZĘŚCIOWE (ta sama luka co `table.row.delete`): legacy `handleAddRow` → nodesUndo.push(); platform `effectiveHandleAddRow` → bridge, BEZ stosu cofania.',
+        'CZĘŚCIOWE (ta sama luka co `table.row.delete`): legacy `handleAddRow` → nodesUndo.push(); platform `effectiveHandleAddRow`/`ctx.handleAddRow` → bridge, BEZ stosu cofania.',
     },
     teresa: {
       description:
-        'Dodaje nowy, pusty wiersz do otwartej Tabeli. Dziś dostępne WYŁĄCZNIE ze skrótu klawiszowego — Teresa tego jeszcze nie wywoła (dla Teresy istnieje `idea.element.add`, ale to OSOBNA ścieżka wykonania — patrz komentarz przy tym wpisie).',
+        'Dodaje nowy, pusty wiersz do otwartej Tabeli. Dziś dostępne WYŁĄCZNIE z klawiatury lub górnego paska narzędzi Tabeli — Teresa tego jeszcze nie wywoła (dla Teresy istnieje `idea.element.add`, ale to OSOBNA ścieżka wykonania — patrz komentarz przy tym wpisie).',
     },
-    source: 'src/components/MyWork/IdeaTableTool.tsx onAddRow (~L1719, useTableKeyboard) → _addRow',
+    source:
+      'src/components/MyWork/IdeaTableTool.tsx onAddRow (~L1719, useTableKeyboard) → _addRow + TableToolbar.tsx przycisk "Row" (N10, 2026-08-10)',
   },
   // ── N9 (2026-08-10) — Tabela, menu komórki (`IdeaTableTool.tsx`'s
   // `cellContextMenu`, `CanvasContextMenu` na prawy klik pojedynczej komórki,
@@ -3556,6 +3777,355 @@ const IDEA_ACTIONS: ActionDef[] = [
     source:
       'src/components/MyWork/IdeaTableTool.tsx cellContextMenu "table.cell.clear" (~L4152-4172) → _fieldChange(rowId, colKey, \'\')',
   },
+  // ── N10 (2026-08-10) — `TableToolbar.tsx`, powierzchnia PLATFORM WYŁĄCZNIE
+  // (patrz komentarz przy `RUNTIME_TBL_SCORING` powyżej). Widok zapisany
+  // (przełącz/zapisz nowy) — DWA z pięciu operacji (Rename/Delete) mają
+  // realny odbiornik Teresy (patrz `RUNTIME_TBL_VIEW_RENAME_PLATFORM`
+  // powyżej), pozostałe trzy zostają UI-only z udokumentowanym powodem przy
+  // każdym wpisie.
+  {
+    id: 'idea.view.table_apply_view',
+    label: { pl: 'Przełącz widok', en: 'Switch view' },
+    icon: 'Layers',
+    scope: 'current_view',
+    tools: ['table'],
+    surfaces: ['toolbar'],
+    handler: (ctx) => runTableToolbarUiOnlyCallback('idea.view.table_apply_view', ctx),
+    // Przełącza WYŁĄCZNIE zaznaczenie zakładki (activeViewId) i lokalny stan
+    // widoku (sort/filters/groupBy/layout z zapisanego widoku) — nie zmienia
+    // ŻADNYCH danych wierszy/kolumn.
+    mutates: false,
+    requiresPreview: false,
+    teresa: {
+      description:
+        'Przełącza Tabelę na wskazany zapisany widok (zakładka nad tabelą) — zmienia sortowanie/filtry/grupowanie/układ na te zapisane w widoku, bez zmiany danych. Dziś dostępne WYŁĄCZNIE z górnego paska narzędzi Tabeli (widok platformowy) — Teresa tego jeszcze nie wywoła (odbiornik wymagałby dopisania, poza zakresem tej zmiany).',
+    },
+    source: 'src/components/MyWork/table/TableToolbar.tsx zakładka widoku onClick (~L429) → applyView(v)',
+  },
+  {
+    id: 'idea.view.table_save_view',
+    label: { pl: 'Zapisz nowy widok', en: 'Save new view' },
+    icon: 'Save',
+    scope: 'current_view',
+    tools: ['table'],
+    surfaces: ['toolbar'],
+    handler: (ctx) => runTableToolbarUiOnlyCallback('idea.view.table_save_view', ctx),
+    mutates: true,
+    requiresPreview: false,
+    undo: {
+      kind: 'none',
+      evidence:
+        'Tworzy NOWY zapisany widok (`ctx.saveCurrentView` = `platformIntegration.saveCurrentView`, realny, asynchroniczny zapis serwerowy) — brak cofnięcia; odzyskanie to ręczne usunięcie widoku (patrz `idea.view.table_platform_saved_view_delete`).',
+    },
+    teresa: {
+      description:
+        'Zapisuje BIEŻĄCY stan Tabeli (sortowanie/filtry/grupowanie/układ/kolumny) jako NOWY, nazwany widok. Dziś dostępne WYŁĄCZNIE z górnego paska narzędzi Tabeli — Teresa tego jeszcze nie wywoła (wymagałby migawki stanu, patrz `idea.view.table_platform_saved_view_update` niżej dla tej samej luki).',
+    },
+    source:
+      'src/components/MyWork/table/TableToolbar.tsx przycisk "Zapisz widok" → dialog → handleSaveView (~L283-289, ~L492) → saveCurrentView',
+  },
+  {
+    // Realny odbiornik Teresy — patrz `RUNTIME_TBL_VIEW_RENAME_PLATFORM` i
+    // `runTablePlatformSavedViewRenameCallback` powyżej dla pełnego
+    // uzasadnienia (INNY mechanizm niż `idea.view.saved_view_rename`, który
+    // woła WYŁĄCZNIE legacy `useTableViews.ts`).
+    id: 'idea.view.table_platform_saved_view_rename',
+    label: { pl: 'Zmień nazwę', en: 'Rename' },
+    icon: 'Pencil',
+    scope: 'current_view',
+    tools: ['table'],
+    surfaces: ['context'],
+    handler: (ctx) => runTablePlatformSavedViewRenameCallback(ctx),
+    mutates: true,
+    requiresPreview: false,
+    undo: {
+      kind: 'none',
+      evidence:
+        '`ctx.updateSavedView` (`platformIntegration.updateSavedView`, `useTablePlatformViews.ts`) to realny, asynchroniczny zapis serwerowy bez historii wersji — brak cofnięcia, ani dla kliku człowieka, ani dla tej ścieżki Teresy.',
+    },
+    teresa: {
+      description:
+        'Zmienia nazwę zapisanego widoku Tabeli (widok platformowy). Podaj `viewId` widoku i nową `name`. Nie działa na widoku domyślnym.',
+      parameters: {
+        type: 'object',
+        properties: {
+          viewId: { type: 'string', description: 'Id zapisanego widoku Tabeli.' },
+          name: { type: 'string', description: 'Nowa nazwa widoku.' },
+        },
+        required: ['viewId', 'name'],
+      },
+    },
+    runtime: RUNTIME_TBL_VIEW_RENAME_PLATFORM,
+    source:
+      'src/components/MyWork/table/TableToolbar.tsx viewContextMenu "Rename" (~L510-522) → ctx.updateSavedView (platformIntegration.updateSavedView)',
+  },
+  {
+    id: 'idea.view.table_platform_saved_view_update',
+    label: { pl: 'Aktualizuj', en: 'Update' },
+    icon: 'Save',
+    scope: 'current_view',
+    tools: ['table'],
+    surfaces: ['toolbar'],
+    handler: (ctx) => runTableToolbarUiOnlyCallback('idea.view.table_platform_saved_view_update', ctx),
+    mutates: true,
+    requiresPreview: false,
+    undo: {
+      kind: 'none',
+      evidence:
+        '`ctx.updateSavedView` (jak wyżej) nadpisuje sort/filters/groupBy/layout/columns zapisanego widoku BIEŻĄCYM stanem platformy — realny, asynchroniczny zapis serwerowy, bez cofnięcia.',
+    },
+    teresa: {
+      description:
+        'Nadpisuje zapisany widok Tabeli (platformowy) bieżącym stanem tabeli. Dziś dostępne WYŁĄCZNIE z menu prawego kliku Tabeli — wymaga migawki bieżącego stanu widoku platformy (sort/filters/groupBy/layout/columns z `platformIntegration`), dziś nieprzekazanej do odbiornika Teresy — Teresa tego jeszcze nie wywoła.',
+    },
+    source:
+      'src/components/MyWork/table/TableToolbar.tsx viewContextMenu "Update" (~L523-542) → ctx.updateSavedView (platformIntegration.updateSavedView)',
+  },
+  {
+    id: 'idea.view.table_platform_saved_view_delete',
+    label: { pl: 'Usuń', en: 'Delete' },
+    icon: 'Trash2',
+    scope: 'current_view',
+    tools: ['table'],
+    surfaces: ['context'],
+    handler: (ctx) => runTablePlatformSavedViewDeleteCallback(ctx),
+    mutates: true,
+    requiresPreview: false,
+    destructive: true,
+    undo: {
+      kind: 'none',
+      evidence:
+        '`ctx.deleteSavedView` (`platformIntegration.deleteSavedView`) to realne, nieodwracalne serwerowe usunięcie widoku — brak cofnięcia, ani dla kliku człowieka, ani dla tej ścieżki Teresy.',
+    },
+    teresa: {
+      description:
+        'Usuwa zapisany widok Tabeli (widok platformowy) na trwałe. Podaj `viewId` widoku do usunięcia. Nie działa na widoku domyślnym.',
+      parameters: {
+        type: 'object',
+        properties: {
+          viewId: { type: 'string', description: 'Id zapisanego widoku Tabeli do usunięcia.' },
+        },
+        required: ['viewId'],
+      },
+      confirmBeforeRun: true,
+    },
+    runtime: RUNTIME_TBL_VIEW_DELETE_PLATFORM,
+    source:
+      'src/components/MyWork/table/TableToolbar.tsx viewContextMenu "Delete" (~L543-552) → ctx.deleteSavedView (platformIntegration.deleteSavedView)',
+  },
+  {
+    // ★ ZNALEZISKO (2026-08-10, przy okazji tego zadania, NIE naprawiane tu —
+    // dokładnie ta sama klasa co defekt kolumn naprawiony 2026-08-10 przed
+    // Programem B: usePlatform ignorowany → mutacja martwego stanu + kłamliwy
+    // toast sukcesu). `props.onBulkConvert` (`TableToolbar.tsx` bulk-actions
+    // "Convert" menu, ~L1235) woła `handleBulkConvert` (`IdeaTableTool.tsx`
+    // ~L1326-1364) BEZPOŚREDNIO — ta funkcja NIE branchuje na `usePlatform`
+    // (brak `effective`/`_` odpowiednika, jedyna wersja w całym pliku), czyta
+    // i pisze WYŁĄCZNIE legacy `nodes`/`nodesUndo`/`selectedRowIds`/
+    // `setSelectedRowIds`. `TableToolbar.tsx` renderuje się WYŁĄCZNIE gdy
+    // `usePlatform` jest `true` — więc dziś w trybie platform ten przycisk:
+    // (a) czyta `selectedRowIds.size` z LEGACY Setu, prawie na pewno 0 lub
+    // nieaktualne wobec realnie zaznaczonych wierszy platformy
+    // (`platformIntegration.selectedRowIds`), (b) `nodesUndo.push(next)`
+    // mutuje LEGACY `nodes` — niewidoczne na ekranie (platform renderuje
+    // `platformIntegration.processedRows`), (c) `toast.success("Converted
+    // {{count}} rows…")` melduje sukces policzony z (a) — KŁAMLIWY toast nad
+    // martwym stanem. Ten wpis WIĄŻE przycisk z rejestrem 1:1 (zero zmiany
+    // zachowania — `ctx.params.run` woła dokładnie `props.onBulkConvert`),
+    // ale ŚWIADOMIE zostaje UI-only i NIE dostaje realnego odbiornika Teresy,
+    // żeby nie rozszerzać tego samego zepsutego mechanizmu na czat. Naprawa
+    // wymaga platform-aware odpowiednika `handleBulkConvert` — poza zakresem
+    // tego zadania (wykracza poza `TableToolbar.tsx`).
+    id: 'idea.workspace.table_bulk_convert',
+    label: { pl: 'Konwertuj zaznaczone wiersze', en: 'Convert selected rows' },
+    icon: 'ArrowRight',
+    scope: 'selected_items',
+    tools: ['table'],
+    surfaces: ['toolbar'],
+    handler: (ctx) => runTableToolbarUiOnlyCallback('idea.workspace.table_bulk_convert', ctx),
+    mutates: true,
+    requiresPreview: false,
+    undo: {
+      kind: 'local_stack',
+      evidence:
+        'ZNALEZISKO (nie naprawiane tu, patrz komentarz powyżej): `handleBulkConvert` NIE branchuje na `usePlatform` — w trybie platform (jedynym, w którym ten przycisk się renderuje) mutuje LEGACY `nodes`/`nodesUndo`, martwy stan niewidoczny na ekranie; `nodesUndo.push` istnieje, ale na stosie, którego platform i tak nie odczytuje przy renderze.',
+    },
+    teresa: {
+      description:
+        'Oznacza dziś zaznaczone wiersze Tabeli jako przekształcone w inicjatywę/zadanie/decyzję. Dziś dostępne WYŁĄCZNIE z górnego paska narzędzi Tabeli — Teresa tego jeszcze nie wywoła (ZNANY defekt: w trybie platformowym ten mechanizm operuje na nieaktualnym zaznaczeniu i niewidocznym stanie — patrz kod źródłowy — świadomie nie dajemy Teresie dostępu do zepsutej ścieżki).',
+    },
+    source:
+      'src/components/MyWork/table/TableToolbar.tsx bulk-actions "Convert" (~L1220-1248) → props.onBulkConvert → IdeaTableTool.tsx handleBulkConvert (~L1326-1364, NIE usePlatform-aware)',
+  },
+  {
+    // ★ DRUGIE ZNALEZISKO tej samej klasy (2026-08-10). `props.onAddRowWithTemplate`
+    // (`TableToolbar.tsx` chevron obok "Row", ~L1284) woła
+    // `handleAddRowWithTemplate` (`useTableRows.ts:205-214`, LEGACY hook, BEZ
+    // `usePlatform`-branchowanego odpowiednika) → otwiera `RowTemplatePicker`
+    // → wybór szablonu woła `handleTemplateSelect` (`useTableRows.ts:216-224`,
+    // TAKŻE legacy, `IdeaTableTool.tsx`'s `RowTemplatePicker onSelect` ~L4429
+    // woła ją BEZPOŚREDNIO, bez `effective`/dual-path). W trybie platform
+    // (jedynym, w którym ten przycisk w `TableToolbar.tsx` się renderuje)
+    // wybranie szablonu robi `nodesUndo.push([...nodes, newNode])` na LEGACY
+        // `nodes` — nowy wiersz NIE POJAWIA SIĘ na ekranie (platform renderuje
+    // `platformIntegration.processedRows`), bez toastu błędu (cichy no-op z
+    // perspektywy użytkownika, gorsze niż kłamliwy toast — brak JAKIEGOKOLWIEK
+    // feedbacku). Ten wpis WIĄŻE przycisk-wyzwalacz (otwarcie pickera) z
+    // rejestrem 1:1, bez zmiany zachowania; naprawa (platform-aware
+    // `handleTemplateSelect`) wymaga zmian w `IdeaTableTool.tsx`/`useTableRows.ts`
+    // poza zakresem tego zadania.
+    id: 'idea.view.table_add_row_with_template',
+    label: { pl: 'Dodaj wiersz z szablonu', en: 'Add row from template' },
+    icon: 'LayoutTemplate',
+    scope: 'current_view',
+    tools: ['table'],
+    surfaces: ['toolbar'],
+    handler: (ctx) => runTableToolbarUiOnlyCallback('idea.view.table_add_row_with_template', ctx),
+    // Sam ten wpis tylko OTWIERA picker (`ctx.params.run` = `props.onAddRowWithTemplate`);
+    // realna mutacja (dodanie wiersza) dzieje się dopiero po wyborze szablonu
+    // w `RowTemplatePicker`, poza tym wpisem — stąd `mutates: false` tutaj,
+    // zgodnie z konwencją `idea.ai.table_assistant` (akcja otwiera narzędzie,
+    // mutacja jest w jego wnętrzu).
+    mutates: false,
+    requiresPreview: false,
+    teresa: {
+      description:
+        'Otwiera wybór szablonu do dodania nowego wiersza Tabeli. Dziś dostępne WYŁĄCZNIE z górnego paska narzędzi Tabeli — Teresa tego jeszcze nie wywoła (ZNANY defekt: w trybie platformowym wybór szablonu dziś cicho nie dodaje wiersza na ekranie — patrz kod źródłowy — świadomie nie dajemy Teresie dostępu do zepsutej ścieżki).',
+    },
+    source:
+      'src/components/MyWork/table/TableToolbar.tsx chevron "Add from template" (~L1283-1289) → props.onAddRowWithTemplate → IdeaTableTool.tsx handleAddRowWithTemplate (useTableRows.ts:205, NIE usePlatform-aware) → RowTemplatePicker onSelect → handleTemplateSelect (useTableRows.ts:216, NIE usePlatform-aware)',
+  },
+  {
+    id: 'idea.view.table_scoring',
+    label: { pl: 'Model scoringowy', en: 'Scoring model' },
+    icon: 'Trophy',
+    scope: 'current_view',
+    tools: ['table'],
+    surfaces: ['toolbar'],
+    // ZWERYFIKOWANE PRZED wpisem: `props.onShowScoringModel` (More/Mobile
+    // menu) i odbiornik `tbl_scoring` (dziś sierocy, zero nadawców) wołają
+    // DOKŁADNIE ten sam `setShowScoringModel` (`IdeaTableTool.tsx`).
+    handler: (ctx) => runToolbarBusAction('idea.view.table_scoring', RUNTIME_TBL_SCORING, ctx),
+    mutates: false,
+    requiresPreview: false,
+    teresa: {
+      description: 'Otwiera model scoringowy Tabeli — ocena i rankowanie wierszy wg wag kryteriów.',
+    },
+    runtime: RUNTIME_TBL_SCORING,
+    source:
+      'src/components/MyWork/table/TableToolbar.tsx More/Mobile menu "Scoring Model" → props.onShowScoringModel + useTableQuickActions.ts tbl_scoring (sierocy przed tą zmianą)',
+  },
+  {
+    id: 'idea.view.table_export_presentation',
+    label: { pl: 'Eksportuj do prezentacji', en: 'Export to presentation' },
+    icon: 'Presentation',
+    scope: 'current_view',
+    tools: ['table'],
+    surfaces: ['toolbar'],
+    handler: (ctx) =>
+      runToolbarBusAction('idea.view.table_export_presentation', RUNTIME_TBL_EXPORT_PPTX, ctx),
+    mutates: false,
+    requiresPreview: false,
+    teresa: {
+      description: 'Otwiera eksport zawartości Tabeli do prezentacji.',
+    },
+    runtime: RUNTIME_TBL_EXPORT_PPTX,
+    source:
+      'src/components/MyWork/table/TableToolbar.tsx More/Mobile menu "Export to Presentation" → props.onShowExportPresentation + useTableQuickActions.ts tbl_export_pptx (sierocy przed tą zmianą)',
+  },
+  {
+    id: 'idea.view.table_pipeline',
+    label: { pl: 'Pipeline pomysłu', en: 'Idea pipeline' },
+    icon: 'Rocket',
+    scope: 'current_view',
+    tools: ['table'],
+    surfaces: ['toolbar'],
+    handler: (ctx) => runToolbarBusAction('idea.view.table_pipeline', RUNTIME_TBL_PIPELINE, ctx),
+    mutates: false,
+    requiresPreview: false,
+    teresa: {
+      description: 'Otwiera widok pipeline\'u Tabeli (etapy/lejek pomysłów).',
+    },
+    runtime: RUNTIME_TBL_PIPELINE,
+    source:
+      'src/components/MyWork/table/TableToolbar.tsx More/Mobile menu "Idea Pipeline" → props.onShowPipeline + useTableQuickActions.ts tbl_pipeline (sierocy przed tą zmianą)',
+  },
+  {
+    id: 'idea.ai.table_copilot',
+    label: { pl: 'AI Copilot', en: 'AI Copilot' },
+    icon: 'Brain',
+    scope: 'current_view',
+    tools: ['table'],
+    surfaces: ['toolbar'],
+    handler: (ctx) => runToolbarBusAction('idea.ai.table_copilot', RUNTIME_TBL_COPILOT, ctx),
+    mutates: false,
+    requiresPreview: false,
+    teresa: {
+      description: 'Otwiera AI Copilota Tabeli — czat pomocniczy przy pracy na wierszach/kolumnach.',
+    },
+    runtime: RUNTIME_TBL_COPILOT,
+    source:
+      'src/components/MyWork/table/TableToolbar.tsx More/Mobile menu "AI Copilot" → props.onShowCopilot + useTableQuickActions.ts tbl_copilot (sierocy przed tą zmianą)',
+  },
+  {
+    id: 'idea.view.table_voice_input',
+    label: { pl: 'Głos / obraz', en: 'Voice / Image' },
+    icon: 'Mic',
+    scope: 'current_view',
+    tools: ['table'],
+    surfaces: ['toolbar'],
+    handler: (ctx) => runToolbarBusAction('idea.view.table_voice_input', RUNTIME_TBL_VOICE, ctx),
+    mutates: false,
+    requiresPreview: false,
+    teresa: {
+      description: 'Otwiera wprowadzanie danych do Tabeli głosem lub obrazem.',
+    },
+    runtime: RUNTIME_TBL_VOICE,
+    source:
+      'src/components/MyWork/table/TableToolbar.tsx More/Mobile menu "Voice / Image" → props.onShowVoiceInput + useTableQuickActions.ts tbl_voice (sierocy przed tą zmianą)',
+  },
+  {
+    id: 'idea.view.table_cross_relations',
+    label: { pl: 'Relacje międzytabelowe', en: 'Cross-table relations' },
+    icon: 'Network',
+    scope: 'current_view',
+    tools: ['table'],
+    surfaces: ['toolbar'],
+    handler: (ctx) =>
+      runToolbarBusAction('idea.view.table_cross_relations', RUNTIME_TBL_CROSS_RELATIONS, ctx),
+    mutates: false,
+    requiresPreview: false,
+    teresa: {
+      description: 'Otwiera relacje między tą Tabelą a innymi tabelami.',
+    },
+    runtime: RUNTIME_TBL_CROSS_RELATIONS,
+    source:
+      'src/components/MyWork/table/TableToolbar.tsx More/Mobile menu "Cross-table Relations" → props.onShowCrossRelations + useTableQuickActions.ts tbl_cross_relations (sierocy przed tą zmianą)',
+  },
+  {
+    // `tbl_heatmap` jest wyjątkiem w tej grupie: klik człowieka jest
+    // PRZEŁĄCZNIKIEM (`props.onToggleHeatmap` = `() => setShowHeatmap((p) =>
+    // !p)`), a odbiornik zawsze USTAWIA `true` (otwiera, nigdy nie zamyka).
+    // `runToolbarBusAction` zachowuje to uczciwie: UI-klik woła oryginalny
+    // toggle 1:1 (`ctx.params.run`), Teresa dostaje WYŁĄCZNIE „otwórz" —
+    // udokumentowane w opisie niżej zamiast milczeć o asymetrii.
+    id: 'idea.view.table_heatmap',
+    label: { pl: 'Mapa cieplna', en: 'Heatmap' },
+    icon: 'Flame',
+    scope: 'current_view',
+    tools: ['table'],
+    surfaces: ['toolbar'],
+    handler: (ctx) => runToolbarBusAction('idea.view.table_heatmap', RUNTIME_TBL_HEATMAP, ctx),
+    mutates: false,
+    requiresPreview: false,
+    teresa: {
+      description:
+        'Otwiera panel mapy cieplnej Tabeli (podświetla wartości kolumn kolorem). Klik człowieka na tym przycisku PRZEŁĄCZA (otwiera/zamyka) — ta ścieżka Teresy WYŁĄCZNIE otwiera panel, nie potrafi go zamknąć.',
+    },
+    runtime: RUNTIME_TBL_HEATMAP,
+    source:
+      'src/components/MyWork/table/TableToolbar.tsx More/Mobile menu "Heatmap" → props.onToggleHeatmap + useTableQuickActions.ts tbl_heatmap (sierocy przed tą zmianą)',
+  },
   {
     id: 'idea.workspace.convert',
     label: {
@@ -3596,6 +4166,18 @@ const IDEA_ACTIONS: ActionDef[] = [
       return { ok: true, actionId: 'idea.workspace.convert', data };
     },
     mutates: true,
+    // E11 UPDATE (2026-08-10) — checked before writing this: unlike the
+    // `idea.node.mm_convert_*` entries below, this `handler` has no
+    // `ctx.params.run` UI shortcut, so the HUMAN Menu 1/panel click path
+    // never reaches it at all — those call `IdeaMapWorkspace`'s own
+    // `handleConvert` prop directly, which now DOES show a mandatory
+    // preview (`ConversionPreviewDialog`) before calling `Api.convertMyIdea`.
+    // THIS handler is reached only by Teresa/command-palette callers, whose
+    // gate is `confirmBeforeRun: true` below (a conversational confirm, not
+    // a visual preview) — that path calls `Api.convertMyIdea` directly with
+    // NO preview. `requiresPreview: false` stays honest for what THIS
+    // dispatch path (registry handler) actually does; it does not describe
+    // the separate, now-previewed human UI path.
     requiresPreview: false,
     undo: {
       kind: 'manual_delete',
@@ -3604,7 +4186,7 @@ const IDEA_ACTIONS: ActionDef[] = [
     },
     teresa: {
       description:
-        'Przekształca Ideę w gotowy obiekt pracy: inicjatywę, zestaw zadań, decyzję, raport albo prezentację. Tworzy nowy, trwały rekord.',
+        'Przekształca Ideę w gotowy obiekt pracy: inicjatywę, zestaw zadań, decyzję, raport albo prezentację. Tworzy nowy, trwały rekord. UWAGA: ta ścieżka (Teresa) NIE pokazuje wizualnego podglądu przed wykonaniem — tylko potwierdzenie konwersacyjne (`confirmBeforeRun`). Ludzki klik w Menu 1/panelu POKAZUJE podgląd (inny mechanizm, ten sam efekt końcowy).',
       parameters: {
         type: 'object',
         properties: {
@@ -3677,6 +4259,68 @@ const IDEA_ACTIONS: ActionDef[] = [
     },
     source:
       'src/components/MyWork/panel/IdeaBusinessCaseSection.tsx (przycisk „Zapisz sekcję") + useIdeaBusinessCase.ts saveSection + server/src/routes/ideaBusinessCase.routes.ts PUT',
+  },
+  {
+    // R10 debt closure (2026-08-10, zapowiedziane w RESUME_HANDOFF.md jako
+    // "pierwsze zadanie następnej sesji") — `IdeaBusinessCaseSection.tsx`'s
+    // `NodeRefPicker` (współdzielony widget, używany przez KAŻDĄ z sekcji
+    // karty biznesowej — problemBaseline/strategicObjective/
+    // stakeholdersProcesses/recommendation/... poprzez `LineageEditor`,
+    // patrz `patchSection(key, ...)` na każdym wywołaniu). Klik "Powiąż"
+    // dopisuje jeden `BusinessCaseSourceRef` do LOKALNEGO draftu bieżącej
+    // sekcji (`patchSection`, `useState`) — nic nie trafia na serwer, dopóki
+    // człowiek nie kliknie osobno "Zapisz sekcję" (`idea.workspace.business_case_save`
+    // wyżej). Sekcja docelowa NIE jest tu znana rejestrowi (widget jest
+    // per-sekcja generyczny) — stąd `ctx.params.run` jest JEDYNĄ ścieżką,
+    // nie tylko dla UI: bez niej rejestr musiałby zgadywać, którego z 13
+    // `patchSection` wywołań dotyczy klik.
+    id: 'idea.workspace.business_case_lineage_add',
+    label: { pl: 'Powiąż element Idei', en: 'Link idea element' },
+    icon: 'Link2',
+    scope: 'workspace',
+    tools: 'all',
+    surfaces: ['panel'],
+    handler: (ctx) => runPanelUiOnlyCallback('idea.workspace.business_case_lineage_add', ctx),
+    mutates: true,
+    requiresPreview: false,
+    undo: {
+      kind: 'none',
+      evidence:
+        'Mutacja WYŁĄCZNIE lokalnego draftu (`useState` w `IdeaBusinessCaseSection.tsx`, NIE zapisana na serwer) — cofnięcie dziś to ręczne usunięcie chipa (patrz `idea.workspace.business_case_lineage_remove` niżej) albo odświeżenie panelu przed zapisem sekcji.',
+    },
+    teresa: {
+      description:
+        'Dopisuje powiązanie z elementem Idei (węzłem grafu) do draftu bieżącej sekcji karty biznesowej — WYŁĄCZNIE lokalnie, dopóki człowiek nie zapisze sekcji osobno. Dziś dostępne WYŁĄCZNIE z prawego panelu (widget jest współdzielony przez 13 sekcji bez jednego, jawnego identyfikatora sekcji po stronie rejestru) — Teresa tego jeszcze nie wywoła.',
+    },
+    source:
+      'src/components/MyWork/panel/IdeaBusinessCaseSection.tsx NodeRefPicker onClick "Powiąż" (~L163-176) → onAdd → patchSection(key, …)',
+  },
+  {
+    // Bliźniaczy wpis do `idea.workspace.business_case_lineage_add` wyżej —
+    // `LineageChips`'s przycisk "×" na chipie (usuwa JEDNO powiązanie po
+    // indeksie z LOKALNEGO draftu tej samej sekcji, ten sam brak zapisu do
+    // czasu "Zapisz sekcję").
+    id: 'idea.workspace.business_case_lineage_remove',
+    label: { pl: 'Usuń powiązanie', en: 'Remove link' },
+    icon: 'X',
+    scope: 'workspace',
+    tools: 'all',
+    surfaces: ['panel'],
+    handler: (ctx) => runPanelUiOnlyCallback('idea.workspace.business_case_lineage_remove', ctx),
+    mutates: true,
+    requiresPreview: false,
+    destructive: true,
+    undo: {
+      kind: 'none',
+      evidence:
+        'Mutacja WYŁĄCZNIE lokalnego draftu (jak wyżej) — usunięcie chipa NIE trafia na serwer, dopóki sekcja nie zostanie zapisana; cofnięcie dziś to ręczne dodanie powiązania ponownie (`idea.workspace.business_case_lineage_add`) przed zapisem.',
+    },
+    teresa: {
+      description:
+        'Usuwa jedno powiązanie z elementem Idei z draftu bieżącej sekcji karty biznesowej — WYŁĄCZNIE lokalnie. Dziś dostępne WYŁĄCZNIE z prawego panelu — Teresa tego jeszcze nie wywoła.',
+    },
+    source:
+      'src/components/MyWork/panel/IdeaBusinessCaseSection.tsx LineageChips onClick "×" (~L205-212) → onRemove(idx) → patchSection(key, …)',
   },
   // ── scope='edge' (pilot Tablicy 2026-08-09, rozszerzenie na Mapę myśli
   // tego samego dnia) ─────────────────────────────────────────────────────
@@ -6992,8 +7636,9 @@ const IDEA_ACTIONS: ActionDef[] = [
     runtime: RUNTIME_MM_NODE_DUPLICATE_BRANCH,
     source: 'src/components/MyWork/mindmap/NodeContextMenu.tsx:183 (ctx_duplicate_branch)',
   },
-  // ── Convert (single-item label, cascades to descendants today — see the
-  // honesty block above `runMindmapNodeConvertAction`) ─────────────────────
+  // ── Convert (single-item — E11 fix 2026-08-10: no longer cascades to
+  // descendants, see `convertSingleNode` in IdeaRecommendationMap.tsx and the
+  // `RUNTIME_MM_NODE_CONVERT_SINGLE` note above) ─────────────────────────────
   {
     id: 'idea.node.mm_convert_initiative',
     label: { pl: 'Konwertuj → Inicjatywa', en: 'Convert → Initiative' },
@@ -7005,11 +7650,12 @@ const IDEA_ACTIONS: ActionDef[] = [
       runMindmapNodeConvertAction(
         'idea.node.mm_convert_initiative',
         'initiative',
-        RUNTIME_MM_NODE_CONVERT_BRANCH,
-        ctx
+        RUNTIME_MM_NODE_CONVERT_SINGLE,
+        ctx,
+        { cascades: false }
       ),
     mutates: true,
-    requiresPreview: false,
+    requiresPreview: true,
     undo: {
       kind: 'manual_delete',
       evidence:
@@ -7017,19 +7663,19 @@ const IDEA_ACTIONS: ActionDef[] = [
     },
     teresa: {
       description:
-        'Konwertuje wskazany węzeł Mapy myśli na Inicjatywę. UWAGA (etykieta menu myli — sprawdzone w kodzie): mimo że pozycja nazywa się „Convert" (bez „branch"), zabiera CAŁE poddrzewo tego węzła, nie tylko sam węzeł — identycznie jak „Konwertuj gałąź". Podaj `nodeId`. Tworzy nowy, trwały rekord w PMO.',
+        'Konwertuje WYŁĄCZNIE wskazany węzeł Mapy myśli (bez potomków) na Inicjatywę. Podaj `nodeId`. Tworzy nowy, trwały rekord w PMO, poprzedzony podglądem (mandatory preview, rozdz. 10 §2.2).',
       parameters: {
         type: 'object',
         properties: {
-          nodeId: { type: 'string', description: 'Id węzła-kotwicy (wraz z poddrzewem) do konwersji.' },
+          nodeId: { type: 'string', description: 'Id węzła do konwersji (BEZ potomków).' },
         },
         required: ['nodeId'],
       },
       confirmBeforeRun: true,
     },
-    runtime: RUNTIME_MM_NODE_CONVERT_BRANCH,
+    runtime: RUNTIME_MM_NODE_CONVERT_SINGLE,
     source:
-      'src/components/MyWork/mindmap/NodeContextMenu.tsx:314 (ctx_convert_initiative) + IdeaRecommendationMap.tsx:4979 convertBranch(\'initiative\', ...)',
+      "src/components/MyWork/mindmap/NodeContextMenu.tsx:314 (ctx_convert_initiative) + IdeaRecommendationMap.tsx convertSingleNode('initiative', ...)",
   },
   {
     id: 'idea.node.mm_convert_decision',
@@ -7042,11 +7688,12 @@ const IDEA_ACTIONS: ActionDef[] = [
       runMindmapNodeConvertAction(
         'idea.node.mm_convert_decision',
         'decision',
-        RUNTIME_MM_NODE_CONVERT_BRANCH,
-        ctx
+        RUNTIME_MM_NODE_CONVERT_SINGLE,
+        ctx,
+        { cascades: false }
       ),
     mutates: true,
-    requiresPreview: false,
+    requiresPreview: true,
     undo: {
       kind: 'manual_delete',
       evidence:
@@ -7054,19 +7701,19 @@ const IDEA_ACTIONS: ActionDef[] = [
     },
     teresa: {
       description:
-        'Konwertuje wskazany węzeł Mapy myśli na artefakt Decyzji. Tak samo jak „→ Inicjatywa" wyżej — mimo etykiety bez „branch" zabiera CAŁE poddrzewo tego węzła. Podaj `nodeId`.',
+        'Konwertuje WYŁĄCZNIE wskazany węzeł Mapy myśli (bez potomków) na artefakt Decyzji. Podaj `nodeId`.',
       parameters: {
         type: 'object',
         properties: {
-          nodeId: { type: 'string', description: 'Id węzła-kotwicy (wraz z poddrzewem) do konwersji.' },
+          nodeId: { type: 'string', description: 'Id węzła do konwersji (BEZ potomków).' },
         },
         required: ['nodeId'],
       },
       confirmBeforeRun: true,
     },
-    runtime: RUNTIME_MM_NODE_CONVERT_BRANCH,
+    runtime: RUNTIME_MM_NODE_CONVERT_SINGLE,
     source:
-      'src/components/MyWork/mindmap/NodeContextMenu.tsx:320 (ctx_convert_decision) + IdeaRecommendationMap.tsx:4980 convertBranch(\'decision\', ...)',
+      "src/components/MyWork/mindmap/NodeContextMenu.tsx:320 (ctx_convert_decision) + IdeaRecommendationMap.tsx convertSingleNode('decision', ...)",
   },
   {
     id: 'idea.node.mm_convert_tasks',
@@ -7079,11 +7726,12 @@ const IDEA_ACTIONS: ActionDef[] = [
       runMindmapNodeConvertAction(
         'idea.node.mm_convert_tasks',
         'task_set',
-        RUNTIME_MM_NODE_CONVERT_BRANCH,
-        ctx
+        RUNTIME_MM_NODE_CONVERT_SINGLE,
+        ctx,
+        { cascades: false }
       ),
     mutates: true,
-    requiresPreview: false,
+    requiresPreview: true,
     undo: {
       kind: 'manual_delete',
       evidence:
@@ -7091,24 +7739,34 @@ const IDEA_ACTIONS: ActionDef[] = [
     },
     teresa: {
       description:
-        'Konwertuje wskazany węzeł Mapy myśli na zestaw zadań (target `task_set` — nie istnieje osobny target „tasks", to ta sama konwersja co „→ Task set (branch)" niżej pod inną etykietą menu). Zabiera CAŁE poddrzewo tego węzła, mimo etykiety bez „branch". Podaj `nodeId`.',
+        'Konwertuje WYŁĄCZNIE wskazany węzeł Mapy myśli (bez potomków) na zestaw zadań (target `task_set` — nie istnieje osobny target „tasks"). Podaj `nodeId`.',
       parameters: {
         type: 'object',
         properties: {
-          nodeId: { type: 'string', description: 'Id węzła-kotwicy (wraz z poddrzewem) do konwersji.' },
+          nodeId: { type: 'string', description: 'Id węzła do konwersji (BEZ potomków).' },
         },
         required: ['nodeId'],
       },
       confirmBeforeRun: true,
     },
-    runtime: RUNTIME_MM_NODE_CONVERT_BRANCH,
+    runtime: RUNTIME_MM_NODE_CONVERT_SINGLE,
     source:
-      'src/components/MyWork/mindmap/NodeContextMenu.tsx:326 (ctx_convert_tasks) + IdeaRecommendationMap.tsx:4978 convertBranch(\'task_set\', ...)',
+      "src/components/MyWork/mindmap/NodeContextMenu.tsx:326 (ctx_convert_tasks) + IdeaRecommendationMap.tsx convertSingleNode('task_set', ...)",
   },
   // ── Convert branch to… (dual-surface, Z1: NodeContextMenu.tsx `context` +
   // FloatingNodeToolbar.tsx `floating` — literally identical local ids
   // `ctx_subtree_convert_*` in both components, same `convertBranch()` call
   // underneath, ONE registry entry each) ────────────────────────────────────
+  // E11 UPDATE (2026-08-10): `requiresPreview: true` on the four REAL
+  // conversions below (decision/tasks/task_set/initiative — all four call
+  // `Api.convertMyIdea`) — their human-click path is `ctx.params.run()`,
+  // which runs `convertBranch()` (IdeaRecommendationMap.tsx), which dispatches
+  // to `IdeaMapWorkspace.handleConvert`, which now ALWAYS shows
+  // `ConversionPreviewDialog` before persisting anything. `mm_convert_branch_
+  // process_flow` (fifth item, own comment below) stays `requiresPreview:
+  // false` — it is representation-generation, not a conversion, and never
+  // reaches `handleConvert` at all (see the honesty block above
+  // `runMindmapNodeConvertAction`).
   {
     id: 'idea.node.mm_convert_branch_decision',
     label: { pl: 'Konwertuj gałąź → Decyzja', en: 'Convert branch → Decision' },
@@ -7124,7 +7782,7 @@ const IDEA_ACTIONS: ActionDef[] = [
         ctx
       ),
     mutates: true,
-    requiresPreview: false,
+    requiresPreview: true,
     undo: {
       kind: 'manual_delete',
       evidence:
@@ -7161,7 +7819,7 @@ const IDEA_ACTIONS: ActionDef[] = [
         ctx
       ),
     mutates: true,
-    requiresPreview: false,
+    requiresPreview: true,
     undo: {
       kind: 'manual_delete',
       evidence:
@@ -7198,7 +7856,7 @@ const IDEA_ACTIONS: ActionDef[] = [
         ctx
       ),
     mutates: true,
-    requiresPreview: false,
+    requiresPreview: true,
     undo: {
       kind: 'manual_delete',
       evidence:
@@ -7235,7 +7893,7 @@ const IDEA_ACTIONS: ActionDef[] = [
         ctx
       ),
     mutates: true,
-    requiresPreview: false,
+    requiresPreview: true,
     undo: {
       kind: 'manual_delete',
       evidence:
@@ -7259,7 +7917,15 @@ const IDEA_ACTIONS: ActionDef[] = [
   },
   {
     id: 'idea.node.mm_convert_branch_process_flow',
-    label: { pl: 'Konwertuj gałąź → Proces', en: 'Convert branch → Process Flow' },
+    // E11 fix (2026-08-10): relabeled to match NodeContextMenu.tsx's
+    // `generateFromBranchItems` — no "Convert"/"Konwertuj" wording, since this
+    // is representation generation (chapter 10 §1), not artifact conversion.
+    // `id` intentionally UNCHANGED (dual-surface FloatingNodeToolbar pairing +
+    // existing test coverage key off it).
+    label: {
+      pl: 'Wygeneruj kroki Procesu z gałęzi',
+      en: 'Generate Process Flow steps from branch',
+    },
     icon: 'Workflow',
     scope: 'single_item',
     tools: ['mindmap'],
@@ -7457,7 +8123,16 @@ const IDEA_ACTIONS: ActionDef[] = [
     source: 'src/components/MyWork/mindmap/NodeContextMenu.tsx:304 (ctx_summarize_branch)',
   },
   {
-    id: 'idea.node.mm_ai_detect_dependencies',
+    // E10 (2026-08-10): id RENAMED from `idea.node.mm_ai_detect_dependencies`
+    // → `idea.view.mm_ai_detect_dependencies` — moved from the per-node menu
+    // (`NodeContextMenu.tsx`) to the canvas background menu
+    // (`PaneContextMenu.tsx`, `pane_dependencies`). See that file's header
+    // comment and the master program §8.3 ("visible scope and actual
+    // serialized input must match"): `AIDependencyDetector` takes the whole
+    // `nodes`/`edges` arrays, no per-node parameter exists, so a per-node
+    // menu position was structurally misleading regardless of label — moving
+    // it removes the mismatch instead of only disclosing it.
+    id: 'idea.view.mm_ai_detect_dependencies',
     label: { pl: 'Wykryj zależności', en: 'Detect dependencies' },
     icon: 'Network',
     scope: 'workspace',
@@ -7466,60 +8141,90 @@ const IDEA_ACTIONS: ActionDef[] = [
     // Etykieta BEZ słowa "AI" mimo realnego LLM (`AIDependencyDetector.tsx` →
     // `Api.getMyIdeaAISuggestions`) — zgodne z rozdz. 09 §5 (nazwa nie musi
     // zawierać "AI", żeby akcja BYŁA realnym AI; zakaz działa w drugą stronę).
-    // `scope: 'workspace'` (NIE `single_item`) jest UCZCIWY wobec kodu, nie
-    // wobec pozycji w menu: `setShowDependencyDetector(true)`
-    // (handleContextAction:4946) nie przekazuje ŻADNEGO nodeId, a
-    // `AIDependencyDetector` bierze CAŁE `nodes`/`edges` mapy — prawoklik na
-    // konkretny węzeł nie ma żadnego wpływu na wynik. Za flagą
+    // `scope: 'workspace'` jest UCZCIWY wobec kodu: `setShowDependencyDetector(true)`
+    // (handlePaneContextAction, `pane_dependencies`) nie przekazuje ŻADNEGO
+    // nodeId, a `AIDependencyDetector` bierze CAŁE `nodes`/`edges` mapy — nie
+    // ma dziś pojęcia partial/current-view w Mapie myśli, więc `workspace`
+    // (cała Idea) opisuje wynik dokładniej niż `current_view` mimo, że menu
+    // tła jest kanonicznie poziomem 2 ("Aktualny widok"). Za flagą
     // `mindmapHeuristicAiOverlays` (domyślnie OFF) — nazwa flagi myląco sugeruje
     // heurystykę; SAMO WYKRYWANIE jest realnym wywołaniem LLM, sprawdzone w
     // kodzie (nie w nazwie flagi). BRAK bus/Teresa: `setShowDependencyDetector`
     // to czysty lokalny stan komponentu, bez żadnego odbiornika na szynie —
     // sprawdzone PRZED wpisem (grep `showDependencyDetector` poza tym plikiem:
     // brak wyników), UI-only.
-    handler: (ctx) => runMindmapNodeUiOnlyCallback('idea.node.mm_ai_detect_dependencies', ctx),
+    //
+    // GROUNDING DEFEKT (E10, znaleziony przy tym audycie — zgłoszony, NIE
+    // naprawiony pełnym backendowym fixem, patrz raport): serwer
+    // (`POST /my-work/my-ideas/:id/map/ai-suggestions`) IGNORUJE niestandardowy
+    // JSON-schema-request wpisany w `seedText` (komponent prosi o
+    // `{"sourceIdx","targetIdx",...}`) i zawsze zwraca własny, generyczny
+    // kształt `{id,category,text,detail,confidence}` (topics|findings|next_steps).
+    // Klient defaultuje brakujące `sourceIdx`/`targetIdx` na `0`/`1` —
+    // realnie KAŻDA "wykryta zależność" łączy dziś pierwsze dwa węzły mapy,
+    // niezależnie od treści. Fabrykowana specyficzność zamiast "Evidence
+    // needed" (rozdz. 09 §8.2 master programu). Za flagą OFF domyślnie, więc
+    // nie dotyka produkcyjnych użytkowników bez świadomego włączenia — ale
+    // flaga NIE naprawia samego mechanizmu.
+    handler: (ctx) => runMindmapPaneUiOnlyCallback('idea.view.mm_ai_detect_dependencies', ctx),
     mutates: true,
     requiresPreview: true,
     undo: {
       kind: 'proposal',
       evidence:
-        'IdeaRecommendationMap.tsx:6469-6529 onAddDependency/onAddAll → pushUndo() + setEdges (Add pojedynczo/Add All, nieklikniete = brak zmian).',
+        'IdeaRecommendationMap.tsx onAddDependency/onAddAll → pushUndo() + setEdges (Add pojedynczo/Add All, nieklikniete = brak zmian).',
     },
     teresa: {
       description:
-        'Wykrywa semantyczne zależności między węzłami CAŁEJ Mapy myśli (realne AI) i proponuje nowe krawędzie do akceptacji pojedynczo lub hurtem. DZIŚ NIEDOSTĘPNE dla Teresy — otwarcie panelu to czysty lokalny stan UI bez odbiornika na szynie. UWAGA: mimo pozycji w menu prawego kliku na węzeł, węzeł spod kursora NIE wpływa na wynik — analiza zawsze obejmuje całą mapę. Za flagą wyłączoną domyślnie.',
+        'Wykrywa semantyczne zależności między węzłami CAŁEJ Mapy myśli (realne AI, ale patrz UWAGA) i proponuje nowe krawędzie do akceptacji pojedynczo lub hurtem. DZIŚ NIEDOSTĘPNE dla Teresy — otwarcie panelu to czysty lokalny stan UI bez odbiornika na szynie. UWAGA (E10): backend nie zwraca pary węzłów, o którą prosi klient — dziś realnie łączy zawsze pierwsze dwa węzły mapy, niezależnie od treści relacji. Za flagą wyłączoną domyślnie.',
     },
-    source: 'src/components/MyWork/mindmap/NodeContextMenu.tsx:310 (ctx_dependencies)',
+    source: 'src/components/MyWork/mindmap/PaneContextMenu.tsx (pane_dependencies)',
   },
   {
-    id: 'idea.node.mm_ai_prioritize',
+    // E10 (2026-08-10): id RENAMED from `idea.node.mm_ai_prioritize` — moved
+    // to the canvas background menu, same reasoning as the entry above.
+    id: 'idea.view.mm_ai_prioritize',
     label: { pl: 'Ustal priorytety', en: 'Prioritize' },
     icon: 'Target',
     scope: 'workspace',
     tools: ['mindmap'],
     surfaces: ['context'],
-    // Ten sam wzorzec co `idea.node.mm_ai_detect_dependencies` wyżej: etykieta
-    // bez "AI" (poprawnie — LLM realny, `AIPriorityRecommender.tsx` →
-    // `Api.getMyIdeaAISuggestions`), `scope: 'workspace'` bo
-    // `setShowPriorityRecommender(true)` (handleContextAction:4947) nie
-    // przekazuje nodeId, a komponent bierze CAŁE `nodes`. UI-only — brak
-    // odbiornika na szynie (sprawdzone grepem).
-    handler: (ctx) => runMindmapNodeUiOnlyCallback('idea.node.mm_ai_prioritize', ctx),
+    // Ten sam wzorzec co wpis wyżej: etykieta bez "AI" (poprawnie — LLM
+    // realny, `AIPriorityRecommender.tsx` → `Api.getMyIdeaAISuggestions`),
+    // `scope: 'workspace'` bo `setShowPriorityRecommender(true)`
+    // (handlePaneContextAction, `pane_priority`) nie przekazuje nodeId, a
+    // komponent bierze CAŁE `nodes`. UI-only — brak odbiornika na szynie
+    // (sprawdzone grepem).
+    //
+    // GROUNDING DEFEKT (E10, NIE gated za `mindmapHeuristicAiOverlays` mimo
+    // tej samej klasy problemu jak wpis wyżej — znalezione, NIE naprawione
+    // pełnym backendowym fixem tym audytem, zgłoszone w raporcie): backend
+    // zwraca generyczny `confidence` (pewność DOPASOWANIA sugestii do
+    // kontekstu, nie ocenę priorytetu), a klient przelicza go WPROST na
+    // `suggestedPriority = confidence*100` oraz progowo na `impact`/`effort`
+    // (`confidence>0.7 ⇒ high impact`, `confidence>0.6 ⇒ low effort`) —
+    // liczby wyglądające jak analiza impact/effort, w rzeczywistości
+    // przetworzony szum. LLM nigdy nie oceniał impact/effort TEGO węzła.
+    // Fabrykowana specyficzność, rozdz. 09 §8.2.
+    handler: (ctx) => runMindmapPaneUiOnlyCallback('idea.view.mm_ai_prioritize', ctx),
     mutates: true,
     requiresPreview: true,
     undo: {
       kind: 'proposal',
       evidence:
-        'IdeaRecommendationMap.tsx:6537-6560 onApplyPriorities → pushUndo() + setNodes (recenzja rekomendacji, Apply commit).',
+        'IdeaRecommendationMap.tsx onApplyPriorities → pushUndo() + setNodes (recenzja rekomendacji, Apply commit).',
     },
     teresa: {
       description:
-        'Proponuje priorytety (0-100) dla węzłów CAŁEJ Mapy myśli na podstawie analizy impact/effort (realne AI, do przeglądu przed zastosowaniem). DZIŚ NIEDOSTĘPNE dla Teresy — czysty lokalny stan UI. Węzeł spod kursora nie wpływa na wynik (cała mapa), mimo pozycji w menu prawego kliku.',
+        'Proponuje priorytety (0-100) dla węzłów CAŁEJ Mapy myśli (realne wywołanie AI, ale patrz UWAGA). DZIŚ NIEDOSTĘPNE dla Teresy — czysty lokalny stan UI. UWAGA (E10): "impact"/"effort"/"priorytet" pokazywane użytkownikowi są dziś przeliczane z ogólnego pola pewności odpowiedzi backendu, NIE z realnej oceny impact/effort TEGO węzła przez model — fabrykowana specyficzność, do naprawy backendu przed zaufaniem tym liczbom.',
     },
-    source: 'src/components/MyWork/mindmap/NodeContextMenu.tsx:316 (ctx_priority)',
+    source: 'src/components/MyWork/mindmap/PaneContextMenu.tsx (pane_priority)',
   },
   {
-    id: 'idea.node.mm_ai_competitors',
+    // E10 (2026-08-10): id RENAMED from `idea.node.mm_ai_competitors` —
+    // moved to the canvas background menu, same reasoning as the two entries
+    // above.
+    id: 'idea.view.mm_ai_competitors',
     label: { pl: 'Konkurencja', en: 'Competitors' },
     icon: 'Globe',
     scope: 'workspace',
@@ -7532,20 +8237,31 @@ const IDEA_ACTIONS: ActionDef[] = [
     // `pushUndo()` przed `idea-workspace-insert`, w przeciwieństwie do
     // WSZYSTKICH pozostałych 6 wywołujących tego samego eventu w tym pliku
     // (onAddBlindSpot/onAddNodes×2/onImport itd., wszystkie mają `pushUndo()`
-    // jako pierwszą linię) — dopisane TĄ zmianą (patrz IdeaRecommendationMap.tsx).
-    handler: (ctx) => runMindmapNodeUiOnlyCallback('idea.node.mm_ai_competitors', ctx),
+    // jako pierwszą linię) — dopisane N5 czwartą falą, zachowane po przenosinach.
+    //
+    // GROUNDING DEFEKT (E10, znaleziony przy tym audycie, NIE naprawiony
+    // pełnym backendowym fixem, zgłoszone w raporcie): backend nie zwraca
+    // strukturalnych pól konkurenta — `strengths`/`weaknesses`/`differentiator`
+    // nie istnieją w odpowiedzi `/map/ai-suggestions`. Klient defaultuje
+    // `weaknesses: []` (ZAWSZE pusta lista — "brak słabości" to fabrykacja,
+    // nie wynik analizy) i `strengths: [s.category]` (dosłownie kategoria
+    // sugestii — "topics"/"findings"/"next_steps" — pokazana użytkownikowi
+    // jako rzekoma "mocna strona konkurenta"). Fabrykowana specyficzność,
+    // rozdz. 09 §8.2 — model nigdy nie nazwał realnego konkurenta ani nie
+    // ocenił jego mocnych/słabych stron w tym wywołaniu.
+    handler: (ctx) => runMindmapPaneUiOnlyCallback('idea.view.mm_ai_competitors', ctx),
     mutates: true,
     requiresPreview: true,
     undo: {
       kind: 'proposal',
       evidence:
-        'IdeaRecommendationMap.tsx onAddToMap (AICompetitiveLandscape) → pushUndo() (DOPISANE tym wpisem — było brakiem, patrz komentarz wyżej) + idea-workspace-insert.',
+        'IdeaRecommendationMap.tsx onAddToMap (AICompetitiveLandscape) → pushUndo() + idea-workspace-insert.',
     },
     teresa: {
       description:
-        'Generuje listę konkurentów/analogii dla CAŁEJ Idei (realne AI) i wstawia wybrane pozycje jako nowe węzły. DZIŚ NIEDOSTĘPNE dla Teresy — czysty lokalny stan UI. Węzeł spod kursora nie wpływa na wynik.',
+        'Generuje listę konkurentów/analogii dla CAŁEJ Idei i wstawia wybrane pozycje jako nowe węzły. DZIŚ NIEDOSTĘPNE dla Teresy — czysty lokalny stan UI. UWAGA (E10): "mocne/słabe strony konkurenta" pokazywane w panelu NIE pochodzą z realnej analizy modelu tego konkurenta — backend nie zwraca takich pól, klient je fabrykuje z ogólnej kategorii sugestii. Traktować jako punkt wyjścia do researchu, nie jako fakt.',
     },
-    source: 'src/components/MyWork/mindmap/NodeContextMenu.tsx:322 (ctx_competitive)',
+    source: 'src/components/MyWork/mindmap/PaneContextMenu.tsx (pane_competitive)',
   },
   {
     id: 'idea.node.mm_ai_suggest_links',

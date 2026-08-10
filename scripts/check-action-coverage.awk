@@ -38,7 +38,35 @@
 #     literalach — rzadkie w JSX-props, ale mozliwe;
 #   - rozwijanie bare-identifier dziala tylko dla handlerow zdefiniowanych
 #     W TYM SAMYM pliku (nie podaza za importami);
-#   - fragment jest ciety do 100 linii bezpiecznika przed nieskonczona petla.
+#   - fragment jest ciety do 100 linii bezpiecznika przed nieskonczona petla;
+#   - wykrywanie listy propsow (Pass A2 nizej) dziala tylko dla JEDNOLINIOWEJ
+#     destrukturyzacji `({ a, b, onX }) => {` / `({ a, b, onX }) {} — typowy
+#     styl tego repo dla komponentow lisci (patrz SubCard/NodeRefPicker/
+#     LineageChips ponizej). Wieloliniowa destrukturyzacja (np. glowny
+#     eksportowany komponent pliku, ktory bierze propsy z osobnych linii) NIE
+#     jest rozpoznawana — false negative w DRUGA strone (moze dalej falszywie
+#     zgloszic), nigdy false positive.
+#
+# ── Pass A2 — propsy odbierane przez komponent (`({ ..., onX, ... }) =>`) ──
+# `onClick={() => onAdd(ref)}` / `onClick={() => onRemove(idx)}` to NIE jest
+# wywolanie wlasnej, lokalnie zdefiniowanej komendy — to PRZEKAZANIE zdarzenia
+# UI do wlasciciela komponentu przez callback-prop nazwany po konwencji
+# `onX` (dokladnie tak samo jak `onClick`/`onChange`/`onSelect` same w sobie
+# sa propsami, nie komendami). Realna mutacja (jesli w ogole istnieje) siedzi
+# tam, gdzie prop DOSTAJE wartosc w JSX (`<NodeRefPicker onAdd={(ref) =>
+# ...}>`) — a to jest przypisanie propsa, NIE `onClick=`/`onSelect=`, wiec
+# poza zakresem tego skryptu z definicji (i tak samo nietraceable jak
+# `onChange`, ktory nigdy nie trafial na liste czasownikow). Bez Pass A2
+# kazdy komponent-lisc z propem `onAdd`/`onRemove`/`onApprove`/`onSave`/...
+# fałszywie zapala się na tej samej klasie bledu, ktora liste `set*/toggle*/
+# show*/hide*/open*/close*` juz eliminuje dla stanu lokalnego — patrz raport
+# zadania R10 (IdeaBusinessCaseSection.tsx L166/L207, 2026-08-10).
+#
+# Wylaczenie dziala TYLKO gdy `word` jest dokladnie nazwa propsa ZNALEZIONA w
+# jednoliniowej licie destrukturyzacji W TYM PLIKU i NIE jest jednoczesnie
+# lokalnie zdefiniowanym handlerem (`word in handlerBody`) — jesli plik SAM
+# definiuje `onAdd` jako prawdziwa funkcje z cialem, ktore np. wola Api.*,
+# Pass A i tak to zlapie normalnie (handlerBody wygrywa nad propNames).
 
 function strip_prefix(word,    r) {
   r = word
@@ -57,7 +85,9 @@ function is_action_verb(word,    lw, i) {
 
 # Ekstrahuje z tekstu `text` kazdy token `identyfikator(` i zwraca 1, jesli
 # ktorykolwiek (po zdjeciu prefiksu handle/on, po ostatnim segmencie kropki)
-# zaczyna sie od czasownika-komendy.
+# zaczyna sie od czasownika-komendy — Z WYJATKIEM identyfikatorow, ktore sa
+# ZNANYM propem-callbackiem TEGO komponentu (patrz Pass A2 / propNames) a nie
+# sa jednoczesnie lokalnie zdefiniowanym handlerem w tym pliku.
 function has_action_call(text,    temp, tok, parts, nseg, word, base) {
   temp = text
   while (match(temp, /[A-Za-z_][A-Za-z0-9_.]*\(/)) {
@@ -65,7 +95,7 @@ function has_action_call(text,    temp, tok, parts, nseg, word, base) {
     nseg = split(tok, parts, ".")
     word = parts[nseg]
     base = strip_prefix(word)
-    if (is_action_verb(base)) return 1
+    if (is_action_verb(base) && !((word in propNames) && !(word in handlerBody))) return 1
     temp = substr(temp, RSTART + RLENGTH)
   }
   return 0
@@ -107,6 +137,36 @@ END {
         if (j - i > 200) break
       }
       if (!(name in handlerBody)) handlerBody[name] = body
+    }
+  }
+
+  # ── Pass A2: propsy odbierane przez komponent, jednoliniowa destrukturyzacja
+  # `({ a, b, onX }) =>` / `({ a, b, onX }) {` — patrz naglowek pliku. Kazdy
+  # nazwany prop pasujacy do konwencji `on[A-Z]...` idzie do propNames; wolanie
+  # takiego identyfikatora w has_action_call NIE jest juz traktowane jako
+  # lokalnie wlasna komenda (chyba ze plik SAM go tez definiuje jako handler —
+  # handlerBody wygrywa, sprawdzane w has_action_call).
+  for (i = 1; i <= n; i++) {
+    line = lines[i]
+    pos = 1
+    while (match(substr(line, pos), /\([ \t]*\{[^{}]*\}[ \t]*\)[ \t]*(:[ \t]*[A-Za-z_][A-Za-z0-9_<>\[\],. \t]*)?[ \t]*(=>|\{)/)) {
+      whole = substr(substr(line, pos), RSTART, RLENGTH)
+      # wnetrze pierwszej pary { } w dopasowaniu — sama lista destrukturyzacji
+      inner = whole
+      sub(/^\([ \t]*\{/, "", inner)
+      sub(/\}.*$/, "", inner)
+      nparts = split(inner, pparts, ",")
+      for (k = 1; k <= nparts; k++) {
+        p = pparts[k]
+        gsub(/^[ \t]+/, "", p); gsub(/[ \t]+$/, "", p)
+        if (p ~ /^\.\.\./) continue
+        sub(/=.*$/, "", p)          # zdejmij wartosc domyslna: `x = false`
+        gsub(/[ \t]+$/, "", p)
+        if (p ~ /:/) { sub(/^[^:]*:/, "", p); gsub(/^[ \t]+/, "", p) }  # `{ x: y }` -> lokalna nazwa `y`
+        if (p ~ /^[A-Za-z_][A-Za-z0-9_]*$/ && p ~ /^on[A-Z]/) propNames[p] = 1
+      }
+      pos += RSTART + RLENGTH - 1
+      if (RLENGTH == 0) pos++  # bezpiecznik przed petla zerowej dlugosci
     }
   }
 

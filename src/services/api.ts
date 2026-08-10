@@ -5218,6 +5218,33 @@ export const Api = {
     return handleResponse(res, 'Failed to convert idea');
   },
 
+  /**
+   * E11 (2026-08-10) — read-only lineage list, §9 append-only `conversions[]`
+   * contract. Backs the mandatory conversion preview's "already converted N×"
+   * notice (docs/standards/idea-workspace/10_*, §2.3).
+   */
+  getMyIdeaConversions: async (
+    ideaId: string
+  ): Promise<{
+    conversions: Array<{
+      conversionId: string;
+      targetType: string;
+      targetId: string | null;
+      scope: string;
+      sourceElementIds: string[];
+      createdAt: string;
+      createdBy: string | null;
+      mappingVersion: string | null;
+      sourceLink: unknown;
+    }>;
+  }> => {
+    const res = await fetch(
+      `${API_URL}/my-work/my-ideas/${encodeURIComponent(ideaId)}/conversions`,
+      { headers: getHeaders() }
+    );
+    return handleResponse(res, 'Failed to fetch idea conversions');
+  },
+
   // ==========================================
   // LINK GRAPH v3 (MVP): Backlinks + edge create
   // SSOT: docs/product/LINK_GRAPH_V3.md

@@ -26,6 +26,11 @@ import {
   selectReadableMapRow,
 } from '../realtime/ideaMapAccess.js';
 import auditEventsService from '../services/AuditEventsService.js';
+import {
+  getIdeaConfidentiality,
+  IDEA_CONFIDENTIALITY_BLOCKED_RESPONSE,
+  isIdeaRestricted,
+} from '../services/ideaConfidentiality.js';
 import { createIdeaMapSnapshot } from '../services/ideaMapSnapshotService.js';
 import { InboxAiAssistItemSchema, runInboxAiAssist } from '../services/inboxAiAssistService.js';
 import inboxService from '../services/inboxService.js';
@@ -4443,6 +4448,15 @@ router.post(
 
     if (!(await requireTables(res, ['my_ideas']))) return;
 
+    // E12 (10.4): a restricted Idea's content must never leave as an export file.
+    const exportConfidentiality = await getIdeaConfidentiality(ideaId, orgId);
+    if (exportConfidentiality === 'restricted') {
+      return res.status(403).json({
+        error: 'This Idea is marked restricted and cannot be exported.',
+        code: 'IDEA_CONFIDENTIALITY_BLOCKED',
+      });
+    }
+
     const idea = await queryHelpers.queryOne<any>(
       `SELECT id, title FROM my_ideas WHERE id = ? AND organization_id = ? LIMIT 1`,
       [ideaId, orgId]
@@ -4487,7 +4501,11 @@ router.post(
       const report = mapMindMapToUnifiedReport(ideaTitle, branches, {
         language,
         template,
-        confidentiality: 'internal',
+        // E12 (10.4): propagate the Idea's real classification instead of the
+        // previous hardcoded 'internal' — 'confidential' ideas now actually
+        // reach PptxPipelineService's confidentiality handling (watermark /
+        // access banner) instead of silently exporting as unclassified.
+        confidentiality: exportConfidentiality === 'confidential' ? 'confidential' : 'internal',
       });
 
       const pipeline = new PptxPipelineService();
@@ -5230,6 +5248,13 @@ router.post(
     const ideaId = String(req.params.id || '').trim();
     if (!ideaId || ideaId === 'all') return res.status(400).json({ error: 'Invalid idea id' });
 
+    // E12 (10.4): a restricted Idea's content must never reach an LLM prompt.
+    if (await isIdeaRestricted(ideaId, orgId)) {
+      return res
+        .status(IDEA_CONFIDENTIALITY_BLOCKED_RESPONSE.status)
+        .json(IDEA_CONFIDENTIALITY_BLOCKED_RESPONSE.body);
+    }
+
     const countRaw = Number(req.body?.count);
     const count =
       Number.isFinite(countRaw) && countRaw > 0 ? Math.min(10, Math.max(1, countRaw)) : 5;
@@ -5480,6 +5505,13 @@ router.post(
     const ideaId = String(req.params.id || '').trim();
     if (!ideaId || ideaId === 'all') return res.status(400).json({ error: 'Invalid idea id' });
 
+    // E12 (10.4): a restricted Idea's content must never reach an LLM prompt.
+    if (await isIdeaRestricted(ideaId, orgId)) {
+      return res
+        .status(IDEA_CONFIDENTIALITY_BLOCKED_RESPONSE.status)
+        .json(IDEA_CONFIDENTIALITY_BLOCKED_RESPONSE.body);
+    }
+
     const idea = await queryHelpers.queryOne<any>(
       `SELECT id, title, seed_text as "seedText" FROM my_ideas WHERE id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
       [ideaId, userId, orgId]
@@ -5589,6 +5621,13 @@ router.post(
 
     const ideaId = String(req.params.id || '').trim();
     if (!ideaId || ideaId === 'all') return res.status(400).json({ error: 'Invalid idea id' });
+
+    // E12 (10.4): a restricted Idea's content must never reach an LLM prompt.
+    if (await isIdeaRestricted(ideaId, orgId)) {
+      return res
+        .status(IDEA_CONFIDENTIALITY_BLOCKED_RESPONSE.status)
+        .json(IDEA_CONFIDENTIALITY_BLOCKED_RESPONSE.body);
+    }
 
     const idea = await queryHelpers.queryOne<any>(
       `SELECT id, title, seed_text as "seedText" FROM my_ideas WHERE id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
@@ -5781,6 +5820,22 @@ router.post(
 
     const ideaId = String(req.params.id || '').trim();
     if (!ideaId) return res.status(400).json({ error: 'Invalid idea id' });
+
+    // E12 (10.4): every other map write endpoint in this file verifies the
+    // idea belongs to the caller's org before writing — this one didn't, so
+    // a client could silently attach a snapshot row to any ideaId string
+    // regardless of org ownership. GET/DELETE are already user+org scoped so
+    // this was never a cross-tenant READ leak, but it let a caller write
+    // garbage history under an id it has no real relationship to. Mirrors
+    // the org-scope check ideaCollabWs.gateway.ts uses for its legacy
+    // (ENABLE_SHARED_IDEA_MAPS off) branch rather than the stricter
+    // assertIdeaMembership, so this doesn't newly require an
+    // organization_members row beyond what every other write path assumes.
+    const ideaOrgCheck = await queryHelpers.queryOne<{ id: string }>(
+      `SELECT id FROM my_ideas WHERE id = ? AND organization_id = ?`,
+      [ideaId, orgId]
+    );
+    if (!ideaOrgCheck) return res.status(404).json({ error: 'Idea not found' });
 
     const schema = z.object({
       label: z.string().min(1).max(200),
@@ -6810,6 +6865,15 @@ const LIVE_CONVERT_TARGETS = [
 ] as const;
 
 /**
+ * E11 (2026-08-10) — version tag for the field-mapping logic below (title →
+ * target name, aiExpansion/body → description, summaryData.nextSteps →
+ * tasks, …). Bump this string whenever that mapping logic changes materially
+ * so lineage rows can be told apart by which mapping produced them
+ * (docs/qa/ideas-manual-audit-2026-08-09/09_*, §9 `mappingVersion`).
+ */
+const CONVERSION_MAPPING_VERSION = 'v1';
+
+/**
  * POST /api/my-work/my-ideas/:id/convert
  * Body: { target: 'initiative'|'task_set'|'decision'|'team_chat'|'report'|'presentation', options?: {...} }
  */
@@ -6911,7 +6975,17 @@ router.post(
     // ścisłym nadzbiorem informacji, którą backend miał do tej pory (żadnej).
     const explicitScope = typeof options?.scope === 'string' ? options.scope.trim() : '';
     const isWholeIdeaScope = explicitScope ? explicitScope === 'workspace' : nodeIds.length === 0;
-    const conversionScope = isWholeIdeaScope ? 'workspace' : 'selection';
+    // E11 (2026-08-10): when the caller sends a real `options.scope` (now wired
+    // from IdeaMapWorkspace.handleConvert's preview gate + convertSingleNode/
+    // convertBranch), record it verbatim (single_item / single_item_cascade /
+    // selected_items / …) instead of collapsing every non-workspace conversion
+    // into the single bucket 'selection' — the column is an open TEXT list
+    // (no CHECK, see 20260723_idea_conversion_history.sql), so finer values
+    // need no migration. Legacy callers that still omit `scope` keep the old
+    // 'selection' fallback — behavior for them is unchanged.
+    const conversionScope = isWholeIdeaScope
+      ? 'workspace'
+      : explicitScope || 'selection';
 
     const promote = async (promotedTo: string, promotedEntityId: string | null) => {
       // Historia KAŻDEJ konwersji — insert, NIGDY update. Zastępuje pojedyncze pole
@@ -6919,20 +6993,41 @@ router.post(
       // (defekt P0-1). Best-effort: brak tabeli (migracja 20260723_idea_conversion_history
       // jeszcze nie uruchomiona) nie może zablokować samej konwersji.
       try {
+        // E11 (2026-08-10): fill in the two fields the §9 lineage shape
+        // ({conversionId,targetType,targetId,scope,sourceElementIds,createdAt,
+        // createdBy,mappingVersion,sourceLink}) was still missing —
+        // `source_link_json` (column existed, unused since the P0-1 migration)
+        // and `mapping_version` (new additive column, feature-detected exactly
+        // like `maturity_gates_json` above — see 20260810_idea_conversion_
+        // mapping_version.sql, NOT applied by this task, DB SAFETY).
+        const conversionCols = await getTableColumns('my_idea_conversions');
+        const hasMappingVersion = conversionCols.has('mapping_version');
+        const sourceLink = JSON.stringify({
+          type: 'idea',
+          id: ideaId,
+          containerType: 'idea_workspace',
+          containerId: ideaId,
+        });
+        const insertCols = ['id', 'idea_id', 'organization_id', 'target', 'entity_id', 'scope', 'node_ids_json', 'source_link_json', 'created_by'];
+        const insertVals: any[] = [
+          uuidv4(),
+          ideaId,
+          orgId,
+          promotedTo,
+          promotedEntityId,
+          conversionScope,
+          JSON.stringify(nodeIds),
+          sourceLink,
+          userId,
+        ];
+        if (hasMappingVersion) {
+          insertCols.push('mapping_version');
+          insertVals.push(CONVERSION_MAPPING_VERSION);
+        }
         await queryHelpers.queryRun(
-          `INSERT INTO my_idea_conversions
-             (id, idea_id, organization_id, target, entity_id, scope, node_ids_json, created_by)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-          [
-            uuidv4(),
-            ideaId,
-            orgId,
-            promotedTo,
-            promotedEntityId,
-            conversionScope,
-            JSON.stringify(nodeIds),
-            userId,
-          ]
+          `INSERT INTO my_idea_conversions (${insertCols.join(', ')})
+           VALUES (${insertCols.map(() => '?').join(', ')})`,
+          insertVals
         );
       } catch (err: any) {
         logger.warn(
@@ -7600,6 +7695,94 @@ router.post(
         created: { conversationId, chatProjectId },
       });
     }
+  })
+);
+
+/**
+ * GET /api/my-work/my-ideas/:id/conversions
+ *
+ * E11 (2026-08-10) — read-only lineage list for the §9 append-only
+ * `conversions[]` contract (docs/qa/ideas-manual-audit-2026-08-09/09_*, §9;
+ * docs/standards/idea-workspace/10_*, §2.3). Backs the FE conversion preview
+ * (prior-conversion count/warnings) and any future "Powiązania" backlink
+ * list. Read-only — creates nothing, mutates nothing.
+ */
+router.get(
+  '/my-ideas/:id/conversions',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { userId, orgId } = identity;
+    if (!(await requireTables(res, ['my_ideas']))) return;
+
+    const ideaId = String(req.params.id || '').trim();
+    if (!ideaId) return res.status(400).json({ error: 'Missing idea id' });
+
+    // Ownership check — same guard as the convert route above.
+    const idea = await queryHelpers.queryOne<{ id: string }>(
+      `SELECT id FROM my_ideas WHERE id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
+      [ideaId, userId, orgId]
+    );
+    if (!idea) return res.status(404).json({ error: 'Idea not found' });
+
+    if (!(await requireTables(res, ['my_idea_conversions']))) {
+      // Additive table from 20260723_idea_conversion_history.sql — if a
+      // database somehow lacks it, degrade honestly to an empty list rather
+      // than a 500; the FE preview treats this as "no known prior conversions".
+      return res.json({ conversions: [] });
+    }
+
+    const conversionCols = await getTableColumns('my_idea_conversions');
+    const mappingVersionSelect = conversionCols.has('mapping_version')
+      ? 'mapping_version as "mappingVersion"'
+      : "NULL as \"mappingVersion\"";
+
+    const rows = await queryHelpers.queryAll<any>(
+      `
+      SELECT
+        id as "conversionId",
+        target as "targetType",
+        entity_id as "targetId",
+        scope,
+        node_ids_json as "sourceElementIdsJson",
+        source_link_json as "sourceLinkJson",
+        created_by as "createdBy",
+        created_at as "createdAt",
+        ${mappingVersionSelect}
+      FROM my_idea_conversions
+      WHERE idea_id = ? AND organization_id = ?
+      ORDER BY created_at DESC
+      `,
+      [ideaId, orgId]
+    );
+
+    const conversions = (rows || []).map((r: any) => {
+      let sourceElementIds: string[] = [];
+      try {
+        sourceElementIds = r.sourceElementIdsJson ? JSON.parse(r.sourceElementIdsJson) : [];
+      } catch {
+        sourceElementIds = [];
+      }
+      let sourceLink: unknown = null;
+      try {
+        sourceLink = r.sourceLinkJson ? JSON.parse(r.sourceLinkJson) : null;
+      } catch {
+        sourceLink = null;
+      }
+      return {
+        conversionId: r.conversionId,
+        targetType: r.targetType,
+        targetId: r.targetId,
+        scope: r.scope,
+        sourceElementIds,
+        createdAt: r.createdAt,
+        createdBy: r.createdBy,
+        mappingVersion: r.mappingVersion,
+        sourceLink,
+      };
+    });
+
+    res.json({ conversions });
   })
 );
 

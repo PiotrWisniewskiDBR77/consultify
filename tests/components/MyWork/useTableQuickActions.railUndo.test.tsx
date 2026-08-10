@@ -48,6 +48,12 @@ function makeHandlers(over: Partial<QuickActionHandlers> = {}): QuickActionHandl
     // N8 (2026-08-10) — saved-view menu (tbl_view_rename/update/delete).
     updateSavedView: vi.fn(),
     deleteSavedView: vi.fn(),
+    // N10 (2026-08-10) — PLATFORM saved-view menu (TableToolbar.tsx,
+    // tbl_view_rename_platform/tbl_view_delete_platform). Separate mocks —
+    // real code passes `platformIntegration.updateSavedView`/
+    // `.deleteSavedView` here, not the legacy pair above.
+    platformUpdateSavedView: vi.fn(),
+    platformDeleteSavedView: vi.fn(),
     // N8.2 (2026-08-10) — column menu (tbl_column_rename/sort/hide/delete).
     cycleSort: vi.fn(),
     toggleColumn: vi.fn(),
@@ -98,6 +104,8 @@ function render(
      */
     columns?: Array<{ key: string; header?: string; visible?: boolean; width?: number; type?: string }>;
     locked?: boolean;
+    /** N10 (2026-08-10) — separate list, defaults to the same fixture. */
+    platformSavedViews?: typeof DEFAULT_SAVED_VIEWS;
   } = {}
 ) {
   return renderHook(() =>
@@ -115,6 +123,7 @@ function render(
       filters: viewOpts.filters ?? { logic: 'and', rules: [] },
       groupBy: viewOpts.groupBy ?? null,
       viewLayout: viewOpts.viewLayout ?? 'table',
+      platformSavedViews: viewOpts.platformSavedViews ?? DEFAULT_SAVED_VIEWS,
     } as any)
   );
 }
@@ -208,6 +217,49 @@ describe('useTableQuickActions — saved view menu (tbl_view_*)', () => {
     emit('tbl_view_delete', { viewId: 'does-not-exist' });
     expect(handlers.updateSavedView).not.toHaveBeenCalled();
     expect(handlers.deleteSavedView).not.toHaveBeenCalled();
+  });
+});
+
+// N10 (2026-08-10) — idea.view.table_platform_saved_view_rename/_delete
+// Teresa bus path (ideaActionRegistry.ts). Separate mechanism from the
+// legacy tbl_view_* above: TableToolbar.tsx's own view-context menu wires to
+// `platformUpdateSavedView`/`platformDeleteSavedView` (real,
+// `platformIntegration.updateSavedView`/`.deleteSavedView` in the actual
+// component), checked against `platformSavedViews`, not `savedViews`.
+describe('useTableQuickActions — PLATFORM saved view menu (tbl_view_*_platform)', () => {
+  it('routes tbl_view_rename_platform to platformUpdateSavedView with a name-only patch', () => {
+    const handlers = makeHandlers();
+    render(handlers);
+    emit('tbl_view_rename_platform', { viewId: 'triage', name: 'Renamed' });
+    expect(handlers.platformUpdateSavedView).toHaveBeenCalledTimes(1);
+    expect(handlers.platformUpdateSavedView).toHaveBeenCalledWith('triage', { name: 'Renamed' });
+    expect(handlers.updateSavedView).not.toHaveBeenCalled();
+  });
+
+  it('routes tbl_view_delete_platform to platformDeleteSavedView', () => {
+    const handlers = makeHandlers();
+    render(handlers);
+    emit('tbl_view_delete_platform', { viewId: 'triage' });
+    expect(handlers.platformDeleteSavedView).toHaveBeenCalledTimes(1);
+    expect(handlers.platformDeleteSavedView).toHaveBeenCalledWith('triage');
+    expect(handlers.deleteSavedView).not.toHaveBeenCalled();
+  });
+
+  it('does not silently no-op: an unknown viewId calls neither platform mutation', () => {
+    const handlers = makeHandlers();
+    render(handlers);
+    emit('tbl_view_rename_platform', { viewId: 'does-not-exist', name: 'X' });
+    emit('tbl_view_delete_platform', { viewId: 'does-not-exist' });
+    expect(handlers.platformUpdateSavedView).not.toHaveBeenCalled();
+    expect(handlers.platformDeleteSavedView).not.toHaveBeenCalled();
+  });
+
+  it('checks against platformSavedViews, not the legacy savedViews list', () => {
+    const handlers = makeHandlers();
+    // "triage" exists only in the legacy fixture here, not in the platform one.
+    render(handlers, { platformSavedViews: [{ id: 'default', name: 'Default' }] });
+    emit('tbl_view_delete_platform', { viewId: 'triage' });
+    expect(handlers.platformDeleteSavedView).not.toHaveBeenCalled();
   });
 });
 

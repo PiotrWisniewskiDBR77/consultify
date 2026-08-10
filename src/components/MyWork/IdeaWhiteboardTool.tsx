@@ -220,6 +220,11 @@ interface WhiteboardCanvasProps {
   onEdgeContextMenu?: (e: React.MouseEvent, edgeId: string) => void;
   // Z15: patch a single node's style (accent/fontSize/fontWeight) onto node.data.
   onNodeStyleChange?: (nodeId: string, patch: Record<string, unknown>) => void;
+  // WB-FRAME-02 (drag containment, 2026-08-10): fired after every unlocked
+  // node drag ends, so the outer component can reconcile the dragged node's
+  // frame membership against where it visually landed (see
+  // `useWhiteboardNodes.reparentNodeOnDrag`).
+  onNodeDragStopReconcile?: (nodeId: string) => void;
   /**
    * Gdy pasek edycji obiektu jest ZADOKOWANY w listwie Menu 3
    * (ff_canvasObjectEditBar), pływający `WhiteboardStyleBar` niósłby DOKŁADNIE
@@ -267,6 +272,7 @@ const WhiteboardCanvas = React.forwardRef<WhiteboardCanvasHandle, WhiteboardCanv
   onEdgeContextMenu: externalOnEdgeContextMenu,
   onNodeStyleChange,
   suppressFloatingStyleBar,
+  onNodeDragStopReconcile,
 }, ref) => {
   const { screenToFlowPosition, setViewport, fitView } = useReactFlow();
   // Z15: subscribe to the live viewport transform so the floating style bar
@@ -278,6 +284,17 @@ const WhiteboardCanvas = React.forwardRef<WhiteboardCanvasHandle, WhiteboardCanv
     grid: 8,
     threshold: 6,
   });
+  // WB-FRAME-02 (drag containment, 2026-08-10): composes with the existing
+  // snap drag-stop handler (currently a no-op, kept for lifecycle parity —
+  // see useCanvasSnapping's own header) and then reconciles frame membership
+  // against wherever the node visually ended up.
+  const handleNodeDragStop = React.useCallback(
+    (event?: unknown, node?: Node) => {
+      onSnapNodeDragStop(event, node);
+      if (node?.id) onNodeDragStopReconcile?.(node.id);
+    },
+    [onSnapNodeDragStop, onNodeDragStopReconcile]
+  );
   const { t } = useTranslation();
   const isDarkCanvas = useIsDark();
   const containerRef = React.useRef<HTMLDivElement>(null);
@@ -600,7 +617,7 @@ const WhiteboardCanvas = React.forwardRef<WhiteboardCanvasHandle, WhiteboardCanv
         onEdgesChange={locked ? undefined : onEdgesChange}
         onConnect={onConnect}
         onNodeDrag={locked ? undefined : onSnapNodeDrag}
-        onNodeDragStop={locked ? undefined : onSnapNodeDragStop}
+        onNodeDragStop={locked ? undefined : handleNodeDragStop}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
         onNodeDoubleClick={(_event: any, node: any) => {
@@ -2736,6 +2753,8 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
     removeFromFrame,
     resizeFrameToFit,
     deleteFrame,
+    // WB-FRAME-02 (drag containment, 2026-08-10)
+    reparentNodeOnDrag,
   } = useWhiteboardNodes({
     nodes,
     edges,
@@ -4560,6 +4579,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
               onEdgeContextMenu={handleEdgeContextMenu}
               onNodeStyleChange={handleNodeStyleChange}
               suppressFloatingStyleBar={wbEditBarDocked}
+              onNodeDragStopReconcile={reparentNodeOnDrag}
             />
           </ReactFlowProvider>
 

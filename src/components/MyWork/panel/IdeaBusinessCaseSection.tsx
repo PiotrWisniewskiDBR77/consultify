@@ -136,12 +136,42 @@ function nodeLabel(node: any): string {
   return node?.data?.label || node?.label || String(node?.id || '');
 }
 
+/**
+ * Builds the shared `ActionContext` for the two lineage-editor registry
+ * entries (`idea.workspace.business_case_lineage_add`/`_remove`) — same
+ * shape as `IdeaBusinessCaseSection`'s own `save()` (surface 'panel',
+ * source 'ui', `params.run` carries the real mutation). Section identity is
+ * NOT threaded through (the widget is shared across 13 sections, patched
+ * generically by the caller's `onAdd`/`onRemove` closure) — see the registry
+ * entries' comments for why that stays UI-only for now.
+ */
+function buildLineageActionContext(
+  ideaId: string,
+  tool: CanvasToolType,
+  selection: IdeaWorkspaceSelection,
+  isPolish: boolean,
+  run: () => void
+): ActionContext {
+  return {
+    ideaId,
+    tool,
+    selection,
+    surface: 'panel',
+    source: 'ui',
+    language: isPolish ? 'pl' : 'en',
+    params: { run },
+  };
+}
+
 /** Picker for linking a section/claim to a real node in the current graph — real lineage, not a fake id. */
 const NodeRefPicker: React.FC<{
+  ideaId: string;
+  tool: CanvasToolType;
+  selection: IdeaWorkspaceSelection;
   graphNodes: any[];
   isPolish: boolean;
   onAdd: (ref: BusinessCaseSourceRef) => void;
-}> = ({ graphNodes, isPolish, onAdd }) => {
+}> = ({ ideaId, tool, selection, graphNodes, isPolish, onAdd }) => {
   const [selected, setSelected] = useState('');
   if (!graphNodes.length) return null;
   return (
@@ -164,10 +194,15 @@ const NodeRefPicker: React.FC<{
         type="button"
         disabled={!selected}
         onClick={() => {
-          const node = graphNodes.find((n) => String(n.id) === selected);
-          if (!node) return;
-          onAdd({ kind: 'node', refId: selected, label: nodeLabel(node) });
-          setSelected('');
+          void runIdeaAction(
+            'idea.workspace.business_case_lineage_add',
+            buildLineageActionContext(ideaId, tool, selection, isPolish, () => {
+              const node = graphNodes.find((n) => String(n.id) === selected);
+              if (!node) return;
+              onAdd({ kind: 'node', refId: selected, label: nodeLabel(node) });
+              setSelected('');
+            })
+          );
         }}
         className="inline-flex items-center justify-center w-7 h-7 rounded-md bg-c-surface-raised text-c-text-muted hover:text-c-text disabled:opacity-30 transition-colors"
         title={isPolish ? 'Powiąż' : 'Link'}
@@ -179,10 +214,13 @@ const NodeRefPicker: React.FC<{
 };
 
 const LineageChips: React.FC<{
+  ideaId: string;
+  tool: CanvasToolType;
+  selection: IdeaWorkspaceSelection;
   lineage: BusinessCaseSourceRef[];
   isPolish: boolean;
   onRemove: (idx: number) => void;
-}> = ({ lineage, isPolish, onRemove }) => {
+}> = ({ ideaId, tool, selection, lineage, isPolish, onRemove }) => {
   if (!lineage.length) {
     return (
       <p className="text-[10px] italic text-c-text-muted">
@@ -204,7 +242,12 @@ const LineageChips: React.FC<{
           <span className="truncate max-w-[120px]">{ref.label || ref.refId}</span>
           <button
             type="button"
-            onClick={() => onRemove(idx)}
+            onClick={() => {
+              void runIdeaAction(
+                'idea.workspace.business_case_lineage_remove',
+                buildLineageActionContext(ideaId, tool, selection, isPolish, () => onRemove(idx))
+              );
+            }}
             className="opacity-70 hover:opacity-100"
             aria-label={isPolish ? 'Usuń powiązanie' : 'Remove link'}
           >
@@ -218,21 +261,30 @@ const LineageChips: React.FC<{
 
 /** Section-level lineage editor — the "links back to originating elements" requirement, made concrete. */
 const LineageEditor: React.FC<{
+  ideaId: string;
+  tool: CanvasToolType;
+  selection: IdeaWorkspaceSelection;
   lineage: BusinessCaseSourceRef[];
   graphNodes: any[];
   isPolish: boolean;
   onChange: (next: BusinessCaseSourceRef[]) => void;
-}> = ({ lineage, graphNodes, isPolish, onChange }) => (
+}> = ({ ideaId, tool, selection, lineage, graphNodes, isPolish, onChange }) => (
   <div className="space-y-1.5">
     <span className={LABEL_CLASS}>
       {isPolish ? 'Powiązane elementy Idei' : 'Linked idea elements'}
     </span>
     <LineageChips
+      ideaId={ideaId}
+      tool={tool}
+      selection={selection}
       lineage={lineage}
       isPolish={isPolish}
       onRemove={(idx) => onChange(lineage.filter((_, i) => i !== idx))}
     />
     <NodeRefPicker
+      ideaId={ideaId}
+      tool={tool}
+      selection={selection}
       graphNodes={graphNodes}
       isPolish={isPolish}
       onAdd={(ref) => onChange([...lineage, ref])}
@@ -566,6 +618,9 @@ export const IdeaBusinessCaseSection: React.FC<IdeaBusinessCaseSectionProps> = (
           />
         </div>
         <LineageEditor
+          ideaId={ideaId}
+          tool={tool}
+          selection={selection}
           lineage={draft.problemBaseline.lineage}
           graphNodes={graphNodes}
           isPolish={isPolish}
@@ -632,6 +687,9 @@ export const IdeaBusinessCaseSection: React.FC<IdeaBusinessCaseSectionProps> = (
           />
         </label>
         <LineageEditor
+          ideaId={ideaId}
+          tool={tool}
+          selection={selection}
           lineage={draft.strategicObjective.lineage}
           graphNodes={graphNodes}
           isPolish={isPolish}
@@ -718,6 +776,9 @@ export const IdeaBusinessCaseSection: React.FC<IdeaBusinessCaseSectionProps> = (
           )}
         />
         <LineageEditor
+          ideaId={ideaId}
+          tool={tool}
+          selection={selection}
           lineage={draft.stakeholdersProcesses.lineage}
           graphNodes={graphNodes}
           isPolish={isPolish}
@@ -1290,6 +1351,9 @@ export const IdeaBusinessCaseSection: React.FC<IdeaBusinessCaseSectionProps> = (
           )}
         />
         <LineageEditor
+          ideaId={ideaId}
+          tool={tool}
+          selection={selection}
           lineage={draft.kpis.lineage}
           graphNodes={graphNodes}
           isPolish={isPolish}

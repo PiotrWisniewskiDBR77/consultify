@@ -13,6 +13,7 @@ import {
   ArrowUp,
   ArrowUpDown,
   Brain,
+  Calculator,
   Calendar,
   Camera,
   ChevronDown,
@@ -47,6 +48,7 @@ import {
   Redo2,
   Rocket,
   Save,
+  Scale,
   Send,
   Sparkles,
   StickyNote,
@@ -72,6 +74,8 @@ import { Api } from '@/services/api';
 import * as TablePlatformApi from '@/services/api/tablePlatform.api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { useAppStore } from '@/store/useAppStore';
+import { isIdeaDecisionLogEnabled } from '@/utils/ideaDecisionLogFlag';
+import { isIdeaFinancialCaseEnabled } from '@/utils/ideaFinancialCaseFlag';
 import {
   IDEA_MENU1_TOOL_SLOT_ID,
   isIdeaTableGuidedBarEnabled,
@@ -137,7 +141,11 @@ import { computeHeatmapStyles, HeatmapControls } from './table/EmbeddedAnalytics
 import { ExportToPresentation } from './table/ExportToPresentation';
 import { FilterBuilder } from './table/FilterBuilder';
 import { FilterPanel } from './table/FilterPanel';
+import { FinancialCaseDialog } from './table/financial/FinancialCaseDialog';
+import type { FinancialCaseStatus } from './table/financial/financialTypes';
 import FormBuilder from './table/FormBuilder';
+import { IdeaDecisionLogPanel } from './table/IdeaDecisionLogPanel';
+import type { FinancialFreshnessResult } from './table/ideaDecisionGovernance';
 import { FormsIndex } from './table/forms/FormsIndex';
 import { batchEvaluateFormulas } from './table/FormulaEngineV2';
 import { FrameworkGenerator } from './table/FrameworkGenerator';
@@ -696,6 +704,60 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
   // w trakcie sesji (localStorage) i tak wymaga przeładowania, żeby wszystkie
   // powierzchnie (pasek, pusty stan, slot Menu 1) były spójne.
   const guidedBar = useMemo(() => isIdeaTableGuidedBarEnabled(), []);
+  /** Karta finansowa (Program E / epic E09) — domyślnie OFF (CLAUDE.md #7). */
+  const financialCaseEnabled = useMemo(() => isIdeaFinancialCaseEnabled(), []);
+  /** Log decyzji — realny model (Program D / epic E08 §6.4) — domyślnie OFF
+   *  (CLAUDE.md #7). NIE dotyczy istniejącej zakładki „Log decyzji"
+   *  (kolumna `decision`), ktora zostaje wlaczona jak dotychczas. */
+  const decisionLogEnabled = useMemo(() => isIdeaDecisionLogEnabled(), []);
+  // ── B4: financial freshness → decision log approval gate ─────────────────
+  // One Financial Case per Idea Table tool instance (mounted once via
+  // `FinancialCaseDialog`, not per row) — `financialCaseFreshness` is that
+  // ONE status, reported by `FinancialCaseView.onStatusChange`. The decision
+  // log's `evaluateApprovalGate` reads this for every row's approval
+  // (there is exactly one financial case to be stale/fresh about). `null`
+  // (dialog never opened this session) maps to the same honest 'unknown' the
+  // module's own `UNWIRED_FINANCIAL_FRESHNESS_PROVIDER` would report — this
+  // is a REAL status once the dialog has been opened and computed at least
+  // once, not a hardcoded default.
+  const [financialCaseStatus, setFinancialCaseStatus] = useState<{
+    status: FinancialCaseStatus;
+    lastComputedAt: string | null;
+  } | null>(null);
+  const handleFinancialStatusChange = useCallback(
+    (status: FinancialCaseStatus, lastComputedAt: string | null) => {
+      setFinancialCaseStatus({ status, lastComputedAt });
+    },
+    []
+  );
+  const financialFreshnessProvider = useCallback((): FinancialFreshnessResult => {
+    if (!financialCaseStatus) {
+      return {
+        status: 'unknown',
+        reason: isPl
+          ? 'Karta finansowa nie była jeszcze otwarta w tej sesji.'
+          : 'The financial case has not been opened yet this session.',
+      };
+    }
+    if (financialCaseStatus.status === 'fresh') {
+      return { status: 'fresh', asOf: financialCaseStatus.lastComputedAt ?? undefined };
+    }
+    if (financialCaseStatus.status === 'blocked') {
+      return {
+        status: 'unknown',
+        reason: isPl
+          ? 'Silnik obliczeniowy karty finansowej nie jest podłączony.'
+          : 'The financial case calculation engine is not connected.',
+      };
+    }
+    return {
+      status: 'stale',
+      asOf: financialCaseStatus.lastComputedAt ?? undefined,
+      reason: isPl
+        ? `Karta finansowa ma status „${financialCaseStatus.status}" — przelicz przed zatwierdzeniem.`
+        : `The financial case is "${financialCaseStatus.status}" — recompute before approving.`,
+    };
+  }, [financialCaseStatus, isPl]);
   /** Cel portalu „Zapisz" w Menu 1 (obok Teresy). `null` → zostajemy w pasku. */
   const menu1ToolSlot = usePortalSlot(guidedBar ? IDEA_MENU1_TOOL_SLOT_ID : null);
 
@@ -727,6 +789,8 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
   const [showScoringModel, setShowScoringModel] = useState(false);
   const [showExportPresentation, setShowExportPresentation] = useState(false);
   const [showPipeline, setShowPipeline] = useState(false);
+  const [showFinancialCase, setShowFinancialCase] = useState(false);
+  const [showDecisionLog, setShowDecisionLog] = useState(false);
   const [showCopilot, setShowCopilot] = useState(false);
   const [showVoiceInput, setShowVoiceInput] = useState(false);
   const [showCrossRelations, setShowCrossRelations] = useState(false);
@@ -1039,6 +1103,11 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
     // `locked`, który `cellContextMenu`'s "Clear cell" onSelect już sprawdza
     // (~L4157) — patrz `useTableQuickActions.ts`'s `UseTableQuickActionsOpts.locked`.
     locked,
+    // N10 (2026-08-10) — `TableToolbar.tsx`'s widok zapisany, ścieżka PLATFORM
+    // (`idea.view.table_platform_saved_view_rename`/`_delete`). Osobne od
+    // `savedViews` wyżej (legacy) — patrz komentarz przy
+    // `UseTableQuickActionsOpts.platformSavedViews`.
+    platformSavedViews: platformIntegration.savedViews,
     handlers: {
       handleAddRow,
       setShowRowTemplatePicker,
@@ -1064,6 +1133,13 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
       onFieldFillProposal: setFieldFillProposal,
       updateSavedView,
       deleteSavedView,
+      // N10 (2026-08-10) — PLATFORM widok zapisany (patrz komentarz przy
+      // `UseTableQuickActionsOpts.platformSavedViews`/`QuickActionHandlers.platformUpdateSavedView`
+      // w `useTableQuickActions.ts`). Realne, asynchroniczne funkcje serwera —
+      // DOKŁADNIE te, które `TableToolbar.tsx`'s `viewContextMenu` już woła
+      // przez `useTableData()` (`ctx.updateSavedView`/`.deleteSavedView`).
+      platformUpdateSavedView: platformIntegration.updateSavedView,
+      platformDeleteSavedView: platformIntegration.deleteSavedView,
       // N8.2 (2026-08-10) — menu kolumny. DOKŁADNIE te same referencje, które
       // woła klik człowieka niżej w tym pliku (`colContextMenu`, `_visCols`
       // headers inline-rename). Defect fix (2026-08-10): the human click's
@@ -1218,18 +1294,58 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
   );
 
   // ── Scoring model handler ──────────────────────────────────────────────────
+  // `canonHistoryEvent`/`canonModelVersion` are set only when IdeaScoringModel
+  // is in "9 dimensions" canon mode (ideaScoringGovernance, epic E08 §6.3) —
+  // appended to the row's own append-only `data.scoreHistory` here, since this
+  // is the one place with access to each row's EXISTING history to append to.
   const handleApplyScores = useCallback(
-    (scores: { nodeId: string; score: number; rank: number }[]) => {
+    (
+      scores: {
+        nodeId: string;
+        score: number;
+        rank: number;
+        canonHistoryEvent?: import('./table/ideaScoringGovernance').ScoreHistory[number];
+        canonModelVersion?: number;
+      }[]
+    ) => {
       const scoreMap = new Map(scores.map((s) => [s.nodeId, s]));
       const next = nodes.map((n) => {
         const s = scoreMap.get(n.id);
         if (!s) return n;
-        return { ...n, data: { ...(n.data || {}), score: s.score, rank: s.rank } };
+        const prevHistory = Array.isArray(n.data?.scoreHistory) ? n.data!.scoreHistory : [];
+        const nextHistory = s.canonHistoryEvent ? [...prevHistory, s.canonHistoryEvent] : prevHistory;
+        return {
+          ...n,
+          data: {
+            ...(n.data || {}),
+            score: s.score,
+            rank: s.rank,
+            ...(s.canonHistoryEvent
+              ? { scoreHistory: nextHistory, scoreModelVersion: s.canonModelVersion }
+              : {}),
+          },
+        };
       });
       nodesUndo.push(next);
       toast.success(t('ideas.table.rankingApplied', 'Ranking applied'));
     },
     [isPl, nodes, nodesUndo]
+  );
+
+  // ── Decision log handler (ideaDecisionGovernance, epic E08 §6.4) ──────────
+  // Writes the FULL next `decisionLog` array for one row — same persistence
+  // pattern as `handleApplyScores`/every other tool dialog in this file
+  // (`nodesUndo`-backed realtime sync). Does NOT touch `data.decision`
+  // (the older single-select "Log decyzji" saved-view column) — see
+  // `IdeaDecisionLogPanel.tsx` header for why these are deliberately separate.
+  const handleApplyDecisionLog = useCallback(
+    (nodeId: string, nextLog: import('./table/ideaDecisionGovernance').DecisionLogEntry[]) => {
+      const next = nodes.map((n) =>
+        n.id === nodeId ? { ...n, data: { ...(n.data || {}), decisionLog: nextLog } } : n
+      );
+      nodesUndo.push(next);
+    },
+    [nodes, nodesUndo]
   );
 
   // ── Formula V2 evaluation ──────────────────────────────────────────────────
@@ -2053,6 +2169,20 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
         heading: t('ideas.table.overflow.sectionMore', 'Więcej'),
         items: [
           {
+            id: 'financial-case',
+            label: t('ideas.financial.dialogTitle', 'Financial case'),
+            icon: Calculator,
+            onClick: () => setShowFinancialCase(true),
+            show: financialCaseEnabled,
+          },
+          {
+            id: 'decision-log',
+            label: isPl ? 'Log decyzji' : 'Decision log',
+            icon: Scale,
+            onClick: () => setShowDecisionLog(true),
+            show: decisionLogEnabled,
+          },
+          {
             id: 'export-presentation',
             label: t('ideas.table.exportToPresentation', 'Export to Presentation'),
             icon: Presentation,
@@ -2500,8 +2630,14 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
 
               <div className="w-px h-5 bg-c-surface-raised" />
 
-              {/* Quick filter */}
-              <div className="relative flex-1 max-w-[200px]">
+              {/* Quick filter.
+                  2026-08-10 (E13 visual audit, HARD VISUAL FAIL "clipped
+                  essential control"): `flex-1` with no `min-width` let this
+                  input shrink to ~47px in the crowded view-tabs row (only
+                  "Fi" of "Filtruj…" legible). `min-w-[120px]` keeps it
+                  usable — the shared flex-wrap row now wraps this control to
+                  its own line instead of crushing it. */}
+              <div className="relative flex-1 min-w-[120px] max-w-[200px]">
                 <Filter
                   size={12}
                   className="absolute left-2 top-1/2 -translate-y-1/2 text-c-text-muted"
@@ -2676,6 +2812,28 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                     >
                       <Trophy size={12} />
                     </button>
+
+                    {/* Financial Case (Program E / epic E09) — flag-gated, default OFF */}
+                    {financialCaseEnabled && (
+                      <button
+                        onClick={() => setShowFinancialCase(true)}
+                        className="p-1.5 rounded-lg text-c-text-muted hover:text-c-text-secondary transition-colors"
+                        title={t('ideas.financial.dialogTitle', 'Financial case')}
+                      >
+                        <Calculator size={12} />
+                      </button>
+                    )}
+
+                    {/* Decision Log (Program D / epic E08 §6.4) — flag-gated, default OFF */}
+                    {decisionLogEnabled && (
+                      <button
+                        onClick={() => setShowDecisionLog(true)}
+                        className="p-1.5 rounded-lg text-c-text-muted hover:text-c-text-secondary transition-colors"
+                        title={isPl ? 'Log decyzji' : 'Decision log'}
+                      >
+                        <Scale size={12} />
+                      </button>
+                    )}
 
                     {/* Export to Presentation */}
                     <button
@@ -4450,6 +4608,28 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
         ideaId={ideaId}
         onApplyScores={handleApplyScores}
       />
+
+      {/* Financial Case (Program E / epic E09) — flag-gated, default OFF */}
+      {financialCaseEnabled && (
+        <FinancialCaseDialog
+          open={showFinancialCase}
+          onClose={() => setShowFinancialCase(false)}
+          readOnly={locked}
+          onStatusChange={handleFinancialStatusChange}
+        />
+      )}
+
+      {/* Decision Log (Program D / epic E08 §6.4) — flag-gated, default OFF */}
+      {decisionLogEnabled && (
+        <IdeaDecisionLogPanel
+          open={showDecisionLog}
+          onClose={() => setShowDecisionLog(false)}
+          nodes={processedRowsWithRollups}
+          ideaId={ideaId}
+          onApplyDecisionLog={handleApplyDecisionLog}
+          financialFreshnessProvider={financialCaseEnabled ? financialFreshnessProvider : undefined}
+        />
+      )}
 
       {/* Export to Presentation */}
       <ExportToPresentation

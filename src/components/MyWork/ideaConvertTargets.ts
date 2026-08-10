@@ -21,13 +21,26 @@
  * (action_plan, raid_log, financial_model, budget, valuation, analysis) were checked
  * one by one against server/src/routes/my-work.routes.ts's `LIVE_CONVERT_TARGETS`
  * allowlist — NONE has a convert handler (the route 400s on anything outside the
- * 6-item allowlist above), so they were REMOVED from the registry rather than kept
- * as "soon". The `IdeaConvertTarget` type union below still carries their ids —
- * intentionally NOT pruned — because IdeaWorkspaceTools.tsx keys an exhaustive
- * `Record<IdeaConvertTarget, …>` (CONVERT_VISUALS) off this union and that file is
- * owned by another workstream (do not touch); narrowing the union would make that
- * Record ill-typed. The array below (the actual runtime/UI-facing list) is the
- * source of truth for what renders — it now only contains `live` entries.
+ * 6-item allowlist above), so they were REMOVED from the registry entirely.
+ *
+ * E11 UPDATE (2026-08-10, docs/qa/ideas-manual-audit-2026-08-09/09_*, §9 —
+ * required target list explicitly includes Financial Model and Budget): the
+ * 2026-07-24 removal read Z3 as "never show a soon item"; re-reading it
+ * against docs/standards/idea-workspace/10_KONWERSJA_EKSPORT_IMPORT_SZABLONY.md
+ * §7 ("Analiza"/"Model finansowy"/"Budżet"/"Wycena" → `status:'soon'`,
+ * disabled, consistent status everywhere) and §9's own instruction ("for
+ * targets not yet supported end-to-end, show one consistent soon/disabled
+ * state with a reason") — Z3 forbids a placeholder WITHOUT a reason, not a
+ * disabled item WITH one. `financial_model`/`budget` are reinstated below as
+ * `soon` with an honest, checked reason (E09 engine exists but unwired — see
+ * their entries). `action_plan`/`raid_log`/`valuation`/`analysis` stay
+ * removed — they are outside this task's required target list and were not
+ * re-audited here. The `IdeaConvertTarget` type union below still carries all
+ * of their ids — intentionally NOT pruned — because IdeaWorkspaceTools.tsx
+ * keys an exhaustive `Record<IdeaConvertTarget, …>` (CONVERT_VISUALS) off
+ * this union and that file is owned by another workstream (do not touch);
+ * narrowing the union would make that Record ill-typed. The array below (the
+ * actual runtime/UI-facing list) is the source of truth for what renders.
  */
 
 export type IdeaConvertTarget =
@@ -130,16 +143,56 @@ export const IDEA_CONVERT_TARGETS: IdeaConvertTargetMeta[] = [
     group: 'docs',
     labelPl: 'Prezentacja',
     labelEn: 'Presentation',
-    descPl: 'Generuj slajdy z gałęzi',
-    descEn: 'Generate slides from branches',
+    // E11 fix (2026-08-10) — corrected: checked server/src/routes/
+    // my-work.routes.ts's Presentation branch before writing this. It creates
+    // ONE draft `presentations` row (title + a text description built from
+    // body/AI-expansion) — it does NOT read branches/nodes or generate slides.
+    // The prior copy ("Generuj slajdy z gałęzi"/"Generate slides from
+    // branches") described a feature that does not exist; that is exactly the
+    // kind of promise this file's own header note (Z3, next block) says must
+    // not ship as a placeholder — except this one wasn't a placeholder, it
+    // was a LIVE item with a false description. Fixed here, not building
+    // real slide generation (separate, larger scope).
+    descPl: 'Tworzy prezentację roboczą (tytuł + opis z treści Idei)',
+    descEn: 'Creates a draft presentation (title + description from the Idea content)',
   },
-  // Z3 audit (2026-07-24): action_plan / raid_log / financial_model / budget /
-  // valuation / analysis were REMOVED here — each checked against the server
-  // convert allowlist (my-work.routes.ts LIVE_CONVERT_TARGETS) and none has a
-  // handler. Standard rozdz. 02 Z3: no "wkrótce" without a real, funded plan —
-  // an idle placeholder in a live convert panel is a silent non-action. See the
-  // file-header Z3 audit note above for the full rationale and what stays intact
-  // (the IdeaConvertTarget type union, kept for a file this task must not touch).
+  // Z3 audit (2026-07-24): action_plan / raid_log / valuation / analysis were
+  // REMOVED here — each checked against the server convert allowlist
+  // (my-work.routes.ts LIVE_CONVERT_TARGETS) and none has a handler. Standard
+  // rozdz. 02 Z3: no "wkrótce" without a real, funded plan — an idle
+  // placeholder in a live convert panel is a silent non-action.
+  //
+  // E11 UPDATE (2026-08-10): `financial_model`/`budget` are back as explicit
+  // `soon` entries — per master program §9 they are REQUIRED targets in the
+  // Convert menu (not absent), shown disabled WITH A REASON, never as an
+  // empty/fabricated artifact (Z3). Reason checked against real code: E09
+  // (financial engine, src/services/ideaFinance/) exists but per
+  // RESUME_HANDOFF.md is uncommitted and has NEVER been wired to any UI — a
+  // conversion to Financial Model/Budget today would either 400 (no server
+  // handler in LIVE_CONVERT_TARGETS) or, via the OTHER conversion pipeline
+  // (conversionService.ts's `/financial-modeling/models` / `/economics/
+  // budgets`), create a content-free record carrying only a title — no Idea
+  // data, failing E11's "meaningful data" DoD. Disabled here until E09 lands
+  // and is wired, rather than either fabricating a placeholder record or
+  // silently hiding the option the canon requires to be visible.
+  {
+    id: 'financial_model',
+    status: 'soon',
+    group: 'models',
+    labelPl: 'Model finansowy',
+    labelEn: 'Financial Model',
+    descPl: 'Wkrótce — silnik finansowy (E09) jeszcze nie podłączony do Idei',
+    descEn: 'Soon — the financial engine (E09) is not wired to Ideas yet',
+  },
+  {
+    id: 'budget',
+    status: 'soon',
+    group: 'models',
+    labelPl: 'Budżet',
+    labelEn: 'Budget',
+    descPl: 'Wkrótce — silnik finansowy (E09) jeszcze nie podłączony do Idei',
+    descEn: 'Soon — the financial engine (E09) is not wired to Ideas yet',
+  },
 ];
 
 /** Server-backed targets (handler exists). Derived — do not hand-edit the membership. */

@@ -102,7 +102,7 @@ import { detectMessageLanguage } from '../../utils/detectMessageLanguage';
 import { cleanTextForSpeech } from '../../utils/textCleaning';
 import { isRtlLanguage } from '../../utils/textDirection';
 import { ChatSmartSuggestions, type ChatSuggestion } from '../Chat/ChatSmartSuggestions';
-import type { CanvasToolType } from '../MyWork/ideaSelectionTypes';
+import type { CanvasToolType, IdeaWorkspaceSelection } from '../MyWork/ideaSelectionTypes';
 import { EMPTY_SELECTION } from '../MyWork/ideaSelectionTypes';
 import TeresaMark from '../shared/TeresaMark';
 import { BranchSelector, type ConversationBranch } from './BranchSelector';
@@ -853,6 +853,56 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     return () => window.removeEventListener('idea-workspace-active-tool', onActiveIdeaTool);
   }, []);
 
+  // E10 (2026-08-10, doc09 §9 Z4 "Teresa controls everything" / master
+  // program §8.4): mirror of the `activeIdeaWorkspaceTool` listener above,
+  // for the live element/edge/row selection — `IdeaMapWorkspace.tsx`
+  // broadcasts it on 'idea-workspace-active-selection' every time it changes
+  // (same shell state its own Tools/right panel already uses). Kept as a
+  // ref, not state: it must be read at tool-call time inside `onIdeaAction`
+  // without forcing that whole callback to re-close over fresh state on
+  // every selection change (same pattern as `teresaIdeaCtxRef` right below).
+  // BEFORE this change `executeTeresaTool` always sent
+  // `selection: EMPTY_SELECTION` here — Teresa's `ctx.selection` was dead for
+  // every real chat call (the only working path was the LLM supplying an
+  // element id directly as a tool argument). This makes "act on what I have
+  // selected" actually reach the registry the same way a UI click does.
+  const teresaIdeaSelectionRef = useRef<{
+    ideaId: string;
+    tool: string | null;
+    selection: IdeaWorkspaceSelection;
+  } | null>(null);
+  useEffect(() => {
+    const onActiveIdeaSelection = (event: Event) => {
+      const detail = (event as CustomEvent).detail as
+        | { ideaId?: string; tool?: string | null; selection?: IdeaWorkspaceSelection }
+        | undefined;
+      teresaIdeaSelectionRef.current = detail
+        ? {
+            ideaId: detail.ideaId || '',
+            tool: detail.tool ?? null,
+            selection: detail.selection || EMPTY_SELECTION,
+          }
+        : null;
+    };
+    window.addEventListener('idea-workspace-active-selection', onActiveIdeaSelection);
+    return () =>
+      window.removeEventListener('idea-workspace-active-selection', onActiveIdeaSelection);
+  }, []);
+
+  // E10: read the live selection ONLY when its ideaId+tool still match the
+  // idea/tool this specific tool-call is executing against — a broadcast
+  // left over from a just-closed workspace or a just-switched tool must NOT
+  // silently apply to a different one (same "no silent fallback" rule this
+  // whole wiring exists to satisfy, applied to the wiring itself).
+  const getLiveTeresaSelection = useCallback(
+    (ideaId: string, tool: string): IdeaWorkspaceSelection => {
+      const live = teresaIdeaSelectionRef.current;
+      if (!live || live.ideaId !== ideaId || live.tool !== tool) return EMPTY_SELECTION;
+      return live.selection;
+    },
+    []
+  );
+
   // Z4 transport — kontekst Idei zapamiętany W CHWILI WYSYŁKI (tool + ideaId), z
   // którym wróci tool-call. Dzięki temu wykonanie na froncie dotyczy dokładnie
   // tej reprezentacji, którą model widział (manifest jest po niej filtrowany).
@@ -1001,6 +1051,13 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     ideaId: string;
     tool: CanvasToolType;
     language: 'pl' | 'en';
+    // E10 (2026-08-10): the selection captured at PROPOSAL time, not
+    // re-sampled when the user clicks "Confirm" — the confirm dialog shows
+    // the target based on this selection, so executing against a
+    // possibly-drifted live selection instead (user clicked something else
+    // in the canvas while the confirmation was pending) would silently
+    // change what "Confirm" actually does versus what was shown.
+    selection: IdeaWorkspaceSelection;
   } | null>(null);
   const [teresaConfirmBusy, setTeresaConfirmBusy] = useState(false);
 
@@ -1982,10 +2039,11 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       }
       const uiLang: 'pl' | 'en' = (i18n.language || 'en').split('-')[0] === 'pl' ? 'pl' : 'en';
       try {
+        const liveSelection = getLiveTeresaSelection(ideaCtx.ideaId, ideaCtx.tool);
         const result = await executeTeresaTool(payload.toolName, {
           ideaId: ideaCtx.ideaId,
           tool: ideaCtx.tool,
-          selection: EMPTY_SELECTION,
+          selection: liveSelection,
           language: uiLang,
           params: payload.args,
         });
@@ -2015,6 +2073,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
               ideaId: ideaCtx.ideaId,
               tool: ideaCtx.tool,
               language: uiLang,
+              selection: liveSelection,
             });
           }
         }
@@ -2036,7 +2095,9 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       const result = await executeTeresaTool(pending.toolName, {
         ideaId: pending.ideaId,
         tool: pending.tool,
-        selection: EMPTY_SELECTION,
+        // E10: reuse the selection captured at proposal time — see the
+        // comment on `teresaPendingConfirm`'s `selection` field above.
+        selection: pending.selection,
         language: pending.language,
         params: pending.args,
         confirmed: true,

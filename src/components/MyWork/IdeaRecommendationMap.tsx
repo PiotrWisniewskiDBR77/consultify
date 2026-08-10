@@ -985,7 +985,7 @@ const BranchNodeComponent: React.FC<NodeProps> = React.memo(({ data, selected, i
           className="!opacity-0 !w-1 !h-1"
         />
         <div className={`text-xs font-semibold ${colors.text}`}>{data.label}</div>
-        <div className="text-[10px] text-slate-500 dark:text-slate-400">{childCount} nodes</div>
+        <div className="text-[10px] text-slate-600 dark:text-c-text-muted">{childCount} nodes</div>
       </div>
     );
   }
@@ -1047,7 +1047,7 @@ const BranchNodeComponent: React.FC<NodeProps> = React.memo(({ data, selected, i
         <GitBranch size={12} />
         {data.label}
       </div>
-      <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+      <div className="text-[10px] text-slate-600 dark:text-c-text-muted mt-0.5">
         {childCount} {childCount === 1 ? 'node' : 'nodes'}
         {collapsed ? ` (${collapsed ? '...' : ''})` : ''}
       </div>
@@ -4454,6 +4454,11 @@ function MindMapInner({
   const convertBranchRef = useRef<((target: string, nodeId?: string) => void) | undefined>(
     undefined
   );
+  // E11 fix (2026-08-10) — same TDZ reason: `convertSingleNode` is declared
+  // later in this component (next to `convertBranch`).
+  const convertSingleNodeRef = useRef<((target: string, nodeId?: string) => void) | undefined>(
+    undefined
+  );
 
   // ── Quick action listener (extracted to useMindMapQuickActions) ──────────
   useMindMapQuickActions({
@@ -4486,6 +4491,10 @@ function MindMapInner({
       duplicateBranch: (nodeId?: string) => duplicateBranchRef.current?.(nodeId),
       // N5 trzecia fala (2026-08-09) — `idea.node.mm_convert_branch_*`.
       convertBranch: (target: string, nodeId?: string) => convertBranchRef.current?.(target, nodeId),
+      // E11 fix (2026-08-10) — `idea.node.mm_convert_initiative`/`_decision`/
+      // `_tasks` (single_item, no cascade).
+      convertSingleNode: (target: string, nodeId?: string) =>
+        convertSingleNodeRef.current?.(target, nodeId),
       getSelectedNode,
       toggleCollapse,
       setFoldLevel,
@@ -4842,20 +4851,53 @@ function MindMapInner({
         presentation: 'convert_presentation',
       };
       const action = actionMap[target] || `convert_${target}`;
+      // E11 fix (2026-08-10): this used to fire a `toast.success("Converting
+      // branch to…")` immediately on click, before anything was actually
+      // converted — a premature-success pattern. The receiver now opens a
+      // mandatory preview (IdeaMapWorkspace.handleConvert); the real success/
+      // error toast fires only after the user confirms and the server call
+      // resolves, so no toast belongs here.
       window.dispatchEvent(
         new CustomEvent('idea-workspace-quick-action', {
-          detail: { action, nodeIds: branchNodeIds, ideaId },
+          detail: { action, nodeIds: branchNodeIds, ideaId, scope: 'single_item_cascade' },
         })
       );
-      toast.success(t('mindmap.convertingBranchTo', { target }), {
-        duration: 1000,
-      });
     },
-    [collectDescendants, getContextTargetNode, ideaId, isPolish]
+    [collectDescendants, getContextTargetNode, ideaId]
   );
   // N5 trzecia fala (2026-08-09) — see `detachBranchRef.current = detachBranch;`
   // above for why this is a ref assignment, not a direct handler value.
   convertBranchRef.current = convertBranch;
+
+  // E11 fix (2026-08-10, docs/standards/idea-workspace/10_*, §2.1 „Element"):
+  // the plain "Convert" node-menu items (ctx_convert_initiative/decision/tasks)
+  // used to be wired to `convertBranch` — same function as "Convert branch" —
+  // so a single-node label silently cascaded to every descendant
+  // (E02-N5-CONVERT honesty finding). This is the real single-item version:
+  // exactly one nodeId, never descendants.
+  const convertSingleNode = useCallback(
+    (target: string, nodeId?: string) => {
+      const targetNodeId = nodeId || getContextTargetNode()?.id;
+      if (!targetNodeId) return;
+
+      const actionMap: Record<string, string> = {
+        initiative: 'convert_initiative',
+        decision: 'convert_decision',
+        task_set: 'convert_task_set',
+        report: 'convert_report',
+        presentation: 'convert_presentation',
+      };
+      const action = actionMap[target] || `convert_${target}`;
+      window.dispatchEvent(
+        new CustomEvent('idea-workspace-quick-action', {
+          detail: { action, nodeIds: [targetNodeId], ideaId, scope: 'single_item' },
+        })
+      );
+    },
+    [getContextTargetNode, ideaId]
+  );
+  // ref declared earlier (near convertBranchRef) for the same TDZ reason.
+  convertSingleNodeRef.current = convertSingleNode;
 
   const handleContextAction = useCallback(
     (action: string) => {
@@ -4943,9 +4985,11 @@ function MindMapInner({
           setDrawerNodeId(ctxNode.id);
         }
       }
-      if (action === 'ctx_dependencies') setShowDependencyDetector(true);
-      if (action === 'ctx_priority') setShowPriorityRecommender(true);
-      if (action === 'ctx_competitive') setShowCompetitiveLandscape(true);
+      // E10 (2026-08-10): ctx_dependencies/ctx_priority/ctx_competitive MOVED
+      // to handlePaneContextAction (pane_dependencies/pane_priority/
+      // pane_competitive below) — see NodeContextMenu.tsx header comment.
+      // These three generators take the whole map regardless of which node
+      // was clicked, so they no longer live in this per-node handler.
       if (action === 'ctx_change_shape') {
         if (ctxNode && ctxNode.type === 'idea') {
           const shapes = ['default', 'circle', 'diamond', 'hexagon'];
@@ -4986,9 +5030,14 @@ function MindMapInner({
       if (action === 'ctx_detach_branch') detachBranch(ctxNode?.id);
       if (action === 'ctx_duplicate_branch') duplicateBranch(ctxNode?.id);
       if (action === 'ctx_summarize_branch') summarizeBranch(ctxNode?.id);
-      if (action === 'ctx_convert_tasks') convertBranch('task_set', ctxNode?.id);
-      if (action === 'ctx_convert_initiative') convertBranch('initiative', ctxNode?.id);
-      if (action === 'ctx_convert_decision') convertBranch('decision', ctxNode?.id);
+      // E11 fix (2026-08-10): these are the plain, non-"branch" Convert items
+      // (single_item scope per docs/standards/idea-workspace/10_*, §2.1) — they
+      // must convert ONLY the right-clicked node, never its descendants. Prior
+      // code routed them through convertBranch() (identical to the "Convert
+      // branch" items below), which silently cascaded despite the label.
+      if (action === 'ctx_convert_tasks') convertSingleNode('task_set', ctxNode?.id);
+      if (action === 'ctx_convert_initiative') convertSingleNode('initiative', ctxNode?.id);
+      if (action === 'ctx_convert_decision') convertSingleNode('decision', ctxNode?.id);
       // MM-15: Subtree conversion actions
       if (action === 'ctx_subtree_convert_decision') convertBranch('decision', ctxNode?.id);
       if (action === 'ctx_subtree_convert_tasks') convertBranch('task_set', ctxNode?.id);
@@ -5217,6 +5266,16 @@ function MindMapInner({
         );
       }
 
+      // E10 (2026-08-10): relocated from handleContextAction (per-node menu)
+      // — see NodeContextMenu.tsx's header comment. `setShowDependencyDetector`
+      // /`setShowPriorityRecommender`/`setShowCompetitiveLandscape` themselves
+      // are unchanged (same modals, same whole-map generators); only the menu
+      // that triggers them moved, since the node under the cursor never
+      // affected their result.
+      if (action === 'pane_dependencies') setShowDependencyDetector(true);
+      if (action === 'pane_priority') setShowPriorityRecommender(true);
+      if (action === 'pane_competitive') setShowCompetitiveLandscape(true);
+
       setPaneContextMenu(null);
     },
     [
@@ -5238,6 +5297,9 @@ function MindMapInner({
       setEdges,
       setFoldLevel,
       setNodes,
+      setShowCompetitiveLandscape,
+      setShowDependencyDetector,
+      setShowPriorityRecommender,
       setViewport,
       undo,
     ]
@@ -5729,7 +5791,6 @@ function MindMapInner({
           canPasteStyle={!!styleClipboard}
           canPasteNodes={hasMindMapClipboard()}
           hasChildren={findChildrenIds(contextMenu.nodeId).length > 0}
-          comingSoonIds={heuristicAiOverlaysEnabled ? [] : ['ctx_dependencies']}
           onClose={() => setContextMenu(null)}
           onAction={handleContextAction}
         />
@@ -5748,6 +5809,9 @@ function MindMapInner({
           canRedo={redoStackRef.current.length > 0}
           canPaste={hasMindMapClipboard()}
           hasSelection={selectedNodeIds.length > 0}
+          // E10 (2026-08-10): gate moved with `pane_dependencies` from
+          // NodeContextMenu.tsx (was `comingSoonIds={['ctx_dependencies']}` there).
+          comingSoonIds={heuristicAiOverlaysEnabled ? [] : ['pane_dependencies']}
           onClose={() => setPaneContextMenu(null)}
           onAction={handlePaneContextAction}
         />
@@ -6725,7 +6789,9 @@ function MindMapInner({
           locked={locked}
           onAddToMap={(items) => {
             // HONEST FIX (2026-08-09, N5 czwarta fala — rejestr akcji
-            // `idea.node.mm_ai_competitors`): znalezione przy wiringu, ta
+            // `idea.view.mm_ai_competitors`, E10 2026-08-10: przeniesione z
+            // `idea.node.mm_ai_competitors` na menu tła, patrz
+            // PaneContextMenu.tsx): znalezione przy wiringu, ta
             // mutacja nigdy nie wołała pushUndo(), w przeciwieństwie do
             // WSZYSTKICH innych wywołujących `idea-workspace-insert` w tym
             // pliku (onAddBlindSpot/onAddNodes×2/onImport itd.) — naprawione

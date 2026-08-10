@@ -27,9 +27,6 @@ export type { RecurringPattern, TaskTemplate } from './TaskTemplates';
 export { TaskTemplates } from './TaskTemplates';
 export { TaskTimer } from './TaskTimer';
 
-// Cross-entity conversion
-export { ConvertToMenu } from './ConvertToMenu';
-
 // Decision-specific components
 export type { Alternative } from './AlternativesSection';
 export { AlternativesSection } from './AlternativesSection';

@@ -88,6 +88,17 @@ export interface QuickActionHandlers {
   updateSavedView: (viewId: string, patch: Partial<SavedView>) => void;
   deleteSavedView: (viewId: string) => void;
   /**
+   * N10 (2026-08-10) — PLATFORM widok zapisany (`idea.view.table_platform_saved_view_rename`/
+   * `_delete` w ideaActionRegistry.ts). `TableToolbar.tsx` woła te SAME
+   * funkcje bezpośrednio przez `useTableData()` (`ctx.updateSavedView`/
+   * `.deleteSavedView` = `platformIntegration.updateSavedView`/
+   * `.deleteSavedView`, `useTablePlatformViews.ts`) — realne, asynchroniczne
+   * wywołania serwera, INNY mechanizm niż `updateSavedView`/`deleteSavedView`
+   * wyżej (legacy, `useTableViews.ts`, synchroniczne).
+   */
+  platformUpdateSavedView: (viewId: string, patch: Partial<SavedView>) => Promise<void>;
+  platformDeleteSavedView: (viewId: string) => Promise<void>;
+  /**
    * N8.2 (2026-08-10) — menu kolumny (`idea.column.*` w ideaActionRegistry.ts).
    * Cztery funkcje przekazywane DOKŁADNIE takie, jakie woła dziś klik człowieka
    * w `IdeaTableTool.tsx` — nic tu nie jest nową funkcją ani „poprawioną"
@@ -163,6 +174,13 @@ export interface UseTableQuickActionsOpts {
   groupBy: string | null;
   viewLayout: ViewLayout;
   /**
+   * N10 (2026-08-10) — PLATFORM widok zapisany, guard dla
+   * `tbl_view_rename_platform`/`tbl_view_delete_platform` (`idea.view.table_platform_saved_view_*`
+   * w ideaActionRegistry.ts). Osobne od `savedViews` wyżej (legacy) —
+   * `platformIntegration.savedViews`, przekazywane 1:1 z `IdeaTableTool.tsx`.
+   */
+  platformSavedViews: SavedView[];
+  /**
    * N9 (2026-08-10) — `tbl_cell_clear` guard. Ta sama wartość, którą
    * `cellContextMenu`'s "Clear cell" czyta z domknięcia komponentu
    * (`IdeaTableTool.tsx` prop `locked`, domyślnie `false`).
@@ -184,6 +202,7 @@ export function useTableQuickActions(opts: UseTableQuickActionsOpts): void {
     filters,
     groupBy,
     viewLayout,
+    platformSavedViews,
     locked,
   } = opts;
 
@@ -254,16 +273,6 @@ export function useTableQuickActions(opts: UseTableQuickActionsOpts): void {
       };
       if (viewMap[action]) {
         handlers.setViewLayout(viewMap[action]);
-        return;
-      }
-
-      if (action === 'tbl_sort') {
-        handlers.setSort((prev) =>
-          prev
-            ? { ...prev, direction: prev.direction === 'asc' ? 'desc' : 'asc' }
-            : { key: 'label', direction: 'asc' }
-        );
-        trackFunnelEvent('ideas_table_sort_applied', { ideaId });
         return;
       }
 
@@ -512,6 +521,37 @@ export function useTableQuickActions(opts: UseTableQuickActionsOpts): void {
         return;
       }
 
+      // N10 (2026-08-10) — `TableToolbar.tsx`'s widok zapisany, ścieżka
+      // PLATFORM (`idea.view.table_platform_saved_view_rename`/`_delete` w
+      // ideaActionRegistry.ts). Odrębna od `tbl_view_rename`/`tbl_view_delete`
+      // wyżej — TE wołają `platformIntegration.updateSavedView`/
+      // `.deleteSavedView` (realne, asynchroniczne wywołania serwera), NIE
+      // legacy `useTableViews.ts`. Teresa-only ścieżka: klik człowieka
+      // (`TableToolbar.tsx`'s `viewContextMenu`, ~L502-555) NIE przechodzi
+      // przez tę szynę — woła `ctx.updateSavedView`/`.deleteSavedView`
+      // bezpośrednio z `useTableData()`, nietknięte tym wpisem.
+      if (action === 'tbl_view_rename_platform' || action === 'tbl_view_delete_platform') {
+        const viewId = typeof detail?.viewId === 'string' ? detail.viewId : undefined;
+        const view = viewId ? platformSavedViews.find((v) => v.id === viewId) : undefined;
+        if (!viewId || !view) {
+          toast.error(
+            i18n.t('ideas.table.quickActions.viewNotFound', 'View not found: {{viewId}}', {
+              viewId: viewId ?? '?',
+            })
+          );
+          return;
+        }
+        if (action === 'tbl_view_rename_platform') {
+          const name = typeof detail?.name === 'string' ? detail.name.trim() : undefined;
+          if (name) void handlers.platformUpdateSavedView(viewId, { name });
+          return;
+        }
+        // tbl_view_delete_platform
+        void handlers.platformDeleteSavedView(viewId);
+        toast.success(i18n.t('ideas.table.viewDeleted', 'View deleted'));
+        return;
+      }
+
       // N8.2 (2026-08-10) — menu kolumny (`idea.column.*` w
       // ideaActionRegistry.ts). Ścieżka WYŁĄCZNIE dla Teresy: klik człowieka w
       // `colContextMenu` (`IdeaTableTool.tsx` ~L3990-4022) NIE przechodzi tędy —
@@ -705,5 +745,10 @@ export function useTableQuickActions(opts: UseTableQuickActionsOpts): void {
     handlers.renameColumn,
     locked,
     handlers.fieldChange,
+    // N10 (2026-08-10) — PLATFORM widok zapisany (patrz komentarz przy
+    // `tbl_view_rename_platform`/`tbl_view_delete_platform` wyżej).
+    platformSavedViews,
+    handlers.platformUpdateSavedView,
+    handlers.platformDeleteSavedView,
   ]);
 }

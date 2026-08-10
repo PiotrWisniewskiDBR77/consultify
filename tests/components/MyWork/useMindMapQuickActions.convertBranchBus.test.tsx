@@ -7,17 +7,17 @@
  * `idea.node.mm_convert_*`/`idea.node.mm_convert_branch_*` action registry
  * entry. Template: `useMindMapQuickActions.nodeBus.test.tsx`.
  *
- * All eight share ONE new bus receiver (`mm_convert_branch`, reading
- * `{ nodeId, target }` from the dispatch payload) and ONE new handler,
- * `convertBranch`, forwarded into this hook the same way `detachBranch`/
- * `duplicateBranch` were in the previous wave (a ref, because the real
- * function is declared later in `IdeaRecommendationMap.tsx` than the
- * `useMindMapQuickActions(...)` call site). This file proves the Teresa path
- * for real: a caller with no menu instance and no component closure — just
- * `runIdeaAction(id, teresaCtx)` — reaches `handlers.convertBranch` with the
- * right `(target, nodeId)` pair, and that the honest guard rails (missing
- * `nodeId`, missing `ctx.confirmed`) actually block the call before it
- * reaches the bus.
+ * E11 UPDATE (2026-08-10, docs/standards/idea-workspace/10_*, §2.1
+ * "Element"): the ORIGINAL version of this file asserted that all EIGHT
+ * items — including the three plain `ctx_convert_*` ("Convert", no "branch"
+ * in the label) — shared ONE bus receiver/handler with the five real
+ * "Convert branch" items, always cascading to descendants. That was the
+ * honesty finding this fix closes: a single-node label must not cascade.
+ * The three plain items now have their OWN bus action (`mm_convert_single`)
+ * and handler (`convertSingleNode`, exactly one nodeId, no descendants) —
+ * asserted in the first `it.each` block below. The five real "Convert
+ * branch" items are UNCHANGED — second `it.each` block, still
+ * `mm_convert_branch`/`convertBranch`.
  */
 import { act, render } from '@testing-library/react';
 import React from 'react';
@@ -30,6 +30,7 @@ import { useMindMapQuickActions } from '../../../src/components/MyWork/mindmap/u
 
 function makeHarness() {
   const convertBranch = vi.fn();
+  const convertSingleNode = vi.fn();
 
   const Harness: React.FC = () => {
     useMindMapQuickActions({
@@ -46,13 +47,14 @@ function makeHarness() {
         toggleCollapse: vi.fn(),
         getSelectedNode: vi.fn(() => undefined as any),
         convertBranch,
+        convertSingleNode,
       } as any,
       setters: { setEdges: vi.fn(), setNodes: vi.fn() } as any,
     });
     return null;
   };
 
-  return { Harness, convertBranch };
+  return { Harness, convertBranch, convertSingleNode };
 }
 
 function teresaCtx(overrides?: Partial<ActionContext>): ActionContext {
@@ -72,12 +74,31 @@ describe('Mind Map node Convert / Convert-branch — real dispatch-bus receiver 
     ['idea.node.mm_convert_initiative', 'initiative'],
     ['idea.node.mm_convert_decision', 'decision'],
     ['idea.node.mm_convert_tasks', 'task_set'],
+  ])(
+    '%s: plain Convert (single_item) — forwards to handlers.convertSingleNode(%s, nodeId), NEVER convertBranch',
+    async (actionId, target) => {
+      const h = makeHarness();
+      render(<h.Harness />);
+
+      const result = await act(async () =>
+        runIdeaAction(actionId, teresaCtx({ params: { nodeId: 'n1' } }))
+      );
+
+      expect(result.ok).toBe(true);
+      expect((result.data as any)?.runtime).toBe('mm_convert_single');
+      expect(h.convertSingleNode).toHaveBeenCalledTimes(1);
+      expect(h.convertSingleNode).toHaveBeenCalledWith(target, 'n1');
+      expect(h.convertBranch).not.toHaveBeenCalled();
+    }
+  );
+
+  it.each([
     ['idea.node.mm_convert_branch_decision', 'decision'],
     ['idea.node.mm_convert_branch_tasks', 'task_set'],
     ['idea.node.mm_convert_branch_task_set', 'task_set'],
     ['idea.node.mm_convert_branch_initiative', 'initiative'],
     ['idea.node.mm_convert_branch_process_flow', 'process_flow'],
-  ])('%s: NEW receiver — forwards to handlers.convertBranch(%s, nodeId)', async (actionId, target) => {
+  ])('%s: Convert branch (cascade) — forwards to handlers.convertBranch(%s, nodeId)', async (actionId, target) => {
     const h = makeHarness();
     render(<h.Harness />);
 
@@ -89,6 +110,7 @@ describe('Mind Map node Convert / Convert-branch — real dispatch-bus receiver 
     expect((result.data as any)?.runtime).toBe('mm_convert_branch');
     expect(h.convertBranch).toHaveBeenCalledTimes(1);
     expect(h.convertBranch).toHaveBeenCalledWith(target, 'n1');
+    expect(h.convertSingleNode).not.toHaveBeenCalled();
   });
 
   it('idea.node.mm_convert_branch_decision: declines with a clear message when no nodeId is given (no selection either)', async () => {

@@ -2751,6 +2751,7 @@
         "ariaLabel": "Whiteboard toolbar",
         "title": "Whiteboard",
         "create": "Create",
+        "insert": "Insert",
         "role": "Role",
         "bgDots": "Dots",
         "bgGrid": "Grid",
@@ -25831,6 +25832,7 @@
     "aiExpandBranch": "AI expand branch",
     "failedToApplyProposals": "Failed to apply proposals",
     "aiRequiresBackend": "AI requires backend.",
+    "aiExpandTargetNodeMissing": "That node is no longer on the canvas — pick another node to expand.",
     "noNewSuggestions": "No new suggestions",
     "aiFailed": "AI failed",
     "branchDetached": "Branch detached",
@@ -28611,7 +28613,11 @@
       "expandLane": "Expand lane",
       "collapseLane": "Collapse lane",
       "resizeLane": "Resize lane",
-      "setColor": "Set lane color"
+      "setColor": "Set lane color",
+      "moveUp": "Move lane up",
+      "moveDown": "Move lane down",
+      "changeColor": "Change lane color",
+      "deleteLane": "Delete lane"
     },
     "exportDialog": {
       "jsonDesc": "Typed graph for integration",

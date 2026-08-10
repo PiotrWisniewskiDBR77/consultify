@@ -260,7 +260,8 @@ const LaneBackground: React.FC<LaneBackgroundProps> = ({
                 <button
                   onClick={() => onMoveUp?.(lane.id)}
                   className="p-0.5 rounded hover:bg-c-surface"
-                  title="Move up"
+                  title={t('processFlow.laneSystem.moveUp', 'Move lane up')}
+                  aria-label={t('processFlow.laneSystem.moveUp', 'Move lane up')}
                 >
                   <ArrowDownUp size={9} className="text-c-text-secondary rotate-180" />
                 </button>
@@ -269,7 +270,8 @@ const LaneBackground: React.FC<LaneBackgroundProps> = ({
                 <button
                   onClick={() => onMoveDown?.(lane.id)}
                   className="p-0.5 rounded hover:bg-c-surface"
-                  title="Move down"
+                  title={t('processFlow.laneSystem.moveDown', 'Move lane down')}
+                  aria-label={t('processFlow.laneSystem.moveDown', 'Move lane down')}
                 >
                   <ArrowDownUp size={9} className="text-c-text-secondary" />
                 </button>
@@ -277,7 +279,8 @@ const LaneBackground: React.FC<LaneBackgroundProps> = ({
               <button
                 onClick={() => setShowColorPicker(!showColorPicker)}
                 className="p-0.5 rounded hover:bg-c-surface"
-                title="Change color"
+                title={t('processFlow.laneSystem.changeColor', 'Change lane color')}
+                aria-label={t('processFlow.laneSystem.changeColor', 'Change lane color')}
               >
                 <Palette size={9} className="text-c-text-secondary" />
               </button>
@@ -285,7 +288,8 @@ const LaneBackground: React.FC<LaneBackgroundProps> = ({
                 <button
                   onClick={() => onDelete?.(lane.id)}
                   className="p-0.5 rounded hover:bg-danger-50 dark:hover:bg-danger-900/20"
-                  title="Delete lane"
+                  title={t('processFlow.laneSystem.deleteLane', 'Delete lane')}
+                  aria-label={t('processFlow.laneSystem.deleteLane', 'Delete lane')}
                 >
                   <X size={9} className="text-danger-400" />
                 </button>

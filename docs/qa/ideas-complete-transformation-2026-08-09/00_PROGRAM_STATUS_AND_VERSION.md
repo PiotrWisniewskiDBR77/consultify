@@ -66,3 +66,16 @@ owner visual acceptance (owner decision 2026-08-09).
   Whiteboard Menu 3 — both as label text and as the button's accessible name).
 
 This file is updated as the program proceeds; do not treat it as final until Program H closes.
+
+## Independent control checkpoint — 2026-08-10
+
+Recorded while Claude had an active uncommitted wave; it describes only the last committed candidate.
+
+- Last committed candidate: `5d80167c5b1caa5f68d83adc2a7b992f05275cd7` (20 commits ahead of `origin/demo`).
+- `scripts/check-actions.sh`: PASS — 177 unique actions, 104 runtime strings.
+- `scripts/check-action-coverage.sh`: PASS as a ratchet with 288 existing constructs retained as baseline debt; not proof of complete coverage.
+- Independent focused regressions: 12 files, 76/76 PASS; repeated React duplicate-key warnings for `#3b82f6` remain.
+- Full root type-check: **NOT VERIFIED**; no terminal result during the inspection window.
+- Runtime/backend/database/cold-reopen readback: **NOT VERIFIED**.
+- Final program acceptance: 0/16 epics under the full exact-SHA/runtime/persistence/visual-CX DoD.
+- Required closure backlog: `03_CODEX_QUALITY_BACKLOG.md`.

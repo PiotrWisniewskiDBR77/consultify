@@ -65,8 +65,13 @@ import { IdeaCanvasMelsView } from './IdeaCanvasMelsView';
 import { IdeaSaveIndicator, IdeaStageChip, IdeaToolIcon } from './IdeaCanvasMenu1Bits';
 import { IdeaCanvasSecondBar } from './IdeaCanvasSecondBar';
 import { IdeaContextPanel } from './IdeaContextPanel';
+import {
+  ConversionPreviewDialog,
+  type ConversionPreviewData,
+} from './ConversionPreviewDialog';
 import { IdeaConvertMenu } from './IdeaConvertMenu';
 import {
+  getConvertTargetMeta,
   IDEA_CONVERT_TARGETS,
   type IdeaConvertTarget,
   isLiveConvertTarget,
@@ -536,8 +541,17 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
       window.dispatchEvent(
         new CustomEvent('idea-workspace-active-tool', { detail: { tool: null } })
       );
+      // E10 (2026-08-10): also clear the selection broadcast on unmount/tool
+      // switch — same reasoning as clearing the active-tool signal above, so
+      // a listener (UnifiedChatPanel's Teresa selection context) can't act on
+      // a selection that belonged to a workspace/tool that just closed.
+      window.dispatchEvent(
+        new CustomEvent('idea-workspace-active-selection', {
+          detail: { ideaId: realId, tool: activeTool, selection: EMPTY_SELECTION },
+        })
+      );
     };
-  }, [activeTool]);
+  }, [activeTool, realId]);
 
   // Cofnij/Ponów lewego paska: jeden autobus (`idea-undo-state` + most dla starych
   // kanałów Mapy/Tabeli). Przyjmujemy TYLKO stan aktywnego narzędzia, a przy
@@ -577,6 +591,22 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
       selectionRef.current = next;
       setSelection(next);
       externalOnSelectionChange?.(next);
+      // E10 (2026-08-10, doc09 §9 Z4 "Teresa controls everything"): broadcast
+      // the SAME selection this shell already lifts from the active tool for
+      // its own Tools panel — same event-broadcast shape as
+      // 'idea-workspace-active-tool' above. Verified BEFORE adding this: this
+      // was the missing link, not a duplicate — grep of
+      // `UnifiedChatPanel.tsx` before this change showed `executeTeresaTool`
+      // always sent `selection: EMPTY_SELECTION`, so Teresa's `ctx.selection`
+      // was dead for real chat calls (the LLM had to supply an element id
+      // directly as a tool argument instead). Includes `ideaId`/`tool` so a
+      // listener can discard a stale broadcast from a just-closed/just-
+      // switched workspace instead of trusting selection blindly.
+      window.dispatchEvent(
+        new CustomEvent('idea-workspace-active-selection', {
+          detail: { ideaId: realId, tool: activeTool, selection: next },
+        })
+      );
       if (next.type !== 'none') {
         trackFunnelEvent('ideas_selection_changed', {
           tool: activeTool,
@@ -585,7 +615,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         });
       }
     },
-    [activeTool, externalOnSelectionChange]
+    [activeTool, externalOnSelectionChange, realId]
   );
 
   const conflictRefreshRef = useRef<(() => Promise<void>) | null>(null);
@@ -873,9 +903,9 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   }, []);
 
   // ── Quick tool actions ──────────────────────────────────────────────────────
-  const handleConvertRef = useRef<(target: IdeaConvertTarget, nodeIds?: string[]) => void>(
-    () => {}
-  );
+  const handleConvertRef = useRef<
+    (target: IdeaConvertTarget, nodeIds?: string[], scope?: string) => void
+  >(() => {});
   const handleAcceptChallengeRef = useRef<() => void>(() => {});
 
   const handleQuickAction = useCallback(
@@ -1050,7 +1080,13 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         const explicitNodeIds = Array.isArray(eventDetail?.nodeIds)
           ? eventDetail.nodeIds
           : undefined;
-        handleConvertRef.current(target, explicitNodeIds);
+        // E11 (2026-08-10): forward the caller's real scope (convertBranch/
+        // convertSingleNode in IdeaRecommendationMap.tsx now attach one —
+        // 'single_item' / 'single_item_cascade') so the preview shows the
+        // TRUE scope instead of handleConvert's coarser nodeIds-based guess.
+        const explicitScope =
+          typeof eventDetail?.scope === 'string' ? eventDetail.scope : undefined;
+        handleConvertRef.current(target, explicitNodeIds, explicitScope);
         return;
       }
 
@@ -2313,21 +2349,30 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   // ── Convert ─────────────────────────────────────────────────────────────────
   // Targets known to the SSOT registry (ideaConvertTargets.ts). Only `live` ones
   // have a server handler — `soon` ones must never be sent (CANON §4, no raw 400).
-  const handleConvert = useCallback(
-    async (target: IdeaConvertTarget, explicitNodeIds?: string[]) => {
-      if (isDraft) return;
-      if (!IDEA_CONVERT_TARGETS.some((t) => t.id === target)) {
-        toast.error(t('mindmap.thisConversionTargetIsNotYet'));
-        return;
-      }
-      if (!isLiveConvertTarget(target)) {
-        toast(t('mindmap.thisConversionIsComingSoon'), {
-          icon: '🔜',
-        });
-        return;
-      }
-      const nodeIds = explicitNodeIds?.length ? explicitNodeIds : selection.ids;
+  //
+  // E11 (2026-08-10, docs/standards/idea-workspace/10_*, §2.2): a mandatory
+  // preview now gates every convert call from EVERY entry point (Menu 1
+  // dropdown, right-panel Convert section, Mind Map node menu via the quick-
+  // action bus, Table bulk convert, Process Flow node convert) — they all
+  // call this same `handleConvert`, which used to go straight to
+  // `Api.convertMyIdea` with only a toast AFTER the fact (E02-N5-CONVERT
+  // honesty finding, confirmed true before this change). It now only BUILDS
+  // and shows a preview; the actual server call moved to `performConvert`,
+  // invoked solely from the dialog's confirm button.
+  const [conversionPreviewOpen, setConversionPreviewOpen] = useState(false);
+  const [conversionPreviewData, setConversionPreviewData] =
+    useState<ConversionPreviewData | null>(null);
+  const [conversionSubmitting, setConversionSubmitting] = useState(false);
+  const conversionPendingRef = useRef<{
+    target: IdeaConvertTarget;
+    nodeIds: string[];
+    scopeKind: string;
+  } | null>(null);
+
+  const performConvert = useCallback(
+    async (target: IdeaConvertTarget, nodeIds: string[], scopeKind: string) => {
       setSaving(true);
+      setConversionSubmitting(true);
       try {
         trackFunnelEvent('mywork_convert_clicked', { from: 'idea', to: target });
         const wbContext =
@@ -2346,6 +2391,12 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
           target: target as any,
           options: {
             language: i18n.language,
+            // E11: explicit scope, shown in the preview the user just
+            // confirmed — the backend now records it verbatim into
+            // my_idea_conversions.scope instead of collapsing every non-
+            // workspace conversion into one bucket (see promote() in
+            // my-work.routes.ts).
+            scope: scopeKind,
             ...(nodeIds?.length ? { nodeIds } : {}),
             ...(wbContext ? { whiteboardContext: wbContext } : {}),
           },
@@ -2415,23 +2466,239 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         }
 
         toast.success(t('mindmap.doneOutputAvailableInTargetModule'));
+        return true;
       } catch (err: any) {
         toast.error(err?.message || t('mindmap.failed'));
+        return false;
       } finally {
         setSaving(false);
+        setConversionSubmitting(false);
       }
     },
-    [
-      activeTool,
-      i18n.language,
-      isDraft,
-      isPolish,
-      realId,
-      selection.ids,
-      whiteboardOutcomes,
-      whiteboardSession,
-    ]
+    [activeTool, i18n.language, realId, whiteboardOutcomes, whiteboardSession]
   );
+
+  // Builds the real preview content — real Idea title/body/AI-expansion (a
+  // fresh GET, not stale local state) + real node labels for the included
+  // scope + real prior-conversion count from the append-only lineage table.
+  // Best-effort on the two network calls: if either fails, the preview still
+  // opens with what IS known locally and an honest warning, never silently
+  // skips the gate.
+  const buildConversionPreview = useCallback(
+    async (
+      target: IdeaConvertTarget,
+      nodeIds: string[],
+      scopeKind: string
+    ): Promise<ConversionPreviewData> => {
+      const meta = getConvertTargetMeta(target);
+      const liveNodes = graphNodesRef.current || [];
+      const nodeIdSet = new Set(nodeIds);
+      const elementLabels = liveNodes
+        .filter((n: any) => nodeIdSet.has(String(n?.id)))
+        .map((n: any) => String(n?.data?.label || n?.data?.text || '').trim())
+        .filter(Boolean);
+
+      const warnings: ConversionPreviewData['warnings'] = [];
+      let ideaBody = '';
+      let ideaExpansion = '';
+      let priorConversionCount = 0;
+
+      const [ideaResult, conversionsResult] = await Promise.allSettled([
+        Api.getMyIdea(realId),
+        Api.getMyIdeaConversions(realId),
+      ]);
+      if (ideaResult.status === 'fulfilled') {
+        ideaBody = String(ideaResult.value?.body || '').trim();
+        ideaExpansion = String(ideaResult.value?.aiExpansion || '').trim();
+      } else {
+        warnings.push({
+          pl: 'Nie udało się pobrać pełnej treści Idei — podgląd może być niepełny.',
+          en: "Couldn't load the Idea's full content — this preview may be incomplete.",
+        });
+      }
+      if (conversionsResult.status === 'fulfilled') {
+        priorConversionCount = conversionsResult.value?.conversions?.length || 0;
+      }
+
+      const hasContent = Boolean(ideaBody || ideaExpansion || elementLabels.length);
+      if (!hasContent) {
+        warnings.push({
+          pl: 'Idea nie ma jeszcze treści (pusty tytuł/opis/mapa) — nowy artefakt też będzie prawie pusty.',
+          en: 'This Idea has no content yet (empty body/map) — the new artifact will be nearly empty too.',
+        });
+      }
+
+      const mappedFields: ConversionPreviewData['mappedFields'] = [
+        {
+          sourcePl: 'Tytuł Idei',
+          sourceEn: 'Idea title',
+          targetPl: `Nazwa (${meta ? meta.labelPl : target})`,
+          targetEn: `Name (${meta ? meta.labelEn : target})`,
+        },
+      ];
+      if (target === 'task_set') {
+        mappedFields.push({
+          sourcePl:
+            elementLabels.length > 0
+              ? `Uwzględnione elementy (${elementLabels.length})`
+              : 'Kolejne kroki (next steps)',
+          sourceEn:
+            elementLabels.length > 0
+              ? `Included elements (${elementLabels.length})`
+              : 'Next steps',
+          targetPl: 'Po jednym zadaniu na element',
+          targetEn: 'One task per element',
+        });
+      }
+      if (ideaBody || ideaExpansion) {
+        mappedFields.push({
+          sourcePl: 'Treść / rozwinięcie AI',
+          sourceEn: 'Body / AI expansion',
+          targetPl: target === 'task_set' ? 'Opis każdego zadania' : 'Opis',
+          targetEn: target === 'task_set' ? "Each task's description" : 'Description',
+        });
+      }
+
+      const scopeLabelByKind: Record<
+        string,
+        { pl: string; en: string }
+      > = {
+        workspace: { pl: 'Cała Idea', en: 'Whole Idea' },
+        selected_items: {
+          pl: `Zaznaczenie (${nodeIds.length})`,
+          en: `Selection (${nodeIds.length})`,
+        },
+        single_item: { pl: 'Węzeł', en: 'Single node' },
+        single_item_cascade: {
+          pl: `Gałąź (${nodeIds.length} elem.)`,
+          en: `Branch (${nodeIds.length} elements)`,
+        },
+        selection: {
+          pl: `Zaznaczenie (${nodeIds.length})`,
+          en: `Selection (${nodeIds.length})`,
+        },
+      };
+      const scopeLabel = scopeLabelByKind[scopeKind] || {
+        pl: `Zaznaczenie (${nodeIds.length})`,
+        en: `Selection (${nodeIds.length})`,
+      };
+
+      const willPromoteStage = scopeKind === 'workspace';
+      if (willPromoteStage && stage === 'promoted') {
+        warnings.push({
+          pl: 'Ta Idea jest już oznaczona jako Promowana.',
+          en: 'This Idea is already marked as Promoted.',
+        });
+      }
+
+      return {
+        targetLabelPl: meta ? meta.labelPl : target,
+        targetLabelEn: meta ? meta.labelEn : target,
+        targetArtifactName:
+          title || safeTitleFromSeed(seedText, isPolish) || t('mindmap.untitled'),
+        scope: {
+          kind:
+            scopeKind === 'workspace'
+              ? 'workspace'
+              : scopeKind === 'single_item'
+                ? 'single_item'
+                : scopeKind === 'single_item_cascade'
+                  ? 'branch'
+                  : 'selection',
+          labelPl: scopeLabel.pl,
+          labelEn: scopeLabel.en,
+          elementLabels,
+          elementCount: nodeIds.length,
+        },
+        mappedFields,
+        warnings,
+        willPromoteStage,
+        priorConversionCount,
+      };
+    },
+    [isPolish, realId, seedText, stage, t, title]
+  );
+
+  const handleConvert = useCallback(
+    async (target: IdeaConvertTarget, explicitNodeIds?: string[], explicitScope?: string) => {
+      if (isDraft) return;
+      if (!IDEA_CONVERT_TARGETS.some((t) => t.id === target)) {
+        toast.error(t('mindmap.thisConversionTargetIsNotYet'));
+        return;
+      }
+      if (!isLiveConvertTarget(target)) {
+        toast(t('mindmap.thisConversionIsComingSoon'), {
+          icon: '🔜',
+        });
+        return;
+      }
+      const nodeIds = explicitNodeIds?.length ? explicitNodeIds : selection.ids || [];
+      const scopeKind = explicitScope || (nodeIds.length > 0 ? 'selected_items' : 'workspace');
+      conversionPendingRef.current = { target, nodeIds, scopeKind };
+      setConversionPreviewData(null);
+      setConversionPreviewOpen(true);
+      try {
+        const preview = await buildConversionPreview(target, nodeIds, scopeKind);
+        // Guard against a stale response landing after the user already
+        // cancelled or a newer request superseded this one.
+        if (conversionPendingRef.current?.target === target) {
+          setConversionPreviewData(preview);
+        }
+      } catch {
+        // Never silently skip the gate — fall back to a minimal, honest
+        // preview built from data already in memory.
+        if (conversionPendingRef.current?.target === target) {
+          setConversionPreviewData({
+            targetLabelPl: getConvertTargetMeta(target)?.labelPl || target,
+            targetLabelEn: getConvertTargetMeta(target)?.labelEn || target,
+            targetArtifactName: title || t('mindmap.untitled'),
+            scope: {
+              kind: nodeIds.length > 0 ? 'selection' : 'workspace',
+              labelPl: nodeIds.length > 0 ? `Zaznaczenie (${nodeIds.length})` : 'Cała Idea',
+              labelEn: nodeIds.length > 0 ? `Selection (${nodeIds.length})` : 'Whole Idea',
+              elementLabels: [],
+              elementCount: nodeIds.length,
+            },
+            mappedFields: [],
+            warnings: [
+              {
+                pl: 'Nie udało się przygotować pełnego podglądu — dostępne są tylko podstawowe informacje.',
+                en: 'Could not build a full preview — only basic information is available.',
+              },
+            ],
+            willPromoteStage: nodeIds.length === 0,
+            priorConversionCount: 0,
+          } as ConversionPreviewData);
+        }
+      }
+    },
+    [buildConversionPreview, isDraft, selection.ids, t, title]
+  );
+
+  const handleConversionPreviewConfirm = useCallback(async () => {
+    const pending = conversionPendingRef.current;
+    if (!pending) return;
+    const ok = await performConvert(pending.target, pending.nodeIds, pending.scopeKind);
+    if (ok) {
+      setConversionPreviewOpen(false);
+      setConversionPreviewData(null);
+      conversionPendingRef.current = null;
+    }
+    // On failure the error toast already fired (performConvert) — keep the
+    // preview closed either way rather than leaving a stale one open; the
+    // user can reopen Convert to try again with a fresh preview.
+    else {
+      setConversionPreviewOpen(false);
+      setConversionPreviewData(null);
+      conversionPendingRef.current = null;
+    }
+  }, [performConvert]);
+
+  const handleConversionPreviewCancel = useCallback(() => {
+    setConversionPreviewOpen(false);
+    setConversionPreviewData(null);
+    conversionPendingRef.current = null;
+  }, []);
 
   handleConvertRef.current = handleConvert;
   handleAcceptChallengeRef.current = handleAcceptChallenge;
@@ -3738,6 +4005,21 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
             }}
           />
         </div>
+
+        {/* E11 (2026-08-10) — same mandatory-preview gate as the legacy shell
+            below. Without this, the mels shell's `IdeaConvertMenu` above sets
+            `conversionPreviewOpen` with nothing to render it — a dead click
+            (the mels branch returns early and skips the legacy branch's
+            modal block entirely, confirmed by reading both return paths
+            before adding this). */}
+        <ConversionPreviewDialog
+          open={conversionPreviewOpen}
+          isPolish={Boolean(isPolish)}
+          data={conversionPreviewData}
+          submitting={conversionSubmitting}
+          onConfirm={handleConversionPreviewConfirm}
+          onCancel={handleConversionPreviewCancel}
+        />
       </div>
     );
   }
@@ -4255,6 +4537,19 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
           }}
           canvasContainerRef={canvasContainerRef}
           onImportGraph={handleImportGraph}
+        />
+
+        {/* E11 (2026-08-10) — the single mandatory-preview gate shared by every
+            Convert entry point (Menu 1, right-panel Convert section, Mind Map
+            node menu, Table bulk convert, Process Flow node convert). See
+            handleConvert/performConvert above. */}
+        <ConversionPreviewDialog
+          open={conversionPreviewOpen}
+          isPolish={Boolean(isPolish)}
+          data={conversionPreviewData}
+          submitting={conversionSubmitting}
+          onConfirm={handleConversionPreviewConfirm}
+          onCancel={handleConversionPreviewCancel}
         />
 
         {drawerUnifiedEnabled ? (

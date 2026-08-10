@@ -334,7 +334,14 @@ describe('M05 L-08 — Ideas workspace persistence contracts (S2/S3/S6)', () => 
   // ── S6: Snapshot 201 ──────────────────────────────────────────────────────
 
   describe('S6 — snapshot creation returns 201', () => {
+    // E12 (10.4): POST /map/snapshots now verifies the idea belongs to the
+    // caller's org (SELECT id FROM my_ideas WHERE id=? AND organization_id=?)
+    // before writing — previously this endpoint ran zero SELECTs before the
+    // INSERT. Every "should succeed" case below must stub that lookup to
+    // resolve the idea; the 400 cases never reach it (schema validation
+    // short-circuits first).
     it('POST /map/snapshots → 201 with snapshot id', async () => {
+      mockQueryOne.mockResolvedValueOnce({ id: IDEA_ID });
       const res = await request(buildApp())
         .post(`/api/my-work/my-ideas/${IDEA_ID}/map/snapshots`)
         .send({ label: 'Milestone v1', nodes: [NODE], edges: [EDGE] });
@@ -349,6 +356,7 @@ describe('M05 L-08 — Ideas workspace persistence contracts (S2/S3/S6)', () => 
     });
 
     it('POST /map/snapshots calls queryHelpers.run (INSERT INTO snapshots)', async () => {
+      mockQueryOne.mockResolvedValueOnce({ id: IDEA_ID });
       await request(buildApp())
         .post(`/api/my-work/my-ideas/${IDEA_ID}/map/snapshots`)
         .send({ label: 'Check insert', nodes: [NODE], edges: [] });
@@ -360,6 +368,7 @@ describe('M05 L-08 — Ideas workspace persistence contracts (S2/S3/S6)', () => 
     });
 
     it('POST /map/snapshots with missing label → 400', async () => {
+      mockQueryOne.mockResolvedValueOnce({ id: IDEA_ID });
       const res = await request(buildApp())
         .post(`/api/my-work/my-ideas/${IDEA_ID}/map/snapshots`)
         .send({ nodes: [], edges: [] }); // label missing
@@ -369,11 +378,22 @@ describe('M05 L-08 — Ideas workspace persistence contracts (S2/S3/S6)', () => 
     });
 
     it('POST /map/snapshots with empty label → 400', async () => {
+      mockQueryOne.mockResolvedValueOnce({ id: IDEA_ID });
       const res = await request(buildApp())
         .post(`/api/my-work/my-ideas/${IDEA_ID}/map/snapshots`)
         .send({ label: '', nodes: [], edges: [] });
 
       expect(res.status).toBe(400);
+    });
+
+    it('POST /map/snapshots → 404 when the idea does not belong to the caller org', async () => {
+      mockQueryOne.mockResolvedValueOnce(null);
+      const res = await request(buildApp())
+        .post(`/api/my-work/my-ideas/${IDEA_ID}/map/snapshots`)
+        .send({ label: 'Should not persist', nodes: [], edges: [] });
+
+      expect(res.status).toBe(404);
+      expect(mockRun).not.toHaveBeenCalled();
     });
   });
 });

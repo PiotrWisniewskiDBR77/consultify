@@ -4,30 +4,43 @@
  * teraz odpowiadający wpis w `IDEA_ACTION_REGISTRY` (`idea.node.mm_*`,
  * `getAction(id)`) i wykonują się przez `runIdeaAction(id, ctx)`. Druga fala =
  * Edit + Structure + Delete (15). Trzecia fala = Convert + Convert branch (8).
- * Czwarta fala (TA zmiana) = AI (9 pozycji, 8 wpisów — ctx_ai_expand/
- * ctx_ai_deepen dzielą jeden wpis, sprawdzone: identyczny handleAIExpand())
- * + Style & data (13 pozycji, 11 wpisów — ctx_quick_notes/ctx_quick_tags
- * reużywają `idea.node.mm_open_detail`, sprawdzone: identyczny
- * setDrawerNodeId()). Tym samym `NodeContextMenu.tsx` jest w CAŁOŚCI
- * podpięty pod rejestr — brak lokalnych pozycji menu bez odpowiadającego
- * wpisu (patrz `if (registryId && !getAction(registryId))` niżej, które teraz
- * pilnuje KAŻDEJ pozycji, nie tylko trzech pierwszych grup).
+ * Czwarta fala = AI (9 pozycji, 8 wpisów — ctx_ai_expand/ctx_ai_deepen dzielą
+ * jeden wpis, sprawdzone: identyczny handleAIExpand()) + Style & data
+ * (13 pozycji, 11 wpisów — ctx_quick_notes/ctx_quick_tags reużywają
+ * `idea.node.mm_open_detail`, sprawdzone: identyczny setDrawerNodeId()). Tym
+ * samym `NodeContextMenu.tsx` jest w CAŁOŚCI podpięty pod rejestr — brak
+ * lokalnych pozycji menu bez odpowiadającego wpisu (patrz
+ * `if (registryId && !getAction(registryId))` niżej, które teraz pilnuje
+ * KAŻDEJ pozycji, nie tylko trzech pierwszych grup).
  *
- * Honesty highlights czwartej fali (pełne uzasadnienia w rejestrze):
+ * E10 (2026-08-10, AI/Teresa behaviour pass — doc09 ch.09, master program §8):
+ * czwarta fala oznaczyła zasięg RZETELNIE (chip „Dokument"/„Selection"/
+ * „Branch") ale NIE zmieniła zachowania. Ta zmiana robi drugi krok — zasięg
+ * WIDOCZNY musi zgadzać się z rzeczywistym wejściem, nie tylko być uczciwie
+ * OPISANY:
+ *  - `ctx_ai_deepen` USUNIĘTE — było bajt-identyczne z `ctx_ai_expand`
+ *    (`handleAIExpand()`, zero parametru różnicującego) — dwie etykiety
+ *    obiecujące różny efekt, dostarczające jeden, dokładna odwrotność zakazu
+ *    z rozdz. 09 §2. Genuine "Deepen" (delegacja do czatu, `mm_ai_deepen`)
+ *    dalej istnieje — ale na pasku szybkich akcji (`AIActionsPopover.tsx`/
+ *    `FloatingAIPopover.tsx`), NIE w tym menu; nie duplikowane tutaj.
+ *  - `ctx_dependencies`/`ctx_priority`/`ctx_competitive` PRZENIESIONE do
+ *    `PaneContextMenu.tsx` (menu tła canvasu — rozdz. 09 §1, poziom 2
+ *    „Aktualny widok"). Weryfikacja w kodzie (nie spekulacja):
+ *    `AIDependencyDetector`/`AIPriorityRecommender`/`AICompetitiveLandscape`
+ *    biorą CAŁE `nodes`/`edges` bez żadnego parametru ogniskującego na
+ *    węźle — węzeł spod kursora fizycznie nie może wpłynąć na wynik. Uczciwy
+ *    chip „Dokument" w menu węzła (poprzednia fala) UJAWNIAŁ niedopasowanie;
+ *    ta zmiana je USUWA STRUKTURALNIE, przenosząc akcję na powierzchnię,
+ *    której zasięg faktycznie ma. Zobacz `idea.view.mm_ai_detect_dependencies`
+ *    / `_prioritize` / `_competitors` w rejestrze.
  *  - `ai_suggest_links` — klik z TEGO menu jest DZIŚ MARTWY
  *    (`handleContextAction` nie ma gałęzi obsługi); ta sama etykieta na
  *    pływającym pasku AI DZIAŁA. Zgłoszone, NIE naprawione tym wpisem (zmiana
  *    widocznego zachowania kliku wykracza poza wiring).
- *  - `ctx_dependencies`/`ctx_priority`/`ctx_competitive` — realne AI
- *    (`Api.getMyIdeaAISuggestions`), ale mimo pozycji w menu WĘZŁA operują na
- *    CAŁEJ mapie (węzeł spod kursora bez wpływu na wynik) — `scope: 'workspace'`
- *    w rejestrze, nie `single_item`. MM-P2-03 (2026-08-10): to jest DOKŁADNIE
- *    powód, dla którego te trzy dostają teraz widoczny chip „Dokument" — bez
- *    niego użytkownik klikający je Z WĘZŁA rozsądnie oczekiwałby wyniku
- *    dotyczącego TEGO węzła, a dostaje wynik dla całej mapy.
  *  - `ctx_competitive` — `onAddToMap` nie wołał `pushUndo()` (jedyny z 7
- *    wywołujących `idea-workspace-insert` w tym pliku bez niego) — DOPISANE tą
- *    zmianą w `IdeaRecommendationMap.tsx`.
+ *    wywołujących `idea-workspace-insert` w tym pliku bez niego) — DOPISANE
+ *    N5 czwartą falą w `IdeaRecommendationMap.tsx`, zachowane po przenosinach.
  *  - `ctx_change_shape`/`ctx_paste_style`/`ctx_vote_up` — bezpośrednio mutują
  *    dane węzła, żadna nie woła `pushUndo()` (systemowa, przedistniejąca luka
  *    w undo tej grupy — zgłoszona, nie naprawiona hurtem tym wiringiem).
@@ -118,13 +131,11 @@ import {
   FileText,
   FoldVertical,
   GitBranch,
-  Globe,
   Image,
   Link2,
   ListChecks,
   MessageSquare,
   MoreHorizontal,
-  Network,
   Paintbrush,
   Plus,
   Rocket,
@@ -135,7 +146,6 @@ import {
   Star,
   StickyNote,
   Tag,
-  Target,
   Trash2,
   UserPlus,
   Wand2,
@@ -192,12 +202,8 @@ const REGISTRY_ID_BY_LOCAL_ID: Record<string, string> = {
   // — sprawdzone w handleContextAction, oba wołają identyczny handleAIExpand()).
   ctx_ai_rewrite_node: 'idea.node.mm_ai_rewrite_node',
   ctx_ai_expand: 'idea.node.mm_ai_expand_node',
-  ctx_ai_deepen: 'idea.node.mm_ai_expand_node',
   ctx_what_if: 'idea.node.mm_ai_what_if',
   ctx_summarize_branch: 'idea.node.mm_summarize_branch',
-  ctx_dependencies: 'idea.node.mm_ai_detect_dependencies',
-  ctx_priority: 'idea.node.mm_ai_prioritize',
-  ctx_competitive: 'idea.node.mm_ai_competitors',
   ai_suggest_links: 'idea.node.mm_ai_suggest_links',
   // N5 czwarta fala (2026-08-09) — Style & data group (13 pozycji: 11 nowe
   // wpisy + ctx_quick_notes/ctx_quick_tags reużywają idea.node.mm_open_detail,
@@ -464,15 +470,17 @@ export const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
       {
         // handleAIExpand() anchors on the clicked node and proposes NEW
         // children under it — verified in IdeaRecommendationMap.tsx.
+        // E10 (2026-08-10): "Expand topic" absorbed the old "Deepen" row —
+        // both called the byte-identical handleAIExpand() with zero
+        // differentiating parameter (see registry honesty note on
+        // `idea.node.mm_ai_expand_node`), which is the exact anti-pattern
+        // ch.09 §2 forbids (two labels promising different effects,
+        // delivering one). A genuinely different "Deepen topic" already
+        // exists on this tool's rail popover (`mm_ai_deepen`,
+        // `useMindMapQuickActions.ts` — opens a chat prompt instead of
+        // mutating) — that mechanism was NOT touched or duplicated here.
         id: 'ctx_ai_expand',
         labelEn: 'Expand topic',
-        icon: Sparkles,
-        disabled: isLocked,
-        scope: 'branch',
-      },
-      {
-        id: 'ctx_ai_deepen',
-        labelEn: 'Deepen',
         icon: Sparkles,
         disabled: isLocked,
         scope: 'branch',
@@ -495,30 +503,20 @@ export const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
         disabled: isLocked,
         scope: 'branch',
       },
-      {
-        // Verified DEAD END, not scope-mislabeled: reads whole-map AI
-        // suggestions regardless of which node was clicked (see file-header
-        // honesty note) — hence "Document", not "Selection".
-        id: 'ctx_dependencies',
-        labelEn: 'Detect dependencies',
-        icon: Network,
-        disabled: isLocked,
-        scope: 'document',
-      },
-      {
-        id: 'ctx_priority',
-        labelEn: 'Prioritize',
-        icon: Target,
-        disabled: isLocked,
-        scope: 'document',
-      },
-      {
-        id: 'ctx_competitive',
-        labelEn: 'Competitors',
-        icon: Globe,
-        disabled: isLocked,
-        scope: 'document',
-      },
+      // E10 (2026-08-10): "Detect dependencies" / "Prioritize" / "Competitors"
+      // MOVED OUT of this per-node menu to `PaneContextMenu.tsx` (canvas
+      // background menu, ch.09 §1 level-2 "Aktualny widok" entry point).
+      // Verified in the underlying generators (`AIDependencyDetector.tsx`,
+      // `AIPriorityRecommender.tsx`, `AICompetitiveLandscape.tsx`): all three
+      // take the FULL `nodes`/`edges` arrays with no per-node focusing
+      // parameter — the node under the cursor genuinely cannot change the
+      // result. Keeping a scope-mismatched action honestly labeled
+      // "Document" in a per-node menu (prior wave's fix) still let a user
+      // reasonably expect node-scoped output from a node menu; relocating to
+      // the surface whose scope actually matches removes the mismatch
+      // structurally instead of only disclosing it. See
+      // `idea.view.mm_ai_detect_dependencies` / `_prioritize` / `_competitors`
+      // in the registry and `PaneContextMenu.tsx` for the new home.
       {
         // mm_ai_suggest_links_execute carries this node's id/label only.
         id: 'ai_suggest_links',
@@ -584,9 +582,33 @@ export const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
               icon: Rocket,
               disabled: isLocked,
             },
+          ]
+        : [],
+    [hasChildren, isLocked]
+  );
+
+  // E11 fix (2026-08-10, docs/standards/idea-workspace/10_*, §1 taxonomy +
+  // §6 "Utwórz z mapy" ban): `ctx_subtree_convert_process_flow` used to sit
+  // inside `convertBranchItems` above, under the "Convert branch to..." group
+  // label — but it does NOT create a record in another module the way the
+  // other four items do. It inserts the branch's nodes as steps into THIS
+  // SAME Idea's Process Flow representation (IdeaMapWorkspace.tsx
+  // handleQuickAction's XFORM_MAP/transformSelection path, verified — see the
+  // honesty block above `runMindmapNodeConvertAction`). Chapter 10 §1 calls
+  // this "Generowanie reprezentacji" (representation generation), a
+  // DIFFERENT, non-interchangeable concept from "Konwersja do artefaktu"
+  // (conversion). Kept as its OWN item/group (id, registry id and mechanism
+  // UNCHANGED — only the label and grouping, to avoid breaking the existing
+  // h2.3-mindmap-processflow-branch-conversion.test.ts coverage and the
+  // registry's dual-surface FloatingNodeToolbar pairing) so it no longer
+  // reads as a sibling of the four real conversions.
+  const generateFromBranchItems: MenuItemBase[] = useMemo(
+    () =>
+      hasChildren
+        ? [
             {
               id: 'ctx_subtree_convert_process_flow',
-              labelEn: '→ Process Flow (branch)',
+              labelEn: '→ Process Flow steps (in this Idea)',
               icon: Workflow,
               disabled: isLocked,
             },
@@ -773,6 +795,32 @@ export const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
       children: convertChildren,
     });
 
+    // E11 fix (2026-08-10): "Process Flow steps from branch" is representation
+    // generation (stays inside THIS Idea), not artifact conversion (rozdz. 10
+    // §1) — a separate flyout so it never reads as a sibling of the four real
+    // Convert-branch targets above. See `generateFromBranchItems` above.
+    const generateChildren = generateFromBranchItems.map((item, i) =>
+      buildItem(item, {
+        groupLabel:
+          i === 0
+            ? t(
+                'myWorkMindmap.ctxMenu.group.generateFromBranch',
+                'Generate (in this Idea, no new object)'
+              )
+            : undefined,
+      })
+    );
+    if (generateChildren.length > 0) {
+      flat.push({
+        id: 'ctx_group_generate',
+        label: t('myWorkMindmap.ctxMenu.group.generate', 'Generate'),
+        icon: <Workflow size={14} />,
+        disabled: generateChildren.every((c) => c.disabled),
+        onSelect: () => undefined,
+        children: generateChildren,
+      });
+    }
+
     const appearanceChildren = appearanceItems.map((item) => buildItem(item));
     flat.push({
       id: 'ctx_group_appearance',
@@ -821,6 +869,7 @@ export const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
     aiItems,
     convertItems,
     convertBranchItems,
+    generateFromBranchItems,
     appearanceItems,
     expertItems,
     moreItems,

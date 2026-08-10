@@ -719,6 +719,117 @@ export function useWhiteboardNodes(opts: UseWhiteboardNodesOpts) {
     [locked, nodes, pushSnapshot, setNodes, setEdges, t]
   );
 
+  /**
+   * WB-FRAME-02 (drag containment, 2026-08-10) — WB-FRAME-01 above gave
+   * frames real container semantics (`parentNode`) but ONLY through explicit
+   * menu commands ("Add selection to frame" / "Remove from frame"); dragging
+   * a node's box physically into or out of a frame's drawn boundary did
+   * nothing to `parentNode` — the two only agreed by coincidence right after
+   * a menu action, and drifted apart the moment the user next dragged
+   * anything. This closes that gap on `onNodeDragStop` (see
+   * `IdeaWhiteboardTool.tsx`'s composed drag-stop handler): hit-test the
+   * dragged node's CENTER, in absolute canvas coordinates, against every
+   * frame's absolute rect, and reconcile `parentNode`/`parentId` to match
+   * what the user just visually did —
+   *   • center now inside a frame's box, none before → become that frame's
+   *     child (same join math `addSelectionToFrame` already uses).
+   *   • center now outside every frame's box, had one before → release back
+   *     to absolute position (the exact formula `removeFromFrame` already
+   *     uses — not a new rule).
+   *   • center now inside a DIFFERENT frame than the one it started in →
+   *     reparent directly, composing the same two known-correct formulas
+   *     (release-style absolute conversion, then join-style relative
+   *     conversion into the new frame) — not a new, untested position rule.
+   * Deliberately excluded, same "no established semantics" boundary
+   * `addSelectionToFrame` already documents: the dragged node being a frame
+   * itself (no nested-frame semantics anywhere in this file), a locked node
+   * or a locked/collapsed target frame, and any drag while the board itself
+   * is locked.
+   */
+  const reparentNodeOnDrag = useCallback(
+    (nodeId: string) => {
+      if (locked) return;
+      const all = nodes as Node[];
+      const node = all.find((n) => n.id === nodeId);
+      if (!node || isNodeLocked(node)) return;
+      if (node.type === 'frameNode' || node.type === 'groupNode') return;
+
+      const currentFrameId = containingFrameId(node);
+      const currentFrame = currentFrameId ? all.find((n) => n.id === currentFrameId) : undefined;
+      const hasNativeParent = Boolean((node as { parentNode?: string }).parentNode);
+      const absolutePosition =
+        currentFrameId && currentFrame && hasNativeParent
+          ? { x: node.position.x + currentFrame.position.x, y: node.position.y + currentFrame.position.y }
+          : node.position;
+
+      const nodeRect = rectOfWhiteboardNode({ ...node, position: absolutePosition });
+      const centerX = nodeRect.x + nodeRect.width / 2;
+      const centerY = nodeRect.y + nodeRect.height / 2;
+
+      const candidateFrames = all.filter(
+        (n) => n.type === 'frameNode' && n.id !== nodeId && !isNodeLocked(n) && !n.data?.collapsed
+      );
+      // Smallest-area match wins when frames overlap — the more specific
+      // (usually inner) frame is the one the dragged box visually landed in.
+      let matched: Node | undefined;
+      let matchedArea = Infinity;
+      for (const frame of candidateFrames) {
+        const rect = rectOfWhiteboardNode(frame, { width: 400, height: 300 });
+        const within =
+          centerX >= rect.x &&
+          centerX <= rect.x + rect.width &&
+          centerY >= rect.y &&
+          centerY <= rect.y + rect.height;
+        if (!within) continue;
+        const area = rect.width * rect.height;
+        if (area < matchedArea) {
+          matched = frame;
+          matchedArea = area;
+        }
+      }
+
+      if ((matched?.id ?? undefined) === currentFrameId) return; // visually unchanged — no toast, no undo entry
+
+      pushSnapshot?.();
+      if (matched) {
+        const frameId = matched.id;
+        const relative = {
+          x: absolutePosition.x - matched.position.x,
+          y: absolutePosition.y - matched.position.y,
+        };
+        setNodes((prev: Node[]) => {
+          const next = prev.map((n) =>
+            n.id === nodeId ? { ...n, parentNode: frameId, parentId: frameId, position: relative } : n
+          );
+          // ReactFlow requires a parent node to precede its children.
+          const frameIdx = next.findIndex((n) => n.id === frameId);
+          const childIdx = next.findIndex((n) => n.id === nodeId);
+          if (frameIdx > childIdx) {
+            const [frameNode] = next.splice(frameIdx, 1);
+            next.unshift(frameNode);
+          }
+          return next;
+        });
+        toast.success(t('myWork.whiteboard.toast.frameAdded'), { duration: 500 });
+      } else {
+        setNodes((prev: Node[]) =>
+          prev.map((n) => {
+            if (n.id !== nodeId) return n;
+            const { parentNode: _pn, parentId: _pid, ...rest } = n as Node & {
+              parentNode?: string;
+              parentId?: string;
+            };
+            const nextData = { ...(n.data as Record<string, unknown>) };
+            delete nextData.parentId;
+            return { ...rest, data: nextData, position: absolutePosition } as Node;
+          })
+        );
+        toast.success(t('myWork.whiteboard.toast.frameReleaseOne'), { duration: 500 });
+      }
+    },
+    [locked, nodes, pushSnapshot, setNodes, t]
+  );
+
   return {
     deleteSelected,
     duplicateSelected,
@@ -735,5 +846,6 @@ export function useWhiteboardNodes(opts: UseWhiteboardNodesOpts) {
     removeFromFrame,
     resizeFrameToFit,
     deleteFrame,
+    reparentNodeOnDrag,
   };
 }

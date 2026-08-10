@@ -2003,6 +2003,7 @@
         "ariaLabel": "Pasek narzędzi tablicy",
         "title": "Whiteboard",
         "create": "Utwórz",
+        "insert": "Wstaw",
         "role": "Rola",
         "bgDots": "Kropki",
         "bgGrid": "Siatka",
@@ -26960,6 +26961,7 @@
     "aiExpandBranch": "AI rozwiń gałąź",
     "failedToApplyProposals": "Nie udało się zastosować propozycji",
     "aiRequiresBackend": "AI wymaga działającego backendu.",
+    "aiExpandTargetNodeMissing": "Tego węzła nie ma już na płótnie — wybierz inny węzeł do rozwinięcia.",
     "noNewSuggestions": "Brak nowych propozycji",
     "aiFailed": "AI nie zadziałało",
     "branchDetached": "Gałąź odłączona",
@@ -29744,7 +29746,11 @@
       "expandLane": "Rozwiń tor",
       "collapseLane": "Zwiń tor",
       "resizeLane": "Zmień wysokość toru",
-      "setColor": "Ustaw kolor toru"
+      "setColor": "Ustaw kolor toru",
+      "moveUp": "Przesuń tor w górę",
+      "moveDown": "Przesuń tor w dół",
+      "changeColor": "Zmień kolor toru",
+      "deleteLane": "Usuń tor"
     },
     "exportDialog": {
       "jsonDesc": "Typowany graf do integracji",

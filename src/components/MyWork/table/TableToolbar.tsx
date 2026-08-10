@@ -57,6 +57,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { type ActionContext, getActionsForSurface, runIdeaAction } from '@/actions/ideaActionRegistry';
 import { Button } from '@/components/ui/primitives/Button';
 import {
   Sheet,
@@ -68,6 +69,7 @@ import {
 } from '@/components/ui/sheet';
 import * as TablePlatformApi from '@/services/api/tablePlatform.api';
 
+import { EMPTY_SELECTION } from '../ideaSelectionTypes';
 import { AddColumnDialog } from './AddColumnDialog';
 import { AITableAssistant } from './AITableAssistant';
 import { AITableProposal, type TableProposal } from './AITableProposal';
@@ -233,7 +235,58 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
     applyPlatformFilters,
     ui,
     uiDispatch,
+    isPl,
   } = ctx;
+
+  /**
+   * N10 (2026-08-10) — same shape as `WhiteboardToolbar.tsx`'s `runAction`
+   * (Program B / E02, N7 kontynuacja): routes a TableToolbar click through
+   * the Action Registry (`ideaActionRegistry.ts`) with the standard
+   * dual-path contract (`ctx.source: 'ui'` + `ctx.params.run` → the
+   * registry's handler calls `run` directly, byte-identical to the
+   * pre-wiring behaviour — no prop or state-setter call is skipped).
+   * `registryActionsById` guard mirrors the Whiteboard precedent: an id
+   * missing from the registry (typo, or an entry not yet declared for the
+   * `'toolbar'` surface) falls back to running the original callback instead
+   * of silently swallowing the click — a signal to fix the registry, not the
+   * intended path. This component only renders when `usePlatform` is `true`
+   * (`IdeaTableTool.tsx` `{usePlatform ? <P15TableToolbar …/> : …}`), so
+   * `tool: 'table'` and the platform-only mechanisms documented per registry
+   * entry always apply.
+   */
+  // Two surfaces, not one: this file hosts both flat toolbar buttons
+  // (`surfaces: ['toolbar']`) and its own right-click view-context menu
+  // (`surfaces: ['context']`, e.g. `idea.view.table_platform_saved_view_*`).
+  const registryActionsById = React.useMemo(() => {
+    const map = new Map<string, ReturnType<typeof getActionsForSurface>[number]>();
+    for (const entry of getActionsForSurface('toolbar', { tool: 'table' })) {
+      map.set(entry.def.id, entry);
+    }
+    for (const entry of getActionsForSurface('context', { tool: 'table' })) {
+      map.set(entry.def.id, entry);
+    }
+    return map;
+  }, []);
+
+  const runAction = useCallback(
+    (id: string, run: () => void) => {
+      if (!registryActionsById.has(id)) {
+        run();
+        return;
+      }
+      const actionCtx: ActionContext = {
+        ideaId: props.ideaId,
+        tool: 'table',
+        selection: EMPTY_SELECTION,
+        surface: 'toolbar',
+        source: 'ui',
+        language: isPl ? 'pl' : 'en',
+        params: { run },
+      };
+      void runIdeaAction(id, actionCtx);
+    },
+    [registryActionsById, props.ideaId, isPl]
+  );
 
   // Local UI toggles scoped to toolbar
   const [showSaveViewDialog, setShowSaveViewDialog] = useState(false);
@@ -426,7 +479,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
               />
             ) : (
               <button
-                onClick={() => applyView(v)}
+                onClick={() => runAction('idea.view.table_apply_view', () => applyView(v))}
                 onContextMenu={(e) => {
                   e.preventDefault();
                   if (v.id !== 'default')
@@ -475,7 +528,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
               value={saveViewName}
               onChange={(e) => setSaveViewName(e.target.value)}
               placeholder={t('ideas.table.viewName', 'View name…')}
-              className="w-full h-8 px-3 rounded-lg text-xs bg-c-surface-raised border border-c-border-subtle outline-none focus:ring-2 focus:ring-blue-500/30 mb-3"
+              className="w-full h-8 px-3 rounded-lg text-xs bg-c-surface-raised border border-c-border-subtle outline-none focus:ring-2 focus:ring-c-focus mb-3"
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && saveViewName.trim()) handleSaveView(saveViewName.trim());
               }}
@@ -489,7 +542,9 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
               </button>
               <button
                 disabled={!saveViewName.trim()}
-                onClick={() => handleSaveView(saveViewName.trim())}
+                onClick={() =>
+                  runAction('idea.view.table_save_view', () => handleSaveView(saveViewName.trim()))
+                }
                 className="px-3 py-1.5 text-xs rounded-lg bg-c-text text-c-surface hover:opacity-90 disabled:opacity-40"
               >
                 {t('ideas.table.save', 'Save')}
@@ -509,44 +564,50 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
           >
             <button
               className="w-full px-3 py-1.5 text-xs text-left hover:bg-c-surface-raised text-c-text"
-              onClick={() => {
-                const v = savedViews.find((sv) => sv.id === viewContextMenu.viewId);
-                if (v) {
-                  setRenamingViewId(v.id);
-                  setRenamingViewName(v.name);
-                }
-                setViewContextMenu(null);
-              }}
+              onClick={() =>
+                runAction('idea.view.table_platform_saved_view_rename', () => {
+                  const v = savedViews.find((sv) => sv.id === viewContextMenu.viewId);
+                  if (v) {
+                    setRenamingViewId(v.id);
+                    setRenamingViewName(v.name);
+                  }
+                  setViewContextMenu(null);
+                })
+              }
             >
               {t('ideas.table.rename', 'Rename')}
             </button>
             <button
               className="w-full px-3 py-1.5 text-xs text-left hover:bg-c-surface-raised text-c-text"
-              onClick={() => {
-                updateSavedView(viewContextMenu.viewId, {
-                  sort: sort ? [sort] : undefined,
-                  filters,
-                  groupBy: groupBy ?? undefined,
-                  layout: viewLayout,
-                  columns: columns.map((c) => ({
-                    key: c.key,
-                    visible: c.visible !== false,
-                    width: c.width,
-                  })),
-                });
-                toast.success(t('ideas.table.viewUpdated', 'View updated'));
-                setViewContextMenu(null);
-              }}
+              onClick={() =>
+                runAction('idea.view.table_platform_saved_view_update', () => {
+                  updateSavedView(viewContextMenu.viewId, {
+                    sort: sort ? [sort] : undefined,
+                    filters,
+                    groupBy: groupBy ?? undefined,
+                    layout: viewLayout,
+                    columns: columns.map((c) => ({
+                      key: c.key,
+                      visible: c.visible !== false,
+                      width: c.width,
+                    })),
+                  });
+                  toast.success(t('ideas.table.viewUpdated', 'View updated'));
+                  setViewContextMenu(null);
+                })
+              }
             >
               {t('ideas.table.update', 'Update')}
             </button>
             <button
               className="w-full px-3 py-1.5 text-xs text-left hover:bg-danger-50 dark:hover:bg-danger-900/20 text-danger-600"
-              onClick={() => {
-                deleteSavedView(viewContextMenu.viewId);
-                toast.success(t('ideas.table.viewDeleted', 'View deleted'));
-                setViewContextMenu(null);
-              }}
+              onClick={() =>
+                runAction('idea.view.table_platform_saved_view_delete', () => {
+                  deleteSavedView(viewContextMenu.viewId);
+                  toast.success(t('ideas.table.viewDeleted', 'View deleted'));
+                  setViewContextMenu(null);
+                })
+              }
             >
               {t('ideas.table.delete', 'Delete')}
             </button>
@@ -556,8 +617,13 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
 
       <div className="w-px h-5 bg-c-border-subtle" />
 
-      {/* Quick filter */}
-      <div className="relative flex-1 max-w-[200px]">
+      {/* Quick filter.
+          2026-08-10 (E13 visual audit, HARD VISUAL FAIL "clipped essential
+          control"): `flex-1` with no `min-width` let this input shrink to
+          ~47px in the crowded view-tabs row (only "Fi" of "Filtruj…"
+          legible). `min-w-[120px]` keeps it usable — the shared flex-wrap
+          row now wraps this control to its own line instead of crushing it. */}
+      <div className="relative flex-1 min-w-[120px] max-w-[200px]">
         <Filter
           size={12}
           className="absolute left-2 top-1/2 -translate-y-1/2 text-c-text-secondary"
@@ -566,7 +632,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
           value={props.filterInput}
           onChange={(e) => props.onFilterInputChange(e.target.value)}
           placeholder={t('ideas.table.filter', 'Filter…')}
-          className="w-full h-7 pl-7 pr-2 rounded-lg text-[11px] bg-c-surface border border-slate-200/60 dark:border-white/[0.03] text-c-text outline-none focus:ring-2 focus:ring-blue-500/30"
+          className="w-full h-7 pl-7 pr-2 rounded-lg text-[11px] bg-c-surface border border-slate-200/60 dark:border-white/[0.03] text-c-text outline-none focus:ring-2 focus:ring-c-focus"
         />
         {props.filterInput && (
           <button
@@ -794,43 +860,45 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
                 {
                   icon: Layers,
                   label: t('ideas.table.aiCategorize', 'AI Categorize'),
-                  onClick: props.onShowAICategorize,
+                  onClick: () => runAction('idea.ai.table_categorize', props.onShowAICategorize),
                   show: !locked,
                 },
                 {
                   icon: Trophy,
                   label: t('ideas.table.scoringModel', 'Scoring Model'),
-                  onClick: props.onShowScoringModel,
+                  onClick: () => runAction('idea.view.table_scoring', props.onShowScoringModel),
                 },
                 {
                   icon: Presentation,
                   label: t('ideas.table.exportToPresentation', 'Export to Presentation'),
-                  onClick: props.onShowExportPresentation,
+                  onClick: () =>
+                    runAction('idea.view.table_export_presentation', props.onShowExportPresentation),
                 },
                 {
                   icon: Rocket,
                   label: t('ideas.table.ideaPipeline', 'Idea Pipeline'),
-                  onClick: props.onShowPipeline,
+                  onClick: () => runAction('idea.view.table_pipeline', props.onShowPipeline),
                 },
                 {
                   icon: Brain,
                   label: t('ideas.table.aiCopilot.label', 'AI Copilot'),
-                  onClick: props.onShowCopilot,
+                  onClick: () => runAction('idea.ai.table_copilot', props.onShowCopilot),
                 },
                 {
                   icon: Mic,
                   label: t('ideas.table.voiceImage', 'Voice / Image'),
-                  onClick: props.onShowVoiceInput,
+                  onClick: () => runAction('idea.view.table_voice_input', props.onShowVoiceInput),
                 },
                 {
                   icon: Network,
                   label: t('ideas.table.crossTableRelations', 'Cross-table Relations'),
-                  onClick: props.onShowCrossRelations,
+                  onClick: () =>
+                    runAction('idea.view.table_cross_relations', props.onShowCrossRelations),
                 },
                 {
                   icon: Flame,
                   label: t('ideas.table.heatmap', 'Heatmap'),
-                  onClick: props.onToggleHeatmap,
+                  onClick: () => runAction('idea.view.table_heatmap', props.onToggleHeatmap),
                   active: props.heatmapColumns.size > 0,
                 },
                 {
@@ -859,7 +927,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
                 {
                   icon: LayoutGrid,
                   label: t('ideas.table.frameworkGenerator', 'Framework Generator'),
-                  onClick: props.onShowFrameworkGen,
+                  onClick: () => runAction('idea.ai.table_framework', props.onShowFrameworkGen),
                   show: !locked,
                 },
                 {
@@ -1012,50 +1080,52 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
       <MobileToolbarMenuComponent>
         {!locked && (
           <button
-            onClick={props.onShowAICategorize}
+            onClick={() => runAction('idea.ai.table_categorize', props.onShowAICategorize)}
             className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-c-text hover:bg-c-surface-raised min-h-[44px]"
           >
             <Layers size={14} /> {t('ideas.table.aiCategorize', 'AI Categorize')}
           </button>
         )}
         <button
-          onClick={props.onShowScoringModel}
+          onClick={() => runAction('idea.view.table_scoring', props.onShowScoringModel)}
           className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-c-text hover:bg-c-surface-raised min-h-[44px]"
         >
           <Trophy size={14} /> {t('ideas.table.scoring', 'Scoring')}
         </button>
         <button
-          onClick={props.onShowExportPresentation}
+          onClick={() =>
+            runAction('idea.view.table_export_presentation', props.onShowExportPresentation)
+          }
           className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-c-text hover:bg-c-surface-raised min-h-[44px]"
         >
           <Presentation size={14} /> {t('ideas.table.presentation', 'Presentation')}
         </button>
         <button
-          onClick={props.onShowPipeline}
+          onClick={() => runAction('idea.view.table_pipeline', props.onShowPipeline)}
           className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-c-text hover:bg-c-surface-raised min-h-[44px]"
         >
           <Rocket size={14} /> {t('ideas.table.pipeline', 'Pipeline')}
         </button>
         <button
-          onClick={props.onShowCopilot}
+          onClick={() => runAction('idea.ai.table_copilot', props.onShowCopilot)}
           className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-c-text hover:bg-c-surface-raised min-h-[44px]"
         >
           <Brain size={14} /> AI Copilot
         </button>
         <button
-          onClick={props.onShowVoiceInput}
+          onClick={() => runAction('idea.view.table_voice_input', props.onShowVoiceInput)}
           className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-c-text hover:bg-c-surface-raised min-h-[44px]"
         >
           <Mic size={14} /> {t('ideas.table.voiceImage', 'Voice / Image')}
         </button>
         <button
-          onClick={props.onShowCrossRelations}
+          onClick={() => runAction('idea.view.table_cross_relations', props.onShowCrossRelations)}
           className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-c-text hover:bg-c-surface-raised min-h-[44px]"
         >
           <Network size={14} /> {t('ideas.table.relations', 'Relations')}
         </button>
         <button
-          onClick={props.onToggleHeatmap}
+          onClick={() => runAction('idea.view.table_heatmap', props.onToggleHeatmap)}
           className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-c-text hover:bg-c-surface-raised min-h-[44px]"
         >
           <Flame size={14} /> {t('ideas.table.heatmap', 'Heatmap')}
@@ -1080,7 +1150,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
         </button>
         {!locked && (
           <button
-            onClick={props.onShowFrameworkGen}
+            onClick={() => runAction('idea.ai.table_framework', props.onShowFrameworkGen)}
             className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-c-text hover:bg-c-surface-raised min-h-[44px]"
           >
             <LayoutGrid size={14} /> Framework
@@ -1232,7 +1302,11 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
                     {(['initiative', 'task', 'decision'] as const).map((convertType) => (
                       <button
                         key={convertType}
-                        onClick={() => props.onBulkConvert(convertType)}
+                        onClick={() =>
+                          runAction('idea.workspace.table_bulk_convert', () =>
+                            props.onBulkConvert(convertType)
+                          )
+                        }
                         className="w-full text-left px-3 py-1.5 rounded-lg text-[11px] font-medium text-c-text hover:bg-c-surface-raised transition-colors capitalize"
                       >
                         →{' '}
@@ -1246,7 +1320,12 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
                   </div>
                 )}
               </div>
-              <Button variant="danger" size="sm" onClick={handleBulkDelete} icon={<Trash2 />}>
+              <Button
+                variant="danger"
+                size="sm"
+                onClick={() => runAction('table.rows.bulk_delete', handleBulkDelete)}
+                icon={<Trash2 />}
+              >
                 {t('ideas.table.delete', 'Delete')}
               </Button>
             </>
@@ -1273,7 +1352,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
       {!locked && (
         <div className="flex items-center rounded-lg border border-c-border-subtle overflow-hidden">
           <button
-            onClick={() => handleAddRow()}
+            onClick={() => runAction('table.rows.add_row', () => handleAddRow())}
             data-testid="table-add-row"
             className="inline-flex items-center gap-1 px-2 py-1.5 text-[11px] font-medium text-c-text-secondary hover:bg-c-surface-raised transition-colors"
             title={t('ideas.table.addBlankRow', 'Add blank row')}
@@ -1281,7 +1360,9 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
             <Plus size={12} /> {t('ideas.table.row', 'Row')}
           </button>
           <button
-            onClick={props.onAddRowWithTemplate}
+            onClick={() =>
+              runAction('idea.view.table_add_row_with_template', props.onAddRowWithTemplate)
+            }
             className="px-1 py-1.5 text-c-text-secondary hover:text-c-text-secondary hover:bg-c-surface-raised transition-colors border-l border-c-border-subtle"
             title={t('ideas.table.addFromTemplate', 'Add from template')}
           >
@@ -1300,7 +1381,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
         <Button
           variant="primary"
           size="sm"
-          onClick={() => void handleSave()}
+          onClick={() => runAction('idea.canvas.tbl_save', () => void handleSave())}
           disabled={saving || loading || locked}
           loading={saving}
           icon={<Save />}

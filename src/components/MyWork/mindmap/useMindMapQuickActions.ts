@@ -126,6 +126,14 @@ export interface MindMapQuickActionHandlers {
    * klik człowieka — patrz `idea.node.mm_convert_branch_*` w rejestrze akcji.
    */
   convertBranch?: (target: string, nodeId?: string) => void;
+  /**
+   * E11 fix (2026-08-10, docs/standards/idea-workspace/10_*, §2.1 „Element"):
+   * the non-cascading counterpart of `convertBranch` above — converts ONLY
+   * the given nodeId, no descendants. Backs the plain "Convert" node items
+   * (`idea.node.mm_convert_initiative`/`_decision`/`_tasks`), which used to
+   * be wired to `convertBranch` (always cascaded despite the label).
+   */
+  convertSingleNode?: (target: string, nodeId?: string) => void;
   pushUndo: () => void;
   undo: () => void;
   redo: () => void;
@@ -277,6 +285,16 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
     if (action === 'mm_convert_branch') {
       const target = typeof detail?.target === 'string' ? detail.target : undefined;
       if (target && targetNodeId) handlers.convertBranch?.(target, targetNodeId);
+    }
+    // E11 fix (2026-08-10) — rejestr akcji `idea.node.mm_convert_initiative`/
+    // `_decision`/`_tasks` (plain "Convert", scope: single_item). Odrębny bus
+    // action od `mm_convert_branch` powyżej: ten NIGDY nie zbiera potomków —
+    // konwertuje wyłącznie wskazany węzeł, zgodnie z etykietą i deklarowanym
+    // zasięgiem (poprzednio dzieliły `mm_convert_branch`, więc zawsze
+    // kaskadowały mimo etykiety — E02-N5-CONVERT honesty finding, naprawione).
+    if (action === 'mm_convert_single') {
+      const target = typeof detail?.target === 'string' ? detail.target : undefined;
+      if (target && targetNodeId) handlers.convertSingleNode?.(target, targetNodeId);
     }
     // NOWY odbiornik (2026-08-09, N5 druga fala — rejestr akcji
     // `idea.node.mm_connect_to_selected`, `NodeContextMenu.tsx` „Connect to
