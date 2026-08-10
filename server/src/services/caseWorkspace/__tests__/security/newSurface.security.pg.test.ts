@@ -880,7 +880,7 @@ suite('NEW SURFACE — adversarial security (intake / autonomy / inbox)', () => 
 
     // Case A's wait is NOT quietly picked because it happens to be older.
     expect(result.outcome).toBe('rejected');
-    expect((result as { rejectionCode: string }).rejectionCode).toBe('CORRELATION_UNKNOWN');
+    expect((result as { rejectionCode: string }).rejectionCode).toBe('CORRELATION_AMBIGUOUS');
 
     const statuses = await control.query<{ wait_id: string; status: string }>(
       `SELECT wait_id, status FROM case_workspace_waits WHERE wait_id = ANY($1::text[])`,
@@ -890,9 +890,10 @@ suite('NEW SURFACE — adversarial security (intake / autonomy / inbox)', () => 
     expect(byId[waitOnCaseA]).toBe('ACTIVE');
     expect(byId[waitOnCaseB]).toBe('ACTIVE');
 
-    // The audit fact says AMBIGUITY, not absence — an operator can tell the
-    // two apart even though they share a durable rejection_code (the column's
-    // CHECK constraint owns that vocabulary).
+    // The audit fact says AMBIGUITY, not absence — and since migration
+    // 20260810c widened the rejection_code CHECK constraint, ambiguity now has
+    // its own durable code instead of being folded into CORRELATION_UNKNOWN,
+    // so an operator can tell the two apart from the column alone.
     const rejectedEvent = await control.query<{ redacted_summary: Record<string, unknown> }>(
       `SELECT redacted_summary FROM case_workspace_event_outbox
         WHERE aggregate_id=$1 AND event_type='inbox.event_rejected'`,
@@ -900,7 +901,7 @@ suite('NEW SURFACE — adversarial security (intake / autonomy / inbox)', () => 
     );
     expect(rejectedEvent.rowCount).toBe(1);
     expect(rejectedEvent.rows[0]!.redacted_summary).toMatchObject({
-      rejectionCode: 'CORRELATION_UNKNOWN',
+      rejectionCode: 'CORRELATION_AMBIGUOUS',
       ambiguousCandidates: 2,
     });
 

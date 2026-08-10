@@ -244,6 +244,99 @@ suite('eventInboxService — durable inbound event boundary against a real Postg
     return { waitId: wait.waitId, correlationKey };
   }
 
+  /**
+   * A SECOND Case (with its own plan, run and binding) inside an EXISTING
+   * organization.
+   *
+   * Needed because `case_workspace_waits` is UNIQUE (case_id, correlation_key):
+   * one key can only collide with itself across DIFFERENT Cases. `seedBoundRun`
+   * always mints a fresh org, so it cannot produce the collision the AMBIGUOUS
+   * path is about.
+   *
+   * The second Case gets its OWN project inside the SAME org, because
+   * `caseCoreService.createCase` enforces one Case per project
+   * (`case_already_exists_for_project`, caseCoreService.ts:334). The
+   * organization is what must be shared — that is the scope the correlation
+   * lookup searches.
+   */
+  async function seedSecondBoundRunInSameOrg(
+    fixture: { orgId: string; actorId: string },
+    label: string
+  ): Promise<{ caseId: string; runId: string; projectId: string }> {
+    const suffix = randomUUID();
+    const projectId = `case-inbox-project-${label}-${suffix}`;
+    await control.query(
+      `INSERT INTO projects (id, organization_id, name) VALUES ($1, $2, $3)
+         ON CONFLICT (id) DO NOTHING`,
+      [projectId, fixture.orgId, `Inbox test project (${label})`]
+    );
+    const created = await caseCoreService.createCase({
+      projectId,
+      organizationId: fixture.orgId,
+      contractedClosureType: 'DELIVERY_COMPLETED',
+      createdByActorId: fixture.actorId,
+    });
+
+    const graph: CanonicalGraph = {
+      schemaVersion: '1',
+      graphId: `graph-${label}-${suffix}`,
+      entryNodeIds: ['n1'],
+      terminalNodeIds: ['n2'],
+      nodes: [
+        { nodeId: 'n1', type: 'TASK' },
+        { nodeId: 'n2', type: 'TASK' },
+      ],
+      edges: [{ edgeId: 'e1', sourceNodeId: 'n1', targetNodeId: 'n2', edgeType: 'SEQUENCE' }],
+    };
+    const draft = await casePlanVersionService.createPlanDraft({
+      caseId: created.caseId,
+      semanticGraph: graph,
+      createdByActorId: fixture.actorId,
+    });
+    const proposed = await casePlanVersionService.proposePlanVersion(
+      draft.casePlanVersionId,
+      { actorUserId: fixture.actorId },
+      draft.version
+    );
+    const published = await casePlanVersionService.publishPlanVersion(
+      draft.casePlanVersionId,
+      { actorUserId: fixture.actorId },
+      proposed.version
+    );
+
+    const runId = `run-inbox-${label}-${suffix}`;
+    await control.query(
+      `INSERT INTO v8_execution_runs (run_id, organization_id, context_snapshot_id, initiator_user_id, goal)
+       VALUES ($1, $2, $3, $4, $5) ON CONFLICT (run_id) DO NOTHING`,
+      [runId, fixture.orgId, `ctx-${runId}`, fixture.actorId, `goal ${label}`]
+    );
+    await runBindingService.bindRunToPlanVersion({
+      runId,
+      casePlanVersionId: published.casePlanVersionId,
+      boundByActorId: fixture.actorId,
+    });
+
+    return { caseId: created.caseId, runId, projectId };
+  }
+
+  /** A wait carrying a CALLER-CHOSEN correlation key (the collision material). */
+  async function seedWaitWithKey(
+    fixture: { caseId: string; runId: string; actorId: string },
+    correlationKey: string
+  ): Promise<string> {
+    const wait = await waitSubscriptionService.createWait(
+      {
+        caseId: fixture.caseId,
+        runId: fixture.runId,
+        waitType: 'EXTERNAL_CALLBACK',
+        correlationKey,
+        expectedEventType: 'vendor.signature.completed',
+      },
+      fixture.actorId
+    );
+    return wait.waitId;
+  }
+
   function registerChannel(source: string): void {
     eventInboxService.registerInboxChannel({
       source,
@@ -699,6 +792,141 @@ suite('eventInboxService — durable inbound event boundary against a real Postg
         .query(`DELETE FROM case_workspace_event_inbox WHERE source = ANY($1)`, [[sourceA, sourceB]])
         .catch(() => undefined);
       await teardown(fixture);
+    }
+  }, 90_000);
+
+  // =========================================================================
+  // 8. An AMBIGUOUS delivery leaves a DURABLE, DISTINGUISHABLE audit trail.
+  //
+  // WHAT THIS TRIES TO DISPROVE
+  // ---------------------------
+  // Until migration 20260810c the service folded AMBIGUOUS onto
+  // CORRELATION_UNKNOWN, because `rejection_code` is a CHECK-constrained
+  // vocabulary and an unknown value would have produced a 500 with NO audit
+  // row. The two situations demand OPPOSITE operator actions:
+  //
+  //   CORRELATION_UNKNOWN    nobody registered this key   -> fix the SENDER
+  //   CORRELATION_AMBIGUOUS  key registered several times -> fix the PAYLOAD
+  //                          and the delivery named no Case   (send caseId)
+  //
+  // So "it got rejected" is NOT the property under test — a test asserting only
+  // `outcome === 'rejected'` passed BEFORE the fix too. What must hold is that
+  // the two rejections are TELLABLE APART in the durable record, specifically
+  // in the reconciliation query the index
+  // `idx_case_workspace_event_inbox_rejections (status, rejection_code,
+  // received_at)` exists to serve. This test therefore runs BOTH kinds of bad
+  // delivery and asserts the operator's GROUP BY separates them.
+  // =========================================================================
+  it('records an ambiguous correlation key under its OWN durable code, tellable apart from CORRELATION_UNKNOWN, and satisfies nothing', async () => {
+    const fixture = await seedBoundRun('ambiguous');
+    const second = await seedSecondBoundRunInSameOrg(fixture, 'ambiguous-2');
+    const source = `vendor-ambiguous-${randomUUID()}`;
+    try {
+      registerChannel(source);
+
+      // ONE key, TWO Cases in the SAME organization — the exact shape the
+      // service calls AMBIGUOUS.
+      const sharedKey = `corrkey-shared-${randomUUID()}`;
+      const waitA = await seedWaitWithKey(fixture, sharedKey);
+      const waitB = await seedWaitWithKey(
+        { caseId: second.caseId, runId: second.runId, actorId: fixture.actorId },
+        sharedKey
+      );
+
+      // The delivery names NO caseId, so nothing can disambiguate it.
+      const ambiguous = await eventInboxService.receiveExternalEvent(
+        signedDelivery({
+          source,
+          eventId: `evt-ambiguous-${randomUUID()}`,
+          organizationId: fixture.orgId,
+          correlationKey: sharedKey,
+        })
+      );
+
+      expect(ambiguous.outcome).toBe('rejected');
+      expect(ambiguous.rejectionCode).toBe('CORRELATION_AMBIGUOUS');
+
+      // DURABLE — not just a return value. A code that only exists in the
+      // response teaches an operator nothing.
+      const rows = await readInboxRows(source);
+      expect(rows).toHaveLength(1);
+      expect(rows[0].status).toBe('REJECTED');
+      expect(rows[0].rejection_code).toBe('CORRELATION_AMBIGUOUS');
+      // No wait may be attributed to a delivery whose target was never
+      // established.
+      expect(rows[0].wait_id).toBeNull();
+
+      // The audit event carries HOW BAD (candidate count) next to WHAT.
+      const audit = await control.query<{ redacted_summary: Record<string, unknown> }>(
+        `SELECT redacted_summary FROM case_workspace_event_outbox
+          WHERE aggregate_id = $1 AND event_type = 'inbox.event_rejected'`,
+        [rows[0].inbox_record_id]
+      );
+      expect(audit.rows).toHaveLength(1);
+      expect(audit.rows[0].redacted_summary.rejectionCode).toBe('CORRELATION_AMBIGUOUS');
+      expect(audit.rows[0].redacted_summary.ambiguousCandidates).toBe(2);
+      expect(audit.rows[0].redacted_summary.caseIdSupplied).toBe(false);
+
+      // §9: an unestablished fact is neither yes nor no — BOTH waits are
+      // untouched, and neither was silently picked as "close enough".
+      for (const waitId of [waitA, waitB]) {
+        const wait = await readWait(waitId);
+        expect(wait?.status).toBe('ACTIVE');
+        expect(wait?.satisfied_by_event_id).toBeNull();
+        expect(wait?.satisfied_at).toBeNull();
+      }
+
+      // ── THE POINT OF THE MIGRATION ────────────────────────────────────────
+      // A second bad delivery, this time with a key NOBODY registered.
+      const unknown = await eventInboxService.receiveExternalEvent(
+        signedDelivery({
+          source,
+          eventId: `evt-unknown-${randomUUID()}`,
+          organizationId: fixture.orgId,
+          correlationKey: `corrkey-never-registered-${randomUUID()}`,
+        })
+      );
+      expect(unknown.outcome).toBe('rejected');
+      expect(unknown.rejectionCode).toBe('CORRELATION_UNKNOWN');
+
+      // The reconciliation view an operator actually runs. Before the fix this
+      // returned ONE row (CORRELATION_UNKNOWN = 2) and the ambiguous delivery
+      // was invisible inside it; it must now return TWO distinct groups.
+      const grouped = await control.query<{ rejection_code: string; n: number }>(
+        `SELECT rejection_code, count(*)::int AS n
+           FROM case_workspace_event_inbox
+          WHERE status = 'REJECTED' AND organization_id = $1
+          GROUP BY rejection_code
+          ORDER BY rejection_code`,
+        [fixture.orgId]
+      );
+      expect(grouped.rows).toEqual([
+        { rejection_code: 'CORRELATION_AMBIGUOUS', n: 1 },
+        { rejection_code: 'CORRELATION_UNKNOWN', n: 1 },
+      ]);
+
+      // Rejections are terminal — neither may sit in the retryable backlog.
+      const backlog = await eventInboxService.getInboxBacklog({
+        organizationId: fixture.orgId,
+      });
+      expect(backlog.pending).toBe(0);
+    } finally {
+      await control
+        .query(`DELETE FROM case_workspace_waits WHERE run_id = $1`, [second.runId])
+        .catch(() => undefined);
+      await control
+        .query(`DELETE FROM case_workspace_run_bindings WHERE run_id = $1`, [second.runId])
+        .catch(() => undefined);
+      await control
+        .query(`DELETE FROM v8_execution_runs WHERE run_id = $1`, [second.runId])
+        .catch(() => undefined);
+      await control
+        .query(`DELETE FROM case_core WHERE project_id = $1`, [second.projectId])
+        .catch(() => undefined);
+      await control
+        .query(`DELETE FROM projects WHERE id = $1`, [second.projectId])
+        .catch(() => undefined);
+      await teardown({ ...fixture, source });
     }
   }, 90_000);
 });

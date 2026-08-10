@@ -15,7 +15,7 @@
  * na wiersz, z którego użytkownik wyszedł (`data-zlecenie-wiersz`).
  */
 
-import { ArrowRight, FolderOpen, ListChecks } from 'lucide-react';
+import { ArrowRight, Ban, FolderOpen, ListChecks, Pause, Play } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
@@ -31,15 +31,18 @@ import {
   governanceTierLabel,
 } from '@/utils/enumLabels';
 
-import { listCases, toFailure } from './api';
-import type { CaseApiFailure, CaseCoreView } from './types';
+import { cancelCase, listCases, newIdempotencyKey, pauseCase, resumeCase, startCase, toFailure } from './api';
+import type { CaseCommandResult, CaseApiFailure, CaseCoreView } from './types';
 import {
   CaseStateBlock,
+  CommandBanner,
+  CommandDialog,
   formatDateTime,
   MoreTabsMenu,
   relativeDays,
   StatusTag,
   useViewportWidth,
+  type CommandNotice,
 } from './ui';
 
 // Zapamiętane „skąd wyszedłem" — do przywrócenia fokusu po Wstecz. Moduł, nie
@@ -191,6 +194,156 @@ export const CasesListScreen: React.FC = () => {
   useEffect(() => {
     load();
   }, [load]);
+
+  /*
+   * ── KOMENDY NA LIŚCIE ────────────────────────────────────────────────────
+   *
+   * Lista wysyła cztery realne komendy do backendu: rozpocznij · wstrzymaj ·
+   * wznów · anuluj (`POST /cases/:id/status`, `POST /cases/:id/cancel`).
+   *
+   * Trzy decyzje, które nie są kosmetyką:
+   *
+   * 1. KLUCZ IDEMPOTENCJI ŻYJE DŁUŻEJ NIŻ ŻĄDANIE. Powstaje w chwili, gdy
+   *    użytkownik otwiera potwierdzenie („ta intencja"), i jest reużywany przy
+   *    powtórzeniu tej samej intencji. Nowy klucz per żądanie byłby atrapą
+   *    idempotencji — chroniłby dokładnie przed niczym.
+   * 2. STAN WIERSZA PO KOMENDZIE POCHODZI Z SERWERA. Nie „ustawiamy ACTIVE, bo
+   *    wysłaliśmy ACTIVE": `api.ts` czyta zlecenie ponownie po mutacji i to ten
+   *    odczyt aktualizuje wiersz. Gdy odczyt kontrolny padnie, mówimy o tym
+   *    wprost zamiast malować sukces.
+   * 3. KONFLIKT NIE JEST BŁĘDEM SYSTEMU. 409 na tych trasach znaczy: zlecenie
+   *    jest w innym stanie, niż pokazuje ekran (np. ktoś je już anulował).
+   *    Uczciwa odpowiedź to „nic nie zmieniono, odśwież", a nie „spróbuj
+   *    ponownie".
+   */
+  type PendingCommand = { kind: 'start' | 'pause' | 'resume' | 'cancel'; item: CaseCoreView };
+
+  const [pending, setPending] = useState<PendingCommand | null>(null);
+  const [commandBusy, setCommandBusy] = useState(false);
+  const [notice, setNotice] = useState<CommandNotice | null>(null);
+  // intencja („anuluj to zlecenie") → klucz idempotencji. Kasowany po sukcesie.
+  const intentKeysRef = useRef<Map<string, string>>(new Map());
+
+  const keyForIntent = useCallback((intent: string) => {
+    const existing = intentKeysRef.current.get(intent);
+    if (existing) return existing;
+    const fresh = newIdempotencyKey();
+    intentKeysRef.current.set(intent, fresh);
+    return fresh;
+  }, []);
+
+  const runPendingCommand = useCallback(
+    async (reason: string) => {
+      if (!pending) return;
+      const { kind, item } = pending;
+      const intent = `${kind}:${item.caseId}`;
+      const idempotencyKey = keyForIntent(intent);
+      setCommandBusy(true);
+      let result: CaseCommandResult<CaseCoreView>;
+      try {
+        if (kind === 'start') {
+          result = await startCase(item.caseId, reason || undefined, { idempotencyKey });
+        } else if (kind === 'pause') {
+          result = await pauseCase(item.caseId, reason, { idempotencyKey });
+        } else if (kind === 'resume') {
+          result = await resumeCase(item.caseId, reason || undefined, { idempotencyKey });
+        } else {
+          result = await cancelCase(item.caseId, reason, { idempotencyKey });
+        }
+      } finally {
+        setCommandBusy(false);
+      }
+
+      if (!result.ok) {
+        // 409 / 400 / 422 → „nic nie zmieniono, odśwież". 403 / 404 / 5xx →
+        // stan krytyczny. Komunikat bierzemy z `api.ts` — jest już po polsku
+        // i (dla 404) NIE zdradza, czy obiekt istnieje.
+        setPending(null);
+        setNotice({
+          tone:
+            result.failure.kind === 'conflict' || result.failure.kind === 'invalid'
+              ? 'warning'
+              : 'critical',
+          text: result.failure.message,
+          refresh: result.failure.refreshSuggested,
+        });
+        return;
+      }
+
+      intentKeysRef.current.delete(intent);
+      setPending(null);
+      // Wiersz aktualizujemy STANEM Z SERWERA (readback), nie tym, co wysłano.
+      setItems((prev) =>
+        prev ? prev.map((row) => (row.caseId === result.value.caseId ? result.value : row)) : prev
+      );
+      setNotice(
+        result.readback === 'confirmed'
+          ? {
+              tone: 'success',
+              // Nazwa albo nic — NIGDY surowy identyfikator techniczny
+              // (warunek właściciela: `case_id` tylko w widoku eksperckim).
+              text: `Zapisane. ${
+                result.value.projectName?.trim()
+                  ? `Zlecenie „${result.value.projectName.trim()}"`
+                  : 'Zlecenie'
+              } ma teraz status: ${caseStatusLabel(result.value.caseStatus, true)}.`,
+            }
+          : {
+              tone: 'warning',
+              refresh: true,
+              text: 'Operacja została przyjęta przez serwer, ale nie udało się potwierdzić stanu odczytem kontrolnym. Odśwież dane, żeby zobaczyć, jak jest naprawdę.',
+            }
+      );
+    },
+    [pending, keyForIntent]
+  );
+
+  const commandDialogCopy = useMemo(() => {
+    if (!pending) return null;
+    // Cudzysłów TYLKO wokół prawdziwej nazwy. Gdy nazwy nie ma, zdanie mówi
+    // „to zlecenie" bez cudzysłowu — inaczej wygląda, jakby zlecenie
+    // NAZYWAŁO SIĘ „to zlecenie".
+    const rawName = pending.item.projectName?.trim();
+    const subject = rawName ? `Zlecenie „${rawName}"` : 'To zlecenie';
+    if (pending.kind === 'start') {
+      return {
+        title: 'Rozpocząć zlecenie?',
+        description: `${subject} przejdzie ze szkicu do realizacji.`,
+        confirmLabel: 'Rozpocznij',
+        reason: { label: 'Powód', required: false, placeholder: 'np. plan uzgodniony z klientem' },
+      };
+    }
+    if (pending.kind === 'pause') {
+      return {
+        title: 'Wstrzymać zlecenie?',
+        description: `${subject} zostanie zablokowane do czasu usunięcia przyczyny.`,
+        confirmLabel: 'Wstrzymaj',
+        reason: {
+          label: 'Powód wstrzymania',
+          required: true,
+          placeholder: 'np. czekamy na dane od klienta',
+        },
+      };
+    }
+    if (pending.kind === 'resume') {
+      return {
+        title: 'Wznowić zlecenie?',
+        description: `${subject} wróci do realizacji.`,
+        confirmLabel: 'Wznów',
+        reason: { label: 'Powód', required: false, placeholder: 'np. blokada usunięta' },
+      };
+    }
+    return {
+      title: 'Anulować zlecenie?',
+      description: `${subject} zostanie zamknięte jako anulowane. Tej zmiany nie da się cofnąć — status anulowany jest końcowy.`,
+      confirmLabel: 'Anuluj zlecenie',
+      reason: {
+        label: 'Powód anulowania',
+        required: true,
+        placeholder: 'np. klient wycofał zapotrzebowanie',
+      },
+    };
+  }, [pending]);
 
   // Powrót ze zlecenia (Wstecz): filtr wraca sam z adresu, a fokus stawiamy na
   // wierszu, z którego użytkownik wyszedł. Bez tego czytnik ekranu i klawiatura
@@ -493,20 +646,74 @@ export const CasesListScreen: React.FC = () => {
     [visibleViews]
   );
 
+  /*
+   * Kebab wiersza: otwarcie + REALNE przejścia stanu + anulowanie.
+   *
+   * Pokazujemy WYŁĄCZNIE krawędzie, które backend dopuszcza
+   * (`caseCoreService.ts:168`: DRAFT→ACTIVE, ACTIVE↔BLOCKED, wszystko →
+   * CANCELLED, stany końcowe bez wyjścia). Dyndająca akcja, która zawsze
+   * kończy się 409, to obietnica bez pokrycia.
+   *
+   * To NIE zwalnia z obsługi 409: między narysowaniem menu a kliknięciem stan
+   * na serwerze mógł się zmienić. Wtedy komenda wraca konfliktem i pasek nad
+   * tabelą mówi „nic nie zmieniono, odśwież".
+   */
   const rowMenu = useCallback(
-    (row: Record<string, unknown>) => ({
-      primary: [
-        {
-          id: 'otworz',
-          label: 'Otwórz zlecenie',
-          icon: ArrowRight,
-          onClick: () => openCase(String(row.id)),
+    (row: Record<string, unknown>) => {
+      const item = row.raw as CaseCoreView;
+      const terminal = ['CLOSED', 'FAILED', 'CANCELLED'].includes(item.caseStatus);
+      const statusTransitions: Array<{
+        id: string;
+        label: string;
+        icon?: React.ElementType;
+        onClick: () => void;
+      }> = [];
+      if (item.caseStatus === 'DRAFT') {
+        statusTransitions.push({
+          id: 'rozpocznij',
+          label: 'Rozpocznij zlecenie',
+          icon: Play,
+          onClick: () => setPending({ kind: 'start', item }),
+        });
+      }
+      if (item.caseStatus === 'ACTIVE') {
+        statusTransitions.push({
+          id: 'wstrzymaj',
+          label: 'Wstrzymaj zlecenie',
+          icon: Pause,
+          onClick: () => setPending({ kind: 'pause', item }),
+        });
+      }
+      if (item.caseStatus === 'BLOCKED') {
+        statusTransitions.push({
+          id: 'wznow',
+          label: 'Wznów zlecenie',
+          icon: Play,
+          onClick: () => setPending({ kind: 'resume', item }),
+        });
+      }
+      return {
+        primary: [
+          {
+            id: 'otworz',
+            label: 'Otwórz zlecenie',
+            icon: ArrowRight,
+            onClick: () => openCase(String(row.id)),
+          },
+        ],
+        statusTransitions,
+        universalHandlers: {
+          preview: () => setSelectedId(String(row.id)),
         },
-      ],
-      universalHandlers: {
-        preview: () => setSelectedId(String(row.id)),
-      },
-    }),
+        destructive: terminal
+          ? undefined
+          : {
+              label: 'Anuluj zlecenie',
+              icon: Ban,
+              onClick: () => setPending({ kind: 'cancel', item }),
+            },
+      };
+    },
     [openCase]
   );
 
@@ -611,6 +818,15 @@ export const CasesListScreen: React.FC = () => {
         onChipChange={(id) => setParam('status', id === 'wszystkie' ? null : id)}
       >
         <div className="mx-auto min-w-0 max-w-[1400px] px-3 py-4 sm:px-6 sm:py-6">
+          {/* Wynik ostatniej komendy — nad tabelą, żeby był widoczny bez szukania. */}
+          <CommandBanner
+            notice={notice}
+            onRefresh={() => {
+              setNotice(null);
+              load();
+            }}
+            onDismiss={() => setNotice(null)}
+          />
           {stateBlock ? (
             <div className="rounded-xl border border-c-border bg-c-surface">{stateBlock}</div>
           ) : null}
@@ -694,6 +910,20 @@ export const CasesListScreen: React.FC = () => {
           ) : null}
         </div>
       </StandardModuleBar>
+      {commandDialogCopy ? (
+        <CommandDialog
+          open
+          title={commandDialogCopy.title}
+          description={commandDialogCopy.description}
+          confirmLabel={commandDialogCopy.confirmLabel}
+          reason={commandDialogCopy.reason}
+          busy={commandBusy}
+          onConfirm={(reason) => {
+            void runPendingCommand(reason);
+          }}
+          onCancel={() => setPending(null)}
+        />
+      ) : null}
     </div>
   );
 };

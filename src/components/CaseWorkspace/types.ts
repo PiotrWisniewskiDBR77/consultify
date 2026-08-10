@@ -144,6 +144,43 @@ export interface CaseActionProposal {
   version: number;
   createdAt: string;
   updatedAt: string;
+
+  /*
+   * Pola wymagane przez KOMENDĘ decyzji (`POST /proposals/:id/decision`).
+   *
+   * Serwis zwraca je ZAWSZE (`proposalApprovalService.ts:261` — `mapRow`),
+   * ale zadeklarowane są jako opcjonalne, bo harness zrzutowy
+   * (`podglad/daneProbne.ts`) tworzy własne obiekty tego typu i nie jest w
+   * zakresie tej zmiany. `decideProposal()` NIE zgaduje ich wartości: czyta
+   * propozycję z serwera tuż przed decyzją i odmawia wysłania komendy, gdy
+   * serwer ich nie przysłał (zamiast wymyślić `payloadDigest`, który
+   * `recordApprovalDecision` porównuje z wierszem w bazie —
+   * `proposalApprovalService.ts:1034` → `proposal_stale` → 409).
+   */
+  /** Wersja TREŚCI propozycji (inna oś niż `version` — OCC agregatu). */
+  proposalVersion?: number;
+  /** Skrót ładunku; serwer porównuje go z wierszem w bazie. */
+  payloadDigest?: string;
+  /** Migawka polityki, pod którą propozycja powstała. */
+  policySnapshotRef?: string;
+  targetExpectedVersion?: number | null;
+  casePlanVersionId?: string | null;
+  capabilityRegistryId?: string | null;
+  organizationId?: string;
+}
+
+export type ApprovalDecisionType = 'APPROVE' | 'REJECT' | 'REQUEST_CHANGES' | 'DEFER';
+
+export interface ApprovalDecisionRecord {
+  decisionId: string;
+  actionProposalId: string;
+  proposalVersion: number;
+  payloadDigest: string;
+  decision: ApprovalDecisionType;
+  decidedByActorId: string;
+  decidedAt: string;
+  reason: string | null;
+  [key: string]: unknown;
 }
 
 export type CaseWaitType = 'HUMAN' | 'TIMER' | 'DOMAIN_EVENT' | 'EXTERNAL_CALLBACK';
@@ -241,3 +278,70 @@ export interface CaseApiFailure {
   status?: number;
   code?: string;
 }
+
+/*
+ * ── KOMENDY (mutacje) ──────────────────────────────────────────────────────
+ *
+ * Odczyt i komenda mają ROZŁĄCZNE typy błędu, świadomie.
+ *
+ * `CaseApiFailure` (wyżej) opisuje „nie udało się WCZYTAĆ" i zna trzy stany.
+ * Komenda ma czwarty, którego odczyt mieć nie może: KONFLIKT (409) — obiekt
+ * istnieje, mam do niego dostęp, ale jego stan na serwerze różni się od tego,
+ * co widzę na ekranie (inna wersja / inny status / inny skrót ładunku). To
+ * jedyny stan, w którym uczciwa odpowiedź brzmi „odśwież i zobacz, co jest
+ * naprawdę", a nie „spróbuj ponownie".
+ *
+ * Osobny typ zamiast dopisania `'conflict'` do `CaseApiFailureKind` — bo
+ * `CaseApiFailure` czytają ekrany pisane RÓWNOLEGLE w tej fali; nowy wariant
+ * w istniejącej unii cicho zmieniłby ich `switch`.
+ */
+export type CaseCommandFailureKind =
+  /** 409 — stan na serwerze inny niż na ekranie. Nic nie zostało zmienione. */
+  | 'conflict'
+  /** 401/403 — brak uprawnień do TEJ operacji. */
+  | 'blocked'
+  /**
+   * 404 — SEC-009. Backend celowo zwraca to samo dla „nie istnieje" i „cudza
+   * organizacja" (`routes/caseWorkspace/_shared/errors.ts:150`). UI NIE wolno
+   * tego rozróżniać ani sugerować, że obiekt istnieje.
+   */
+  | 'notFound'
+  /** 400/422 — serwer odrzucił dane komendy. */
+  | 'invalid'
+  /** Reszta: 5xx, sieć, przerwane połączenie. */
+  | 'error';
+
+export interface CaseCommandFailure {
+  kind: CaseCommandFailureKind;
+  /** Gotowy komunikat po polsku — do pokazania użytkownikowi wprost. */
+  message: string;
+  status?: number;
+  code?: string;
+  /** Czy UI ma zaproponować odświeżenie danych (konflikt / stan nieznany). */
+  refreshSuggested: boolean;
+}
+
+/**
+ * Sukces komendy.
+ *
+ * `value` to stan odczytany PONOWNIE z serwera po mutacji (authoritative
+ * readback), a nie treść odpowiedzi na samą mutację. Gdy odczyt kontrolny nie
+ * doszedł do skutku, `readback` mówi o tym wprost — UI ma wtedy powiedzieć
+ * „operacja przyjęta, ale nie potwierdziliśmy stanu", zamiast malować sukces.
+ */
+export interface CaseCommandSuccess<T> {
+  ok: true;
+  value: T;
+  readback: 'confirmed' | 'unconfirmed';
+  readbackFailure?: CaseCommandFailure;
+  /** Klucz idempotencji użyty w tym wywołaniu (do powtórzenia BEZ dublowania). */
+  idempotencyKey: string;
+}
+
+export interface CaseCommandRejected {
+  ok: false;
+  failure: CaseCommandFailure;
+  idempotencyKey: string;
+}
+
+export type CaseCommandResult<T> = CaseCommandSuccess<T> | CaseCommandRejected;

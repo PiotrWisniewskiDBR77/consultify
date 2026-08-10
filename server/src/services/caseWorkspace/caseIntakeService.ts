@@ -913,3 +913,418 @@ export async function getConfirmedWorkOrders(
     };
   });
 }
+
+// ===========================================================================
+// 4. CONVERSATION BINDING — the layer the REAL chat/Teresa routes call
+// ===========================================================================
+/**
+ * Everything above is conversation-agnostic: `confirmWorkOrder` takes the work
+ * order FROM THE CALLER and only checks that the caller's digest matches the
+ * caller's own order. That is enough for a machine-to-machine contract and it
+ * is NOT enough for a chat surface, because it leaves the client free to
+ * submit an order the human never saw and a digest computed over it. Check 1
+ * (RECOMPUTE) passes trivially for such a pair; check 2 (WAS-SHOWN) only
+ * proves that SOMEONE was once shown that order, not that it is what this
+ * conversation is showing NOW.
+ *
+ * The three functions below close that hole, and they are the ONLY entry
+ * points the chat/Teresa routes use:
+ *
+ *   proposeConversationWorkOrder   binds the proposal to a conversationId
+ *                                  (never optional here — the link is what
+ *                                  makes "return from the Case to the right
+ *                                  conversation" answerable at all).
+ *   getCurrentConversationWorkOrder  reads back the CURRENT (newest) proposal
+ *                                  for a conversation, reconstructed from the
+ *                                  event stream and re-digested.
+ *   confirmConversationWorkOrder   takes ONLY a digest from the client. The
+ *                                  work order that gets executed is the one
+ *                                  the SERVER reads back. If the digest the
+ *                                  human confirmed is not the current one,
+ *                                  the answer is `intake_work_order_digest_stale`
+ *                                  and no Case is created.
+ *
+ * That inversion — client sends a digest, server supplies the order — is what
+ * makes "what you confirmed is what will be executed" true rather than merely
+ * asserted. A client CANNOT confirm a superseded summary, because the digest
+ * of a superseded summary is not the current digest, and it cannot smuggle a
+ * different order in alongside a valid digest, because it never sends one.
+ *
+ * WHERE THE LINK LIVES. In the proposal/confirmation events' redacted summary
+ * (`sourceConversationId`), which is already part of the DIGESTED work order —
+ * so the conversation a Case came from is covered by the same signature the
+ * human confirmed and cannot be rewritten after the fact. This packet adds no
+ * migration (none is in its allowlist), so there is no `case_core` column and
+ * no join; see OPEN QUESTIONS #1. Consequence, stated plainly: both link
+ * lookups are event-stream scans filtered on a JSONB expression, and there is
+ * no index on `redacted_summary->>'sourceConversationId'` today.
+ */
+
+/**
+ * What may happen to Runs once this Case exists. Intake itself ALWAYS creates
+ * zero Runs (see the header) — this value tells the surface what is permitted
+ * NEXT, so a UI cannot invent a "start" button the policy forbids.
+ *
+ * LIGHT — the ceiling is one Run, and it may be started straight off the
+ *   confirmed work order; there is no plan to publish first.
+ * STANDARD / TRANSFORMATION — ZERO Runs until a plan version is published AND
+ *   a human explicitly starts it. Confirming the work order creates the Case
+ *   and nothing else.
+ * MONITORING — treated as STANDARD deliberately: it has no defined intake
+ *   run policy yet, and the safe default for an undefined policy is the one
+ *   that starts nothing.
+ */
+export type RunStartPolicy =
+  | 'MAY_START_SINGLE_RUN_AFTER_CONFIRMATION'
+  | 'REQUIRES_PUBLISHED_PLAN_AND_EXPLICIT_START';
+
+export function resolveRunStartPolicy(caseProfile: CaseProfile): RunStartPolicy {
+  return caseProfile === 'LIGHT'
+    ? 'MAY_START_SINGLE_RUN_AFTER_CONFIRMATION'
+    : 'REQUIRES_PUBLISHED_PLAN_AND_EXPLICIT_START';
+}
+
+/** The current proposal for one conversation, reconstructed from the outbox. */
+export interface ConversationWorkOrderProposal {
+  conversationId: string;
+  workOrderId: string;
+  workOrderDigest: string;
+  /** Re-digested on read: this object provably hashes to `workOrderDigest`. */
+  workOrder: CanonicalWorkOrder;
+  proposedEventId: string;
+  proposedAt: string;
+  proposedByActorId: string;
+  runStartPolicy: RunStartPolicy;
+  /** ALWAYS false — a proposal is not a Case (CW-CANON-01). */
+  caseCreated: false;
+  /** ALWAYS false — a proposal is not a Run. */
+  runCreated: false;
+}
+
+export interface ConversationProposeResult extends ProposeWorkOrderResult {
+  conversationId: string;
+  runStartPolicy: RunStartPolicy;
+}
+
+export interface ConversationConfirmResult extends ConfirmWorkOrderResult {
+  conversationId: string;
+  runStartPolicy: RunStartPolicy;
+}
+
+/** The two-way link between a conversation and the Case it produced. */
+export interface CaseConversationLink {
+  caseId: string;
+  conversationId: string;
+  projectId: string | null;
+  workOrderId: string;
+  workOrderDigest: string;
+  confirmedByActorId: string;
+  confirmedAt: string;
+  confirmedEventId: string;
+}
+
+interface IntakeOutboxRow {
+  event_id: string;
+  event_type: string;
+  organization_id: string;
+  project_id: string | null;
+  aggregate_id: string;
+  case_id: string | null;
+  actor_user_id: string;
+  occurred_at: Date | string;
+  redacted_summary: Record<string, unknown> | string | null;
+}
+
+const INTAKE_OUTBOX_COLUMNS = `event_id, event_type, organization_id, project_id, aggregate_id,
+  case_id, actor_user_id, occurred_at, redacted_summary`;
+
+function summaryOf(row: IntakeOutboxRow): Record<string, unknown> {
+  const raw = row.redacted_summary;
+  if (raw && typeof raw === 'string') {
+    try {
+      const parsed = JSON.parse(raw);
+      return parsed && typeof parsed === 'object' ? (parsed as Record<string, unknown>) : {};
+    } catch {
+      return {};
+    }
+  }
+  if (raw && typeof raw === 'object') return raw as Record<string, unknown>;
+  return {};
+}
+
+function occurredAtOf(row: IntakeOutboxRow): string {
+  return row.occurred_at instanceof Date ? row.occurred_at.toISOString() : String(row.occurred_at);
+}
+
+function stringList(value: unknown): string[] {
+  return Array.isArray(value) ? value.map((item) => String(item)) : [];
+}
+
+/**
+ * Rebuilds the canonical work order from the proposal event, then PROVES the
+ * rebuild is faithful by re-digesting it and comparing to the digest stored in
+ * the same row. Without that comparison this function would be a trust hole:
+ * the summary passes through `redact()` on the way in, and any future change
+ * to the PII field list (or to `normalizeWorkOrder`'s defaults) could silently
+ * hand back an order that differs from the one the human read. A mismatch is
+ * therefore an integrity failure, never something to paper over.
+ */
+function reconstructWorkOrder(row: IntakeOutboxRow): {
+  workOrder: CanonicalWorkOrder;
+  digest: string;
+} {
+  const summary = summaryOf(row);
+  const storedDigest = String(summary.workOrderDigest ?? '');
+  const storedVersion = Number(summary.workOrderSchemaVersion ?? 0);
+  if (storedVersion !== WORK_ORDER_SCHEMA_VERSION) {
+    // A v1 proposal must never be silently re-read under v2 rules.
+    throw new Error('intake_work_order_schema_version_unsupported');
+  }
+
+  const workOrder = normalizeWorkOrder({
+    organizationId: row.organization_id,
+    projectId: String(row.project_id ?? ''),
+    goal: String(summary.goal ?? ''),
+    scope: stringList(summary.scope),
+    expectedOutcome: String(summary.expectedOutcome ?? ''),
+    constraints: stringList(summary.constraints),
+    successCriteria: stringList(summary.successCriteria),
+    contractedClosureType: summary.contractedClosureType as ClosureType,
+    caseProfile: (summary.caseProfile ?? null) as CaseProfile | null,
+    governanceTier: (summary.governanceTier ?? null) as GovernanceTier | null,
+    autonomyPolicy: (summary.autonomyPolicy ?? null) as AutonomyPolicy | null,
+    sourceConversationId: (summary.sourceConversationId ?? null) as string | null,
+    sourceMessageId: (summary.sourceMessageId ?? null) as string | null,
+  });
+
+  const digest = computeWorkOrderDigest(workOrder);
+  if (digest !== storedDigest) throw new Error('intake_work_order_reconstruction_mismatch');
+  return { workOrder, digest };
+}
+
+/**
+ * Proposes a work order that is BOUND to a conversation.
+ *
+ * Identical to `proposeWorkOrder` in every guarantee (zero Cases, zero Runs,
+ * idempotent on the digest) with one addition: `sourceConversationId` is set
+ * from the `conversationId` argument and a caller-supplied one in the draft is
+ * OVERWRITTEN, not merged. The conversation a work order belongs to is decided
+ * by the route that owns the conversation, never by the request body — the
+ * same reasoning that keeps `organizationId` out of the body.
+ */
+export async function proposeConversationWorkOrder(input: {
+  conversationId: string;
+  workOrder: WorkOrderDraftInput;
+  proposedByActorId: string;
+  correlationId?: string | null;
+}): Promise<ConversationProposeResult> {
+  const conversationId = requireNonBlank(input?.conversationId, 'intake_conversation_id_required');
+
+  const proposal = await proposeWorkOrder({
+    workOrder: { ...input.workOrder, sourceConversationId: conversationId },
+    proposedByActorId: input.proposedByActorId,
+    correlationId: input?.correlationId ?? null,
+  });
+
+  return {
+    ...proposal,
+    conversationId,
+    runStartPolicy: resolveRunStartPolicy(proposal.workOrder.caseProfile),
+  };
+}
+
+/**
+ * The CURRENT work order for a conversation — the newest proposal, which is by
+ * definition the only one a human may confirm. Returns null when the
+ * conversation never produced a proposal (an informational chat: CW-CANON-01).
+ *
+ * Fail-closed and enumeration-safe: `requireOrgMember` runs FIRST, so a
+ * non-member gets the identical `not_org_member` answer whether the
+ * conversation exists, belongs to another tenant, or does not exist at all.
+ */
+export async function getCurrentConversationWorkOrder(input: {
+  conversationId: string;
+  organizationId: string;
+  actorUserId: string;
+}): Promise<ConversationWorkOrderProposal | null> {
+  const conversationId = requireNonBlank(input?.conversationId, 'intake_conversation_id_required');
+  const organizationId = requireNonBlank(input?.organizationId, 'intake_organization_id_required');
+  const actorUserId = requireNonBlank(input?.actorUserId, 'intake_actor_required');
+
+  await requireOrgMember(actorUserId, organizationId);
+
+  const rows = await queryAll<IntakeOutboxRow>(
+    `SELECT ${INTAKE_OUTBOX_COLUMNS}
+       FROM ${OUTBOX_TABLE}
+      WHERE organization_id = $1
+        AND event_type = $2
+        AND redacted_summary->>'sourceConversationId' = $3
+      ORDER BY occurred_at DESC, created_at DESC
+      LIMIT 1`,
+    [organizationId, EVENT_WORK_ORDER_PROPOSED, conversationId]
+  );
+
+  const row = rows[0];
+  if (!row) return null;
+
+  const { workOrder, digest } = reconstructWorkOrder(row);
+
+  return {
+    conversationId,
+    workOrderId: workOrderIdForDigest(digest),
+    workOrderDigest: digest,
+    workOrder,
+    proposedEventId: row.event_id,
+    proposedAt: occurredAtOf(row),
+    proposedByActorId: row.actor_user_id,
+    runStartPolicy: resolveRunStartPolicy(workOrder.caseProfile),
+    caseCreated: false,
+    runCreated: false,
+  };
+}
+
+/**
+ * Confirms a conversation's CURRENT work order and creates EXACTLY ONE Case.
+ *
+ * The client sends a digest and nothing else. Refusals, each leaving zero
+ * Cases behind:
+ *   `intake_conversation_work_order_not_proposed`  nothing was ever shown in
+ *       this conversation — there is nothing a human could have confirmed.
+ *   `intake_work_order_digest_stale`  (409) the confirmed digest is a real,
+ *       previously-shown digest, but it is NOT the current one: the summary
+ *       moved on between display and click. This is the security case. It is
+ *       deliberately a SEPARATE code from
+ *       `intake_work_order_digest_mismatch`, because the two say different
+ *       things to an operator: "you sent an inconsistent pair" versus "you
+ *       confirmed something that is no longer what we would execute".
+ *
+ * Concurrency: two simultaneous confirmations read the same current proposal
+ * and both call `confirmWorkOrder`, whose `ON CONFLICT (project_id) DO
+ * NOTHING` lets exactly one INSERT win. The loser returns the winner's Case
+ * with `caseCreated: false`. One Case, no error either side has to interpret.
+ *
+ * Creates NO Run, for every profile. `runStartPolicy` says what MAY happen
+ * next; nothing here acts on it.
+ */
+export async function confirmConversationWorkOrder(input: {
+  conversationId: string;
+  organizationId: string;
+  confirmedDigest: string;
+  confirmedByActorId: string;
+  correlationId?: string | null;
+}): Promise<ConversationConfirmResult> {
+  const conversationId = requireNonBlank(input?.conversationId, 'intake_conversation_id_required');
+  const organizationId = requireNonBlank(input?.organizationId, 'intake_organization_id_required');
+  const confirmedDigest = requireNonBlank(
+    input?.confirmedDigest,
+    'intake_confirmed_digest_required'
+  );
+  const confirmedByActorId = requireNonBlank(input?.confirmedByActorId, 'intake_actor_required');
+
+  // Fail closed before anything about the conversation is observable.
+  await requireOrgMember(confirmedByActorId, organizationId);
+
+  const current = await getCurrentConversationWorkOrder({
+    conversationId,
+    organizationId,
+    actorUserId: confirmedByActorId,
+  });
+  if (!current) throw new Error('intake_conversation_work_order_not_proposed');
+
+  if (current.workOrderDigest !== confirmedDigest) {
+    throw new Error('intake_work_order_digest_stale');
+  }
+
+  const result = await confirmWorkOrder({
+    // The SERVER's copy of the order — never the client's.
+    workOrder: current.workOrder,
+    confirmedDigest: current.workOrderDigest,
+    confirmedByActorId,
+    correlationId: input?.correlationId ?? null,
+  });
+
+  return {
+    ...result,
+    conversationId,
+    runStartPolicy: current.runStartPolicy,
+  };
+}
+
+function toLink(row: IntakeOutboxRow): CaseConversationLink | null {
+  const summary = summaryOf(row);
+  const conversationId = String(summary.sourceConversationId ?? '');
+  const caseId = row.case_id ?? String(row.aggregate_id ?? '');
+  if (!conversationId || !caseId) return null;
+  return {
+    caseId,
+    conversationId,
+    projectId: row.project_id,
+    workOrderId: String(summary.workOrderId ?? ''),
+    workOrderDigest: String(summary.workOrderDigest ?? ''),
+    confirmedByActorId: row.actor_user_id,
+    confirmedAt: occurredAtOf(row),
+    confirmedEventId: row.event_id,
+  };
+}
+
+/**
+ * Conversation -> Case. "This chat already produced a work order; here is the
+ * Case." Returns the FIRST confirmation, because that is the one that created
+ * the Case; later confirmations against the same project reuse it.
+ */
+export async function findCaseForConversation(input: {
+  conversationId: string;
+  organizationId: string;
+  actorUserId: string;
+}): Promise<CaseConversationLink | null> {
+  const conversationId = requireNonBlank(input?.conversationId, 'intake_conversation_id_required');
+  const organizationId = requireNonBlank(input?.organizationId, 'intake_organization_id_required');
+  const actorUserId = requireNonBlank(input?.actorUserId, 'intake_actor_required');
+
+  await requireOrgMember(actorUserId, organizationId);
+
+  const rows = await queryAll<IntakeOutboxRow>(
+    `SELECT ${INTAKE_OUTBOX_COLUMNS}
+       FROM ${OUTBOX_TABLE}
+      WHERE organization_id = $1
+        AND event_type = $2
+        AND redacted_summary->>'sourceConversationId' = $3
+      ORDER BY occurred_at ASC, created_at ASC
+      LIMIT 1`,
+    [organizationId, EVENT_WORK_ORDER_CONFIRMED, conversationId]
+  );
+
+  return rows[0] ? toLink(rows[0]) : null;
+}
+
+/**
+ * Case -> conversation. "Take me back to the chat this came from."
+ *
+ * Gated by `requireCaseAccess`, so an unknown caseId and a cross-tenant caseId
+ * are indistinguishable (`case_access_denied` -> HTTP 404): the return link
+ * must not become the enumeration oracle the rest of the surface refuses to
+ * be.
+ */
+export async function findConversationForCase(
+  caseId: string,
+  actorUserId: string
+): Promise<CaseConversationLink | null> {
+  const id = requireNonBlank(caseId, 'intake_case_id_required');
+  const actor = requireNonBlank(actorUserId, 'intake_actor_required');
+
+  await requireCaseAccess(actor, id);
+
+  const rows = await queryAll<IntakeOutboxRow>(
+    `SELECT ${INTAKE_OUTBOX_COLUMNS}
+       FROM ${OUTBOX_TABLE}
+      WHERE aggregate_type = $1
+        AND aggregate_id = $2
+        AND event_type = $3
+        AND redacted_summary->>'sourceConversationId' IS NOT NULL
+      ORDER BY occurred_at ASC, created_at ASC
+      LIMIT 1`,
+    [CASE_AGGREGATE_TYPE, id, EVENT_WORK_ORDER_CONFIRMED]
+  );
+
+  return rows[0] ? toLink(rows[0]) : null;
+}

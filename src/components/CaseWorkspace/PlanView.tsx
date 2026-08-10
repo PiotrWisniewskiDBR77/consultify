@@ -13,7 +13,7 @@
  */
 
 import { AlertTriangle, CheckCircle2, ChevronRight } from 'lucide-react';
-import React, { useMemo, useRef } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import { StandardTable, type TableColumn } from '@/components/standard/StandardTable';
 import { closureTypeLabel, planNodeTypeLabel, planVersionStatusLabel } from '@/utils/enumLabels';
@@ -55,6 +55,62 @@ export interface PlanViewProps {
   onSelectNode: (nodeId: string | null) => void;
 }
 
+/**
+ * Szerokość REALNIE dostępna dla tabeli — mierzona na jej karcie, nie na oknie.
+ *
+ * ★ DLACZEGO NIE `useViewportWidth()`, którego ten plik używał wcześniej.
+ * ZMIERZONE na żywym ekranie zlecenia (łańcuch rodziców tabeli):
+ *
+ *     okno 768 px  → kontener tabeli 564 px
+ *     okno 1024 px → kontener tabeli 284 px   ← WĘŻSZY niż przy 768!
+ *     okno 1440 px → kontener tabeli 700 px
+ *     okno 1920 px → kontener tabeli 876 px
+ *
+ * Przebieg nie jest monotoniczny, bo powyżej `lg` obok treści staje prawy pas
+ * (~216 px), a całość i tak ogranicza `max-w-6xl` (1152 px). Próg liczony z
+ * `window.innerWidth` musi się w takim układzie mylić — i mylił się: przy oknie
+ * 1024 px „szeroki" zestaw 4 kolumn dostawał 284 px kontenera i chował 696 px
+ * treści za przewijaniem WEWNĄTRZ tabeli, przy zupełnie czystym pomiarze strony
+ * (`documentElement.scrollWidth === innerWidth === 1024`).
+ *
+ * Wniosek liczbowy, który wyznacza progi niżej: sufit dla tej tabeli to 876 px
+ * (okno 1920 px). Wymuszane wcześniej 980 px NIE MIEŚCI SIĘ NIGDZIE na tym
+ * ekranie — żadna szerokość okna go nie ratowała.
+ *
+ * (Miejsce docelowe tego hooka to `ui.tsx`, wspólny dla modułu — ten plik jest
+ * poza zakresem tej zmiany, więc hook stoi na razie tutaj i w `RealizacjaView`.)
+ */
+function useAvailableWidth(ref: React.RefObject<HTMLElement | null>): number | null {
+  const [width, setWidth] = useState<number | null>(null);
+
+  const measure = useCallback(() => {
+    const node = ref.current;
+    if (!node) return;
+    const style = window.getComputedStyle(node);
+    const padding = parseFloat(style.paddingLeft || '0') + parseFloat(style.paddingRight || '0');
+    setWidth(Math.max(0, Math.round(node.clientWidth - padding)));
+  }, [ref]);
+
+  useLayoutEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+    measure();
+    const node = ref.current;
+    const observer =
+      typeof ResizeObserver !== 'undefined' ? new ResizeObserver(() => measure()) : null;
+    if (node) observer?.observe(node);
+    window.addEventListener('resize', measure);
+    return () => {
+      window.removeEventListener('resize', measure);
+      observer?.disconnect();
+    };
+  }, [measure, ref]);
+
+  return width;
+}
+
+/** Suma szerokości kolumn zestawu pełnego (260+150+180+180). */
+const PLAN_FULL_WIDTH = 770;
+
 /** Polski opis reguły walidacji. Kod techniczny pokazujemy tylko obok. */
 function blockerText(code: string, detail: string): string {
   const known: Record<string, string> = {
@@ -76,13 +132,41 @@ export const PlanView: React.FC<PlanViewProps> = ({
   selectedNodeId,
   onSelectNode,
 }) => {
-  // Próg 768 px — ten sam co w powłoce zlecenia; poniżej niego tabela dostaje
-  // jednokolumnowy zestaw, żeby treść nie chowała się za przewijaniem.
+  // `narrow` zostaje WYŁĄCZNIE do wysokości płótna — tam pytanie brzmi „ile
+  // miejsca ma okno w pionie", a to naprawdę jest cecha okna. O zestawie kolumn
+  // decyduje pomiar kontenera (`listAvailableWidth`), nie ta flaga.
   const narrow = useViewportWidth() < 768;
   // Płótno eksperckie dostaje wysokość z POMIARU miejsca do dołu okna.
   // Hooki muszą stać przed wcześniejszymi `return` dla projekcji „lista"
   // i „prosty" — inaczej kolejność hooków zmienia się między renderami.
   const canvasSlotRef = useRef<HTMLDivElement | null>(null);
+  // Karta tabeli kroków mierzy się sama — patrz `useAvailableWidth`.
+  const listCardRef = useRef<HTMLDivElement | null>(null);
+  const listAvailableWidth = useAvailableWidth(listCardRef);
+
+  /*
+   * Escape odznacza wybrany krok (zamyka „szczegóły kroku" w widoku eksperckim
+   * i podświetlenie w pozostałych projekcjach). Bez tego jedynym wyjściem był
+   * celowany klik w „Zamknij szczegóły" — ta sama luka co przy podglądzie w
+   * Realizacji.
+   *
+   * Świadomie NIE przechwytuję Escape, gdy fokus jest w polu tekstowym albo w
+   * otwartym oknie dialogowym — tam Escape ma już swoje znaczenie i odbieranie
+   * go byłoby regresją.
+   */
+  useEffect(() => {
+    if (!selectedNodeId) return undefined;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      const active = document.activeElement as HTMLElement | null;
+      if (active?.closest('input, textarea, select, [contenteditable="true"], [role="dialog"]')) {
+        return;
+      }
+      onSelectNode(null);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [selectedNodeId, onSelectNode]);
   // Na telefonie nad płótnem stoi więcej zawijanego tekstu, więc próg 320 px
   // znowu wypychał sterowanie poza ekran (zmierzone na 375×812: dół przycisku
   // 858 przy oknie 812, strona nie przewija się w pionie). Na wąskim ekranie
@@ -224,15 +308,54 @@ export const PlanView: React.FC<PlanViewProps> = ({
       {
         id: 'krok',
         label: 'Krok',
-        width: '280px',
+        width: '260px',
         sortable: true,
         render: (row: Record<string, unknown>) => (
           <span className="text-sm font-medium text-c-text">{String(row.krok)}</span>
         ),
       },
-      { id: 'rodzaj', label: 'Kto to robi', width: '190px', filterable: true, sortable: true },
-      { id: 'poprzednik', label: 'Po czym następuje', width: '220px' },
-      { id: 'nastepnik', label: 'Prowadzi do', width: '220px' },
+      { id: 'rodzaj', label: 'Kto to robi', width: '150px', filterable: true, sortable: true },
+      { id: 'poprzednik', label: 'Po czym następuje', width: '180px' },
+      { id: 'nastepnik', label: 'Prowadzi do', width: '180px' },
+    ];
+
+    /*
+     * Zestaw POŚREDNI — dla kontenerów, w których cztery kolumny się nie
+     * mieszczą, ale jedna marnuje miejsce (zmierzone: 564 px przy oknie 768 px,
+     * 700 px przy oknie 1440 px). Dwie kolumny danych to dokładnie próg, przy
+     * którym `minTableWidth="columns"` znosi wymuszone 980 px, więc tabela
+     * zwęża się do kontenera zamiast chować kierunek przepływu.
+     */
+    const columnsMedium: TableColumn[] = [
+      {
+        id: 'krok',
+        label: 'Krok i wykonawca',
+        sortable: true,
+        render: (row: Record<string, unknown>) => (
+          <div className="min-w-0 space-y-0.5">
+            <div className="flex items-baseline gap-2">
+              <span className="shrink-0 text-xs tabular-nums text-c-text-muted">
+                {String(row.kolejnosc)}.
+              </span>
+              <span className="min-w-0 text-sm font-medium leading-snug text-c-text">
+                {String(row.krok)}
+              </span>
+            </div>
+            <div className="pl-6 text-xs text-c-text-muted">{String(row.rodzaj)}</div>
+          </div>
+        ),
+      },
+      {
+        id: 'nastepnik',
+        label: 'Przepływ',
+        width: '240px',
+        render: (row: Record<string, unknown>) => (
+          <div className="min-w-0 space-y-0.5 text-xs text-c-text-muted">
+            <div>Po: {String(row.poprzednik)}</div>
+            <div>Dalej: {String(row.nastepnik)}</div>
+          </div>
+        ),
+      },
     ];
 
     const columnsNarrow: TableColumn[] = [
@@ -259,7 +382,18 @@ export const PlanView: React.FC<PlanViewProps> = ({
       },
     ];
 
-    const columns = narrow ? columnsNarrow : columnsWide;
+    // Zestaw wybiera POMIAR kontenera, nie szerokość okna — uzasadnienie i
+    // liczby przy `useAvailableWidth` na górze pliku.
+    const tier =
+      listAvailableWidth === null
+        ? 'waski'
+        : listAvailableWidth >= PLAN_FULL_WIDTH + 40
+          ? 'pelny'
+          : listAvailableWidth >= 460
+            ? 'sredni'
+            : 'waski';
+    const columns =
+      tier === 'pelny' ? columnsWide : tier === 'sredni' ? columnsMedium : columnsNarrow;
     const rows = layout.nodes.map((item, index) => ({
       id: item.node.nodeId,
       kolejnosc: index + 1,
@@ -278,24 +412,31 @@ export const PlanView: React.FC<PlanViewProps> = ({
     return (
       <div className="min-w-0">
         {header}
-        <div className="min-w-0 overflow-hidden rounded-xl border border-c-border bg-c-surface p-2 sm:p-3">
+        <div
+          ref={listCardRef}
+          className="min-w-0 overflow-hidden rounded-xl border border-c-border bg-c-surface p-2 sm:p-3"
+        >
           <StandardTable
             columns={columns}
             data={rows}
             selectedRowId={selectedNodeId}
             onRowClick={(row) => onSelectNode(String(row.id))}
             rowDescription={() => null}
-            persistKey={narrow ? 'caseWorkspace.plan.steps.mobile' : 'caseWorkspace.plan.steps'}
+            // Osobny klucz per zestaw: pstryczek kolumn zapamiętuje widoczność
+            // po `id`, a te same identyfikatory znaczą co innego w każdym
+            // zestawie (ukrycie kolumny na desktopie chowałoby jedyną kolumnę
+            // telefonu).
+            persistKey={`caseWorkspace.plan.steps.${tier}`}
             density="compact"
             /*
-             * Ten sam defekt co na liście zleceń: tabela dostawała 980 px
-             * min-width niezależnie od tego, ile kolumn moduł zadeklarował,
-             * więc jednokolumnowy widok telefonu i tak chował treść za
-             * przewijaniem WEWNĄTRZ tabeli. `'columns'` znosi min-width przy
-             * ≤2 kolumnach danych (telefon: 1) i zostawia 980 px dla widoku
-             * szerokiego (4 kolumny) — bez zmiany dla innych modułów.
+             * `'columns'` znosi min-width przy ≤2 kolumnach danych (zestaw wąski
+             * i pośredni). Zestaw pełny deklaruje tyle, ile jego kolumny
+             * NAPRAWDĘ potrzebują (770 px), a nie zapożyczone 980 px —
+             * zmierzony sufit kontenera na tym ekranie to 876 px, więc 980 px
+             * nie mieściło się przy ŻADNEJ szerokości okna (416/696/280/104 px
+             * ukrytego przewijania przy 768/1024/1440/1920).
              */
-            minTableWidth="columns"
+            minTableWidth={tier === 'pelny' ? PLAN_FULL_WIDTH : 'columns'}
             empty={{ title: 'Plan nie ma kroków' }}
           />
         </div>
@@ -319,7 +460,17 @@ export const PlanView: React.FC<PlanViewProps> = ({
                   type="button"
                   onClick={() => onSelectNode(isSelected ? null : item.node.nodeId)}
                   aria-pressed={isSelected}
-                  className={`flex w-full items-start gap-3 rounded-xl border bg-c-surface px-3 py-2.5 text-left transition focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus ${
+                  /*
+                   * `motion-reduce:transition-none` — jedyne przejście w całej
+                   * projekcji planu (kolor obramowania kroku). Płótno eksperckie
+                   * NIE ma żadnej animacji ani przejścia (zmierzone na żywym
+                   * ekranie: 0 elementów z niezerowym `transition-duration`/
+                   * `animation-duration` wewnątrz `[role=application]`), więc
+                   * cała projekcja „Plan" spełnia `prefers-reduced-motion`
+                   * dopiero razem z tym wariantem — bez niego zostawałby jeden
+                   * niezabezpieczony punkt.
+                   */
+                  className={`flex w-full items-start gap-3 rounded-xl border bg-c-surface px-3 py-2.5 text-left transition motion-reduce:transition-none focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus ${
                     isSelected
                       ? 'border-c-border-strong'
                       : 'border-c-border hover:border-c-border-strong'

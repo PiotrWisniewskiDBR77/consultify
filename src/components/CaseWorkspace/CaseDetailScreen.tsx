@@ -1,26 +1,66 @@
 /**
- * Zlecenie — POWŁOKA OBIEKTU (SPEC-A, archetyp Rekord).
+ * Zlecenie — POWŁOKA ARTEFAKTU (SPEC-A, archetyp C „Rekord", klasa L).
  *
- * Menu 1 = ścieżka „Zlecenia › [nazwa]" (powrót do listy), Menu 2 = trzy
- * stałe zakładki Plan · Realizacja · Rezultaty, Menu 3 = przełącznik projekcji
- * planu. Wszystko przez `StandardModuleBar` — powłoka nie klei własnego menu.
+ * ★ CO SIĘ TU ZMIENIŁO (2026-08-10). Ten ekran był wcześniej zbudowany na
+ * `StandardModuleBar` — czyli na powłoce LISTY. To realne odstępstwo od
+ * SPEC-A: zlecenie jest OBIEKTEM (ma tożsamość, adres, cykl życia, powiązania
+ * i historię), a nie zbiorem wierszy. Teraz ekran stoi na
+ * `StandardArtifactShell` (`src/components/standard/StandardArtifactShell.tsx`),
+ * który opakowuje `NModeShell` i sam renderuje `ArtifactRightPanel`
+ * (tamże, linia 399) — zero lokalnej imitacji powłoki.
  *
- * Stan ekranu żyje w adresie (`?zakladka=&widok-planu=&krok=`), więc:
- *  · Wstecz z zakładki wraca na poprzednią zakładkę, nie od razu do listy,
- *  · Wstecz z zlecenia wraca do listy z zachowanym filtrem i fokusem,
- *  · adres da się wysłać drugiej osobie i pokaże jej to samo.
+ * Co z tego wynika wprost (ARTIFACT_ANATOMY_STANDARD.md §10.2/§11.2):
+ *  · Menu 1 = powrót · ikona-typ · tytuł · pigułka statusu · wskaźnik zapisu ·
+ *    JEDEN primary · kebab z kodem obiektu i linkiem — wszystko z `NModeHeader`,
+ *  · Plan · Realizacja · Rezultaty to KANONICZNA nawigacja powłoki (lewa
+ *    kolumna `NModeLeftNav`), nie własny pasek zakładek,
+ *  · prawy panel to accordion o stałej kolejności Akcje · Właściwości ·
+ *    Powiązania · Źródła i założenia · Historia (Komentarze jawnie pominięte),
+ *  · projekcja planu (Prosty/Ekspercki/Lista) siedzi w slocie `toolbar`
+ *    (`NModeToolbar`) — jedyna dozwolona droga własnego paska (SPEC-N §2.4).
+ *
+ * Stan ekranu żyje w adresie (`?zakladka=&widok-planu=&krok=`), więc adres da
+ * się wysłać drugiej osobie i pokaże jej to samo. Wyjście do obiektu w innym
+ * module DODATKOWO zapisuje migawkę powrotu (sekcja „PAMIĘĆ POWROTU" niżej).
  *
  * Ładowanie jest ROZDZIELONE na sekcje (`settleSection`): padnięcie jednej
  * z nich daje jawny stan CZĘŚCIOWY z nazwą brakującej sekcji, a nie cichą
  * pustkę i nie błąd całego ekranu.
  */
 
-import { ArrowLeft } from 'lucide-react';
+import {
+  AlertTriangle,
+  ArrowUpRight,
+  BarChart3,
+  ClipboardList,
+  Link2,
+  ListChecks,
+  Lock,
+  RefreshCw,
+  Route as RouteIcon,
+  ScrollText,
+} from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
-import { StandardModuleBar } from '@/components/standard/StandardModuleBar';
-import { caseStatusLabel } from '@/utils/enumLabels';
+import { NModeToolbar } from '@/components/shared/NModeLayout/NModeToolbar';
+import { PreviewActionBar, PreviewActivityStrip } from '@/components/shared/PreviewPane';
+import { ArtifactPropertiesTable } from '@/components/standard/ArtifactPropertiesTable';
+import type { KartaNKey } from '@/components/standard/registry';
+import {
+  StandardArtifactShell,
+  type StandardSekcjaDef,
+} from '@/components/standard/StandardArtifactShell';
+import type { PresentationMode } from '@/hooks/usePresentationMode';
+import {
+  artifactLinkRelationLabel,
+  autonomyPolicyLabel,
+  caseProfileLabel,
+  caseStatusLabel,
+  governanceTierLabel,
+  linkedTypeLabel,
+  planVersionStatusLabel,
+} from '@/utils/enumLabels';
 
 import {
   getCase,
@@ -38,7 +78,13 @@ import {
 import { rememberedListLocation, rememberOpenedCase } from './CasesListScreen';
 import { PLAN_PROJECTIONS, type PlanProjection, PlanView } from './PlanView';
 import { RealizacjaView } from './RealizacjaView';
-import { RezultatyView } from './RezultatyView';
+import {
+  kluczFokusuObiektu,
+  type OtwarcieZadanie,
+  type RezultatSelection,
+  RezultatyView,
+  rozstrzygnijOtwarcie,
+} from './RezultatyView';
 import type {
   CanonicalGraph,
   CaseActionProposal,
@@ -54,23 +100,157 @@ import type {
 import {
   CaseStateBlock,
   FOCUS_RING,
-  MoreTabsMenu,
+  formatDate,
+  formatDateTime,
   PartialBanner,
   StatusTag,
-  useViewportWidth,
+  TechnicalId,
 } from './ui';
 
 type Tab = 'plan' | 'realizacja' | 'rezultaty';
 
-const TABS: Array<{ id: Tab; label: string; description: string }> = [
-  { id: 'plan', label: 'Plan', description: 'Co i w jakiej kolejności ma się wydarzyć.' },
-  { id: 'realizacja', label: 'Realizacja', description: 'Co się dzieje teraz i na co czekamy.' },
+const TABS: Array<{
+  id: Tab;
+  label: string;
+  description: string;
+  icon: React.FC<{ size?: number; className?: string }>;
+}> = [
+  {
+    id: 'plan',
+    label: 'Plan',
+    description: 'Co i w jakiej kolejności ma się wydarzyć.',
+    icon: RouteIcon,
+  },
+  {
+    id: 'realizacja',
+    label: 'Realizacja',
+    description: 'Co się dzieje teraz i na co czekamy.',
+    icon: ListChecks,
+  },
   {
     id: 'rezultaty',
     label: 'Rezultaty',
     description: 'Co powstało i czy efekt został potwierdzony.',
+    icon: BarChart3,
   },
 ];
+
+// ═══════════════════════════════════════════════════════════════════════════
+// PAMIĘĆ POWROTU — wyjście do innego modułu i powrót „tam, gdzie byłem"
+// ═══════════════════════════════════════════════════════════════════════════
+//
+// Adres niesie zakładkę, krok planu i projekcję, więc te trzy rzeczy wracają
+// same. NIE wracają natomiast: pozycja przewijania i fokus — przeglądarka nie
+// odtwarza scrolla kontenera wewnątrz aplikacji jednostronicowej, a fokus po
+// zamontowaniu nowego drzewa ląduje na `<body>`. Dlatego przed wyjściem
+// zapisujemy migawkę i odtwarzamy ją po powrocie.
+//
+// `sessionStorage`, nie `localStorage`: migawka dotyczy JEDNEJ sesji karty
+// przeglądarki i nie ma prawa przetrwać jej zamknięcia. Zużywana JEDNORAZOWO —
+// inaczej wejście na zlecenie z zakładki albo z listy przeskakiwałoby w dół
+// bez powodu, dzień później.
+
+const KLUCZ_POWROTU = 'zlecenia.powrot';
+/** Migawka starsza niż 30 min to już nie „powrót", tylko przypadek. */
+const WAZNOSC_POWROTU_MS = 30 * 60 * 1000;
+
+interface StanPowrotu {
+  caseId: string;
+  zakladka: Tab;
+  krok: string | null;
+  widokPlanu: PlanProjection;
+  scrollCentrum: number;
+  scrollPanel: number;
+  kluczFokusu: string | null;
+  /** Przewinięcia (obie osie) wszystkich kontenerów nad elementem fokusu. */
+  przewinieciaFokusu: PozycjaPrzewiniecia[];
+  etykieta: string;
+  /** Otwarty podgląd w sekcji Rezultaty — bez niego wysokość treści się zmienia. */
+  wybor: RezultatSelection;
+  adresListy: string;
+  zapisanoO: number;
+}
+
+function zapiszStanPowrotu(stan: StanPowrotu): void {
+  try {
+    window.sessionStorage.setItem(KLUCZ_POWROTU, JSON.stringify(stan));
+  } catch {
+    // Prywatny tryb przeglądarki / wyłączony storage — powrót zadziała bez
+    // przywrócenia przewinięcia. To degradacja, nie awaria: świadomie cicha.
+  }
+}
+
+function pobierzStanPowrotu(caseId: string): StanPowrotu | null {
+  try {
+    const surowy = window.sessionStorage.getItem(KLUCZ_POWROTU);
+    if (!surowy) return null;
+    const stan = JSON.parse(surowy) as StanPowrotu;
+    if (stan?.caseId !== caseId) return null;
+    if (!stan.zapisanoO || Date.now() - stan.zapisanoO > WAZNOSC_POWROTU_MS) {
+      window.sessionStorage.removeItem(KLUCZ_POWROTU);
+      return null;
+    }
+    return stan;
+  } catch {
+    return null;
+  }
+}
+
+function wyczyscStanPowrotu(): void {
+  try {
+    window.sessionStorage.removeItem(KLUCZ_POWROTU);
+  } catch {
+    /* jw. */
+  }
+}
+
+/**
+ * Najbliższy przodek, który REALNIE się przewija.
+ *
+ * Powłoka `NModeShell` przewija w dwóch niezależnych kontenerach (kolumna
+ * centrum i prawy panel) i żadnego z nich nie wystawia refem. Zamiast zgadywać
+ * selektorem CSS (kruche — klasy powłoki mogą się zmienić), pytamy DOM o fakt:
+ * `overflow-y` pozwala przewijać I treść jest wyższa niż okno kontenera.
+ */
+function kontenerScrolla(node: HTMLElement | null): HTMLElement | null {
+  let el: HTMLElement | null = node?.parentElement ?? null;
+  while (el && el !== document.body) {
+    const styl = window.getComputedStyle(el);
+    if (/(auto|scroll)/.test(styl.overflowY) && el.scrollHeight > el.clientHeight + 1) return el;
+    el = el.parentElement;
+  }
+  return null;
+}
+
+/**
+ * WSZYSTKIE przewijalne kontenery nad elementem (pionowo LUB poziomo).
+ *
+ * ★ ZMIERZONE: sam kontener kolumny centrum nie wystarczy. Przycisk „Otwórz"
+ * siedzi w OSTATNIEJ kolumnie tabeli, a tabela ma własne przewijanie poziome.
+ * Po powrocie kolumna wracała na pozycję 0, więc element z przywróconym fokusem
+ * był poza kadrem — fokus istniał, ale nie było go WIDAĆ. Zapisujemy więc obie
+ * osie dla całego łańcucha kontenerów nad elementem, a nie jedną liczbę.
+ */
+function kontenerySkrolla(node: HTMLElement | null): HTMLElement[] {
+  const znalezione: HTMLElement[] = [];
+  let el: HTMLElement | null = node?.parentElement ?? null;
+  while (el && el !== document.body && znalezione.length < 4) {
+    const styl = window.getComputedStyle(el);
+    const przewijalny =
+      (/(auto|scroll)/.test(styl.overflowY) && el.scrollHeight > el.clientHeight + 1) ||
+      (/(auto|scroll)/.test(styl.overflowX) && el.scrollWidth > el.clientWidth + 1);
+    if (przewijalny) znalezione.push(el);
+    el = el.parentElement;
+  }
+  return znalezione;
+}
+
+interface PozycjaPrzewiniecia {
+  top: number;
+  left: number;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
 
 interface CaseBundle {
   caseItem: CaseCoreView;
@@ -86,12 +266,20 @@ interface CaseBundle {
   blocked: boolean;
 }
 
+/** Kolejność, w jakiej szukamy „rezultatu do otwarcia" przyciskiem głównym. */
+const PIERWSZENSTWO_REZULTATU: Array<CaseArtifactLink['relation']> = [
+  'DELIVERABLE',
+  'OUTPUT',
+  'OUTCOME_MEASUREMENT',
+  'EVIDENCE',
+  'DECISION_BASIS',
+  'INPUT',
+];
+
 export const CaseDetailScreen: React.FC = () => {
   const { caseId = '' } = useParams();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const viewportWidth = useViewportWidth();
-  const isNarrow = viewportWidth < 768;
 
   const tab = (searchParams.get('zakladka') as Tab | null) ?? 'plan';
   const projection = (searchParams.get('widok-planu') as PlanProjection | null) ?? 'prosty';
@@ -100,7 +288,26 @@ export const CaseDetailScreen: React.FC = () => {
   const [bundle, setBundle] = useState<CaseBundle | null>(null);
   const [loading, setLoading] = useState(true);
   const [failure, setFailure] = useState<CaseApiFailure | null>(null);
-  const headingRef = useRef<HTMLHeadingElement | null>(null);
+  const [gestosc, setGestosc] = useState<PresentationMode>('n');
+  const [komunikat, setKomunikat] = useState<string | null>(null);
+
+  /*
+   * Migawkę powrotu czytamy SYNCHRONICZNIE, w pierwszym renderze — nie w efekcie.
+   * Gdyby czytał ją efekt, sekcja Rezultaty zdążyłaby się już zamontować z pustym
+   * zaznaczeniem, a przywrócony podgląd „doklejałby się" po chwili, zmieniając
+   * wysokość treści pod już odtworzonym przewinięciem.
+   */
+  const [stanPowrotu] = useState<StanPowrotu | null>(() =>
+    caseId ? pobierzStanPowrotu(caseId) : null
+  );
+  const [wyborRezultatow, setWyborRezultatow] = useState<RezultatSelection>(
+    () => stanPowrotu?.wybor ?? null
+  );
+
+  const kotwicaSekcjiRef = useRef<HTMLHeadingElement | null>(null);
+  const znacznikCentrumRef = useRef<HTMLSpanElement | null>(null);
+  const znacznikPanuRef = useRef<HTMLSpanElement | null>(null);
+  const przywroconoRef = useRef(false);
 
   const load = useCallback(async () => {
     if (!caseId) return;
@@ -211,18 +418,10 @@ export const CaseDetailScreen: React.FC = () => {
     void load();
   }, [load]);
 
-  // Wejście na zlecenie zawsze zaczyna się od nagłówka — czytnik ekranu
-  // i klawiatura nie mogą zostać na dole poprzedniej listy.
-  useEffect(() => {
-    if (!loading && bundle) headingRef.current?.focus();
-  }, [loading, bundle]);
-
   /*
    * Tożsamość `setParam` MUSI być stabilna, a nawigacja pomijana, gdy adres się
-   * nie zmienia — dokładnie z tego samego powodu co w `CasesListScreen`
-   * (`ModuleNavBar` woła handlery z wnętrza `useEffect`; niestabilny handler =
-   * pętla renderowania). Ta powłoka nie podaje `onSearch`, ale reguła jest
-   * wspólna i tańsza do utrzymania niż wyjątek.
+   * nie zmienia (`NModeLeftNav`/toolbar wołają handlery także z efektów;
+   * niestabilny handler = pętla renderowania).
    */
   const searchParamsRef = useRef(searchParams);
   searchParamsRef.current = searchParams;
@@ -242,23 +441,16 @@ export const CaseDetailScreen: React.FC = () => {
   );
 
   /*
-   * Powrót do listy — JEDNO kliknięcie, właściwa lista, zachowany filtr, fokus
-   * na wierszu, z którego użytkownik wyszedł (warunek właściciela #4).
+   * Powrót do listy — JEDNO kliknięcie, właściwa lista, zachowany filtr.
    *
-   * ★ ZMIERZONE NA ŻYWYM EKRANIE, nie wywnioskowane z kodu: wcześniejsze
-   * `navigate(-1)` cofało o JEDEN wpis historii, a przełączanie zakładek
-   * i projekcji planu wpisy DODAJE (`setParam` z `replace: false` — celowo,
-   * żeby przeglądarkowe Wstecz wracało na poprzednią zakładkę, a nie od razu
-   * do listy). Pomiar: po kliknięciu „Ekspercki" jedno kliknięcie „Wróć do
-   * listy zleceń" dawało `onList: false` — użytkownik zostawał w tym samym
-   * zleceniu. Przy wejściu z linku `navigate(-1)` wyprowadzało poza moduł.
-   *
-   * Teraz idziemy WPROST pod zapamiętany adres listy (z filtrem). Historia
-   * przeglądarki zostaje nietknięta, więc przeglądarkowe Wstecz dalej działa
-   * po swojemu — zmienia się tylko zachowanie JAWNEGO przycisku powrotu.
+   * ★ ZMIERZONE NA ŻYWYM EKRANIE, nie wywnioskowane z kodu: `navigate(-1)`
+   * cofało o JEDEN wpis historii, a przełączanie sekcji i projekcji planu wpisy
+   * DODAJE, więc powrót do listy wymagał tylu kliknięć, ile rzeczy użytkownik
+   * po drodze przełączył. Idziemy WPROST pod zapamiętany adres listy.
    */
   const goToList = useCallback(() => {
     rememberOpenedCase(caseId);
+    wyczyscStanPowrotu();
     navigate(rememberedListLocation());
   }, [caseId, navigate]);
 
@@ -274,29 +466,500 @@ export const CaseDetailScreen: React.FC = () => {
     );
   }, [bundle]);
 
-  const visibleTabs = isNarrow ? TABS.filter((item) => item.id === tab) : TABS;
-  const hiddenTabs = isNarrow ? TABS.filter((item) => item.id !== tab) : [];
+  // ── Otwieranie obiektów w ICH modułach + zapis migawki powrotu ────────────
+  const otworzObiekt = useCallback(
+    (zadanie: OtwarcieZadanie) => {
+      zapiszStanPowrotu({
+        caseId,
+        zakladka: tab,
+        krok: selectedNodeId,
+        widokPlanu: projection,
+        scrollCentrum: kontenerScrolla(znacznikCentrumRef.current)?.scrollTop ?? 0,
+        scrollPanel: kontenerScrolla(znacznikPanuRef.current)?.scrollTop ?? 0,
+        kluczFokusu: zadanie.kluczFokusu,
+        przewinieciaFokusu: kontenerySkrolla(
+          document.querySelector<HTMLElement>(
+            `[data-cw-focus="${CSS.escape(zadanie.kluczFokusu)}"]`
+          )
+        ).map((el) => ({ top: el.scrollTop, left: el.scrollLeft })),
+        etykieta: zadanie.etykieta,
+        wybor: wyborRezultatow,
+        adresListy: rememberedListLocation(),
+        zapisanoO: Date.now(),
+      });
+      navigate(zadanie.sciezka);
+    },
+    [caseId, navigate, projection, selectedNodeId, tab, wyborRezultatow]
+  );
 
-  /**
-   * Przełącznik projekcji planu.
+  /*
+   * Przywrócenie po powrocie. Kolejność jest istotna:
+   *  1. brakujące parametry adresu (gdy ktoś wrócił „gołym" linkiem do zlecenia),
+   *  2. przewinięcie obu kontenerów,
+   *  3. fokus na elemencie, z którego wyszliśmy.
    *
-   * ★ POMIAR, NIE PRZECZUCIE: dopóki ten przełącznik siedział w pasku modułu,
-   * na telefonie wymuszał minimalną szerokość STRONY — `window.innerWidth`
-   * rósł do 436 px przy żądanych 320/375/430, czyli cała strona przewijała się
-   * w poziomie (warunek właściciela #4 złamany). Trzy pigułki z polskimi
-   * etykietami po prostu nie mieszczą się obok zakładek na 320 px.
-   *
-   * Dlatego na wąskim ekranie przełącznik NIE jest w pasku, tylko nad treścią,
-   * gdzie wolno mu się zawinąć (`flex-wrap`) i zająć dwie linie. Nic nie znika
-   * i nic nie chowa się pod gest — zmienia się wyłącznie miejsce.
+   * Uczciwie o zasięgu: element w ZWINIĘTEJ sekcji prawego panelu nie istnieje
+   * w DOM po ponownym zamontowaniu (powłoka zwija wszystko poza „Akcje" —
+   * `StandardArtifactShell.tsx:353`). Wtedy fokus ląduje na nagłówku sekcji
+   * i mówimy o tym na głos (`role="status"`), zamiast zostawić fokus na
+   * `<body>` i udawać, że wróciliśmy dokładnie tam, gdzie byliśmy.
    */
-  const renderProjectionSwitch = (wrap: boolean) => (
+  useEffect(() => {
+    if (loading || !bundle || przywroconoRef.current) return;
+    const stan = stanPowrotu;
+    przywroconoRef.current = true;
+    if (!stan) {
+      kotwicaSekcjiRef.current?.focus();
+      return;
+    }
+    wyczyscStanPowrotu();
+
+    const brakujace: Record<string, string | null> = {};
+    if (!searchParamsRef.current.get('zakladka')) brakujace.zakladka = stan.zakladka;
+    if (!searchParamsRef.current.get('widok-planu')) brakujace['widok-planu'] = stan.widokPlanu;
+    if (!searchParamsRef.current.get('krok') && stan.krok) brakujace.krok = stan.krok;
+    if (Object.keys(brakujace).length) setParam(brakujace);
+
+    /*
+     * ★ ZMIERZONE, nie założone: JEDNO ustawienie `scrollTop` w `requestAnimationFrame`
+     * NIE wystarcza. Przy powrocie zapisane 237 px lądowało jako 213 px, bo w tej
+     * klatce tabele „Zmierzona wartość" i „Powiązane obiekty" jeszcze się nie
+     * rozwinęły — dokument był krótszy, więc przeglądarka PRZYCIĘŁA przewinięcie do
+     * ówczesnego maksimum. Dlatego dociągamy pozycję kilka razy w oknie ~0,8 s,
+     * dopóki treść nie urośnie. Ręczne przewinięcie użytkownika przerywa dociąganie
+     * natychmiast — jego decyzja zawsze wygrywa z odtwarzaniem.
+     */
+    const znajdzCel = () =>
+      stan.kluczFokusu
+        ? document.querySelector<HTMLElement>(`[data-cw-focus="${CSS.escape(stan.kluczFokusu)}"]`)
+        : null;
+
+    const dociagnijScroll = () => {
+      const centrum = kontenerScrolla(znacznikCentrumRef.current);
+      if (centrum && Math.abs(centrum.scrollTop - stan.scrollCentrum) > 1) {
+        centrum.scrollTop = stan.scrollCentrum;
+      }
+      const panel = kontenerScrolla(znacznikPanuRef.current);
+      if (panel && Math.abs(panel.scrollTop - stan.scrollPanel) > 1) {
+        panel.scrollTop = stan.scrollPanel;
+      }
+      // Łańcuch kontenerów nad elementem fokusu — obie osie, żeby przycisk,
+      // z którego wyszliśmy, wrócił na ekran, a nie tylko do drzewa DOM.
+      const cel = znajdzCel();
+      if (cel) {
+        kontenerySkrolla(cel).forEach((el, i) => {
+          const zapis = stan.przewinieciaFokusu?.[i];
+          if (!zapis) return;
+          if (Math.abs(el.scrollTop - zapis.top) > 1) el.scrollTop = zapis.top;
+          if (Math.abs(el.scrollLeft - zapis.left) > 1) el.scrollLeft = zapis.left;
+        });
+      }
+    };
+    let recznePrzewiniecie = false;
+    const naKolku = () => {
+      recznePrzewiniecie = true;
+    };
+    window.addEventListener('wheel', naKolku, { passive: true, once: true });
+    window.addEventListener('touchmove', naKolku, { passive: true, once: true });
+    const budziki = [120, 320, 640].map((ms) =>
+      window.setTimeout(() => {
+        if (!recznePrzewiniecie) dociagnijScroll();
+      }, ms)
+    );
+
+    const klatka = window.requestAnimationFrame(() => {
+      dociagnijScroll();
+
+      const cel = znajdzCel();
+      if (cel) {
+        /*
+         * `preventScroll` jest KONIECZNE, nie kosmetyczne. ★ ZMIERZONE: z domyślnym
+         * `focus()` + `scrollIntoView` przeglądarka dosuwała przycisk „Otwórz" do
+         * widoku, przewijając tabelę TAKŻE W POZIOMIE — po powrocie pierwsza
+         * kolumna („Obiekt") była poza kadrem, a pionowe przewinięcie zmieniało
+         * się z odtworzonych 237 px na 213 px. Skoro pozycję przewijania już
+         * odtworzyliśmy dokładnie, przeglądarka nie ma czego poprawiać.
+         */
+        cel.focus({ preventScroll: true });
+        /*
+         * Obrys rysujemy RĘCZNIE, bo `focus-visible` NIE zapala się przy fokusie
+         * nadanym programowo (przeglądarka wie, że użytkownik nie użył
+         * klawiatury). Bez tego „przywróciliśmy fokus" byłoby prawdą wyłącznie
+         * dla czytnika ekranu, a wzrokowo — niewidoczne. Ton to `--c-focus`
+         * (niebieski), nigdy crimson. Obrys znika, gdy użytkownik pójdzie dalej.
+         */
+        cel.style.outline = '2px solid var(--c-focus)';
+        cel.style.outlineOffset = '2px';
+        cel.addEventListener(
+          'blur',
+          () => {
+            cel.style.outline = '';
+            cel.style.outlineOffset = '';
+          },
+          { once: true }
+        );
+        setKomunikat(`Wróciłeś do zlecenia — kursor stoi przy: ${stan.etykieta}.`);
+      } else {
+        kotwicaSekcjiRef.current?.focus();
+        setKomunikat(
+          `Wróciłeś do zlecenia. Element „${stan.etykieta}" jest w zwiniętej sekcji prawego ` +
+            `panelu — kursor stoi na nagłówku sekcji.`
+        );
+      }
+    });
+    return () => {
+      window.cancelAnimationFrame(klatka);
+      budziki.forEach((id) => window.clearTimeout(id));
+      window.removeEventListener('wheel', naKolku);
+      window.removeEventListener('touchmove', naKolku);
+    };
+  }, [bundle, loading, setParam, stanPowrotu]);
+
+  // ── Rezultat do otwarcia przyciskiem głównym Menu 1 ───────────────────────
+  const rezultatDoOtwarcia = useMemo(() => {
+    const linki = bundle?.artifactLinks ?? [];
+    for (const relacja of PIERWSZENSTWO_REZULTATU) {
+      const kandydat = linki
+        .filter((link) => link.relation === relacja)
+        .map((link) => ({ link, otwarcie: rozstrzygnijOtwarcie(link) }))
+        .find((wpis) => wpis.otwarcie.status === 'otwieralny');
+      if (kandydat) return kandydat;
+    }
+    return null;
+  }, [bundle]);
+
+  // ── Sekcje lewej kolumny = KANONICZNA nawigacja powłoki ───────────────────
+  const aktywnaSekcja = TABS.find((item) => item.id === tab) ?? TABS[0];
+
+  const trescSekcji = (id: Tab): React.ReactNode => {
+    if (loading || failure || !bundle) {
+      return (
+        <div className="rounded-xl border border-c-border bg-c-surface">
+          <CaseStateBlock
+            loading={loading}
+            failure={failure}
+            onRetry={() => void load()}
+            onBack={goToList}
+          />
+        </div>
+      );
+    }
+    if (id === 'plan') {
+      return (
+        <PlanView
+          caseItem={bundle.caseItem}
+          planVersion={currentPlanVersion}
+          graph={bundle.graph}
+          validation={bundle.validation}
+          projection={projection}
+          selectedNodeId={selectedNodeId}
+          onSelectNode={(nodeId) => setParam({ krok: nodeId })}
+        />
+      );
+    }
+    if (id === 'realizacja') {
+      return (
+        <RealizacjaView
+          caseItem={bundle.caseItem}
+          waits={bundle.waits}
+          proposals={bundle.proposals}
+          history={bundle.history}
+          expert={projection === 'ekspercki'}
+        />
+      );
+    }
+    return (
+      <RezultatyView
+        caseItem={bundle.caseItem}
+        measurements={bundle.measurements}
+        artifactLinks={bundle.artifactLinks}
+        expert={projection === 'ekspercki'}
+        onOpenDeliverable={otworzObiekt}
+        wybor={wyborRezultatow}
+        onWybor={setWyborRezultatow}
+      />
+    );
+  };
+
+  const opakujSekcje = (item: (typeof TABS)[number]): React.ReactNode => (
+    <div className="min-w-0">
+      {/* Znacznik do namierzenia kontenera przewijania centrum (patrz `kontenerScrolla`). */}
+      <span ref={item.id === tab ? znacznikCentrumRef : null} aria-hidden className="sr-only" />
+      <h2
+        ref={item.id === tab ? kotwicaSekcjiRef : null}
+        tabIndex={-1}
+        className="mb-1 text-base font-semibold text-c-text outline-none"
+      >
+        {item.label}
+      </h2>
+      <p className="mb-3 text-sm text-c-text-secondary">{item.description}</p>
+      <p aria-live="polite" role="status" className="sr-only">
+        {komunikat ?? ''}
+      </p>
+      {bundle ? (
+        <PartialBanner sections={bundle.failedSections} onRetry={() => void load()} />
+      ) : null}
+      {trescSekcji(item.id)}
+    </div>
+  );
+
+  const sekcje: StandardSekcjaDef[] = TABS.map((item) => ({
+    id: item.id,
+    icon: item.icon,
+    label: { en: item.label, pl: item.label },
+    component: opakujSekcje(item),
+    aiContract: {
+      none: true,
+      reason:
+        'Treść tej sekcji pochodzi w całości z silnika zleceń (plan, przebieg, ' +
+        'pomiary wartości) — model językowy jej nie pisze i nie ma tu czego regenerować.',
+    },
+  }));
+
+  // ── Prawy panel (SPEC-A §11.2) ────────────────────────────────────────────
+  const wierszeWlasciwosci = bundle
+    ? [
+        {
+          id: 'status',
+          label: 'Stan zlecenia',
+          value: (
+            <StatusTag tone="info">{caseStatusLabel(bundle.caseItem.caseStatus, true)}</StatusTag>
+          ),
+        },
+        {
+          id: 'profil',
+          label: 'Profil',
+          value: caseProfileLabel(bundle.caseItem.caseProfile, true),
+        },
+        {
+          id: 'nadzor',
+          label: 'Tryb nadzoru',
+          value: governanceTierLabel(bundle.caseItem.governanceTier, true),
+        },
+        {
+          id: 'samodzielnosc',
+          label: 'Samodzielność',
+          value: autonomyPolicyLabel(bundle.caseItem.autonomyPolicy, true),
+        },
+        {
+          id: 'plan',
+          label: 'Plan',
+          value: currentPlanVersion
+            ? `nr ${currentPlanVersion.planNumber} · ${planVersionStatusLabel(currentPlanVersion.status, true)}`
+            : 'brak wersji planu',
+        },
+        {
+          id: 'zalozone',
+          label: 'Założone',
+          value: formatDate(bundle.caseItem.createdAt),
+          mono: true,
+        },
+        {
+          id: 'zmienione',
+          label: 'Ostatnia zmiana',
+          value: formatDateTime(bundle.caseItem.updatedAt),
+          mono: true,
+        },
+        {
+          id: 'zamkniete',
+          label: 'Zamknięte',
+          value: bundle.caseItem.closedAt ? formatDateTime(bundle.caseItem.closedAt) : 'nie',
+          mono: true,
+        },
+      ]
+    : [];
+
+  const linkiPanelu = (bundle?.artifactLinks ?? []).map((link) => ({
+    link,
+    otwarcie: rozstrzygnijOtwarcie(link),
+  }));
+
+  const zrodla = bundle
+    ? [
+        { id: 'kryteria', label: 'Kryteria odbioru', value: bundle.caseItem.acceptanceCriteriaRef },
+        { id: 'budzet', label: 'Polityka budżetu', value: bundle.caseItem.budgetPolicyRef },
+        {
+          id: 'autonomia',
+          label: 'Polityka samodzielności',
+          value: bundle.caseItem.autonomyPolicyRef,
+        },
+        { id: 'dowod', label: 'Dowód zamknięcia', value: bundle.caseItem.closureEvidenceRef },
+      ].filter((wpis) => Boolean(wpis.value))
+    : [];
+
+  const brakDostepuDoPowiazan = Boolean(
+    bundle?.blocked && bundle.failedSections.includes('powiązane obiekty')
+  );
+
+  const prawyPanel = {
+    actions: {
+      label: 'Akcje',
+      icon: ClipboardList,
+      children: (
+        <div>
+          <span ref={znacznikPanuRef} aria-hidden className="sr-only" />
+          <PreviewActionBar
+            rows={[
+              {
+                buttons: [
+                  {
+                    label: 'Wczytaj ponownie',
+                    icon: RefreshCw,
+                    colorScheme: 'neutral',
+                    flex: true,
+                    onClick: () => void load(),
+                  },
+                  {
+                    label: 'Wróć do listy zleceń',
+                    icon: ListChecks,
+                    colorScheme: 'neutral',
+                    flex: true,
+                    onClick: goToList,
+                  },
+                ],
+              },
+            ]}
+          />
+        </div>
+      ),
+      actionIds: ['wczytaj-ponownie', 'wroc-do-listy'],
+    },
+    properties: {
+      label: 'Właściwości',
+      children: wierszeWlasciwosci.length ? (
+        <ArtifactPropertiesTable
+          rows={wierszeWlasciwosci}
+          propertyLabel="Właściwość"
+          valueLabel="Wartość"
+        />
+      ) : null,
+      isEmpty: !wierszeWlasciwosci.length,
+      emptyLabel: 'Dane zlecenia nie zostały jeszcze wczytane.',
+    },
+    relations: {
+      label: 'Powiązania',
+      icon: Link2,
+      badge: linkiPanelu.length,
+      children: brakDostepuDoPowiazan ? (
+        <div className="flex items-start gap-2 rounded-lg border border-c-border bg-c-surface-raised px-3 py-2">
+          <Lock className="mt-0.5 h-4 w-4 shrink-0 text-c-text-muted" aria-hidden />
+          <p className="min-w-0 text-xs text-c-text-secondary">
+            Nie masz uprawnień do listy obiektów powiązanych z tym zleceniem. Reszta zlecenia jest
+            widoczna — poproś właściciela zlecenia o dostęp.
+          </p>
+        </div>
+      ) : (
+        <ul className="space-y-1.5">
+          {linkiPanelu.map(({ link, otwarcie }) => {
+            const otwieralny = otwarcie.status === 'otwieralny';
+            // Nagłówek pozycji to zawsze RODZAJ obiektu (Dokument/Prezentacja/
+            // Arkusz), a nie jego rola — inaczej pozycja niedostępna pokazywała
+            // „Dowód / Dowód", czyli tę samą informację dwa razy.
+            const etykietaTypu = linkedTypeLabel(link.artifactType, true) || link.artifactType;
+            return (
+              <li key={link.linkId}>
+                <button
+                  type="button"
+                  data-cw-focus={kluczFokusuObiektu(link.linkId)}
+                  disabled={!otwieralny}
+                  title={otwieralny ? `Otwórz: ${otwarcie.etykieta}` : otwarcie.powod}
+                  onClick={() =>
+                    otwieralny
+                      ? otworzObiekt({
+                          sciezka: otwarcie.sciezka,
+                          kluczFokusu: kluczFokusuObiektu(link.linkId),
+                          etykieta: otwarcie.etykieta,
+                        })
+                      : undefined
+                  }
+                  className={`flex w-full items-start gap-2 rounded-lg border border-c-border-subtle px-2.5 py-2 text-left transition ${FOCUS_RING} ${
+                    otwieralny
+                      ? 'text-c-text hover:bg-c-surface-raised'
+                      : 'cursor-not-allowed text-c-text-muted'
+                  }`}
+                >
+                  {otwieralny ? (
+                    <ArrowUpRight size={14} className="mt-0.5 shrink-0" aria-hidden />
+                  ) : (
+                    <AlertTriangle size={14} className="mt-0.5 shrink-0" aria-hidden />
+                  )}
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-xs font-medium">{etykietaTypu}</span>
+                    <span className="block truncate text-[11px] text-c-text-muted">
+                      {artifactLinkRelationLabel(link.relation, true)}
+                      {link.isStale ? ' · nieaktualny' : ''}
+                    </span>
+                    {!otwieralny ? (
+                      // Pełny powód siedzi w `title`; tu dwie linijki, żeby panel
+                      // pozostał panelem, a nie ścianą tekstu (doktryna gęstości).
+                      <span className="mt-0.5 line-clamp-2 block text-[11px] text-c-text-secondary">
+                        {otwarcie.powod}
+                      </span>
+                    ) : null}
+                  </span>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      ),
+      isEmpty: !brakDostepuDoPowiazan && linkiPanelu.length === 0,
+      emptyLabel:
+        'Nic jeszcze nie powiązano. Tu trafiają dokumenty, decyzje i dowody tego zlecenia.',
+    },
+    evidence: {
+      label: 'Źródła i założenia',
+      icon: ScrollText,
+      children: (
+        <dl className="space-y-2">
+          {zrodla.map((wpis) => (
+            <div key={wpis.id}>
+              <dt className="text-[11px] uppercase tracking-wide text-c-text-muted">
+                {wpis.label}
+              </dt>
+              <dd className="text-xs text-c-text">
+                <TechnicalId value={wpis.value} title={wpis.label} />
+              </dd>
+            </div>
+          ))}
+        </dl>
+      ),
+      isEmpty: zrodla.length === 0,
+      emptyLabel:
+        'Zlecenie nie wskazuje jeszcze kryteriów odbioru ani polityk, na których się opiera.',
+    },
+    comments: {
+      pominieta: true as const,
+      reason:
+        'Backend zleceń nie ma dziś wątku komentarzy (brak serwisu i tabeli — ' +
+        'w katalogu caseWorkspace nie istnieje żaden serwis komentarzy). Pusty akordeon ' +
+        'udawałby funkcję, której nie ma; rozmowa o zleceniu toczy się w module, ' +
+        'do którego należy dany obiekt.',
+    },
+    history: {
+      label: 'Historia',
+      children: (
+        <PreviewActivityStrip
+          events={(bundle?.history ?? []).map((event) => ({
+            id: event.eventId,
+            description: event.summary || event.eventType,
+            timestamp: event.occurredAt,
+            userName: event.actorId,
+          }))}
+          initialCount={5}
+        />
+      ),
+      isEmpty: (bundle?.history ?? []).length === 0,
+      emptyLabel: 'Przebieg zlecenia jest jeszcze pusty — nic się na nim nie wydarzyło.',
+    },
+  };
+
+  // ── Menu 3 (view-local): projekcja planu ──────────────────────────────────
+  const przelacznikProjekcji = (
     <div
       role="radiogroup"
-      aria-label="Sposób pokazania planu"
-      className={`flex items-center gap-1 rounded-full border border-c-border p-0.5 ${
-        wrap ? 'w-full flex-wrap justify-start' : ''
-      }`}
+      aria-label="Sposób pokazania zlecenia"
+      className="flex flex-wrap items-center gap-1 rounded-full border border-c-border p-0.5"
     >
       {PLAN_PROJECTIONS.map((item) => {
         const active = item.id === projection;
@@ -308,7 +971,7 @@ export const CaseDetailScreen: React.FC = () => {
             aria-checked={active}
             title={item.description}
             onClick={() => setParam({ 'widok-planu': item.id })}
-            className={`h-8 whitespace-nowrap rounded-full px-3 text-xs font-medium transition ${FOCUS_RING} ${
+            className={`h-7 whitespace-nowrap rounded-full px-3 text-xs font-medium transition ${FOCUS_RING} ${
               active
                 ? 'bg-c-surface-raised text-c-text'
                 : 'text-c-text-secondary hover:bg-c-surface-raised'
@@ -321,126 +984,103 @@ export const CaseDetailScreen: React.FC = () => {
     </div>
   );
 
-  const projectionSwitchInBar = tab === 'plan' && !isNarrow ? renderProjectionSwitch(false) : null;
-
-  const body = (() => {
-    const state = (
-      <CaseStateBlock
-        loading={loading}
-        failure={failure}
-        onRetry={() => void load()}
-        onBack={goToList}
-      />
-    );
-    if (loading || failure || !bundle) {
-      return <div className="rounded-xl border border-c-border bg-c-surface">{state}</div>;
-    }
-
-    return (
-      <>
-        <PartialBanner sections={bundle.failedSections} onRetry={() => void load()} />
-        {tab === 'plan' && isNarrow ? (
-          <div className="mb-3 min-w-0">{renderProjectionSwitch(true)}</div>
-        ) : null}
-        {tab === 'plan' ? (
-          <PlanView
-            caseItem={bundle.caseItem}
-            planVersion={currentPlanVersion}
-            graph={bundle.graph}
-            validation={bundle.validation}
-            projection={projection}
-            selectedNodeId={selectedNodeId}
-            onSelectNode={(id) => setParam({ krok: id })}
-          />
-        ) : null}
-        {tab === 'realizacja' ? (
-          <RealizacjaView
-            caseItem={bundle.caseItem}
-            waits={bundle.waits}
-            proposals={bundle.proposals}
-            history={bundle.history}
-            expert={projection === 'ekspercki'}
-          />
-        ) : null}
-        {tab === 'rezultaty' ? (
-          <RezultatyView
-            caseItem={bundle.caseItem}
-            measurements={bundle.measurements}
-            artifactLinks={bundle.artifactLinks}
-            expert={projection === 'ekspercki'}
-          />
-        ) : null}
-      </>
-    );
-  })();
-
-  const title = bundle?.caseItem.projectName || 'Zlecenie';
+  const tytul = bundle?.caseItem.projectName || 'Zlecenie';
+  const stanZlecenia = bundle?.caseItem.caseStatus;
+  const tonStatusu: 'draft' | 'review' | 'approved' | 'rejected' | 'neutral' =
+    stanZlecenia === 'BLOCKED' || stanZlecenia === 'FAILED'
+      ? 'rejected'
+      : stanZlecenia === 'ACTIVE'
+        ? 'approved'
+        : stanZlecenia === 'CLOSED'
+          ? 'review'
+          : 'draft';
 
   return (
     <div className="h-full min-w-0" data-testid="zlecenie-szczegol">
-      <StandardModuleBar
-        breadcrumbs={[{ label: 'Zlecenia', onClick: goToList }, { label: title }]}
-        tabs={visibleTabs.map((item) => ({ id: item.id, label: item.label }))}
-        activeTab={tab}
-        onTabChange={(id) => setParam({ zakladka: id })}
-        viewModes={['table']}
-        filterControls={
-          <div className="flex items-center gap-2">
-            {projectionSwitchInBar}
-            {hiddenTabs.length ? (
-              <MoreTabsMenu
-                items={hiddenTabs}
-                activeId={tab}
-                onSelect={(id) => setParam({ zakladka: id })}
-                label="Więcej"
-                ariaLabel="Więcej sekcji zlecenia"
-              />
-            ) : null}
-          </div>
+      <StandardArtifactShell
+        /*
+         * ★ UCZCIWIE: `registry.ts` (SSOT kart N) zna dziś siedem kluczy i nie
+         * ma wśród nich zlecenia; dopisanie ósmego to zmiana rejestru, nie tego
+         * ekranu. Klucz jest więc rzutowany — powłoka używa go WYŁĄCZNIE do
+         * treści ostrzeżeń dev i do reguły warstwy dowodowej dla kart pisanych
+         * przez AI (`StandardArtifactShell.tsx:192`), więc rzutowanie nie
+         * wyłącza żadnej bramki obowiązującej ten ekran.
+         */
+        karta={'zlecenie' as KartaNKey}
+        klasa="L"
+        header={{
+          title: tytul,
+          onTitleChange: () => undefined,
+          titleReadOnly: true,
+          artifactType: 'project',
+          artifactId: caseId,
+          onSave: () => undefined,
+          saveState: 'saved',
+          lastSavedLabel: bundle
+            ? `Dane odczytane z serwera · ostatnia zmiana zlecenia ${formatDateTime(bundle.caseItem.updatedAt)}`
+            : undefined,
+          onClose: goToList,
+          statusLabel: stanZlecenia ? caseStatusLabel(stanZlecenia, true) : undefined,
+          statusTone: tonStatusu,
+        }}
+        primaryAction={
+          rezultatDoOtwarcia
+            ? {
+                id: 'otworz-rezultat',
+                label: { en: 'Open result', pl: 'Otwórz rezultat' },
+                icon: ArrowUpRight,
+                onClick: () =>
+                  otworzObiekt({
+                    sciezka:
+                      rezultatDoOtwarcia.otwarcie.status === 'otwieralny'
+                        ? rezultatDoOtwarcia.otwarcie.sciezka
+                        : '',
+                    kluczFokusu: kluczFokusuObiektu(rezultatDoOtwarcia.link.linkId),
+                    etykieta:
+                      rezultatDoOtwarcia.otwarcie.status === 'otwieralny'
+                        ? rezultatDoOtwarcia.otwarcie.etykieta
+                        : '',
+                  }),
+                title: {
+                  en: 'Open the main result of this case',
+                  pl: 'Otwórz najważniejszy rezultat tego zlecenia w jego module',
+                },
+              }
+            : {
+                /*
+                 * ★ ZOBACZONE NA ZRZUCIE, nie wydedukowane: wersja z
+                 * `disabled: true` wyglądała DOKŁADNIE tak samo jak aktywna —
+                 * `MENU_1_PRIMARY_CTA` (`ModuleMenu3.tsx:15`) nie ma ŻADNEGO
+                 * wariantu `disabled:`, więc powłoka rysuje pełny, biały przycisk
+                 * niezależnie od stanu. Wyłączony przycisk wyglądający na
+                 * klikalny to atrapa, więc gdy nie ma czego otworzyć, primary po
+                 * prostu nie powstaje — zgodnie ze SPEC-N §2.3 brak jest JAWNY
+                 * i uzasadniony, a nie przemilczany.
+                 */
+                intentionallyNone: true,
+                reason:
+                  'To zlecenie nie ma jeszcze ANI JEDNEGO powiązanego obiektu, który dałoby ' +
+                  'się otworzyć (albo wszystkie są niedostępne/odpięte). Wyłączony przycisk ' +
+                  'byłby atrapą: powłoka rysuje go identycznie jak aktywny.',
+              }
         }
-      >
-        <div className="mx-auto min-w-0 max-w-[1400px] px-3 py-4 sm:px-6 sm:py-6">
-          <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
-            <div className="min-w-0">
-              <button
-                type="button"
-                onClick={goToList}
-                className={`mb-1 inline-flex items-center gap-1.5 rounded-lg text-xs font-medium text-c-text-secondary hover:text-c-text ${FOCUS_RING}`}
-              >
-                <ArrowLeft size={14} aria-hidden />
-                Wróć do listy zleceń
-              </button>
-              <h1
-                ref={headingRef}
-                tabIndex={-1}
-                className="truncate text-lg font-semibold text-c-text outline-none"
-              >
-                {title}
-              </h1>
-              {bundle?.caseItem.projectDescription ? (
-                <p className="mt-0.5 line-clamp-2 text-sm text-c-text-secondary">
-                  {bundle.caseItem.projectDescription}
-                </p>
-              ) : null}
-            </div>
-            {bundle ? (
-              <StatusTag
-                tone={
-                  bundle.caseItem.caseStatus === 'BLOCKED' ||
-                  bundle.caseItem.caseStatus === 'FAILED'
-                    ? 'critical'
-                    : bundle.caseItem.caseStatus === 'CLOSED'
-                      ? 'success'
-                      : 'info'
-                }
-              >
-                {caseStatusLabel(bundle.caseItem.caseStatus, true)}
-              </StatusTag>
-            ) : null}
-          </div>
-          {body}
-        </div>
-      </StandardModuleBar>
+        sections={sekcje}
+        rightPanel={prawyPanel}
+        activeSection={tab}
+        onSectionChange={(id) => setParam({ zakladka: id })}
+        densityMode={gestosc}
+        onDensityModeChange={setGestosc}
+        toolbar={
+          <NModeToolbar
+            isPolish
+            activeSectionLabel={aktywnaSekcja.label}
+            sectionsDropdown={przelacznikProjekcji}
+            visibleActionCount={PLAN_PROJECTIONS.length}
+          />
+        }
+        panelAriaLabel="Szczegóły zlecenia"
+        loading={false}
+      />
     </div>
   );
 };

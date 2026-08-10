@@ -243,6 +243,187 @@ export const PartialBanner: React.FC<{ sections: string[]; onRetry?: () => void 
   );
 };
 
+// ── Wynik KOMENDY ────────────────────────────────────────────────────────────
+
+/**
+ * Pasek wyniku komendy (zapisu). Osobny od `CaseStateBlock`, bo mówi o czymś
+ * innym: tam „nie udało się WCZYTAĆ", tutaj „co się stało z Twoją decyzją".
+ *
+ * Trzy rzeczy, które ten pasek musi umieć powiedzieć i mówi wprost:
+ *  · KONFLIKT (409) — nic nie zmieniono, stan na serwerze jest inny niż na
+ *    ekranie; obok komunikatu stoi „Odśwież dane", bo powtórzenie tej samej
+ *    komendy w ciemno jest bez sensu;
+ *  · BRAK DOSTĘPU (403) / NIE ZNALEZIONO (404) — bez sugerowania, że obiekt
+ *    istnieje (SEC-009);
+ *  · SUKCES NIEPOTWIERDZONY — komenda przeszła, ale kontrolny odczyt nie, więc
+ *    NIE twierdzimy, że wiemy, jak wygląda stan.
+ */
+export interface CommandNotice {
+  tone: 'success' | 'warning' | 'critical';
+  text: string;
+  /** Pokaż przycisk odświeżenia (konflikt, stan nieznany). */
+  refresh?: boolean;
+}
+
+export const CommandBanner: React.FC<{
+  notice: CommandNotice | null;
+  onRefresh?: () => void;
+  onDismiss?: () => void;
+}> = ({ notice, onRefresh, onDismiss }) => {
+  if (!notice) return null;
+  const toneClass =
+    notice.tone === 'critical'
+      ? 'border-danger-300 bg-danger-50 text-danger-800 dark:border-danger-500/30 dark:bg-danger-500/10 dark:text-danger-200'
+      : notice.tone === 'warning'
+        ? 'border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-100'
+        : 'border-success-300 bg-success-50 text-success-800 dark:border-success-500/30 dark:bg-success-500/10 dark:text-success-200';
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      className={`mb-3 flex flex-wrap items-start gap-2 rounded-xl border px-3 py-2 text-sm ${toneClass}`}
+    >
+      <span className="min-w-0 flex-1">{notice.text}</span>
+      {notice.refresh && onRefresh ? (
+        <button
+          type="button"
+          onClick={onRefresh}
+          className={`shrink-0 rounded-lg border border-current px-2 py-1 text-xs font-medium ${FOCUS_RING}`}
+        >
+          Odśwież dane
+        </button>
+      ) : null}
+      {onDismiss ? (
+        <button
+          type="button"
+          onClick={onDismiss}
+          aria-label="Zamknij komunikat"
+          className={`shrink-0 rounded-lg border border-current px-2 py-1 text-xs font-medium ${FOCUS_RING}`}
+        >
+          Zamknij
+        </button>
+      ) : null}
+    </div>
+  );
+};
+
+/**
+ * Potwierdzenie komendy z opcjonalnym POWODEM.
+ *
+ * Nie jest to ozdoba: trasy `cancel`, `pause`, `withdraw`, `revoke` wymagają
+ * niepustego `reason` po stronie serwera (zod `min(1)`) — bez pola na powód
+ * komenda wróciłaby z 400 i użytkownik nie miałby pojęcia dlaczego. Dlatego
+ * przycisk potwierdzenia jest ZABLOKOWANY, dopóki wymagany powód jest pusty.
+ *
+ * Klawiatura: fokus wchodzi na pole/przycisk po otwarciu, Escape zamyka.
+ */
+export interface CommandDialogProps {
+  open: boolean;
+  title: string;
+  description: string;
+  confirmLabel: string;
+  /** Gdy podany — pokazujemy pole powodu; `required` blokuje potwierdzenie. */
+  reason?: { label: string; required: boolean; placeholder?: string };
+  busy?: boolean;
+  onConfirm: (reason: string) => void;
+  onCancel: () => void;
+}
+
+export const CommandDialog: React.FC<CommandDialogProps> = ({
+  open,
+  title,
+  description,
+  confirmLabel,
+  reason,
+  busy,
+  onConfirm,
+  onCancel,
+}) => {
+  const [value, setValue] = useState('');
+  const inputRef = useRef<HTMLTextAreaElement | null>(null);
+  const confirmRef = useRef<HTMLButtonElement | null>(null);
+  const titleId = useId();
+  const descId = useId();
+
+  useEffect(() => {
+    if (!open) {
+      setValue('');
+      return;
+    }
+    // Fokus na to, co użytkownik ma wypełnić albo kliknąć — nie na tło.
+    const node = reason ? inputRef.current : confirmRef.current;
+    node?.focus();
+  }, [open, reason]);
+
+  if (!open) return null;
+
+  const blocked = Boolean(reason?.required) && value.trim().length === 0;
+
+  return (
+    <div
+      className="fixed inset-0 z-[100] flex items-end justify-center bg-black/40 p-3 sm:items-center"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) onCancel();
+      }}
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        aria-describedby={descId}
+        onKeyDown={(event) => {
+          if (event.key === 'Escape') {
+            event.stopPropagation();
+            onCancel();
+          }
+        }}
+        className="w-full max-w-md rounded-2xl border border-c-border bg-c-surface p-4 shadow-xl"
+      >
+        <h2 id={titleId} className="text-base font-semibold text-c-text">
+          {title}
+        </h2>
+        <p id={descId} className="mt-1 text-sm text-c-text-secondary">
+          {description}
+        </p>
+        {reason ? (
+          <label className="mt-3 block">
+            <span className="block text-xs font-medium uppercase tracking-wide text-c-text-muted">
+              {reason.label}
+              {reason.required ? ' (wymagany)' : ' (opcjonalny)'}
+            </span>
+            <textarea
+              ref={inputRef}
+              value={value}
+              onChange={(event) => setValue(event.target.value)}
+              rows={3}
+              placeholder={reason.placeholder}
+              className={`mt-1 w-full resize-y rounded-lg border border-c-border bg-c-bg px-2.5 py-2 text-sm text-c-text ${FOCUS_RING}`}
+            />
+          </label>
+        ) : null}
+        <div className="mt-4 flex flex-wrap justify-end gap-2">
+          <button
+            type="button"
+            onClick={onCancel}
+            className={`rounded-lg border border-c-border px-3 py-1.5 text-sm font-medium text-c-text-secondary hover:bg-c-surface-raised ${FOCUS_RING}`}
+          >
+            Nie teraz
+          </button>
+          <button
+            ref={confirmRef}
+            type="button"
+            disabled={blocked || busy}
+            onClick={() => onConfirm(value.trim())}
+            className={`rounded-lg border border-c-border bg-c-surface-raised px-3 py-1.5 text-sm font-semibold text-c-text hover:bg-c-bg disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
+          >
+            {busy ? 'Wysyłam…' : confirmLabel}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 /** Wąski pasek „brak uprawnień" wewnątrz sekcji (nie cały ekran). */
 export const BlockedNote: React.FC<{ text: string }> = ({ text }) => (
   <div

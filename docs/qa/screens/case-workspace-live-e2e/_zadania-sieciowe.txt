@@ -1,0 +1,32 @@
+REALNE zadania HTTP zarejestrowane podczas robienia zrzutow
+(dowod, ze UI rozmawia z backendem, a nie z atrapa):
+
+200 POST /api/auth/login
+200 GET /api/v8/case-workspace/cases
+200 GET /api/v8/case-workspace/cases/case-0006f4a5-7fa9-41d8-aa0d-793b6cb4b3c0
+200 GET /api/v8/case-workspace/cases/case-0006f4a5-7fa9-41d8-aa0d-793b6cb4b3c0/plan-versions
+200 GET /api/v8/case-workspace/cases/case-0006f4a5-7fa9-41d8-aa0d-793b6cb4b3c0/history-events?limit=50
+200 GET /api/v8/case-workspace/cases/case-0006f4a5-7fa9-41d8-aa0d-793b6cb4b3c0/waits
+200 GET /api/v8/case-workspace/cases/case-0006f4a5-7fa9-41d8-aa0d-793b6cb4b3c0/proposals
+200 GET /api/v8/case-workspace/cases/case-0006f4a5-7fa9-41d8-aa0d-793b6cb4b3c0/value-measurements
+200 GET /api/v8/case-workspace/cases/case-0006f4a5-7fa9-41d8-aa0d-793b6cb4b3c0/artifact-links
+200 GET /api/v8/case-workspace/plan-versions/planv-696aa873-6079-4506-af9d-ebcd0e92f579/graph
+200 GET /api/v8/case-workspace/plan-versions/planv-696aa873-6079-4506-af9d-ebcd0e92f579/validate
+200 GET /api/v8/case-workspace/cases/case-0006f4a5-7fa9-41d8-aa0d-793b6cb4b3c0
+200 GET /api/v8/case-workspace/cases/case-0006f4a5-7fa9-41d8-aa0d-793b6cb4b3c0/value-measurements
+200 GET /api/v8/case-workspace/cases/case-0006f4a5-7fa9-41d8-aa0d-793b6cb4b3c0/plan-versions
+200 GET /api/v8/case-workspace/cases/case-0006f4a5-7fa9-41d8-aa0d-793b6cb4b3c0/artifact-links
+200 GET /api/v8/case-workspace/cases/case-0006f4a5-7fa9-41d8-aa0d-793b6cb4b3c0/waits
+200 GET /api/v8/case-workspace/cases/case-0006f4a5-7fa9-41d8-aa0d-793b6cb4b3c0/proposals
+200 GET /api/v8/case-workspace/cases/case-0006f4a5-7fa9-41d8-aa0d-793b6cb4b3c0/history-events?limit=50
+200 GET /api/v8/case-workspace/plan-versions/planv-696aa873-6079-4506-af9d-ebcd0e92f579/graph
+200 GET /api/v8/case-workspace/plan-versions/planv-696aa873-6079-4506-af9d-ebcd0e92f579/validate
+200 GET /api/v8/case-workspace/cases/case-0006f4a5-7fa9-41d8-aa0d-793b6cb4b3c0
+200 GET /api/v8/case-workspace/cases/case-0006f4a5-7fa9-41d8-aa0d-793b6cb4b3c0/plan-versions
+200 GET /api/v8/case-workspace/cases/case-0006f4a5-7fa9-41d8-aa0d-793b6cb4b3c0/artifact-links
+200 GET /api/v8/case-workspace/cases/case-0006f4a5-7fa9-41d8-aa0d-793b6cb4b3c0/history-events?limit=50
+200 GET /api/v8/case-workspace/cases/case-0006f4a5-7fa9-41d8-aa0d-793b6cb4b3c0/value-measurements
+200 GET /api/v8/case-workspace/cases/case-0006f4a5-7fa9-41d8-aa0d-793b6cb4b3c0/proposals
+200 GET /api/v8/case-workspace/cases/case-0006f4a5-7fa9-41d8-aa0d-793b6cb4b3c0/waits
+200 GET /api/v8/case-workspace/plan-versions/planv-696aa873-6079-4506-af9d-ebcd0e92f579/graph
+200 GET /api/v8/case-workspace/plan-versions/planv-696aa873-6079-4506-af9d-ebcd0e92f579/validate

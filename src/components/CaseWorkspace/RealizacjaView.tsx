@@ -12,7 +12,7 @@
  */
 
 import { Clock, Inbox } from 'lucide-react';
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import { StandardPreview } from '@/components/standard/StandardPreview';
 import { StandardTable, type TableColumn } from '@/components/standard/StandardTable';
@@ -37,6 +37,80 @@ export interface RealizacjaViewProps {
 }
 
 type Selection = { kind: 'oczekiwanie'; id: string } | { kind: 'propozycja'; id: string } | null;
+
+/**
+ * Szerokość REALNIE dostępna dla tabeli — mierzona na jej własnym kontenerze,
+ * nie na oknie.
+ *
+ * ★ DLACZEGO NIE `useViewportWidth()` (jak na liście zleceń i w „Planie →
+ * Lista"). ZMIERZONE NA ŻYWYM EKRANIE, nie wydedukowane: przy TYM SAMYM oknie
+ * 1024 px kontener tabeli ma
+ *
+ *     916 px  gdy podgląd jest zamknięty,
+ *     520 px  gdy użytkownik kliknął wiersz i otworzył prawy panel
+ *             (`lg:w-[380px]`, patrz układ na dole tego pliku).
+ *
+ * Czyli jedna szerokość okna daje DWIE różne szerokości tabeli. Próg liczony z
+ * `window.innerWidth` musiałby zgadnąć, którą — i przy otwartym podglądzie
+ * zawsze zgadywałby źle (zmierzone: 460 px ukrytego przewijania przy oknie
+ * 1024 px z otwartym podglądem, mimo że okno „jest desktopowe"). Na tych
+ * dwóch tabelach panel jest częścią tego samego rzędu flex, więc źródłem
+ * prawdy jest kontener.
+ *
+ * Zwraca szerokość WNĘTRZA (bez paddingu karty), bo to ona ogranicza tabelę.
+ */
+function useAvailableWidth(ref: React.RefObject<HTMLElement | null>): number | null {
+  const [width, setWidth] = useState<number | null>(null);
+
+  const measure = useCallback(() => {
+    const node = ref.current;
+    if (!node) return;
+    const style = window.getComputedStyle(node);
+    const padding = parseFloat(style.paddingLeft || '0') + parseFloat(style.paddingRight || '0');
+    setWidth(Math.max(0, Math.round(node.clientWidth - padding)));
+  }, [ref]);
+
+  useLayoutEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+    measure();
+    const node = ref.current;
+    const observer =
+      typeof ResizeObserver !== 'undefined' ? new ResizeObserver(() => measure()) : null;
+    if (node) observer?.observe(node);
+    window.addEventListener('resize', measure);
+    return () => {
+      window.removeEventListener('resize', measure);
+      observer?.disconnect();
+    };
+  }, [measure, ref]);
+
+  return width;
+}
+
+/**
+ * Trzy zestawy kolumn, wybierane szerokością kontenera.
+ *
+ * Progi NIE są okrągłe „dla ładności" — biorą się z sumy szerokości kolumn,
+ * które zestaw deklaruje (oczekiwania 250+150+150+150 = 700 px, propozycje
+ * 260+180+140+150 = 730 px). Zestaw pełny wolno pokazać dopiero wtedy, gdy
+ * mieści się BEZ przewijania; poniżej tego moduł deklaruje węższy zestaw,
+ * zamiast ściskać cztery kolumny do ~60 px (to był jawny warunek właściciela:
+ * MOBILNE ZESTAWY KOLUMN, nie ściśnięta tabela desktopowa).
+ */
+type ColumnTier = 'pelny' | 'sredni' | 'waski';
+
+function tierFor(available: number | null, fullWidth: number): ColumnTier {
+  // Pierwszy render (przed pomiarem) celowo zakłada zestaw wąski: lepiej
+  // pokazać komplet treści w jednej kolumnie i rozszerzyć po pomiarze, niż
+  // mignąć tabelą z ukrytym przewijaniem.
+  if (available === null) return 'waski';
+  if (available >= fullWidth + 40) return 'pelny';
+  if (available >= 460) return 'sredni';
+  return 'waski';
+}
+
+const WAITS_FULL_WIDTH = 700;
+const PROPOSALS_FULL_WIDTH = 730;
 
 function waitTone(wait: CaseWait): 'critical' | 'warning' | 'success' | 'neutral' {
   if (wait.status === 'EXPIRED') return 'critical';
@@ -66,6 +140,86 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
   expert,
 }) => {
   const [selection, setSelection] = useState<Selection>(null);
+
+  // Karty obu tabel mierzą się SAME — patrz `useAvailableWidth`. Dwa osobne
+  // pomiary, bo obie karty mogą kiedyś stanąć w różnych kolumnach układu.
+  const waitsCardRef = useRef<HTMLDivElement | null>(null);
+  const proposalsCardRef = useRef<HTMLDivElement | null>(null);
+  const waitsAvailableWidth = useAvailableWidth(waitsCardRef);
+  const proposalsAvailableWidth = useAvailableWidth(proposalsCardRef);
+
+  // Wiersz, na który ma wrócić fokus po zamknięciu podglądu Escape'em.
+  // Ref, nie stan: to nie jest treść ekranu, a jego zmiana nie ma prawa
+  // wywołać renderu.
+  const powrotFokusuRef = useRef<string | null>(null);
+
+  /*
+   * Escape zamyka podgląd.
+   *
+   * ★ ZMIERZONE, nie założone: w przebiegu klawiaturowym podgląd otwierał się
+   * kliknięciem, ale Escape go NIE zamykał — jedynym wyjściem był celowany klik
+   * w „×". `StandardPreview` nie obsługuje Escape w ogóle (grep po
+   * `src/components/standard/StandardPreview.tsx`: zero trafień), więc dotyczy
+   * to KAŻDEGO modułu, który go używa — zgłoszone osobno jako luka wspólnego
+   * komponentu. Tutaj domykam to po stronie modułu, bo to moduł jest
+   * właścicielem stanu wyboru.
+   *
+   * Po zamknięciu fokus wraca na wiersz, z którego podgląd wyszedł — inaczej
+   * użytkownik klawiatury ląduje na początku dokumentu i gubi miejsce w tabeli.
+   */
+  useEffect(() => {
+    if (!selection) return undefined;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      powrotFokusuRef.current = selection.id;
+      setSelection(null);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [selection]);
+
+  /*
+   * Przywrócenie fokusu PO zamknięciu podglądu — osobny efekt, bo jedna klatka
+   * nie wystarcza.
+   *
+   * ★ ZMIERZONE NA ŻYWYM EKRANIE (okno 1920, podgląd otwarty na pierwszym
+   * wierszu, Escape): poprzednia wersja robiła `requestAnimationFrame` zaraz po
+   * `setSelection(null)` i fokus NIE wracał — `document.activeElement` lądował
+   * na nagłówku sekcji (`H2`), a nie na wierszu. Powód nie jest oczywisty:
+   * zamknięcie podglądu ODDAJE tabeli szerokość panelu (`lg:w-[380px]`), więc
+   * `useAvailableWidth` przelicza próg i tabela przechodzi na SZERSZY zestaw
+   * kolumn. Kotwica `[data-realizacja-wiersz]` żyje w komórce, a komórki
+   * zestawu są tworzone OD NOWA — pojedyncza klatka trafiała albo w węzeł
+   * jeszcze nieistniejący, albo w taki, który zaraz potem znikał (i fokus
+   * spadał na `body`).
+   *
+   * Dlatego powtarzamy próbę przez kilka klatek: każda klatka szuka AKTUALNEJ
+   * kotwiki i ustawia na niej fokus. Ostatnia klatka trafia już w zestaw po
+   * przeliczeniu, więc fokus siada tam, gdzie użytkownik był. Powtórne
+   * `focus()` na tym samym węźle jest bezkosztowe i niewidoczne.
+   */
+  useEffect(() => {
+    if (selection) return undefined;
+    const rowId = powrotFokusuRef.current;
+    if (!rowId) return undefined;
+
+    let klatka = 0;
+    let uchwyt = 0;
+    const KLATKI = 6;
+    const sprobuj = () => {
+      document
+        .querySelector<HTMLElement>(`[data-realizacja-wiersz="${CSS.escape(rowId)}"]`)
+        ?.focus();
+      klatka += 1;
+      if (klatka < KLATKI) {
+        uchwyt = window.requestAnimationFrame(sprobuj);
+      } else {
+        powrotFokusuRef.current = null;
+      }
+    };
+    sprobuj();
+    return () => window.cancelAnimationFrame(uchwyt);
+  }, [selection]);
 
   const activeWaits = useMemo(() => waits.filter((w) => w.status === 'ACTIVE'), [waits]);
   const pendingProposals = useMemo(
@@ -108,84 +262,225 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
     [proposals]
   );
 
-  const waitColumns: TableColumn[] = [
-    {
-      id: 'naCo',
-      label: 'Na co czekamy',
-      width: '250px',
-      sortable: true,
-      filterable: true,
-      render: (row: Record<string, unknown>) => (
-        <span className="text-sm font-medium text-c-text">{String(row.naCo)}</span>
-      ),
-    },
-    {
-      id: 'stan',
-      label: 'Stan',
-      width: '150px',
-      filterable: true,
-      render: (row: Record<string, unknown>) => (
-        <StatusTag tone={row.stanTone as 'critical'}>{String(row.stan)}</StatusTag>
-      ),
-    },
-    {
-      id: 'odKiedy',
-      label: 'Czeka od',
-      width: '150px',
-      sortable: true,
-      render: (row: Record<string, unknown>) => (
-        <span className="text-sm text-c-text-secondary" title={formatDateTime(String(row.odKiedy))}>
-          {relativeDays(String(row.odKiedy))}
-        </span>
-      ),
-    },
-    {
-      id: 'termin',
-      label: 'Termin',
-      width: '150px',
-      sortable: true,
-      render: (row: Record<string, unknown>) =>
-        row.termin ? (
-          <span className="text-sm text-c-text-secondary">
-            {formatDateTime(String(row.termin))}
-          </span>
-        ) : (
-          <span className="text-sm text-c-text-muted">bez terminu</span>
-        ),
-    },
-  ];
+  // Termin czytelnie w JEDNEJ linii — używany przez zestaw średni i wąski,
+  // gdzie „Czeka od" i „Termin" dzielą komórkę.
+  const terminText = (row: Record<string, unknown>) =>
+    row.termin ? formatDateTime(String(row.termin)) : 'bez terminu';
 
-  const proposalColumns: TableColumn[] = [
-    {
-      id: 'czego',
-      label: 'Czego dotyczy',
-      width: '260px',
-      sortable: true,
-      filterable: true,
-      render: (row: Record<string, unknown>) => (
-        <span className="text-sm font-medium text-c-text">{String(row.czego)}</span>
-      ),
-    },
-    {
-      id: 'stan',
-      label: 'Stan',
-      width: '180px',
-      filterable: true,
-      render: (row: Record<string, unknown>) => (
-        <StatusTag tone={row.stanTone as 'critical'}>{String(row.stan)}</StatusTag>
-      ),
-    },
-    { id: 'ktoZglosil', label: 'Kto zgłosił', width: '140px', filterable: true },
-    {
-      id: 'zgloszone',
-      label: 'Zgłoszone',
-      width: '150px',
-      sortable: true,
-      render: (row: Record<string, unknown>) => (
-        <span className="text-sm text-c-text-secondary">{relativeDays(String(row.zgloszone))}</span>
-      ),
-    },
-  ];
+  const waitColumnsByTier: Record<ColumnTier, TableColumn[]> = {
+    pelny: [
+      {
+        id: 'naCo',
+        label: 'Na co czekamy',
+        width: '250px',
+        sortable: true,
+        filterable: true,
+        render: (row: Record<string, unknown>) => (
+          <span
+            // Kotwica fokusu: po zamknięciu podglądu Escape'em wracamy dokładnie
+            // na ten wiersz. `tabIndex={-1}` = poza kolejnością Tab, ale można
+            // mu oddać fokus programowo.
+            data-realizacja-wiersz={String(row.id)}
+            tabIndex={-1}
+            className="block rounded text-sm font-medium text-c-text outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+          >
+            {String(row.naCo)}
+          </span>
+        ),
+      },
+      {
+        id: 'stan',
+        label: 'Stan',
+        width: '150px',
+        filterable: true,
+        render: (row: Record<string, unknown>) => (
+          <StatusTag tone={row.stanTone as 'critical'}>{String(row.stan)}</StatusTag>
+        ),
+      },
+      {
+        id: 'odKiedy',
+        label: 'Czeka od',
+        width: '150px',
+        sortable: true,
+        render: (row: Record<string, unknown>) => (
+          <span
+            className="text-sm text-c-text-secondary"
+            title={formatDateTime(String(row.odKiedy))}
+          >
+            {relativeDays(String(row.odKiedy))}
+          </span>
+        ),
+      },
+      {
+        id: 'termin',
+        label: 'Termin',
+        width: '150px',
+        sortable: true,
+        render: (row: Record<string, unknown>) =>
+          row.termin ? (
+            <span className="text-sm text-c-text-secondary">
+              {formatDateTime(String(row.termin))}
+            </span>
+          ) : (
+            <span className="text-sm text-c-text-muted">bez terminu</span>
+          ),
+      },
+    ],
+    // Dwie kolumny: co i w jakim stanie · kiedy. Dwie kolumny danych to próg,
+    // przy którym `minTableWidth="columns"` znosi wymuszone 980 px, więc
+    // tabela zwęża się do kontenera zamiast chować treść za przewijaniem.
+    sredni: [
+      {
+        id: 'naCo',
+        label: 'Na co czekamy',
+        sortable: true,
+        render: (row: Record<string, unknown>) => (
+          <div
+            data-realizacja-wiersz={String(row.id)}
+            tabIndex={-1}
+            className="min-w-0 space-y-1 rounded outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+          >
+            <div className="text-sm font-medium leading-snug text-c-text">{String(row.naCo)}</div>
+            <StatusTag tone={row.stanTone as 'critical'}>{String(row.stan)}</StatusTag>
+          </div>
+        ),
+      },
+      {
+        id: 'odKiedy',
+        label: 'Od kiedy i do kiedy',
+        width: '190px',
+        sortable: true,
+        sortAccessor: (row: Record<string, unknown>) => String(row.odKiedy ?? ''),
+        render: (row: Record<string, unknown>) => (
+          <div className="min-w-0 space-y-0.5">
+            <div className="text-sm text-c-text-secondary" title={formatDateTime(String(row.odKiedy))}>
+              Czeka {relativeDays(String(row.odKiedy))}
+            </div>
+            <div className="text-xs text-c-text-muted">Termin: {terminText(row)}</div>
+          </div>
+        ),
+      },
+    ],
+    // Telefon: jedna kolumna, w niej pełna odpowiedź na pytanie „na co czekamy
+    // i czy się pali" — nic nie zostaje za przewijaniem.
+    waski: [
+      {
+        id: 'naCo',
+        label: 'Na co czekamy',
+        sortable: true,
+        render: (row: Record<string, unknown>) => (
+          <div
+            data-realizacja-wiersz={String(row.id)}
+            tabIndex={-1}
+            className="min-w-0 space-y-1 rounded outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+          >
+            <div className="text-sm font-medium leading-snug text-c-text">{String(row.naCo)}</div>
+            <StatusTag tone={row.stanTone as 'critical'}>{String(row.stan)}</StatusTag>
+            <div className="text-xs text-c-text-muted">
+              Czeka {relativeDays(String(row.odKiedy))} · termin: {terminText(row)}
+            </div>
+          </div>
+        ),
+      },
+    ],
+  };
+
+  const proposalColumnsByTier: Record<ColumnTier, TableColumn[]> = {
+    pelny: [
+      {
+        id: 'czego',
+        label: 'Czego dotyczy',
+        width: '260px',
+        sortable: true,
+        filterable: true,
+        render: (row: Record<string, unknown>) => (
+          <span
+            data-realizacja-wiersz={String(row.id)}
+            tabIndex={-1}
+            className="block rounded text-sm font-medium text-c-text outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+          >
+            {String(row.czego)}
+          </span>
+        ),
+      },
+      {
+        id: 'stan',
+        label: 'Stan',
+        width: '180px',
+        filterable: true,
+        render: (row: Record<string, unknown>) => (
+          <StatusTag tone={row.stanTone as 'critical'}>{String(row.stan)}</StatusTag>
+        ),
+      },
+      { id: 'ktoZglosil', label: 'Kto zgłosił', width: '140px', filterable: true },
+      {
+        id: 'zgloszone',
+        label: 'Zgłoszone',
+        width: '150px',
+        sortable: true,
+        render: (row: Record<string, unknown>) => (
+          <span className="text-sm text-c-text-secondary">
+            {relativeDays(String(row.zgloszone))}
+          </span>
+        ),
+      },
+    ],
+    sredni: [
+      {
+        id: 'czego',
+        label: 'Czego dotyczy',
+        sortable: true,
+        render: (row: Record<string, unknown>) => (
+          <div
+            data-realizacja-wiersz={String(row.id)}
+            tabIndex={-1}
+            className="min-w-0 space-y-1 rounded outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+          >
+            <div className="text-sm font-medium leading-snug text-c-text">{String(row.czego)}</div>
+            <StatusTag tone={row.stanTone as 'critical'}>{String(row.stan)}</StatusTag>
+          </div>
+        ),
+      },
+      {
+        id: 'zgloszone',
+        label: 'Kto i kiedy',
+        width: '180px',
+        sortable: true,
+        sortAccessor: (row: Record<string, unknown>) => String(row.zgloszone ?? ''),
+        render: (row: Record<string, unknown>) => (
+          <div className="min-w-0 space-y-0.5">
+            <div className="text-sm text-c-text-secondary">{String(row.ktoZglosil)}</div>
+            <div className="text-xs text-c-text-muted">{relativeDays(String(row.zgloszone))}</div>
+          </div>
+        ),
+      },
+    ],
+    waski: [
+      {
+        id: 'czego',
+        label: 'Sprawy do zatwierdzenia',
+        sortable: true,
+        render: (row: Record<string, unknown>) => (
+          <div
+            data-realizacja-wiersz={String(row.id)}
+            tabIndex={-1}
+            className="min-w-0 space-y-1 rounded outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+          >
+            <div className="text-sm font-medium leading-snug text-c-text">{String(row.czego)}</div>
+            <StatusTag tone={row.stanTone as 'critical'}>{String(row.stan)}</StatusTag>
+            <div className="text-xs text-c-text-muted">
+              Zgłosił: {String(row.ktoZglosil)} · {relativeDays(String(row.zgloszone))}
+            </div>
+          </div>
+        ),
+      },
+    ],
+  };
+
+  const waitTier = tierFor(waitsAvailableWidth, WAITS_FULL_WIDTH);
+  const proposalTier = tierFor(proposalsAvailableWidth, PROPOSALS_FULL_WIDTH);
+  const waitColumns = waitColumnsByTier[waitTier];
+  const proposalColumns = proposalColumnsByTier[proposalTier];
 
   const selectedWait =
     selection?.kind === 'oczekiwanie'
@@ -217,16 +512,37 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
           <h3 id="zlecenia-oczekiwania" className="mb-2 text-sm font-semibold text-c-text">
             Na co czekamy
           </h3>
-          <div className="min-w-0 overflow-hidden rounded-xl border border-c-border bg-c-surface p-2 sm:p-3">
+          <div
+            ref={waitsCardRef}
+            className="min-w-0 overflow-hidden rounded-xl border border-c-border bg-c-surface p-2 sm:p-3"
+          >
             <StandardTable
               columns={waitColumns}
               data={waitRows}
               selectedRowId={selection?.kind === 'oczekiwanie' ? selection.id : null}
               onRowClick={(row) => setSelection({ kind: 'oczekiwanie', id: String(row.id) })}
               rowDescription={() => null}
-              persistKey="caseWorkspace.execution.waits"
+              /*
+               * Klucz zależy od zestawu kolumn: pstryczek kolumn zapamiętuje
+               * WIDOCZNOŚĆ po `id`, a te same identyfikatory znaczą co innego w
+               * każdym zestawie. Wspólny klucz przenosiłby ukrycie kolumny z
+               * desktopu na telefon i chował jedyną kolumnę, jaka tam jest.
+               */
+              persistKey={`caseWorkspace.execution.waits.${waitTier}`}
               density="compact"
               defaultSort={{ columnId: 'odKiedy', direction: 'desc' }}
+              /*
+               * Ten sam defekt co na liście zleceń i w „Planie → Lista":
+               * `StandardTable` wymuszał 980 px min-width niezależnie od liczby
+               * kolumn. ZMIERZONE przed naprawą: przy oknie 375 px kontener miał
+               * 299 px, a tabela 980 px → 681 px przewijania UKRYTEGO wewnątrz
+               * tabeli, przy czystym pomiarze strony
+               * (`documentElement.scrollWidth === innerWidth === 375`).
+               * Zestawy 1- i 2-kolumnowe schodzą przez `'columns'` do braku
+               * min-width; zestaw pełny deklaruje tyle, ile jego kolumny
+               * naprawdę potrzebują (700 px), a nie zapożyczone 980 px.
+               */
+              minTableWidth={waitTier === 'pelny' ? WAITS_FULL_WIDTH : 'columns'}
               empty={{
                 icon: Clock,
                 title: 'Nic nie czeka',
@@ -240,16 +556,20 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
           <h3 id="zlecenia-decyzje" className="mb-2 text-sm font-semibold text-c-text">
             Sprawy do zatwierdzenia
           </h3>
-          <div className="min-w-0 overflow-hidden rounded-xl border border-c-border bg-c-surface p-2 sm:p-3">
+          <div
+            ref={proposalsCardRef}
+            className="min-w-0 overflow-hidden rounded-xl border border-c-border bg-c-surface p-2 sm:p-3"
+          >
             <StandardTable
               columns={proposalColumns}
               data={proposalRows}
               selectedRowId={selection?.kind === 'propozycja' ? selection.id : null}
               onRowClick={(row) => setSelection({ kind: 'propozycja', id: String(row.id) })}
               rowDescription={() => null}
-              persistKey="caseWorkspace.execution.proposals"
+              persistKey={`caseWorkspace.execution.proposals.${proposalTier}`}
               density="compact"
               defaultSort={{ columnId: 'zgloszone', direction: 'desc' }}
+              minTableWidth={proposalTier === 'pelny' ? PROPOSALS_FULL_WIDTH : 'columns'}
               empty={{
                 icon: Inbox,
                 title: 'Nic nie czeka na decyzję',
