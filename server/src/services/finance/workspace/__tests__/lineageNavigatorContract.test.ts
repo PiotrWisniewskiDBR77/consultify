@@ -61,7 +61,12 @@ function edge(
   };
 }
 
-const NODES: Record<string, LineageNodeMetadata> = {
+/**
+ * Fixture nodes without the tenant field — `NODES` below stamps every one of
+ * them with `ORG`. Tests that need a foreign node build it explicitly with
+ * `foreignNode()`, so a cross-tenant fixture can never appear by accident.
+ */
+const NODE_SHAPES: Record<string, Omit<LineageNodeMetadata, 'organizationId'>> = {
   sp3: {
     versionId: 'sp3',
     artifactId: 'sp',
@@ -130,6 +135,31 @@ const NODES: Record<string, LineageNodeMetadata> = {
   },
 };
 
+const NODES: Record<string, LineageNodeMetadata> = Object.fromEntries(
+  Object.entries(NODE_SHAPES).map(([versionId, shape]) => [
+    versionId,
+    { organizationId: ORG, ...shape } satisfies LineageNodeMetadata,
+  ])
+);
+
+const OTHER_ORG = 'org-intruder';
+
+/** A version that genuinely resolves — but belongs to somebody else. */
+function foreignNode(overrides: Partial<LineageNodeMetadata> & { versionId: string }): LineageNodeMetadata {
+  return {
+    organizationId: OTHER_ORG,
+    artifactId: 'foreign-artifact',
+    artifactType: 'BASELINE_MODEL',
+    name: 'Konkurencja — model',
+    versionLabel: 'v9',
+    periodLabel: 'FY2024',
+    status: 'APPROVED',
+    freshness: 'CURRENT',
+    variantLabel: null,
+    ...overrides,
+  };
+}
+
 const resolve: LineageMetadataResolver = (versionId) => NODES[versionId];
 
 /** Ancestors of `val1` — the shape `lineageService.getAncestors` really returns: flat, distinct, unordered. */
@@ -151,7 +181,7 @@ describe('AP-11 lineageNavigatorContract — stage order does not drift from lin
 
 describe('AP-11 lineageNavigatorContract — compact trail', () => {
   it('builds the register\'s example chain as STRUCTURED data, root -> focus', () => {
-    const trail = buildLineageTrail({ focusVersionId: 'val1', ancestorEdges: ANCESTOR_EDGES, resolve });
+    const trail = buildLineageTrail({ organizationId: ORG, focusVersionId: 'val1', ancestorEdges: ANCESTOR_EDGES, resolve });
     const nodes = trail.items.filter((i): i is LineageTrailNode => i.kind === 'node');
     expect(nodes.map((n) => n.displayName)).toEqual([
       'Statement pack v3',
@@ -170,7 +200,7 @@ describe('AP-11 lineageNavigatorContract — compact trail', () => {
   });
 
   it('carries a stale badge per element instead of one badge for the whole chain', () => {
-    const trail = buildLineageTrail({ focusVersionId: 'val1', ancestorEdges: ANCESTOR_EDGES, resolve });
+    const trail = buildLineageTrail({ organizationId: ORG, focusVersionId: 'val1', ancestorEdges: ANCESTOR_EDGES, resolve });
     const nodes = trail.items.filter((i): i is LineageTrailNode => i.kind === 'node');
     expect(nodes[0].staleBadge).toBeNull(); // Statement pack is CURRENT
     expect(nodes[3].staleBadge?.kind).toBe('SOURCE_CHANGED'); // Scenario is STALE_SOURCE
@@ -178,13 +208,13 @@ describe('AP-11 lineageNavigatorContract — compact trail', () => {
   });
 
   it('picks a deterministic primary parent when a node has two (and flags the alternate)', () => {
-    const trail = buildLineageTrail({ focusVersionId: 'val1', ancestorEdges: ANCESTOR_EDGES, resolve });
+    const trail = buildLineageTrail({ organizationId: ORG, focusVersionId: 'val1', ancestorEdges: ANCESTOR_EDGES, resolve });
     expect(trail.hasAlternatePaths).toBe(true); // bm4 has both sp3 and an2 as parents
     const nodes = trail.items.filter((i): i is LineageTrailNode => i.kind === 'node');
     // Nearest upstream stage wins: HISTORICAL_ANALYSIS (rank 1) over STATEMENT_PACK (rank 0).
     expect(nodes[1].metadata.versionId).toBe('an2');
     // Same input in a different order must give the same trail.
-    const shuffled = buildLineageTrail({
+    const shuffled = buildLineageTrail({ organizationId: ORG,
       focusVersionId: 'val1',
       ancestorEdges: [...ANCESTOR_EDGES].reverse(),
       resolve,
@@ -195,7 +225,7 @@ describe('AP-11 lineageNavigatorContract — compact trail', () => {
   });
 
   it('collapses the middle when the chain exceeds the compact budget', () => {
-    const trail = buildLineageTrail({
+    const trail = buildLineageTrail({ organizationId: ORG,
       focusVersionId: 'val1',
       ancestorEdges: ANCESTOR_EDGES,
       resolve,
@@ -210,12 +240,12 @@ describe('AP-11 lineageNavigatorContract — compact trail', () => {
 
   it('reports an unresolvable version instead of silently dropping the chain', () => {
     const partial: LineageMetadataResolver = (id) => (id === 'bm4' ? undefined : NODES[id]);
-    const trail = buildLineageTrail({ focusVersionId: 'val1', ancestorEdges: ANCESTOR_EDGES, resolve: partial });
+    const trail = buildLineageTrail({ organizationId: ORG, focusVersionId: 'val1', ancestorEdges: ANCESTOR_EDGES, resolve: partial });
     expect(trail.unresolvedVersionIds).toEqual(['bm4']);
   });
 
   it('terminates on a root with no ancestor edges at all', () => {
-    const trail = buildLineageTrail({ focusVersionId: 'sp3', ancestorEdges: [], resolve });
+    const trail = buildLineageTrail({ organizationId: ORG, focusVersionId: 'sp3', ancestorEdges: [], resolve });
     expect(trail.items).toHaveLength(1);
     expect((trail.items[0] as LineageTrailNode).isFocus).toBe(true);
     expect(trail.hasAlternatePaths).toBe(false);
@@ -231,7 +261,7 @@ describe('AP-11 lineageNavigatorContract — Related panel', () => {
   ];
 
   it('separates direct parents, direct children and indirect descendants with counts', () => {
-    const panel = buildRelatedPanel({
+    const panel = buildRelatedPanel({ organizationId: ORG,
       focusVersionId: 'bm4',
       ancestorEdges: ANCESTOR_EDGES,
       descendantEdges: DESCENDANT_EDGES,
@@ -251,7 +281,7 @@ describe('AP-11 lineageNavigatorContract — Related panel', () => {
   });
 
   it('offers "+ New" for every permitted downstream type with the exact source version preselected', () => {
-    const panel = buildRelatedPanel({
+    const panel = buildRelatedPanel({ organizationId: ORG,
       focusVersionId: 'bm4',
       ancestorEdges: ANCESTOR_EDGES,
       descendantEdges: DESCENDANT_EDGES,
@@ -272,7 +302,7 @@ describe('AP-11 lineageNavigatorContract — Related panel', () => {
   });
 
   it('flags downstream staleness on a node that is itself current', () => {
-    const panel = buildRelatedPanel({
+    const panel = buildRelatedPanel({ organizationId: ORG,
       focusVersionId: 'bm4',
       ancestorEdges: ANCESTOR_EDGES,
       descendantEdges: DESCENDANT_EDGES,
@@ -285,7 +315,7 @@ describe('AP-11 lineageNavigatorContract — Related panel', () => {
   it('flags an orphan: an Analysis with no STATEMENT_TO_ANALYSIS parent', () => {
     expect(isOrphaned('HISTORICAL_ANALYSIS', [])).toBe(true);
     expect(isOrphaned('STATEMENT_PACK', [])).toBe(false); // roots are never orphans
-    const panel = buildRelatedPanel({
+    const panel = buildRelatedPanel({ organizationId: ORG,
       focusVersionId: 'an2',
       ancestorEdges: [],
       descendantEdges: [],
@@ -297,9 +327,9 @@ describe('AP-11 lineageNavigatorContract — Related panel', () => {
   it('treats a management-adjusted variant edge as a sibling, not an ancestor', () => {
     const variantEdge = edge('sc2', 'PREDICTION_SCENARIO', 'sc9', 'PREDICTION_SCENARIO', 'VERSION_TO_MANAGEMENT_ADJUSTED_VARIANT');
     const withVariant = [...ANCESTOR_EDGES, variantEdge];
-    const trail = buildLineageTrail({ focusVersionId: 'val1', ancestorEdges: withVariant, resolve });
+    const trail = buildLineageTrail({ organizationId: ORG, focusVersionId: 'val1', ancestorEdges: withVariant, resolve });
     expect(trail.items.filter((i) => i.kind === 'node')).toHaveLength(5); // unchanged chain
-    const panel = buildRelatedPanel({
+    const panel = buildRelatedPanel({ organizationId: ORG,
       focusVersionId: 'sc2',
       ancestorEdges: withVariant,
       descendantEdges: [],
@@ -313,17 +343,27 @@ describe('AP-11 lineageNavigatorContract — Related panel', () => {
 
   it('returns null when the focus version itself cannot be resolved', () => {
     expect(
-      buildRelatedPanel({ focusVersionId: 'ghost', ancestorEdges: [], descendantEdges: [], resolve })
+      buildRelatedPanel({ organizationId: ORG, focusVersionId: 'ghost', ancestorEdges: [], descendantEdges: [], resolve })
     ).toBeNull();
   });
 
   it('computes BFS depths in both directions', () => {
-    const down = computeDepths(DESCENDANT_EDGES, 'bm4', 'downstream');
+    const down = computeDepths({
+      edges: DESCENDANT_EDGES,
+      rootVersionId: 'bm4',
+      direction: 'downstream',
+      organizationId: ORG,
+    }).depths;
     expect(down.get('sc2')).toBe(1);
     expect(down.get('val1')).toBe(1);
     expect(down.get('rep1')).toBe(2);
     expect(down.has('bm4')).toBe(false);
-    const up = computeDepths(ANCESTOR_EDGES, 'val1', 'upstream');
+    const up = computeDepths({
+      edges: ANCESTOR_EDGES,
+      rootVersionId: 'val1',
+      direction: 'upstream',
+      organizationId: ORG,
+    }).depths;
     expect(up.get('sc2')).toBe(1);
     expect(up.get('bm4')).toBe(2);
     expect(up.get('sp3')).toBe(3);

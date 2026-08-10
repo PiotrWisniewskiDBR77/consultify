@@ -135,6 +135,12 @@ export const LINEAGE_REQUIRED_PARENT_EDGES: Readonly<
  * pure transformation.
  */
 export interface LineageNodeMetadata {
+  /**
+   * The tenant this version belongs to. REQUIRED, and checked on every node the
+   * navigator renders — see the "Tenant isolation" section below for why the
+   * SQL-level filter one layer down was not enough.
+   */
+  organizationId: string;
   versionId: string;
   artifactId: string;
   artifactType: FinanceArtifactType;
@@ -155,6 +161,105 @@ export type LineageMetadataResolver = (versionId: string) => LineageNodeMetadata
 export function lineageNodeDisplayName(metadata: LineageNodeMetadata): string {
   const variant = metadata.variantLabel ? ` ${metadata.variantLabel}` : '';
   return `${metadata.name}${variant} ${metadata.versionLabel}`;
+}
+
+// ---------------------------------------------------------------------------
+// Tenant isolation — the navigator's OWN guard, not the SQL layer's.
+// ---------------------------------------------------------------------------
+
+/**
+ * `lineageService.getAncestors`/`getDescendants` already filter on
+ * `organization_id` in SQL and every `LineageEdgeRow` carries the column — but
+ * that was, until this section existed, the ONLY defence. No function in this
+ * module read the field. `loadLineageNavigator` took an `organizationId` purely
+ * to forward it to the port. So the navigator would faithfully render whatever
+ * it was handed:
+ *
+ *   - a caller that merged two edge sets, or a cache keyed on `version_id`
+ *     alone (version ids are UUIDs, so nothing about the KEY says which tenant
+ *     it belongs to);
+ *   - a `LineageMetadataResolver` that reached another tenant's version — the
+ *     resolver is caller-supplied and completely untyped with respect to org;
+ *   - a future batch/preload path that fetches edges without the org predicate.
+ *
+ * Relying on the layer below is exactly the "ochrona, której nie ma" pattern:
+ * the guarantee exists in a place the reader of THIS file cannot see, and
+ * disappears the moment someone assembles the inputs differently. The
+ * navigator therefore re-establishes the boundary itself, on both inputs it
+ * accepts (edges AND resolved metadata), and REPORTS what it dropped instead of
+ * hiding it — a silent filter would turn a tenant-leak bug into a
+ * "mysteriously short trail".
+ *
+ * Defence in depth, not a replacement: the SQL predicate stays authoritative
+ * for what is fetched; this is the presentation layer refusing to render
+ * anything that does not belong to the organization it was asked about.
+ */
+export interface LineageTenantAnomalies {
+  /** Edge ids dropped because `organization_id` did not match — never traversed. */
+  foreignEdgeIds: readonly string[];
+  /** Version ids whose resolved metadata belonged to another organization — never rendered. */
+  foreignVersionIds: readonly string[];
+}
+
+export const EMPTY_TENANT_ANOMALIES: LineageTenantAnomalies = Object.freeze({
+  foreignEdgeIds: Object.freeze([]) as readonly string[],
+  foreignVersionIds: Object.freeze([]) as readonly string[],
+});
+
+export function hasTenantAnomalies(anomalies: LineageTenantAnomalies): boolean {
+  return anomalies.foreignEdgeIds.length > 0 || anomalies.foreignVersionIds.length > 0;
+}
+
+/** Splits an edge set into "this organization's" and "everything else", by id. */
+export function partitionEdgesByOrganization(
+  edges: readonly LineageEdgeRow[],
+  organizationId: string
+): { own: LineageEdgeRow[]; foreignEdgeIds: string[] } {
+  const own: LineageEdgeRow[] = [];
+  const foreignEdgeIds: string[] = [];
+  for (const edge of edges) {
+    if (edge.organization_id === organizationId) own.push(edge);
+    else foreignEdgeIds.push(edge.id);
+  }
+  return { own, foreignEdgeIds };
+}
+
+export interface LineageTenantScopedResolver {
+  /** Same shape as the caller's resolver, but returns `undefined` for a foreign version. */
+  resolve: LineageMetadataResolver;
+  /** Accumulates while the traversal runs; read it after building. */
+  foreignVersionIds: readonly string[];
+  isForeign(versionId: string): boolean;
+}
+
+/**
+ * Wraps a caller-supplied resolver so a version belonging to another
+ * organization can never enter a trail, a panel group, a sibling list or a
+ * `+ Nowy` preselected source. Memoized per version id so the same lookup is
+ * not charged twice and the anomaly is reported once.
+ */
+export function createTenantScopedResolver(
+  resolve: LineageMetadataResolver,
+  organizationId: string
+): LineageTenantScopedResolver {
+  const foreign = new Set<string>();
+  const foreignVersionIds: string[] = [];
+  return {
+    resolve: (versionId: string) => {
+      const metadata = resolve(versionId);
+      if (!metadata) return undefined;
+      if (metadata.organizationId !== organizationId) {
+        if (!foreign.has(versionId)) {
+          foreign.add(versionId);
+          foreignVersionIds.push(versionId);
+        }
+        return undefined;
+      }
+      return metadata;
+    },
+    foreignVersionIds,
+    isForeign: (versionId: string) => foreign.has(versionId),
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -294,6 +399,8 @@ export interface LineageTrail {
   hasAlternatePaths: boolean;
   /** Version ids the resolver could not describe — surfaced instead of silently dropped. */
   unresolvedVersionIds: readonly string[];
+  /** Cross-tenant input the navigator refused to render. Empty on healthy data. */
+  tenant: LineageTenantAnomalies;
 }
 
 /** Minimum that still shows root + ellipsis + focus. */
@@ -301,6 +408,8 @@ export const LINEAGE_TRAIL_MIN_NODES = 3;
 export const LINEAGE_TRAIL_DEFAULT_MAX_NODES = 5;
 
 export interface BuildLineageTrailParams {
+  /** REQUIRED tenant scope — every edge and every resolved node is checked against it. */
+  organizationId: string;
   focusVersionId: string;
   /** Whatever `lineageService.getAncestors` returned (flat, de-duplicated, unordered). */
   ancestorEdges: readonly LineageEdgeRow[];
@@ -311,8 +420,14 @@ export interface BuildLineageTrailParams {
 export function buildLineageTrail(params: BuildLineageTrailParams): LineageTrail {
   const maxNodes = Math.max(params.maxNodes ?? LINEAGE_TRAIL_DEFAULT_MAX_NODES, LINEAGE_TRAIL_MIN_NODES);
 
+  const { own: ownEdges, foreignEdgeIds } = partitionEdgesByOrganization(
+    params.ancestorEdges,
+    params.organizationId
+  );
+  const scoped = createTenantScopedResolver(params.resolve, params.organizationId);
+
   const parentsByTarget = new Map<string, LineageEdgeRow[]>();
-  for (const edge of params.ancestorEdges) {
+  for (const edge of ownEdges) {
     if (LINEAGE_SIBLING_EDGE_TYPES.includes(edge.edge_type)) continue;
     const list = parentsByTarget.get(edge.target_version_id);
     if (list) list.push(edge);
@@ -342,9 +457,11 @@ export function buildLineageTrail(params: BuildLineageTrailParams): LineageTrail
 
   const nodes: LineageTrailNode[] = [];
   for (const entry of chain) {
-    const metadata = params.resolve(entry.versionId);
+    const metadata = scoped.resolve(entry.versionId);
     if (!metadata) {
-      unresolvedVersionIds.push(entry.versionId);
+      // A foreign node is NOT "unresolved" — it resolved fine and was refused.
+      // Keeping the two apart stops a tenant leak from being read as bad data.
+      if (!scoped.isForeign(entry.versionId)) unresolvedVersionIds.push(entry.versionId);
       continue;
     }
     nodes.push({
@@ -362,6 +479,7 @@ export function buildLineageTrail(params: BuildLineageTrailParams): LineageTrail
     totalNodeCount: nodes.length,
     hasAlternatePaths,
     unresolvedVersionIds,
+    tenant: { foreignEdgeIds, foreignVersionIds: scoped.foreignVersionIds },
   };
 }
 
@@ -439,9 +557,13 @@ export interface LineageRelatedPanel {
   createNew: readonly LineageCreateNewAction[];
   /** Focus-node badges: freshness-derived, plus `orphaned` and `downstream stale` which need the graph to compute. */
   focusBadges: readonly LineageStaleBadge[];
+  /** Cross-tenant input the navigator refused to render. Empty on healthy data. */
+  tenant: LineageTenantAnomalies;
 }
 
 export interface BuildRelatedPanelParams {
+  /** REQUIRED tenant scope — every edge and every resolved node is checked against it. */
+  organizationId: string;
   focusVersionId: string;
   ancestorEdges: readonly LineageEdgeRow[];
   descendantEdges: readonly LineageEdgeRow[];
@@ -451,26 +573,41 @@ export interface BuildRelatedPanelParams {
 }
 
 export function buildRelatedPanel(params: BuildRelatedPanelParams): LineageRelatedPanel | null {
-  const focus = params.resolve(params.focusVersionId);
+  const ancestors = partitionEdgesByOrganization(params.ancestorEdges, params.organizationId);
+  const descendants = partitionEdgesByOrganization(params.descendantEdges, params.organizationId);
+  const foreignEdgeIds = [...ancestors.foreignEdgeIds, ...descendants.foreignEdgeIds];
+  const scoped = createTenantScopedResolver(params.resolve, params.organizationId);
+
+  // A focus node from another tenant is not a degraded panel, it is a refusal:
+  // there is nothing legitimate to show and no partial answer worth rendering.
+  const focus = scoped.resolve(params.focusVersionId);
   if (!focus) return null;
 
-  const incoming = params.ancestorEdges.filter((e) => e.target_version_id === params.focusVersionId);
+  const ancestorEdges = ancestors.own;
+  const descendantEdges = descendants.own;
+
+  const incoming = ancestorEdges.filter((e) => e.target_version_id === params.focusVersionId);
 
   const parentEntries = toEntries(
     incoming.filter((e) => !LINEAGE_SIBLING_EDGE_TYPES.includes(e.edge_type)),
     (edge) => edge.source_version_id,
     1,
-    params.resolve
+    scoped.resolve
   );
 
-  const descendantDepths = computeDepths(params.descendantEdges, params.focusVersionId, 'downstream');
-  const directChildEdges = params.descendantEdges.filter(
+  const descendantDepths = computeDepths({
+    edges: descendantEdges,
+    rootVersionId: params.focusVersionId,
+    direction: 'downstream',
+    organizationId: params.organizationId,
+  }).depths;
+  const directChildEdges = descendantEdges.filter(
     (e) => e.source_version_id === params.focusVersionId && !LINEAGE_SIBLING_EDGE_TYPES.includes(e.edge_type)
   );
-  const childEntries = toEntries(directChildEdges, (edge) => edge.target_version_id, 1, params.resolve);
+  const childEntries = toEntries(directChildEdges, (edge) => edge.target_version_id, 1, scoped.resolve);
 
   const directChildIds = new Set(directChildEdges.map((e) => e.target_version_id));
-  const indirectEdges = params.descendantEdges.filter(
+  const indirectEdges = descendantEdges.filter(
     (e) =>
       !LINEAGE_SIBLING_EDGE_TYPES.includes(e.edge_type) &&
       e.target_version_id !== params.focusVersionId &&
@@ -478,7 +615,7 @@ export function buildRelatedPanel(params: BuildRelatedPanelParams): LineageRelat
   );
   const indirectEntries = dedupeByVersionId(
     indirectEdges.map((edge) => {
-      const metadata = params.resolve(edge.target_version_id);
+      const metadata = scoped.resolve(edge.target_version_id);
       if (!metadata) return null;
       return {
         metadata,
@@ -490,7 +627,7 @@ export function buildRelatedPanel(params: BuildRelatedPanelParams): LineageRelat
     })
   );
 
-  const variantEdges = [...params.ancestorEdges, ...params.descendantEdges].filter((e) =>
+  const variantEdges = [...ancestorEdges, ...descendantEdges].filter((e) =>
     LINEAGE_SIBLING_EDGE_TYPES.includes(e.edge_type)
   );
   const siblingIds = new Set<string>(params.siblingVersionIds ?? []);
@@ -501,7 +638,7 @@ export function buildRelatedPanel(params: BuildRelatedPanelParams): LineageRelat
   siblingIds.delete(params.focusVersionId);
   const siblings = dedupeByVersionId(
     [...siblingIds].map((versionId) => {
-      const metadata = params.resolve(versionId);
+      const metadata = scoped.resolve(versionId);
       if (!metadata) return null;
       return {
         metadata,
@@ -541,6 +678,7 @@ export function buildRelatedPanel(params: BuildRelatedPanelParams): LineageRelat
       },
     })),
     focusBadges,
+    tenant: { foreignEdgeIds, foreignVersionIds: scoped.foreignVersionIds },
   };
 }
 
@@ -605,13 +743,25 @@ function groupByArtifactType(entries: readonly LineageRelatedEntry[]): LineageRe
  * here — and recovering it from the edge set is cheaper and less brittle than
  * changing a shipped, tested SQL query that other callers depend on.
  */
-export function computeDepths(
-  edges: readonly LineageEdgeRow[],
-  rootVersionId: string,
-  direction: 'upstream' | 'downstream'
-): Map<string, number> {
+export interface ComputeDepthsParams {
+  edges: readonly LineageEdgeRow[];
+  rootVersionId: string;
+  direction: 'upstream' | 'downstream';
+  /** REQUIRED tenant scope — foreign edges are dropped before the walk, and reported. */
+  organizationId: string;
+}
+
+export interface LineageDepthComputation {
+  depths: Map<string, number>;
+  /** Edge ids dropped because they belong to another organization. */
+  foreignEdgeIds: readonly string[];
+}
+
+export function computeDepths(params: ComputeDepthsParams): LineageDepthComputation {
+  const { rootVersionId, direction } = params;
+  const { own, foreignEdgeIds } = partitionEdgesByOrganization(params.edges, params.organizationId);
   const adjacency = new Map<string, string[]>();
-  for (const edge of edges) {
+  for (const edge of own) {
     if (LINEAGE_SIBLING_EDGE_TYPES.includes(edge.edge_type)) continue;
     const from = direction === 'downstream' ? edge.source_version_id : edge.target_version_id;
     const to = direction === 'downstream' ? edge.target_version_id : edge.source_version_id;
@@ -631,7 +781,7 @@ export function computeDepths(
     }
   }
   depths.delete(rootVersionId);
-  return depths;
+  return { depths, foreignEdgeIds };
 }
 
 // ---------------------------------------------------------------------------
@@ -680,6 +830,13 @@ export interface LineageNavigatorModel {
   fullGraph: typeof LINEAGE_FULL_GRAPH_VIEW;
 }
 
+/**
+ * `organizationId` is used TWICE on purpose: once as the SQL predicate the port
+ * applies, and once as the navigator's own guard over whatever came back (plus
+ * over whatever the caller's `resolve` produces, which the port never sees).
+ * The second use is the one that survives a caller assembling the inputs by
+ * hand — see the "Tenant isolation" section.
+ */
 export async function loadLineageNavigator(params: {
   port: LineageServicePort;
   organizationId: string;
@@ -695,12 +852,14 @@ export async function loadLineageNavigator(params: {
   ]);
   return {
     trail: buildLineageTrail({
+      organizationId: params.organizationId,
       focusVersionId: params.focusVersionId,
       ancestorEdges,
       resolve: params.resolve,
       maxNodes: params.maxTrailNodes,
     }),
     related: buildRelatedPanel({
+      organizationId: params.organizationId,
       focusVersionId: params.focusVersionId,
       ancestorEdges,
       descendantEdges,
