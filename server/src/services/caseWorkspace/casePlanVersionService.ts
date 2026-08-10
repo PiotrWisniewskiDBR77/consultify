@@ -16,6 +16,9 @@
  * FUNCTIONAL_REQUIREMENT_COVERAGE.csv, epics column contains "E2"):
  *
  *   createPlanDraft              -> CW-01-010, CW-RT-016, CW-RT-017, CW-RT-043, CW-GR-024
+ *   createPlanDraftOnClient        -> same, on a caller-owned transaction client
+ *                                     (createPlanDraft is now only the transaction
+ *                                     wrapper around it)
  *   updatePlanDraft               -> CW-01-010, CW-GR-025, CW-RT-043, CW-RT-044, CW-RT-061, CW-GR-044
  *   getPlanVersion                 -> CW-RT-016, CW-GR-024
  *   listPlanVersionsForCase        -> CW-RT-016, CW-RT-017
@@ -764,6 +767,28 @@ async function loadForUpdate(client: PgTransactionClient, planVersionId: string)
 // Service methods
 // ---------------------------------------------------------------------------
 
+export interface CreatePlanDraftInput {
+  caseId: string;
+  sourceProcessVersionId?: string | null;
+  supersedesPlanVersionId?: string | null;
+  semanticGraph: CanonicalGraph;
+  changeReason?: string | null;
+  createdByActorId: string;
+}
+
+/**
+ * createPlanDraftOnClient's input: createPlanDraft's input plus the two
+ * envelope-identity fields a joining command needs to make its own event and
+ * `case.plan.draft_created` one chain (EVENT_TAXONOMY.md §1 `correlationId`,
+ * §5 `causationId`). Both optional; omitted, publishEvent resolves the
+ * correlation id from the ambient request exactly as it does for every other
+ * command in this file.
+ */
+export interface CreatePlanDraftOnClientInput extends CreatePlanDraftInput {
+  correlationId?: string | null;
+  causationId?: string | null;
+}
+
 /**
  * CW-01-010 (Plan Definition is an editable draft, distinct from the
  * immutable Plan Version), CW-RT-016 (CasePlanVersion aggregate), CW-RT-017
@@ -775,110 +800,138 @@ async function loadForUpdate(client: PgTransactionClient, planVersionId: string)
  * plan_number values rather than colliding. If supersedesPlanVersionId is
  * given, requires it to name a PUBLISHED plan version of the same Case
  * (replanning is only meaningful against a published baseline).
+ *
+ * The whole body lives in createPlanDraftOnClient below; this entry point is
+ * only "open a transaction and run it". Callers that already hold a
+ * transaction call that one directly so their own event commits with this
+ * INSERT — see its docblock.
  */
-export async function createPlanDraft(input: {
-  caseId: string;
-  sourceProcessVersionId?: string | null;
-  supersedesPlanVersionId?: string | null;
-  semanticGraph: CanonicalGraph;
-  changeReason?: string | null;
-  createdByActorId: string;
-}): Promise<CasePlanVersion> {
+export async function createPlanDraft(input: CreatePlanDraftInput): Promise<CasePlanVersion> {
+  return withPgTransaction((client) => createPlanDraftOnClient(client, input));
+}
+
+/**
+ * The body of createPlanDraft, on a transaction client the CALLER owns.
+ *
+ * Exists so a command that must emit its own event about this draft can put
+ * that event in the SAME transaction as the INSERT and as
+ * `case.plan.draft_created` — the concrete case is
+ * playService.instantiateProcessVersion, whose taxonomy row
+ * (`process.version.instantiated`) is the play->Case join point. Without this
+ * entry point the only way to emit it would be a second transaction opened
+ * after this one committed: exactly the dual-write hole the outbox exists to
+ * close (EVENT_TAXONOMY.md §0 "Opening a second connection for the event …
+ * reintroduces exactly the dual-write hole").
+ *
+ * Identical validation, identical authorization, identical INSERT and
+ * identical `case.plan.draft_created` envelope to createPlanDraft — that
+ * function is now nothing but `withPgTransaction(client => this(client, input))`,
+ * so there is only one copy of this logic to keep correct. The two optional
+ * fields (`correlationId`/`causationId`) are absent from every existing
+ * caller's input and therefore change nothing for them: publishEvent falls
+ * back to the ambient request correlation id exactly as before. A caller that
+ * DOES pass them makes its own event and this one provably one chain
+ * (EVENT_TAXONOMY.md §1/§5).
+ */
+export async function createPlanDraftOnClient(
+  client: PgTransactionClient,
+  input: CreatePlanDraftOnClientInput
+): Promise<CasePlanVersion> {
   const caseId = requireNonBlank(input.caseId, 'plan_case_id_required');
   const createdByActorId = requireNonBlank(input.createdByActorId, 'plan_created_by_actor_required');
   const semanticGraph = requireGraph(input.semanticGraph, 'plan_semantic_graph_invalid');
 
   await requireCaseAccess(createdByActorId, caseId);
 
-  return withPgTransaction(async (client) => {
-    // organization_id/project_id are selected alongside case_id because the
-    // outbox event published at the end of this transaction needs them
-    // (EVENT_TAXONOMY.md §1) and case_plan_versions carries neither. This is
-    // the same single read that already existed — still read-only, still the
-    // FOR UPDATE lock that serializes concurrent draft creation.
-    const caseResult = await client.query<{
-      case_id: string;
-      organization_id: string;
-      project_id: string | null;
-    }>(
-      `SELECT case_id, organization_id, project_id FROM case_core WHERE case_id = ? FOR UPDATE`,
-      [caseId]
-    );
-    const caseRow = caseResult.rows[0];
-    if (!caseRow) throw new Error('plan_case_not_found');
+  // organization_id/project_id are selected alongside case_id because the
+  // outbox event published at the end of this transaction needs them
+  // (EVENT_TAXONOMY.md §1) and case_plan_versions carries neither. This is
+  // the same single read that already existed — still read-only, still the
+  // FOR UPDATE lock that serializes concurrent draft creation.
+  const caseResult = await client.query<{
+    case_id: string;
+    organization_id: string;
+    project_id: string | null;
+  }>(
+    `SELECT case_id, organization_id, project_id FROM case_core WHERE case_id = ? FOR UPDATE`,
+    [caseId]
+  );
+  const caseRow = caseResult.rows[0];
+  if (!caseRow) throw new Error('plan_case_not_found');
 
-    let supersedesPlanVersionId: string | null = null;
-    if (input.supersedesPlanVersionId) {
-      const supersedesResult = await client.query<CasePlanVersionRow>(
-        `SELECT * FROM case_plan_versions WHERE case_plan_version_id = ?`,
-        [input.supersedesPlanVersionId]
-      );
-      const target = supersedesResult.rows[0];
-      if (!target || target.case_id !== caseId || target.status !== 'PUBLISHED') {
-        throw new Error('plan_supersedes_target_invalid');
-      }
-      supersedesPlanVersionId = target.case_plan_version_id;
+  let supersedesPlanVersionId: string | null = null;
+  if (input.supersedesPlanVersionId) {
+    const supersedesResult = await client.query<CasePlanVersionRow>(
+      `SELECT * FROM case_plan_versions WHERE case_plan_version_id = ?`,
+      [input.supersedesPlanVersionId]
+    );
+    const target = supersedesResult.rows[0];
+    if (!target || target.case_id !== caseId || target.status !== 'PUBLISHED') {
+      throw new Error('plan_supersedes_target_invalid');
     }
+    supersedesPlanVersionId = target.case_plan_version_id;
+  }
 
-    const planNumberResult = await client.query<{ next_plan_number: number }>(
-      `SELECT COALESCE(MAX(plan_number), 0) + 1 AS next_plan_number
-         FROM case_plan_versions WHERE case_id = ?`,
-      [caseId]
-    );
-    const planNumber = Number(planNumberResult.rows[0]?.next_plan_number ?? 1);
+  const planNumberResult = await client.query<{ next_plan_number: number }>(
+    `SELECT COALESCE(MAX(plan_number), 0) + 1 AS next_plan_number
+       FROM case_plan_versions WHERE case_id = ?`,
+    [caseId]
+  );
+  const planNumber = Number(planNumberResult.rows[0]?.next_plan_number ?? 1);
 
-    const graphDigest = computeGraphDigest(semanticGraph);
-    const casePlanVersionId = `planv-${uuidv4()}`;
-    const now = new Date().toISOString();
+  const graphDigest = computeGraphDigest(semanticGraph);
+  const casePlanVersionId = `planv-${uuidv4()}`;
+  const now = new Date().toISOString();
 
-    const inserted = await client.query<CasePlanVersionRow>(
-      `INSERT INTO case_plan_versions (
-         case_plan_version_id, case_id, plan_number, source_process_version_id,
-         supersedes_plan_version_id, status, semantic_graph, graph_digest,
-         change_reason, review_history, created_by_actor_id, version,
-         created_at, updated_at
-       ) VALUES (?, ?, ?, ?, ?, 'DRAFT', ?, ?, ?, '[]', ?, 1, ?, ?)
-       RETURNING *`,
-      [
-        casePlanVersionId,
-        caseId,
-        planNumber,
-        input.sourceProcessVersionId ?? null,
-        supersedesPlanVersionId,
-        JSON.stringify(semanticGraph),
-        graphDigest,
-        input.changeReason ?? null,
-        createdByActorId,
-        now,
-        now,
-      ]
-    );
-    const insertedRow = inserted.rows[0];
-    if (!insertedRow) throw new Error('plan_create_failed');
+  const inserted = await client.query<CasePlanVersionRow>(
+    `INSERT INTO case_plan_versions (
+       case_plan_version_id, case_id, plan_number, source_process_version_id,
+       supersedes_plan_version_id, status, semantic_graph, graph_digest,
+       change_reason, review_history, created_by_actor_id, version,
+       created_at, updated_at
+     ) VALUES (?, ?, ?, ?, ?, 'DRAFT', ?, ?, ?, '[]', ?, 1, ?, ?)
+     RETURNING *`,
+    [
+      casePlanVersionId,
+      caseId,
+      planNumber,
+      input.sourceProcessVersionId ?? null,
+      supersedesPlanVersionId,
+      JSON.stringify(semanticGraph),
+      graphDigest,
+      input.changeReason ?? null,
+      createdByActorId,
+      now,
+      now,
+    ]
+  );
+  const insertedRow = inserted.rows[0];
+  if (!insertedRow) throw new Error('plan_create_failed');
 
-    // EVENT_TAXONOMY.md §2 `createPlanDraft -> case.plan.draft_created`.
-    await publishEvent(client, {
-      eventType: 'case.plan.draft_created',
-      organizationId: caseRow.organization_id,
-      projectId: caseRow.project_id,
-      aggregateType: PLAN_VERSION_AGGREGATE_TYPE,
-      aggregateId: insertedRow.case_plan_version_id,
-      aggregateVersion: Number(insertedRow.version),
-      caseId: insertedRow.case_id,
-      actorUserId: insertedRow.created_by_actor_id,
-      payloadRef: graphPayloadRef(insertedRow.case_plan_version_id, insertedRow.graph_digest),
-      redactedSummary: redact({
-        status: insertedRow.status,
-        planNumber: Number(insertedRow.plan_number),
-        graphDigest: insertedRow.graph_digest,
-        supersedesPlanVersionId: insertedRow.supersedes_plan_version_id,
-        sourceProcessVersionId: insertedRow.source_process_version_id,
-        ...graphShapeFacts(semanticGraph),
-      }),
-    });
-
-    return mapRow(insertedRow);
+  // EVENT_TAXONOMY.md §2 `createPlanDraft -> case.plan.draft_created`.
+  await publishEvent(client, {
+    eventType: 'case.plan.draft_created',
+    organizationId: caseRow.organization_id,
+    projectId: caseRow.project_id,
+    aggregateType: PLAN_VERSION_AGGREGATE_TYPE,
+    aggregateId: insertedRow.case_plan_version_id,
+    aggregateVersion: Number(insertedRow.version),
+    caseId: insertedRow.case_id,
+    actorUserId: insertedRow.created_by_actor_id,
+    correlationId: input.correlationId ?? undefined,
+    causationId: input.causationId ?? undefined,
+    payloadRef: graphPayloadRef(insertedRow.case_plan_version_id, insertedRow.graph_digest),
+    redactedSummary: redact({
+      status: insertedRow.status,
+      planNumber: Number(insertedRow.plan_number),
+      graphDigest: insertedRow.graph_digest,
+      supersedesPlanVersionId: insertedRow.supersedes_plan_version_id,
+      sourceProcessVersionId: insertedRow.source_process_version_id,
+      ...graphShapeFacts(semanticGraph),
+    }),
   });
+
+  return mapRow(insertedRow);
 }
 
 /**

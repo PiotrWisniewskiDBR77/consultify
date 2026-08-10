@@ -871,6 +871,74 @@ suite('caseCoreService — Case Core against a real PostgreSQL (CW-P01, E1)', ()
   }, 30_000);
 
   // -------------------------------------------------------------------------
+  // 12b. The `case.failed` branch of STATUS_EVENT_TYPE — the one terminal
+  //      status with no wrapper command of its own (cancelCase covers
+  //      CANCELLED, recordClosure+CLOSED covers CLOSED), so nothing else in
+  //      this suite reaches it. A branch no test enters is a branch we have no
+  //      evidence about, however obviously correct the mapping table looks.
+  //
+  //      Both directions are asserted from the live table, out of band: the
+  //      event that IS written, and the absence of any second event when the
+  //      now-terminal Case refuses a further transition.
+  // -------------------------------------------------------------------------
+  it('ACTIVE -> FAILED publishes exactly one case.failed row carrying the reason and the post-mutation version, and FAILED accepts no further transition', async () => {
+    const { orgId, projectId } = await seedOrgAndProject('outbox-failed');
+    const actorId = await seedMemberedUser(orgId, 'outbox-failed');
+    try {
+      const created = await caseCoreService.createCase({
+        projectId,
+        organizationId: orgId,
+        contractedClosureType: 'DELIVERY_COMPLETED',
+        createdByActorId: actorId,
+      });
+      await caseCoreService.transitionStatus(created.caseId, 'ACTIVE', { actorUserId: actorId });
+      const failed = await caseCoreService.transitionStatus(
+        created.caseId,
+        'FAILED',
+        { actorUserId: actorId },
+        'external dependency never delivered'
+      );
+      expect(failed.caseStatus).toBe('FAILED');
+
+      const events = await readOutboxRowsForCase(created.caseId);
+      expect(events.map((e) => e.event_type)).toEqual([
+        'case.created',
+        'case.activated',
+        'case.failed',
+      ]);
+      const failedEvent = events[2];
+      // Identity, not just the type — an event nobody can attribute is not
+      // evidence (§1/§6.2).
+      expect(failedEvent.aggregate_type).toBe('CASE');
+      expect(failedEvent.aggregate_id).toBe(created.caseId);
+      expect(failedEvent.case_id).toBe(created.caseId);
+      expect(failedEvent.organization_id).toBe(orgId);
+      expect(failedEvent.project_id).toBe(projectId);
+      expect(failedEvent.actor_user_id).toBe(actorId);
+      expect(String(failedEvent.correlation_id ?? '').length).toBeGreaterThan(0);
+      // POST-mutation version, taken from the UPDATE's own RETURNING row:
+      // 1 created, 2 activated, 3 failed.
+      expect(failedEvent.aggregate_version).toBe(3);
+      expect(failedEvent.redacted_summary).toMatchObject({
+        from: 'ACTIVE',
+        to: 'FAILED',
+        reason: 'external dependency never delivered',
+      });
+
+      // The status really flipped in case_core, read out of band.
+      expect((await readCaseCoreRow(created.caseId))?.case_status).toBe('FAILED');
+
+      // FAILED is terminal: the rejected transition writes no fourth event.
+      await expect(
+        caseCoreService.transitionStatus(created.caseId, 'ACTIVE', { actorUserId: actorId })
+      ).rejects.toThrow(/case_status_transition_not_allowed:FAILED->ACTIVE/);
+      expect(await readOutboxRowsForCase(created.caseId)).toHaveLength(3);
+    } finally {
+      await teardown([orgId], [projectId], [actorId]);
+    }
+  }, 30_000);
+
+  // -------------------------------------------------------------------------
   // 13. EVENT OUTBOX ATOMICITY — a failure raised AFTER the aggregate write,
   //     inside the same transaction, must leave BOTH the mutation and the
   //     event unwritten.

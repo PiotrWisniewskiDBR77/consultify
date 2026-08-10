@@ -57,17 +57,21 @@
  *   publishProcessVersion     -> process.definition.published (PROCESS_VERSION)
  *   deprecateProcessVersion   -> process.definition.deprecated (PROCESS_VERSION)
  *   archiveProcessVersion     -> process.version.archived     (PROCESS_VERSION)
- *   instantiateProcessVersion -> process.version.instantiated  NOT EMITTED, see below
+ *   instantiateProcessVersion -> process.version.instantiated (PROCESS_VERSION)
  *
  * `aggregateVersion` is always the POST-mutation `version` taken from the
  * write's own `RETURNING` row (never a re-read, which would be a different
  * value under concurrency). `process_versions.version_number` is the SEMANTIC
  * version and belongs in the summary, not in `aggregateVersion` — the two are
- * different counters on the same row (open question #9). `projectId` is
- * always null: a Play is org-scoped and belongs to no Case or project until
- * instantiated. The read methods (getProcessDefinition/listProcessDefinitions/
- * getProcessVersion/listProcessVersionsForDefinition/computeGraphDigest/
- * isAuthorizedPublisher) emit nothing.
+ * different counters on the same row (open question #9). The single exception
+ * is instantiateProcessVersion, which does not mutate its aggregate at all
+ * (see below): its `aggregateVersion` is the PUBLISHED row's current OCC
+ * counter. `projectId` is always null: a Play is org-scoped and belongs to no
+ * Case or project — even at instantiation, where the Case is carried by
+ * `caseId` and the aggregate is still the org-scoped ProcessVersion. The read
+ * methods (getProcessDefinition/listProcessDefinitions/getProcessVersion/
+ * listProcessVersionsForDefinition/computeGraphDigest/isAuthorizedPublisher)
+ * emit nothing.
  *
  * Three of the event_types above name `process.definition.*` while the
  * aggregate they carry is a `PROCESS_VERSION`. That asymmetry is EVENT_
@@ -75,21 +79,23 @@
  * three strings verbatim), not a typo here, and it must not be "fixed" at a
  * call site — it is an owner decision.
  *
- * instantiateProcessVersion — NO EVENT, DELIBERATELY, AND THIS IS A GAP.
- * The taxonomy asks it for `process.version.instantiated` as the play->Case
- * join point. It cannot be honoured atomically from this file: the command
- * writes nothing to process_definitions/process_versions and opens no
- * transaction of its own — the only mutation is inside
- * casePlanVersionService.createPlanDraft's own `withPgTransaction`, which
- * already publishes `case.plan.draft_created` on that client and exposes no
- * way to join it. Publishing here would mean opening a SECOND transaction
- * after that one committed, i.e. exactly the dual-write hole the outbox
- * exists to close (eventOutboxService header, §12 "kill worker … after
- * domain commit before outbox publication") — so nothing is published rather
- * than something unsound. Closing it requires a change in
- * casePlanVersionService.ts (an optional caller-supplied transaction client
- * on createPlanDraft, or a createPlanDraftOnClient(client, input) export) so
- * both events can be written on one client; that file is owned elsewhere.
+ * instantiateProcessVersion — THE ONE COMMAND THAT PUBLISHES TWO EVENTS AND
+ * MUTATES NOTHING OF ITS OWN. It writes nothing to process_definitions/
+ * process_versions; its only mutation is the case_plan_versions INSERT, which
+ * belongs to casePlanVersionService. So it opens ITS OWN transaction and
+ * performs that INSERT through casePlanVersionService.createPlanDraftOnClient
+ * (client, input) — the caller-owned-transaction form of createPlanDraft —
+ * which publishes `case.plan.draft_created` on that same client. This
+ * command's own `process.version.instantiated` is then published on that
+ * client too, before COMMIT. One BEGIN…COMMIT holds the INSERT and both
+ * events: all three, or none.
+ *
+ * The alternative — calling createPlanDraft(), which opens and commits its
+ * own transaction, then publishing from here — would be a SECOND transaction
+ * opened after the first committed, i.e. exactly the dual-write hole the
+ * outbox exists to close (eventOutboxService header, §12 "kill worker … after
+ * domain commit before outbox publication"). It is not available and must not
+ * be reintroduced.
  *
  * Cross-cutting invariants held by every mutating method here (see the
  * migration file's header for the exact canon citations):
@@ -130,13 +136,15 @@
  *     never deletes history" is enforced: history rows are untouched, only
  *     new instantiation is blocked;
  *   - instantiateProcessVersion does not duplicate casePlanVersionService's
- *     draft-creation logic. It is a plain cross-service call into
- *     casePlanVersionService.createPlanDraft({caseId, sourceProcessVersionId,
- *     semanticGraph, createdByActorId, changeReason}) — createPlanDraft's
- *     existing input type already accepts sourceProcessVersionId and its
- *     INSERT already writes it into case_plan_versions.source_process_version_id,
- *     so this file needs no change to casePlanVersionService.ts or its
- *     migration;
+ *     draft-creation logic. It is a cross-service call into
+ *     casePlanVersionService.createPlanDraftOnClient(client, {caseId,
+ *     sourceProcessVersionId, semanticGraph, createdByActorId, changeReason})
+ *     on THIS command's own transaction client — createPlanDraft's existing
+ *     input type already accepts sourceProcessVersionId and its INSERT already
+ *     writes it into case_plan_versions.source_process_version_id. The only
+ *     thing casePlanVersionService.ts needed was that caller-owned-transaction
+ *     entry point, so this command's own event commits with the INSERT; its
+ *     migration is untouched;
  *   - every mutating method uses loadForUpdate (SELECT ... FOR UPDATE) plus
  *     `WHERE ... AND version = expectedVersion`; a 0-row UPDATE throws a
  *     `*_conflict` error with no partial write — identical OCC convention to
@@ -149,9 +157,10 @@
  *   - this file performs no ALTER TABLE on case_plan_versions, case_core, any
  *     existing case_workspace_* table, or Finance/Results. process_definitions
  *     and process_versions are two wholly new tables; the only touch point
- *     with pre-existing schema is the read-only cross-service call into
- *     casePlanVersionService.createPlanDraft and an internal read of
- *     organization_members for the authorized-publisher check.
+ *     with pre-existing schema is the cross-service call into
+ *     casePlanVersionService.createPlanDraftOnClient (which owns that INSERT)
+ *     and an internal read of organization_members for the
+ *     authorized-publisher check.
  *
  * OPEN QUESTIONS (flagged in the approved design, carried forward here — not
  * resolved by this packet, product/API-owner confirmation needed):
@@ -219,7 +228,7 @@
  *      not silently resolve it differently between the two tables.
  */
 
-import { createHash } from 'crypto';
+import { createHash, randomUUID } from 'crypto';
 
 import { v4 as uuidv4 } from 'uuid';
 
@@ -229,8 +238,9 @@ import {
   queryOne,
   withPgTransaction,
 } from '../../utils/queryHelpers.js';
+import { getCorrelationId } from '../../utils/RequestStore.js';
 
-import { createPlanDraft } from './casePlanVersionService.js';
+import { createPlanDraftOnClient } from './casePlanVersionService.js';
 import type { CanonicalGraph, CasePlanVersion } from './casePlanVersionService.js';
 import { publishEvent, redact } from './eventOutboxService.js';
 import {
@@ -1547,14 +1557,17 @@ export async function archiveProcessVersion(
 
 /**
  * CW-RT-014, CW-RT-029. getProcessVersion(processVersionId); throws
- * process_version_not_publishable unless status='PUBLISHED'. Calls
- * casePlanVersionService.createPlanDraft({ caseId, sourceProcessVersionId,
- * semanticGraph, changeReason, createdByActorId }) as a plain cross-service
- * async call (not inside a shared transaction, not duplicating
- * createPlanDraft's own case_core-exists check or plan_number computation)
- * and returns its result verbatim. Does not write to process_versions or
- * process_definitions at all (see open_question #5 for the cross-tenant
- * isolation gap this does not close).
+ * process_version_not_publishable unless status='PUBLISHED'. Opens its own
+ * transaction and calls casePlanVersionService.createPlanDraftOnClient(client,
+ * { caseId, sourceProcessVersionId, semanticGraph, changeReason,
+ * createdByActorId }) inside it (not duplicating createPlanDraft's own
+ * case_core-exists check or plan_number computation), returns its result
+ * verbatim, and publishes `process.version.instantiated` on that same client
+ * before COMMIT. Sharing the transaction is the point: `case.plan.draft_created`,
+ * `process.version.instantiated` and the case_plan_versions INSERT commit
+ * together or not at all — see the header's instantiateProcessVersion note.
+ * Does not write to process_versions or process_definitions at all (see
+ * open_question #5, now RESOLVED, for the cross-tenant check).
  */
 export async function instantiateProcessVersion(
   processVersionId: string,
@@ -1586,24 +1599,83 @@ export async function instantiateProcessVersion(
 
   await requireCaseAccess(actorUserId, targetCaseId);
 
-  // EVENT_TAXONOMY asks this command for `process.version.instantiated`
-  // (aggregate PROCESS_VERSION, caseId set, the new case_plan_version_id in
-  // the summary) and it is NOT emitted. This is a known, deliberate gap, not
-  // an oversight: this function writes nothing itself and holds no
-  // transaction — the sole mutation happens inside createPlanDraft's own
-  // withPgTransaction, which already publishes `case.plan.draft_created` on
-  // its client and offers no way to join it. Emitting from here would require
-  // a second transaction opened after that one committed, which is precisely
-  // the dual-write hole the outbox exists to close, so nothing is emitted
-  // rather than something unsound. The fix is a caller-supplied transaction
-  // client on casePlanVersionService.createPlanDraft (or a
-  // createPlanDraftOnClient(client, input) export) so both events land on one
-  // client; that file is owned elsewhere and is not changed by this packet.
-  return createPlanDraft({
-    caseId: targetCaseId,
-    sourceProcessVersionId: version.processVersionId,
-    semanticGraph: version.semanticGraph,
-    changeReason: options?.changeReason ?? `Instantiated from Play version ${version.processVersionId}`,
-    createdByActorId: actorUserId,
+  // THIS command owns the transaction, and the plan draft is created INSIDE
+  // it via createPlanDraftOnClient — that is the whole point. The mutation
+  // (the case_plan_versions INSERT), `case.plan.draft_created` and this
+  // command's own `process.version.instantiated` are three statements on ONE
+  // client inside ONE BEGIN…COMMIT, so the play->Case join point can never
+  // exist half-recorded. Calling createPlanDraft() (which opens its own
+  // transaction) and then publishing here would mean a second transaction
+  // opened after the first committed — precisely the dual-write hole the
+  // outbox exists to close (EVENT_TAXONOMY.md §0).
+  //
+  // Both events carry the same correlation_id — resolved once here, from the
+  // ambient request when there is one — so the pair reads as one causal chain
+  // rather than two unrelated facts, and `case.plan.draft_created` names this
+  // command's event as its causation (§5): the instantiation is what caused
+  // the draft to exist. That forces the instantiated event's id to be minted
+  // up front, the same pattern publishPlanVersion already uses for its
+  // published/superseded pair.
+  const correlationId = getCorrelationId() ?? `corr-${randomUUID()}`;
+  const instantiatedEventId = `cwevt-${randomUUID()}`;
+
+  return withPgTransaction(async (client) => {
+    const created = await createPlanDraftOnClient(client, {
+      caseId: targetCaseId,
+      sourceProcessVersionId: version.processVersionId,
+      semanticGraph: version.semanticGraph,
+      changeReason:
+        options?.changeReason ?? `Instantiated from Play version ${version.processVersionId}`,
+      createdByActorId: actorUserId,
+      correlationId,
+      causationId: instantiatedEventId,
+    });
+
+    // Tenancy for the envelope is re-read on THIS transaction's own client
+    // rather than reused from the pre-flight pool reads above (EVENT_TAXONOMY
+    // §1: the org the event records must be the org the mutation actually
+    // landed in). organization_id is asserted equal to the Play's definition
+    // org before the transaction opens, so this is the same value — read
+    // where the write happened.
+    const caseScope = await client.query<{ organization_id: string }>(
+      `SELECT organization_id FROM case_core WHERE case_id = ?`,
+      [targetCaseId]
+    );
+    const organizationId = caseScope.rows[0]?.organization_id;
+    if (!organizationId) throw new Error('case_not_found');
+
+    // EVENT_TAXONOMY: `instantiateProcessVersion -> process.version.instantiated`,
+    // aggregate PROCESS_VERSION, `caseId` set (this is the play->Case join
+    // point), the new case_plan_version_id in the summary. `aggregateVersion`
+    // is the process_versions OCC counter, unchanged by this command — this
+    // is a read of a PUBLISHED Play, not a mutation of it; `version_number`
+    // is the semantic ordinal and belongs in the summary (open question #9).
+    // `projectId` stays null: the aggregate is the org-scoped ProcessVersion,
+    // and the Case the instantiation landed in is carried by `caseId`.
+    await publishEvent(client, {
+      eventId: instantiatedEventId,
+      eventType: 'process.version.instantiated',
+      organizationId,
+      projectId: null,
+      aggregateType: 'PROCESS_VERSION',
+      aggregateId: version.processVersionId,
+      aggregateVersion: Number(version.version),
+      caseId: targetCaseId,
+      actorUserId,
+      correlationId,
+      causationId: null,
+      redactedSummary: redact({
+        processDefinitionId: version.processDefinitionId,
+        versionNumber: Number(version.versionNumber),
+        status: version.status,
+        graphDigest: version.graphDigest,
+        casePlanVersionId: created.casePlanVersionId,
+        casePlanVersionStatus: created.status,
+        planNumber: Number(created.planNumber),
+      }),
+      payloadRef: `process_versions:${version.processVersionId}`,
+    });
+
+    return created;
   });
 }

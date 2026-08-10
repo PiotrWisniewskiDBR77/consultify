@@ -1583,6 +1583,146 @@ suite(
     }, 60_000);
 
     // -------------------------------------------------------------------------
+    // 12b. The two remaining branches of DECISION_EVENT_TYPES. APPROVE and
+    //      DEFER are covered above; REJECT and REQUEST_CHANGES were emitted by
+    //      the service but asserted by nothing, so the claim that the event
+    //      type is derived from the decision (rather than hard-coded per
+    //      branch) rested on two of four cases.
+    //
+    //      They need two proposals, not one: both decisions move the proposal
+    //      off PENDING_REVIEW, and recordApprovalDecision's status guard
+    //      rejects any second decision after that.
+    // -------------------------------------------------------------------------
+    it('emits approval.rejected for REJECT and approval.changes_requested for REQUEST_CHANGES, each exactly once, with full identity and the post-mutation version', async () => {
+      const { orgId, projectId, caseId, actorId: actorA } = await seedOrgProjectCase('outbox-reject-changes');
+      const actorB = await seedMemberedUser(orgId, 'outbox-reject-changes-B');
+      const runId = `run-t12b-${randomUUID()}`;
+      try {
+        await seedV8Run({ runId, organizationId: orgId });
+
+        // -- REJECT -> approval.rejected.
+        const rejectCreated = await proposalApprovalService.createActionProposal(
+          minimalProposalInput({
+            caseId,
+            runId,
+            tag: 'outbox-reject',
+            createdByActorId: actorA,
+          })
+        );
+        const rejectId = rejectCreated.actionProposalId;
+        const rejectSubmitted = await proposalApprovalService.submitActionProposalForReview(
+          rejectId,
+          { actorUserId: actorA },
+          rejectCreated.version
+        );
+        const rejected = await proposalApprovalService.recordApprovalDecision(
+          rejectId,
+          minimalDecisionInput({
+            tag: 'outbox-reject',
+            proposalVersion: rejectSubmitted.proposalVersion,
+            payloadDigest: rejectSubmitted.payloadDigest,
+            decision: 'REJECT',
+            decidedByActorId: actorB,
+          }),
+          rejectSubmitted.version
+        );
+        expect(rejected.proposal.status).toBe('REJECTED');
+
+        const rejectRows = await readOutboxRowsForAggregate(rejectId);
+        expect(rejectRows.map((r) => r.event_type)).toEqual([
+          'proposal.created',
+          'proposal.review_requested',
+          'approval.rejected',
+        ]);
+        const rejectEvent = expectOneEvent(rejectRows, 2, {
+          aggregateId: rejectId,
+          organizationId: orgId,
+          projectId,
+          caseId,
+          runId,
+          nodeRunId: 'noderun-outbox-reject',
+          eventType: 'approval.rejected',
+          actorUserId: actorB,
+          aggregateVersion: rejected.proposal.version,
+        });
+        // The decision is carried as a fact too, and the decision row it names
+        // is the one the service actually inserted.
+        expect(rejectEvent.redacted_summary.decision).toBe('REJECT');
+        expect(rejectEvent.redacted_summary.decisionId).toBe(rejected.decision.decisionId);
+        expect(rejectEvent.redacted_summary.from).toBe('PENDING_REVIEW');
+        expect(rejectEvent.redacted_summary.to).toBe('REJECTED');
+        expect(rejectEvent.redacted_summary.payloadDigest).toBe(rejectSubmitted.payloadDigest);
+
+        // -- REQUEST_CHANGES -> approval.changes_requested, on its own proposal.
+        const changesCreated = await proposalApprovalService.createActionProposal(
+          minimalProposalInput({
+            caseId,
+            runId,
+            tag: 'outbox-changes',
+            createdByActorId: actorA,
+          })
+        );
+        const changesId = changesCreated.actionProposalId;
+        const changesSubmitted = await proposalApprovalService.submitActionProposalForReview(
+          changesId,
+          { actorUserId: actorA },
+          changesCreated.version
+        );
+        const changed = await proposalApprovalService.recordApprovalDecision(
+          changesId,
+          minimalDecisionInput({
+            tag: 'outbox-changes',
+            proposalVersion: changesSubmitted.proposalVersion,
+            payloadDigest: changesSubmitted.payloadDigest,
+            decision: 'REQUEST_CHANGES',
+            decidedByActorId: actorB,
+          }),
+          changesSubmitted.version
+        );
+        expect(changed.proposal.status).toBe('REQUESTED_CHANGES');
+
+        const changesRows = await readOutboxRowsForAggregate(changesId);
+        expect(changesRows.map((r) => r.event_type)).toEqual([
+          'proposal.created',
+          'proposal.review_requested',
+          'approval.changes_requested',
+        ]);
+        const changesEvent = expectOneEvent(changesRows, 2, {
+          aggregateId: changesId,
+          organizationId: orgId,
+          projectId,
+          caseId,
+          runId,
+          nodeRunId: 'noderun-outbox-changes',
+          eventType: 'approval.changes_requested',
+          actorUserId: actorB,
+          aggregateVersion: changed.proposal.version,
+        });
+        expect(changesEvent.redacted_summary.decision).toBe('REQUEST_CHANGES');
+        expect(changesEvent.redacted_summary.decisionId).toBe(changed.decision.decisionId);
+        expect(changesEvent.redacted_summary.from).toBe('PENDING_REVIEW');
+        expect(changesEvent.redacted_summary.to).toBe('REQUESTED_CHANGES');
+
+        // Four distinct event types across the two aggregates — the decision
+        // really selects the type; neither proposal picked up the other's.
+        expect(rejectEvent.event_id).not.toBe(changesEvent.event_id);
+        expect(
+          [...rejectRows, ...changesRows].filter((r) => r.event_type === 'approval.rejected')
+        ).toHaveLength(1);
+        expect(
+          [...rejectRows, ...changesRows].filter((r) => r.event_type === 'approval.changes_requested')
+        ).toHaveLength(1);
+      } finally {
+        await teardown({
+          runIds: [runId],
+          orgIds: [orgId],
+          projectIds: [projectId],
+          userIds: [actorA, actorB],
+        });
+      }
+    }, 60_000);
+
+    // -------------------------------------------------------------------------
     // 13. ATOMICITY, the property the whole outbox exists for: force the
     //     transaction to fail AT COMMIT — after both the aggregate UPDATE and
     //     the publishEvent INSERT have run on its client — and prove that

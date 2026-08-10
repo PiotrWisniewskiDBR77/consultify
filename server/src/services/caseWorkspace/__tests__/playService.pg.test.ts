@@ -78,8 +78,18 @@ import * as playService from '../playService.js';
  * database and CREATE TRIGGER takes an ACCESS EXCLUSIVE lock on it. The mock
  * is process-local and can never affect another suite; the wrapper is inert
  * (`armed === false`) for every other test in this file.
+ *
+ * `armedForEventType` is the same mechanism aimed at ONE event_type instead of
+ * the next call. instantiateProcessVersion publishes two events — the
+ * `case.plan.draft_created` that casePlanVersionService.createPlanDraftOnClient
+ * emits, then its own `process.version.instantiated`. Arming on the FIRST of
+ * those would prove nothing about the one-transaction claim: a two-transaction
+ * implementation would roll back identically, because that throw lands inside
+ * createPlanDraft's own transaction either way. Arming on the SECOND is what
+ * discriminates — under two transactions the draft and its event would already
+ * be COMMITTED and would survive; under one they cannot.
  */
-const outboxBoom = vi.hoisted(() => ({ armed: false }));
+const outboxBoom = vi.hoisted(() => ({ armed: false, armedForEventType: null as string | null }));
 
 vi.mock('../eventOutboxService.js', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../eventOutboxService.js')>();
@@ -90,7 +100,9 @@ vi.mock('../eventOutboxService.js', async (importOriginal) => {
       envelope: Parameters<typeof actual.publishEvent>[1]
     ) => {
       const published = await actual.publishEvent(client, envelope);
-      if (outboxBoom.armed) throw new Error('cw_test_forced_failure_after_publish');
+      if (outboxBoom.armed || outboxBoom.armedForEventType === envelope.eventType) {
+        throw new Error('cw_test_forced_failure_after_publish');
+      }
       return published;
     },
   };
@@ -1194,4 +1206,157 @@ suite('playService — Play (reusable Process) against a real PostgreSQL (CW-P08
       });
     }
   }, 30_000);
+
+  // -------------------------------------------------------------------------
+  // instantiateProcessVersion — the play->Case join point. The one command in
+  // this file that mutates nothing of its own and still publishes TWO events:
+  // `case.plan.draft_created` (from casePlanVersionService.createPlanDraftOnClient,
+  // on this command's transaction client) and `process.version.instantiated`.
+  //
+  // Both are read back on the out-of-band `control` pool AFTER the command
+  // returned — i.e. after COMMIT, from a connection that never saw the
+  // transaction. A row visible there is a row that really committed.
+  // -------------------------------------------------------------------------
+  it('instantiateProcessVersion publishes exactly two outbox rows — case.plan.draft_created and process.version.instantiated — sharing one correlation_id and naming the same new case_plan_version_id', async () => {
+    const { orgId, projectId, caseId, actorId: caseActorId } = await seedOrgProjectCase('instantiate-outbox');
+    const userId = await seedMemberedUser(orgId, 'instantiate-outbox');
+    try {
+      const definition = await playService.createProcessDefinition({
+        organizationId: orgId,
+        name: 'Instantiate outbox play',
+        ownerActorId: userId,
+        createdByActorId: userId,
+      });
+      const published = await createPublishedVersion(definition.processDefinitionId, userId, 'instantiate-outbox');
+
+      // Everything the fixture itself already emitted (createCase, the five
+      // Play lifecycle commands). Diffing against this set is what makes
+      // "exactly two" a statement about THIS command rather than about the
+      // whole test.
+      const before = new Set((await readOutboxRowsForOrg(orgId)).map((row) => row.event_id));
+
+      const result = await playService.instantiateProcessVersion(published.processVersionId, caseId, {
+        actorUserId: userId,
+      });
+
+      const emitted = (await readOutboxRowsForOrg(orgId)).filter((row) => !before.has(row.event_id));
+      expect(emitted.map((row) => row.event_type).sort()).toEqual([
+        'case.plan.draft_created',
+        'process.version.instantiated',
+      ]);
+      expect(emitted).toHaveLength(2);
+
+      const draftCreated = emitted.find((row) => row.event_type === 'case.plan.draft_created')!;
+      const instantiated = emitted.find((row) => row.event_type === 'process.version.instantiated')!;
+
+      // One chain, not two unrelated facts.
+      expect(String(instantiated.correlation_id ?? '').length).toBeGreaterThan(0);
+      expect(draftCreated.correlation_id).toBe(instantiated.correlation_id);
+      // The instantiation is what caused the draft to exist.
+      expect(draftCreated.causation_id).toBe(instantiated.event_id);
+      expect(instantiated.causation_id).toBeNull();
+      expect(draftCreated.event_id).not.toBe(instantiated.event_id);
+
+      // Identity taken from the real rows, not from the caller's input.
+      for (const row of emitted) {
+        expect(row.organization_id).toBe(orgId);
+        expect(row.actor_user_id).toBe(userId);
+        expect(row.case_id).toBe(caseId);
+      }
+
+      // Both name the SAME newly created plan version — one as its aggregate,
+      // the other as the summary fact the taxonomy asks for.
+      expect(draftCreated.aggregate_type).toBe('CASE_PLAN_VERSION');
+      expect(draftCreated.aggregate_id).toBe(result.casePlanVersionId);
+      expect(draftCreated.aggregate_version).toBe(1);
+
+      expect(instantiated.aggregate_type).toBe('PROCESS_VERSION');
+      expect(instantiated.aggregate_id).toBe(published.processVersionId);
+      // This command mutates no process_versions row, so the OCC counter is
+      // the PUBLISHED row's current one — not a bumped or re-read value.
+      expect(instantiated.aggregate_version).toBe(published.version);
+      expect(instantiated.project_id).toBeNull();
+      expect(instantiated.payload_ref).toBe(`process_versions:${published.processVersionId}`);
+      expect(instantiated.redacted_summary.casePlanVersionId).toBe(result.casePlanVersionId);
+      expect(instantiated.redacted_summary.casePlanVersionStatus).toBe('DRAFT');
+      expect(instantiated.redacted_summary.processDefinitionId).toBe(definition.processDefinitionId);
+      expect(instantiated.redacted_summary.versionNumber).toBe(published.versionNumber);
+      expect(instantiated.redacted_summary.graphDigest).toBe(published.graphDigest);
+
+      // The plan version the events describe really exists in Postgres.
+      const planRows = await readCasePlanVersionRowsForCase(caseId);
+      expect(planRows).toHaveLength(1);
+      expect(planRows[0].case_plan_version_id).toBe(result.casePlanVersionId);
+
+      // And the ProcessVersion aggregate's own ladder now ends with it.
+      const versionEvents = await readOutboxRowsForAggregate(published.processVersionId);
+      expect(versionEvents.map((row) => row.event_type)).toContain('process.version.instantiated');
+
+      await teardown({
+        orgIds: [orgId],
+        projectIds: [projectId],
+        userIds: [userId, caseActorId],
+        processDefinitionIds: [definition.processDefinitionId],
+      });
+    } finally {
+      await teardown({ orgIds: [orgId], projectIds: [projectId], userIds: [userId, caseActorId] });
+    }
+  }, 60_000);
+
+  it('a failure raised after process.version.instantiated is published rolls back the plan draft AND case.plan.draft_created too — proving one transaction, not two', async () => {
+    const { orgId, projectId, caseId, actorId: caseActorId } = await seedOrgProjectCase('instantiate-rollback');
+    const userId = await seedMemberedUser(orgId, 'instantiate-rollback');
+    try {
+      const definition = await playService.createProcessDefinition({
+        organizationId: orgId,
+        name: 'Instantiate rollback play',
+        ownerActorId: userId,
+        createdByActorId: userId,
+      });
+      const published = await createPublishedVersion(definition.processDefinitionId, userId, 'instantiate-rollback');
+
+      const before = new Set((await readOutboxRowsForOrg(orgId)).map((row) => row.event_id));
+
+      // Fail on the SECOND event only. `case.plan.draft_created` and the
+      // case_plan_versions INSERT have both already happened when this throws
+      // — if they lived in their own committed transaction they would survive
+      // it. The assertions below are that they did not.
+      outboxBoom.armedForEventType = 'process.version.instantiated';
+      try {
+        await expect(
+          playService.instantiateProcessVersion(published.processVersionId, caseId, {
+            actorUserId: userId,
+          })
+        ).rejects.toThrow(/cw_test_forced_failure_after_publish/);
+      } finally {
+        outboxBoom.armedForEventType = null;
+      }
+
+      // Neither event survived...
+      const afterFailure = (await readOutboxRowsForOrg(orgId)).filter((row) => !before.has(row.event_id));
+      expect(afterFailure).toHaveLength(0);
+      // ...and neither did the plan draft.
+      expect(await readCasePlanVersionRowsForCase(caseId)).toHaveLength(0);
+
+      // Negative control: disarmed, the identical call succeeds and leaves
+      // exactly the two events and the one plan row. Without this, an
+      // implementation that instantiates nothing at all would pass above.
+      const result = await playService.instantiateProcessVersion(published.processVersionId, caseId, {
+        actorUserId: userId,
+      });
+      const afterSuccess = (await readOutboxRowsForOrg(orgId)).filter((row) => !before.has(row.event_id));
+      expect(afterSuccess.map((row) => row.event_type).sort()).toEqual([
+        'case.plan.draft_created',
+        'process.version.instantiated',
+      ]);
+      const planRows = await readCasePlanVersionRowsForCase(caseId);
+      expect(planRows).toHaveLength(1);
+      expect(planRows[0].case_plan_version_id).toBe(result.casePlanVersionId);
+      // plan_number is 1, not 2: the rolled-back attempt left no gap because
+      // it left no row.
+      expect(result.planNumber).toBe(1);
+    } finally {
+      await teardown({ orgIds: [orgId], projectIds: [projectId], userIds: [userId, caseActorId] });
+    }
+  }, 60_000);
 });
