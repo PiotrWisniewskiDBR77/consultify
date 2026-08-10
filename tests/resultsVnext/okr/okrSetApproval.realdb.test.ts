@@ -54,6 +54,8 @@ type ProgramCommandsModule = typeof import('../../../server/src/services/results
 type CycleCommandsModule = typeof import('../../../server/src/services/resultsVnext/okr/okrCycleCommands.js');
 type SetCommandsModule = typeof import('../../../server/src/services/resultsVnext/okr/okrSetCommands.js');
 type SetRepositoryModule = typeof import('../../../server/src/services/resultsVnext/okr/okrSetRepository.js');
+type ObjectiveCommandsModule = typeof import('../../../server/src/services/resultsVnext/okr/okrObjectiveCommands.js');
+type KeyResultCommandsModule = typeof import('../../../server/src/services/resultsVnext/okr/okrKeyResultCommands.js');
 type KpiCommandsModule = typeof import('../../../server/src/services/resultsVnext/kpi/kpiDefinitionCommands.js');
 type PgModule = typeof import('../../../server/src/database/PostgresDatabase.js');
 
@@ -66,8 +68,45 @@ let approveOkrSet: SetCommandsModule['approveOkrSet'];
 let OkrSetSelfApprovalDeniedError: SetCommandsModule['OkrSetSelfApprovalDeniedError'];
 let getOkrSetApprovedSnapshot: SetRepositoryModule['getOkrSetApprovedSnapshot'];
 let listOkrSetApprovedSnapshots: SetRepositoryModule['listOkrSetApprovedSnapshots'];
+let createObjective: ObjectiveCommandsModule['createObjective'];
+let createKeyResult: KeyResultCommandsModule['createKeyResult'];
 let computeStateHash: KpiCommandsModule['computeStateHash'];
 let closePgPool: (() => Promise<void>) | undefined;
+
+/**
+ * OKR-E003: `submitOkrSetForApproval` now also requires
+ * `hasSufficientKeyResultCoverage` (>=2 non-cancelled KRs per non-cancelled
+ * Objective) — this fixture helper gives a draft Set exactly that minimum
+ * so this file's pre-existing approval-focused assertions keep exercising
+ * approve's own self-approval/snapshot/hash logic, not blocked earlier by
+ * the new submission guard.
+ */
+async function addSufficientKeyResultCoverage(setId: string, organizationId: string, ownerUserId: string): Promise<void> {
+  const objective = await createObjective({
+    setId,
+    organizationId,
+    ownerUserId,
+    title: 'Approval fixture Objective',
+    createdBy: ownerUserId,
+    actorEffectiveRole: 'member',
+    idempotencyKey: `fixture-objective-${randomUUID()}`,
+  });
+  for (let i = 0; i < 2; i += 1) {
+    await createKeyResult({
+      objectiveId: objective.result.objectiveId,
+      organizationId,
+      ownerUserId,
+      title: `Approval fixture KR ${i + 1}`,
+      measurementType: 'numeric',
+      direction: 'reach',
+      targetValue: 10,
+      currentValue: 5,
+      createdBy: ownerUserId,
+      actorEffectiveRole: 'member',
+      idempotencyKey: `fixture-kr-${i}-${randomUUID()}`,
+    });
+  }
+}
 
 function baseCycleTimes() {
   return {
@@ -156,6 +195,16 @@ describe('OKR-E002 approveOkrSet — self-approval denial, snapshot, pointers, h
     getOkrSetApprovedSnapshot = setRepository.getOkrSetApprovedSnapshot;
     listOkrSetApprovedSnapshots = setRepository.listOkrSetApprovedSnapshots;
 
+    const objectiveCommands: ObjectiveCommandsModule = await import(
+      '../../../server/src/services/resultsVnext/okr/okrObjectiveCommands.js'
+    );
+    createObjective = objectiveCommands.createObjective;
+
+    const keyResultCommands: KeyResultCommandsModule = await import(
+      '../../../server/src/services/resultsVnext/okr/okrKeyResultCommands.js'
+    );
+    createKeyResult = keyResultCommands.createKeyResult;
+
     const kpiCommands: KpiCommandsModule = await import(
       '../../../server/src/services/resultsVnext/kpi/kpiDefinitionCommands.js'
     );
@@ -170,6 +219,17 @@ describe('OKR-E002 approveOkrSet — self-approval denial, snapshot, pointers, h
     const orgLike = `${ORG_PREFIX}%`;
     await client.query(
       `UPDATE okr_vnext_sets SET latest_approved_snapshot_id = NULL WHERE organization_id LIKE $1`,
+      [orgLike]
+    );
+    // OKR-E003: okr_vnext_key_results/okr_vnext_objectives REFERENCE
+    // okr_vnext_sets — must be deleted before the Set rows below, or the
+    // FK constraint blocks the DELETE.
+    await client.query(
+      `DELETE FROM okr_vnext_key_results WHERE organization_id LIKE $1`,
+      [orgLike]
+    );
+    await client.query(
+      `DELETE FROM okr_vnext_objectives WHERE organization_id LIKE $1`,
       [orgLike]
     );
     await client.query(`DELETE FROM okr_vnext_approved_snapshots WHERE organization_id LIKE $1`, [orgLike]);
@@ -230,6 +290,7 @@ describe('OKR-E002 approveOkrSet — self-approval denial, snapshot, pointers, h
       actorEffectiveRole: 'admin',
       idempotencyKey: `create-set-selfapprove-submitted-${randomUUID()}`,
     });
+    await addSufficientKeyResultCoverage(created.result.set.setId, organizationId, `${USER_OWNER}-submitted-branch`);
     const submitted = await submitOkrSetForApproval({
       setId: created.result.set.setId,
       organizationId,
@@ -283,6 +344,7 @@ describe('OKR-E002 approveOkrSet — self-approval denial, snapshot, pointers, h
       idempotencyKey: `create-set-selfapprove-created-${randomUUID()}`,
     });
     expect(created.result.set.createdBy).toBe(ownerId);
+    await addSufficientKeyResultCoverage(created.result.set.setId, organizationId, ownerId);
 
     // A DELEGATE submits on the owner's behalf — submitted_by = DELEGATE,
     // deliberately different from created_by.
@@ -331,6 +393,7 @@ describe('OKR-E002 approveOkrSet — self-approval denial, snapshot, pointers, h
       actorEffectiveRole: 'admin',
       idempotencyKey: `create-set-genuine-${randomUUID()}`,
     });
+    await addSufficientKeyResultCoverage(created.result.set.setId, organizationId, ownerId);
     const submitted = await submitOkrSetForApproval({
       setId: created.result.set.setId,
       organizationId,
@@ -373,6 +436,7 @@ describe('OKR-E002 approveOkrSet — self-approval denial, snapshot, pointers, h
         actorEffectiveRole: 'admin',
         idempotencyKey: `create-set-snapshot-${randomUUID()}`,
       });
+      await addSufficientKeyResultCoverage(created.result.set.setId, organizationId, ownerId);
       const submitted = await submitOkrSetForApproval({
         setId: created.result.set.setId,
         organizationId,
@@ -394,17 +458,20 @@ describe('OKR-E002 approveOkrSet — self-approval denial, snapshot, pointers, h
       expect(approved.result.set.approvedVersion).toBe(1);
       expect(approved.result.set.latestApprovedSnapshotId).toBe(approved.result.snapshot.snapshotId);
 
-      // D8: objectives:[] placeholder, structurally present.
+      // OKR-E003 (design §12): objectives is now REAL content (the fixture's
+      // one Objective + 2 KeyResults from addSufficientKeyResultCoverage),
+      // not the E002-era empty D8 placeholder.
       const dbRow = await client.query<{
         content_hash: string;
-        snapshot_payload: { set: { setId: string }; objectives: unknown[] };
+        snapshot_payload: { set: { setId: string }; objectives: Array<{ objectiveId: string; keyResults: unknown[] }> };
         sequence_number: number;
       }>(`SELECT content_hash, snapshot_payload, sequence_number FROM okr_vnext_approved_snapshots WHERE snapshot_id = $1`, [
         approved.result.snapshot.snapshotId,
       ]);
       expect(dbRow.rowCount).toBe(1);
       expect(dbRow.rows[0].sequence_number).toBe(1);
-      expect(dbRow.rows[0].snapshot_payload.objectives).toEqual([]);
+      expect(dbRow.rows[0].snapshot_payload.objectives).toHaveLength(1);
+      expect(dbRow.rows[0].snapshot_payload.objectives[0].keyResults).toHaveLength(2);
       expect(dbRow.rows[0].snapshot_payload.set.setId).toBe(created.result.set.setId);
 
       // Content-hash stability across TWO independent reads (repository +
@@ -475,6 +542,7 @@ describe('OKR-E002 approveOkrSet — self-approval denial, snapshot, pointers, h
         actorEffectiveRole: 'admin',
         idempotencyKey: `create-set-reseq-${randomUUID()}`,
       });
+      await addSufficientKeyResultCoverage(created.result.set.setId, organizationId, ownerId);
       const submitted = await submitOkrSetForApproval({
         setId: created.result.set.setId,
         organizationId,
@@ -559,6 +627,7 @@ describe('OKR-E002 approveOkrSet — self-approval denial, snapshot, pointers, h
       actorEffectiveRole: 'admin',
       idempotencyKey: `create-set-immutable-${randomUUID()}`,
     });
+    await addSufficientKeyResultCoverage(created.result.set.setId, organizationId, ownerId);
     const submitted = await submitOkrSetForApproval({
       setId: created.result.set.setId,
       organizationId,
