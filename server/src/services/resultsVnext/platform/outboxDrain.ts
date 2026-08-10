@@ -53,7 +53,20 @@ import type { PoolClient } from 'pg';
 
 import logger from '../../../utils/Logger.js';
 
-export type RvnOutboxStatus = 'pending' | 'claimed' | 'dispatched' | 'failed' | 'dead_letter';
+/**
+ * RN-G3 (docs/product/results-vnext/RN_G3_OUTBOX_DISPATCHER_DESIGN.md §2
+ * IO-C) appended 'parked' — a distinct terminal status for rows whose
+ * `consumer_group` is known, deliberately unbuilt backlog (see
+ * `consumerRegistry.ts`'s `UNBUILT_CONSUMER_GROUPS`), never a failure.
+ * Additive only: every existing status/function in this file is unchanged.
+ */
+export type RvnOutboxStatus =
+  | 'pending'
+  | 'claimed'
+  | 'dispatched'
+  | 'failed'
+  | 'dead_letter'
+  | 'parked';
 
 export interface RvnOutboxRow {
   outbox_id: string;
@@ -197,19 +210,40 @@ export async function markFailed(
 
   const row = result.rows[0];
   if (row?.status === 'dead_letter') {
-    // TODO(RN-G1 follow-up): wire this into the repo's actual alerting path
-    // (whatever paged/Slack-notified path other dead-letter/exhausted-retry
-    // conditions in this codebase use — none identified/built as part of
-    // this bounded package). A dead_letter row today is only discoverable
-    // by querying rvn_platform_outbox directly or grepping logs for this
-    // warning; per design §A.5 ("wymaga alertu, nie cichy koniec") that is
-    // NOT sufficient for production, but building a full alerting system is
-    // out of scope here.
+    // RN-G3 (platformOutboxDrainCron.ts) now wires this into a real alert —
+    // sendSystemAlert(CRITICAL, throttled per consumer_group) — from the
+    // cron tick, per design §6 ("Lives in the cron tick, not inside
+    // markFailed(), keeping outboxDrain.ts a pure-function module as its
+    // header requires"). This log line stays as a non-blocking trace
+    // alongside that alert, not a replacement for it.
     logger.warn(
-      '[resultsVnext/platform/outboxDrain] outbox row moved to dead_letter — requires alert, see TODO in markFailed',
+      '[resultsVnext/platform/outboxDrain] outbox row moved to dead_letter — see platformOutboxDrainCron.ts for the alert',
       { outboxId, attempts: row.attempts, lastError: error }
     );
   }
 
   return row ?? { status: 'failed', attempts: 0 };
+}
+
+/**
+ * RN-G3 (design §2 IO-C, §3): terminal "parked" outcome for an outbox row
+ * whose `consumer_group` is known-unbuilt backlog (see
+ * `consumerRegistry.ts`'s `UNBUILT_CONSUMER_GROUPS`) — never a failure, never
+ * counted against `attempts`/`max_attempts`, never dead-lettered. The row
+ * stays visible and can be re-processed once a real consumer is registered
+ * for its group (a future migration/backfill would flip `parked` rows for
+ * that group back to `pending`; not built in this slice — see
+ * RN_G3_OUTBOX_DISPATCHER_DESIGN.md §9).
+ */
+export async function markParked(
+  client: PoolClient,
+  outboxId: string,
+  reason: string
+): Promise<void> {
+  await client.query(
+    `UPDATE rvn_platform_outbox
+        SET status = 'parked', last_error = $2
+      WHERE outbox_id = $1`,
+    [outboxId, reason]
+  );
 }

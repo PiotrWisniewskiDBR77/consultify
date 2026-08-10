@@ -1854,6 +1854,19 @@ if (startServer && shouldStartHttpServer) {
       logger.warn('[Server] Notification outbox drain not started:', err?.message);
     }
 
+    // RN-G3: rvn_platform_outbox drain — closes the gap where all three
+    // Results vNext domains (KPI/ROI/OKR) wrote events + outbox rows
+    // atomically but nothing ever consumed them (EXECUTION_LEDGER.md,
+    // docs/product/results-vnext/RN_G3_OUTBOX_DISPATCHER_DESIGN.md). Opt-OUT
+    // (on by default), same posture as the notification_outbox drain above.
+    try {
+      const { startPlatformOutboxDrainCron } =
+        await import('./services/resultsVnext/platform/platformOutboxDrainCron.js');
+      startPlatformOutboxDrainCron();
+    } catch (err: any) {
+      logger.warn('[Server] Platform outbox drain not started:', err?.message);
+    }
+
     // EXE-09: closure→Results/Finance delivery receipt reconciliation sweep.
     // Opt-OUT (on by default) — retries any closure_delivery_receipts row
     // whose Results/Finance leg is still PENDING/FAILED, so a failed or
