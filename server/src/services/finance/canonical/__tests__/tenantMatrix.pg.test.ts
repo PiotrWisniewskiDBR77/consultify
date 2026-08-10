@@ -929,16 +929,41 @@ describe.skipIf(!REAL_PG)('W9-C — tenant isolation matrix (real PostgreSQL)', 
   });
 
   // =========================================================================
-  // Cross-cutting: no RLS anywhere, so none of the above can be delegated
+  // Cross-cutting: RLS exists ONLY on the W2 pilot's three tables; the rest
+  // of the finance*/compute* schema is still application-level only.
+  //
+  // UPDATED by 20260826_finance_v3_w2_rls_pilot_policies.sql (W2 RLS PILOT,
+  // EM-9). This test used to assert ZERO RLS policies anywhere in
+  // finance*/compute* — that was true until this migration. It is rewritten
+  // here, not deleted, per this file's own "cannot be lost" discipline: it
+  // now pins the NARROW scope of the pilot (three tables, and three tables
+  // only) so that a future migration silently widening RLS coverage — or
+  // silently regressing it back to zero — turns this test red either way.
+  //
+  // IMPORTANT — this assertion is about POLICY EXISTENCE, not about whether
+  // isolation is actually enforced for real traffic. See
+  // W2_RLS_TENANT_ENFORCEMENT_report.md and
+  // rlsPilotEnforcement.pg.test.ts's STATE 3: the role this very test
+  // connects as (and the role production/migrations connect as) is a
+  // superuser, which bypasses RLS unconditionally. The application-level
+  // guards this file spends its other ~20 tests proving (FIXED W9-C-1
+  // through W9-C-7) remain the ONLY enforcement that matters for real
+  // traffic today.
   // =========================================================================
-  it('cross-cutting: the schema has ZERO row-level-security policies — isolation is application-level only', async () => {
+  it('cross-cutting: row-level-security policies exist on exactly the W2 pilot\'s three tables, nowhere else in finance*/compute*', async () => {
+    const PILOT_TABLES = [
+      'compute_jobs',
+      'finance_valuation_sensitivity_grids',
+      'finance_valuation_sensitivity_cells',
+    ].sort();
+
     const policies = await t((tx) =>
       tx.queryAll<{ tablename: string }>(
         `SELECT tablename FROM pg_policies WHERE schemaname = 'public'
           AND (tablename LIKE 'finance%' OR tablename LIKE 'compute%')`
       )
     );
-    expect(policies).toEqual([]);
+    expect(policies.map((p) => p.tablename).sort()).toEqual(PILOT_TABLES);
 
     const rlsEnabled = await t((tx) =>
       tx.queryAll<{ relname: string }>(
@@ -947,6 +972,6 @@ describe.skipIf(!REAL_PG)('W9-C — tenant isolation matrix (real PostgreSQL)', 
             AND (c.relname LIKE 'finance%' OR c.relname LIKE 'compute%')`
       )
     );
-    expect(rlsEnabled).toEqual([]);
+    expect(rlsEnabled.map((r) => r.relname).sort()).toEqual(PILOT_TABLES);
   });
 });
