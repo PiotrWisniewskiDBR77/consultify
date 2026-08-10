@@ -47,6 +47,15 @@ function propertyLabels(isPolish: boolean): { propertyLabel: string; valueLabel:
   };
 }
 
+/** Block 4 (mandatory, TRIADA checklist item 28) — every existing RN-G2 ROI
+ * preview (`roiRegistryPresenters.tsx` `buildRoiCasePreview`/
+ * `buildRoiBenefitsRealizationPreview`) shows a disabled "Coming soon" AI
+ * hint strip rather than omitting the block; this package's four new
+ * previews match that, not a fifth bespoke variant. */
+function aiComingSoon(hints: string[], isPolish: boolean) {
+  return { hints, disabled: true, disabledTooltip: isPolish ? 'Wkrótce' : 'Coming soon' };
+}
+
 /** Shared "case is locked" header/meta chrome every one of the four
  * previews below attaches identically — one place, not four copies of the
  * same `LifecycleLockBadge`/pill wiring. */
@@ -231,6 +240,7 @@ export function buildRoiSettingsPreview(
             ]
           : [{ id: 'missing', label: isPolish ? 'Rekord' : 'Record', value: isPolish ? 'Brak rekordu baseline dla tej sprawy.' : 'No baseline record for this case.' }],
       },
+      ai: aiComingSoon(isPolish ? ['Podsumuj baseline'] : ['Summarize baseline'], isPolish),
       relations: [],
     };
   }
@@ -262,6 +272,7 @@ export function buildRoiSettingsPreview(
           ]
         : [{ id: 'missing', label: isPolish ? 'Rekord' : 'Record', value: isPolish ? 'Brak rekordu polityki kalkulacji dla tej sprawy.' : 'No calculation policy record for this case.' }],
     },
+    ai: aiComingSoon(isPolish ? ['Podsumuj politykę'] : ['Summarize policy'], isPolish),
     relations: [],
   };
 }
@@ -326,6 +337,7 @@ export function buildRoiAssumptionPreview(row: RoiAssumption, caseStatus: RoiCas
         { id: 'owner', label: isPolish ? 'Właściciel' : 'Owner', value: row.ownerUserId ?? '—', mono: true },
       ],
     },
+    ai: aiComingSoon(isPolish ? ['Podsumuj założenie'] : ['Summarize assumption'], isPolish),
     relations: [],
   };
 }
@@ -379,6 +391,7 @@ export function buildRoiCostLinePreview(row: RoiCostLine, caseStatus: RoiCaseSta
         { id: 'owner', label: isPolish ? 'Właściciel' : 'Owner', value: row.ownerUserId ?? '—', mono: true },
       ],
     },
+    ai: aiComingSoon(isPolish ? ['Podsumuj koszt'] : ['Summarize cost line'], isPolish),
     relations: [],
   };
 }
@@ -453,6 +466,7 @@ export function buildRoiBenefitLinePreview(row: RoiBenefitLine, caseStatus: RoiC
         { id: 'owner', label: isPolish ? 'Właściciel' : 'Owner', value: row.ownerUserId ?? '—', mono: true },
       ],
     },
+    ai: aiComingSoon(isPolish ? ['Podsumuj korzyść'] : ['Summarize benefit line'], isPolish),
     relations: [],
   };
 }
