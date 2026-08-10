@@ -475,4 +475,268 @@ describe.skipIf(!REAL_PG)('WP-D02 Statement Pack mapping/reconciliation — real
       expect(mapped.every((r) => r.bucket === 'MAPPED')).toBe(true);
     });
   });
+
+  /**
+   * RC-02 / RC-03 regressions — both require the additive migration
+   * `20260810_finance_v3_d01c_real_company_integrity_fix.sql` to be applied to the target cluster.
+   *
+   * REAL DATA: Grupa Apator's filed consolidated IFRS statements, thousand PLN, `unit='THOUSANDS'`,
+   * transcribed verbatim from
+   * `docs/validation/finance-v3/generated/STATEMENT_IMPORT_SAMPLE_AUDIT_2026-03-15.json` and
+   * cross-checked against `docs/validation/finance-v3/generated/gate-d/REAL_COMPANY_PROOF_report.md`
+   * §3/§5 (RC-02, RC-03).
+   */
+  describe('RC-02 / RC-03 fixes — real Apator IFRS pack (unit=THOUSANDS)', () => {
+    /** FY2024 balance-sheet total, as filed: PLN 965 357 thousand (REAL_COMPANY_PROOF §3). */
+    const APATOR_TOTAL_ASSETS_FY2024 = 965_357;
+    /** Retained-earnings bridge, as filed (REAL_COMPANY_PROOF §5 RC-02). */
+    const APATOR_RE = {
+      openingFy2023: -29_215,
+      netIncomeFy2023: 8_504,
+      dividendsFy2023: 14_612,
+      closingFy2023: -72_699,
+    } as const;
+    /** −29 215 + 8 504 − 14 612 = −35 323 vs reported −72 699 -> 37 376 thousand PLN unexplained. */
+    const APATOR_RE_GAP =
+      Math.abs(
+        APATOR_RE.openingFy2023 + APATOR_RE.netIncomeFy2023 - APATOR_RE.dividendsFy2023 - APATOR_RE.closingFy2023
+      );
+
+    let thousandsCalendarId = '';
+    let fy2022Id = '';
+    let fy2023Id = '';
+    let fy2024Id = '';
+
+    beforeAll(async () => {
+      // Dedicated calendar: `uq_finance_stmt_period_fy` is unique per (calendar, fiscal_year) and
+      // the shared fixture calendar in this file already owns FY2025.
+      const cal = await withPinnedPostgresTransaction((tx) =>
+        tx.queryOne<{ fiscal_calendar_id: string }>(
+          `INSERT INTO finance_stmt_calendars (organization_id, calendar_type, fiscal_year_end_month, effective_from, created_by)
+           VALUES (?, 'STANDARD', 12, '2019-01-01', ?) RETURNING fiscal_calendar_id`,
+          [orgId, preparerId]
+        )
+      );
+      if (!cal) throw new Error('Apator fixture calendar insert returned no row');
+      thousandsCalendarId = cal.fiscal_calendar_id;
+
+      const mkPeriod = async (fiscalYear: number, previous: string | null) => {
+        const row = await withPinnedPostgresTransaction((tx) =>
+          tx.queryOne<{ period_id: string }>(
+            `INSERT INTO finance_stmt_periods (organization_id, fiscal_calendar_id, period_type, fiscal_year, period_start, period_end, label, previous_period_id, created_by)
+             VALUES (?, ?, 'FY', ?, ?, ?, ?, ?, ?) RETURNING period_id`,
+            [
+              orgId, thousandsCalendarId, fiscalYear,
+              `${fiscalYear}-01-01`, `${fiscalYear}-12-31`, `FY${fiscalYear}`, previous, preparerId,
+            ]
+          )
+        );
+        if (!row) throw new Error(`FY${fiscalYear} period insert returned no row`);
+        return row.period_id;
+      };
+      fy2022Id = await mkPeriod(2022, null);
+      fy2023Id = await mkPeriod(2023, fy2022Id);
+      fy2024Id = await mkPeriod(2024, fy2023Id);
+    });
+
+    // -----------------------------------------------------------------------------------
+    // RC-03 — the balance tolerance used to scale 1000x with the declared unit.
+    // -----------------------------------------------------------------------------------
+    describe('RC-03 — balance tolerance is compared in the same scale as the value', () => {
+      /** Files the real Apator FY2024 total assets and a Liabilities+Equity side that is
+       *  `imbalanceThousands` thousand PLN short of it. */
+      async function apatorBalanceProbe(imbalanceThousands: number) {
+        const pack = await makeStatementPack();
+        const bvId = pack.businessVersion.business_version_id;
+        const entityCode = `APATOR-BS-${imbalanceThousands}`;
+        await makeEntity(bvId, entityCode);
+        const rawLines: import('../statementMappingService.js').RawStatementLine[] = [
+          { lineItem: 'AKTYWA RAZEM', periodId: fy2024Id, entityCode, currency: 'PLN', value: APATOR_TOTAL_ASSETS_FY2024, sourceRef: {} },
+          {
+            lineItem: 'PASYWA RAZEM', periodId: fy2024Id, entityCode, currency: 'PLN',
+            value: APATOR_TOTAL_ASSETS_FY2024 - imbalanceThousands, sourceRef: {},
+          },
+        ];
+        const rules: import('../statementMappingService.js').MappingRule[] = [
+          { sourceLabel: 'AKTYWA RAZEM', statementType: 'BS', lineCode: 'TOTAL_ASSETS' },
+          { sourceLabel: 'PASYWA RAZEM', statementType: 'BS', lineCode: 'TOTAL_LIABILITIES_EQUITY' },
+        ];
+        return statementMappingService.mapStatementLines({
+          organizationId: orgId,
+          businessVersionId: bvId,
+          unit: 'THOUSANDS',
+          presentationCurrency: 'PLN',
+          createdBy: preparerId,
+          rawLines,
+          rules,
+        });
+      }
+
+      it('a 500-thousand (PLN 500 000) imbalance at unit=THOUSANDS is rejected (pre-fix: silently ACCEPTED — tolerance was 1000 thousand = PLN 1 000 000)', async () => {
+        await expect(apatorBalanceProbe(500)).rejects.toThrow(/balance check failed/);
+      });
+
+      it('the tolerance reported by the trigger is 1 presentation unit, not 1000', async () => {
+        await expect(apatorBalanceProbe(500)).rejects.toThrow(/diff=500 tolerance=1(\D|$)/);
+      });
+
+      it('a 1 500-thousand imbalance is still rejected (no regression on what already failed)', async () => {
+        await expect(apatorBalanceProbe(1_500)).rejects.toThrow(/balance check failed/);
+      });
+
+      it('the genuinely balanced Apator FY2024 balance sheet still commits (fix does not over-reject)', async () => {
+        const mapped = await apatorBalanceProbe(0);
+        expect(mapped).toHaveLength(2);
+        expect(mapped.every((r) => r.bucket === 'MAPPED')).toBe(true);
+      });
+
+      it('a 1-unit rounding difference is still tolerated at THOUSANDS (two independently rounded subtotals)', async () => {
+        const mapped = await apatorBalanceProbe(1);
+        expect(mapped).toHaveLength(2);
+        expect(mapped.every((r) => r.bucket === 'MAPPED')).toBe(true);
+      });
+    });
+
+    // -----------------------------------------------------------------------------------
+    // RC-02 — the retained-earnings roll-forward used to abort the whole import.
+    // -----------------------------------------------------------------------------------
+    describe('RC-02 — an unexplained retained-earnings roll-forward raises an exception instead of destroying the import', () => {
+      /** Files the real Apator FY2022->FY2023 retained-earnings bridge. `otherEquityMovements`
+       *  null = the pack does not disclose the bridge (what the extractor actually produced). */
+      async function apatorRollForwardImport(otherEquityMovements: number | null) {
+        const pack = await makeStatementPack();
+        const bvId = pack.businessVersion.business_version_id;
+        const entityCode = `APATOR-RE-${otherEquityMovements ?? 'none'}`;
+        await makeEntity(bvId, entityCode);
+
+        const rawLines: import('../statementMappingService.js').RawStatementLine[] = [
+          { lineItem: 'Niepodzielony wynik finansowy 2022', periodId: fy2022Id, entityCode, currency: 'PLN', value: APATOR_RE.openingFy2023, sourceRef: {} },
+          { lineItem: 'Niepodzielony wynik finansowy 2023', periodId: fy2023Id, entityCode, currency: 'PLN', value: APATOR_RE.closingFy2023, sourceRef: {} },
+          { lineItem: 'Zysk netto 2023', periodId: fy2023Id, entityCode, currency: 'PLN', value: APATOR_RE.netIncomeFy2023, sourceRef: {} },
+          { lineItem: 'Wyplacona dywidenda 2023', periodId: fy2023Id, entityCode, currency: 'PLN', value: APATOR_RE.dividendsFy2023, sourceRef: {} },
+        ];
+        const rules: import('../statementMappingService.js').MappingRule[] = [
+          { sourceLabel: 'Niepodzielony wynik finansowy 2022', statementType: 'BS', lineCode: 'RETAINED_EARNINGS' },
+          { sourceLabel: 'Niepodzielony wynik finansowy 2023', statementType: 'BS', lineCode: 'RETAINED_EARNINGS' },
+          { sourceLabel: 'Zysk netto 2023', statementType: 'P&L', lineCode: 'NET_INCOME' },
+          { sourceLabel: 'Wyplacona dywidenda 2023', statementType: 'BS', lineCode: 'DIVIDENDS_DECLARED' },
+        ];
+        if (otherEquityMovements !== null) {
+          rawLines.push({ lineItem: 'Pozostale zmiany kapitalu 2023', periodId: fy2023Id, entityCode, currency: 'PLN', value: otherEquityMovements, sourceRef: {} });
+          rules.push({ sourceLabel: 'Pozostale zmiany kapitalu 2023', statementType: 'BS', lineCode: 'OTHER_EQUITY_MOVEMENTS' });
+        }
+
+        const mapped = await statementMappingService.mapStatementLines({
+          organizationId: orgId,
+          businessVersionId: bvId,
+          unit: 'THOUSANDS',
+          presentationCurrency: 'PLN',
+          createdBy: preparerId,
+          rawLines,
+          rules,
+        });
+        return { bvId, mapped };
+      }
+
+      it('the import COMMITS (pre-fix: the whole transaction was aborted by a RAISE EXCEPTION)', async () => {
+        const { bvId, mapped } = await apatorRollForwardImport(null);
+        expect(mapped).toHaveLength(4);
+        expect(mapped.every((r) => r.bucket === 'MAPPED')).toBe(true);
+
+        // The rows really are in the table after COMMIT — not just returned by the service.
+        const persisted = await withPinnedPostgresTransaction((tx) =>
+          tx.queryOne<{ n: string }>(`SELECT COUNT(*)::text AS n FROM finance_stmt_lines WHERE business_version_id = ?`, [bvId])
+        );
+        expect(Number(persisted?.n)).toBe(4);
+      });
+
+      it('a MATERIAL finance_exceptions row is raised carrying the real 37 376 thousand PLN gap', async () => {
+        const { bvId } = await apatorRollForwardImport(null);
+
+        const exc = await withPinnedPostgresTransaction((tx) =>
+          tx.queryOne<{
+            event_type: string; severity: string; reason_code: string; state: string;
+            expected: string; observed: string; delta: string; unit: string; evidence: Record<string, unknown>;
+          }>(
+            `SELECT event_type, severity, reason_code, state, expected, observed, delta, unit, evidence
+               FROM finance_exceptions_current WHERE business_version_id = ?`,
+            [bvId]
+          )
+        );
+        expect(exc, 'no exception raised for the unexplained roll-forward').toBeTruthy();
+        expect(exc?.event_type).toBe('RAISED');
+        expect(exc?.state).toBe('OPEN');
+        expect(exc?.reason_code).toBe('RE_ROLLFORWARD_UNEXPLAINED');
+        // 37 376 / 72 699 = 51.4% of closing RE -> far above the 5%
+        // PROVISIONAL_PENDING_OWNER_DECISION placeholder threshold.
+        expect(exc?.severity).toBe('MATERIAL');
+        expect(exc?.unit).toBe('THOUSANDS');
+        expect(Number(exc?.expected)).toBe(
+          APATOR_RE.openingFy2023 + APATOR_RE.netIncomeFy2023 - APATOR_RE.dividendsFy2023
+        ); // -35 323 implied
+        expect(Number(exc?.observed)).toBe(APATOR_RE.closingFy2023); // -72 699 reported
+        expect(Math.abs(Number(exc?.delta))).toBe(APATOR_RE_GAP); // 37 376
+        expect(Number((exc?.evidence as { gap?: number })?.gap)).toBe(APATOR_RE_GAP);
+      });
+
+      it('exactly ONE exception is logged for the cell, not one per row of the batch', async () => {
+        const { bvId } = await apatorRollForwardImport(null);
+        const row = await withPinnedPostgresTransaction((tx) =>
+          tx.queryOne<{ n: string }>(`SELECT COUNT(*)::text AS n FROM finance_exceptions WHERE business_version_id = ?`, [bvId])
+        );
+        expect(Number(row?.n)).toBe(1);
+      });
+
+      it('the business version is marked PROVISIONAL, so downstream work continues under a declared quality (DEC-FIN-009)', async () => {
+        const { bvId } = await apatorRollForwardImport(null);
+        const bv = await withPinnedPostgresTransaction((tx) =>
+          tx.queryOne<{ result_quality: string | null; status: string }>(
+            `SELECT result_quality, status FROM finance_business_versions WHERE business_version_id = ?`,
+            [bvId]
+          )
+        );
+        expect(bv?.result_quality).toBe('PROVISIONAL');
+        expect(bv?.status).toBe('DRAFT'); // import is alive, not rolled back
+      });
+
+      it('when the pack DOES disclose the bridge (OTHER_EQUITY_MOVEMENTS = −37 376), the identity closes and nothing is raised', async () => {
+        const { bvId, mapped } = await apatorRollForwardImport(-APATOR_RE_GAP);
+        expect(mapped).toHaveLength(5);
+        expect(mapped.every((r) => r.bucket === 'MAPPED')).toBe(true);
+
+        const row = await withPinnedPostgresTransaction((tx) =>
+          tx.queryOne<{ n: string }>(`SELECT COUNT(*)::text AS n FROM finance_exceptions WHERE business_version_id = ?`, [bvId])
+        );
+        expect(Number(row?.n)).toBe(0);
+
+        const bv = await withPinnedPostgresTransaction((tx) =>
+          tx.queryOne<{ result_quality: string | null }>(
+            `SELECT result_quality FROM finance_business_versions WHERE business_version_id = ?`,
+            [bvId]
+          )
+        );
+        expect(bv?.result_quality).toBeNull();
+      });
+
+      it('Assets = Liabilities + Equity still HARD-rejects — RC-02 relaxes the roll-forward, not the accounting identity', async () => {
+        const pack = await makeStatementPack();
+        const bvId = pack.businessVersion.business_version_id;
+        await makeEntity(bvId, 'APATOR-IDENTITY-GUARD');
+        const rawLines: import('../statementMappingService.js').RawStatementLine[] = [
+          { lineItem: 'AKTYWA RAZEM', periodId: fy2024Id, entityCode: 'APATOR-IDENTITY-GUARD', currency: 'PLN', value: APATOR_TOTAL_ASSETS_FY2024, sourceRef: {} },
+          { lineItem: 'PASYWA RAZEM', periodId: fy2024Id, entityCode: 'APATOR-IDENTITY-GUARD', currency: 'PLN', value: APATOR_TOTAL_ASSETS_FY2024 - 10_000, sourceRef: {} },
+        ];
+        const rules: import('../statementMappingService.js').MappingRule[] = [
+          { sourceLabel: 'AKTYWA RAZEM', statementType: 'BS', lineCode: 'TOTAL_ASSETS' },
+          { sourceLabel: 'PASYWA RAZEM', statementType: 'BS', lineCode: 'TOTAL_LIABILITIES_EQUITY' },
+        ];
+        await expect(
+          statementMappingService.mapStatementLines({
+            organizationId: orgId, businessVersionId: bvId, unit: 'THOUSANDS',
+            presentationCurrency: 'PLN', createdBy: preparerId, rawLines, rules,
+          })
+        ).rejects.toThrow(/balance check failed/);
+      });
+    });
+  });
 });

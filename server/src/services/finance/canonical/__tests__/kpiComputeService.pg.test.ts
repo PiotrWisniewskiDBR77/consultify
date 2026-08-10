@@ -476,6 +476,243 @@ describe.skipIf(!REAL_PG)('WP-D04 kpiComputeService — real PostgreSQL known-an
     });
   });
 
+  /**
+   * RC-04 regression — `sign_convention='CONTRA'` is written by the mapping layer but must also be
+   * APPLIED when `loadStmtLineCells()` reads the cell back.
+   *
+   * REAL DATA, not synthetic: Grupa Apator's filed consolidated IFRS statements, transcribed
+   * verbatim from `docs/validation/finance-v3/generated/STATEMENT_IMPORT_SAMPLE_AUDIT_2026-03-15.json`
+   * (`topMappedLines` of "Grupa Apator Raport RS 2023"/"RS 2024") and cross-checked against
+   * `docs/validation/finance-v3/generated/gate-d/REAL_COMPANY_PROOF_report.md` §4/§5 RC-04.
+   * All values in thousand PLN, `unit='THOUSANDS'`:
+   *
+   *   FY2023: INVENTORY = 242 296   AP = 93 591   COGS = −881 346
+   *   FY2024: INVENTORY = 225 460   AP =    722   COGS = −913 065
+   *
+   * COGS is negative because that is how the statement is filed ("Koszt własny sprzedaży"
+   * −913 065) — the pack declares `signConvention: 'CONTRA'` for it rather than mutilating the
+   * as-filed value. Expected values, computed here by hand (NOT via formulaAstEvaluator), FY2024
+   * being a leap year so DAYS_IN_PERIOD = 366:
+   *
+   *   COGS per day        = 913 065 / 366                    = 2 494.7131147540983
+   *   INVENTORY average   = (225 460 + 242 296) / 2          = 233 878
+   *   DIO                 = 233 878 / 2 494.7131147540983    = 93.7495…   (report: 93.749)
+   *   AP average          = (722 + 93 591) / 2               = 47 156.5
+   *   DPO                 = 47 156.5 / 2 494.7131147540983   = 18.9026…   (report: 18.903)
+   *
+   * Pre-fix, both came back `NOT_APPLICABLE`: the CONTRA convention was never applied, the
+   * denominator stayed −913 065, and DIO/DPO both carry `negative_denominator_policy='FORCE_NA'`.
+   * (The AP FY2024 = 722 figure is itself an extraction defect — RC-05 — but it is the real value
+   * that really flowed through the pipeline, and this test is about the sign convention, not
+   * about AP's plausibility.)
+   */
+  describe('RC-04 fix — sign_convention=CONTRA is applied on read, so DIO/DPO compute on an as-filed pack', () => {
+    const APATOR = {
+      inventoryFy2023: 242_296,
+      inventoryFy2024: 225_460,
+      apFy2023: 93_591,
+      apFy2024: 722,
+      cogsFy2024AsFiled: -913_065, // as filed, negative; declared CONTRA
+    } as const;
+    const DAYS_FY2024 = 366; // leap year
+    const COGS_PER_DAY = 913_065 / DAYS_FY2024;
+    const EXPECTED_DIO = ((APATOR.inventoryFy2024 + APATOR.inventoryFy2023) / 2) / COGS_PER_DAY;
+    const EXPECTED_DPO = ((APATOR.apFy2024 + APATOR.apFy2023) / 2) / COGS_PER_DAY;
+
+    let apatorCalendarId = '';
+    let apatorFy2023 = '';
+    let apatorFy2024 = '';
+
+    /** Same shortcut as `writeLine` above, but keeps `unit='THOUSANDS'` (as filed) and lets the
+     *  caller declare the sign convention — the two dimensions this regression is about. */
+    async function writeApatorLine(
+      businessVersionId: string,
+      entityId: string,
+      periodId: string,
+      lineCode: string,
+      statementType: 'P&L' | 'BS' | 'CF',
+      value: number,
+      signConvention: 'NATURAL' | 'CONTRA'
+    ) {
+      const line = await withPinnedPostgresTransaction((tx) =>
+        tx.queryOne<{ id: string }>(`SELECT id FROM financial_statement_lines WHERE line_code = ? AND organization_id IS NULL LIMIT 1`, [lineCode])
+      );
+      if (!line) throw new Error(`financial_statement_lines seed row not found for line_code=${lineCode}`);
+      await withPinnedPostgresTransaction((tx) =>
+        tx.queryRun(
+          `INSERT INTO finance_stmt_lines (
+             organization_id, business_version_id, statement_type, canonical_line_id, entity_id, period_id,
+             accumulation_basis, consolidation_scope, value_status, value_decimal, native_currency,
+             presentation_currency, unit, sign_convention, accounting_policy, created_by
+           ) VALUES (?, ?, ?, ?, ?, ?, 'FULL_YEAR', 'CONSOLIDATED', 'PRESENT_NONZERO', ?, 'PLN', 'PLN', 'THOUSANDS', ?, 'IFRS', ?)`,
+          [orgId, businessVersionId, statementType, line.id, entityId, periodId, value, signConvention, preparerId]
+        )
+      );
+    }
+
+    beforeAll(async () => {
+      // A dedicated calendar: `uq_finance_stmt_period_fy` is unique per (calendar, fiscal_year),
+      // and this org's shared fixture calendar already owns FY2024.
+      const cal = await withPinnedPostgresTransaction((tx) =>
+        tx.queryOne<{ fiscal_calendar_id: string }>(
+          `INSERT INTO finance_stmt_calendars (organization_id, calendar_type, fiscal_year_end_month, effective_from, created_by)
+           VALUES (?, 'STANDARD', 12, '2019-01-01', ?) RETURNING fiscal_calendar_id`,
+          [orgId, preparerId]
+        )
+      );
+      if (!cal) throw new Error('Apator fixture calendar insert returned no row');
+      apatorCalendarId = cal.fiscal_calendar_id;
+
+      const p2023 = await withPinnedPostgresTransaction((tx) =>
+        tx.queryOne<{ period_id: string }>(
+          `INSERT INTO finance_stmt_periods (organization_id, fiscal_calendar_id, period_type, fiscal_year, period_start, period_end, label, created_by)
+           VALUES (?, ?, 'FY', 2023, '2023-01-01', '2023-12-31', 'FY2023', ?) RETURNING period_id`,
+          [orgId, apatorCalendarId, preparerId]
+        )
+      );
+      if (!p2023) throw new Error('Apator FY2023 period insert returned no row');
+      apatorFy2023 = p2023.period_id;
+
+      const p2024 = await withPinnedPostgresTransaction((tx) =>
+        tx.queryOne<{ period_id: string }>(
+          `INSERT INTO finance_stmt_periods (organization_id, fiscal_calendar_id, period_type, fiscal_year, period_start, period_end, label, previous_period_id, created_by)
+           VALUES (?, ?, 'FY', 2024, '2024-01-01', '2024-12-31', 'FY2024', ?, ?) RETURNING period_id`,
+          [orgId, apatorCalendarId, apatorFy2023, preparerId]
+        )
+      );
+      if (!p2024) throw new Error('Apator FY2024 period insert returned no row');
+      apatorFy2024 = p2024.period_id;
+    });
+
+    it('DIO and DPO compute from the real Apator FY2024 pack whose COGS is stored as filed (−913 065, CONTRA)', async () => {
+      const pack = await makeStatementPack();
+      const packBvId = pack.businessVersion.business_version_id;
+      const entityId = await makeEntity(packBvId, 'GRUPA-APATOR');
+
+      await writeApatorLine(packBvId, entityId, apatorFy2024, 'COGS', 'P&L', APATOR.cogsFy2024AsFiled, 'CONTRA');
+      await writeApatorLine(packBvId, entityId, apatorFy2024, 'INVENTORY', 'BS', APATOR.inventoryFy2024, 'NATURAL');
+      await writeApatorLine(packBvId, entityId, apatorFy2023, 'INVENTORY', 'BS', APATOR.inventoryFy2023, 'NATURAL');
+      await writeApatorLine(packBvId, entityId, apatorFy2024, 'AP', 'BS', APATOR.apFy2024, 'NATURAL');
+      await writeApatorLine(packBvId, entityId, apatorFy2023, 'AP', 'BS', APATOR.apFy2023, 'NATURAL');
+
+      // The value really is stored negative — the fix must NOT be "rewrite the pack".
+      const storedCogs = await withPinnedPostgresTransaction((tx) =>
+        tx.queryOne<{ value_decimal: string; sign_convention: string }>(
+          `SELECT l.value_decimal, l.sign_convention
+             FROM finance_stmt_lines l
+             JOIN financial_statement_lines c ON c.id = l.canonical_line_id
+            WHERE l.business_version_id = ? AND c.line_code = 'COGS'`,
+          [packBvId]
+        )
+      );
+      expect(Number(storedCogs?.value_decimal)).toBe(APATOR.cogsFy2024AsFiled);
+      expect(storedCogs?.sign_convention).toBe('CONTRA');
+
+      const analysis = await makeAnalysis();
+      const analysisBvId = analysis.businessVersion.business_version_id;
+      await withPinnedPostgresTransaction((tx) =>
+        tx.queryRun(
+          `INSERT INTO finance_analysis_definitions (
+             organization_id, business_version_id, purpose, analysis_type, entity_scope_mode, presentation_currency, unit, created_by
+           ) VALUES (?, ?, 'INTERNAL_REVIEW', 'STANDARD', 'GROUP_CONSOLIDATED', 'PLN', 'THOUSANDS', ?)`,
+          [orgId, analysisBvId, preparerId]
+        )
+      );
+      const edge = await lineageService.insertEdge({
+        organizationId: orgId, sourceVersionId: packBvId, sourceArtifactType: 'STATEMENT_PACK',
+        targetVersionId: analysisBvId, targetArtifactType: 'HISTORICAL_ANALYSIS', edgeType: 'STATEMENT_TO_ANALYSIS',
+        transformationKind: 'MANUAL_LINK', authorId: preparerId,
+      });
+      expect(edge.ok).toBe(true);
+
+      for (const code of ['DIO', 'DPO']) {
+        const catalogId = catalogIdByCode.get(code);
+        if (!catalogId) throw new Error(`catalog row not found for ${code}`);
+        await withPinnedPostgresTransaction((tx) =>
+          tx.queryRun(
+            `INSERT INTO finance_analysis_kpi_values (organization_id, business_version_id, kpi_catalog_id, entity_id, period_id)
+             VALUES (?, ?, ?, ?, ?)`,
+            [orgId, analysisBvId, catalogId, entityId, apatorFy2024]
+          )
+        );
+      }
+
+      const computed = await kpiComputeService.computeAnalysisKpis({
+        organizationId: orgId,
+        businessVersionId: analysisBvId,
+        requestedByUserId: preparerId,
+      });
+      expect(computed.ok).toBe(true);
+      if (!computed.ok) throw new Error('unreachable');
+
+      const byCode = new Map(computed.results.map((r) => [r.kpiCode, r]));
+
+      const dio = byCode.get('DIO');
+      expect(dio, 'no compute result for DIO').toBeTruthy();
+      expect(dio!.status).toBe('PRESENT_NONZERO'); // pre-fix: 'NOT_APPLICABLE' (FORCE_NA on a negative denominator)
+      expect(dio!.value).toBeCloseTo(EXPECTED_DIO, 3);
+      expect(dio!.value).toBeCloseTo(93.749, 2); // the figure REAL_COMPANY_PROOF §4 reports for PASS B
+
+      const dpo = byCode.get('DPO');
+      expect(dpo, 'no compute result for DPO').toBeTruthy();
+      expect(dpo!.status).toBe('PRESENT_NONZERO'); // pre-fix: 'NOT_APPLICABLE'
+      expect(dpo!.value).toBeCloseTo(EXPECTED_DPO, 3);
+      expect(dpo!.value).toBeCloseTo(18.903, 2);
+    });
+
+    it('a NATURAL-signed pack is unaffected: the same Apator figures with a positive COGS give identical DIO/DPO', async () => {
+      const pack = await makeStatementPack();
+      const packBvId = pack.businessVersion.business_version_id;
+      const entityId = await makeEntity(packBvId, 'GRUPA-APATOR-NORMALIZED');
+
+      // What the analyst had to do by hand pre-fix: physically flip the sign. Must land on the
+      // exact same numbers as the as-filed CONTRA pack above — the fix changes reach, not results.
+      await writeApatorLine(packBvId, entityId, apatorFy2024, 'COGS', 'P&L', -APATOR.cogsFy2024AsFiled, 'NATURAL');
+      await writeApatorLine(packBvId, entityId, apatorFy2024, 'INVENTORY', 'BS', APATOR.inventoryFy2024, 'NATURAL');
+      await writeApatorLine(packBvId, entityId, apatorFy2023, 'INVENTORY', 'BS', APATOR.inventoryFy2023, 'NATURAL');
+      await writeApatorLine(packBvId, entityId, apatorFy2024, 'AP', 'BS', APATOR.apFy2024, 'NATURAL');
+      await writeApatorLine(packBvId, entityId, apatorFy2023, 'AP', 'BS', APATOR.apFy2023, 'NATURAL');
+
+      const analysis = await makeAnalysis();
+      const analysisBvId = analysis.businessVersion.business_version_id;
+      await withPinnedPostgresTransaction((tx) =>
+        tx.queryRun(
+          `INSERT INTO finance_analysis_definitions (
+             organization_id, business_version_id, purpose, analysis_type, entity_scope_mode, presentation_currency, unit, created_by
+           ) VALUES (?, ?, 'INTERNAL_REVIEW', 'STANDARD', 'GROUP_CONSOLIDATED', 'PLN', 'THOUSANDS', ?)`,
+          [orgId, analysisBvId, preparerId]
+        )
+      );
+      const edge = await lineageService.insertEdge({
+        organizationId: orgId, sourceVersionId: packBvId, sourceArtifactType: 'STATEMENT_PACK',
+        targetVersionId: analysisBvId, targetArtifactType: 'HISTORICAL_ANALYSIS', edgeType: 'STATEMENT_TO_ANALYSIS',
+        transformationKind: 'MANUAL_LINK', authorId: preparerId,
+      });
+      expect(edge.ok).toBe(true);
+
+      for (const code of ['DIO', 'DPO']) {
+        await withPinnedPostgresTransaction((tx) =>
+          tx.queryRun(
+            `INSERT INTO finance_analysis_kpi_values (organization_id, business_version_id, kpi_catalog_id, entity_id, period_id)
+             VALUES (?, ?, ?, ?, ?)`,
+            [orgId, analysisBvId, catalogIdByCode.get(code)!, entityId, apatorFy2024]
+          )
+        );
+      }
+
+      const computed = await kpiComputeService.computeAnalysisKpis({
+        organizationId: orgId,
+        businessVersionId: analysisBvId,
+        requestedByUserId: preparerId,
+      });
+      expect(computed.ok).toBe(true);
+      if (!computed.ok) throw new Error('unreachable');
+      const byCode = new Map(computed.results.map((r) => [r.kpiCode, r]));
+      expect(byCode.get('DIO')!.value).toBeCloseTo(EXPECTED_DIO, 6);
+      expect(byCode.get('DPO')!.value).toBeCloseTo(EXPECTED_DPO, 6);
+    });
+  });
+
   afterAll(async () => {
     // Best-effort only, same convention as the sibling .pg.test.ts suites in this directory:
     // append-only/deny-delete triggers on this schema's FK chain make the fixture rows this suite
