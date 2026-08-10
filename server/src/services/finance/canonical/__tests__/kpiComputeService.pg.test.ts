@@ -161,11 +161,30 @@ describe.skipIf(!REAL_PG)('WP-D04 kpiComputeService — real PostgreSQL known-an
     if (!per2025) throw new Error('finance_stmt_periods FY2025 insert returned no row');
     fy2025PeriodId = per2025.period_id;
 
+    // W10 test-isolation fix — scoped to the WP-D03b P0 SEED SET ONLY
+    // (`tier = 'UNIVERSAL' AND organization_id IS NULL`).
+    //
+    // The previous read was unscoped (`WHERE status = 'ACTIVE'` and nothing else), so it
+    // returned whatever the shared test database held at that instant. A sibling suite that
+    // legitimately owns an ACTIVE `ORG_CUSTOM` catalog row for the length of its own run
+    // (`savedViewService.pg.test.ts` — it creates one under a unique random `kpi_code` and
+    // deletes it in `afterAll`) overlaps this `beforeAll` whenever vitest runs the files in
+    // parallel. Result: `expected 19 to be 18`, red in the full suite, green when this file
+    // ran alone. No `afterAll` anywhere can close that window — the row is supposed to exist
+    // while its owning suite runs — so the reader has to say what it actually means.
+    //
+    // This is NOT a loosened assertion: the expected count stays an exact 18, and the check
+    // becomes strictly stronger. Unscoped, "17 seed rows + 1 foreign ORG_CUSTOM row" also
+    // counted as 18 and would have hidden a genuinely missing P0 seed row; scoped, it cannot.
     const catalogRows = await withPinnedPostgresTransaction((tx) =>
-      tx.queryAll<{ id: string; kpi_code: string }>(`SELECT id, kpi_code FROM finance_analysis_kpi_catalog WHERE status = 'ACTIVE'`)
+      tx.queryAll<{ id: string; kpi_code: string }>(
+        `SELECT id, kpi_code FROM finance_analysis_kpi_catalog
+          WHERE status = 'ACTIVE' AND tier = 'UNIVERSAL' AND organization_id IS NULL`
+      )
     );
     catalogIdByCode = new Map(catalogRows.map((r) => [r.kpi_code, r.id]));
-    expect(catalogIdByCode.size).toBe(18); // sanity: WP-D03b's 18 P0 seed rows are present
+    expect(catalogRows).toHaveLength(18); // sanity: WP-D03b's 18 P0 seed rows are present…
+    expect(catalogIdByCode.size).toBe(18); // …and their kpi_codes are all distinct
   });
 
   describe('6 KPI across 6 different categories, GoldCo PARENT standalone FY2025', () => {
