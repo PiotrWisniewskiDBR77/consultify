@@ -256,7 +256,7 @@ async function loadNonCancelledObjectivesForRollup(
  * independent read, so the Set layer can never disagree with the Objective
  * layer about which policy version governed this write.
  */
-async function applySetRollupUpdate(
+export async function applySetRollupUpdate(
   client: PoolClient,
   setRow: OkrSetRow,
   organizationId: string,

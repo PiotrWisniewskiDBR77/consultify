@@ -163,7 +163,7 @@ export async function completeObligation(
             row_version = row_version + 1, updated_at = now()
       WHERE organization_id = $1 AND reference_type = $2 AND reference_id = $3
         AND obligation_type = $4 AND status = 'open'
-        AND ($6::uuid IS NULL OR cadence_occurrence_id = $6::uuid)
+        AND ($6::text IS NULL OR cadence_occurrence_id = $6::text)
       RETURNING *`,
     [organizationId, referenceType, referenceId, obligationType, completedViaCommand, cadenceOccurrenceId ?? null]
   );
