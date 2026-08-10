@@ -58,26 +58,53 @@ export interface MethodRow {
   weight_pct: string | null;
 }
 
+export type FindOrCreateMethodResult =
+  | { ok: true; method: MethodRow }
+  | { ok: false; code: 'BUSINESS_VERSION_NOT_FOUND'; message: string };
+
+/**
+ * W9-C-3 fix. Previously selected by `business_version_id + method_type` alone
+ * (no `organization_id` predicate) — org A calling with org B's
+ * `businessVersionId` got B's method row back, `organization_id` included,
+ * which was then the vector into W9-C-4 (`writeSensitivityGrid` trusting a
+ * cross-tenant `methodId`). Now verifies the business version itself belongs
+ * to `organizationId` FIRST and refuses typed — `BUSINESS_VERSION_NOT_FOUND`,
+ * never a raw Postgres FK violation from the INSERT branch below (the
+ * business_versions/organization_id pair not existing would otherwise surface
+ * as an unhandled 23503 from `fk_finance_valuation_methods_bv_org`).
+ */
 export async function findOrCreateMethod(params: {
   organizationId: string;
   businessVersionId: string;
   methodType: MethodType;
   createdBy: string;
   applicabilityPolicyRef?: string | null;
-}): Promise<MethodRow> {
+}): Promise<FindOrCreateMethodResult> {
   return withPinnedPostgresTransaction(async (tx) => {
-    const existing = await tx.queryOne<MethodRow>(
-      `SELECT * FROM finance_valuation_methods WHERE business_version_id = ? AND method_type = ?`,
-      [params.businessVersionId, params.methodType]
+    const bv = await tx.queryOne<{ business_version_id: string }>(
+      `SELECT business_version_id FROM finance_business_versions WHERE business_version_id = ? AND organization_id = ?`,
+      [params.businessVersionId, params.organizationId]
     );
-    if (existing) return existing;
+    if (!bv) {
+      return {
+        ok: false,
+        code: 'BUSINESS_VERSION_NOT_FOUND',
+        message: `business_version ${params.businessVersionId} not found for organization ${params.organizationId}`,
+      };
+    }
+
+    const existing = await tx.queryOne<MethodRow>(
+      `SELECT * FROM finance_valuation_methods WHERE business_version_id = ? AND organization_id = ? AND method_type = ?`,
+      [params.businessVersionId, params.organizationId, params.methodType]
+    );
+    if (existing) return { ok: true, method: existing };
     const inserted = await tx.queryOne<MethodRow>(
       `INSERT INTO finance_valuation_methods (id, organization_id, business_version_id, method_type, applicability_policy_ref, created_by)
        VALUES (?, ?, ?, ?, ?, ?) RETURNING *`,
       [uuidv4(), params.organizationId, params.businessVersionId, params.methodType, params.applicabilityPolicyRef ?? null, params.createdBy]
     );
     if (!inserted) throw new Error('finance_valuation_methods insert returned no row');
-    return inserted;
+    return { ok: true, method: inserted };
   });
 }
 
@@ -219,7 +246,8 @@ export type RunDcfFcffValuationResult =
         | 'NO_WACC_INPUTS'
         | 'WACC_COMPUTE_FAILED'
         | 'FCFF_NOT_FULLY_PRESENT'
-        | 'TERMINAL_G_MUST_BE_LESS_THAN_WACC';
+        | 'TERMINAL_G_MUST_BE_LESS_THAN_WACC'
+        | 'BUSINESS_VERSION_NOT_FOUND';
       message: string;
     };
 
@@ -263,12 +291,16 @@ export async function runDcfFcffValuation(params: RunDcfFcffValuationParams): Pr
   }
   await persistComputedWacc(params.organizationId, params.valuationBusinessVersionId, waccResult.breakdown);
 
-  const method = await findOrCreateMethod({
+  const methodResult = await findOrCreateMethod({
     organizationId: params.organizationId,
     businessVersionId: params.valuationBusinessVersionId,
     methodType: 'DCF_FCFF',
     createdBy: params.requestedByUserId,
   });
+  if (!methodResult.ok) {
+    return { ok: false, code: 'BUSINESS_VERSION_NOT_FOUND', message: methodResult.message };
+  }
+  const method = methodResult.method;
 
   const notPresent = fcff.years.filter((y) => y.status !== 'PRESENT');
   if (notPresent.length > 0) {

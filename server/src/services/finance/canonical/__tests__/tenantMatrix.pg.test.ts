@@ -18,10 +18,20 @@
  *
  * Level (ii) is the one that matters: a tenant boundary that only holds
  * because every caller remembered to add a predicate is not a boundary. Where
- * a leak was found it is asserted here AS a leak — a red test would have been
- * deleted by the next person; a green test that pins the defective behaviour
- * with a `DEFECT W9-C-n` label cannot be lost, and turns red the moment the
- * defect is fixed (which is exactly when someone should come back to it).
+ * a leak was found it was asserted here AS a leak — a red test would have
+ * been deleted by the next person; a green test that pins the defective
+ * behaviour with a `DEFECT W9-C-n` label cannot be lost, and turns red the
+ * moment the defect is fixed (which is exactly when someone should come back
+ * to it).
+ *
+ * STATUS (P0_TENANT_ISOLATION_FIX, this same work package, 2026-08-10): every
+ * `DEFECT W9-C-n` assertion below that pinned a real leak (W9-C-1 through
+ * W9-C-5, plus the structural W9-C-7 table list) has been INVERTED to assert
+ * the fix instead — tests now labelled `FIXED W9-C-n`, still describing what
+ * they used to prove in a comment, per the same "cannot be lost" discipline:
+ * a red test here means the boundary regressed, not that a defect
+ * reappeared. `W9-C-6` (untyped throw on a tenant-boundary refusal, P2) is
+ * left as-is — out of scope for this P0/P1/structural pass.
  *
  * There are no RLS policies and no `SET LOCAL app.current_org` in this schema
  * (0 policies exist), so nothing below can be delegated to the database's own
@@ -203,12 +213,14 @@ describe.skipIf(!REAL_PG)('W9-C — tenant isolation matrix (real PostgreSQL)', 
     // --- VALUATION family ---------------------------------------------------
     const valuation = await av.createArtifact({ organizationId: orgId, artifactType: 'VALUATION_CASE', createdBy: userId });
     const valuationBvId = valuation.businessVersion.business_version_id;
-    const method = await valc.findOrCreateMethod({
+    const methodResult = await valc.findOrCreateMethod({
       organizationId: orgId,
       businessVersionId: valuationBvId,
       methodType: 'DCF_FCFF',
       createdBy: userId,
     });
+    if (!methodResult.ok) throw new Error(`seed: findOrCreateMethod failed ${methodResult.code}`);
+    const method = methodResult.method;
     await t((tx) =>
       tx.queryRun(
         `INSERT INTO finance_valuation_wacc_inputs (id, organization_id, business_version_id, currency, nominal_or_real,
@@ -437,14 +449,16 @@ describe.skipIf(!REAL_PG)('W9-C — tenant isolation matrix (real PostgreSQL)', 
       expect(Number(bValue!.value_decimal)).toBe(B.marker);
     });
 
-    it('DEFECT W9-C-1: baselineComputeService.loadContext() reads ANOTHER ORG\'s statement cells and model', async () => {
-      // `loadContext()` filters `finance_stmt_periods` by organizationId but
-      // reads `finance_baseline_models`, `finance_business_versions`,
-      // `finance_stmt_lines`, `finance_baseline_schedules` and
-      // `finance_baseline_assumptions` by business_version_id ALONE
-      // (baselineComputeService.ts:201/208/231/241/251/258 — no organization_id
-      // predicate). Called with org A's context and org B's baseline version it
-      // returns org B's data.
+    it('FIXED W9-C-1: baselineComputeService.loadContext() refuses ANOTHER ORG\'s statement cells and model (was: DEFECT — returned B\'s data)', async () => {
+      // BEFORE the fix this asserted `loaded.ok === true` and that org A,
+      // calling with org B's baseline businessVersionId, received B's
+      // model/assumptions/schedules (identified by B's marker) — a full
+      // cross-tenant model-data read. `loadContext()` now predicates every
+      // one of those reads (finance_baseline_models, finance_business_versions,
+      // finance_stmt_lines, finance_baseline_schedules,
+      // finance_baseline_assumptions) on organization_id, so the FIRST one
+      // (finance_baseline_models) refuses and the typed NOT_FOUND-shaped
+      // result propagates — never another org's data, never a raw error.
       const loaded = await baseline.loadContext({
         organizationId: A.orgId,
         businessVersionId: B.baselineBvId,
@@ -455,14 +469,18 @@ describe.skipIf(!REAL_PG)('W9-C — tenant isolation matrix (real PostgreSQL)', 
         openingBalanceSheetPeriodId: B.periodId,
       });
 
-      expect(loaded.ok).toBe(true); // <-- THE DEFECT: should have refused
-      if (!loaded.ok) throw new Error('unreachable');
+      expect(loaded.ok).toBe(false);
+      if (loaded.ok) throw new Error('unreachable');
+      expect(loaded.code).toBe('NO_BASELINE_MODEL_ROW');
 
-      // It is genuinely B's data, identified by B's marker, not an empty shell.
-      expect(loaded.ctx.model.organization_id).toBe(B.orgId);
-      expect(loaded.ctx.assumptions.size).toBeGreaterThan(0);
-      expect(loaded.ctx.assumptions.get('revenue_pvm::REVENUE_GROWTH_YOY')).toBeCloseTo(B.marker / 100000, 10);
-      expect(loaded.ctx.schedulesByType.get('debt_maturity')![0].payload).toMatchObject({ principal_opening: B.marker });
+      // Independent physical read: B's own baseline model row is untouched —
+      // this was a read-only attempt, and it never even reached B's data.
+      const bModel = await t((tx) =>
+        tx.queryOne<{ organization_id: string }>(`SELECT organization_id FROM finance_baseline_models WHERE business_version_id = ?`, [
+          B.baselineBvId,
+        ])
+      );
+      expect(bModel!.organization_id).toBe(B.orgId);
     });
 
     it('the same call from B\'s OWN context returns the same data — proving the leak is not an artefact of a broken fixture', async () => {
@@ -579,20 +597,24 @@ describe.skipIf(!REAL_PG)('W9-C — tenant isolation matrix (real PostgreSQL)', 
       expect(rows).toHaveLength(0);
     });
 
-    it('DEFECT W9-C-2: runPreflight(orgA, bvB) reads B\'s scenario and is stopped only by a RAW DB foreign key', async () => {
-      // `predictionPreflightService.ts:141` selects the scenario by
-      // business_version_id alone. The service therefore proceeds into B's
-      // data; the only thing that stops the write is
-      // `fk_finance_prediction_preflight_runs_bv_org` raising 23503 out of the
-      // transaction. Defense-in-depth works, but the SERVICE layer does not
-      // enforce the boundary and the caller gets a raw Postgres error.
-      await expect(
-        preflight.runPreflight({
-          organizationId: A.orgId,
-          businessVersionId: B.predictionBvId,
-          runBy: A.userId,
-        })
-      ).rejects.toThrow(/foreign key constraint|fk_finance_prediction_preflight_runs_bv_org/i);
+    it('FIXED W9-C-2: runPreflight(orgA, bvB) refuses TYPED, never reaches B\'s scenario data (was: DEFECT — raw FK error after reading B)', async () => {
+      // BEFORE the fix this asserted the call THREW a raw Postgres foreign-key
+      // error (`fk_finance_prediction_preflight_runs_bv_org`) — proof the
+      // service had already read B's scenario/assumption data and only the
+      // DB's own defense-in-depth stopped the eventual write. `runPreflight()`
+      // now predicates its very first read (finance_prediction_scenarios) on
+      // organization_id, so it refuses immediately with the same typed
+      // NO_SCENARIO_ROW shape it already used for a genuinely unknown
+      // scenario — a resolved Promise, not a rejection, and never a raw DB
+      // error surfacing to the caller.
+      const result = await preflight.runPreflight({
+        organizationId: A.orgId,
+        businessVersionId: B.predictionBvId,
+        runBy: A.userId,
+      });
+      expect(result.ok).toBe(false);
+      if (result.ok) throw new Error('unreachable');
+      expect(result.code).toBe('NO_SCENARIO_ROW');
 
       // Nothing was persisted under either org.
       const runs = await t((tx) =>
@@ -601,6 +623,14 @@ describe.skipIf(!REAL_PG)('W9-C — tenant isolation matrix (real PostgreSQL)', 
         ])
       );
       expect(runs).toHaveLength(0);
+
+      // Independent physical read: B's scenario row is untouched.
+      const bScenario = await t((tx) =>
+        tx.queryOne<{ organization_id: string }>(`SELECT organization_id FROM finance_prediction_scenarios WHERE business_version_id = ?`, [
+          B.predictionBvId,
+        ])
+      );
+      expect(bScenario!.organization_id).toBe(B.orgId);
     });
   });
 
@@ -620,28 +650,46 @@ describe.skipIf(!REAL_PG)('W9-C — tenant isolation matrix (real PostgreSQL)', 
       expect(await advisor.listAdvisorOutputs(A.orgId, B.valuationBvId)).toEqual([]);
     });
 
-    it('DEFECT W9-C-3: findOrCreateMethod(orgA, bvB) returns ANOTHER ORG\'s method row', async () => {
-      // valuationComputeService.ts:70 — `SELECT * FROM finance_valuation_methods
-      // WHERE business_version_id = ? AND method_type = ?`, no organization_id.
-      const method = await valc.findOrCreateMethod({
+    it('FIXED W9-C-3: findOrCreateMethod(orgA, bvB) refuses TYPED (was: DEFECT — returned B\'s method row)', async () => {
+      // BEFORE the fix this asserted `method.id === B.methodId` — org A got
+      // org B's method row back (organization_id included), which was then
+      // the vector into W9-C-4. `findOrCreateMethod()` now verifies the
+      // business_version_id belongs to organizationId FIRST and refuses with
+      // a typed BUSINESS_VERSION_NOT_FOUND — never another org's row, never
+      // a raw FK error from the fallback INSERT path.
+      const result = await valc.findOrCreateMethod({
         organizationId: A.orgId,
         businessVersionId: B.valuationBvId,
         methodType: 'DCF_FCFF',
         createdBy: A.userId,
       });
-      expect(method.id).toBe(B.methodId); // <-- THE DEFECT
-      expect((method as { organization_id?: string }).organization_id).toBe(B.orgId);
+      expect(result.ok).toBe(false);
+      if (result.ok) throw new Error('unreachable');
+      expect(result.code).toBe('BUSINESS_VERSION_NOT_FOUND');
+
+      // Independent physical read: no new finance_valuation_methods row was
+      // created for A against B's business version, and B's own method row
+      // (seeded once, DCF_FCFF) is still exactly one row, still B's.
+      const methodsForBv = await t((tx) =>
+        tx.queryAll<{ id: string; organization_id: string }>(
+          `SELECT id, organization_id FROM finance_valuation_methods WHERE business_version_id = ? AND method_type = 'DCF_FCFF'`,
+          [B.valuationBvId]
+        )
+      );
+      expect(methodsForBv).toHaveLength(1);
+      expect(methodsForBv[0].id).toBe(B.methodId);
+      expect(methodsForBv[0].organization_id).toBe(B.orgId);
     });
 
-    it('DEFECT W9-C-4: writeSensitivityGrid() lets org A DESTROY and REPLACE org B\'s grid cells', async () => {
-      // The single worst finding in this matrix: a cross-tenant DESTRUCTIVE
-      // write. `writeSensitivityGrid` upserts on `(method_id, grid_label)` and
-      // then `DELETE FROM finance_valuation_sensitivity_cells WHERE grid_id = ?`
-      // — neither statement carries an organization_id predicate
-      // (valuationSensitivityService.ts:167/180), and neither
-      // `finance_valuation_sensitivity_grids` nor `..._cells` has a composite
-      // (parent, organization_id) FK, so nothing at the DB layer catches it
-      // either.
+    it('FIXED W9-C-4: writeSensitivityGrid() refuses to touch org B\'s grid (was: DEFECT — destroyed and replaced B\'s 25 cells)', async () => {
+      // BEFORE the fix this proved org A could upsert against B's methodId
+      // and DELETE+replace B's 25 cells with its own — the single worst
+      // finding in the matrix, a cross-tenant DESTRUCTIVE write with no audit
+      // trail (the sensitivity tables are not append-only). Now
+      // `writeSensitivityGrid()` verifies methodId belongs to organizationId
+      // BEFORE touching the grid/cells tables (typed SensitivityGridAccessError),
+      // backstopped by the W9-C-7 structural migration's composite FK on both
+      // finance_valuation_sensitivity_grids and `..._cells`.
       const cells = Array.from({ length: 25 }, (_, i) => ({
         rowIndex: Math.floor(i / 5) + 1,
         colIndex: (i % 5) + 1,
@@ -672,17 +720,21 @@ describe.skipIf(!REAL_PG)('W9-C — tenant isolation matrix (real PostgreSQL)', 
       );
       expect(ownedByBBefore).toHaveLength(25); // physical pre-state
 
-      // A now writes the SAME grid label against B's method.
-      await sens.writeSensitivityGrid({
-        organizationId: A.orgId,
-        methodId: B.methodId,
-        gridLabel: 'W9C_WACC_X_G',
-        rowAxisVariable: 'WACC',
-        columnAxisVariable: 'TERMINAL_G',
-        cells: cells.map((c) => ({ ...c, cellValueDecimal: c.cellValueDecimal + 1_000_000 })),
-        createdBy: A.userId,
-      });
+      // A attempts to write the SAME grid label against B's method — must be refused.
+      await expect(
+        sens.writeSensitivityGrid({
+          organizationId: A.orgId,
+          methodId: B.methodId,
+          gridLabel: 'W9C_WACC_X_G',
+          rowAxisVariable: 'WACC',
+          columnAxisVariable: 'TERMINAL_G',
+          cells: cells.map((c) => ({ ...c, cellValueDecimal: c.cellValueDecimal + 1_000_000 })),
+          createdBy: A.userId,
+        })
+      ).rejects.toThrow(/method .* not found for organization/i);
 
+      // Independent physical read: B's 25 cells are UNTOUCHED, and no cell of
+      // A's ever landed on B's grid.
       const ownership = await t((tx) =>
         tx.queryAll<{ organization_id: string; n: string }>(
           `SELECT c.organization_id, count(*)::text AS n FROM finance_valuation_sensitivity_cells c
@@ -692,23 +744,45 @@ describe.skipIf(!REAL_PG)('W9-C — tenant isolation matrix (real PostgreSQL)', 
           [B.methodId]
         )
       );
-      // THE DEFECT: B's 25 cells are gone; 25 cells owned by A sit on B's grid.
       expect(ownership).toHaveLength(1);
-      expect(ownership[0].organization_id).toBe(A.orgId);
+      expect(ownership[0].organization_id).toBe(B.orgId);
       expect(Number(ownership[0].n)).toBe(25);
 
-      const bCellsLeft = await t((tx) =>
-        tx.queryAll<{ id: string }>(
-          `SELECT c.id FROM finance_valuation_sensitivity_cells c
+      const bCellsAfter = await t((tx) =>
+        tx.queryAll<{ id: string; cell_value_decimal: string }>(
+          `SELECT c.id, c.cell_value_decimal FROM finance_valuation_sensitivity_cells c
              JOIN finance_valuation_sensitivity_grids g ON g.id = c.grid_id
             WHERE g.method_id = ? AND g.grid_label = 'W9C_WACC_X_G' AND c.organization_id = ?`,
           [B.methodId, B.orgId]
         )
       );
-      expect(bCellsLeft).toHaveLength(0); // org B's data was DELETED by org A
+      expect(bCellsAfter).toHaveLength(25); // still B's original 25 rows
+      const ids = new Set(ownedByBBefore.map((r) => r.id));
+      expect(bCellsAfter.every((r) => ids.has(r.id))).toBe(true); // same rows, not recreated
     });
 
-    it('STRUCTURAL W9-C-7: the valuation child tables that leak are exactly those with no composite tenant FK', async () => {
+    it('STRUCTURAL W9-C-7 FIXED: every valuation child table with a real parent now has a composite tenant FK (was: DEFECT — 6 unguarded)', async () => {
+      // BEFORE the fix this pinned exactly 6 unguarded tables (cases, comps,
+      // ev_equity_bridge_components, sensitivity_cells, sensitivity_grids,
+      // terminal) as PROOF of the structural gap behind W9-C-4. The
+      // W9-C-7 migration (20260825_finance_v3_w9c7_valuation_child_tenant_fk.sql)
+      // now adds a composite (parent, organization_id) FK to five of those six
+      // real CHILD tables (comps, ev_equity_bridge_components,
+      // sensitivity_cells, sensitivity_grids, terminal).
+      //
+      // `finance_valuation_cases` DELIBERATELY remains in the "no composite
+      // FK" list — not because it was missed, but because it structurally
+      // CANNOT have one: it is a ROOT table (case_id PK, organization_id
+      // REFERENCES organizations(id) directly, no business_version_id /
+      // method_id / grid_id of its own — see
+      // `20260809_finance_v3_d09_valuation_01_tables.sql` section 1). Same
+      // class as finance_stmt_calendars/finance_stmt_periods, which the
+      // source W9 report itself calls "skalowane tylko org FK — poprawnie".
+      // Confirmed by grep over server/src: zero production services read or
+      // write finance_valuation_cases, so there is no live leak vector here
+      // either — this SQL heuristic (composite FK exists?) simply cannot
+      // distinguish "root table, correctly scoped" from "child table,
+      // leaking", and finance_valuation_cases is the former.
       const unguarded = await t((tx) =>
         tx.queryAll<{ tbl: string }>(
           `WITH t AS (
@@ -728,17 +802,11 @@ describe.skipIf(!REAL_PG)('W9-C — tenant isolation matrix (real PostgreSQL)', 
         )
       );
       const names = unguarded.map((r) => r.tbl);
-      // Pinned so that ADDING a composite FK (the fix) turns this red and
-      // forces the matrix to be re-read, and so that adding a NEW unguarded
-      // child table is caught immediately.
-      expect(names).toEqual([
-        'finance_valuation_cases',
-        'finance_valuation_comps',
-        'finance_valuation_ev_equity_bridge_components',
-        'finance_valuation_sensitivity_cells',
-        'finance_valuation_sensitivity_grids',
-        'finance_valuation_terminal',
-      ]);
+      // Pinned so that (a) accidentally dropping the migration's FK turns
+      // this red immediately, and (b) a NEW unguarded child table is caught
+      // immediately too — only the documented, justified root-table
+      // exception remains.
+      expect(names).toEqual(['finance_valuation_cases']);
     });
   });
 
@@ -796,31 +864,50 @@ describe.skipIf(!REAL_PG)('W9-C — tenant isolation matrix (real PostgreSQL)', 
       expect(rows).toHaveLength(0);
     });
 
-    it('DEFECT W9-C-5 (P0): computeJobService.getJob() has NO organizationId parameter — any job is readable', async () => {
-      const job = await jobsSvc.getJob(B.jobId);
-      expect(job).not.toBeNull(); // <-- THE DEFECT
-      expect(job!.organization_id).toBe(B.orgId);
-      expect(job!.input_revision_hash).toBe('hash-B'); // B's own payload, disclosed
+    it('FIXED W9-C-5 (P0): computeJobService.getJob() now REQUIRES organizationId and refuses cross-tenant (was: DEFECT — any job readable)', async () => {
+      // BEFORE the fix `getJob(jobId)` took no organizationId at all and
+      // `getJob(B.jobId)` returned B's full job row, payload included. The
+      // signature is now `getJob(organizationId, jobId)`; calling it with A's
+      // org and B's jobId returns null — same NOT_FOUND convention as an
+      // unknown id, never another tenant's row.
+      const crossTenant = await jobsSvc.getJob(A.orgId, B.jobId);
+      expect(crossTenant).toBeNull();
+
+      // Sanity: B reading its OWN job still works — this is a refusal of the
+      // cross-tenant call, not a general breakage of getJob().
+      const ownRead = await jobsSvc.getJob(B.orgId, B.jobId);
+      expect(ownRead).not.toBeNull();
+      expect(ownRead!.input_revision_hash).toBe('hash-B');
     });
 
-    it('DEFECT W9-C-5 (P0): cancelJob() / failJob() have NO organizationId parameter — cross-tenant MUTATION', async () => {
+    it('FIXED W9-C-5 (P0): cancelJob() / failJob() now REQUIRE organizationId and refuse cross-tenant MUTATION (was: DEFECT)', async () => {
       const before = await t((tx) =>
         tx.queryOne<{ status: string }>(`SELECT status FROM compute_jobs WHERE id = ?`, [B.jobId])
       );
       expect(before!.status).toBe('queued'); // physical pre-state
 
-      const cancelled = await jobsSvc.cancelJob(B.jobId, 'cancelled by an actor from another tenant');
-      expect(cancelled).not.toBeNull(); // <-- THE DEFECT
-      expect(cancelled!.organization_id).toBe(B.orgId);
+      // BEFORE the fix `cancelJob(B.jobId, reason)` succeeded from org A's
+      // context — cross-tenant CANCELLATION, a mutation, not just a read.
+      // Signature is now `cancelJob(organizationId, jobId, reason)`.
+      const cancelled = await jobsSvc.cancelJob(A.orgId, B.jobId, 'cancelled by an actor from another tenant');
+      expect(cancelled).toBeNull();
 
+      // Independent physical read: B's job is completely untouched — still
+      // `queued`, no cancel_reason, no cancel_requested_at.
       const after = await t((tx) =>
-        tx.queryOne<{ status: string; cancel_reason: string }>(
-          `SELECT status, cancel_reason FROM compute_jobs WHERE id = ?`,
+        tx.queryOne<{ status: string; cancel_reason: string | null; cancel_requested_at: string | null }>(
+          `SELECT status, cancel_reason, cancel_requested_at FROM compute_jobs WHERE id = ?`,
           [B.jobId]
         )
       );
-      expect(after!.status).toBe('cancelled');
-      expect(after!.cancel_reason).toBe('cancelled by an actor from another tenant');
+      expect(after!.status).toBe('queued');
+      expect(after!.cancel_reason).toBeNull();
+      expect(after!.cancel_requested_at).toBeNull();
+
+      // Sanity: B cancelling its OWN job still works.
+      const ownCancel = await jobsSvc.cancelJob(B.orgId, B.jobId, 'cancelled by its own org');
+      expect(ownCancel).not.toBeNull();
+      expect(ownCancel!.status).toBe('cancelled');
     });
 
     it('the output table IS guarded: A cannot commit an output against B\'s artifact', async () => {

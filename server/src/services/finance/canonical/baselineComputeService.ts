@@ -197,16 +197,24 @@ export async function loadContext(params: RunBaselineComputeParams): Promise<
     };
   }
 
+  // W9-C-1 fix: every read below is now scoped to params.organizationId. A
+  // cross-tenant businessVersionId must refuse HERE, at the first row fetched
+  // (finance_baseline_models), exactly the same NOT_FOUND-shaped typed refusal
+  // this function already returns for a genuinely nonexistent id — never a
+  // raw Postgres error, and never another org's data.
   const model = await withPinnedPostgresTransaction((tx) =>
-    tx.queryOne<BaselineModelRow>(`SELECT * FROM finance_baseline_models WHERE business_version_id = ?`, [params.businessVersionId])
+    tx.queryOne<BaselineModelRow>(`SELECT * FROM finance_baseline_models WHERE business_version_id = ? AND organization_id = ?`, [
+      params.businessVersionId,
+      params.organizationId,
+    ])
   );
   if (!model) {
     return { ok: false, code: 'NO_BASELINE_MODEL_ROW', message: `No finance_baseline_models row for ${params.businessVersionId}` };
   }
   const bv = await withPinnedPostgresTransaction((tx) =>
     tx.queryOne<{ artifact_id: string; source_working_revision_id: string | null }>(
-      `SELECT artifact_id, source_working_revision_id FROM finance_business_versions WHERE business_version_id = ?`,
-      [params.businessVersionId]
+      `SELECT artifact_id, source_working_revision_id FROM finance_business_versions WHERE business_version_id = ? AND organization_id = ?`,
+      [params.businessVersionId, params.organizationId]
     )
   );
   if (!bv) {
@@ -231,9 +239,9 @@ export async function loadContext(params: RunBaselineComputeParams): Promise<
         `SELECT sl.period_id, sl.value_decimal, sl.value_status
            FROM finance_stmt_lines sl
            JOIN financial_statement_lines fsl ON fsl.id = sl.canonical_line_id
-          WHERE sl.business_version_id = ? AND sl.entity_id = ? AND fsl.line_code = 'REVENUE'
+          WHERE sl.business_version_id = ? AND sl.organization_id = ? AND sl.entity_id = ? AND fsl.line_code = 'REVENUE'
             AND sl.consolidation_scope = 'CONSOLIDATED'`,
-        [sourceStatementPackVersionId, params.entityId]
+        [sourceStatementPackVersionId, params.organizationId, params.entityId]
       )
     ),
     withPinnedPostgresTransaction((tx) =>
@@ -241,23 +249,23 @@ export async function loadContext(params: RunBaselineComputeParams): Promise<
         `SELECT fsl.line_code AS canonical_line_id, sl.value_decimal, sl.value_status
            FROM finance_stmt_lines sl
            JOIN financial_statement_lines fsl ON fsl.id = sl.canonical_line_id
-          WHERE sl.business_version_id = ? AND sl.entity_id = ? AND sl.period_id = ?
+          WHERE sl.business_version_id = ? AND sl.organization_id = ? AND sl.entity_id = ? AND sl.period_id = ?
             AND sl.consolidation_scope = 'CONSOLIDATED'`,
-        [sourceStatementPackVersionId, params.entityId, params.openingBalanceSheetPeriodId]
+        [sourceStatementPackVersionId, params.organizationId, params.entityId, params.openingBalanceSheetPeriodId]
       )
     ),
     withPinnedPostgresTransaction((tx) =>
       tx.queryAll<BaselineScheduleRow>(
         `SELECT schedule_type, entity_id, schedule_item_code, payload FROM finance_baseline_schedules
-          WHERE business_version_id = ? AND entity_id = ?`,
-        [params.businessVersionId, params.entityId]
+          WHERE business_version_id = ? AND organization_id = ? AND entity_id = ?`,
+        [params.businessVersionId, params.organizationId, params.entityId]
       )
     ),
     withPinnedPostgresTransaction((tx) =>
       tx.queryAll<BaselineAssumptionRow>(
         `SELECT schedule_type, driver_code, entity_id, value_decimal, value_status FROM finance_baseline_assumptions
-          WHERE business_version_id = ? AND entity_id = ?`,
-        [params.businessVersionId, params.entityId]
+          WHERE business_version_id = ? AND organization_id = ? AND entity_id = ?`,
+        [params.businessVersionId, params.organizationId, params.entityId]
       )
     ),
   ]);
