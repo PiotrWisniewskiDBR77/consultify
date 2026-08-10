@@ -1,0 +1,1961 @@
+{
+  "provenance": {
+    "sourceFile": "docs/validation/finance-v3/generated/STATEMENT_IMPORT_SAMPLE_AUDIT_2026-03-15.json",
+    "note": "Distilled Apator subset. Values are VERBATIM from the committed extraction audit; nothing recomputed here."
+  },
+  "documents": [
+    {
+      "label": "Apator SA Raport R 2024",
+      "filePath": "knowledge/Finanse/Apator SA Raport R 2024.pdf",
+      "currency": "PLN",
+      "scaling": "thousands",
+      "documentClass": "mixed_report",
+      "extractionStrategy": "pdf_layout_mixed",
+      "statements": [
+        {
+          "statementType": "BS",
+          "period": "2024",
+          "comparisonPeriod": "2023",
+          "readinessStatus": "ready",
+          "readinessScore": 100,
+          "warnings": [],
+          "lines": [
+            {
+              "canonicalId": "fsl-bs-fixed",
+              "label": "Aktywa trwałe 2024",
+              "value": 350252
+            },
+            {
+              "canonicalId": "fsl-bs-intangibles",
+              "label": "Wartości niematerialne 2024",
+              "value": 16204
+            },
+            {
+              "canonicalId": "fsl-bs-intangibles-goodwill",
+              "label": "Wartość firmy 2024",
+              "value": 34506
+            },
+            {
+              "canonicalId": "fsl-bs-ppe",
+              "label": "Rzeczowe aktywa trwałe 2024",
+              "value": 99388
+            },
+            {
+              "canonicalId": "fsl-bs-rou-assets",
+              "label": "Aktywa z tytułu prawa do użytkowania 2024",
+              "value": 15125
+            },
+            {
+              "canonicalId": "fsl-bs-lt-financial-assets",
+              "label": "Pozostałe długoterminowe aktywa finansowe 2024",
+              "value": 171007
+            },
+            {
+              "canonicalId": "fsl-bs-other-non-current-assets-deferred-tax",
+              "label": "Aktywa z tytułu odroczonego podatku dochodowego 2024",
+              "value": 13921
+            },
+            {
+              "canonicalId": "fsl-bs-current-assets",
+              "label": "Aktywa obrotowe 2024",
+              "value": 195755
+            },
+            {
+              "canonicalId": "fsl-bs-inventory",
+              "label": "Zapasy 2024",
+              "value": 84562
+            },
+            {
+              "canonicalId": "fsl-bs-ar",
+              "label": "Należności handlowe 2024",
+              "value": 77126
+            },
+            {
+              "canonicalId": "fsl-bs-cash",
+              "label": "Środki pieniężne 2024",
+              "value": 2040
+            },
+            {
+              "canonicalId": "fsl-bs-other-current-assets",
+              "label": "Pozostałe aktywa krótkoterminowe 2024",
+              "value": 7308
+            },
+            {
+              "canonicalId": "fsl-bs-total-assets",
+              "label": "AKTYWA RAZEM 2024",
+              "value": 546007
+            },
+            {
+              "canonicalId": "fsl-bs-equity",
+              "label": "Kapitał własny 2024",
+              "value": 425042
+            },
+            {
+              "canonicalId": "fsl-bs-equity-parent",
+              "label": "Kapitał własny przypadający akcjonariuszom jednostki dominującej 2024",
+              "value": 425042
+            },
+            {
+              "canonicalId": "fsl-bs-share-capital",
+              "label": "Kapitał podstawowy 2024",
+              "value": 3265
+            },
+            {
+              "canonicalId": "fsl-bs-other-equity-reserves",
+              "label": "Pozostałe kapitały 2024",
+              "value": 368562
+            },
+            {
+              "canonicalId": "fsl-bs-retained-earnings",
+              "label": "Niepodzielony wynik finansowy 2024",
+              "value": 53287
+            },
+            {
+              "canonicalId": "fsl-bs-total-liabilities",
+              "label": "Zobowiązania 2024",
+              "value": 120965
+            },
+            {
+              "canonicalId": "fsl-bs-long-term-debt",
+              "label": "Zobowiązania i rezerwy długoterminowe 2024",
+              "value": 13962
+            },
+            {
+              "canonicalId": "fsl-bs-long-term-debt-lease",
+              "label": "Zobowiązania długoterminowe z tytułu leasingu 2024",
+              "value": 10434
+            },
+            {
+              "canonicalId": "fsl-bs-employee-benefits-lt",
+              "label": "Długoterminowe zobowiązania z tytułu świadczeń pracowniczych 2024",
+              "value": 3528
+            },
+            {
+              "canonicalId": "fsl-bs-current-liabilities",
+              "label": "Zobowiązania i rezerwy krótkoterminowe 2024",
+              "value": 107003
+            },
+            {
+              "canonicalId": "fsl-bs-short-term-debt",
+              "label": "Krótkoterminowe kredyty i pożyczki 2024",
+              "value": 10649
+            },
+            {
+              "canonicalId": "fsl-bs-ap",
+              "label": "Zobowiązania handlowe 2024",
+              "value": 37313
+            },
+            {
+              "canonicalId": "fsl-bs-contract-liabilities",
+              "label": "Krótkoterminowe zobowiązania kontraktowe 2024",
+              "value": 3222
+            },
+            {
+              "canonicalId": "fsl-bs-other-current-liabilities-tax",
+              "label": "Zobowiązania z tytułu podatku dochodowego od osób prawnych 2024",
+              "value": 2424
+            },
+            {
+              "canonicalId": "fsl-bs-other-tax-payables",
+              "label": "Zobowiązania z tytułu innych podatków, ceł i ubezpieczeń społecznych 2024",
+              "value": 9971
+            },
+            {
+              "canonicalId": "fsl-bs-other-current-liabilities",
+              "label": "Pozostałe zobowiązania krótkoterminowe 2024",
+              "value": 9587
+            },
+            {
+              "canonicalId": "fsl-bs-short-term-debt-lease",
+              "label": "Zobowiązania krótkoterminowe z tytułu leasingu 2024",
+              "value": 4354
+            },
+            {
+              "canonicalId": "fsl-bs-employee-benefits-st",
+              "label": "Krótkoterminowe zobowiązania z tytułu świadczeń pracowniczych 2024",
+              "value": 10886
+            },
+            {
+              "canonicalId": "fsl-bs-provisions",
+              "label": "Pozostałe rezerwy krótkoterminowe 2024",
+              "value": 13541
+            },
+            {
+              "canonicalId": "fsl-bs-total-liabilities-equity",
+              "label": "PASYWA RAZEM 2024",
+              "value": 546007
+            }
+          ]
+        },
+        {
+          "statementType": "P&L",
+          "period": "2024",
+          "comparisonPeriod": "2023",
+          "readinessStatus": "recoverable",
+          "readinessScore": 77,
+          "warnings": [
+            "REQUIRED_LINES_MISSING"
+          ],
+          "lines": [
+            {
+              "canonicalId": "fsl-pl-revenue",
+              "label": "Przychody ze sprzedaży dóbr i usług 2024",
+              "value": 536578
+            },
+            {
+              "canonicalId": "fsl-pl-cogs",
+              "label": "Koszt własny sprzedaży 2024",
+              "value": -394861
+            },
+            {
+              "canonicalId": "fsl-pl-gross",
+              "label": "Zysk brutto ze sprzedaży 2024",
+              "value": 141717
+            },
+            {
+              "canonicalId": "fsl-pl-selling",
+              "label": "Koszty sprzedaży 2024",
+              "value": -19843
+            },
+            {
+              "canonicalId": "fsl-pl-gna",
+              "label": "Koszty ogólnego zarządu 2024",
+              "value": -64008
+            },
+            {
+              "canonicalId": "fsl-pl-opex",
+              "label": "Zysk ze sprzedaży 2024",
+              "value": 57866
+            },
+            {
+              "canonicalId": "fsl-pl-ebit",
+              "label": "Zysk z działalności operacyjnej 2024",
+              "value": 53426
+            },
+            {
+              "canonicalId": "fsl-pl-interest",
+              "label": "Wynik na działalności finansowej 2024",
+              "value": 13137
+            },
+            {
+              "canonicalId": "fsl-pl-ebt",
+              "label": "Zysk przed opodatkowaniem 2024",
+              "value": 66563
+            },
+            {
+              "canonicalId": "fsl-pl-tax",
+              "label": "Podatek dochodowy 2024",
+              "value": -3482
+            },
+            {
+              "canonicalId": "fsl-pl-shares-outstanding",
+              "label": "Średnia ważona liczba akcji 2024",
+              "value": 32647
+            },
+            {
+              "canonicalId": "fsl-pl-oci-total",
+              "label": "Inne całkowite dochody 2024",
+              "value": 214
+            },
+            {
+              "canonicalId": "fsl-pl-oci-actuarial",
+              "label": "Pozycje, które w przyszłości nie będą przeklasyfikowane do wyniku finansowego: Zyski i straty aktuarialne 2024",
+              "value": -333
+            },
+            {
+              "canonicalId": "fsl-pl-comprehensive-income",
+              "label": "Całkowite dochody ogółem 2024",
+              "value": 63295
+            }
+          ]
+        },
+        {
+          "statementType": "CF",
+          "period": "2024",
+          "comparisonPeriod": "2023",
+          "readinessStatus": "recoverable",
+          "readinessScore": 89,
+          "warnings": [
+            "REQUIRED_LINES_MISSING"
+          ],
+          "lines": [
+            {
+              "canonicalId": "fsl-cf-operating-depreciation-intangibles",
+              "label": "Amortyzacja wartości niematerialnych 2024",
+              "value": 6114
+            },
+            {
+              "canonicalId": "fsl-cf-operating-depreciation-ppe",
+              "label": "Amortyzacja rzeczowych aktywów trwałych 2024",
+              "value": 13336
+            },
+            {
+              "canonicalId": "fsl-cf-operating-depreciation-rou",
+              "label": "Amortyzacja aktywów z tytułu prawa do użytkowania 2024",
+              "value": 4129
+            },
+            {
+              "canonicalId": "fsl-cf-operating-impairment",
+              "label": "Odpisy aktualizujące z tytułu utraty wartości rzeczowych aktywów trwałych i wartości niematerialnych 2024",
+              "value": 62
+            },
+            {
+              "canonicalId": "fsl-cf-operating-gain-disposal",
+              "label": "Zysk na sprzedaży rzeczowych aktywów trwałych i wartości niematerialnych 2024",
+              "value": -526
+            },
+            {
+              "canonicalId": "fsl-cf-operating-fv-changes",
+              "label": "Zyski z wyceny nieruchomości inwestycyjnych według wartości godziwej 2024",
+              "value": -717
+            },
+            {
+              "canonicalId": "fsl-cf-operating-fv-derivatives",
+              "label": "(Zyski) straty z tytułu zmiany wartości godziwej instrumentów pochodnych 2024",
+              "value": -39
+            },
+            {
+              "canonicalId": "fsl-cf-operating-interest-cost",
+              "label": "Koszty odsetek 2024",
+              "value": 1322
+            },
+            {
+              "canonicalId": "fsl-cf-operating-dividend-income",
+              "label": "Przychody z tytułu dywidend 2024",
+              "value": -14134
+            },
+            {
+              "canonicalId": "fsl-cf-operating-other-adj",
+              "label": "Inne korekty 2024",
+              "value": -182
+            },
+            {
+              "canonicalId": "fsl-cf-change-wc",
+              "label": "w kapitale obrotowym 2024",
+              "value": 77144
+            },
+            {
+              "canonicalId": "fsl-cf-change-wc-inventory",
+              "label": "Zmiana stanu zapasów 2024",
+              "value": 26187
+            },
+            {
+              "canonicalId": "fsl-cf-change-wc-ar",
+              "label": "Zmiana stanu należności 2024",
+              "value": -18938
+            },
+            {
+              "canonicalId": "fsl-cf-change-wc-ap",
+              "label": "Zmiana stanu zobowiązań 2024",
+              "value": 5126
+            },
+            {
+              "canonicalId": "fsl-cf-change-wc-provisions",
+              "label": "Zmiana stanu rezerw 2024",
+              "value": 3649
+            },
+            {
+              "canonicalId": "fsl-cf-taxes-paid",
+              "label": "Zapłacony podatek dochodowy 2024",
+              "value": -2696
+            },
+            {
+              "canonicalId": "fsl-cf-capex",
+              "label": "Wydatki na nabycie rzeczowych aktywów trwałych 2024",
+              "value": -30376
+            },
+            {
+              "canonicalId": "fsl-cf-investing-disposal-proceeds",
+              "label": "Wpływy ze sprzedaży rzeczowych aktywów trwałych 2024",
+              "value": 774
+            },
+            {
+              "canonicalId": "fsl-cf-dividends-received",
+              "label": "Otrzymane dywidendy 2024",
+              "value": 624
+            },
+            {
+              "canonicalId": "fsl-cf-other-expenditure",
+              "label": "Inne wydatki 2024",
+              "value": -2069
+            },
+            {
+              "canonicalId": "fsl-cf-investing",
+              "label": "Środki pieniężne netto wykorzystane z działalności inwestycyjnej 2024",
+              "value": -31428
+            },
+            {
+              "canonicalId": "fsl-cf-financing",
+              "label": "Przepływy środków pieniężnych z działalności finansowej Spłaty kredytów i pożyczek 2024",
+              "value": -34759
+            },
+            {
+              "canonicalId": "fsl-cf-interest-paid",
+              "label": "Odsetki zapłacone 2024",
+              "value": -754
+            },
+            {
+              "canonicalId": "fsl-cf-dividends",
+              "label": "Dywidendy wypłacone 2024",
+              "value": -19588
+            },
+            {
+              "canonicalId": "fsl-cf-lease-repayment",
+              "label": "Spłata zobowiązań z tytułu leasingu 2024",
+              "value": -3969
+            },
+            {
+              "canonicalId": "fsl-cf-net-change-cash",
+              "label": "Zwiększenie (zmniejszenie) netto stanu środków pieniężnych 2024",
+              "value": -1258
+            },
+            {
+              "canonicalId": "fsl-cf-opening-cash",
+              "label": "Środki pieniężne na początek okresu 2024",
+              "value": 3298
+            },
+            {
+              "canonicalId": "fsl-cf-closing-cash",
+              "label": "Środki pieniężne na koniec okresu 2024",
+              "value": 2040
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "label": "Grupa Apator Raport RS 2023",
+      "filePath": "knowledge/Finanse/Grupa Apator Raport RS 2023.pdf",
+      "currency": "PLN",
+      "scaling": "thousands",
+      "documentClass": "mixed_report",
+      "extractionStrategy": "pdf_layout_mixed",
+      "statements": [
+        {
+          "statementType": "BS",
+          "period": "2023",
+          "comparisonPeriod": "2022",
+          "readinessStatus": "recoverable",
+          "readinessScore": 89,
+          "warnings": [
+            "REQUIRED_LINES_MISSING"
+          ],
+          "lines": [
+            {
+              "canonicalId": "fsl-bs-fixed",
+              "label": "Aktywa trwałe 2023",
+              "value": 492647
+            },
+            {
+              "canonicalId": "fsl-bs-intangibles",
+              "label": "Wartości niematerialne 2023",
+              "value": 94114
+            },
+            {
+              "canonicalId": "fsl-bs-intangibles-goodwill",
+              "label": "Wartość firmy 2023",
+              "value": 120672
+            },
+            {
+              "canonicalId": "fsl-bs-ppe",
+              "label": "Rzeczowe aktywa trwałe 2023",
+              "value": 196811
+            },
+            {
+              "canonicalId": "fsl-bs-rou-assets",
+              "label": "Prawo do użytkowania aktywów 2023",
+              "value": 54800
+            },
+            {
+              "canonicalId": "fsl-bs-investment-property",
+              "label": "Nieruchomości inwestycyjne 2023",
+              "value": 2234
+            },
+            {
+              "canonicalId": "fsl-bs-lt-receivables",
+              "label": "Należności długoterminowe 2023",
+              "value": 3536
+            },
+            {
+              "canonicalId": "fsl-bs-lt-prepaids",
+              "label": "Długoterminowe rozliczenia międzyokresowe 2023",
+              "value": 303
+            },
+            {
+              "canonicalId": "fsl-bs-other-non-current-assets-deferred-tax",
+              "label": "Aktywa z tytułu odroczonego podatku dochodowego 2023",
+              "value": 20177
+            },
+            {
+              "canonicalId": "fsl-bs-current-assets",
+              "label": "Aktywa obrotowe 2023",
+              "value": 482551
+            },
+            {
+              "canonicalId": "fsl-bs-inventory",
+              "label": "Zapasy 2023",
+              "value": 242296
+            },
+            {
+              "canonicalId": "fsl-bs-tax-receivables",
+              "label": "Należności z tytułu podatku dochodowego od osób prawnych 2023",
+              "value": 6285
+            },
+            {
+              "canonicalId": "fsl-bs-other-tax-receivables",
+              "label": "Należności z tytułu innych podatków, ceł i ubezpieczeń społecznych 2023",
+              "value": 8780
+            },
+            {
+              "canonicalId": "fsl-bs-other-st-receivables",
+              "label": "Pozostałe należności krótkoterminowe 2023",
+              "value": 3293
+            },
+            {
+              "canonicalId": "fsl-bs-cash",
+              "label": "Środki pieniężne i ich ekwiwalenty 2023",
+              "value": 22939
+            },
+            {
+              "canonicalId": "fsl-bs-total-assets",
+              "label": "AKTYWA RAZEM 2023",
+              "value": 975198
+            },
+            {
+              "canonicalId": "fsl-bs-equity",
+              "label": "Kapitał własny 2023",
+              "value": 539023
+            },
+            {
+              "canonicalId": "fsl-bs-equity-parent",
+              "label": "Kapitał własny przypadający akcjonariuszom jednostki dominującej 2023",
+              "value": 536965
+            },
+            {
+              "canonicalId": "fsl-bs-share-capital",
+              "label": "Kapitał podstawowy 2023",
+              "value": 3265
+            },
+            {
+              "canonicalId": "fsl-bs-treasury-shares",
+              "label": "Akcje własne 2023",
+              "value": -3522
+            },
+            {
+              "canonicalId": "fsl-bs-other-equity-reserves",
+              "label": "Pozostałe kapitały 2023",
+              "value": 600182
+            },
+            {
+              "canonicalId": "fsl-bs-actuarial-reserve",
+              "label": "Kapitał z przeszacowania programu określonych świadczeń 2023",
+              "value": 894
+            },
+            {
+              "canonicalId": "fsl-bs-fx-reserve",
+              "label": "Kapitał z wyceny transakcji zabezpieczających oraz różnice kursowe z konsolidacji 2023",
+              "value": 8845
+            },
+            {
+              "canonicalId": "fsl-bs-retained-earnings",
+              "label": "Niepodzielony wynik finansowy 2023",
+              "value": -72699
+            },
+            {
+              "canonicalId": "fsl-bs-minority-interest",
+              "label": "Udziały niesprawujące kontroli 2023",
+              "value": 2058
+            },
+            {
+              "canonicalId": "fsl-bs-total-liabilities",
+              "label": "Zobowiązania 2023",
+              "value": 436175
+            },
+            {
+              "canonicalId": "fsl-bs-long-term-debt",
+              "label": "Zobowiązania i rezerwy długoterminowe 2023",
+              "value": 80106
+            },
+            {
+              "canonicalId": "fsl-bs-long-term-borrowings",
+              "label": "Długoterminowe kredyty i pożyczki 2023",
+              "value": 29545
+            },
+            {
+              "canonicalId": "fsl-bs-other-non-current-liabilities",
+              "label": "Pozostałe zobowiązania długoterminowe 2023",
+              "value": 2750
+            },
+            {
+              "canonicalId": "fsl-bs-long-term-debt-lease",
+              "label": "Zobowiązania długoterminowe z tytułu prawa do użytkowania aktywów 2023",
+              "value": 37608
+            },
+            {
+              "canonicalId": "fsl-bs-other-non-current-liabilities-deferred-tax",
+              "label": "Rezerwa z tytułu odroczonego podatku dochodowego 2023",
+              "value": 3684
+            },
+            {
+              "canonicalId": "fsl-bs-employee-benefits-lt",
+              "label": "Długoterminowe zobowiązania z tytułu świadczeń pracowniczych 2023",
+              "value": 5315
+            },
+            {
+              "canonicalId": "fsl-bs-other-non-current-liabilities-provisions",
+              "label": "Pozostałe rezerwy długoterminowe 2023",
+              "value": 1204
+            },
+            {
+              "canonicalId": "fsl-bs-current-liabilities",
+              "label": "Zobowiązania i rezerwy krótkoterminowe 2023",
+              "value": 356069
+            },
+            {
+              "canonicalId": "fsl-bs-short-term-debt",
+              "label": "Krótkoterminowe kredyty i pożyczki 2023",
+              "value": 162511
+            },
+            {
+              "canonicalId": "fsl-bs-ap",
+              "label": "Zobowiązania handlowe 2023",
+              "value": 93591
+            },
+            {
+              "canonicalId": "fsl-bs-other-tax-payables",
+              "label": "Zobowiązania z tytułu innych podatków, ceł i ubezpieczeń społecznych 2023",
+              "value": 16957
+            },
+            {
+              "canonicalId": "fsl-bs-other-current-liabilities",
+              "label": "Pozostałe zobowiązania krótkoterminowe 2023",
+              "value": 34791
+            },
+            {
+              "canonicalId": "fsl-bs-short-term-debt-lease",
+              "label": "Zobowiązania krótkoterminowe z tytułu prawa do użytkowania aktywów 2023",
+              "value": 11110
+            },
+            {
+              "canonicalId": "fsl-bs-employee-benefits-st",
+              "label": "Krótkoterminowe zobowiązania z tytułu świadczeń pracowniczych 2023",
+              "value": 20954
+            },
+            {
+              "canonicalId": "fsl-bs-provisions",
+              "label": "Pozostałe rezerwy krótkoterminowe 2023",
+              "value": 12914
+            },
+            {
+              "canonicalId": "fsl-bs-total-liabilities-equity",
+              "label": "PASYWA RAZEM 2023",
+              "value": 975198
+            }
+          ]
+        },
+        {
+          "statementType": "P&L",
+          "period": "2023",
+          "comparisonPeriod": "2022",
+          "readinessStatus": "recoverable",
+          "readinessScore": 71,
+          "warnings": [
+            "REQUIRED_LINES_MISSING"
+          ],
+          "lines": [
+            {
+              "canonicalId": "fsl-pl-revenue",
+              "label": "Przychody ze sprzedaży dóbr i usług 2023",
+              "value": 1137174
+            },
+            {
+              "canonicalId": "fsl-pl-cogs",
+              "label": "Koszt własny sprzedaży 2023",
+              "value": -881346
+            },
+            {
+              "canonicalId": "fsl-pl-gross",
+              "label": "Zysk brutto ze sprzedaży 2023",
+              "value": 255828
+            },
+            {
+              "canonicalId": "fsl-pl-selling",
+              "label": "Koszty sprzedaży 2023",
+              "value": -44903
+            },
+            {
+              "canonicalId": "fsl-pl-gna",
+              "label": "Koszty ogólnego zarządu 2023",
+              "value": -153655
+            },
+            {
+              "canonicalId": "fsl-pl-opex",
+              "label": "Zysk ze sprzedaży 2023",
+              "value": 57270
+            },
+            {
+              "canonicalId": "fsl-pl-other-op-result",
+              "label": "Wynik na pozostałej działalności operacyjnej, w tym: 2023",
+              "value": -17138
+            },
+            {
+              "canonicalId": "fsl-pl-ebit",
+              "label": "Zysk z działalności operacyjnej 2023",
+              "value": 40132
+            },
+            {
+              "canonicalId": "fsl-pl-interest",
+              "label": "Wynik na działalności finansowej, w tym: 2023",
+              "value": -12588
+            },
+            {
+              "canonicalId": "fsl-pl-ebt",
+              "label": "Zysk przed opodatkowaniem 2023",
+              "value": 27544
+            },
+            {
+              "canonicalId": "fsl-pl-tax-current",
+              "label": "Bieżący podatek dochodowy 2023",
+              "value": -7326
+            },
+            {
+              "canonicalId": "fsl-pl-tax-deferred",
+              "label": "Odroczony podatek dochodowy 2023",
+              "value": -11714
+            },
+            {
+              "canonicalId": "fsl-pl-net-continuing",
+              "label": "Zysk netto z działalności kontynuowanej 2023",
+              "value": 8504
+            },
+            {
+              "canonicalId": "fsl-pl-oci-total",
+              "label": "Inne całkowite dochody Inne całkowite dochody netto 2023",
+              "value": 5887
+            },
+            {
+              "canonicalId": "fsl-pl-oci-reclassifiable",
+              "label": "Pozycje, które mogą w przyszłości być przeklasyfikowane do wyniku finansowego: 2023",
+              "value": 6140
+            },
+            {
+              "canonicalId": "fsl-pl-oci-fx",
+              "label": "Różnice kursowe z przeliczenia jednostek zagranicznych 2023",
+              "value": 2839
+            },
+            {
+              "canonicalId": "fsl-pl-oci-hedge",
+              "label": "Wynik na rachunkowości zabezpieczeń wraz z efektem podatkowym 2023",
+              "value": 3301
+            },
+            {
+              "canonicalId": "fsl-pl-oci-non-reclassifiable",
+              "label": "Pozycje, które w przyszłości nie będą przeklasyfikowane do wyniku finansowego: 2023",
+              "value": -253
+            },
+            {
+              "canonicalId": "fsl-pl-oci-actuarial",
+              "label": "Zyski i straty aktuarialne 2023",
+              "value": -253
+            },
+            {
+              "canonicalId": "fsl-pl-comprehensive-income",
+              "label": "Całkowite dochody ogółem 2023",
+              "value": 14391
+            },
+            {
+              "canonicalId": "fsl-pl-shares-outstanding",
+              "label": "Średnia ważona liczba akcji 2023",
+              "value": 29047
+            }
+          ]
+        },
+        {
+          "statementType": "CF",
+          "period": "2023",
+          "comparisonPeriod": "2022",
+          "readinessStatus": "recoverable",
+          "readinessScore": 83,
+          "warnings": [
+            "REQUIRED_LINES_MISSING"
+          ],
+          "lines": [
+            {
+              "canonicalId": "fsl-cf-operating-depreciation-intangibles",
+              "label": "Amortyzacja wartości niematerialnych 2023",
+              "value": 16807
+            },
+            {
+              "canonicalId": "fsl-cf-operating-depreciation-ppe",
+              "label": "Amortyzacja rzeczowych aktywów trwałych 2023",
+              "value": 86
+            },
+            {
+              "canonicalId": "fsl-cf-operating-impairment",
+              "label": "Odpisy aktualizujące z tytułu utraty wartości rzeczowych aktywów trwałych 2023",
+              "value": 3408
+            },
+            {
+              "canonicalId": "fsl-cf-operating-gain-disposal",
+              "label": "Zysk na sprzedaży rzeczowych aktywów trwałych i wartości niematerialnych 2023",
+              "value": -1365
+            },
+            {
+              "canonicalId": "fsl-cf-operating-fv-derivatives",
+              "label": "Straty z tytułu zmiany wartości godziwej instrumentów pochodnych 2023",
+              "value": -920
+            },
+            {
+              "canonicalId": "fsl-cf-operating-interest-cost",
+              "label": "Koszty odsetek 2023",
+              "value": 15676
+            },
+            {
+              "canonicalId": "fsl-cf-operating-other-adj",
+              "label": "Inne korekty 2023",
+              "value": 15953
+            },
+            {
+              "canonicalId": "fsl-cf-change-wc",
+              "label": "zmian w kapitale obrotowym 2023",
+              "value": 116317
+            },
+            {
+              "canonicalId": "fsl-cf-change-wc-inventory",
+              "label": "Zmiana stanu zapasów 2023",
+              "value": 9321
+            },
+            {
+              "canonicalId": "fsl-cf-change-wc-ar",
+              "label": "Zmiana stanu należności 2023",
+              "value": 10624
+            },
+            {
+              "canonicalId": "fsl-cf-change-wc-ap",
+              "label": "Zmiana stanu zobowiązań 2023",
+              "value": -27050
+            },
+            {
+              "canonicalId": "fsl-cf-change-wc-provisions",
+              "label": "Zmiana stanu rezerw 2023",
+              "value": 6788
+            },
+            {
+              "canonicalId": "fsl-cf-tax-refund",
+              "label": "Zwrot podatku 2023",
+              "value": 7277
+            },
+            {
+              "canonicalId": "fsl-cf-taxes-paid",
+              "label": "Zapłacony podatek dochodowy 2023",
+              "value": -15423
+            },
+            {
+              "canonicalId": "fsl-cf-capex",
+              "label": "Wydatki na nabycie rzeczowych aktywów trwałych i aktywów leasingowych 2023",
+              "value": -18499
+            },
+            {
+              "canonicalId": "fsl-cf-investing-disposal-proceeds",
+              "label": "Wpływy ze sprzedaży rzeczowych aktywów trwałych 2023",
+              "value": 12196
+            },
+            {
+              "canonicalId": "fsl-cf-investing",
+              "label": "Środki pieniężne netto wykorzystane z działalności inwestycyjnej 2023",
+              "value": -25225
+            },
+            {
+              "canonicalId": "fsl-cf-debt-drawdown",
+              "label": "Wpływy z tytułu zaciągnięcia kredytów i pożyczek 2023",
+              "value": 24706
+            },
+            {
+              "canonicalId": "fsl-cf-debt-repayment",
+              "label": "Spłaty kredytów i pożyczek 2023",
+              "value": -71482
+            },
+            {
+              "canonicalId": "fsl-cf-interest-paid",
+              "label": "Odsetki zapłacone 2023",
+              "value": -14168
+            },
+            {
+              "canonicalId": "fsl-cf-dividends",
+              "label": "Dywidendy wypłacone 2023",
+              "value": -14612
+            },
+            {
+              "canonicalId": "fsl-cf-lease-repayment",
+              "label": "Spłata zobowiązań z tytułu leasingu 2023",
+              "value": -11582
+            },
+            {
+              "canonicalId": "fsl-cf-other-expenditure",
+              "label": "Inne wydatki 2023",
+              "value": -1613
+            },
+            {
+              "canonicalId": "fsl-cf-net-change-cash",
+              "label": "Zwiększenie (zmniejszenie) netto stanu środków pieniężnych i ekwiwalentów środków pieniężnych 2023",
+              "value": -6041
+            },
+            {
+              "canonicalId": "fsl-cf-opening-cash",
+              "label": "Środki pieniężne i ich ekwiwalenty na początek okresu 2023",
+              "value": 28980
+            },
+            {
+              "canonicalId": "fsl-cf-closing-cash",
+              "label": "Środki pieniężne i ich ekwiwalenty na koniec okresu 2023",
+              "value": 22939
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "label": "Grupa Apator Raport RS 2024",
+      "filePath": "knowledge/Finanse/Grupa Apator Raport RS 2024.pdf",
+      "currency": "PLN",
+      "scaling": "thousands",
+      "documentClass": "mixed_report",
+      "extractionStrategy": "pdf_layout_mixed",
+      "statements": [
+        {
+          "statementType": "BS",
+          "period": "2024",
+          "comparisonPeriod": "2023",
+          "readinessStatus": "ready",
+          "readinessScore": 100,
+          "warnings": [],
+          "lines": [
+            {
+              "canonicalId": "fsl-bs-fixed",
+              "label": "Aktywa trwałe 2024",
+              "value": 497947
+            },
+            {
+              "canonicalId": "fsl-bs-intangibles",
+              "label": "Wartości niematerialne 2024",
+              "value": 88444
+            },
+            {
+              "canonicalId": "fsl-bs-intangibles-goodwill",
+              "label": "Wartość firmy 2024",
+              "value": 120004
+            },
+            {
+              "canonicalId": "fsl-bs-ppe",
+              "label": "Rzeczowe aktywa trwałe 2024",
+              "value": 215334
+            },
+            {
+              "canonicalId": "fsl-bs-rou-assets",
+              "label": "Aktywa z tytułu prawa do użytkowania 2024",
+              "value": 47386
+            },
+            {
+              "canonicalId": "fsl-bs-investment-property",
+              "label": "Nieruchomości inwestycyjne 2024",
+              "value": 1019
+            },
+            {
+              "canonicalId": "fsl-bs-lt-receivables",
+              "label": "Należności długoterminowe 2024",
+              "value": 2367
+            },
+            {
+              "canonicalId": "fsl-bs-other-non-current-assets-deferred-tax",
+              "label": "Aktywa z tytułu odroczonego podatku dochodowego 2024",
+              "value": 23183
+            },
+            {
+              "canonicalId": "fsl-bs-current-assets",
+              "label": "Aktywa obrotowe 2024",
+              "value": 467410
+            },
+            {
+              "canonicalId": "fsl-bs-inventory",
+              "label": "Zapasy 2024",
+              "value": 225460
+            },
+            {
+              "canonicalId": "fsl-bs-ar",
+              "label": "Należności handlowe 2024",
+              "value": 185495
+            },
+            {
+              "canonicalId": "fsl-bs-tax-receivables",
+              "label": "Należności z tytułu podatku dochodowego od osób prawnych 2024",
+              "value": 1198
+            },
+            {
+              "canonicalId": "fsl-bs-other-tax-receivables",
+              "label": "Należności z tytułu innych podatków, ceł i ubezpieczeń społecznych 2024",
+              "value": 9804
+            },
+            {
+              "canonicalId": "fsl-bs-other-st-receivables",
+              "label": "Pozostałe należności krótkoterminowe 2024",
+              "value": 9421
+            },
+            {
+              "canonicalId": "fsl-bs-other-current-financial-assets",
+              "label": "Pozostałe krótkoterminowe aktywa finansowe 2024",
+              "value": 1155
+            },
+            {
+              "canonicalId": "fsl-bs-cash",
+              "label": "Środki pieniężne 2024",
+              "value": 17716
+            },
+            {
+              "canonicalId": "fsl-bs-other-current-assets",
+              "label": "Pozostałe aktywa krótkoterminowe 2024",
+              "value": 11208
+            },
+            {
+              "canonicalId": "fsl-bs-total-assets",
+              "label": "AKTYWA RAZEM 2024",
+              "value": 965357
+            },
+            {
+              "canonicalId": "fsl-bs-equity",
+              "label": "Kapitał własny 2024",
+              "value": 592502
+            },
+            {
+              "canonicalId": "fsl-bs-equity-parent",
+              "label": "Kapitał własny przypadający akcjonariuszom jednostki dominującej 2024",
+              "value": 590290
+            },
+            {
+              "canonicalId": "fsl-bs-share-capital",
+              "label": "Kapitał podstawowy 2024",
+              "value": 3265
+            },
+            {
+              "canonicalId": "fsl-bs-treasury-shares",
+              "label": "Akcje własne 2024",
+              "value": -3522
+            },
+            {
+              "canonicalId": "fsl-bs-other-equity-reserves",
+              "label": "Pozostałe kapitały 2024",
+              "value": 574829
+            },
+            {
+              "canonicalId": "fsl-bs-hedge-reserve",
+              "label": "Kapitał z wyceny transakcji zabezpieczających 2024",
+              "value": 389
+            },
+            {
+              "canonicalId": "fsl-bs-fx-reserve",
+              "label": "Różnice kursowe z konsolidacji 2024",
+              "value": 6132
+            },
+            {
+              "canonicalId": "fsl-bs-retained-earnings",
+              "label": "Niepodzielony wynik finansowy 2024",
+              "value": 8590
+            },
+            {
+              "canonicalId": "fsl-bs-minority-interest",
+              "label": "Udziały niesprawujące kontroli 2024",
+              "value": 2212
+            },
+            {
+              "canonicalId": "fsl-bs-total-liabilities",
+              "label": "Zobowiązania 2024",
+              "value": 372855
+            },
+            {
+              "canonicalId": "fsl-bs-long-term-debt",
+              "label": "Zobowiązania i rezerwy długoterminowe 2024",
+              "value": 63274
+            },
+            {
+              "canonicalId": "fsl-bs-long-term-borrowings",
+              "label": "Długoterminowe kredyty i pożyczki 2024",
+              "value": 24621
+            },
+            {
+              "canonicalId": "fsl-bs-long-term-debt-lease",
+              "label": "Zobowiązania długoterminowe z tytułu leasingu 2024",
+              "value": 28954
+            },
+            {
+              "canonicalId": "fsl-bs-other-non-current-liabilities-deferred-tax",
+              "label": "Rezerwa z tytułu odroczonego podatku dochodowego 2024",
+              "value": 2565
+            },
+            {
+              "canonicalId": "fsl-bs-employee-benefits-lt",
+              "label": "Długoterminowe zobowiązania z tytułu świadczeń pracowniczych 2024",
+              "value": 5567
+            },
+            {
+              "canonicalId": "fsl-bs-other-non-current-liabilities-provisions",
+              "label": "Pozostałe rezerwy długoterminowe 2024",
+              "value": 1567
+            },
+            {
+              "canonicalId": "fsl-bs-current-liabilities",
+              "label": "Zobowiązania i rezerwy krótkoterminowe 2024",
+              "value": 309581
+            },
+            {
+              "canonicalId": "fsl-bs-short-term-debt",
+              "label": "Krótkoterminowe kredyty i pożyczki 2024",
+              "value": 90226
+            },
+            {
+              "canonicalId": "fsl-bs-ap",
+              "label": "Zobowiązania handlowe 2024",
+              "value": 722
+            },
+            {
+              "canonicalId": "fsl-bs-contract-liabilities",
+              "label": "Krótkoterminowe zobowiązania kontraktowe 2024",
+              "value": 5940
+            },
+            {
+              "canonicalId": "fsl-bs-other-current-liabilities-tax",
+              "label": "Zobowiązania z tytułu podatku dochodowego od osób prawnych 2024",
+              "value": 5427
+            },
+            {
+              "canonicalId": "fsl-bs-other-tax-payables",
+              "label": "Zobowiązania z tytułu innych podatków, ceł i ubezpieczeń społecznych 2024",
+              "value": 19722
+            },
+            {
+              "canonicalId": "fsl-bs-other-current-liabilities",
+              "label": "Pozostałe zobowiązania krótkoterminowe 2024",
+              "value": 16853
+            },
+            {
+              "canonicalId": "fsl-bs-short-term-debt-lease",
+              "label": "Zobowiązania krótkoterminowe z tytułu leasingu 2024",
+              "value": 11950
+            },
+            {
+              "canonicalId": "fsl-bs-employee-benefits-st",
+              "label": "Krótkoterminowe zobowiązania z tytułu świadczeń pracowniczych 2024",
+              "value": 22854
+            },
+            {
+              "canonicalId": "fsl-bs-provisions",
+              "label": "Pozostałe rezerwy krótkoterminowe 2024",
+              "value": 29785
+            },
+            {
+              "canonicalId": "fsl-bs-total-liabilities-equity",
+              "label": "PASYWA RAZEM 2024",
+              "value": 965357
+            }
+          ]
+        },
+        {
+          "statementType": "P&L",
+          "period": "2024",
+          "comparisonPeriod": "2023",
+          "readinessStatus": "recoverable",
+          "readinessScore": 77,
+          "warnings": [
+            "REQUIRED_LINES_MISSING"
+          ],
+          "lines": [
+            {
+              "canonicalId": "fsl-pl-revenue",
+              "label": "Przychody ze sprzedaży dóbr i usług 2024",
+              "value": 1227799
+            },
+            {
+              "canonicalId": "fsl-pl-cogs",
+              "label": "Koszt własny sprzedaży 2024",
+              "value": -913065
+            },
+            {
+              "canonicalId": "fsl-pl-gross",
+              "label": "Zysk brutto ze sprzedaży 2024",
+              "value": 314734
+            },
+            {
+              "canonicalId": "fsl-pl-selling",
+              "label": "Koszty sprzedaży 2024",
+              "value": -48381
+            },
+            {
+              "canonicalId": "fsl-pl-gna",
+              "label": "Koszty ogólnego zarządu 2024",
+              "value": -162894
+            },
+            {
+              "canonicalId": "fsl-pl-opex",
+              "label": "Zysk ze sprzedaży 2024",
+              "value": 103459
+            },
+            {
+              "canonicalId": "fsl-pl-impairment-receivables",
+              "label": "Zmiana stanu odpisów aktualizujących należności 2024",
+              "value": -280
+            },
+            {
+              "canonicalId": "fsl-pl-other-op-result",
+              "label": "Wynik na pozostałej działalności operacyjnej, w tym: 2024",
+              "value": -18045
+            },
+            {
+              "canonicalId": "fsl-pl-ebit",
+              "label": "Zysk z działalności operacyjnej 2024",
+              "value": 85134
+            },
+            {
+              "canonicalId": "fsl-pl-interest",
+              "label": "Wynik na działalności finansowej, w tym: 2024",
+              "value": -7599
+            },
+            {
+              "canonicalId": "fsl-pl-ebt",
+              "label": "Zysk przed opodatkowaniem 2024",
+              "value": 81818
+            },
+            {
+              "canonicalId": "fsl-pl-tax",
+              "label": "Podatek dochodowy 2024",
+              "value": -8604
+            },
+            {
+              "canonicalId": "fsl-pl-shares-outstanding",
+              "label": "Średnia ważona liczba akcji 2024",
+              "value": 29047
+            },
+            {
+              "canonicalId": "fsl-pl-oci-total",
+              "label": "Inne całkowite dochody - Inne całkowite dochody netto 2024",
+              "value": -2261
+            },
+            {
+              "canonicalId": "fsl-pl-oci-reclassifiable",
+              "label": "Pozycje, które mogą w przyszłości być przeklasyfikowane do wyniku finansowego: 2024",
+              "value": -1974
+            },
+            {
+              "canonicalId": "fsl-pl-oci-fx",
+              "label": "Różnice kursowe z przeliczenia jednostek zagranicznych 2024",
+              "value": -718
+            },
+            {
+              "canonicalId": "fsl-pl-oci-hedge",
+              "label": "Wynik na rachunkowości zabezpieczeń wraz z efektem podatkowym 2024",
+              "value": -1256
+            }
+          ]
+        },
+        {
+          "statementType": "CF",
+          "period": "2024",
+          "comparisonPeriod": "2023",
+          "readinessStatus": "recoverable",
+          "readinessScore": 89,
+          "warnings": [
+            "REQUIRED_LINES_MISSING"
+          ],
+          "lines": [
+            {
+              "canonicalId": "fsl-cf-operating-depreciation-intangibles",
+              "label": "Amortyzacja wartości niematerialnych 2024",
+              "value": 16268
+            },
+            {
+              "canonicalId": "fsl-cf-operating-depreciation-ppe",
+              "label": "Amortyzacja rzeczowych aktywów trwałych 2024",
+              "value": 30172
+            },
+            {
+              "canonicalId": "fsl-cf-operating-depreciation-rou",
+              "label": "Amortyzacja aktywów z tytułu prawa do użytkowania 2024",
+              "value": 10872
+            },
+            {
+              "canonicalId": "fsl-cf-operating-impairment",
+              "label": "Odpisy aktualizujące z tytułu utraty wartości rzeczowych aktywów trwałych 2024",
+              "value": 453
+            },
+            {
+              "canonicalId": "fsl-cf-operating-gain-disposal",
+              "label": "Zysk na sprzedaży rzeczowych aktywów trwałych i wartości niematerialnych 2024",
+              "value": -867
+            },
+            {
+              "canonicalId": "fsl-cf-operating-fv-changes",
+              "label": "Zyski z wyceny nieruchomości inwestycyjnych według wartości godziwej 2024",
+              "value": -716
+            },
+            {
+              "canonicalId": "fsl-cf-operating-interest-cost",
+              "label": "Koszty odsetek 2024",
+              "value": 9877
+            },
+            {
+              "canonicalId": "fsl-cf-operating-other-adj",
+              "label": "Inne korekty 2024",
+              "value": 274
+            },
+            {
+              "canonicalId": "fsl-cf-change-wc",
+              "label": "uwzględnieniem zmian w kapitale obrotowym 2024",
+              "value": 149575
+            },
+            {
+              "canonicalId": "fsl-cf-change-wc-inventory",
+              "label": "Zmiana stanu zapasów 2024",
+              "value": 17454
+            },
+            {
+              "canonicalId": "fsl-cf-change-wc-ar",
+              "label": "Zmiana stanu należności 2024",
+              "value": -8434
+            },
+            {
+              "canonicalId": "fsl-cf-change-wc-other",
+              "label": "Zmiana stanu pozostałych aktywów 2024",
+              "value": -2109
+            },
+            {
+              "canonicalId": "fsl-cf-change-wc-ap",
+              "label": "Zmiana stanu zobowiązań 2024",
+              "value": -18739
+            },
+            {
+              "canonicalId": "fsl-cf-change-wc-provisions",
+              "label": "Zmiana stanu rezerw 2024",
+              "value": 19005
+            },
+            {
+              "canonicalId": "fsl-cf-tax-refund",
+              "label": "Zwrot podatku 2024",
+              "value": 7070
+            },
+            {
+              "canonicalId": "fsl-cf-taxes-paid",
+              "label": "Zapłacony podatek dochodowy 2024",
+              "value": -12623
+            },
+            {
+              "canonicalId": "fsl-cf-capex",
+              "label": "Wydatki na nabycie rzeczowych aktywów trwałych 2024",
+              "value": -43691
+            },
+            {
+              "canonicalId": "fsl-cf-investing-disposal-proceeds",
+              "label": "Wpływy ze sprzedaży rzeczowych aktywów trwałych 2024",
+              "value": 1758
+            },
+            {
+              "canonicalId": "fsl-cf-other-expenditure",
+              "label": "Inne wydatki 2024",
+              "value": -2058
+            },
+            {
+              "canonicalId": "fsl-cf-investing",
+              "label": "Środki pieniężne netto wykorzystane z działalności inwestycyjnej 2024",
+              "value": -58668
+            },
+            {
+              "canonicalId": "fsl-cf-financing",
+              "label": "Przepływy środków pieniężnych z działalności finansowej - Wpływy z tytułu zaciągnięcia kredytów i pożyczek 2024",
+              "value": 31396
+            },
+            {
+              "canonicalId": "fsl-cf-debt-repayment",
+              "label": "Spłaty kredytów i pożyczek 2024",
+              "value": -88845
+            },
+            {
+              "canonicalId": "fsl-cf-interest-paid",
+              "label": "Odsetki zapłacone 2024",
+              "value": -8157
+            },
+            {
+              "canonicalId": "fsl-cf-dividends",
+              "label": "Dywidendy wypłacone 2024",
+              "value": -17428
+            },
+            {
+              "canonicalId": "fsl-cf-lease-repayment",
+              "label": "Spłata zobowiązań z tytułu leasingu 2024",
+              "value": -13257
+            },
+            {
+              "canonicalId": "fsl-cf-net-change-cash",
+              "label": "Zmniejszenie netto stanu środków pieniężnych 2024",
+              "value": -5223
+            },
+            {
+              "canonicalId": "fsl-cf-opening-cash",
+              "label": "Środki pieniężne na początek okresu 2024",
+              "value": 22939
+            },
+            {
+              "canonicalId": "fsl-cf-closing-cash",
+              "label": "Środki pieniężne na koniec okresu 2024",
+              "value": 17716
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "label": "Raport skonsolidowany Apator",
+      "filePath": "knowledge/Finanse/Raport-skonsolidowany-Apator.pdf",
+      "currency": "PLN",
+      "scaling": "thousands",
+      "documentClass": "mixed_report",
+      "extractionStrategy": "pdf_layout_mixed",
+      "statements": [
+        {
+          "statementType": "BS",
+          "period": "2022",
+          "comparisonPeriod": "2021",
+          "readinessStatus": "ready",
+          "readinessScore": 100,
+          "warnings": [],
+          "lines": [
+            {
+              "canonicalId": "fsl-bs-fixed",
+              "label": "Aktywa trwałe 2022",
+              "value": 527979
+            },
+            {
+              "canonicalId": "fsl-bs-intangibles",
+              "label": "Wartości niematerialne 2022",
+              "value": 105831
+            },
+            {
+              "canonicalId": "fsl-bs-intangibles-goodwill",
+              "label": "Wartość firmy 2022",
+              "value": 122275
+            },
+            {
+              "canonicalId": "fsl-bs-ppe",
+              "label": "Rzeczowe aktywa trwałe 2022",
+              "value": 212844
+            },
+            {
+              "canonicalId": "fsl-bs-rou-assets",
+              "label": "Prawo do użytkowania aktywów 2022",
+              "value": 46690
+            },
+            {
+              "canonicalId": "fsl-bs-investment-property",
+              "label": "Nieruchomości inwestycyjne 2022",
+              "value": 2282
+            },
+            {
+              "canonicalId": "fsl-bs-equity-method-investments",
+              "label": "Inwestycje w jednostkach współkontrolowanych konsolidowane metodą praw własności 2022",
+              "value": 0
+            },
+            {
+              "canonicalId": "fsl-bs-lt-receivables",
+              "label": "Należności długoterminowe 2022",
+              "value": 6437
+            },
+            {
+              "canonicalId": "fsl-bs-lt-prepaids",
+              "label": "Długoterminowe rozliczenia międzyokresowe 2022",
+              "value": 55
+            },
+            {
+              "canonicalId": "fsl-bs-other-non-current-assets-deferred-tax",
+              "label": "Aktywa z tytułu odroczonego podatku dochodowego 2022",
+              "value": 30213
+            },
+            {
+              "canonicalId": "fsl-bs-current-assets",
+              "label": "Aktywa obrotowe 2022",
+              "value": 514068
+            },
+            {
+              "canonicalId": "fsl-bs-inventory",
+              "label": "Zapasy 2022",
+              "value": 251617
+            },
+            {
+              "canonicalId": "fsl-bs-other-current-assets",
+              "label": "Inne aktywa obrotowe 2022",
+              "value": 0
+            },
+            {
+              "canonicalId": "fsl-bs-ar",
+              "label": "Należności handlowe 2022",
+              "value": 189804
+            },
+            {
+              "canonicalId": "fsl-bs-tax-receivables",
+              "label": "Należności z tytułu podatku dochodowego od osób prawnych 2022",
+              "value": 5741
+            },
+            {
+              "canonicalId": "fsl-bs-other-tax-receivables",
+              "label": "Należności z tytułu innych podatków, ceł i ubezpieczeń społecznych 2022",
+              "value": 12309
+            },
+            {
+              "canonicalId": "fsl-bs-other-st-receivables",
+              "label": "Pozostałe należności krótkoterminowe 2022",
+              "value": 6642
+            },
+            {
+              "canonicalId": "fsl-bs-cash",
+              "label": "Środki pieniężne i ich ekwiwalenty 2022",
+              "value": 28980
+            },
+            {
+              "canonicalId": "fsl-bs-other-current-assets-prepaids",
+              "label": "Krótkoterminowe rozliczenia międzyokresowe 2022",
+              "value": 5839
+            },
+            {
+              "canonicalId": "fsl-bs-assets-held-for-sale",
+              "label": "Aktywa trwałe zaklasyfikowane jako przeznaczone do sprzedaży 2022",
+              "value": 12863
+            },
+            {
+              "canonicalId": "fsl-bs-total-assets",
+              "label": "AKTYWA RAZEM 2022",
+              "value": 1042047
+            },
+            {
+              "canonicalId": "fsl-bs-equity",
+              "label": "Kapitał własny 2022",
+              "value": 539148
+            },
+            {
+              "canonicalId": "fsl-bs-equity-parent",
+              "label": "Kapitał własny przypadający akcjonariuszom jednostki dominującej 2022",
+              "value": 537347
+            },
+            {
+              "canonicalId": "fsl-bs-share-capital",
+              "label": "Kapitał podstawowy 2022",
+              "value": 3265
+            },
+            {
+              "canonicalId": "fsl-bs-treasury-shares",
+              "label": "Akcje własne 2022",
+              "value": -3522
+            },
+            {
+              "canonicalId": "fsl-bs-other-equity-reserves",
+              "label": "Pozostałe kapitały 2022",
+              "value": 562967
+            },
+            {
+              "canonicalId": "fsl-bs-fx-reserve",
+              "label": "Kapitał z wyceny transakcji zabezpieczających oraz różnice kursowe z konsolidacji 2022",
+              "value": 2705
+            },
+            {
+              "canonicalId": "fsl-bs-retained-earnings",
+              "label": "Niepodzielony wynik finansowy 2022",
+              "value": -29215
+            },
+            {
+              "canonicalId": "fsl-bs-minority-interest",
+              "label": "Udziały niesprawujące kontroli 2022",
+              "value": 1801
+            },
+            {
+              "canonicalId": "fsl-bs-total-liabilities",
+              "label": "Zobowiązania 2022",
+              "value": 502899
+            },
+            {
+              "canonicalId": "fsl-bs-long-term-debt",
+              "label": "Zobowiązania i rezerwy długoterminowe 2022",
+              "value": 45174
+            },
+            {
+              "canonicalId": "fsl-bs-long-term-borrowings",
+              "label": "Długoterminowe kredyty i pożyczki 2022",
+              "value": 3119
+            },
+            {
+              "canonicalId": "fsl-bs-other-non-current-liabilities",
+              "label": "Pozostałe zobowiązania długoterminowe 2022",
+              "value": 52
+            },
+            {
+              "canonicalId": "fsl-bs-long-term-debt-lease",
+              "label": "Zobowiązania długoterminowe z tytułu prawa do użytkowania aktywów 2022",
+              "value": 33299
+            },
+            {
+              "canonicalId": "fsl-bs-other-non-current-liabilities-deferred-tax",
+              "label": "Rezerwa z tytułu odroczonego podatku dochodowego 2022",
+              "value": 2939
+            },
+            {
+              "canonicalId": "fsl-bs-employee-benefits-lt",
+              "label": "Długoterminowe zobowiązania z tytułu świadczeń pracowniczych 2022",
+              "value": 4474
+            },
+            {
+              "canonicalId": "fsl-bs-other-non-current-liabilities-provisions",
+              "label": "Pozostałe rezerwy długoterminowe 2022",
+              "value": 1291
+            },
+            {
+              "canonicalId": "fsl-bs-current-liabilities",
+              "label": "Zobowiązania i rezerwy krótkoterminowe 2022",
+              "value": 457725
+            },
+            {
+              "canonicalId": "fsl-bs-short-term-debt",
+              "label": "Krótkoterminowe kredyty i pożyczki 2022",
+              "value": 237350
+            },
+            {
+              "canonicalId": "fsl-bs-ap",
+              "label": "Zobowiązania handlowe 2022",
+              "value": 121894
+            },
+            {
+              "canonicalId": "fsl-bs-contract-liabilities",
+              "label": "Zobowiązania kontraktowe 2022",
+              "value": 0
+            },
+            {
+              "canonicalId": "fsl-bs-other-current-liabilities-tax",
+              "label": "Zobowiązania z tytułu podatku dochodowego od osób prawnych 2022",
+              "value": 1976
+            },
+            {
+              "canonicalId": "fsl-bs-other-tax-payables",
+              "label": "Zobowiązania z tytułu innych podatków, ceł i ubezpieczeń społecznych 2022",
+              "value": 17107
+            },
+            {
+              "canonicalId": "fsl-bs-other-current-liabilities",
+              "label": "Pozostałe zobowiązania krótkoterminowe 2022",
+              "value": 41978
+            },
+            {
+              "canonicalId": "fsl-bs-short-term-debt-lease",
+              "label": "Zobowiązania krótkoterminowe z tytułu prawa do użytkowania aktywów 2022",
+              "value": 9556
+            },
+            {
+              "canonicalId": "fsl-bs-employee-benefits-st",
+              "label": "Krótkoterminowe zobowiązania z tytułu świadczeń pracowniczych 2022",
+              "value": 15382
+            },
+            {
+              "canonicalId": "fsl-bs-provisions",
+              "label": "Pozostałe rezerwy krótkoterminowe 2022",
+              "value": 12482
+            },
+            {
+              "canonicalId": "fsl-bs-total-liabilities-equity",
+              "label": "PASYWA RAZEM 2022",
+              "value": 1042047
+            }
+          ]
+        },
+        {
+          "statementType": "P&L",
+          "period": "2022",
+          "comparisonPeriod": "2021",
+          "readinessStatus": "recoverable",
+          "readinessScore": 71,
+          "warnings": [
+            "REQUIRED_LINES_MISSING"
+          ],
+          "lines": [
+            {
+              "canonicalId": "fsl-pl-revenue",
+              "label": "Przychody ze sprzedaży dóbr i usług 2022",
+              "value": 1081792
+            },
+            {
+              "canonicalId": "fsl-pl-cogs",
+              "label": "Koszt własny sprzedaży 2022",
+              "value": -857531
+            },
+            {
+              "canonicalId": "fsl-pl-gross",
+              "label": "Zysk brutto ze sprzedaży 2022",
+              "value": 224261
+            },
+            {
+              "canonicalId": "fsl-pl-selling",
+              "label": "Koszty sprzedaży 2022",
+              "value": -42422
+            },
+            {
+              "canonicalId": "fsl-pl-gna",
+              "label": "Koszty ogólnego zarządu 2022",
+              "value": -136749
+            },
+            {
+              "canonicalId": "fsl-pl-opex",
+              "label": "Zysk ze sprzedaży 2022",
+              "value": 45090
+            },
+            {
+              "canonicalId": "fsl-pl-other-op-result",
+              "label": "Wynik na pozostałej działalności operacyjnej, w tym: 2022",
+              "value": -14194
+            },
+            {
+              "canonicalId": "fsl-pl-equity-method-income",
+              "label": "Udział w zyskach jednostek objętych konsolidacją metodą praw własności 2022",
+              "value": 444
+            },
+            {
+              "canonicalId": "fsl-pl-ebit",
+              "label": "Zysk z działalności operacyjnej 2022",
+              "value": 31340
+            },
+            {
+              "canonicalId": "fsl-pl-interest",
+              "label": "Wynik na działalności finansowej, w tym: 2022",
+              "value": -15425
+            },
+            {
+              "canonicalId": "fsl-pl-ebt",
+              "label": "Zysk przed opodatkowaniem 2022",
+              "value": 15915
+            },
+            {
+              "canonicalId": "fsl-pl-tax-current",
+              "label": "Bieżący podatek dochodowy 2022",
+              "value": -9019
+            },
+            {
+              "canonicalId": "fsl-pl-tax-deferred",
+              "label": "Odroczony podatek dochodowy 2022",
+              "value": 309
+            },
+            {
+              "canonicalId": "fsl-pl-net-continuing",
+              "label": "Zysk netto z działalności kontynuowanej 2022",
+              "value": 7205
+            },
+            {
+              "canonicalId": "fsl-pl-oci-total",
+              "label": "Inne całkowite dochody Inne całkowite dochody netto 2022",
+              "value": 4767
+            },
+            {
+              "canonicalId": "fsl-pl-oci-hedge",
+              "label": "Wynik na rachunkowości zabezpieczeń wraz z efektem podatkowym 2022",
+              "value": 1132
+            },
+            {
+              "canonicalId": "fsl-pl-comprehensive-income",
+              "label": "Całkowite dochody ogółem 2022",
+              "value": 11972
+            },
+            {
+              "canonicalId": "fsl-pl-net-minority",
+              "label": "akcjonariuszom niesprawującym kontroli 2022",
+              "value": 589
+            },
+            {
+              "canonicalId": "fsl-pl-shares-outstanding",
+              "label": "Średnia ważona liczba akcji 2022",
+              "value": 29070
+            }
+          ]
+        },
+        {
+          "statementType": "CF",
+          "period": "2022",
+          "comparisonPeriod": "2021",
+          "readinessStatus": "recoverable",
+          "readinessScore": 89,
+          "warnings": [
+            "REQUIRED_LINES_MISSING"
+          ],
+          "lines": [
+            {
+              "canonicalId": "fsl-cf-operating-depreciation-intangibles",
+              "label": "Amortyzacja wartości niematerialnych 2022",
+              "value": 14530
+            },
+            {
+              "canonicalId": "fsl-cf-operating-depreciation-ppe",
+              "label": "Amortyzacja rzeczowych aktywów trwałych 2022",
+              "value": 86
+            },
+            {
+              "canonicalId": "fsl-cf-operating-gain-disposal",
+              "label": "Zysk na sprzedaży rzeczowych aktywów trwałych i wartości niematerialnych 2022",
+              "value": -2881
+            },
+            {
+              "canonicalId": "fsl-cf-operating-fv-changes",
+              "label": "Zyski z wyceny nieruchomości inwestycyjnych według wartości godziwej 2022",
+              "value": -325
+            },
+            {
+              "canonicalId": "fsl-cf-operating-fv-derivatives",
+              "label": "(Zyski) straty z tytułu zmiany wartości godziwej instrumentów pochodnych 2022",
+              "value": -3493
+            },
+            {
+              "canonicalId": "fsl-cf-operating-interest-cost",
+              "label": "Koszty odsetek 2022",
+              "value": 14690
+            },
+            {
+              "canonicalId": "fsl-cf-operating-equity-method",
+              "label": "Udziały w zyskach jednostek stowarzyszonych 2022",
+              "value": -444
+            },
+            {
+              "canonicalId": "fsl-cf-operating-interest-income",
+              "label": "Przychody z tytułu odsetek 2022",
+              "value": -178
+            },
+            {
+              "canonicalId": "fsl-cf-operating-other-adj",
+              "label": "Inne korekty 2022",
+              "value": 3373
+            },
+            {
+              "canonicalId": "fsl-cf-change-wc",
+              "label": "kapitale obrotowym 2022",
+              "value": 98246
+            },
+            {
+              "canonicalId": "fsl-cf-change-wc-inventory",
+              "label": "Zmiana stanu zapasów 2022",
+              "value": -12682
+            },
+            {
+              "canonicalId": "fsl-cf-change-wc-other",
+              "label": "Zmiana stanu amortyzowanego aktywa kontraktowego 2022",
+              "value": 1625
+            },
+            {
+              "canonicalId": "fsl-cf-change-wc-ar",
+              "label": "Zmiana stanu należności 2022",
+              "value": -49607
+            },
+            {
+              "canonicalId": "fsl-cf-change-wc-ap",
+              "label": "Zmiana stanu zobowiązań 2022",
+              "value": 38617
+            },
+            {
+              "canonicalId": "fsl-cf-change-wc-provisions",
+              "label": "Zmiana stanu rezerw 2022",
+              "value": -1423
+            },
+            {
+              "canonicalId": "fsl-cf-change-wc-restricted-cash",
+              "label": "Zmiana stanu środków pieniężnych o ograniczonym sposobie dysponowania 2022",
+              "value": 556
+            },
+            {
+              "canonicalId": "fsl-cf-change-wc-prepaids",
+              "label": "Zmiana stanu rozliczeń międzyokresowych 2022",
+              "value": 666
+            },
+            {
+              "canonicalId": "fsl-cf-taxes-paid",
+              "label": "Zapłacony podatek dochodowy 2022",
+              "value": -25272
+            },
+            {
+              "canonicalId": "fsl-cf-capex",
+              "label": "Wydatki na nabycie rzeczowych aktywów trwałych i aktywów leasingowych 2022",
+              "value": -38911
+            },
+            {
+              "canonicalId": "fsl-cf-investing-disposal-proceeds",
+              "label": "Wpływy ze sprzedaży rzeczowych aktywów trwałych 2022",
+              "value": 25806
+            },
+            {
+              "canonicalId": "fsl-cf-investing-subsidiaries",
+              "label": "Inwestycje w jednostki zależne 2022",
+              "value": -10860
+            },
+            {
+              "canonicalId": "fsl-cf-dividends-received",
+              "label": "Otrzymane dywidendy 2022",
+              "value": 0
+            },
+            {
+              "canonicalId": "fsl-cf-other-receipts",
+              "label": "Inne wpływy (wydatki) 2022",
+              "value": 618
+            },
+            {
+              "canonicalId": "fsl-cf-investing",
+              "label": "Środki pieniężne netto wykorzystane z działalności inwestycyjnej 2022",
+              "value": -47066
+            },
+            {
+              "canonicalId": "fsl-cf-financing",
+              "label": "Przepływy środków pieniężnych z działalności finansowej Nabycie akcji własnych 2022",
+              "value": -1950
+            },
+            {
+              "canonicalId": "fsl-cf-debt-drawdown",
+              "label": "Wpływy z tytułu zaciągnięcia kredytów i pożyczek 2022",
+              "value": 90033
+            },
+            {
+              "canonicalId": "fsl-cf-debt-repayment",
+              "label": "Spłaty kredytów i pożyczek 2022",
+              "value": -60488
+            },
+            {
+              "canonicalId": "fsl-cf-interest-paid",
+              "label": "Odsetki zapłacone 2022",
+              "value": -13877
+            },
+            {
+              "canonicalId": "fsl-cf-dividends",
+              "label": "Dywidendy wypłacone 2022",
+              "value": -14730
+            },
+            {
+              "canonicalId": "fsl-cf-lease-repayment",
+              "label": "Spłata zobowiązań z tytułu leasingu 2022",
+              "value": -10912
+            },
+            {
+              "canonicalId": "fsl-cf-other-expenditure",
+              "label": "Inne wydatki 2022",
+              "value": -1015
+            },
+            {
+              "canonicalId": "fsl-cf-net-change-cash",
+              "label": "Zwiększenie (zmniejszenie) netto stanu środków pieniężnych i ekwiwalentów środków pieniężnych 2022",
+              "value": -7852
+            },
+            {
+              "canonicalId": "fsl-cf-opening-cash",
+              "label": "Środki pieniężne i ich ekwiwalenty na początek okresu 2022",
+              "value": 36832
+            },
+            {
+              "canonicalId": "fsl-cf-closing-cash",
+              "label": "Środki pieniężne i ich ekwiwalenty na koniec okresu 2022",
+              "value": 28980
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

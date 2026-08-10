@@ -1,0 +1,1173 @@
+{
+  "generatedAt": "2026-08-10T07:06:03.706Z",
+  "sourceAudit": "docs/validation/finance-v3/generated/STATEMENT_IMPORT_SAMPLE_AUDIT_2026-03-15.json",
+  "note": "Every figure is verbatim from the committed extraction audit; only the scaling multiplication is done here.",
+  "section13Availability": [
+    {
+      "companyNamedInHandoffSection13": "CD Projekt",
+      "presentInRepo": false,
+      "matchingDocuments": []
+    },
+    {
+      "companyNamedInHandoffSection13": "Apator",
+      "presentInRepo": true,
+      "matchingDocuments": [
+        "Apator SA Raport R 2024",
+        "Grupa Apator Raport RS 2023",
+        "Grupa Apator Raport RS 2024",
+        "Raport skonsolidowany Apator"
+      ]
+    },
+    {
+      "companyNamedInHandoffSection13": "Tesco",
+      "presentInRepo": false,
+      "matchingDocuments": []
+    },
+    {
+      "companyNamedInHandoffSection13": "Tesla",
+      "presentInRepo": true,
+      "matchingDocuments": [
+        "Tesla 10-K 2024"
+      ]
+    }
+  ],
+  "companies": [
+    {
+      "label": "Apator SA Raport R 2024",
+      "filePath": "knowledge/Finanse/Apator SA Raport R 2024.pdf",
+      "declaredCurrency": "PLN",
+      "expectedCurrency": "PLN",
+      "currencyPlausible": true,
+      "declaredScaling": "thousands",
+      "unitMultiplier": 1000,
+      "extractionStrategy": "pdf_layout_mixed",
+      "perStatement": [
+        {
+          "type": "BS",
+          "period": "2024",
+          "comparison": "2023",
+          "extracted": 33,
+          "mapped": 33,
+          "coveragePct": 100,
+          "readiness": "ready",
+          "score": 100,
+          "warnings": []
+        },
+        {
+          "type": "P&L",
+          "period": "2024",
+          "comparison": "2023",
+          "extracted": 14,
+          "mapped": 14,
+          "coveragePct": 100,
+          "readiness": "recoverable",
+          "score": 77,
+          "warnings": [
+            "REQUIRED_LINES_MISSING"
+          ]
+        },
+        {
+          "type": "CF",
+          "period": "2024",
+          "comparison": "2023",
+          "extracted": 28,
+          "mapped": 28,
+          "coveragePct": 100,
+          "readiness": "recoverable",
+          "score": 89,
+          "warnings": [
+            "REQUIRED_LINES_MISSING"
+          ]
+        }
+      ],
+      "revenueRaw": 536578,
+      "revenueFullUnits": 536578000,
+      "totalAssetsRaw": 546007,
+      "totalAssetsFullUnits": 546007000,
+      "equityRaw": 425042,
+      "equityFullUnits": 425042000,
+      "separatorMisparse": {
+        "totalLines": 75,
+        "fractionalLines": 0,
+        "fractionalPct": 0,
+        "examples": []
+      }
+    },
+    {
+      "label": "Grupa Apator Raport RS 2023",
+      "filePath": "knowledge/Finanse/Grupa Apator Raport RS 2023.pdf",
+      "declaredCurrency": "PLN",
+      "expectedCurrency": "PLN",
+      "currencyPlausible": true,
+      "declaredScaling": "thousands",
+      "unitMultiplier": 1000,
+      "extractionStrategy": "pdf_layout_mixed",
+      "perStatement": [
+        {
+          "type": "BS",
+          "period": "2023",
+          "comparison": "2022",
+          "extracted": 42,
+          "mapped": 42,
+          "coveragePct": 100,
+          "readiness": "recoverable",
+          "score": 89,
+          "warnings": [
+            "REQUIRED_LINES_MISSING"
+          ]
+        },
+        {
+          "type": "P&L",
+          "period": "2023",
+          "comparison": "2022",
+          "extracted": 21,
+          "mapped": 21,
+          "coveragePct": 100,
+          "readiness": "recoverable",
+          "score": 71,
+          "warnings": [
+            "REQUIRED_LINES_MISSING"
+          ]
+        },
+        {
+          "type": "CF",
+          "period": "2023",
+          "comparison": "2022",
+          "extracted": 26,
+          "mapped": 26,
+          "coveragePct": 100,
+          "readiness": "recoverable",
+          "score": 83,
+          "warnings": [
+            "REQUIRED_LINES_MISSING"
+          ]
+        }
+      ],
+      "revenueRaw": 1137174,
+      "revenueFullUnits": 1137174000,
+      "totalAssetsRaw": 975198,
+      "totalAssetsFullUnits": 975198000,
+      "equityRaw": 539023,
+      "equityFullUnits": 539023000,
+      "separatorMisparse": {
+        "totalLines": 89,
+        "fractionalLines": 0,
+        "fractionalPct": 0,
+        "examples": []
+      }
+    },
+    {
+      "label": "Grupa Apator Raport RS 2024",
+      "filePath": "knowledge/Finanse/Grupa Apator Raport RS 2024.pdf",
+      "declaredCurrency": "PLN",
+      "expectedCurrency": "PLN",
+      "currencyPlausible": true,
+      "declaredScaling": "thousands",
+      "unitMultiplier": 1000,
+      "extractionStrategy": "pdf_layout_mixed",
+      "perStatement": [
+        {
+          "type": "BS",
+          "period": "2024",
+          "comparison": "2023",
+          "extracted": 45,
+          "mapped": 45,
+          "coveragePct": 100,
+          "readiness": "ready",
+          "score": 100,
+          "warnings": []
+        },
+        {
+          "type": "P&L",
+          "period": "2024",
+          "comparison": "2023",
+          "extracted": 17,
+          "mapped": 17,
+          "coveragePct": 100,
+          "readiness": "recoverable",
+          "score": 77,
+          "warnings": [
+            "REQUIRED_LINES_MISSING"
+          ]
+        },
+        {
+          "type": "CF",
+          "period": "2024",
+          "comparison": "2023",
+          "extracted": 28,
+          "mapped": 28,
+          "coveragePct": 100,
+          "readiness": "recoverable",
+          "score": 89,
+          "warnings": [
+            "REQUIRED_LINES_MISSING"
+          ]
+        }
+      ],
+      "revenueRaw": 1227799,
+      "revenueFullUnits": 1227799000,
+      "totalAssetsRaw": 965357,
+      "totalAssetsFullUnits": 965357000,
+      "equityRaw": 592502,
+      "equityFullUnits": 592502000,
+      "separatorMisparse": {
+        "totalLines": 90,
+        "fractionalLines": 0,
+        "fractionalPct": 0,
+        "examples": []
+      }
+    },
+    {
+      "label": "Raport skonsolidowany Apator",
+      "filePath": "knowledge/Finanse/Raport-skonsolidowany-Apator.pdf",
+      "declaredCurrency": "PLN",
+      "expectedCurrency": "PLN",
+      "currencyPlausible": true,
+      "declaredScaling": "thousands",
+      "unitMultiplier": 1000,
+      "extractionStrategy": "pdf_layout_mixed",
+      "perStatement": [
+        {
+          "type": "BS",
+          "period": "2022",
+          "comparison": "2021",
+          "extracted": 48,
+          "mapped": 48,
+          "coveragePct": 100,
+          "readiness": "ready",
+          "score": 100,
+          "warnings": []
+        },
+        {
+          "type": "P&L",
+          "period": "2022",
+          "comparison": "2021",
+          "extracted": 19,
+          "mapped": 19,
+          "coveragePct": 100,
+          "readiness": "recoverable",
+          "score": 71,
+          "warnings": [
+            "REQUIRED_LINES_MISSING"
+          ]
+        },
+        {
+          "type": "CF",
+          "period": "2022",
+          "comparison": "2021",
+          "extracted": 34,
+          "mapped": 34,
+          "coveragePct": 100,
+          "readiness": "recoverable",
+          "score": 89,
+          "warnings": [
+            "REQUIRED_LINES_MISSING"
+          ]
+        }
+      ],
+      "revenueRaw": 1081792,
+      "revenueFullUnits": 1081792000,
+      "totalAssetsRaw": 1042047,
+      "totalAssetsFullUnits": 1042047000,
+      "equityRaw": 539148,
+      "equityFullUnits": 539148000,
+      "separatorMisparse": {
+        "totalLines": 101,
+        "fractionalLines": 0,
+        "fractionalPct": 0,
+        "examples": []
+      }
+    },
+    {
+      "label": "BMW Group Financial Statements 2024",
+      "filePath": "knowledge/Finanse/Samples/BMW-Group-Financial-Statements-2024-en.pdf",
+      "declaredCurrency": "EUR",
+      "expectedCurrency": "EUR",
+      "currencyPlausible": true,
+      "declaredScaling": "millions",
+      "unitMultiplier": 1000000,
+      "extractionStrategy": "pdf_layout_primary",
+      "perStatement": [
+        {
+          "type": "BS",
+          "period": "2024",
+          "comparison": "2025",
+          "extracted": 45,
+          "mapped": 12,
+          "coveragePct": 27,
+          "readiness": "recoverable",
+          "score": 14,
+          "warnings": [
+            "BS_EQUATION_INCOMPLETE",
+            "LOW_MAPPING_COVERAGE",
+            "REQUIRED_LINES_MISSING"
+          ]
+        },
+        {
+          "type": "P&L",
+          "period": "2024",
+          "comparison": "2023",
+          "extracted": 58,
+          "mapped": 23,
+          "coveragePct": 40,
+          "readiness": "recoverable",
+          "score": 29,
+          "warnings": [
+            "PL_GROSS_MISMATCH",
+            "LOW_MAPPING_COVERAGE",
+            "REQUIRED_LINES_MISSING"
+          ]
+        },
+        {
+          "type": "CF",
+          "period": "2024",
+          "comparison": "2023",
+          "extracted": 48,
+          "mapped": 17,
+          "coveragePct": 35,
+          "readiness": "recoverable",
+          "score": 50,
+          "warnings": [
+            "LOW_MAPPING_COVERAGE"
+          ]
+        }
+      ],
+      "revenueRaw": 7,
+      "revenueFullUnits": 7000000,
+      "totalAssetsRaw": 267.732,
+      "totalAssetsFullUnits": 267732000.00000003,
+      "equityRaw": null,
+      "equityFullUnits": null,
+      "separatorMisparse": {
+        "totalLines": 52,
+        "fractionalLines": 24,
+        "fractionalPct": 46.2,
+        "examples": [
+          {
+            "label": "Other operating income 2024",
+            "canonicalId": "fsl-bs-other-equity-reserves",
+            "value": 1.335,
+            "valueIfCommaWasThousandsSeparator": 1335
+          },
+          {
+            "label": "Capital expenditure on non-current assets 2024",
+            "canonicalId": "fsl-bs-other-non-current-assets-deferred-tax",
+            "value": 12.371,
+            "valueIfCommaWasThousandsSeparator": 12371
+          },
+          {
+            "label": "Total Group capital expenditure on non-current assets 2024",
+            "canonicalId": "fsl-bs-current-assets",
+            "value": 36.752,
+            "valueIfCommaWasThousandsSeparator": 36752
+          },
+          {
+            "label": "Financial and other assets - Automotive 2024",
+            "canonicalId": "fsl-bs-other-current-financial-assets",
+            "value": 61.208,
+            "valueIfCommaWasThousandsSeparator": 61208
+          },
+          {
+            "label": "Trade payables - Automotive 2024",
+            "canonicalId": "fsl-bs-ap",
+            "value": 12.556,
+            "valueIfCommaWasThousandsSeparator": 12556
+          },
+          {
+            "label": "Total liabilities – Financial Services 2024",
+            "canonicalId": "fsl-bs-total-liabilities",
+            "value": 147.929,
+            "valueIfCommaWasThousandsSeparator": 147929
+          }
+        ]
+      }
+    },
+    {
+      "label": "KGHM SRR 2024",
+      "filePath": "knowledge/Finanse/Samples/Skonsolidowane sprawozdanie finansowe KGHM SRR_2024.pdf",
+      "declaredCurrency": "PLN",
+      "expectedCurrency": "PLN",
+      "currencyPlausible": true,
+      "declaredScaling": "millions",
+      "unitMultiplier": 1000000,
+      "extractionStrategy": "pdf_layout_mixed",
+      "perStatement": [
+        {
+          "type": "BS",
+          "period": "2024",
+          "comparison": "2023",
+          "extracted": 15,
+          "mapped": 10,
+          "coveragePct": 67,
+          "readiness": "recoverable",
+          "score": 48,
+          "warnings": [
+            "BS_EQUATION_INCOMPLETE",
+            "LOW_MAPPING_COVERAGE",
+            "REQUIRED_LINES_MISSING"
+          ]
+        },
+        {
+          "type": "P&L",
+          "period": "2024",
+          "comparison": "2023",
+          "extracted": 14,
+          "mapped": 12,
+          "coveragePct": 86,
+          "readiness": "recoverable",
+          "score": 37,
+          "warnings": [
+            "REQUIRED_LINES_MISSING"
+          ]
+        },
+        {
+          "type": "CF",
+          "period": "2024",
+          "comparison": "2023",
+          "extracted": 48,
+          "mapped": 20,
+          "coveragePct": 42,
+          "readiness": "recoverable",
+          "score": 48,
+          "warnings": [
+            "LOW_MAPPING_COVERAGE",
+            "REQUIRED_LINES_MISSING"
+          ]
+        }
+      ],
+      "revenueRaw": null,
+      "revenueFullUnits": null,
+      "totalAssetsRaw": 53892,
+      "totalAssetsFullUnits": 53892000000,
+      "equityRaw": 31058,
+      "equityFullUnits": 31058000000,
+      "separatorMisparse": {
+        "totalLines": 42,
+        "fractionalLines": 1,
+        "fractionalPct": 2.4,
+        "examples": [
+          {
+            "label": "Zysk/(strata) na akcję podstawowy i rozwodniony (w PLN) 2024",
+            "canonicalId": "fsl-pl-eps-basic",
+            "value": 14.34,
+            "valueIfCommaWasThousandsSeparator": 1434
+          }
+        ]
+      }
+    },
+    {
+      "label": "bp Annual Report 2025",
+      "filePath": "knowledge/Finanse/Samples/bp-annual-report-and-form-20f-2025.pdf",
+      "declaredCurrency": "EUR",
+      "expectedCurrency": "USD",
+      "currencyPlausible": false,
+      "declaredScaling": "thousands",
+      "unitMultiplier": 1000,
+      "extractionStrategy": "pdf_layout_primary",
+      "perStatement": [
+        {
+          "type": "BS",
+          "period": "2025",
+          "comparison": "2024",
+          "extracted": 37,
+          "mapped": 14,
+          "coveragePct": 38,
+          "readiness": "recoverable",
+          "score": 33,
+          "warnings": [
+            "BS_EQUATION_INCOMPLETE",
+            "LOW_MAPPING_COVERAGE",
+            "REQUIRED_LINES_MISSING"
+          ]
+        },
+        {
+          "type": "P&L",
+          "period": "2023",
+          "comparison": "2025",
+          "extracted": 77,
+          "mapped": 20,
+          "coveragePct": 26,
+          "readiness": "recoverable",
+          "score": 7,
+          "warnings": [
+            "LOW_MAPPING_COVERAGE",
+            "REQUIRED_LINES_MISSING"
+          ]
+        },
+        {
+          "type": "CF",
+          "period": "2025",
+          "comparison": "2024",
+          "extracted": 107,
+          "mapped": 26,
+          "coveragePct": 24,
+          "readiness": "recoverable",
+          "score": 42,
+          "warnings": [
+            "LOW_MAPPING_COVERAGE"
+          ]
+        }
+      ],
+      "revenueRaw": 189.335,
+      "revenueFullUnits": 189335,
+      "totalAssetsRaw": 26.574,
+      "totalAssetsFullUnits": 26574,
+      "equityRaw": null,
+      "equityFullUnits": null,
+      "separatorMisparse": {
+        "totalLines": 60,
+        "fractionalLines": 29,
+        "fractionalPct": 48.3,
+        "examples": [
+          {
+            "label": "Sales and other operating revenues 2025",
+            "canonicalId": "fsl-bs-ar-trade",
+            "value": 4.426,
+            "valueIfCommaWasThousandsSeparator": 4426
+          },
+          {
+            "label": "Non-current assets 2025",
+            "canonicalId": "fsl-bs-fixed",
+            "value": 22.564,
+            "valueIfCommaWasThousandsSeparator": 22564
+          },
+          {
+            "label": "Total assets 2025",
+            "canonicalId": "fsl-bs-total-assets",
+            "value": 26.574,
+            "valueIfCommaWasThousandsSeparator": 26574
+          },
+          {
+            "label": "Total liabilities 2025",
+            "canonicalId": "fsl-bs-total-liabilities",
+            "value": 16.414,
+            "valueIfCommaWasThousandsSeparator": 16414
+          },
+          {
+            "label": "Current assets 2025",
+            "canonicalId": "fsl-bs-current-assets",
+            "value": 2.005,
+            "valueIfCommaWasThousandsSeparator": 2005
+          },
+          {
+            "label": "Current liabilities 2025",
+            "canonicalId": "fsl-bs-current-liabilities",
+            "value": 2.528,
+            "valueIfCommaWasThousandsSeparator": 2528
+          }
+        ]
+      }
+    },
+    {
+      "label": "Coca-Cola 10-K 2025",
+      "filePath": "knowledge/Finanse/Samples/nyse-ko-2025-10K-25644916.pdf",
+      "declaredCurrency": "EUR",
+      "expectedCurrency": "USD",
+      "currencyPlausible": false,
+      "declaredScaling": "millions",
+      "unitMultiplier": 1000000,
+      "extractionStrategy": "pdf_layout_primary",
+      "perStatement": [
+        {
+          "type": "BS",
+          "period": "2024",
+          "comparison": "2023",
+          "extracted": 58,
+          "mapped": 24,
+          "coveragePct": 41,
+          "readiness": "recoverable",
+          "score": 22,
+          "warnings": [
+            "BS_EQUATION_MISMATCH",
+            "LOW_MAPPING_COVERAGE",
+            "REQUIRED_LINES_MISSING"
+          ]
+        },
+        {
+          "type": "P&L",
+          "period": "2023",
+          "comparison": "2025",
+          "extracted": 13,
+          "mapped": 3,
+          "coveragePct": 23,
+          "readiness": "recoverable",
+          "score": 0,
+          "warnings": [
+            "LOW_MAPPING_COVERAGE",
+            "REQUIRED_LINES_MISSING"
+          ]
+        },
+        {
+          "type": "CF",
+          "period": "2024",
+          "comparison": "2023",
+          "extracted": 39,
+          "mapped": 8,
+          "coveragePct": 21,
+          "readiness": "recoverable",
+          "score": 21,
+          "warnings": [
+            "LOW_MAPPING_COVERAGE",
+            "REQUIRED_LINES_MISSING"
+          ]
+        }
+      ],
+      "revenueRaw": null,
+      "revenueFullUnits": null,
+      "totalAssetsRaw": 100.549,
+      "totalAssetsFullUnits": 100549000,
+      "equityRaw": 26.372,
+      "equityFullUnits": 26372000,
+      "separatorMisparse": {
+        "totalLines": 35,
+        "fractionalLines": 25,
+        "fractionalPct": 71.4,
+        "examples": [
+          {
+            "label": "Other Comprehensive Income: Net foreign currency translation",
+            "canonicalId": "fsl-bs-fx-reserve",
+            "value": -2.893,
+            "valueIfCommaWasThousandsSeparator": -2893
+          },
+          {
+            "label": "ASSETS Current Assets Cash and cash equivalents $ 2024",
+            "canonicalId": "fsl-bs-cash",
+            "value": 10.828,
+            "valueIfCommaWasThousandsSeparator": 10828
+          },
+          {
+            "label": "Short-term investments 2024",
+            "canonicalId": "fsl-bs-short-term-debt",
+            "value": 2.02,
+            "valueIfCommaWasThousandsSeparator": 202
+          },
+          {
+            "label": "Inventories 2024",
+            "canonicalId": "fsl-bs-inventory",
+            "value": 4.728,
+            "valueIfCommaWasThousandsSeparator": 4728
+          },
+          {
+            "label": "Total Current Assets 2024",
+            "canonicalId": "fsl-bs-current-assets",
+            "value": 25.997,
+            "valueIfCommaWasThousandsSeparator": 25997
+          },
+          {
+            "label": "Equity method investments 2024",
+            "canonicalId": "fsl-bs-equity-method-investments",
+            "value": 18.087,
+            "valueIfCommaWasThousandsSeparator": 18087
+          }
+        ]
+      }
+    },
+    {
+      "label": "Tesla 10-K 2024",
+      "filePath": "knowledge/Finanse/Samples/tsla-20241231-gen.pdf",
+      "declaredCurrency": "EUR",
+      "expectedCurrency": "USD",
+      "currencyPlausible": false,
+      "declaredScaling": "millions",
+      "unitMultiplier": 1000000,
+      "extractionStrategy": "pdf_layout_primary",
+      "perStatement": [
+        {
+          "type": "BS",
+          "period": "2024",
+          "comparison": "2023",
+          "extracted": 69,
+          "mapped": 23,
+          "coveragePct": 33,
+          "readiness": "recoverable",
+          "score": 36,
+          "warnings": [
+            "LOW_MAPPING_COVERAGE",
+            "REQUIRED_LINES_MISSING"
+          ]
+        },
+        {
+          "type": "P&L",
+          "period": "2024",
+          "comparison": null,
+          "extracted": 56,
+          "mapped": 15,
+          "coveragePct": 27,
+          "readiness": "recoverable",
+          "score": 2,
+          "warnings": [
+            "LOW_MAPPING_COVERAGE",
+            "REQUIRED_LINES_MISSING"
+          ]
+        },
+        {
+          "type": "CF",
+          "period": "2025",
+          "comparison": null,
+          "extracted": 26,
+          "mapped": 1,
+          "coveragePct": 4,
+          "readiness": "recoverable",
+          "score": 4,
+          "warnings": [
+            "CF_CORE_LINES_MISSING",
+            "LOW_MAPPING_COVERAGE",
+            "REQUIRED_LINES_MISSING"
+          ]
+        }
+      ],
+      "revenueRaw": null,
+      "revenueFullUnits": null,
+      "totalAssetsRaw": 122.07,
+      "totalAssetsFullUnits": 122070000,
+      "equityRaw": 72.913,
+      "equityFullUnits": 72913000,
+      "separatorMisparse": {
+        "totalLines": 39,
+        "fractionalLines": 29,
+        "fractionalPct": 74.4,
+        "examples": [
+          {
+            "label": "Assets Current assets Cash and cash equivalents $ 2024",
+            "canonicalId": "fsl-bs-cash",
+            "value": 16.139,
+            "valueIfCommaWasThousandsSeparator": 16139
+          },
+          {
+            "label": "Short-term investments 2024",
+            "canonicalId": "fsl-bs-short-term-debt",
+            "value": 20.424,
+            "valueIfCommaWasThousandsSeparator": 20424
+          },
+          {
+            "label": "Accounts receivable, net 2024",
+            "canonicalId": "fsl-bs-ar",
+            "value": 4.418,
+            "valueIfCommaWasThousandsSeparator": 4418
+          },
+          {
+            "label": "Inventory 2024",
+            "canonicalId": "fsl-bs-inventory",
+            "value": 12.017,
+            "valueIfCommaWasThousandsSeparator": 12017
+          },
+          {
+            "label": "Total current assets 2024",
+            "canonicalId": "fsl-bs-current-assets",
+            "value": 58.36,
+            "valueIfCommaWasThousandsSeparator": 5836
+          },
+          {
+            "label": "Operating lease vehicles, net 2024",
+            "canonicalId": "fsl-bs-ppe-vehicles",
+            "value": 5.581,
+            "valueIfCommaWasThousandsSeparator": 5581
+          }
+        ]
+      }
+    },
+    {
+      "label": "BDG 2026 V1 XLSX",
+      "filePath": "knowledge/Finanse/BDG 2026 V1.xlsx",
+      "declaredCurrency": "PLN",
+      "expectedCurrency": null,
+      "currencyPlausible": null,
+      "declaredScaling": "millions",
+      "unitMultiplier": 1000000,
+      "extractionStrategy": "spreadsheet_structured",
+      "perStatement": [
+        {
+          "type": "BS",
+          "period": "2028",
+          "comparison": "2021",
+          "extracted": 66,
+          "mapped": 27,
+          "coveragePct": 41,
+          "readiness": "recoverable",
+          "score": 18,
+          "warnings": [
+            "BS_EQUATION_INCOMPLETE",
+            "LOW_MAPPING_COVERAGE",
+            "REQUIRED_LINES_MISSING"
+          ]
+        },
+        {
+          "type": "P&L",
+          "period": "2021",
+          "comparison": null,
+          "extracted": 109,
+          "mapped": 24,
+          "coveragePct": 22,
+          "readiness": "recoverable",
+          "score": 16,
+          "warnings": [
+            "PL_NON_POSITIVE_REVENUE",
+            "LOW_MAPPING_COVERAGE",
+            "REQUIRED_LINES_MISSING"
+          ]
+        },
+        {
+          "type": "CF",
+          "period": "2028",
+          "comparison": "2021",
+          "extracted": 1281,
+          "mapped": 42,
+          "coveragePct": 3,
+          "readiness": "recoverable",
+          "score": 27,
+          "warnings": [
+            "LOW_MAPPING_COVERAGE"
+          ]
+        }
+      ],
+      "revenueRaw": 0,
+      "revenueFullUnits": 0,
+      "totalAssetsRaw": 0,
+      "totalAssetsFullUnits": 0,
+      "equityRaw": null,
+      "equityFullUnits": null,
+      "separatorMisparse": {
+        "totalLines": 93,
+        "fractionalLines": 12,
+        "fractionalPct": 12.9,
+        "examples": [
+          {
+            "label": "ZOBOWIĄZANIA KRÓTKOTERMINOWE C. SHORT-TERM LIABILITIES C. SH",
+            "canonicalId": "fsl-cf-debt-drawdown",
+            "value": 566.592,
+            "valueIfCommaWasThousandsSeparator": 566592
+          },
+          {
+            "label": "PASYWA LIABILITIES LIABILITIES 2028",
+            "canonicalId": "fsl-cf-debt-drawdown-lease",
+            "value": 452.389,
+            "valueIfCommaWasThousandsSeparator": 452389
+          },
+          {
+            "label": "Amortyzacja 2028",
+            "canonicalId": "fsl-cf-operating-depreciation",
+            "value": 86.873,
+            "valueIfCommaWasThousandsSeparator": 86873
+          },
+          {
+            "label": "EBT - Zysk Brutto 2028",
+            "canonicalId": "fsl-cf-operating-ebt",
+            "value": -461.18,
+            "valueIfCommaWasThousandsSeparator": -46118
+          },
+          {
+            "label": "Zysk Netto 2028",
+            "canonicalId": "fsl-cf-operating-net-income",
+            "value": -461.18,
+            "valueIfCommaWasThousandsSeparator": -46118
+          },
+          {
+            "label": "Cash Flow Przepływy z działalności operacyjnej 2028",
+            "canonicalId": "fsl-cf-operating",
+            "value": -2.59,
+            "valueIfCommaWasThousandsSeparator": -259
+          }
+        ]
+      }
+    },
+    {
+      "label": "BDG 2026 V1 XLS",
+      "filePath": "knowledge/Finanse/BDG 2026 V1 old.xls",
+      "declaredCurrency": "PLN",
+      "expectedCurrency": null,
+      "currencyPlausible": null,
+      "declaredScaling": "millions",
+      "unitMultiplier": 1000000,
+      "extractionStrategy": "spreadsheet_structured",
+      "perStatement": [
+        {
+          "type": "BS",
+          "period": "2028",
+          "comparison": "2021",
+          "extracted": 66,
+          "mapped": 27,
+          "coveragePct": 41,
+          "readiness": "recoverable",
+          "score": 18,
+          "warnings": [
+            "BS_EQUATION_INCOMPLETE",
+            "LOW_MAPPING_COVERAGE",
+            "REQUIRED_LINES_MISSING"
+          ]
+        },
+        {
+          "type": "P&L",
+          "period": "2021",
+          "comparison": null,
+          "extracted": 109,
+          "mapped": 24,
+          "coveragePct": 22,
+          "readiness": "recoverable",
+          "score": 16,
+          "warnings": [
+            "PL_NON_POSITIVE_REVENUE",
+            "LOW_MAPPING_COVERAGE",
+            "REQUIRED_LINES_MISSING"
+          ]
+        },
+        {
+          "type": "CF",
+          "period": "2028",
+          "comparison": "2021",
+          "extracted": 1282,
+          "mapped": 42,
+          "coveragePct": 3,
+          "readiness": "recoverable",
+          "score": 27,
+          "warnings": [
+            "LOW_MAPPING_COVERAGE"
+          ]
+        }
+      ],
+      "revenueRaw": 0,
+      "revenueFullUnits": 0,
+      "totalAssetsRaw": 0,
+      "totalAssetsFullUnits": 0,
+      "equityRaw": null,
+      "equityFullUnits": null,
+      "separatorMisparse": {
+        "totalLines": 93,
+        "fractionalLines": 12,
+        "fractionalPct": 12.9,
+        "examples": [
+          {
+            "label": "ZOBOWIĄZANIA KRÓTKOTERMINOWE C. SHORT-TERM LIABILITIES C. SH",
+            "canonicalId": "fsl-cf-debt-drawdown",
+            "value": 566.592,
+            "valueIfCommaWasThousandsSeparator": 566592
+          },
+          {
+            "label": "PASYWA LIABILITIES LIABILITIES 2028",
+            "canonicalId": "fsl-cf-debt-drawdown-lease",
+            "value": 452.389,
+            "valueIfCommaWasThousandsSeparator": 452389
+          },
+          {
+            "label": "Amortyzacja 2028",
+            "canonicalId": "fsl-cf-operating-depreciation",
+            "value": 86.873,
+            "valueIfCommaWasThousandsSeparator": 86873
+          },
+          {
+            "label": "EBT - Zysk Brutto 2028",
+            "canonicalId": "fsl-cf-operating-ebt",
+            "value": -461.18,
+            "valueIfCommaWasThousandsSeparator": -46118
+          },
+          {
+            "label": "Zysk Netto 2028",
+            "canonicalId": "fsl-cf-operating-net-income",
+            "value": -461.18,
+            "valueIfCommaWasThousandsSeparator": -46118
+          },
+          {
+            "label": "Cash Flow Przepływy z działalności operacyjnej 2028",
+            "canonicalId": "fsl-cf-operating",
+            "value": -2.59,
+            "valueIfCommaWasThousandsSeparator": -259
+          }
+        ]
+      }
+    }
+  ],
+  "currencyDetectionDefects": [
+    {
+      "label": "bp Annual Report 2025",
+      "declared": "EUR",
+      "expected": "USD"
+    },
+    {
+      "label": "Coca-Cola 10-K 2025",
+      "declared": "EUR",
+      "expected": "USD"
+    },
+    {
+      "label": "Tesla 10-K 2024",
+      "declared": "EUR",
+      "expected": "USD"
+    }
+  ],
+  "thousandsSeparatorMisparse": [
+    {
+      "label": "BMW Group Financial Statements 2024",
+      "declaredScaling": "millions",
+      "fractionalPct": 46.2,
+      "totalLines": 52,
+      "examples": [
+        {
+          "label": "Other operating income 2024",
+          "canonicalId": "fsl-bs-other-equity-reserves",
+          "value": 1.335,
+          "valueIfCommaWasThousandsSeparator": 1335
+        },
+        {
+          "label": "Capital expenditure on non-current assets 2024",
+          "canonicalId": "fsl-bs-other-non-current-assets-deferred-tax",
+          "value": 12.371,
+          "valueIfCommaWasThousandsSeparator": 12371
+        },
+        {
+          "label": "Total Group capital expenditure on non-current assets 2024",
+          "canonicalId": "fsl-bs-current-assets",
+          "value": 36.752,
+          "valueIfCommaWasThousandsSeparator": 36752
+        },
+        {
+          "label": "Financial and other assets - Automotive 2024",
+          "canonicalId": "fsl-bs-other-current-financial-assets",
+          "value": 61.208,
+          "valueIfCommaWasThousandsSeparator": 61208
+        },
+        {
+          "label": "Trade payables - Automotive 2024",
+          "canonicalId": "fsl-bs-ap",
+          "value": 12.556,
+          "valueIfCommaWasThousandsSeparator": 12556
+        },
+        {
+          "label": "Total liabilities – Financial Services 2024",
+          "canonicalId": "fsl-bs-total-liabilities",
+          "value": 147.929,
+          "valueIfCommaWasThousandsSeparator": 147929
+        }
+      ]
+    },
+    {
+      "label": "bp Annual Report 2025",
+      "declaredScaling": "thousands",
+      "fractionalPct": 48.3,
+      "totalLines": 60,
+      "examples": [
+        {
+          "label": "Sales and other operating revenues 2025",
+          "canonicalId": "fsl-bs-ar-trade",
+          "value": 4.426,
+          "valueIfCommaWasThousandsSeparator": 4426
+        },
+        {
+          "label": "Non-current assets 2025",
+          "canonicalId": "fsl-bs-fixed",
+          "value": 22.564,
+          "valueIfCommaWasThousandsSeparator": 22564
+        },
+        {
+          "label": "Total assets 2025",
+          "canonicalId": "fsl-bs-total-assets",
+          "value": 26.574,
+          "valueIfCommaWasThousandsSeparator": 26574
+        },
+        {
+          "label": "Total liabilities 2025",
+          "canonicalId": "fsl-bs-total-liabilities",
+          "value": 16.414,
+          "valueIfCommaWasThousandsSeparator": 16414
+        },
+        {
+          "label": "Current assets 2025",
+          "canonicalId": "fsl-bs-current-assets",
+          "value": 2.005,
+          "valueIfCommaWasThousandsSeparator": 2005
+        },
+        {
+          "label": "Current liabilities 2025",
+          "canonicalId": "fsl-bs-current-liabilities",
+          "value": 2.528,
+          "valueIfCommaWasThousandsSeparator": 2528
+        }
+      ]
+    },
+    {
+      "label": "Coca-Cola 10-K 2025",
+      "declaredScaling": "millions",
+      "fractionalPct": 71.4,
+      "totalLines": 35,
+      "examples": [
+        {
+          "label": "Other Comprehensive Income: Net foreign currency translation",
+          "canonicalId": "fsl-bs-fx-reserve",
+          "value": -2.893,
+          "valueIfCommaWasThousandsSeparator": -2893
+        },
+        {
+          "label": "ASSETS Current Assets Cash and cash equivalents $ 2024",
+          "canonicalId": "fsl-bs-cash",
+          "value": 10.828,
+          "valueIfCommaWasThousandsSeparator": 10828
+        },
+        {
+          "label": "Short-term investments 2024",
+          "canonicalId": "fsl-bs-short-term-debt",
+          "value": 2.02,
+          "valueIfCommaWasThousandsSeparator": 202
+        },
+        {
+          "label": "Inventories 2024",
+          "canonicalId": "fsl-bs-inventory",
+          "value": 4.728,
+          "valueIfCommaWasThousandsSeparator": 4728
+        },
+        {
+          "label": "Total Current Assets 2024",
+          "canonicalId": "fsl-bs-current-assets",
+          "value": 25.997,
+          "valueIfCommaWasThousandsSeparator": 25997
+        },
+        {
+          "label": "Equity method investments 2024",
+          "canonicalId": "fsl-bs-equity-method-investments",
+          "value": 18.087,
+          "valueIfCommaWasThousandsSeparator": 18087
+        }
+      ]
+    },
+    {
+      "label": "Tesla 10-K 2024",
+      "declaredScaling": "millions",
+      "fractionalPct": 74.4,
+      "totalLines": 39,
+      "examples": [
+        {
+          "label": "Assets Current assets Cash and cash equivalents $ 2024",
+          "canonicalId": "fsl-bs-cash",
+          "value": 16.139,
+          "valueIfCommaWasThousandsSeparator": 16139
+        },
+        {
+          "label": "Short-term investments 2024",
+          "canonicalId": "fsl-bs-short-term-debt",
+          "value": 20.424,
+          "valueIfCommaWasThousandsSeparator": 20424
+        },
+        {
+          "label": "Accounts receivable, net 2024",
+          "canonicalId": "fsl-bs-ar",
+          "value": 4.418,
+          "valueIfCommaWasThousandsSeparator": 4418
+        },
+        {
+          "label": "Inventory 2024",
+          "canonicalId": "fsl-bs-inventory",
+          "value": 12.017,
+          "valueIfCommaWasThousandsSeparator": 12017
+        },
+        {
+          "label": "Total current assets 2024",
+          "canonicalId": "fsl-bs-current-assets",
+          "value": 58.36,
+          "valueIfCommaWasThousandsSeparator": 5836
+        },
+        {
+          "label": "Operating lease vehicles, net 2024",
+          "canonicalId": "fsl-bs-ppe-vehicles",
+          "value": 5.581,
+          "valueIfCommaWasThousandsSeparator": 5581
+        }
+      ]
+    }
+  ]
+}
