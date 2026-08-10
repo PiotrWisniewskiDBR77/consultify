@@ -232,6 +232,64 @@ async function getLegacyEngineManifestId(pool: Queryable): Promise<string> {
   return legacyEngineManifestId!;
 }
 
+// ---------------------------------------------------------------------------------------------
+// F-2 fix — single-writer guard (docs/validation/finance-v3/generated/gate-d/
+// W3_BACKFILL_LOCK_EXPORT_HASH_report.md). `getOrCreateArtifact()` below is a check-then-act
+// (SELECT, then INSERT) race: two concurrent `seed`/`run` invocations against the same database
+// can both miss each other's uncommitted row and each insert their own `finance_artifacts` row
+// for the same (organization_id, natural_key) — reproduced directly at the SQL level in the
+// report (§ F-2b). A session-scoped Postgres advisory lock, held for the whole `seed`/`run`
+// invocation (acquired on a dedicated connection kept checked out from the pool for that purpose,
+// released and unlocked in `main()`'s `finally`), makes two concurrent invocations mutually
+// exclusive so this race can no longer happen at all — not just "fail safely if it happens".
+//
+// `pg_try_advisory_lock` (immediate refusal), not `pg_advisory_lock` (blocking wait), was chosen
+// deliberately: this script's only real caller is a human operator running one shell command at a
+// time (see file header — no cron, no orchestrator, no route). An operator who accidentally
+// double-launches the job wants to find out INSTANTLY and unambiguously ("another run is already
+// in progress, refusing to start a second one") — a silent indefinite block looks exactly like a
+// hang (no distinguishing symptom from a genuinely stuck run), is much harder to diagnose from a
+// terminal, and offers no operational upside here since there is no queue of pending work for a
+// blocked second invocation to usefully wait for. This also matches the script's existing idiom
+// of failing loud and immediately rather than waiting/retrying (`process.exit(2)` for a missing
+// `--database-url`, an explicit thrown error for "Refusing to silently continue a prior run"
+// instead of blocking on `--resume`). If this script is ever wired into an orchestrator with a
+// real job queue, that would be the moment to reconsider — a queued caller might legitimately
+// prefer to block — but that is a different, not-yet-existing caller, not this one.
+const BACKFILL_ADVISORY_LOCK_KEY = 'finance-v3-backfill-dry-run:single-writer';
+
+class BackfillLockHeldError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'BackfillLockHeldError';
+  }
+}
+
+/** Attempts to acquire the single-writer advisory lock on `client`'s own session. Throws BackfillLockHeldError if another session already holds it. */
+async function acquireBackfillLock(client: PoolClient): Promise<void> {
+  const res = await client.query<{ locked: boolean }>(
+    `SELECT pg_try_advisory_lock(hashtext($1)::bigint) AS locked`,
+    [BACKFILL_ADVISORY_LOCK_KEY]
+  );
+  if (!res.rows[0]?.locked) {
+    throw new BackfillLockHeldError(
+      `Another finance-v3-backfill-dry-run 'seed' or 'run' process already holds the advisory lock ` +
+        `(key='${BACKFILL_ADVISORY_LOCK_KEY}') on this database. Refusing to run concurrently — two ` +
+        `simultaneous invocations race on getOrCreateArtifact()/createBusinessVersion() (F-2, ` +
+        `docs/validation/finance-v3/generated/gate-d/W3_BACKFILL_LOCK_EXPORT_HASH_report.md). Wait ` +
+        `for the other process to finish (or confirm its PID is actually dead — the lock is session-` +
+        `scoped and releases automatically if that connection drops) and retry.`
+    );
+  }
+}
+
+/** Releases the single-writer advisory lock. Best-effort: the lock is session-scoped and is also released automatically when the connection closes. */
+async function releaseBackfillLock(client: PoolClient): Promise<void> {
+  await client.query(`SELECT pg_advisory_unlock(hashtext($1)::bigint)`, [BACKFILL_ADVISORY_LOCK_KEY]).catch(() => {});
+}
+
+let raceTestDelayFired = false;
+
 async function getOrCreateArtifact(
   client: PoolClient,
   opts: { organizationId: string; artifactType: string; naturalKey: string }
@@ -241,6 +299,18 @@ async function getOrCreateArtifact(
     [opts.organizationId, opts.naturalKey]
   );
   if (existing.rows[0]) return existing.rows[0].artifact_id;
+  // TEST-ONLY hook, no-op unless BACKFILL_RACE_TEST_DELAY_MS is set: widens the check-then-act
+  // window between the SELECT above and the INSERT below so the F-2b silent-duplicate race
+  // (docs/validation/finance-v3/generated/gate-d/W3_BACKFILL_LOCK_EXPORT_HASH_report.md) can be
+  // reproduced and re-verified on demand instead of depending on incidental process-scheduling
+  // luck. Fires only on this process's FIRST missing-artifact lookup (not every call) so two
+  // concurrently-launched processes hit the delay at nearly the same wall-clock instant instead of
+  // drifting apart over many delayed calls. Never set in normal seed/run/verify usage.
+  const raceTestDelayMs = Number(process.env.BACKFILL_RACE_TEST_DELAY_MS || 0);
+  if (raceTestDelayMs > 0 && !raceTestDelayFired) {
+    raceTestDelayFired = true;
+    await new Promise((resolve) => setTimeout(resolve, raceTestDelayMs));
+  }
   const res = await client.query(
     `INSERT INTO finance_artifacts (organization_id, artifact_type, natural_key, created_by)
      VALUES ($1, $2, $3, $4) RETURNING artifact_id`,
@@ -1895,9 +1965,29 @@ async function main() {
     process.exit(2);
   }
   const pool = new Pool({ connectionString: databaseUrl });
+  // F-2 fix: `seed`/`run` both write; hold a dedicated, checked-out connection for the advisory
+  // lock's whole lifetime so it stays on the SAME Postgres session (advisory locks are
+  // session-scoped — acquiring on one pool connection and later calling pool.query() again,
+  // which may hand back a DIFFERENT connection, would not see/release the same lock).
+  // `verify` is read-only and does not need the lock.
+  let lockClient: PoolClient | null = null;
 
   try {
     await ensureBookkeeping(pool);
+
+    if (command === 'seed' || command === 'run') {
+      lockClient = await pool.connect();
+      try {
+        await acquireBackfillLock(lockClient);
+      } catch (err) {
+        if (err instanceof BackfillLockHeldError) {
+          console.error(`\n🔒 ${err.message}`);
+          process.exitCode = 3; // distinct exit code for "lock held by another process", not a data/logic error
+          return;
+        }
+        throw err;
+      }
+    }
 
     if (command === 'seed') {
       await seed(pool);
@@ -1926,6 +2016,10 @@ async function main() {
       process.exitCode = 2;
     }
   } finally {
+    if (lockClient) {
+      await releaseBackfillLock(lockClient);
+      lockClient.release();
+    }
     await pool.end();
   }
 }
