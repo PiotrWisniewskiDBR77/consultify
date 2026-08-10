@@ -74,7 +74,7 @@ jobs:
       
       - name: OWASP ZAP Full Scan
         if: github.event.inputs.scan_type == 'full' || github.event.schedule
-        uses: zaproxy/action-full-scan@v0.10.0
+        uses: zaproxy/action-full-scan@v0.13.0
         with:
           target: ${{ github.event.inputs.target_url || 'http://localhost:3000' }}
           rules_file_name: 'tests/security/zap-config.yaml'
