@@ -24,6 +24,7 @@ import {
   computeDepths,
   hasTenantAnomalies,
   isOrphaned,
+  isTerminalVersionStatus,
   lineageStageRank,
   loadLineageNavigator,
   type LineageMetadataResolver,
@@ -624,5 +625,153 @@ describe('AP-11 lineageNavigatorContract — cross-tenant defence (adversarial)'
     });
     expect(trail.totalNodeCount).toBe(5);
     expect(hasTenantAnomalies(trail.tenant)).toBe(false);
+  });
+});
+
+// ===========================================================================
+// AP-11 — terminal lifecycle states (ARCHIVED / SUPERSEDED / INVALIDATED).
+// ===========================================================================
+
+describe('AP-11 lineageNavigatorContract — terminal versions', () => {
+  const archived = (versionId: string): LineageNodeMetadata => ({
+    ...NODES[versionId],
+    status: 'ARCHIVED',
+  });
+
+  it('POSITIVE CONTROL — "+ Nowy" is refused from a terminal node, with a stated reason', () => {
+    for (const status of ['ARCHIVED', 'SUPERSEDED', 'INVALIDATED'] as const) {
+      expect(isTerminalVersionStatus(status)).toBe(true);
+      expect(allowedDownstreamCreations('BASELINE_MODEL', status)).toEqual([]);
+      expect(allowedDownstreamCreations('STATEMENT_PACK', status)).toEqual([]);
+    }
+    const panel = buildRelatedPanel({
+      organizationId: ORG,
+      focusVersionId: 'bm4',
+      ancestorEdges: ANCESTOR_EDGES,
+      descendantEdges: [],
+      resolve: (id) => (id === 'bm4' ? archived('bm4') : NODES[id]),
+    })!;
+    expect(panel.createNew).toEqual([]);
+    expect(panel.createNewBlockedReason).toBe('TERMINAL_SOURCE_STATUS');
+    expect(panel.createNewBlockedLabel?.pl).toContain('zamknięta');
+    expect(panel.focusBadges.map((b) => b.kind)).toContain('ARCHIVED');
+  });
+
+  it('NEGATIVE CONTROL — every live status still offers the full downstream set', () => {
+    for (const status of ['DRAFT', 'READY_FOR_REVIEW', 'IN_REVIEW', 'APPROVED', 'NEEDS_CHANGES'] as const) {
+      expect(isTerminalVersionStatus(status)).toBe(false);
+      expect(allowedDownstreamCreations('BASELINE_MODEL', status)).toEqual([
+        'PREDICTION_SCENARIO',
+        'VALUATION_CASE',
+        'REPORT_EXPORT',
+      ]);
+    }
+    const panel = buildRelatedPanel({
+      organizationId: ORG,
+      focusVersionId: 'bm4',
+      ancestorEdges: ANCESTOR_EDGES,
+      descendantEdges: [],
+      resolve,
+    })!;
+    expect(panel.createNew).toHaveLength(3);
+    expect(panel.createNewBlockedReason).toBeNull();
+  });
+
+  it('distinguishes "no downstream type exists" from "this version is closed"', () => {
+    // A REPORT_EXPORT is the last stage: empty for a structural reason, not a lifecycle one.
+    const panel = buildRelatedPanel({
+      organizationId: ORG,
+      focusVersionId: 'rep1',
+      ancestorEdges: [edge('val1', 'VALUATION_CASE', 'rep1', 'REPORT_EXPORT', 'VERSION_TO_REPORT')],
+      descendantEdges: [],
+      resolve,
+    })!;
+    expect(panel.createNew).toEqual([]);
+    expect(panel.createNewBlockedReason).toBe('NO_DOWNSTREAM_TYPE');
+  });
+
+  it('keeps an archived ANCESTOR in the trail but marks and dims it', () => {
+    const trail = buildLineageTrail({
+      organizationId: ORG,
+      focusVersionId: 'val1',
+      ancestorEdges: ANCESTOR_EDGES,
+      resolve: (id) => (id === 'bm4' ? archived('bm4') : NODES[id]),
+    });
+    const nodes = trail.items.filter((i): i is LineageTrailNode => i.kind === 'node');
+    // The chain is intact — hiding a closed ancestor would falsify provenance.
+    expect(nodes.map((n) => n.displayName)).toEqual([
+      'Statement pack v3',
+      'Analysis v2',
+      'Baseline model v4',
+      'Scenario Bull v2',
+      'Valuation v1',
+    ]);
+    const bm = nodes.find((n) => n.metadata.versionId === 'bm4')!;
+    expect(bm.isDimmed).toBe(true);
+    expect(bm.stateBadge?.kind).toBe('ARCHIVED');
+    // Orthogonal to freshness: sc2 is stale but live, bm4 is closed but current.
+    expect(bm.staleBadge).toBeNull();
+    const sc = nodes.find((n) => n.metadata.versionId === 'sc2')!;
+    expect(sc.isDimmed).toBe(false);
+    expect(sc.staleBadge?.kind).toBe('SOURCE_CHANGED');
+    expect(sc.stateBadge).toBeNull();
+  });
+
+  it('dims terminal relatives by default and can hide them on request — with a count', () => {
+    const descendants = [
+      edge('bm4', 'BASELINE_MODEL', 'sc2', 'PREDICTION_SCENARIO', 'MODEL_TO_SCENARIO'),
+      edge('bm4', 'BASELINE_MODEL', 'val1', 'VALUATION_CASE', 'MODEL_TO_VALUATION'),
+    ];
+    // sc2 is forced CURRENT so the only stale child is the closed one; otherwise
+    // the DOWNSTREAM_STALE assertion below would be answered by sc2, not by the rule.
+    const withArchivedChild: LineageMetadataResolver = (id) =>
+      id === 'val1'
+        ? { ...NODES.val1, status: 'INVALIDATED' }
+        : id === 'sc2'
+          ? { ...NODES.sc2, freshness: 'CURRENT' }
+          : NODES[id];
+
+    const dimmed = buildRelatedPanel({
+      organizationId: ORG,
+      focusVersionId: 'bm4',
+      ancestorEdges: ANCESTOR_EDGES,
+      descendantEdges: descendants,
+      resolve: withArchivedChild,
+    })!;
+    expect(dimmed.terminalVisibility).toBe('dim');
+    expect(dimmed.children.map((g) => g.artifactType)).toEqual([
+      'PREDICTION_SCENARIO',
+      'VALUATION_CASE',
+    ]);
+    expect(dimmed.children.flatMap((g) => g.entries).filter((e) => e.isDimmed)).toHaveLength(1);
+    expect(dimmed.hiddenTerminalCount).toBe(0);
+    // val1 is NEVER_COMPUTED, but it is closed — no actionable downstream staleness.
+    expect(dimmed.focusBadges.map((b) => b.kind)).not.toContain('DOWNSTREAM_STALE');
+
+    const hidden = buildRelatedPanel({
+      organizationId: ORG,
+      focusVersionId: 'bm4',
+      ancestorEdges: ANCESTOR_EDGES,
+      descendantEdges: descendants,
+      resolve: withArchivedChild,
+      terminalVisibility: 'hide',
+    })!;
+    expect(hidden.children.map((g) => g.artifactType)).toEqual(['PREDICTION_SCENARIO']);
+    expect(hidden.hiddenTerminalCount).toBe(1);
+  });
+
+  it('NEGATIVE CONTROL — with no terminal relatives, hide mode changes nothing', () => {
+    const descendants = [edge('bm4', 'BASELINE_MODEL', 'sc2', 'PREDICTION_SCENARIO', 'MODEL_TO_SCENARIO')];
+    const hidden = buildRelatedPanel({
+      organizationId: ORG,
+      focusVersionId: 'bm4',
+      ancestorEdges: ANCESTOR_EDGES,
+      descendantEdges: descendants,
+      resolve,
+      terminalVisibility: 'hide',
+    })!;
+    expect(hidden.hiddenTerminalCount).toBe(0);
+    expect(hidden.children.map((g) => g.count)).toEqual([1]);
+    expect(hidden.parents.flatMap((g) => g.entries).every((e) => e.isDimmed === false)).toBe(true);
   });
 });
