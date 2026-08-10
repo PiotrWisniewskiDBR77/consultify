@@ -483,8 +483,85 @@ Szczegóły: `EXECUTION_LEDGER.md` §36. Poza zakresem, świadomie NIEZBUDOWANE
 roli PMO/governance napędzającej AC-01 (D19), generacja Teresy odroczona do
 ROI-E008 (D13), brak ścieżki reopen z `post_investment_review`/`closed`.
 
-**Domena ROI: 6/8 epików zbudowanych (E001, E002, E003, E004, E005, E006).
-Cała mechanika backendu ROI-E001…E006 domknięta. ROI-E007 Finance/KPI Seams
-następny w kolejce.**
+**ROI-E007 Finance/KPI Seams — Status: IMPLEMENTED 2026-08-10** (backend
+only; UI Registry to RN-G2, poza zakresem). **Siódmy epik domeny ROI —
+integracyjny seam, nie nowa treść domenowa** — deliberately smaller than
+E001-E006. Poprzednia próba implementacji (inny agent, ta sama sesja)
+przerwana w trakcie bez commitu i bez weryfikacji — ten wpis to CZYSTY
+retry: cztery pozostawione pliki (migracja + `roiFinanceSeamTypes.ts` +
+`roiFinanceLinkCommands.ts` + `roiFinanceReconciliationCommands.ts`)
+zweryfikowane krytycznie względem designu i aktualnego stanu kodu, uznane
+za poprawne i dokończone (nie przepisane od zera). `docs/product/
+results-vnext/ROI_E007_DESIGN.md` (FROZEN, 7-wierszowa tabela Decisions
+D1-D7) → `server/migrations/20260820_rvn_roi_finance_seam.sql` (2 nowe
+tabele — `rvn_roi_finance_links`/`rvn_roi_finance_reconciliations`, obie
+dziedziczą widoczność wyłącznie przez `case_id`, ŻADNA nie ma triggera
+zamrażającego — linki są usuwalne, reconciliations mają ograniczony
+cykl życia przez CAS) → `server/src/services/resultsVnext/roi/
+roiFinanceLinkCommands.ts` (`createRoiFinanceLink`/`removeRoiFinanceLink`,
+ZERO walidacji istnienia względem tabel Finance — Decyzja D4) +
+`roiFinanceReconciliationCommands.ts` (`openRoiFinanceReconciliation`/
+`updateRoiFinanceReconciliationStatus` — Decyzja D1, PATCH z CAS na
+WŁASNEJ wersji rekordu, dokładny szablon `updateVarianceStatus`) +
+`roiFinanceLinkRepository.ts` (nowy plik — `listRoiFinanceLinks`/
+`getRoiFinanceLink`/`listRoiFinanceReconciliations`/
+`getRoiFinanceReconciliation`) → Changed `roiEconomicModelRepository.ts`
+(`isStale` dopisane do istniejącego odczytu D14-hydration
+`listBenefitEvidenceLinks`, obliczane WYŁĄCZNIE przy odczycie, nigdy
+zapisywane; nowa `listRoiEvidenceLinksByKpi` — odwrotny odczyt KPI→ROI,
+Decyzja D2, ten sam dwuwarstwowy model widoczności co D14) → Changed
+`roiBenefitEvidenceLinkCommands.ts` (`flagEvidenceLinkFreshnessCheck` —
+Decyzja D7, ustawia WYŁĄCZNIE `freshness_checked_at`, ZERO zapisu do
+jakiejkolwiek tabeli `rvn_kpi_*`, dowiedzione statycznym testem
+źródła) → `server/src/routes/resultsVnext/roi.routes.ts` (5 nowych tras)
++ `resultsVnextRoi.validators.ts` (4 nowe schematy Zod + 3 nowe schematy
+parametrów ścieżki) + `atomicWrite.ts` (6 nowych typów zdarzeń — link
+create/remove i reconciliation opened/resolved fanują do
+`['mywork_projection','finance_projection']`, non-terminal
+status-update i freshness-flagged tylko do `['mywork_projection']`,
+zgodnie z Decyzją D1/D7). 38 nowych testów, wszystkie PASS na efemerycznym
+Postgresie 17 (5 finance-link realDB + 6 finance-reconciliation realDB +
+5 evidence-link-freshness realDB + 4 links-by-kpi realDB + 18 route
+mock). Pięć AC z prozy §0 designu wszystkie zaadresowane: AC-01 pełna
+pinned koperta (`createRoiFinanceLink` zwraca każde pole z §3 DDL/§9.6,
+dowiedzione bezpośrednim testem envelope), AC-02 zero nadpisania w obu
+kierunkach (AC-02 grep gate: `grep -rn "financial_roi_links\|
+financial_models\|financial_statement" server/src/services/resultsVnext/
+roi/` — ZERO trafień, potwierdzone realnie, nie tylko deklaratywnie),
+AC-03 reconciliation record zamiast silent sync (rekord tworzony i
+rozwiązywalny przez CAS, event fan-out RÓŻNI się terminal/non-terminal —
+dowiedzione bezpośrednim odczytem `rvn_platform_outbox`), AC-04 typed
+KPI evidence zamiast luźnego FK (odwrotny odczyt `listRoiEvidenceLinksByKpi`
+respektuje dwuwarstwową widoczność — dowiedzione trzema rolami: grantee/
+case-only/outsider), AC-05 freshness event bez auto-propagacji wartości
+(`isStale` liczone WYŁĄCZNIE przy odczycie, `flagEvidenceLinkFreshnessCheck`
+NIGDY nie zmienia `isStale` ani nie pisze do `rvn_kpi_*` — dowiedzione
+behawioralnie ORAZ statycznym grep-em własnego kodu funkcji). Regresja:
+PRZED/PO `git stash` (surowe, per-plik — TYLKO plików tego epika, nie
+`-u`) na tej samej efemerycznej bazie Postgres 17 — 20 plików/36 testów
+failed IDENTYCZNIE w obu przebiegach (`diff` list nazw testów pusty;
+przedistniejący `initiatives_organization_id_fkey` w starszych plikach
+ROI-E001…E004 realDB, które nie insertują wiersza `organizations` przed
+`initiatives` — środowiskowy artefakt pełnego zestawu migracji na
+efemerycznej bazie, NIE związany z tym epikiem, żaden z 20 plików nie
+dotknięty przez ROI-E007), 423→461 passed (+38, dokładnie tyle ile nowych
+testów). `tsc --noEmit` clean (root 0 błędów; `server/tsconfig.json` 18
+przedistniejących błędów `decimal.js` w `roiCalculationEngine.ts`,
+IDENTYCZNE PRZED/PO tym samym stash-porównaniem, plik całkowicie
+nietknięty przez ten epik — liczba różni się od `28` odnotowanych w §36,
+ale to stan pliku na tej gałęzi w tym momencie, nie regresja tego epika).
+Szczegóły: `EXECUTION_LEDGER.md` §38. Poza zakresem, świadomie
+NIEZBUDOWANE (backlog, Decyzje D3/D5, honest caveat D2): D3 brak
+composed `GET .../finance-envelope` rollup endpoint (żaden confirmed
+consumer), D5 brak `finance_projection` outbox consumer (`outboxDrain.ts`
+jawnie instruuje, żeby tego NIE budować teraz — Finance's own team buduje
+gdy będzie gotowy), D2's honest caveat: odwrotny odczyt
+`listRoiEvidenceLinksByKpi` może być redundantny względem tego, co
+ROI-E002 już dostarczył po stronie zapisu — zbudowany bo tani i
+bezpieczny, NIE przedstawiony jako pewny wymóg.
+
+**Domena ROI: 7/8 epików zbudowanych (E001, E002, E003, E004, E005, E006,
+E007). Cała mechanika backendu ROI-E001…E007 domknięta. ROI-E008
+Teresa/Legacy/Ops następny i OSTATNI w kolejce.**
 
 Pełne tabele (wszystkie pola per AC): transkrypt agenta `a2714d65fd9b0df12`.
