@@ -143,6 +143,7 @@ import {
   withPgTransaction,
 } from '../../utils/queryHelpers.js';
 import { CaseWorkspaceAuthError, requireCaseAccess } from './caseWorkspaceAuthContext.js';
+import { publishEvent, redact } from './eventOutboxService.js';
 
 // ---------------------------------------------------------------------------
 // Public types — Case History Events
@@ -406,6 +407,17 @@ function requireEnum<T extends string>(
   return value;
 }
 
+/**
+ * Returns the value only when it is a timestamp `new Date()` can actually
+ * parse; null otherwise. Used exclusively for the domain event's `occurredAt`
+ * (see appendCaseHistoryEvent) — the history table's own occurred_at column
+ * stays exactly as the caller supplied it.
+ */
+function parsableTimestampOrNull(value: string | null | undefined): string | null {
+  if (!value) return null;
+  return Number.isNaN(new Date(value).getTime()) ? null : value;
+}
+
 function toNullableNumber(value: string | null): number | null {
   if (value === null || value === undefined) return null;
   const parsed = Number(value);
@@ -611,6 +623,20 @@ export function computeMetricValueOutcomeState(
  * a dedupeKey, always inserts a new row. global_seq is DB-assigned.
  * Validates organizationId/caseId/eventType/actorId/occurredAt/summary
  * non-blank; payload defaults to {} and is JSON.stringify'd.
+ *
+ * DOMAIN EVENT (EVENT_TAXONOMY.md §2, caseHistoryService row 1): the outbox
+ * event is emitted HERE — on the public entry point — and deliberately NOT
+ * inside insertHistoryEvent(), which other commands in this file reuse
+ * internally. That placement is the whole of §5.6's double-emission rule:
+ * recordValueMeasurement() appends a history row through the same helper, and
+ * if the helper emitted, that one command would produce TWO outbox rows
+ * (`outcome.measurement_recorded` + the history event). Do not move this call
+ * down into insertHistoryEvent().
+ *
+ * The `event_type` is the caller's own, emitted VERBATIM and never translated:
+ * `case_workspace_history_events.event_type` is an open TEXT catalog
+ * (HISTORY_EVENT_TYPES) that is NOT this taxonomy's namespace, and inventing a
+ * mapping at this call site would silently rename other people's facts.
  */
 export async function appendCaseHistoryEvent(
   input: AppendCaseHistoryEventInput
@@ -619,7 +645,50 @@ export async function appendCaseHistoryEvent(
     requireNonBlank(input.actorId, 'history_event_actor_id_required'),
     requireNonBlank(input.caseId, 'history_event_case_id_required')
   );
-  return withPgTransaction((client) => insertHistoryEvent(client, input));
+  return withPgTransaction(async (client) => {
+    const appended = await insertHistoryEvent(client, input);
+
+    // Deterministic eventId derived from the history row's own PK (§1). On the
+    // dedupe_key idempotent-replay path insertHistoryEvent() returns the
+    // ORIGINAL row, so this resolves to the ORIGINAL event id and
+    // `ON CONFLICT (event_id) DO NOTHING` collapses it: a replayed append can
+    // never produce a second outbox row for the same history fact.
+    await publishEvent(client, {
+      eventId: `cwevt-${appended.eventId}`,
+      eventType: appended.eventType,
+      organizationId: appended.organizationId,
+      projectId: appended.projectId,
+      aggregateType: 'CASE',
+      aggregateId: appended.caseId,
+      // §3: null. This command writes case_workspace_history_events, not
+      // case_core — there is no post-mutation case_core.version to take from a
+      // RETURNING row here, and re-reading one would be a different value under
+      // concurrency (§3's explicit prohibition). This service also never SELECTs
+      // case_core inside appendCaseHistoryEvent by design (see file header).
+      aggregateVersion: null,
+      caseId: appended.caseId,
+      actorUserId: appended.actorId,
+      correlationId: appended.correlationId,
+      // §2's rule for this row: ids only. The caller's free-text `summary` and
+      // arbitrary `payload` stay in the history row and are referenced, never
+      // copied into the event (§6 facts-not-documents).
+      redactedSummary: redact({
+        historyEventId: appended.eventId,
+        sourceTable: appended.sourceTable,
+        sourceId: appended.sourceId,
+      }),
+      payloadRef: `case_workspace_history_events:${appended.eventId}`,
+      // Business time carried across ONLY when it actually parses.
+      // `occurred_at` on the history table is a validated-non-blank TEXT
+      // column, not a timestamp — publishEvent throws
+      // `event_outbox_occurred_at_invalid` on an unparseable value, and a
+      // malformed caller timestamp must not turn a working append into a hard
+      // failure. Unparseable -> publishEvent's own now() default.
+      occurredAt: parsableTimestampOrNull(appended.occurredAt),
+    });
+
+    return appended;
+  });
 }
 
 /** CW-00-020-INV13. Plain read, no lock. */
@@ -859,6 +928,43 @@ export async function recordValueMeasurement(
       },
       sourceTable: 'case_workspace_value_measurements',
       sourceId: measurementId,
+    });
+
+    // EVENT_TAXONOMY.md §2 (caseHistoryService row 2) + §5.6: exactly ONE
+    // outbox row for this command — `outcome.measurement_recorded` on the
+    // VALUE_MEASUREMENT aggregate. The insertHistoryEvent() call above is the
+    // INTERNAL helper and deliberately does not emit (the emission lives in the
+    // public appendCaseHistoryEvent entry point), so this command cannot
+    // double-count as a measurement AND a history event.
+    //
+    // Deterministic eventId from the measurement's own PK (§1). Note the
+    // dedupe_key replay path returns EARLIER, above, without inserting a
+    // measurement row — no mutation, therefore no event.
+    await publishEvent(client, {
+      eventId: `cwevt-${measurementId}`,
+      eventType: 'outcome.measurement_recorded',
+      organizationId: caseRow.organization_id,
+      projectId: caseRow.project_id,
+      aggregateType: 'VALUE_MEASUREMENT',
+      aggregateId: measurementId,
+      // §3: case_workspace_value_measurements has no version column.
+      aggregateVersion: null,
+      caseId,
+      actorUserId: measuredByActorId,
+      redactedSummary: redact({
+        metricKey,
+        measurementStatus,
+        confidence,
+        attribution,
+        measurementDate,
+        baselineValue: input.baselineValue ?? null,
+        targetValue: input.targetValue ?? null,
+        actualValue: input.actualValue ?? null,
+        actualUnit: input.actualUnit ?? null,
+        kpiRef: input.kpiRef ?? null,
+      }),
+      // §6: the evidence itself is referenced, never copied into the event.
+      payloadRef: `case_workspace_value_measurements:${measurementId}`,
     });
 
     return mapValueMeasurementRow(measurementRow);

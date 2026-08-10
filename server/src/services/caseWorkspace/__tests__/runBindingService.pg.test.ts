@@ -105,7 +105,20 @@ async function canReachWithSchema(connectionString: string): Promise<boolean> {
     );
     const orgMembersOk = Number(orgMembersResult.rows[0]?.present ?? 0) === 4;
 
-    return bindingsOk && runsOk && orgMembersOk;
+    // The service now publishes a domain event on the SAME transaction as the
+    // bind (EVENT_TAXONOMY.md §2), so without this table every bind fails.
+    // Probed here so a missing outbox migration is a LOUD SKIP, not a
+    // mysterious red suite.
+    const outboxResult = await probe.query(
+      `SELECT count(*)::int AS present FROM information_schema.columns
+        WHERE table_schema = 'public' AND table_name = 'case_workspace_event_outbox'
+          AND column_name IN ('event_id', 'event_type', 'organization_id', 'aggregate_type',
+                               'aggregate_id', 'aggregate_version', 'case_id', 'run_id',
+                               'actor_user_id', 'correlation_id', 'redacted_summary')`
+    );
+    const outboxOk = Number(outboxResult.rows[0]?.present ?? 0) === 11;
+
+    return bindingsOk && runsOk && orgMembersOk && outboxOk;
   } catch {
     return false;
   } finally {
@@ -134,6 +147,26 @@ interface CaseWorkspaceRunBindingDbRow {
   graph_digest: string;
   bound_by_actor_id: string;
   created_at: string;
+}
+
+/** One `case_workspace_event_outbox` row, as stored (snake_case, straight from Postgres). */
+interface EventOutboxDbRow {
+  event_id: string;
+  event_type: string;
+  organization_id: string;
+  project_id: string | null;
+  aggregate_type: string;
+  aggregate_id: string;
+  aggregate_version: number | null;
+  case_id: string | null;
+  run_id: string | null;
+  node_run_id: string | null;
+  attempt_id: string | null;
+  actor_user_id: string;
+  correlation_id: string;
+  causation_id: string | null;
+  redacted_summary: Record<string, unknown>;
+  payload_ref: string | null;
 }
 
 suite('runBindingService — Run Binding against a real PostgreSQL (CW-P04, E4)', () => {
@@ -308,6 +341,62 @@ suite('runBindingService — Run Binding against a real PostgreSQL (CW-P04, E4)'
     });
   }
 
+  /**
+   * Reads the outbox OUT OF BAND (dedicated `control` pool), never through the
+   * service's own return value — the return value only proves what the service
+   * THINKS it published. Scoped by aggregate_id so one test can never see
+   * another's rows.
+   */
+  async function readOutboxRowsForAggregate(aggregateId: string): Promise<EventOutboxDbRow[]> {
+    const result = await control.query<EventOutboxDbRow>(
+      `SELECT * FROM case_workspace_event_outbox WHERE aggregate_id = $1 ORDER BY created_at ASC`,
+      [aggregateId]
+    );
+    return result.rows;
+  }
+
+  /**
+   * Forces a failure AFTER the command's mutation AND after its publishEvent,
+   * by installing a DEFERRABLE INITIALLY DEFERRED constraint trigger that
+   * raises at COMMIT time for exactly one row. This is what makes the rollback
+   * test a real atomicity proof rather than a "the insert itself blew up"
+   * tautology: both writes have already happened on the transaction's client
+   * when the poison fires, so a surviving outbox row would mean the outbox is
+   * NOT sharing the command's transaction.
+   *
+   * The trigger is scoped by a UUID-derived match value and dropped in the
+   * caller's `finally`, so it can never leak into another test.
+   */
+  async function withCommitTimePoison<T>(
+    params: { table: string; matchColumn: string; matchValue: string; event: 'INSERT' | 'UPDATE' },
+    fn: () => Promise<T>
+  ): Promise<T> {
+    const token = randomUUID().replace(/-/g, '');
+    const fnName = `cw_test_poison_fn_${token}`;
+    const trgName = `cw_test_poison_trg_${token}`;
+    const literal = params.matchValue.replace(/'/g, "''");
+    await control.query(
+      `CREATE FUNCTION ${fnName}() RETURNS trigger LANGUAGE plpgsql AS $poison$
+         BEGIN RAISE EXCEPTION 'forced_commit_time_failure_for_atomicity_test'; END
+       $poison$`
+    );
+    await control.query(
+      `CREATE CONSTRAINT TRIGGER ${trgName}
+         AFTER ${params.event} ON ${params.table}
+         DEFERRABLE INITIALLY DEFERRED
+         FOR EACH ROW WHEN (NEW.${params.matchColumn} = '${literal}')
+         EXECUTE FUNCTION ${fnName}()`
+    );
+    try {
+      return await fn();
+    } finally {
+      await control
+        .query(`DROP TRIGGER IF EXISTS ${trgName} ON ${params.table}`)
+        .catch(() => undefined);
+      await control.query(`DROP FUNCTION IF EXISTS ${fnName}()`).catch(() => undefined);
+    }
+  }
+
   async function readBindingRow(runId: string): Promise<CaseWorkspaceRunBindingDbRow | null> {
     const result = await control.query<CaseWorkspaceRunBindingDbRow>(
       `SELECT * FROM case_workspace_run_bindings WHERE run_id = $1`,
@@ -365,6 +454,15 @@ suite('runBindingService — Run Binding against a real PostgreSQL (CW-P04, E4)'
     }
     for (const userId of params.userIds ?? []) {
       await control.query(`DELETE FROM users WHERE id = $1`, [userId]).catch(() => undefined);
+    }
+    if (params.orgIds.length > 0) {
+      // The outbox carries no FK to organizations (it is an append-only log of
+      // ids), so it never cascades — each test removes exactly its own rows.
+      await control
+        .query(`DELETE FROM case_workspace_event_outbox WHERE organization_id = ANY($1)`, [
+          params.orgIds,
+        ])
+        .catch(() => undefined);
     }
     for (const orgId of params.orgIds) {
       await control.query(`DELETE FROM organizations WHERE id = $1`, [orgId]).catch(() => undefined);
@@ -760,6 +858,128 @@ suite('runBindingService — Run Binding against a real PostgreSQL (CW-P04, E4)'
         projectIds: [projectId],
         userIds: [actorId, noMembershipActor],
       });
+    }
+  }, 30_000);
+
+  // -------------------------------------------------------------------------
+  // 8. DOMAIN EVENT (EVENT_TAXONOMY.md §2, runBindingService row) — a
+  //    successful bind leaves EXACTLY ONE `run.bound_to_plan_version` row in
+  //    case_workspace_event_outbox, with the full identity/correlation chain
+  //    filled from the row that was actually written. Read out of band.
+  // -------------------------------------------------------------------------
+  it('bindRunToPlanVersion writes exactly one run.bound_to_plan_version outbox row carrying org/aggregate/actor/correlation identity, read back out of band', async () => {
+    const { orgId, projectId, caseId, actorId } = await seedOrgProjectCase('event-emitted');
+    const runIds: string[] = [];
+    try {
+      const published = await publishedPlanVersion({ caseId, tag: 'event-emitted', actorId });
+      const runId = `run-t8-${randomUUID()}`;
+      runIds.push(runId);
+      await seedV8Run({ runId, organizationId: orgId });
+
+      await runBindingService.bindRunToPlanVersion({
+        runId,
+        casePlanVersionId: published.casePlanVersionId,
+        boundByActorId: actorId,
+      });
+
+      const events = await readOutboxRowsForAggregate(runId);
+      expect(events).toHaveLength(1);
+      const event = events[0];
+      expect(event.event_type).toBe('run.bound_to_plan_version');
+      expect(event.aggregate_type).toBe('RUN');
+      expect(event.aggregate_id).toBe(runId);
+      // §3: case_workspace_run_bindings has no `version` column -> null, never
+      // an invented number.
+      expect(event.aggregate_version).toBeNull();
+
+      // Identity + §6.4 correlation chain, every field the aggregate actually has.
+      expect(event.organization_id).toBe(orgId);
+      expect(event.project_id).toBe(projectId);
+      expect(event.case_id).toBe(caseId);
+      expect(event.run_id).toBe(runId);
+      expect(event.actor_user_id).toBe(actorId);
+      expect(String(event.correlation_id ?? '').trim().length).toBeGreaterThan(0);
+      // No causing event: this command is not triggered by another one.
+      expect(event.causation_id).toBeNull();
+
+      // Facts, not commands: the exact plan version + digest the Run is now
+      // pinned to (CW-00-020-INV6).
+      expect(event.redacted_summary).toMatchObject({
+        casePlanVersionId: published.casePlanVersionId,
+        graphDigest: published.graphDigest,
+        caseId,
+        planVersionStatus: 'PUBLISHED',
+      });
+
+      // The event's identity agrees with the row that actually landed — not
+      // merely with what the service returned.
+      const bindingRow = await readBindingRow(runId);
+      expect(event.aggregate_id).toBe(bindingRow?.run_id);
+      expect(event.organization_id).toBe(bindingRow?.organization_id);
+      expect(event.actor_user_id).toBe(bindingRow?.bound_by_actor_id);
+
+      // A second bind attempt is rejected (run_already_bound) and must not
+      // mint a second event for the same binding.
+      await expect(
+        runBindingService.bindRunToPlanVersion({
+          runId,
+          casePlanVersionId: published.casePlanVersionId,
+          boundByActorId: actorId,
+        })
+      ).rejects.toThrow('run_already_bound');
+      expect(await readOutboxRowsForAggregate(runId)).toHaveLength(1);
+    } finally {
+      await teardown({ runIds, orgIds: [orgId], projectIds: [projectId], userIds: [actorId] });
+    }
+  }, 30_000);
+
+  // -------------------------------------------------------------------------
+  // 9. ROLLBACK / ATOMICITY — a failure forced AFTER the binding INSERT and
+  //    AFTER publishEvent (deferred constraint trigger firing at COMMIT)
+  //    leaves ZERO outbox rows and ZERO binding rows. If publishEvent ever
+  //    opened its own connection, the event would survive here.
+  // -------------------------------------------------------------------------
+  it('a failure forced at COMMIT time after the bind leaves zero binding rows AND zero outbox rows', async () => {
+    const { orgId, projectId, caseId, actorId } = await seedOrgProjectCase('event-rollback');
+    const runIds: string[] = [];
+    try {
+      const published = await publishedPlanVersion({ caseId, tag: 'event-rollback', actorId });
+      const runId = `run-t9-${randomUUID()}`;
+      runIds.push(runId);
+      await seedV8Run({ runId, organizationId: orgId });
+
+      await withCommitTimePoison(
+        {
+          table: 'case_workspace_run_bindings',
+          matchColumn: 'run_id',
+          matchValue: runId,
+          event: 'INSERT',
+        },
+        async () => {
+          await expect(
+            runBindingService.bindRunToPlanVersion({
+              runId,
+              casePlanVersionId: published.casePlanVersionId,
+              boundByActorId: actorId,
+            })
+          ).rejects.toThrow(/forced_commit_time_failure_for_atomicity_test/);
+        }
+      );
+
+      expect(await readBindingRow(runId)).toBeNull();
+      expect(await readOutboxRowsForAggregate(runId)).toHaveLength(0);
+
+      // And the same command succeeds once the poison is gone — proving the
+      // rollback left no partial state behind.
+      await runBindingService.bindRunToPlanVersion({
+        runId,
+        casePlanVersionId: published.casePlanVersionId,
+        boundByActorId: actorId,
+      });
+      expect(await readBindingRow(runId)).not.toBeNull();
+      expect(await readOutboxRowsForAggregate(runId)).toHaveLength(1);
+    } finally {
+      await teardown({ runIds, orgIds: [orgId], projectIds: [projectId], userIds: [actorId] });
     }
   }, 30_000);
 });

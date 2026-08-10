@@ -165,6 +165,8 @@
  *      own open_questions.
  */
 
+import { createHash } from 'node:crypto';
+
 import { v4 as uuidv4 } from 'uuid';
 
 import {
@@ -174,6 +176,7 @@ import {
   withPgTransaction,
 } from '../../utils/queryHelpers.js';
 import { CaseWorkspaceAuthError, requireCaseAccess } from './caseWorkspaceAuthContext.js';
+import { publishEvent, redact } from './eventOutboxService.js';
 
 // ---------------------------------------------------------------------------
 // Public types
@@ -363,6 +366,93 @@ function mapRow(row: CaseWorkspaceWaitRow): CaseWait {
 }
 
 // ---------------------------------------------------------------------------
+// Domain events — docs/product/case-workspace/acceptance/EVENT_TAXONOMY.md,
+// section "waitSubscriptionService — aggregate WAIT".
+//
+// Every publishEvent() below runs on the SAME withPgTransaction client as the
+// mutation that produced it (§6 "Domain changes and outbox records commit
+// atomically"). This matters most for resolveWait: §8 says "Wait satisfaction is
+// atomic and unique", and the outbox row inside the status flip's own
+// transaction is what makes that provable rather than asserted.
+//
+// Read-only members (getWait, listWaitsForRun, listWaitsForCase,
+// listDueTimerWaitsForClaim, computeWaitOverdueState) emit nothing. A
+// non-claiming outcome of claimTimerWait ('active_elsewhere'/'not_claimable'/
+// 'not_found') and a non-renewing outcome of renewTimerWaitClaimLease
+// ('fenced'/'not_found') also emit nothing — no row changed, so there is no fact.
+// createWait's idempotent replay likewise emits nothing (§8 dedup: a retried
+// command must not look like a second registration).
+//
+// SYSTEM ACTORS. §1 `actorUserId`: "`system:<worker>` for scheduler/worker
+// emitters (e.g. `expireWait`)". claimTimerWait, renewTimerWaitClaimLease,
+// expireWait and the bare resolveWait entry point have no human actor in their
+// signatures at all (they are the INTERNAL-ONLY scheduler primitives documented
+// in this file's header), so they emit under an explicit system token rather
+// than an invented user id.
+// ---------------------------------------------------------------------------
+
+/** §6 aggregate discriminator for every event emitted by this service. */
+const WAIT_AGGREGATE_TYPE = 'WAIT';
+
+const SYSTEM_ACTOR_TIMER_CLAIMER = 'system:case-workspace-timer-claimer';
+const SYSTEM_ACTOR_WAIT_RESOLVER = 'system:case-workspace-wait-resolver';
+const SYSTEM_ACTOR_WAIT_SCHEDULER = 'system:case-workspace-wait-scheduler';
+
+/**
+ * §1 `eventId`: a deterministic id derived from the command's idempotency key is
+ * what makes publishEvent's `ON CONFLICT DO NOTHING` a real deduplication.
+ * createWait's idempotency key is (case_id, correlation_key) — open_question #5
+ * flags that overload; the event id inherits it rather than inventing a second
+ * one. Hashed so an opaque key of any length yields a bounded id and is not
+ * echoed verbatim into a durable audit row.
+ */
+function deterministicEventId(kind: string, ...parts: string[]): string {
+  const digest = createHash('sha256').update(parts.join(' ')).digest('hex').slice(0, 40);
+  return `cwevt-${kind}-${digest}`;
+}
+
+/**
+ * cancelWait's `reason` is free text and is not persisted on the table at all
+ * (open_question #9) — it must not become durable by the back door of an event
+ * summary either. Same posture as proposalApprovalService's own classifyReason.
+ */
+function classifyReason(reason: string): { reasonClass: string; reasonDigest: string } {
+  const trimmed = String(reason ?? '').trim();
+  return {
+    reasonClass: /^[A-Za-z0-9_.:-]{1,120}$/.test(trimmed) ? trimmed : 'unclassified',
+    reasonDigest: `sha256:${createHash('sha256').update(trimmed).digest('hex').slice(0, 32)}`,
+  };
+}
+
+/**
+ * §3 tenancy + §10 correlation chain, read from the row the command just wrote
+ * (`RETURNING *`), never from input and never from a second SELECT — so
+ * `aggregateVersion` is always the POST-mutation OCC counter. `attemptId` has no
+ * column on this aggregate and is deliberately absent rather than invented.
+ */
+function waitEventIdentity(row: CaseWorkspaceWaitRow): {
+  organizationId: string;
+  projectId: string | null;
+  aggregateType: string;
+  aggregateId: string;
+  aggregateVersion: number;
+  caseId: string;
+  runId: string | null;
+  nodeRunId: string | null;
+} {
+  return {
+    organizationId: row.organization_id,
+    projectId: row.project_id,
+    aggregateType: WAIT_AGGREGATE_TYPE,
+    aggregateId: row.wait_id,
+    aggregateVersion: Number(row.version),
+    caseId: row.case_id,
+    runId: row.run_id,
+    nodeRunId: row.node_run_id,
+  };
+}
+
+// ---------------------------------------------------------------------------
 // Row loaders
 // ---------------------------------------------------------------------------
 
@@ -508,6 +598,26 @@ export async function createWait(input: CreateWaitInput, actorUserId: string): P
     );
 
     if (inserted.rows[0]) {
+      // Taxonomy: `wait.registered`. Summary: wait_type + due time, per that row.
+      // `predicateRef`/`resumeTokenHash` are deliberately NOT copied — the first
+      // is a pointer the consumer can resolve itself, the second is
+      // credential-shaped.
+      await publishEvent(client, {
+        eventId: deterministicEventId('waitregistered', caseId, correlationKey),
+        eventType: 'wait.registered',
+        ...waitEventIdentity(inserted.rows[0]),
+        actorUserId,
+        redactedSummary: redact({
+          waitType,
+          status: 'ACTIVE',
+          correlationKey,
+          expectedEventType: input.expectedEventType ?? null,
+          dueAt: input.dueAt ?? null,
+          timeoutAt: input.timeoutAt ?? null,
+          actionProposalId,
+        }),
+        payloadRef: input.predicateRef ?? null,
+      });
       return mapRow(inserted.rows[0]);
     }
 
@@ -572,6 +682,25 @@ export async function claimTimerWait(
 
     const claimedRow = claimed.rows[0];
     if (claimedRow) {
+      // Taxonomy: `wait.claimed`, scheduler actor, flagged high-volume (§5.8).
+      // The owner token is a capability secret and never enters the event; the
+      // fencing token (a monotonic ordinal) is the auditable fact.
+      await publishEvent(client, {
+        eventType: 'wait.claimed',
+        ...waitEventIdentity(claimedRow),
+        actorUserId: SYSTEM_ACTOR_TIMER_CLAIMER,
+        redactedSummary: redact({
+          waitType: claimedRow.wait_type,
+          // NOT `fencingToken`: PiiRedactor matches field names by SUBSTRING, so
+          // any key containing "token" is blanked to [REDACTED]. The fencing
+          // value is a monotonic counter, not a credential, and losing it would
+          // gut the §10 lease trace — so it is named for what it is.
+          claimFencingCounter: Number(claimedRow.claim_fencing_token),
+          leaseMs,
+          leaseExpiresAt: claimedRow.claim_lease_expires_at,
+          dueAt: claimedRow.due_at,
+        }),
+      });
       return {
         outcome: 'claimed',
         wait: mapRow(claimedRow),
@@ -625,16 +754,36 @@ export async function renewTimerWaitClaimLease(
 
   return withPgTransaction(async (client) => {
     const now = new Date().toISOString();
-    const renewed = await client.query<{ wait_id: string }>(
+    // RETURNING * (not just wait_id): the renewed row is the ONLY legitimate
+    // source of the event's tenancy/correlation identity — re-SELECTing it would
+    // be a different read under concurrency (§3 of the taxonomy's checklist).
+    const renewed = await client.query<CaseWorkspaceWaitRow>(
       `UPDATE case_workspace_waits
           SET claim_lease_expires_at = (NOW() + (? || ' milliseconds')::interval)::text,
               updated_at = ?
         WHERE wait_id = ? AND claim_owner_token = ? AND claim_fencing_token = ?
           AND status = 'ACTIVE'
-        RETURNING wait_id`,
+        RETURNING *`,
       [String(leaseMsResolved), now, id, owner, fencingToken]
     );
-    if (renewed.rows[0]) return 'renewed';
+    if (renewed.rows[0]) {
+      // Taxonomy: `wait.claim_lease_renewed` — the heartbeat, explicitly the
+      // highest-volume event in this table (§5.8). Kept because §10 wants
+      // "worker utilization, leases and stuck nodes" observable.
+      await publishEvent(client, {
+        eventType: 'wait.claim_lease_renewed',
+        ...waitEventIdentity(renewed.rows[0]),
+        actorUserId: SYSTEM_ACTOR_TIMER_CLAIMER,
+        redactedSummary: redact({
+          waitType: renewed.rows[0].wait_type,
+          // See claimTimerWait — deliberately not named `fencingToken`.
+          claimFencingCounter: Number(renewed.rows[0].claim_fencing_token),
+          leaseMs: leaseMsResolved,
+          leaseExpiresAt: renewed.rows[0].claim_lease_expires_at,
+        }),
+      });
+      return 'renewed';
+    }
 
     const existingResult = await client.query<{ wait_id: string }>(
       `SELECT wait_id FROM case_workspace_waits WHERE wait_id = ?`,
@@ -676,6 +825,43 @@ export async function resolveWait(
   input: ResolveWaitInput,
   expectedVersion: number
 ): Promise<CaseWait> {
+  return resolveWaitCore(waitId, input, expectedVersion, {
+    eventType: 'wait.satisfied',
+    // No actor exists in this signature by design (TIMER/DOMAIN_EVENT/
+    // EXTERNAL_CALLBACK paths have no end user); §1 permits a `system:<worker>`
+    // token, which is honest, whereas borrowing an unrelated user id would not be.
+    actorUserId: SYSTEM_ACTOR_WAIT_RESOLVER,
+    summary: { satisfiedByEventId: input.satisfiedByEventId },
+  });
+}
+
+/**
+ * The shared satisfaction body behind BOTH `resolveWait` (taxonomy
+ * `wait.satisfied`) and `provideHumanInput` (taxonomy
+ * `wait.human_input_provided`).
+ *
+ * WHY THE EVENT IS A PARAMETER RATHER THAN A CONSTANT. The taxonomy gives those
+ * two commands DIFFERENT event types and states "one row = one command = one
+ * event_type" with 55 of 57 commands emitting exactly one event. If
+ * provideHumanInput simply delegated to the public resolveWait, one command
+ * would emit the wrong type; if it emitted its own event around the delegate, a
+ * single human submission would produce TWO outbox rows with different ids that
+ * §8's dedup-by-eventId cannot collapse — precisely the double-count the
+ * taxonomy forbids for `cancelCase` in §5.3. Threading the event through the one
+ * transaction gives each command exactly one event, of its own type, atomic with
+ * the status flip.
+ */
+async function resolveWaitCore(
+  waitId: string,
+  input: ResolveWaitInput,
+  expectedVersion: number,
+  event: {
+    eventType: string;
+    actorUserId: string;
+    summary?: Record<string, unknown>;
+    payloadRef?: string | null;
+  }
+): Promise<CaseWait> {
   const id = requireNonBlank(waitId, 'wait_id_required');
   const satisfiedByEventId = requireNonBlank(
     input.satisfiedByEventId,
@@ -709,6 +895,22 @@ export async function resolveWait(
       [now, satisfiedByEventId, now, id, expectedVersion]
     );
     if (!updated.rows[0]) throw new Error('wait_version_conflict');
+
+    // §8 "Wait satisfaction is atomic and unique" — this row, written on the
+    // same client inside the same transaction as the status flip, is the proof.
+    await publishEvent(client, {
+      eventType: event.eventType,
+      ...waitEventIdentity(updated.rows[0]),
+      actorUserId: event.actorUserId,
+      redactedSummary: redact({
+        waitType: row.wait_type,
+        from: row.status,
+        to: 'SATISFIED',
+        correlationKey: row.correlation_key,
+        ...(event.summary ?? {}),
+      }),
+      payloadRef: event.payloadRef ?? null,
+    });
     return mapRow(updated.rows[0]);
   });
 }
@@ -739,7 +941,16 @@ export async function provideHumanInput(
   if (!wait) throw new Error('wait_not_found');
   if (wait.waitType !== 'HUMAN') throw new Error('wait_wrong_type_for_human_input');
 
-  return resolveWait(id, { satisfiedByEventId: inputRef }, expectedVersion);
+  // Taxonomy: `wait.human_input_provided`, and "Summary must NOT contain the
+  // human's free text — `payloadRef` it". inputRef is exactly that pointer, so
+  // it goes to payloadRef and nowhere else. Delegates to resolveWaitCore (not to
+  // the public resolveWait) so this command emits its OWN single event rather
+  // than `wait.satisfied` or two rows — see resolveWaitCore's header.
+  return resolveWaitCore(id, { satisfiedByEventId: inputRef }, expectedVersion, {
+    eventType: 'wait.human_input_provided',
+    actorUserId,
+    payloadRef: inputRef,
+  });
 }
 
 /**
@@ -763,7 +974,12 @@ export async function expireWait(
   waitId: string,
   expectedVersion: number
 ): Promise<CaseWait> {
-  return applySimpleWaitTransition(waitId, expectedVersion, 'EXPIRED');
+  // Taxonomy: `wait.expired`, "Scheduler actor" — §1 names expireWait as the
+  // literal example of a `system:<worker>` emitter.
+  return applySimpleWaitTransition(waitId, expectedVersion, 'EXPIRED', {
+    eventType: 'wait.expired',
+    actorUserId: SYSTEM_ACTOR_WAIT_SCHEDULER,
+  });
 }
 
 /**
@@ -784,7 +1000,16 @@ export async function cancelWait(
 ): Promise<CaseWait> {
   const actorUserId = requireNonBlank(actor?.actorUserId, 'wait_actor_required');
   requireNonBlank(reason, 'wait_cancel_reason_required');
-  return applySimpleWaitTransition(waitId, expectedVersion, 'CANCELLED', actorUserId);
+  return applySimpleWaitTransition(
+    waitId,
+    expectedVersion,
+    'CANCELLED',
+    // Taxonomy: `wait.cancelled`. `reason` is not persisted on the table
+    // (open_question #9) and must not become durable via the event either —
+    // classifyReason keeps the class + digest, never the prose.
+    { eventType: 'wait.cancelled', actorUserId, summary: classifyReason(reason) },
+    actorUserId
+  );
 }
 
 /**
@@ -792,11 +1017,20 @@ export async function cancelWait(
  * extra domain check beyond ALLOWED_TRANSITIONS reachability
  * (expireWait/cancelWait — mirrors proposalApprovalService.
  * applySimpleTransition()'s own shape).
+ *
+ * `event` is REQUIRED, not optional: this helper is the single write path for
+ * two distinct taxonomy rows with two different actors (scheduler vs. human), and
+ * a defaulted event_type here is exactly how a command would silently stop being
+ * observable. Note `event.actorUserId` is separate from the trailing
+ * `actorUserId` guard argument — the latter decides whether requireCaseAccess
+ * runs at all (expireWait is an unguarded system primitive), the former is the
+ * accountable actor recorded on the event, which every event must have.
  */
 async function applySimpleWaitTransition(
   waitId: string,
   expectedVersion: number,
   nextStatus: CaseWaitStatus,
+  event: { eventType: string; actorUserId: string; summary?: Record<string, unknown> },
   actorUserId?: string
 ): Promise<CaseWait> {
   const id = requireNonBlank(waitId, 'wait_id_required');
@@ -820,6 +1054,21 @@ async function applySimpleWaitTransition(
       [nextStatus, now, id, expectedVersion]
     );
     if (!updated.rows[0]) throw new Error('wait_version_conflict');
+
+    await publishEvent(client, {
+      eventType: event.eventType,
+      ...waitEventIdentity(updated.rows[0]),
+      actorUserId: event.actorUserId,
+      redactedSummary: redact({
+        waitType: row.wait_type,
+        from: row.status,
+        to: nextStatus,
+        correlationKey: row.correlation_key,
+        dueAt: row.due_at,
+        timeoutAt: row.timeout_at,
+        ...(event.summary ?? {}),
+      }),
+    });
     return mapRow(updated.rows[0]);
   });
 }

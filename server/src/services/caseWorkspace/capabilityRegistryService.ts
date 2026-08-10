@@ -128,6 +128,7 @@ import {
 } from '../../utils/queryHelpers.js';
 import { ApprovalClassValues, type ApprovalClass } from '../../types/executionSpine.js';
 import { CaseWorkspaceAuthError, requireOrgMember, requireOrgRole } from './caseWorkspaceAuthContext.js';
+import { publishEvent, redact } from './eventOutboxService.js';
 
 // ---------------------------------------------------------------------------
 // Public types
@@ -303,6 +304,24 @@ function requireEnum<T extends string>(
 ): T {
   if (!value || !allowed.includes(value)) throw new Error(reason);
   return value;
+}
+
+/**
+ * EVENT_TAXONOMY.md §1: `health_detail` is operator-supplied free text and the
+ * taxonomy puts it in `capability.health_changed`'s summary ({from,to,detail}).
+ * publishEvent REJECTS (never truncates) a summary over
+ * MAX_REDACTED_SUMMARY_BYTES, so an unbounded detail would turn a legitimate
+ * health update into a failed command. Clipped here, with the clip made
+ * visible, so the event stays a small fact and the command stays reliable.
+ */
+const MAX_EVENT_DETAIL_CHARS = 500;
+
+function clipEventDetail(detail: string | null | undefined): string | null {
+  if (detail === null || detail === undefined) return null;
+  const text = String(detail);
+  return text.length <= MAX_EVENT_DETAIL_CHARS
+    ? text
+    : `${text.slice(0, MAX_EVENT_DETAIL_CHARS)}…[clipped]`;
 }
 
 function parseJsonArray(raw: string): string[] {
@@ -528,7 +547,40 @@ export async function registerCapability(
         now,
       ]
     );
-    return mapRow(inserted.rows[0]);
+
+    const insertedRow = inserted.rows[0];
+
+    // EVENT_TAXONOMY.md §2 (capabilityRegistryService) + §4: same `client`,
+    // same transaction as the INSERT above — the registration and its event
+    // commit together or not at all. `case_workspace_capabilities` has NO
+    // organization_id column (the registry is platform-global, see this file's
+    // open_questions #1), so the outbox's NOT NULL organization_id takes the
+    // CALLER's org and the summary records that the aggregate itself is global.
+    await publishEvent(client, {
+      eventType: 'capability.registered',
+      organizationId: callerOrganizationId,
+      aggregateType: 'CAPABILITY',
+      aggregateId: insertedRow.capability_registry_id,
+      aggregateVersion: Number(insertedRow.version),
+      actorUserId: insertedRow.created_by_actor_id,
+      redactedSummary: redact({
+        capabilityId: insertedRow.capability_id,
+        capabilityVersion: insertedRow.capability_version,
+        ownerModule: insertedRow.owner_module,
+        providerType: insertedRow.provider_type,
+        operationClass: insertedRow.operation_class,
+        effectClass: insertedRow.effect_class,
+        approvalRecommendation: insertedRow.approval_recommendation,
+        lifecycle: insertedRow.lifecycle,
+        health: insertedRow.health,
+        owningCommandRef: insertedRow.owning_command_ref,
+        // §4 — the aggregate is platform-global; organizationId above is the
+        // caller's, not the aggregate's own tenant.
+        platformGlobalAggregate: true,
+      }),
+    });
+
+    return mapRow(insertedRow);
   });
 }
 
@@ -689,7 +741,7 @@ export async function markCapabilityHealth(
     // Confirms the row exists before attempting the OCC update, same
     // loadForUpdate + WHERE ... AND version = ? convention as
     // caseCoreService.ts/casePlanVersionService.ts.
-    await loadForUpdate(client, id);
+    const before = await loadForUpdate(client, id);
 
     const now = new Date().toISOString();
     const updated = await client.query<CapabilityRegistryRow>(
@@ -701,7 +753,32 @@ export async function markCapabilityHealth(
       [health, detail ?? null, now, now, id, expectedVersion]
     );
     if (!updated.rows[0]) throw new Error('capability_version_conflict');
-    return mapRow(updated.rows[0]);
+
+    const updatedRow = updated.rows[0];
+
+    // EVENT_TAXONOMY.md §2 — `{from, to, detail}`. `aggregateVersion` is the
+    // POST-mutation OCC counter, taken from this UPDATE's own RETURNING row
+    // (§3: never a second SELECT). Published on the transaction's own client,
+    // so a rolled-back OCC conflict can never leave an orphan event behind.
+    await publishEvent(client, {
+      eventType: 'capability.health_changed',
+      organizationId: callerOrganizationId,
+      aggregateType: 'CAPABILITY',
+      aggregateId: updatedRow.capability_registry_id,
+      aggregateVersion: Number(updatedRow.version),
+      actorUserId,
+      redactedSummary: redact({
+        from: before.health,
+        to: updatedRow.health,
+        detail: clipEventDetail(detail),
+        capabilityId: updatedRow.capability_id,
+        capabilityVersion: updatedRow.capability_version,
+        lifecycle: updatedRow.lifecycle,
+        platformGlobalAggregate: true,
+      }),
+    });
+
+    return mapRow(updatedRow);
   });
 }
 
@@ -719,6 +796,13 @@ export async function markCapabilityHealth(
  * caller must not re-execute); a mismatched digest throws
  * idempotency_key_conflict (fails closed rather than returning a stale
  * result for a different payload).
+ *
+ * EMITS NO DOMAIN EVENT — deliberately, per EVENT_TAXONOMY.md §2's explicit
+ * "NO EVENT" row for this command: it writes duplicate-suppression bookkeeping
+ * for a DIFFERENT command (the capability invocation), whose own
+ * proposal.executing/executed/failed events are the business facts. §6 "events
+ * carry facts, not commands"; emitting here would make every retried command
+ * indistinguishable from a real second action. Do not "fix" this omission.
  */
 export async function recordIdempotencyKeyCheck(
   input: {

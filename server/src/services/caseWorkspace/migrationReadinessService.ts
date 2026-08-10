@@ -159,6 +159,7 @@ import {
   withPgTransaction,
 } from '../../utils/queryHelpers.js';
 import { CaseWorkspaceAuthError, requireOrgMember, requireOrgRole } from './caseWorkspaceAuthContext.js';
+import { publishEvent, redact } from './eventOutboxService.js';
 
 // ---------------------------------------------------------------------------
 // Public types — Flag Definitions
@@ -449,7 +450,37 @@ export async function registerFlagDefinition(
        RETURNING *`,
       [flagKey, parentFlagKey, description, now, createdBy]
     );
-    return mapFlagDefinitionRow(inserted.rows[0]);
+
+    const insertedRow = inserted.rows[0];
+
+    // EVENT_TAXONOMY.md §2 (migrationReadinessService row 1) + §4:
+    // `case_workspace_feature_flag_definitions` has no organization_id (the
+    // catalog is platform-global) and no version column, so `aggregateId` is
+    // the flag_key PK, `organizationId` is the CALLER's org and
+    // `aggregateVersion` is null. Same transaction, same client as the INSERT.
+    //
+    // Deterministic eventId (§1): flag_key is the PK and definitions are
+    // immutable, so a retried registration can never mint a second event. Note
+    // the idempotent "already registered, identical" path returns EARLIER,
+    // above — no mutation, therefore no event.
+    await publishEvent(client, {
+      eventId: `cwevt-flagdef-${insertedRow.flag_key}`,
+      eventType: 'flag.definition_registered',
+      organizationId: callerOrganizationId,
+      aggregateType: 'FEATURE_FLAG_DEFINITION',
+      aggregateId: insertedRow.flag_key,
+      aggregateVersion: null,
+      actorUserId: insertedRow.created_by,
+      redactedSummary: redact({
+        flagKey: insertedRow.flag_key,
+        parentFlagKey: insertedRow.parent_flag_key,
+        // CW-DOD-J1: a definition can never be registered default-ON.
+        defaultEnabled: Boolean(insertedRow.default_enabled),
+        platformGlobalAggregate: true,
+      }),
+    });
+
+    return mapFlagDefinitionRow(insertedRow);
   });
 }
 
@@ -578,8 +609,33 @@ export async function listFlagDescendants(
  * explicitly passes enabled:true — there is no implicit-enable path
  * anywhere (CW-DOD-J1's "default OFF, server-authoritative": this is the
  * only write path into the table, so no client bypass exists).
+ *
+ * DOMAIN EVENT: `flag.org_state_changed` (EVENT_TAXONOMY.md §2). See
+ * applyOrgFlagState() below for why the event_type is a parameter of the
+ * shared writer rather than hard-coded here.
  */
 export async function setOrgFlagState(input: SetOrgFlagStateInput): Promise<FeatureFlagState> {
+  return applyOrgFlagState(input, 'flag.org_state_changed');
+}
+
+/**
+ * The single write path into `case_workspace_feature_flags`, shared by
+ * setOrgFlagState() and rollbackFlag().
+ *
+ * WHY event_type IS A PARAMETER: EVENT_TAXONOMY.md §2 gives these two commands
+ * DIFFERENT event types (`flag.org_state_changed` vs `flag.rolled_back`) while
+ * rollbackFlag is implemented as a thin delegate to the same upsert. If the
+ * event were published inside setOrgFlagState with a hard-coded type, a
+ * rollback would emit `flag.org_state_changed` (wrong type) and adding a second
+ * publish in rollbackFlag would emit TWO rows for one mutation — exactly the
+ * double-count §5.3 rejects for cancelCase/transitionStatus. Threading the type
+ * through the shared writer keeps it at ONE event per mutation, of the right
+ * type, inside the one transaction that did the write.
+ */
+async function applyOrgFlagState(
+  input: SetOrgFlagStateInput,
+  eventType: 'flag.org_state_changed' | 'flag.rolled_back'
+): Promise<FeatureFlagState> {
   const organizationId = requireNonBlank(input.organizationId, 'feature_flag_organization_id_required');
   const flagKey = requireNonBlank(input.flagKey, 'feature_flag_key_required');
   const updatedBy = requireNonBlank(input.updatedBy, 'feature_flag_updated_by_required');
@@ -597,6 +653,17 @@ export async function setOrgFlagState(input: SetOrgFlagStateInput): Promise<Feat
 
   return withPgTransaction(async (client) => {
     await requireFlagDefinitionExists(client, flagKey, 'feature_flag_definition_not_found');
+
+    // Pre-image for the event's `{from, to}` facts, read on THIS transaction's
+    // client and locked, so the "from" reported to consumers is the state this
+    // upsert actually replaced and not a value some concurrent writer changed
+    // in between. Null = no state row yet, which every reader treats as OFF.
+    const beforeResult = await client.query<CaseWorkspaceFeatureFlagRow>(
+      `SELECT * FROM case_workspace_feature_flags
+        WHERE organization_id = ? AND flag_key = ? FOR UPDATE`,
+      [organizationId, flagKey]
+    );
+    const before = beforeResult.rows[0] ?? null;
 
     const flagId = `cwff-${uuidv4()}`;
     const now = new Date().toISOString();
@@ -616,7 +683,46 @@ export async function setOrgFlagState(input: SetOrgFlagStateInput): Promise<Feat
        RETURNING *`,
       [flagId, organizationId, flagKey, enabled, cohort, rolloutPercentage, JSON.stringify(allowList), now, updatedBy]
     );
-    return mapFeatureFlagRow(upserted.rows[0]);
+
+    const upsertedRow = upserted.rows[0];
+
+    // EVENT_TAXONOMY.md §2 (migrationReadinessService rows 2 and 3). Aggregate
+    // is FEATURE_FLAG, `aggregateId` its own flag_id PK — note the ON CONFLICT
+    // DO UPDATE branch keeps the EXISTING flag_id, so the aggregate id stays
+    // stable across every state change of one (org, flag). No version column on
+    // this table -> `aggregateVersion` null (§3). Same client, same transaction
+    // as the upsert.
+    await publishEvent(client, {
+      eventType,
+      organizationId: upsertedRow.organization_id,
+      aggregateType: 'FEATURE_FLAG',
+      aggregateId: upsertedRow.flag_id,
+      aggregateVersion: null,
+      actorUserId: updatedBy,
+      redactedSummary: redact({
+        flagKey: upsertedRow.flag_key,
+        from: before === null ? null : Boolean(before.enabled),
+        to: Boolean(upsertedRow.enabled),
+        scope: {
+          cohort: upsertedRow.cohort,
+          rolloutPercentage: Number(upsertedRow.rollout_percentage),
+          allowListSize: mapFeatureFlagRow(upsertedRow).allowList.length,
+        },
+        previousScope:
+          before === null
+            ? null
+            : {
+                cohort: before.cohort,
+                rolloutPercentage: Number(before.rollout_percentage),
+                allowListSize: mapFeatureFlagRow(before).allowList.length,
+              },
+        // CW-DOD-J1: a (org, flag) pair with no row at all is OFF, so a first
+        // write is materially different from a flip and consumers can see it.
+        firstStateRow: before === null,
+      }),
+    });
+
+    return mapFeatureFlagRow(upsertedRow);
   });
 }
 
@@ -778,15 +884,22 @@ export async function rollbackFlag(
   const current = await getCurrentOrgFlagState(orgId, key, actor);
   if (!current) throw new Error('feature_flag_state_not_found');
 
-  return setOrgFlagState({
-    organizationId: orgId,
-    flagKey: key,
-    enabled: false,
-    cohort: current.cohort,
-    rolloutPercentage: current.rolloutPercentage,
-    allowList: current.allowList,
-    updatedBy: actor,
-  });
+  // EVENT_TAXONOMY.md §2: this command's event_type is `flag.rolled_back`, NOT
+  // `flag.org_state_changed`. It therefore goes through the shared writer with
+  // its own type rather than through the public setOrgFlagState() — one
+  // mutation, one event, correctly typed (see applyOrgFlagState's header).
+  return applyOrgFlagState(
+    {
+      organizationId: orgId,
+      flagKey: key,
+      enabled: false,
+      cohort: current.cohort,
+      rolloutPercentage: current.rolloutPercentage,
+      allowList: current.allowList,
+      updatedBy: actor,
+    },
+    'flag.rolled_back'
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -862,7 +975,38 @@ export async function recordQuarantinedLegacyRecord(
     );
 
     const row = inserted.rows[0];
-    if (row) return mapLegacyQuarantineRow(row);
+    if (row) {
+      // EVENT_TAXONOMY.md §2 (migrationReadinessService row 4). Aggregate
+      // LEGACY_RECORD, `aggregateId` = quarantine_id, no version column -> null
+      // (§3). organizationId comes from the row just written, not from
+      // unvalidated input (§6.2). Reason CODE only — the quarantined payload
+      // (source_record_snapshot) is deliberately NOT copied into the event; it
+      // is reachable through payloadRef (§6/§6.5).
+      //
+      // Deterministic eventId from the quarantine PK (§1). The dedupe_key
+      // replay path below returns the pre-existing row without inserting, so it
+      // is not a mutation and emits nothing.
+      await publishEvent(client, {
+        eventId: `cwevt-${row.quarantine_id}`,
+        eventType: 'legacy.record_quarantined',
+        organizationId: row.organization_id,
+        aggregateType: 'LEGACY_RECORD',
+        aggregateId: row.quarantine_id,
+        aggregateVersion: null,
+        actorUserId,
+        redactedSummary: redact({
+          sourceSystem: row.source_system,
+          sourceTable: row.source_table,
+          sourceId: row.source_id,
+          quarantineReasonCode: row.quarantine_reason_code,
+          rehearsalRunId: row.rehearsal_run_id,
+          attemptedCaseId: row.attempted_case_id,
+          recoveryPathRef: row.recovery_path_ref,
+        }),
+        payloadRef: `case_workspace_legacy_quarantine:${row.quarantine_id}`,
+      });
+      return mapLegacyQuarantineRow(row);
+    }
 
     // 0 rows only happens when dedupeKey is set and already claimed by a
     // prior insert (NULL dedupe_key values never collide under UNIQUE).

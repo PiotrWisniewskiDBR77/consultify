@@ -177,6 +177,8 @@
  *      packet's proposal/decision flow.
  */
 
+import { createHash } from 'node:crypto';
+
 import { v4 as uuidv4 } from 'uuid';
 
 import {
@@ -187,6 +189,7 @@ import {
 } from '../../utils/queryHelpers.js';
 import type { CapabilityEffectClass } from './capabilityRegistryService.js';
 import { CaseWorkspaceAuthError, requireCaseAccess } from './caseWorkspaceAuthContext.js';
+import { publishEvent, redact } from './eventOutboxService.js';
 
 export type { CapabilityEffectClass };
 
@@ -509,6 +512,120 @@ function mapDecisionRow(row: CaseWorkspaceActionProposalDecisionRow): ApprovalDe
 }
 
 // ---------------------------------------------------------------------------
+// Domain events — docs/product/case-workspace/acceptance/EVENT_TAXONOMY.md,
+// section "proposalApprovalService — aggregate ACTION_PROPOSAL".
+//
+// Every publishEvent() below runs on the SAME withPgTransaction client as the
+// mutation that produced it, inside the same BEGIN…COMMIT: the aggregate write
+// and the outbox row commit together or not at all (§6 "Domain changes and
+// outbox records commit atomically"). There is deliberately no post-commit
+// publish and no second connection anywhere in this file.
+//
+// Read-only members of this service (getActionProposal,
+// listActionProposalsForCase, listActionProposalsForRun,
+// listDecisionsForProposal, computeProposalExpiryState,
+// computeProposalTargetValidity) emit nothing — a query is not a fact.
+// Idempotent REPLAYS of createActionProposal/recordApprovalDecision also emit
+// nothing: the replay path performs no mutation, so an event there would make a
+// retried command indistinguishable from a real second action (§8 dedup).
+// ---------------------------------------------------------------------------
+
+/** §6 aggregate discriminator for every event emitted by this service. */
+const PROPOSAL_AGGREGATE_TYPE = 'ACTION_PROPOSAL';
+
+/**
+ * Taxonomy row `recordApprovalDecision`: the event_type is DERIVED from the
+ * decision, never hard-coded per branch. `DEFER` -> `approval.deferred` is the
+ * taxonomy's §5.5 addition (the decision enum's 4th value is reachable and must
+ * not be silently unobservable).
+ */
+const DECISION_EVENT_TYPES: Record<ApprovalDecisionType, string> = {
+  APPROVE: 'approval.approved',
+  REJECT: 'approval.rejected',
+  REQUEST_CHANGES: 'approval.changes_requested',
+  DEFER: 'approval.deferred',
+};
+
+/**
+ * §1 `eventId`: "Pass a DETERMINISTIC id derived from the command's idempotency
+ * key wherever the command is retryable — that is what makes the ON CONFLICT DO
+ * NOTHING dedup real rather than decorative." Hashed rather than concatenated so
+ * an opaque caller-supplied key of any length yields a bounded id AND is not
+ * echoed verbatim into a durable audit row.
+ */
+function deterministicEventId(kind: string, ...parts: string[]): string {
+  const digest = createHash('sha256').update(parts.join('\u0000')).digest('hex').slice(0, 40);
+  return `cwevt-${kind}-${digest}`;
+}
+
+/**
+ * The free-text `reason` arguments (transitionProposalToFailed,
+ * revokeApprovedProposal) must never be copied verbatim into an event — the
+ * taxonomy's `proposal.failed` row is explicit: "error class only, never the
+ * provider response body". A reason already shaped like a machine error class is
+ * kept as the class; anything prose-shaped collapses to `unclassified`. The
+ * digest still lets an operator prove two failures shared one cause without the
+ * event carrying the text.
+ */
+function classifyReason(reason: string): { reasonClass: string; reasonDigest: string } {
+  const trimmed = String(reason ?? '').trim();
+  return {
+    reasonClass: /^[A-Za-z0-9_.:-]{1,120}$/.test(trimmed) ? trimmed : 'unclassified',
+    reasonDigest: `sha256:${createHash('sha256').update(trimmed).digest('hex').slice(0, 32)}`,
+  };
+}
+
+/**
+ * §3 tenancy + §10 correlation chain, taken from the row the command just wrote
+ * (`RETURNING *`), never from unvalidated input and never from a second SELECT.
+ * `aggregateVersion` is therefore always the POST-mutation OCC counter.
+ * `attemptId` has no column on this aggregate, so it is deliberately absent
+ * rather than invented.
+ */
+function proposalEventIdentity(row: CaseWorkspaceActionProposalRow): {
+  organizationId: string;
+  projectId: string | null;
+  aggregateType: string;
+  aggregateId: string;
+  aggregateVersion: number;
+  caseId: string;
+  runId: string;
+  nodeRunId: string;
+} {
+  return {
+    organizationId: row.organization_id,
+    projectId: row.project_id,
+    aggregateType: PROPOSAL_AGGREGATE_TYPE,
+    aggregateId: row.action_proposal_id,
+    aggregateVersion: Number(row.version),
+    caseId: row.case_id,
+    runId: row.run_id,
+    nodeRunId: row.node_run_id,
+  };
+}
+
+/**
+ * `retryProposalFromFailed`'s taxonomy row: "causationId = the `proposal.failed`
+ * event being retried". Read on the command's own transaction client so the
+ * causal link is resolved against exactly the state this transaction sees.
+ * Returns null when no failure event exists (e.g. a row that reached FAILED
+ * before this wiring shipped) — a missing cause is NULL, never a fabricated id.
+ */
+async function findCausingFailureEventId(
+  client: PgTransactionClient,
+  actionProposalId: string
+): Promise<string | null> {
+  const result = await client.query<{ event_id: string }>(
+    `SELECT event_id FROM case_workspace_event_outbox
+      WHERE aggregate_type = ? AND aggregate_id = ? AND event_type = 'proposal.failed'
+      ORDER BY created_at DESC
+      LIMIT 1`,
+    [PROPOSAL_AGGREGATE_TYPE, actionProposalId]
+  );
+  return result.rows[0]?.event_id ?? null;
+}
+
+// ---------------------------------------------------------------------------
 // Row loaders
 // ---------------------------------------------------------------------------
 
@@ -742,6 +859,27 @@ export async function createActionProposal(
     );
 
     if (inserted.rows[0]) {
+      // Taxonomy: `proposal.created`. Summary carries the effect class,
+      // capability ref and payload DIGEST — never the payload itself
+      // (CW-DOD-C3 precedent, and §6 "facts, not commands").
+      await publishEvent(client, {
+        eventId: deterministicEventId('propcreated', caseId, idempotencyKey),
+        eventType: 'proposal.created',
+        ...proposalEventIdentity(inserted.rows[0]),
+        actorUserId: createdByActorId,
+        redactedSummary: redact({
+          effectClass,
+          proposerType,
+          proposalVersion,
+          payloadDigest,
+          policySnapshotRef,
+          capabilityRegistryId: input.capabilityRegistryId ?? null,
+          casePlanVersionId: input.casePlanVersionId ?? null,
+          supersedesActionProposalId,
+          status: 'DRAFT',
+        }),
+        payloadRef: previewRef,
+      });
       return mapRow(inserted.rows[0]);
     }
 
@@ -784,6 +922,22 @@ export async function submitActionProposalForReview(
       [now, id, expectedVersion]
     );
     if (!updated.rows[0]) throw new Error('proposal_version_conflict');
+
+    // Taxonomy: `proposal.review_requested`. (`approval.requested` is
+    // deliberately NOT also emitted here — EVENT_TAXONOMY §5.7 leaves that to a
+    // future approvals-inbox projection, with a causationId back to this event.)
+    await publishEvent(client, {
+      eventType: 'proposal.review_requested',
+      ...proposalEventIdentity(updated.rows[0]),
+      actorUserId,
+      redactedSummary: redact({
+        from: row.status,
+        to: 'PENDING_REVIEW',
+        proposalVersion: Number(row.proposal_version),
+        effectClass: row.effect_class,
+        expiresAt: row.expires_at,
+      }),
+    });
     return mapRow(updated.rows[0]);
   });
 }
@@ -922,6 +1076,42 @@ export async function recordApprovalDecision(
       isReplay = true;
     }
 
+    /**
+     * Taxonomy row `recordApprovalDecision`: one event per call, its type
+     * chosen by the decision (DECISION_EVENT_TYPES). The aggregate stays the
+     * PROPOSAL — the decision row has its own id, which goes in the summary.
+     * The free-text `reason` is deliberately absent; `policySnapshotRef` /
+     * `previewRef` are the payload pointers (§6 "referenced rather than
+     * copied").
+     */
+    async function publishDecisionEvent(
+      proposalRow: CaseWorkspaceActionProposalRow,
+      fromStatus: ActionProposalStatus,
+      toStatus: ActionProposalStatus
+    ): Promise<void> {
+      await publishEvent(client, {
+        eventId: deterministicEventId('propdecision', id, idempotencyKey),
+        eventType: DECISION_EVENT_TYPES[decision],
+        ...proposalEventIdentity(proposalRow),
+        actorUserId: decidedByActorId,
+        redactedSummary: redact({
+          decision,
+          decisionId: decisionRecord.decision_id,
+          decisionSource: source,
+          approvalChannelPolicy,
+          authenticationAssurance,
+          policyVersion,
+          proposalVersion: Number(proposalRow.proposal_version),
+          payloadDigest,
+          from: fromStatus,
+          to: toStatus,
+          conversationId: input.conversationId ?? null,
+          sourceMessageDigest: input.sourceMessageDigest ?? null,
+        }),
+        payloadRef: proposalRow.policy_snapshot_ref,
+      });
+    }
+
     if (decision === 'DEFER') {
       // CW-RT-041 never lists DEFER as a status-machine trigger — proposal
       // status is left untouched (open_question #6). Re-read the current
@@ -931,7 +1121,14 @@ export async function recordApprovalDecision(
         `SELECT * FROM case_workspace_action_proposals WHERE action_proposal_id = ?`,
         [id]
       );
-      return { proposal: mapRow(currentResult.rows[0]!), decision: mapDecisionRow(decisionRecord) };
+      const currentRow = currentResult.rows[0]!;
+      if (!isReplay) {
+        // The mutation here IS the append-only decision row; the proposal's
+        // own status/version is intentionally unchanged, so aggregateVersion
+        // is the live (unmoved) counter.
+        await publishDecisionEvent(currentRow, currentRow.status, currentRow.status);
+      }
+      return { proposal: mapRow(currentRow), decision: mapDecisionRow(decisionRecord) };
     }
 
     if (isReplay) {
@@ -963,6 +1160,7 @@ export async function recordApprovalDecision(
       [nextStatus, now, id, expectedVersion]
     );
     if (!updated.rows[0]) throw new Error('proposal_version_conflict');
+    await publishDecisionEvent(updated.rows[0], row.status, nextStatus);
     return { proposal: mapRow(updated.rows[0]), decision: mapDecisionRow(decisionRecord) };
   });
 }
@@ -1028,6 +1226,24 @@ export async function transitionProposalToExecuting(
       [now, id, expectedVersion]
     );
     if (!updated.rows[0]) throw new Error('proposal_version_conflict');
+
+    // Taxonomy: `proposal.executing`. runId/nodeRunId are carried by
+    // proposalEventIdentity (§10 correlation chain); attemptId has no column
+    // on this aggregate.
+    await publishEvent(client, {
+      eventType: 'proposal.executing',
+      ...proposalEventIdentity(updated.rows[0]),
+      actorUserId,
+      redactedSummary: redact({
+        from: row.status,
+        to: 'EXECUTING',
+        effectClass: row.effect_class,
+        payloadDigest: row.payload_digest,
+        capabilityRegistryId: row.capability_registry_id,
+        casePlanVersionId: row.case_plan_version_id,
+        targetValidated: true,
+      }),
+    });
     return mapRow(updated.rows[0]);
   });
 }
@@ -1042,7 +1258,9 @@ export async function transitionProposalToExecuted(
   actor: CaseActor,
   expectedVersion: number
 ): Promise<CaseActionProposal> {
-  return applySimpleTransition(actionProposalId, actor, expectedVersion, 'EXECUTED');
+  return applySimpleTransition(actionProposalId, actor, expectedVersion, 'EXECUTED', {
+    eventType: 'proposal.executed',
+  });
 }
 
 /** CW-RT-041. EXECUTING -> FAILED. `reason` is required. */
@@ -1053,7 +1271,12 @@ export async function transitionProposalToFailed(
   expectedVersion: number
 ): Promise<CaseActionProposal> {
   requireNonBlank(reason, 'proposal_failed_reason_required');
-  return applySimpleTransition(actionProposalId, actor, expectedVersion, 'FAILED');
+  // Taxonomy `proposal.failed`: "Summary: error class only, never the provider
+  // response body" — classifyReason() is what enforces that here.
+  return applySimpleTransition(actionProposalId, actor, expectedVersion, 'FAILED', {
+    eventType: 'proposal.failed',
+    summary: classifyReason(reason),
+  });
 }
 
 /**
@@ -1112,6 +1335,23 @@ export async function retryProposalFromFailed(
       [now, id, expectedVersion]
     );
     if (!updated.rows[0]) throw new Error('proposal_version_conflict');
+
+    // Taxonomy: `proposal.retry_requested`, with "causationId = the
+    // `proposal.failed` event being retried" — resolved on this same client so
+    // the causal edge is committed atomically with the retry itself.
+    await publishEvent(client, {
+      eventType: 'proposal.retry_requested',
+      ...proposalEventIdentity(updated.rows[0]),
+      actorUserId,
+      causationId: await findCausingFailureEventId(client, id),
+      redactedSummary: redact({
+        from: row.status,
+        to: 'APPROVED',
+        effectClass: row.effect_class,
+        payloadDigest: row.payload_digest,
+        targetRevalidated: true,
+      }),
+    });
     return mapRow(updated.rows[0]);
   });
 }
@@ -1122,7 +1362,9 @@ export async function markProposalAudited(
   actor: CaseActor,
   expectedVersion: number
 ): Promise<CaseActionProposal> {
-  return applySimpleTransition(actionProposalId, actor, expectedVersion, 'AUDITED');
+  return applySimpleTransition(actionProposalId, actor, expectedVersion, 'AUDITED', {
+    eventType: 'proposal.audited',
+  });
 }
 
 /**
@@ -1138,7 +1380,12 @@ export async function revokeApprovedProposal(
   expectedVersion: number
 ): Promise<CaseActionProposal> {
   requireNonBlank(reason, 'proposal_revoke_reason_required');
-  return applySimpleTransition(actionProposalId, actor, expectedVersion, 'REVOKED');
+  // §5 "revocation after approval blocks execution" — consumers of
+  // `proposal.revoked` must treat it as a hard stop.
+  return applySimpleTransition(actionProposalId, actor, expectedVersion, 'REVOKED', {
+    eventType: 'proposal.revoked',
+    summary: classifyReason(reason),
+  });
 }
 
 /**
@@ -1148,12 +1395,18 @@ export async function revokeApprovedProposal(
  * markProposalAudited/revokeApprovedProposal — see open_question #8 for why
  * these rely on plain OCC only, unlike createActionProposal/
  * recordApprovalDecision).
+ *
+ * `event` is REQUIRED, not optional: this helper is the single write path for
+ * four distinct taxonomy rows, and a defaulted/omitted event_type here is how a
+ * command would silently stop being observable. Each caller passes its own
+ * literal event_type from EVENT_TAXONOMY.md.
  */
 async function applySimpleTransition(
   actionProposalId: string,
   actor: CaseActor,
   expectedVersion: number,
-  nextStatus: ActionProposalStatus
+  nextStatus: ActionProposalStatus,
+  event: { eventType: string; summary?: Record<string, unknown> }
 ): Promise<CaseActionProposal> {
   const id = requireNonBlank(actionProposalId, 'proposal_id_required');
   const actorUserId = requireNonBlank(actor?.actorUserId, 'proposal_actor_required');
@@ -1175,6 +1428,19 @@ async function applySimpleTransition(
       [nextStatus, now, id, expectedVersion]
     );
     if (!updated.rows[0]) throw new Error('proposal_version_conflict');
+
+    await publishEvent(client, {
+      eventType: event.eventType,
+      ...proposalEventIdentity(updated.rows[0]),
+      actorUserId,
+      redactedSummary: redact({
+        from: row.status,
+        to: nextStatus,
+        effectClass: row.effect_class,
+        payloadDigest: row.payload_digest,
+        ...(event.summary ?? {}),
+      }),
+    });
     return mapRow(updated.rows[0]);
   });
 }

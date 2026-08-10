@@ -49,6 +49,30 @@
  *                                   CW-03-017, CW-01-004
  *   computeArtifactLinkSetDigest -> CW-01-026-INV9, CW-02-031
  *
+ * DOMAIN EVENTS (docs/product/case-workspace/acceptance/EVENT_TAXONOMY.md):
+ * each of the five mutating commands appends exactly one row to
+ * `case_workspace_event_outbox`, on aggregate `ARTIFACT_LINK`
+ * (`aggregateId` = `link_id`, `aggregateVersion` = the POST-mutation
+ * `version` taken from the write's own `RETURNING` row, never a re-read):
+ *
+ *   linkArtifactToCase          -> artifact.linked_to_case
+ *   pinArtifactRevision         -> evidence.pinned
+ *   markLinkStale               -> artifact_link.marked_stale
+ *   markLinkArtifactUnavailable -> artifact_link.marked_unavailable
+ *   unlinkArtifactFromCase      -> artifact.unlinked_from_case
+ *
+ * Every `publishEvent()` call sits INSIDE that command's existing
+ * `withPgTransaction()` callback on the same client, so the link row and its
+ * event commit or roll back together — there is no post-commit publish path.
+ * Summaries carry the typed pointer facts only (artifact type/id, relation,
+ * pinned revision digest, bounded reason text); artifact CONTENT is never in
+ * this table to begin with, and `payloadRef` points back at the link row.
+ * linkArtifactToCase publishes only on the branch that actually inserted —
+ * a dedupe_key replay returns the pre-existing row and records no new fact,
+ * which is also why that path must not emit a second event. The read methods
+ * (getArtifactLink/listArtifactLinksForCase/computeArtifactLinkSetDigest)
+ * emit nothing.
+ *
  * Cross-cutting invariants held by every mutating method here (see the
  * migration file's header for the exact canon citations):
  *   - no method in this file ever issues a SQL DELETE against
@@ -134,6 +158,7 @@ import {
   withPgTransaction,
 } from '../../utils/queryHelpers.js';
 import { CaseWorkspaceAuthError, requireCaseAccess } from './caseWorkspaceAuthContext.js';
+import { publishEvent, redact } from './eventOutboxService.js';
 
 // ---------------------------------------------------------------------------
 // Public types
@@ -301,6 +326,19 @@ function requireEnum<T extends string>(
   return value;
 }
 
+/**
+ * EVENT_TAXONOMY §1: a `redactedSummary` holds FACTS, not payloads. Reasons,
+ * revisions and other caller-supplied opaque strings are bounded here before
+ * they reach the envelope, so an oversized caller string can never trip
+ * MAX_REDACTED_SUMMARY_BYTES and roll the whole command back.
+ */
+function factText(value: string | null | undefined, maxLength = 200): string | null {
+  if (value === null || value === undefined) return null;
+  const normalized = String(value).trim();
+  if (!normalized) return null;
+  return normalized.length > maxLength ? `${normalized.slice(0, maxLength)}...` : normalized;
+}
+
 function parseRevisionPinHistory(raw: string): RevisionPinHistoryEntry[] {
   try {
     const parsed: unknown = JSON.parse(raw || '[]');
@@ -454,7 +492,37 @@ export async function linkArtifactToCase(input: LinkArtifactToCaseInput): Promis
     );
 
     const row = inserted.rows[0];
-    if (row) return mapRow(row);
+    if (row) {
+      // EVENT_TAXONOMY: `artifact.linked_to_case`, aggregate ARTIFACT_LINK.
+      // Same transaction, same client as the INSERT; identity comes from the
+      // RETURNING row, and aggregateVersion is that row's post-insert
+      // version (1). Summary: artifact id + revision, never content.
+      await publishEvent(client, {
+        eventType: 'artifact.linked_to_case',
+        organizationId: row.organization_id,
+        projectId: row.project_id,
+        aggregateType: 'ARTIFACT_LINK',
+        aggregateId: row.link_id,
+        aggregateVersion: Number(row.version),
+        caseId: row.case_id,
+        actorUserId: row.linked_by_actor_id,
+        // correlationId omitted on purpose — publishEvent takes the ambient
+        // RequestStore correlation id. causationId is null: linking is a
+        // first-class user command, not a consequence of another event.
+        causationId: null,
+        redactedSummary: redact({
+          artifactType: factText(row.artifact_type),
+          artifactId: factText(row.artifact_id),
+          artifactRevision: factText(row.artifact_revision),
+          relation: row.relation,
+          linkStatus: row.link_status,
+          revisionPinnedAtLinkTime: row.artifact_revision !== null,
+          idempotent: row.dedupe_key !== null,
+        }),
+        payloadRef: `case_workspace_artifact_links:${row.link_id}`,
+      });
+      return mapRow(row);
+    }
 
     // 0 rows only happens when dedupeKey is set and already claimed by a
     // prior insert (NULL dedupe_key values never collide under UNIQUE).
@@ -522,8 +590,42 @@ export async function pinArtifactRevision(
         RETURNING *`,
       [nextRevision, JSON.stringify(nextHistory), now, id, row.version]
     );
-    if (!updated.rows[0]) throw new Error('artifact_link_version_conflict');
-    return mapRow(updated.rows[0]);
+    const updatedRow = updated.rows[0];
+    if (!updatedRow) throw new Error('artifact_link_version_conflict');
+
+    // EVENT_TAXONOMY: `evidence.pinned`, aggregate ARTIFACT_LINK. Same
+    // transaction/client as the UPDATE; identity and the post-mutation
+    // version come from the RETURNING row, never a re-read (§3). Summary
+    // carries the pinned revision digest + provenance facts (§9), never any
+    // artifact content — which this table never holds in the first place.
+    await publishEvent(client, {
+      eventType: 'evidence.pinned',
+      organizationId: updatedRow.organization_id,
+      projectId: updatedRow.project_id,
+      aggregateType: 'ARTIFACT_LINK',
+      aggregateId: updatedRow.link_id,
+      aggregateVersion: Number(updatedRow.version),
+      caseId: updatedRow.case_id,
+      actorUserId: actorUserId,
+      // correlationId omitted on purpose — publishEvent takes the ambient
+      // RequestStore correlation id. Pinning is a first-class user command,
+      // not a consequence of another event, so causationId is null.
+      causationId: null,
+      redactedSummary: redact({
+        artifactType: factText(updatedRow.artifact_type),
+        artifactId: factText(updatedRow.artifact_id),
+        relation: updatedRow.relation,
+        pinnedRevision: factText(updatedRow.artifact_revision),
+        previousRevision: factText(row.artifact_revision),
+        pinReason: factText(reason ?? null),
+        pinHistoryLength: nextHistory.length,
+        // CW-01-026-INV9: re-pinning is what resolves staleness.
+        clearedStaleFlag: Boolean(row.is_stale),
+      }),
+      payloadRef: `case_workspace_artifact_links:${updatedRow.link_id}`,
+    });
+
+    return mapRow(updatedRow);
   });
 }
 
@@ -568,8 +670,36 @@ export async function markLinkStale(
         RETURNING *`,
       [now, actorUserId, reason ?? null, now, id, row.version]
     );
-    if (!updated.rows[0]) throw new Error('artifact_link_version_conflict');
-    return mapRow(updated.rows[0]);
+    const updatedRow = updated.rows[0];
+    if (!updatedRow) throw new Error('artifact_link_version_conflict');
+
+    // EVENT_TAXONOMY: `artifact_link.marked_stale`, aggregate ARTIFACT_LINK
+    // (CW-01-026-INV9 "changed upstream evidence marks downstream work
+    // stale"). Same transaction/client as the UPDATE.
+    await publishEvent(client, {
+      eventType: 'artifact_link.marked_stale',
+      organizationId: updatedRow.organization_id,
+      projectId: updatedRow.project_id,
+      aggregateType: 'ARTIFACT_LINK',
+      aggregateId: updatedRow.link_id,
+      aggregateVersion: Number(updatedRow.version),
+      caseId: updatedRow.case_id,
+      actorUserId: actorUserId,
+      causationId: null,
+      redactedSummary: redact({
+        artifactType: factText(updatedRow.artifact_type),
+        artifactId: factText(updatedRow.artifact_id),
+        relation: updatedRow.relation,
+        // The pinned digest itself is untouched by this command — only the
+        // "is this still current" flag flips.
+        pinnedRevision: factText(updatedRow.artifact_revision),
+        staleReason: factText(updatedRow.stale_reason),
+        previouslyStale: Boolean(row.is_stale),
+      }),
+      payloadRef: `case_workspace_artifact_links:${updatedRow.link_id}`,
+    });
+
+    return mapRow(updatedRow);
   });
 }
 
@@ -613,8 +743,39 @@ export async function markLinkArtifactUnavailable(
         RETURNING *`,
       [now, actorUserId, reason ?? null, now, id, row.version]
     );
-    if (!updated.rows[0]) throw new Error('artifact_link_version_conflict');
-    return mapRow(updated.rows[0]);
+    const updatedRow = updated.rows[0];
+    if (!updatedRow) throw new Error('artifact_link_version_conflict');
+
+    // EVENT_TAXONOMY: `artifact_link.marked_unavailable`, aggregate
+    // ARTIFACT_LINK (CW-03-017: unavailable is NOT removal from lineage — the
+    // row survives, so the event is a status fact, not a deletion). Same
+    // transaction/client as the UPDATE; post-mutation version from RETURNING.
+    await publishEvent(client, {
+      eventType: 'artifact_link.marked_unavailable',
+      organizationId: updatedRow.organization_id,
+      projectId: updatedRow.project_id,
+      aggregateType: 'ARTIFACT_LINK',
+      aggregateId: updatedRow.link_id,
+      aggregateVersion: Number(updatedRow.version),
+      caseId: updatedRow.case_id,
+      actorUserId: actorUserId,
+      causationId: null,
+      redactedSummary: redact({
+        artifactType: factText(updatedRow.artifact_type),
+        artifactId: factText(updatedRow.artifact_id),
+        relation: updatedRow.relation,
+        linkStatusFrom: row.link_status,
+        linkStatusTo: updatedRow.link_status,
+        unavailableReason: factText(updatedRow.unavailable_reason),
+        // CW-03-017: the row and its pin history stay queryable; this is
+        // provenance-preserving, not a removal.
+        pinnedRevision: factText(updatedRow.artifact_revision),
+        lineageRetained: true,
+      }),
+      payloadRef: `case_workspace_artifact_links:${updatedRow.link_id}`,
+    });
+
+    return mapRow(updatedRow);
   });
 }
 
@@ -662,8 +823,39 @@ export async function unlinkArtifactFromCase(
         RETURNING *`,
       [now, actorUserId, reason ?? null, now, id, row.version]
     );
-    if (!updated.rows[0]) throw new Error('artifact_link_version_conflict');
-    return mapRow(updated.rows[0]);
+    const updatedRow = updated.rows[0];
+    if (!updatedRow) throw new Error('artifact_link_version_conflict');
+
+    // EVENT_TAXONOMY: `artifact.unlinked_from_case`, aggregate ARTIFACT_LINK.
+    // Same transaction/client as the UPDATE. The HTTP verb is DELETE but the
+    // fact is a status flip (CW-RT-025: unlinking never deletes the
+    // artifact), so the summary says exactly that and nothing about content.
+    await publishEvent(client, {
+      eventType: 'artifact.unlinked_from_case',
+      organizationId: updatedRow.organization_id,
+      projectId: updatedRow.project_id,
+      aggregateType: 'ARTIFACT_LINK',
+      aggregateId: updatedRow.link_id,
+      aggregateVersion: Number(updatedRow.version),
+      caseId: updatedRow.case_id,
+      actorUserId: actorUserId,
+      causationId: null,
+      redactedSummary: redact({
+        artifactType: factText(updatedRow.artifact_type),
+        artifactId: factText(updatedRow.artifact_id),
+        relation: updatedRow.relation,
+        linkStatusFrom: row.link_status,
+        linkStatusTo: updatedRow.link_status,
+        unlinkReason: factText(updatedRow.unlink_reason),
+        pinnedRevision: factText(updatedRow.artifact_revision),
+        // CW-RT-025: the module keeps owning the artifact; only the Case-side
+        // reference stops being in effect.
+        artifactDeleted: false,
+      }),
+      payloadRef: `case_workspace_artifact_links:${updatedRow.link_id}`,
+    });
+
+    return mapRow(updatedRow);
   });
 }
 

@@ -78,13 +78,55 @@
 import { randomUUID } from 'node:crypto';
 
 import { Pool } from 'pg';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import * as caseCoreService from '../caseCoreService.js';
 import * as casePlanVersionService from '../casePlanVersionService.js';
 import type { CanonicalGraph, CasePlanVersion } from '../casePlanVersionService.js';
 import * as executionGraphService from '../executionGraphService.js';
 import * as runBindingService from '../runBindingService.js';
+
+/**
+ * ===========================================================================
+ * ROLLBACK HARNESS — how "a forced failure after the mutation leaves NO
+ * outbox row" is proved without touching shared schema
+ * ===========================================================================
+ * EVENT_TAXONOMY §6.6 requires each command's realDB suite to prove both
+ * directions of the atomicity claim: one outbox row on success, and ZERO
+ * after a forced failure. Proving the second direction needs a failure that
+ * happens strictly AFTER the aggregate write AND after the outbox INSERT —
+ * anything that fails earlier proves nothing (the outbox would be empty for
+ * the trivial reason that publishEvent never ran).
+ *
+ * The mechanism is a pass-through module mock: `publishEvent` calls the REAL
+ * implementation on the service's own transaction client (so a genuine outbox
+ * row really is written inside the transaction), and only then, when armed,
+ * throws. withPgTransaction's catch issues ROLLBACK, and the assertion is
+ * that Postgres — read afterwards on a SEPARATE out-of-band connection —
+ * holds neither the event nor the mutation.
+ *
+ * A Postgres trigger on `case_workspace_event_outbox` would prove the same
+ * thing, but that table is shared with every other suite running against this
+ * database, and CREATE TRIGGER takes an ACCESS EXCLUSIVE lock on it. The mock
+ * is process-local: it can never affect another suite. The wrapper is inert
+ * (`armed === false`) for every other test in this file.
+ */
+const outboxBoom = vi.hoisted(() => ({ armed: false }));
+
+vi.mock('../eventOutboxService.js', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../eventOutboxService.js')>();
+  return {
+    ...actual,
+    publishEvent: async (
+      client: Parameters<typeof actual.publishEvent>[0],
+      envelope: Parameters<typeof actual.publishEvent>[1]
+    ) => {
+      const published = await actual.publishEvent(client, envelope);
+      if (outboxBoom.armed) throw new Error('cw_test_forced_failure_after_publish');
+      return published;
+    },
+  };
+});
 
 const CONNECTION_STRING = process.env.DATABASE_URL ?? '';
 const REAL_DB_REQUESTED =
@@ -205,6 +247,27 @@ interface NodeResultAcceptanceDbRow {
   occurred_at: string;
   recorded_at: string;
   recorded_by_actor_id: string;
+}
+
+/** One `case_workspace_event_outbox` row, read back out-of-band. */
+interface OutboxDbRow {
+  event_id: string;
+  event_type: string;
+  schema_version: number;
+  organization_id: string;
+  project_id: string | null;
+  aggregate_type: string;
+  aggregate_id: string;
+  aggregate_version: number | null;
+  case_id: string | null;
+  run_id: string | null;
+  node_run_id: string | null;
+  actor_user_id: string;
+  correlation_id: string;
+  causation_id: string | null;
+  redacted_summary: Record<string, unknown>;
+  payload_ref: string | null;
+  delivered_at: string | null;
 }
 
 suite('executionGraphService — Execution Graph against a real PostgreSQL (CW-P10, E9)', () => {
@@ -387,6 +450,27 @@ suite('executionGraphService — Execution Graph against a real PostgreSQL (CW-P
     return result.rows;
   }
 
+  /**
+   * Outbox rows for one aggregate, read on the out-of-band `control` pool —
+   * NEVER from publishEvent's return value, which only proves what the
+   * service THINKS it wrote. Scoped by aggregate_id (never a global count):
+   * this database is shared with other suites, some of which write to the
+   * same table.
+   */
+  async function readOutboxRowsForAggregate(aggregateId: string): Promise<OutboxDbRow[]> {
+    const result = await control.query<OutboxDbRow>(
+      `SELECT event_id, event_type, schema_version, organization_id, project_id,
+              aggregate_type, aggregate_id, aggregate_version, case_id, run_id,
+              node_run_id, actor_user_id, correlation_id, causation_id,
+              redacted_summary, payload_ref, delivered_at
+         FROM case_workspace_event_outbox
+        WHERE aggregate_id = $1
+        ORDER BY created_at ASC, aggregate_version ASC NULLS LAST`,
+      [aggregateId]
+    );
+    return result.rows;
+  }
+
   async function readNodeResultAcceptanceRows(
     nodeRunId: string
   ): Promise<NodeResultAcceptanceDbRow[]> {
@@ -438,6 +522,12 @@ suite('executionGraphService — Execution Graph against a real PostgreSQL (CW-P
       await control.query(`DELETE FROM users WHERE id = $1`, [userId]).catch(() => undefined);
     }
     for (const orgId of params.orgIds) {
+      // The outbox has no FK to organizations, so nothing cascades it away.
+      // Every event this suite emits is org-scoped, so deleting by
+      // organization_id removes exactly this test's rows and nothing else.
+      await control
+        .query(`DELETE FROM case_workspace_event_outbox WHERE organization_id = $1`, [orgId])
+        .catch(() => undefined);
       await control.query(`DELETE FROM organizations WHERE id = $1`, [orgId]).catch(() => undefined);
     }
   }
@@ -1026,6 +1116,216 @@ suite('executionGraphService — Execution Graph against a real PostgreSQL (CW-P
         orgIds: [fixture.orgId],
         projectIds: [fixture.projectId],
         userIds: [fixture.actorId, noMembershipActor],
+      });
+    }
+  }, 30_000);
+
+  // -------------------------------------------------------------------------
+  // EVENT OUTBOX (EVENT_TAXONOMY §6.6) — every mutating command in this
+  // service publishes exactly one event, inside its own transaction, and
+  // publishes NOTHING when that transaction rolls back.
+  //
+  // Both commands here write to tables WITHOUT a `version` column, so
+  // aggregate_version must be NULL (EVENT_TAXONOMY §3) — asserted literally,
+  // because a 0 or a 1 there would silently corrupt replay ordering.
+  // -------------------------------------------------------------------------
+
+  it('recordGatewayEvaluation publishes exactly one node.gateway_evaluated outbox row with full identity, and its idempotent replay publishes no second row', async () => {
+    const fixture = await seedCaseWithBoundRun('outbox-gw');
+    const runIds = [fixture.runId];
+    const replayActor = await seedMemberedUser(fixture.orgId, 'outbox-gw-replay');
+    try {
+      const nodeRunId = `node-outbox-gw-${randomUUID()}`;
+      const evaluatedAt = new Date().toISOString();
+      // A distinctive marker buried in the evaluated data: the event must
+      // reference the row, never copy the data (EVENT_TAXONOMY §6.5).
+      const snapshotMarker = `evaluated-payload-marker-${randomUUID()}`;
+
+      await executionGraphService.recordGatewayEvaluation({
+        nodeRunId,
+        runId: fixture.runId,
+        gatewayNodeType: 'DECISION_GATEWAY',
+        conditionExpression: 'input.value > 0',
+        conditionSchemaVersion: 'v1',
+        evaluationInputSnapshot: { value: 42, secret: snapshotMarker },
+        outcomeStatus: 'BRANCH_SELECTED',
+        outcomeDetail: { selectedEdgeId: 'e1', ruleId: 'rule-7' },
+        evaluatedAt,
+        recordedByActorId: fixture.actorId,
+      });
+
+      // Read the outbox on the out-of-band pool, not from a return value.
+      const events = await readOutboxRowsForAggregate(nodeRunId);
+      expect(events).toHaveLength(1);
+      const event = events[0];
+
+      // event_type is the literal from EVENT_TAXONOMY, never invented here.
+      expect(event.event_type).toBe('node.gateway_evaluated');
+      expect(event.aggregate_type).toBe('NODE_RUN');
+      expect(event.aggregate_id).toBe(nodeRunId);
+
+      // Identity: every field comes from the row that was actually written.
+      expect(event.organization_id).toBe(fixture.orgId);
+      expect(event.project_id).toBe(fixture.projectId);
+      expect(event.case_id).toBe(fixture.caseId);
+      expect(event.run_id).toBe(fixture.runId);
+      expect(event.node_run_id).toBe(nodeRunId);
+      expect(event.actor_user_id).toBe(fixture.actorId);
+      expect(String(event.correlation_id ?? '').length).toBeGreaterThan(0);
+      expect(event.causation_id).toBeNull();
+      // EVENT_TAXONOMY §3: this table has no version column.
+      expect(event.aggregate_version).toBeNull();
+      expect(event.schema_version).toBe(1);
+      // Undelivered on purpose — dispatch is a separate, later concern.
+      expect(event.delivered_at).toBeNull();
+
+      // Facts, not payload.
+      const summary = event.redacted_summary;
+      expect(summary.gatewayNodeType).toBe('DECISION_GATEWAY');
+      expect(summary.outcomeStatus).toBe('BRANCH_SELECTED');
+      expect(summary.selectedEdgeId).toBe('e1');
+      expect(summary.ruleId).toBe('rule-7');
+      expect(summary.hasConditionExpression).toBe(true);
+      const storedRow = (await readGatewayEvaluationRows(nodeRunId))[0];
+      expect(summary.evaluationInputDigest).toBe(storedRow.evaluation_input_digest);
+      // The evaluated data itself is referenced, never copied.
+      expect(JSON.stringify(summary)).not.toContain(snapshotMarker);
+      expect(event.payload_ref).toBe(`case_workspace_gateway_evaluations:${nodeRunId}`);
+
+      // Idempotent replay writes no aggregate row, so it must write no event
+      // either: a retried command must not become a second business fact.
+      await executionGraphService.recordGatewayEvaluation({
+        nodeRunId,
+        runId: fixture.runId,
+        gatewayNodeType: 'DECISION_GATEWAY',
+        conditionExpression: 'input.value > 0',
+        conditionSchemaVersion: 'v1',
+        evaluationInputSnapshot: { value: 42, secret: snapshotMarker },
+        outcomeStatus: 'BRANCH_SELECTED',
+        outcomeDetail: { selectedEdgeId: 'e1', ruleId: 'rule-7' },
+        evaluatedAt,
+        recordedByActorId: replayActor,
+      });
+      const afterReplay = await readOutboxRowsForAggregate(nodeRunId);
+      expect(afterReplay).toHaveLength(1);
+      expect(afterReplay[0].event_id).toBe(event.event_id);
+      expect(afterReplay[0].actor_user_id).toBe(fixture.actorId);
+    } finally {
+      await teardown({
+        runIds,
+        orgIds: [fixture.orgId],
+        projectIds: [fixture.projectId],
+        userIds: [fixture.actorId, replayActor],
+      });
+    }
+  }, 30_000);
+
+  it('recordNodeResultAcceptance publishes exactly one node.result_accepted outbox row with full identity and a NULL aggregate_version', async () => {
+    const fixture = await seedCaseWithBoundRun('outbox-acc');
+    const runIds = [fixture.runId];
+    try {
+      const nodeRunId = `node-outbox-acc-${randomUUID()}`;
+      const occurredAt = new Date().toISOString();
+      const snapshotMarker = `acceptance-payload-marker-${randomUUID()}`;
+
+      await executionGraphService.recordNodeResultAcceptance({
+        nodeRunId,
+        runId: fixture.runId,
+        nodeType: 'CAPABILITY',
+        nodeCompletionState: 'COMPLETED',
+        resultAcceptance: 'ACCEPTED',
+        acceptanceInputSnapshot: { status: 'ok', body: snapshotMarker },
+        occurredAt,
+        recordedByActorId: fixture.actorId,
+      });
+
+      const events = await readOutboxRowsForAggregate(nodeRunId);
+      expect(events).toHaveLength(1);
+      const event = events[0];
+
+      expect(event.event_type).toBe('node.result_accepted');
+      expect(event.aggregate_type).toBe('NODE_RUN');
+      expect(event.aggregate_id).toBe(nodeRunId);
+      expect(event.organization_id).toBe(fixture.orgId);
+      expect(event.project_id).toBe(fixture.projectId);
+      expect(event.case_id).toBe(fixture.caseId);
+      expect(event.run_id).toBe(fixture.runId);
+      expect(event.node_run_id).toBe(nodeRunId);
+      expect(event.actor_user_id).toBe(fixture.actorId);
+      expect(String(event.correlation_id ?? '').length).toBeGreaterThan(0);
+      expect(event.causation_id).toBeNull();
+      expect(event.aggregate_version).toBeNull();
+
+      const summary = event.redacted_summary;
+      expect(summary.nodeType).toBe('CAPABILITY');
+      expect(summary.nodeCompletionState).toBe('COMPLETED');
+      expect(summary.resultAcceptance).toBe('ACCEPTED');
+      // The accepted result itself is a payloadRef, never a copy.
+      expect(JSON.stringify(summary)).not.toContain(snapshotMarker);
+      expect(event.payload_ref).toBe(`case_workspace_node_result_acceptances:${nodeRunId}`);
+    } finally {
+      await teardown({
+        runIds,
+        orgIds: [fixture.orgId],
+        projectIds: [fixture.projectId],
+        userIds: [fixture.actorId],
+      });
+    }
+  }, 30_000);
+
+  it('a failure raised AFTER the event is published rolls both back: neither the gateway evaluation row nor its outbox row survives', async () => {
+    const fixture = await seedCaseWithBoundRun('outbox-rollback');
+    const runIds = [fixture.runId];
+    try {
+      const nodeRunId = `node-outbox-rollback-${randomUUID()}`;
+
+      // Armed: the real publishEvent runs on the service's own transaction
+      // client (a real outbox row IS inserted inside the transaction), and
+      // only then does the command blow up.
+      outboxBoom.armed = true;
+      try {
+        await expect(
+          executionGraphService.recordGatewayEvaluation({
+            nodeRunId,
+            runId: fixture.runId,
+            gatewayNodeType: 'PARALLEL_SPLIT',
+            evaluationInputSnapshot: { branch: 'rollback' },
+            outcomeStatus: 'SPLIT_ACTIVATED',
+            evaluatedAt: new Date().toISOString(),
+            recordedByActorId: fixture.actorId,
+          })
+        ).rejects.toThrow(/cw_test_forced_failure_after_publish/);
+      } finally {
+        outboxBoom.armed = false;
+      }
+
+      // Both halves of the transaction are gone — this is the whole point of
+      // an outbox rather than a post-commit log.
+      expect(await readOutboxRowsForAggregate(nodeRunId)).toHaveLength(0);
+      expect(await readGatewayEvaluationRows(nodeRunId)).toHaveLength(0);
+
+      // And the harness is genuinely disarmed: the same command succeeds now
+      // and DOES leave exactly one event. Without this control, a broken
+      // wiring that never publishes anything would pass the assertions above.
+      await executionGraphService.recordGatewayEvaluation({
+        nodeRunId,
+        runId: fixture.runId,
+        gatewayNodeType: 'PARALLEL_SPLIT',
+        evaluationInputSnapshot: { branch: 'rollback' },
+        outcomeStatus: 'SPLIT_ACTIVATED',
+        evaluatedAt: new Date().toISOString(),
+        recordedByActorId: fixture.actorId,
+      });
+      const afterSuccess = await readOutboxRowsForAggregate(nodeRunId);
+      expect(afterSuccess).toHaveLength(1);
+      expect(afterSuccess[0].event_type).toBe('node.gateway_evaluated');
+      expect(await readGatewayEvaluationRows(nodeRunId)).toHaveLength(1);
+    } finally {
+      await teardown({
+        runIds,
+        orgIds: [fixture.orgId],
+        projectIds: [fixture.projectId],
+        userIds: [fixture.actorId],
       });
     }
   }, 30_000);

@@ -84,6 +84,7 @@ import {
   withPgTransaction,
 } from '../../utils/queryHelpers.js';
 import { CaseWorkspaceAuthError, requireCaseAccess } from './caseWorkspaceAuthContext.js';
+import { publishEvent, redact } from './eventOutboxService.js';
 
 // ---------------------------------------------------------------------------
 // Public types
@@ -128,6 +129,12 @@ interface CasePlanVersionRefRow {
 interface CaseCoreRefRow {
   case_id: string;
   organization_id: string;
+  /**
+   * Read only to fill the domain event's `project_id` correlation field
+   * (EVENT_TAXONOMY.md §1/§6.4) — never written to, and never copied onto the
+   * binding row itself (`case_workspace_run_bindings` has no project column).
+   */
+  project_id: string | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -221,7 +228,7 @@ export async function bindRunToPlanVersion(input: {
     await requireCaseAccess(boundByActorId, planVersion.case_id);
 
     const caseResult = await client.query<CaseCoreRefRow>(
-      `SELECT case_id, organization_id FROM case_core WHERE case_id = ?`,
+      `SELECT case_id, organization_id, project_id FROM case_core WHERE case_id = ?`,
       [planVersion.case_id]
     );
     const caseRow = caseResult.rows[0];
@@ -249,7 +256,41 @@ export async function bindRunToPlanVersion(input: {
       ]
     );
     if (!inserted.rows[0]) throw new Error('run_already_bound');
-    return mapRow(inserted.rows[0]);
+
+    const insertedRow = inserted.rows[0];
+
+    // EVENT_TAXONOMY.md §2 (runBindingService) — `run.bound_to_plan_version`
+    // on the RUN aggregate. `case_workspace_run_bindings` has no `version`
+    // column, so `aggregateVersion` is null per §3 (never invented at the call
+    // site). Every correlation field this aggregate actually has is filled
+    // (§6.4): caseId + runId; nodeRunId/attemptId do not exist at bind time.
+    //
+    // The eventId is DETERMINISTIC (§1): run_id is this table's PK and the row
+    // is written exactly once ever, so a retried bind can never mint a second
+    // event for the same binding — ON CONFLICT (event_id) DO NOTHING collapses
+    // it. Published on this transaction's own client, so `run_already_bound`
+    // above (and any later failure) leaves no orphan event behind.
+    await publishEvent(client, {
+      eventId: `cwevt-runbind-${insertedRow.run_id}`,
+      eventType: 'run.bound_to_plan_version',
+      organizationId: insertedRow.organization_id,
+      projectId: caseRow.project_id,
+      aggregateType: 'RUN',
+      aggregateId: insertedRow.run_id,
+      aggregateVersion: null,
+      caseId: insertedRow.case_id,
+      runId: insertedRow.run_id,
+      actorUserId: insertedRow.bound_by_actor_id,
+      redactedSummary: redact({
+        // CW-00-020-INV6: the Run is bound to an EXACT plan version and digest.
+        casePlanVersionId: insertedRow.case_plan_version_id,
+        graphDigest: insertedRow.graph_digest,
+        caseId: insertedRow.case_id,
+        planVersionStatus: planVersion.status,
+      }),
+    });
+
+    return mapRow(insertedRow);
   });
 }
 

@@ -68,10 +68,52 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { Pool } from 'pg';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import * as artifactLinkService from '../artifactLinkService.js';
 import * as caseCoreService from '../caseCoreService.js';
+
+/**
+ * ===========================================================================
+ * ROLLBACK HARNESS — how "a forced failure after the mutation leaves NO
+ * outbox row" is proved without touching shared schema
+ * ===========================================================================
+ * EVENT_TAXONOMY §6.6 requires each command's realDB suite to prove both
+ * directions of the atomicity claim: one outbox row on success, and ZERO
+ * after a forced failure. Proving the second direction needs a failure that
+ * lands strictly AFTER the aggregate write AND after the outbox INSERT —
+ * anything failing earlier proves nothing, because the outbox would then be
+ * empty for the trivial reason that publishEvent never ran.
+ *
+ * The mechanism is a pass-through module mock: `publishEvent` calls the REAL
+ * implementation on the service's own transaction client (a genuine outbox
+ * row really is inserted inside the transaction), and only then, when armed,
+ * throws. withPgTransaction's catch issues ROLLBACK, and the assertions —
+ * made afterwards on a SEPARATE out-of-band connection — are that Postgres
+ * holds neither the event nor the mutation.
+ *
+ * A Postgres trigger on `case_workspace_event_outbox` would prove the same
+ * thing, but that table is shared with every other suite running against this
+ * database and CREATE TRIGGER takes an ACCESS EXCLUSIVE lock on it. The mock
+ * is process-local and can never affect another suite; the wrapper is inert
+ * (`armed === false`) for every other test in this file.
+ */
+const outboxBoom = vi.hoisted(() => ({ armed: false }));
+
+vi.mock('../eventOutboxService.js', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../eventOutboxService.js')>();
+  return {
+    ...actual,
+    publishEvent: async (
+      client: Parameters<typeof actual.publishEvent>[0],
+      envelope: Parameters<typeof actual.publishEvent>[1]
+    ) => {
+      const published = await actual.publishEvent(client, envelope);
+      if (outboxBoom.armed) throw new Error('cw_test_forced_failure_after_publish');
+      return published;
+    },
+  };
+});
 
 const CONNECTION_STRING = process.env.DATABASE_URL ?? '';
 const REAL_DB_REQUESTED =
@@ -157,6 +199,25 @@ interface CaseWorkspaceArtifactLinkDbRow {
   version: number;
   created_at: string;
   updated_at: string;
+}
+
+/** One `case_workspace_event_outbox` row, read back out-of-band. */
+interface OutboxDbRow {
+  event_id: string;
+  event_type: string;
+  schema_version: number;
+  organization_id: string;
+  project_id: string | null;
+  aggregate_type: string;
+  aggregate_id: string;
+  aggregate_version: number | null;
+  case_id: string | null;
+  actor_user_id: string;
+  correlation_id: string;
+  causation_id: string | null;
+  redacted_summary: Record<string, unknown>;
+  payload_ref: string | null;
+  delivered_at: string | null;
 }
 
 suite(
@@ -255,6 +316,12 @@ suite(
       }
       await control.query(`DELETE FROM case_core WHERE case_id = $1`, [caseId]).catch(() => undefined);
       await control.query(`DELETE FROM projects WHERE id = $1`, [projectId]).catch(() => undefined);
+      // The outbox has no FK to organizations, so nothing cascades it away.
+      // Every event this suite emits is org-scoped, so deleting by
+      // organization_id removes exactly this test's rows and nothing else.
+      await control
+        .query(`DELETE FROM case_workspace_event_outbox WHERE organization_id = $1`, [orgId])
+        .catch(() => undefined);
       await control.query(`DELETE FROM organizations WHERE id = $1`, [orgId]).catch(() => undefined);
     }
 
@@ -264,6 +331,26 @@ suite(
         [linkId]
       );
       return result.rows[0];
+    }
+
+    /**
+     * Outbox rows for one aggregate, read on the out-of-band `control` pool —
+     * NEVER from publishEvent's return value, which only proves what the
+     * service THINKS it wrote. Scoped by aggregate_id (never a global count):
+     * this database is shared with other suites that write the same table.
+     */
+    async function readOutboxRowsForAggregate(aggregateId: string): Promise<OutboxDbRow[]> {
+      const result = await control.query<OutboxDbRow>(
+        `SELECT event_id, event_type, schema_version, organization_id, project_id,
+                aggregate_type, aggregate_id, aggregate_version, case_id,
+                actor_user_id, correlation_id, causation_id, redacted_summary,
+                payload_ref, delivered_at
+           FROM case_workspace_event_outbox
+          WHERE aggregate_id = $1
+          ORDER BY aggregate_version ASC NULLS LAST, created_at ASC`,
+        [aggregateId]
+      );
+      return result.rows;
     }
 
     async function readLinkRowsForTuple(
@@ -670,6 +757,225 @@ suite(
         expect(allowed?.linkId).toBe(link.linkId);
       } finally {
         await teardownCase(orgId, projectId, caseId, [actorId, noMembershipActor]);
+      }
+    }, 30_000);
+
+    // -----------------------------------------------------------------------
+    // EVENT OUTBOX (EVENT_TAXONOMY §6.6) — each of the five mutating commands
+    // publishes exactly one event, inside its own transaction, and publishes
+    // nothing when that transaction rolls back.
+    //
+    // `case_workspace_artifact_links` HAS a version column, so every event
+    // must carry the POST-mutation version (§3). Asserting the exact
+    // 1,2,3,4 ladder over one link is what proves the events were taken from
+    // the RETURNING row and not from a re-read or from the pre-image.
+    // -----------------------------------------------------------------------
+
+    it('linkArtifactToCase, pinArtifactRevision, markLinkStale and markLinkArtifactUnavailable each publish exactly one outbox row, in order, with the post-mutation version and full identity', async () => {
+      const { orgId, projectId, caseId, actorId } = await seedOrgProjectCase('outbox-lifecycle');
+      const artifactType = 'document';
+      const artifactId = `doc-outbox-${randomUUID()}`;
+      try {
+        const link = await artifactLinkService.linkArtifactToCase({
+          caseId,
+          artifactType,
+          artifactId,
+          relation: 'EVIDENCE',
+          linkedByActorId: actorId,
+        });
+
+        const afterLink = await readOutboxRowsForAggregate(link.linkId);
+        expect(afterLink).toHaveLength(1);
+        const linkedEvent = afterLink[0];
+        expect(linkedEvent.event_type).toBe('artifact.linked_to_case');
+        expect(linkedEvent.aggregate_type).toBe('ARTIFACT_LINK');
+        expect(linkedEvent.aggregate_id).toBe(link.linkId);
+        expect(linkedEvent.aggregate_version).toBe(1);
+        expect(linkedEvent.organization_id).toBe(orgId);
+        expect(linkedEvent.project_id).toBe(projectId);
+        expect(linkedEvent.case_id).toBe(caseId);
+        expect(linkedEvent.actor_user_id).toBe(actorId);
+        expect(String(linkedEvent.correlation_id ?? '').length).toBeGreaterThan(0);
+        expect(linkedEvent.causation_id).toBeNull();
+        expect(linkedEvent.schema_version).toBe(1);
+        expect(linkedEvent.delivered_at).toBeNull();
+        expect(linkedEvent.redacted_summary.artifactId).toBe(artifactId);
+        expect(linkedEvent.redacted_summary.relation).toBe('EVIDENCE');
+        expect(linkedEvent.payload_ref).toBe(`case_workspace_artifact_links:${link.linkId}`);
+
+        const pinned = await artifactLinkService.pinArtifactRevision(
+          link.linkId,
+          'rev-7',
+          { actorUserId: actorId },
+          'evidence for the closure memo'
+        );
+        expect(pinned.version).toBe(2);
+
+        const afterPin = await readOutboxRowsForAggregate(link.linkId);
+        expect(afterPin).toHaveLength(2);
+        const pinnedEvent = afterPin[1];
+        expect(pinnedEvent.event_type).toBe('evidence.pinned');
+        // The post-mutation version, taken from RETURNING — not the pre-image.
+        expect(pinnedEvent.aggregate_version).toBe(2);
+        expect(pinnedEvent.aggregate_id).toBe(link.linkId);
+        expect(pinnedEvent.organization_id).toBe(orgId);
+        expect(pinnedEvent.case_id).toBe(caseId);
+        expect(pinnedEvent.actor_user_id).toBe(actorId);
+        expect(pinnedEvent.redacted_summary.pinnedRevision).toBe('rev-7');
+
+        const staled = await artifactLinkService.markLinkStale(
+          link.linkId,
+          { actorUserId: actorId },
+          'upstream document moved past rev-7'
+        );
+        expect(staled.version).toBe(3);
+
+        const afterStale = await readOutboxRowsForAggregate(link.linkId);
+        expect(afterStale).toHaveLength(3);
+        const staleEvent = afterStale[2];
+        expect(staleEvent.event_type).toBe('artifact_link.marked_stale');
+        expect(staleEvent.aggregate_version).toBe(3);
+        expect(staleEvent.actor_user_id).toBe(actorId);
+        expect(staleEvent.redacted_summary.staleReason).toBe('upstream document moved past rev-7');
+
+        const unavailable = await artifactLinkService.markLinkArtifactUnavailable(
+          link.linkId,
+          { actorUserId: actorId },
+          'source deleted in its own module'
+        );
+        expect(unavailable.version).toBe(4);
+
+        const afterUnavailable = await readOutboxRowsForAggregate(link.linkId);
+        expect(afterUnavailable).toHaveLength(4);
+        const unavailableEvent = afterUnavailable[3];
+        expect(unavailableEvent.event_type).toBe('artifact_link.marked_unavailable');
+        expect(unavailableEvent.aggregate_version).toBe(4);
+        expect(unavailableEvent.organization_id).toBe(orgId);
+        expect(unavailableEvent.case_id).toBe(caseId);
+        expect(unavailableEvent.actor_user_id).toBe(actorId);
+        // CW-03-017: unavailable is NOT removal from lineage.
+        expect(unavailableEvent.redacted_summary.linkStatusFrom).toBe('ACTIVE');
+        expect(unavailableEvent.redacted_summary.linkStatusTo).toBe('UNAVAILABLE');
+        expect(unavailableEvent.redacted_summary.lineageRetained).toBe(true);
+
+        // The full ordered event_type ladder for one aggregate — the sequence
+        // itself is the replay contract, so it is asserted literally.
+        expect(afterUnavailable.map((row) => row.event_type)).toEqual([
+          'artifact.linked_to_case',
+          'evidence.pinned',
+          'artifact_link.marked_stale',
+          'artifact_link.marked_unavailable',
+        ]);
+        // Every event_id is distinct: four facts, never one fact repeated.
+        expect(new Set(afterUnavailable.map((row) => row.event_id)).size).toBe(4);
+      } finally {
+        await teardownCase(orgId, projectId, caseId, [actorId]);
+      }
+    }, 30_000);
+
+    it('unlinkArtifactFromCase publishes exactly one artifact.unlinked_from_case outbox row recording the status flip, not a deletion', async () => {
+      const { orgId, projectId, caseId, actorId } = await seedOrgProjectCase('outbox-unlink');
+      const artifactType = 'document';
+      const artifactId = `doc-outbox-unlink-${randomUUID()}`;
+      try {
+        const link = await artifactLinkService.linkArtifactToCase({
+          caseId,
+          artifactType,
+          artifactId,
+          relation: 'INPUT',
+          linkedByActorId: actorId,
+        });
+
+        const unlinked = await artifactLinkService.unlinkArtifactFromCase(
+          link.linkId,
+          { actorUserId: actorId },
+          'no longer referenced by the Case'
+        );
+        expect(unlinked.version).toBe(2);
+
+        const events = await readOutboxRowsForAggregate(link.linkId);
+        expect(events).toHaveLength(2);
+        expect(events.map((row) => row.event_type)).toEqual([
+          'artifact.linked_to_case',
+          'artifact.unlinked_from_case',
+        ]);
+
+        const unlinkEvent = events[1];
+        expect(unlinkEvent.aggregate_type).toBe('ARTIFACT_LINK');
+        expect(unlinkEvent.aggregate_id).toBe(link.linkId);
+        expect(unlinkEvent.aggregate_version).toBe(2);
+        expect(unlinkEvent.organization_id).toBe(orgId);
+        expect(unlinkEvent.project_id).toBe(projectId);
+        expect(unlinkEvent.case_id).toBe(caseId);
+        expect(unlinkEvent.actor_user_id).toBe(actorId);
+        expect(String(unlinkEvent.correlation_id ?? '').length).toBeGreaterThan(0);
+        expect(unlinkEvent.causation_id).toBeNull();
+        expect(unlinkEvent.redacted_summary.linkStatusFrom).toBe('ACTIVE');
+        expect(unlinkEvent.redacted_summary.linkStatusTo).toBe('UNLINKED');
+        // CW-RT-025: the module keeps owning the artifact.
+        expect(unlinkEvent.redacted_summary.artifactDeleted).toBe(false);
+        expect(unlinkEvent.payload_ref).toBe(`case_workspace_artifact_links:${link.linkId}`);
+
+        // The link row itself still exists — the event describes a status
+        // flip, and the row it points at is still there to be read.
+        const row = await readLinkRow(link.linkId);
+        expect(row?.link_status).toBe('UNLINKED');
+      } finally {
+        await teardownCase(orgId, projectId, caseId, [actorId]);
+      }
+    }, 30_000);
+
+    it('a failure raised AFTER the event is published rolls both back: pinArtifactRevision leaves neither a new outbox row nor a bumped link row', async () => {
+      const { orgId, projectId, caseId, actorId } = await seedOrgProjectCase('outbox-rollback');
+      const artifactType = 'document';
+      const artifactId = `doc-outbox-rollback-${randomUUID()}`;
+      try {
+        const link = await artifactLinkService.linkArtifactToCase({
+          caseId,
+          artifactType,
+          artifactId,
+          relation: 'EVIDENCE',
+          artifactRevision: 'rev-1',
+          linkedByActorId: actorId,
+        });
+        expect(await readOutboxRowsForAggregate(link.linkId)).toHaveLength(1);
+
+        outboxBoom.armed = true;
+        try {
+          await expect(
+            artifactLinkService.pinArtifactRevision(link.linkId, 'rev-2', { actorUserId: actorId }, 'doomed')
+          ).rejects.toThrow(/cw_test_forced_failure_after_publish/);
+        } finally {
+          outboxBoom.armed = false;
+        }
+
+        // No second event...
+        const afterFailure = await readOutboxRowsForAggregate(link.linkId);
+        expect(afterFailure).toHaveLength(1);
+        expect(afterFailure[0].event_type).toBe('artifact.linked_to_case');
+
+        // ...and no mutation either: version and revision are untouched. This
+        // is what "atomic", rather than "logged after the fact", means.
+        const row = await readLinkRow(link.linkId);
+        expect(Number(row?.version)).toBe(1);
+        expect(row?.artifact_revision).toBe('rev-1');
+
+        // Negative control: disarmed, the very same call succeeds and DOES
+        // add exactly one event. Without this, a wiring that never publishes
+        // anything would pass the assertions above.
+        const pinned = await artifactLinkService.pinArtifactRevision(
+          link.linkId,
+          'rev-2',
+          { actorUserId: actorId },
+          'retried'
+        );
+        expect(pinned.version).toBe(2);
+        const afterRetry = await readOutboxRowsForAggregate(link.linkId);
+        expect(afterRetry).toHaveLength(2);
+        expect(afterRetry[1].event_type).toBe('evidence.pinned');
+        expect(afterRetry[1].aggregate_version).toBe(2);
+      } finally {
+        await teardownCase(orgId, projectId, caseId, [actorId]);
       }
     }, 30_000);
   }

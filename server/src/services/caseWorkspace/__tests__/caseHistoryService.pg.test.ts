@@ -117,7 +117,20 @@ async function canReachWithSchema(connectionString: string): Promise<boolean> {
     );
     const orgMembersOk = Number(orgMembersResult.rows[0]?.present ?? 0) === 4;
 
-    return historyOk && valueOk && orgMembersOk;
+    // appendCaseHistoryEvent/recordValueMeasurement now publish a domain event
+    // on the SAME transaction as the write (EVENT_TAXONOMY.md §2), so a missing
+    // outbox table would fail every mutation. Probed here so that is a LOUD
+    // SKIP rather than a mysterious red suite.
+    const outboxResult = await probe.query(
+      `SELECT count(*)::int AS present FROM information_schema.columns
+        WHERE table_schema = 'public' AND table_name = 'case_workspace_event_outbox'
+          AND column_name IN ('event_id', 'event_type', 'organization_id', 'project_id',
+                               'aggregate_type', 'aggregate_id', 'aggregate_version', 'case_id',
+                               'actor_user_id', 'correlation_id', 'redacted_summary', 'payload_ref')`
+    );
+    const outboxOk = Number(outboxResult.rows[0]?.present ?? 0) === 12;
+
+    return historyOk && valueOk && orgMembersOk && outboxOk;
   } catch {
     return false;
   } finally {
@@ -168,6 +181,25 @@ interface CaseWorkspaceValueMeasurementDbRow {
   evidence_ref: string | null;
   dedupe_key: string | null;
   created_at: string;
+}
+
+/** One `case_workspace_event_outbox` row, as stored (snake_case, straight from Postgres). */
+interface EventOutboxDbRow {
+  event_id: string;
+  event_type: string;
+  organization_id: string;
+  project_id: string | null;
+  aggregate_type: string;
+  aggregate_id: string;
+  aggregate_version: number | null;
+  case_id: string | null;
+  run_id: string | null;
+  actor_user_id: string;
+  correlation_id: string;
+  causation_id: string | null;
+  occurred_at: string;
+  redacted_summary: Record<string, unknown>;
+  payload_ref: string | null;
 }
 
 suite('caseHistoryService — Case History & Value Measurements against a real PostgreSQL (CW-P07, E11)', () => {
@@ -280,8 +312,77 @@ suite('caseHistoryService — Case History & Value Measurements against a real P
     for (const userId of params.userIds ?? []) {
       await control.query(`DELETE FROM users WHERE id = $1`, [userId]).catch(() => undefined);
     }
+    if (params.orgIds.length > 0) {
+      // The outbox has no FK to organizations (append-only log of ids), so it
+      // never cascades — each test removes exactly its own rows.
+      await control
+        .query(`DELETE FROM case_workspace_event_outbox WHERE organization_id = ANY($1)`, [
+          params.orgIds,
+        ])
+        .catch(() => undefined);
+    }
     for (const orgId of params.orgIds) {
       await control.query(`DELETE FROM organizations WHERE id = $1`, [orgId]).catch(() => undefined);
+    }
+  }
+
+  /**
+   * Reads the outbox OUT OF BAND (dedicated `control` pool), never through the
+   * service's own return value — the return value only proves what the service
+   * THINKS it published.
+   */
+  async function readOutboxRowsForCase(caseId: string): Promise<EventOutboxDbRow[]> {
+    const result = await control.query<EventOutboxDbRow>(
+      `SELECT * FROM case_workspace_event_outbox WHERE case_id = $1 ORDER BY created_at ASC`,
+      [caseId]
+    );
+    return result.rows;
+  }
+
+  async function readOutboxRowsForAggregate(aggregateId: string): Promise<EventOutboxDbRow[]> {
+    const result = await control.query<EventOutboxDbRow>(
+      `SELECT * FROM case_workspace_event_outbox WHERE aggregate_id = $1 ORDER BY created_at ASC`,
+      [aggregateId]
+    );
+    return result.rows;
+  }
+
+  /**
+   * Forces a failure AFTER the command's mutation AND after its publishEvent,
+   * by installing a DEFERRABLE INITIALLY DEFERRED constraint trigger that
+   * raises at COMMIT time for exactly one row. That is what makes the rollback
+   * test a real atomicity proof rather than a "the insert itself blew up"
+   * tautology: both writes have already happened on the transaction's client
+   * when the poison fires, so a surviving outbox row would mean the outbox is
+   * NOT sharing the command's transaction.
+   */
+  async function withCommitTimePoison<T>(
+    params: { table: string; matchColumn: string; matchValue: string; event: 'INSERT' | 'UPDATE' },
+    fn: () => Promise<T>
+  ): Promise<T> {
+    const token = randomUUID().replace(/-/g, '');
+    const fnName = `cw_test_poison_fn_${token}`;
+    const trgName = `cw_test_poison_trg_${token}`;
+    const literal = params.matchValue.replace(/'/g, "''");
+    await control.query(
+      `CREATE FUNCTION ${fnName}() RETURNS trigger LANGUAGE plpgsql AS $poison$
+         BEGIN RAISE EXCEPTION 'forced_commit_time_failure_for_atomicity_test'; END
+       $poison$`
+    );
+    await control.query(
+      `CREATE CONSTRAINT TRIGGER ${trgName}
+         AFTER ${params.event} ON ${params.table}
+         DEFERRABLE INITIALLY DEFERRED
+         FOR EACH ROW WHEN (NEW.${params.matchColumn} = '${literal}')
+         EXECUTE FUNCTION ${fnName}()`
+    );
+    try {
+      return await fn();
+    } finally {
+      await control
+        .query(`DROP TRIGGER IF EXISTS ${trgName} ON ${params.table}`)
+        .catch(() => undefined);
+      await control.query(`DROP FUNCTION IF EXISTS ${fnName}()`).catch(() => undefined);
     }
   }
 
@@ -710,6 +811,228 @@ suite('caseHistoryService — Case History & Value Measurements against a real P
         projectIds: [projectId],
         caseIds: [caseId],
         userIds: [actorId, noMembershipActor],
+      });
+    }
+  }, 30_000);
+
+  // -------------------------------------------------------------------------
+  // 5. DOMAIN EVENT (EVENT_TAXONOMY.md §2, caseHistoryService row 1) —
+  //    appendCaseHistoryEvent emits the caller's own event_type VERBATIM (the
+  //    history catalog is NOT this taxonomy's namespace), exactly once, on the
+  //    CASE aggregate, referencing the history row instead of copying it.
+  // -------------------------------------------------------------------------
+  it('appendCaseHistoryEvent writes exactly one outbox row carrying the caller event_type verbatim, and a dedupe_key replay adds no second row', async () => {
+    const { orgId, projectId, caseId, actorId } = await seedOrgProjectCase('outbox-history');
+    try {
+      const dedupeKey = `history-outbox-${randomUUID()}`;
+      const appended = await caseHistoryService.appendCaseHistoryEvent({
+        organizationId: orgId,
+        projectId,
+        caseId,
+        eventType: 'GOVERNANCE_TIER_CHANGED',
+        actorId,
+        occurredAt: new Date().toISOString(),
+        summary: 'free text that must never be copied into the event',
+        payload: { secretish: 'also never copied' },
+        sourceTable: 'case_core',
+        sourceId: caseId,
+        dedupeKey,
+      });
+
+      const emitted = (await readOutboxRowsForCase(caseId)).filter(
+        (row) => row.event_type === 'GOVERNANCE_TIER_CHANGED'
+      );
+      expect(emitted).toHaveLength(1);
+      const event = emitted[0];
+      expect(event.aggregate_type).toBe('CASE');
+      expect(event.aggregate_id).toBe(caseId);
+      // §3: this command writes case_workspace_history_events, not case_core —
+      // there is no post-mutation case_core.version to take, so null, never a
+      // re-read.
+      expect(event.aggregate_version).toBeNull();
+      expect(event.organization_id).toBe(orgId);
+      expect(event.project_id).toBe(projectId);
+      expect(event.case_id).toBe(caseId);
+      expect(event.actor_user_id).toBe(actorId);
+      expect(String(event.correlation_id ?? '').trim().length).toBeGreaterThan(0);
+
+      // Facts and ids only; the free-text summary/payload are REFERENCED.
+      expect(event.redacted_summary).toMatchObject({
+        historyEventId: appended.eventId,
+        sourceTable: 'case_core',
+        sourceId: caseId,
+      });
+      expect(event.payload_ref).toBe(`case_workspace_history_events:${appended.eventId}`);
+      const summaryText = JSON.stringify(event.redacted_summary);
+      expect(summaryText).not.toContain('free text that must never be copied');
+      expect(summaryText).not.toContain('also never copied');
+
+      // Same dedupe_key -> the service returns the ORIGINAL history row and the
+      // deterministic event id collapses under ON CONFLICT DO NOTHING: still
+      // exactly one outbox row, not two.
+      const replayed = await caseHistoryService.appendCaseHistoryEvent({
+        organizationId: orgId,
+        projectId,
+        caseId,
+        eventType: 'GOVERNANCE_TIER_CHANGED',
+        actorId,
+        occurredAt: new Date().toISOString(),
+        summary: 'replay attempt',
+        sourceTable: 'case_core',
+        sourceId: caseId,
+        dedupeKey,
+      });
+      expect(replayed.eventId).toBe(appended.eventId);
+      expect(
+        (await readOutboxRowsForCase(caseId)).filter(
+          (row) => row.event_type === 'GOVERNANCE_TIER_CHANGED'
+        )
+      ).toHaveLength(1);
+    } finally {
+      await teardown({
+        orgIds: [orgId],
+        projectIds: [projectId],
+        caseIds: [caseId],
+        userIds: [actorId],
+      });
+    }
+  }, 30_000);
+
+  // -------------------------------------------------------------------------
+  // 6. DOMAIN EVENT + §5.6 NO DOUBLE-EMISSION — recordValueMeasurement writes
+  //    a measurement row AND a linked history row in one transaction, but must
+  //    produce EXACTLY ONE outbox row (`outcome.measurement_recorded`): the
+  //    internal insertHistoryEvent() helper deliberately does not emit.
+  // -------------------------------------------------------------------------
+  it('recordValueMeasurement writes exactly one outcome.measurement_recorded outbox row and NO second row for the history entry it appends internally (§5.6)', async () => {
+    const { orgId, projectId, caseId, actorId } = await seedOrgProjectCase('outbox-measurement');
+    try {
+      const measurement = await caseHistoryService.recordValueMeasurement({
+        caseId,
+        metricKey: 'cost-savings-pct',
+        metricName: 'Cost savings percentage',
+        actualValue: 12.5,
+        targetValue: 15,
+        baselineValue: 0,
+        measurementStatus: 'CONFIRMED',
+        measurementDate: '2026-01-15',
+        confidence: 'HIGH',
+        attribution: 'Directly attributable to the procurement renegotiation workstream',
+        evidenceRef: 'evidence-doc-1',
+        measuredByActorId: actorId,
+      });
+
+      // The internal history row really landed — so the absence of its event
+      // below proves deliberate silence, not a missing write.
+      const historyRows = await readHistoryEventRowsForCase(caseId);
+      expect(historyRows).toHaveLength(1);
+      expect(historyRows[0].event_type).toBe('VALUE_MEASUREMENT_RECORDED');
+
+      const measurementEvents = await readOutboxRowsForAggregate(measurement.measurementId);
+      expect(measurementEvents).toHaveLength(1);
+      const event = measurementEvents[0];
+      expect(event.event_type).toBe('outcome.measurement_recorded');
+      expect(event.aggregate_type).toBe('VALUE_MEASUREMENT');
+      expect(event.aggregate_id).toBe(measurement.measurementId);
+      // §3: case_workspace_value_measurements has no version column.
+      expect(event.aggregate_version).toBeNull();
+      expect(event.organization_id).toBe(orgId);
+      expect(event.project_id).toBe(projectId);
+      expect(event.case_id).toBe(caseId);
+      expect(event.actor_user_id).toBe(actorId);
+      expect(String(event.correlation_id ?? '').trim().length).toBeGreaterThan(0);
+      expect(event.payload_ref).toBe(
+        `case_workspace_value_measurements:${measurement.measurementId}`
+      );
+      expect(event.redacted_summary).toMatchObject({
+        metricKey: 'cost-savings-pct',
+        measurementStatus: 'CONFIRMED',
+        confidence: 'HIGH',
+        actualValue: 12.5,
+        targetValue: 15,
+      });
+
+      // §5.6: NO `VALUE_MEASUREMENT_RECORDED` outbox row anywhere for this Case
+      // — the emission lives only in the PUBLIC appendCaseHistoryEvent entry
+      // point, never in the internal helper this command reuses.
+      const historyTypedEvents = (await readOutboxRowsForCase(caseId)).filter(
+        (row) => row.event_type === 'VALUE_MEASUREMENT_RECORDED'
+      );
+      expect(historyTypedEvents).toHaveLength(0);
+    } finally {
+      await teardown({
+        orgIds: [orgId],
+        projectIds: [projectId],
+        caseIds: [caseId],
+        userIds: [actorId],
+      });
+    }
+  }, 30_000);
+
+  // -------------------------------------------------------------------------
+  // 7. ROLLBACK / ATOMICITY — a failure forced AFTER the measurement INSERT,
+  //    after the linked history INSERT and after publishEvent (deferred
+  //    constraint trigger firing at COMMIT) leaves ZERO rows in all three
+  //    tables. If publishEvent ever opened its own connection, the event would
+  //    survive here.
+  // -------------------------------------------------------------------------
+  it('a failure forced at COMMIT time after recordValueMeasurement leaves zero measurement rows, zero history rows AND zero outbox rows', async () => {
+    const { orgId, projectId, caseId, actorId } = await seedOrgProjectCase('outbox-rollback');
+    try {
+      await withCommitTimePoison(
+        {
+          table: 'case_workspace_value_measurements',
+          matchColumn: 'case_id',
+          matchValue: caseId,
+          event: 'INSERT',
+        },
+        async () => {
+          await expect(
+            caseHistoryService.recordValueMeasurement({
+              caseId,
+              metricKey: 'rollback-metric',
+              metricName: 'Rollback metric',
+              actualValue: 1,
+              measurementStatus: 'CONFIRMED',
+              measurementDate: '2026-03-01',
+              confidence: 'MEDIUM',
+              attribution: 'poisoned transaction',
+              evidenceRef: 'evidence-rollback',
+              measuredByActorId: actorId,
+            })
+          ).rejects.toThrow(/forced_commit_time_failure_for_atomicity_test/);
+        }
+      );
+
+      expect(await readValueMeasurementRowsForCase(caseId)).toHaveLength(0);
+      expect(await readHistoryEventRowsForCase(caseId)).toHaveLength(0);
+      expect(
+        (await readOutboxRowsForCase(caseId)).filter(
+          (row) => row.event_type === 'outcome.measurement_recorded'
+        )
+      ).toHaveLength(0);
+
+      // The same command succeeds once the poison is gone — the rollback left
+      // no partial state behind.
+      const measurement = await caseHistoryService.recordValueMeasurement({
+        caseId,
+        metricKey: 'rollback-metric',
+        metricName: 'Rollback metric',
+        actualValue: 1,
+        measurementStatus: 'CONFIRMED',
+        measurementDate: '2026-03-01',
+        confidence: 'MEDIUM',
+        attribution: 'clean retry after rollback',
+        evidenceRef: 'evidence-rollback',
+        measuredByActorId: actorId,
+      });
+      expect(await readOutboxRowsForAggregate(measurement.measurementId)).toHaveLength(1);
+    } finally {
+      await teardown({
+        orgIds: [orgId],
+        projectIds: [projectId],
+        caseIds: [caseId],
+        userIds: [actorId],
       });
     }
   }, 30_000);

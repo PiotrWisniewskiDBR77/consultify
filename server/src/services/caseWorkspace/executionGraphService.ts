@@ -48,6 +48,25 @@
  *   listNodeResultAcceptancesForRun  -> CW-RT-037, CW-RT-035
  *   listNodeResultAcceptancesForCase -> CW-RT-037
  *
+ * DOMAIN EVENTS (docs/product/case-workspace/acceptance/EVENT_TAXONOMY.md):
+ * the two recording commands each append exactly one row to
+ * `case_workspace_event_outbox` — `node.gateway_evaluated` and
+ * `node.result_accepted`, both on aggregate `NODE_RUN`, both with
+ * `aggregateVersion = null` (§3: neither ledger has a version column). The
+ * `publishEvent()` call is made INSIDE the command's existing
+ * `withPgTransaction()` callback, on that same client, so the ledger row and
+ * the event commit or roll back together; there is no post-commit publish
+ * path. Because both tables key on `node_run_id` (PK) and both commands are
+ * therefore idempotent by construction, each event carries a DETERMINISTIC
+ * `eventId` derived from that same `node_run_id` — a replayed recording takes
+ * the ON CONFLICT branch and publishes nothing, and even a hypothetical
+ * double-publish would collapse on the outbox's own `ON CONFLICT (event_id)`.
+ * `node.result_accepted` is emitted for every recorded acceptance value
+ * (ACCEPTED/PARTIAL/REJECTED/NOT_APPLICABLE) — the taxonomy fixes one literal
+ * event_type for this command and lists only `transitionStatus`/
+ * `recordApprovalDecision` as state-dependent; the recorded value travels in
+ * the summary. The read/list methods emit nothing.
+ *
  * Cross-cutting invariants held by this service (see the migration file's
  * header for the exact canon citations):
  *   - gateway_node_type is CHECK-restricted to exactly the DECISION_GATEWAY/
@@ -177,6 +196,7 @@ import {
   withPgTransaction,
 } from '../../utils/queryHelpers.js';
 import { CaseWorkspaceAuthError, requireCaseAccess } from './caseWorkspaceAuthContext.js';
+import { publishEvent, redact } from './eventOutboxService.js';
 
 // ---------------------------------------------------------------------------
 // Public types
@@ -431,6 +451,45 @@ function computeInputDigest(snapshot: unknown): string {
   return `sha256:${createHash('sha256').update(json, 'utf8').digest('hex')}`;
 }
 
+/**
+ * EVENT_TAXONOMY §1: a `redactedSummary` holds FACTS, not payloads. Free-text
+ * and opaque caller strings are bounded here before they ever reach the
+ * envelope, so a caller cannot blow past MAX_REDACTED_SUMMARY_BYTES (which
+ * would throw and roll back the whole command) by supplying a large string.
+ */
+function factText(value: string | null | undefined, maxLength = 200): string | null {
+  if (value === null || value === undefined) return null;
+  const normalized = String(value).trim();
+  if (!normalized) return null;
+  return normalized.length > maxLength ? `${normalized.slice(0, maxLength)}...` : normalized;
+}
+
+/**
+ * EVENT_TAXONOMY, `recordGatewayEvaluation`: "Summary: branch taken + rule id,
+ * not the evaluated data." outcome_detail is caller-supplied opaque JSON, so
+ * only these few identity-shaped keys are lifted out of it — the object itself
+ * is never copied into the event (it stays in the row the `payloadRef` points
+ * at).
+ */
+const OUTCOME_DETAIL_FACT_KEYS = [
+  'selectedEdgeId',
+  'selectedNodeId',
+  'selectedBranchId',
+  'ruleId',
+] as const;
+
+function branchFactsFromOutcomeDetail(detail: unknown): Record<string, string> {
+  if (!detail || typeof detail !== 'object' || Array.isArray(detail)) return {};
+  const source = detail as Record<string, unknown>;
+  const facts: Record<string, string> = {};
+  for (const key of OUTCOME_DETAIL_FACT_KEYS) {
+    const value = source[key];
+    const normalized = typeof value === 'string' ? factText(value) : null;
+    if (normalized) facts[key] = normalized;
+  }
+  return facts;
+}
+
 function safeJsonParse(value: string | null | undefined): unknown {
   if (value === null || value === undefined) return null;
   try {
@@ -639,8 +698,52 @@ export async function recordGatewayEvaluation(
       ]
     );
 
-    if (inserted.rows[0]) {
-      return mapGatewayEvaluationRow(inserted.rows[0]);
+    const insertedRow = inserted.rows[0];
+    if (insertedRow) {
+      // EVENT_TAXONOMY: `node.gateway_evaluated`, aggregate NODE_RUN. Same
+      // transaction, same client as the INSERT above (atomicity), and every
+      // identity field is taken from the row that was just written — never
+      // from unvalidated input. Emitted only on the branch that actually
+      // wrote a row: the ON CONFLICT replay below records no new fact.
+      await publishEvent(client, {
+        eventId: `cwevt-node-gateway-evaluated-${insertedRow.node_run_id}`,
+        eventType: 'node.gateway_evaluated',
+        organizationId: insertedRow.organization_id,
+        projectId: insertedRow.project_id,
+        aggregateType: 'NODE_RUN',
+        aggregateId: insertedRow.node_run_id,
+        // §3: case_workspace_gateway_evaluations has no version column.
+        aggregateVersion: null,
+        caseId: insertedRow.case_id,
+        runId: insertedRow.run_id,
+        nodeRunId: insertedRow.node_run_id,
+        actorUserId: insertedRow.recorded_by_actor_id,
+        // correlationId is deliberately omitted: publishEvent falls back to
+        // RequestStore.getCorrelationId() and only mints one when this runs
+        // outside any request scope. causationId is null — this command is
+        // not triggered by another event.
+        causationId: null,
+        redactedSummary: redact({
+          gatewayNodeType: insertedRow.gateway_node_type,
+          outcomeStatus: insertedRow.outcome_status,
+          joinPolicy: insertedRow.join_policy,
+          joinRequiredCount:
+            insertedRow.join_required_count === null ? null : Number(insertedRow.join_required_count),
+          joinBranchTotalCount:
+            insertedRow.join_branch_total_count === null
+              ? null
+              : Number(insertedRow.join_branch_total_count),
+          // The versioned expression schema pin (the "rule id"); the
+          // expression text and the evaluated data itself stay in the row.
+          conditionSchemaVersion: insertedRow.condition_schema_version,
+          hasConditionExpression: insertedRow.condition_expression !== null,
+          evaluationInputDigest: insertedRow.evaluation_input_digest,
+          evaluatedAt: insertedRow.evaluated_at,
+          ...branchFactsFromOutcomeDetail(safeJsonParse(insertedRow.outcome_detail)),
+        }),
+        payloadRef: `case_workspace_gateway_evaluations:${insertedRow.node_run_id}`,
+      });
+      return mapGatewayEvaluationRow(insertedRow);
     }
 
     const existingResult = await client.query<CaseWorkspaceGatewayEvaluationRow>(
@@ -827,8 +930,39 @@ export async function recordNodeResultAcceptance(
       ]
     );
 
-    if (inserted.rows[0]) {
-      return mapNodeResultAcceptanceRow(inserted.rows[0]);
+    const insertedRow = inserted.rows[0];
+    if (insertedRow) {
+      // EVENT_TAXONOMY: `node.result_accepted`, aggregate NODE_RUN. One
+      // literal event_type for this command regardless of the recorded
+      // acceptance value (the value itself is a fact in the summary); the
+      // result payload is NOT copied — `payloadRef` points at the row.
+      await publishEvent(client, {
+        eventId: `cwevt-node-result-accepted-${insertedRow.node_run_id}`,
+        eventType: 'node.result_accepted',
+        organizationId: insertedRow.organization_id,
+        projectId: insertedRow.project_id,
+        aggregateType: 'NODE_RUN',
+        aggregateId: insertedRow.node_run_id,
+        // §3: case_workspace_node_result_acceptances has no version column.
+        aggregateVersion: null,
+        caseId: insertedRow.case_id,
+        runId: insertedRow.run_id,
+        nodeRunId: insertedRow.node_run_id,
+        actorUserId: insertedRow.recorded_by_actor_id,
+        causationId: null,
+        redactedSummary: redact({
+          nodeType: insertedRow.node_type,
+          nodeCompletionState: insertedRow.node_completion_state,
+          resultAcceptance: insertedRow.result_acceptance,
+          skipAuthorizedByGraphCondition: insertedRow.skip_authorized_by_graph_condition,
+          skipConditionRef: factText(insertedRow.skip_condition_ref),
+          causedByGatewayNodeRunId: insertedRow.caused_by_gateway_node_run_id,
+          acceptanceInputDigest: insertedRow.acceptance_input_digest,
+          occurredAt: insertedRow.occurred_at,
+        }),
+        payloadRef: `case_workspace_node_result_acceptances:${insertedRow.node_run_id}`,
+      });
+      return mapNodeResultAcceptanceRow(insertedRow);
     }
 
     const existingResult = await client.query<CaseWorkspaceNodeResultAcceptanceRow>(

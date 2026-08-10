@@ -48,11 +48,53 @@
 import { randomUUID } from 'node:crypto';
 
 import { Pool } from 'pg';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import * as caseCoreService from '../caseCoreService.js';
 import type { CanonicalGraph } from '../casePlanVersionService.js';
 import * as playService from '../playService.js';
+
+/**
+ * ===========================================================================
+ * ROLLBACK HARNESS — how "a forced failure after the mutation leaves NO
+ * outbox row" is proved without touching shared schema
+ * ===========================================================================
+ * EVENT_TAXONOMY §6.6 requires each command's realDB suite to prove both
+ * directions of the atomicity claim: one outbox row on success, and ZERO
+ * after a forced failure. Proving the second direction needs a failure that
+ * lands strictly AFTER the aggregate write AND after the outbox INSERT —
+ * anything failing earlier proves nothing, because the outbox would then be
+ * empty for the trivial reason that publishEvent never ran.
+ *
+ * The mechanism is a pass-through module mock: `publishEvent` calls the REAL
+ * implementation on the service's own transaction client (a genuine outbox
+ * row really is inserted inside the transaction), and only then, when armed,
+ * throws. withPgTransaction's catch issues ROLLBACK, and the assertions —
+ * made afterwards on a SEPARATE out-of-band connection — are that Postgres
+ * holds neither the event nor the mutation.
+ *
+ * A Postgres trigger on `case_workspace_event_outbox` would prove the same
+ * thing, but that table is shared with every other suite running against this
+ * database and CREATE TRIGGER takes an ACCESS EXCLUSIVE lock on it. The mock
+ * is process-local and can never affect another suite; the wrapper is inert
+ * (`armed === false`) for every other test in this file.
+ */
+const outboxBoom = vi.hoisted(() => ({ armed: false }));
+
+vi.mock('../eventOutboxService.js', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../eventOutboxService.js')>();
+  return {
+    ...actual,
+    publishEvent: async (
+      client: Parameters<typeof actual.publishEvent>[0],
+      envelope: Parameters<typeof actual.publishEvent>[1]
+    ) => {
+      const published = await actual.publishEvent(client, envelope);
+      if (outboxBoom.armed) throw new Error('cw_test_forced_failure_after_publish');
+      return published;
+    },
+  };
+});
 
 const CONNECTION_STRING = process.env.DATABASE_URL ?? '';
 const REAL_DB_REQUESTED =
@@ -150,6 +192,25 @@ interface CasePlanVersionDbRow {
   status: string;
   source_process_version_id: string | null;
   semantic_graph: string;
+}
+
+/** One `case_workspace_event_outbox` row, read back out-of-band. */
+interface OutboxDbRow {
+  event_id: string;
+  event_type: string;
+  schema_version: number;
+  organization_id: string;
+  project_id: string | null;
+  aggregate_type: string;
+  aggregate_id: string;
+  aggregate_version: number | null;
+  case_id: string | null;
+  actor_user_id: string;
+  correlation_id: string;
+  causation_id: string | null;
+  redacted_summary: Record<string, unknown>;
+  payload_ref: string | null;
+  delivered_at: string | null;
 }
 
 suite('playService — Play (reusable Process) against a real PostgreSQL (CW-P08, E12)', () => {
@@ -266,8 +327,49 @@ suite('playService — Play (reusable Process) against a real PostgreSQL (CW-P08
       await control.query(`DELETE FROM users WHERE id = $1`, [userId]).catch(() => undefined);
     }
     for (const orgId of opts.orgIds ?? []) {
+      // The outbox has no FK to organizations, so nothing cascades it away.
+      // Every event this suite emits is org-scoped, so deleting by
+      // organization_id removes exactly this test's rows and nothing else.
+      await control
+        .query(`DELETE FROM case_workspace_event_outbox WHERE organization_id = $1`, [orgId])
+        .catch(() => undefined);
       await control.query(`DELETE FROM organizations WHERE id = $1`, [orgId]).catch(() => undefined);
     }
+  }
+
+  /**
+   * Outbox rows for one aggregate, read on the out-of-band `control` pool —
+   * NEVER from publishEvent's return value, which only proves what the
+   * service THINKS it wrote. Scoped by aggregate_id (never a global count):
+   * this database is shared with other suites that write the same table.
+   */
+  async function readOutboxRowsForAggregate(aggregateId: string): Promise<OutboxDbRow[]> {
+    const result = await control.query<OutboxDbRow>(
+      `SELECT event_id, event_type, schema_version, organization_id, project_id,
+              aggregate_type, aggregate_id, aggregate_version, case_id,
+              actor_user_id, correlation_id, causation_id, redacted_summary,
+              payload_ref, delivered_at
+         FROM case_workspace_event_outbox
+        WHERE aggregate_id = $1
+        ORDER BY aggregate_version ASC NULLS LAST, created_at ASC`,
+      [aggregateId]
+    );
+    return result.rows;
+  }
+
+  /** Every outbox row an organization has accumulated, oldest first. */
+  async function readOutboxRowsForOrg(organizationId: string): Promise<OutboxDbRow[]> {
+    const result = await control.query<OutboxDbRow>(
+      `SELECT event_id, event_type, schema_version, organization_id, project_id,
+              aggregate_type, aggregate_id, aggregate_version, case_id,
+              actor_user_id, correlation_id, causation_id, redacted_summary,
+              payload_ref, delivered_at
+         FROM case_workspace_event_outbox
+        WHERE organization_id = $1
+        ORDER BY created_at ASC, aggregate_version ASC NULLS LAST`,
+      [organizationId]
+    );
+    return result.rows;
   }
 
   async function readDefinitionRow(processDefinitionId: string): Promise<ProcessDefinitionDbRow | null> {
@@ -807,6 +909,287 @@ suite('playService — Play (reusable Process) against a real PostgreSQL (CW-P08
       await teardown({
         orgIds: [orgId],
         userIds: [noMembershipActor, ownerActor],
+        processDefinitionIds: createdDefinitionIds,
+      });
+    }
+  }, 30_000);
+
+  // -------------------------------------------------------------------------
+  // EVENT OUTBOX (EVENT_TAXONOMY §6.6) — every mutating command publishes
+  // exactly one event, inside its own transaction, and publishes nothing when
+  // that transaction rolls back.
+  //
+  // Both `process_definitions` and `process_versions` HAVE a version column,
+  // so every event must carry the POST-mutation version (§3). Asserting the
+  // exact 1..7 ladder across one process_version is what proves the events
+  // were taken from each command's own RETURNING row and not from a re-read
+  // or from the pre-image.
+  //
+  // The three `process.definition.submitted|published|deprecated` types on a
+  // PROCESS_VERSION aggregate are the documented §5.4 naming asymmetry: §7's
+  // literal text wins for now, so the test asserts it literally rather than
+  // "fixing" it at a call site.
+  // -------------------------------------------------------------------------
+
+  it('the full Play lifecycle publishes exactly one outbox row per command, with the taxonomy event_type ladder and the post-mutation version on each', async () => {
+    const orgId = await seedOrg('outbox-lifecycle');
+    const adminActor = await seedUser(orgId, 'outbox-lifecycle-admin');
+    await seedMember(orgId, adminActor, 'ADMIN');
+    const createdDefinitionIds: string[] = [];
+    try {
+      const definition = await playService.createProcessDefinition({
+        organizationId: orgId,
+        name: 'Outbox lifecycle Play',
+        ownerActorId: adminActor,
+        createdByActorId: adminActor,
+      });
+      createdDefinitionIds.push(definition.processDefinitionId);
+
+      const afterCreate = await readOutboxRowsForAggregate(definition.processDefinitionId);
+      expect(afterCreate).toHaveLength(1);
+      const createdEvent = afterCreate[0];
+      expect(createdEvent.event_type).toBe('process.definition.created');
+      expect(createdEvent.aggregate_type).toBe('PROCESS_DEFINITION');
+      expect(createdEvent.aggregate_id).toBe(definition.processDefinitionId);
+      expect(createdEvent.aggregate_version).toBe(1);
+      expect(createdEvent.organization_id).toBe(orgId);
+      // A Play is org-scoped and reusable: it belongs to no project and no Case.
+      expect(createdEvent.project_id).toBeNull();
+      expect(createdEvent.case_id).toBeNull();
+      expect(createdEvent.actor_user_id).toBe(adminActor);
+      expect(String(createdEvent.correlation_id ?? '').length).toBeGreaterThan(0);
+      expect(createdEvent.causation_id).toBeNull();
+      expect(createdEvent.schema_version).toBe(1);
+      expect(createdEvent.delivered_at).toBeNull();
+      // visibility is forced server-side; the event reports what was STORED.
+      expect(createdEvent.redacted_summary.visibility).toBe('PRIVATE');
+      expect(createdEvent.payload_ref).toBe(`process_definitions:${definition.processDefinitionId}`);
+
+      const draft = await playService.createProcessVersionDraft({
+        processDefinitionId: definition.processDefinitionId,
+        semanticGraph: validGraph('outbox-lifecycle-v1'),
+        createdByActorId: adminActor,
+      });
+      const versionId = draft.processVersionId;
+
+      const afterDraft = await readOutboxRowsForAggregate(versionId);
+      expect(afterDraft).toHaveLength(1);
+      expect(afterDraft[0].event_type).toBe('process.version.draft_created');
+      expect(afterDraft[0].aggregate_type).toBe('PROCESS_VERSION');
+      expect(afterDraft[0].aggregate_version).toBe(1);
+      expect(afterDraft[0].organization_id).toBe(orgId);
+      expect(afterDraft[0].actor_user_id).toBe(adminActor);
+      // `version` is the OCC lock counter; `version_number` is the semantic
+      // version and belongs in the summary (EVENT_TAXONOMY §3).
+      expect(afterDraft[0].redacted_summary.versionNumber).toBe(draft.versionNumber);
+      expect(afterDraft[0].redacted_summary.graphDigest).toBe(draft.graphDigest);
+
+      const updated = await playService.updateProcessVersionDraft(
+        versionId,
+        { semanticGraph: validGraph('outbox-lifecycle-v1-edited'), expectedVersion: draft.version },
+        { actorUserId: adminActor }
+      );
+      const proposed = await playService.proposeProcessVersion(
+        versionId,
+        { actorUserId: adminActor },
+        updated.version
+      );
+      const reviewed = await playService.reviewProcessVersion(
+        versionId,
+        { actorUserId: adminActor },
+        'APPROVED',
+        undefined,
+        proposed.version
+      );
+      const published = await playService.publishProcessVersion(
+        versionId,
+        { actorUserId: adminActor },
+        reviewed.version
+      );
+
+      // Sharing widens the DEFINITION, and only once a PUBLISHED version
+      // exists — so it runs here, and lands on the definition aggregate.
+      const shared = await playService.shareProcessDefinition(
+        definition.processDefinitionId,
+        'ORGANIZATION',
+        { actorUserId: adminActor },
+        definition.version
+      );
+      expect(shared.version).toBe(2);
+
+      const deprecated = await playService.deprecateProcessVersion(
+        versionId,
+        { actorUserId: adminActor },
+        'superseded by the next Play revision',
+        published.version
+      );
+      const archived = await playService.archiveProcessVersion(
+        versionId,
+        { actorUserId: adminActor },
+        deprecated.version
+      );
+      expect(archived.status).toBe('ARCHIVED');
+
+      // The version aggregate's complete, ordered event ladder.
+      const versionEvents = await readOutboxRowsForAggregate(versionId);
+      expect(versionEvents.map((row) => row.event_type)).toEqual([
+        'process.version.draft_created',
+        'process.version.draft_updated',
+        'process.definition.submitted',
+        'process.version.reviewed',
+        'process.definition.published',
+        'process.definition.deprecated',
+        'process.version.archived',
+      ]);
+      // One row per command — never two, never zero.
+      expect(versionEvents).toHaveLength(7);
+      // Post-mutation OCC version on every single one.
+      expect(versionEvents.map((row) => row.aggregate_version)).toEqual([1, 2, 3, 4, 5, 6, 7]);
+      // Distinct ids: seven facts, not one fact repeated.
+      expect(new Set(versionEvents.map((row) => row.event_id)).size).toBe(7);
+      for (const row of versionEvents) {
+        expect(row.aggregate_type).toBe('PROCESS_VERSION');
+        expect(row.aggregate_id).toBe(versionId);
+        expect(row.organization_id).toBe(orgId);
+        expect(row.actor_user_id).toBe(adminActor);
+        expect(String(row.correlation_id ?? '').length).toBeGreaterThan(0);
+        expect(row.payload_ref).toBe(`process_versions:${versionId}`);
+      }
+      expect(versionEvents[3].redacted_summary.decision).toBe('APPROVED');
+      expect(versionEvents[5].redacted_summary.reason).toBe('superseded by the next Play revision');
+
+      // The definition aggregate's own ladder, unaffected by the version's.
+      const definitionEvents = await readOutboxRowsForAggregate(definition.processDefinitionId);
+      expect(definitionEvents.map((row) => row.event_type)).toEqual([
+        'process.definition.created',
+        'process.definition.shared',
+      ]);
+      expect(definitionEvents.map((row) => row.aggregate_version)).toEqual([1, 2]);
+      expect(definitionEvents[1].redacted_summary.from).toBe('PRIVATE');
+      expect(definitionEvents[1].redacted_summary.to).toBe('ORGANIZATION');
+
+      // Nine commands, nine events for this org — nothing extra leaked in.
+      expect(await readOutboxRowsForOrg(orgId)).toHaveLength(9);
+    } finally {
+      await teardown({
+        orgIds: [orgId],
+        userIds: [adminActor],
+        processDefinitionIds: createdDefinitionIds,
+      });
+    }
+  }, 60_000);
+
+  it('reviewProcessVersion with CHANGES_REQUESTED publishes exactly one process.version.reviewed row carrying the decision as a fact, not as a second event_type', async () => {
+    const orgId = await seedOrg('outbox-changes');
+    const actorId = await seedMemberedUser(orgId, 'outbox-changes');
+    const createdDefinitionIds: string[] = [];
+    try {
+      const definition = await playService.createProcessDefinition({
+        organizationId: orgId,
+        name: 'Outbox changes-requested Play',
+        ownerActorId: actorId,
+        createdByActorId: actorId,
+      });
+      createdDefinitionIds.push(definition.processDefinitionId);
+
+      const draft = await playService.createProcessVersionDraft({
+        processDefinitionId: definition.processDefinitionId,
+        semanticGraph: validGraph('outbox-changes-v1'),
+        createdByActorId: actorId,
+      });
+      const proposed = await playService.proposeProcessVersion(
+        draft.processVersionId,
+        { actorUserId: actorId },
+        draft.version
+      );
+      const changed = await playService.reviewProcessVersion(
+        draft.processVersionId,
+        { actorUserId: actorId },
+        'CHANGES_REQUESTED',
+        'graph is missing an approval node',
+        proposed.version
+      );
+      expect(changed.status).toBe('DRAFT');
+
+      const events = await readOutboxRowsForAggregate(draft.processVersionId);
+      expect(events.map((row) => row.event_type)).toEqual([
+        'process.version.draft_created',
+        'process.definition.submitted',
+        // Same literal event_type as the APPROVED branch: the decision is a
+        // fact in the summary, not a second name (only recordApprovalDecision
+        // and transitionStatus are per-decision/per-state in the taxonomy).
+        'process.version.reviewed',
+      ]);
+      const reviewedEvent = events[2];
+      expect(reviewedEvent.aggregate_version).toBe(3);
+      expect(reviewedEvent.organization_id).toBe(orgId);
+      expect(reviewedEvent.actor_user_id).toBe(actorId);
+      expect(String(reviewedEvent.correlation_id ?? '').length).toBeGreaterThan(0);
+      expect(reviewedEvent.redacted_summary.decision).toBe('CHANGES_REQUESTED');
+      expect(reviewedEvent.redacted_summary.from).toBe('IN_REVIEW');
+      expect(reviewedEvent.redacted_summary.to).toBe('DRAFT');
+      // The reset of a prior approval is the fact that stops a stale approval
+      // authorizing a later publish.
+      expect(reviewedEvent.redacted_summary.reviewDecisionCleared).toBe(true);
+    } finally {
+      await teardown({
+        orgIds: [orgId],
+        userIds: [actorId],
+        processDefinitionIds: createdDefinitionIds,
+      });
+    }
+  }, 30_000);
+
+  it('a failure raised AFTER the event is published rolls both back: createProcessDefinition leaves neither a definition row nor an outbox row', async () => {
+    const orgId = await seedOrg('outbox-rollback');
+    const actorId = await seedMemberedUser(orgId, 'outbox-rollback');
+    const createdDefinitionIds: string[] = [];
+    try {
+      outboxBoom.armed = true;
+      try {
+        await expect(
+          playService.createProcessDefinition({
+            organizationId: orgId,
+            name: 'Doomed Play',
+            ownerActorId: actorId,
+            createdByActorId: actorId,
+          })
+        ).rejects.toThrow(/cw_test_forced_failure_after_publish/);
+      } finally {
+        outboxBoom.armed = false;
+      }
+
+      // No event...
+      expect(await readOutboxRowsForOrg(orgId)).toHaveLength(0);
+      // ...and no aggregate row either. This is what "atomic", rather than
+      // "logged after the fact", means.
+      const definitionRows = await control.query<{ n: number }>(
+        `SELECT count(*)::int AS n FROM process_definitions WHERE organization_id = $1`,
+        [orgId]
+      );
+      expect(definitionRows.rows[0].n).toBe(0);
+
+      // Negative control: disarmed, the same call succeeds and DOES leave
+      // exactly one event. Without this, a wiring that never publishes
+      // anything would pass the assertions above.
+      const definition = await playService.createProcessDefinition({
+        organizationId: orgId,
+        name: 'Retried Play',
+        ownerActorId: actorId,
+        createdByActorId: actorId,
+      });
+      createdDefinitionIds.push(definition.processDefinitionId);
+
+      const events = await readOutboxRowsForOrg(orgId);
+      expect(events).toHaveLength(1);
+      expect(events[0].event_type).toBe('process.definition.created');
+      expect(events[0].aggregate_id).toBe(definition.processDefinitionId);
+      expect(events[0].aggregate_version).toBe(1);
+      expect(events[0].actor_user_id).toBe(actorId);
+    } finally {
+      await teardown({
+        orgIds: [orgId],
+        userIds: [actorId],
         processDefinitionIds: createdDefinitionIds,
       });
     }

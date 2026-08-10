@@ -84,7 +84,21 @@ async function canReachWithSchema(connectionString: string): Promise<boolean> {
     );
     const orgMembersOk = Number(orgMembersResult.rows[0]?.present ?? 0) === 4;
 
-    return caseCoreOk && orgMembersOk;
+    // Every mutating caseCoreService command now publishes to the outbox
+    // inside its own transaction (EVENT_TAXONOMY.md §2), so this table is no
+    // longer optional for this suite: without it every mutation would fail on
+    // a missing relation and the failures would read as service defects. Gate
+    // on it and skip loudly instead.
+    const outboxResult = await probe.query(
+      `SELECT count(*)::int AS present FROM information_schema.columns
+        WHERE table_schema = 'public' AND table_name = 'case_workspace_event_outbox'
+          AND column_name IN ('event_id', 'event_type', 'organization_id', 'aggregate_type',
+                               'aggregate_id', 'aggregate_version', 'actor_user_id',
+                               'correlation_id', 'redacted_summary')`
+    );
+    const outboxOk = Number(outboxResult.rows[0]?.present ?? 0) === 9;
+
+    return caseCoreOk && orgMembersOk && outboxOk;
   } catch {
     return false;
   } finally {
@@ -97,8 +111,8 @@ if (!REACHABLE) {
   console.warn(
     `[caseCoreService pg suite SKIPPED — this is a clean skip, not a failure] needs ` +
       `DB_TYPE=postgres NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false, a reachable DATABASE_URL, and the ` +
-      `20260809_case_workspace_case_core.sql migration applied. requested=${REAL_DB_REQUESTED} ` +
-      `reachable=${REACHABLE}`
+      `20260809_case_workspace_case_core.sql + 20260810_case_workspace_event_outbox.sql migrations ` +
+      `applied. requested=${REAL_DB_REQUESTED} reachable=${REACHABLE}`
   );
 }
 
@@ -118,6 +132,24 @@ interface CaseCoreDbRow {
   implementation_status: string;
   outcome_status: string;
   version: number;
+}
+
+/** One `case_workspace_event_outbox` row, as stored. */
+interface OutboxDbRow {
+  event_id: string;
+  event_type: string;
+  organization_id: string;
+  project_id: string | null;
+  aggregate_type: string;
+  aggregate_id: string;
+  aggregate_version: number | null;
+  case_id: string | null;
+  actor_user_id: string;
+  correlation_id: string;
+  causation_id: string | null;
+  redacted_summary: Record<string, unknown>;
+  payload_ref: string | null;
+  delivered_at: string | null;
 }
 
 suite('caseCoreService — Case Core against a real PostgreSQL (CW-P01, E1)', () => {
@@ -206,8 +238,46 @@ suite('caseCoreService — Case Core against a real PostgreSQL (CW-P01, E1)', ()
       await control.query(`DELETE FROM users WHERE id = $1`, [userId]).catch(() => undefined);
     }
     for (const orgId of orgIds) {
+      // The outbox has ZERO foreign keys by design (see the migration header:
+      // an audit record must survive the deletion of the thing it describes),
+      // so nothing cascades it away — each test deletes its own org's events
+      // explicitly, before the org row itself.
+      await control
+        .query(`DELETE FROM case_workspace_event_outbox WHERE organization_id = $1`, [orgId])
+        .catch(() => undefined);
       await control.query(`DELETE FROM organizations WHERE id = $1`, [orgId]).catch(() => undefined);
     }
+  }
+
+  /**
+   * Every outbox row for one Case, read OUT OF BAND through the control pool
+   * and ordered by the aggregate version the event carries.
+   *
+   * Reading through a separate connection is the whole point: the service's
+   * return value only proves what it believes it published, and a row read
+   * inside the service's own transaction would be visible even if that
+   * transaction later rolled back. Only a committed row seen from another
+   * connection proves the event actually landed.
+   */
+  async function readOutboxRowsForCase(caseId: string): Promise<OutboxDbRow[]> {
+    const result = await control.query<OutboxDbRow>(
+      `SELECT * FROM case_workspace_event_outbox
+        WHERE aggregate_id = $1
+        ORDER BY aggregate_version ASC NULLS LAST, created_at ASC`,
+      [caseId]
+    );
+    return result.rows;
+  }
+
+  /** Every outbox row belonging to one test's own organization. */
+  async function readOutboxRowsForOrg(orgId: string): Promise<OutboxDbRow[]> {
+    const result = await control.query<OutboxDbRow>(
+      `SELECT * FROM case_workspace_event_outbox
+        WHERE organization_id = $1
+        ORDER BY aggregate_version ASC NULLS LAST, created_at ASC`,
+      [orgId]
+    );
+    return result.rows;
   }
 
   async function readCaseCoreRow(caseId: string): Promise<CaseCoreDbRow | null> {
@@ -603,6 +673,266 @@ suite('caseCoreService — Case Core against a real PostgreSQL (CW-P01, E1)', ()
       expect(found?.caseId).toBe(created.caseId);
     } finally {
       await teardown([orgId], [projectId], [ownerActor, noMembershipActor]);
+    }
+  }, 30_000);
+
+  // -------------------------------------------------------------------------
+  // 11. EVENT OUTBOX (EVENT_TAXONOMY.md §2) — one committed event per mutating
+  //     command, with the event_type the taxonomy names and a fully populated
+  //     identity. Walks a whole Case lifecycle so the assertion is about the
+  //     SEQUENCE, not one lucky call: six commands, six events, no extras.
+  // -------------------------------------------------------------------------
+  it('every mutating caseCore command publishes exactly one outbox row with its taxonomy event_type, populated identity and post-mutation aggregate_version', async () => {
+    const { orgId, projectId } = await seedOrgAndProject('outbox-lifecycle');
+    const actorId = await seedMemberedUser(orgId, 'outbox-lifecycle');
+    try {
+      const created = await caseCoreService.createCase({
+        projectId,
+        organizationId: orgId,
+        contractedClosureType: 'DELIVERY_COMPLETED',
+        createdByActorId: actorId,
+      });
+      await caseCoreService.transitionStatus(created.caseId, 'ACTIVE', { actorUserId: actorId });
+      await caseCoreService.updateGovernanceTier(
+        created.caseId,
+        'STANDARD',
+        { actorUserId: actorId },
+        'escalated for outbox coverage'
+      );
+      await caseCoreService.updateAutonomyPolicy(created.caseId, 'EXECUTE_APPROVED_PLAN', {
+        actorUserId: actorId,
+      });
+      await caseCoreService.updateClosureAxisStatus(created.caseId, 'delivery', 'COMPLETED', {
+        actorUserId: actorId,
+      });
+      await caseCoreService.recordClosure(
+        created.caseId,
+        'DELIVERY_COMPLETED',
+        { actorUserId: actorId },
+        'artifact://closure-evidence/outbox-lifecycle'
+      );
+      await caseCoreService.transitionStatus(created.caseId, 'CLOSED', { actorUserId: actorId });
+
+      const events = await readOutboxRowsForCase(created.caseId);
+
+      // Exactly seven commands ran; exactly seven events exist. No command
+      // emitted twice and none emitted nothing.
+      expect(events.map((e) => e.event_type)).toEqual([
+        'case.created',
+        'case.activated',
+        'case.governance_tier_changed',
+        'case.autonomy_policy_changed',
+        'case.closure_axis_updated',
+        'case.closure_recorded',
+        'case.closed',
+      ]);
+
+      // Identity is complete on EVERY row (§1/§6.2): the outbox is useless for
+      // a tenant-scoped projection or an operator trace if any of these is
+      // null, and correlation_id is NOT NULL in the schema precisely because a
+      // hole there breaks the trace.
+      for (const event of events) {
+        expect(event.organization_id).toBe(orgId);
+        expect(event.project_id).toBe(projectId);
+        expect(event.aggregate_type).toBe('CASE');
+        expect(event.aggregate_id).toBe(created.caseId);
+        expect(event.case_id).toBe(created.caseId);
+        expect(event.actor_user_id).toBe(actorId);
+        expect(event.correlation_id).toBeTruthy();
+        expect(event.causation_id).toBeNull();
+        // Published, not yet dispatched: publishing must never pre-mark a row
+        // delivered, or the dispatcher would skip it forever.
+        expect(event.delivered_at).toBeNull();
+      }
+
+      // aggregate_version is the POST-mutation version, taken from the write's
+      // own RETURNING row — so the seven events carry 1..7 and the final one
+      // matches what case_core actually holds now.
+      expect(events.map((e) => Number(e.aggregate_version))).toEqual([1, 2, 3, 4, 5, 6, 7]);
+      const finalRow = await readCaseCoreRow(created.caseId);
+      expect(Number(events[events.length - 1].aggregate_version)).toBe(Number(finalRow?.version));
+
+      // Summaries carry FACTS about the transition, not commands and not the
+      // whole aggregate.
+      const byType = new Map(events.map((e) => [e.event_type, e]));
+      expect(byType.get('case.created')?.redacted_summary).toMatchObject({
+        contractedClosureType: 'DELIVERY_COMPLETED',
+        governanceTier: 'LIGHTWEIGHT',
+        caseStatus: 'DRAFT',
+      });
+      expect(byType.get('case.activated')?.redacted_summary).toMatchObject({
+        from: 'DRAFT',
+        to: 'ACTIVE',
+      });
+      expect(byType.get('case.governance_tier_changed')?.redacted_summary).toMatchObject({
+        from: 'LIGHTWEIGHT',
+        to: 'STANDARD',
+        rationale: 'escalated for outbox coverage',
+      });
+      expect(byType.get('case.autonomy_policy_changed')?.redacted_summary).toMatchObject({
+        from: 'ASK_MATERIAL_ACTIONS',
+        to: 'EXECUTE_APPROVED_PLAN',
+      });
+      // `from` is the axis's real prior value read off the locked row — the
+      // schema default is NOT_APPLICABLE, not PENDING, and the event reports
+      // what was actually there rather than what a caller assumed.
+      expect(byType.get('case.closure_axis_updated')?.redacted_summary).toMatchObject({
+        axis: 'delivery',
+        from: 'NOT_APPLICABLE',
+        to: 'COMPLETED',
+      });
+
+      // §5.2: recordClosure is `case.closure_recorded`, NOT a second
+      // `case.closed` — otherwise "how many Cases closed" double-counts and
+      // the closed-projection fires while the Case is still ACTIVE. The
+      // closure event above proves the Case was still ACTIVE at that point.
+      expect(byType.get('case.closure_recorded')?.redacted_summary).toMatchObject({
+        closureType: 'DELIVERY_COMPLETED',
+        caseStatus: 'ACTIVE',
+      });
+      // Evidence is REFERENCED, never copied into the event (§6.5).
+      expect(byType.get('case.closure_recorded')?.payload_ref).toBe(
+        'artifact://closure-evidence/outbox-lifecycle'
+      );
+      expect(events.filter((e) => e.event_type === 'case.closed')).toHaveLength(1);
+
+      // Nothing leaked outside this Case's own org scope.
+      expect(await readOutboxRowsForOrg(orgId)).toHaveLength(7);
+    } finally {
+      await teardown([orgId], [projectId], [actorId]);
+    }
+  }, 30_000);
+
+  // -------------------------------------------------------------------------
+  // 12. EVENT OUTBOX §5.3 — cancelCase delegates to transitionStatus and must
+  //     NOT emit an event of its own. Two events for one cancellation would
+  //     have different event_ids, so §8's dedup-by-eventId cannot collapse
+  //     them, and every cancellation via this route would double-count.
+  //     Also covers the `case.blocked` branch of the dynamic event_type.
+  // -------------------------------------------------------------------------
+  it('cancelCase produces exactly ONE case.cancelled event (no duplicate from the wrapper) and carries its reason; ACTIVE->BLOCKED produces case.blocked', async () => {
+    const { orgId, projectId: cancelProjectId } = await seedOrgAndProject('outbox-cancel');
+    const blockProjectId = await seedProjectInOrg(orgId, 'outbox-block');
+    const actorId = await seedMemberedUser(orgId, 'outbox-cancel');
+    try {
+      // -- cancelCase: the wrapper emits nothing, the delegate emits once.
+      const cancelCase = await caseCoreService.createCase({
+        projectId: cancelProjectId,
+        organizationId: orgId,
+        contractedClosureType: 'DELIVERY_COMPLETED',
+        createdByActorId: actorId,
+      });
+      await caseCoreService.cancelCase(
+        cancelCase.caseId,
+        { actorUserId: actorId },
+        'sponsor withdrew funding'
+      );
+
+      const cancelEvents = await readOutboxRowsForCase(cancelCase.caseId);
+      expect(cancelEvents.map((e) => e.event_type)).toEqual(['case.created', 'case.cancelled']);
+      expect(cancelEvents.filter((e) => e.event_type === 'case.cancelled')).toHaveLength(1);
+
+      // §5.3: the wrapper's `reason` survives — inside the delegate's summary,
+      // which is the only place a cancellation reason becomes an event fact.
+      const cancelled = cancelEvents[1];
+      expect(cancelled.redacted_summary).toMatchObject({
+        from: 'DRAFT',
+        to: 'CANCELLED',
+        reason: 'sponsor withdrew funding',
+      });
+      expect(cancelled.actor_user_id).toBe(actorId);
+      expect(cancelled.organization_id).toBe(orgId);
+      expect(cancelled.correlation_id).toBeTruthy();
+
+      // -- The BLOCKED branch of the target-status → event_type mapping.
+      const blockedCase = await caseCoreService.createCase({
+        projectId: blockProjectId,
+        organizationId: orgId,
+        contractedClosureType: 'DELIVERY_COMPLETED',
+        createdByActorId: actorId,
+      });
+      await caseCoreService.transitionStatus(blockedCase.caseId, 'ACTIVE', {
+        actorUserId: actorId,
+      });
+      await caseCoreService.transitionStatus(blockedCase.caseId, 'BLOCKED', {
+        actorUserId: actorId,
+      });
+
+      const blockedEvents = await readOutboxRowsForCase(blockedCase.caseId);
+      expect(blockedEvents.map((e) => e.event_type)).toEqual([
+        'case.created',
+        'case.activated',
+        'case.blocked',
+      ]);
+      expect(blockedEvents[2].redacted_summary).toMatchObject({ from: 'ACTIVE', to: 'BLOCKED' });
+    } finally {
+      await teardown([orgId], [cancelProjectId, blockProjectId], [actorId]);
+    }
+  }, 30_000);
+
+  // -------------------------------------------------------------------------
+  // 13. EVENT OUTBOX ATOMICITY — a failure raised AFTER the aggregate write,
+  //     inside the same transaction, must leave BOTH the mutation and the
+  //     event unwritten.
+  //
+  //     The forced failure is a real, documented one rather than a stub: the
+  //     summary of `transitionStatus` carries the caller's `reason`, and
+  //     publishEvent REJECTS a summary over MAX_REDACTED_SUMMARY_BYTES (8 KiB)
+  //     instead of truncating it, because a silently truncated document is
+  //     still a copied document. So an oversized reason fails the publish at a
+  //     point where the UPDATE has already been issued on the transaction —
+  //     exactly the "domain committed, event lost" window the outbox exists to
+  //     close. If publishEvent ever ran on its own connection, this test would
+  //     find case_status flipped and no event: the dual-write hole, visible.
+  // -------------------------------------------------------------------------
+  it('a failure after the case_core UPDATE rolls the whole transaction back: no outbox row AND no status change', async () => {
+    const { orgId, projectId } = await seedOrgAndProject('outbox-rollback');
+    const actorId = await seedMemberedUser(orgId, 'outbox-rollback');
+    try {
+      const created = await caseCoreService.createCase({
+        projectId,
+        organizationId: orgId,
+        contractedClosureType: 'DELIVERY_COMPLETED',
+        createdByActorId: actorId,
+      });
+      const before = await readCaseCoreRow(created.caseId);
+      expect(before?.case_status).toBe('DRAFT');
+      const eventsBefore = await readOutboxRowsForCase(created.caseId);
+      expect(eventsBefore.map((e) => e.event_type)).toEqual(['case.created']);
+
+      // 9 KiB of reason — over the 8 KiB ceiling, so publishEvent throws after
+      // the UPDATE has run on this transaction's client.
+      const oversizedReason = 'x'.repeat(9 * 1024);
+      await expect(
+        caseCoreService.transitionStatus(
+          created.caseId,
+          'ACTIVE',
+          { actorUserId: actorId },
+          oversizedReason
+        )
+      ).rejects.toThrow(/event_outbox_redacted_summary_too_large/);
+
+      // The event never landed...
+      const eventsAfter = await readOutboxRowsForCase(created.caseId);
+      expect(eventsAfter.map((e) => e.event_type)).toEqual(['case.created']);
+      expect(eventsAfter.filter((e) => e.event_type === 'case.activated')).toHaveLength(0);
+
+      // ...and neither did the mutation that would have produced it. Same
+      // version, same status: not a compensating write, a rollback.
+      const after = await readCaseCoreRow(created.caseId);
+      expect(after?.case_status).toBe('DRAFT');
+      expect(after?.version).toBe(before?.version);
+
+      // The Case is still fully usable — the failed command left no lock,
+      // no partial write and no poisoned state behind.
+      const activated = await caseCoreService.transitionStatus(created.caseId, 'ACTIVE', {
+        actorUserId: actorId,
+      });
+      expect(activated.caseStatus).toBe('ACTIVE');
+      const eventsFinal = await readOutboxRowsForCase(created.caseId);
+      expect(eventsFinal.map((e) => e.event_type)).toEqual(['case.created', 'case.activated']);
+    } finally {
+      await teardown([orgId], [projectId], [actorId]);
     }
   }, 30_000);
 });

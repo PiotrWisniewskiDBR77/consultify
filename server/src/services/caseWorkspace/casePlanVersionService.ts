@@ -105,7 +105,7 @@
  *      added later.
  */
 
-import { createHash } from 'crypto';
+import { createHash, randomUUID } from 'crypto';
 
 import { v4 as uuidv4 } from 'uuid';
 
@@ -116,6 +116,7 @@ import {
   withPgTransaction,
 } from '../../utils/queryHelpers.js';
 import { requireCaseAccess } from './caseWorkspaceAuthContext.js';
+import { publishEvent, redact } from './eventOutboxService.js';
 
 // ---------------------------------------------------------------------------
 // Canonical graph shape (CW-GR-008). Loosely typed on purpose — this packet
@@ -693,6 +694,62 @@ export function computeValidationBlockers(graph: CanonicalGraph): PlanValidation
 // Row loaders
 // ---------------------------------------------------------------------------
 
+/** Aggregate name this service owns in the outbox (EVENT_TAXONOMY.md §2/§3). */
+const PLAN_VERSION_AGGREGATE_TYPE = 'CASE_PLAN_VERSION';
+
+interface CaseScope {
+  organizationId: string;
+  projectId: string | null;
+}
+
+/**
+ * EVENT_TAXONOMY.md §1: `organization_id` on the outbox is NOT NULL, and
+ * `case_plan_versions` carries neither organization_id nor project_id — its
+ * only tenancy link is case_id. So every event this service publishes resolves
+ * its tenancy from `case_core` INSIDE the same transaction, on the same client.
+ *
+ * This is a plain SELECT (no lock, no write): the packet's collision-avoidance
+ * mandate forbids this service from writing to case_core, and reading it here
+ * is the same read createPlanDraft already performs. Reading it on the
+ * transaction's own client — rather than through the shared pool — is what
+ * keeps the tenancy the event records consistent with the mutation it
+ * describes, even if another transaction is touching that Case concurrently.
+ */
+async function loadCaseScope(client: PgTransactionClient, caseId: string): Promise<CaseScope> {
+  const result = await client.query<{ organization_id: string; project_id: string | null }>(
+    `SELECT organization_id, project_id FROM case_core WHERE case_id = ?`,
+    [caseId]
+  );
+  const row = result.rows[0];
+  if (!row) throw new Error('plan_case_not_found');
+  return { organizationId: row.organization_id, projectId: row.project_id };
+}
+
+/**
+ * EVENT_TAXONOMY.md §2: "graph node/edge counts + graph_digest, never the
+ * graph". Counts and the digest are facts a projection can act on; the graph
+ * itself is content and belongs behind payloadRef (§6.5).
+ */
+function graphShapeFacts(graph: CanonicalGraph): Record<string, unknown> {
+  return {
+    nodeCount: Array.isArray(graph.nodes) ? graph.nodes.length : 0,
+    edgeCount: Array.isArray(graph.edges) ? graph.edges.length : 0,
+    entryNodeCount: Array.isArray(graph.entryNodeIds) ? graph.entryNodeIds.length : 0,
+    terminalNodeCount: Array.isArray(graph.terminalNodeIds) ? graph.terminalNodeIds.length : 0,
+    variableCount: Array.isArray(graph.variables) ? graph.variables.length : 0,
+  };
+}
+
+/**
+ * The pointer that stands in for the semantic graph in an event (§1
+ * `payloadRef`). Identifies the exact row AND the exact digest, so a consumer
+ * can fetch the very graph the event describes rather than whatever that row
+ * holds by the time it looks.
+ */
+function graphPayloadRef(planVersionId: string, graphDigest: string): string {
+  return `case_plan_versions:${planVersionId}#${graphDigest}`;
+}
+
 async function loadForUpdate(client: PgTransactionClient, planVersionId: string): Promise<CasePlanVersionRow> {
   const result = await client.query<CasePlanVersionRow>(
     `SELECT * FROM case_plan_versions WHERE case_plan_version_id = ? FOR UPDATE`,
@@ -734,11 +791,21 @@ export async function createPlanDraft(input: {
   await requireCaseAccess(createdByActorId, caseId);
 
   return withPgTransaction(async (client) => {
-    const caseResult = await client.query<{ case_id: string }>(
-      `SELECT case_id FROM case_core WHERE case_id = ? FOR UPDATE`,
+    // organization_id/project_id are selected alongside case_id because the
+    // outbox event published at the end of this transaction needs them
+    // (EVENT_TAXONOMY.md §1) and case_plan_versions carries neither. This is
+    // the same single read that already existed — still read-only, still the
+    // FOR UPDATE lock that serializes concurrent draft creation.
+    const caseResult = await client.query<{
+      case_id: string;
+      organization_id: string;
+      project_id: string | null;
+    }>(
+      `SELECT case_id, organization_id, project_id FROM case_core WHERE case_id = ? FOR UPDATE`,
       [caseId]
     );
-    if (!caseResult.rows[0]) throw new Error('plan_case_not_found');
+    const caseRow = caseResult.rows[0];
+    if (!caseRow) throw new Error('plan_case_not_found');
 
     let supersedesPlanVersionId: string | null = null;
     if (input.supersedesPlanVersionId) {
@@ -786,7 +853,31 @@ export async function createPlanDraft(input: {
         now,
       ]
     );
-    return mapRow(inserted.rows[0]);
+    const insertedRow = inserted.rows[0];
+    if (!insertedRow) throw new Error('plan_create_failed');
+
+    // EVENT_TAXONOMY.md §2 `createPlanDraft -> case.plan.draft_created`.
+    await publishEvent(client, {
+      eventType: 'case.plan.draft_created',
+      organizationId: caseRow.organization_id,
+      projectId: caseRow.project_id,
+      aggregateType: PLAN_VERSION_AGGREGATE_TYPE,
+      aggregateId: insertedRow.case_plan_version_id,
+      aggregateVersion: Number(insertedRow.version),
+      caseId: insertedRow.case_id,
+      actorUserId: insertedRow.created_by_actor_id,
+      payloadRef: graphPayloadRef(insertedRow.case_plan_version_id, insertedRow.graph_digest),
+      redactedSummary: redact({
+        status: insertedRow.status,
+        planNumber: Number(insertedRow.plan_number),
+        graphDigest: insertedRow.graph_digest,
+        supersedesPlanVersionId: insertedRow.supersedes_plan_version_id,
+        sourceProcessVersionId: insertedRow.source_process_version_id,
+        ...graphShapeFacts(semanticGraph),
+      }),
+    });
+
+    return mapRow(insertedRow);
   });
 }
 
@@ -823,8 +914,34 @@ export async function updatePlanDraft(
         RETURNING *`,
       [JSON.stringify(semanticGraph), graphDigest, now, id, expectedVersion]
     );
-    if (!updated.rows[0]) throw new Error('plan_version_conflict');
-    return mapRow(updated.rows[0]);
+    const updatedRow = updated.rows[0];
+    if (!updatedRow) throw new Error('plan_version_conflict');
+
+    // EVENT_TAXONOMY.md §2 `updatePlanDraft -> case.plan.draft_updated`:
+    // "new graph_digest + what changed; the graph itself goes in payloadRef".
+    // `digestChanged` is the fact that matters — a save that did not alter the
+    // graph semantically still bumps `version` but changes nothing downstream.
+    const scope = await loadCaseScope(client, updatedRow.case_id);
+    await publishEvent(client, {
+      eventType: 'case.plan.draft_updated',
+      organizationId: scope.organizationId,
+      projectId: scope.projectId,
+      aggregateType: PLAN_VERSION_AGGREGATE_TYPE,
+      aggregateId: updatedRow.case_plan_version_id,
+      aggregateVersion: Number(updatedRow.version),
+      caseId: updatedRow.case_id,
+      actorUserId,
+      payloadRef: graphPayloadRef(updatedRow.case_plan_version_id, updatedRow.graph_digest),
+      redactedSummary: redact({
+        status: updatedRow.status,
+        graphDigest: updatedRow.graph_digest,
+        previousGraphDigest: row.graph_digest,
+        digestChanged: row.graph_digest !== updatedRow.graph_digest,
+        ...graphShapeFacts(semanticGraph),
+      }),
+    });
+
+    return mapRow(updatedRow);
   });
 }
 
@@ -914,8 +1031,42 @@ export async function proposePlanVersion(
         RETURNING *`,
       [JSON.stringify(nextHistory), now, actorUserId, now, id, expectedVersion]
     );
-    if (!updated.rows[0]) throw new Error('plan_version_conflict');
-    return mapRow(updated.rows[0]);
+    const updatedRow = updated.rows[0];
+    if (!updatedRow) throw new Error('plan_version_conflict');
+
+    // EVENT_TAXONOMY.md §2 `proposePlanVersion -> case.plan.proposed`,
+    // "Summary: validation blocker count". Computed from the persisted graph
+    // with the same pure function publishPlanVersion re-runs, split by
+    // severity: a reviewer's inbox cares that N BLOCKING items stand between
+    // this proposal and publication, and the DEFERRED_EXTERNAL count is
+    // reported separately so it can never be mistaken for a passing check
+    // (open_question #3).
+    const blockers = computeValidationBlockers(parseGraph(updatedRow.semantic_graph));
+    const scope = await loadCaseScope(client, updatedRow.case_id);
+    await publishEvent(client, {
+      eventType: 'case.plan.proposed',
+      organizationId: scope.organizationId,
+      projectId: scope.projectId,
+      aggregateType: PLAN_VERSION_AGGREGATE_TYPE,
+      aggregateId: updatedRow.case_plan_version_id,
+      aggregateVersion: Number(updatedRow.version),
+      caseId: updatedRow.case_id,
+      actorUserId,
+      payloadRef: graphPayloadRef(updatedRow.case_plan_version_id, updatedRow.graph_digest),
+      redactedSummary: redact({
+        from: row.status,
+        to: updatedRow.status,
+        graphDigest: updatedRow.graph_digest,
+        blockingBlockerCount: blockers.filter((b) => b.severity === 'BLOCKING').length,
+        deferredExternalBlockerCount: blockers.filter((b) => b.severity === 'DEFERRED_EXTERNAL')
+          .length,
+        blockingBlockerCodes: [
+          ...new Set(blockers.filter((b) => b.severity === 'BLOCKING').map((b) => b.code)),
+        ],
+      }),
+    });
+
+    return mapRow(updatedRow);
   });
 }
 
@@ -954,8 +1105,30 @@ export async function requestChangesOnPlanVersion(
         RETURNING *`,
       [JSON.stringify(nextHistory), now, id, expectedVersion]
     );
-    if (!updated.rows[0]) throw new Error('plan_version_conflict');
-    return mapRow(updated.rows[0]);
+    const updatedRow = updated.rows[0];
+    if (!updatedRow) throw new Error('plan_version_conflict');
+
+    // EVENT_TAXONOMY.md §2 `requestChangesOnPlanVersion ->
+    // case.plan.changes_requested`, "Summary: reviewer + reason".
+    const scope = await loadCaseScope(client, updatedRow.case_id);
+    await publishEvent(client, {
+      eventType: 'case.plan.changes_requested',
+      organizationId: scope.organizationId,
+      projectId: scope.projectId,
+      aggregateType: PLAN_VERSION_AGGREGATE_TYPE,
+      aggregateId: updatedRow.case_plan_version_id,
+      aggregateVersion: Number(updatedRow.version),
+      caseId: updatedRow.case_id,
+      actorUserId,
+      redactedSummary: redact({
+        from: row.status,
+        to: updatedRow.status,
+        reviewerActorId: actorUserId,
+        reason: changeReason,
+      }),
+    });
+
+    return mapRow(updatedRow);
   });
 }
 
@@ -1004,6 +1177,7 @@ export async function publishPlanVersion(
       [row.case_id]
     );
     const previouslyPublished = currentPublished.rows[0];
+    let supersededRow: CasePlanVersionRow | null = null;
     if (previouslyPublished) {
       const supersedeResult = await client.query<CasePlanVersionRow>(
         `UPDATE case_plan_versions
@@ -1012,7 +1186,8 @@ export async function publishPlanVersion(
           RETURNING *`,
         [now, now, previouslyPublished.case_plan_version_id, previouslyPublished.version]
       );
-      if (!supersedeResult.rows[0]) throw new Error('plan_version_conflict');
+      supersededRow = supersedeResult.rows[0] ?? null;
+      if (!supersededRow) throw new Error('plan_version_conflict');
     }
 
     const nextHistory = [
@@ -1028,8 +1203,62 @@ export async function publishPlanVersion(
         RETURNING *`,
       [now, actorUserId, JSON.stringify(nextHistory), now, id, expectedVersion]
     );
-    if (!updated.rows[0]) throw new Error('plan_version_conflict');
-    return mapRow(updated.rows[0]);
+    const updatedRow = updated.rows[0];
+    if (!updatedRow) throw new Error('plan_version_conflict');
+
+    const scope = await loadCaseScope(client, updatedRow.case_id);
+
+    // EVENT_TAXONOMY.md §2 `publishPlanVersion -> case.plan.published`, and,
+    // when this publish supersedes a previous version, `case.plan.superseded`
+    // for the superseded id IN THE SAME TRANSACTION with causationId = this
+    // event's id. The publish event id is therefore minted UP FRONT rather
+    // than read back from publishEvent's result, because the causation link
+    // has to name it and both rows have to be written before COMMIT — one
+    // publish can never leave a supersede unexplained, or vice versa.
+    const publishedEventId = `cwevt-${randomUUID()}`;
+    await publishEvent(client, {
+      eventId: publishedEventId,
+      eventType: 'case.plan.published',
+      organizationId: scope.organizationId,
+      projectId: scope.projectId,
+      aggregateType: PLAN_VERSION_AGGREGATE_TYPE,
+      aggregateId: updatedRow.case_plan_version_id,
+      aggregateVersion: Number(updatedRow.version),
+      caseId: updatedRow.case_id,
+      actorUserId,
+      payloadRef: graphPayloadRef(updatedRow.case_plan_version_id, updatedRow.graph_digest),
+      redactedSummary: redact({
+        from: row.status,
+        to: updatedRow.status,
+        planNumber: Number(updatedRow.plan_number),
+        graphDigest: updatedRow.graph_digest,
+        supersededPlanVersionId: supersededRow?.case_plan_version_id ?? null,
+        ...graphShapeFacts(graph),
+      }),
+    });
+
+    if (supersededRow) {
+      await publishEvent(client, {
+        eventType: 'case.plan.superseded',
+        organizationId: scope.organizationId,
+        projectId: scope.projectId,
+        aggregateType: PLAN_VERSION_AGGREGATE_TYPE,
+        aggregateId: supersededRow.case_plan_version_id,
+        aggregateVersion: Number(supersededRow.version),
+        caseId: supersededRow.case_id,
+        actorUserId,
+        causationId: publishedEventId,
+        redactedSummary: redact({
+          from: 'PUBLISHED',
+          to: supersededRow.status,
+          planNumber: Number(supersededRow.plan_number),
+          graphDigest: supersededRow.graph_digest,
+          supersededByPlanVersionId: updatedRow.case_plan_version_id,
+        }),
+      });
+    }
+
+    return mapRow(updatedRow);
   });
 }
 
@@ -1069,8 +1298,30 @@ export async function withdrawPlanVersion(
         RETURNING *`,
       [now, actorUserId, withdrawalReason, JSON.stringify(nextHistory), now, id, expectedVersion]
     );
-    if (!updated.rows[0]) throw new Error('plan_version_conflict');
-    return mapRow(updated.rows[0]);
+    const updatedRow = updated.rows[0];
+    if (!updatedRow) throw new Error('plan_version_conflict');
+
+    // EVENT_TAXONOMY.md §2 `withdrawPlanVersion -> case.plan.withdrawn`.
+    const scope = await loadCaseScope(client, updatedRow.case_id);
+    await publishEvent(client, {
+      eventType: 'case.plan.withdrawn',
+      organizationId: scope.organizationId,
+      projectId: scope.projectId,
+      aggregateType: PLAN_VERSION_AGGREGATE_TYPE,
+      aggregateId: updatedRow.case_plan_version_id,
+      aggregateVersion: Number(updatedRow.version),
+      caseId: updatedRow.case_id,
+      actorUserId,
+      redactedSummary: redact({
+        from: row.status,
+        to: updatedRow.status,
+        planNumber: Number(updatedRow.plan_number),
+        graphDigest: updatedRow.graph_digest,
+        reason: withdrawalReason,
+      }),
+    });
+
+    return mapRow(updatedRow);
   });
 }
 
@@ -1221,6 +1472,33 @@ export async function putViewState(
        RETURNING *`,
       [id, type, JSON.stringify(viewState ?? {}), now, actorUserId]
     );
-    return mapViewStateRow(upserted.rows[0]);
+    const upsertedRow = upserted.rows[0];
+    if (!upsertedRow) throw new Error('plan_view_state_write_failed');
+
+    // EVENT_TAXONOMY.md §2 `putViewState -> case.plan.view_state_updated`.
+    // The aggregate stays the PLAN VERSION even though the row written lives
+    // in case_plan_view_state; that table has no `version` column, so
+    // aggregateVersion is null (§3) — never the plan version's own counter,
+    // which this command does not touch and must not appear to advance.
+    //
+    // The view state itself (pan/zoom/collapse) is presentation payload, not a
+    // fact: it goes behind payloadRef, and only the view type is summarised.
+    // §5.8 flags this command as a hot path — if it turns out to fire per
+    // interaction rather than per save, it will dominate outbox volume.
+    const scope = await loadCaseScope(client, planRow.case_id);
+    await publishEvent(client, {
+      eventType: 'case.plan.view_state_updated',
+      organizationId: scope.organizationId,
+      projectId: scope.projectId,
+      aggregateType: PLAN_VERSION_AGGREGATE_TYPE,
+      aggregateId: upsertedRow.case_plan_version_id,
+      aggregateVersion: null,
+      caseId: planRow.case_id,
+      actorUserId,
+      payloadRef: `case_plan_view_state:${upsertedRow.case_plan_version_id}#${upsertedRow.view_type}`,
+      redactedSummary: redact({ viewType: upsertedRow.view_type }),
+    });
+
+    return mapViewStateRow(upsertedRow);
   });
 }

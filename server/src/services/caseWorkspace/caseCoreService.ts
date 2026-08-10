@@ -41,6 +41,7 @@ import {
   withPgTransaction,
 } from '../../utils/queryHelpers.js';
 import { requireCaseAccess, requireOrgMember } from './caseWorkspaceAuthContext.js';
+import { publishEvent, redact } from './eventOutboxService.js';
 
 export type CaseProfile = 'LIGHT' | 'STANDARD' | 'TRANSFORMATION' | 'MONITORING';
 export type GovernanceTier = 'LIGHTWEIGHT' | 'STANDARD' | 'CONTROLLED';
@@ -174,6 +175,33 @@ const ALLOWED_STATUS_TRANSITIONS: Record<CaseStatus, readonly CaseStatus[]> = {
 };
 
 const TERMINAL_STATUSES: readonly CaseStatus[] = ['CLOSED', 'FAILED', 'CANCELLED'];
+
+/**
+ * EVENT_TAXONOMY.md §2 (caseCoreService rows) + §5.1.
+ *
+ * `transitionStatus` emits ONE event chosen by the TARGET status, never a
+ * generic "status changed". DRAFT maps to null on purpose: no row of
+ * ALLOWED_STATUS_TRANSITIONS above can target DRAFT, so `case.drafted` does
+ * not exist and inventing one here would create an event type no consumer
+ * knows and no transition can produce. The null branch is therefore an
+ * unreachable-by-construction guard, not a fallback — it throws rather than
+ * silently committing a status change with no event, because a mutation
+ * without its event is exactly the dual-write hole the outbox closes.
+ *
+ * `case.successor_created` (§5.1) is deliberately absent: no successor /
+ * Monitoring-Case concept exists in this code yet.
+ */
+const STATUS_EVENT_TYPE: Record<CaseStatus, string | null> = {
+  DRAFT: null,
+  ACTIVE: 'case.activated',
+  BLOCKED: 'case.blocked',
+  CLOSED: 'case.closed',
+  FAILED: 'case.failed',
+  CANCELLED: 'case.cancelled',
+};
+
+/** Aggregate name this service owns in the outbox (EVENT_TAXONOMY.md §2/§3). */
+const CASE_AGGREGATE_TYPE = 'CASE';
 
 // closureType -> the one closure axis it must be backed by (CW-RT-027 cross-check).
 const CLOSURE_TYPE_AXIS: Record<Exclude<ClosureType, 'COMPLETED_PARTIAL'>, ClosureAxis> = {
@@ -340,7 +368,32 @@ export async function createCase(input: {
         now,
       ]
     );
-    return mapRow(inserted.rows[0]);
+    const insertedRow = inserted.rows[0];
+    if (!insertedRow) throw new Error('case_create_failed');
+
+    // EVENT_TAXONOMY.md §2 `createCase -> case.created`. Same `client`, same
+    // BEGIN…COMMIT as the INSERT above: either the Case and its event both
+    // exist, or neither does. Identity is taken from the RETURNING row, never
+    // from the caller's input (§6.2).
+    await publishEvent(client, {
+      eventType: 'case.created',
+      organizationId: insertedRow.organization_id,
+      projectId: insertedRow.project_id,
+      aggregateType: CASE_AGGREGATE_TYPE,
+      aggregateId: insertedRow.case_id,
+      aggregateVersion: Number(insertedRow.version),
+      caseId: insertedRow.case_id,
+      actorUserId: insertedRow.created_by_actor_id,
+      redactedSummary: redact({
+        caseProfile: insertedRow.case_profile,
+        governanceTier: insertedRow.governance_tier,
+        contractedClosureType: insertedRow.contracted_closure_type,
+        autonomyPolicy: insertedRow.autonomy_policy,
+        caseStatus: insertedRow.case_status,
+      }),
+    });
+
+    return mapRow(insertedRow);
   });
 }
 
@@ -436,10 +489,34 @@ export async function transitionStatus(
         RETURNING *`,
       [targetStatus, completedAt, now, id, row.version]
     );
-    if (!updated.rows[0]) throw new Error('case_version_conflict');
-    void actorUserId;
-    void reason;
-    return mapRow(updated.rows[0]);
+    const updatedRow = updated.rows[0];
+    if (!updatedRow) throw new Error('case_version_conflict');
+
+    // EVENT_TAXONOMY.md §2: the event_type is computed from the TARGET status,
+    // one event per call. §5.3: `cancelCase` delegates here and emits nothing
+    // of its own, so the cancellation `reason` it carries is recorded in THIS
+    // summary — that is the only place a cancellation reason becomes an event
+    // fact.
+    const eventType = STATUS_EVENT_TYPE[updatedRow.case_status];
+    if (!eventType) throw new Error(`case_status_event_type_unmapped:${updatedRow.case_status}`);
+
+    await publishEvent(client, {
+      eventType,
+      organizationId: updatedRow.organization_id,
+      projectId: updatedRow.project_id,
+      aggregateType: CASE_AGGREGATE_TYPE,
+      aggregateId: updatedRow.case_id,
+      aggregateVersion: Number(updatedRow.version),
+      caseId: updatedRow.case_id,
+      actorUserId,
+      redactedSummary: redact({
+        from: row.case_status,
+        to: updatedRow.case_status,
+        reason: reason ?? null,
+      }),
+    });
+
+    return mapRow(updatedRow);
   });
 }
 
@@ -488,8 +565,29 @@ export async function updateGovernanceTier(
         RETURNING *`,
       [newTier, JSON.stringify(nextHistory), now, id, row.version]
     );
-    if (!updated.rows[0]) throw new Error('case_version_conflict');
-    return mapRow(updated.rows[0]);
+    const updatedRow = updated.rows[0];
+    if (!updatedRow) throw new Error('case_version_conflict');
+
+    // EVENT_TAXONOMY.md §2: summary is {from, to, rationale}. The full
+    // governance_tier_history is deliberately NOT copied into the event — the
+    // event is one transition, the column is the ledger.
+    await publishEvent(client, {
+      eventType: 'case.governance_tier_changed',
+      organizationId: updatedRow.organization_id,
+      projectId: updatedRow.project_id,
+      aggregateType: CASE_AGGREGATE_TYPE,
+      aggregateId: updatedRow.case_id,
+      aggregateVersion: Number(updatedRow.version),
+      caseId: updatedRow.case_id,
+      actorUserId,
+      redactedSummary: redact({
+        from: row.governance_tier,
+        to: updatedRow.governance_tier,
+        rationale: changeReason,
+      }),
+    });
+
+    return mapRow(updatedRow);
   });
 }
 
@@ -527,8 +625,27 @@ export async function updateAutonomyPolicy(
         RETURNING *`,
       [newPolicy, now, id, row.version]
     );
-    if (!updated.rows[0]) throw new Error('case_version_conflict');
-    return mapRow(updated.rows[0]);
+    const updatedRow = updated.rows[0];
+    if (!updatedRow) throw new Error('case_version_conflict');
+
+    // EVENT_TAXONOMY.md §2: from/to autonomy level + the policy ref.
+    await publishEvent(client, {
+      eventType: 'case.autonomy_policy_changed',
+      organizationId: updatedRow.organization_id,
+      projectId: updatedRow.project_id,
+      aggregateType: CASE_AGGREGATE_TYPE,
+      aggregateId: updatedRow.case_id,
+      aggregateVersion: Number(updatedRow.version),
+      caseId: updatedRow.case_id,
+      actorUserId,
+      redactedSummary: redact({
+        from: row.autonomy_policy,
+        to: updatedRow.autonomy_policy,
+        autonomyPolicyRef: updatedRow.autonomy_policy_ref,
+      }),
+    });
+
+    return mapRow(updatedRow);
   });
 }
 
@@ -577,8 +694,28 @@ export async function updateClosureAxisStatus(
         RETURNING *`,
       [status, now, id, row.version]
     );
-    if (!updated.rows[0]) throw new Error('case_version_conflict');
-    return mapRow(updated.rows[0]);
+    const updatedRow = updated.rows[0];
+    if (!updatedRow) throw new Error('case_version_conflict');
+
+    // EVENT_TAXONOMY.md §2: {axis, from, to}, ONE event per call even though
+    // four axes exist — the other three are untouched by this command.
+    await publishEvent(client, {
+      eventType: 'case.closure_axis_updated',
+      organizationId: updatedRow.organization_id,
+      projectId: updatedRow.project_id,
+      aggregateType: CASE_AGGREGATE_TYPE,
+      aggregateId: updatedRow.case_id,
+      aggregateVersion: Number(updatedRow.version),
+      caseId: updatedRow.case_id,
+      actorUserId,
+      redactedSummary: redact({
+        axis,
+        from: row[column],
+        to: updatedRow[column],
+      }),
+    });
+
+    return mapRow(updatedRow);
   });
 }
 
@@ -635,8 +772,36 @@ export async function recordClosure(
         RETURNING *`,
       [closureType, now, actorUserId, evidenceRef ?? null, now, id, row.version]
     );
-    if (!updated.rows[0]) throw new Error('case_version_conflict');
-    return mapRow(updated.rows[0]);
+    const updatedRow = updated.rows[0];
+    if (!updatedRow) throw new Error('case_version_conflict');
+
+    // EVENT_TAXONOMY.md §5.2: `case.closure_recorded`, NOT `case.closed`.
+    // This command records closure_type; it does not set case_status='CLOSED'
+    // (transitionStatus does, and refuses to until this has run). Giving both
+    // `case.closed` would double-count every closure and would fire the
+    // closed-projection while the Case is still ACTIVE.
+    //
+    // The evidence reference goes in payloadRef, not the summary: it is a
+    // pointer to evidence, and the evidence itself never belongs in an event.
+    await publishEvent(client, {
+      eventType: 'case.closure_recorded',
+      organizationId: updatedRow.organization_id,
+      projectId: updatedRow.project_id,
+      aggregateType: CASE_AGGREGATE_TYPE,
+      aggregateId: updatedRow.case_id,
+      aggregateVersion: Number(updatedRow.version),
+      caseId: updatedRow.case_id,
+      actorUserId,
+      payloadRef: updatedRow.closure_evidence_ref,
+      redactedSummary: redact({
+        closureType: updatedRow.closure_type,
+        contractedClosureType: updatedRow.contracted_closure_type,
+        caseStatus: updatedRow.case_status,
+        closedByActorId: updatedRow.closed_by_actor_id,
+      }),
+    });
+
+    return mapRow(updatedRow);
   });
 }
 
@@ -644,6 +809,13 @@ export async function recordClosure(
  * CW-GR-023 (POST /api/cases/:caseId/cancel). Thin wrapper over
  * transitionStatus(caseId, 'CANCELLED', actor, reason); records the reason
  * so cancellation is auditable without inventing a second cancel pathway.
+ *
+ * EMITS NO EVENT OF ITS OWN — deliberate, EVENT_TAXONOMY.md §5.3. The
+ * delegate already emits `case.cancelled` and carries this `reason` into that
+ * event's summary. Publishing here as well would produce two events with
+ * different event_ids for one cancellation, which §8's dedup-by-eventId
+ * cannot collapse, and every cancellation routed through this wrapper would
+ * be double-counted against one routed straight through transitionStatus.
  */
 export async function cancelCase(
   caseId: string,

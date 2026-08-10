@@ -139,7 +139,20 @@ async function canReachWithSchema(connectionString: string): Promise<boolean> {
     );
     const orgMembersOk = Number(orgMembersResult.rows[0]?.present ?? 0) === 4;
 
-    return definitionsOk && flagsOk && quarantineOk && orgMembersOk;
+    // Every mutating command here now publishes a domain event on the SAME
+    // transaction as its write (EVENT_TAXONOMY.md §2), so a missing outbox
+    // table would fail all of them. Probed here so that is a LOUD SKIP rather
+    // than a mysterious red suite.
+    const outboxResult = await probe.query(
+      `SELECT count(*)::int AS present FROM information_schema.columns
+        WHERE table_schema = 'public' AND table_name = 'case_workspace_event_outbox'
+          AND column_name IN ('event_id', 'event_type', 'organization_id', 'aggregate_type',
+                               'aggregate_id', 'aggregate_version', 'actor_user_id',
+                               'correlation_id', 'redacted_summary', 'payload_ref')`
+    );
+    const outboxOk = Number(outboxResult.rows[0]?.present ?? 0) === 10;
+
+    return definitionsOk && flagsOk && quarantineOk && orgMembersOk && outboxOk;
   } catch {
     return false;
   } finally {
@@ -195,6 +208,23 @@ interface LegacyQuarantineDbRow {
   detected_at: string;
   recorded_at: string;
   dedupe_key: string | null;
+}
+
+/** One `case_workspace_event_outbox` row, as stored (snake_case, straight from Postgres). */
+interface EventOutboxDbRow {
+  event_id: string;
+  event_type: string;
+  organization_id: string;
+  project_id: string | null;
+  aggregate_type: string;
+  aggregate_id: string;
+  aggregate_version: number | null;
+  case_id: string | null;
+  actor_user_id: string;
+  correlation_id: string;
+  causation_id: string | null;
+  redacted_summary: Record<string, unknown>;
+  payload_ref: string | null;
 }
 
 suite(
@@ -343,8 +373,84 @@ suite(
       for (const userId of params.userIds ?? []) {
         await control.query(`DELETE FROM users WHERE id = $1`, [userId]).catch(() => undefined);
       }
+      if (params.orgIds.length > 0) {
+        // The outbox has no FK to organizations (append-only log of ids), so it
+        // never cascades — each test removes exactly its own rows. §4: the
+        // org-less flag-DEFINITION aggregate's event still carries the caller's
+        // org, so org-scoping catches those rows too.
+        await control
+          .query(`DELETE FROM case_workspace_event_outbox WHERE organization_id = ANY($1)`, [
+            params.orgIds,
+          ])
+          .catch(() => undefined);
+      }
       for (const orgId of params.orgIds) {
         await control.query(`DELETE FROM organizations WHERE id = $1`, [orgId]).catch(() => undefined);
+      }
+    }
+
+    /**
+     * Reads the outbox OUT OF BAND (dedicated `control` pool), never through
+     * the service's own return value — the return value only proves what the
+     * service THINKS it published.
+     */
+    async function readOutboxRowsForAggregate(aggregateId: string): Promise<EventOutboxDbRow[]> {
+      const result = await control.query<EventOutboxDbRow>(
+        `SELECT * FROM case_workspace_event_outbox WHERE aggregate_id = $1 ORDER BY created_at ASC`,
+        [aggregateId]
+      );
+      return result.rows;
+    }
+
+    async function readOutboxRowsForOrg(organizationId: string): Promise<EventOutboxDbRow[]> {
+      const result = await control.query<EventOutboxDbRow>(
+        `SELECT * FROM case_workspace_event_outbox WHERE organization_id = $1 ORDER BY created_at ASC`,
+        [organizationId]
+      );
+      return result.rows;
+    }
+
+    /**
+     * Forces a failure AFTER the command's mutation AND after its
+     * publishEvent, by installing a DEFERRABLE INITIALLY DEFERRED constraint
+     * trigger that raises at COMMIT time for exactly one row. That is what
+     * makes the rollback test a real atomicity proof rather than a "the insert
+     * itself blew up" tautology: both writes have already happened on the
+     * transaction's client when the poison fires, so a surviving outbox row
+     * would mean the outbox is NOT sharing the command's transaction.
+     */
+    async function withCommitTimePoison<T>(
+      params: {
+        table: string;
+        matchColumn: string;
+        matchValue: string;
+        event: 'INSERT' | 'UPDATE';
+      },
+      fn: () => Promise<T>
+    ): Promise<T> {
+      const token = randomUUID().replace(/-/g, '');
+      const fnName = `cw_test_poison_fn_${token}`;
+      const trgName = `cw_test_poison_trg_${token}`;
+      const literal = params.matchValue.replace(/'/g, "''");
+      await control.query(
+        `CREATE FUNCTION ${fnName}() RETURNS trigger LANGUAGE plpgsql AS $poison$
+           BEGIN RAISE EXCEPTION 'forced_commit_time_failure_for_atomicity_test'; END
+         $poison$`
+      );
+      await control.query(
+        `CREATE CONSTRAINT TRIGGER ${trgName}
+           AFTER ${params.event} ON ${params.table}
+           DEFERRABLE INITIALLY DEFERRED
+           FOR EACH ROW WHEN (NEW.${params.matchColumn} = '${literal}')
+           EXECUTE FUNCTION ${fnName}()`
+      );
+      try {
+        return await fn();
+      } finally {
+        await control
+          .query(`DROP TRIGGER IF EXISTS ${trgName} ON ${params.table}`)
+          .catch(() => undefined);
+        await control.query(`DROP FUNCTION IF EXISTS ${fnName}()`).catch(() => undefined);
       }
     }
 
@@ -870,6 +976,272 @@ suite(
           flagKeysDeepestFirst: [flagKey],
           userIds: [memberActorId, noMembershipActorId, adminActorId],
         });
+      }
+    }, 30_000);
+
+    // -----------------------------------------------------------------------
+    // 7. DOMAIN EVENT (EVENT_TAXONOMY.md §2 row 1 + §4) —
+    //    registerFlagDefinition emits exactly one
+    //    `flag.definition_registered` on the org-LESS definition aggregate:
+    //    aggregate_id = flag_key, organization_id = the CALLER's org,
+    //    aggregate_version = null. The idempotent identical re-registration
+    //    mutates nothing and must therefore emit nothing.
+    // -----------------------------------------------------------------------
+    it('registerFlagDefinition writes exactly one flag.definition_registered outbox row keyed by flag_key with the caller org, and an identical re-registration adds none', async () => {
+      const orgId = await seedOrg('outbox-flagdef');
+      const actorId = await seedMemberedUser(orgId, 'outbox-flagdef', 'ADMIN');
+      const flagKey = uniqueFlagKey('outbox-flagdef');
+      try {
+        await migrationReadinessService.registerFlagDefinition(
+          { flagKey, description: 'outbox definition test', createdBy: actorId },
+          orgId
+        );
+
+        const events = await readOutboxRowsForAggregate(flagKey);
+        expect(events).toHaveLength(1);
+        const event = events[0];
+        expect(event.event_type).toBe('flag.definition_registered');
+        expect(event.aggregate_type).toBe('FEATURE_FLAG_DEFINITION');
+        expect(event.aggregate_id).toBe(flagKey);
+        // §3: case_workspace_feature_flag_definitions has no version column.
+        expect(event.aggregate_version).toBeNull();
+        // §4: the aggregate carries no organization_id — the event takes the
+        // CALLER's org and says so in the summary.
+        expect(event.organization_id).toBe(orgId);
+        expect(event.actor_user_id).toBe(actorId);
+        expect(String(event.correlation_id ?? '').trim().length).toBeGreaterThan(0);
+        expect(event.causation_id).toBeNull();
+        expect(event.redacted_summary).toMatchObject({
+          // CW-DOD-J1: a definition can never be registered default-ON.
+          defaultEnabled: false,
+          parentFlagKey: null,
+          platformGlobalAggregate: true,
+        });
+
+        // Idempotent, identical re-registration returns the existing row
+        // WITHOUT writing — so it must not mint a second event.
+        await migrationReadinessService.registerFlagDefinition(
+          { flagKey, description: 'outbox definition test', createdBy: actorId },
+          orgId
+        );
+        expect(await readOutboxRowsForAggregate(flagKey)).toHaveLength(1);
+      } finally {
+        await teardown({ orgIds: [orgId], flagKeysDeepestFirst: [flagKey], userIds: [actorId] });
+      }
+    }, 30_000);
+
+    // -----------------------------------------------------------------------
+    // 8. DOMAIN EVENTS (EVENT_TAXONOMY.md §2 rows 2 and 3) — setOrgFlagState
+    //    and rollbackFlag share ONE upsert path but must produce DIFFERENT
+    //    event types, one row each, on the SAME stable flag_id aggregate.
+    //    A rollback emitting `flag.org_state_changed` (or emitting twice)
+    //    would be exactly the double-count §5.3 rejects.
+    // -----------------------------------------------------------------------
+    it('setOrgFlagState emits one flag.org_state_changed and rollbackFlag emits one flag.rolled_back, both on the same stable flag_id aggregate', async () => {
+      const orgId = await seedOrg('outbox-flagstate');
+      const actorId = await seedMemberedUser(orgId, 'outbox-flagstate', 'ADMIN');
+      const flagKey = uniqueFlagKey('outbox-flagstate');
+      try {
+        await migrationReadinessService.registerFlagDefinition(
+          { flagKey, description: 'outbox state test', createdBy: actorId },
+          orgId
+        );
+
+        const enabled: FeatureFlagState = await migrationReadinessService.setOrgFlagState({
+          organizationId: orgId,
+          flagKey,
+          enabled: true,
+          cohort: 'internal',
+          rolloutPercentage: 25,
+          updatedBy: actorId,
+        });
+
+        const flagRow = await readFeatureFlagRow(orgId, flagKey);
+        expect(flagRow).not.toBeNull();
+        const flagId = flagRow!.flag_id;
+
+        const afterSet = await readOutboxRowsForAggregate(flagId);
+        expect(afterSet).toHaveLength(1);
+        const setEvent = afterSet[0];
+        expect(setEvent.event_type).toBe('flag.org_state_changed');
+        expect(setEvent.aggregate_type).toBe('FEATURE_FLAG');
+        expect(setEvent.aggregate_id).toBe(flagId);
+        expect(setEvent.aggregate_version).toBeNull();
+        expect(setEvent.organization_id).toBe(orgId);
+        expect(setEvent.actor_user_id).toBe(actorId);
+        expect(String(setEvent.correlation_id ?? '').trim().length).toBeGreaterThan(0);
+        expect(setEvent.redacted_summary).toMatchObject({
+          from: null, // no state row existed before -> read as OFF
+          to: true,
+          firstStateRow: true,
+        });
+        expect(enabled.enabled).toBe(true);
+
+        await migrationReadinessService.rollbackFlag(orgId, flagKey, actorId);
+
+        const afterRollback = await readOutboxRowsForAggregate(flagId);
+        expect(afterRollback).toHaveLength(2);
+        // The ON CONFLICT DO UPDATE branch keeps the EXISTING flag_id, so the
+        // aggregate id is stable across every state change of one (org, flag).
+        expect(afterRollback.every((row) => row.aggregate_id === flagId)).toBe(true);
+        const rollbackEvents = afterRollback.filter((row) => row.event_type === 'flag.rolled_back');
+        expect(rollbackEvents).toHaveLength(1);
+        expect(rollbackEvents[0].redacted_summary).toMatchObject({ from: true, to: false });
+        // And the rollback did NOT also emit the setOrgFlagState type.
+        expect(
+          afterRollback.filter((row) => row.event_type === 'flag.org_state_changed')
+        ).toHaveLength(1);
+      } finally {
+        await teardown({ orgIds: [orgId], flagKeysDeepestFirst: [flagKey], userIds: [actorId] });
+      }
+    }, 30_000);
+
+    // -----------------------------------------------------------------------
+    // 9. DOMAIN EVENT (EVENT_TAXONOMY.md §2 row 4) —
+    //    recordQuarantinedLegacyRecord emits exactly one
+    //    `legacy.record_quarantined` carrying the reason CODE and a
+    //    payloadRef, never the quarantined payload itself. The dedupe_key
+    //    replay path writes nothing and must emit nothing.
+    // -----------------------------------------------------------------------
+    it('recordQuarantinedLegacyRecord emits one legacy.record_quarantined row with the reason code and a payloadRef, never the quarantined snapshot; a dedupe replay adds none', async () => {
+      const orgId = await seedOrg('outbox-quarantine');
+      const actorId = await seedMemberedUser(orgId, 'outbox-quarantine', 'MEMBER');
+      const rehearsalRunId = `rehearsal-${randomUUID()}`;
+      const dedupeKey = `quarantine-outbox-${randomUUID()}`;
+      try {
+        const created = await migrationReadinessService.recordQuarantinedLegacyRecord(
+          {
+            organizationId: orgId,
+            rehearsalRunId,
+            sourceSystem: 'legacy_agent_plan',
+            sourceTable: 'legacy_plan_steps',
+            sourceId: `legacy-row-${randomUUID()}`,
+            quarantineReasonCode: 'NO_CASE_MATCH',
+            quarantineReasonDetail: 'No case_core row could be matched for this legacy record.',
+            recoveryPathRef: 'runbook://migration/manual-reconcile#no-case-match',
+            sourceRecordSnapshot: { legacySecretPayload: 'must-never-be-copied-into-the-event' },
+            detectedAt: new Date().toISOString(),
+            dedupeKey,
+          },
+          actorId
+        );
+
+        const events = await readOutboxRowsForAggregate(created.quarantineId);
+        expect(events).toHaveLength(1);
+        const event = events[0];
+        expect(event.event_type).toBe('legacy.record_quarantined');
+        expect(event.aggregate_type).toBe('LEGACY_RECORD');
+        expect(event.aggregate_id).toBe(created.quarantineId);
+        expect(event.aggregate_version).toBeNull();
+        // §6.2: taken from the row that was written, not from unvalidated input.
+        expect(event.organization_id).toBe(orgId);
+        expect(event.actor_user_id).toBe(actorId);
+        expect(String(event.correlation_id ?? '').trim().length).toBeGreaterThan(0);
+        expect(event.redacted_summary).toMatchObject({
+          sourceSystem: 'legacy_agent_plan',
+          sourceTable: 'legacy_plan_steps',
+          quarantineReasonCode: 'NO_CASE_MATCH',
+          rehearsalRunId,
+        });
+        expect(event.payload_ref).toBe(
+          `case_workspace_legacy_quarantine:${created.quarantineId}`
+        );
+        // Reason CODE only — the quarantined payload is referenced, never copied.
+        const summaryText = JSON.stringify(event.redacted_summary);
+        expect(summaryText).not.toContain('must-never-be-copied-into-the-event');
+        expect(summaryText).not.toContain('legacySecretPayload');
+
+        // Same dedupe_key -> the service returns the existing row without
+        // inserting; no mutation, therefore no second event.
+        const replayed = await migrationReadinessService.recordQuarantinedLegacyRecord(
+          {
+            organizationId: orgId,
+            rehearsalRunId,
+            sourceSystem: 'legacy_agent_plan',
+            sourceTable: 'legacy_plan_steps',
+            sourceId: `legacy-row-${randomUUID()}`,
+            quarantineReasonCode: 'NO_CASE_MATCH',
+            quarantineReasonDetail: 'Replay of the same quarantine record.',
+            recoveryPathRef: 'runbook://migration/manual-reconcile#no-case-match',
+            sourceRecordSnapshot: { legacySecretPayload: 'must-never-be-copied-into-the-event' },
+            detectedAt: new Date().toISOString(),
+            dedupeKey,
+          },
+          actorId
+        );
+        expect(replayed.quarantineId).toBe(created.quarantineId);
+        expect(await readOutboxRowsForAggregate(created.quarantineId)).toHaveLength(1);
+      } finally {
+        await teardown({
+          orgIds: [orgId],
+          flagKeysDeepestFirst: [],
+          rehearsalRunIds: [rehearsalRunId],
+          userIds: [actorId],
+        });
+      }
+    }, 30_000);
+
+    // -----------------------------------------------------------------------
+    // 10. ROLLBACK / ATOMICITY — a failure forced AFTER the flag-state upsert
+    //     and AFTER publishEvent (deferred constraint trigger firing at
+    //     COMMIT) leaves ZERO flag rows and ZERO `flag.org_state_changed`
+    //     rows. If publishEvent ever opened its own connection, the event
+    //     would survive here.
+    // -----------------------------------------------------------------------
+    it('a failure forced at COMMIT time after setOrgFlagState leaves zero feature-flag rows AND zero flag.org_state_changed outbox rows', async () => {
+      const orgId = await seedOrg('outbox-rollback');
+      const actorId = await seedMemberedUser(orgId, 'outbox-rollback', 'ADMIN');
+      const flagKey = uniqueFlagKey('outbox-rollback');
+      try {
+        await migrationReadinessService.registerFlagDefinition(
+          { flagKey, description: 'outbox rollback test', createdBy: actorId },
+          orgId
+        );
+        // The definition's own event is already durable — the rollback below
+        // must not remove it, and must not add a flag-state one.
+        expect(await readOutboxRowsForAggregate(flagKey)).toHaveLength(1);
+
+        await withCommitTimePoison(
+          {
+            table: 'case_workspace_feature_flags',
+            matchColumn: 'flag_key',
+            matchValue: flagKey,
+            event: 'INSERT',
+          },
+          async () => {
+            await expect(
+              migrationReadinessService.setOrgFlagState({
+                organizationId: orgId,
+                flagKey,
+                enabled: true,
+                updatedBy: actorId,
+              })
+            ).rejects.toThrow(/forced_commit_time_failure_for_atomicity_test/);
+          }
+        );
+
+        expect(await readFeatureFlagRow(orgId, flagKey)).toBeNull();
+        const orgEvents = await readOutboxRowsForOrg(orgId);
+        expect(orgEvents.filter((row) => row.event_type === 'flag.org_state_changed')).toHaveLength(
+          0
+        );
+        expect(
+          orgEvents.filter((row) => row.event_type === 'flag.definition_registered')
+        ).toHaveLength(1);
+
+        // The same command succeeds once the poison is gone — the rollback
+        // left no partial state behind.
+        await migrationReadinessService.setOrgFlagState({
+          organizationId: orgId,
+          flagKey,
+          enabled: true,
+          updatedBy: actorId,
+        });
+        const flagRow = await readFeatureFlagRow(orgId, flagKey);
+        expect(flagRow).not.toBeNull();
+        expect(await readOutboxRowsForAggregate(flagRow!.flag_id)).toHaveLength(1);
+      } finally {
+        await teardown({ orgIds: [orgId], flagKeysDeepestFirst: [flagKey], userIds: [actorId] });
       }
     }, 30_000);
   }

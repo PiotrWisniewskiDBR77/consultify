@@ -175,6 +175,31 @@ interface CaseWorkspaceActionProposalDecisionDbRow {
   idempotency_key: string;
 }
 
+/**
+ * The transactional outbox row (server/migrations/
+ * 20260810_case_workspace_event_outbox.sql). Read ONLY through the out-of-band
+ * `control` pool, after the service call has returned and its transaction has
+ * committed — a value returned by publishEvent proves nothing about what
+ * survived COMMIT, which is the entire property under test.
+ */
+interface CaseWorkspaceEventOutboxDbRow {
+  event_id: string;
+  event_type: string;
+  organization_id: string;
+  project_id: string | null;
+  aggregate_type: string;
+  aggregate_id: string;
+  aggregate_version: number | null;
+  case_id: string | null;
+  run_id: string | null;
+  node_run_id: string | null;
+  actor_user_id: string;
+  correlation_id: string;
+  causation_id: string | null;
+  redacted_summary: Record<string, unknown>;
+  payload_ref: string | null;
+}
+
 suite(
   'proposalApprovalService — Action Proposal + Approval against a real PostgreSQL (CW-P05, E6)',
   () => {
@@ -416,6 +441,97 @@ suite(
     }
 
     /**
+     * Every outbox row this aggregate ever produced, oldest first, read out of
+     * band. `event_id` breaks ties because `created_at` defaults to `now()` =
+     * transaction start time, so two events from the same command would share it.
+     */
+    async function readOutboxRowsForAggregate(
+      aggregateId: string
+    ): Promise<CaseWorkspaceEventOutboxDbRow[]> {
+      const result = await control.query<CaseWorkspaceEventOutboxDbRow>(
+        `SELECT * FROM case_workspace_event_outbox
+           WHERE aggregate_id = $1
+           ORDER BY created_at ASC, event_id ASC`,
+        [aggregateId]
+      );
+      return result.rows;
+    }
+
+    /**
+     * The assertion this whole packet exists for: after ONE mutating command
+     * there is EXACTLY ONE new row, of the expected type, whose tenancy and
+     * correlation identity is filled in from the aggregate — not from the
+     * caller's hopes. Returns the row so a caller can assert type-specific
+     * summary facts on top.
+     */
+    function expectOneEvent(
+      rows: CaseWorkspaceEventOutboxDbRow[],
+      index: number,
+      expected: {
+        eventType: string;
+        aggregateId: string;
+        organizationId: string;
+        projectId: string;
+        caseId: string;
+        runId: string;
+        nodeRunId: string;
+        actorUserId: string;
+        aggregateVersion: number;
+      }
+    ): CaseWorkspaceEventOutboxDbRow {
+      const row = rows[index];
+      if (!row) throw new Error(`expected an outbox row at index ${index}, got ${rows.length} rows`);
+      expect(row.event_type).toBe(expected.eventType);
+      expect(row.aggregate_type).toBe('ACTION_PROPOSAL');
+      expect(row.aggregate_id).toBe(expected.aggregateId);
+      expect(row.organization_id).toBe(expected.organizationId);
+      expect(row.project_id).toBe(expected.projectId);
+      expect(row.case_id).toBe(expected.caseId);
+      expect(row.run_id).toBe(expected.runId);
+      expect(row.node_run_id).toBe(expected.nodeRunId);
+      expect(row.actor_user_id).toBe(expected.actorUserId);
+      expect(Number(row.aggregate_version)).toBe(expected.aggregateVersion);
+      // NOT NULL in the schema, defaulted by the service — a hole here breaks
+      // the §10 operator trace, so assert it is a real value, not just present.
+      expect(typeof row.correlation_id).toBe('string');
+      expect(row.correlation_id.trim().length).toBeGreaterThan(0);
+      return row;
+    }
+
+    /**
+     * A DEFERRABLE INITIALLY DEFERRED constraint trigger fires at COMMIT, i.e.
+     * AFTER the command's aggregate UPDATE *and* after its publishEvent INSERT
+     * have both run on the transaction's client. It is therefore the only honest
+     * way to force "the mutation and the event both happened, then the
+     * transaction failed" — an ordinary AFTER trigger fires during the UPDATE
+     * statement, before the event is ever written, and would prove nothing.
+     * Scoped by a WHEN clause to one action_proposal_id so a concurrently
+     * running suite on the same database is untouched.
+     */
+    async function installCommitFailureTrigger(actionProposalId: string): Promise<() => Promise<void>> {
+      const suffix = randomUUID().replace(/-/g, '');
+      const fnName = `cw_test_prop_rollback_${suffix}`;
+      const triggerName = `cw_test_prop_rollback_trg_${suffix}`;
+      await control.query(
+        `CREATE FUNCTION ${fnName}() RETURNS trigger LANGUAGE plpgsql AS
+         $fn$ BEGIN RAISE EXCEPTION 'cw_test_forced_commit_failure'; END; $fn$`
+      );
+      await control.query(
+        `CREATE CONSTRAINT TRIGGER ${triggerName}
+           AFTER UPDATE ON case_workspace_action_proposals
+           DEFERRABLE INITIALLY DEFERRED
+           FOR EACH ROW WHEN (NEW.action_proposal_id = '${actionProposalId}')
+           EXECUTE FUNCTION ${fnName}()`
+      );
+      return async () => {
+        await control
+          .query(`DROP TRIGGER IF EXISTS ${triggerName} ON case_workspace_action_proposals`)
+          .catch(() => undefined);
+        await control.query(`DROP FUNCTION IF EXISTS ${fnName}()`).catch(() => undefined);
+      };
+    }
+
+    /**
      * Teardown order matters: decisions cascade off proposals (ON DELETE
      * CASCADE), but proposals themselves have no ON DELETE clause on either
      * their case_core or v8_execution_runs FK (RESTRICT/NO ACTION), so
@@ -429,6 +545,16 @@ suite(
       projectIds: string[];
       userIds?: string[];
     }): Promise<void> {
+      // The outbox has ZERO foreign keys by design (see its migration header),
+      // so its rows survive every delete below and must be cleared explicitly
+      // or they leak into the next run's counts.
+      if (params.orgIds.length > 0) {
+        await control
+          .query(`DELETE FROM case_workspace_event_outbox WHERE organization_id = ANY($1)`, [
+            params.orgIds,
+          ])
+          .catch(() => undefined);
+      }
       if (params.runIds.length > 0) {
         await control
           .query(`DELETE FROM case_workspace_action_proposals WHERE run_id = ANY($1)`, [
@@ -1049,5 +1175,518 @@ suite(
         });
       }
     }, 30_000);
+
+    // =========================================================================
+    // EVENT OUTBOX (docs/product/case-workspace/acceptance/EVENT_TAXONOMY.md,
+    // section "proposalApprovalService — aggregate ACTION_PROPOSAL")
+    //
+    // Every assertion below reads `case_workspace_event_outbox` out of band,
+    // AFTER the command returned — never the value publishEvent handed back.
+    // The whole point of the outbox is what survives COMMIT.
+    // =========================================================================
+
+    // -------------------------------------------------------------------------
+    // 10. The happy-path lifecycle: six mutating commands, six outbox rows, in
+    //     order, each with the taxonomy's literal event_type and a fully
+    //     populated identity (org/aggregate/actor/correlation + the §10
+    //     case->run->nodeRun chain and the POST-mutation aggregate version).
+    //     Read-only calls interleaved at the end add nothing.
+    // -------------------------------------------------------------------------
+    it('emits exactly one correctly-identified outbox event per mutating command across the full DRAFT->AUDITED lifecycle, and none for reads', async () => {
+      const { orgId, projectId, caseId, actorId: actorA } = await seedOrgProjectCase('outbox-lifecycle');
+      const actorB = await seedMemberedUser(orgId, 'outbox-lifecycle-B');
+      const actorExecutor = await seedMemberedUser(orgId, 'outbox-lifecycle-exec');
+      const runId = `run-t10-${randomUUID()}`;
+      try {
+        await seedV8Run({ runId, organizationId: orgId });
+
+        const created = await proposalApprovalService.createActionProposal(
+          minimalProposalInput({
+            caseId,
+            runId,
+            tag: 'outbox-lifecycle',
+            createdByActorId: actorA,
+          })
+        );
+        const aggregateId = created.actionProposalId;
+        const nodeRunId = `noderun-outbox-lifecycle`;
+
+        const identity = {
+          aggregateId,
+          organizationId: orgId,
+          projectId,
+          caseId,
+          runId,
+          nodeRunId,
+        };
+
+        let rows = await readOutboxRowsForAggregate(aggregateId);
+        expect(rows).toHaveLength(1);
+        const createdEvent = expectOneEvent(rows, 0, {
+          ...identity,
+          eventType: 'proposal.created',
+          actorUserId: actorA,
+          aggregateVersion: 1,
+        });
+        // §6: facts, not payloads — the digest is carried, the payload is not.
+        expect(createdEvent.redacted_summary.payloadDigest).toBe(created.payloadDigest);
+        expect(createdEvent.redacted_summary.effectClass).toBe('SENSITIVE_UPDATE');
+        expect(createdEvent.payload_ref).toBe(created.previewRef);
+
+        const submitted = await proposalApprovalService.submitActionProposalForReview(
+          aggregateId,
+          { actorUserId: actorA },
+          created.version
+        );
+        rows = await readOutboxRowsForAggregate(aggregateId);
+        expect(rows).toHaveLength(2);
+        const submitEvent = expectOneEvent(rows, 1, {
+          ...identity,
+          eventType: 'proposal.review_requested',
+          actorUserId: actorA,
+          aggregateVersion: submitted.version,
+        });
+        expect(submitEvent.redacted_summary.from).toBe('DRAFT');
+        expect(submitEvent.redacted_summary.to).toBe('PENDING_REVIEW');
+
+        const approved = await proposalApprovalService.recordApprovalDecision(
+          aggregateId,
+          minimalDecisionInput({
+            tag: 'outbox-lifecycle',
+            proposalVersion: submitted.proposalVersion,
+            payloadDigest: submitted.payloadDigest,
+            decision: 'APPROVE',
+            decidedByActorId: actorB,
+          }),
+          submitted.version
+        );
+        rows = await readOutboxRowsForAggregate(aggregateId);
+        expect(rows).toHaveLength(3);
+        const approveEvent = expectOneEvent(rows, 2, {
+          ...identity,
+          // Dynamic type: chosen from the decision, not hard-coded per branch.
+          eventType: 'approval.approved',
+          actorUserId: actorB,
+          aggregateVersion: approved.proposal.version,
+        });
+        expect(approveEvent.redacted_summary.decision).toBe('APPROVE');
+        expect(approveEvent.redacted_summary.decisionId).toBe(approved.decision.decisionId);
+        expect(approveEvent.redacted_summary.approvalChannelPolicy).toBe('standard');
+        expect(approveEvent.redacted_summary.authenticationAssurance).toBe('MFA');
+        expect(approveEvent.redacted_summary.policyVersion).toBe('policy-v1');
+
+        const executing = await proposalApprovalService.transitionProposalToExecuting(
+          aggregateId,
+          { actorUserId: actorExecutor },
+          approved.proposal.version
+        );
+        const executed = await proposalApprovalService.transitionProposalToExecuted(
+          aggregateId,
+          { actorUserId: actorExecutor },
+          executing.version
+        );
+        const audited = await proposalApprovalService.markProposalAudited(
+          aggregateId,
+          { actorUserId: actorExecutor },
+          executed.version
+        );
+
+        rows = await readOutboxRowsForAggregate(aggregateId);
+        expect(rows).toHaveLength(6);
+        expectOneEvent(rows, 3, {
+          ...identity,
+          eventType: 'proposal.executing',
+          actorUserId: actorExecutor,
+          aggregateVersion: executing.version,
+        });
+        expectOneEvent(rows, 4, {
+          ...identity,
+          eventType: 'proposal.executed',
+          actorUserId: actorExecutor,
+          aggregateVersion: executed.version,
+        });
+        expectOneEvent(rows, 5, {
+          ...identity,
+          eventType: 'proposal.audited',
+          actorUserId: actorExecutor,
+          aggregateVersion: audited.version,
+        });
+
+        expect(rows.map((r) => r.event_type)).toEqual([
+          'proposal.created',
+          'proposal.review_requested',
+          'approval.approved',
+          'proposal.executing',
+          'proposal.executed',
+          'proposal.audited',
+        ]);
+        // Every event of one aggregate carries a distinct event_id (§8 dedup key).
+        expect(new Set(rows.map((r) => r.event_id)).size).toBe(6);
+
+        // Reads are not facts: none of these may append anything.
+        await proposalApprovalService.getActionProposal(aggregateId, actorA);
+        await proposalApprovalService.listActionProposalsForCase(caseId, undefined, actorA);
+        await proposalApprovalService.listActionProposalsForRun(runId, actorA);
+        await proposalApprovalService.listDecisionsForProposal(aggregateId, actorA);
+        expect(await readOutboxRowsForAggregate(aggregateId)).toHaveLength(6);
+      } finally {
+        await teardown({
+          runIds: [runId],
+          orgIds: [orgId],
+          projectIds: [projectId],
+          userIds: [actorA, actorB, actorExecutor],
+        });
+      }
+    }, 60_000);
+
+    // -------------------------------------------------------------------------
+    // 11. Retried commands must not look like second actions (§8 dedup): a safe
+    //     replay of createActionProposal/recordApprovalDecision performs no
+    //     mutation, so it emits nothing. A REJECTED command emits nothing
+    //     either — self_approval_forbidden and proposal_stale leave the outbox
+    //     as empty as they leave the aggregate.
+    // -------------------------------------------------------------------------
+    it('emits no event for an idempotent replay and no event for a rejected command (self-approval, stale digest)', async () => {
+      const { orgId, projectId, caseId, actorId: actorA } = await seedOrgProjectCase('outbox-replay');
+      const actorB = await seedMemberedUser(orgId, 'outbox-replay-B');
+      const runId = `run-t11-${randomUUID()}`;
+      try {
+        await seedV8Run({ runId, organizationId: orgId });
+
+        const input = minimalProposalInput({
+          caseId,
+          runId,
+          tag: 'outbox-replay',
+          createdByActorId: actorA,
+        });
+        const created = await proposalApprovalService.createActionProposal(input);
+        const aggregateId = created.actionProposalId;
+        expect(await readOutboxRowsForAggregate(aggregateId)).toHaveLength(1);
+
+        // Safe replay of the create: same row returned, still ONE event.
+        const replay = await proposalApprovalService.createActionProposal(input);
+        expect(replay.actionProposalId).toBe(aggregateId);
+        expect(await readOutboxRowsForAggregate(aggregateId)).toHaveLength(1);
+
+        const submitted = await proposalApprovalService.submitActionProposalForReview(
+          aggregateId,
+          { actorUserId: actorA },
+          created.version
+        );
+        expect(await readOutboxRowsForAggregate(aggregateId)).toHaveLength(2);
+
+        // Rejected: GOV-022 self-approval.
+        await expect(
+          proposalApprovalService.recordApprovalDecision(
+            aggregateId,
+            minimalDecisionInput({
+              tag: 'outbox-replay-self',
+              proposalVersion: submitted.proposalVersion,
+              payloadDigest: submitted.payloadDigest,
+              decision: 'APPROVE',
+              decidedByActorId: actorA,
+            }),
+            submitted.version
+          )
+        ).rejects.toThrow(/self_approval_forbidden/);
+        expect(await readOutboxRowsForAggregate(aggregateId)).toHaveLength(2);
+
+        // Rejected: CW-GR-028 stale digest.
+        await expect(
+          proposalApprovalService.recordApprovalDecision(
+            aggregateId,
+            minimalDecisionInput({
+              tag: 'outbox-replay-stale',
+              proposalVersion: submitted.proposalVersion,
+              payloadDigest: 'sha256:not-the-live-digest',
+              decision: 'APPROVE',
+              decidedByActorId: actorB,
+            }),
+            submitted.version
+          )
+        ).rejects.toThrow(/proposal_stale/);
+        expect(await readOutboxRowsForAggregate(aggregateId)).toHaveLength(2);
+
+        // A real decision, then its own safe replay.
+        //
+        // DEFER is used deliberately: it is the ONLY decision whose
+        // `ON CONFLICT (action_proposal_id, idempotency_key) DO NOTHING` replay
+        // path is actually reachable. APPROVE/REJECT/REQUEST_CHANGES move the
+        // proposal off PENDING_REVIEW, and recordApprovalDecision's status guard
+        // (proposalApprovalService.ts, `if (row.status !== 'PENDING_REVIEW')`)
+        // runs BEFORE the idempotency insert — so retrying one of those throws
+        // `proposal_status_transition_not_allowed` instead of replaying. That is
+        // pre-existing service behaviour, unrelated to the outbox; the event
+        // rule under test here is "a replay adds no second event", and DEFER is
+        // where that rule can be exercised.
+        const decisionInput = minimalDecisionInput({
+          tag: 'outbox-replay-decide',
+          proposalVersion: submitted.proposalVersion,
+          payloadDigest: submitted.payloadDigest,
+          decision: 'DEFER',
+          decidedByActorId: actorB,
+        });
+        await proposalApprovalService.recordApprovalDecision(
+          aggregateId,
+          decisionInput,
+          submitted.version
+        );
+        const afterDecision = await readOutboxRowsForAggregate(aggregateId);
+        expect(afterDecision).toHaveLength(3);
+        expect(afterDecision[2]?.event_type).toBe('approval.deferred');
+
+        const replayedDecision = await proposalApprovalService.recordApprovalDecision(
+          aggregateId,
+          decisionInput,
+          submitted.version
+        );
+        expect(replayedDecision.decision.decisionId).toBe(
+          afterDecision[2]?.redacted_summary.decisionId
+        );
+        expect(await readOutboxRowsForAggregate(aggregateId)).toHaveLength(3);
+      } finally {
+        await teardown({
+          runIds: [runId],
+          orgIds: [orgId],
+          projectIds: [projectId],
+          userIds: [actorA, actorB],
+        });
+      }
+    }, 60_000);
+
+    // -------------------------------------------------------------------------
+    // 12. The two taxonomy subtleties this service owns:
+    //     - DEFER (§5.5) is a real, reachable decision that changes no status —
+    //       it must still emit `approval.deferred`, at the UNCHANGED version;
+    //     - `proposal.failed` -> `proposal.retry_requested` must carry a
+    //       causationId back to the failure it retries, and the failure's
+    //       free-text reason must NOT appear anywhere in the event.
+    // -------------------------------------------------------------------------
+    it('emits approval.deferred for a status-neutral DEFER, and links proposal.retry_requested to the proposal.failed it retries without copying the reason text', async () => {
+      const { orgId, projectId, caseId, actorId: actorA } = await seedOrgProjectCase('outbox-defer-retry');
+      const actorB = await seedMemberedUser(orgId, 'outbox-defer-retry-B');
+      const runId = `run-t12-${randomUUID()}`;
+      const secretReason = 'connector returned 500 for account holder jan.kowalski@example.test';
+      try {
+        await seedV8Run({ runId, organizationId: orgId });
+
+        const created = await proposalApprovalService.createActionProposal(
+          minimalProposalInput({
+            caseId,
+            runId,
+            tag: 'outbox-defer-retry',
+            createdByActorId: actorA,
+          })
+        );
+        const aggregateId = created.actionProposalId;
+        const submitted = await proposalApprovalService.submitActionProposalForReview(
+          aggregateId,
+          { actorUserId: actorA },
+          created.version
+        );
+
+        // -- DEFER: no status change, but a real, observable decision.
+        const deferred = await proposalApprovalService.recordApprovalDecision(
+          aggregateId,
+          minimalDecisionInput({
+            tag: 'outbox-defer',
+            proposalVersion: submitted.proposalVersion,
+            payloadDigest: submitted.payloadDigest,
+            decision: 'DEFER',
+            decidedByActorId: actorB,
+          }),
+          submitted.version
+        );
+        expect(deferred.proposal.status).toBe('PENDING_REVIEW');
+        expect(deferred.proposal.version).toBe(submitted.version);
+
+        let rows = await readOutboxRowsForAggregate(aggregateId);
+        expect(rows).toHaveLength(3);
+        const deferEvent = expectOneEvent(rows, 2, {
+          aggregateId,
+          organizationId: orgId,
+          projectId,
+          caseId,
+          runId,
+          nodeRunId: 'noderun-outbox-defer-retry',
+          eventType: 'approval.deferred',
+          actorUserId: actorB,
+          aggregateVersion: submitted.version,
+        });
+        expect(deferEvent.redacted_summary.from).toBe('PENDING_REVIEW');
+        expect(deferEvent.redacted_summary.to).toBe('PENDING_REVIEW');
+
+        // -- APPROVE -> EXECUTING -> FAILED -> retry.
+        const approved = await proposalApprovalService.recordApprovalDecision(
+          aggregateId,
+          minimalDecisionInput({
+            tag: 'outbox-defer-retry-approve',
+            proposalVersion: submitted.proposalVersion,
+            payloadDigest: submitted.payloadDigest,
+            decision: 'APPROVE',
+            decidedByActorId: actorB,
+          }),
+          submitted.version
+        );
+        const executing = await proposalApprovalService.transitionProposalToExecuting(
+          aggregateId,
+          { actorUserId: actorB },
+          approved.proposal.version
+        );
+        const failed = await proposalApprovalService.transitionProposalToFailed(
+          aggregateId,
+          { actorUserId: actorB },
+          secretReason,
+          executing.version
+        );
+        const retried = await proposalApprovalService.retryProposalFromFailed(
+          aggregateId,
+          { actorUserId: actorB },
+          failed.version
+        );
+        expect(retried.status).toBe('APPROVED');
+
+        rows = await readOutboxRowsForAggregate(aggregateId);
+        expect(rows.map((r) => r.event_type)).toEqual([
+          'proposal.created',
+          'proposal.review_requested',
+          'approval.deferred',
+          'approval.approved',
+          'proposal.executing',
+          'proposal.failed',
+          'proposal.retry_requested',
+        ]);
+
+        const failedEvent = rows[5];
+        const retryEvent = rows[6];
+        expect(Number(failedEvent.aggregate_version)).toBe(failed.version);
+        expect(Number(retryEvent.aggregate_version)).toBe(retried.version);
+        // The causal edge the taxonomy demands, resolved inside the retry's own
+        // transaction.
+        expect(retryEvent.causation_id).toBe(failedEvent.event_id);
+
+        // "Error class only, never the provider response body": the prose
+        // reason (which even contains an email address) is nowhere in the event.
+        const failedSummary = JSON.stringify(failedEvent.redacted_summary);
+        expect(failedSummary).not.toContain('jan.kowalski@example.test');
+        expect(failedSummary).not.toContain('connector returned 500');
+        expect(failedEvent.redacted_summary.reasonClass).toBe('unclassified');
+        expect(String(failedEvent.redacted_summary.reasonDigest)).toMatch(/^sha256:[0-9a-f]{32}$/);
+      } finally {
+        await teardown({
+          runIds: [runId],
+          orgIds: [orgId],
+          projectIds: [projectId],
+          userIds: [actorA, actorB],
+        });
+      }
+    }, 60_000);
+
+    // -------------------------------------------------------------------------
+    // 13. ATOMICITY, the property the whole outbox exists for: force the
+    //     transaction to fail AT COMMIT — after both the aggregate UPDATE and
+    //     the publishEvent INSERT have run on its client — and prove that
+    //     NEITHER survived. If publishEvent ever opened its own connection or
+    //     published post-commit, the event would be here and the mutation would
+    //     not; that is the dual-write hole this test closes.
+    // -------------------------------------------------------------------------
+    it('rolls the outbox row back with the mutation when the transaction fails after both were written (revoke + commit-time failure)', async () => {
+      const { orgId, projectId, caseId, actorId: actorA } = await seedOrgProjectCase('outbox-rollback');
+      const actorB = await seedMemberedUser(orgId, 'outbox-rollback-B');
+      const runId = `run-t13-${randomUUID()}`;
+      let dropTrigger: (() => Promise<void>) | null = null;
+      try {
+        await seedV8Run({ runId, organizationId: orgId });
+
+        const created = await proposalApprovalService.createActionProposal(
+          minimalProposalInput({
+            caseId,
+            runId,
+            tag: 'outbox-rollback',
+            createdByActorId: actorA,
+          })
+        );
+        const aggregateId = created.actionProposalId;
+        const submitted = await proposalApprovalService.submitActionProposalForReview(
+          aggregateId,
+          { actorUserId: actorA },
+          created.version
+        );
+        const approved = await proposalApprovalService.recordApprovalDecision(
+          aggregateId,
+          minimalDecisionInput({
+            tag: 'outbox-rollback',
+            proposalVersion: submitted.proposalVersion,
+            payloadDigest: submitted.payloadDigest,
+            decision: 'APPROVE',
+            decidedByActorId: actorB,
+          }),
+          submitted.version
+        );
+
+        const before = await readOutboxRowsForAggregate(aggregateId);
+        expect(before).toHaveLength(3);
+
+        dropTrigger = await installCommitFailureTrigger(aggregateId);
+
+        await expect(
+          proposalApprovalService.revokeApprovedProposal(
+            aggregateId,
+            { actorUserId: actorB },
+            'policy_withdrawn',
+            approved.proposal.version
+          )
+        ).rejects.toThrow(/cw_test_forced_commit_failure/);
+
+        // The aggregate is untouched...
+        const row = await readProposalRow(aggregateId);
+        expect(row?.status).toBe('APPROVED');
+        expect(row?.version).toBe(approved.proposal.version);
+
+        // ...and so is the outbox: no proposal.revoked row exists.
+        const after = await readOutboxRowsForAggregate(aggregateId);
+        expect(after).toHaveLength(3);
+        expect(after.map((r) => r.event_type)).not.toContain('proposal.revoked');
+
+        // Control: with the trigger gone, the identical call succeeds and DOES
+        // emit — proving the rollback above was the trigger, not a silent
+        // failure to wire the event at all.
+        await dropTrigger();
+        dropTrigger = null;
+
+        const revoked = await proposalApprovalService.revokeApprovedProposal(
+          aggregateId,
+          { actorUserId: actorB },
+          'policy_withdrawn',
+          approved.proposal.version
+        );
+        expect(revoked.status).toBe('REVOKED');
+
+        const final = await readOutboxRowsForAggregate(aggregateId);
+        expect(final).toHaveLength(4);
+        const revokedEvent = expectOneEvent(final, 3, {
+          aggregateId,
+          organizationId: orgId,
+          projectId,
+          caseId,
+          runId,
+          nodeRunId: 'noderun-outbox-rollback',
+          eventType: 'proposal.revoked',
+          actorUserId: actorB,
+          aggregateVersion: revoked.version,
+        });
+        expect(revokedEvent.redacted_summary.from).toBe('APPROVED');
+        expect(revokedEvent.redacted_summary.to).toBe('REVOKED');
+        expect(revokedEvent.redacted_summary.reasonClass).toBe('policy_withdrawn');
+      } finally {
+        if (dropTrigger) await dropTrigger().catch(() => undefined);
+        await teardown({
+          runIds: [runId],
+          orgIds: [orgId],
+          projectIds: [projectId],
+          userIds: [actorA, actorB],
+        });
+      }
+    }, 60_000);
   }
 );

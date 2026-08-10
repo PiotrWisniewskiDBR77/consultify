@@ -107,7 +107,20 @@ async function canReachWithSchema(connectionString: string): Promise<boolean> {
     );
     const orgMembersOk = Number(orgMembersResult.rows[0]?.present ?? 0) === 4;
 
-    return capabilitiesOk && idempotencyOk && orgMembersOk;
+    // registerCapability/markCapabilityHealth now publish a domain event on
+    // the SAME transaction as the write (EVENT_TAXONOMY.md §2), so a missing
+    // outbox table would fail every mutation. Probed here so that is a LOUD
+    // SKIP rather than a mysterious red suite.
+    const outboxResult = await probe.query(
+      `SELECT count(*)::int AS present FROM information_schema.columns
+        WHERE table_schema = 'public' AND table_name = 'case_workspace_event_outbox'
+          AND column_name IN ('event_id', 'event_type', 'organization_id', 'aggregate_type',
+                               'aggregate_id', 'aggregate_version', 'actor_user_id',
+                               'correlation_id', 'redacted_summary')`
+    );
+    const outboxOk = Number(outboxResult.rows[0]?.present ?? 0) === 9;
+
+    return capabilitiesOk && idempotencyOk && orgMembersOk && outboxOk;
   } catch {
     return false;
   } finally {
@@ -147,6 +160,24 @@ interface IdempotencyKeyDbRow {
   actor_id: string;
   request_digest: string;
   created_at: string;
+}
+
+/** One `case_workspace_event_outbox` row, as stored (snake_case, straight from Postgres). */
+interface EventOutboxDbRow {
+  event_id: string;
+  event_type: string;
+  organization_id: string;
+  project_id: string | null;
+  aggregate_type: string;
+  aggregate_id: string;
+  aggregate_version: number | null;
+  case_id: string | null;
+  run_id: string | null;
+  actor_user_id: string;
+  correlation_id: string;
+  causation_id: string | null;
+  redacted_summary: Record<string, unknown>;
+  payload_ref: string | null;
 }
 
 suite('capabilityRegistryService — Capability Registry against a real PostgreSQL (CW-P03, E3)', () => {
@@ -221,8 +252,70 @@ suite('capabilityRegistryService — Capability Registry against a real PostgreS
     for (const userId of userIds) {
       await control.query(`DELETE FROM users WHERE id = $1`, [userId]).catch(() => undefined);
     }
+    if (orgIds.length > 0) {
+      // The outbox has no FK to organizations (append-only log of ids), so it
+      // never cascades — each test removes exactly its own rows. §4: capability
+      // events carry the CALLER's org, which is why org-scoping is enough here
+      // even though the aggregate itself is platform-global.
+      await control
+        .query(`DELETE FROM case_workspace_event_outbox WHERE organization_id = ANY($1)`, [orgIds])
+        .catch(() => undefined);
+    }
     for (const orgId of orgIds) {
       await control.query(`DELETE FROM organizations WHERE id = $1`, [orgId]).catch(() => undefined);
+    }
+  }
+
+  /**
+   * Reads the outbox OUT OF BAND (dedicated `control` pool), never through the
+   * service's own return value — the return value only proves what the service
+   * THINKS it published. Scoped by aggregate_id so one test can never see
+   * another's rows.
+   */
+  async function readOutboxRowsForAggregate(aggregateId: string): Promise<EventOutboxDbRow[]> {
+    const result = await control.query<EventOutboxDbRow>(
+      `SELECT * FROM case_workspace_event_outbox WHERE aggregate_id = $1 ORDER BY created_at ASC`,
+      [aggregateId]
+    );
+    return result.rows;
+  }
+
+  /**
+   * Forces a failure AFTER the command's mutation AND after its publishEvent,
+   * by installing a DEFERRABLE INITIALLY DEFERRED constraint trigger that
+   * raises at COMMIT time for exactly one row. That is what makes the rollback
+   * test a real atomicity proof rather than a "the insert itself blew up"
+   * tautology: both writes have already happened on the transaction's client
+   * when the poison fires, so a surviving outbox row would mean the outbox is
+   * NOT sharing the command's transaction.
+   */
+  async function withCommitTimePoison<T>(
+    params: { table: string; matchColumn: string; matchValue: string; event: 'INSERT' | 'UPDATE' },
+    fn: () => Promise<T>
+  ): Promise<T> {
+    const token = randomUUID().replace(/-/g, '');
+    const fnName = `cw_test_poison_fn_${token}`;
+    const trgName = `cw_test_poison_trg_${token}`;
+    const literal = params.matchValue.replace(/'/g, "''");
+    await control.query(
+      `CREATE FUNCTION ${fnName}() RETURNS trigger LANGUAGE plpgsql AS $poison$
+         BEGIN RAISE EXCEPTION 'forced_commit_time_failure_for_atomicity_test'; END
+       $poison$`
+    );
+    await control.query(
+      `CREATE CONSTRAINT TRIGGER ${trgName}
+         AFTER ${params.event} ON ${params.table}
+         DEFERRABLE INITIALLY DEFERRED
+         FOR EACH ROW WHEN (NEW.${params.matchColumn} = '${literal}')
+         EXECUTE FUNCTION ${fnName}()`
+    );
+    try {
+      return await fn();
+    } finally {
+      await control
+        .query(`DROP TRIGGER IF EXISTS ${trgName} ON ${params.table}`)
+        .catch(() => undefined);
+      await control.query(`DROP FUNCTION IF EXISTS ${fnName}()`).catch(() => undefined);
     }
   }
 
@@ -696,6 +789,234 @@ suite('capabilityRegistryService — Capability Registry against a real PostgreS
     } finally {
       await teardownCapabilities(createdIds);
       await teardownUsers([orgId], [actorId, noMembershipActorId]);
+    }
+  }, 30_000);
+
+  // -------------------------------------------------------------------------
+  // 8. DOMAIN EVENTS (EVENT_TAXONOMY.md §2/§4, capabilityRegistryService) —
+  //    registerCapability then markCapabilityHealth leave EXACTLY ONE
+  //    `capability.registered` and EXACTLY ONE `capability.health_changed`
+  //    row, each with the POST-mutation OCC version and the CALLER's org
+  //    (the aggregate itself has no organization_id column). Read out of band.
+  // -------------------------------------------------------------------------
+  it('registerCapability and markCapabilityHealth each write exactly one outbox row with the post-mutation version and the caller org (§4 platform-global aggregate)', async () => {
+    const tag = randomUUID();
+    const createdIds: string[] = [];
+    const { orgId, actorId } = await seedAdminFixture('outbox-emitted');
+    try {
+      const registered = await capabilityRegistryService.registerCapability(
+        buildRegisterInput(tag, actorId),
+        orgId
+      );
+      createdIds.push(registered.capabilityRegistryId);
+
+      const afterRegister = await readOutboxRowsForAggregate(registered.capabilityRegistryId);
+      expect(afterRegister).toHaveLength(1);
+      const registeredEvent = afterRegister[0];
+      expect(registeredEvent.event_type).toBe('capability.registered');
+      expect(registeredEvent.aggregate_type).toBe('CAPABILITY');
+      expect(registeredEvent.aggregate_id).toBe(registered.capabilityRegistryId);
+      // §3: post-mutation OCC counter, taken from the INSERT's RETURNING row.
+      expect(Number(registeredEvent.aggregate_version)).toBe(1);
+      // §4: the registry row carries no organization_id — the event takes the
+      // CALLER's org and says so in the summary.
+      expect(registeredEvent.organization_id).toBe(orgId);
+      expect(registeredEvent.actor_user_id).toBe(actorId);
+      expect(String(registeredEvent.correlation_id ?? '').trim().length).toBeGreaterThan(0);
+      expect(registeredEvent.causation_id).toBeNull();
+      expect(registeredEvent.redacted_summary).toMatchObject({
+        ownerModule: registered.ownerModule,
+        providerType: registered.providerType,
+        operationClass: registered.operationClass,
+        effectClass: registered.effectClass,
+        approvalRecommendation: registered.approvalRecommendation,
+        lifecycle: 'UNAVAILABLE',
+        health: 'UNKNOWN',
+        platformGlobalAggregate: true,
+      });
+
+      // KNOWN, PINNED LIMITATION of the shared redaction primitive (NOT a
+      // property of this service): publishEvent runs every summary through
+      // PiiRedactor, whose TOKEN_REGEX treats ANY value of three or more
+      // dot-separated segments as a JWT. A semver `1.0.0` and a dotted
+      // capability id therefore arrive as '[REDACTED]', even though the
+      // taxonomy asks for them as facts. The identity that survives is the
+      // aggregate_id column (never redacted — only redacted_summary is), which
+      // is why the assertions above lean on it. Pinned here so that a fix to
+      // piiRedactor.ts turns this test red instead of passing silently.
+      expect(registered.capabilityVersion).toBe('1.0.0');
+      expect(registeredEvent.redacted_summary).toMatchObject({
+        capabilityId: '[REDACTED]',
+        capabilityVersion: '[REDACTED]',
+      });
+
+      const marked = await capabilityRegistryService.markCapabilityHealth(
+        registered.capabilityRegistryId,
+        'UNHEALTHY' as CapabilityHealth,
+        { actorUserId: actorId },
+        'probe timed out',
+        registered.version,
+        orgId
+      );
+      expect(marked.version).toBe(2);
+
+      const afterHealth = await readOutboxRowsForAggregate(registered.capabilityRegistryId);
+      expect(afterHealth).toHaveLength(2);
+      const healthEvents = afterHealth.filter(
+        (row) => row.event_type === 'capability.health_changed'
+      );
+      expect(healthEvents).toHaveLength(1);
+      const healthEvent = healthEvents[0];
+      expect(healthEvent.aggregate_type).toBe('CAPABILITY');
+      expect(healthEvent.aggregate_id).toBe(registered.capabilityRegistryId);
+      // POST-mutation version, matching what actually landed in the table.
+      const rowAfter = await readCapabilityRow(registered.capabilityRegistryId);
+      expect(Number(healthEvent.aggregate_version)).toBe(2);
+      expect(Number(healthEvent.aggregate_version)).toBe(Number(rowAfter?.version));
+      expect(healthEvent.organization_id).toBe(orgId);
+      expect(healthEvent.actor_user_id).toBe(actorId);
+      expect(healthEvent.redacted_summary).toMatchObject({
+        from: 'UNKNOWN',
+        to: 'UNHEALTHY',
+        detail: 'probe timed out',
+      });
+
+      // A stale-version (OCC-conflicting) call mutates nothing and must
+      // therefore mint no third event.
+      await expect(
+        capabilityRegistryService.markCapabilityHealth(
+          registered.capabilityRegistryId,
+          'HEALTHY' as CapabilityHealth,
+          { actorUserId: actorId },
+          null,
+          registered.version,
+          orgId
+        )
+      ).rejects.toThrow('capability_version_conflict');
+      expect(await readOutboxRowsForAggregate(registered.capabilityRegistryId)).toHaveLength(2);
+    } finally {
+      await teardownCapabilities(createdIds);
+      await teardownUsers([orgId], [actorId]);
+    }
+  }, 30_000);
+
+  // -------------------------------------------------------------------------
+  // 9. DELIBERATE NON-EMISSION (EVENT_TAXONOMY.md §2, "NO EVENT" row) —
+  //    recordIdempotencyKeyCheck writes duplicate-suppression bookkeeping for
+  //    a DIFFERENT command and must emit nothing, on either the first-seen or
+  //    the replay path. Asserted as an unchanged org-wide outbox count.
+  // -------------------------------------------------------------------------
+  it('recordIdempotencyKeyCheck emits NO outbox row on either the first-seen or the duplicate-replay path', async () => {
+    const tag = randomUUID();
+    const createdIds: string[] = [];
+    const { orgId, actorId } = await seedAdminFixture('outbox-no-event');
+    try {
+      const registered = await capabilityRegistryService.registerCapability(
+        buildRegisterInput(tag, actorId),
+        orgId
+      );
+      createdIds.push(registered.capabilityRegistryId);
+
+      const countForOrg = async (): Promise<number> => {
+        const result = await control.query<{ n: number }>(
+          `SELECT count(*)::int AS n FROM case_workspace_event_outbox WHERE organization_id = $1`,
+          [orgId]
+        );
+        return Number(result.rows[0]?.n ?? 0);
+      };
+
+      const before = await countForOrg();
+      expect(before).toBe(1); // capability.registered only
+
+      const first = await capabilityRegistryService.recordIdempotencyKeyCheck(
+        {
+          capabilityRegistryId: registered.capabilityRegistryId,
+          idempotencyKey: `idem-${tag}`,
+          requestPayload: { a: 1 },
+          actorId,
+        },
+        orgId
+      );
+      expect(first.isDuplicate).toBe(false);
+
+      const replay = await capabilityRegistryService.recordIdempotencyKeyCheck(
+        {
+          capabilityRegistryId: registered.capabilityRegistryId,
+          idempotencyKey: `idem-${tag}`,
+          requestPayload: { a: 1 },
+          actorId,
+        },
+        orgId
+      );
+      expect(replay.isDuplicate).toBe(true);
+
+      // The bookkeeping row really landed (so this is a proof of deliberate
+      // silence, not of a no-op command).
+      const idempotencyRows = await control.query<IdempotencyKeyDbRow>(
+        `SELECT * FROM case_workspace_capability_idempotency_keys
+          WHERE capability_registry_id = $1 AND idempotency_key = $2`,
+        [registered.capabilityRegistryId, `idem-${tag}`]
+      );
+      expect(idempotencyRows.rows).toHaveLength(1);
+
+      expect(await countForOrg()).toBe(before);
+    } finally {
+      await teardownCapabilities(createdIds);
+      await teardownUsers([orgId], [actorId]);
+    }
+  }, 30_000);
+
+  // -------------------------------------------------------------------------
+  // 10. ROLLBACK / ATOMICITY — a failure forced AFTER the registry INSERT and
+  //     AFTER publishEvent (deferred constraint trigger firing at COMMIT)
+  //     leaves ZERO capability rows and ZERO outbox rows.
+  // -------------------------------------------------------------------------
+  it('a failure forced at COMMIT time after registerCapability leaves zero capability rows AND zero outbox rows', async () => {
+    const tag = randomUUID();
+    const capabilityId = `test.capability.rollback.${tag}`;
+    const { orgId, actorId } = await seedAdminFixture('outbox-rollback');
+    const createdIds: string[] = [];
+    try {
+      await withCommitTimePoison(
+        {
+          table: 'case_workspace_capabilities',
+          matchColumn: 'capability_id',
+          matchValue: capabilityId,
+          event: 'INSERT',
+        },
+        async () => {
+          await expect(
+            capabilityRegistryService.registerCapability(
+              buildRegisterInput(tag, actorId, { capabilityId }),
+              orgId
+            )
+          ).rejects.toThrow(/forced_commit_time_failure_for_atomicity_test/);
+        }
+      );
+
+      const capabilityRows = await control.query<CapabilityRegistryDbRow>(
+        `SELECT * FROM case_workspace_capabilities WHERE capability_id = $1`,
+        [capabilityId]
+      );
+      expect(capabilityRows.rows).toHaveLength(0);
+
+      const outboxRows = await control.query<EventOutboxDbRow>(
+        `SELECT * FROM case_workspace_event_outbox WHERE organization_id = $1`,
+        [orgId]
+      );
+      expect(outboxRows.rows).toHaveLength(0);
+
+      // The same command succeeds once the poison is gone — the rollback left
+      // no partial state behind.
+      const registered = await capabilityRegistryService.registerCapability(
+        buildRegisterInput(tag, actorId, { capabilityId }),
+        orgId
+      );
+      createdIds.push(registered.capabilityRegistryId);
+      expect(await readOutboxRowsForAggregate(registered.capabilityRegistryId)).toHaveLength(1);
+    } finally {
+      await teardownCapabilities(createdIds);
+      await teardownUsers([orgId], [actorId]);
     }
   }, 30_000);
 });

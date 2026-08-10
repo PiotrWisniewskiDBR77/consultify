@@ -166,6 +166,31 @@ interface CaseWorkspaceWaitDbRow {
   updated_at: string;
 }
 
+/**
+ * The transactional outbox row (server/migrations/
+ * 20260810_case_workspace_event_outbox.sql). Read ONLY through the out-of-band
+ * `control` pool, after the service call returned and its transaction
+ * committed — publishEvent's return value proves nothing about what survived
+ * COMMIT, which is the entire property under test.
+ */
+interface CaseWorkspaceEventOutboxDbRow {
+  event_id: string;
+  event_type: string;
+  organization_id: string;
+  project_id: string | null;
+  aggregate_type: string;
+  aggregate_id: string;
+  aggregate_version: number | null;
+  case_id: string | null;
+  run_id: string | null;
+  node_run_id: string | null;
+  actor_user_id: string;
+  correlation_id: string;
+  causation_id: string | null;
+  redacted_summary: Record<string, unknown>;
+  payload_ref: string | null;
+}
+
 suite('waitSubscriptionService — Wait Subscription against a real PostgreSQL (CW-P06, E5)', () => {
   let control: Pool;
 
@@ -305,6 +330,89 @@ suite('waitSubscriptionService — Wait Subscription against a real PostgreSQL (
   }
 
   /**
+   * Every outbox row this WAIT aggregate ever produced, oldest first, read out
+   * of band. `event_id` breaks ties because `created_at` defaults to `now()` =
+   * transaction start time.
+   */
+  async function readOutboxRowsForAggregate(
+    aggregateId: string
+  ): Promise<CaseWorkspaceEventOutboxDbRow[]> {
+    const result = await control.query<CaseWorkspaceEventOutboxDbRow>(
+      `SELECT * FROM case_workspace_event_outbox
+         WHERE aggregate_id = $1
+         ORDER BY created_at ASC, event_id ASC`,
+      [aggregateId]
+    );
+    return result.rows;
+  }
+
+  /**
+   * After ONE mutating command: EXACTLY ONE new row, of the expected type,
+   * whose tenancy/correlation identity comes from the aggregate row rather than
+   * from the caller's input. Returns the row for further, type-specific
+   * assertions.
+   */
+  function expectOneEvent(
+    rows: CaseWorkspaceEventOutboxDbRow[],
+    index: number,
+    expected: {
+      eventType: string;
+      aggregateId: string;
+      organizationId: string;
+      projectId: string;
+      caseId: string;
+      actorUserId: string;
+      aggregateVersion: number;
+    }
+  ): CaseWorkspaceEventOutboxDbRow {
+    const row = rows[index];
+    if (!row) throw new Error(`expected an outbox row at index ${index}, got ${rows.length} rows`);
+    expect(row.event_type).toBe(expected.eventType);
+    expect(row.aggregate_type).toBe('WAIT');
+    expect(row.aggregate_id).toBe(expected.aggregateId);
+    expect(row.organization_id).toBe(expected.organizationId);
+    expect(row.project_id).toBe(expected.projectId);
+    expect(row.case_id).toBe(expected.caseId);
+    expect(row.actor_user_id).toBe(expected.actorUserId);
+    expect(Number(row.aggregate_version)).toBe(expected.aggregateVersion);
+    expect(typeof row.correlation_id).toBe('string');
+    expect(row.correlation_id.trim().length).toBeGreaterThan(0);
+    return row;
+  }
+
+  /**
+   * A DEFERRABLE INITIALLY DEFERRED constraint trigger fires at COMMIT — after
+   * the command's aggregate UPDATE *and* its publishEvent INSERT have both run
+   * on the transaction's client. That is the only honest way to force "mutation
+   * and event both written, then the transaction failed"; an ordinary AFTER
+   * trigger fires during the UPDATE statement, before any event exists, and
+   * would prove nothing. The WHEN clause scopes it to a single wait_id so a
+   * suite running concurrently against the same database is unaffected.
+   */
+  async function installCommitFailureTrigger(waitId: string): Promise<() => Promise<void>> {
+    const suffix = randomUUID().replace(/-/g, '');
+    const fnName = `cw_test_wait_rollback_${suffix}`;
+    const triggerName = `cw_test_wait_rollback_trg_${suffix}`;
+    await control.query(
+      `CREATE FUNCTION ${fnName}() RETURNS trigger LANGUAGE plpgsql AS
+       $fn$ BEGIN RAISE EXCEPTION 'cw_test_forced_commit_failure'; END; $fn$`
+    );
+    await control.query(
+      `CREATE CONSTRAINT TRIGGER ${triggerName}
+         AFTER UPDATE ON case_workspace_waits
+         DEFERRABLE INITIALLY DEFERRED
+         FOR EACH ROW WHEN (NEW.wait_id = '${waitId}')
+         EXECUTE FUNCTION ${fnName}()`
+    );
+    return async () => {
+      await control
+        .query(`DROP TRIGGER IF EXISTS ${triggerName} ON case_workspace_waits`)
+        .catch(() => undefined);
+      await control.query(`DROP FUNCTION IF EXISTS ${fnName}()`).catch(() => undefined);
+    };
+  }
+
+  /**
    * Teardown order matters: case_workspace_waits rows have no ON DELETE
    * clause on their case_core/case_workspace_action_proposals FKs (RESTRICT/
    * NO ACTION — see the migration file's header), so waits must be deleted
@@ -319,6 +427,16 @@ suite('waitSubscriptionService — Wait Subscription against a real PostgreSQL (
     projectIds: string[];
     userIds?: string[];
   }): Promise<void> {
+    // The outbox has ZERO foreign keys by design (see its migration header), so
+    // its rows survive every delete below and must be cleared explicitly or they
+    // leak into the next run's counts.
+    if (params.orgIds.length > 0) {
+      await control
+        .query(`DELETE FROM case_workspace_event_outbox WHERE organization_id = ANY($1)`, [
+          params.orgIds,
+        ])
+        .catch(() => undefined);
+    }
     if (params.waitIds.length > 0) {
       await control
         .query(`DELETE FROM case_workspace_waits WHERE wait_id = ANY($1)`, [params.waitIds])
@@ -837,4 +955,425 @@ suite('waitSubscriptionService — Wait Subscription against a real PostgreSQL (
       });
     }
   }, 30_000);
+
+  // ===========================================================================
+  // EVENT OUTBOX (docs/product/case-workspace/acceptance/EVENT_TAXONOMY.md,
+  // section "waitSubscriptionService — aggregate WAIT")
+  //
+  // Every assertion reads `case_workspace_event_outbox` out of band AFTER the
+  // command returned — never the value publishEvent handed back. What matters
+  // is what survived COMMIT.
+  // ===========================================================================
+
+  // -------------------------------------------------------------------------
+  // 9. The TIMER lifecycle: register -> claim -> renew -> satisfy. Four
+  //    mutating commands, four events, in order, each with the taxonomy's
+  //    literal event_type, the POST-mutation aggregate version, and the right
+  //    actor — human for createWait, `system:<worker>` for the three scheduler
+  //    primitives that have no human in their signature.
+  // -------------------------------------------------------------------------
+  it('emits exactly one correctly-identified outbox event per mutating command across register -> claim -> renew -> satisfy, with system actors on the scheduler paths', async () => {
+    const { orgId, projectId, caseId, actorId } = await seedOrgProjectCase('outbox-timer-lifecycle');
+    const runId = `run-t9-${randomUUID()}`;
+    const waitIds: string[] = [];
+    try {
+      await seedV8Run({ runId, organizationId: orgId });
+      const actionProposalId = await seedActionProposal({
+        caseId,
+        runId,
+        actorId,
+        tag: 'outbox-timer-lifecycle',
+      });
+      const correlationKey = `corr-outbox-timer-${randomUUID()}`;
+
+      const created = await waitSubscriptionService.createWait(
+        {
+          caseId,
+          actionProposalId,
+          waitType: 'TIMER',
+          correlationKey,
+          dueAt: new Date(Date.now() - 60_000).toISOString(),
+        },
+        actorId
+      );
+      waitIds.push(created.waitId);
+      const aggregateId = created.waitId;
+      const identity = { aggregateId, organizationId: orgId, projectId, caseId };
+
+      let rows = await readOutboxRowsForAggregate(aggregateId);
+      expect(rows).toHaveLength(1);
+      const registered = expectOneEvent(rows, 0, {
+        ...identity,
+        eventType: 'wait.registered',
+        actorUserId: actorId,
+        aggregateVersion: 1,
+      });
+      expect(registered.redacted_summary.waitType).toBe('TIMER');
+      expect(registered.redacted_summary.correlationKey).toBe(correlationKey);
+      expect(registered.redacted_summary.actionProposalId).toBe(actionProposalId);
+      // A wait registered against a proposal (not a run binding) legitimately
+      // has no run — the chain carries what exists and nothing invented.
+      expect(registered.run_id).toBeNull();
+
+      const claim = await waitSubscriptionService.claimTimerWait(aggregateId);
+      expect(claim.outcome).toBe('claimed');
+      if (claim.outcome !== 'claimed') throw new Error('unreachable');
+
+      rows = await readOutboxRowsForAggregate(aggregateId);
+      expect(rows).toHaveLength(2);
+      const claimed = expectOneEvent(rows, 1, {
+        ...identity,
+        eventType: 'wait.claimed',
+        actorUserId: 'system:case-workspace-timer-claimer',
+        // Claiming does not bump the OCC counter — the event reports the row's
+        // real version, not an assumed increment.
+        aggregateVersion: claim.wait.version,
+      });
+      expect(claimed.redacted_summary.claimFencingCounter).toBe(claim.fencingToken);
+      // The owner token is a capability secret: it must not be in the event.
+      expect(JSON.stringify(claimed.redacted_summary)).not.toContain(claim.ownerToken);
+
+      const renewOutcome = await waitSubscriptionService.renewTimerWaitClaimLease(
+        aggregateId,
+        claim.ownerToken,
+        claim.fencingToken
+      );
+      expect(renewOutcome).toBe('renewed');
+
+      rows = await readOutboxRowsForAggregate(aggregateId);
+      expect(rows).toHaveLength(3);
+      const renewed = expectOneEvent(rows, 2, {
+        ...identity,
+        eventType: 'wait.claim_lease_renewed',
+        actorUserId: 'system:case-workspace-timer-claimer',
+        aggregateVersion: claim.wait.version,
+      });
+      expect(renewed.redacted_summary.claimFencingCounter).toBe(claim.fencingToken);
+
+      const satisfied = await waitSubscriptionService.resolveWait(
+        aggregateId,
+        {
+          satisfiedByEventId: `evt-outbox-timer-${randomUUID()}`,
+          timerClaim: { ownerToken: claim.ownerToken, fencingToken: claim.fencingToken },
+        },
+        claim.wait.version
+      );
+      expect(satisfied.status).toBe('SATISFIED');
+
+      rows = await readOutboxRowsForAggregate(aggregateId);
+      expect(rows).toHaveLength(4);
+      const satisfiedEvent = expectOneEvent(rows, 3, {
+        ...identity,
+        eventType: 'wait.satisfied',
+        actorUserId: 'system:case-workspace-wait-resolver',
+        aggregateVersion: satisfied.version,
+      });
+      expect(satisfiedEvent.redacted_summary.from).toBe('ACTIVE');
+      expect(satisfiedEvent.redacted_summary.to).toBe('SATISFIED');
+
+      expect(rows.map((r) => r.event_type)).toEqual([
+        'wait.registered',
+        'wait.claimed',
+        'wait.claim_lease_renewed',
+        'wait.satisfied',
+      ]);
+      expect(new Set(rows.map((r) => r.event_id)).size).toBe(4);
+
+      // Reads are not facts.
+      await waitSubscriptionService.getWait(aggregateId, actorId);
+      await waitSubscriptionService.listWaitsForCase(caseId, undefined, actorId);
+      await waitSubscriptionService.listDueTimerWaitsForClaim();
+      expect(await readOutboxRowsForAggregate(aggregateId)).toHaveLength(4);
+    } finally {
+      await teardown({
+        waitIds,
+        runIds: [runId],
+        orgIds: [orgId],
+        projectIds: [projectId],
+        userIds: [actorId],
+      });
+    }
+  }, 60_000);
+
+  // -------------------------------------------------------------------------
+  // 10. provideHumanInput is NOT resolveWait with a different caller: it emits
+  //     its OWN single event (`wait.human_input_provided`, human actor), never
+  //     `wait.satisfied` and never two rows — the double-count the taxonomy
+  //     forbids in §5.3. The submitted input is referenced via payload_ref, not
+  //     copied into the summary.
+  // -------------------------------------------------------------------------
+  it('provideHumanInput emits exactly one wait.human_input_provided under the human actor, referencing the input via payload_ref instead of copying it', async () => {
+    const { orgId, projectId, caseId, actorId } = await seedOrgProjectCase('outbox-human-input');
+    const runId = `run-t10-${randomUUID()}`;
+    const waitIds: string[] = [];
+    try {
+      await seedV8Run({ runId, organizationId: orgId });
+      const actionProposalId = await seedActionProposal({
+        caseId,
+        runId,
+        actorId,
+        tag: 'outbox-human-input',
+      });
+
+      const created = await waitSubscriptionService.createWait(
+        {
+          caseId,
+          actionProposalId,
+          waitType: 'HUMAN',
+          correlationKey: `corr-outbox-human-${randomUUID()}`,
+        },
+        actorId
+      );
+      waitIds.push(created.waitId);
+      const inputRef = `humaninput-${randomUUID()}`;
+
+      const satisfied = await waitSubscriptionService.provideHumanInput(
+        created.waitId,
+        { inputRef, actorUserId: actorId },
+        created.version
+      );
+      expect(satisfied.status).toBe('SATISFIED');
+
+      const rows = await readOutboxRowsForAggregate(created.waitId);
+      expect(rows).toHaveLength(2);
+      expect(rows.map((r) => r.event_type)).toEqual([
+        'wait.registered',
+        'wait.human_input_provided',
+      ]);
+      expect(rows.map((r) => r.event_type)).not.toContain('wait.satisfied');
+
+      const humanEvent = expectOneEvent(rows, 1, {
+        aggregateId: created.waitId,
+        organizationId: orgId,
+        projectId,
+        caseId,
+        eventType: 'wait.human_input_provided',
+        actorUserId: actorId,
+        aggregateVersion: satisfied.version,
+      });
+      expect(humanEvent.payload_ref).toBe(inputRef);
+      expect(humanEvent.redacted_summary.waitType).toBe('HUMAN');
+      expect(humanEvent.redacted_summary.to).toBe('SATISFIED');
+    } finally {
+      await teardown({
+        waitIds,
+        runIds: [runId],
+        orgIds: [orgId],
+        projectIds: [projectId],
+        userIds: [actorId],
+      });
+    }
+  }, 60_000);
+
+  // -------------------------------------------------------------------------
+  // 11. expireWait (scheduler actor) and cancelWait (human actor) each emit
+  //     their own terminal event, and cancelWait's free-text reason — which is
+  //     not even persisted on the table — must not become durable via the event.
+  //     Commands that change NOTHING (a failed claim, a fenced renew, a replayed
+  //     create) emit nothing at all.
+  // -------------------------------------------------------------------------
+  it('emits wait.expired/wait.cancelled with the right actors and no reason text, and emits nothing for non-mutating outcomes', async () => {
+    const { orgId, projectId, caseId, actorId } = await seedOrgProjectCase('outbox-terminal');
+    const runId = `run-t11-${randomUUID()}`;
+    const waitIds: string[] = [];
+    const cancelReason = 'client withdrew consent, contact anna.nowak@example.test';
+    try {
+      await seedV8Run({ runId, organizationId: orgId });
+      const proposalForExpire = await seedActionProposal({
+        caseId,
+        runId,
+        actorId,
+        tag: 'outbox-terminal-expire',
+      });
+      const proposalForCancel = await seedActionProposal({
+        caseId,
+        runId,
+        actorId,
+        tag: 'outbox-terminal-cancel',
+      });
+
+      const correlationKeyExpire = `corr-outbox-expire-${randomUUID()}`;
+      const toExpire = await waitSubscriptionService.createWait(
+        {
+          caseId,
+          actionProposalId: proposalForExpire,
+          waitType: 'TIMER',
+          correlationKey: correlationKeyExpire,
+          dueAt: new Date(Date.now() - 60_000).toISOString(),
+        },
+        actorId
+      );
+      waitIds.push(toExpire.waitId);
+
+      const toCancel = await waitSubscriptionService.createWait(
+        {
+          caseId,
+          actionProposalId: proposalForCancel,
+          waitType: 'HUMAN',
+          correlationKey: `corr-outbox-cancel-${randomUUID()}`,
+        },
+        actorId
+      );
+      waitIds.push(toCancel.waitId);
+
+      // -- Non-mutating outcomes emit nothing.
+      const replay = await waitSubscriptionService.createWait(
+        {
+          caseId,
+          actionProposalId: proposalForExpire,
+          waitType: 'TIMER',
+          correlationKey: correlationKeyExpire,
+        },
+        actorId
+      );
+      expect(replay.waitId).toBe(toExpire.waitId);
+      expect(await readOutboxRowsForAggregate(toExpire.waitId)).toHaveLength(1);
+
+      // A HUMAN wait is not claimable — no row changes, so no fact exists.
+      expect((await waitSubscriptionService.claimTimerWait(toCancel.waitId)).outcome).toBe(
+        'not_claimable'
+      );
+      expect(await readOutboxRowsForAggregate(toCancel.waitId)).toHaveLength(1);
+
+      // A fenced renew (wrong owner token) changes nothing either.
+      expect(
+        await waitSubscriptionService.renewTimerWaitClaimLease(toExpire.waitId, 'not-the-owner', 0)
+      ).toBe('fenced');
+      expect(await readOutboxRowsForAggregate(toExpire.waitId)).toHaveLength(1);
+
+      // -- expireWait: scheduler actor.
+      const expired = await waitSubscriptionService.expireWait(toExpire.waitId, toExpire.version);
+      expect(expired.status).toBe('EXPIRED');
+      const expireRows = await readOutboxRowsForAggregate(toExpire.waitId);
+      expect(expireRows).toHaveLength(2);
+      const expiredEvent = expectOneEvent(expireRows, 1, {
+        aggregateId: toExpire.waitId,
+        organizationId: orgId,
+        projectId,
+        caseId,
+        eventType: 'wait.expired',
+        actorUserId: 'system:case-workspace-wait-scheduler',
+        aggregateVersion: expired.version,
+      });
+      expect(expiredEvent.redacted_summary.from).toBe('ACTIVE');
+      expect(expiredEvent.redacted_summary.to).toBe('EXPIRED');
+
+      // -- cancelWait: human actor, no reason text.
+      const cancelled = await waitSubscriptionService.cancelWait(
+        toCancel.waitId,
+        { actorUserId: actorId },
+        cancelReason,
+        toCancel.version
+      );
+      expect(cancelled.status).toBe('CANCELLED');
+      const cancelRows = await readOutboxRowsForAggregate(toCancel.waitId);
+      expect(cancelRows).toHaveLength(2);
+      const cancelledEvent = expectOneEvent(cancelRows, 1, {
+        aggregateId: toCancel.waitId,
+        organizationId: orgId,
+        projectId,
+        caseId,
+        eventType: 'wait.cancelled',
+        actorUserId: actorId,
+        aggregateVersion: cancelled.version,
+      });
+      const cancelSummary = JSON.stringify(cancelledEvent.redacted_summary);
+      expect(cancelSummary).not.toContain('anna.nowak@example.test');
+      expect(cancelSummary).not.toContain('withdrew consent');
+      expect(cancelledEvent.redacted_summary.reasonClass).toBe('unclassified');
+      expect(String(cancelledEvent.redacted_summary.reasonDigest)).toMatch(/^sha256:[0-9a-f]{32}$/);
+    } finally {
+      await teardown({
+        waitIds,
+        runIds: [runId],
+        orgIds: [orgId],
+        projectIds: [projectId],
+        userIds: [actorId],
+      });
+    }
+  }, 60_000);
+
+  // -------------------------------------------------------------------------
+  // 12. ATOMICITY — §8 "Wait satisfaction is atomic and unique". Force the
+  //     transaction to fail AT COMMIT, after both the status flip and the
+  //     publishEvent INSERT have run on its client, and prove NEITHER survived.
+  //     A publishEvent that opened its own connection (or published after
+  //     commit) would leave the event here with no satisfied wait behind it.
+  // -------------------------------------------------------------------------
+  it('rolls the outbox row back together with the wait mutation when the transaction fails after both were written', async () => {
+    const { orgId, projectId, caseId, actorId } = await seedOrgProjectCase('outbox-rollback');
+    const runId = `run-t12-${randomUUID()}`;
+    const waitIds: string[] = [];
+    let dropTrigger: (() => Promise<void>) | null = null;
+    try {
+      await seedV8Run({ runId, organizationId: orgId });
+      const actionProposalId = await seedActionProposal({
+        caseId,
+        runId,
+        actorId,
+        tag: 'outbox-rollback',
+      });
+
+      const created = await waitSubscriptionService.createWait(
+        {
+          caseId,
+          actionProposalId,
+          waitType: 'HUMAN',
+          correlationKey: `corr-outbox-rollback-${randomUUID()}`,
+        },
+        actorId
+      );
+      waitIds.push(created.waitId);
+      expect(await readOutboxRowsForAggregate(created.waitId)).toHaveLength(1);
+
+      dropTrigger = await installCommitFailureTrigger(created.waitId);
+
+      const inputRef = `humaninput-rollback-${randomUUID()}`;
+      await expect(
+        waitSubscriptionService.provideHumanInput(
+          created.waitId,
+          { inputRef, actorUserId: actorId },
+          created.version
+        )
+      ).rejects.toThrow(/cw_test_forced_commit_failure/);
+
+      // The wait never moved...
+      const row = await readWaitRow(created.waitId);
+      expect(row?.status).toBe('ACTIVE');
+      expect(Number(row?.version)).toBe(created.version);
+      expect(row?.satisfied_at).toBeNull();
+
+      // ...and no event was left behind.
+      const after = await readOutboxRowsForAggregate(created.waitId);
+      expect(after).toHaveLength(1);
+      expect(after.map((r) => r.event_type)).not.toContain('wait.human_input_provided');
+
+      // Control: with the trigger gone the identical call succeeds AND emits —
+      // proving the rollback above was the forced commit failure, not a missing
+      // event wiring.
+      await dropTrigger();
+      dropTrigger = null;
+
+      const satisfied = await waitSubscriptionService.provideHumanInput(
+        created.waitId,
+        { inputRef, actorUserId: actorId },
+        created.version
+      );
+      expect(satisfied.status).toBe('SATISFIED');
+
+      const final = await readOutboxRowsForAggregate(created.waitId);
+      expect(final).toHaveLength(2);
+      expect(final[1]?.event_type).toBe('wait.human_input_provided');
+      expect(final[1]?.payload_ref).toBe(inputRef);
+    } finally {
+      if (dropTrigger) await dropTrigger().catch(() => undefined);
+      await teardown({
+        waitIds,
+        runIds: [runId],
+        orgIds: [orgId],
+        projectIds: [projectId],
+        userIds: [actorId],
+      });
+    }
+  }, 60_000);
 });

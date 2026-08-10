@@ -41,6 +41,56 @@
  *   archiveProcessVersion           -> CW-RT-028, CW-RT-029
  *   instantiateProcessVersion       -> CW-RT-014, CW-RT-029
  *
+ * DOMAIN EVENTS (docs/product/case-workspace/acceptance/EVENT_TAXONOMY.md):
+ * every mutating command below appends exactly one row to
+ * `case_workspace_event_outbox`, from INSIDE that command's own
+ * `withPgTransaction()` callback, on that callback's own client — so the
+ * process_definitions/process_versions write and its event commit or roll
+ * back together. There is no post-commit publish path in this file.
+ *
+ *   createProcessDefinition   -> process.definition.created   (PROCESS_DEFINITION)
+ *   shareProcessDefinition    -> process.definition.shared    (PROCESS_DEFINITION)
+ *   createProcessVersionDraft -> process.version.draft_created (PROCESS_VERSION)
+ *   updateProcessVersionDraft -> process.version.draft_updated (PROCESS_VERSION)
+ *   proposeProcessVersion     -> process.definition.submitted (PROCESS_VERSION)
+ *   reviewProcessVersion      -> process.version.reviewed     (PROCESS_VERSION)
+ *   publishProcessVersion     -> process.definition.published (PROCESS_VERSION)
+ *   deprecateProcessVersion   -> process.definition.deprecated (PROCESS_VERSION)
+ *   archiveProcessVersion     -> process.version.archived     (PROCESS_VERSION)
+ *   instantiateProcessVersion -> process.version.instantiated  NOT EMITTED, see below
+ *
+ * `aggregateVersion` is always the POST-mutation `version` taken from the
+ * write's own `RETURNING` row (never a re-read, which would be a different
+ * value under concurrency). `process_versions.version_number` is the SEMANTIC
+ * version and belongs in the summary, not in `aggregateVersion` — the two are
+ * different counters on the same row (open question #9). `projectId` is
+ * always null: a Play is org-scoped and belongs to no Case or project until
+ * instantiated. The read methods (getProcessDefinition/listProcessDefinitions/
+ * getProcessVersion/listProcessVersionsForDefinition/computeGraphDigest/
+ * isAuthorizedPublisher) emit nothing.
+ *
+ * Three of the event_types above name `process.definition.*` while the
+ * aggregate they carry is a `PROCESS_VERSION`. That asymmetry is EVENT_
+ * TAXONOMY §5.4's deliberate, flagged decision (§7 of the canon lists those
+ * three strings verbatim), not a typo here, and it must not be "fixed" at a
+ * call site — it is an owner decision.
+ *
+ * instantiateProcessVersion — NO EVENT, DELIBERATELY, AND THIS IS A GAP.
+ * The taxonomy asks it for `process.version.instantiated` as the play->Case
+ * join point. It cannot be honoured atomically from this file: the command
+ * writes nothing to process_definitions/process_versions and opens no
+ * transaction of its own — the only mutation is inside
+ * casePlanVersionService.createPlanDraft's own `withPgTransaction`, which
+ * already publishes `case.plan.draft_created` on that client and exposes no
+ * way to join it. Publishing here would mean opening a SECOND transaction
+ * after that one committed, i.e. exactly the dual-write hole the outbox
+ * exists to close (eventOutboxService header, §12 "kill worker … after
+ * domain commit before outbox publication") — so nothing is published rather
+ * than something unsound. Closing it requires a change in
+ * casePlanVersionService.ts (an optional caller-supplied transaction client
+ * on createPlanDraft, or a createPlanDraftOnClient(client, input) export) so
+ * both events can be written on one client; that file is owned elsewhere.
+ *
  * Cross-cutting invariants held by every mutating method here (see the
  * migration file's header for the exact canon citations):
  *   - a process_versions row is semantically mutable via
@@ -182,6 +232,7 @@ import {
 
 import { createPlanDraft } from './casePlanVersionService.js';
 import type { CanonicalGraph, CasePlanVersion } from './casePlanVersionService.js';
+import { publishEvent, redact } from './eventOutboxService.js';
 import {
   CaseWorkspaceAuthError,
   requireCaseAccess,
@@ -382,6 +433,36 @@ function requireGraph(value: CanonicalGraph | null | undefined, reason: string):
     throw new Error(reason);
   }
   return value;
+}
+
+/**
+ * EVENT_TAXONOMY §1: a `redactedSummary` holds FACTS, not payloads. Change
+ * reasons, deprecation reasons and policy refs are caller-supplied opaque
+ * strings; they are bounded here before they reach the envelope, so an
+ * oversized caller string can never trip MAX_REDACTED_SUMMARY_BYTES and roll
+ * the whole command back. Same helper as artifactLinkService.factText.
+ */
+function factText(value: string | null | undefined, maxLength = 200): string | null {
+  if (value === null || value === undefined) return null;
+  const normalized = String(value).trim();
+  if (!normalized) return null;
+  return normalized.length > maxLength ? `${normalized.slice(0, maxLength)}...` : normalized;
+}
+
+/**
+ * EVENT_TAXONOMY (casePlanVersionService rows: "graph node/edge counts +
+ * graph_digest, never the graph"). The same rule holds for a Play's semantic
+ * graph: shape facts and the digest go in the summary, the graph itself stays
+ * in the row that `payloadRef` points at.
+ */
+function graphShapeFacts(graph: CanonicalGraph): Record<string, unknown> {
+  return {
+    graphSchemaVersion: factText((graph as { schemaVersion?: string }).schemaVersion ?? null),
+    nodeCount: Array.isArray(graph.nodes) ? graph.nodes.length : 0,
+    edgeCount: Array.isArray(graph.edges) ? graph.edges.length : 0,
+    entryNodeCount: Array.isArray(graph.entryNodeIds) ? graph.entryNodeIds.length : 0,
+    terminalNodeCount: Array.isArray(graph.terminalNodeIds) ? graph.terminalNodeIds.length : 0,
+  };
 }
 
 function parseReviewHistory(raw: string): ProcessReviewHistoryEntry[] {
@@ -608,16 +689,53 @@ export async function createProcessDefinition(input: {
   const processDefinitionId = `procdef-${uuidv4()}`;
   const now = new Date().toISOString();
 
-  const inserted = await queryOne<ProcessDefinitionRow>(
-    `INSERT INTO process_definitions (
-       process_definition_id, organization_id, name, description, visibility,
-       owner_actor_id, created_by_actor_id, version, created_at, updated_at
-     ) VALUES (?, ?, ?, ?, 'PRIVATE', ?, ?, 1, ?, ?)
-     RETURNING *`,
-    [processDefinitionId, organizationId, name, input.description ?? null, ownerActorId, createdByActorId, now, now]
-  );
-  if (!inserted) throw new Error('process_definition_insert_failed');
-  return mapDefinitionRow(inserted);
+  // The INSERT was a bare queryOne() before the outbox existed. It is wrapped
+  // in withPgTransaction now for one reason only: publishEvent must run on the
+  // SAME client as the write (EVENT_TAXONOMY §0), and a bare queryOne has no
+  // client to share. The SQL, its parameters and its failure mode are
+  // unchanged — this is a transaction boundary, not a behaviour change.
+  return withPgTransaction(async (client) => {
+    const inserted = await client.query<ProcessDefinitionRow>(
+      `INSERT INTO process_definitions (
+         process_definition_id, organization_id, name, description, visibility,
+         owner_actor_id, created_by_actor_id, version, created_at, updated_at
+       ) VALUES (?, ?, ?, ?, 'PRIVATE', ?, ?, 1, ?, ?)
+       RETURNING *`,
+      [processDefinitionId, organizationId, name, input.description ?? null, ownerActorId, createdByActorId, now, now]
+    );
+    const row = inserted.rows[0];
+    if (!row) throw new Error('process_definition_insert_failed');
+
+    // EVENT_TAXONOMY: `process.definition.created`, aggregate
+    // PROCESS_DEFINITION. Identity comes from the RETURNING row, never from
+    // `input` — `visibility` in particular is forced server-side, so the
+    // event reports what was actually stored.
+    await publishEvent(client, {
+      eventType: 'process.definition.created',
+      organizationId: row.organization_id,
+      // A Play belongs to no project: it is org-scoped and reusable.
+      projectId: null,
+      aggregateType: 'PROCESS_DEFINITION',
+      aggregateId: row.process_definition_id,
+      aggregateVersion: Number(row.version),
+      caseId: null,
+      actorUserId: row.created_by_actor_id,
+      // correlationId omitted on purpose — publishEvent takes the ambient
+      // RequestStore correlation id. causationId is null: creating a Play is
+      // a first-class user command, not a consequence of another event.
+      causationId: null,
+      redactedSummary: redact({
+        name: factText(row.name),
+        hasDescription: row.description !== null,
+        visibility: row.visibility,
+        ownerActorId: row.owner_actor_id,
+        teamId: row.team_id,
+      }),
+      payloadRef: `process_definitions:${row.process_definition_id}`,
+    });
+
+    return mapDefinitionRow(row);
+  });
 }
 
 /** CW-RT-014, CW-GR-029. Plain read, no lock. */
@@ -730,8 +848,33 @@ export async function shareProcessDefinition(
         RETURNING *`,
       [targetVisibility, now, actorUserId, now, id, expectedVersion]
     );
-    if (!updated.rows[0]) throw new Error('process_definition_conflict');
-    return mapDefinitionRow(updated.rows[0]);
+    const updatedRow = updated.rows[0];
+    if (!updatedRow) throw new Error('process_definition_conflict');
+
+    // EVENT_TAXONOMY: `process.definition.shared`, aggregate
+    // PROCESS_DEFINITION. Summary = the scope of the share: what the
+    // visibility was, what it became, and who widened it.
+    await publishEvent(client, {
+      eventType: 'process.definition.shared',
+      organizationId: updatedRow.organization_id,
+      projectId: null,
+      aggregateType: 'PROCESS_DEFINITION',
+      aggregateId: updatedRow.process_definition_id,
+      aggregateVersion: Number(updatedRow.version),
+      caseId: null,
+      actorUserId,
+      causationId: null,
+      redactedSummary: redact({
+        from: row.visibility,
+        to: updatedRow.visibility,
+        teamId: updatedRow.team_id,
+        sharedByActorId: updatedRow.shared_by_actor_id,
+        ownerActorId: updatedRow.owner_actor_id,
+      }),
+      payloadRef: `process_definitions:${updatedRow.process_definition_id}`,
+    });
+
+    return mapDefinitionRow(updatedRow);
   });
 }
 
@@ -798,7 +941,41 @@ export async function createProcessVersionDraft(input: {
         now,
       ]
     );
-    return mapVersionRow(inserted.rows[0]);
+    const insertedRow = inserted.rows[0];
+    if (!insertedRow) throw new Error('process_version_insert_failed');
+
+    // EVENT_TAXONOMY: `process.version.draft_created`, aggregate
+    // PROCESS_VERSION. organization_id is the PARENT DEFINITION's (this table
+    // has no organization_id of its own); the parent id itself goes in the
+    // summary, as the taxonomy requires. Graph shape + digest only — the
+    // graph is behind payloadRef.
+    await publishEvent(client, {
+      eventType: 'process.version.draft_created',
+      organizationId: definitionRow.organization_id,
+      projectId: null,
+      aggregateType: 'PROCESS_VERSION',
+      aggregateId: insertedRow.process_version_id,
+      // OCC lock counter, post-insert (= 1). NOT version_number, which is the
+      // semantic version and is reported in the summary instead.
+      aggregateVersion: Number(insertedRow.version),
+      caseId: null,
+      actorUserId: insertedRow.created_by_actor_id,
+      causationId: null,
+      redactedSummary: redact({
+        processDefinitionId: insertedRow.process_definition_id,
+        versionNumber: Number(insertedRow.version_number),
+        status: insertedRow.status,
+        graphDigest: insertedRow.graph_digest,
+        ...graphShapeFacts(semanticGraph),
+        capabilityVersionCount: (input.capabilityVersions ?? []).length,
+        requiredBindingCount: (input.requiredBindings ?? []).length,
+        policyRef: factText(insertedRow.policy_ref),
+        changeReason: factText(insertedRow.change_reason),
+      }),
+      payloadRef: `process_versions:${insertedRow.process_version_id}`,
+    });
+
+    return mapVersionRow(insertedRow);
   });
 }
 
@@ -855,8 +1032,39 @@ export async function updateProcessVersionDraft(
         expectedVersion,
       ]
     );
-    if (!updated.rows[0]) throw new Error('process_version_conflict');
-    return mapVersionRow(updated.rows[0]);
+    const updatedRow = updated.rows[0];
+    if (!updatedRow) throw new Error('process_version_conflict');
+
+    // EVENT_TAXONOMY: `process.version.draft_updated`, aggregate
+    // PROCESS_VERSION. The new digest plus what changed; the graph itself is
+    // behind payloadRef. `graphChanged` is the digest comparison, which is
+    // exactly the fact a downstream projection needs and cannot recompute
+    // from the event alone.
+    await publishEvent(client, {
+      eventType: 'process.version.draft_updated',
+      organizationId,
+      projectId: null,
+      aggregateType: 'PROCESS_VERSION',
+      aggregateId: updatedRow.process_version_id,
+      aggregateVersion: Number(updatedRow.version),
+      caseId: null,
+      actorUserId,
+      causationId: null,
+      redactedSummary: redact({
+        processDefinitionId: updatedRow.process_definition_id,
+        versionNumber: Number(updatedRow.version_number),
+        status: updatedRow.status,
+        graphDigest: updatedRow.graph_digest,
+        previousGraphDigest: row.graph_digest,
+        graphChanged: updatedRow.graph_digest !== row.graph_digest,
+        ...graphShapeFacts(semanticGraph),
+        policyRef: factText(updatedRow.policy_ref),
+        policyRefChanged: updatedRow.policy_ref !== row.policy_ref,
+      }),
+      payloadRef: `process_versions:${updatedRow.process_version_id}`,
+    });
+
+    return mapVersionRow(updatedRow);
   });
 }
 
@@ -939,8 +1147,36 @@ export async function proposeProcessVersion(
         RETURNING *`,
       [JSON.stringify(nextHistory), now, actorUserId, now, id, expectedVersion]
     );
-    if (!updated.rows[0]) throw new Error('process_version_conflict');
-    return mapVersionRow(updated.rows[0]);
+    const updatedRow = updated.rows[0];
+    if (!updatedRow) throw new Error('process_version_conflict');
+
+    // EVENT_TAXONOMY: `process.definition.submitted` on a PROCESS_VERSION
+    // aggregate. The name/aggregate asymmetry is §5.4's flagged, deliberate
+    // decision (canon §7 lists this string verbatim) — an owner decision, not
+    // something to "correct" here.
+    await publishEvent(client, {
+      eventType: 'process.definition.submitted',
+      organizationId,
+      projectId: null,
+      aggregateType: 'PROCESS_VERSION',
+      aggregateId: updatedRow.process_version_id,
+      aggregateVersion: Number(updatedRow.version),
+      caseId: null,
+      actorUserId,
+      causationId: null,
+      redactedSummary: redact({
+        processDefinitionId: updatedRow.process_definition_id,
+        versionNumber: Number(updatedRow.version_number),
+        from: row.status,
+        to: updatedRow.status,
+        graphDigest: updatedRow.graph_digest,
+        proposedByActorId: updatedRow.proposed_by_actor_id,
+        proposedAt: updatedRow.proposed_at,
+      }),
+      payloadRef: `process_versions:${updatedRow.process_version_id}`,
+    });
+
+    return mapVersionRow(updatedRow);
   });
 }
 
@@ -995,8 +1231,40 @@ export async function reviewProcessVersion(
           RETURNING *`,
         [JSON.stringify(nextHistory), now, id, expectedVersion]
       );
-      if (!updated.rows[0]) throw new Error('process_version_conflict');
-      return mapVersionRow(updated.rows[0]);
+      const changesRequestedRow = updated.rows[0];
+      if (!changesRequestedRow) throw new Error('process_version_conflict');
+
+      // EVENT_TAXONOMY: `process.version.reviewed` — ONE event_type for this
+      // command; the decision itself is a fact in the summary, not a second
+      // event name (unlike recordApprovalDecision, whose taxonomy row does
+      // enumerate per-decision types).
+      await publishEvent(client, {
+        eventType: 'process.version.reviewed',
+        organizationId,
+        projectId: null,
+        aggregateType: 'PROCESS_VERSION',
+        aggregateId: changesRequestedRow.process_version_id,
+        aggregateVersion: Number(changesRequestedRow.version),
+        caseId: null,
+        actorUserId,
+        causationId: null,
+        redactedSummary: redact({
+          processDefinitionId: changesRequestedRow.process_definition_id,
+          versionNumber: Number(changesRequestedRow.version_number),
+          decision: 'CHANGES_REQUESTED',
+          reviewerActorId: actorUserId,
+          from: row.status,
+          to: changesRequestedRow.status,
+          // The CHANGES_REQUESTED path resets any prior approval — that reset
+          // is the fact that stops a stale approval authorizing a publish.
+          reviewDecisionCleared: changesRequestedRow.review_decision === null,
+          reason: factText(changeReason),
+          graphDigest: changesRequestedRow.graph_digest,
+        }),
+        payloadRef: `process_versions:${changesRequestedRow.process_version_id}`,
+      });
+
+      return mapVersionRow(changesRequestedRow);
     }
 
     // decision === 'APPROVED': status stays IN_REVIEW.
@@ -1013,8 +1281,36 @@ export async function reviewProcessVersion(
         RETURNING *`,
       [now, actorUserId, JSON.stringify(nextHistory), now, id, expectedVersion]
     );
-    if (!updated.rows[0]) throw new Error('process_version_conflict');
-    return mapVersionRow(updated.rows[0]);
+    const approvedRow = updated.rows[0];
+    if (!approvedRow) throw new Error('process_version_conflict');
+
+    await publishEvent(client, {
+      eventType: 'process.version.reviewed',
+      organizationId,
+      projectId: null,
+      aggregateType: 'PROCESS_VERSION',
+      aggregateId: approvedRow.process_version_id,
+      aggregateVersion: Number(approvedRow.version),
+      caseId: null,
+      actorUserId,
+      causationId: null,
+      redactedSummary: redact({
+        processDefinitionId: approvedRow.process_definition_id,
+        versionNumber: Number(approvedRow.version_number),
+        decision: 'APPROVED',
+        reviewerActorId: approvedRow.reviewed_by_actor_id,
+        reviewedAt: approvedRow.reviewed_at,
+        // Status deliberately does NOT move on approval — it stays IN_REVIEW
+        // until publishProcessVersion. Reporting both makes that visible.
+        from: row.status,
+        to: approvedRow.status,
+        reason: factText(reason ?? null),
+        graphDigest: approvedRow.graph_digest,
+      }),
+      payloadRef: `process_versions:${approvedRow.process_version_id}`,
+    });
+
+    return mapVersionRow(approvedRow);
   });
 }
 
@@ -1065,8 +1361,40 @@ export async function publishProcessVersion(
         RETURNING *`,
       [now, actorUserId, JSON.stringify(nextHistory), now, id, expectedVersion]
     );
-    if (!updated.rows[0]) throw new Error('process_version_conflict');
-    return mapVersionRow(updated.rows[0]);
+    const publishedRow = updated.rows[0];
+    if (!publishedRow) throw new Error('process_version_conflict');
+
+    // EVENT_TAXONOMY: `process.definition.published` on a PROCESS_VERSION
+    // aggregate (§5.4 asymmetry, flagged there, kept here). Unlike
+    // publishPlanVersion there is NO supersede side-effect, so this command
+    // emits exactly one event and never a paired `*.superseded`.
+    await publishEvent(client, {
+      eventType: 'process.definition.published',
+      organizationId,
+      projectId: null,
+      aggregateType: 'PROCESS_VERSION',
+      aggregateId: publishedRow.process_version_id,
+      aggregateVersion: Number(publishedRow.version),
+      caseId: null,
+      actorUserId,
+      causationId: null,
+      redactedSummary: redact({
+        processDefinitionId: publishedRow.process_definition_id,
+        versionNumber: Number(publishedRow.version_number),
+        from: row.status,
+        to: publishedRow.status,
+        graphDigest: publishedRow.graph_digest,
+        publishedByActorId: publishedRow.published_by_actor_id,
+        publishedAt: publishedRow.published_at,
+        // The prior explicit approval this publish stands on (CW-GR-030:
+        // IN_REVIEW alone is never sufficient).
+        reviewDecision: publishedRow.review_decision,
+        reviewedByActorId: publishedRow.reviewed_by_actor_id,
+      }),
+      payloadRef: `process_versions:${publishedRow.process_version_id}`,
+    });
+
+    return mapVersionRow(publishedRow);
   });
 }
 
@@ -1113,8 +1441,38 @@ export async function deprecateProcessVersion(
         RETURNING *`,
       [now, actorUserId, deprecationReason, JSON.stringify(nextHistory), now, id, expectedVersion]
     );
-    if (!updated.rows[0]) throw new Error('process_version_conflict');
-    return mapVersionRow(updated.rows[0]);
+    const deprecatedRow = updated.rows[0];
+    if (!deprecatedRow) throw new Error('process_version_conflict');
+
+    // EVENT_TAXONOMY: `process.definition.deprecated` on a PROCESS_VERSION
+    // aggregate (§5.4 asymmetry). This is the fact CW-RT-029 needs
+    // observable: new instantiation is blocked from here on, and nothing
+    // historical was deleted.
+    await publishEvent(client, {
+      eventType: 'process.definition.deprecated',
+      organizationId,
+      projectId: null,
+      aggregateType: 'PROCESS_VERSION',
+      aggregateId: deprecatedRow.process_version_id,
+      aggregateVersion: Number(deprecatedRow.version),
+      caseId: null,
+      actorUserId,
+      causationId: null,
+      redactedSummary: redact({
+        processDefinitionId: deprecatedRow.process_definition_id,
+        versionNumber: Number(deprecatedRow.version_number),
+        from: row.status,
+        to: deprecatedRow.status,
+        graphDigest: deprecatedRow.graph_digest,
+        deprecatedByActorId: deprecatedRow.deprecated_by_actor_id,
+        deprecatedAt: deprecatedRow.deprecated_at,
+        reason: factText(deprecatedRow.deprecation_reason),
+        blocksNewInstantiation: true,
+      }),
+      payloadRef: `process_versions:${deprecatedRow.process_version_id}`,
+    });
+
+    return mapVersionRow(deprecatedRow);
   });
 }
 
@@ -1157,8 +1515,33 @@ export async function archiveProcessVersion(
         RETURNING *`,
       [now, actorUserId, JSON.stringify(nextHistory), now, id, expectedVersion]
     );
-    if (!updated.rows[0]) throw new Error('process_version_conflict');
-    return mapVersionRow(updated.rows[0]);
+    const archivedRow = updated.rows[0];
+    if (!archivedRow) throw new Error('process_version_conflict');
+
+    // EVENT_TAXONOMY: `process.version.archived`, aggregate PROCESS_VERSION.
+    await publishEvent(client, {
+      eventType: 'process.version.archived',
+      organizationId,
+      projectId: null,
+      aggregateType: 'PROCESS_VERSION',
+      aggregateId: archivedRow.process_version_id,
+      aggregateVersion: Number(archivedRow.version),
+      caseId: null,
+      actorUserId,
+      causationId: null,
+      redactedSummary: redact({
+        processDefinitionId: archivedRow.process_definition_id,
+        versionNumber: Number(archivedRow.version_number),
+        from: row.status,
+        to: archivedRow.status,
+        graphDigest: archivedRow.graph_digest,
+        archivedByActorId: archivedRow.archived_by_actor_id,
+        archivedAt: archivedRow.archived_at,
+      }),
+      payloadRef: `process_versions:${archivedRow.process_version_id}`,
+    });
+
+    return mapVersionRow(archivedRow);
   });
 }
 
@@ -1203,6 +1586,19 @@ export async function instantiateProcessVersion(
 
   await requireCaseAccess(actorUserId, targetCaseId);
 
+  // EVENT_TAXONOMY asks this command for `process.version.instantiated`
+  // (aggregate PROCESS_VERSION, caseId set, the new case_plan_version_id in
+  // the summary) and it is NOT emitted. This is a known, deliberate gap, not
+  // an oversight: this function writes nothing itself and holds no
+  // transaction — the sole mutation happens inside createPlanDraft's own
+  // withPgTransaction, which already publishes `case.plan.draft_created` on
+  // its client and offers no way to join it. Emitting from here would require
+  // a second transaction opened after that one committed, which is precisely
+  // the dual-write hole the outbox exists to close, so nothing is emitted
+  // rather than something unsound. The fix is a caller-supplied transaction
+  // client on casePlanVersionService.createPlanDraft (or a
+  // createPlanDraftOnClient(client, input) export) so both events land on one
+  // client; that file is owned elsewhere and is not changed by this packet.
   return createPlanDraft({
     caseId: targetCaseId,
     sourceProcessVersionId: version.processVersionId,
