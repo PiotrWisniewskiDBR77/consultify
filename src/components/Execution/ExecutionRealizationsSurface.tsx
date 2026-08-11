@@ -109,6 +109,7 @@ export const ExecutionRealizationsSurface = ({
   const [rows, setRows] = useState<ExecutionRow[]>([]);
   const [initiativeRows, setInitiativeRows] = useState<ExecutionInitiativeRow[]>([]);
   const [selectedInitiativeId, setSelectedInitiativeId] = useState<string | null>(null);
+  const [selectedExecutionCaseId, setSelectedExecutionCaseId] = useState<string | null>(null);
   const [showWorkbench, setShowWorkbench] = useState(false);
 
   const load = useCallback(async () => {
@@ -171,8 +172,12 @@ export const ExecutionRealizationsSurface = ({
     return initiativeRows.filter((row) => ids.has(row.id));
   }, [initiativeRows, visibleRows]);
   const selected = useMemo(
-    () => rows.find((row) => row.initiativeId === selectedInitiativeId) ?? null,
-    [rows, selectedInitiativeId]
+    () => rows.find((row) => row.id === selectedExecutionCaseId) ?? null,
+    [rows, selectedExecutionCaseId]
+  );
+  const executionByInitiativeId = useMemo(
+    () => new Map(rows.map((row) => [row.initiativeId, row])),
+    [rows]
   );
 
   useEffect(
@@ -187,11 +192,31 @@ export const ExecutionRealizationsSurface = ({
         selectedId={selectedInitiativeId}
         onSelect={(row) => {
           setSelectedInitiativeId(row?.id ?? null);
+          setSelectedExecutionCaseId(
+            row ? (executionByInitiativeId.get(row.id)?.id ?? null) : null
+          );
           setShowWorkbench(false);
         }}
         onOpen={(row) => {
+          const execution = executionByInitiativeId.get(row.id);
           setSelectedInitiativeId(row.id);
-          setShowWorkbench(true);
+          setSelectedExecutionCaseId(execution?.id ?? null);
+          setShowWorkbench(Boolean(execution));
+        }}
+        relationForRow={(row) => {
+          const execution = executionByInitiativeId.get(row.id);
+          return execution
+            ? [
+                {
+                  label: `Execution Case ${execution.id}@v${execution.version}`,
+                  onClick: () => {
+                    setSelectedExecutionCaseId(execution.id);
+                    setShowWorkbench(true);
+                  },
+                },
+                { label: `Handoff ${execution.handoffRef}` },
+              ]
+            : [{ label: 'Execution Case UNKNOWN' }];
         }}
         persistKey="execution.canonical.executions.v1"
         loading={state === 'LOADING'}
@@ -199,6 +224,7 @@ export const ExecutionRealizationsSurface = ({
         onRetry={() => void load()}
         emptyTitle="Brak inicjatyw w realizacji"
         emptyDescription="Inicjatywa pojawi się tutaj po zaakceptowaniu jej pakietu przekazania."
+        previewOpen={!showWorkbench && Boolean(selectedInitiativeId)}
       />
 
       {showWorkbench && selected ? (

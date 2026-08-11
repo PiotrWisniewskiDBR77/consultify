@@ -169,6 +169,17 @@ describe('R04-2A · interakcja wiersza', () => {
     fireEvent.doubleClick(screen.getByText('Alpha').closest('tr') as HTMLElement);
     expect(onRowDoubleClick).toHaveBeenCalledTimes(1);
   });
+
+  it('Shift+F10 na wierszu otwiera ten sam kontekst co kebab', () => {
+    renderTable({
+      getRowActions: () => [{ id: 'open', label: 'Open exact row', onClick: vi.fn() }],
+    });
+    const row = screen.getByText('Alpha').closest('tr') as HTMLElement;
+    row.focus();
+    fireEvent.keyDown(row, { key: 'F10', shiftKey: true });
+    expect(screen.getByRole('menuitem', { name: 'Open exact row' })).toBeInTheDocument();
+    expect(row).toHaveAttribute('tabindex', '0');
+  });
 });
 
 // ── Stany empty (§5 Stany) ─────────────────────────────────────────────────

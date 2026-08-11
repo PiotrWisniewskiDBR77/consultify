@@ -444,6 +444,7 @@ export const ExecutionReportsSurface = ({
             }}
             itemIds={definitions.map((row) => row.id)}
             getItemById={(id) => definitions.find((row) => row.id === id) ?? null}
+            previewOpen={!showDefinitionEditor && Boolean(selectedDefinitionId)}
             renderPreview={(row) => {
               const version = row.definition.versions?.find(
                 (item: any) => item.definitionVersion === row.currentVersion
@@ -667,6 +668,7 @@ export const ExecutionReportsSurface = ({
           }}
           itemIds={rows.map((r) => r.id)}
           getItemById={(id) => rows.find((r) => r.id === id) ?? null}
+          previewOpen={!showRunEditor && Boolean(selectedId)}
           renderPreview={(r) => (
             <StandardPreview
               embedded

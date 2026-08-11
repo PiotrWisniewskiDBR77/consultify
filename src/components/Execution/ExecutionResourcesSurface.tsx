@@ -288,6 +288,7 @@ export const ExecutionResourcesSurface = ({
             }}
             itemIds={items.map((item) => item.allocationId)}
             getItemById={(id) => items.find((item) => item.allocationId === id) ?? null}
+            previewOpen={!showWorkspace && Boolean(selected)}
             renderPreview={(item) => (
               <StandardPreview
                 embedded

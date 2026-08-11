@@ -135,4 +135,14 @@ describe('Handoff and Realizacje', () => {
     expect(screen.getAllByText('Pakiet przekazania').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Zaakceptowana baza').length).toBeGreaterThan(0);
   });
+
+  it('shows the exact Execution Case relation and opens it from preview', async () => {
+    render(<ExecutionRealizationsSurface scope="all" />);
+    const row = (await screen.findByText('Program poprawy jakości')).closest('tr')!;
+    fireEvent.click(row);
+    expect(await screen.findByText('Execution Case case1@v1')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Otwórz' }));
+    expect(await screen.findByLabelText('Karta realizacji')).toBeInTheDocument();
+    expect(screen.getAllByText(/Execution Case case1/).length).toBeGreaterThan(0);
+  });
 });

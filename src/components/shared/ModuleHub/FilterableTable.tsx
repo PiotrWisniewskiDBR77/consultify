@@ -899,8 +899,33 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                 sortedData.map((row) => (
                   <tr
                     key={row.id}
+                    tabIndex={0}
+                    aria-selected={row.id === selectedRowId}
                     onClick={() => onRowClick?.(row)}
                     onDoubleClick={() => onRowDoubleClick?.(row)}
+                    onKeyDown={(e) => {
+                      if (
+                        !(
+                          !hideRowActions &&
+                          (e.key === 'ContextMenu' || (e.shiftKey && e.key === 'F10'))
+                        )
+                      )
+                        return;
+                      const sections = getRowActionSections?.(row);
+                      const hasMenu = sections
+                        ? sections.length > 0
+                        : getRowActions
+                          ? (getRowActions(row)?.length ?? 0) > 0
+                          : true;
+                      if (!hasMenu) return;
+                      e.preventDefault();
+                      e.stopPropagation();
+                      const rect = e.currentTarget.getBoundingClientRect();
+                      setContextMenuRow({
+                        rowId: String(row.id),
+                        point: { x: Math.max(rect.left + 24, rect.right - 40), y: rect.top + 28 },
+                      });
+                    }}
                     onContextMenu={
                       hideRowActions
                         ? undefined
@@ -925,7 +950,7 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                           }
                     }
                     className={[
-                      'group cursor-pointer transition-colors',
+                      'group cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-c-focus',
                       row.id === selectedRowId ? 'bg-state-selected' : 'hover:bg-state-hover',
                       typeof rowClassName === 'function' ? rowClassName(row) : rowClassName,
                     ]

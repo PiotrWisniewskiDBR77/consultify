@@ -50,6 +50,7 @@ export interface CanonicalInitiativeRegisterProps {
   onRetry?: () => void;
   emptyTitle: string;
   emptyDescription: string;
+  previewOpen?: boolean;
   relationForRow?: (row: CanonicalInitiativeRow) => Array<{ label: string; onClick?: () => void }>;
 }
 
@@ -216,6 +217,7 @@ export const CanonicalInitiativeRegister = ({
   onRetry,
   emptyTitle,
   emptyDescription,
+  previewOpen,
   relationForRow,
 }: CanonicalInitiativeRegisterProps) => {
   const columns = useMemo(() => createCanonicalInitiativeRegisterColumns(), []);
@@ -296,6 +298,7 @@ export const CanonicalInitiativeRegister = ({
       itemIds={layoutRows.map((row) => row.id)}
       getItemById={(id) => layoutRows.find((row) => row.id === id) ?? null}
       renderPreview={renderPreview}
+      previewOpen={previewOpen}
       renderPreviewFooter={(initiative) => (
         <div className="grid grid-cols-2 gap-2">
           <button

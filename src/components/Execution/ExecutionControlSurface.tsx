@@ -585,12 +585,13 @@ export const ExecutionControlSurface = ({
             selectedItem={selectedSignal}
             onSelect={setSelectedSignalId}
             onOpenFull={(id) => {
-              setSelectedSignalId(id);
               setShowInterventionForm(true);
               setDraftSignalIds((current) => (current.includes(id) ? current : [...current, id]));
+              setSelectedSignalId(null);
             }}
             itemIds={signalRows.map((row) => row.id)}
             getItemById={(id) => signalRows.find((row) => row.id === id) ?? null}
+            previewOpen={Boolean(selectedSignalId)}
             renderPreview={(row) => (
               <StandardPreview
                 embedded
@@ -601,6 +602,7 @@ export const ExecutionControlSurface = ({
                   setDraftSignalIds((current) =>
                     current.includes(row.id) ? current : [...current, row.id]
                   );
+                  setSelectedSignalId(null);
                 }}
                 openLabel="Otwórz przygotowanie"
                 meta={{
@@ -644,6 +646,7 @@ export const ExecutionControlSurface = ({
                         setDraftSignalIds((current) =>
                           current.includes(row.id) ? current : [...current, row.id]
                         );
+                        setSelectedSignalId(null);
                       },
                     },
                   ],
@@ -657,11 +660,11 @@ export const ExecutionControlSurface = ({
               selectedRowId={selectedSignalId}
               onRowClick={(row) => setSelectedSignalId(row.id)}
               onRowDoubleClick={(row) => {
-                setSelectedSignalId(row.id);
                 setShowInterventionForm(true);
                 setDraftSignalIds((current) =>
                   current.includes(row.id) ? current : [...current, row.id]
                 );
+                setSelectedSignalId(null);
               }}
               rowMenu={(row) => ({
                 primary: [
@@ -669,11 +672,11 @@ export const ExecutionControlSurface = ({
                     id: 'prepare-intervention',
                     label: 'Przygotuj interwencję',
                     onClick: () => {
-                      setSelectedSignalId(row.id);
                       setShowInterventionForm(true);
                       setDraftSignalIds((current) =>
                         current.includes(row.id) ? current : [...current, row.id]
                       );
+                      setSelectedSignalId(null);
                     },
                   },
                 ],
@@ -694,6 +697,7 @@ export const ExecutionControlSurface = ({
         }}
         itemIds={rows.map((r) => r.id)}
         getItemById={(id) => rows.find((r) => r.id === id) ?? null}
+        previewOpen={!showInterventionForm && Boolean(selectedId)}
         renderPreview={(r) => (
           <StandardPreview
             embedded

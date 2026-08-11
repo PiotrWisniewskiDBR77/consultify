@@ -536,6 +536,7 @@ export const ExecutionWorkSurface = ({ activePreset, onCountsChange }: Execution
           }}
           itemIds={rows.map((r) => r.id)}
           getItemById={(id) => rows.find((r) => r.id === id) ?? null}
+          previewOpen={!showWorkspace && Boolean(selectedId)}
           renderPreview={(r) => (
             <StandardPreview
               embedded
