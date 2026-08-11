@@ -13,6 +13,11 @@
  *   --clip=0,0,1440,220     wycinek zrzutu
  *   --eval=<js>             wykonaj JS w stronie po akcjach
  *   --dump=<selektor>       wypisz outerHTML (skrót) do stdout
+ *   --key=<klawisz>         page.keyboard.press (Tab/Shift+Tab/Enter/Space/Escape...)
+ *
+ * Zawsze na stdout: KONSOLA-BLEDY (wszystkie, nie ucięte do 8) i SIEC-4XX5XX
+ * (każda odpowiedź >=400 z hosta localhost, do re-weryfikacji interaktywnej
+ * FALA 0 RN-G3 — pełna lista błędów konsoli/sieci per krok).
  */
 import { chromium } from 'playwright';
 
@@ -31,10 +36,17 @@ import { chromium } from 'playwright';
   const browser = await chromium.launch();
   const page = await browser.newPage({ viewport: { width, height }, deviceScaleFactor: 2 });
   const errors = [];
+  const netErrors = [];
   page.on('console', (m) => {
     if (m.type() === 'error') errors.push(m.text().slice(0, 300));
   });
   page.on('pageerror', (e) => errors.push('PAGEERROR ' + String(e).slice(0, 300)));
+  page.on('response', (res) => {
+    const st = res.status();
+    if (st >= 400) {
+      netErrors.push(`${st} ${res.request().method()} ${res.url()}`);
+    }
+  });
 
   // Bez sieci zewnętrznej: fonty z CDN nigdy się nie ładują, a `page.screenshot`
   // czeka na `document.fonts.ready` → timeout. Ucinamy je od razu.
@@ -143,7 +155,8 @@ import { chromium } from 'playwright';
     shotOpts.clip = { x, y, width: w, height: h };
   }
   await page.screenshot(shotOpts);
-  if (errors.length) console.log('KONSOLA-BLEDY:\n' + errors.slice(0, 8).join('\n'));
+  if (errors.length) console.log('KONSOLA-BLEDY:\n' + errors.join('\n'));
+  if (netErrors.length) console.log('SIEC-4XX5XX:\n' + netErrors.join('\n'));
   console.log('OK ->', out);
   await browser.close();
 })();
