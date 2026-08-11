@@ -32,6 +32,7 @@ import type {
 } from '@/components/shared/NModeLayout/types';
 import type { PresentationMode } from '@/hooks/usePresentationMode';
 
+import type { ArtifactBreadcrumbItem } from './ArtifactBreadcrumb';
 import type { ArtifactRightPanelSection } from './ArtifactRightPanel';
 import type { KartaNKey, KartaNKlasa } from './registry';
 
@@ -270,6 +271,16 @@ export interface StandardArtifactShellProps<
 
   /** Nagłówek karty (bez wycofanego `draftSavedLabel`, bez `primaryAction` — ten ma slot). */
   readonly header: ArtifactHeaderConfig;
+
+  /**
+   * Element `㉛` Menu 1 (ARTIFACT_ANATOMY_STANDARD.md §9.2/§11.2 „breadcrumb").
+   * Pominięty/pusta tablica → powłoka renderuje się DOKŁADNIE jak wcześniej
+   * (addytywne — żadna z 7 istniejących kart nie musi się zmienić). Renderowany
+   * przez `ArtifactBreadcrumb` NAD `NModeShell` (tor PLATFORMY, 2026-08-11 —
+   * `NModeHeader.tsx` nie ma elementu breadcrumb, a nie jest na allowliście
+   * tego toru; ten prop domyka lukę bez ruszania `NModeLayout/**`).
+   */
+  readonly breadcrumb?: readonly ArtifactBreadcrumbItem[];
 
   /** (b) Jeden primary ALBO jawny, uzasadniony brak. Bez wartości domyślnej. */
   readonly primaryAction: PrimaryActionSlot;

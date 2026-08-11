@@ -22,6 +22,7 @@
 
 import { ChevronRight, type LucideIcon } from 'lucide-react';
 import React, { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import type { FilterChip } from '../shared/ModuleHub/ActiveFilters';
 import { ModuleNavBar, type StatusFilter } from '../shared/ModuleHub/ModuleNavBar';
@@ -97,10 +98,19 @@ export interface StandardBulkAction {
 export interface StandardBulkState {
   /** Number of selected rows — bar renders only when > 0. */
   count: number;
+  /**
+   * Pominięte → domyślny, PRZETŁUMACZONY podpis („Zaznaczono: {{count}}" /
+   * „{{count}} selected", `common.selectedCount`). Zbadano 2026-08-11: żaden
+   * z trzech dzisiejszych wywołujących (BlockTypesManager, TemplatesManager,
+   * AssessmentTable) nie polega na tym fallbacku — wszyscy podają własną
+   * etykietę — więc zmiana domyślnej wartości jest bezpieczna wstecznie.
+   */
   selectedLabel?: string;
   onSelectAll?: () => void;
+  /** Pominięte → `common.selectAll` (jw. — bezpieczne wstecznie). */
   selectAllLabel?: string;
   onClear?: () => void;
+  /** Pominięte → `common.clear` (jw. — bezpieczne wstecznie). */
   clearLabel?: string;
   actions: StandardBulkAction[];
 }
@@ -277,6 +287,9 @@ export const StandardModuleBar: React.FC<StandardModuleBarProps> = ({
   className,
   children,
 }) => {
+  const { t, i18n } = useTranslation();
+  const isPolish = !!i18n.language?.startsWith('pl');
+
   const navTabs = useMemo<TabConfig[]>(
     () =>
       (tabs ?? []).map((tab) => ({
@@ -295,15 +308,29 @@ export const StandardModuleBar: React.FC<StandardModuleBarProps> = ({
       <div className={MENU_3_INNER_CLASS}>
         <div className={MENU_3_LEFT_CLASS}>
           <span className="inline-flex h-7 items-center rounded-full px-2.5 text-[11px] font-semibold text-c-text whitespace-nowrap">
-            {bulk!.selectedLabel ?? `${bulk!.count} selected`}
+            {/* `defaultValue` niesie liczbę WBUDOWANĄ w JS (nie tylko `{{count}}`)
+                celowo — testy komponentów mockują `useTranslation` naiwnie
+                (`t = (key, fallback) => fallback`, options ignorowane), więc
+                fallback musi być już poprawny SAM W SOBIE. Prawdziwy i18next,
+                gdy klucz istnieje w translation.json, ignoruje `defaultValue`
+                i interpoluje `{{count}}` z `options` — oba tory dają tę samą,
+                poprawną liczbę. */}
+            {bulk!.selectedLabel ??
+              t(
+                'common.selectedCount',
+                isPolish ? `Zaznaczono: ${bulk!.count}` : `${bulk!.count} selected`,
+                { count: bulk!.count }
+              )}
           </span>
           {bulk!.onSelectAll ? (
             <Menu3Chip onClick={bulk!.onSelectAll}>
-              {bulk!.selectAllLabel ?? 'Select all'}
+              {bulk!.selectAllLabel ?? t('common.selectAll', isPolish ? 'Zaznacz wszystko' : 'Select all')}
             </Menu3Chip>
           ) : null}
           {bulk!.onClear ? (
-            <Menu3Chip onClick={bulk!.onClear}>{bulk!.clearLabel ?? 'Clear'}</Menu3Chip>
+            <Menu3Chip onClick={bulk!.onClear}>
+              {bulk!.clearLabel ?? t('common.clear', isPolish ? 'Wyczyść' : 'Clear')}
+            </Menu3Chip>
           ) : null}
         </div>
         <div className={MENU_3_RIGHT_CLASS}>

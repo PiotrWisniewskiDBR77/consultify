@@ -31,6 +31,7 @@
  */
 import { ChevronDown, type LucideIcon } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 /**
  * KANONICZNA kolejność sekcji prawego panelu (standard n-Type ETAP 1.3).
@@ -117,7 +118,14 @@ export interface ArtifactRightPanelProps {
   width?: number | string;
   /** Dodatkowa klasa kontenera. */
   className?: string;
-  /** Aria-label kontenera (a11y). */
+  /**
+   * Aria-label kontenera (a11y). Pominięty → domyślny, PRZETŁUMACZONY podpis
+   * (`common.artifactDetailsPanel`, PL/EN wg `i18n.language` — patrz OQ-UI-D
+   * platforma, 2026-08-11: żaden dzisiejszy konsument nie podaje tego propa,
+   * więc statyczny angielski literał renderował się identycznie na koncie
+   * polskim i angielskim; zero callerów ustawiało go jawnie, więc ta zmiana
+   * jest bezpieczna wstecznie — poprawia WSZYSTKICH konsumentów naraz).
+   */
   ariaLabel?: string;
   /**
    * HP-8 (Harvey-Parity workflow engine): opcjonalny slot NAD sekcjami dla
@@ -208,6 +216,12 @@ export const ArtifactRightPanel: React.FC<ArtifactRightPanelProps> = ({
   ariaLabel,
   statusBar,
 }) => {
+  const { t, i18n } = useTranslation();
+  const isPolish = !!i18n.language?.startsWith('pl');
+  const defaultAriaLabel = t(
+    'common.artifactDetailsPanel',
+    isPolish ? 'Szczegóły artefaktu' : 'Artifact details'
+  );
   const [openIds, setOpenIds] = useState<Set<string>>(
     () => new Set(sections.filter((s) => s.defaultOpen ?? true).map((s) => s.id))
   );
@@ -306,7 +320,7 @@ export const ArtifactRightPanel: React.FC<ArtifactRightPanelProps> = ({
 
   return (
     <aside
-      aria-label={ariaLabel ?? 'Artifact details'}
+      aria-label={ariaLabel ?? defaultAriaLabel}
       style={{ width, minWidth: width }}
       className={`shrink-0 h-full overflow-y-auto bg-c-surface border-l border-c-border-subtle ${className ?? ''}`}
     >

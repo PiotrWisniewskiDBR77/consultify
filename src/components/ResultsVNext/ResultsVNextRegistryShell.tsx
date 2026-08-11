@@ -27,7 +27,7 @@
  * per-field (`HonestValueCell`) — also no shell-level special case needed.
  */
 
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 
 import { PREVIEW_PANE_WIDTH } from '@/components/shared/PreviewPane/previewGeometry';
 import {
@@ -80,6 +80,58 @@ export const ResultsVNextRegistryShell: React.FC<ResultsVNextRegistryShellProps>
   onForbiddenBack,
   className,
 }) => {
+  /**
+   * Punkt zakresu 5 (tor PLATFORMY, 2026-08-11) — „Esc zamyka, focus wraca do
+   * rekordu" (TRIADA §B pkt 24/42, `06_ACCEPTANCE_AND_VERIFICATION_HANDBOOK.md`
+   * §10 Preview: „single-click otwiera, Esc zamyka i zwraca focus"). Zbadano:
+   * ten wzorzec już istnieje jako R03-2 w `TableWithPreviewLayout.tsx`, ale ta
+   * powłoka komponuje `StandardTable`+`StandardPreview` RĘCZNIE (linie ~99-121,
+   * poza `TableWithPreviewLayout`), więc żadna z trzech domen RN-G2 (KPI/ROI/
+   * OKR) nie dostawała Esc-to-close ani powrotu fokusu — potwierdzone czytaniem
+   * `ResultsKpiRegistryPage.tsx`/`ResultsRoiRegistryPage.tsx`/
+   * `ResultsOkrRegistryPage.tsx`: `onClose` tylko zeruje stan zaznaczenia,
+   * zero listenera klawiatury, zero śledzenia elementu-otwieracza.
+   *
+   * Minimalna, wsteczna kompatybilna łatka na TYM poziomie (bez zmiany API
+   * powłoki ani `StandardPreviewProps`): `preview.onClose` już istnieje jako
+   * pole kontraktu — używamy go. Bez j/k nawigacji z R03-2 (powłoka nie ma
+   * `itemIds`/`onSelect` — dodanie ich byłoby zmianą sygnatury, a ZASADY tego
+   * zadania każą się zatrzymać i zgłosić zamiast tego, nie dopisywać propów).
+   */
+  const previewOpenerRef = useRef<HTMLElement | null>(null);
+  const wasPreviewOpenRef = useRef(false);
+
+  useEffect(() => {
+    const isOpen = !!preview;
+    if (isOpen && !wasPreviewOpenRef.current) {
+      // Świeże otwarcie — zapamiętaj element, z którego przyszedł focus.
+      const active = typeof document !== 'undefined' ? document.activeElement : null;
+      if (active instanceof HTMLElement && active !== document.body) {
+        previewOpenerRef.current = active;
+      }
+    } else if (!isOpen && wasPreviewOpenRef.current) {
+      // Świeże zamknięcie (× albo Esc niżej) — oddaj focus, jeśli element żyje.
+      const opener = previewOpenerRef.current;
+      previewOpenerRef.current = null;
+      if (opener && typeof document !== 'undefined' && document.contains(opener)) {
+        opener.focus();
+      }
+    }
+    wasPreviewOpenRef.current = isOpen;
+  }, [preview]);
+
+  useEffect(() => {
+    if (!preview?.onClose) return;
+    const onClose = preview.onClose;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      event.preventDefault();
+      onClose();
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [preview?.onClose]);
+
   return (
     <div
       className={className ?? 'h-full'}
