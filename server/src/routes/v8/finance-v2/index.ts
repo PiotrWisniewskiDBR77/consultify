@@ -23,6 +23,7 @@ import crosscuttingRoutes from './crosscutting.routes.js';
 import modelsRoutes from './models.routes.js';
 import predictionRoutes from './prediction.routes.js';
 import statementsRoutes from './statements.routes.js';
+import valuationRoutes from './valuation.routes.js';
 import versionsRoutes from './versions.routes.js';
 
 const financeV2Router = Router();
@@ -49,5 +50,10 @@ financeV2Router.use(analysisRoutes);
 financeV2Router.use(baselineRoutes);
 financeV2Router.use(predictionRoutes);
 financeV2Router.use(crosscuttingRoutes);
+// Pakiet B3 (Valuation HTTP Surface) — the last zero-coverage domain (Pakiet B2 report §2.6):
+// Cases/Variants, Methods/basket weights, WACC inputs, DCF/FCFF compute, full results, EV->Equity
+// bridge, Terminal/Sensitivity (method-scoped), Advisor. Own `/valuation/*` + `/valuation/methods/
+// :methodId/*` prefixes — no path overlap with any router above.
+financeV2Router.use(valuationRoutes);
 
 export default financeV2Router;
