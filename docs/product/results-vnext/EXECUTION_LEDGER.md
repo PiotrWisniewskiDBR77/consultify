@@ -6361,3 +6361,114 @@ UI tego nie zasłania fałszywym wyszarzeniem.
 
 Osie, których automat nie potrafi sprawdzić (aktywacja Enter/Space, pełny cykl Esc z
 powrotem fokusu), zostają jawnie NIEZWERYFIKOWANE — nie zaliczone jako sprawdzone.
+
+---
+
+## 56. RN-G3/RN-G4 — pełne narzędzia klasy L, runda interaktywna, blocker harnessu (2026-08-11)
+
+Doba pracy orkiestratora z ośmioma izolowanymi worktree. **Nic nie wypchnięte,
+nic nie wdrożone, wszystkie trzy flagi domenowe domyślnie WYŁĄCZONE.**
+`IMPLEMENTED_EVIDENCED_CANDIDATE` **nie osiągnięty** — patrz §56.5.
+
+### 56.1 Dowiezione
+
+RN-G2 z 11 do ~19 pakietów. **Pełne narzędzia klasy L (D03) dla trzech domen**:
+KPI (`/results/kpi/:kpiId`, 8 sekcji, sprawa odchylenia jako **subwidok** D05 z
+realnym 9-stanowym automatem i nakładką `escalated` — nigdy 10. stan) · ROI
+(cztery fazy Build Case → Decision → Realize Value → Learn, ~5600 linii) · OKR
+(obszar roboczy zestawu + **osobne** powierzchnie Programu i Cyklu).
+Platforma: powłoka klasy L bez tworzenia nowego standardu, **D06 nadpisało
+decyzję R01** (powód blokady wrócił do UI), dokończone i18n komponentów
+wspólnych, Esc i powrót fokusu w podglądzie.
+
+**Bramki na scalonym HEAD**: `tsc --noEmit` 0 błędów · `vite build` zielony ·
+`check-list-canon.sh` **408 przy baseline 409 — dług SPADŁ** ·
+`check-artefakt.sh` 7/7 · ~250 zrzutów · wszystkie `persistKey` w
+`results-vnext.*`.
+
+### 56.2 Runda interaktywna (Fala 0) — i jej granica
+
+`RN_G3_F0_INTERACTIVE_REVERIFY.md`: realny Playwright, 8 ekranów, każda zakładka
+i chip kliknięte, kebab otwierany myszą **i klawiaturą**, ustawienia kolumn
+przeżyły realne `page.reload()`, Tab przez 12 przystanków, Esc rozwijał jedną
+warstwę naraz z powrotem fokusu. **Zero błędów konsoli, zero odpowiedzi ≥400.**
+Runda **obaliła własny wcześniejszy zapis** OQ-UI-G #1: aktywacja Enter/Space na
+kebabie **działa** — to było ograniczenie poprzedniego narzędzia, nie produktu.
+
+### 56.3 Trzy defekty przepuszczone przez odbiór — zapisane jako przyjęte z wadą
+
+1. **Rejestr zestawów OKR**: `progress` to ułamek 0–1, formater nie mnożył ×100,
+   **mock w harnessie był wykalibrowany na 0–100** — dwa błędy znosiły się na
+   ekranie. Realne dane dałyby „0,6%" zamiast „62,5%".
+2. **Karty wyników KPI**: `useMemo` za wczesnym zwrotem wywalał ekran przy
+   kliknięciu nowej zakładki **na żywej trasie**. Odebrany na 21 zrzutach —
+   ekran harnessu KPI padał wcześniej z innego powodu, więc **ta zakładka nigdy
+   nie została kliknięta na żadnym zaakceptowanym zrzucie**.
+3. **Siedem `window.prompt`** w kodzie produkcyjnym (6 OKR, 1 KPI). Natywne okno
+   nie ma motywu, nie da się go zrzucić ani przetestować. Usunięte, zastąpione
+   realnymi dialogami. Orkiestrator **skorygował własną klasyfikację** pakietu
+   KPI z czystego na przyjęty z wadą po uruchomieniu grepa.
+
+**Reguła wyprowadzona i obowiązująca**: *zrzut dowodzi, że ekran się RENDERUJE,
+nie że da się go KLIKAĆ.* Przy pakiecie dodającym zakładkę żądaj zrzutu **z tej
+zakładki, po kliknięciu**.
+
+Czwarty przypadek: tor naprawiający `window.prompt` **zawiesił się przed
+uruchomieniem bramek** i zostawił 8 błędów typów (martwa strefa czasowa w
+`OkrReviewReflectionView.tsx` i `OkrSupportView.tsx`). Wykryte typecheckiem
+orkiestratora **po** scaleniu, naprawione ręcznie. Dowód, że bramki muszą biegać
+przed scaleniem.
+
+### 56.4 OQ-UI-I — blocker znaleziony niezależną weryfikacją, nie raportem
+
+Pięć z sześciu ekranów `dev-render/screens/results-vnext-*.tsx` montowało
+**drugą implementację ekranu** (wspólna powłoka + prezentery), a nie komponent
+produkcyjny. Rejestr KPI był jedyny, który montował prawdziwy komponent — i
+**dlatego tylko tam dało się znaleźć awarię hooków**. Pozostałe pięć miało tę
+klasę błędu poza zasięgiem jakiegokolwiek dowodu, łącznie z Falą 0, która
+przeklikała wszystko sumiennie i nie mogła tego zobaczyć.
+Większość przerobiona, **konwersja niezweryfikowana w całości i nieponowiona
+rundą interaktywną** — to pierwsze zadanie następcy.
+
+### 56.5 Czego NIE dowiedziono
+
+- **Żaden pakiet UI tej doby nie ma własnego dowodu readback na realnym
+  PostgreSQL** — wszystkie są klientami backendu zamkniętego wcześniej.
+- Zrzuty i interakcje pochodzą z harnessu z podstawioną warstwą sieciową: dowód
+  układu i logiki komponentu, **nie** dowód endpointu ani trwałości.
+- **Macierz UI/CX nie została przejechana w całości na jednym finalnym SHA.**
+- **Fala Teresy i dowody przekrojowe NIE wykonane.** Praca zabezpieczona na
+  gałęziach `rn-g4-lane-teresa` i `rn-g4-lane-crossdomain`, oznaczona `WIP(...)`,
+  **niezweryfikowana i nieuruchomiona, NIE scalona**. Pięć plików
+  `tests/acceptance/rvn-g4-*.e2e.test.ts` nigdy nie wykonano na realnej bazie —
+  nieuruchomiony test nie dowodzi niczego.
+
+### 56.6 Naprawione narzędzia pomiarowe
+
+`check-gestosc.sh` **mierzył nieprawdę na macOS**: `\s` to rozszerzenie GNU awk,
+BSD awk go nie zna, więc reguły zamykające strefę nigdy nie odpalały i licznik
+sumował Menu 2 z Menu 3. Naprawione i sprawdzone **w obie strony**. Bramka, która
+odpala na poprawnym kodzie, jest gorsza niż jej brak.
+Ponadto: luka fikstur w 18 plikach testowych ROI oraz `dev-render/shot.mjs`
+raportujący teraz odpowiedzi ≥400 i pełną listę błędów konsoli.
+
+### 56.7 Ochrona cudzej pracy
+
+Pięć plików równoległej sesji **nietkniętych przez całą dobę**. Orkiestrator
+**nie utworzył trzeciej konkurencyjnej naprawy `initiatives.status`**, mimo
+posiadania dowodu, że jej brak kosztuje 48 czerwonych testów ROI (dowód w
+izolacji: ROI **129/48/12 → 189/0/0**, sumy zgodne 684=684, kontrola negatywna
+przeszła, zero porażek z przyczyny produktowej po zdjęciu maski).
+
+### 56.8 Blockery przekazane dalej
+
+**B1** OQ-UI-I częściowo domknięty · **B2** D08 nieosiągalne bez zmiany w
+`server/**` (powód `not_calculable` niepersystowany dla Zestawu OKR i check-inu)
+· **B3** luki API bez obejścia, w tym **brak kontroli roli na komendach sprawy
+odchylenia KPI poza `approvePlan`** — UI tego nie zasłania fałszywym
+wyszarzeniem · **B4** `initiatives.status DEFAULT 'step3'` · **B5** trzy pliki
+testowe KPI z tą samą luką fikstur.
+
+Handoff: `RESUME_HANDOFF_2026-08-11.md`. Raport dla Codexa:
+`RN_G4_RAPORT_DLA_CODEX_2026-08-11.md`. Prompt dla następcy:
+`RN_G4_PROMPT_DLA_NASTEPCY.md`.

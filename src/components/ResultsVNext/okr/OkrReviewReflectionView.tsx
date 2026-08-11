@@ -87,6 +87,27 @@ export const OkrReviewReflectionView: React.FC<OkrReviewReflectionViewProps> = (
     Record<string, { whatWorked: string; whatDidNotWork: string; why: string; learning: string; nextCycleChange: string; disposition: OkrReflectionDisposition | '' }>
   >({});
 
+  // TDZ FIX (2026-08-11): `load`, `selfReview` and `managerReview` used to be
+  // declared BELOW the dialog callbacks that list them as dependencies, so the
+  // dependency arrays read them inside their temporal dead zone. Declared here,
+  // before their first use.
+  const load = useCallback(() => {
+    setError(null);
+    Promise.all([listOkrSetReviews(set.setId), listObjectivesForSet(set.setId)])
+      .then(([r, o]) => {
+        setReviews(r);
+        setObjectives(o);
+      })
+      .catch((err) => setError(err instanceof Error ? err.message : String(err)));
+  }, [set.setId]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const selfReview = (reviews ?? []).find((r) => r.reviewType === 'self') ?? null;
+  const managerReview = (reviews ?? []).find((r) => r.reviewType === 'manager') ?? null;
+
   // "Request changes" dialog (replaces `window.prompt` — RN-G3 prompt-removal
   // pass, 2026-08-11). Kept OUTSIDE `run()`/`pending` on purpose: a rejected
   // submit must keep the dialog open with the server's error shown inline,
@@ -151,22 +172,6 @@ export const OkrReviewReflectionView: React.FC<OkrReviewReflectionViewProps> = (
     [set.setId, isPolish, load]
   );
 
-  const load = useCallback(() => {
-    setError(null);
-    Promise.all([listOkrSetReviews(set.setId), listObjectivesForSet(set.setId)])
-      .then(([r, o]) => {
-        setReviews(r);
-        setObjectives(o);
-      })
-      .catch((err) => setError(err instanceof Error ? err.message : String(err)));
-  }, [set.setId]);
-
-  useEffect(() => {
-    load();
-  }, [load]);
-
-  const selfReview = (reviews ?? []).find((r) => r.reviewType === 'self') ?? null;
-  const managerReview = (reviews ?? []).find((r) => r.reviewType === 'manager') ?? null;
 
   const run = (id: string, promise: Promise<unknown>, onDone?: () => void) => {
     setPending(id);

@@ -105,6 +105,18 @@ export const OkrSupportView: React.FC<OkrSupportViewProps> = ({ set, isPolish, b
   const [busy, setBusy] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
+  // TDZ FIX (2026-08-11): `load` was declared BELOW the dialog callback that
+  // lists it as a dependency, so the dependency array read it inside its
+  // temporal dead zone. Declared here, before its first use.
+  const load = useCallback(() => {
+    setLoading(true);
+    setError(null);
+    listSupportRequestsForSet(set.setId)
+      .then((rows) => setItems(rows))
+      .catch((err) => setError(err instanceof Error ? err.message : String(err)))
+      .finally(() => setLoading(false));
+  }, [set.setId]);
+
   const [actionTarget, setActionTarget] = useState<{ kind: SupportActionKind; row: OkrSupportRequestDto } | null>(null);
   const [actionBusy, setActionBusy] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -144,14 +156,6 @@ export const OkrSupportView: React.FC<OkrSupportViewProps> = ({ set, isPolish, b
     [actionTarget, load]
   );
 
-  const load = useCallback(() => {
-    setLoading(true);
-    setError(null);
-    listSupportRequestsForSet(set.setId)
-      .then((rows) => setItems(rows))
-      .catch((err) => setError(err instanceof Error ? err.message : String(err)))
-      .finally(() => setLoading(false));
-  }, [set.setId]);
 
   useEffect(() => {
     load();
