@@ -29,7 +29,7 @@ import { Router } from 'express';
 
 import type { AuthRequest } from '../../../middleware/auth.middleware.js';
 import { getV8Context } from '../../../middleware/v8Auth.middleware.js';
-import { cancelJob, enqueue, getJob, type EnqueueJobParams } from '../../../services/finance/canonical/computeJobService.js';
+import { cancelJob, enqueue, getJob, getJobOutput, type EnqueueJobParams } from '../../../services/finance/canonical/computeJobService.js';
 import { asyncHandler } from '../../../utils/asyncHandler.js';
 import { financeV2Meta, readIdempotencyKey, sendError } from './_shared.js';
 
@@ -110,6 +110,47 @@ router.get(
     }
 
     return res.status(200).json({ data: jobToDto(job), meta: financeV2Meta() });
+  })
+);
+
+// ---------------------------------------------------------------------------
+// GET /compute/jobs/:jobId/output — D2 fix (Pakiet B2). Closes the gap Pakiet
+// B's report flagged: no endpoint could ever return a compute result, only
+// job status. Fail-closed: job must exist for THIS org (404 otherwise);
+// output missing (job not yet succeeded, or succeeded-without-output — see
+// `computeJobService.getJobOutput`'s own doc comment) is a distinct 404 code
+// so a client can tell "wrong id/not yours" apart from "not ready yet".
+// ---------------------------------------------------------------------------
+
+router.get(
+  '/compute/jobs/:jobId/output',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const jobId = String(req.params.jobId || '');
+
+    const job = await getJob(organizationId, jobId);
+    if (!job) {
+      return sendError(res, 404, 'NOT_FOUND', 'Compute job not found');
+    }
+
+    const output = await getJobOutput(organizationId, jobId);
+    if (!output) {
+      return sendError(res, 404, 'OUTPUT_NOT_READY', 'Compute job has no committed output yet', { jobStatus: job.status });
+    }
+
+    return res.status(200).json({
+      data: {
+        jobId: output.job_id,
+        outputArtifactId: output.output_artifact_id,
+        outputBusinessVersionId: output.output_business_version_id,
+        outputWorkingRevisionId: output.output_working_revision_id,
+        committedByAttemptNumber: output.committed_by_attempt_number,
+        contentSemanticHash: output.content_semantic_hash,
+        freshness: output.freshness,
+        committedAt: output.committed_at,
+      },
+      meta: financeV2Meta(),
+    });
   })
 );
 

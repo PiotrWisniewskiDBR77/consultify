@@ -35,12 +35,14 @@ import {
   getArtifact,
   getBusinessVersion,
   listBusinessVersions,
+  renameArtifact,
   type CreateArtifactParams,
 } from '../../../services/finance/canonical/artifactVersionService.js';
 import {
   allowedActionsFromStatus,
   type FinanceArtifactType,
 } from '../../../services/finance/canonical/lifecycleService.js';
+import { canRenameArtifact, validateWorkspaceName } from '../../../services/finance/workspace/workspaceBarContract.js';
 import { asyncHandler } from '../../../utils/asyncHandler.js';
 import { financeV2Meta, mapOrgRoleToFinanceRole, sendError } from './_shared.js';
 
@@ -230,6 +232,61 @@ router.get(
         role,
         allowedActions,
       },
+      meta: financeV2Meta(),
+    });
+  })
+);
+
+// ---------------------------------------------------------------------------
+// POST /artifacts/:artifactId/rename — D3 fix (Pakiet B2). OWN-FIN-011
+// editable Workspace Bar name. Router-level gating reuses the CLIENT
+// contract this program already shipped (`workspaceBarContract.ts`
+// `canRenameArtifact`/`validateWorkspaceName`) rather than inventing a
+// second rule set — same "one source of truth" reasoning `_shared.ts`'s own
+// header documents for `mapOrgRoleToFinanceRole`.
+// ---------------------------------------------------------------------------
+
+router.post(
+  '/artifacts/:artifactId/rename',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userRole } = getV8Context(req);
+    const artifactId = String(req.params.artifactId || '');
+    const body = req.body ?? {};
+
+    const artifact = await getArtifact(organizationId, artifactId);
+    if (!artifact) {
+      return sendError(res, 404, 'NOT_FOUND', 'Artifact not found');
+    }
+
+    const versions = await listBusinessVersions(organizationId, artifactId);
+    const current = versions.length > 0 ? versions[versions.length - 1] : null;
+    const role = mapOrgRoleToFinanceRole(userRole);
+
+    if (current) {
+      const gate = canRenameArtifact(current.status, role);
+      if (!gate.editable) {
+        return sendError(res, 403, gate.reason, `Rename blocked: ${gate.reason}`);
+      }
+    }
+
+    if (typeof body.naturalKey !== 'string') {
+      return sendError(res, 400, 'INVALID_BODY', 'naturalKey is required and must be a string');
+    }
+    const nameCheck = validateWorkspaceName(body.naturalKey);
+    if (!nameCheck.ok) {
+      return sendError(res, 400, nameCheck.code, nameCheck.message);
+    }
+
+    const updated = await renameArtifact(organizationId, artifactId, nameCheck.normalized);
+    if (!updated) {
+      // Fail-closed / not-a-leak: identical to the `getArtifact` guard above
+      // racing a concurrent archive/cross-tenant change between the two
+      // reads — never distinguishable from "not found" to the caller.
+      return sendError(res, 404, 'NOT_FOUND', 'Artifact not found');
+    }
+
+    return res.status(200).json({
+      data: { artifactId: updated.artifact_id, naturalKey: updated.natural_key },
       meta: financeV2Meta(),
     });
   })
