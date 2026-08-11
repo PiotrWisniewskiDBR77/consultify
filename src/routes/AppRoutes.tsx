@@ -129,6 +129,21 @@ const OkrProgramsPage = lazyWithRetry(() =>
 const OkrCyclesPage = lazyWithRetry(() =>
   import('@/components/ResultsVNext/okr/OkrCyclesPage').then((m) => ({ default: m.default }))
 );
+// RN-G3 lane (2026-08-11) — full KPI tool, klasa L (`/results/kpi/:kpiId`,
+// D03) + Deviation Case subview (`/results/kpi/:kpiId/deviation-cases/:caseId`,
+// D05 — subview of the tool, not a top-level registry). See
+// `src/components/ResultsVNext/kpiTool/KpiToolPage.tsx` header for the full
+// scope/gap disclosure.
+const KpiToolPage = lazyWithRetry(() =>
+  import('@/components/ResultsVNext/kpiTool/KpiToolPage').then((m) => ({
+    default: m.default,
+  }))
+);
+const KpiDeviationCaseSubview = lazyWithRetry(() =>
+  import('@/components/ResultsVNext/kpiTool/KpiDeviationCaseSubview').then((m) => ({
+    default: m.default,
+  }))
+);
 
 const ConclusionsHub = lazyWithRetry(() =>
   import('@/components/Conclusions/ConclusionsHub').then((m) => ({ default: m.default }))
@@ -2530,6 +2545,63 @@ export const AppRoutes: React.FC = () => {
                 >
                   <RouteErrorBoundary>
                     <ResultsKpiScorecardDetailPage />
+                  </RouteErrorBoundary>
+                </ProductionModuleGate>
+              </MainLayout>
+            </BetaGate>
+          }
+        />
+        {/* RN-G3 lane (2026-08-11) — KPI full tool, klasa L (D03) + Deviation
+            Case subview (D05). Same entitlement chain as the routes above —
+            reused, not reinvented. Both internally gated by the SAME
+            `kpiRegistry` flag (one flag per domain, resultsVNextFeatureFlags.ts
+            convention). MainLayout omits `breadcrumbs` for the KPI tool route
+            since the shell itself (NModeShell/NModeHeader) already renders its
+            own identity chrome (back/title/kebab) — an app-level breadcrumb
+            bar on top would duplicate it, unlike the list-shell routes above
+            which have no such built-in identity header. */}
+        <Route
+          path={ROUTES.RESULTS_KPI.TOOL}
+          element={
+            <BetaGate moduleId="MODULE_BENEFITS">
+              <MainLayout
+                breadcrumbs={
+                  breadcrumbs || [t('sidebar.results', 'Results'), t('results.kpi', 'KPI')]
+                }
+                noPadding
+              >
+                <ProductionModuleGate
+                  enabled={!hideNonCoreModulesOnPublicProduction}
+                  moduleName="Results"
+                >
+                  <RouteErrorBoundary>
+                    <KpiToolPage />
+                  </RouteErrorBoundary>
+                </ProductionModuleGate>
+              </MainLayout>
+            </BetaGate>
+          }
+        />
+        <Route
+          path={ROUTES.RESULTS_KPI.DEVIATION_CASE}
+          element={
+            <BetaGate moduleId="MODULE_BENEFITS">
+              <MainLayout
+                breadcrumbs={
+                  breadcrumbs || [
+                    t('sidebar.results', 'Results'),
+                    t('results.kpi', 'KPI'),
+                    t('results.kpiDeviationCase', 'Deviation case'),
+                  ]
+                }
+                noPadding
+              >
+                <ProductionModuleGate
+                  enabled={!hideNonCoreModulesOnPublicProduction}
+                  moduleName="Results"
+                >
+                  <RouteErrorBoundary>
+                    <KpiDeviationCaseSubview />
                   </RouteErrorBoundary>
                 </ProductionModuleGate>
               </MainLayout>

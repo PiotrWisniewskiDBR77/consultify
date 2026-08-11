@@ -66,6 +66,13 @@ export { OkrCyclesPage } from './okr/OkrCyclesPage';
 // `kpiScorecardPresenters.tsx` (StandardTable/Preview builders shared by the
 // live screens and the dev-render QA harness).
 export { ResultsKpiScorecardDetailPage } from './kpiScorecards/ResultsKpiScorecardDetailPage';
+// RN-G3 lane (2026-08-11) — KPI full tool, klasa L (`/results/kpi/:kpiId`,
+// D03) + Deviation Case subview (D05). See `kpiTool/` subfolder:
+// `kpiDeviationApi.ts`/`kpiInitiativeImpactApi.ts` (fetch clients),
+// `kpiToolMappers.ts` (status/tone pure helpers), `KpiToolPage.tsx`/
+// `KpiDeviationCaseSubview.tsx` (screens).
+export { KpiToolPage } from './kpiTool/KpiToolPage';
+export { KpiDeviationCaseSubview } from './kpiTool/KpiDeviationCaseSubview';
 export {
   isResultsVNextFlagEnabled,
   RESULTS_VNEXT_FLAG_KEYS,

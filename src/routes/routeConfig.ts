@@ -135,6 +135,15 @@ export const ROUTES = {
   RESULTS_KPI: {
     ROOT: '/results/kpi',
     SCORECARD: '/results/kpi/scorecards/:scorecardId',
+    // RN-G3 lane (2026-08-11) — full KPI tool, klasa L (D03) + Deviation
+    // Case subview (D05: subview of the tool, never a top-level registry —
+    // master plan §11's route list only names ROOT/SCORECARD; these two are
+    // additive, not a change to the frozen contract). React Router v6 ranks
+    // by specificity, so `/results/kpi/scorecards/:scorecardId` above still
+    // wins over `/results/kpi/:kpiId` for that literal path segment —
+    // verified against v6's route-ranking algorithm, not order-dependent.
+    TOOL: '/results/kpi/:kpiId',
+    DEVIATION_CASE: '/results/kpi/:kpiId/deviation-cases/:caseId',
   },
   RESULTS_ROI: {
     ROOT: '/results/roi',

@@ -274,6 +274,9 @@ const ResultsVNextOkrAdminScreen = React.lazy(
 const ResultsVNextKpiScorecardsScreen = React.lazy(
   () => import('./screens/results-vnext-kpi-scorecards')
 );
+const ResultsVNextKpiToolScreen = React.lazy(
+  () => import('./screens/results-vnext-kpi-tool')
+);
 const ResultsVNextLegacyArchiveScreen = React.lazy(
   () => import('./screens/results-vnext-legacy-archive')
 );
@@ -323,6 +326,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'RN-G2 P1 #8 — REALNY rejestr Kart Wyników KPI (kpiScorecardPresenters + ResultsVNextRegistryShell): lista (zakładka Karty wyników) + szczegóły karty (Pozycje/Migawki), status GET .../status, lock NO_MEMBERS. &view=list|detail &tab=items|snapshots &state=ready|loading|empty|error|forbidden &selected=<id|none> &scorecard=sc-1|sc-2|sc-3|sc-4',
     render: () => <ResultsVNextKpiScorecardsScreen />,
+  },
+  'results-vnext-kpi-tool': {
+    label:
+      'RN-G3 lane — REALNY <KpiToolPage> + <KpiDeviationCaseSubview> (klasa L, D03/D05), zamontowane pod jednym <MemoryRouter> z prawdziwym useNavigate() między nimi. &view=tool|case &state=ready|loading|error &caseState=open|analysis_required|plan_required|plan_submitted|approved|executing|recovery_observed|verification|closed &severity=warning|critical &escalated=1 &impacts=0 &ff=off',
+    render: () => <ResultsVNextKpiToolScreen />,
   },
   'results-vnext-legacy-archive': {
     label:
