@@ -239,3 +239,58 @@ export async function writeSensitivityGrid(params: WriteSensitivityGridParams): 
 
   return { gridId };
 }
+
+// ---------------------------------------------------------------------------
+// Pakiet B3 (Valuation HTTP Surface) — thin readers
+// ---------------------------------------------------------------------------
+
+export interface SensitivityGridRow {
+  id: string;
+  organization_id: string;
+  method_id: string;
+  grid_label: string;
+  row_axis_variable: string;
+  column_axis_variable: string;
+  grid_status: 'DRAFT' | 'COMPLETE';
+}
+
+export interface SensitivityCellRow {
+  id: string;
+  row_index: number;
+  col_index: number;
+  row_axis_value: string | null;
+  column_axis_value: string | null;
+  cell_value_decimal: string | null;
+  is_base_cell: boolean;
+}
+
+export async function listSensitivityGrids(organizationId: string, methodId: string): Promise<SensitivityGridRow[]> {
+  return withPinnedPostgresTransaction((tx) =>
+    tx.queryAll<SensitivityGridRow>(
+      `SELECT id, organization_id, method_id, grid_label, row_axis_variable, column_axis_variable, grid_status
+         FROM finance_valuation_sensitivity_grids WHERE organization_id = ? AND method_id = ? ORDER BY grid_label`,
+      [organizationId, methodId]
+    )
+  );
+}
+
+export async function getSensitivityGrid(
+  organizationId: string,
+  methodId: string,
+  gridLabel: string
+): Promise<{ grid: SensitivityGridRow; cells: SensitivityCellRow[] } | null> {
+  return withPinnedPostgresTransaction(async (tx) => {
+    const grid = await tx.queryOne<SensitivityGridRow>(
+      `SELECT id, organization_id, method_id, grid_label, row_axis_variable, column_axis_variable, grid_status
+         FROM finance_valuation_sensitivity_grids WHERE organization_id = ? AND method_id = ? AND grid_label = ?`,
+      [organizationId, methodId, gridLabel]
+    );
+    if (!grid) return null;
+    const cells = await tx.queryAll<SensitivityCellRow>(
+      `SELECT id, row_index, col_index, row_axis_value, column_axis_value, cell_value_decimal, is_base_cell
+         FROM finance_valuation_sensitivity_cells WHERE grid_id = ? ORDER BY row_index, col_index`,
+      [grid.id]
+    );
+    return { grid, cells };
+  });
+}

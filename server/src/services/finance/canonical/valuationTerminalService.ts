@@ -156,3 +156,35 @@ export async function writeTerminalRow(input: TerminalRowInput): Promise<{ id: s
   );
   return { id };
 }
+
+// ---------------------------------------------------------------------------
+// Pakiet B3 (Valuation HTTP Surface) — thin reader
+// ---------------------------------------------------------------------------
+
+export interface TerminalRow {
+  id: string;
+  organization_id: string;
+  method_id: string;
+  convention: 'GORDON_GROWTH' | 'EXIT_MULTIPLE';
+  g_pct: string | null;
+  exit_multiple_value: string | null;
+  reinvestment_rate_pct: string | null;
+  roic_pct: string | null;
+  terminal_value_decimal: string | null;
+  terminal_share_pct: string | null;
+  is_primary: boolean;
+  rationale: string | null;
+}
+
+/** Up to two rows per method (one `GORDON_GROWTH`, one `EXIT_MULTIPLE` cross-check — `UNIQUE(method_id, convention)`). */
+export async function listTerminalRows(organizationId: string, methodId: string): Promise<TerminalRow[]> {
+  return withPinnedPostgresTransaction((tx) =>
+    tx.queryAll<TerminalRow>(
+      `SELECT t.* FROM finance_valuation_terminal t
+         JOIN finance_valuation_methods m ON m.id = t.method_id
+        WHERE t.method_id = ? AND t.organization_id = ? AND m.organization_id = ?
+        ORDER BY t.convention`,
+      [methodId, organizationId, organizationId]
+    )
+  );
+}
