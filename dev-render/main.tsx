@@ -271,6 +271,7 @@ const ResultsVNextKpiScorecardsScreen = React.lazy(
 const ResultsVNextLegacyArchiveScreen = React.lazy(
   () => import('./screens/results-vnext-legacy-archive')
 );
+const RnG3ClassLRecordShellScreen = React.lazy(() => import('./screens/rn-g3-class-l-record-shell'));
 
 const SCREENS: Record<string, { label: string; render: () => React.ReactElement }> = {
   'results-vnext-registry-shell': {
@@ -312,6 +313,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'RN-G2 R09-3 — REALNY <ResultsVNextLegacyArchivePanel> (kpi/roi/okr .../legacy index, tylko do odczytu, prep pod kolejną falę — NIEPODPIĘty do żadnego huba). &domain=kpi|roi|okr &state=ready|loading|empty|error',
     render: () => <ResultsVNextLegacyArchiveScreen />,
+  },
+  'rn-g3-class-l-record-shell': {
+    label:
+      'RN-G3 tor PLATFORMY §1 — DEMONSTRACJA przepisu powłoki klasy L (archetyp Rekord): ArtifactBreadcrumb + NModeShell + ArtifactRightPanel/ArtifactPropertiesTable, zero nowego standardu. &save=idle|saving|saved|error|conflict &teresa=1',
+    render: () => <RnG3ClassLRecordShellScreen />,
   },
   'mw-007-calendar-narrow-viewport': {
     label:
