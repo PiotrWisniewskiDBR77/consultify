@@ -269,6 +269,12 @@ export interface FinanceBusinessVersionSummaryDto {
   approvedAt: string | null;
 }
 
+/** artifacts.routes.ts:288-291 (POST /artifacts/:id/rename), sukces. */
+export interface FinanceRenameArtifactResultDto {
+  artifactId: string;
+  naturalKey: string | null;
+}
+
 /** artifacts.routes.ts:214-234 (GET /artifacts/:id/capabilities). */
 export interface FinanceCapabilitiesDto {
   artifactId: string;

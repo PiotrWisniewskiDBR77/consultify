@@ -34,6 +34,7 @@ import type {
   FinanceComputeSnapshotResultDto,
   FinanceCreateArtifactResultDto,
   FinanceEnqueueJobResultDto,
+  FinanceRenameArtifactResultDto,
   FinanceReopenModelResultDto,
   FinanceTransitionResultDto,
   LifecycleAction,
@@ -98,6 +99,11 @@ export async function listFinanceArtifactVersions(
 /** WP-B02 §4.3 `allowedActionsFromCurrentStatus` — steruje paskiem akcji `FinanceWorkspaceBar` (OWN-FIN-012). */
 export async function getFinanceArtifactCapabilities(artifactId: string): Promise<FinanceCapabilitiesDto> {
   return v8Get<FinanceCapabilitiesDto>(`${BASE}/artifacts/${encodeURIComponent(artifactId)}/capabilities`);
+}
+
+/** artifacts.routes.ts:249-293 (D3 fix, Pakiet B2) — OWN-FIN-011 rename kontrolowany: serwer sam bramkuje `canRenameArtifact`/`validateWorkspaceName` (403 z `STATUS_IMMUTABLE`/`INSUFFICIENT_ROLE`, 400 z kodem walidacji nazwy). */
+export async function renameFinanceArtifact(artifactId: string, naturalKey: string): Promise<FinanceRenameArtifactResultDto> {
+  return v8Post<FinanceRenameArtifactResultDto>(`${BASE}/artifacts/${encodeURIComponent(artifactId)}/rename`, { naturalKey });
 }
 
 // ---------------------------------------------------------------------------
@@ -340,6 +346,7 @@ export const FinanceV2Api = {
   getFinanceArtifact,
   listFinanceArtifactVersions,
   getFinanceArtifactCapabilities,
+  renameFinanceArtifact,
   getFinanceBusinessVersion,
   transitionFinanceVersion,
   createFinanceComputeSnapshot,
