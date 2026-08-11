@@ -15,10 +15,20 @@
 
 import { Router } from 'express';
 
+import artifactsRoutes from './artifacts.routes.js';
+import computeRoutes from './compute.routes.js';
 import modelsRoutes from './models.routes.js';
+import versionsRoutes from './versions.routes.js';
 
 const financeV2Router = Router();
 
 financeV2Router.use(modelsRoutes);
+// Pakiet B (API & Runtime Integration) — artifact lifecycle + compute job
+// queue surface. Mounted after `modelsRoutes` so `/models/:modelId/*`
+// (WP-C02, frozen fixture contract) keeps first-match priority; no path
+// overlap in practice (`/artifacts`, `/versions`, `/compute` prefixes).
+financeV2Router.use(artifactsRoutes);
+financeV2Router.use(versionsRoutes);
+financeV2Router.use(computeRoutes);
 
 export default financeV2Router;

@@ -1,0 +1,140 @@
+/**
+ * Finance v3 canonical adapter — compute job queue surface,
+ * `/api/v8/finance-v2/compute/jobs/*`.
+ *
+ * Pakiet B (API & Runtime Integration), priority (a). Exposes the
+ * caller-facing subset of `computeJobService.ts`: `enqueue`, `getJob`,
+ * `cancelJob`. Deliberately NOT exposed here (worker-internal, not a
+ * client-facing REST concern): `claim`/`claimById`/`heartbeat`/
+ * `completeJobSuccess`/`failJob`/`reapExpiredLeases` — these are called by
+ * the compute worker/cron (`server/src/cron/Scheduler.ts`), not by an HTTP
+ * client acting on behalf of a user. Same reasoning for the org-wide
+ * kill-switch/concurrency-limit setters (`setKillSwitch`/
+ * `setOrgConcurrencyLimit`) — operational controls, not part of this
+ * package's user-facing artifact/compute surface; flagged NIEPOKRYTE in
+ * the report rather than guessed at.
+ *
+ * `ComputeJobRow` has no `output`/`result` column (that lives in
+ * `compute_job_outputs`, written by `completeJobSuccess`) and
+ * `computeJobService.ts` exports no reader for it — GET /jobs/:jobId
+ * therefore returns job status (queued/running/succeeded/failed/cancelled)
+ * and `input_revision_hash`, but NOT the compute result payload. Documented
+ * as a gap in the report (services/finance/canonical/computeJobService.ts
+ * is out of this package's write-allowlist — `server/src/services/finance/**`
+ * is explicitly NOT allowed to be modified here).
+ */
+
+import type { Response } from 'express';
+import { Router } from 'express';
+
+import type { AuthRequest } from '../../../middleware/auth.middleware.js';
+import { getV8Context } from '../../../middleware/v8Auth.middleware.js';
+import { cancelJob, enqueue, getJob, type EnqueueJobParams } from '../../../services/finance/canonical/computeJobService.js';
+import { asyncHandler } from '../../../utils/asyncHandler.js';
+import { financeV2Meta, readIdempotencyKey, sendError } from './_shared.js';
+
+const router = Router();
+
+function jobToDto(job: Awaited<ReturnType<typeof getJob>>) {
+  if (!job) return null;
+  return {
+    jobId: job.id,
+    jobType: job.job_type,
+    status: job.status,
+    inputArtifactId: job.input_artifact_id,
+    inputRevisionHash: job.input_revision_hash,
+    attemptCount: job.attempt_count,
+    maxAttempts: job.max_attempts,
+    createdAt: job.created_at,
+    startedAt: job.started_at,
+    finishedAt: job.finished_at,
+    error: job.error,
+    requestedByUserId: job.requested_by_user_id,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// POST /compute/jobs — enqueue
+// ---------------------------------------------------------------------------
+
+router.post(
+  '/compute/jobs',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    const body = req.body ?? {};
+
+    const idempotencyKey = readIdempotencyKey(req);
+    if (!idempotencyKey) {
+      return sendError(res, 400, 'IDEMPOTENCY_KEY_REQUIRED', 'Idempotency-Key header (or body.idempotencyKey) is required to enqueue a compute job');
+    }
+    for (const field of ['jobType', 'inputArtifactId', 'inputRevisionHash', 'engineManifestId']) {
+      if (typeof body[field] !== 'string' || !body[field].trim()) {
+        return sendError(res, 400, 'INVALID_BODY', `${field} is required and must be a non-empty string`);
+      }
+    }
+
+    const params: EnqueueJobParams = {
+      organizationId,
+      jobType: body.jobType,
+      inputArtifactId: body.inputArtifactId,
+      inputRevisionHash: body.inputRevisionHash,
+      engineManifestId: body.engineManifestId,
+      idempotencyKey,
+      requestedByUserId: userId,
+      requestId: typeof body.requestId === 'string' ? body.requestId : null,
+      maxAttempts: typeof body.maxAttempts === 'number' ? body.maxAttempts : undefined,
+    };
+
+    const result = await enqueue(params);
+
+    return res.status(result.wasExisting ? 200 : 201).json({
+      data: { ...jobToDto(result.job), wasExisting: result.wasExisting },
+      meta: financeV2Meta(),
+    });
+  })
+);
+
+// ---------------------------------------------------------------------------
+// GET /compute/jobs/:jobId — status
+// ---------------------------------------------------------------------------
+
+router.get(
+  '/compute/jobs/:jobId',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const jobId = String(req.params.jobId || '');
+
+    const job = await getJob(organizationId, jobId);
+    if (!job) {
+      return sendError(res, 404, 'NOT_FOUND', 'Compute job not found');
+    }
+
+    return res.status(200).json({ data: jobToDto(job), meta: financeV2Meta() });
+  })
+);
+
+// ---------------------------------------------------------------------------
+// POST /compute/jobs/:jobId/cancel
+// ---------------------------------------------------------------------------
+
+router.post(
+  '/compute/jobs/:jobId/cancel',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const jobId = String(req.params.jobId || '');
+    const reason = typeof (req.body ?? {}).reason === 'string' ? req.body.reason : 'Cancelled via API';
+
+    const updated = await cancelJob(organizationId, jobId, reason);
+    if (!updated) {
+      // Fail-closed / not-a-leak: identical response whether the job does not
+      // exist, belongs to another org, or is already terminal (queued/running
+      // only are cancellable) — callers cannot distinguish "not yours" from
+      // "already done" from "never existed".
+      return sendError(res, 404, 'NOT_FOUND', 'Compute job not found or not cancellable (already terminal)');
+    }
+
+    return res.status(200).json({ data: jobToDto(updated), meta: financeV2Meta() });
+  })
+);
+
+export default router;
