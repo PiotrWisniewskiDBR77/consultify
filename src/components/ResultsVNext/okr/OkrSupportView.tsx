@@ -24,6 +24,7 @@ import { StatusChip } from '@/components/ui/primitives';
 import { ResultsVNextRegistryShell } from '../ResultsVNextRegistryShell';
 import type { OkrSetDto } from './okrApi';
 import { listObjectivesForSet, type OkrObjectiveWithKeyResultsDto } from './okrObjectiveApi';
+import { OkrActionDialog, type OkrActionDialogField } from './OkrActionDialog';
 import {
   acknowledgeSupportRequest,
   dismissSupportRequest,
@@ -61,6 +62,31 @@ function withId(row: OkrSupportRequestDto): OkrSupportRequestDto & { id: string 
 
 type ComposeKind = OkrSupportRequestKind;
 
+// Resolve/request-decision/dismiss dialog (replaces three `window.prompt`
+// calls — RN-G3 prompt-removal pass, 2026-08-11). One shared dialog keyed
+// by {kind, row} rather than three separate `useState` triples, since all
+// three share the exact same shape (one target request + N required text
+// fields + busy/error/isConflict) — only the field list and endpoint
+// differ, and both come straight from each mutation's own Zod schema
+// (`ResolveSupportRequestSchema`/`RequestDecisionFromSupportRequestSchema`/
+// `DismissSupportRequestSchema`, all fields required, `okrWorkspaceApi.ts`).
+type SupportActionKind = 'resolve' | 'request-decision' | 'dismiss';
+
+const SUPPORT_ACTION_FIELDS: Record<SupportActionKind, OkrActionDialogField[]> = {
+  resolve: [{ id: 'resolutionNote', label: { pl: 'Notatka rozwiązania', en: 'Resolution note' }, required: true }],
+  'request-decision': [
+    { id: 'requestedDecision', label: { pl: 'Jaka decyzja jest potrzebna?', en: 'What decision is needed?' }, required: true },
+    { id: 'impactOfDelay', label: { pl: 'Jaki jest wpływ opóźnienia?', en: 'What is the impact of delay?' }, required: true },
+  ],
+  dismiss: [{ id: 'dismissedReason', label: { pl: 'Powód odrzucenia', en: 'Dismissal reason' }, required: true }],
+};
+
+const SUPPORT_ACTION_TITLE: Record<SupportActionKind, { pl: string; en: string }> = {
+  resolve: { pl: 'Rozwiąż', en: 'Resolve' },
+  'request-decision': { pl: 'Poproś o decyzję', en: 'Request decision' },
+  dismiss: { pl: 'Odrzuć', en: 'Dismiss' },
+};
+
 export const OkrSupportView: React.FC<OkrSupportViewProps> = ({ set, isPolish, breadcrumbs }) => {
   const [items, setItems] = useState<OkrSupportRequestDto[] | null>(null);
   const [objectives, setObjectives] = useState<OkrObjectiveWithKeyResultsDto[] | null>(null);
@@ -78,6 +104,45 @@ export const OkrSupportView: React.FC<OkrSupportViewProps> = ({ set, isPolish, b
   const [composeVisibility, setComposeVisibility] = useState<'team' | 'organization'>('team');
   const [busy, setBusy] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+
+  const [actionTarget, setActionTarget] = useState<{ kind: SupportActionKind; row: OkrSupportRequestDto } | null>(null);
+  const [actionBusy, setActionBusy] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [actionConflict, setActionConflict] = useState(false);
+
+  const submitAction = useCallback(
+    (values: Record<string, string>) => {
+      if (!actionTarget) return;
+      const { kind, row } = actionTarget;
+      setActionBusy(true);
+      setActionError(null);
+      setActionConflict(false);
+      const idempotencyKey = newOkrWorkspaceIdempotencyKey();
+      const req =
+        kind === 'resolve'
+          ? resolveSupportRequest(row.requestId, { expectedVersion: row.rowVersion, resolutionNote: values.resolutionNote, idempotencyKey })
+          : kind === 'request-decision'
+            ? requestDecisionFromSupportRequest(row.requestId, {
+                expectedVersion: row.rowVersion,
+                requestedDecision: values.requestedDecision,
+                impactOfDelay: values.impactOfDelay,
+                idempotencyKey,
+              })
+            : dismissSupportRequest(row.requestId, { expectedVersion: row.rowVersion, dismissedReason: values.dismissedReason, idempotencyKey });
+      req
+        .then(() => {
+          setActionTarget(null);
+          load();
+        })
+        .catch((err) => {
+          setActionConflict(err instanceof OkrWorkspaceApiError && err.status === 409);
+          setActionError(err instanceof Error ? err.message : String(err));
+        })
+        .finally(() => setActionBusy(false));
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [actionTarget, load]
+  );
 
   const load = useCallback(() => {
     setLoading(true);
@@ -291,29 +356,18 @@ export const OkrSupportView: React.FC<OkrSupportViewProps> = ({ set, isPolish, b
                         id: 'resolve',
                         label: isPolish ? 'Rozwiąż' : 'Resolve',
                         onClick: () => {
-                          const note = window.prompt(isPolish ? 'Notatka rozwiązania (wymagana)' : 'Resolution note (required)');
-                          if (!note) return;
-                          respond(() =>
-                            resolveSupportRequest(r.requestId, { expectedVersion: r.rowVersion, resolutionNote: note, idempotencyKey: newOkrWorkspaceIdempotencyKey() })
-                          );
+                          setActionError(null);
+                          setActionConflict(false);
+                          setActionTarget({ kind: 'resolve', row: r });
                         },
                       },
                       {
                         id: 'request-decision',
                         label: isPolish ? 'Poproś o decyzję' : 'Request decision',
                         onClick: () => {
-                          const requestedDecision = window.prompt(isPolish ? 'Jaka decyzja jest potrzebna?' : 'What decision is needed?');
-                          if (!requestedDecision) return;
-                          const impactOfDelay = window.prompt(isPolish ? 'Jaki jest wpływ opóźnienia?' : 'What is the impact of delay?');
-                          if (!impactOfDelay) return;
-                          respond(() =>
-                            requestDecisionFromSupportRequest(r.requestId, {
-                              expectedVersion: r.rowVersion,
-                              requestedDecision,
-                              impactOfDelay,
-                              idempotencyKey: newOkrWorkspaceIdempotencyKey(),
-                            })
-                          );
+                          setActionError(null);
+                          setActionConflict(false);
+                          setActionTarget({ kind: 'request-decision', row: r });
                         },
                       },
                     ].filter((a): a is NonNullable<typeof a> => a !== undefined)
@@ -323,11 +377,9 @@ export const OkrSupportView: React.FC<OkrSupportViewProps> = ({ set, isPolish, b
                   ? {
                       label: isPolish ? 'Odrzuć' : 'Dismiss',
                       onClick: () => {
-                        const reason = window.prompt(isPolish ? 'Powód odrzucenia (wymagany)' : 'Dismissal reason (required)');
-                        if (!reason) return;
-                        respond(() =>
-                          dismissSupportRequest(r.requestId, { expectedVersion: r.rowVersion, dismissedReason: reason, idempotencyKey: newOkrWorkspaceIdempotencyKey() })
-                        );
+                        setActionError(null);
+                        setActionConflict(false);
+                        setActionTarget({ kind: 'dismiss', row: r });
                       },
                     }
                   : { label: isPolish ? 'Odrzuć' : 'Dismiss', note: isPolish ? 'Wpis już zamknięty.' : 'Entry already closed.' },
@@ -474,6 +526,21 @@ export const OkrSupportView: React.FC<OkrSupportViewProps> = ({ set, isPolish, b
           ) : null}
         </div>
       </Modal>
+
+      <OkrActionDialog
+        open={!!actionTarget}
+        title={actionTarget ? (isPolish ? SUPPORT_ACTION_TITLE[actionTarget.kind].pl : SUPPORT_ACTION_TITLE[actionTarget.kind].en) : ''}
+        description={actionTarget ? (isPolish ? `Wpis: ${actionTarget.row.body.slice(0, 80)}` : `Entry: ${actionTarget.row.body.slice(0, 80)}`) : undefined}
+        fields={actionTarget ? SUPPORT_ACTION_FIELDS[actionTarget.kind] : []}
+        isPolish={isPolish}
+        onClose={() => (actionBusy ? undefined : setActionTarget(null))}
+        onSubmit={submitAction}
+        submitLabel={actionTarget ? (isPolish ? SUPPORT_ACTION_TITLE[actionTarget.kind].pl : SUPPORT_ACTION_TITLE[actionTarget.kind].en) : ''}
+        busy={actionBusy}
+        errorMessage={actionError}
+        isConflict={actionConflict}
+        destructive={actionTarget?.kind === 'dismiss'}
+      />
     </>
   );
 };

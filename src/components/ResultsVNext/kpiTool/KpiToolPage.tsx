@@ -120,6 +120,7 @@ import {
   recordReviewedAttribution,
   type InitiativeKpiImpactDto,
 } from './kpiInitiativeImpactApi';
+import { KpiReviewedAttributionDialog } from './KpiReviewedAttributionDialog';
 import {
   DEVIATION_CASE_STATUS_TONE,
   DEVIATION_SEVERITY_TONE,
@@ -206,6 +207,15 @@ export const KpiToolPage: React.FC = () => {
   const [initiativeImpacts, setInitiativeImpacts] = useState<InitiativeKpiImpactDto[] | 'loading'>('loading');
   const [impactBusy, setImpactBusy] = useState(false);
 
+  // "Record reviewed attribution" dialog (replaces `window.prompt` — RN-G3
+  // prompt-removal pass, 2026-08-11, extended scope). Kept OUTSIDE
+  // `impactBusy`/toast on purpose: a rejected submit must keep the dialog
+  // open with the server's error shown inline, not bounce the user to a
+  // toast and lose the typed value.
+  const [attributionTarget, setAttributionTarget] = useState<InitiativeKpiImpactDto | null>(null);
+  const [attributionBusy, setAttributionBusy] = useState(false);
+  const [attributionError, setAttributionError] = useState<string | null>(null);
+
   const [activeSection, setActiveSection] = useState('performance');
 
   // Propose-impact form state.
@@ -271,6 +281,28 @@ export const KpiToolPage: React.FC = () => {
     if (!enabled) return;
     loadInitiativeImpacts();
   }, [enabled, loadInitiativeImpacts]);
+
+  const submitReviewedAttribution = useCallback(
+    (value: number) => {
+      if (!attributionTarget) return;
+      setAttributionBusy(true);
+      setAttributionError(null);
+      recordReviewedAttribution(attributionTarget.impactId, {
+        expectedVersion: attributionTarget.rowVersion,
+        reviewedAttributionValue: value,
+        reviewRationale: t('Przegląd z narzędzia KPI', 'Review from KPI tool'),
+      })
+        .then(() => {
+          toast.success(t('Atrybucja zapisana', 'Attribution recorded'));
+          setAttributionTarget(null);
+          loadInitiativeImpacts();
+        })
+        .catch((err) => setAttributionError(err instanceof Error ? err.message : String(err)))
+        .finally(() => setAttributionBusy(false));
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [attributionTarget, t, loadInitiativeImpacts]
+  );
 
   const runLifecycleAction = useCallback(
     async (action: 'activate' | 'suspend' | 'archive') => {
@@ -719,25 +751,10 @@ export const KpiToolPage: React.FC = () => {
                       disabled={impactBusy}
                       className={GHOST_BUTTON_CLASS}
                       onClick={() => {
-                        const value = window.prompt(
-                          t('Zweryfikowana wartość atrybucji', 'Reviewed attribution value')
-                        );
-                        if (value === null || value.trim() === '') return;
-                        const numeric = Number(value);
-                        if (!Number.isFinite(numeric)) return;
-                        setImpactBusy(true);
-                        recordReviewedAttribution(imp.impactId, {
-                          expectedVersion: imp.rowVersion,
-                          reviewedAttributionValue: numeric,
-                          reviewRationale: t('Przegląd z narzędzia KPI', 'Review from KPI tool'),
-                        })
-                          .then(() => {
-                            toast.success(t('Atrybucja zapisana', 'Attribution recorded'));
-                            loadInitiativeImpacts();
-                          })
-                          .catch((err) => toast.error(err instanceof Error ? err.message : String(err)))
-                          .finally(() => setImpactBusy(false));
+                        setAttributionError(null);
+                        setAttributionTarget(imp);
                       }}
+                      data-testid={`kpi-tool-record-reviewed-attribution-${imp.impactId}`}
                     >
                       {t('Zapisz zweryfikowaną atrybucję', 'Record reviewed attribution')}
                     </button>
@@ -855,6 +872,14 @@ export const KpiToolPage: React.FC = () => {
         onPresentationModeChange={() => {}}
         showModeSwitcher={false}
         rightPanel={<ArtifactRightPanel sections={rightPanelSections} ariaLabel={t('Panel KPI', 'KPI panel')} />}
+      />
+      <KpiReviewedAttributionDialog
+        open={!!attributionTarget}
+        isPolish={isPolish}
+        onClose={() => (attributionBusy ? undefined : setAttributionTarget(null))}
+        onSubmit={submitReviewedAttribution}
+        busy={attributionBusy}
+        errorMessage={attributionError}
       />
     </div>
   );
