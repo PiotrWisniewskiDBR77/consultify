@@ -21,6 +21,11 @@
  *
  * Colors come from the app CSS token layer (var(--c-*)); light/dark automatic.
  * `c-danger` is used only for genuinely failed writes — never as decoration.
+ *
+ * `TeresaUnavailableNotice` (`./TeresaState.tsx`) is the sixth member of this
+ * vocabulary — "AI degraded, manual workflow continues" — kept in its own
+ * file because it is not a `SaveStatus` (Teresa can be unreachable whether or
+ * not the screen has a pending write).
  */
 
 import { AlertTriangle, Check, Loader2, Lock, RefreshCw, RotateCw } from 'lucide-react';

@@ -36420,6 +36420,10 @@
       "description": "Wczytaj najnowszą wersję przed kolejnym zapisem.",
       "byAt": "Ostatnia zmiana: {{who}}{{when}}",
       "someoneElse": "inny użytkownik"
+    },
+    "teresa": {
+      "unavailableTitle": "Teresa jest niedostępna",
+      "unavailableDescription": "Podpowiedzi AI są wstrzymane. Możesz pracować dalej ręcznie."
     }
   },
   "initiativeStatus": {
