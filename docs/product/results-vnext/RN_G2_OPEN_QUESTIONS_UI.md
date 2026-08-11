@@ -204,3 +204,48 @@ Dwa skutki, oba do świadomej decyzji, żaden nie jest awarią:
 **Czego potrzeba**: decyzji, czy to zamierzone (np. bo kolumny check-inów mogą
 realnie różnić się per Kluczowy Rezultat), czy klucz ma być per powierzchnia.
 Zmiana jest jednoliniowa w każdym z trzech miejsc.
+
+---
+
+## OQ-UI-I — BLOCKER: harness montuje realny komponent tylko dla JEDNEGO z sześciu ekranów
+
+Znalezione przez orkiestratora przy niezależnej weryfikacji wyniku Fali 0
+(`grep` po importach `dev-render/screens/results-vnext-*.tsx`).
+
+| Ekran harnessu | Co realnie montuje |
+|---|---|
+| `results-vnext-kpi-registry` | **REALNY `ResultsKpiRegistryPage`** z podstawionym `Api` |
+| `results-vnext-roi-registry` | powłoka + prezentery + modale — **NIE `ResultsRoiHub`** |
+| `results-vnext-roi-model` | powłoka + 6 formularzy — **NIE `RoiCaseModelWorkspace`** |
+| `results-vnext-okr-registry` | powłoka + prezentery — **NIE `ResultsOkrHub`** |
+| `results-vnext-okr-objectives` | powłoka + formularze — **NIE `Okr*View`** |
+| `results-vnext-kpi-scorecards` | powłoka + prezentery — **NIE `ResultsKpiScorecardDetailPage`** |
+
+Czyli pięć z sześciu ekranów harnessu to **druga implementacja ekranu**, a nie
+ekran produkcyjny. Zrzuty i interakcje dowodzą wtedy prezenterów i wspólnej
+powłoki — **nie dowodzą logiki stanu, kolejności hooków, orkiestracji pobrań ani
+przełączania zakładek w komponentach, które realnie pójdą do użytkownika**.
+
+**To nie jest teoria.** Awarię hooków w rejestrze KPI („Rendered fewer hooks than
+expected") znaleziono dokładnie dlatego, że ekran KPI jako JEDYNY montuje realny
+komponent. Pozostałe pięć ekranów ma dziś tę samą klasę błędu poza zasięgiem
+jakiegokolwiek dowodu — łącznie z Falą 0, która przeklikała wszystko sumiennie i
+nie mogła tego zobaczyć.
+
+Skutek uboczny tej samej przyczyny: `onClose` jest jawnym no-opem w harnessach
+ROI-registry, ROI-model i OKR-objectives, więc **Esc i powrót fokusu z modali nie
+są sprawdzalne** na żadnym z tych trzech ekranów (rozszerzenie OQ-UI-G #2 z
+jednego modala na wszystkie).
+
+**Wzorzec naprawy istnieje w repo i jest sprawdzony**: `results-vnext-kpi-registry.tsx`
+podstawia metody `Api` i montuje prawdziwy komponent. To samo trzeba zrobić dla
+pozostałych pięciu — podstawić warstwę sieciową, zamontować komponent
+produkcyjny, przekazać realne `onClose`.
+
+**Dopóki to nie jest zrobione, żaden dowód interaktywny dla tych pięciu ekranów
+nie jest dowodem o produkcie** i program nie może uczciwie ogłosić
+IMPLEMENTED_EVIDENCED_CANDIDATE.
+
+Kolejność prac: trzy tory domenowe przepisują teraz dokładnie te pliki, więc
+konwersja harnessów musi pójść PO ich scaleniu, a po niej cała Fala 0 wymaga
+powtórzenia na realnych komponentach.
