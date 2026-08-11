@@ -206,7 +206,9 @@ export const OkrKeyResultsView: React.FC<OkrKeyResultsViewProps> = ({ set, objec
         table={{
           columns: buildOkrKeyResultColumns(isPolish, set.status),
           data: rows,
-          persistKey: `results-vnext.okr-key-results.${objectiveId}`,
+          // D09 fix — see OkrObjectivesView.tsx's identical note. Was
+          // `results-vnext.okr-key-results.${objectiveId}` (OQ-UI-H).
+          persistKey: 'results-vnext.okr-key-results',
           loading,
           error,
           onRetry: load,

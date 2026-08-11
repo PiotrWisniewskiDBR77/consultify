@@ -1,69 +1,54 @@
 /**
- * RN-G2 P3 #23 — visual QA harness for the OKR Set registry (`ResultsOkrHub`
- * / `okrRegistryPresenters.tsx`). Mounts the REAL `ResultsVNextRegistryShell`
- * fed by the REAL presenter functions (`buildOkrSetColumns`/
- * `buildOkrSetRowMenu`/`buildOkrSetPreview`) with mock `OkrSetDto` data —
- * NOT `ResultsOkrHub` itself, which does live `fetch()` calls with no
- * backend available in this harness (same reason ROI's
- * `results-vnext-roi-registry.tsx` mounts the presenters directly). Mirrors
- * that file's structure exactly.
+ * RN-G2 P3 #23 — visual QA harness for the OKR Set registry.
+ *
+ * ── OQ-UI-I FIX (2026-08-11, RN-G3 lane `okr` full-tool task) ────────────
+ * Independent verification found this screen did NOT mount the real
+ * `ResultsOkrHub` — it rebuilt the screen from `ResultsVNextRegistryShell` +
+ * the presenter functions directly, with every callback (`onRetry`,
+ * `onChipChange`, row-menu actions beyond preview) wired to a no-op. That
+ * proves the PRESENTERS render correctly; it proves nothing about
+ * `ResultsOkrHub`'s own hook order, fetch orchestration, or state machine —
+ * exactly the class of defect that only surfaced in the KPI registry
+ * because that harness (uniquely, before this fix) mounted the real
+ * component. Recorded as OQ-UI-I in `RN_G2_OPEN_QUESTIONS_UI.md`.
+ *
+ * Fixed here: mounts the REAL `ResultsOkrHub` (which itself owns
+ * `ResultsVNextRegistryShell` + the drill-down state machine down to
+ * `OkrSetWorkspace`/`OkrObjectivesView`/etc.), with `window.fetch` stubbed
+ * for `/api/vnext/results/okr/*` (same pattern as
+ * `results-vnext-legacy-archive.tsx`/`assessment-initiatives-panel.tsx` —
+ * `okrApi.ts` uses a raw `fetch()` client, not the `Api.*` facade, so
+ * stubbing `Api` methods would not intercept anything here). The mock data
+ * below is UNCHANGED from the prior version (all 10 statuses, the genuine
+ * 2-way honest-missing domain for `overallProgress`/`overallConfidence` —
+ * see the retained note further down) — only the mounting mechanism
+ * changed, so this screen's own visual output is expected to be pixel-
+ * identical to before the fix.
  *
  * URL params:
  *   ?tab=org|my|company           which Menu 2 tab (default org) — all three
- *                                  reuse the SAME mock list here (the real
- *                                  endpoints return the identical `OkrSetDto`
- *                                  shape for all three perspectives, see
- *                                  `okrApi.ts` header; only the live Hub's
- *                                  network call differs per tab, which this
- *                                  static harness has no reason to fake).
- *   &state=ready|loading|empty|error   top-level StandardTable state (default ready)
- *   &selected=<setId|none>        pre-select a row (default: first row); 'none' closes preview
- *
- * ── HONEST FINDING re. "null vs not_calculable" QA requirement ──────────
- * `okrApi.ts`/`okrRegistryMappers.ts` (`parseOkrProgress`'s own doc comment)
- * establish, by reading the real server code, that `overall_progress`/
- * `overall_confidence` on `okr_vnext_sets` are a genuine 2-way domain on the
- * wire (`T | null`) — the calculation engine's own `'not_calculable'`
- * distinction (`okrProgressEngine.ts`/`okrSetRollupCalculator.ts`) is never
- * persisted or exposed via any GET endpoint for a Set. This mock therefore
- * does NOT contain a `'not_calculable'` row for `overallProgress` —
- * fabricating one here would misrepresent what the real Hub can ever show
- * from real API data (RN_G2_UI_SCOPE.md's own "never invent a value/state
- * no source document or server code defines" rule, applied to inventing a
- * DISTINCTION rather than a number). The rendering PRIMITIVE's
- * `'not_calculable'` branch is still exercised by the pre-existing P0 shell
- * harness (`?screen=results-vnext-registry-shell&domain=okr`) — that mock
- * predates this package's verified wire shapes and is illustrative of the
- * `HonestValueCell` component generically, not of this package's real data.
- * See the acceptance report for the full citation trail.
- *
- * ── FIXED 2026-08-10 (RN-G2 §G #25 pass) — progress SCALE bug ───────────
- * `overallProgress` values below were rescaled from a 0-100 assumption
- * (`'62.5'`/`'91'`/`'104'`/`'78'`) to the REAL 0-1 unclamped-ratio wire
- * scale (`'0.625'`/`'0.91'`/`'1.04'`/`'0.78'`) — `okrRegistryMappers.ts`'s
- * `formatOkrProgressPercent` was fixed in the same pass to multiply by 100
- * (see that function's own doc comment for the full proof). The two fixes
- * cancel out visually: this screen renders the identical 62.5%/91%/104%/78%
- * on screen before and after, so this is a data-model correction, not a
- * visual regression.
+ *                                  now genuinely hit DIFFERENT stubbed routes
+ *                                  (`/sets`, `/my`, `/company`), same as the
+ *                                  real backend's own three distinct routes.
+ *   &state=ready|loading|empty|error   loading/error freeze the stub (never
+ *                                  resolves / always 503); empty returns [].
+ *   &selected=<setId|none>        deep-link via `?setId=` (real Hub's own
+ *                                  deep-link param) — 'none' leaves nothing
+ *                                  selected.
  */
-import React, { useMemo, useState } from 'react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { ResultsVNextRegistryShell } from '../../src/components/ResultsVNext/ResultsVNextRegistryShell';
+import { ResultsOkrHub } from '../../src/components/ResultsVNext/okr/ResultsOkrHub';
 import type { OkrSetDto } from '../../src/components/ResultsVNext/okr/okrApi';
-import {
-  buildOkrSetColumns,
-  buildOkrSetPreview,
-  buildOkrSetRowMenu,
-} from '../../src/components/ResultsVNext/okr/okrRegistryPresenters';
-import type { StandardCounterChip, TableRow } from '../../src/components/standard';
 
 // ── Mock OKR Sets — one representative row per real status (all 10 from
 //    `OKR_SET_STATUSES`, including the two reserved/unreachable ones for
 //    exhaustiveness) and spanning the genuine 2-way honest-missing domain
-//    for overallProgress/overallConfidence (real value vs null — see header
-//    note for why a 3rd `'not_calculable'` row is deliberately absent).
+//    for overallProgress/overallConfidence (real value vs null — see
+//    `okrRegistryMappers.ts`'s `parseOkrProgress` doc comment for why a 3rd
+//    `'not_calculable'` row is deliberately absent: the wire cannot carry
+//    that distinction for a Set, only for Objectives/Key Results).
 const MOCK_SETS: OkrSetDto[] = [
   {
     setId: 'okr-set-1',
@@ -364,122 +349,48 @@ const MOCK_SETS: OkrSetDto[] = [
   },
 ];
 
-function withId<T extends { setId: string }>(row: T): T & { id: string } {
-  return { ...row, id: row.setId };
+const params = new URLSearchParams(window.location.search);
+const state = params.get('state') || 'ready';
+
+function jsonResponse(body: unknown, status = 200): Response {
+  return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
 }
 
-const params = new URLSearchParams(window.location.search);
-const initialTab = (params.get('tab') as 'org' | 'my' | 'company') || 'org';
-const state = params.get('state') || 'ready';
-const initialSelected = params.get('selected');
+const g = window as unknown as { __OKR_REGISTRY_FETCH__?: boolean };
+if (!g.__OKR_REGISTRY_FETCH__) {
+  g.__OKR_REGISTRY_FETCH__ = true;
+  const realFetch = window.fetch.bind(window);
+  window.fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+    const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+    try {
+      if (!url.includes('/api/vnext/results/okr/')) return realFetch(input as RequestInfo, init);
+      if (state === 'loading') return new Promise<Response>(() => {}); // never resolves
+      if (state === 'error') return jsonResponse({ error: 'Service unavailable', code: 'OKR_UNAVAILABLE' }, 503);
+      const rows = state === 'empty' ? [] : MOCK_SETS;
+      // Three genuinely distinct real routes — org (`/sets`, no scope
+      // narrowing), `/my` (owner-or-reviewer only), `/company` (scope_type
+      // pinned) — mirrors the real three-tab distinction the Hub itself
+      // documents in its own header.
+      if (url.match(/\/sets\/[^/?]+$/)) {
+        const setId = url.split('/sets/')[1]?.split(/[?/]/)[0];
+        const set = MOCK_SETS.find((s) => s.setId === setId);
+        return set ? jsonResponse({ set }) : jsonResponse({ error: 'not found', code: 'NOT_FOUND' }, 404);
+      }
+      if (url.match(/\/sets(\?|$)/)) return jsonResponse({ sets: rows });
+      if (url.match(/\/my(\?|$)/)) return jsonResponse({ sets: rows.filter((s) => s.ownerUserId === 'user-anna-kowalska' || s.reviewerUserId === 'user-anna-kowalska') });
+      if (url.match(/\/company(\?|$)/)) return jsonResponse({ sets: rows.filter((s) => s.scopeType === 'company') });
+    } catch {
+      /* fall through to real fetch */
+    }
+    return realFetch(input as RequestInfo, init);
+  };
+}
 
 const ResultsVNextOkrRegistryScreen: React.FC = () => {
-  const [tab, setTab] = useState<'org' | 'my' | 'company'>(initialTab);
-  const [selectedSetId, setSelectedSetId] = useState<string | null>(
-    initialSelected === 'none' ? null : (initialSelected ?? MOCK_SETS[0]?.setId ?? null)
-  );
-
-  // Mirrors the REAL `ResultsOkrHub.tsx`: `isPolish` follows the harness's
-  // `&lang=` param via i18n, not a hardcoded constant — otherwise `&lang=en`
-  // silently has no effect on this screen's copy (same RN-G2 P2 fix ROI's
-  // own harness documents, applied here from the start).
-  const { i18n } = useTranslation();
-  const isPolish = !!i18n.language?.startsWith('pl');
-
-  const selectedSet = useMemo(() => MOCK_SETS.find((s) => s.setId === selectedSetId) ?? null, [selectedSetId]);
-
-  const tabs = [
-    { id: 'org', label: isPolish ? 'Organizacja' : 'Organization' },
-    { id: 'my', label: isPolish ? 'Moje' : 'My' },
-    { id: 'company', label: isPolish ? 'Firma' : 'Company' },
-  ];
-
-  const bucketOf = (s: OkrSetDto['status']): 'in_progress' | 'in_review' | 'active' | 'closed_out' => {
-    if (s === 'submitted') return 'in_review';
-    if (s === 'approved' || s === 'active' || s === 'review') return 'active';
-    if (s === 'closed' || s === 'cancelled') return 'closed_out';
-    return 'in_progress';
-  };
-
-  const chips: StandardCounterChip[] = [
-    { id: 'all', label: isPolish ? 'Wszystkie' : 'All', count: MOCK_SETS.length },
-    {
-      id: 'in_progress',
-      label: isPolish ? 'W toku' : 'In progress',
-      count: MOCK_SETS.filter((s) => bucketOf(s.status) === 'in_progress').length,
-    },
-    {
-      id: 'in_review',
-      label: isPolish ? 'Do akceptacji' : 'In review',
-      count: MOCK_SETS.filter((s) => bucketOf(s.status) === 'in_review').length,
-    },
-    {
-      id: 'active',
-      label: isPolish ? 'Aktywne' : 'Active',
-      count: MOCK_SETS.filter((s) => bucketOf(s.status) === 'active').length,
-    },
-    {
-      id: 'closed_out',
-      label: isPolish ? 'Zamknięte / anulowane' : 'Closed / cancelled',
-      count: MOCK_SETS.filter((s) => bucketOf(s.status) === 'closed_out').length,
-    },
-  ];
-
-  const rows: TableRow[] = state === 'empty' ? [] : MOCK_SETS.map(withId);
-
+  useTranslation();
   return (
     <div className="h-screen bg-c-bg text-c-text">
-      <ResultsVNextRegistryShell
-        domain="okr"
-        moduleBar={{
-          tabs,
-          activeTab: tab,
-          onTabChange: (id) => setTab(id as 'org' | 'my' | 'company'),
-          showTabCounts: false,
-          viewModes: ['table'],
-          viewMode: 'table',
-          chips,
-          activeChip: 'all',
-          onChipChange: () => {},
-        }}
-        table={{
-          columns: buildOkrSetColumns(isPolish),
-          data: rows,
-          persistKey: `results-vnext.okr-registry.${tab}`,
-          loading: state === 'loading',
-          error:
-            state === 'error'
-              ? isPolish
-                ? 'Nie udało się wczytać rejestru OKR — usługa zwróciła 503.'
-                : 'Failed to load the OKR registry — the service returned 503.'
-              : null,
-          onRetry: () => {},
-          empty:
-            state === 'empty'
-              ? {
-                  title: isPolish ? 'Brak zestawów OKR' : 'No OKR sets yet',
-                  description: isPolish
-                    ? 'W tej organizacji nie utworzono jeszcze żadnego zestawu OKR.'
-                    : 'No OKR set has been created in this organization yet.',
-                }
-              : undefined,
-          selectedRowId: selectedSetId,
-          onRowClick: (row) => setSelectedSetId(String(row.setId)),
-          rowMenu: (row) =>
-            buildOkrSetRowMenu(row as unknown as OkrSetDto, isPolish, {
-              onPreview: (r) => setSelectedSetId(r.setId),
-            }),
-          defaultSort: { columnId: 'updatedAt', direction: 'desc' },
-        }}
-        preview={
-          state === 'ready' && selectedSet
-            ? buildOkrSetPreview(selectedSet, {
-                isPolish,
-                onClose: () => setSelectedSetId(null),
-              })
-            : null
-        }
-      />
+      <ResultsOkrHub />
     </div>
   );
 };

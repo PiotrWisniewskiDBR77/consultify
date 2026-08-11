@@ -166,7 +166,9 @@ export const OkrCheckInsView: React.FC<OkrCheckInsViewProps> = ({ set, keyResult
         table={{
           columns: buildOkrCheckInColumns(isPolish),
           data: rows,
-          persistKey: `results-vnext.okr-check-ins.${keyResult.keyResultId}`,
+          // D09 fix — see OkrObjectivesView.tsx's identical note. Was
+          // `results-vnext.okr-check-ins.${keyResult.keyResultId}` (OQ-UI-H).
+          persistKey: 'results-vnext.okr-check-ins',
           loading,
           error,
           onRetry: load,

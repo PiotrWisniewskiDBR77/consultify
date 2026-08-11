@@ -75,18 +75,28 @@ import type { OkrKeyResultDto, OkrObjectiveWithKeyResultsDto } from './okrObject
 import { OkrObjectivesView } from './OkrObjectivesView';
 import { OkrKeyResultsView } from './OkrKeyResultsView';
 import { OkrCheckInsView } from './OkrCheckInsView';
+import { OkrSetWorkspace } from './OkrSetWorkspace';
 
 type OkrTab = 'org' | 'my' | 'company';
 const OKR_SETS_FETCH_LIMIT = 200;
 
 // ==========================================
-// RN-G2 §G #25 — drill-down navigation state (see file header).
+// RN-G2 §G #25 — drill-down navigation state (see file header). RN-G3 lane
+// `okr` full-tool task (2026-08-11) adds `'workspace'` — the FULL OKR tool
+// for one Set (`OkrSetWorkspace.tsx`: Overview/Objectives & Key
+// Results/Alignment/Conversations & Support/Review & Reflection/History).
+// The pre-existing `'objectives'|'keyResults'|'checkIns'` levels are left
+// UNCHANGED (still reachable from the Set preview's "Cele" action, per the
+// already-accepted §G #25 package) — `'workspace'` is a genuinely additive
+// FOURTH entry point, not a replacement, so the already-shipped/QA'd drill
+// keeps working byte-for-byte for anyone still using it.
 // ==========================================
 
 type OkrDrill =
   | { level: 'objectives'; set: OkrSetDto }
   | { level: 'keyResults'; set: OkrSetDto; objective: OkrObjectiveWithKeyResultsDto }
-  | { level: 'checkIns'; set: OkrSetDto; objective: OkrObjectiveWithKeyResultsDto; keyResult: OkrKeyResultDto };
+  | { level: 'checkIns'; set: OkrSetDto; objective: OkrObjectiveWithKeyResultsDto; keyResult: OkrKeyResultDto }
+  | { level: 'workspace'; set: OkrSetDto };
 
 function withId<T extends { setId: string }>(row: T): T & { id: string } {
   return { ...row, id: row.setId };
@@ -275,6 +285,21 @@ export const ResultsOkrHub: React.FC = () => {
     );
   }
 
+  if (drill?.level === 'workspace') {
+    return (
+      <OkrSetWorkspace
+        set={drill.set}
+        isPolish={isPolish}
+        setsLabel={setsLabel}
+        onBackToSets={() => setDrill(null)}
+        onSetChanged={(updated) => {
+          setSets((prev) => (prev ? prev.map((s) => (s.setId === updated.setId ? updated : s)) : prev));
+          setDrill({ level: 'workspace', set: updated });
+        }}
+      />
+    );
+  }
+
   if (drill?.level === 'checkIns') {
     const breadcrumbs: StandardBreadcrumb[] = [
       { label: setsLabel, onClick: () => setDrill(null) },
@@ -332,6 +357,7 @@ export const ResultsOkrHub: React.FC = () => {
           buildOkrSetRowMenu(row as unknown as OkrSetDto, isPolish, {
             onPreview: (r) => setSelectedSetId(r.setId),
             onOpenObjectives: (r) => setDrill({ level: 'objectives', set: r }),
+            onOpenWorkspace: (r) => setDrill({ level: 'workspace', set: r }),
           }),
         defaultSort: { columnId: 'updatedAt', direction: 'desc' },
       }}
@@ -341,6 +367,7 @@ export const ResultsOkrHub: React.FC = () => {
               isPolish,
               onClose: () => setSelectedSetId(null),
               onOpenObjectives: (r) => setDrill({ level: 'objectives', set: r }),
+              onOpenWorkspace: (r) => setDrill({ level: 'workspace', set: r }),
             })
           : null
       }

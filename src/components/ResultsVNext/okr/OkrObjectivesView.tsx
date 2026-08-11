@@ -198,7 +198,15 @@ export const OkrObjectivesView: React.FC<OkrObjectivesViewProps> = ({ set, isPol
         table={{
           columns: buildOkrObjectiveColumns(isPolish, set.status),
           data: rows,
-          persistKey: `results-vnext.okr-objectives.${set.setId}`,
+          // D09 (task brief, 2026-08-11): persistKey is per SURFACE, never per
+          // record id — a `${set.setId}` suffix here would (a) not carry
+          // column layout between Sets the user opens (column layout belongs
+          // to the "Objectives of a Set" surface, not to one specific Set)
+          // and (b) grow the browser's localStorage key count without bound,
+          // one per Set ever opened, with no cleanup. Fixed from the prior
+          // `results-vnext.okr-objectives.${set.setId}` (flagged as OQ-UI-H
+          // in RN_G2_OPEN_QUESTIONS_UI.md) to the stable surface key below.
+          persistKey: 'results-vnext.okr-objectives',
           loading,
           error,
           onRetry: load,

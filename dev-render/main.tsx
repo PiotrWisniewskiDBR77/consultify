@@ -265,6 +265,12 @@ const ResultsVNextOkrRegistryScreen = React.lazy(
 const ResultsVNextOkrObjectivesScreen = React.lazy(
   () => import('./screens/results-vnext-okr-objectives')
 );
+const ResultsVNextOkrWorkspaceScreen = React.lazy(
+  () => import('./screens/results-vnext-okr-workspace')
+);
+const ResultsVNextOkrAdminScreen = React.lazy(
+  () => import('./screens/results-vnext-okr-admin')
+);
 const ResultsVNextKpiScorecardsScreen = React.lazy(
   () => import('./screens/results-vnext-kpi-scorecards')
 );
@@ -295,13 +301,23 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   },
   'results-vnext-okr-registry': {
     label:
-      'RN-G2 P3 #23 — REALNY rejestr OKR (okrRegistryPresenters + ResultsVNextRegistryShell): Organization/My/Company tabs, honest progress/confidence, lock badges (draft-editable vs locked). &tab=org|my|company &state=ready|loading|empty|error &selected=<setId|none>',
+      'RN-G2 P3 #23 — REALNY <ResultsOkrHub> (OQ-UI-I fix 2026-08-11: mounts the production component, window.fetch stubbed for /api/vnext/results/okr*, not a presenter reimplementation). Organization/My/Company tabs (real clicks, real fetch per tab), honest progress/confidence, lock badges, real ?setId= deep link. &state=ready|loading|empty|error',
     render: () => <ResultsVNextOkrRegistryScreen />,
   },
   'results-vnext-okr-objectives': {
     label:
-      'RN-G2 §G #25 — REALNE Cele/Kluczowe Rezultaty/Check-iny OKR (drill-down breadcrumb pod /results/okr): honest 3-way progress via calc-reason, lock (draft-editable vs zamrożony), formularze create/edit/cancel/record/correct. &level=objectives|keyResults|checkIns &setStatus=<status> &krStatus=<status> &state=ready|loading|empty|error &selected=<id|none> &modal=none|create|edit|cancel|record|correct &modalState=idle|saving|error|conflict &suggestion=trend|no_history|loading|failed',
+      'RN-G2 §G #25 — REALNE <OkrObjectivesView>/<OkrKeyResultsView>/<OkrCheckInsView> (OQ-UI-I fix 2026-08-11: production components + window.fetch stub, real modals with real onClose — not eight no-ops). Click through the real drill (Cele -> Kluczowe Rezultaty -> Check-iny) inside the harness. &level=objectives|keyResults|checkIns (initial level) &setStatus=<status> &state=ready|loading|empty|error',
     render: () => <ResultsVNextOkrObjectivesScreen />,
+  },
+  'results-vnext-okr-workspace': {
+    label:
+      'RN-G3 lane okr full-tool task (2026-08-11) — REALNY <OkrSetWorkspace> (pełne narzędzie: Przegląd/Cele i KR/Dopasowania/Rozmowy i wsparcie/Przegląd i refleksja/Historia), window.fetch stubbed, real component + real tab clicks. &setStatus=<status> &asOwner=1',
+    render: () => <ResultsVNextOkrWorkspaceScreen />,
+  },
+  'results-vnext-okr-admin': {
+    label:
+      'RN-G3 lane okr full-tool task (2026-08-11) — REALNE <OkrProgramsPage>/<OkrCyclesPage> (powierzchnie administracyjne Programu/Cyklu, OSOBNE od Set workspace), window.fetch stubbed. &page=programs|cycles',
+    render: () => <ResultsVNextOkrAdminScreen />,
   },
   'results-vnext-kpi-scorecards': {
     label:

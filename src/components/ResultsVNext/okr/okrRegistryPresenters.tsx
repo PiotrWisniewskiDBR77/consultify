@@ -181,6 +181,14 @@ export function buildOkrSetRowMenu(
      * children is lock-gated, enforced one level down).
      */
     onOpenObjectives?: (row: OkrSetDto) => void;
+    /**
+     * RN-G3 lane `okr` (2026-08-11, full-tool task) — opens the FULL
+     * `OkrSetWorkspace` (Overview/Objectives & Key Results/Alignment/
+     * Conversations & Support/Review & Reflection/History). Optional, same
+     * addytywne posture as `onOpenObjectives` above — this function keeps
+     * working byte-for-byte for any caller that predates the workspace.
+     */
+    onOpenWorkspace?: (row: OkrSetDto) => void;
   }
 ): StandardRowMenu {
   const locked = isOkrSetLocked(row.status);
@@ -195,6 +203,15 @@ export function buildOkrSetRowMenu(
         label: isPolish ? 'Otwórz' : 'Open',
         onClick: () => handlers.onPreview(row),
       },
+      ...(handlers.onOpenWorkspace
+        ? [
+            {
+              id: 'open-workspace',
+              label: isPolish ? 'Obszar roboczy OKR' : 'OKR workspace',
+              onClick: () => handlers.onOpenWorkspace!(row),
+            },
+          ]
+        : []),
       ...(handlers.onOpenObjectives
         ? [
             {
@@ -232,10 +249,12 @@ export interface OkrSetPreviewDeps {
   /** RN-G2 §G #25 — optional, same addytywne posture as
    * `buildOkrSetRowMenu`'s own `onOpenObjectives`. */
   onOpenObjectives?: (row: OkrSetDto) => void;
+  /** RN-G3 lane `okr` full-tool task — optional, opens `OkrSetWorkspace`. */
+  onOpenWorkspace?: (row: OkrSetDto) => void;
 }
 
 export function buildOkrSetPreview(row: OkrSetDto, deps: OkrSetPreviewDeps): StandardPreviewProps {
-  const { isPolish, onClose, onOpenObjectives } = deps;
+  const { isPolish, onClose, onOpenObjectives, onOpenWorkspace } = deps;
   const lock = getOkrSetLockInfo(row.status);
   const progress = parseOkrProgress(row.overallProgress);
 
@@ -336,17 +355,28 @@ export function buildOkrSetPreview(row: OkrSetDto, deps: OkrSetPreviewDeps): Sta
     // wired in this package — same "no fake button" rationale
     // `roiRegistryPresenters.tsx` states, now narrowed to exactly the one
     // capability that IS real.
-    actions: onOpenObjectives
-      ? {
-          informational: [
-            {
-              id: 'open-objectives',
-              variant: 'neutral',
-              label: isPolish ? 'Cele (Objectives)' : 'Objectives',
-              onClick: () => onOpenObjectives(row),
-            },
-          ],
-        }
-      : undefined,
+    actions:
+      onOpenObjectives || onOpenWorkspace
+        ? {
+            informational: [
+              onOpenWorkspace
+                ? {
+                    id: 'open-workspace',
+                    variant: 'neutral' as const,
+                    label: isPolish ? 'Obszar roboczy OKR' : 'OKR workspace',
+                    onClick: () => onOpenWorkspace(row),
+                  }
+                : null,
+              onOpenObjectives
+                ? {
+                    id: 'open-objectives',
+                    variant: 'neutral' as const,
+                    label: isPolish ? 'Cele (Objectives)' : 'Objectives',
+                    onClick: () => onOpenObjectives(row),
+                  }
+                : null,
+            ].filter((a): a is NonNullable<typeof a> => a !== null),
+          }
+        : undefined,
   };
 }

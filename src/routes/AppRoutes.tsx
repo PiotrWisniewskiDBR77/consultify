@@ -121,6 +121,14 @@ const ResultsKpiScorecardDetailPage = lazyWithRetry(() =>
     default: m.default,
   }))
 );
+// RN-G3 lane `okr` full-tool task (2026-08-11) — Program/Cycle admin
+// surfaces (`ROUTES.RESULTS_OKR.PROGRAMS`/`.CYCLES`).
+const OkrProgramsPage = lazyWithRetry(() =>
+  import('@/components/ResultsVNext/okr/OkrProgramsPage').then((m) => ({ default: m.default }))
+);
+const OkrCyclesPage = lazyWithRetry(() =>
+  import('@/components/ResultsVNext/okr/OkrCyclesPage').then((m) => ({ default: m.default }))
+);
 
 const ConclusionsHub = lazyWithRetry(() =>
   import('@/components/Conclusions/ConclusionsHub').then((m) => ({ default: m.default }))
@@ -2566,6 +2574,54 @@ export const AppRoutes: React.FC = () => {
                 >
                   <RouteErrorBoundary>
                     <ResultsOkrRegistryPage />
+                  </RouteErrorBoundary>
+                </ProductionModuleGate>
+              </MainLayout>
+            </BetaGate>
+          }
+        />
+        {/* RN-G3 lane `okr` full-tool task (2026-08-11) — Program/Cycle admin
+            surfaces. Same entitlement chain + same internal `okrRegistry`
+            flag gate as ROUTES.RESULTS_OKR.ROOT above (one flag per domain,
+            not per screen — resultsVNextFeatureFlags.ts's own convention). */}
+        <Route
+          path={ROUTES.RESULTS_OKR.PROGRAMS}
+          element={
+            <BetaGate moduleId="MODULE_BENEFITS">
+              <MainLayout
+                breadcrumbs={
+                  breadcrumbs || [t('sidebar.results', 'Results'), t('results.okr', 'OKR'), t('results.okrPrograms', 'Programs')]
+                }
+                noPadding
+              >
+                <ProductionModuleGate
+                  enabled={!hideNonCoreModulesOnPublicProduction}
+                  moduleName="Results"
+                >
+                  <RouteErrorBoundary>
+                    <OkrProgramsPage />
+                  </RouteErrorBoundary>
+                </ProductionModuleGate>
+              </MainLayout>
+            </BetaGate>
+          }
+        />
+        <Route
+          path={ROUTES.RESULTS_OKR.CYCLES}
+          element={
+            <BetaGate moduleId="MODULE_BENEFITS">
+              <MainLayout
+                breadcrumbs={
+                  breadcrumbs || [t('sidebar.results', 'Results'), t('results.okr', 'OKR'), t('results.okrCycles', 'Cycles')]
+                }
+                noPadding
+              >
+                <ProductionModuleGate
+                  enabled={!hideNonCoreModulesOnPublicProduction}
+                  moduleName="Results"
+                >
+                  <RouteErrorBoundary>
+                    <OkrCyclesPage />
                   </RouteErrorBoundary>
                 </ProductionModuleGate>
               </MainLayout>

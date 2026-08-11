@@ -143,6 +143,12 @@ export const ROUTES = {
   RESULTS_OKR: {
     ROOT: '/results/okr',
     SET: '/results/okr/sets/:okrSetId',
+    // RN-G3 lane `okr` full-tool task (2026-08-11) — Program/Cycle admin
+    // surfaces, OWN top-level routes per design §8.3 ("Program Settings and
+    // Cycle Management have their own governed admin routes/tools... not
+    // tabs belonging to a selected Set").
+    PROGRAMS: '/results/okr/programs',
+    CYCLES: '/results/okr/cycles',
   },
   CONCLUSIONS: '/conclusions',
   MCP_IRIS: '/mcp/iris',
