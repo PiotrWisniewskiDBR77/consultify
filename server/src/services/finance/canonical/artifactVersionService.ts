@@ -136,6 +136,30 @@ export async function getArtifact(organizationId: string, artifactId: string): P
   );
 }
 
+/**
+ * D3 (Pakiet B2 API report, `PKG_B_API_report.md` §3) — thin rename writer,
+ * added per DEC-FIN-012. `finance_artifacts.natural_key` is identity
+ * metadata, not versioned content (WP-B01 §2.1 "identity, not content") —
+ * unlike `finance_business_versions` there is no post-approval immutability
+ * trigger on this table (only `bv_terminal_immutability`/
+ * `bv_superseded_immutability` target business versions), so this is a plain
+ * org-scoped UPDATE, not a lifecycle transition. It deliberately does NOT
+ * re-implement `workspaceBarContract.ts`'s `canRenameArtifact`/
+ * `validateWorkspaceName` (client-side gating: which statuses/roles may
+ * rename, and name normalization/length) — the router calling this function
+ * is expected to run those first (same "no domain logic in this thin
+ * addition" boundary as `computeJobService.getJobOutput` above) and pass
+ * only an already-validated, already-normalized name.
+ */
+export async function renameArtifact(organizationId: string, artifactId: string, naturalKey: string): Promise<ArtifactRow | null> {
+  return withPinnedPostgresTransaction((tx) =>
+    tx.queryOne<ArtifactRow>(
+      `UPDATE finance_artifacts SET natural_key = ? WHERE artifact_id = ? AND organization_id = ? RETURNING *`,
+      [naturalKey, artifactId, organizationId]
+    )
+  );
+}
+
 export async function getBusinessVersion(
   organizationId: string,
   businessVersionId: string

@@ -275,6 +275,107 @@ async function loadActiveCatalogByCode(organizationId: string): Promise<Map<stri
 }
 
 // ---------------------------------------------------------------------------
+// Pakiet B2 — thin readers (DEC-FIN-012), additive to this file so they stay
+// co-located with the row shapes/queries they mirror (`loadActiveCatalogByCode`
+// above, `finance_analysis_kpi_values` reads inside `computeAnalysisKpis`).
+// No domain logic: org-scoped SELECTs only, same tier-visibility rule
+// `loadActiveCatalogByCode` already enforces (`tier != 'ORG_CUSTOM' OR
+// organization_id = ?`) reused verbatim so the catalog a client browses and
+// the catalog the compute engine actually resolves against never diverge.
+// ---------------------------------------------------------------------------
+
+export interface KpiCatalogListRow extends KpiCatalogRow {
+  organization_id: string | null;
+  industry_code: string | null;
+  description: string | null;
+}
+
+export interface ListKpiCatalogOptions {
+  /** Default: only ACTIVE rows (what compute actually uses). Pass `includeAllStatuses: true` to also see DRAFT/DEPRECATED. */
+  includeAllStatuses?: boolean;
+  tier?: 'UNIVERSAL' | 'INDUSTRY' | 'ORG_CUSTOM';
+}
+
+/** Three-layer catalog (universal / industry / org-custom), WP-D03 §3. Read-only mirror of `loadActiveCatalogByCode`'s own WHERE clause — see that function for why `tier != 'ORG_CUSTOM' OR organization_id = ?` is the whole visibility rule. */
+export async function listKpiCatalog(organizationId: string, options: ListKpiCatalogOptions = {}): Promise<KpiCatalogListRow[]> {
+  const conditions: string[] = [`(tier != 'ORG_CUSTOM' OR organization_id = ?)`];
+  const params: unknown[] = [organizationId];
+  if (!options.includeAllStatuses) {
+    conditions.push(`status = 'ACTIVE'`);
+  }
+  if (options.tier) {
+    conditions.push(`tier = ?`);
+    params.push(options.tier);
+  }
+  return withPinnedPostgresTransaction((tx) =>
+    tx.queryAll<KpiCatalogListRow>(
+      `SELECT id, kpi_code, catalog_version, status, tier, industry_code, organization_id, category, kpi_name,
+              description, unit_type, formula_ast, compile_status, resolved_output_unit, period_convention,
+              negative_denominator_policy, required_canonical_line_codes
+         FROM finance_analysis_kpi_catalog
+        WHERE ${conditions.join(' AND ')}
+        ORDER BY tier ASC, category ASC, kpi_code ASC`,
+      params
+    )
+  );
+}
+
+export interface KpiValueListRow {
+  id: string;
+  organization_id: string;
+  business_version_id: string;
+  kpi_catalog_id: string;
+  kpi_code: string;
+  kpi_name: string;
+  category: string;
+  tier: string;
+  unit_type: string;
+  entity_id: string;
+  period_id: string;
+  value_status: string;
+  value_decimal: string | null;
+  native_currency: string | null;
+  presentation_currency: string | null;
+  unit: string | null;
+  multiplier: string;
+  quality_flag: string | null;
+  delta_vs_prior_period: string | null;
+  delta_pct_vs_prior_period: string | null;
+  interpretation_text: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+/**
+ * Computed KPI results for one Analysis version, joined against the catalog for the
+ * kpiCode/name/category/tier a client needs to render without a second round-trip.
+ * `finance_analysis_benchmarks` (peer-set percentiles) is deliberately NOT joined here —
+ * this program ships no writer for that table yet (grep confirms zero INSERT callers
+ * anywhere in `services/finance/**`), so joining it would only ever return NULL columns;
+ * documented as a real gap in the report rather than a silently-always-empty join.
+ */
+export async function listKpiValues(
+  organizationId: string,
+  businessVersionId: string
+): Promise<KpiValueListRow[]> {
+  return withPinnedPostgresTransaction((tx) =>
+    tx.queryAll<KpiValueListRow>(
+      `SELECT v.id, v.organization_id, v.business_version_id, v.kpi_catalog_id,
+              c.kpi_code, c.kpi_name, c.category, c.tier, c.unit_type,
+              v.entity_id, v.period_id, v.value_status, v.value_decimal,
+              v.native_currency, v.presentation_currency, v.unit, v.multiplier,
+              v.quality_flag, v.delta_vs_prior_period, v.delta_pct_vs_prior_period,
+              v.interpretation_text, v.created_at, v.updated_at
+         FROM finance_analysis_kpi_values v
+         JOIN finance_analysis_kpi_catalog c ON c.id = v.kpi_catalog_id
+        WHERE v.organization_id = ? AND v.business_version_id = ?
+        ORDER BY c.category ASC, c.kpi_code ASC, v.entity_id ASC, v.period_id ASC`,
+      [organizationId, businessVersionId]
+    )
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Resolver factory — builds the CellResolver/DynamicConstantResolver
 // formulaAstEvaluator needs, anchored at one (defaultEntityId, anchorPeriodId).
 // ---------------------------------------------------------------------------

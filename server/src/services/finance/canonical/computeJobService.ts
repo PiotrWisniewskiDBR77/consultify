@@ -545,6 +545,47 @@ export async function getJob(organizationId: string, jobId: string): Promise<Com
   );
 }
 
+/**
+ * D2 (Pakiet B2 API report, `PKG_B_API_report.md` §3) — thin reader for
+ * `compute_job_outputs`, added per DEC-FIN-012 ("jeśli brakujący reader jest
+ * cienki i oczywisty, dopisz go minimalnie"). Written exclusively by
+ * `completeJobSuccess()` above; this function performs no domain logic, only
+ * an org-scoped SELECT joined through the owning job (a job's
+ * `organization_id` and its output row's `organization_id` are always equal
+ * by construction — `completeJobSuccess` writes both from the same
+ * `params.organizationId` — but the join+filter is done explicitly here
+ * rather than trusted implicitly, so a future caller cannot accidentally
+ * read another organization's output row even if that invariant were ever
+ * violated upstream). Returns `null` both when the job does not exist/belong
+ * to this org AND when it exists but has not (yet) produced a committed
+ * output — callers distinguish the two by calling `getJob()` first, exactly
+ * the pattern `compute.routes.ts`'s `GET /compute/jobs/:jobId` already uses
+ * for the job row itself.
+ */
+export interface ComputeJobOutputRow {
+  id: string;
+  job_id: string;
+  organization_id: string;
+  output_artifact_id: string;
+  output_business_version_id: string | null;
+  output_working_revision_id: string;
+  committed_by_attempt_number: number;
+  content_semantic_hash: string;
+  freshness: ComputeJobFreshness;
+  committed_at: string;
+}
+
+export async function getJobOutput(organizationId: string, jobId: string): Promise<ComputeJobOutputRow | null> {
+  return withPinnedPostgresTransaction((tx) =>
+    tx.queryOne<ComputeJobOutputRow>(
+      `SELECT o.* FROM compute_job_outputs o
+        JOIN compute_jobs j ON j.id = o.job_id
+       WHERE o.job_id = ? AND o.organization_id = ? AND j.organization_id = ?`,
+      [jobId, organizationId, organizationId]
+    )
+  );
+}
+
 export interface ReapedJob {
   jobId: string;
   organizationId: string;

@@ -706,6 +706,232 @@ export async function runBaselineCompute(params: RunBaselineComputeParams): Prom
   return { ok: true, job: finalJob, periodsComputed: monthlyResults.length, monthlyResults };
 }
 
+// ---------------------------------------------------------------------------
+// Pakiet B2 — thin assumptions read/batch-write + outputs reader (DEC-FIN-012).
+//
+// This file's own header ("SCOPE") already draws the line: assumption
+// AUTHORING is "a Kreator-surface concern, not this compute engine's" —
+// `runBaselineCompute` above only ever READS `finance_baseline_assumptions`
+// (`loadContext`'s `SELECT ... FROM finance_baseline_assumptions`, line
+// ~278). This package's brief lists "Baseline: assumptions (odczyt i zapis
+// wsadowy)" as an explicit priority-3 scope item — not a discovered defect —
+// so it is built here, not just reported. Kept intentionally thin: an
+// org-scoped batch UPSERT on the table's own unique cell key
+// (business_version_id, entity_id, schedule_type, driver_code, period_id),
+// no solver/schedule logic, no read-modify-write against compute output.
+// ---------------------------------------------------------------------------
+
+/** `finance_baseline_assumptions.schedule_type` CHECK values (migration `20260809_finance_v3_d05_baseline_01_tables.sql`). */
+export const BASELINE_SCHEDULE_TYPES = [
+  'revenue_pvm', 'headcount', 'cogs_opex', 'wc_dso_dio_dpo',
+  'capex_depreciation', 'leases', 'debt_maturity', 'tax_nol', 'equity_re',
+] as const;
+export type BaselineScheduleType = (typeof BASELINE_SCHEDULE_TYPES)[number];
+
+/** `finance_baseline_assumptions.rule` CHECK values. */
+export const BASELINE_ASSUMPTION_RULES = [
+  'HISTORICAL_AVERAGE', 'GROWTH_RATE', 'FIXED_VALUE', 'LINKED_TO_ANALYSIS_KPI', 'FORMULA', 'MANUAL_OVERRIDE',
+] as const;
+export type BaselineAssumptionRule = (typeof BASELINE_ASSUMPTION_RULES)[number];
+
+/** `finance_baseline_assumptions.quality` CHECK values. Default 'ESTIMATED' at the DB layer. */
+export const BASELINE_ASSUMPTION_QUALITIES = ['CONFIRMED', 'ESTIMATED', 'DEGRADED_INSUFFICIENT_HISTORY'] as const;
+export type BaselineAssumptionQuality = (typeof BASELINE_ASSUMPTION_QUALITIES)[number];
+
+export interface BaselineAssumptionListRow {
+  id: string;
+  organization_id: string;
+  business_version_id: string;
+  schedule_type: BaselineScheduleType;
+  driver_code: string;
+  entity_id: string;
+  period_id: string;
+  base_period_id: string | null;
+  rule: BaselineAssumptionRule;
+  value_status: string;
+  value_decimal: string | null;
+  unit: string;
+  source_ref: Record<string, unknown> | null;
+  range_low: string | null;
+  range_high: string | null;
+  quality: BaselineAssumptionQuality;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ListBaselineAssumptionsFilters {
+  scheduleType?: BaselineScheduleType;
+  entityId?: string;
+}
+
+export async function listBaselineAssumptions(
+  organizationId: string,
+  businessVersionId: string,
+  filters: ListBaselineAssumptionsFilters = {}
+): Promise<BaselineAssumptionListRow[]> {
+  const conditions = ['organization_id = ?', 'business_version_id = ?'];
+  const params: unknown[] = [organizationId, businessVersionId];
+  if (filters.scheduleType) {
+    conditions.push('schedule_type = ?');
+    params.push(filters.scheduleType);
+  }
+  if (filters.entityId) {
+    conditions.push('entity_id = ?');
+    params.push(filters.entityId);
+  }
+  return withPinnedPostgresTransaction((tx) =>
+    tx.queryAll<BaselineAssumptionListRow>(
+      `SELECT * FROM finance_baseline_assumptions WHERE ${conditions.join(' AND ')} ORDER BY schedule_type ASC, driver_code ASC, entity_id ASC, period_id ASC`,
+      params
+    )
+  );
+}
+
+export interface UpsertAssumptionInput {
+  scheduleType: BaselineScheduleType;
+  driverCode: string;
+  entityId: string;
+  periodId: string;
+  basePeriodId?: string | null;
+  rule: BaselineAssumptionRule;
+  valueStatus: string;
+  valueDecimal: number | null;
+  unit: string;
+  sourceRef?: Record<string, unknown> | null;
+  rangeLow?: number | null;
+  rangeHigh?: number | null;
+  quality?: BaselineAssumptionQuality;
+}
+
+export interface UpsertAssumptionsBatchParams {
+  organizationId: string;
+  businessVersionId: string;
+  createdBy: string;
+  assumptions: UpsertAssumptionInput[];
+}
+
+/**
+ * Batch UPSERT on `uq_finance_baseline_assumptions_cell` — one call writes
+ * the whole Kreator screen's worth of driver overrides atomically (same
+ * "batch, not per-cell, so a partial save is never possible" reasoning
+ * `statementMappingService.mapStatementLines`'s file header documents for
+ * its own one-transaction batch write).
+ */
+export async function upsertAssumptionsBatch(params: UpsertAssumptionsBatchParams): Promise<BaselineAssumptionListRow[]> {
+  return withPinnedPostgresTransaction(async (tx) => {
+    const written: BaselineAssumptionListRow[] = [];
+    for (const a of params.assumptions) {
+      const row = await tx.queryOne<BaselineAssumptionListRow>(
+        `INSERT INTO finance_baseline_assumptions (
+           id, organization_id, business_version_id, schedule_type, driver_code, entity_id, period_id,
+           base_period_id, rule, value_status, value_decimal, unit, source_ref, range_low, range_high,
+           quality, created_by
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         ON CONFLICT ON CONSTRAINT uq_finance_baseline_assumptions_cell DO UPDATE SET
+           base_period_id = EXCLUDED.base_period_id,
+           rule = EXCLUDED.rule,
+           value_status = EXCLUDED.value_status,
+           value_decimal = EXCLUDED.value_decimal,
+           unit = EXCLUDED.unit,
+           source_ref = EXCLUDED.source_ref,
+           range_low = EXCLUDED.range_low,
+           range_high = EXCLUDED.range_high,
+           quality = EXCLUDED.quality,
+           updated_at = now()
+         RETURNING *`,
+        [
+          uuidv4(),
+          params.organizationId,
+          params.businessVersionId,
+          a.scheduleType,
+          a.driverCode,
+          a.entityId,
+          a.periodId,
+          a.basePeriodId ?? null,
+          a.rule,
+          a.valueStatus,
+          a.valueDecimal,
+          a.unit,
+          a.sourceRef ? JSON.stringify(a.sourceRef) : null,
+          a.rangeLow ?? null,
+          a.rangeHigh ?? null,
+          a.quality ?? 'ESTIMATED',
+          params.createdBy,
+        ]
+      );
+      if (!row) throw new Error('finance_baseline_assumptions upsert returned no row');
+      written.push(row);
+    }
+    return written;
+  });
+}
+
+export interface BaselineOutputListRow {
+  id: string;
+  organization_id: string;
+  business_version_id: string;
+  statement_type: 'P&L' | 'BS' | 'CF';
+  canonical_line_id: string;
+  line_code: string;
+  entity_id: string;
+  period_id: string;
+  period_label: string;
+  consolidation_scope: string;
+  value_status: string;
+  value_decimal: string | null;
+  native_currency: string;
+  presentation_currency: string;
+  unit: string;
+  multiplier: string;
+  value_kind: string;
+  driving_schedule_type: string | null;
+  created_by: string;
+  created_at: string;
+}
+
+export interface ListBaselineOutputsFilters {
+  statementType?: 'P&L' | 'BS' | 'CF';
+  entityId?: string;
+  periodId?: string;
+}
+
+/** Reader for `finance_baseline_outputs` — the three forecast statements `runBaselineCompute` above writes. No prior HTTP caller could read this back before Pakiet B2. */
+export async function listBaselineOutputs(
+  organizationId: string,
+  businessVersionId: string,
+  filters: ListBaselineOutputsFilters = {}
+): Promise<BaselineOutputListRow[]> {
+  const conditions = ['o.organization_id = ?', 'o.business_version_id = ?'];
+  const params: unknown[] = [organizationId, businessVersionId];
+  if (filters.statementType) {
+    conditions.push('o.statement_type = ?');
+    params.push(filters.statementType);
+  }
+  if (filters.entityId) {
+    conditions.push('o.entity_id = ?');
+    params.push(filters.entityId);
+  }
+  if (filters.periodId) {
+    conditions.push('o.period_id = ?');
+    params.push(filters.periodId);
+  }
+  return withPinnedPostgresTransaction((tx) =>
+    tx.queryAll<BaselineOutputListRow>(
+      `SELECT o.id, o.organization_id, o.business_version_id, o.statement_type, o.canonical_line_id,
+              fsl.line_code, o.entity_id, o.period_id, p.label AS period_label, o.consolidation_scope,
+              o.value_status, o.value_decimal, o.native_currency, o.presentation_currency, o.unit,
+              o.multiplier, o.value_kind, o.driving_schedule_type, o.created_by, o.created_at
+         FROM finance_baseline_outputs o
+         JOIN financial_statement_lines fsl ON fsl.id = o.canonical_line_id
+         JOIN finance_stmt_periods p ON p.period_id = o.period_id
+        WHERE ${conditions.join(' AND ')}
+        ORDER BY o.statement_type ASC, fsl.line_code ASC, p.period_start ASC`,
+      params
+    )
+  );
+}
+
 class BaselineNonConvergenceError extends Error {
   constructor(public readonly periodId: string, public readonly partialResults: PeriodComputeSummary[]) {
     super(`baseline circularity solver did not converge for period ${periodId}`);

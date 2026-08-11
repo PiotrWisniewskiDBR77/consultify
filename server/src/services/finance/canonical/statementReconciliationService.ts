@@ -864,6 +864,52 @@ export async function runReconciliation(params: RunReconciliationParams): Promis
   };
 }
 
+// ---------------------------------------------------------------------------
+// Pakiet B2 — thin readers (DEC-FIN-012). No prior HTTP caller wrote
+// `finance_reconciliation_runs`/`finance_stmt_reconciliation` back out —
+// `runReconciliation` above only ever returns them in-process to its own
+// caller. Org-scoped SELECTs only, mirroring this file's own row shapes.
+// ---------------------------------------------------------------------------
+
+/** Single reconciliation run by id, org-scoped — 404-vs-empty-array disambiguation for the router (same reasoning as `artifactVersionService.getArtifact`). */
+export async function getReconciliationRun(
+  organizationId: string,
+  reconciliationRunId: string
+): Promise<FinanceReconciliationRunRow | null> {
+  return withPinnedPostgresTransaction((tx) =>
+    tx.queryOne<FinanceReconciliationRunRow>(
+      `SELECT * FROM finance_reconciliation_runs WHERE organization_id = ? AND id = ?`,
+      [organizationId, reconciliationRunId]
+    )
+  );
+}
+
+/** Every reconciliation run for one Statement Pack version, newest first — the "reconciliation ledger" the brief asks for. */
+export async function listReconciliationRuns(
+  organizationId: string,
+  businessVersionId: string
+): Promise<FinanceReconciliationRunRow[]> {
+  return withPinnedPostgresTransaction((tx) =>
+    tx.queryAll<FinanceReconciliationRunRow>(
+      `SELECT * FROM finance_reconciliation_runs WHERE organization_id = ? AND business_version_id = ? ORDER BY created_at DESC`,
+      [organizationId, businessVersionId]
+    )
+  );
+}
+
+/** Row-level detail (one row per mapped source line) for a single reconciliation run — the waterfall's audit trail. */
+export async function listReconciliationDetail(
+  organizationId: string,
+  reconciliationRunId: string
+): Promise<FinanceStmtReconciliationRow[]> {
+  return withPinnedPostgresTransaction((tx) =>
+    tx.queryAll<FinanceStmtReconciliationRow>(
+      `SELECT * FROM finance_stmt_reconciliation WHERE organization_id = ? AND reconciliation_run_id = ? ORDER BY created_at ASC`,
+      [organizationId, reconciliationRunId]
+    )
+  );
+}
+
 /**
  * RC-05 data access — every stored balance-sheet cell of one Statement Pack version, flattened
  * for `detectPeriodOverPeriodJumps`. Only `value_status='PRESENT_*'` cells carry a number;

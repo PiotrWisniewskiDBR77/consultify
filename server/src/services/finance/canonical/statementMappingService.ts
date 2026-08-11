@@ -447,3 +447,90 @@ export async function mapStatementLines(params: MapStatementLinesParams): Promis
     return results;
   });
 }
+
+// ---------------------------------------------------------------------------
+// Pakiet B2 — thin reader (DEC-FIN-012). `mapStatementLines` above only ever
+// WRITES `finance_stmt_lines`; no prior caller anywhere in `services/finance/**`
+// reads it back out (statementReconciliationService.ts's
+// `loadBalanceSheetObservations` reads a BS-only slice for its own internal
+// plausibility check, not a general-purpose reader). Org-scoped SELECT only,
+// joined against the same three dimension tables `mapStatementLines` itself
+// resolves against (canonical taxonomy / entities / periods), so a caller gets
+// human-readable `lineCode`/`entityCode`/`periodLabel` without a second round
+// trip — every FinanceValue-bundle column (status/decimal/currency/unit/
+// multiplier/sourceRef) is carried through untouched.
+// ---------------------------------------------------------------------------
+
+export interface StatementLineListRow {
+  id: string;
+  organization_id: string;
+  business_version_id: string;
+  statement_type: StatementType;
+  canonical_line_id: string;
+  line_code: string;
+  entity_id: string;
+  entity_code: string;
+  period_id: string;
+  period_label: string;
+  accumulation_basis: AccumulationBasis;
+  consolidation_scope: ConsolidationScope;
+  value_status: FinanceValueStatus;
+  value_decimal: string | null;
+  native_currency: string;
+  presentation_currency: string;
+  unit: FinanceUnit;
+  multiplier: string;
+  source_ref: Record<string, unknown> | null;
+  is_adjustment: boolean;
+  adjustment_reason: string | null;
+  sign_convention: SignConvention;
+  accounting_policy: AccountingPolicy;
+  reclassified_from_line_id: string | null;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ListStatementLinesFilters {
+  statementType?: StatementType;
+  entityId?: string;
+  periodId?: string;
+}
+
+export async function listStatementLines(
+  organizationId: string,
+  businessVersionId: string,
+  filters: ListStatementLinesFilters = {}
+): Promise<StatementLineListRow[]> {
+  const conditions = ['l.organization_id = ?', 'l.business_version_id = ?'];
+  const params: unknown[] = [organizationId, businessVersionId];
+  if (filters.statementType) {
+    conditions.push('l.statement_type = ?');
+    params.push(filters.statementType);
+  }
+  if (filters.entityId) {
+    conditions.push('l.entity_id = ?');
+    params.push(filters.entityId);
+  }
+  if (filters.periodId) {
+    conditions.push('l.period_id = ?');
+    params.push(filters.periodId);
+  }
+  return withPinnedPostgresTransaction((tx) =>
+    tx.queryAll<StatementLineListRow>(
+      `SELECT l.id, l.organization_id, l.business_version_id, l.statement_type, l.canonical_line_id,
+              fsl.line_code, l.entity_id, e.entity_code, l.period_id, p.label AS period_label,
+              l.accumulation_basis, l.consolidation_scope, l.value_status, l.value_decimal,
+              l.native_currency, l.presentation_currency, l.unit, l.multiplier, l.source_ref,
+              l.is_adjustment, l.adjustment_reason, l.sign_convention, l.accounting_policy,
+              l.reclassified_from_line_id, l.created_by, l.created_at, l.updated_at
+         FROM finance_stmt_lines l
+         JOIN financial_statement_lines fsl ON fsl.id = l.canonical_line_id
+         JOIN finance_stmt_entities e ON e.id = l.entity_id
+         JOIN finance_stmt_periods p ON p.period_id = l.period_id
+        WHERE ${conditions.join(' AND ')}
+        ORDER BY l.statement_type ASC, fsl.line_code ASC, e.entity_code ASC, p.period_start ASC`,
+      params
+    )
+  );
+}
