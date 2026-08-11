@@ -97,6 +97,7 @@ interface ImpactChainRow {
   ramp_months: number | null;
   duration_months: number | null;
   decay_pct_per_period: string | null;
+  created_at: string;
 }
 
 interface InitiativeDefaultsRow {
@@ -106,20 +107,76 @@ interface InitiativeDefaultsRow {
   default_duration_months: number | null;
 }
 
+export type FinancingKind =
+  | 'FACILITY_DRAWDOWN'
+  | 'DISCRETIONARY_REPAYMENT'
+  | 'EQUITY_INJECTION'
+  | 'DIVIDEND_DECLARATION'
+  | 'SHARE_BUYBACK'
+  | 'SURPLUS_ALLOCATION_POLICY'
+  | 'COVENANT_DEFINITION'
+  | 'MIN_CASH_POLICY';
+
 interface FinancingRow {
   id: string;
-  financing_kind:
-    | 'FACILITY_DRAWDOWN'
-    | 'DISCRETIONARY_REPAYMENT'
-    | 'EQUITY_INJECTION'
-    | 'DIVIDEND_DECLARATION'
-    | 'SHARE_BUYBACK'
-    | 'SURPLUS_ALLOCATION_POLICY'
-    | 'COVENANT_DEFINITION'
-    | 'MIN_CASH_POLICY';
+  financing_kind: FinancingKind;
   entity_id: string;
   period_id: string | null;
   payload: { amount?: number; principal?: number; rate?: number; tenor_months?: number };
+  created_at: string;
+}
+
+/**
+ * PKG-A determinism fix (`docs/validation/finance-v3/generated/gate-e/PKG_A_DETERMINISM_report.md`):
+ * both `finance_prediction_impact_chain` and `finance_prediction_financing` are read with
+ * `SELECT ... WHERE business_version_id = ? AND entity_id = ?` — no `ORDER BY` — so Postgres's
+ * returned row order is not guaranteed stable across runs on byte-identical data (same defect class
+ * empirically proven in `W3_COMPUTE_DETERMINISM_report.md` for `kpiComputeService.ts`/
+ * `valuationFcffService.ts`: plain `UPDATE` churn on the shared table was enough to reorder the
+ * physical scan within a handful of runs, no VACUUM or forced index scan needed). Sorted here in
+ * memory by (`created_at`, `id`) — deliberately NOT via SQL `ORDER BY` — because that mirrors this
+ * codebase's own established fix pattern (`kpiComputeService.hashPayloadFor()`,
+ * `valuationFcffService.sumFlow()`'s period-order sort): a small, independently unit-testable pure
+ * function, rather than a query-string change that can only be proven against a live database.
+ * `id` is the tiebreaker for the (rare, same-millisecond) case of two rows sharing `created_at`.
+ */
+export function sortByCreatedAtThenId<T extends { id: string; created_at: string }>(rows: readonly T[]): T[] {
+  return [...rows].sort((a, b) => {
+    if (a.created_at !== b.created_at) return a.created_at < b.created_at ? -1 : 1;
+    return a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
+  });
+}
+
+/**
+ * PKG-A determinism fix — canonical within-period processing order for `finance_prediction_financing`
+ * events (see the `runOverlayCompute` financing-overlay loop comment for the full rationale).
+ * `DISCRETIONARY_REPAYMENT` ranks ahead of `FACILITY_DRAWDOWN` because they interact through a
+ * `Math.max(0, facilityDebtBalance - amount)` floor clamp — the only pair in this discriminated
+ * union where processing order changes the BUSINESS RESULT, not just float summation order. Every
+ * other kind is commutative (pure addition against a running total, no clamp) and is ranked after
+ * purely to give the whole array a single fixed total order (ties broken by `sortByCreatedAtThenId`,
+ * applied to `financingRows` before this rank sort runs — see `runOverlayCompute`).
+ */
+export const FINANCING_KIND_PROCESSING_RANK: Record<FinancingKind, number> = {
+  DISCRETIONARY_REPAYMENT: 0,
+  FACILITY_DRAWDOWN: 1,
+  EQUITY_INJECTION: 2,
+  SHARE_BUYBACK: 3,
+  DIVIDEND_DECLARATION: 4,
+  SURPLUS_ALLOCATION_POLICY: 5,
+  COVENANT_DEFINITION: 6,
+  MIN_CASH_POLICY: 7,
+};
+
+/**
+ * PKG-A determinism fix — pure, exported for direct unit testing (see
+ * `__tests__/predictionOverlayOrderDeterminism.test.ts`). `rows` is expected to already be in
+ * `sortByCreatedAtThenId` order (the stable JS sort below then preserves that as the tiebreaker for
+ * same-rank events, so the WHOLE array — not just the priority groups — ends up in one fixed total
+ * order).
+ */
+export function orderFinancingEventsForPeriod<T extends { financing_kind: FinancingKind }>(rows: readonly T[]): T[] {
+  return [...rows].sort((a, b) => FINANCING_KIND_PROCESSING_RANK[a.financing_kind] - FINANCING_KIND_PROCESSING_RANK[b.financing_kind]);
 }
 
 // ---------------------------------------------------------------------------
@@ -388,7 +445,7 @@ async function runOverlayCompute(
     if (code && r.value_decimal !== null) baselineValueByCellKey.set(`${code}::${r.period_id}`, Number(r.value_decimal));
   }
 
-  const [driverOverrideRows, impactChainRows, initiativeRows, financingRows, lineIdRows] = await Promise.all([
+  const [driverOverrideRows, impactChainRowsRaw, initiativeRows, financingRowsRaw, lineIdRows] = await Promise.all([
     withPinnedPostgresTransaction((tx) =>
       tx.queryAll<DriverOverrideRow>(
         `SELECT schedule_type, driver_code, entity_id, period_id, value_decimal FROM finance_prediction_driver_overrides WHERE business_version_id = ? AND entity_id = ?`,
@@ -396,8 +453,12 @@ async function runOverlayCompute(
       )
     ),
     withPinnedPostgresTransaction((tx) =>
+      // PKG-A determinism fix (`docs/validation/finance-v3/generated/gate-e/PKG_A_DETERMINISM_report.md`):
+      // no `ORDER BY` — see `sortByCreatedAtThenId`'s doc comment above for why. This array feeds
+      // `impactDeltaFor()`'s `total +=` accumulation below (float addition is not associative), so it
+      // is re-sorted right after `Promise.all` resolves, before any consumer sees it.
       tx.queryAll<ImpactChainRow>(
-        `SELECT id, initiative_id, statement_line_id, entity_id, amount_kind, amount_decimal, sign, start_period_id, ramp_months, duration_months, decay_pct_per_period
+        `SELECT id, initiative_id, statement_line_id, entity_id, amount_kind, amount_decimal, sign, start_period_id, ramp_months, duration_months, decay_pct_per_period, created_at::text AS created_at
            FROM finance_prediction_impact_chain WHERE business_version_id = ? AND entity_id = ?`,
         [params.businessVersionId, params.entityId]
       )
@@ -409,13 +470,22 @@ async function runOverlayCompute(
       )
     ),
     withPinnedPostgresTransaction((tx) =>
-      tx.queryAll<FinancingRow>(`SELECT id, financing_kind, entity_id, period_id, payload FROM finance_prediction_financing WHERE business_version_id = ? AND entity_id = ?`, [
-        params.businessVersionId,
-        params.entityId,
-      ])
+      // PKG-A determinism fix: no `ORDER BY` — re-sorted right after `Promise.all` resolves (see
+      // `sortByCreatedAtThenId`). Establishes a canonical base order for `financingRows`, making the
+      // `financingRows.find(kind === 'FACILITY_DRAWDOWN')` rate lookup below deterministic (picks the
+      // canonically EARLIEST facility row instead of "whatever Postgres returns first"). The
+      // period-scoped drawdown/repayment PROCESSING order (which needs a business policy, not just
+      // chronology) is applied separately below via `orderFinancingEventsForPeriod`.
+      tx.queryAll<FinancingRow>(
+        `SELECT id, financing_kind, entity_id, period_id, payload, created_at::text AS created_at
+           FROM finance_prediction_financing WHERE business_version_id = ? AND entity_id = ?`,
+        [params.businessVersionId, params.entityId]
+      )
     ),
     withPinnedPostgresTransaction((tx) => tx.queryAll<{ id: string; line_code: string }>(`SELECT id, line_code FROM financial_statement_lines`)),
   ]);
+  const impactChainRows = sortByCreatedAtThenId(impactChainRowsRaw);
+  const financingRows = sortByCreatedAtThenId(financingRowsRaw);
   const lineIdByCode2 = new Map<string, string>();
   for (const r of lineIdRows) lineIdByCode2.set(r.line_code, r.id);
   const lineCodeById2 = new Map<string, string>();
@@ -601,7 +671,23 @@ async function runOverlayCompute(
       //     either `facilityDebtBalance`/`cumulativeOtherEquityAdj`/dividend (liabilities+equity
       //     side) — by construction the two sides move by an identical amount every period, so the
       //     balance-sheet identity below ties EXACTLY, not just within a tolerance band. ---
-      const financingThisPeriod = financingRows.filter((f) => f.period_id === periodId);
+      // PKG-A determinism fix (`docs/validation/finance-v3/generated/gate-e/PKG_A_DETERMINISM_report.md`):
+      // apply this period's financing events in a fixed CANONICAL order, not raw query order.
+      // Unlike `impactDeltaFor`'s pure summation, this is not merely a bit-level rounding concern —
+      // `DISCRETIONARY_REPAYMENT` and `FACILITY_DRAWDOWN` share `facilityDebtBalance` through
+      // `Math.max(0, ...)` (line below), so swapping their order changes the BUSINESS RESULT (a
+      // repayment applied before vs. after a same-period drawdown can floor-clamp to a different
+      // ending balance — e.g. balance=0, drawdown=100, repayment=50 gives 50 if drawdown-first, 100
+      // if repayment-first-then-drawdown, since a repayment can never floor below 0). Policy decided
+      // per DEC-FIN-012 (routine matters, highest market-standard practice, documented if diverging):
+      // industry-standard debt-schedule convention applies contractual/scheduled obligations before
+      // discretionary shortfall-covering draws. This table has no separate "mandatory" repayment
+      // kind — `DISCRETIONARY_REPAYMENT` is the only debt-reducing event type — so it is ranked
+      // ahead of `FACILITY_DRAWDOWN`, mirroring "repayments before draws". Every other kind is
+      // commutative (pure addition, no floor) and ranked after for a stable TOTAL order only, so the
+      // per-period sum is bit-reproducible; ties broken by `financingRows`'s own `sortByCreatedAtThenId`
+      // order (a stable sort preserves that ordering within each rank — never re-derived here).
+      const financingThisPeriod = orderFinancingEventsForPeriod(financingRows.filter((f) => f.period_id === periodId));
       const facilityDebtOpening = facilityDebtBalance;
       let facilityCff = 0;
       let dividendThisPeriod = 0;

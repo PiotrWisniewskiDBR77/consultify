@@ -85,6 +85,53 @@ interface InitiativeDefaultsRow {
 }
 
 // ---------------------------------------------------------------------------
+// PKG-A determinism fixes (`docs/validation/finance-v3/generated/gate-e/PKG_A_DETERMINISM_report.md`)
+// — pure, exported functions, unit-tested without a database in
+// `__tests__/predictionPreflightOrderDeterminism.test.ts`, same pattern as
+// `kpiComputeService.hashPayloadFor()` / `valuationFcffService.sumFlow()`.
+// ---------------------------------------------------------------------------
+
+/**
+ * `finance_prediction_detect_overlaps()`'s own `jsonb_agg(...)` (`server/migrations/20260809_
+ * finance_v3_d07_prediction_03_readiness.sql`, frozen — never edited by this fix) has no `ORDER BY`
+ * inside the aggregate, so `overlap.sources`'s element order is not guaranteed stable across runs on
+ * identical data. `runPreflight`'s `layer2Combined` sums each source's own JS-`number` (float64)
+ * delta — NOT associative — so consuming the array in raw aggregate order can change
+ * `layer2Combined`'s bit pattern run-to-run even though `overlap.combined_impact_decimal` itself
+ * (an exact Postgres `NUMERIC SUM`, order-independent) does not. Sorted by each source's own
+ * `source_id` — collision-free within one overlap group by construction
+ * (`COUNT(DISTINCT (source_type, source_id))` in the same migration).
+ */
+export function sortOverlapSourcesById<T extends { source_id: string }>(sources: readonly T[]): T[] {
+  return [...sources].sort((a, b) => (a.source_id < b.source_id ? -1 : a.source_id > b.source_id ? 1 : 0));
+}
+
+/**
+ * `driverOverrideRows`/`impactChainRows` are read with no `ORDER BY` (same defect class as
+ * `kpiComputeService.ts`'s own pre-fix bug — see that file's `hashPayloadFor()` doc comment) —
+ * hashing them in raw Postgres row order means `assumption_set_semantic_hash` for the IDENTICAL
+ * assumption set can differ across runs. Sorted here by each row's own `id` (unique PK,
+ * collision-free) before being handed to the hash.
+ */
+export function buildAssumptionSetSemanticHash(
+  driverOverrideRows: readonly Pick<DriverOverrideRow, 'id' | 'schedule_type' | 'driver_code' | 'entity_id' | 'period_id' | 'value_decimal'>[],
+  impactChainRows: readonly Pick<ImpactChainRow, 'id' | 'statement_line_id' | 'amount_kind' | 'amount_decimal' | 'sign' | 'start_period_id'>[]
+): string {
+  return createHash('sha256')
+    .update(
+      JSON.stringify({
+        driverOverrides: [...driverOverrideRows]
+          .sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))
+          .map((r) => [r.id, r.schedule_type, r.driver_code, r.entity_id, r.period_id, r.value_decimal]),
+        impactChain: [...impactChainRows]
+          .sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))
+          .map((r) => [r.id, r.statement_line_id, r.amount_kind, r.amount_decimal, r.sign, r.start_period_id]),
+      })
+    )
+    .digest('hex');
+}
+
+// ---------------------------------------------------------------------------
 // Public API
 // ---------------------------------------------------------------------------
 
@@ -236,7 +283,9 @@ export async function runPreflight(params: RunPreflightParams): Promise<RunPrefl
 
   for (const overlap of overlaps) {
     const layer2Deltas: number[] = [];
-    for (const source of overlap.sources) {
+    // PKG-A determinism fix — see `sortOverlapSourcesById`'s doc comment above.
+    const orderedSources = sortOverlapSourcesById(overlap.sources);
+    for (const source of orderedSources) {
       if (source.source_type === 'DRIVER_OVERRIDE') {
         const row = driverOverrideById.get(source.source_id);
         if (row && baselineCtx) {
@@ -272,18 +321,12 @@ export async function runPreflight(params: RunPreflightParams): Promise<RunPrefl
       sourceCount: overlap.source_count,
       layer1: overlap.combined_impact_decimal === null ? null : Number(overlap.combined_impact_decimal),
       layer2: layer2Combined,
-      involvedSources: overlap.sources,
+      involvedSources: orderedSources, // canonical order (see above) — never the raw jsonb_agg order
     });
   }
 
-  const assumptionSetSemanticHash = createHash('sha256')
-    .update(
-      JSON.stringify({
-        driverOverrides: driverOverrideRows.map((r) => [r.id, r.schedule_type, r.driver_code, r.entity_id, r.period_id, r.value_decimal]),
-        impactChain: impactChainRows.map((r) => [r.id, r.statement_line_id, r.amount_kind, r.amount_decimal, r.sign, r.start_period_id]),
-      })
-    )
-    .digest('hex');
+  // PKG-A determinism fix — see `buildAssumptionSetSemanticHash`'s doc comment above.
+  const assumptionSetSemanticHash = buildAssumptionSetSemanticHash(driverOverrideRows, impactChainRows);
 
   const preflightRunId = uuidv4();
   await withPinnedPostgresTransaction(async (tx) => {
