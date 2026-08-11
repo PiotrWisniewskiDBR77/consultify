@@ -153,6 +153,7 @@ interface RowMenuContext {
   isPolish: boolean;
   pending: PendingAction;
   onOpen: (kpiId: string) => void;
+  onOpenTool: (kpiId: string) => void;
   onOpenMeasurements: (row: KpiDefinitionDto) => void;
   onActivate: (row: KpiDefinitionDto) => void;
   onSuspend: (row: KpiDefinitionDto) => void;
@@ -249,6 +250,10 @@ function buildRowMenu(row: KpiDefinitionDto, ctx: RowMenuContext): StandardRowMe
   return {
     primary: [
       { id: 'open', label: t('Otwórz', 'Open'), onClick: () => ctx.onOpen(row.kpiId) },
+      // RN-G3 lane (2026-08-11) — full KPI tool (klasa L, D03), same
+      // "kebab navigates directly" convention `buildKpiScorecardRowMenu`
+      // already established (`onOpenDetail` -> `/results/kpi/scorecards/:id`).
+      { id: 'open-tool', label: t('Otwórz pełne narzędzie', 'Open full tool'), onClick: () => ctx.onOpenTool(row.kpiId) },
       // RN-G2 §G #7 — sub-view entry point (see ResultsKpiMeasurementsPanel.tsx
       // header for the "why here, not a new tab/route" placement decision).
       { id: 'measurements', label: t('Pomiary', 'Measurements'), onClick: () => ctx.onOpenMeasurements(row) },
@@ -273,6 +278,7 @@ function buildPreview(
     measurement: KpiMeasurementDto | null | 'loading';
     pending: PendingAction;
     onClose: () => void;
+    onOpenFull: () => void;
     onOpenMeasurements: (row: KpiDefinitionDto) => void;
     onActivate: (row: KpiDefinitionDto) => void;
     onSuspend: (row: KpiDefinitionDto) => void;
@@ -311,6 +317,10 @@ function buildPreview(
   return {
     title: row.kpiCode,
     onClose: ctx.onClose,
+    // RN-G3 lane (2026-08-11) — StandardPreview's own "Open" header action
+    // (StandardPreview.tsx L145 `onOpenFull`) now navigates to the real full
+    // KPI tool (`/results/kpi/:kpiId`, klasa L, D03) instead of doing nothing.
+    onOpenFull: ctx.onOpenFull,
     headerExtra: lockBadge,
     meta: {
       pills: [{ label: statusLabel(row.status, ctx.isPolish), tone: STATUS_TONE[row.status] }],
@@ -765,6 +775,7 @@ export const ResultsKpiRegistryPage: React.FC = () => {
         isPolish,
         pending,
         onOpen: (kpiId) => setSelectedId(kpiId),
+        onOpenTool: (kpiId) => navigate(ROUTES.RESULTS_KPI.TOOL.replace(':kpiId', kpiId)),
         onOpenMeasurements: (r) => setMeasurementsKpi(r),
         onActivate: (r) => void runLifecycleAction(r, 'activate'),
         onSuspend: (r) => void runLifecycleAction(r, 'suspend'),
@@ -801,6 +812,7 @@ export const ResultsKpiRegistryPage: React.FC = () => {
                 measurement,
                 pending,
                 onClose: () => setSelectedId(null),
+                onOpenFull: () => navigate(ROUTES.RESULTS_KPI.TOOL.replace(':kpiId', selectedRow.kpiId)),
                 onOpenMeasurements: (r) => setMeasurementsKpi(r),
                 onActivate: (r) => void runLifecycleAction(r, 'activate'),
                 onSuspend: (r) => void runLifecycleAction(r, 'suspend'),
