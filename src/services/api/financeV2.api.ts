@@ -16,6 +16,10 @@
 import { fetchWithRetry, getHeaders, handleResponse } from './baseClient';
 import { v8Get, v8Post } from './v8/client';
 import type {
+  AnalysisComputeResultDto,
+  AnalysisKpiCatalogEntryDto,
+  AnalysisKpiTier,
+  AnalysisKpiValueDto,
   FinanceApproveModelResultDto,
   FinanceArtifactDetailDto,
   FinanceArtifactType,
@@ -251,6 +255,50 @@ export async function reopenFinanceModel(
   );
 }
 
+// ---------------------------------------------------------------------------
+// Analysis (KPI) — analysis.routes.ts (Pakiet B2, ten pakiet — Pakiet E — jest
+// pierwszym frontendowym konsumentem, `grep -rn "analysis/kpi-catalog" src/`
+// dawał 0 trafień przed tym plikiem).
+// ---------------------------------------------------------------------------
+
+export interface GetAnalysisKpiCatalogParams {
+  tier?: AnalysisKpiTier;
+  includeAllStatuses?: boolean;
+}
+
+export async function getAnalysisKpiCatalog(
+  params: GetAnalysisKpiCatalogParams = {}
+): Promise<AnalysisKpiCatalogEntryDto[]> {
+  const query = new URLSearchParams();
+  if (params.tier) query.set('tier', params.tier);
+  if (params.includeAllStatuses) query.set('includeAllStatuses', 'true');
+  const qs = query.toString();
+  return v8Get<AnalysisKpiCatalogEntryDto[]>(`${BASE}/analysis/kpi-catalog${qs ? `?${qs}` : ''}`);
+}
+
+export interface ComputeAnalysisKpisApiParams {
+  businessVersionId: string;
+  attemptReadinessTransition?: boolean;
+  /** Wymagane przez serwer TYLKO gdy `attemptReadinessTransition=true` (analysis.routes.ts:89-93). */
+  expectedVersion?: number;
+}
+
+export async function computeAnalysisKpis(
+  params: ComputeAnalysisKpisApiParams
+): Promise<AnalysisComputeResultDto> {
+  return v8Post<AnalysisComputeResultDto>(
+    `${BASE}/analysis/${encodeURIComponent(params.businessVersionId)}/compute`,
+    {
+      attemptReadinessTransition: params.attemptReadinessTransition === true,
+      ...(params.expectedVersion !== undefined ? { expectedVersion: params.expectedVersion } : {}),
+    }
+  );
+}
+
+export async function getAnalysisKpiValues(businessVersionId: string): Promise<AnalysisKpiValueDto[]> {
+  return v8Get<AnalysisKpiValueDto[]>(`${BASE}/analysis/${encodeURIComponent(businessVersionId)}/kpi-values`);
+}
+
 export const FinanceV2Api = {
   createFinanceArtifact,
   getFinanceArtifact,
@@ -265,4 +313,7 @@ export const FinanceV2Api = {
   pollFinanceComputeJobUntilSettled,
   approveFinanceModel,
   reopenFinanceModel,
+  getAnalysisKpiCatalog,
+  computeAnalysisKpis,
+  getAnalysisKpiValues,
 };
