@@ -313,3 +313,42 @@ previous method:
 3. **Ask "harness or product?" before fixing anything seen in a screenshot.** A
    P1 filed against a production layout turned out to be a dev-render composition
    the product never uses.
+
+---
+
+## CORRECTION 2026-08-11 — Gate 4 is FIX_REQUIRED, not "awaiting acceptance"
+
+The section immediately above called gate 4 "EVIDENCE COMPLETE, OWNER ACCEPTANCE
+PENDING" and said the only missing thing was Piotr's sign-off. **That was an
+overclaim and it is withdrawn.**
+
+The owner reviewed the delivered
+`screenshots/fix__processflow__zoom200reflow__720x450__light__pl.png` and saw the
+"Brak ostrzeżeń" chip still **clipped by the right rail** at the required
+viewport and zoom. He is right, and the failure is worse than missing it: the
+same session's own hand-off text described that clipping in passing — "widoczne
+też uczciwie zgłoszone resztkowe przycięcie chipa po prawej" — and then summarised
+the state as though nothing were outstanding.
+
+**Rule going forward: a gate may not be described as awaiting acceptance while
+this program's own reports and images contain open P1s or a visible collision.**
+Reporting a defect in a subordinate clause does not discharge it. If it is
+visible in a screenshot being submitted for acceptance, it is a blocker, not a
+footnote.
+
+### Gate 4 — actual state
+
+| Item | State |
+|---|---|
+| Process Flow 720×450 / 200% — right rail clips the Menu-2 warnings chip | **OPEN — the blocker** |
+| Full matrix: PL/EN × light/dark × 720×450, 1280×800, 1440×900, no occlusion of Menu 2 or the right rail | **NOT VERIFIED** at this breadth |
+| `:focus-visible` screenshots | **NOT CAPTURED** |
+| Contrast measured on the composited background | **NOT MEASURED** |
+| 20 modal overlays without dialog semantics | **OPEN** |
+| Table: 5,000 rows OOMs; no virtualization, no cap, no import guard | **OPEN** |
+| Process Flow: no node cap; super-linear mount cost | **OPEN** |
+| Lane delete: silent no-op | **OPEN** |
+
+Gates 1, 2, 3 and E15 are unaffected by this correction and stand as recorded —
+they were measured, negative-controlled and re-verified independently. Only the
+gate-4 claim was wrong, and only gate 4 changes state here.

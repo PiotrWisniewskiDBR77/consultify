@@ -23,11 +23,19 @@ what the evidence column literally says.
 | 1 — full type-check | **PASS** | `npm run type-check` exit 0, 0 errors, captured bare. Server `tsc --noEmit` exit 0 too. |
 | 2 — QG backlog | **QG-01…QG-06 all RESOLVED** | `03_CODEX_QUALITY_BACKLOG.md` |
 | 3 — runtime + persistence | **PASS on isolated local DB** — 8/8 chains | `13_RUNTIME_GATE_EVIDENCE.md` |
-| 4 — visual + CX + a11y | **EVIDENCE COMPLETE, OWNER ACCEPTANCE PENDING** | `19_VISUAL_CX_MATRIX.md`, `14_A11Y_LOCALE_PERF_REPORT.md` |
+| 4 — visual + CX + a11y | **FIX_REQUIRED** (owner review 2026-08-11) | `19_VISUAL_CX_MATRIX.md`, `14_A11Y_LOCALE_PERF_REPORT.md` |
 | E15 — two clean rounds | **PASS** | `20_E15_TWO_CLEAN_ROUNDS.md` |
 
-**Status: NOT `READY_FOR_CODEX_REVIEW` — one thing is missing, and it is not
-something an agent may supply.** See §5.
+**Status: NOT `READY_FOR_CODEX_REVIEW`.** An earlier revision of this file said
+the only missing item was the owner's acceptance. **That was an overclaim and it
+is withdrawn.** The owner reviewed the submitted Process Flow screenshot and saw
+the "Brak ostrzeżeń" chip still clipped by the right rail at 720×450/200% — a
+visible collision at a required viewport. Several P1s from this program's own
+reports were also still open while the state was being summarised as complete.
+
+Rule, now explicit: **a gate is never "awaiting acceptance" while this program's
+own reports or submitted images contain open P1s or a visible collision.**
+Reporting a defect in a subordinate clause does not discharge it. See §5.
 
 ## 3. What this session actually proved
 
@@ -79,23 +87,45 @@ confirmed to return.
 
 ## 5. What is NOT done — read before claiming anything
 
-1. **Your visual acceptance (rule #7).** I cannot give it and did not.
-   `19_VISUAL_CX_MATRIX.md` plus 60+ screenshots are prepared for you to accept or
-   reject. **This is the only thing blocking gate 4.** Start with:
-   `screenshots/fix__table__rightpanel__1440x900__light__pl.png`,
-   `screenshots/fix__{whiteboard,processflow}__zoom200reflow__720x450__light__pl.png`,
-   and the `g4__*` matrix.
-2. **20 modal overlays still lack dialog semantics** — listed by file and line in
-   the a11y report. 58 are converted; these are not.
-3. **Table has no virtualization and no row cap** — it OOMs at N=5,000 even with
-   an 8 GB heap. Process Flow has no node cap either. Both P1, both reported and
-   deliberately NOT attempted: they need a windowing library, which is structural.
-4. **de/ar/jp/es** did not receive the 210 new keys. Not a regression — they had
+**Gate-4 blockers (owner review 2026-08-11). These come before any acceptance
+request, not after it.**
+
+1. **Process Flow at 720×450 / 200%: the right rail clips the Menu-2 "Brak
+   ostrzeżeń" chip.** Visible in the submitted
+   `screenshots/fix__processflow__zoom200reflow__720x450__light__pl.png`. A prior
+   stream fixed a *different* collision at this viewport and filed this one as
+   "residual, out of scope". It is not.
+2. **The verification matrix is too narrow.** Required: PL/EN × light/dark ×
+   720×450, 1280×800, 1440×900, with **no occlusion of any Menu-2 element or any
+   right-rail control** — for Process Flow and Whiteboard.
+3. **No `:focus-visible` screenshots** and **no measured contrast** for the key
+   controls. Both were recorded as NOT CAPTURED / NOT MEASURED and both are now
+   required. Contrast must be computed on the **composited** background — this
+   program has already published one wrong figure by measuring the wrong layer.
+4. **20 modal overlays still lack dialog semantics** — listed by file and line in
+   the a11y report. 58 converted; these 20 are not.
+5. **Table: 5,000 rows OOMs even with an 8 GB heap.** No virtualization, no row
+   cap, no import guard. Needs virtualization *or* a safe limit + import guard
+   that never truncates silently.
+6. **Process Flow: no node cap at all**, and mount cost is super-linear (~53 s at
+   N=1,000). Needs a guardrail consistent with the sibling tools, plus whatever
+   of the super-linear cost is honestly fixable.
+7. **Lane delete is a silent no-op.** Must either work or refuse visibly — the
+   worst defect class in this product's history is a control that looks like it
+   worked and did not.
+
+**Known and accepted limitations (not gate-4 blockers):**
+
+8. **de/ar/jp/es** did not receive the 210 new keys. Not a regression — they had
    no entry before — but localization is not "done".
-5. **Full-repo schema convergence is broken** (583 pending on one runner, 172 of
+9. **Full-repo schema convergence is broken** (583 pending on one runner, 172 of
    787 failing on the other). Pre-existing, out of scope. The 1011-table database
    all runtime evidence used is a PARTIAL schema.
-6. **No full-repo test run.** The E15 scope is the Idea Workspace surface only.
+10. **No full-repo test run.** The E15 scope is the Idea Workspace surface only.
+
+**Your visual acceptance (rule #7)** is still required and still cannot be given
+by an agent — but it is *not* what is blocking today. Items 1-7 are. Nothing
+should be submitted for acceptance until they are closed and re-verified.
 
 ## 6. Method that must continue
 
