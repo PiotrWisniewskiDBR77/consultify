@@ -85,6 +85,49 @@ export function financeValueToArithmeticOperand(
   }
 }
 
+/**
+ * Formatowanie `FinanceValue` do WYŚWIETLENIA — druga (obok
+ * `financeValueToArithmeticOperand`) strona tej samej zasady: MISSING/NA/
+ * NOT_APPLICABLE muszą wyglądać jak „brak", NIE jak „0". `—` (em dash) jest
+ * celowo różne wizualnie i semantycznie od cyfry `0`; trzy statusy braku mają
+ * TEN SAM glif `—`, bo widoczne rozróżnienie MISSING/NA/NOT_APPLICABLE jest
+ * zadaniem tooltipa/etykiety obok (`financeValueDisplayReasonLabel`), nie
+ * samego glifu — inaczej UI musiałby wymyślić trzy różne symbole zamiast
+ * jednego czytelnego „nie wiem/nie dotyczy".
+ */
+export interface FinanceValueDisplay {
+  text: string;
+  isMissingLikeGlyph: boolean;
+  status: FinanceValueStatus;
+}
+
+export function formatFinanceValueForDisplay(
+  value: Pick<FinanceValue, 'status' | 'valueDecimal'>,
+  formatNumber: (n: number) => string = (n) => n.toLocaleString('pl-PL')
+): FinanceValueDisplay {
+  if (value.status === 'MISSING' || value.status === 'NA' || value.status === 'NOT_APPLICABLE') {
+    return { text: '—', isMissingLikeGlyph: true, status: value.status };
+  }
+  const n = value.valueDecimal === null ? null : Number(value.valueDecimal);
+  if (n === null || Number.isNaN(n)) {
+    return { text: '—', isMissingLikeGlyph: true, status: value.status };
+  }
+  return { text: formatNumber(n), isMissingLikeGlyph: false, status: value.status };
+}
+
+export function financeValueDisplayReasonLabel(status: FinanceValueStatus): string | null {
+  switch (status) {
+    case 'MISSING':
+      return 'Brak danych (luka źródłowa)';
+    case 'NA':
+      return 'Analityk oznaczył: nie dotyczy';
+    case 'NOT_APPLICABLE':
+      return 'Pole strukturalnie nie istnieje dla tej linii/branży';
+    default:
+      return null;
+  }
+}
+
 export const FinanceArtifactFreshnessValues = [
   'NEVER_COMPUTED',
   'CURRENT',

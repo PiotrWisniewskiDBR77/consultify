@@ -10,7 +10,9 @@ import { describe, expect, it } from 'vitest';
 
 import {
   describeFinanceV2Error,
+  financeValueDisplayReasonLabel,
   financeValueToArithmeticOperand,
+  formatFinanceValueForDisplay,
   isMissingFinanceValue,
   isPresentFinanceValue,
   type FinanceValue,
@@ -70,6 +72,37 @@ describe('financeV2.types — MISSING ≠ 0 (twarda zasada produktu)', () => {
     expect(isPresentFinanceValue(value('NOT_APPLICABLE', null))).toBe(false);
     expect(isMissingFinanceValue(value('MISSING', null))).toBe(true);
     expect(isMissingFinanceValue(value('PRESENT_ZERO', '0'))).toBe(false);
+  });
+});
+
+describe('financeV2.types — formatFinanceValueForDisplay (UI nigdy nie rysuje MISSING jako "0")', () => {
+  it('PRESENT_ZERO renderuje się jako "0" — glif liczby, nie myślnik', () => {
+    const display = formatFinanceValueForDisplay(value('PRESENT_ZERO', '0'));
+    expect(display.text).toBe('0');
+    expect(display.isMissingLikeGlyph).toBe(false);
+  });
+
+  it('KONTROLA NEGATYWNA: MISSING renderuje się jako „—", WIZUALNIE ODRÓŻNIALNE od PRESENT_ZERO', () => {
+    const missingDisplay = formatFinanceValueForDisplay(value('MISSING', null));
+    const zeroDisplay = formatFinanceValueForDisplay(value('PRESENT_ZERO', '0'));
+    expect(missingDisplay.text).toBe('—');
+    expect(missingDisplay.isMissingLikeGlyph).toBe(true);
+    expect(missingDisplay.text).not.toBe(zeroDisplay.text);
+  });
+
+  it('NA i NOT_APPLICABLE też renderują się jako „—", z rozróżnieniem w etykiecie powodu (nie w samym glifie)', () => {
+    expect(formatFinanceValueForDisplay(value('NA', null)).text).toBe('—');
+    expect(formatFinanceValueForDisplay(value('NOT_APPLICABLE', null)).text).toBe('—');
+    expect(financeValueDisplayReasonLabel('NA')).toMatch(/nie dotyczy/);
+    expect(financeValueDisplayReasonLabel('NOT_APPLICABLE')).toMatch(/strukturalnie/);
+    expect(financeValueDisplayReasonLabel('MISSING')).toMatch(/Brak danych/);
+    expect(financeValueDisplayReasonLabel('PRESENT_ZERO')).toBeNull();
+  });
+
+  it('wartość ujemna renderuje się poprawnie (nie gubi znaku)', () => {
+    const display = formatFinanceValueForDisplay(value('PRESENT_NONZERO', '-125000.5'), (n) => n.toString());
+    expect(display.text).toBe('-125000.5');
+    expect(display.text.startsWith('-')).toBe(true);
   });
 });
 
