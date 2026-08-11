@@ -134,6 +134,8 @@ const ExecutionExportPrezentacjaScreen = React.lazy(
 );
 const FinanceValuePanelsScreen = React.lazy(() => import('./screens/finance-value-panels'));
 const FinanceModelWorkspaceScreen = React.lazy(() => import('./screens/finance-model-workspace'));
+const FinanceWorkspaceBarScreen = React.lazy(() => import('./screens/finance-workspace-bar'));
+const FinanceFocusModeScreen = React.lazy(() => import('./screens/finance-focus-mode'));
 const GenDeckContentHintsScreen = React.lazy(() => import('./screens/gen-deck-content-hints'));
 const GenExcelTemplatesTabScreen = React.lazy(() => import('./screens/gen-excel-templates-tab'));
 const GenWordContentHintsScreen = React.lazy(() => import('./screens/gen-word-content-hints'));
@@ -600,6 +602,16 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'PKG_M — REAL <FinancialModelWorkspace> (Models detail, OWN-FIN-011/016/018 evidence) — &status=draft|approved &name=<string>',
     render: () => <FinanceModelWorkspaceScreen />,
+  },
+  'finance-workspace-bar': {
+    label:
+      'PKG_C — REAL <FinanceWorkspaceBar> (OWN-FIN-011/012/013/016/020/021) — &scene=draft|stale|approved|failed|computing|needs-changes|longname|values|empty|error &name=<string> &role=preparer|viewer',
+    render: () => <FinanceWorkspaceBarScreen />,
+  },
+  'finance-focus-mode': {
+    label:
+      'PKG_C — REAL Focus Mode (useFinanceFocusMode + FinanceWorkspaceBar, OWN-FIN-004) — &autofocus=1 &draft=<string>',
+    render: () => <FinanceFocusModeScreen />,
   },
   'execution-change-signals': {
     label:

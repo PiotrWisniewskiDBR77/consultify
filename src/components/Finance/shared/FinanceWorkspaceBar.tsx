@@ -175,7 +175,17 @@ export function FinanceWorkspaceBar(props: FinanceWorkspaceBarProps): React.Reac
   return (
     <div className="flex w-full flex-col border-b border-c-border-subtle bg-c-surface" data-testid="finance-workspace-bar">
       {/* ── Rząd główny ────────────────────────────────────────────────── */}
-      <div className="flex w-full items-center gap-2 px-4 py-2">
+      {/*
+        `overflow-x-auto`: pod 200% zoom (efektywna szerokość layoutu spada
+        do ok. połowy referencyjnego viewportu) osiem+ elementów paska nie
+        zmieści się bez skrótów — zamiast NIEWIDOCZNEGO przelania poza
+        krawędź strony (niedostępne bez wiedzy, że strona w ogóle się
+        przewija w poziomie — antywzorzec WCAG reflow), pasek dostaje WŁASNY,
+        widoczny scrollbar: `primary`/`fullscreen` pozostają osiągalne
+        przewinięciem TEGO paska, nie całej strony. Zmierzone dev-render
+        zrzutem `finance-workspace-bar-zoom200-*` — patrz PKG_C_UI_PLATFORM_report.md.
+      */}
+      <div className="flex w-full items-center gap-2 overflow-x-auto px-4 py-2">
         {/* LEWO */}
         <div className="flex min-w-0 flex-1 items-center gap-2">
           <button
