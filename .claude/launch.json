@@ -226,6 +226,19 @@
         "--strictPort"
       ],
       "port": 58021
+    },
+    {
+      "name": "fv3p-c-uiplatform",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "vite",
+        "--config",
+        "dev-render/vite.config.ts",
+        "--port",
+        "58022",
+        "--strictPort"
+      ],
+      "port": 58022
     }
   ]
 }
