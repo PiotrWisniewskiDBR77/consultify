@@ -67,7 +67,7 @@ import {
   type StandardRowMenu,
   StandardTable,
 } from '@/components/standard';
-import { DueChip, statusChipTone } from '@/components/ui/primitives/chips';
+import { DueChip, EntityStatusChip, statusChipTone } from '@/components/ui/primitives/chips';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { ROUTES } from '@/routes/routeConfig';
 import {
@@ -121,12 +121,13 @@ import {
 } from '../shared/ModuleMenu3';
 import { StandardModuleBar } from '../standard/StandardModuleBar';
 import ExecutionChangeSignalsPanel from './ExecutionChangeSignalsPanel';
+import { ExecutionControlSurface } from './ExecutionControlSurface';
 import { isExecutionFlagEnabled } from './executionFeatureFlags';
 import { ExecutionInitiativesKanbanView } from './ExecutionInitiativesKanbanView';
-import { ExecutionInitiativeStatusControl } from './ExecutionInitiativeStatusControl';
 import ExecutionIntelligencePanel from './ExecutionIntelligencePanel';
 import { ExecutionManagementView } from './ExecutionManagementView';
 import { normalizeExecutionArrayEnvelope } from './executionPayloadGuards';
+import { ExecutionRealizationsSurface } from './ExecutionRealizationsSurface';
 import {
   buildReportMarkdown,
   computeRAG,
@@ -136,10 +137,13 @@ import {
   type ReportDataContext,
   type ReportDef,
 } from './executionReports';
+import { ExecutionReportsSurface } from './ExecutionReportsSurface';
+import { ExecutionResourcesSurface } from './ExecutionResourcesSurface';
 import ExecutionSummaryOneLook from './ExecutionSummaryOneLook';
 import { DelaySignalItem, ExecutionTimelineView, RiskSignalItem } from './ExecutionTimelineView';
 import ExecutionWhatIfSandbox from './ExecutionWhatIfSandbox';
 import { ExecutionWorkloadView } from './ExecutionWorkloadView';
+import { ExecutionWorkSurface } from './ExecutionWorkSurface';
 import { ReportDocumentView } from './ReportDocumentView';
 import { RolloutTab } from './RolloutTab';
 
@@ -636,39 +640,74 @@ const isPastDue = (date?: string): boolean => {
   return new Date(date).getTime() < new Date().setHours(0, 0, 0, 0);
 };
 
-/**
- * CB-04/RB-008 — ONE overdue-aware health predicate for initiatives, used by
- * every surface that needs to know whether an initiative is overdue: the
- * attention-preset filter, the summary table's progress-bar color, and the
- * Attention/Summary panel's action center. Before this fix each surface had
- * its own inline computation:
- *  - matchesAttentionPreset('overdue'): slaDeadline||plannedEndDate, DONE
- *    and ARCHIVED both terminal — the CORRECT definition.
- *  - the table's progress-column color: plannedEndDate ONLY, DONE terminal
- *    but NOT archived — silently disagreed with the filter chip.
- *  - actionCenter (Summary/Attention panel): no overdue-initiatives concept
- *    at all — an overdue initiative that wasn't also BLOCKED never appeared
- *    in Attention, reading as implicitly on-track by omission (the actual
- *    P0: the fallback health surface never classified it as anything BUT
- *    on-track, because it never classified it at all).
- * `now` is injectable so tests can assert exact boundary behavior with a
- * fixed clock instead of real wall-clock time.
- */
-export function isInitiativeOverdue(
-  initiative: Pick<FullInitiative, 'slaDeadline' | 'plannedEndDate' | 'status'>,
-  now: number = Date.now()
-): boolean {
-  const deadline = initiative.slaDeadline || initiative.plannedEndDate;
-  if (!deadline) return false;
-  const terminal =
-    initiative.status === InitiativeStatus.DONE || initiative.status === InitiativeStatus.ARCHIVED;
-  if (terminal) return false;
-  return new Date(deadline).getTime() < now;
-}
-
 interface ExecutionHubProps {
   initialTab?: ModuleTab;
 }
+const EXECUTION_MENU3: Record<string, Array<{ id: string; label: string }>> = {
+  list: [
+    ['active', 'Active'],
+    ['at-risk', 'At risk'],
+    ['critical', 'Critical'],
+    ['blocked', 'Blocked work'],
+    ['missing-baseline', 'Missing baseline'],
+    ['missing-forecast', 'Missing forecast'],
+    ['closing', 'Closing'],
+    ['delivered', 'Recently delivered'],
+    ['unknown', 'Unknown data'],
+  ].map(([id, label]) => ({ id, label })),
+  work: [
+    ['all', 'All'],
+    ['tasks', 'Tasks'],
+    ['decisions', 'Decisions'],
+    ['blocked', 'Blocked'],
+    ['overdue', 'Overdue'],
+    ['due-soon', 'Due soon'],
+    ['missing-owner', 'Missing owner'],
+    ['missing-evidence', 'Missing DoD/evidence'],
+    ['waiting', 'Waiting dependency'],
+    ['mine', 'Mine'],
+    ['team', 'By team'],
+  ].map(([id, label]) => ({ id, label })),
+  resources: [
+    ['all', 'All'],
+    ['overallocated', 'Overallocated'],
+    ['unassigned', 'Unassigned work'],
+    ['skill-gaps', 'Skill gaps'],
+    ['unconfirmed', 'Unconfirmed assignments'],
+    ['unknown', 'Availability unknown'],
+    ['cost-risk', 'Cost risk'],
+    ['needs-decision', 'Needs decision'],
+    ['team', 'By team'],
+    ['initiative', 'By Initiative'],
+  ].map(([id, label]) => ({ id, label })),
+  control: [
+    ['needs-action', 'Needs action'],
+    ['critical', 'Critical'],
+    ['decisions', 'Decisions'],
+    ['schedule', 'Schedule'],
+    ['resources', 'Resources'],
+    ['cost', 'Cost'],
+    ['risk', 'Risk'],
+    ['dependencies', 'Dependencies'],
+    ['adoption', 'Adoption'],
+    ['outcome-risk', 'Outcome risk'],
+    ['verification-overdue', 'Verification overdue'],
+    ['resolved', 'Resolved'],
+  ].map(([id, label]) => ({ id, label })),
+  reports: [
+    ['all', 'All'],
+    ['weekly', 'Weekly'],
+    ['monthly', 'Monthly'],
+    ['on-demand', 'On demand'],
+    ['sponsor', 'Sponsor'],
+    ['needs-generation', 'Needs generation'],
+    ['needs-review', 'Needs review'],
+    ['partial-stale', 'Partial/stale'],
+    ['published', 'Published'],
+    ['failed', 'Failed'],
+    ['recent', 'Recent runs'],
+  ].map(([id, label]) => ({ id, label })),
+};
 
 export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' }) => {
   const { t, i18n } = useTranslation();
@@ -685,6 +724,27 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
 
   // State
   const [activeTab, setActiveTab] = useState<ModuleTab>(initialTab);
+  const [canonicalMenu3Preset, setCanonicalMenu3Preset] = useState<Record<string, string>>({
+    list: 'active',
+    work: 'all',
+    resources: 'all',
+    control: 'needs-action',
+    reports: 'all',
+  });
+  const [canonicalMenu3Counts, setCanonicalMenu3Counts] = useState<
+    Record<string, Record<string, number>>
+  >({});
+  const menu3CountHandlers = useMemo(
+    () =>
+      Object.fromEntries(
+        ['list', 'work', 'resources', 'control', 'reports'].map((surface) => [
+          surface,
+          (counts: Record<string, number>) =>
+            setCanonicalMenu3Counts((current) => ({ ...current, [surface]: counts })),
+        ])
+      ) as Record<string, (counts: Record<string, number>) => void>,
+    []
+  );
   const [viewMode, setViewMode] = useState<ViewMode>('table');
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilters, setActiveFilters] = useState<FilterChip[]>([]);
@@ -766,11 +826,6 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       message: string;
     }>
   >([]);
-  // FIN-006/A O2: real currency for the portfolio budget, sourced from
-  // executionBudgetService via V8ExecutionControlApi.getBudgetPortfolio
-  // (server already resolves it from initiatives.budget_currency). Replaces
-  // the "PLN" literal previously hardcoded on the Summary One-Look call below.
-  const [portfolioBudgetCurrency, setPortfolioBudgetCurrency] = useState<string | null>(null);
   const [isLoadingControlSignals, setIsLoadingControlSignals] = useState(false);
   const [timelineWarnings, setTimelineWarnings] = useState<GovernedTimelineWarning[]>([]);
   const [timelineWarningTotal, setTimelineWarningTotal] = useState(0);
@@ -862,8 +917,8 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       .trim()
       .toLowerCase();
 
-    if (targetTab === 'reports') {
-      setActiveTab('reports');
+    if (['list', 'work', 'resources', 'control', 'reports'].includes(targetTab)) {
+      setActiveTab(targetTab as ModuleTab);
       setViewMode(targetView === 'grid' ? 'grid' : 'table');
       setDeepLinkHandled(true);
       return;
@@ -1136,6 +1191,13 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
 
   // Fetch initiatives in execution phase
   useEffect(() => {
+    // Frozen Realizacje is backed exclusively by canonical Execution Case APIs.
+    // Do not issue the legacy initiatives portfolio request on this route.
+    if (activeTab === 'list') {
+      setIsLoading(false);
+      setInitiativesLoadError(null);
+      return;
+    }
     initRetryRef.current = 0;
     const loadInitiatives = async () => {
       setIsLoading(true);
@@ -1181,7 +1243,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       }
     };
     loadInitiatives();
-  }, [currentProjectId, executionTruthRefreshKey, fullSessionData?.initiatives, t]);
+  }, [activeTab, currentProjectId, executionTruthRefreshKey, fullSessionData?.initiatives, t]);
 
   useEffect(() => {
     const loadRiskSignals = async () => {
@@ -1256,21 +1318,11 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         setOverspendSignals([]);
       }
     };
-    const loadBudgetCurrency = async () => {
-      try {
-        const resp = await V8ExecutionControlApi.getBudgetPortfolio(currentProjectId || undefined);
-        setPortfolioBudgetCurrency(resp?.summary?.currency ?? null);
-      } catch {
-        // non-blocking: ExecutionSummaryOneLook falls back to its own default
-        setPortfolioBudgetCurrency(null);
-      }
-    };
     setIsLoadingControlSignals(true);
     void Promise.allSettled([
       loadRiskSignals(),
       loadDelaySignals(),
       loadOverspendSignals(),
-      loadBudgetCurrency(),
     ]).finally(() => setIsLoadingControlSignals(false));
   }, [currentProjectId, executionTruthRefreshKey]);
 
@@ -1672,7 +1724,13 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         return !initiative.plannedStartDate || !initiative.plannedEndDate;
       }
       if (attention === 'overdue') {
-        return isInitiativeOverdue(initiative);
+        if (!initiative.plannedEndDate && !initiative.slaDeadline) return false;
+        const deadline = initiative.slaDeadline || initiative.plannedEndDate!;
+        const isOverdue = new Date(deadline) < new Date();
+        const terminal =
+          initiative.status === InitiativeStatus.DONE ||
+          initiative.status === InitiativeStatus.ARCHIVED;
+        return isOverdue && !terminal;
       }
       if (attention === 'overdue_decisions') {
         const related = decisionsByInitiative[initiative.id] || [];
@@ -1723,7 +1781,11 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           matchesAttentionPreset(
             i,
             (isMissingDatesFilter ? 'missing_dates' : filter.value) as
-              'blocked' | 'missing_dates' | 'overdue' | 'overdue_decisions' | 'due_soon_tasks'
+              | 'blocked'
+              | 'missing_dates'
+              | 'overdue'
+              | 'overdue_decisions'
+              | 'due_soon_tasks'
           )
         );
       }
@@ -1930,52 +1992,33 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   // Tab configuration
   const tabs = useMemo(
     () => [
-      // #77 / Z94 — Kokpit menedżera „pełna wizja McKinsey" (za flagą OFF do akceptu).
-      ...(summaryOneLookEnabled
-        ? [
-            {
-              id: 'summary' as ModuleTab,
-              label: t('execution.tabs.summary', 'Kokpit'),
-              icon: <LayoutDashboard size={16} />,
-            },
-          ]
-        : []),
       {
         id: 'list' as ModuleTab,
-        label: t('execution.tabs.execution', 'Portfolio'),
+        label: 'Realizacje',
         icon: <LayoutDashboard size={16} />,
-        count:
-          (stats.blocked ?? 0) +
-          decisions.filter(
-            (d) => String(d.status).toUpperCase() === 'PENDING' && isPastDue(d.dueDate)
-          ).length,
       },
       {
-        id: 'rollout' as ModuleTab,
-        label: t('execution.rollout.tabLabel', 'Rollout'),
-        icon: <Rocket size={16} />,
+        id: 'work' as ModuleTab,
+        label: 'Praca',
+        icon: <ClipboardList size={16} />,
+      },
+      {
+        id: 'resources' as ModuleTab,
+        label: 'Zasoby',
+        icon: <Users size={16} />,
+      },
+      {
+        id: 'control' as ModuleTab,
+        label: 'Sterowanie',
+        icon: <Target size={16} />,
       },
       {
         id: 'reports' as ModuleTab,
-        label: t('execution.tabs.reports', 'Raporty'),
+        label: 'Raporty',
         icon: <FileText size={16} />,
       },
-      {
-        id: 'people_change' as ModuleTab,
-        label: t('execution.tabs.peopleChange', 'Manager'),
-        icon: <Shield size={16} />,
-        count: (stats.blocked ?? 0) + (actionQueueItems?.length ?? 0),
-      },
     ],
-    [
-      t,
-      filteredInitiatives.length,
-      stats.blocked,
-      tasks.length,
-      decisions,
-      actionQueueItems,
-      summaryOneLookEnabled,
-    ]
+    [t]
   );
 
   // Handle inline status change from table/grid
@@ -2158,14 +2201,37 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
             color: meta?.dotColor || 'bg-slate-400',
           };
         }),
-        render: (row) => (
-          <ExecutionInitiativeStatusControl
-            initiativeName={row.name}
-            currentStatus={row.status as InitiativeStatus}
-            onChange={(nextStatus) => handleInlineStatusChange(row.id, nextStatus)}
-            disabled={isPilotParticipant}
-          />
-        ),
+        render: (row) => {
+          const meta = STATUS_METADATA[row.status as InitiativeStatus];
+          const actions = getStatusActions(row.status as InitiativeStatus);
+          const canMutateStatus = !isPilotParticipant && actions.length > 0;
+          return (
+            <div className="relative group">
+              <EntityStatusChip
+                status={String(row.status)}
+                label={meta?.label || String(row.status)}
+              />
+              {canMutateStatus && (
+                <select
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  value=""
+                  onChange={(e) => {
+                    if (e.target.value) {
+                      handleInlineStatusChange(row.id, e.target.value);
+                    }
+                  }}
+                >
+                  <option value="">{meta?.label || row.status}</option>
+                  {actions.map((a) => (
+                    <option key={a.targetStatus} value={a.targetStatus}>
+                      {a.label}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
+          );
+        },
       },
       {
         id: 'assignee',
@@ -2198,11 +2264,10 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           const progress = row.progress || 0;
           // §4.3/§4.0: progress fill is NEVER danger/crimson. info (in-progress)
           // → success @100%; amber only for the explicit "at-risk" (overdue) signal.
-          // CB-04/RB-008: shared isInitiativeOverdue() — this column used to
-          // compute its own overdue flag from plannedEndDate only (ignoring
-          // slaDeadline and ARCHIVED), silently disagreeing with the
-          // "Overdue" attention filter chip for the same row.
-          const isOverdue = isInitiativeOverdue(row);
+          const isOverdue =
+            row.plannedEndDate &&
+            new Date(row.plannedEndDate) < new Date() &&
+            row.status !== InitiativeStatus.DONE;
           const color = isOverdue
             ? 'bg-amber-500'
             : progress >= 100
@@ -2667,16 +2732,17 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         ? []
         : getStatusActions(init.status as InitiativeStatus);
       return {
-        // Canon A6: "Otwórz podgląd" is block 4, auto-added by StandardTable from
-        // `universalHandlers.preview` below. Declaring it in `primary` as well
-        // rendered the entry TWICE in the row kebab — module declares blocks 1-3 only.
-        primary: [],
+        primary: [
+          {
+            id: 'open_preview',
+            label: t('common.openPreview', 'Otwórz podgląd'),
+            icon: ChevronRight,
+            onClick: () => setSummaryPreviewInitiativeId(init.id),
+          },
+        ],
         statusTransitions: statusActions.map((action) => ({
           id: `status-${action.targetStatus}`,
-          // initiativeLifecycle already ships Polish labels (`labelPl`); the kebab
-          // used to render the English `label` regardless of locale, so a PL demo
-          // showed "Mark Complete"/"Mark Blocked" next to Polish entries.
-          label: (isPolish && action.labelPl) || action.label,
+          label: action.label,
           icon: CheckCircle2,
           onClick: () => handleInlineStatusChange(init.id, String(action.targetStatus)),
         })),
@@ -2703,7 +2769,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         },
       };
     },
-    [handleInlineStatusChange, handleOpenDocument, isPilotParticipant, isPolish, t]
+    [handleInlineStatusChange, handleOpenDocument, isPilotParticipant, t]
   );
 
   // Triada standard (StandardTable rowMenu contract, canon A6) — Reports
@@ -2715,6 +2781,12 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   const buildReportRowMenu = useCallback(
     (report: ReportDef): StandardRowMenu => ({
       primary: [
+        {
+          id: 'open_preview',
+          label: t('common.openPreview', 'Otwórz podgląd'),
+          icon: ChevronRight,
+          onClick: () => setReportPreviewId(report.id),
+        },
         {
           id: 'open_full',
           label: t('common.openFull', 'Otwórz pełny widok'),
@@ -3285,27 +3357,11 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       })
       .sort((a, b) => (a.dueDate || '').localeCompare(b.dueDate || ''));
 
-    // CB-04/RB-008: the Summary/Attention panel had no overdue-initiatives
-    // concept at all — an overdue-but-not-blocked initiative never appeared
-    // here, which is what made the fallback health read as "on-track" for
-    // overdue work (it wasn't classified as anything). Uses the SAME
-    // isInitiativeOverdue() predicate as the attention filter chip and the
-    // table's progress-bar color, so this list, that chip's count, and that
-    // bar can never disagree about the same initiative again.
-    const overdueInitiatives = dashboardBaseInitiatives
-      .filter((i) => isInitiativeOverdue(i, now))
-      .sort((a, b) =>
-        (a.plannedEndDate || a.slaDeadline || '').localeCompare(
-          b.plannedEndDate || b.slaDeadline || ''
-        )
-      );
-
     return {
       blocked,
       missingDates,
       overdueDecisions,
       dueSoonTasks,
-      overdueInitiatives,
     };
   }, [dashboardBaseInitiatives, decisions, tasks]);
 
@@ -3829,9 +3885,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
                 ? t('execution.attention.overdueDecisions', 'Overdue decisions')
                 : attention === 'due_soon_tasks'
                   ? t('execution.attention.dueSoonTasks', 'Due soon tasks')
-                  : attention === 'overdue'
-                    ? t('execution.attention.overdue', 'Overdue')
-                    : t('execution.attention.attention', 'Attention'),
+                  : t('execution.attention.attention', 'Attention'),
           color:
             attention === 'missing_dates'
               ? 'text-amber-500'
@@ -3839,9 +3893,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
                 ? 'text-danger-500'
                 : attention === 'due_soon_tasks'
                   ? 'text-blue-500'
-                  : attention === 'overdue'
-                    ? 'text-danger-500'
-                    : 'text-c-text-muted',
+                  : 'text-c-text-muted',
         },
       ]);
     },
@@ -3908,17 +3960,12 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     const overdueDecisionsCount = actionCenter.overdueDecisions.length;
     const missingDatesCount = actionCenter.missingDates.length;
     const dueSoonTasksCount = actionCenter.dueSoonTasks.length;
-    // CB-04/RB-008: previously computed nowhere in this command row — an
-    // overdue-but-not-blocked initiative had no chip, no count, no click
-    // target anywhere in Execution.
-    const overdueCount = actionCenter.overdueInitiatives.length;
     const allCount = dashboardBaseInitiatives.length;
     const allActive =
       !activeStatusFilter &&
       !isAttentionActive('overdue_decisions') &&
       !isAttentionActive('missing_dates') &&
-      !isAttentionActive('due_soon_tasks') &&
-      !isAttentionActive('overdue');
+      !isAttentionActive('due_soon_tasks');
     const executionPresets = [
       {
         id: 'all',
@@ -3942,24 +3989,6 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
             return;
           }
           openInitiativesWithAttention('blocked');
-        },
-      },
-      {
-        // CB-04/RB-008: the missing chip — same isInitiativeOverdue()
-        // predicate that already drove the table's progress-bar color and
-        // (now) the Attention panel's overdueInitiatives list.
-        id: 'overdue',
-        label: t('execution.attention.overdue', 'Overdue'),
-        count: overdueCount,
-        active: isAttentionActive('overdue'),
-        disabled: overdueCount === 0,
-        icon: <AlertTriangle size={14} className="text-danger-400" />,
-        onClick: () => {
-          if (isAttentionActive('overdue')) {
-            resetExecutionCommandRow();
-            return;
-          }
-          openInitiativesWithAttention('overdue');
         },
       },
       {
@@ -5039,7 +5068,8 @@ Please return:
       const selectedReportPreviewId = reportPreviewId;
       const selectedReport = selectedReportPreviewId
         ? ((filteredReportCatalog.find((r) => r.id === selectedReportPreviewId) as
-            ReportRow | undefined) ?? null)
+            | ReportRow
+            | undefined) ?? null)
         : null;
       const rag = selectedReport ? computeRAG(selectedReport) : null;
       const ragConf = rag ? RAG_CONFIG[rag] : null;
@@ -5472,6 +5502,42 @@ Please return:
 
   // Render content
   const renderContent = () => {
+    if (activeTab === 'list')
+      return (
+        <ExecutionRealizationsSurface
+          scope={scope}
+          activePreset={canonicalMenu3Preset.list}
+          onCountsChange={menu3CountHandlers.list}
+        />
+      );
+    if (activeTab === ('work' as ModuleTab))
+      return (
+        <ExecutionWorkSurface
+          activePreset={canonicalMenu3Preset.work}
+          onCountsChange={menu3CountHandlers.work}
+        />
+      );
+    if (activeTab === ('resources' as ModuleTab))
+      return (
+        <ExecutionResourcesSurface
+          activePreset={canonicalMenu3Preset.resources}
+          onCountsChange={menu3CountHandlers.resources}
+        />
+      );
+    if (activeTab === ('control' as ModuleTab))
+      return (
+        <ExecutionControlSurface
+          activePreset={canonicalMenu3Preset.control}
+          onCountsChange={menu3CountHandlers.control}
+        />
+      );
+    if (activeTab === 'reports')
+      return (
+        <ExecutionReportsSurface
+          activePreset={canonicalMenu3Preset.reports}
+          onCountsChange={menu3CountHandlers.reports}
+        />
+      );
     // Rollout tab manages its own data + loading/error states independently of
     // the portfolio fetch, so resolve it before the portfolio loading guards.
     if (activeTab === ('rollout' as ModuleTab)) {
@@ -5542,7 +5608,7 @@ Please return:
           topRisks={summaryOneLookProps.topRisks}
           decisions={summaryOneLookProps.decisions}
           milestones={summaryOneLookProps.milestones}
-          currency={portfolioBudgetCurrency ?? undefined}
+          currency="PLN"
           isPolish={isPolish}
           generatedAt={summaryOneLookProps.generatedAt}
           onOpenEntity={(type, id) => {
@@ -5661,8 +5727,25 @@ Please return:
 
       return (
         <div className="flex h-full flex-col overflow-hidden">
-          {/* T32 R14: EVM/what-if analytics panels moved BELOW the canonical
-              table (T32-TABLE-T13) — relocated, not deleted. */}
+          {isExecutionFlagEnabled('intelligence') && (
+            <div className="shrink-0 px-4 pt-3">
+              <ExecutionIntelligencePanel projectId={currentProjectId || 'all'} />
+            </div>
+          )}
+          {isExecutionFlagEnabled('changeSignals') && (
+            <div className="shrink-0 px-4 pt-3">
+              <ExecutionChangeSignalsPanel />
+            </div>
+          )}
+          {isExecutionFlagEnabled('whatIfSandbox') && (
+            <div className="shrink-0 px-4 pt-3">
+              <ExecutionWhatIfSandbox
+                baseline={{
+                  healthScore: portfolioMetrics?.healthScore ?? executionHealth?.healthScore ?? 0,
+                }}
+              />
+            </div>
+          )}
           {bulkConfirmDialog}
           <div className="min-h-0 flex-1 flex overflow-hidden">
             <div className="flex-1 min-w-0 overflow-auto pl-4 pr-1.5 pt-3 pb-4">
@@ -5773,23 +5856,6 @@ Please return:
               </aside>
             ) : null}
           </div>
-          {(isExecutionFlagEnabled('intelligence') ||
-            isExecutionFlagEnabled('changeSignals') ||
-            isExecutionFlagEnabled('whatIfSandbox')) && (
-            <div className="shrink-0 max-h-[45%] space-y-3 overflow-auto border-t border-slate-200 px-4 py-3 dark:border-slate-700">
-              {isExecutionFlagEnabled('intelligence') && (
-                <ExecutionIntelligencePanel projectId={currentProjectId || 'all'} />
-              )}
-              {isExecutionFlagEnabled('changeSignals') && <ExecutionChangeSignalsPanel />}
-              {isExecutionFlagEnabled('whatIfSandbox') && (
-                <ExecutionWhatIfSandbox
-                  baseline={{
-                    healthScore: portfolioMetrics?.healthScore ?? executionHealth?.healthScore ?? 0,
-                  }}
-                />
-              )}
-            </div>
-          )}
         </div>
       );
     }
@@ -5804,9 +5870,9 @@ Please return:
   const availableViewModes = useMemo(
     () =>
       activeTab === 'list'
-        ? (['table', 'kanban', 'timeline'] as ViewMode[])
+        ? (['table'] as ViewMode[])
         : activeTab === 'reports'
-          ? (['table', 'grid'] as ViewMode[])
+          ? (['table'] as ViewMode[])
           : ([] as ViewMode[]),
     [activeTab]
   );
@@ -5826,7 +5892,7 @@ Please return:
 
     if (activeTab === 'reports') {
       return {
-        onNewItem: dispatch('reporting:new-report'),
+        onNewItem: undefined,
         newItemLabel: t('execution.reports.newReport', 'New Report'),
       };
     }
@@ -5858,8 +5924,8 @@ Please return:
       return { onNewItem: undefined, newItemLabel: defaultLabel };
     }
 
-    // Summary ('list') -> keep "New initiative".
-    return { onNewItem: handleCreateInitiative, newItemLabel: defaultLabel };
+    // Canonical Realizacje are created only by accepted Handoff; never manually.
+    return { onNewItem: undefined, newItemLabel: defaultLabel };
   }, [activeTab, handleCreateInitiative, isPilotParticipant, rolloutSubview, t]);
 
   return (
@@ -5893,15 +5959,15 @@ Please return:
         onStatusFilterChange={setActiveStatusFilter}
         filterControls={rightControls}
         viewModes={availableViewModes}
-        commandRowContent={
-          activeTab === ('people_change' as ModuleTab)
-            ? managerCommandRowContent
-            : activeTab === ('rollout' as ModuleTab)
-              ? rolloutCommandRowContent
-              : (summaryBulkCommandRowContent ?? reportBulkCommandRowContent ?? commandRowContent)
-        }
-        commandRowRightContent={
-          activeTab === ('people_change' as ModuleTab) ? managerCommandRowRightContent : undefined
+        commandRowContent={undefined}
+        commandRowRightContent={undefined}
+        chips={(EXECUTION_MENU3[activeTab] ?? []).map((preset) => ({
+          ...preset,
+          count: canonicalMenu3Counts[activeTab]?.[preset.id] ?? 0,
+        }))}
+        activeChip={canonicalMenu3Preset[activeTab] ?? null}
+        onChipChange={(id) =>
+          setCanonicalMenu3Preset((current) => ({ ...current, [activeTab]: id }))
         }
       >
         {renderContent()}

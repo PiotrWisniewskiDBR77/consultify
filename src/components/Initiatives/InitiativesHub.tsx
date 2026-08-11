@@ -48,13 +48,7 @@ import {
   StandardTable,
   type TableColumn as StandardTableColumn,
 } from '@/components/standard';
-import {
-  DueChip,
-  PriorityChip,
-  type PriorityLevel,
-  statusChipTone,
-} from '@/components/ui/primitives/chips';
-import { useDialogA11y } from '@/components/ui/primitives/useDialogA11y';
+import { statusChipTone } from '@/components/ui/primitives/chips';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { ROUTES } from '@/routes/routeConfig';
 import { Api, shouldAllowDemoData } from '@/services/api';
@@ -74,16 +68,11 @@ import {
 import { useConversationStore } from '@/store/useConversationStore';
 import { buildInitiativeDeepLink, readInitiativeDeepLinkId } from '@/utils/initiativeDeepLink';
 import { checkDuplicateInitiative } from '@/utils/initiativeDuplicateDetection';
-import {
-  ACTIVE_STATUSES,
-  ALL_STATUSES,
-  formatRelativeTime,
-  formatShortDate,
-  getHealthInfo,
-} from '@/utils/initiativeHelpers';
+import { ACTIVE_STATUSES, formatRelativeTime, formatShortDate } from '@/utils/initiativeHelpers';
 import { isInitiativesBulkStubEnabled } from '@/utils/initiativesBulkStubFlag';
 import { dispatchPilotAccessBlocked, isPilotParticipantRole } from '@/utils/pilotAccess';
 
+import { listRegisteredInitiatives } from '../../services/initiatives-execution/runtimeApi';
 import { usePortfolioStore } from '../../store/portfolioSlice';
 import { useAppStore } from '../../store/useAppStore';
 import { useInitiativeRefreshStore } from '../../store/useInitiativeRefreshStore';
@@ -111,10 +100,9 @@ import {
 } from '../shared/ModuleMenu3';
 import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
 import { StandardModuleBar } from '../standard/StandardModuleBar';
-import { PortfolioAnalysisView } from './Analysis';
-import type { AnalysisSubview } from './Analysis/types';
-import { type AcceptCandidatePayload } from './CandidatesPanel';
-import { CandidatesTable } from './CandidatesTable';
+import { CanonicalInitiativeCardWorkspace } from './CanonicalInitiativeCardWorkspace';
+import { CanonicalInitiativeRegister } from './CanonicalInitiativeRegister';
+import { CapacityScenarioSurface } from './CapacityScenarioSurface';
 import {
   getCreatedInitiativeRevealState,
   normalizeInitiativeForPortfolio,
@@ -122,27 +110,28 @@ import {
 } from './initiativeCreateFlow';
 import { InitiativeDocumentView } from './InitiativeDocumentView';
 import { InitiativeObservabilityPanel } from './InitiativeObservabilityPanel';
-import { InitiativeObservabilityTable } from './InitiativeObservabilityTable';
-import { buildInitiativePreviewDetails } from './initiativePreviewDetails';
 import {
   InitiativePreviewV3Body,
   InitiativePreviewV3Footer,
   type InitiativePreviewV3Model,
 } from './InitiativePreviewV3';
+import {
+  INITIATIVE_LIFECYCLE_LABELS,
+  INITIATIVE_LIFECYCLE_PRESETS,
+  type InitiativeLifecyclePreset,
+  lifecycleMatchesPreset,
+  projectCanonicalInitiativeRegisterRow,
+  toCanonicalInitiativeRegisterItem,
+} from './initiativeRegisterProjection';
 import { createInitiativesDemoDataset, isShowcaseInitiativeId } from './initiativesDemoData';
 import { getSourceDisplayLabel } from './InitiativeSourceLink';
 import { InitiativesTimelineView } from './InitiativesTimelineView';
-import { InitiativesGoalsTable } from './InitiativesGoalsTable';
 import { DEFAULT_INITIATIVES_VIEW_MODE } from './initiativesViewDefaults';
+import { PlanScenarioSurface } from './PlanScenarioSurface';
 import PortfolioHealthView from './PortfolioHealthView';
-import { PortfolioHealthTable } from './PortfolioHealthTable';
+import { PortfolioScenarioSurface } from './PortfolioScenarioSurface';
+import { SourceProposalRegistrationSurface } from './SourceProposalRegistrationSurface';
 import { InitiativeWizardModal } from './Wizard/InitiativeWizardModal';
-
-// CB-01 pass 3 — stable identifier for the empty-portfolio "New Initiative"
-// CTA, used to re-resolve a live focus-return target if the button's DOM
-// node was replaced (e.g. a loading-state flash) while the inline creation
-// dialog it opens was itself open.
-const NEW_INITIATIVE_EMPTY_CTA_TESTID = 'initiatives-new-modal-empty-cta';
 
 const MODULE_STATUSES = getStatusesForModule('initiatives');
 const MIN_SHOWCASE_INITIATIVES = 10;
@@ -229,41 +218,7 @@ interface InitiativesHubProps {
   initialTab?: ModuleTab;
 }
 
-// CB-02 pass 2 (RB-030/RV-018 follow-up): the exact 6 tabs this hub actually
-// renders (see the `tabs` useMemo below) — kept as an explicit allowlist so
-// `?tab=` is validated against reality instead of being trusted blindly. An
-// unrecognized/stale tab id used to be written straight into `activeTab`,
-// which the `tabs` list doesn't render a matching entry for — nothing in the
-// nav would highlight and the workspace fell through to whatever the default
-// switch-case branch does, an unintended "recovery" rather than a real one.
-const INITIATIVES_TAB_IDS: ModuleTab[] = [
-  'list',
-  'analysis',
-  'observability',
-  'candidates',
-  'portfolioHealth',
-  'goals',
-];
-const INITIATIVES_DEFAULT_TAB: ModuleTab = 'list';
-
-function isKnownInitiativesTab(value: string): value is ModuleTab {
-  return (INITIATIVES_TAB_IDS as string[]).includes(value);
-}
-
-// CB-02 pass 2: resolves the canonical tab from the URL, shared by the
-// mount-time lazy state initializer and the URL->state effect below. Using
-// a lazy initializer (not effect-only hydration) matters: on the very first
-// render, the state->URL effect runs in the SAME commit as the URL->state
-// effect, using this render's (not the post-effect) `activeTab` — an
-// effect-only hydration left a one-commit gap where `activeTab` was still
-// the `initialTab` prop default while the URL already had a different
-// `?tab=`, so the state->URL effect saw a "mismatch" and rewrote the URL
-// back to the default before the URL->state effect's own update ever
-// landed — the exact race this pattern hit in StrategicToolsView.tsx.
-function resolveInitiativesTab(searchParams: URLSearchParams): ModuleTab {
-  const tabParam = searchParams.get('tab');
-  return tabParam && isKnownInitiativesTab(tabParam) ? tabParam : INITIATIVES_DEFAULT_TAB;
-}
+const CANONICAL_INITIATIVES_TABS = new Set<ModuleTab>(['list', 'portfolio', 'plan', 'capacity']);
 
 export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'list' }) => {
   const { t, i18n } = useTranslation();
@@ -278,8 +233,8 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   // View state
   const [viewMode, setViewMode] = useState<ViewMode>(DEFAULT_INITIATIVES_VIEW_MODE);
   const [activeTab, setActiveTab] = useState<ModuleTab>(() => {
-    const tabParam = searchParams.get('tab');
-    return tabParam ? resolveInitiativesTab(searchParams) : initialTab;
+    const requestedTab = searchParams.get('tab') as ModuleTab | null;
+    return requestedTab && CANONICAL_INITIATIVES_TABS.has(requestedTab) ? requestedTab : initialTab;
   });
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilters, setActiveFilters] = useState<FilterChip[]>([]);
@@ -289,74 +244,33 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   const openChatWithContext = useOpenChatWithContext();
   const addChatMessage = useConversationStore((s) => s.addMessage);
   const [activeStatusFilter, setActiveStatusFilter] = useState<string | null>(null);
-  /** Active/All scope toggle — used for Kanban columns and data filtering */
-  const [scope, setScope] = useState<KanbanScope>('active');
-
-  // Analysis sub-view state (lifted so chips render in Menu 3 via commandRowContent)
-  // RB-030/RV-018 (CB-02): initialize from the canonical `subview` query
-  // param when present (direct entry/refresh/back-forward), else the old
-  // 'resources' default.
-  const ANALYSIS_SUBVIEW_IDS: AnalysisSubview[] = [
-    'resources',
-    'feasibility',
-    'logic',
-    'timeline',
-    'completeness',
-  ];
-  const [analysisSubview, setAnalysisSubview] = useState<AnalysisSubview>(() => {
-    const sv = searchParams.get('subview') as AnalysisSubview | null;
-    return sv && ANALYSIS_SUBVIEW_IDS.includes(sv) ? sv : 'resources';
+  const [activeLifecyclePreset, setActiveLifecyclePreset] =
+    useState<InitiativeLifecyclePreset | null>(null);
+  const [canonicalMenu3Preset, setCanonicalMenu3Preset] = useState<Record<string, string>>({
+    portfolio: 'current',
+    plan: 'published',
+    capacity: 'all',
   });
-  const [analysisActionButtons, setAnalysisActionButtons] = useState<React.ReactNode>(null);
-  const registerAnalysisActions = useCallback(
-    (node: React.ReactNode) => setAnalysisActionButtons(node),
+  const [canonicalMenu3Counts, setCanonicalMenu3Counts] = useState<
+    Record<string, Record<string, number>>
+  >({});
+  const handlePortfolioMenu3Counts = useCallback(
+    (counts: Record<string, number>) =>
+      setCanonicalMenu3Counts((current) => ({ ...current, portfolio: counts })),
     []
   );
-
-  // RB-030/RV-018 (CB-02): canonical route-state contract for the module tab
-  // and (when on Analysis) the selected analysis subview — direct entry,
-  // refresh, and browser back/forward restore both instead of always
-  // resetting to Portfolio/Resources. Object deep links already carried in
-  // `searchParams` (handled elsewhere in this component) are untouched: this
-  // effect only ever sets `tab`/`subview` keys, never clears others.
-  useEffect(() => {
-    // CB-02 pass 2: validate against the actual tab allowlist instead of
-    // trusting any string. An unknown/stale `?tab=` (typo'd, or a link to a
-    // tab that no longer exists) resolves to the default Portfolio tab —
-    // honest recovery instead of setting `activeTab` to a value nothing in
-    // the nav renders. A URL with NO `tab=` at all (e.g. browsing back past
-    // this route's history, or a bookmarked pre-route-state link) also
-    // restores the default rather than leaving whatever tab happened to be
-    // showing.
-    const resolvedTab = resolveInitiativesTab(searchParams);
-    if (resolvedTab !== activeTab) {
-      setActiveTab(resolvedTab);
-    }
-    if (resolvedTab === 'analysis') {
-      const subviewParam = searchParams.get('subview') as AnalysisSubview | null;
-      if (
-        subviewParam &&
-        ANALYSIS_SUBVIEW_IDS.includes(subviewParam) &&
-        subviewParam !== analysisSubview
-      ) {
-        setAnalysisSubview(subviewParam);
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams]);
-
-  useEffect(() => {
-    const currentTabParam = searchParams.get('tab');
-    const currentSubviewParam = searchParams.get('subview');
-    const desiredSubviewParam = activeTab === 'analysis' ? analysisSubview : null;
-    if (currentTabParam === activeTab && currentSubviewParam === desiredSubviewParam) return;
-    const next = new URLSearchParams(searchParams);
-    next.set('tab', activeTab);
-    if (desiredSubviewParam) next.set('subview', desiredSubviewParam);
-    else next.delete('subview');
-    setSearchParams(next, { replace: false });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab, analysisSubview]);
+  const handlePlanMenu3Counts = useCallback(
+    (counts: Record<string, number>) =>
+      setCanonicalMenu3Counts((current) => ({ ...current, plan: counts })),
+    []
+  );
+  const handleCapacityMenu3Counts = useCallback(
+    (counts: Record<string, number>) =>
+      setCanonicalMenu3Counts((current) => ({ ...current, capacity: counts })),
+    []
+  );
+  /** Active/All scope toggle — used for Kanban columns and data filtering */
+  const [scope, setScope] = useState<KanbanScope>('active');
 
   // Data state
   const [initiatives, setInitiatives] = useState<PortfolioInitiative[]>([]);
@@ -379,7 +293,6 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   const [isV8InitiativeSnapshotLoading, setIsV8InitiativeSnapshotLoading] = useState(false);
   const v8SnapshotRequestRef = useRef(0);
   const [showNewModal, setShowNewModal] = useState(false);
-  const newModalDialogRef = useRef<HTMLDivElement>(null);
   const [showInitiativeWizard, setShowInitiativeWizard] = useState(false);
   const [showBulkModal, setShowBulkModal] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -397,24 +310,6 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   const [newLevel, setNewLevel] = useState<InitiativeLevel>('standard');
   const [newSummary, setNewSummary] = useState('');
   const [isCreating, setIsCreating] = useState(false);
-  const closeNewModal = useCallback(() => {
-    if (!isCreating) setShowNewModal(false);
-  }, [isCreating]);
-  // CODEX pass 3 — the empty-state CTA that opens this overlay can be
-  // remounted as a fresh DOM node by an intervening re-render (e.g. a
-  // loading-state flash) while the dialog is open, detaching the exact
-  // element useDialogA11y captured at open-time. Re-query a LIVE equivalent
-  // by its stable testid instead of silently losing focus to <body>.
-  const getNewModalFallbackFocusTarget = useCallback(
-    () => document.querySelector<HTMLElement>(`[data-testid="${NEW_INITIATIVE_EMPTY_CTA_TESTID}"]`),
-    []
-  );
-  useDialogA11y({
-    open: showNewModal,
-    onClose: closeNewModal,
-    containerRef: newModalDialogRef,
-    getFallbackFocusTarget: getNewModalFallbackFocusTarget,
-  });
 
   // Preview pane state (V3 Table+Preview)
   const [previewInitiativeId, setPreviewInitiativeId] = useState<string | null>(null);
@@ -534,63 +429,53 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         if (filters.priority?.length) filters.priority.forEach((p) => params.append('priority', p));
         if (searchQuery) params.append('search', searchQuery);
 
-        // Prefer governed V8 portfolio continuity, then fallback to legacy portfolio reads.
-        let response: { initiatives?: PortfolioInitiative[] } = { initiatives: [] };
-        try {
-          response = await V8PlanningApi.getPortfolio({
-            projectId: currentProjectId || undefined,
-            statuses: scope === 'active' && !activeStatusFilter ? ACTIVE_STATUSES : undefined,
-            status: activeStatusFilter || undefined,
-            priority: filters.priority?.length ? filters.priority : undefined,
-            search: searchQuery || undefined,
-          });
-          // Governed V8 Planning read succeeded — clear any degraded state.
-          setV8PlanningDegraded(false);
-          // Base-data fix: a V8-enabled org with ZERO governed initiatives still
-          // returns an empty (non-throwing) portfolio — so an initiative created
-          // via the legacy endpoint would never appear. When the governed list is
-          // empty, cross-check the legacy endpoint and use it if it has rows.
-          // (No-op for V8 orgs that already have governed initiatives.)
-          if (!(response.initiatives || []).length) {
-            try {
-              const legacy = await Api.getInitiatives(currentProjectId || undefined);
-              const legacyList = Array.isArray(legacy)
-                ? legacy
-                : (legacy as any)?.initiatives || [];
-              if (legacyList.length) response = { initiatives: legacyList };
-            } catch {
-              /* keep the empty governed result */
+        const canonical = await listRegisteredInitiatives();
+        const canonicalRows: PortfolioInitiative[] = canonical.initiatives.map(
+          toCanonicalInitiativeRegisterItem
+        );
+        const response: { initiatives: PortfolioInitiative[] } = {
+          initiatives: canonicalRows.filter((initiative) => {
+            if (
+              scope === 'active' &&
+              [
+                InitiativeStatus.DONE,
+                InitiativeStatus.CANCELLED,
+                InitiativeStatus.ARCHIVED,
+              ].includes(initiative.status as InitiativeStatus)
+            ) {
+              return false;
             }
-          }
-        } catch {
-          // L-05: governed V8 Planning is unavailable (env-off / org not
-          // V8-enabled / 404). Surface a degraded banner instead of silently
-          // falling back, then read the legacy initiatives endpoint.
-          setV8PlanningDegraded(true);
-          const fallbackResponse = await Api.getInitiatives(currentProjectId || undefined);
-          response = {
-            initiatives: Array.isArray(fallbackResponse)
-              ? fallbackResponse
-              : (fallbackResponse as any).initiatives || [],
-          };
-        }
+            if (activeStatusFilter && initiative.status !== activeStatusFilter) return false;
+            if (activeLifecyclePreset) {
+              if (
+                !lifecycleMatchesPreset(
+                  String((initiative as any).displayStatus),
+                  activeLifecyclePreset
+                )
+              ) {
+                return false;
+              }
+            }
+            if (
+              searchQuery &&
+              !`${initiative.name ?? ''} ${initiative.summary ?? ''}`
+                .toLocaleLowerCase()
+                .includes(searchQuery.toLocaleLowerCase())
+            ) {
+              return false;
+            }
+            return true;
+          }),
+        };
+        setV8PlanningDegraded(false);
 
         const allowed = (response.initiatives || []).filter((i) =>
           ALLOWED_STATUSES.includes(i.status as InitiativeStatus)
         );
         setInitiatives(allowed);
 
-        // Also fetch all initiatives (including archived/cancelled) for duplicate detection.
-        try {
-          const allResponse = await V8PlanningApi.getPortfolio({
-            projectId: currentProjectId || undefined,
-            search: searchQuery || undefined,
-          });
-          setAllInitiatives(allResponse.initiatives || response.initiatives || []);
-        } catch {
-          // Fallback: use current initiatives
-          setAllInitiatives(response.initiatives || []);
-        }
+        // Duplicate detection uses the same canonical source of truth, including history.
+        setAllInitiatives(canonicalRows);
       } catch (error: any) {
         console.error('[InitiativesHub] Fetch error:', error);
         const isNetworkError =
@@ -628,6 +513,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
       currentProjectId,
       allowDemoData,
       activeStatusFilter,
+      activeLifecyclePreset,
       filters.priority,
       initiativesDemoData,
       mergeShowcaseInitiatives,
@@ -701,11 +587,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
 
   // Available view modes — hide when Analysis tab is active
   const availableViewModes: ViewMode[] =
-    activeTab === 'analysis' ||
-    activeTab === 'observability' ||
-    activeTab === 'candidates' ||
-    activeTab === 'portfolioHealth' ||
-    activeTab === 'goals'
+    activeTab === 'portfolio' || activeTab === 'plan' || activeTab === 'capacity'
       ? []
       : ['table', 'kanban', 'timeline', 'grid'];
 
@@ -714,38 +596,23 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     () => [
       {
         id: 'list' as ModuleTab,
-        label: t('initiatives.tabs.portfolio', 'Portfolio'),
+        label: 'Inicjatywy',
         icon: <List size={16} />,
       },
       {
-        id: 'analysis' as ModuleTab,
-        label: t('initiatives.tabs.analysis', 'Analysis'),
+        id: 'portfolio' as ModuleTab,
+        label: 'Portfel',
         icon: <BarChart3 size={16} />,
       },
       {
-        // UNIFICATION E1/E2 — chain observability (lineage + funnel)
-        id: 'observability' as ModuleTab,
-        label: t('initiatives.tabs.observability', 'Observability'),
-        icon: <GitBranch size={16} />,
+        id: 'plan' as ModuleTab,
+        label: 'Plan',
+        icon: <CalendarClock size={16} />,
       },
       {
-        // F2 — candidates inbox (AI suggests initiatives from discovery)
-        id: 'candidates' as ModuleTab,
-        label: t('initiatives.tabs.candidates', 'Candidates'),
-        icon: <Sparkles size={16} />,
-      },
-      {
-        // F4 — portfolio health (MECE / gaps / balance / duplicates)
-        id: 'portfolioHealth' as ModuleTab,
-        label: t('initiatives.tabs.portfolioHealth', 'Portfolio Health'),
-        icon: <Activity size={16} />,
-      },
-      {
-        // RES-10 — Initiatives-owned goals/OKR (goals table via initiativeGovernanceService).
-        // Distinct from Results' scorecards (kpi_scorecards) — see InitiativeGoalsView.tsx.
-        id: 'goals' as ModuleTab,
-        label: t('initiatives.tabs.goals', 'Goals'),
-        icon: <Target size={16} />,
+        id: 'capacity' as ModuleTab,
+        label: 'Obciążenie',
+        icon: <Users size={16} />,
       },
     ],
     [t]
@@ -806,10 +673,18 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
           id: initiative.id,
           name: initiative.name || t('initiatives.document.untitled', 'Untitled initiative'),
           type: 'initiative',
-          subType: String(initiative.axis || 'initiative'),
+          subType: 'canonical-runtime',
           status: (initiative.status || InitiativeStatus.DRAFT) as any,
         };
         setOpenDocuments((prev) => [...prev, newDoc]);
+      } else if (existingDoc.subType !== 'canonical-runtime') {
+        setOpenDocuments((prev) =>
+          prev.map((document) =>
+            document.id === initiative.id && document.type === 'initiative'
+              ? { ...document, subType: 'canonical-runtime' }
+              : document
+          )
+        );
       }
       setActiveTab('list');
       setActiveDocumentId(initiative.id);
@@ -1229,10 +1104,31 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     setActiveDocumentId(null);
   }, []);
 
-  const handleMainTabChange = useCallback((tab: ModuleTab) => {
-    setActiveTab(tab);
-    setActiveDocumentId(null);
-  }, []);
+  const handleMainTabChange = useCallback(
+    (tab: ModuleTab) => {
+      setActiveTab(tab);
+      setActiveDocumentId(null);
+      const next = new URLSearchParams(searchParams);
+      if (tab === 'list') next.delete('tab');
+      else next.set('tab', tab);
+      setSearchParams(next, { replace: true });
+    },
+    [searchParams, setActiveDocumentId, setSearchParams]
+  );
+
+  useEffect(() => {
+    const syncTabFromHistory = () => {
+      const requestedTab = new URLSearchParams(window.location.search).get(
+        'tab'
+      ) as ModuleTab | null;
+      const nextTab =
+        requestedTab && CANONICAL_INITIATIVES_TABS.has(requestedTab) ? requestedTab : 'list';
+      setActiveTab(nextTab);
+      setActiveDocumentId(null);
+    };
+    window.addEventListener('popstate', syncTabFromHistory);
+    return () => window.removeEventListener('popstate', syncTabFromHistory);
+  }, [setActiveDocumentId]);
 
   const handleCloseDocument = useCallback(
     (id: string) => {
@@ -1455,81 +1351,6 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     [isMaterializing, t]
   );
 
-  // F2 — accept candidate: create a DRAFT initiative via the existing create flow
-  // (no dependency on a not-yet-built generator endpoint). The candidate's
-  // rationale/brief seeds the summary; source lineage is stamped when available.
-  const handleAcceptCandidate = useCallback(
-    async (payload: AcceptCandidatePayload) => {
-      if (isPilotParticipant) {
-        dispatchPilotAccessBlocked({ href: '/initiatives' });
-        return;
-      }
-      try {
-        // F2→F1 anti-duplicate: if accept created an initiative server-side (and filled it
-        // via the generator), do NOT create a second one — navigate to the returned initiativeId.
-        let createdId: string | null;
-        let truth: { initiative?: unknown } = {};
-        if (payload.initiativeId) {
-          createdId = payload.initiativeId;
-        } else {
-          const r = await createInitiativeWriteTruth({
-            projectId: currentProjectId || undefined,
-            title: payload.title.trim(),
-            axis: 'operational',
-            level: 'standard',
-            summary: (payload.brief || payload.rationale || '').trim() || undefined,
-            status: 'DRAFT',
-            sourceType: payload.sourceType || undefined,
-            sourceId: payload.sourceId || undefined,
-          });
-          createdId = r.createdId;
-          truth = r.truth;
-        }
-        toast.success(t('initiatives.form.initiativeCreated', 'Initiative created'));
-        if (createdId) {
-          try {
-            const full = truth.initiative || (await V8PlanningApi.getInitiative(createdId));
-            const normalized = normalizeInitiativeForPortfolio(
-              full as Record<string, any>,
-              createdId
-            );
-            if (normalized) {
-              setAllInitiatives((prev) => upsertPortfolioInitiative(prev, normalized));
-              setInitiatives((prev) => upsertPortfolioInitiative(prev, normalized));
-              const revealState = getCreatedInitiativeRevealState(
-                { scope, activeStatusFilter },
-                normalized.status
-              );
-              setScope(revealState.scope);
-              setActiveStatusFilter(revealState.activeStatusFilter);
-              setActiveTab('list');
-              handleInitiativeClick(normalized);
-              return;
-            }
-          } catch {
-            /* fall through to refetch */
-          }
-        }
-        await fetchData(true);
-      } catch (e: any) {
-        toast.error(
-          e?.response?.data?.error ||
-            e?.message ||
-            t('initiatives.form.createFailed', 'Failed to create initiative')
-        );
-      }
-    },
-    [
-      activeStatusFilter,
-      currentProjectId,
-      fetchData,
-      handleInitiativeClick,
-      isPilotParticipant,
-      scope,
-      t,
-    ]
-  );
-
   // Triada standard (canon B.24): Esc closes the Portfolio 'table' (list)
   // StandardPreview; [O] shortcut opens the full initiative document. Mirrors
   // AssessmentHub 'list' / InterviewHub Inbox — renderContent() is a plain
@@ -1580,69 +1401,83 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   // ============================================
 
   const renderContent = () => {
-    // T27 R11: Observability table plus preserved lineage dashboard.
+    // USPOJNIENIE E1/E2: Observability tab — lineage + funnel (read-only)
     if (activeTab === 'observability') {
-      return (
-        <div className="flex h-full flex-col overflow-hidden">
-          <div className="h-1/2 min-h-[320px] shrink-0 overflow-hidden border-b border-slate-200 dark:border-slate-700">
-            <InitiativeObservabilityTable
-              onOpenInitiative={(id, title) =>
-                handleOpenDocument({ id, type: 'initiative', name: title || t('initiatives.document.untitled', 'Untitled initiative') })
-              }
-            />
-          </div>
-          <div className="flex-1 min-h-0 overflow-auto">
-            <InitiativeObservabilityPanel initialInitiativeId={previewInitiativeId} />
-          </div>
-        </div>
-      );
+      return <InitiativeObservabilityPanel initialInitiativeId={previewInitiativeId} />;
     }
-    // T28 R11: Candidates canonical table.
+    // Compatibility mount: source proposals belong to the Initiatives intake flow.
+    // The legacy "Accept candidate" write path is intentionally no longer reachable
+    // from the UI: registration is a governed, idempotent server command with read-back.
     if (activeTab === 'candidates') {
-      return <CandidatesTable onAccept={handleAcceptCandidate} />;
-    }
-    // T30 R13-CORRECTION: Goals canonical table.
-    if (activeTab === 'goals') {
-      return <InitiativesGoalsTable />;
-    }
-    // T29 R11: Portfolio health table plus preserved dashboard.
-    if (activeTab === 'portfolioHealth') {
-      const openInitiative = (id: string, title: string) =>
-        handleOpenDocument({ id, type: 'initiative', name: title || t('initiatives.document.untitled', 'Untitled initiative') });
       return (
-        <div className="flex h-full flex-col overflow-hidden">
-          <div className="h-1/2 min-h-[320px] shrink-0 overflow-hidden border-b border-slate-200 dark:border-slate-700">
-            <PortfolioHealthTable onOpenInitiative={openInitiative} />
-          </div>
-          <div className="flex-1 min-h-0 overflow-auto">
-            <PortfolioHealthView onOpenInitiative={openInitiative} />
-          </div>
-        </div>
-      );
-    }
-    // V3-F02: Analysis tab — portfolio quality gate
-    if (activeTab === 'analysis') {
-      return (
-        <PortfolioAnalysisView
-          initiatives={initiatives}
-          onOpenInitiative={(id) => {
-            const init = initiatives.find((i) => i.id === id);
-            if (init) handlePreviewSelection(init.id);
+        <SourceProposalRegistrationSurface
+          initialSelectedId={searchParams.get('sourceProposalId')}
+          onSelectionChange={(proposalId) => {
+            const next = new URLSearchParams(searchParams);
+            if (proposalId) next.set('sourceProposalId', proposalId);
+            else next.delete('sourceProposalId');
+            setSearchParams(next, { replace: true });
           }}
-          onQuickUpdate={
-            isPilotParticipant
-              ? undefined
-              : async (initiativeId, updates) => {
-                  await handleQuickUpdate(initiativeId, updates as Partial<PortfolioInitiative>);
-                }
+          onOpenInitiative={(initiativeId) =>
+            handleOpenDocument({
+              id: initiativeId,
+              type: 'initiative',
+              name: t('initiatives.document.untitled', 'Untitled initiative'),
+              subType: 'canonical-runtime',
+              // OpenDocument still uses the legacy UI projection. The Initiative
+              // document reloads canonical REGISTERED_DRAFT from runtime-v1.
+              status: InitiativeStatus.DRAFT,
+            })
           }
-          users={users}
-          projectId={currentProjectId || undefined}
-          subview={analysisSubview}
-          onRegisterActions={registerAnalysisActions}
         />
       );
     }
+    // F4: Portfolio health — MECE coverage / gaps / balance / duplicate clusters (read-only).
+    if (activeTab === 'portfolioHealth') {
+      return (
+        <PortfolioHealthView
+          onOpenInitiative={(id, title) =>
+            handleOpenDocument({
+              id,
+              type: 'initiative',
+              name: title || t('initiatives.document.untitled', 'Untitled initiative'),
+            })
+          }
+        />
+      );
+    }
+    if (activeTab === 'portfolio') {
+      return (
+        <PortfolioScenarioSurface
+          portfolioId={currentProjectId}
+          initiatives={allInitiatives.map((initiative) => ({
+            id: initiative.id,
+            name: initiative.name || initiative.title || initiative.id,
+          }))}
+          activePreset={canonicalMenu3Preset.portfolio}
+          onCountsChange={handlePortfolioMenu3Counts}
+        />
+      );
+    }
+    if (activeTab === 'plan') {
+      return (
+        <PlanScenarioSurface
+          initiatives={allInitiatives.map((initiative) => ({
+            id: initiative.id,
+            name: initiative.name || initiative.title || initiative.id,
+          }))}
+          activePreset={canonicalMenu3Preset.plan}
+          onCountsChange={handlePlanMenu3Counts}
+        />
+      );
+    }
+    if (activeTab === 'capacity')
+      return (
+        <CapacityScenarioSurface
+          activePreset={canonicalMenu3Preset.capacity}
+          onCountsChange={handleCapacityMenu3Counts}
+        />
+      );
 
     // If there's an active document, show the appropriate view based on type
     if (activeDocumentId) {
@@ -1670,6 +1505,29 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
       }
 
       if (activeDoc?.type === 'initiative' || !activeDoc) {
+        if (activeDoc?.subType === 'canonical-runtime') {
+          return (
+            <CanonicalInitiativeCardWorkspace
+              initiativeId={activeDocumentId}
+              initialCardKey={searchParams.get('cardKey')}
+              initialFindingId={searchParams.get('findingId')}
+              onContextChange={({ cardKey, findingId }) => {
+                const next = new URLSearchParams(searchParams);
+                next.set('cardKey', cardKey);
+                if (findingId) next.set('findingId', findingId);
+                else next.delete('findingId');
+                setSearchParams(next, { replace: true });
+              }}
+              onBack={() => {
+                const next = new URLSearchParams(searchParams);
+                next.delete('cardKey');
+                next.delete('findingId');
+                setSearchParams(next, { replace: true });
+                handleShowList();
+              }}
+            />
+          );
+        }
         return (
           <InitiativeDocumentView
             initiativeId={activeDocumentId}
@@ -1740,7 +1598,6 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
                   label: t('initiatives.form.newInitiative'),
                   onClick: () => setShowNewModal(true),
                   icon: Plus,
-                  testId: NEW_INITIATIVE_EMPTY_CTA_TESTID,
                 }
           }
         />
@@ -1882,325 +1739,35 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     // TYLKO dane + kontrakt kebaba/akcji; chrome pochodzi z fasad Standard*
     // (wzorzec 1:1 z AssessmentHub 'list' — 6fb79511fe / InterviewHub Inbox —
     // 290c78ea33). Widok KANBAN (poniżej) pozostaje nietknięty.
-    const PRIORITY_LEVEL_MAP: Record<string, PriorityLevel> = {
-      CRITICAL: 'urgent',
-      HIGH: 'high',
-      MEDIUM: 'medium',
-      LOW: 'low',
-    };
-
-    const isTerminalStatusValue = (status: string) =>
-      status === InitiativeStatus.CANCELLED || status === InitiativeStatus.ARCHIVED;
-
     // canon A10/C1: dot color derives from the neutral c-* semantic tokens
     // (statusChipTone), never from STATUS_METADATA.dotColor — one status there
     // maps to the legacy crimson brand class (tracked separately in
     // initiativeLifecycle.ts) which must not surface in new Triada UI.
-    const statusDotClass = (status: string): string => {
-      const tone = statusChipTone(status);
-      return tone === 'info'
-        ? 'bg-c-info'
-        : tone === 'warning'
-          ? 'bg-c-warning'
-          : tone === 'success'
-            ? 'bg-c-success'
-            : tone === 'danger'
-              ? 'bg-c-danger'
-              : 'bg-c-text-muted';
-    };
-
-    const initiativeColumns: StandardTableColumn[] = [
-      {
-        id: 'name',
-        label: t('initiatives.table.initiative', 'Initiative'),
-        render: (row: PortfolioInitiative) => (
-          <span className="text-sm font-semibold text-c-text truncate block">{row.name}</span>
-        ),
-      },
-      {
-        id: 'status',
-        label: t('initiatives.table.status', 'Status'),
-        width: '150px',
-        filterable: true,
-        filterOptions: ALL_STATUSES.map((s) => ({
-          value: s,
-          label: STATUS_METADATA[s as InitiativeStatus]?.label || s,
-          color: statusDotClass(s),
-        })),
-        render: (row: PortfolioInitiative) => {
-          const label = STATUS_METADATA[row.status as InitiativeStatus]?.label || row.status;
-          return (
-            <span className="inline-flex items-center gap-1.5 text-xs font-medium text-c-text-secondary">
-              <span
-                className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${statusDotClass(row.status)}`}
-              />
-              {label}
-            </span>
-          );
-        },
-      },
-      {
-        id: 'priority',
-        label: t('initiatives.table.priority', 'Priority'),
-        width: '110px',
-        filterable: true,
-        filterOptions: [
-          { value: 'CRITICAL', label: 'Critical', color: 'bg-danger-500' },
-          { value: 'HIGH', label: 'High', color: 'bg-amber-500' },
-          { value: 'MEDIUM', label: 'Medium', color: 'bg-blue-500' },
-          { value: 'LOW', label: 'Low', color: 'bg-c-text-muted' },
-        ],
-        render: (row: PortfolioInitiative) => {
-          const level = PRIORITY_LEVEL_MAP[row.priority];
-          return level ? (
-            <PriorityChip level={level} label={row.priority} />
-          ) : (
-            <span className="text-xs text-c-text-muted">—</span>
-          );
-        },
-      },
-      {
-        id: 'owner',
-        label: t('initiatives.table.owner', 'Owner'),
-        width: '170px',
-        render: (row: PortfolioInitiative) => {
-          const owner = row.ownerBusiness || row.ownerExecution;
-          if (!owner) return <span className="text-xs text-c-text-muted">—</span>;
-          const name = `${owner.firstName || ''} ${owner.lastName || ''}`.trim() || '—';
-          return <span className="text-xs text-c-text-secondary truncate block">{name}</span>;
-        },
-      },
-      {
-        id: 'plannedEndDate',
-        label: t('initiatives.table.targetDate', 'Target date'),
-        width: '140px',
-        sortable: true,
-        sortAccessor: (row: PortfolioInitiative) =>
-          row.plannedEndDate ? new Date(row.plannedEndDate).getTime() : 0,
-        render: (row: PortfolioInitiative) =>
-          row.plannedEndDate ? (
-            <DueChip
-              label={formatShortDate(row.plannedEndDate)}
-              due={isTerminalStatusValue(row.status) ? null : row.plannedEndDate}
-              showIcon
-            />
-          ) : (
-            <span className="text-xs text-c-text-muted">—</span>
-          ),
-      },
-      {
-        id: 'health',
-        label: t('initiatives.table.health', 'Health'),
-        width: '110px',
-        render: (row: PortfolioInitiative) => {
-          const health = getHealthInfo(row);
-          return (
-            <span className="inline-flex items-center gap-1.5 text-xs text-c-text-muted">
-              <span className={`w-2 h-2 rounded-full flex-shrink-0 ${health.dotClass}`} />
-              {health.label}
-            </span>
-          );
-        },
-      },
-      {
-        id: 'updatedAt',
-        label: t('initiatives.table.updated', 'Updated'),
-        width: '110px',
-        align: 'right',
-        sortable: true,
-        sortAccessor: (row: PortfolioInitiative) =>
-          row.updatedAt ? new Date(row.updatedAt).getTime() : 0,
-        render: (row: PortfolioInitiative) => (
-          <span className="text-xs text-c-text-muted tabular-nums">
-            {formatRelativeTime(row.updatedAt)}
-          </span>
-        ),
-      },
-    ];
-
-    const selectedTableRow: PortfolioInitiative | null = selectedInit;
-    const tablePreviewDetailsText = buildInitiativePreviewDetails(
-      selectedTableRow,
-      i18n.language?.startsWith('pl') ? 'pl' : 'en'
-    );
-
-    const tablePreviewActions: StandardPreviewActions | undefined = selectedTableRow
-      ? {
-          resolutions: !isPilotParticipant
-            ? [
-                {
-                  id: 'delete',
-                  variant: 'destructive',
-                  label: t('common.delete', 'Delete'),
-                  icon: Trash2,
-                  onClick: () => void handleDeleteInitiative(selectedTableRow),
-                },
-              ]
-            : undefined,
-          informational: [
-            {
-              id: 'copy-link',
-              variant: 'neutral',
-              label: t('initiatives.copyLinkAction', 'Copy link'),
-              icon: Copy,
-              onClick: () => void copyInitiativeLink(selectedTableRow.id),
-            },
-          ],
-        }
-      : undefined;
-
     switch (viewMode) {
       case 'table':
         return (
-          <div className="h-full flex overflow-hidden">
-            <div className="flex-1 min-w-0 overflow-auto pl-4 pr-1.5 pt-3 pb-4">
-              <StandardTable
-                columns={initiativeColumns}
-                data={
-                  searchedInitiatives as unknown as Array<Record<string, unknown> & { id: string }>
-                }
-                selectedRowId={previewInitiativeId}
-                onRowClick={(row) => handleInitiativeClick(row as unknown as PortfolioInitiative)}
-                onRowDoubleClick={(row) =>
-                  handleOpenInitiativeDocument(row as unknown as PortfolioInitiative)
-                }
-                rowDescription={(row) => (row as unknown as PortfolioInitiative).summary || null}
-                defaultSort={{ columnId: 'updatedAt', direction: 'desc' }}
-                persistKey="initiatives.portfolio.list"
-                selection={{ selectedIds, onChange: setSelectedIds }}
-                empty={{
-                  icon: Lightbulb,
-                  title: t('initiatives.hub.noInitiativesFound', 'No initiatives found'),
-                  description: t(
-                    'initiatives.hub.noInitiativesFoundDesc',
-                    'No initiatives match the current filters. Try widening the search or clearing filters.'
-                  ),
-                }}
-                rowMenu={(row): StandardRowMenu => {
-                  const initiative = row as unknown as PortfolioInitiative;
-                  const canArchive =
-                    initiative.status === InitiativeStatus.DONE ||
-                    initiative.status === InitiativeStatus.CANCELLED;
-                  return {
-                    primary: [
-                      {
-                        id: 'open',
-                        label: t('common.open', 'Open'),
-                        icon: ExternalLink,
-                        onClick: () => handleOpenInitiativeDocument(initiative),
-                      },
-                    ],
-                    timeActions: initiative.plannedEndDate
-                      ? [
-                          {
-                            id: 'delay',
-                            label: t('common.delay', 'Delay'),
-                            icon: Clock,
-                            // Brak dedykowanego endpointu "delay by N days" — quickUpdate
-                            // istnieje, ale bez zwalidowanej semantyki przesunięcia terminu
-                            // w tym module (§9-todo w PortfolioListView). Disabled z notą
-                            // zamiast cichego dopisywania nowej logiki biznesowej.
-                            disabled: true,
-                            note: t('common.comingSoonBackend', 'Coming soon (backend)'),
-                          },
-                        ]
-                      : undefined,
-                    universalHandlers: {
-                      preview: () => handleInitiativeClick(initiative),
-                      edit: () => handleInitiativeClick(initiative),
-                      archive: canArchive ? () => handleArchiveInitiative(initiative) : undefined,
-                      archiveNote: canArchive
-                        ? undefined
-                        : t('initiatives.archive.hint', 'Zakończ lub anuluj najpierw'),
+          <CanonicalInitiativeRegister
+            rows={searchedInitiatives}
+            selectedId={previewInitiativeId}
+            onSelect={(row) => (row ? handleInitiativeClick(row) : handlePreviewSelection(null))}
+            onOpen={handleOpenInitiativeDocument}
+            persistKey="initiatives.canonical-register.v1"
+            emptyTitle={t('initiatives.hub.noInitiativesFound', 'No initiatives found')}
+            emptyDescription={t(
+              'initiatives.hub.noInitiativesFoundDesc',
+              'No initiatives match the current filters. Try widening the search or clearing filters.'
+            )}
+            relationForRow={(row) =>
+              row.sourceType && row.sourceId
+                ? [
+                    {
+                      label: getSourceDisplayLabel(row.sourceType),
+                      onClick: () => navigate(buildInitiativeDeepLink(row.id, { mode: 'doc' })),
                     },
-                    destructive: {
-                      onClick: isPilotParticipant
-                        ? undefined
-                        : () => handleDeleteInitiative(initiative),
-                      note: isPilotParticipant
-                        ? t('initiatives.pilotAccessBlocked', 'Not available in pilot mode')
-                        : undefined,
-                    },
-                  };
-                }}
-              />
-            </div>
-
-            {selectedTableRow ? (
-              <aside className="w-[400px] shrink-0 bg-slate-50 dark:bg-navy-950 p-3 overflow-hidden">
-                <StandardPreview
-                  title={
-                    selectedTableRow.name ||
-                    t('initiatives.document.untitled', 'Untitled initiative')
-                  }
-                  onClose={() => handlePreviewSelection(null)}
-                  onOpenFull={() => handleOpenInitiativeDocument(selectedTableRow)}
-                  meta={{
-                    pills: [
-                      {
-                        label:
-                          STATUS_METADATA[selectedTableRow.status as InitiativeStatus]?.label ||
-                          selectedTableRow.status,
-                        tone: statusChipTone(selectedTableRow.status),
-                      },
-                      {
-                        label: selectedTableRow.priority || 'MEDIUM',
-                        tone: 'neutral',
-                      },
-                    ],
-                    trailing: (
-                      <span className="text-[11px] font-semibold text-c-text-secondary">
-                        {selectedTableRow.plannedEndDate
-                          ? formatShortDate(selectedTableRow.plannedEndDate)
-                          : '—'}
-                      </span>
-                    ),
-                  }}
-                  details={{
-                    text: tablePreviewDetailsText,
-                    onCopy: () => {
-                      void navigator.clipboard?.writeText(tablePreviewDetailsText);
-                    },
-                  }}
-                  ai={{
-                    hints: [
-                      t('initiatives.aiHint.summarize', 'Summarize'),
-                      t('initiatives.aiHint.makeDocument', 'Make document'),
-                    ],
-                    onRunHint: (hint) => {
-                      const isSummarize = hint === 'Podsumuj' || hint === 'Summarize';
-                      void openAiChat(
-                        selectedTableRow,
-                        isSummarize
-                          ? t(
-                              'initiatives.aiPrompt.summarize',
-                              'Summarize this initiative in 5 bullets and propose 3 next steps.'
-                            )
-                          : t(
-                              'initiatives.aiPrompt.makeDocument',
-                              'Write a document based on this initiative: goals, status, risks and recommendations.'
-                            )
-                      );
-                    },
-                  }}
-                  relations={
-                    selectedTableRow.sourceType && selectedTableRow.sourceId
-                      ? [
-                          {
-                            label: getSourceDisplayLabel(selectedTableRow.sourceType),
-                            onClick: () =>
-                              navigate(
-                                buildInitiativeDeepLink(selectedTableRow.id, { mode: 'doc' })
-                              ),
-                          },
-                        ]
-                      : []
-                  }
-                  actions={tablePreviewActions}
-                />
-              </aside>
-            ) : null}
-          </div>
+                  ]
+                : []
+            }
+          />
         );
       case 'grid':
         return (
@@ -2378,80 +1945,24 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
       ? v8InitiativeSnapshot.wbsCompleteness.gaps.length
       : 0;
 
-  const ANALYSIS_SUBVIEWS: { id: AnalysisSubview; labelKey: string; icon: React.ReactNode }[] = [
-    {
-      id: 'resources',
-      labelKey: 'initiatives.analysis.resources.title',
-      icon: <Users size={14} className="text-c-text-secondary" />,
-    },
-    {
-      id: 'feasibility',
-      labelKey: 'initiatives.analysis.feasibility.title',
-      icon: <Target size={14} className="text-amber-400" />,
-    },
-    {
-      id: 'logic',
-      labelKey: 'initiatives.analysis.logic.title',
-      icon: <GitBranch size={14} className="text-blue-400" />,
-    },
-    {
-      id: 'timeline',
-      labelKey: 'initiatives.analysis.timeline.title',
-      icon: <BarChart3 size={14} className="text-emerald-400" />,
-    },
-    {
-      id: 'completeness',
-      labelKey: 'initiatives.analysis.completeness.title',
-      icon: <CheckCircle2 size={14} className="text-danger-400" />,
-    },
-  ];
-
-  const analysisCommandRow = (
-    <div className="flex items-center justify-between gap-2">
-      <div className={MENU_3_LEFT_CLASS}>
-        {ANALYSIS_SUBVIEWS.map((sv) => (
-          <button
-            key={sv.id}
-            type="button"
-            onClick={() => setAnalysisSubview(sv.id)}
-            className={analysisSubview === sv.id ? MENU_3_CHIP_ACTIVE : MENU_3_CHIP_INACTIVE}
-          >
-            {sv.icon}
-            {t(sv.labelKey, sv.id.charAt(0).toUpperCase() + sv.id.slice(1))}
-          </button>
-        ))}
-      </div>
-      {analysisActionButtons && <div className={MENU_3_RIGHT_CLASS}>{analysisActionButtons}</div>}
-    </div>
-  );
-
-  // Menu 3 stability: render the FULL portfolio status set ALWAYS (In Review →
-  // Promoted → Planning → Approved → Scheduled), regardless of which filter is
-  // active or which view is shown. Only the active state + the bottom list change —
-  // Menu 3 itself never rebuilds on view/filter change. Any extra active status
-  // (e.g. a non-portfolio status reached via deep link) is appended so it never
-  // disappears while selected.
-  const PORTFOLIO_STATUS_CHIPS: InitiativeStatus[] = useMemo(
-    () => [
-      InitiativeStatus.REVIEW,
-      InitiativeStatus.PROMOTED,
-      InitiativeStatus.PLANNING,
-      InitiativeStatus.APPROVED,
-      InitiativeStatus.SCHEDULED,
-    ],
-    []
-  );
-  const visibleStatusChips = useMemo(() => {
-    const base = [...PORTFOLIO_STATUS_CHIPS];
-    if (
-      activeStatusFilter &&
-      ALLOWED_STATUSES.includes(activeStatusFilter as InitiativeStatus) &&
-      !base.includes(activeStatusFilter as InitiativeStatus)
-    ) {
-      base.push(activeStatusFilter as InitiativeStatus);
+  const lifecyclePresetCounts = useMemo(() => {
+    const countable =
+      scope === 'active'
+        ? allInitiatives.filter(
+            (initiative) =>
+              !['CLOSED', 'ARCHIVED', 'CANCELLED'].includes(
+                String((initiative as any).displayStatus)
+              )
+          )
+        : allInitiatives;
+    const counts: Record<string, number> = { all: countable.length };
+    for (const preset of INITIATIVE_LIFECYCLE_PRESETS) {
+      counts[preset.id] = countable.filter((initiative) =>
+        preset.states.includes(String((initiative as any).displayStatus))
+      ).length;
     }
-    return base;
-  }, [PORTFOLIO_STATUS_CHIPS, activeStatusFilter]);
+    return counts;
+  }, [allInitiatives, scope]);
 
   // Canon §15.3 Formula 2 — MULTI-SELECT bulk action bar.
   // When ≥1 row is selected in table view, Menu 3 becomes a bulk bar:
@@ -2460,7 +1971,8 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   const isBulkMode =
     viewMode === 'table' &&
     !activeDocumentId &&
-    activeTab !== 'analysis' &&
+    activeTab !== 'portfolio' &&
+    activeTab !== 'plan' &&
     !isPilotParticipant &&
     selectedIds.size > 0;
 
@@ -2575,28 +2087,34 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
       <div className={MENU_3_LEFT_CLASS}>
         <button
           type="button"
-          onClick={() => setActiveStatusFilter(null)}
-          className={!activeStatusFilter ? MENU_3_CHIP_ACTIVE : MENU_3_CHIP_INACTIVE}
+          onClick={() => {
+            setActiveLifecyclePreset(null);
+            setActiveStatusFilter(null);
+          }}
+          className={!activeLifecyclePreset ? MENU_3_CHIP_ACTIVE : MENU_3_CHIP_INACTIVE}
         >
           <span className={MENU_3_ALL_DOT_CLASS} />
-          <span>ALL</span>
-          <span className={!activeStatusFilter ? MENU_3_BADGE_ACTIVE : MENU_3_BADGE_INACTIVE}>
-            {statusCounts.all ?? 0}
+          <span>Wszystkie</span>
+          <span className={!activeLifecyclePreset ? MENU_3_BADGE_ACTIVE : MENU_3_BADGE_INACTIVE}>
+            {lifecyclePresetCounts.all ?? 0}
           </span>
         </button>
-        {visibleStatusChips.map((s) => {
-          const meta = STATUS_METADATA[s];
-          const isActive = activeStatusFilter === s;
-          const count = statusCounts[s] ?? 0;
+        {INITIATIVE_LIFECYCLE_PRESETS.map((preset) => {
+          const isActive = activeLifecyclePreset === preset.id;
+          const count = lifecyclePresetCounts[preset.id] ?? 0;
           return (
             <button
-              key={s}
+              key={preset.id}
               type="button"
-              onClick={() => setActiveStatusFilter(isActive ? null : s)}
+              onClick={() => {
+                setActiveLifecyclePreset(isActive ? null : preset.id);
+                setActiveStatusFilter(null);
+                if (preset.id === 'HISTORICAL' && !isActive) setScope('all');
+              }}
               className={isActive ? MENU_3_CHIP_ACTIVE : MENU_3_CHIP_INACTIVE}
             >
-              <span className={`w-2 h-2 rounded-full ${meta?.dotColor || 'bg-c-text-muted'}`} />
-              <span>{meta?.label || s}</span>
+              <span className="h-2 w-2 rounded-full bg-c-text-muted" />
+              <span>{preset.label}</span>
               <span className={isActive ? MENU_3_BADGE_ACTIVE : MENU_3_BADGE_INACTIVE}>
                 {count}
               </span>
@@ -2619,6 +2137,44 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     </div>
   );
 
+  const canonicalMenu3Definitions: Record<string, Array<{ id: string; label: string }>> = {
+    portfolio: [
+      ['current', 'Current scenario'],
+      ['unassigned', 'Unassigned'],
+      ['included', 'Included'],
+      ['conditional', 'Conditional'],
+      ['deferred', 'Deferred'],
+      ['excluded', 'Excluded'],
+      ['mandatory', 'Mandatory'],
+      ['low-confidence', 'Low confidence'],
+      ['coverage-gaps', 'Coverage gaps'],
+      ['duplicates', 'Duplicates'],
+    ].map(([id, label]) => ({ id, label })),
+    plan: [
+      ['unscheduled', 'Unscheduled'],
+      ['now', 'Now'],
+      ['next', 'Next'],
+      ['later', 'Later'],
+      ['conflicted', 'Conflicted'],
+      ['missing-dependencies', 'Missing dependencies'],
+      ['needs-capacity', 'Needs capacity'],
+      ['ready', 'Ready for schedule'],
+      ['published', 'Published'],
+    ].map(([id, label]) => ({ id, label })),
+    capacity: [
+      ['all', 'All constraints'],
+      ['critical', 'Critical'],
+      ['unknown-supply', 'Unknown supply'],
+      ['missing-demand', 'Missing demand'],
+      ['skill-gaps', 'Skill gaps'],
+      ['management-load', 'Management load'],
+      ['budget-envelope', 'Budget envelope'],
+      ['unconfirmed', 'Unconfirmed'],
+      ['resolved', 'Resolved in scenario'],
+    ].map(([id, label]) => ({ id, label })),
+  };
+  const canonicalMenu3 = canonicalMenu3Definitions[activeTab] ?? [];
+
   return (
     <div className="h-full" data-testid="initiatives-hub">
       <StandardModuleBar
@@ -2637,28 +2193,38 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         onRemoveFilter={handleRemoveFilter}
         onClearFilters={handleClearFilters}
         primaryCta={
-          isPilotParticipant
-            ? {
-                label: t('initiatives.form.newInitiative'),
-                onClick: () => dispatchPilotAccessBlocked({ href: '/initiatives' }),
-                locked: true,
-                lockedReason: t(
-                  'initiatives.pilot.createLocked',
-                  'Available in the next project phase'
-                ),
-              }
-            : {
-                label: t('initiatives.form.newInitiative'),
-                onClick: () => setShowInitiativeWizard(true),
-              }
+          activeTab !== 'list'
+            ? undefined
+            : isPilotParticipant
+              ? {
+                  label: t('initiatives.form.newInitiative'),
+                  onClick: () => dispatchPilotAccessBlocked({ href: '/initiatives' }),
+                  locked: true,
+                  lockedReason: t(
+                    'initiatives.pilot.createLocked',
+                    'Available in the next project phase'
+                  ),
+                }
+              : {
+                  label: t('initiatives.form.newInitiative'),
+                  onClick: () => setShowInitiativeWizard(true),
+                }
         }
         filterControls={rightControls}
         commandRowContent={
-          activeTab === 'analysis'
-            ? analysisCommandRow
+          activeTab === 'portfolio' || activeTab === 'plan' || activeTab === 'capacity'
+            ? undefined
             : isBulkMode
               ? bulkBarContent
               : commandRowContent
+        }
+        chips={canonicalMenu3.map((preset) => ({
+          ...preset,
+          count: canonicalMenu3Counts[activeTab]?.[preset.id] ?? 0,
+        }))}
+        activeChip={canonicalMenu3.length ? canonicalMenu3Preset[activeTab] : null}
+        onChipChange={(id) =>
+          setCanonicalMenu3Preset((current) => ({ ...current, [activeTab]: id }))
         }
         viewModes={availableViewModes}
       >
@@ -2710,48 +2276,29 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
       {/* New Initiative Modal — D1.1: includes type/level selector */}
       {showNewModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div
-            ref={newModalDialogRef}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="initiatives-new-modal-heading"
-            tabIndex={-1}
-            className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto outline-none"
-          >
-            <h2
-              id="initiatives-new-modal-heading"
-              className="text-lg font-semibold text-c-text mb-4"
-            >
+          <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <h2 className="text-lg font-semibold text-c-text mb-4">
               {t('initiatives.form.createNew')}
             </h2>
             <div className="space-y-4">
               {/* Title */}
               <div>
-                <label
-                  htmlFor="initiatives-new-modal-title"
-                  className="block text-xs text-c-text-muted mb-1"
-                >
+                <label className="block text-xs text-c-text-muted mb-1">
                   {t('initiatives.form.titleRequired')}
                 </label>
                 <input
-                  id="initiatives-new-modal-title"
                   value={newTitle}
                   onChange={(e) => setNewTitle(e.target.value)}
                   className="w-full px-3 py-2 bg-c-bg border border-c-border-subtle rounded-lg text-sm text-c-text"
                   placeholder={t('initiatives.form.titlePlaceholder')}
-                  required
-                  aria-required="true"
                   autoFocus
                 />
               </div>
 
               {/* D1.1: Initiative Type/Level selector */}
-              <div role="group" aria-labelledby="initiatives-new-modal-level-label">
-                <label
-                  id="initiatives-new-modal-level-label"
-                  className="block text-xs text-c-text-muted mb-2"
-                >
-                  {t('initiatives.form.levelTypeLabel')} *
+              <div>
+                <label className="block text-xs text-c-text-muted mb-2">
+                  Initiative Type / Level *
                 </label>
                 <div className="grid grid-cols-2 gap-2">
                   {INITIATIVE_LEVELS.map((level) => (
@@ -2759,7 +2306,6 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
                       key={level.id}
                       type="button"
                       onClick={() => setNewLevel(level.id)}
-                      aria-pressed={newLevel === level.id}
                       className={`
                         relative p-3 rounded-lg border text-left transition-[background-color,border-color,box-shadow] duration-200
                         ${
@@ -2784,14 +2330,10 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
 
               {/* Axis */}
               <div>
-                <label
-                  htmlFor="initiatives-new-modal-axis"
-                  className="block text-xs text-c-text-muted mb-1"
-                >
+                <label className="block text-xs text-c-text-muted mb-1">
                   {t('initiatives.form.axis')}
                 </label>
                 <select
-                  id="initiatives-new-modal-axis"
                   value={newAxis}
                   onChange={(e) => setNewAxis(e.target.value as any)}
                   className="w-full px-3 py-2 bg-c-bg border border-c-border-subtle rounded-lg text-sm text-c-text"
@@ -2805,14 +2347,10 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
 
               {/* Summary */}
               <div>
-                <label
-                  htmlFor="initiatives-new-modal-summary"
-                  className="block text-xs text-c-text-muted mb-1"
-                >
+                <label className="block text-xs text-c-text-muted mb-1">
                   {t('initiatives.form.summary')}
                 </label>
                 <textarea
-                  id="initiatives-new-modal-summary"
                   value={newSummary}
                   onChange={(e) => setNewSummary(e.target.value)}
                   className="w-full px-3 py-2 bg-c-bg border border-c-border-subtle rounded-lg text-sm text-c-text resize-none"
@@ -2830,13 +2368,16 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
                       {INITIATIVE_LEVELS.find((l) => l.id === newLevel)?.label}
                     </span>
                     {' — '}
-                    {newLevel === 'quick_win' && t('initiatives.form.levelDescQuickWin')}
-                    {newLevel === 'standard' && t('initiatives.form.levelDescStandard')}
-                    {newLevel === 'strategic' && t('initiatives.form.levelDescStrategic')}
-                    {newLevel === 'transformation' && t('initiatives.form.levelDescTransformation')}
+                    {newLevel === 'quick_win' && 'Minimal governance. Can be self-approved.'}
+                    {newLevel === 'standard' &&
+                      'Standard approval flow. Requires owner + deadline + tasks.'}
+                    {newLevel === 'strategic' &&
+                      'Executive approval required. Full charter + RAID analysis.'}
+                    {newLevel === 'transformation' &&
+                      'Board-level governance. Full charter, steering committee, gate reviews.'}
                     <br />
                     <span className="text-c-text-muted italic">
-                      {t('initiatives.form.levelUpgradeOnlyNote')}
+                      Level can be upgraded later but not downgraded.
                     </span>
                   </div>
                 </div>

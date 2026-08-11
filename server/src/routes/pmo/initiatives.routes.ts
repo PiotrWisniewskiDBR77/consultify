@@ -56,6 +56,7 @@ import {
   UpdateInitiativeStatusSchema,
   UpdateInitiativeTemplateSchema,
 } from '../../validators/initiative.validators.js';
+import initiativesExecutionRuntimeRouter from './initiativesExecutionRuntime.routes.js';
 
 const router = Router();
 
@@ -118,6 +119,10 @@ router.use(requireOrgAccess());
 
 // Apply demo context middleware (switches org to demo org if x-demo-mode header is set)
 router.use(demoContextMiddleware);
+
+// Canonical Initiatives + Execution vertical. Parent middleware supplies authenticated,
+// tenant-scoped actor context; the child router additionally enforces project capability.
+router.use('/runtime-v1', initiativesExecutionRuntimeRouter);
 
 // ==========================================
 // INITIATIVE CRUD

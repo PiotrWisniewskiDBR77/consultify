@@ -1,0 +1,313 @@
+# Initiatives + Execution — manual business and UI/UX acceptance plan
+
+Status: `READY_FOR_REVIEW — automated gates pass; logged-in demo acceptance NOT VERIFIED`
+
+Candidate under test: `codex/initiatives-execution-final-recovery` (final SHA pending)
+
+Runtime: `http://127.0.0.1:3000`
+
+Demo acceptance runtime: `https://demo.consultify.ai` — DBR77 organization, project
+`DBR77 Demo — All Modules`, owner `piotr.wisniewski@dbr77.com`.
+
+This plan is an independent acceptance layer. Automated unit, realDB and Playwright results are
+inputs, not substitutes for a business user completing the two journeys below in the full shell.
+
+## 1. Verdict rules
+
+- Each of the nine functions is graded independently: `PASS`, `FAIL`, `NOT VERIFIED` or
+  `BLOCKED_FIXTURE`.
+- One P0 failure makes its function and parent module fail.
+- Missing evidence is `NOT VERIFIED`, never PASS.
+- Each screen must score at least 90/100 for visual and interaction quality; the score cannot
+  override a P0 failure.
+- Required evidence is produced on the same SHA and dataset: screenshot, actor, URL/query, selected
+  ID/version, before/after state, command/read-back, retry and unauthorized attempt.
+
+## 2. Common P0 interaction gate — repeat for all nine functions
+
+1. The hierarchy is Topbar -> frozen Menu 2 -> exactly one Menu 3 -> one primary table.
+2. Menu 3 presets use the same query as their counts and visible rows.
+3. `StandardTable` provides sticky/sortable headers, filters, resizing and `Settings2`.
+4. Column visibility/order/width, sort and filters survive reload and re-entry.
+5. Single click opens preview without losing URL, filters, selection or scroll.
+6. Preview order is Header -> Meta -> Details -> AI proposal -> Relations -> Actions; optional empty
+   blocks are hidden and AI is visually distinct from accepted truth.
+7. Double-click, Enter and `Open` open the same exact workspace. `Back` restores table context and
+   focus.
+8. Kebab, right-click and `Shift+F10` expose the same capability-derived actions and disabled
+   reasons; destructive actions are last and confirmed.
+9. Arrow keys move the active row, Space changes checkbox selection, Esc closes the nearest layer
+   and returns focus.
+10. `Unknown`, `Not evaluated`, `Partial`, `Stale` and `EVIDENCE_MISSING` are literal and never
+    converted to zero, green or success.
+11. Loading, first-use empty, filtered empty, partial/stale, permission, write failure, read-back
+    pending and version conflict preserve usable context and offer the correct recovery.
+12. Verify 1440x900, 1280x720, 1024 drawer fallback, 390x844, light/dark, 125% and 200% text.
+
+## 3. Business case A — Initiatives: NordWerk Q4 change portfolio
+
+### Starting dataset and actors
+
+- ACO — Automated Changeover Optimization: Assessment `ASM-F-ACO-001 v3`, baseline 95 minutes,
+  target hypothesis 60 minutes, envelope PLN 1.2m.
+- QMS 4.0 — mandatory compliance initiative with a regulatory deadline.
+- Energy Reduction Programme — high financial value and shared Data Analyst demand.
+- Scarce roles: Controls Engineer 0.8–1.2 FTE, Maintenance Lead 0.4–0.7, Data Analyst 0.2–0.4;
+  part of supply remains `UNKNOWN`.
+- Actors: Initiative Owner, Portfolio Owner, Planner, Resource Owner, Sponsor/independent authority,
+  Viewer, unrelated-project user and foreign-tenant user.
+
+If the three competing initiatives, authorities or evidence versions are absent, the journey is
+`BLOCKED_FIXTURE`. Do not replace them with invented frontend data.
+
+### A1. Inicjatywy — registered Initiative register and exact Card
+
+1. Show all Registered Initiatives, then use Needs evidence/decision/archived presets.
+2. Verify lifecycle, next gate, readiness, owner/next actor, next action, outcome+confidence,
+   planned window, health and updated/as-of remain separate dimensions.
+3. Open ACO preview and verify exact Assessment lineage, 95-minute problem, 60-minute hypothesis,
+   owner, readiness and restricted Finance/Results relations.
+4. Open the exact Card; inspect source, problem/outcome, scope/exclusions, do-nothing option,
+   evidence/counter-evidence, Finance/KPI references, RAID, dependencies, RACI, gates and history.
+5. Submit Definition with stale/missing evidence: it must fail with exact findings.
+6. Refresh evidence, resolve accountable Task/Decision, freeze and submit. A different authority
+   approves; lifecycle changes only after authoritative read-back.
+7. Reject one AI proposal and accept a corrected one; only accepted human content becomes truth.
+8. Retry the same material command; prove one effect and one stable ID.
+
+Negative gates: Viewer write, self-approval, stale source, legacy unknown state, archive mutation and
+foreign-tenant read all fail closed without data mutation or disclosure.
+
+### A2. Portfel — active scenario membership list
+
+1. Primary rows are Initiative memberships, not a second permanent Scenario table.
+2. Create baseline and constrained scenarios with ACO/QMS/Energy include dispositions.
+3. Compare score decomposition, value/cost/risk ranges, readiness, confidence, coverage, overlap and
+   rough demand.
+4. Override ACO rank; actor, rationale and affected positions are mandatory.
+5. Publish immutable scenario and request one Decision per Initiative. No batch lifecycle write.
+6. Independent authority conditionally approves ACO and defers Energy; read-back moves only eligible
+   work to `APPROVED_BACKLOG`.
+
+Negative gates: stale Initiative snapshot, partial comparability, concurrent edit, publish retry and
+AI publish attempt all fail safely.
+
+### A3. Plan — proposed windows and dependencies
+
+1. Clone an exact published Portfolio Scenario version into a Plan draft.
+2. Sequence QMS before its deadline and ACO after its prerequisite; use earliest/target/latest ranges,
+   not false exact commitment dates.
+3. Move ACO and inspect draft diff; Initiative remains `APPROVED_BACKLOG`.
+4. Open timeline/dependency Workbench; verify unscheduled, now/next/later and conflicts.
+5. Send the same Plan ID/version and time basis to Capacity and return with table context preserved.
+6. Compare move/split/reduce/defer options, publish after review, then request Schedule Decision.
+7. Only approved Schedule Decision creates `SCHEDULED` and an immutable Handoff Package.
+
+Negative gates: cycle, missing dependency, stale Portfolio, unknown time basis, Viewer drag and retry
+must not mutate Initiative dates, Tasks or lifecycle.
+
+### A4. Obciążenie — capacity constraints and options
+
+1. Primary rows are period/role constraints with demand and supply low/base/high ranges, unit,
+   confidence, knowledge state, affected initiatives, freshness and owner.
+2. Inspect Controls Engineer demand and prove unknown non-project load stays null/unknown.
+3. Compare RESEQUENCE, SCOPE_SPLIT and ADD_CAPACITY with time/cost/risk/value effects.
+4. Simulation remains read-only. Resource Owner and named assignee perform separate confirmation.
+5. Conditions return to the exact Plan Scenario and Schedule readiness by read-back.
+
+Negative gates: mismatched time basis, stale supply, unknown critical supply, self-confirmation and
+retry must fail without shadow assignment or lifecycle mutation.
+
+### Initiatives reconciliation
+
+One Initiative ID and lineage; one published Portfolio version; exact Plan->Capacity lineage; no
+lifecycle mutation from draft tools; `SCHEDULED` only after Schedule Decision.
+
+## 4. Business case B — Execution: NordWerk Line 4 delivery
+
+### Starting dataset and actors
+
+- ACO in `SCHEDULED / HANDOFF_PENDING`, pilot + wave 1 + wave 2, deadline 15 December.
+- Execution Manager, Resource Manager, Task Owner, Sponsor/Decision authority and Report Reviewer
+  are different actors; Viewer is read-only.
+- Critical dependency is Controls Engineer availability; execution introduces a capacity conflict
+  and stale milestone.
+
+### B1. Realizacje — plain Execution Case register
+
+1. Reject the first Handoff with blockers; verify no Execution Case exists.
+2. Resolve blocker and accept with exact package/version. Retry creates exactly one stable Case.
+3. Pilot and waves are children, not parallel Cases.
+4. Table/preview show accepted baseline, current/forecast, gaps, next milestone, manager and next
+   action without synthetic progress.
+5. Refresh/relogin/deep-link retains the same Case and table context.
+
+Negative gates: Viewer accept, changed payload under same idempotency key, missing baseline and
+read-back timeout.
+
+### B2. Praca — canonical Task and Decision register
+
+1. Load cross-case register without requiring Case selection; exercise Tasks, Decisions, Blocked,
+   Overdue and Missing evidence presets.
+2. Open type-aware Task and Decision previews/workspaces.
+3. Create Task with DoD/evidence and Decision with options including do-nothing.
+4. Verify identical IDs/versions in Praca, Case and My Work.
+5. Completion without evidence fails; after evidence it updates parent and milestone.
+6. Conditional Decision creates exactly one follow-up Task and re-evaluates blockers.
+
+Negative gates: mixed unsafe bulk, self-decision, duplicate follow-up, stale version and delayed
+projection.
+
+### B3. Zasoby — operational allocation
+
+1. Load cross-case allocation table and inspect Controls Engineer demand, time basis, evidence,
+   skills, acceptance and affected work.
+2. Purely simulate move/split/outsource/defer/do-nothing and compare before/after blast radius.
+3. Save proposal; named assignee accepts; Resource Manager confirms or conditions it.
+4. Verify the same allocation in Zasoby, Praca and Case after reload.
+
+Negative gates: unknown availability cannot yield utilization, time-basis mismatch, missing resource
+authority, rejected proposal and retry.
+
+### B4. Sterowanie — intervention effectiveness loop
+
+1. Ingest capacity-conflict and stale-milestone signals; deduplicate them into one Intervention Case.
+2. Separate hypothesis, evidence/counter-evidence, unknowns and blast radius.
+3. Compare resequence, add capacity and mandatory do-nothing; independent authority decides.
+4. Apply only an exact canonical command receipt and verify target read-back.
+5. Record `PARTIAL`/`INEFFECTIVE`; Case remains escalated with follow-up and verify-by date.
+
+Negative gates: AI approval, duplicated intervention, missing counter-evidence, stale receipt,
+material change without reapproval and retry.
+
+### B5. Raporty — persisted Definition and Run
+
+1. Use explicit Runs and Definitions lenses; default to Runs and preserve lens state.
+2. Create/version/validate and independently publish a project-scoped Definition.
+3. Create a persisted Run bound to exact Definition and source versions.
+4. Missing mandatory source blocks validation/publish with `PARTIAL`/stale details.
+5. Freeze deterministic hash, approve, publish and record distribution.
+6. Source drill creates and links one canonical follow-up Task.
+7. Refresh creates a new draft with immutable parent; old published Run does not change.
+
+Negative gates: unauthorized export, stale/denied source, generation retry, failed generation and AI
+publication.
+
+### Execution reconciliation
+
+One Handoff -> one Execution Case -> native Task/Decision IDs -> one governed Allocation -> one
+Intervention Case -> immutable Report Run and refresh lineage.
+
+## 5. Visual/UI/UX score — 100 points per screen
+
+- Hierarchy and five-second business scanability: 20.
+- Table geometry, density, typography and semantic color: 20.
+- Preview/Workbench composition and proposal-vs-truth distinction: 15.
+- Discoverability, feedback, permission and error recovery: 15.
+- State completeness, copy and localized data formatting: 15.
+- Keyboard, focus, accessibility, responsive and theme quality: 15.
+
+Market comparison is secondary: context preservation comparable to Linear, configurable dense data
+like Airtable, explicit filters like Jira and approachable hierarchy like Asana. Consultify's repo
+canon remains authoritative.
+
+## 6. Initial full-shell manual ledger — 2026-08-11
+
+### Repeatable manual dataset
+
+The populated Initiatives register is created through canonical production commands, not by
+inserting business aggregates directly:
+
+```bash
+NODE_ENV=test \
+DATABASE_URL='postgresql://consultify_ie:consultify_ie_test@127.0.0.1:32768/consultify_ie_acceptance' \
+npx tsx tests/e2e/initiatives-execution/seed-manual-acceptance.ts
+```
+
+The seed provides:
+
+- `manual-energy-draft-initiative` — `REGISTERED_DRAFT`;
+- `manual-aco-ready-initiative` — `READY_FOR_DECISION`, created by the complete governed golden
+  thread;
+- the existing completed ACO golden record remains the archived/read-only reference.
+
+Only governance-policy and role-binding bootstrap uses SQL. All proposals, initiatives, cards,
+reviews, Decisions and lifecycle transitions use the canonical HTTP/domain contracts. Two
+consecutive executions returned the same stable IDs without duplicate business objects.
+
+| Area                   | State   | Evidence / finding                                                                                                                                                                                                                   |
+| ---------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Initiatives shell      | PASS    | Menu 2 changes both URL and mounted function. The stale Portfel surface race was removed; direct navigation and tab navigation agree.                                                                                                |
+| Inicjatywy             | PARTIAL | Canonical API seed now provides REGISTERED_DRAFT, READY_FOR_DECISION and ARCHIVED records. Presets, Settings2, preview and kebab work. Full material-write journey and current-SHA PPM persistence remain not verified.              |
+| Portfel                | PARTIAL | Populated membership list, preview, settings and honest UNKNOWN are visible. Workbench now has an explicit Close action. Full compare/publish/Decision journey remains not verified manually.                                        |
+| Plan                   | PARTIAL | Populated Initiative-window table, preview, Settings2 and explicit Workbench are visible. Workbench now has an explicit Close action. Full draft/publish/Schedule journey remains not verified manually.                             |
+| Obciążenie             | PARTIAL | Populated period/constraint register and literal UNKNOWN are visible. Workbench now has an explicit Close action. Full option/commitment journey remains not verified manually.                                                      |
+| Execution shell        | PASS    | Frozen five-function Menu 2 works. Menu 3 uses a visible controlled horizontal scrollbar at constrained width instead of silently clipping presets.                                                                                  |
+| Realizacje             | PARTIAL | Active empty state is honest; All/Closing exposes the archived ACO Case in the canonical Initiative-style table. A current active handoff/case journey is still not present in the manual dataset.                                   |
+| Praca                  | PARTIAL | Populated Task/Decision register and preview work. Raw status translation fallback and missing Initiative relation were fixed. Full write/read-back journey remains not verified manually.                                           |
+| Zasoby                 | PARTIAL | Confirmed allocation is enriched with the Task title and exact versioned availability/calendar/remaining-estimate/cost evidence; false EVIDENCE_MISSING was removed. Transition journey remains not verified manually.               |
+| Sterowanie             | PARTIAL | Intervention Cases are the primary register and Signals are secondary after explicit Open. Populated evidence/options and honest UNKNOWN are visible; raw technical identifiers and full apply/verify journey remain to be reviewed. |
+| Raporty                | PARTIAL | Populated Runs, Settings2, preview and Shift+F10 menu work; all Menu 3 presets remain reachable at 1280. Full Definition->Run->refresh journey remains not verified manually.                                                        |
+| Full-shell integration | FAIL    | Console reports local token decode error plus 404s for users, personal tasks and notifications. These do not always block the module table, but invalidate production-like shell acceptance.                                         |
+
+Cross-cutting fixes in this pass:
+
+- Canonical API seed added for repeatable populated manual acceptance; governance SQL is bootstrap only,
+  never business-truth seeding.
+- `btn-*` compatibility styles moved into the actually imported stylesheet, so Workbench actions no
+  longer render as unstyled text.
+- Full Initiatives + Execution unit suite: 59 files / 144 tests PASS. Focused Workbench close tests:
+  3 files / 8 tests PASS.
+- Current 200%/390 automated rerun: 1/1 PASS across the twelve fixture surfaces; no document-level
+  horizontal overflow or clipped active controls was detected. The first attempt timed out under
+  concurrent compiler load; the bounded 300-second rerun completed in 3.8 minutes.
+
+## 7. Demo acceptance checkpoint — 2026-08-11
+
+Deployment `13741b2e-7f60-4279-977d-e370dc9cfb5e` is `SUCCESS`; `/api/health` returns HTTP 200 and
+database connected. Static-bundle inspection confirms the deployed candidate contains the frozen
+four-function Initiatives shell, five-function Execution shell and the canonical projection tables.
+The health payload still exposes the previous environment `gitSha`; this is a release-metadata defect
+and must not be used as candidate identity evidence.
+
+The DBR77 dataset now contains a full, previously accepted ACO lineage copied from the isolated
+acceptance database. The import is scoped to the DBR77 organization and demo project, rewrites the
+Initiative Owner to Piotr's canonical user ID, performs no delete/truncate, and is idempotent through
+the existing aggregate keys. This is a demo-fixture import, not a production command acceptance test;
+the production-command journey remains proven separately by the isolated golden browser/realDB run.
+
+Read-model reconciliation on the demo database:
+
+- 5 Initiatives;
+- 1 Portfolio Scenario, 1 Plan Scenario and 1 Capacity Scenario;
+- 1 Execution Case, 3 Tasks, 1 Milestone and 1 Decision;
+- 1 Operational Allocation;
+- 2 Management Signals and 1 Intervention Case;
+- 1 Report Definition and 2 Report Runs;
+- 196 receipts, 196 audit events and 196 outbox events imported with the acceptance lineage;
+- 0 references to the source tenant or source project remain in aggregate payloads.
+
+Current engineering gates: Initiatives/Execution unit suite 59 files / 144 tests PASS; focused lint
+PASS; global type-check PASS; production build PASS. Final human-interface acceptance on the logged-in
+demo account is `NOT VERIFIED`: both supported browser-control surfaces are temporarily blocked by an
+admin-enforced browser security policy. This must be retried; it may not be replaced by a fixture or
+API-only PASS.
+- The previously recorded six global TypeScript errors were corrected during candidate
+  reconstruction. Repository-wide type-check and production build now pass. This is engineering
+  evidence only; it does not replace the still-missing logged-in demo walkthrough.
+
+The prior automated `ACCEPTED` record remains historical evidence. This independent manual gate is
+reopened and cannot become PASS until every FAIL is corrected and all NOT VERIFIED steps have fresh
+runtime evidence.
+
+## 7. Canonical sources
+
+- `docs/modules/INITIATIVES_EXECUTION_FUNCTIONS_CANON.md`
+- `docs/modules/initiatives-execution-canon/02_FUNCTIONAL_CONTRACTS.md`
+- `docs/modules/initiatives-execution-canon/03_UI_UX_AND_INTERACTION_SPEC.md`
+- `docs/modules/initiatives-execution-canon/04_SURFACE_DESCRIPTORS.md`
+- `docs/modules/initiatives-execution-canon/08_ACCEPTANCE_SCENARIOS.md`
+- `docs/ui-standards/TRIADA_KANON.md`
+- `docs/ui-standards/03-modules/TABLE_AND_PREVIEW_CANON.md`
+- `docs/ui-standards/UI_UX_IMPLEMENTATION_STANDARD.md`
+- `docs/implementation/FINAL_ACCEPTANCE_CASE_ACO.md`

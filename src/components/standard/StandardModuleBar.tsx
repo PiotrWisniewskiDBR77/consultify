@@ -335,7 +335,10 @@ export const StandardModuleBar: React.FC<StandardModuleBarProps> = ({
   // Menu 3 / tryb 1 — ciche chipy z licznikami (0 też widoczne).
   const chipsContent =
     chips && chips.length > 0 ? (
-      <div className={`${MENU_3_LEFT_CLASS} overflow-x-auto whitespace-nowrap no-scrollbar`}>
+      <div
+        className={`${MENU_3_LEFT_CLASS} app-table-scrollbar overflow-x-auto whitespace-nowrap pb-1`}
+        aria-label="Presety tabeli"
+      >
         {chips.map((chip) => {
           const isActive = activeChip === chip.id;
           return (
