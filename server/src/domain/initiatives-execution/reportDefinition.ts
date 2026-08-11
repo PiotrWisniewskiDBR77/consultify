@@ -180,7 +180,7 @@ export async function transitionReportDefinition(
       currentVersion += 1;
       const next: ReportDefinitionVersion = {
         ...current,
-        ...envelope.payload.patch,
+        ...(envelope.payload as Extract<DefinitionAction, { action: 'CREATE_VERSION' }>).patch,
         definitionVersion: currentVersion,
         state: 'DRAFT',
         validationFindings: [],
@@ -193,9 +193,10 @@ export async function transitionReportDefinition(
     } else if (envelope.payload.action === 'UPDATE_DRAFT') {
       if (current.state !== 'DRAFT' || envelope.actorId !== current.ownerId)
         throw new MaterialCommandValidationError('Owner updates current DRAFT only');
+      const patch = envelope.payload.patch;
       versions = versions.map((item) =>
         item.definitionVersion === currentVersion
-          ? { ...item, ...envelope.payload.patch, validationFindings: [], updatedAt: now }
+          ? { ...item, ...patch, validationFindings: [], updatedAt: now }
           : item
       );
     } else if (envelope.payload.action === 'VALIDATE') {

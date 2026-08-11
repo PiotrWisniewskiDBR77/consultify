@@ -5,6 +5,7 @@ import {
   executeMaterialCommand,
   type MaterialCommandEnvelope,
   type MaterialCommandResult,
+  type MaterialCommandTransaction,
   type MaterialCommandUnitOfWork,
   MaterialCommandValidationError,
 } from './materialCommand.js';
@@ -105,7 +106,7 @@ export function managementSignalFingerprint(input: {
     .digest('hex');
 }
 async function projectForSignalSource(
-  tx: any,
+  tx: MaterialCommandTransaction,
   org: string,
   sourceType: string,
   sourceId: string
@@ -159,7 +160,7 @@ export async function ingestManagementSignal(
   envelope: MaterialCommandEnvelope<
     Omit<
       ManagementSignal,
-      'signalId' | 'fingerprint' | 'state' | 'occurrences' | 'createdAt' | 'updatedAt'
+      'signalId' | 'fingerprint' | 'projectId' | 'state' | 'occurrences' | 'createdAt' | 'updatedAt'
     > & { occurredAt: string; evidenceRef: string }
   >
 ): Promise<MaterialCommandResult<ManagementSignal>> {

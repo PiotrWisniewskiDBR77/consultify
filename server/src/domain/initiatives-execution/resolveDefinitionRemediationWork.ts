@@ -48,7 +48,11 @@ export async function resolveDefinitionRemediationWork(
   ) {
     throw new MaterialCommandValidationError('Invalid Definition remediation resolution');
   }
-  return executeMaterialCommand(unitOfWork, envelope, async (transaction) => {
+  return executeMaterialCommand<
+    ResolveDefinitionRemediationPayload,
+    Record<string, unknown>,
+    ResolvedDefinitionRemediationResult
+  >(unitOfWork, envelope, async (transaction) => {
     if (envelope.aggregateType === 'task') {
       if (envelope.payload.workType !== 'FINANCE_EVIDENCE') {
         throw new MaterialCommandValidationError('Finance Task resolution payload is required');

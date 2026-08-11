@@ -23,7 +23,7 @@ export interface RefreshInitiativeSourceResult {
   invalidatedCardKeys: string[];
 }
 
-interface RefreshableInitiative extends RegisteredInitiative, InitiativeWithCardRefs {}
+type RefreshableInitiative = RegisteredInitiative & Omit<InitiativeWithCardRefs, 'lifecycleState'>;
 
 export async function refreshInitiativeSource(
   unitOfWork: MaterialCommandUnitOfWork,
@@ -86,7 +86,12 @@ export async function refreshInitiativeSource(
       throw new MaterialCommandValidationError('Initiative source snapshot is already current');
     }
     const invalidatedCardKeys: string[] = [];
-    const cardRefs = { ...(initiative.cardRefs ?? {}) };
+    const cardRefs = {
+      ...((initiative.cardRefs ?? {}) as Record<
+        string,
+        { cardVersion: number; aggregateVersion: number }
+      >),
+    };
     for (const cardKey of await transaction.listCanonicalInitiativeCardKeys()) {
       const current = await transaction.getLatestInitiativeCardForUpdate(
         envelope.organizationId,

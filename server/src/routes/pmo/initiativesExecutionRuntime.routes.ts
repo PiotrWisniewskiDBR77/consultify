@@ -93,6 +93,7 @@ import {
 import {
   diffPortfolioScenarios,
   mutatePortfolioScenario,
+  type PortfolioScenario,
 } from '../../domain/initiatives-execution/portfolioScenario.js';
 import {
   type EffectiveGovernancePolicy,
@@ -1509,6 +1510,7 @@ export function createInitiativesExecutionRuntimeRouter(
         createIfMissing: true,
         payload: {
           ...parsed.data,
+          proposedOutcome: parsed.data.proposedOutcome ?? null,
           validatorCapability: 'INITIATIVE_REGISTER',
         },
       });
@@ -1711,7 +1713,10 @@ export function createInitiativesExecutionRuntimeRouter(
         commandType: 'initiative.cards.configure',
         payload: {
           registryVersion: parsed.data.registryVersion,
-          cards: parsed.data.cards,
+          cards: parsed.data.cards.map((card) => ({
+            ...card,
+            waiverDecisionId: card.waiverDecisionId ?? null,
+          })),
         },
       });
       res.status(result.status === 'APPLIED' ? 201 : 200).json(result);
@@ -2418,7 +2423,25 @@ export function createInitiativesExecutionRuntimeRouter(
         policyVersion: policy.version,
         commandType: 'portfolio.scenario.mutate',
         createIfMissing: parsed.data.operation === 'CREATE',
-        payload: { operation: parsed.data.operation, scenario: parsed.data.scenario },
+        payload: {
+          operation: parsed.data.operation,
+          scenario: {
+            ...parsed.data.scenario,
+            memberships: parsed.data.scenario.memberships.map((membership) => ({
+              ...membership,
+              rank: membership.rank ?? null,
+              rankOverride: membership.rankOverride
+                ? {
+                    ...membership.rankOverride,
+                    previousRank: membership.rankOverride.previousRank ?? null,
+                  }
+                : null,
+            })),
+            publishedBy: parsed.data.scenario.publishedBy ?? null,
+            publishedAt: parsed.data.scenario.publishedAt ?? null,
+            previousPublishedVersion: parsed.data.scenario.previousPublishedVersion ?? null,
+          } as PortfolioScenario,
+        },
       });
       res.status(result.status === 'APPLIED' ? 201 : 200).json(result);
     })
@@ -2696,7 +2719,20 @@ export function createInitiativesExecutionRuntimeRouter(
         policyVersion: policy.version,
         commandType: 'plan.scenario.mutate',
         createIfMissing: parsed.data.operation === 'CREATE',
-        payload: { operation: parsed.data.operation, scenario: parsed.data.scenario },
+        payload: {
+          operation: parsed.data.operation,
+          scenario: {
+            ...parsed.data.scenario,
+            windows: parsed.data.scenario.windows.map((window) => ({
+              ...window,
+              earliest: window.earliest ?? null,
+              target: window.target ?? null,
+              latest: window.latest ?? null,
+            })),
+            publishedBy: parsed.data.scenario.publishedBy ?? null,
+            publishedAt: parsed.data.scenario.publishedAt ?? null,
+          },
+        },
       });
       res.status(result.status === 'APPLIED' ? 201 : 200).json(result);
     })
@@ -2862,7 +2898,47 @@ export function createInitiativesExecutionRuntimeRouter(
         policyVersion: policy.version,
         commandType: 'capacity.scenario.mutate',
         createIfMissing: parsed.data.operation === 'CREATE',
-        payload: { operation: parsed.data.operation, scenario: parsed.data.scenario },
+        payload: {
+          operation: parsed.data.operation,
+          scenario: {
+            ...parsed.data.scenario,
+            periods: parsed.data.scenario.periods.map((period) => ({
+              ...period,
+              demand: {
+                ...period.demand,
+                low: period.demand.low ?? null,
+                base: period.demand.base ?? null,
+                high: period.demand.high ?? null,
+                sourceRef: period.demand.sourceRef ?? null,
+                sourceVersion: period.demand.sourceVersion ?? null,
+                reason: period.demand.reason ?? null,
+              },
+              supply: {
+                ...period.supply,
+                low: period.supply.low ?? null,
+                base: period.supply.base ?? null,
+                high: period.supply.high ?? null,
+                sourceRef: period.supply.sourceRef ?? null,
+                sourceVersion: period.supply.sourceVersion ?? null,
+                reason: period.supply.reason ?? null,
+              },
+            })),
+            proposedAssignments: parsed.data.scenario.proposedAssignments.map((assignment) => ({
+              ...assignment,
+              demand: {
+                ...assignment.demand,
+                low: assignment.demand.low ?? null,
+                base: assignment.demand.base ?? null,
+                high: assignment.demand.high ?? null,
+                sourceRef: assignment.demand.sourceRef ?? null,
+                sourceVersion: assignment.demand.sourceVersion ?? null,
+                reason: assignment.demand.reason ?? null,
+              },
+            })),
+            publishedBy: parsed.data.scenario.publishedBy ?? null,
+            publishedAt: parsed.data.scenario.publishedAt ?? null,
+          },
+        },
       });
       res.status(result.status === 'APPLIED' ? 201 : 200).json(result);
     })
@@ -3379,7 +3455,11 @@ export function createInitiativesExecutionRuntimeRouter(
         policyVersion: 1,
         commandType: 'execution.milestone.create',
         createIfMissing: true,
-        payload,
+        payload: {
+          ...payload,
+          targetAt: payload.targetAt ?? null,
+          forecastAt: payload.forecastAt ?? null,
+        },
       });
       res.status(result.status === 'APPLIED' ? 201 : 200).json(result);
     })
@@ -3602,7 +3682,7 @@ export function createInitiativesExecutionRuntimeRouter(
         policyId: 'execution-work',
         policyVersion: 1,
         commandType: 'execution.decision.decide',
-        payload,
+        payload: { ...payload, followUpTask: payload.followUpTask ?? null },
       });
       res.json(result);
     })
@@ -3735,7 +3815,34 @@ export function createInitiativesExecutionRuntimeRouter(
         policyVersion: 1,
         commandType: 'operational-allocation.propose',
         createIfMissing: true,
-        payload,
+        payload: {
+          ...payload,
+          demand: {
+            ...payload.demand,
+            low: payload.demand.low ?? null,
+            base: payload.demand.base ?? null,
+            high: payload.demand.high ?? null,
+          },
+          availabilityRef: {
+            ...payload.availabilityRef,
+            ref: payload.availabilityRef.ref ?? null,
+            version: payload.availabilityRef.version ?? null,
+            reason: payload.availabilityRef.reason ?? null,
+          },
+          calendarRef: {
+            ...payload.calendarRef,
+            ref: payload.calendarRef.ref ?? null,
+            version: payload.calendarRef.version ?? null,
+            reason: payload.calendarRef.reason ?? null,
+          },
+          remainingEstimateRef: {
+            ...payload.remainingEstimateRef,
+            ref: payload.remainingEstimateRef.ref ?? null,
+            version: payload.remainingEstimateRef.version ?? null,
+            reason: payload.remainingEstimateRef.reason ?? null,
+          },
+          costRef: payload.costRef ?? null,
+        },
       });
       res.status(result.status === 'APPLIED' ? 201 : 200).json(result);
     })
@@ -3754,7 +3861,36 @@ export function createInitiativesExecutionRuntimeRouter(
         return;
       }
       res.json(
-        simulateOperationalAllocation(parsed.data.allocation, parsed.data.expectedTimeBasis)
+        simulateOperationalAllocation(
+          {
+            ...parsed.data.allocation,
+            demand: {
+              ...parsed.data.allocation.demand,
+              low: parsed.data.allocation.demand.low ?? null,
+              base: parsed.data.allocation.demand.base ?? null,
+              high: parsed.data.allocation.demand.high ?? null,
+            },
+            availabilityRef: {
+              ...parsed.data.allocation.availabilityRef,
+              ref: parsed.data.allocation.availabilityRef.ref ?? null,
+              version: parsed.data.allocation.availabilityRef.version ?? null,
+              reason: parsed.data.allocation.availabilityRef.reason ?? null,
+            },
+            calendarRef: {
+              ...parsed.data.allocation.calendarRef,
+              ref: parsed.data.allocation.calendarRef.ref ?? null,
+              version: parsed.data.allocation.calendarRef.version ?? null,
+              reason: parsed.data.allocation.calendarRef.reason ?? null,
+            },
+            remainingEstimateRef: {
+              ...parsed.data.allocation.remainingEstimateRef,
+              ref: parsed.data.allocation.remainingEstimateRef.ref ?? null,
+              version: parsed.data.allocation.remainingEstimateRef.version ?? null,
+              reason: parsed.data.allocation.remainingEstimateRef.reason ?? null,
+            },
+          },
+          parsed.data.expectedTimeBasis
+        )
       );
     })
   );
@@ -4021,7 +4157,15 @@ export function createInitiativesExecutionRuntimeRouter(
         policyVersion: 1,
         commandType: 'report-definition.create',
         createIfMissing: true,
-        payload,
+        payload: {
+          ...payload,
+          formulas: payload.formulas.map((formula) => ({
+            ...formula,
+            unit: formula.unit ?? null,
+            currency: formula.currency ?? null,
+            windowId: formula.windowId ?? null,
+          })),
+        },
       });
       res.status(result.status === 'APPLIED' ? 201 : 200).json(result);
     })
@@ -4102,7 +4246,17 @@ export function createInitiativesExecutionRuntimeRouter(
         policyVersion: 1,
         commandType: 'report-run.create',
         createIfMissing: true,
-        payload,
+        payload: {
+          ...payload,
+          parentRunRef: payload.parentRunRef ?? null,
+          sources: payload.sources.map((source) => ({
+            ...source,
+            formula: source.formula ?? null,
+            unit: source.unit ?? null,
+            currency: source.currency ?? null,
+            window: source.window ?? null,
+          })),
+        },
       });
       res.status(result.status === 'APPLIED' ? 201 : 200).json(result);
     })
@@ -5117,7 +5271,12 @@ export function createInitiativesExecutionRuntimeRouter(
           policyVersion: policy.version,
           commandType: 'gate.signoff',
           createIfMissing: true,
-          payload: { ...data, initiativeId: req.params.initiativeId, policy },
+          payload: {
+            ...data,
+            initiativeId: req.params.initiativeId,
+            delegationProof: data.delegationProof ?? null,
+            policy,
+          },
         })
       );
     })

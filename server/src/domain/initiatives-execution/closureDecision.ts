@@ -4,6 +4,7 @@ import {
   executeMaterialCommand,
   type MaterialCommandEnvelope,
   type MaterialCommandResult,
+  type MaterialCommandTransaction,
   type MaterialCommandUnitOfWork,
   MaterialCommandValidationError,
 } from './materialCommand.js';
@@ -48,7 +49,11 @@ export interface ClosureSnapshotV2 {
   rationale: string;
 }
 
-async function validateFollowUps(tx: any, org: string, followUps: ClosureFollowUp[]) {
+async function validateFollowUps(
+  tx: MaterialCommandTransaction,
+  org: string,
+  followUps: ClosureFollowUp[]
+) {
   if (!followUps.length)
     throw new MaterialCommandValidationError('Mandatory closure follow-up required');
   for (const item of followUps) {
