@@ -53,6 +53,12 @@ export { ResultsRoiHub } from './roi/ResultsRoiHub';
 // (StandardTable/Preview builders shared by the live Hub and the dev-render
 // QA harness). Mirrors the `roi/` subfolder exactly.
 export { ResultsOkrHub } from './okr/ResultsOkrHub';
+// RN-G3 lane `okr` full-tool task (2026-08-11) — the full OKR tool
+// (`OkrSetWorkspace`, reached from a Set's row menu/preview) and the
+// Program/Cycle admin surfaces (`/results/okr/programs`, `/results/okr/cycles`).
+export { OkrSetWorkspace } from './okr/OkrSetWorkspace';
+export { OkrProgramsPage } from './okr/OkrProgramsPage';
+export { OkrCyclesPage } from './okr/OkrCyclesPage';
 // RN-G2 P1 #8 — KPI Scorecards (registry tab on ResultsKpiRegistryPage +
 // its own `/results/kpi/scorecards/:scorecardId` detail route). See
 // `kpiScorecards/` subfolder: `kpiScorecardApi.ts` (fetch client),
