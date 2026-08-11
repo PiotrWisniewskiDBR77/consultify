@@ -15,8 +15,10 @@ import {
   Table2,
   X,
 } from 'lucide-react';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+
+import { useDialogA11y } from '@/components/ui/primitives/useDialogA11y';
 
 import type { ColumnDef, TableNode } from './tableTypes';
 
@@ -91,6 +93,8 @@ export const ExportToPresentation: React.FC<ExportToPresentationProps> = ({
   ]);
   const [exporting, setExporting] = useState(false);
   const [exportDone, setExportDone] = useState(false);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useDialogA11y({ open, onClose, containerRef: dialogRef });
 
   const toggleSlide = useCallback((type: SlideType) => {
     setSlides((prev) => prev.map((s) => (s.type === type ? { ...s, enabled: !s.enabled } : s)));
@@ -271,13 +275,18 @@ export const ExportToPresentation: React.FC<ExportToPresentationProps> = ({
       onClick={onClose}
     >
       <div
-        className="w-[440px] max-w-[90vw] rounded-2xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 shadow-2xl overflow-hidden flex flex-col"
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="export-to-presentation-title"
+        tabIndex={-1}
+        className="w-[440px] max-w-[90vw] rounded-2xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 shadow-2xl overflow-hidden flex flex-col outline-none"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="flex items-center gap-2 px-5 py-3.5 border-b border-slate-200/60 dark:border-navy-700/60">
           <Presentation size={16} className="text-c-info" />
-          <span className="text-sm font-bold text-slate-800 dark:text-slate-200">
+          <span id="export-to-presentation-title" className="text-sm font-bold text-slate-800 dark:text-slate-200">
             {t('myWorkTable.exportToPresentation.exportToPresentation')}
           </span>
           <div className="flex-1" />

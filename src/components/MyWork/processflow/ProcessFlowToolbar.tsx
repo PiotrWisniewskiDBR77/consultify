@@ -326,7 +326,17 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
       : null;
 
   return (
-    <div className="border-b border-c-border-subtle bg-c-surface-raised flex-shrink-0">
+    <div
+      className="border-b border-c-border-subtle bg-c-surface-raised flex-shrink-0"
+      // Gate 4 (2026-08-10, 720×450): the floating right tool rail overlays this
+      // bar without shrinking the canvas (ExecutiveModuleShell keeps the canvas
+      // full-bleed on purpose), so this bar's own real content — the mode tabs
+      // and the Kroki/Ścieżki/warnings chips reaching the right edge — has to
+      // reserve its own space or the rail clips it ("Brak ostrzeżeń" → "Brak
+      // os…"). `--mels-rail-gutter` is the shell's measured rail width; it
+      // falls back to 0px wherever the var isn't set (no floating rail).
+      style={{ paddingRight: 'var(--mels-rail-gutter, 0px)' }}
+    >
       <div className="px-4 py-2 flex flex-col gap-2">
         {/* ── Top row: compact mode switch · status badges ───────────────── */}
         <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">

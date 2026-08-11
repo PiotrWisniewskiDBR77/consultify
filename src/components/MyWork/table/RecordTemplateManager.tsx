@@ -3,12 +3,13 @@
  * Templates are pre-filled field values stored as special records.
  */
 import { Copy, Edit3, FileText, Loader2, Plus, Trash2, X } from 'lucide-react';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { type ActionContext, runIdeaAction } from '@/actions/ideaActionRegistry';
 import { EMPTY_SELECTION } from '@/components/MyWork/ideaSelectionTypes';
+import { useDialogA11y } from '@/components/ui/primitives/useDialogA11y';
 import * as TablePlatformApi from '@/services/api/tablePlatform.api';
 import type { TablePlatformField } from '@/types/tablePlatform';
 
@@ -51,6 +52,14 @@ export const RecordTemplateManager: React.FC<RecordTemplateManagerProps> = ({
   const [loading, setLoading] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<RecordTemplate | null>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  // Suspend this dialog's own Escape/focus-trap while the nested
+  // `TemplateEditor` dialog is showing — two simultaneously-open
+  // `useDialogA11y` document Escape listeners would both fire on a single
+  // Escape press (stopPropagation doesn't stop sibling listeners on the
+  // same `document` target), closing both dialogs instead of just the top
+  // one.
+  useDialogA11y({ open: open && !showCreate, onClose, containerRef: dialogRef });
 
   const loadTemplates = useCallback(async () => {
     if (!tableId) return;
@@ -121,12 +130,17 @@ export const RecordTemplateManager: React.FC<RecordTemplateManagerProps> = ({
       onClick={onClose}
     >
       <div
-        className="w-[520px] max-w-[95vw] max-h-[80vh] flex flex-col rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-2xl"
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="record-template-manager-title"
+        tabIndex={-1}
+        className="w-[520px] max-w-[95vw] max-h-[80vh] flex flex-col rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-2xl outline-none"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-c-border-subtle">
-          <h3 className="text-sm font-bold text-c-text">
+          <h3 id="record-template-manager-title" className="text-sm font-bold text-c-text">
             {t('ideas.table.recordTemplates.recordTemplatesTitle', 'Record Templates')}
           </h3>
           <div className="flex items-center gap-1">
@@ -313,6 +327,9 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
     return d;
   });
   const [saving, setSaving] = useState(false);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const nameInputRef = useRef<HTMLInputElement>(null);
+  useDialogA11y({ open: true, onClose, containerRef: dialogRef, initialFocusRef: nameInputRef });
 
   const editableFields = fields.filter(
     (f) => EDITABLE_FIELD_TYPES.has(f.fieldType) && !f.isComputed
@@ -377,12 +394,17 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
       onClick={onClose}
     >
       <div
-        className="w-[480px] max-w-[95vw] max-h-[80vh] flex flex-col rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-2xl"
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="record-template-editor-title"
+        tabIndex={-1}
+        className="w-[480px] max-w-[95vw] max-h-[80vh] flex flex-col rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-2xl outline-none"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-c-border-subtle">
-          <h3 className="text-sm font-bold text-c-text">
+          <h3 id="record-template-editor-title" className="text-sm font-bold text-c-text">
             {template
               ? t('ideas.table.recordTemplates.editTemplateTitle', 'Edit Template')
               : t('ideas.table.recordTemplates.newTemplateTitle', 'New Template')}
@@ -402,6 +424,7 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
               {t('ideas.table.recordTemplates.templateNameLabel', 'Template name')}
             </label>
             <input
+              ref={nameInputRef}
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder={t(
@@ -409,7 +432,6 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
                 'e.g. Standard Task'
               )}
               className="w-full rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-xs text-c-text outline-none focus:ring-2 focus:ring-c-focus"
-              autoFocus
             />
           </div>
 

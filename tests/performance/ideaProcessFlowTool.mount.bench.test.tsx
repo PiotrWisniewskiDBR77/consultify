@@ -229,7 +229,12 @@ function buildNodes(n: number) {
 // own per-node DOM cost. REPS trimmed to 2 and per-test timeout raised for
 // the larger sizes so the run finishes; see the written report for the
 // N=1000/2500 attempt outcome (completed or reported as impractical).
-const SIZES = [100, 500, 1000];
+//
+// G4-PF-GUARDRAIL (this stream): after batching EdgeRehydrateFix's
+// `updateNodeInternals` calls (IdeaProcessFlowTool.tsx — one call per timer
+// tick instead of one per node), N=2500 became attainable in this harness —
+// added to the series so the fixed shape is measured, not just N=1000.
+const SIZES = [100, 500, 1000, 2500];
 const REPS = 2;
 
 describe('perf: IdeaProcessFlowTool mount time vs node count (no onlyRenderVisibleElements)', () => {

@@ -16,6 +16,7 @@
 
 import { useCallback, useEffect, useRef } from 'react';
 
+import { isElementWithinCanvas } from './canvasFocusScope';
 import type { IdeasToolType } from './useIdeasToolDefaults';
 
 export interface CanvasKeyboardCallbacks {
@@ -156,6 +157,35 @@ export function useCanvasKeyboard({
       // Non-meta shortcuts below — skip if meta is held
       if (isMeta) return;
 
+      // F-K1 fix (G4-KBD-P0, 2026-08-11): neither Process Flow nor
+      // Whiteboard used to pass `containerRef`, so this listener sat on
+      // `document` with only an input/textarea/select/contentEditable
+      // exclusion — buttons, links and tabs (exactly what a keyboard user
+      // tabs between) were NOT excluded, so Tab never moved focus anywhere
+      // on the page while either tool was open.
+      //
+      // Scoped ONLY to the non-meta "grammar" keys below (Tab/Enter/F2/
+      // Delete/Escape) — the actual reported collision (Tab stealing normal
+      // focus navigation, Enter/F2/Delete doing the same class of thing).
+      // Ctrl/Cmd+Z/S/Y/A/C/V/X/D/0/L and Space-hold-pan above stay global/
+      // "always on while the tool is open", matching this hook's existing,
+      // deliberately-global undo contract — see IdeaDrawingLayer.tsx's own
+      // doc comment ("the parent canvas's ALWAYS-ON Ctrl+Z listener") and
+      // tests/components/MyWork/IdeaWhiteboardTool.drawUndo.test.tsx, which
+      // fires Ctrl+Z directly on `document` (no node/pane focused) and
+      // asserts it still undoes — scoping THAT branch too broke it.
+      //
+      // Read `containerRef.current` fresh here (not captured once when the
+      // listener was attached) so this self-corrects even if the canvas
+      // container mounts AFTER this effect first runs (both tools render a
+      // loading skeleton in place of the real container while their idea
+      // map hydrates). When no `containerRef` is supplied at all, scoping
+      // is skipped entirely — back-compat for any future caller that
+      // hasn't opted in yet.
+      if (containerRef && !isElementWithinCanvas(containerRef.current, e.target, document.activeElement)) {
+        return;
+      }
+
       // Tab → add child
       if (e.key === 'Tab' && !e.shiftKey) {
         e.preventDefault();
@@ -190,7 +220,7 @@ export function useCanvasKeyboard({
         return;
       }
     },
-    [enabled, locked]
+    [enabled, locked, containerRef]
   );
 
   const handleKeyUp = useCallback((e: KeyboardEvent) => {
@@ -201,12 +231,19 @@ export function useCanvasKeyboard({
   }, []);
 
   useEffect(() => {
-    const target = containerRef?.current || document;
-    target.addEventListener('keydown', handleKeyDown as EventListener);
-    target.addEventListener('keyup', handleKeyUp as EventListener);
+    // Always bind on `document` — scoping happens inside `handleKeyDown` via
+    // a live `containerRef.current` read (see F-K1 fix above), not by
+    // choosing the addEventListener target once here. Binding directly to
+    // the container element would silently stay global for the tool's
+    // entire lifetime whenever this effect's first run happens to land
+    // before the container has mounted (e.g. while the idea map is still
+    // loading), since `containerRef`'s object identity never changes to
+    // re-trigger this effect once the ref populates.
+    document.addEventListener('keydown', handleKeyDown as EventListener);
+    document.addEventListener('keyup', handleKeyUp as EventListener);
     return () => {
-      target.removeEventListener('keydown', handleKeyDown as EventListener);
-      target.removeEventListener('keyup', handleKeyUp as EventListener);
+      document.removeEventListener('keydown', handleKeyDown as EventListener);
+      document.removeEventListener('keyup', handleKeyUp as EventListener);
     };
-  }, [containerRef, handleKeyDown, handleKeyUp]);
+  }, [handleKeyDown, handleKeyUp]);
 }

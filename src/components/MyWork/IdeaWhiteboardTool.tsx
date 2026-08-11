@@ -3972,10 +3972,31 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
   );
 
   // P3: shared grammar (Delete/Ctrl+Z/S/D/0/A/Shift+Z)
+  // F-K1 fix (G4-KBD-P0, 2026-08-11): `containerRef` scopes the grammar to
+  // genuine focus within the canvas (see useIdeasToolKeyboard.ts) — this
+  // call site never passed it before, so Tab was hijacked globally while
+  // Whiteboard was merely `open`, breaking keyboard navigation anywhere else
+  // on the page.
+  //
+  // Reuses `wbKeyboardMenuContainerRef` (declared above in THIS component,
+  // `IdeaWhiteboardTool`) — the same ref the Shift+F10 context-menu
+  // invocation already relies on. NOT the `containerRef` declared inside
+  // the separate `WhiteboardCanvas` sub-component (React.forwardRef,
+  // defined earlier in this file) — that one is a different function's
+  // local variable, out of scope here (confirmed the hard way: a
+  // `ReferenceError` at render, caught by
+  // tests/components/MyWork/IdeaWhiteboardTool.drawUndo.test.tsx and
+  // .../IdeaWhiteboardTool.observer-readonly.test.tsx, not by
+  // `esbuild --outfile=/dev/null`, which only checks syntax, not scope).
+  // `wbKeyboardMenuContainerRef`'s DOM subtree still contains
+  // `WhiteboardCanvas`'s own inner container (tabIndex={0}) as a
+  // descendant, so a click on any non-focusable node still resolves real
+  // DOM focus somewhere inside this outer ref's containment.
   useCanvasKeyboard({
     toolType: 'whiteboard',
     enabled: open,
     locked: locked || false,
+    containerRef: wbKeyboardMenuContainerRef as React.RefObject<HTMLElement | null>,
     callbacks: {
       onSave: () => runWbKeyboardAction('idea.canvas.save', handleSave),
       onUndo: () => runWbKeyboardAction('idea.canvas.undo', undoWhiteboard),

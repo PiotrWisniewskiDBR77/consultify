@@ -115,3 +115,119 @@ the numbers here are not comparable to it, and no attempt is made to pretend the
 are. The full-repo suite was not run — running it is not blocked, it simply was
 not part of this gate, and claiming otherwise would be the kind of quiet scope
 inflation this program exists to avoid.
+
+---
+
+## RETRACTION 2026-08-11 — this document's PASS is withdrawn
+
+**The two "clean rounds" recorded above measured a scope that silently excluded
+59 test files, and a real regression was hiding in the excluded tier.**
+
+### What went wrong
+
+The runs passed `"src/components/MyWork/**/__tests__/**"` as a CLI argument.
+Vitest treats CLI arguments as path *filters*, not shell globs — quoted, it
+matched **nothing**. Verified after the fact against the stored JSON: of the 146
+files in each round, **zero** were colocated `src/components/MyWork/**/__tests__/`
+files. The real scope is **208 files**; 59 were never run in either round.
+
+This is precisely the failure mode this program documents and guards against —
+silent truncation reading as full coverage — committed by the round that exists
+to catch exactly that. The lesson the rounds themselves recorded ("compare test
+COUNTS, not just pass/fail") was the right lesson at the wrong level: I compared
+counts *within* the scope and never checked the scope itself.
+
+### What was hiding there
+
+`src/components/MyWork/canvas/__tests__/whiteboardContextMenu.keyboard.integration.test.tsx`
+— **4 passed at `origin/demo` (9d17cac114), 4 failed on the candidate.** Bisected
+across nine commits: the transition is exactly at **`93ebc3aa20`**, this program's
+FIRST commit ("E00: forward-port Ideas navigation/context-menu unification").
+
+The failures are real keyboard-accessibility losses, not test noise:
+```
+expected <body> to be <div class="react-flow__node" …>   // focus not restored to the node trigger
+expected <body> to be SVGGElement{…}                      // focus not restored to the edge trigger
+expected <body> to be <div class="react-flow__pane" …>    // focus not restored to the pane trigger
+expected -1 to be greater than or equal to 0              // no menuitem carries tabIndex >= 0
+```
+
+It compounds a second mislabelling: "roving-tabindex gaps in the shared
+`CanvasContextMenu`" has been carried on this program's **known pre-existing
+failures** list for weeks. It is not pre-existing. It is this program's own
+regression, and being on that list is what kept anyone from bisecting it.
+
+### Consequence
+
+- **E15 is NOT PASS.** The gate board reverts to E15 = FIX_REQUIRED.
+- Both rounds must be re-run on the corrected 208-file scope, and the scope must
+  be **proven from the run's own JSON** (file count and a named spot-check),
+  never from the command line that was typed.
+- Two entries on the "known pre-existing" list are now suspect on principle. Any
+  item on that list that has never been A/B'd against `origin/demo` must be
+  treated as unverified rather than as inherited debt.
+
+### Rule added
+
+A scope is not a scope until the run itself proves it: assert the file count and
+assert that a named file you expect is present. A filter that matches nothing
+exits 0 and looks identical to a filter that matches everything and passes.
+
+---
+
+## RE-RUN 2026-08-11 — corrected scope, scope proven from the run itself
+
+The retracted rounds are replaced. Scope is now passed as real directories, and
+— the point of the correction — **proven from each run's own JSON**, never from
+the command line that was typed.
+
+```
+npx vitest run tests/components/MyWork tests/unit/mindmap src/components/MyWork \
+  --retry=0 --reporter=json --outputFile=<out>.json
+```
+
+Scope assertion, printed for every run: **208 files · 59 colocated
+`src/components/MyWork/**/__tests__/` · `whiteboardContextMenu` present: True.**
+The old rounds reported 146 / 0 / False.
+
+| | Baseline `9d17cac114` | Round 1 | Round 2 |
+|---|---:|---:|---:|
+| Test files | 155 | 208 | 208 |
+| Tests collected | 887 | **1239** | **1239** |
+| Files that lost tests vs baseline | — | **0** | **0** |
+| New failing tests vs baseline | — | **0** | **0** |
+| Tests fixed vs baseline | — | **13** | 13 |
+| Round 1 vs round 2 differences | — | — | **0** |
+
+**Two consecutive clean rounds, no flakiness, on a scope that is 53 files and
+352 tests larger than the one the withdrawn rounds measured.**
+
+### What the corrected scope caught immediately
+
+The first corrected round found a new failure the old scope could never see:
+`IntakeJwtPanel.test.tsx > renders the intake summary…` expected `2 fields` and
+got the raw key `ideas.table.intakeJwt.fieldCount`.
+
+Diagnosed rather than patched: the **product was correct** — the locale sweep had
+converted a hand-rolled English plural into real i18next plural keys, present in
+both locales with correct Polish forms (`pole` / `pola` / `pól`). The gap was in
+the test helper: `src/test-utils/realTranslations.ts` resolved only exact dot
+paths, so `t('…fieldCount', { count: 2 })` found nothing (the JSON holds
+`fieldCount_one` / `_other`) and fell back to the key.
+
+Fixed at the helper, using `Intl.PluralRules` — the same mechanism i18next uses,
+so Polish resolves through real Slavic rules rather than an English-shaped
+one/other guess — and the test was pointed at the real shipped JSON instead of
+the global key-returning mock.
+
+That makes the assertion **stricter than it was before the string was
+localized**: it now also fails if the key or its plural form goes missing.
+Proven by negative control — deleting `fieldCount_one`/`_other` from `en` turns
+it red, restoring them turns it green. The test file's assertions were not
+weakened; nothing was made green by lowering a bar.
+
+### Standing rule
+
+A scope is not a scope until the run proves it. Assert the file count **and**
+assert that a named file you expect is present. A filter matching nothing exits 0
+and is indistinguishable from a filter matching everything and passing.

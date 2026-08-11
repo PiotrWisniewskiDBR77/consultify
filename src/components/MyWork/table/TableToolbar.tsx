@@ -59,6 +59,7 @@ import { useTranslation } from 'react-i18next';
 
 import { type ActionContext, getActionsForSurface, runIdeaAction } from '@/actions/ideaActionRegistry';
 import { Button } from '@/components/ui/primitives/Button';
+import { useDialogA11y } from '@/components/ui/primitives/useDialogA11y';
 import {
   Sheet,
   SheetClose,
@@ -291,6 +292,15 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
   // Local UI toggles scoped to toolbar
   const [showSaveViewDialog, setShowSaveViewDialog] = useState(false);
   const [saveViewName, setSaveViewName] = useState('');
+  const saveViewDialogRef = useRef<HTMLDivElement>(null);
+  const saveViewNameInputRef = useRef<HTMLInputElement>(null);
+  const closeSaveViewDialog = useCallback(() => setShowSaveViewDialog(false), []);
+  useDialogA11y({
+    open: showSaveViewDialog,
+    onClose: closeSaveViewDialog,
+    containerRef: saveViewDialogRef,
+    initialFocusRef: saveViewNameInputRef,
+  });
   const [viewContextMenu, setViewContextMenu] = useState<{
     viewId: string;
     x: number;
@@ -514,17 +524,22 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
       {showSaveViewDialog && (
         <div
           className="fixed inset-0 z-[60] flex items-center justify-center bg-black/20"
-          onClick={() => setShowSaveViewDialog(false)}
+          onClick={closeSaveViewDialog}
         >
           <div
-            className="bg-c-surface rounded-xl shadow-xl border border-slate-200/60 dark:border-white/[0.03] p-4 w-72"
+            ref={saveViewDialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="table-save-view-dialog-title"
+            tabIndex={-1}
+            className="bg-c-surface rounded-xl shadow-xl border border-slate-200/60 dark:border-white/[0.03] p-4 w-72 outline-none"
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 className="text-sm font-semibold mb-2 text-c-text">
+            <h3 id="table-save-view-dialog-title" className="text-sm font-semibold mb-2 text-c-text">
               {t('ideas.table.saveView', 'Save view')}
             </h3>
             <input
-              autoFocus
+              ref={saveViewNameInputRef}
               value={saveViewName}
               onChange={(e) => setSaveViewName(e.target.value)}
               placeholder={t('ideas.table.viewName', 'View name…')}

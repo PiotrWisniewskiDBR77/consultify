@@ -271,6 +271,10 @@ export const WhiteboardToolbar: React.FC<WhiteboardToolbarProps> = ({
       className="flex items-center gap-1 px-3 py-1.5 border-b border-c-border-subtle bg-c-surface-raised backdrop-blur-sm flex-shrink-0 overflow-x-auto"
       role="toolbar"
       aria-label={t('myWork.whiteboard.toolbarExtra.ariaLabel')}
+      // Same shell contract as ProcessFlowToolbar (Gate 4, 720×450): reserve
+      // the floating right tool rail's measured width so this bar's own
+      // content never sits under it. Falls back to 0px when unset.
+      style={{ paddingRight: 'var(--mels-rail-gutter, 0px)' }}
     >
       <div className="text-xs font-semibold text-c-text-secondary mr-1.5 shrink-0">
         {t('myWork.whiteboard.toolbarExtra.title')}

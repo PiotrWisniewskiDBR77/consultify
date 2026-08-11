@@ -137,6 +137,7 @@ import {
 } from './table/csvUtils';
 import { DistributionManager } from './table/distribution/DistributionManager';
 import { DistributionBuilder } from './table/DistributionBuilder';
+import { applyCsvImportCap, computeRowRenderCap, MAX_TABLE_ROWS } from './table/tableRowLimits';
 import { computeHeatmapStyles, HeatmapControls } from './table/EmbeddedAnalytics';
 import { ExportToPresentation } from './table/ExportToPresentation';
 import { FilterBuilder } from './table/FilterBuilder';
@@ -622,6 +623,20 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
     usePlatform ? effectiveColumns : columns,
     usePlatform ? effectiveNodes : nodes,
     edges
+  );
+
+  // ── Row render cap (default plain-table view only — see MAX_TABLE_ROWS) ────
+  // Aggregations/selection/"select all" still operate on the FULL row set —
+  // only what gets mounted into real <tr> DOM nodes is capped. Grouped view
+  // spends the same global budget across groups, in group order, so the
+  // banner's "first N" claim stays literally true.
+  const tableRenderCap = useMemo(
+    () => computeRowRenderCap(processedRowsWithRollups, effectiveGroupedRows),
+    [effectiveGroupedRows, processedRowsWithRollups]
+  );
+  const tableRenderCapHiddenCount = Math.max(
+    0,
+    tableRenderCap.totalCount - tableRenderCap.shownCount
   );
 
   // ── Persistence hook ────────────────────────────────────────────────────────
@@ -1313,7 +1328,9 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
         const s = scoreMap.get(n.id);
         if (!s) return n;
         const prevHistory = Array.isArray(n.data?.scoreHistory) ? n.data!.scoreHistory : [];
-        const nextHistory = s.canonHistoryEvent ? [...prevHistory, s.canonHistoryEvent] : prevHistory;
+        const nextHistory = s.canonHistoryEvent
+          ? [...prevHistory, s.canonHistoryEvent]
+          : prevHistory;
         return {
           ...n,
           data: {
@@ -1420,15 +1437,50 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
           toast.error(t('ideas.table.emptyCsvFile', 'Empty CSV file'));
           return;
         }
-        const { nodes: newNodes, newColumns } = csvToNodes(headers, rows, columns);
+        // G4-TABLE-SCALE: never silently drop rows. If the table is already
+        // at MAX_TABLE_ROWS, refuse the import outright; if the import would
+        // cross the cap, truncate to the remaining budget and say so — the
+        // success toast only fires on an untruncated import.
+        const capDecision = applyCsvImportCap(nodes.length, rows);
+        if (capDecision.blocked) {
+          toast.error(
+            t(
+              'ideas.table.csvImportBlockedAtCap',
+              'Table has reached the {{max}}-row limit — remove rows before importing more.',
+              { max: MAX_TABLE_ROWS }
+            )
+          );
+          return;
+        }
+        const { rowsToImport, truncatedCount } = capDecision;
+        const { nodes: newNodes, newColumns } = csvToNodes(headers, rowsToImport, columns);
         if (newColumns.length > 0) {
           setColumns((prev) => [...prev, ...newColumns]);
         }
         nodesUndo.push([...nodes, ...newNodes]);
-        toast.success(
-          t('ideas.table.importedRowsCsv', 'Imported {{count}} rows', { count: newNodes.length })
-        );
-        trackFunnelEvent('ideas_table_csv_imported', { ideaId, rowCount: newNodes.length });
+        if (truncatedCount > 0) {
+          toast.error(
+            t(
+              'ideas.table.csvImportTruncatedAtCap',
+              'Imported {{imported}} of {{total}} rows — table limit is {{max}} rows. {{skipped}} rows were not imported.',
+              {
+                imported: newNodes.length,
+                total: rows.length,
+                max: MAX_TABLE_ROWS,
+                skipped: truncatedCount,
+              }
+            )
+          );
+        } else {
+          toast.success(
+            t('ideas.table.importedRowsCsv', 'Imported {{count}} rows', { count: newNodes.length })
+          );
+        }
+        trackFunnelEvent('ideas_table_csv_imported', {
+          ideaId,
+          rowCount: newNodes.length,
+          truncated: truncatedCount > 0,
+        });
       };
       reader.readAsText(file);
       if (csvInputRef.current) csvInputRef.current.value = '';
@@ -2527,7 +2579,9 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                     ) : (
                       <button
                         onClick={() =>
-                          runTblLegacyToolbarAction('idea.view.table_apply_view', () => applyView(v))
+                          runTblLegacyToolbarAction('idea.view.table_apply_view', () =>
+                            applyView(v)
+                          )
                         }
                         onContextMenu={(e) => {
                           e.preventDefault();
@@ -3526,8 +3580,9 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                               <button
                                 key={bulkTarget}
                                 onClick={() =>
-                                  runTblLegacyToolbarAction('idea.workspace.table_bulk_convert', () =>
-                                    handleBulkConvert(bulkTarget)
+                                  runTblLegacyToolbarAction(
+                                    'idea.workspace.table_bulk_convert',
+                                    () => handleBulkConvert(bulkTarget)
                                   )
                                 }
                                 className="w-full text-left px-3 py-1.5 rounded-lg text-[11px] font-medium text-c-text-secondary hover:bg-c-surface-raised transition-colors capitalize"
@@ -3986,273 +4041,296 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                   onAddField={locked ? undefined : () => setShowAddColumn(true)}
                 />
               ) : (
-                <div
-                  ref={tableContainerRef}
-                  className="flex-1 overflow-x-auto overflow-y-auto relative -webkit-overflow-scrolling-touch"
-                >
-                  <ConnectionLines
-                    selectedNodeId={selectedNodeForLines}
-                    edges={edges}
-                    allNodes={effectiveNodes}
-                    containerRef={tableContainerRef}
-                  />
-                  <table /* §27-exempt: archetyp D Platforma-tabel (kolumny/kolejność/agregacje user-defined, jak GridView) — decyzja Piotra 07-13 w _ROZLICZENIE_1-88 ("zły archetyp do StandardTable, ZOSTAW"); przetagowane z §27-todo 07-14 */
-                    className="w-full text-left"
-                    style={{ width: tableWidth, minWidth: tableWidth, tableLayout: 'fixed' }}
-                  >
-                    <thead className="sticky top-0 bg-c-surface-raised backdrop-blur-sm border-b border-c-border-subtle z-10">
-                      <tr>
-                        <th className="w-8 px-2 py-2">
-                          <input
-                            type="checkbox"
-                            checked={
-                              _selIds.size === processedRowsWithRollups.length &&
-                              processedRowsWithRollups.length > 0
-                            }
-                            onChange={() => {
-                              const setSelFn = usePlatform
-                                ? effectiveSetSelectedRowIds
-                                : setSelectedRowIds;
-                              if (_selIds.size === processedRowsWithRollups.length) {
-                                setSelFn(new Set());
-                                onSelectionChange?.(EMPTY_SELECTION);
-                              } else {
-                                const all = new Set(processedRowsWithRollups.map((r) => r.id));
-                                setSelFn(all);
-                                onSelectionChange?.({
-                                  type: 'row',
-                                  count: all.size,
-                                  ids: Array.from(all),
-                                });
-                              }
-                            }}
-                            aria-label={t('ideas.table.a11y.selectAllRows', 'Select all rows')}
-                            className="w-3.5 h-3.5 rounded border-c-border-subtle text-c-text-muted focus:ring-c-focus"
-                          />
-                        </th>
-                        <th className="w-10 px-1 py-2 text-[10px] font-normal text-c-text-muted text-right select-none">
-                          #
-                        </th>
-                        {stretchedVisibleCols.map((col) => (
-                          <th
-                            key={col.key}
-                            style={{ width: col.width, minWidth: col.width, maxWidth: col.width }}
-                            className="relative px-2 py-2 text-[10px] font-bold uppercase tracking-wider text-c-text-muted select-none group"
-                            draggable={editingHeaderKey !== col.key}
-                            onDragStart={() => handleColDragStart(col.key)}
-                            onDragOver={(e) => handleColDragOver(e, col.key)}
-                            onDragEnd={handleColDragEnd}
-                          >
-                            {editingHeaderKey === col.key ? (
-                              <input
-                                autoFocus
-                                defaultValue={col.header}
-                                aria-label={t(
-                                  'ideas.table.a11y.renameColumnFor',
-                                  'New column name: {{column}}',
-                                  {
-                                    column: col.header,
-                                  }
-                                )}
-                                className="w-full bg-c-surface border border-c-border-subtle rounded px-1 py-0.5 text-[10px] font-bold uppercase tracking-wider text-c-text-secondary outline-none focus:border-c-focus"
-                                onBlur={(e) => {
-                                  effectiveRenameColumn(col.key, e.target.value);
-                                  setEditingHeaderKey(null);
-                                }}
-                                onKeyDown={(e) => {
-                                  if (e.key === 'Enter') {
-                                    effectiveRenameColumn(
-                                      col.key,
-                                      (e.target as HTMLInputElement).value
-                                    );
-                                    setEditingHeaderKey(null);
-                                  }
-                                  if (e.key === 'Escape') setEditingHeaderKey(null);
-                                }}
-                                onClick={(e) => e.stopPropagation()}
-                              />
-                            ) : (
-                              <div
-                                className="flex items-center gap-1 cursor-pointer hover:text-c-text-secondary"
-                                onClick={() => effectiveCycleSort(col.key)}
-                                onDoubleClick={(e) => {
-                                  e.stopPropagation();
-                                  if (!locked) setEditingHeaderKey(col.key);
-                                }}
-                                onContextMenu={(e) => {
-                                  e.preventDefault();
-                                  if (!locked)
-                                    setColContextMenu({
-                                      colKey: col.key,
-                                      x: e.clientX,
-                                      y: e.clientY,
-                                    });
-                                }}
-                              >
-                                <GripVertical
-                                  size={10}
-                                  className="opacity-0 group-hover:opacity-40 cursor-grab"
-                                />
-                                {col.header}
-                                {_sort?.key === col.key ? (
-                                  _sort.direction === 'asc' ? (
-                                    <ArrowUp size={10} />
-                                  ) : (
-                                    <ArrowDown size={10} />
-                                  )
-                                ) : (
-                                  <ArrowUpDown size={10} className="opacity-30" />
-                                )}
-                              </div>
-                            )}
-                            {/* Resize handle */}
-                            <div
-                              className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-c-surface-raised transition-colors"
-                              onMouseDown={(e) => handleResizeStart(col.key, e)}
-                            />
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {effectiveGroupedRows ? (
-                        Object.entries(effectiveGroupedRows).map(([groupKey, rows]) => (
-                          <React.Fragment key={groupKey}>
-                            <tr className="bg-c-surface-raised">
-                              <td
-                                colSpan={_visCols.length + 2}
-                                className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-c-text-muted"
-                              >
-                                {groupKey || t('ideas.table.empty', '(empty)')}{' '}
-                                <span className="text-c-text-muted font-normal ml-1">
-                                  ({rows.length})
-                                </span>
-                              </td>
-                            </tr>
-                            {rows.map((row, idx) => renderRow(row, idx))}
-                          </React.Fragment>
-                        ))
-                      ) : processedRowsWithRollups.length === 0 ? (
-                        <tr>
-                          <td colSpan={_visCols.length + 2} className="px-4 py-12 text-center">
-                            <div className="mx-auto max-w-xl text-c-text-muted">
-                              <div className="text-sm font-semibold mb-1">
-                                {t(
-                                  'ideas.table.thisTableIsStillEmpty',
-                                  'This table is still empty'
-                                )}
-                              </div>
-                              <div className="text-[11px] leading-relaxed">
-                                {t(
-                                  'ideas.table.startWithStructureChooseAFrameworkAddTheFirstRowOrUseATempla',
-                                  'Start with structure: choose a framework, add the first row, or use a template. Save AI for the moment when the table model is already trustworthy.'
-                                )}
-                              </div>
-                              {!locked && (
-                                <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
-                                  <button
-                                    onClick={() => _addRow()}
-                                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-c-surface-raised text-c-text-secondary hover:bg-c-surface transition-colors"
-                                  >
-                                    <Plus size={14} />
-                                    {t('ideas.table.addBlankRow', 'Add blank row')}
-                                  </button>
-                                  <button
-                                    onClick={handleAddRowWithTemplate}
-                                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-c-surface-raised text-c-text-secondary hover:bg-c-surface-raised transition-colors"
-                                  >
-                                    <Layers size={14} />
-                                    {t('ideas.table.useRowTemplate', 'Use row template')}
-                                  </button>
-                                  <button
-                                    onClick={() => setShowFrameworkGen(true)}
-                                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-[color-mix(in_srgb,var(--c-warning)_12%,transparent)] text-amber-900 dark:text-amber-200 hover:bg-[color-mix(in_srgb,var(--c-warning)_20%,transparent)] transition-colors"
-                                  >
-                                    <LayoutGrid size={14} />
-                                    {t('ideas.table.buildFramework', 'Build framework')}
-                                  </button>
-                                </div>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      ) : (
-                        processedRowsWithRollups.map((row, idx) => renderRow(row, idx))
+                <>
+                  {tableRenderCapHiddenCount > 0 && (
+                    <div
+                      data-testid="idea-table-row-cap-banner"
+                      role="status"
+                      className="shrink-0 px-4 py-1.5 text-[11px] font-medium text-c-text-secondary bg-[color-mix(in_srgb,var(--c-warning)_12%,transparent)] border-b border-c-border-subtle"
+                    >
+                      {t(
+                        'ideas.table.rowRenderCapBanner',
+                        'Showing first {{shown}} of {{total}} rows — {{hidden}} more are not rendered to keep the table responsive. Export or filter to see the rest.',
+                        {
+                          shown: tableRenderCap.shownCount,
+                          total: tableRenderCap.totalCount,
+                          hidden: tableRenderCapHiddenCount,
+                        }
                       )}
-                    </tbody>
-                    {/* Footer aggregations */}
-                    {processedRowsWithRollups.length > 0 &&
-                      _visCols.some((c) => c.aggregation && c.aggregation !== 'none') && (
-                        <tfoot className="border-t-2 border-c-border-subtle">
-                          <tr className="bg-c-surface-raised">
-                            <td className="px-2 py-1.5" />
-                            <td className="w-10 px-1 py-1.5" />
-                            {stretchedVisibleCols.map((col) => {
-                              const agg = col.aggregation;
-                              if (!agg || agg === 'none')
-                                return <td key={col.key} className="px-2 py-1.5" />;
-                              const values = processedRowsWithRollups.map((r) => r.data?.[col.key]);
-                              return (
-                                <td
-                                  key={col.key}
-                                  className="px-2 py-1.5 text-[10px] font-bold text-c-text-muted tabular-nums"
-                                >
-                                  <span className="text-[8px] text-c-text-muted uppercase mr-1">
-                                    {agg}
-                                  </span>
-                                  {computeAggregation(agg, values)}
-                                </td>
-                              );
-                            })}
-                          </tr>
-                        </tfoot>
-                      )}
-                  </table>
-
-                  {/* Edges table */}
-                  {edges.length > 0 && (
-                    <div className="border-t border-c-border-subtle mt-4">
-                      <div className="px-4 py-2 text-[10px] font-bold uppercase tracking-wider text-c-text-muted">
-                        {t('ideas.table.edges', 'Edges')} ({edges.length})
-                      </div>
-                      <table
-                        /* §27-exempt: akcesoryjny podgląd krawędzi grafu wewnątrz tego samego narzędzia platformowego (patrz tabela wyżej), nie osobny ekran listowy */ className="w-full text-left"
-                      >
-                        <thead>
-                          <tr className="border-b border-c-border-subtle">
-                            <th className="px-3 py-1.5 text-[10px] font-bold uppercase text-c-text-muted">
-                              {t('ideas.table.source', 'Source')}
-                            </th>
-                            <th className="px-3 py-1.5 text-[10px] font-bold uppercase text-c-text-muted">
-                              {t('ideas.table.target', 'Target')}
-                            </th>
-                            <th className="px-3 py-1.5 text-[10px] font-bold uppercase text-c-text-muted w-28">
-                              {t('ideas.table.edgeKind', 'Kind')}
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {edges.map((e) => (
-                            <tr key={e.id} className="border-b border-c-border-subtle">
-                              <td className="px-3 py-1.5 text-[11px] text-c-text-muted">
-                                {edgeNodeLabelById.get(e.source) ?? e.source}
-                              </td>
-                              <td className="px-3 py-1.5 text-[11px] text-c-text-muted">
-                                {edgeNodeLabelById.get(e.target) ?? e.target}
-                              </td>
-                              <td className="px-3 py-1.5 text-[11px] text-c-text-muted">
-                                {getCanvasEdgeKindLabel(
-                                  e?.data?.kind ? String(e.data.kind) : e.type,
-                                  isPl
-                                )}
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
                     </div>
                   )}
-                </div>
+                  <div
+                    ref={tableContainerRef}
+                    className="flex-1 overflow-x-auto overflow-y-auto relative -webkit-overflow-scrolling-touch"
+                  >
+                    <ConnectionLines
+                      selectedNodeId={selectedNodeForLines}
+                      edges={edges}
+                      allNodes={effectiveNodes}
+                      containerRef={tableContainerRef}
+                    />
+                    <table /* §27-exempt: archetyp D Platforma-tabel (kolumny/kolejność/agregacje user-defined, jak GridView) — decyzja Piotra 07-13 w _ROZLICZENIE_1-88 ("zły archetyp do StandardTable, ZOSTAW"); przetagowane z §27-todo 07-14 */
+                      className="w-full text-left"
+                      style={{ width: tableWidth, minWidth: tableWidth, tableLayout: 'fixed' }}
+                    >
+                      <thead className="sticky top-0 bg-c-surface-raised backdrop-blur-sm border-b border-c-border-subtle z-10">
+                        <tr>
+                          <th className="w-8 px-2 py-2">
+                            <input
+                              type="checkbox"
+                              checked={
+                                _selIds.size === processedRowsWithRollups.length &&
+                                processedRowsWithRollups.length > 0
+                              }
+                              onChange={() => {
+                                const setSelFn = usePlatform
+                                  ? effectiveSetSelectedRowIds
+                                  : setSelectedRowIds;
+                                if (_selIds.size === processedRowsWithRollups.length) {
+                                  setSelFn(new Set());
+                                  onSelectionChange?.(EMPTY_SELECTION);
+                                } else {
+                                  const all = new Set(processedRowsWithRollups.map((r) => r.id));
+                                  setSelFn(all);
+                                  onSelectionChange?.({
+                                    type: 'row',
+                                    count: all.size,
+                                    ids: Array.from(all),
+                                  });
+                                }
+                              }}
+                              aria-label={t('ideas.table.a11y.selectAllRows', 'Select all rows')}
+                              className="w-3.5 h-3.5 rounded border-c-border-subtle text-c-text-muted focus:ring-c-focus"
+                            />
+                          </th>
+                          <th className="w-10 px-1 py-2 text-[10px] font-normal text-c-text-muted text-right select-none">
+                            #
+                          </th>
+                          {stretchedVisibleCols.map((col) => (
+                            <th
+                              key={col.key}
+                              style={{ width: col.width, minWidth: col.width, maxWidth: col.width }}
+                              className="relative px-2 py-2 text-[10px] font-bold uppercase tracking-wider text-c-text-muted select-none group"
+                              draggable={editingHeaderKey !== col.key}
+                              onDragStart={() => handleColDragStart(col.key)}
+                              onDragOver={(e) => handleColDragOver(e, col.key)}
+                              onDragEnd={handleColDragEnd}
+                            >
+                              {editingHeaderKey === col.key ? (
+                                <input
+                                  autoFocus
+                                  defaultValue={col.header}
+                                  aria-label={t(
+                                    'ideas.table.a11y.renameColumnFor',
+                                    'New column name: {{column}}',
+                                    {
+                                      column: col.header,
+                                    }
+                                  )}
+                                  className="w-full bg-c-surface border border-c-border-subtle rounded px-1 py-0.5 text-[10px] font-bold uppercase tracking-wider text-c-text-secondary outline-none focus:border-c-focus"
+                                  onBlur={(e) => {
+                                    effectiveRenameColumn(col.key, e.target.value);
+                                    setEditingHeaderKey(null);
+                                  }}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                      effectiveRenameColumn(
+                                        col.key,
+                                        (e.target as HTMLInputElement).value
+                                      );
+                                      setEditingHeaderKey(null);
+                                    }
+                                    if (e.key === 'Escape') setEditingHeaderKey(null);
+                                  }}
+                                  onClick={(e) => e.stopPropagation()}
+                                />
+                              ) : (
+                                <div
+                                  className="flex items-center gap-1 cursor-pointer hover:text-c-text-secondary"
+                                  onClick={() => effectiveCycleSort(col.key)}
+                                  onDoubleClick={(e) => {
+                                    e.stopPropagation();
+                                    if (!locked) setEditingHeaderKey(col.key);
+                                  }}
+                                  onContextMenu={(e) => {
+                                    e.preventDefault();
+                                    if (!locked)
+                                      setColContextMenu({
+                                        colKey: col.key,
+                                        x: e.clientX,
+                                        y: e.clientY,
+                                      });
+                                  }}
+                                >
+                                  <GripVertical
+                                    size={10}
+                                    className="opacity-0 group-hover:opacity-40 cursor-grab"
+                                  />
+                                  {col.header}
+                                  {_sort?.key === col.key ? (
+                                    _sort.direction === 'asc' ? (
+                                      <ArrowUp size={10} />
+                                    ) : (
+                                      <ArrowDown size={10} />
+                                    )
+                                  ) : (
+                                    <ArrowUpDown size={10} className="opacity-30" />
+                                  )}
+                                </div>
+                              )}
+                              {/* Resize handle */}
+                              <div
+                                className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-c-surface-raised transition-colors"
+                                onMouseDown={(e) => handleResizeStart(col.key, e)}
+                              />
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {tableRenderCap.groups ? (
+                          tableRenderCap.groups.map(([groupKey, cappedRows]) => (
+                            <React.Fragment key={groupKey}>
+                              <tr className="bg-c-surface-raised">
+                                <td
+                                  colSpan={_visCols.length + 2}
+                                  className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-c-text-muted"
+                                >
+                                  {groupKey || t('ideas.table.empty', '(empty)')}{' '}
+                                  <span className="text-c-text-muted font-normal ml-1">
+                                    ({(effectiveGroupedRows?.[groupKey] ?? cappedRows).length})
+                                  </span>
+                                </td>
+                              </tr>
+                              {cappedRows.map((row, idx) => renderRow(row, idx))}
+                            </React.Fragment>
+                          ))
+                        ) : processedRowsWithRollups.length === 0 ? (
+                          <tr>
+                            <td colSpan={_visCols.length + 2} className="px-4 py-12 text-center">
+                              <div className="mx-auto max-w-xl text-c-text-muted">
+                                <div className="text-sm font-semibold mb-1">
+                                  {t(
+                                    'ideas.table.thisTableIsStillEmpty',
+                                    'This table is still empty'
+                                  )}
+                                </div>
+                                <div className="text-[11px] leading-relaxed">
+                                  {t(
+                                    'ideas.table.startWithStructureChooseAFrameworkAddTheFirstRowOrUseATempla',
+                                    'Start with structure: choose a framework, add the first row, or use a template. Save AI for the moment when the table model is already trustworthy.'
+                                  )}
+                                </div>
+                                {!locked && (
+                                  <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+                                    <button
+                                      onClick={() => _addRow()}
+                                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-c-surface-raised text-c-text-secondary hover:bg-c-surface transition-colors"
+                                    >
+                                      <Plus size={14} />
+                                      {t('ideas.table.addBlankRow', 'Add blank row')}
+                                    </button>
+                                    <button
+                                      onClick={handleAddRowWithTemplate}
+                                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-c-surface-raised text-c-text-secondary hover:bg-c-surface-raised transition-colors"
+                                    >
+                                      <Layers size={14} />
+                                      {t('ideas.table.useRowTemplate', 'Use row template')}
+                                    </button>
+                                    <button
+                                      onClick={() => setShowFrameworkGen(true)}
+                                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-[color-mix(in_srgb,var(--c-warning)_12%,transparent)] text-amber-900 dark:text-amber-200 hover:bg-[color-mix(in_srgb,var(--c-warning)_20%,transparent)] transition-colors"
+                                    >
+                                      <LayoutGrid size={14} />
+                                      {t('ideas.table.buildFramework', 'Build framework')}
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        ) : (
+                          (tableRenderCap.rows ?? processedRowsWithRollups).map((row, idx) =>
+                            renderRow(row, idx)
+                          )
+                        )}
+                      </tbody>
+                      {/* Footer aggregations */}
+                      {processedRowsWithRollups.length > 0 &&
+                        _visCols.some((c) => c.aggregation && c.aggregation !== 'none') && (
+                          <tfoot className="border-t-2 border-c-border-subtle">
+                            <tr className="bg-c-surface-raised">
+                              <td className="px-2 py-1.5" />
+                              <td className="w-10 px-1 py-1.5" />
+                              {stretchedVisibleCols.map((col) => {
+                                const agg = col.aggregation;
+                                if (!agg || agg === 'none')
+                                  return <td key={col.key} className="px-2 py-1.5" />;
+                                const values = processedRowsWithRollups.map(
+                                  (r) => r.data?.[col.key]
+                                );
+                                return (
+                                  <td
+                                    key={col.key}
+                                    className="px-2 py-1.5 text-[10px] font-bold text-c-text-muted tabular-nums"
+                                  >
+                                    <span className="text-[8px] text-c-text-muted uppercase mr-1">
+                                      {agg}
+                                    </span>
+                                    {computeAggregation(agg, values)}
+                                  </td>
+                                );
+                              })}
+                            </tr>
+                          </tfoot>
+                        )}
+                    </table>
+
+                    {/* Edges table */}
+                    {edges.length > 0 && (
+                      <div className="border-t border-c-border-subtle mt-4">
+                        <div className="px-4 py-2 text-[10px] font-bold uppercase tracking-wider text-c-text-muted">
+                          {t('ideas.table.edges', 'Edges')} ({edges.length})
+                        </div>
+                        <table
+                          /* §27-exempt: akcesoryjny podgląd krawędzi grafu wewnątrz tego samego narzędzia platformowego (patrz tabela wyżej), nie osobny ekran listowy */ className="w-full text-left"
+                        >
+                          <thead>
+                            <tr className="border-b border-c-border-subtle">
+                              <th className="px-3 py-1.5 text-[10px] font-bold uppercase text-c-text-muted">
+                                {t('ideas.table.source', 'Source')}
+                              </th>
+                              <th className="px-3 py-1.5 text-[10px] font-bold uppercase text-c-text-muted">
+                                {t('ideas.table.target', 'Target')}
+                              </th>
+                              <th className="px-3 py-1.5 text-[10px] font-bold uppercase text-c-text-muted w-28">
+                                {t('ideas.table.edgeKind', 'Kind')}
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {edges.map((e) => (
+                              <tr key={e.id} className="border-b border-c-border-subtle">
+                                <td className="px-3 py-1.5 text-[11px] text-c-text-muted">
+                                  {edgeNodeLabelById.get(e.source) ?? e.source}
+                                </td>
+                                <td className="px-3 py-1.5 text-[11px] text-c-text-muted">
+                                  {edgeNodeLabelById.get(e.target) ?? e.target}
+                                </td>
+                                <td className="px-3 py-1.5 text-[11px] text-c-text-muted">
+                                  {getCanvasEdgeKindLabel(
+                                    e?.data?.kind ? String(e.data.kind) : e.type,
+                                    isPl
+                                  )}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+                </>
               )}
 
               {/* Status Bar — record count + aggregates */}
@@ -4379,7 +4457,9 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                   label: t('ideas.table.duplicateRow', 'Duplicate row'),
                   separatorBefore: true,
                   disabled: locked,
-                  disabledReason: locked ? t('ideas.table.lockedReason', 'Table is locked') : undefined,
+                  disabledReason: locked
+                    ? t('ideas.table.lockedReason', 'Table is locked')
+                    : undefined,
                   onSelect: () => effectiveHandleDuplicateRow(rowContextMenu.rowId),
                 },
                 {
@@ -4387,7 +4467,9 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                   label: t('ideas.table.deleteRow', 'Delete row'),
                   danger: true,
                   disabled: locked,
-                  disabledReason: locked ? t('ideas.table.lockedReason', 'Table is locked') : undefined,
+                  disabledReason: locked
+                    ? t('ideas.table.lockedReason', 'Table is locked')
+                    : undefined,
                   onSelect: () => {
                     effectiveHandleDeleteRow(rowContextMenu.rowId);
                     toast.success(t('ideas.table.rowDeleted', 'Row deleted'));
@@ -4434,15 +4516,15 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                       ? t('ideas.table.readOnlyCell', 'Cell is read-only')
                       : undefined,
                   onSelect: () => {
-                      const { rowId, colKey } = cellContextMenu;
-                      void (async () => {
-                        try {
-                          const text = await navigator.clipboard?.readText();
-                          if (text != null) _fieldChange(rowId, colKey, text);
-                        } catch {
-                          toast.error(t('ideas.table.pasteFailed', 'Could not read clipboard'));
-                        }
-                      })();
+                    const { rowId, colKey } = cellContextMenu;
+                    void (async () => {
+                      try {
+                        const text = await navigator.clipboard?.readText();
+                        if (text != null) _fieldChange(rowId, colKey, text);
+                      } catch {
+                        toast.error(t('ideas.table.pasteFailed', 'Could not read clipboard'));
+                      }
+                    })();
                   },
                 },
                 {
@@ -4454,11 +4536,11 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                       ? t('ideas.table.typeCannotExpand', 'Type cell cannot be expanded')
                       : undefined,
                   onSelect: () => {
-                      handleCellExpand(
-                        cellContextMenu.rowId,
-                        cellContextMenu.colKey,
-                        cellContextMenu.rect
-                      );
+                    handleCellExpand(
+                      cellContextMenu.rowId,
+                      cellContextMenu.colKey,
+                      cellContextMenu.rect
+                    );
                   },
                 },
                 {

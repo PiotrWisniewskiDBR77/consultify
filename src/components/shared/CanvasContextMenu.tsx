@@ -68,16 +68,26 @@ function MenuRow({
   index,
   items,
   submenuOpen,
+  active,
   onTriggerSubmenu,
   onSelectLeaf,
+  onItemFocus,
   registerSubmenuAnchor,
 }: {
   item: CanvasContextMenuItemDescriptor;
   index: number;
   items: CanvasContextMenuItemDescriptor[];
   submenuOpen: boolean;
+  /** CB-05 roving tabIndex: true for the ONE menuitem currently in the Tab
+   * order (`tabindex="0"`) — every other row gets `tabindex="-1"`. */
+  active: boolean;
   onTriggerSubmenu: (id: string, open: boolean) => void;
   onSelectLeaf: (item: CanvasContextMenuItemDescriptor) => void;
+  /** Fired on the row's native `focus` event — this is what makes the roving
+   * tabIndex FOLLOW focus regardless of how focus got there (open-focus
+   * effect, ArrowUp/Down/Home/End, or a mouse click), instead of every
+   * focus-moving call site having to also remember to update the index. */
+  onItemFocus: (id: string) => void;
   registerSubmenuAnchor: (id: string, el: HTMLButtonElement | null) => void;
 }) {
   const hasChildren = !!item.children?.length;
@@ -95,6 +105,7 @@ function MenuRow({
         ref={hasChildren ? (el) => registerSubmenuAnchor(item.id, el) : undefined}
         type="button"
         role="menuitem"
+        tabIndex={active ? 0 : -1}
         disabled={item.disabled}
         aria-disabled={item.disabled || undefined}
         aria-haspopup={hasChildren ? 'menu' : undefined}
@@ -105,6 +116,7 @@ function MenuRow({
             : item.label
         }
         onMouseEnter={() => onTriggerSubmenu(item.id, hasChildren && !item.disabled)}
+        onFocus={() => onItemFocus(item.id)}
         onClick={() => {
           if (item.disabled) return;
           if (hasChildren) {
@@ -174,6 +186,9 @@ function SubmenuFlyout({
   const ref = useRef<HTMLDivElement>(null);
   const [position, setPosition] = useState({ left: anchorRect.right, top: anchorRect.top });
   const [maxHeight, setMaxHeight] = useState<number | undefined>();
+  // CB-05 roving tabIndex — own tracked "active" row, same contract as the
+  // top-level menu below (separate DOM/portal subtree, so a separate index).
+  const [activeItemId, setActiveItemId] = useState<string | null>(null);
 
   useLayoutEffect(() => {
     const panel = ref.current;
@@ -239,8 +254,10 @@ function SubmenuFlyout({
           index={idx}
           items={items}
           submenuOpen={false}
+          active={child.id === activeItemId}
           onTriggerSubmenu={() => undefined}
           onSelectLeaf={onSelectLeaf}
+          onItemFocus={setActiveItemId}
           registerSubmenuAnchor={() => undefined}
         />
       ))}
@@ -268,10 +285,41 @@ export const CanvasContextMenu: React.FC<CanvasContextMenuProps> = ({
   const [maxHeight, setMaxHeight] = useState<number | undefined>();
   const [openSubmenuId, setOpenSubmenuId] = useState<string | null>(null);
   const submenuAnchors = useRef<Record<string, HTMLButtonElement | null>>({});
+  // CB-05 roving tabIndex: id of the ONE menuitem with tabindex="0". Kept in
+  // lockstep with DOM focus via `MenuRow`'s `onFocus` — every focus-moving
+  // call site below (open-focus layout effect, ArrowUp/Down, Home/End) just
+  // calls `.focus()` as before; this state follows automatically instead of
+  // needing its own bespoke update at each call site.
+  const [activeItemId, setActiveItemId] = useState<string | null>(null);
+
+  // Focus-restore-on-close — reuses the SAME mechanism as useDialogA11y
+  // (`src/components/ui/primitives/useDialogA11y.ts`): capture the trigger on
+  // mount, restore it from an unmount-effect CLEANUP, not a
+  // requestAnimationFrame callback fired from the close handler.
+  //
+  // Why this matters: this component unmounts as a direct result of
+  // `onClose()` (every consumer conditionally renders it — see the
+  // consumers listed at `isInsideAnyMenuSurface` below). React 18/testing-
+  // library flushes that unmount, and this effect's cleanup, SYNCHRONOUSLY
+  // inside the `act()` that wraps `fireEvent`. A `requestAnimationFrame`
+  // scheduled from the click/Escape handler does NOT run inside that same
+  // flush — it fires on the next real animation frame, which is why a
+  // caller asserting `document.activeElement` immediately after Escape (no
+  // awaited frame — see `whiteboardContextMenu.keyboard.integration.test.tsx`
+  // and `IdeaCanvasContextMenu.cb05.test.tsx`) always observed
+  // `document.body`, never the trigger. Restoring from the unmount cleanup
+  // makes it visible in the same synchronous flush that removed the menu.
+  useEffect(() => {
+    return () => {
+      const trigger = returnFocusRef.current;
+      if (trigger && document.contains(trigger)) {
+        trigger.focus({ preventScroll: true });
+      }
+    };
+  }, []);
 
   const closeAndRestore = React.useCallback(() => {
     onClose();
-    requestAnimationFrame(() => returnFocusRef.current?.focus());
   }, [onClose]);
 
   const handleSelectLeaf = React.useCallback(
@@ -411,8 +459,10 @@ export const CanvasContextMenu: React.FC<CanvasContextMenuProps> = ({
           index={index}
           items={items}
           submenuOpen={openSubmenuId === item.id}
+          active={item.id === activeItemId}
           onTriggerSubmenu={(id, open) => setOpenSubmenuId(open ? id : null)}
           onSelectLeaf={handleSelectLeaf}
+          onItemFocus={setActiveItemId}
           registerSubmenuAnchor={(id, el) => {
             submenuAnchors.current[id] = el;
           }}

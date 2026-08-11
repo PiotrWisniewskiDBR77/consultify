@@ -6,6 +6,26 @@ import { useCallback, useRef } from 'react';
 import toast from 'react-hot-toast';
 import type { Edge, Node } from 'reactflow';
 
+import i18n from '@/i18n';
+
+import {
+  checkProcessFlowNodeCap,
+  PROCESS_FLOW_NODE_LIMIT,
+  PROCESS_FLOW_NODE_WARN_THRESHOLD,
+} from './nodeCap';
+
+/**
+ * `isPl` is threaded explicitly through this hook's opts (same pattern as
+ * `useProcessFlowAIProposal.ts`'s `tr()`), not read from global i18next
+ * state, so the message language stays deterministic per-call.
+ */
+function tr(isPl: boolean, key: string, defaultValue: string, vars?: Record<string, unknown>): string {
+  return i18n.t(`myWorkIdeas.processFlowTool.${key}`, defaultValue, {
+    lng: isPl ? 'pl' : 'en',
+    ...vars,
+  });
+}
+
 export interface Lane {
   id: string;
   label: string;
@@ -39,6 +59,24 @@ export interface UseProcessFlowNodesOpts {
   /** Injected confirm for bulk deletes (≥2 nodes). Returns true = proceed. */
   confirmBulkDelete?: (count: number) => Promise<boolean>;
   /**
+   * G4-LANE-DELETE (2026-08-10/11): fired when `handleLaneDelete` REFUSES —
+   * currently only the last-remaining-lane case — instead of silently doing
+   * nothing. Previously `if (locked || lanes.length <= 1) return;` was the
+   * whole guard: no toast, no signal, nothing (`useProcessFlowNodes.ts:293`,
+   * flagged as a known gap in `idea.lane.pf_delete`'s Teresa description in
+   * `processFlowActions.ts`). The UI delete button is hidden once
+   * `laneCount <= 1` (`LaneSystem.tsx:287`), so a human never hits this path
+   * — but Teresa's Action Registry receiver (`deleteLane` on the
+   * `idea-workspace-quick-action` bus, `useProcessFlowQuickActions.ts:337-339`)
+   * calls this handler directly with an explicit `laneId` and got a false
+   * `{ ok: true }` back with zero effect. Caller (`IdeaProcessFlowTool.tsx`)
+   * shows this via `toast.error` with a real i18n key
+   * (`myWorkIdeas.processFlowTool.cannotDeleteLastLane`) — kept as an
+   * injected callback (same shape as `confirmBulkDelete` above) so this hook
+   * stays free of `useTranslation`.
+   */
+  onLaneDeleteBlocked?: (laneId: string) => void;
+  /**
    * M07 F3 realtime emission. Optional so this hook stays usable without a
    * collab layer (tests, single-user). Each fires AFTER local state is set.
    */
@@ -64,8 +102,45 @@ export function useProcessFlowNodes(opts: UseProcessFlowNodesOpts) {
     onNodeDetail,
     onNodesDeleted,
     confirmBulkDelete,
+    onLaneDeleteBlocked,
     collab,
   } = opts;
+
+  // G4-PF-GUARDRAIL: node-count cap, checked before paste/duplicate mutate
+  // `nodes`. Mirrors the guard in IdeaProcessFlowTool.tsx (same nodeCap.ts
+  // decision function) — see that file's own comment for the full
+  // rationale. Checks the RESULTING count so a large paste/duplicate can't
+  // land past the ceiling in one step.
+  const guardAddNodes = useCallback(
+    (addCount: number): boolean => {
+      const cap = checkProcessFlowNodeCap(nodes.length, addCount);
+      if (!cap.allowed) {
+        toast.error(
+          tr(
+            isPl,
+            'nodeLimitReached',
+            `Step limit reached (${PROCESS_FLOW_NODE_LIMIT} maximum). Please delete some steps or split the process into multiple flows.`,
+            { limit: PROCESS_FLOW_NODE_LIMIT }
+          ),
+          { duration: 3000 }
+        );
+        return false;
+      }
+      if (cap.shouldWarn) {
+        toast(
+          tr(
+            isPl,
+            'nodeLimitWarning',
+            `You are approaching the step limit (${PROCESS_FLOW_NODE_WARN_THRESHOLD} steps). Consider splitting into multiple flows.`,
+            { warn: PROCESS_FLOW_NODE_WARN_THRESHOLD }
+          ),
+          { icon: '⚠️', duration: 3000 }
+        );
+      }
+      return true;
+    },
+    [nodes, isPl]
+  );
 
   const deleteSelected = useCallback(async () => {
     if (locked) return;
@@ -126,6 +201,7 @@ export function useProcessFlowNodes(opts: UseProcessFlowNodesOpts) {
     (zrodloweWezly: Node[], zrodloweKrawedzie: Edge[], przesuniecie: { x: number; y: number }) => {
       if (locked) return;
       if (zrodloweWezly.length === 0) return;
+      if (!guardAddNodes(zrodloweWezly.length)) return;
       pushUndo();
 
       const idMap = new Map<string, string>();
@@ -170,7 +246,7 @@ export function useProcessFlowNodes(opts: UseProcessFlowNodesOpts) {
         ...newEdges.map((e) => ({ op: 'add_edge', data: e })),
       ]);
     },
-    [locked, onNodeDetail, pushUndo, setEdges, setNodes, collab]
+    [locked, guardAddNodes, onNodeDetail, pushUndo, setEdges, setNodes, collab]
   );
 
   /**
@@ -228,6 +304,7 @@ export function useProcessFlowNodes(opts: UseProcessFlowNodesOpts) {
     if (locked) return;
     const selected = nodes.filter((n) => n.selected);
     if (selected.length === 0) return;
+    if (!guardAddNodes(selected.length)) return;
     pushUndo();
 
     const idMap = new Map<string, string>();
@@ -273,7 +350,7 @@ export function useProcessFlowNodes(opts: UseProcessFlowNodesOpts) {
       ...newNodes.map((n) => ({ op: 'add_node', data: n })),
       ...newEdges.map((e) => ({ op: 'add_edge', data: e })),
     ]);
-  }, [edges, locked, nodes, onNodeDetail, pushUndo, setEdges, setNodes, collab]);
+  }, [edges, guardAddNodes, locked, nodes, onNodeDetail, pushUndo, setEdges, setNodes, collab]);
 
   const handleLaneRename = useCallback(
     (laneId: string, next: string) => {
@@ -290,7 +367,18 @@ export function useProcessFlowNodes(opts: UseProcessFlowNodesOpts) {
 
   const handleLaneDelete = useCallback(
     (laneId: string) => {
-      if (locked || lanes.length <= 1) return;
+      if (locked) return;
+      // G4-LANE-DELETE: the last remaining lane can't be deleted (a Process
+      // Flow with zero lanes is not a valid state — there'd be nowhere for
+      // existing/new nodes to live). REFUSE VISIBLY instead of the previous
+      // silent `return` — the UI already hides the delete button in this
+      // state (`LaneSystem.tsx:287`, `laneCount > 1`), but Teresa's Action
+      // Registry receiver can still call this handler directly with an
+      // explicit `laneId` and must not get a false "done".
+      if (lanes.length <= 1) {
+        onLaneDeleteBlocked?.(laneId);
+        return;
+      }
       pushUndo();
       const fallbackLane = lanes.find((l) => l.id !== laneId) || lanes[0];
       const reassigned: Node[] = [];
@@ -315,7 +403,7 @@ export function useProcessFlowNodes(opts: UseProcessFlowNodesOpts) {
       // the new Lane[]; the reassigned nodes ride as update_node[]).
       collab?.broadcastLanes?.(nextLanes, reassigned);
     },
-    [locked, lanes, pushUndo, setLanes, setNodes, collab]
+    [locked, lanes, pushUndo, setLanes, setNodes, collab, onLaneDeleteBlocked]
   );
 
   const handleLaneColorChange = useCallback(

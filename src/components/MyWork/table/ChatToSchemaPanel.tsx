@@ -21,6 +21,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next';
 
 import { type ActionContext, runIdeaAction } from '@/actions/ideaActionRegistry';
+import { useDialogA11y } from '@/components/ui/primitives/useDialogA11y';
 
 import { EMPTY_SELECTION } from '../ideaSelectionTypes';
 
@@ -348,6 +349,7 @@ export const ChatToSchemaPanel: React.FC<ChatToSchemaPanelProps> = ({
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const conversationEndRef = useRef<HTMLDivElement>(null);
+  const slideOverDialogRef = useRef<HTMLDivElement>(null);
 
   const proposal = normalizeProposal(rawProposal);
   const currentSchema = useMemo(() => extractCurrentSchema(existingSchema), [existingSchema]);
@@ -552,6 +554,19 @@ export const ChatToSchemaPanel: React.FC<ChatToSchemaPanelProps> = ({
     onClose?.();
   }, [clearProposal, onClose]);
 
+  // Only the slideOver render mode owns a `fixed inset-0` backdrop + panel;
+  // splitScreen/modal are embedded by the host and don't get dialog semantics
+  // here. Suspended while the nested `RefineDialog` is showing — two
+  // simultaneously-open `useDialogA11y` document Escape listeners would both
+  // fire on a single Escape press (stopPropagation doesn't stop sibling
+  // listeners on the same `document` target), closing both dialogs instead
+  // of just the top one.
+  useDialogA11y({
+    open: mode === 'slideOver' && !showRefineDialog,
+    onClose: handleClose,
+    containerRef: slideOverDialogRef,
+  });
+
   // Quick action chips
   const quickActions = [
     {
@@ -586,7 +601,7 @@ export const ChatToSchemaPanel: React.FC<ChatToSchemaPanelProps> = ({
       {/* Panel header */}
       <div className="flex items-center gap-2 px-4 py-3 border-b border-c-border-subtle bg-c-surface-raised flex-shrink-0">
         <Sparkles size={16} className="text-c-text-secondary" />
-        <span className="text-sm font-semibold text-c-text">
+        <span id="chat-to-schema-panel-title" className="text-sm font-semibold text-c-text">
           {t('myWorkTable.chatToSchemaPanel.aiTableBuilder')}
         </span>
         {companyContext?.workspaceName && (
@@ -788,7 +803,14 @@ export const ChatToSchemaPanel: React.FC<ChatToSchemaPanelProps> = ({
           className="fixed inset-0 z-context-menu bg-black/20 backdrop-blur-[2px]"
           onClick={handleClose}
         />
-        <div className="fixed right-0 top-0 bottom-0 z-context-menu w-[480px] max-w-[90vw] bg-c-surface border-l border-c-border-subtle shadow-2xl flex flex-col">
+        <div
+          ref={slideOverDialogRef}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="chat-to-schema-panel-title"
+          tabIndex={-1}
+          className="fixed right-0 top-0 bottom-0 z-context-menu w-[480px] max-w-[90vw] bg-c-surface border-l border-c-border-subtle shadow-2xl flex flex-col outline-none"
+        >
           {panelContent}
         </div>
       </>

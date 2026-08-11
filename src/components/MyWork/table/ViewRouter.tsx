@@ -30,6 +30,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { useDialogA11y } from '@/components/ui/primitives/useDialogA11y';
 import type {
   FieldType,
   LinkedRecordFieldOptions,
@@ -189,6 +190,15 @@ export const PlatformGridView: React.FC<PlatformGridViewProps> = ({
     fieldKey: string;
     value: string;
   } | null>(null);
+  const noteEditorDialogRef = useRef<HTMLDivElement>(null);
+  const noteEditorTextareaRef = useRef<HTMLTextAreaElement>(null);
+  const closeNoteEditor = useCallback(() => setNoteEditor(null), []);
+  useDialogA11y({
+    open: !!noteEditor,
+    onClose: closeNoteEditor,
+    containerRef: noteEditorDialogRef,
+    initialFocusRef: noteEditorTextareaRef,
+  });
 
   // Fala 8 (parytet Airtable) — szerokości kolumn przez drag na uchwycie w
   // prawej krawędzi nagłówka. Trzymane per-sesję w stanie komponentu (bez
@@ -1113,15 +1123,22 @@ export const PlatformGridView: React.FC<PlatformGridViewProps> = ({
       {noteEditor && (
         <div
           className="fixed inset-0 z-[60] flex items-center justify-center bg-[color-mix(in_srgb,var(--c-text)_20%,transparent)]"
-          onClick={() => setNoteEditor(null)}
+          onClick={closeNoteEditor}
         >
           <div
-            className="bg-c-surface rounded-xl shadow-xl border border-c-border p-4 w-80"
+            ref={noteEditorDialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="note-editor-dialog-title"
+            tabIndex={-1}
+            className="bg-c-surface rounded-xl shadow-xl border border-c-border p-4 w-80 outline-none"
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 className="text-sm font-semibold mb-2 text-c-text">{isPl ? 'Notatka' : 'Note'}</h3>
+            <h3 id="note-editor-dialog-title" className="text-sm font-semibold mb-2 text-c-text">
+              {isPl ? 'Notatka' : 'Note'}
+            </h3>
             <textarea
-              autoFocus
+              ref={noteEditorTextareaRef}
               value={noteEditor.value}
               onChange={(e) =>
                 setNoteEditor((prev) => (prev ? { ...prev, value: e.target.value } : prev))

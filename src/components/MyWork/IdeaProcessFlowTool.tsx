@@ -152,6 +152,11 @@ import {
   type ProcessFlowNodeComment,
   removeComment,
 } from './processflow/nodeComments';
+import {
+  checkProcessFlowNodeCap,
+  PROCESS_FLOW_NODE_LIMIT,
+  PROCESS_FLOW_NODE_WARN_THRESHOLD,
+} from './processflow/nodeCap';
 import { ActivityNode } from './processflow/nodes/ActivityNode';
 import { BPMNEndNode } from './processflow/nodes/BPMNEndNode';
 import { BPMNStartNode } from './processflow/nodes/BPMNStartNode';
@@ -293,8 +298,27 @@ const EdgeRehydrateFix: React.FC<{ nodeIdsKey: string; nodeIds: string[] }> = ({
     // Re-measure after the nodes are actually laid out in the DOM. A single rAF
     // fires too early (dimensions not yet recorded → edges stay hidden), so retry
     // across a few frames/timeouts until ReactFlow has measured them.
+    //
+    // G4-PF-GUARDRAIL perf fix: `updateNodeInternals` accepts an array
+    // (`useUpdateNodeInternals` in @reactflow/core does
+    // `Array.isArray(id) ? id : [id]`), so pass the WHOLE id set in one call
+    // instead of calling it once per id. This is not cosmetic: each
+    // invocation schedules its own `requestAnimationFrame` → one
+    // `store.updateNodeDimensions(updates)` → one
+    // `updateAbsoluteNodePositions(nodeInternals, …)` sweep over the ENTIRE
+    // nodeInternals map (@reactflow/core index.mjs, `updateNodeDimensions`
+    // calling `updateAbsoluteNodePositions`, itself a `nodeInternals.forEach`
+    // over every node regardless of how many were actually updated) plus a
+    // fresh `new Map(nodeInternals)` copy and a store `set()`. Calling this
+    // once per node turned a mount with N nodes into N separate O(N) sweeps
+    // (O(N²)) at each of the 4 timer ticks below; batching into one call per
+    // tick makes it O(N) per tick (measured — see
+    // docs/qa/ideas-complete-transformation-2026-08-09/17_PERFORMANCE_MEASUREMENT.md
+    // for the before numbers and the G4 stream's benchmark rerun for after).
     const timers = [60, 250, 600, 1200].map((ms) =>
-      window.setTimeout(() => idsRef.current.forEach((id) => updateNodeInternals(id)), ms)
+      window.setTimeout(() => {
+        if (idsRef.current.length) updateNodeInternals(idsRef.current);
+      }, ms)
     );
     return () => timers.forEach((t) => window.clearTimeout(t));
     // Keyed on the node-id set so it fires on hydrate / structural changes, not every render.
@@ -422,6 +446,48 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
   const [newLaneId, setNewLaneId] = useState<string | null>(null);
   const [extensions, setExtensions] = useState<Record<string, unknown>>({});
   const [warnings, setWarnings] = useState<ValidationWarning[]>([]);
+
+  // ── G4-PF-GUARDRAIL: node-count cap ──────────────────────────────────────
+  // Process Flow had NO node cap of any kind (unlike Mind Map's soft 500-node
+  // banner and Whiteboard's hard block at `nodes.length >= 500`), while its
+  // mount cost is the worst of the four canvas tools (see nodeCap.ts header
+  // + docs/qa/ideas-complete-transformation-2026-08-09/17_PERFORMANCE_MEASUREMENT.md
+  // §4.3/§6). This checks the RESULTING count (current + addCount) so a bulk
+  // add (AI-proposal accept, paste, cross-tool conversion/import) can't jump
+  // straight past the ceiling in one step — every node-adding call site in
+  // this file (manual add, insert-between, split-path, ghost-accept, AI
+  // apply, and the cross-tool `idea-workspace-insert` bulk handler) calls
+  // this before mutating `nodes`. Defined early (before `nodes` has any other
+  // consumers below) so every later callback can list it as a dependency
+  // without a temporal-dead-zone hazard. Returns `false` (and toasts) when
+  // the add must be refused entirely — no silent refusal, no silent
+  // truncation.
+  const guardAddNodes = useCallback(
+    (addCount: number): boolean => {
+      const cap = checkProcessFlowNodeCap(nodes.length, addCount);
+      if (!cap.allowed) {
+        toast.error(
+          t('myWorkIdeas.processFlowTool.nodeLimitReached', {
+            defaultValue: `Step limit reached (${PROCESS_FLOW_NODE_LIMIT} maximum). Please delete some steps or split the process into multiple flows.`,
+            limit: PROCESS_FLOW_NODE_LIMIT,
+          }),
+          { duration: 3000 }
+        );
+        return false;
+      }
+      if (cap.shouldWarn) {
+        toast(
+          t('myWorkIdeas.processFlowTool.nodeLimitWarning', {
+            defaultValue: `You are approaching the step limit (${PROCESS_FLOW_NODE_WARN_THRESHOLD} steps). Consider splitting into multiple flows.`,
+            warn: PROCESS_FLOW_NODE_WARN_THRESHOLD,
+          }),
+          { icon: '⚠️', duration: 3000 }
+        );
+      }
+      return true;
+    },
+    [nodes, t]
+  );
 
   useEffect(() => {
     onGraphChange?.({
@@ -750,8 +816,16 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
   // step, then persists via the autosave effect (scheduleSave fires from the
   // nodes/edges/lanes → buildPersistPayload → scheduleSave effect below).
   const handleApplyAIProposal = useCallback(
-    (result: ApplyPatchResult) => {
-      if (locked) return;
+    (result: ApplyPatchResult): boolean => {
+      if (locked) return false;
+      // G4-PF-GUARDRAIL: AI generate/expand is a bulk add — check the WHOLE
+      // batch before applying anything, not per-node (a per-node check here
+      // would read a stale `nodes.length` across the batch and never catch
+      // it). Blocked → the whole acceptance is refused (toast explains why);
+      // `resolveProposal` (useProcessFlowAIProposal.ts) keeps the proposal
+      // open on `false` so the user can reject/regenerate instead of it
+      // silently vanishing.
+      if (!guardAddNodes(result.addedNodeIds.length)) return false;
       pushUndo();
       const added = new Set(result.addedNodeIds);
       setNodes(
@@ -787,8 +861,9 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       toast.success(t('myWorkIdeas.processFlowTool.aiProposalApplied'), {
         duration: 1200,
       });
+      return true;
     },
-    [collab, isPl, locked, onNodeDetail, pushUndo, setEdges, setNodes]
+    [collab, guardAddNodes, isPl, locked, onNodeDetail, pushUndo, setEdges, setNodes]
   );
 
   const {
@@ -1547,6 +1622,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       }
     ) => {
       if (locked) return;
+      if (!guardAddNodes(1)) return;
       pushUndo();
 
       // ── B1 (2026-07-27): „dodalem krok i nic sie nie stalo" ─────────────
@@ -1769,6 +1845,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       edges,
       flowMode,
       focusObjectId,
+      guardAddNodes,
       handleSelectionUpdate,
       i18n.language,
       ideaId,
@@ -1822,6 +1899,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       toast.error(t('myWorkIdeas.processFlowTool.selectEdgeFirst'));
       return;
     }
+    if (!guardAddNodes(1)) return;
     pushUndo();
     const sourceNode = (nodes as Node[]).find((n) => n.id === selectedEdge.source);
     const targetNode = (nodes as Node[]).find((n) => n.id === selectedEdge.target);
@@ -1881,6 +1959,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
     collab,
     edges,
     flowMode,
+    guardAddNodes,
     isPl,
     lanes,
     locked,
@@ -1901,6 +1980,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       toast.error(t('myWorkIdeas.processFlowTool.selectDecisionNode'));
       return;
     }
+    if (!guardAddNodes(1)) return;
     pushUndo();
     const newId = `pf-split-${Date.now()}`;
     const lane = lanes.find((l) => l.id === selected.data?.laneId) || lanes[0] || DEFAULT_LANES[0];
@@ -1944,7 +2024,19 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       { op: 'add_edge', data: splitEdge },
     ]);
     toast.success(t('myWorkIdeas.processFlowTool.pathSplit'), { duration: 800 });
-  }, [collab, flowMode, isPl, lanes, locked, nodes, onNodeDetail, pushUndo, setEdges, setNodes]);
+  }, [
+    collab,
+    flowMode,
+    guardAddNodes,
+    isPl,
+    lanes,
+    locked,
+    nodes,
+    onNodeDetail,
+    pushUndo,
+    setEdges,
+    setNodes,
+  ]);
 
   // ── Add lane ───────────────────────────────────────────────────────────
 
@@ -2114,6 +2206,12 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
         cancelLabel: t('myWorkIdeas.processFlowTool.cancel'),
         variant: 'danger',
       }),
+    // G4-LANE-DELETE: `handleLaneDelete` refuses (instead of silently doing
+    // nothing) when asked to delete the only remaining lane. Surface that
+    // refusal — same toast.error pattern as selectEdgeFirst/selectDecisionNode
+    // above.
+    onLaneDeleteBlocked: () =>
+      toast.error(t('myWorkIdeas.processFlowTool.cannotDeleteLastLane')),
   });
 
   // ── F5a A3: lane collapse / resize (state in lanes[].{collapsed,height}) ──
@@ -2335,6 +2433,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
     (ghostId: string) => {
       const ghost = ghostNodes.find((g) => g.id === ghostId);
       if (!ghost) return;
+      if (!guardAddNodes(1)) return;
       pushUndo();
       const realId = `pf-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
       const realNode: Node = {
@@ -2360,7 +2459,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       collab.broadcastNodeAdd(realNode); // F3: accepted ghost → real add
       toast.success(t('myWorkIdeas.processFlowTool.stepAccepted'), { duration: 800 });
     },
-    [collab, ghostNodes, isPl, locked, onNodeDetail, pushUndo, setNodes]
+    [collab, ghostNodes, guardAddNodes, isPl, locked, onNodeDetail, pushUndo, setNodes]
   );
 
   // ── Save ───────────────────────────────────────────────────────────────
@@ -2541,10 +2640,16 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
   }, [nodes, lanes]);
 
   // P3: shared grammar (Tab/Enter/F2/Delete/Escape/Ctrl+Z/S/D/L/0)
+  // F-K1 fix (G4-KBD-P0, 2026-08-11): `containerRef` scopes the grammar to
+  // genuine focus within the canvas (see useIdeasToolKeyboard.ts) — this
+  // call site never passed it before, so Tab was hijacked globally while
+  // Process Flow was merely `open`, breaking keyboard navigation anywhere
+  // else on the page.
   useCanvasKeyboard({
     toolType: 'processflow',
     enabled: open,
     locked: locked || false,
+    containerRef: flowContainerRef as React.RefObject<HTMLElement | null>,
     callbacks: {
       onSave: () => runPfKeyboardAction('idea.canvas.pf_save', handleSave),
       onUndo: () => runPfKeyboardAction('idea.canvas.undo', undo),
@@ -2698,6 +2803,15 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       if (detail.ideaId && detail.ideaId !== ideaId) return;
 
       if (Array.isArray(detail.items) && detail.items.length > 0) {
+        // G4-PF-GUARDRAIL: cross-tool conversion/import is a bulk add — check
+        // the WHOLE batch up front. `addNode`'s own per-call guard below
+        // reads `nodes.length` from a closure that this synchronous forEach
+        // never lets React re-render, so it would see the SAME stale count
+        // on every iteration and never catch a batch that blows past the
+        // cap. Blocked → refuse the whole insert (toast explains why),
+        // matching Whiteboard's all-or-nothing convention rather than a
+        // partial/truncated insert.
+        if (!guardAddNodes(detail.items.length)) return;
         detail.items.forEach((item) => {
           const shape = resolveSemanticInsertShape(
             item.type || item.label || item.text,
@@ -2739,7 +2853,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
 
     window.addEventListener(IDEA_WORKSPACE_INSERT_EVENT, handler);
     return () => window.removeEventListener(IDEA_WORKSPACE_INSERT_EVENT, handler);
-  }, [addNode, flowMode, ideaId, open, semanticKit]);
+  }, [addNode, flowMode, guardAddNodes, ideaId, open, semanticKit]);
 
   useEffect(() => {
     if (!open) return;
@@ -3426,7 +3540,22 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
           </div>
         )
       ) : (
-        <div ref={flowContainerRef} className="flex-1 relative">
+        <div
+          ref={flowContainerRef}
+          className="flex-1 relative"
+          // F-K1 fix (G4-KBD-P0, 2026-08-11): ReactFlow nodes are not
+          // natively focusable, so without this the browser's click-to-focus
+          // ancestor walk had nothing to land on inside the canvas — a click
+          // on a node left `document.activeElement` outside this container,
+          // and `useCanvasKeyboard`'s new focus-containment check (see
+          // `containerRef` above) would then wrongly treat the canvas as
+          // unfocused right after the user clicked a node. tabIndex=-1
+          // (focusable programmatically/via click, excluded from the
+          // page's normal Tab order) mirrors the same pattern already used
+          // by Mind Map's canvas root (IdeaRecommendationMap.tsx) and
+          // Whiteboard's (`containerRef` there already carries tabIndex=0).
+          tabIndex={-1}
+        >
           {/* B2 2026-07-27: the provider now opens BEFORE the lane layer (DOM
               order and paint order are unchanged — ReactFlowProvider renders no
               element) so the swimlane bands can read the live viewport and

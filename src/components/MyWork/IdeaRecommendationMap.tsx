@@ -68,6 +68,10 @@ import {
 import TeresaMark from '../shared/TeresaMark';
 import { getCanvasBg } from './canvas/canvasBackground';
 import {
+  isCanvasKeyboardScope,
+  resolveMindMapGrammarAction,
+} from './canvas/mindmapKeyboardScope';
+import {
   canvasObjectSurfaceStyle,
   canvasObjectTextStyle,
   canvasShapeClasses,
@@ -3571,21 +3575,6 @@ function MindMapInner({
       const target = e.target as HTMLElement;
       const container = containerRef.current;
       const active = document.activeElement;
-      // ReactFlow nodes are not focusable, so clicking a node leaves focus on
-      // <body> (activeElement === body, target === body). The map's keyboard
-      // grammar (Tab=child, Enter=sibling, Delete, …) must still work in that
-      // state — otherwise "select a branch and press Tab" silently does nothing.
-      // We therefore treat "no real focus target" (body/null) as in-map. Typing
-      // in any OTHER surface keeps activeElement on that input (not body), so it
-      // stays excluded and we never hijack keystrokes from another module.
-      const noRealFocus =
-        !active || active === document.body || active === document.documentElement;
-      const isWithinMap =
-        !!container &&
-        (container.contains(target) ||
-          (!!active && container.contains(active)) ||
-          (noRealFocus && (target === document.body || container.contains(target))));
-      if (!isWithinMap) return;
 
       const keyLabel = formatDebugKey(e);
       const isEditing = editingNodeIdRef.current !== null;
@@ -3708,6 +3697,37 @@ function MindMapInner({
         return;
       }
 
+      // ReactFlow nodes are not focusable, so clicking a node leaves focus on
+      // the container itself (it carries `tabIndex={-1}` — see the JSX root
+      // below — so the browser's click-to-focus ancestor walk lands there).
+      // The map's keyboard grammar (Tab=child, Enter=sibling, Delete, …)
+      // keeps working in that state because `container.contains(active)`
+      // is still true.
+      //
+      // F-K1 fix (G4-KBD-P0, 2026-08-11): this used to ALSO treat "nothing
+      // real is focused" (activeElement === body/documentElement) as
+      // in-scope, which is true EVERYWHERE on the page before anything has
+      // been focused — that's what let a bare Tab keypress anywhere hijack
+      // focus/add a node. The container already gets real DOM focus on
+      // mount (see the viewport-restore effect's `containerRef.current?.
+      // focus()` call below) specifically to keep "select a branch and
+      // press Tab" working from a fresh load, so that fallback was both
+      // redundant and unsafe. See `mindmapKeyboardScope.ts` for the
+      // extracted, unit-tested containment check.
+      //
+      // Scoped here — AFTER Ctrl/Cmd+S/Z/Shift+Z/Shift+H/A/D and Alt+0-9 —
+      // deliberately, not at the top of the handler: those modifier combos
+      // are this map's "always on while open" shortcuts (mirrors the same
+      // fix in useIdeasToolKeyboard.ts for Process Flow/Whiteboard, which
+      // discovered — via tests/components/MyWork/IdeaWhiteboardTool.
+      // drawUndo.test.tsx firing Ctrl+Z directly on `document` with nothing
+      // focused — that scoping modifier-combo undo/save this strictly
+      // breaks a real, tested, deliberate contract). Only the plain
+      // "grammar" keys below (mode toggles, Tab/Enter/F2/Delete/Escape,
+      // arrow navigation) require genuine in-map focus.
+      const isWithinMap = isCanvasKeyboardScope(container, target, active);
+      if (!isWithinMap) return;
+
       if (isEditing || isInput) {
         debugLog('KEY_IGNORED editing_or_input', {
           source: 'keyboard',
@@ -3752,7 +3772,12 @@ function MindMapInner({
         return;
       }
 
-      if (e.key === 'Tab') {
+      // F-K2 fix (G4-KBD-P0, 2026-08-11): `resolveMindMapGrammarAction`
+      // requires `!e.shiftKey` for Tab — this used to fire on Shift+Tab too
+      // (a pure focus-navigation key), silently spawning a real empty child
+      // node with its inline editor open on every backward-Tab.
+      const grammarAction = resolveMindMapGrammarAction(e);
+      if (grammarAction === 'add_child') {
         e.preventDefault();
         debugLog('KEY_HANDLED addChild', {
           source: 'keyboard',
@@ -3762,7 +3787,7 @@ function MindMapInner({
         addChildNode();
         return;
       }
-      if (e.key === 'Enter') {
+      if (grammarAction === 'add_sibling') {
         e.preventDefault();
         debugLog('KEY_HANDLED addSibling', {
           source: 'keyboard',

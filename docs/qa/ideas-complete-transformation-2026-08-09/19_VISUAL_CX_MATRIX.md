@@ -160,3 +160,80 @@ Run from this worktree's root, real exit codes captured directly (`echo "EXIT=$?
 | `scripts/check-gestosc.sh` | **0** | "brak regresji mechanicznych (sprawdzono plików: 1)". |
 
 All four guards pass (exit 0); none flag the `IdeaViewSwitcher.tsx` change or the screenshot files (guards check source, not images). No baseline was raised.
+
+---
+
+## UPDATE 2026-08-11 — owner rejection, root cause, and the full 24-cell re-verification
+
+### What the owner rejected, and why the earlier entry was wrong
+
+This document previously carried finding **F-03** (the floating view-switcher pill
+overlapping the Menu-2 row at 720×450) as fixed, and separately logged the right
+rail clipping the "Brak ostrzeżeń" chip as a **residual finding, out of scope**.
+
+The owner reviewed the submitted
+`screenshots/fix__processflow__zoom200reflow__720x450__light__pl.png`, saw the
+clipped chip, and returned Gate 4 as **FIX_REQUIRED**. He is right. Two different
+collisions existed at the same viewport; fixing one and filing the other as
+"residual" left a visible truncation in an image being offered for acceptance.
+Calling it out in a subordinate clause did not discharge it.
+
+### Root cause of the rail collision
+
+`src/components/shared/ExecutiveModuleShell/index.tsx` measures the floating right
+tool rail's real width but, in `centerMode='canvas'`, deliberately zeroes the
+reserved gutter so ReactFlow keeps full-bleed width. That decision is still
+correct for the canvas itself — but `ProcessFlowToolbar` and `WhiteboardToolbar`
+render as ordinary DOM inside that full-width wrapper, and their Menu-2 badges are
+right-aligned. The absolutely-positioned rail (`right:0`, `inset-y-0`) therefore
+overlapped real content: "Brak ostrzeżeń" → "Brak os…". A stale comment in the
+shell even *claimed* the gutter was reserved while the code below forced it to 0.
+
+### The fix
+
+Reserve space only where real content lives, not by shrinking the canvas. The
+shell now also tracks the unclamped rail width and exposes it as a CSS custom
+property `--mels-rail-gutter` on the canvas-content wrapper; both toolbars apply
+`padding-right: var(--mels-rail-gutter, 0px)`. Their existing `flex-wrap` /
+`overflow-x-auto` then does the right thing inside a correctly-sized container —
+no new mechanism, and no shrinking text into unreadability.
+
+### The matrix the owner asked for — 24 cells, all captured and all looked at
+
+`g4v2__{tool}__{viewport}__{theme}__{locale}.png`, SHA `d2d18aa05f`.
+24 files, **24 distinct checksums** (no blank or duplicated frames).
+
+| Tool | 720×450 | 1280×800 | 1440×900 |
+|---|---|---|---|
+| Process Flow — light pl / light en / dark pl / dark en | PASS ×4 | PASS ×4 | PASS ×4 |
+| Whiteboard — light pl / light en / dark pl / dark en | PASS ×4 | PASS ×4 | PASS ×4 |
+
+PASS here means, per cell: **no Menu-2 element occluded or truncated, and no
+right-rail control occluded or truncated.**
+
+The orchestrator independently opened and inspected the originally-rejected cell
+(`processflow 720×450 light pl` — "Brak ostrzeżeń" now renders in full, the badge
+row wraps to its own line, clear gap before the rail) and the hardest contrast
+case (`processflow 720×450 dark en` — "Steps 7 / Lanes 2 / No warnings" all
+complete on one row, rail clear).
+
+The earlier view-switcher fix was checked for regression by live DOM measurement
+rather than by eye: at 720×450 the pill's top sits below the toolbar chrome's
+bottom on both tools (Process Flow 197.5 > 189.5; Whiteboard 105.5 > 97.5),
+`overlap: false`.
+
+### Consequence for the older evidence
+
+`fix__processflow__zoom200reflow__720x450__light__pl.png` and its whiteboard
+sibling are **superseded** — they show the pre-fix rail collision and must not be
+cited as acceptance evidence. The `g4v2__*` set replaces them.
+
+### Still NOT captured at this gate
+
+- Interactive behaviour (opening mode tabs, the overflow menu, dragging nodes) —
+  the 24 cells are static first-paint layout only.
+- A Process Flow carrying more badges or longer labels than the harness mock, or
+  a semantic-kit chip alongside the mode tabs. The `flex-wrap` fallback is
+  expected to hold, and that expectation is **not** evidence — it was not
+  screenshotted.
+- Viewport widths between 720 and 1280, and heights between 450 and 800.

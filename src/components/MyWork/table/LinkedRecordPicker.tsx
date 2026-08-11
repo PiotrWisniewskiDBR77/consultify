@@ -14,6 +14,7 @@ import { ChevronRight, ExternalLink, Link2, Loader2, Plus, Search, X } from 'luc
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { useDialogA11y } from '@/components/ui/primitives/useDialogA11y';
 import * as TablePlatformApi from '@/services/api/tablePlatform.api';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -88,6 +89,8 @@ export const LinkedRecordPicker: React.FC<LinkedRecordPickerProps> = React.memo(
     const containerRef = useRef<HTMLDivElement>(null);
 
     const linkedIds = useMemo(() => new Set(currentLinks.map((l) => l.id)), [currentLinks]);
+
+    useDialogA11y({ open, onClose, containerRef, initialFocusRef: inputRef });
 
     // Load table fields metadata once
     useEffect(() => {
@@ -172,7 +175,7 @@ export const LinkedRecordPicker: React.FC<LinkedRecordPickerProps> = React.memo(
       };
     }, [open, linkedTableId, debouncedSearch, fieldsMeta]);
 
-    // Reset state on open
+    // Reset state on open (initial focus is handled by useDialogA11y via initialFocusRef)
     useEffect(() => {
       if (open) {
         setSelected(new Set(currentLinks.map((l) => l.id)));
@@ -180,7 +183,6 @@ export const LinkedRecordPicker: React.FC<LinkedRecordPickerProps> = React.memo(
         setHighlightIdx(-1);
         setExpandedChipId(null);
         setExpandData(null);
-        setTimeout(() => inputRef.current?.focus(), 50);
       }
     }, [open, currentLinks]);
 
@@ -213,12 +215,10 @@ export const LinkedRecordPicker: React.FC<LinkedRecordPickerProps> = React.memo(
           } else if (highlightIdx === filteredCandidates.length && onCreateNew && !locked) {
             onCreateNew();
           }
-        } else if (e.key === 'Escape') {
-          e.preventDefault();
-          onClose();
         }
+        // Escape is handled globally by useDialogA11y (avoids a double onClose call).
       },
-      [highlightIdx, filteredCandidates, totalItems, onCreateNew, locked, onClose]
+      [highlightIdx, filteredCandidates, totalItems, onCreateNew, locked]
     );
 
     // Scroll highlighted item into view
@@ -308,11 +308,18 @@ export const LinkedRecordPicker: React.FC<LinkedRecordPickerProps> = React.memo(
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-[1px]">
         <div
           ref={containerRef}
-          className="flex h-[620px] max-h-[85vh] w-[520px] flex-col overflow-hidden rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-2xl"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="linked-record-picker-title"
+          tabIndex={-1}
+          className="flex h-[620px] max-h-[85vh] w-[520px] flex-col overflow-hidden rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-2xl outline-none"
         >
           {/* Header */}
           <div className="flex items-center justify-between border-b border-c-border-subtle px-5 py-3">
-            <div className="flex items-center gap-2 text-sm font-semibold text-c-text">
+            <div
+              id="linked-record-picker-title"
+              className="flex items-center gap-2 text-sm font-semibold text-c-text"
+            >
               <Link2 className="h-4 w-4 text-blue-500" />
               {t('myWorkTable.linkedRecordPicker.title')}
             </div>

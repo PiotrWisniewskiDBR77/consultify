@@ -3,14 +3,26 @@
  *
  * Performance measurement — IdeaTableTool mount time vs row count.
  *
+ * ── BEFORE (original state of this file, still the historical record) ──────
  * Context (docs/qa/ideas-complete-transformation-2026-08-09/17_PERFORMANCE_MEASUREMENT.md):
  * a prior audit claimed "Table tool: no virtualization — every row rendered"
- * as a code-level risk but measured nothing. Code inspection confirms the
- * claim: src/components/MyWork/IdeaTableTool.tsx renders
- * `processedRowsWithRollups.map((row, idx) => renderRow(row, idx))` (line
- * ~4180) straight into a plain <table>/<tbody> — no react-window, no
- * react-virtual, no windowing of any kind (`grep -c
- * 'react-window|react-virtual|FixedSizeList|Virtuoso'` over the file = 0).
+ * as a code-level risk but measured nothing. Code inspection confirmed the
+ * claim: `IdeaTableTool.tsx` rendered `processedRowsWithRollups.map((row,
+ * idx) => renderRow(row, idx))` straight into a plain `<table>/<tbody>` — no
+ * windowing of any kind. Measured: N=100 mean 880ms, N=1,000 mean 5,972ms,
+ * N=5,000 OOM-crashed the vitest worker even with an 8GB heap, N=10,000 not
+ * attempted after that. `expect(domRows).toBe(n)` asserted every row landed
+ * in real DOM — proof of the "no cap, no virtualization" problem.
+ *
+ * ── AFTER (G4-TABLE-SCALE, this session) ────────────────────────────────────
+ * `IdeaTableTool` now hard-caps rendered rows at `MAX_TABLE_ROWS` (500, see
+ * `src/components/MyWork/table/tableRowLimits.ts`) instead of virtualizing —
+ * virtualization was judged structural (sticky header, column resize,
+ * inline edit, grouping, keyboard nav all wired to real DOM rows across a
+ * ~5,000-line component) and out of a single-stream budget. The assertion
+ * below now expects `domRows === Math.min(n, MAX_TABLE_ROWS)`: mounting is
+ * expected to succeed at every N (including 5,000/10,000) because the DOM
+ * cost stops growing past the cap, not because virtualization was added.
  *
  * This benchmark mounts the REAL IdeaTableTool component (not a
  * reimplementation of its render loop) with the same heavy-mock scaffolding
@@ -20,7 +32,8 @@
  * legacy `nodes`/`processedRows` path). `useRollupComputation` is mocked to
  * identity here so this measures pure row/cell render cost — the rollup
  * O(n * (edges + allNodes)) cost is measured separately in
- * tests/performance/rollupComputation.bench.test.ts.
+ * tests/performance/rollupComputation.bench.test.ts. `tableRowLimits` is
+ * NOT mocked — this measures the real cap.
  *
  * Columns: 8 realistic mixed-type columns (text/select/number/date) so each
  * row renders 8 real <td> cells, not an empty shell.
@@ -280,6 +293,7 @@ vi.mock('../../src/components/MyWork/table/GridView', () => ({
 }));
 
 import { IdeaTableTool } from '../../src/components/MyWork/IdeaTableTool';
+import { MAX_TABLE_ROWS } from '../../src/components/MyWork/table/tableRowLimits';
 
 const SIZES = [100, 1000, 5000, 10000];
 const REPS = 5;
@@ -327,9 +341,10 @@ describe('perf: IdeaTableTool mount time vs row count (no virtualization)', () =
         `[table-mount-bench] N=${n} reps=${REPS} mean=${meanMs.toFixed(2)}ms min=${minMs.toFixed(2)}ms ` +
           `max=${maxMs.toFixed(2)}ms domRows=${domRows} all=[${timings.map((t) => t.toFixed(2)).join(', ')}]`
       );
-      // Sanity: confirms every row really is in the DOM — proves "no virtualization"
-      // empirically (a windowed table would cap this near viewport size regardless of N).
-      expect(domRows).toBe(n);
+      // G4-TABLE-SCALE: confirms the render cap holds — DOM rows never exceed
+      // MAX_TABLE_ROWS regardless of N, which is what stops the OOM at scale
+      // (this is NOT virtualization; it's a hard render ceiling).
+      expect(domRows).toBe(Math.min(n, MAX_TABLE_ROWS));
     }, 120000);
   }
 

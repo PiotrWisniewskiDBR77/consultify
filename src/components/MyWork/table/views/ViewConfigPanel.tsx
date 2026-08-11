@@ -18,8 +18,10 @@ import {
   Timer,
   X,
 } from 'lucide-react';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+
+import { useDialogA11y } from '@/components/ui/primitives/useDialogA11y';
 
 import type { FormatRule } from '../ConditionalFormatting';
 import { ConditionalFormattingConfig } from '../ConditionalFormatting';
@@ -107,6 +109,8 @@ export const ViewConfigPanel: React.FC<ViewConfigPanelProps> = ({
   const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
   const [expandedSection, setExpandedSection] = useState<string | null>('type');
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useDialogA11y({ open, onClose, containerRef: dialogRef });
 
   const selectFields = useMemo(
     () =>
@@ -165,14 +169,19 @@ export const ViewConfigPanel: React.FC<ViewConfigPanelProps> = ({
   return (
     <div className="fixed inset-0 z-modal flex items-start justify-end" onClick={onClose}>
       <div
-        className="w-80 h-full bg-c-surface border-l border-c-border-subtle shadow-2xl overflow-auto"
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="view-config-panel-title"
+        tabIndex={-1}
+        className="w-80 h-full bg-c-surface border-l border-c-border-subtle shadow-2xl overflow-auto outline-none"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-c-border-subtle">
           <div className="flex items-center gap-2">
             <Settings2 size={14} className="text-c-text-muted" />
-            <span className="text-xs font-bold text-c-text">
+            <span id="view-config-panel-title" className="text-xs font-bold text-c-text">
               {t('myWorkTable.viewConfigPanel.viewConfiguration')}
             </span>
           </div>

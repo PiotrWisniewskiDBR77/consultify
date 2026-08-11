@@ -17,9 +17,11 @@ import {
   X,
   Zap,
 } from 'lucide-react';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+
+import { useDialogA11y } from '@/components/ui/primitives/useDialogA11y';
 
 import type { ColumnDef, TableNode } from './tableTypes';
 import { SELECT_COLORS } from './tableTypes';
@@ -356,6 +358,8 @@ export const FrameworkGenerator: React.FC<FrameworkGeneratorProps> = ({
   const isPl = i18n.language?.startsWith('pl');
   const [selected, setSelected] = useState<string | null>(null);
   const [applying, setApplying] = useState(false);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useDialogA11y({ open, onClose, containerRef: dialogRef });
 
   const handleApply = useCallback(() => {
     const fw = FRAMEWORKS.find((f) => f.id === selected);
@@ -398,11 +402,18 @@ export const FrameworkGenerator: React.FC<FrameworkGeneratorProps> = ({
 
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/30 backdrop-blur-sm">
-      <div className="w-[560px] max-h-[80vh] overflow-auto rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-2xl">
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="framework-generator-title"
+        tabIndex={-1}
+        className="w-[560px] max-h-[80vh] overflow-auto rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-2xl outline-none"
+      >
         <div className="flex items-center justify-between px-5 py-4 border-b border-c-border-subtle">
           <div className="flex items-center gap-2">
             <Sparkles size={16} className="text-c-text-secondary" />
-            <h3 className="text-sm font-bold text-c-text">
+            <h3 id="framework-generator-title" className="text-sm font-bold text-c-text">
               {t('myWorkTable.frameworkGenerator.frameworkGenerator')}
             </h3>
           </div>

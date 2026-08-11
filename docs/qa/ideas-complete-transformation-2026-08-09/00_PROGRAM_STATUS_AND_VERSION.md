@@ -352,3 +352,70 @@ footnote.
 Gates 1, 2, 3 and E15 are unaffected by this correction and stand as recorded —
 they were measured, negative-controlled and re-verified independently. Only the
 gate-4 claim was wrong, and only gate 4 changes state here.
+
+---
+
+## CORRECTION 2026-08-11 (second) — E15 reverts to FIX_REQUIRED
+
+The gate board above records E15 as PASS on the strength of two clean rounds.
+**Withdrawn.** Those rounds ran a CLI scope argument that matched zero colocated
+`src/**/__tests__/**` files: 59 of the 208 in-scope files were never executed in
+either round, and the runs' own JSON proves it. Full account and the rule added
+as a result: `20_E15_TWO_CLEAN_ROUNDS.md`, RETRACTION section.
+
+Hiding in the excluded tier: `whiteboardContextMenu.keyboard.integration.test.tsx`
+passes 4/4 at `origin/demo` and fails 4/4 from **`93ebc3aa20`** — this program's
+first commit. Focus is not restored to the trigger on close, and the menu has no
+roving tabindex, across all seven context-menu consumers.
+
+That finding carries a second correction with it. **"Roving-tabindex gaps in the
+shared `CanvasContextMenu`" has been on this program's KNOWN PRE-EXISTING
+FAILURES list for weeks.** It is not pre-existing — it is this program's own
+regression. Sitting on that list is precisely what stopped anyone from bisecting
+it. Every other item on that list that has never been A/B'd against
+`origin/demo` is now treated as **unverified**, not as inherited debt.
+
+| Gate | State |
+|---|---|
+| 1 — type-check | PASS (re-verification pending after the current merges) |
+| 2 — QG backlog | QG-01…QG-06 RESOLVED |
+| 3 — runtime + persistence | PASS on isolated local DB, 8/8 chains |
+| 4 — visual + CX + a11y | **FIX_REQUIRED** |
+| E15 — two clean rounds | **FIX_REQUIRED** (rounds withdrawn, re-run pending on the 208-file scope) |
+
+---
+
+## GATE BOARD 2026-08-11 (after the Gate-4 fix wave)
+
+| Gate | State | Evidence |
+|---|---|---|
+| 1 — type-check | **PASS** | serialized run: client exit 0 / 0 errors, server exit 0 / 0 errors |
+| 2 — QG backlog | **QG-01…QG-06 RESOLVED** | `03_CODEX_QUALITY_BACKLOG.md` |
+| 3 — runtime + persistence | **PASS on isolated local DB, 8/8 chains** | `13_RUNTIME_GATE_EVIDENCE.md` |
+| 4 — visual + CX + a11y | **FIX_REQUIRED** — blockers closed, owner acceptance not yet sought | below |
+| E15 — two clean rounds | **PASS on the corrected 208-file scope** | `20_E15_TWO_CLEAN_ROUNDS.md` RE-RUN |
+
+### Gate 4 — what the fix wave closed
+
+- 720×450/200% rail-vs-chip collision — fixed; 24-cell matrix (2 tools × pl/en ×
+  light/dark × 3 viewports) all PASS, orchestrator opened the two hardest cells.
+- 20 remaining modal overlays — 16 converted, 2 already correct, 2 excluded as
+  popovers with reasons. A nested-dialog Escape bug was found and fixed.
+- Table 5,000-row OOM — hard 500-row render cap plus an explicit CSV import
+  guard, nothing silently truncated.
+- Process Flow — 500/200 node guardrail on every add path.
+- lane delete — refuses visibly instead of no-opping; undo proven.
+- `:focus-visible` — 40 captures; canvas nodes given a `c-focus` ring.
+- Contrast — 87 controls measured on the composited background.
+- Two keyboard **P0s** found and fixed: forward Tab was globally hijacked, and
+  Shift+Tab spawned a node on Mind Map.
+- A context-menu focus/roving-tabindex regression dating to the program's FIRST
+  commit was bisected and fixed.
+
+### Why Gate 4 is still FIX_REQUIRED
+
+Three P2s remain open and measured: the kebab-icon contrast failures (1.93:1
+light, 1.61:1 dark against a 3:1 floor), the Mind Map dark badge at 3.22:1, and
+the Process Flow swimlane label at 4.43:1. The owner's acceptance has not been
+sought and will not be until those are closed — that is the rule this program
+adopted after the last overclaim.
