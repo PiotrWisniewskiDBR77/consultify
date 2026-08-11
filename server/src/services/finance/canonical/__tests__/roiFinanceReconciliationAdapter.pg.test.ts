@@ -48,6 +48,7 @@
 import { randomUUID } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import express, { type Express } from 'express';
 import pg from 'pg';
@@ -78,8 +79,10 @@ vi.mock('../../../../middleware/auth.middleware.js', () => ({
   },
 }));
 
+// `fileURLToPath`, not `new URL(...).pathname` — see the note in `coldReopen.pg.test.ts`: the
+// latter stays percent-encoded and breaks under any checkout path containing a space.
 const MIGRATIONS_DIR = path.resolve(
-  path.dirname(new URL(import.meta.url).pathname),
+  path.dirname(fileURLToPath(import.meta.url)),
   '../../../../../migrations'
 );
 const PROTECTION_MIGRATION = path.join(

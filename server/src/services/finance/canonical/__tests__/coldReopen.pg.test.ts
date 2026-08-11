@@ -64,6 +64,7 @@ import { execFile } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
 
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -93,7 +94,10 @@ if (REAL_PG_REQUESTED) {
 }
 const REAL_PG = REAL_PG_REQUESTED;
 
-const HERE = path.dirname(new URL(import.meta.url).pathname);
+// `fileURLToPath`, not `new URL(...).pathname` — the latter stays percent-encoded, so any repo
+// checkout under a path containing a space (e.g. `.../Mobile Documents/...`) yields `%20` and every
+// fs read below fails with ENOENT. Same pattern as `statementCoverageAndJumps.pg.test.ts`.
+const HERE = path.dirname(fileURLToPath(import.meta.url));
 // __tests__ -> canonical -> finance -> services -> src -> server -> repo root
 const REPO_ROOT = path.resolve(HERE, '../../../../../..');
 const READER_PATH = path.join(HERE, 'coldReopenReader.ts');
@@ -568,14 +572,29 @@ describe.skipIf(!REAL_PG)('Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.
       )
     );
     const lineIdByCode = new Map(lineRows.map((r) => [r.line_code, r.id]));
+    /**
+     * FY2026 roll-up of the 12 monthly Baseline outputs, summed in CHRONOLOGICAL period order.
+     *
+     * The order matters and is not decorative. This query has no `ORDER BY` (and Postgres
+     * guarantees no row order without one), float addition is not associative, and the FY2027/
+     * FY2028 rows derived from this sum are written to `finance_baseline_outputs` and then read
+     * back by the real DCF/FCFF engine. Summing in raw SQL-row order therefore leaked a
+     * last-significant-digit difference straight into `enterpriseValueComputed` — reproduced on
+     * real Postgres as 2-3 distinct EV bit patterns across otherwise identical runs of this
+     * deterministic GoldCo fixture, which looked exactly like an engine defect but was this
+     * harness rollup. `period_id` must be SELECTed for the same reason: without it the row order
+     * cannot be restored here at all. Same in-memory canonical-order pattern as
+     * `valuationFcffService.sumFlow()`.
+     */
     const annualSum = async (code: string) => {
       const rows = await withPinnedPostgresTransaction((tx) =>
-        tx.queryAll<{ value_decimal: string }>(
-          `SELECT value_decimal FROM finance_baseline_outputs WHERE business_version_id = ? AND canonical_line_id = ? AND entity_id = ? AND period_id = ANY(?)`,
+        tx.queryAll<{ period_id: string; value_decimal: string }>(
+          `SELECT period_id, value_decimal FROM finance_baseline_outputs WHERE business_version_id = ? AND canonical_line_id = ? AND entity_id = ? AND period_id = ANY(?)`,
           [ids.baseline, lineIdByCode.get(code), entityId, monthPeriods2026]
         )
       );
-      return rows.reduce((s, r) => s + Number(r.value_decimal), 0);
+      const valueByPeriod = new Map(rows.map((r) => [r.period_id, r.value_decimal]));
+      return monthPeriods2026.reduce((s, pid) => s + Number(valueByPeriod.get(pid) ?? 0), 0);
     };
     const closing = async (code: string) => {
       const row = await withPinnedPostgresTransaction((tx) =>
