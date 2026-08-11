@@ -31,6 +31,8 @@ import { StatusChip } from '@/components/ui/primitives';
 
 import type { OkrSetDto } from './okrApi';
 import { listObjectivesForSet, type OkrObjectiveWithKeyResultsDto } from './okrObjectiveApi';
+import { OkrActionDialog } from './OkrActionDialog';
+import { OkrCarryForwardDialog } from './OkrCarryForwardDialog';
 import {
   approveOkrSetManagerReview,
   carryForwardOkrSet,
@@ -85,6 +87,70 @@ export const OkrReviewReflectionView: React.FC<OkrReviewReflectionViewProps> = (
     Record<string, { whatWorked: string; whatDidNotWork: string; why: string; learning: string; nextCycleChange: string; disposition: OkrReflectionDisposition | '' }>
   >({});
 
+  // "Request changes" dialog (replaces `window.prompt` — RN-G3 prompt-removal
+  // pass, 2026-08-11). Kept OUTSIDE `run()`/`pending` on purpose: a rejected
+  // submit must keep the dialog open with the server's error shown inline,
+  // not bounce the user back to the page-level error banner and lose their
+  // typed notes.
+  const [requestChangesOpen, setRequestChangesOpen] = useState(false);
+  const [requestChangesBusy, setRequestChangesBusy] = useState(false);
+  const [requestChangesError, setRequestChangesError] = useState<string | null>(null);
+  const [requestChangesConflict, setRequestChangesConflict] = useState(false);
+
+  const submitRequestChanges = useCallback(
+    (values: Record<string, string>) => {
+      if (!managerReview) return;
+      setRequestChangesBusy(true);
+      setRequestChangesError(null);
+      setRequestChangesConflict(false);
+      requestChangesOnOkrSetManagerReview(set.setId, {
+        expectedVersion: managerReview.rowVersion,
+        changeRequestNotes: values.notes || null,
+        idempotencyKey: newOkrWorkspaceIdempotencyKey(),
+      })
+        .then(() => {
+          setRequestChangesOpen(false);
+          load();
+        })
+        .catch((err) => {
+          setRequestChangesConflict(err instanceof OkrWorkspaceApiError && err.status === 409);
+          setRequestChangesError(err instanceof Error ? err.message : String(err));
+        })
+        .finally(() => setRequestChangesBusy(false));
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [managerReview, set.setId, load]
+  );
+
+  // "Carry forward" dialog (replaces `window.prompt` — same pass). Same
+  // reasoning as above: keeps the picked cycle + server error visible in
+  // the dialog on failure instead of routing through the page banner.
+  const [carryForwardOpen, setCarryForwardOpen] = useState(false);
+  const [carryForwardBusy, setCarryForwardBusy] = useState(false);
+  const [carryForwardError, setCarryForwardError] = useState<string | null>(null);
+  const [carryForwardConflict, setCarryForwardConflict] = useState(false);
+
+  const submitCarryForward = useCallback(
+    (targetCycleId: string) => {
+      setCarryForwardBusy(true);
+      setCarryForwardError(null);
+      setCarryForwardConflict(false);
+      carryForwardOkrSet(set.setId, { targetCycleId, idempotencyKey: newOkrWorkspaceIdempotencyKey() })
+        .then(() => {
+          setCarryForwardOpen(false);
+          setNotice(isPolish ? 'Zestaw przeniesiony na kolejny cykl.' : 'Set carried forward to the next cycle.');
+          load();
+        })
+        .catch((err) => {
+          setCarryForwardConflict(err instanceof OkrWorkspaceApiError && err.status === 409);
+          setCarryForwardError(err instanceof Error ? err.message : String(err));
+        })
+        .finally(() => setCarryForwardBusy(false));
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [set.setId, isPolish, load]
+  );
+
   const load = useCallback(() => {
     setError(null);
     Promise.all([listOkrSetReviews(set.setId), listObjectivesForSet(set.setId)])
@@ -124,6 +190,7 @@ export const OkrReviewReflectionView: React.FC<OkrReviewReflectionViewProps> = (
   const managerReviewSubmitGate = gateManagerReviewSubmit(set);
 
   return (
+    <>
     <div className="h-full overflow-auto px-4 py-4 space-y-4" data-testid="okr-review-reflection">
       {error ? (
         <div role="alert" className="flex items-start gap-2 rounded-lg border border-c-danger/30 bg-c-danger/10 px-3 py-2 text-[12px] text-c-text" data-testid="okr-review-error">
@@ -206,15 +273,9 @@ export const OkrReviewReflectionView: React.FC<OkrReviewReflectionViewProps> = (
             data-testid="okr-review-manager-request-changes"
             onClick={() => {
               if (!managerReview) return;
-              const notes = window.prompt(isPolish ? 'Uwagi do poprawek (opcjonalnie)' : 'Change-request notes (optional)') ?? undefined;
-              run(
-                'manager-request-changes',
-                requestChangesOnOkrSetManagerReview(set.setId, {
-                  expectedVersion: managerReview.rowVersion,
-                  changeRequestNotes: notes ?? null,
-                  idempotencyKey: newOkrWorkspaceIdempotencyKey(),
-                })
-              );
+              setRequestChangesError(null);
+              setRequestChangesConflict(false);
+              setRequestChangesOpen(true);
             }}
           >
             {isPolish ? 'Żądaj poprawek' : 'Request changes'}
@@ -350,14 +411,12 @@ export const OkrReviewReflectionView: React.FC<OkrReviewReflectionViewProps> = (
             title={carryForwardGate ? (isPolish ? carryForwardGate.pl : carryForwardGate.en) : undefined}
             data-testid="okr-review-carry-forward"
             onClick={() => {
-              const targetCycleId = window.prompt(isPolish ? 'Docelowy cykl (UUID) — wklej identyfikator' : 'Target cycle (UUID) — paste the id');
-              if (!targetCycleId) return;
-              run('carry-forward', carryForwardOkrSet(set.setId, { targetCycleId: targetCycleId.trim(), idempotencyKey: newOkrWorkspaceIdempotencyKey() }), () =>
-                setNotice(isPolish ? 'Zestaw przeniesiony na kolejny cykl.' : 'Set carried forward to the next cycle.')
-              );
+              setCarryForwardError(null);
+              setCarryForwardConflict(false);
+              setCarryForwardOpen(true);
             }}
           >
-            {pending === 'carry-forward' ? (isPolish ? 'Przenoszenie…' : 'Carrying forward…') : isPolish ? 'Przenieś na kolejny cykl' : 'Carry forward'}
+            {isPolish ? 'Przenieś na kolejny cykl' : 'Carry forward'}
           </button>
         </div>
         {closeGate ? <p className="mt-2 text-[11px] text-c-text-muted">{isPolish ? closeGate.pl : closeGate.en}</p> : null}
@@ -369,6 +428,32 @@ export const OkrReviewReflectionView: React.FC<OkrReviewReflectionViewProps> = (
         </p>
       </section>
     </div>
+
+    <OkrActionDialog
+      open={requestChangesOpen}
+      title={isPolish ? 'Żądaj poprawek' : 'Request changes'}
+      description={isPolish ? `Zestaw: ${set.title}` : `Set: ${set.title}`}
+      fields={[{ id: 'notes', label: { pl: 'Uwagi do poprawek', en: 'Change-request notes' }, required: false }]}
+      isPolish={isPolish}
+      onClose={() => (requestChangesBusy ? undefined : setRequestChangesOpen(false))}
+      onSubmit={submitRequestChanges}
+      submitLabel={isPolish ? 'Żądaj poprawek' : 'Request changes'}
+      busy={requestChangesBusy}
+      errorMessage={requestChangesError}
+      isConflict={requestChangesConflict}
+    />
+
+    <OkrCarryForwardDialog
+      open={carryForwardOpen}
+      programId={set.programId}
+      isPolish={isPolish}
+      onClose={() => (carryForwardBusy ? undefined : setCarryForwardOpen(false))}
+      onSubmit={submitCarryForward}
+      busy={carryForwardBusy}
+      errorMessage={carryForwardError}
+      isConflict={carryForwardConflict}
+    />
+    </>
   );
 };
 
