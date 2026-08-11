@@ -227,14 +227,14 @@ Exact-SHA verification after the implementation commit:
 The SHA of the acceptance-record commit is the Git commit containing this section and is reported
 in the final handoff. A commit cannot truthfully contain its own cryptographic SHA.
 
-## 2026-08-11 — reconstructed release-candidate checkpoint
+## 2026-08-11 — reconstructed release-candidate and demo deployment checkpoint
 
 - the original worktree Git pointer was broken and its local commit was unavailable from the
   remote; the source tree was preserved at
   `/Users/piotrwisniewski/Developer/consultify-ie-recovery-20260811-125704` with SHA-256 inventory;
 - a new repository was reconstructed from remote base
   `9d17cac11484a82f729a51044e30453e39fbcb02` on branch
-  `codex/initiatives-execution-final-recovery`;
+  `codex/initiatives-execution-final-candidate`;
 - unit: `59/59 files, 144/144 tests PASS`;
 - disposable local PostgreSQL realDB: `38/38 files, 88/88 tests PASS`;
 - Playwright full composition: `3/3 PASS`, including ACO 1–59 and WCAG 200%;
@@ -243,5 +243,8 @@ in the final handoff. A commit cannot truthfully contain its own cryptographic S
 - production build: `PASS`;
 - browser assertion text was aligned to user-facing labels and allocation-row identity; product
   commands and lifecycle contracts were not weakened;
-- final reconstructed commit SHA, exact-SHA deployment and logged-in demo acceptance remain
-  pending. Therefore IE-099 is `READY_FOR_REVIEW`, not `ACCEPTED`.
+- reconstructed code candidate `cd5f5f858390d82694926e130ea77faa97f855ad` was pushed and deployed
+  to Railway demo as `d4bc7cd4-46cd-435c-bdc0-3440995d26fa`; deployment status is `SUCCESS`,
+  `/ping` returns `200 pong`, and runtime variables `APP_BUILD_SHA` and `GIT_SHA` match the candidate;
+- logged-in manual demo acceptance remains `NOT VERIFIED`. Therefore IE-099 is
+  `READY_FOR_REVIEW`, not `ACCEPTED`.

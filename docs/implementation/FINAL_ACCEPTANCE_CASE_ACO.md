@@ -10,26 +10,26 @@ Epic: `IE-001`
 
 ### Fixed starting facts
 
-| Fact | Value |
-| --- | --- |
-| source | Assessment finding `ASM-F-ACO-001`, version 3 |
-| proposed title | Automated Changeover Optimization |
-| problem | median changeover 95 minutes; target hypothesis is not yet approved |
-| organization | `nordwerk-e2e` |
-| project | `operations-transformation-2027` |
-| governance | organization default Standard; project override Standard-Industrial |
-| Sponsor | Anna Sponsor |
-| Initiative Owner | Iwona Owner |
-| Project Leader | Paweł Leader |
-| Execution Manager | Ewa Manager |
-| Resource Manager | Roman Capacity |
-| Benefit/KPI Owner | Karolina Results |
-| Finance Owner | Filip Finance |
-| competing work | QMS 4.0 and Energy Reduction Programme |
-| scarce roles | Controls Engineer, Maintenance Lead, Data Analyst |
-| planned delivery structure | pilot + wave 1 + wave 2 inside one Execution Case |
-| intended KPI | median changeover minutes, baseline 95, target 60, weekly observation |
-| budget envelope | PLN 1,200,000; Finance remains source of truth |
+| Fact                       | Value                                                                 |
+| -------------------------- | --------------------------------------------------------------------- |
+| source                     | Assessment finding `ASM-F-ACO-001`, version 3                         |
+| proposed title             | Automated Changeover Optimization                                     |
+| problem                    | median changeover 95 minutes; target hypothesis is not yet approved   |
+| organization               | `nordwerk-e2e`                                                        |
+| project                    | `operations-transformation-2027`                                      |
+| governance                 | organization default Standard; project override Standard-Industrial   |
+| Sponsor                    | Anna Sponsor                                                          |
+| Initiative Owner           | Iwona Owner                                                           |
+| Project Leader             | Paweł Leader                                                          |
+| Execution Manager          | Ewa Manager                                                           |
+| Resource Manager           | Roman Capacity                                                        |
+| Benefit/KPI Owner          | Karolina Results                                                      |
+| Finance Owner              | Filip Finance                                                         |
+| competing work             | QMS 4.0 and Energy Reduction Programme                                |
+| scarce roles               | Controls Engineer, Maintenance Lead, Data Analyst                     |
+| planned delivery structure | pilot + wave 1 + wave 2 inside one Execution Case                     |
+| intended KPI               | median changeover minutes, baseline 95, target 60, weekly observation |
+| budget envelope            | PLN 1,200,000; Finance remains source of truth                        |
 
 Values are fixtures, not product defaults.
 
@@ -185,26 +185,27 @@ The Playwright case may be split into restartable phases, but one orchestrated a
 `PASS` below means the numbered browser/realDB action was executed in the current isolated fixture.
 Backend implementation alone is `READY_FOR_REVIEW`, never step `PASS`.
 
-| Steps | Current state | Evidence / limitation |
-| --- | --- | --- |
-| 1–18 | PASS | registered Card screenshot plus HTTP/realDB golden thread through `READY_FOR_DECISION`; browser journey exercised the mounted source/card flow |
-| 19–20 | PASS | `aco-browser-portfolio-scenario-step-19.png`, `aco-browser-portfolio-decision-step-20.png` |
-| 21–22 | PASS | `aco-browser-plan-scenario-steps-21-22.png` |
-| 23–27 | PASS | Capacity Scenario and three options screenshots; unknown values remain non-zero/non-green |
-| 28–31 | PASS | commitment, Schedule request/decision and frozen handoff screenshots |
-| 32–34 | PASS | handoff return/accept and single Execution Case screenshots |
-| 35–39 | PASS | canonical work, Decision blocker/follow-up and operational allocation screenshots |
-| 40–42 | PASS | `aco-browser-management-intervention-steps-40-42.png` |
-| 43 | PASS | governed capacity-option → Material Change → Plan resequence → Intervention apply/read-back; `aco-browser-plan-intervention-step-43.png` |
-| 44 | PASS | `aco-browser-report-definition-step-44.png`; exact project-scoped published Report Definition |
-| 45–47 | PASS | persisted Run, frozen/approved snapshot, linked follow-up and refresh-as-new-draft screenshots |
-| 48–50 | PASS | delivery Tasks, missing-evidence block and accepted Delivery evidence screenshots |
-| 51–55 | PASS | Results acceptance, authoritative 95→58 observations, Finance ref and Effectiveness Review screenshots |
-| 56–59 | PASS | Effectiveness snapshot, governed Closure, archive, read-only mutation/restore proof; `aco-browser-closure-archive-steps-56-59.png` |
+| Steps | Current state | Evidence / limitation                                                                                                                          |
+| ----- | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1–18  | PASS          | registered Card screenshot plus HTTP/realDB golden thread through `READY_FOR_DECISION`; browser journey exercised the mounted source/card flow |
+| 19–20 | PASS          | `aco-browser-portfolio-scenario-step-19.png`, `aco-browser-portfolio-decision-step-20.png`                                                     |
+| 21–22 | PASS          | `aco-browser-plan-scenario-steps-21-22.png`                                                                                                    |
+| 23–27 | PASS          | Capacity Scenario and three options screenshots; unknown values remain non-zero/non-green                                                      |
+| 28–31 | PASS          | commitment, Schedule request/decision and frozen handoff screenshots                                                                           |
+| 32–34 | PASS          | handoff return/accept and single Execution Case screenshots                                                                                    |
+| 35–39 | PASS          | canonical work, Decision blocker/follow-up and operational allocation screenshots                                                              |
+| 40–42 | PASS          | `aco-browser-management-intervention-steps-40-42.png`                                                                                          |
+| 43    | PASS          | governed capacity-option → Material Change → Plan resequence → Intervention apply/read-back; `aco-browser-plan-intervention-step-43.png`       |
+| 44    | PASS          | `aco-browser-report-definition-step-44.png`; exact project-scoped published Report Definition                                                  |
+| 45–47 | PASS          | persisted Run, frozen/approved snapshot, linked follow-up and refresh-as-new-draft screenshots                                                 |
+| 48–50 | PASS          | delivery Tasks, missing-evidence block and accepted Delivery evidence screenshots                                                              |
+| 51–55 | PASS          | Results acceptance, authoritative 95→58 observations, Finance ref and Effectiveness Review screenshots                                         |
+| 56–59 | PASS          | Effectiveness snapshot, governed Closure, archive, read-only mutation/restore proof; `aco-browser-closure-archive-steps-56-59.png`             |
 
 Current total persistent screenshot inventory: 25 ACO journey PNGs. The current Playwright result
 adds 12 narrow `390x844` and 12 matching 200% text-resize PNGs across all nine functions plus
 Source, Card and My Work. The full browser composition passes `3/3`. Product Owner acceptance was
 granted for the historical isolated candidate on 2026-08-11. IE-090 remains automated `ACCEPTED`.
-The reconstructed candidate must still receive an exact commit SHA, deployment of that SHA and
-manual logged-in demo acceptance before IE-099 can be closed.
+The reconstructed code candidate `cd5f5f858390d82694926e130ea77faa97f855ad` is deployed on Railway
+demo as `d4bc7cd4-46cd-435c-bdc0-3440995d26fa`. Manual logged-in demo acceptance remains
+`NOT VERIFIED` and is the final gate before IE-099 can be closed.

@@ -1,8 +1,8 @@
 # EPIC IE-001 — Initiative to Effectiveness, one governed golden thread
 
-Status: `AUTOMATED ACCEPTED — release candidate reconstruction in progress; manual demo NOT VERIFIED`
+Status: `AUTOMATED ACCEPTED — exact-SHA demo deployed; manual demo NOT VERIFIED`
 Owner: Product + Engineering
-Implementation branch: `codex/initiatives-execution-20260809`
+Implementation branch: `codex/initiatives-execution-final-candidate`
 Baseline: `635fd2d48d5a396c45bcb43b7f363535403ecf93`
 
 ## 1. Outcome
@@ -13,9 +13,11 @@ This Epic is complete only when [FINAL_ACCEPTANCE_CASE_ACO.md](FINAL_ACCEPTANCE_
 
 Automated implementation disposition (2026-08-11): `ACCEPTED`. The canonical backend, complete ACO
 1–59 browser journey and nine-function automated runtime audit are evidenced. The original isolated
-commit is unavailable from the remote, so the candidate is being reconstructed on
-`codex/initiatives-execution-final-recovery`. Manual acceptance on the logged-in demo, deployment of
-one exact reconstructed SHA and release disposition remain open gates.
+commit is unavailable from the remote, so the candidate was reconstructed on
+`codex/initiatives-execution-final-candidate`. The code candidate
+`cd5f5f858390d82694926e130ea77faa97f855ad` passed the strict Railway build and was deployed to
+`https://demo.consultify.ai` as deployment `d4bc7cd4-46cd-435c-bdc0-3440995d26fa`. Manual acceptance
+on the logged-in demo and release disposition remain open gates.
 
 ## 2. Scope
 
@@ -161,7 +163,7 @@ aggregate/audit/outbox/receipt mutation.
 The historical isolated candidate was accepted on 2026-08-11. During reconstruction the previously
 reported global TypeScript failures were corrected and repository-wide type-check and production
 build now pass. This does not turn historical evidence into proof of the reconstructed release:
-commit/SHA, exact-SHA deployment and manual logged-in demo acceptance are still required.
+manual logged-in demo acceptance is still required.
 
 Current verification evidence: full browser composition `3/3 PASS` covering Source/Card, ACO 1–59
 and the nine-function WCAG/responsive matrix; unit `59/59 files, 144/144 tests`; isolated sequential
