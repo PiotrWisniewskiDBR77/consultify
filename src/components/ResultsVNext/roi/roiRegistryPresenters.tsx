@@ -258,14 +258,13 @@ export function buildRoiCaseRowMenu(
      * (live Hub or dev-render harness) owns the actual API call/mock. */
     onTransition: (row: RoiCaseListItem, transitionId: RoiTransitionId) => void;
     /**
-     * Opens `RoiCaseModelWorkspace` (RN_G2_UI_SCOPE.md §G #12-14 —
-     * baseline/calculation-policy/assumptions/cost+benefit lines) for this
-     * case. Optional: `roiRegistryPresenters.tsx` is also used by the
-     * pre-existing dev-render QA harness for the registry alone, which does
-     * not need this action wired. ALWAYS enabled, even on a locked case —
-     * modeling is read-only-with-honest-reason from the inside (every
-     * sub-view there disables Add/Edit/Delete itself), never hidden at this
-     * entry point.
+     * Opens `RoiCaseFullTool` (the four-phase Build Case → Decision →
+     * Realize Value → Learn full tool, `RoiCaseFullTool.tsx`) for this case.
+     * Optional: `roiRegistryPresenters.tsx` is also used by the pre-existing
+     * dev-render QA harness for the registry alone, which does not need this
+     * action wired. ALWAYS enabled, even on a locked case — every phase is
+     * read-only-with-honest-reason from the inside (each sub-view disables
+     * Add/Edit/Delete itself), never hidden at this entry point.
      */
     onModel?: (row: RoiCaseListItem) => void;
   }
@@ -286,7 +285,7 @@ export function buildRoiCaseRowMenu(
         ? [
             {
               id: 'model',
-              label: isPolish ? 'Modeluj sprawę' : 'Model case',
+              label: isPolish ? 'Otwórz pełne narzędzie' : 'Open full tool',
               onClick: () => handlers.onModel!(row),
             },
           ]

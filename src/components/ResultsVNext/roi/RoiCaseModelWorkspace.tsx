@@ -1,51 +1,48 @@
 /**
- * RoiCaseModelWorkspace — RN-G2 §G #12-14, the ROI Case MODEL SETUP
- * pod-widok: Baseline + calculation policy (§G #12), Assumptions CRUD
- * (§G #13 first half), Cost lines + Benefit lines CRUD (§G #13 second
- * half / §G #14).
+ * RoiCaseModelWorkspace — the BUILD CASE phase of the ROI Case FULL TOOL
+ * (task brief: "Zorganizuj je jako cztery fazy — Build Case → Decision →
+ * Realize Value → Learn"). Originally RN-G2 §G #12-14 (Baseline +
+ * calculation policy, Assumptions CRUD, Cost lines + Benefit lines CRUD) —
+ * EXTENDED, not duplicated, with Scenarios + overrides and Calculation-run
+ * triggering (§C `roi.routes.ts` scenarios/overrides/calculation-runs
+ * groups), since both are genuinely part of building the case's economic
+ * model before it goes to Decision.
  *
- * PLACEMENT DECISION (per task brief — "wybierz i uzasadnij w komentarzu"):
- * a sub-view of the SELECTED case within the existing `/results/roi` route,
- * switched by local component state in `ResultsRoiHub.tsx` (triggered from
- * the case row's kebab "Model sprawy"/"Model case" action) — NOT a new
- * route. Reasons:
- *  1. RN_G2_UI_SCOPE.md §G Open Question #2 ("archetype/shell for full-tool
- *     screens") is explicitly UNRESOLVED — building a real
- *     `/results/roi/cases/:roiCaseId` route would silently pre-decide that
- *     question (klasa S vs L, `StandardArtifactShell` vs a new shell) for a
- *     package whose job is model-setup CRUD, not the full-tool archetype.
- *  2. `ResultsVNextRegistryShell` already supports exactly this shape
- *     without a route: the `moduleBar.breadcrumbs`/`breadcrumbCta` slot is
- *     documented FOR "embedded hubs" (§A) — a case-scoped sub-view nested
- *     inside the ROI registry's own screen is precisely that.
- *  3. Every one of the five sub-resources here is scoped to ONE already-
- *     selected case (`caseId` in every path) — there is no independent
- *     "list of baselines across cases" to justify a standalone registry
- *     route the way KPI Scorecards' "own route" decision was justified
- *     (§G Open Question #3 precedent, a DIFFERENT resource shape).
+ * PLACEMENT: a sub-view of the SELECTED case within the existing
+ * `/results/roi` route, switched by local component state in
+ * `ResultsRoiHub.tsx` — see that file's `modelCase`/`fullToolCase` state
+ * and `RoiCaseFullTool.tsx`'s header comment for the up-to-date placement
+ * rationale (RN_G2_UI_SCOPE.md §G Open Question #2 stays unresolved; this
+ * package does not silently pre-decide it).
  *
  * Data flow: the case itself (`RoiCaseListItem`) is passed in from the
  * already-loaded registry row — no redundant `GET /cases/:caseId` fetch.
- * Each of the four Menu 2 tabs below fetches its own sub-resource lazily on
- * first visit (mirrors `ResultsRoiHub.tsx`'s "All cases"/"Benefits
- * realization" lazy-per-tab convention) and a local fetch failure never
- * blanks the other tabs (RN_G2_UI_SCOPE.md §D, master plan §9 Gate 2).
+ * Each Menu 2 tab fetches its own sub-resource lazily on first visit and a
+ * local fetch failure never blanks the other tabs (RN_G2_UI_SCOPE.md §D).
  *
- * Lock semantics: ALL FIVE sub-resources share the exact same
- * `NON_EDITABLE_STATUSES` guard as the case itself (verified by reading
- * every `roi*Commands.ts` file — see `roiCaseDetailMappers.ts` header
- * comment) — so `isRoiCaseLocked(roiCase.status)` from
- * `roiRegistryMappers.ts` gates Add/Edit/Delete across every tab here, not
- * five separate re-derivations of the same server list.
+ * Lock semantics: every sub-resource here shares the exact same
+ * `NON_EDITABLE_STATUSES` guard as the case itself (baseline/policy/
+ * assumptions/cost+benefit lines verified in `roiCaseDetailMappers.ts`
+ * header comment; scenarios/overrides verified at
+ * `roiScenarioCommands.ts:75-77`; calculation-run creation instead uses its
+ * OWN narrower `RUNNABLE_STATUSES = {'modeling','ready_for_review'}`
+ * (`roiCalculationRunCommands.ts:349,385-390`) — NOT the same list, so the
+ * "New run" CTA locks on a different, narrower condition than the rest of
+ * this tab, computed separately below, not reusing `isRoiCaseLocked`.
+ *
+ * Menu 3: the phase-switcher chips (Build Case/Decision/Realize
+ * Value/Learn), built once by `RoiCasePhaseNav.tsx` and reused identically
+ * by the other three phase workspaces so the strip never drifts.
  */
 import { Plus } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 
-import type { StandardModuleTab, TableRow } from '@/components/standard';
+import type { RelationItem, StandardModuleTab, TableRow } from '@/components/standard';
 
 import { ResultsVNextRegistryShell } from '../ResultsVNextRegistryShell';
 import type { RoiCaseListItem } from './roiApi';
 import { isRoiCaseLocked, getRoiCaseLockInfo } from './roiRegistryMappers';
+import { roiEvidenceLinkPurposeLabel } from './roiCaseFullToolMappers';
 import {
   addRoiAssumption,
   addRoiBenefitLine,
@@ -95,13 +92,51 @@ import { RoiAssumptionFormModal } from './RoiAssumptionFormModal';
 import { RoiCostLineFormModal } from './RoiCostLineFormModal';
 import { RoiBenefitLineFormModal } from './RoiBenefitLineFormModal';
 import { RoiRemoveLineItemDialog } from './RoiRemoveLineItemDialog';
+import {
+  addRoiBenefitEvidenceLink,
+  addRoiScenario,
+  createRoiCalculationRun,
+  listRoiBenefitEvidenceLinks,
+  listRoiCalculationRuns,
+  listRoiScenarios,
+  removeRoiBenefitEvidenceLink,
+  removeRoiScenario,
+  removeRoiScenarioOverride,
+  setRoiScenarioOverride,
+  updateRoiScenario,
+  type AddRoiBenefitEvidenceLinkInput,
+  type AddRoiScenarioInput,
+  type RoiBenefitEvidenceLink,
+  type RoiCalculationRun,
+  type RoiScenario,
+  type RoiScenarioOverride,
+  type SetRoiScenarioOverrideInput,
+} from './roiCaseFullToolApi';
+import {
+  buildRoiCalculationRunColumns,
+  buildRoiCalculationRunPreview,
+  buildRoiCalculationRunRowMenu,
+  buildRoiScenarioColumns,
+  buildRoiScenarioPreview,
+  buildRoiScenarioRowMenu,
+  withRoiFullToolId,
+} from './roiCaseFullToolPresenters';
+import { RoiCalculationRunTriggerModal, RoiKpiEvidenceLinkFormModal, RoiScenarioFormModal, RoiScenarioOverrideFormModal } from './RoiBuildCaseModals';
+import { buildRoiCasePhaseChips, type RoiCasePhase } from './RoiCasePhaseNav';
 
-type ModelTab = 'settings' | 'assumptions' | 'cost-lines' | 'benefit-lines';
+type ModelTab = 'settings' | 'assumptions' | 'cost-lines' | 'benefit-lines' | 'scenarios' | 'calculation-runs';
+
+/** `RUNNABLE_STATUSES` for calculation-run creation — verbatim from
+ * `roiCalculationRunCommands.ts:349` — deliberately NOT
+ * `NON_EDITABLE_STATUSES`, see file header. */
+const ROI_CALC_RUN_RUNNABLE_STATUSES: readonly RoiCaseListItem['status'][] = ['modeling', 'ready_for_review'];
 
 export interface RoiCaseModelWorkspaceProps {
   roiCase: RoiCaseListItem;
   isPolish: boolean;
   onBack: () => void;
+  phase: RoiCasePhase;
+  onPhaseChange: (phase: RoiCasePhase) => void;
 }
 
 function withId<T extends object>(row: T, idField: keyof T): T & { id: string } {
@@ -118,11 +153,51 @@ interface WriteState {
 }
 const IDLE_WRITE: WriteState = { busy: false, error: null, isConflict: false };
 
-export const RoiCaseModelWorkspace: React.FC<RoiCaseModelWorkspaceProps> = ({ roiCase, isPolish, onBack }) => {
+export const RoiCaseModelWorkspace: React.FC<RoiCaseModelWorkspaceProps> = ({ roiCase, isPolish, onBack, phase, onPhaseChange }) => {
   const [tab, setTab] = useState<ModelTab>('settings');
   const locked = isRoiCaseLocked(roiCase.status);
   const lock = getRoiCaseLockInfo(roiCase.status);
   const lockReason = lock ? (isPolish ? lock.reason.pl : lock.reason.en) : undefined;
+  const phaseChips = buildRoiCasePhaseChips(isPolish);
+
+  // ── Scenarios (+ overrides) ──────────────────────────────────────────────
+  const [scenarios, setScenarios] = useState<RoiScenario[] | null>(null);
+  const [scenariosError, setScenariosError] = useState<string | null>(null);
+  const [scenariosLoading, setScenariosLoading] = useState(false);
+  const [selectedScenarioId, setSelectedScenarioId] = useState<string | null>(null);
+  const [scenarioOverrides, setScenarioOverrides] = useState<RoiScenarioOverride[] | null>(null);
+  const [scenarioForm, setScenarioForm] = useState<{ mode: 'create' | 'edit'; scenario: RoiScenario | null } | null>(null);
+  const [scenarioWrite, setScenarioWrite] = useState<WriteState>(IDLE_WRITE);
+  const [scenarioIdempotencyKey, setScenarioIdempotencyKey] = useState('');
+  const [removeScenario, setRemoveScenarioTarget] = useState<RoiScenario | null>(null);
+  const [overrideForm, setOverrideForm] = useState<RoiScenario | null>(null);
+
+  const loadScenarios = useCallback(() => {
+    setScenariosLoading(true);
+    setScenariosError(null);
+    listRoiScenarios(roiCase.caseId)
+      .then((rows) => setScenarios(rows.filter((s) => !s.deletedAt)))
+      .catch((err) => setScenariosError(err instanceof Error ? err.message : String(err)))
+      .finally(() => setScenariosLoading(false));
+  }, [roiCase.caseId]);
+
+  // ── Calculation runs (read history + trigger new) ────────────────────────
+  const [calcRuns, setCalcRuns] = useState<RoiCalculationRun[] | null>(null);
+  const [calcRunsError, setCalcRunsError] = useState<string | null>(null);
+  const [calcRunsLoading, setCalcRunsLoading] = useState(false);
+  const [selectedCalcRunId, setSelectedCalcRunId] = useState<string | null>(null);
+  const [calcRunTriggerOpen, setCalcRunTriggerOpen] = useState(false);
+  const [calcRunWrite, setCalcRunWrite] = useState<WriteState>(IDLE_WRITE);
+  const [calcRunIdempotencyKey, setCalcRunIdempotencyKey] = useState('');
+
+  const loadCalcRuns = useCallback(() => {
+    setCalcRunsLoading(true);
+    setCalcRunsError(null);
+    listRoiCalculationRuns(roiCase.caseId)
+      .then((rows) => setCalcRuns(rows))
+      .catch((err) => setCalcRunsError(err instanceof Error ? err.message : String(err)))
+      .finally(() => setCalcRunsLoading(false));
+  }, [roiCase.caseId]);
 
   // ── Settings (Baseline + Calculation policy) ──────────────────────────
   const [baseline, setBaseline] = useState<RoiBaseline | null | undefined>(undefined);
@@ -203,17 +278,79 @@ export const RoiCaseModelWorkspace: React.FC<RoiCaseModelWorkspaceProps> = ({ ro
       .finally(() => setBenefitLinesLoading(false));
   }, [roiCase.caseId]);
 
+  const conflictOf = (err: unknown) => err instanceof RoiApiError && err.status === 409;
+  const messageOf = (err: unknown) => (err instanceof Error ? err.message : String(err));
+
+  // ── KPI evidence links — nested under ONE selected benefit line ──────────
+  // (roi.routes.ts L1368-1467). Fetched lazily only when a benefit line is
+  // open, rendered via that line's `StandardPreview.relations` block
+  // (`roiCaseFullToolPresenters.tsx` pattern) — never a 7th top-level tab for
+  // a resource with no independent existence outside its parent line.
+  const [evidenceLinks, setEvidenceLinks] = useState<RoiBenefitEvidenceLink[] | null>(null);
+  const [evidenceLinksError, setEvidenceLinksError] = useState<string | null>(null);
+  const [evidenceLinkForm, setEvidenceLinkForm] = useState<RoiBenefitLine | null>(null);
+  const [evidenceLinkWrite, setEvidenceLinkWrite] = useState<WriteState>(IDLE_WRITE);
+
+  useEffect(() => {
+    if (!selectedBenefitLineId) {
+      setEvidenceLinks(null);
+      return;
+    }
+    let cancelled = false;
+    setEvidenceLinks(null);
+    setEvidenceLinksError(null);
+    listRoiBenefitEvidenceLinks(roiCase.caseId, selectedBenefitLineId)
+      .then((rows) => { if (!cancelled) setEvidenceLinks(rows); })
+      .catch((err) => { if (!cancelled) setEvidenceLinksError(err instanceof Error ? err.message : String(err)); });
+    return () => { cancelled = true; };
+  }, [roiCase.caseId, selectedBenefitLineId]);
+
+  const submitEvidenceLink = (values: AddRoiBenefitEvidenceLinkInput) => {
+    if (!evidenceLinkForm) return;
+    setEvidenceLinkWrite({ busy: true, error: null, isConflict: false });
+    addRoiBenefitEvidenceLink(roiCase.caseId, evidenceLinkForm.benefitLineId, { ...values, idempotencyKey: newRoiIdempotencyKey() })
+      .then((res) => {
+        setEvidenceLinks((prev) => [...(prev ?? []), res.link]);
+        setEvidenceLinkForm(null);
+      })
+      .catch((err) => setEvidenceLinkWrite({ busy: false, error: messageOf(err), isConflict: conflictOf(err) }))
+      .finally(() => setEvidenceLinkWrite((s) => ({ ...s, busy: false })));
+  };
+  const removeEvidenceLink = (benefitLine: RoiBenefitLine, link: RoiBenefitEvidenceLink) => {
+    removeRoiBenefitEvidenceLink(roiCase.caseId, benefitLine.benefitLineId, link.linkId, { expectedVersion: link.rowVersion, idempotencyKey: newRoiIdempotencyKey() })
+      .then(() => setEvidenceLinks((prev) => (prev ?? []).filter((l) => l.linkId !== link.linkId)))
+      .catch(() => {
+        /* Non-blocking, same rationale as `removeOverride` above — a failed
+         * remove leaves the link visible and the user can retry. */
+      });
+  };
+
   // Lazy per-tab fetch — a local failure never blanks the other three tabs.
   useEffect(() => {
     if (tab === 'settings' && baseline === undefined && !settingsLoading) loadSettings();
     if (tab === 'assumptions' && assumptions === null && !assumptionsLoading) loadAssumptions();
     if (tab === 'cost-lines' && costLines === null && !costLinesLoading) loadCostLines();
     if (tab === 'benefit-lines' && benefitLines === null && !benefitLinesLoading) loadBenefitLines();
+    if (tab === 'scenarios' && scenarios === null && !scenariosLoading) loadScenarios();
+    if (tab === 'calculation-runs' && calcRuns === null && !calcRunsLoading) loadCalcRuns();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab]);
 
-  const conflictOf = (err: unknown) => err instanceof RoiApiError && err.status === 409;
-  const messageOf = (err: unknown) => (err instanceof Error ? err.message : String(err));
+  // Overrides are nested under ONE selected scenario — fetched lazily only
+  // when a scenario is opened (same "no N+1 across the whole list" shape as
+  // `ResultsRoiHub.tsx`'s calc-run preview fetch).
+  useEffect(() => {
+    if (!selectedScenarioId) { setScenarioOverrides(null); return; }
+    // Overrides have no dedicated GET-list wrapper in `roiCaseFullToolApi.ts`
+    // by server design (no such route exists — only POST/DELETE on a
+    // scenario's overrides; the scenario's own GET response does not embed
+    // them either, per `roiEconomicModelTypes.ts` `RoiScenario` shape). This
+    // is a real, honest gap: the preview's `relations` block below renders
+    // whatever this component has accumulated CLIENT-SIDE this session
+    // (via `setRoiScenarioOverride`'s own response), never re-fetched from
+    // a list endpoint that does not exist. Documented, not silently guessed.
+    setScenarioOverrides((prev) => prev ?? []);
+  }, [selectedScenarioId]);
 
   // ── Settings write handlers ─────────────────────────────────────────────
   const openEditSettings = (kind: 'baseline' | 'calculation-policy') => {
@@ -402,11 +539,108 @@ export const RoiCaseModelWorkspace: React.FC<RoiCaseModelWorkspaceProps> = ({ ro
       .finally(() => setBenefitLineWrite((s) => ({ ...s, busy: false })));
   };
 
+  // ── Scenario write handlers ──────────────────────────────────────────────
+  const openCreateScenario = () => {
+    if (locked) return;
+    setScenarioWrite(IDLE_WRITE);
+    setScenarioIdempotencyKey(newRoiIdempotencyKey());
+    setScenarioForm({ mode: 'create', scenario: null });
+  };
+  const openEditScenario = (s: RoiScenario) => {
+    setScenarioWrite(IDLE_WRITE);
+    setScenarioIdempotencyKey(newRoiIdempotencyKey());
+    setScenarioForm({ mode: 'edit', scenario: s });
+  };
+  const submitScenario = (values: AddRoiScenarioInput) => {
+    if (!scenarioForm) return;
+    setScenarioWrite({ busy: true, error: null, isConflict: false });
+    const call =
+      scenarioForm.mode === 'create'
+        ? addRoiScenario(roiCase.caseId, { ...values, idempotencyKey: scenarioIdempotencyKey })
+        : updateRoiScenario(roiCase.caseId, scenarioForm.scenario!.scenarioId, {
+            label: values.label,
+            description: values.description,
+            expectedVersion: scenarioForm.scenario!.rowVersion,
+            idempotencyKey: scenarioIdempotencyKey,
+          });
+    call
+      .then((res) => {
+        setScenarios((prev) => {
+          const without = (prev ?? []).filter((s) => s.scenarioId !== res.scenario.scenarioId);
+          return [...without, res.scenario];
+        });
+        setSelectedScenarioId(res.scenario.scenarioId);
+        setScenarioForm(null);
+      })
+      .catch((err) => setScenarioWrite({ busy: false, error: messageOf(err), isConflict: conflictOf(err) }))
+      .finally(() => setScenarioWrite((s) => ({ ...s, busy: false })));
+  };
+  const submitRemoveScenario = (reason: string | null) => {
+    if (!removeScenario) return;
+    setScenarioWrite({ busy: true, error: null, isConflict: false });
+    removeRoiScenario(roiCase.caseId, removeScenario.scenarioId, { expectedVersion: removeScenario.rowVersion, reason, idempotencyKey: newRoiIdempotencyKey() })
+      .then(() => {
+        setScenarios((prev) => (prev ?? []).filter((s) => s.scenarioId !== removeScenario.scenarioId));
+        if (selectedScenarioId === removeScenario.scenarioId) setSelectedScenarioId(null);
+        setRemoveScenarioTarget(null);
+      })
+      .catch((err) => setScenarioWrite({ busy: false, error: messageOf(err), isConflict: conflictOf(err) }))
+      .finally(() => setScenarioWrite((s) => ({ ...s, busy: false })));
+  };
+  const overrideTargetOptions = (): { targetType: 'assumption' | 'cost_line' | 'benefit_line'; targetId: string; label: string }[] => [
+    ...(assumptions ?? []).map((a) => ({ targetType: 'assumption' as const, targetId: a.assumptionId, label: `${isPolish ? 'Założenie' : 'Assumption'}: ${a.label}` })),
+    ...(costLines ?? []).map((c) => ({ targetType: 'cost_line' as const, targetId: c.costLineId, label: `${isPolish ? 'Koszt' : 'Cost'}: ${c.label}` })),
+    ...(benefitLines ?? []).map((b) => ({ targetType: 'benefit_line' as const, targetId: b.benefitLineId, label: `${isPolish ? 'Korzyść' : 'Benefit'}: ${b.label}` })),
+  ];
+  const submitOverride = (values: Omit<SetRoiScenarioOverrideInput, 'expectedVersion'>) => {
+    if (!overrideForm) return;
+    setScenarioWrite({ busy: true, error: null, isConflict: false });
+    setRoiScenarioOverride(roiCase.caseId, overrideForm.scenarioId, { ...values, expectedVersion: overrideForm.rowVersion, idempotencyKey: newRoiIdempotencyKey() })
+      .then((res) => {
+        setScenarioOverrides((prev) => [...(prev ?? []).filter((o) => o.overrideId !== res.override.overrideId), res.override]);
+        setOverrideForm(null);
+      })
+      .catch((err) => setScenarioWrite({ busy: false, error: messageOf(err), isConflict: conflictOf(err) }))
+      .finally(() => setScenarioWrite((s) => ({ ...s, busy: false })));
+  };
+  const removeOverride = (scenario: RoiScenario, override: RoiScenarioOverride) => {
+    removeRoiScenarioOverride(roiCase.caseId, scenario.scenarioId, override.overrideId, { expectedVersion: scenario.rowVersion, idempotencyKey: newRoiIdempotencyKey() })
+      .then(() => setScenarioOverrides((prev) => (prev ?? []).filter((o) => o.overrideId !== override.overrideId)))
+      .catch(() => {
+        /* Non-blocking — a failed remove leaves the override visible; the
+         * user can retry. Preview-level relation clicks intentionally don't
+         * open a second confirmation dialog (RN-G2 keeps this action
+         * single-click, unlike top-level line-item removal). */
+      });
+  };
+
+  // ── Calculation run write handlers ───────────────────────────────────────
+  const calcRunRunnable = ROI_CALC_RUN_RUNNABLE_STATUSES.includes(roiCase.status);
+  const openTriggerCalcRun = () => {
+    if (!calcRunRunnable) return;
+    setCalcRunWrite(IDLE_WRITE);
+    setCalcRunIdempotencyKey(newRoiIdempotencyKey());
+    setCalcRunTriggerOpen(true);
+  };
+  const submitCalcRunTrigger = (values: { scenarioId?: string | null; reason?: string | null }) => {
+    setCalcRunWrite({ busy: true, error: null, isConflict: false });
+    createRoiCalculationRun(roiCase.caseId, { ...values, idempotencyKey: calcRunIdempotencyKey })
+      .then((res) => {
+        setCalcRuns((prev) => [res.run, ...(prev ?? [])]);
+        setSelectedCalcRunId(res.run.runId);
+        setCalcRunTriggerOpen(false);
+      })
+      .catch((err) => setCalcRunWrite({ busy: false, error: messageOf(err), isConflict: conflictOf(err) }))
+      .finally(() => setCalcRunWrite((s) => ({ ...s, busy: false })));
+  };
+
   const tabs: StandardModuleTab[] = [
     { id: 'settings', label: isPolish ? 'Baseline i polityka' : 'Baseline & policy' },
     { id: 'assumptions', label: isPolish ? 'Założenia' : 'Assumptions' },
     { id: 'cost-lines', label: isPolish ? 'Koszty' : 'Cost lines' },
     { id: 'benefit-lines', label: isPolish ? 'Korzyści' : 'Benefit lines' },
+    { id: 'scenarios', label: isPolish ? 'Scenariusze' : 'Scenarios' },
+    { id: 'calculation-runs', label: isPolish ? 'Przebiegi kalkulacji' : 'Calculation runs' },
   ];
 
   const breadcrumbs = [
@@ -450,6 +684,9 @@ export const RoiCaseModelWorkspace: React.FC<RoiCaseModelWorkspaceProps> = ({ ro
             showTabCounts: false,
             viewModes: ['table'],
             viewMode: 'table',
+            chips: phaseChips,
+            activeChip: phase,
+            onChipChange: (id) => onPhaseChange(id as RoiCasePhase),
             primaryCta: addCta(isPolish ? 'Nowe założenie' : 'New assumption', openCreateAssumption, 'roi-model-assumption-create-cta'),
           }}
           table={{
@@ -528,6 +765,9 @@ export const RoiCaseModelWorkspace: React.FC<RoiCaseModelWorkspaceProps> = ({ ro
             showTabCounts: false,
             viewModes: ['table'],
             viewMode: 'table',
+            chips: phaseChips,
+            activeChip: phase,
+            onChipChange: (id) => onPhaseChange(id as RoiCasePhase),
             primaryCta: addCta(isPolish ? 'Nowa pozycja kosztowa' : 'New cost line', openCreateCostLine, 'roi-model-cost-line-create-cta'),
           }}
           table={{
@@ -605,6 +845,9 @@ export const RoiCaseModelWorkspace: React.FC<RoiCaseModelWorkspaceProps> = ({ ro
             showTabCounts: false,
             viewModes: ['table'],
             viewMode: 'table',
+            chips: phaseChips,
+            activeChip: phase,
+            onChipChange: (id) => onPhaseChange(id as RoiCasePhase),
             primaryCta: addCta(isPolish ? 'Nowa pozycja korzyści' : 'New benefit line', openCreateBenefitLine, 'roi-model-benefit-line-create-cta'),
           }}
           table={{
@@ -639,7 +882,49 @@ export const RoiCaseModelWorkspace: React.FC<RoiCaseModelWorkspaceProps> = ({ ro
             },
             defaultSort: { columnId: 'updatedAt', direction: 'desc' },
           }}
-          preview={selected ? buildRoiBenefitLinePreview(selected, roiCase.status, isPolish, () => setSelectedBenefitLineId(null)) : null}
+          preview={
+            selected
+              ? {
+                  ...buildRoiBenefitLinePreview(selected, roiCase.status, isPolish, () => setSelectedBenefitLineId(null)),
+                  relations: (evidenceLinks ?? []).map(
+                    (l): RelationItem => ({
+                      id: l.linkId,
+                      label: `KPI ${l.kpiId} · ${roiEvidenceLinkPurposeLabel(l.purpose, isPolish)}`,
+                      type: 'roi-kpi-evidence-link',
+                      onClick: locked ? undefined : () => removeEvidenceLink(selected, l),
+                    })
+                  ),
+                  relationsEmptyLabel: evidenceLinksError
+                    ? isPolish
+                      ? `Błąd wczytywania dowodów: ${evidenceLinksError}`
+                      : `Error loading evidence: ${evidenceLinksError}`
+                    : isPolish
+                      ? 'Brak dowodów KPI dla tej pozycji korzyści'
+                      : 'No KPI evidence for this benefit line',
+                  actions: {
+                    informational: [
+                      {
+                        id: 'manage-evidence',
+                        variant: 'neutral',
+                        label: isPolish ? 'Dodaj dowód KPI' : 'Add KPI evidence',
+                        onClick: () => setEvidenceLinkForm(selected),
+                        disabled: locked,
+                      },
+                    ],
+                  },
+                }
+              : null
+          }
+        />
+        <RoiKpiEvidenceLinkFormModal
+          open={!!evidenceLinkForm}
+          benefitLineLabel={evidenceLinkForm?.label ?? ''}
+          onClose={() => (evidenceLinkWrite.busy ? undefined : setEvidenceLinkForm(null))}
+          onSubmit={submitEvidenceLink}
+          isPolish={isPolish}
+          busy={evidenceLinkWrite.busy}
+          errorMessage={evidenceLinkWrite.error}
+          isConflict={evidenceLinkWrite.isConflict}
         />
         <RoiBenefitLineFormModal
           open={!!benefitLineForm}
@@ -667,6 +952,164 @@ export const RoiCaseModelWorkspace: React.FC<RoiCaseModelWorkspaceProps> = ({ ro
     );
   }
 
+  if (tab === 'scenarios') {
+    const rows: TableRow[] = (scenarios ?? []).map((s) => withRoiFullToolId(s, 'scenarioId'));
+    const selected = (scenarios ?? []).find((s) => s.scenarioId === selectedScenarioId) ?? null;
+    return (
+      <>
+        <ResultsVNextRegistryShell
+          domain="roi"
+          moduleBar={{
+            breadcrumbs,
+            tabs,
+            activeTab: tab,
+            onTabChange: (id) => setTab(id as ModelTab),
+            showTabCounts: false,
+            viewModes: ['table'],
+            viewMode: 'table',
+            chips: phaseChips,
+            activeChip: phase,
+            onChipChange: (id) => onPhaseChange(id as RoiCasePhase),
+            primaryCta: addCta(isPolish ? 'Nowy scenariusz' : 'New scenario', openCreateScenario, 'roi-model-scenario-create-cta'),
+          }}
+          table={{
+            columns: buildRoiScenarioColumns(isPolish),
+            data: rows,
+            persistKey: 'results-vnext.roi-model.scenarios',
+            loading: scenariosLoading,
+            error: scenariosError,
+            onRetry: loadScenarios,
+            empty:
+              !scenariosLoading && !scenariosError && rows.length === 0
+                ? {
+                    title: isPolish ? 'Brak scenariuszy' : 'No scenarios yet',
+                    description: isPolish ? 'Ta sprawa nie ma jeszcze żadnych scenariuszy.' : 'This case has no scenarios yet.',
+                    actionLabel: locked ? undefined : isPolish ? 'Nowy scenariusz' : 'New scenario',
+                    onAction: locked ? undefined : openCreateScenario,
+                  }
+                : undefined,
+            selectedRowId: selectedScenarioId,
+            onRowClick: (row) => setSelectedScenarioId(String(row.scenarioId)),
+            rowMenu: (row) => buildRoiScenarioRowMenu(row as unknown as RoiScenario, roiCase.status, isPolish, {
+              onPreview: (r) => setSelectedScenarioId(r.scenarioId),
+              onEdit: locked ? undefined : (r) => openEditScenario(r),
+              onRemove: locked ? undefined : (r) => setRemoveScenarioTarget(r),
+            }),
+            defaultSort: { columnId: 'updatedAt', direction: 'desc' },
+          }}
+          preview={
+            selected
+              ? buildRoiScenarioPreview(selected, scenarioOverrides, roiCase.status, isPolish, {
+                  onClose: () => setSelectedScenarioId(null),
+                  onManageOverrides: locked ? undefined : () => setOverrideForm(selected),
+                  onRemoveOverride: locked ? undefined : (o) => removeOverride(selected, o),
+                })
+              : null
+          }
+        />
+        <RoiScenarioFormModal
+          open={!!scenarioForm}
+          mode={scenarioForm?.mode ?? 'create'}
+          scenario={scenarioForm?.scenario ?? null}
+          onClose={() => (scenarioWrite.busy ? undefined : setScenarioForm(null))}
+          onSubmit={submitScenario}
+          isPolish={isPolish}
+          busy={scenarioWrite.busy}
+          errorMessage={scenarioWrite.error}
+          isConflict={scenarioWrite.isConflict}
+        />
+        <RoiRemoveLineItemDialog
+          open={!!removeScenario}
+          itemLabel={removeScenario?.label ?? ''}
+          isPolish={isPolish}
+          onClose={() => (scenarioWrite.busy ? undefined : setRemoveScenarioTarget(null))}
+          onSubmit={submitRemoveScenario}
+          busy={scenarioWrite.busy}
+          errorMessage={scenarioWrite.error}
+          isConflict={scenarioWrite.isConflict}
+        />
+        <RoiScenarioOverrideFormModal
+          open={!!overrideForm}
+          scenarioLabel={overrideForm?.label ?? ''}
+          targetOptions={overrideTargetOptions()}
+          onClose={() => (scenarioWrite.busy ? undefined : setOverrideForm(null))}
+          onSubmit={submitOverride}
+          isPolish={isPolish}
+          busy={scenarioWrite.busy}
+          errorMessage={scenarioWrite.error}
+          isConflict={scenarioWrite.isConflict}
+        />
+      </>
+    );
+  }
+
+  if (tab === 'calculation-runs') {
+    const rows: TableRow[] = (calcRuns ?? []).map((r) => withRoiFullToolId(r, 'runId'));
+    const selected = (calcRuns ?? []).find((r) => r.runId === selectedCalcRunId) ?? null;
+    const runLockReason = isPolish
+      ? 'Nowy przebieg kalkulacji można uruchomić tylko w statusie „Modelowanie” lub „Gotowy do przeglądu”.'
+      : 'A new calculation run can only be started while the case is Modeling or Ready for review.';
+    return (
+      <>
+        <ResultsVNextRegistryShell
+          domain="roi"
+          moduleBar={{
+            breadcrumbs,
+            tabs,
+            activeTab: tab,
+            onTabChange: (id) => setTab(id as ModelTab),
+            showTabCounts: false,
+            viewModes: ['table'],
+            viewMode: 'table',
+            chips: phaseChips,
+            activeChip: phase,
+            onChipChange: (id) => onPhaseChange(id as RoiCasePhase),
+            primaryCta: {
+              label: isPolish ? 'Nowy przebieg' : 'New run',
+              icon: Plus,
+              onClick: openTriggerCalcRun,
+              testId: 'roi-model-calc-run-trigger-cta',
+              locked: !calcRunRunnable,
+              lockedReason: !calcRunRunnable ? runLockReason : undefined,
+            },
+          }}
+          table={{
+            columns: buildRoiCalculationRunColumns(isPolish),
+            data: rows,
+            persistKey: 'results-vnext.roi-model.calculation-runs',
+            loading: calcRunsLoading,
+            error: calcRunsError,
+            onRetry: loadCalcRuns,
+            empty:
+              !calcRunsLoading && !calcRunsError && rows.length === 0
+                ? {
+                    title: isPolish ? 'Brak przebiegów kalkulacji' : 'No calculation runs yet',
+                    description: isPolish ? 'Ta sprawa nie ma jeszcze żadnego przebiegu kalkulacji.' : 'This case has no calculation runs yet.',
+                    actionLabel: calcRunRunnable ? (isPolish ? 'Nowy przebieg' : 'New run') : undefined,
+                    onAction: calcRunRunnable ? openTriggerCalcRun : undefined,
+                  }
+                : undefined,
+            selectedRowId: selectedCalcRunId,
+            onRowClick: (row) => setSelectedCalcRunId(String(row.runId)),
+            rowMenu: (row) => buildRoiCalculationRunRowMenu(row as unknown as RoiCalculationRun, isPolish, (r) => setSelectedCalcRunId(r.runId)),
+            defaultSort: { columnId: 'completedAt', direction: 'desc' },
+          }}
+          preview={selected ? buildRoiCalculationRunPreview(selected, isPolish, () => setSelectedCalcRunId(null)) : null}
+        />
+        <RoiCalculationRunTriggerModal
+          open={calcRunTriggerOpen}
+          scenarios={scenarios ?? []}
+          onClose={() => (calcRunWrite.busy ? undefined : setCalcRunTriggerOpen(false))}
+          onSubmit={submitCalcRunTrigger}
+          isPolish={isPolish}
+          busy={calcRunWrite.busy}
+          errorMessage={calcRunWrite.error}
+          isConflict={calcRunWrite.isConflict}
+        />
+      </>
+    );
+  }
+
   // ── "settings" (default tab) — Baseline + Calculation policy 2-row table ─
   const settingsRows: TableRow[] =
     baseline === undefined || policy === undefined ? [] : buildRoiSettingsRows(baseline, policy).map((r) => withId(r, 'id'));
@@ -684,6 +1127,9 @@ export const RoiCaseModelWorkspace: React.FC<RoiCaseModelWorkspaceProps> = ({ ro
           showTabCounts: false,
           viewModes: ['table'],
           viewMode: 'table',
+          chips: phaseChips,
+          activeChip: phase,
+          onChipChange: (id) => onPhaseChange(id as RoiCasePhase),
         }}
         table={{
           columns: buildRoiSettingsColumns(isPolish),
