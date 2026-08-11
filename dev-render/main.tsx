@@ -133,6 +133,7 @@ const ExecutionExportPrezentacjaScreen = React.lazy(
   () => import('./screens/execution-export-prezentacja')
 );
 const FinanceValuePanelsScreen = React.lazy(() => import('./screens/finance-value-panels'));
+const FinanceModelWorkspaceScreen = React.lazy(() => import('./screens/finance-model-workspace'));
 const GenDeckContentHintsScreen = React.lazy(() => import('./screens/gen-deck-content-hints'));
 const GenExcelTemplatesTabScreen = React.lazy(() => import('./screens/gen-excel-templates-tab'));
 const GenWordContentHintsScreen = React.lazy(() => import('./screens/gen-word-content-hints'));
@@ -594,6 +595,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'Section B — M16 ValueOffice + DriverPlanner: real-data wiring, POPULATED vs EMPTY (&panel=value|driver &state=populated|empty)',
     render: () => <FinanceValuePanelsScreen />,
+  },
+  'finance-model-workspace': {
+    label:
+      'PKG_M — REAL <FinancialModelWorkspace> (Models detail, OWN-FIN-011/016/018 evidence) — &status=draft|approved &name=<string>',
+    render: () => <FinanceModelWorkspaceScreen />,
   },
   'execution-change-signals': {
     label:

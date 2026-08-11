@@ -213,6 +213,19 @@
         "--strictPort"
       ],
       "port": 3500
+    },
+    {
+      "name": "fv3p-m-inventory",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "vite",
+        "--config",
+        "dev-render/vite.config.ts",
+        "--port",
+        "58021",
+        "--strictPort"
+      ],
+      "port": 58021
     }
   ]
 }
