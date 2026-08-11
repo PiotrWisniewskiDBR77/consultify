@@ -198,7 +198,9 @@ acceptance record below.
 
 - Product Owner accepted the complete Initiatives + Execution candidate after the documented
   unit, realDB, browser, UI/UX, responsive, accessibility and authorization evidence passed;
-- IE-010 through IE-091 and IE-099 are `ACCEPTED` in the task register;
+- IE-010 through IE-091 were accepted for the historical isolated candidate. IE-099 for the
+  reconstructed deployed candidate remains `READY_FOR_REVIEW` until logged-in manual demo
+  acceptance is recorded;
 - six global TypeScript errors in unrelated AIChat, Document Studio and Presentations paths are
   explicitly excluded from the Initiatives/Execution acceptance gate; no error points to the
   accepted module scope, and the unrelated errors remain unresolved;
@@ -248,3 +250,26 @@ in the final handoff. A commit cannot truthfully contain its own cryptographic S
   `/ping` returns `200 pong`, and runtime variables `APP_BUILD_SHA` and `GIT_SHA` match the candidate;
 - logged-in manual demo acceptance remains `NOT VERIFIED`. Therefore IE-099 is
   `READY_FOR_REVIEW`, not `ACCEPTED`.
+
+## 2026-08-11 — final release-record deployment and rollback evidence
+
+- final branch: `codex/initiatives-execution-final-candidate`; the SHA of the release-record commit
+  is the Git commit containing this section and is reported with the active Railway deployment in
+  the final handoff because a commit cannot truthfully contain its own cryptographic SHA;
+- the active Railway demo deployment has status `SUCCESS` and image digest
+  `sha256:a1f02d173251e62fb5705ec04da6b6ab3a053e04a535a06f4d046ea1354c8791`;
+- runtime variables `APP_BUILD_BRANCH`, `APP_BUILD_SHA` and `GIT_SHA` point to that branch and
+  release-record SHA; `https://demo.consultify.ai/ping` returns `200 pong`;
+- startup readback confirms the PostgreSQL pool, schema and all 458 migrations are ready before
+  traffic is served;
+- previous healthy code-candidate deployment `d4bc7cd4-46cd-435c-bdc0-3440995d26fa` is retained in
+  Railway deployment history with the same built image digest. It is the immediate runtime-image
+  rollback target if the final documentation-only release record must be reverted;
+- rollback is forward-only: stop new writes or cohort expansion, redeploy the last proven image,
+  retain canonical data/audit/outbox/receipts, reconcile affected IDs, and use a compensating
+  migration if schema correction is required. Destructive down-migration and database deletion are
+  prohibited;
+- rollback has not been executed against demo because doing so would deliberately interrupt the
+  healthy accepted candidate. The availability of the prior image and procedure is verified;
+  measured RPO/RTO and a live rollback drill remain `NOT VERIFIED` and require release-owner
+  authorization.
