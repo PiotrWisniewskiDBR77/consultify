@@ -857,4 +857,90 @@ suite('nodeRunService — canonical NodeRun against a real PostgreSQL (doc 04 §
       await teardown(fixture);
     }
   }, 90_000);
+
+  // =========================================================================
+  // 10. getLatestNodeRunForNode — Stream A's runLifecycleService.retryNode/
+  //     advanceRun primitive. A node with MULTIPLE NodeRun rows (a manual
+  //     retry after FAILED_TERMINAL) must report the newest one, never the
+  //     first, and a node that never ran must report null — not throw.
+  // =========================================================================
+  it('getLatestNodeRunForNode returns null for a node that never ran, and the NEWEST row once a node has several (retry) NodeRuns', async () => {
+    const fixture = await seedBoundRun('latest-for-node');
+    try {
+      const neverRan = await nodeRunService.getLatestNodeRunForNode(fixture.runId, 'n1', fixture.actorId);
+      expect(neverRan).toBeNull();
+
+      const first = await nodeRunService.createNodeRun(
+        {
+          caseId: fixture.caseId,
+          runId: fixture.runId,
+          nodeId: 'n1',
+          nodeVersionRef: 'v1',
+          idempotencyKey: `idem-first-${randomUUID()}`,
+          initialStatus: 'READY',
+        },
+        fixture.actorId
+      );
+
+      const latestAfterFirst = await nodeRunService.getLatestNodeRunForNode(
+        fixture.runId,
+        'n1',
+        fixture.actorId
+      );
+      expect(latestAfterFirst?.nodeRunId).toBe(first.nodeRunId);
+
+      // Drive the first NodeRun to FAILED_TERMINAL (budget of 1, one failed
+      // attempt) so a second, manual-retry NodeRun for the SAME node is a
+      // realistic fixture, not an artificial second row.
+      const claim = await nodeRunService.claimNodeRun(first.nodeRunId, { leaseMs: 60_000 });
+      expect(claim.outcome).toBe('claimed');
+      if (claim.outcome !== 'claimed') throw new Error('unreachable');
+      const started = await nodeRunService.startNodeRunAttempt(
+        first.nodeRunId,
+        { leaseOwner: claim.leaseOwner, fencingToken: claim.fencingToken, timeoutMs: 60_000 },
+        claim.nodeRun.version
+      );
+      const completed = await nodeRunService.completeNodeRunAttempt(
+        first.nodeRunId,
+        {
+          attemptId: started.attempt.attemptId,
+          leaseOwner: claim.leaseOwner,
+          fencingToken: claim.fencingToken,
+          outcome: 'FAILED_TERMINAL',
+        },
+        started.nodeRun.version
+      );
+      expect(completed.nodeRun.status).toBe('FAILED_TERMINAL');
+
+      // A manual retry: a brand-new NodeRun row for the SAME node_id, minted
+      // with a fresh idempotency key (this directory's own precedent for a
+      // human-authorized retry, distinct from the automatic retry budget).
+      const second = await nodeRunService.createNodeRun(
+        {
+          caseId: fixture.caseId,
+          runId: fixture.runId,
+          nodeId: 'n1',
+          nodeVersionRef: 'v1',
+          idempotencyKey: `idem-retry-${randomUUID()}`,
+          initialStatus: 'READY',
+        },
+        fixture.actorId
+      );
+      expect(second.nodeRunId).not.toBe(first.nodeRunId);
+
+      const latestAfterRetry = await nodeRunService.getLatestNodeRunForNode(
+        fixture.runId,
+        'n1',
+        fixture.actorId
+      );
+      expect(latestAfterRetry?.nodeRunId).toBe(second.nodeRunId);
+      expect(latestAfterRetry?.status).toBe('READY');
+
+      // A different node_id in the same Run must not leak into the result.
+      const otherNode = await nodeRunService.getLatestNodeRunForNode(fixture.runId, 'n2', fixture.actorId);
+      expect(otherNode).toBeNull();
+    } finally {
+      await teardown(fixture);
+    }
+  }, 90_000);
 });

@@ -748,7 +748,24 @@ export async function createProcessDefinition(input: {
   });
 }
 
-/** CW-RT-014, CW-GR-029. Plain read, no lock. */
+/**
+ * CW-RT-014, CW-GR-029. Plain read, no lock.
+ *
+ * CW-SEC-ENUM-PLAYS-01 fix: `row.organization_id` here is a FOREIGN,
+ * caller-supplied-id-derived value (this is a by-id read — the id is
+ * attacker-controlled, unlike e.g. createProcessVersionDraft's
+ * processDefinitionId path where the actor is asserting THEIR OWN org
+ * membership against a resource they are about to act on inside an
+ * already-org-scoped flow). A non-member actor probing a real cross-tenant
+ * id must be indistinguishable from one probing an id that does not exist
+ * at all — same posture as
+ * caseWorkspaceAuthContext.requireCaseAccess's `case_access_denied` collapse
+ * and migrationReadinessService.getQuarantinedLegacyRecord's identical
+ * try/catch -> return null. Only CaseWorkspaceAuthError (the "actor has no
+ * standing here" signal) is swallowed into a null; any other error (a
+ * genuinely broken read) still propagates and must never be reported as
+ * "not found".
+ */
 export async function getProcessDefinition(
   processDefinitionId: string,
   actorUserId: string
@@ -759,7 +776,12 @@ export async function getProcessDefinition(
     [requireNonBlank(processDefinitionId, 'process_definition_id_required')]
   );
   if (!row) return null;
-  await requireOrgMember(actor, row.organization_id);
+  try {
+    await requireOrgMember(actor, row.organization_id);
+  } catch (err) {
+    if (err instanceof CaseWorkspaceAuthError) return null;
+    throw err;
+  }
   return mapDefinitionRow(row);
 }
 
@@ -1078,7 +1100,20 @@ export async function updateProcessVersionDraft(
   });
 }
 
-/** CW-RT-014, CW-GR-029. Plain read, no lock. */
+/**
+ * CW-RT-014, CW-GR-029. Plain read, no lock.
+ *
+ * CW-SEC-ENUM-PLAYS-01 fix: same posture as getProcessDefinition above —
+ * `definitionRow.organization_id` is reached via a caller-supplied
+ * processVersionId, so a non-member actor on a real cross-tenant version
+ * must collapse to the same null (-> 404 "not found") a nonexistent
+ * processVersionId already produces, not a distinguishable
+ * CaseWorkspaceAuthError. The `!definitionRow` branch just above is
+ * deliberately NOT touched by this: an orphan process_versions row with no
+ * matching process_definitions row is a genuine data-integrity anomaly, not
+ * an authorization denial, and must keep propagating as an error rather
+ * than silently reporting "not found".
+ */
 export async function getProcessVersion(
   processVersionId: string,
   actorUserId: string
@@ -1094,7 +1129,12 @@ export async function getProcessVersion(
     [row.process_definition_id]
   );
   if (!definitionRow) throw new Error('process_definition_not_found');
-  await requireOrgMember(actor, definitionRow.organization_id);
+  try {
+    await requireOrgMember(actor, definitionRow.organization_id);
+  } catch (err) {
+    if (err instanceof CaseWorkspaceAuthError) return null;
+    throw err;
+  }
   return mapVersionRow(row);
 }
 

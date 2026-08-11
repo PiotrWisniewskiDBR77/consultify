@@ -1854,6 +1854,21 @@ if (startServer && shouldStartHttpServer) {
       logger.warn('[Server] Notification outbox drain not started:', err?.message);
     }
 
+    // Case Workspace outbox drain — same reason as the notification drain
+    // directly above, and it was missing entirely: every row committed to
+    // case_workspace_event_outbox sat there forever in a real deployment
+    // because nothing called the worker outside its own tests, so no
+    // subscribeToOutboxDelivery consumer ever ran. The transactional write
+    // side was correct; only the delivery side was never started.
+    try {
+      const { startCaseWorkspaceOutboxWorker } = await import(
+        './services/caseWorkspace/outboxWorker.js'
+      );
+      startCaseWorkspaceOutboxWorker();
+    } catch (err: any) {
+      logger.warn('[Server] Case Workspace outbox worker not started:', err?.message);
+    }
+
     // EXE-09: closure→Results/Finance delivery receipt reconciliation sweep.
     // Opt-OUT (on by default) — retries any closure_delivery_receipts row
     // whose Results/Finance leg is still PENDING/FAILED, so a failed or

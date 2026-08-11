@@ -1,7 +1,7 @@
 # My Work Table Surface Contract v1
 
-Status: **CLOSED / NORMATIVE**  
-Data: 2026-08-05  
+Status: **CLOSED / NORMATIVE**
+Data: 2026-08-05
 Zakres: web/desktop; tabela, preview, kebab, menu kontekstowe prawego kliknięcia oraz Menu 1/2/3.
 
 ## 0. Pierwszeństwo i reguła kompletności

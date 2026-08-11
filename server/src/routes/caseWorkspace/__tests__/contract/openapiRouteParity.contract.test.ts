@@ -129,19 +129,22 @@ describe('CONTRACT — OpenAPI ↔ mounted router parity', () => {
     expect(declaredNotMounted.sort()).toEqual([...EXTERNALLY_MOUNTED_OPERATIONS].sort());
   });
 
-  it('the router mounts 110 operations and the spec declares those plus the 1 external mount', () => {
+  it('the router mounts 125 operations and the spec declares those plus the 1 external mount', () => {
     // Pinned deliberately: a new route added without a spec entry (or the
     // reverse) must fail loudly here, not drift silently. This pin has already
     // earned its keep once — it caught `intake.routes.ts` (3 operations, added
     // by a parallel stream after the first 106 were transcribed) before those
-    // endpoints reached the spec. Bumped from 109 to 110 for
-    // `POST /cases/{caseId}/light-start` (lightStart.routes.ts, now mounted
-    // here and now documented). The spec's count is 1 higher than the
+    // endpoints reached the spec. Bumped from 110 to 125 for the 14 Run
+    // lifecycle operations `runLifecycle.routes.ts` mounts (createRun,
+    // listRunsForCase, getRun, startRun, pauseRun, resumeRun, cancelRun,
+    // advanceRun, failRun, recordRunOutcome, compensateRun, retryNode,
+    // recordNodeCompensationOutcome, provideNodeInput — now documented; see
+    // the "Run lifecycle" tag). The spec's count is 1 higher than the
     // router's because it ALSO declares `POST /{source}/deliveries`, which
     // this router deliberately does not mount (see EXTERNALLY_MOUNTED_OPERATIONS).
-    expect(mounted.length).toBe(110);
+    expect(mounted.length).toBe(125);
     expect(declared.length).toBe(mounted.length + EXTERNALLY_MOUNTED_OPERATIONS.length);
-    expect(declared.length).toBe(111);
+    expect(declared.length).toBe(126);
   });
 
   it('every $ref in the spec resolves to a component that exists', () => {
@@ -190,7 +193,7 @@ describe('CONTRACT — OpenAPI ↔ mounted router parity', () => {
         if (item[method]?.operationId) ids.push(item[method].operationId);
       }
     }
-    expect(ids.length).toBe(111);
-    expect(new Set(ids).size).toBe(111);
+    expect(ids.length).toBe(126);
+    expect(new Set(ids).size).toBe(126);
   });
 });

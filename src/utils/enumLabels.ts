@@ -470,3 +470,104 @@ export function measurementConfidenceLabel(
   if (!key) return '';
   return pick(MEASUREMENT_CONFIDENCE_LABELS, key, isPolish) ?? humanizeEnum(key);
 }
+
+/**
+ * Stan Run (`runLifecycleService.ts` — §4.4 czternastowartościowa maszyna
+ * stanów, verbatim z listy `RunStatus`). Dopisane dla pakietu B3 (komendy
+ * mutujące UI Realizacji — start/wstrzymaj/wznów/anuluj przebieg).
+ */
+const RUN_STATUS_LABELS: Record<string, Bilingual> = {
+  CREATED: { en: 'Created, not started', pl: 'Utworzony, jeszcze nie wystartował' },
+  VALIDATING: { en: 'Checking before start', pl: 'Sprawdzanie przed startem' },
+  QUEUED: { en: 'Queued to start', pl: 'W kolejce do startu' },
+  RUNNING: { en: 'Running', pl: 'W toku' },
+  PAUSED: { en: 'Paused', pl: 'Wstrzymany' },
+  WAITING: { en: 'Waiting for a step', pl: 'Czeka na krok' },
+  BLOCKED: { en: 'Blocked', pl: 'Zablokowany' },
+  RETRY_SCHEDULED: { en: 'Retry scheduled', pl: 'Zaplanowano ponowienie' },
+  COMPLETED: { en: 'Completed', pl: 'Zakończony' },
+  COMPLETED_WITH_WARNINGS: {
+    en: 'Completed with warnings',
+    pl: 'Zakończony z zastrzeżeniami',
+  },
+  FAILED: { en: 'Failed', pl: 'Nieudany' },
+  CANCELLED: { en: 'Cancelled', pl: 'Anulowany' },
+  COMPENSATING: { en: 'Reversing effects', pl: 'Cofanie skutków' },
+  COMPENSATED: { en: 'Effects reversed', pl: 'Skutki cofnięte' },
+};
+
+export function runStatusLabel(raw: string | null | undefined, isPolish: boolean): string {
+  const key = String(raw ?? '')
+    .trim()
+    .toUpperCase();
+  if (!key) return '';
+  return pick(RUN_STATUS_LABELS, key, isPolish) ?? humanizeEnum(key);
+}
+
+/** Wynik Run (`RunOutcomeStatus` — „technical completion is separate from
+ *  outcomeStatus", verbatim z `runLifecycleService.ts`). */
+const RUN_OUTCOME_STATUS_LABELS: Record<string, Bilingual> = {
+  PENDING_REVIEW: { en: 'Outcome not reviewed yet', pl: 'Wynik jeszcze nie oceniony' },
+  ACCEPTED: { en: 'Outcome accepted', pl: 'Wynik zaakceptowany' },
+  REJECTED: { en: 'Outcome rejected', pl: 'Wynik odrzucony' },
+  PARTIALLY_ACCEPTED: { en: 'Outcome partially accepted', pl: 'Wynik częściowo zaakceptowany' },
+  NOT_APPLICABLE: { en: 'Not applicable', pl: 'Nie dotyczy' },
+};
+
+export function runOutcomeStatusLabel(raw: string | null | undefined, isPolish: boolean): string {
+  const key = String(raw ?? '')
+    .trim()
+    .toUpperCase();
+  if (!key) return '';
+  return pick(RUN_OUTCOME_STATUS_LABELS, key, isPolish) ?? humanizeEnum(key);
+}
+
+/**
+ * Stan otwarcia rezultatu (`ArtifactLinkOpenState` — `GET
+ * /artifact-links/:linkId/open`, pakiet B5/C4: „Deliverable Open/Return").
+ * Cztery jawne stany, żeby żaden nie był ślepą uliczką: STALE nadal da się
+ * otworzyć (przypięta rewizja jest starsza), UNAVAILABLE i DELETED — nie.
+ */
+const ARTIFACT_LINK_OPEN_STATE_LABELS: Record<string, Bilingual> = {
+  AVAILABLE: { en: 'Available', pl: 'Dostępny' },
+  STALE: { en: 'Pinned revision is older', pl: 'Przypięta rewizja jest starsza' },
+  UNAVAILABLE: { en: 'Source confirmed gone', pl: 'Moduł źródłowy potwierdził zniknięcie' },
+  DELETED: { en: 'Unlinked from the Case', pl: 'Odpięty od zlecenia' },
+};
+
+export function artifactLinkOpenStateLabel(raw: string | null | undefined, isPolish: boolean): string {
+  const key = String(raw ?? '')
+    .trim()
+    .toUpperCase();
+  if (!key) return '';
+  return pick(ARTIFACT_LINK_OPEN_STATE_LABELS, key, isPolish) ?? humanizeEnum(key);
+}
+
+/**
+ * Grupa Rezultatów, do której należy powiązanie (`ArtifactLinkResultsGroup`
+ * — `resolveArtifactLinkOpen`'s `returnContext.resultsGroup`, doc 02 §7's
+ * pięć grup Rezultatów). Używane WYŁĄCZNIE do uczciwego komunikatu powrotu
+ * („wróciłeś do: …") — sama nawigacja wraca po `linkId`/zaznaczeniu, nie po
+ * tej grupie.
+ */
+const ARTIFACT_LINK_RESULTS_GROUP_LABELS: Record<string, Bilingual> = {
+  KEY_FINDINGS_AND_RECOMMENDATIONS: {
+    en: 'Key findings and recommendations',
+    pl: 'Kluczowe wnioski i rekomendacje',
+  },
+  DECISIONS: { en: 'Decisions', pl: 'Decyzje' },
+  NATIVE_DELIVERABLES: { en: 'Native deliverables', pl: 'Rezultaty' },
+  EFFECT_AND_VALUE: { en: 'Effect and value', pl: 'Efekt i wartość' },
+  EVIDENCE_AND_LINEAGE: { en: 'Evidence and lineage', pl: 'Dowody i pochodzenie' },
+};
+
+export function artifactLinkResultsGroupLabel(
+  raw: string | null | undefined,
+  isPolish: boolean
+): string {
+  const key = String(raw ?? '')
+    .trim()
+    .toUpperCase();
+  if (!key) return '';
+  return pick(ARTIFACT_LINK_RESULTS_GROUP_LABELS, key, isPolish) ?? humanizeEnum(key);
+}

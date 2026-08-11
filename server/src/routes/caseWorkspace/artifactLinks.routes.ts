@@ -122,6 +122,37 @@ router.get(
   })
 );
 
+// GET /artifact-links/:linkId/open — resolveArtifactLinkOpen (CW-P09 packet
+// B5, closes SCOPE_ADJUDICATION.md Golden Case item 12's PARTIAL:
+// "opening it in the module" / "returning to the Case" had no
+// case-workspace API call to back it). Resolves the canonical deep-link
+// target (artifactType/artifactId/artifactRevision) plus an explicit
+// AVAILABLE/STALE/UNAVAILABLE/DELETED state and a Case-side return context
+// (caseId + casePhase + resultsGroup, doc 03 §5's "same Case phase and
+// selected step"), or 404s — with the SAME code used for a missing linkId —
+// when the actor's Case access does not cover this link (SEC-009: cross-
+// tenant must stay indistinguishable from nonexistent; see
+// artifactLinkService.ts's ArtifactLinkOpenState doc comment).
+router.get(
+  '/artifact-links/:linkId/open',
+  caseWorkspaceHandler(async (req, res, actor) => {
+    const params = parseParams(linkIdParams, req.params);
+    // Defense-in-depth pass, same convention as every other by-id route in
+    // this file (see this file's "RE-WIRE AFTER STREAM A MERGES" header
+    // note) — svc.resolveArtifactLinkOpen() re-does the same access check
+    // internally via getArtifactLink().
+    await requireCaseAccessForLink(actor, params.linkId);
+    const resolution = await svc.resolveArtifactLinkOpen(params.linkId, actor.actorUserId);
+    if (!resolution) {
+      // Reachable only if the link was concurrently unlinked/access-revoked
+      // between the two checks above — same 404 code as every other
+      // not-found/inaccessible linkId in this file, per SEC-009.
+      throw toCaseWorkspaceAppError(new Error('artifact_link_not_found'), actor.correlationId);
+    }
+    res.status(200).json({ data: resolution });
+  })
+);
+
 // POST /artifact-links/:linkId/pin — pinArtifactRevision
 const pinBody = z.object({
   revision: z.string().trim().min(1),

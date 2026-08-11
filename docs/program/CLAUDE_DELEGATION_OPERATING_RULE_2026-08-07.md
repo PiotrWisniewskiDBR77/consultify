@@ -1,7 +1,7 @@
 # Zasada oszczędnej delegacji Claude — 7–12 sierpnia 2026
 
-**Status:** nadrzędna reguła wykonawcza dla prac Consultify przez najbliższe 6 dni.  
-**Właściciel:** Codex jako CTO i Release Owner.  
+**Status:** nadrzędna reguła wykonawcza dla prac Consultify przez najbliższe 6 dni.
+**Właściciel:** Codex jako CTO i Release Owner.
 **Preferowany wykonawca dużych prac:** Claude Sonnet 5.0; jeżeli nie jest dostępny w danym środowisku, najbliższy dostępny model Sonnet/Claude o porównywalnym koszcie.
 
 ## 1. Podział odpowiedzialności
@@ -76,4 +76,3 @@ Codex może sam wykonać większy fragment tylko gdy:
 - zmiana dotyczy konfliktu integracyjnego, którego agent nie może bezpiecznie rozwiązać w shared worktree.
 
 Wyjątek musi zostać odnotowany w aktualizacji pracy wraz z powodem.
-

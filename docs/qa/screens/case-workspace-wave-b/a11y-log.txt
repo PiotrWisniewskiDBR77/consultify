@@ -1,0 +1,13 @@
+=== ZOOM 200% ===
+zoom200: innerWidth=1280 scrollWidth=1280 pageOverflowX=0
+=== REDUCED MOTION ===
+reduced-motion: elements with nonzero transition/animation duration = 95
+sample: [{"tag":"BUTTON","cls":"\n        group relative\n        w-8 h-8\n        fl","dur":0.15,"adur":0},{"tag":"SPAN","cls":"relative z-10 text-sm font-semibold text-primary-4","dur":0.15,"adur":0},{"tag":"DIV","cls":"\n          absolute right-full mr-2\n          px-2","dur":0.15,"adur":0},{"tag":"BUTTON","cls":"\n        group relative\n        w-8 h-8\n        fl","dur":0.15,"adur":0},{"tag":"svg","cls":"[object SVGAnimatedString]","dur":0.15,"adur":0},{"tag":"DIV","cls":"\n          absolute right-full mr-2\n          px-2","dur":0.15,"adur":0},{"tag":"BUTTON","cls":"\n        group relative\n        w-8 h-8\n        fl","dur":0.15,"adur":0},{"tag":"svg","cls":"[object SVGAnimatedString]","dur":0.15,"adur":0},{"tag":"DIV","cls":"\n          absolute right-full mr-2\n          px-2","dur":0.15,"adur":0},{"tag":"DIV","cls":"flex items-center shrink-0 transition-all duration","dur":0.2,"adur":0}]
+=== KEYBOARD: open/close preview, focus return ===
+first row data-realizacja-wiersz = cwwait-e4c941e0-4c06-4d53-9ce2-b38dc323b63f
+preview aside present after click: true
+preview action buttons: ["Akcje","Wczytaj ponownie","Wróć do listy zleceń","Właściwości","Powiązania6","Źródła i założenia","Historia"]
+after Escape: {"activeTag":"DIV","activeMatchesRow":true,"asideGone":false}
+=== DEEP LINK RESTORATION ===
+deep-link plan/ekspercki: {"url":"http://localhost:3562/zlecenia/case-8099338b-f730-48d8-83e3-26c9e8ece272?zakladka=plan&widok-planu=ekspercki&ff_zlecenia=1","hasEkspercki":true,"activeTabText":"?Help CenterFeedbackDocuments77Skip to m"}
+deep-link rezultaty heading: Rezultaty

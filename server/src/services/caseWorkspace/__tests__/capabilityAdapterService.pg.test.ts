@@ -624,4 +624,47 @@ suite('capabilityAdapterService — InternalCommand + HttpApi adapters against a
       await teardown(orgId, [capabilityId]);
     }
   }, 90_000);
+
+  // =========================================================================
+  // 9. CapabilityHandlerError lets an INTERNAL handler report a PRECISE
+  //    taxonomy code instead of the generic CAPABILITY_INTERNAL_ERROR every
+  //    other throw collapses to (added for the module adapters in
+  //    server/src/services/caseWorkspace/adapters/** — Strumień C).
+  // =========================================================================
+  it('maps a thrown CapabilityHandlerError to its OWN code, and a plain throw still falls back to CAPABILITY_INTERNAL_ERROR', async () => {
+    const { orgId, adminId } = await seedAdminOrg('handler-error');
+    const capabilityId = `cap-handler-error-${randomUUID()}`;
+    try {
+      await capabilityAdapterService.registerCapabilityWithAdapter(
+        registrationInput({ capabilityId, providerType: 'INTERNAL', adminId }),
+        {
+          kind: 'INTERNAL',
+          handler: async (payload) => {
+            if (payload.mode === 'typed') {
+              throw new capabilityAdapterService.CapabilityHandlerError(
+                'CAPABILITY_UNAUTHORIZED',
+                'no_standing_on_this_case'
+              );
+            }
+            throw new Error('some_untyped_bug');
+          },
+        },
+        orgId
+      );
+
+      const typed = await capabilityAdapterService.executeCapability(
+        envelope({ capabilityId, orgId, actorId: adminId, payload: { mode: 'typed' } })
+      );
+      expect(typed.outcome).toBe('FAILED');
+      expect(typed.errorCode).toBe('CAPABILITY_UNAUTHORIZED');
+
+      const untyped = await capabilityAdapterService.executeCapability(
+        envelope({ capabilityId, orgId, actorId: adminId, payload: { mode: 'untyped' } })
+      );
+      expect(untyped.outcome).toBe('FAILED');
+      expect(untyped.errorCode).toBe('CAPABILITY_INTERNAL_ERROR');
+    } finally {
+      await teardown(orgId, [capabilityId]);
+    }
+  }, 90_000);
 });

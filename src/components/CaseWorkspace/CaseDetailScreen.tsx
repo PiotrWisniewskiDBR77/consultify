@@ -55,6 +55,7 @@ import {
 import type { PresentationMode } from '@/hooks/usePresentationMode';
 import {
   artifactLinkRelationLabel,
+  artifactLinkResultsGroupLabel,
   autonomyPolicyLabel,
   caseProfileLabel,
   caseStatusLabel,
@@ -73,6 +74,7 @@ import {
   listHistoryEvents,
   listPlanVersions,
   listProposals,
+  listRunsForCase,
   listValueMeasurements,
   listWaits,
   newIdempotencyKey,
@@ -96,9 +98,11 @@ import {
   type RezultatSelection,
   RezultatyView,
   rozstrzygnijOtwarcie,
+  useOtwarciaZBackendu,
   weryfikujIstnienieDokumentu,
 } from './RezultatyView';
 import type {
+  ArtifactLinkResultsGroup,
   CanonicalGraph,
   CaseActionProposal,
   CaseApiFailure,
@@ -107,6 +111,7 @@ import type {
   CaseHistoryEvent,
   CaseIntakeSummary,
   CasePlanVersion,
+  CaseRun,
   CaseWait,
   PlanGraphEnvelope,
   PlanValidationResult,
@@ -184,6 +189,17 @@ interface StanPowrotu {
   wybor: RezultatSelection;
   adresListy: string;
   zapisanoO: number;
+  /**
+   * Kontekst powrotu z autorytatywnego odczytu backendu przy otwarciu
+   * (`resolveArtifactLinkOpen` → `returnContext`, pakiet B5/C4) — `null`,
+   * gdy otwarcie poszło ścieżką czysto kliencką (backend jeszcze nie
+   * odpowiedział w chwili kliknięcia). Faza zlecenia i grupa Rezultatów, w
+   * której obiekt siedział W CHWILI WYJŚCIA — doc 03 §5: „ten sam punkt w
+   * zleceniu". Scroll/fokus wracają niezależnie od tego pola (patrz
+   * `scrollCentrum`/`kluczFokusu` wyżej); to pole niesie WYŁĄCZNIE uczciwy
+   * komunikat powrotu, gdy faza zlecenia zmieniła się pod nieobecność.
+   */
+  kontekstPowrotu: { casePhase: string; resultsGroup: ArtifactLinkResultsGroup } | null;
 }
 
 function zapiszStanPowrotu(stan: StanPowrotu): void {
@@ -274,6 +290,8 @@ interface CaseBundle {
   validation: PlanValidationResult | null;
   waits: CaseWait[];
   proposals: CaseActionProposal[];
+  /** Przebiegi (Run) tego zlecenia — pakiet B3, `listRunsForCase`. */
+  runs: CaseRun[];
   measurements: ValueMeasurement[];
   artifactLinks: CaseArtifactLink[];
   history: CaseHistoryEvent[];
@@ -472,10 +490,24 @@ export const CaseDetailScreen: React.FC = () => {
     };
   }, [bundle]);
 
+  /*
+   * Autorytatywny stan `GET /artifact-links/:linkId/open` (pakiet B5/C4) —
+   * TA SAMA klasyfikacja co w `RezultatyView` (cache współdzielony per
+   * `linkId` na poziomie modułu, patrz `useOtwarciaZBackendu`), więc Menu 1
+   * „Otwórz rezultat" i panel „Powiązania" nigdy nie rozjadą się z tabelą
+   * „Powiązane obiekty" w centrum.
+   */
+  const nadpisaniaBackendu = useOtwarciaZBackendu(bundle?.artifactLinks ?? []);
+
+  /*
+   * Pierwszeństwo IDENTYCZNE jak `otwarciaObiektow` w `RezultatyView.tsx`:
+   * potwierdzone 404 dokumentu > autorytatywny stan backendu > klasyfikacja
+   * z samego już wczytanego linku.
+   */
   const rozstrzygnijOtwarcieZWeryfikacja = useCallback(
     (link: CaseArtifactLink): OtwarcieObiektu =>
-      nadpisaniaWeryfikacji[link.linkId] ?? rozstrzygnijOtwarcie(link),
-    [nadpisaniaWeryfikacji]
+      nadpisaniaWeryfikacji[link.linkId] ?? nadpisaniaBackendu[link.linkId] ?? rozstrzygnijOtwarcie(link),
+    [nadpisaniaWeryfikacji, nadpisaniaBackendu]
   );
 
   /*
@@ -523,7 +555,7 @@ export const CaseDetailScreen: React.FC = () => {
       const failedSections: string[] = [];
       const blockedFlag = { blocked: false };
 
-      const [planVersions, waits, proposals, measurements, artifactLinks, history, intake] =
+      const [planVersions, waits, proposals, runs, measurements, artifactLinks, history, intake] =
         await Promise.all([
           settleSection(
             'plan',
@@ -546,6 +578,7 @@ export const CaseDetailScreen: React.FC = () => {
             failedSections,
             blockedFlag
           ),
+          settleSection('przebiegi', listRunsForCase(caseId), [] as CaseRun[], failedSections, blockedFlag),
           settleSection(
             'pomiary wartości',
             listValueMeasurements(caseId),
@@ -624,6 +657,7 @@ export const CaseDetailScreen: React.FC = () => {
         validation,
         waits,
         proposals,
+        runs,
         measurements,
         artifactLinks,
         history,
@@ -750,6 +784,12 @@ export const CaseDetailScreen: React.FC = () => {
         wybor: wyborRezultatow,
         adresListy: rememberedListLocation(),
         zapisanoO: Date.now(),
+        kontekstPowrotu: zadanie.returnContext
+          ? {
+              casePhase: zadanie.returnContext.casePhase,
+              resultsGroup: zadanie.returnContext.resultsGroup,
+            }
+          : null,
       });
       navigate(zadanie.sciezka);
     },
@@ -777,6 +817,19 @@ export const CaseDetailScreen: React.FC = () => {
       return;
     }
     wyczyscStanPowrotu();
+
+    /*
+     * Doklejka komunikatu z `returnContext` backendu (`kontekstPowrotu`,
+     * pakiet B5/C4) — TYLKO gdy naprawdę mamy z czym porównywać (otwarcie
+     * poszło ścieżką backendową) i TYLKO gdy faza faktycznie się zmieniła
+     * pod nieobecność. Grupa Rezultatów jest zawsze uczciwa do pokazania,
+     * bo nie zależy od czasu — mówi, DOKĄD realnie wracamy.
+     */
+    const doklejkaKontekstu = stan.kontekstPowrotu
+      ? stan.kontekstPowrotu.casePhase !== bundle.caseItem.caseStatus
+        ? ` Zlecenie zmieniło w międzyczasie stan na „${caseStatusLabel(bundle.caseItem.caseStatus, true).toLowerCase()}" — sekcja: ${artifactLinkResultsGroupLabel(stan.kontekstPowrotu.resultsGroup, true).toLowerCase()}.`
+        : ` Sekcja: ${artifactLinkResultsGroupLabel(stan.kontekstPowrotu.resultsGroup, true).toLowerCase()}.`
+      : '';
 
     const brakujace: Record<string, string | null> = {};
     if (!searchParamsRef.current.get('zakladka')) brakujace.zakladka = stan.zakladka;
@@ -862,12 +915,12 @@ export const CaseDetailScreen: React.FC = () => {
           },
           { once: true }
         );
-        setKomunikat(`Wróciłeś do zlecenia — kursor stoi przy: ${stan.etykieta}.`);
+        setKomunikat(`Wróciłeś do zlecenia — kursor stoi przy: ${stan.etykieta}.${doklejkaKontekstu}`);
       } else {
         kotwicaSekcjiRef.current?.focus();
         setKomunikat(
           `Wróciłeś do zlecenia. Element „${stan.etykieta}" jest w zwiniętej sekcji prawego ` +
-            `panelu — kursor stoi na nagłówku sekcji.`
+            `panelu — kursor stoi na nagłówku sekcji.${doklejkaKontekstu}`
         );
       }
     });
@@ -927,6 +980,8 @@ export const CaseDetailScreen: React.FC = () => {
           caseItem={bundle.caseItem}
           waits={bundle.waits}
           proposals={bundle.proposals}
+          runs={bundle.runs}
+          onReload={() => void load()}
           /*
            * ★ CELOWO PUSTA TABLICA (2026-08-10), nie przeoczenie.
            * `RealizacjaView.tsx:656-676` („Przebieg zlecenia") jest DRUGĄ,
@@ -1228,6 +1283,7 @@ export const CaseDetailScreen: React.FC = () => {
                           sciezka: otwarcie.sciezka,
                           kluczFokusu: kluczFokusuObiektu(link.linkId),
                           etykieta: otwarcie.etykieta,
+                          returnContext: otwarcie.returnContext,
                         })
                       : undefined
                   }
@@ -1413,6 +1469,10 @@ export const CaseDetailScreen: React.FC = () => {
                       rezultatDoOtwarcia.otwarcie.status === 'otwieralny'
                         ? rezultatDoOtwarcia.otwarcie.etykieta
                         : '',
+                    returnContext:
+                      rezultatDoOtwarcia.otwarcie.status === 'otwieralny'
+                        ? rezultatDoOtwarcia.otwarcie.returnContext
+                        : undefined,
                   }),
                 title: {
                   en: 'Otwórz najważniejszy rezultat tego zlecenia w jego module',

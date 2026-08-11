@@ -58,6 +58,7 @@ import {
   valueMeasurementStatusLabel,
 } from '@/utils/enumLabels';
 
+import { resolveArtifactLinkOpen } from './api';
 import {
   type CaseRunBinding,
   deliverableRefFromSnapshot,
@@ -70,7 +71,14 @@ import {
   summaryFromSnapshot,
   toFailure,
 } from './apiResults';
-import type { CaseApiFailure, CaseArtifactLink, CaseCoreView, ValueMeasurement } from './types';
+import type {
+  ArtifactLinkOpenResolution,
+  ArtifactLinkReturnContext,
+  CaseApiFailure,
+  CaseArtifactLink,
+  CaseCoreView,
+  ValueMeasurement,
+} from './types';
 import { CaseStateBlock, FOCUS_RING, formatDate, formatDateTime, StatusTag, TechnicalId } from './ui';
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -134,7 +142,25 @@ export const TYP_OBIEKTU_NA_MODUL: Record<string, ArtifactType> = {
 };
 
 export type OtwarcieObiektu =
-  | { status: 'otwieralny'; sciezka: string; etykieta: string }
+  | {
+      status: 'otwieralny';
+      sciezka: string;
+      etykieta: string;
+      /**
+       * Tylko dla stanu backendowego STALE (`ArtifactLinkOpenState`):
+       * obiekt nadal da się otworzyć, ale przypięta rewizja jest starsza —
+       * uczciwie oznaczone, nigdy ślepa uliczka.
+       */
+      ostrzezenie?: string;
+      /**
+       * Obecny WYŁĄCZNIE, gdy klasyfikacja przyszła z autorytatywnego
+       * odczytu backendu (`resolveArtifactLinkOpen`), nie z samego już
+       * wczytanego `CaseArtifactLink`. Powłoka (`CaseDetailScreen`) niesie
+       * to dalej do migawki powrotu („ta sama faza Zlecenia i grupa
+       * Rezultatów", doc 03 §5).
+       */
+      returnContext?: ArtifactLinkReturnContext;
+    }
   | { status: 'niedostepny'; powod: string }
   | { status: 'odpiety'; powod: string }
   | { status: 'nieznany-typ'; powod: string };
@@ -194,6 +220,143 @@ export function rozstrzygnijOtwarcie(link: CaseArtifactLink): OtwarcieObiektu {
     sciezka: getArtifactPath(typ, link.artifactId),
     etykieta: etykietaTypu,
   };
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// OTWARCIE Z BACKENDU — `GET /artifact-links/:linkId/open` (pakiet B5/C4)
+// ═══════════════════════════════════════════════════════════════════════════
+//
+// `rozstrzygnijOtwarcie` wyżej klasyfikuje WYŁĄCZNIE z już wczytanego
+// `CaseArtifactLink` (`listArtifactLinksForCase`) — dobre jako pierwszy,
+// nie-migoczący render, ale to NIE jest odczyt aktualny w chwili kliknięcia:
+// między wczytaniem zlecenia a kliknięciem „Otwórz" ktoś inny mógł oznaczyć
+// link jako `UNAVAILABLE`/`UNLINKED`/nieaktualny. `resolveArtifactLinkOpen`
+// odpowiada na oba pytania NA ŻYWO w jednym wywołaniu: czy dziś wolno
+// otworzyć (AVAILABLE/STALE/UNAVAILABLE/DELETED, z prawdziwym powodem —
+// `staleReason`/`unavailableReason`/`unlinkReason`) i dokąd wraca się z
+// powrotem (`returnContext`: `caseId`/`casePhase`/`resultsGroup`).
+//
+// Wzorzec identyczny jak przy weryfikacji dokumentów niżej: START zawsze z
+// `rozstrzygnijOtwarcie` (bez flashu złego stanu), NADPISANIE dokłada
+// pewność z backendu, nigdy jej nie zdejmuje. Cache per `linkId`, żeby
+// dziesięć wierszy tej samej tabeli (i Menu 1 w `CaseDetailScreen`, który
+// używa TEJ SAMEJ funkcji) nie odpalało dziesięciu identycznych zapytań.
+const otwarcieBackenduCache = new Map<string, Promise<ArtifactLinkOpenResolution | null>>();
+
+/**
+ * `null` = wynik NIEJEDNOZNACZNY (sieć/401/404/500/timeout) — celowo NIE
+ * nadpisujemy klasyfikacji klienta w dół z powodu chwilowej awarii backendu;
+ * `resolveArtifactLinkOpen` jest odczytem WZBOGACAJĄCYM, nie jedynym źródłem
+ * prawdy o otwieralności.
+ */
+function pobierzOtwarcieBackendu(linkId: string): Promise<ArtifactLinkOpenResolution | null> {
+  let cached = otwarcieBackenduCache.get(linkId);
+  if (!cached) {
+    cached = resolveArtifactLinkOpen(linkId).catch(() => null);
+    otwarcieBackenduCache.set(linkId, cached);
+  }
+  return cached;
+}
+
+/**
+ * Tłumaczy autorytatywną odpowiedź backendu na ten sam kształt, którego
+ * używa cała reszta modułu (`OtwarcieObiektu`). Etykieta typu i BAZOWY adres
+ * nadal idą przez `TYP_OBIEKTU_NA_MODUL`/`getArtifactPath` — jedno źródło
+ * prawdy tras (nagłówek pliku) — backend daje tylko FAKTY (stan, powód,
+ * `artifactId`/`artifactRevision` z `deepLink`), nigdy gotowego URL-a.
+ */
+function otwarcieZOdpowiedziBackendu(
+  link: CaseArtifactLink,
+  resolution: ArtifactLinkOpenResolution
+): OtwarcieObiektu {
+  const etykietaTypu = linkedTypeLabel(link.artifactType, true) || link.artifactType;
+
+  if (resolution.state === 'UNAVAILABLE') {
+    return {
+      status: 'niedostepny',
+      powod: resolution.unavailableReason
+        ? `Moduł źródłowy potwierdził, że tego obiektu („${etykietaTypu}") już nie ma: ` +
+          `${resolution.unavailableReason}.`
+        : `Moduł źródłowy potwierdził, że tego obiektu („${etykietaTypu}") nie da się dziś ` +
+          `otworzyć. Zlecenie pamięta, że był — dlatego nie znika z listy.`,
+    };
+  }
+  if (resolution.state === 'DELETED') {
+    return {
+      status: 'odpiety',
+      powod: resolution.unlinkReason
+        ? `Powiązanie zostało odpięte od tego zlecenia: ${resolution.unlinkReason}.`
+        : `Powiązanie zostało odpięte od tego zlecenia. Obiekt może nadal istnieć w swoim ` +
+          `module, ale nie jest już rezultatem tego zlecenia.`,
+    };
+  }
+
+  // AVAILABLE lub STALE — backend gwarantuje `deepLink` dla obu (patrz
+  // `ArtifactLinkOpenResolution.deepLink` w `types.ts`).
+  const typZrodla = resolution.deepLink?.artifactType ?? link.artifactType;
+  const idZrodla = resolution.deepLink?.artifactId ?? link.artifactId;
+  const typ = TYP_OBIEKTU_NA_MODUL[String(typZrodla || '').toLowerCase()];
+  if (!typ || !resolution.deepLink) {
+    return {
+      status: 'nieznany-typ',
+      powod:
+        `Consultify nie ma jeszcze ekranu, który otwiera obiekt rodzaju ` +
+        `„${etykietaTypu}". Nie zgadujemy adresu — zgadnięty link wyrzuciłby ` +
+        `Cię na pustą stronę zamiast pokazać rezultat.`,
+    };
+  }
+
+  const sciezka = getArtifactPath(typ, idZrodla);
+
+  if (resolution.state === 'STALE') {
+    return {
+      status: 'otwieralny',
+      sciezka,
+      etykieta: etykietaTypu,
+      returnContext: resolution.returnContext,
+      ostrzezenie: resolution.staleReason
+        ? `Przypięta rewizja jest starsza: ${resolution.staleReason}.`
+        : 'Przypięta rewizja jest starsza niż aktualna wersja obiektu.',
+    };
+  }
+  return {
+    status: 'otwieralny',
+    sciezka,
+    etykieta: etykietaTypu,
+    returnContext: resolution.returnContext,
+  };
+}
+
+/**
+ * Hook: dogania klasyfikację KAŻDEGO powiązania o autorytatywny stan
+ * backendu (`resolveArtifactLinkOpen`), po jednym wywołaniu na `linkId`.
+ * Współdzielony przez `RezultatyView` i `CaseDetailScreen` (Menu 1 „Otwórz
+ * rezultat" + panel „Powiązania") — TA SAMA klasyfikacja wszędzie, bo cache
+ * jest per `linkId` na poziomie modułu, nie per instancja komponentu.
+ */
+export function useOtwarciaZBackendu(
+  artifactLinks: CaseArtifactLink[]
+): Record<string, OtwarcieObiektu> {
+  const [nadpisania, setNadpisania] = useState<Record<string, OtwarcieObiektu>>({});
+
+  useEffect(() => {
+    let anulowano = false;
+    artifactLinks.forEach((link) => {
+      pobierzOtwarcieBackendu(link.linkId).then((resolution) => {
+        if (anulowano || !resolution) return;
+        setNadpisania((prev) => ({
+          ...prev,
+          [link.linkId]: otwarcieZOdpowiedziBackendu(link, resolution),
+        }));
+      });
+    });
+    return () => {
+      anulowano = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- linkId-owy skład, nie referencja tablicy
+  }, [artifactLinks.map((l) => l.linkId).join(',')]);
+
+  return nadpisania;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -303,6 +466,14 @@ export interface OtwarcieZadanie {
   sciezka: string;
   kluczFokusu: string;
   etykieta: string;
+  /**
+   * Kontekst powrotu z autorytatywnego odczytu backendu
+   * (`resolveArtifactLinkOpen` → `returnContext`) — obecny tylko, gdy
+   * klasyfikacja przeszła przez `GET /artifact-links/:linkId/open`, a nie
+   * wyłącznie przez klienta. Powłoka (`CaseDetailScreen`) niesie to w
+   * migawce powrotu razem ze scrollem i fokusem.
+   */
+  returnContext?: ArtifactLinkReturnContext;
 }
 
 export type RezultatSelection =
@@ -324,18 +495,21 @@ export function kluczFokusuRezultatuKroku(nodeRunId: string): string {
  * PRAWDA Z BACKENDU, dopiero potem heurystyka.
  *  1. Gdy wyłuskany `typ:id` pasuje do JUŻ WCZYTANEGO, backendowo
  *     zweryfikowanego `CaseArtifactLink` tego zlecenia (to samo `artifactType`
- *     + `artifactId`) — używamy JEGO `rozstrzygnijOtwarcie`, czyli
- *     PRAWDZIWEGO `linkStatus`/`isStale`, a nie zgadywania. To jedyny sposób,
- *     w jaki „niedostępny/odpięty/nieaktualny" dla wyniku kroku może być
- *     UCZCIWY, skoro `case_workspace_node_result_acceptances` samo w sobie
- *     nie ma kolumny stanu powiązania (patrz nagłówek `apiResults.ts`).
+ *     + `artifactId`) — używamy JEGO wpisu w `otwarciaObiektow`, czyli
+ *     PRAWDZIWEGO stanu z `GET /artifact-links/:linkId/open` (a do jego
+ *     przyjścia — `rozstrzygnijOtwarcie`'s `linkStatus`/`isStale`, ten sam
+ *     „bez flashu" wzorzec co reszta modułu), a nie zgadywania. To jedyny
+ *     sposób, w jaki „niedostępny/odpięty/nieaktualny" dla wyniku kroku może
+ *     być UCZCIWY, skoro `case_workspace_node_result_acceptances` samo w
+ *     sobie nie ma kolumny stanu powiązania (patrz nagłówek `apiResults.ts`).
  *  2. Bez dopasowania spada na `rozstrzygnijOtwarcieDowodu` — tę samą,
  *     słabszą ścieżkę „typ jest znany, więc otwieramy", której repo już
  *     używa dla `evidenceRef` pomiaru wartości. Nie silniejszą, nie słabszą.
  */
 function rozstrzygnijOtwarcieRezultatuKroku(
   item: NodeResultAcceptance,
-  artifactLinks: CaseArtifactLink[]
+  artifactLinks: CaseArtifactLink[],
+  otwarciaObiektow: Map<string, OtwarcieObiektu>
 ): OtwarcieObiektu | null {
   const ref = deliverableRefFromSnapshot(item.acceptanceInputSnapshot);
   if (!ref) return null;
@@ -347,7 +521,9 @@ function rozstrzygnijOtwarcieRezultatuKroku(
         String(link.artifactType).toLowerCase() === parsed.type.toLowerCase() &&
         String(link.artifactId) === parsed.id
     );
-    if (dopasowanie) return rozstrzygnijOtwarcie(dopasowanie);
+    if (dopasowanie) {
+      return otwarciaObiektow.get(dopasowanie.linkId) ?? rozstrzygnijOtwarcie(dopasowanie);
+    }
   }
   return rozstrzygnijOtwarcieDowodu(ref);
 }
@@ -415,13 +591,22 @@ const OpenButton: React.FC<{
   szeroki?: boolean;
 }> = ({ otwarcie, kluczFokusu, etykietaDostepna, onOpen, szeroki }) => {
   const otwieralny = otwarcie.status === 'otwieralny';
+  const nieaktualny = otwieralny && Boolean(otwarcie.ostrzezenie);
   return (
     <button
       type="button"
       data-cw-focus={kluczFokusu}
       disabled={!otwieralny}
-      title={otwieralny ? `Otwórz: ${otwarcie.etykieta}` : otwarcie.powod}
-      aria-label={etykietaDostepna}
+      title={
+        otwieralny
+          ? nieaktualny
+            ? `Otwórz: ${otwarcie.etykieta} — ${otwarcie.ostrzezenie}`
+            : `Otwórz: ${otwarcie.etykieta}`
+          : otwarcie.powod
+      }
+      aria-label={
+        nieaktualny ? `${etykietaDostepna} (przypięta rewizja jest starsza)` : etykietaDostepna
+      }
       onClick={(event) => {
         event.stopPropagation();
         if (otwarcie.status !== 'otwieralny') return;
@@ -429,17 +614,24 @@ const OpenButton: React.FC<{
           sciezka: otwarcie.sciezka,
           kluczFokusu,
           etykieta: otwarcie.etykieta,
+          returnContext: otwarcie.returnContext,
         });
       }}
-      className={`inline-flex h-8 items-center gap-1.5 rounded-lg border border-c-border px-2.5 text-xs font-medium transition ${FOCUS_RING} ${
+      className={`inline-flex h-8 items-center gap-1.5 rounded-lg border px-2.5 text-xs font-medium transition ${FOCUS_RING} ${
         szeroki ? 'w-full justify-center' : ''
       } ${
-        otwieralny
-          ? 'text-c-text hover:bg-c-surface-raised'
-          : 'cursor-not-allowed text-c-text-muted opacity-60'
+        !otwieralny
+          ? 'cursor-not-allowed border-c-border text-c-text-muted opacity-60'
+          : nieaktualny
+            ? 'border-amber-300 text-c-text hover:bg-c-surface-raised dark:border-amber-500/40'
+            : 'border-c-border text-c-text hover:bg-c-surface-raised'
       }`}
     >
-      <ArrowUpRight size={14} aria-hidden />
+      {nieaktualny ? (
+        <AlertTriangle size={14} className="text-amber-600 dark:text-amber-400" aria-hidden />
+      ) : (
+        <ArrowUpRight size={14} aria-hidden />
+      )}
       Otwórz
     </button>
   );
@@ -524,11 +716,16 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
     [caseItem]
   );
 
+  // Nadpisania „otwieralny" → stan AUTORYTATYWNY z `GET
+  // /artifact-links/:linkId/open` (AVAILABLE/STALE/UNAVAILABLE/DELETED, z
+  // prawdziwym powodem) — patrz komentarz przy `useOtwarciaZBackendu` wyżej.
+  const nadpisaniaBackendu = useOtwarciaZBackendu(artifactLinks);
+
   // Nadpisania „otwieralny" → „niedostępny" po potwierdzonym 404 z modułu
   // docelowego — patrz komentarz przy `weryfikujIstnienieDokumentu` wyżej.
   // Ta sama zasada co w CaseDetailScreen.tsx (Menu 1/„Powiązania"): start
-  // zawsze z `rozstrzygnijOtwarcie` (bez flashu złego stanu), nadpisanie
-  // tylko DOKŁADA ostrożność, nigdy jej nie zdejmuje.
+  // zawsze z `rozstrzygnijOtwarcie` (bez flashu złego stanu), każde
+  // nadpisanie tylko DOKŁADA ostrożność, nigdy jej nie zdejmuje.
   const [nadpisaniaWeryfikacji, setNadpisaniaWeryfikacji] = useState<
     Record<string, OtwarcieObiektu>
   >({});
@@ -558,14 +755,30 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
     };
   }, [artifactLinks]);
 
-  /** Stan otwarcia liczony RAZ per obiekt — tabela i podgląd czytają to samo. */
+  /**
+   * Stan otwarcia liczony RAZ per obiekt — tabela i podgląd czytają to samo.
+   *
+   * Pierwszeństwo (mocniejsze nadpisanie zawsze wygrywa, NIEZALEŻNIE od tego,
+   * który odczyt dojdzie pierwszy — obie asynchroniczne ścieżki piszą do
+   * OSOBNYCH stanów właśnie po to, żeby kolejność odpowiedzi sieci nie
+   * decydowała o wyniku):
+   *  1. `nadpisaniaWeryfikacji` — potwierdzone 404 w module docelowym (silny
+   *     negatywny sygnał specyficzny dla Dokumentów, patrz wyżej),
+   *  2. `nadpisaniaBackendu` — autorytatywny stan `resolveArtifactLinkOpen`
+   *     (wszystkie typy),
+   *  3. `rozstrzygnijOtwarcie(link)` — klasyfikacja z już wczytanego linku,
+   *     zanim którykolwiek odczyt z sieci wróci.
+   */
   const otwarciaObiektow = useMemo(() => {
     const mapa = new Map<string, OtwarcieObiektu>();
     artifactLinks.forEach((link) =>
-      mapa.set(link.linkId, nadpisaniaWeryfikacji[link.linkId] ?? rozstrzygnijOtwarcie(link))
+      mapa.set(
+        link.linkId,
+        nadpisaniaWeryfikacji[link.linkId] ?? nadpisaniaBackendu[link.linkId] ?? rozstrzygnijOtwarcie(link)
+      )
     );
     return mapa;
-  }, [artifactLinks, nadpisaniaWeryfikacji]);
+  }, [artifactLinks, nadpisaniaWeryfikacji, nadpisaniaBackendu]);
 
   const measurementRows = useMemo(
     () =>
@@ -785,7 +998,7 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
     ? rozstrzygnijOtwarcieDowodu(selectedMeasurement.evidenceRef)
     : null;
   const selectedNodeResultOtwarcie = selectedNodeResult
-    ? rozstrzygnijOtwarcieRezultatuKroku(selectedNodeResult, artifactLinks)
+    ? rozstrzygnijOtwarcieRezultatuKroku(selectedNodeResult, artifactLinks, otwarciaObiektow)
     : null;
 
   // Kontekst źródłowego Run dla PODGLĄDU wyniku kroku — leniwie, dopiero gdy
@@ -1078,6 +1291,7 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
                       sciezka: selectedLinkOtwarcie.sciezka,
                       kluczFokusu: kluczFokusuObiektu(selectedLink.linkId),
                       etykieta: selectedLinkOtwarcie.etykieta,
+                      returnContext: selectedLinkOtwarcie.returnContext,
                     })
                 : undefined
             }
@@ -1091,9 +1305,12 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
               ],
             }}
             details={{
-              text: selectedLink.isStale
-                ? 'Obiekt zmienił się po powiązaniu — sprawdź, czy nadal potwierdza to, co miał potwierdzać.'
-                : 'Obiekt powiązany z tym zleceniem.',
+              text:
+                selectedLinkOtwarcie?.status === 'otwieralny' && selectedLinkOtwarcie.ostrzezenie
+                  ? selectedLinkOtwarcie.ostrzezenie
+                  : selectedLink.isStale
+                    ? 'Obiekt zmienił się po powiązaniu — sprawdź, czy nadal potwierdza to, co miał potwierdzać.'
+                    : 'Obiekt powiązany z tym zleceniem.',
               showWordCount: false,
               propertyLabel: 'Właściwość',
               valueLabel: 'Wartość',
@@ -1144,6 +1361,21 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
                   </p>
                 </div>
               </div>
+            ) : selectedLinkOtwarcie?.status === 'otwieralny' && selectedLinkOtwarcie.ostrzezenie ? (
+              // STALE — nadal otwieralny, ale nieaktualny: uczciwe ostrzeżenie
+              // zamiast cichego otwarcia przestarzałej wersji.
+              <div className="flex items-start gap-2 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 dark:border-amber-500/30 dark:bg-amber-500/10">
+                <AlertTriangle
+                  className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400"
+                  aria-hidden
+                />
+                <div className="min-w-0">
+                  <p className="text-xs font-medium text-c-text">Otworzysz nieaktualną rewizję</p>
+                  <p className="mt-0.5 text-xs text-c-text-secondary">
+                    {selectedLinkOtwarcie.ostrzezenie}
+                  </p>
+                </div>
+              </div>
             ) : (
               <p className="text-xs text-c-text-muted">
                 „Otwórz obiekt" w nagłówku podglądu przeniesie Cię do modułu, do którego ten obiekt
@@ -1168,6 +1400,7 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
                       sciezka: selectedNodeResultOtwarcie.sciezka,
                       kluczFokusu: kluczFokusuRezultatuKroku(selectedNodeResult.nodeRunId),
                       etykieta: selectedNodeResultOtwarcie.etykieta,
+                      returnContext: selectedNodeResultOtwarcie.returnContext,
                     })
                 : undefined
             }
@@ -1285,6 +1518,19 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
                     <p className="text-xs font-medium text-c-text">Tego obiektu nie otworzymy</p>
                     <p className="mt-0.5 text-xs text-c-text-secondary">
                       {selectedNodeResultOtwarcie.powod}
+                    </p>
+                  </div>
+                </div>
+              ) : selectedNodeResultOtwarcie.ostrzezenie ? (
+                <div className="flex items-start gap-2 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 dark:border-amber-500/30 dark:bg-amber-500/10">
+                  <AlertTriangle
+                    className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400"
+                    aria-hidden
+                  />
+                  <div className="min-w-0">
+                    <p className="text-xs font-medium text-c-text">Otworzysz nieaktualną rewizję</p>
+                    <p className="mt-0.5 text-xs text-c-text-secondary">
+                      {selectedNodeResultOtwarcie.ostrzezenie}
                     </p>
                   </div>
                 </div>

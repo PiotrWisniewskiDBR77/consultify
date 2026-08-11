@@ -760,6 +760,173 @@ suite(
       }
     }, 30_000);
 
+    // -------------------------------------------------------------------------
+    // 8. resolveArtifactLinkOpen (CW-P09 packet B5, Deliverable Open/Return) —
+    //    all four explicit states, the SEC-009 unauthorized/nonexistent
+    //    collapse, and the deterministic relation -> resultsGroup mapping.
+    // -------------------------------------------------------------------------
+    it('resolveArtifactLinkOpen returns AVAILABLE with a populated deepLink for a fresh ACTIVE, non-stale link, and the returnContext carries caseId/casePhase/resultsGroup/linkId/relation', async () => {
+      const { orgId, projectId, caseId, actorId } = await seedOrgProjectCase('open-available');
+      const artifactType = 'decision';
+      const artifactId = `dec-open-available-${randomUUID()}`;
+      try {
+        const link = await artifactLinkService.linkArtifactToCase({
+          caseId,
+          artifactType,
+          artifactId,
+          artifactRevision: 'rev-1',
+          relation: 'DECISION_BASIS',
+          linkedByActorId: actorId,
+        });
+
+        const resolution = await artifactLinkService.resolveArtifactLinkOpen(link.linkId, actorId);
+        expect(resolution).not.toBeNull();
+        expect(resolution?.state).toBe('AVAILABLE');
+        expect(resolution?.linkId).toBe(link.linkId);
+        expect(resolution?.caseId).toBe(caseId);
+        expect(resolution?.relation).toBe('DECISION_BASIS');
+        expect(resolution?.isStale).toBe(false);
+        expect(resolution?.deepLink).toEqual({
+          artifactType,
+          artifactId,
+          artifactRevision: 'rev-1',
+        });
+        expect(resolution?.unavailableReason).toBeNull();
+        expect(resolution?.unlinkReason).toBeNull();
+        // returnContext: doc 03 §5's "same Case phase and selected step" —
+        // casePhase from case_core.case_status (DRAFT immediately after
+        // createCase), resultsGroup deterministic from DECISION_BASIS.
+        expect(resolution?.returnContext).toEqual({
+          caseId,
+          casePhase: 'DRAFT',
+          resultsGroup: 'DECISIONS',
+          linkId: link.linkId,
+          relation: 'DECISION_BASIS',
+        });
+        expect(typeof resolution?.resolvedAt).toBe('string');
+        expect(String(resolution?.resolvedAt)).not.toHaveLength(0);
+      } finally {
+        await teardownCase(orgId, projectId, caseId, [actorId]);
+      }
+    }, 30_000);
+
+    it('resolveArtifactLinkOpen returns STALE with deepLink STILL populated for an ACTIVE link marked stale, carrying staleReason/staleMarkedAt', async () => {
+      const { orgId, projectId, caseId, actorId } = await seedOrgProjectCase('open-stale');
+      const artifactType = 'kpi';
+      const artifactId = `kpi-open-stale-${randomUUID()}`;
+      try {
+        const link = await artifactLinkService.linkArtifactToCase({
+          caseId,
+          artifactType,
+          artifactId,
+          artifactRevision: 'rev-1',
+          relation: 'OUTCOME_MEASUREMENT',
+          linkedByActorId: actorId,
+        });
+        await artifactLinkService.markLinkStale(link.linkId, { actorUserId: actorId }, 'upstream KPI recomputed');
+
+        const resolution = await artifactLinkService.resolveArtifactLinkOpen(link.linkId, actorId);
+        expect(resolution?.state).toBe('STALE');
+        expect(resolution?.isStale).toBe(true);
+        expect(resolution?.staleReason).toBe('upstream KPI recomputed');
+        expect(resolution?.staleMarkedAt).not.toBeNull();
+        // A stale link is still openable — the pinned revision is behind,
+        // not gone — so deepLink stays populated, distinct from UNAVAILABLE/DELETED.
+        expect(resolution?.deepLink).toEqual({
+          artifactType,
+          artifactId,
+          artifactRevision: 'rev-1',
+        });
+        expect(resolution?.returnContext.resultsGroup).toBe('EFFECT_AND_VALUE');
+      } finally {
+        await teardownCase(orgId, projectId, caseId, [actorId]);
+      }
+    }, 30_000);
+
+    it('resolveArtifactLinkOpen returns UNAVAILABLE with a null deepLink for a link the module marked unavailable, carrying unavailableReason/unavailableMarkedAt', async () => {
+      const { orgId, projectId, caseId, actorId } = await seedOrgProjectCase('open-unavailable');
+      const artifactType = 'document';
+      const artifactId = `doc-open-unavailable-${randomUUID()}`;
+      try {
+        const link = await artifactLinkService.linkArtifactToCase({
+          caseId,
+          artifactType,
+          artifactId,
+          relation: 'EVIDENCE',
+          linkedByActorId: actorId,
+        });
+        await artifactLinkService.markLinkArtifactUnavailable(
+          link.linkId,
+          { actorUserId: actorId },
+          'source document deleted in Documents module'
+        );
+
+        const resolution = await artifactLinkService.resolveArtifactLinkOpen(link.linkId, actorId);
+        expect(resolution?.state).toBe('UNAVAILABLE');
+        expect(resolution?.deepLink).toBeNull();
+        expect(resolution?.unavailableReason).toBe('source document deleted in Documents module');
+        expect(resolution?.unavailableMarkedAt).not.toBeNull();
+        expect(resolution?.returnContext.resultsGroup).toBe('EVIDENCE_AND_LINEAGE');
+      } finally {
+        await teardownCase(orgId, projectId, caseId, [actorId]);
+      }
+    }, 30_000);
+
+    it('resolveArtifactLinkOpen returns DELETED with a null deepLink for an unlinked (Case-side removed) link, carrying unlinkReason/unlinkedAt', async () => {
+      const { orgId, projectId, caseId, actorId } = await seedOrgProjectCase('open-deleted');
+      const artifactType = 'initiative';
+      const artifactId = `init-open-deleted-${randomUUID()}`;
+      try {
+        const link = await artifactLinkService.linkArtifactToCase({
+          caseId,
+          artifactType,
+          artifactId,
+          relation: 'OUTPUT',
+          linkedByActorId: actorId,
+        });
+        await artifactLinkService.unlinkArtifactFromCase(link.linkId, { actorUserId: actorId }, 'no longer relevant');
+
+        const resolution = await artifactLinkService.resolveArtifactLinkOpen(link.linkId, actorId);
+        expect(resolution?.state).toBe('DELETED');
+        expect(resolution?.deepLink).toBeNull();
+        expect(resolution?.unlinkReason).toBe('no longer relevant');
+        expect(resolution?.unlinkedAt).not.toBeNull();
+        expect(resolution?.returnContext.resultsGroup).toBe('KEY_FINDINGS_AND_RECOMMENDATIONS');
+      } finally {
+        await teardownCase(orgId, projectId, caseId, [actorId]);
+      }
+    }, 30_000);
+
+    it('resolveArtifactLinkOpen returns null (never throws) for both a nonexistent linkId and a linkId a non-member actor cannot access — the SEC-009 unauthorized/nonexistent collapse', async () => {
+      const { orgId, projectId, caseId, actorId } = await seedOrgProjectCase('open-auth');
+      const noMembershipActor = await seedUser(orgId, 'open-auth-outsider');
+      try {
+        const link = await artifactLinkService.linkArtifactToCase({
+          caseId,
+          artifactType: 'document',
+          artifactId: `doc-open-auth-${randomUUID()}`,
+          relation: 'EVIDENCE',
+          linkedByActorId: actorId,
+        });
+
+        const missing = await artifactLinkService.resolveArtifactLinkOpen(`cwlink-${randomUUID()}`, actorId);
+        const deniedByOtherOrgActor = await artifactLinkService.resolveArtifactLinkOpen(
+          link.linkId,
+          noMembershipActor
+        );
+        expect(missing).toBeNull();
+        expect(deniedByOtherOrgActor).toBeNull();
+
+        // Negative control: the SAME link, resolved by the actual owning
+        // actor, succeeds — proving the two nulls above are a genuine
+        // access/existence outcome, not a wiring bug that always returns null.
+        const allowed = await artifactLinkService.resolveArtifactLinkOpen(link.linkId, actorId);
+        expect(allowed?.state).toBe('AVAILABLE');
+      } finally {
+        await teardownCase(orgId, projectId, caseId, [actorId, noMembershipActor]);
+      }
+    }, 30_000);
+
     // -----------------------------------------------------------------------
     // EVENT OUTBOX (EVENT_TAXONOMY §6.6) — each of the five mutating commands
     // publishes exactly one event, inside its own transaction, and publishes

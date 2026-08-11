@@ -2,7 +2,7 @@
 
 > Wygenerowane automatycznie przez `scripts/case-workspace/ledger-report.mjs`.
 > NIE edytowac recznie — kazdy przebieg nadpisuje ten plik od zera.
-> Wygenerowano: 2026-08-10T22:12:19.436Z
+> Wygenerowano: 2026-08-11T06:35:54.016Z
 
 ## Jak uruchomic
 
@@ -48,6 +48,111 @@ NOT_IMPLEMENTED: **1273**, PARTIAL: **201**, IMPLEMENTED_AND_PROVEN: **187**, EV
 ### (dla porownania) rozklad surowy — WSZYSTKIE wiersze, bez dedup supersedes
 
 NOT_IMPLEMENTED: **1479**, PARTIAL: **259**, IMPLEMENTED_AND_PROVEN: **191**, BLOCKED_ON_UI: **44**, EVIDENCE_MISSING: **34**, OUT_OF_SCOPE_THIS_WAVE: **5**
+
+## Deduplikacja semantyczna wymagan (grupy, nie wystapienia)
+
+Metoda: dla kazdego pliku z kolumna `requirement_text`, wiersze EFEKTYWNE grupowane
+cross-file po identycznym znormalizowanym tekscie (NFKD fold, lowercase, usunieta
+interpunkcja, zwiniete biale znaki) — wylacznie dopasowanie DOKLADNE, ZERO dopasowania
+parafraz (parafrazy to osobny, nie-mechaniczny problem — patrz `README.md` "near-duplicate
+rows across clusters... have not been deduplicated yet"). `TRACEABILITY_AUTH_ROUTES.csv` nie
+ma kolumny `requirement_text` (schemat route x authorization_predicate) — pozostaje poza tym
+rozdzialem, na wlasnej osi (patrz jego wlasna sekcja per-plik ponizej).
+
+Wiersze efektywne z niepustym `requirement_text` (pliki: 9 z 12): **1505**
+
+Odrebne grupy semantyczne (exact-text) po dedup: **836**
+
+- Grupy z 1 czlonkiem (juz unikalne): **283**
+- Grupy z >=2 czlonkami: **553** (skolapsowanych wierszy: **1222**, srednio 2.2/grupe)
+- Grupy, w ktorych KAZDY czlonek to nadal `NOT_IMPLEMENTED`: **597**
+- Grupy MIESZANE (co najmniej 1 czlonek w lepszym stanie — PARTIAL/IMPLEMENTED_AND_PROVEN/PASS/OUT_OF_SCOPE_THIS_WAVE — a co najmniej 1 inna kopia utkniety w gorszym): **165**
+
+Rozklad statusow **na poziomie grupy** (kazda grupa liczona RAZ, jej "najlepszym" statusem
+sposrod czlonkow — ranga: IMPLEMENTED_AND_PROVEN/PASS > PARTIAL > OUT_OF_SCOPE_THIS_WAVE >
+EVIDENCE_MISSING > BLOCKED* > NOT_IMPLEMENTED):
+
+NOT_IMPLEMENTED: **597**, PARTIAL: **147**, IMPLEMENTED_AND_PROVEN: **71**, EVIDENCE_MISSING: **16**, OUT_OF_SCOPE_THIS_WAVE: **5**
+
+**To NIE zastepuje ani nie zmniejsza licznika GAP z sekcji powyzej.** Zaden status w zadnym
+pliku CSV nie zostal zmieniony przez ten skrypt — to jest DRUGA, jawnie oznaczona miara: ile
+WYMAGAN (nie wystapien) istnieje, i jaki jest najlepszy dowod, jaki KTOKOLWIEK z duplikatow
+tego wymagania dotychczas zebral. Grupy mieszane oznaczone powyzej sa realnym targetem higieny
+rejestru (dwoch agentow ekstrahowalo to samo wymaganie do dwoch rejestrow, jeden zaktualizowal
+swoja kopie dowodem, drugi nie) — nie sa rozwiazywane przez ten skrypt, tylko wskazywane.
+
+### Przyklad grup mieszanych (pierwsze 15 z 165)
+
+| Tekst wymagania (skrocony) | Czlonkowie (plik:id=status) |
+|---|---|
+| Execution layer owns: adapter dispatch, approval validation, result collection, partial failure hand… | API_EVENT_SCHEMA_COVERAGE.csv:AEV8-EXECLAYER-01=PARTIAL; FUNCTIONAL_REQUIREMENT_COVERAGE.csv:AEV8-EXECLAYER-01=NOT_IMPLEMENTED |
+| Audit layer owns: status trail, actor trail, timestamps, affected artifact refs, final run summary (… | API_EVENT_SCHEMA_COVERAGE.csv:AEV8-AUDITLAYER-01=PARTIAL; FUNCTIONAL_REQUIREMENT_COVERAGE.csv:AEV8-AUDITLAYER-01=NOT_IMPLEMENTED |
+| Execution Agent must distinguish between planning failure, validation failure, approval missing, ada… | API_EVENT_SCHEMA_COVERAGE.csv:AEV8-FAILURE-MODEL-01=PARTIAL; FUNCTIONAL_REQUIREMENT_COVERAGE.csv:AEV8-FAILURE-MODEL-01=NOT_IMPLEMENTED |
+| Reusable runtime pattern from actionDecisionService + actionExecutionAdapter: snapshot before execut… | API_EVENT_SCHEMA_COVERAGE.csv:AEV8-ASIS-IDEMPOTENCY-01=PARTIAL; FUNCTIONAL_REQUIREMENT_COVERAGE.csv:AEV8-ASIS-IDEMPOTENCY-01=NOT_IMPLEMENTED |
+| Platform must add explicit idempotency and replay-safe execution steps, plus checkpoint and resume p… | API_EVENT_SCHEMA_COVERAGE.csv:AEV8-BG-IDEMPOTENCY-01=PARTIAL; FUNCTIONAL_REQUIREMENT_COVERAGE.csv:AEV8-BG-IDEMPOTENCY-01=NOT_IMPLEMENTED |
+| Users and operators must be able to distinguish queued, running, waiting, failed, cancelled and comp… | API_EVENT_SCHEMA_COVERAGE.csv:AEV8-BG-WAITSTATUS-01=PARTIAL; FUNCTIONAL_REQUIREMENT_COVERAGE.csv:AEV8-BG-WAITSTATUS-01=NOT_IMPLEMENTED |
+| Cross-mode invariant: Approved human work is protected during retry and rerun. | API_EVENT_SCHEMA_COVERAGE.csv:CW-01-026-INV8=PARTIAL; FUNCTIONAL_REQUIREMENT_COVERAGE.csv:CW-01-026-INV8=NOT_IMPLEMENTED |
+| 'Running' is forbidden for a step that is actually waiting. The step card must identify who/what is … | API_EVENT_SCHEMA_COVERAGE.csv:CW-02-029=PARTIAL; CUSTOMER_JOURNEY_LEDGER.csv:CW-02-029=NOT_IMPLEMENTED; FUNCTIONAL_REQUIREMENT_COVERAGE.csv:CW-02-029=NOT_IMPLEMENTED |
+| Durable command set: Case (CreateCase, ClarifyCaseGoal, ChangeCaseScope, AssignCaseOwner, RaiseGover… | API_EVENT_SCHEMA_COVERAGE.csv:CW-RT-043=PARTIAL; FUNCTIONAL_REQUIREMENT_COVERAGE.csv:CW-RT-043=NOT_IMPLEMENTED |
+| Case API: POST /api/cases; GET /api/cases/:caseId; PATCH /api/cases/:caseId; POST /api/cases/:caseId… | API_EVENT_SCHEMA_COVERAGE.csv:CW-GR-023=PARTIAL; FUNCTIONAL_REQUIREMENT_COVERAGE.csv:CW-GR-023=NOT_IMPLEMENTED |
+| Plan and graph API: POST /api/cases/:caseId/plans; GET/PATCH .../plans/:planVersionId; POST .../plan… | API_EVENT_SCHEMA_COVERAGE.csv:CW-GR-024=PARTIAL; FUNCTIONAL_REQUIREMENT_COVERAGE.csv:CW-GR-024=NOT_IMPLEMENTED |
+| Draft mutations require expectedVersion. Published versions reject mutation. Layout-only changes use… | API_EVENT_SCHEMA_COVERAGE.csv:CW-GR-025=IMPLEMENTED_AND_PROVEN; FUNCTIONAL_REQUIREMENT_COVERAGE.csv:CW-GR-025=NOT_IMPLEMENTED |
+| Runtime API: POST /api/cases/:caseId/runs; GET /api/runs/:runId; GET /api/runs/:runId/node-runs; POS… | API_EVENT_SCHEMA_COVERAGE.csv:CW-GR-026=PARTIAL; FUNCTIONAL_REQUIREMENT_COVERAGE.csv:CW-GR-026=NOT_IMPLEMENTED |
+| Proposals and approvals API: GET /api/work/proposals/:proposalId; POST /api/work/proposals/:proposal… | API_EVENT_SCHEMA_COVERAGE.csv:CW-GR-027=PARTIAL; FUNCTIONAL_REQUIREMENT_COVERAGE.csv:CW-GR-027=NOT_IMPLEMENTED |
+| Decision requests carry proposalVersion, payloadDigest and idempotency key. The server returns autho… | API_EVENT_SCHEMA_COVERAGE.csv:CW-GR-028=IMPLEMENTED_AND_PROVEN; FUNCTIONAL_REQUIREMENT_COVERAGE.csv:CW-GR-028=NOT_IMPLEMENTED |
+
+## Higiena dowodowa: sentinel `UNCOMMITTED-WORKTREE` i SHA korpusu wymagan w `candidate_sha`
+
+Wiersz EFEKTYWNY nie powinien nosic w `candidate_sha` ani sentinela roboczego
+`UNCOMMITTED-WORKTREE...` (dopuszczalny WYLACZNIE jako tymczasowy znacznik podczas pracy na
+niezacommitowanym, wspoldzielonym worktree — nie jako trwaly dowod), ani SHA korpusu wymagan
+(`80d75f24ce01751639e572226f4e52b30503cd22`, patrz `PACKET_REGISTRY.md` linia 5: "Corpus
+commit:" — to commit DOKUMENTOW zrodlowych, nie kodu) uzytego tak, jakby byl dowodem code-review.
+
+Wiersze efektywne z `candidate_sha` zaczynajacym sie od `UNCOMMITTED-WORKTREE`: **71**
+  z tego o statusie IMPLEMENTED_AND_PROVEN/PASS (najbardziej niepokojace — dowod "trwaly" na wierszu z sentinelem roboczym): **6**
+
+| Plik | ID | status | candidate_sha |
+|---|---|---|---|
+| EPIC_DOD_COVERAGE.csv | CW-DOD-F5-U4 | IMPLEMENTED_AND_PROVEN | UNCOMMITTED-WORKTREE-2026-08-10 |
+| EPIC_DOD_COVERAGE.csv | CW-DOD-F1-U4 | IMPLEMENTED_AND_PROVEN | UNCOMMITTED-WORKTREE-2026-08-10 |
+| EPIC_DOD_COVERAGE.csv | CW-CANON-01-U4 | IMPLEMENTED_AND_PROVEN | UNCOMMITTED-WORKTREE-2026-08-10 |
+| GOLDEN_CASE_EVIDENCE_LEDGER.csv | CW-GC-F-04-U1 | IMPLEMENTED_AND_PROVEN | UNCOMMITTED-WORKTREE-2026-08-11 |
+| SECURITY_RESILIENCE_MATRIX.csv | SEC-009-U1 | IMPLEMENTED_AND_PROVEN | UNCOMMITTED-WORKTREE-2026-08-11 |
+| SECURITY_RESILIENCE_MATRIX.csv | CW-DOD-D6-U1 | IMPLEMENTED_AND_PROVEN | UNCOMMITTED-WORKTREE-2026-08-11 |
+
+Wiersze efektywne o statusie IMPLEMENTED_AND_PROVEN/PASS, ktorych `candidate_sha` jest SHA korpusu wymagan (mylnie uzyty jako dowod kodu): **18**
+
+| Plik | ID | status |
+|---|---|---|
+| API_EVENT_SCHEMA_COVERAGE.csv | CW-00-020-INV10 | IMPLEMENTED_AND_PROVEN |
+| API_EVENT_SCHEMA_COVERAGE.csv | CW-GR-025 | IMPLEMENTED_AND_PROVEN |
+| API_EVENT_SCHEMA_COVERAGE.csv | CW-GR-028 | IMPLEMENTED_AND_PROVEN |
+| API_EVENT_SCHEMA_COVERAGE.csv | SEC-020 | IMPLEMENTED_AND_PROVEN |
+| API_EVENT_SCHEMA_COVERAGE.csv | SEC-025 | IMPLEMENTED_AND_PROVEN |
+| GOLDEN_CASE_EVIDENCE_LEDGER.csv | CW-GR-044 | IMPLEMENTED_AND_PROVEN |
+| GOLDEN_CASE_EVIDENCE_LEDGER.csv | CW-GR-045 | IMPLEMENTED_AND_PROVEN |
+| GOLDEN_CASE_EVIDENCE_LEDGER.csv | CW-GR-050 | IMPLEMENTED_AND_PROVEN |
+| GOLDEN_CASE_EVIDENCE_LEDGER.csv | CW-GC-B-05 | IMPLEMENTED_AND_PROVEN |
+| GOLDEN_CASE_EVIDENCE_LEDGER.csv | CW-GC-B-10 | IMPLEMENTED_AND_PROVEN |
+| GOLDEN_CASE_EVIDENCE_LEDGER.csv | CW-GC-C-02 | IMPLEMENTED_AND_PROVEN |
+| GOLDEN_CASE_EVIDENCE_LEDGER.csv | CW-GC-D-01 | IMPLEMENTED_AND_PROVEN |
+| GOLDEN_CASE_EVIDENCE_LEDGER.csv | CW-GC-D-02 | IMPLEMENTED_AND_PROVEN |
+| GOLDEN_CASE_EVIDENCE_LEDGER.csv | CW-GC-D-03 | IMPLEMENTED_AND_PROVEN |
+| GOLDEN_CASE_EVIDENCE_LEDGER.csv | CW-GC-D-04 | IMPLEMENTED_AND_PROVEN |
+| GOLDEN_CASE_EVIDENCE_LEDGER.csv | CW-GC-E-02 | IMPLEMENTED_AND_PROVEN |
+| GOLDEN_CASE_EVIDENCE_LEDGER.csv | CW-GC-E-03 | IMPLEMENTED_AND_PROVEN |
+| GOLDEN_CASE_EVIDENCE_LEDGER.csv | CW-GC-READ-01 | IMPLEMENTED_AND_PROVEN |
+
+Wiersze efektywne o statusie IMPLEMENTED_AND_PROVEN/PASS w pliku, ktory w ogole NIE MA kolumny `candidate_sha` (strukturalnie niemozliwe do zweryfikowania, wobec jakiego stanu kodu wiersz zostal przyjety): **113**
+
+TRACEABILITY_AUTH_ROUTES.csv: **113**
+
+Zaden `evidence_ref` (odrebna kolumna od `candidate_sha`) nie ma dokladnej wartosci-sentinela
+`UNCOMMITTED-WORKTREE` — sentinel wystepuje wylacznie w `candidate_sha`; sprawdzone parserem.
+
+**Ten skrypt nic tu nie zmienia** — zero edycji `status`, zero edycji `candidate_sha`/`evidence_ref`.
+Powyzsze liczby sa raportem dla koordynatora, ktory stempluje realny SHA po scaleniu.
 
 ## Rozbicie per plik
 

@@ -24,6 +24,31 @@
  *        c) wskazuje na plik, ktory FIZYCZNIE NIE ISTNIEJE w repo (sprawdzone
  *           wzgledem korzenia repo; dla golych nazw plikow bez "/" dodatkowo
  *           przeszukuje repo po basename, zeby nie dawac falszywych alarmow).
+ *   6. DEDUPLIKACJA SEMANTYCZNA (grupy wymagan): dla wszystkich plikow, ktore
+ *      maja kolumne `requirement_text`, normalizuje tekst (NFKD fold, lowercase,
+ *      usuniecie interpunkcji, zwiniecie bialych znakow) i grupuje wiersze
+ *      EFEKTYWNE (cross-file) po identycznym znormalizowanym tekscie. To jest
+ *      dokladny odpowiednik dopasowania "exact-text" opisanego w
+ *      SCOPE_ADJUDICATION.md §2.1 — wylacznie tekst bajtowo/normalizacyjnie
+ *      identyczny, ZERO dopasowania parafraz. Liczy: liczbe grup, ile grup ma
+ *      >=2 czlonkow, ile wierszy zostalo skolapsowanych, oraz ile grup ma
+ *      MIESZANY status (co najmniej jeden czlonek w lepszym stanie niz reszta
+ *      — np. jedna kopia PROVEN, druga nadal NOT_IMPLEMENTED). Ten rozklad
+ *      "po grupie" jest raportowany OBOK (nie zamiast) rozkladu "po wierszu"
+ *      z sekcji 3 — nie zmniejsza to licznika GAP z sekcji 3, to osobna,
+ *      jawnie podpisana miara na poziomie wymagania zamiast wystapienia.
+ *      Zaden plik *.csv nie jest przy tym modyfikowany.
+ *   7. HIGIENA DOWODOWA (candidate_sha/evidence_ref sentinels): dla wierszy
+ *      EFEKTYWNYCH wyszukuje uzycie sentinela `UNCOMMITTED-WORKTREE...` w
+ *      `candidate_sha` (dozwolony format roboczy w trakcie wspoldzielonej,
+ *      niezacommitowanej pracy, ale niedopuszczalny na wierszu, ktory ma
+ *      zostac odczytany jako trwaly dowod) oraz uzycie SHA korpusu wymagan
+ *      (`PACKET_REGISTRY.md` linia 5, `Corpus commit:` — to commit
+ *      DOKUMENTOW zrodlowych, NIE commit kodu) w `candidate_sha` wiersza o
+ *      statusie IMPLEMENTED_AND_PROVEN/PASS — to pomylenie dwoch roznych SHA
+ *      i nie stanowi wazacego dowodu candidate_sha dla konkretnego wiersza.
+ *      Ten skrypt NIE zmienia zadnego statusu ani wartosci — tylko raportuje
+ *      liczby do recznej decyzji koordynatora.
  *
  * Uzycie:
  *   node scripts/case-workspace/ledger-report.mjs
@@ -59,6 +84,57 @@ const OUT_PATH = outIdx !== -1 && args[outIdx + 1]
 const EMIT_JSON = args.includes('--json');
 
 const PROVEN_STATUSES = new Set(['IMPLEMENTED_AND_PROVEN', 'PASS']);
+
+// "Better than raw NOT_IMPLEMENTED" statuses, used only for the group-level
+// mixed-status detection in the semantic-dedup pass (section 6 in the header
+// comment above). This mirrors SCOPE_ADJUDICATION.md §2.2's own definition
+// of a "mixed" group verbatim: at least one member at a better status, at
+// least one other member stuck at a worse one.
+const BETTER_STATUSES = new Set(['IMPLEMENTED_AND_PROVEN', 'PASS', 'PARTIAL', 'OUT_OF_SCOPE_THIS_WAVE']);
+
+// Rank used to pick the single "best status" that represents an entire
+// semantic group in the group-level distribution. Lower = better/closer to
+// proven. Anything not listed here (unknown/typo status) ranks worst, so it
+// never silently masks a real gap.
+const STATUS_RANK = {
+  IMPLEMENTED_AND_PROVEN: 0,
+  PASS: 0,
+  PARTIAL: 1,
+  OUT_OF_SCOPE_THIS_WAVE: 2,
+  EVIDENCE_MISSING: 3,
+  BLOCKED_ON_UI: 4,
+  BLOCKED: 4,
+  NOT_IMPLEMENTED: 5,
+};
+function statusRank(status) {
+  const s = (status || '').trim();
+  if (s === '') return 6;
+  return Object.prototype.hasOwnProperty.call(STATUS_RANK, s) ? STATUS_RANK[s] : 5.5;
+}
+
+// Requirement-corpus commit (the source-DOCUMENT extraction commit), per
+// docs/product/case-workspace/acceptance/PACKET_REGISTRY.md line 5:
+// "Corpus commit: `80d75f24ce01751639e572226f4e52b30503cd22`". This is NOT a
+// code-implementation commit — using it as a row's `candidate_sha` cannot
+// evidence that row's code was reviewed/accepted, because it does not
+// identify a code state at all.
+const CORPUS_DOC_SHA = '80d75f24ce01751639e572226f4e52b30503cd22';
+
+// ---------------------------------------------------------------------------
+// requirement_text normalization for semantic (exact-match) dedup.
+// NFKD-fold + lowercase + strip punctuation + collapse whitespace, matching
+// the method SCOPE_ADJUDICATION.md §2.1 describes in prose (now codified).
+// ---------------------------------------------------------------------------
+function normalizeRequirementText(raw) {
+  if (!raw) return '';
+  return raw
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '') // strip combining diacritics after NFKD fold
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, ' ') // strip punctuation -> space
+    .trim()
+    .replace(/\s+/g, ' ');
+}
 
 // ---------------------------------------------------------------------------
 // RFC4180-ish CSV parser (handles quoted fields, embedded commas/newlines,
@@ -363,6 +439,62 @@ function analyzeFile(csvPath) {
     }
   }
 
+  // -------------------------------------------------------------------------
+  // Semantic dedup input: one entry per effective row that carries a
+  // non-empty requirement_text. Grouping itself happens cross-file, after
+  // all files are analyzed (see buildRequirementGroups below) — this is just
+  // per-file extraction.
+  // -------------------------------------------------------------------------
+  const hasRequirementText = fields.includes('requirement_text');
+  const requirementTextRows = [];
+  if (hasRequirementText) {
+    for (const row of effectiveRows) {
+      const raw = (row.requirement_text || '').trim();
+      if (!raw) continue;
+      requirementTextRows.push({
+        file: name,
+        id: idField ? row[idField] : '(brak id)',
+        status: hasStatus ? ((row.status || '').trim() || '(brak statusu)') : '(brak statusu)',
+        rawText: raw,
+        normText: normalizeRequirementText(raw),
+      });
+    }
+  }
+
+  // -------------------------------------------------------------------------
+  // Evidence hygiene (Task 3 / header comment section 7): active rows whose
+  // candidate_sha is an UNCOMMITTED-WORKTREE sentinel (not a real commit) or
+  // is the requirement-corpus doc commit misused as a code candidate_sha.
+  // Read-only: nothing here is ever written back to the CSV.
+  // -------------------------------------------------------------------------
+  const hasCandidateSha = fields.includes('candidate_sha');
+  const uncommittedWorktreeRows = [];
+  const corpusShaMisuseRows = [];
+  if (hasCandidateSha) {
+    for (const row of effectiveRows) {
+      const cs = (row.candidate_sha || '').trim();
+      const status = hasStatus ? (row.status || '').trim() : '';
+      const id = idField ? row[idField] : '(brak id)';
+      if (/^UNCOMMITTED-WORKTREE/.test(cs)) {
+        uncommittedWorktreeRows.push({ id, status, candidateSha: cs });
+      } else if (cs === CORPUS_DOC_SHA && PROVEN_STATUSES.has(status)) {
+        corpusShaMisuseRows.push({ id, status, candidateSha: cs });
+      }
+    }
+  }
+  // Rows proven (IMPLEMENTED_AND_PROVEN/PASS) in a file that has NO
+  // candidate_sha column at all — there is structurally no way to know which
+  // code state such a row was accepted against.
+  const provenNoCandidateShaColumn = [];
+  if (hasStatus && !hasCandidateSha) {
+    for (const row of effectiveRows) {
+      const status = (row.status || '').trim();
+      if (PROVEN_STATUSES.has(status)) {
+        provenNoCandidateShaColumn.push({ id: idField ? row[idField] : '(brak id)', status });
+      }
+    }
+  }
+
   return {
     file: name,
     fields,
@@ -372,6 +504,8 @@ function analyzeFile(csvPath) {
     hasSupersedes,
     hasTestRef,
     hasEvidenceRef,
+    hasRequirementText,
+    hasCandidateSha,
     rawStatusDist,
     effectiveStatusDist,
     effectiveRowCount: effectiveRows.length,
@@ -379,6 +513,76 @@ function analyzeFile(csvPath) {
     noEvidenceCount: noEvidenceRows.length,
     provenNoEvidence,
     provenBrokenTestRef,
+    requirementTextRows,
+    uncommittedWorktreeRows,
+    corpusShaMisuseRows,
+    provenNoCandidateShaColumn,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Cross-file semantic grouping (exact-text match on normalized
+// requirement_text). This is the "counter shows requirements, not
+// occurrences" mechanism (Task 1). Read-only: does not touch any CSV.
+// ---------------------------------------------------------------------------
+function buildRequirementGroups(perFile) {
+  const groupsByNormText = new Map();
+  for (const f of perFile) {
+    for (const r of f.requirementTextRows) {
+      if (!groupsByNormText.has(r.normText)) groupsByNormText.set(r.normText, []);
+      groupsByNormText.get(r.normText).push(r);
+    }
+  }
+
+  const groups = Array.from(groupsByNormText.entries()).map(([normText, members]) => {
+    let bestRank = Infinity;
+    let bestStatus = null;
+    let hasBetter = false;
+    let hasWorse = false;
+    for (const m of members) {
+      const rank = statusRank(m.status);
+      if (rank < bestRank) {
+        bestRank = rank;
+        bestStatus = m.status;
+      }
+      if (BETTER_STATUSES.has(m.status)) hasBetter = true;
+      else hasWorse = true;
+    }
+    return {
+      normText,
+      sampleText: members[0].rawText,
+      members,
+      size: members.length,
+      bestStatus,
+      mixed: hasBetter && hasWorse,
+    };
+  });
+
+  const totalReqTextRows = groups.reduce((acc, g) => acc + g.size, 0);
+  const singletonGroups = groups.filter((g) => g.size === 1);
+  const multiGroups = groups.filter((g) => g.size >= 2);
+  const collapsedRowCount = multiGroups.reduce((acc, g) => acc + g.size, 0);
+  const mixedGroups = groups.filter((g) => g.mixed);
+  const allNotImplementedGroups = groups.filter(
+    (g) => g.members.every((m) => (m.status || '').trim() === 'NOT_IMPLEMENTED')
+  );
+
+  const groupBestStatusDist = {};
+  for (const g of groups) {
+    const s = g.bestStatus || '(brak statusu)';
+    groupBestStatusDist[s] = (groupBestStatusDist[s] || 0) + 1;
+  }
+
+  return {
+    totalReqTextRows,
+    totalGroups: groups.length,
+    singletonGroups,
+    multiGroups,
+    collapsedRowCount,
+    mixedGroups,
+    allNotImplementedGroups,
+    groupBestStatusDist,
+    groups,
   };
 }
 
@@ -403,6 +607,9 @@ const grand = {
   noEvidenceCount: 0,
   provenNoEvidence: [],
   provenBrokenTestRef: [],
+  uncommittedWorktreeRows: [],
+  corpusShaMisuseRows: [],
+  provenNoCandidateShaColumn: [],
 };
 
 for (const f of perFile) {
@@ -419,7 +626,12 @@ for (const f of perFile) {
   grand.noEvidenceCount += f.noEvidenceCount;
   for (const r of f.provenNoEvidence) grand.provenNoEvidence.push({ file: f.file, ...r });
   for (const r of f.provenBrokenTestRef) grand.provenBrokenTestRef.push({ file: f.file, ...r });
+  for (const r of f.uncommittedWorktreeRows) grand.uncommittedWorktreeRows.push({ file: f.file, ...r });
+  for (const r of f.corpusShaMisuseRows) grand.corpusShaMisuseRows.push({ file: f.file, ...r });
+  for (const r of f.provenNoCandidateShaColumn) grand.provenNoCandidateShaColumn.push({ file: f.file, ...r });
 }
+
+const reqGroups = buildRequirementGroups(perFile);
 
 // ---------------------------------------------------------------------------
 // Render Markdown
@@ -485,6 +697,97 @@ lines.push('');
 lines.push('### (dla porownania) rozklad surowy — WSZYSTKIE wiersze, bez dedup supersedes');
 lines.push('');
 lines.push(fmtDist(grand.rawStatusDist));
+lines.push('');
+
+lines.push('## Deduplikacja semantyczna wymagan (grupy, nie wystapienia)');
+lines.push('');
+lines.push('Metoda: dla kazdego pliku z kolumna `requirement_text`, wiersze EFEKTYWNE grupowane');
+lines.push('cross-file po identycznym znormalizowanym tekscie (NFKD fold, lowercase, usunieta');
+lines.push('interpunkcja, zwiniete biale znaki) — wylacznie dopasowanie DOKLADNE, ZERO dopasowania');
+lines.push('parafraz (parafrazy to osobny, nie-mechaniczny problem — patrz `README.md` "near-duplicate');
+lines.push('rows across clusters... have not been deduplicated yet"). `TRACEABILITY_AUTH_ROUTES.csv` nie');
+lines.push('ma kolumny `requirement_text` (schemat route x authorization_predicate) — pozostaje poza tym');
+lines.push('rozdzialem, na wlasnej osi (patrz jego wlasna sekcja per-plik ponizej).');
+lines.push('');
+lines.push(`Wiersze efektywne z niepustym \`requirement_text\` (pliki: ${perFile.filter((f) => f.hasRequirementText).length} z ${perFile.length}): **${reqGroups.totalReqTextRows}**`);
+lines.push('');
+lines.push(`Odrebne grupy semantyczne (exact-text) po dedup: **${reqGroups.totalGroups}**`);
+lines.push('');
+lines.push(`- Grupy z 1 czlonkiem (juz unikalne): **${reqGroups.singletonGroups.length}**`);
+lines.push(`- Grupy z >=2 czlonkami: **${reqGroups.multiGroups.length}** (skolapsowanych wierszy: **${reqGroups.collapsedRowCount}**, srednio ${reqGroups.multiGroups.length ? (reqGroups.collapsedRowCount / reqGroups.multiGroups.length).toFixed(1) : '0'}/grupe)`);
+lines.push(`- Grupy, w ktorych KAZDY czlonek to nadal \`NOT_IMPLEMENTED\`: **${reqGroups.allNotImplementedGroups.length}**`);
+lines.push(`- Grupy MIESZANE (co najmniej 1 czlonek w lepszym stanie — PARTIAL/IMPLEMENTED_AND_PROVEN/PASS/OUT_OF_SCOPE_THIS_WAVE — a co najmniej 1 inna kopia utkniety w gorszym): **${reqGroups.mixedGroups.length}**`);
+lines.push('');
+lines.push('Rozklad statusow **na poziomie grupy** (kazda grupa liczona RAZ, jej "najlepszym" statusem');
+lines.push('sposrod czlonkow — ranga: IMPLEMENTED_AND_PROVEN/PASS > PARTIAL > OUT_OF_SCOPE_THIS_WAVE >');
+lines.push('EVIDENCE_MISSING > BLOCKED* > NOT_IMPLEMENTED):');
+lines.push('');
+lines.push(fmtDist(reqGroups.groupBestStatusDist));
+lines.push('');
+lines.push('**To NIE zastepuje ani nie zmniejsza licznika GAP z sekcji powyzej.** Zaden status w zadnym');
+lines.push('pliku CSV nie zostal zmieniony przez ten skrypt — to jest DRUGA, jawnie oznaczona miara: ile');
+lines.push('WYMAGAN (nie wystapien) istnieje, i jaki jest najlepszy dowod, jaki KTOKOLWIEK z duplikatow');
+lines.push('tego wymagania dotychczas zebral. Grupy mieszane oznaczone powyzej sa realnym targetem higieny');
+lines.push('rejestru (dwoch agentow ekstrahowalo to samo wymaganie do dwoch rejestrow, jeden zaktualizowal');
+lines.push('swoja kopie dowodem, drugi nie) — nie sa rozwiazywane przez ten skrypt, tylko wskazywane.');
+lines.push('');
+if (reqGroups.mixedGroups.length > 0) {
+  const sample = reqGroups.mixedGroups.slice(0, 15);
+  lines.push(`### Przyklad grup mieszanych (pierwsze ${sample.length} z ${reqGroups.mixedGroups.length})`);
+  lines.push('');
+  lines.push('| Tekst wymagania (skrocony) | Czlonkowie (plik:id=status) |');
+  lines.push('|---|---|');
+  for (const g of sample) {
+    const shortText = g.sampleText.length > 100 ? g.sampleText.slice(0, 100) + '…' : g.sampleText;
+    const memberList = g.members.map((m) => `${m.file}:${m.id}=${m.status}`).join('; ');
+    lines.push(`| ${shortText.replace(/\|/g, '\\|')} | ${memberList.replace(/\|/g, '\\|')} |`);
+  }
+  lines.push('');
+}
+
+lines.push('## Higiena dowodowa: sentinel `UNCOMMITTED-WORKTREE` i SHA korpusu wymagan w `candidate_sha`');
+lines.push('');
+lines.push('Wiersz EFEKTYWNY nie powinien nosic w `candidate_sha` ani sentinela roboczego');
+lines.push('`UNCOMMITTED-WORKTREE...` (dopuszczalny WYLACZNIE jako tymczasowy znacznik podczas pracy na');
+lines.push('niezacommitowanym, wspoldzielonym worktree — nie jako trwaly dowod), ani SHA korpusu wymagan');
+lines.push('(`80d75f24ce01751639e572226f4e52b30503cd22`, patrz `PACKET_REGISTRY.md` linia 5: "Corpus');
+lines.push('commit:" — to commit DOKUMENTOW zrodlowych, nie kodu) uzytego tak, jakby byl dowodem code-review.');
+lines.push('');
+lines.push(`Wiersze efektywne z \`candidate_sha\` zaczynajacym sie od \`UNCOMMITTED-WORKTREE\`: **${grand.uncommittedWorktreeRows.length}**`);
+const uwProven = grand.uncommittedWorktreeRows.filter((r) => PROVEN_STATUSES.has((r.status || '').trim()));
+lines.push(`  z tego o statusie IMPLEMENTED_AND_PROVEN/PASS (najbardziej niepokojace — dowod "trwaly" na wierszu z sentinelem roboczym): **${uwProven.length}**`);
+lines.push('');
+if (uwProven.length > 0) {
+  lines.push('| Plik | ID | status | candidate_sha |');
+  lines.push('|---|---|---|---|');
+  for (const r of uwProven) {
+    lines.push(`| ${r.file} | ${r.id} | ${r.status} | ${r.candidateSha} |`);
+  }
+  lines.push('');
+}
+lines.push(`Wiersze efektywne o statusie IMPLEMENTED_AND_PROVEN/PASS, ktorych \`candidate_sha\` jest SHA korpusu wymagan (mylnie uzyty jako dowod kodu): **${grand.corpusShaMisuseRows.length}**`);
+lines.push('');
+if (grand.corpusShaMisuseRows.length > 0) {
+  lines.push('| Plik | ID | status |');
+  lines.push('|---|---|---|');
+  for (const r of grand.corpusShaMisuseRows) {
+    lines.push(`| ${r.file} | ${r.id} | ${r.status} |`);
+  }
+  lines.push('');
+}
+lines.push(`Wiersze efektywne o statusie IMPLEMENTED_AND_PROVEN/PASS w pliku, ktory w ogole NIE MA kolumny \`candidate_sha\` (strukturalnie niemozliwe do zweryfikowania, wobec jakiego stanu kodu wiersz zostal przyjety): **${grand.provenNoCandidateShaColumn.length}**`);
+if (grand.provenNoCandidateShaColumn.length > 0) {
+  const byFile = {};
+  for (const r of grand.provenNoCandidateShaColumn) byFile[r.file] = (byFile[r.file] || 0) + 1;
+  lines.push('');
+  lines.push(Object.entries(byFile).map(([f, c]) => `${f}: **${c}**`).join(', '));
+}
+lines.push('');
+lines.push('Zaden `evidence_ref` (odrebna kolumna od `candidate_sha`) nie ma dokladnej wartosci-sentinela');
+lines.push('`UNCOMMITTED-WORKTREE` — sentinel wystepuje wylacznie w `candidate_sha`; sprawdzone parserem.');
+lines.push('');
+lines.push('**Ten skrypt nic tu nie zmienia** — zero edycji `status`, zero edycji `candidate_sha`/`evidence_ref`.');
+lines.push('Powyzsze liczby sa raportem dla koordynatora, ktory stempluje realny SHA po scaleniu.');
 lines.push('');
 
 lines.push('## Rozbicie per plik');
@@ -591,8 +894,17 @@ console.log('Rozklad statusow (EFEKTYWNE):', JSON.stringify(grand.effectiveStatu
 console.log(`Wiersze efektywne bez dowodu (test_ref lub evidence_ref puste): ${grand.noEvidenceCount}`);
 console.log(`  z tego IMPLEMENTED_AND_PROVEN/PASS bez dowodu: ${grand.provenNoEvidence.length}`);
 console.log(`Niespojnosc PROVEN + test_ref nie wskazujacy na istniejacy plik: ${grand.provenBrokenTestRef.length}`);
+console.log('');
+console.log(`Wymagania z requirement_text (wiersze efektywne): ${reqGroups.totalReqTextRows}`);
+console.log(`Odrebne grupy semantyczne (exact-text dedup): ${reqGroups.totalGroups}`);
+console.log(`  singleton: ${reqGroups.singletonGroups.length}, multi (>=2): ${reqGroups.multiGroups.length} (skolapsowane wiersze: ${reqGroups.collapsedRowCount})`);
+console.log(`  grupy w 100% NOT_IMPLEMENTED: ${reqGroups.allNotImplementedGroups.length}, grupy mieszane: ${reqGroups.mixedGroups.length}`);
+console.log('');
+console.log(`Higiena: candidate_sha=UNCOMMITTED-WORKTREE* na wierszu efektywnym: ${grand.uncommittedWorktreeRows.length} (z tego PROVEN/PASS: ${grand.uncommittedWorktreeRows.filter((r) => PROVEN_STATUSES.has((r.status || '').trim())).length})`);
+console.log(`Higiena: candidate_sha = SHA korpusu wymagan na wierszu PROVEN/PASS: ${grand.corpusShaMisuseRows.length}`);
+console.log(`Higiena: PROVEN/PASS w pliku bez kolumny candidate_sha: ${grand.provenNoCandidateShaColumn.length}`);
 
 if (EMIT_JSON) {
   console.log('');
-  console.log(JSON.stringify({ perFile, grand }, null, 2));
+  console.log(JSON.stringify({ perFile, grand, reqGroups }, null, 2));
 }

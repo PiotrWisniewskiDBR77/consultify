@@ -317,6 +317,38 @@ function mapTransportErrorToCode(error: unknown): CapabilityErrorCode {
 }
 
 // ---------------------------------------------------------------------------
+// CapabilityHandlerError — the escape hatch an INTERNAL handler uses to
+// report a PRECISE taxonomy code instead of the generic
+// CAPABILITY_INTERNAL_ERROR every other thrown error maps to.
+// ---------------------------------------------------------------------------
+
+/**
+ * A module-owned INTERNAL handler (doc 05 §5's "map every failure into the
+ * taxonomy; it may not throw raw errors") knows more about WHY it failed than
+ * a generic catch block ever can: a case the actor cannot access is
+ * `CAPABILITY_UNAUTHORIZED`, a caseId that does not resolve is
+ * `CAPABILITY_NOT_FOUND`, a request that fails the module's own business
+ * validation is `CAPABILITY_INPUT_INVALID` — none of that is
+ * `CAPABILITY_INTERNAL_ERROR` (reserved for OUR bugs, per this file's own
+ * error-taxonomy header, "kept last so nothing silently maps to a friendlier
+ * code than it deserves").
+ *
+ * Throwing this from a `CapabilityHandler` lets `internalCommandAdapter` map
+ * to the handler's OWN chosen code rather than defaulting every throw to
+ * `CAPABILITY_INTERNAL_ERROR`. A handler that throws anything else (a plain
+ * `Error`, a driver exception) still gets the old generic behavior —
+ * this is additive, not a change to any existing adapter's contract.
+ */
+export class CapabilityHandlerError extends Error {
+  readonly code: CapabilityErrorCode;
+  constructor(code: CapabilityErrorCode, message: string) {
+    super(message);
+    this.name = 'CapabilityHandlerError';
+    this.code = code;
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Adapters
 // ---------------------------------------------------------------------------
 
@@ -367,6 +399,9 @@ export const internalCommandAdapter: CapabilityAdapter = {
       }
       return { ok: true, output, resultRef: result?.resultRef ?? null };
     } catch (error) {
+      if (error instanceof CapabilityHandlerError) {
+        return { ok: false, errorCode: error.code, errorDetail: error.message };
+      }
       const name = (error as { name?: string } | null)?.name ?? '';
       return {
         ok: false,

@@ -10,12 +10,17 @@
 > (30-min browser-heap Run — §6, `EVIDENCE_MISSING`), `CW-DOD-I5` (list
 > pagination — §7 finding 1, confirms the existing `PARTIAL` under real load),
 > `CW-DOD-I6` (dispatch/backlog observability — §5 finding 4, `outboxWorker`
-> not wired into `server/src/index.ts`), `CW-DOD-I8` (failure injection — §5,
+> not wired into `server/src/index.ts` **at the time this original evidence was
+> produced — see §9 for the CW-T-E / B4 update: it is wired now, and §9 is the
+> current evidence for this row**), `CW-DOD-I8` (failure injection — §5,
 > DONE). Does **not** bear on `CW-DOD-I1` (spinner/socket memory — frontend)
 > or `CW-DOD-I7` (reconnect/cold-reopen convergence — a live-session/frontend
 > concern this backend-only harness has no way to exercise); not claimed here.
 > Checkpoint under test: `cbfd32a48a` (as instructed; no `git` commands were
-> run by this packet — see "How this was produced" below).
+> run by this packet — see "How this was produced" below). **§9 below is a
+> LATER packet (CW-T-E / B4) run against a newer checkpoint where the worker
+> is wired — read §9's own header for its exact scope before treating §1-§8
+> as the current state of `CW-DOD-I6`.**
 > Harness: `server/src/services/caseWorkspace/__tests__/performance/**`
 > (new in this packet).
 > Packet allowlist: `server/src/services/caseWorkspace/__tests__/performance/**`
@@ -563,3 +568,243 @@ Raw per-run JSON (all fields, not just the tables above) is retained at
 the repository (run artifacts, not source; regenerate with the command
 above from the same checkpoint to reproduce byte-for-byte-comparable output
 modulo timestamps/ids).
+
+---
+
+## 9. CW-T-E / B4 update — outbox worker dead-letter, recovery, observability, performance
+
+> Packet: CW-T-E, B4 ("WYDAJNOSC, DEAD-LETTER I OBSERVABILITY WORKERA").
+> Checkpoint under test: `292bafd4e8` (`HEAD` at the time this section was
+> written — genuinely newer than §1-§8's `cbfd32a48a`; between the two,
+> `startCaseWorkspaceOutboxWorker()` was wired into `server/src/index.ts` by
+> the session coordinator — verified directly: `grep -n
+> "startCaseWorkspaceOutboxWorker" server/src/index.ts` returns two real call
+> sites, lines 1864-1867, not just the function's own definition).
+> Allowlist for this section: `server/src/services/caseWorkspace/outboxWorker.ts`,
+> `server/src/services/caseWorkspace/__tests__/integration/outboxWorker.pg.test.ts`,
+> `server/src/services/caseWorkspace/__tests__/perf/**` (a DIFFERENT,
+> narrower directory than §1-§8's `__tests__/performance/**`), and this file.
+> `eventOutboxService.ts` and `server/migrations/**` are out of allowlist —
+> called, never edited.
+
+### 9.1 What changed in `outboxWorker.ts`, and why
+
+The pre-existing worker (§5 finding 4's own subject) already had a correct
+interval loop and an accurate per-tick metrics snapshot; this packet added
+what B4's brief asked for, entirely inside `outboxWorker.ts`'s own
+orchestration layer (no change to `eventOutboxService.ts`'s claim/retry/
+dead-letter SQL, which was already correct and is out of this packet's
+allowlist):
+
+1. **Tick-cadence exponential backoff** (`getOutboxWorkerMetrics().currentBackoffMultiplier`,
+   1x→2x→4x→8x, capped, resets to 1x on the next clean tick). Explicitly
+   NOT per-row backoff — `case_workspace_event_outbox` has no
+   `next_retry_at` column, and adding one would mean editing
+   `eventOutboxService.ts`'s schema/SQL, out of allowlist. This is stated
+   plainly rather than implied to be more than it is.
+2. **Stuck-tick watchdog** (`tickTimeoutMs`, `OutboxWorkerTickResult.timedOut`,
+   `getOutboxWorkerMetrics().stuckTicks`): a durable consumer
+   (`subscribeToOutboxDelivery`) whose promise never settles — e.g. a
+   webhook call with no timeout of its own — used to be able to wedge the
+   interval loop forever (`tickInFlight` never clears under the OLD
+   `setInterval` design). `runOutboxWorkerTick()` now races the real
+   dispatch against a timer; the loop is guaranteed to keep making progress,
+   and the real outcome is still applied to cumulative metrics whenever the
+   slow call eventually settles (see the function's own header for exactly
+   what is and is not cancellable — nothing in Node/Postgres can truly
+   cancel an in-flight await).
+3. **Queue lag in TIME, not just row count** (`oldestPendingAgeSeconds`,
+   sourced from `eventOutboxService.getOutboxBacklog()`'s own
+   `oldestPendingAgeSeconds`, which existed already but was not previously
+   surfaced through the worker's tick result/metrics).
+4. **Rolling tick-duration p50/p95** (`tickDurationMsP50`/`tickDurationMsP95`,
+   last 50 ticks) — a delivery-latency proxy.
+5. **Reconciliation sweep** (`runOutboxReconciliationSweep()`,
+   `getOutboxWorkerMetrics().lastDeadLetterSample`/`lastReconciliationAt`):
+   samples the ACTUAL dead-lettered rows (event id, type, attempt count,
+   last error), not just the count `deadLetterCount` already gave. The
+   interval loop runs it automatically every `reconciliationEveryNTicks`
+   (default 12) clean ticks.
+
+### 9.2 Dead-letter / recovery / observability — proved against the real database
+
+`server/src/services/caseWorkspace/__tests__/integration/outboxWorker.pg.test.ts`,
+run against `postgresql://case_workspace:case_workspace@127.0.0.1:55432/case_workspace_test`
+(command: see the file's own header) — **9/9 passed**, no unhandled errors,
+2.9-4.8s wall clock across repeated runs:
+
+```
+DB_TYPE=postgres LC_ALL=C NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false \
+POSTGRES_SKIP_INIT_IN_TEST=1 \
+DATABASE_URL="postgresql://case_workspace:case_workspace@127.0.0.1:55432/case_workspace_test" \
+npx vitest run \
+src/services/caseWorkspace/__tests__/integration/outboxWorker.pg.test.ts \
+--environment node
+```
+
+| # | Case | What it proves | Real DB mechanism |
+|---|---|---|---|
+| 1 | Tick metrics | `runOutboxWorkerTick()` return value and `getOutboxWorkerMetrics()` agree with Postgres | real dispatch, real read-back |
+| 2 | Failure injection + dead-letter | a permanently-failing consumer drives a row to `DEAD_LETTER_ATTEMPT_THRESHOLD` (10) attempts, then the worker stops claiming it, durably | real retries, real `listDeadLetterEvents`/`countDeadLetterEvents` |
+| 3 | Concurrent delivery | two ticks racing the same batch never double-deliver | real `FOR UPDATE SKIP LOCKED` |
+| 4 | Restart recovery | a fully-stopped-and-reset worker instance, then a fresh start, recovers what was published while down, with no redelivery of what already went out | real stop/start, real Postgres state read back |
+| 5 (new, B4) | **Stuck lease recovery** | a claiming transaction that never commits (simulated crash) does not block OTHER rows (`SKIP LOCKED`), and once its backend is killed with a real `pg_terminate_backend()`, the very next tick recovers its row **immediately — no lease-expiry wait of any kind**, because this design has no lease column to expire in the first place | real `pg_terminate_backend()`, real lock release |
+| 6 (new, B4) | **Tick watchdog** | a durable consumer hung past `tickTimeoutMs` does not block `runOutboxWorkerTick()` from returning (`timedOut=true`, `elapsedMs < 2s` even though the handler was still hanging), `stuckTicks` increments, and the late real outcome still lands in cumulative metrics once the handler is released | real timer race against a real DB call |
+| 7 (new, B4) | **Adaptive backoff** | `currentBackoffMultiplier` doubles 1→2→4 across two consecutive failing ticks, resets to 1 on the next clean tick | real failing/succeeding dispatch |
+| 8 (new, B4) | **Reconciliation sweep** | `runOutboxReconciliationSweep()` returns the actual dead-lettered row (event id, type, `deliveryAttemptCount=10`, `lastDeliveryError` containing the real thrown message) and mirrors it onto `getOutboxWorkerMetrics()` | real dead-letter row read back |
+| 9 (new, B4) | **Queue lag in time** | `oldestPendingAgeSeconds` is `null` idle, `>= 1` after a row has aged past 1s, `null` again once drained | real `EXTRACT(EPOCH FROM (now() - min(created_at)))` |
+
+**Negative controls performed on the two genuinely new pieces of worker logic**
+(sabotage → confirm red → revert → confirm green again, evidence not merely
+described):
+
+- Backoff: hard-coded `backoffMultiplier = 1` unconditionally in
+  `applyTickResultToMetrics` → test 7 failed with `AssertionError: expected 1
+  to be 2` → reverted → full suite green again (9/9).
+- Watchdog: forced `runOutboxWorkerTick()` to always `return bodyPromise`
+  regardless of `tickTimeoutMs` → test 6 failed with `Error: Test timed out
+  in 15000ms` (the hung handler genuinely blocked it, proving the watchdog
+  is what prevents that in the real code) → reverted → full suite green
+  again (9/9).
+
+Test 5 (stuck lease recovery) was not sabotaged the same way — it mostly
+proves an intrinsic Postgres/`SKIP LOCKED` property this file does not
+implement itself (see `runOutboxWorkerTick`'s own doc comment on why there
+is no lease column at all); tests 2 and 3 above already establish
+`SKIP LOCKED`'s behavior under sabotage-free real crash/concurrency
+conditions.
+
+### 9.3 Performance — measured against DoD-I's own cited volumes
+
+DoD-I's literal text (`14_COMPLETE_DOD_EPICS_ACCEPTANCE_AND_CLAUDE_PROMPT.md`
+lines 329-354), quoted for the canon-vs-result comparison table below:
+
+> "SPEC-L remains operable with 1,000 Cases, Plan with 250 nodes/500 edges,
+> and timeline with 10,000 events using pagination or virtualization."
+>
+> "On recorded standard test hardware, warm p95 route-to-interactive is
+> <= 2.5 s, p95 local interaction response <= 100 ms and p95 server-backed
+> mutation feedback <= 1 s under a recorded throttled-network profile."
+>
+> "A 30-minute active Run has no unbounded DOM/event growth and no more than
+> 20% browser-heap growth after GC from the post-load baseline."
+>
+> "Projection lag, stuck leases, waits, retries and capability health are
+> observable."
+>
+> "Reconnect/cold reopen converges to authoritative server state."
+>
+> "Failure injection proves recovery without duplicate effects."
+
+`server/src/services/caseWorkspace/__tests__/perf/outboxThroughput.perf.pg.test.ts`
+(NEW harness for this packet — a different, narrower file from §1-§8's
+`__tests__/performance/**`), run against the same real database, with
+`NODE_OPTIONS=--expose-gc` for a real forced-GC heap floor:
+
+```
+DB_TYPE=postgres LC_ALL=C NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false \
+POSTGRES_SKIP_INIT_IN_TEST=1 \
+DATABASE_URL="postgresql://case_workspace:case_workspace@127.0.0.1:55432/case_workspace_test" \
+NODE_OPTIONS=--expose-gc \
+npx vitest run \
+src/services/caseWorkspace/__tests__/perf/outboxThroughput.perf.pg.test.ts \
+--environment node
+```
+
+**3/3 passed.** Real evidence lines (unconditionally printed by the suite,
+not gated behind a flag), from a run with comparatively little cross-agent
+contention at the moment it ran (contention is disclosed, not hidden — see
+§1.3's own finding that this shared environment moves absolute numbers by up
+to 95x run to run; a SECOND run minutes later, also captured below, shows
+exactly that variance on the same fixture):
+
+| Metric (DoD-I canon volume) | DoD-I canon threshold | Run A (low contention) | Run B (same session, minutes later) |
+|---|---|---:|---:|
+| Outbox drain, 10,000 events / 1,000 Cases, `dispatchPendingEvents` batch=500 | "timeline with 10,000 events ... observable" | seedMs=1598, drainWallClockMs=81219, **123.1 events/s**, tick p50=3313ms p95=7690ms p99=8680ms | seedMs=390, drainWallClockMs=6056, **1651.3 events/s**, tick p50=294ms p95=330ms p99=446ms |
+| `getOutboxBacklog()` read at full 10,000-row backlog | "projection lag ... observable" | 205ms | 16ms |
+| `publishEvent()` commit latency, n=200, DB-transaction floor of "p95 server-backed mutation feedback <= 1 s" | <= 1000ms (full-stack; this is a lower-bound proxy only, see §1.3-equivalent caveat below) | p50=76ms p95=190ms p99=240ms | p50=9ms p95=11ms p99=12ms |
+| Heap, draining 10,000 events through the REAL `outboxWorker.runOutboxWorkerTick()` path, forced GC (`--expose-gc`) | "no more than 20% browser-heap growth after GC" (a browser-tab metric; this is the server-process analogue, see caveat below) | baseline=16.51MB → postDrain(GC)=18.93MB, **+14.71%** | baseline=18.48MB → postDrain(GC)=18.11MB, **-2.03%** |
+| `getOutboxWorkerMetrics()` accuracy at 10,000-event volume (worker path) | "capability health are observable" | `totalClaimed=totalDelivered=10000`, `totalFailed=0`, `oldestPendingAgeSeconds=null` post-drain, `tickDurationMsP50=307` `P95=342`, `stuckTicks=0` | `totalClaimed=totalDelivered=10000`, `totalFailed=0`, `oldestPendingAgeSeconds=null` post-drain, `tickDurationMsP50=296` `P95=326`, `stuckTicks=0` |
+
+**Same environment caveat as §1.3, restated for THIS section rather than
+assumed carried over**: this ran on a shared worktree with multiple other
+concurrently active agent sessions on the same physical Postgres instance
+(per this packet's own task briefing), not DoD-I's frozen/exclusive 4 vCPU /
+16 GB runner with the `CW-NET-1` network-throttle profile. The 30.6x-95.3x
+run-to-run spread §4 already documented for the sibling `__tests__/performance/**`
+harness is visibly the same phenomenon here (Run A vs Run B above: an 8-13x
+spread on the identical fixture, minutes apart). **These numbers are real,
+reproducible-SHAPE server-side evidence at the exact DoD-I-cited volumes for
+THIS packet's scope (the outbox event spine, via the actual worker call
+path) — they are explicitly NOT a DoD-I browser-route p95/heap PASS/FAIL
+verdict**, for the same two reasons §1.3 already gives: the cited latency
+budgets are UI-route budgets this harness does not drive, and the
+environment is not the frozen/exclusive one DoD-I's freeze clause requires.
+
+**30-minute active Run (`CW-DOD-I4`, browser DOM/event growth + heap):
+`EVIDENCE_MISSING`, unchanged from §6.** This packet's allowlist is
+`server/src/services/caseWorkspace/{outboxWorker.ts,__tests__/integration/**,__tests__/perf/**}`
+plus this doc — no browser, no frontend, no 30-continuous-minute harness is
+reachable from here either. Not attempted, not approximated, stated plainly.
+
+### 9.4 A genuine finding from actually running this, not reasoned about: outbox rows can never be deleted, by anyone, and no test/production cleanup exists
+
+Discovered while writing this packet's own tests' teardown, then confirmed
+directly against Postgres (`DELETE FROM case_workspace_event_outbox WHERE
+organization_id = '…'` → `case_workspace_event_outbox is append-only: DELETE
+is not permitted`):
+
+`server/migrations/20260810f_case_workspace_append_only_guards.sql` — landed
+by a SIBLING packet, between this section's checkpoint and §1-§8's, out of
+this packet's own allowlist — added a real, unconditional `BEFORE DELETE`
+trigger on `case_workspace_event_outbox` (correctly enforcing §9's own
+audit-survives guarantee: the table is append-only FACTS, with only
+`delivered_at`/`delivery_attempt_count`/`last_delivery_error` ever mutable).
+This is almost certainly the CORRECT production behavior for an audit
+outbox — but it has two consequences worth the coordinator's attention:
+
+1. **Every `*.pg.test.ts` file in this repo that writes to
+   `case_workspace_event_outbox` and tries to clean up after itself with a
+   `DELETE ... .catch(() => undefined)` — including this packet's own two
+   test files, and the pre-existing `outboxWorker.pg.test.ts` tests 1-4 —
+   has had that cleanup silently fail (swallowed by the `.catch`) since this
+   migration landed.** Test correctness is unaffected here (every org id in
+   this packet's tests is a fresh `randomUUID()`, so accumulation cannot
+   collide with a later run), but `case_workspace_test` now grows
+   PERMANENTLY, unboundedly, on every test run that has ever touched this
+   table since the migration landed — this session alone left tens of
+   thousands of orphaned rows across dozens of organization ids (directly
+   counted: `SELECT organization_id, count(*) FROM
+   case_workspace_event_outbox WHERE organization_id LIKE 'cwperf-%' OR
+   organization_id LIKE 'cwworker-org-%' GROUP BY organization_id` returned
+   100+ distinct orgs, several with 8,000-10,000 rows each, from this
+   session's own and other concurrent agents' test runs).
+2. **The same trigger applies in production.** Nothing in
+   `eventOutboxService.ts` (already correctly delivery-append-only by
+   design) or anywhere else in this codebase archives, partitions or purges
+   OLD, ALREADY-DELIVERED outbox rows — `delivered_at IS NOT NULL` rows stay
+   in the live table forever. At DoD-I's own cited "10,000 events" scale
+   this is a rounding error; over a real deployment's lifetime it is an
+   unbounded-growth risk to exactly the query this section measured as cheap
+   at 10,000 rows (`getOutboxBacklog`'s `count(*)`/`min(created_at)` over a
+   PARTIAL index on undelivered rows only stays cheap because it is
+   partial — but `dispatchPendingEvents`'s own claim query and any future
+   `replayEventsForAggregate` call scan/filter the FULL table). Not fixed
+   here — `eventOutboxService.ts` and `server/migrations/**` are both
+   outside this packet's allowlist, and a retention/archival policy is a
+   product decision, not something to invent unilaterally inside a
+   dead-letter/observability packet. Flagged for the coordinator as a
+   genuine DoD-I-relevant, previously-undocumented finding.
+
+### 9.5 Literal top-line status for this section
+
+| Requirement (B4 scope) | Result |
+|---|---|
+| Automatic retry with backoff | **PARTIAL, stated precisely**: per-row retry already existed and is correct (`eventOutboxService.ts`, unchanged); **tick-cadence** backoff (this packet's own addition) is **DONE** and proved (§9.2 case 7); **per-row** backoff is **not implemented** — would require a schema/SQL change outside this packet's allowlist, stated explicitly rather than glossed over |
+| Dead-letter after N attempts | **DONE** (pre-existing, `DEAD_LETTER_ATTEMPT_THRESHOLD=10`), now also surfaced with the actual rows via `runOutboxReconciliationSweep()` — **DONE**, new |
+| Reconciliation | **DONE**, new (§9.1 point 5, §9.2 case 8) |
+| Restart does not lose or duplicate the effect | **DONE** (pre-existing, §9.2 case 4) |
+| Stuck lease recovery | **DONE, with a caveat stated precisely**: this design has NO lease column to recover from expiry — proved instead that a crashed claiming transaction releases its locks immediately (§9.2 case 5) and that a hung IN-PROCESS consumer no longer wedges the worker loop (§9.2 case 6, this packet's own new watchdog) |
+| Metrics (queue lag, failure count, delivery latency) via `getOutboxWorkerMetrics()` | **DONE** — `oldestPendingAgeSeconds` (queue lag in time, new), `deadLetterCount`/`totalFailed` (failure count, pre-existing + new cumulative), `tickDurationMsP50`/`P95` (delivery-latency proxy, new); all proved live at 10,000-event volume in §9.3 |
+| 1,000 Cases / 250 nodes-500 edges / 10,000 events performance, p95, heap | **DONE for the outbox slice of this volume** (§9.3) — §1-§8 already cover the Case/Plan-graph slice; NOT re-measured here (out of this packet's allowlist, and would duplicate §2-§3 rather than add evidence) |
+| 30-minute active Run | **`EVIDENCE_MISSING`**, same reason as §6, not attempted |

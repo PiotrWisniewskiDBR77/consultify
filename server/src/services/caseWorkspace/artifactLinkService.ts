@@ -943,6 +943,210 @@ export interface ArtifactLinkSetDigest {
   computedAt: string;
 }
 
+// ---------------------------------------------------------------------------
+// CW-P09 packet B5 — Deliverable Open/Return (SCOPE_ADJUDICATION.md Golden
+// Case list item 12, reported PARTIAL: "the backend contract that MAKES that
+// round trip possible is proven [...] What is not [...] proven [...] is
+// 'opening it in the module' and 'returning to the Case' [...] no
+// corresponding case-workspace API call in this packet's surface").
+//
+// resolveArtifactLinkOpen() is that missing call: given a linkId the caller
+// already has (from listArtifactLinksForCase or getArtifactLink), it answers
+// two questions in one round trip — "is this link safe to open right now,
+// and if so what exactly do I open" (CW-RT-024's artifactType/artifactId/
+// artifactRevision — the deep-link target doc 03 §5 / doc 02 §7's
+// `Otwórz w [module]` needs) and "where do I land back on the Case side"
+// (doc 03 §5: "provides a semantic return path to the same Case phase and
+// selected step").
+// ---------------------------------------------------------------------------
+
+/** The three fields CW-RT-024 says are "enough to construct a deep link into the owning module" — never more. */
+export interface ArtifactLinkDeepLinkTarget {
+  artifactType: string;
+  artifactId: string;
+  artifactRevision: string | null;
+}
+
+/**
+ * The four explicit, honest states this packet's task brief asks for
+ * (unavailable / deleted / unauthorized / stale), realized against this
+ * table's actual columns:
+ *   - UNAVAILABLE  <- link_status='UNAVAILABLE' (markLinkArtifactUnavailable:
+ *                      the module confirmed the source itself is gone;
+ *                      CW-03-017 "rendered as unavailable with provenance").
+ *   - DELETED      <- link_status='UNLINKED' (unlinkArtifactFromCase: the
+ *                      Case-side reference was removed; this table has no
+ *                      other "deleted" concept — the artifact itself is
+ *                      never deleted by this service, only the pointer's
+ *                      Case-side reference stops being in effect, which is
+ *                      what "deleted" means from THIS endpoint's point of
+ *                      view: there is nothing left here to open).
+ *   - STALE        <- link_status='ACTIVE' AND is_stale=true (the pinned
+ *                      revision is known to be behind — still openable, the
+ *                      caller decides whether to warn or refresh first).
+ *   - AVAILABLE    <- link_status='ACTIVE' AND is_stale=false.
+ *   - "unauthorized" is deliberately NOT a fifth value here. SEC-009 /
+ *     CW-DOD-D6 (same rule this file's getArtifactLink() and the route
+ *     layer's toCaseWorkspaceAppError already apply): a linkId the caller's
+ *     Case access does not cover must be INDISTINGUISHABLE from a linkId
+ *     that does not exist. Giving "unauthorized" its own stable code here
+ *     would itself be the leak the rule forbids. Both cases share exactly
+ *     one outcome — this function returns `null` — and the route layer maps
+ *     that to the same 404 `artifact_link_not_found` used everywhere else in
+ *     this file (see getArtifactLink() above). "Unauthorized" therefore does
+ *     get a stable code, the SAME one as "does not exist", which is the
+ *     point.
+ */
+export type ArtifactLinkOpenState = 'AVAILABLE' | 'STALE' | 'UNAVAILABLE' | 'DELETED';
+
+/**
+ * doc 02 §7's five required Rezultaty groups (key findings and
+ * recommendations / decisions / native deliverables / effect/value /
+ * evidence and lineage) are the closest existing, documented concept to a
+ * "step" this table's own data can honestly resolve to — this service has no
+ * column and no read access to any execution-graph node/plan step (see this
+ * file's own header: it never references case_plan_versions or any
+ * case_workspace_run_bindings/case_workspace_waits table). Deterministic,
+ * total mapping from CW-RT-024's closed relation enum; documented here
+ * rather than silently invented, and open to product confirmation as the
+ * literal RESULTS_GROUP_BY_RELATION table below states per-branch.
+ */
+export type ArtifactLinkResultsGroup =
+  | 'KEY_FINDINGS_AND_RECOMMENDATIONS'
+  | 'DECISIONS'
+  | 'NATIVE_DELIVERABLES'
+  | 'EFFECT_AND_VALUE'
+  | 'EVIDENCE_AND_LINEAGE';
+
+const RESULTS_GROUP_BY_RELATION: Record<ArtifactLinkRelation, ArtifactLinkResultsGroup> = {
+  // An artifact the Case produced as its own output reads most naturally as
+  // a finding/recommendation surfaced back to the Case.
+  OUTPUT: 'KEY_FINDINGS_AND_RECOMMENDATIONS',
+  DECISION_BASIS: 'DECISIONS',
+  DELIVERABLE: 'NATIVE_DELIVERABLES',
+  OUTCOME_MEASUREMENT: 'EFFECT_AND_VALUE',
+  // Both EVIDENCE and INPUT are lineage the Case leaned on, not something the
+  // Case itself produced — grouped together per doc 02 §7's single
+  // "evidence and lineage" bucket.
+  EVIDENCE: 'EVIDENCE_AND_LINEAGE',
+  INPUT: 'EVIDENCE_AND_LINEAGE',
+};
+
+/**
+ * doc 03 §5: "provides a semantic return path to the same Case phase and
+ * selected step." `casePhase` is case_core.case_status (CW-RT-024/CW-RT-025
+ * name no separate "phase" entity for Case Workspace — case_status is the
+ * one first-class Case-lifecycle field this service is permitted to SELECT,
+ * per this file's own header mandate); `resultsGroup` stands in for "step"
+ * per the ArtifactLinkResultsGroup doc comment above. `linkId`/`relation`
+ * are included so the UI can re-select exactly this card within that group
+ * without a second round trip.
+ */
+export interface ArtifactLinkReturnContext {
+  caseId: string;
+  casePhase: string;
+  resultsGroup: ArtifactLinkResultsGroup;
+  linkId: string;
+  relation: ArtifactLinkRelation;
+}
+
+export interface ArtifactLinkOpenResolution {
+  linkId: string;
+  caseId: string;
+  relation: ArtifactLinkRelation;
+  state: ArtifactLinkOpenState;
+  /** Non-null only for AVAILABLE/STALE — the two states where opening the module actually makes sense. */
+  deepLink: ArtifactLinkDeepLinkTarget | null;
+  isStale: boolean;
+  staleReason: string | null;
+  staleMarkedAt: string | null;
+  unavailableReason: string | null;
+  unavailableMarkedAt: string | null;
+  unlinkReason: string | null;
+  unlinkedAt: string | null;
+  returnContext: ArtifactLinkReturnContext;
+  resolvedAt: string;
+}
+
+interface CaseCorePhaseRow {
+  case_status: string;
+}
+
+/**
+ * CW-RT-024, CW-RT-025, CW-03-017, doc 03 §5, doc 02 §7 — see the type doc
+ * comments above for the exact state/group mapping. Read-only: no row here
+ * is mutated by opening a link (opening is not itself a fact worth an outbox
+ * event — the existing lifecycle events already cover every state change
+ * that produced the state being read).
+ *
+ * Returns `null` — never throws — for both a linkId with no row and a linkId
+ * the actor's Case access does not cover (getArtifactLink() already
+ * collapses those two outcomes; see the ArtifactLinkOpenState doc comment's
+ * SEC-009 note). Callers (the route layer) turn `null` into the same 404
+ * `artifact_link_not_found` every other by-id route in this file uses.
+ */
+export async function resolveArtifactLinkOpen(
+  linkId: string,
+  actorUserId: string
+): Promise<ArtifactLinkOpenResolution | null> {
+  const id = requireNonBlank(linkId, 'artifact_link_id_required');
+  const actor = requireNonBlank(actorUserId, 'artifact_link_actor_required');
+
+  // getArtifactLink() already runs requireCaseAccess and returns null on
+  // either a missing row or a CaseWorkspaceAuthError — exactly the
+  // indistinguishable-from-nonexistent behavior SEC-009 requires here too.
+  const link = await getArtifactLink(id, actor);
+  if (!link) return null;
+
+  const caseRow = await queryOne<CaseCorePhaseRow>(`SELECT case_status FROM case_core WHERE case_id = ?`, [
+    link.caseId,
+  ]);
+  // Structurally, a link row always FKs to an existing case_core row (see
+  // the migration's header) — caseRow absent would mean the FK itself was
+  // violated, not a normal runtime outcome. 'UNKNOWN' is a defensive
+  // fallback, never expected to be observed.
+  const casePhase = caseRow?.case_status ?? 'UNKNOWN';
+
+  let state: ArtifactLinkOpenState;
+  let deepLink: ArtifactLinkDeepLinkTarget | null;
+  if (link.linkStatus === 'UNAVAILABLE') {
+    state = 'UNAVAILABLE';
+    deepLink = null;
+  } else if (link.linkStatus === 'UNLINKED') {
+    state = 'DELETED';
+    deepLink = null;
+  } else if (link.isStale) {
+    state = 'STALE';
+    deepLink = { artifactType: link.artifactType, artifactId: link.artifactId, artifactRevision: link.artifactRevision };
+  } else {
+    state = 'AVAILABLE';
+    deepLink = { artifactType: link.artifactType, artifactId: link.artifactId, artifactRevision: link.artifactRevision };
+  }
+
+  return {
+    linkId: link.linkId,
+    caseId: link.caseId,
+    relation: link.relation,
+    state,
+    deepLink,
+    isStale: link.isStale,
+    staleReason: link.staleReason,
+    staleMarkedAt: link.staleMarkedAt,
+    unavailableReason: link.unavailableReason,
+    unavailableMarkedAt: link.unavailableMarkedAt,
+    unlinkReason: link.unlinkReason,
+    unlinkedAt: link.unlinkedAt,
+    returnContext: {
+      caseId: link.caseId,
+      casePhase,
+      resultsGroup: RESULTS_GROUP_BY_RELATION[link.relation],
+      linkId: link.linkId,
+      relation: link.relation,
+    },
+    resolvedAt: new Date().toISOString(),
+  };
+}
+
 /**
  * CW-01-026-INV9, CW-02-031. Reads listArtifactLinksForCase(caseId,
  * { linkStatus: 'ACTIVE' }) internally, sorts the results deterministically

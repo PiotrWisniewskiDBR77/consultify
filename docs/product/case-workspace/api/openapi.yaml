@@ -8,15 +8,15 @@ openapi: 3.0.3
 # Every path, method, parameter, request schema, status code and error code
 # below was read out of:
 #
-#   server/src/routes/caseWorkspace/*.routes.ts   (106 handlers)
+#   server/src/routes/caseWorkspace/*.routes.ts   (125 handlers)
 #   server/src/routes/caseWorkspace/_shared/errors.ts     (status mapping)
 #   server/src/routes/caseWorkspace/_shared/handler.ts    (actor resolution)
 #   server/src/routes/caseWorkspace/_shared/validate.ts   (400 shape)
 #   server/src/services/caseWorkspace/*.ts                (response types)
 #
 # Where a route does NOT implement something the design canon asks for
-# (cursor pagination on most lists, PATCH verbs, /runs lifecycle endpoints,
-# /api/my-work projections, chat promotion), it is ABSENT here. This file
+# (cursor pagination on most lists, PATCH verbs, /api/my-work projections,
+# chat promotion), it is ABSENT here. This file
 # describes what is mounted today, not what is planned. See
 # docs/product/case-workspace/acceptance/API_EVENT_SCHEMA_COVERAGE.csv for the
 # gap ledger.
@@ -102,6 +102,14 @@ tags:
     description: capabilityRegistryService — PLATFORM-GLOBAL registry (no tenant column).
   - name: Run bindings
     description: runBindingService — binds an execution runId to a published plan version.
+  - name: Run lifecycle
+    description: |
+      runLifecycleService — the canonical §3.4/§4.4 Run aggregate and its
+      command set (CreateRun, StartRun, PauseRun, ResumeRun, CancelRun,
+      RetryNode, CompensateAction) plus AdvanceRun (graph-progression
+      orchestration reaction) and the Wait→NodeRun ProvideNodeInput bridge.
+      STANDARD/TRANSFORMATION only for CreateRun/StartRun — a LIGHT Case uses
+      `POST /cases/{caseId}/light-start` (Light one-click tag) instead.
   - name: Action proposals
     description: proposalApprovalService — proposals, approval decisions, execution lifecycle.
   - name: Waits
@@ -1113,6 +1121,477 @@ paths:
                 properties:
                   data: { $ref: '#/components/schemas/CaseRunBinding' }
         '404': { $ref: '#/components/responses/NotFound' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  # ===========================================================================
+  # runLifecycle.routes.ts — runLifecycleService
+  # ===========================================================================
+  # §3.4/§4.4 Run aggregate. STANDARD/TRANSFORMATION only for createRun/
+  # startRun — a LIGHT Case's one-click path is `POST /cases/{caseId}/
+  # light-start` (lightOneClickService, "Light one-click" tag); this file
+  # never duplicates that planning/binding decision. Every mutation takes
+  # `expectedVersion` in the body (OCC — see the top-level description's
+  # "Optimistic concurrency" section) except createRun (idempotencyKey-keyed
+  # instead, no prior version to race against) and advanceRun/retryNode
+  # (progression commands with their own idempotency, not version-guarded
+  # writes from the caller's point of view).
+
+  /cases/{caseId}/runs:
+    parameters:
+      - $ref: '#/components/parameters/CaseId'
+    post:
+      tags: [Run lifecycle]
+      operationId: createRun
+      summary: Create a Run (CREATED, zero NodeRuns) against a PUBLISHED plan version.
+      description: |
+        STANDARD/TRANSFORMATION only — a LIGHT Case's `casePlanVersionId`
+        refuses with `409 RUN_LIFECYCLE_LIGHT_CASE_REQUIRES_ONE_CLICK`
+        (use `POST /cases/{caseId}/light-start` instead). Requires the
+        referenced `casePlanVersionId` to already be `PUBLISHED`
+        (`422 RUN_LIFECYCLE_PLAN_NOT_PUBLISHED` otherwise) and creates NO
+        NodeRuns — only a separate `POST /runs/{runId}/start` call ever
+        moves the Run to `RUNNING`. A `DRAFT` Case is auto-activated to
+        `ACTIVE` as part of this call.
+
+        An `Idempotency-Key` request header or `body.idempotencyKey` is
+        REQUIRED; omitting both is `400 VALIDATION_ERROR`. Idempotent on
+        `(caseId, idempotencyKey)`: a replay returns the SAME Run unchanged
+        and creates nothing new.
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKeyHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [casePlanVersionId]
+              properties:
+                casePlanVersionId: { type: string, minLength: 1 }
+                idempotencyKey: { type: string, minLength: 1 }
+                correlationId: { type: string, minLength: 1, nullable: true }
+      responses:
+        '201': { $ref: '#/components/responses/RunCreated' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '403': { $ref: '#/components/responses/OrgRoleDenied' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/Unprocessable' }
+        '500': { $ref: '#/components/responses/InternalError' }
+    get:
+      tags: [Run lifecycle]
+      operationId: listRunsForCase
+      summary: List every Run for a Case, newest first.
+      responses:
+        '200': { $ref: '#/components/responses/RunListOk' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '403': { $ref: '#/components/responses/OrgRoleDenied' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /runs/{runId}:
+    parameters:
+      - $ref: '#/components/parameters/RunId'
+    get:
+      tags: [Run lifecycle]
+      operationId: getRun
+      summary: Fetch one Run.
+      description: |
+        A nonexistent runId responds `404 RUN_NOT_FOUND` via a bare
+        `{ "error": { "code", "message" } }` body (not routed through the
+        error middleware — same convention as this file's own
+        "missing-idempotency-key" bare-error case, see the top-level
+        description). A cross-tenant runId is indistinguishable from this
+        same `404` (SEC-009), raised from `requireCaseAccess` instead.
+      responses:
+        '200':
+          description: Run readback.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/Run' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '403': { $ref: '#/components/responses/OrgRoleDenied' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /runs/{runId}/start:
+    parameters:
+      - $ref: '#/components/parameters/RunId'
+    post:
+      tags: [Run lifecycle]
+      operationId: startRun
+      summary: CREATED → RUNNING — mints entry NodeRuns and enters the graph.
+      description: |
+        Takes no request body. Idempotent: a Run already past `CREATED`
+        responds `200` with `data.outcome = "already_started"` and the Run
+        unchanged, rather than erroring — EXCEPT a `CANCELLED`/`FAILED` Run,
+        which refuses `409 RUN_LIFECYCLE_STATUS_TRANSITION_NOT_ALLOWED`. On a
+        fresh `CREATED` Run: re-verifies the bound plan version is still
+        `PUBLISHED` with at least one entry node
+        (`422 RUN_LIFECYCLE_PLAN_NOT_PUBLISHED`,
+        `409 RUN_LIFECYCLE_START_VALIDATION_FAILED` if it has zero entry
+        nodes), mints a `READY` NodeRun for every entry node, and lands on
+        `RUNNING` with `startedAt` stamped as one physical transition.
+      responses:
+        '200':
+          description: '`started` (fresh entry NodeRuns minted) or `already_started` (idempotent replay).'
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/StartRunResult' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '403': { $ref: '#/components/responses/OrgRoleDenied' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/Unprocessable' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /runs/{runId}/pause:
+    parameters:
+      - $ref: '#/components/parameters/RunId'
+    post:
+      tags: [Run lifecycle]
+      operationId: pauseRun
+      summary: RUNNING → PAUSED. Stops new automatic dispatch.
+      description: |
+        `advanceRun` refuses on a `PAUSED` Run (only its active family —
+        RUNNING/WAITING/BLOCKED/RETRY_SCHEDULED — is eligible). Any other
+        source status fails `409 RUN_LIFECYCLE_STATUS_TRANSITION_NOT_ALLOWED`;
+        a stale `expectedVersion` fails `409 RUN_LIFECYCLE_VERSION_CONFLICT`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ExpectedVersionBody' }
+      responses:
+        '200': { $ref: '#/components/responses/RunOk' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '403': { $ref: '#/components/responses/OrgRoleDenied' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /runs/{runId}/resume:
+    parameters:
+      - $ref: '#/components/parameters/RunId'
+    post:
+      tags: [Run lifecycle]
+      operationId: resumeRun
+      summary: PAUSED → RUNNING.
+      description: |
+        Any source status other than `PAUSED` fails
+        `409 RUN_LIFECYCLE_STATUS_TRANSITION_NOT_ALLOWED`; a stale
+        `expectedVersion` fails `409 RUN_LIFECYCLE_VERSION_CONFLICT`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ExpectedVersionBody' }
+      responses:
+        '200': { $ref: '#/components/responses/RunOk' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '403': { $ref: '#/components/responses/OrgRoleDenied' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /runs/{runId}/cancel:
+    parameters:
+      - $ref: '#/components/parameters/RunId'
+    post:
+      tags: [Run lifecycle]
+      operationId: cancelRun
+      summary: Any pre-terminal status → CANCELLED, cascading to cancellable NodeRuns.
+      description: |
+        Cascades: every NodeRun of this Run currently `PENDING`/`READY`/
+        `WAITING_HUMAN`/`WAITING_TIMER`/`WAITING_EVENT`/`FAILED_RETRYABLE` is
+        transitioned to `CANCELLED` too. A `RUNNING`/`CLAIMED` NodeRun is left
+        alone — it must terminate or time out on its own (nodeRunService's
+        own §4.5 rule). A Run already in a terminal status
+        (`COMPLETED`/`COMPLETED_WITH_WARNINGS`/`FAILED`/`CANCELLED`/
+        `COMPENSATED`) fails `409 RUN_LIFECYCLE_STATUS_TRANSITION_NOT_ALLOWED`;
+        a stale `expectedVersion` fails `409 RUN_LIFECYCLE_VERSION_CONFLICT`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [expectedVersion]
+              properties:
+                expectedVersion: { type: integer }
+                reason: { type: string, minLength: 1 }
+      responses:
+        '200': { $ref: '#/components/responses/RunOk' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '403': { $ref: '#/components/responses/OrgRoleDenied' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /runs/{runId}/advance:
+    parameters:
+      - $ref: '#/components/parameters/RunId'
+    post:
+      tags: [Run lifecycle]
+      operationId: advanceRun
+      summary: Graph-progression reaction — creates NodeRuns for now-satisfied successors and recomputes Run status.
+      description: |
+        Takes no request body. A no-op (Run returned unchanged,
+        `createdNodeRunIds: []`) unless the Run is currently in its active
+        family (RUNNING/WAITING/BLOCKED/RETRY_SCHEDULED). Resolves
+        `DECISION_GATEWAY` nodes from an ALREADY-recorded gateway evaluation
+        only — never guesses a branch
+        (`422 RUN_LIFECYCLE_GATEWAY_EVALUATION_MISSING_AFTER_SUCCESS` /
+        `_UNEXPECTED_OUTCOME` / `_MISSING_SELECTED_EDGE` if the recorded fact
+        is malformed; `404 RUN_LIFECYCLE_GATEWAY_EVALUATION_SELECTED_EDGE_NOT_FOUND`
+        if it points at an edge that does not belong to that gateway — an
+        `_not_found`-suffixed code, mapped generically like every other
+        not-found code in this file, even though it signals malformed data
+        rather than a missing resource). `PARALLEL_SPLIT`/`PARALLEL_JOIN`
+        nodes are resolved by this endpoint itself the moment their own
+        readiness is satisfied. Never auto-declares a Run `FAILED` — a stuck
+        Run settles into `BLOCKED` for a human to `retryNode`/`failRun`/
+        `cancelRun`.
+      responses:
+        '200':
+          description: Run (possibly unchanged) plus any NodeRuns created this call.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/AdvanceRunResult' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '403': { $ref: '#/components/responses/OrgRoleDenied' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/Unprocessable' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /runs/{runId}/fail:
+    parameters:
+      - $ref: '#/components/parameters/RunId'
+    post:
+      tags: [Run lifecycle]
+      operationId: failRun
+      summary: Explicit, human-authored write-off — BLOCKED or RUNNING → FAILED.
+      description: |
+        Never inferred automatically — `advanceRun` settles a stuck Run into
+        `BLOCKED` and waits for exactly this call (or `retryNode`/
+        `cancelRun`) rather than declaring failure itself. A source status
+        other than `RUNNING`/`BLOCKED` (per the documented transition table)
+        fails `409 RUN_LIFECYCLE_STATUS_TRANSITION_NOT_ALLOWED`; a stale
+        `expectedVersion` fails `409 RUN_LIFECYCLE_VERSION_CONFLICT`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ReasonAndExpectedVersionBody' }
+      responses:
+        '200': { $ref: '#/components/responses/RunOk' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '403': { $ref: '#/components/responses/OrgRoleDenied' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /runs/{runId}/outcome:
+    parameters:
+      - $ref: '#/components/parameters/RunId'
+    post:
+      tags: [Run lifecycle]
+      operationId: recordRunOutcome
+      summary: Set the business outcomeStatus once the Run has technically completed.
+      description: |
+        §4.4: "Technical completion is separate from outcomeStatus" — never
+        inferred automatically. Only legal once the Run's status is
+        `COMPLETED`/`COMPLETED_WITH_WARNINGS`/`FAILED`/`CANCELLED`/
+        `COMPENSATED` (`422 RUN_LIFECYCLE_NOT_TECHNICALLY_COMPLETE`
+        otherwise). A stale `expectedVersion` fails
+        `409 RUN_LIFECYCLE_VERSION_CONFLICT`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [expectedVersion, outcomeStatus]
+              properties:
+                expectedVersion: { type: integer }
+                outcomeStatus: { $ref: '#/components/schemas/RunOutcomeStatus' }
+      responses:
+        '200': { $ref: '#/components/responses/RunOk' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '403': { $ref: '#/components/responses/OrgRoleDenied' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/Unprocessable' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /runs/{runId}/compensate:
+    parameters:
+      - $ref: '#/components/parameters/RunId'
+    post:
+      tags: [Run lifecycle]
+      operationId: compensateRun
+      summary: Start compensation — RUNNING|CANCELLED → COMPENSATING, marks REQUIRED NodeRuns IN_PROGRESS.
+      description: |
+        Records the fact only — the actual reversal of an external effect is
+        a capability-adapter concern; the caller/worker performs it and
+        reports back via `POST /runs/{runId}/node-runs/{nodeRunId}/compensation-outcome`
+        per marked node. A source status other than `RUNNING`/`CANCELLED`
+        fails `409 RUN_LIFECYCLE_STATUS_TRANSITION_NOT_ALLOWED`; a stale
+        `expectedVersion` fails `409 RUN_LIFECYCLE_VERSION_CONFLICT`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ExpectedVersionBody' }
+      responses:
+        '200':
+          description: Run (now COMPENSATING) plus the NodeRun ids marked IN_PROGRESS.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/CompensateRunResult' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '403': { $ref: '#/components/responses/OrgRoleDenied' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /runs/{runId}/nodes/{nodeId}/retry:
+    parameters:
+      - $ref: '#/components/parameters/RunId'
+      - $ref: '#/components/parameters/NodeId'
+    post:
+      tags: [Run lifecycle]
+      operationId: retryNode
+      summary: Human-authorized new attempt at a node — mints a NEW NodeRun, never a second parallel effect.
+      description: |
+        Only legal once the node's latest NodeRun has exhausted its
+        automatic retry budget (`FAILED_TERMINAL`) or was `CANCELLED`
+        (`422 RUN_LIFECYCLE_NODE_NOT_RETRYABLE` if it is still live or
+        already succeeded; `422 RUN_LIFECYCLE_NODE_NEVER_RAN` if the node has
+        no NodeRun at all). The Run itself must be in a "work can still
+        happen" status (RUNNING/PAUSED/WAITING/BLOCKED/RETRY_SCHEDULED —
+        `409 RUN_LIFECYCLE_STATUS_TRANSITION_NOT_ALLOWED` otherwise); if it
+        was WAITING/BLOCKED/RETRY_SCHEDULED it is brought back to RUNNING as
+        part of this call. Idempotent on `idempotencyKey` (header or body) —
+        a duplicated click mints no second business effect.
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKeyHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                idempotencyKey: { type: string, minLength: 1 }
+                maxAttempts: { type: integer, minimum: 1 }
+      responses:
+        '200':
+          description: Run (resumed to RUNNING if it was WAITING/BLOCKED/RETRY_SCHEDULED) plus the newly minted NodeRun.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/RetryNodeResult' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '403': { $ref: '#/components/responses/OrgRoleDenied' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/Unprocessable' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /runs/{runId}/node-runs/{nodeRunId}/compensation-outcome:
+    parameters:
+      - $ref: '#/components/parameters/RunId'
+      - $ref: '#/components/parameters/NodeRunId'
+    post:
+      tags: [Run lifecycle]
+      operationId: recordNodeCompensationOutcome
+      summary: A worker reports one node's compensation outcome.
+      description: |
+        Only legal while the Run is `COMPENSATING`
+        (`409 RUN_LIFECYCLE_STATUS_TRANSITION_NOT_ALLOWED` otherwise). Once
+        every node this Run marked `IN_PROGRESS` (via
+        `POST /runs/{runId}/compensate`) has reached a terminal compensation
+        state, the Run itself resolves: all `COMPLETED` →
+        Run `COMPENSATED`; any `FAILED` → Run `FAILED`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [outcome]
+              properties:
+                outcome: { type: string, enum: [COMPLETED, FAILED] }
+      responses:
+        '200': { $ref: '#/components/responses/RunOk' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '403': { $ref: '#/components/responses/OrgRoleDenied' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /node-runs/{nodeRunId}/provide-input:
+    parameters:
+      - $ref: '#/components/parameters/NodeRunId'
+    post:
+      tags: [Run lifecycle]
+      operationId: provideNodeInput
+      summary: Bridges a satisfied HUMAN wait back to the WAITING_HUMAN NodeRun parked on it.
+      description: |
+        The NEW NodeRun-scoped connective tissue — the `wait.human_input_
+        provided` event still fires on the Wait aggregate itself (via
+        `waitSubscriptionService.provideHumanInput`, called internally), then
+        this endpoint transitions the NodeRun `WAITING_HUMAN` → `READY` and,
+        if the Run itself is `WAITING` and no OTHER NodeRun is still waiting,
+        resumes the Run to `RUNNING`. `422 RUN_LIFECYCLE_NODE_RUN_NOT_WAITING_HUMAN`
+        if the NodeRun is not currently `WAITING_HUMAN`. NOT one atomic
+        transaction across the wait/NodeRun/Run writes — each step is itself
+        OCC/idempotent-guarded, so a crash between steps leaves a safely
+        re-driveable state, never a lost update.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [inputRef]
+              properties:
+                inputRef: { type: string, minLength: 1 }
+      responses:
+        '200':
+          description: The NodeRun (now READY) plus its Run (resumed to RUNNING if nothing else is still waiting).
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/ProvideNodeInputResult' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '403': { $ref: '#/components/responses/OrgRoleDenied' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/Unprocessable' }
         '500': { $ref: '#/components/responses/InternalError' }
 
   # ===========================================================================
@@ -2185,6 +2664,63 @@ paths:
         '409': { $ref: '#/components/responses/Conflict' }
         '500': { $ref: '#/components/responses/InternalError' }
 
+  /artifact-links/{linkId}/open:
+    parameters:
+      - $ref: '#/components/parameters/LinkId'
+    get:
+      tags: [Artifact links]
+      operationId: resolveArtifactLinkOpen
+      summary: Resolve the canonical deep-link target and Case return context for one link.
+      description: |
+        Backs the "otwórz w module źródłowym / wróć do Case" round trip
+        (SCOPE_ADJUDICATION.md Golden Case list item 12, previously
+        PARTIAL — no case-workspace API call existed for either
+        navigation direction).
+
+        Returns exactly (`artifactType`, `artifactId`, `artifactRevision`)
+        as the deep-link target — CW-RT-024's own stated minimum "enough to
+        construct a deep link into the owning module" — plus one of four
+        explicit `state` values and a `returnContext` the client uses to
+        restore the Case's own view:
+
+        - `AVAILABLE` — `link_status='ACTIVE'`, not stale; `deepLink` is
+          populated.
+        - `STALE` — `link_status='ACTIVE'`, `is_stale=true`; `deepLink` is
+          still populated (the pinned revision is behind, not gone), plus
+          `staleReason`/`staleMarkedAt`.
+        - `UNAVAILABLE` — `link_status='UNAVAILABLE'` (the module confirmed
+          the source is gone, CW-03-017); `deepLink` is `null`, plus
+          `unavailableReason`/`unavailableMarkedAt`.
+        - `DELETED` — `link_status='UNLINKED'` (the Case-side reference was
+          removed); `deepLink` is `null`, plus `unlinkReason`/`unlinkedAt`.
+
+        A linkId the actor has no Case access to is **indistinguishable**
+        from a linkId that does not exist (SEC-009 / CW-DOD-D6): both return
+        the same `404 ARTIFACT_LINK_NOT_FOUND`, never a distinct
+        "unauthorized" status or body shape that would leak cross-tenant
+        existence.
+
+        `returnContext.casePhase` is `case_core.case_status`.
+        `returnContext.resultsGroup` is a deterministic mapping from this
+        link's `relation` onto doc 02 §7's five Rezultaty groups (key
+        findings and recommendations / decisions / native deliverables /
+        effect and value / evidence and lineage) — the closest concept this
+        service can honestly resolve to doc 03 §5's "same Case phase and
+        selected step" without reading any execution-graph/plan-step table
+        outside this service's own scope.
+      responses:
+        '200':
+          description: Deep-link resolution.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/ArtifactLinkOpenResolution' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
   /artifact-links/{linkId}/pin:
     parameters:
       - $ref: '#/components/parameters/LinkId'
@@ -2910,6 +3446,8 @@ components:
       { in: path, name: runId, required: true, schema: { type: string, minLength: 1 } }
     NodeRunId:
       { in: path, name: nodeRunId, required: true, schema: { type: string, minLength: 1 } }
+    NodeId:
+      { in: path, name: nodeId, required: true, schema: { type: string, minLength: 1 } }
     WaitId:
       { in: path, name: waitId, required: true, schema: { type: string, minLength: 1 } }
     LinkId:
@@ -3065,6 +3603,33 @@ components:
             required: [data]
             properties:
               data: { type: array, items: { $ref: '#/components/schemas/CaseRunBinding' } }
+    RunOk:
+      description: Run readback.
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [data]
+            properties:
+              data: { $ref: '#/components/schemas/Run' }
+    RunCreated:
+      description: Run created (CREATED, zero NodeRuns), or an idempotent replay of one already created.
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [data]
+            properties:
+              data: { $ref: '#/components/schemas/Run' }
+    RunListOk:
+      description: Runs for a Case, newest first.
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [data]
+            properties:
+              data: { type: array, items: { $ref: '#/components/schemas/Run' } }
     ProposalOk:
       description: Action proposal readback.
       content:
@@ -3587,6 +4152,125 @@ components:
         boundByActorId: { type: string }
         createdAt: { type: string }
 
+    # -- Run lifecycle ------------------------------------------------------------
+    RunStatus:
+      type: string
+      enum:
+        [CREATED, VALIDATING, QUEUED, RUNNING, PAUSED, WAITING, BLOCKED, RETRY_SCHEDULED,
+         COMPLETED, COMPLETED_WITH_WARNINGS, FAILED, CANCELLED, COMPENSATING, COMPENSATED]
+    RunOutcomeStatus:
+      type: string
+      enum: [PENDING_REVIEW, ACCEPTED, REJECTED, PARTIALLY_ACCEPTED, NOT_APPLICABLE]
+    Run:
+      type: object
+      required:
+        [runId, organizationId, projectId, caseId, casePlanVersionId, graphDigest, status,
+         outcomeStatus, initiatedBy, correlationId, idempotencyKey, version, createdAt,
+         startedAt, completedAt, updatedAt]
+      properties:
+        runId: { type: string }
+        organizationId: { type: string }
+        projectId: { type: string, nullable: true }
+        caseId: { type: string }
+        casePlanVersionId: { type: string }
+        graphDigest: { type: string }
+        status: { $ref: '#/components/schemas/RunStatus' }
+        outcomeStatus: { $ref: '#/components/schemas/RunOutcomeStatus' }
+        initiatedBy: { type: string }
+        correlationId: { type: string, nullable: true }
+        idempotencyKey: { type: string }
+        version: { type: integer }
+        createdAt: { type: string }
+        startedAt: { type: string, nullable: true }
+        completedAt: { type: string, nullable: true }
+        updatedAt: { type: string }
+    NodeRunStatus:
+      type: string
+      enum:
+        [PENDING, READY, CLAIMED, RUNNING, WAITING_HUMAN, WAITING_TIMER, WAITING_EVENT,
+         FAILED_RETRYABLE, RETRY_SCHEDULED, SUCCEEDED, SKIPPED, FAILED_TERMINAL, CANCELLED]
+    NodeRunCompensationState:
+      type: string
+      enum: [NOT_REQUIRED, REQUIRED, IN_PROGRESS, COMPLETED, FAILED]
+    NodeRun:
+      type: object
+      required:
+        [nodeRunId, organizationId, projectId, caseId, runId, nodeId, nodeVersionRef, status,
+         attempt, maxAttempts, currentAttemptId, inputSnapshotRef, outputSnapshotRef, waitId,
+         actionProposalId, idempotencyKey, leaseOwner, leaseFencingToken, leaseExpiresAt,
+         heartbeatAt, timeoutAt, retryNotBefore, startedAt, completedAt, errorCode,
+         errorDetailRef, compensationState, compensationRef, version, createdAt, updatedAt]
+      properties:
+        nodeRunId: { type: string }
+        organizationId: { type: string }
+        projectId: { type: string, nullable: true }
+        caseId: { type: string }
+        runId: { type: string }
+        nodeId: { type: string }
+        nodeVersionRef: { type: string }
+        status: { $ref: '#/components/schemas/NodeRunStatus' }
+        attempt: { type: integer }
+        maxAttempts: { type: integer }
+        currentAttemptId: { type: string, nullable: true }
+        inputSnapshotRef: { type: string, nullable: true }
+        outputSnapshotRef: { type: string, nullable: true }
+        waitId: { type: string, nullable: true }
+        actionProposalId: { type: string, nullable: true }
+        idempotencyKey: { type: string }
+        leaseOwner: { type: string, nullable: true }
+        leaseFencingToken: { type: integer }
+        leaseExpiresAt: { type: string, nullable: true }
+        heartbeatAt: { type: string, nullable: true }
+        timeoutAt: { type: string, nullable: true }
+        retryNotBefore: { type: string, nullable: true }
+        startedAt: { type: string, nullable: true }
+        completedAt: { type: string, nullable: true }
+        errorCode: { type: string, nullable: true }
+        errorDetailRef: { type: string, nullable: true }
+        compensationState: { $ref: '#/components/schemas/NodeRunCompensationState' }
+        compensationRef: { type: string, nullable: true }
+        version: { type: integer }
+        createdAt: { type: string }
+        updatedAt: { type: string }
+    StartRunResult:
+      description: Discriminated on `outcome` — `started` (fresh) or `already_started` (idempotent replay).
+      oneOf:
+        - type: object
+          required: [outcome, run, nodeRunIds]
+          properties:
+            outcome: { type: string, enum: [started] }
+            run: { $ref: '#/components/schemas/Run' }
+            nodeRunIds: { type: array, items: { type: string } }
+        - type: object
+          required: [outcome, run]
+          properties:
+            outcome: { type: string, enum: [already_started] }
+            run: { $ref: '#/components/schemas/Run' }
+    AdvanceRunResult:
+      type: object
+      required: [run, createdNodeRunIds]
+      properties:
+        run: { $ref: '#/components/schemas/Run' }
+        createdNodeRunIds: { type: array, items: { type: string } }
+    CompensateRunResult:
+      type: object
+      required: [run, markedNodeRunIds]
+      properties:
+        run: { $ref: '#/components/schemas/Run' }
+        markedNodeRunIds: { type: array, items: { type: string } }
+    RetryNodeResult:
+      type: object
+      required: [run, nodeRun]
+      properties:
+        run: { $ref: '#/components/schemas/Run' }
+        nodeRun: { $ref: '#/components/schemas/NodeRun' }
+    ProvideNodeInputResult:
+      type: object
+      required: [nodeRun, run]
+      properties:
+        nodeRun: { $ref: '#/components/schemas/NodeRun' }
+        run: { $ref: '#/components/schemas/Run' }
+
     # -- Proposals --------------------------------------------------------------
     CreateActionProposalBody:
       type: object
@@ -3973,6 +4657,56 @@ components:
         digest: { type: string }
         linkCount: { type: integer }
         computedAt: { type: string }
+
+    ArtifactLinkOpenState: { type: string, enum: [AVAILABLE, STALE, UNAVAILABLE, DELETED] }
+    ArtifactLinkResultsGroup:
+      type: string
+      enum: [KEY_FINDINGS_AND_RECOMMENDATIONS, DECISIONS, NATIVE_DELIVERABLES, EFFECT_AND_VALUE, EVIDENCE_AND_LINEAGE]
+
+    ArtifactLinkDeepLinkTarget:
+      type: object
+      required: [artifactType, artifactId, artifactRevision]
+      description: |
+        CW-RT-024's own stated minimum to construct a deep link into the
+        owning module — never anything more (no content, no title, no
+        payload).
+      properties:
+        artifactType: { type: string }
+        artifactId: { type: string }
+        artifactRevision: { type: string, nullable: true }
+
+    ArtifactLinkReturnContext:
+      type: object
+      required: [caseId, casePhase, resultsGroup, linkId, relation]
+      description: doc 03 §5 "a semantic return path to the same Case phase and selected step."
+      properties:
+        caseId: { type: string }
+        casePhase: { type: string, description: 'case_core.case_status at resolution time.' }
+        resultsGroup: { $ref: '#/components/schemas/ArtifactLinkResultsGroup' }
+        linkId: { type: string }
+        relation: { $ref: '#/components/schemas/ArtifactLinkRelation' }
+
+    ArtifactLinkOpenResolution:
+      type: object
+      required: [linkId, caseId, relation, state, deepLink, isStale, returnContext, resolvedAt]
+      properties:
+        linkId: { type: string }
+        caseId: { type: string }
+        relation: { $ref: '#/components/schemas/ArtifactLinkRelation' }
+        state: { $ref: '#/components/schemas/ArtifactLinkOpenState' }
+        deepLink:
+          allOf: [{ $ref: '#/components/schemas/ArtifactLinkDeepLinkTarget' }]
+          nullable: true
+          description: 'Populated for AVAILABLE/STALE only; null for UNAVAILABLE/DELETED.'
+        isStale: { type: boolean }
+        staleReason: { type: string, nullable: true }
+        staleMarkedAt: { type: string, nullable: true }
+        unavailableReason: { type: string, nullable: true }
+        unavailableMarkedAt: { type: string, nullable: true }
+        unlinkReason: { type: string, nullable: true }
+        unlinkedAt: { type: string, nullable: true }
+        returnContext: { $ref: '#/components/schemas/ArtifactLinkReturnContext' }
+        resolvedAt: { type: string }
 
     # -- Execution graph --------------------------------------------------------
     RecordGatewayEvaluationBody:

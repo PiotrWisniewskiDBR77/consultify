@@ -286,6 +286,54 @@ export interface CaseArtifactLink {
   updatedAt: string;
 }
 
+// ── Deliverable Open/Return (pakiet B5/C4) ──────────────────────────────────
+// Przepisane 1:1 z `server/src/services/caseWorkspace/artifactLinkService.ts`
+// (`ArtifactLinkOpenState`/`ArtifactLinkResultsGroup`/`ArtifactLinkDeepLinkTarget`/
+// `ArtifactLinkReturnContext`/`ArtifactLinkOpenResolution`) — `GET
+// /artifact-links/:linkId/open`. Cztery jawne stany, nigdy piąte „unauthorized"
+// (SEC-009: nieodróżnialne od nieistniejącego linku, patrz komentarz w serwisie).
+
+export type ArtifactLinkOpenState = 'AVAILABLE' | 'STALE' | 'UNAVAILABLE' | 'DELETED';
+
+export type ArtifactLinkResultsGroup =
+  | 'KEY_FINDINGS_AND_RECOMMENDATIONS'
+  | 'DECISIONS'
+  | 'NATIVE_DELIVERABLES'
+  | 'EFFECT_AND_VALUE'
+  | 'EVIDENCE_AND_LINEAGE';
+
+export interface ArtifactLinkDeepLinkTarget {
+  artifactType: string;
+  artifactId: string;
+  artifactRevision: string | null;
+}
+
+export interface ArtifactLinkReturnContext {
+  caseId: string;
+  casePhase: string;
+  resultsGroup: ArtifactLinkResultsGroup;
+  linkId: string;
+  relation: ArtifactLinkRelation;
+}
+
+export interface ArtifactLinkOpenResolution {
+  linkId: string;
+  caseId: string;
+  relation: ArtifactLinkRelation;
+  state: ArtifactLinkOpenState;
+  /** Nie-null wyłącznie dla AVAILABLE/STALE — jedynych stanów, w których otwarcie ma sens. */
+  deepLink: ArtifactLinkDeepLinkTarget | null;
+  isStale: boolean;
+  staleReason: string | null;
+  staleMarkedAt: string | null;
+  unavailableReason: string | null;
+  unavailableMarkedAt: string | null;
+  unlinkReason: string | null;
+  unlinkedAt: string | null;
+  returnContext: ArtifactLinkReturnContext;
+  resolvedAt: string;
+}
+
 export interface CaseHistoryEvent {
   eventId: string;
   caseId: string;
@@ -424,3 +472,65 @@ export interface CaseCommandRejected {
 }
 
 export type CaseCommandResult<T> = CaseCommandSuccess<T> | CaseCommandRejected;
+
+/*
+ * ── RUN / NODERUN LIFECYCLE (pakiet B3) ────────────────────────────────────
+ *
+ * Przepisane z `runLifecycleService.ts` (`RunStatus`/`RunOutcomeStatus`/`Run`,
+ * `server/src/services/caseWorkspace/runLifecycleService.ts:154-211`) — te
+ * same czternaście wartości statusu, verbatim z §4.4 kanonu domenowego
+ * (`04_DOMAIN_RUNTIME_AND_STATE_MACHINES.md`). Trasy:
+ * `server/src/routes/caseWorkspace/runLifecycle.routes.ts`.
+ */
+export type RunStatus =
+  | 'CREATED'
+  | 'VALIDATING'
+  | 'QUEUED'
+  | 'RUNNING'
+  | 'PAUSED'
+  | 'WAITING'
+  | 'BLOCKED'
+  | 'RETRY_SCHEDULED'
+  | 'COMPLETED'
+  | 'COMPLETED_WITH_WARNINGS'
+  | 'FAILED'
+  | 'CANCELLED'
+  | 'COMPENSATING'
+  | 'COMPENSATED';
+
+/** „Technical completion is separate from outcomeStatus" — verbatim z serwisu. */
+export type RunOutcomeStatus =
+  | 'PENDING_REVIEW'
+  | 'ACCEPTED'
+  | 'REJECTED'
+  | 'PARTIALLY_ACCEPTED'
+  | 'NOT_APPLICABLE';
+
+export interface CaseRun {
+  runId: string;
+  organizationId: string;
+  projectId: string | null;
+  caseId: string;
+  casePlanVersionId: string;
+  graphDigest: string;
+  status: RunStatus;
+  outcomeStatus: RunOutcomeStatus;
+  initiatedBy: string;
+  correlationId: string | null;
+  idempotencyKey: string;
+  version: number;
+  createdAt: string;
+  startedAt: string | null;
+  completedAt: string | null;
+  updatedAt: string;
+}
+
+/**
+ * `POST /runs/:runId/start` nie zwraca gołego `CaseRun` — serwis rozróżnia
+ * pierwsze uruchomienie (tworzy NodeRun-y wejściowe) od powtórzenia komendy
+ * dla Runu, który już wystartował (`runLifecycleService.StartRunResult`).
+ * Klient NIGDY nie zgaduje `nodeRunIds` — bierze je z tej odpowiedzi.
+ */
+export type StartRunOutcome =
+  | { outcome: 'started'; run: CaseRun; nodeRunIds: string[] }
+  | { outcome: 'already_started'; run: CaseRun };

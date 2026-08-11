@@ -1563,6 +1563,37 @@ export async function listAttemptsForNodeRun(
 }
 
 /**
+ * Run-lifecycle orchestration primitive (Stream A, runLifecycleService.ts).
+ *
+ * `node_id` is NOT unique per Run: §5's `RetryNode` command and this
+ * service's own idempotency model (createNodeRun keys on (run_id,
+ * idempotency_key), not on (run_id, node_id)) both mean a node may have
+ * MULTIPLE NodeRun rows over its lifetime — one per explicit retry attempt at
+ * the business effect, each an honest, separate audit row (§3.4: "A retry
+ * creates an auditable attempt"). Graph advancement and RetryNode both need
+ * "what is this node's CURRENT state right now", which is the most recently
+ * created row, never an aggregate/merge across them. Read-only; returns null
+ * when the node has never had a NodeRun at all.
+ */
+export async function getLatestNodeRunForNode(
+  runId: string,
+  nodeId: string,
+  actorUserId: string
+): Promise<NodeRun | null> {
+  const id = requireNonBlank(runId, 'node_run_run_id_required');
+  const node = requireNonBlank(nodeId, 'node_run_node_id_required');
+  const actor = requireNonBlank(actorUserId, 'node_run_actor_required');
+  const row = await queryOne<NodeRunRow>(
+    `SELECT * FROM ${NODE_RUN_TABLE} WHERE run_id = ? AND node_id = ?
+       ORDER BY created_at DESC, node_run_id DESC LIMIT 1`,
+    [id, node]
+  );
+  if (!row) return null;
+  await requireCaseAccess(actor, row.case_id);
+  return mapRow(row);
+}
+
+/**
  * Scheduler candidate scan. "Report, don't decide" — it never claims anything;
  * the caller follows up with individually-atomic claimNodeRun() calls.
  * INTERNAL-ONLY: cross-case, cross-org by design.

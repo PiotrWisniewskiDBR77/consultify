@@ -41,6 +41,33 @@
  * 5. TICK METRICS — runOutboxWorkerTick()'s own return value and
  *    getOutboxWorkerMetrics() agree with what Postgres actually recorded.
  *
+ * ===========================================================================
+ * ADDED IN CW-T-E / B4 (perf, dead-letter recovery, observability)
+ * ===========================================================================
+ * 6. STUCK LEASE RECOVERY — this design has no lease/lock-expiry column at
+ *    all (claim + deliver + mark happen inside ONE short transaction), so a
+ *    dispatcher that crashes mid-claim has Postgres release its row locks
+ *    the instant its connection dies. This case proves that literally: a
+ *    manually-opened, never-committed claim transaction is killed mid-flight
+ *    with `pg_terminate_backend`, and the very next tick recovers its row
+ *    immediately — no lease-expiry wait of any kind — while a concurrent
+ *    tick, run WHILE the stuck transaction was still open, already proved
+ *    `SKIP LOCKED` lets every OTHER row through regardless.
+ * 7. TICK WATCHDOG — a durable consumer whose promise hangs past
+ *    `tickTimeoutMs` does not block `runOutboxWorkerTick()` from returning
+ *    (`timedOut: true`), and once the hung consumer is finally released, its
+ *    real outcome still lands in `getOutboxWorkerMetrics()`'s cumulative
+ *    totals.
+ * 8. ADAPTIVE BACKOFF — `getOutboxWorkerMetrics().currentBackoffMultiplier`
+ *    doubles across consecutive failing ticks (capped) and resets to 1 on
+ *    the next clean tick.
+ * 9. RECONCILIATION SWEEP — `runOutboxReconciliationSweep()` surfaces the
+ *    actual dead-lettered rows (event id/type/attempt count/last error), not
+ *    just a count, and mirrors them onto `getOutboxWorkerMetrics()`.
+ * 10. QUEUE LAG (TIME) — `oldestPendingAgeSeconds` (not just the row-count
+ *     backlog) is `null` when idle, positive while something ages, and
+ *     `null` again once fully drained.
+ *
  * ISOLATION: every test owns a uniquely namespaced organization_id
  * (randomUUID) and scopes every worker call to it via `organizationId`, so
  * concurrently running suites (and this repo's other CW-T-* packets writing
@@ -50,7 +77,7 @@
 
 import { randomUUID } from 'node:crypto';
 
-import { Pool } from 'pg';
+import { Client, Pool } from 'pg';
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 
 import { withPgTransaction } from '../../../../utils/queryHelpers.js';
@@ -127,6 +154,27 @@ suite('outboxWorker — the production outbox worker against a real PostgreSQL (
     };
   }
 
+  /**
+   * NOTE (discovered running this suite for real, CW-T-E / B4): as of
+   * server/migrations/20260810f_case_workspace_append_only_guards.sql — a
+   * migration outside this packet's allowlist, landed by a sibling packet —
+   * `case_workspace_event_outbox` has a real, DB-level `BEFORE DELETE`
+   * trigger that unconditionally `RAISE EXCEPTION`s on every delete (§9
+   * audit-survives guarantee: the outbox is append-only FACTS, mutable only
+   * in `delivered_at`/`delivery_attempt_count`/`last_delivery_error`). This
+   * DELETE therefore ALWAYS fails now and the `.catch()` below always
+   * swallows it — this function has been a no-op since that migration
+   * landed, for every `*.pg.test.ts` in this repo that ever called it, not
+   * just this file. It is kept only so a future relaxation of that guard
+   * (or a partition/retention job) makes cleanup start working again for
+   * free. Correctness is unaffected: every org id here is a fresh
+   * `randomUUID()`, so rows accumulating forever cannot collide with a later
+   * run — but the shared `case_workspace_test` database DOES grow
+   * unboundedly across every test run in this suite. Flagged in this
+   * packet's report as a genuine, previously-undocumented finding — not
+   * fixed here (`eventOutboxService.ts` and `server/migrations/**` are both
+   * outside this packet's allowlist).
+   */
   async function teardown(orgId: string): Promise<void> {
     await control
       .query(`DELETE FROM case_workspace_event_outbox WHERE organization_id = $1`, [orgId])
@@ -360,4 +408,238 @@ suite('outboxWorker — the production outbox worker against a real PostgreSQL (
       await teardown(orgId);
     }
   }, 60_000);
+
+  // =========================================================================
+  // 6. STUCK LEASE RECOVERY — no lease column exists; a crashed claiming
+  //    transaction releases its locks the instant its connection dies, and
+  //    SKIP LOCKED already lets every other row through while it is stuck.
+  // =========================================================================
+  it(
+    'a claiming transaction that never commits (simulating a crashed/stuck dispatcher) does not block ' +
+      'other rows, and once its connection is killed the next tick recovers its row immediately — no lease-expiry wait',
+    async () => {
+      const { orgId, caseId } = scope('stuck-lease');
+      const stuckClient = new Client({ connectionString: CONNECTION_STRING });
+      // node-postgres re-emits 'error' on the Client itself when its
+      // connection is severed out from under it (exactly what
+      // pg_terminate_backend below does, on purpose) — an EventEmitter
+      // 'error' with zero listeners is an uncaughtException by default. This
+      // test deliberately terminates its OWN client's connection, so the
+      // expected termination error is swallowed here, not left to crash the
+      // process (the real production gap this documents for `queryHelpers.ts`'s
+      // `withPgTransaction` — which has no such listener — is flagged
+      // separately in this packet's report, out of this file's allowlist to
+      // fix).
+      stuckClient.on('error', () => undefined);
+      try {
+        const delivered: string[] = [];
+        eventOutboxService.subscribeToOutboxDelivery((event) => {
+          delivered.push(event.eventId);
+        });
+
+        const stuckEventId = await publish(orgId, caseId, { eventType: 'case.stuck_probe' });
+        const healthyEventId = await publish(orgId, caseId, { eventType: 'case.healthy_probe' });
+
+        await stuckClient.connect();
+        await stuckClient.query('BEGIN');
+        // Same claim shape dispatchPendingEvents() uses, scoped to just this
+        // one row, held open forever — never COMMIT/ROLLBACK-ed until this
+        // test kills it below. This IS "a stuck dispatcher": a transaction
+        // that claimed a row and then never finished.
+        const claimResult = await stuckClient.query<{ event_id: string }>(
+          `SELECT event_id FROM case_workspace_event_outbox
+             WHERE event_id = $1 FOR UPDATE SKIP LOCKED`,
+          [stuckEventId]
+        );
+        expect(claimResult.rows.map((row) => row.event_id)).toEqual([stuckEventId]);
+        const pidResult = await stuckClient.query<{ pid: number }>('SELECT pg_backend_pid() AS pid');
+        const stuckPid = pidResult.rows[0]!.pid;
+
+        // While the stuck transaction is still open: a real tick must still
+        // deliver the OTHER, unlocked row — SKIP LOCKED means the locked row
+        // is silently skipped, never waited on.
+        const tickWhileStuck = await outboxWorker.runOutboxWorkerTick({ organizationId: orgId });
+        expect(tickWhileStuck.claimed).toBe(1);
+        expect(delivered).toEqual([healthyEventId]);
+        expect((await readRow(stuckEventId))?.delivered_at).toBeNull();
+
+        // Kill the stuck backend — the real-world equivalent of that
+        // dispatcher process crashing. Postgres releases every lock it held
+        // the instant the connection dies; there is no lease to wait out.
+        await control.query('SELECT pg_terminate_backend($1)', [stuckPid]);
+        await stuckClient.end().catch(() => undefined);
+
+        const recoveryTick = await outboxWorker.runOutboxWorkerTick({ organizationId: orgId });
+        expect(recoveryTick).toMatchObject({ claimed: 1, delivered: 1, failed: 0 });
+        expect(delivered).toEqual([healthyEventId, stuckEventId]);
+        expect((await readRow(stuckEventId))?.delivered_at).not.toBeNull();
+      } finally {
+        await stuckClient.end().catch(() => undefined);
+        await teardown(orgId);
+      }
+    },
+    30_000
+  );
+
+  // =========================================================================
+  // 7. TICK WATCHDOG — a hung durable consumer must not block the worker
+  //    loop forever; `tickTimeoutMs` returns early, and the real outcome
+  //    still lands in metrics once the hung consumer eventually resolves.
+  // =========================================================================
+  it(
+    'tickTimeoutMs: a durable consumer hung past the watchdog does not block runOutboxWorkerTick from ' +
+      'returning (timedOut=true, stuckTicks increments), and the late real outcome still updates cumulative metrics',
+    async () => {
+      const { orgId, caseId } = scope('watchdog');
+      let releaseHang: (() => void) | null = null;
+      const hangGate = new Promise<void>((resolve) => {
+        releaseHang = resolve;
+      });
+      const deliveredAfterRelease: string[] = [];
+      try {
+        eventOutboxService.subscribeToOutboxDelivery(async (event) => {
+          // Hang until explicitly released — a bounded stand-in for "a
+          // webhook call with no timeout", kept finite so this test never
+          // leaks a permanently-open DB connection of its own.
+          await hangGate;
+          deliveredAfterRelease.push(event.eventId);
+        });
+
+        const eventId = await publish(orgId, caseId, { eventType: 'case.hang_probe' });
+
+        const stuckTicksBefore = outboxWorker.getOutboxWorkerMetrics().stuckTicks;
+        const startedAt = Date.now();
+        const tick = await outboxWorker.runOutboxWorkerTick({
+          organizationId: orgId,
+          tickTimeoutMs: 300,
+        });
+        const elapsedMs = Date.now() - startedAt;
+
+        expect(tick.timedOut).toBe(true);
+        // The decisive assertion: the call returned close to tickTimeoutMs,
+        // NOT after however long the handler eventually takes to resolve —
+        // proving the loop was never blocked on it.
+        expect(elapsedMs).toBeLessThan(2_000);
+        expect(outboxWorker.getOutboxWorkerMetrics().stuckTicks).toBe(stuckTicksBefore + 1);
+        // Nothing was falsely marked delivered just because the caller
+        // stopped waiting on it.
+        expect((await readRow(eventId))?.delivered_at).toBeNull();
+
+        releaseHang!();
+        // Give the background dispatch (now unblocked) a moment to finish
+        // and apply its real outcome to metrics.
+        await new Promise((resolve) => setTimeout(resolve, 500));
+
+        expect(deliveredAfterRelease).toEqual([eventId]);
+        expect((await readRow(eventId))?.delivered_at).not.toBeNull();
+        expect(outboxWorker.getOutboxWorkerMetrics().totalDelivered).toBeGreaterThanOrEqual(1);
+      } finally {
+        if (releaseHang) releaseHang();
+        await teardown(orgId);
+      }
+    },
+    15_000
+  );
+
+  // =========================================================================
+  // 8. ADAPTIVE BACKOFF — the tick-cadence backoff multiplier doubles across
+  //    consecutive failing ticks (capped) and resets to 1 on a clean tick.
+  // =========================================================================
+  it('getOutboxWorkerMetrics().currentBackoffMultiplier doubles on consecutive failing ticks and resets to 1 on the next clean tick', async () => {
+    const { orgId, caseId } = scope('backoff');
+    try {
+      eventOutboxService.subscribeToOutboxDelivery(() => {
+        throw new Error('cwworker_backoff_probe_failure');
+      });
+      await publish(orgId, caseId, { eventType: 'case.backoff_probe_a' });
+
+      expect(outboxWorker.getOutboxWorkerMetrics().currentBackoffMultiplier).toBe(1);
+
+      const tick1 = await outboxWorker.runOutboxWorkerTick({ organizationId: orgId });
+      expect(tick1.failed).toBe(1);
+      expect(outboxWorker.getOutboxWorkerMetrics().currentBackoffMultiplier).toBe(2);
+
+      const tick2 = await outboxWorker.runOutboxWorkerTick({ organizationId: orgId });
+      expect(tick2.failed).toBe(1);
+      expect(outboxWorker.getOutboxWorkerMetrics().currentBackoffMultiplier).toBe(4);
+
+      // Fix the consumer: the very next CLEAN tick resets the multiplier
+      // immediately — it is not phased back in gradually.
+      eventOutboxService.clearOutboxDeliverySubscribers();
+      await publish(orgId, caseId, { eventType: 'case.backoff_probe_b' });
+      const tick3 = await outboxWorker.runOutboxWorkerTick({ organizationId: orgId });
+      expect(tick3.failed).toBe(0);
+      expect(outboxWorker.getOutboxWorkerMetrics().currentBackoffMultiplier).toBe(1);
+    } finally {
+      await teardown(orgId);
+    }
+  }, 30_000);
+
+  // =========================================================================
+  // 9. RECONCILIATION SWEEP — the actual dead-lettered rows, not just a
+  //    count, surfaced through both the direct call and getOutboxWorkerMetrics().
+  // =========================================================================
+  it('runOutboxReconciliationSweep surfaces the dead-lettered rows (event id/type/attempts/lastError) and mirrors them onto getOutboxWorkerMetrics()', async () => {
+    const { orgId, caseId } = scope('reconciliation');
+    try {
+      eventOutboxService.subscribeToOutboxDelivery(() => {
+        throw new Error('cwworker_reconciliation_probe_failure');
+      });
+      const eventId = await publish(orgId, caseId, { eventType: 'case.reconciliation_probe' });
+
+      for (let attempt = 1; attempt <= eventOutboxService.DEAD_LETTER_ATTEMPT_THRESHOLD; attempt += 1) {
+        await outboxWorker.runOutboxWorkerTick({ organizationId: orgId });
+      }
+
+      // Before any sweep has run, the metrics field starts empty — it is not
+      // implicitly populated by the plain per-tick deadLetterCount.
+      expect(outboxWorker.getOutboxWorkerMetrics().lastDeadLetterSample).toEqual([]);
+
+      const sweep = await outboxWorker.runOutboxReconciliationSweep({ organizationId: orgId });
+      expect(sweep.sampledCount).toBe(1);
+      expect(sweep.sample).toEqual([
+        expect.objectContaining({
+          eventId,
+          eventType: 'case.reconciliation_probe',
+          deliveryAttemptCount: eventOutboxService.DEAD_LETTER_ATTEMPT_THRESHOLD,
+          lastDeliveryError: expect.stringContaining('cwworker_reconciliation_probe_failure'),
+        }),
+      ]);
+
+      const metricsAfterSweep = outboxWorker.getOutboxWorkerMetrics();
+      expect(metricsAfterSweep.lastDeadLetterSample).toEqual(sweep.sample);
+      expect(metricsAfterSweep.lastReconciliationAt).not.toBeNull();
+    } finally {
+      await teardown(orgId);
+    }
+  }, 30_000);
+
+  // =========================================================================
+  // 10. QUEUE LAG IN TIME — oldestPendingAgeSeconds, not just the row-count
+  //     backlog, is what actually answers "is anything late".
+  // =========================================================================
+  it('oldestPendingAgeSeconds is null when idle, positive while something ages, and null again once fully drained', async () => {
+    const { orgId, caseId } = scope('queue-lag');
+    try {
+      const idleTick = await outboxWorker.runOutboxWorkerTick({ organizationId: orgId });
+      expect(idleTick.oldestPendingAgeSeconds).toBeNull();
+
+      await publish(orgId, caseId, { eventType: 'case.lag_probe' });
+      // Let the row actually age past the 1-second granularity of the
+      // EXTRACT(EPOCH ...) read this asserts against.
+      await new Promise((resolve) => setTimeout(resolve, 1100));
+
+      const backlogBeforeDrain = await eventOutboxService.getOutboxBacklog({ organizationId: orgId });
+      expect(backlogBeforeDrain.oldestPendingAgeSeconds).toBeGreaterThanOrEqual(1);
+
+      const drainingTick = await outboxWorker.runOutboxWorkerTick({ organizationId: orgId });
+      expect(drainingTick.claimed).toBe(1);
+      // Sampled AFTER dispatch — the backlog is already empty by the time
+      // this tick's own oldestPendingAgeSeconds is read.
+      expect(drainingTick.oldestPendingAgeSeconds).toBeNull();
+      expect(outboxWorker.getOutboxWorkerMetrics().lastTickResult?.oldestPendingAgeSeconds).toBeNull();
+    } finally {
+      await teardown(orgId);
+    }
+  }, 15_000);
 });

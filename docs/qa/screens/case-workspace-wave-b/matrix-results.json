@@ -1,0 +1,114 @@
+[
+  {
+    "width": 320,
+    "theme": "light",
+    "innerWidth": 320,
+    "scrollWidth": 320,
+    "pageOverflow": 0,
+    "scrollers": []
+  },
+  {
+    "width": 320,
+    "theme": "dark",
+    "innerWidth": 320,
+    "scrollWidth": 320,
+    "pageOverflow": 0,
+    "scrollers": []
+  },
+  {
+    "width": 375,
+    "theme": "light",
+    "innerWidth": 375,
+    "scrollWidth": 375,
+    "pageOverflow": 0,
+    "scrollers": []
+  },
+  {
+    "width": 375,
+    "theme": "dark",
+    "innerWidth": 375,
+    "scrollWidth": 375,
+    "pageOverflow": 0,
+    "scrollers": []
+  },
+  {
+    "width": 430,
+    "theme": "light",
+    "innerWidth": 430,
+    "scrollWidth": 430,
+    "pageOverflow": 0,
+    "scrollers": []
+  },
+  {
+    "width": 430,
+    "theme": "dark",
+    "innerWidth": 430,
+    "scrollWidth": 430,
+    "pageOverflow": 0,
+    "scrollers": []
+  },
+  {
+    "width": 768,
+    "theme": "light",
+    "innerWidth": 768,
+    "scrollWidth": 768,
+    "pageOverflow": 0,
+    "scrollers": []
+  },
+  {
+    "width": 768,
+    "theme": "dark",
+    "innerWidth": 768,
+    "scrollWidth": 768,
+    "pageOverflow": 0,
+    "scrollers": []
+  },
+  {
+    "width": 1024,
+    "theme": "light",
+    "innerWidth": 1024,
+    "scrollWidth": 1024,
+    "pageOverflow": 0,
+    "scrollers": []
+  },
+  {
+    "width": 1024,
+    "theme": "dark",
+    "innerWidth": 1024,
+    "scrollWidth": 1024,
+    "pageOverflow": 0,
+    "scrollers": []
+  },
+  {
+    "width": 1440,
+    "theme": "light",
+    "innerWidth": 1440,
+    "scrollWidth": 1440,
+    "pageOverflow": 0,
+    "scrollers": []
+  },
+  {
+    "width": 1440,
+    "theme": "dark",
+    "innerWidth": 1440,
+    "scrollWidth": 1440,
+    "pageOverflow": 0,
+    "scrollers": []
+  },
+  {
+    "width": 1920,
+    "theme": "light",
+    "innerWidth": 1920,
+    "scrollWidth": 1920,
+    "pageOverflow": 0,
+    "scrollers": []
+  },
+  {
+    "width": 1920,
+    "theme": "dark",
+    "innerWidth": 1920,
+    "scrollWidth": 1920,
+    "pageOverflow": 0,
+    "scrollers": []
+  }
+]

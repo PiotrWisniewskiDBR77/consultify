@@ -30,6 +30,7 @@ import { v8Get } from '@/services/api/v8/client';
 import type {
   ApprovalDecisionRecord,
   ApprovalDecisionType,
+  ArtifactLinkOpenResolution,
   CanonicalGraph,
   CaseActionProposal,
   CaseApiFailure,
@@ -40,11 +41,13 @@ import type {
   CaseHistoryEvent,
   CaseIntakeSummary,
   CasePlanVersion,
+  CaseRun,
   CaseStatus,
   CaseWait,
   ConfirmedWorkOrderRecord,
   PlanGraphEnvelope,
   PlanValidationResult,
+  StartRunOutcome,
   ValueMeasurement,
 } from './types';
 
@@ -427,6 +430,19 @@ export function getWait(waitId: string): Promise<CaseWait> {
 
 export function getArtifactLink(linkId: string): Promise<CaseArtifactLink> {
   return v8Get<CaseArtifactLink>(`${BASE}/artifact-links/${encodeURIComponent(linkId)}`);
+}
+
+/**
+ * GET /artifact-links/:linkId/open — `artifactLinkService.resolveArtifactLinkOpen`
+ * (pakiet B5/C4). JEDYNE autorytatywne źródło stanu otwarcia
+ * (AVAILABLE/STALE/UNAVAILABLE/DELETED) i celu deep-linku — patrz
+ * `RezultatyView.tsx` (`rozstrzygnijOtwarcieBackend`), które tego używa
+ * zamiast zgadywać wyłącznie z już wczytanego `CaseArtifactLink`.
+ */
+export function resolveArtifactLinkOpen(linkId: string): Promise<ArtifactLinkOpenResolution> {
+  return v8Get<ArtifactLinkOpenResolution>(
+    `${BASE}/artifact-links/${encodeURIComponent(linkId)}/open`
+  );
 }
 
 // ── PLAN ────────────────────────────────────────────────────────────────────
@@ -964,4 +980,228 @@ export function unlinkArtifactFromCase(
     (updated) => updated,
     options?.idempotencyKey
   );
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * PRZEBIEGI (Run/NodeRun) — pakiet B3.
+ *
+ * `runLifecycle.routes.ts` istnieje i jest ZAMONTOWANY
+ * (`routes/caseWorkspace/index.ts` niesie `router.use(runLifecycleRoutes)`),
+ * ale do 2026-08-11 żaden ekran UI nie wołał ANI JEDNEJ z jego tras — moduł
+ * umiał wyłącznie patrzeć na oczekiwania (`CaseWait`) i sprawy do
+ * zatwierdzenia (`CaseActionProposal`), nigdy na sam Run, który je tworzy.
+ * Poniższe funkcje dokładają dokładnie te trasy, które ekran Realizacji
+ * realnie ma jak wywołać z danych, które już czyta (lista Run-ów zlecenia,
+ * `CaseWait.nodeRunId` dla oczekiwań typu HUMAN):
+ *
+ *  · listRunsForCase / getRun            — odczyt (też jako readback),
+ *  · createRun                            — POST /cases/:caseId/runs,
+ *  · startRun                             — POST /runs/:runId/start,
+ *  · pauseRun / resumeRun / cancelRun     — POST /runs/:runId/{pause,resume,cancel},
+ *  · provideNodeInput                     — POST /node-runs/:nodeRunId/provide-input.
+ *
+ * UCZCIWIE O TYM, CZEGO TU NIE MA: `retryNode` (POST
+ * /runs/:runId/nodes/:nodeId/retry) NIE ma tu klienta. Powód nie jest
+ * lenistwem — jest strukturalny: żadna trasa w tym katalogu nie zwraca listy
+ * NodeRun-ów danego Runu z ich statusem (`FAILED_TERMINAL`/`CANCELLED` =
+ * kandydat do ponowienia). `executionGraph.routes.ts` ma WYŁĄCZNIE
+ * gateway-evaluations i node-result-acceptances (zdarzenia SUKCESU/pominięcia,
+ * nie porażki), a `runBindings.routes.ts`/ten plik nie dają NodeRun-ów wcale.
+ * Przycisk „Ponów krok" bez danych, KTÓRY krok ponowić, byłby atrapą — zgadywanie
+ * `nodeId` byłoby dokładnie tym, czego ten moduł (i `api.ts`'s własny nagłówek,
+ * §„nie zgaduje") zakazuje. Zgłoszone w raporcie jako brakująca trasa odczytu
+ * (`GET /runs/:runId/node-runs`), nie obejście po stronie klienta.
+ * ═════════════════════════════════════════════════════════════════════════ */
+
+/** GET /cases/:caseId/runs — listRunsForCase. */
+export function listRunsForCase(caseId: string): Promise<CaseRun[]> {
+  return v8Get<CaseRun[]>(`${BASE}/cases/${encodeURIComponent(caseId)}/runs`);
+}
+
+/** GET /runs/:runId — getRun (też readback po komendzie). */
+export function getRun(runId: string): Promise<CaseRun> {
+  return v8Get<CaseRun>(`${BASE}/runs/${encodeURIComponent(runId)}`);
+}
+
+export interface CreateRunInput {
+  casePlanVersionId: string;
+  correlationId?: string | null;
+}
+
+/**
+ * POST /cases/:caseId/runs → 201. Wymagany JAWNY, opublikowany plan
+ * (`casePlanVersionId`) — trasa sama sprawdza `status === 'PUBLISHED'` po
+ * stronie serwisu przy `startRun`, ale `createRun` już wymaga id istniejącej
+ * wersji planu w ciele (`createRunBody`, zod `min(1)`).
+ */
+export function createRun(
+  caseId: string,
+  input: CreateRunInput,
+  options?: CommandOptions
+): Promise<CaseCommandResult<CaseRun>> {
+  return runCommand<CaseRun, CaseRun>(
+    (key) =>
+      send({
+        method: 'POST',
+        path: `/cases/${encodeURIComponent(caseId)}/runs`,
+        body: { casePlanVersionId: input.casePlanVersionId, correlationId: input.correlationId ?? null, idempotencyKey: key },
+        idempotencyKey: key,
+      }),
+    (created) => getRun(created.runId),
+    (created) => created,
+    options?.idempotencyKey
+  );
+}
+
+/**
+ * POST /runs/:runId/start — jedyna komenda, która CREATED → RUNNING i tworzy
+ * NodeRun-y wejściowe. Odpowiedź jest DWUwariantowa
+ * (`outcome: 'started' | 'already_started'`) — klient jej NIE spłaszcza:
+ * ekran musi wiedzieć, czy właśnie powstały nowe NodeRun-y, czy Run już
+ * wcześniej wystartował (podwójny klik / powtórzona intencja).
+ *
+ * Trasa nie przyjmuje `expectedVersion` w ciele (sprawdzone:
+ * `runLifecycle.routes.ts` — `/start` nie parsuje żadnego body poza
+ * nagłówkiem idempotencji) — serwis sam odrzuca nielegalne przejście
+ * (`run_lifecycle_status_transition_not_allowed` dla CANCELLED/FAILED → 409
+ * przez `toCaseWorkspaceAppError`).
+ */
+export async function startRun(
+  runId: string,
+  options?: CommandOptions
+): Promise<CaseCommandResult<StartRunOutcome>> {
+  const idempotencyKey = options?.idempotencyKey ?? newIdempotencyKey();
+  try {
+    const mutated = await send<StartRunOutcome>({
+      method: 'POST',
+      path: `/runs/${encodeURIComponent(runId)}/start`,
+      body: {},
+      idempotencyKey,
+    });
+    try {
+      const confirmed = await getRun(runId);
+      return {
+        ok: true,
+        value: mutated.outcome === 'started' ? { ...mutated, run: confirmed } : { outcome: 'already_started', run: confirmed },
+        readback: 'confirmed',
+        idempotencyKey,
+      };
+    } catch (readbackError) {
+      return {
+        ok: true,
+        value: mutated,
+        readback: 'unconfirmed',
+        readbackFailure: toCommandFailure(readbackError),
+        idempotencyKey,
+      };
+    }
+  } catch (error) {
+    return { ok: false, failure: toCommandFailure(error), idempotencyKey };
+  }
+}
+
+function runCommandOnRun(
+  runId: string,
+  action: 'pause' | 'resume',
+  expectedVersion: number,
+  options?: CommandOptions
+): Promise<CaseCommandResult<CaseRun>> {
+  return runCommand<CaseRun, CaseRun>(
+    (key) =>
+      send({
+        method: 'POST',
+        path: `/runs/${encodeURIComponent(runId)}/${action}`,
+        body: { expectedVersion },
+        idempotencyKey: key,
+      }),
+    () => getRun(runId),
+    (updated) => updated,
+    options?.idempotencyKey
+  );
+}
+
+/** POST /runs/:runId/pause — RUNNING → PAUSED. */
+export function pauseRun(
+  runId: string,
+  expectedVersion: number,
+  options?: CommandOptions
+): Promise<CaseCommandResult<CaseRun>> {
+  return runCommandOnRun(runId, 'pause', expectedVersion, options);
+}
+
+/** POST /runs/:runId/resume — PAUSED → RUNNING. */
+export function resumeRun(
+  runId: string,
+  expectedVersion: number,
+  options?: CommandOptions
+): Promise<CaseCommandResult<CaseRun>> {
+  return runCommandOnRun(runId, 'resume', expectedVersion, options);
+}
+
+/** POST /runs/:runId/cancel — dowolny nieterminalny stan → CANCELLED. */
+export function cancelRun(
+  runId: string,
+  expectedVersion: number,
+  reason: string | undefined,
+  options?: CommandOptions
+): Promise<CaseCommandResult<CaseRun>> {
+  return runCommand<CaseRun, CaseRun>(
+    (key) =>
+      send({
+        method: 'POST',
+        path: `/runs/${encodeURIComponent(runId)}/cancel`,
+        body: reason ? { expectedVersion, reason } : { expectedVersion },
+        idempotencyKey: key,
+      }),
+    () => getRun(runId),
+    (updated) => updated,
+    options?.idempotencyKey
+  );
+}
+
+/**
+ * POST /node-runs/:nodeRunId/provide-input — „system czeka na Ciebie", wariant
+ * NodeRun-owy (nie mylić z `provideHumanInput` wyżej, która zasila
+ * `CaseWait` bezpośrednio). Ta trasa robi WIĘCEJ niż tamta: po zapisaniu
+ * danych PRZESTAWIA sam NodeRun z `WAITING_HUMAN` na `READY` i, jeśli Run
+ * czekał wyłącznie na ten krok, wznawia go do `RUNNING`
+ * (`runLifecycleService.provideNodeInput` → `maybeResumeRunFromWaiting`).
+ * Dlatego jest to preferowana ścieżka, gdy `CaseWait.nodeRunId` istnieje —
+ * `RealizacjaView` sięga po nią właśnie wtedy.
+ *
+ * Readback: żadna trasa w tym katalogu nie oddaje pojedynczego NodeRunu
+ * (sprawdzone — grep po `router.get` w każdym pliku tego katalogu: zero
+ * trafień na `/node-runs/:id`), więc kontrolny odczyt bierze WYŁĄCZNIE Run
+ * (`getRun(mutated.run.runId)`) — to jedyny autorytatywny stan, jaki UI może
+ * tu potwierdzić. Stan samego NodeRunu w wyniku pochodzi z ODPOWIEDZI mutacji,
+ * nie z ponownego odczytu — uczciwie nienazwane jako „potwierdzony".
+ */
+export async function provideNodeInput(
+  nodeRunId: string,
+  inputRef: string,
+  options?: CommandOptions
+): Promise<CaseCommandResult<CaseRun>> {
+  const idempotencyKey = options?.idempotencyKey ?? newIdempotencyKey();
+  try {
+    const mutated = await send<{ nodeRun: unknown; run: CaseRun }>({
+      method: 'POST',
+      path: `/node-runs/${encodeURIComponent(nodeRunId)}/provide-input`,
+      body: { inputRef },
+      idempotencyKey,
+    });
+    try {
+      const confirmed = await getRun(mutated.run.runId);
+      return { ok: true, value: confirmed, readback: 'confirmed', idempotencyKey };
+    } catch (readbackError) {
+      return {
+        ok: true,
+        value: mutated.run,
+        readback: 'unconfirmed',
+        readbackFailure: toCommandFailure(readbackError),
+        idempotencyKey,
+      };
+    }
+  } catch (error) {
+    return { ok: false, failure: toCommandFailure(error), idempotencyKey };
+  }
 }

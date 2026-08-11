@@ -219,6 +219,21 @@
         "--strictPort"
       ],
       "port": 3500
+    },
+    {
+      "name": "case-workspace-wave-b3",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["vite", "--port", "3562", "--strictPort"],
+      "port": 3562
+    },
+    {
+      "name": "case-workspace-wave-c4-deliverable-open-return",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": [
+        "-c",
+        "VITE_API_TARGET=http://127.0.0.1:3001 VITE_API_URL= npx vite --port 4501 --strictPort"
+      ],
+      "port": 4501
     }
   ]
 }
