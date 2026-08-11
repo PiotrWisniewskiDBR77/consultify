@@ -29,6 +29,14 @@ import type {
   FinanceReopenModelResultDto,
   FinanceTransitionResultDto,
   LifecycleAction,
+  ReconciliationRunDetailDto,
+  ReconciliationRunSummaryDto,
+  RunReconciliationResultDto,
+  StatementLineDto,
+  StatementMapResultDto,
+  StatementMapResultSummaryDto,
+  StatementType,
+  VersionLineageDto,
 } from './financeV2.types';
 
 const BASE = '/finance-v2';
@@ -251,6 +259,135 @@ export async function reopenFinanceModel(
   );
 }
 
+// ---------------------------------------------------------------------------
+// Statements domain — statements.routes.ts (Pakiet B2, Pakiet D konsument)
+// ---------------------------------------------------------------------------
+
+export interface ListStatementLinesParams {
+  statementType?: StatementType;
+  entityId?: string;
+  periodId?: string;
+}
+
+export async function listStatementLines(
+  businessVersionId: string,
+  params: ListStatementLinesParams = {}
+): Promise<StatementLineDto[]> {
+  const qs = new URLSearchParams();
+  if (params.statementType) qs.set('statementType', params.statementType);
+  if (params.entityId) qs.set('entityId', params.entityId);
+  if (params.periodId) qs.set('periodId', params.periodId);
+  const suffix = qs.toString() ? `?${qs.toString()}` : '';
+  return v8Get<StatementLineDto[]>(
+    `${BASE}/statements/${encodeURIComponent(businessVersionId)}/lines${suffix}`
+  );
+}
+
+export interface MapStatementLinesRequestParams {
+  businessVersionId: string;
+  unit: string;
+  presentationCurrency: string;
+  accumulationBasis?: string;
+  rawLines: unknown[];
+  rules: unknown[];
+}
+
+/**
+ * Krok 1/2 przepływu mapowania (statements.routes.ts:56-98). Wymaga
+ * `rawLines`/`rules` — surowych danych źródłowych i reguł mapowania, których
+ * TEN workspace (widok już-zmapowanego packa) nie posiada; to jest zadanie
+ * potoku ingestii (`FinancialStatementMappingEditor`/legacy pipeline).
+ * Funkcja klienta jest tu dla kompletności kontraktu (mirror API B2), ale
+ * `StatementPackWorkspaceV2` jej NIE wywołuje — patrz PKG_D_STATEMENTS_report.md
+ * §„Co niepokryte" dla uzasadnienia.
+ */
+export async function mapStatementLines(
+  params: MapStatementLinesRequestParams
+): Promise<StatementMapResultSummaryDto> {
+  return v8Post<StatementMapResultSummaryDto>(
+    `${BASE}/statements/${encodeURIComponent(params.businessVersionId)}/map`,
+    {
+      unit: params.unit,
+      presentationCurrency: params.presentationCurrency,
+      accumulationBasis: params.accumulationBasis,
+      rawLines: params.rawLines,
+      rules: params.rules,
+    }
+  );
+}
+
+export interface RunStatementReconciliationParams {
+  businessVersionId: string;
+  sourceSystem: string;
+  mappingResults: StatementMapResultDto[];
+  materialityThresholdPct?: number;
+  attemptReadinessTransition?: boolean;
+  expectedVersion?: number;
+  runPeriodJumpCheck?: boolean;
+}
+
+/**
+ * Krok 2/2 — patrz uwaga przy `mapStatementLines`: wymaga `mappingResults` z kroku 1.
+ * `expectedVersion` idzie w BODY (`_shared.ts:readExpectedVersion` czyta
+ * `req.body.expectedVersion` PRZED nagłówkiem `x-model-version` — zmierzone,
+ * nie zgadywane), tylko gdy `attemptReadinessTransition=true` (serwer zwraca
+ * 400 `EXPECTED_VERSION_REQUIRED`, jeśli brak).
+ */
+export async function runStatementReconciliation(
+  params: RunStatementReconciliationParams
+): Promise<RunReconciliationResultDto> {
+  return v8Post<RunReconciliationResultDto>(
+    `${BASE}/statements/${encodeURIComponent(params.businessVersionId)}/reconcile`,
+    {
+      sourceSystem: params.sourceSystem,
+      mappingResults: params.mappingResults,
+      materialityThresholdPct: params.materialityThresholdPct,
+      attemptReadinessTransition: params.attemptReadinessTransition ?? false,
+      ...(params.attemptReadinessTransition && params.expectedVersion !== undefined
+        ? { expectedVersion: params.expectedVersion }
+        : {}),
+      runPeriodJumpCheck: params.runPeriodJumpCheck,
+    }
+  );
+}
+
+/** Rekoncyliacja jest realnym, przetestowanym (real Postgres, B2) ledgerem — sam odczyt, newest-first. */
+export async function listStatementReconciliationRuns(
+  businessVersionId: string
+): Promise<ReconciliationRunSummaryDto[]> {
+  return v8Get<ReconciliationRunSummaryDto[]>(
+    `${BASE}/statements/${encodeURIComponent(businessVersionId)}/reconciliation-runs`
+  );
+}
+
+export async function getStatementReconciliationRun(
+  reconciliationRunId: string
+): Promise<ReconciliationRunDetailDto> {
+  return v8Get<ReconciliationRunDetailDto>(
+    `${BASE}/statements/reconciliation-runs/${encodeURIComponent(reconciliationRunId)}`
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Cross-cutting — crosscutting.routes.ts (lineage, OWN-FIN-007/022)
+// ---------------------------------------------------------------------------
+
+/**
+ * OWN-FIN-007/022: relacje WYŁĄCZNIE po `businessVersionId` (immutable) —
+ * `ancestors`/`descendants` niosą typ artefaktu docelowego/źródłowego, nigdy
+ * nazwę. Nazwa do wyświetlenia (jeśli w ogóle potrzebna) musi być dociągnięta
+ * osobno (np. `getFinanceArtifact`) i jest tylko etykietą UI, nie kluczem relacji.
+ */
+export async function getFinanceVersionLineage(
+  businessVersionId: string,
+  maxDepth?: number
+): Promise<VersionLineageDto> {
+  const suffix = typeof maxDepth === 'number' ? `?maxDepth=${maxDepth}` : '';
+  return v8Get<VersionLineageDto>(
+    `${BASE}/versions/${encodeURIComponent(businessVersionId)}/lineage${suffix}`
+  );
+}
+
 export const FinanceV2Api = {
   createFinanceArtifact,
   getFinanceArtifact,
@@ -265,4 +402,10 @@ export const FinanceV2Api = {
   pollFinanceComputeJobUntilSettled,
   approveFinanceModel,
   reopenFinanceModel,
+  listStatementLines,
+  mapStatementLines,
+  runStatementReconciliation,
+  listStatementReconciliationRuns,
+  getStatementReconciliationRun,
+  getFinanceVersionLineage,
 };
