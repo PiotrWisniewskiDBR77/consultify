@@ -51,7 +51,7 @@ import { InitiativeApi } from '@/services/api/initiatives.api';
 import { tokenService } from '@/services/tokenService';
 
 import { ResultsVNextRegistryShell } from '../ResultsVNextRegistryShell';
-import { RoiCaseModelWorkspace } from './RoiCaseModelWorkspace';
+import { RoiCaseFullTool } from './RoiCaseFullTool';
 import { RoiCaseCreateModal, type RoiCaseCreateFormValues, type RoiCaseCreateInitiativeOption } from './RoiCaseCreateModal';
 import { RoiTransitionDialog } from './RoiTransitionDialog';
 import {
@@ -368,7 +368,7 @@ export const ResultsRoiHub: React.FC = () => {
   // placed AFTER every hook above (rules of hooks) but before the two
   // registry-tab branches below, which it replaces entirely.
   if (modelCase) {
-    return <RoiCaseModelWorkspace roiCase={modelCase} isPolish={isPolish} onBack={() => setModelCase(null)} />;
+    return <RoiCaseFullTool roiCase={modelCase} isPolish={isPolish} onBack={() => setModelCase(null)} />;
   }
 
   const tabs: StandardModuleTab[] = [

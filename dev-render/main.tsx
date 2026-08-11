@@ -259,6 +259,9 @@ const ResultsVNextRoiRegistryScreen = React.lazy(
 const ResultsVNextRoiModelScreen = React.lazy(
   () => import('./screens/results-vnext-roi-model')
 );
+const ResultsVNextRoiFullToolScreen = React.lazy(
+  () => import('./screens/results-vnext-roi-full-tool')
+);
 const ResultsVNextOkrRegistryScreen = React.lazy(
   () => import('./screens/results-vnext-okr-registry')
 );
@@ -302,6 +305,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'RN-G2 §G #12-14 — REALNY pod-widok modelowania sprawy ROI (roiCaseDetailPresenters + ResultsVNextRegistryShell): Baseline+polityka (2-wierszowa tabela), Założenia/Koszty/Korzyści CRUD. &tab=settings|assumptions|cost-lines|benefit-lines &state=ready|loading|empty|error &selected=<id|none> &locked=1 &nullBaseline=1 &nullPolicy=1 &editBaseline=1 &editPolicy=1 &assumptionForm=create|edit &costLineForm=create|edit &benefitLineForm=create|edit &removeAssumption=1 &removeCostLine=1 &removeBenefitLine=1 &formState=idle|saving|error|conflict',
     render: () => <ResultsVNextRoiModelScreen />,
+  },
+  'results-vnext-roi-full-tool': {
+    label:
+      'FALA 1 (ROI) — REALNY <ResultsRoiHub> -> <RoiCaseFullTool> (4 fazy: Build Case/Decision/Realize Value/Learn), window.fetch stubbed statefully for the whole /vnext/results/roi surface, real onClose (no harness no-op). Click the case row, then kebab "Otwórz pełne narzędzie".',
+    render: () => <ResultsVNextRoiFullToolScreen />,
   },
   'results-vnext-okr-registry': {
     label:
