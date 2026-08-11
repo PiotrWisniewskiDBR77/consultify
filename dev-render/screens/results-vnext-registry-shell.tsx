@@ -1,9 +1,28 @@
 /**
- * RN-G2 P0 — visual QA harness for `ResultsVNextRegistryShell`. Mounts the
- * REAL shell component (no domain screen yet — P0 is shell-only) with mock
- * data covering every required state from RN_G2_UI_SCOPE.md §D: loading,
- * empty, error, forbidden (ABAC deep-link deny), and locked/lifecycle-gated
- * rows + the honest-missing (`null` vs `'not_calculable'`) value domain.
+ * RN-G2 P0 — visual QA harness for `ResultsVNextRegistryShell` ITSELF, the
+ * shared component every domain registry (`ResultsKpiRegistryPage`,
+ * `ResultsRoiHub`, `ResultsOkrHub`, `ResultsKpiScorecardDetailPage`, ...)
+ * is built on. Mounts the REAL shell with synthetic, cross-domain mock rows
+ * covering every required state from RN_G2_UI_SCOPE.md §D: loading, empty,
+ * error, forbidden (ABAC deep-link deny), and locked/lifecycle-gated rows +
+ * the honest-missing (`null` vs `'not_calculable'`) value domain.
+ *
+ * RN-G2 UI OQ-UI-I NOTE (`docs/product/results-vnext/RN_G2_OPEN_QUESTIONS_UI.md`):
+ * this screen is OUT OF SCOPE for that finding's "mount the real production
+ * page, not a second implementation" fix — it predates every domain
+ * registry (written when P0 shipped ONLY the shell, before any of KPI/ROI/
+ * OKR existed) and was never meant to stand in for one. There is no single
+ * production page to mount here: the columns/rowMenu/preview below are
+ * deliberately generic fixtures spanning all three domains in one
+ * vocabulary, not any one domain's real presenter. Real, domain-specific
+ * proof of `ResultsVNextRegistryShell` now lives in the six converted
+ * screens (`results-vnext-kpi-registry.tsx`, `-roi-registry.tsx`,
+ * `-roi-model.tsx`, `-okr-registry.tsx`, `-okr-objectives.tsx`,
+ * `-kpi-scorecards.tsx`) — this screen stays as the shell-level smoke test
+ * those six don't each need to re-derive (e.g. a uniform sweep of all 6 ABAC
+ * deny reasons, which no single domain screen exercises exhaustively).
+ * Verified 2026-08-11 (RN-G4 lane polish): still renders correctly against
+ * the current shell contract, no action needed.
  *
  * URL params:
  *   ?domain=kpi|roi|okr           which domain's mock vocabulary to use (default kpi)
