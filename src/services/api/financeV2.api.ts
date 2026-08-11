@@ -16,6 +16,14 @@
 import { fetchWithRetry, getHeaders, handleResponse } from './baseClient';
 import { v8Get, v8Post } from './v8/client';
 import type {
+  BaselineAssumptionDto,
+  BaselineAssumptionUpsertInput,
+  BaselineAssumptionUpsertResultDto,
+  BaselineComputeParams,
+  BaselineComputeResultDto,
+  BaselineOutputDto,
+  BaselineScheduleType,
+  BaselineStatementType,
   FinanceApproveModelResultDto,
   FinanceArtifactDetailDto,
   FinanceArtifactType,
@@ -251,6 +259,82 @@ export async function reopenFinanceModel(
   );
 }
 
+// ---------------------------------------------------------------------------
+// Pakiet F — Baseline (`server/src/routes/v8/finance-v2/baseline.routes.ts`,
+// pakiet B2). Cztery endpointy: odczyt/zapis wsadowy założeń, compute,
+// odczyt wyliczeń.
+// ---------------------------------------------------------------------------
+
+const BASELINE_BASE = `${BASE}/baseline`;
+
+export interface ListBaselineAssumptionsParams {
+  scheduleType?: BaselineScheduleType;
+  entityId?: string;
+}
+
+export async function listBaselineAssumptions(
+  businessVersionId: string,
+  params: ListBaselineAssumptionsParams = {}
+): Promise<BaselineAssumptionDto[]> {
+  const qs = new URLSearchParams();
+  if (params.scheduleType) qs.set('scheduleType', params.scheduleType);
+  if (params.entityId) qs.set('entityId', params.entityId);
+  const suffix = qs.toString() ? `?${qs.toString()}` : '';
+  return v8Get<BaselineAssumptionDto[]>(
+    `${BASELINE_BASE}/${encodeURIComponent(businessVersionId)}/assumptions${suffix}`
+  );
+}
+
+/** Zapis wsadowy — UPSERT (ON CONFLICT po kluczu komórki, baseline.routes.ts:101-155). Bezpieczne do ponowienia z tym samym zestawem — nie duplikuje wierszy. */
+export async function upsertBaselineAssumptions(
+  businessVersionId: string,
+  assumptions: BaselineAssumptionUpsertInput[]
+): Promise<BaselineAssumptionUpsertResultDto> {
+  return v8Post<BaselineAssumptionUpsertResultDto>(
+    `${BASELINE_BASE}/${encodeURIComponent(businessVersionId)}/assumptions`,
+    { assumptions }
+  );
+}
+
+/**
+ * Uwaga (OWN-FIN-018, „Compute kończy się timeoutem bez wyniku"): `v8Post`
+ * dziedziczy `fetchWithRetry`'ego twardy 20s timeout
+ * (`src/services/api/baseClient.ts`). Ten klient NIE łapie timeoutu tutaj —
+ * `describeFinanceV2Error` (financeV2.types.ts) już przeformułowuje surowy
+ * `„Request timed out"` na komunikat PL, ale sam FAKT „czy compute się mimo
+ * to zakończył po stronie serwera" musi rozstrzygnąć CALLER (odczytem
+ * `listBaselineOutputs`/`getFinanceBusinessVersion` po timeoucie) — ten
+ * moduł tylko woła endpoint, nie ukrywa niepewności. Patrz `useBaselineCompute`
+ * (`src/components/Finance/baseline/useBaselineCompute.ts`) po realizację tej
+ * ścieżki odzysku.
+ */
+export async function computeBaseline(params: BaselineComputeParams): Promise<BaselineComputeResultDto> {
+  return v8Post<BaselineComputeResultDto>(`${BASELINE_BASE}/${encodeURIComponent(params.businessVersionId)}/compute`, {
+    entityId: params.entityId,
+    forecastPeriodIds: params.forecastPeriodIds,
+    openingBalanceSheetPeriodId: params.openingBalanceSheetPeriodId,
+    ...(params.engineManifestId ? { engineManifestId: params.engineManifestId } : {}),
+  });
+}
+
+export interface ListBaselineOutputsParams {
+  statementType?: BaselineStatementType;
+  entityId?: string;
+  periodId?: string;
+}
+
+export async function listBaselineOutputs(
+  businessVersionId: string,
+  params: ListBaselineOutputsParams = {}
+): Promise<BaselineOutputDto[]> {
+  const qs = new URLSearchParams();
+  if (params.statementType) qs.set('statementType', params.statementType);
+  if (params.entityId) qs.set('entityId', params.entityId);
+  if (params.periodId) qs.set('periodId', params.periodId);
+  const suffix = qs.toString() ? `?${qs.toString()}` : '';
+  return v8Get<BaselineOutputDto[]>(`${BASELINE_BASE}/${encodeURIComponent(businessVersionId)}/outputs${suffix}`);
+}
+
 export const FinanceV2Api = {
   createFinanceArtifact,
   getFinanceArtifact,
@@ -265,4 +349,8 @@ export const FinanceV2Api = {
   pollFinanceComputeJobUntilSettled,
   approveFinanceModel,
   reopenFinanceModel,
+  listBaselineAssumptions,
+  upsertBaselineAssumptions,
+  computeBaseline,
+  listBaselineOutputs,
 };
