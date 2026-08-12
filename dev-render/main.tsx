@@ -143,6 +143,11 @@ const FinanceBaselineWorkspaceScreen = React.lazy(() => import('./screens/financ
 const FinancePredictionWorkspaceScreen = React.lazy(() => import('./screens/finance-prediction-workspace'));
 const FinanceAnalysisWorkspaceScreen = React.lazy(() => import('./screens/finance-analysis-workspace'));
 const FinanceValuationWorkspaceScreen = React.lazy(() => import('./screens/finance-valuation-workspace'));
+const FinanceLineageNavigatorScreen = React.lazy(() => import('./screens/finance-lineage-navigator'));
+const FinanceComparePanelScreen = React.lazy(() => import('./screens/finance-compare-panel'));
+const FinanceCommentsPanelScreen = React.lazy(() => import('./screens/finance-comments-panel'));
+const FinanceSavedViewsPanelScreen = React.lazy(() => import('./screens/finance-saved-views-panel'));
+const FinanceExportImportPanelScreen = React.lazy(() => import('./screens/finance-export-import-panel'));
 const GenDeckContentHintsScreen = React.lazy(() => import('./screens/gen-deck-content-hints'));
 const GenExcelTemplatesTabScreen = React.lazy(() => import('./screens/gen-excel-templates-tab'));
 const GenWordContentHintsScreen = React.lazy(() => import('./screens/gen-word-content-hints'));
@@ -643,6 +648,27 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'PKG_H — REAL <ValuationWorkspace> (Enterprise Valuation, 7 kroków Source→Assumptions→Methods→Results→Sensitivity→Advisor→Export) — &step=source|assumptions|methods|results|sensitivity|advisor|export &sourceLinked=1|0 &name=<string>',
     render: () => <FinanceValuationWorkspaceScreen />,
+  },
+  'finance-lineage-navigator': {
+    label:
+      'AP-CLIENT (Gate J) — REAL <FinanceLineageNavigator> (breadcrumb + panel Powiązane, OWN-FIN-007/022) — &scene=default|error|off, flaga financeLineageNavigatorV1 default OFF',
+    render: () => <FinanceLineageNavigatorScreen />,
+  },
+  'finance-compare-panel': {
+    label: 'AP-CLIENT (Gate J) — REAL <FinanceComparePanel> (5 osi, Δ/%, filtr istotności, eksport CSV) — &scene=default|off, flaga financeCompareV1 default OFF',
+    render: () => <FinanceComparePanelScreen />,
+  },
+  'finance-comments-panel': {
+    label: 'AP-CLIENT (Gate J) — REAL <FinanceCommentsPanel> (kotwice, wzmianki, resolve/reopen, checklist maker-checker) — &scene=default|off, flaga financeCommentsV1 default OFF',
+    render: () => <FinanceCommentsPanelScreen />,
+  },
+  'finance-saved-views-panel': {
+    label: 'AP-CLIENT (Gate J) — REAL <FinanceSavedViewsPanel> (PERSONAL/TEAM, zapis, link, usuń) — &scene=default|off, flaga financeSavedViewsV1 default OFF',
+    render: () => <FinanceSavedViewsPanelScreen />,
+  },
+  'finance-export-import-panel': {
+    label: 'AP-CLIENT (Gate J) — REAL <FinanceExportImportPanel> (.xlsx eksport+manifest, import parse→preview→apply transakcyjny) — &scene=default|off, flaga financeExportImportV1 default OFF',
+    render: () => <FinanceExportImportPanelScreen />,
   },
   'execution-change-signals': {
     label:
