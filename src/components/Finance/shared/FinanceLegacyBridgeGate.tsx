@@ -56,7 +56,10 @@ export const FinanceLegacyBridgeGate: React.FC<FinanceLegacyBridgeGateProps> = (
           icon={AlertTriangle}
           message="Nie udało się sprawdzić tego rekordu w nowym systemie."
           hint={state.message}
-          action={{ label: 'Spróbuj ponownie', onClick: retry }}
+          // ★ NAPRAWA (zaszyty prefiks "+" — patrz `EmptyStateInline.tsx`'s own
+          // header comment): "Spróbuj ponownie" nie tworzy nowego obiektu, więc
+          // `showPrefix: false`.
+          action={{ label: 'Spróbuj ponownie', onClick: retry, showPrefix: false }}
         />
       </div>
     );
@@ -81,7 +84,9 @@ export const FinanceLegacyBridgeGate: React.FC<FinanceLegacyBridgeGateProps> = (
           icon={Link2}
           message="Nie można otworzyć tego rekordu w nowym module."
           hint={hint}
-          action={{ label: 'Wróć do listy', onClick: onBackToList }}
+          // "Wróć do listy" nie tworzy nowego obiektu — patrz komentarz przy
+          // "Spróbuj ponownie" wyżej.
+          action={{ label: 'Wróć do listy', onClick: onBackToList, showPrefix: false }}
         />
       </div>
     );
