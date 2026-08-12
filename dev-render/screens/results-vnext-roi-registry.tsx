@@ -1,8 +1,20 @@
 /**
- * RN-G2 P2/G2-create — dev-render host for the REAL `ResultsRoiHub`
- * (`src/components/ResultsVNext/roi/ResultsRoiHub.tsx`) — the "All cases" /
- * "Benefits realization" registry tabs, the quick-create modal
- * (`RoiCaseCreateModal`) and the 7-transition dialog (`RoiTransitionDialog`).
+ * RN-G2 P2/G2-create — dev-render host for the REAL route entry
+ * `ResultsRoiRegistryPage` (`src/components/ResultsVNext/ResultsRoiRegistryPage.tsx`,
+ * mounted at `AppRoutes.tsx:2626`) — the flag-gated shell that renders
+ * `EmptyState` (`data-testid="results-vnext-roi-disabled"`) when the
+ * `roiRegistry` flag is OFF, and the "All cases" / "Benefits realization"
+ * registry tabs (`ResultsRoiHub`), the quick-create modal
+ * (`RoiCaseCreateModal`) and the 7-transition dialog (`RoiTransitionDialog`)
+ * when it's ON.
+ *
+ * RN-G5 harness fix (blocker B1, remaining item #2): this screen previously
+ * mounted `ResultsRoiHub` directly, skipping the flag-gated route-entry
+ * shell entirely — zero coverage of (a) the actual production route entry,
+ * (b) the flag-OFF `EmptyState`. Pattern mirrors
+ * `results-vnext-kpi-registry.tsx`'s `&ff=off` param (see its header) —
+ * default mounts with the flag ON (localStorage), `&ff=off` mounts with it
+ * OFF so both states are screenshot-able.
  *
  * RN-G2 UI OQ-UI-I FIX (`docs/product/results-vnext/RN_G2_OPEN_QUESTIONS_UI.md`):
  * this screen previously reassembled the registry from
@@ -41,6 +53,18 @@
  *                                       (quick-create submit); default success
  *   &transitionResult=success|error|conflict   outcome of the NEXT transition
  *                                       POST; default success
+ *   &ff=off                            force the `roiRegistry` flag OFF —
+ *                                       renders the route entry's own
+ *                                       `EmptyState` (`data-testid=
+ *                                       "results-vnext-roi-disabled"`)
+ *                                       instead of `ResultsRoiHub`; default
+ *                                       (ff unset) renders the flag ON.
+ *                                       EXPLICITLY writes '0'/'1' to
+ *                                       localStorage every load (not a
+ *                                       skipped write on off) so a stale
+ *                                       '1' from a prior visit in the same
+ *                                       browser session can't leak through
+ *                                       and fake an "off" screenshot.
  *
  * Golden-flow click chain (see acceptance report for the actual run):
  *   1. row click on a case -> preview opens, lazy calc-run resolves
@@ -52,7 +76,7 @@
 import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
 
-import { ResultsRoiHub } from '../../src/components/ResultsVNext/roi/ResultsRoiHub';
+import { ResultsRoiRegistryPage } from '../../src/components/ResultsVNext/ResultsRoiRegistryPage';
 import { API_URL } from '../../src/services/api';
 import type { RoiCaseListItem, RoiCaseStatus, RoiCalculationRunSummary, RoiOrgBenefitsRealizationRow } from '../../src/components/ResultsVNext/roi/roiApi';
 
@@ -61,9 +85,19 @@ const registryState = harnessParams.get('state') || 'ready';
 const calcState = harnessParams.get('calc') || 'ready';
 const createResultParam = (harnessParams.get('createResult') as 'success' | 'error' | 'conflict' | null) ?? 'success';
 const transitionResultParam = (harnessParams.get('transitionResult') as 'success' | 'error' | 'conflict' | null) ?? 'success';
+const flagOff = harnessParams.get('ff') === 'off';
 
 try {
-  window.localStorage.setItem('ff.results_vnext_roi_registry', '1');
+  // EXPLICIT '0'/'1', never a skipped write: `localStorage` is shared
+  // across the whole harness origin, so a PRIOR visit without `&ff=off`
+  // (or a prior visit to a DIFFERENT screen that flips this same key —
+  // `results-vnext-kpi-registry.tsx`'s `&ff=off` has this exact shape too)
+  // can leave the key at '1'. Skipping the write on `&ff=off` (the initial,
+  // WRONG version of this fix) would then leave that stale '1' in place —
+  // `isResultsVNextFlagEnabled` reads localStorage BEFORE env/default, so
+  // the screen would silently render the HUB while claiming to prove the
+  // flag-OFF `EmptyState`. Caught by orchestrator review before commit.
+  window.localStorage.setItem('ff.results_vnext_roi_registry', flagOff ? '0' : '1');
   // A fake, self-issued JWT — `tokenService.decodeToken` only base64-decodes
   // the payload, it never verifies a signature — under the `token` key
   // `tokenService.getToken()` reads. Deliberately NOT `auth_token`/
@@ -314,7 +348,7 @@ if (!g.__RVN_ROI_REGISTRY_FETCH__) {
 const ResultsVNextRoiRegistryScreen: React.FC = () => (
   <div className="h-screen bg-c-bg text-c-text">
     <MemoryRouter initialEntries={['/results/roi']}>
-      <ResultsRoiHub />
+      <ResultsRoiRegistryPage />
     </MemoryRouter>
   </div>
 );
