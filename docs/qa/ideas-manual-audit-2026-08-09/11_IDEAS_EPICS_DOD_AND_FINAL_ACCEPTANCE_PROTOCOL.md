@@ -1,7 +1,7 @@
 # Consultify Ideas — epics, Definition of Done and final acceptance protocol
 
-Status: **NORMATIVE EXECUTION AND ACCEPTANCE CONTRACT**  
-Parent program: `09_IDEAS_COMPLETE_TRANSFORMATION_PROGRAM_FOR_CLAUDE.md`  
+Status: **NORMATIVE EXECUTION AND ACCEPTANCE CONTRACT**
+Parent program: `09_IDEAS_COMPLETE_TRANSFORMATION_PROGRAM_FOR_CLAUDE.md`
 Detailed remediation: `08_P1_P3_EXECUTION_PLAN_FOR_CLAUDE.md`
 
 ## 1. Completion statement

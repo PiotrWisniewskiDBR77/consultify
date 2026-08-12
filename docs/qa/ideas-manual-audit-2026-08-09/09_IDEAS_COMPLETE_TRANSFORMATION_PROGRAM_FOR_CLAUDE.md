@@ -1,8 +1,8 @@
 # CONSULTIFY IDEAS — complete transformation and final-acceptance program
 
-Status: **MASTER EXECUTION PROGRAM — goal-driven implementation through final acceptance**  
-Prepared: `2026-08-09`  
-Executor: next Claude execution  
+Status: **MASTER EXECUTION PROGRAM — goal-driven implementation through final acceptance**
+Prepared: `2026-08-09`
+Executor: next Claude execution
 Owner intent: deliver a complete, coherent and professionally competent Ideas system—not another partial UI repair
 
 Normative epic, Definition of Done and review protocol: `11_IDEAS_EPICS_DOD_AND_FINAL_ACCEPTANCE_PROTOCOL.md`.

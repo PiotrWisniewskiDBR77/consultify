@@ -421,4 +421,3 @@ export async function runIdeaAction(id: string, ctx: ActionContext): Promise<Act
   }
   return def.handler(ctx);
 }
-

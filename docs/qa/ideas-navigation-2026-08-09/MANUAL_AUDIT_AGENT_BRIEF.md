@@ -1,8 +1,8 @@
 # Manualny audyt czterech narzędzi Ideas — brief dla niezależnego agenta
 
-Status: **EXECUTION BRIEF — audit only**  
-Właściciel: Piotr Wiśniewski  
-Data: 2026-08-09  
+Status: **EXECUTION BRIEF — audit only**
+Właściciel: Piotr Wiśniewski
+Data: 2026-08-09
 Badane narzędzia: Mind Map, Process Flow, Whiteboard, Table
 
 ## 0. Misja
@@ -288,4 +288,3 @@ Audyt jest kompletny dopiero, gdy:
 - istnieje dowód wersji środowiska;
 - wszystkie raporty i screenshoty są zapisane;
 - raport końcowy rozdziela fakty, obserwacje, wnioski i rekomendacje.
-

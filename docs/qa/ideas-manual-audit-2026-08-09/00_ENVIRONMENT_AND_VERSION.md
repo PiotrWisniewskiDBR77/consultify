@@ -1,7 +1,7 @@
 # Ideas manual audit — environment and version gate
 
-Status: **PASS — current working tree runtime verified**  
-Execution: `2026-08-09 07:27–10:43 Europe/Warsaw`  
+Status: **PASS — current working tree runtime verified**
+Execution: `2026-08-09 07:27–10:43 Europe/Warsaw`
 Mode: audit → repair → retest → continue
 
 ## Candidate identity

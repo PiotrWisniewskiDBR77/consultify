@@ -1,7 +1,7 @@
 # Idea Workspace navigation — raport wykonania 2026-08-09
 
-Status: **IMPLEMENTED / automated acceptance gates passed; human SR + realDB pending**  
-Środowisko QA: izolowany frontend `localhost:4173`, istniejący backend lokalny  
+Status: **IMPLEMENTED / automated acceptance gates passed; human SR + realDB pending**
+Środowisko QA: izolowany frontend `localhost:4173`, istniejący backend lokalny
 Bez commit, push i deploy.
 
 ## Wykonane

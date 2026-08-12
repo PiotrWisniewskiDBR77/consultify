@@ -1,7 +1,7 @@
 # Ideas — macierz funkcji menu i ocena użyteczności
 
-Status: **DO WSPÓLNEGO PRZEGLĄDU Z WŁAŚCICIELEM**  
-Zakres: Mind Map, Process Flow, Whiteboard, Table  
+Status: **DO WSPÓLNEGO PRZEGLĄDU Z WŁAŚCICIELEM**
+Zakres: Mind Map, Process Flow, Whiteboard, Table
 Zasada: każda akcja musi odpowiadać na pytanie „jaki rezultat pracy uzyskuje użytkownik?”.
 
 ## 1. Powierzchnie wspólne

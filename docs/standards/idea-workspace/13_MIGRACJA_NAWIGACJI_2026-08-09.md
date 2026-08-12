@@ -1,7 +1,7 @@
 # 13 — Migracja nawigacji Idea Workspace
 
-Status: **implemented candidate — acceptance evidence pending**  
-Decyzja właściciela: 2026-08-08  
+Status: **implemented candidate — acceptance evidence pending**
+Decyzja właściciela: 2026-08-08
 Zakres: Mind Map · Process Flow · Whiteboard · Table
 
 Ten rozdział zastępuje kierunek geometryczny z rozdziałów 03, 06 i 07 tam,

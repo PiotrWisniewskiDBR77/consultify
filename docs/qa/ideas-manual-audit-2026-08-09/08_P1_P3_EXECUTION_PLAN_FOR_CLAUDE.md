@@ -1,7 +1,7 @@
 # Ideas P1–P3 — complete execution plan for the next Claude
 
-Status: **READY FOR EXECUTION — implement, test, retest in runtime, and report**  
-Prepared: `2026-08-09`  
+Status: **READY FOR EXECUTION — implement, test, retest in runtime, and report**
+Prepared: `2026-08-09`
 Product surface: Consultify → My Work → Ideas → Mind Map / Process Flow / Whiteboard / Table
 
 This plan is the detailed P1–P3 work package under the broader terminal program in `09_IDEAS_COMPLETE_TRANSFORMATION_PROGRAM_FOR_CLAUDE.md`.
