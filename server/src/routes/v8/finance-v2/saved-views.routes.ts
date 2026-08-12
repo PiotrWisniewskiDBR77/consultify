@@ -16,6 +16,7 @@ import { Router } from 'express';
 
 import type { AuthRequest } from '../../../middleware/auth.middleware.js';
 import { getV8Context } from '../../../middleware/v8Auth.middleware.js';
+import { getArtifact } from '../../../services/finance/canonical/artifactVersionService.js';
 import {
   createSavedView,
   deleteSavedView,
@@ -89,6 +90,17 @@ router.post(
     if (typeof body.artifactId !== 'string' || !body.artifactId) {
       return sendError(res, 400, 'INVALID_BODY', 'artifactId is required');
     }
+
+    // Gate E FIX-B (proof-gaps pass, 2026-08-12) — LUKA 3: ownership checked BEFORE the remaining
+    // body-shape checks below (scope enum, gridViewState typeof), mirroring the same reordering
+    // `createSavedView()` now does internally (name/filters/gridViewState-content checks). A
+    // cross-tenant artifactId must ALWAYS surface as the uniform ARTIFACT_NOT_FOUND 404, never as
+    // an INVALID_BODY 400 that happens to depend on what else was wrong with the rest of the body.
+    const artifact = await getArtifact(organizationId, body.artifactId);
+    if (!artifact) {
+      return sendError(res, 404, 'ARTIFACT_NOT_FOUND', `No finance_artifacts row for artifact_id='${body.artifactId}' in this organization`);
+    }
+
     if (!(FinanceSavedViewScopeValues as readonly string[]).includes(body.scope)) {
       return sendError(res, 400, 'INVALID_BODY', `scope must be one of ${FinanceSavedViewScopeValues.join(', ')}`);
     }

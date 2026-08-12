@@ -359,6 +359,20 @@ function generateShareToken(): string {
 }
 
 export async function createSavedView(params: CreateSavedViewParams): Promise<CreateSavedViewResult> {
+  // Gate E FIX-B (proof-gaps pass, 2026-08-12) — LUKA 3: ownership is checked BEFORE any body-shape
+  // validation (name/filters/gridViewState), not after. Previously a cross-tenant artifactId
+  // could surface as NAME_REQUIRED/INVALID_FILTERS/INVALID_GRID_VIEW_STATE (400) instead of the
+  // uniform ARTIFACT_NOT_FOUND (404) every other tenant-scoped denial in this surface already
+  // returns, depending on what else was wrong with the request body — a weak, inconsistent
+  // response-shape oracle (no leak, no write, but distinguishable from the normal "doesn't exist
+  // anywhere" 404). artifact_type is ALSO ALWAYS derived from this real finance_artifacts row,
+  // never trusted from a caller-supplied value — see migration file header ("savedViewService.ts
+  // derives it FROM the artifact row").
+  const artifact = await getArtifact(params.organizationId, params.artifactId);
+  if (!artifact) {
+    return { ok: false, code: 'ARTIFACT_NOT_FOUND', message: `No finance_artifacts row for artifact_id='${params.artifactId}' in this organization` };
+  }
+
   if (!params.name || !params.name.trim()) {
     return { ok: false, code: 'NAME_REQUIRED', message: 'Saved view name must be non-empty' };
   }
@@ -372,14 +386,6 @@ export async function createSavedView(params: CreateSavedViewParams): Promise<Cr
   const snapshotResult = GridViewStateSnapshotSchema.safeParse(gridViewSnapshot);
   if (!snapshotResult.success) {
     return { ok: false, code: 'INVALID_GRID_VIEW_STATE', message: snapshotResult.error.message };
-  }
-
-  // artifact_type is ALWAYS derived from the real finance_artifacts row, never trusted from a
-  // caller-supplied value — see migration file header ("savedViewService.ts derives it FROM the
-  // artifact row").
-  const artifact = await getArtifact(params.organizationId, params.artifactId);
-  if (!artifact) {
-    return { ok: false, code: 'ARTIFACT_NOT_FOUND', message: `No finance_artifacts row for artifact_id='${params.artifactId}' in this organization` };
   }
 
   const viewState: FinanceSavedViewState = {

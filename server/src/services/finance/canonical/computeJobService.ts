@@ -95,6 +95,28 @@ export interface EnqueueJobResult {
 }
 
 /**
+ * Gate E FIX-B (proof-gaps pass, 2026-08-12) — LUKA 3. Thrown by `enqueue()` instead of letting the
+ * raw Postgres FK-violation error propagate. `cross-tenant.routes.pg.test.ts`'s own test #
+ * "POST /compute/jobs — org B cannot enqueue a job against org A's artifact" documented this as a
+ * known defect: org B enqueuing against org A's `inputArtifactId` has no matching
+ * `(input_artifact_id, organization_id)` row for `fk_compute_jobs_artifact_org`
+ * (`20260809_finance_v3_b04_compute_jobs.sql`), so the INSERT is correctly rejected at the DB layer
+ * — but `asyncHandler` was surfacing that as an unhandled raw 500. A cross-tenant `inputArtifactId`
+ * (wrong org) and a genuinely-nonexistent `inputArtifactId` (typo, never existed) hit the exact same
+ * FK — both are "this artifact is not usable by this org," the same shape every other tenant-scoped
+ * denial in this router already returns as 404. `compute.routes.ts` catches this specific error type
+ * and maps it to a typed 4xx; any OTHER insert failure still propagates as an unhandled 500 exactly
+ * as before (this class only recognizes the one named constraint).
+ */
+export class ComputeJobArtifactMismatchError extends Error {
+  readonly code = 'ARTIFACT_NOT_FOUND' as const;
+  constructor(inputArtifactId: string) {
+    super(`Compute job input artifact '${inputArtifactId}' does not exist in this organization`);
+    this.name = 'ComputeJobArtifactMismatchError';
+  }
+}
+
+/**
  * Enqueue a compute job. Idempotent on (organization_id, job_type,
  * idempotency_key) — `compute_jobs_idempotency_uq` (B04 migration) makes a
  * duplicate enqueue with the same key a safe no-op read-back rather than a
@@ -102,26 +124,35 @@ export interface EnqueueJobResult {
  */
 export async function enqueue(params: EnqueueJobParams): Promise<EnqueueJobResult> {
   return withPinnedPostgresTransaction(async (tx) => {
-    const inserted = await tx.queryOne<ComputeJobRow>(
-      `INSERT INTO compute_jobs (
-         id, organization_id, job_type, input_artifact_id, input_revision_hash,
-         engine_manifest_id, idempotency_key, requested_by_user_id, request_id, max_attempts
-       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-       ON CONFLICT (organization_id, job_type, idempotency_key) DO NOTHING
-       RETURNING *`,
-      [
-        uuidv4(),
-        params.organizationId,
-        params.jobType,
-        params.inputArtifactId,
-        params.inputRevisionHash,
-        params.engineManifestId,
-        params.idempotencyKey,
-        params.requestedByUserId,
-        params.requestId ?? null,
-        params.maxAttempts ?? 5,
-      ]
-    );
+    let inserted: ComputeJobRow | null;
+    try {
+      inserted = await tx.queryOne<ComputeJobRow>(
+        `INSERT INTO compute_jobs (
+           id, organization_id, job_type, input_artifact_id, input_revision_hash,
+           engine_manifest_id, idempotency_key, requested_by_user_id, request_id, max_attempts
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         ON CONFLICT (organization_id, job_type, idempotency_key) DO NOTHING
+         RETURNING *`,
+        [
+          uuidv4(),
+          params.organizationId,
+          params.jobType,
+          params.inputArtifactId,
+          params.inputRevisionHash,
+          params.engineManifestId,
+          params.idempotencyKey,
+          params.requestedByUserId,
+          params.requestId ?? null,
+          params.maxAttempts ?? 5,
+        ]
+      );
+    } catch (error: any) {
+      const message = String(error?.message || error);
+      if (error?.code === '23503' && /fk_compute_jobs_artifact_org/.test(message)) {
+        throw new ComputeJobArtifactMismatchError(params.inputArtifactId);
+      }
+      throw error;
+    }
     if (inserted) return { job: inserted, wasExisting: false };
 
     const existing = await tx.queryOne<ComputeJobRow>(

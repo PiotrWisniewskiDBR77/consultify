@@ -205,7 +205,7 @@ describe.skipIf(!REAL_PG)('Finance v2 Pakiet B — cross-tenant matrix (real HTT
     expect(legitCancel.body.data.status).toBe('cancelled');
   });
 
-  it('POST /compute/jobs — org B cannot enqueue a job against org A\'s artifact (FK requires (artifact_id, organization_id) match)', async () => {
+  it('POST /compute/jobs — org B cannot enqueue a job against org A\'s artifact -> 404 typed error, not a raw 500 (FK requires (artifact_id, organization_id) match)', async () => {
     const artifact = await request(appA).post('/api/v8/finance-v2/artifacts').send({ artifactType: 'BASELINE_MODEL' });
     const artifactId = artifact.body.data.artifactId;
     const engineManifestId = await legacyUnknownManifestId();
@@ -214,17 +214,18 @@ describe.skipIf(!REAL_PG)('Finance v2 Pakiet B — cross-tenant matrix (real HTT
     // authenticated as org B -> the composite FK
     // fk_compute_jobs_artifact_org(input_artifact_id, organization_id) has no
     // matching row (artifactId, orgB), so the INSERT is rejected at the DB
-    // level. asyncHandler surfaces this as a 500 with the raw FK violation —
-    // documented as a defect below (services/finance/canonical/computeJobService.ts
-    // is NOT in this package's write-allowlist, so the fix belongs to that
-    // service's owner, not this router).
+    // level. Gate E FIX-B (LUKA 3, 2026-08-12): computeJobService.ts's
+    // enqueue() now catches exactly this FK violation and throws a typed
+    // ComputeJobArtifactMismatchError; compute.routes.ts maps it to the same
+    // 404 shape every other tenant-scoped denial in this router already
+    // returns — no more raw, unhandled 500.
     const res = await request(appB)
       .post('/api/v8/finance-v2/compute/jobs')
       .set('Idempotency-Key', `xt-enqueue-${randomUUID()}`)
       .send({ jobType: 'BASELINE_COMPUTE', inputArtifactId: artifactId, inputRevisionHash: 'xh3', engineManifestId });
 
-    expect(res.status).not.toBe(201);
-    expect(res.status).not.toBe(200);
+    expect(res.status).toBe(404);
+    expect(res.body).toHaveProperty('code', 'ARTIFACT_NOT_FOUND');
 
     const rows = await withPinnedPostgresTransaction((tx) =>
       tx.queryAll<{ id: string }>(`SELECT id FROM compute_jobs WHERE input_artifact_id = ? AND organization_id = ?`, [artifactId, orgB])

@@ -227,6 +227,39 @@ describe.skipIf(!REAL_PG)('Finance v2 ROUTES_EXPOSURE — Saved views (real HTTP
     expect(res.body.data).toEqual([]);
   });
 
+  // Gate E FIX-B (proof-gaps pass, 2026-08-12) — LUKA 3: ownership must be checked BEFORE body-shape
+  // validation, so a cross-tenant POST always surfaces the SAME uniform 404 ARTIFACT_NOT_FOUND,
+  // regardless of what else is (or isn't) wrong with the rest of the request body. Two requests
+  // below differ ONLY in body validity — both must land on the identical 404 shape, not a 400 for
+  // one and a 404 for the other (the "weak oracle" this fix closes).
+
+  it('CROSS-TENANT: org B POSTing a WELL-FORMED saved view against org A\'s artifactId -> uniform 404 ARTIFACT_NOT_FOUND, no row created', async () => {
+    const res = await request(appB)
+      .post('/api/v8/finance-v2/saved-views')
+      .send({ artifactId, scope: 'PERSONAL', name: 'cross-tenant well-formed attempt', gridViewState: EMPTY_GRID_VIEW_STATE });
+    expect(res.status).toBe(404);
+    expect(res.body).toHaveProperty('code', 'ARTIFACT_NOT_FOUND');
+
+    const orgBRows = await withPinnedPostgresTransaction((tx) =>
+      tx.queryAll<{ id: string }>(`SELECT id FROM finance_saved_views WHERE organization_id = ?`, [orgB])
+    );
+    expect(orgBRows.length).toBe(0);
+  });
+
+  it('CROSS-TENANT: org B POSTing a MALFORMED (missing name) saved view against org A\'s artifactId -> SAME uniform 404 ARTIFACT_NOT_FOUND, NOT 400 NAME_REQUIRED', async () => {
+    const res = await request(appB)
+      .post('/api/v8/finance-v2/saved-views')
+      .send({ artifactId, scope: 'PERSONAL', gridViewState: EMPTY_GRID_VIEW_STATE }); // no `name` at all
+    expect(res.status).toBe(404);
+    expect(res.body).toHaveProperty('code', 'ARTIFACT_NOT_FOUND');
+    expect(res.body.code).not.toBe('NAME_REQUIRED');
+
+    const orgBRows = await withPinnedPostgresTransaction((tx) =>
+      tx.queryAll<{ id: string }>(`SELECT id FROM finance_saved_views WHERE organization_id = ?`, [orgB])
+    );
+    expect(orgBRows.length).toBe(0);
+  });
+
   it('CROSS-TENANT: org B reading org A\'s TEAM view by id -> 404; SQL confirms the row still exists for org A', async () => {
     const crossRead = await request(appB).get(`/api/v8/finance-v2/saved-views/${teamViewId}`);
     expect(crossRead.status).toBe(404);
