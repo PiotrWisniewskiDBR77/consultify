@@ -61,6 +61,7 @@ let RoiCaseValidationError: CaseCommandsModule['RoiCaseValidationError'];
 let RoiCaseNotReadyForReviewError: CaseCommandsModule['RoiCaseNotReadyForReviewError'];
 let captureOrUpdateBaseline: BaselineCommandsModule['captureOrUpdateBaseline'];
 let getRoiCase: RepositoryModule['getRoiCase'];
+let listRoiCases: RepositoryModule['listRoiCases'];
 // ROI-E002 §5: markReadyForReview's guard now ALSO requires a successful,
 // fresh calculation run (isRoiCaseReadyForReviewEligibleWithEconomicModel
 // wraps this file's own E001 baseline guard, never replaces it) — this
@@ -93,7 +94,13 @@ async function insertVisibilityPolicy(domain: string, mode: string, createdBy: s
  */
 async function createFixtureCase(): Promise<{ caseId: string; rowVersion: number }> {
   const initiativeId = `${INITIATIVE_ID}-${randomUUID()}`;
-  await client.query(`INSERT INTO initiatives (id, organization_id, name) VALUES ($1, $2, $3)`, [
+  // RN-G6: `initiatives.status` DEFAULT is 'step3', which is NOT one of the
+  // values `initiatives_status_check` allows on a real Postgres — a known,
+  // pre-existing blocker (out of this pakiet's scope: the fix lives in
+  // `server/migrations/20260810_fix_initiatives_status_default.sql`, owned
+  // by a parallel session and off-limits here). Passing an explicit valid
+  // `status` sidesteps the bad default without touching that migration.
+  await client.query(`INSERT INTO initiatives (id, organization_id, name, status) VALUES ($1, $2, $3, 'DRAFT')`, [
     initiativeId,
     ORG_ID,
     'Lifecycle fixture initiative (per-case)',
@@ -151,7 +158,9 @@ describe('ROI-E001 case lifecycle — startModeling/markReadyForReview guards + 
            name TEXT NOT NULL
          )`
       );
-      await client.query(`INSERT INTO initiatives (id, organization_id, name) VALUES ($1, $2, $3)`, [
+      // See `createFixtureCase`'s comment above: explicit valid `status`
+      // sidesteps the known `initiatives.status` DEFAULT 'step3' blocker.
+      await client.query(`INSERT INTO initiatives (id, organization_id, name, status) VALUES ($1, $2, $3, 'DRAFT')`, [
         INITIATIVE_ID,
         ORG_ID,
         'Lifecycle fixture initiative',
@@ -181,6 +190,7 @@ describe('ROI-E001 case lifecycle — startModeling/markReadyForReview guards + 
 
     const repository: RepositoryModule = await import('../../../server/src/services/resultsVnext/roi/roiRepository.js');
     getRoiCase = repository.getRoiCase;
+    listRoiCases = repository.listRoiCases;
 
     const calcRunCommands: CalcRunCommandsModule = await import(
       '../../../server/src/services/resultsVnext/roi/roiCalculationRunCommands.js'
@@ -234,6 +244,38 @@ describe('ROI-E001 case lifecycle — startModeling/markReadyForReview guards + 
       },
       timeoutMs
     );
+
+  // ==========================================
+  // RN-G6 defect 2 — "fałszywa pustka": does the creator actually see the
+  // case it just created on its own list, or does createRoiCase succeed
+  // while `buildVisibilityScopedCte` (used by listRoiCases) silently hides
+  // it? This org's policy is RESTRICTED_ACL (the strictest mode, set up in
+  // beforeAll above) — if the owner sees its own case under RESTRICTED_ACL,
+  // that proves createRoiCase's atomic transaction really did write both the
+  // `rvn_platform_resource_visibility` row (owner_user_id) AND the
+  // `rvn_platform_resource_acl` grant (createRoiCase's Decision D3), because
+  // RESTRICTED_ACL's CTE branch requires the ACL join, not just ownership.
+  // An unrelated outsider (never an owner/grantee/team-member/RBAC override)
+  // is the negative control: it must NOT see the case, which rules out the
+  // test accidentally passing because visibility is wide open.
+  itDB(
+    'createRoiCase: the creator/owner sees the case on listRoiCases immediately after creation ' +
+      '(RESTRICTED_ACL policy — the strictest mode); an unrelated outsider does not',
+    async () => {
+      const { caseId } = await createFixtureCase();
+
+      const ownerList = await listRoiCases({ userId: USER_OWNER, organizationId: ORG_ID });
+      expect(ownerList.map((c) => c.caseId)).toContain(caseId);
+
+      const ownerGet = await getRoiCase({ userId: USER_OWNER, organizationId: ORG_ID, caseId });
+      expect(ownerGet).not.toBeNull();
+      expect(ownerGet?.caseId).toBe(caseId);
+
+      const outsiderId = `roi-e001-lifecycle-outsider-${randomUUID()}`;
+      const outsiderList = await listRoiCases({ userId: outsiderId, organizationId: ORG_ID });
+      expect(outsiderList.map((c) => c.caseId)).not.toContain(caseId);
+    }
+  );
 
   itDB('startModeling: draft -> modeling succeeds; rejects from a non-draft status', async () => {
     const { caseId, rowVersion } = await createFixtureCase();
