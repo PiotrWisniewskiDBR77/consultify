@@ -281,16 +281,28 @@ async function evaluateNode(node: FormulaNode, ctx: EvalContext): Promise<Intern
 
     case 'divide':
     case 'ratio': {
-      // P1 fix (`PKG_FIX_CANONICAL_report.md`, defect 2 — "NA jest nieosiągalny"): a MISSING or
-      // exactly-zero DENOMINATOR makes the division itself mathematically undefined, independent
-      // of the numerator's own state — this is `NA` ("cannot be computed"), checked FIRST and
-      // unconditionally, never `MISSING` (that stays reserved for "the source data is absent",
-      // still the correct status when only the NUMERATOR is missing, handled further below) and
-      // never a silently fabricated number. `qualityFlag` stays `null` here (not
-      // `'DIVISION_BY_ZERO'`) — see `EvalValueStatus`'s doc comment for why: the DB CHECK pairs
-      // that flag with `NOT_APPLICABLE`, not `NA`. The reason code instead travels in `detail`
-      // (persisted to `interpretation_text`), prefixed `NA_REASON:` so it is machine-parseable.
+      // P1 fix (`PKG_FIX_CANONICAL_report.md`, defect 2 — "NA jest nieosiągalny"): a MISSING
+      // DENOMINATOR makes the division mathematically undefined — but ONLY when there is
+      // otherwise a real, present NUMERATOR to divide. If the numerator is ITSELF unusable for
+      // any reason (`isUnusable`: MISSING, NA, or NOT_APPLICABLE — e.g. AVERAGE_BALANCE with no
+      // prior period surfaces as NOT_APPLICABLE/INSUFFICIENT_HISTORY, not literally 'MISSING'),
+      // this is not "an isolated math problem with the denominator", it is "there is no usable
+      // data here at all" — the standard MISSING-beats-NA-beats-NOT_APPLICABLE priority
+      // (`propagateUnusable`) applies instead (regression guard:
+      // `kpiComputeService.determinism.pg.test.ts`'s W3 fixture selects all 18 P0 KPI against a
+      // business version with ZERO source stmt lines and only ONE period on record — DSO/DIO/DPO
+      // there have a NOT_APPLICABLE numerator (INSUFFICIENT_HISTORY, single-period fixture) and a
+      // MISSING denominator; the whole thing must stay `MISSING`, not flip to `NA`, or a
+      // brand-new/empty Analysis would misleadingly read as "we tried to compute this and
+      // failed" instead of "nothing entered yet"). When the numerator IS a real present value
+      // (`PRESENT_ZERO`/`PRESENT_NONZERO` — SOME data genuinely exists), a missing denominator
+      // specifically is the blocker: `NA`, never `MISSING`, never a silently fabricated number.
+      // `qualityFlag` stays `null` here (not `'DIVISION_BY_ZERO'`) — see `EvalValueStatus`'s doc
+      // comment for why: the DB CHECK pairs that flag with `NOT_APPLICABLE`, not `NA`. The reason
+      // code instead travels in `detail` (persisted to `interpretation_text`), prefixed
+      // `NA_REASON:` so it is machine-parseable.
       if (right.status === 'MISSING') {
+        if (isUnusable(left)) return propagateUnusable(left, right); // numerator ALSO unusable -> standard priority wins
         return {
           status: 'NA',
           value: null,

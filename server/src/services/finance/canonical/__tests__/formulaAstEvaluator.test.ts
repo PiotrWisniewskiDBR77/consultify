@@ -168,7 +168,7 @@ describe('evaluateFormula — CURRENT_RATIO shape (ratio, POINT_IN_TIME, SHOW_WI
     expect(result.detail).toContain('DENOMINATOR_MISSING');
   });
 
-  it('BOTH numerator and denominator MISSING: still NA — for a division node specifically, a missing DENOMINATOR always makes the operation undefined, independent of the numerator (asymmetric by design; add/subtract/multiply use the symmetric MISSING-beats-NA priority instead, see propagateUnusable)', async () => {
+  it('BOTH numerator and denominator MISSING: MISSING wins, not NA — "no data here at all" is a more fundamental fact than "this specific division is undefined" (regression guard: an empty/new Analysis with zero source data must read as MISSING, never as a failed computation)', async () => {
     const result = await evaluateFormula(
       ast,
       {
@@ -178,7 +178,7 @@ describe('evaluateFormula — CURRENT_RATIO shape (ratio, POINT_IN_TIME, SHOW_WI
       },
       'SHOW_WITH_FLAG'
     );
-    expect(result.status).toBe('NA');
+    expect(result.status).toBe('MISSING');
     expect(result.value).toBeNull();
   });
 });
