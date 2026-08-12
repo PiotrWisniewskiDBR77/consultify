@@ -441,7 +441,27 @@ function isTransientDocumentId(id: string): boolean {
   return TRANSIENT_DOCUMENT_PREFIXES.some((prefix) => id.startsWith(prefix));
 }
 
-function readStoredMyWorkDocuments(): {
+// D1 (P2, 2026-08-12): this key used to be a single global session-storage
+// entry (`moduleHub.openDocuments.mywork`) with no owner. Two identities
+// sharing one browser tab (a second user logging in, or the same user
+// switching organizations) would inherit each other's open document tabs.
+// Scope the key to org+user and require BOTH before touching storage at all
+// — an unauthenticated caller (no user/org yet) must never read or write
+// under someone else's key.
+const LEGACY_MYWORK_OPEN_DOCUMENTS_KEY = 'moduleHub.openDocuments.mywork';
+
+function getMyWorkDocumentsStorageKey(
+  userId?: string | null,
+  organizationId?: string | null
+): string | null {
+  if (!userId || !organizationId) return null;
+  return `moduleHub.openDocuments.mywork.${organizationId}.${userId}`;
+}
+
+function readStoredMyWorkDocuments(
+  userId?: string | null,
+  organizationId?: string | null
+): {
   openDocuments: OpenDocument[];
   activeDocumentId: string | null;
 } {
@@ -449,8 +469,24 @@ function readStoredMyWorkDocuments(): {
     return { openDocuments: [], activeDocumentId: null };
   }
 
+  // Best-effort cleanup of the pre-D1 unscoped key so it stops being a leak
+  // source. Safe unconditionally: it only ever removes data that was never
+  // correctly scoped in the first place, never anything scoped correctly.
   try {
-    const raw = window.sessionStorage.getItem('moduleHub.openDocuments.mywork');
+    window.sessionStorage.removeItem(LEGACY_MYWORK_OPEN_DOCUMENTS_KEY);
+  } catch {
+    // ignore
+  }
+
+  const storageKey = getMyWorkDocumentsStorageKey(userId, organizationId);
+  if (!storageKey) {
+    // No identity yet (e.g. pre-login) — never read under an unscoped or
+    // guessed key.
+    return { openDocuments: [], activeDocumentId: null };
+  }
+
+  try {
+    const raw = window.sessionStorage.getItem(storageKey);
     if (!raw) return { openDocuments: [], activeDocumentId: null };
 
     const parsed = JSON.parse(raw);
@@ -471,6 +507,30 @@ function readStoredMyWorkDocuments(): {
     return { openDocuments: [], activeDocumentId: null };
   }
 }
+
+function writeStoredMyWorkDocuments(
+  userId: string | null | undefined,
+  organizationId: string | null | undefined,
+  state: { openDocuments: OpenDocument[]; activeDocumentId: string | null }
+): void {
+  if (typeof window === 'undefined') return;
+  const storageKey = getMyWorkDocumentsStorageKey(userId, organizationId);
+  if (!storageKey) return;
+  try {
+    window.sessionStorage.setItem(storageKey, JSON.stringify(state));
+  } catch {
+    /* ignore */
+  }
+}
+
+// Exported for regression coverage (D1, 2026-08-12): lets tests exercise the
+// org/user-scoped storage key directly instead of rendering the full hub.
+export {
+  getMyWorkDocumentsStorageKey,
+  readStoredMyWorkDocuments,
+  writeStoredMyWorkDocuments,
+  LEGACY_MYWORK_OPEN_DOCUMENTS_KEY,
+};
 
 function getDocumentTab(type: OpenDocument['type']): ModuleTab {
   switch (type) {
@@ -835,6 +895,7 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   const [searchParams, setSearchParams] = useSearchParams();
   const {
     currentUser,
+    currentOrganization,
     currentProjectId,
     myWorkIntent,
     clearMyWorkIntent,
@@ -867,7 +928,15 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   const ideasBetaLocked =
     isBetaSubareaClosed('MYWORK_IDEAS') && isBetaLockedForRole(currentUser?.role);
 
-  const restoredDocumentState = useMemo(() => readStoredMyWorkDocuments(), []);
+  // D1 (P2, 2026-08-12): scoped to userId+organizationId so two identities
+  // sharing this browser tab never inherit each other's open document tabs
+  // — see readStoredMyWorkDocuments above.
+  const myWorkDocumentsUserId = currentUser?.id;
+  const myWorkDocumentsOrgId = currentOrganization?.id || currentUser?.organizationId;
+  const restoredDocumentState = useMemo(
+    () => readStoredMyWorkDocuments(myWorkDocumentsUserId, myWorkDocumentsOrgId),
+    [myWorkDocumentsUserId, myWorkDocumentsOrgId]
+  );
   // Tab state — restore the last live document when possible, otherwise land on Home/path intent.
   const [activeTab, setActiveTab] = useState<ModuleTab>(() => {
     const restoredActiveDoc = restoredDocumentState.activeDocumentId
@@ -1197,15 +1266,11 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     }
   }, [activeTab, ideasBetaLocked, location.pathname, navigate, openDocuments, searchParams, t]);
   useEffect(() => {
-    try {
-      window.sessionStorage.setItem(
-        'moduleHub.openDocuments.mywork',
-        JSON.stringify({ openDocuments, activeDocumentId })
-      );
-    } catch {
-      /* ignore */
-    }
-  }, [openDocuments, activeDocumentId]);
+    writeStoredMyWorkDocuments(myWorkDocumentsUserId, myWorkDocumentsOrgId, {
+      openDocuments,
+      activeDocumentId,
+    });
+  }, [openDocuments, activeDocumentId, myWorkDocumentsUserId, myWorkDocumentsOrgId]);
 
   // Keep chat "screen context" aligned with My Work sub-page (tab + open artifact)
   useEffect(() => {
