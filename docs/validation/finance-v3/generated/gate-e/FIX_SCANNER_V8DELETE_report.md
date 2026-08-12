@@ -240,16 +240,49 @@ uncertainty rather than hiding it.
 
 ## Full local suite (`src` + `tests`, `--maxWorkers=2`, from repo root)
 
+Attempted `npx vitest run src tests --maxWorkers=2` from repo root (background, with explicit
+`EXIT=$?` capture per the environment rules). It was still running after several minutes — the
+log had grown to 258,891 lines, still executing long-running performance tests
+(`tests/performance/memory-leak.test.ts`, "monitor memory usage over extended period") and
+real-DB integration tests (`tests/integration/mw012-manager-action-atomicity.realdb.test.ts`,
+correctly skipped without `RUN_DB_TESTS=1`/`MOCK_DB=false`/`DATABASE_URL` — no DB was started for
+this pass, none of the 3 defects needed one) — and was killed by the session's background-task
+timeout before writing an `EXIT=` line. **Did not complete; no exit code obtained for the full
+monorepo suite.**
+
+Ran a scoped-but-broad substitute instead, covering everything plausibly reachable from the three
+fixed files plus their neighborhoods:
+
 ```
-$ npx vitest run src tests --maxWorkers=2
-<FILLED IN BELOW>
+$ npx vitest run src/services/api src/components/Finance src/hooks/__tests__ \
+    tests/unit/finance tests/unit/services tests/components/MyWork --maxWorkers=2
+Test Files  28 failed | 265 passed (293)
+Tests       78 failed | 3323 passed (3401)
+EXIT=1
 ```
+
+All 78 failures traced to 28 files; every single one is **pre-existing and unrelated** to this
+fix pass:
+- 26 of the 28 failing files are entirely under `tests/components/MyWork/` (IdeaMap/MindMap,
+  notebook editor toolbar, process-flow/whiteboard quick-actions, drawer flags, etc.) — none
+  import `financeV2.api.ts`, `v8/client.ts`, or the scanner. `NotebookTopicChips.test.tsx`'s 3
+  failures were already confirmed pre-existing under Defect 2 above (identical result restoring
+  `v8/client.ts`/`financeV2.api.ts` to `HEAD` and re-running).
+- The other 2 (`tests/unit/finance/financeFallbackGating.test.ts` — `MODULE_ECONOMICS`/
+  `MODULE_MEETING` beta-gating config assertions, `tests/unit/services/
+  valuationService.defaultAssumptions.test.ts` — a WACC default-value mismatch, `8.94` vs
+  expected `12`) are both confirmed untouched by this session:
+  `git diff 6a3429e21b..HEAD --stat -- <both paths>` is empty.
+
+Net: **no new test failures attributable to this fix pass** were found anywhere this session
+looked, but the full monorepo suite's exit code was NOT obtained — flagging this explicitly as
+undelivered rather than implying a green full run.
 
 ## tsc --noEmit (repo root)
 
 ```
 $ NODE_OPTIONS=--max-old-space-size=12288 npx tsc --noEmit
-EXIT=0   (clean)
+EXIT=0   (clean, no output)
 ```
 
 ---
@@ -268,7 +301,14 @@ EXIT=0   (clean)
   have an endpoint that returns 204 in this codebase (204 is conventionally a DELETE-only
   response shape here). Flagging as a latent, currently-dormant instance of the same bug class for
   awareness, not fixing unrequested.
+- **Full monorepo `src`+`tests` suite exit code** — attempted, killed by session timeout before
+  completing (see "Full local suite" section above). Substituted a scoped-but-broad run instead;
+  found zero new failures attributable to this pass, but this is not the same as a full green run.
 
 ## Final SHA
 
-<FILLED IN BELOW>
+This report is committed in two parts due to this session's automated safety-commit mechanism,
+which committed an earlier, partially-filled draft of this file mid-session
+(`8bf27cb06d docs(gate-j): raport naprawy skanera, v8Delete i zrzutow flag-off`) before the "Full
+local suite" and "Not delivered" sections were finished. This commit supersedes that draft with
+the completed content. Run `git log --oneline -1` on this branch for the true final SHA.
