@@ -146,6 +146,7 @@ const FinanceValuationWorkspaceScreen = React.lazy(() => import('./screens/finan
 const FinanceLineageNavigatorScreen = React.lazy(() => import('./screens/finance-lineage-navigator'));
 const FinanceComparePanelScreen = React.lazy(() => import('./screens/finance-compare-panel'));
 const FinanceCommentsPanelScreen = React.lazy(() => import('./screens/finance-comments-panel'));
+const FinanceSavedViewsPanelScreen = React.lazy(() => import('./screens/finance-saved-views-panel'));
 const GenDeckContentHintsScreen = React.lazy(() => import('./screens/gen-deck-content-hints'));
 const GenExcelTemplatesTabScreen = React.lazy(() => import('./screens/gen-excel-templates-tab'));
 const GenWordContentHintsScreen = React.lazy(() => import('./screens/gen-word-content-hints'));
@@ -659,6 +660,10 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'finance-comments-panel': {
     label: 'AP-CLIENT (Gate J) — REAL <FinanceCommentsPanel> (kotwice, wzmianki, resolve/reopen, checklist maker-checker) — &scene=default|off, flaga financeCommentsV1 default OFF',
     render: () => <FinanceCommentsPanelScreen />,
+  },
+  'finance-saved-views-panel': {
+    label: 'AP-CLIENT (Gate J) — REAL <FinanceSavedViewsPanel> (PERSONAL/TEAM, zapis, link, usuń) — &scene=default|off, flaga financeSavedViewsV1 default OFF',
+    render: () => <FinanceSavedViewsPanelScreen />,
   },
   'execution-change-signals': {
     label:
