@@ -392,11 +392,17 @@ async function runAccessibilityProbe(browser) {
   await page.goto(`${BASE}/results/kpi?ff_resultsVNextKpi=1`, { waitUntil: 'domcontentloaded' });
   await waitForRootRender(page, 20000);
   await dismissOnboarding(page);
+  // waitForRootRender only checks innerHTML length, which a loading spinner
+  // shell also satisfies — wait for actual table content (the KPI CODE
+  // column header) before probing, with a generous timeout for first lazy
+  // chunk compile in dev mode (observed 15-20s on this machine).
+  await page.waitForSelector('text=KPI CODE', { timeout: 30000 }).catch(() => {});
   const orgTab = page.locator('button:has-text("Org")').first();
   if (await orgTab.count().catch(() => 0)) {
     await orgTab.click().catch(() => {});
     await page.waitForTimeout(1200);
   }
+  await page.waitForSelector('table, [role="table"], text=KPI-', { timeout: 15000 }).catch(() => {});
 
   const domSignals = await page.evaluate(() => {
     const out = {};
