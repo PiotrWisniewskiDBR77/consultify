@@ -310,6 +310,73 @@ export type LegacyBridgeResolutionDto =
   | LegacyBridgeQuarantinedDto
   | LegacyBridgeNotMigratedDto;
 
+/**
+ * `LegacyBridgeQuarantinedDto.reason` (= `finance_artifact_aliases.mapping_reason`,
+ * DB column `TEXT`, no CHECK constraint) is NOT a closed enum — confirmed by
+ * grep against every writer of that column, `server/scripts/finance-v3-backfill-dry-run.ts`
+ * (the only script that INSERTs into `finance_artifact_aliases`; grep-confirmed
+ * at session start of this task, 2026-08-12). Values there range from short
+ * reason CODES (`APPROVED_WITHOUT_SNAPSHOT`) to full diagnostic sentences with
+ * `;`/`=` (`pack_status=...;pack_readiness_status=...`,
+ * `status=DRAFT; ORCH-DEC-002: financial_analyses is the sole canonical
+ * NPV/IRR/ROI source`) — the same free-text shape the WP-C03 backfill report
+ * documents. `FinanceLegacyBridgeGate.tsx` used to render this raw in a
+ * Polish sentence (`Powód: ${state.reason}`, e.g. "Powód: approved_without_snapshot.")
+ * — its own test even ASSERTED the raw string as expected, betoning the
+ * defect. `rawEnumLeakScanner.test.ts` does not catch this class (`reason`
+ * is not on its scanned-property list, and values are not pure
+ * SCREAMING_SNAKE_CASE — a fifth known blind spot of that scanner, alongside
+ * the four documented in its own header, since the raw value here comes from
+ * an API RESPONSE at runtime, not a code literal the scanner's static grep
+ * can see).
+ *
+ * This label layer: (1) recognizes every reason CODE actually grep-confirmed
+ * in the backfill script's `logQuarantine`/`logExcluded`/`insertAlias` calls
+ * (`reasonCode` values plus the one literal `mappingReason` token that shares
+ * that vocabulary) with an honest Polish sentence saying what happened and
+ * what the user can do; (2) for anything else — the free-text diagnostic
+ * sentences that are NOT a closed set and can never be exhaustively
+ * enumerated — falls back to ONE honest, generic Polish sentence that never
+ * echoes the raw value into user-visible text.
+ */
+export function financeLegacyBridgeQuarantineReasonLabel(reason: string | null): string {
+  if (!reason || !reason.trim()) {
+    return 'Nie zapisano szczegółowego powodu.';
+  }
+  // Normalize so both `APPROVED_WITHOUT_SNAPSHOT` (reasonCode style) and
+  // `approved_without_snapshot` (the lowercase form seen on live screenshots)
+  // hit the same lookup key.
+  const normalized = reason.trim().toUpperCase().replace(/[^A-Z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+  const known: Record<string, string> = {
+    APPROVED_WITHOUT_SNAPSHOT:
+      'Rekord był oznaczony jako zatwierdzony, ale bez zapisanej migawki danych — nie mógł zostać bezpiecznie przeniesiony jako zatwierdzony. Skontaktuj się z zespołem finansowym, aby zweryfikować to zatwierdzenie.',
+    DUPLICATE_VERSION_NUMBER:
+      'W starym systemie ten sam numer wersji miał więcej niż jeden zapis, więc kolejność wersji nie była jednoznaczna. Wymaga ręcznego uzgodnienia przez zespół danych.',
+    ORPHANED_ORG_REFERENCE:
+      'Rekord odwoływał się do organizacji, która nie istnieje w systemie. Zgłoś to administratorowi.',
+    ORPHAN_STATEMENT_NO_PACK:
+      'Rekord nie miał przypisanego nadrzędnego zestawu sprawozdań w starym systemie, więc nie dało się go przenieść samodzielnie.',
+    CROSS_ORG_STATEMENT_PACK_MISMATCH:
+      'Rekord należał do innej organizacji niż jego nadrzędny zestaw sprawozdań — rozbieżność w starym systemie uniemożliwiła bezpieczne przeniesienie.',
+    PARENT_STATEMENT_QUARANTINED:
+      'Nadrzędny rekord również został wykluczony z przenoszenia, więc ten element odziedziczył ten sam status.',
+    LEGACY_PARALLEL_STORE_UNRECONCILED:
+      'Rekord pochodzi ze starszego, równoległego magazynu danych, jeszcze nie uzgodnionego z głównym źródłem. Wymaga decyzji zespołu danych, zanim trafi do nowego systemu.',
+    AMBIGUOUS_DECISION_EVENT_ZERO_AMOUNT:
+      'Powiązane zdarzenie decyzyjne miało zerową kwotę w starym systemie, co uniemożliwia jednoznaczną interpretację. Wymaga weryfikacji zespołu finansowego.',
+    AMBIGUOUS_DECISION_EVENT_DUPLICATE:
+      'Powiązane zdarzenie decyzyjne ma dokładny duplikat w starym systemie, co uniemożliwia jednoznaczne przeniesienie. Wymaga weryfikacji zespołu finansowego.',
+    EVENT_ONLY_BASELINE_ARCHITECTURE:
+      'Model bazuje wyłącznie na architekturze zdarzeń, która nie jest jeszcze obsługiwana w nowym systemie.',
+    SOURCE_MODEL_NOT_MIGRATED:
+      'Model źródłowy, z którego pochodzi ten rekord, nie został jeszcze przeniesiony do nowego systemu.',
+  };
+  return (
+    known[normalized] ??
+    'Powód jest zapisany jako wewnętrzny, techniczny zapis zespołu ds. migracji danych — skontaktuj się z zespołem finansowym, jeśli potrzebujesz szczegółów.'
+  );
+}
+
 // ---------------------------------------------------------------------------
 // WP-B02 — lifecycle. Źródło: server/src/services/finance/canonical/lifecycleService.ts:24-53
 // ---------------------------------------------------------------------------
