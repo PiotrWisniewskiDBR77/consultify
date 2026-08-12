@@ -266,7 +266,29 @@ function buildDefinitionActions(
       kind: 'submit',
     });
   } else {
-    // pending_approval
+    // pending_approval — BUG FOUND during the RN-G5 screenshot walkthrough
+    // (screenshot 16: after a successful approve, the KPI root stays
+    // "pending_approval" — approveDefinitionVersion never touches root
+    // status, only activateKpi does, see this file's own header note — so
+    // gating on row.status alone left Approve/Reject clickable a SECOND
+    // time post-approval, which the server would then 409 NOT_SUBMITTED).
+    // Must also check known.approvalStatus === 'submitted', mirroring the
+    // 'draft' branch's own known.approvalStatus check above.
+    if (known && known.approvalStatus !== 'submitted') {
+      const alreadyDecidedReason =
+        known.approvalStatus === 'approved'
+          ? t(
+              'Wersja już zatwierdzona — aktywuj KPI z menu statusu, aby zacząć pomiary.',
+              'Version already approved — activate the KPI from the status menu to start measuring.'
+            )
+          : t(
+              'Wersja już odrzucona.',
+              'Version already rejected.'
+            );
+      out.push({ id: 'approve-definition', label: t('Zatwierdź', 'Approve'), onClick: () => {}, disabled: true, note: alreadyDecidedReason, kind: 'approve' });
+      out.push({ id: 'reject-definition', label: t('Odrzuć', 'Reject'), onClick: () => {}, disabled: true, note: alreadyDecidedReason, kind: 'reject' });
+      return out;
+    }
     out.push({
       id: 'approve-definition',
       label: t('Zatwierdź', 'Approve'),
