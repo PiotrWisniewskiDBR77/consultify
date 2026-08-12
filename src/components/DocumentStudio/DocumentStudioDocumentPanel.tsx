@@ -85,8 +85,8 @@ import {
   recordDocumentStudioApprovalDecision,
   requestDocumentStudioApproval,
   revokeDocumentStudioShareLink,
-  rotateDocumentStudioShareLink,
   rollbackDocumentStudioSnapshot,
+  rotateDocumentStudioShareLink,
   saveDocumentStudioManualContent,
 } from './api';
 import { CreateTemplateFromArtifactModal } from './CreateTemplateFromArtifactModal';

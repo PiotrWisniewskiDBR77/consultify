@@ -51,7 +51,7 @@ const ALLOWED_TYPES = new Set<WorkbookMutation['type']>([
   'setCellStyle',
   'setColumn',
 ]);
-const FORBIDDEN_SHEET_NAME = /[\[\]:*?/\\]/;
+const FORBIDDEN_SHEET_NAME = new RegExp(String.raw`[\[\]:*?/\\]`);
 const STYLE_KEYS = new Set([
   'bold',
   'italic',

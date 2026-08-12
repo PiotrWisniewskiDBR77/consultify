@@ -15,20 +15,20 @@ import { verifyToken } from '../middleware/auth.middleware.js';
 import { demoContextMiddleware } from '../middleware/demoGuard.middleware.js';
 import { apiAuthRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { requireOrgAccess } from '../middleware/rbac.middleware.js';
-import { buildOrgContextSourcePack } from '../services/documentStudio/documentOrgContextSourcePack.js';
 import ArtifactApprovalService from '../services/artifactApprovalService.js';
 import {
-  evaluateArtifactExportPolicy,
   type ArtifactClassification,
   type ArtifactExportMode,
+  evaluateArtifactExportPolicy,
 } from '../services/artifactExportPolicy.js';
+import { buildOrgContextSourcePack } from '../services/documentStudio/documentOrgContextSourcePack.js';
 import { createP23Error } from '../services/v8/exceleCanon.js';
-import type { WorkbookQualityReport } from '../services/workbook/workbookQualityGate.js';
 import {
   applyWorkbookCommand,
   undoWorkbookCommand,
   WorkbookCommandError,
 } from '../services/workbook/workbookCommandService.js';
+import type { WorkbookQualityReport } from '../services/workbook/workbookQualityGate.js';
 import {
   pruneWorkbookRuntimeCache,
   workbookRuntimeCache as workbookCache,
@@ -426,7 +426,7 @@ type WorkbookMutation =
 
 type WorkbookAnchorTransform = WorkbookAxisMutation & { sheetId: string };
 
-const WORKBOOK_SHEET_NAME_FORBIDDEN = /[\[\]:*?/\\]/;
+const WORKBOOK_SHEET_NAME_FORBIDDEN = new RegExp(String.raw`[\[\]:*?/\\]`);
 
 function normalizedSheetName(value: unknown): string {
   if (typeof value !== 'string') throw new Error('Invalid sheet name');

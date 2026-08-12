@@ -14,10 +14,10 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { UnifiedChatPanel } from '@/components/AIChat/UnifiedChatPanel';
 import { getSourceDisplayLabel } from '@/components/Initiatives/InitiativeSourceLink';
 import {
-  ArtifactContextCommandSurface,
-  ArtifactMenu3,
   type ArtifactCommandContext,
+  ArtifactContextCommandSurface,
   type ArtifactLifecycle,
+  ArtifactMenu3,
 } from '@/components/shared/ArtifactStudio';
 import { EmbeddedView } from '@/components/shared/NModeBlocks';
 import { ErrorState as SpecAErrorState, SkeletonState } from '@/components/shared/states';
@@ -66,12 +66,13 @@ import { normalizeSlideComposition } from './deckData';
 import { DeckGovernanceCardModal } from './DeckGovernanceCardModal';
 import { DeckPresenceStack } from './DeckPresenceStack';
 import { DeckQualityGatesPanel } from './DeckQualityGatesPanel';
-import { PresentationReviewPanel } from './PresentationReviewPanel';
 import { DeckRelationsPanel } from './DeckRelationsPanel';
 import type { BrandKit } from './DeckThemeContext';
 import { DeckThemeProvider } from './DeckThemeContext';
 import { MediaLibraryBrowser } from './MediaLibraryBrowser';
+import { presentationVersionApprovalId } from './presentationApproval';
 import { createPresentationArtifactCommandRegistry } from './presentationArtifactCommands';
+import { PresentationReviewPanel } from './PresentationReviewPanel';
 import { PresentMode } from './PresentMode';
 import { ShareAnalyticsPanel } from './ShareAnalyticsPanel';
 import { ShareModal } from './ShareModal';
@@ -81,7 +82,6 @@ import { useCollaboration } from './useCollaboration';
 import { useDataRefresh } from './useDataRefresh';
 import { useDeckState } from './useDeckState';
 import { useVersionHistory } from './useVersionHistory';
-import { presentationVersionApprovalId } from './presentationApproval';
 import { VersionHistoryPanel } from './VersionHistoryPanel';
 
 // VF1-7 (SPEC-A wzorzec Deck): gate for the shared/states swap on the

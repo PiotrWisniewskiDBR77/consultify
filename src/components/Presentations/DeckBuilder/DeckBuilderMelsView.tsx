@@ -247,14 +247,7 @@ export const DeckBuilderMelsView: React.FC<DeckBuilderMelsViewProps> = ({
     // local right rail; Teresa is global. Retain the working artifact actions
     // and existing workflow overlays until their common workflows replace
     // them, so the rollout does not trade visual cleanup for lost capability.
-    const artifactMenu2Ids = new Set([
-      'internal',
-      'history',
-      'qa',
-      'analytics',
-      'audit',
-      'share',
-    ]);
+    const artifactMenu2Ids = new Set(['internal', 'history', 'qa', 'analytics', 'audit', 'share']);
     return descriptors
       .filter((descriptor) => artifactMenu2Ids.has(descriptor.id))
       .map((descriptor) => {

@@ -8,9 +8,8 @@
  * The old service remains as v1 fallback.
  */
 
-import { createRequire } from 'module';
-
 import JSZip from 'jszip';
+import { createRequire } from 'module';
 
 import logger from '../../../utils/Logger.js';
 import type {

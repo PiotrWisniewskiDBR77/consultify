@@ -393,9 +393,7 @@ export const DocumentTipTapEditor: React.FC<DocumentTipTapEditorProps> = ({
                 kind: 'bar',
                 title: title.trim(),
                 categories: points.map(([category]) => category),
-                series: [
-                  { label: 'Wartość', values: points.map(([, value]) => Number(value)) },
-                ],
+                series: [{ label: 'Wartość', values: points.map(([, value]) => Number(value)) }],
               }),
             },
           })

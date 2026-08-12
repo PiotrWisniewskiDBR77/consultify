@@ -17,9 +17,9 @@ import { verifyToken } from '../middleware/auth.middleware.js';
 import { sanitizeOrgIdForUploadPath } from '../middleware/fileUpload.middleware.js';
 import { requireOrgAccess } from '../middleware/rbac.middleware.js';
 import { requireAudit } from '../middleware/requireAudit.middleware.js';
-import { exportsDir } from '../utils/storagePaths.js';
-import auditEventsService from '../services/AuditEventsService.js';
 import ArtifactApprovalService from '../services/artifactApprovalService.js';
+import { evaluateArtifactExportPolicy } from '../services/artifactExportPolicy.js';
+import auditEventsService from '../services/AuditEventsService.js';
 import {
   createDeckComment,
   DeckCommentError,
@@ -178,12 +178,12 @@ import {
 } from '../services/report/pdf/PdfLayoutTruncationMarker.js';
 import { PptxPipelineService } from '../services/report/pptx/PptxPipelineService.js';
 import { getStorage } from '../services/storage/index.js';
-import { evaluateArtifactExportPolicy } from '../services/artifactExportPolicy.js';
 import * as artifactRegistryService from '../services/v8/artifactRegistryService.js';
 import { applyExportApprovalGate } from '../services/v8/exportApprovalGate.js';
 import * as reportsPresModelService from '../services/v8/reportsPresModelService.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
+import { exportsDir } from '../utils/storagePaths.js';
 import { canOverrideQualityGate, enforceQualityGateForExport } from './presentationExportGate.js';
 
 const router = Router();

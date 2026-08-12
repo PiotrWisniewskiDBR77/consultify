@@ -753,7 +753,7 @@ function normalizeStructuredBlock(
   if (
     declaredType === 'paragraph' &&
     typeof canonicalContent.text === 'string' &&
-    /^\s*[\[{]/.test(canonicalContent.text)
+    /^\s*(?:\[|\{)/.test(canonicalContent.text)
   ) {
     try {
       const parsed = JSON.parse(canonicalContent.text);

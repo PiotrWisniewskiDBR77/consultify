@@ -43,7 +43,9 @@ function Harness({
   onSaveStateChange: (state: SpreadsheetSaveState) => void;
   persistCells?: React.ComponentProps<typeof EditableSpreadsheetGrid>['persistCells'];
   freezeFirstColumn?: boolean;
-  onSelectionContextMenu?: React.ComponentProps<typeof EditableSpreadsheetGrid>['onSelectionContextMenu'];
+  onSelectionContextMenu?: React.ComponentProps<
+    typeof EditableSpreadsheetGrid
+  >['onSelectionContextMenu'];
 }) {
   const gridRef = React.useRef<EditableSpreadsheetGridHandle>(null);
   return (
@@ -86,13 +88,7 @@ function Harness({
 
 describe('EditableSpreadsheetGrid Artifact Studio contract', () => {
   it('freezes the first data column when the view command is active', () => {
-    render(
-      <Harness
-        onSelectionChange={vi.fn()}
-        onSaveStateChange={vi.fn()}
-        freezeFirstColumn
-      />
-    );
+    render(<Harness onSelectionChange={vi.fn()} onSaveStateChange={vi.fn()} freezeFirstColumn />);
 
     expect(screen.getByText('Conversion').closest('td')).toHaveClass('sticky', 'left-10');
     expect(screen.getByText('21,2').closest('td')).not.toHaveClass('sticky');
