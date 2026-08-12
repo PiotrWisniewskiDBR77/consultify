@@ -287,8 +287,18 @@ export const PlanView: React.FC<PlanViewProps> = ({
         <div className="rounded-xl border border-c-border bg-c-surface p-8 text-center">
           <p className="text-sm font-medium text-c-text">Ten plan nie ma jeszcze kroków</p>
           <p className="mt-1 text-sm text-c-text-muted">
-            Plan powstaje razem ze zleceniem. Gdy pojawi się pierwsza wersja, zobaczysz tu kolejność
-            pracy.
+            {/*
+             * ★ Dwa różne fakty pod jednym „pusto" (2026-08-12). Gdy `planVersion`
+             * jest `null`, zlecenie NIE MA jeszcze żadnej wersji planu — jedyna
+             * droga naprzód to panel „Akcje" po prawej („Utwórz szkic planu"),
+             * nie czekanie, aż coś „powstanie samo". Gdy wersja ISTNIEJE, ale jej
+             * graf jest pusty, to fakt o TEJ wersji, nie o braku planu w ogóle —
+             * inny komunikat, żeby nie sugerować przycisku, który tu nie pomoże
+             * (ten ekran nie ma edytora grafu — patrz nagłówek pliku).
+             */}
+            {planVersion
+              ? 'Ta wersja planu nie ma jeszcze zapisanych kroków.'
+              : 'Zlecenie nie ma jeszcze żadnej wersji planu. Utwórz pierwszy szkic w panelu „Akcje" po prawej.'}
           </p>
         </div>
       </div>

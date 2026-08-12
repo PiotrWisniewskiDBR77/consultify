@@ -11,7 +11,21 @@
  * po imieniu: na kogo/na co czekamy i od kiedy.
  */
 
-import { Ban, CheckCircle2, Clock, Inbox, Pause, Play, RotateCcw, Route as RunIcon, XCircle } from 'lucide-react';
+import {
+  AlertTriangle,
+  Ban,
+  CheckCircle2,
+  Clock,
+  Inbox,
+  Pause,
+  Play,
+  RefreshCw,
+  RotateCcw,
+  Route as RunIcon,
+  Send,
+  Undo2,
+  XCircle,
+} from 'lucide-react';
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import { StandardPreview, type StandardPreviewAction } from '@/components/standard/StandardPreview';
@@ -31,6 +45,7 @@ import {
   cancelRun,
   cancelWait,
   deferProposal,
+  markProposalFailed,
   newIdempotencyKey,
   pauseRun,
   provideHumanInput,
@@ -38,7 +53,10 @@ import {
   rejectProposal,
   requestChangesOnProposal,
   resumeRun,
+  retryProposal,
+  revokeProposal,
   startRun,
+  submitProposalForReview,
 } from './api';
 import { listNodeResultAcceptancesForCase } from './apiResults';
 import type { CaseActionProposal, CaseCoreView, CaseHistoryEvent, CaseRun, CaseWait } from './types';
@@ -140,6 +158,17 @@ type Selection =
  */
 type PendingCommand =
   | { kind: 'proposal-decision'; decision: 'APPROVE' | 'REJECT' | 'REQUEST_CHANGES' | 'DEFER'; proposal: CaseActionProposal }
+  /**
+   * Cztery przejścia stanu propozycji BEZ decyzji zatwierdzającej — pakiet M2.
+   * DRAFT→PENDING_REVIEW (wyślij), FAILED→APPROVED (ponów),
+   * APPROVED→REVOKED (cofnij zatwierdzenie), EXECUTING→FAILED (oznacz jako
+   * nieudane) — dokładnie te krawędzie, które `ALLOWED_TRANSITIONS` w
+   * `proposalApprovalService.ts:448` dopuszcza dla tych czterech stanów.
+   */
+  | { kind: 'proposal-submit'; proposal: CaseActionProposal }
+  | { kind: 'proposal-retry'; proposal: CaseActionProposal }
+  | { kind: 'proposal-revoke'; proposal: CaseActionProposal }
+  | { kind: 'proposal-mark-failed'; proposal: CaseActionProposal }
   | { kind: 'wait-provide-input'; wait: CaseWait }
   | { kind: 'wait-cancel'; wait: CaseWait }
   | { kind: 'run-pause'; run: CaseRun }
@@ -260,6 +289,145 @@ function proposalTone(
   return 'neutral';
 }
 
+/**
+ * Zestaw akcji podglądu propozycji — GATING 1:1 z `ALLOWED_TRANSITIONS` po
+ * stronie serwisu (`proposalApprovalService.ts:448`):
+ *
+ *   DRAFT             -> PENDING_REVIEW   (submitProposalForReview)
+ *   PENDING_REVIEW     -> APPROVED/REJECTED/REQUESTED_CHANGES (decideProposal)
+ *   APPROVED           -> REVOKED         (revokeProposal)
+ *   EXECUTING          -> FAILED          (markProposalFailed)
+ *   FAILED             -> APPROVED        (retryProposal, „ponowiony retry")
+ *   EXECUTED/AUDITED/REJECTED/REQUESTED_CHANGES/REVOKED -> [] (bez akcji)
+ *
+ * Pokazywanie przycisku, który serwer i tak odrzuci 409-tką, byłoby atrapą —
+ * ta sama zasada co przy przebiegach (Run) i statusie zlecenia niżej w tym
+ * pliku i w `CasesListScreen.tsx`.
+ *
+ * WARIANTY (CLAUDE.md pułapka #1 — crimson TYLKO dla semantyki krytycznej):
+ * „Wyślij do przeglądu" i „Ponów" przesuwają sprawę DO PRZODU (jak „Uruchom"/
+ * „Wznów" przy przebiegach) — `positive`, nigdy crimson. „Cofnij zatwierdzenie"
+ * i „Oznacz jako nieudane" SĄ destrukcyjne z osobna: pierwsze unieważnia
+ * ważne zatwierdzenie i twardo blokuje wykonanie („revocation after approval
+ * blocks execution" — kanon §3.6), drugie zapisuje porażkę wykonywanej właśnie
+ * czynności. Obie idą jako `destructive` (danger-*, ta sama pula co „Odrzuć"/
+ * „Anuluj przebieg" wyżej) — żaden zwykły CTA tego pliku nie używa tego
+ * wariantu.
+ */
+function proposalPreviewActions(
+  proposal: CaseActionProposal,
+  setPending: (cmd: PendingCommand) => void
+): { resolutions: StandardPreviewAction[]; informational?: StandardPreviewAction[] } | undefined {
+  if (proposal.status === 'PENDING_REVIEW') {
+    return {
+      resolutions: [
+        {
+          id: 'zatwierdz',
+          variant: 'positive',
+          label: 'Zatwierdź',
+          icon: CheckCircle2,
+          onClick: () => setPending({ kind: 'proposal-decision', decision: 'APPROVE', proposal }),
+        },
+        {
+          id: 'odrzuc',
+          variant: 'destructive',
+          label: 'Odrzuć',
+          icon: XCircle,
+          onClick: () => setPending({ kind: 'proposal-decision', decision: 'REJECT', proposal }),
+        },
+      ],
+      informational: [
+        {
+          id: 'popros-o-zmiany',
+          variant: 'neutral',
+          label: 'Poproś o zmiany',
+          icon: RotateCcw,
+          onClick: () =>
+            setPending({ kind: 'proposal-decision', decision: 'REQUEST_CHANGES', proposal }),
+        },
+        {
+          id: 'odloz',
+          variant: 'neutral',
+          label: 'Odłóż',
+          icon: Clock,
+          onClick: () => setPending({ kind: 'proposal-decision', decision: 'DEFER', proposal }),
+        },
+      ],
+    };
+  }
+  if (proposal.status === 'DRAFT') {
+    return {
+      resolutions: [
+        {
+          id: 'wyslij-do-przegladu',
+          variant: 'positive',
+          label: 'Wyślij do przeglądu',
+          icon: Send,
+          onClick: () => setPending({ kind: 'proposal-submit', proposal }),
+        },
+      ],
+    };
+  }
+  if (proposal.status === 'APPROVED') {
+    return {
+      resolutions: [
+        {
+          id: 'cofnij-zatwierdzenie',
+          variant: 'destructive',
+          label: 'Cofnij zatwierdzenie',
+          icon: Undo2,
+          onClick: () => setPending({ kind: 'proposal-revoke', proposal }),
+        },
+      ],
+    };
+  }
+  if (proposal.status === 'FAILED') {
+    return {
+      resolutions: [
+        {
+          id: 'ponow',
+          variant: 'positive',
+          label: 'Ponów',
+          icon: RefreshCw,
+          onClick: () => setPending({ kind: 'proposal-retry', proposal }),
+        },
+      ],
+    };
+  }
+  if (proposal.status === 'EXECUTING') {
+    return {
+      resolutions: [
+        {
+          id: 'oznacz-jako-nieudane',
+          variant: 'destructive',
+          label: 'Oznacz jako nieudane',
+          icon: AlertTriangle,
+          onClick: () => setPending({ kind: 'proposal-mark-failed', proposal }),
+        },
+      ],
+    };
+  }
+  return undefined;
+}
+
+/** Jedno zdanie rekomendacji w karcie meta, per stan propozycji. `null` = brak. */
+function proposalRecommendation(status: CaseActionProposal['status']): string | undefined {
+  switch (status) {
+    case 'DRAFT':
+      return 'Ta sprawa jest szkicem — wyślij ją do przeglądu, żeby ktoś mógł ją zatwierdzić.';
+    case 'PENDING_REVIEW':
+      return 'Ta sprawa czeka na Twoją decyzję.';
+    case 'APPROVED':
+      return 'Ta sprawa jest zatwierdzona i czeka na wykonanie przez system.';
+    case 'FAILED':
+      return 'Wykonanie tej sprawy się nie powiodło — możesz spróbować ponownie.';
+    case 'EXECUTING':
+      return 'Ta sprawa jest właśnie wykonywana.';
+    default:
+      return undefined;
+  }
+}
+
 export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
   caseItem,
   waits,
@@ -342,6 +510,135 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
               result.readback === 'confirmed'
                 ? `Decyzja zapisana. Sprawa ma teraz status: ${proposalStatusLabel(result.value.proposal.status, true)}.`
                 : 'Decyzja została przyjęta, ale nie udało się jej potwierdzić ponownym odczytem. Odśwież dane.',
+          });
+          onReload();
+          return;
+        }
+
+        // ── Sprawy: wyślij do przeglądu / ponów / cofnij zatwierdzenie /
+        // oznacz jako nieudane — CZTERY przejścia bez decyzji zatwierdzającej
+        // (pakiet M2). Każde niesie WŁASNE `expectedVersion` z ostatnio
+        // wczytanej propozycji (`pending.proposal.version`) — ten sam wzorzec
+        // authoritative-readback co reszta tej zakładki.
+        if (pending.kind === 'proposal-submit') {
+          const intent = `proposal-submit:${pending.proposal.actionProposalId}`;
+          const idempotencyKey = keyForIntent(intent);
+          const result = await submitProposalForReview(
+            pending.proposal.actionProposalId,
+            pending.proposal.version,
+            { idempotencyKey }
+          );
+          if (!result.ok) {
+            setNotice({
+              tone: result.failure.kind === 'conflict' || result.failure.kind === 'invalid' ? 'warning' : 'critical',
+              text: result.failure.message,
+              refresh: result.failure.refreshSuggested,
+            });
+            return;
+          }
+          intentKeysRef.current.delete(intent);
+          setNotice({
+            tone: 'success',
+            text:
+              result.readback === 'confirmed'
+                ? `Sprawa wysłana do przeglądu. Ma teraz status: ${proposalStatusLabel(result.value.status, true)}.`
+                : 'Sprawa została wysłana do przeglądu, ale nie udało się tego potwierdzić ponownym odczytem. Odśwież dane.',
+          });
+          onReload();
+          return;
+        }
+
+        if (pending.kind === 'proposal-retry') {
+          const intent = `proposal-retry:${pending.proposal.actionProposalId}`;
+          const idempotencyKey = keyForIntent(intent);
+          const result = await retryProposal(
+            pending.proposal.actionProposalId,
+            pending.proposal.version,
+            { idempotencyKey }
+          );
+          if (!result.ok) {
+            setNotice({
+              tone: result.failure.kind === 'conflict' || result.failure.kind === 'invalid' ? 'warning' : 'critical',
+              text: result.failure.message,
+              refresh: result.failure.refreshSuggested,
+            });
+            return;
+          }
+          intentKeysRef.current.delete(intent);
+          setNotice({
+            tone: 'success',
+            text:
+              result.readback === 'confirmed'
+                ? `Sprawa ponowiona. Ma teraz status: ${proposalStatusLabel(result.value.status, true)}.`
+                : 'Sprawa została ponowiona, ale nie udało się tego potwierdzić ponownym odczytem. Odśwież dane.',
+          });
+          onReload();
+          return;
+        }
+
+        if (pending.kind === 'proposal-revoke') {
+          const intent = `proposal-revoke:${pending.proposal.actionProposalId}`;
+          const idempotencyKey = keyForIntent(intent);
+          const reason = reasonOrInput.trim();
+          if (!reason) {
+            setNotice({ tone: 'warning', text: 'Podaj powód cofnięcia zatwierdzenia — jest wymagany.' });
+            return;
+          }
+          const result = await revokeProposal(
+            pending.proposal.actionProposalId,
+            reason,
+            pending.proposal.version,
+            { idempotencyKey }
+          );
+          if (!result.ok) {
+            setNotice({
+              tone: result.failure.kind === 'conflict' || result.failure.kind === 'invalid' ? 'warning' : 'critical',
+              text: result.failure.message,
+              refresh: result.failure.refreshSuggested,
+            });
+            return;
+          }
+          intentKeysRef.current.delete(intent);
+          setNotice({
+            tone: 'success',
+            text:
+              result.readback === 'confirmed'
+                ? 'Zatwierdzenie zostało cofnięte. Czynność NIE zostanie wykonana, dopóki ktoś nie zatwierdzi jej ponownie.'
+                : 'Cofnięcie zostało przyjęte, ale nie udało się tego potwierdzić ponownym odczytem. Odśwież dane.',
+          });
+          onReload();
+          return;
+        }
+
+        if (pending.kind === 'proposal-mark-failed') {
+          const intent = `proposal-mark-failed:${pending.proposal.actionProposalId}`;
+          const idempotencyKey = keyForIntent(intent);
+          const reason = reasonOrInput.trim();
+          if (!reason) {
+            setNotice({ tone: 'warning', text: 'Podaj powód niepowodzenia — jest wymagany.' });
+            return;
+          }
+          const result = await markProposalFailed(
+            pending.proposal.actionProposalId,
+            reason,
+            pending.proposal.version,
+            { idempotencyKey }
+          );
+          if (!result.ok) {
+            setNotice({
+              tone: result.failure.kind === 'conflict' || result.failure.kind === 'invalid' ? 'warning' : 'critical',
+              text: result.failure.message,
+              refresh: result.failure.refreshSuggested,
+            });
+            return;
+          }
+          intentKeysRef.current.delete(intent);
+          setNotice({
+            tone: 'success',
+            text:
+              result.readback === 'confirmed'
+                ? 'Sprawa oznaczona jako nieudana. Można ją teraz ponowić.'
+                : 'Operacja została przyjęta, ale nie udało się jej potwierdzić ponownym odczytem. Odśwież dane.',
           });
           onReload();
           return;
@@ -1204,67 +1501,21 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
                   {relativeDays(selectedProposal.createdAt)}
                 </span>
               ),
-              recommendation:
-                selectedProposal.status === 'PENDING_REVIEW'
-                  ? 'Ta sprawa czeka na Twoją decyzję.'
-                  : undefined,
+              recommendation: proposalRecommendation(selectedProposal.status),
             }}
             /*
-             * Cztery decyzje z JEDNEJ trasy backendu (`POST
-             * /proposals/:id/decision`, `decideProposal` w `api.ts`) — ta
-             * funkcja SAMA odczytuje propozycję tuż przed wysłaniem, żeby
-             * dostać `proposalVersion`/`payloadDigest`/`policySnapshotRef` z
-             * serwera (nigdy nie zgaduje ich tutaj). Tylko dla spraw, które
-             * REALNIE czekają na decyzję — dla pozostałych stanów przycisków
-             * nie ma (blok akcji po prostu znika, `StandardPreview` renderuje
-             * go warunkowo).
+             * Osiem przejść, DWIE trasy backendu: decyzja (`POST
+             * /proposals/:id/decision`, tylko z `PENDING_REVIEW`) i cztery
+             * przejścia bez decyzji — wyślij do przeglądu / ponów / cofnij
+             * zatwierdzenie / oznacz jako nieudane (pakiet M2, `submit-for-
+             * review`/`retry`/`revoke`/`transition-to-failed`). Jedna funkcja
+             * (`proposalPreviewActions`, zdefiniowana nad tym komponentem)
+             * gatuje WSZYSTKIE osiem 1:1 z `ALLOWED_TRANSITIONS` po stronie
+             * serwisu — dla stanów bez wyjścia (EXECUTED/AUDITED/REJECTED/
+             * REQUESTED_CHANGES/REVOKED) zwraca `undefined` i blok akcji po
+             * prostu znika (`StandardPreview` renderuje go warunkowo).
              */
-            actions={
-              selectedProposal.status === 'PENDING_REVIEW'
-                ? {
-                    resolutions: [
-                      {
-                        id: 'zatwierdz',
-                        variant: 'positive',
-                        label: 'Zatwierdź',
-                        icon: CheckCircle2,
-                        onClick: () =>
-                          setPending({ kind: 'proposal-decision', decision: 'APPROVE', proposal: selectedProposal }),
-                      },
-                      {
-                        id: 'odrzuc',
-                        variant: 'destructive',
-                        label: 'Odrzuć',
-                        icon: XCircle,
-                        onClick: () =>
-                          setPending({ kind: 'proposal-decision', decision: 'REJECT', proposal: selectedProposal }),
-                      },
-                    ],
-                    informational: [
-                      {
-                        id: 'popros-o-zmiany',
-                        variant: 'neutral',
-                        label: 'Poproś o zmiany',
-                        icon: RotateCcw,
-                        onClick: () =>
-                          setPending({
-                            kind: 'proposal-decision',
-                            decision: 'REQUEST_CHANGES',
-                            proposal: selectedProposal,
-                          }),
-                      },
-                      {
-                        id: 'odloz',
-                        variant: 'neutral',
-                        label: 'Odłóż',
-                        icon: Clock,
-                        onClick: () =>
-                          setPending({ kind: 'proposal-decision', decision: 'DEFER', proposal: selectedProposal }),
-                      },
-                    ],
-                  }
-                : undefined
-            }
+            actions={proposalPreviewActions(selectedProposal, setPending)}
             details={{
               text: 'Propozycja czynności zgłoszona w ramach tego zlecenia.',
               showWordCount: false,
@@ -1463,6 +1714,36 @@ function dialogConfig(pending: PendingCommand | null): {
         reason: { label: 'Powód (opcjonalnie)', required: false, placeholder: 'Krótkie uzasadnienie decyzji…' },
       };
     }
+    case 'proposal-submit':
+      return {
+        title: 'Wysłać tę sprawę do przeglądu?',
+        description:
+          'Sprawa przejdzie ze szkicu do kolejki „Sprawy do zatwierdzenia" — Ty albo inna uprawniona osoba będzie mógł ją zatwierdzić, odrzucić albo odesłać do poprawy.',
+        confirmLabel: 'Wyślij do przeglądu',
+      };
+    case 'proposal-retry':
+      return {
+        title: 'Ponowić tę sprawę?',
+        description:
+          'Sprawa wraca do stanu zatwierdzonej i system spróbuje wykonać czynność jeszcze raz. Cel zostanie sprawdzony ponownie — jeśli w międzyczasie zwietrzał, ponowienie zostanie odrzucone.',
+        confirmLabel: 'Ponów',
+      };
+    case 'proposal-revoke':
+      return {
+        title: 'Cofnąć zatwierdzenie tej sprawy?',
+        description:
+          'Zatwierdzenie przestanie obowiązywać i czynność NIE zostanie wykonana, dopóki ktoś nie zatwierdzi jej ponownie. Tej operacji nie da się cofnąć.',
+        confirmLabel: 'Cofnij zatwierdzenie',
+        reason: { label: 'Powód cofnięcia', required: true, placeholder: 'Dlaczego cofasz to zatwierdzenie?' },
+      };
+    case 'proposal-mark-failed':
+      return {
+        title: 'Oznaczyć tę sprawę jako nieudaną?',
+        description:
+          'Wykonywana właśnie czynność zostanie zapisana jako nieudana. Będzie można ją potem ponowić przyciskiem „Ponów".',
+        confirmLabel: 'Oznacz jako nieudane',
+        reason: { label: 'Powód niepowodzenia', required: true, placeholder: 'Co poszło nie tak?' },
+      };
     case 'wait-provide-input':
       return {
         title: 'Podaj dane',

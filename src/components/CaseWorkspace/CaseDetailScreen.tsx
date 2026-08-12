@@ -34,12 +34,17 @@ import {
   BarChart3,
   CheckCircle2,
   ClipboardList,
+  FilePlus2,
+  GitBranch,
   Link2,
   ListChecks,
   Lock,
   RefreshCw,
+  RotateCcw,
   Route as RouteIcon,
   ScrollText,
+  Send,
+  Undo2,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
@@ -67,6 +72,7 @@ import {
 } from '@/utils/enumLabels';
 
 import {
+  createPlanDraft,
   getCase,
   getCaseIntakeSummary,
   getPlanGraph,
@@ -78,9 +84,13 @@ import {
   listValueMeasurements,
   listWaits,
   newIdempotencyKey,
+  publishPlanVersion,
+  proposePlanVersion,
+  requestChangesOnPlanVersion,
   settleSection,
   toFailure,
   validatePlanVersion,
+  withdrawPlanVersion,
 } from './api';
 import { startLightOneClick } from './apiLightStart';
 import {
@@ -119,6 +129,9 @@ import type {
 } from './types';
 import {
   CaseStateBlock,
+  CommandBanner,
+  type CommandNotice,
+  CommandDialog,
   FOCUS_RING,
   formatDate,
   formatDateTime,
@@ -426,6 +439,62 @@ const PIERWSZENSTWO_REZULTATU: Array<CaseArtifactLink['relation']> = [
   'INPUT',
 ];
 
+/*
+ * ── PLAN: cykl życia (Szkic → W recenzji → Opublikowany, + odesłanie do
+ * poprawek i wycofanie) ──────────────────────────────────────────────────
+ *
+ * Stan przejść przepisany z `docs/product/case-workspace/
+ * 04_DOMAIN_RUNTIME_AND_STATE_MACHINES.md` §4.3 i z
+ * `casePlanVersionService.ts`'s `ALLOWED_TRANSITIONS` (jedyne realne źródło —
+ * doc §4.3 nazywa te same krawędzie, ale kod jest tym, co serwer faktycznie
+ * egzekwuje):
+ *
+ *     DRAFT -> IN_REVIEW -> PUBLISHED -> WITHDRAWN
+ *     IN_REVIEW -> DRAFT        [„poproś o zmiany"]
+ *     PUBLISHED -> SUPERSEDED   [WYŁĄCZNIE efekt uboczny publikacji następcy —
+ *                                nigdy osobne kliknięcie użytkownika]
+ *
+ * Ten moduł nie ma edytora grafu (poza zakresem tego pakietu — brak
+ * dozwolonego pliku na płótno edycyjne), więc „Utwórz szkic" zawsze zasila
+ * nowy wiersz gotowym, już poprawnym grafem: albo kopią grafu poprzedniej
+ * wersji (replanowanie z opublikowanego/wycofanego planu — użytkownik i tak
+ * nie miał tu jak go zmienić), albo, gdy zlecenie nie ma jeszcze ŻADNEJ
+ * wersji planu, minimalnym grafem start→koniec, który przechodzi walidację
+ * strukturalną `computeValidationBlockers` (jeden węzeł wejściowy, jeden
+ * końcowy, brak cykli, brak wiszących krawędzi). To NIE jest dana zmyślona —
+ * to jedyny sposób, w jaki UI może w ogóle wjechać w `createPlanDraft` bez
+ * osobnego edytora, i jest jawnie tak nazwane w dialogu potwierdzenia.
+ */
+const MINIMAL_SEED_GRAPH: CanonicalGraph = {
+  entryNodeIds: ['start'],
+  terminalNodeIds: ['end'],
+  nodes: [
+    { nodeId: 'start', type: 'START' },
+    { nodeId: 'end', type: 'END' },
+  ],
+  edges: [{ edgeId: 'start-do-end', sourceNodeId: 'start', targetNodeId: 'end', edgeType: 'SEQUENCE' }],
+};
+
+/**
+ * Jedno miejsce, w którym żyje „co czeka na potwierdzenie" dla akcji planu.
+ *
+ * `plan-create` niesie DWA osobne pola, bo to DWA różne fakty:
+ *  · `supersedesPlanVersion` — co serwer wolno mu podać jako
+ *    `supersedesPlanVersionId` (WYŁĄCZNIE wersja o statusie PUBLISHED, inaczej
+ *    `plan_supersedes_target_invalid` — `casePlanVersionService.ts:904`);
+ *  · `seedFrom` — SKĄD ten ekran (bez edytora grafu) bierze startowy graf.
+ *    Dla replanu opublikowanego planu obie wartości są tą samą wersją; dla
+ *    nowego szkicu po WYCOFANIU planu `seedFrom` wskazuje wycofaną wersję
+ *    (żeby nie zaczynać od zera), a `supersedesPlanVersion` jest `null`
+ *    (wycofany plan nie jest PUBLISHED, serwer by go odrzucił).
+ */
+type PendingPlanCommand =
+  | { kind: 'plan-create'; supersedesPlanVersion: CasePlanVersion | null; seedFrom: CasePlanVersion | null }
+  | { kind: 'plan-propose'; plan: CasePlanVersion }
+  | { kind: 'plan-publish'; plan: CasePlanVersion }
+  | { kind: 'plan-request-changes'; plan: CasePlanVersion }
+  | { kind: 'plan-withdraw'; plan: CasePlanVersion };
+
 export const CaseDetailScreen: React.FC = () => {
   const { caseId = '' } = useParams();
   const navigate = useNavigate();
@@ -527,6 +596,41 @@ export const CaseDetailScreen: React.FC = () => {
   const lightStartKeyRef = useRef<string | null>(null);
 
   /*
+   * ── PLAN: stan komend cyklu życia ──────────────────────────────────────
+   *
+   * Ten sam wzorzec co `RealizacjaView.tsx` (jedno miejsce na `pending` /
+   * `busy` / `notice`, klucz idempotencji na INTENCJĘ, nie na żądanie).
+   *
+   * `pinnedPlanVersionId` istnieje, bo `case_core.current_plan_version_id`
+   * NIE jest aktualizowane przez ten serwis (`casePlanVersionService.ts`,
+   * open_question #4 w jego własnym nagłówku — świadomie, poza mandatem tego
+   * pakietu backendu). Bez tego pola ekran po np. „Zaproponuj do przeglądu"
+   * potrafiłby wrócić do POKAZYWANIA starszego, wciąż PUBLISHED planu (patrz
+   * priorytet w `currentPlanVersion` niżej) zamiast tego, którym użytkownik
+   * właśnie zarządza — myląc „zapisałem" z „zniknęło". Ref, bo `load()` musi
+   * czytać AKTUALNĄ wartość bez wchodzenia do jej tablicy zależności (inaczej
+   * każda zmiana pina tworzyłaby nowy `load` i przeładowywała ekran).
+   */
+  const [planPending, setPlanPending] = useState<PendingPlanCommand | null>(null);
+  const [planCommandBusy, setPlanCommandBusy] = useState(false);
+  const [planNotice, setPlanNotice] = useState<CommandNotice | null>(null);
+  const [pinnedPlanVersionId, setPinnedPlanVersionIdState] = useState<string | null>(null);
+  const pinnedPlanVersionIdRef = useRef<string | null>(null);
+  const setPinnedPlanVersionId = useCallback((id: string | null) => {
+    pinnedPlanVersionIdRef.current = id;
+    setPinnedPlanVersionIdState(id);
+  }, []);
+  const planIntentKeysRef = useRef<Map<string, string>>(new Map());
+  const keyForPlanIntent = useCallback((intent: string) => {
+    const existing = planIntentKeysRef.current.get(intent);
+    if (existing) return existing;
+    const fresh = newIdempotencyKey();
+    planIntentKeysRef.current.set(intent, fresh);
+    return fresh;
+  }, []);
+  const closePlanDialog = useCallback(() => setPlanPending(null), []);
+
+  /*
    * Migawkę powrotu czytamy SYNCHRONICZNIE, w pierwszym renderze — nie w efekcie.
    * Gdyby czytał ją efekt, sekcja Rezultaty zdążyłaby się już zamontować z pustym
    * zaznaczeniem, a przywrócony podgląd „doklejałby się" po chwili, zmieniając
@@ -609,9 +713,16 @@ export const CaseDetailScreen: React.FC = () => {
           ),
         ]);
 
-      // Wersja planu do pokazania: najpierw ta wskazana przez zlecenie,
-      // potem ostatnia zatwierdzona, na końcu po prostu najnowsza.
+      /*
+       * Wersja planu do pokazania: NAJPIERW ta, którą użytkownik właśnie
+       * utworzył/zaproponował/wycofał w TEJ sesji (`pinnedPlanVersionIdRef`
+       * — patrz komentarz przy jego deklaracji: `case_core.
+       * current_plan_version_id` nie aktualizuje się sam), potem ta wskazana
+       * przez zlecenie, potem ostatnia zatwierdzona, na końcu po prostu
+       * najnowsza.
+       */
       const current =
+        planVersions.find((v) => v.casePlanVersionId === pinnedPlanVersionIdRef.current) ??
         planVersions.find((v) => v.casePlanVersionId === caseItem.currentPlanVersionId) ??
         planVersions.find((v) => v.status === 'PUBLISHED') ??
         planVersions[0] ??
@@ -677,6 +788,12 @@ export const CaseDetailScreen: React.FC = () => {
     void load();
   }, [load]);
 
+  // Zmiana zlecenia = czysta karta: pin z poprzedniego zlecenia nie ma prawa
+  // przetrwać (inny `caseId`, inny zestaw wersji planu).
+  useEffect(() => {
+    setPinnedPlanVersionId(null);
+  }, [caseId, setPinnedPlanVersionId]);
+
   /*
    * "Zatwierdź i rozpocznij" — JEDNA akcja UI, JEDNO wywołanie backendu.
    * `outcome: 'refused'` to NIE błąd sieci/serwera — backend świadomie nie
@@ -717,6 +834,197 @@ export const CaseDetailScreen: React.FC = () => {
   }, [caseId, load]);
 
   /*
+   * ── PLAN: wykonanie komendy z `CommandDialog` ──────────────────────────
+   *
+   * Ten sam kształt co `RealizacjaView.runPendingCommand`: `finally` zamyka
+   * dialog i tak (sukces ALBO świadoma odmowa ALBO błąd — treść wyniku mówi
+   * `planNotice`, dialog nie ma po co stać otworem po odpowiedzi serwera).
+   * Po KAŻDEJ udanej komendzie: pin nowego/zmienionego wiersza (patrz
+   * komentarz przy `pinnedPlanVersionIdRef`) + pełny `load()` — nigdy
+   * malowanie stanu z pamięci, zawsze autorytatywny odczyt.
+   */
+  const runPlanCommand = useCallback(
+    async (reasonOrEmpty: string) => {
+      if (!caseId || !planPending) return;
+      setPlanCommandBusy(true);
+      try {
+        if (planPending.kind === 'plan-create') {
+          const intent = `plan-create:${planPending.supersedesPlanVersion?.casePlanVersionId ?? planPending.seedFrom?.casePlanVersionId ?? 'nowe'}`;
+          const idempotencyKey = keyForPlanIntent(intent);
+          const semanticGraph = planPending.seedFrom
+            ? structuredClone(planPending.seedFrom.semanticGraph)
+            : structuredClone(MINIMAL_SEED_GRAPH);
+          const result = await createPlanDraft(
+            caseId,
+            {
+              semanticGraph,
+              changeReason: reasonOrEmpty || null,
+              // Belt-and-braces: serwer i tak odrzuci wersję nie-PUBLISHED
+              // (`plan_supersedes_target_invalid`), ale nie wysyłamy jej
+              // świadomie złej — patrz komentarz przy `PendingPlanCommand`.
+              supersedesPlanVersionId:
+                planPending.supersedesPlanVersion?.status === 'PUBLISHED'
+                  ? planPending.supersedesPlanVersion.casePlanVersionId
+                  : null,
+            },
+            { idempotencyKey }
+          );
+          if (!result.ok) {
+            setPlanNotice({
+              tone: result.failure.kind === 'conflict' || result.failure.kind === 'invalid' ? 'warning' : 'critical',
+              text: result.failure.message,
+              refresh: result.failure.refreshSuggested,
+            });
+            setKomunikat(result.failure.message);
+            return;
+          }
+          planIntentKeysRef.current.delete(intent);
+          setPinnedPlanVersionId(result.value.casePlanVersionId);
+          const komunikatSukcesu =
+            result.readback === 'confirmed'
+              ? `Utworzono szkic planu nr ${result.value.planNumber}.`
+              : 'Szkic planu został utworzony, ale nie udało się potwierdzić stanu ponownym odczytem. Odśwież dane.';
+          setPlanNotice({ tone: 'success', text: komunikatSukcesu });
+          setKomunikat(komunikatSukcesu);
+          await load();
+          return;
+        }
+
+        const plan = planPending.plan;
+        const kindToIntent: Record<Exclude<PendingPlanCommand['kind'], 'plan-create'>, string> = {
+          'plan-propose': 'plan-propose',
+          'plan-publish': 'plan-publish',
+          'plan-request-changes': 'plan-request-changes',
+          'plan-withdraw': 'plan-withdraw',
+        };
+        const intent = `${kindToIntent[planPending.kind]}:${plan.casePlanVersionId}`;
+        const idempotencyKey = keyForPlanIntent(intent);
+
+        if (planPending.kind === 'plan-request-changes' || planPending.kind === 'plan-withdraw') {
+          const reason = reasonOrEmpty.trim();
+          if (!reason) {
+            setPlanNotice({
+              tone: 'warning',
+              text:
+                planPending.kind === 'plan-withdraw'
+                  ? 'Podaj powód wycofania planu — jest wymagany.'
+                  : 'Podaj, co należy poprawić — powód jest wymagany.',
+            });
+            return;
+          }
+        }
+
+        const result =
+          planPending.kind === 'plan-propose'
+            ? await proposePlanVersion(plan.casePlanVersionId, plan.version, { idempotencyKey })
+            : planPending.kind === 'plan-publish'
+              ? await publishPlanVersion(plan.casePlanVersionId, plan.version, { idempotencyKey })
+              : planPending.kind === 'plan-request-changes'
+                ? await requestChangesOnPlanVersion(
+                    plan.casePlanVersionId,
+                    reasonOrEmpty.trim(),
+                    plan.version,
+                    { idempotencyKey }
+                  )
+                : await withdrawPlanVersion(plan.casePlanVersionId, reasonOrEmpty.trim(), plan.version, {
+                    idempotencyKey,
+                  });
+
+        if (!result.ok) {
+          setPlanNotice({
+            tone: result.failure.kind === 'conflict' || result.failure.kind === 'invalid' ? 'warning' : 'critical',
+            text: result.failure.message,
+            refresh: result.failure.refreshSuggested,
+          });
+          setKomunikat(result.failure.message);
+          return;
+        }
+        planIntentKeysRef.current.delete(intent);
+        setPinnedPlanVersionId(result.value.casePlanVersionId);
+        const komunikatSukcesu =
+          result.readback === 'confirmed'
+            ? `Plan nr ${result.value.planNumber} ma teraz status: ${planVersionStatusLabel(result.value.status, true)}.`
+            : 'Komenda została przyjęta, ale nie udało się potwierdzić stanu ponownym odczytem. Odśwież dane.';
+        setPlanNotice({ tone: 'success', text: komunikatSukcesu });
+        setKomunikat(komunikatSukcesu);
+        await load();
+      } finally {
+        setPlanCommandBusy(false);
+        setPlanPending(null);
+      }
+    },
+    [caseId, planPending, keyForPlanIntent, setPinnedPlanVersionId, load]
+  );
+
+  /** Treść `CommandDialog` dla każdy rodzaj komendy planu — jedna tabela, nie pięć `if`-ów w JSX. */
+  const planDialogConfig = (
+    pending: PendingPlanCommand
+  ): {
+    title: string;
+    description: string;
+    confirmLabel: string;
+    reason?: { label: string; required: boolean; placeholder?: string };
+  } => {
+    if (pending.kind === 'plan-create') {
+      if (pending.supersedesPlanVersion) {
+        return {
+          title: 'Nowy szkic planu (zmiana)',
+          description: `Powstanie nowy szkic na podstawie opublikowanego planu nr ${pending.supersedesPlanVersion.planNumber}. Obecnie opublikowany plan zostaje bez zmian i dalej obowiązuje, dopóki nowego szkicu nie opublikujesz.`,
+          confirmLabel: 'Utwórz szkic',
+          reason: { label: 'Powód zmiany', required: false, placeholder: 'Np. Aktualizacja zakresu po spotkaniu z klientem.' },
+        };
+      }
+      if (pending.seedFrom) {
+        return {
+          title: 'Nowy szkic planu',
+          description: `Powstanie nowy szkic, punkt startowy: treść wersji nr ${pending.seedFrom.planNumber} (${planVersionStatusLabel(pending.seedFrom.status, true).toLowerCase()}). Poprawki wprowadzisz przed zaproponowaniem go do przeglądu.`,
+          confirmLabel: 'Utwórz szkic',
+          reason: { label: 'Powód', required: false, placeholder: 'Np. Wznawiamy planowanie po wycofaniu.' },
+        };
+      }
+      return {
+        title: 'Utwórz szkic planu',
+        description:
+          'Powstanie pierwszy szkic planu tego zlecenia z jednym punktem startowym i końcowym. Ten ekran nie ma jeszcze edytora kroków — kolejność i wykonawców dodasz w narzędziu autorskim planu, zanim zaproponujesz go do przeglądu.',
+        confirmLabel: 'Utwórz szkic',
+        reason: { label: 'Powód (opcjonalnie)', required: false, placeholder: 'Np. Pierwszy szkic planu zlecenia.' },
+      };
+    }
+    if (pending.kind === 'plan-propose') {
+      return {
+        title: 'Zaproponuj plan do przeglądu',
+        description: `Plan nr ${pending.plan.planNumber} przejdzie ze stanu „Szkic" do „W recenzji". Do publikacji trzeba go będzie jeszcze zatwierdzić.`,
+        confirmLabel: 'Zaproponuj',
+      };
+    }
+    if (pending.kind === 'plan-publish') {
+      return {
+        title: 'Opublikuj plan',
+        description: `Plan nr ${pending.plan.planNumber} stanie się obowiązującym planem tego zlecenia. Poprzedni opublikowany plan (jeśli istnieje) zostanie automatycznie zastąpiony.`,
+        confirmLabel: 'Opublikuj',
+      };
+    }
+    if (pending.kind === 'plan-request-changes') {
+      return {
+        title: 'Poproś o zmiany w planie',
+        description: `Plan nr ${pending.plan.planNumber} wróci ze stanu „W recenzji" do „Szkic".`,
+        confirmLabel: 'Odeślij do poprawek',
+        reason: {
+          label: 'Co należy poprawić',
+          required: true,
+          placeholder: 'Opisz, czego brakuje albo co zmienić przed ponowną propozycją…',
+        },
+      };
+    }
+    return {
+      title: 'Wycofaj opublikowany plan',
+      description: `Plan nr ${pending.plan.planNumber} przestanie obowiązywać. Zlecenie zostanie bez aktywnego planu, dopóki nie opublikujesz kolejnego.`,
+      confirmLabel: 'Wycofaj plan',
+      reason: { label: 'Powód wycofania', required: true, placeholder: 'Dlaczego wycofujesz ten plan?' },
+    };
+  };
+
+  /*
    * Tożsamość `setParam` MUSI być stabilna, a nawigacja pomijana, gdy adres się
    * nie zmienia (`NModeLeftNav`/toolbar wołają handlery także z efektów;
    * niestabilny handler = pętla renderowania).
@@ -752,9 +1060,13 @@ export const CaseDetailScreen: React.FC = () => {
     navigate(rememberedListLocation());
   }, [caseId, navigate]);
 
+  // Sam priorytet — patrz komentarz przy `pinnedPlanVersionIdRef` i przy
+  // `current` w `load()` powyżej; to jest ta sama reguła, zastosowana do
+  // `bundle` już wczytanego do stanu (używana m.in. przez prawy panel).
   const currentPlanVersion = useMemo(() => {
     if (!bundle) return null;
     return (
+      bundle.planVersions.find((v) => v.casePlanVersionId === pinnedPlanVersionId) ??
       bundle.planVersions.find(
         (v) => v.casePlanVersionId === bundle.caseItem.currentPlanVersionId
       ) ??
@@ -762,7 +1074,7 @@ export const CaseDetailScreen: React.FC = () => {
       bundle.planVersions[0] ??
       null
     );
-  }, [bundle]);
+  }, [bundle, pinnedPlanVersionId]);
 
   // ── Otwieranie obiektów w ICH modułach + zapis migawki powrotu ────────────
   const otworzObiekt = useCallback(
@@ -1172,6 +1484,109 @@ export const CaseDetailScreen: React.FC = () => {
     stanZleceniaStartowalnyLight &&
     !maPublikowanyPlanLight;
 
+  /*
+   * ── PLAN: który przycisk pokazać ────────────────────────────────────────
+   *
+   * WYŁĄCZNIE przejścia, które `ALLOWED_TRANSITIONS` w
+   * `casePlanVersionService.ts` naprawdę zezwala z BIEŻĄCEGO stanu — warunek
+   * właściciela #2 z tego pakietu („przycisk zawsze widoczny i zwykle
+   * zawodzący jest gorszy niż brak przycisku"):
+   *
+   *     brak wersji planu -> Utwórz szkic
+   *     DRAFT             -> Zaproponuj do przeglądu
+   *     IN_REVIEW         -> Publikuj | Poproś o zmiany
+   *     PUBLISHED         -> Wycofaj plan | Nowy szkic (zmiana planu)
+   *     WITHDRAWN         -> Nowy szkic planu
+   *     SUPERSEDED        -> (żaden — historyczny wiersz; w normalnym biegu
+   *                          `currentPlanVersion` go nie pokaże, bo priorytet
+   *                          zawsze woli PUBLISHED następcę, patrz wyżej)
+   *
+   * „Publikuj" jest dodatkowo ZABLOKOWANY (nie ukryty — użytkownik ma widzieć,
+   * że dalszy krok istnieje), gdy `bundle.validation` mówi `valid: false`:
+   * serwer i tak odrzuci publikację z `plan_publish_validation_failed`, a
+   * zakładka „Plan" już pokazuje listę blokerów nad tym przyciskiem.
+   */
+  const planPublishBlokowany = Boolean(bundle?.validation) && !bundle!.validation!.valid;
+  const planActionButtons: Array<{
+    id: string;
+    label: string;
+    icon: typeof FilePlus2;
+    colorScheme: 'primary' | 'neutral' | 'red';
+    onClick: () => void;
+    disabled?: boolean;
+  }> = [];
+  if (bundle) {
+    const busyLabel = (label: string) => (planCommandBusy ? 'Wysyłam…' : label);
+    if (!currentPlanVersion) {
+      planActionButtons.push({
+        id: 'plan-utworz-szkic',
+        label: busyLabel('Utwórz szkic planu'),
+        icon: FilePlus2,
+        colorScheme: 'primary',
+        disabled: planCommandBusy,
+        onClick: () => setPlanPending({ kind: 'plan-create', supersedesPlanVersion: null, seedFrom: null }),
+      });
+    } else if (currentPlanVersion.status === 'DRAFT') {
+      planActionButtons.push({
+        id: 'plan-zaproponuj',
+        label: busyLabel('Zaproponuj do przeglądu'),
+        icon: Send,
+        colorScheme: 'primary',
+        disabled: planCommandBusy,
+        onClick: () => setPlanPending({ kind: 'plan-propose', plan: currentPlanVersion }),
+      });
+    } else if (currentPlanVersion.status === 'IN_REVIEW') {
+      planActionButtons.push({
+        id: 'plan-publikuj',
+        label: busyLabel('Publikuj'),
+        icon: CheckCircle2,
+        colorScheme: 'primary',
+        disabled: planCommandBusy || planPublishBlokowany,
+        onClick: () => setPlanPending({ kind: 'plan-publish', plan: currentPlanVersion }),
+      });
+      planActionButtons.push({
+        id: 'plan-popros-o-zmiany',
+        label: busyLabel('Poproś o zmiany'),
+        icon: RotateCcw,
+        colorScheme: 'neutral',
+        disabled: planCommandBusy,
+        onClick: () => setPlanPending({ kind: 'plan-request-changes', plan: currentPlanVersion }),
+      });
+    } else if (currentPlanVersion.status === 'PUBLISHED') {
+      planActionButtons.push({
+        id: 'plan-wycofaj',
+        label: busyLabel('Wycofaj plan'),
+        icon: Undo2,
+        colorScheme: 'red',
+        disabled: planCommandBusy,
+        onClick: () => setPlanPending({ kind: 'plan-withdraw', plan: currentPlanVersion }),
+      });
+      planActionButtons.push({
+        id: 'plan-nowy-szkic-zmiana',
+        label: busyLabel('Nowy szkic (zmiana planu)'),
+        icon: GitBranch,
+        colorScheme: 'neutral',
+        disabled: planCommandBusy,
+        onClick: () =>
+          setPlanPending({
+            kind: 'plan-create',
+            supersedesPlanVersion: currentPlanVersion,
+            seedFrom: currentPlanVersion,
+          }),
+      });
+    } else if (currentPlanVersion.status === 'WITHDRAWN') {
+      planActionButtons.push({
+        id: 'plan-nowy-szkic',
+        label: busyLabel('Nowy szkic planu'),
+        icon: FilePlus2,
+        colorScheme: 'primary',
+        disabled: planCommandBusy,
+        onClick: () =>
+          setPlanPending({ kind: 'plan-create', supersedesPlanVersion: null, seedFrom: currentPlanVersion }),
+      });
+    }
+  }
+
   const prawyPanel = {
     actions: {
       label: 'Akcje',
@@ -1197,6 +1612,20 @@ export const CaseDetailScreen: React.FC = () => {
                           onClick: () => void handleLightStart(),
                         },
                       ],
+                    },
+                  ]
+                : []),
+              ...(planActionButtons.length
+                ? [
+                    {
+                      buttons: planActionButtons.map((btn) => ({
+                        label: btn.label,
+                        icon: btn.icon,
+                        colorScheme: btn.colorScheme,
+                        flex: true,
+                        disabled: btn.disabled,
+                        onClick: btn.onClick,
+                      })),
                     },
                   ]
                 : []),
@@ -1232,11 +1661,25 @@ export const CaseDetailScreen: React.FC = () => {
               {lightStart.refreshSuggested ? ' Odśwież dane i spróbuj ponownie.' : ''}
             </div>
           ) : null}
+          {planPublishBlokowany && currentPlanVersion?.status === 'IN_REVIEW' ? (
+            <div className="mt-2 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-100">
+              Ten plan ma nierozwiązane blokery walidacji — publikacja jest niedostępna, dopóki nie
+              zostaną poprawione. Lista blokerów jest w zakładce „Plan".
+            </div>
+          ) : null}
+          <CommandBanner
+            notice={planNotice}
+            onRefresh={() => void load()}
+            onDismiss={() => setPlanNotice(null)}
+          />
         </div>
       ),
-      actionIds: pokazZatwierdzIRozpocznij
-        ? ['zatwierdz-i-rozpocznij', 'wczytaj-ponownie', 'wroc-do-listy']
-        : ['wczytaj-ponownie', 'wroc-do-listy'],
+      actionIds: [
+        ...(pokazZatwierdzIRozpocznij ? ['zatwierdz-i-rozpocznij'] : []),
+        ...planActionButtons.map((btn) => btn.id),
+        'wczytaj-ponownie',
+        'wroc-do-listy',
+      ],
     },
     properties: {
       label: 'Właściwości',
@@ -1514,6 +1957,15 @@ export const CaseDetailScreen: React.FC = () => {
         panelAriaLabel="Szczegóły zlecenia"
         loading={false}
       />
+      {planPending ? (
+        <CommandDialog
+          open={Boolean(planPending)}
+          busy={planCommandBusy}
+          onCancel={closePlanDialog}
+          onConfirm={(reason) => void runPlanCommand(reason)}
+          {...planDialogConfig(planPending)}
+        />
+      ) : null}
     </div>
   );
 };
