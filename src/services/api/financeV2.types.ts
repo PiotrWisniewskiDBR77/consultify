@@ -1735,3 +1735,505 @@ export interface FinanceExceptionOpenDto {
   reasonCode: string | null;
   createdAt: string;
 }
+
+// =============================================================================================
+// --- AP-CLIENT (Gate J) ---
+//
+// Client types for five capabilities whose HTTP routes were built and tested but had ZERO
+// frontend client method and ZERO UI (`docs/validation/finance-v3/generated/gate-e/
+// PKG_AP_LAYER_INVENTORY_2026-08-12.md`, capabilities #5/#6/#7/#4/#10). Port (not import — same
+// server/↔src/ boundary discipline this whole file documents) of the shapes read from:
+//   - `server/src/routes/v8/finance-v2/compare.routes.ts` (Compare, 6 endpoints)
+//   - `server/src/routes/v8/finance-v2/comments.routes.ts` (Comments + review checklist, 17 endpoints)
+//   - `server/src/routes/v8/finance-v2/saved-views.routes.ts` (Saved views, 6 endpoints)
+//   - `server/src/routes/v8/finance-v2/export-import.routes.ts` (Excel export/import, 4 endpoints)
+//   - `server/src/routes/v8/finance-v2/lineage-navigator.routes.ts` (Lineage navigator, 2 endpoints)
+// All five routers already strip `organization_id` from every DTO they return (it is always the
+// caller's own org) — these client types follow that same convention, camelCase throughout.
+// =============================================================================================
+
+// --- AP-CLIENT Compare ---
+// Port of `server/src/services/finance/canonical/financeCompareService.ts` (AP-05) result shapes,
+// as returned VERBATIM by `compare.routes.ts`'s `respondCompare()` (`{data: CompareResult}`, plus
+// an optional `relationship` string some callers attach).
+// ---------------------------------------------------------------------------
+
+export type CompareCellPresenceDto = 'PRESENT' | 'MISSING' | 'NA' | 'NOT_APPLICABLE' | 'NO_ROW';
+
+/** financeCompareService.ts `CellRef` field is the full server `CellRef` shape — treated as an opaque, re-postable blob on the client (never hand-assembled here). */
+export interface CompareCellPointDto {
+  presence: CompareCellPresenceDto;
+  valueStatus: FinanceValueStatus | null;
+  businessVersionId: string;
+  cellRef: Record<string, unknown> | null;
+  fullUnitValue: number | null;
+  rawValueDecimal: string | null;
+  unit: 'UNITS' | 'THOUSANDS' | 'MILLIONS' | 'BILLIONS' | null;
+  multiplier: string | null;
+  nativeCurrency: string | null;
+  presentationCurrency: string | null;
+}
+
+export type CompareDiffKindDto = 'BOTH_PRESENT' | 'MISSING_IN_A' | 'MISSING_IN_B' | 'MISSING_IN_BOTH' | 'CURRENCY_MISMATCH';
+
+export interface CompareRowDto {
+  matchKey: string;
+  dimensions: Record<string, string>;
+  a: CompareCellPointDto;
+  b: CompareCellPointDto;
+  diffKind: CompareDiffKindDto;
+  absoluteDiff: number | null;
+  pctDiff: number | null;
+  materialityFlag: boolean;
+  note: string | null;
+}
+
+export type CompareComparisonTypeDto = 'PERIOD' | 'VERSION' | 'ENTITY' | 'SCENARIO' | 'VALUATION_METHOD' | 'ACTUAL_VS_FORECAST' | 'GENERIC';
+
+export interface CompareSummaryDto {
+  totalRows: number;
+  bothPresent: number;
+  missingInA: number;
+  missingInB: number;
+  missingInBoth: number;
+  currencyMismatch: number;
+  materialCount: number;
+}
+
+/** Human labels for `diffKind`/`presence` — CLAUDE.md enum-leak rule: never render the raw token. */
+export function compareDiffKindLabel(kind: CompareDiffKindDto): string {
+  switch (kind) {
+    case 'BOTH_PRESENT':
+      return 'Obie strony mają wartość';
+    case 'MISSING_IN_A':
+      return 'Brak w A';
+    case 'MISSING_IN_B':
+      return 'Brak w B';
+    case 'MISSING_IN_BOTH':
+      return 'Brak w obu';
+    case 'CURRENCY_MISMATCH':
+      return 'Niezgodność walut';
+    default: {
+      const _exhaustive: never = kind;
+      return _exhaustive;
+    }
+  }
+}
+
+export function compareComparisonTypeLabel(type: CompareComparisonTypeDto): string {
+  switch (type) {
+    case 'PERIOD':
+      return 'Okres / okres';
+    case 'VERSION':
+      return 'Wersja / wersja';
+    case 'ENTITY':
+      return 'Podmiot / podmiot';
+    case 'SCENARIO':
+      return 'Scenariusz / baseline';
+    case 'VALUATION_METHOD':
+      return 'Metoda / metoda';
+    case 'ACTUAL_VS_FORECAST':
+      return 'Actual / forecast';
+    case 'GENERIC':
+      return 'Porównanie ogólne';
+    default: {
+      const _exhaustive: never = type;
+      return _exhaustive;
+    }
+  }
+}
+
+/** `compare.routes.ts` `respondCompare()` — every `/compare/*` endpoint returns this shape under `data`. */
+export interface CompareResultDto {
+  comparisonType: CompareComparisonTypeDto;
+  generatedAt: string;
+  sourceA: { artifactType: FinanceArtifactType; businessVersionId: string; label: string };
+  sourceB: { artifactType: FinanceArtifactType; businessVersionId: string; label: string };
+  ignoreDimensions: readonly string[];
+  materialityThresholdPct: number;
+  onlyMaterial: boolean;
+  summary: CompareSummaryDto;
+  rows: CompareRowDto[];
+  /** Only present on `compareEntities` (financeCompareService.ts's own optional field, passed through `respondCompare`). */
+  relationship?: string;
+}
+
+export type CompareErrorCodeDto =
+  | 'ARTIFACT_NOT_FOUND'
+  | 'ORGANIZATION_MISMATCH'
+  | 'UNSUPPORTED_ARTIFACT_TYPE'
+  | 'AMBIGUOUS_MATCH_KEY'
+  | 'VERSION_ARTIFACT_MISMATCH'
+  | 'ENTITY_CODE_NOT_FOUND'
+  | 'INVALID_ARTIFACT_REF'
+  | 'INVALID_BODY';
+// --- /AP-CLIENT Compare ---
+
+// --- AP-CLIENT Comments ---
+// Port of `comments.routes.ts`'s `toCommentDto`/`toCommentAssignmentDto`/`toChecklistItemDto`
+// mappers (camelCase, `organization_id` dropped) — measured field-by-field from the route file,
+// not from the underlying `commentService.ts` row shape.
+// ---------------------------------------------------------------------------
+
+/** Opaque `CellRef` blob — same convention as `CompareCellPointDto.cellRef` (never hand-assembled client-side; round-tripped from a server read, e.g. `StatementLineDto` would need one added upstream to originate one). */
+export type FinanceCellRefInput = Record<string, unknown>;
+
+export interface FinanceCommentDto {
+  id: string;
+  artifactId: string;
+  businessVersionId: string;
+  anchor: FinanceCellRefInput | null;
+  authorId: string;
+  body: string;
+  mentions: string[];
+  isBlocking: boolean;
+  resolvedBy: string | null;
+  resolvedAt: string | null;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface FinanceCommentAssignmentDto {
+  id: string;
+  commentId: string;
+  assigneeId: string;
+  dueDate: string | null;
+  assignedBy: string;
+  assignedAt: string;
+}
+
+export interface FinanceReviewChecklistItemDto {
+  id: string;
+  businessVersionId: string;
+  item: string;
+  required: boolean;
+  checkedBy: string | null;
+  checkedAt: string | null;
+  createdBy: string;
+  createdAt: string;
+}
+
+export interface FinanceChangedCellDto {
+  cellKey?: string;
+  [key: string]: unknown;
+}
+
+export interface FinanceChangedCellsResultDto {
+  hasPreviousApproved: boolean;
+  previousBusinessVersionId: string | null;
+  changedCells: FinanceChangedCellDto[];
+}
+// --- /AP-CLIENT Comments ---
+
+// --- AP-CLIENT SavedViews ---
+// Port of `saved-views.routes.ts`'s `toSavedViewDto` mapper + `savedViewService.ts`'s
+// `GridViewStateSnapshot`/`SavedViewFilter` shapes (structural port, not the zod schemas).
+// ---------------------------------------------------------------------------
+
+export const FinanceSavedViewScopeValues = ['PERSONAL', 'TEAM'] as const;
+export type FinanceSavedViewScope = (typeof FinanceSavedViewScopeValues)[number];
+
+export function financeSavedViewScopeLabel(scope: FinanceSavedViewScope): string {
+  switch (scope) {
+    case 'PERSONAL':
+      return 'Osobisty';
+    case 'TEAM':
+      return 'Zespołowy';
+    default: {
+      const _exhaustive: never = scope;
+      return _exhaustive;
+    }
+  }
+}
+
+export interface GridViewColumnStateInput {
+  columnId: string;
+  hidden: boolean;
+  pinned: 'LEFT' | 'RIGHT' | null;
+  groupId: string | null;
+}
+
+export interface GridViewRowStateInput {
+  rowId: string;
+  hidden: boolean;
+  groupId: string | null;
+}
+
+export interface GridViewGroupStateInput {
+  groupId: string;
+  label: string;
+  axis: 'ROW' | 'COLUMN';
+  collapsed: boolean;
+  memberIds: string[];
+}
+
+/** `savedViewService.ts` `GridViewStateSnapshotSchema` — schemaVersion is always `1` today. */
+export interface GridViewStateSnapshotInput {
+  schemaVersion: 1;
+  freezeRowsCount: number;
+  freezeColumnsCount: number;
+  columns: GridViewColumnStateInput[];
+  rows: GridViewRowStateInput[];
+  groups: GridViewGroupStateInput[];
+}
+
+export function emptyGridViewStateSnapshot(): GridViewStateSnapshotInput {
+  return { schemaVersion: 1, freezeRowsCount: 0, freezeColumnsCount: 0, columns: [], rows: [], groups: [] };
+}
+
+/** `savedViewService.ts`'s `SavedViewFilterSchema` discriminated union, ported field-for-field. */
+export type SavedViewFilterInput =
+  | { type: 'category'; values: string[] }
+  | { type: 'quality'; values: FinanceValueStatus[] }
+  | { type: 'missing'; onlyMissing: boolean }
+  | { type: 'changed'; changedOnly: boolean }
+  | { type: 'materiality'; minAbsValueDecimal: string | null }
+  | { type: 'source'; values: string[] }
+  | { type: 'owner'; values: string[] }
+  | { type: 'downstream_use'; values: FinanceArtifactType[] }
+  | { type: 'entity'; values: string[] }
+  | { type: 'period'; values: string[] };
+
+export interface FinanceSavedViewColumnAvailabilityDto {
+  columnId: string;
+  available: boolean;
+  reason: 'KPI_DEPRECATED' | null;
+}
+
+/** `saved-views.routes.ts` `toSavedViewDto()` — `columnAvailability` present only on get/list/shared reads. */
+export interface FinanceSavedViewDto {
+  id: string;
+  artifactId: string;
+  artifactType: FinanceArtifactType;
+  scope: FinanceSavedViewScope;
+  ownerUserId: string;
+  name: string;
+  viewState: { schemaVersion: 1; gridViewState: GridViewStateSnapshotInput; filters: SavedViewFilterInput[] };
+  shareToken: string;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+  columnAvailability?: FinanceSavedViewColumnAvailabilityDto[];
+}
+// --- /AP-CLIENT SavedViews ---
+
+// --- AP-CLIENT ExportImport ---
+// Port of `financeExcelShared.ts` (`FinanceExcelManifest`), `financeImportService.ts`
+// (`ParsedFinanceImport`/`FinanceImportPreviewResult`/`ApplyFinanceImportResult`) and
+// `export-import.routes.ts` (response envelope + manifest header on the export download).
+// ---------------------------------------------------------------------------
+
+/** `financeExcelShared.ts:58-72` — round-trip manifest embedded in every export and required on every import call. */
+export interface FinanceExcelManifestDto {
+  manifestVersion: 1;
+  source: 'consultify-finance-v3-ap02';
+  exportId: string;
+  organizationId: string;
+  artifactId: string;
+  artifactType: FinanceArtifactType;
+  businessVersionId: string;
+  businessVersionStatus: BusinessVersionStatus;
+  businessVersionNo: number;
+  businessVersionCasVersion: number;
+  workingRevisionId: string;
+  asOf: string;
+  defaultUnit: 'UNITS' | 'THOUSANDS' | 'MILLIONS' | 'BILLIONS';
+  defaultPresentationCurrency: string;
+  rowCount: number;
+}
+
+/** `financeImportService.ts` `RawImportRow` — one raw Values-sheet row keyed by its own column headers, plus the source row number. */
+export type FinanceImportRawRow = Record<string, unknown> & { __rowNumber: number };
+
+/** `POST /import/parse` response (`ParsedFinanceImport`). */
+export interface FinanceImportParsedDto {
+  manifest: FinanceExcelManifestDto | null;
+  manifestIssues: string[];
+  rows: FinanceImportRawRow[];
+}
+
+export interface FinanceImportRowErrorDto {
+  rowNumber: number;
+  message: string;
+}
+
+export interface FinanceImportDiffChangeDto {
+  cellKey: string;
+  cellRef: FinanceCellRefInput;
+  before: { status: FinanceValueStatus; valueDecimal: string | null };
+  after: { rowNumber: number; cellKey: string; cellRef: FinanceCellRefInput; value: Record<string, unknown> };
+}
+
+export interface FinanceImportDiffDto {
+  toAdd: { rowNumber: number; cellKey: string; cellRef: FinanceCellRefInput; value: Record<string, unknown> }[];
+  toChange: FinanceImportDiffChangeDto[];
+  toClear: { cellKey: string; cellRef: FinanceCellRefInput }[];
+  unchangedCount: number;
+}
+
+export interface FinanceExcelManifestCheckDto {
+  ok: boolean;
+  issues: string[];
+}
+
+/** `POST /import/preview` response (`FinanceImportPreviewResult`) — read-only, no write happens here. */
+export interface FinanceImportPreviewDto {
+  ok: boolean;
+  manifestCheck: FinanceExcelManifestCheckDto;
+  diff: FinanceImportDiffDto;
+  rowErrors: FinanceImportRowErrorDto[];
+  totalRows: number;
+}
+
+/** `POST /import/apply` success shape (`export-import.routes.ts:216-226`) — one transactional `Operation.batch`, all-or-nothing (never partial). */
+export interface FinanceImportApplyResultDto {
+  businessVersionId: string;
+  newWorkingRevisionId: string;
+  newRevisionSeq: number;
+  appliedCount: { added: number; changed: number; cleared: number };
+  idempotentReplay: boolean;
+  reopened: boolean;
+}
+
+export type FinanceImportApplyErrorCodeDto =
+  | 'NOT_FOUND'
+  | 'MANIFEST_MISMATCH'
+  | 'STATE_PRECONDITION_FAILED'
+  | 'WORKING_REVISION_CONFLICT'
+  | 'VALIDATION_FAILED'
+  | 'REOPEN_FAILED';
+// --- /AP-CLIENT ExportImport ---
+
+// --- AP-CLIENT LineageNavigator ---
+// Port of `lineageNavigatorContract.ts` (AP-11) presentation shapes, as returned VERBATIM by
+// `lineage-navigator.routes.ts`'s `GET /versions/:businessVersionId/lineage-navigator`.
+// `WorkspaceBarLabel` ({key, pl}) is reused as-is — always render `.pl`, never `.key` (enum-leak
+// rule: the PL text is already server-authored, so the client never needs its own switch/case for
+// these labels the way it does for raw enum tokens like `CompareDiffKindDto`).
+// ---------------------------------------------------------------------------
+
+export interface FinanceLabelDto {
+  key: string;
+  pl: string;
+}
+
+/** `lineageNavigatorContract.ts` `LineageNodeMetadata` — everything the trail/panel shows about one business version. */
+export interface LineageNodeMetadataDto {
+  versionId: string;
+  artifactId: string;
+  artifactType: FinanceArtifactType;
+  name: string;
+  versionLabel: string;
+  periodLabel: string | null;
+  status: BusinessVersionStatus;
+  freshness: FinanceArtifactFreshness;
+  variantLabel: string | null;
+}
+
+export type LineageStaleBadgeKindDto =
+  | 'SOURCE_CHANGED'
+  | 'ASSUMPTIONS_CHANGED'
+  | 'DOWNSTREAM_STALE'
+  | 'ORPHANED'
+  | 'NEVER_COMPUTED'
+  | 'COMPUTE_FAILED'
+  | 'ARCHIVED'
+  | 'SUPERSEDED'
+  | 'INVALIDATED';
+
+export interface LineageStaleBadgeDto {
+  kind: LineageStaleBadgeKindDto;
+  label: FinanceLabelDto;
+  severity: 'info' | 'warning' | 'error';
+}
+
+export interface LineageTrailNodeDto {
+  kind: 'node';
+  metadata: LineageNodeMetadataDto;
+  displayName: string;
+  isFocus: boolean;
+  outgoingEdgeType: string | null;
+  staleBadge: LineageStaleBadgeDto | null;
+  stateBadge: LineageStaleBadgeDto | null;
+  isDimmed: boolean;
+}
+
+export interface LineageTrailCollapsedDto {
+  kind: 'collapsed';
+  hiddenCount: number;
+  hiddenVersionIds: readonly string[];
+}
+
+export type LineageTrailItemDto = LineageTrailNodeDto | LineageTrailCollapsedDto;
+
+/** Ordered ROOT → FOCUS — the reading order of `Statement pack v3 → Analysis v2 → Baseline v4 → Scenario Bull v2 → Valuation v1`. */
+export interface LineageTrailDto {
+  items: readonly LineageTrailItemDto[];
+  totalNodeCount: number;
+  hasAlternatePaths: boolean;
+  unresolvedVersionIds: readonly string[];
+  cycleVersionIds: readonly string[];
+}
+
+export interface LineageRelatedEntryDto {
+  metadata: LineageNodeMetadataDto;
+  displayName: string;
+  edgeType: string;
+  depth: number;
+  staleBadge: LineageStaleBadgeDto | null;
+  stateBadge: LineageStaleBadgeDto | null;
+  isDimmed: boolean;
+}
+
+export interface LineageRelatedGroupDto {
+  artifactType: FinanceArtifactType;
+  count: number;
+  entries: readonly LineageRelatedEntryDto[];
+}
+
+export interface LineageCreateNewActionDto {
+  targetArtifactType: FinanceArtifactType;
+  label: FinanceLabelDto;
+  preselectedSource: { artifactId: string; artifactType: FinanceArtifactType; businessVersionId: string };
+}
+
+/** "Powiązane" panel (OWN-FIN-007) — groups with counts + `+ Nowy` action per downstream type. */
+export interface LineageRelatedPanelDto {
+  focus: LineageNodeMetadataDto;
+  parents: readonly LineageRelatedGroupDto[];
+  indirectAncestors: readonly LineageRelatedGroupDto[];
+  children: readonly LineageRelatedGroupDto[];
+  indirectDescendants: readonly LineageRelatedGroupDto[];
+  siblings: readonly LineageRelatedEntryDto[];
+  createNew: readonly LineageCreateNewActionDto[];
+  createNewBlockedReason: 'TERMINAL_SOURCE_STATUS' | 'NO_DOWNSTREAM_TYPE' | null;
+  createNewBlockedLabel: FinanceLabelDto | null;
+  focusBadges: readonly LineageStaleBadgeDto[];
+  terminalVisibility: 'show' | 'dim' | 'hide';
+  hiddenTerminalCount: number;
+  cycleVersionIds: readonly string[];
+}
+
+/** `GET /versions/:businessVersionId/lineage-navigator` full response, under `data`. */
+export interface FinanceLineageNavigatorDto {
+  businessVersionId: string;
+  trail: LineageTrailDto;
+  relatedPanel: LineageRelatedPanelDto;
+  fullGraphView: { id: string; label: FinanceLabelDto; auxiliary: boolean; defaultVisible: boolean };
+}
+
+/** `POST /versions/lineage-edges` success shape (`lineage-navigator.routes.ts:268-283`). */
+export interface FinanceLineageEdgeCreatedDto {
+  edgeId: string;
+  sourceVersionId: string;
+  sourceArtifactType: FinanceArtifactType;
+  targetVersionId: string;
+  targetArtifactType: FinanceArtifactType;
+  edgeType: string;
+  transformationKind: string;
+  assumptionSnapshotHash: string | null;
+  authorId: string;
+  createdAt: string;
+}
+// --- /AP-CLIENT LineageNavigator ---

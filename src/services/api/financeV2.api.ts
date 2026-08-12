@@ -14,7 +14,7 @@
  */
 
 import { fetchWithRetry, getHeaders, handleResponse } from './baseClient';
-import { v8Get, v8Patch, v8Post, v8Put } from './v8/client';
+import { v8Get, v8Patch, v8Post, v8PostMultipart, v8Put } from './v8/client';
 import type {
   AnalysisComputeResultDto,
   AnalysisKpiCatalogEntryDto,
@@ -72,6 +72,26 @@ import type {
   ValuationWaccInputsRawDto,
   ValuationWeightedRecommendationDto,
   VersionLineageDto,
+  // --- AP-CLIENT ---
+  CompareErrorCodeDto,
+  CompareResultDto,
+  FinanceCellRefInput,
+  FinanceChangedCellsResultDto,
+  FinanceCommentAssignmentDto,
+  FinanceCommentDto,
+  FinanceExcelManifestDto,
+  FinanceImportApplyErrorCodeDto,
+  FinanceImportApplyResultDto,
+  FinanceImportParsedDto,
+  FinanceImportPreviewDto,
+  FinanceImportRawRow,
+  FinanceLineageEdgeCreatedDto,
+  FinanceLineageNavigatorDto,
+  FinanceReviewChecklistItemDto,
+  FinanceSavedViewDto,
+  FinanceSavedViewScope,
+  GridViewStateSnapshotInput,
+  SavedViewFilterInput,
 } from './financeV2.types';
 
 const BASE = '/finance-v2';
@@ -98,6 +118,24 @@ async function v8PostRawBody<T>(
     body: body ? JSON.stringify(body) : undefined,
   });
   return handleResponse<T>(res, `V8 POST ${path}`);
+}
+
+/**
+ * `v8Delete` (src/services/api/v8/client.ts) unconditionally reads `json.data` off whatever
+ * `handleResponse` returns — but `handleResponse` returns `null` (not `{data}`) for a genuine
+ * 204 No Content, so `v8Delete` crashes with `Cannot read properties of null (reading 'data')`
+ * on any endpoint that really answers 204 (measured against a mocked 204 in this pakiet's own
+ * test — `deleteFinanceSavedView` is `saved-views.routes.ts`'s `DELETE /saved-views/:id`, which
+ * really does `res.status(204).send()`, no body at all). Flagged as a shared-file bug (out of
+ * this pakiet's "add-only" scope — see `AP_CLIENT_report.md`), NOT fixed in `v8/client.ts`
+ * itself to avoid touching code five other agents may depend on; this local helper sidesteps it
+ * the same way `v8PostRawBody` above sidesteps `v8Post`'s envelope assumption.
+ */
+async function v8DeleteExpectNoContent(path: string): Promise<null> {
+  const res = await fetchWithRetry(`${V8_BASE}${path}`, { method: 'DELETE', headers: getHeaders() });
+  if (res.ok) return null;
+  await handleResponse(res, `V8 DELETE ${path}`); // throws for !res.ok — never returns
+  return null;
 }
 
 // ---------------------------------------------------------------------------
@@ -925,3 +963,562 @@ export async function listFinanceExceptionsOpen(artifactId?: string): Promise<Fi
   const qs = artifactId ? `?artifactId=${encodeURIComponent(artifactId)}` : '';
   return v8Get<FinanceExceptionOpenDto[]>(`${BASE}/exceptions/open${qs}`);
 }
+
+// =============================================================================================
+// --- AP-CLIENT (Gate J) ---
+//
+// Pięć zdolności z realnymi, przetestowanymi trasami HTTP i ZERO klienta frontendowego
+// (`docs/validation/finance-v3/generated/gate-e/PKG_AP_LAYER_INVENTORY_2026-08-12.md`):
+// Compare (6), Comments/review (17), Saved views (6), Export/Import (4), Lineage navigator (2) —
+// 35 endpointów łącznie. Reużywa `v8Get`/`v8Post`/`v8Patch`/`v8Delete`/`v8PostMultipart`
+// (src/services/api/v8/client.ts) — TA SAMA koperta `{data}` konwencja jak reszta tego pliku,
+// zweryfikowana czytaniem KAŻDEJ trasy (nie zgadywana) przed napisaniem funkcji poniżej.
+// Nowe, nazwane eksporty WYŁĄCZNIE w tych pięciu blokach — istniejące 51 eksportów i obiekt
+// `FinanceV2Api` powyżej NIE są dotykane (fan-in bezpieczeństwo).
+// =============================================================================================
+
+// --- AP-CLIENT Compare ---
+// compare.routes.ts — 6 endpointów, jeden POST per oś porównania. Każdy zwraca `{data: CompareResultDto}`
+// (koperta standardowa, `v8Post` ją rozpakowuje) albo rzuca błąd z `.status`/`.data.code` (400/403/404,
+// patrz `httpStatusForCompareError` w routerze — `CompareErrorCodeDto` tu jest portem tej samej listy).
+// ---------------------------------------------------------------------------
+
+const COMPARE_BASE = `${BASE}/compare`;
+
+export interface CompareFinancePeriodsParams {
+  artifactRef: { artifactType: FinanceArtifactType; artifactId: string; businessVersionId: string };
+  periodIdA: string;
+  periodIdB: string;
+  entityId?: string;
+  canonicalLineIds?: string[];
+  kpiCatalogIds?: string[];
+  consolidationScope?: string;
+  accumulationBasis?: string;
+  materialityThresholdPct?: number;
+  onlyMaterial?: boolean;
+  labelA?: string;
+  labelB?: string;
+}
+
+/** `POST /compare/periods` — ta sama wersja/artefakt, dwa okresy (oś "okres/okres"). */
+export async function compareFinancePeriods(params: CompareFinancePeriodsParams): Promise<CompareResultDto> {
+  return v8Post<CompareResultDto>(`${COMPARE_BASE}/periods`, {
+    artifactRef: params.artifactRef,
+    periodIdA: params.periodIdA,
+    periodIdB: params.periodIdB,
+    entityId: params.entityId,
+    canonicalLineIds: params.canonicalLineIds,
+    kpiCatalogIds: params.kpiCatalogIds,
+    consolidationScope: params.consolidationScope,
+    accumulationBasis: params.accumulationBasis,
+    materialityThresholdPct: params.materialityThresholdPct,
+    onlyMaterial: params.onlyMaterial,
+    labelA: params.labelA,
+    labelB: params.labelB,
+  });
+}
+
+export interface CompareFinanceVersionsParams {
+  artifactType: FinanceArtifactType;
+  artifactId: string;
+  businessVersionIdA: string;
+  businessVersionIdB: string;
+  entityCode?: string;
+  canonicalLineIds?: string[];
+  kpiCatalogIds?: string[];
+  consolidationScope?: string;
+  accumulationBasis?: string;
+  materialityThresholdPct?: number;
+  onlyMaterial?: boolean;
+  labelA?: string;
+  labelB?: string;
+}
+
+/** `POST /compare/versions` — dwa `business_version_id` TEGO SAMEGO artefaktu (oś "wersja/wersja"). */
+export async function compareFinanceVersions(params: CompareFinanceVersionsParams): Promise<CompareResultDto> {
+  return v8Post<CompareResultDto>(`${COMPARE_BASE}/versions`, {
+    artifactType: params.artifactType,
+    artifactId: params.artifactId,
+    businessVersionIdA: params.businessVersionIdA,
+    businessVersionIdB: params.businessVersionIdB,
+    entityCode: params.entityCode,
+    canonicalLineIds: params.canonicalLineIds,
+    kpiCatalogIds: params.kpiCatalogIds,
+    consolidationScope: params.consolidationScope,
+    accumulationBasis: params.accumulationBasis,
+    materialityThresholdPct: params.materialityThresholdPct,
+    onlyMaterial: params.onlyMaterial,
+    labelA: params.labelA,
+    labelB: params.labelB,
+  });
+}
+
+export interface CompareFinanceEntitiesParams {
+  artifactRef: { artifactType: FinanceArtifactType; artifactId: string; businessVersionId: string };
+  periodId: string;
+  entityIdA: string;
+  entityIdB: string;
+  canonicalLineIds?: string[];
+  consolidationScope?: string;
+  accumulationBasis?: string;
+  materialityThresholdPct?: number;
+  onlyMaterial?: boolean;
+  labelA?: string;
+  labelB?: string;
+}
+
+/** `POST /compare/entities` — ten sam okres, dwa podmioty w obrębie Statement Pack. */
+export async function compareFinanceEntities(params: CompareFinanceEntitiesParams): Promise<CompareResultDto> {
+  return v8Post<CompareResultDto>(`${COMPARE_BASE}/entities`, {
+    artifactRef: params.artifactRef,
+    periodId: params.periodId,
+    entityIdA: params.entityIdA,
+    entityIdB: params.entityIdB,
+    canonicalLineIds: params.canonicalLineIds,
+    consolidationScope: params.consolidationScope,
+    accumulationBasis: params.accumulationBasis,
+    materialityThresholdPct: params.materialityThresholdPct,
+    onlyMaterial: params.onlyMaterial,
+    labelA: params.labelA,
+    labelB: params.labelB,
+  });
+}
+
+export interface CompareFinanceScenariosParams {
+  businessVersionIdBase: string;
+  businessVersionIdOther: string;
+  entityCode?: string;
+  canonicalLineIds?: string[];
+  consolidationScope?: string;
+  materialityThresholdPct?: number;
+  onlyMaterial?: boolean;
+  labelBase?: string;
+  labelOther?: string;
+}
+
+/** `POST /compare/scenarios` — Base vs Upside/Downside (oś "scenariusz/baseline"). */
+export async function compareFinanceScenarios(params: CompareFinanceScenariosParams): Promise<CompareResultDto> {
+  return v8Post<CompareResultDto>(`${COMPARE_BASE}/scenarios`, {
+    businessVersionIdBase: params.businessVersionIdBase,
+    businessVersionIdOther: params.businessVersionIdOther,
+    entityCode: params.entityCode,
+    canonicalLineIds: params.canonicalLineIds,
+    consolidationScope: params.consolidationScope,
+    materialityThresholdPct: params.materialityThresholdPct,
+    onlyMaterial: params.onlyMaterial,
+    labelBase: params.labelBase,
+    labelOther: params.labelOther,
+  });
+}
+
+export interface CompareFinanceValuationMethodsParams {
+  businessVersionId: string;
+  methodTypeA: string;
+  methodTypeB: string;
+  materialityThresholdPct?: number;
+  labelA?: string;
+  labelB?: string;
+}
+
+/** `POST /compare/valuation-methods` — DCF vs comps (oś "metoda/metoda"), ta sama wersja. */
+export async function compareFinanceValuationMethods(params: CompareFinanceValuationMethodsParams): Promise<CompareResultDto> {
+  return v8Post<CompareResultDto>(`${COMPARE_BASE}/valuation-methods`, {
+    businessVersionId: params.businessVersionId,
+    methodTypeA: params.methodTypeA,
+    methodTypeB: params.methodTypeB,
+    materialityThresholdPct: params.materialityThresholdPct,
+    labelA: params.labelA,
+    labelB: params.labelB,
+  });
+}
+
+export interface CompareFinanceActualVsForecastParams {
+  actualArtifactRef: { artifactType: FinanceArtifactType; artifactId: string; businessVersionId: string };
+  forecastArtifactRef: { artifactType: FinanceArtifactType; artifactId: string; businessVersionId: string };
+  entityCode: string;
+  periodIds: string[];
+  accumulationBasis: string;
+  canonicalLineIds?: string[];
+  consolidationScope?: string;
+  materialityThresholdPct?: number;
+  onlyMaterial?: boolean;
+}
+
+/** `POST /compare/actual-vs-forecast` — Statement Pack (actual) vs Baseline/Scenario (forecast), oś "actual/forecast". */
+export async function compareFinanceActualVsForecast(params: CompareFinanceActualVsForecastParams): Promise<CompareResultDto> {
+  return v8Post<CompareResultDto>(`${COMPARE_BASE}/actual-vs-forecast`, {
+    actualArtifactRef: params.actualArtifactRef,
+    forecastArtifactRef: params.forecastArtifactRef,
+    entityCode: params.entityCode,
+    periodIds: params.periodIds,
+    accumulationBasis: params.accumulationBasis,
+    canonicalLineIds: params.canonicalLineIds,
+    consolidationScope: params.consolidationScope,
+    materialityThresholdPct: params.materialityThresholdPct,
+    onlyMaterial: params.onlyMaterial,
+  });
+}
+// --- /AP-CLIENT Compare ---
+
+// --- AP-CLIENT Comments ---
+// comments.routes.ts — 10 endpointów komentarzy + 7 endpointów review-checklist = 17. DTO w
+// financeV2.types.ts §AP-CLIENT Comments jest portem `toCommentDto`/`toCommentAssignmentDto`/
+// `toChecklistItemDto` (te trzy mappery już usuwają `organization_id`) — czytane wprost z routera.
+// ---------------------------------------------------------------------------
+
+export interface CreateFinanceCommentParams {
+  artifactId: string;
+  businessVersionId: string;
+  anchor?: FinanceCellRefInput | null;
+  body: string;
+  mentions?: string[];
+  isBlocking?: boolean;
+}
+
+export async function createFinanceComment(params: CreateFinanceCommentParams): Promise<FinanceCommentDto> {
+  return v8Post<FinanceCommentDto>(`${BASE}/comments`, {
+    artifactId: params.artifactId,
+    businessVersionId: params.businessVersionId,
+    anchor: params.anchor ?? null,
+    body: params.body,
+    mentions: params.mentions,
+    isBlocking: params.isBlocking,
+  });
+}
+
+export async function resolveFinanceComment(commentId: string): Promise<FinanceCommentDto> {
+  return v8Post<FinanceCommentDto>(`${BASE}/comments/${encodeURIComponent(commentId)}/resolve`);
+}
+
+export async function reopenFinanceComment(commentId: string): Promise<FinanceCommentDto> {
+  return v8Post<FinanceCommentDto>(`${BASE}/comments/${encodeURIComponent(commentId)}/reopen`);
+}
+
+export async function assignFinanceComment(
+  commentId: string,
+  params: { assigneeId: string; dueDate?: string }
+): Promise<FinanceCommentAssignmentDto> {
+  return v8Post<FinanceCommentAssignmentDto>(`${BASE}/comments/${encodeURIComponent(commentId)}/assign`, {
+    assigneeId: params.assigneeId,
+    dueDate: params.dueDate,
+  });
+}
+
+export async function getFinanceCommentAssignment(commentId: string): Promise<FinanceCommentAssignmentDto | null> {
+  return v8Get<FinanceCommentAssignmentDto | null>(`${BASE}/comments/${encodeURIComponent(commentId)}/assignment`);
+}
+
+export async function getFinanceComment(commentId: string): Promise<FinanceCommentDto> {
+  return v8Get<FinanceCommentDto>(`${BASE}/comments/${encodeURIComponent(commentId)}`);
+}
+
+export interface ListFinanceCommentsParams {
+  /** Dokładnie jedno z dwóch — serwer odrzuca (400) i brak, i oba naraz. */
+  artifactId?: string;
+  businessVersionId?: string;
+  unresolvedOnly?: boolean;
+  blockingOnly?: boolean;
+}
+
+export async function listFinanceComments(params: ListFinanceCommentsParams): Promise<FinanceCommentDto[]> {
+  const qs = new URLSearchParams();
+  if (params.artifactId) qs.set('artifactId', params.artifactId);
+  if (params.businessVersionId) qs.set('businessVersionId', params.businessVersionId);
+  if (params.unresolvedOnly) qs.set('unresolvedOnly', 'true');
+  if (params.blockingOnly) qs.set('blockingOnly', 'true');
+  const suffix = qs.toString() ? `?${qs.toString()}` : '';
+  return v8Get<FinanceCommentDto[]>(`${BASE}/comments${suffix}`);
+}
+
+export async function searchFinanceCommentsByCell(
+  businessVersionId: string,
+  cellRef: FinanceCellRefInput
+): Promise<FinanceCommentDto[]> {
+  return v8Post<FinanceCommentDto[]>(`${BASE}/comments/search-by-cell`, { businessVersionId, cellRef });
+}
+
+/** `GET /comments/mentions/me` — TYLKO wzmianki wywołującego (serwer nie przyjmuje `userId` w query). */
+export async function listFinanceCommentMentionsForMe(): Promise<FinanceCommentDto[]> {
+  return v8Get<FinanceCommentDto[]>(`${BASE}/comments/mentions/me`);
+}
+
+export async function hasUnresolvedBlockingFinanceComments(
+  businessVersionId: string
+): Promise<{ hasUnresolvedBlockingComments: boolean }> {
+  return v8Get<{ hasUnresolvedBlockingComments: boolean }>(
+    `${BASE}/versions/${encodeURIComponent(businessVersionId)}/has-unresolved-blocking-comments`
+  );
+}
+
+export interface AddFinanceReviewChecklistItemParams {
+  businessVersionId: string;
+  item: string;
+  required?: boolean;
+}
+
+export async function addFinanceReviewChecklistItem(
+  params: AddFinanceReviewChecklistItemParams
+): Promise<FinanceReviewChecklistItemDto> {
+  return v8Post<FinanceReviewChecklistItemDto>(`${BASE}/review-checklist`, {
+    businessVersionId: params.businessVersionId,
+    item: params.item,
+    required: params.required,
+  });
+}
+
+export async function checkFinanceReviewChecklistItem(itemId: string): Promise<FinanceReviewChecklistItemDto> {
+  return v8Post<FinanceReviewChecklistItemDto>(`${BASE}/review-checklist/${encodeURIComponent(itemId)}/check`);
+}
+
+export async function uncheckFinanceReviewChecklistItem(itemId: string): Promise<FinanceReviewChecklistItemDto> {
+  return v8Post<FinanceReviewChecklistItemDto>(`${BASE}/review-checklist/${encodeURIComponent(itemId)}/uncheck`);
+}
+
+export async function setFinanceReviewChecklistItemRequired(
+  itemId: string,
+  required: boolean
+): Promise<FinanceReviewChecklistItemDto> {
+  return v8Post<FinanceReviewChecklistItemDto>(`${BASE}/review-checklist/${encodeURIComponent(itemId)}/required`, { required });
+}
+
+export async function listFinanceReviewChecklist(businessVersionId: string): Promise<FinanceReviewChecklistItemDto[]> {
+  return v8Get<FinanceReviewChecklistItemDto[]>(`${BASE}/review-checklist/${encodeURIComponent(businessVersionId)}`);
+}
+
+export async function allFinanceReviewChecklistRequiredChecked(
+  businessVersionId: string
+): Promise<{ allRequiredChecked: boolean }> {
+  return v8Get<{ allRequiredChecked: boolean }>(
+    `${BASE}/review-checklist/${encodeURIComponent(businessVersionId)}/all-required-checked`
+  );
+}
+
+/** Maker-checker: wiersze zmienione od ostatniej APPROVED wersji (AP-06's "changed-only reviewer entry"). */
+export async function getFinanceReviewChecklistChangedCells(
+  businessVersionId: string,
+  previousApprovedBusinessVersionId?: string
+): Promise<FinanceChangedCellsResultDto> {
+  const qs = previousApprovedBusinessVersionId
+    ? `?previousApprovedBusinessVersionId=${encodeURIComponent(previousApprovedBusinessVersionId)}`
+    : '';
+  return v8Get<FinanceChangedCellsResultDto>(
+    `${BASE}/review-checklist/${encodeURIComponent(businessVersionId)}/changed-cells${qs}`
+  );
+}
+// --- /AP-CLIENT Comments ---
+
+// --- AP-CLIENT SavedViews ---
+// saved-views.routes.ts — 6 endpointów. Widoczność (PERSONAL/TEAM), kolejność/przypięcie/ukrycie
+// kolumn żyją w `gridViewState` (port `GridViewStateSnapshotInput`), filtry w osobnej tablicy
+// `filters` (port `SavedViewFilterInput`) — serwer bramkuje WSZYSTKIE reguły widoczności/edycji
+// wewnątrz `savedViewService.ts`, klient ich nie powiela.
+// ---------------------------------------------------------------------------
+
+const SAVED_VIEWS_BASE = `${BASE}/saved-views`;
+
+export interface CreateFinanceSavedViewParams {
+  artifactId: string;
+  scope: FinanceSavedViewScope;
+  name: string;
+  gridViewState: GridViewStateSnapshotInput;
+  filters?: SavedViewFilterInput[];
+}
+
+export async function createFinanceSavedView(params: CreateFinanceSavedViewParams): Promise<FinanceSavedViewDto> {
+  return v8Post<FinanceSavedViewDto>(SAVED_VIEWS_BASE, {
+    artifactId: params.artifactId,
+    scope: params.scope,
+    name: params.name,
+    gridViewState: params.gridViewState,
+    filters: params.filters,
+  });
+}
+
+/** `GET /saved-views?artifactId=` — widoki TEAM na artefakcie + własne PERSONAL wywołującego. */
+export async function listFinanceSavedViews(artifactId: string): Promise<FinanceSavedViewDto[]> {
+  return v8Get<FinanceSavedViewDto[]>(`${SAVED_VIEWS_BASE}?artifactId=${encodeURIComponent(artifactId)}`);
+}
+
+export async function getFinanceSharedSavedView(shareToken: string): Promise<FinanceSavedViewDto> {
+  return v8Get<FinanceSavedViewDto>(`${SAVED_VIEWS_BASE}/shared/${encodeURIComponent(shareToken)}`);
+}
+
+export async function getFinanceSavedView(viewId: string): Promise<FinanceSavedViewDto> {
+  return v8Get<FinanceSavedViewDto>(`${SAVED_VIEWS_BASE}/${encodeURIComponent(viewId)}`);
+}
+
+export interface UpdateFinanceSavedViewParams {
+  name?: string;
+  gridViewState?: GridViewStateSnapshotInput;
+  filters?: SavedViewFilterInput[];
+}
+
+/** Owner-only niezależnie od `scope` (egzekwowane przez serwer). */
+export async function updateFinanceSavedView(
+  viewId: string,
+  params: UpdateFinanceSavedViewParams
+): Promise<FinanceSavedViewDto> {
+  return v8Patch<FinanceSavedViewDto>(`${SAVED_VIEWS_BASE}/${encodeURIComponent(viewId)}`, params);
+}
+
+/** Owner-only niezależnie od `scope`. 204 bez treści — patrz `v8DeleteExpectNoContent` (obejście defektu `v8Delete`). */
+export async function deleteFinanceSavedView(viewId: string): Promise<null> {
+  return v8DeleteExpectNoContent(`${SAVED_VIEWS_BASE}/${encodeURIComponent(viewId)}`);
+}
+// --- /AP-CLIENT SavedViews ---
+
+// --- AP-CLIENT ExportImport ---
+// export-import.routes.ts — 4 endpointy: `.xlsx` eksport (binarny + manifest w nagłówku) i
+// trzystopniowy import (parse multipart → preview read-only → apply transakcyjny). Import jest
+// WSZYSTKO-ALBO-NIC — `applyFinanceImport` nigdy nie zwraca częściowego sukcesu (serwer sam
+// egzekwuje to jednym `Operation.batch`; klient tego nie symuluje ponownie).
+// ---------------------------------------------------------------------------
+
+export interface FinanceStatementPackExportResult {
+  blob: Blob;
+  manifest: FinanceExcelManifestDto;
+  filename: string;
+}
+
+/**
+ * `GET /export/statement-pack/:artifactId/:businessVersionId` — jedyny endpoint w tym pakiecie,
+ * który NIE zwraca JSON `{data}}` (binarny `.xlsx`) — woła `fetchWithRetry` bezpośrednio, jak
+ * `v8PostRawBody` powyżej, ale dla GET+blob. Manifest (wersja/jednostka/źródło) podróżuje w
+ * nagłówku `X-Finance-Export-Manifest` (export-import.routes.ts:78), NIE w treści.
+ */
+export async function exportFinanceStatementPackXlsx(
+  artifactId: string,
+  businessVersionId: string
+): Promise<FinanceStatementPackExportResult> {
+  const path = `${BASE}/export/statement-pack/${encodeURIComponent(artifactId)}/${encodeURIComponent(businessVersionId)}`;
+  const res = await fetchWithRetry(`${V8_BASE}${path}`, { method: 'GET', headers: getHeaders() });
+  if (!res.ok) {
+    // Ścieżka błędu zwraca zwykły JSON {error,code} — reużywamy `handleResponse`, żeby dostać
+    // ten sam kształt rzuconego błędu (`.status`/`.data.code`) jak reszta tego klienta.
+    await handleResponse(res, `V8 GET ${path}`);
+    throw new Error('Nieoczekiwany stan: handleResponse powinien rzucić dla !res.ok');
+  }
+  const manifestHeader = res.headers.get('X-Finance-Export-Manifest');
+  if (!manifestHeader) {
+    throw new Error('Odpowiedź eksportu nie zawiera nagłówka X-Finance-Export-Manifest');
+  }
+  const manifest = JSON.parse(manifestHeader) as FinanceExcelManifestDto;
+  const disposition = res.headers.get('Content-Disposition') || '';
+  const filenameMatch = /filename="([^"]+)"/.exec(disposition);
+  const blob = await res.blob();
+  return {
+    blob,
+    manifest,
+    filename: filenameMatch?.[1] ?? `${manifest.artifactId}-v${manifest.businessVersionNo}.xlsx`,
+  };
+}
+
+/** `POST /import/parse` — multipart `.xlsx` upload (pole `file`). Tylko `.xlsx` — `.csv` świadomie poza zakresem tego routera (patrz nagłówek `export-import.routes.ts`). */
+export async function parseFinanceImportXlsx(file: Blob, filename: string): Promise<FinanceImportParsedDto> {
+  const formData = new FormData();
+  formData.append('file', file, filename);
+  return v8PostMultipart<FinanceImportParsedDto>(`${BASE}/import/parse`, formData);
+}
+
+export interface PreviewFinanceImportParams {
+  artifactId: string;
+  businessVersionId: string;
+  manifest: FinanceExcelManifestDto;
+  rows: FinanceImportRawRow[];
+}
+
+/** `POST /import/preview` — read-only PODGLĄD RÓŻNIC przed zastosowaniem (nic nie zapisuje). */
+export async function previewFinanceImport(params: PreviewFinanceImportParams): Promise<FinanceImportPreviewDto> {
+  return v8Post<FinanceImportPreviewDto>(`${BASE}/import/preview`, {
+    artifactId: params.artifactId,
+    businessVersionId: params.businessVersionId,
+    manifest: params.manifest,
+    rows: params.rows,
+  });
+}
+
+export interface ApplyFinanceImportReopenInput {
+  reason: string;
+  expectedVersion: number;
+  versionKind?: 'ORIGINAL' | 'RESTATED';
+  restatementReason?: string;
+  restatementClass?: string;
+}
+
+export interface ApplyFinanceImportParams {
+  artifactId: string;
+  businessVersionId: string;
+  /** CAS pin — musi zgadzać się z bieżącą `working_revision_id`, inaczej 409 `WORKING_REVISION_CONFLICT`. */
+  expectedWorkingRevisionId: string;
+  manifest: FinanceExcelManifestDto;
+  rows: FinanceImportRawRow[];
+  /** Wymagane — generuj per intencja użytkownika (jeden import = jeden klucz), nie per retry. */
+  batchIdempotencyKey: string;
+  /** Dostarczane TYLKO gdy caller już potwierdził (po `STATE_PRECONDITION_FAILED`/`reopenRequired` z preview), że cel jest APPROVED i wywołanie ma go najpierw ponownie otworzyć. */
+  reopen?: ApplyFinanceImportReopenInput;
+}
+
+/** `POST /import/apply` — JEDEN transakcyjny `Operation.batch`, wszystko-albo-nic (400/409/422 zamiast częściowego zastosowania). */
+export async function applyFinanceImport(params: ApplyFinanceImportParams): Promise<FinanceImportApplyResultDto> {
+  return v8Post<FinanceImportApplyResultDto>(
+    `${BASE}/import/apply`,
+    {
+      artifactId: params.artifactId,
+      businessVersionId: params.businessVersionId,
+      expectedWorkingRevisionId: params.expectedWorkingRevisionId,
+      manifest: params.manifest,
+      rows: params.rows,
+      batchIdempotencyKey: params.batchIdempotencyKey,
+      ...(params.reopen ? { reopen: params.reopen } : {}),
+    },
+    { extraHeaders: { 'Idempotency-Key': params.batchIdempotencyKey } }
+  );
+}
+// --- /AP-CLIENT ExportImport ---
+
+// --- AP-CLIENT LineageNavigator ---
+// lineage-navigator.routes.ts — 2 endpointy. `getFinanceLineageNavigator` zamyka OWN-FIN-007/022
+// (kompaktowy breadcrumb + panel "Powiązane" z licznikami i `+ Nowy`); `createFinanceLineageEdge`
+// jest połową zapisu tego samego grafu (bez niej DAG Statement→Analysis→Baseline→Prediction→
+// Valuation nie dało się zbudować przez API w ogóle — patrz nagłówek routera).
+// ---------------------------------------------------------------------------
+
+export interface GetFinanceLineageNavigatorParams {
+  maxDepth?: number;
+  maxTrailNodes?: number;
+  terminalVisibility?: 'show' | 'dim' | 'hide';
+}
+
+export async function getFinanceLineageNavigator(
+  businessVersionId: string,
+  params: GetFinanceLineageNavigatorParams = {}
+): Promise<FinanceLineageNavigatorDto> {
+  const qs = new URLSearchParams();
+  if (params.maxDepth !== undefined) qs.set('maxDepth', String(params.maxDepth));
+  if (params.maxTrailNodes !== undefined) qs.set('maxTrailNodes', String(params.maxTrailNodes));
+  if (params.terminalVisibility) qs.set('terminalVisibility', params.terminalVisibility);
+  const suffix = qs.toString() ? `?${qs.toString()}` : '';
+  return v8Get<FinanceLineageNavigatorDto>(
+    `${BASE}/versions/${encodeURIComponent(businessVersionId)}/lineage-navigator${suffix}`
+  );
+}
+
+export interface CreateFinanceLineageEdgeParams {
+  sourceVersionId: string;
+  sourceArtifactType: FinanceArtifactType;
+  targetVersionId: string;
+  targetArtifactType: FinanceArtifactType;
+  edgeType: string;
+  transformationKind: string;
+  assumptionSnapshotHash?: string;
+  assumptionSnapshotId?: string;
+  computeRunId?: string;
+}
+
+/** `POST /versions/lineage-edges` — jedna, append-only krawędź lineage (rank/cykl/hash walidowane serwerowo). */
+export async function createFinanceLineageEdge(params: CreateFinanceLineageEdgeParams): Promise<FinanceLineageEdgeCreatedDto> {
+  return v8Post<FinanceLineageEdgeCreatedDto>(`${BASE}/versions/lineage-edges`, params);
+}
+// --- /AP-CLIENT LineageNavigator ---
+
+export type { CompareErrorCodeDto, FinanceImportApplyErrorCodeDto };
