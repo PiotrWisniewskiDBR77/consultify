@@ -211,10 +211,12 @@ export function classifyMigrationChecksum(
   if (base !== 'drift') return base;
 
   const approved = APPROVED_HISTORICAL_CHECKSUM_VARIANTS[filename];
+  const approvedVariants = approved ? (Array.isArray(approved) ? approved : [approved]) : [];
+  const currentChecksum = fileChecksum(fileContent);
   if (
-    approved &&
-    storedChecksum === approved.stored &&
-    fileChecksum(fileContent) === approved.current
+    approvedVariants.some(
+      (variant) => storedChecksum === variant.stored && currentChecksum === variant.current
+    )
   ) {
     return 'accepted_historical_variant';
   }
