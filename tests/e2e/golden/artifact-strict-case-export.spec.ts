@@ -4,6 +4,7 @@ import path from 'node:path';
 import { expect, test } from '@playwright/test';
 import ExcelJS from 'exceljs';
 import JSZip from 'jszip';
+import jwt from 'jsonwebtoken';
 
 import {
   API_BASE_URL,
@@ -287,6 +288,21 @@ test.describe('Artifact Studio strict cross-format export [@module:artifact-stud
   test('persists, cold-reopens and exports a reconciled DOCX, PPTX and XLSX', async ({ page }) => {
     const token = await setupDocumentStudioSession(page);
     const headers = authHeaders(token);
+    const implementationSha = String(process.env.GIT_SHA || '').trim();
+    expect(implementationSha, 'GIT_SHA must pin the exact runtime under review').toMatch(
+      /^[0-9a-f]{40}$/
+    );
+    const testIdentity = jwt.decode(token) as {
+      id?: string;
+      email?: string;
+      organizationId?: string;
+    } | null;
+    expect(testIdentity?.id, 'test token must identify the persisted user').toBeTruthy();
+    expect(testIdentity?.email, 'test token must identify the persisted email').toBeTruthy();
+    expect(
+      testIdentity?.organizationId,
+      'test token must identify the persisted tenant'
+    ).toBeTruthy();
 
     // DOC: use the real deterministic generation lane, then make the generated
     // schema carry the restrictive board case without changing its structure.
@@ -887,12 +903,17 @@ test.describe('Artifact Studio strict cross-format export [@module:artifact-stud
         {
           caseId: CASE_ID,
           title: TITLE,
-          implementationSha: process.env.GIT_SHA || 'b79fc79554a5780614823f1d860d0f6301a67efe',
+          implementationSha,
           classification: 'INTERNAL',
           recommendation: 'DEFER pending evidence',
           providerEvidence: 'EVIDENCE_MISSING',
           xlsxSourcePackRelationship: 'NATIVE_METADATA_AND_RANGE_BINDINGS',
           artifactIds: { document: seeded.artifactId, presentation: deckId, workbook: workbookId },
+          testIdentity: {
+            userId: testIdentity!.id,
+            email: testIdentity!.email,
+            organizationId: testIdentity!.organizationId,
+          },
           sources,
         },
         null,
