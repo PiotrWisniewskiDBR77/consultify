@@ -57,6 +57,16 @@ export interface PlanViewProps {
   projection: PlanProjection;
   selectedNodeId: string | null;
   onSelectNode: (nodeId: string | null) => void;
+  /**
+   * Wołane po UDANYM zapisie szkicu. Bez tego `CaseDetailScreen` trzyma swój
+   * `bundle` z wersją planu sprzed edycji, więc „Zaproponuj"/„Publikuj"
+   * kliknięte zaraz po zapisie wysyłają nieaktualny `expectedVersion` i dostają
+   * 409 — bezpiecznie, bez uszkodzenia danych, ale użytkownik widzi błąd tam,
+   * gdzie nic nie jest zepsute. Ten callback pozwala właścicielowi stanu
+   * pobrać wersję autorytatywną. Opcjonalny, więc istniejący caller bez niego
+   * nadal działa (tylko z tą samą szorstką krawędzią).
+   */
+  onDraftSaved?: () => void;
 }
 
 /**
@@ -160,6 +170,7 @@ export const PlanView: React.FC<PlanViewProps> = ({
   projection,
   selectedNodeId,
   onSelectNode,
+  onDraftSaved,
 }) => {
   /*
    * ── EDYCJA SZKICU (`updatePlanDraft`) ─────────────────────────────────────
@@ -276,7 +287,11 @@ export const PlanView: React.FC<PlanViewProps> = ({
           : 'Zapis został przyjęty, ale nie udało się potwierdzić stanu ponownym odczytem serwera. Odśwież dane.',
       refresh: result.readback !== 'confirmed',
     });
-  }, [local]);
+    // Właściciel stanu (CaseDetailScreen) trzyma własny `bundle` z wersją planu
+    // sprzed tego zapisu. Bez tego sygnału „Zaproponuj"/„Publikuj" kliknięte
+    // zaraz po zapisie wysyłają nieaktualny `expectedVersion` i dostają 409.
+    onDraftSaved?.();
+  }, [local, onDraftSaved]);
 
   /**
    * WARUNEK WŁAŚCICIELA #5: odśwież = zawsze z serwera, nigdy z tego, co ekran

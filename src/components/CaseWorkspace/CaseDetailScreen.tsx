@@ -518,6 +518,15 @@ export const CaseDetailScreen: React.FC = () => {
   const selectedNodeId = searchParams.get('krok');
 
   const [bundle, setBundle] = useState<CaseBundle | null>(null);
+  /*
+   * Licznik wymuszający ponowne pobranie `bundle`. Podbija go PlanView po
+   * UDANYM zapisie szkicu — inaczej ten ekran trzymałby wersję planu sprzed
+   * edycji, a „Zaproponuj"/„Publikuj" kliknięte zaraz potem wysyłałyby
+   * nieaktualny `expectedVersion` i dostawały 409. Kontrola współbieżności
+   * działała wtedy poprawnie (żadnego uszkodzenia danych), ale użytkownik
+   * widział błąd tam, gdzie nic nie było zepsute.
+   */
+  const [tokenPrzeladowania, setTokenPrzeladowania] = useState(0);
   const [loading, setLoading] = useState(true);
   const [failure, setFailure] = useState<CaseApiFailure | null>(null);
   const [gestosc, setGestosc] = useState<PresentationMode>('n');
@@ -795,7 +804,7 @@ export const CaseDetailScreen: React.FC = () => {
       setBundle(null);
       setLoading(false);
     }
-  }, [caseId]);
+  }, [caseId, tokenPrzeladowania]);
 
   useEffect(() => {
     void load();
@@ -1296,6 +1305,7 @@ export const CaseDetailScreen: React.FC = () => {
           projection={projection}
           selectedNodeId={selectedNodeId}
           onSelectNode={(nodeId) => setParam({ krok: nodeId })}
+          onDraftSaved={() => setTokenPrzeladowania((n) => n + 1)}
         />
       );
     }
