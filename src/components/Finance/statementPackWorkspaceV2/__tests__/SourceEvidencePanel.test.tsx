@@ -100,6 +100,37 @@ describe('SourceEvidencePanel — missing ≠ zero ≠ N/A', () => {
     expect(screen.queryByText('Brak danych (luka źródłowa)')).not.toBeInTheDocument();
   });
 
+  // ★ Korekta kanonu (koordynator): PIĘĆ stanów, nie trzy — `NA` ("nie da się
+  // policzyć") i `NOT_APPLICABLE` ("ta pozycja strukturalnie nie dotyczy")
+  // niosą RÓŻNĄ informację dla użytkownika i muszą mieć RÓŻNY tekst powodu.
+  it('NOT_APPLICABLE renders "—" with a reason DISTINCT from both MISSING and NA', () => {
+    render(
+      <SourceEvidencePanel
+        rowLabel="Revenue"
+        periodLabel="FY2025"
+        cell={cell({ value: value({ status: 'NOT_APPLICABLE', valueDecimal: null }) })}
+        emptyLabel="—"
+      />
+    );
+    expect(screen.getByTestId('source-evidence-status')).toHaveTextContent('NOT_APPLICABLE');
+    expect(screen.getByText('Pole strukturalnie nie istnieje dla tej linii/branży')).toBeInTheDocument();
+    expect(screen.queryByText('Brak danych (luka źródłowa)')).not.toBeInTheDocument();
+    expect(screen.queryByText('Analityk oznaczył: nie dotyczy')).not.toBeInTheDocument();
+  });
+
+  it('PRESENT_NONZERO renders the exact decimal value — the fifth state, distinct from all four others', () => {
+    render(
+      <SourceEvidencePanel
+        rowLabel="Revenue"
+        periodLabel="FY2025"
+        cell={cell({ value: value({ status: 'PRESENT_NONZERO', valueDecimal: '1000000' }) })}
+        emptyLabel="—"
+      />
+    );
+    expect(screen.getByTestId('source-evidence-status')).toHaveTextContent('PRESENT_NONZERO');
+    expect(screen.getByText('1 000 000', { selector: '.tabular-nums' })).toBeInTheDocument();
+  });
+
   // KONTROLA NEGATYWNA: zmiana statusu z PRESENT_ZERO na MISSING musi zmienić DOM (glif i etykietę).
   it('NEGATIVE CONTROL — rerender from PRESENT_ZERO to MISSING changes both the glyph and the reason text', () => {
     const { rerender } = render(

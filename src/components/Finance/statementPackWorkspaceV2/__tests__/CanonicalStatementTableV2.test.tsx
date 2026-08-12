@@ -125,6 +125,61 @@ describe('CanonicalStatementTableV2', () => {
     );
   });
 
+  // ★ Korekta kanonu (koordynator, po §2.4 master planu): PIĘĆ rozróżnialnych
+  // stanów wartości finansowej, nie trzy. `formatFinanceValueForDisplay`
+  // (Pakiet C) celowo daje TEN SAM glif "—" trzem stanom absencji (MISSING/
+  // NA/NOT_APPLICABLE) — rozróżnienie żyje w `data-value-status` + `title`
+  // (reason label). Ten test dowodzi, że wszystkie pięć statusów faktycznie
+  // trafiają do DOM-u tabeli NIEZMIENIONE (żaden nie ginie/koerycji do 0),
+  // i że PRESENT_ZERO jest realną cyfrą "0", nie tym samym glifem co absencja.
+  it('all five FinanceValueStatus values render distinctly at the table-cell surface (status attribute + glyph)', () => {
+    const rows: Array<{ status: 'PRESENT_ZERO' | 'PRESENT_NONZERO' | 'MISSING' | 'NA' | 'NOT_APPLICABLE'; valueDecimal: string | null; expectedText: string }> = [
+      { status: 'PRESENT_ZERO', valueDecimal: '0', expectedText: '0' },
+      { status: 'PRESENT_NONZERO', valueDecimal: '7', expectedText: '7' },
+      { status: 'MISSING', valueDecimal: null, expectedText: '—' },
+      { status: 'NA', valueDecimal: null, expectedText: '—' },
+      { status: 'NOT_APPLICABLE', valueDecimal: null, expectedText: '—' },
+    ];
+    render(
+      <CanonicalStatementTableV2
+        lines={rows.map((r, i) =>
+          line({
+            stmtLineId: `l-${r.status}`,
+            canonicalLineId: `canon-${r.status}`,
+            lineCode: r.status,
+            periodId: 'p1',
+            value: {
+              status: r.status,
+              valueDecimal: r.valueDecimal,
+              nativeCurrency: 'PLN',
+              presentationCurrency: 'PLN',
+              unit: 'UNITS',
+              multiplier: '1',
+              sourceRef: null,
+              isAdjustment: false,
+              adjustmentReason: null,
+            },
+          })
+        )}
+        resolveLineLabel={resolveLineLabel}
+        selectedCellKey={null}
+        onSelectCell={() => {}}
+        emptyLabel="—"
+      />
+    );
+    for (const r of rows) {
+      const el = screen.getByTestId(`canonical-statement-cell-canon-${r.status}::p1`);
+      expect(el).toHaveTextContent(r.expectedText);
+      expect(el.getAttribute('data-value-status')).toBe(r.status);
+    }
+    // Trzy stany absencji dzielą glif "—" (celowa decyzja Pakietu C), ale
+    // NIGDY nie dzielą go z prawdziwym zerem — sprawdzone jawnie.
+    const zeroCell = screen.getByTestId('canonical-statement-cell-canon-PRESENT_ZERO::p1');
+    expect(zeroCell).not.toHaveTextContent('—');
+    const missingCell = screen.getByTestId('canonical-statement-cell-canon-MISSING::p1');
+    expect(missingCell).not.toHaveTextContent('0');
+  });
+
   it('flags management-adjusted cells with a badge, driven by isAdjustment', () => {
     render(
       <CanonicalStatementTableV2

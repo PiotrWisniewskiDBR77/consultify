@@ -11,6 +11,8 @@
 
 import type { ReconciliationDetailRowDto, StatementLineDto } from '@/services/api/financeV2.types';
 
+const LINE_CODE_FALLBACK_PREFIX = 'linecode:';
+
 export interface StatementPeriodColumn {
   periodId: string;
   periodLabel: string;
@@ -86,7 +88,7 @@ export function deriveStatementTable(lines: readonly StatementLineDto[]): Derive
     periodLabelCounts.get(label)!.add(line.periodId);
 
     const usesLineCodeFallback = !line.canonicalLineId;
-    const rowKey = line.canonicalLineId || `linecode:${line.lineCode || 'unknown'}`;
+    const rowKey = line.canonicalLineId || `${LINE_CODE_FALLBACK_PREFIX}${line.lineCode || 'unknown'}`;
     if (!rowsByKey.has(rowKey)) {
       rowsByKey.set(rowKey, {
         rowKey,
@@ -210,6 +212,19 @@ export function pickHeaderCurrencyAndScale(
  * przypisania, `usesLineCodeFallback`), dopasowanie po definicji zawodzi
  * (rekoncyliacja operuje na canonicalLineId) — honest `null`, nie zgadywanie.
  */
+/**
+ * Odwrotność konstrukcji `rowKey` powyżej — `CanonicalStatementTableV2`
+ * przekazuje `onSelectCell({rowKey, periodId, cell})` bez osobnego pola
+ * `canonicalLineId` (nie duplikujemy go w `StatementTableCell`), więc caller
+ * (`StatementPackWorkspaceV2`), chcąc dociągnąć krok mapowania po kliknięciu
+ * komórki, musi odzyskać `canonicalLineId` z `rowKey`. JEDNO miejsce prawdy
+ * dla obu kierunków tej konwencji — `LINE_CODE_FALLBACK_PREFIX` używany też
+ * przy budowie `rowKey` powyżej, żeby te dwie funkcje nie mogły dryfować.
+ */
+export function canonicalLineIdFromRowKey(rowKey: string): string | null {
+  return rowKey.startsWith(LINE_CODE_FALLBACK_PREFIX) ? null : rowKey;
+}
+
 export function findReconciliationDetailRowForCell(
   target: { canonicalLineId: string | null; periodId: string; entityId: string },
   rows: readonly ReconciliationDetailRowDto[]

@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import type { ReconciliationDetailRowDto, StatementLineDto } from '@/services/api/financeV2.types';
 
 import {
+  canonicalLineIdFromRowKey,
   deriveStatementTable,
   findReconciliationDetailRowForCell,
   pickHeaderCurrencyAndScale,
@@ -74,6 +75,43 @@ describe('deriveStatementTable', () => {
     const cell = table.rows[0]!.cellsByPeriodId['p1']!;
     expect(cell.value.status).toBe('MISSING');
     expect(cell.value.valueDecimal).toBeNull();
+  });
+
+  // ★ Korekta kanonu (koordynator, po przeczytaniu master planu §2.4): PIĘĆ
+  // rozróżnialnych stanów, nie trzy — PRESENT_ZERO/PRESENT_NONZERO/MISSING/
+  // NA/NOT_APPLICABLE. `deriveStatementTable` jest czystą derywacją
+  // strukturalną (zero arytmetyki), więc dowód "brak koercji" musi objąć
+  // WSZYSTKIE pięć z osobna, nie tylko MISSING-vs-PRESENT_ZERO.
+  it('round-trips all five FinanceValueStatus values through the derivation UNCHANGED — no coercion of any kind', () => {
+    const statuses: Array<{ status: StatementLineDto['value']['status']; valueDecimal: string | null }> = [
+      { status: 'PRESENT_ZERO', valueDecimal: '0' },
+      { status: 'PRESENT_NONZERO', valueDecimal: '42.5' },
+      { status: 'MISSING', valueDecimal: null },
+      { status: 'NA', valueDecimal: null },
+      { status: 'NOT_APPLICABLE', valueDecimal: null },
+    ];
+    for (const s of statuses) {
+      const table = deriveStatementTable([
+        line({
+          stmtLineId: `l-${s.status}`,
+          periodId: 'p1',
+          value: {
+            status: s.status,
+            valueDecimal: s.valueDecimal,
+            nativeCurrency: 'PLN',
+            presentationCurrency: 'PLN',
+            unit: 'UNITS',
+            multiplier: '1',
+            sourceRef: null,
+            isAdjustment: false,
+            adjustmentReason: null,
+          },
+        }),
+      ]);
+      const cell = table.rows[0]!.cellsByPeriodId['p1']!;
+      expect(cell.value.status).toBe(s.status);
+      expect(cell.value.valueDecimal).toBe(s.valueDecimal);
+    }
   });
 
   // KONTROLA NEGATYWNA: zmiana jednej wartości w mocku musi zmienić wynik.
@@ -213,6 +251,33 @@ function reconRow(overrides: Partial<ReconciliationDetailRowDto> & { id: string 
 // (canonicalLineId+periodId+entityId) do jej wiersza mapowania rekoncyliacji
 // (sourceAmount/mappedAmount/sourceRowRef) — dopasowanie STRUKTURALNE, nie po
 // nazwie/etykiecie (żaden z tych DTO nie niesie nazwy linii).
+// ★ `rowKey` <-> `canonicalLineId` must round-trip through `deriveStatementTable`
+// exactly — this is what lets `StatementPackWorkspaceV2` recover the
+// canonicalLineId from `onSelectCell`'s rowKey without a duplicated field.
+describe('canonicalLineIdFromRowKey', () => {
+  it('returns the rowKey unchanged when it is a real canonicalLineId (round-trips with deriveStatementTable)', () => {
+    const table = deriveStatementTable([line({ stmtLineId: 'l1', canonicalLineId: 'canon-revenue' })]);
+    const row = table.rows[0]!;
+    expect(canonicalLineIdFromRowKey(row.rowKey)).toBe('canon-revenue');
+    expect(canonicalLineIdFromRowKey(row.rowKey)).toBe(row.canonicalLineId);
+  });
+
+  it('returns null for a lineCode-fallback rowKey (round-trips with deriveStatementTable)', () => {
+    const table = deriveStatementTable([line({ stmtLineId: 'l1', canonicalLineId: null, lineCode: 'MISC_LINE' })]);
+    const row = table.rows[0]!;
+    expect(row.usesLineCodeFallback).toBe(true);
+    expect(canonicalLineIdFromRowKey(row.rowKey)).toBeNull();
+  });
+
+  // KONTROLA NEGATYWNA: a canonicalLineId that (adversarially) starts with the fallback prefix
+  // string is NOT itself a fallback — proves the check is prefix-based on the ACTUAL rowKey
+  // construction, not a heuristic on the canonicalLineId's own contents alone.
+  it('NEGATIVE CONTROL — a genuine canonicalLineId is never rewritten to null merely because a differently-shaped id could look similar', () => {
+    const table = deriveStatementTable([line({ stmtLineId: 'l1', canonicalLineId: 'canon-revenue' })]);
+    expect(canonicalLineIdFromRowKey(table.rows[0]!.rowKey)).not.toBeNull();
+  });
+});
+
 describe('findReconciliationDetailRowForCell', () => {
   it('finds the reconciliation row that maps to a presented cell, by (canonicalLineId, periodId, entityId)', () => {
     const rows = [
