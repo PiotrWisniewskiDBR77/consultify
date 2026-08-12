@@ -6,6 +6,8 @@
 import { useEffect, useRef } from 'react';
 import type { Node } from 'reactflow';
 
+import { emitQuickActionAck, isQuickActionOutcome, type LaneOpOutcome } from '@/actions/quickActionAck';
+
 export interface ProcessFlowQuickActionHandlers {
   addNode: (shape: any, overrides?: { label?: string }) => void;
   insertAutomationTrigger: () => void;
@@ -117,13 +119,25 @@ export interface ProcessFlowQuickActionHandlers {
    * `handleLaneColorChange`/`handleLaneDelete` in `useProcessFlowNodes.ts`,
    * `handleLaneToggleCollapse` in `IdeaProcessFlowTool.tsx`) — component
    * (`LaneSystem.tsx`) untouched, same pattern as the node/edge menu passes.
+   *
+   * ★ RISK-30 (S5-TERESA, 2026-08-12) ★ — all six now RETURN a `LaneOpOutcome`
+   * instead of `void`. That is the whole fix: previously the handler swallowed
+   * its own refusals (`if (locked) return;`, `if (lanes.length <= 1) return;`,
+   * unknown `laneId` → silent no-op) and the registry, having no way to see
+   * them, answered Teresa `{ ok: true }` for work that never happened. The
+   * return value travels back over the ack bus (`src/actions/quickActionAck.ts`).
+   *
+   * The UI (`LaneSystem.tsx`) passes these same functions as `onRename`/
+   * `onDelete`/… props typed `=> void`; TypeScript accepts a value-returning
+   * function where `void` is expected, so the component stays UNTOUCHED and
+   * the human-visible toast path is unchanged.
    */
-  renameLane?: (laneId: string, label: string) => void;
-  moveLaneUp?: (laneId: string) => void;
-  moveLaneDown?: (laneId: string) => void;
-  setLaneColor?: (laneId: string, color: string) => void;
-  toggleLaneCollapse?: (laneId: string) => void;
-  deleteLane?: (laneId: string) => void;
+  renameLane?: (laneId: string, label: string) => LaneOpOutcome;
+  moveLaneUp?: (laneId: string) => LaneOpOutcome;
+  moveLaneDown?: (laneId: string) => LaneOpOutcome;
+  setLaneColor?: (laneId: string, color: string) => LaneOpOutcome;
+  toggleLaneCollapse?: (laneId: string) => LaneOpOutcome;
+  deleteLane?: (laneId: string) => LaneOpOutcome;
 }
 
 export interface ProcessFlowQuickActionSetters {
@@ -139,6 +153,78 @@ export interface UseProcessFlowQuickActionsOpts {
   nodes: Node[];
   handlers: ProcessFlowQuickActionHandlers;
   setters: ProcessFlowQuickActionSetters;
+}
+
+/**
+ * RISK-30 (S5-TERESA, 2026-08-12) — jedno miejsce, w którym WSZYSTKIE SZEŚĆ
+ * akcji toru wykonuje się i ODPOWIADA na szynie potwierdzeń. Świadomie jedna
+ * funkcja, nie sześć kopii: gdyby każdy przypadek miał własne `emitQuickActionAck`,
+ * dopisanie siódmej operacji toru bez potwierdzenia byłoby o jedno
+ * przeoczenie od powrotu dokładnie tego defektu, który tu zamykamy.
+ *
+ * Kolejność sprawdzeń jest istotna:
+ *   1. brak `laneId` w detalu           → `unknown_lane` (NIGDY milczący sukces),
+ *   2. brak wymaganego parametru        → `missing_param`,
+ *   3. brak wpiętego handlera           → `no_handler`,
+ *   4. handler zwrócił coś, co nie jest `LaneOpOutcome` → `no_handler`
+ *      (obrona przed „potwierdzeniem" o nieznanym kształcie — to jest ta sama
+ *      klasa błędu co bezwarunkowe `{ ok: true }`, tylko o piętro niżej).
+ */
+function runLaneOp(
+  action: string,
+  detail: Record<string, unknown> | undefined,
+  handlers: ProcessFlowQuickActionHandlers
+): void {
+  const ackId = typeof detail?.ackId === 'string' ? detail.ackId : undefined;
+  const laneId =
+    typeof detail?.laneId === 'string' && detail.laneId ? detail.laneId : undefined;
+  if (!laneId) {
+    emitQuickActionAck(ackId, { ok: false, reason: 'unknown_lane' });
+    return;
+  }
+
+  const call = (fn: (() => LaneOpOutcome) | undefined): void => {
+    if (!fn) {
+      emitQuickActionAck(ackId, { ok: false, reason: 'no_handler' });
+      return;
+    }
+    const outcome = fn();
+    emitQuickActionAck(ackId, isQuickActionOutcome(outcome) ? outcome : { ok: false, reason: 'no_handler' });
+  };
+
+  if (action === 'pf_lane_rename') {
+    const label = typeof detail?.label === 'string' ? detail.label : undefined;
+    if (!label) {
+      emitQuickActionAck(ackId, { ok: false, reason: 'missing_param' });
+      return;
+    }
+    call(handlers.renameLane && (() => handlers.renameLane!(laneId, label)));
+    return;
+  }
+  if (action === 'pf_lane_color') {
+    const color = typeof detail?.color === 'string' ? detail.color : undefined;
+    if (!color) {
+      emitQuickActionAck(ackId, { ok: false, reason: 'missing_param' });
+      return;
+    }
+    call(handlers.setLaneColor && (() => handlers.setLaneColor!(laneId, color)));
+    return;
+  }
+  if (action === 'pf_lane_move_up') {
+    call(handlers.moveLaneUp && (() => handlers.moveLaneUp!(laneId)));
+    return;
+  }
+  if (action === 'pf_lane_move_down') {
+    call(handlers.moveLaneDown && (() => handlers.moveLaneDown!(laneId)));
+    return;
+  }
+  if (action === 'pf_lane_toggle_collapse') {
+    call(handlers.toggleLaneCollapse && (() => handlers.toggleLaneCollapse!(laneId)));
+    return;
+  }
+  if (action === 'pf_lane_delete') {
+    call(handlers.deleteLane && (() => handlers.deleteLane!(laneId)));
+  }
 }
 
 export function useProcessFlowQuickActions(opts: UseProcessFlowQuickActionsOpts): void {
@@ -312,31 +398,21 @@ export function useProcessFlowQuickActions(opts: UseProcessFlowQuickActionsOpts)
     // (`handleLaneRename`/etc. in `IdeaProcessFlowTool.tsx` /
     // `useProcessFlowNodes.ts`, all already `pushUndo()`'d — see
     // `idea.lane.pf_*` registry entries for the per-action evidence).
-    if (action === 'pf_lane_rename') {
-      const laneId = typeof detail?.laneId === 'string' ? detail.laneId : undefined;
-      const label = typeof detail?.label === 'string' ? detail.label : undefined;
-      if (laneId && label) handlers.renameLane?.(laneId, label);
-    }
-    if (action === 'pf_lane_move_up') {
-      const laneId = typeof detail?.laneId === 'string' ? detail.laneId : undefined;
-      if (laneId) handlers.moveLaneUp?.(laneId);
-    }
-    if (action === 'pf_lane_move_down') {
-      const laneId = typeof detail?.laneId === 'string' ? detail.laneId : undefined;
-      if (laneId) handlers.moveLaneDown?.(laneId);
-    }
-    if (action === 'pf_lane_color') {
-      const laneId = typeof detail?.laneId === 'string' ? detail.laneId : undefined;
-      const color = typeof detail?.color === 'string' ? detail.color : undefined;
-      if (laneId && color) handlers.setLaneColor?.(laneId, color);
-    }
-    if (action === 'pf_lane_toggle_collapse') {
-      const laneId = typeof detail?.laneId === 'string' ? detail.laneId : undefined;
-      if (laneId) handlers.toggleLaneCollapse?.(laneId);
-    }
-    if (action === 'pf_lane_delete') {
-      const laneId = typeof detail?.laneId === 'string' ? detail.laneId : undefined;
-      if (laneId) handlers.deleteLane?.(laneId);
+    //
+    // ★ RISK-30 (S5-TERESA, 2026-08-12): each of the six now ACKS. `runLane`
+    // below runs the handler, normalises whatever came back into a
+    // `LaneOpOutcome` and answers on the correlated ack bus. `detail.ackId`
+    // is absent for any caller that predates this wave — `emitQuickActionAck` is a
+    // no-op then, so the old fire-and-forget path is bit-for-bit unchanged.
+    if (
+      action === 'pf_lane_rename' ||
+      action === 'pf_lane_move_up' ||
+      action === 'pf_lane_move_down' ||
+      action === 'pf_lane_color' ||
+      action === 'pf_lane_toggle_collapse' ||
+      action === 'pf_lane_delete'
+    ) {
+      runLaneOp(action, detail, handlers);
     }
   };
 

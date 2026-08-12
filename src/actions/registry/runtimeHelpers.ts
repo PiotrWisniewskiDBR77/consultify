@@ -14,6 +14,14 @@
  */
 
 import type { ActionContext, ActionResult, Tool, ToolActionMap } from './types';
+// RISK-30 (S5-TERESA, 2026-08-12): potwierdzenie skorelowane dla akcji toru.
+// Pełne uzasadnienie mechanizmu + budżetu limitu czasu: `src/actions/quickActionAck.ts`.
+import {
+  awaitQuickActionAck,
+  isQuickActionOutcome,
+  type QuickActionAckOutcome,
+  type QuickActionOutcome,
+} from '@/actions/quickActionAck';
 import { Api } from '@/services/api';
 // Alias `TP` (NIE `TablePlatformApi`) — patrz komentarz przy funkcjach
 // `runTable*Callback` niżej DLACZEGO nazwa nie może kończyć się na „Api"
@@ -35,6 +43,68 @@ export function dispatchQuickAction(action: string, ctx: ActionContext, extra?: 
       detail: { action, ideaId: ctx.ideaId, source: ctx.source, ...(extra || {}) },
     })
   );
+}
+
+/**
+ * ★ RISK-30 (S5-TERESA, 2026-08-12) — PUNKT DŁAWIENIA DLA SZYNY ★
+ *
+ * `dispatchQuickAction` wyżej jest i zostaje SYNCHRONICZNA oraz `void` —
+ * celowo nietknięta, bo woła ją też kod spoza tego pliku (`sharedActions.ts`,
+ * `whiteboardActions.ts`). Ta funkcja to jej wariant Z POTWIERDZENIEM: dokłada
+ * `ackId` do detalu i czeka na odpowiedź odbiornika.
+ *
+ * Zmierzone na tym pliku @ edb38d6a29 (własny census, zgodny z niezależnym
+ * liczeniem koordynatora): 90 miejsc `return { ok: true`, z czego SZEŚĆ zaraz
+ * po `dispatchQuickAction(...)` (linie 65, 266, 820, 865, 893, 939 — GRUPA A,
+ * szyna, punkt dławienia ISTNIEJE) i 59 zaraz po `(run as () => void)()`
+ * (GRUPA B, domknięcie UI, punktu dławienia NIE MA — `run` jest przekazywany
+ * z komponentu). Pozostałe 25 to sprawy niezwiązane.
+ *
+ * Zwraca `confirmed` do wstawienia w `ActionResult`:
+ *   `true`  — odbiornik potwierdził wykonanie,
+ *   `false` — nikt nie potwierdził (odbiornik niezmigrowany, narzędzie
+ *             zamknięte, albo limit czasu) — patrz `quickActionAck.ts`,
+ *             gdzie brak odpowiedzi jest wykrywany NATYCHMIAST, bez czekania,
+ *             żeby ack nie spowalniał niezmigrowanych ścieżek.
+ * `ok` NIE ZMIENIA ZNACZENIA — nadal „przyjęte i wysłane".
+ */
+export async function dispatchQuickActionAwaited(
+  action: string,
+  ctx: ActionContext,
+  extra?: Record<string, unknown>
+): Promise<QuickActionAckOutcome> {
+  return awaitQuickActionAck((ackId) =>
+    // `ackId` NA KOŃCU celowo: `extra` nie może go nadpisać ani podmienić,
+    // bo to on jest jedynym wiązaniem odpowiedzi z tym wywołaniem.
+    dispatchQuickAction(action, ctx, { ...(extra || {}), ackId })
+  );
+}
+
+/**
+ * RISK-30, GRUPA B (59 miejsc) — CENTRALNE wywołanie domknięcia UI.
+ *
+ * Wywołujący przekazuje `ctx.params.run`. Historycznie było ono wołane jako
+ * `(run as () => void)()` i natychmiast po nim szło `return { ok: true }` —
+ * bez oglądania czegokolwiek. Ta funkcja woła je RAZ i mówi, czy dostaliśmy
+ * jakikolwiek dowód wykonania:
+ *   • zwrócone `QuickActionOutcome`  → dokładny wynik (także ODMOWA),
+ *   • zwrócone `true`                → potwierdzenie bez szczegółów,
+ *   • zwrócone `false`               → jawna odmowa bez powodu,
+ *   • zwrócone `undefined`/cokolwiek → `confirmed: false` (uczciwe „nie wiem”).
+ *
+ * Dzięki temu migracja pozostałych 58 miejsc Grupy B to zmiana JEDNEJ linii
+ * per miejsce, a nie przebudowa — i żadne z nich nie regresuje, bo `ok`
+ * zostaje `true` niezależnie od wyniku.
+ */
+export function runUiClosure(run: unknown): {
+  confirmed: boolean;
+  outcome?: QuickActionOutcome;
+} {
+  const returned = (run as () => unknown)();
+  if (isQuickActionOutcome(returned)) return { confirmed: returned.ok, outcome: returned };
+  if (returned === true) return { confirmed: true, outcome: { ok: true } };
+  if (returned === false) return { confirmed: false };
+  return { confirmed: false };
 }
 
 /**
@@ -61,8 +131,10 @@ export async function runByTool(
       message: `Ta akcja nie istnieje w tej reprezentacji (${ctx.tool}).`,
     };
   }
-  dispatchQuickAction(runtime, ctx, extra);
-  return { ok: true, actionId, data: { runtime } };
+  // RISK-30 GRUPA A (1/6, generyczny przekaźnik). `confirmed` mówi prawdę:
+  // `true` tylko gdy odbiornik potwierdził. `ok` bez zmian.
+  const ack = await dispatchQuickActionAwaited(runtime, ctx, extra);
+  return { ok: true, actionId, confirmed: ack.ok, data: { runtime } };
 }
 
 /**
@@ -262,8 +334,13 @@ export async function runEdgeParamCallback(
       message: `Ta akcja nie istnieje w tej reprezentacji (${ctx.tool}).`,
     };
   }
-  dispatchQuickAction(runtime, ctx, { edgeId, ...(ctx.params || {}), ...(extra || {}) });
-  return { ok: true, actionId, data: { runtime, edgeId } };
+  // RISK-30 GRUPA A (2/6, krawędzie).
+  const ack = await dispatchQuickActionAwaited(runtime, ctx, {
+    edgeId,
+    ...(ctx.params || {}),
+    ...(extra || {}),
+  });
+  return { ok: true, actionId, confirmed: ack.ok, data: { runtime, edgeId } };
 }
 
 /**
@@ -774,6 +851,38 @@ export const RUNTIME_LANE_ACTION_MAPS: Partial<Record<string, ToolActionMap>> = 
 };
 
 /**
+ * RISK-30: powód odmowy → zdanie dla Teresy. Te teksty NIE trafiają do UI —
+ * wszyscy wywołujący z `src/components/**` robią `void runIdeaAction(...)`
+ * i odrzucają wynik, a człowiek dostaje swój komunikat toastem (np.
+ * `myWorkIdeas.processFlowTool.cannotDeleteLastLane`, NIETKNIĘTY). To jest
+ * kanał model-facing, dlatego — dokładnie jak wszystkie pozostałe `message`
+ * w tym pliku — zostaje twardym polskim tekstem bez kluczy locale.
+ */
+type LaneRefusalReason = Extract<QuickActionAckOutcome, { ok: false }>['reason'];
+
+function laneRefusalMessage(reason: LaneRefusalReason, laneId: string): string {
+  switch (reason) {
+    case 'last_lane':
+      return `NIE usunąłem toru \`${laneId}\` — to jedyny pozostały tor Przepływu, a przepływ bez torów nie jest poprawnym stanem. Użytkownik zobaczył tę odmowę na ekranie. Żeby usunąć ten tor, najpierw dodaj drugi.`;
+    case 'locked':
+      return `NIE wykonałem tej operacji na torze \`${laneId}\` — Idea jest otwarta w trybie tylko do odczytu (zablokowana).`;
+    case 'unknown_lane':
+      return `NIE ma toru o identyfikatorze \`${laneId}\` w tym Przepływie — nic nie zmieniłem. Sprawdź listę torów i podaj istniejący \`laneId\`.`;
+    case 'already_first':
+      return `NIE przesunąłem toru \`${laneId}\` w górę — jest już pierwszy.`;
+    case 'already_last':
+      return `NIE przesunąłem toru \`${laneId}\` w dół — jest już ostatni.`;
+    case 'missing_param':
+      return `NIE wykonałem tej operacji na torze \`${laneId}\` — brakuje wymaganego parametru (nowa nazwa dla zmiany nazwy, kolor dla zmiany koloru).`;
+    case 'no_handler':
+      return `NIE wykonałem tej operacji na torze \`${laneId}\` — Przepływ jest otwarty, ale nie udostępnia dziś tej operacji przez szynę.`;
+    case 'no_receiver':
+    default:
+      return `NIE MAM POTWIERDZENIA, że operacja na torze \`${laneId}\` się wykonała — żaden odbiornik nie odpowiedział w wyznaczonym czasie (najpewniej Przepływ nie jest otwarty). Zakładaj, że NIC się nie zmieniło; nie melduj sukcesu.`;
+  }
+}
+
+/**
  * Przekaźnik dla akcji `scope: 'lane_frame'` (N6.3, 2026-08-10) — ten sam
  * kształt co `runEdgeParamCallback`, przystosowany do toru: `LaneSystem.tsx`
  * NIE jest budowane z rejestru (przyciski stałe w nagłówku, NIETKNIĘTE —
@@ -783,6 +892,25 @@ export const RUNTIME_LANE_ACTION_MAPS: Partial<Record<string, ToolActionMap>> = 
  * ścieżka niżej istnieje dla ewentualnych przyszłych wywołujących z realnym
  * zamknięciem (ten sam powód co w `runEdgeParamCallback`). Realna ścieżka
  * dziś to zawsze szyna z jawnym `laneId`.
+ *
+ * ★ RISK-30 ZAMKNIĘTE (S5-TERESA, 2026-08-12) ★
+ * Do 2026-08-11 ta funkcja kończyła się BEZWARUNKOWYM `{ ok: true }` — Teresa
+ * meldowała sukces także wtedy, gdy `handleLaneDelete` odmówił na jedynym
+ * pozostałym torze (człowiek widział toast z odmową, model pisał „usunięte").
+ * Teraz ścieżka szyny CZEKA na potwierdzenie skorelowane (`awaitLaneAck`,
+ * `src/actions/quickActionAck.ts` — tam pełne uzasadnienie mechanizmu i budżetu
+ * limitu czasu) i tłumaczy jego powód na komunikat dla modelu. Cztery
+ * rozłączne wyniki: sukces · ODMOWA (z powodem) · BRAK ODBIORNIKA (limit
+ * czasu) · nieznany `laneId` — żaden z trzech ostatnich nie wygląda jak `ok`.
+ *
+ * Dotyczy WSZYSTKICH SZEŚCIU akcji `lane_frame` (rename · move_up ·
+ * move_down · color · toggle_collapse · delete) — wszystkie idą przez tę
+ * jedną funkcję i tę jedną mapę `RUNTIME_LANE_ACTION_MAPS`.
+ *
+ * OBIE gałęzie są zamknięte — to jest ta pułapka, o której mówił koordynator:
+ * `runLaneParamCallback` ma miejsce GRUPY B (domknięcie UI) ORAZ miejsce
+ * GRUPY A (szyna) w jednym ciele, więc zamknięcie samej szyny zostawiałoby
+ * `idea.lane.*` z niepotwierdzonym `ok: true` dla `ctx.source === 'ui'`.
  */
 export async function runLaneParamCallback(
   actionId: string,
@@ -791,8 +919,26 @@ export async function runLaneParamCallback(
 ): Promise<ActionResult> {
   const run = ctx.params?.run;
   if (ctx.source === 'ui' && typeof run === 'function') {
-    (run as () => void)();
-    return { ok: true, actionId };
+    // RISK-30, druga ścieżka niepotwierdzona (wskazana przez koordynatora):
+    // do 2026-08-11 ta gałąź wołała `run()` i zwracała `ok: true` NIE
+    // OGLĄDAJĄC niczego — ten sam antywzorzec co szyna. Domknięcie UI jest
+    // synchroniczne, więc jego wynik JEST dostępny: jeśli `run()` zwróci
+    // `LaneOpOutcome` (a od tej fali wszystkie sześć handlerów toru zwraca),
+    // honorujemy go dosłownie. Jeśli zwróci cokolwiek innego — zostaje
+    // `ok: true`, bo (a) wyjątek propaguje się sam i nie udaje sukcesu,
+    // (b) w tej ścieżce człowiek ma toast jako właściwy kanał, (c) każdy
+    // wywołujący z `src/components/**` i tak robi `void runIdeaAction(...)`.
+    const ui = runUiClosure(run);
+    if (ui.outcome && !ui.outcome.ok) {
+      return {
+        ok: false,
+        actionId,
+        confirmed: false,
+        message: laneRefusalMessage(ui.outcome.reason, String(ctx.params?.laneId ?? '?')),
+        data: { reason: ui.outcome.reason },
+      };
+    }
+    return { ok: true, actionId, confirmed: ui.confirmed };
   }
 
   const laneId =
@@ -816,8 +962,26 @@ export async function runLaneParamCallback(
       message: `Ta akcja nie istnieje w tej reprezentacji (${ctx.tool}).`,
     };
   }
-  dispatchQuickAction(runtime, ctx, { laneId, ...(ctx.params || {}), ...(extra || {}) });
-  return { ok: true, actionId, data: { runtime, laneId } };
+  const ack = await dispatchQuickActionAwaited(runtime, ctx, {
+    laneId,
+    ...(ctx.params || {}),
+    ...(extra || {}),
+  });
+  if (ack.ok) {
+    return { ok: true, actionId, confirmed: true, data: { runtime, laneId } };
+  }
+  // ODMOWA albo BRAK ODBIORNIKA. Tory są PIERWSZYM w pełni zmigrowanym
+  // konsumentem, więc tu — inaczej niż w niezmigrowanej Grupie A/B — stać nas
+  // na `ok: false`: znamy realny powód, a nie zgadujemy. `confirmed: false`
+  // zostaje ustawione jawnie, żeby warstwa odpowiedzi nie musiała wnioskować
+  // z `ok`.
+  return {
+    ok: false,
+    actionId,
+    confirmed: false,
+    message: laneRefusalMessage(ack.reason, laneId),
+    data: { runtime, laneId, reason: ack.reason },
+  };
 }
 
 /** Wskaźnik akcja RAMKI (frame) Tablicy → jej mapa runtime, ten sam kształt
@@ -861,8 +1025,9 @@ export async function runFrameParamCallback(actionId: string, ctx: ActionContext
       message: `Ta akcja nie istnieje w tej reprezentacji (${ctx.tool}).`,
     };
   }
-  dispatchQuickAction(runtime, ctx, { frameId });
-  return { ok: true, actionId, data: { runtime, frameId } };
+  // RISK-30 GRUPA A (4/6, ramki Tablicy).
+  const ack = await dispatchQuickActionAwaited(runtime, ctx, { frameId });
+  return { ok: true, actionId, confirmed: ack.ok, data: { runtime, frameId } };
 }
 
 /**
@@ -889,8 +1054,11 @@ export async function runFrameNodeParamCallback(ctx: ActionContext): Promise<Act
       message: 'Nie wiem, który element Tablicy zwolnić z ramki — podaj `nodeId`.',
     };
   }
-  dispatchQuickAction(RUNTIME_NODE_REMOVE_FROM_FRAME.whiteboard!, ctx, { nodeId });
-  return { ok: true, actionId, data: { nodeId } };
+  // RISK-30 GRUPA A (5/6, węzeł→ramka).
+  const ack = await dispatchQuickActionAwaited(RUNTIME_NODE_REMOVE_FROM_FRAME.whiteboard!, ctx, {
+    nodeId,
+  });
+  return { ok: true, actionId, confirmed: ack.ok, data: { nodeId } };
 }
 
 /**
@@ -935,8 +1103,9 @@ export async function runProcessFlowAIRewriteStepCallback(ctx: ActionContext): P
   if (!runtime) {
     return { ok: false, actionId, message: 'Ta akcja nie istnieje w tej reprezentacji.' };
   }
-  dispatchQuickAction(runtime, ctx, { nodeId, instruction });
-  return { ok: true, actionId, data: { runtime, nodeId } };
+  // RISK-30 GRUPA A (6/6, węzeł + instrukcja AI).
+  const ack = await dispatchQuickActionAwaited(runtime, ctx, { nodeId, instruction });
+  return { ok: true, actionId, confirmed: ack.ok, data: { runtime, nodeId } };
 }
 
 /**

@@ -18,6 +18,7 @@ import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { runIdeaAction, type ActionContext } from '@/actions/ideaActionRegistry';
+import type { LaneOpOutcome } from '@/actions/quickActionAck';
 import { EMPTY_SELECTION } from '@/components/MyWork/ideaSelectionTypes';
 
 import {
@@ -41,12 +42,19 @@ function makeHandlers(): ProcessFlowQuickActionHandlers {
     createFromPrompt: vi.fn(),
     runProcessCoach: vi.fn(),
     autoLayout: vi.fn(),
-    renameLane: vi.fn(),
-    moveLaneUp: vi.fn(),
-    moveLaneDown: vi.fn(),
-    setLaneColor: vi.fn(),
-    toggleLaneCollapse: vi.fn(),
-    deleteLane: vi.fn(),
+    // RISK-30 (S5-TERESA, 2026-08-12): sześć handlerów toru zwraca dziś
+    // `LaneOpOutcome`, a nie `void` — rejestr czeka na ten wynik i dopiero z
+    // niego buduje `ok`/`confirmed`. Atrapa zwracająca `undefined` znaczy
+    // teraz „narzędzie nie wpięło handlera" (`no_handler`), więc atrapy MUSZĄ
+    // deklarować wynik. Tu deklarują sukces, bo ten plik bada TRASOWANIE
+    // (czy dotarło do właściwej funkcji z właściwymi argumentami); realne
+    // odmowy na realnych handlerach bada `laneAckRisk30.test.tsx`.
+    renameLane: vi.fn((): LaneOpOutcome => ({ ok: true })),
+    moveLaneUp: vi.fn((): LaneOpOutcome => ({ ok: true })),
+    moveLaneDown: vi.fn((): LaneOpOutcome => ({ ok: true })),
+    setLaneColor: vi.fn((): LaneOpOutcome => ({ ok: true })),
+    toggleLaneCollapse: vi.fn((): LaneOpOutcome => ({ ok: true })),
+    deleteLane: vi.fn((): LaneOpOutcome => ({ ok: true })),
   };
 }
 

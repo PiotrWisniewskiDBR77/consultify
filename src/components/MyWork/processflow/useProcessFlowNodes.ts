@@ -6,6 +6,7 @@ import { useCallback, useRef } from 'react';
 import toast from 'react-hot-toast';
 import type { Edge, Node } from 'reactflow';
 
+import type { LaneOpOutcome } from '@/actions/quickActionAck';
 import i18n from '@/i18n';
 
 import {
@@ -352,22 +353,44 @@ export function useProcessFlowNodes(opts: UseProcessFlowNodesOpts) {
     ]);
   }, [edges, guardAddNodes, locked, nodes, onNodeDetail, pushUndo, setEdges, setNodes, collab]);
 
+  // ── RISK-30 (S5-TERESA, 2026-08-12): tory raportują WYNIK ────────────────
+  // Wszystkie handlery toru zwracają dziś `LaneOpOutcome` zamiast `void`.
+  // Powód: każdy z nich miał ciche `return` (blokada, ostatni tor, nieznany
+  // `laneId`, tor już skrajny), a rejestr akcji — nie widząc ich — meldował
+  // Teresie sukces operacji, która się nie odbyła (RISK-30). Zwrócona
+  // wartość wraca szyną potwierdzeń do `runLaneParamCallback`.
+  //
+  // Decyzje mechaniczne przy tej zmianie:
+  //  • Odmowę wyliczamy z DOMKNIĘCIA `lanes`, nie ze środka `setLanes(prev
+  //    => …)`. Aktualizator biegnie w fazie renderu, więc jego wynik nie
+  //    może zdążyć na `return` — a wynik wyliczony gdzie indziej niż
+  //    wykonana mutacja to znowu „raport bez pokrycia". Dlatego decyzja I
+  //    zapis czytają JEDNO źródło (`lanes`), dokładnie jak `handleLaneDelete`
+  //    robił to już wcześniej. Ryzyko nieaktualnego domknięcia = to samo, co
+  //    `handleLaneDelete` niósł od 2026-08-10, nie nowe.
+  //  • `collab?.broadcastLanes?.()` wychodzi POZA aktualizator stanu (był
+  //    efektem ubocznym w funkcji czystej — w StrictMode mógł nadać dwa razy).
+  //  • Sygnatury propów w `LaneSystem.tsx` (`onRename`/`onDelete`/…) są typu
+  //    `=> void`; TypeScript przyjmuje funkcję zwracającą wartość tam, gdzie
+  //    oczekiwany jest `void`, więc KOMPONENT I TOAST SĄ NIETKNIĘTE.
   const handleLaneRename = useCallback(
-    (laneId: string, next: string) => {
-      if (locked) return;
+    (laneId: string, next: string): LaneOpOutcome => {
+      if (locked) return { ok: false, reason: 'locked' };
+      if (!lanes.some((l) => l.id === laneId)) return { ok: false, reason: 'unknown_lane' };
       pushUndo();
       setLanes((prev: Lane[]) => {
         const nextLanes = prev.map((l: Lane) => (l.id === laneId ? { ...l, label: next } : l));
         collab?.broadcastLanes?.(nextLanes);
         return nextLanes;
       });
+      return { ok: true };
     },
-    [locked, pushUndo, setLanes, collab]
+    [locked, lanes, pushUndo, setLanes, collab]
   );
 
   const handleLaneDelete = useCallback(
-    (laneId: string) => {
-      if (locked) return;
+    (laneId: string): LaneOpOutcome => {
+      if (locked) return { ok: false, reason: 'locked' };
       // G4-LANE-DELETE: the last remaining lane can't be deleted (a Process
       // Flow with zero lanes is not a valid state — there'd be nowhere for
       // existing/new nodes to live). REFUSE VISIBLY instead of the previous
@@ -375,10 +398,16 @@ export function useProcessFlowNodes(opts: UseProcessFlowNodesOpts) {
       // state (`LaneSystem.tsx:287`, `laneCount > 1`), but Teresa's Action
       // Registry receiver can still call this handler directly with an
       // explicit `laneId` and must not get a false "done".
+      //
+      // RISK-30: kolejność sprawdzeń CELOWO zostawiona bez zmian — „ostatni
+      // tor" PRZED „nieznany tor". Gdyby odwrócić, wywołanie z nieistniejącym
+      // `laneId` przy jednym torze przestałoby pokazywać toast, który dziś
+      // pokazuje. Odmowa i tak nie jest sukcesem, więc nic nie tracimy.
       if (lanes.length <= 1) {
         onLaneDeleteBlocked?.(laneId);
-        return;
+        return { ok: false, reason: 'last_lane' };
       }
+      if (!lanes.some((l) => l.id === laneId)) return { ok: false, reason: 'unknown_lane' };
       pushUndo();
       const fallbackLane = lanes.find((l) => l.id !== laneId) || lanes[0];
       const reassigned: Node[] = [];
@@ -402,13 +431,15 @@ export function useProcessFlowNodes(opts: UseProcessFlowNodesOpts) {
       // F3: lane removal + node reassignment as ONE batch (update_lanes carries
       // the new Lane[]; the reassigned nodes ride as update_node[]).
       collab?.broadcastLanes?.(nextLanes, reassigned);
+      return { ok: true };
     },
     [locked, lanes, pushUndo, setLanes, setNodes, collab, onLaneDeleteBlocked]
   );
 
   const handleLaneColorChange = useCallback(
-    (laneId: string, color: string) => {
-      if (locked) return;
+    (laneId: string, color: string): LaneOpOutcome => {
+      if (locked) return { ok: false, reason: 'locked' };
+      if (!lanes.some((l) => l.id === laneId)) return { ok: false, reason: 'unknown_lane' };
       pushUndo();
       const recolored: Node[] = [];
       let nextLanes: Lane[] = lanes;
@@ -426,40 +457,41 @@ export function useProcessFlowNodes(opts: UseProcessFlowNodesOpts) {
       );
       // F3: lane color + affected node laneColor as one batch.
       collab?.broadcastLanes?.(nextLanes, recolored);
+      return { ok: true };
     },
     [locked, lanes, pushUndo, setLanes, setNodes, collab]
   );
 
   const handleLaneMoveUp = useCallback(
-    (laneId: string) => {
-      if (locked) return;
+    (laneId: string): LaneOpOutcome => {
+      if (locked) return { ok: false, reason: 'locked' };
+      const idx = lanes.findIndex((l) => l.id === laneId);
+      if (idx < 0) return { ok: false, reason: 'unknown_lane' };
+      if (idx === 0) return { ok: false, reason: 'already_first' };
       pushUndo();
-      setLanes((prev) => {
-        const idx = prev.findIndex((l) => l.id === laneId);
-        if (idx <= 0) return prev;
-        const next = [...prev];
-        [next[idx - 1], next[idx]] = [next[idx], next[idx - 1]];
-        collab?.broadcastLanes?.(next);
-        return next;
-      });
+      const next = [...lanes];
+      [next[idx - 1], next[idx]] = [next[idx], next[idx - 1]];
+      setLanes(next);
+      collab?.broadcastLanes?.(next);
+      return { ok: true };
     },
-    [locked, pushUndo, setLanes, collab]
+    [locked, lanes, pushUndo, setLanes, collab]
   );
 
   const handleLaneMoveDown = useCallback(
-    (laneId: string) => {
-      if (locked) return;
+    (laneId: string): LaneOpOutcome => {
+      if (locked) return { ok: false, reason: 'locked' };
+      const idx = lanes.findIndex((l) => l.id === laneId);
+      if (idx < 0) return { ok: false, reason: 'unknown_lane' };
+      if (idx >= lanes.length - 1) return { ok: false, reason: 'already_last' };
       pushUndo();
-      setLanes((prev) => {
-        const idx = prev.findIndex((l) => l.id === laneId);
-        if (idx < 0 || idx >= prev.length - 1) return prev;
-        const next = [...prev];
-        [next[idx], next[idx + 1]] = [next[idx + 1], next[idx]];
-        collab?.broadcastLanes?.(next);
-        return next;
-      });
+      const next = [...lanes];
+      [next[idx], next[idx + 1]] = [next[idx + 1], next[idx]];
+      setLanes(next);
+      collab?.broadcastLanes?.(next);
+      return { ok: true };
     },
-    [locked, pushUndo, setLanes, collab]
+    [locked, lanes, pushUndo, setLanes, collab]
   );
 
   return {

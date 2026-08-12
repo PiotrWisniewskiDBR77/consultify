@@ -267,11 +267,40 @@ export interface ActionContext {
 }
 
 export interface ActionResult {
+  /**
+   * „Akcja została PRZYJĘTA i wysłana" — znaczenie NIEZMIENIONE od zawsze.
+   * Świadomie NIE zmieniamy jego semantyki (RISK-30, 2026-08-12): ~59 akcji
+   * zwraca dziś `ok: true` po wywołaniu domknięcia UI, którego wyniku nikt nie
+   * oglądał. Przestawienie ich na `ok: false` zamieniłoby jedno kłamstwo na
+   * gorsze — „nie udało się" dla operacji, które działają.
+   */
   ok: boolean;
   actionId: string;
   /** Komunikat dla użytkownika (PL) — także powód odmowy. */
   message?: string;
   data?: unknown;
+  /**
+   * ★ RISK-30 (S5-TERESA, 2026-08-12) — TRZECI STAN, addytywny ★
+   *
+   * Czy ktokolwiek POTWIERDZIŁ, że operacja naprawdę się wykonała:
+   *   `true`   — wróciło realne potwierdzenie z odbiornika; operacja się stała;
+   *   `false`  — wysłane, ale NIC tego nie potwierdziło (brak odbiornika,
+   *              limit czasu, albo domknięcie UI, które nic nie zwraca);
+   *   `undefined` — ścieżka jeszcze niezmigrowana. Traktuj DOKŁADNIE jak
+   *              `false`. NIGDY jak sukces.
+   *
+   * Powód istnienia: `ok` mówiło „wysłałem zdarzenie", a warstwa odpowiedzi
+   * Teresy czytała to jako „zrobione". Użytkownik prosił o usunięcie toru,
+   * `handleLaneDelete` odmawiał (ostatni tor), człowiek widział toast z
+   * odmową — a Teresa i tak pisała, że usunęła. To pole jest jedynym
+   * miejscem, w którym „wysłane" i „potwierdzone" przestają być tym samym.
+   *
+   * UWAGA NA NAZWĘ: `ActionContext.confirmed` (wyżej) to CO INNEGO —
+   * potwierdzenie UŻYTKOWNIKA przed uruchomieniem (`teresa.confirmBeforeRun`).
+   * Tamto jest wejściem od człowieka PRZED akcją, to jest wyjściem z systemu
+   * PO akcji.
+   */
+  confirmed?: boolean;
 }
 
 /**

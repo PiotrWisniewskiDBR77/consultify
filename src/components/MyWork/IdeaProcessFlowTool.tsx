@@ -61,6 +61,7 @@ import ReactFlow, {
 } from 'reactflow';
 
 import { type ActionContext, runIdeaAction } from '@/actions/ideaActionRegistry';
+import type { LaneOpOutcome } from '@/actions/quickActionAck';
 import { ErrorState, SkeletonState } from '@/components/shared/states';
 import { Api } from '@/services/api';
 import {
@@ -2215,17 +2216,23 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
   });
 
   // ── F5a A3: lane collapse / resize (state in lanes[].{collapsed,height}) ──
+  // RISK-30 (S5-TERESA, 2026-08-12): szósty handler toru — jedyny mieszkający
+  // tutaj, a nie w `useProcessFlowNodes.ts`. Zwraca `LaneOpOutcome` z tego
+  // samego powodu co pozostałe pięć: bez tego rejestr akcji meldował Teresie
+  // sukces zwinięcia toru, którego nie było (blokada / nieznany `laneId`).
   const handleLaneToggleCollapse = useCallback(
-    (laneId: string) => {
-      if (locked) return;
+    (laneId: string): LaneOpOutcome => {
+      if (locked) return { ok: false, reason: 'locked' };
+      if (!lanes.some((l) => l.id === laneId)) return { ok: false, reason: 'unknown_lane' };
       pushUndo();
       setLanes((prev) => {
         const next = toggleLaneCollapsed(prev, laneId);
         collab.broadcastLanes?.(next);
         return next;
       });
+      return { ok: true };
     },
-    [collab, locked, pushUndo, setLanes]
+    [collab, lanes, locked, pushUndo, setLanes]
   );
 
   const handleLaneResize = useCallback(
