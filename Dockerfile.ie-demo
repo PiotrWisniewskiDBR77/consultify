@@ -1,0 +1,401 @@
+# Consultify Combined Backend + Frontend Dockerfile
+# Production-optimized build for Railway deployment (single service)
+
+# ==========================================
+# STAGE 1: Dependencies
+# ==========================================
+FROM node:20-alpine AS deps
+WORKDIR /app
+
+# Install security updates
+RUN apk update && apk upgrade --no-cache
+
+# Copy package files
+COPY package.json package-lock.json ./
+COPY server/package.json server/package-lock.json ./server/
+
+# Install dependencies (ignore scripts as they're not needed in Docker builds)
+# Strict npm ci: a package-lock.json that is out of sync with package.json must
+# fail the build immediately. Silently falling back to `npm install` would ship
+# a non-deterministic dependency tree that doesn't match what's committed.
+RUN npm ci --omit=dev --ignore-scripts
+RUN cd server && npm ci --omit=dev --ignore-scripts
+# cookie-parser is a declared dependency of both package.json and
+# server/package.json (see their "dependencies"), so the strict npm ci calls
+# above already install it deterministically from each lock file. No separate
+# tolerant install needed.
+
+# ==========================================
+# STAGE 2: Frontend Builder
+# ==========================================
+FROM node:20-alpine AS frontend-builder
+WORKDIR /app
+
+# Expose public AI keys to the Vite build so live voice code
+# can be compiled with the same provider config as production runtime.
+ARG NEXT_PUBLIC_GEMINI_API_KEY
+ARG GEMINI_API_KEY
+ENV NEXT_PUBLIC_GEMINI_API_KEY=${NEXT_PUBLIC_GEMINI_API_KEY}
+ENV GEMINI_API_KEY=${GEMINI_API_KEY}
+
+# VITE_* flags are baked at build time by `vite build`. Railway passes service
+# variables as build args, but Docker only exposes them to RUN if declared as ARG
+# here. Without this, VITE_ENABLE_DELIVERABLES_LIGHT stays unset on the deployed
+# bundle → the chat→canvas deliverables panel silently falls back to the legacy
+# redirect (root cause of "panel never worked on staging/demo", 2026-06-14).
+# Set VITE_ENABLE_DELIVERABLES_LIGHT=true as a Railway service variable AND keep
+# the backend ENABLE_DELIVERABLES_LIGHT=true (runtime) in sync.
+ARG VITE_ENABLE_DELIVERABLES_LIGHT
+ENV VITE_ENABLE_DELIVERABLES_LIGHT=${VITE_ENABLE_DELIVERABLES_LIGHT}
+
+# Copy package files and workspace structure for npm workspaces
+COPY package.json package-lock.json ./
+COPY packages/ ./packages/
+# Strict npm ci for deterministic builds: an out-of-sync lock file must fail
+# the build loudly, not silently regenerate itself via npm install.
+# Ignore scripts (like husky) as they're not needed in Docker builds
+RUN npm ci --ignore-scripts
+
+# Copy remaining source and build
+COPY . .
+# Build a minimal runtime knowledge bundle so staging/prod can reindex
+# product pills and tool packs without shipping large PDFs/XLSX.
+RUN mkdir -p /tmp/knowledge-runtime/product-pills /tmp/knowledge-runtime/tool-kb && \
+    if [ -d "knowledge/Pigułki wiedzy " ]; then \
+      cp -R "knowledge/Pigułki wiedzy "/. /tmp/knowledge-runtime/product-pills/; \
+    fi && \
+    if [ -d "knowledge/tool-kb" ]; then \
+      cp -R knowledge/tool-kb/. /tmp/knowledge-runtime/tool-kb/; \
+    fi && \
+    echo "Knowledge runtime bundle stats:" && \
+    echo " - product-pills md:" && find /tmp/knowledge-runtime/product-pills -type f -name "*.md" | wc -l && \
+    echo " - tool-kb md:" && find /tmp/knowledge-runtime/tool-kb -type f -name "*.md" | wc -l && \
+    COUNT="$(find /tmp/knowledge-runtime -type f -name '*.md' | wc -l)" && \
+    echo "Total knowledge md files: $COUNT" && \
+    if [ "$COUNT" -eq 0 ]; then echo "WARNING: knowledge bundle is empty (git-triggered build without local knowledge files — expected, non-fatal)"; fi
+# Railway snapshots can (rarely) omit some tracked folders; ensure critical frontend util exists.
+RUN if [ ! -f src/lib/utils.ts ]; then \
+      echo "Recreating missing src/lib/utils.ts" && \
+      mkdir -p src/lib && \
+      printf "import { type ClassValue, clsx } from 'clsx';\nimport { twMerge } from 'tailwind-merge';\n\nexport function cn(...inputs: ClassValue[]) {\n  return twMerge(clsx(inputs));\n}\n" > src/lib/utils.ts; \
+    fi
+RUN NODE_OPTIONS="--max-old-space-size=4096" npm run build
+
+# ==========================================
+# STAGE 3: Backend Builder
+# ==========================================
+FROM node:20-alpine AS backend-builder
+WORKDIR /app
+
+# Copy root package files first (server dependencies are in root package.json due to monorepo/workspace setup)
+COPY package.json package-lock.json ./
+# Copy server's OWN package.json + package-lock.json into an isolated subdirectory so its
+# dependency tree can be resolved strictly from ITS OWN lock file, never from a semver range
+# re-resolved against the registry.
+COPY server/package.json server/package-lock.json ./server-src/
+# Install dependencies from root package.json (includes most server runtime dependencies plus
+# build tooling like TypeScript, which only lives in root devDependencies).
+# Install devDependencies too since we need TypeScript and type definitions for the build.
+# Strict npm ci: an out-of-sync lock file must fail the build, never silently regenerate.
+# Ignore scripts (like husky) as they're not needed in Docker builds
+RUN npm ci --ignore-scripts
+# Install server-specific dependencies strictly from server/package-lock.json (own isolated
+# install, exact resolved versions — not `npm install <name>` against a semver range, which
+# would silently re-resolve to whatever the registry has today).
+RUN cd server-src && npm ci --ignore-scripts
+# Deterministic merge, step 1 (fill gaps): copy any package that exists in server's resolved
+# tree but doesn't exist at all yet in the shared node_modules — this picks up transitive-only
+# packages that neither root nor server declare directly. This pass never overwrites an existing
+# entry; step 2 below handles the packages server directly declares, unconditionally.
+RUN node -e "\
+const fs=require('fs'); const path=require('path'); \
+function mergeMissing(srcDir, destDir) { \
+  if (!fs.existsSync(srcDir)) return; \
+  fs.mkdirSync(destDir, { recursive: true }); \
+  for (const name of fs.readdirSync(srcDir)) { \
+    const s = path.join(srcDir, name); const d = path.join(destDir, name); \
+    if (name.startsWith('@')) { mergeMissing(s, d); continue; } \
+    if (!fs.existsSync(d)) { fs.cpSync(s, d, { recursive: true }); } \
+  } \
+} \
+mergeMissing('server-src/node_modules', 'node_modules'); \
+console.log('Step 1: transitive-only server packages filled into shared node_modules where absent.'); \
+"
+# Deterministic merge, step 2 (server is authoritative for its own declared deps): for every
+# name server/package.json directly declares, server's OWN package-lock.json resolution wins,
+# unconditionally — even if root's package.json/lock also declares that name at a different
+# version (e.g. root resolves `ws`/`ioredis`/`docx`/`cheerio` etc. to versions that can legally
+# differ from server's lock). Delete whatever step 1 (or root's own npm ci) put at that path,
+# then copy server's exact resolved package over it. This is NOT "fill if missing" — it always
+# replaces, so server's lock is never silently shadowed by root's.
+RUN cp server-src/package.json ./server-package.json && \
+    node -e "\
+const fs=require('fs'); const path=require('path'); \
+const deps=Object.keys(require('./server-package.json').dependencies||{}); \
+for (const name of deps) { \
+  const s=path.join('server-src/node_modules', name); \
+  const d=path.join('node_modules', name); \
+  if (!fs.existsSync(s)) { console.error('FATAL: '+name+' not found in server-src/node_modules after server npm ci'); process.exit(1); } \
+  fs.rmSync(d, { recursive: true, force: true }); \
+  fs.mkdirSync(path.dirname(d), { recursive: true }); \
+  fs.cpSync(s, d, { recursive: true }); \
+} \
+console.log('Step 2: '+deps.length+' server-declared deps force-copied from server-src (server lock authoritative).'); \
+"
+# Exact version verification (not just existence): for every one of server's declared runtime
+# deps, compare the version actually sitting in the merged node_modules against the version
+# server's OWN npm ci resolved (still available in server-src/node_modules from step 2, read
+# BEFORE cleanup). A version string match is required — presence alone is not proof server's
+# lock file resolution shipped. Fails the build loudly on any mismatch.
+RUN node -e "\
+const fs=require('fs'); const path=require('path'); \
+const deps=Object.keys(require('./server-package.json').dependencies||{}); \
+const mismatches=[]; const report=[]; \
+for (const name of deps) { \
+  const expectedPkg=path.join('server-src/node_modules', name, 'package.json'); \
+  const actualPkg=path.join('node_modules', name, 'package.json'); \
+  const expected=JSON.parse(fs.readFileSync(expectedPkg,'utf8')).version; \
+  const actual=fs.existsSync(actualPkg) ? JSON.parse(fs.readFileSync(actualPkg,'utf8')).version : undefined; \
+  report.push(name+'='+actual+' (server lock expects '+expected+')'); \
+  if (actual !== expected) mismatches.push(name+': expected '+expected+' from server lock, got '+actual); \
+} \
+console.log(report.join('\n')); \
+if (mismatches.length) { console.error('FATAL: '+mismatches.length+' server dependency version mismatch(es):\n'+mismatches.join('\n')); process.exit(1); } \
+console.log('OK: all '+deps.length+' server runtime deps present AND version-exact vs server/package-lock.json (zero mismatches)'); \
+"
+RUN rm -rf server-src/node_modules
+
+# Copy TypeScript config files explicitly (needed for build)
+COPY server/tsconfig.json ./
+# Copy all server files first (tsconfig.build.json should be included)
+COPY server/ .
+# Create aiPipeline.js for case-sensitive filesystems (macOS git can't track both)
+# Note: We don't create AIPipeline.js re-export as it would overwrite the compiled output
+RUN if [ ! -f src/services/ai/aiPipeline.js ]; then \
+      echo "Creating aiPipeline.js re-export file..." && \
+      printf '// Re-export from AIPipeline.js (compiled) for case-sensitive file systems\n// This file allows imports using lowercase '\''aiPipeline'\'' to work on case-sensitive filesystems\nexport * from '\''./AIPipeline.js'\'';\nexport { AIPipeline } from '\''./AIPipeline.js'\'';\nexport { default } from '\''./AIPipeline.js'\'';\n' > src/services/ai/aiPipeline.js; \
+    fi
+# Create aiSchemaValidator.js for case-sensitive filesystems (macOS git can't track both)
+# Note: We don't create AISchemaValidator.js re-export as it would overwrite the compiled output
+RUN if [ ! -f src/utils/aiSchemaValidator.js ]; then \
+      echo "Creating aiSchemaValidator.js re-export file..." && \
+      printf '// Re-export from AISchemaValidator.js (compiled) for case-sensitive file systems\n// This file allows imports using lowercase '\''aiSchemaValidator'\'' to work on case-sensitive filesystems\nexport * from '\''./AISchemaValidator.js'\'';\n' > src/utils/aiSchemaValidator.js; \
+    fi
+# Verify tsconfig.build.json exists before building
+RUN test -f tsconfig.build.json || (echo "ERROR: tsconfig.build.json not found!" && ls -la tsconfig*.json && exit 1)
+# Production backend compilation is fail-hard. `noEmitOnError` is enabled in
+# tsconfig.build.json, so a failed check can never leave a shippable partial dist.
+RUN rm -rf dist && NODE_OPTIONS="--max-old-space-size=3072" ./node_modules/.bin/tsc --build tsconfig.build.json
+# Fail the image build if a stale cached backend dist is ever paired with the
+# current migration files.  Demo carries this exact, reviewed historical
+# checksum variant and also legacy NULL checksum rows.  Both classifications
+# are production-readiness invariants; checking the compiled module here makes
+# the Docker image itself prove that it contains the current runner rather than
+# trusting layer-cache metadata.
+RUN node --input-type=module -e "\
+import fs from 'node:fs'; \
+import { classifyMigrationChecksum } from './dist/src/services/tablePlatform/migrationIdentity.js'; \
+const filename='20260228_budget_initiative_links.sql'; \
+const sql=fs.readFileSync('./migrations/'+filename,'utf8'); \
+const historical=classifyMigrationChecksum(filename,'7826f403a14163b1',sql); \
+const legacy=classifyMigrationChecksum(filename,null,sql); \
+if (historical !== 'accepted_historical_variant' || legacy !== 'unverifiable') { \
+  throw new Error('Compiled migration identity invariant failed: historical='+historical+', legacy='+legacy); \
+} \
+console.log('OK: compiled migration identity accepts exact reviewed history and preserves legacy NULL semantics'); \
+"
+RUN test -f dist/scripts/migrate.postgres.js || (echo "FATAL: strict Postgres migration runner missing from production dist" && exit 1)
+RUN if find dist -type f \( -path '*/scripts/*RealDbProof.js' -o -path '*/scripts/*RestartWorker.js' -o -path '*/scripts/t01BrowserFixtureServer.js' \) | grep -q .; then \
+      echo "FATAL: proof/fixture/restart-worker script emitted into production dist"; \
+      exit 1; \
+    fi
+# Copy .js re-export files to dist (TypeScript excludes .js files but we need them at runtime)
+# Note: Only copy lowercase re-export files - uppercase files are compiled outputs from TypeScript
+RUN mkdir -p dist/src/utils dist/src/services/ai && \
+    if [ -f src/utils/aiSchemaValidator.js ]; then \
+      cp src/utils/aiSchemaValidator.js dist/src/utils/aiSchemaValidator.js && \
+      echo "✓ Copied aiSchemaValidator.js"; \
+    else \
+      echo "⚠️  aiSchemaValidator.js not found in src"; \
+    fi && \
+    if [ -f src/services/ai/aiPipeline.js ]; then \
+      cp src/services/ai/aiPipeline.js dist/src/services/ai/aiPipeline.js && \
+      echo "✓ Copied aiPipeline.js"; \
+    else \
+      echo "⚠️  aiPipeline.js not found in src"; \
+    fi && \
+    echo "Verifying copied files:" && \
+    ls -la dist/src/utils/*.js 2>/dev/null | grep -i schema || echo "No schema files in dist/src/utils" && \
+    ls -la dist/src/services/ai/*.js 2>/dev/null | grep -i pipeline || echo "No pipeline files in dist/src/services/ai"
+# Patch known ESM dynamic import paths that TypeScript may leave extensionless.
+RUN if [ -f dist/src/cron/Scheduler.js ]; then \
+      sed -i "s#import('../services/ai/learningSystem')#import('../services/ai/learningSystem.js')#g" dist/src/cron/Scheduler.js && \
+      sed -i "s#import('../services/ai/aiMemoryMetricsService')#import('../services/ai/aiMemoryMetricsService.js')#g" dist/src/cron/Scheduler.js && \
+      sed -i "s#import('../services/aiCostControlService')#import('../services/aiCostControlService.js')#g" dist/src/cron/Scheduler.js && \
+      sed -i "s#import('../services/slaService')#import('../services/slaService.js')#g" dist/src/cron/Scheduler.js && \
+      sed -i "s#import('../services/taskAssignmentService')#import('../services/taskAssignmentService.js')#g" dist/src/cron/Scheduler.js && \
+      sed -i "s#import('../services/decisionEscalationChainService')#import('../services/decisionEscalationChainService.js')#g" dist/src/cron/Scheduler.js && \
+      sed -i "s#import('../services/aiMemoryManager')#import('../services/aiMemoryManager.js')#g" dist/src/cron/Scheduler.js && \
+      sed -i "s#import('../services/feedbackService')#import('../services/feedbackService.js')#g" dist/src/cron/Scheduler.js && \
+      echo "✓ Patched Scheduler.js ESM imports"; \
+    else \
+      echo "⚠️  dist/src/cron/Scheduler.js not found for ESM patch"; \
+    fi
+# Verify dist directory was created
+RUN test -d dist || (echo "ERROR: dist directory not created after build!" && ls -la && exit 1)
+# Verify critical modules exist in dist
+RUN echo "Checking compiled modules..." && \
+    (test -f dist/index.js || test -f dist/src/index.js) || (echo "ERROR: index.js not found!" && exit 1) && \
+    (test -f dist/config/index.js || test -f dist/src/config/index.js) || (echo "WARNING: config/index.js not found" && find dist -name "index.js" -path "*/config/*" || echo "config/index.js not found anywhere") && \
+    (test -f dist/Gateway.js || test -f dist/src/Gateway.js) || (echo "WARNING: Gateway.js not found" && find dist -name "Gateway.js" || echo "Gateway.js not found anywhere") && \
+    echo "Build verification complete"
+
+# ==========================================
+# STAGE 4: Production (Backend + Frontend)
+# ==========================================
+FROM node:20-alpine AS api
+WORKDIR /app
+
+# Security: Create non-root user
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S nodejs -u 1001 -G nodejs
+
+# Install security updates and required tools
+# su-exec: lets docker-entrypoint-api.sh start as root (to chown a mounted
+# Railway Volume, root-owned by default) then drop to non-root nodejs for the
+# actual node process — see server/docker-entrypoint-api.sh.
+RUN apk update && \
+    apk upgrade --no-cache && \
+    apk add --no-cache dumb-init curl su-exec
+
+# Production dependencies will be copied later
+
+# Copy built frontend (at /app/dist) with correct ownership
+# Backend code serves from: path.join(__dirname, '../dist')
+# Structure: backend at /app/server/index.js, frontend at /app/dist
+# So: path.join('/app/server', '../dist') = /app/dist ✓
+COPY --from=frontend-builder --chown=nodejs:nodejs /app/dist /app/dist
+COPY --from=frontend-builder --chown=nodejs:nodejs /tmp/knowledge-runtime /app/knowledge-runtime
+
+# Copy built backend (server code) to /app/server/
+# Backend compiled output is in dist/ directory
+RUN mkdir -p /app/server
+# Copy dist directory from backend-builder with correct ownership
+# TypeScript preserves src/ directory structure, so we need to handle it correctly
+COPY --from=backend-builder --chown=nodejs:nodejs /app/dist /app/server/dist-temp
+# Copy runtime SQL migrations needed by the table-platform bootstrapper.
+COPY --from=backend-builder --chown=nodejs:nodejs /app/migrations /app/server/migrations
+# Copy public KB assets (article images served via express.static('/kb'))
+COPY --from=backend-builder --chown=nodejs:nodejs /app/public /app/server/public
+# Check where index.js actually is and set up the correct structure
+RUN if [ -f /app/server/dist-temp/index.js ]; then \
+      echo "Found index.js at root level"; \
+      mv /app/server/dist-temp /app/server/dist; \
+    elif [ -f /app/server/dist-temp/src/index.js ]; then \
+      echo "Found index.js in src/ subdirectory, preserving structure"; \
+      mv /app/server/dist-temp /app/server/dist; \
+      echo "Structure preserved: dist/src/index.js"; \
+    else \
+      echo "ERROR: index.js not found!" && \
+      echo "Contents of /app/server/dist-temp:" && ls -la /app/server/dist-temp/ && \
+      find /app/server/dist-temp -name "index.js" 2>/dev/null || echo "No index.js found anywhere" && \
+      exit 1; \
+    fi
+# Verify index.js exists and check for required modules
+RUN if [ -f /app/server/dist/index.js ]; then \
+      echo "✓ index.js found at /app/server/dist/index.js"; \
+      echo "Checking required modules from index.js location..."; \
+      test -f /app/server/dist/config/index.js || echo "WARNING: dist/config/index.js not found"; \
+      test -f /app/server/dist/Gateway.js || echo "WARNING: dist/Gateway.js not found"; \
+      test -f /app/server/dist/database/index.js || echo "WARNING: dist/database/index.js not found"; \
+      echo "Listing dist structure:" && ls -la /app/server/dist/ | head -20; \
+      echo "Module check complete"; \
+    elif [ -f /app/server/dist/src/index.js ]; then \
+      echo "✓ index.js found at /app/server/dist/src/index.js"; \
+      echo "Checking required modules from src/ location..."; \
+      test -f /app/server/dist/src/config/index.js || echo "WARNING: dist/src/config/index.js not found"; \
+      test -f /app/server/dist/src/Gateway.js || echo "WARNING: dist/src/Gateway.js not found"; \
+      test -f /app/server/dist/src/database/index.js || echo "WARNING: dist/src/database/index.js not found"; \
+      echo "Listing dist/src structure:" && ls -la /app/server/dist/src/ | head -20; \
+      echo "Module check complete"; \
+    else \
+      echo "ERROR: index.js not found in expected locations!" && \
+      echo "Searching for index.js:" && \
+      find /app/server/dist -name "index.js" 2>/dev/null || echo "No index.js found" && \
+      echo "Dist directory structure:" && \
+      ls -la /app/server/dist/ && \
+      exit 1; \
+    fi
+COPY --from=backend-builder --chown=nodejs:nodejs /app/package.json /app/server/
+# Copy node_modules from backend-builder (has all dependencies including cookie-parser)
+# This ensures all dependencies needed at runtime are available
+# Note: Includes devDependencies but ensures no missing runtime dependencies
+# Use --chown to set ownership during copy (much faster than chown -R afterwards)
+COPY --from=backend-builder --chown=nodejs:nodejs /app/node_modules /app/server/node_modules
+# Verify critical dependencies are present
+RUN test -d /app/server/node_modules/cookie-parser || (echo "ERROR: cookie-parser not found!" && ls -la /app/server/node_modules/ | head -20 && exit 1)
+RUN test -d /app/server/node_modules/express || (echo "ERROR: express not found!" && exit 1)
+RUN test -d /app/server/node_modules/zod || (echo "ERROR: zod not found!" && exit 1)
+RUN test -d /app/server/node_modules/pptxgenjs || (echo "ERROR: pptxgenjs not found!" && ls -la /app/server/node_modules/ | grep -i pptx || echo "pptxgenjs not in node_modules" && exit 1)
+RUN test -d /app/server/node_modules/rrule || (echo "ERROR: rrule not found!" && ls -la /app/server/node_modules/ | grep -i rrule || echo "rrule not in node_modules" && exit 1)
+# C5 (M18 document-studio chart export) — documentChartRasterizer.ts imports
+# `@napi-rs/canvas` (prebuilt binaries, no native build) directly, but it is
+# only declared in ROOT package.json, not server/package.json (adding it there
+# would desync server/package-lock.json — regenerating that lock requires an
+# `npm install`, out of scope for this fix). It ships today because this stage
+# installs root deps into /app/node_modules FIRST, then layers server deps
+# into that SAME node_modules, and the whole tree is copied to
+# /app/server/node_modules above. This check fails the build loudly (instead
+# of silently shipping documents whose charts degrade to text placeholders)
+# if that coupling ever breaks. See docs/qa/CHART_EXPORT_PROVISIONING.md.
+RUN test -d /app/server/node_modules/@napi-rs/canvas || (echo "ERROR: @napi-rs/canvas not found — chart export (DOCX/PDF) will silently degrade to text placeholders!" && ls -la /app/server/node_modules/@napi-rs 2>&1 || echo "@napi-rs namespace missing entirely" && exit 1)
+
+WORKDIR /app/server
+
+# Set ownership only for directories that weren't copied with --chown
+# This is much faster than chown -R on the entire /app directory
+# Only chown the server directory itself and any runtime-created directories
+RUN chown nodejs:nodejs /app/server /app/dist || true
+
+# Switch to non-root user
+USER nodejs
+
+# Environment
+ENV NODE_ENV=production
+ENV PORT=3001
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+    CMD curl -f http://localhost:3001/api/health || exit 1
+
+# Expose port
+EXPOSE 3001
+
+# Backend entry point - check both possible locations
+# TypeScript may output to dist/index.js or dist/src/index.js depending on structure
+RUN if [ -f /app/server/dist/index.js ]; then \
+      echo '#!/bin/sh' > /app/server/start.sh && \
+      echo 'exec node dist/index.js "$@"' >> /app/server/start.sh && \
+      chmod +x /app/server/start.sh; \
+    elif [ -f /app/server/dist/src/index.js ]; then \
+      echo '#!/bin/sh' > /app/server/start.sh && \
+      echo 'exec node dist/src/index.js "$@"' >> /app/server/start.sh && \
+      chmod +x /app/server/start.sh; \
+    else \
+      echo "ERROR: Cannot determine entry point!" && exit 1; \
+    fi
+
+# P0 follow-up (2026-07-22): container must start as ROOT so the entrypoint
+# can chown a mounted Railway Volume (root-owned by default) before dropping
+# to nodejs — see server/docker-entrypoint-api.sh. Switch to root BEFORE the
+# COPY+chmod below: COPY always lands as root:root regardless of current
+# USER, so `chmod +x` on it must also run as root (nodejs doesn't own the
+# file and can't chmod it) — ordering matters here.
+USER root
+COPY server/docker-entrypoint-api.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
+
+# docker-entrypoint-api.sh chowns the volume (if any) as root, then execs
+# `su-exec nodejs dumb-init -- sh /app/server/start.sh` — identical runtime
+# command to the previous ENTRYPOINT+CMD, app itself still never runs as root.
+ENTRYPOINT ["/docker-entrypoint.sh"]
