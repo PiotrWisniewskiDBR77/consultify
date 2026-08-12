@@ -15,6 +15,7 @@
 import React, { useMemo, useState } from 'react';
 
 import {
+  financeValueDisplayReasonLabel,
   formatFinanceValueForDisplay,
   isMissingFinanceValue,
   type BaselineOutputDto,
@@ -113,23 +114,42 @@ export function CalculationsView(props: CalculationsViewProps): React.ReactEleme
     [monthlyResults]
   );
 
-  function aggregatedValueFor(line: CanonicalLineCode, group: { members: PeriodMeta[] }): { text: string; isMissingLikeGlyph: boolean; numeric: number | null } {
+  /**
+   * ★ Pięć stanów (korekta kanonu, master plan §2.4 — nie trzy):
+   * `PRESENT_ZERO` · `PRESENT_NONZERO` · `MISSING` · `NA` · `NOT_APPLICABLE`.
+   * Wszystkie trzy stany „brakowe" renderują ten sam glif „—" (celowa decyzja
+   * Pakietu C, `financeV2.types.ts` — widoczne rozróżnienie jest zadaniem
+   * `title`/etykiety OBOK glifu, nie samego glifu), ale MUSZĄ być rozróżnialne
+   * dla użytkownika — stąd `reason` z `financeValueDisplayReasonLabel`
+   * wystawiony jako `title` na komórce.
+   */
+  function aggregatedValueFor(
+    line: CanonicalLineCode,
+    group: { members: PeriodMeta[] }
+  ): { text: string; isMissingLikeGlyph: boolean; numeric: number | null; reason: string | null } {
     const meta = CANONICAL_LINE_META[line];
     const cellsInGroup = group.members.map((p) => outputsByLineAndPeriod.get(`${line}::${p.periodId}`));
     if (cellsInGroup.some((c) => c === undefined)) {
       // Brak choćby jednego miesiąca w grupie = brak danych dla całej grupy — NIGDY nie renderujemy częściowej sumy jako pełnego wyniku.
-      return { text: '—', isMissingLikeGlyph: true, numeric: null };
+      return { text: '—', isMissingLikeGlyph: true, numeric: null, reason: 'Brak wyliczenia dla przynajmniej jednego miesiąca w tym okresie (roll-up)' };
     }
     const present = cellsInGroup as BaselineOutputDto[];
-    if (present.some((c) => isMissingFinanceValue(c.value))) {
-      return { text: '—', isMissingLikeGlyph: true, numeric: null };
+    const missingLike = present.filter((c) => c.value.status === 'MISSING' || c.value.status === 'NA' || c.value.status === 'NOT_APPLICABLE');
+    if (missingLike.length > 0 || present.some((c) => isMissingFinanceValue(c.value))) {
+      const reason =
+        present.length === 1
+          ? financeValueDisplayReasonLabel(present[0].value.status)
+          : missingLike.length === present.length && new Set(missingLike.map((c) => c.value.status)).size === 1
+            ? financeValueDisplayReasonLabel(missingLike[0].value.status)
+            : `Część okresów w tym roll-upie bez danych (${Array.from(new Set(missingLike.map((c) => c.value.status))).join(', ')})`;
+      return { text: '—', isMissingLikeGlyph: true, numeric: null, reason };
     }
     const numbers = present.map((c) => (c.value.valueDecimal === null ? null : Number(c.value.valueDecimal)));
-    if (numbers.some((n) => n === null)) return { text: '—', isMissingLikeGlyph: true, numeric: null };
+    if (numbers.some((n) => n === null)) return { text: '—', isMissingLikeGlyph: true, numeric: null, reason: 'Brak wartości liczbowej' };
     const nums = numbers as number[];
     const value = meta.aggregation === 'flow-sum' ? nums.reduce((a, b) => a + b, 0) : nums[nums.length - 1];
     const display = formatFinanceValueForDisplay({ status: value === 0 ? 'PRESENT_ZERO' : 'PRESENT_NONZERO', valueDecimal: String(value) });
-    return { text: display.text, isMissingLikeGlyph: false, numeric: value };
+    return { text: display.text, isMissingLikeGlyph: false, numeric: value, reason: null };
   }
 
   const groupsByStatement = (statementType: 'P&L' | 'BS' | 'CF') =>
@@ -225,7 +245,7 @@ export function CalculationsView(props: CalculationsViewProps): React.ReactEleme
           </div>
         ) : (
           (['P&L', 'BS', 'CF'] as const).map((statementType) => (
-            <table key={statementType} className="w-full min-w-[900px] border-collapse text-sm" data-testid={`baseline-statement-table-${statementType.replace('&', '')}`}>
+            <table key={statementType} /* §27-exempt: archetyp Excel — sprawozdanie finansowe (P&L/BS/CF) z liniami kanonicznymi i roll-upem, nie lista rekordów encji (docs/ui-standards/DOKTRYNA_TABELA_NIE_EXCEL.md #2) */ className="w-full min-w-[900px] border-collapse text-sm" data-testid={`baseline-statement-table-${statementType.replace('&', '')}`}>
               <thead className="sticky top-0 z-10 bg-c-surface-raised text-[11px] font-semibold uppercase tracking-wide text-c-text-muted">
                 <tr>
                   <th className="px-3 py-2 text-left" style={{ minWidth: 220 }}>
@@ -269,7 +289,8 @@ export function CalculationsView(props: CalculationsViewProps): React.ReactEleme
                             className={`px-3 py-1.5 text-right tabular-nums ${
                               agg.isMissingLikeGlyph ? 'text-c-text-muted' : negative ? 'font-semibold text-c-danger' : 'text-c-text'
                             }`}
-                            data-testid={isCashLine ? `baseline-cash-value-${g.key}` : undefined}
+                            data-testid={isCashLine ? `baseline-cash-value-${g.key}` : `baseline-line-value-${line}-${g.key}`}
+                            title={agg.reason ?? undefined}
                           >
                             {agg.text}
                           </td>

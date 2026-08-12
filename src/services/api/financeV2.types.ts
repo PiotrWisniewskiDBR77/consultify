@@ -269,11 +269,13 @@ export interface FinanceBusinessVersionSummaryDto {
   approvedAt: string | null;
 }
 
-/** artifacts.routes.ts:288-291 (POST /artifacts/:id/rename), sukces. */
+// --- PKG-F Baseline ---
+/** artifacts.routes.ts:288-291 (POST /artifacts/:id/rename), sukces. Używane przez `BaselineWorkspace.handleCommitRename`. */
 export interface FinanceRenameArtifactResultDto {
   artifactId: string;
   naturalKey: string | null;
 }
+// --- /PKG-F Baseline ---
 
 /** artifacts.routes.ts:214-234 (GET /artifacts/:id/capabilities). */
 export interface FinanceCapabilitiesDto {
@@ -448,7 +450,7 @@ export function describeFinanceV2Error(err: unknown): { title: string; detail: s
   }
 }
 
-// ---------------------------------------------------------------------------
+// --- PKG-F Baseline ---
 // Pakiet F — Baseline (`/baseline/*`). Źródło:
 // server/src/routes/v8/finance-v2/baseline.routes.ts (czytane w całości
 // 2026-08-11) + server/src/services/finance/canonical/baselineComputeService.ts
@@ -456,6 +458,7 @@ export function describeFinanceV2Error(err: unknown): { title: string; detail: s
 // BASELINE_ASSUMPTION_QUALITIES:738, CANONICAL_CODES:112-120,
 // STATEMENT_TYPE_OF:122-129). Kształt DTO PORTOWANY pole-po-polu z routera
 // (nie zgadywany) — `server/**` poza allowlistą tego pakietu.
+// Blok ciągnie się do końca pliku (ostatni blok pliku na 2026-08-11).
 // ---------------------------------------------------------------------------
 
 export const BaselineScheduleTypeValues = [
@@ -647,3 +650,4 @@ export interface BaselineOutputDto {
   createdBy: string;
   createdAt: string;
 }
+// --- /PKG-F Baseline ---

@@ -136,6 +136,7 @@ const FinanceValuePanelsScreen = React.lazy(() => import('./screens/finance-valu
 const FinanceModelWorkspaceScreen = React.lazy(() => import('./screens/finance-model-workspace'));
 const FinanceWorkspaceBarScreen = React.lazy(() => import('./screens/finance-workspace-bar'));
 const FinanceFocusModeScreen = React.lazy(() => import('./screens/finance-focus-mode'));
+const FinanceBaselineWorkspaceScreen = React.lazy(() => import('./screens/finance-baseline-workspace'));
 const GenDeckContentHintsScreen = React.lazy(() => import('./screens/gen-deck-content-hints'));
 const GenExcelTemplatesTabScreen = React.lazy(() => import('./screens/gen-excel-templates-tab'));
 const GenWordContentHintsScreen = React.lazy(() => import('./screens/gen-word-content-hints'));
@@ -612,6 +613,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'PKG_C — REAL Focus Mode (useFinanceFocusMode + FinanceWorkspaceBar, OWN-FIN-004) — &autofocus=1 &draft=<string>',
     render: () => <FinanceFocusModeScreen />,
+  },
+  'finance-baseline-workspace': {
+    label:
+      'PKG_F — REAL <BaselineWorkspace> (Baseline Model, V-1..V-6 zamknięte) — &view=assumptions|wyliczenia &scene=default|fundinggap &status=DRAFT|APPROVED|IN_REVIEW',
+    render: () => <FinanceBaselineWorkspaceScreen />,
   },
   'execution-change-signals': {
     label:

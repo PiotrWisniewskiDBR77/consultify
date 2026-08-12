@@ -214,7 +214,7 @@ export function AssumptionsView({ editor, rowOrder, periodLabelById, readOnly = 
         </div>
       )}
       <div className="flex-1 overflow-auto">
-        <table className="w-full min-w-[1200px] border-collapse text-sm" role="table" data-testid="baseline-assumptions-table">
+        <table /* §27-exempt: archetyp Excel — grid komórek edytowalnych (reguła/wartość/zakres) z formułami silnika, nie lista rekordów encji (docs/ui-standards/DOKTRYNA_TABELA_NIE_EXCEL.md #2) */ className="w-full min-w-[1200px] border-collapse text-sm" role="table" data-testid="baseline-assumptions-table">
           <thead className="sticky top-0 z-10 bg-c-surface-raised text-[11px] font-semibold uppercase tracking-wide text-c-text-muted">
             <tr>
               <th className="px-3 py-2 text-left" style={{ minWidth: 220 }}>Założenie</th>

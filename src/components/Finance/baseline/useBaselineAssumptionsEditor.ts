@@ -16,7 +16,7 @@
  * identyczności wiersza — NIGDY samo `assumptionId` (wiersz może jeszcze nie
  * istnieć po stronie serwera, gdy Kreator dodaje nowy driver).
  */
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import {
   listBaselineAssumptions,
@@ -142,6 +142,16 @@ export function useBaselineAssumptionsEditor(
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [businessVersionId, JSON.stringify(listParams)]);
+
+  // ★ Naprawa (Pakiet F, wykryte przy weryfikacji szkicu): bez tego efektu
+  // `reload()` nie był wołany PRZY MOUNCIE — tylko z przycisku „Spróbuj
+  // ponownie" w ErrorBoundary — więc `rows`/`cells` zostawały puste, a
+  // `AssumptionsView` renderowała siatkę z samymi wartościami domyślnymi
+  // (nigdy z realnych danych z serwera). Ten sam wzorzec co `useBaselineOutputs`.
+  useEffect(() => {
+    void reload();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reload]);
 
   const applyChanges = useCallback(
     (changes: Array<{ key: string; after: AssumptionDraftPatch }>) => {

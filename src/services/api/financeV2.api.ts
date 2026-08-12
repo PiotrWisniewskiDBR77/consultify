@@ -101,10 +101,12 @@ export async function getFinanceArtifactCapabilities(artifactId: string): Promis
   return v8Get<FinanceCapabilitiesDto>(`${BASE}/artifacts/${encodeURIComponent(artifactId)}/capabilities`);
 }
 
-/** artifacts.routes.ts:249-293 (D3 fix, Pakiet B2) — OWN-FIN-011 rename kontrolowany: serwer sam bramkuje `canRenameArtifact`/`validateWorkspaceName` (403 z `STATUS_IMMUTABLE`/`INSUFFICIENT_ROLE`, 400 z kodem walidacji nazwy). */
+// --- PKG-F Baseline ---
+/** artifacts.routes.ts:249-293 (D3 fix, Pakiet B2) — OWN-FIN-011 rename kontrolowany: serwer sam bramkuje `canRenameArtifact`/`validateWorkspaceName` (403 z `STATUS_IMMUTABLE`/`INSUFFICIENT_ROLE`, 400 z kodem walidacji nazwy). Używane przez `BaselineWorkspace.handleCommitRename`. */
 export async function renameFinanceArtifact(artifactId: string, naturalKey: string): Promise<FinanceRenameArtifactResultDto> {
   return v8Post<FinanceRenameArtifactResultDto>(`${BASE}/artifacts/${encodeURIComponent(artifactId)}/rename`, { naturalKey });
 }
+// --- /PKG-F Baseline ---
 
 // ---------------------------------------------------------------------------
 // Versions — versions.routes.ts
@@ -265,7 +267,7 @@ export async function reopenFinanceModel(
   );
 }
 
-// ---------------------------------------------------------------------------
+// --- PKG-F Baseline ---
 // Pakiet F — Baseline (`server/src/routes/v8/finance-v2/baseline.routes.ts`,
 // pakiet B2). Cztery endpointy: odczyt/zapis wsadowy założeń, compute,
 // odczyt wyliczeń.
@@ -340,6 +342,7 @@ export async function listBaselineOutputs(
   const suffix = qs.toString() ? `?${qs.toString()}` : '';
   return v8Get<BaselineOutputDto[]>(`${BASELINE_BASE}/${encodeURIComponent(businessVersionId)}/outputs${suffix}`);
 }
+// --- /PKG-F Baseline ---
 
 export const FinanceV2Api = {
   createFinanceArtifact,
@@ -356,8 +359,10 @@ export const FinanceV2Api = {
   pollFinanceComputeJobUntilSettled,
   approveFinanceModel,
   reopenFinanceModel,
+  // --- PKG-F Baseline ---
   listBaselineAssumptions,
   upsertBaselineAssumptions,
   computeBaseline,
   listBaselineOutputs,
+  // --- /PKG-F Baseline ---
 };

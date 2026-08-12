@@ -239,6 +239,19 @@
         "--strictPort"
       ],
       "port": 58022
+    },
+    {
+      "name": "fv3p-f-baseline",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "vite",
+        "--config",
+        "dev-render/vite.config.ts",
+        "--port",
+        "58023",
+        "--strictPort"
+      ],
+      "port": 58023
     }
   ]
 }
