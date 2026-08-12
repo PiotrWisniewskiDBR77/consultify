@@ -233,7 +233,15 @@ const LaneBackground: React.FC<LaneBackgroundProps> = ({
             />
           ) : (
             <div
-              className="text-[10px] font-semibold text-c-text-muted select-none cursor-pointer hover:text-c-text-secondary"
+              // RISK-35 (S1-CONTRAST, 2026-08-12): text-c-text-muted measured 4.43:1
+              // against the 4.5:1 WCAG 1.4.3 text bar in light theme (a hairline miss
+              // on the lane's `${lane.color}15` tinted background). text-c-text-secondary
+              // clears it (7.24:1+ — see
+              // docs/qa/ideas-complete-transformation-2026-08-09/21_FOCUS_AND_CONTRAST.md
+              // §8); dark theme already passed (5.67:1) and gains headroom. Hover now
+              // steps up to full-strength text-c-text to keep a visible hover cue since
+              // resting and previous hover token converge.
+              className="text-[10px] font-semibold text-c-text-secondary select-none cursor-pointer hover:text-c-text"
               onDoubleClick={() => {
                 if (!locked) {
                   setValue(lane.label);
