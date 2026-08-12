@@ -319,7 +319,7 @@ async function runStandardBase(params: RunPredictionComputeParams, baselineModel
   );
   if (!baselineModelArtifact) throw new Error(`predictionComputeService: no finance_business_versions row for Baseline Model ${baselineModelVersionId}`);
 
-  const { job } = await computeJobService.enqueue({
+  const { job, wasExisting } = await computeJobService.enqueue({
     organizationId: params.organizationId,
     jobType: 'PREDICTION_COMPUTE',
     inputArtifactId: baselineModelArtifact.artifact_id,
@@ -332,17 +332,40 @@ async function runStandardBase(params: RunPredictionComputeParams, baselineModel
   // NEW-3 fix: self-claim the EXACT row just enqueued (by id, org-scoped) —
   // never the globally-oldest queued PREDICTION_COMPUTE job across every
   // organization (see computeJobService.claimById doc comment).
-  const claimed = await computeJobService.claimById({
+  // P1 fix (idempotent compute retry): see valuationComputeService.ts's
+  // identical call for the full rationale.
+  const claimResult = await computeJobService.claimForCompute({
     organizationId: params.organizationId,
-    jobId: job.id,
+    job,
+    wasExisting,
     workerId: `predictionComputeService:${uuidv4()}`,
   });
-  if (!claimed) {
-    throw new Error(
-      `predictionComputeService: failed to self-claim just-enqueued job ${job.id} (organization ${params.organizationId}) — row is no longer 'queued' (concurrent claim or already terminal)`
-    );
+  if (claimResult.outcome === 'hard_error') {
+    return {
+      ok: false,
+      code: 'JOB_NOT_RUNNING',
+      message: `runStandardBase: ${claimResult.message}`,
+    };
   }
-  const runningJob = claimed;
+  if (claimResult.outcome === 'already_committed') {
+    // Idempotent replay: an earlier byte-identical call already computed and committed this
+    // exact result (same contentSemanticHash, derived above from either a fresh Baseline compute
+    // or the already-computed one — deterministic either way). Never mint a second
+    // compute_jobs/compute_job_outputs row for the same idempotency key.
+    const passthroughRows = await withPinnedPostgresTransaction((tx) =>
+      tx.queryAll<{ n: string }>(`SELECT count(*)::text AS n FROM finance_prediction_outputs_effective WHERE business_version_id = ?`, [
+        params.businessVersionId,
+      ])
+    );
+    return {
+      ok: true,
+      mode: 'STANDARD_BASE',
+      job: claimResult.job,
+      baselineJob,
+      passthroughRowCount: Number(passthroughRows[0]?.n ?? '0'),
+    };
+  }
+  const runningJob = claimResult.job;
 
   const scenarioWorkingRevision = await withPinnedPostgresTransaction((tx) =>
     tx.queryOne<{ source_working_revision_id: string | null }>(`SELECT source_working_revision_id FROM finance_business_versions WHERE business_version_id = ?`, [
@@ -546,7 +569,7 @@ async function runOverlayCompute(
   const inputRevisionHash = createHash('sha256')
     .update(JSON.stringify({ businessVersionId: params.businessVersionId, entityId: params.entityId, forecastPeriodIds: params.forecastPeriodIds }))
     .digest('hex');
-  const { job } = await computeJobService.enqueue({
+  const { job, wasExisting } = await computeJobService.enqueue({
     organizationId: params.organizationId,
     jobType: 'PREDICTION_COMPUTE',
     inputArtifactId: scenarioArtifactEarly.artifact_id,
@@ -559,17 +582,41 @@ async function runOverlayCompute(
   // NEW-3 fix: self-claim the EXACT row just enqueued (by id, org-scoped) —
   // never the globally-oldest queued PREDICTION_COMPUTE job across every
   // organization (see computeJobService.claimById doc comment).
-  const claimed = await computeJobService.claimById({
+  // P1 fix (idempotent compute retry): see valuationComputeService.ts's
+  // identical call for the full rationale.
+  const claimResult = await computeJobService.claimForCompute({
     organizationId: params.organizationId,
-    jobId: job.id,
+    job,
+    wasExisting,
     workerId: `predictionComputeService:${uuidv4()}`,
   });
-  if (!claimed) {
-    throw new Error(
-      `predictionComputeService: failed to self-claim just-enqueued job ${job.id} (organization ${params.organizationId}) — row is no longer 'queued' (concurrent claim or already terminal)`
-    );
+  if (claimResult.outcome === 'hard_error') {
+    return {
+      ok: false,
+      code: 'JOB_NOT_RUNNING',
+      message: `runOverlayCompute: ${claimResult.message}`,
+    };
   }
-  const runningJob = claimed;
+  if (claimResult.outcome === 'already_committed') {
+    // Idempotent replay: an earlier byte-identical call already computed and committed this
+    // overlay result. Never mint a second compute_jobs/compute_job_outputs row for the same
+    // idempotency key, and never re-run the (expensive) circularity solver loop below. Per-period
+    // figures for a duplicate call are read back from `finance_prediction_outputs`, exactly as
+    // `runStandardBase()` above documents for its own idempotent-replay branch.
+    const priorPeriods = await withPinnedPostgresTransaction((tx) =>
+      tx.queryOne<{ n: string }>(`SELECT count(DISTINCT period_id)::text AS n FROM finance_prediction_outputs WHERE business_version_id = ?`, [
+        params.businessVersionId,
+      ])
+    );
+    return {
+      ok: true,
+      mode: 'COMPUTED',
+      job: claimResult.job,
+      periodsComputed: Number(priorPeriods?.n ?? '0'),
+      periods: [],
+    };
+  }
+  const runningJob = claimResult.job;
 
   const other = (code: CanonicalCode) => ctx.openingCells.get(code) ?? 0;
   let priorFixedAssets = other('FIXED_ASSETS');

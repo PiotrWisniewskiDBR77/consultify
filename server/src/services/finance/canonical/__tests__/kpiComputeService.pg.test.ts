@@ -123,6 +123,27 @@ describe.skipIf(!REAL_PG)('WP-D04 kpiComputeService — real PostgreSQL known-an
     );
   }
 
+  /** Like `writeLine` above, but for a genuine `PRESENT_ZERO` cell (`writeLine` hardcodes
+   *  `value_status='PRESENT_NONZERO'`, which the `chk_finance_stmt_lines_value_shape` CHECK
+   *  rejects for `value=0`) — needed by the P1-fix NA-reachability suite below, which writes
+   *  BOTH a real zero denominator (-> NA) and a real zero numerator (-> PRESENT_ZERO). */
+  async function writeZeroLine(businessVersionId: string, entityId: string, periodId: string, lineCode: string, statementType: 'P&L' | 'BS' | 'CF') {
+    const line = await withPinnedPostgresTransaction((tx) =>
+      tx.queryOne<{ id: string }>(`SELECT id FROM financial_statement_lines WHERE line_code = ? AND organization_id IS NULL LIMIT 1`, [lineCode])
+    );
+    if (!line) throw new Error(`financial_statement_lines seed row not found for line_code=${lineCode}`);
+    await withPinnedPostgresTransaction((tx) =>
+      tx.queryRun(
+        `INSERT INTO finance_stmt_lines (
+           organization_id, business_version_id, statement_type, canonical_line_id, entity_id, period_id,
+           accumulation_basis, consolidation_scope, value_status, value_decimal, native_currency,
+           presentation_currency, unit, sign_convention, accounting_policy, created_by
+         ) VALUES (?, ?, ?, ?, ?, ?, 'FULL_YEAR', 'CONSOLIDATED', 'PRESENT_ZERO', 0, 'PLN', 'PLN', 'UNITS', 'NATURAL', 'IFRS', ?)`,
+        [orgId, businessVersionId, statementType, line.id, entityId, periodId, preparerId]
+      )
+    );
+  }
+
   beforeAll(async () => {
     ({ withPinnedPostgresTransaction } = await import('../../../../database/PostgresDatabase.js'));
     artifactVersionService = await import('../artifactVersionService.js');
@@ -360,7 +381,8 @@ describe.skipIf(!REAL_PG)('WP-D04 kpiComputeService — real PostgreSQL known-an
    *       CCC = 50.13736263736264+57.9978813559322-52.58474576271186      = 55.55049823058298
    *
    *   DEBT_TO_EBITDA (10th KPI in this block) is asserted SEPARATELY as a structural-unavailability
-   *   case (`status='MISSING'`, `value=null`) — never assigned a fabricated 18th number.
+   *   case (`status='NA'` — P1 fix, `PKG_FIX_CANONICAL_report.md` defect 2; was `'MISSING'` before
+   *   NA became reachable — `value=null`) — never assigned a fabricated 18th number.
    */
   describe('W10 — 9 additional P0 KPI (known-answer) + 1 structurally-unavailable (DEBT_TO_EBITDA), GoldCo PARENT FY2025', () => {
     it('QUICK_RATIO / CASH_RATIO / EBITDA_MARGIN_PCT / NET_MARGIN_PCT / INTEREST_COVERAGE / ROA / REVENUE_GROWTH_YOY / FCF_MARGIN / CASH_CONVERSION_CYCLE match hand-computed values', async () => {
@@ -496,14 +518,24 @@ describe.skipIf(!REAL_PG)('WP-D04 kpiComputeService — real PostgreSQL known-an
       // RC-09 — DEBT_TO_EBITDA (LONG_TERM_DEBT / EBITDA[LTM_SUM_4Q]) is structurally unavailable
       // for an annual-only report: `periodConventionResolver.resolvePeriodOffset('LTM_SUM_4Q', ...)`
       // requires `period_type='Q'` (this fixture, like GoldCo's whole oracle, only has FY periods)
-      // -> WRONG_PERIOD_TYPE_FOR_LTM -> the cell resolves to MISSING (not a DB-valid quality_flag,
-      // per formulaAstEvaluator.ts's own header note) -> the whole ratio propagates MISSING. This
-      // is NOT a defect: it is the correctly-documented absence of quarterly data, never a fabricated
-      // 18th number. A real LONG_TERM_DEBT value (40,500,000, written above) is present and PRESENT
-      // regardless — it is the EBITDA[LTM_SUM_4Q] side that cannot be resolved on FY-only data.
+      // -> WRONG_PERIOD_TYPE_FOR_LTM -> the DENOMINATOR cell resolves to MISSING (not a DB-valid
+      // quality_flag, per formulaAstEvaluator.ts's own header note). This is NOT a defect: it is
+      // the correctly-documented absence of quarterly data, never a fabricated 18th number. A real
+      // LONG_TERM_DEBT value (40,500,000, written above) is present and PRESENT regardless — it is
+      // the EBITDA[LTM_SUM_4Q] side that cannot be resolved on FY-only data.
+      //
+      // P1 fix (`PKG_FIX_CANONICAL_report.md`, defect 2): this used to assert 'MISSING' — before
+      // the fix, EVERY unresolvable denominator (regardless of the underlying reason) propagated
+      // as 'MISSING' at the whole-ratio level, because 'NA' had no live producer anywhere in this
+      // evaluator (the exact defect the fix closes). A missing DENOMINATOR specifically means "this
+      // division cannot be computed" — semantically 'NA', not 'MISSING' ('MISSING' stays reserved
+      // for "the source data itself is absent", still correct when the NUMERATOR is missing — see
+      // formulaAstEvaluator.test.ts's own coverage of that distinction). This assertion is now
+      // MORE precise, not weaker: value/qualityFlag stay null either way, and `detail` still must
+      // carry the WRONG_PERIOD_TYPE_FOR_LTM reason.
       const debtToEbitda = byCode.get('DEBT_TO_EBITDA');
       expect(debtToEbitda, 'no compute result for DEBT_TO_EBITDA').toBeTruthy();
-      expect(debtToEbitda!.status).toBe('MISSING');
+      expect(debtToEbitda!.status).toBe('NA');
       expect(debtToEbitda!.value).toBeNull();
       expect(debtToEbitda!.qualityFlag).toBeNull();
       expect(debtToEbitda!.detail).toContain('WRONG_PERIOD_TYPE_FOR_LTM');
@@ -516,7 +548,7 @@ describe.skipIf(!REAL_PG)('WP-D04 kpiComputeService — real PostgreSQL known-an
           [analysisBvId, debtToEbitdaCatalogId]
         )
       );
-      expect(debtToEbitdaRow?.value_status).toBe('MISSING');
+      expect(debtToEbitdaRow?.value_status).toBe('NA');
       expect(debtToEbitdaRow?.value_decimal).toBeNull();
       expect(debtToEbitdaRow?.quality_flag).toBeNull();
     });
@@ -962,6 +994,130 @@ describe.skipIf(!REAL_PG)('WP-D04 kpiComputeService — real PostgreSQL known-an
       const byCode = new Map(computed.results.map((r) => [r.kpiCode, r]));
       expect(byCode.get('DIO')!.value).toBeCloseTo(EXPECTED_DIO, 6);
       expect(byCode.get('DPO')!.value).toBeCloseTo(EXPECTED_DPO, 6);
+    });
+  });
+
+  /**
+   * P1 fix (`PKG_FIX_CANONICAL_report.md`, defect 2 — "NA jest nieosiągalny"): an independent
+   * oracle (GoldCo) found that `NA` was legal in the schema but UNREACHABLE from any live
+   * canonical service — `formulaAstEvaluator.ts`'s own `EvalValueStatus` comment said so
+   * explicitly ("never `'NA'`"), and a zero/missing denominator both mapped to `NOT_APPLICABLE`
+   * instead. This SERVICE-LEVEL (not presentation-layer) suite proves the fix end-to-end through
+   * REAL Postgres: `computeAnalysisKpis()` -> `evaluateFormula()` -> `finance_analysis_kpi_values`
+   * write, past the DB's own CHECK constraints (`chk_finance_analysis_kpi_values_value_shape`,
+   * `chk_finance_analysis_kpi_values_division_by_zero_shape`) — not a call into
+   * `formulaAstEvaluator` in isolation (that pure-unit coverage already lives in
+   * `formulaAstEvaluator.test.ts`).
+   */
+  describe('P1 fix — NA is reachable end-to-end (missing/zero denominator), distinguishable from a real computed PRESENT_ZERO', () => {
+    async function makeCurrentRatioAnalysis(entitySuffix: string): Promise<{ packBvId: string; analysisBvId: string; entityId: string }> {
+      const pack = await makeStatementPack();
+      const packBvId = pack.businessVersion.business_version_id;
+      const entityId = await makeEntity(packBvId, `NA-${entitySuffix}`);
+
+      const analysis = await makeAnalysis();
+      const analysisBvId = analysis.businessVersion.business_version_id;
+      await withPinnedPostgresTransaction((tx) =>
+        tx.queryRun(
+          `INSERT INTO finance_analysis_definitions (
+             organization_id, business_version_id, purpose, analysis_type, entity_scope_mode, presentation_currency, unit, created_by
+           ) VALUES (?, ?, 'INTERNAL_REVIEW', 'STANDARD', 'GROUP_CONSOLIDATED', 'PLN', 'UNITS', ?)`,
+          [orgId, analysisBvId, preparerId]
+        )
+      );
+      const edge = await lineageService.insertEdge({
+        organizationId: orgId,
+        sourceVersionId: packBvId,
+        sourceArtifactType: 'STATEMENT_PACK',
+        targetVersionId: analysisBvId,
+        targetArtifactType: 'HISTORICAL_ANALYSIS',
+        edgeType: 'STATEMENT_TO_ANALYSIS',
+        transformationKind: 'MANUAL_LINK',
+        authorId: preparerId,
+      });
+      expect(edge.ok).toBe(true);
+
+      await withPinnedPostgresTransaction((tx) =>
+        tx.queryRun(
+          `INSERT INTO finance_analysis_kpi_values (organization_id, business_version_id, kpi_catalog_id, entity_id, period_id)
+           VALUES (?, ?, ?, ?, ?)`,
+          [orgId, analysisBvId, catalogIdByCode.get('CURRENT_RATIO')!, entityId, fy2025PeriodId]
+        )
+      );
+      return { packBvId, analysisBvId, entityId };
+    }
+
+    async function readKpiRow(analysisBvId: string) {
+      return withPinnedPostgresTransaction((tx) =>
+        tx.queryOne<{ value_status: string; value_decimal: string | null; quality_flag: string | null; interpretation_text: string | null }>(
+          `SELECT value_status, value_decimal, quality_flag, interpretation_text FROM finance_analysis_kpi_values
+            WHERE business_version_id = ? AND kpi_catalog_id = ?`,
+          [analysisBvId, catalogIdByCode.get('CURRENT_RATIO')!]
+        )
+      );
+    }
+
+    it('CURRENT_LIABILITIES cell absent (MISSING denominator) -> value_status=NA with a DENOMINATOR_MISSING reason code, never MISSING and never a fabricated number', async () => {
+      const { analysisBvId, packBvId, entityId } = await makeCurrentRatioAnalysis(`den-missing-${randomUUID().slice(0, 8)}`);
+      await writeLine(packBvId, entityId, fy2025PeriodId, 'CURRENT_ASSETS', 'BS', 56_500_000);
+      // CURRENT_LIABILITIES intentionally NEVER written — the denominator cell is absent, not
+      // just zero.
+
+      const computed = await kpiComputeService.computeAnalysisKpis({ organizationId: orgId, businessVersionId: analysisBvId, requestedByUserId: preparerId });
+      expect(computed.ok).toBe(true);
+      if (!computed.ok) throw new Error('unreachable');
+      const result = computed.results.find((r) => r.kpiCode === 'CURRENT_RATIO');
+      expect(result?.status).toBe('NA');
+      expect(result?.value).toBeNull();
+      expect(result?.qualityFlag).toBeNull();
+      expect(result?.detail).toContain('DENOMINATOR_MISSING');
+
+      // Independent SQL read — never trust the service's own in-memory return value alone.
+      const row = await readKpiRow(analysisBvId);
+      expect(row?.value_status).toBe('NA');
+      expect(row?.value_decimal).toBeNull();
+      expect(row?.quality_flag).toBeNull();
+      expect(row?.interpretation_text).toContain('DENOMINATOR_MISSING');
+    });
+
+    it('CURRENT_LIABILITIES=0 (zero denominator) -> value_status=NA with a DIVISION_BY_ZERO reason code, never a silent zero and never NOT_APPLICABLE (the pre-fix behavior)', async () => {
+      const { analysisBvId, packBvId, entityId } = await makeCurrentRatioAnalysis(`div-zero-${randomUUID().slice(0, 8)}`);
+      await writeLine(packBvId, entityId, fy2025PeriodId, 'CURRENT_ASSETS', 'BS', 56_500_000);
+      await writeZeroLine(packBvId, entityId, fy2025PeriodId, 'CURRENT_LIABILITIES', 'BS');
+
+      const computed = await kpiComputeService.computeAnalysisKpis({ organizationId: orgId, businessVersionId: analysisBvId, requestedByUserId: preparerId });
+      expect(computed.ok).toBe(true);
+      if (!computed.ok) throw new Error('unreachable');
+      const result = computed.results.find((r) => r.kpiCode === 'CURRENT_RATIO');
+      expect(result?.status).toBe('NA');
+      expect(result?.value).toBeNull();
+      expect(result?.qualityFlag).toBeNull(); // NOT 'DIVISION_BY_ZERO' — see EvalValueStatus doc comment (DB CHECK pairs that flag with NOT_APPLICABLE, not NA)
+      expect(result?.detail).toContain('DIVISION_BY_ZERO');
+
+      const row = await readKpiRow(analysisBvId);
+      expect(row?.value_status).toBe('NA');
+      expect(row?.value_decimal).toBeNull();
+      expect(row?.quality_flag).toBeNull();
+      expect(row?.interpretation_text).toContain('DIVISION_BY_ZERO');
+    });
+
+    it('a REAL computed zero (CURRENT_ASSETS=0, healthy nonzero CURRENT_LIABILITIES) -> value_status=PRESENT_ZERO, value_decimal=0 — reliably distinguishable from the NA-by-zero-denominator case above', async () => {
+      const { analysisBvId, packBvId, entityId } = await makeCurrentRatioAnalysis(`present-zero-${randomUUID().slice(0, 8)}`);
+      await writeZeroLine(packBvId, entityId, fy2025PeriodId, 'CURRENT_ASSETS', 'BS');
+      await writeLine(packBvId, entityId, fy2025PeriodId, 'CURRENT_LIABILITIES', 'BS', 17_500_000);
+
+      const computed = await kpiComputeService.computeAnalysisKpis({ organizationId: orgId, businessVersionId: analysisBvId, requestedByUserId: preparerId });
+      expect(computed.ok).toBe(true);
+      if (!computed.ok) throw new Error('unreachable');
+      const result = computed.results.find((r) => r.kpiCode === 'CURRENT_RATIO');
+      expect(result?.status).toBe('PRESENT_ZERO');
+      expect(result?.value).toBe(0);
+      expect(result?.status).not.toBe('NA');
+
+      const row = await readKpiRow(analysisBvId);
+      expect(row?.value_status).toBe('PRESENT_ZERO');
+      expect(Number(row?.value_decimal)).toBe(0);
+      expect(row?.value_status).not.toBe('NA');
     });
   });
 

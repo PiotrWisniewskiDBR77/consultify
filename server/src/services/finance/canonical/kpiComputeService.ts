@@ -634,7 +634,7 @@ export async function computeAnalysisKpis(params: ComputeAnalysisKpisParams): Pr
   const inputRevisionHash = createHash('sha256')
     .update(JSON.stringify({ businessVersionId: params.businessVersionId, sourceVersionId, kpiValueIdsSorted }))
     .digest('hex');
-  const { job } = await computeJobService.enqueue({
+  const { job, wasExisting } = await computeJobService.enqueue({
     organizationId: params.organizationId,
     jobType: 'ANALYSIS_KPI_COMPUTE',
     inputArtifactId: bv.artifact_id,
@@ -647,17 +647,30 @@ export async function computeAnalysisKpis(params: ComputeAnalysisKpisParams): Pr
   // NEW-3 fix: self-claim the EXACT row just enqueued (by id, org-scoped) —
   // never the globally-oldest queued ANALYSIS_KPI_COMPUTE job across every
   // organization (see computeJobService.claimById doc comment).
-  const claimed = await computeJobService.claimById({
+  // P1 fix (idempotent compute retry): see valuationComputeService.ts's
+  // identical call for the full rationale. Unlike that file, an
+  // 'already_committed' outcome here does NOT short-circuit the return —
+  // `runningJob` below is simply left non-'running' (the already-succeeded
+  // job row), which the pre-existing `if (runningJob.status === 'running')`
+  // guards a few lines down already skip correctly (they exist for the
+  // unrelated "cancelled mid-flight" race, W9-B-2) — so this duplicate call
+  // still safely re-evaluates and re-persists the SAME deterministic KPI
+  // values (idempotent UPDATE, never a second compute_job_outputs row) and
+  // returns them, instead of throwing.
+  const claimResult = await computeJobService.claimForCompute({
     organizationId: params.organizationId,
-    jobId: job.id,
+    job,
+    wasExisting,
     workerId: `kpiComputeService:${uuidv4()}`,
   });
-  if (!claimed) {
-    throw new Error(
-      `kpiComputeService: failed to self-claim just-enqueued job ${job.id} (organization ${params.organizationId}) — row is no longer 'queued' (concurrent claim or already terminal)`
-    );
+  if (claimResult.outcome === 'hard_error') {
+    return {
+      ok: false,
+      code: 'JOB_NOT_RUNNING',
+      message: `computeAnalysisKpis: ${claimResult.message}`,
+    };
   }
-  const runningJob = claimed;
+  const runningJob = claimResult.job;
 
   let results: ComputedKpiResult[];
   try {

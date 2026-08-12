@@ -439,7 +439,7 @@ export async function runDcfFcffValuation(params: RunDcfFcffValuationParams): Pr
   const inputRevisionHash = createHash('sha256')
     .update(JSON.stringify({ businessVersionId: params.valuationBusinessVersionId, entityId: params.entityId, projectionYears: params.projectionYears, terminal: params.terminal }))
     .digest('hex');
-  const { job } = await computeJobService.enqueue({
+  const { job, wasExisting } = await computeJobService.enqueue({
     organizationId: params.organizationId,
     jobType: 'VALUATION_COMPUTE',
     inputArtifactId: bv.artifact_id,
@@ -452,17 +452,42 @@ export async function runDcfFcffValuation(params: RunDcfFcffValuationParams): Pr
   // NEW-3 fix: self-claim the EXACT row just enqueued (by id, org-scoped) —
   // never the globally-oldest queued VALUATION_COMPUTE job across every
   // organization (see computeJobService.claimById doc comment).
-  const claimed = await computeJobService.claimById({
+  // P1 fix (idempotent compute retry): a byte-identical repeated POST maps to
+  // the SAME idempotency key, so `enqueue()` returns `wasExisting=true` with
+  // an already-`succeeded` row — `claimById()` alone would return null (it
+  // only matches `status='queued'`) and used to crash with a raw Error. See
+  // `computeJobService.claimForCompute()` doc comment for the full decision
+  // table.
+  const claimResult = await computeJobService.claimForCompute({
     organizationId: params.organizationId,
-    jobId: job.id,
+    job,
+    wasExisting,
     workerId: `valuationComputeService:${uuidv4()}`,
   });
-  if (!claimed) {
-    throw new Error(
-      `valuationComputeService: failed to self-claim just-enqueued job ${job.id} (organization ${params.organizationId}) — row is no longer 'queued' (concurrent claim or already terminal)`
-    );
+  if (claimResult.outcome === 'hard_error') {
+    return {
+      ok: false,
+      code: 'JOB_NOT_RUNNING',
+      message: `runDcfFcffValuation: ${claimResult.message}`,
+    };
   }
-  const runningJob = claimed;
+  if (claimResult.outcome === 'already_committed') {
+    // Idempotent replay: an earlier byte-identical call already computed and committed this
+    // exact result. This invocation independently recomputed the SAME deterministic values above
+    // (Decimal-based, in-memory sorted) — we report the ORIGINAL job's identity, never mint a
+    // second compute_jobs/compute_job_outputs row for the same idempotency key.
+    return {
+      ok: true,
+      job: claimResult.job,
+      methodId: method.id,
+      fcffYears: fcff.years,
+      wacc: waccResult.breakdown,
+      terminalValue: terminal.terminalValue,
+      discounted,
+      enterpriseValue: discounted.enterpriseValue,
+    };
+  }
+  const runningJob = claimResult.job;
 
   const contentSemanticHash = canonicalPayloadHash({ enterpriseValue: discounted.enterpriseValue, fcff: fcff.years });
   const completed = await computeJobService.completeJobSuccess({
