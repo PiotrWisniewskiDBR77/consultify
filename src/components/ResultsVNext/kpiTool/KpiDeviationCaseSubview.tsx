@@ -70,6 +70,7 @@ import { EmptyState } from '@/components/shared/states';
 import { ResultsVNextForbiddenState } from '../ResultsVNextForbiddenState';
 import type { ResultsVNextForbiddenDetail } from '../types';
 import { isResultsVNextFlagEnabled } from '../resultsVNextFeatureFlags';
+import { toUserFacingErrorMessage } from '../shared/errorMessage';
 import { listKpiMeasurements, type KpiMeasurementDto } from '../kpiApi';
 import {
   acknowledgeDeviationCase,
@@ -206,7 +207,10 @@ export const KpiDeviationCaseSubview: React.FC = () => {
       setForbidden(null);
       setKase(record);
     } catch (err) {
-      setLoadError(err instanceof Error ? err.message : String(err));
+      // RN-G5 polish: plain fetch failure, no server business-rule payload
+      // here (that's `deviationErrorDetail`, used only by `run()` below) —
+      // never render the raw exception text.
+      setLoadError(toUserFacingErrorMessage(err, isPolish));
     } finally {
       setLoading(false);
     }
@@ -268,8 +272,18 @@ export const KpiDeviationCaseSubview: React.FC = () => {
         toast.success(successMessage);
       } catch (err) {
         const detail = deviationErrorDetail(err);
-        setErrorDetail(detail.message);
-        toast.error(detail.message);
+        // RN-G5 polish: a real server business-rule rejection (NOT_PLAN_
+        // REQUIRED, self-approval denial, …) is shown verbatim BY DESIGN —
+        // see this file's own header ("shown verbatim via `errorDetail` —
+        // these are workflow/maker-checker rules, not ABAC visibility
+        // denials"). Only the FALLBACK (no server payload — a raw JS/
+        // network-error string) goes through the translated, generic
+        // message instead of leaking straight to the screen.
+        const message = detail.isServerMessage
+          ? detail.message
+          : toUserFacingErrorMessage(err, isPolish);
+        setErrorDetail(message);
+        toast.error(message);
       } finally {
         setBusy(false);
       }

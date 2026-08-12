@@ -121,6 +121,7 @@ import {
   type InitiativeKpiImpactDto,
 } from './kpiInitiativeImpactApi';
 import { KpiReviewedAttributionDialog } from './KpiReviewedAttributionDialog';
+import { toUserFacingErrorMessage } from '../shared/errorMessage';
 import {
   DEVIATION_CASE_STATUS_TONE,
   DEVIATION_SEVERITY_TONE,
@@ -237,7 +238,7 @@ export const KpiToolPage: React.FC = () => {
       setForbidden(null);
       setKpi(record);
     } catch (err) {
-      setLoadError(err instanceof Error ? err.message : String(err));
+      setLoadError(toUserFacingErrorMessage(err, isPolish));
     } finally {
       setLoading(false);
     }
@@ -297,7 +298,7 @@ export const KpiToolPage: React.FC = () => {
           setAttributionTarget(null);
           loadInitiativeImpacts();
         })
-        .catch((err) => setAttributionError(err instanceof Error ? err.message : String(err)))
+        .catch((err) => setAttributionError(toUserFacingErrorMessage(err, isPolish)))
         .finally(() => setAttributionBusy(false));
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -313,7 +314,7 @@ export const KpiToolPage: React.FC = () => {
         await runner({ kpiId: kpi.kpiId, expectedVersion: kpi.rowVersion });
         await loadKpi();
       } catch (err) {
-        toast.error(err instanceof Error ? err.message : String(err));
+        toast.error(toUserFacingErrorMessage(err, isPolish));
       } finally {
         setPending(null);
       }
@@ -738,7 +739,7 @@ export const KpiToolPage: React.FC = () => {
                             toast.success(t('Wpływ zatwierdzony (baseline zamrożony)', 'Impact committed (baseline frozen)'));
                             loadInitiativeImpacts();
                           })
-                          .catch((err) => toast.error(err instanceof Error ? err.message : String(err)))
+                          .catch((err) => toast.error(toUserFacingErrorMessage(err, isPolish)))
                           .finally(() => setImpactBusy(false));
                       }}
                     >
@@ -805,7 +806,7 @@ export const KpiToolPage: React.FC = () => {
                   setProposeContributionValue('');
                   loadInitiativeImpacts();
                 })
-                .catch((err) => toast.error(err instanceof Error ? err.message : String(err)))
+                .catch((err) => toast.error(toUserFacingErrorMessage(err, isPolish)))
                 .finally(() => setImpactBusy(false));
             }}
           >
