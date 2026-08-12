@@ -31,6 +31,7 @@
 import { all as dbAll } from '../utils/DbPromise.js';
 import { getTableColumns } from '../utils/dbSchema.js';
 import logger from '../utils/Logger.js';
+import { buildSeedExclusion } from '../utils/superadminSeedFilter.js';
 import { routeToSlack } from './slack/slackRouter.js';
 
 interface FeedbackSummaryRow {
@@ -223,15 +224,20 @@ async function loadWorkSections(): Promise<WorkSections> {
     try {
       const cols = await getTableColumns('users');
       if (!cols.has('created_at')) return [];
+      // Exclude seed/e2e fixture accounts (e.g. e2e+...@local.test) — real
+      // signups only. Without this, an automated test run's 20 throwaway
+      // accounts showed up as "20 nowych użytkowników" in one digest.
+      const seedExclusion = buildSeedExclusion({ emailCol: 'email' });
       const rows = await dbAll<{ id: string; label: string | null }>(
         `
           SELECT id, email AS label
           FROM users
           WHERE created_at >= ?
+            ${seedExclusion.clause ? `AND ${seedExclusion.clause}` : ''}
           ORDER BY created_at DESC
           LIMIT 20
         `,
-        [since24h]
+        [since24h, ...seedExclusion.params]
       );
       return rows || [];
     } catch (err) {
@@ -375,7 +381,15 @@ export async function runFeedbackDigestOnce(): Promise<number> {
       : sections.stuckInNewOver48h.length
         ? 'WARNING'
         : 'INFO';
+    const env = String(process.env.APP_ENV || process.env.NODE_ENV || 'development');
+    const now = new Date();
+    const dayKey = `${now.getUTCFullYear()}-${now.getUTCMonth()}-${now.getUTCDate()}`;
     // Slack Command Center: the daily command report goes to #cf-progress.
+    // dedupeKey+dedupeWindowMs guard against the SAME day's digest re-firing
+    // on every process restart (the router's dedupe is DB-backed, so this
+    // survives restarts — unlike the in-memory `lastDigestDayUtc` guard below,
+    // which is kept only as a fast local skip and is not, on its own, reliable
+    // across restarts).
     await routeToSlack({
       channel: 'progress',
       severity,
@@ -383,6 +397,8 @@ export async function runFeedbackDigestOnce(): Promise<number> {
       category: 'Raport dzienny',
       title: payload.title,
       text: payload.body,
+      dedupeKey: `digest:${env}:${dayKey}`,
+      dedupeWindowMs: 20 * 60 * 60 * 1000, // 20h — one send per UTC day, next day still fires
     });
     logger.info(`[feedbackDigest] Slack digest posted (rows referenced: ${total}).`);
     return total;

@@ -53,6 +53,7 @@ import { all as _dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js
 import { getTableColumns } from '../utils/dbSchema.js';
 import logger from '../utils/Logger.js';
 import { isForcedSuperAdminEmail, resolveAuthEffectiveRole } from '../utils/platformRoles.js';
+import { SEED_EMAIL_DOMAINS } from '../utils/superadminSeedFilter.js';
 import {
   ChangePasswordRequestSchema,
   ForgotPasswordRequestSchema,
@@ -1989,26 +1990,44 @@ router.post(
 
         // Slack Command Center (Filar 5): alert #cf-progress for EVERY signup,
         // not just APLIX. The dedicated APLIX alert above is unchanged.
-        try {
-          const { routeToSlack } = await import('../services/slack/slackRouter.js');
-          const fullName = [firstName, lastName].filter(Boolean).join(' ').trim() || email;
-          const orgLabel = joiningExistingOrg
-            ? `existing org ${orgId}`
-            : companyName || 'new organization';
-          await _withTimeout(
-            routeToSlack({
-              channel: 'progress',
-              severity: 'INFO',
-              // Headline (watch/phone): `🙋 Rejestracja · <imię> (<organizacja>)`.
-              category: 'Rejestracja',
-              title: `${fullName} (${orgLabel})`,
-              text: `Email: ${email} · Rola: ${effectiveRole}`,
-              dedupeKey: `registration:${userId}`,
-            }).then(() => undefined),
-            1500
-          );
-        } catch (progressErr) {
-          logger.warn('[Auth] Failed to send progress registration Slack alert:', progressErr);
+        // Skip seed/test-fixture accounts (e.g. e2e+...@local.test created by
+        // automated test runs) — they aren't real signups and were flooding
+        // #cf-progress (observed: 20 "Rejestracja" posts in one 24h digest
+        // window, all e2e+work-canvas-owner-...@local.test / e2e+xlsx-shell-...).
+        const registrationEmailDomain = String(email || '')
+          .split('@')[1]
+          ?.trim()
+          .toLowerCase();
+        const isSeedRegistration = SEED_EMAIL_DOMAINS.some(
+          (domain) =>
+            registrationEmailDomain === domain || registrationEmailDomain?.endsWith(`.${domain}`)
+        );
+        if (isSeedRegistration) {
+          logger.debug('[Auth] Skipping progress Slack alert for seed/test account', {
+            emailDomain: registrationEmailDomain,
+          });
+        } else {
+          try {
+            const { routeToSlack } = await import('../services/slack/slackRouter.js');
+            const fullName = [firstName, lastName].filter(Boolean).join(' ').trim() || email;
+            const orgLabel = joiningExistingOrg
+              ? `existing org ${orgId}`
+              : companyName || 'new organization';
+            await _withTimeout(
+              routeToSlack({
+                channel: 'progress',
+                severity: 'INFO',
+                // Headline (watch/phone): `🙋 Rejestracja · <imię> (<organizacja>)`.
+                category: 'Rejestracja',
+                title: `${fullName} (${orgLabel})`,
+                text: `Email: ${email} · Rola: ${effectiveRole}`,
+                dedupeKey: `registration:${userId}`,
+              }).then(() => undefined),
+              1500
+            );
+          } catch (progressErr) {
+            logger.warn('[Auth] Failed to send progress registration Slack alert:', progressErr);
+          }
         }
 
         return res.json({

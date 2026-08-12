@@ -1,6 +1,6 @@
 import cron from 'node-cron';
 
-import { SlackServiceClass } from '../services/slackService.js';
+import { routeToSlack } from '../services/slack/slackRouter.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 
@@ -46,21 +46,6 @@ function computeSignature(snapshot: {
     .map((p) => `${p.provider}=${p.health}`)
     .join(',');
   return `db:${snapshot.dbOk ? 'ok' : 'down'}|${providers}`;
-}
-
-function resolveOpsWebhookUrl(): string {
-  const direct = String(process.env.AI_OPS_SLACK_WEBHOOK_URL || '').trim();
-  if (direct) return direct;
-  const ai = String(process.env.AI_SLACK_WEBHOOK_URL || '').trim();
-  if (ai) return ai;
-  const envName = String(process.env.APP_ENV || process.env.NODE_ENV || 'development')
-    .trim()
-    .toUpperCase()
-    .replace(/[^A-Z0-9]+/g, '_');
-  return (
-    String(process.env[`SLACK_WEBHOOK_URL_${envName}`] || '').trim() ||
-    String(process.env.SLACK_WEBHOOK_URL || '').trim()
-  );
 }
 
 async function buildSnapshot(): Promise<{
@@ -116,9 +101,6 @@ async function buildSnapshot(): Promise<{
 }
 
 export async function sendOpsSnapshotToSlack(): Promise<void> {
-  const url = resolveOpsWebhookUrl();
-  if (!url) return;
-
   const snapshot = await buildSnapshot();
   const healthy = snapshot.providers.filter((p) => p.health === 'healthy').length;
   const degraded = snapshot.providers.filter((p) => p.health === 'degraded').length;
@@ -158,12 +140,19 @@ export async function sendOpsSnapshotToSlack(): Promise<void> {
     .map((p) => `- ${p.provider}: ${p.health}`)
     .join('\n');
 
-  const slack = new SlackServiceClass({ webhookUrl: url });
-  await slack.sendSystemAlert(
-    'AI Ops snapshot (state change)',
-    `DB: ${snapshot.dbOk ? 'healthy' : 'degraded'}\nLLM providers: healthy=${healthy}, degraded=${degraded}, unhealthy=${unhealthy}, unknown=${unknown}\n\n${lines}`,
-    severity
-  );
+  // Slack Command Center: route through the central router to the #cf-ai-ops
+  // channel (bot + channel id, or its dedicated webhook fallback) instead of
+  // the old bespoke webhook-only path — which silently sent nothing when
+  // AI_OPS_SLACK_WEBHOOK_URL / AI_SLACK_WEBHOOK_URL / SLACK_WEBHOOK_URL were
+  // all unset, and this cron never reported that as an error (`if (!url) return;`).
+  // That's why #cf-ai-ops had zero messages since its creation.
+  await routeToSlack({
+    channel: 'ai_ops',
+    severity: severity as 'INFO' | 'WARNING',
+    category: 'AI Ops',
+    title: 'AI Ops snapshot (zmiana stanu)',
+    text: `DB: ${snapshot.dbOk ? 'healthy' : 'degraded'}\nDostawcy LLM: healthy=${healthy}, degraded=${degraded}, unhealthy=${unhealthy}, unknown=${unknown}\n\n${lines}`,
+  });
 
   // Record the new state so the next hour stays quiet unless something moves.
   if (!alwaysSend) {

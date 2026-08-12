@@ -14,6 +14,7 @@ vi.mock('../../../server/src/utils/Logger.js', () => ({
 import {
   routeToSlack,
   __resetDedupeForTests,
+  __resetDurableDedupeForTests,
 } from '../../../server/src/services/slack/slackRouter.js';
 
 // Snapshot & restore env between tests so channel/token mapping is isolated.
@@ -28,6 +29,8 @@ const SLACK_ENV_KEYS = [
   'SLACK_PROGRESS_WEBHOOK_URL',
   'AI_OPS_SLACK_WEBHOOK_URL',
   'AI_SLACK_WEBHOOK_URL',
+  'SLACK_DISABLED_STAGING',
+  'SLACK_DISABLED_TEST',
   'APP_ENV',
   'NODE_ENV',
 ];
@@ -48,13 +51,13 @@ function mockFetchOk(json: Record<string, unknown>, httpOk = true) {
   return fetchMock;
 }
 
-beforeEach(() => {
+beforeEach(async () => {
   savedEnv = {};
   for (const key of SLACK_ENV_KEYS) savedEnv[key] = process.env[key];
   clearSlackEnv();
   // Neutral env so resolver suffix is deterministic.
   process.env.NODE_ENV = 'test';
-  __resetDedupeForTests();
+  await __resetDurableDedupeForTests();
   vi.clearAllMocks();
 });
 
@@ -272,5 +275,85 @@ describe('slackRouter.routeToSlack', () => {
     expect(fetchMock.mock.calls[0][0]).toBe('https://hooks.slack.com/services/staging');
 
     delete process.env.SLACK_WEBHOOK_URL_STAGING;
+  });
+
+  // Regression coverage for the observed bug: #cf-progress received 11
+  // identical "🚀 Wdrożenie" posts for the SAME commit within ~1 minute
+  // because the dedupe map was purely in-memory and got wiped on every
+  // process restart. `__resetDedupeForTests()` (memory-only, NOT the durable
+  // DB-backed table) simulates exactly that: a fresh process, same DB.
+  it('dedupe SURVIVES a simulated process restart (durable, DB-backed)', async () => {
+    process.env.SLACK_WEBHOOK_URL = 'https://hooks.slack.com/services/alerts';
+    const fetchMock = mockFetchOk({}, true);
+
+    const first = await routeToSlack({
+      channel: 'alerts',
+      title: 'deploy',
+      text: 'v1',
+      dedupeKey: 'deploy:demo:abc123',
+    });
+    expect(first.ok).toBe(true);
+
+    // Simulate a process restart: only the in-memory map is cleared, the
+    // durable table is untouched — this is exactly what a redeploy/crash-loop
+    // does to the real process.
+    __resetDedupeForTests();
+
+    const second = await routeToSlack({
+      channel: 'alerts',
+      title: 'deploy',
+      text: 'v1',
+      dedupeKey: 'deploy:demo:abc123',
+    });
+
+    expect(second).toEqual({ ok: false, transport: 'none' });
+    expect(fetchMock).toHaveBeenCalledTimes(1); // NOT re-sent after the "restart"
+  });
+
+  it('honours a per-event dedupeWindowMs override instead of the 30-min default', async () => {
+    process.env.SLACK_WEBHOOK_URL = 'https://hooks.slack.com/services/alerts';
+    const fetchMock = mockFetchOk({}, true);
+
+    await routeToSlack({
+      channel: 'alerts',
+      title: 'digest',
+      text: 'day 1',
+      dedupeKey: 'digest:demo:day1',
+      dedupeWindowMs: 1, // effectively no suppression — expires almost immediately
+    });
+    await new Promise((r) => setTimeout(r, 5));
+    await routeToSlack({
+      channel: 'alerts',
+      title: 'digest',
+      text: 'day 1',
+      dedupeKey: 'digest:demo:day1',
+      dedupeWindowMs: 1,
+    });
+
+    expect(fetchMock).toHaveBeenCalledTimes(2); // window already elapsed both times
+  });
+
+  it('SLACK_DISABLED_<ENV> silences the environment entirely (kill switch for e.g. staging CI noise)', async () => {
+    process.env.APP_ENV = 'staging';
+    process.env.SLACK_DISABLED_STAGING = 'true';
+    process.env.SLACK_WEBHOOK_URL = 'https://hooks.slack.com/services/alerts';
+    const fetchMock = mockFetchOk({}, true);
+
+    const result = await routeToSlack({ channel: 'progress', title: 'noise', text: 'ignore me' });
+
+    expect(result).toEqual({ ok: false, transport: 'none' });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('SLACK_DISABLED_<ENV> does not affect a DIFFERENT environment', async () => {
+    process.env.APP_ENV = 'demo';
+    process.env.SLACK_DISABLED_STAGING = 'true'; // only staging is disabled
+    process.env.SLACK_WEBHOOK_URL = 'https://hooks.slack.com/services/alerts';
+    const fetchMock = mockFetchOk({}, true);
+
+    const result = await routeToSlack({ channel: 'progress', title: 'ok', text: 'still sent' });
+
+    expect(result.ok).toBe(true);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });
