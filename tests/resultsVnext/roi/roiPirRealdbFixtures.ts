@@ -258,6 +258,11 @@ export async function buildCaseThroughTracking(
     actorEffectiveRole: 'consultant',
     idempotencyKey: `ready-${randomUUID()}`,
   });
+  // RN-G5: this fixture exercises the full ROI case decision flow, not
+  // authorization — the wildcard makes the new command-capability guard
+  // (commandCapabilityGuard.ts) always ALLOW, preserving every consuming
+  // suite's pre-existing PIR/tracking coverage.
+  const roi_gold_access = { capabilities: ['*'], platformRole: null } as const;
   const submitOutcome = await modules.submitRoiCaseForApproval({
     caseId,
     organizationId,
@@ -265,6 +270,7 @@ export async function buildCaseThroughTracking(
     actorUserId: ownerUserId,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `submit-${randomUUID()}`,
+    access: roi_gold_access,
   });
   const approveOutcome = await modules.approveRoiCase({
     caseId,
@@ -273,6 +279,7 @@ export async function buildCaseThroughTracking(
     approverId,
     actorEffectiveRole: 'admin',
     idempotencyKey: `approve-${randomUUID()}`,
+    access: roi_gold_access,
   });
   const trackingOutcome = await modules.startRoiCaseTracking({
     caseId,

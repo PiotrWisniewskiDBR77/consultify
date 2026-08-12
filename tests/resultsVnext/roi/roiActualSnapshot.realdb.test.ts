@@ -183,7 +183,8 @@ async function buildTrackingCase(suffix: string): Promise<TrackingCaseFixture> {
     actorUserId: USER_MAKER,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `submit-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   const approveOutcome = await approveRoiCase({
     caseId,
     organizationId: ORG_ID,
@@ -191,7 +192,8 @@ async function buildTrackingCase(suffix: string): Promise<TrackingCaseFixture> {
     approverId: USER_APPROVER,
     actorEffectiveRole: 'admin',
     idempotencyKey: `approve-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   const trackingOutcome = await startRoiCaseTracking({
     caseId,
     organizationId: ORG_ID,

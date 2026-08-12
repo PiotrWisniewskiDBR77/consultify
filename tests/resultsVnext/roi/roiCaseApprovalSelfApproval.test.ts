@@ -98,6 +98,11 @@ function baseInput(overrides: Record<string, unknown> = {}) {
     approverId: 'user-approver',
     actorEffectiveRole: 'admin',
     idempotencyKey: 'idem-approve-1',
+    // RN-G5: this suite tests approveRoiCase's SELF-APPROVAL logic, not the
+    // command-capability guard — give every case the wildcard so the RBAC
+    // gate always ALLOWs (dedicated guard coverage lives in
+    // commandCapabilityGuard.test.ts and the RN-G5 security tests).
+    access: { capabilities: ['*'], platformRole: null },
     ...overrides,
   };
 }

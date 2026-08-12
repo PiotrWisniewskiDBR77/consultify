@@ -198,7 +198,8 @@ async function buildApprovedCase(suffix: string, addBenefitAmount: number | null
     actorUserId: USER_MAKER,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `submit-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   const approveOutcome = await approveRoiCase({
     caseId,
     organizationId: ORG_ID,
@@ -206,7 +207,8 @@ async function buildApprovedCase(suffix: string, addBenefitAmount: number | null
     approverId: USER_APPROVER,
     actorEffectiveRole: 'admin',
     idempotencyKey: `approve-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
   return {
     caseId,

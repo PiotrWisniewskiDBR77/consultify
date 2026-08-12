@@ -337,7 +337,8 @@ describe('ROI-E004 getRoiCaseCompareView — AC-04 (real Postgres)', () => {
       actorUserId: USER_MAKER,
       actorEffectiveRole: 'consultant',
       idempotencyKey: `submit-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const approveOutcome = await approveRoiCase({
       caseId,
       organizationId: ORG_ID,
@@ -345,7 +346,8 @@ describe('ROI-E004 getRoiCaseCompareView — AC-04 (real Postgres)', () => {
       approverId: USER_APPROVER,
       actorEffectiveRole: 'admin',
       idempotencyKey: `approve-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const trackingOutcome = await startRoiCaseTracking({
       caseId,
       organizationId: ORG_ID,

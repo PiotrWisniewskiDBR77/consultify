@@ -355,7 +355,8 @@ describe('ROI-E003 submit guard (AC-01) + edit-lock (D3/D4) — real Postgres', 
           actorUserId: USER_MAKER,
           actorEffectiveRole: 'consultant',
           idempotencyKey: `submit-fail-${randomUUID()}`,
-        })
+        access: { capabilities: ['*'], platformRole: null },
+})
       ).rejects.toBeInstanceOf(RoiCaseNotReadyForReviewError);
 
       // Case must still be 'ready_for_review' — the failed submit did not
@@ -380,7 +381,8 @@ describe('ROI-E003 submit guard (AC-01) + edit-lock (D3/D4) — real Postgres', 
         actorUserId: USER_MAKER,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `submit-ok-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       expect(submitOutcome.result.status).toBe('submitted_for_approval');
 
       // Half 1 (D3, pre-existing NON_EDITABLE_STATUSES wiring in

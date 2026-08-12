@@ -189,7 +189,8 @@ async function buildSubmittedCase(initiativeId: string): Promise<{
     actorUserId: USER_MAKER,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `submit-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   expect(submitOutcome.result.status).toBe('submitted_for_approval');
   expect(submitOutcome.result.submittedBy).toBe(USER_MAKER);
   expect(submitOutcome.result.decisionCalculationRunId).toBe(runOutcome.result.runId);
@@ -337,7 +338,8 @@ describe('ROI-E003 approveRoiCase — full happy path (real Postgres)', () => {
         approverId: USER_APPROVER,
         actorEffectiveRole: 'admin',
         idempotencyKey: `approve-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
       expect(approveOutcome.outcome).toBe('applied');
       expect(approveOutcome.result.case.status).toBe('approved');

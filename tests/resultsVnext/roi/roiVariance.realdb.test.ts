@@ -192,7 +192,8 @@ async function buildForecastedCase(suffix: string): Promise<VarianceFixture> {
     actorUserId: USER_MAKER,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `submit-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   const approveOutcome = await approveRoiCase({
     caseId,
     organizationId: ORG_ID,
@@ -200,7 +201,8 @@ async function buildForecastedCase(suffix: string): Promise<VarianceFixture> {
     approverId: USER_APPROVER,
     actorEffectiveRole: 'admin',
     idempotencyKey: `approve-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   const trackingOutcome = await startRoiCaseTracking({
     caseId,
     organizationId: ORG_ID,

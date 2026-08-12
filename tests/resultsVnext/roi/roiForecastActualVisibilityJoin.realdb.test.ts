@@ -330,7 +330,8 @@ describe('ROI-E004 forecast/actual/variance visibility-join regression (real Pos
       actorUserId: USER_MAKER,
       actorEffectiveRole: 'consultant',
       idempotencyKey: `submit-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const approveOutcome = await approveRoiCase({
       caseId,
       organizationId: ORG_ID,
@@ -338,7 +339,8 @@ describe('ROI-E004 forecast/actual/variance visibility-join regression (real Pos
       approverId: USER_APPROVER,
       actorEffectiveRole: 'admin',
       idempotencyKey: `approve-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const trackingOutcome = await startRoiCaseTracking({
       caseId,
       organizationId: ORG_ID,

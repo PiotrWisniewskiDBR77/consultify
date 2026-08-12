@@ -180,7 +180,8 @@ async function buildApprovedCase(initiativeSuffix: string): Promise<{ caseId: st
     actorUserId: USER_MAKER,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `submit-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   const approveOutcome = await approveRoiCase({
     caseId,
     organizationId: ORG_ID,
@@ -188,7 +189,8 @@ async function buildApprovedCase(initiativeSuffix: string): Promise<{ caseId: st
     approverId: USER_APPROVER,
     actorEffectiveRole: 'admin',
     idempotencyKey: `approve-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
   return { caseId, ownerUserId: USER_MAKER, rowVersion: approveOutcome.resultingVersion };
 }

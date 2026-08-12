@@ -409,7 +409,8 @@ describe('ROI-E003 approval-driven freeze/unfreeze — real Postgres', () => {
         actorUserId: USER_MAKER,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `submit-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
       const approveOutcome = await approveRoiCase({
         caseId: fixture.caseId,
@@ -418,7 +419,8 @@ describe('ROI-E003 approval-driven freeze/unfreeze — real Postgres', () => {
         approverId: USER_APPROVER,
         actorEffectiveRole: 'admin',
         idempotencyKey: `approve-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
       await expectAllFrozen(fixture);
 
@@ -454,7 +456,8 @@ describe('ROI-E003 approval-driven freeze/unfreeze — real Postgres', () => {
         actorEffectiveRole: 'consultant',
         reason: 'Reopening to prove unfreeze',
         idempotencyKey: `reopen-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
       await expectAllUnfrozen(fixture);
 
@@ -498,7 +501,8 @@ describe('ROI-E003 approval-driven freeze/unfreeze — real Postgres', () => {
       actorUserId: USER_MAKER,
       actorEffectiveRole: 'consultant',
       idempotencyKey: `submit-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
     const rejectOutcome = await rejectRoiCase({
       caseId: fixture.caseId,
@@ -508,7 +512,8 @@ describe('ROI-E003 approval-driven freeze/unfreeze — real Postgres', () => {
       rejectionReason: 'Numbers do not add up',
       actorEffectiveRole: 'admin',
       idempotencyKey: `reject-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     expect(rejectOutcome.result.status).toBe('rejected');
     expect(rejectOutcome.result.rejectionReason).toBe('Numbers do not add up');
 
@@ -533,7 +538,8 @@ describe('ROI-E003 approval-driven freeze/unfreeze — real Postgres', () => {
       actorUserId: USER_MAKER,
       actorEffectiveRole: 'consultant',
       idempotencyKey: `submit-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
     const changesOutcome = await requestChangesOnRoiCase({
       caseId: fixture.caseId,
@@ -543,7 +549,8 @@ describe('ROI-E003 approval-driven freeze/unfreeze — real Postgres', () => {
       changeRequestNotes: 'Please re-verify the benefit assumptions',
       actorEffectiveRole: 'admin',
       idempotencyKey: `changes-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     expect(changesOutcome.result.status).toBe('changes_requested');
     expect(changesOutcome.result.changesRequestedReason).toBe('Please re-verify the benefit assumptions');
 

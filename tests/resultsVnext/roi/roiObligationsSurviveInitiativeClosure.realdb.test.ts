@@ -496,7 +496,8 @@ describe('ROI-E005 AC-02 — ROI obligations survive a REAL Initiative closure (
         actorUserId: USER_OWNER,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `submit-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       const approveRoiOutcome = await approveRoiCase({
         caseId,
         organizationId: ORG_ID,
@@ -504,7 +505,8 @@ describe('ROI-E005 AC-02 — ROI obligations survive a REAL Initiative closure (
         approverId: USER_APPROVER,
         actorEffectiveRole: 'admin',
         idempotencyKey: `approve-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       const trackingOutcome = await startRoiCaseTracking({
         caseId,
         organizationId: ORG_ID,
