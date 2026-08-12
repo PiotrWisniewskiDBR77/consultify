@@ -54,6 +54,7 @@ let reachable = false;
 type ProgramCommandsModule = typeof import('../../../server/src/services/resultsVnext/okr/okrProgramCommands.js');
 type CycleCommandsModule = typeof import('../../../server/src/services/resultsVnext/okr/okrCycleCommands.js');
 type SetCommandsModule = typeof import('../../../server/src/services/resultsVnext/okr/okrSetCommands.js');
+type SetRepositoryModule = typeof import('../../../server/src/services/resultsVnext/okr/okrSetRepository.js');
 type PgModule = typeof import('../../../server/src/database/PostgresDatabase.js');
 
 let createProgram: ProgramCommandsModule['createProgram'];
@@ -68,6 +69,7 @@ let OKR_SET_ACTIVATE_SPEC: SetCommandsModule['OKR_SET_ACTIVATE_SPEC'];
 let OKR_SET_CANCEL_SPEC: SetCommandsModule['OKR_SET_CANCEL_SPEC'];
 let OkrSetNotReadyForSubmissionError: SetCommandsModule['OkrSetNotReadyForSubmissionError'];
 let OkrSetValidationError: SetCommandsModule['OkrSetValidationError'];
+let listOkrSets: SetRepositoryModule['listOkrSets'];
 let closePgPool: (() => Promise<void>) | undefined;
 
 type ObjectiveCommandsModule = typeof import('../../../server/src/services/resultsVnext/okr/okrObjectiveCommands.js');
@@ -172,6 +174,52 @@ async function createProgramAndCycle(): Promise<{ organizationId: string; progra
   return { organizationId, programId: created.result.programId, cycleId: cycle.result.cycleId };
 }
 
+/**
+ * RN-G6 defect 2: same shape as `createProgramAndCycle` above, but with an
+ * explicit `visibilityDefault` so a test can pick the STRICTEST mode
+ * (RESTRICTED_ACL) rather than inheriting `createProgram`'s own default of
+ * 'OPEN_ORG' — under OPEN_ORG every org member sees every Set regardless of
+ * `createOkrSet`'s own visibility-row write, which would make a "creator
+ * sees their own Set" assertion pass even if that write were missing or
+ * broken. RESTRICTED_ACL is the only mode where the assertion actually
+ * exercises `createOkrSet`'s `rvn_platform_resource_visibility` +
+ * `rvn_platform_resource_acl` inserts.
+ */
+async function createProgramAndCycleWithVisibility(
+  visibilityDefault: 'OPEN_ORG' | 'PRIVATE' | 'SCOPE' | 'MANAGEMENT_CHAIN' | 'RESTRICTED_ACL'
+): Promise<{ organizationId: string; programId: string; cycleId: string }> {
+  const organizationId = freshOrgId();
+  const created = await createProgram({
+    organizationId,
+    name: 'Set-lifecycle visibility fixture Program',
+    visibilityDefault,
+    createdBy: USER_ADMIN,
+    actorEffectiveRole: 'admin',
+    idempotencyKey: `create-program-vis-${randomUUID()}`,
+        access: { capabilities: ['*'], platformRole: null },
+});
+  await publishProgram({
+    programId: created.result.programId,
+    organizationId,
+    expectedVersion: created.result.rowVersion,
+    actorUserId: USER_ADMIN,
+    actorEffectiveRole: 'admin',
+    idempotencyKey: `publish-program-vis-${randomUUID()}`,
+        access: { capabilities: ['*'], platformRole: null },
+});
+  const cycle = await createCycle({
+    organizationId,
+    programId: created.result.programId,
+    name: 'Set-lifecycle visibility fixture Cycle',
+    ...baseCycleTimes(),
+    createdBy: USER_ADMIN,
+    actorEffectiveRole: 'admin',
+    idempotencyKey: `create-cycle-vis-${randomUUID()}`,
+        access: { capabilities: ['*'], platformRole: null },
+});
+  return { organizationId, programId: created.result.programId, cycleId: cycle.result.cycleId };
+}
+
 describe('OKR-E002 Set lifecycle — submission guard, full pipeline, cancel, D3 uniqueness (real Postgres)', () => {
   beforeAll(async () => {
     if (!DB_CONFIGURED) {
@@ -214,6 +262,11 @@ describe('OKR-E002 Set lifecycle — submission guard, full pipeline, cancel, D3
     OKR_SET_CANCEL_SPEC = setCommands.OKR_SET_CANCEL_SPEC;
     OkrSetNotReadyForSubmissionError = setCommands.OkrSetNotReadyForSubmissionError;
     OkrSetValidationError = setCommands.OkrSetValidationError;
+
+    const setRepository: SetRepositoryModule = await import(
+      '../../../server/src/services/resultsVnext/okr/okrSetRepository.js'
+    );
+    listOkrSets = setRepository.listOkrSets;
 
     const objectiveCommands: ObjectiveCommandsModule = await import(
       '../../../server/src/services/resultsVnext/okr/okrObjectiveCommands.js'
@@ -281,6 +334,48 @@ describe('OKR-E002 Set lifecycle — submission guard, full pipeline, cancel, D3
   // ==========================================
   // submitOkrSetForApproval — D7 eligibility guard
   // ==========================================
+
+  // ==========================================
+  // RN-G6 defect 2 — "fałszywa pustka": does the creator/owner actually see
+  // the Set it just created on its own list, or does createOkrSet succeed
+  // while `buildVisibilityScopedCte` (used by listOkrSets) silently hides
+  // it? Uses a dedicated Program with visibilityDefault RESTRICTED_ACL (the
+  // strictest mode) — under this mode `listOkrSets` only returns a Set via
+  // its RESTRICTED_ACL branch (owner_user_id ACL grant), so a pass here
+  // proves createOkrSet's atomic transaction really wrote BOTH the
+  // `rvn_platform_resource_visibility` row AND the ACL grant, not just that
+  // visibility is wide open. An unrelated outsider is the negative control.
+  // ==========================================
+
+  itDB(
+    'createOkrSet: the creator/owner sees the Set on listOkrSets immediately after creation ' +
+      '(RESTRICTED_ACL policy — the strictest mode); an unrelated outsider does not',
+    async () => {
+      const { organizationId, programId, cycleId } = await createProgramAndCycleWithVisibility('RESTRICTED_ACL');
+      const owner = `okr-e002-setlife-vis-owner-${randomUUID()}`;
+      const created = await createOkrSet({
+        organizationId,
+        programId,
+        cycleId,
+        scopeType: 'individual',
+        scopeId: owner,
+        ownerUserId: owner,
+        title: 'Creator-visibility fixture Set',
+        createdBy: owner,
+        actorEffectiveRole: 'member',
+        idempotencyKey: `create-set-vis-${randomUUID()}`,
+        access: { capabilities: ['*'], platformRole: null },
+      });
+      const setId = created.result.set.setId;
+
+      const ownerList = await listOkrSets({ userId: owner, organizationId });
+      expect(ownerList.map((s) => s.setId)).toContain(setId);
+
+      const outsider = `okr-e002-setlife-vis-outsider-${randomUUID()}`;
+      const outsiderList = await listOkrSets({ userId: outsider, organizationId });
+      expect(outsiderList.map((s) => s.setId)).not.toContain(setId);
+    }
+  );
 
   itDB('submitOkrSetForApproval rejects with OkrSetNotReadyForSubmissionError when no reviewer is assigned', async () => {
     const { organizationId, programId, cycleId } = await createProgramAndCycle();
