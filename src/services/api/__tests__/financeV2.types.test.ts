@@ -11,6 +11,7 @@ import { describe, expect, it } from 'vitest';
 import {
   describeFinanceV2Error,
   financeValueDisplayReasonLabel,
+  financeValueStatusLabel,
   financeValueToArithmeticOperand,
   formatFinanceValueForDisplay,
   isMissingFinanceValue,
@@ -103,6 +104,41 @@ describe('financeV2.types — formatFinanceValueForDisplay (UI nigdy nie rysuje 
     const display = formatFinanceValueForDisplay(value('PRESENT_NONZERO', '-125000.5'), (n) => n.toString());
     expect(display.text).toBe('-125000.5');
     expect(display.text.startsWith('-')).toBe(true);
+  });
+});
+
+describe('financeV2.types — financeValueStatusLabel (Pakiet D fix: raw enum "PRESENT_NONZERO" no longer leaks to the UI as a label)', () => {
+  it('covers all five FinanceValueStatus values with a non-empty human label', () => {
+    const statuses: FinanceValue['status'][] = ['PRESENT_ZERO', 'PRESENT_NONZERO', 'MISSING', 'NA', 'NOT_APPLICABLE'];
+    for (const status of statuses) {
+      const label = financeValueStatusLabel(status);
+      expect(typeof label).toBe('string');
+      expect(label.length).toBeGreaterThan(0);
+    }
+  });
+
+  it('NEGATIVE CONTROL — all five labels are pairwise distinct (never two different statuses collapsing onto one shared word)', () => {
+    const statuses: FinanceValue['status'][] = ['PRESENT_ZERO', 'PRESENT_NONZERO', 'MISSING', 'NA', 'NOT_APPLICABLE'];
+    const labels = statuses.map((s) => financeValueStatusLabel(s));
+    expect(new Set(labels).size).toBe(statuses.length);
+  });
+
+  it('never returns the raw enum token itself — the whole point of the fix', () => {
+    expect(financeValueStatusLabel('PRESENT_NONZERO')).not.toBe('PRESENT_NONZERO');
+    expect(financeValueStatusLabel('PRESENT_ZERO')).not.toBe('PRESENT_ZERO');
+    expect(financeValueStatusLabel('MISSING')).not.toBe('MISSING');
+    expect(financeValueStatusLabel('NA')).not.toBe('NA');
+    expect(financeValueStatusLabel('NOT_APPLICABLE')).not.toBe('NOT_APPLICABLE');
+  });
+
+  it('MISSING/NA/NOT_APPLICABLE status labels are distinct from their own financeValueDisplayReasonLabel — status and reason render as two separate rows in SourceEvidencePanel and must never show identical text', () => {
+    expect(financeValueStatusLabel('MISSING')).not.toBe(financeValueDisplayReasonLabel('MISSING'));
+    expect(financeValueStatusLabel('NA')).not.toBe(financeValueDisplayReasonLabel('NA'));
+    expect(financeValueStatusLabel('NOT_APPLICABLE')).not.toBe(financeValueDisplayReasonLabel('NOT_APPLICABLE'));
+  });
+
+  it('PRESENT_ZERO and PRESENT_NONZERO labels are distinct from each other — a true zero must read differently from "has a value"', () => {
+    expect(financeValueStatusLabel('PRESENT_ZERO')).not.toBe(financeValueStatusLabel('PRESENT_NONZERO'));
   });
 });
 

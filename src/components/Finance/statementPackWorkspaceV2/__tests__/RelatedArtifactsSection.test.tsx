@@ -17,10 +17,8 @@ import { RelatedArtifactsSection } from '../RelatedArtifactsSection';
 
 function edge(overrides: Partial<LineageEdgeDto> & { edgeId: string; targetVersionId: string }): LineageEdgeDto {
   return {
-    edgeId: overrides.edgeId,
     sourceVersionId: 'bv-statement-pack-1',
     sourceArtifactType: 'STATEMENT_PACK',
-    targetVersionId: overrides.targetVersionId,
     targetArtifactType: 'HISTORICAL_ANALYSIS',
     edgeType: 'derived_from',
     transformationKind: 'analysis_from_statement',

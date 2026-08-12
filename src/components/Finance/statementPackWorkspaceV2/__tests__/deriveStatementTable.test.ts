@@ -11,7 +11,6 @@ import {
 
 function line(overrides: Partial<StatementLineDto> & { stmtLineId: string }): StatementLineDto {
   return {
-    stmtLineId: overrides.stmtLineId,
     statementType: 'P&L',
     canonicalLineId: 'canon-revenue',
     lineCode: 'REVENUE',
@@ -231,7 +230,6 @@ describe('pickHeaderCurrencyAndScale', () => {
 
 function reconRow(overrides: Partial<ReconciliationDetailRowDto> & { id: string }): ReconciliationDetailRowDto {
   return {
-    id: overrides.id,
     canonicalLineId: 'canon-revenue',
     entityId: 'entity-1',
     periodId: 'period-1',

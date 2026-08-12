@@ -128,6 +128,66 @@ export function financeValueDisplayReasonLabel(status: FinanceValueStatus): stri
   }
 }
 
+/**
+ * Ludzka etykieta PL dla `FinanceValueStatus`, dla miejsc renderujących status
+ * WPROST jako pole (np. `SourceEvidencePanel`'s "Status" row w Pakiecie D —
+ * przed tą funkcją renderowało surowy token `cell.value.status`, np.
+ * "PRESENT_NONZERO", jako tekst widoczny dla użytkownika).
+ *
+ * Świadomie ODDZIELNA od `financeValueDisplayReasonLabel` (nie rozszerza jej):
+ * tamta funkcja odpowiada tylko na pytanie "dlaczego liczby nie ma" i celowo
+ * zwraca `null` dla PRESENT_ZERO/PRESENT_NONZERO — jest pomyślana jako
+ * uzupełniający wiersz "Powód braku", widoczny OBOK etykiety statusu, nie
+ * zamiast niej (patrz `SourceEvidencePanel.tsx`, oba wiersze renderują się
+ * razem dla MISSING/NA/NOT_APPLICABLE). Ta funkcja musi pokryć WSZYSTKIE
+ * pięć stanów z jednym krótkim, rozróżnialnym słowem/frazą — inny kontrakt,
+ * inna funkcja, ten sam plik/konwencja (etykiety polskie, zero zależności
+ * od i18n `t()` — ten plik jest czystym TS, używanym też poza komponentami
+ * Reacta, np. `deriveStatementTable.ts`).
+ *
+ * `src/components/Benefits/ValuationWorkspace.tsx`'s `valuationStatusLabel`/
+ * `valuationSourceLabel` (zadanie #110) rozważone i ODRZUCONE jako baza do
+ * rozszerzenia: inny enum (DRAFT/REVIEW/APPROVED — zero wspólnych wartości z
+ * `FinanceValueStatus`), inny język etykiet (angielski, przez `TranslateFn`
+ * `t()`), inna warstwa (komponent React z zależnością od hooka i18n; ten plik
+ * jest współdzielony z czystymi funkcjami derywacji bez dostępu do `t()`).
+ * Wymuszenie tamtej funkcji na tym enumie oznaczałoby albo brak obsługi
+ * wszystkich pięciu wartości (padłoby na domyślną gałąź "Draft"), albo
+ * zaimportowanie zależności i18n do pliku, który jej dziś nie ma. Zamiast
+ * tego ta funkcja PRZEDŁUŻA już istniejącą, poprawną instancję tej samej
+ * klasy defektu W TYM PAKIECIE — `financeValueDisplayReasonLabel` tuż powyżej
+ * — ta sama konwencja (Polski literał, brak `t()`), ten sam plik, ten sam
+ * `FinanceValueStatus`.
+ *
+ * Etykiety celowo różne słowa (nie warianty jednego zdania), żeby użytkownik
+ * odróżnił PRAWDZIWE zero (PRESENT_ZERO) od trzech RÓŻNYCH przyczyn braku
+ * liczby (MISSING = luka źródłowa, NA = analityk oznaczył wprost,
+ * NOT_APPLICABLE = pole strukturalnie nie istnieje) — nigdy jeden wspólny
+ * "brak" dla wszystkich trzech. Etykiety statusu są CELOWO krótsze niż i
+ * TEKSTOWO różne od `financeValueDisplayReasonLabel`'s pełnych zdań — obie
+ * funkcje renderują się OBOK SIEBIE w tym samym wierszu-parze
+ * (Status/"Powód braku"), więc identyczny tekst w obu byłby zarówno
+ * redundantny wizualnie, jak i niejednoznaczny dla zapytań `getByText`.
+ */
+export function financeValueStatusLabel(status: FinanceValueStatus): string {
+  switch (status) {
+    case 'PRESENT_ZERO':
+      return 'Obecna wartość: zero';
+    case 'PRESENT_NONZERO':
+      return 'Obecna wartość';
+    case 'MISSING':
+      return 'Brak danych';
+    case 'NA':
+      return 'Nie dotyczy (analityk)';
+    case 'NOT_APPLICABLE':
+      return 'Nie dotyczy (struktura)';
+    default: {
+      const _exhaustive: never = status;
+      return _exhaustive;
+    }
+  }
+}
+
 export const FinanceArtifactFreshnessValues = [
   'NEVER_COMPUTED',
   'CURRENT',
