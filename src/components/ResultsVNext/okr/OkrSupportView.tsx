@@ -49,6 +49,7 @@ import {
   shortWorkspaceId,
 } from './okrWorkspaceMappers';
 import { formatOkrDate } from './okrRegistryMappers';
+import { toUserFacingErrorMessage } from '../shared/errorMessage';
 
 export interface OkrSupportViewProps {
   set: OkrSetDto;
@@ -113,7 +114,7 @@ export const OkrSupportView: React.FC<OkrSupportViewProps> = ({ set, isPolish, b
     setError(null);
     listSupportRequestsForSet(set.setId)
       .then((rows) => setItems(rows))
-      .catch((err) => setError(err instanceof Error ? err.message : String(err)))
+      .catch((err) => setError(toUserFacingErrorMessage(err, isPolish)))
       .finally(() => setLoading(false));
   }, [set.setId]);
 
@@ -148,7 +149,7 @@ export const OkrSupportView: React.FC<OkrSupportViewProps> = ({ set, isPolish, b
         })
         .catch((err) => {
           setActionConflict(err instanceof OkrWorkspaceApiError && err.status === 409);
-          setActionError(err instanceof Error ? err.message : String(err));
+          setActionError(toUserFacingErrorMessage(err, isPolish));
         })
         .finally(() => setActionBusy(false));
     },
@@ -185,7 +186,7 @@ export const OkrSupportView: React.FC<OkrSupportViewProps> = ({ set, isPolish, b
   const respond = (fn: () => Promise<unknown>) => {
     fn()
       .then(() => load())
-      .catch((err) => setError(err instanceof Error ? err.message : String(err)));
+      .catch((err) => setError(toUserFacingErrorMessage(err, isPolish)));
   };
 
   const bucketCounts = { all: items?.length ?? 0, comment: 0, recognition: 0, support_request: 0 } as Record<
@@ -436,7 +437,7 @@ export const OkrSupportView: React.FC<OkrSupportViewProps> = ({ set, isPolish, b
                     setComposeOpen(false);
                     load();
                   })
-                  .catch((err) => setFormError(err instanceof Error ? err.message : String(err)))
+                  .catch((err) => setFormError(toUserFacingErrorMessage(err, isPolish)))
                   .finally(() => setBusy(false));
               }}
               data-testid="okr-support-compose-submit"

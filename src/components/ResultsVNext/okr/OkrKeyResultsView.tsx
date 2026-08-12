@@ -35,6 +35,7 @@ import { getOkrSetChildEditLock } from './okrObjectiveMappers';
 import { buildOkrKeyResultColumns, buildOkrKeyResultPreview, buildOkrKeyResultRowMenu } from './okrKeyResultPresenters';
 import { OkrCancelDialog } from './OkrCancelDialog';
 import { OkrKeyResultFormModal, type OkrKeyResultFormValues } from './OkrKeyResultFormModal';
+import { toUserFacingErrorMessage } from '../shared/errorMessage';
 
 function resolveCurrentUserIdFromToken(): string | null {
   try {
@@ -85,7 +86,7 @@ export const OkrKeyResultsView: React.FC<OkrKeyResultsViewProps> = ({ set, objec
     setError(null);
     getObjectiveWithKeyResults(objectiveId)
       .then((obj) => setObjective(obj))
-      .catch((err) => setError(err instanceof Error ? err.message : String(err)))
+      .catch((err) => setError(toUserFacingErrorMessage(err, isPolish)))
       .finally(() => setLoading(false));
   }, [objectiveId]);
 
@@ -155,7 +156,7 @@ export const OkrKeyResultsView: React.FC<OkrKeyResultsViewProps> = ({ set, objec
         .catch((err) => {
           const isConflict = err instanceof OkrObjectiveApiError && err.status === 409;
           setFormConflict(isConflict);
-          setFormError(err instanceof Error ? err.message : String(err));
+          setFormError(toUserFacingErrorMessage(err, isPolish));
         })
         .finally(() => setFormBusy(false));
     },
@@ -180,7 +181,7 @@ export const OkrKeyResultsView: React.FC<OkrKeyResultsViewProps> = ({ set, objec
         .catch((err) => {
           const isConflict = err instanceof OkrObjectiveApiError && err.status === 409;
           setCancelConflict(isConflict);
-          setCancelError(err instanceof Error ? err.message : String(err));
+          setCancelError(toUserFacingErrorMessage(err, isPolish));
         })
         .finally(() => setCancelBusy(false));
     },

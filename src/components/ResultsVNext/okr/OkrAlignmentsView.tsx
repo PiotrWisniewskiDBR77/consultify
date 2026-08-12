@@ -51,6 +51,7 @@ import {
 } from './okrWorkspaceApi';
 import { OKR_ALIGNMENT_STATUS_TONE, okrAlignmentStatusLabel, shortWorkspaceId } from './okrWorkspaceMappers';
 import { formatOkrDate } from './okrRegistryMappers';
+import { toUserFacingErrorMessage } from '../shared/errorMessage';
 
 export interface OkrAlignmentsViewProps {
   set: OkrSetDto;
@@ -81,7 +82,7 @@ export const OkrAlignmentsView: React.FC<OkrAlignmentsViewProps> = ({ set, isPol
         setObjectives(rows);
         if (rows.length > 0 && !selectedObjectiveId) setSelectedObjectiveId(rows[0].objectiveId);
       })
-      .catch((err) => setError(err instanceof Error ? err.message : String(err)));
+      .catch((err) => setError(toUserFacingErrorMessage(err, isPolish)));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [set.setId]);
 
@@ -99,7 +100,7 @@ export const OkrAlignmentsView: React.FC<OkrAlignmentsViewProps> = ({ set, isPol
           ...incoming.map((a) => ({ ...a, direction: 'incoming' as const })),
         ]);
       })
-      .catch((err) => setError(err instanceof Error ? err.message : String(err)))
+      .catch((err) => setError(toUserFacingErrorMessage(err, isPolish)))
       .finally(() => setLoading(false));
   }, [selectedObjectiveId]);
 
@@ -110,7 +111,7 @@ export const OkrAlignmentsView: React.FC<OkrAlignmentsViewProps> = ({ set, isPol
   const respond = (fn: () => Promise<unknown>) => {
     fn()
       .then(() => load())
-      .catch((err) => setError(err instanceof Error ? err.message : String(err)));
+      .catch((err) => setError(toUserFacingErrorMessage(err, isPolish)));
   };
 
   const columns: TableColumn[] = [
@@ -280,7 +281,7 @@ export const OkrAlignmentsView: React.FC<OkrAlignmentsViewProps> = ({ set, isPol
                     setProposeOpen(false);
                     load();
                   })
-                  .catch((err) => setFormError(err instanceof Error ? err.message : String(err)))
+                  .catch((err) => setFormError(toUserFacingErrorMessage(err, isPolish)))
                   .finally(() => setBusy(false));
               }}
               data-testid="okr-alignment-propose-submit"

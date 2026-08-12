@@ -18,6 +18,7 @@ import {
   type OkrSetHistoryEntry,
 } from './okrWorkspaceApi';
 import { formatOkrWorkspaceDate, shortWorkspaceId } from './okrWorkspaceMappers';
+import { toUserFacingErrorMessage } from '../shared/errorMessage';
 
 export interface OkrHistoryViewProps {
   set: OkrSetDto;
@@ -46,7 +47,7 @@ export const OkrHistoryView: React.FC<OkrHistoryViewProps> = ({ set, isPolish, b
         setEntries(history.entries);
         setSnapshots(snaps);
       })
-      .catch((err) => setError(err instanceof Error ? err.message : String(err)))
+      .catch((err) => setError(toUserFacingErrorMessage(err, isPolish)))
       .finally(() => setLoading(false));
   }, [set.setId]);
 

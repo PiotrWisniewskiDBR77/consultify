@@ -16,6 +16,7 @@ import { Modal, StatusChip } from '@/components/ui/primitives';
 
 import { ResultsVNextRegistryShell } from '../ResultsVNextRegistryShell';
 import { isResultsVNextFlagEnabled } from '../resultsVNextFeatureFlags';
+import { toUserFacingErrorMessage } from '../shared/errorMessage';
 import {
   createOkrProgram,
   editOkrProgramDraft,
@@ -92,7 +93,7 @@ const OkrProgramsPageContent: React.FC<{ isPolish: boolean }> = ({ isPolish }) =
     setError(null);
     listOkrPrograms()
       .then((rows) => setPrograms(rows))
-      .catch((err) => setError(err instanceof Error ? err.message : String(err)))
+      .catch((err) => setError(toUserFacingErrorMessage(err, isPolish)))
       .finally(() => setLoading(false));
   }, []);
 
@@ -135,7 +136,7 @@ const OkrProgramsPageContent: React.FC<{ isPolish: boolean }> = ({ isPolish }) =
         setFormOpen(false);
         load();
       })
-      .catch((err) => setFormError(err instanceof Error ? err.message : String(err)))
+      .catch((err) => setFormError(toUserFacingErrorMessage(err, isPolish)))
       .finally(() => setBusy(false));
   };
 
@@ -143,7 +144,7 @@ const OkrProgramsPageContent: React.FC<{ isPolish: boolean }> = ({ isPolish }) =
     setError(null);
     publishOkrProgram(p.programId, { expectedVersion: p.rowVersion, idempotencyKey: newOkrAdminIdempotencyKey() })
       .then(() => load())
-      .catch((err) => setError(err instanceof Error ? err.message : String(err)));
+      .catch((err) => setError(toUserFacingErrorMessage(err, isPolish)));
   };
 
   const columns: TableColumn[] = [

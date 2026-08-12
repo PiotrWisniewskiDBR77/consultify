@@ -76,6 +76,7 @@ import { OkrObjectivesView } from './OkrObjectivesView';
 import { OkrKeyResultsView } from './OkrKeyResultsView';
 import { OkrCheckInsView } from './OkrCheckInsView';
 import { OkrSetWorkspace } from './OkrSetWorkspace';
+import { toUserFacingErrorMessage } from '../shared/errorMessage';
 
 type OkrTab = 'org' | 'my' | 'company';
 const OKR_SETS_FETCH_LIMIT = 200;
@@ -132,7 +133,7 @@ export const ResultsOkrHub: React.FC = () => {
           : listCompanyOkrSets({ limit: OKR_SETS_FETCH_LIMIT });
     fetcher
       .then((rows) => setSets(rows))
-      .catch((err) => setError(err instanceof Error ? err.message : String(err)))
+      .catch((err) => setError(toUserFacingErrorMessage(err, isPolish)))
       .finally(() => setLoading(false));
   }, []);
 
