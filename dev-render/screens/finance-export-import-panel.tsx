@@ -18,10 +18,12 @@ import { FINANCE_EXPORT_IMPORT_FLAG_ID } from '../../src/hooks/useFinanceExportI
 const params = new URLSearchParams(window.location.search);
 const scene = (params.get('scene') as 'default' | 'off' | null) ?? 'default';
 
-if (scene !== 'off') {
+// Explicit true/false (not "skip when off") — localStorage persists across page.goto()
+// within the same browser context. See finance-lineage-navigator.tsx for the bug this fixes.
+{
   const raw = window.localStorage.getItem('consultify_feature_flags');
   const overrides = raw ? JSON.parse(raw) : {};
-  overrides[FINANCE_EXPORT_IMPORT_FLAG_ID] = true;
+  overrides[FINANCE_EXPORT_IMPORT_FLAG_ID] = scene !== 'off';
   window.localStorage.setItem('consultify_feature_flags', JSON.stringify(overrides));
 }
 
@@ -58,6 +60,15 @@ function xlsxResponse(): Response {
   });
 }
 
+function json(data: unknown, status = 200): Response {
+  return new Response(JSON.stringify({ data }), { status, headers: { 'Content-Type': 'application/json' } });
+}
+
+const IMPORT_ROWS = [
+  { __rowNumber: 2, entityCode: 'PARENT', canonicalLineId: 'REVENUE', periodLabel: '02/2026', status: 'PRESENT_NONZERO', valueDecimal: '431000' },
+  { __rowNumber: 3, entityCode: 'PARENT', canonicalLineId: 'COGS', periodLabel: '02/2026', status: 'PRESENT_NONZERO', valueDecimal: '-251500' },
+];
+
 const g = window as unknown as { __EXPORT_IMPORT_PANEL_FETCH__?: boolean };
 if (!g.__EXPORT_IMPORT_PANEL_FETCH__) {
   g.__EXPORT_IMPORT_PANEL_FETCH__ = true;
@@ -66,6 +77,36 @@ if (!g.__EXPORT_IMPORT_PANEL_FETCH__) {
     const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
     if (url.includes('/locales/')) return realFetch(input as RequestInfo, init);
     if (url.includes('/export/statement-pack/')) return xlsxResponse();
+    if (url.includes('/import/parse')) {
+      return json({ manifest: SAMPLE_MANIFEST, manifestIssues: [], rows: IMPORT_ROWS });
+    }
+    if (url.includes('/import/preview')) {
+      return json({
+        ok: true,
+        manifestCheck: { ok: true, issues: [] },
+        diff: {
+          toAdd: [],
+          toChange: [
+            {
+              cellKey: 'REVENUE-02/2026',
+              cellRef: {},
+              before: { status: 'PRESENT_NONZERO', valueDecimal: '420000' },
+              after: { rowNumber: 2, cellKey: 'REVENUE-02/2026', cellRef: {}, value: { status: 'PRESENT_NONZERO', valueDecimal: '431000' } },
+            },
+            {
+              cellKey: 'COGS-02/2026',
+              cellRef: {},
+              before: { status: 'PRESENT_NONZERO', valueDecimal: '-243600' },
+              after: { rowNumber: 3, cellKey: 'COGS-02/2026', cellRef: {}, value: { status: 'PRESENT_NONZERO', valueDecimal: '-251500' } },
+            },
+          ],
+          toClear: [],
+          unchangedCount: 370,
+        },
+        rowErrors: [],
+        totalRows: IMPORT_ROWS.length,
+      });
+    }
     if (url.includes('/api/')) return new Response(JSON.stringify({ data: [] }), { status: 200, headers: { 'Content-Type': 'application/json' } });
     return realFetch(input as RequestInfo, init);
   };

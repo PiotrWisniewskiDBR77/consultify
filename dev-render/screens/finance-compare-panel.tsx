@@ -17,10 +17,13 @@ import { FINANCE_COMPARE_FLAG_ID } from '../../src/hooks/useFinanceCompareFlag';
 const params = new URLSearchParams(window.location.search);
 const scene = (params.get('scene') as 'default' | 'off' | null) ?? 'default';
 
-if (scene !== 'off') {
+// Explicit true/false (not "skip when off") — localStorage persists across page.goto()
+// within the same browser context, so a prior scene left ON would leak into this one.
+// See finance-lineage-navigator.tsx for the screenshot review that found this bug.
+{
   const raw = window.localStorage.getItem('consultify_feature_flags');
   const overrides = raw ? JSON.parse(raw) : {};
-  overrides[FINANCE_COMPARE_FLAG_ID] = true;
+  overrides[FINANCE_COMPARE_FLAG_ID] = scene !== 'off';
   window.localStorage.setItem('consultify_feature_flags', JSON.stringify(overrides));
 }
 

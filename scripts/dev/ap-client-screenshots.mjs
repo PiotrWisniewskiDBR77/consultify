@@ -26,6 +26,21 @@ const shots = [
 
   { name: 'export-import-panel-light.png', url: `${BASE}/?screen=finance-export-import-panel&scene=default&theme=light`, wait: 1200 },
   { name: 'export-import-panel-dark.png', url: `${BASE}/?screen=finance-export-import-panel&scene=default&theme=dark`, wait: 1200 },
+  // ★ "PODGLĄDEM RÓŻNIC przed zastosowaniem" — starred requirement. Drives a real
+  // file input (Playwright setInputFiles) so the diff-preview state (toChange rows,
+  // Apply button gated on preview.ok) is actually captured, not just the empty form.
+  {
+    name: 'export-import-panel-preview-light.png',
+    url: `${BASE}/?screen=finance-export-import-panel&scene=default&theme=light`,
+    wait: 1000,
+    importPreviewFlow: true,
+  },
+  {
+    name: 'export-import-panel-preview-dark.png',
+    url: `${BASE}/?screen=finance-export-import-panel&scene=default&theme=dark`,
+    wait: 1000,
+    importPreviewFlow: true,
+  },
 ];
 
 const browser = await chromium.launch();
@@ -40,6 +55,13 @@ for (const shot of shots) {
     continue;
   }
   await page.waitForTimeout(shot.wait);
+  if (shot.importPreviewFlow) {
+    await page.setInputFiles('[data-testid="import-file-input"]', '/private/tmp/claude-501/-Users-piotrwisniewski-Library-Mobile-Documents-com-apple-CloudDocs-Documents-Antygracity-DRD-consultify/325ac9d1-2815-4b57-8a21-237353bc4ba9/scratchpad/dummy-import.xlsx');
+    await page.waitForSelector('[data-testid="import-parsed"]', { timeout: 10000 });
+    await page.click('[data-testid="import-preview-button"]');
+    await page.waitForSelector('[data-testid="import-preview"]', { timeout: 10000 });
+    await page.waitForTimeout(400);
+  }
   const path = `${OUT}/${shot.name}`;
   await page.screenshot({ path, fullPage: true });
   console.log('saved', path);

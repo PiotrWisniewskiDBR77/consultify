@@ -32,10 +32,16 @@ const scene = (params.get('scene') as 'default' | 'error' | 'off' | null) ?? 'de
 
 const BV_FOCUS = 'bv-dbr77-valuation-1';
 
-if (scene !== 'off') {
+// BUG FOUND DURING SCREENSHOT REVIEW (2026-08-12): `consultify_feature_flags` lives in
+// localStorage, which PERSISTS across `page.goto()` calls within the same browser
+// context/origin — an earlier scene (default/error) that set the flag ON left it ON for
+// a later `scene=off` navigation too, so the "flag off" screenshot silently rendered the
+// FULL component instead of proving null-render. Must explicitly set `false` for `off`,
+// not merely skip setting `true`.
+{
   const raw = window.localStorage.getItem('consultify_feature_flags');
   const overrides = raw ? JSON.parse(raw) : {};
-  overrides[FINANCE_LINEAGE_NAVIGATOR_FLAG_ID] = true;
+  overrides[FINANCE_LINEAGE_NAVIGATOR_FLAG_ID] = scene !== 'off';
   window.localStorage.setItem('consultify_feature_flags', JSON.stringify(overrides));
 }
 

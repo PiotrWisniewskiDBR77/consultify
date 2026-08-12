@@ -14,10 +14,12 @@ import { emptyGridViewStateSnapshot } from '../../src/services/api/financeV2.typ
 const params = new URLSearchParams(window.location.search);
 const scene = (params.get('scene') as 'default' | 'off' | null) ?? 'default';
 
-if (scene !== 'off') {
+// Explicit true/false (not "skip when off") — localStorage persists across page.goto()
+// within the same browser context. See finance-lineage-navigator.tsx for the bug this fixes.
+{
   const raw = window.localStorage.getItem('consultify_feature_flags');
   const overrides = raw ? JSON.parse(raw) : {};
-  overrides[FINANCE_SAVED_VIEWS_FLAG_ID] = true;
+  overrides[FINANCE_SAVED_VIEWS_FLAG_ID] = scene !== 'off';
   window.localStorage.setItem('consultify_feature_flags', JSON.stringify(overrides));
 }
 
