@@ -2136,6 +2136,7 @@ router.post(
       const { caseId } = req.params as { caseId: string };
       if (!(await requireExistingRoiCase(auth, caseId, res))) return;
       const body = req.body as import('zod').infer<typeof CreateRoiForecastVersionSchema>;
+      const access = await resolveAccess(req, auth);
       const outcome = await createRoiForecastVersion({
         caseId,
         organizationId: auth.organizationId,
@@ -2146,6 +2147,7 @@ router.post(
         actorEffectiveRole: auth.role,
         idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
         correlationId: getCorrelationId(req),
+        access,
       });
       res.status(outcome.outcome === 'applied' ? 201 : 200).json({
         outcome: outcome.outcome,
@@ -2323,6 +2325,7 @@ router.post(
     try {
       const { entryId } = req.params as { caseId: string; entryId: string };
       const body = req.body as import('zod').infer<typeof CorrectActualEntrySchema>;
+      const access = await resolveAccess(req, auth);
       const outcome = await correctActualEntry({
         actualEntryId: entryId,
         organizationId: auth.organizationId,
@@ -2333,6 +2336,7 @@ router.post(
         actorEffectiveRole: auth.role,
         idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
         correlationId: getCorrelationId(req),
+        access,
       });
       res.status(outcome.outcome === 'applied' ? 201 : 200).json({
         outcome: outcome.outcome,
@@ -2356,6 +2360,7 @@ router.post(
     try {
       const { entryId } = req.params as { caseId: string; entryId: string };
       const body = req.body as import('zod').infer<typeof VerifyActualEntrySchema>;
+      const access = await resolveAccess(req, auth);
       const outcome = await verifyActualEntry({
         actualEntryId: entryId,
         organizationId: auth.organizationId,
@@ -2364,6 +2369,7 @@ router.post(
         idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
         correlationId: getCorrelationId(req),
         notes: body.notes,
+        access,
       });
       res.status(outcome.outcome === 'applied' ? 201 : 200).json({
         outcome: outcome.outcome,
@@ -2387,6 +2393,7 @@ router.post(
     try {
       const { entryId } = req.params as { caseId: string; entryId: string };
       const body = req.body as import('zod').infer<typeof DisputeActualEntrySchema>;
+      const access = await resolveAccess(req, auth);
       const outcome = await disputeActualEntry({
         actualEntryId: entryId,
         organizationId: auth.organizationId,
@@ -2395,6 +2402,7 @@ router.post(
         actorEffectiveRole: auth.role,
         idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
         correlationId: getCorrelationId(req),
+        access,
       });
       res.status(outcome.outcome === 'applied' ? 201 : 200).json({
         outcome: outcome.outcome,
