@@ -121,6 +121,13 @@ function baseInput(overrides: Record<string, unknown> = {}) {
     approverId: 'user-approver',
     actorEffectiveRole: 'admin',
     idempotencyKey: 'idem-1',
+    // RN-G5: this suite tests approveDefinitionVersion's SELF-APPROVAL
+    // logic, not the command-capability guard — give every case the
+    // wildcard so the RBAC gate always ALLOWs (fakeQuery's fallthrough
+    // returns no owner row for the new "SELECT owner_user_id ..." lookup,
+    // which without the wildcard would DENY every scenario here for the
+    // wrong reason).
+    access: { capabilities: ['*'], platformRole: null },
     ...overrides,
   };
 }

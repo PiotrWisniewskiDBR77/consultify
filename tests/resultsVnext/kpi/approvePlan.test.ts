@@ -114,6 +114,12 @@ function baseInput(overrides: Record<string, unknown> = {}) {
     approverId: 'user-approver',
     actorEffectiveRole: 'admin',
     idempotencyKey: 'idem-1',
+    // RN-G5: this suite tests approvePlan's SELF-APPROVAL logic, not the
+    // command-capability guard (that has its own dedicated coverage in
+    // commandCapabilityGuard.test.ts and the RN-G5 security tests) — give
+    // every case the wildcard so the RBAC gate always ALLOWs and the tests
+    // below keep exercising exactly what they exercised before.
+    access: { capabilities: ['*'], platformRole: null },
     ...overrides,
   };
 }

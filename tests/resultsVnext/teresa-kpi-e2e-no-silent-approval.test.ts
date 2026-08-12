@@ -484,6 +484,12 @@ describe('KPI-E006 — Teresa KPI handoff, no silent approval (real Postgres)', 
           actorEffectiveRole: 'consultant',
           idempotencyKey: randomUUID(),
           reason: 'KPI-E006 e2e self-approval probe',
+          // RN-G5: no capability grant needed here — OWNER_USER_ID is the
+          // case's own owner_user_id (fixture, line ~247), so the RBAC gate
+          // ALLOWs via ownership. This intentionally proves the maker-checker
+          // self-approval denial fires even for someone the RBAC gate itself
+          // would let through — the exact scenario this probe is about.
+          access: { capabilities: [], platformRole: null },
         })
       ).rejects.toBeInstanceOf(DeviationSelfApprovalDeniedError);
 
