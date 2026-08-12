@@ -253,11 +253,10 @@ async function buildApprovedCase(params: {
   const client = pgClient();
   await client.connect();
   try {
-    await client.query(`INSERT INTO initiatives (id, organization_id, name) VALUES ($1, $2, $3)`, [
-      initiativeId,
-      orgId,
-      'RN-G6 fixture initiative',
-    ]);
+    await client.query(
+      `INSERT INTO initiatives (id, organization_id, name, status) VALUES ($1, $2, $3, 'DRAFT')`,
+      [initiativeId, orgId, 'RN-G6 fixture initiative']
+    );
   } finally {
     await client.end();
   }
@@ -436,11 +435,10 @@ async function buildDraftCaseWithLink(params: {
   const client = pgClient();
   await client.connect();
   try {
-    await client.query(`INSERT INTO initiatives (id, organization_id, name) VALUES ($1, $2, $3)`, [
-      initiativeId,
-      orgId,
-      'RN-G6 fixture initiative (draft)',
-    ]);
+    await client.query(
+      `INSERT INTO initiatives (id, organization_id, name, status) VALUES ($1, $2, $3, 'DRAFT')`,
+      [initiativeId, orgId, 'RN-G6 fixture initiative (draft)']
+    );
   } finally {
     await client.end();
   }

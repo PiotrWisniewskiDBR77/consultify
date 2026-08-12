@@ -362,11 +362,10 @@ async function buildApprovedRoiCaseWithMatchingLink(params: {
   const client = pgClient();
   await client.connect();
   try {
-    await client.query(`INSERT INTO initiatives (id, organization_id, name) VALUES ($1, $2, $3)`, [
-      initiativeId,
-      orgId,
-      'RN-G0 gold-flow fixture initiative',
-    ]);
+    await client.query(
+      `INSERT INTO initiatives (id, organization_id, name, status) VALUES ($1, $2, $3, 'DRAFT')`,
+      [initiativeId, orgId, 'RN-G0 gold-flow fixture initiative']
+    );
   } finally {
     await client.end();
   }
