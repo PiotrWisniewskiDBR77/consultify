@@ -40,19 +40,29 @@ import {
   type RoiTransitionId,
 } from './roiRegistryMappers';
 
-/** Kebab display order for the 7 lifecycle transitions this package wires
- * (RN_G2_UI_SCOPE.md §G #16 subset) — decision-zone actions first (approve/
- * reject/request-changes), then the two-step "approved → revision" escape
- * hatch, then the tracking-phase transitions (start-pir/close), with `cancel`
- * last (broadest `fromStatuses`, most cases in the flow could theoretically
- * show it eligible only very late — closest in spirit to an ending action,
- * though it stays in the `statusTransitions` zone, not `destructive`, since
- * it is a real lifecycle status, not a delete). */
+/** Kebab display order for the lifecycle transitions this package wires
+ * (RN_G2_UI_SCOPE.md §G #16 subset, 7 transitions) — decision-zone actions
+ * first (approve/reject/request-changes), then the two-step "approved →
+ * revision" escape hatch, then the tracking-phase transitions (start-pir/
+ * close), with `cancel` last (broadest `fromStatuses`, most cases in the
+ * flow could theoretically show it eligible only very late — closest in
+ * spirit to an ending action, though it stays in the `statusTransitions`
+ * zone, not `destructive`, since it is a real lifecycle status, not a
+ * delete). PLUS (RN-G6-C2): `start_modeling`/`ready_for_review` prepended —
+ * the two earliest-lifecycle transitions (draft → modeling → ready for
+ * review), added after the fact once the gold-flow run found they had no
+ * frontend caller at all (see `roiApi.ts` header comment). */
 const ROI_TRANSITION_ORDER: RoiTransitionId[] = [
+  'start_modeling',
+  'ready_for_review',
+  'submit_for_approval',
   'approve',
   'reject',
   'request_changes',
   'reopen_for_revision',
+  'start_tracking',
+  'start_benefits_realization',
+  'mark_pir_due',
   'start_pir',
   'close',
   'cancel',

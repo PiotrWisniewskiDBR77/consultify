@@ -324,6 +324,26 @@ export function formatRoiDate(value: string | null, isPolish: boolean): string {
 // server's own status guard, NOT inferred/invented — citations point at the
 // exact guard line so a reviewer can diff this table against the code:
 //
+// PLUS (RN-G6-C2) start_modeling/ready_for_review — see `roiApi.ts`'s
+// header comment on `startModelingRoiCase`/`markRoiCaseReadyForReview` for
+// why these two were added: the endpoints existed server-side but had no
+// frontend caller, leaving every newly-created case permanently stuck in
+// `draft` with no UI path to a calculation-run-eligible status.
+//
+//  - start-modeling     : status !== 'draft' → reject
+//                          `server/src/services/resultsVnext/roi/roiCaseCommands.ts` L977 (fromStatuses)
+//  - ready-for-review    : status !== 'modeling' → reject (+ economic-model guard:
+//                          successful/fresh calc run, no unresolved double-counting)
+//                          same file L991-999
+//  - submit-for-approval : status not in ('ready_for_review','changes_requested')
+//                          → reject (+ SAME economic-model guard re-checked)
+//                          `server/src/services/resultsVnext/roi/roiCaseApprovalCommands.ts` L236-254
+//  - start-tracking      : status !== 'approved' → reject
+//                          `server/src/services/resultsVnext/roi/roiTrackingCommands.ts` L106
+//  - start-benefits-realization : status !== 'tracking' → reject
+//                          `server/src/services/resultsVnext/roi/roiBenefitsRealizationCommands.ts` L143
+//  - mark-pir-due        : status !== 'benefits_realization' → reject
+//                          `server/src/services/resultsVnext/roi/roiPirCommands.ts` L353
 //  - approve            : status !== 'submitted_for_approval' → reject
 //                          `server/src/services/resultsVnext/roi/roiCaseApprovalCommands.ts` L347
 //  - reject              : status !== 'submitted_for_approval' → reject
@@ -350,10 +370,16 @@ export function formatRoiDate(value: string | null, isPolish: boolean): string {
 // ==========================================
 
 export type RoiTransitionId =
+  | 'start_modeling'
+  | 'ready_for_review'
+  | 'submit_for_approval'
   | 'approve'
   | 'reject'
   | 'request_changes'
   | 'reopen_for_revision'
+  | 'start_tracking'
+  | 'start_benefits_realization'
+  | 'mark_pir_due'
   | 'cancel'
   | 'start_pir'
   | 'close';
@@ -387,6 +413,36 @@ const ROI_TRACKING_ACTIVE_STATUSES_FOR_TRANSITIONS: readonly RoiCaseStatus[] = [
 ];
 
 export const ROI_TRANSITIONS: Record<RoiTransitionId, RoiTransitionDefinition> = {
+  start_modeling: {
+    id: 'start_modeling',
+    label: { pl: 'Rozpocznij modelowanie', en: 'Start modeling' },
+    fromStatuses: ['draft'],
+    reasonRequired: false,
+    disabledReason: {
+      pl: 'Rozpoczęcie modelowania dostępne tylko dla sprawy w statusie „Szkic”.',
+      en: 'Starting modeling is only available for a case in Draft status.',
+    },
+  },
+  ready_for_review: {
+    id: 'ready_for_review',
+    label: { pl: 'Oznacz jako gotowe do przeglądu', en: 'Mark ready for review' },
+    fromStatuses: ['modeling'],
+    reasonRequired: false,
+    disabledReason: {
+      pl: 'Dostępne tylko w statusie „Modelowanie”, po udanym przebiegu kalkulacji.',
+      en: 'Only available while Modeling, after a successful calculation run.',
+    },
+  },
+  submit_for_approval: {
+    id: 'submit_for_approval',
+    label: { pl: 'Zgłoś do zatwierdzenia', en: 'Submit for approval' },
+    fromStatuses: ['ready_for_review', 'changes_requested'],
+    reasonRequired: false,
+    disabledReason: {
+      pl: 'Dostępne tylko w statusie „Gotowe do przeglądu” lub „Poproszono o poprawki”.',
+      en: 'Only available while Ready for review or Changes requested.',
+    },
+  },
   approve: {
     id: 'approve',
     label: { pl: 'Zaakceptuj', en: 'Approve' },
@@ -425,6 +481,36 @@ export const ROI_TRANSITIONS: Record<RoiTransitionId, RoiTransitionDefinition> =
     disabledReason: {
       pl: 'Ponowne otwarcie do rewizji dostępne tylko dla sprawy zaakceptowanej.',
       en: 'Reopening for revision is only available for an approved case.',
+    },
+  },
+  start_tracking: {
+    id: 'start_tracking',
+    label: { pl: 'Rozpocznij śledzenie', en: 'Start tracking' },
+    fromStatuses: ['approved'],
+    reasonRequired: false,
+    disabledReason: {
+      pl: 'Rozpoczęcie śledzenia dostępne tylko dla sprawy zaakceptowanej.',
+      en: 'Starting tracking is only available for an approved case.',
+    },
+  },
+  start_benefits_realization: {
+    id: 'start_benefits_realization',
+    label: { pl: 'Rozpocznij realizację korzyści', en: 'Start benefits realization' },
+    fromStatuses: ['tracking'],
+    reasonRequired: false,
+    disabledReason: {
+      pl: 'Dostępne tylko w statusie „Śledzenie”.',
+      en: 'Only available while Tracking.',
+    },
+  },
+  mark_pir_due: {
+    id: 'mark_pir_due',
+    label: { pl: 'Oznacz PIR jako wymagany', en: 'Mark PIR due' },
+    fromStatuses: ['benefits_realization'],
+    reasonRequired: false,
+    disabledReason: {
+      pl: 'Dostępne tylko w statusie „Realizacja korzyści”.',
+      en: 'Only available while Benefits realization.',
     },
   },
   cancel: {
