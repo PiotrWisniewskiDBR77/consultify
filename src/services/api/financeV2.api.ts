@@ -14,7 +14,7 @@
  */
 
 import { fetchWithRetry, getHeaders, handleResponse } from './baseClient';
-import { v8Get, v8Post } from './v8/client';
+import { v8Get, v8Patch, v8Post, v8Put } from './v8/client';
 import type {
   FinanceApproveModelResultDto,
   FinanceArtifactDetailDto,
@@ -29,6 +29,25 @@ import type {
   FinanceReopenModelResultDto,
   FinanceTransitionResultDto,
   LifecycleAction,
+  ValuationAdvisorFindingStoredDto,
+  ValuationAdvisorGenerateResultDto,
+  ValuationBridgeComponentInput,
+  ValuationBridgeReadDto,
+  ValuationBridgeWriteResultDto,
+  ValuationCaseDetailDto,
+  ValuationCaseDto,
+  ValuationComputeDcfResultDto,
+  ValuationCompareVariantsResultDto,
+  ValuationLineageDto,
+  ValuationMethodDto,
+  ValuationMethodType,
+  ValuationResultsDto,
+  ValuationSensitivityGridRawDto,
+  ValuationSensitivityWriteResultDto,
+  ValuationTerminalRowRawDto,
+  ValuationVariantDto,
+  ValuationWaccInputsRawDto,
+  ValuationWeightedRecommendationDto,
 } from './financeV2.types';
 
 const BASE = '/finance-v2';
@@ -251,6 +270,246 @@ export async function reopenFinanceModel(
   );
 }
 
+// ---------------------------------------------------------------------------
+// --- PKG-H Valuation --- valuation.routes.ts (Pakiet B3, UNVERIFIED_WIP @ 9604652e27)
+//
+// Typed client for the 21 `/finance-v2/valuation/*` endpoints. Shapes ported in
+// `./financeV2.types` (§ PKG-H Valuation) — several read endpoints return raw snake_case DB rows
+// (documented there, not silently re-mapped here: this client is a thin wrapper, same
+// "router-only, no domain logic" discipline the server side documents for itself).
+// ---------------------------------------------------------------------------
+
+// --- 1. Cases + Variants ---
+
+export async function createValuationCase(params: { name: string; description?: string | null }): Promise<ValuationCaseDto> {
+  return v8Post<ValuationCaseDto>(`${BASE}/valuation/cases`, { name: params.name, description: params.description ?? null });
+}
+
+export async function listValuationCases(): Promise<ValuationCaseDto[]> {
+  return v8Get<ValuationCaseDto[]>(`${BASE}/valuation/cases`);
+}
+
+export async function getValuationCase(caseId: string): Promise<ValuationCaseDetailDto> {
+  return v8Get<ValuationCaseDetailDto>(`${BASE}/valuation/cases/${encodeURIComponent(caseId)}`);
+}
+
+export interface CreateValuationVariantParams {
+  caseId: string;
+  /** Must already exist — create via `createFinanceArtifact({artifactType:'VALUATION_CASE'})` first. */
+  businessVersionId: string;
+  name: string;
+  description?: string | null;
+}
+
+export async function createValuationVariant(params: CreateValuationVariantParams): Promise<ValuationVariantDto> {
+  return v8Post<ValuationVariantDto>(`${BASE}/valuation/cases/${encodeURIComponent(params.caseId)}/variants`, {
+    businessVersionId: params.businessVersionId,
+    name: params.name,
+    description: params.description ?? null,
+  });
+}
+
+export async function getValuationVariant(businessVersionId: string): Promise<ValuationVariantDto> {
+  return v8Get<ValuationVariantDto>(`${BASE}/valuation/variants/${encodeURIComponent(businessVersionId)}`);
+}
+
+export async function renameValuationVariant(
+  businessVersionId: string,
+  params: { name?: string; description?: string | null }
+): Promise<ValuationVariantDto> {
+  return v8Patch<ValuationVariantDto>(`${BASE}/valuation/variants/${encodeURIComponent(businessVersionId)}`, params);
+}
+
+export interface CompareValuationVariantsParams {
+  caseId: string;
+  variantIdA: string;
+  variantIdB: string;
+  /** Default false (pure read). `true` also writes the comparison findings against variant A, pre-approval (DEC-FIN-006). */
+  persist?: boolean;
+}
+
+export async function compareValuationVariants(params: CompareValuationVariantsParams): Promise<ValuationCompareVariantsResultDto> {
+  return v8Post<ValuationCompareVariantsResultDto>(`${BASE}/valuation/cases/${encodeURIComponent(params.caseId)}/compare-variants`, {
+    variantIdA: params.variantIdA,
+    variantIdB: params.variantIdB,
+    persist: params.persist === true,
+  });
+}
+
+// --- 2. Methods + weighted recommendation basket ---
+
+export async function listValuationMethods(
+  businessVersionId: string
+): Promise<{ methods: ValuationMethodDto[]; weightedRecommendation: ValuationWeightedRecommendationDto }> {
+  return v8Get(`${BASE}/valuation/variants/${encodeURIComponent(businessVersionId)}/methods`);
+}
+
+export async function createValuationMethod(
+  businessVersionId: string,
+  params: { methodType: ValuationMethodType; applicabilityPolicyRef?: string | null }
+): Promise<ValuationMethodDto> {
+  return v8Post<ValuationMethodDto>(`${BASE}/valuation/variants/${encodeURIComponent(businessVersionId)}/methods`, params);
+}
+
+export interface ValuationBasketUpdate {
+  methodId: string;
+  isInRecommendationBasket: boolean;
+  /** Required (> 0) when `isInRecommendationBasket` is true; must be `null`/omitted otherwise — server rejects a mismatch with 400 before the DB CHECK would (DEC-FIN-005). */
+  weightPct: number | null;
+}
+
+/** Atomic batch — the basket's weight sum (100%) is validated ONCE across every update in this call, not per-PATCH (DEFERRABLE trigger at COMMIT). Sends ONE request for the whole rebalance, never N one-method calls. */
+export async function setValuationMethodBasketWeights(
+  businessVersionId: string,
+  updates: ValuationBasketUpdate[]
+): Promise<{ methods: ValuationMethodDto[]; weightedRecommendation: ValuationWeightedRecommendationDto }> {
+  return v8Post(`${BASE}/valuation/variants/${encodeURIComponent(businessVersionId)}/methods/basket`, { updates });
+}
+
+// --- 3. WACC inputs ---
+
+export async function getValuationWaccInputs(businessVersionId: string): Promise<ValuationWaccInputsRawDto> {
+  return v8Get<ValuationWaccInputsRawDto>(`${BASE}/valuation/variants/${encodeURIComponent(businessVersionId)}/wacc-inputs`);
+}
+
+export interface UpsertValuationWaccInputsParams {
+  currency: string;
+  nominalOrReal: 'NOMINAL' | 'REAL';
+  preOrPostTax: 'PRE_TAX' | 'POST_TAX';
+  riskFreeRatePct?: number | null;
+  equityRiskPremiumPct?: number | null;
+  betaPeerSetRef?: string | null;
+  betaUnlevered?: number | null;
+  targetCapitalStructureDebtPct?: number | null;
+  targetCapitalStructureEquityPct?: number | null;
+  currentCapitalStructureDebtPct?: number | null;
+  currentCapitalStructureEquityPct?: number | null;
+  costOfDebtPretaxPct?: number | null;
+  creditSpreadPct?: number | null;
+  cashTaxRatePct?: number | null;
+}
+
+/** Server response is the raw upserted row (same shape as GET) despite this being a write — see inconsistency note in financeV2.types.ts. */
+export async function upsertValuationWaccInputs(
+  businessVersionId: string,
+  params: UpsertValuationWaccInputsParams
+): Promise<ValuationWaccInputsRawDto> {
+  return v8Put<ValuationWaccInputsRawDto>(`${BASE}/valuation/variants/${encodeURIComponent(businessVersionId)}/wacc-inputs`, params);
+}
+
+// --- 4. Compute (DCF/FCFF) + full Results ---
+
+export interface RunValuationDcfComputeParams {
+  businessVersionId: string;
+  entityId: string;
+  projectionYears: { fiscalYear: number; periodIds: string[] }[];
+  terminalGPct: number;
+  engineManifestId?: string;
+  requestId?: string | null;
+  openingWorkingCapital?: number | null;
+}
+
+export async function runValuationDcfCompute(params: RunValuationDcfComputeParams): Promise<ValuationComputeDcfResultDto> {
+  return v8Post<ValuationComputeDcfResultDto>(`${BASE}/valuation/variants/${encodeURIComponent(params.businessVersionId)}/compute/dcf`, {
+    entityId: params.entityId,
+    projectionYears: params.projectionYears,
+    terminal: { gPct: params.terminalGPct },
+    engineManifestId: params.engineManifestId,
+    requestId: params.requestId ?? null,
+    openingWorkingCapital: params.openingWorkingCapital ?? null,
+  });
+}
+
+/** The "Results" step's single call — EV, Equity, weighted range, per-method breakdown, WACC, terminal, bridge, sensitivity grids, method-agreement warnings. */
+export async function getValuationResults(businessVersionId: string): Promise<ValuationResultsDto> {
+  return v8Get<ValuationResultsDto>(`${BASE}/valuation/variants/${encodeURIComponent(businessVersionId)}/results`);
+}
+
+// --- 5. EV -> Equity bridge ---
+
+export async function getValuationBridge(businessVersionId: string): Promise<ValuationBridgeReadDto> {
+  return v8Get<ValuationBridgeReadDto>(`${BASE}/valuation/variants/${encodeURIComponent(businessVersionId)}/bridge`);
+}
+
+export interface WriteValuationBridgeParams {
+  businessVersionId: string;
+  asOfDate: string;
+  enterpriseValueDecimal: number;
+  components: ValuationBridgeComponentInput[];
+}
+
+export async function writeValuationBridge(params: WriteValuationBridgeParams): Promise<ValuationBridgeWriteResultDto> {
+  return v8Put<ValuationBridgeWriteResultDto>(`${BASE}/valuation/variants/${encodeURIComponent(params.businessVersionId)}/bridge`, {
+    asOfDate: params.asOfDate,
+    enterpriseValueDecimal: params.enterpriseValueDecimal,
+    components: params.components,
+  });
+}
+
+// --- 6. Terminal value (read) + Sensitivity 5x5 ---
+
+export async function listValuationTerminalRows(methodId: string): Promise<ValuationTerminalRowRawDto[]> {
+  return v8Get<ValuationTerminalRowRawDto[]>(`${BASE}/valuation/methods/${encodeURIComponent(methodId)}/terminal`);
+}
+
+export interface BuildValuationSensitivityGridParams {
+  methodId: string;
+  gridLabel: string;
+  rowAxisVariable: string;
+  columnAxisVariable: string;
+  /** Exactly 5 ascending values — server rejects any other length with 400 (DEC-FIN-005 / OWN-FIN-002). */
+  waccAxis: [number, number, number, number, number];
+  /** Exactly 5 ascending values. */
+  terminalGAxis: [number, number, number, number, number];
+  years: { fiscalYear: number; fcff: number }[];
+  fcffTerminalYear: number;
+  baseWaccPct: number;
+  baseGPct: number;
+}
+
+export async function buildValuationSensitivityGrid(params: BuildValuationSensitivityGridParams): Promise<ValuationSensitivityWriteResultDto> {
+  return v8Post<ValuationSensitivityWriteResultDto>(`${BASE}/valuation/methods/${encodeURIComponent(params.methodId)}/sensitivity`, {
+    gridLabel: params.gridLabel,
+    rowAxisVariable: params.rowAxisVariable,
+    columnAxisVariable: params.columnAxisVariable,
+    axes: { wacc: params.waccAxis, terminalG: params.terminalGAxis },
+    years: params.years,
+    fcffTerminalYear: params.fcffTerminalYear,
+    baseWaccPct: params.baseWaccPct,
+    baseGPct: params.baseGPct,
+  });
+}
+
+export async function getValuationSensitivityGrid(methodId: string, gridLabel: string): Promise<ValuationSensitivityGridRawDto> {
+  return v8Get<ValuationSensitivityGridRawDto>(
+    `${BASE}/valuation/methods/${encodeURIComponent(methodId)}/sensitivity/${encodeURIComponent(gridLabel)}`
+  );
+}
+
+// --- 7. Advisor (pre-approval only, DEC-FIN-006) ---
+
+export async function generateValuationAdvisorOutput(
+  businessVersionId: string,
+  opts: { persist?: boolean } = {}
+): Promise<ValuationAdvisorGenerateResultDto> {
+  return v8Post<ValuationAdvisorGenerateResultDto>(`${BASE}/valuation/variants/${encodeURIComponent(businessVersionId)}/advisor/generate`, {
+    persist: opts.persist !== false,
+  });
+}
+
+export async function listValuationAdvisorOutputs(businessVersionId: string): Promise<ValuationAdvisorFindingStoredDto[]> {
+  return v8Get<ValuationAdvisorFindingStoredDto[]>(`${BASE}/valuation/variants/${encodeURIComponent(businessVersionId)}/advisor`);
+}
+
+// --- Cross-cutting, needed by the "Source" step (crosscutting.routes.ts, not Valuation-owned) ---
+
+export async function getFinanceVersionLineage(businessVersionId: string, maxDepth?: number): Promise<ValuationLineageDto> {
+  const qs = typeof maxDepth === 'number' ? `?maxDepth=${encodeURIComponent(String(maxDepth))}` : '';
+  return v8Get<ValuationLineageDto>(`${BASE}/versions/${encodeURIComponent(businessVersionId)}/lineage${qs}`);
+}
+
+// --- /PKG-H Valuation ---
+
 export const FinanceV2Api = {
   createFinanceArtifact,
   getFinanceArtifact,
@@ -265,4 +524,27 @@ export const FinanceV2Api = {
   pollFinanceComputeJobUntilSettled,
   approveFinanceModel,
   reopenFinanceModel,
+  // --- PKG-H Valuation ---
+  createValuationCase,
+  listValuationCases,
+  getValuationCase,
+  createValuationVariant,
+  getValuationVariant,
+  renameValuationVariant,
+  compareValuationVariants,
+  listValuationMethods,
+  createValuationMethod,
+  setValuationMethodBasketWeights,
+  getValuationWaccInputs,
+  upsertValuationWaccInputs,
+  runValuationDcfCompute,
+  getValuationResults,
+  getValuationBridge,
+  writeValuationBridge,
+  listValuationTerminalRows,
+  buildValuationSensitivityGrid,
+  getValuationSensitivityGrid,
+  generateValuationAdvisorOutput,
+  listValuationAdvisorOutputs,
+  getFinanceVersionLineage,
 };
