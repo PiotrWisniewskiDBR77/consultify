@@ -14,7 +14,7 @@
  */
 
 import { fetchWithRetry, getHeaders, handleResponse } from './baseClient';
-import { v8Get, v8Patch, v8Post, v8PostMultipart, v8Put } from './v8/client';
+import { v8Delete, v8Get, v8Patch, v8Post, v8PostMultipart, v8Put } from './v8/client';
 import type {
   AnalysisComputeResultDto,
   AnalysisKpiCatalogEntryDto,
@@ -118,24 +118,6 @@ async function v8PostRawBody<T>(
     body: body ? JSON.stringify(body) : undefined,
   });
   return handleResponse<T>(res, `V8 POST ${path}`);
-}
-
-/**
- * `v8Delete` (src/services/api/v8/client.ts) unconditionally reads `json.data` off whatever
- * `handleResponse` returns — but `handleResponse` returns `null` (not `{data}`) for a genuine
- * 204 No Content, so `v8Delete` crashes with `Cannot read properties of null (reading 'data')`
- * on any endpoint that really answers 204 (measured against a mocked 204 in this pakiet's own
- * test — `deleteFinanceSavedView` is `saved-views.routes.ts`'s `DELETE /saved-views/:id`, which
- * really does `res.status(204).send()`, no body at all). Flagged as a shared-file bug (out of
- * this pakiet's "add-only" scope — see `AP_CLIENT_report.md`), NOT fixed in `v8/client.ts`
- * itself to avoid touching code five other agents may depend on; this local helper sidesteps it
- * the same way `v8PostRawBody` above sidesteps `v8Post`'s envelope assumption.
- */
-async function v8DeleteExpectNoContent(path: string): Promise<null> {
-  const res = await fetchWithRetry(`${V8_BASE}${path}`, { method: 'DELETE', headers: getHeaders() });
-  if (res.ok) return null;
-  await handleResponse(res, `V8 DELETE ${path}`); // throws for !res.ok — never returns
-  return null;
 }
 
 // ---------------------------------------------------------------------------
@@ -1361,9 +1343,14 @@ export async function updateFinanceSavedView(
   return v8Patch<FinanceSavedViewDto>(`${SAVED_VIEWS_BASE}/${encodeURIComponent(viewId)}`, params);
 }
 
-/** Owner-only niezależnie od `scope`. 204 bez treści — patrz `v8DeleteExpectNoContent` (obejście defektu `v8Delete`). */
+/**
+ * Owner-only niezależnie od `scope`. 204 bez treści — `v8Delete` (src/services/api/v8/client.ts)
+ * poprawnie obsługuje pusty `204 No Content` (naprawione w tej samej sesji, Gate J fix pass); ten
+ * lokalny wrapper obchodzący defekt (`v8DeleteExpectNoContent`) był tylko obejściem i został
+ * usunięty jako zbędny.
+ */
 export async function deleteFinanceSavedView(viewId: string): Promise<null> {
-  return v8DeleteExpectNoContent(`${SAVED_VIEWS_BASE}/${encodeURIComponent(viewId)}`);
+  return v8Delete<null>(`${SAVED_VIEWS_BASE}/${encodeURIComponent(viewId)}`);
 }
 // --- /AP-CLIENT SavedViews ---
 
