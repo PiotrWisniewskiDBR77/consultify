@@ -2958,8 +2958,10 @@ router.post(
         return;
       }
       const body = req.body as import('zod').infer<typeof RequestOkrDecisionSchema>;
+      const access = await resolveAccess(req, auth);
       const outcome = await requestDecisionFromSupportRequest({
         requestId,
+        access,
         organizationId: auth.organizationId,
         expectedVersion: body.expectedVersion,
         requestedDecision: body.requestedDecision,
@@ -3030,6 +3032,7 @@ router.post(
     try {
       const { linkId } = req.params as { linkId: string };
       const body = req.body as import('zod').infer<typeof AcknowledgeOkrDecisionResolutionSchema>;
+      const access = await resolveAccess(req, auth);
       const outcome = await acknowledgeDecisionResolution({
         linkId,
         organizationId: auth.organizationId,
@@ -3039,6 +3042,7 @@ router.post(
         idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
         correlationId: getCorrelationId(req),
         reason: body.reason ?? null,
+        access,
       });
       res.status(200).json({
         outcome: outcome.outcome,

@@ -75,6 +75,7 @@ import {
   type AtomicCommandOutcome,
   type AtomicEventInput,
 } from '../platform/atomicWrite.js';
+import { assertCommandCapability, type CommandAccessContext } from '../platform/commandCapabilityGuard.js';
 
 import { OkrSupportRequestValidationError } from './okrSupportCommands.js';
 import { OKR_EVENT_SOURCE } from './okrProgramCommands.js';
@@ -113,6 +114,12 @@ export class OkrDecisionNotYetResolvedError extends Error {
  * IO-6-approved `DecisionController.createDecision` extension reads/accepts. */
 export const OKR_DECISION_SOURCE_TYPE = 'okr_support_request';
 
+// RN-G5 — command capability names (docs/product/results-vnext/RN_G5_AUTHZ_DESIGN.md).
+export const OKR_DECISION_CAPABILITIES = {
+  requestFromSupportRequest: 'results.okr.decision.request_from_support_request',
+  acknowledgeResolution: 'results.okr.decision.acknowledge_resolution',
+} as const;
+
 const OKR_DECISION_LINK_ELIGIBLE_STATUSES: readonly string[] = ['open', 'acknowledged'];
 
 async function loadDecisionLinkForUpdate(
@@ -150,6 +157,7 @@ export interface RequestDecisionFromSupportRequestInput {
   correlationId?: string;
   causationId?: string | null;
   reason?: string | null;
+  access: CommandAccessContext;
 }
 
 export interface RequestDecisionFromSupportRequestResult {
@@ -173,6 +181,7 @@ export async function requestDecisionFromSupportRequest(
     correlationId,
     causationId = null,
     reason = null,
+    access,
   } = input;
 
   if (!requestedDecision || !requestedDecision.trim()) {
@@ -193,6 +202,14 @@ export async function requestDecisionFromSupportRequest(
       if (!srRow) {
         throw new AtomicWriteAggregateNotFoundError(`Support request ${requestId} not found`);
       }
+
+      assertCommandCapability({
+        access,
+        actorUserId: requestedBy,
+        capability: OKR_DECISION_CAPABILITIES.requestFromSupportRequest,
+        responsibleUserIds: [srRow.created_by, srRow.assigned_to_user_id],
+      });
+
       if (srRow.kind !== 'support_request' || !OKR_DECISION_LINK_ELIGIBLE_STATUSES.includes(srRow.status ?? '')) {
         throw new OkrSupportRequestValidationError(
           `Support request ${requestId} cannot request a Decision from its current state (kind=${srRow.kind}, status=${srRow.status})`,
@@ -314,6 +331,7 @@ export interface AcknowledgeDecisionResolutionInput {
   correlationId?: string;
   causationId?: string | null;
   reason?: string | null;
+  access: CommandAccessContext;
 }
 
 export interface AcknowledgeDecisionResolutionResult {
@@ -336,6 +354,7 @@ export async function acknowledgeDecisionResolution(
     correlationId,
     causationId = null,
     reason = null,
+    access,
   } = input;
 
   let beforeState: Record<string, unknown> | null = null;
@@ -347,6 +366,17 @@ export async function acknowledgeDecisionResolution(
     loadForUpdate: loadDecisionLinkForUpdate,
     getCurrentVersion: decisionLinkRowVersion,
     applyMutation: async (client, currentRow, nextVersion) => {
+      // RN-G5: actorUserId may be null (okrDecisionResolutionScanner.ts's
+      // scheduled/service-actor trigger, this input type's own documented
+      // convention) — same system-wildcard shape as
+      // financeProjectionConsumer.ts/okrCycleScheduler.ts.
+      assertCommandCapability({
+        access,
+        actorUserId: actorUserId ?? '',
+        capability: OKR_DECISION_CAPABILITIES.acknowledgeResolution,
+        responsibleUserIds: [currentRow.requested_by],
+      });
+
       if (currentRow.resolution_acknowledged) {
         throw new OkrSupportRequestValidationError(
           `Decision link ${linkId} resolution was already acknowledged`,

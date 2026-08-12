@@ -23,10 +23,23 @@
  */
 import { acquirePgClient } from '../../../database/PostgresDatabase.js';
 
+import type { CommandAccessContext } from '../platform/commandCapabilityGuard.js';
+
 import { acknowledgeDecisionResolution, OkrDecisionNotYetResolvedError } from './okrDecisionCommands.js';
 import { OkrSupportRequestValidationError } from './okrSupportCommands.js';
 
 export const OKR_DECISION_RESOLUTION_SCANNER_ACTOR = 'system:okr_decision_resolution_scanner';
+
+/** RN-G5 — this scanner is a system/service actor (actorUserId=null, see
+ * this file's own header), not a human/HTTP one. Same shape as
+ * financeProjectionConsumer.ts/okrCycleScheduler.ts's own system access
+ * contexts: the action here is "record an already-true fact" (design
+ * §10.4's own words), not arbitrary input, and the RN-G5 gate still runs
+ * unconditionally. */
+const OKR_DECISION_RESOLUTION_SCANNER_ACCESS: CommandAccessContext = {
+  capabilities: ['*'],
+  platformRole: null,
+};
 
 export interface ScanAndAcknowledgeResolvedDecisionLinksInput {
   organizationId: string;
@@ -85,6 +98,7 @@ export async function scanAndAcknowledgeResolvedDecisionLinks(
         actorUserId: null,
         actorEffectiveRole: 'system',
         idempotencyKey: `okr-decision-resolution-scan:${organizationId}:${row.link_id}:${row.row_version}`,
+        access: OKR_DECISION_RESOLUTION_SCANNER_ACCESS,
       });
       acknowledged += 1;
     } catch (err) {
