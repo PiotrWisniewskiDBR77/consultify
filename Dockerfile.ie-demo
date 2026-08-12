@@ -87,6 +87,14 @@ RUN NODE_OPTIONS="--max-old-space-size=4096" npm run build
 FROM node:20-alpine AS backend-builder
 WORKDIR /app
 
+# The demo release identity is part of the backend build input. Railway may
+# otherwise reuse a compiled `dist/` layer from an older source snapshot even
+# when a locally uploaded deployment carries a new APP_BUILD_SHA. Pinning the
+# value before source compilation invalidates that layer for every exact-SHA
+# candidate, while the runtime still reads APP_BUILD_SHA from the environment.
+ARG APP_BUILD_SHA
+RUN test -n "$APP_BUILD_SHA" && echo "Building backend for $APP_BUILD_SHA"
+
 # Copy root package files first (server dependencies are in root package.json due to monorepo/workspace setup)
 COPY package.json package-lock.json ./
 # Copy server's OWN package.json + package-lock.json into an isolated subdirectory so its
