@@ -141,6 +141,7 @@ const FinanceStatementPackWorkspaceV2Screen = React.lazy(
 );
 const FinanceBaselineWorkspaceScreen = React.lazy(() => import('./screens/finance-baseline-workspace'));
 const FinancePredictionWorkspaceScreen = React.lazy(() => import('./screens/finance-prediction-workspace'));
+const FinanceIdBridgeScreen = React.lazy(() => import('./screens/finance-id-bridge'));
 const FinanceAnalysisWorkspaceScreen = React.lazy(() => import('./screens/finance-analysis-workspace'));
 const FinanceValuationWorkspaceScreen = React.lazy(() => import('./screens/finance-valuation-workspace'));
 const GenDeckContentHintsScreen = React.lazy(() => import('./screens/gen-deck-content-hints'));
@@ -631,8 +632,14 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     render: () => <FinanceBaselineWorkspaceScreen />,
   },
   'finance-prediction-workspace': {
-    label: 'PKG_G — REAL <PredictionWorkspace> (Prediction scenario builder + Modele/Wyniki) — &mode=A|B|C &view=assumptions|results',
+    label:
+      'PKG_G — REAL <PredictionWorkspace> (Prediction scenario builder + Modele/Wyniki) — &mode=A|B|C &view=assumptions|results &bridge=ok|missing|notfound|error (ID_BRIDGE anty-cicha-pustka)',
     render: () => <FinancePredictionWorkspaceScreen />,
+  },
+  'finance-id-bridge': {
+    label:
+      'ID_BRIDGE (Gate E) — REAL <FinanceLegacyBridgeGate> (most legacy->kanoniczny id) — &kind=baseline|prediction|analysis|valuation &state=resolved|missing|quarantined|error',
+    render: () => <FinanceIdBridgeScreen />,
   },
   'finance-analysis-workspace': {
     label:

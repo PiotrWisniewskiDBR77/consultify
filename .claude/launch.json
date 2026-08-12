@@ -304,6 +304,19 @@
         "--strictPort"
       ],
       "port": 58033
+    },
+    {
+      "name": "fv3p-l-idbridge",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "vite",
+        "--config",
+        "dev-render/vite.config.ts",
+        "--port",
+        "58040",
+        "--strictPort"
+      ],
+      "port": 58040
     }
   ]
 }
