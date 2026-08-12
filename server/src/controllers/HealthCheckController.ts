@@ -20,13 +20,20 @@ import { getDatabase } from '../database/Database.js';
  *   the same env vars are already the *sole* source for `announceDeploy()` /
  *   `detectCrashLoop()` in `server/src/index.ts`, which simply fail soft when
  *   they are absent. Local dev now behaves identically: no env, no `gitSha`.
+ * - CLI uploads may carry Railway's source-linked SHA from an older deployment.
+ *   `APP_BUILD_SHA` is the explicit immutable release identity and therefore
+ *   takes precedence when the release operator supplies it.
  *
  * The branch name is intentionally NOT exposed. It is internal information with
  * no consumer; only `gitSha` is read (by deploy verification, which curls
  * `/api/health` and compares the commit). Neither is any filesystem path.
  */
 const PUBLIC_GIT_SHA: string | undefined = (() => {
-  const raw = process.env.RAILWAY_GIT_COMMIT_SHA || process.env.GITHUB_SHA || process.env.GIT_SHA;
+  const raw =
+    process.env.APP_BUILD_SHA ||
+    process.env.RAILWAY_GIT_COMMIT_SHA ||
+    process.env.GITHUB_SHA ||
+    process.env.GIT_SHA;
   // Keep the value byte-identical to what the platform set (deploy checks compare
   // full 40-char SHAs); only trim and bound it so a malformed var cannot bloat
   // the public body.

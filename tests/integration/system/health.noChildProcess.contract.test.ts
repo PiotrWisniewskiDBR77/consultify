@@ -255,4 +255,34 @@ describe('public health surface: no child processes, no internals disclosed', ()
       delete process.env.RAILWAY_GIT_BRANCH;
     }
   });
+
+  it('prefers the explicit release SHA over stale source-linked Railway metadata', async () => {
+    const releaseSha = '1111111111111111111111111111111111111111';
+    const staleRailwaySha = '2222222222222222222222222222222222222222';
+
+    vi.resetModules();
+    process.env.APP_BUILD_SHA = releaseSha;
+    process.env.RAILWAY_GIT_COMMIT_SHA = staleRailwaySha;
+
+    try {
+      const { HealthCheckController } = await import(
+        '../../../server/src/controllers/HealthCheckController'
+      );
+      const probe = express();
+      probe.get('/api/health', (req, res) => {
+        void HealthCheckController.checkHealth(req, res);
+      });
+
+      cp.reset();
+      const res = await request(probe).get('/api/health');
+
+      expect(res.status).toBe(200);
+      expect(res.body.gitSha).toBe(releaseSha);
+      expect(res.body.gitSha).not.toBe(staleRailwaySha);
+      expect(cp.total()).toBe(0);
+    } finally {
+      delete process.env.APP_BUILD_SHA;
+      delete process.env.RAILWAY_GIT_COMMIT_SHA;
+    }
+  });
 });
