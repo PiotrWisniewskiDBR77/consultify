@@ -61,6 +61,11 @@
  * choice that could be designed away without a new GET endpoint (out of this
  * package's allowlist — `server/src/services/resultsVnext/**`/
  * `server/src/routes/resultsVnext/**` are the parallel safety track's files).
+ *
+ * -- RN_G6_P0A (2026-08-12) — added `reviseKpiDefinition`, the fix for the
+ * "a rejected KPI is stuck forever" domain-model defect
+ * (`docs/product/results-vnext/RN_G6_P0A_KPI_REVISION_CONTRACT.md`). See its
+ * own doc comment below.
  */
 import { Api } from '@/services/api';
 
@@ -435,6 +440,38 @@ export async function rejectKpiDefinitionVersion(
       rejectionReason: input.rejectionReason,
       idempotencyKey: input.idempotencyKey,
     }
+  );
+  return resp?.definitionVersion as KpiDefinitionVersionDto;
+}
+
+export interface ReviseKpiDefinitionInput {
+  /** CAS — the REJECTED version's own `rowVersion` (same "must come from a
+   * `KpiDefinitionVersionDto` this client itself received" rule as every
+   * other CAS field on this page — see `EditKpiDraftInput`'s doc comment). */
+  expectedVersion: number;
+  reason?: string | null;
+  idempotencyKey: string;
+}
+
+/**
+ * `POST .../definition-versions/:versionId/revise` — RN_G6_P0A. Fixes the
+ * "a rejected KPI is permanently stuck" defect
+ * (`docs/product/results-vnext/RN_G6_P0A_KPI_REVISION_CONTRACT.md`):
+ * `:versionId` must be the REJECTED version; the server creates a NEW draft
+ * version (`versionNumber = MAX + 1`) with every substantive field copied
+ * from it, and returns that new version — never mutates the rejected one.
+ * 409 with a per-status code (`CANNOT_REVISE_APPROVED`/`CANNOT_REVISE_DRAFT`/
+ * `CANNOT_REVISE_SUBMITTED`) if the indicated version isn't currently
+ * `'rejected'`.
+ */
+export async function reviseKpiDefinition(
+  kpiId: string,
+  versionId: string,
+  input: ReviseKpiDefinitionInput
+): Promise<KpiDefinitionVersionDto> {
+  const resp = await Api.post(
+    `/vnext/results/kpi/${encodeURIComponent(kpiId)}/definition-versions/${encodeURIComponent(versionId)}/revise`,
+    { expectedVersion: input.expectedVersion, reason: input.reason ?? null, idempotencyKey: input.idempotencyKey }
   );
   return resp?.definitionVersion as KpiDefinitionVersionDto;
 }

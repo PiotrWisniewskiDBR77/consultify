@@ -78,6 +78,7 @@ import {
   KpiDefinitionValidationError,
   KpiNoActiveVisibilityPolicyError,
   rejectDefinitionVersion,
+  reviseDefinition,
   SelfApprovalDeniedError,
   submitDefinition,
   suspendKpi,
@@ -124,6 +125,7 @@ import {
   ListMeasurementsQuerySchema,
   RecordMeasurementSchema,
   RejectDefinitionVersionSchema,
+  ReviseDefinitionSchema,
   SubmitDefinitionSchema,
   VerifyMeasurementSchema,
 } from '../../validators/resultsVnextKpi.validators.js';
@@ -596,6 +598,58 @@ router.post(
       });
     } catch (err) {
       handleKpiRouteError(res, err, 'rejectDefinitionVersion');
+    }
+  }
+);
+
+// ==========================================
+// POST .../definition-versions/:versionId/revise — reviseDefinition
+// (RN_G6_P0A — see kpiDefinitionCommands.ts's own doc comment: fixes the
+// "rejected KPI permanently blocked" defect. `:versionId` here is the
+// REJECTED version — same 404-if-not-this-KPI's-own-version guard as
+// approve/reject above; `handleKpiRouteError`'s existing
+// `KpiDefinitionValidationError` branch (409) already covers this command's
+// three per-status codes (CANNOT_REVISE_APPROVED/_DRAFT/_SUBMITTED) without
+// any new mapping.)
+// ==========================================
+
+router.post(
+  '/:kpiId/definition-versions/:versionId/revise',
+  validateParams(KpiDefinitionVersionParamsSchema),
+  validateBody(ReviseDefinitionSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { kpiId, versionId } = req.params as { kpiId: string; versionId: string };
+      const versionRow = await loadDefinitionVersionRow(auth.organizationId, versionId);
+      if (!versionRow || versionRow.kpi_id !== kpiId) {
+        res
+          .status(404)
+          .json({ error: 'Definition version not found for this KPI', code: 'NOT_FOUND' });
+        return;
+      }
+      const body = req.body as import('zod').infer<typeof ReviseDefinitionSchema>;
+      const access = await resolveAccess(req, auth);
+      const outcome = await reviseDefinition({
+        definitionVersionId: versionId,
+        organizationId: auth.organizationId,
+        expectedVersion: body.expectedVersion,
+        actorUserId: auth.userId,
+        actorEffectiveRole: auth.role,
+        idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
+        correlationId: getCorrelationId(req),
+        reason: body.reason ?? null,
+        access,
+      });
+      res.status(outcome.outcome === 'applied' ? 201 : 200).json({
+        outcome: outcome.outcome,
+        eventId: outcome.eventId,
+        resultingVersion: outcome.resultingVersion,
+        definitionVersion: outcome.result,
+      });
+    } catch (err) {
+      handleKpiRouteError(res, err, 'reviseDefinition');
     }
   }
 );

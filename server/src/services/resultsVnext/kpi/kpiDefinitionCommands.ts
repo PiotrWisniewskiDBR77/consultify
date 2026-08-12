@@ -15,6 +15,16 @@
  * (see atomicWrite.ts's header comment) and `executeAtomicCommand` already
  * generalizes.
  *
+ * `reviseDefinition` (RN_G6_P0A) is a THIRD shape: it CASes on an EXISTING
+ * row (the rejected definition version, via `executeAtomicCommand`, so a
+ * stale read still gets the ordinary typed `STALE_VERSION` conflict) but
+ * never UPDATEs that row — it INSERTs a brand-new sibling version instead,
+ * with `version_number` computed under a lock on the PARENT
+ * `rvn_kpi_definitions` row (not the CAS'd row) so two concurrent revisions
+ * of the same rejected version cannot collide on `UNIQUE (kpi_id,
+ * version_number)`. See its own doc comment for the full contract
+ * (docs/product/results-vnext/RN_G6_P0A_KPI_REVISION_CONTRACT.md).
+ *
  * DB access, event/state-hash construction, and the "capture inside
  * applyMutation via an outer-scope `let`, read from buildEvent" pattern for
  * values that only exist mid-transaction (e.g. the active visibility
@@ -73,6 +83,11 @@ export const KPI_DEFINITION_CAPABILITIES = {
    * `responsibleUserIds` being optional). */
   create: 'results.kpi.definition.create',
   editDraft: 'results.kpi.definition.edit_draft',
+  /** RN_G6_P0A — gates `reviseDefinition` (create a new draft version from a
+   * rejected one). Same responsible-people fallback shape as `editDraft`
+   * (owner OR the rejected version's own `created_by`) — see that
+   * command's own `assertCommandCapability` call for the precedent. */
+  revise: 'results.kpi.definition.revise',
   submit: 'results.kpi.definition.submit',
   approve: 'results.kpi.definition.approve',
   reject: 'results.kpi.definition.reject',
@@ -957,11 +972,24 @@ export async function rejectDefinitionVersion(
 
       // Mirror of submitDefinition's forward transition: a rejection lifts
       // the "frozen for reviewer decision" state (plan §4.1) this KPI
-      // entered when the now-rejected version was submitted, so the KPI
-      // can be edited and resubmitted. Only fires from 'pending_approval' —
-      // an amendment draft being rejected while the KPI is already
-      // 'active'/'suspended' on a DIFFERENT, already-approved version must
-      // not touch that root status.
+      // entered when the now-rejected version was submitted. Only fires
+      // from 'pending_approval' — an amendment draft being rejected while
+      // the KPI is already 'active'/'suspended' on a DIFFERENT,
+      // already-approved version must not touch that root status.
+      //
+      // CORRECTED (RN_G6_P0A, 2026-08-12): this comment used to claim "so
+      // the KPI can be edited and resubmitted" — FALSE until this package.
+      // The version this UPDATE just set back to 'draft' on the ROOT row is
+      // NOT the rejected version itself (that row stays 'rejected' forever,
+      // see the trigger/comment on this table — it is never edited or
+      // reactivated). Before `reviseDefinition` (below) existed, nothing in
+      // this file could ever INSERT the version 2 row that `editDraft`
+      // would need to act on — `editDraft` requires `approval_status =
+      // 'draft'` ON THE VERSION, and no command produced one after a
+      // rejection, so a rejected KPI was permanently stuck. `reviseDefinition`
+      // is what actually makes "edited and resubmitted" true: it creates
+      // that new draft version (copied from the rejected one) that
+      // `editDraft`/`submitDefinition` then act on normally.
       await client.query(
         `UPDATE rvn_kpi_definitions
             SET status = 'draft', updated_at = now()
@@ -996,6 +1024,282 @@ export async function rejectDefinitionVersion(
         expectedVersion,
         resultingVersion: nextVersion,
         payload: { definitionVersionId },
+      } satisfies AtomicEventInput;
+    },
+  });
+}
+
+// ==========================================
+// reviseDefinition (RN_G6_P0A — P0-A defect fix)
+// ==========================================
+//
+// Docs/product/results-vnext/RN_G6_P0A_KPI_REVISION_CONTRACT.md §3. Before
+// this command, a REJECTED definition version was a dead end: `editDraft`
+// requires `approval_status = 'draft'` ON THE VERSION, and nothing in this
+// file ever produced a new version after a rejection — the KPI was
+// permanently blocked (§1 of the contract). No migration was needed: the
+// schema already supports multiple versions per `kpi_id`
+// (`UNIQUE (kpi_id, version_number)`, `20260810_rvn_kpi_core.sql:110`), the
+// approved-only overlap EXCLUDE constraint already ignores draft/submitted/
+// rejected rows, and the protect_approved trigger only ever blocks UPDATEs
+// on an approved row — none of that stood in the way of a plain INSERT.
+//
+// Contract §3 "Warunki wstępne" point 2 (checked "each case separately", so
+// the 403 wording an owner sees names exactly which prior decision blocks
+// them):
+//   - the indicated version is 'approved'  -> CANNOT_REVISE_APPROVED
+//     (amending an approved definition is a different, out-of-scope flow).
+//   - the indicated version is 'draft'     -> CANNOT_REVISE_DRAFT
+//     (nothing to revise from — use `editDraft`).
+//   - the indicated version is 'submitted' -> CANNOT_REVISE_SUBMITTED
+//     (a reviewer decision has not landed yet).
+//   - only 'rejected' passes.
+
+/**
+ * `reviseDefinition`'s own row loader is `loadDefinitionVersionForUpdate`
+ * (shared with `editDraft`/`submitDefinition`/`approveDefinitionVersion`/
+ * `rejectDefinitionVersion` above) — it is the REJECTED version that gets
+ * `SELECT ... FOR UPDATE`'d and CAS'd (contract §3 point 3: `expectedVersion`
+ * compares against the rejected version's OWN `row_version`, and a mismatch
+ * is the ordinary `AtomicWriteConflictError`/`STALE_VERSION` every other
+ * command in this file already throws — no new conflict type). What is
+ * DIFFERENT from every sibling command: `applyMutation` never issues an
+ * `UPDATE` against that locked row (contract §3 "Czego komenda NIE robi"
+ * point 1 — the rejected row is untouched, forever, byte-for-byte). It
+ * INSERTs a new sibling row instead, with `version_number` computed under a
+ * SEPARATE lock on the PARENT `rvn_kpi_definitions` row (not the CAS'd
+ * version row) — two concurrent `reviseDefinition` calls against the SAME
+ * rejected version (or against two DIFFERENT rejected versions of the same
+ * KPI) must not both compute the same `MAX(version_number) + 1` and collide
+ * on `UNIQUE (kpi_id, version_number)`; only a real row lock inside the same
+ * transaction as the INSERT prevents that race (an app-level pre-check
+ * would not — a second transaction could read the same MAX before the
+ * first's INSERT commits).
+ */
+export interface ReviseDefinitionInput {
+  /** The REJECTED version to revise from — contract §3 point 2. */
+  definitionVersionId: string;
+  organizationId: string;
+  /** CAS against the REJECTED version's own `row_version` — contract §3
+   * point 3. */
+  expectedVersion: number;
+  actorUserId: string;
+  actorEffectiveRole: string;
+  idempotencyKey: string;
+  correlationId?: string;
+  causationId?: string | null;
+  reason?: string | null;
+  access: CommandAccessContext;
+}
+
+export async function reviseDefinition(
+  input: ReviseDefinitionInput
+): Promise<AtomicCommandOutcome<KpiDefinitionVersion>> {
+  const {
+    definitionVersionId,
+    organizationId,
+    expectedVersion,
+    actorUserId,
+    actorEffectiveRole,
+    idempotencyKey,
+    correlationId,
+    causationId = null,
+    reason = null,
+    access,
+  } = input;
+
+  let beforeState: Record<string, unknown> | null = null;
+
+  return executeAtomicCommand<KpiDefinitionVersionRow, KpiDefinitionVersion>({
+    organizationId,
+    aggregateId: definitionVersionId,
+    expectedVersion,
+    loadForUpdate: loadDefinitionVersionForUpdate,
+    getCurrentVersion: versionRowVersion,
+    applyMutation: async (client, currentRow, _nextVersion) => {
+      // RN-G5: authorization FIRST, same responsible-people fallback shape
+      // as editDraft's own call (owner OR the rejected version's own
+      // created_by) — the owner who got the rejection is exactly who should
+      // be able to act on it, mirroring editDraft's rationale for the same
+      // pair of ids.
+      const ownerUserId = await loadKpiOwnerUserId(client, currentRow.kpi_id);
+      assertCommandCapability({
+        access,
+        actorUserId,
+        capability: KPI_DEFINITION_CAPABILITIES.revise,
+        responsibleUserIds: [ownerUserId, currentRow.created_by],
+      });
+
+      // Contract §3 "Warunki wstępne" point 2 — each disallowed status gets
+      // its own code/message (never a single generic "wrong status"), so a
+      // denied caller (or this command's own tests) can tell an
+      // already-approved definition apart from one still awaiting review.
+      if (currentRow.approval_status === 'approved') {
+        throw new KpiDefinitionValidationError(
+          `Definition version ${definitionVersionId} is "approved" — amending an approved definition is a separate flow, out of scope for reviseDefinition`,
+          'CANNOT_REVISE_APPROVED',
+          { definitionVersionId, approvalStatus: currentRow.approval_status }
+        );
+      }
+      if (currentRow.approval_status === 'draft') {
+        throw new KpiDefinitionValidationError(
+          `Definition version ${definitionVersionId} is already "draft" — nothing to revise, use editDraft instead`,
+          'CANNOT_REVISE_DRAFT',
+          { definitionVersionId, approvalStatus: currentRow.approval_status }
+        );
+      }
+      if (currentRow.approval_status === 'submitted') {
+        throw new KpiDefinitionValidationError(
+          `Definition version ${definitionVersionId} is "submitted" — awaiting a reviewer decision before it can be revised`,
+          'CANNOT_REVISE_SUBMITTED',
+          { definitionVersionId, approvalStatus: currentRow.approval_status }
+        );
+      }
+      if (currentRow.approval_status !== 'rejected') {
+        // Unreachable given the 4-value CHECK constraint (draft/submitted/
+        // approved/rejected) — defensive, not a real branch, same
+        // "impossible state fails loudly instead of silently falling
+        // through" discipline this file already uses elsewhere.
+        throw new KpiDefinitionValidationError(
+          `Definition version ${definitionVersionId} is "${currentRow.approval_status}" — only a rejected version may be revised`,
+          'NOT_REJECTED',
+          { definitionVersionId, approvalStatus: currentRow.approval_status }
+        );
+      }
+
+      beforeState = { definitionVersion: toKpiDefinitionVersion(currentRow) };
+
+      // Lock the PARENT KPI row FOR UPDATE — see this command's own doc
+      // comment above for why this (not the already-locked version row) is
+      // what actually serializes concurrent revisions and protects
+      // `UNIQUE (kpi_id, version_number)`.
+      const kpiLock = await client.query<{ kpi_id: string }>(
+        `SELECT kpi_id FROM rvn_kpi_definitions WHERE kpi_id = $1 AND organization_id = $2 FOR UPDATE`,
+        [currentRow.kpi_id, organizationId]
+      );
+      if (!kpiLock.rows[0]) {
+        // The version row we just loaded references this kpi_id via a NOT
+        // NULL FK (20260810_rvn_kpi_core.sql) — this branch means something
+        // is structurally broken, not a normal not-found path. Fail loudly
+        // rather than silently proceed with an unlocked parent.
+        throw new Error(
+          `[reviseDefinition] KPI ${currentRow.kpi_id} not found while locking its parent row for version numbering`
+        );
+      }
+
+      const maxVersionResult = await client.query<{ max_version: number }>(
+        `SELECT COALESCE(MAX(version_number), 0)::int AS max_version
+           FROM rvn_kpi_definition_versions WHERE kpi_id = $1`,
+        [currentRow.kpi_id]
+      );
+      const newVersionNumber = (maxVersionResult.rows[0]?.max_version ?? 0) + 1;
+
+      // Contract §3 "Skutek" — every substantive field copied verbatim from
+      // the rejected version (the reviewer's feedback already lives on that
+      // frozen row; the owner gets a filled-in form, not a blank one). Audit
+      // fields (submitted/approved/rejected by/at) reset to NULL, `created_by`
+      // is THIS actor, `row_version` starts fresh at 1 — this is a brand-new
+      // row, not a copy of the rejected row's own optimistic-concurrency
+      // counter.
+      const insertResult = await client.query<KpiDefinitionVersionRow>(
+        `INSERT INTO rvn_kpi_definition_versions
+           (kpi_id, organization_id, version_number, name, description, unit, target_geometry,
+            target_value, target_min, target_max, warning_low, warning_high, critical_low, critical_high,
+            binary_success_value, formula_text, approval_status, created_by)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, 'draft', $17)
+         RETURNING *`,
+        [
+          currentRow.kpi_id,
+          organizationId,
+          newVersionNumber,
+          currentRow.name,
+          currentRow.description,
+          currentRow.unit,
+          currentRow.target_geometry,
+          currentRow.target_value,
+          currentRow.target_min,
+          currentRow.target_max,
+          currentRow.warning_low,
+          currentRow.warning_high,
+          currentRow.critical_low,
+          currentRow.critical_high,
+          currentRow.binary_success_value,
+          currentRow.formula_text,
+          actorUserId,
+        ]
+      );
+      const newVersionRow = insertResult.rows[0];
+      if (!newVersionRow) {
+        throw new Error('[reviseDefinition] insert into rvn_kpi_definition_versions returned no row');
+      }
+
+      // Root aggregate: `createKpiDraft` sets `current_definition_version_id`
+      // to the version it JUST created, at kpiDefinitionCommands.ts:413-418
+      // (`UPDATE rvn_kpi_definitions SET current_definition_version_id = $1
+      // ... WHERE kpi_id = $2`, immediately after that command's own INSERT
+      // into rvn_kpi_definition_versions) — i.e. this column follows the
+      // newest version a create/revise-shaped command just produced, not
+      // only approved ones (approveDefinitionVersion's later re-pointing,
+      // ~line 847 above, is what makes it ALSO track "latest approved" once
+      // an approval happens — the two are not in conflict: create/revise set
+      // it to the newest version at the moment a new one is born, approve
+      // re-points it to whichever version was actually approved, e.g. after
+      // this rejected-then-revised cycle producing version 2, approving
+      // version 2 exercises that exact same re-pointing code path again).
+      // reviseDefinition mirrors createKpiDraft's own write here — same
+      // "derived pointer, not a separately CAS'd write" shape
+      // approveDefinitionVersion's own comment documents, no bump of
+      // rvn_kpi_definitions.row_version.
+      await client.query(
+        `UPDATE rvn_kpi_definitions
+            SET current_definition_version_id = $1, updated_at = now()
+          WHERE kpi_id = $2`,
+        [newVersionRow.definition_version_id, currentRow.kpi_id]
+      );
+
+      return toKpiDefinitionVersion(newVersionRow);
+    },
+    buildEvent: ({ currentRow, result, nextVersion }) => {
+      // `resultingVersion` here follows this file's established idiom for
+      // every sibling command (`nextVersion` = the CAS'd row's
+      // `row_version` + 1) rather than literally describing a persisted
+      // column — see this command's own doc comment: the CAS'd row (the
+      // rejected version) is deliberately never UPDATEd, so no row anywhere
+      // actually reaches `nextVersion` as its `row_version`. Kept consistent
+      // with editDraft/submitDefinition/approveDefinitionVersion/
+      // rejectDefinitionVersion above (all of which set this field from the
+      // literal `nextVersion` the framework computes) rather than
+      // special-cased, so a reader of `rvn_platform_events` sees the same
+      // "expected_version -> resulting_version = +1" shape across this
+      // whole command family.
+      const afterState = { definitionVersion: result, previousDefinitionVersionId: currentRow.definition_version_id };
+      return {
+        schemaVersion: 1,
+        eventType: 'kpi.definition_revised',
+        aggregateType: 'kpi',
+        aggregateId: result.kpiId,
+        organizationId,
+        actorUserId,
+        actorEffectiveRole,
+        commandId: randomUUID(),
+        correlationId: correlationId ?? randomUUID(),
+        causationId,
+        occurredAt: new Date().toISOString(),
+        policyVersion: POLICY_VERSION_NOT_TRACKED,
+        beforeState,
+        afterState,
+        stateHash: computeStateHash(afterState),
+        reason,
+        evidenceRefs: [],
+        source: KPI_EVENT_SOURCE,
+        idempotencyKey,
+        expectedVersion,
+        resultingVersion: nextVersion,
+        payload: {
+          definitionVersionId: result.definitionVersionId,
+          previousDefinitionVersionId: currentRow.definition_version_id,
+          versionNumber: result.versionNumber,
+        },
       } satisfies AtomicEventInput;
     },
   });
