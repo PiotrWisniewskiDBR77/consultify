@@ -386,6 +386,167 @@ export function isFinanceV2ApiError(err: unknown): err is FinanceV2ApiError {
   return err instanceof Error && ('status' in err || 'data' in err);
 }
 
+// ---------------------------------------------------------------------------
+// Statements domain (Pakiet D, PKG_D_STATEMENTS) — port kształtu DTO z
+// `server/src/routes/v8/finance-v2/statements.routes.ts` (Pakiet B2), pole po
+// polu, zmierzone czytaniem routera 2026-08-11 (nie zgadywane).
+// ---------------------------------------------------------------------------
+
+export const StatementTypeValues = ['P&L', 'BS', 'CF'] as const;
+export type StatementType = (typeof StatementTypeValues)[number];
+
+/** statementMappingService.ts:56 — `ReconciliationBucket`. */
+export const ReconciliationBucketValues = [
+  'MAPPED',
+  'EXCLUDED',
+  'UNMAPPED',
+  'DUPLICATE',
+  'RECLASS',
+  'ELIMINATION',
+  'CANONICAL',
+] as const;
+export type ReconciliationBucket = (typeof ReconciliationBucketValues)[number];
+
+/** statements.routes.ts:195-223 (GET /statements/:id/lines), jeden wiersz. */
+export interface StatementLineDto {
+  stmtLineId: string;
+  statementType: StatementType;
+  canonicalLineId: string | null;
+  lineCode: string | null;
+  entityId: string;
+  entityCode: string | null;
+  periodId: string;
+  periodLabel: string | null;
+  accumulationBasis: string | null;
+  consolidationScope: string | null;
+  value: FinanceValue;
+  signConvention: string | null;
+  accountingPolicy: string | null;
+  reclassifiedFromLineId: string | null;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** statements.routes.ts:87-96 (POST /statements/:id/map), jeden wynik mapowania. */
+export interface StatementMapResultDto {
+  bucket: ReconciliationBucket;
+  [key: string]: unknown;
+}
+
+/** statements.routes.ts:87-96 (POST /statements/:id/map), całość odpowiedzi. */
+export interface StatementMapResultSummaryDto {
+  businessVersionId: string;
+  rowCount: number;
+  mappedCount: number;
+  unmappedCount: number;
+  results: StatementMapResultDto[];
+}
+
+/** statements.routes.ts:254-265 (GET .../reconciliation-runs, POST .../reconcile) — totals. */
+export interface ReconciliationTotalsDto {
+  sourceTotal: string | null;
+  mappedTotal: string | null;
+  excludedTotal: string | null;
+  unmappedTotal: string | null;
+  duplicateTotal: string | null;
+  reclassNetTotal: string | null;
+  eliminationNetTotal: string | null;
+  canonicalTotal: string | null;
+  residual: string | null;
+  residualPct: string | null;
+}
+
+/** statements.routes.ts:247-272 (GET /statements/:id/reconciliation-runs), jeden wpis ledgera. */
+export interface ReconciliationRunSummaryDto {
+  reconciliationRunId: string;
+  artifactId: string;
+  businessVersionId: string;
+  sourceSystem: string;
+  status: string;
+  resultQuality: string | null;
+  totals: ReconciliationTotalsDto;
+  materialityThresholdApplied: string | null;
+  sourceValueCoveragePct: string | null;
+  linkedExceptionId: string | null;
+  coverageExceptionId: string | null;
+  createdAt: string;
+  createdBy: string;
+}
+
+/** statements.routes.ts:146-159 (POST /statements/:id/reconcile), sukces. */
+export interface RunReconciliationResultDto {
+  reconciliationRunId: string;
+  status: string;
+  resultQuality: string | null;
+  totals: ReconciliationTotalsDto;
+  materialityThresholdPct: number | null;
+  exceptionId: string | null;
+  coverageExceptionId: string | null;
+  periodJumpsCount: number;
+  readiness: unknown;
+}
+
+/** statements.routes.ts:305-318 (GET .../reconciliation-runs/:id), jeden wiersz detalu. */
+export interface ReconciliationDetailRowDto {
+  id: string;
+  canonicalLineId: string | null;
+  entityId: string;
+  periodId: string;
+  bucket: ReconciliationBucket;
+  sourceAmount: string | null;
+  mappedAmount: string | null;
+  duplicateOfRowId: string | null;
+  reclassTargetLineId: string | null;
+  eliminationCounterpartyEntityId: string | null;
+  reasonCode: string | null;
+  sourceRowRef: Record<string, unknown> | null;
+}
+
+/** statements.routes.ts:294-321 (GET /statements/reconciliation-runs/:id), całość. */
+export interface ReconciliationRunDetailDto {
+  reconciliationRunId: string;
+  artifactId: string;
+  businessVersionId: string;
+  sourceSystem: string;
+  status: string;
+  resultQuality: string | null;
+  residual: string | null;
+  residualPct: string | null;
+  createdAt: string;
+  rows: ReconciliationDetailRowDto[];
+}
+
+// ---------------------------------------------------------------------------
+// Cross-cutting — lineage. Port z
+// `server/src/routes/v8/finance-v2/crosscutting.routes.ts:54-73` (Pakiet B2),
+// zmierzone 2026-08-11.
+// ---------------------------------------------------------------------------
+
+/** crosscutting.routes.ts:54-66 — jedna krawędź lineage (ancestor lub descendant). */
+export interface LineageEdgeDto {
+  edgeId: string;
+  sourceVersionId: string;
+  sourceArtifactType: FinanceArtifactType;
+  targetVersionId: string;
+  targetArtifactType: FinanceArtifactType;
+  edgeType: string;
+  transformationKind: string | null;
+  assumptionSnapshotHash: string | null;
+  computeRunId: string | null;
+  authorId: string | null;
+  createdAt: string;
+}
+
+/** crosscutting.routes.ts:68-71 (GET /versions/:id/lineage), całość. Relacje po
+ * `sourceVersionId`/`targetVersionId` (immutable business-version ID) —
+ * NIGDY po nazwie, zgodnie z OWN-FIN-007/022. */
+export interface VersionLineageDto {
+  businessVersionId: string;
+  ancestors: LineageEdgeDto[];
+  descendants: LineageEdgeDto[];
+}
+
 function finanaceV2ErrorCode(err: FinanceV2ApiError): string | null {
   return (err.data && typeof err.data === 'object' && typeof err.data.code === 'string' ? err.data.code : null) ?? null;
 }
