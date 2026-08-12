@@ -124,6 +124,18 @@ Chrome (breadcrumb, Menu 1 buttons/status pills, Menu 2 tab labels, empty-states
 
 - **Focus-ring color/visibility**: no capture shows an interactive element in `:focus-visible` state. Cannot visually confirm or deny blue `c-focus` compliance from these 24 screenshots; `check-focus-canon.sh` (run separately, see §4) is the only signal available for this run, and it is a repo-wide static-analysis heuristic, not a check of these specific screens.
 - **Text contrast ratios**: not computed. Per instructions, judging contrast reliably requires measuring the actual composited pixel colors with a proper contrast tool, not eyeballing a screenshot; no such tool was run in this pass. Reported as NOT MEASURED rather than guessing a ratio anywhere in this document.
+  **UPDATE 2026-08-12 (stream S1-CONTRAST, RISK-35):** contrast WAS since measured (a later
+  stream, `21_FOCUS_AND_CONTRAST.md` §3) and four measured FAILs were fixed — see
+  `21_FOCUS_AND_CONTRAST.md` §8 for the authoritative before/after ratios, file:line diffs, and
+  screenshots (`fix__table__rowactions-rest__{light,dark}__pl.png`,
+  `fix__mindmap__l2-badge__{light,dark}__pl.png`,
+  `fix__processflow__swimlane-klient__{light,dark}__pl.png`). Affected cells in this document's
+  §1 table: row 2 (Idea Table baseline, kebab icon-only button) and the Process Flow baseline
+  rows (swimlane labels) carried this contrast defect at the time of THIS document's original
+  pass but were not flagged here because contrast was explicitly out of scope for this
+  24-screenshot layout review — not a contradiction, a different pass measuring a different
+  thing. This update is a pointer only; §1's PASS/FAIL verdicts in this document were about
+  layout/clipping/overlap, not text/icon contrast, and are left unchanged.
 - ~~Table archetype at 1280x800 and 720x450 with a row selected~~ — **superseded**: F-06 turned out to be a harness bug, not gated on row selection at all (see correction in the F-06 row above); this NOT-MEASURED item no longer applies. Still genuinely not captured in this pass: a Table screenshot with an actual ROW clicked open (the row-preview flyout built into `IdeasTableContent`, distinct from the outer artefakt panel) at any viewport — none of the 6 recaptured Table shots click a row.
 - **Whiteboard amber glow (F-04) semantic meaning**: could not determine from static images whether the glow is a deliberate "unconnected element" indicator, a stale hover/selection state coincidentally captured, or an unintended shadow leak. Would need to inspect the component source or interact with a live render to know for certain.
 - **Mind-map edge-through-text (F-01) reproducibility**: only observed in the two dark captures; whether it's a stable per-idea layout seed or genuinely random per-render was not tested (would require re-rendering the same idea multiple times, which this stream was explicitly told not to do).

@@ -317,3 +317,163 @@ removed.
 
 Worktree base: **`e0fc428a33`** ("E15 PASS: two consecutive clean rounds, and the final gate
 board"), detached HEAD, no commits made in this stream.
+
+## 8. RISK-35 fix — S1-CONTRAST, 2026-08-12
+
+Stream S1-CONTRAST. Worktree `/Users/piotrwisniewski/.codex/worktrees/ideas-streams/s1-contrast`,
+branch `codex/ideas-s1-contrast`, base `edb38d6a29`. Closes the four measured contrast FAILs
+from §3.1 above (F-C1, F-C2, F-C3 in §4, plus the light-theme kebab row that shares F-C3's
+finding). All four rows were confirmed **product bugs, not dev-render-harness artifacts** —
+each was reproduced by loading the REAL production component through its existing dev-render
+harness screen (the same screens/components production mounts, per each screen file's own
+header comment), not a bespoke or broken harness composition.
+
+Method: same ancestor-walk compositing as §3 ("Method 1"), now implemented as a small reusable
+tool (`scripts/contrast-ratio.mjs` — `compositeOver`/`contrastRatio`/`minOpacityForRatio`,
+CLI + importable) instead of hand-computed per screenshot. Every predicted ratio below was
+additionally **cross-verified against the live render** two ways: (a) `page.evaluate` reading
+the real element's `getComputedStyle` color/opacity off the running dev-render page
+(`http://localhost:3733`, `npx vite --config dev-render/vite.config.ts --port 3733
+--strictPort`, started manually from this worktree — same reason as the port-3611 note in §0:
+the browser-preview tool's `.claude/launch.json` resolves against the outer session checkout),
+and (b) pixel-sampling the actual rendered PNG (`dev-render/shot.mjs`, Playwright,
+`deviceScaleFactor: 2`) for the darkest/lightest pixels in the control's bounding box — Method 2
+from §3, reused here for the same reason: catches both the token-vs-composited trap and any
+gap between the computed-style prediction and what a user's screen actually shows (font
+anti-aliasing dims small glyphs below their nominal fill color — see the L2 badge row).
+
+### 8.1 Results
+
+| # | Control | Theme | File:line changed | Old → new | Before | After (computed) | After (pixel-sampled) | Threshold | Verdict |
+|---|---|---|---|---|---|---|---|---|---|
+| 1 | Idea Table row-actions kebab (icon-only, at rest) | light | `src/components/MyWork/IdeasTableContent.tsx:1315` (wrapper `className` passed to the shared `RowActionsMenu`, whose own button color is `src/components/shared/RowActionsMenu.tsx:549`, untouched) | `opacity-40` → `opacity-90` (color unchanged: `text-slate-600`) | 1.93:1 | 5.84:1 | 5.93:1 (darkest icon-stroke pixels avg `rgb(88,101,119)` vs `rgb(255,255,255)`) | 3.0 (WCAG 1.4.11) | **PASS** |
+| 2 | Idea Table row-actions kebab (icon-only, at rest) | dark | same as above | `opacity-40` → `opacity-90` (color unchanged: `dark:text-slate-500`) | 1.61:1 | 3.29:1 | 3.25:1 (lightest icon-stroke pixels avg `rgb(91,106,129)` vs `rgb(15,23,42)`) | 3.0 (WCAG 1.4.11) | **PASS** |
+| 3 | Mind Map node sub-label badge "L2" | dark | `src/components/MyWork/IdeaRecommendationMap.tsx:1763` | `text-slate-600 dark:text-slate-500` → `text-c-text-secondary` | 3.22:1 | 8.26:1 (at depth 2, `opacity-90` node fade) | 8.28:1 (lightest text pixels avg `rgb(167,178,196)` vs `rgb(17,24,40)`; NOTE: 8px glyphs never reach full computed-style color even at their brightest pixel — anti-aliasing dims them, this is expected, still clears the bar by a wide margin) | 4.5 (WCAG 1.4.3) | **PASS** |
+| 4 | Process Flow swimlane label "Klient" | light | `src/components/MyWork/processflow/LaneSystem.tsx:236` | `text-c-text-muted` → `text-c-text-secondary` | 4.43:1 | 7.01–7.07:1 (composited-bg reading varied by ~1 RGB unit between the two harnesses' mock `lane.color`, both wells above the bar) | 7.01:1 (darkest text pixels avg `rgb(71,85,105)` — exact match to computed style, vs `rgb(245,246,249)`) | 4.5 (WCAG 1.4.3) | **PASS** |
+
+Row 4's dark theme was already PASS (5.67:1) before this fix and was not required to change;
+it now reads even higher (9.3:1, computed) because dark `c-text-secondary` (`rgb(184,196,214)`)
+is lighter than the dark `c-text-muted` (`rgb(138,153,176)`) it replaced — checked for
+regression, not a claimed fix.
+
+### 8.2 Tokens, not hex
+
+All three fixes reuse existing `c-*` tokens already defined in `src/index.css` (`--c-text-secondary`)
+— no new token was introduced, and `text-c-text-secondary` was already in use one line away in
+two of the three files (`LaneSystem.tsx:232`'s rename `<input>`, `IdeaRecommendationMap.tsx`'s
+node-title rendering) before this fix extended it to the sibling element that had been left on
+raw Tailwind `slate-*`. No `primary-*` touched.
+
+### 8.3 Screenshots
+
+Captured with `dev-render/shot.mjs` (Playwright, `--w=1440` or `--w=1800` for the Idea Table —
+see below — `--h=900`, `deviceScaleFactor: 2`), all under
+`docs/qa/ideas-complete-transformation-2026-08-09/screenshots/`, all opened with the Read tool
+and visually inspected (no clipping, no overlap, no layout regression vs. the pre-fix captures
+in §2/§3.1's evidence set):
+
+- `fix__table__rowactions-rest__light__pl.png`, `fix__table__rowactions-rest__dark__pl.png` —
+  Idea Table, kebab column now visible at rest in both themes. Captured at `--w=1800` (not 1440):
+  at 1440 the dev-render `idea-table` screen's inner table starts horizontally scrolled to 0 and
+  the fixed `table-fixed` column widths (sum ~1354px) plus the 320px `ArtifactRightPanel` don't
+  both fit in 1440 without a manual scroll the harness doesn't auto-perform — a **harness
+  viewport-fit limitation**, not a product bug (production's `MyIdeasListContent` mounts
+  `IdeasTableContent` without a competing flex sibling, per the existing comment at
+  `dev-render/screens/idea-table.tsx:277-293`). 1800px shows every column without scrolling.
+- `fix__mindmap__l2-badge__light__pl.png`, `fix__mindmap__l2-badge__dark__pl.png` — Mind Map,
+  10 "L2" badges visible across the tree at `--w=1440`, legible in both themes.
+- `fix__processflow__swimlane-klient__light__pl.png`,
+  `fix__processflow__swimlane-klient__dark__pl.png` — Process Flow, "Klient" / "Zespół
+  wdrożenia" lane labels at `--w=1440`, darker and more legible than the pre-fix captures,
+  no layout shift (label position/size unchanged, only color).
+
+### 8.4 Negative control
+
+Sabotaged commit `7d9d7f2fe0` (the kebab fix) in place — reverted
+`IdeasTableContent.tsx:1315`'s `opacity-90` back to the original `opacity-40` — and re-ran
+`scripts/risk35-kebab-contrast-check.mjs` (a Playwright script that reads the LIVE
+`getComputedStyle` off the running dev-render page and asserts ≥3:1 for both themes) against
+the running server with no other change:
+
+```
+$ node scripts/risk35-kebab-contrast-check.mjs http://localhost:3733
+[light] color=rgb(71,85,105) opacity=0.4 bg=rgb(255,255,255) composited=rgb(181,187,195) ratio=1.93 threshold=3 -> FAIL
+[dark] color=rgb(100,116,139) opacity=0.4 bg=rgb(15,23,42) composited=rgb(49,60,81) ratio=1.61 threshold=3 -> FAIL
+RESULT: FAIL
+EXIT=1
+```
+
+Ratios reproduce the original FAIL numbers exactly (1.93 / 1.61 — same as row 1/2's "Before"
+column), exit code 1. Restored `opacity-90` and re-ran the identical command with no other
+change:
+
+```
+$ node scripts/risk35-kebab-contrast-check.mjs http://localhost:3733
+[light] color=rgb(71,85,105) opacity=0.9 bg=rgb(255,255,255) composited=rgb(89,102,120) ratio=5.84 threshold=3 -> PASS
+[dark] color=rgb(100,116,139) opacity=0.9 bg=rgb(15,23,42) composited=rgb(92,107,129) ratio=3.29 threshold=3 -> PASS
+RESULT: ALL PASS
+EXIT=0
+```
+
+`git diff --stat` after the restore showed the same 3-file/27-line diff as before the sabotage
+(confirmed no residual change was left behind).
+
+### 8.5 Guards (real exit codes, run from this worktree's root after each commit via the
+pre-commit hook, and once more manually as instructed)
+
+```
+$ bash scripts/check-focus-canon.sh; echo "rc=$?"        # rc=0 (report mode; 130/261 baseline, unchanged — none of the 3 files touched are in the violation list)
+$ bash scripts/check-list-canon.sh; echo "rc=$?"          # rc=0 ("dług nie rośnie" — debt did not grow)
+$ bash scripts/check-artefakt.sh; echo "rc=$?"            # rc=0 (7 baseline crimson violations, unchanged)
+$ bash scripts/check-gestosc.sh src/components/MyWork/IdeasTableContent.tsx src/components/MyWork/IdeaRecommendationMap.tsx src/components/MyWork/processflow/LaneSystem.tsx; echo "rc=$?"  # rc=0 ("brak regresji mechanicznych — sprawdzono plików: 3")
+```
+
+All four rc=0.
+
+### 8.6 Tests
+
+No dedicated test file exercises `IdeasTableContent`'s row-actions kebab, `IdeaRecommendationMap`'s
+depth badge, or `LaneSystem`'s label specifically (checked: `grep -rl "IdeasTableContent\|RowActionsMenu\|IdeaRecommendationMap" tests/` finds tests for folders, kebab-atrapa-detection, and mind-map conversion/broadcast logic — none assert on color/contrast). Ran the nearest existing targeted suites that mount the touched files, plus esbuild as a syntax/type-surface smoke check (per this program's "no full tsc/vitest for workers" rule):
+
+```
+$ npx vitest run tests/components/MyWork/MyIdeasListContent.folders.test.tsx tests/components/MyWork/processflow/LaneSystemAutoNaming.test.tsx --retry=0
+ Test Files  2 passed (2)
+      Tests  6 passed (6)
+
+$ npx esbuild src/components/MyWork/IdeasTableContent.tsx --bundle=false --outfile=/dev/null       # done, no errors
+$ npx esbuild src/components/MyWork/IdeaRecommendationMap.tsx --bundle=false --outfile=/dev/null   # done, no errors
+$ npx esbuild src/components/MyWork/processflow/LaneSystem.tsx --bundle=false --outfile=/dev/null  # done, no errors
+```
+
+The contrast assertion itself is `scripts/risk35-kebab-contrast-check.mjs` (§8.4) — a real
+Playwright-driven check against the live DOM, not a unit test, but it is the actual evidence
+this fix works, and it is the one component of the four with a repeatable, scriptable
+before/after (the Mind Map and Process Flow fixes were verified by one-off `--eval` reads,
+not wrapped in a standalone reusable script, for lack of remaining time budget — **NOT
+VERIFIED via an automated repeatable check for rows 3 and 4**, only via the manual `page.evaluate`
++ pixel-sample commands shown in this session's transcript).
+
+### 8.7 Commits (this worktree, not pushed)
+
+- `7fff6a1078` — `test(ideas): add reusable WCAG contrast tooling for RISK-35`
+- `7d9d7f2fe0` — `fix(ideas): raise Idea Table row-actions kebab to 3:1 at rest (RISK-35)`
+- `f91ec7a134` — `fix(ideas): raise Mind Map depth-badge dark contrast to 4.5:1 (RISK-35)`
+- `bdeb275a66` — `fix(ideas): raise Process Flow swimlane label to 4.5:1 in light (RISK-35)`
+
+### 8.8 NOT VERIFIED / out of scope
+
+- **Depth-3+ "L3" badge, light theme**: computes to ~4.27:1 with the new `c-text-secondary`
+  token (under 4.5:1) — see the commit message on `f91ec7a134`. No depth-3 badge was found in
+  the measured evidence this stream inherited or in this stream's own harness capture (the
+  `mindmap-canvas` mock tree only goes to depth 2), so it was neither measured before nor
+  claimed fixed now — flagged, not silently left unrecorded, not fixed (out of RISK-35's
+  four-row scope).
+- **Rows 3 and 4 do not have a standalone repeatable contrast-assertion script** (unlike row
+  1/2's `risk35-kebab-contrast-check.mjs`) — verified via one-off `page.evaluate` reads in this
+  session only, not committed as a re-runnable check. If a future stream needs to re-verify
+  these two, redo the `--eval` calls in §8's method description (selector: `[title="Depth N"]`
+  for Mind Map, text-content match on the lane label `<div>` for Process Flow).
+- **Only the four measured rows in the RISK-35 brief were touched.** No sweep was made for other
+  instances of the same `opacity-40`-on-`slate-600/500` or `c-text-muted`-on-tinted-background
+  patterns elsewhere in the four tools or the other 26 `RowActionsMenu` call sites — those may
+  or may not share the same defect class; not measured, not claimed fixed.
