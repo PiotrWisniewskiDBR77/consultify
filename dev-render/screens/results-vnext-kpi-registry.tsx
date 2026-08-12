@@ -529,7 +529,19 @@ Api.get = (async (url: string) => {
       err.status = 404;
       throw err;
     }
-    return { kpi: found };
+    // RN-G5 FIX (found during the create->submit->approve/reject screenshot
+    // walkthrough): a shallow copy, not the live mutable object — a real
+    // HTTP GET always deserializes a FRESH object from JSON, so returning
+    // `found` by reference here (this mock's own pre-existing pattern)
+    // meant a mutation made by the reject/approve mocks below was visible
+    // to anything holding an OLD reference to the same object without a
+    // re-render ever being triggered for it. Real screenshot evidence: the
+    // KPI's own StandardPreview panel (freshly looked up per render) showed
+    // "Szkic" after a reject while the StandardTable row for the SAME KPI
+    // still showed "Do zatwierdzenia" — a stale-table artifact of THIS
+    // mock's object-identity reuse, not a production defect (a real GET
+    // response is never the same object twice).
+    return { kpi: { ...found } };
   }
   if (url.startsWith('/vnext/results/kpi')) {
     if (state === 'loading') return new Promise(() => {}); // never resolves
@@ -539,7 +551,10 @@ Api.get = (async (url: string) => {
       throw err;
     }
     if (state === 'empty') return { kpis: [] };
-    return { kpis: MOCK_KPIS };
+    // Same fix as the single-KPI branch above — fresh array AND fresh
+    // per-row objects on every call, so React's `setRows` never bails out
+    // on an unchanged reference after a mutation made by a write mock.
+    return { kpis: MOCK_KPIS.map((k) => ({ ...k })) };
   }
   return realGet(url);
 }) as typeof Api.get;
@@ -896,7 +911,12 @@ const ResultsVNextKpiRegistryScreen: React.FC = () => {
           useAppStore.setState({ currentUser: next === 'piotr' ? ACTOR_PIOTR : ACTOR_ANNA } as any);
           setActor(next);
         }}
-        className="fixed bottom-3 right-3 z-[9999] rounded-full border border-c-border bg-c-surface-raised px-3 py-1.5 text-[11px] font-semibold text-c-text shadow-lg"
+        // bottom-16 (not bottom-3) — the harness chrome's own "← Lista"/
+        // "Uwagi" buttons already occupy bottom-3 right-3 and intercept
+        // pointer events at that position (found via a real click timeout
+        // during the create->submit->approve screenshot walkthrough, not
+        // guessed).
+        className="fixed bottom-16 right-3 z-[9999] rounded-full border border-c-border bg-c-surface-raised px-3 py-1.5 text-[11px] font-semibold text-c-text shadow-lg"
       >
         Aktor: {actor === 'piotr' ? 'Piotr' : 'Anna'} (kliknij, aby przełączyć)
       </button>
