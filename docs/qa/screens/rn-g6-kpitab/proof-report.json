@@ -1,0 +1,27 @@
+{
+  "steps": [
+    "01-fresh-mount-default-my-tab.png",
+    "02-before-org-draft-selected.png",
+    "03-full-kpi-tool.png",
+    "04-after-back-tab-chip-selection-restored.png",
+    "05-after-f5-reload-still-restored.png",
+    "06-scorecards-tab-selected-before-deeplink.png",
+    "07-deep-link-still-resolves-off-scorecards-tab.png"
+  ],
+  "consoleErrors": [
+    "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+    "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+    "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "badResponses": [
+    "401 GET http://localhost:3205/api/v10/teresa/voice-config",
+    "401 GET http://localhost:3205/api/v10/teresa/voice-config",
+    "404 GET http://localhost:3205/api/v8/admin/flags",
+    "404 GET http://localhost:3205/api/v8/admin/flags",
+    "404 GET http://localhost:3205/api/v8/admin/flags",
+    "404 GET http://localhost:3205/api/v8/admin/flags"
+  ]
+}

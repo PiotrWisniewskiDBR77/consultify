@@ -671,6 +671,54 @@ function buildPreview(
   };
 }
 
+// RN-G6 (2026-08-12) — "RN_G6_KPITAB" fix: Menu 2 tab selection was a plain
+// `useState` with no persistence at all (unlike ROI's `ResultsRoiHub.tsx`
+// and OKR's `ResultsOkrHub.tsx`, which both got this exact fix under
+// RN-G5). Symptom: switch to "Org", open the full KPI tool, come back — the
+// registry silently reset to "My", discarding the user's filter. Reusing
+// the SAME sessionStorage pattern those two hubs already establish — ONE key
+// for the whole surface (D09: never per-record), namespaced under
+// `results-vnext.*` so it can never collide with a legacy screen's storage.
+//
+// ADAPTATION vs ROI/OKR (documented per task brief, not a silent deviation):
+// KPI has a genuine THIRD tab, "Scorecards", which — like ROI's "Benefits
+// realization" — swaps the whole registry to a different DTO/endpoint, not
+// just a different filter of the same rows (see file header "RN-G2 P1 #8").
+// That case is NOT new: ROI's hub already persists two independent
+// selection ids (`selectedCaseId`/`selectedBenefitsCaseId`) for its two
+// differently-shaped tabs. KPI mirrors that 1:1 — `selectedId` for the
+// my/org KPI-definition table, `selectedScorecardId` for the Scorecards
+// table — same shape, no third mechanism invented. The one KPI-specific
+// wrinkle (handled in the deep-link effect below, not here): a restored
+// `tab: 'scorecards'` must not be allowed to swallow a `?kpiId=` deep link,
+// since the KPI table/preview do not even render on that branch.
+const UI_STATE_KEY = 'results-vnext.kpi-registry.ui-state';
+
+interface KpiHubUiState {
+  tab?: 'my' | 'org' | 'scorecards';
+  statusFilter?: KpiStatus | null;
+  selectedId?: string | null;
+  selectedScorecardId?: string | null;
+}
+
+function readKpiHubUiState(): KpiHubUiState {
+  try {
+    const raw = window.sessionStorage.getItem(UI_STATE_KEY);
+    return raw ? (JSON.parse(raw) as KpiHubUiState) : {};
+  } catch {
+    return {};
+  }
+}
+
+function writeKpiHubUiState(state: KpiHubUiState): void {
+  try {
+    window.sessionStorage.setItem(UI_STATE_KEY, JSON.stringify(state));
+  } catch {
+    // no-op — sessionStorage unavailable (private mode) is not fatal, it
+    // only means the next mount starts from defaults instead of restoring.
+  }
+}
+
 export const ResultsKpiRegistryPage: React.FC = () => {
   const { i18n } = useTranslation();
   const isPolish = !!i18n.language?.startsWith('pl');
@@ -681,15 +729,21 @@ export const ResultsKpiRegistryPage: React.FC = () => {
   const [rows, setRows] = useState<KpiDefinitionDto[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // RN-G6 — restored ONCE at mount (see `UI_STATE_KEY` note above `tab`
+  // below is initialized from it, mirroring `ResultsRoiHub.tsx`'s own
+  // `restoredUiState` convention).
+  const restoredUiState = useMemo(() => readKpiHubUiState(), []);
+
   // RN-G2 P1 #8 — third value 'scorecards' added alongside the pre-existing
   // 'my'/'org' pair (see file header). `scope` below stays scoped to ONLY
   // the my/org KPI-filtering meaning it always had — renamed nowhere, kept
   // separate from `tab` so the scorecards branch never touches KPI-scope
   // logic.
-  const [tab, setTab] = useState<'my' | 'org' | 'scorecards'>('my');
+  const [tab, setTab] = useState<'my' | 'org' | 'scorecards'>(restoredUiState.tab ?? 'my');
   const scope: 'my' | 'org' = tab === 'org' ? 'org' : 'my';
-  const [statusFilter, setStatusFilter] = useState<KpiStatus | null>(null);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState<KpiStatus | null>(restoredUiState.statusFilter ?? null);
+  const [selectedId, setSelectedId] = useState<string | null>(restoredUiState.selectedId ?? null);
   const [measurement, setMeasurement] = useState<KpiMeasurementDto | null | 'loading'>(null);
   const [pending, setPending] = useState<PendingAction>(null);
   const [forbidden, setForbidden] = useState<ResultsVNextForbiddenDetail | null>(null);
@@ -728,7 +782,9 @@ export const ResultsKpiRegistryPage: React.FC = () => {
   const [scorecardRows, setScorecardRows] = useState<KpiScorecardDto[]>([]);
   const [scorecardsLoading, setScorecardsLoading] = useState(false);
   const [scorecardsError, setScorecardsError] = useState<string | null>(null);
-  const [selectedScorecardId, setSelectedScorecardId] = useState<string | null>(null);
+  const [selectedScorecardId, setSelectedScorecardId] = useState<string | null>(
+    restoredUiState.selectedScorecardId ?? null
+  );
   const [scorecardPending, setScorecardPending] = useState(false);
 
   // RN-G6 UI fix — quick-create for scorecards (was wired-up API with zero
@@ -747,6 +803,18 @@ export const ResultsKpiRegistryPage: React.FC = () => {
   // fetch — entered from either the row menu or the preview pane, on the
   // 'my'/'org' branch only (Scorecards rows are a different DTO entirely).
   const [measurementsKpi, setMeasurementsKpi] = useState<KpiDefinitionDto | null>(null);
+
+  // RN-G6 — persist tab/chip/selection so navigating to the full KPI tool
+  // (`ROUTES.RESULTS_KPI.TOOL`) or a scorecard's full record and back
+  // restores the list context instead of silently resetting to "My" (the
+  // defect this fix closes — see `UI_STATE_KEY`'s own doc comment above).
+  // Deliberately does NOT include `measurementsKpi` — that sub-view is
+  // entered/exited within this same mount (row menu/preview "Pomiary" ->
+  // "Wstecz"), never crosses a route boundary, so it is outside what the
+  // task brief asks to survive (tab/chip/selected row only).
+  useEffect(() => {
+    writeKpiHubUiState({ tab, statusFilter, selectedId, selectedScorecardId });
+  }, [tab, statusFilter, selectedId, selectedScorecardId]);
 
   const fetchRows = useCallback(async () => {
     setLoading(true);
@@ -780,6 +848,23 @@ export const ResultsKpiRegistryPage: React.FC = () => {
           setForbidden({ reason: 'NO_VISIBILITY_RECORD' });
         } else {
           setSelectedId(kpi.kpiId);
+          // RN-G6 — a deep link must always land on a VISIBLE record. Two
+          // independent ways a `tab`/`statusFilter` restored/persisted from a
+          // PRIOR session (see `UI_STATE_KEY` above) could hide the resolved
+          // KPI despite `selectedId` being set correctly, caught live by this
+          // package's own dowód run (`docs/qa/screens/rn-g6-kpitab/07-*`):
+          //  1. `tab === 'scorecards'` never renders the KPI table/preview
+          //     branch at all.
+          //  2. `tab === 'my'` scopes to `ownerUserId === currentUser.id` —
+          //     invisible if the deep-linked KPI belongs to someone else.
+          // Bumping to 'org' covers both (never touches a restored 'org' that
+          // already renders every KPI). `statusFilter` is cleared the same
+          // way `handleFormSubmit`'s create branch below already does for a
+          // freshly-created row ("ensure the row is visible regardless of
+          // prior filter") — the identical rule, applied to the identical
+          // failure mode.
+          setStatusFilter(null);
+          setTab((t) => (t === 'scorecards' || (t === 'my' && kpi.ownerUserId !== currentUser?.id) ? 'org' : t));
         }
       } catch {
         if (!cancelled) setForbidden({ reason: 'NO_VISIBILITY_RECORD' });
