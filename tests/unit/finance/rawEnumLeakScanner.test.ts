@@ -119,6 +119,25 @@
  *   4. String concatenation:       `<div>{'Status: ' + m.status}</div>`
  *      (the `+` operator makes the brace content a BinaryExpression, not a bare chain, so it
  *      falls outside the regex the same way a function call does.)
+ *   5. [Found Gate E FIX-B, 2026-08-12] Values that only exist as an API RESPONSE, never as a
+ *      literal property-access chain the regex can see. This scanner is a grep over SOURCE TEXT —
+ *      it has no idea which JSON fields an HTTP response carries; it can only ever assert "no known
+ *      property NAME is bare-interpolated in this file's own text," never "no enum-shaped runtime
+ *      value is bare-interpolated." Concrete illustrative case from this same session:
+ *      `legacyIdBridgeService.ts`'s `resolveLegacyFinanceArtifact()` (Gate E FIX-B LUKA 1) returns
+ *      `{ status: 'QUARANTINED', reason: alias.mapping_reason, ... }` straight from the
+ *      `finance_artifact_aliases.mapping_reason` column (a free-text/enum-ish value the WP-C03
+ *      backfill writes, e.g. `'approved_without_snapshot'`) over `GET
+ *      /artifacts/resolve-legacy/:legacyTable/:legacyId`. If a future component renders that value
+ *      raw — `{resolution.reason}` — this scanner would NOT flag it, for two independent reasons:
+ *      (a) `reason` is not in `ENUM_PROPERTY_NAMES` (only the eight names already burned by a real
+ *      bug are listed), and (b) even adding it would not help in general, because the scanner has
+ *      no way to tell a `reason` that came from a typed API response apart from an ordinary,
+ *      already-humanized string — the enum-ness lives in the DATABASE COLUMN's vocabulary, which is
+ *      invisible from `.tsx` source text alone. Closing this class of blind spot needs a
+ *      response-shape/type-level check (e.g. a lint rule keyed off the API client's own return
+ *      types), not a wider regex — flagged here as a known limitation, not fixed in this pass (out
+ *      of scope for FIX-B, a test/proof-coverage task).
  *   A reader who sees this test GREEN has proof there is no *literal, single-hop, bare-brace*
  *   enum leak in the scanned scope — not proof the UI never renders a raw enum code by any means.
  *   Treat green as "no regression of the exact bug shape we've hit four times," not as an
@@ -216,6 +235,14 @@ function listTsxFiles(dir: string): string[] {
  */
 const KNOWN_UNFIXED_LEAKS = new Set<string>([
   'src/components/Finance/FinancialStatementPackWorkspace.tsx: {file.status}',
+  // Gate E FIX-B (proof-gaps pass, 2026-08-12): found while widening the directory-list assertion
+  // below to cover Prediction/ + baseline/ explicitly. Confirmed pre-existing at this session's own
+  // base commit (`git show 57fe0543cc:src/components/Finance/Prediction/PredictionWorkspace.tsx`
+  // already contains this exact line) — not introduced by this pass. Out of scope for FIX-B (a
+  // test/proof-coverage task, not a UI-fix task) and PredictionWorkspace.tsx is a workspace file a
+  // parallel session may be mounting/editing concurrently (same collision class the
+  // FinancialStatementPackWorkspace.tsx entry above documents) — same reasoning, not fixed here.
+  'src/components/Finance/Prediction/PredictionWorkspace.tsx: {mountCheck.version.status}',
 ]);
 
 describe('Finance/** — no raw SCREAMING_SNAKE_CASE enum leaks to rendered text', () => {
@@ -243,6 +270,55 @@ describe('Finance/** — no raw SCREAMING_SNAKE_CASE enum leaks to rendered text
       expect(
         relPaths.some((p) => p.includes(`Finance/${dir}/`) || p.includes(`Finance\\${dir}\\`)),
         `expected at least one scanned file under Finance/${dir}/`
+      ).toBe(true);
+    }
+  });
+
+  /**
+   * Gate E FIX-B (proof-gaps pass, 2026-08-12) — LUKA 2. Independent mutation-testing found that
+   * the `>= 40` file-count check above (actual count at the time: 44) has a slack of exactly FOUR
+   * files: excluding `Finance/Prediction/**` and `Finance/baseline/**` entirely (add `'Prediction'`
+   * / `'baseline'` to `listTsxFiles`'s directory-skip list, next to `__tests__`/`node_modules`)
+   * drops the count to 40 — still `>= 40` — so all five tests in this file stayed GREEN while two
+   * whole directories silently lost coverage. A raw count is a fundamentally weak guard for "did
+   * scope shrink": it drifts up and down for ordinary reasons (files added/removed/split), so any
+   * fixed threshold below the current count is, by construction, exactly this kind of slack.
+   *
+   * The real defense is this test: an explicit, named list of every directory `Finance/**` is
+   * currently known to contain. Silently dropping ANY one of them — not just the five AP-CLIENT
+   * ones already covered above — now fails on the specific missing directory name, not on a number
+   * quietly falling by four. `Analysis`/`Valuation` (the two original, pre-2026-08-12 roots) and
+   * `shared`/`statementPackWorkspaceV2` (in-scope but not previously pinned by name anywhere in
+   * this file) are included here too, so this list is now the actual ground truth for "what does
+   * this scanner cover", not the loose count above (kept only as a coarse, fast-failing smoke
+   * check, per the brief: "asercja na liste katalogow, a nie na sama liczbe plikow - liczba jest
+   * KRUCHYM przyblizeniem").
+   *
+   * KONTROLA NEGATYWNA (performed manually this session, not re-run automatically here): added
+   * 'Prediction' and 'baseline' to `listTsxFiles`'s directory-skip set (mirroring the mutation
+   * above) — this test went RED, correctly naming `Prediction` and `baseline` as the two missing
+   * directories, while the `>= 40` count check directly above it stayed GREEN (41 >= 40) — proving
+   * the count check alone would NOT have caught this regression. Reverted; GREEN again.
+   */
+  it('discovers every directory Finance/** is currently known to contain (the real defense — not the file-count threshold above, which has only a ~4-file margin)', () => {
+    const relPaths = files.map((f) => path.relative(process.cwd(), f));
+    const EXPECTED_FINANCE_SUBDIRECTORIES = [
+      'Analysis',
+      'Prediction',
+      'Valuation',
+      'baseline',
+      'comments',
+      'compare',
+      'exportImport',
+      'lineage',
+      'savedViews',
+      'shared',
+      'statementPackWorkspaceV2',
+    ];
+    for (const dir of EXPECTED_FINANCE_SUBDIRECTORIES) {
+      expect(
+        relPaths.some((p) => p.includes(`Finance/${dir}/`) || p.includes(`Finance\\${dir}\\`)),
+        `expected at least one scanned file under Finance/${dir}/ — SCANNED_ROOTS/listTsxFiles may have silently narrowed`
       ).toBe(true);
     }
   });
