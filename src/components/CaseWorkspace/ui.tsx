@@ -424,6 +424,147 @@ export const CommandDialog: React.FC<CommandDialogProps> = ({
   );
 };
 
+/**
+ * Okno z FORMULARZEM (kilka pól), nie tylko jednym powodem.
+ *
+ * `CommandDialog` wyżej zakłada JEDNO pole (powód) — świetne dla
+ * cancel/pause/withdraw/revoke, za wąskie dla komendy, która potrzebuje kilku
+ * pól naraz (np. „powiąż istniejący obiekt": typ + identyfikator + rola).
+ * `FormDialog` niesie TĘ SAMĄ powłokę modalną (tło, `role="dialog"`, Escape,
+ * klik w tło zamyka, fokus wchodzi na pierwsze pole po otwarciu) i zostawia
+ * TREŚĆ formularza wywołującemu przez `children` — moduł deklaruje pola,
+ * ta powłoka narzuca zachowanie okna. Nie jest to „drugi system relacji":
+ * to ten sam wzorzec okna komend co `CommandDialog`, tylko bez założenia
+ * „jedno pole = powód".
+ *
+ * Walidację (czy przycisk potwierdzenia jest aktywny) liczy WYWOŁUJĄCY przez
+ * `confirmDisabled` — ta powłoka nie zna kształtu pól, więc nie umie sama
+ * ocenić poprawności.
+ */
+export interface FormDialogProps {
+  open: boolean;
+  title: string;
+  description?: string;
+  confirmLabel: string;
+  cancelLabel?: string;
+  busy?: boolean;
+  confirmDisabled?: boolean;
+  onConfirm: () => void;
+  onCancel: () => void;
+  children: React.ReactNode;
+}
+
+export const FormDialog: React.FC<FormDialogProps> = ({
+  open,
+  title,
+  description,
+  confirmLabel,
+  cancelLabel = 'Nie teraz',
+  busy,
+  confirmDisabled,
+  onConfirm,
+  onCancel,
+  children,
+}) => {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const titleId = useId();
+  const descId = useId();
+  // Element, który miał fokus PRZED otwarciem okna (zwykle przycisk, który je
+  // otworzył) — klawiaturowy warunek „focus return": po zamknięciu (Escape,
+  // „Nie teraz", klik w tło, udana komenda) fokus wraca DOKŁADNIE tam, skąd
+  // przyszedł, a nie spada na `<body>`.
+  const powrotFokusuRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    if (!open) {
+      powrotFokusuRef.current?.focus();
+      powrotFokusuRef.current = null;
+      return;
+    }
+    powrotFokusuRef.current = (document.activeElement as HTMLElement) ?? null;
+    // Fokus na PIERWSZE pole formularza — nie na tło, nie na przycisk
+    // potwierdzenia (użytkownik ma najpierw coś wypełnić).
+    const node = containerRef.current;
+    const focusable = node?.querySelector<HTMLElement>(
+      'input:not([disabled]), select:not([disabled]), textarea:not([disabled])'
+    );
+    focusable?.focus();
+  }, [open]);
+
+  if (!open) return null;
+
+  return (
+    <div
+      className="fixed inset-0 z-[100] flex items-end justify-center bg-black/40 p-3 sm:items-center"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) onCancel();
+      }}
+    >
+      <div
+        ref={containerRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        aria-describedby={description ? descId : undefined}
+        onKeyDown={(event) => {
+          if (event.key === 'Escape') {
+            event.stopPropagation();
+            onCancel();
+          }
+        }}
+        className="w-full max-w-md rounded-2xl border border-c-border bg-c-surface p-4 shadow-xl"
+      >
+        <h2 id={titleId} className="text-base font-semibold text-c-text">
+          {title}
+        </h2>
+        {description ? (
+          <p id={descId} className="mt-1 text-sm text-c-text-secondary">
+            {description}
+          </p>
+        ) : null}
+        <div className="mt-3 space-y-3">{children}</div>
+        <div className="mt-4 flex flex-wrap justify-end gap-2">
+          <button
+            type="button"
+            onClick={onCancel}
+            className={`rounded-lg border border-c-border px-3 py-1.5 text-sm font-medium text-c-text-secondary hover:bg-c-surface-raised ${FOCUS_RING}`}
+          >
+            {cancelLabel}
+          </button>
+          <button
+            type="button"
+            disabled={confirmDisabled || busy}
+            onClick={onConfirm}
+            className={`rounded-lg border border-c-border bg-c-surface-raised px-3 py-1.5 text-sm font-semibold text-c-text hover:bg-c-bg disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
+          >
+            {busy ? 'Wysyłam…' : confirmLabel}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/** Etykietowane pole tekstowe formularza w `FormDialog` — jeden wygląd dla wszystkich pól tego modułu. */
+export const FormField: React.FC<{
+  label: string;
+  required?: boolean;
+  helpText?: string;
+  children: React.ReactNode;
+}> = ({ label, required, helpText, children }) => (
+  <label className="block">
+    <span className="block text-xs font-medium uppercase tracking-wide text-c-text-muted">
+      {label}
+      {required ? ' (wymagane)' : ' (opcjonalne)'}
+    </span>
+    <div className="mt-1">{children}</div>
+    {helpText ? <span className="mt-1 block text-xs text-c-text-muted">{helpText}</span> : null}
+  </label>
+);
+
+/** Klasy wspólne dla `<input>`/`<select>`/`<textarea>` wewnątrz `FormDialog`. */
+export const FORM_INPUT_CLASS = `w-full rounded-lg border border-c-border bg-c-bg px-2.5 py-2 text-sm text-c-text ${FOCUS_RING}`;
+
 /** Wąski pasek „brak uprawnień" wewnątrz sekcji (nie cały ekran). */
 export const BlockedNote: React.FC<{ text: string }> = ({ text }) => (
   <div

@@ -33,9 +33,11 @@ import {
   BarChart3,
   ClipboardCheck,
   Link2,
+  Pin,
+  Plus,
   Unlink,
 } from 'lucide-react';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { getDocumentStudioArtifact } from '@/components/DocumentStudio/api';
 import { StandardPreview } from '@/components/standard/StandardPreview';
@@ -58,7 +60,13 @@ import {
   valueMeasurementStatusLabel,
 } from '@/utils/enumLabels';
 
-import { resolveArtifactLinkOpen } from './api';
+import {
+  linkArtifactToCase,
+  newIdempotencyKey,
+  pinArtifactRevision,
+  resolveArtifactLinkOpen,
+  unlinkArtifactFromCase,
+} from './api';
 import {
   type CaseRunBinding,
   deliverableRefFromSnapshot,
@@ -73,13 +81,27 @@ import {
 } from './apiResults';
 import type {
   ArtifactLinkOpenResolution,
+  ArtifactLinkRelation,
   ArtifactLinkReturnContext,
   CaseApiFailure,
   CaseArtifactLink,
   CaseCoreView,
   ValueMeasurement,
 } from './types';
-import { CaseStateBlock, FOCUS_RING, formatDate, formatDateTime, StatusTag, TechnicalId } from './ui';
+import {
+  CaseStateBlock,
+  CommandBanner,
+  type CommandNotice,
+  CommandDialog,
+  FOCUS_RING,
+  FORM_INPUT_CLASS,
+  FormDialog,
+  FormField,
+  formatDate,
+  formatDateTime,
+  StatusTag,
+  TechnicalId,
+} from './ui';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // OTWIERANIE OBIEKTÓW — jedno miejsce dla całego modułu
@@ -140,6 +162,28 @@ export const TYP_OBIEKTU_NA_MODUL: Record<string, ArtifactType> = {
   analysis: 'analysis',
   knowledge: 'knowledge',
 };
+
+/**
+ * Typy obiektów, którymi wolno wypełnić select „Typ obiektu" w dialogu
+ * „Powiąż istniejący obiekt" (pakiet N2) — DOKŁADNIE te, które
+ * `TYP_OBIEKTU_NA_MODUL` wyżej umie otworzyć. Świadomie NIE każdy string,
+ * jaki backend by przyjął (`artifactLinkService.ts` nie ma zamkniętego enuma
+ * typu — `KNOWN_ARTIFACT_TYPES` to udokumentowany katalog, nie ograniczenie
+ * bazy) — wolimy ograniczyć wybór do tego, co ten moduł realnie umie później
+ * OTWORZYĆ, niż pozwolić powiązać obiekt typu, którego „Otwórz" i tak nie
+ * obsłuży (patrz stan `nieznany-typ` w `rozstrzygnijOtwarcie` niżej).
+ */
+export const LINKOWALNE_TYPY_OBIEKTOW: string[] = Object.keys(TYP_OBIEKTU_NA_MODUL).sort();
+
+/** CW-RT-024 — sześć wartości `relation`, verbatim jak w `artifactLinkService.ts`. */
+export const RELACJE_POWIAZANIA: ArtifactLinkRelation[] = [
+  'INPUT',
+  'OUTPUT',
+  'EVIDENCE',
+  'DECISION_BASIS',
+  'DELIVERABLE',
+  'OUTCOME_MEASUREMENT',
+];
 
 export type OtwarcieObiektu =
   | {
@@ -259,6 +303,18 @@ function pobierzOtwarcieBackendu(linkId: string): Promise<ArtifactLinkOpenResolu
 }
 
 /**
+ * Usuwa wpis cache po UDANEJ komendzie mutującej (przypnij/odepnij) —
+ * inaczej `useOtwarciaZBackendu` pokazywałby stan sprzed komendy aż do
+ * następnego pełnego przeładowania widoku. Powiązane z `refreshToken` w
+ * `useOtwarciaZBackendu` niżej: samo usunięcie wpisu NIE odpala ponownego
+ * odczytu (hook trzyma własny efekt), więc wywołujący musi też podbić
+ * `refreshToken`.
+ */
+export function invalidujOtwarcieBackendu(linkId: string): void {
+  otwarcieBackenduCache.delete(linkId);
+}
+
+/**
  * Tłumaczy autorytatywną odpowiedź backendu na ten sam kształt, którego
  * używa cała reszta modułu (`OtwarcieObiektu`). Etykieta typu i BAZOWY adres
  * nadal idą przez `TYP_OBIEKTU_NA_MODUL`/`getArtifactPath` — jedno źródło
@@ -334,8 +390,19 @@ function otwarcieZOdpowiedziBackendu(
  * rezultat" + panel „Powiązania") — TA SAMA klasyfikacja wszędzie, bo cache
  * jest per `linkId` na poziomie modułu, nie per instancja komponentu.
  */
+/**
+ * `refreshToken` (domyślnie 0, wstecznie zgodne z dotychczasowymi
+ * wywołaniami — `CaseDetailScreen` go nie podaje i zachowuje się identycznie
+ * jak przed pakietem N2) — podbicie tej liczby wymusza NOWY odczyt, mimo że
+ * skład `linkId`-ów się nie zmienił. Potrzebne po udanej komendzie mutującej
+ * (przypnij wersję/odepnij), która realnie zmienia stan TEGO SAMEGO linku:
+ * bez tego drugi argument efekt niżej by się nie powtórzył, a
+ * `invalidujOtwarcieBackendu` usuwa wpis z cache, ale nikogo o tym nie
+ * informuje.
+ */
 export function useOtwarciaZBackendu(
-  artifactLinks: CaseArtifactLink[]
+  artifactLinks: CaseArtifactLink[],
+  refreshToken: number = 0
 ): Record<string, OtwarcieObiektu> {
   const [nadpisania, setNadpisania] = useState<Record<string, OtwarcieObiektu>>({});
 
@@ -354,7 +421,7 @@ export function useOtwarciaZBackendu(
       anulowano = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- linkId-owy skład, nie referencja tablicy
-  }, [artifactLinks.map((l) => l.linkId).join(',')]);
+  }, [artifactLinks.map((l) => l.linkId).join(','), refreshToken]);
 
   return nadpisania;
 }
@@ -640,7 +707,7 @@ const OpenButton: React.FC<{
 export const RezultatyView: React.FC<RezultatyViewProps> = ({
   caseItem,
   measurements,
-  artifactLinks,
+  artifactLinks: artifactLinksZPropsow,
   expert,
   onOpenDeliverable,
   wybor,
@@ -664,6 +731,259 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
       onOpenDeliverable?.(zadanie);
     },
     [onOpenDeliverable]
+  );
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // POWIĄZANIA — komendy MUTUJĄCE (pakiet N2, 2026-08-12).
+  //
+  // `CaseDetailScreen.tsx` (właściciel `CaseBundle`/`load()`) jest w tym
+  // pakiecie ZAKAZANY do edycji — dokładnie ten sam ograniczenie, które
+  // uzasadnia SAMODZIELNY odczyt `nodeResults` niżej. Ten widok nie może więc
+  // poprosić powłoki o pełne przeładowanie `artifactLinks` po udanej komendzie.
+  // Zamiast tego: `artifactLinksZPropsow` (to, co dała powłoka) jest NADPISYWANE
+  // lokalnie WYŁĄCZNIE autorytatywnym odczytem z samej komendy (`runCommand`'s
+  // readback w `api.ts` — nigdy zgadywaniem) — `localOverrides` dla
+  // zmienionych linków (przypnij/odepnij), `localNewLinks` dla świeżo
+  // powiązanych. Pełne odświeżenie strony i tak czyta stan na nowo z serwera
+  // (dane są REALNE, zapisane), więc „przeżywa odświeżenie" nie zależy od tej
+  // lokalnej nakładki — ta istnieje wyłącznie po to, żeby NIE trzeba było
+  // odświeżać strony po każdym kliknięciu.
+  const [localOverrides, setLocalOverrides] = useState<Record<string, CaseArtifactLink>>({});
+  const [localNewLinks, setLocalNewLinks] = useState<CaseArtifactLink[]>([]);
+  const artifactLinks = useMemo(() => {
+    const scalone = artifactLinksZPropsow.map((link) => localOverrides[link.linkId] ?? link);
+    const znaneId = new Set(scalone.map((link) => link.linkId));
+    const nowe = localNewLinks.filter((link) => !znaneId.has(link.linkId));
+    return [...scalone, ...nowe];
+  }, [artifactLinksZPropsow, localOverrides, localNewLinks]);
+
+  // Podbijane po KAŻDEJ udanej komendzie mutującej — patrz komentarz przy
+  // `useOtwarciaZBackendu`/`invalidujOtwarcieBackendu` wyżej: samo wyczyszczenie
+  // wpisu cache niczego nie odświeża bez zmiany zależności efektu.
+  const [otwarcieRefreshToken, setOtwarcieRefreshToken] = useState(0);
+
+  type PendingArtifactCommand =
+    | { kind: 'powiaz' }
+    | { kind: 'przypnij'; link: CaseArtifactLink }
+    | { kind: 'odepnij'; link: CaseArtifactLink };
+
+  const [pendingArtifactCommand, setPendingArtifactCommand] =
+    useState<PendingArtifactCommand | null>(null);
+  const [artifactCommandBusy, setArtifactCommandBusy] = useState(false);
+  const [artifactCommandNotice, setArtifactCommandNotice] = useState<CommandNotice | null>(null);
+  const artifactIntentKeysRef = useRef<Map<string, string>>(new Map());
+  const keyForArtifactIntent = useCallback((intent: string) => {
+    const existing = artifactIntentKeysRef.current.get(intent);
+    if (existing) return existing;
+    const fresh = newIdempotencyKey();
+    artifactIntentKeysRef.current.set(intent, fresh);
+    return fresh;
+  }, []);
+
+  // Pola formularza „Powiąż istniejący obiekt" — reset przy KAŻDYM otwarciu
+  // (patrz `otworzDialogPowiazania` niżej), inaczej drugie otwarcie
+  // pokazywałoby resztki po poprzednim, odrzuconym albo anulowanym wpisie.
+  const [formTypObiektu, setFormTypObiektu] = useState('document');
+  const [formIdObiektu, setFormIdObiektu] = useState('');
+  const [formRelacja, setFormRelacja] = useState<ArtifactLinkRelation>('EVIDENCE');
+  const [formRewizja, setFormRewizja] = useState('');
+  const [formPowodPrzypiecia, setFormPowodPrzypiecia] = useState('');
+
+  /**
+   * Element, który miał fokus PRZED otwarciem okna komendy — klawiaturowy
+   * warunek „focus return". `FormDialog` (nowy komponent tego pakietu) sam
+   * to robi wewnętrznie, ale `CommandDialog` (istniejący, współdzielony z
+   * `CaseDetailScreen.tsx`/`RealizacjaView.tsx`/`CasesListScreen.tsx` — poza
+   * dozwolonym do edycji zakresem tego pakietu) tego nie robi. Zamiast
+   * dotykać wspólnego komponentu, ten widok sam pilnuje powrotu fokusu na
+   * WŁASNYM poziomie — działa identycznie dla wszystkich trzech okien
+   * (`powiaz`/`przypnij`/`odepnij`), niezależnie od tego, który komponent
+   * okna renderuje dany przypadek.
+   */
+  const powrotFokusuArtefaktuRef = useRef<HTMLElement | null>(null);
+
+  const otworzDialogPowiazania = useCallback(() => {
+    powrotFokusuArtefaktuRef.current = (document.activeElement as HTMLElement) ?? null;
+    setFormTypObiektu('document');
+    setFormIdObiektu('');
+    setFormRelacja('EVIDENCE');
+    setFormRewizja('');
+    setFormPowodPrzypiecia('');
+    setPendingArtifactCommand({ kind: 'powiaz' });
+  }, []);
+
+  // Pola formularza „Przypnij wersję".
+  const [pinRewizja, setPinRewizja] = useState('');
+  const [pinPowod, setPinPowod] = useState('');
+
+  const otworzDialogPrzypiecia = useCallback((link: CaseArtifactLink) => {
+    powrotFokusuArtefaktuRef.current = (document.activeElement as HTMLElement) ?? null;
+    setPinRewizja(link.artifactRevision ?? '');
+    setPinPowod('');
+    setPendingArtifactCommand({ kind: 'przypnij', link });
+  }, []);
+
+  const otworzDialogOdpiecia = useCallback((link: CaseArtifactLink) => {
+    powrotFokusuArtefaktuRef.current = (document.activeElement as HTMLElement) ?? null;
+    setPendingArtifactCommand({ kind: 'odepnij', link });
+  }, []);
+
+  const zamknijDialogArtefaktu = useCallback(() => {
+    setPendingArtifactCommand(null);
+    powrotFokusuArtefaktuRef.current?.focus();
+    powrotFokusuArtefaktuRef.current = null;
+  }, []);
+
+  /**
+   * Jedna funkcja dla trzech komend tej sekcji — TEN SAM wzorzec co
+   * `RealizacjaView.tsx` (`runPendingCommand`): `busy` w trakcie wysyłki,
+   * `notice` z wynikiem (sukces/konflikt/błąd) PO POLSKU (nigdy surowy kod
+   * HTTP — `toCommandFailure` w `api.ts` już to tłumaczy), klucz idempotencji
+   * per INTENCJA (nie per żądanie), autorytatywny odczyt jako JEDYNE źródło
+   * nowego stanu w UI.
+   */
+  const uruchomKomendeArtefaktu = useCallback(
+    async (reasonOrRevision: string) => {
+      if (!pendingArtifactCommand) return;
+      setArtifactCommandBusy(true);
+      try {
+        if (pendingArtifactCommand.kind === 'powiaz') {
+          const typObiektu = formTypObiektu.trim();
+          const idObiektu = formIdObiektu.trim();
+          if (!typObiektu || !idObiektu) {
+            setArtifactCommandNotice({
+              tone: 'warning',
+              text: 'Podaj typ i identyfikator obiektu — oba pola są wymagane.',
+            });
+            return;
+          }
+          const intent = `link:${caseItem.caseId}:${typObiektu}:${idObiektu}:${formRelacja}`;
+          const idempotencyKey = keyForArtifactIntent(intent);
+          const result = await linkArtifactToCase(
+            caseItem.caseId,
+            {
+              artifactType: typObiektu,
+              artifactId: idObiektu,
+              relation: formRelacja,
+              artifactRevision: formRewizja.trim() || null,
+              pinReason: formPowodPrzypiecia.trim() || null,
+            },
+            { idempotencyKey }
+          );
+          if (!result.ok) {
+            setArtifactCommandNotice({
+              tone:
+                result.failure.kind === 'conflict' || result.failure.kind === 'invalid'
+                  ? 'warning'
+                  : 'critical',
+              text: result.failure.message,
+              refresh: result.failure.refreshSuggested,
+            });
+            return;
+          }
+          artifactIntentKeysRef.current.delete(intent);
+          setLocalNewLinks((prev) => [...prev, result.value]);
+          setSelection({ kind: 'obiekt', id: result.value.linkId });
+          setOtwarcieRefreshToken((n) => n + 1);
+          setArtifactCommandNotice({
+            tone: 'success',
+            text:
+              result.readback === 'confirmed'
+                ? `Obiekt powiązany ze zleceniem jako „${artifactLinkRelationLabel(result.value.relation, true)}".`
+                : 'Powiązanie zostało przyjęte, ale nie udało się go potwierdzić ponownym odczytem. Odśwież dane.',
+          });
+          return;
+        }
+
+        if (pendingArtifactCommand.kind === 'przypnij') {
+          const { link } = pendingArtifactCommand;
+          const revision = reasonOrRevision.trim();
+          if (!revision) {
+            setArtifactCommandNotice({ tone: 'warning', text: 'Podaj wersję do przypięcia — jest wymagana.' });
+            return;
+          }
+          const intent = `pin:${link.linkId}:${revision}`;
+          const idempotencyKey = keyForArtifactIntent(intent);
+          const result = await pinArtifactRevision(link.linkId, revision, pinPowod.trim() || null, {
+            idempotencyKey,
+          });
+          if (!result.ok) {
+            setArtifactCommandNotice({
+              tone:
+                result.failure.kind === 'conflict' || result.failure.kind === 'invalid'
+                  ? 'warning'
+                  : 'critical',
+              text: result.failure.message,
+              refresh: result.failure.refreshSuggested,
+            });
+            return;
+          }
+          artifactIntentKeysRef.current.delete(intent);
+          setLocalOverrides((prev) => ({ ...prev, [link.linkId]: result.value }));
+          invalidujOtwarcieBackendu(link.linkId);
+          setOtwarcieRefreshToken((n) => n + 1);
+          setArtifactCommandNotice({
+            tone: 'success',
+            text:
+              result.readback === 'confirmed'
+                ? `Wersja przypięta: „${revision}". Powiązanie przestało być oznaczone jako nieaktualne.`
+                : 'Wersja została przypięta, ale nie udało się tego potwierdzić ponownym odczytem. Odśwież dane.',
+          });
+          return;
+        }
+
+        // odepnij
+        {
+          const { link } = pendingArtifactCommand;
+          const reason = reasonOrRevision.trim();
+          const intent = `unlink:${link.linkId}`;
+          const idempotencyKey = keyForArtifactIntent(intent);
+          const result = await unlinkArtifactFromCase(link.linkId, reason || null, { idempotencyKey });
+          if (!result.ok) {
+            setArtifactCommandNotice({
+              tone:
+                result.failure.kind === 'conflict' || result.failure.kind === 'invalid'
+                  ? 'warning'
+                  : 'critical',
+              text: result.failure.message,
+              refresh: result.failure.refreshSuggested,
+            });
+            return;
+          }
+          artifactIntentKeysRef.current.delete(intent);
+          setLocalOverrides((prev) => ({ ...prev, [link.linkId]: result.value }));
+          invalidujOtwarcieBackendu(link.linkId);
+          setOtwarcieRefreshToken((n) => n + 1);
+          setArtifactCommandNotice({
+            tone: 'success',
+            text:
+              result.readback === 'confirmed'
+                ? 'Powiązanie zostało odpięte. Sam obiekt NIE został usunięty — pozostaje w swoim module, tylko przestał być rezultatem tego zlecenia.'
+                : 'Odpięcie zostało przyjęte, ale nie udało się tego potwierdzić ponownym odczytem. Odśwież dane.',
+          });
+        }
+      } finally {
+        setArtifactCommandBusy(false);
+        setPendingArtifactCommand(null);
+        // Sukces LUB odrzucenie — okno i tak się zamyka (ten sam wzorzec co
+        // `RealizacjaView.tsx`'s `runPendingCommand`), więc fokus wraca tu, w
+        // JEDNYM miejscu, zamiast osobno w każdej z trzech gałęzi wyżej.
+        powrotFokusuArtefaktuRef.current?.focus();
+        powrotFokusuArtefaktuRef.current = null;
+      }
+    },
+    [
+      pendingArtifactCommand,
+      caseItem.caseId,
+      formTypObiektu,
+      formIdObiektu,
+      formRelacja,
+      formRewizja,
+      formPowodPrzypiecia,
+      pinPowod,
+      keyForArtifactIntent,
+      setSelection,
+    ]
   );
 
   // ═══════════════════════════════════════════════════════════════════════
@@ -719,7 +1039,7 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
   // Nadpisania „otwieralny" → stan AUTORYTATYWNY z `GET
   // /artifact-links/:linkId/open` (AVAILABLE/STALE/UNAVAILABLE/DELETED, z
   // prawdziwym powodem) — patrz komentarz przy `useOtwarciaZBackendu` wyżej.
-  const nadpisaniaBackendu = useOtwarciaZBackendu(artifactLinks);
+  const nadpisaniaBackendu = useOtwarciaZBackendu(artifactLinks, otwarcieRefreshToken);
 
   // Nadpisania „otwieralny" → „niedostępny" po potwierdzonym 404 z modułu
   // docelowego — patrz komentarz przy `weryfikujIstnienieDokumentu` wyżej.
@@ -1150,9 +1470,28 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
         </section>
 
         <section aria-labelledby="zlecenia-obiekty" className="min-w-0">
-          <h3 id="zlecenia-obiekty" className="mb-2 text-sm font-semibold text-c-text">
-            Powiązane obiekty
-          </h3>
+          <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+            <h3 id="zlecenia-obiekty" className="text-sm font-semibold text-c-text">
+              Powiązane obiekty
+            </h3>
+            {/* Powiąż ISTNIEJĄCY obiekt — nigdy kopia, zawsze wskaźnik
+               (CW-RT-025: „late binding creates a link, not a copy or
+               ownership transfer"). Ten sam przycisk niezależnie od tego,
+               czy tabela jest pusta, czy pełna — dokładanie kolejnego
+               powiązania to ta sama czynność co pierwsze. */}
+            <button
+              type="button"
+              onClick={otworzDialogPowiazania}
+              className={`inline-flex h-8 items-center gap-1.5 rounded-lg border border-c-border px-2.5 text-xs font-medium text-c-text transition hover:bg-c-surface-raised ${FOCUS_RING}`}
+            >
+              <Plus size={14} aria-hidden />
+              Powiąż obiekt
+            </button>
+          </div>
+          <CommandBanner
+            notice={artifactCommandNotice}
+            onDismiss={() => setArtifactCommandNotice(null)}
+          />
           <div className="min-w-0 overflow-hidden rounded-xl border border-c-border bg-c-surface p-2 sm:p-3">
             <StandardTable
               columns={linkColumns}
@@ -1296,6 +1635,47 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
                 : undefined
             }
             openLabel="Otwórz obiekt"
+            /*
+             * Blok 6 kanonu podglądu — akcje ZARZĄDZANIA powiązaniem, nie
+             * treścią artefaktu (tej moduł nie posiada, patrz nagłówek pliku:
+             * „Case links objects and NEVER owns them"). WYŁĄCZNIE gdy
+             * powiązanie jest ACTIVE — serwis (`artifactLinkService.ts`)
+             * odrzuca obie komendy na powiązaniu odpiętym/niedostępnym jako
+             * `artifact_link_not_active` (409); pokazywanie przycisku, który
+             * serwer i tak odrzuci, byłoby atrapą (ten sam warunek co
+             * `RealizacjaView.tsx` stosuje dla propozycji/przebiegów).
+             * „Odepnij" jest `destructive` (crimson) — kanon (CLAUDE.md #1)
+             * rezerwuje ten wariant dla semantyki krytycznej, a odpięcie
+             * REALNIE zmienia, co liczy się jako dowód/dostawa tego zlecenia
+             * (nawet bez usunięcia samego obiektu) — ten sam próg, którym
+             * `RealizacjaView.tsx` uzasadnia `destructive` dla „Cofnij
+             * zatwierdzenie"/„Oznacz jako nieudane": konsekwentna zmiana
+             * stanu, nie usunięcie danych. `orderPreviewActionRows`
+             * (`StandardPreview.tsx`) i tak przesuwa `destructive` na koniec
+             * stopki niezależnie od kolejności w tej tablicy.
+             */
+            actions={
+              selectedLink.linkStatus === 'ACTIVE'
+                ? {
+                    resolutions: [
+                      {
+                        id: 'przypnij-wersje',
+                        variant: 'neutral',
+                        label: 'Przypnij wersję',
+                        icon: Pin,
+                        onClick: () => otworzDialogPrzypiecia(selectedLink),
+                      },
+                      {
+                        id: 'odepnij-obiekt',
+                        variant: 'destructive',
+                        label: 'Odepnij od zlecenia',
+                        icon: Unlink,
+                        onClick: () => otworzDialogOdpiecia(selectedLink),
+                      },
+                    ],
+                  }
+                : undefined
+            }
             meta={{
               pills: [
                 { label: artifactLinkRelationLabel(selectedLink.relation, true), tone: 'info' },
@@ -1548,6 +1928,135 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
           </StandardPreview>
         </aside>
       ) : null}
+
+      {/* ═══════════════════════════════════════════════════════════════════
+         POWIĄZANIA — trzy okna komend (poza kolumnami układu celowo: `fixed
+         inset-0`, więc pozycja w drzewie nie ma znaczenia dla wyglądu, ale ma
+         znaczenie dla czytelności — trzymamy je razem, blisko stanu, który
+         obsługują). */}
+      <FormDialog
+        open={pendingArtifactCommand?.kind === 'powiaz'}
+        title="Powiąż istniejący obiekt"
+        description="Obiekt zostaje POWIĄZANY, nie skopiowany — nadal należy do swojego modułu, a to zlecenie dostaje tylko wskaźnik do niego (CW-RT-025)."
+        confirmLabel="Powiąż"
+        busy={artifactCommandBusy}
+        confirmDisabled={!formTypObiektu.trim() || !formIdObiektu.trim()}
+        onConfirm={() => uruchomKomendeArtefaktu('')}
+        onCancel={zamknijDialogArtefaktu}
+      >
+        <FormField label="Typ obiektu" required>
+          <select
+            value={formTypObiektu}
+            onChange={(event) => setFormTypObiektu(event.target.value)}
+            className={FORM_INPUT_CLASS}
+          >
+            {LINKOWALNE_TYPY_OBIEKTOW.map((typ) => (
+              <option key={typ} value={typ}>
+                {linkedTypeLabel(typ, true) || typ}
+              </option>
+            ))}
+          </select>
+        </FormField>
+        <FormField
+          label="Identyfikator obiektu"
+          required
+          helpText="Skopiuj identyfikator z ekranu obiektu w jego własnym module (widok ekspercki pokazuje go obok nazwy)."
+        >
+          <input
+            type="text"
+            value={formIdObiektu}
+            onChange={(event) => setFormIdObiektu(event.target.value)}
+            placeholder="np. doc-... / decision-..."
+            className={FORM_INPUT_CLASS}
+          />
+        </FormField>
+        <FormField label="Rola w zleceniu" required>
+          <select
+            value={formRelacja}
+            onChange={(event) => setFormRelacja(event.target.value as ArtifactLinkRelation)}
+            className={FORM_INPUT_CLASS}
+          >
+            {RELACJE_POWIAZANIA.map((relacja) => (
+              <option key={relacja} value={relacja}>
+                {artifactLinkRelationLabel(relacja, true)}
+              </option>
+            ))}
+          </select>
+        </FormField>
+        <FormField label="Przypnij konkretną wersję" helpText="Puste = zawsze najnowsza wersja obiektu.">
+          <input
+            type="text"
+            value={formRewizja}
+            onChange={(event) => setFormRewizja(event.target.value)}
+            placeholder="np. v3 / skrót rewizji"
+            className={FORM_INPUT_CLASS}
+          />
+        </FormField>
+        {formRewizja.trim() ? (
+          <FormField label="Powód przypięcia tej wersji">
+            <input
+              type="text"
+              value={formPowodPrzypiecia}
+              onChange={(event) => setFormPowodPrzypiecia(event.target.value)}
+              className={FORM_INPUT_CLASS}
+            />
+          </FormField>
+        ) : null}
+      </FormDialog>
+
+      <FormDialog
+        open={pendingArtifactCommand?.kind === 'przypnij'}
+        title="Przypnij wersję obiektu"
+        description="Przypięcie NOWEJ wersji zdejmuje flagę „nieaktualny” — dokładnie ta czynność, po której zlecenie ponownie uznaje powiązanie za aktualne (CW-01-026-INV9)."
+        confirmLabel="Przypnij"
+        busy={artifactCommandBusy}
+        confirmDisabled={!pinRewizja.trim()}
+        onConfirm={() => uruchomKomendeArtefaktu(pinRewizja)}
+        onCancel={zamknijDialogArtefaktu}
+      >
+        <FormField label="Wersja" required>
+          <input
+            type="text"
+            value={pinRewizja}
+            onChange={(event) => setPinRewizja(event.target.value)}
+            placeholder="np. v4 / skrót rewizji"
+            className={FORM_INPUT_CLASS}
+          />
+        </FormField>
+        <FormField label="Powód">
+          <input
+            type="text"
+            value={pinPowod}
+            onChange={(event) => setPinPowod(event.target.value)}
+            placeholder="np. zaktualizowano po uwagach klienta"
+            className={FORM_INPUT_CLASS}
+          />
+        </FormField>
+      </FormDialog>
+
+      {/*
+       * Odepnij — pojedyncze pole (powód), więc `CommandDialog` (nie
+       * `FormDialog`) jest właściwym oknem — ten sam komponent, którego
+       * `RealizacjaView.tsx` używa dla „Cofnij zatwierdzenie"/„Anuluj
+       * przebieg". Powód jest OPCJONALNY po stronie serwera
+       * (`artifactLinks.routes.ts`: `reasonOnlyBody` → `.optional()`), więc
+       * UI go nie wymusza — ten sam wzorzec co `run-cancel` w
+       * `RealizacjaView.tsx`.
+       */}
+      <CommandDialog
+        open={pendingArtifactCommand?.kind === 'odepnij'}
+        title="Odepnij obiekt od zlecenia"
+        description="Powiązanie zniknie z aktywnej listy tego zlecenia. Sam obiekt NIE zostanie usunięty — zostaje w swoim module, tylko przestaje być rezultatem tego zlecenia. Historię tego powiązania da się odtworzyć."
+        confirmLabel="Odepnij"
+        reason={{
+          label: 'Powód odpięcia',
+          required: false,
+          placeholder: 'np. powiązano przez pomyłkę / zastąpione nowszym dokumentem',
+        }}
+        busy={artifactCommandBusy}
+        onConfirm={(reason) => uruchomKomendeArtefaktu(reason)}
+        onCancel={zamknijDialogArtefaktu}
+      />
     </div>
   );
 };

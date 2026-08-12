@@ -869,18 +869,20 @@ export function cancelWait(
  * nadal istnieje (`linkStatus`) i czy przypięta wersja nie zwietrzała
  * (`isStale`). Nawigacja jest sprawą ekranu; ta funkcja daje mu fakty, na
  * podstawie których wolno ją wykonać.
+ *
+ * ★ USUNIĘTY MARTWY DUBLET (2026-08-12, pakiet N2). Ta funkcja NAZYWAŁA się
+ * „otwórz", ale wołała `getArtifactLink` (`GET /artifact-links/:linkId`) —
+ * PROSTY odczyt wiersza, nie `/open`. Zero wywołań w całym repo (`grep -rn
+ * "openArtifactLink" src/ server/src/ dev-render/ tests/` przed usunięciem —
+ * jeden trafiony wiersz: definicja samej funkcji). Jedyna ŻYWA i POPRAWNA
+ * ścieżka otwarcia to `resolveArtifactLinkOpen` niżej (`GET
+ * /artifact-links/:linkId/open` → `artifactLinkService.resolveArtifactLinkOpen`),
+ * której faktycznie używa `RezultatyView.tsx` (`rozstrzygnijOtwarcieBackend`/
+ * `useOtwarciaZBackendu`) i która zamyka Golden Case scenariusz 12 na żywym
+ * dowodzie. Usunięcie tego dubletu zapobiega przyszłemu podłączeniu
+ * NIEWŁAŚCIWEJ funkcji przez kogoś, kto zobaczy nazwę „openArtifactLink" i
+ * uzna ją za gotową trasę.
  */
-export async function openArtifactLink(
-  linkId: string
-): Promise<CaseCommandResult<CaseArtifactLink>> {
-  const idempotencyKey = newIdempotencyKey();
-  try {
-    const link = await getArtifactLink(linkId);
-    return { ok: true, value: link, readback: 'confirmed', idempotencyKey };
-  } catch (error) {
-    return { ok: false, failure: toCommandFailure(error), idempotencyKey };
-  }
-}
 
 export interface LinkArtifactInput {
   artifactType: string;
