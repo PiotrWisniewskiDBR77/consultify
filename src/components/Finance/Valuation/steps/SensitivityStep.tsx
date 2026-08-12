@@ -12,7 +12,7 @@
  */
 import React, { useState } from 'react';
 
-import { valuationMethodTypeLabel, type ValuationMethodDto, type ValuationSensitivityGridRawDto, type ValuationWeightedRecommendationDto } from '@/services/api/financeV2.types';
+import { describeFinanceV2Error, valuationMethodTypeLabel, type ValuationMethodDto, type ValuationSensitivityGridRawDto, type ValuationWeightedRecommendationDto } from '@/services/api/financeV2.types';
 
 import { assertSensitivityGridIntegrity } from '../valuationMath';
 
@@ -49,7 +49,8 @@ export function SensitivityStep(props: SensitivityStepProps): React.ReactElement
       const g = await getGrid(effectiveMethodId, gridLabel);
       setGrid(g);
     } catch (err) {
-      setLoadError(err instanceof Error ? err.message : 'Nie udało się wczytać siatki wrażliwości.');
+      // ID_BRIDGE (Gate E) fix: honest-UI PL message (CANON §4.1) — było `err.message` surowe.
+      setLoadError(describeFinanceV2Error(err).detail);
     } finally {
       setLoading(false);
     }

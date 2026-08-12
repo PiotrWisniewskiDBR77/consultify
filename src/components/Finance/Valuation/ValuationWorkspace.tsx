@@ -18,18 +18,19 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useFinanceFocusMode } from '@/hooks/useFinanceFocusMode';
 import { useFinanceValuationWorkspaceFlag } from '@/hooks/useFinanceValuationWorkspaceFlag';
-import type {
-  ValuationAdvisorFindingGeneratedDto,
-  ValuationAdvisorFindingStoredDto,
-  ValuationCompareVariantsResultDto,
-  ValuationLineageDto,
-  ValuationMethodDto,
-  ValuationMethodType,
-  ValuationResultsDto,
-  ValuationSensitivityGridRawDto,
-  ValuationVariantDto,
-  ValuationWaccInputsRawDto,
-  ValuationWeightedRecommendationDto,
+import {
+  describeFinanceV2Error,
+  type ValuationAdvisorFindingGeneratedDto,
+  type ValuationAdvisorFindingStoredDto,
+  type ValuationCompareVariantsResultDto,
+  type ValuationLineageDto,
+  type ValuationMethodDto,
+  type ValuationMethodType,
+  type ValuationResultsDto,
+  type ValuationSensitivityGridRawDto,
+  type ValuationVariantDto,
+  type ValuationWaccInputsRawDto,
+  type ValuationWeightedRecommendationDto,
 } from '@/services/api/financeV2.types';
 import {
   createValuationMethod,
@@ -154,7 +155,8 @@ function ValuationWorkspaceInner(props: ValuationWorkspaceProps): React.ReactEle
         if (!cancelled) setVariant(v);
       })
       .catch((err: unknown) => {
-        if (!cancelled) setVariantError(err instanceof Error ? err.message : 'Nie udało się wczytać wariantu wyceny.');
+        // ID_BRIDGE (Gate E) fix: honest-UI PL message (CANON §4.1) — było `err.message` surowe.
+        if (!cancelled) setVariantError(describeFinanceV2Error(err).detail);
       });
     return () => {
       cancelled = true;

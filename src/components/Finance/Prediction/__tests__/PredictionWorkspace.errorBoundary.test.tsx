@@ -15,16 +15,20 @@
  * AP_MOUNT_report.md §D as a structural inconsistency worth a follow-up,
  * out of this task's scope to restructure.
  */
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { clearFeatureFlagOverrides, setFeatureFlagOverrides } from '@/test-utils/featureFlagOverrides';
 
-vi.mock('@/services/api/financeV2.api', () => ({
+import type { FinanceBusinessVersionDetailDto } from '../../../../services/api/financeV2.types';
+
+const apiMocks = vi.hoisted(() => ({
+  getFinanceBusinessVersion: vi.fn(),
   runFinancePredictionPreflight: vi.fn(),
   runFinancePredictionCalculate: vi.fn(),
 }));
+vi.mock('@/services/api/financeV2.api', () => apiMocks);
 
 vi.mock('../ScenarioAssumptionsView', () => ({
   ScenarioAssumptionsView: () => {
@@ -34,16 +38,44 @@ vi.mock('../ScenarioAssumptionsView', () => ({
 
 import { PredictionWorkspace } from '../PredictionWorkspace';
 
+const CONFIRMED_VERSION: FinanceBusinessVersionDetailDto = {
+  businessVersionId: 'bv-eb-1',
+  artifactId: 'artifact-1',
+  versionNo: 1,
+  version: 1,
+  status: 'DRAFT',
+  freshness: 'NEVER_COMPUTED',
+  freshnessReason: null,
+  staleSince: null,
+  riskTier: 'LOW',
+  versionKind: 'MAIN',
+  parentVersionId: null,
+  supersededByVersionId: null,
+  computeSnapshotId: null,
+  computeRunId: null,
+  contentSemanticHash: null,
+  submittedBy: null,
+  submittedAt: null,
+  approvedBy: null,
+  approvedAt: null,
+  reopenReason: null,
+  reopenedBy: null,
+  reopenedAt: null,
+  createdAt: '2026-08-01T00:00:00Z',
+  updatedAt: '2026-08-01T00:00:00Z',
+};
+
 afterEach(() => {
   clearFeatureFlagOverrides();
 });
 
 describe('PredictionWorkspace — FinanceErrorBoundary (AP_MOUNT §D)', () => {
-  it('a crash in the assumptions view is caught locally, not propagated to the caller', () => {
+  it('a crash in the assumptions view is caught locally, not propagated to the caller', async () => {
+    apiMocks.getFinanceBusinessVersion.mockResolvedValue(CONFIRMED_VERSION);
     setFeatureFlagOverrides({ financePredictionWorkspaceV1: true });
     const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    expect(() => render(<PredictionWorkspace artifactId="artifact-1" />)).not.toThrow();
-    expect(screen.getByTestId('finance-error-boundary')).toBeInTheDocument();
+    expect(() => render(<PredictionWorkspace artifactId="artifact-1" businessVersionId="bv-eb-1" />)).not.toThrow();
+    await waitFor(() => expect(screen.getByTestId('finance-error-boundary')).toBeInTheDocument());
     expect(screen.getByTestId('finance-error-boundary')).toHaveTextContent(/Ponów|Wróć do listy/);
     consoleErrorSpy.mockRestore();
   });

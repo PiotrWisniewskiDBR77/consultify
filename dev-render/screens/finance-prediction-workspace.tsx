@@ -11,6 +11,15 @@
  *                 negative-control knob: changing this changes the initially-active tab, proving
  *                 the harness renders the REAL component, not a static image.
  *   &view=assumptions|results
+ *   &bridge=ok|missing|notfound|error   ID_BRIDGE (Gate E) anti-cicha-pustka states:
+ *     ok       (default) — businessVersionId resolved + confirmed by GET .../versions/:id — real
+ *              workspace mounts, honest "nowy szkic" banner shown (no scenario-content GET exists).
+ *     missing  — ID_BRIDGE could not resolve a canonical id at all (businessVersionId=null) —
+ *                honest "brak połączenia z realnym rekordem" state, ZERO network calls.
+ *     notfound — businessVersionId set, but GET .../versions/:id returns 404 — honest
+ *                "nie znaleziono tej wersji" state.
+ *     error    — businessVersionId set, GET .../versions/:id fails (500) — honest error state
+ *                with "Spróbuj ponownie".
  */
 import React from 'react';
 
@@ -35,6 +44,66 @@ const PredictionWorkspaceLazy = React.lazy(() =>
 
 const params = new URLSearchParams(window.location.search);
 const MODE = params.get('mode') === 'B' ? 'DRIVER_OVERRIDE' : params.get('mode') === 'C' ? 'FUNDAMENTAL_INITIATIVE' : 'STANDARD_BASE';
+const BRIDGE = (params.get('bridge') as 'ok' | 'missing' | 'notfound' | 'error' | null) ?? 'ok';
+const BV_ID = 'bv-prediction-demo-1';
+
+// ID_BRIDGE (Gate E) — window.fetch mock for GET /api/v8/finance-v2/versions/:id
+// (`getFinanceBusinessVersion`, called on mount by the REAL PredictionWorkspace
+// to verify the resolved businessVersionId before rendering anything). Same
+// mock-on-window.fetch pattern as finance-baseline-workspace.tsx (named-function
+// imports from financeV2.api.ts can't be swapped from outside the module).
+const g = window as unknown as { __PREDICTION_WORKSPACE_FETCH__?: boolean };
+if (!g.__PREDICTION_WORKSPACE_FETCH__) {
+  g.__PREDICTION_WORKSPACE_FETCH__ = true;
+  const realFetch = window.fetch.bind(window);
+  window.fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+    const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+    const json = (data: unknown, status = 200): Response =>
+      new Response(JSON.stringify({ data }), { status, headers: { 'Content-Type': 'application/json' } });
+    // Error envelope shape is `{error, code}` at the TOP LEVEL (matches the
+    // real server's `sendError()` — `_shared.ts` — and what
+    // `handleResponse()`/`baseClient.ts` reads as `err.data.code`), NOT
+    // wrapped in `{data: ...}` like a success body.
+    const errorJson = (error: string, code: string, status: number): Response =>
+      new Response(JSON.stringify({ error, code }), { status, headers: { 'Content-Type': 'application/json' } });
+
+    if (url.includes('/locales/')) return realFetch(input as RequestInfo, init);
+
+    if (url.includes(`/versions/${BV_ID}`)) {
+      if (BRIDGE === 'notfound') return errorJson('Business version not found', 'NOT_FOUND', 404);
+      if (BRIDGE === 'error') return errorJson('Internal error', 'INTERNAL_ERROR', 500);
+      return json({
+        businessVersionId: BV_ID,
+        artifactId: 'artifact-prediction-demo-1',
+        versionNo: 1,
+        version: 1,
+        status: 'DRAFT',
+        freshness: 'NEVER_COMPUTED',
+        freshnessReason: null,
+        staleSince: null,
+        riskTier: 'LOW',
+        versionKind: 'MAIN',
+        parentVersionId: null,
+        supersededByVersionId: null,
+        computeSnapshotId: null,
+        computeRunId: null,
+        contentSemanticHash: null,
+        submittedBy: null,
+        submittedAt: null,
+        approvedBy: null,
+        approvedAt: null,
+        reopenReason: null,
+        reopenedBy: null,
+        reopenedAt: null,
+        createdAt: '2026-08-01T00:00:00Z',
+        updatedAt: '2026-08-01T00:00:00Z',
+      });
+    }
+
+    if (url.includes('/api/')) return json([]);
+    return realFetch(input as RequestInfo, init);
+  };
+}
 
 // Shapes taken directly from predictionScenarioModel.ts's own exported types (createEmptyScenarioDraft +
 // manual demo rows) — not invented ad hoc.
@@ -123,6 +192,7 @@ export function FinancePredictionWorkspaceScreen(): React.ReactElement {
           <React.Suspense fallback={null}>
             <PredictionWorkspaceLazy
               artifactId="artifact-prediction-demo-1"
+              businessVersionId={BRIDGE === 'missing' ? null : BV_ID}
               initialDraft={initialDraft as never}
               scenarioValues={demoScenarioValues}
               baselineValues={demoBaselineValues}

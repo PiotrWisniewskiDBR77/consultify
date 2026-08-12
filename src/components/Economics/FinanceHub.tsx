@@ -132,6 +132,11 @@ import { useFinancePredictionWorkspaceFlag } from '@/hooks/useFinancePredictionW
 import { useFinanceValuationWorkspaceFlag } from '@/hooks/useFinanceValuationWorkspaceFlag';
 import type { BusinessVersionStatus } from '@/services/api/financeV2.types';
 
+// ID_BRIDGE (Gate E) — legacy `/api/v8/finance/*` id -> canonical
+// `{artifactId, businessVersionId}` resolution gate, used by all four v3
+// mount branches below (openV3Baseline/Prediction/Analysis/Valuation).
+import { FinanceLegacyBridgeGate } from '../Finance/shared/FinanceLegacyBridgeGate';
+
 // ---------------------------------------------------------------------------
 // H5.1 perf (code-splitting): heavy, on-demand surfaces are lazy-loaded so the
 // FinanceHub critical-path chunk no longer bundles the full editor suite +
@@ -2865,33 +2870,59 @@ export const FinanceHub: React.FC = () => {
                   onCreateAnalysisFromPack={handleCreateAnalysisFromStatements}
                 />
               ) : openV3Baseline ? (
-                // AP_MOUNT §B (Pakiet F) — `financeBaselineWorkspaceV1`. See the
-                // ID-space/entityId/forecastPeriods caveat above: this branch is a
-                // REAL mount (no harness, no mock), but the legacy list row cannot
-                // honestly supply entityId/forecastPeriods/assumptionRowOrder today
-                // — passed as empty (component renders its own honest empty state,
-                // never fabricated rows).
-                <FinanceV3BaselineWorkspace
-                  artifactId={activeDocument.id}
-                  businessVersionId={activeDocument.id}
-                  entityId=""
-                  name={activeDocument.title}
-                  status={mapLegacyFinanceStatusToV3(activeDocument.status)}
-                  freshness="NEVER_COMPUTED"
-                  version={1}
-                  role="preparer"
-                  forecastPeriods={[]}
-                  openingBalanceSheetPeriodId=""
-                  assumptionRowOrder={[]}
-                  contextValues={{ type: 'Model bazowy (Baseline)' }}
-                  onNavigateBack={handleShowList}
-                />
+                // AP_MOUNT §B (Pakiet F) — `financeBaselineWorkspaceV1`. ID_BRIDGE
+                // (Gate E) fix: `activeDocument.id` is a LEGACY `financial_models.id`
+                // — resolved through `FinanceLegacyBridgeGate` (reads
+                // `finance_artifact_aliases`) into the real canonical
+                // `{artifactId, businessVersionId}` before this workspace ever
+                // mounts, instead of passing the legacy id through as if it were a
+                // canonical one. `entityId`/`forecastPeriods`/`assumptionRowOrder`
+                // still can't be honestly supplied by the legacy list row today
+                // (unchanged from before this fix) — passed as empty (component
+                // renders its own honest empty state, never fabricated rows).
+                <FinanceLegacyBridgeGate
+                  legacyTable="financial_models"
+                  legacyId={activeDocument.id}
+                  onBackToList={handleShowList}
+                >
+                  {(resolved) => (
+                    <FinanceV3BaselineWorkspace
+                      artifactId={resolved.artifactId}
+                      businessVersionId={resolved.businessVersionId ?? ''}
+                      entityId=""
+                      name={activeDocument.title}
+                      status={mapLegacyFinanceStatusToV3(activeDocument.status)}
+                      freshness="NEVER_COMPUTED"
+                      version={1}
+                      role="preparer"
+                      forecastPeriods={[]}
+                      openingBalanceSheetPeriodId=""
+                      assumptionRowOrder={[]}
+                      contextValues={{ type: 'Model bazowy (Baseline)' }}
+                      onNavigateBack={handleShowList}
+                    />
+                  )}
+                </FinanceLegacyBridgeGate>
               ) : openV3Prediction ? (
-                // AP_MOUNT §B (Pakiet G) — `financePredictionWorkspaceV1`.
-                <FinanceV3PredictionWorkspace
-                  artifactId={activeDocument.id}
-                  onNavigateBack={handleShowList}
-                />
+                // AP_MOUNT §B (Pakiet G) — `financePredictionWorkspaceV1`. ID_BRIDGE
+                // (Gate E) fix: same legacy->canonical resolution as Baseline above.
+                // Prediction is additionally fixed at the component level
+                // (`PredictionWorkspace.tsx`) to stop silently rendering an empty
+                // draft when no real `businessVersionId` is available — this gate is
+                // defense-in-depth, not the only fix (see that component's header).
+                <FinanceLegacyBridgeGate
+                  legacyTable="financial_models"
+                  legacyId={activeDocument.id}
+                  onBackToList={handleShowList}
+                >
+                  {(resolved) => (
+                    <FinanceV3PredictionWorkspace
+                      artifactId={resolved.artifactId}
+                      businessVersionId={resolved.businessVersionId}
+                      onNavigateBack={handleShowList}
+                    />
+                  )}
+                </FinanceLegacyBridgeGate>
               ) : isModelWorkspace ? (
                 // #82c/#82f — FinanceModelDocumentView (read-only P&L/BS/CF table) had no
                 // way to edit assumptions, add events, compute, approve, or refresh from
@@ -2906,13 +2937,23 @@ export const FinanceHub: React.FC = () => {
                   onModelChanged={handleModelChanged}
                 />
               ) : openV3Analysis ? (
-                // AP_MOUNT §B (Pakiet E) — `financeAnalysisWorkspaceV1`.
-                <FinanceV3AnalysisWorkspace
-                  artifactId={activeDocument.id}
-                  businessVersionId={activeDocument.id}
-                  role="preparer"
-                  onNavigateBack={handleShowList}
-                />
+                // AP_MOUNT §B (Pakiet E) — `financeAnalysisWorkspaceV1`. ID_BRIDGE
+                // (Gate E) fix: same legacy->canonical resolution as Baseline above
+                // — `activeDocument.id` is a legacy `financial_analyses.id`.
+                <FinanceLegacyBridgeGate
+                  legacyTable="financial_analyses"
+                  legacyId={activeDocument.id}
+                  onBackToList={handleShowList}
+                >
+                  {(resolved) => (
+                    <FinanceV3AnalysisWorkspace
+                      artifactId={resolved.artifactId}
+                      businessVersionId={resolved.businessVersionId ?? ''}
+                      role="preparer"
+                      onNavigateBack={handleShowList}
+                    />
+                  )}
+                </FinanceLegacyBridgeGate>
               ) : openAnalysis ? (
                 <FinancialAnalysisWorkspace
                   initialAnalysisId={activeDocument.id}
@@ -2920,12 +2961,22 @@ export const FinanceHub: React.FC = () => {
                   onAnalysisChanged={handleAnalysisChanged}
                 />
               ) : openV3Valuation ? (
-                // AP_MOUNT §B (Pakiet H) — `financeValuationWorkspaceV1`.
-                <FinanceV3ValuationWorkspace
-                  businessVersionId={activeDocument.id}
-                  role="preparer"
-                  onNavigateBack={handleShowList}
-                />
+                // AP_MOUNT §B (Pakiet H) — `financeValuationWorkspaceV1`. ID_BRIDGE
+                // (Gate E) fix: same legacy->canonical resolution as Baseline above
+                // — `activeDocument.id` is a legacy `valuations.id`.
+                <FinanceLegacyBridgeGate
+                  legacyTable="valuations"
+                  legacyId={activeDocument.id}
+                  onBackToList={handleShowList}
+                >
+                  {(resolved) => (
+                    <FinanceV3ValuationWorkspace
+                      businessVersionId={resolved.businessVersionId ?? ''}
+                      role="preparer"
+                      onNavigateBack={handleShowList}
+                    />
+                  )}
+                </FinanceLegacyBridgeGate>
               ) : openValuation ? (
                 <ValuationWorkspace
                   initialValuationId={activeDocument.id}

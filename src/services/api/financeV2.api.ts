@@ -44,6 +44,8 @@ import type {
   FinanceRenameArtifactResultDto,
   FinanceReopenModelResultDto,
   FinanceTransitionResultDto,
+  LegacyBridgeResolutionDto,
+  LegacyFinanceTable,
   LifecycleAction,
   ReconciliationRunDetailDto,
   ReconciliationRunSummaryDto,
@@ -140,6 +142,28 @@ export async function createFinanceArtifact(
 
 export async function getFinanceArtifact(artifactId: string): Promise<FinanceArtifactDetailDto> {
   return v8Get<FinanceArtifactDetailDto>(`${BASE}/artifacts/${encodeURIComponent(artifactId)}`);
+}
+
+/**
+ * ID BRIDGE (Gate E) — translates an OLD `/api/v8/finance/*` list-row id
+ * (`financial_models.id` / `financial_analyses.id` /
+ * `financial_statement_packs.id` / `valuations.id`) into the NEW canonical
+ * `{artifactId, businessVersionId}` pair the v3 detail workspaces
+ * (Baseline/Prediction/Analysis/Valuation) need. Always resolves to a
+ * `{status: ...}` DTO on a normal 200 response — RESOLVED / NOT_MIGRATED /
+ * QUARANTINED are domain outcomes, not transport errors. This function only
+ * THROWS for a genuine transport/server failure (network, 5xx, malformed
+ * legacyTable -> 400) — the caller (see `useFinanceLegacyBridge.ts`) treats
+ * that thrown case as its own third UI state, distinct from both
+ * NOT_MIGRATED and QUARANTINED.
+ */
+export async function resolveLegacyFinanceArtifact(
+  legacyTable: LegacyFinanceTable,
+  legacyId: string
+): Promise<LegacyBridgeResolutionDto> {
+  return v8Get<LegacyBridgeResolutionDto>(
+    `${BASE}/artifacts/resolve-legacy/${encodeURIComponent(legacyTable)}/${encodeURIComponent(legacyId)}`
+  );
 }
 
 export async function listFinanceArtifactVersions(

@@ -267,6 +267,50 @@ export function artifactRefKey(ref: Pick<ArtifactRef, 'artifactType' | 'business
 }
 
 // ---------------------------------------------------------------------------
+// ID BRIDGE (Gate E) — legacy `/api/v8/finance/*` id -> canonical
+// `{artifactId, businessVersionId}`. Źródło: pole po polu z
+// `server/src/routes/v8/finance-v2/artifacts.routes.ts`
+// `GET /artifacts/resolve-legacy/:legacyTable/:legacyId` handler
+// (`legacyIdBridgeService.ts`'s `LegacyBridgeResolution`).
+//
+// Trzy, i TYLKO trzy, rozróżnialne stany — nigdy nie zlewaj RESOLVED z
+// NOT_MIGRATED/QUARANTINED w jeden komunikat (CLAUDE.md §2.3, ta sama
+// dyscyplina co `FinanceValueStatus`).
+// ---------------------------------------------------------------------------
+
+/** Legacy tabele, z których `FinanceHub.tsx` bierze `id` swoich wierszy — musi być identyczne ze `LEGACY_FINANCE_TABLES` w `legacyIdBridgeService.ts`. */
+export const LegacyFinanceTableValues = [
+  'financial_statement_packs',
+  'financial_analyses',
+  'financial_models',
+  'valuations',
+] as const;
+export type LegacyFinanceTable = (typeof LegacyFinanceTableValues)[number];
+
+export interface LegacyBridgeResolvedDto {
+  status: 'RESOLVED';
+  artifactId: string;
+  businessVersionId: string | null;
+  artifactType: FinanceArtifactType;
+  mappingConfidence: 'AUTO_MIGRATE' | 'MIGRATE_WITH_WARNING';
+}
+
+export interface LegacyBridgeQuarantinedDto {
+  status: 'QUARANTINED';
+  mappingConfidence: 'QUARANTINE' | 'EXCLUDE_WITH_REASON';
+  reason: string | null;
+}
+
+export interface LegacyBridgeNotMigratedDto {
+  status: 'NOT_MIGRATED';
+}
+
+export type LegacyBridgeResolutionDto =
+  | LegacyBridgeResolvedDto
+  | LegacyBridgeQuarantinedDto
+  | LegacyBridgeNotMigratedDto;
+
+// ---------------------------------------------------------------------------
 // WP-B02 — lifecycle. Źródło: server/src/services/finance/canonical/lifecycleService.ts:24-53
 // ---------------------------------------------------------------------------
 

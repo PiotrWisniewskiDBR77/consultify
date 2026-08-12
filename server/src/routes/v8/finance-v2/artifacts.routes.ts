@@ -38,6 +38,7 @@ import {
   renameArtifact,
   type CreateArtifactParams,
 } from '../../../services/finance/canonical/artifactVersionService.js';
+import { isLegacyFinanceTable, resolveLegacyFinanceArtifact } from '../../../services/finance/canonical/legacyIdBridgeService.js';
 import {
   allowedActionsFromStatus,
   type FinanceArtifactType,
@@ -99,6 +100,80 @@ router.post(
         },
         workingRevisionId: result.workingRevision.working_revision_id,
       },
+      meta: financeV2Meta(),
+    });
+  })
+);
+
+// ---------------------------------------------------------------------------
+// GET /artifacts/resolve-legacy/:legacyTable/:legacyId — ID BRIDGE (Gate E).
+//
+// Translates an OLD `/api/v8/finance/*` list-row id (`financial_models.id` /
+// `financial_analyses.id` / `financial_statement_packs.id` / `valuations.id`)
+// into the NEW canonical `{artifactId, businessVersionId}` pair the four v3
+// detail workspaces (Baseline/Prediction/Analysis/Valuation) are built
+// against — see `legacyIdBridgeService.ts` header for the full context and
+// why this reads `finance_artifact_aliases` rather than inventing a new
+// mapping.
+//
+// Three DISTINGUISHABLE outcomes in the response body (never collapsed —
+// CLAUDE.md §2.3), all at HTTP 200 (this is a normal, successful *query*
+// regardless of which of the three domain states it finds — a 4xx/5xx is
+// reserved for an actual request/transport problem, e.g. bad legacyTable ->
+// 400, which the FRONTEND then treats as its own third "coś poszło nie tak"
+// state, distinct from both of these):
+//   - `{status:'RESOLVED', artifactId, businessVersionId, artifactType}` — a
+//     migrated alias exists; the caller may mount the real v3 workspace.
+//   - `{status:'NOT_MIGRATED'}` — no alias row for this legacy id at all
+//     (never backfilled, or the org's backfill has not been run yet).
+//   - `{status:'QUARANTINED', reason}` — an alias row exists but the
+//     backfill deliberately did not migrate it (WP-A01 classification
+//     QUARANTINE/EXCLUDE_WITH_REASON) — a different situation from
+//     NOT_MIGRATED (the record was LOOKED AT and rejected, not simply never
+//     processed), so the reason (when the backfill recorded one) is passed
+//     through rather than folded into the same generic copy.
+// ---------------------------------------------------------------------------
+
+router.get(
+  '/artifacts/resolve-legacy/:legacyTable/:legacyId',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const legacyTable = String(req.params.legacyTable || '');
+    const legacyId = String(req.params.legacyId || '');
+
+    if (!isLegacyFinanceTable(legacyTable)) {
+      return sendError(res, 400, 'INVALID_LEGACY_TABLE', `legacyTable must be one of the known legacy Finance tables, got "${legacyTable}"`);
+    }
+    if (!legacyId.trim()) {
+      return sendError(res, 400, 'INVALID_LEGACY_ID', 'legacyId is required');
+    }
+
+    const resolution = await resolveLegacyFinanceArtifact(organizationId, legacyTable, legacyId);
+
+    if (resolution.status === 'RESOLVED') {
+      return res.status(200).json({
+        data: {
+          status: 'RESOLVED',
+          artifactId: resolution.artifactId,
+          businessVersionId: resolution.businessVersionId,
+          artifactType: resolution.artifactType,
+          mappingConfidence: resolution.mappingConfidence,
+        },
+        meta: financeV2Meta(),
+      });
+    }
+    if (resolution.status === 'QUARANTINED') {
+      return res.status(200).json({
+        data: {
+          status: 'QUARANTINED',
+          mappingConfidence: resolution.mappingConfidence,
+          reason: resolution.reason,
+        },
+        meta: financeV2Meta(),
+      });
+    }
+    return res.status(200).json({
+      data: { status: 'NOT_MIGRATED' },
       meta: financeV2Meta(),
     });
   })

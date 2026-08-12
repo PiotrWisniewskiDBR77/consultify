@@ -23,12 +23,13 @@ import {
   upsertBaselineAssumptions,
   type ListBaselineAssumptionsParams,
 } from '@/services/api/financeV2.api';
-import type {
-  BaselineAssumptionDto,
-  BaselineAssumptionQuality,
-  BaselineAssumptionRule,
-  BaselineScheduleType,
-  FinanceValueStatus,
+import {
+  describeFinanceV2Error,
+  type BaselineAssumptionDto,
+  type BaselineAssumptionQuality,
+  type BaselineAssumptionRule,
+  type BaselineScheduleType,
+  type FinanceValueStatus,
 } from '@/services/api/financeV2.types';
 
 export interface AssumptionCellKey {
@@ -136,7 +137,10 @@ export function useBaselineAssumptionsEditor(
       setUndoStack([]);
       setRedoStack([]);
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+      // ID_BRIDGE (Gate E) fix: honest-UI PL message (CANON §4.1 zakazuje
+      // surowego błędu backendu) — było `e.message` wprost, np. surowe "Not
+      // Found" albo network error string, niezrozumiałe dla analityka.
+      setError(describeFinanceV2Error(e).detail);
     } finally {
       setLoading(false);
     }
@@ -324,7 +328,8 @@ export function useBaselineAssumptionsEditor(
       await reload();
       return { ok: true, writtenCount: result.writtenCount };
     } catch (e) {
-      const message = e instanceof Error ? e.message : String(e);
+      // ID_BRIDGE (Gate E) fix: honest-UI PL message, same reasoning as `reload()` above.
+      const message = describeFinanceV2Error(e).detail;
       setSaveError(message);
       return { ok: false, message };
     } finally {
