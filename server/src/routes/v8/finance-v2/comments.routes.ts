@@ -43,6 +43,8 @@ import {
   listMentioning,
   reopenComment,
   resolveComment,
+  type FinanceCommentAssignmentRow,
+  type FinanceCommentRow,
 } from '../../../services/finance/canonical/commentService.js';
 import {
   addChecklistItem,
@@ -52,12 +54,67 @@ import {
   listChecklistItems,
   setChecklistItemRequired,
   uncheckItem,
+  type FinanceReviewChecklistItemRow,
 } from '../../../services/finance/canonical/reviewChecklistService.js';
 import { CellRefSchema, type CellRef } from '../../../types/finance/CellRef.js';
 import { asyncHandler } from '../../../utils/asyncHandler.js';
 import { financeV2Meta, sendError } from './_shared.js';
 
 const router = Router();
+
+// ---------------------------------------------------------------------------
+// Row -> DTO mapping (camelCase, internal columns dropped).
+//
+// Same convention `crosscutting.routes.ts` already established for this
+// package's routers (a small local `toDto`-style mapper next to the routes
+// that use it, rather than a generic serializer) — reused here, not
+// reinvented. `organization_id` is deliberately NOT included in any DTO: it
+// is always identical to the caller's own authenticated org (every query
+// above is `WHERE organization_id = ?`), so it carries no information the
+// client doesn't already have, only an internal implementation detail.
+// ---------------------------------------------------------------------------
+
+function toCommentDto(row: FinanceCommentRow) {
+  return {
+    id: row.id,
+    artifactId: row.artifact_id,
+    businessVersionId: row.business_version_id,
+    anchor: row.anchor,
+    authorId: row.author_id,
+    body: row.body,
+    mentions: row.mentions,
+    isBlocking: row.is_blocking,
+    resolvedBy: row.resolved_by,
+    resolvedAt: row.resolved_at,
+    createdBy: row.created_by,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+function toCommentAssignmentDto(row: FinanceCommentAssignmentRow) {
+  return {
+    id: row.id,
+    commentId: row.comment_id,
+    assigneeId: row.assignee_id,
+    dueDate: row.due_date,
+    assignedBy: row.assigned_by,
+    assignedAt: row.assigned_at,
+  };
+}
+
+function toChecklistItemDto(row: FinanceReviewChecklistItemRow) {
+  return {
+    id: row.id,
+    businessVersionId: row.business_version_id,
+    item: row.item,
+    required: row.required,
+    checkedBy: row.checked_by,
+    checkedAt: row.checked_at,
+    createdBy: row.created_by,
+    createdAt: row.created_at,
+  };
+}
 
 // ---------------------------------------------------------------------------
 // Comments — create / resolve / reopen / assign
@@ -105,7 +162,7 @@ router.post(
     if (!result.ok) {
       return sendError(res, 400, result.code, result.message);
     }
-    return res.status(201).json({ data: result.comment, meta: financeV2Meta() });
+    return res.status(201).json({ data: toCommentDto(result.comment), meta: financeV2Meta() });
   })
 );
 
@@ -117,7 +174,7 @@ router.post(
     if (!result.ok) {
       return sendError(res, result.code === 'NOT_FOUND' ? 404 : 409, result.code, result.message);
     }
-    return res.status(200).json({ data: result.comment, meta: financeV2Meta() });
+    return res.status(200).json({ data: toCommentDto(result.comment), meta: financeV2Meta() });
   })
 );
 
@@ -129,7 +186,7 @@ router.post(
     if (!result.ok) {
       return sendError(res, result.code === 'NOT_FOUND' ? 404 : 409, result.code, result.message);
     }
-    return res.status(200).json({ data: result.comment, meta: financeV2Meta() });
+    return res.status(200).json({ data: toCommentDto(result.comment), meta: financeV2Meta() });
   })
 );
 
@@ -151,7 +208,7 @@ router.post(
     if (!result.ok) {
       return sendError(res, 404, result.code, result.message);
     }
-    return res.status(201).json({ data: result.assignment, meta: financeV2Meta() });
+    return res.status(201).json({ data: toCommentAssignmentDto(result.assignment), meta: financeV2Meta() });
   })
 );
 
@@ -160,7 +217,7 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId } = getV8Context(req);
     const assignment = await getCurrentAssignment(organizationId, String(req.params.commentId || ''));
-    return res.status(200).json({ data: assignment, meta: financeV2Meta() });
+    return res.status(200).json({ data: assignment ? toCommentAssignmentDto(assignment) : null, meta: financeV2Meta() });
   })
 );
 
@@ -172,7 +229,7 @@ router.get(
     if (!comment) {
       return sendError(res, 404, 'NOT_FOUND', 'Comment not found');
     }
-    return res.status(200).json({ data: comment, meta: financeV2Meta() });
+    return res.status(200).json({ data: toCommentDto(comment), meta: financeV2Meta() });
   })
 );
 
@@ -196,7 +253,7 @@ router.get(
     const comments = businessVersionId
       ? await listByBusinessVersion(organizationId, businessVersionId, opts)
       : await listByArtifact(organizationId, artifactId as string, opts);
-    return res.status(200).json({ data: comments, meta: financeV2Meta() });
+    return res.status(200).json({ data: comments.map(toCommentDto), meta: financeV2Meta() });
   })
 );
 
@@ -213,7 +270,7 @@ router.post(
       return sendError(res, 400, 'INVALID_CELL_REF', `cellRef is not valid: ${parsedCellRef.error.message}`);
     }
     const comments = await listByCell(organizationId, body.businessVersionId, parsedCellRef.data);
-    return res.status(200).json({ data: comments, meta: financeV2Meta() });
+    return res.status(200).json({ data: comments.map(toCommentDto), meta: financeV2Meta() });
   })
 );
 
@@ -223,7 +280,7 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId, userId } = getV8Context(req);
     const comments = await listMentioning(organizationId, userId);
-    return res.status(200).json({ data: comments, meta: financeV2Meta() });
+    return res.status(200).json({ data: comments.map(toCommentDto), meta: financeV2Meta() });
   })
 );
 
@@ -263,7 +320,7 @@ router.post(
     if (!result.ok) {
       return sendError(res, 400, result.code, result.message);
     }
-    return res.status(201).json({ data: result.item, meta: financeV2Meta() });
+    return res.status(201).json({ data: toChecklistItemDto(result.item), meta: financeV2Meta() });
   })
 );
 
@@ -275,7 +332,7 @@ router.post(
     if (!result.ok) {
       return sendError(res, result.code === 'NOT_FOUND' ? 404 : 409, result.code, result.message);
     }
-    return res.status(200).json({ data: result.item, meta: financeV2Meta() });
+    return res.status(200).json({ data: toChecklistItemDto(result.item), meta: financeV2Meta() });
   })
 );
 
@@ -287,7 +344,7 @@ router.post(
     if (!result.ok) {
       return sendError(res, result.code === 'NOT_FOUND' ? 404 : 409, result.code, result.message);
     }
-    return res.status(200).json({ data: result.item, meta: financeV2Meta() });
+    return res.status(200).json({ data: toChecklistItemDto(result.item), meta: financeV2Meta() });
   })
 );
 
@@ -303,7 +360,7 @@ router.post(
     if (!result.ok) {
       return sendError(res, 404, result.code, result.message);
     }
-    return res.status(200).json({ data: result.item, meta: financeV2Meta() });
+    return res.status(200).json({ data: toChecklistItemDto(result.item), meta: financeV2Meta() });
   })
 );
 
@@ -312,7 +369,7 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId } = getV8Context(req);
     const items = await listChecklistItems(organizationId, String(req.params.businessVersionId || ''));
-    return res.status(200).json({ data: items, meta: financeV2Meta() });
+    return res.status(200).json({ data: items.map(toChecklistItemDto), meta: financeV2Meta() });
   })
 );
 

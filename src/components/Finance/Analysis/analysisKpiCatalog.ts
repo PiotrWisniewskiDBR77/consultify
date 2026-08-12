@@ -33,6 +33,20 @@ export const ANALYSIS_INDUSTRY_PRESETS = [
 ] as const;
 export type AnalysisIndustryCode = (typeof ANALYSIS_INDUSTRY_PRESETS)[number]['code'];
 
+const INDUSTRY_LABEL_BY_CODE = new Map(ANALYSIS_INDUSTRY_PRESETS.map((p) => [p.code as string, p.labelPl] as const));
+
+/**
+ * Polish label for an industry code — the ONE place every industry-code render in the Analysis
+ * surface goes through (Kreator's own picker + `AnalysisKpiDetailCard`'s benchmark line so far;
+ * task #E2 enum-label sweep). `industryCode` is server-side a free string (see the file header —
+ * "industry_code w katalogu jest stringiem dowolnym po stronie serwera"), so an unrecognized code
+ * falls back to the raw value rather than a placeholder — never crashes, never silently hides an
+ * industry the preset list doesn't know about yet.
+ */
+export function industryLabelForCode(industryCode: string): string {
+  return INDUSTRY_LABEL_BY_CODE.get(industryCode) ?? industryCode;
+}
+
 /**
  * KPI uniwersalne rekomendowane niezależnie od branży + dopisek branżowy.
  * Kody muszą pokrywać się z `kpiCode` realnie zwracanym przez

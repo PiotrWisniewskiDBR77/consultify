@@ -10,7 +10,14 @@
  */
 import React from 'react';
 
-import type { ValuationAdvisorFindingGeneratedDto, ValuationAdvisorFindingStoredDto } from '@/services/api/financeV2.types';
+import {
+  BusinessVersionStatusValues,
+  businessVersionStatusLabel,
+  valuationAdvisorConfidenceLabel,
+  type BusinessVersionStatus,
+  type ValuationAdvisorFindingGeneratedDto,
+  type ValuationAdvisorFindingStoredDto,
+} from '@/services/api/financeV2.types';
 
 import { groupAdvisorFindingsByKind, normalizeAdvisorFinding, type ValuationAdvisorFindingView } from '../valuationMath';
 
@@ -30,6 +37,13 @@ const KIND_LABELS: Record<ValuationAdvisorFindingView['outputKind'], string> = {
   QUESTION: 'Pytanie',
   ACTION: 'Działanie',
 };
+
+/** `status` arrives as a loose `string` prop (see `AdvisorStepProps`) — label the known lifecycle statuses via the shared map, fall back to the raw value only for a truly unknown one (never crash on an unrecognized string). */
+function statusLabel(status: string): string {
+  return (BusinessVersionStatusValues as readonly string[]).includes(status)
+    ? businessVersionStatusLabel(status as BusinessVersionStatus)
+    : status;
+}
 
 export function AdvisorStep(props: AdvisorStepProps): React.ReactElement {
   const { findings, status, onGenerate } = props;
@@ -63,7 +77,7 @@ export function AdvisorStep(props: AdvisorStepProps): React.ReactElement {
 
       {!canGenerate && (
         <p role="alert" className="text-xs text-c-warning" data-testid="advisor-blocked-status">
-          Ta wersja ma status „{status}" — Doradca nie generuje nowych wniosków dla wersji zatwierdzonych/terminalnych
+          Ta wersja ma status „{statusLabel(status)}" — Doradca nie generuje nowych wniosków dla wersji zatwierdzonych/terminalnych
           (DEC-FIN-006).
         </p>
       )}
@@ -111,7 +125,9 @@ export function AdvisorStep(props: AdvisorStepProps): React.ReactElement {
                     >
                       {f.isFactual ? 'Fakt' : 'Hipoteza / ocena'}
                     </span>
-                    {f.confidence && <span className="text-[10px] text-c-text-muted">Pewność: {f.confidence}</span>}
+                    {f.confidence && (
+                      <span className="text-[10px] text-c-text-muted">Pewność: {valuationAdvisorConfidenceLabel(f.confidence)}</span>
+                    )}
                     {f.isFrozen && <span className="text-[10px] text-c-text-muted">Zamrożone</span>}
                     {f.isStale && <span className="text-[10px] text-c-warning">Nieaktualne</span>}
                   </div>

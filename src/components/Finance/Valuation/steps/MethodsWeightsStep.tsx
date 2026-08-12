@@ -7,7 +7,7 @@
 import React, { useEffect, useState } from 'react';
 
 import type { ValuationMethodDto, ValuationMethodType, ValuationWeightedRecommendationDto } from '@/services/api/financeV2.types';
-import { ValuationMethodTypeValues } from '@/services/api/financeV2.types';
+import { ValuationMethodTypeValues, valuationMethodReadinessLabel, valuationMethodTypeLabel } from '@/services/api/financeV2.types';
 import type { ValuationBasketUpdate } from '@/services/api/financeV2.api';
 
 import { ValuationValueCell } from '../ValuationValueCell';
@@ -87,8 +87,8 @@ export function MethodsWeightsStep(props: MethodsWeightsStepProps): React.ReactE
             const row = draftRows.find((r) => r.methodId === m.methodId);
             return (
               <tr key={m.methodId} className="border-b border-c-border-subtle/60" data-testid={`method-row-${m.methodType}`}>
-                <td className="py-1.5 pr-2 text-c-text">{m.methodType}</td>
-                <td className="py-1.5 pr-2 text-c-text-muted">{m.readiness}</td>
+                <td className="py-1.5 pr-2 text-c-text">{valuationMethodTypeLabel(m.methodType)}</td>
+                <td className="py-1.5 pr-2 text-c-text-muted">{valuationMethodReadinessLabel(m.readiness)}</td>
                 <td className="py-1.5 pr-2">
                   <ValuationValueCell status={m.result.status} valueDecimal={m.result.valueDecimal} />
                 </td>
@@ -142,7 +142,7 @@ export function MethodsWeightsStep(props: MethodsWeightsStepProps): React.ReactE
       {weightedRecommendation.status === 'INCOMPLETE' && (
         <p className="text-xs text-c-warning" data-testid="weighted-recommendation-incomplete">
           Rekomendacja niekompletna — metody w koszyku bez gotowego wyniku:{' '}
-          {weightedRecommendation.notReadyMethodTypes.join(', ')}
+          {weightedRecommendation.notReadyMethodTypes.map(valuationMethodTypeLabel).join(', ')}
         </p>
       )}
 
@@ -171,7 +171,7 @@ export function MethodsWeightsStep(props: MethodsWeightsStepProps): React.ReactE
         >
           {ValuationMethodTypeValues.map((t) => (
             <option key={t} value={t}>
-              {t}
+              {valuationMethodTypeLabel(t)}
             </option>
           ))}
         </select>

@@ -12,7 +12,7 @@
  */
 import React, { useState } from 'react';
 
-import type { ValuationMethodDto, ValuationSensitivityGridRawDto, ValuationWeightedRecommendationDto } from '@/services/api/financeV2.types';
+import { valuationMethodTypeLabel, type ValuationMethodDto, type ValuationSensitivityGridRawDto, type ValuationWeightedRecommendationDto } from '@/services/api/financeV2.types';
 
 import { assertSensitivityGridIntegrity } from '../valuationMath';
 
@@ -20,6 +20,13 @@ export interface SensitivityStepProps {
   businessVersionId: string;
   methodsData: { methods: ValuationMethodDto[]; weightedRecommendation: ValuationWeightedRecommendationDto } | null;
   getGrid: (methodId: string, gridLabel: string) => Promise<ValuationSensitivityGridRawDto>;
+}
+
+/** Decimal string -> pl-PL thousands-grouped display, `'—'` for null/unparsable (grid EV cells are large numbers — a raw un-grouped digit string is hard to scan, same defect class as the EV->Equity bridge in ResultsStep.tsx). */
+function fmtCellValue(raw: string | null): string {
+  if (raw === null) return '—';
+  const n = Number(raw);
+  return Number.isFinite(n) ? n.toLocaleString('pl-PL', { maximumFractionDigits: 0 }) : raw;
 }
 
 export function SensitivityStep(props: SensitivityStepProps): React.ReactElement {
@@ -75,7 +82,7 @@ export function SensitivityStep(props: SensitivityStepProps): React.ReactElement
           >
             {methods.map((m) => (
               <option key={m.methodId} value={m.methodId}>
-                {m.methodType}
+                {valuationMethodTypeLabel(m.methodType)}
               </option>
             ))}
           </select>
@@ -148,7 +155,7 @@ export function SensitivityStep(props: SensitivityStepProps): React.ReactElement
                           data-testid={`sensitivity-cell-${r}-${c}`}
                           className={`border border-c-border-subtle p-1.5 ${cell?.is_base_cell ? 'bg-c-surface-raised font-semibold text-c-text' : 'text-c-text-secondary'}`}
                         >
-                          {cell?.cell_value_decimal ?? '—'}
+                          {fmtCellValue(cell?.cell_value_decimal ?? null)}
                         </td>
                       );
                     })}
