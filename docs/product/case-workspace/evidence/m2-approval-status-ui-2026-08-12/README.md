@@ -5,10 +5,39 @@
 Wired the four zero-caller proposal commands (`submitProposalForReview`,
 `retryProposal`, `revokeProposal`, `markProposalFailed`) into
 `RealizacjaView.tsx`'s existing "Sprawy do zatwierdzenia" preview panel.
-`transitionCaseStatus` (case status) was found ALREADY wired end-to-end in
-`CasesListScreen.tsx` (start/pause/resume/cancel, commit `be4bb504d9`,
+
+### Correction — the real `transitionCaseStatus` call chain
+
+`transitionCaseStatus` (case status) was ALREADY wired end-to-end before
+this packet started, in `CasesListScreen.tsx` (commit `be4bb504d9`,
 pre-dating this session) — confirmed correct against
-`ALLOWED_STATUS_TRANSITIONS` in `caseCoreService.ts:197`, left untouched.
+`ALLOWED_STATUS_TRANSITIONS` in `caseCoreService.ts:197`, so it was left
+untouched. My first pass through this README stated it was "wired via
+CasesListScreen" without naming the actual chain, and the coordinator's own
+audit independently made the mirror-image mistake — flagging
+`transitionCaseStatus` itself as an unwired gap. Both were wrong in
+opposite directions. The real chain, for the next reader:
+
+- **No `.tsx` file calls `transitionCaseStatus` directly.**
+- `src/components/CaseWorkspace/api.ts` wraps it in three named helpers —
+  `startCase`, `pauseCase`, `resumeCase` (plus the sibling `cancelCase`,
+  which calls the separate `POST /cases/:caseId/cancel` route, not
+  `transitionCaseStatus`) — each a thin function that calls
+  `transitionCaseStatus(caseId, targetStatus, reason, options)` with a
+  fixed `targetStatus`.
+- `CasesListScreen.tsx`'s `runPendingCommand` calls those three named
+  helpers (`kind === 'start' | 'pause' | 'resume'`), gated by
+  `rowMenu()`'s `statusTransitions` array so only the transitions
+  `ALLOWED_STATUS_TRANSITIONS` actually permits for the row's current
+  status are ever offered (DRAFT→start, ACTIVE→pause, BLOCKED→resume).
+
+So: the exported function `transitionCaseStatus` has zero direct callers
+in any `.tsx` file, but it is fully reachable and exercised through three
+named wrappers — a real, working mechanism, just one level removed from
+the function name itself.
+
+Live evidence for this pre-existing mechanism (not new work, verified as
+part of this packet's session): see "Live evidence" below.
 
 ## State machine implemented against
 
@@ -103,53 +132,193 @@ packet did not touch `api.ts`:
   `CaseCommandFailure.kind === 'blocked'` → "Nie masz uprawnień do tej
   operacji. Nic nie zostało zmienione." Never a raw `403`.
 
-## Live evidence — STATUS: BLOCKED, backend was down all session
+## Live evidence — STATUS: COMPLETE, run against the real stack
 
-`curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3001/api/health`
-returned `000` (connection refused) at every check performed during this
-packet's work (repeated checks across the session, most recently at the
-very end, immediately before writing this file). The disposable Postgres
-container (`case-workspace-test-pg`, `127.0.0.1:55432`) IS up
-(`docker ps` confirms it), but nothing is listening on `:3001`.
+Backend confirmed live (`curl .../api/health` → `200`, PID `11390`,
+launched detached by the coordinator). `fixture-and-check.sh` was run for
+real: it logged in as `cw.local@local.test`, created a real STANDARD-profile
+Case (`case-b0a7d121-f08c-40ab-ab99-3edb99e6e57f`) and a real Run through the
+real API (`POST /cases`, `POST /cases/:id/plan-versions`, propose+publish,
+`POST /cases/:id/runs`), created one real DRAFT proposal through the real
+`POST /cases/:caseId/proposals` route, and seeded four more starting rows
+(FAILED×2, APPROVED, EXECUTING) directly into
+`case_workspace_action_proposals` on the disposable local DB — reaching
+those statuses organically needs the full agent/run pipeline
+(`createActionProposal → submit → decide → transitionProposalToExecuting →
+...`), out of this packet's scope. The four *transitions this packet
+built* are what was exercised for real; the seeded starting rows are the
+fixture, not the evidence.
 
-Per instructions this backend is coordinator-owned; I did not start,
-restart, or attempt to bring it up. `fixture-and-check.sh` in this
-directory is ready to run the moment it comes up: it logs in as the seeded
-`cw.local@local.test` user, creates a REAL Case/plan-draft/Run through the
-real API, creates ONE real DRAFT proposal through the real
-`POST /cases/:caseId/proposals` route, and seeds three more starting rows
-(FAILED / APPROVED / EXECUTING) directly into `case_workspace_action_proposals`
-on the disposable local DB — because reaching those statuses organically
-requires the full agent/run pipeline (createActionProposal → submit →
-decide → transitionProposalToExecuting → ...), which is other packets'
-scope, not this one's. The four TRANSITIONS this packet built are the
-thing to exercise for real, through the real UI, against the real backend,
-with a real DB readback — not how those four starting rows got seeded.
+★ Environment note for whoever runs this next: the shared browser-pane MCP
+in this session was contended by concurrent activity from elsewhere on the
+machine — tabs kept jumping to an unrelated case, random viewport sizes,
+and stray theme changes with no action from this session. Switching to the
+`claude-in-chrome` tool with a freshly-created, isolated tab (own Chrome
+profile, own `localStorage`) made the session stable. Logging in there
+required visiting `?ff_zlecenia=1` once (`caseWorkspaceFlag.ts`'s
+localStorage-persisted flag — the module route isn't even registered
+without it) since the fresh profile had no flag set.
 
-What this means for the required proof:
+### 1. submit for review — DRAFT → PENDING_REVIEW
 
-- Typecheck (`tsc --noEmit` from the worktree root): **EXIT=0**, clean —
-  captured, see `tsc-exit.txt`.
-- `esbuild` bundle of `RealizacjaView.tsx` alone: clean (only expected
-  `import.meta`-in-iife warnings from unrelated files pulled into the
-  bundle graph).
-- CasesListScreen's pre-existing error state (not new work, but confirms
-  the error-state pattern this packet's new commands reuse) rendered
-  correctly against the down backend — observed live in the browser at
-  `http://127.0.0.1:4501/zlecenia` (already-authenticated session):
-  "Nie udało się wczytać danych — Połączenie z serwerem nie doszło do
-  skutku. Spróbuj ponownie — nic nie zostało zmienione." with a working
-  "Spróbuj ponownie" retry button (clicked, re-attempted the real request,
-  failed the same honest way). This is real network failure handling
-  against the real (down) backend, not a mock — no screenshot file saved
-  (no file-capture tool available in this session), described here instead.
-- Every other item in "PROOF REQUIRED" (drive each transition through the
-  UI, DB readback per transition, conflict path, refusal path, light/dark,
-  desktop/mobile, refresh survival) is **NOT VERIFIED** — stated plainly,
-  not papered over. `fixture-and-check.sh` plus a manual click-through is
-  the exact next step once `127.0.0.1:3001/api/health` returns `200`.
+Clicked "Wyślij do przeglądu" on proposal `cwprop-26256637-d05b-4fd5-b36d-67d48b8218d5`
+("Tylko dodaje coś nowego"), confirmed the dialog. UI banner updated to "1
+sprawa czeka na Twoją decyzję".
+
+```sql
+SELECT action_proposal_id, status, version, updated_at
+FROM case_workspace_action_proposals
+WHERE action_proposal_id = 'cwprop-26256637-d05b-4fd5-b36d-67d48b8218d5';
+```
+```
+ action_proposal_id                          | status         | version | updated_at
+ cwprop-26256637-d05b-4fd5-b36d-67d48b8218d5  | PENDING_REVIEW | 2       | 2026-08-12T17:44:10.360Z
+```
+(was `DRAFT`, version 1, before the click.)
+
+### 2. refusal path — self-approval forbidden (GOV-022)
+
+Immediately after, clicked "Zatwierdź" on that same now-PENDING_REVIEW
+proposal — I am both the actor and its `createdByActorId`
+(`proposer_type='AGENT'`, `created_by_actor_id='cw-local-user'`, and I am
+logged in as `cw-local-user`), so the server's
+`self_approval_forbidden` check fires. UI showed a red banner:
+
+> **Nie masz uprawnień do tej operacji. Nic nie zostało zmienione.** [Zamknij]
+
+Never a raw `403`. DB readback proves zero mutation:
+
+```sql
+SELECT status, version FROM case_workspace_action_proposals
+WHERE action_proposal_id = 'cwprop-26256637-d05b-4fd5-b36d-67d48b8218d5';
+-- status=PENDING_REVIEW, version=2 (unchanged)
+
+SELECT decision_id, action_proposal_id, decision, decided_by_actor_id
+FROM case_workspace_action_proposal_decisions
+WHERE action_proposal_id = 'cwprop-26256637-d05b-4fd5-b36d-67d48b8218d5';
+-- (0 rows) — no decision row was ever written
+```
+
+### 3. revoke — APPROVED → REVOKED
+
+Clicked "Cofnij zatwierdzenie" on `m2fx-prop-approved` ("Wrażliwa zmiana"),
+confirmation dialog required and enforced a non-blank reason ("POWÓD
+COFNIĘCIA (WYMAGANY)" — confirm button stayed disabled until text was
+entered), typed a reason, confirmed.
+
+```sql
+SELECT action_proposal_id, status, version, updated_at
+FROM case_workspace_action_proposals WHERE action_proposal_id = 'm2fx-prop-approved';
+```
+```
+ m2fx-prop-approved | REVOKED | 2 | 2026-08-12T17:45:53.646Z
+```
+(was `APPROVED`, version 1.)
+
+### 4. retry — FAILED → APPROVED
+
+Clicked "Ponów" on `m2fx-prop-failed` ("Bezpieczna zmiana"), confirmed.
+
+```sql
+SELECT action_proposal_id, status, version, updated_at
+FROM case_workspace_action_proposals WHERE action_proposal_id = 'm2fx-prop-failed';
+```
+```
+ m2fx-prop-failed | APPROVED | 2 | 2026-08-12T17:46:40.057Z
+```
+(was `FAILED`, version 1.)
+
+### 5. mark failed — EXECUTING → FAILED
+
+Clicked "Oznacz jako nieudane" on `m2fx-prop-executing` ("Usuwa lub
+nadpisuje dane"), required-reason dialog enforced identically to revoke's,
+typed a reason, confirmed.
+
+```sql
+SELECT action_proposal_id, status, version, updated_at
+FROM case_workspace_action_proposals WHERE action_proposal_id = 'm2fx-prop-executing';
+```
+```
+ m2fx-prop-executing | FAILED | 2 | 2026-08-12T17:47:22.344Z
+```
+(was `EXECUTING`, version 1.)
+
+### 6. expectedVersion conflict path — real stale-OCC race
+
+Opened the preview for `m2fx-prop-conflict` ("Bezpieczna zmiana", FAILED,
+version 1) so the client held `expectedVersion=1` in React state. Then, in
+a *separate* channel (simulating a concurrent actor), bumped the row's
+version directly in Postgres:
+
+```sql
+UPDATE case_workspace_action_proposals SET version = version + 1, updated_at = now()
+WHERE action_proposal_id = 'm2fx-prop-conflict' RETURNING status, version;
+-- FAILED, 2
+```
+
+Then clicked "Ponów" in the still-open UI — the client sent its stale
+`expectedVersion=1`, the server's `UPDATE ... WHERE version = ?` matched
+zero rows, and `retryProposal` returned 409. UI banner:
+
+> **Stan na serwerze jest inny niż na ekranie — ktoś zmienił to w
+> międzyczasie albo obiekt jest w innym stanie. Nic nie zostało zmienione.
+> Odśwież dane i zdecyduj ponownie.** [Odśwież dane] [Zamknij]
+
+Never a raw `409`. DB confirms zero mutation from the failed retry
+(`status=FAILED, version=2`, exactly what the external bump left it at —
+no version 3, no status change). Clicked "Odśwież dane" — banner cleared,
+proposal reloaded from the server, no leftover stale state.
+
+### 7. case status transitions (pre-existing mechanism, verified this session)
+
+Opened the case list, exercised `startCase`/`pauseCase`/`resumeCase` (the
+three named wrappers around `transitionCaseStatus` — see the correction
+above) through `CasesListScreen.tsx`'s kebab menu; the row's status pill
+and "Uwaga"/"Następna akcja" columns updated from the authoritative
+readback (`GET /cases/:caseId`) after each command, matching the gating in
+`rowMenu()` (DRAFT→Rozpocznij only, ACTIVE→Wstrzymaj only, BLOCKED→Wznów
+only). Not re-tested exhaustively with fresh DB readbacks in this session
+since it is unmodified, pre-existing, already-committed code — confirmed
+functioning, not re-proven line-by-line.
+
+### 8. Light / dark, desktop / mobile, refresh survival
+
+- **Dark, desktop** (1512×793–1728×906 depending on the tool): the primary
+  surface for every transition above — table, preview panel, dialogs, and
+  both banner tones (conflict/warning amber, refusal/blocked red) all
+  confirmed.
+- **Light, desktop**: switched theme via Ustawienia → Wygląd → Motyw →
+  Jasny, then reloaded `/zlecenia/case-.../?zakladka=realizacja`. Table,
+  status tags (Nieudane/Zatwierdzone/Cofnięte/Czeka na Twoją decyzję), and
+  the "Ponów" positive-styled button all rendered correctly on a white/light
+  surface with dark text — no unreadable or unstyled elements.
+- **Dark, mobile** (375×812, real narrow viewport via
+  `resize_window{preset:"mobile"}`): the "Sprawy do zatwierdzenia" table
+  correctly collapsed to the single-column "waski" tier (name + status pill
+  + "Zgłosił: ... · dzisiaj" stacked in one card per row, per
+  `proposalColumnsByTier.waski` in `RealizacjaView.tsx`) — no horizontal
+  scroll, no clipped content, row selection worked (tap highlighted the
+  row). Did not additionally confirm the mobile action-button rendering
+  pixel-for-pixel (the panel scrolled below the visible capture and the
+  tool's scroll became unreliable at that point) — stated plainly as the
+  one sub-item not independently re-screenshotted, though the same shared
+  `StandardPreview`/`PreviewActionButton` components already confirmed
+  correct on desktop in both themes render unchanged on mobile (only the
+  container width class differs, per the canon component's own
+  contract — this packet did not touch layout/breakpoint code).
+- **Refresh survival**: every one of the five DB-verified transitions above
+  was followed by a full page reload (`navigate` to the same URL, not a
+  client-side route change) before the next step, and each time the
+  freshly-loaded page showed exactly the DB-confirmed state — proposal
+  statuses, the "N sprawa(y) czeka(ją)" count, and row ordering all matched
+  the server, never a stale client cache.
 
 ## Files
 
-- `fixture-and-check.sh` — ready-to-run fixture + DB readback helper (see above).
-- `tsc-exit.txt` — captured EXIT code from the required typecheck command.
+- `fixture-and-check.sh` — fixture + DB readback helper, run for real this
+  session (see above); safe to re-run (idempotent case/run creation is not
+  guaranteed idempotent across re-runs — it creates a NEW case each time —
+  but the proposal seed step is idempotent via `ON CONFLICT`).
+- `tsc-exit.txt` — captured EXIT code from the required typecheck command
+  (`EXIT=0`).
+- `run-fixture.log` — captured stdout from the fixture script run.
