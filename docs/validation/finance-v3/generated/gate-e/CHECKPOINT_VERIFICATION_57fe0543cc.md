@@ -30,7 +30,7 @@ pomiar w kolejnej partii.
 **Czas trwania:** 16 s
 **SHA:** `57fe0543cc2b8a026d137451a65b18da67d8bd1e`
 **Środowisko:** lokalny Node/TS z `server/node_modules`, brak połączenia z bazą (czysty typecheck).
-**Wynik:** brak błędów — 0 linii wyjścia. Log: `logs/03-tsc-backend.txt` (pusty = czysto).
+**Wynik:** brak błędów — 0 linii wyjścia. Log: `evidence/03-tsc-backend.txt` (pusty = czysto).
 
 ## 4. Typecheck frontendu — `npm run type-check`
 
@@ -39,7 +39,7 @@ pomiar w kolejnej partii.
 **Czas trwania:** 374 s (mierzone `date +%s` przed/po, nie przez potok — dowód pełnego przebiegu,
 zgodnie z oczekiwaniem 100–300 s+ pod obciążeniem maszyny)
 **SHA:** `57fe0543cc2b8a026d137451a65b18da67d8bd1e`
-**Wynik:** brak błędów. Log: `logs/04-tsc-frontend.txt`.
+**Wynik:** brak błędów. Log: `evidence/04-tsc-frontend.txt`.
 
 ## 5. Lint dla ZMIENIONYCH plików
 
@@ -70,7 +70,7 @@ odpowiadają za ~44% wszystkich błędów.
 zmian tej gałęzi, nie regresja logiki. Wszystkie błędy są automatycznie naprawialne przez
 `eslint --fix` / `prettier --write`, ale NIE zostały naprawione w tym pomiarze.
 
-Pełny log: `logs/05-lint-summary.txt` (skondensowany, z listą per-plik) — surowy log (1.3 MB)
+Pełny log: `evidence/05-lint-summary.txt` (skondensowany, z listą per-plik) — surowy log (1.3 MB)
 NIE wchodzi do repo; do odtworzenia użyj dokładnej komendy powyżej.
 
 ## 6. `git diff --check ee5736a5a62ebd19442ed63e897c0bf890102ab6..HEAD`
@@ -79,7 +79,7 @@ NIE wchodzi do repo; do odtworzenia użyj dokładnej komendy powyżej.
 **Kod wyjścia:** `0`
 **Czas trwania:** <1 s
 **SHA:** `57fe0543cc2b8a026d137451a65b18da67d8bd1e`
-**Wynik:** brak konfliktowych markerów, brak whitespace errors. Log: `logs/06-diffcheck.txt` (pusty).
+**Wynik:** brak konfliktowych markerów, brak whitespace errors. Log: `evidence/06-diffcheck.txt` (pusty).
 
 ## 7. realDB (zapis/odczyt)
 
@@ -127,10 +127,10 @@ NIE wchodzi do repo; do odtworzenia użyj dokładnej komendy powyżej.
 |---|-------|-------|-------------|-------|
 | 1 | Testy jednostkowe/komponentowe Finance/Economics | EVIDENCE_MISSING | — | — |
 | 2 | Testy kontraktowe/API/persistence (realDB) | EVIDENCE_MISSING | — | — |
-| 3 | Typecheck backend | PASS | 0 | `logs/03-tsc-backend.txt`, 16s |
-| 4 | Typecheck frontend | PASS | 0 | `logs/04-tsc-frontend.txt`, 374s |
-| 5 | Lint zmienionych plików | FAIL (formatowanie) | 1 | `logs/05-lint-summary.txt`, 2749 błędów/103 z 115 plików |
-| 6 | git diff --check | PASS | 0 | `logs/06-diffcheck.txt` (pusty) |
+| 3 | Typecheck backend | PASS | 0 | `evidence/03-tsc-backend.txt`, 16s |
+| 4 | Typecheck frontend | PASS | 0 | `evidence/04-tsc-frontend.txt`, 374s |
+| 5 | Lint zmienionych plików | FAIL (formatowanie) | 1 | `evidence/05-lint-summary.txt`, 2749 błędów/103 z 115 plików |
+| 6 | git diff --check | PASS | 0 | `evidence/06-diffcheck.txt` (pusty) |
 | 7 | realDB zapis/odczyt | EVIDENCE_MISSING | — | — |
 | 8 | Kontrola negatywna bramki bazy | EVIDENCE_MISSING | — | — |
 | 9 | Autoryzacja/izolacja najemców (J2/J3/J4) | EVIDENCE_MISSING | — | — |
