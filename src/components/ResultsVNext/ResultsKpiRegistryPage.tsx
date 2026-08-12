@@ -235,7 +235,11 @@ function noKnownVersionReason(isPolish: boolean): string {
  * all). `reviseDefinition` now exists — this label is the real, clickable
  * action, wired to `ctx.onReviseDefinition` in `buildDefinitionActions`
  * below, not a placeholder. */
-const REVISE_DEFINITION_LABEL = { pl: 'Popraw i zgłoś ponownie', en: 'Revise and resubmit' };
+// PL label kept ≤22 chars (StandardPreview contract §6
+// PREVIEW_ACTION_LABEL_TOO_LONG, previewContract.ts's `actionLabelCharsMax`)
+// — "Popraw i zgłoś ponownie" (23 chars) violated it, caught live via the
+// console warning during this package's own harness walkthrough.
+const REVISE_DEFINITION_LABEL = { pl: 'Popraw i zgłoś', en: 'Revise and resubmit' };
 
 /** RN-G5 — the definition-lifecycle entries (edit/submit/approve/reject),
  * shared by `buildRowMenu` and `buildPreview` so both surfaces apply the
