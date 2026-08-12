@@ -84,6 +84,17 @@ vi.mock('../../../database/PostgresDatabase.js', () => ({
   acquirePgClient: async () => ({ query: mockDbQuery, release: mockDbRelease }),
 }));
 
+// RN-G5 (docs/product/results-vnext/RN_G5_AUTHZ_DESIGN.md): kpiScorecard.routes.ts
+// now resolves REAL effective access via resolveEffectiveAccess() before
+// calling its commands — same mock shape as kpiDeviation.routes.test.ts's
+// identical mock (wildcard capability, so gating never blocks a scenario
+// this file's own test cases aren't about).
+vi.mock('../../../services/effectiveAccessService.js', () => ({
+  resolveEffectiveAccess: vi.fn(async () => ({ capabilities: ['*'], platformRole: null })),
+  hasEffectiveCapability: (access: { capabilities: string[] }, capability: string) =>
+    access.capabilities.includes('*') || access.capabilities.includes(capability),
+}));
+
 // Backs `loadVisibleScorecard` (this router's own local helper for
 // `GET /:scorecardId` — see kpiScorecard.routes.ts's file header). Neutered
 // to a no-op CTE (VISIBILITY_CTE_PARAM_COUNT=0, empty values) so the fake

@@ -81,6 +81,16 @@ const ORG_ID = `kpi-e004-routes-it-org-${tag}`;
 const USER_A = `kpi-e004-routes-it-user-a-${tag}`; // owner of every fixture KPI/scorecard
 const USER_B = `kpi-e004-routes-it-user-b-${tag}`; // plain member — no override, no ownership
 
+/**
+ * RN-G5 (docs/product/results-vnext/RN_G5_AUTHZ_DESIGN.md): every
+ * kpiScorecardCommands.ts command called in this file now requires an
+ * `access: CommandAccessContext` field — same rationale as
+ * `scorecardPublishNonLeak.realdb.test.ts`'s identical fixture (USER_A is
+ * the real owner in every scenario here too; this suite is about the
+ * repository-level visibility join, not command-layer authorization).
+ */
+const WILDCARD_ACCESS = { capabilities: ['*'], platformRole: null } as const;
+
 let client: Client;
 let reachable = false;
 
@@ -445,6 +455,7 @@ describe('KPI-E004 routes package — repository-level real-Postgres coverage (v
         createdBy: USER_A,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `create-scorecard-items-${kpiVisible}`,
+        access: WILDCARD_ACCESS,
       });
       const scorecardId = scorecardOutcome.result.scorecard.scorecardId;
       // Scorecard-level visibility is OPEN_ORG by default (decision #1 policy
@@ -461,6 +472,7 @@ describe('KPI-E004 routes package — repository-level real-Postgres coverage (v
           actorUserId: USER_A,
           actorEffectiveRole: 'consultant',
           idempotencyKey: `add-item-routes-${kpiId}`,
+          access: WILDCARD_ACCESS,
           kpiId,
         });
         expectedVersion = addOutcome.result.scorecard.rowVersion;
@@ -542,6 +554,7 @@ describe('KPI-E004 routes package — repository-level real-Postgres coverage (v
         actorUserId: USER_A,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `add-item-hist-${kpiId}`,
+        access: WILDCARD_ACCESS,
         kpiId,
       });
 
@@ -553,6 +566,7 @@ describe('KPI-E004 routes package — repository-level real-Postgres coverage (v
         createdBy: USER_A,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `draft-hist-${kpiId}`,
+        access: WILDCARD_ACCESS,
       });
       // expectedVersion here is the SNAPSHOT's own row_version (CAS surface
       // for publishReviewSnapshot — kpiScorecardCommands.ts's own
@@ -566,6 +580,7 @@ describe('KPI-E004 routes package — repository-level real-Postgres coverage (v
         publishedBy: USER_A,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `publish-hist-${kpiId}`,
+        access: WILDCARD_ACCESS,
       });
 
       const historyAsOwner = await listReviewSnapshots({
