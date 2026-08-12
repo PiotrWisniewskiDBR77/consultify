@@ -987,7 +987,7 @@ export const CaseDetailScreen: React.FC = () => {
         description:
           'Powstanie pierwszy szkic planu tego zlecenia z jednym punktem startowym i końcowym. Ten ekran nie ma jeszcze edytora kroków — kolejność i wykonawców dodasz w narzędziu autorskim planu, zanim zaproponujesz go do przeglądu.',
         confirmLabel: 'Utwórz szkic',
-        reason: { label: 'Powód (opcjonalnie)', required: false, placeholder: 'Np. Pierwszy szkic planu zlecenia.' },
+        reason: { label: 'Powód', required: false, placeholder: 'Np. Pierwszy szkic planu zlecenia.' },
       };
     }
     if (pending.kind === 'plan-propose') {
