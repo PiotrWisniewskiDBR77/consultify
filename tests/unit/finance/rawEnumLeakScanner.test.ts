@@ -124,6 +124,7 @@
  *   Treat green as "no regression of the exact bug shape we've hit four times," not as an
  *   absolute guarantee.
  */
+import { execSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 import { describe, expect, it } from 'vitest';
@@ -208,15 +209,84 @@ function listTsxFiles(dir: string): string[] {
 }
 
 /**
- * Real, currently-present leaks this pass found but deliberately did NOT fix — see the
- * "SCOPE HISTORY" doc comment above for why each one is here instead of being fixed on the spot.
- * Every entry MUST be a file this agent is barred from editing for a documented, session-specific
- * reason (never "ran out of time" or "seemed low priority"). The staleness test below fails if an
- * entry stops being a real offender — remove the entry then, don't leave it as dead weight.
+ * ══════════════════════════════════════════════════════════════════════════════════════════
+ * PROVENANCE REQUIREMENT (added 2026-08-12, gate-e/FIX-D) — read before adding an entry
+ * ══════════════════════════════════════════════════════════════════════════════════════════
+ * Incident this guards against: agent "FIX-B" found `{mountCheck.version.status}` in
+ * `PredictionWorkspace.tsx` and filed it here as "przedistniejący, poza zakresem" (pre-existing,
+ * out of scope) without checking WHEN the leak was introduced. An independent verification pass
+ * traced it with `git log -S` to commit `2e61d2eeff` — a same-session regression, not debt. A
+ * bare allowlist (`Set<string>` of offender keys, no provenance) cannot distinguish "this has
+ * been broken for months and is out of scope" from "I just broke this and don't want to fix it
+ * right now" — both look identical: a string in a Set. That is the structural flaw, not any one
+ * agent's carelessness; the fix is to make the claim falsifiable, not to trust it.
+ *
+ * Every entry below MUST declare `origin` — either a git commit SHA (short or full hex) that
+ * introduced the raw interpolation, or an ISO date (`YYYY-MM-DD`) if the exact commit could not
+ * be pinned — plus a non-empty `reason`. The tests further down enforce two things:
+ *   1. `origin` matches the required shape (commit SHA or ISO date) and `reason` is non-empty —
+ *      hard failure, always enforced.
+ *   2. IF `origin` looks like a commit SHA, it must resolve to a real commit in THIS repo's
+ *      history (`git cat-file -e <sha>^{commit}`) — best-effort: skipped (not failed) if git
+ *      itself cannot run (e.g. no git on PATH), but a HARD failure if git runs and confirms the
+ *      object does not exist, which catches a fabricated/typo'd SHA.
+ * This does not by itself prove an entry is correctly classified as debt vs. regression — that
+ * still requires a human (or agent) to actually run `git log -S` against the session's start
+ * point before filing the entry — but a made-up or unverifiable origin can no longer pass
+ * silently the way a bare string could.
  */
-const KNOWN_UNFIXED_LEAKS = new Set<string>([
-  'src/components/Finance/FinancialStatementPackWorkspace.tsx: {file.status}',
-]);
+interface KnownUnfixedLeak {
+  /** Exact offender key as produced by the scanner: `<relPath>: <matched raw interpolation>`. */
+  key: string;
+  /** Commit SHA that introduced the leak, or an ISO `YYYY-MM-DD` date if the commit could not be pinned. REQUIRED — see provenance doc comment above. */
+  origin: string;
+  /** One-sentence justification for why this is deliberately unfixed right now (not "ran out of time"). */
+  reason: string;
+}
+
+const KNOWN_UNFIXED_LEAKS: readonly KnownUnfixedLeak[] = [
+  {
+    key: 'src/components/Finance/FinancialStatementPackWorkspace.tsx: {file.status}',
+    // `git log -S'{file.status}' -- src/components/Finance/FinancialStatementPackWorkspace.tsx`
+    // → 050ef26962 (2026-03-15, "fix(finance): statement import improvements and audit
+    // updates") — five months before this session (2026-08-12). Genuinely pre-existing debt: it
+    // only became visible to THIS scanner when SCANNED_ROOTS widened to all of Finance/** this
+    // session (see "SCOPE HISTORY" above), it was not introduced by that widening.
+    origin: '050ef26962',
+    reason:
+      'Pre-existing since 2026-03-15 (predates this session by ~5 months); newly visible only because SCANNED_ROOTS widened to all of Finance/** this session. FinancialStatementPackWorkspace.tsx is a *Workspace.tsx file two other concurrent agents were editing (AP-mount/P0-RBAC) at time of discovery — fixing here risked colliding with that work.',
+  },
+];
+
+const KNOWN_UNFIXED_LEAK_KEYS = new Set(KNOWN_UNFIXED_LEAKS.map((leak) => leak.key));
+
+const COMMIT_SHA_RE = /^[0-9a-f]{7,40}$/i;
+const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+/**
+ * Best-effort check that `sha` resolves to a real commit in this repo's history. Returns `null`
+ * (inconclusive — caller must NOT fail the test) when git itself could not run at all (not on
+ * PATH, not a git worktree, etc.), and `false` only when git ran successfully and reported the
+ * object does not exist — that is the one case worth failing loudly on, since it means the
+ * `origin` field is fabricated or a typo.
+ */
+function commitExistsInHistory(sha: string): boolean | null {
+  try {
+    execSync(`git cat-file -e ${sha}^{commit}`, {
+      cwd: path.resolve(__dirname, '../../..'),
+      stdio: 'ignore',
+    });
+    return true;
+  } catch (err: unknown) {
+    const status = (err as { status?: number } | null)?.status;
+    if (typeof status === 'number') {
+      // git ran and exited non-zero — it looked and did not find the object.
+      return false;
+    }
+    // git could not be spawned at all (ENOENT, no .git, etc.) — inconclusive.
+    return null;
+  }
+}
 
 describe('Finance/** — no raw SCREAMING_SNAKE_CASE enum leaks to rendered text', () => {
   const files = SCANNED_ROOTS.flatMap(listTsxFiles);
@@ -265,7 +335,7 @@ describe('Finance/** — no raw SCREAMING_SNAKE_CASE enum leaks to rendered text
         }
       }
     }
-    const newOffenders = offenders.filter((o) => !KNOWN_UNFIXED_LEAKS.has(o));
+    const newOffenders = offenders.filter((o) => !KNOWN_UNFIXED_LEAK_KEYS.has(o));
     expect(newOffenders).toEqual([]);
   });
 
@@ -281,9 +351,30 @@ describe('Finance/** — no raw SCREAMING_SNAKE_CASE enum leaks to rendered text
     }
     for (const known of KNOWN_UNFIXED_LEAKS) {
       expect(
-        currentOffenders.has(known),
-        `${known} is listed as a known-unfixed leak but is no longer detected — remove it from KNOWN_UNFIXED_LEAKS`
+        currentOffenders.has(known.key),
+        `${known.key} is listed as a known-unfixed leak but is no longer detected — remove it from KNOWN_UNFIXED_LEAKS`
       ).toBe(true);
+    }
+  });
+
+  it('every KNOWN_UNFIXED_LEAKS entry declares a checkable origin (commit SHA or ISO date) and a reason — prevents a same-session regression from being filed as pre-existing debt', () => {
+    for (const leak of KNOWN_UNFIXED_LEAKS) {
+      const isShaShaped = COMMIT_SHA_RE.test(leak.origin);
+      const isDateShaped = ISO_DATE_RE.test(leak.origin);
+      expect(
+        isShaShaped || isDateShaped,
+        `${leak.key}: origin must be a git commit SHA (7-40 hex chars) or an ISO date (YYYY-MM-DD), got ${JSON.stringify(leak.origin)}`
+      ).toBe(true);
+      expect(leak.reason.trim().length, `${leak.key}: reason must not be empty`).toBeGreaterThan(0);
+    }
+  });
+
+  it('every KNOWN_UNFIXED_LEAKS entry with a commit-SHA origin points at a real commit in this repo (best-effort — inconclusive git failures do not fail this test)', () => {
+    for (const leak of KNOWN_UNFIXED_LEAKS) {
+      if (!COMMIT_SHA_RE.test(leak.origin)) continue; // ISO-date origins are out of scope for this check
+      const exists = commitExistsInHistory(leak.origin);
+      if (exists === null) continue; // git unavailable/inconclusive in this environment — do not flake
+      expect(exists, `${leak.key}: origin commit "${leak.origin}" does not exist in this repo's history — looks fabricated or mistyped`).toBe(true);
     }
   });
 });
