@@ -281,7 +281,8 @@ describe('OKR-E001 Cycle scheduler — two-call idempotency (real Postgres)', ()
         createdBy: USER_ADMIN,
         actorEffectiveRole: 'admin',
         idempotencyKey: `create-cycle-cadence-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       const cycleId = created.result.cycleId;
 
       const firstRun = await generateCadenceOccurrences({ organizationId, cycleId });
@@ -319,7 +320,8 @@ describe('OKR-E001 Cycle scheduler — two-call idempotency (real Postgres)', ()
       createdBy: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `create-program-custom-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const published = await publishProgram({
       programId: created.result.programId,
       organizationId,
@@ -327,7 +329,8 @@ describe('OKR-E001 Cycle scheduler — two-call idempotency (real Postgres)', ()
       actorUserId: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `publish-program-custom-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     expect(published.result.policyVersion.snapshot.checkinFrequency).toBe('custom');
 
     const cycle = await createCycle({
@@ -346,7 +349,8 @@ describe('OKR-E001 Cycle scheduler — two-call idempotency (real Postgres)', ()
       createdBy: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `create-cycle-custom-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
     const run = await generateCadenceOccurrences({ organizationId, cycleId: cycle.result.cycleId });
     // OKR-E004 addition (IO-6, additive/backward-compatible): the result

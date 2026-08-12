@@ -375,7 +375,8 @@ describe('OKR-E002 narrowOkrSetVisibility — every narrowing accepted, every wi
         actorUserId: USER_ADMIN,
         actorEffectiveRole: 'admin',
         idempotencyKey: `activate-active-narrow-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       expect(activated.result.status).toBe('active');
 
       // Ceiling is OPEN_ORG (rank 0) — narrowing to RESTRICTED_ACL (rank 3)
@@ -432,7 +433,8 @@ describe('OKR-E002 narrowOkrSetVisibility — every narrowing accepted, every wi
         actorUserId: USER_ADMIN,
         actorEffectiveRole: 'admin',
         idempotencyKey: `activate-scope-active-narrow-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
       await expect(
         narrowOkrSetVisibility({
@@ -466,7 +468,8 @@ describe('OKR-E002 narrowOkrSetVisibility — every narrowing accepted, every wi
       actorUserId: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `cancel-for-narrow-guard-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     expect(cancelled.result.status).toBe('cancelled');
 
     await expect(

@@ -332,7 +332,8 @@ describe('OKR-E001 Cycle lifecycle — program-not-active guard, transitions, ca
           actorUserId: USER_ADMIN,
           actorEffectiveRole: 'admin',
           idempotencyKey: `activate-out-of-order-${randomUUID()}`,
-        })
+        access: { capabilities: ['*'], platformRole: null },
+})
       ).rejects.toBeInstanceOf(OkrCycleValidationError);
 
       const drafting = await runOkrCycleLifecycleTransition(OKR_CYCLE_OPEN_DRAFTING_SPEC, {
@@ -342,7 +343,8 @@ describe('OKR-E001 Cycle lifecycle — program-not-active guard, transitions, ca
         actorUserId: USER_ADMIN,
         actorEffectiveRole: 'admin',
         idempotencyKey: `open-drafting-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       expect(drafting.result.status).toBe('drafting');
 
       const active = await runOkrCycleLifecycleTransition(OKR_CYCLE_ACTIVATE_SPEC, {
@@ -352,7 +354,8 @@ describe('OKR-E001 Cycle lifecycle — program-not-active guard, transitions, ca
         actorUserId: USER_ADMIN,
         actorEffectiveRole: 'admin',
         idempotencyKey: `activate-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       expect(active.result.status).toBe('active');
 
       const review = await runOkrCycleLifecycleTransition(OKR_CYCLE_OPEN_REVIEW_SPEC, {
@@ -362,7 +365,8 @@ describe('OKR-E001 Cycle lifecycle — program-not-active guard, transitions, ca
         actorUserId: USER_ADMIN,
         actorEffectiveRole: 'admin',
         idempotencyKey: `open-review-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       expect(review.result.status).toBe('review');
 
       const closed = await runOkrCycleLifecycleTransition(OKR_CYCLE_CLOSE_SPEC, {
@@ -372,7 +376,8 @@ describe('OKR-E001 Cycle lifecycle — program-not-active guard, transitions, ca
         actorUserId: USER_ADMIN,
         actorEffectiveRole: 'admin',
         idempotencyKey: `close-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       expect(closed.result.status).toBe('closed');
 
       // Terminal — closing again must reject, not silently no-op.
@@ -384,7 +389,8 @@ describe('OKR-E001 Cycle lifecycle — program-not-active guard, transitions, ca
           actorUserId: USER_ADMIN,
           actorEffectiveRole: 'admin',
           idempotencyKey: `close-again-${randomUUID()}`,
-        })
+        access: { capabilities: ['*'], platformRole: null },
+})
       ).rejects.toBeInstanceOf(OkrCycleValidationError);
 
       const persisted = await getCycle({ organizationId, cycleId });
@@ -415,7 +421,8 @@ describe('OKR-E001 Cycle lifecycle — program-not-active guard, transitions, ca
       actorUserId: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `cancel-planned-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     expect(cancelled.result.status).toBe('cancelled');
   });
 
@@ -438,7 +445,8 @@ describe('OKR-E001 Cycle lifecycle — program-not-active guard, transitions, ca
       actorUserId: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `open-drafting-cancel-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const cancelled = await runOkrCycleLifecycleTransition(OKR_CYCLE_CANCEL_SPEC, {
       cycleId: created.result.cycleId,
       organizationId,
@@ -446,7 +454,8 @@ describe('OKR-E001 Cycle lifecycle — program-not-active guard, transitions, ca
       actorUserId: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `cancel-drafting-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     expect(cancelled.result.status).toBe('cancelled');
   });
 
@@ -469,7 +478,8 @@ describe('OKR-E001 Cycle lifecycle — program-not-active guard, transitions, ca
       actorUserId: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `open-drafting-for-active-cancel-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const active = await runOkrCycleLifecycleTransition(OKR_CYCLE_ACTIVATE_SPEC, {
       cycleId: created.result.cycleId,
       organizationId,
@@ -477,7 +487,8 @@ describe('OKR-E001 Cycle lifecycle — program-not-active guard, transitions, ca
       actorUserId: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `activate-for-cancel-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const cancelled = await runOkrCycleLifecycleTransition(OKR_CYCLE_CANCEL_SPEC, {
       cycleId: created.result.cycleId,
       organizationId,
@@ -485,7 +496,8 @@ describe('OKR-E001 Cycle lifecycle — program-not-active guard, transitions, ca
       actorUserId: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `cancel-active-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     expect(cancelled.result.status).toBe('cancelled');
   });
 
@@ -508,7 +520,8 @@ describe('OKR-E001 Cycle lifecycle — program-not-active guard, transitions, ca
       actorUserId: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `open-drafting-for-review-cancel-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const active = await runOkrCycleLifecycleTransition(OKR_CYCLE_ACTIVATE_SPEC, {
       cycleId: created.result.cycleId,
       organizationId,
@@ -516,7 +529,8 @@ describe('OKR-E001 Cycle lifecycle — program-not-active guard, transitions, ca
       actorUserId: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `activate-for-review-cancel-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const review = await runOkrCycleLifecycleTransition(OKR_CYCLE_OPEN_REVIEW_SPEC, {
       cycleId: created.result.cycleId,
       organizationId,
@@ -524,7 +538,8 @@ describe('OKR-E001 Cycle lifecycle — program-not-active guard, transitions, ca
       actorUserId: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `open-review-for-cancel-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const cancelled = await runOkrCycleLifecycleTransition(OKR_CYCLE_CANCEL_SPEC, {
       cycleId: created.result.cycleId,
       organizationId,
@@ -532,7 +547,8 @@ describe('OKR-E001 Cycle lifecycle — program-not-active guard, transitions, ca
       actorUserId: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `cancel-review-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     expect(cancelled.result.status).toBe('cancelled');
   });
 
@@ -555,7 +571,8 @@ describe('OKR-E001 Cycle lifecycle — program-not-active guard, transitions, ca
       actorUserId: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `open-drafting-for-closed-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const active = await runOkrCycleLifecycleTransition(OKR_CYCLE_ACTIVATE_SPEC, {
       cycleId: created.result.cycleId,
       organizationId,
@@ -563,7 +580,8 @@ describe('OKR-E001 Cycle lifecycle — program-not-active guard, transitions, ca
       actorUserId: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `activate-for-closed-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const review = await runOkrCycleLifecycleTransition(OKR_CYCLE_OPEN_REVIEW_SPEC, {
       cycleId: created.result.cycleId,
       organizationId,
@@ -571,7 +589,8 @@ describe('OKR-E001 Cycle lifecycle — program-not-active guard, transitions, ca
       actorUserId: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `open-review-for-closed-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const closed = await runOkrCycleLifecycleTransition(OKR_CYCLE_CLOSE_SPEC, {
       cycleId: created.result.cycleId,
       organizationId,
@@ -579,7 +598,8 @@ describe('OKR-E001 Cycle lifecycle — program-not-active guard, transitions, ca
       actorUserId: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `close-for-cancel-attempt-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     expect(closed.result.status).toBe('closed');
 
     await expect(
@@ -590,7 +610,8 @@ describe('OKR-E001 Cycle lifecycle — program-not-active guard, transitions, ca
         actorUserId: USER_ADMIN,
         actorEffectiveRole: 'admin',
         idempotencyKey: `cancel-closed-attempt-${randomUUID()}`,
-      })
+        access: { capabilities: ['*'], platformRole: null },
+})
     ).rejects.toBeInstanceOf(OkrCycleValidationError);
   });
 });

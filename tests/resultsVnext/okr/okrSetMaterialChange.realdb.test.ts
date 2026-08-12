@@ -206,7 +206,8 @@ async function createActiveSetWithApproval(suffix: string): Promise<{
     actorUserId: USER_ADMIN,
     actorEffectiveRole: 'admin',
     idempotencyKey: `activate-${suffix}-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   return {
     organizationId,
     setId: created.result.set.setId,

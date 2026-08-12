@@ -330,7 +330,8 @@ describe('OKR-E005 — proposeAlignment: self-loop / owner / visibility / dedupe
           proposedBy: USER_B, // B is NOT A's owner
           actorEffectiveRole: 'member',
           idempotencyKey: `propose-not-owner-${randomUUID()}`,
-        });
+        access: { capabilities: ['*'], platformRole: null },
+});
         expect.unreachable('expected proposeAlignment to throw');
       } catch (err) {
         expect(err).toBeInstanceOf(OkrAlignmentNotOwnerError);
@@ -350,7 +351,8 @@ describe('OKR-E005 — proposeAlignment: self-loop / owner / visibility / dedupe
           proposedBy: USER_A, // has no ACL grant on the RESTRICTED_ACL Set D lives in
           actorEffectiveRole: 'member',
           idempotencyKey: `propose-no-vis-${randomUUID()}`,
-        });
+        access: { capabilities: ['*'], platformRole: null },
+});
         expect.unreachable('expected proposeAlignment to throw');
       } catch (err) {
         expect(err).toBeInstanceOf(OkrAlignmentVisibilityDeniedError);
@@ -376,7 +378,8 @@ describe('OKR-E005 — proposeAlignment: self-loop / owner / visibility / dedupe
           proposedBy: USER_A,
           actorEffectiveRole: 'member',
           idempotencyKey: `propose-race-1-${randomUUID()}`,
-        }),
+        access: { capabilities: ['*'], platformRole: null },
+}),
         proposeAlignment({
           organizationId,
           sourceObjectiveId: objectiveA,
@@ -384,7 +387,8 @@ describe('OKR-E005 — proposeAlignment: self-loop / owner / visibility / dedupe
           proposedBy: USER_A,
           actorEffectiveRole: 'member',
           idempotencyKey: `propose-race-2-${randomUUID()}`,
-        }),
+        access: { capabilities: ['*'], platformRole: null },
+}),
       ]);
 
       expect(first.result.alignment.alignmentId).toBe(second.result.alignment.alignmentId);

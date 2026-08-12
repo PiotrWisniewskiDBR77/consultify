@@ -134,7 +134,8 @@ describe('OKR-E007 finalScoreOkrSet — scoring-model dispatch + upsert + status
       actorUserId: USER_OWNER,
       actorEffectiveRole: 'member',
       idempotencyKey: `open-review-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     return fixture;
   }
 

@@ -211,7 +211,8 @@ describe('OKR-E007 getOkrSetHistory — merged event+material-change timeline, v
       actorUserId: USER_OWNER,
       actorEffectiveRole: 'member',
       idempotencyKey: `open-review-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
     const fullPage = await getOkrSetHistory({ userId: USER_OWNER, organizationId: fixture.organizationId, setId: fixture.setId, limit: 500 });
     const totalEvents = fullPage.entries.filter(isEventEntry).length;

@@ -217,7 +217,8 @@ async function buildActiveSetFixtureNoOccurrences(): Promise<ActiveSetFixture> {
     actorUserId: approverId,
     actorEffectiveRole: 'admin',
     idempotencyKey: `activate-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   expect(activated.result.status).toBe('active');
 
   return {

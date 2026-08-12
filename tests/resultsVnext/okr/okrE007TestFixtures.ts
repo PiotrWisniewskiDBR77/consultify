@@ -240,7 +240,8 @@ export async function buildActiveOkrSetFixture(opts: OkrE007FixtureOptions): Pro
     actorUserId: ownerUserId,
     actorEffectiveRole: 'member',
     idempotencyKey: `e007-activate-set-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
   return {
     organizationId,

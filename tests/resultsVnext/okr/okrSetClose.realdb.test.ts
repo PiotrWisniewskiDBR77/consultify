@@ -150,7 +150,8 @@ describe('OKR-E007 closeOkrSet — three independent close gates + D10 no-self-c
       actorUserId: USER_OWNER,
       actorEffectiveRole: 'member',
       idempotencyKey: `open-review-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     return fixture;
   }
 
@@ -322,7 +323,8 @@ describe('OKR-E007 closeOkrSet — three independent close gates + D10 no-self-c
         actorUserId: USER_OWNER, // the Set's own owner AND created_by
         actorEffectiveRole: 'member',
         idempotencyKey: `close-self-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       expect(outcome.outcome).toBe('applied');
       expect(outcome.result.set.status).toBe('closed');
 

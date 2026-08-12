@@ -137,7 +137,8 @@ describe('OKR-E007 carryForwardOkrSet — lineage, dedupe, source/target guards 
       actorUserId: USER_OWNER,
       actorEffectiveRole: 'member',
       idempotencyKey: `open-review-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const { rowVersion: reviewVersion } = await readSetVersionAndStatus(client, fixture.setId);
     await closeOkrSet({
       setId: fixture.setId,
@@ -303,7 +304,8 @@ describe('OKR-E007 carryForwardOkrSet — lineage, dedupe, source/target guards 
       actorUserId: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `open-drafting-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     await cycleCommands.runOkrCycleLifecycleTransition(cycleCommands.OKR_CYCLE_ACTIVATE_SPEC, {
       cycleId: targetCycleId,
       organizationId,
@@ -311,7 +313,8 @@ describe('OKR-E007 carryForwardOkrSet — lineage, dedupe, source/target guards 
       actorUserId: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `activate-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
     await expect(
       carryForwardOkrSet({

@@ -224,7 +224,8 @@ async function buildActiveSetFixture(
     actorUserId: approverId,
     actorEffectiveRole: 'admin',
     idempotencyKey: `activate-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   expect(activated.result.status).toBe('active');
 
   const generated = await generateCadenceOccurrences({ organizationId, cycleId: cycle.result.cycleId });

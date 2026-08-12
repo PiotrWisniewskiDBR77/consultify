@@ -282,7 +282,8 @@ describe('OKR-E007 recordObjectiveReflection lifecycle + protect-frozen trigger 
       actorUserId: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `cancel-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
     // The Set-status guard reuses `OkrSetValidationError` (imported from
     // `okrSetCommands.ts`) — a Set-level precondition, not a
@@ -351,7 +352,8 @@ describe('OKR-E007 recordObjectiveReflection lifecycle + protect-frozen trigger 
         actorUserId: USER_OWNER,
         actorEffectiveRole: 'member',
         idempotencyKey: `open-review-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
       // Score BOTH Objectives (finalScoreOkrSet is a Set-level batch) so
       // the score-half of the gate is satisfied for both — isolating the

@@ -219,7 +219,8 @@ describe('ROI-E006 closeRoiCase (real Postgres)', () => {
         actorUserId: started.startedBy, // == USER_OWNER, the PIR's own starter
         actorEffectiveRole: 'consultant',
         idempotencyKey: `close-self-${randomUUID()}`,
-      })
+        access: { capabilities: ['*'], platformRole: null },
+})
     ).rejects.toThrow(modules.RoiPirSelfCloseDeniedError);
 
     const caseRow = await client.query<{ status: string }>(`SELECT status FROM rvn_roi_cases WHERE case_id = $1`, [started.caseId]);
@@ -264,7 +265,8 @@ describe('ROI-E006 closeRoiCase (real Postgres)', () => {
         actorUserId: USER_CLOSER, // different from started.startedBy (USER_OWNER)
         actorEffectiveRole: 'admin',
         idempotencyKey: `close-happy-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
       expect(closeOutcome.outcome).toBe('applied');
       expect(closeOutcome.result.case.status).toBe('closed');
