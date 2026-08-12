@@ -39,17 +39,46 @@
  */
 import { expect, test, type Page } from '@playwright/test';
 
-type Viewport = { name: string; width: number; height: number };
+interface Viewport {
+  name: string;
+  width: number;
+  height: number;
+  /**
+   * Whether the AT-REST (scrollLeft=0) state must already be overlap-free.
+   * Hard-coded per the owner's literal requirement, NOT derived from a
+   * runtime measurement (e.g. "was scrollMax 0 this run") — deriving it
+   * from runtime state would let a regression that reintroduces horizontal
+   * overflow at 1280×800 (e.g. reverting the title-width fit) silently
+   * downgrade itself into the narrow-viewport exception (by making
+   * scrollMax > 0) and PASS instead of failing. Confirmed live: see the
+   * S18-NOOVERLAP session report's "sabotage variant 1" evidence — the
+   * scrollMax-derived version of this suite went GREEN against sabotaged
+   * code because sabotage made scrollMax > 0 at 1280×800 too.
+   * True for the two viewports the owner requires to hold simultaneously
+   * at rest (1280×800 is the literal acceptance viewport; 1440×900 is the
+   * control — both fit their fixed columns without scrolling). False for
+   * 720×450 and 200%-zoom/640×400, where the fixed columns alone (794px)
+   * already exceed the viewport — the owner was explicit that this is a
+   * genuine "not everything can be visible at once" case, not one to be
+   * dressed up as passing.
+   */
+  requireNoOverlapAtRest: boolean;
+}
 
 const VIEWPORTS: Viewport[] = [
-  { name: '1280x800 @100%', width: 1280, height: 800 },
-  { name: '1440x900 @100%', width: 1440, height: 900 },
-  { name: '720x450', width: 720, height: 450 },
+  { name: '1280x800 @100%', width: 1280, height: 800, requireNoOverlapAtRest: true },
+  { name: '1440x900 @100%', width: 1440, height: 900, requireNoOverlapAtRest: true },
+  { name: '720x450', width: 720, height: 450, requireNoOverlapAtRest: false },
   // 200% zoom / reflow: per WCAG 1.4.10 reflow-testing convention, zooming
   // the browser to Z% is equivalent (in CSS px terms) to emulating a
   // viewport of 1/Z the linear size — a 1280x800 design at 200% zoom
   // presents an effective 640x400 CSS-px viewport.
-  { name: '200% zoom (emulated 640x400 CSS px)', width: 640, height: 400 },
+  {
+    name: '200% zoom (emulated 640x400 CSS px)',
+    width: 640,
+    height: 400,
+    requireNoOverlapAtRest: false,
+  },
 ];
 
 interface Rect {
@@ -151,18 +180,10 @@ function assertNoOverlap(label: string, who: string, a: Rect | null, b: Rect | n
 
 /**
  * `enforceOverlap`: whether the no-overlap assertions are required at THIS
- * scroll position. Always true once scrolled to the max (the date must be
- * fully legible with zero pixels covered once scrolled — no exceptions,
- * any viewport). At scrollLeft=0 it is true only when the columns already
- * fit (`scrollMax === 0` — the 1280×800 acceptance viewport after Fix A,
- * and the 1440×900 control): the owner was explicit that a viewport whose
- * FIXED columns alone (794px) exceed its own width (720×450; 640×400 at
- * 200% zoom) cannot show everything uncovered simultaneously AT REST, and
- * that is not to be "dressed up as fits" — so this suite does not assert
- * it there. Kebab reachability, in contrast, is required at EVERY scroll
- * position regardless of viewport (`assertScenario` always checks it) —
- * the sticky column is the topmost layer at rest too, so the kebab stays
- * clickable even while the date text is covered.
+ * scroll position. Kebab reachability, in contrast, is required at EVERY
+ * scroll position regardless of viewport (`assertScenario` always checks
+ * it) — the sticky column is the topmost layer at rest too, so the kebab
+ * stays clickable even while the date text is covered.
  */
 function assertScenario(label: string, m: Measurement, enforceOverlap: boolean) {
   if (enforceOverlap) {
@@ -206,9 +227,11 @@ test.describe('Idea Table — Updated column vs pinned actions column overlap (S
       await gotoTable(page);
 
       const atZero = await measureAtScroll(page, 0);
-      // See assertScenario's doc comment: overlap-free is only required at
-      // rest when there's nothing to scroll away in the first place.
-      assertScenario(`${vp.name}, scrollLeft=0`, atZero, atZero.scrollMax === 0);
+      // `vp.requireNoOverlapAtRest` is a FIXED per-viewport requirement (see
+      // the Viewport interface doc comment above) — deliberately NOT derived
+      // from `atZero.scrollMax`. See that doc comment for why: a runtime-
+      // derived version of this check went GREEN against sabotaged code.
+      assertScenario(`${vp.name}, scrollLeft=0`, atZero, vp.requireNoOverlapAtRest);
 
       // Role + accessible name — the owner's other required check, kept
       // live against the real rendered DOM (not just structural presence).
