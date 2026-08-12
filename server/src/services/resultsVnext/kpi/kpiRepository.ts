@@ -41,9 +41,12 @@ import {
 
 import {
   toKpiDefinition,
+  toKpiDefinitionVersion,
   toKpiMeasurement,
   type KpiDefinition,
   type KpiDefinitionRow,
+  type KpiDefinitionVersion,
+  type KpiDefinitionVersionRow,
   type KpiMeasurement,
   type KpiMeasurementRow,
   type KpiStatus,
@@ -158,6 +161,77 @@ export async function getKpi(params: GetKpiParams): Promise<KpiDefinition | null
   );
   const row = rows[0];
   return row ? toKpiDefinition(row) : null;
+}
+
+// ==========================================
+// getKpiCurrentDefinitionVersion (RN-G6 P0 fix — F1B)
+// ==========================================
+
+export interface GetKpiCurrentDefinitionVersionParams {
+  userId: string;
+  organizationId: string;
+  kpiId: string;
+}
+
+/**
+ * F1B — the GET this domain never had (see `kpiApi.ts`'s "CONFIRMED BACKEND
+ * GAP" doc comment and `ResultsKpiRegistryPage.tsx`'s "knownVersions" file
+ * header note, both written before this fix). Without it, a KPI's current
+ * definition-version row — name/unit/target geometry/`approvalStatus`/the
+ * CAS `rowVersion` every write command requires as `expectedVersion` — was
+ * reachable ONLY from the response of a write this exact browser tab made,
+ * so a second reviewer who never wrote anything had no way to approve or
+ * reject someone else's submission: the maker-checker workflow's entire
+ * reason for existing was unusable for a real second person.
+ *
+ * Same visibility contract as `getKpi` above (this file's header comment:
+ * "ALL THREE functions below go through `wrapWithVisibilityScope`... never a
+ * raw WHERE") and the SAME join shape `kpiPerspectivesRepository.ts`'s
+ * `branch_update_due_heuristic` CTE already established for reaching a KPI's
+ * current version row (`INNER JOIN rvn_kpi_definition_versions kdv ON
+ * kdv.definition_version_id = kd.current_definition_version_id`) — reused
+ * here, not reinvented. `rvn_kpi_definition_versions` has no row of its own
+ * in `rvn_platform_resource_visibility` (this file's own header comment,
+ * "Key points"), so visibility is enforced via `kd`'s join to
+ * `rvn_visible_resources`, exactly like `getKpi`/`listMeasurements` already
+ * do — a caller who cannot see the KPI gets `null` here too, never a row.
+ *
+ * Returns `null` when the KPI does not exist, is not visible to `userId`
+ * (fail-closed, same as `getKpi`), or — defensively — has no current
+ * version yet (should not happen for any KPI that completed `createKpiDraft`,
+ * but INNER JOIN naturally returns nothing rather than a partial row if it
+ * ever did). The route layer collapses ALL of these into the same generic
+ * 404, per D06 ("odmowa ma być generyczna, bez potwierdzania istnienia
+ * obiektu") — never a distinct "exists but you can't see it" response.
+ */
+export async function getKpiCurrentDefinitionVersion(
+  params: GetKpiCurrentDefinitionVersionParams
+): Promise<KpiDefinitionVersion | null> {
+  const { userId, organizationId, kpiId } = params;
+
+  const baseQuerySql = `
+    SELECT kdv.*
+      FROM rvn_kpi_definitions kd
+      INNER JOIN rvn_visible_resources vr
+              ON vr.resource_type = 'kpi' AND vr.resource_id = kd.kpi_id::text
+      INNER JOIN rvn_kpi_definition_versions kdv
+              ON kdv.definition_version_id = kd.current_definition_version_id
+     WHERE kd.organization_id = $1
+       AND kd.kpi_id = $${VISIBILITY_CTE_PARAM_COUNT + 1}
+  `;
+
+  const wrapped = await wrapWithVisibilityScope(baseQuerySql, {
+    userId,
+    organizationId,
+    resourceType: 'kpi',
+  });
+  const values = [...wrapped.values, kpiId];
+
+  const rows = await withReadClient((client) =>
+    queryRows<KpiDefinitionVersionRow>(client, wrapped.sql, values)
+  );
+  const row = rows[0];
+  return row ? toKpiDefinitionVersion(row) : null;
 }
 
 // ==========================================
