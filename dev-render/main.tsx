@@ -284,6 +284,9 @@ const ResultsVNextLegacyArchiveScreen = React.lazy(
   () => import('./screens/results-vnext-legacy-archive')
 );
 const RnG3ClassLRecordShellScreen = React.lazy(() => import('./screens/rn-g3-class-l-record-shell'));
+const ResultsVNextTeresaKpiDeviationScreen = React.lazy(
+  () => import('./screens/results-vnext-teresa-kpi-deviation')
+);
 
 const SCREENS: Record<string, { label: string; render: () => React.ReactElement }> = {
   'results-vnext-registry-shell': {
@@ -340,6 +343,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'RN-G3 lane — REALNY <KpiToolPage> + <KpiDeviationCaseSubview> (klasa L, D03/D05), zamontowane pod jednym <MemoryRouter> z prawdziwym useNavigate() między nimi. &view=tool|case &state=ready|loading|error &caseState=open|analysis_required|plan_required|plan_submitted|approved|executing|recovery_observed|verification|closed &severity=warning|critical &escalated=1 &impacts=0 &ff=off',
     render: () => <ResultsVNextKpiToolScreen />,
+  },
+  'results-vnext-teresa-kpi-deviation': {
+    label:
+      'RN-G5 lane teresa (2026-08-12) — REALNY <KpiDeviationCaseSubview> Phase 2 "Poproś Teresę o zapis przez pipeline" (reflection_rca), window.fetch stubbed statefully for /api/v8/teresa/proposal* (P08) PLUS Api.get/post/put for /vnext/results/kpi*. Case starts at analysis_required. &teresaDown=1 (transport failure -> manual fallback) &teresaDeny=1 (first execute denies -> blocked banner, no silent success)',
+    render: () => <ResultsVNextTeresaKpiDeviationScreen />,
   },
   'results-vnext-legacy-archive': {
     label:

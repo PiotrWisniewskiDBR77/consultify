@@ -36,10 +36,15 @@
  * checker rules, not ABAC visibility denials, so the general-reason
  * constraint (D06's security clause) does not apply to them.
  *
- * -- D13: Teresa is FALA 2 — this subview does not render any Teresa
- * affordance, but every mutation goes through the exact same typed command
- * functions Teresa would eventually call after explicit user acceptance, so
- * wiring Teresa later does not require touching this file's write paths.
+ * -- D13 (RN-G5 lane `teresa`, 2026-08-12): the "Poproś Teresę o zapis przez
+ * pipeline" action next to "Zapisz analizę" (Phase 2) routes the SAME form
+ * fields through the governed P08 propose→approve/reject→execute→audit
+ * lifecycle (`kpiTeresaRcaDraft.ts`, `reflection_rca` advisor mode) instead
+ * of calling `submitRootCause` directly — see that file's header for why
+ * the proposed text is always exactly what the human already typed. The
+ * pre-existing manual "Zapisz analizę" button is untouched and remains the
+ * primary, always-available path; Teresa's pipeline is an alternative, not
+ * a replacement, and stays fully optional per-case.
  */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -54,6 +59,7 @@ import {
   RotateCcw,
   Settings2,
   ShieldAlert,
+  Sparkles,
 } from 'lucide-react';
 
 import { NModeShell } from '@/components/shared/NModeLayout/NModeShell';
@@ -71,6 +77,13 @@ import { ResultsVNextForbiddenState } from '../ResultsVNextForbiddenState';
 import type { ResultsVNextForbiddenDetail } from '../types';
 import { isResultsVNextFlagEnabled } from '../resultsVNextFeatureFlags';
 import { listKpiMeasurements, type KpiMeasurementDto } from '../kpiApi';
+import { TeresaProposalPanel } from '../teresa/TeresaProposalPanel';
+import {
+  buildKpiRcaHandoffContext,
+  buildKpiRcaSuggestion,
+  buildKpiRcaTargetPayload,
+  kpiRcaConsequencePreview,
+} from './kpiTeresaRcaDraft';
 import {
   acknowledgeDeviationCase,
   addCorrectiveAction,
@@ -233,6 +246,13 @@ export const KpiDeviationCaseSubview: React.FC = () => {
   const [recurrenceFlag, setRecurrenceFlag] = useState(false);
   const [expectedRecoveryDate, setExpectedRecoveryDate] = useState('');
   const [expectedRecoveryValue, setExpectedRecoveryValue] = useState('');
+
+  // RN-G5 lane `teresa` (2026-08-12) — GENERATION gate for `reflection_rca`
+  // (see `kpiTeresaRcaDraft.ts` header). `askTeresaRcaKey` is a fresh
+  // idempotency key per open ATTEMPT, regenerated each time the panel opens
+  // — same convention as ROI's `askTeresaKey` in `RoiCaseLearnWorkspace.tsx`.
+  const [askTeresaRca, setAskTeresaRca] = useState(false);
+  const [askTeresaRcaKey, setAskTeresaRcaKey] = useState('');
 
   const [actionTitle, setActionTitle] = useState('');
   const [actionOwner, setActionOwner] = useState('');
@@ -603,6 +623,27 @@ export const KpiDeviationCaseSubview: React.FC = () => {
                 }
               >
                 {t('Zapisz analizę', 'Save analysis')}
+              </button>
+              <button
+                type="button"
+                disabled={busy || !isAnalysis || !rootCauseSummary.trim() || !rootCauseCategory.trim()}
+                title={
+                  !isAnalysis
+                    ? t('Dostępne tylko w stanie „Wymaga analizy"', 'Only available while "Analysis required"')
+                    : t(
+                        'Wyślij DOKŁADNIE ten tekst przez zarządzaną ścieżkę Teresy (propozycja → zatwierdzenie → wykonanie → audyt)',
+                        'Route EXACTLY this text through Teresa\'s governed pipeline (propose → approve → execute → audit)'
+                      )
+                }
+                className={`${GHOST_BUTTON_CLASS} ml-2`}
+                data-testid="kpi-deviation-ask-teresa-rca"
+                onClick={() => {
+                  setAskTeresaRcaKey(`${kase.caseId}-${Date.now()}`);
+                  setAskTeresaRca(true);
+                }}
+              >
+                <Sparkles size={14} />
+                {t('Poproś Teresę o zapis przez pipeline', 'Ask Teresa to route this through her pipeline')}
               </button>
             </div>
           )}
@@ -1008,6 +1049,57 @@ export const KpiDeviationCaseSubview: React.FC = () => {
         showModeSwitcher={false}
         rightPanel={<ArtifactRightPanel sections={rightPanelSections} ariaLabel={t('Panel sprawy', 'Case panel')} />}
       />
+      {askTeresaRca && kase
+        ? (() => {
+            const form = {
+              rootCauseSummary,
+              rootCauseCategory,
+              recurrenceFlag,
+            };
+            const suggestion = buildKpiRcaSuggestion({ kase, form, isPolish });
+            const sessionId = `kpi-deviation-teresa-${kase.caseId}`;
+            return (
+              <TeresaProposalPanel
+                open={askTeresaRca}
+                onClose={() => setAskTeresaRca(false)}
+                isPolish={isPolish}
+                title={t('Poproś Teresę o zapis analizy przyczyny', 'Ask Teresa to record the root cause analysis')}
+                targetModule="kpi"
+                sessionId={sessionId}
+                idempotencyKey={askTeresaRcaKey}
+                buildHandoffContext={() => buildKpiRcaHandoffContext({ kase, suggestion, sessionId })}
+                buildTargetPayload={() => buildKpiRcaTargetPayload({ kase, form, suggestion })}
+                renderProposedChange={() => (
+                  <div className="space-y-2" data-testid="teresa-kpi-rca-draft-text">
+                    <p>
+                      <span className="text-c-text-muted">{t('Przyczyna: ', 'Cause: ')}</span>
+                      {form.rootCauseSummary.trim()}
+                    </p>
+                    <p>
+                      <span className="text-c-text-muted">{t('Kategoria: ', 'Category: ')}</span>
+                      {form.rootCauseCategory.trim()}
+                    </p>
+                    <p>
+                      <span className="text-c-text-muted">{t('Powtarzalne: ', 'Recurring: ')}</span>
+                      {form.recurrenceFlag ? t('tak', 'yes') : t('nie', 'no')}
+                    </p>
+                  </div>
+                )}
+                evidenceBreakdown={suggestion.evidenceBreakdown}
+                evidencePointers={suggestion.evidencePointers}
+                consequencePreview={kpiRcaConsequencePreview(isPolish)}
+                onCompleted={() => {
+                  // D13 "przeładowanie i zimne otwarcie" — re-fetch the case
+                  // from the server rather than approximating the write
+                  // locally, same convention `RoiCaseLearnWorkspace.tsx`
+                  // documents for its own `onCompleted`.
+                  void loadCase();
+                }}
+                onManualFallback={() => setAskTeresaRca(false)}
+              />
+            );
+          })()
+        : null}
     </div>
   );
 };
