@@ -24,10 +24,30 @@ const BASE = process.env.RN_G6_FRONTEND_URL || 'http://localhost:3197';
 const OUT_DIR = path.join(__dirname, '..', 'docs', 'qa', 'screens', 'rn-g6-runtime');
 fs.mkdirSync(OUT_DIR, { recursive: true });
 
+// RN-G6 B3 — real-routing inventory. IDs below come from the seed summary
+// (deterministic `uid()` hashes — reproducible via `--wipe`), NOT re-queried
+// live, so a route-not-found here can never be blamed on a stale ID lookup
+// bug in this script itself.
+const KPI_A_1 = process.env.RN_G6_KPI_A_1 || '4d5db4f2-454e-4813-8813-4d5db4454ebd';
+const KPI_SCORECARD_A_1 = process.env.RN_G6_SCORECARD_A_1 || 'a7a84b5c-cfae-4680-8680-a7a84bcfaea3';
+const ROI_CASE_A_2 = process.env.RN_G6_ROI_CASE_A_2 || '4d60dfcb-463e-4b5e-8b5e-4d60df463e9a';
+const OKR_SET_A_1 = process.env.RN_G6_OKR_SET_A_1 || 'f772dd20-6d67-49a1-89a1-f772dd6d67ca';
+
 const routes = [
-  { name: 'kpi', path: '/results/kpi?ff_resultsVNextKpi=1' },
-  { name: 'roi', path: '/results/roi?ff_resultsVNextRoi=1' },
-  { name: 'okr', path: '/results/okr?ff_resultsVNextOkr=1' },
+  { name: 'kpi-registry', path: '/results/kpi?ff_resultsVNextKpi=1' },
+  { name: 'kpi-tool', path: `/results/kpi/${KPI_A_1}?ff_resultsVNextKpi=1` },
+  { name: 'kpi-scorecard', path: `/results/kpi/scorecards/${KPI_SCORECARD_A_1}?ff_resultsVNextKpi=1` },
+  { name: 'roi-registry', path: '/results/roi?ff_resultsVNextRoi=1' },
+  { name: 'roi-case', path: `/results/roi/cases/${ROI_CASE_A_2}?ff_resultsVNextRoi=1` },
+  { name: 'okr-registry', path: '/results/okr?ff_resultsVNextOkr=1' },
+  { name: 'okr-set', path: `/results/okr/sets/${OKR_SET_A_1}?ff_resultsVNextOkr=1` },
+  // Real route is /results/attention (routeConfig.ts RESULTS_ATTENTION) —
+  // gated behind BOTH kpiRegistry AND okrRegistry flags together
+  // (ResultsAttentionPage.tsx). Mission brief said `/attention` (bare) —
+  // checked separately below as `attention-bare` to confirm which one is
+  // real, not assumed.
+  { name: 'attention', path: '/results/attention?ff_resultsVNextKpi=1&ff_resultsVNextOkr=1' },
+  { name: 'attention-bare', path: '/attention' },
 ];
 
 const report = { routes: [] };
@@ -64,7 +84,7 @@ for (const r of routes) {
   page.on('response', listener);
 
   await page.goto(`${BASE}${r.path}`, { waitUntil: 'domcontentloaded' });
-  await page.waitForTimeout(6000);
+  await page.waitForTimeout(8000);
 
   // Dismiss onboarding modal if present
   const skipBtn = page.locator('button:has-text("Skip for now")');
@@ -78,7 +98,7 @@ for (const r of routes) {
     } catch {}
   }
 
-  if (r.name === 'kpi') {
+  if (r.name === 'kpi-registry') {
     const orgTab = page.locator('button:has-text("Org")').first();
     if (await orgTab.count().catch(() => 0)) {
       try {
@@ -91,12 +111,28 @@ for (const r of routes) {
   const shotPath = `${OUT_DIR}/${r.name}.png`;
   await page.screenshot({ path: shotPath, fullPage: false });
 
+  const rootInfo = await page.evaluate(() => {
+    const root = document.getElementById('root');
+    const bodyText = document.body ? document.body.innerText : '';
+    return {
+      rootInnerHtmlLength: root ? root.innerHTML.length : 0,
+      bodyTextSnippet: bodyText.slice(0, 400),
+      finalUrl: window.location.pathname + window.location.search,
+    };
+  });
+
   page.off('response', listener);
   const errCount = netStatuses.filter((s) => s.status >= 400).length;
+  const redirectedAway = rootInfo.finalUrl.split('?')[0] !== r.path.split('?')[0];
   report.routes.push({
     name: r.name,
-    url: page.url(),
+    requestedPath: r.path,
+    finalUrl: page.url(),
+    finalPath: rootInfo.finalUrl,
+    redirectedAway,
     screenshot: shotPath,
+    rootInnerHtmlLength: rootInfo.rootInnerHtmlLength,
+    bodyTextSnippet: rootInfo.bodyTextSnippet,
     consoleErrors: [...consoleErrors],
     apiCalls: netStatuses,
     apiErrorCount: errCount,
