@@ -3457,6 +3457,10 @@ async function handleOkrReflectionSynthesis(
     evidence_breakdown: synthesis.evidence_breakdown,
   };
 
+  // RN-G5: recordOkrReflectionTeresaDraft now requires an `access` context
+  // — resolved for the REAL human userId, same pattern as every other
+  // Teresa handoff fix in this package.
+  const access = await resolveEffectiveAccess({ userId, organizationId });
   const outcome = await recordOkrReflectionTeresaDraft({
     objectiveId: synthesis.objective_id,
     setId: synthesis.set_id,
@@ -3468,6 +3472,7 @@ async function handleOkrReflectionSynthesis(
     idempotencyKey: proposalId,
     correlationId: context.runtime_binding?.conversation_id ?? undefined,
     reason: 'Teresa reflection_synthesis draft, approved by user',
+    access,
   });
   await recordTeresaOkrHandoffResult(proposalId, organizationId, synthesis.objective_id);
   return {

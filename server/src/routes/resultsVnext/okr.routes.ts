@@ -2227,6 +2227,7 @@ router.post(
         return;
       }
       const body = req.body as import('zod').infer<typeof OkrSetReviewLifecycleTransitionSchema>;
+      const access = await resolveAccess(req, auth);
       const outcome = await finalScoreOkrSet({
         setId,
         organizationId: auth.organizationId,
@@ -2236,6 +2237,7 @@ router.post(
         idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
         correlationId: getCorrelationId(req),
         reason: body.reason ?? null,
+        access,
       });
       res.status(200).json({
         outcome: outcome.outcome,
@@ -2269,6 +2271,7 @@ router.post(
         res.status(404).json({ error: 'OKR Objective not found', code: 'NOT_FOUND' });
         return;
       }
+      const access = await resolveAccess(req, auth);
       const outcome = await recordObjectiveReflection({
         objectiveId,
         setId: body.setId,
@@ -2285,6 +2288,7 @@ router.post(
         idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
         correlationId: getCorrelationId(req),
         reason: body.reason ?? null,
+        access,
       });
       res.status(200).json({
         outcome: outcome.outcome,

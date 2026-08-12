@@ -47,6 +47,7 @@ import {
   type AtomicEventInput,
   type ExistingEventRow,
 } from '../platform/atomicWrite.js';
+import { assertCommandCapability, type CommandAccessContext } from '../platform/commandCapabilityGuard.js';
 
 import { resolveOkrCyclePinnedPolicySnapshot } from './okrObjectiveCommands.js';
 import { OKR_EVENT_SOURCE } from './okrProgramCommands.js';
@@ -104,6 +105,14 @@ export class OkrReflectionValidationError extends Error {
     this.details = details;
   }
 }
+
+// RN-G5 — command capability names (docs/product/results-vnext/RN_G5_AUTHZ_DESIGN.md).
+export const OKR_REFLECTION_CAPABILITIES = {
+  finalScore: 'results.okr.reflection.final_score',
+  record: 'results.okr.reflection.record',
+  recordTeresaDraft: 'results.okr.reflection.record_teresa_draft',
+  recordTeresaDraftDisposition: 'results.okr.reflection.record_teresa_draft_disposition',
+} as const;
 
 // ==========================================
 // applyOkrScoringModel (D2)
@@ -174,6 +183,7 @@ export interface FinalScoreOkrSetInput {
   correlationId?: string;
   causationId?: string | null;
   reason?: string | null;
+  access: CommandAccessContext;
 }
 
 export interface FinalScoreOkrSetResult {
@@ -214,6 +224,7 @@ export async function finalScoreOkrSet(
     correlationId,
     causationId = null,
     reason = null,
+    access,
   } = input;
 
   let beforeState: Record<string, unknown> | null = null;
@@ -225,6 +236,13 @@ export async function finalScoreOkrSet(
     loadForUpdate: loadOkrSetForUpdate,
     getCurrentVersion: setRowVersion,
     applyMutation: async (client, currentRow, nextVersion) => {
+      assertCommandCapability({
+        access,
+        actorUserId,
+        capability: OKR_REFLECTION_CAPABILITIES.finalScore,
+        responsibleUserIds: [currentRow.owner_user_id, currentRow.reviewer_user_id],
+      });
+
       if (currentRow.status !== 'review') {
         throw new OkrSetValidationError(
           `OKR Set ${setId} is "${currentRow.status}" — final scoring may only run while the Set is "review"`,
@@ -365,6 +383,7 @@ export interface RecordObjectiveReflectionInput {
   correlationId?: string;
   causationId?: string | null;
   reason?: string | null;
+  access: CommandAccessContext;
 }
 
 /**
@@ -372,10 +391,15 @@ export interface RecordObjectiveReflectionInput {
  * `executeAtomicCommand` step-for-step but supporting create-or-update
  * (file header). Guard: parent Set `status IN ('active','review')`. Guard:
  * if the reflection row already exists, `status === 'draft'` (protect-
- * frozen trigger backs this a second time as defense-in-depth). Authorized
- * writer enforcement (Objective Owner or Set Owner) is a route-layer
- * concern per this program's established RBAC/ABAC split — not re-derived
- * here.
+ * frozen trigger backs this a second time as defense-in-depth).
+ *
+ * RN-G5: this function's own header ORIGINALLY said "Authorized writer
+ * enforcement (Objective Owner or Set Owner) is a route-layer concern...
+ * not re-derived here" — that route-layer check was never actually
+ * implemented (okr.routes.ts's own header states no route in this codebase
+ * implements a live per-route ACL gate). Gated here on the Objective's own
+ * owner_user_id OR the Set's owner_user_id (both queries below extended to
+ * also select owner_user_id, no extra round-trip).
  */
 export async function recordObjectiveReflection(
   input: RecordObjectiveReflectionInput
@@ -397,14 +421,15 @@ export async function recordObjectiveReflection(
     correlationId,
     causationId = null,
     reason = null,
+    access,
   } = input;
 
   const client = await acquirePgClient();
   try {
     await client.query('BEGIN');
 
-    const objectiveResult = await client.query<{ set_id: string }>(
-      `SELECT set_id FROM okr_vnext_objectives WHERE objective_id = $1 AND organization_id = $2`,
+    const objectiveResult = await client.query<{ set_id: string; owner_user_id: string }>(
+      `SELECT set_id, owner_user_id FROM okr_vnext_objectives WHERE objective_id = $1 AND organization_id = $2`,
       [objectiveId, organizationId]
     );
     const objectiveRow = objectiveResult.rows[0];
@@ -423,8 +448,8 @@ export async function recordObjectiveReflection(
       );
     }
 
-    const setResult = await client.query<{ status: string }>(
-      `SELECT status FROM okr_vnext_sets WHERE set_id = $1 AND organization_id = $2 FOR UPDATE`,
+    const setResult = await client.query<{ status: string; owner_user_id: string }>(
+      `SELECT status, owner_user_id FROM okr_vnext_sets WHERE set_id = $1 AND organization_id = $2 FOR UPDATE`,
       [setId, organizationId]
     );
     const setRow = setResult.rows[0];
@@ -432,6 +457,14 @@ export async function recordObjectiveReflection(
       await client.query('ROLLBACK');
       throw new OkrSetValidationError(`OKR Set ${setId} not found`, 'SET_NOT_FOUND', { setId });
     }
+
+    assertCommandCapability({
+      access,
+      actorUserId,
+      capability: OKR_REFLECTION_CAPABILITIES.record,
+      responsibleUserIds: [objectiveRow.owner_user_id, setRow.owner_user_id],
+    });
+
     if (setRow.status !== 'active' && setRow.status !== 'review') {
       await client.query('ROLLBACK');
       throw new OkrSetValidationError(
@@ -653,6 +686,7 @@ export interface RecordOkrReflectionTeresaDraftInput {
   correlationId?: string;
   causationId?: string | null;
   reason?: string | null;
+  access: CommandAccessContext;
 }
 
 /**
@@ -682,14 +716,15 @@ export async function recordOkrReflectionTeresaDraft(
     correlationId,
     causationId = null,
     reason = null,
+    access,
   } = input;
 
   const client = await acquirePgClient();
   try {
     await client.query('BEGIN');
 
-    const objectiveResult = await client.query<{ set_id: string }>(
-      `SELECT set_id FROM okr_vnext_objectives WHERE objective_id = $1 AND organization_id = $2`,
+    const objectiveResult = await client.query<{ set_id: string; owner_user_id: string }>(
+      `SELECT set_id, owner_user_id FROM okr_vnext_objectives WHERE objective_id = $1 AND organization_id = $2`,
       [objectiveId, organizationId]
     );
     const objectiveRow = objectiveResult.rows[0];
@@ -708,8 +743,8 @@ export async function recordOkrReflectionTeresaDraft(
       );
     }
 
-    const setResult = await client.query<{ status: string }>(
-      `SELECT status FROM okr_vnext_sets WHERE set_id = $1 AND organization_id = $2 FOR UPDATE`,
+    const setResult = await client.query<{ status: string; owner_user_id: string }>(
+      `SELECT status, owner_user_id FROM okr_vnext_sets WHERE set_id = $1 AND organization_id = $2 FOR UPDATE`,
       [setId, organizationId]
     );
     const setRow = setResult.rows[0];
@@ -717,6 +752,14 @@ export async function recordOkrReflectionTeresaDraft(
       await client.query('ROLLBACK');
       throw new OkrSetValidationError(`OKR Set ${setId} not found`, 'SET_NOT_FOUND', { setId });
     }
+
+    assertCommandCapability({
+      access,
+      actorUserId,
+      capability: OKR_REFLECTION_CAPABILITIES.recordTeresaDraft,
+      responsibleUserIds: [objectiveRow.owner_user_id, setRow.owner_user_id],
+    });
+
     if (setRow.status !== 'active' && setRow.status !== 'review') {
       await client.query('ROLLBACK');
       throw new OkrSetValidationError(
@@ -928,6 +971,7 @@ export interface RecordOkrReflectionTeresaDraftDispositionInput {
   correlationId?: string;
   causationId?: string | null;
   reason?: string | null;
+  access: CommandAccessContext;
 }
 
 async function loadOkrReflectionForUpdate(
@@ -983,6 +1027,7 @@ export async function recordOkrReflectionTeresaDraftDisposition(
     correlationId,
     causationId = null,
     reason = null,
+    access,
   } = input;
 
   let beforeState: Record<string, unknown> | null = null;
@@ -995,6 +1040,21 @@ export async function recordOkrReflectionTeresaDraftDisposition(
     loadForUpdate: loadOkrReflectionForUpdate,
     getCurrentVersion: reflectionRowVersion,
     applyMutation: async (client, currentRow, nextVersion) => {
+      // RN-G5: OkrReflectionRow carries no owner column of its own — the
+      // parent Objective's owner is the responsible person (same "no
+      // owner_user_id column, look it up via the parent" shape as
+      // roiPirCommands.ts's loadRoiCaseOwnerUserId).
+      const objectiveOwnerResult = await client.query<{ owner_user_id: string }>(
+        `SELECT owner_user_id FROM okr_vnext_objectives WHERE objective_id = $1 AND organization_id = $2`,
+        [objectiveId, organizationId]
+      );
+      assertCommandCapability({
+        access,
+        actorUserId,
+        capability: OKR_REFLECTION_CAPABILITIES.recordTeresaDraftDisposition,
+        responsibleUserIds: [objectiveOwnerResult.rows[0]?.owner_user_id],
+      });
+
       if (currentRow.status !== 'draft') {
         throw new OkrReflectionValidationError(
           `OKR Reflection for Objective ${objectiveId} is "${currentRow.status}" — a Teresa draft disposition may only be recorded while the reflection is a draft`,
