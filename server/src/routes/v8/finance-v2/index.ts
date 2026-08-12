@@ -22,6 +22,7 @@ import commentsRoutes from './comments.routes.js';
 import compareRoutes from './compare.routes.js';
 import computeRoutes from './compute.routes.js';
 import crosscuttingRoutes from './crosscutting.routes.js';
+import exportImportRoutes from './export-import.routes.js';
 import lineageNavigatorRoutes from './lineage-navigator.routes.js';
 import modelsRoutes from './models.routes.js';
 import predictionRoutes from './prediction.routes.js';
@@ -77,5 +78,7 @@ financeV2Router.use(commentsRoutes);
 // Pakiet ROUTES_EXPOSURE — Saved views (personal/team, shareable token). Own
 // `/saved-views/*` prefix, no collision.
 financeV2Router.use(savedViewsRoutes);
+// Pakiet ROUTES_EXPOSURE — Export/Import (.xlsx). Own `/export/*` + `/import/*` prefixes.
+financeV2Router.use(exportImportRoutes);
 
 export default financeV2Router;
