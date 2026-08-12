@@ -58,6 +58,7 @@ import {
   carryForwardOkrSet,
   closeOkrSet,
   finalScoreOkrSet,
+  getObjectiveReflection,
   listOkrSetReviews,
   newOkrWorkspaceIdempotencyKey,
   OkrWorkspaceApiError,
@@ -128,6 +129,40 @@ export const OkrReviewReflectionView: React.FC<OkrReviewReflectionViewProps> = (
       .then(([r, o]) => {
         setReviews(r);
         setObjectives(o);
+        // RN-G6 C3 (2026-08-12) — discover each Objective's real reflection
+        // row_version (and any already-saved text) instead of assuming a
+        // fresh `0`. See `getObjectiveReflection`'s doc comment: without
+        // this, "Save reflection" 409s with STALE_VERSION on every reload
+        // once a reflection row exists (created by an earlier save OR by
+        // `finalScoreOkrSet`, in this or any other session). Best-effort —
+        // a failed lookup for one Objective must not block the others or
+        // the page; it just leaves that Objective's expectedVersion at the
+        // old 0-default, same as before this fix.
+        void Promise.allSettled(o.map((obj) => getObjectiveReflection(obj.objectiveId))).then((results) => {
+          const versions: Record<string, number> = {};
+          const drafts: Record<
+            string,
+            { whatWorked: string; whatDidNotWork: string; why: string; learning: string; nextCycleChange: string; disposition: OkrReflectionDisposition | '' }
+          > = {};
+          results.forEach((res, i) => {
+            if (res.status !== 'fulfilled' || !res.value) return;
+            const reflection = res.value;
+            const objectiveId = o[i].objectiveId;
+            versions[objectiveId] = reflection.rowVersion;
+            drafts[objectiveId] = {
+              whatWorked: reflection.whatWorked ?? '',
+              whatDidNotWork: reflection.whatDidNotWork ?? '',
+              why: reflection.why ?? '',
+              learning: reflection.learning ?? '',
+              nextCycleChange: reflection.nextCycleChange ?? '',
+              disposition: reflection.disposition ?? '',
+            };
+          });
+          if (Object.keys(versions).length > 0) {
+            setReflectionVersions((prev) => ({ ...prev, ...versions }));
+            setReflectionDrafts((prev) => ({ ...prev, ...drafts }));
+          }
+        });
       })
       // RN-G5 polish: plain list-load failure (reviews + objectives), no
       // server business-rule payload involved here — unlike the write

@@ -160,6 +160,7 @@ import {
 import {
   finalScoreOkrSet,
   recordObjectiveReflection,
+  getObjectiveReflection,
   OkrReflectionNotFoundError,
   OkrReflectionValidationError,
   OkrSetReflectionRequiredError,
@@ -2247,6 +2248,34 @@ router.post(
       });
     } catch (err) {
       handleOkrRouteError(res, err, 'finalScoreOkrSet');
+    }
+  }
+);
+
+// ==========================================
+// GET /api/vnext/results/okr/objectives/:objectiveId/reflection — getObjectiveReflection
+// RN-G6 C3 (2026-08-12) — added so the client can learn the current
+// row_version before saving (see getObjectiveReflection's doc comment for
+// the STALE_VERSION write-blocker this closes).
+// ==========================================
+
+router.get(
+  '/objectives/:objectiveId/reflection',
+  validateParams(OkrObjectiveIdParamsSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { objectiveId } = req.params as { objectiveId: string };
+      const existingObjective = await getObjective({ userId: auth.userId, organizationId: auth.organizationId, objectiveId });
+      if (!existingObjective) {
+        res.status(404).json({ error: 'OKR Objective not found', code: 'NOT_FOUND' });
+        return;
+      }
+      const reflection = await getObjectiveReflection(objectiveId, auth.organizationId);
+      res.status(200).json({ reflection });
+    } catch (err) {
+      handleOkrRouteError(res, err, 'getObjectiveReflection');
     }
   }
 );

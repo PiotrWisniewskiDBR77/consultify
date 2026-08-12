@@ -986,6 +986,44 @@ async function loadOkrReflectionForUpdate(
   return result.rows[0];
 }
 
+/**
+ * RN-G6 C3 (2026-08-12) — plain, non-locking read so a caller (the
+ * Review & Reflection UI) can discover the CURRENT `row_version` of an
+ * Objective's reflection row before calling `recordObjectiveReflection`.
+ *
+ * Fixes a reproducible write-blocker found live in this session: the file
+ * header above documents "no GET endpoint exists to discover this after a
+ * reload" as a deliberate prior decision, with the client instead keeping a
+ * session-local `expectedVersion` cache defaulting to 0. That default is
+ * only correct the FIRST time a reflection is ever recorded for an
+ * Objective. Once `finalScoreOkrSet` (or any earlier save, in any session)
+ * has created the `okr_vnext_reflections` row, EVERY subsequent "Save
+ * reflection" from a fresh page load sends `expectedVersion: 0` against a
+ * row already at `row_version: 1` — the server correctly rejects this as
+ * `STALE_VERSION` (`currentVersion` vs `expectedVersion` mismatch), but the
+ * client had no way to recover: no GET meant no way to learn the real
+ * current version, so the form was permanently unsavable after any reload.
+ * Returns `null` (not an error) when no reflection row exists yet — that is
+ * the legitimate "never reflected on this Objective" state, expectedVersion
+ * stays 0 for that caller.
+ */
+export async function getObjectiveReflection(
+  objectiveId: string,
+  organizationId: string
+): Promise<OkrReflection | null> {
+  const client = await acquirePgClient();
+  try {
+    const result = await client.query<OkrReflectionRow>(
+      `SELECT * FROM okr_vnext_reflections WHERE objective_id = $1 AND organization_id = $2`,
+      [objectiveId, organizationId]
+    );
+    const row = result.rows[0];
+    return row ? toOkrReflection(row) : null;
+  } finally {
+    client.release();
+  }
+}
+
 function reflectionRowVersion(row: OkrReflectionRow): number {
   return row.row_version;
 }
