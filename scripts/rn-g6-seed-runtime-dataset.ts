@@ -33,6 +33,21 @@ const USER_A = 'rn-g6-user-a-admin';
 const USER_B = 'rn-g6-user-b-admin';
 const TEST_PASSWORD = 'RnG6Runtime!2026';
 
+// B2 role diversity — five distinct org-A memberships covering the DB's
+// `organization_members.role` CHECK constraint values that map to different
+// EFFECTIVE roles (see resolveAuthEffectiveRole / isPilotRestrictedRole
+// findings in RN_G6_RUNTIME_ENVIRONMENT.md §7): OWNER and ADMIN are the only
+// two membership roles that survive `isPilotRestrictedRole` unrestricted —
+// MEMBER/CONSULTANT/USER/GUEST all normalize to the client's USER/GUEST band
+// and get bounced to /interview regardless of the DB role label. Seeded
+// anyway (own login each) so B3 can empirically confirm this, not assume it.
+const USER_A_OWNER = 'rn-g6-user-a-owner'; // wlasciciel (OWNER, unrestricted)
+// USER_A ('rn-g6-user-a-admin') doubles as the "menedzer" (manager) role —
+// ADMIN, unrestricted.
+const USER_A_CONTRIBUTOR = 'rn-g6-user-a-contributor'; // wspoltworca (MEMBER)
+const USER_A_REVIEWER = 'rn-g6-user-a-reviewer'; // recenzent/zatwierdzajacy (CONSULTANT)
+const USER_A_OUTSIDER = 'rn-g6-user-a-outsider'; // obcy z ograniczonym dostepem (GUEST)
+
 async function main() {
   assertNoLocalDatabaseOutsideTests(process.env);
 
@@ -89,11 +104,46 @@ async function main() {
       'light'
     );
 
+    console.log('Seeding ROI extra scenarios (org A, error + locked)...');
+    const roiAExtra = await seedRoiExtraScenarios(
+      client,
+      ORG_A,
+      USER_A,
+      initiatives.initA5,
+      initiatives.initA1
+    );
+
     console.log('Seeding OKR domain (org A, active program)...');
     const okrA = await seedOkrDomain(client, ORG_A, USER_A, 'rich');
 
     console.log('Seeding OKR domain (org B, draft-only program)...');
     const okrB = await seedOkrDomain(client, ORG_B, USER_B, 'light');
+
+    console.log('Seeding OKR decision link (org A, objective2/kr3)...');
+    const okrDecisionLink = await seedOkrDecisionLink(
+      client,
+      ORG_A,
+      USER_A_CONTRIBUTOR,
+      USER_A,
+      okrA.set1,
+      okrA.objective2,
+      okrA.keyResult3NoCheckins
+    );
+
+    console.log('Seeding MyWork obligations (org A)...');
+    const myWorkObligations = await seedMyWorkObligations(
+      client,
+      ORG_A,
+      kpiA.kpi1,
+      kpiA.kpi4,
+      kpiA.deviationCase1,
+      USER_A_CONTRIBUTOR,
+      USER_A_REVIEWER,
+      USER_A
+    );
+
+    console.log('Seeding Teresa proposal (org A)...');
+    const teresaProposal = await seedTeresaProposal(client, ORG_A, USER_A, kpiA.kpi1, kpiA.deviationCase1);
 
     // Platform visibility rows — WITHOUT these, every list/detail read on
     // KPI/ROI/OKR-set goes through `buildVisibilityScopedCte`
@@ -115,6 +165,12 @@ async function main() {
         : []),
       ...(kpiA.scorecard1 ? [{ resourceType: 'kpi_scorecard', resourceId: kpiA.scorecard1 }] : []),
       ...Object.entries(roiA).map(([, id]) => ({ resourceType: 'roi_case', resourceId: id })),
+      ...(roiAExtra.case5ErrorNotCalculable
+        ? [{ resourceType: 'roi_case', resourceId: roiAExtra.case5ErrorNotCalculable }]
+        : []),
+      ...(roiAExtra.case6LockedClosed
+        ? [{ resourceType: 'roi_case', resourceId: roiAExtra.case6LockedClosed }]
+        : []),
       ...(okrA.set1 ? [{ resourceType: 'okr_set', resourceId: okrA.set1 }] : []),
     ]);
 
@@ -135,14 +191,21 @@ async function main() {
     const summary = {
       organizations: [ORG_A, ORG_B],
       users: [
-        { id: USER_A, email: `${USER_A}@consultify.local`, org: ORG_A },
-        { id: USER_B, email: `${USER_B}@consultify.local`, org: ORG_B },
+        { id: USER_A, email: `${USER_A}@consultify.local`, org: ORG_A, dbRole: 'ADMIN', concept: 'menedzer/manager' },
+        { id: USER_A_OWNER, email: `${USER_A_OWNER}@consultify.local`, org: ORG_A, dbRole: 'OWNER', concept: 'wlasciciel/owner' },
+        { id: USER_A_CONTRIBUTOR, email: `${USER_A_CONTRIBUTOR}@consultify.local`, org: ORG_A, dbRole: 'MEMBER', concept: 'wspoltworca/contributor' },
+        { id: USER_A_REVIEWER, email: `${USER_A_REVIEWER}@consultify.local`, org: ORG_A, dbRole: 'CONSULTANT', concept: 'recenzent-zatwierdzajacy/reviewer' },
+        { id: USER_A_OUTSIDER, email: `${USER_A_OUTSIDER}@consultify.local`, org: ORG_A, dbRole: 'GUEST', concept: 'obcy-ograniczony-dostep/outsider' },
+        { id: USER_B, email: `${USER_B}@consultify.local`, org: ORG_B, dbRole: 'ADMIN', concept: 'org-B admin (tenant isolation)' },
       ],
       password: TEST_PASSWORD,
       initiatives,
       kpi: { orgA: kpiA, orgB: kpiB },
-      roi: { orgA: roiA, orgB: roiB },
+      roi: { orgA: { ...roiA, ...roiAExtra }, orgB: roiB },
       okr: { orgA: okrA, orgB: okrB },
+      okrDecisionLink,
+      myWorkObligations,
+      teresaProposal,
     };
     console.log('\n=== RN-G6 SEED SUMMARY (save this) ===');
     console.log(JSON.stringify(summary, null, 2));
@@ -162,6 +225,8 @@ async function wipeOrg(client: any, orgId: string) {
   const tables = [
     'rvn_platform_resource_visibility',
     'rvn_platform_visibility_policies',
+    'rvn_platform_obligations',
+    'teresa_proposals',
     'okr_vnext_checkins',
     'okr_vnext_checkin_occurrences',
     'okr_vnext_alignments',
@@ -222,6 +287,13 @@ async function wipeOrg(client: any, orgId: string) {
     `UPDATE rvn_kpi_definitions SET current_definition_version_id = NULL WHERE organization_id = $1`,
     [orgId]
   );
+  // decisions rows created via the OKR support-request -> decision flow
+  // (seedOkrDecisionLink) — scoped by source_type so an unrelated `decisions`
+  // row from another program is never touched by this seed's wipe.
+  await client.query(
+    `DELETE FROM decisions WHERE organization_id = $1 AND source_type = 'okr_support_request'`,
+    [orgId]
+  );
   for (const t of tables) {
     await client.query(`DELETE FROM ${t} WHERE organization_id = $1`, [orgId]);
   }
@@ -277,6 +349,42 @@ async function seedOrgsAndUsers(client: any) {
      VALUES ($1,$2,$3,'ADMIN','ACTIVE')`,
     [uid(ORG_B, 'orgmember-b-admin'), ORG_B, USER_B]
   );
+
+  // B2 role diversity (org A only) — owner / contributor / reviewer /
+  // outsider, alongside the existing USER_A ("menedzer"/ADMIN). Same shared
+  // TEST_PASSWORD for all. See constants above for the DB-role mapping.
+  const extraRoleUsers: Array<{
+    id: string;
+    firstName: string;
+    lastName: string;
+    membershipRole: string;
+  }> = [
+    { id: USER_A_OWNER, firstName: 'Zofia', lastName: 'Baran-Sikorska', membershipRole: 'OWNER' },
+    { id: USER_A_CONTRIBUTOR, firstName: 'Grzegorz', lastName: 'Lewandowski', membershipRole: 'MEMBER' },
+    { id: USER_A_REVIEWER, firstName: 'Katarzyna', lastName: 'Wisniewska', membershipRole: 'CONSULTANT' },
+    { id: USER_A_OUTSIDER, firstName: 'Tomasz', lastName: 'Kaczmarek', membershipRole: 'GUEST' },
+  ];
+  for (const u of extraRoleUsers) {
+    await client.query(
+      `INSERT INTO users (id, organization_id, email, password, first_name, last_name, role, status, access_level)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,'active',$8)`,
+      [
+        u.id,
+        ORG_A,
+        `${u.id}@consultify.local`,
+        passwordHash,
+        u.firstName,
+        u.lastName,
+        u.membershipRole,
+        u.membershipRole === 'GUEST' ? 'restricted' : 'member',
+      ]
+    );
+    await client.query(
+      `INSERT INTO organization_members (id, organization_id, user_id, role, status)
+       VALUES ($1,$2,$3,$4,'ACTIVE')`,
+      [uid(ORG_A, `orgmember-a-${u.id}`), ORG_A, u.id, u.membershipRole]
+    );
+  }
 }
 
 async function seedInitiatives(client: any) {
@@ -318,7 +426,19 @@ async function seedInitiatives(client: any) {
     [initB2, ORG_B, 'Wdrożenie zunifikowanej platformy raportowania dla klientów doradczych']
   );
 
-  return { initA1, initA2, initA3, initA4, initB1, initB2 };
+  // Fifth org-A initiative, dedicated to the ROI "error/not_calculable" case
+  // (see seedRoiExtraScenarios) — needs its own initiative id because
+  // `ux_rvn_roi_cases_one_active_per_initiative` allows only one non-
+  // cancelled/closed ROI case per initiative, and initA1..initA4 are already
+  // each claimed by an active-status case above.
+  const initA5 = 'rn-g6-init-a5';
+  await client.query(
+    `INSERT INTO initiatives (id, organization_id, name, status)
+     VALUES ($1,$2,$3,'PLANNING')`,
+    [initA5, ORG_A, 'Migracja platformy analitycznej do chmury — walidacja modelu inwestycyjnego']
+  );
+
+  return { initA1, initA2, initA3, initA4, initA5, initB1, initB2 };
 }
 
 async function seedKpiDomain(
@@ -896,6 +1016,85 @@ async function seedRoiDomain(
   return ids;
 }
 
+// B2 "error" + "locked" ROI scenarios — kept separate from seedRoiDomain
+// (which already covers the 4 canonical phases) so both are additive and
+// easy to omit for the 'light' org-B dataset.
+//
+//  - case5: a calculation run with status='failed' — per
+//    `roiCaseFullToolMappers.ts` (`if (run.status === 'failed') return
+//    'not_calculable'`), this is the ONE seedable DB shape that makes the
+//    ROI screen render the literal `'not_calculable'` HonestValue chip
+//    instead of a plain "-" (which just means "no run attempted yet", see
+//    case1 in seedRoiDomain). Needs its OWN initiative (initA5) because
+//    `ux_rvn_roi_cases_one_active_per_initiative` already has one active
+//    case on each of initA1..initA4.
+//  - case6: status='closed' (terminal, NOT one of the four phase statuses)
+//    — the ROI-domain analogue of KPI's `archived` "locked" state. Excluded
+//    from the one-active-per-initiative unique index, so it safely reuses
+//    initA1 (already claimed by the active case2).
+async function seedRoiExtraScenarios(
+  client: any,
+  orgId: string,
+  userId: string,
+  errorInitiativeId: string,
+  lockedInitiativeId: string
+) {
+  const ids: Record<string, string> = {};
+
+  const case5 = uid(orgId, 'roi5');
+  await client.query(
+    `INSERT INTO rvn_roi_cases (case_id, organization_id, initiative_id, title, owner_user_id, status, currency, granularity, analysis_start, analysis_end, submitted_by, submitted_at, created_by)
+     VALUES ($1,$2,$3,$4,$5,'changes_requested','PLN','monthly','2026-08-01','2028-07-31',$5, now() - interval '3 days', $5)`,
+    [case5, orgId, errorInitiativeId, 'Migracja platformy analitycznej do chmury — model odrzucony przez silnik obliczeniowy', userId]
+  );
+  await client.query(
+    `INSERT INTO rvn_roi_cost_lines (cost_line_id, case_id, organization_id, category, label, amount, currency, timing_type, one_time_period_date, confidence, owner_user_id, created_by)
+     VALUES ($1,$2,$3,'technology','Migracja hurtowni danych do środowiska chmurowego', 4500000.00,'PLN','one_time','2026-09-01','low',$4,$4)`,
+    [uid(orgId, 'roi5-c1'), case5, orgId, userId]
+  );
+  await client.query(
+    `INSERT INTO rvn_roi_benefit_lines (benefit_line_id, case_id, organization_id, category, label, is_financial, amount, currency, timing_type, recurrence_start_date, recurrence_cadence, confidence, owner_user_id, created_by)
+     VALUES ($1,$2,$3,'efficiency','Redukcja kosztów utrzymania infrastruktury on-premise', true, 620000.00,'PLN','recurring','2027-01-01','quarterly','low',$4,$4)`,
+    [uid(orgId, 'roi5-b1'), case5, orgId, userId]
+  );
+  const run5 = uid(orgId, 'roi5-run1');
+  await client.query(
+    `INSERT INTO rvn_roi_calculation_runs
+       (run_id, case_id, organization_id, engine_version, policy_version_stamp, status, input_snapshot, input_hash,
+        irr_status, period_series, validation_findings, initiated_by)
+     VALUES ($1,$2,$3,'seed-1.0','seed-policy-1','failed', $4::jsonb, $5,
+             'not_applicable', '[]'::jsonb, $6::jsonb, $7)`,
+    [
+      run5,
+      case5,
+      orgId,
+      JSON.stringify({ seed: true, note: 'intentionally malformed input for the error scenario' }),
+      'seed-hash-roi5-run1-failed',
+      JSON.stringify([
+        {
+          severity: 'error',
+          code: 'MIXED_CURRENCY_UNRESOLVED',
+          message:
+            'Linia kosztowa i linia korzyści zawierają różne waluty bazowe bez zdefiniowanego kursu przeliczeniowego — silnik odmówił obliczenia NPV/IRR.',
+        },
+      ]),
+      userId,
+    ]
+  );
+  ids.case5ErrorNotCalculable = case5;
+  ids.case5FailedRunId = run5;
+
+  const case6 = uid(orgId, 'roi6');
+  await client.query(
+    `INSERT INTO rvn_roi_cases (case_id, organization_id, initiative_id, title, owner_user_id, status, currency, granularity, analysis_start, analysis_end, approved_by, approved_at, created_by)
+     VALUES ($1,$2,$3,$4,$5,'closed','PLN','monthly','2023-01-01','2024-12-31',$5, now() - interval '900 days', $5)`,
+    [case6, orgId, lockedInitiativeId, 'Wdrożenie starego systemu raportowania — sprawa zamknięta, tylko odczyt', userId]
+  );
+  ids.case6LockedClosed = case6;
+
+  return ids;
+}
+
 async function seedOkrDomain(client: any, orgId: string, userId: string, depth: 'rich' | 'light') {
   const ids: Record<string, string> = {};
 
@@ -1045,6 +1244,172 @@ async function seedOkrDomain(client: any, orgId: string, userId: string, depth: 
   ids.keyResult3NoCheckins = kr3;
 
   return ids;
+}
+
+// B2 "powiazanie z decyzja" — replicates the exact write shape of
+// `okrDecisionCommands.ts`'s "raise a decision from a support request" flow
+// (support_request -> decisions row -> okr_vnext_decision_links), the one
+// genuine Results-Next -> `decisions` bridge that exists in this SHA (see
+// file header there: direct INSERT into `decisions`, source_type
+// OKR_DECISION_SOURCE_TYPE = 'okr_support_request'). Raised against
+// objective2/kr3 (the "at risk", no-checkins objective) — a manager decision
+// is the honest reason that KR has stayed uncalculable.
+async function seedOkrDecisionLink(
+  client: any,
+  orgId: string,
+  requestedByUserId: string,
+  assignedToUserId: string,
+  setId: string,
+  objectiveId: string,
+  keyResultId: string
+) {
+  const requestId = uid(orgId, 'okrsupportreq1');
+  await client.query(
+    `INSERT INTO okr_vnext_support_requests
+       (request_id, organization_id, set_id, objective_id, key_result_id, kind, body, status,
+        assigned_to_user_id, created_by)
+     VALUES ($1,$2,$3,$4,$5,'support_request',
+             'Onboarding portalu dostawców utknął — potrzebna decyzja zarządu: rozszerzyć budżet integracji czy zawęzić zakres do 10 dostawców pilotażowych.',
+             'open', $6, $7)`,
+    [requestId, orgId, setId, objectiveId, keyResultId, assignedToUserId, requestedByUserId]
+  );
+
+  const decisionId = uid(orgId, 'okrdecision1');
+  await client.query(
+    `INSERT INTO decisions
+       (id, organization_id, title, description, type, decision_maker_id, deadline, status,
+        created_by, source_type, source_id)
+     VALUES ($1,$2,$3,$4,'GENERAL',$5, now() + interval '10 days', 'pending', $6, 'okr_support_request', $7)`,
+    [
+      decisionId,
+      orgId,
+      'OKR support request: rozszerzyć budżet integracji portalu dostawców czy zawęzić zakres pilotażu',
+      'Zablokowany onboarding portalu samoobsługowego dla dostawców strategicznych — obiektyw ryzykowny (at_risk), brak check-inów kluczowego rezultatu do czasu decyzji.',
+      assignedToUserId,
+      requestedByUserId,
+      requestId,
+    ]
+  );
+
+  const linkId = uid(orgId, 'okrdecisionlink1');
+  await client.query(
+    `INSERT INTO okr_vnext_decision_links
+       (link_id, organization_id, set_id, support_request_id, objective_id, key_result_id, decision_id,
+        requested_decision, impact_of_delay, desired_date, requested_by)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,
+    [
+      linkId,
+      orgId,
+      setId,
+      requestId,
+      objectiveId,
+      keyResultId,
+      decisionId,
+      'Rozszerzyć budżet integracji portalu dostawców o 15% lub zawęzić zakres pilotażu do 10 dostawców.',
+      'Kolejny miesiąc bez decyzji oznacza utratę okna wdrożeniowego przed Q4 — onboarding pozostałych 25 dostawców przesunie się o co najmniej jeden kwartał.',
+      '2026-09-05',
+      requestedByUserId,
+    ]
+  );
+
+  return { requestId, decisionId, linkId };
+}
+
+// B2 "obowiazki MyWork" — three `rvn_platform_obligations` rows exercising
+// the real obligation_type taxonomy read by `kpiPerspectivesRepository.ts`'s
+// "My KPIs" attention query: one open explanation obligation tied to the
+// KPI-1 deviation case, one open periodic-review obligation on KPI-4, and
+// one already-`completed` one on KPI-1 (so the MyWork surface has both an
+// open and a resolved item, not just a single flat state).
+async function seedMyWorkObligations(
+  client: any,
+  orgId: string,
+  kpi1Id: string,
+  kpi4Id: string,
+  deviationCaseId: string,
+  contributorUserId: string,
+  reviewerUserId: string,
+  adminUserId: string
+) {
+  const ids: Record<string, string> = {};
+
+  const ob1 = uid(orgId, 'obligation1');
+  await client.query(
+    `INSERT INTO rvn_platform_obligations
+       (obligation_id, organization_id, assignee_user_id, reference_type, reference_id,
+        aggregate_version_at_creation, obligation_type, due_at, status, deduplication_key)
+     VALUES ($1,$2,$3,'deviation_case',$4,1,'explain_warning_critical_deviation', now() + interval '2 days', 'open', $5)`,
+    [ob1, orgId, contributorUserId, deviationCaseId, `rn-g6-ob1-${orgId}`]
+  );
+  ids.obligationExplainDeviation = ob1;
+
+  const ob2 = uid(orgId, 'obligation2');
+  await client.query(
+    `INSERT INTO rvn_platform_obligations
+       (obligation_id, organization_id, assignee_user_id, reference_type, reference_id,
+        aggregate_version_at_creation, obligation_type, due_at, status, deduplication_key)
+     VALUES ($1,$2,$3,'kpi',$4,1,'perform_periodic_kpi_review', now() + interval '10 days', 'open', $5)`,
+    [ob2, orgId, reviewerUserId, kpi4Id, `rn-g6-ob2-${orgId}`]
+  );
+  ids.obligationPeriodicReview = ob2;
+
+  const ob3 = uid(orgId, 'obligation3');
+  await client.query(
+    `INSERT INTO rvn_platform_obligations
+       (obligation_id, organization_id, assignee_user_id, reference_type, reference_id,
+        aggregate_version_at_creation, obligation_type, due_at, status, completed_at,
+        completed_via_command, deduplication_key)
+     VALUES ($1,$2,$3,'kpi',$4,1,'enter_kpi_value', now() - interval '5 days', 'completed',
+             now() - interval '2 days', 'seed_manual', $5)`,
+    [ob3, orgId, adminUserId, kpi1Id, `rn-g6-ob3-${orgId}`]
+  );
+  ids.obligationEnterValueCompleted = ob3;
+
+  return ids;
+}
+
+// B2 "dowod/propozycja Teresy" — one `teresa_proposals` row targeting the
+// 'kpi' HandoffTargetModule (see `teresaCopilotCanon.ts`'s union — 'kpi',
+// 'roi', 'okr', 'results' are all pre-reserved slots, but the actual
+// composer bridge for those into Results Next does NOT exist yet in this
+// SHA; TARGET_LABELS in `teresaCopilotService.ts` has no label for any of
+// them, unlike 'initiatives'/'documents'/'presentations' which the recent
+// program wave wired up — see RN_G6_RUNTIME_ENVIRONMENT.md addendum). This
+// row proves the DB shape renders, not that a live Teresa chat session can
+// reach it end-to-end.
+async function seedTeresaProposal(
+  client: any,
+  orgId: string,
+  userId: string,
+  kpi1Id: string,
+  deviationCaseId: string
+) {
+  const proposalId = uid(orgId, 'teresaproposal1');
+  const nowIso = new Date().toISOString();
+  await client.query(
+    `INSERT INTO teresa_proposals
+       (id, organization_id, user_id, session_id, state, handoff_context_json, target_module,
+        target_payload_json, created_at, updated_at)
+     VALUES ($1,$2,$3,$4,'proposal',$5,'kpi',$6,$7,$7)`,
+    [
+      proposalId,
+      orgId,
+      userId,
+      uid(orgId, 'teresasession1'),
+      JSON.stringify({
+        user_intent:
+          'Zaproponuj działanie korygujące dla przekroczonego budżetu utrzymania ruchu na linii precyzyjnej.',
+      }),
+      JSON.stringify({
+        kpiId: kpi1Id,
+        deviationCaseId,
+        proposedAction:
+          'Renegocjacja kontraktu serwisowego z dostawcą części zamiennych — odzyskanie 60% odchylenia do końca Q3.',
+      }),
+      nowIso,
+    ]
+  );
+  return { proposalId };
 }
 
 async function seedOpenOrgVisibility(
