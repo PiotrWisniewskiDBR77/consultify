@@ -45,8 +45,11 @@ function line(overrides: Partial<StatementLineDto> & { stmtLineId: string }): St
   };
 }
 
-const resolveLineLabel = (rowKey: string, canonicalLineId: string | null, lineCode: string | null) =>
-  lineCode || canonicalLineId || rowKey;
+const resolveLineLabel = (
+  rowKey: string,
+  canonicalLineId: string | null,
+  lineCode: string | null
+) => lineCode || canonicalLineId || rowKey;
 
 describe('CanonicalStatementTableV2', () => {
   it('renders an honest empty state when there are zero lines', () => {
@@ -59,7 +62,9 @@ describe('CanonicalStatementTableV2', () => {
         emptyLabel="Brak danych dla tego dokumentu."
       />
     );
-    expect(screen.getByTestId('canonical-statement-table-v2-empty')).toHaveTextContent('Brak danych');
+    expect(screen.getByTestId('canonical-statement-table-v2-empty')).toHaveTextContent(
+      'Brak danych'
+    );
   });
 
   it('renders currency+scale in the table header (not just the workspace bar)', () => {
@@ -119,7 +124,9 @@ describe('CanonicalStatementTableV2', () => {
       expect.objectContaining({
         rowKey: 'canon-revenue',
         periodId: 'p1',
-        cell: expect.objectContaining({ value: expect.objectContaining({ sourceRef: { page: 3, row: 12 } }) }),
+        cell: expect.objectContaining({
+          value: expect.objectContaining({ sourceRef: { page: 3, row: 12 } }),
+        }),
       })
     );
   });
@@ -132,7 +139,11 @@ describe('CanonicalStatementTableV2', () => {
   // trafiają do DOM-u tabeli NIEZMIENIONE (żaden nie ginie/koerycji do 0),
   // i że PRESENT_ZERO jest realną cyfrą "0", nie tym samym glifem co absencja.
   it('all five FinanceValueStatus values render distinctly at the table-cell surface (status attribute + glyph)', () => {
-    const rows: Array<{ status: 'PRESENT_ZERO' | 'PRESENT_NONZERO' | 'MISSING' | 'NA' | 'NOT_APPLICABLE'; valueDecimal: string | null; expectedText: string }> = [
+    const rows: Array<{
+      status: 'PRESENT_ZERO' | 'PRESENT_NONZERO' | 'MISSING' | 'NA' | 'NOT_APPLICABLE';
+      valueDecimal: string | null;
+      expectedText: string;
+    }> = [
       { status: 'PRESENT_ZERO', valueDecimal: '0', expectedText: '0' },
       { status: 'PRESENT_NONZERO', valueDecimal: '7', expectedText: '7' },
       { status: 'MISSING', valueDecimal: null, expectedText: '—' },
@@ -225,7 +236,9 @@ describe('CanonicalStatementTableV2', () => {
         emptyLabel="—"
       />
     );
-    expect(screen.getByTestId('canonical-statement-cell-canon-revenue::period-1')).toHaveTextContent('1 000 000');
+    expect(
+      screen.getByTestId('canonical-statement-cell-canon-revenue::period-1')
+    ).toHaveTextContent('1 000 000');
 
     rerender(
       <CanonicalStatementTableV2
@@ -251,6 +264,8 @@ describe('CanonicalStatementTableV2', () => {
         emptyLabel="—"
       />
     );
-    expect(screen.getByTestId('canonical-statement-cell-canon-revenue::period-1')).toHaveTextContent('42');
+    expect(
+      screen.getByTestId('canonical-statement-cell-canon-revenue::period-1')
+    ).toHaveTextContent('42');
   });
 });

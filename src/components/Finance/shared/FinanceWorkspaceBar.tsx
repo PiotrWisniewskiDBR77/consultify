@@ -176,10 +176,15 @@ export function FinanceWorkspaceBar(props: FinanceWorkspaceBarProps): React.Reac
     setIsEditingName(false);
   }
 
-  const contextFieldsWithValues = identity.contextFields.filter((field) => contextValues[field] !== undefined);
+  const contextFieldsWithValues = identity.contextFields.filter(
+    (field) => contextValues[field] !== undefined
+  );
 
   return (
-    <div className="flex w-full flex-col border-b border-c-border-subtle bg-c-surface" data-testid="finance-workspace-bar">
+    <div
+      className="flex w-full flex-col border-b border-c-border-subtle bg-c-surface"
+      data-testid="finance-workspace-bar"
+    >
       {/* ── Rząd główny ────────────────────────────────────────────────── */}
       {/*
         `overflow-x-auto`: pod 200% zoom (efektywna szerokość layoutu spada
@@ -265,7 +270,9 @@ export function FinanceWorkspaceBar(props: FinanceWorkspaceBarProps): React.Reac
                 }`}
                 data-testid="finance-workspace-bar-name"
               >
-                <span className="min-w-0 truncate text-sm font-semibold text-c-text">{identity.name.value}</span>
+                <span className="min-w-0 truncate text-sm font-semibold text-c-text">
+                  {identity.name.value}
+                </span>
                 {identity.name.editable && (
                   <EditIcon className="shrink-0 text-c-text-muted opacity-0 group-hover:opacity-100" />
                 )}
@@ -309,9 +316,14 @@ export function FinanceWorkspaceBar(props: FinanceWorkspaceBarProps): React.Reac
                 >
                   <dl className="space-y-1.5">
                     {contextFieldsWithValues.map((field) => (
-                      <div key={field} className="flex items-baseline justify-between gap-3 text-xs">
+                      <div
+                        key={field}
+                        className="flex items-baseline justify-between gap-3 text-xs"
+                      >
                         <dt className="text-c-text-muted">{CONTEXT_FIELD_LABELS[field]}</dt>
-                        <dd className="min-w-0 truncate text-right font-medium text-c-text">{contextValues[field]}</dd>
+                        <dd className="min-w-0 truncate text-right font-medium text-c-text">
+                          {contextValues[field]}
+                        </dd>
                       </div>
                     ))}
                   </dl>
@@ -323,7 +335,10 @@ export function FinanceWorkspaceBar(props: FinanceWorkspaceBarProps): React.Reac
 
         {/* ŚRODEK — tylko gdy ≤2 widoki */}
         {viewNavigation.placement === 'in-bar' && (
-          <div className="hidden shrink-0 items-center gap-1 rounded-lg bg-c-surface-raised p-1 md:flex" role="tablist">
+          <div
+            className="hidden shrink-0 items-center gap-1 rounded-lg bg-c-surface-raised p-1 md:flex"
+            role="tablist"
+          >
             {viewNavigation.views.map((view) => (
               <ViewTab
                 key={view.id}
@@ -336,11 +351,16 @@ export function FinanceWorkspaceBar(props: FinanceWorkspaceBarProps): React.Reac
         )}
 
         {/* PRAWO — maks. 5 bezpośrednich kontrolek */}
-        <div className="flex shrink-0 items-center gap-1.5" data-direct-control-count={directControlCount}>
+        <div
+          className="flex shrink-0 items-center gap-1.5"
+          data-direct-control-count={directControlCount}
+        >
           {actions.secondary && (
             <SecondaryButton
               label={actions.secondary.label.pl}
-              disabled={!resolveControlState(actions.secondary.enablement, evaluationContext).available}
+              disabled={
+                !resolveControlState(actions.secondary.enablement, evaluationContext).available
+              }
               onClick={() => props.onSecondaryAction?.()}
             />
           )}
@@ -359,7 +379,10 @@ export function FinanceWorkspaceBar(props: FinanceWorkspaceBarProps): React.Reac
                 <ChevronDownIcon />
               </button>
               {lifecycleOpen && (
-                <div role="menu" className="absolute right-0 top-full z-30 mt-1 w-64 rounded-xl border border-c-border-subtle bg-c-surface p-1 shadow-lg">
+                <div
+                  role="menu"
+                  className="absolute right-0 top-full z-30 mt-1 w-64 rounded-xl border border-c-border-subtle bg-c-surface p-1 shadow-lg"
+                >
                   {actions.lifecycle.transitions.map((transition) => {
                     const state = resolveControlState(transition.enablement, evaluationContext);
                     return (
@@ -377,7 +400,9 @@ export function FinanceWorkspaceBar(props: FinanceWorkspaceBarProps): React.Reac
                           }
                         }}
                         className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus disabled:cursor-not-allowed disabled:opacity-40 ${
-                          transition.destructive ? 'text-c-danger hover:bg-c-danger/10' : 'text-c-text hover:bg-c-surface-raised'
+                          transition.destructive
+                            ? 'text-c-danger hover:bg-c-danger/10'
+                            : 'text-c-text hover:bg-c-surface-raised'
                         }`}
                       >
                         {transition.label.pl}
@@ -403,7 +428,10 @@ export function FinanceWorkspaceBar(props: FinanceWorkspaceBarProps): React.Reac
                 <MoreIcon />
               </button>
               {moreOpen && (
-                <div role="menu" className="absolute right-0 top-full z-30 mt-1 w-64 rounded-xl border border-c-border-subtle bg-c-surface p-1 shadow-lg">
+                <div
+                  role="menu"
+                  className="absolute right-0 top-full z-30 mt-1 w-64 rounded-xl border border-c-border-subtle bg-c-surface p-1 shadow-lg"
+                >
                   {actions.more.items.map((item) => {
                     const state = resolveControlState(item.enablement, evaluationContext);
                     return (
@@ -421,7 +449,9 @@ export function FinanceWorkspaceBar(props: FinanceWorkspaceBarProps): React.Reac
                           }
                         }}
                         className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus disabled:cursor-not-allowed disabled:opacity-40 ${
-                          item.destructive ? 'text-c-danger hover:bg-c-danger/10' : 'text-c-text hover:bg-c-surface-raised'
+                          item.destructive
+                            ? 'text-c-danger hover:bg-c-danger/10'
+                            : 'text-c-text hover:bg-c-surface-raised'
                         }`}
                       >
                         {item.label.pl}
@@ -461,9 +491,17 @@ export function FinanceWorkspaceBar(props: FinanceWorkspaceBarProps): React.Reac
 
       {/* ── Osobny kompaktowy rząd nawigacji, gdy >2 widoki ─────────────── */}
       {viewNavigation.placement === 'separate-row' && (
-        <div className="flex w-full items-center gap-1 overflow-x-auto border-t border-c-border-subtle bg-c-surface-raised/40 px-4 py-1.5" role="tablist">
+        <div
+          className="flex w-full items-center gap-1 overflow-x-auto border-t border-c-border-subtle bg-c-surface-raised/40 px-4 py-1.5"
+          role="tablist"
+        >
           {viewNavigation.views.map((view) => (
-            <ViewTab key={view.id} view={view} active={view.id === viewNavigation.activeViewId} onClick={() => props.onSelectView(view.id)} />
+            <ViewTab
+              key={view.id}
+              view={view}
+              active={view.id === viewNavigation.activeViewId}
+              onClick={() => props.onSelectView(view.id)}
+            />
           ))}
         </div>
       )}
@@ -471,7 +509,11 @@ export function FinanceWorkspaceBar(props: FinanceWorkspaceBarProps): React.Reac
       {/* ── Potwierdzenie operacji destrukcyjnej (CANON.md §4.3) ────────── */}
       {pendingDestructive && (
         <ConfirmDestructiveDialog
-          label={pendingDestructive.kind === 'lifecycle' ? pendingDestructive.transition.label.pl : pendingDestructive.item.label.pl}
+          label={
+            pendingDestructive.kind === 'lifecycle'
+              ? pendingDestructive.transition.label.pl
+              : pendingDestructive.item.label.pl
+          }
           onCancel={() => {
             // ★ NAPRAWA a11y (Pakiet I): przywracamy fokus na trigger JAWNIE
             // i SYNCHRONICZNIE, tu — zanim stan się zmieni i dialog
@@ -521,7 +563,9 @@ function ViewTab({
       aria-selected={active}
       onClick={onClick}
       className={`inline-flex min-h-[2.25rem] shrink-0 items-center gap-1.5 rounded-md px-3 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus ${
-        active ? 'bg-c-surface text-c-text shadow-sm' : 'text-c-text-secondary hover:bg-c-surface-raised'
+        active
+          ? 'bg-c-surface text-c-text shadow-sm'
+          : 'text-c-text-secondary hover:bg-c-surface-raised'
       }`}
     >
       <span>{view.label.pl}</span>
@@ -530,7 +574,11 @@ function ViewTab({
   );
 }
 
-function ViewStateBadge({ state }: { state: NonNullable<WorkspaceBarConfig['viewNavigation']['views'][number]['state']> }): React.ReactElement {
+function ViewStateBadge({
+  state,
+}: {
+  state: NonNullable<WorkspaceBarConfig['viewNavigation']['views'][number]['state']>;
+}): React.ReactElement {
   // ★ NAPRAWA a11y (Pakiet I): przy 10px `text-c-warning` mierzył 4.31:1
   // (axe, próg 4.5:1) na tle karty zakładki — surowy token semantyczny jest
   // kalibrowany pod większe elementy (kropki/ikony), nie mikro-tekst.
@@ -545,7 +593,11 @@ function ViewStateBadge({ state }: { state: NonNullable<WorkspaceBarConfig['view
         : state.kind === 'blocked'
           ? 'text-red-800 dark:text-red-300'
           : 'text-c-text-muted';
-  return <span className={`text-[10px] font-semibold uppercase tracking-wide ${toneClass}`}>{state.label.pl}</span>;
+  return (
+    <span className={`text-[10px] font-semibold uppercase tracking-wide ${toneClass}`}>
+      {state.label.pl}
+    </span>
+  );
 }
 
 const STATUS_LABELS: Record<string, string> = {
@@ -576,18 +628,30 @@ function IdentityBadge({
   return (
     <span
       className={`hidden shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium sm:inline-flex ${toneClass}`}
-      title={version.hasUncommittedWorkingRevision ? 'Wersja robocza — niezapisane zmiany' : undefined}
+      title={
+        version.hasUncommittedWorkingRevision ? 'Wersja robocza — niezapisane zmiany' : undefined
+      }
       data-testid="finance-workspace-bar-identity-badge"
     >
       <span className="tabular-nums">{version.label}</span>
       <span aria-hidden="true">·</span>
       <span>{STATUS_LABELS[status] ?? status}</span>
-      {version.hasUncommittedWorkingRevision && <span className="text-c-text-muted">· robocza</span>}
+      {version.hasUncommittedWorkingRevision && (
+        <span className="text-c-text-muted">· robocza</span>
+      )}
     </span>
   );
 }
 
-function SecondaryButton({ label, disabled, onClick }: { label: string; disabled: boolean; onClick: () => void }): React.ReactElement {
+function SecondaryButton({
+  label,
+  disabled,
+  onClick,
+}: {
+  label: string;
+  disabled: boolean;
+  onClick: () => void;
+}): React.ReactElement {
   return (
     <button
       type="button"
@@ -634,7 +698,11 @@ function ConfirmDestructiveDialog({
   });
 
   return (
-    <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4" role="presentation" onMouseDown={onCancel}>
+    <div
+      className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4"
+      role="presentation"
+      onMouseDown={onCancel}
+    >
       <div
         ref={containerRef}
         role="alertdialog"
@@ -645,7 +713,8 @@ function ConfirmDestructiveDialog({
       >
         <p className="text-sm font-semibold text-c-text">Potwierdź operację</p>
         <p className="mt-1 text-sm text-c-text-secondary">
-          Czy na pewno chcesz wykonać: <span className="font-medium text-c-text">{label}</span>? Tej operacji nie da się cofnąć jednym kliknięciem.
+          Czy na pewno chcesz wykonać: <span className="font-medium text-c-text">{label}</span>? Tej
+          operacji nie da się cofnąć jednym kliknięciem.
         </p>
         <div className="mt-4 flex justify-end gap-2">
           <button
@@ -676,14 +745,32 @@ function ConfirmDestructiveDialog({
 function BackIcon(): React.ReactElement {
   return (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-      <path d="M10 3L5 8l5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path
+        d="M10 3L5 8l5 5"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }
 function EditIcon({ className }: { className?: string }): React.ReactElement {
   return (
-    <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true" className={className}>
-      <path d="M11.5 2.5l2 2L5 13H3v-2l8.5-8.5z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" />
+    <svg
+      width="12"
+      height="12"
+      viewBox="0 0 16 16"
+      fill="none"
+      aria-hidden="true"
+      className={className}
+    >
+      <path
+        d="M11.5 2.5l2 2L5 13H3v-2l8.5-8.5z"
+        stroke="currentColor"
+        strokeWidth="1.3"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }
@@ -698,7 +785,13 @@ function InfoIcon(): React.ReactElement {
 function ChevronDownIcon(): React.ReactElement {
   return (
     <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-      <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path
+        d="M4 6l4 4 4-4"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }

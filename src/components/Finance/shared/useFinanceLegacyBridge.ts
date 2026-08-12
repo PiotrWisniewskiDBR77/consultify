@@ -30,7 +30,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { resolveLegacyFinanceArtifact } from '@/services/api/financeV2.api';
-import { describeFinanceV2Error, type FinanceArtifactType, type LegacyFinanceTable } from '@/services/api/financeV2.types';
+import {
+  describeFinanceV2Error,
+  type FinanceArtifactType,
+  type LegacyFinanceTable,
+} from '@/services/api/financeV2.types';
 
 export interface FinanceLegacyBridgeResolved {
   kind: 'resolved';

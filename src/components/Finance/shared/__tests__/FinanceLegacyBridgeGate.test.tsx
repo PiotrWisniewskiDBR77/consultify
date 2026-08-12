@@ -49,7 +49,11 @@ describe('FinanceLegacyBridgeGate — RESOLVED (list row -> real workspace with 
     });
 
     render(
-      <FinanceLegacyBridgeGate legacyTable="financial_models" legacyId="legacy-model-1" onBackToList={() => {}}>
+      <FinanceLegacyBridgeGate
+        legacyTable="financial_models"
+        legacyId="legacy-model-1"
+        onBackToList={() => {}}
+      >
         {(resolved) => (
           <div data-testid="mounted-workspace">
             artifactId={resolved.artifactId} businessVersionId={resolved.businessVersionId}
@@ -62,7 +66,10 @@ describe('FinanceLegacyBridgeGate — RESOLVED (list row -> real workspace with 
     expect(screen.getByTestId('mounted-workspace').textContent).toContain('canonical-artifact-77');
     expect(screen.getByTestId('mounted-workspace').textContent).toContain('canonical-bv-77');
     expect(screen.getByTestId('mounted-workspace').textContent).not.toContain('legacy-model-1');
-    expect(apiMocks.resolveLegacyFinanceArtifact).toHaveBeenCalledWith('financial_models', 'legacy-model-1');
+    expect(apiMocks.resolveLegacyFinanceArtifact).toHaveBeenCalledWith(
+      'financial_models',
+      'legacy-model-1'
+    );
   });
 
   it('shows a loading state before resolution, never mounts children early', async () => {
@@ -75,7 +82,11 @@ describe('FinanceLegacyBridgeGate — RESOLVED (list row -> real workspace with 
     const childRenderSpy = vi.fn().mockReturnValue(<div data-testid="mounted-workspace" />);
 
     render(
-      <FinanceLegacyBridgeGate legacyTable="valuations" legacyId="legacy-val-1" onBackToList={() => {}}>
+      <FinanceLegacyBridgeGate
+        legacyTable="valuations"
+        legacyId="legacy-val-1"
+        onBackToList={() => {}}
+      >
         {childRenderSpy}
       </FinanceLegacyBridgeGate>
     );
@@ -83,7 +94,13 @@ describe('FinanceLegacyBridgeGate — RESOLVED (list row -> real workspace with 
     expect(screen.getByTestId('finance-bridge-loading')).toBeInTheDocument();
     expect(childRenderSpy).not.toHaveBeenCalled();
 
-    resolvePromise({ status: 'RESOLVED', artifactId: 'a-1', businessVersionId: 'bv-1', artifactType: 'VALUATION_CASE', mappingConfidence: 'AUTO_MIGRATE' });
+    resolvePromise({
+      status: 'RESOLVED',
+      artifactId: 'a-1',
+      businessVersionId: 'bv-1',
+      artifactType: 'VALUATION_CASE',
+      mappingConfidence: 'AUTO_MIGRATE',
+    });
     await waitFor(() => expect(screen.getByTestId('mounted-workspace')).toBeInTheDocument());
   });
 });
@@ -95,12 +112,18 @@ describe('FinanceLegacyBridgeGate — UNRESOLVED (anti-silent-emptiness for the 
     const onBackToList = vi.fn();
 
     render(
-      <FinanceLegacyBridgeGate legacyTable="financial_analyses" legacyId="legacy-analysis-unresolvable" onBackToList={onBackToList}>
+      <FinanceLegacyBridgeGate
+        legacyTable="financial_analyses"
+        legacyId="legacy-analysis-unresolvable"
+        onBackToList={onBackToList}
+      >
         {childRenderSpy}
       </FinanceLegacyBridgeGate>
     );
 
-    await waitFor(() => expect(screen.getByTestId('finance-bridge-unresolved')).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByTestId('finance-bridge-unresolved')).toBeInTheDocument()
+    );
     expect(childRenderSpy).not.toHaveBeenCalled();
     expect(screen.queryByTestId('mounted-workspace')).not.toBeInTheDocument();
     expect(screen.getByTestId('finance-bridge-unresolved').textContent).toMatch(
@@ -120,12 +143,18 @@ describe('FinanceLegacyBridgeGate — UNRESOLVED (anti-silent-emptiness for the 
     const childRenderSpy = vi.fn().mockReturnValue(<div data-testid="mounted-workspace" />);
 
     render(
-      <FinanceLegacyBridgeGate legacyTable="valuations" legacyId="legacy-val-quarantined" onBackToList={() => {}}>
+      <FinanceLegacyBridgeGate
+        legacyTable="valuations"
+        legacyId="legacy-val-quarantined"
+        onBackToList={() => {}}
+      >
         {childRenderSpy}
       </FinanceLegacyBridgeGate>
     );
 
-    await waitFor(() => expect(screen.getByTestId('finance-bridge-unresolved')).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByTestId('finance-bridge-unresolved')).toBeInTheDocument()
+    );
     expect(childRenderSpy).not.toHaveBeenCalled();
     // ★ NAPRAWA (Gate E FIXA — surowy `mapping_reason` na ekranie): ten test
     // dawniej ASERTOWAŁ raw string `approved_without_snapshot` jako
@@ -148,12 +177,18 @@ describe('FinanceLegacyBridgeGate — UNRESOLVED (anti-silent-emptiness for the 
     const childRenderSpy = vi.fn().mockReturnValue(<div data-testid="mounted-workspace" />);
 
     render(
-      <FinanceLegacyBridgeGate legacyTable="financial_statement_packs" legacyId="legacy-pack-1" onBackToList={() => {}}>
+      <FinanceLegacyBridgeGate
+        legacyTable="financial_statement_packs"
+        legacyId="legacy-pack-1"
+        onBackToList={() => {}}
+      >
         {childRenderSpy}
       </FinanceLegacyBridgeGate>
     );
 
-    await waitFor(() => expect(screen.getByTestId('finance-bridge-unresolved')).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByTestId('finance-bridge-unresolved')).toBeInTheDocument()
+    );
     const text = screen.getByTestId('finance-bridge-unresolved').textContent ?? '';
     expect(text).not.toContain('pack_status=draft');
     expect(text).not.toContain(';');
@@ -165,11 +200,23 @@ describe('FinanceLegacyBridgeGate — UNRESOLVED (anti-silent-emptiness for the 
 describe('FinanceLegacyBridgeGate — ERROR (network/server failure, distinct from UNRESOLVED)', () => {
   it('a rejected resolve call shows a distinct error state (not the NOT_MIGRATED copy) with a working Retry', async () => {
     apiMocks.resolveLegacyFinanceArtifact
-      .mockRejectedValueOnce(Object.assign(new Error('network down'), { status: 500, data: { code: 'INTERNAL_ERROR' } }))
-      .mockResolvedValueOnce({ status: 'RESOLVED', artifactId: 'a-2', businessVersionId: 'bv-2', artifactType: 'HISTORICAL_ANALYSIS', mappingConfidence: 'AUTO_MIGRATE' });
+      .mockRejectedValueOnce(
+        Object.assign(new Error('network down'), { status: 500, data: { code: 'INTERNAL_ERROR' } })
+      )
+      .mockResolvedValueOnce({
+        status: 'RESOLVED',
+        artifactId: 'a-2',
+        businessVersionId: 'bv-2',
+        artifactType: 'HISTORICAL_ANALYSIS',
+        mappingConfidence: 'AUTO_MIGRATE',
+      });
 
     render(
-      <FinanceLegacyBridgeGate legacyTable="financial_analyses" legacyId="legacy-analysis-2" onBackToList={() => {}}>
+      <FinanceLegacyBridgeGate
+        legacyTable="financial_analyses"
+        legacyId="legacy-analysis-2"
+        onBackToList={() => {}}
+      >
         {(resolved) => <div data-testid="mounted-workspace">{resolved.artifactId}</div>}
       </FinanceLegacyBridgeGate>
     );

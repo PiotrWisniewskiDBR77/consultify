@@ -9,10 +9,16 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { clearFeatureFlagOverrides, setFeatureFlagOverrides } from '@/test-utils/featureFlagOverrides';
-
-import { StatementPackWorkspaceV2, type StatementPackWorkspaceV2Fetchers } from '../StatementPackWorkspaceV2';
 import type { StatementLineDto } from '@/services/api/financeV2.types';
+import {
+  clearFeatureFlagOverrides,
+  setFeatureFlagOverrides,
+} from '@/test-utils/featureFlagOverrides';
+
+import {
+  StatementPackWorkspaceV2,
+  type StatementPackWorkspaceV2Fetchers,
+} from '../StatementPackWorkspaceV2';
 
 function line(overrides: Partial<StatementLineDto> & { stmtLineId: string }): StatementLineDto {
   return {
@@ -26,8 +32,15 @@ function line(overrides: Partial<StatementLineDto> & { stmtLineId: string }): St
     accumulationBasis: 'FULL_YEAR',
     consolidationScope: 'CONSOLIDATED',
     value: {
-      status: 'PRESENT_NONZERO', valueDecimal: '1000000', nativeCurrency: 'PLN', presentationCurrency: 'PLN',
-      unit: 'THOUSANDS', multiplier: '1', sourceRef: { page: 3, row: 12 }, isAdjustment: false, adjustmentReason: null,
+      status: 'PRESENT_NONZERO',
+      valueDecimal: '1000000',
+      nativeCurrency: 'PLN',
+      presentationCurrency: 'PLN',
+      unit: 'THOUSANDS',
+      multiplier: '1',
+      sourceRef: { page: 3, row: 12 },
+      isAdjustment: false,
+      adjustmentReason: null,
     },
     signConvention: 'NATURAL',
     accountingPolicy: 'IFRS',
@@ -42,13 +55,20 @@ function line(overrides: Partial<StatementLineDto> & { stmtLineId: string }): St
 function fakeFetchers(): StatementPackWorkspaceV2Fetchers {
   return {
     listLines: vi.fn().mockResolvedValue([line({ stmtLineId: 'l1' })]),
-    getLineage: vi.fn().mockResolvedValue({ businessVersionId: 'bv-1', ancestors: [], descendants: [] }),
+    getLineage: vi
+      .fn()
+      .mockResolvedValue({ businessVersionId: 'bv-1', ancestors: [], descendants: [] }),
     listReconciliationRuns: vi.fn().mockResolvedValue([]),
     getReconciliationRunDetail: vi.fn(),
     generateReportDraft: vi.fn(),
     publishReport: vi.fn(),
     getIdentity: vi.fn().mockResolvedValue({
-      artifactId: 'art-1', name: 'Sprawozdanie testowe', status: 'DRAFT', freshness: 'CURRENT', versionNo: 1, version: 1,
+      artifactId: 'art-1',
+      name: 'Sprawozdanie testowe',
+      status: 'DRAFT',
+      freshness: 'CURRENT',
+      versionNo: 1,
+      version: 1,
     }),
     renameArtifact: vi.fn(),
     transitionVersion: vi.fn(),
@@ -57,8 +77,11 @@ function fakeFetchers(): StatementPackWorkspaceV2Fetchers {
   };
 }
 
-const resolveLineLabel = (rowKey: string, canonicalLineId: string | null, lineCode: string | null) =>
-  lineCode || canonicalLineId || rowKey;
+const resolveLineLabel = (
+  rowKey: string,
+  canonicalLineId: string | null,
+  lineCode: string | null
+) => lineCode || canonicalLineId || rowKey;
 
 afterEach(() => {
   clearFeatureFlagOverrides();
@@ -80,11 +103,15 @@ describe('StatementPackWorkspaceV2 — Focus Mode no-refetch (AP_MOUNT §E)', ()
     );
 
     await waitFor(() => expect(fetchers.listLines).toHaveBeenCalledTimes(1));
-    await waitFor(() => expect(screen.getByTestId('canonical-statement-table-v2')).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByTestId('canonical-statement-table-v2')).toBeInTheDocument()
+    );
 
     // Select a cell — this is the state Focus Mode must preserve.
     fireEvent.click(screen.getByTestId('canonical-statement-cell-canon-revenue::period-1'));
-    await waitFor(() => expect(screen.queryByTestId('source-evidence-panel-empty')).not.toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.queryByTestId('source-evidence-panel-empty')).not.toBeInTheDocument()
+    );
 
     const callsBefore =
       (fetchers.listLines as ReturnType<typeof vi.fn>).mock.calls.length +
@@ -93,7 +120,9 @@ describe('StatementPackWorkspaceV2 — Focus Mode no-refetch (AP_MOUNT §E)', ()
       (fetchers.getIdentity as ReturnType<typeof vi.fn>).mock.calls.length;
 
     fireEvent.click(screen.getByTestId('finance-workspace-bar-fullscreen'));
-    await waitFor(() => expect(document.body.classList.contains('finance-focus-mode-active')).toBe(true));
+    await waitFor(() =>
+      expect(document.body.classList.contains('finance-focus-mode-active')).toBe(true)
+    );
 
     const callsAfterEnter =
       (fetchers.listLines as ReturnType<typeof vi.fn>).mock.calls.length +
@@ -104,7 +133,9 @@ describe('StatementPackWorkspaceV2 — Focus Mode no-refetch (AP_MOUNT §E)', ()
     expect(screen.queryByTestId('source-evidence-panel-empty')).not.toBeInTheDocument();
 
     fireEvent.keyDown(document, { key: 'Escape' });
-    await waitFor(() => expect(document.body.classList.contains('finance-focus-mode-active')).toBe(false));
+    await waitFor(() =>
+      expect(document.body.classList.contains('finance-focus-mode-active')).toBe(false)
+    );
 
     const callsAfterExit =
       (fetchers.listLines as ReturnType<typeof vi.fn>).mock.calls.length +

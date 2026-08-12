@@ -50,7 +50,15 @@ function sampleResult(label: string) {
     ignoreDimensions: ['periodId'],
     materialityThresholdPct: 5,
     onlyMaterial: false,
-    summary: { totalRows: 0, bothPresent: 0, missingInA: 0, missingInB: 0, missingInBoth: 0, currencyMismatch: 0, materialCount: 0 },
+    summary: {
+      totalRows: 0,
+      bothPresent: 0,
+      missingInA: 0,
+      missingInB: 0,
+      missingInBoth: 0,
+      currencyMismatch: 0,
+      materialCount: 0,
+    },
     rows: [] as unknown[],
   };
 }
@@ -58,7 +66,15 @@ function sampleResult(label: string) {
 function makeRequest(periodIdB: string): FinanceCompareRequest {
   return {
     kind: 'periods',
-    params: { artifactRef: { artifactType: 'STATEMENT_PACK', artifactId: 'art-1', businessVersionId: 'bv-1' }, periodIdA: 'p1', periodIdB },
+    params: {
+      artifactRef: {
+        artifactType: 'STATEMENT_PACK',
+        artifactId: 'art-1',
+        businessVersionId: 'bv-1',
+      },
+      periodIdA: 'p1',
+      periodIdB,
+    },
   };
 }
 
@@ -73,7 +89,10 @@ afterEach(() => {
 
 describe('FinanceStatusAnnouncer — niezależna weryfikacja (FinanceComparePanel, wyzwalacz = zmiana propsa request)', () => {
   it('re-render z nowym request MUTUJE istniejący węzeł role="status", nie remontuje go', async () => {
-    window.localStorage.setItem('consultify_feature_flags', JSON.stringify({ financeCompareV1: true }));
+    window.localStorage.setItem(
+      'consultify_feature_flags',
+      JSON.stringify({ financeCompareV1: true })
+    );
 
     mockComparePeriods.mockResolvedValueOnce(sampleResult('pierwsze'));
 
@@ -107,7 +126,9 @@ describe('FinanceStatusAnnouncer — niezależna weryfikacja (FinanceComparePane
 
     releaseSecond(sampleResult('drugie'));
 
-    await waitFor(() => expect(screen.getByTestId('finance-status-announcer')).toHaveTextContent('Porównanie gotowe.'));
+    await waitFor(() =>
+      expect(screen.getByTestId('finance-status-announcer')).toHaveTextContent('Porównanie gotowe.')
+    );
     observer.disconnect();
 
     expect(screen.getByTestId('finance-status-announcer')).toBe(announcerBefore);

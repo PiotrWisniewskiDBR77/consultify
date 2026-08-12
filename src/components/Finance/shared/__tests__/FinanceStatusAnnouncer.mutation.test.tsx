@@ -123,7 +123,10 @@ afterEach(() => {
 
 describe('FinanceStatusAnnouncer — MutationObserver proof (Gate E FIXA, defekt 2)', () => {
   it('FinanceCommentsPanel: "Oznacz jako rozwiązany" MUTATES the existing role="status" node, never remounts it', async () => {
-    window.localStorage.setItem('consultify_feature_flags', JSON.stringify({ financeCommentsV1: true }));
+    window.localStorage.setItem(
+      'consultify_feature_flags',
+      JSON.stringify({ financeCommentsV1: true })
+    );
 
     mockListFinanceComments.mockResolvedValueOnce([SAMPLE_COMMENT]);
     mockListFinanceReviewChecklist.mockResolvedValueOnce([]);
@@ -183,7 +186,11 @@ describe('FinanceStatusAnnouncer — MutationObserver proof (Gate E FIXA, defekt
     releaseChecklist([]);
     releaseBlocking({ hasUnresolvedBlockingComments: false });
 
-    await waitFor(() => expect(screen.getByTestId('finance-status-announcer')).toHaveTextContent('Komentarz oznaczony jako rozwiązany.'));
+    await waitFor(() =>
+      expect(screen.getByTestId('finance-status-announcer')).toHaveTextContent(
+        'Komentarz oznaczony jako rozwiązany.'
+      )
+    );
     observer.disconnect();
 
     // The node currently bearing the testid must STILL be the SAME node
@@ -200,7 +207,10 @@ describe('FinanceStatusAnnouncer — MutationObserver proof (Gate E FIXA, defekt
 
 describe('FinanceStatusAnnouncer — MutationObserver proof (Gate E FIXA, defekt 2), SavedViews', () => {
   it('FinanceSavedViewsPanel: "Usuń" (goes through loading) MUTATES the existing role="status" node, never remounts it', async () => {
-    window.localStorage.setItem('consultify_feature_flags', JSON.stringify({ financeSavedViewsV1: true }));
+    window.localStorage.setItem(
+      'consultify_feature_flags',
+      JSON.stringify({ financeSavedViewsV1: true })
+    );
 
     mockListFinanceSavedViews.mockResolvedValueOnce([sampleView()]);
     mockDeleteFinanceSavedView.mockResolvedValueOnce(undefined);
@@ -222,12 +232,16 @@ describe('FinanceStatusAnnouncer — MutationObserver proof (Gate E FIXA, defekt
 
     fireEvent.click(screen.getByTestId('saved-view-delete'));
 
-    await waitFor(() => expect(screen.getByTestId('saved-views-panel-loading')).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByTestId('saved-views-panel-loading')).toBeInTheDocument()
+    );
     expect(screen.getByTestId('finance-status-announcer')).toBe(announcerBefore);
 
     releaseViews([]);
 
-    await waitFor(() => expect(screen.getByTestId('finance-status-announcer')).toHaveTextContent('Widok usunięty.'));
+    await waitFor(() =>
+      expect(screen.getByTestId('finance-status-announcer')).toHaveTextContent('Widok usunięty.')
+    );
     observer.disconnect();
 
     expect(screen.getByTestId('finance-status-announcer')).toBe(announcerBefore);

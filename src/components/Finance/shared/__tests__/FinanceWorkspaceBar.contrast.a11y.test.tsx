@@ -15,17 +15,34 @@ import { render, screen } from '@testing-library/react';
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { ENABLEMENT_ALWAYS, type WorkspaceBarConfig, type WorkspaceBarEvaluationContext } from '../financeWorkspaceBar.contract';
 import { FinanceWorkspaceBar } from '../FinanceWorkspaceBar';
+import {
+  ENABLEMENT_ALWAYS,
+  type WorkspaceBarConfig,
+  type WorkspaceBarEvaluationContext,
+} from '../financeWorkspaceBar.contract';
 
-function makeConfigWithViewState(state: { kind: 'ready' | 'stale' | 'blocked'; label: { key: string; pl: string } }): WorkspaceBarConfig {
+function makeConfigWithViewState(state: {
+  kind: 'ready' | 'stale' | 'blocked';
+  label: { key: string; pl: string };
+}): WorkspaceBarConfig {
   return {
     moduleId: 'baselineModel',
     artifactType: 'BASELINE_MODEL',
     identity: {
-      artifactRef: { artifactType: 'BASELINE_MODEL', businessVersionId: 'bv-1', artifactId: 'art-1' },
+      artifactRef: {
+        artifactType: 'BASELINE_MODEL',
+        businessVersionId: 'bv-1',
+        artifactId: 'art-1',
+      },
       back: { targetListRoute: '/finance', label: { key: 'back', pl: 'Wróć do listy' } },
-      name: { value: 'Model bazowy', editable: true, editableBlockedReason: null, maxChars: 120, layoutBudgetChars: 60 },
+      name: {
+        value: 'Model bazowy',
+        editable: true,
+        editableBlockedReason: null,
+        maxChars: 120,
+        layoutBudgetChars: 60,
+      },
       version: { label: 'v1', businessVersionId: 'bv-1', hasUncommittedWorkingRevision: false },
       status: 'DRAFT',
       freshness: 'CURRENT',
@@ -62,7 +79,12 @@ function makeConfigWithViewState(state: { kind: 'ready' | 'stale' | 'blocked'; l
   };
 }
 
-const evaluationContext: WorkspaceBarEvaluationContext = { status: 'DRAFT', role: 'preparer', freshness: 'CURRENT', gates: {} };
+const evaluationContext: WorkspaceBarEvaluationContext = {
+  status: 'DRAFT',
+  role: 'preparer',
+  freshness: 'CURRENT',
+  gates: {},
+};
 
 function noopHandlers() {
   return {
@@ -80,7 +102,10 @@ describe('FinanceWorkspaceBar — ViewStateBadge, kontrast (a11y, Pakiet I)', ()
   it('stan "stale" NIE używa surowego `text-c-warning` (za mały kontrast na 10px) — używa ciemniejszego `text-amber-900`', () => {
     render(
       <FinanceWorkspaceBar
-        config={makeConfigWithViewState({ kind: 'stale', label: { key: 'stale', pl: 'Nieaktualne' } })}
+        config={makeConfigWithViewState({
+          kind: 'stale',
+          label: { key: 'stale', pl: 'Nieaktualne' },
+        })}
         evaluationContext={evaluationContext}
         contextValues={{}}
         {...noopHandlers()}
@@ -94,7 +119,10 @@ describe('FinanceWorkspaceBar — ViewStateBadge, kontrast (a11y, Pakiet I)', ()
   it('stan "blocked" NIE używa surowego `text-c-danger` — używa `text-red-800`', () => {
     render(
       <FinanceWorkspaceBar
-        config={makeConfigWithViewState({ kind: 'blocked', label: { key: 'blocked', pl: 'Zablokowane' } })}
+        config={makeConfigWithViewState({
+          kind: 'blocked',
+          label: { key: 'blocked', pl: 'Zablokowane' },
+        })}
         evaluationContext={evaluationContext}
         contextValues={{}}
         {...noopHandlers()}
@@ -122,7 +150,10 @@ describe('FinanceWorkspaceBar — ViewStateBadge, kontrast (a11y, Pakiet I)', ()
   it('KONTROLA NEGATYWNA: status nadal niesiony TEKSTEM (etykieta), nie tylko klasą koloru — zmiana `state.label.pl` zmienia widoczny tekst', () => {
     render(
       <FinanceWorkspaceBar
-        config={makeConfigWithViewState({ kind: 'stale', label: { key: 'stale', pl: 'Wymaga przeliczenia' } })}
+        config={makeConfigWithViewState({
+          kind: 'stale',
+          label: { key: 'stale', pl: 'Wymaga przeliczenia' },
+        })}
         evaluationContext={evaluationContext}
         contextValues={{}}
         {...noopHandlers()}

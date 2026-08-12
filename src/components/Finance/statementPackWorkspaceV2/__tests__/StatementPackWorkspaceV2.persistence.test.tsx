@@ -11,20 +11,33 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { clearFeatureFlagOverrides, setFeatureFlagOverrides } from '@/test-utils/featureFlagOverrides';
+import {
+  clearFeatureFlagOverrides,
+  setFeatureFlagOverrides,
+} from '@/test-utils/featureFlagOverrides';
 
-import { StatementPackWorkspaceV2, type StatementPackWorkspaceV2Fetchers } from '../StatementPackWorkspaceV2';
+import {
+  StatementPackWorkspaceV2,
+  type StatementPackWorkspaceV2Fetchers,
+} from '../StatementPackWorkspaceV2';
 
 function fakeFetchers(name: string, renameArtifact = vi.fn()): StatementPackWorkspaceV2Fetchers {
   return {
     listLines: vi.fn().mockResolvedValue([]),
-    getLineage: vi.fn().mockResolvedValue({ businessVersionId: 'bv-1', ancestors: [], descendants: [] }),
+    getLineage: vi
+      .fn()
+      .mockResolvedValue({ businessVersionId: 'bv-1', ancestors: [], descendants: [] }),
     listReconciliationRuns: vi.fn().mockResolvedValue([]),
     getReconciliationRunDetail: vi.fn(),
     generateReportDraft: vi.fn(),
     publishReport: vi.fn(),
     getIdentity: vi.fn().mockResolvedValue({
-      artifactId: 'art-1', name, status: 'DRAFT', freshness: 'CURRENT', versionNo: 1, version: 1,
+      artifactId: 'art-1',
+      name,
+      status: 'DRAFT',
+      freshness: 'CURRENT',
+      versionNo: 1,
+      version: 1,
     }),
     renameArtifact,
     transitionVersion: vi.fn(),
@@ -55,14 +68,20 @@ describe('StatementPackWorkspaceV2 — persistence + cold reopen (AP_MOUNT §6)'
         onOpenReportResult={() => {}}
       />
     );
-    await waitFor(() => expect(screen.getByTestId('finance-workspace-bar-name')).toHaveTextContent('Sprawozdanie — przed zmianą'));
+    await waitFor(() =>
+      expect(screen.getByTestId('finance-workspace-bar-name')).toHaveTextContent(
+        'Sprawozdanie — przed zmianą'
+      )
+    );
 
     fireEvent.click(screen.getByTestId('finance-workspace-bar-name'));
     const input = await screen.findByRole('textbox');
     fireEvent.change(input, { target: { value: 'Sprawozdanie — PO zmianie' } });
     fireEvent.keyDown(input, { key: 'Enter' });
 
-    await waitFor(() => expect(renameArtifact).toHaveBeenCalledWith('art-1', 'Sprawozdanie — PO zmianie'));
+    await waitFor(() =>
+      expect(renameArtifact).toHaveBeenCalledWith('art-1', 'Sprawozdanie — PO zmianie')
+    );
 
     // Cold reopen: unmount + fresh mount whose getIdentity now returns the persisted name.
     unmount();
@@ -77,7 +96,11 @@ describe('StatementPackWorkspaceV2 — persistence + cold reopen (AP_MOUNT §6)'
         onOpenReportResult={() => {}}
       />
     );
-    await waitFor(() => expect(screen.getByTestId('finance-workspace-bar-name')).toHaveTextContent('Sprawozdanie — PO zmianie'));
+    await waitFor(() =>
+      expect(screen.getByTestId('finance-workspace-bar-name')).toHaveTextContent(
+        'Sprawozdanie — PO zmianie'
+      )
+    );
     expect(screen.queryByText('Sprawozdanie — przed zmianą')).not.toBeInTheDocument();
   });
 });

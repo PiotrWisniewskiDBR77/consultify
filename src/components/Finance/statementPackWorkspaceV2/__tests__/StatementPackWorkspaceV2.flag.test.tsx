@@ -16,20 +16,33 @@ import { render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { clearFeatureFlagOverrides, setFeatureFlagOverrides } from '@/test-utils/featureFlagOverrides';
+import {
+  clearFeatureFlagOverrides,
+  setFeatureFlagOverrides,
+} from '@/test-utils/featureFlagOverrides';
 
-import { StatementPackWorkspaceV2, type StatementPackWorkspaceV2Fetchers } from '../StatementPackWorkspaceV2';
+import {
+  StatementPackWorkspaceV2,
+  type StatementPackWorkspaceV2Fetchers,
+} from '../StatementPackWorkspaceV2';
 
 function fakeFetchers(): StatementPackWorkspaceV2Fetchers {
   return {
     listLines: vi.fn().mockResolvedValue([]),
-    getLineage: vi.fn().mockResolvedValue({ businessVersionId: 'bv-1', ancestors: [], descendants: [] }),
+    getLineage: vi
+      .fn()
+      .mockResolvedValue({ businessVersionId: 'bv-1', ancestors: [], descendants: [] }),
     listReconciliationRuns: vi.fn().mockResolvedValue([]),
     getReconciliationRunDetail: vi.fn(),
     generateReportDraft: vi.fn(),
     publishReport: vi.fn(),
     getIdentity: vi.fn().mockResolvedValue({
-      artifactId: 'art-1', name: 'Sprawozdanie testowe', status: 'DRAFT', freshness: 'CURRENT', versionNo: 1, version: 1,
+      artifactId: 'art-1',
+      name: 'Sprawozdanie testowe',
+      status: 'DRAFT',
+      freshness: 'CURRENT',
+      versionNo: 1,
+      version: 1,
     }),
     renameArtifact: vi.fn(),
     transitionVersion: vi.fn(),

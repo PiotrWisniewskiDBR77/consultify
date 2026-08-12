@@ -21,7 +21,6 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { clearFeatureFlagOverrides, setFeatureFlagOverrides } from '@/test-utils/featureFlagOverrides';
 import type {
   LineageEdgeDto,
   ReconciliationRunDetailDto,
@@ -29,10 +28,14 @@ import type {
   StatementLineDto,
   VersionLineageDto,
 } from '@/services/api/financeV2.types';
+import {
+  clearFeatureFlagOverrides,
+  setFeatureFlagOverrides,
+} from '@/test-utils/featureFlagOverrides';
 
 import {
-  StatementPackWorkspaceV2,
   type ReportArtifactRef,
+  StatementPackWorkspaceV2,
   type StatementPackWorkspaceV2Fetchers,
 } from '../StatementPackWorkspaceV2';
 
@@ -79,22 +82,35 @@ function line(overrides: Partial<StatementLineDto> & { stmtLineId: string }): St
   };
 }
 
-const resolveLineLabel = (rowKey: string, canonicalLineId: string | null, lineCode: string | null) =>
-  lineCode || canonicalLineId || rowKey;
+const resolveLineLabel = (
+  rowKey: string,
+  canonicalLineId: string | null,
+  lineCode: string | null
+) => lineCode || canonicalLineId || rowKey;
 
-function makeFetchers(overrides: Partial<StatementPackWorkspaceV2Fetchers> = {}): StatementPackWorkspaceV2Fetchers {
+function makeFetchers(
+  overrides: Partial<StatementPackWorkspaceV2Fetchers> = {}
+): StatementPackWorkspaceV2Fetchers {
   return {
     listLines: vi.fn(async () => [line({ stmtLineId: 'l1' })]),
-    getLineage: vi.fn(async (): Promise<VersionLineageDto> => ({ businessVersionId: 'bv-1', ancestors: [], descendants: [] })),
+    getLineage: vi.fn(
+      async (): Promise<VersionLineageDto> => ({
+        businessVersionId: 'bv-1',
+        ancestors: [],
+        descendants: [],
+      })
+    ),
     listReconciliationRuns: vi.fn(async (): Promise<ReconciliationRunSummaryDto[]> => []),
     getReconciliationRunDetail: vi.fn(async (): Promise<ReconciliationRunDetailDto> => {
       throw new Error('not configured in this test');
     }),
-    generateReportDraft: vi.fn(async (): Promise<ReportArtifactRef> => ({
-      artifactId: 'report-1',
-      businessVersionId: 'bv-report-1',
-      version: 1,
-    })),
+    generateReportDraft: vi.fn(
+      async (): Promise<ReportArtifactRef> => ({
+        artifactId: 'report-1',
+        businessVersionId: 'bv-report-1',
+        version: 1,
+      })
+    ),
     publishReport: vi.fn(async () => {}),
     // §C — tożsamość/lifecycle paska: fakes by default, no real network call,
     // consistent with the DI pattern the rest of this file already uses.
@@ -127,7 +143,9 @@ describe('StatementPackWorkspaceV2 — assembly renders real data via injected f
         onOpenReportResult={() => {}}
       />
     );
-    await waitFor(() => expect(screen.getByTestId('canonical-statement-table-v2')).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByTestId('canonical-statement-table-v2')).toBeInTheDocument()
+    );
     expect(screen.getByTestId('source-evidence-panel-empty')).toBeInTheDocument();
   });
 });
@@ -205,7 +223,9 @@ describe('StatementPackWorkspaceV2 — chain proof (source -> mapping -> canonic
       />
     );
 
-    await waitFor(() => expect(screen.getByTestId('canonical-statement-table-v2')).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByTestId('canonical-statement-table-v2')).toBeInTheDocument()
+    );
 
     // Click the presented cell — step 1 (sourceRef) must appear immediately.
     fireEvent.click(screen.getByTestId('canonical-statement-cell-canon-revenue::period-1'));
@@ -216,14 +236,18 @@ describe('StatementPackWorkspaceV2 — chain proof (source -> mapping -> canonic
 
     // Open the reconciliation section — auto-selects the first run in this assembly.
     fireEvent.click(screen.getByTestId('named-collapsible-trigger-reconciliation'));
-    await waitFor(() => expect(screen.getByTestId('source-evidence-mapping-row')).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByTestId('source-evidence-mapping-row')).toBeInTheDocument()
+    );
     // Step 2 proof: the SAME cell's mapping row is now visible, tying source -> mapping -> canonical line -> presentation.
     expect(screen.getByTestId('source-evidence-mapping-bucket')).toHaveTextContent('MAPPED');
-    expect(screen.getByTestId('source-evidence-mapping-source-row-ref')).toHaveTextContent('trial_balance.csv');
+    expect(screen.getByTestId('source-evidence-mapping-source-row-ref')).toHaveTextContent(
+      'trial_balance.csv'
+    );
   });
 
   // KONTROLA NEGATYWNA: a mapping row for a DIFFERENT period must NOT show up as this cell's evidence.
-  it('NEGATIVE CONTROL — a reconciliation row for a different period is not shown as this cell\'s mapping evidence', async () => {
+  it("NEGATIVE CONTROL — a reconciliation row for a different period is not shown as this cell's mapping evidence", async () => {
     const runs: ReconciliationRunSummaryDto[] = [
       {
         reconciliationRunId: 'run-1',
@@ -294,7 +318,9 @@ describe('StatementPackWorkspaceV2 — chain proof (source -> mapping -> canonic
         onOpenReportResult={() => {}}
       />
     );
-    await waitFor(() => expect(screen.getByTestId('canonical-statement-table-v2')).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByTestId('canonical-statement-table-v2')).toBeInTheDocument()
+    );
     fireEvent.click(screen.getByTestId('canonical-statement-cell-canon-revenue::period-1'));
     fireEvent.click(screen.getByTestId('named-collapsible-trigger-reconciliation'));
     await waitFor(() => expect(screen.getByTestId('source-evidence-mapping')).toBeInTheDocument());
@@ -317,21 +343,39 @@ describe('StatementPackWorkspaceV2 — report actions wired to the real client s
         onOpenReportResult={onOpenReportResult}
       />
     );
-    await waitFor(() => expect(screen.getByTestId('canonical-statement-table-v2')).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByTestId('canonical-statement-table-v2')).toBeInTheDocument()
+    );
 
     fireEvent.click(screen.getByTestId('statement-report-step-button-draft'));
     expect(fetchers.generateReportDraft).toHaveBeenCalledTimes(1);
-    await waitFor(() => expect(screen.getByTestId('statement-report-step-button-open')).not.toBeDisabled());
+    await waitFor(() =>
+      expect(screen.getByTestId('statement-report-step-button-open')).not.toBeDisabled()
+    );
 
     fireEvent.click(screen.getByTestId('statement-report-step-button-open'));
-    expect(onOpenReportResult).toHaveBeenCalledWith({ artifactId: 'report-1', businessVersionId: 'bv-report-1', version: 1 });
-    await waitFor(() => expect(screen.getByTestId('statement-report-step-button-publish')).not.toBeDisabled());
+    expect(onOpenReportResult).toHaveBeenCalledWith({
+      artifactId: 'report-1',
+      businessVersionId: 'bv-report-1',
+      version: 1,
+    });
+    await waitFor(() =>
+      expect(screen.getByTestId('statement-report-step-button-publish')).not.toBeDisabled()
+    );
 
     fireEvent.click(screen.getByTestId('statement-report-step-button-publish'));
     await waitFor(() =>
-      expect(fetchers.publishReport).toHaveBeenCalledWith({ artifactId: 'report-1', businessVersionId: 'bv-report-1', version: 1 })
+      expect(fetchers.publishReport).toHaveBeenCalledWith({
+        artifactId: 'report-1',
+        businessVersionId: 'bv-report-1',
+        version: 1,
+      })
     );
-    await waitFor(() => expect(screen.getByTestId('statement-report-step-status-publish')).toHaveTextContent('Opublikowano'));
+    await waitFor(() =>
+      expect(screen.getByTestId('statement-report-step-status-publish')).toHaveTextContent(
+        'Opublikowano'
+      )
+    );
   });
 
   it('step 3 is never reachable without going through step 2 — clicking publish before opening does nothing (button stays disabled)', async () => {
@@ -346,10 +390,14 @@ describe('StatementPackWorkspaceV2 — report actions wired to the real client s
         onOpenReportResult={() => {}}
       />
     );
-    await waitFor(() => expect(screen.getByTestId('canonical-statement-table-v2')).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByTestId('canonical-statement-table-v2')).toBeInTheDocument()
+    );
 
     fireEvent.click(screen.getByTestId('statement-report-step-button-draft'));
-    await waitFor(() => expect(screen.getByTestId('statement-report-step-button-open')).not.toBeDisabled());
+    await waitFor(() =>
+      expect(screen.getByTestId('statement-report-step-button-open')).not.toBeDisabled()
+    );
 
     // Skip step 2 — publish must still be disabled.
     expect(screen.getByTestId('statement-report-step-button-publish')).toBeDisabled();
@@ -373,10 +421,14 @@ describe('StatementPackWorkspaceV2 — report actions wired to the real client s
         onOpenReportResult={() => {}}
       />
     );
-    await waitFor(() => expect(screen.getByTestId('canonical-statement-table-v2')).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByTestId('canonical-statement-table-v2')).toBeInTheDocument()
+    );
     fireEvent.click(screen.getByTestId('statement-report-step-button-draft'));
     await waitFor(() =>
-      expect(screen.getByTestId('statement-report-step-status-draft')).toHaveTextContent('Serwer odrzucił żądanie (500)')
+      expect(screen.getByTestId('statement-report-step-status-draft')).toHaveTextContent(
+        'Serwer odrzucił żądanie (500)'
+      )
     );
     expect(screen.getByTestId('statement-report-step-button-open')).toBeDisabled();
   });

@@ -10,9 +10,15 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
-import { clearFeatureFlagOverrides, setFeatureFlagOverrides } from '@/test-utils/featureFlagOverrides';
+import {
+  clearFeatureFlagOverrides,
+  setFeatureFlagOverrides,
+} from '@/test-utils/featureFlagOverrides';
 
-import { StatementPackWorkspaceV2, type StatementPackWorkspaceV2Fetchers } from '../StatementPackWorkspaceV2';
+import {
+  StatementPackWorkspaceV2,
+  type StatementPackWorkspaceV2Fetchers,
+} from '../StatementPackWorkspaceV2';
 
 beforeAll(() => {
   Object.defineProperty(HTMLElement.prototype, 'offsetParent', {
@@ -26,13 +32,20 @@ beforeAll(() => {
 function fakeFetchers(): StatementPackWorkspaceV2Fetchers {
   return {
     listLines: vi.fn().mockResolvedValue([]),
-    getLineage: vi.fn().mockResolvedValue({ businessVersionId: 'bv-1', ancestors: [], descendants: [] }),
+    getLineage: vi
+      .fn()
+      .mockResolvedValue({ businessVersionId: 'bv-1', ancestors: [], descendants: [] }),
     listReconciliationRuns: vi.fn().mockResolvedValue([]),
     getReconciliationRunDetail: vi.fn(),
     generateReportDraft: vi.fn(),
     publishReport: vi.fn(),
     getIdentity: vi.fn().mockResolvedValue({
-      artifactId: 'art-1', name: 'Sprawozdanie testowe', status: 'IN_REVIEW', freshness: 'CURRENT', versionNo: 1, version: 1,
+      artifactId: 'art-1',
+      name: 'Sprawozdanie testowe',
+      status: 'IN_REVIEW',
+      freshness: 'CURRENT',
+      versionNo: 1,
+      version: 1,
     }),
     renameArtifact: vi.fn(),
     transitionVersion: vi.fn().mockResolvedValue({ status: 'NEEDS_CHANGES', version: 2 }),
@@ -75,7 +88,10 @@ describe('StatementPackWorkspaceV2 — dialog „Podaj powód" (a11y, Pakiet I)'
     renderWorkspace(fetchers);
     await waitFor(() => expect(fetchers.getIdentity).toHaveBeenCalled());
     await openReasonDialog();
-    expect(screen.getByTestId('statement-pack-reason-dialog')).toHaveAttribute('role', 'alertdialog');
+    expect(screen.getByTestId('statement-pack-reason-dialog')).toHaveAttribute(
+      'role',
+      'alertdialog'
+    );
     await waitFor(() => expect(screen.getByTestId('statement-pack-reason-input')).toHaveFocus());
   });
 
@@ -89,7 +105,9 @@ describe('StatementPackWorkspaceV2 — dialog „Podaj powód" (a11y, Pakiet I)'
 
     fireEvent.keyDown(document, { key: 'Escape' });
 
-    await waitFor(() => expect(screen.queryByTestId('statement-pack-reason-dialog')).not.toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.queryByTestId('statement-pack-reason-dialog')).not.toBeInTheDocument()
+    );
     await waitFor(() => expect(lifecycleTrigger).toHaveFocus());
   });
 
@@ -101,7 +119,9 @@ describe('StatementPackWorkspaceV2 — dialog „Podaj powód" (a11y, Pakiet I)'
     await openReasonDialog();
 
     fireEvent.keyDown(document, { key: 'Escape' });
-    await waitFor(() => expect(screen.queryByTestId('statement-pack-reason-dialog')).not.toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.queryByTestId('statement-pack-reason-dialog')).not.toBeInTheDocument()
+    );
 
     fireEvent.keyDown(document, { key: 'Escape' });
     expect(screen.queryByTestId('statement-pack-reason-dialog')).not.toBeInTheDocument();

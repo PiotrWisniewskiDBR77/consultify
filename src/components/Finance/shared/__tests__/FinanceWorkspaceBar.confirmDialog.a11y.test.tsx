@@ -14,8 +14,12 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 
-import { ENABLEMENT_ALWAYS, type WorkspaceBarConfig, type WorkspaceBarEvaluationContext } from '../financeWorkspaceBar.contract';
 import { FinanceWorkspaceBar } from '../FinanceWorkspaceBar';
+import {
+  ENABLEMENT_ALWAYS,
+  type WorkspaceBarConfig,
+  type WorkspaceBarEvaluationContext,
+} from '../financeWorkspaceBar.contract';
 
 beforeAll(() => {
   Object.defineProperty(HTMLElement.prototype, 'offsetParent', {
@@ -31,9 +35,19 @@ function makeConfigWithDestructiveLifecycle(): WorkspaceBarConfig {
     moduleId: 'baselineModel',
     artifactType: 'BASELINE_MODEL',
     identity: {
-      artifactRef: { artifactType: 'BASELINE_MODEL', businessVersionId: 'bv-1', artifactId: 'art-1' },
+      artifactRef: {
+        artifactType: 'BASELINE_MODEL',
+        businessVersionId: 'bv-1',
+        artifactId: 'art-1',
+      },
       back: { targetListRoute: '/finance', label: { key: 'back', pl: 'Wróć do listy' } },
-      name: { value: 'Model bazowy FY2026', editable: true, editableBlockedReason: null, maxChars: 120, layoutBudgetChars: 60 },
+      name: {
+        value: 'Model bazowy FY2026',
+        editable: true,
+        editableBlockedReason: null,
+        maxChars: 120,
+        layoutBudgetChars: 60,
+      },
       version: { label: 'v1', businessVersionId: 'bv-1', hasUncommittedWorkingRevision: false },
       status: 'APPROVED',
       freshness: 'CURRENT',
@@ -85,7 +99,12 @@ function makeConfigWithDestructiveLifecycle(): WorkspaceBarConfig {
   };
 }
 
-const evaluationContext: WorkspaceBarEvaluationContext = { status: 'APPROVED', role: 'preparer', freshness: 'CURRENT', gates: {} };
+const evaluationContext: WorkspaceBarEvaluationContext = {
+  status: 'APPROVED',
+  role: 'preparer',
+  freshness: 'CURRENT',
+  gates: {},
+};
 
 function noopHandlers() {
   return {
@@ -109,13 +128,27 @@ async function openConfirmDialog(): Promise<HTMLElement> {
 
 describe('FinanceWorkspaceBar — ConfirmDestructiveDialog (a11y, Pakiet I)', () => {
   it('otwiera się z rolą alertdialog i fokusem na przycisku Potwierdź', async () => {
-    render(<FinanceWorkspaceBar config={makeConfigWithDestructiveLifecycle()} evaluationContext={evaluationContext} contextValues={{}} {...noopHandlers()} />);
+    render(
+      <FinanceWorkspaceBar
+        config={makeConfigWithDestructiveLifecycle()}
+        evaluationContext={evaluationContext}
+        contextValues={{}}
+        {...noopHandlers()}
+      />
+    );
     await openConfirmDialog();
     await waitFor(() => expect(screen.getByRole('button', { name: 'Potwierdź' })).toHaveFocus());
   });
 
   it('Escape zamyka dialog i przywraca fokus na trigger lifecycle (wyzwalacz — pozycja menu, która faktycznie otworzyła dialog, już się odmontowała)', async () => {
-    render(<FinanceWorkspaceBar config={makeConfigWithDestructiveLifecycle()} evaluationContext={evaluationContext} contextValues={{}} {...noopHandlers()} />);
+    render(
+      <FinanceWorkspaceBar
+        config={makeConfigWithDestructiveLifecycle()}
+        evaluationContext={evaluationContext}
+        contextValues={{}}
+        {...noopHandlers()}
+      />
+    );
     const lifecycleTrigger = screen.getByTestId('finance-workspace-bar-lifecycle-trigger');
     await openConfirmDialog();
 
@@ -126,7 +159,14 @@ describe('FinanceWorkspaceBar — ConfirmDestructiveDialog (a11y, Pakiet I)', ()
   });
 
   it('Tab z ostatniego elementu (Potwierdź) wraca na pierwszy (Anuluj) — pułapka fokusa', async () => {
-    render(<FinanceWorkspaceBar config={makeConfigWithDestructiveLifecycle()} evaluationContext={evaluationContext} contextValues={{}} {...noopHandlers()} />);
+    render(
+      <FinanceWorkspaceBar
+        config={makeConfigWithDestructiveLifecycle()}
+        evaluationContext={evaluationContext}
+        contextValues={{}}
+        {...noopHandlers()}
+      />
+    );
     await openConfirmDialog();
     const cancelButton = screen.getByRole('button', { name: 'Anuluj' });
     const confirmButton = screen.getByRole('button', { name: 'Potwierdź' });
@@ -138,10 +178,19 @@ describe('FinanceWorkspaceBar — ConfirmDestructiveDialog (a11y, Pakiet I)', ()
 
   it('"Potwierdź" wywołuje onLifecycleTransition z transition oryginalnym', async () => {
     const handlers = noopHandlers();
-    render(<FinanceWorkspaceBar config={makeConfigWithDestructiveLifecycle()} evaluationContext={evaluationContext} contextValues={{}} {...handlers} />);
+    render(
+      <FinanceWorkspaceBar
+        config={makeConfigWithDestructiveLifecycle()}
+        evaluationContext={evaluationContext}
+        contextValues={{}}
+        {...handlers}
+      />
+    );
     await openConfirmDialog();
     fireEvent.click(screen.getByRole('button', { name: 'Potwierdź' }));
-    expect(handlers.onLifecycleTransition).toHaveBeenCalledWith(expect.objectContaining({ action: 'reopen' }));
+    expect(handlers.onLifecycleTransition).toHaveBeenCalledWith(
+      expect.objectContaining({ action: 'reopen' })
+    );
   });
 
   it('KONTROLA NEGATYWNA: transition BEZ requiresConfirmation NIE otwiera ConfirmDestructiveDialog — woła onLifecycleTransition wprost', async () => {
@@ -154,17 +203,29 @@ describe('FinanceWorkspaceBar — ConfirmDestructiveDialog (a11y, Pakiet I)', ()
         ...config.actions,
         lifecycle: {
           ...config.actions.lifecycle!,
-          transitions: config.actions.lifecycle!.transitions.map((t) => ({ ...t, requiresConfirmation: false })),
+          transitions: config.actions.lifecycle!.transitions.map((t) => ({
+            ...t,
+            requiresConfirmation: false,
+          })),
         },
       },
     };
-    render(<FinanceWorkspaceBar config={nonConfirming} evaluationContext={evaluationContext} contextValues={{}} {...handlers} />);
+    render(
+      <FinanceWorkspaceBar
+        config={nonConfirming}
+        evaluationContext={evaluationContext}
+        contextValues={{}}
+        {...handlers}
+      />
+    );
     const lifecycleTrigger = screen.getByTestId('finance-workspace-bar-lifecycle-trigger');
     fireEvent.click(lifecycleTrigger);
     const menuItem = await screen.findByRole('menuitem', { name: 'Otwórz ponownie' });
     fireEvent.click(menuItem);
 
     expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
-    expect(handlers.onLifecycleTransition).toHaveBeenCalledWith(expect.objectContaining({ action: 'reopen' }));
+    expect(handlers.onLifecycleTransition).toHaveBeenCalledWith(
+      expect.objectContaining({ action: 'reopen' })
+    );
   });
 });
