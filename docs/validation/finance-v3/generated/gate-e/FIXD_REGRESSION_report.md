@@ -188,7 +188,18 @@ Test Files: 2 failed | 60 passed (62). Tests: 3 failed | 789 passed (792).
 Test Files: 62 passed (62). Tests: 504 passed (504).
 
 ### `npx tsc --noEmit -p tsconfig.json` z korzenia
-[UZUPEŁNIONE PO ZAKOŃCZENIU — patrz sekcja niżej]
+Pierwsza próba (domyślny heap): `npx tsc --noEmit -p tsconfig.json` → **exit 134** (SIGABRT),
+`FATAL ERROR: Ineffective mark-compacts near heap limit Allocation failed - JavaScript heap out of
+memory`, duration 194s. Kod wyjścia zmierzony bez potoku (`cmd > plik 2>&1; code=$?`), zgodnie z
+poleceniem — to jest prawdziwy exit code procesu, nie artefakt `PIPESTATUS`. To OOM, nie sukces —
+zero linii diagnostycznych TS przed crashem, więc nie da się z tego przebiegu wywnioskować "0 błędów".
+
+Powtórka z podniesionym limitem sterty (znana pułapka środowiskowa z tej sesji — `tsc` na tym
+repo regularnie OOM-uje na domyślnym V8 heapie):
+`NODE_OPTIONS="--max-old-space-size=8192" npx tsc --noEmit -p tsconfig.json` →
+**exit 0**, duration **253s** (~4min 13s — w oczekiwanym zakresie 100–374s z memory), zero linii
+output (czysty przebieg, `tsc_root2.log` ma 1 linię — tylko marker `TSC_DONE2 code=0`, brak błędów
+przed nim). **Typecheck całego repo jest czysty na tej gałęzi** (`57fe0543cc` + mój diff testowy).
 
 ## Rzeczy niedostarczone i powody
 
