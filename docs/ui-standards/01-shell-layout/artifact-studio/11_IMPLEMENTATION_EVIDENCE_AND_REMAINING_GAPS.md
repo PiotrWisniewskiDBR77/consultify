@@ -2,8 +2,10 @@
 
 > Status programu: `IN_PROGRESS / NO_GO`
 > Zakres: otwarte DOC, PPT i XLSX; template'y są `OUT`
-> Snapshot zamkniętego kandydata: branch `codex/sync-demo-20260729`, HEAD
-> `2fb925160bd357477c937ab142bb4ff97424cefe`
+> Snapshot kandydata technicznego: branch `codex/artifact-studio-program-final`,
+> HEAD `fb1f12bfe414d8d34a3e3efe90cf15e445c695a3`; terminalna akceptacja
+> pozostaje `EVIDENCE_MISSING` dla ręcznego VoiceOver, badania transferu,
+> realnego providera oraz dwóch stabilnych okien telemetrycznych.
 
 ## 1. Co zostało zaimplementowane
 
