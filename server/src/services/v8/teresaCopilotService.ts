@@ -3248,6 +3248,10 @@ async function handleOkrObjectiveDraft(
     throw new TeresaCopilotError('OKR Set not found or not visible to approving user', 'P08_OKR_VISIBILITY_STALE');
   }
 
+  // RN-G5: createObjective now requires an `access` context (gated on the
+  // parent Set's owner/reviewer) — resolved for the REAL human userId, same
+  // pattern as resolveTeresaKpiAccess for the KPI handoff above.
+  const access = await resolveEffectiveAccess({ userId, organizationId });
   const outcome = await createObjective({
     setId: proposed.setId,
     organizationId,
@@ -3264,6 +3268,7 @@ async function handleOkrObjectiveDraft(
     idempotencyKey: proposalId,
     correlationId: context.runtime_binding?.conversation_id ?? undefined,
     reason: `Teresa objective_draft: ${proposed.title}`,
+    access,
   });
   await recordTeresaOkrHandoffResult(proposalId, organizationId, outcome.result.objectiveId);
   return {

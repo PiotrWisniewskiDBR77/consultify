@@ -27,10 +27,15 @@
  */
 import { acquirePgClient } from '../../../database/PostgresDatabase.js';
 
+import { assertCommandCapability, type CommandAccessContext } from '../platform/commandCapabilityGuard.js';
+
 import { createOkrSet, OkrSetValidationError, type CreateOkrSetResult } from './okrSetCommands.js';
 import { OkrCycleValidationError } from './okrCycleCommands.js';
 import { toOkrSet, type OkrSet, type OkrSetRow } from './okrSetTypes.js';
 import type { OkrCycleRow } from './okrCycleTypes.js';
+
+// RN-G5 — command capability name (docs/product/results-vnext/RN_G5_AUTHZ_DESIGN.md).
+export const OKR_CARRY_FORWARD_CAPABILITY = 'results.okr.set.carry_forward';
 
 export interface CarryForwardOkrSetInput {
   sourceSetId: string;
@@ -42,6 +47,7 @@ export interface CarryForwardOkrSetInput {
   correlationId?: string;
   causationId?: string | null;
   reason?: string | null;
+  access: CommandAccessContext;
 }
 
 export interface CarryForwardOkrSetResult {
@@ -72,6 +78,7 @@ export async function carryForwardOkrSet(input: CarryForwardOkrSetInput): Promis
     correlationId,
     causationId = null,
     reason = null,
+    access,
   } = input;
 
   const client = await acquirePgClient();
@@ -113,6 +120,18 @@ export async function carryForwardOkrSet(input: CarryForwardOkrSetInput): Promis
     client.release();
   }
 
+  // RN-G5: unlike a fresh createOkrSet (which has no prior row to check
+  // against, see that command's own documented ungated decision),
+  // carryForwardOkrSet acts on an EXISTING closed source Set — it has a
+  // real owner/reviewer already loaded above, so this is gated on THAT,
+  // not left capability-only.
+  assertCommandCapability({
+    access,
+    actorUserId,
+    capability: OKR_CARRY_FORWARD_CAPABILITY,
+    responsibleUserIds: [sourceRow.owner_user_id, sourceRow.reviewer_user_id],
+  });
+
   const outcome = await createOkrSet({
     organizationId,
     programId: sourceRow.program_id,
@@ -129,6 +148,11 @@ export async function carryForwardOkrSet(input: CarryForwardOkrSetInput): Promis
     correlationId,
     causationId,
     reason,
+    // createOkrSet itself is deliberately capability-only-ungated (see its
+    // own header comment) — this carryForwardOkrSet-level check above is
+    // the real gate for this call path. Passed through only because the
+    // field is structurally required.
+    access,
   });
 
   const result: CreateOkrSetResult = outcome.result;
