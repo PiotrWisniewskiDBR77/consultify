@@ -83,7 +83,9 @@ describe('v8Delete — 204 No Content regression + negative controls', () => {
   });
 
   it('NEGATIVE CONTROL: a normal 200 + {data} envelope still unwraps .data (no regression on the common path)', async () => {
-    mockedFetch.mockResolvedValueOnce(jsonResponse(200, { data: { success: true, deleted: 'x-1' } }));
+    mockedFetch.mockResolvedValueOnce(
+      jsonResponse(200, { data: { success: true, deleted: 'x-1' } })
+    );
     const result = await v8Delete<{ success: boolean; deleted: string }>('/finance/events/x-1');
     expect(result).toEqual({ success: true, deleted: 'x-1' });
   });

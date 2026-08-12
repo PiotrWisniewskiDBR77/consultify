@@ -262,7 +262,9 @@ export interface ArtifactRef {
 }
 
 /** Klucz stabilny dla React Query/mapy stanu — NIGDY samo artifactId (reopen zmienia businessVersionId przy stałym artifactId). ArtifactRef.ts:116-119. */
-export function artifactRefKey(ref: Pick<ArtifactRef, 'artifactType' | 'businessVersionId'>): string {
+export function artifactRefKey(
+  ref: Pick<ArtifactRef, 'artifactType' | 'businessVersionId'>
+): string {
   return `${ref.artifactType}:${ref.businessVersionId}`;
 }
 
@@ -346,7 +348,11 @@ export function financeLegacyBridgeQuarantineReasonLabel(reason: string | null):
   // Normalize so both `APPROVED_WITHOUT_SNAPSHOT` (reasonCode style) and
   // `approved_without_snapshot` (the lowercase form seen on live screenshots)
   // hit the same lookup key.
-  const normalized = reason.trim().toUpperCase().replace(/[^A-Z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+  const normalized = reason
+    .trim()
+    .toUpperCase()
+    .replace(/[^A-Z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '');
   const known: Record<string, string> = {
     APPROVED_WITHOUT_SNAPSHOT:
       'Rekord był oznaczony jako zatwierdzony, ale bez zapisanej migawki danych — nie mógł zostać bezpiecznie przeniesiony jako zatwierdzony. Skontaktuj się z zespołem finansowym, aby zweryfikować to zatwierdzenie.',
@@ -444,14 +450,26 @@ export const LifecycleActionValues = [
 ] as const;
 export type LifecycleAction = (typeof LifecycleActionValues)[number];
 
-export const FinanceRoleValues = ['viewer', 'preparer', 'reviewer', 'approver', 'finance_admin'] as const;
+export const FinanceRoleValues = [
+  'viewer',
+  'preparer',
+  'reviewer',
+  'approver',
+  'finance_admin',
+] as const;
 export type FinanceRole = (typeof FinanceRoleValues)[number];
 
 // ---------------------------------------------------------------------------
 // computeJobService — status joba. Źródło: computeJobService.ts:51-52
 // ---------------------------------------------------------------------------
 
-export const ComputeJobStatusValues = ['queued', 'running', 'succeeded', 'failed', 'cancelled'] as const;
+export const ComputeJobStatusValues = [
+  'queued',
+  'running',
+  'succeeded',
+  'failed',
+  'cancelled',
+] as const;
 export type ComputeJobStatus = (typeof ComputeJobStatusValues)[number];
 
 // ---------------------------------------------------------------------------
@@ -635,8 +653,13 @@ export type AnalysisKpiTier = (typeof AnalysisKpiTierValues)[number];
  * kontraktu backendowego, ten klient jest wobec nich neutralny — traktuje
  * każdą nieznaną wartość jak `FORCE_NA`, nigdy jak "policz mimo to").
  */
-export const AnalysisNegativeDenominatorPolicyValues = ['FORCE_NA', 'ALLOW_NEGATIVE_RATIO', 'FLAG_ONLY'] as const;
-export type AnalysisNegativeDenominatorPolicy = (typeof AnalysisNegativeDenominatorPolicyValues)[number];
+export const AnalysisNegativeDenominatorPolicyValues = [
+  'FORCE_NA',
+  'ALLOW_NEGATIVE_RATIO',
+  'FLAG_ONLY',
+] as const;
+export type AnalysisNegativeDenominatorPolicy =
+  (typeof AnalysisNegativeDenominatorPolicyValues)[number];
 
 /** analysis.routes.ts:55-71 (GET /analysis/kpi-catalog), jeden wpis katalogu. */
 export interface AnalysisKpiCatalogEntryDto {
@@ -667,7 +690,10 @@ export interface AnalysisComputeResultDto {
 }
 
 /** analysis.routes.ts:107-110 — kody błędu specyficzne dla domeny Analysis. */
-export const ANALYSIS_COMPUTE_NOT_FOUND_CODES = ['NO_SOURCE_STATEMENT_PACK_EDGE', 'BUSINESS_VERSION_NOT_FOUND'] as const;
+export const ANALYSIS_COMPUTE_NOT_FOUND_CODES = [
+  'NO_SOURCE_STATEMENT_PACK_EDGE',
+  'BUSINESS_VERSION_NOT_FOUND',
+] as const;
 
 /** analysis.routes.ts:143-170 (GET /analysis/:businessVersionId/kpi-values), jeden wiersz. */
 export interface AnalysisKpiValueDto {
@@ -693,7 +719,13 @@ export interface AnalysisKpiValueDto {
   deltaPctVsPriorPeriod: string | null;
   interpretationText: string | null;
   /** Realny gap backendu (brak writera `finance_analysis_benchmarks`) — zawsze `null` dziś, analysis.routes.ts:165-167. */
-  benchmark: { rangeLow: string; rangeHigh: string; source: string; asOf: string; industryCode: string } | null;
+  benchmark: {
+    rangeLow: string;
+    rangeHigh: string;
+    source: string;
+    asOf: string;
+    industryCode: string;
+  } | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -887,7 +919,11 @@ export interface VersionLineageDto {
 }
 
 function finanaceV2ErrorCode(err: FinanceV2ApiError): string | null {
-  return (err.data && typeof err.data === 'object' && typeof err.data.code === 'string' ? err.data.code : null) ?? null;
+  return (
+    (err.data && typeof err.data === 'object' && typeof err.data.code === 'string'
+      ? err.data.code
+      : null) ?? null
+  );
 }
 
 /**
@@ -967,7 +1003,12 @@ export function valuationMethodTypeLabel(methodType: ValuationMethodType): strin
   }
 }
 
-export const ValuationMethodReadinessValues = ['NOT_CONFIGURED', 'DATA_INCOMPLETE', 'READY', 'COMPUTE_FAILED'] as const;
+export const ValuationMethodReadinessValues = [
+  'NOT_CONFIGURED',
+  'DATA_INCOMPLETE',
+  'READY',
+  'COMPUTE_FAILED',
+] as const;
 export type ValuationMethodReadiness = (typeof ValuationMethodReadinessValues)[number];
 
 /** Polish label for a valuation method's readiness state — never render `readiness` raw. */
@@ -1009,7 +1050,12 @@ export type ValuationWeightedRecommendationDto =
   | {
       status: 'READY';
       weightedEnterpriseValue: number;
-      contributions: { methodType: ValuationMethodType; weightPct: number; resultEvDecimal: number; contribution: number }[];
+      contributions: {
+        methodType: ValuationMethodType;
+        weightPct: number;
+        resultEvDecimal: number;
+        contribution: number;
+      }[];
     };
 
 // ---------------------------------------------------------------------------
@@ -1148,7 +1194,11 @@ export interface ValuationBridgeWriteResultDto {
   bridgeId: string;
   enterpriseValueDecimal: number;
   equityValueDecimal: number;
-  breakdown: { componentKind: ValuationBridgeComponentKind; sign: ValuationBridgeComponentSign; signedAmount: number }[];
+  breakdown: {
+    componentKind: ValuationBridgeComponentKind;
+    sign: ValuationBridgeComponentSign;
+    signedAmount: number;
+  }[];
 }
 
 // ---------------------------------------------------------------------------
@@ -1204,7 +1254,11 @@ export interface ValuationSensitivityGridRawDto {
 // snapshot shape from valuationAdvisorService.ts:218-271 `ValuationAdvisorSnapshot`).
 // ---------------------------------------------------------------------------
 
-export type ValuationHeadlineEvSource = 'BRIDGE' | 'WEIGHTED_BASKET' | 'SINGLE_READY_METHOD' | 'NONE';
+export type ValuationHeadlineEvSource =
+  | 'BRIDGE'
+  | 'WEIGHTED_BASKET'
+  | 'SINGLE_READY_METHOD'
+  | 'NONE';
 
 export interface ValuationEvidencePointerDto {
   table: string;
@@ -1239,8 +1293,19 @@ export interface ValuationResultsDto {
   wacc: (Record<string, string | null> & { id: string }) | null;
   terminal: ValuationAdvisorTerminalRowDto[];
   bridge: {
-    header: { id: string; as_of_date: string; enterprise_value_decimal: string | null; equity_value_decimal: string | null };
-    components: { id: string; sequence_order: number; component_kind: string; sign: ValuationBridgeComponentSign; amount_decimal: string }[];
+    header: {
+      id: string;
+      as_of_date: string;
+      enterprise_value_decimal: string | null;
+      equity_value_decimal: string | null;
+    };
+    components: {
+      id: string;
+      sequence_order: number;
+      component_kind: string;
+      sign: ValuationBridgeComponentSign;
+      amount_decimal: string;
+    }[];
   } | null;
   sensitivityGrids: ValuationAdvisorGridSnapshotDto[];
   usableCompsByMethodId: Record<string, number>;
@@ -1433,7 +1498,12 @@ export interface ValuationAdvisorFindingStoredDto {
 // (only a slice of CompareVariantsResult is sent over the wire — no full snapshot).
 // ---------------------------------------------------------------------------
 
-export type ValuationComparisonMetricName = 'ENTERPRISE_VALUE' | 'EQUITY_VALUE' | 'WACC_PCT' | 'TERMINAL_SHARE_PCT' | 'TERMINAL_G_PCT';
+export type ValuationComparisonMetricName =
+  | 'ENTERPRISE_VALUE'
+  | 'EQUITY_VALUE'
+  | 'WACC_PCT'
+  | 'TERMINAL_SHARE_PCT'
+  | 'TERMINAL_G_PCT';
 
 export interface ValuationComparisonMetricDto {
   metric: ValuationComparisonMetricName;
@@ -1446,8 +1516,16 @@ export interface ValuationComparisonMetricDto {
 
 export interface ValuationCompareVariantsResultDto {
   caseId: string;
-  variantA: { businessVersionId: string; name: string; enterpriseValue: ValuationHeadlineEnterpriseValueDto };
-  variantB: { businessVersionId: string; name: string; enterpriseValue: ValuationHeadlineEnterpriseValueDto };
+  variantA: {
+    businessVersionId: string;
+    name: string;
+    enterpriseValue: ValuationHeadlineEnterpriseValueDto;
+  };
+  variantB: {
+    businessVersionId: string;
+    name: string;
+    enterpriseValue: ValuationHeadlineEnterpriseValueDto;
+  };
   metrics: ValuationComparisonMetricDto[];
   findings: ValuationAdvisorFindingGeneratedDto[];
   computeSnapshotId: string | null;
@@ -1509,7 +1587,11 @@ export function financeLineageTransformationKindLabel(kind: string | null): stri
 // --- /PKG-H Valuation ---
 // =============================================================================================
 
-export function describeFinanceV2Error(err: unknown): { title: string; detail: string; code: string | null } {
+export function describeFinanceV2Error(err: unknown): {
+  title: string;
+  detail: string;
+  code: string | null;
+} {
   // Timeout ("Request timed out", fetchWithRetry's own 20s AbortController,
   // src/services/api/baseClient.ts:151) jest zwykłym `new Error(...)` BEZ
   // `.status`/`.data` — sprawdzane PRZED `isFinanceV2ApiError`, inaczej ten
@@ -1518,17 +1600,26 @@ export function describeFinanceV2Error(err: unknown): { title: string; detail: s
   if (err instanceof Error && err.message === 'Request timed out') {
     return {
       title: 'Operacja trwa dłużej niż zwykle',
-      detail: 'Serwer nie odpowiedział w oczekiwanym czasie. Sprawdź stan po chwili lub spróbuj ponownie.',
+      detail:
+        'Serwer nie odpowiedział w oczekiwanym czasie. Sprawdź stan po chwili lub spróbuj ponownie.',
       code: 'TIMEOUT',
     };
   }
   if (!isFinanceV2ApiError(err)) {
-    return { title: 'Wystąpił nieoczekiwany błąd', detail: 'Spróbuj ponownie za chwilę.', code: null };
+    return {
+      title: 'Wystąpił nieoczekiwany błąd',
+      detail: 'Spróbuj ponownie za chwilę.',
+      code: null,
+    };
   }
   const code = finanaceV2ErrorCode(err);
   switch (code) {
     case 'NOT_FOUND':
-      return { title: 'Nie znaleziono', detail: 'Ten artefakt lub wersja już nie istnieje albo nie masz do niej dostępu.', code };
+      return {
+        title: 'Nie znaleziono',
+        detail: 'Ten artefakt lub wersja już nie istnieje albo nie masz do niej dostępu.',
+        code,
+      };
     case 'NO_SOURCE_STATEMENT_PACK_EDGE':
       // Pakiet E — realny, potwierdzony gap: `POST /analysis/:id/compute` (analysis.routes.ts:108)
       // wymaga istniejącej krawędzi lineage do źródłowego Statement Pack, ale
@@ -1542,7 +1633,11 @@ export function describeFinanceV2Error(err: unknown): { title: string; detail: s
         code,
       };
     case 'BUSINESS_VERSION_NOT_FOUND':
-      return { title: 'Wersja analizy nie istnieje', detail: 'Ta wersja analizy została usunięta lub nie masz do niej dostępu.', code };
+      return {
+        title: 'Wersja analizy nie istnieje',
+        detail: 'Ta wersja analizy została usunięta lub nie masz do niej dostępu.',
+        code,
+      };
     case 'VERSION_CONFLICT':
       return {
         title: 'Ktoś inny zmienił ten rekord',
@@ -1550,7 +1645,11 @@ export function describeFinanceV2Error(err: unknown): { title: string; detail: s
         code,
       };
     case 'STATE_PRECONDITION_FAILED':
-      return { title: 'Ta operacja nie jest teraz możliwa', detail: 'Stan rekordu zmienił się od ostatniego odczytu. Odśwież i spróbuj ponownie.', code };
+      return {
+        title: 'Ta operacja nie jest teraz możliwa',
+        detail: 'Stan rekordu zmienił się od ostatniego odczytu. Odśwież i spróbuj ponownie.',
+        code,
+      };
     case 'FORBIDDEN':
     case 'SELF_APPROVAL_FORBIDDEN':
       return { title: 'Brak uprawnień', detail: 'Twoja rola nie pozwala na tę operację.', code };
@@ -1559,11 +1658,18 @@ export function describeFinanceV2Error(err: unknown): { title: string; detail: s
     case 'INVALID_ACTION':
     case 'EXPECTED_VERSION_REQUIRED':
     case 'INVALID_ARTIFACT_TYPE':
-      return { title: 'Nieprawidłowe żądanie', detail: err.message || 'Sprawdź dane i spróbuj ponownie.', code };
+      return {
+        title: 'Nieprawidłowe żądanie',
+        detail: err.message || 'Sprawdź dane i spróbuj ponownie.',
+        code,
+      };
     default:
       return {
         title: 'Nie udało się wykonać operacji',
-        detail: err.message && err.message.length < 160 ? err.message : 'Spróbuj ponownie lub zgłoś problem.',
+        detail:
+          err.message && err.message.length < 160
+            ? err.message
+            : 'Spróbuj ponownie lub zgłoś problem.',
         code,
       };
   }
@@ -1603,7 +1709,11 @@ export const BaselineAssumptionRuleValues = [
 ] as const;
 export type BaselineAssumptionRule = (typeof BaselineAssumptionRuleValues)[number];
 
-export const BaselineAssumptionQualityValues = ['CONFIRMED', 'ESTIMATED', 'DEGRADED_INSUFFICIENT_HISTORY'] as const;
+export const BaselineAssumptionQualityValues = [
+  'CONFIRMED',
+  'ESTIMATED',
+  'DEGRADED_INSUFFICIENT_HISTORY',
+] as const;
 export type BaselineAssumptionQuality = (typeof BaselineAssumptionQualityValues)[number];
 
 /** baseline.routes.ts:75-90 — węższy kształt wartości niż `FinanceValue` (brak native/presentation currency, multiplier, isAdjustment). */
@@ -1653,7 +1763,13 @@ export interface BaselineAssumptionUpsertInput {
 export interface BaselineAssumptionUpsertResultDto {
   businessVersionId: string;
   writtenCount: number;
-  assumptions: Array<{ assumptionId: string; scheduleType: BaselineScheduleType; driverCode: string; entityId: string; periodId: string }>;
+  assumptions: Array<{
+    assumptionId: string;
+    scheduleType: BaselineScheduleType;
+    driverCode: string;
+    entityId: string;
+    periodId: string;
+  }>;
 }
 
 /** baseline.routes.ts:159-191 — wejście POST compute (ciało). */
@@ -1745,12 +1861,37 @@ export type BaselineValueKind = 'ACTUAL' | 'FORECAST';
 
 /** baselineComputeService.ts CANONICAL_CODES (112-120) — jedna linia kanoniczna z jej grupą sprawozdania. */
 export const BASELINE_CANONICAL_LINE_ORDER: readonly string[] = [
-  'REVENUE', 'COGS', 'GROSS_MARGIN', 'OPEX', 'EBITDA', 'DEPRECIATION', 'EBIT',
-  'INTEREST_EXPENSE', 'TAX_EXPENSE', 'NET_INCOME',
-  'CASH', 'AR', 'INVENTORY', 'CURRENT_ASSETS', 'FIXED_ASSETS', 'TOTAL_ASSETS',
-  'AP', 'CURRENT_LIABILITIES', 'LONG_TERM_DEBT', 'TOTAL_LIABILITIES',
-  'EQUITY', 'TOTAL_LIABILITIES_EQUITY', 'RETAINED_EARNINGS', 'DIVIDENDS_DECLARED', 'WORKING_CAPITAL',
-  'CFO', 'CFI', 'CFF', 'NET_CHANGE_CASH', 'CAPEX', 'FCF',
+  'REVENUE',
+  'COGS',
+  'GROSS_MARGIN',
+  'OPEX',
+  'EBITDA',
+  'DEPRECIATION',
+  'EBIT',
+  'INTEREST_EXPENSE',
+  'TAX_EXPENSE',
+  'NET_INCOME',
+  'CASH',
+  'AR',
+  'INVENTORY',
+  'CURRENT_ASSETS',
+  'FIXED_ASSETS',
+  'TOTAL_ASSETS',
+  'AP',
+  'CURRENT_LIABILITIES',
+  'LONG_TERM_DEBT',
+  'TOTAL_LIABILITIES',
+  'EQUITY',
+  'TOTAL_LIABILITIES_EQUITY',
+  'RETAINED_EARNINGS',
+  'DIVIDENDS_DECLARED',
+  'WORKING_CAPITAL',
+  'CFO',
+  'CFI',
+  'CFF',
+  'NET_CHANGE_CASH',
+  'CAPEX',
+  'FCF',
 ];
 
 /** baseline.routes.ts:240-260, jeden wiersz. */
@@ -1787,16 +1928,44 @@ export interface BaselineOutputDto {
 
 /** Port `server/src/services/finance/canonical/baselineComputeService.ts:112-120`, reużywany bit-identycznie przez prediction. */
 export const CANONICAL_CODE_VALUES = [
-  'REVENUE', 'COGS', 'GROSS_MARGIN', 'OPEX', 'EBITDA', 'DEPRECIATION', 'EBIT',
-  'INTEREST_EXPENSE', 'TAX_EXPENSE', 'NET_INCOME',
-  'CASH', 'AR', 'INVENTORY', 'CURRENT_ASSETS', 'FIXED_ASSETS', 'TOTAL_ASSETS',
-  'AP', 'CURRENT_LIABILITIES', 'LONG_TERM_DEBT', 'TOTAL_LIABILITIES',
-  'EQUITY', 'TOTAL_LIABILITIES_EQUITY', 'RETAINED_EARNINGS', 'DIVIDENDS_DECLARED', 'WORKING_CAPITAL',
-  'CFO', 'CFI', 'CFF', 'NET_CHANGE_CASH', 'CAPEX', 'FCF',
+  'REVENUE',
+  'COGS',
+  'GROSS_MARGIN',
+  'OPEX',
+  'EBITDA',
+  'DEPRECIATION',
+  'EBIT',
+  'INTEREST_EXPENSE',
+  'TAX_EXPENSE',
+  'NET_INCOME',
+  'CASH',
+  'AR',
+  'INVENTORY',
+  'CURRENT_ASSETS',
+  'FIXED_ASSETS',
+  'TOTAL_ASSETS',
+  'AP',
+  'CURRENT_LIABILITIES',
+  'LONG_TERM_DEBT',
+  'TOTAL_LIABILITIES',
+  'EQUITY',
+  'TOTAL_LIABILITIES_EQUITY',
+  'RETAINED_EARNINGS',
+  'DIVIDENDS_DECLARED',
+  'WORKING_CAPITAL',
+  'CFO',
+  'CFI',
+  'CFF',
+  'NET_CHANGE_CASH',
+  'CAPEX',
+  'FCF',
 ] as const;
 export type CanonicalCode = (typeof CANONICAL_CODE_VALUES)[number];
 
-export const PREDICTION_FINDING_KIND_VALUES = ['OVERLAP_DOUBLE_COUNTING', 'CONTRADICTORY_SIGNS'] as const;
+export const PREDICTION_FINDING_KIND_VALUES = [
+  'OVERLAP_DOUBLE_COUNTING',
+  'CONTRADICTORY_SIGNS',
+] as const;
 export type PredictionFindingKind = (typeof PREDICTION_FINDING_KIND_VALUES)[number];
 
 /** `prediction.routes.ts` `POST /prediction/:businessVersionId/preflight`, sukces (201), jeden finding — pole-po-polu z `PreflightFindingPreview`. */
@@ -1846,9 +2015,17 @@ export interface FinancePredictionCalculateComputedResultDto {
   periods: FinancePredictionPeriodResultDto[];
 }
 
-export type FinancePredictionCalculateResultDto = FinancePredictionCalculateStandardBaseResultDto | FinancePredictionCalculateComputedResultDto;
+export type FinancePredictionCalculateResultDto =
+  | FinancePredictionCalculateStandardBaseResultDto
+  | FinancePredictionCalculateComputedResultDto;
 
-export const PREDICTION_SCENARIO_MODE_VALUES = ['STANDARD_BASE', 'STANDARD_UPSIDE', 'STANDARD_DOWNSIDE', 'DRIVER_OVERRIDE', 'FUNDAMENTAL_INITIATIVE'] as const;
+export const PREDICTION_SCENARIO_MODE_VALUES = [
+  'STANDARD_BASE',
+  'STANDARD_UPSIDE',
+  'STANDARD_DOWNSIDE',
+  'DRIVER_OVERRIDE',
+  'FUNDAMENTAL_INITIATIVE',
+] as const;
 export type PredictionScenarioMode = (typeof PREDICTION_SCENARIO_MODE_VALUES)[number];
 
 /** `crosscutting.routes.ts` `GET /exceptions/open`, jeden wpis — reużywany przez widok Modele/Wyniki (rejestr wyjątków, DEC-FIN-009). */
@@ -1905,7 +2082,12 @@ export interface CompareCellPointDto {
   presentationCurrency: string | null;
 }
 
-export type CompareDiffKindDto = 'BOTH_PRESENT' | 'MISSING_IN_A' | 'MISSING_IN_B' | 'MISSING_IN_BOTH' | 'CURRENCY_MISMATCH';
+export type CompareDiffKindDto =
+  | 'BOTH_PRESENT'
+  | 'MISSING_IN_A'
+  | 'MISSING_IN_B'
+  | 'MISSING_IN_BOTH'
+  | 'CURRENCY_MISMATCH';
 
 export interface CompareRowDto {
   matchKey: string;
@@ -1919,7 +2101,14 @@ export interface CompareRowDto {
   note: string | null;
 }
 
-export type CompareComparisonTypeDto = 'PERIOD' | 'VERSION' | 'ENTITY' | 'SCENARIO' | 'VALUATION_METHOD' | 'ACTUAL_VS_FORECAST' | 'GENERIC';
+export type CompareComparisonTypeDto =
+  | 'PERIOD'
+  | 'VERSION'
+  | 'ENTITY'
+  | 'SCENARIO'
+  | 'VALUATION_METHOD'
+  | 'ACTUAL_VS_FORECAST'
+  | 'GENERIC';
 
 export interface CompareSummaryDto {
   totalRows: number;
@@ -2110,7 +2299,14 @@ export interface GridViewStateSnapshotInput {
 }
 
 export function emptyGridViewStateSnapshot(): GridViewStateSnapshotInput {
-  return { schemaVersion: 1, freezeRowsCount: 0, freezeColumnsCount: 0, columns: [], rows: [], groups: [] };
+  return {
+    schemaVersion: 1,
+    freezeRowsCount: 0,
+    freezeColumnsCount: 0,
+    columns: [],
+    rows: [],
+    groups: [],
+  };
 }
 
 /** `savedViewService.ts`'s `SavedViewFilterSchema` discriminated union, ported field-for-field. */
@@ -2140,7 +2336,11 @@ export interface FinanceSavedViewDto {
   scope: FinanceSavedViewScope;
   ownerUserId: string;
   name: string;
-  viewState: { schemaVersion: 1; gridViewState: GridViewStateSnapshotInput; filters: SavedViewFilterInput[] };
+  viewState: {
+    schemaVersion: 1;
+    gridViewState: GridViewStateSnapshotInput;
+    filters: SavedViewFilterInput[];
+  };
   shareToken: string;
   createdBy: string;
   createdAt: string;
@@ -2193,11 +2393,21 @@ export interface FinanceImportDiffChangeDto {
   cellKey: string;
   cellRef: FinanceCellRefInput;
   before: { status: FinanceValueStatus; valueDecimal: string | null };
-  after: { rowNumber: number; cellKey: string; cellRef: FinanceCellRefInput; value: Record<string, unknown> };
+  after: {
+    rowNumber: number;
+    cellKey: string;
+    cellRef: FinanceCellRefInput;
+    value: Record<string, unknown>;
+  };
 }
 
 export interface FinanceImportDiffDto {
-  toAdd: { rowNumber: number; cellKey: string; cellRef: FinanceCellRefInput; value: Record<string, unknown> }[];
+  toAdd: {
+    rowNumber: number;
+    cellKey: string;
+    cellRef: FinanceCellRefInput;
+    value: Record<string, unknown>;
+  }[];
   toChange: FinanceImportDiffChangeDto[];
   toClear: { cellKey: string; cellRef: FinanceCellRefInput }[];
   unchangedCount: number;
@@ -2326,7 +2536,11 @@ export interface LineageRelatedGroupDto {
 export interface LineageCreateNewActionDto {
   targetArtifactType: FinanceArtifactType;
   label: FinanceLabelDto;
-  preselectedSource: { artifactId: string; artifactType: FinanceArtifactType; businessVersionId: string };
+  preselectedSource: {
+    artifactId: string;
+    artifactType: FinanceArtifactType;
+    businessVersionId: string;
+  };
 }
 
 /** "Powiązane" panel (OWN-FIN-007) — groups with counts + `+ Nowy` action per downstream type. */
@@ -2351,7 +2565,12 @@ export interface FinanceLineageNavigatorDto {
   businessVersionId: string;
   trail: LineageTrailDto;
   relatedPanel: LineageRelatedPanelDto;
-  fullGraphView: { id: string; label: FinanceLabelDto; auxiliary: boolean; defaultVisible: boolean };
+  fullGraphView: {
+    id: string;
+    label: FinanceLabelDto;
+    auxiliary: boolean;
+    defaultVisible: boolean;
+  };
 }
 
 /** `POST /versions/lineage-edges` success shape (`lineage-navigator.routes.ts:268-283`). */
