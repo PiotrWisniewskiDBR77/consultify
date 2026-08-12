@@ -609,6 +609,9 @@
         "typeNote": "Notiz",
         "typeUrl": "URL"
       }
+    },
+    "shared": {
+      "dragHandleTitle": "Zum Neuanordnen ziehen"
     }
   },
   "step1": {
@@ -3342,7 +3345,19 @@
       "frameworkApplyTruncatedAtCap": "{{added}} von {{total}} Framework-Zeilen hinzugefügt — das Tabellenlimit liegt bei {{max}} Zeilen. {{skipped}} Zeilen wurden nicht hinzugefügt."
     },
     "mindmap": {
-      "resetView": "Ansicht zurücksetzen"
+      "resetView": "Ansicht zurücksetzen",
+      "doubleClickToAddLabel": "Doppelklicken, um eine Beschriftung hinzuzufügen",
+      "mindMapOverview": "Mind-Map-Übersicht",
+      "noIdeasYet": "Noch keine Ideen",
+      "mindMapPresentationTitle": "Mind-Map-Präsentation",
+      "canvasNotFound": "Mind-Map-Canvas nicht gefunden. Bitte versuche es erneut.",
+      "canvasEmptyNothingToExport": "Die Mind-Map scheint leer zu sein — nichts zu exportieren.",
+      "preparingPdfExport": "PDF-Export wird vorbereitet…",
+      "popupBlockedForPdf": "Pop-up blockiert. Bitte erlaube Pop-ups, um die PDF zu exportieren.",
+      "failedToRenderImageRetry": "Das Mind-Map-Bild konnte nicht gerendert werden. Bitte schließe diesen Tab und versuche es erneut.",
+      "pdfReadyPrintDialog": "PDF ist bereit — verwende den Druckdialog, um es zu speichern.",
+      "pdfExportFailedRetry": "PDF-Export fehlgeschlagen. Bitte versuche es erneut.",
+      "copyFailed": "Kopieren fehlgeschlagen"
     },
     "financial": {
       "dialogTitle": "Wirtschaftlichkeitsrechnung",

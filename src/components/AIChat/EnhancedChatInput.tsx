@@ -150,7 +150,8 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
   const uiLangBase = String(i18n.language || 'pl')
     .split('-')[0]
     .toLowerCase();
-  const uiLang = uiLangBase === 'ja' ? 'jp' : uiLangBase;
+  // Legacy compat: a stale cached bundle/localStorage value could still say 'jp'.
+  const uiLang = uiLangBase === 'jp' ? 'ja' : uiLangBase;
 
   // Cloud integrations
   const {
@@ -524,8 +525,8 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
       en: 'en-US',
       de: 'de-DE',
       es: 'es-ES',
-      jp: 'ja-JP',
-      ja: 'ja-JP', // alias
+      ja: 'ja-JP',
+      jp: 'ja-JP', // legacy alias (pre-migration code, see src/i18n.ts)
       ar: 'ar-SA',
     };
     recognition.lang = langMap[effectiveLang] || 'pl-PL';

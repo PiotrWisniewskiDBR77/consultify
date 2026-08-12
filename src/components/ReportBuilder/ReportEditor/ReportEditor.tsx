@@ -75,8 +75,8 @@ import { StaleDataBadge } from './StaleDataBadge';
 export interface ReportIntent {
   audience: 'executive' | 'technical' | 'board' | 'operational' | 'mixed';
   goal: 'diagnosis' | 'roadmap' | 'investment_decision' | 'stakeholder_update' | 'summary';
-  /** Supported languages: pl, en, de, es, ar, jp */
-  language: 'pl' | 'en' | 'de' | 'es' | 'ar' | 'jp';
+  /** Supported languages: pl, en, de, es, ar, ja */
+  language: 'pl' | 'en' | 'de' | 'es' | 'ar' | 'ja';
   tone: 'consulting' | 'neutral' | 'decisive' | 'academic';
   scope: 'full' | 'executive' | 'focused';
   focusedAxes?: string[];

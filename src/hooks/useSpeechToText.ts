@@ -81,7 +81,7 @@ const SUPPORTED_LANGUAGES = [
   'en',
   'de',
   'es',
-  'jp',
+  'ja',
   'ar',
   'fr',
   'it',

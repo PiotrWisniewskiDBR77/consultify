@@ -82,8 +82,11 @@ export const ChatConfirmRequestSchema = z.object({
     .transform((lang) => {
       if (!lang) return 'en';
       const base = lang.split('-')[0].toLowerCase();
-      const validLangs = ['pl', 'en', 'de', 'es', 'ja', 'jp', 'ar'];
-      return validLangs.includes(base) ? base : 'en';
+      // 'jp' accepted for one release as a legacy input alias (S23-LOCALE,
+      // 2026-08-12: 'jp' was not valid BCP47 for Japanese, migrated to 'ja').
+      const mappedBase = base === 'jp' ? 'ja' : base;
+      const validLangs = ['pl', 'en', 'de', 'es', 'ja', 'ar'];
+      return validLangs.includes(mappedBase) ? mappedBase : 'en';
     })
     .optional(),
   conversationId: z.string().optional(),
@@ -164,8 +167,11 @@ export const ChatStreamRequestSchema = z.object({
       // Accept locale variants like 'en-GB', 'en-US', etc. and convert to base code
       if (!lang) return 'en';
       const base = lang.split('-')[0].toLowerCase();
-      const validLangs = ['pl', 'en', 'de', 'es', 'ja', 'jp', 'ar'];
-      return validLangs.includes(base) ? base : 'en';
+      // 'jp' accepted for one release as a legacy input alias (S23-LOCALE,
+      // 2026-08-12: 'jp' was not valid BCP47 for Japanese, migrated to 'ja').
+      const mappedBase = base === 'jp' ? 'ja' : base;
+      const validLangs = ['pl', 'en', 'de', 'es', 'ja', 'ar'];
+      return validLangs.includes(mappedBase) ? mappedBase : 'en';
     })
     .optional(),
   conversationId: z.preprocess(
@@ -195,8 +201,11 @@ export const AgentAuditSuggestRequestSchema = z.object({
     .transform((lang) => {
       if (!lang) return 'en';
       const base = lang.split('-')[0].toLowerCase();
-      const validLangs = ['pl', 'en', 'de', 'es', 'ja', 'jp', 'ar'];
-      return validLangs.includes(base) ? base : 'en';
+      // 'jp' accepted for one release as a legacy input alias (S23-LOCALE,
+      // 2026-08-12: 'jp' was not valid BCP47 for Japanese, migrated to 'ja').
+      const mappedBase = base === 'jp' ? 'ja' : base;
+      const validLangs = ['pl', 'en', 'de', 'es', 'ja', 'ar'];
+      return validLangs.includes(mappedBase) ? mappedBase : 'en';
     })
     .optional(),
   maxAgents: z
@@ -218,8 +227,11 @@ export const AgentAuditReviewRequestSchema = z.object({
     .transform((lang) => {
       if (!lang) return 'en';
       const base = lang.split('-')[0].toLowerCase();
-      const validLangs = ['pl', 'en', 'de', 'es', 'ja', 'jp', 'ar'];
-      return validLangs.includes(base) ? base : 'en';
+      // 'jp' accepted for one release as a legacy input alias (S23-LOCALE,
+      // 2026-08-12: 'jp' was not valid BCP47 for Japanese, migrated to 'ja').
+      const mappedBase = base === 'jp' ? 'ja' : base;
+      const validLangs = ['pl', 'en', 'de', 'es', 'ja', 'ar'];
+      return validLangs.includes(mappedBase) ? mappedBase : 'en';
     })
     .optional(),
   selectedTier: z.enum(['BUDGET', 'STANDARD', 'PREMIUM', 'REASONING']).optional(),

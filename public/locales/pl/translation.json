@@ -4519,6 +4519,9 @@
         "typeNote": "Notatka",
         "typeUrl": "URL"
       }
+    },
+    "shared": {
+      "dragHandleTitle": "Przeciągnij, aby zmienić kolejność"
     }
   },
   "step1": {
@@ -28727,7 +28730,19 @@
       "branchHasNoChildren": "Ten węzeł nie ma podgałęzi — nie ma czego podsumować.",
       "tryAgain": "Spróbuj ponownie",
       "arrowDirectionBranch": "Strzałki w gałęzi",
-      "resetView": "Przywróć widok"
+      "resetView": "Przywróć widok",
+      "doubleClickToAddLabel": "Kliknij dwukrotnie, aby dodać etykietę",
+      "mindMapOverview": "Przegląd mapy myśli",
+      "noIdeasYet": "Brak pomysłów",
+      "mindMapPresentationTitle": "Prezentacja mapy myśli",
+      "copyFailed": "Nie udało się skopiować",
+      "canvasNotFound": "Nie znaleziono płótna mapy myśli. Spróbuj ponownie.",
+      "canvasEmptyNothingToExport": "Mapa myśli wygląda na pustą — nie ma nic do wyeksportowania.",
+      "preparingPdfExport": "Przygotowuję eksport PDF…",
+      "popupBlockedForPdf": "Wyskakujące okno zablokowane. Zezwól na wyskakujące okna, aby wyeksportować PDF.",
+      "failedToRenderImageRetry": "Nie udało się wyrenderować obrazu mapy myśli. Zamknij tę kartę i spróbuj ponownie.",
+      "pdfReadyPrintDialog": "PDF gotowy — użyj okna drukowania, aby go zapisać.",
+      "pdfExportFailedRetry": "Eksport PDF nie powiódł się. Spróbuj ponownie."
     },
     "financial": {
       "dialogTitle": "Case finansowy",

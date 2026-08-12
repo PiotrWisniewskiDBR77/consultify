@@ -610,6 +610,9 @@
         "typeNote": "Nota",
         "typeUrl": "URL"
       }
+    },
+    "shared": {
+      "dragHandleTitle": "Arrastra para reordenar"
     }
   },
   "step1": {
@@ -3239,7 +3242,19 @@
       "frameworkApplyTruncatedAtCap": "Se añadieron {{added}} de {{total}} filas del framework: el límite de la tabla es de {{max}} filas. No se añadieron {{skipped}} filas."
     },
     "mindmap": {
-      "resetView": "Restablecer vista"
+      "resetView": "Restablecer vista",
+      "doubleClickToAddLabel": "Haz doble clic para añadir una etiqueta",
+      "mindMapOverview": "Resumen del mapa mental",
+      "noIdeasYet": "Aún no hay ideas",
+      "mindMapPresentationTitle": "Presentación del mapa mental",
+      "copyFailed": "Error al copiar",
+      "canvasNotFound": "No se encontró el lienzo del mapa mental. Inténtalo de nuevo.",
+      "canvasEmptyNothingToExport": "El mapa mental parece estar vacío: no hay nada que exportar.",
+      "preparingPdfExport": "Preparando la exportación a PDF…",
+      "popupBlockedForPdf": "Ventana emergente bloqueada. Permite las ventanas emergentes para exportar el PDF.",
+      "failedToRenderImageRetry": "No se pudo renderizar la imagen del mapa mental. Cierra esta pestaña e inténtalo de nuevo.",
+      "pdfReadyPrintDialog": "PDF listo: usa el cuadro de diálogo de impresión para guardarlo.",
+      "pdfExportFailedRetry": "Error al exportar el PDF. Inténtalo de nuevo."
     },
     "financial": {
       "dialogTitle": "Caso financiero",

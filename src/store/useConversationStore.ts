@@ -12,7 +12,7 @@
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
-import { isValidLanguage, type SupportedLanguage } from '@/i18n';
+import { normalizeLanguageCode, type SupportedLanguage } from '@/i18n';
 import { Api } from '@/services/api';
 
 import { AppView, ChatMessage } from '../types';
@@ -191,8 +191,9 @@ function getAppLanguageFallback(): SupportedLanguage {
       const i18nLng = localStorage.getItem('i18nextLng');
       if (i18nLng) {
         const i18nBase = String(i18nLng).split('-')[0].toLowerCase();
-        const i18nMapped = i18nBase === 'ja' ? 'jp' : i18nBase;
-        if (isValidLanguage(i18nMapped)) return i18nMapped as SupportedLanguage;
+        // normalizeLanguageCode resolves the legacy 'jp' alias to 'ja' too.
+        const i18nMapped = normalizeLanguageCode(i18nBase);
+        if (i18nMapped) return i18nMapped;
       }
     }
     // Fall back to browser language
@@ -200,8 +201,8 @@ function getAppLanguageFallback(): SupportedLanguage {
       (typeof navigator !== 'undefined' && (navigator.languages?.[0] || navigator.language)) ||
       'pl';
     const base = String(nav).split('-')[0].toLowerCase();
-    const mapped = base === 'ja' ? 'jp' : base;
-    return (isValidLanguage(mapped) ? mapped : 'pl') as SupportedLanguage;
+    const mapped = normalizeLanguageCode(base);
+    return mapped || 'pl';
   } catch {
     return 'pl';
   }
@@ -922,7 +923,10 @@ export const useConversationStore = create<ConversationState>()(
             set((state) => {
               const fromApiRaw = result?.language;
               const fromApiBase = fromApiRaw ? String(fromApiRaw).split('-')[0] : null;
-              const fromApi = fromApiBase && isValidLanguage(fromApiBase) ? fromApiBase : null;
+              // normalizeLanguageCode (not a raw isValidLanguage check) so a
+              // conversation persisted with the legacy 'jp' code still resolves
+              // instead of silently falling through to the app default.
+              const fromApi = fromApiBase ? normalizeLanguageCode(fromApiBase) : null;
               const existing = state.chatLanguageByConversationId[id];
               const resolved =
                 (fromApi as any) || existing || state.draftChatLanguage || getAppLanguageFallback();
@@ -2051,10 +2055,9 @@ function mapApiConversation(api: any): Conversation {
     id: api.id,
     title: api.title,
     titleSource: api.title_source || 'auto',
-    language:
-      languageBase && isValidLanguage(languageBase)
-        ? (languageBase as SupportedLanguage)
-        : undefined,
+    // normalizeLanguageCode (not a raw isValidLanguage check) so a
+    // conversation persisted with the legacy 'jp' code still resolves.
+    language: (languageBase ? normalizeLanguageCode(languageBase) : null) || undefined,
     projectId: api.project_id,
     chatProjectId: api.chat_project_id || null,
     organizationId: api.organization_id,

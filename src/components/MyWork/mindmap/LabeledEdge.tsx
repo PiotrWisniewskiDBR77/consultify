@@ -1,6 +1,7 @@
 // @ts-ignore reactflow version mismatch
 import { EdgeLabelRenderer, getSmoothStepPath } from '@reactflow/core';
 import React, { useCallback, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { type EdgeProps } from 'reactflow';
 
 import {
@@ -22,6 +23,7 @@ export const LabeledEdge: React.FC<EdgeProps> = ({
   data,
   selected,
 }) => {
+  const { t } = useTranslation();
   const [edgePath, labelX, labelY] = getSmoothStepPath({
     sourceX,
     sourceY,
@@ -197,7 +199,7 @@ export const LabeledEdge: React.FC<EdgeProps> = ({
             <div
               onDoubleClick={handleDoubleClick}
               className="w-4 h-4 rounded-full bg-transparent hover:bg-c-surface-raised cursor-pointer transition-colors"
-              title="Double-click to add label"
+              title={t('ideas.mindmap.doubleClickToAddLabel', 'Double-click to add label')}
             />
           )}
         </div>

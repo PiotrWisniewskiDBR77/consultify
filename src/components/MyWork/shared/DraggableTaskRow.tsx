@@ -8,6 +8,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { GripVertical } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface DraggableTaskRowProps {
   id: string;
@@ -20,6 +21,7 @@ export const DraggableTaskRow: React.FC<DraggableTaskRowProps> = ({
   children,
   disabled = false,
 }) => {
+  const { t } = useTranslation();
   const { attributes, listeners, setNodeRef, transform, transition, isDragging, isOver } =
     useSortable({
       id,
@@ -56,7 +58,7 @@ export const DraggableTaskRow: React.FC<DraggableTaskRowProps> = ({
             transition-colors
             ${disabled ? 'invisible' : ''}
           `}
-          title="Drag to reorder"
+          title={t('myWork.shared.dragHandleTitle', 'Drag to reorder')}
         >
           <GripVertical size={14} />
         </button>

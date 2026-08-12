@@ -5249,6 +5249,9 @@
         "typeNote": "Note",
         "typeUrl": "URL"
       }
+    },
+    "shared": {
+      "dragHandleTitle": "Drag to reorder"
     }
   },
   "step1": {
@@ -27594,7 +27597,19 @@
       "branchHasNoChildren": "This node has no sub-nodes, so there is no branch to summarize.",
       "tryAgain": "Try again",
       "arrowDirectionBranch": "Arrows in branch",
-      "resetView": "Reset view"
+      "resetView": "Reset view",
+      "doubleClickToAddLabel": "Double-click to add label",
+      "mindMapOverview": "Mind Map Overview",
+      "noIdeasYet": "No ideas yet",
+      "mindMapPresentationTitle": "Mind Map Presentation",
+      "copyFailed": "Failed to copy",
+      "canvasNotFound": "Mind map canvas not found. Please try again.",
+      "canvasEmptyNothingToExport": "Mind map appears empty — nothing to export.",
+      "preparingPdfExport": "Preparing PDF export…",
+      "popupBlockedForPdf": "Pop-up blocked. Please allow pop-ups to export the PDF.",
+      "failedToRenderImageRetry": "Failed to render the mind map image. Please close this tab and try again.",
+      "pdfReadyPrintDialog": "PDF ready — use the print dialog to save it.",
+      "pdfExportFailedRetry": "PDF export failed. Please try again."
     },
     "financial": {
       "dialogTitle": "Financial case",

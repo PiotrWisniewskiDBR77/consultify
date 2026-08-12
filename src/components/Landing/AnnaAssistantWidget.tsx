@@ -35,7 +35,7 @@ type AnnaSurfaceContext = {
 };
 
 type VoiceStatus = 'idle' | 'connecting' | 'live' | 'error';
-type AnnaUiLanguage = 'en' | 'pl' | 'es' | 'de' | 'jp' | 'ar';
+type AnnaUiLanguage = 'en' | 'pl' | 'es' | 'de' | 'ja' | 'ar';
 
 type AnnaCopy = {
   title: string;
@@ -197,7 +197,7 @@ const COPY: Record<AnnaUiLanguage, AnnaCopy> = {
     trialCta: 'Trial starten',
     contactCta: 'Kontakt',
   },
-  jp: {
+  ja: {
     title: 'Anna',
     subtitle: '公開プロダクトアシスタント',
     intro:
@@ -413,7 +413,7 @@ function buildGenericSiteIntro(lang: AnnaUiLanguage, brandName: string): string 
   if (lang === 'de') {
     return `Ich kann ${brandName}, seine Rolle im DBR77-Okosystem und den besten nachsten Schritt erklaren. Ich habe keinen Zugriff auf Kunden- oder Projektdaten.`;
   }
-  if (lang === 'jp') {
+  if (lang === 'ja') {
     return `${brandName}、そのDBR77エコシステム内での役割、そして適切な次のステップを説明できます。顧客データやプロジェクトデータにはアクセスできません。`;
   }
   if (lang === 'ar') {
@@ -439,7 +439,7 @@ function buildGenericSiteSuggestions(lang: AnnaUiLanguage, brandName: string): s
       'Was ist der richtige nachste Schritt?',
     ];
   }
-  if (lang === 'jp') {
+  if (lang === 'ja') {
     return [
       `${brandName}とは何ですか？`,
       `${brandName}は誰のためのものですか？`,
@@ -581,7 +581,7 @@ Wissenskontext:
 ${String(knowledgeContext || 'Es wurde kein zusatzlicher Produktkontext geladen. Bleibe bei verifizierten offentlichen Fakten.')}`;
   }
 
-  if (lang === 'jp') {
+  if (lang === 'ja') {
     return `あなたは${brandName}の公開向け音声アシスタントAnnaです。
 
 声は温かく、落ち着いていて、プロフェッショナルで、女性らしい印象にしてください。チャットボットや押しの強い営業ではなく、経験豊富なAI戦略コンサルタントのように話します。
@@ -700,7 +700,7 @@ export const AnnaAssistantWidget: React.FC<AnnaAssistantWidgetProps> = ({
     resolvedLanguage === 'pl' ||
     resolvedLanguage === 'es' ||
     resolvedLanguage === 'de' ||
-    resolvedLanguage === 'jp' ||
+    resolvedLanguage === 'ja' ||
     resolvedLanguage === 'ar'
       ? resolvedLanguage
       : 'en';

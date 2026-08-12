@@ -1,14 +1,14 @@
 import type { FAQItem } from './faqContent';
 import type { ViewHelpMapping } from './viewToModuleMapping';
 
-export type SupportedHelpLanguage = 'en' | 'pl' | 'de' | 'ar' | 'jp' | 'es';
+export type SupportedHelpLanguage = 'en' | 'pl' | 'de' | 'ar' | 'ja' | 'es';
 
 export interface LocalizedText {
   en: string;
   pl: string;
   de?: string;
   ar?: string;
-  jp?: string;
+  ja?: string;
   es?: string;
 }
 

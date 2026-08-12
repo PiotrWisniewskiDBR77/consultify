@@ -109,8 +109,8 @@ export const ExportDiagramCode: React.FC<ExportDiagramCodeProps> = ({
         toast.success(t('ideas.mindmap.copied', 'Copied!'), { duration: 1000 });
         setTimeout(() => setCopied(false), 2000);
       })
-      .catch(() => toast.error('Failed to copy'));
-  }, [code]);
+      .catch(() => toast.error(t('ideas.mindmap.copyFailed', 'Failed to copy')));
+  }, [code, t]);
 
   const containerRef = useRef<HTMLDivElement>(null);
   useDialogA11y({ open, onClose, containerRef });

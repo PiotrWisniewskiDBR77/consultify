@@ -12,7 +12,7 @@ const TARGETS = {
   pl: { deepl: 'PL', formality: 'prefer_more' },
   de: { deepl: 'DE', formality: 'prefer_more' },
   es: { deepl: 'ES', formality: 'prefer_more' },
-  jp: { deepl: 'JA', formality: 'prefer_more' },
+  ja: { deepl: 'JA', formality: 'prefer_more' },
   ar: { deepl: 'AR', formality: null },
 };
 

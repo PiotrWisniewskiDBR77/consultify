@@ -644,7 +644,6 @@ function getBrowserLanguage(): string {
     const raw =
       (typeof navigator !== 'undefined' && (navigator.languages?.[0] || navigator.language)) || '';
     const base = String(raw).split('-')[0].toLowerCase();
-    if (base === 'ja') return 'jp'; // app uses "jp" locale folder/code
     return base || 'en';
   } catch {
     return 'en';

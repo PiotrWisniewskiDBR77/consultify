@@ -613,6 +613,9 @@
         "typeNote": "ملاحظة",
         "typeUrl": "الرابط"
       }
+    },
+    "shared": {
+      "dragHandleTitle": "اسحب لإعادة الترتيب"
     }
   },
   "step1": {
@@ -3245,7 +3248,19 @@
       "frameworkApplyTruncatedAtCap": "تمت إضافة {{added}} من أصل {{total}} صفًا من الإطار — الحد الأقصى للجدول هو {{max}} صفًا. لم تتم إضافة {{skipped}} صفًا."
     },
     "mindmap": {
-      "resetView": "إعادة تعيين العرض"
+      "resetView": "إعادة تعيين العرض",
+      "doubleClickToAddLabel": "انقر نقرًا مزدوجًا لإضافة تسمية",
+      "mindMapOverview": "نظرة عامة على الخريطة الذهنية",
+      "noIdeasYet": "لا توجد أفكار بعد",
+      "mindMapPresentationTitle": "عرض الخريطة الذهنية التقديمي",
+      "copyFailed": "فشل النسخ",
+      "canvasNotFound": "لم يتم العثور على لوحة الخريطة الذهنية. يرجى المحاولة مرة أخرى.",
+      "canvasEmptyNothingToExport": "تبدو الخريطة الذهنية فارغة — لا يوجد ما يمكن تصديره.",
+      "preparingPdfExport": "جارٍ تجهيز تصدير PDF…",
+      "popupBlockedForPdf": "تم حظر النافذة المنبثقة. يرجى السماح بالنوافذ المنبثقة لتصدير ملف PDF.",
+      "failedToRenderImageRetry": "فشل عرض صورة الخريطة الذهنية. يرجى إغلاق هذا التبويب والمحاولة مرة أخرى.",
+      "pdfReadyPrintDialog": "ملف PDF جاهز — استخدم مربع حوار الطباعة لحفظه.",
+      "pdfExportFailedRetry": "فشل تصدير PDF. يرجى المحاولة مرة أخرى."
     },
     "financial": {
       "dialogTitle": "الحالة المالية",

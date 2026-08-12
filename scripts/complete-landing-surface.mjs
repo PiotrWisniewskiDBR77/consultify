@@ -1,5 +1,5 @@
 // Completes EVERY t() key rendered on the landing surface (all namespaces) for
-// pl/de/es/jp/ar. Seeds EN from component defaults where the key is absent, then
+// pl/de/es/ja/ar. Seeds EN from component defaults where the key is absent, then
 // DeepL-translates any target value that is missing or still equal to EN.
 import fs from 'node:fs';
 
@@ -12,7 +12,7 @@ const TARGETS = {
   pl: { deepl: 'PL', formality: 'prefer_more' },
   de: { deepl: 'DE', formality: 'prefer_more' },
   es: { deepl: 'ES', formality: 'prefer_more' },
-  jp: { deepl: 'JA', formality: 'prefer_more' },
+  ja: { deepl: 'JA', formality: 'prefer_more' },
   ar: { deepl: 'AR', formality: null },
 };
 

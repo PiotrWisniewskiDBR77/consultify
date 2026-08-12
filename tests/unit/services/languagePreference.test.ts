@@ -25,7 +25,7 @@ vi.mock('@/i18n', () => ({
     const base = String(lng || '')
       .toLowerCase()
       .split(/[-_]/)[0];
-    const supported = ['en', 'pl', 'de', 'ar', 'jp', 'es'];
+    const supported = ['en', 'pl', 'de', 'ar', 'ja', 'es'];
     return supported.includes(base) ? base : null;
   },
 }));

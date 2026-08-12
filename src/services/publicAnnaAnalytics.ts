@@ -1,6 +1,6 @@
 export type AnnaLpCtaType = 'demo' | 'trial' | 'contact';
 export type AnnaLpChannel = 'text' | 'voice';
-export type AnnaLpLanguage = 'pl' | 'en' | 'es' | 'de' | 'jp' | 'ar';
+export type AnnaLpLanguage = 'pl' | 'en' | 'es' | 'de' | 'ja' | 'ar';
 export type AnnaLpSourceIntent =
   | 'learn'
   | 'evaluate_fit'

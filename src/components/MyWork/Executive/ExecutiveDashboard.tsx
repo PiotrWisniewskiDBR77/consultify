@@ -232,7 +232,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
     de: 'de-DE',
     es: 'es-ES',
     ar: 'ar-SA',
-    jp: 'ja-JP',
+    ja: 'ja-JP',
   };
   const dateLocale = dateLocaleMap[currentLang] || 'en-US';
 

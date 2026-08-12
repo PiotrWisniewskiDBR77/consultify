@@ -25,8 +25,9 @@ const LANGUAGES = [
   { code: 'de', locale: 'de-DE', name: 'Deutsch', direction: 'ltr' },
   { code: 'es', locale: 'es-ES', name: 'Español', direction: 'ltr' },
   { code: 'ar', locale: 'ar-SA', name: 'العربية', direction: 'rtl' },
-  // App uses "jp" locale code, but browsers report "ja"
-  { code: 'jp', locale: 'ja-JP', name: '日本語', direction: 'ltr' },
+  // S23-LOCALE (2026-08-12): app locale code is "ja" (BCP47-correct),
+  // matching what browsers report — no remapping needed anymore.
+  { code: 'ja', locale: 'ja-JP', name: '日本語', direction: 'ltr' },
 ] as const;
 
 // Helper to set browser language before page load (app detects from navigator.*)

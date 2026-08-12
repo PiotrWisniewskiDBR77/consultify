@@ -116,9 +116,9 @@ export const EmbedInReports: React.FC<EmbedInReportsProps> = ({
         setTimeout(() => setCopied(false), 2000);
       })
       .catch(() => {
-        toast.error('Failed to copy');
+        toast.error(t('ideas.mindmap.copyFailed', 'Failed to copy'));
       });
-  }, [embedContent]);
+  }, [embedContent, t]);
 
   const containerRef = useRef<HTMLDivElement>(null);
   useDialogA11y({ open, onClose, containerRef });

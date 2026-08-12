@@ -2,11 +2,22 @@
  * s2-locale-added-keys.test.ts
  *
  * RISK-26 (P3) — locale-sweep gate for the S2-LOCALE stream.
+ * Updated by S23-LOCALE (2026-08-12, RISK-38): the app's Japanese locale code
+ * was migrated from 'jp' to 'ja' — see src/i18n.ts. 'jp' is not a valid
+ * BCP47 subtag for Japanese ('ja' is); the app now resolves 'ja' natively and
+ * reads `public/locales/ja/`. The old `public/locales/jp/` directory (richer
+ * content — 2480 keys vs. the then-dead `ja/`'s 1175, plus 8 keys
+ * (`reports.entry.*`) that only existed in `ja/`) was reconciled into the new
+ * `public/locales/ja/` (nothing lost from either side) and removed. 'jp' is
+ * kept as a read-time alias (see `LANGUAGE_ALIASES` in src/i18n.ts) so any
+ * already-persisted 'jp' preference (localStorage, account/conversation
+ * `language` columns) keeps resolving instead of stranding users — it is not
+ * a locale file on disk anymore.
  *
  * This program (the "Ideas transformation" branch) added a batch of new keys
  * to `public/locales/pl` and `public/locales/en` on top of the origin/demo
  * baseline. Those keys previously had no translation at all in `de`, `es`,
- * `ar`, `jp` and silently fell back to the English developer default — not a
+ * `ar`, `ja` and silently fell back to the English developer default — not a
  * regression (they never had an entry), but not "done" either.
  *
  * Rather than hand-maintaining a list of "which keys were added" (which goes
@@ -21,24 +32,28 @@
  * of an AST, but the goal is the same: no hand-typed list to drift out of sync.
  *
  * Supported-locale decision for this stream (S2-LOCALE, 2026-08-12):
- *   - de, es, ar, jp: option (A) — keys added, machine/LLM-translated (not
- *     reviewed by a native speaker — see session report). Covered by this test.
+ *   - de, es, ar, ja (formerly jp): option (A) — keys added, machine/LLM-
+ *     translated (not reviewed by a native speaker — see session report).
+ *     Covered by this test.
  *   - pl, en: out of scope — they are this stream's read-only source of truth,
  *     covered separately by idea-workspace-required-keys.test.ts.
- *   - The stray `public/locales/ja/` directory is NOT a supported locale (the
- *     app only ever resolves 'jp' — see src/i18n.ts SUPPORTED_LANGUAGES; 'ja'
- *     is aliased to 'jp' at the browser-detection layer, the folder itself is
- *     never read) and is intentionally NOT covered here.
  *
  * Plural handling: i18next's PluralResolver calls `new Intl.PluralRules(lng)`
- * with the app's own locale code, not a re-mapped ISO code. For 'jp' this is
- * NOT a valid BCP47 language subtag, so Intl.PluralRules('jp') silently
- * resolves to an en-US-shaped rule (['one','other']) instead of the
- * linguistically correct Japanese-only ('other') rule — verified empirically,
- * see the session report. This test computes the actually-required plural
- * suffixes per locale via `Intl.PluralRules(locale).resolvedOptions()`, the
- * same mechanism i18next itself uses, so it validates against runtime
- * reality rather than assumed linguistics.
+ * with the app's own locale code, not a re-mapped ISO code. Before the
+ * S23-LOCALE migration the app's Japanese code was 'jp', which is NOT a valid
+ * BCP47 language subtag, so Intl.PluralRules('jp') silently resolved to an
+ * en-US-shaped rule (['one','other']) instead of the linguistically correct
+ * Japanese-only ('other') rule — verified empirically, see the session
+ * report. Now that the app resolves the real 'ja' subtag,
+ * Intl.PluralRules('ja').resolvedOptions().pluralCategories is ['other']
+ * only, and the `_one` duplicates that existed purely as a workaround for the
+ * bug were removed from `public/locales/ja/translation.json`. This test
+ * computes the actually-required plural suffixes per locale via
+ * `Intl.PluralRules(locale).resolvedOptions()`, the same mechanism i18next
+ * itself uses, so it validates against runtime reality rather than assumed
+ * linguistics — and would have caught the 'jp' bug directly if it had
+ * compared against real Japanese instead of inheriting the app's own broken
+ * code.
  */
 import { execSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
@@ -54,7 +69,7 @@ const ROOT = process.cwd();
 // this point, not keys added by later, unrelated work on the same branch.
 const BASE_SHA = '9d17cac114';
 
-const SUPPORTED_TARGET_LOCALES = ['de', 'es', 'ar', 'jp'] as const;
+const SUPPORTED_TARGET_LOCALES = ['de', 'es', 'ar', 'ja'] as const;
 type TargetLocale = (typeof SUPPORTED_TARGET_LOCALES)[number];
 
 function flatten(obj: unknown, prefix: string, out: Record<string, unknown>): Record<string, unknown> {
@@ -106,7 +121,7 @@ function requiredSuffixesFor(locale: TargetLocale): string[] {
   return new Intl.PluralRules(locale).resolvedOptions().pluralCategories;
 }
 
-describe('S2-LOCALE — keys this program added to en resolve in de/es/ar/jp', () => {
+describe('S2-LOCALE — keys this program added to en resolve in de/es/ar/ja', () => {
   it('re-derived a non-trivial number of added keys from the base commit diff', () => {
     // Sanity guard mirroring idea-workspace-required-keys.test.ts: if this
     // drops to ~0, the git derivation broke, not the locales.

@@ -4,7 +4,7 @@
  * Lightweight, dependency-free heuristic that infers the language of a chat
  * message so the assistant can reply in the language the user actually writes
  * in — not the UI language. Covers the app's supported languages
- * (en, pl, de, es, ar, jp).
+ * (en, pl, de, es, ar, ja).
  *
  * Design goals:
  * - High precision over recall: return `null` when not confident, so callers
@@ -183,7 +183,7 @@ export function detectMessageLanguage(raw: string): SupportedLanguage | null {
 
   // 1. Script-based — effectively certain.
   if (/[؀-ۿݐ-ݿ]/.test(text)) return 'ar';
-  if (/[぀-ヿㇰ-ㇿｦ-ﾝ一-鿿]/.test(text)) return 'jp';
+  if (/[぀-ヿㇰ-ㇿｦ-ﾝ一-鿿]/.test(text)) return 'ja';
 
   const lower = text.toLowerCase();
 
