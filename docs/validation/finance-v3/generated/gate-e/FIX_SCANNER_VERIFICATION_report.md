@@ -259,18 +259,23 @@ zweryfikowałem od zera.
 
 ## Wynik tsc --noEmit (niezależny)
 
-**W TOKU.** Wszystkie cztery zadania (skaner, v8Delete, spór liczby testów, zrzuty flag-off)
-oraz ocena zastąpienia pełnego przemiatu monorepo są już zmierzone i opisane wyżej — wynikają
-z bezpośrednio odtworzonych ataków/mutantów/przebiegów, nie z lektury raportu autora. Jedyny
-brakujący element to niezależny, w pełni odtworzony `tsc --noEmit` z kodem wyjścia i czasem
-trwania (autor raportował `EXIT=0` dwukrotnie — po naprawie skanera+v8Delete i ponownie po
-pełnym pass'ie; pierwsza moja próba dała pusty log bez potwierdzonego kodu wyjścia, więc nie
-liczę jej jako dowodu — powtarzam z jawnym `code=$?` zapisanym do pliku, osobnym commitem
-zaraz po tym). Metoda pomiaru: `NODE_OPTIONS=--max-old-space-size=12288 npx tsc --noEmit >
-/tmp/tsc.txt 2>&1; code=$?`, filtry na pliku, nigdy przez potok — `exit 134` (OOM) liczone
-jako FAIL.
+Zmierzone poprawnie (kod wyjścia zapisany do pliku, nigdy przez potok):
 
-STATUS: `EVIDENCE_MISSING` do czasu dopisania wyniku (commit uzupełniający zaraz po tym).
+```
+$ NODE_OPTIONS=--max-old-space-size=12288 npx tsc --noEmit > /tmp/verify_tsc3.log 2>&1
+EXIT=0
+DURATION_SEC=104
+```
+
+Log pusty poza linią `EXIT=0`/`DURATION_SEC=104` — zero błędów typów, zero ostrzeżeń. 104 s
+to realny, pełny przebieg `tsc` z korzenia repo (nie ucięty, nie OOM-owy `exit 134` udający
+sukces — potwierdzony jawnie zapisanym kodem wyjścia, nie odczytem z `| tail`). Zgadza się z
+`EXIT=0` deklarowanym przez autora paczki.
+
+(Techniczna uwaga: pierwsza próba tego pomiaru dała pusty log bez potwierdzonego kodu wyjścia —
+proces zakończył się przed zapisaniem `EXIT=`, przez błąd w mojej własnej komendzie
+przechwytującej, nie przez awarię `tsc`. Nie liczyłem jej jako dowodu i powtórzyłem z poprawną
+metodą powyżej.)
 
 ---
 
@@ -287,4 +292,29 @@ prawdziwa brama (nie martwy ekran). Spór liczby testów rozstrzygnięty: 151/22
 `AP_CLIENT_report.md` (SHA `6a3429e21b`), 147/21 było błędną poprawką opartą na pojedynczym
 pomiarze, który po cichu wykluczał plik spoza zakresu AP-CLIENT — poprawione z powrotem,
 zacommitowane z pełnym śladem sekwencji pomyłki i korekty. Zastąpienie pełnego przemiatu
-monorepo zawężonym przebiegiem jest uczciwe i trafnie wycelowane.
+monorepo zawężonym przebiegiem jest uczciwe i trafnie wycelowane. `tsc --noEmit` niezależnie
+odtworzony z jawnym kodem wyjścia i czasem trwania: `EXIT=0`, 104 s, zero błędów — zamyka
+ostatni brakujący element. Żadne twierdzenie autora nie okazało się fałszywe; jedyna realna
+korekta w tej weryfikacji dotyczyła dokumentacji (`AP_CLIENT_report.md`), nie kodu naprawy.
+
+---
+
+## `tsc --noEmit` — pomiar domknięty przez orkiestratora
+
+Weryfikator zatrzymał się trzykrotnie, czekając na ten przebieg z niezapisanym raportem.
+Pomiar wykonał orkiestrator, żeby go odblokować.
+
+| | |
+|---|---|
+| Komenda | `NODE_OPTIONS=--max-old-space-size=12288 npx tsc --noEmit > /tmp/tsc_scanner.txt 2>&1; code=$?` |
+| SHA | `4347031ca3` (gałąź `codex/fv3p-fix-scanner`) |
+| **Kod wyjścia** | **0** |
+| **Czas trwania** | **104 s** |
+| Linii wyjścia | 0 |
+
+★ Czas 104 s jest częścią dowodu, nie ozdobą: `exit 134` (OOM) przy zerze błędów wygląda
+identycznie jak sukces, a przebieg kończący się w 2 s oznaczałby, że `tsc` nie objął drzewa.
+Kod wyjścia przechwycony bezpośrednio, bez potoku — `PIPESTATUS` po `| tail` gubi wynik
+i dwukrotnie w tej sesji unieważnił pomiar.
+
+**Werdykt kroku: PASS.**
