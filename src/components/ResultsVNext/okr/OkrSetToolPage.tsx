@@ -77,7 +77,10 @@ export const OkrSetToolPage: React.FC = () => {
     void loadSet();
   }, [enabled, loadSet]);
 
-  const goToRegistry = useCallback(() => navigate(ROUTES.RESULTS_OKR.ROOT), [navigate]);
+  const goToRegistry = useCallback(
+    () => navigate(`${ROUTES.RESULTS_OKR.ROOT}${window.location.search}`),
+    [navigate]
+  );
   const setsLabel = t('Zestawy OKR', 'OKR sets');
 
   if (!enabled) {

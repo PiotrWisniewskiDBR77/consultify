@@ -515,6 +515,22 @@ export async function recordObjectiveReflection(
   return mutateJson('POST', `/vnext/results/okr/objectives/${encodeURIComponent(objectiveId)}/reflection`, input);
 }
 
+/**
+ * RN-G6 C3 (2026-08-12) — closes the `expectedVersion` gap documented on
+ * `RecordReflectionInput` above: callers should call this on load (per
+ * Objective shown in the Review & Reflection tab) to discover the real
+ * current `row_version` BEFORE the human edits/saves, instead of assuming
+ * `0`. Returns `null` when no reflection row exists yet for this Objective
+ * (the legitimate "never reflected yet" state — `expectedVersion` stays `0`
+ * for that Objective).
+ */
+export async function getObjectiveReflection(objectiveId: string): Promise<OkrReflectionDto | null> {
+  const { reflection } = await getJson<{ reflection: OkrReflectionDto | null }>(
+    `/vnext/results/okr/objectives/${encodeURIComponent(objectiveId)}/reflection`
+  );
+  return reflection;
+}
+
 // ==========================================
 // Support / recognition / comments / decision links (OKR-E006) —
 // okr.routes.ts L2578-2977

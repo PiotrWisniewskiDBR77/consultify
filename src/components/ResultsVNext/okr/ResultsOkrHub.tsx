@@ -276,7 +276,7 @@ export const ResultsOkrHub: React.FC = () => {
         variant="secondary"
         size="sm"
         icon={<Blocks className="h-3.5 w-3.5" />}
-        onClick={() => navigate(ROUTES.RESULTS_OKR.PROGRAMS)}
+        onClick={() => navigate(`${ROUTES.RESULTS_OKR.PROGRAMS}${window.location.search}`)}
         data-testid="okr-registry-open-programs"
       >
         {isPolish ? 'Programy' : 'Programs'}
@@ -285,7 +285,7 @@ export const ResultsOkrHub: React.FC = () => {
         variant="secondary"
         size="sm"
         icon={<CalendarClock className="h-3.5 w-3.5" />}
-        onClick={() => navigate(ROUTES.RESULTS_OKR.CYCLES)}
+        onClick={() => navigate(`${ROUTES.RESULTS_OKR.CYCLES}${window.location.search}`)}
         data-testid="okr-registry-open-cycles"
       >
         {isPolish ? 'Cykle' : 'Cycles'}
@@ -435,7 +435,7 @@ export const ResultsOkrHub: React.FC = () => {
           buildOkrSetRowMenu(row as unknown as OkrSetDto, isPolish, {
             onPreview: (r) => setSelectedSetId(r.setId),
             onOpenObjectives: (r) => setDrill({ level: 'objectives', set: r }),
-            onOpenWorkspace: (r) => navigate(ROUTES.RESULTS_OKR.SET.replace(':okrSetId', r.setId)),
+            onOpenWorkspace: (r) => navigate(`${ROUTES.RESULTS_OKR.SET.replace(':okrSetId', r.setId)}${window.location.search}`),
           }),
         defaultSort: { columnId: 'updatedAt', direction: 'desc' },
       }}
@@ -445,7 +445,7 @@ export const ResultsOkrHub: React.FC = () => {
               isPolish,
               onClose: () => setSelectedSetId(null),
               onOpenObjectives: (r) => setDrill({ level: 'objectives', set: r }),
-              onOpenWorkspace: (r) => navigate(ROUTES.RESULTS_OKR.SET.replace(':okrSetId', r.setId)),
+              onOpenWorkspace: (r) => navigate(`${ROUTES.RESULTS_OKR.SET.replace(':okrSetId', r.setId)}${window.location.search}`),
             })
           : null
       }
