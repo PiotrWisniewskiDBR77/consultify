@@ -88,6 +88,7 @@ import {
   buildKpiScorecardSnapshotRowMenu,
 } from './kpiScorecardPresenters';
 import { kpiScorecardItemRoleLabel, kpiScorecardSnapshotStatusLabel } from './kpiScorecardMappers';
+import { toUserFacingErrorMessage } from '../shared/errorMessage';
 
 type DetailTab = 'items' | 'snapshots';
 type PendingAction = 'activate' | 'suspend' | 'archive' | null;
@@ -145,7 +146,7 @@ export const ResultsKpiScorecardDetailPage: React.FC = () => {
         .then((d) => setDistribution(d))
         .catch(() => setDistribution(undefined));
     } catch (err) {
-      setScorecardError(err instanceof Error ? err.message : String(err));
+      setScorecardError(toUserFacingErrorMessage(err, isPolish));
     } finally {
       setScorecardLoading(false);
     }
@@ -162,7 +163,7 @@ export const ResultsKpiScorecardDetailPage: React.FC = () => {
     setItemsError(null);
     listKpiScorecardItems(scorecardId)
       .then((rows) => setItems(rows))
-      .catch((err) => setItemsError(err instanceof Error ? err.message : String(err)))
+      .catch((err) => setItemsError(toUserFacingErrorMessage(err, isPolish)))
       .finally(() => setItemsLoading(false));
   }, [scorecardId]);
 
@@ -172,7 +173,7 @@ export const ResultsKpiScorecardDetailPage: React.FC = () => {
     setSnapshotsError(null);
     listKpiScorecardReviewSnapshots(scorecardId)
       .then((rows) => setSnapshots(rows))
-      .catch((err) => setSnapshotsError(err instanceof Error ? err.message : String(err)))
+      .catch((err) => setSnapshotsError(toUserFacingErrorMessage(err, isPolish)))
       .finally(() => setSnapshotsLoading(false));
   }, [scorecardId]);
 
@@ -192,7 +193,7 @@ export const ResultsKpiScorecardDetailPage: React.FC = () => {
         await runner({ scorecardId: row.scorecardId, expectedVersion: row.rowVersion });
         await loadScorecard();
       } catch (err) {
-        toast.error(err instanceof Error ? err.message : String(err));
+        toast.error(toUserFacingErrorMessage(err, isPolish));
       } finally {
         setPending(null);
       }
