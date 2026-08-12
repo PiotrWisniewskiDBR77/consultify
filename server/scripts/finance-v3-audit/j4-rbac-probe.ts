@@ -4,7 +4,7 @@
  * (DEC-FIN-001) i niemutowalność APPROVED (DEC-FIN-007) dla Finance v3.
  *
  * Real HTTP (express + supertest) against the real `financeV2Router`, real
- * PostgreSQL (this agent's ephemeral `j4_rbac` cluster), and independent
+ * PostgreSQL (this agent's ephemeral local cluster), and independent
  * verification via a SEPARATE `pg.Client` connection (own TCP socket) that
  * never goes through the app's own `PostgresDatabase` pool.
  *
@@ -911,6 +911,107 @@ async function main() {
   }
 
   // =========================================================================
+  // CROSS-ORG substituted-identifier access (scope item 5). This is
+  // primarily J2's mandate, but the coordinator asked J4 to prove it too for
+  // the specific RBAC-relevant surfaces (versions/models/artifacts) this
+  // probe already drives, using an approver-in-org-A identity substituting
+  // an org-B businessVersionId/artifactId that value happens to exist.
+  // =========================================================================
+  if (shouldRun('RULE-CROSSORG-GET-VERSION') || shouldRun('RULE-CROSSORG-TRANSITION') || shouldRun('RULE-CROSSORG-APPROVE')) {
+    const otherOrgPreparer = appAs(`user-otherorg-prep-${randomUUID()}`, orgIdOther, 'editor');
+    const otherOrgApprover = appAs(`user-otherorg-appr-${randomUUID()}`, orgIdOther, 'owner');
+    const victim = await createArtifactViaHttp(otherOrgPreparer, 'HISTORICAL_ANALYSIS'); // lives in orgIdOther
+    let vBvId = victim.currentBusinessVersion.businessVersionId;
+    let vVer = victim.currentBusinessVersion.version;
+    let vr = await request(otherOrgPreparer).post(`/api/v8/finance-v2/versions/${vBvId}/transitions`).send({ action: 'submit_for_review', expectedVersion: vVer });
+    vVer = vr.body.data.version;
+    vr = await request(otherOrgApprover).post(`/api/v8/finance-v2/versions/${vBvId}/transitions`).send({ action: 'start_review', expectedVersion: vVer });
+    vVer = vr.body.data.version;
+    await forceFreshnessCurrent(vBvId);
+
+    if (shouldRun('RULE-CROSSORG-GET-VERSION')) {
+      const res = await request(appApprover).get(`/api/v8/finance-v2/versions/${vBvId}`); // approver is in orgId, version belongs to orgIdOther
+      record({
+        id: 'RULE-CROSSORG-GET-VERSION',
+        task: 'CROSS-ORG',
+        description: "GET /versions/:id with an org-A caller and an org-B businessVersionId (substituted identifier) — must fail closed as NOT_FOUND, not leak the other tenant's row",
+        expected: 'HTTP 404 NOT_FOUND',
+        actual: `HTTP ${res.status} ${JSON.stringify(res.body).slice(0, 200)}`,
+        pass: res.status === 404,
+      });
+    }
+
+    if (shouldRun('RULE-CROSSORG-TRANSITION')) {
+      const before = await verifyIndependently(vBvId);
+      const res = await request(appApprover) // org-A approver, substituting org-B's businessVersionId
+        .post(`/api/v8/finance-v2/versions/${vBvId}/transitions`)
+        .send({ action: 'archive', expectedVersion: vVer }); // action irrelevant here since v is IN_REVIEW not APPROVED, but this proves org-scoping fires BEFORE state validation
+      const after = await verifyIndependently(vBvId);
+      record({
+        id: 'RULE-CROSSORG-TRANSITION',
+        task: 'CROSS-ORG',
+        description: 'org-A caller POSTs a transition against org-B businessVersionId (substituted identifier)',
+        expected: 'HTTP 404/409, never a 200; row unchanged (independent SQL)',
+        actual: `HTTP ${res.status} ${JSON.stringify(res.body).slice(0, 200)}; row status before=${before.status} after=${after.status}`,
+        pass: res.status !== 200 && before.status === after.status && before.version === after.version,
+      });
+    }
+
+    if (shouldRun('RULE-CROSSORG-APPROVE')) {
+      const before = await verifyIndependently(vBvId);
+      const res = await request(appApprover) // org-A approver, substituting org-B's artifactId
+        .post(`/api/v8/finance-v2/models/${victim.artifactId}/approve`)
+        .set('Idempotency-Key', randomUUID())
+        .send({ expectedVersion: vVer });
+      const after = await verifyIndependently(vBvId);
+      record({
+        id: 'RULE-CROSSORG-APPROVE',
+        task: 'CROSS-ORG',
+        description: 'org-A approver POSTs approve against org-B artifactId (substituted identifier) — getArtifact/findCurrentArtifactVersion are org-scoped',
+        expected: 'HTTP 404 Model not found, row stays IN_REVIEW (independent SQL)',
+        actual: `HTTP ${res.status} ${JSON.stringify(res.body).slice(0, 200)}; row status after: ${after.status}`,
+        pass: res.status === 404 && after.status !== 'APPROVED',
+      });
+    }
+  }
+
+  // =========================================================================
+  // Capability-vs-endpoint consistency (scope item 6): the /capabilities
+  // read endpoint (allowedActionsFromStatus) is a UI HINT ONLY — it must
+  // never be treated as, or substitute for, the endpoint's own gate. Proven
+  // by the sharpest possible case: for a viewer on an IN_REVIEW version, the
+  // capabilities endpoint correctly does NOT list 'approve' (viewer is not
+  // in allowedActionsFromStatus's approver/finance_admin set) — yet, per the
+  // confirmed P0 above, the real approve ENDPOINT allows it anyway. This
+  // check makes that inconsistency an explicit, independently-recorded
+  // finding rather than an inference from the P0 result alone.
+  // =========================================================================
+  if (shouldRun('RULE-CAPABILITY-NOT-A-GATE')) {
+    const st = await driveToStatus(appPreparer, 'HISTORICAL_ANALYSIS', 'IN_REVIEW');
+    await forceFreshnessCurrent(st.businessVersionId);
+    const capRes = await request(appViewer).get(`/api/v8/finance-v2/artifacts/${st.artifactId}/capabilities`);
+    const capabilitySaysApproveAllowed = Array.isArray(capRes.body?.data?.allowedActions) && capRes.body.data.allowedActions.includes('approve');
+    const approveRes = await request(appViewer)
+      .post(`/api/v8/finance-v2/models/${st.artifactId}/approve`)
+      .set('Idempotency-Key', randomUUID())
+      .send({ expectedVersion: st.version });
+    const after = await verifyIndependently(st.businessVersionId);
+    record({
+      id: 'RULE-CAPABILITY-NOT-A-GATE',
+      task: 'CAPABILITY-VS-ENDPOINT',
+      description:
+        "capabilities read for a viewer correctly omits 'approve' from allowedActions, but the real approve endpoint does not consult capabilities/allowedActionsFromStatus at all — it must reject independently of what capabilities says",
+      expected: "capabilities.allowedActions does NOT include 'approve' (capRes correctly UI-gates) AND the real endpoint ALSO rejects (403) — capability absence and endpoint rejection must agree",
+      actual: `capabilities allowedActions=${JSON.stringify(capRes.body?.data?.allowedActions)} (says approve allowed: ${capabilitySaysApproveAllowed}); real approve endpoint HTTP ${approveRes.status}; row after: ${after.status}`,
+      pass: !capabilitySaysApproveAllowed && approveRes.status === 403,
+      detail:
+        after.status === 'APPROVED'
+          ? "CONFIRMED: capabilities correctly says viewer may NOT approve (UI would hide the button), but the real endpoint approved anyway — proof that the endpoint has NO independent gate of its own and silently trusts nothing-at-all rather than the (correct) capability computation. A UI built on capabilities alone would look secure while the API is not."
+          : undefined,
+    });
+  }
+
+  // =========================================================================
   // RLS — local-only, restricted-role check (NOT a substitute for Railway).
   // =========================================================================
   if (shouldRun('RULE-RLS-RESTRICTED-ROLE')) {
@@ -921,7 +1022,8 @@ async function main() {
     try {
       await verifyClient.query(`CREATE ROLE ${restrictedRole} LOGIN PASSWORD 'j4probepw' NOSUPERUSER NOBYPASSRLS`);
       await verifyClient.query(`GRANT SELECT, INSERT, UPDATE, DELETE ON compute_jobs TO ${restrictedRole}`);
-      await verifyClient.query(`GRANT CONNECT ON DATABASE j4_rbac TO ${restrictedRole}`);
+      const dbNameFromUrl = new URL(DATABASE_URL).pathname.replace(/^\//, '');
+      await verifyClient.query(`GRANT CONNECT ON DATABASE ${dbNameFromUrl} TO ${restrictedRole}`);
 
       const jobA = randomUUID();
       const jobB = randomUUID();
