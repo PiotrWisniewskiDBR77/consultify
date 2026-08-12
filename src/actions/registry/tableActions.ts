@@ -46,6 +46,7 @@ import {
   runTableDistributionCreateCallback,
   runTableDistributionDeleteCallback,
   runTableDistributionExecuteCallback,
+  runFinancialCaseSaveShapedCallback,
   runTableFormDeleteCallback,
   runTableFormIntakeSaveAllowListCallback,
   runTableFormShareModeChangeCallback,
@@ -1389,6 +1390,106 @@ export const TABLE_ACTIONS: ActionDef[] = [
       },
     },
     source: 'src/components/MyWork/table/RecordTemplateManager.tsx:407 (TemplateEditor handleSave)',
+  },
+  {
+    // R10 closure (2026-08-12) — `FinancialCaseDialog.tsx`'s header Save
+    // button (program E / epic E09, RISK-12 save path). Real, awaited
+    // `PUT /api/idea-financial-case/:ideaId` through
+    // `useIdeaFinancialCasePersistence().save()` — see `runFinancialCaseSaveShapedCallback`'s
+    // header for the `confirmed`-truthfulness contract.
+    id: 'table.financial_case.save',
+    label: { pl: 'Zapisz kartę finansową', en: 'Save financial case' },
+    icon: 'Save',
+    scope: 'workspace',
+    tools: ['table'],
+    surfaces: ['panel'],
+    handler: (ctx) => runFinancialCaseSaveShapedCallback('table.financial_case.save', ctx),
+    mutates: true,
+    requiresPreview: false,
+    undo: {
+      kind: 'no_undo',
+      reason: 'unrecoverable',
+      evidence:
+        '`PUT /api/idea-financial-case/:ideaId` nadpisuje `input`/`result` pod optymistyczną blokadą wersji (409 przy rozjeździe) — wersjonowanie chroni przed CICHĄ utratą cudzej pracy, ale NIE jest historią: po udanym zapisie poprzednia treść karty nigdzie się nie zachowuje, ani dla kliku człowieka, ani dla Teresy.',
+    },
+    teresa: {
+      description:
+        'Zapisuje bieżące (niewysłane) zmiany otwartej karty finansowej Idei — drivery, scenariusze, parametry. Dziś dostępne WYŁĄCZNIE z otwartego dialogu karty finansowej — Teresa tego jeszcze nie wywoła (niewysłane zmiany żyją w ref-ie znanym tylko otwartemu dialogowi).',
+    },
+    disabledReason: (ctx) =>
+      ctx.source === 'teresa'
+        ? 'Dziś dostępne wyłącznie z otwartego dialogu karty finansowej — Teresa tego jeszcze nie wywoła.'
+        : null,
+    source:
+      'src/components/MyWork/table/financial/FinancialCaseDialog.tsx (header Save button) + useIdeaFinancialCasePersistence.ts save()',
+  },
+  {
+    // Bliźniaczy wpis do `table.financial_case.save` wyżej — confirm-close
+    // bar's "Save and close" (widoczny tylko gdy `requestClose` wykrył
+    // niezapisane zmiany, patrz `confirmClose` w `FinancialCaseDialog.tsx`).
+    // Woła DOKŁADNIE tę samą `persistence.save()`, różni się wyłącznie tym,
+    // co robi PO potwierdzonym sukcesie (zamyka dialog) — stąd osobny wpis,
+    // nie alias: `undo` i `teresa.description` muszą uczciwie opisywać "i
+    // zamyka", nie tylko "zapisuje".
+    id: 'table.financial_case.save_and_close',
+    label: { pl: 'Zapisz i zamknij kartę finansową', en: 'Save and close financial case' },
+    icon: 'Save',
+    scope: 'workspace',
+    tools: ['table'],
+    surfaces: ['panel'],
+    handler: (ctx) => runFinancialCaseSaveShapedCallback('table.financial_case.save_and_close', ctx),
+    mutates: true,
+    requiresPreview: false,
+    undo: {
+      kind: 'no_undo',
+      reason: 'unrecoverable',
+      evidence:
+        'Ten sam nieodwracalny zapis co `table.financial_case.save` (patrz jego `undo.evidence`) — dialog zamyka się TYLKO gdy zapis faktycznie doszedł (`confirmed: true`); na 409/błąd transportu dialog zostaje otwarty z komunikatem, więc to NIE jest dodatkowa utrata poza samym nadpisaniem karty.',
+    },
+    teresa: {
+      description:
+        'Zapisuje bieżące zmiany otwartej karty finansowej i zamyka dialog — TYLKO jeśli zapis się powiódł; przy konflikcie/błędzie dialog zostaje otwarty. Dziś dostępne WYŁĄCZNIE z otwartego dialogu — Teresa tego jeszcze nie wywoła.',
+    },
+    disabledReason: (ctx) =>
+      ctx.source === 'teresa'
+        ? 'Dziś dostępne wyłącznie z otwartego dialogu karty finansowej — Teresa tego jeszcze nie wywoła.'
+        : null,
+    source:
+      'src/components/MyWork/table/financial/FinancialCaseDialog.tsx (confirm-close bar „Save and close") + useIdeaFinancialCasePersistence.ts save()',
+  },
+  {
+    // Error banner's recovery button — text/behaviour switches on
+    // `persistence.hasPendingEdits` (RISK-12 error-path regression guard,
+    // see the hook's `hasPendingEdits` comment): retries the SAME save when
+    // local edits are still unsent, or re-fetches from the server when the
+    // failure was a LOAD failure instead. Two branches, ONE click — same
+    // "uczciwa, słabsza wspólna klasyfikacja" call as `table.record_template.save`
+    // making one entry for its create/edit split.
+    id: 'table.financial_case.retry',
+    label: { pl: 'Ponów (karta finansowa)', en: 'Retry (financial case)' },
+    icon: 'RefreshCw',
+    scope: 'workspace',
+    tools: ['table'],
+    surfaces: ['panel'],
+    handler: (ctx) => runFinancialCaseSaveShapedCallback('table.financial_case.retry', ctx),
+    mutates: true,
+    requiresPreview: false,
+    undo: {
+      kind: 'no_undo',
+      reason: 'unrecoverable',
+      evidence:
+        'Gdy `hasPendingEdits` jest prawdziwe, to ponowienie TEGO SAMEGO nieodwracalnego zapisu co `table.financial_case.save` (patrz jego `undo.evidence`); gdy fałszywe, to zwykłe ponowne pobranie (bez mutacji serwera) — uczciwa, słabsza wspólna klasyfikacja dla jednej akcji obsługującej oba przypadki: `no_undo`.',
+    },
+    teresa: {
+      description:
+        'Ponawia nieudany zapis karty finansowej (jeśli są niewysłane zmiany) albo ponownie pobiera kartę z serwera (jeśli poprzedni błąd to był błąd ładowania). Dziś dostępne WYŁĄCZNIE z otwartego dialogu karty finansowej — Teresa tego jeszcze nie wywoła.',
+    },
+    disabledReason: (ctx) =>
+      ctx.source === 'teresa'
+        ? 'Dziś dostępne wyłącznie z otwartego dialogu karty finansowej — Teresa tego jeszcze nie wywoła.'
+        : null,
+    source:
+      'src/components/MyWork/table/financial/FinancialCaseDialog.tsx (error banner recovery button) + useIdeaFinancialCasePersistence.ts save()/reload()',
   },
   {
     id: 'table.automation.run_now',

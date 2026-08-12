@@ -120,24 +120,36 @@ export function useIdeaFinancialCasePersistence({
     setLoadKey((k) => k + 1);
   }, []);
 
-  const load = useCallback(async () => {
+  /**
+   * Returns `Promise<boolean>` (added for the S12-REGISTRY action-registry
+   * wiring, R10 closure) — `true` only when THIS call's fetch actually landed
+   * and was applied; `false` on a transport error OR when a newer `load()`
+   * call superseded this one before it resolved (`loadSeq` guard: the
+   * superseding call is the one whose result matters, so THIS call reports
+   * "not confirmed" rather than guessing). Existing callers (`useEffect`
+   * below, `reloadFromServer`) already ignored the return value, so this is
+   * additive — no behaviour change for them.
+   */
+  const load = useCallback(async (): Promise<boolean> => {
     if (!ideaId) {
       setStatus('disabled');
-      return;
+      return false;
     }
     const mySeq = ++loadSeq.current;
     setStatus('loading');
     setErrorMessage(null);
     try {
       const row = await fetchIdeaFinancialCase(ideaId);
-      if (mySeq !== loadSeq.current) return;
+      if (mySeq !== loadSeq.current) return false;
       applyLoaded(row);
+      return true;
     } catch (err) {
-      if (mySeq !== loadSeq.current) return;
+      if (mySeq !== loadSeq.current) return false;
       // Honest failure: the dialog shows an error with a retry, and does NOT
       // render an empty case that the user could mistake for "nothing saved".
       setStatus('error');
       setErrorMessage(err instanceof Error ? err.message : String(err));
+      return false;
     }
   }, [ideaId, applyLoaded]);
 
@@ -180,12 +192,23 @@ export function useIdeaFinancialCasePersistence({
     status === 'conflict' ||
     (status === 'error' && hasPendingEdits);
 
-  const save = useCallback(async () => {
-    if (!ideaId) return;
+  /**
+   * Returns `Promise<boolean>` (added for the S12-REGISTRY action-registry
+   * wiring, R10 closure) — `true` ONLY when the PUT actually landed (2xx);
+   * `false` on a 409 conflict, a transport error, or the no-`ideaId` guard.
+   * The "nothing pending" no-op returns `true` (nothing needed saving, so
+   * nothing is unconfirmed) but the Save button is disabled whenever
+   * `!dirty`, so callers reach that branch only via the retry path, and only
+   * when `hasPendingEdits` is already false there. This is the ONLY change
+   * to this function's behaviour — every existing state transition
+   * (`saving`→`saved`/`conflict`/`error`) is unchanged.
+   */
+  const save = useCallback(async (): Promise<boolean> => {
+    if (!ideaId) return false;
     const input = pendingInput.current;
     // Nothing edited this session — saving would bump `version` for no reason
     // and invalidate other editors' copies. Not an error, just a no-op.
-    if (!input) return;
+    if (!input) return true;
     setStatus('saving');
     setErrorMessage(null);
     try {
@@ -203,6 +226,7 @@ export function useIdeaFinancialCasePersistence({
       setServerVersion(null);
       pendingInput.current = null;
       setStatus('saved');
+      return true;
     } catch (err) {
       if (err instanceof IdeaFinancialCaseConflictError) {
         // Local work is deliberately NOT discarded and NOT auto-merged: the
@@ -210,10 +234,11 @@ export function useIdeaFinancialCasePersistence({
         setServerVersion(err.currentVersion);
         setStatus('conflict');
         setErrorMessage(null);
-        return;
+        return false;
       }
       setStatus('error');
       setErrorMessage(err instanceof Error ? err.message : String(err));
+      return false;
     }
   }, [ideaId, version]);
 

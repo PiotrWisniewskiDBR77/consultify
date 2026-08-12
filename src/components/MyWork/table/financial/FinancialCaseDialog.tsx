@@ -38,6 +38,8 @@ import { AlertTriangle, Calculator, Check, Loader2, RefreshCw, X } from 'lucide-
 import React, { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { type ActionContext, runIdeaAction } from '@/actions/ideaActionRegistry';
+import { EMPTY_SELECTION } from '@/components/MyWork/ideaSelectionTypes';
 import { useDialogA11y } from '@/components/ui/primitives/useDialogA11y';
 
 import { FinancialCaseView } from './FinancialCaseView';
@@ -90,15 +92,67 @@ export const FinancialCaseDialog: React.FC<FinancialCaseDialogProps> = ({
     onClose();
   }, [onClose]);
 
-  const saveAndClose = useCallback(async () => {
-    await persistence.save();
-    // Only leave if the save actually landed. On conflict/error the dialog
-    // stays open with the message visible — closing here would be the same
-    // silent data loss in a politer costume.
-    if (persistence.dirty) return;
-    setConfirmClose(false);
-    onClose();
-  }, [onClose, persistence]);
+  /**
+   * ── R10 REGISTRY WIRING (S12-REGISTRY, 2026-08-12) ─────────────────────
+   * The three save-shaped clicks below (header Save, confirm-bar "Save and
+   * close", error-banner retry) route through `runIdeaAction` instead of
+   * calling `persistence.*` directly — `scripts/check-action-coverage.sh`'s
+   * R10 flagged all three as command verbs (`save`) with no registry
+   * traceability. Registry entries: `table.financial_case.save` /
+   * `.save_and_close` / `.retry` in `src/actions/registry/tableActions.ts`.
+   *
+   * `ctx.params.run` is REQUIRED to resolve `Promise<boolean>` here — the
+   * registry handler (`runFinancialCaseSaveShapedCallback`) awaits it and
+   * reports that exact value as `ActionResult.confirmed`, never a guess.
+   * `persistence.save()`/`.load()` were changed alongside this file to
+   * return that truthful boolean (see their headers).
+   */
+  const buildFinancialCaseActionCtx = useCallback(
+    (run: () => Promise<boolean>): ActionContext => ({
+      ideaId: ideaId ?? '',
+      tool: 'table',
+      selection: EMPTY_SELECTION,
+      surface: 'panel',
+      source: 'ui',
+      params: { run },
+    }),
+    [ideaId]
+  );
+
+  const handleSaveClick = useCallback(() => {
+    void runIdeaAction(
+      'table.financial_case.save',
+      buildFinancialCaseActionCtx(() => persistence.save())
+    );
+  }, [buildFinancialCaseActionCtx, persistence]);
+
+  const handleSaveAndCloseClick = useCallback(() => {
+    void runIdeaAction(
+      'table.financial_case.save_and_close',
+      buildFinancialCaseActionCtx(async () => {
+        const confirmed = await persistence.save();
+        // Only leave if the save actually landed. On conflict/error the
+        // dialog stays open with the message visible — closing here would be
+        // the same silent data loss in a politer costume. Reading the
+        // closure's own resolved boolean (not `persistence.dirty` from this
+        // render's stale snapshot) is what makes this check reliable.
+        if (confirmed) {
+          setConfirmClose(false);
+          onClose();
+        }
+        return confirmed;
+      })
+    );
+  }, [buildFinancialCaseActionCtx, onClose, persistence]);
+
+  const handleRetryClick = useCallback(() => {
+    void runIdeaAction(
+      'table.financial_case.retry',
+      buildFinancialCaseActionCtx(() =>
+        persistence.hasPendingEdits ? persistence.save() : persistence.reload()
+      )
+    );
+  }, [buildFinancialCaseActionCtx, persistence]);
 
   useDialogA11y({ open, onClose: requestClose, containerRef: dialogRef });
 
@@ -191,7 +245,7 @@ export const FinancialCaseDialog: React.FC<FinancialCaseDialogProps> = ({
           {showSave && (
             <button
               type="button"
-              onClick={() => void persistence.save()}
+              onClick={handleSaveClick}
               disabled={s === 'saving' || s === 'loading' || !persistence.dirty}
               className="ml-2 px-3 py-1.5 rounded-lg text-xs font-semibold border border-c-border-subtle text-c-text bg-c-surface-raised hover:bg-c-surface disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             >
@@ -237,7 +291,7 @@ export const FinancialCaseDialog: React.FC<FinancialCaseDialogProps> = ({
             </button>
             <button
               type="button"
-              onClick={() => void saveAndClose()}
+              onClick={handleSaveAndCloseClick}
               className="px-2.5 py-1 rounded-md text-xs font-semibold border border-c-border-subtle text-c-text bg-c-surface hover:bg-c-surface-raised transition-colors"
             >
               {t('ideas.financial.persistence.saveAndClose', 'Save and close')}
@@ -276,9 +330,7 @@ export const FinancialCaseDialog: React.FC<FinancialCaseDialogProps> = ({
                 discard RISK-12 was about, just reached through the error path. */}
             <button
               type="button"
-              onClick={() =>
-                void (persistence.hasPendingEdits ? persistence.save() : persistence.reload())
-              }
+              onClick={handleRetryClick}
               className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs border border-c-border-subtle text-c-text bg-c-surface hover:bg-c-surface-raised transition-colors"
             >
               <RefreshCw size={12} />

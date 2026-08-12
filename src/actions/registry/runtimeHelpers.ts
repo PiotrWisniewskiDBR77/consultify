@@ -2908,6 +2908,56 @@ export async function runTableRecordTemplateSaveCallback(ctx: ActionContext): Pr
   }
 }
 
+// ─── Financial case (FinancialCaseDialog.tsx, E09/RISK-12) ───
+/**
+ * R10 closure (2026-08-12) — `table.financial_case.save` /
+ * `.save_and_close` / `.retry`, the three save-shaped clicks in
+ * `FinancialCaseDialog.tsx` (header Save button, confirm-close bar's "Save
+ * and close", error banner's recovery button). Same `ctx.params.run` bridge
+ * as `runPanelUiOnlyCallback` above (the dialog's own hook,
+ * `useIdeaFinancialCasePersistence`, owns the real I/O — PUT
+ * /api/idea-financial-case/:ideaId with optimistic concurrency, 409 handling,
+ * `loading|saving|saved|error|conflict` states — the registry only gives it
+ * traceability), but UNLIKE that helper this one does NOT blindly return
+ * `confirmed` as a byproduct of "the closure didn't throw": `run` here is
+ * REQUIRED to return `Promise<boolean>`, and `useIdeaFinancialCasePersistence`
+ * was changed alongside this entry so `save`/`load`(`reload`) genuinely
+ * resolve `true` only on a landed 2xx and `false` on a conflict, a transport
+ * error, or a superseded/stale request — never a guess.
+ *
+ * UI-only for now — same honest gap as `idea.workspace.business_case_save`
+ * in `sharedActions.ts`: the pending edit lives in a `ref` inside the open
+ * dialog's hook instance, addressable only by the click that is already
+ * looking at it, so Teresa cannot drive this without first seeing the same
+ * open dialog. Not invented here — tracked as the same class of gap, not
+ * silently different behaviour.
+ */
+export async function runFinancialCaseSaveShapedCallback(
+  actionId: string,
+  ctx: ActionContext
+): Promise<ActionResult> {
+  const run = ctx.params?.run;
+  if (ctx.source !== 'ui' || typeof run !== 'function') {
+    return {
+      ok: false,
+      actionId,
+      confirmed: false,
+      message:
+        'Ta akcja działa dziś wyłącznie z otwartego dialogu karty finansowej — nie mam jeszcze sposobu wywołania jej z czatu.',
+    };
+  }
+  const confirmed = await (run as () => Promise<boolean>)();
+  if (!confirmed) {
+    return {
+      ok: false,
+      actionId,
+      confirmed: false,
+      message: 'Zapis karty finansowej się nie powiódł — sprawdź komunikat w dialogu.',
+    };
+  }
+  return { ok: true, actionId, confirmed: true };
+}
+
 // ─── Automations (automations/AutomationsManager.tsx) ───
 export async function runTableAutomationRunNowCallback(ctx: ActionContext): Promise<ActionResult> {
   const actionId = 'table.automation.run_now';
