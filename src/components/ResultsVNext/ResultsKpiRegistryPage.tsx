@@ -128,6 +128,7 @@ import { ResultsVNextRegistryShell, type ResultsVNextTableProps } from './Result
 import {
   activateKpiScorecard,
   archiveKpiScorecard,
+  createKpiScorecard,
   listKpiScorecards,
   suspendKpiScorecard,
   type KpiScorecardDto,
@@ -137,6 +138,10 @@ import {
   buildKpiScorecardPreview,
   buildKpiScorecardRowMenu,
 } from './kpiScorecards/kpiScorecardPresenters';
+import {
+  CreateKpiScorecardModal,
+  type CreateKpiScorecardFormValues,
+} from './kpiScorecards/CreateKpiScorecardModal';
 import { ResultsKpiMeasurementsPanel } from './kpiMeasurements/ResultsKpiMeasurementsPanel';
 import { toUserFacingErrorMessage } from './shared/errorMessage';
 
@@ -726,6 +731,15 @@ export const ResultsKpiRegistryPage: React.FC = () => {
   const [selectedScorecardId, setSelectedScorecardId] = useState<string | null>(null);
   const [scorecardPending, setScorecardPending] = useState(false);
 
+  // RN-G6 UI fix — quick-create for scorecards (was wired-up API with zero
+  // UI entry point, see CreateKpiScorecardModal.tsx header). Own state,
+  // same "create" shape as the KPI draft form (formOpen/formBusy/formError)
+  // above, kept separate since it is a different DTO/endpoint entirely.
+  const [createScorecardOpen, setCreateScorecardOpen] = useState(false);
+  const [createScorecardBusy, setCreateScorecardBusy] = useState(false);
+  const [createScorecardError, setCreateScorecardError] = useState<string | null>(null);
+  const [createScorecardIsConflict, setCreateScorecardIsConflict] = useState(false);
+
   // RN-G2 §G #7 — "Pomiary" sub-view of a selected KPI (see
   // ResultsKpiMeasurementsPanel.tsx header for the "why a sub-view, not a
   // tab/route" placement decision). Holds the full row (not just an id) so
@@ -1063,6 +1077,32 @@ export const ResultsKpiRegistryPage: React.FC = () => {
     [fetchScorecardRows]
   );
 
+  const openCreateScorecard = useCallback(() => {
+    setCreateScorecardError(null);
+    setCreateScorecardIsConflict(false);
+    setCreateScorecardOpen(true);
+  }, []);
+
+  const handleCreateScorecardSubmit = useCallback(
+    (values: CreateKpiScorecardFormValues) => {
+      setCreateScorecardBusy(true);
+      setCreateScorecardError(null);
+      setCreateScorecardIsConflict(false);
+      createKpiScorecard(values)
+        .then(async ({ scorecard }) => {
+          setCreateScorecardOpen(false);
+          await fetchScorecardRows();
+          setSelectedScorecardId(scorecard.scorecardId);
+        })
+        .catch((err) => {
+          setCreateScorecardIsConflict(isConflictError(err));
+          setCreateScorecardError(toUserFacingErrorMessage(err, isPolish));
+        })
+        .finally(() => setCreateScorecardBusy(false));
+    },
+    [fetchScorecardRows, isPolish]
+  );
+
   const scopedRows = useMemo(() => {
     if (scope === 'my' && currentUser?.id) {
       return rows.filter((r) => r.ownerUserId === currentUser.id);
@@ -1169,6 +1209,15 @@ export const ResultsKpiRegistryPage: React.FC = () => {
             showTabCounts: false,
             viewModes: ['table'],
             viewMode: 'table',
+            // RN-G6 UI fix — makes `createKpiScorecard` (already wired in
+            // kpiScorecardApi.ts) reachable from the UI, see
+            // CreateKpiScorecardModal.tsx header.
+            primaryCta: {
+              label: isPolish ? 'Nowa karta wyników' : 'New scorecard',
+              icon: Plus,
+              onClick: openCreateScorecard,
+              testId: 'kpi-scorecard-new-cta',
+            },
           }}
           table={{
             columns: buildKpiScorecardColumns(isPolish, currentUser?.id),
@@ -1213,6 +1262,16 @@ export const ResultsKpiRegistryPage: React.FC = () => {
                 })
               : null
           }
+        />
+        <CreateKpiScorecardModal
+          open={createScorecardOpen}
+          onClose={() => (createScorecardBusy ? undefined : setCreateScorecardOpen(false))}
+          onSubmit={handleCreateScorecardSubmit}
+          isPolish={isPolish}
+          currentUserId={currentUser?.id ?? null}
+          busy={createScorecardBusy}
+          errorMessage={createScorecardError}
+          isConflict={createScorecardIsConflict}
         />
       </div>
     );
@@ -1347,9 +1406,14 @@ export const ResultsKpiRegistryPage: React.FC = () => {
                 criticalHigh: editTarget.criticalHigh,
                 binarySuccessValue: editTarget.binarySuccessValue,
                 formulaText: editTarget.formulaText,
+                // RN-G6 UI fix (task 3) — real owner from the parent KPI row
+                // (`KpiDefinitionDto`, not the definition-version `editTarget`
+                // this form otherwise edits), read-only display only.
+                ownerUserId: formTargetKpi?.ownerUserId ?? null,
               }
             : undefined
         }
+        currentUserId={currentUser?.id ?? null}
         busy={formBusy}
         errorMessage={formError}
         isConflict={formIsConflict}
