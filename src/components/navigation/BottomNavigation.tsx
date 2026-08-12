@@ -157,14 +157,14 @@ export const BottomNavigation: React.FC = () => {
                                 transition-all duration-200 relative touch-target no-select
                                 ${
                                   active
-                                    ? 'text-primary-600 dark:text-primary-400'
-                                    : 'text-slate-600 dark:text-c-text-muted active:text-primary-600 dark:active:text-primary-400'
+                                    ? 'text-c-text'
+                                    : 'text-slate-600 dark:text-c-text-muted active:text-c-text dark:active:text-c-text'
                                 }
                             `}
             >
               {/* Active Indicator */}
               {active && (
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-1 bg-primary-600 dark:bg-primary-400 rounded-b-full" />
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-1 bg-c-info rounded-b-full" />
               )}
 
               {/* Icon Container with pulse effect for AI */}

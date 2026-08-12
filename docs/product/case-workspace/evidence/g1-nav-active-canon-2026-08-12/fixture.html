@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>BottomNavigation active-state canon fixture (G1)</title>
+<link rel="stylesheet" href="./compiled.css" />
+</head>
+<body>
+<!--
+  Faithful reproduction of src/components/navigation/BottomNavigation.tsx render output,
+  scoped to the ACTIVE-item defect (packet G1, 2026-08-12).
+
+  "before" = original crimson active state:
+    active item:    text-primary-600 dark:text-primary-400
+    indicator bar:  bg-primary-600 dark:bg-primary-400
+    inactive :active (touch-press): active:text-primary-600 dark:active:text-primary-400
+
+  "after" = fix landed in this packet:
+    active item:    text-c-text
+    indicator bar:  bg-c-info
+    inactive :active (touch-press): active:text-c-text dark:active:text-c-text
+
+  Inactive item's resting (non-:active) color (text-slate-600 dark:text-c-text-muted) is
+  UNCHANGED from packet F2 (already fixed/measured there) and is reproduced here unmodified,
+  both for the composed-background parity and to re-confirm no regression.
+
+  Structure, wrapper bg (bg-c-bg), nav bg (bg-white/95 dark:bg-navy-900/95 backdrop-blur-xl)
+  match the real component exactly, so composited colors are pixel-real, not guessed.
+-->
+<div class="flex flex-col min-h-screen bg-c-bg font-sans" id="app-root-before">
+  <div style="height: 500px"></div>
+
+  <nav aria-label="Primary mobile navigation" class="fixed bottom-0 left-0 right-0 z-50 md:hidden safe-area-pb" id="before" data-variant="before">
+    <div class="absolute inset-0 bg-white/95 dark:bg-navy-900/95 backdrop-blur-xl border-t border-slate-200 dark:border-navy-700 shadow-2xl shadow-black/10"></div>
+    <div class="relative flex items-stretch justify-around px-2 h-16">
+      <button type="button" data-testid="bottom-nav-mywork" class="flex-1 flex flex-col items-center justify-center gap-0.5 transition-all duration-200 relative touch-target no-select text-slate-600 dark:text-c-text-muted active:text-primary-600 dark:active:text-primary-400">
+        <div class="relative flex items-center justify-center"><svg width="22" height="22"></svg></div>
+        <span class="text-[10px] font-medium" data-role="label">My Work</span>
+      </button>
+      <button type="button" data-testid="bottom-nav-assessment" aria-current="page" class="flex-1 flex flex-col items-center justify-center gap-0.5 transition-all duration-200 relative touch-target no-select text-primary-600 dark:text-primary-400">
+        <div class="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-1 bg-primary-600 dark:bg-primary-400 rounded-b-full" data-role="indicator"></div>
+        <div class="relative flex items-center justify-center"><svg width="22" height="22"></svg></div>
+        <span class="text-[10px] font-medium font-semibold" data-role="label">Licensed Tools</span>
+      </button>
+      <button type="button" data-testid="bottom-nav-initiatives" class="flex-1 flex flex-col items-center justify-center gap-0.5 transition-all duration-200 relative touch-target no-select text-slate-600 dark:text-c-text-muted active:text-primary-600 dark:active:text-primary-400">
+        <div class="relative flex items-center justify-center"><svg width="22" height="22"></svg></div>
+        <span class="text-[10px] font-medium" data-role="label">Initiatives</span>
+      </button>
+      <button type="button" data-testid="bottom-nav-ai" class="flex-1 flex flex-col items-center justify-center gap-0.5 transition-all duration-200 relative touch-target no-select text-slate-600 dark:text-c-text-muted active:text-primary-600 dark:active:text-primary-400">
+        <div class="relative flex items-center justify-center"><svg width="22" height="22"></svg></div>
+        <span class="text-[10px] font-medium" data-role="label">AI</span>
+      </button>
+      <button type="button" data-testid="bottom-nav-more" class="flex-1 flex flex-col items-center justify-center gap-0.5 transition-all duration-200 relative touch-target no-select text-slate-600 dark:text-c-text-muted active:text-primary-600 dark:active:text-primary-400">
+        <div class="relative flex items-center justify-center"><svg width="22" height="22"></svg></div>
+        <span class="text-[10px] font-medium" data-role="label">More</span>
+      </button>
+    </div>
+  </nav>
+</div>
+
+<div class="flex flex-col min-h-screen bg-c-bg font-sans" id="app-root-after">
+  <div style="height: 500px"></div>
+
+  <nav aria-label="Primary mobile navigation" class="fixed bottom-0 left-0 right-0 z-50 md:hidden safe-area-pb" id="after" data-variant="after" style="display:none">
+    <div class="absolute inset-0 bg-white/95 dark:bg-navy-900/95 backdrop-blur-xl border-t border-slate-200 dark:border-navy-700 shadow-2xl shadow-black/10"></div>
+    <div class="relative flex items-stretch justify-around px-2 h-16">
+      <button type="button" data-testid="bottom-nav-mywork" class="flex-1 flex flex-col items-center justify-center gap-0.5 transition-all duration-200 relative touch-target no-select text-slate-600 dark:text-c-text-muted active:text-c-text dark:active:text-c-text">
+        <div class="relative flex items-center justify-center"><svg width="22" height="22"></svg></div>
+        <span class="text-[10px] font-medium" data-role="label">My Work</span>
+      </button>
+      <button type="button" data-testid="bottom-nav-assessment" aria-current="page" class="flex-1 flex flex-col items-center justify-center gap-0.5 transition-all duration-200 relative touch-target no-select text-c-text">
+        <div class="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-1 bg-c-info rounded-b-full" data-role="indicator"></div>
+        <div class="relative flex items-center justify-center"><svg width="22" height="22"></svg></div>
+        <span class="text-[10px] font-medium font-semibold" data-role="label">Licensed Tools</span>
+      </button>
+      <button type="button" data-testid="bottom-nav-initiatives" class="flex-1 flex flex-col items-center justify-center gap-0.5 transition-all duration-200 relative touch-target no-select text-slate-600 dark:text-c-text-muted active:text-c-text dark:active:text-c-text">
+        <div class="relative flex items-center justify-center"><svg width="22" height="22"></svg></div>
+        <span class="text-[10px] font-medium" data-role="label">Initiatives</span>
+      </button>
+      <button type="button" data-testid="bottom-nav-ai" class="flex-1 flex flex-col items-center justify-center gap-0.5 transition-all duration-200 relative touch-target no-select text-slate-600 dark:text-c-text-muted active:text-c-text dark:active:text-c-text">
+        <div class="relative flex items-center justify-center"><svg width="22" height="22"></svg></div>
+        <span class="text-[10px] font-medium" data-role="label">AI</span>
+      </button>
+      <button type="button" data-testid="bottom-nav-more" class="flex-1 flex flex-col items-center justify-center gap-0.5 transition-all duration-200 relative touch-target no-select text-slate-600 dark:text-c-text-muted active:text-c-text dark:active:text-c-text">
+        <div class="relative flex items-center justify-center"><svg width="22" height="22"></svg></div>
+        <span class="text-[10px] font-medium" data-role="label">More</span>
+      </button>
+    </div>
+  </nav>
+</div>
+</body>
+</html>
