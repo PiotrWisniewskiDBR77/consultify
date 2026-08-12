@@ -272,10 +272,16 @@ export function closureAxisStatusLabel(raw: string | null | undefined, isPolish:
   return pick(CLOSURE_AXIS_STATUS_LABELS, key, isPolish) ?? humanizeEnum(key);
 }
 
+// PL etykiety = verbatim kanon: `docs/product/case-workspace/03_INTERACTION_
+// RESPONSIVE_ACCESSIBILITY.md:66` i `04_DOMAIN_RUNTIME_AND_STATE_MACHINES.md:228`
+// — „UX mapping is `Szkic | Do przeglądu | Opublikowany | Wycofany`". SUPERSEDED
+// nie jest w tej czwórce (kanon jej tam nie wymienia), ale ma własne pokrycie w
+// `docs/product/case-workspace/prototype-w2-v0/js/labels.js:54`
+// (`plan_status_superseded: "Zastąpiony"`) — zgodne z wartością poniżej.
 const PLAN_VERSION_STATUS_LABELS: Record<string, Bilingual> = {
   DRAFT: { en: 'Draft', pl: 'Szkic' },
-  IN_REVIEW: { en: 'In review', pl: 'W recenzji' },
-  PUBLISHED: { en: 'Approved', pl: 'Zatwierdzony' },
+  IN_REVIEW: { en: 'In review', pl: 'Do przeglądu' },
+  PUBLISHED: { en: 'Published', pl: 'Opublikowany' },
   SUPERSEDED: { en: 'Replaced', pl: 'Zastąpiony' },
   WITHDRAWN: { en: 'Withdrawn', pl: 'Wycofany' },
 };
