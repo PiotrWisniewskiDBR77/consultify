@@ -16,6 +16,76 @@ efemeryczne i celowo odizolowane od demo/staging/prod.
 
 ---
 
+## 2026-08-12 aktualizacja (B1/B2/B3) — nowy SHA, ten sam Postgres, rozbudowany zasiew
+
+Worktree przeniesiony na `/Users/piotrwisniewski/rn-g2-lanes/g6-runtime`,
+gałąź `rn-g6-runtime2`, HEAD `d6bd233a77` (pełna integracja: 10 torów RN-G5 +
+P0-A + P0-C + naprawa ról + fikstury akceptacyjne). Ten dokument, oba skrypty
+(`scripts/rn-g6-seed-runtime-dataset.ts`, `scripts/rn-g6-smoke-screenshot.mjs`)
+zostały wciągnięte z gałęzi `rn-g6-runtime` (`git checkout rn-g6-runtime --
+scripts/ docs/...`) i rozbudowane, nie napisane od nowa.
+
+**Postgres z poprzedniej rundy PONOWNIE UŻYTY** (nie postawiono nowego) —
+proces `pg_ctl` sprzed tej sesji wciąż żył na porcie 55821
+(`/Users/piotrwisniewski/rn-g6-lanes/pgdata-g6`), `migrate.postgres.ts`
+uruchomiony ponownie przeciw NOWEMU SHA zgłosił `0 applied` (schemat już
+zgodny — commity RN-G5 na tym torze nie zmieniały DDL). Weryfikacja
+`information_schema` zgodna z poprzednią rundą (patrz §1 fingerprint) — nic
+nie zgadywane.
+
+**Zasiew rozbudowany o B2** (`scripts/rn-g6-seed-runtime-dataset.ts`,
+commit `cd303ecd28`) — dodano ponad istniejące 4 fazy ROI + 6 stanów KPI +
+OKR:
+- **5 ról org A** zamiast 1: `rn-g6-user-a-owner` (OWNER), `rn-g6-user-a-admin`
+  (ADMIN, "menedżer"), `rn-g6-user-a-contributor` (MEMBER), `rn-g6-user-a-reviewer`
+  (CONSULTANT), `rn-g6-user-a-outsider` (GUEST) — wszyscy hasło
+  `RnG6Runtime!2026`. **Empiryczna weryfikacja (patrz `RN_G6_B3_ROUTE_INVENTORY.md`
+  F3): tylko OWNER i ADMIN faktycznie widzą `/results/*`** — MEMBER/CONSULTANT/GUEST
+  wszystkie normalizują się do klienckiego `USER`/`GUEST` i są odbijane na
+  `/interview`, niezależnie od etykiety roli w DB. To jest realne ograniczenie
+  modelu ról tego SHA, nie błąd zasiewu.
+- **3 obowiązki MyWork** (`rvn_platform_obligations`) — 2 otwarte
+  (`explain_warning_critical_deviation` na deviation case KPI-1,
+  `perform_periodic_kpi_review` na KPI-4), 1 zamknięty (`enter_kpi_value`,
+  `completed`).
+- **1 powiązanie z decyzją** — replika prawdziwej ścieżki OKR
+  support-request → `decisions` → `okr_vnext_decision_links`
+  (`okrDecisionCommands.ts`'s jedyny prawdziwy most Results Next → `decisions`
+  w tym SHA), zawieszona na objective2/kr3 (at_risk, bez check-inów).
+- **1 propozycja Teresy** (`teresa_proposals`, `target_module='kpi'`) —
+  UWAGA: `kpi`/`roi`/`okr`/`results` SĄ zarezerwowanymi wartościami
+  `HandoffTargetModule` w tym SHA, ale `TARGET_LABELS` nie ma dla nich etykiety
+  (w przeciwieństwie do `initiatives`/`documents`/`presentations`, które
+  ostatnia fala programu podłączyła) — most Teresa→Results Next NIE istnieje
+  jeszcze end-to-end, ten wiersz dowodzi tylko kształtu danych.
+- **ROI case5** (`changes_requested`) z `rvn_roi_calculation_runs.status='failed'`
+  — jedyny seedowalny kształt dający dosłowny literał `'not_calculable'`
+  (`roiCaseFullToolMappers.ts`: `if (run.status === 'failed') return
+  'not_calculable'`) zamiast zwykłego "—". To jest jednocześnie scenariusz
+  **error** i **not_calculable** z B2.
+- **ROI case6** (`closed`) — terminal, analog "locked" dla ROI (jak `archived`
+  dla KPI/scorecard).
+- Nowa 5. inicjatywa org A (`rn-g6-init-a5`) — potrzebna bo
+  `ux_rvn_roi_cases_one_active_per_initiative` już miał jedną aktywną sprawę
+  na każdej z 4 pierwszych.
+
+Zweryfikowana idempotencja: dwa przebiegi `--wipe` pod rząd dały IDENTYCZNE
+identyfikatory (deterministyczny `uid()`).
+
+**Cold restart zweryfikowany** (wymóg zadania) — backend i frontend
+zatrzymane precyzyjnymi PID-ami (NIE `pkill -f`), postawione ponownie tymi
+samymi komendami z §3, `/api/ready` znów `"status":"ready"`, dane
+sprawdzone bezpośrednio w Postgresie PO restarcie (6 KPI, 6 org_members, 3
+obowiązki — bez ubytku), `POST /api/auth/login` + `GET
+/api/vnext/results/kpi` zwróciły realne dane od razu po restarcie.
+
+**B3 — pełna tabela tras**: `RN_G6_B3_ROUTE_INVENTORY.md` (rozszerzono z 3
+tras rejestru do 9: KPI registry/tool/scorecard, ROI registry/case, OKR
+registry/set, `/results/attention`, plus literalne `/attention` z briefu
+zadania — okazało się MARTWĄ trasą, patrz F1 tam).
+
+---
+
 ## 0. Skrócona ścieżka (TL;DR)
 
 ```bash
@@ -289,17 +359,30 @@ Katalog danych: `/Users/piotrwisniewski/rn-g6-lanes/pgdata-g6` (poza repo,
 trwały między sesjami dopóki nikt go nie skasuje). Port `55821`, gniazdo
 `/tmp/rn-g6-sock`, baza `rn_g6_runtime`.
 
-**Stan na koniec tej sesji: Postgres URUCHOMIONY, backend i frontend
-ZATRZYMANE** (uruchamiane ad hoc na czas dowodu §6, nie zostawione jako
-stałe procesy w tle — restart wg §0/§3 w razie potrzeby).
+**Stan na koniec tej sesji (poprzednia runda): Postgres URUCHOMIONY, backend i
+frontend ZATRZYMANE.**
+
+**2026-08-12 (ta runda) — stan na koniec: Postgres, backend I frontend
+URUCHOMIONE celowo** (zadanie B1 wymaga zostawienia stosu żywym dla kolejnych
+torów domenowych). Przetestowany cold restart (zatrzymanie precyzyjnymi PID-ami
++ ponowne uruchomienie tymi samymi komendami z §3 — dane przetrwały, `/api/ready`
+znów `ready`). Aktualne PID-y/porty do zatrzymania — patrz raport agenta z tej
+sesji (zmieniają się przy każdym restarcie, nie zapisywane tu na stałe).
 
 ---
 
 ## 5. Logowanie i flagi
 
-**Logowanie** (dwóch użytkowników testowych, NIE dane właściciela):
-- `rn-g6-user-a-admin@consultify.local` / `RnG6Runtime!2026` (org A, bogaty zestaw)
-- `rn-g6-user-b-admin@consultify.local` / `RnG6Runtime!2026` (org B, izolacja tenantów)
+**Logowanie** (sześciu użytkowników testowych, NIE dane właściciela; hasło
+wspólne `RnG6Runtime!2026` dla wszystkich). Od 2026-08-12 pięć ról org A —
+patrz `RN_G6_B3_ROUTE_INVENTORY.md` F3 dla empirycznej weryfikacji które z
+nich faktycznie widzą `/results/*`:
+- `rn-g6-user-a-owner@consultify.local` — OWNER, "właściciel" — dociera do `/results/*`
+- `rn-g6-user-a-admin@consultify.local` — ADMIN, "menedżer" — dociera do `/results/*`, bogaty zestaw
+- `rn-g6-user-a-contributor@consultify.local` — MEMBER, "współtwórca" — **odbity na `/interview`**
+- `rn-g6-user-a-reviewer@consultify.local` — CONSULTANT, "recenzent/zatwierdzający" — **odbity na `/interview`**
+- `rn-g6-user-a-outsider@consultify.local` — GUEST, "obcy z ograniczonym dostępem" — **odbity na `/interview`**
+- `rn-g6-user-b-admin@consultify.local` — ADMIN, org B — dociera do `/results/*`, izolacja tenantów
 
 **Flagi domenowe — WYŁĄCZNIE przez parametr adresu**, kolejność
 rozstrzygania query → localStorage → env → default `false`
@@ -313,6 +396,11 @@ http://localhost:3197/results/okr?ff_resultsVNextOkr=1
 ---
 
 ## 6. ZADANIE 4 — dymny dowód (Playwright, nie dev-render)
+
+**2026-08-12: rozszerzone z 3 do 9 tras (pełna tabela B3, aktualna) →
+`RN_G6_B3_ROUTE_INVENTORY.md`.** Tabela poniżej to oryginalny, węższy
+przebieg z poprzedniej rundy (3 rejestry na starszym SHA) — zachowana dla
+historii, NIE aktualny stan.
 
 Skrypt: `scripts/rn-g6-smoke-screenshot.mjs`. Loguje się jako
 `rn-g6-user-a-admin`, otwiera trzy trasy z flagami, zrzuca ekran + raport
