@@ -17,6 +17,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useFinanceFocusMode } from '@/hooks/useFinanceFocusMode';
+import { useFinanceValuationWorkspaceFlag } from '@/hooks/useFinanceValuationWorkspaceFlag';
 import type {
   ValuationAdvisorFindingGeneratedDto,
   ValuationAdvisorFindingStoredDto,
@@ -115,7 +116,20 @@ export interface ValuationWorkspaceProps {
   role?: WorkspaceBarEvaluationContext['role'];
 }
 
-export function ValuationWorkspace(props: ValuationWorkspaceProps): React.ReactElement {
+/**
+ * Gate publiczny (CLAUDE.md #7/#9): przy `financeValuationWorkspaceV1` OFF
+ * zwraca `null` PRZED zamontowaniem `ValuationWorkspaceInner` — żaden z
+ * dwóch `useEffect`y ładujących dane (variant/lineage/WACC/methods/results/
+ * advisor) nigdy się nie uruchamia. Flaga jest jedynym hookiem tego
+ * komponentu.
+ */
+export function ValuationWorkspace(props: ValuationWorkspaceProps): React.ReactElement | null {
+  const { enabled } = useFinanceValuationWorkspaceFlag();
+  if (!enabled) return null;
+  return <ValuationWorkspaceInner {...props} />;
+}
+
+function ValuationWorkspaceInner(props: ValuationWorkspaceProps): React.ReactElement {
   const { businessVersionId, api = REAL_VALUATION_WORKSPACE_API, initialStepId = 'source', onNavigateBack = () => {}, role = 'preparer' } = props;
 
   const [activeStep, setActiveStep] = useState<ValuationStepId>(initialStepId);

@@ -10,15 +10,31 @@
  *   - bez realnego `businessVersionId` (luka CRUD, patrz predictionScenarioModel.ts nagłówek)
  *     kliknięcie "Uruchom preflight"/"Przelicz scenariusz" pokazuje honest-UI komunikat zamiast
  *     fejkować sukces lub crashować.
+ *
+ * AP_MOUNT §A: `PredictionWorkspace` teraz SAM odczytuje
+ * `financePredictionWorkspaceV1` i renderuje `null` przy OFF — te testy
+ * dowodzą zachowania ekranu przy fladze WŁĄCZONEJ (real local override, nie
+ * mock hooka), więc `beforeEach` włącza flagę tym samym mechanizmem, którego
+ * użyłby prawdziwy użytkownik/harness (localStorage). Osobny plik
+ * `PredictionWorkspace.flag.test.tsx` dowodzi zachowania przy OFF.
  */
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+
+import { clearFeatureFlagOverrides, setFeatureFlagOverrides } from '@/test-utils/featureFlagOverrides';
 
 import { createEmptyScenarioDraft } from '../predictionScenarioModel';
 import { PredictionWorkspace } from '../PredictionWorkspace';
 
 describe('PredictionWorkspace — smoke render', () => {
+  beforeEach(() => {
+    setFeatureFlagOverrides({ financePredictionWorkspaceV1: true });
+  });
+  afterEach(() => {
+    clearFeatureFlagOverrides();
+  });
+
   it('montuje FinanceWorkspaceBar i widok Budowa założeń domyślnie', () => {
     render(<PredictionWorkspace artifactId="artifact-1" />);
     expect(screen.getByTestId('finance-workspace-bar')).toBeInTheDocument();

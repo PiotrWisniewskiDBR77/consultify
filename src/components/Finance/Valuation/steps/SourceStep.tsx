@@ -30,7 +30,7 @@ export function SourceStep(props: SourceStepProps): React.ReactElement {
   const sourceEdge = lineage?.ancestors[0] ?? null;
 
   return (
-    <div className="max-w-2xl space-y-4" data-testid="valuation-source-step">
+    <div className="max-w-5xl space-y-4" data-testid="valuation-source-step">
       <h2 className="text-sm font-semibold text-c-text">Źródło wyceny</h2>
       <p className="text-xs text-c-text-muted">
         Ta wersja wyceny (<span className="font-mono">{businessVersionId}</span>
@@ -50,7 +50,7 @@ export function SourceStep(props: SourceStepProps): React.ReactElement {
             Powiązano z wersją źródłową <span className="font-mono">{sourceEdge.sourceVersionId}</span> (
             {financeArtifactTypeLabel(sourceEdge.sourceArtifactType)})
           </p>
-          <dl className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-c-text-muted">
+          <dl className="mt-2 grid grid-cols-2 gap-x-6 gap-y-3 text-xs text-c-text-muted md:grid-cols-4">
             <dt>Typ transformacji</dt>
             <dd className="text-c-text">{financeLineageTransformationKindLabel(sourceEdge.transformationKind)}</dd>
             <dt>Hash migawki założeń</dt>

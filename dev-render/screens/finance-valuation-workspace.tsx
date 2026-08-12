@@ -29,6 +29,16 @@ import type {
   ValuationWaccInputsRawDto,
 } from '../../src/services/api/financeV2.types';
 
+// AP_MOUNT §A: `ValuationWorkspace` now reads `financeValuationWorkspaceV1`
+// itself (not just its caller) and renders `null` when OFF — force it ON via
+// the same localStorage-backed local override the hook reads at init.
+try {
+  const existing = JSON.parse(localStorage.getItem('consultify_feature_flags') || '{}');
+  localStorage.setItem('consultify_feature_flags', JSON.stringify({ ...existing, financeValuationWorkspaceV1: true }));
+} catch {
+  // ignore — harness-only convenience
+}
+
 const params = new URLSearchParams(window.location.search);
 const INITIAL_STEP = (params.get('step') as any) || 'source';
 const SOURCE_LINKED = params.get('sourceLinked') !== '0';

@@ -39,6 +39,16 @@ import type {
   BusinessVersionStatus,
 } from '../../src/services/api/financeV2.types';
 
+// AP_MOUNT §A: `BaselineWorkspace` now reads `financeBaselineWorkspaceV1`
+// itself (not just its caller) and renders `null` when OFF — force it ON via
+// the same localStorage-backed local override the hook reads at init.
+try {
+  const existing = JSON.parse(localStorage.getItem('consultify_feature_flags') || '{}');
+  localStorage.setItem('consultify_feature_flags', JSON.stringify({ ...existing, financeBaselineWorkspaceV1: true }));
+} catch {
+  // ignore — harness-only convenience
+}
+
 const params = new URLSearchParams(window.location.search);
 const initialView = (params.get('view') as BaselineWorkspaceView | null) ?? 'assumptions';
 const scene = params.get('scene') === 'fundinggap' ? 'fundinggap' : 'default';

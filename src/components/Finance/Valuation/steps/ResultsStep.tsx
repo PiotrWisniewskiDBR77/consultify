@@ -45,7 +45,7 @@ export function ResultsStep(props: ResultsStepProps): React.ReactElement {
   const headline = results.headlineEnterpriseValue;
 
   return (
-    <div className="max-w-3xl space-y-5" data-testid="valuation-results-step">
+    <div className="max-w-5xl space-y-5" data-testid="valuation-results-step">
       <div className="rounded-xl border border-c-border-subtle bg-c-surface p-4">
         <p className="text-xs text-c-text-muted">Wartość przedsiębiorstwa (EV) — nagłówek</p>
         <p className="mt-1 text-2xl font-semibold text-c-text" data-testid="headline-ev">

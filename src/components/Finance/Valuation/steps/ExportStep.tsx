@@ -12,7 +12,7 @@ import React from 'react';
 
 export function ExportStep(): React.ReactElement {
   return (
-    <div className="max-w-2xl space-y-3" data-testid="valuation-export-step">
+    <div className="max-w-5xl space-y-3" data-testid="valuation-export-step">
       <h2 className="text-sm font-semibold text-c-text">Eksport</h2>
       <div className="rounded-xl border border-c-warning/30 bg-c-warning/10 p-4" data-testid="export-not-available">
         <p className="text-sm font-medium text-c-text">Eksport wyceny nie jest dziś dostępny</p>

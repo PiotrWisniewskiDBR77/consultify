@@ -68,7 +68,7 @@ export function SensitivityStep(props: SensitivityStepProps): React.ReactElement
   const integrity = grid ? assertSensitivityGridIntegrity(cellsForIntegrityCheck) : null;
 
   return (
-    <div className="max-w-3xl space-y-4" data-testid="valuation-sensitivity-step">
+    <div className="max-w-5xl space-y-4" data-testid="valuation-sensitivity-step">
       <h2 className="text-sm font-semibold text-c-text">Wrażliwość — WACC × wzrost terminalny (5×5)</h2>
 
       <div className="flex flex-wrap items-end gap-2">

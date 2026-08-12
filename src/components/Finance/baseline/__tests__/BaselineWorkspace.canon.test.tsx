@@ -18,7 +18,9 @@
  */
 import { render, screen, waitFor, within } from '@testing-library/react';
 import React from 'react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { clearFeatureFlagOverrides, setFeatureFlagOverrides } from '@/test-utils/featureFlagOverrides';
 
 vi.mock('@/services/api/financeV2.api', () => ({
   approveFinanceModel: vi.fn(),
@@ -64,8 +66,16 @@ function baseProps(overrides: Partial<BaselineWorkspaceProps> = {}): BaselineWor
 }
 
 describe('BaselineWorkspace — V-1/V-2/V-3/V-6 (dowód programowy)', () => {
+  // AP_MOUNT §A: `BaselineWorkspace` teraz SAM odczytuje `financeBaselineWorkspaceV1`
+  // i renderuje `null` przy OFF — włącz flagę tym samym local-override
+  // mechanizmem, którego użyłby prawdziwy harness (localStorage), żeby te
+  // testy dalej dowodziły zachowania REALNEGO ekranu (nie mockowanego hooka).
   beforeEach(() => {
     vi.clearAllMocks();
+    setFeatureFlagOverrides({ financeBaselineWorkspaceV1: true });
+  });
+  afterEach(() => {
+    clearFeatureFlagOverrides();
   });
 
   it('V-3: renderuje DOKŁADNIE DWA widoki — Założenia i Wyliczenia, żadnego innego', async () => {

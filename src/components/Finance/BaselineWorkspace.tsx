@@ -41,6 +41,7 @@ import {
   type WorkspaceBarLifecycleTransition,
   type WorkspaceBarMoreMenuItem,
 } from '@/components/Finance/shared/financeWorkspaceBar.contract';
+import { useFinanceBaselineWorkspaceFlag } from '@/hooks/useFinanceBaselineWorkspaceFlag';
 import { useFinanceFocusMode } from '@/hooks/useFinanceFocusMode';
 import {
   approveFinanceModel,
@@ -88,7 +89,20 @@ const VIEW_NAV_STATE_READY = { kind: 'ready' as const, label: { key: 'ready', pl
 const VIEW_NAV_STATE_STALE = { kind: 'stale' as const, label: { key: 'stale', pl: 'Nieaktualne' } };
 const VIEW_NAV_STATE_NOT_CONFIGURED = { kind: 'not-configured' as const, label: { key: 'brak', pl: 'Do uzupełnienia' } };
 
-export function BaselineWorkspace(props: BaselineWorkspaceProps): React.ReactElement {
+/**
+ * Gate publiczny (CLAUDE.md #7/#9): przy `financeBaselineWorkspaceV1` OFF
+ * zwraca `null` PRZED zamontowaniem `BaselineWorkspaceInner` — żaden hook
+ * (`useBaselineAssumptionsEditor`/`useBaselineOutputs`/`useBaselineCompute`,
+ * wszystkie ładują dane z `/api/v8/finance-v2/baseline/*` na mount) nigdy się
+ * nie wykonuje. Flaga jest jedynym hookiem tego komponentu.
+ */
+export function BaselineWorkspace(props: BaselineWorkspaceProps): React.ReactElement | null {
+  const { enabled } = useFinanceBaselineWorkspaceFlag();
+  if (!enabled) return null;
+  return <BaselineWorkspaceInner {...props} />;
+}
+
+function BaselineWorkspaceInner(props: BaselineWorkspaceProps): React.ReactElement {
   const { artifactId, businessVersionId, entityId, forecastPeriods, openingBalanceSheetPeriodId, assumptionRowOrder, readOnly = false } = props;
 
   const [activeView, setActiveView] = useState<BaselineWorkspaceView>(props.initialView ?? 'assumptions');

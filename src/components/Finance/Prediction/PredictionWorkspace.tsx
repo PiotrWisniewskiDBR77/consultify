@@ -3,8 +3,13 @@
  * `FinanceErrorBoundary`, dwa widoki (Budowa założeń / Modele-Wyniki), stan draftu scenariusza
  * zachowany przy przełączaniu widoków/focus mode (Focus Mode kontrakt gwarantuje "nie refetchuje").
  *
- * ★ ZA FLAGĄ (CLAUDE.md #7): renderuj TYLKO gdy `useFinancePredictionWorkspaceFlag().enabled`.
- * Żaden production caller dziś tego nie montuje — gotowe dla integracji po akcepcie Piotra.
+ * ★ ZA FLAGĄ (CLAUDE.md #7): eksportowany `PredictionWorkspace` odczytuje
+ * `useFinancePredictionWorkspaceFlag().enabled` SAM (nie tylko caller) —
+ * przy `false` zwraca `null` PRZED zamontowaniem `PredictionWorkspaceInner`,
+ * więc żaden hook/efekt tego ekranu (w tym sieciowe preflight/calculate)
+ * nigdy się nie uruchamia. Gate na callerze (Task B, `FinanceHub.tsx`) jest
+ * DODATKOWY, nie jedyny — komponent nigdy nie polega wyłącznie na tym, że
+ * caller sprawdził flagę poprawnie (AP_MOUNT §A).
  *
  * ★ LUKA: preflight/calculate wołają REALNE endpointy (`financeV2.api.ts` PKG-G blok) gdy
  * `draft.businessVersionId` istnieje; bez realnego scenariusza (brak CRUD zapisu, patrz
@@ -15,6 +20,7 @@ import React, { useState } from 'react';
 import { FinanceErrorBoundary } from '@/components/Finance/shared/FinanceErrorBoundary';
 import { FinanceWorkspaceBar } from '@/components/Finance/shared/FinanceWorkspaceBar';
 import { useFinanceFocusMode } from '@/hooks/useFinanceFocusMode';
+import { useFinancePredictionWorkspaceFlag } from '@/hooks/useFinancePredictionWorkspaceFlag';
 import { runFinancePredictionCalculate, runFinancePredictionPreflight } from '@/services/api/financeV2.api';
 import { describeFinanceV2Error } from '@/services/api/financeV2.types';
 
@@ -32,7 +38,21 @@ export interface PredictionWorkspaceProps {
   onNavigateBack?: () => void;
 }
 
-export function PredictionWorkspace(props: PredictionWorkspaceProps): React.ReactElement {
+/**
+ * Gate publiczny (CLAUDE.md #7/#9): przy fladze OFF zwraca `null` PRZED
+ * zamontowaniem `PredictionWorkspaceInner` — żaden hook/efekt (w tym
+ * `runFinancePredictionPreflight`/`runFinancePredictionCalculate`) nigdy się
+ * nie wykonuje. Flaga jest jedynym hookiem tego komponentu, więc Rules of
+ * Hooks zostają zachowane (wywołanie bezwarunkowe, wcześniejszy return
+ * PRZED jakimkolwiek innym hookiem).
+ */
+export function PredictionWorkspace(props: PredictionWorkspaceProps): React.ReactElement | null {
+  const { enabled } = useFinancePredictionWorkspaceFlag();
+  if (!enabled) return null;
+  return <PredictionWorkspaceInner {...props} />;
+}
+
+function PredictionWorkspaceInner(props: PredictionWorkspaceProps): React.ReactElement {
   const [draft, setDraft] = useState<ScenarioDraft>(props.initialDraft ?? createEmptyScenarioDraft({ name: 'Nowy scenariusz' }));
   const [activeViewId, setActiveViewId] = useState<PredictionViewId>(PREDICTION_VIEW_IDS.assumptions);
   const [exceptionLedger, setExceptionLedger] = useState<readonly ExceptionLedgerEntry[]>([]);
