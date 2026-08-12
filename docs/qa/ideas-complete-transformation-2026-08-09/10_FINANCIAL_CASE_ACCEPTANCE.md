@@ -1,5 +1,14 @@
 # E09 — Financial case acceptance
 
+> **READ §6 → §8 FIRST — the header line below is HISTORY.** `deb103fcde` is the SHA at which
+> this document was opened, and §1–§5 describe the state *then*, including verdict (c) ("no save
+> path at all"). That verdict is **superseded**: the save path was built (§6), independently
+> re-run by the integrator with a two-stage falsifiability sabotage (§7), and the action-registry
+> guard failure that §6.9 honestly recorded is **closed** (§8, commit `a537a022e2`). Current
+> candidate at the time of writing §8: code final at `f5cdc7b867`. The historical SHA is kept
+> deliberately rather than overwritten — swapping it without re-verifying every §1–§5 claim would
+> be the same falsehood in a new costume.
+
 Candidate: HEAD `deb103fcde`, base `origin/demo` @ `9d17cac114`. DoD: doc 11 §4 E09 ("at least
 three cost and three benefit drivers; benefit types separated; calculations reconcile; provenance
 visible; invalid/stale state blocks approval; compute→save→reopen→mutate→stale→recompute→
