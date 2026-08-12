@@ -17,6 +17,18 @@ import React from 'react';
 import { FeatureFlagsProvider } from '../../src/contexts/FeatureFlagsContext';
 import { AppProviders } from '../../src/providers/AppProviders';
 
+// AP_MOUNT §A: `PredictionWorkspace` now reads `financePredictionWorkspaceV1`
+// itself (not just its caller) and renders `null` when OFF — force it ON via
+// the same localStorage-backed local override the hook reads at init
+// (STORAGE_KEY = 'consultify_feature_flags'), same pattern as
+// `dev-render/screens/assessment-menu3-status-chips.tsx`.
+try {
+  const existing = JSON.parse(localStorage.getItem('consultify_feature_flags') || '{}');
+  localStorage.setItem('consultify_feature_flags', JSON.stringify({ ...existing, financePredictionWorkspaceV1: true }));
+} catch {
+  // ignore — harness-only convenience
+}
+
 const PredictionWorkspaceLazy = React.lazy(() =>
   import('../../src/components/Finance/Prediction/PredictionWorkspace').then((m) => ({ default: m.PredictionWorkspace }))
 );

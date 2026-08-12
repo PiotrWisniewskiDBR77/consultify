@@ -17,10 +17,23 @@
  */
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import React from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { clearFeatureFlagOverrides, setFeatureFlagOverrides } from '@/test-utils/featureFlagOverrides';
 
 import type { ValuationWorkspaceApi } from '../ValuationWorkspace';
 import { ValuationWorkspace } from '../ValuationWorkspace';
+
+// AP_MOUNT §A: `ValuationWorkspace` teraz SAM odczytuje `financeValuationWorkspaceV1`
+// i renderuje `null` przy OFF — file-scope hook włącza flagę dla WSZYSTKICH
+// `describe` bloków w tym pliku (ten sam local-override mechanizm co realny
+// harness/użytkownik), żeby testy dalej dowodziły zachowania REALNEGO ekranu.
+beforeEach(() => {
+  setFeatureFlagOverrides({ financeValuationWorkspaceV1: true });
+});
+afterEach(() => {
+  clearFeatureFlagOverrides();
+});
 
 const BV_ID = 'bv-valuation-1';
 
