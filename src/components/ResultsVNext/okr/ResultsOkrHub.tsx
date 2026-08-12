@@ -50,11 +50,35 @@
  * into the same 404, so this always renders `NO_VISIBILITY_RECORD`
  * (RN_G1_PLATFORM_DESIGN.md §B's own documented fail-closed default) rather
  * than inventing a reason the API never told it.
+ *
+ * RE-ROUTED FULL WORKSPACE (RN-G5, 2026-08-12): the `'workspace'` drill
+ * level described below (§G #25's own comment block) is GONE — "Otwórz
+ * obszar roboczy" now `navigate()`s to `ROUTES.RESULTS_OKR.SET`
+ * (`/results/okr/sets/:okrSetId`, `OkrSetToolPage.tsx`) instead of setting
+ * local `drill` state, for the same D03 reason `RoiCaseFullTool`'s
+ * re-routing documents (`ResultsRoiHub.tsx` header). The
+ * Objectives/KeyResults/CheckIns breadcrumb-drill levels immediately above
+ * are UNCHANGED — they were never part of that open question, only the full
+ * workspace was. Also adds a `primaryCtaContent` pair of links to
+ * `ROUTES.RESULTS_OKR.PROGRAMS`/`.CYCLES` — those two admin routes were
+ * mounted (RN-G3 lane) but had NO entry point anywhere in the app; this Hub
+ * (the Sets registry) is the natural place per the task brief, using the
+ * `StandardModuleBar` "escape hatch" slot already documented for exactly
+ * this "more than one CTA-area element" case (see `FullROIView.tsx` for the
+ * precedent of a `primaryCtaContent` button that `navigate()`s).
+ *
+ * RETURN-CONTEXT PRESERVATION (RN-G5): same `sessionStorage`-backed
+ * tab/chip/selection restore as `ResultsRoiHub.tsx` — see that file's header
+ * for the full rationale (surface-scoped key, never per-record, D09).
  */
+import { Blocks, CalendarClock } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 
 import type { StandardBreadcrumb, StandardCounterChip, StandardModuleTab, TableRow } from '@/components/standard';
+import { Button } from '@/components/ui/primitives';
+import { ROUTES } from '@/routes/routeConfig';
 
 import { ResultsVNextRegistryShell } from '../ResultsVNextRegistryShell';
 import type { ResultsVNextForbiddenDetail } from '../types';
@@ -75,44 +99,69 @@ import type { OkrKeyResultDto, OkrObjectiveWithKeyResultsDto } from './okrObject
 import { OkrObjectivesView } from './OkrObjectivesView';
 import { OkrKeyResultsView } from './OkrKeyResultsView';
 import { OkrCheckInsView } from './OkrCheckInsView';
-import { OkrSetWorkspace } from './OkrSetWorkspace';
 
 type OkrTab = 'org' | 'my' | 'company';
 const OKR_SETS_FETCH_LIMIT = 200;
 
 // ==========================================
-// RN-G2 §G #25 — drill-down navigation state (see file header). RN-G3 lane
-// `okr` full-tool task (2026-08-11) adds `'workspace'` — the FULL OKR tool
-// for one Set (`OkrSetWorkspace.tsx`: Overview/Objectives & Key
-// Results/Alignment/Conversations & Support/Review & Reflection/History).
-// The pre-existing `'objectives'|'keyResults'|'checkIns'` levels are left
-// UNCHANGED (still reachable from the Set preview's "Cele" action, per the
-// already-accepted §G #25 package) — `'workspace'` is a genuinely additive
-// FOURTH entry point, not a replacement, so the already-shipped/QA'd drill
-// keeps working byte-for-byte for anyone still using it.
+// RN-G2 §G #25 — drill-down navigation state (see file header). The
+// pre-existing `'objectives'|'keyResults'|'checkIns'` levels are still
+// reachable from the Set preview's "Cele" action — `'workspace'` (the FULL
+// OKR tool) was removed from this union by RN-G5 (2026-08-12): it is now a
+// real route (`ROUTES.RESULTS_OKR.SET`, `OkrSetToolPage.tsx`), not a drill
+// level of this Hub — see file header "RE-ROUTED FULL WORKSPACE".
 // ==========================================
 
 type OkrDrill =
   | { level: 'objectives'; set: OkrSetDto }
   | { level: 'keyResults'; set: OkrSetDto; objective: OkrObjectiveWithKeyResultsDto }
-  | { level: 'checkIns'; set: OkrSetDto; objective: OkrObjectiveWithKeyResultsDto; keyResult: OkrKeyResultDto }
-  | { level: 'workspace'; set: OkrSetDto };
+  | { level: 'checkIns'; set: OkrSetDto; objective: OkrObjectiveWithKeyResultsDto; keyResult: OkrKeyResultDto };
 
 function withId<T extends { setId: string }>(row: T): T & { id: string } {
   return { ...row, id: row.setId };
 }
 
+// RN-G5 (2026-08-12) — see file header "RETURN-CONTEXT PRESERVATION". ONE
+// sessionStorage key for the whole surface, never per-record.
+const UI_STATE_KEY = 'results-vnext.okr-registry.ui-state';
+
+interface OkrHubUiState {
+  tab?: OkrTab;
+  chip?: 'all' | OkrSetStatusBucket;
+  selectedSetId?: string | null;
+}
+
+function readOkrHubUiState(): OkrHubUiState {
+  try {
+    const raw = window.sessionStorage.getItem(UI_STATE_KEY);
+    return raw ? (JSON.parse(raw) as OkrHubUiState) : {};
+  } catch {
+    return {};
+  }
+}
+
+function writeOkrHubUiState(state: OkrHubUiState): void {
+  try {
+    window.sessionStorage.setItem(UI_STATE_KEY, JSON.stringify(state));
+  } catch {
+    // no-op — sessionStorage unavailable (private mode) is not fatal, it
+    // only means the next mount starts from defaults instead of restoring.
+  }
+}
+
 export const ResultsOkrHub: React.FC = () => {
   const { i18n } = useTranslation();
   const isPolish = !!i18n.language?.startsWith('pl');
+  const navigate = useNavigate();
 
-  const [tab, setTab] = useState<OkrTab>('org');
-  const [chip, setChip] = useState<'all' | OkrSetStatusBucket>('all');
+  const restoredUiState = useMemo(() => readOkrHubUiState(), []);
+  const [tab, setTab] = useState<OkrTab>(restoredUiState.tab ?? 'org');
+  const [chip, setChip] = useState<'all' | OkrSetStatusBucket>(restoredUiState.chip ?? 'all');
 
   const [sets, setSets] = useState<OkrSetDto[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [selectedSetId, setSelectedSetId] = useState<string | null>(null);
+  const [selectedSetId, setSelectedSetId] = useState<string | null>(restoredUiState.selectedSetId ?? null);
   const [forbidden, setForbidden] = useState<ResultsVNextForbiddenDetail | null>(null);
 
   // RN-G2 §G #25 — drill-down (see file header). `null` = showing the Sets
@@ -136,15 +185,28 @@ export const ResultsOkrHub: React.FC = () => {
       .finally(() => setLoading(false));
   }, []);
 
+  // RN-G5 — the FIRST run of this effect (mount, possibly with a restored
+  // `tab`/`selectedSetId` from sessionStorage) must NOT wipe the restored
+  // selection; only a genuine USER tab switch afterwards should (each tab is
+  // a different query/scope, so a stale cross-tab selection would be
+  // dishonest — unchanged reasoning from before this package).
+  const isInitialTabEffect = React.useRef(true);
   useEffect(() => {
-    // Refetch on every tab switch — each tab is a genuinely different query
-    // (different endpoint / scope filter), not a client-side re-slice of
-    // one shared list, so a stale cross-tab cache would be dishonest.
     setSets(null);
-    setSelectedSetId(null);
+    if (!isInitialTabEffect.current) {
+      setSelectedSetId(null);
+    }
+    isInitialTabEffect.current = false;
     loadSets(tab);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab]);
+
+  // RN-G5 — persist tab/chip/selection so navigating to the full workspace
+  // (`ROUTES.RESULTS_OKR.SET`) and back restores the list context instead of
+  // resetting to defaults on remount.
+  useEffect(() => {
+    writeOkrHubUiState({ tab, chip, selectedSetId });
+  }, [tab, chip, selectedSetId]);
 
   // Deep link (§D "forbidden") — ?setId=<id> pre-selects/validates a record,
   // independent of whichever tab is currently active.
@@ -200,6 +262,35 @@ export const ResultsOkrHub: React.FC = () => {
     { id: 'my', label: isPolish ? 'Moje' : 'My' },
     { id: 'company', label: isPolish ? 'Firma' : 'Company' },
   ];
+
+  // RN-G5 (2026-08-12) — see file header "RE-ROUTED FULL WORKSPACE": the
+  // ONLY entry point in the whole app to `ROUTES.RESULTS_OKR.PROGRAMS`/
+  // `.CYCLES` (both real, mounted routes with zero prior links anywhere).
+  // `secondary`/`ghost` `Button` variants only — VISUAL_STANDARD.md §5.1
+  // reserves `brand` (crimson) for actual brand moments, never a plain nav
+  // link.
+  const adminLinksCta = (
+    <div className="flex items-center gap-2">
+      <Button
+        variant="secondary"
+        size="sm"
+        icon={<Blocks className="h-3.5 w-3.5" />}
+        onClick={() => navigate(ROUTES.RESULTS_OKR.PROGRAMS)}
+        data-testid="okr-registry-open-programs"
+      >
+        {isPolish ? 'Programy' : 'Programs'}
+      </Button>
+      <Button
+        variant="secondary"
+        size="sm"
+        icon={<CalendarClock className="h-3.5 w-3.5" />}
+        onClick={() => navigate(ROUTES.RESULTS_OKR.CYCLES)}
+        data-testid="okr-registry-open-cycles"
+      >
+        {isPolish ? 'Cykle' : 'Cycles'}
+      </Button>
+    </div>
+  );
 
   const chips: StandardCounterChip[] = [
     { id: 'all', label: isPolish ? 'Wszystkie' : 'All', count: sets?.length ?? 0 },
@@ -285,21 +376,6 @@ export const ResultsOkrHub: React.FC = () => {
     );
   }
 
-  if (drill?.level === 'workspace') {
-    return (
-      <OkrSetWorkspace
-        set={drill.set}
-        isPolish={isPolish}
-        setsLabel={setsLabel}
-        onBackToSets={() => setDrill(null)}
-        onSetChanged={(updated) => {
-          setSets((prev) => (prev ? prev.map((s) => (s.setId === updated.setId ? updated : s)) : prev));
-          setDrill({ level: 'workspace', set: updated });
-        }}
-      />
-    );
-  }
-
   if (drill?.level === 'checkIns') {
     const breadcrumbs: StandardBreadcrumb[] = [
       { label: setsLabel, onClick: () => setDrill(null) },
@@ -334,6 +410,7 @@ export const ResultsOkrHub: React.FC = () => {
         chips,
         activeChip: chip,
         onChipChange: (id) => setChip(id as 'all' | OkrSetStatusBucket),
+        primaryCtaContent: adminLinksCta,
       }}
       table={{
         columns: buildOkrSetColumns(isPolish),
@@ -357,7 +434,7 @@ export const ResultsOkrHub: React.FC = () => {
           buildOkrSetRowMenu(row as unknown as OkrSetDto, isPolish, {
             onPreview: (r) => setSelectedSetId(r.setId),
             onOpenObjectives: (r) => setDrill({ level: 'objectives', set: r }),
-            onOpenWorkspace: (r) => setDrill({ level: 'workspace', set: r }),
+            onOpenWorkspace: (r) => navigate(ROUTES.RESULTS_OKR.SET.replace(':okrSetId', r.setId)),
           }),
         defaultSort: { columnId: 'updatedAt', direction: 'desc' },
       }}
@@ -367,7 +444,7 @@ export const ResultsOkrHub: React.FC = () => {
               isPolish,
               onClose: () => setSelectedSetId(null),
               onOpenObjectives: (r) => setDrill({ level: 'objectives', set: r }),
-              onOpenWorkspace: (r) => setDrill({ level: 'workspace', set: r }),
+              onOpenWorkspace: (r) => navigate(ROUTES.RESULTS_OKR.SET.replace(':okrSetId', r.setId)),
             })
           : null
       }
