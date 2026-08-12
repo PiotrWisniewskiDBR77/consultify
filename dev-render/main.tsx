@@ -147,6 +147,7 @@ const FinanceLineageNavigatorScreen = React.lazy(() => import('./screens/finance
 const FinanceComparePanelScreen = React.lazy(() => import('./screens/finance-compare-panel'));
 const FinanceCommentsPanelScreen = React.lazy(() => import('./screens/finance-comments-panel'));
 const FinanceSavedViewsPanelScreen = React.lazy(() => import('./screens/finance-saved-views-panel'));
+const FinanceExportImportPanelScreen = React.lazy(() => import('./screens/finance-export-import-panel'));
 const GenDeckContentHintsScreen = React.lazy(() => import('./screens/gen-deck-content-hints'));
 const GenExcelTemplatesTabScreen = React.lazy(() => import('./screens/gen-excel-templates-tab'));
 const GenWordContentHintsScreen = React.lazy(() => import('./screens/gen-word-content-hints'));
@@ -664,6 +665,10 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'finance-saved-views-panel': {
     label: 'AP-CLIENT (Gate J) — REAL <FinanceSavedViewsPanel> (PERSONAL/TEAM, zapis, link, usuń) — &scene=default|off, flaga financeSavedViewsV1 default OFF',
     render: () => <FinanceSavedViewsPanelScreen />,
+  },
+  'finance-export-import-panel': {
+    label: 'AP-CLIENT (Gate J) — REAL <FinanceExportImportPanel> (.xlsx eksport+manifest, import parse→preview→apply transakcyjny) — &scene=default|off, flaga financeExportImportV1 default OFF',
+    render: () => <FinanceExportImportPanelScreen />,
   },
   'execution-change-signals': {
     label:
