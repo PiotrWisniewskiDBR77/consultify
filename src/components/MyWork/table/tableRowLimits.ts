@@ -77,6 +77,44 @@ export function computeRowRenderCap(
   return { groups: null, rows, totalCount, shownCount: rows.length };
 }
 
+export interface RowAddCapDecision<T> {
+  /** Incoming rows actually allowed in, truncated to the remaining budget (possibly empty). */
+  rowsToAdd: T[];
+  /** How many of the incoming rows were NOT added because of the cap. */
+  truncatedCount: number;
+  /** True when the table was already at/over the cap before this add — nothing was added. */
+  blocked: boolean;
+}
+
+/**
+ * RISK-36 — generic guard for EVERY multi-row entry path (CSV import, AI add
+ * rows, framework apply, and any future bulk-add path), not just CSV.
+ *
+ * Checked against the RESULTING count (`currentRowCount + incomingRows.length`),
+ * matching CSV import's existing convention — a batch can never jump straight
+ * over the ceiling just because it started under it. Never silently drops
+ * rows: callers MUST surface `truncatedCount`/`blocked` to the user (see
+ * `IdeaTableTool.handleCSVImport`, `handleAIAddRows`, `handleFrameworkApply`),
+ * they are not swallowed here.
+ */
+export function applyRowAddCap<T>(
+  currentRowCount: number,
+  incomingRows: T[],
+  cap: number = MAX_TABLE_ROWS
+): RowAddCapDecision<T> {
+  const remainingCapacity = cap - currentRowCount;
+  if (remainingCapacity <= 0) {
+    return { rowsToAdd: [], truncatedCount: incomingRows.length, blocked: true };
+  }
+  const rowsToAdd =
+    incomingRows.length > remainingCapacity ? incomingRows.slice(0, remainingCapacity) : incomingRows;
+  return {
+    rowsToAdd,
+    truncatedCount: incomingRows.length - rowsToAdd.length,
+    blocked: false,
+  };
+}
+
 export interface CsvImportCapDecision {
   /** Parsed CSV rows actually allowed in, truncated to the remaining budget (possibly empty). */
   rowsToImport: string[][];
@@ -90,24 +128,18 @@ export interface CsvImportCapDecision {
  * Guards CSV import against pushing the table over MAX_TABLE_ROWS.
  * Never silently drops rows: callers must surface `truncatedCount`/`blocked`
  * to the user (see `IdeaTableTool.handleCSVImport`), they are not swallowed
- * here.
+ * here. Thin CSV-shaped wrapper over `applyRowAddCap` — same cap math, kept
+ * as its own named type/function so existing callers/tests are untouched.
  */
 export function applyCsvImportCap(
   currentRowCount: number,
   incomingRows: string[][],
   cap: number = MAX_TABLE_ROWS
 ): CsvImportCapDecision {
-  const remainingCapacity = cap - currentRowCount;
-  if (remainingCapacity <= 0) {
-    return { rowsToImport: [], truncatedCount: incomingRows.length, blocked: true };
-  }
-  const rowsToImport =
-    incomingRows.length > remainingCapacity
-      ? incomingRows.slice(0, remainingCapacity)
-      : incomingRows;
+  const decision = applyRowAddCap(currentRowCount, incomingRows, cap);
   return {
-    rowsToImport,
-    truncatedCount: incomingRows.length - rowsToImport.length,
-    blocked: false,
+    rowsToImport: decision.rowsToAdd,
+    truncatedCount: decision.truncatedCount,
+    blocked: decision.blocked,
   };
 }

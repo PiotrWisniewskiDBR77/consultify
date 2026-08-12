@@ -10,6 +10,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   applyCsvImportCap,
+  applyRowAddCap,
   computeRowRenderCap,
   MAX_TABLE_ROWS,
 } from '../../../../../src/components/MyWork/table/tableRowLimits';
@@ -136,6 +137,59 @@ describe('applyCsvImportCap', () => {
     const rows = Array.from({ length: 600 }, (_, i) => [`label-${i}`]);
     const decision = applyCsvImportCap(0, rows);
     expect(decision.rowsToImport).toHaveLength(500);
+    expect(decision.truncatedCount).toBe(100);
+  });
+});
+
+/**
+ * RISK-36 — `applyRowAddCap` is the generic guard reused by EVERY multi-row
+ * entry path (AI add rows: `handleAIAddRows` — fed by AITableAssistant,
+ * AITableProposal, AICopilotMode, VoiceImageInput; framework apply:
+ * `handleFrameworkApply`), not just CSV import. `applyCsvImportCap` above is
+ * now a thin CSV-shaped wrapper over this same function — these tests cover
+ * the shared cap math directly against `TableNode[]`, the shape the AI/
+ * framework paths actually use.
+ */
+describe('applyRowAddCap — generic multi-row-add guard (AI add rows, framework apply)', () => {
+  it('adds everything unchanged when well under the cap', () => {
+    const rows = makeRows(50, 'ai');
+    const decision = applyRowAddCap(0, rows, 500);
+    expect(decision.blocked).toBe(false);
+    expect(decision.truncatedCount).toBe(0);
+    expect(decision.rowsToAdd).toHaveLength(50);
+  });
+
+  it('checks the RESULTING count: a batch cannot jump straight over the ceiling', () => {
+    // 480 existing + 30 incoming = 510 > 500 — must truncate to 20, not wave
+    // the whole batch through just because 480 was under the cap.
+    const rows = makeRows(30, 'fw');
+    const decision = applyRowAddCap(480, rows, 500);
+    expect(decision.blocked).toBe(false);
+    expect(decision.rowsToAdd).toHaveLength(20);
+    expect(decision.truncatedCount).toBe(10);
+    expect(decision.rowsToAdd[19].id).toBe('fw-19');
+  });
+
+  it('blocks entirely (adds nothing) when the table is already at the cap', () => {
+    const rows = makeRows(10, 'ai');
+    const decision = applyRowAddCap(500, rows, 500);
+    expect(decision.blocked).toBe(true);
+    expect(decision.rowsToAdd).toHaveLength(0);
+    expect(decision.truncatedCount).toBe(10);
+  });
+
+  it('blocks entirely when the table is already over the cap', () => {
+    const rows = makeRows(10, 'fw');
+    const decision = applyRowAddCap(600, rows, 500);
+    expect(decision.blocked).toBe(true);
+    expect(decision.rowsToAdd).toHaveLength(0);
+    expect(decision.truncatedCount).toBe(10);
+  });
+
+  it('respects the real default cap (500) when none is passed explicitly', () => {
+    const rows = makeRows(600, 'ai');
+    const decision = applyRowAddCap(0, rows);
+    expect(decision.rowsToAdd).toHaveLength(500);
     expect(decision.truncatedCount).toBe(100);
   });
 });
