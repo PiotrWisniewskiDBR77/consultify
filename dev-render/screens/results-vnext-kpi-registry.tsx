@@ -707,6 +707,80 @@ Api.post = (async (url: string, data: any) => {
     return { outcome: 'applied', eventId: `evt-${versionId}-approve`, resultingVersion: version.rowVersion, definitionVersion: versionToDto(version) };
   }
 
+  // RN_G6_P0A (2026-08-12) — POST .../definition-versions/:versionId/revise
+  // (reviseDefinition). Mirrors the real command: only a 'rejected' source
+  // version may be revised (per-status codes, same as the real
+  // `KpiDefinitionValidationError`), the source row is copied but NEVER
+  // mutated, and a NEW version (versionNumber = MAX + 1 for this kpiId) is
+  // created as 'draft' — same "fresh mock id, push into MOCK_KPI_VERSIONS,
+  // re-point currentDefinitionVersionId" shape the create mock above uses.
+  const reviseMatch = url.match(/\/vnext\/results\/kpi\/([^/]+)\/definition-versions\/([^/]+)\/revise$/);
+  if (reviseMatch) {
+    const [, kpiId, versionId] = reviseMatch;
+    const source = MOCK_KPI_VERSIONS[versionId];
+    const kpi = MOCK_KPIS.find((k) => k.kpiId === kpiId);
+    if (!source || source.kpiId !== kpiId || !kpi) {
+      const err: any = new Error('Definition version not found for this KPI');
+      err.status = 404;
+      throw err;
+    }
+    if (source.approvalStatus === 'approved') {
+      const err: any = new Error(`Definition version ${versionId} is "approved" — amending an approved definition is a separate flow, out of scope for reviseDefinition`);
+      err.status = 409;
+      err.data = { code: 'CANNOT_REVISE_APPROVED' };
+      throw err;
+    }
+    if (source.approvalStatus === 'draft') {
+      const err: any = new Error(`Definition version ${versionId} is already "draft" — nothing to revise, use editDraft instead`);
+      err.status = 409;
+      err.data = { code: 'CANNOT_REVISE_DRAFT' };
+      throw err;
+    }
+    if (source.approvalStatus === 'submitted') {
+      const err: any = new Error(`Definition version ${versionId} is "submitted" — awaiting a reviewer decision before it can be revised`);
+      err.status = 409;
+      err.data = { code: 'CANNOT_REVISE_SUBMITTED' };
+      throw err;
+    }
+    if (data.expectedVersion !== source.rowVersion) {
+      const err: any = new Error(`Version conflict: expected ${data.expectedVersion}, current ${source.rowVersion}`);
+      err.status = 409;
+      err.data = { code: 'STALE_VERSION', currentVersion: source.rowVersion, expectedVersion: data.expectedVersion };
+      throw err;
+    }
+    const newVersionId = nextMockVersionId();
+    const maxVersionNumber = Object.values(MOCK_KPI_VERSIONS)
+      .filter((v) => v.kpiId === kpiId)
+      .reduce((max, v) => Math.max(max, v.versionNumber), 0);
+    const now = new Date().toISOString();
+    const revised: MockKpiDefinitionVersion = {
+      ...source,
+      definitionVersionId: newVersionId,
+      versionNumber: maxVersionNumber + 1,
+      approvalStatus: 'draft',
+      effectiveFrom: null,
+      effectiveTo: null,
+      createdBy: currentActorId(),
+      createdAt: now,
+      updatedAt: now,
+      submittedBy: null,
+      submittedAt: null,
+      approvedBy: null,
+      approvedAt: null,
+      rejectedBy: null,
+      rejectedAt: null,
+      rejectionReason: null,
+      rowVersion: 1,
+    };
+    // Source row stays byte-for-byte untouched — no field of `source` is
+    // written here, only a NEW object is created and inserted, exactly like
+    // the real command's "zero UPDATE on the rejected row" contract.
+    MOCK_KPI_VERSIONS[newVersionId] = revised;
+    kpi.currentDefinitionVersionId = newVersionId;
+    kpi.updatedAt = now;
+    return { outcome: 'applied', eventId: `evt-${newVersionId}-revise`, resultingVersion: revised.rowVersion, definitionVersion: versionToDto(revised) };
+  }
+
   // RN-G5 — POST .../definition-versions/:versionId/reject.
   const rejectMatch = url.match(/\/vnext\/results\/kpi\/([^/]+)\/definition-versions\/([^/]+)\/reject$/);
   if (rejectMatch) {

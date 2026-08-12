@@ -79,7 +79,7 @@
  * would let any KPI's version-level actions unlock regardless of session
  * history.
  */
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
@@ -115,6 +115,7 @@ import {
   getKpi,
   newKpiIdempotencyKey,
   rejectKpiDefinitionVersion,
+  reviseKpiDefinition,
   submitKpiDefinition,
   suspendKpi,
 } from './kpiApi';
@@ -186,7 +187,11 @@ function ownerDisplay(
 }
 
 type PendingAction = { kpiId: string; action: 'activate' | 'suspend' | 'archive' } | null;
-type DefPendingAction = { kpiId: string; kind: 'submit' | 'approve' | 'reject' } | null;
+// RN_G6_P0A — 'revise' added alongside submit/approve/reject (same shared
+// busy-indicator state, see `runReviseDefinition` below — reviseDefinition
+// has no confirmation dialog of its own, unlike submit/approve/reject, but
+// still needs to disable the row's other definition actions while in flight).
+type DefPendingAction = { kpiId: string; kind: 'submit' | 'approve' | 'reject' | 'revise' } | null;
 
 /** RN-G5 — shared by `buildRowMenu`'s and `buildPreview`'s own (differently-
  * shaped) context objects, so `buildDefinitionActions` below works for both
@@ -200,6 +205,8 @@ interface DefinitionActionsContext {
   onSubmitDefinition: (row: KpiDefinitionDto) => void;
   onApproveDefinition: (row: KpiDefinitionDto) => void;
   onRejectDefinition: (row: KpiDefinitionDto) => void;
+  /** RN_G6_P0A — see `runReviseDefinition`'s own doc comment. */
+  onReviseDefinition: (row: KpiDefinitionDto) => void;
 }
 
 interface RowMenuContext extends DefinitionActionsContext {
@@ -221,10 +228,14 @@ function noKnownVersionReason(isPolish: boolean): string {
     : 'No definition-version data in this session — no GET returns the version (backend gap). Only available where the draft was created/edited in this tab.';
 }
 
-const REJECTED_NO_AMEND_REASON = {
-  pl: 'Wersja odrzucona — utworzenie nowej (poprawionej) wersji nie jest jeszcze zaimplementowane po stronie backendu.',
-  en: 'Version rejected — creating a new (amended) version is not implemented on the backend yet.',
-};
+/** RN_G6_P0A (2026-08-12) FIX: this used to be a permanently-disabled
+ * "Edit draft" entry with a note saying revision "is not implemented on the
+ * backend yet" — that was the actual defect (see kpiDefinitionCommands.ts's
+ * `reviseDefinition` doc comment: a rejected KPI had NO path forward at
+ * all). `reviseDefinition` now exists — this label is the real, clickable
+ * action, wired to `ctx.onReviseDefinition` in `buildDefinitionActions`
+ * below, not a placeholder. */
+const REVISE_DEFINITION_LABEL = { pl: 'Popraw i zgłoś ponownie', en: 'Revise and resubmit' };
 
 /** RN-G5 — the definition-lifecycle entries (edit/submit/approve/reject),
  * shared by `buildRowMenu` and `buildPreview` so both surfaces apply the
@@ -236,7 +247,7 @@ const REJECTED_NO_AMEND_REASON = {
 function buildDefinitionActions(
   row: KpiDefinitionDto,
   ctx: DefinitionActionsContext
-): { id: string; label: string; onClick: () => void; disabled?: boolean; note?: string; kind: 'edit' | 'submit' | 'approve' | 'reject' }[] {
+): { id: string; label: string; onClick: () => void; disabled?: boolean; note?: string; kind: 'edit' | 'submit' | 'approve' | 'reject' | 'revise' }[] {
   const t = (pl: string, en: string) => (ctx.isPolish ? pl : en);
   if (row.status !== 'draft' && row.status !== 'pending_approval') return [];
   const known = ctx.knownVersions[row.kpiId] ?? null;
@@ -245,9 +256,20 @@ function buildDefinitionActions(
   const out: ReturnType<typeof buildDefinitionActions> = [];
 
   if (row.status === 'draft') {
+    // RN_G6_P0A — the ONLY forward path out of 'rejected' (see
+    // `reviseDefinition`'s own doc comment): create a new draft version
+    // copied from the rejected one, then the normal edit/submit flow below
+    // takes over once `knownVersions[row.kpiId]` reflects that new draft
+    // (`runReviseDefinition` updates it from the write response, same
+    // pattern every other definition command here already uses).
     if (known && known.approvalStatus === 'rejected') {
-      const reason = t(REJECTED_NO_AMEND_REASON.pl, REJECTED_NO_AMEND_REASON.en);
-      out.push({ id: 'edit-draft', label: t('Edytuj szkic', 'Edit draft'), onClick: () => {}, disabled: true, note: reason, kind: 'edit' });
+      out.push({
+        id: 'revise-definition',
+        label: t(REVISE_DEFINITION_LABEL.pl, REVISE_DEFINITION_LABEL.en),
+        onClick: () => ctx.onReviseDefinition(row),
+        disabled: isBusy,
+        kind: 'revise',
+      });
       return out;
     }
     out.push({
@@ -448,6 +470,8 @@ function buildPreview(
     onSubmitDefinition: (row: KpiDefinitionDto) => void;
     onApproveDefinition: (row: KpiDefinitionDto) => void;
     onRejectDefinition: (row: KpiDefinitionDto) => void;
+    /** RN_G6_P0A — see `runReviseDefinition`'s own doc comment. */
+    onReviseDefinition: (row: KpiDefinitionDto) => void;
   }
 ): StandardPreviewProps {
   const t = (pl: string, en: string) => (ctx.isPolish ? pl : en);
@@ -469,11 +493,15 @@ function buildPreview(
   // relies on `disabled` alone here (same as the pre-existing archived-KPI
   // "Zablokowane" entry above); the row menu's `note` is where the actual
   // reason text lives.
+  // RN_G6_P0A — 'revise' joins 'approve' as a "positive, forward-moving"
+  // resolution (it is the ONLY action available once a version is
+  // 'rejected' — same visual prominence "Zatwierdź" gets for a 'submitted'
+  // one). Only 'reject' is destructive.
   const defResolutions = defActions
-    .filter((a) => a.kind === 'approve' || a.kind === 'reject')
+    .filter((a) => a.kind === 'approve' || a.kind === 'reject' || a.kind === 'revise')
     .map((a) => ({
       id: a.id,
-      variant: (a.kind === 'approve' ? 'positive' : 'destructive') as 'positive' | 'destructive',
+      variant: (a.kind === 'reject' ? 'destructive' : 'positive') as 'positive' | 'destructive',
       label: a.label,
       onClick: a.onClick,
       disabled: a.disabled,
@@ -922,6 +950,50 @@ export const ResultsKpiRegistryPage: React.FC = () => {
     [transition, knownVersions, transitionIdempotencyKey, isPolish, fetchRows]
   );
 
+  // RN_G6_P0A — "Popraw i zgłoś ponownie" (revise a rejected version). No
+  // confirmation dialog, unlike submit/approve/reject: `reviseDefinition`
+  // itself changes nothing the user typed (every field is copied
+  // server-side from the rejected version — see the command's own doc
+  // comment) and starts no irreversible transition (the KPI root status
+  // does not move, only a new 'draft' version is born) — same "no dialog"
+  // treatment `runLifecycleAction` already gives activate/suspend/archive.
+  // Idempotency key: generated lazily per kpiId and held in a ref (not
+  // component state — this is a one-shot, no-dialog action, so there is no
+  // "open" event to seed a state field at, unlike `transitionIdempotencyKey`)
+  // until the call SUCCEEDS, so a manual retry after a transient failure
+  // reuses the same key (same "retry within one attempt reuses the key"
+  // rule `formIdempotencyKey`/`transitionIdempotencyKey` already follow) —
+  // cleared on success so the NEXT revise (a different rejected version,
+  // later) gets its own fresh key.
+  const reviseIdempotencyKeysRef = useRef<Record<string, string>>({});
+
+  const runReviseDefinition = useCallback(
+    (row: KpiDefinitionDto) => {
+      const known = knownVersions[row.kpiId];
+      if (!known) return; // gated by buildDefinitionActions — should be unreachable.
+      if (!reviseIdempotencyKeysRef.current[row.kpiId]) {
+        reviseIdempotencyKeysRef.current[row.kpiId] = newKpiIdempotencyKey();
+      }
+      const idempotencyKey = reviseIdempotencyKeysRef.current[row.kpiId];
+      setDefPending({ kpiId: row.kpiId, kind: 'revise' });
+      reviseKpiDefinition(row.kpiId, known.definitionVersionId, {
+        expectedVersion: known.rowVersion,
+        reason: null,
+        idempotencyKey,
+      })
+        .then((definitionVersion) => {
+          delete reviseIdempotencyKeysRef.current[row.kpiId];
+          setKnownVersions((prev) => ({ ...prev, [row.kpiId]: definitionVersion }));
+          void fetchRows(); // KPI root's updatedAt moved (current_definition_version_id re-pointed).
+        })
+        .catch((err) => {
+          toast.error(toUserFacingErrorMessage(err, isPolish));
+        })
+        .finally(() => setDefPending(null));
+    },
+    [knownVersions, fetchRows, isPolish]
+  );
+
   const fetchScorecardRows = useCallback(async () => {
     setScorecardsLoading(true);
     setScorecardsError(null);
@@ -1153,6 +1225,7 @@ export const ResultsKpiRegistryPage: React.FC = () => {
         onSubmitDefinition: (r) => openTransition(r, 'submit'),
         onApproveDefinition: (r) => openTransition(r, 'approve'),
         onRejectDefinition: (r) => openTransition(r, 'reject'),
+        onReviseDefinition: (r) => runReviseDefinition(r),
       }),
     defaultSort: { columnId: 'updatedAt', direction: 'desc' },
   };
@@ -1211,6 +1284,7 @@ export const ResultsKpiRegistryPage: React.FC = () => {
                   onSubmitDefinition: (r) => openTransition(r, 'submit'),
                   onApproveDefinition: (r) => openTransition(r, 'approve'),
                   onRejectDefinition: (r) => openTransition(r, 'reject'),
+                  onReviseDefinition: (r) => runReviseDefinition(r),
                 })
               : null
           }

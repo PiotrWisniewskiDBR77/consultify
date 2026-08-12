@@ -165,6 +165,20 @@ export const RejectDefinitionVersionSchema = z.object({
 });
 
 // ==========================================
+// POST .../definition-versions/:versionId/revise — reviseDefinition
+// (RN_G6_P0A — same body shape as ApproveDefinitionVersionSchema: CAS +
+// optional free-text reason, no extra fields — every substantive field is
+// copied server-side from the rejected version, see the command's own doc
+// comment).
+// ==========================================
+
+export const ReviseDefinitionSchema = z.object({
+  expectedVersion: expectedVersionField,
+  reason: nullableReasonField,
+  idempotencyKey: idempotencyKeyField,
+});
+
+// ==========================================
 // POST .../activate | .../suspend | .../archive — KpiLifecycleInput
 // ==========================================
 
