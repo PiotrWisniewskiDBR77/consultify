@@ -6,15 +6,20 @@
  *
  * -- ★ D07 / DECISION #6b REMINDER (see `kpiScorecardPresenters.tsx` header
  * and `kpiScorecardApi.ts`'s `publishKpiScorecardReviewSnapshot` doc comment
- * for the full finding): a review snapshot's `snapshotPayload` (item facts +
- * statusCounts) is ONLY safely reader-filtered by `getPublishedSnapshot` —
- * a bare `listReviewSnapshots`/`createReviewSnapshot`/`publishReviewSnapshot`
- * response row is NOT re-filtered per-reader. Both dialogs below are
- * confirmation-only (period pickers / a publish confirm) — NEITHER ever
- * reads or renders `.snapshotPayload` from any response, by construction
- * (there is no code path here that even touches that field). Do not "helpfully"
- * add a payload preview to either dialog without routing through
- * `getPublishedKpiScorecardSnapshot` specifically.
+ * for the full finding, updated by P0-C): as of P0-C
+ * (docs/product/results-vnext/RN_G2_OPEN_QUESTIONS_UI.md §OQ-UI-B, closed),
+ * `listReviewSnapshots` is ALSO reader-filtered server-side (same mechanism
+ * `getPublishedSnapshot` uses), so no response this file can receive carries
+ * an unfiltered `snapshotPayload` anymore. `publishReviewSnapshot`'s OWN
+ * response still reflects the PUBLISHER's visibility at publish time
+ * (decision #6a) rather than the current reader's — correct for that one
+ * call (the publisher IS the current reader in that request), not a gap.
+ * Both dialogs below remain confirmation-only (period pickers / a publish
+ * confirm) — NEITHER reads or renders `.snapshotPayload` from any response,
+ * by construction (there is no code path here that even touches that
+ * field), kept as defense-in-depth. Do not "helpfully" add a payload preview
+ * to either dialog without routing through `getPublishedKpiScorecardSnapshot`
+ * specifically.
  */
 import { AlertTriangle, CheckCircle2, Plus } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
