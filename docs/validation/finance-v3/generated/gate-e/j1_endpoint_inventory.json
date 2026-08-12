@@ -1,0 +1,1444 @@
+{
+  "meta": {
+    "agent": "J1",
+    "gate": "Gate J",
+    "branch": "codex/fv3p-j1-inventory",
+    "candidate_sha": "ee5736a5a6",
+    "worktree": "/Users/piotrwisniewski/consultify-wt/fv3p-d-statements",
+    "generated_at": "2026-08-12",
+    "scope": "server/src/routes/v8/finance-v2/*.routes.ts (15 files, 88 endpoints) + server/src/routes/v8/finance-v2/__tests__/*.pg.test.ts (18 files, 5135 lines)",
+    "totals": {
+      "covered": 78,
+      "uncalled": 9,
+      "partially_covered": 1,
+      "false_green": 0,
+      "blocked": 0,
+      "total": 88
+    },
+    "full_db_run": {
+      "command": "RUN_DB_TESTS=1 MOCK_DB=false NODE_ENV=test DATABASE_URL=postgresql://piotrwisniewski@127.0.0.1:54330/j1_inv npx vitest run src/routes/v8/finance-v2 src/services/finance/canonical --maxWorkers=2 --testTimeout=60000 --hookTimeout=60000",
+      "exit_code": 1,
+      "duration_seconds": 236,
+      "test_files": {
+        "passed": 57,
+        "failed": 2,
+        "total": 59
+      },
+      "tests": {
+        "passed": 634,
+        "failed": 2,
+        "total": 636
+      },
+      "failures_outside_finance_v2_routes_tests": [
+        "server/src/services/finance/canonical/__tests__/faultMatrix.pg.test.ts > EM-1 reapExpiredLeases lease-expiry timing test",
+        "server/src/services/finance/canonical/__tests__/perfSlo.pg.test.ts > D2 Analysis KPI compute p95 SLO (900.03ms observed vs 750ms ceiling; host load average 245 at time of run, unconfirmed hypothesis that this is host contention not a real regression)"
+      ],
+      "finance_v2_route_test_failures": 0
+    },
+    "negative_control": {
+      "subset": [
+        "comments.routes.pg.test.ts",
+        "valuation.routes.pg.test.ts"
+      ],
+      "with_gate": {
+        "vars": "RUN_DB_TESTS=1 MOCK_DB=false NODE_ENV=test DATABASE_URL=<explicit>",
+        "test_files_passed": 2,
+        "tests_passed": 32,
+        "exit_code": 0
+      },
+      "without_run_db_tests": {
+        "vars": "MOCK_DB=false NODE_ENV=test DATABASE_URL=<explicit> (RUN_DB_TESTS unset)",
+        "test_files_skipped": 2,
+        "tests_skipped": 32,
+        "exit_code": 0
+      },
+      "conclusion": "Missing RUN_DB_TESTS=1 yields skipped, not passed or silent-mock-passed. describe.skipIf(!REAL_PG) gate confirmed real."
+    },
+    "db_fingerprint": {
+      "database_url": "postgresql://piotrwisniewski@127.0.0.1:54330/j1_inv",
+      "cloned_from": "fv3_template via /Users/piotrwisniewski/fv3-pg/newdb.sh j1_inv",
+      "postgres_version": "PostgreSQL 15.15 (Homebrew) on aarch64-apple-darwin25.2.0",
+      "public_schema_base_tables": 1451,
+      "public_schema_views": 8,
+      "v8_schema_base_tables": 121,
+      "v8_schema_views": 0,
+      "migrations_applied": 637
+    },
+    "mutation_sample": {
+      "sample_size": 17,
+      "caught": 16,
+      "not_caught": 1,
+      "false_green": 0,
+      "not_caught_detail": {
+        "endpoint": "POST /baseline/:businessVersionId/compute",
+        "location": "server/src/routes/v8/finance-v2/baseline.routes.ts:162",
+        "reason": "Only test (baseline.routes.pg.test.ts) exercises the 404 NO_SOURCE_STATEMENT_PACK_EDGE precondition-failure branch. Success-path response body (jobStatus/periodsComputed/monthlyResults) never asserted by any test. Mutating jobStatus in success branch did not fail the test file."
+      }
+    },
+    "hygiene": {
+      "git_stash_reset_hard_clean_used": false,
+      "mutations_all_reverted_before_commit": true,
+      "db_connections": "127.0.0.1:54330/j1_inv only, no demo/staging/prod contact",
+      "database_cleanup": "dropdb j1_inv performed at end of session"
+    }
+  },
+  "endpoints": [
+    {
+      "group": "analysis",
+      "method": "GET",
+      "path": "/analysis/kpi-catalog",
+      "location": "server/src/routes/v8/finance-v2/analysis.routes.ts:38",
+      "calls": [
+        "analysis.routes.pg.test.ts:111",
+        "analysis.routes.pg.test.ts:123"
+      ],
+      "call_count": 2,
+      "classification": "covered",
+      "mutation_tested": null,
+      "note": ""
+    },
+    {
+      "group": "analysis",
+      "method": "POST",
+      "path": "/analysis/:businessVersionId/compute",
+      "location": "server/src/routes/v8/finance-v2/analysis.routes.ts:82",
+      "calls": [
+        "analysis.routes.pg.test.ts:172",
+        "analysis.routes.pg.test.ts:201",
+        "pkg-b2-cross-tenant.routes.pg.test.ts:155"
+      ],
+      "call_count": 3,
+      "classification": "covered",
+      "mutation_tested": null,
+      "note": ""
+    },
+    {
+      "group": "analysis",
+      "method": "GET",
+      "path": "/analysis/:businessVersionId/kpi-values",
+      "location": "server/src/routes/v8/finance-v2/analysis.routes.ts:129",
+      "calls": [
+        "analysis.routes.pg.test.ts:178",
+        "pkg-b2-cross-tenant.routes.pg.test.ts:146"
+      ],
+      "call_count": 2,
+      "classification": "covered",
+      "mutation_tested": null,
+      "note": ""
+    },
+    {
+      "group": "artifacts",
+      "method": "POST",
+      "path": "/artifacts",
+      "location": "server/src/routes/v8/finance-v2/artifacts.routes.ts:68",
+      "calls": [
+        "analysis.routes.pg.test.ts:138",
+        "analysis.routes.pg.test.ts:198",
+        "artifacts-lifecycle-compute.routes.pg.test.ts:77",
+        "artifacts-lifecycle-compute.routes.pg.test.ts:88",
+        "artifacts-lifecycle-compute.routes.pg.test.ts:94",
+        "artifacts-lifecycle-compute.routes.pg.test.ts:110",
+        "artifacts-lifecycle-compute.routes.pg.test.ts:121",
+        "artifacts-lifecycle-compute.routes.pg.test.ts:142",
+        "artifacts-lifecycle-compute.routes.pg.test.ts:165",
+        "artifacts-lifecycle-compute.routes.pg.test.ts:176",
+        "artifacts-lifecycle-compute.routes.pg.test.ts:185",
+        "artifacts-lifecycle-compute.routes.pg.test.ts:196",
+        "artifacts-lifecycle-compute.routes.pg.test.ts:216",
+        "baseline.routes.pg.test.ts:103",
+        "baseline.routes.pg.test.ts:160",
+        "baseline.routes.pg.test.ts:171",
+        "baseline.routes.pg.test.ts:182",
+        "cross-tenant.routes.pg.test.ts:82",
+        "cross-tenant.routes.pg.test.ts:96",
+        "cross-tenant.routes.pg.test.ts:106",
+        "cross-tenant.routes.pg.test.ts:114",
+        "cross-tenant.routes.pg.test.ts:147",
+        "cross-tenant.routes.pg.test.ts:160",
+        "cross-tenant.routes.pg.test.ts:181",
+        "cross-tenant.routes.pg.test.ts:209",
+        "mount-proof.pg.test.ts:159",
+        "pkg-b2-cross-tenant.routes.pg.test.ts:102",
+        "pkg-b2-cross-tenant.routes.pg.test.ts:130",
+        "pkg-b2-cross-tenant.routes.pg.test.ts:143",
+        "pkg-b2-cross-tenant.routes.pg.test.ts:152",
+        "pkg-b2-cross-tenant.routes.pg.test.ts:168",
+        "pkg-b2-cross-tenant.routes.pg.test.ts:219",
+        "pkg-b2-cross-tenant.routes.pg.test.ts:244",
+        "pkg-b2-cross-tenant.routes.pg.test.ts:263",
+        "statements.routes.pg.test.ts:94",
+        "statements.routes.pg.test.ts:167",
+        "valuation-b3-review.routes.pg.test.ts:72",
+        "valuation-cross-tenant.routes.pg.test.ts:56",
+        "valuation-cross-tenant.routes.pg.test.ts:87",
+        "valuation-independent-verifier.pg.test.ts:78",
+        "valuation.routes.pg.test.ts:58",
+        "valuation.routes.pg.test.ts:127"
+      ],
+      "call_count": 42,
+      "classification": "covered",
+      "mutation_tested": null,
+      "note": ""
+    },
+    {
+      "group": "artifacts",
+      "method": "GET",
+      "path": "/artifacts/:artifactId",
+      "location": "server/src/routes/v8/finance-v2/artifacts.routes.ts:111",
+      "calls": [
+        "artifacts-lifecycle-compute.routes.pg.test.ts:97",
+        "artifacts-lifecycle-compute.routes.pg.test.ts:104",
+        "cross-tenant.routes.pg.test.ts:85",
+        "mount-proof.pg.test.ts:85",
+        "mount-proof.pg.test.ts:122",
+        "mount-proof.pg.test.ts:141",
+        "mount-proof.pg.test.ts:152",
+        "mount-proof.pg.test.ts:162"
+      ],
+      "call_count": 8,
+      "classification": "covered",
+      "mutation_tested": null,
+      "note": ""
+    },
+    {
+      "group": "artifacts",
+      "method": "GET",
+      "path": "/artifacts/:artifactId/versions",
+      "location": "server/src/routes/v8/finance-v2/artifacts.routes.ts:163",
+      "calls": [
+        "artifacts-lifecycle-compute.routes.pg.test.ts:113",
+        "cross-tenant.routes.pg.test.ts:99"
+      ],
+      "call_count": 2,
+      "classification": "covered",
+      "mutation_tested": null,
+      "note": ""
+    },
+    {
+      "group": "artifacts",
+      "method": "GET",
+      "path": "/artifacts/:artifactId/capabilities",
+      "location": "server/src/routes/v8/finance-v2/artifacts.routes.ts:201",
+      "calls": [
+        "artifacts-lifecycle-compute.routes.pg.test.ts:125",
+        "artifacts-lifecycle-compute.routes.pg.test.ts:131",
+        "cross-tenant.routes.pg.test.ts:109"
+      ],
+      "call_count": 3,
+      "classification": "covered",
+      "mutation_tested": null,
+      "note": ""
+    },
+    {
+      "group": "artifacts",
+      "method": "POST",
+      "path": "/artifacts/:artifactId/rename",
+      "location": "server/src/routes/v8/finance-v2/artifacts.routes.ts:249",
+      "calls": [
+        "pkg-b2-cross-tenant.routes.pg.test.ts:247",
+        "pkg-b2-cross-tenant.routes.pg.test.ts:257"
+      ],
+      "call_count": 2,
+      "classification": "covered",
+      "mutation_tested": "caught",
+      "note": ""
+    },
+    {
+      "group": "baseline",
+      "method": "GET",
+      "path": "/baseline/:businessVersionId/assumptions",
+      "location": "server/src/routes/v8/finance-v2/baseline.routes.ts:53",
+      "calls": [
+        "baseline.routes.pg.test.ts:128",
+        "pkg-b2-cross-tenant.routes.pg.test.ts:171"
+      ],
+      "call_count": 2,
+      "classification": "covered",
+      "mutation_tested": null,
+      "note": ""
+    },
+    {
+      "group": "baseline",
+      "method": "POST",
+      "path": "/baseline/:businessVersionId/assumptions",
+      "location": "server/src/routes/v8/finance-v2/baseline.routes.ts:101",
+      "calls": [
+        "baseline.routes.pg.test.ts:123",
+        "baseline.routes.pg.test.ts:144",
+        "baseline.routes.pg.test.ts:164",
+        "pkg-b2-cross-tenant.routes.pg.test.ts:175"
+      ],
+      "call_count": 4,
+      "classification": "covered",
+      "mutation_tested": null,
+      "note": ""
+    },
+    {
+      "group": "baseline",
+      "method": "POST",
+      "path": "/baseline/:businessVersionId/compute",
+      "location": "server/src/routes/v8/finance-v2/baseline.routes.ts:162",
+      "calls": [
+        "baseline.routes.pg.test.ts:175"
+      ],
+      "call_count": 1,
+      "classification": "partially covered",
+      "mutation_tested": "NOT_CAUGHT",
+      "note": "Test only exercises the 404 NO_SOURCE_STATEMENT_PACK_EDGE precondition-failure branch; the success-path response body (jobStatus/periodsComputed/monthlyResults) is never asserted. Confirmed by mutation: corrupting jobStatus in the success branch did NOT fail baseline.routes.pg.test.ts."
+    },
+    {
+      "group": "baseline",
+      "method": "GET",
+      "path": "/baseline/:businessVersionId/outputs",
+      "location": "server/src/routes/v8/finance-v2/baseline.routes.ts:215",
+      "calls": [
+        "baseline.routes.pg.test.ts:200"
+      ],
+      "call_count": 1,
+      "classification": "covered",
+      "mutation_tested": null,
+      "note": ""
+    },
+    {
+      "group": "comments",
+      "method": "POST",
+      "path": "/comments",
+      "location": "server/src/routes/v8/finance-v2/comments.routes.ts:123",
+      "calls": [
+        "comments.routes.pg.test.ts:100",
+        "comments.routes.pg.test.ts:117",
+        "comments.routes.pg.test.ts:193",
+        "comments.routes.pg.test.ts:269"
+      ],
+      "call_count": 4,
+      "classification": "covered",
+      "mutation_tested": "caught",
+      "note": ""
+    },
+    {
+      "group": "comments",
+      "method": "POST",
+      "path": "/comments/:commentId/resolve",
+      "location": "server/src/routes/v8/finance-v2/comments.routes.ts:169",
+      "calls": [
+        "comments.routes.pg.test.ts:173",
+        "comments.routes.pg.test.ts:178",
+        "comments.routes.pg.test.ts:202"
+      ],
+      "call_count": 3,
+      "classification": "covered",
+      "mutation_tested": "caught",
+      "note": ""
+    },
+    {
+      "group": "comments",
+      "method": "POST",
+      "path": "/comments/:commentId/reopen",
+      "location": "server/src/routes/v8/finance-v2/comments.routes.ts:181",
+      "calls": [
+        "comments.routes.pg.test.ts:182",
+        "comments.routes.pg.test.ts:186"
+      ],
+      "call_count": 2,
+      "classification": "covered",
+      "mutation_tested": null,
+      "note": ""
+    },
+    {
+      "group": "comments",
+      "method": "POST",
+      "path": "/comments/:commentId/assign",
+      "location": "server/src/routes/v8/finance-v2/comments.routes.ts:193",
+      "calls": [
+        "comments.routes.pg.test.ts:160"
+      ],
+      "call_count": 1,
+      "classification": "covered",
+      "mutation_tested": null,
+      "note": ""
+    },
+    {
+      "group": "comments",
+      "method": "GET",
+      "path": "/comments/:commentId/assignment",
+      "location": "server/src/routes/v8/finance-v2/comments.routes.ts:215",
+      "calls": [
+        "comments.routes.pg.test.ts:167"
+      ],
+      "call_count": 1,
+      "classification": "covered",
+      "mutation_tested": null,
+      "note": ""
+    },
+    {
+      "group": "comments",
+      "method": "GET",
+      "path": "/comments/:commentId",
+      "location": "server/src/routes/v8/finance-v2/comments.routes.ts:224",
+      "calls": [
+        "comments.routes.pg.test.ts:78",
+        "comments.routes.pg.test.ts:123",
+        "comments.routes.pg.test.ts:280",
+        "comments.routes.pg.test.ts:284"
+      ],
+      "call_count": 4,
+      "classification": "covered",
+      "mutation_tested": null,
+      "note": ""
+    },
+    {
+      "group": "comments",
+      "method": "GET",
+      "path": "/comments",
+      "location": "server/src/routes/v8/finance-v2/comments.routes.ts:240",
+      "calls": [
+        "comments.routes.pg.test.ts:129",
+        "comments.routes.pg.test.ts:135"
+      ],
+      "call_count": 2,
+      "classification": "covered",
+      "mutation_tested": null,
+      "note": ""
+    },
+    {
+      "group": "comments",
+      "method": "POST",
+      "path": "/comments/search-by-cell",
+      "location": "server/src/routes/v8/finance-v2/comments.routes.ts:260",
+      "calls": [],
+      "call_count": 0,
+      "classification": "uncalled",
+      "mutation_tested": null,
+      "note": "No test file contains a request to this method+path (verified by automated call-site scan across all *.pg.test.ts in server/src/routes/v8/finance-v2/__tests__)."
+    },
+    {
+      "group": "comments",
+      "method": "GET",
+      "path": "/comments/mentions/me",
+      "location": "server/src/routes/v8/finance-v2/comments.routes.ts:278",
+      "calls": [
+        "comments.routes.pg.test.ts:142",
+        "comments.routes.pg.test.ts:146",
+        "comments.routes.pg.test.ts:154"
+      ],
+      "call_count": 3,
+      "classification": "covered",
+      "mutation_tested": "caught",
+      "note": ""
+    },
+    {
+      "group": "comments",
+      "method": "GET",
+      "path": "/versions/:businessVersionId/has-unresolved-blocking-comments",
+      "location": "server/src/routes/v8/finance-v2/comments.routes.ts:287",
+      "calls": [
+        "comments.routes.pg.test.ts:198",
+        "comments.routes.pg.test.ts:205"
+      ],
+      "call_count": 2,
+      "classification": "covered",
+      "mutation_tested": null,
+      "note": ""
+    },
+    {
+      "group": "comments",
+      "method": "POST",
+      "path": "/review-checklist",
+      "location": "server/src/routes/v8/finance-v2/comments.routes.ts:300",
+      "calls": [
+        "comments.routes.pg.test.ts:218"
+      ],
+      "call_count": 1,
+      "classification": "covered",
+      "mutation_tested": null,
+      "note": ""
+    },
+    {
+      "group": "comments",
+      "method": "POST",
+      "path": "/review-checklist/:itemId/check",
+      "location": "server/src/routes/v8/finance-v2/comments.routes.ts:327",
+      "calls": [
+        "comments.routes.pg.test.ts:229",
+        "comments.routes.pg.test.ts:239"
+      ],
+      "call_count": 2,
+      "classification": "covered",
+      "mutation_tested": "caught",
+      "note": ""
+    },
+    {
+      "group": "comments",
+      "method": "POST",
+      "path": "/review-checklist/:itemId/uncheck",
+      "location": "server/src/routes/v8/finance-v2/comments.routes.ts:339",
+      "calls": [
+        "comments.routes.pg.test.ts:245"
+      ],
+      "call_count": 1,
+      "classification": "covered",
+      "mutation_tested": null,
+      "note": ""
+    },
+    {
+      "group": "comments",
+      "method": "POST",
+      "path": "/review-checklist/:itemId/required",
+      "location": "server/src/routes/v8/finance-v2/comments.routes.ts:351",
+      "calls": [
+        "comments.routes.pg.test.ts:249"
+      ],
+      "call_count": 1,
+      "classification": "covered",
+      "mutation_tested": null,
+      "note": ""
+    },
+    {
+      "group": "comments",
+      "method": "GET",
+      "path": "/review-checklist/:businessVersionId",
+      "location": "server/src/routes/v8/finance-v2/comments.routes.ts:367",
+      "calls": [
+        "comments.routes.pg.test.ts:259",
+        "comments.routes.pg.test.ts:294",
+        "comments.routes.pg.test.ts:298"
+      ],
+      "call_count": 3,
+      "classification": "covered",
+      "mutation_tested": null,
+      "note": ""
+    },
+    {
+      "group": "comments",
+      "method": "GET",
+      "path": "/review-checklist/:businessVersionId/all-required-checked",
+      "location": "server/src/routes/v8/finance-v2/comments.routes.ts:376",
+      "calls": [
+        "comments.routes.pg.test.ts:225",
+        "comments.routes.pg.test.ts:235",
+        "comments.routes.pg.test.ts:253"
+      ],
+      "call_count": 3,
+      "classification": "covered",
+      "mutation_tested": null,
+      "note": ""
+    },
+    {
+      "group": "comments",
+      "method": "GET",
+      "path": "/review-checklist/:businessVersionId/changed-cells",
+      "location": "server/src/routes/v8/finance-v2/comments.routes.ts:385",
+      "calls": [],
+      "call_count": 0,
+      "classification": "uncalled",
+      "mutation_tested": null,
+      "note": "No test file contains a request to this method+path (verified by automated call-site scan across all *.pg.test.ts in server/src/routes/v8/finance-v2/__tests__)."
+    },
+    {
+      "group": "compare",
+      "method": "POST",
+      "path": "/compare/periods",
+      "location": "server/src/routes/v8/finance-v2/compare.routes.ts:92",
+      "calls": [
+        "compare.routes.pg.test.ts:152",
+        "compare.routes.pg.test.ts:170",
+        "compare.routes.pg.test.ts:182",
+        "compare.routes.pg.test.ts:201",
+        "compare.routes.pg.test.ts:216",
+        "compare.routes.pg.test.ts:224",
+        "compare.routes.pg.test.ts:242"
+      ],
+      "call_count": 7,
+      "classification": "covered",
+      "mutation_tested": null,
+      "note": ""
+    },
+    {
+      "group": "compare",
+      "method": "POST",
+      "path": "/compare/versions",
+      "location": "server/src/routes/v8/finance-v2/compare.routes.ts:126",
+      "calls": [],
+      "call_count": 0,
+      "classification": "uncalled",
+      "mutation_tested": null,
+      "note": "No test file contains a request to this method+path (verified by automated call-site scan across all *.pg.test.ts in server/src/routes/v8/finance-v2/__tests__)."
+    },
+    {
+      "group": "compare",
+      "method": "POST",
+      "path": "/compare/entities",
+      "location": "server/src/routes/v8/finance-v2/compare.routes.ts:165",
+      "calls": [],
+      "call_count": 0,
+      "classification": "uncalled",
+      "mutation_tested": null,
+      "note": "No test file contains a request to this method+path (verified by automated call-site scan across all *.pg.test.ts in server/src/routes/v8/finance-v2/__tests__)."
+    },
+    {
+      "group": "compare",
+      "method": "POST",
+      "path": "/compare/scenarios",
+      "location": "server/src/routes/v8/finance-v2/compare.routes.ts:201",
+      "calls": [],
+      "call_count": 0,
+      "classification": "uncalled",
+      "mutation_tested": null,
+      "note": "No test file contains a request to this method+path (verified by automated call-site scan across all *.pg.test.ts in server/src/routes/v8/finance-v2/__tests__)."
+    },
+    {
+      "group": "compare",
+      "method": "POST",
+      "path": "/compare/valuation-methods",
+      "location": "server/src/routes/v8/finance-v2/compare.routes.ts:235",
+      "calls": [],
+      "call_count": 0,
+      "classification": "uncalled",
+      "mutation_tested": null,
+      "note": "No test file contains a request to this method+path (verified by automated call-site scan across all *.pg.test.ts in server/src/routes/v8/finance-v2/__tests__)."
+    },
+    {
+      "group": "compare",
+      "method": "POST",
+      "path": "/compare/actual-vs-forecast",
+      "location": "server/src/routes/v8/finance-v2/compare.routes.ts:264",
+      "calls": [],
+      "call_count": 0,
+      "classification": "uncalled",
+      "mutation_tested": null,
+      "note": "No test file contains a request to this method+path (verified by automated call-site scan across all *.pg.test.ts in server/src/routes/v8/finance-v2/__tests__)."
+    },
+    {
+      "group": "compute",
+      "method": "POST",
+      "path": "/compute/jobs",
+      "location": "server/src/routes/v8/finance-v2/compute.routes.ts:60",
+      "calls": [
+        "artifacts-lifecycle-compute.routes.pg.test.ts:236",
+        "artifacts-lifecycle-compute.routes.pg.test.ts:251",
+        "artifacts-lifecycle-compute.routes.pg.test.ts:281",
+        "artifacts-lifecycle-compute.routes.pg.test.ts:299",
+        "cross-tenant.routes.pg.test.ts:165",
+        "cross-tenant.routes.pg.test.ts:186",
+        "cross-tenant.routes.pg.test.ts:222",
+        "pkg-b2-cross-tenant.routes.pg.test.ts:227"
+      ],
+      "call_count": 8,
+      "classification": "covered",
+      "mutation_tested": null,
+      "note": ""
+    },
+    {
+      "group": "compute",
+      "method": "GET",
+      "path": "/compute/jobs/:jobId",
+      "location": "server/src/routes/v8/finance-v2/compute.routes.ts:101",
+      "calls": [
+        "artifacts-lifecycle-compute.routes.pg.test.ts:263",
+        "artifacts-lifecycle-compute.routes.pg.test.ts:272",
+        "artifacts-lifecycle-compute.routes.pg.test.ts:288",
+        "cross-tenant.routes.pg.test.ts:170"
+      ],
+      "call_count": 4,
+      "classification": "covered",
+      "mutation_tested": null,
+      "note": ""
+    },
+    {
+      "group": "compute",
+      "method": "GET",
+      "path": "/compute/jobs/:jobId/output",
+      "location": "server/src/routes/v8/finance-v2/compute.routes.ts:125",
+      "calls": [
+        "pkg-b2-cross-tenant.routes.pg.test.ts:232",
+        "pkg-b2-cross-tenant.routes.pg.test.ts:238"
+      ],
+      "call_count": 2,
+      "classification": "covered",
+      "mutation_tested": null,
+      "note": ""
+    },
+    {
+      "group": "compute",
+      "method": "POST",
+      "path": "/compute/jobs/:jobId/cancel",
+      "location": "server/src/routes/v8/finance-v2/compute.routes.ts:161",
+      "calls": [
+        "artifacts-lifecycle-compute.routes.pg.test.ts:268",
+        "artifacts-lifecycle-compute.routes.pg.test.ts:304",
+        "artifacts-lifecycle-compute.routes.pg.test.ts:307",
+        "cross-tenant.routes.pg.test.ts:191",
+        "cross-tenant.routes.pg.test.ts:203"
+      ],
+      "call_count": 5,
+      "classification": "covered",
+      "mutation_tested": "caught",
+      "note": ""
+    },
+    {
+      "group": "crosscutting",
+      "method": "GET",
+      "path": "/versions/:businessVersionId/lineage",
+      "location": "server/src/routes/v8/finance-v2/crosscutting.routes.ts:38",
+      "calls": [
+        "pkg-b2-cross-tenant.routes.pg.test.ts:267"
+      ],
+      "call_count": 1,
+      "classification": "covered",
+      "mutation_tested": null,
+      "note": ""
+    },
+    {
+      "group": "crosscutting",
+      "method": "GET",
+      "path": "/versions/:businessVersionId/freshness-events",
+      "location": "server/src/routes/v8/finance-v2/crosscutting.routes.ts:80",
+      "calls": [],
+      "call_count": 0,
+      "classification": "uncalled",
+      "mutation_tested": null,
+      "note": "No test file contains a request to this method+path (verified by automated call-site scan across all *.pg.test.ts in server/src/routes/v8/finance-v2/__tests__)."
+    },
+    {
+      "group": "crosscutting",
+      "method": "GET",
+      "path": "/exceptions/open",
+      "location": "server/src/routes/v8/finance-v2/crosscutting.routes.ts:114",
+      "calls": [
+        "pkg-b2-cross-tenant.routes.pg.test.ts:272"
+      ],
+      "call_count": 1,
+      "classification": "covered",
+      "mutation_tested": null,
+      "note": ""
+    },
+    {
+      "group": "crosscutting",
+      "method": "GET",
+      "path": "/exceptions/inbox",
+      "location": "server/src/routes/v8/finance-v2/crosscutting.routes.ts:147",
+      "calls": [],
+      "call_count": 0,
+      "classification": "uncalled",
+      "mutation_tested": null,
+      "note": "No test file contains a request to this method+path (verified by automated call-site scan across all *.pg.test.ts in server/src/routes/v8/finance-v2/__tests__)."
+    },
+    {
+      "group": "export-import",
+      "method": "GET",
+      "path": "/export/statement-pack/:artifactId/:businessVersionId",
+      "location": "server/src/routes/v8/finance-v2/export-import.routes.ts:62",
+      "calls": [
+        "export-import.routes.pg.test.ts:145",
+        "export-import.routes.pg.test.ts:165",
+        "export-import.routes.pg.test.ts:302"
+      ],
+      "call_count": 3,
+      "classification": "covered",
+      "mutation_tested": null,
+      "note": ""
+    },
+    {
+      "group": "export-import",
+      "method": "POST",
+      "path": "/import/parse",
+      "location": "server/src/routes/v8/finance-v2/export-import.routes.ts:87",
+      "calls": [
+        "export-import.routes.pg.test.ts:185"
+      ],
+      "call_count": 1,
+      "classification": "covered",
+      "mutation_tested": null,
+      "note": ""
+    },
+    {
+      "group": "export-import",
+      "method": "POST",
+      "path": "/import/preview",
+      "location": "server/src/routes/v8/finance-v2/export-import.routes.ts:104",
+      "calls": [
+        "export-import.routes.pg.test.ts:197",
+        "export-import.routes.pg.test.ts:210",
+        "export-import.routes.pg.test.ts:309"
+      ],
+      "call_count": 3,
+      "classification": "covered",
+      "mutation_tested": null,
+      "note": ""
+    },
+    {
+      "group": "export-import",
+      "method": "POST",
+      "path": "/import/apply",
+      "location": "server/src/routes/v8/finance-v2/export-import.routes.ts:156",
+      "calls": [
+        "export-import.routes.pg.test.ts:228",
+        "export-import.routes.pg.test.ts:269",
+        "export-import.routes.pg.test.ts:280"
+      ],
+      "call_count": 3,
+      "classification": "covered",
+      "mutation_tested": "caught",
+      "note": ""
+    },
+    {
+      "group": "lineage-navigator",
+      "method": "POST",
+      "path": "/versions/lineage-edges",
+      "location": "server/src/routes/v8/finance-v2/lineage-navigator.routes.ts:208",
+      "calls": [
+        "lineage-navigator.routes.pg.test.ts:236",
+        "lineage-navigator.routes.pg.test.ts:254",
+        "lineage-navigator.routes.pg.test.ts:302",
+        "lineage-navigator.routes.pg.test.ts:321",
+        "lineage-navigator.routes.pg.test.ts:345"
+      ],
+      "call_count": 5,
+      "classification": "covered",
+      "mutation_tested": null,
+      "note": ""
+    },
+    {
+      "group": "lineage-navigator",
+      "method": "GET",
+      "path": "/versions/:businessVersionId/lineage-navigator",
+      "location": "server/src/routes/v8/finance-v2/lineage-navigator.routes.ts:292",
+      "calls": [
+        "lineage-navigator.routes.pg.test.ts:123",
+        "lineage-navigator.routes.pg.test.ts:139",
+        "lineage-navigator.routes.pg.test.ts:187",
+        "lineage-navigator.routes.pg.test.ts:199",
+        "lineage-navigator.routes.pg.test.ts:219",
+        "lineage-navigator.routes.pg.test.ts:223",
+        "lineage-navigator.routes.pg.test.ts:293"
+      ],
+      "call_count": 7,
+      "classification": "covered",
+      "mutation_tested": "caught",
+      "note": ""
+    },
+    {
+      "group": "models",
+      "method": "POST",
+      "path": "/models/:modelId/approve",
+      "location": "server/src/routes/v8/finance-v2/models.routes.ts:103",
+      "calls": [
+        "models.routes.pg.test.ts:144",
+        "models.routes.pg.test.ts:190",
+        "models.routes.pg.test.ts:231"
+      ],
+      "call_count": 3,
+      "classification": "covered",
+      "mutation_tested": "caught",
+      "note": ""
+    },
+    {
+      "group": "models",
+      "method": "POST",
+      "path": "/models/:modelId/reopen",
+      "location": "server/src/routes/v8/finance-v2/models.routes.ts:175",
+      "calls": [
+        "models.routes.pg.test.ts:236",
+        "models.routes.pg.test.ts:241"
+      ],
+      "call_count": 2,
+      "classification": "covered",
+      "mutation_tested": null,
+      "note": ""
+    },
+    {
+      "group": "prediction",
+      "method": "POST",
+      "path": "/prediction/:businessVersionId/preflight",
+      "location": "server/src/routes/v8/finance-v2/prediction.routes.ts:36",
+      "calls": [
+        "pkg-b2-cross-tenant.routes.pg.test.ts:209",
+        "prediction.routes.pg.test.ts:108",
+        "prediction.routes.pg.test.ts:126"
+      ],
+      "call_count": 3,
+      "classification": "covered",
+      "mutation_tested": null,
+      "note": ""
+    },
+    {
+      "group": "prediction",
+      "method": "POST",
+      "path": "/prediction/:businessVersionId/calculate",
+      "location": "server/src/routes/v8/finance-v2/prediction.routes.ts:79",
+      "calls": [
+        "prediction.routes.pg.test.ts:139",
+        "prediction.routes.pg.test.ts:149"
+      ],
+      "call_count": 2,
+      "classification": "covered",
+      "mutation_tested": null,
+      "note": ""
+    },
+    {
+      "group": "saved-views",
+      "method": "POST",
+      "path": "/saved-views",
+      "location": "server/src/routes/v8/finance-v2/saved-views.routes.ts:84",
+      "calls": [
+        "saved-views.routes.pg.test.ts:107",
+        "saved-views.routes.pg.test.ts:124",
+        "saved-views.routes.pg.test.ts:169"
+      ],
+      "call_count": 3,
+      "classification": "covered",
+      "mutation_tested": null,
+      "note": ""
+    },
+    {
+      "group": "saved-views",
+      "method": "GET",
+      "path": "/saved-views",
+      "location": "server/src/routes/v8/finance-v2/saved-views.routes.ts:120",
+      "calls": [
+        "saved-views.routes.pg.test.ts:141",
+        "saved-views.routes.pg.test.ts:145",
+        "saved-views.routes.pg.test.ts:179",
+        "saved-views.routes.pg.test.ts:225"
+      ],
+      "call_count": 4,
+      "classification": "covered",
+      "mutation_tested": null,
+      "note": ""
+    },
+    {
+      "group": "saved-views",
+      "method": "GET",
+      "path": "/saved-views/shared/:shareToken",
+      "location": "server/src/routes/v8/finance-v2/saved-views.routes.ts:137",
+      "calls": [
+        "saved-views.routes.pg.test.ts:199",
+        "saved-views.routes.pg.test.ts:203",
+        "saved-views.routes.pg.test.ts:212",
+        "saved-views.routes.pg.test.ts:216"
+      ],
+      "call_count": 4,
+      "classification": "covered",
+      "mutation_tested": null,
+      "note": ""
+    },
+    {
+      "group": "saved-views",
+      "method": "GET",
+      "path": "/saved-views/:viewId",
+      "location": "server/src/routes/v8/finance-v2/saved-views.routes.ts:157",
+      "calls": [
+        "saved-views.routes.pg.test.ts:88",
+        "saved-views.routes.pg.test.ts:131",
+        "saved-views.routes.pg.test.ts:135",
+        "saved-views.routes.pg.test.ts:175",
+        "saved-views.routes.pg.test.ts:209",
+        "saved-views.routes.pg.test.ts:231"
+      ],
+      "call_count": 6,
+      "classification": "covered",
+      "mutation_tested": null,
+      "note": ""
+    },
+    {
+      "group": "saved-views",
+      "method": "PATCH",
+      "path": "/saved-views/:viewId",
+      "location": "server/src/routes/v8/finance-v2/saved-views.routes.ts:173",
+      "calls": [
+        "saved-views.routes.pg.test.ts:151",
+        "saved-views.routes.pg.test.ts:155"
+      ],
+      "call_count": 2,
+      "classification": "covered",
+      "mutation_tested": "caught",
+      "note": ""
+    },
+    {
+      "group": "saved-views",
+      "method": "DELETE",
+      "path": "/saved-views/:viewId",
+      "location": "server/src/routes/v8/finance-v2/saved-views.routes.ts:199",
+      "calls": [
+        "saved-views.routes.pg.test.ts:184",
+        "saved-views.routes.pg.test.ts:243",
+        "saved-views.routes.pg.test.ts:259"
+      ],
+      "call_count": 3,
+      "classification": "covered",
+      "mutation_tested": null,
+      "note": ""
+    },
+    {
+      "group": "statements",
+      "method": "POST",
+      "path": "/statements/:businessVersionId/map",
+      "location": "server/src/routes/v8/finance-v2/statements.routes.ts:56",
+      "calls": [
+        "pkg-b2-cross-tenant.routes.pg.test.ts:109",
+        "statements.routes.pg.test.ts:102",
+        "statements.routes.pg.test.ts:170"
+      ],
+      "call_count": 3,
+      "classification": "covered",
+      "mutation_tested": null,
+      "note": ""
+    },
+    {
+      "group": "statements",
+      "method": "POST",
+      "path": "/statements/:businessVersionId/reconcile",
+      "location": "server/src/routes/v8/finance-v2/statements.routes.ts:105",
+      "calls": [
+        "pkg-b2-cross-tenant.routes.pg.test.ts:133",
+        "statements.routes.pg.test.ts:143"
+      ],
+      "call_count": 2,
+      "classification": "covered",
+      "mutation_tested": "caught",
+      "note": ""
+    },
+    {
+      "group": "statements",
+      "method": "GET",
+      "path": "/statements/:businessVersionId/lines",
+      "location": "server/src/routes/v8/finance-v2/statements.routes.ts:168",
+      "calls": [
+        "pkg-b2-cross-tenant.routes.pg.test.ts:118",
+        "statements.routes.pg.test.ts:120",
+        "statements.routes.pg.test.ts:179"
+      ],
+      "call_count": 3,
+      "classification": "covered",
+      "mutation_tested": null,
+      "note": ""
+    },
+    {
+      "group": "statements",
+      "method": "GET",
+      "path": "/statements/:businessVersionId/reconciliation-runs",
+      "location": "server/src/routes/v8/finance-v2/statements.routes.ts:233",
+      "calls": [
+        "statements.routes.pg.test.ts:150"
+      ],
+      "call_count": 1,
+      "classification": "covered",
+      "mutation_tested": null,
+      "note": ""
+    },
+    {
+      "group": "statements",
+      "method": "GET",
+      "path": "/statements/reconciliation-runs/:reconciliationRunId",
+      "location": "server/src/routes/v8/finance-v2/statements.routes.ts:282",
+      "calls": [
+        "statements.routes.pg.test.ts:155"
+      ],
+      "call_count": 1,
+      "classification": "covered",
+      "mutation_tested": null,
+      "note": ""
+    },
+    {
+      "group": "valuation",
+      "method": "POST",
+      "path": "/valuation/cases",
+      "location": "server/src/routes/v8/finance-v2/valuation.routes.ts:112",
+      "calls": [
+        "valuation-b3-review.routes.pg.test.ts:66",
+        "valuation-cross-tenant.routes.pg.test.ts:52",
+        "valuation-independent-verifier.pg.test.ts:72",
+        "valuation.routes.pg.test.ts:52"
+      ],
+      "call_count": 4,
+      "classification": "covered",
+      "mutation_tested": "caught",
+      "note": ""
+    },
+    {
+      "group": "valuation",
+      "method": "GET",
+      "path": "/valuation/cases",
+      "location": "server/src/routes/v8/finance-v2/valuation.routes.ts:125",
+      "calls": [
+        "valuation-cross-tenant.routes.pg.test.ts:80"
+      ],
+      "call_count": 1,
+      "classification": "covered",
+      "mutation_tested": null,
+      "note": ""
+    },
+    {
+      "group": "valuation",
+      "method": "GET",
+      "path": "/valuation/cases/:caseId",
+      "location": "server/src/routes/v8/finance-v2/valuation.routes.ts:134",
+      "calls": [
+        "valuation-cross-tenant.routes.pg.test.ts:76",
+        "valuation.routes.pg.test.ts:148"
+      ],
+      "call_count": 2,
+      "classification": "covered",
+      "mutation_tested": null,
+      "note": ""
+    },
+    {
+      "group": "valuation",
+      "method": "POST",
+      "path": "/valuation/cases/:caseId/variants",
+      "location": "server/src/routes/v8/finance-v2/valuation.routes.ts:157",
+      "calls": [
+        "valuation-b3-review.routes.pg.test.ts:75",
+        "valuation-cross-tenant.routes.pg.test.ts:58",
+        "valuation-cross-tenant.routes.pg.test.ts:90",
+        "valuation-independent-verifier.pg.test.ts:81",
+        "valuation.routes.pg.test.ts:65",
+        "valuation.routes.pg.test.ts:117",
+        "valuation.routes.pg.test.ts:123",
+        "valuation.routes.pg.test.ts:129"
+      ],
+      "call_count": 8,
+      "classification": "covered",
+      "mutation_tested": null,
+      "note": ""
+    },
+    {
+      "group": "valuation",
+      "method": "GET",
+      "path": "/valuation/variants/:businessVersionId",
+      "location": "server/src/routes/v8/finance-v2/valuation.routes.ts:189",
+      "calls": [
+        "valuation-cross-tenant.routes.pg.test.ts:102",
+        "valuation.routes.pg.test.ts:88",
+        "valuation.routes.pg.test.ts:104",
+        "valuation.routes.pg.test.ts:134"
+      ],
+      "call_count": 4,
+      "classification": "covered",
+      "mutation_tested": null,
+      "note": ""
+    },
+    {
+      "group": "valuation",
+      "method": "PATCH",
+      "path": "/valuation/variants/:businessVersionId",
+      "location": "server/src/routes/v8/finance-v2/valuation.routes.ts:203",
+      "calls": [
+        "valuation-cross-tenant.routes.pg.test.ts:105",
+        "valuation.routes.pg.test.ts:138"
+      ],
+      "call_count": 2,
+      "classification": "covered",
+      "mutation_tested": null,
+      "note": ""
+    },
+    {
+      "group": "valuation",
+      "method": "POST",
+      "path": "/valuation/cases/:caseId/compare-variants",
+      "location": "server/src/routes/v8/finance-v2/valuation.routes.ts:236",
+      "calls": [
+        "valuation-cross-tenant.routes.pg.test.ts:249",
+        "valuation.routes.pg.test.ts:616",
+        "valuation.routes.pg.test.ts:626"
+      ],
+      "call_count": 3,
+      "classification": "covered",
+      "mutation_tested": null,
+      "note": ""
+    },
+    {
+      "group": "valuation",
+      "method": "GET",
+      "path": "/valuation/variants/:businessVersionId/methods",
+      "location": "server/src/routes/v8/finance-v2/valuation.routes.ts:276",
+      "calls": [
+        "valuation-b3-review.routes.pg.test.ts:263",
+        "valuation-cross-tenant.routes.pg.test.ts:117",
+        "valuation.routes.pg.test.ts:168",
+        "valuation.routes.pg.test.ts:449",
+        "valuation.routes.pg.test.ts:520"
+      ],
+      "call_count": 5,
+      "classification": "covered",
+      "mutation_tested": null,
+      "note": ""
+    },
+    {
+      "group": "valuation",
+      "method": "POST",
+      "path": "/valuation/variants/:businessVersionId/methods",
+      "location": "server/src/routes/v8/finance-v2/valuation.routes.ts:288",
+      "calls": [
+        "valuation-b3-review.routes.pg.test.ts:98",
+        "valuation-b3-review.routes.pg.test.ts:156",
+        "valuation-b3-review.routes.pg.test.ts:216",
+        "valuation-b3-review.routes.pg.test.ts:249",
+        "valuation-b3-review.routes.pg.test.ts:250",
+        "valuation-b3-review.routes.pg.test.ts:251",
+        "valuation-cross-tenant.routes.pg.test.ts:120",
+        "valuation-cross-tenant.routes.pg.test.ts:133",
+        "valuation-cross-tenant.routes.pg.test.ts:195",
+        "valuation-cross-tenant.routes.pg.test.ts:227",
+        "valuation-cross-tenant.routes.pg.test.ts:244",
+        "valuation-cross-tenant.routes.pg.test.ts:245",
+        "valuation.routes.pg.test.ts:162",
+        "valuation.routes.pg.test.ts:186",
+        "valuation.routes.pg.test.ts:194",
+        "valuation.routes.pg.test.ts:203",
+        "valuation.routes.pg.test.ts:204",
+        "valuation.routes.pg.test.ts:205",
+        "valuation.routes.pg.test.ts:263",
+        "valuation.routes.pg.test.ts:264",
+        "valuation.routes.pg.test.ts:574",
+        "valuation.routes.pg.test.ts:611",
+        "valuation.routes.pg.test.ts:612",
+        "valuation.routes.pg.test.ts:640"
+      ],
+      "call_count": 24,
+      "classification": "covered",
+      "mutation_tested": null,
+      "note": ""
+    },
+    {
+      "group": "valuation",
+      "method": "POST",
+      "path": "/valuation/variants/:businessVersionId/methods/basket",
+      "location": "server/src/routes/v8/finance-v2/valuation.routes.ts:324",
+      "calls": [
+        "valuation-cross-tenant.routes.pg.test.ts:123",
+        "valuation.routes.pg.test.ts:216",
+        "valuation.routes.pg.test.ts:222",
+        "valuation.routes.pg.test.ts:245",
+        "valuation.routes.pg.test.ts:267"
+      ],
+      "call_count": 5,
+      "classification": "covered",
+      "mutation_tested": null,
+      "note": ""
+    },
+    {
+      "group": "valuation",
+      "method": "GET",
+      "path": "/valuation/variants/:businessVersionId/wacc-inputs",
+      "location": "server/src/routes/v8/finance-v2/valuation.routes.ts:375",
+      "calls": [
+        "valuation-cross-tenant.routes.pg.test.ts:162",
+        "valuation.routes.pg.test.ts:301"
+      ],
+      "call_count": 2,
+      "classification": "covered",
+      "mutation_tested": null,
+      "note": ""
+    },
+    {
+      "group": "valuation",
+      "method": "PUT",
+      "path": "/valuation/variants/:businessVersionId/wacc-inputs",
+      "location": "server/src/routes/v8/finance-v2/valuation.routes.ts:388",
+      "calls": [
+        "valuation-b3-review.routes.pg.test.ts:382",
+        "valuation-cross-tenant.routes.pg.test.ts:166",
+        "valuation-independent-verifier.pg.test.ts:190",
+        "valuation.routes.pg.test.ts:297",
+        "valuation.routes.pg.test.ts:308",
+        "valuation.routes.pg.test.ts:320",
+        "valuation.routes.pg.test.ts:409",
+        "valuation.routes.pg.test.ts:493"
+      ],
+      "call_count": 8,
+      "classification": "covered",
+      "mutation_tested": "caught",
+      "note": ""
+    },
+    {
+      "group": "valuation",
+      "method": "POST",
+      "path": "/valuation/variants/:businessVersionId/compute/dcf",
+      "location": "server/src/routes/v8/finance-v2/valuation.routes.ts:450",
+      "calls": [
+        "valuation-b3-review.routes.pg.test.ts:400",
+        "valuation-b3-review.routes.pg.test.ts:412",
+        "valuation-cross-tenant.routes.pg.test.ts:179",
+        "valuation-independent-verifier.pg.test.ts:212",
+        "valuation-independent-verifier.pg.test.ts:218",
+        "valuation-independent-verifier.pg.test.ts:230",
+        "valuation-independent-verifier.pg.test.ts:268",
+        "valuation.routes.pg.test.ts:427",
+        "valuation.routes.pg.test.ts:508"
+      ],
+      "call_count": 9,
+      "classification": "covered",
+      "mutation_tested": "caught",
+      "note": ""
+    },
+    {
+      "group": "valuation",
+      "method": "GET",
+      "path": "/valuation/variants/:businessVersionId/results",
+      "location": "server/src/routes/v8/finance-v2/valuation.routes.ts:521",
+      "calls": [
+        "valuation-b3-review.routes.pg.test.ts:293",
+        "valuation-cross-tenant.routes.pg.test.ts:198",
+        "valuation-cross-tenant.routes.pg.test.ts:203",
+        "valuation.routes.pg.test.ts:456",
+        "valuation.routes.pg.test.ts:562"
+      ],
+      "call_count": 5,
+      "classification": "covered",
+      "mutation_tested": null,
+      "note": ""
+    },
+    {
+      "group": "valuation",
+      "method": "GET",
+      "path": "/valuation/variants/:businessVersionId/bridge",
+      "location": "server/src/routes/v8/finance-v2/valuation.routes.ts:567",
+      "calls": [
+        "valuation-cross-tenant.routes.pg.test.ts:212",
+        "valuation.routes.pg.test.ts:557"
+      ],
+      "call_count": 2,
+      "classification": "covered",
+      "mutation_tested": null,
+      "note": ""
+    },
+    {
+      "group": "valuation",
+      "method": "PUT",
+      "path": "/valuation/variants/:businessVersionId/bridge",
+      "location": "server/src/routes/v8/finance-v2/valuation.routes.ts:580",
+      "calls": [
+        "valuation-cross-tenant.routes.pg.test.ts:216",
+        "valuation.routes.pg.test.ts:535",
+        "valuation.routes.pg.test.ts:545"
+      ],
+      "call_count": 3,
+      "classification": "covered",
+      "mutation_tested": "caught",
+      "note": ""
+    },
+    {
+      "group": "valuation",
+      "method": "GET",
+      "path": "/valuation/methods/:methodId/terminal",
+      "location": "server/src/routes/v8/finance-v2/valuation.routes.ts:641",
+      "calls": [
+        "valuation-cross-tenant.routes.pg.test.ts:137",
+        "valuation.routes.pg.test.ts:462"
+      ],
+      "call_count": 2,
+      "classification": "covered",
+      "mutation_tested": null,
+      "note": ""
+    },
+    {
+      "group": "valuation",
+      "method": "POST",
+      "path": "/valuation/methods/:methodId/sensitivity",
+      "location": "server/src/routes/v8/finance-v2/valuation.routes.ts:653",
+      "calls": [
+        "valuation-b3-review.routes.pg.test.ts:111",
+        "valuation-b3-review.routes.pg.test.ts:118",
+        "valuation-cross-tenant.routes.pg.test.ts:141",
+        "valuation.routes.pg.test.ts:587"
+      ],
+      "call_count": 4,
+      "classification": "covered",
+      "mutation_tested": "caught",
+      "note": ""
+    },
+    {
+      "group": "valuation",
+      "method": "GET",
+      "path": "/valuation/methods/:methodId/sensitivity/:gridLabel",
+      "location": "server/src/routes/v8/finance-v2/valuation.routes.ts:711",
+      "calls": [
+        "valuation-b3-review.routes.pg.test.ts:141",
+        "valuation-b3-review.routes.pg.test.ts:158",
+        "valuation-b3-review.routes.pg.test.ts:176",
+        "valuation.routes.pg.test.ts:592"
+      ],
+      "call_count": 4,
+      "classification": "covered",
+      "mutation_tested": null,
+      "note": ""
+    },
+    {
+      "group": "valuation",
+      "method": "POST",
+      "path": "/valuation/variants/:businessVersionId/advisor/generate",
+      "location": "server/src/routes/v8/finance-v2/valuation.routes.ts:737",
+      "calls": [
+        "valuation-cross-tenant.routes.pg.test.ts:230",
+        "valuation.routes.pg.test.ts:636",
+        "valuation.routes.pg.test.ts:643"
+      ],
+      "call_count": 3,
+      "classification": "covered",
+      "mutation_tested": null,
+      "note": ""
+    },
+    {
+      "group": "valuation",
+      "method": "GET",
+      "path": "/valuation/variants/:businessVersionId/advisor",
+      "location": "server/src/routes/v8/finance-v2/valuation.routes.ts:759",
+      "calls": [
+        "valuation-cross-tenant.routes.pg.test.ts:233",
+        "valuation.routes.pg.test.ts:648"
+      ],
+      "call_count": 2,
+      "classification": "covered",
+      "mutation_tested": null,
+      "note": ""
+    },
+    {
+      "group": "versions",
+      "method": "GET",
+      "path": "/versions/:businessVersionId",
+      "location": "server/src/routes/v8/finance-v2/versions.routes.ts:68",
+      "calls": [
+        "artifacts-lifecycle-compute.routes.pg.test.ts:145"
+      ],
+      "call_count": 1,
+      "classification": "covered",
+      "mutation_tested": null,
+      "note": ""
+    },
+    {
+      "group": "versions",
+      "method": "POST",
+      "path": "/versions/:businessVersionId/transitions",
+      "location": "server/src/routes/v8/finance-v2/versions.routes.ts:116",
+      "calls": [
+        "artifacts-lifecycle-compute.routes.pg.test.ts:151",
+        "artifacts-lifecycle-compute.routes.pg.test.ts:158",
+        "artifacts-lifecycle-compute.routes.pg.test.ts:169",
+        "artifacts-lifecycle-compute.routes.pg.test.ts:179",
+        "artifacts-lifecycle-compute.routes.pg.test.ts:189",
+        "cross-tenant.routes.pg.test.ts:119",
+        "cross-tenant.routes.pg.test.ts:140"
+      ],
+      "call_count": 7,
+      "classification": "covered",
+      "mutation_tested": null,
+      "note": ""
+    },
+    {
+      "group": "versions",
+      "method": "POST",
+      "path": "/versions/:businessVersionId/compute-snapshot",
+      "location": "server/src/routes/v8/finance-v2/versions.routes.ts:172",
+      "calls": [
+        "artifacts-lifecycle-compute.routes.pg.test.ts:199",
+        "artifacts-lifecycle-compute.routes.pg.test.ts:205",
+        "cross-tenant.routes.pg.test.ts:150"
+      ],
+      "call_count": 3,
+      "classification": "covered",
+      "mutation_tested": null,
+      "note": ""
+    }
+  ]
+}
