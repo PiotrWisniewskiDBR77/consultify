@@ -226,3 +226,19 @@ EXIT: 0 for all 8 files (clean compile, no syntax errors)
 
 No files touched outside `src/components/MyWork/` and this new doc. No commits made (per task
 constraint) — changes are left uncommitted in the worktree for the orchestrator to merge.
+
+---
+
+## Re-verified at `6fec03f7a0` (stream S11-DOCS, 2026-08-12)
+
+This report's own candidate identity (`04a959288f0d8fde6242e6d5c8a4cfd0f82c30d9`,
+worktree `ideas-e14-a11y`) is a historical, detached snapshot — its uncommitted
+changes were merged into the program's committed history well before this
+wave and are not re-derivable from that detached worktree today. Kept here as
+history. This wave's own a11y/locale work is unrelated in scope: RISK-26
+extended locale coverage for this program's added keys to de/es/ar/jp
+(445 EN / 461 PL total), and RISK-38 (new) filed a pre-existing
+`Intl.PluralRules('jp')` → `en-US` defect found while investigating RISK-26 —
+see `16_OPEN_RISKS_AND_LIMITATIONS.csv`. **Not re-verified this wave:**
+whether this report's specific `src/components/MyWork/` a11y fixes still hold
+line-by-line at `6fec03f7a0` — carried forward as history, not re-read.

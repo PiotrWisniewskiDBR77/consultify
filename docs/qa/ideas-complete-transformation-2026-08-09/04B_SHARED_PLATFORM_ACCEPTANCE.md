@@ -66,3 +66,18 @@ Candidate: HEAD `deb103fcde`, base `origin/demo` @ `9d17cac114`. Canon: `docs/st
 unresolved coverage debt); QG-01 (split) open; runtime/Teresa-invocation NOT VERIFIED.**
 **E03: IMPLEMENTED per commit record and baseline mock readback; acceptance NOT VERIFIED** — both
 consistent with, and not superseding, `00_PROGRAM_STATUS_AND_VERSION.md`'s Program A/B rows.
+
+---
+
+**Re-verified at `6fec03f7a0` (stream S11-DOCS, 2026-08-12):** QG-01 (this
+doc's own "open" item above) is now RESOLVED — the 10,696-line monolith was
+split into a 404-line barrel plus `src/actions/registry/*`, 231/231 action
+bodies byte-identical, verified 2026-08-10 at `4afa10c31b`; see
+`16_OPEN_RISKS_AND_LIMITATIONS.csv` RISK-07. Registry action counts are
+UNCHANGED this wave (231/124/7/4) — RISK-30's fix this wave changed action
+*semantics* (a truthful `confirmed` field on `ActionResult`), not registry
+shape or count. `check-actions.sh` is currently **rc=1** for an unrelated,
+documented reason (3 new command-verb handlers in `FinancialCaseDialog.tsx`
+not yet traced to the registry — see `10_FINANCIAL_CASE_ACCEPTANCE.md` §6.9).
+**Still true and unchanged: E02/E03 runtime/Teresa-invocation acceptance was
+not re-run this wave** — remains NOT VERIFIED.

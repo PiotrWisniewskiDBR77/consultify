@@ -53,3 +53,16 @@ context-correct").
 forward undisguised.** Consistent with `00_PROGRAM_STATUS_AND_VERSION.md`'s E06 line; this report
 adds the ledger cross-reference and restates the lane-delete defect as a named, unresolved risk
 rather than letting it fade from view between program documents.
+
+---
+
+**Re-verified at `6fec03f7a0` (stream S11-DOCS, 2026-08-12):** the named
+lane-delete defect was fixed **before** this wave (RISK-11, RESOLVED for the
+human-visible case — a toast now refuses visibly). This wave landed two
+further, smaller items on this tool: RISK-30 gave `lane_frame.*` actions a
+truthful `confirmed` acknowledgement instead of an unconditional `{ok:true}`
+(residual: `confirmed:false` still posts no chat correction — see
+`16_OPEN_RISKS_AND_LIMITATIONS.csv` RISK-30); and RISK-35 raised the light
+"Klient" swimlane label to its 4.5:1 contrast floor. **Verdict otherwise
+unchanged: WIRED TO REGISTRY, DoD NOT CLOSED.** Performance (node-cap speed at
+N≥500) remains NOT MEASURED by the owner's own decision.

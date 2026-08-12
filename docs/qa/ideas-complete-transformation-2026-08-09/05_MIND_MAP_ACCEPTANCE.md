@@ -53,3 +53,17 @@ action").
 **WIRED TO REGISTRY, DoD NOT CLOSED** — unchanged from `00_PROGRAM_STATUS_AND_VERSION.md`'s own
 E04 line. This report adds the specific commit/file evidence for the wiring claim and confirms no
 new runtime or persistence evidence exists beyond what that file already states.
+
+---
+
+**Re-verified at `6fec03f7a0` (stream S11-DOCS, 2026-08-12):** verdict
+unchanged — **WIRED TO REGISTRY, DoD NOT CLOSED**. One visual defect closed
+this wave and worth recording here: the depth-3+ "L{n}" node badge measured
+4.41:1 in light theme against the 4.5:1 text bar (an earlier stream had called
+this "hypothetical" for lack of a depth-3 fixture node; the integrator
+rejected that and built one — `getNodeDepth()` walks a real edge chain, so
+depth 3 is production-reachable). Fixed with a `c-*` token swap, re-measured
+9.32:1/11.48:1. See `16_OPEN_RISKS_AND_LIMITATIONS.csv` RISK-35 and
+`21_FOCUS_AND_CONTRAST.md` §9. **This is a visual/contrast fix only — it does
+not close any part of this epic's functional DoD** (18-node scene, cross-link,
+AI-proposal persistence remain not independently rerun).

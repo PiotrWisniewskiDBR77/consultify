@@ -64,3 +64,18 @@ mandatory-preview and honest-relabeling work is real, mounted, and grounded in a
 finding (the disproved stale ledger claim); the schema change it depends on for full lineage
 completeness (`mappingVersion`) is unapplied, so read-back correctness for that specific field is
 not just unverified — it is untestable against a real database until the migration lands.
+
+---
+
+**Re-verified at `6fec03f7a0` (stream S11-DOCS, 2026-08-12):** the
+"unapplied migration" this verdict names is STALE — `20260810_idea_conversion_mapping_version.sql`
+was applied to the isolated local ephemeral Postgres before this wave started
+(RISK-04, RESOLVED — see `16_OPEN_RISKS_AND_LIMITATIONS.csv`), and `mapping_version`
+read-back is now proven under Gate 3. Worth noting alongside this closure: the
+column carries a Postgres `DEFAULT 'v1'`, so an omission-style test assertion
+against it is vacuous by construction — RISK-23 documents the trap and its
+mitigation (the assertion was rewritten to sabotage the written constant, not
+the write path). No E11-specific change landed in this wave beyond that
+prior-wave migration closure. Corrected verdict: **PARTIAL; the `mappingVersion`
+schema dependency is now applied and read-back-proven on isolated local DB
+only — never run against demo/prod/dev.**

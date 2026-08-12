@@ -231,3 +231,20 @@ weakened; nothing was made green by lowering a bar.
 A scope is not a scope until the run proves it. Assert the file count **and**
 assert that a named file you expect is present. A filter matching nothing exits 0
 and is indistinguishable from a filter matching everything and passing.
+
+---
+
+## Re-verified at `6fec03f7a0` (stream S11-DOCS, 2026-08-12)
+
+**NOT re-run at this SHA.** The two-clean-rounds result above (208 files /
+1239 tests, two identical rounds, 0 lost tests, 0 new failures) was executed
+at `c5b1b6e6b9`, which is **16 commits behind** this wave's HEAD
+(`6fec03f7a0`). Per the "standing rule" above, that scope is not this
+candidate's scope until it is re-run and re-proven at `6fec03f7a0` — the
+result at `c5b1b6e6b9` is kept here as history, not re-attested as current.
+
+The owner is running the two-round regression at `6fec03f7a0` separately from
+this documentation pass and will supply the numbers. A marked placeholder for
+that result lives in `24_FINAL_ACCEPTANCE.md` §10 — do not treat this
+file's historical PASS as a current one, and do not infer a fresh PASS from
+its absence here.

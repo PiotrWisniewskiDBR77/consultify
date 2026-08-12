@@ -58,3 +58,19 @@ pass; no canvas metaphors/legacy dual path").
 re-verified this session) remains open** — same finding QG-02's remediation pass reported, not a
 new regression, but still unresolved as of this HEAD. Consistent with
 `00_PROGRAM_STATUS_AND_VERSION.md`'s E07 line.
+
+---
+
+**Re-verified at `6fec03f7a0` (stream S11-DOCS, 2026-08-12):** the
+dead-mount defect this verdict names as still open is now CLOSED —
+`RecordTemplateManager` is reachable from `TableToolbar`'s real "More" > Tools
+menu, proven by an accessible-name test with a sabotage/restore cycle (19/19
+pass). See `16_OPEN_RISKS_AND_LIMITATIONS.csv` RISK-06. Three further items
+landed on this tool this wave: RISK-36 extended the row-add cap to AI add-rows
+and framework-apply (previously only CSV import had it); RISK-35 raised the
+row-actions kebab icon to its 3:1 contrast floor. A **new, untriaged** finding
+also surfaced this wave and is NOT part of this verdict: at exactly 1280×800,
+the kebab column is out of frame at rest in the true production wrapper, with
+no visible scroll hint — see `19_VISUAL_CX_MATRIX.md` "PRODUCTION-SHAPE
+measurement". **Verdict otherwise unchanged: WIRED TO REGISTRY, DoD NOT
+CLOSED.**

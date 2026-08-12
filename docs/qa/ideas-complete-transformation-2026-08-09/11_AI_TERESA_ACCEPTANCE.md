@@ -64,3 +64,18 @@ proposal/result/error/cancel; Teresa uses same action ID and confirmation/audit 
 Teresa-parity (one action ID, one manifest, one description block) is enforced registry-wide and
 machine-checked (R9); the epic's behavioral DoD (silent-mutation prevention, scope-match, terminal-
 state coverage under a real model call) has not been runtime-verified.
+
+---
+
+**Re-verified at `6fec03f7a0` (stream S11-DOCS, 2026-08-12):** one
+directly-relevant item landed this wave — RISK-30 gave 6/6 bus-dispatch sites
+plus the lane UI-closure branch a truthful `confirmed` acknowledgement instead
+of an unconditional `{ok:true}`, closing part of the "silent-mutation
+prevention" gap this verdict names. **Residual, stated plainly (not part of
+this fix): 58 other UI-closure sites still degrade to `confirmed:false` with
+no chat message, and `UnifiedChatPanel.tsx` only posts a correction when
+`result.message` is set — so a silent `confirmed:false` still leaves the
+model's already-streamed "done" reply unchallenged on screen.** See
+`16_OPEN_RISKS_AND_LIMITATIONS.csv` RISK-30. **Verdict otherwise unchanged:
+OPENED, NOT CLOSED** — no real-model-call runtime verification happened this
+wave.

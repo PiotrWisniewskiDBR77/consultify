@@ -344,3 +344,68 @@ Prepared fix for whoever lands it after S5: mirror
 (`scope: 'workspace'`, `surfaces: ['panel']`, `mutates: true`), and route the
 dialog's save through `runIdeaAction(...)` the way
 `IdeaBusinessCaseSection.tsx:539` does.
+
+## 7. 2026-08-12 — integrator verification: my own 6/6 run, and a second, two-stage sabotage of the OCC layer
+
+Stream S11-DOCS (worktree `codex/ideas-s11-docs`, HEAD `6fec03f7a0`). §6's RESOLVED
+verdict for RISK-12 is confirmed, not just adopted from the stream's own report —
+this section records the integrator's *own* execution of the suite plus a second,
+independent falsifiability check §6.4 did not run.
+
+### 7.1 My own run, real exit code
+
+```
+NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false E2E_MODE=true POSTGRES_SKIP_INIT_IN_TEST=1 \
+DATABASE_URL=postgres://postgres@127.0.0.1:54331/ideas_e12 \
+npx vitest run tests/integration/e09-financial-case-persistence.realdb.test.ts --retry=0
+→ exit 0, Test Files 1 passed (1), Tests 6 passed (6)
+```
+
+Confirms §6.3's figure independently, at the wave's final SHA rather than at the
+stream's own working SHA.
+
+### 7.2 A second sabotage: is the OCC actually two layers, or one layer described twice?
+
+`ideaFinancialCaseService.ts` contains what read, on inspection, like two
+independent guards against a stale-write race:
+
+1. A **fast-path JS check** (`input.expectedVersion === undefined ||
+   input.expectedVersion !== existing.version` → throws `IdeaFinancialCaseStaleVersionError`
+   before any `UPDATE` is issued).
+2. A **SQL compare-and-swap** on the `UPDATE` itself
+   (`WHERE id = ? AND organization_id = ? AND version = ?`), with the affected-row
+   count checked afterward.
+
+§6.4's sabotage removed the `lastComputedAt` field from the serializer — a
+different concern (proving the cold-reopen readback isn't vacuous), not this one.
+So this had not actually been tested: disable only the fast-path check and see
+whether the SQL CAS alone still produces the 409.
+
+**Stage 1 — disable only the fast-path check.** Result: suite stayed **GREEN**,
+6/6. This is the *expected*, non-vacuous outcome, not a red flag — the SQL
+compare-and-swap caught the race on its own, exactly as its comment claims
+(`// Compare-and-swap: the \`AND version = ?\` predicate is the real guard.`). A
+green result here does not mean the check is untested; it means the *second*
+layer is carrying the guarantee, which is exactly what defense-in-depth predicts.
+
+**Stage 2 — disable the fast-path check AND neutralise the SQL CAS** (temporarily
+widened the `WHERE` clause to drop `AND version = ?`). Result: **RED** —
+`AssertionError: expected 200 to be 409` at the stale-version sub-test, and the
+losing writer's payload was visibly persisted at `version: 3` (it should have been
+rejected, leaving the winning writer's `version: 2` row intact). Restored both
+guards immediately; `git diff --stat -- server/src` clean after restore; re-ran →
+exit 0, 6/6 again.
+
+**Conclusion:** the OCC is genuinely defense-in-depth, not one guard duplicated in
+two places. Stage 1's green was **redundancy**, not a vacuous assertion — it is
+the opposite failure mode from this program's own RISK-23 (a Postgres column
+`DEFAULT` that made an *omitted write* look correct). Here, removing one full
+layer of protection still left a correct behaviour; only removing both layers
+exposed the defect. That distinction is why RISK-12's evidence explicitly
+separates "which layer catches it" from "does something catch it."
+
+### 7.3 Cleanup
+
+No database rows were left behind: the stale-version sub-test's probe rows are
+deleted by the suite's own teardown, confirmed by a residue count query
+returning 0 both before and after this section's extra sabotage runs.

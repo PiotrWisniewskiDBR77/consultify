@@ -77,3 +77,18 @@ honest fail-open/feature-detect behavior. One of the four (confidentiality) has 
 tests proving the gating logic; the other three have none. Zero of the four have ever run against
 a database in this program. This is an explicit, named blocker requiring an owner/orchestrator
 decision to apply — not a defect in the migrations themselves as written.
+
+---
+
+**Re-verified at `6fec03f7a0` (stream S11-DOCS, 2026-08-12):** the blocker this
+report names is CLOSED, not by this document's own history but by later
+sessions this report predates. All four migrations named above were applied
+under the owner's explicit authorisation to an isolated local ephemeral
+Postgres and proven via `information_schema`/`pg_constraint`, not the
+migration runner's own report — see `13_RUNTIME_GATE_EVIDENCE.md` and
+`16_OPEN_RISKS_AND_LIMITATIONS.csv` RISK-02/03/04/05 (all RESOLVED). A fifth
+migration, `20260812_idea_financial_case.sql`, was added and applied this wave
+(RISK-12) — see `10_FINANCIAL_CASE_ACCEPTANCE.md` §6. **Still true and
+unchanged: none of these six migrations has ever run against demo, staging,
+or production** — isolated local ephemeral Postgres only, torn down after
+each session.

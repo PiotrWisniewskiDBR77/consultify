@@ -212,3 +212,26 @@ orphaned under QG-02's accounting. Restored 2026-08-10.)
 4. Execute QG-01 and QG-02 before another large registry expansion.
 5. Fix QG-04 and prove warning-free mounted behavior.
 6. Execute QG-03; do not declare `READY_FOR_CODEX_REVIEW` before it passes.
+
+---
+
+## Re-verified at `6fec03f7a0` (stream S11-DOCS, 2026-08-12)
+
+This backlog's own header already says it "does not declare acceptance and
+must be reconciled against the next committed SHA" — that reconciliation
+happened in later sessions this file predates, kept here as history rather
+than rewritten in place:
+
+- **QG-01** (split the registry monolith) — RESOLVED at `4afa10c31b`
+  (2026-08-10), independently of this file. See
+  `16_OPEN_RISKS_AND_LIMITATIONS.csv` RISK-07.
+- **QG-03** (full runtime→persistence chain) — PASS on isolated local DB,
+  now **9 chains** (was 8 before this wave; chain 9 = E09 financial case).
+  See `13_RUNTIME_GATE_EVIDENCE.md`.
+- **QG-02/QG-04/QG-05/QG-06** — see `00_PROGRAM_STATUS_AND_VERSION.md`'s
+  "GATE BOARD 2026-08-11" section, which records `QG-01…QG-06 all RESOLVED`
+  as of that wave — unchanged and not re-audited item-by-item in this pass.
+
+**Not re-verified this wave:** whether every individual QG-02/04/05 DoD clause
+still holds line-by-line at `6fec03f7a0` was not re-read; the gate-board-level
+RESOLVED status is carried forward, not re-derived from scratch.

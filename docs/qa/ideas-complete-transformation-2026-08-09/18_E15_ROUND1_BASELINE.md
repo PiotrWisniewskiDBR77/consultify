@@ -337,3 +337,16 @@ bash scripts/check-ledger-csv.sh
 bash scripts/check-artefakt.sh
 bash scripts/check-focus-canon.sh
 ```
+
+---
+
+## Re-verified at `6fec03f7a0` (stream S11-DOCS, 2026-08-12)
+
+**Superseded, not current.** This file's own candidate SHA (`3dd93792b9`) is
+Round 1 of E15 — the two-clean-rounds process this program requires. Round 1
+was followed by a corrected re-run at `c5b1b6e6b9`
+(`20_E15_TWO_CLEAN_ROUNDS.md`), which is itself now **16 commits behind**
+this wave's HEAD (`6fec03f7a0`) and has not been re-run at this SHA either —
+see that file's own re-verification note. This document is kept purely as
+historical Round-1 evidence; do not cite it as this candidate's current test
+state.

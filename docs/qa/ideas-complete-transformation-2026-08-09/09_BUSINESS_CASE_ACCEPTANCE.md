@@ -60,3 +60,15 @@ decisions version rather than overwrite").
 Program D / E08 row. Model, service, routes and UI compile and are flag-gated; scoring and
 decision-log governance are wired with correct terminal-state modeling per the commit record; zero
 of it has been proven against a real database.
+
+---
+
+**Re-verified at `6fec03f7a0` (stream S11-DOCS, 2026-08-12):** the
+"PERSISTENCE EVIDENCE_MISSING" half of this verdict is now STALE — the
+migrations named in `03B_DATA_AND_MIGRATION_REPORT.md` (maturity gates,
+business case) were applied to an isolated local ephemeral Postgres under
+owner authorisation and proven under Gate 3 (`13_RUNTIME_GATE_EVIDENCE.md`,
+8/8 chains at the time, now 9/9) **before this wave started** — this document
+predates that closure and was not itself updated. No E08-specific change
+landed in this wave. Corrected verdict: **PARTIAL; persistence now PROVEN ON
+ISOLATED LOCAL DB ONLY — never run against demo/prod/dev.**

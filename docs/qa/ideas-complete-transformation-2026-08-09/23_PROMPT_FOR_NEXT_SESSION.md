@@ -4,83 +4,95 @@ Copy everything between the rules into the new session as the first message.
 
 ---
 
-Kontynuuj program Ideas Transformation. Nie twórz nowej gałęzi, worktree ani nowej sesji programu.
+Kontynuuj program Ideas Transformation. Nie twórz nowej gałęzi ani nowej sesji programu bez
+potwierdzenia — na dysku istnieje RÓWNOLEGŁA linia (`ideas-transform/consultify`, branch
+`codex/ideas-transformation-20260809`, obserwowana ta sesja przy `fe2b8b7a82`, PRZED tą linią
+multi-stream); to NIE jest ta sama praca — zapytaj właściciela, zanim ją dotkniesz.
 
-Worktree: /Users/piotrwisniewski/.codex/worktrees/ideas-transform/consultify
-Branch:   codex/ideas-transformation-20260809
-HEAD:     d31dd37bd4   (40 commitów przed origin/demo, 0 za, drzewo czyste, NIGDY nie pushowane)
+Worktree: /Users/piotrwisniewski/.codex/worktrees/ideas-streams/s6-e09
+Branch:   codex/ideas-s11-docs
+HEAD:     6fec03f7a0   (57 commitów przed origin/demo, 2 ZA — patrz KROK 0, drzewo czyste, NIGDY nie pushowane)
+
+KROK 0 — origin/demo się przesunęło w trakcie tej fali (9d17cac114 → f3e7df565e, "Slack Command
+Center hardening", INNA sesja). Baza porównawcza dla KAŻDEGO A/B w tym pakiecie ZOSTAJE
+zamrożona na 9d17cac114 — nie przestawiaj jej. Rozłączność zweryfikowana: te 2 commity dotykają
+6 plików, zero przecięcia z czymkolwiek dotkniętym przez ten program.
 
 KROK 1 — przeczytaj w całości, w tej kolejności:
 1. docs/qa/ideas-complete-transformation-2026-08-09/RESUME_HANDOFF.md   ← zacznij tutaj
-2. .../22_CODEX_REVIEW_REPORT.md
-3. .../16_OPEN_RISKS_AND_LIMITATIONS.csv   (37 wierszy; parsuj PRAWDZIWYM parserem CSV — komórki mają przecinki w cudzysłowach)
-4. .../21_FOCUS_AND_CONTRAST.md            (tabela kontrastu = Twoje pierwsze zadanie)
-5. .../20_E15_TWO_CLEAN_ROUNDS.md          (czytaj RETRACTION zanim przeczytasz wyniki)
+2. .../24_FINAL_ACCEPTANCE.md                     (rekomendacja + tabela zamknięcia E00-E15)
+3. .../22_CODEX_REVIEW_REPORT.md
+4. .../16_OPEN_RISKS_AND_LIMITATIONS.csv   (38 wierszy; parsuj PRAWDZIWYM parserem CSV — komórki mają przecinki w cudzysłowach)
+5. .../19_VISUAL_CX_MATRIX.md              (sekcja PRODUCTION-SHAPE = nowe, nietriażowane znalezisko)
 
 KROK 2 — sprawdź stan zanim cokolwiek zrobisz:
     cd "<worktree>" && git log --oneline -3 && git status --short && git rev-list --left-right --count origin/demo...HEAD
-    for g in check-actions check-action-coverage check-list-canon check-gestosc check-ledger-csv check-artefakt check-focus-canon; do bash scripts/$g.sh >/dev/null 2>&1; echo "$g rc=$?"; done
-Oczekiwane: HEAD d31dd37bd4, 0 zmian, "0 40", wszystkie bramki rc=0. Jeśli cokolwiek się nie zgadza — zatrzymaj się i ustal dlaczego, zanim ruszysz dalej.
+    for g in check-actions check-ledger-csv check-focus-canon check-list-canon check-artefakt; do bash scripts/$g.sh >/dev/null 2>&1; echo "$g rc=$?"; done
+Oczekiwane: HEAD 6fec03f7a0, 0 zmian, "2 57" (2 ZA origin/demo, 57 PRZED),
+check-actions rc=1 (udokumentowane, patrz KROK 3 punkt 4), reszta bramek rc=0.
+Jeśli cokolwiek się nie zgadza — zatrzymaj się i ustal dlaczego, zanim ruszysz dalej.
 
-KROK 3 — kolejność prac (narzucona, nie zmieniaj):
+KROK 3 — otwarte sprawy, w kolejności ważności:
 
-1) ZAMKNIJ GATE 4. Zostały TRZY zmierzone porażki kontrastu (RISK-35, P2):
-   - kebab akcji wiersza w Tabeli Idei: 1,93:1 (jasny) i 1,61:1 (ciemny) przy progu 3:1
-   - ciemna plakietka „L2" w Mapie myśli: 3,22:1 przy progu 4,5:1
-   - jasna etykieta toru „Klient" w Przepływie: 4,43:1 przy progu 4,5:1
-   Napraw tokenami c-*. NIGDY primary-<dowolna liczba> — każdy numer to crimson #85182F,
-   zarezerwowany wyłącznie na semantykę krytyczną. Po naprawie zrób nowe zrzuty
-   dotkniętych komórek, OBEJRZYJ JE SAM, i dopiero wtedy proś Piotra o akcept.
+1) E15 DWIE CZYSTE RUNDY jeszcze nie uruchomione na tym SHA. Ostatni zapisany czysty wynik jest
+   przy c5b1b6e6b9, 16 commitów za HEAD. Właściciel uruchamia to osobno i dostarczy liczby —
+   sprawdź, czy 24_FINAL_ACCEPTANCE.md nadal ma placeholder, czy liczby już przyszły.
 
-2) NIE proś o akcept, dopóki jakikolwiek P1 albo widoczna kolizja siedzi w raportach
-   lub obrazach tego programu. Ta reguła istnieje, bo złamałem ją 2026-08-10 i właściciel
-   to wyłapał. Zgłoszenie defektu w zdaniu podrzędnym go nie zamyka.
+2) NOWE, NIEZTRIAŻOWANE znalezisko wizualne: dokładnie przy 1280x800, kebab akcji wiersza w
+   Tabeli Idei nie mieści się w kadrze w spoczynku w PRAWDZIWYM wrapperze produkcyjnym, bez
+   widocznej podpowiedzi przewijania (kontener faktycznie się przewija —
+   TableWithPreviewLayout.tsx — po prostu nie widać tego bez wcześniejszej wiedzy). Nie ma
+   jeszcze własnego numeru ryzyka. Zdecyduj z właścicielem, czy to osobny wiersz P2/P3.
 
-3) Dopiero potem przekazanie Codexowi — 22_CODEX_REVIEW_REPORT.md jest napisany,
-   ale zweryfikuj jego liczby względem kodu przed wysłaniem.
+3) RISK-30 rezydualne: `confirmed:false` nadal nie wysyła wiadomości na czacie, więc 58
+   niezmigrowanych akcji może dalej brzmieć jak sukces w odpowiedzi Teresy. Potrzebna ścieżka
+   korekty w UI czatu, nie tylko uczciwa flaga.
 
-DECYZJA WŁAŚCICIELA DO UZYSKANIA:
-RISK-12 (P1) — sprawa finansowa E09 NIE MA ŻADNEJ ŚCIEŻKI ZAPISU. Okno wyrzuca pracę
-użytkownika przy zamknięciu. Udowodnione: mount bez onCaseChange, zero route'ów, zero
-migracji, zero tabel w żywej bazie, test przypina brak. Flaga domyślnie WYŁĄCZONA, więc
-zasięg ograniczony. Zbudowanie tego to FUNKCJA — zapytaj Piotra, czy ma powstać; luka jest
-wyceniona w 10_FINANCIAL_CASE_ACCEPTANCE.md. Nie buduj bez jego zgody.
+4) `scripts/check-actions.sh` = rc=1, ŚWIADOMIE. 3 handlery-komendy w FinancialCaseDialog.tsx
+   (save/saveAndClose/retry) nie są jeszcze śledzone do IDEA_ACTION_REGISTRY — naprawa wymaga
+   src/actions/registry/sharedActions.ts, który był aktywnie przepisywany przez inny strumień
+   (S5) w tej fali. Gotowa naprawa opisana w 10_FINANCIAL_CASE_ACCEPTANCE.md §6.9.
+
+5) RISK-31/RISK-36 wydajność: N>=500 (Process Flow) i N=5000/10000 (Tabela) NIE ZMIERZONE,
+   dosłownie, decyzją właściciela — maszyna miała obciążenie 84-832 z procesów niezwiązanych z
+   Consultify. Nie opisuj żadnej z tych zmian jako poprawę bez czystej liczby.
+
+6) RISK-24 — konwergencja schematu na czystej bazie nadal zepsuta obydwoma runnerami. Dwie NOWE
+   konkretne instancje znalezione w tej fali (role_change_audit_events, organization_context_
+   snapshots) — opisane, nie naprawione, poza zakresem programu.
 
 ZASADY, które trzymają wiarygodność tego programu (każda kupiona defektem):
-- Nie ufaj raportowi agenta — uruchom sam. Ta sesja złapała: podział rejestru, który się nie
-  kompilował; pusty sabotaż maskowany przez DEFAULT kolumny; dokument dowodowy sprzeczny
-  z kodem, który opisywał; cztery defekty z moich własnych scaleń trójstronnych.
-- Atakuj każdą zieleń, zanim ją przyjmiesz. Test, który nie potrafi się zaczerwienić, nie jest
-  dowodem. Jeśli sabotaż zostawia zielone — pusta jest ASERCJA, nie kod. Powiedz to i popraw
-  asercję, zamiast księgować pass.
-- Porównuj LICZBĘ testów per plik, nie tylko czerwony/zielony. Plik, który już był czerwony,
-  potrafi po cichu zgubić wszystkie swoje testy.
-- ZAKRES nie jest zakresem, dopóki przebieg go nie udowodni. Asertuj liczbę plików ORAZ
-  obecność nazwanego pliku, którego się spodziewasz. Cytowany glob podany vitestowi to FILTR
-  ścieżki, nie glob — dopasował zero plików i 59 z 208 nigdy się nie uruchomiło.
-- „Znana przedistniejąca porażka" to twierdzenie, nie fakt. Jedna z listy okazała się regresją
-  tego programu, a obecność na liście zablokowała bisekcję. Każda pozycja, której nikt nie
-  porównał z origin/demo, jest NIEZWERYFIKOWANA, nie odziedziczona.
-- Pytaj „harness czy produkt?" zanim naprawisz cokolwiek widziane na zrzucie.
+- Nie ufaj raportowi agenta — uruchom sam. Ta fala złapała: rozjazd między tekstem CSV a plikami
+  faktycznie leżącymi na dysku (RISK-29 "tylko light/pl" — wszystkie 4 komórki były już czyste);
+  liczbę kluczy lokalizacji, która się nie zgodziła z niezależnym liczeniem integratora (478/494
+  vs 445/461) — zapisano obie, nie uzgodniono na siłę.
+- Atakuj każdą zieleń, zanim ją przyjmiesz — także zieleń z WYŁĄCZENIA jednej warstwy
+  dwuwarstwowej ochrony. Sabotaż OCC dla RISK-12 był dwuetapowy: wyłączenie SAMEGO
+  szybkiego sprawdzenia wersji JS zostawiło zielone (warstwa SQL compare-and-swap złapała
+  sama) — to redundancja, nie pusta asercja. Dopiero wyłączenie OBU warstw dało czerwone.
+- „Znana przedistniejąca porażka" to twierdzenie, nie fakt, dopóki nie porównasz A/B z
+  origin/demo@9d17cac114 (RISK-13/16/17/18 są teraz formalnie zweryfikowane, nie tylko
+  przyjęte na wiarę).
+- Pytaj „harness czy produkt?" zanim naprawisz cokolwiek widziane na zrzucie — i pytaj to
+  jeszcze raz zanim ogłosisz macierz aktualną: sprawdź pliki na dysku, nie tylko tekst CSV.
 - Łap prawdziwe kody wyjścia. `cmd | tail` zwraca status `tail`. NODE_ENV=test bez
   RUN_DB_TESTS=1 i MOCK_DB=false = CICHA ATRAPA BAZY. Bramki czytają ścieżki względem cwd —
   uruchamiaj z korzenia worktree.
 
 ŚRODOWISKO — oszczędzi Ci godziny:
-- `tsc` uruchamiaj SZEREGOWO (klient, potem serwer). Na tej maszynie działa kilka sesji naraz;
-  trzy równoległe przebiegi zostały zagłodzone (0% CPU przez 8+ minut).
-- `git stash` jest WSPÓLNY dla wszystkich worktree tego repo. Dwa razy wciągnął tu WIP innej
-  sesji. Do porównań używaj `git diff > /tmp/x.patch` i `git apply -R`. Kopie obcego WIP:
-  /private/tmp/consultify-ideas-foreign-wip-backup/
-- Czyste `git apply` może wnieść złą treść BEZ konfliktu — trzy obce pliki weszły cicho.
-  Po scaleniu sprawdź: `git log --oneline 9d17cac114..HEAD -- <plik> | wc -l` = 0 znaczy „nie Twój".
-- Bazy efemeryczne (127.0.0.1:54329 i :54331) po 24h prawdopodobnie już nie istnieją.
-  Przepis odtworzenia: 13_RUNTIME_GATE_EVIDENCE.md §2. NIGDY demo (trolley:28146),
-  NIGDY produkcja (centerbeam:37823), NIGDY dev (thomas:20221).
+- `tsc` uruchamiaj SZEREGOWO (klient, potem serwer). Na tej maszynie działa kilka sesji naraz.
+- `git stash` jest WSPÓLNY dla wszystkich worktree tego repo. Do porównań używaj
+  `git diff > /tmp/x.patch` i `git apply -R`.
+- Czyste `git apply` może wnieść złą treść BEZ konfliktu — sprawdzaj `git log --oneline
+  <base>..HEAD -- <plik> | wc -l` = 0 znaczy „nie Twój".
+- Bazy efemeryczne (127.0.0.1:54329 i :54331, ta druga teraz **1012 tabel** po migracji E09)
+  po 24h prawdopodobnie już nie istnieją. Przepis odtworzenia: 13_RUNTIME_GATE_EVIDENCE.md §2.
+  NIGDY demo (trolley:28146), NIGDY produkcja (centerbeam:37823), NIGDY dev (thomas:20221).
+- Realne testy bazy potrzebują OBU: RUN_DB_TESTS=1 ORAZ MOCK_DB=false.
 
 OGRANICZENIA: bez push, bez merge do demo, bez deployu, bez migracji na demo/produkcji.
-Pracuj równolegle wieloma agentami Sonnet w izolowanych worktree; Ty orkiestrujesz, scalasz
-i weryfikujesz SAM. Raportuj po każdej fali. Nie deklaruj READY_FOR_CODEX_REVIEW, dopóki
-Gate 4 nie przejdzie i Piotr nie da akceptu wzrokowego.
+Nie deklaruj READY_FOR_CODEX_REVIEW, dopóki E15 nie ma świeżego wyniku na 6fec03f7a0 i Piotr nie
+da akceptu wzrokowego — to jedyne dwa realne braki, reszta techniczna jest zamknięta (patrz
+24_FINAL_ACCEPTANCE.md).
 
 ---

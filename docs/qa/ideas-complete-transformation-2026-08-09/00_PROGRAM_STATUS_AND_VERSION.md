@@ -419,3 +419,96 @@ light, 1.61:1 dark against a 3:1 floor), the Mind Map dark badge at 3.22:1, and
 the Process Flow swimlane label at 4.43:1. The owner's acceptance has not been
 sought and will not be until those are closed — that is the rule this program
 adopted after the last overclaim.
+
+**Superseded by the section below — the three contrast failures are now
+RESOLVED (plus a fourth found and fixed). Gate 4 is now blocked ONLY on the
+owner's visual acceptance, not on any remaining technical defect.**
+
+## MULTI-STREAM WAVE — 2026-08-12, HEAD `6fec03f7a0` (integrator: S11-DOCS)
+
+Between the Gate-4 fix wave above (HEAD `d31dd37bd4`) and this section, the
+program moved to a **parallel multi-stream model**: ten independent worktrees
+(`codex/ideas-s1-contrast` … `codex/ideas-s11-docs`), each scoped to one named
+risk or a small cluster of them, based on a shared prior handoff SHA
+`edb38d6a29`. This section reconciles the result — **16 commits beyond
+`edb38d6a29`**, integrated onto **HEAD `6fec03f7a0`**, tree clean, never
+pushed.
+
+### Candidate identity (current, supersedes every earlier identity line in this file)
+
+| | |
+|---|---|
+| Worktree (this reconciliation pass) | `/Users/piotrwisniewski/.codex/worktrees/ideas-streams/s6-e09` |
+| Branch | `codex/ideas-s11-docs` |
+| HEAD | **`6fec03f7a0`** |
+| Prior handoff SHA (all streams forked from here) | `edb38d6a29` (16 commits behind HEAD) |
+| Base | `origin/demo` |
+| Position vs `origin/demo` | **57 commits ahead, 2 behind** — see "origin/demo drift" below |
+| Working tree | clean |
+| Pushed? | **NO.** No push, no merge to demo, no deploy. |
+
+### `origin/demo` drift — moved during this wave, from a push outside this program
+
+`origin/demo` moved **`9d17cac114` → `f3e7df565e`** (2 commits, "Slack Command
+Center hardening") from a *different* session, while this program's streams
+were running. This program's own comparison base for every A/B and every
+"pre-existing vs regression" claim in this package **stays frozen at
+`9d17cac114`** — moving it mid-programme would invalidate every piece of
+evidence measured against it, including the whole S3-AB inheritance-verification
+pass (RISK-13/14/15/16/17/18) and the E15 two-clean-rounds baseline.
+
+Disjointness verified directly, not assumed: the 2 `origin/demo` commits touch
+exactly 6 files (`AIOpsReportCron.ts`, `server/src/index.ts`, `auth.routes.ts`,
+`feedbackDigest.ts`, `slackRouter.ts`, `slackRouter.test.ts`). The intersection
+with this session's changed files is **0**, and with the whole program's
+changed files (all streams, `edb38d6a29..6fec03f7a0`) is also **0**. So the
+"2 behind" is real but inert with respect to everything this package claims —
+a future merge will need a genuine 3-way reconciliation of those 6 files
+against whatever this program touched in the same area (it touched none), but
+no evidence in this package needs to change because of it.
+
+### What this wave closed (16 commits, `edb38d6a29..6fec03f7a0`)
+
+| Risk | What closed | Commit(s) |
+|---|---|---|
+| RISK-35 (contrast, 4 failures) | Idea Table kebab, Mind Map dark badge, Process Flow swimlane label all raised to their required ratios with `c-*` tokens | `8931c19356`,`723c6effee`,`a09e1cdce8`,`ea2b29e99b`,`da98379c27` |
+| RISK-35 (5th, found this wave) | Mind Map depth-3+ badge, light theme, 4.41:1 → 9.32:1 | `707516e67f` |
+| RISK-30 | `ActionResult.confirmed` — 6/6 bus-dispatch sites + lane UI-closure branch report truthfully; 58 sites left honestly silent | `b7868277de` |
+| RISK-26 | de/es/ar/jp translated for this program's added keys, two passes | `ed99d5954a`, `aefbdf9e40` |
+| RISK-36 (residual) | AI add rows + framework apply capped via the shared `applyRowAddCap`, not just CSV import | `c68d1554bc`, `dfdb443884` |
+| RISK-06 | RecordTemplateManager reachable from TableToolbar's Tools menu | `dfdb443884` |
+| RISK-22 | Confidentiality UI control ships in `IdeaWorkspaceTools.tsx` | `c84686a81d` |
+| RISK-12 | E09 financial-case save path built end-to-end, 6/6 real-DB | `896616e957` |
+| — | dialogA11y.batch6 type fix (supplies now-required `onShowRecordTemplateManager` prop) | `55b307825c` |
+| RISK-13/14/15/16/17/18 | A/B-verified against `origin/demo@9d17cac114`, closing 3 stale ledger rows (RISK-08/09/10) in the same pass | `fecbded50b` |
+| RISK-19, RISK-29 | Reconciled against what is actually on disk (evidence-only, no code change); a new, narrower, production-shape kebab-reachability finding surfaced at 1280×800 and is NOT yet triaged into its own risk row | `ce3a652b66`, `6fec03f7a0` |
+
+Full per-row rulings: `16_OPEN_RISKS_AND_LIMITATIONS.csv` (38 rows as of this
+wave — 37 plus the new RISK-38, filed this wave, for the pre-existing
+`Intl.PluralRules('jp')` → `en-US` defect found while investigating RISK-26).
+
+### GATE BOARD 2026-08-12 (after this wave)
+
+| Gate | State | Evidence |
+|---|---|---|
+| 1 — type-check | not re-run this wave (documentation-only pass; last known PASS at `d31dd37bd4`) | see `22_CODEX_REVIEW_REPORT.md` |
+| 2 — QG backlog | unchanged, QG-01…QG-06 RESOLVED | `03_CODEX_QUALITY_BACKLOG.md` |
+| 3 — runtime + persistence | **PASS, 9/9 chains** (E09 financial case added as chain 9) | `13_RUNTIME_GATE_EVIDENCE.md` |
+| 4 — visual + CX + a11y | **all measured technical blockers RESOLVED; owner acceptance is the ONLY residual** | `19_VISUAL_CX_MATRIX.md`, `21_FOCUS_AND_CONTRAST.md` |
+| E15 — two clean rounds | **NOT YET RE-RUN at this SHA** — the last recorded clean-round result is at `c5b1b6e6b9`, 16 commits behind HEAD; the owner is running the two-round regression at `6fec03f7a0` now, separately from this documentation pass | `20_E15_TWO_CLEAN_ROUNDS.md` (historical), `24_FINAL_ACCEPTANCE.md` (placeholder) |
+| `scripts/check-actions.sh` | **rc=1** (known, documented, deliberately deferred) | R10 flags 3 command-verb handlers in `FinancialCaseDialog.tsx` not yet traced to `IDEA_ACTION_REGISTRY`; fix requires editing `src/actions/registry/sharedActions.ts`, which stream S5 was actively rewriting and which the orchestrator placed off-limits this wave. Prepared fix recorded in `10_FINANCIAL_CASE_ACCEPTANCE.md` §6.9. |
+
+**Recommendation: `NOT_READY` for Codex review.** The only named residual is the
+owner's visual acceptance (which no agent may substitute for) plus the pending
+E15 two-round result. See `24_FINAL_ACCEPTANCE.md`.
+
+### Environment notes for whoever resumes
+
+- Two ephemeral Postgres clusters are still alive: `127.0.0.1:54329` and
+  `127.0.0.1:54331` (`ideas_e12`, 1012 tables as of this wave — up from 1011
+  after the `idea_financial_cases` migration).
+- Real-DB tests need **both** `RUN_DB_TESTS=1` and `MOCK_DB=false`.
+  `NODE_ENV=test` alone silently substitutes a DB mock.
+- `scripts/check-actions.sh` is currently rc=1 for the documented, deliberate
+  reason above — do not treat that as a regression to chase without first
+  reading `10_FINANCIAL_CASE_ACCEPTANCE.md` §6.9.

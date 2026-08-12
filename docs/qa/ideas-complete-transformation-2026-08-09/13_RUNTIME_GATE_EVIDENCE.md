@@ -303,3 +303,18 @@ and any org-context behaviour measured on it is measuring a stub.
   simultaneous writers were not executed; the SQL compare-and-swap is what
   would hold under a real race.
 - Never run against demo/prod/dev.
+
+### UPDATE 2026-08-12 (stream S11-DOCS, integrator) — chain 9's OCC is two real layers, not one described twice
+
+Ran chain 9's suite personally, exit 0, 6/6 (matches §6.3). Then went one step
+further than §6.4's sabotage (which targets `lastComputedAt` inside `case_json`,
+a different concern): disabled the fast-path JS version check in
+`ideaFinancialCaseService.ts` ALONE — suite stayed **GREEN**, because the SQL
+compare-and-swap (`WHERE id = ? AND organization_id = ? AND version = ?`) caught
+the race on its own. Disabled the fast-path check AND the SQL CAS together —
+**RED**, `expected 200 to be 409`, the losing writer's payload visibly landed at
+`version: 3`. Both restored, diff clean, re-run exit 0. Conclusion: the OCC is
+genuine defense-in-depth; either layer alone suffices; the first green above was
+redundancy, not a vacuous assertion — the inverse of this program's RISK-23
+(a column `DEFAULT` that made an *omitted* write look correct). Full write-up:
+`10_FINANCIAL_CASE_ACCEPTANCE.md` §7.

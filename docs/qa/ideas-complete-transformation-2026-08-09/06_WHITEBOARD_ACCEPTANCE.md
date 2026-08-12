@@ -56,3 +56,14 @@ copy/paste work").
 **WIRED TO REGISTRY, WB-CLIPBOARD-01 code-landed but its own ledger row still reads NOT_VERIFIED
 (unreconciled bookkeeping gap), DoD NOT CLOSED.** Consistent with, and adding one concrete
 follow-up item beyond, `00_PROGRAM_STATUS_AND_VERSION.md`'s E05 line.
+
+---
+
+**Re-verified at `6fec03f7a0` (stream S11-DOCS, 2026-08-12):** the
+"bookkeeping gap" this verdict names is CLOSED — S3-AB (2026-08-12, before
+this reconciliation pass) confirmed the ledger row and re-tested the clipboard
+directly: `02_EXECUTION_LEDGER.csv` row `WB-CLIPBOARD-01` now reads
+`final_state=REPAIRED_RETESTED`, with a dedicated unit test
+(`tests/unit/mywork/useWhiteboardNodes.clipboard.test.ts`, 3/3 pass). No
+further Whiteboard change landed in this wave beyond that reconciliation.
+**Verdict otherwise unchanged: WIRED TO REGISTRY, DoD NOT CLOSED.**
