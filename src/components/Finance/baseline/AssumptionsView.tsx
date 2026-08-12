@@ -49,6 +49,19 @@ function periodLabelOf(periodId: string, periodLabelById?: Record<string, string
   return periodLabelById?.[periodId] ?? periodId;
 }
 
+/**
+ * ★ NAPRAWA punktu 4 orkiestratora: `rangeLow`/`rangeHigh` bywają liczbami
+ * zmiennoprzecinkowymi ze szczątkami precyzji (np. `0.58 - 0.1` w JS daje
+ * `0.48000000000000004`, nie `0.48`) — czy to z realnego API (`Number()` na
+ * dowolnym decimalu), czy z fikstury dev-render. Renderowane wprost w 56px
+ * polu liczbowym, taki ciąg wizualnie się ucina. Zaokrąglenie do 4 miejsc
+ * (precyzja wystarczająca dla stopni/procentów tego ekranu — kroki wejścia
+ * to `0.001`/`0.01`) usuwa szczątki bez utraty realnej precyzji wejścia.
+ */
+function roundForRangeDisplay(n: number): number {
+  return Math.round(n * 10000) / 10000;
+}
+
 function historicalValueOf(row: BaselineAssumptionDto | null): FinanceValue | null {
   const raw = row?.value.sourceRef;
   if (!raw || typeof raw !== 'object') return null;
@@ -213,18 +226,28 @@ export function AssumptionsView({ editor, rowOrder, periodLabelById, readOnly = 
           </div>
         </div>
       )}
-      <div className="flex-1 overflow-auto">
+      {/* `pb-16`: patrz uzasadnienie w `CalculationsView.tsx` (punkt 1 orkiestratora) — ostatni wiersz nie chowa się pod pływającą kontrolką w rogu przy przewinięciu do końca. */}
+      <div className="flex-1 overflow-auto pb-16">
         <table /* §27-exempt: archetyp Excel — grid komórek edytowalnych (reguła/wartość/zakres) z formułami silnika, nie lista rekordów encji (docs/ui-standards/DOKTRYNA_TABELA_NIE_EXCEL.md #2) */ className="w-full min-w-[1200px] border-collapse text-sm" role="table" data-testid="baseline-assumptions-table">
           <thead className="sticky top-0 z-10 bg-c-surface-raised text-[11px] font-semibold uppercase tracking-wide text-c-text-muted">
             <tr>
               <th className="px-3 py-2 text-left" style={{ minWidth: 220 }}>Założenie</th>
               <th className="px-3 py-2 text-right" style={{ minWidth: 110 }}>Wart. historyczna</th>
               <th className="px-3 py-2 text-left" style={{ minWidth: 90 }}>Okres bazowy</th>
-              <th className="px-3 py-2 text-left" style={{ minWidth: 150 }}>Reguła kalibracji</th>
+              {/*
+                ★ NAPRAWA punktu 4 orkiestratora: „Reguła kalibracji" (najdłuższa
+                etykieta „Powiązane z KPI analizy" ~23 znaki) i „Jakość"
+                („Ograniczona") były węższe niż treść natywnych `<select>` —
+                przeglądarka obcinała wybraną opcję wielokropkiem
+                („Średnia historycz…", „Potwierd…"). Szerokości poniżej
+                zmierzone pod realne etykiety z `baselineLabels.ts`
+                (`BASELINE_RULE_LABELS`/opcje jakości), nie zgadywane.
+              */}
+              <th className="px-3 py-2 text-left" style={{ minWidth: 210 }}>Reguła kalibracji</th>
               <th className="px-3 py-2 text-left" style={{ minWidth: 170 }}>Źródło</th>
               <th className="px-3 py-2 text-right" style={{ minWidth: 140 }}>Wartość prognozy</th>
-              <th className="px-3 py-2 text-left" style={{ minWidth: 160 }}>Bezpieczny zakres</th>
-              <th className="px-3 py-2 text-left" style={{ minWidth: 100 }}>Jakość</th>
+              <th className="px-3 py-2 text-left" style={{ minWidth: 180 }}>Bezpieczny zakres</th>
+              <th className="px-3 py-2 text-left" style={{ minWidth: 140 }}>Jakość</th>
               <th className="px-3 py-2 text-left" style={{ minWidth: 140 }}>Podgląd wpływu</th>
               <th className="px-3 py-2 text-center" style={{ minWidth: 90 }}>Akcje</th>
             </tr>
@@ -332,18 +355,18 @@ export function AssumptionsView({ editor, rowOrder, periodLabelById, readOnly = 
                         <input
                           type="number"
                           disabled={readOnly}
-                          value={cell.rangeLow}
+                          value={roundForRangeDisplay(cell.rangeLow)}
                           onChange={(e) => setCellValue(spec, { rangeLow: Number(e.target.value) })}
-                          className="w-14 rounded-md border border-c-border-subtle bg-c-bg px-1.5 py-1 text-right tabular-nums focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                          className="w-20 rounded-md border border-c-border-subtle bg-c-bg px-1.5 py-1 text-right tabular-nums focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                           data-testid={`baseline-assumption-range-low-${index}`}
                         />
                         <span>–</span>
                         <input
                           type="number"
                           disabled={readOnly}
-                          value={cell.rangeHigh}
+                          value={roundForRangeDisplay(cell.rangeHigh)}
                           onChange={(e) => setCellValue(spec, { rangeHigh: Number(e.target.value) })}
-                          className="w-14 rounded-md border border-c-border-subtle bg-c-bg px-1.5 py-1 text-right tabular-nums focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                          className="w-20 rounded-md border border-c-border-subtle bg-c-bg px-1.5 py-1 text-right tabular-nums focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                           data-testid={`baseline-assumption-range-high-${index}`}
                         />
                       </div>

@@ -85,7 +85,12 @@ function rollupLabel(key: string, granularity: RollupGranularity, fallback: stri
 }
 
 export function CalculationsView(props: CalculationsViewProps): React.ReactElement {
-  const { outputs, loadingOutputs, outputsError, forecastPeriods, computeState, computeErrorDetail, lastComputedAt, wasRecovered, stale, monthlyResults, onRunCompute, readOnly = false } = props;
+  // `onRunCompute`/`readOnly` (destructured further below only where still
+  // used) — `onRunCompute` NIE jest już wołane z tego widoku (naprawa
+  // punktu 2 orkiestratora: JEDNA akcja „Przelicz", w `FinanceWorkspaceBar`,
+  // nie zdublowana tu w podpasku). Prop zostaje w interfejsie — caller
+  // (`BaselineWorkspace.tsx`) i istniejące testy nadal go przekazują.
+  const { outputs, loadingOutputs, outputsError, forecastPeriods, computeState, computeErrorDetail, lastComputedAt, wasRecovered, stale, monthlyResults } = props;
   const [granularity, setGranularity] = useState<RollupGranularity>('monthly');
   const [lineageOpenFor, setLineageOpenFor] = useState<string | null>(null);
 
@@ -157,8 +162,10 @@ export function CalculationsView(props: CalculationsViewProps): React.ReactEleme
 
   return (
     <div className="flex h-full w-full flex-col overflow-hidden" data-testid="baseline-calculations-view">
-      {/* ── Pasek stanu compute (bez duplikowania statusu z FinanceWorkspaceBar — tylko informacje SPECYFICZNE dla tego widoku: horyzont, ostatnie udane przeliczenie, alarm). ── */}
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-c-border-subtle px-4 py-2">
+      {/* ── Pasek stanu compute (bez duplikowania statusu z FinanceWorkspaceBar — tylko informacje SPECYFICZNE dla tego widoku: horyzont, ostatnie udane przeliczenie, alarm).
+          ★ NAPRAWA punktu 2 orkiestratora: BEZ własnego przycisku „Przelicz" tutaj — jedyna akcja compute
+          żyje w `FinanceWorkspaceBar` (prawy górny róg), ten pasek jest wyłącznie informacyjny. ── */}
+      <div className="flex flex-wrap items-center gap-2 border-b border-c-border-subtle px-4 py-2">
         <div className="flex items-center gap-2 text-xs text-c-text-muted">
           <label htmlFor="baseline-granularity" className="sr-only">
             Horyzont
@@ -185,15 +192,6 @@ export function CalculationsView(props: CalculationsViewProps): React.ReactEleme
             </span>
           )}
         </div>
-        <button
-          type="button"
-          disabled={readOnly || computeState === 'computing' || computeState === 'recovering'}
-          onClick={onRunCompute}
-          data-testid="baseline-run-compute"
-          className="inline-flex min-h-[2.75rem] items-center rounded-lg bg-c-text px-3.5 text-xs font-semibold text-c-surface hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          {computeState === 'computing' ? 'Liczę…' : computeState === 'recovering' ? 'Sprawdzam stan…' : 'Przelicz'}
-        </button>
       </div>
 
       {/* ── Stan compute — NIGDY surowy "Request timed out" (OWN-FIN-018). ── */}
@@ -235,7 +233,14 @@ export function CalculationsView(props: CalculationsViewProps): React.ReactEleme
         </div>
       )}
 
-      <div className="flex-1 overflow-auto">
+      {/*
+        `pb-16`: rezerwuje miejsce po ostatnim wierszu tabeli, żeby przy
+        przewinięciu do końca listy ostatni wiersz (np. „Zobowiązania
+        handlowe (AP)") nie znalazł się pod jakąkolwiek pływającą kontrolką w
+        rogu ekranu (harness odbioru dziś, potencjalny widget produkcyjny
+        jutro) — naprawa punktu 1 orkiestratora, zakres tego widoku.
+      */}
+      <div className="flex-1 overflow-auto pb-16">
         {loadingOutputs ? (
           <div className="flex min-h-[240px] items-center justify-center text-sm text-c-text-muted">Wczytuję wyliczenia…</div>
         ) : outputs.length === 0 && groupedPeriods.length === 0 ? (
@@ -283,11 +288,19 @@ export function CalculationsView(props: CalculationsViewProps): React.ReactEleme
                       {groupedPeriods.map((g) => {
                         const agg = aggregatedValueFor(line, g);
                         const negative = agg.numeric !== null && agg.numeric < 0;
+                        // ★ NAPRAWA punktu 5 orkiestratora: `text-c-danger` (czerwień) jest
+                        // semantyką KRYTYCZNĄ (DEC-FIN-002 — luka finansowania/ujemna gotówka),
+                        // NIE dekoracją "ujemna liczba". COGS/OPEX/amortyzacja/odsetki/podatek są
+                        // ZAWSZE ujemne na P&L z definicji konwencji znaku — to nie jest alarm,
+                        // więc dostają neutralny `text-c-text` (minus w `tabular-nums` już
+                        // wystarczająco odróżnia liczbę od dodatniej). Czerwień zostaje
+                        // WYŁĄCZNIE dla linii CASH, gdy realnie spada poniżej zera.
+                        const isCriticalNegative = negative && isCashLine;
                         return (
                           <td
                             key={g.key}
                             className={`px-3 py-1.5 text-right tabular-nums ${
-                              agg.isMissingLikeGlyph ? 'text-c-text-muted' : negative ? 'font-semibold text-c-danger' : 'text-c-text'
+                              agg.isMissingLikeGlyph ? 'text-c-text-muted' : isCriticalNegative ? 'font-semibold text-c-danger' : 'text-c-text'
                             }`}
                             data-testid={isCashLine ? `baseline-cash-value-${g.key}` : `baseline-line-value-${line}-${g.key}`}
                             title={agg.reason ?? undefined}

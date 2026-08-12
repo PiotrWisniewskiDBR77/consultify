@@ -272,15 +272,16 @@ export function FinanceWorkspaceBar(props: FinanceWorkspaceBarProps): React.Reac
             )}
           </div>
 
-          <span
-            className="hidden shrink-0 items-center rounded-full border border-c-border-subtle bg-c-surface-raised px-2 py-0.5 text-xs font-medium tabular-nums text-c-text-secondary sm:inline-flex"
-            title={identity.version.hasUncommittedWorkingRevision ? 'Wersja robocza — niezapisane zmiany' : undefined}
-          >
-            {identity.version.label}
-            {identity.version.hasUncommittedWorkingRevision && <span className="ml-1 text-c-text-muted">· robocza</span>}
-          </span>
-
-          <StatusBadge status={identity.status} />
+          {/*
+            ★ NAPRAWA (ten sam defekt zdiagnozowany wcześniej w Pakiecie C —
+            addendum §7): wersja i status były DWIEMA osobnymi odznakami
+            (`v1` + `Wersja robocza`), a lifecycle-menu obok POWTARZA tekst
+            statusu jako trzeci raz — łącznie trzy miejsca z tą samą
+            informacją. Jedna kombinowana odznaka tożsamości („v1 · Wersja
+            robocza") + kontrolka lifecycle to KANONICZNE dwa miejsca
+            (tożsamość raz, kontrolka zmiany stanu raz), nie trzy.
+          */}
+          <IdentityBadge version={identity.version} status={identity.status} />
 
           {contextFieldsWithValues.length > 0 && (
             <div className="relative shrink-0" ref={contextRef}>
@@ -519,17 +520,25 @@ function ViewStateBadge({ state }: { state: NonNullable<WorkspaceBarConfig['view
   return <span className={`text-[10px] font-semibold uppercase tracking-wide ${toneClass}`}>{state.label.pl}</span>;
 }
 
-function StatusBadge({ status }: { status: WorkspaceBarConfig['identity']['status'] }): React.ReactElement {
-  const labels: Record<string, string> = {
-    DRAFT: 'Wersja robocza',
-    READY_FOR_REVIEW: 'Gotowe do przeglądu',
-    IN_REVIEW: 'W przeglądzie',
-    APPROVED: 'Zatwierdzone',
-    NEEDS_CHANGES: 'Wymaga zmian',
-    SUPERSEDED: 'Zastąpione',
-    ARCHIVED: 'Zarchiwizowane',
-    INVALIDATED: 'Unieważnione',
-  };
+const STATUS_LABELS: Record<string, string> = {
+  DRAFT: 'Wersja robocza',
+  READY_FOR_REVIEW: 'Gotowe do przeglądu',
+  IN_REVIEW: 'W przeglądzie',
+  APPROVED: 'Zatwierdzone',
+  NEEDS_CHANGES: 'Wymaga zmian',
+  SUPERSEDED: 'Zastąpione',
+  ARCHIVED: 'Zarchiwizowane',
+  INVALIDATED: 'Unieważnione',
+};
+
+/** Odznaka tożsamości: wersja + status w JEDNYM pilule (naprawa duplikacji — patrz wywołanie). */
+function IdentityBadge({
+  version,
+  status,
+}: {
+  version: WorkspaceBarConfig['identity']['version'];
+  status: WorkspaceBarConfig['identity']['status'];
+}): React.ReactElement {
   const toneClass =
     status === 'APPROVED'
       ? 'border-c-success/30 bg-c-success/10 text-c-success'
@@ -537,8 +546,15 @@ function StatusBadge({ status }: { status: WorkspaceBarConfig['identity']['statu
         ? 'border-c-danger/30 bg-c-danger/10 text-c-danger'
         : 'border-c-border-subtle bg-c-surface-raised text-c-text-secondary';
   return (
-    <span className={`hidden shrink-0 items-center rounded-full border px-2 py-0.5 text-xs font-medium sm:inline-flex ${toneClass}`}>
-      {labels[status] ?? status}
+    <span
+      className={`hidden shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium sm:inline-flex ${toneClass}`}
+      title={version.hasUncommittedWorkingRevision ? 'Wersja robocza — niezapisane zmiany' : undefined}
+      data-testid="finance-workspace-bar-identity-badge"
+    >
+      <span className="tabular-nums">{version.label}</span>
+      <span aria-hidden="true">·</span>
+      <span>{STATUS_LABELS[status] ?? status}</span>
+      {version.hasUncommittedWorkingRevision && <span className="text-c-text-muted">· robocza</span>}
     </span>
   );
 }

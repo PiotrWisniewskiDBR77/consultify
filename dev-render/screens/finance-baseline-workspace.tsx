@@ -92,8 +92,11 @@ const MOCK_ASSUMPTIONS: BaselineAssumptionDto[] = ASSUMPTION_SPECS.map((s, i) =>
     unit: s.unit,
     sourceRef: { historicalValueDecimal: s.historical, statementPackLabel: 'Pakiet sprawozdań FY2025', analysisVersionLabel: 'Analiza v3' },
   },
-  rangeLow: s.unit === 'PCT' ? String(Math.max(0, Number(s.value) - 0.1)) : null,
-  rangeHigh: s.unit === 'PCT' ? String(Number(s.value) + 0.1) : null,
+  // `.toFixed(4)` — bez tego JS zmiennoprzecinkowe artefakty (np. `0.58 - 0.1`
+  // = `0.48000000000000004`) trafiały wprost do UI i wizualnie ucinały się w
+  // wąskim polu liczbowym (naprawa punktu 4 orkiestratora — dowód na zrzucie).
+  rangeLow: s.unit === 'PCT' ? Math.max(0, Number(s.value) - 0.1).toFixed(4) : null,
+  rangeHigh: s.unit === 'PCT' ? (Number(s.value) + 0.1).toFixed(4) : null,
   quality: s.quality,
   createdBy: 'user-piotr-demo',
   createdAt: '2026-08-01T09:00:00.000Z',
