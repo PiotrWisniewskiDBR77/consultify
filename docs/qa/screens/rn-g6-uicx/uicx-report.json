@@ -1,0 +1,1615 @@
+{
+  "generatedAt": "2026-08-12T21:31:52.362Z",
+  "base": "http://localhost:3201",
+  "sections": {
+    "roleMatrix": [
+      {
+        "user": "ownerA",
+        "email": "rn-g6-user-a-owner@consultify.local",
+        "finalPath": "/results/kpi",
+        "reachedResults": true,
+        "screenshot": "/Users/piotrwisniewski/rn-g2-lanes/g6-matrix/docs/qa/screens/rn-g6-uicx/role-ownerA.png",
+        "consoleErrors": [
+          "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)"
+        ],
+        "netErrors": [
+          {
+            "url": "http://localhost:3201/api/v10/teresa/voice-config",
+            "status": 401
+          },
+          {
+            "url": "http://localhost:3201/api/v10/teresa/voice-config",
+            "status": 401
+          },
+          {
+            "url": "http://localhost:3201/api/v8/admin/flags",
+            "status": 404
+          },
+          {
+            "url": "http://localhost:3201/api/v8/admin/flags",
+            "status": 404
+          }
+        ]
+      },
+      {
+        "user": "adminA",
+        "email": "rn-g6-user-a-admin@consultify.local",
+        "finalPath": "/results/kpi",
+        "reachedResults": true,
+        "screenshot": "/Users/piotrwisniewski/rn-g2-lanes/g6-matrix/docs/qa/screens/rn-g6-uicx/role-adminA.png",
+        "consoleErrors": [
+          "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)"
+        ],
+        "netErrors": [
+          {
+            "url": "http://localhost:3201/api/v10/teresa/voice-config",
+            "status": 401
+          },
+          {
+            "url": "http://localhost:3201/api/v10/teresa/voice-config",
+            "status": 401
+          },
+          {
+            "url": "http://localhost:3201/api/v8/admin/flags",
+            "status": 404
+          },
+          {
+            "url": "http://localhost:3201/api/v8/admin/flags",
+            "status": 404
+          }
+        ]
+      },
+      {
+        "user": "contributorA",
+        "email": "rn-g6-user-a-contributor@consultify.local",
+        "finalPath": "/interview",
+        "reachedResults": false,
+        "screenshot": "/Users/piotrwisniewski/rn-g2-lanes/g6-matrix/docs/qa/screens/rn-g6-uicx/role-contributorA.png",
+        "consoleErrors": [
+          "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)"
+        ],
+        "netErrors": [
+          {
+            "url": "http://localhost:3201/api/v10/teresa/voice-config",
+            "status": 401
+          },
+          {
+            "url": "http://localhost:3201/api/v10/teresa/voice-config",
+            "status": 401
+          },
+          {
+            "url": "http://localhost:3201/api/v8/admin/flags",
+            "status": 404
+          },
+          {
+            "url": "http://localhost:3201/api/v8/admin/flags",
+            "status": 404
+          }
+        ]
+      },
+      {
+        "user": "reviewerA",
+        "email": "rn-g6-user-a-reviewer@consultify.local",
+        "finalPath": "/interview",
+        "reachedResults": false,
+        "screenshot": "/Users/piotrwisniewski/rn-g2-lanes/g6-matrix/docs/qa/screens/rn-g6-uicx/role-reviewerA.png",
+        "consoleErrors": [
+          "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)"
+        ],
+        "netErrors": [
+          {
+            "url": "http://localhost:3201/api/v10/teresa/voice-config",
+            "status": 401
+          },
+          {
+            "url": "http://localhost:3201/api/v10/teresa/voice-config",
+            "status": 401
+          },
+          {
+            "url": "http://localhost:3201/api/v8/admin/flags",
+            "status": 404
+          },
+          {
+            "url": "http://localhost:3201/api/v8/admin/flags",
+            "status": 404
+          }
+        ]
+      },
+      {
+        "user": "outsiderA",
+        "email": "rn-g6-user-a-outsider@consultify.local",
+        "finalPath": "/interview",
+        "reachedResults": false,
+        "screenshot": "/Users/piotrwisniewski/rn-g2-lanes/g6-matrix/docs/qa/screens/rn-g6-uicx/role-outsiderA.png",
+        "consoleErrors": [
+          "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)"
+        ],
+        "netErrors": [
+          {
+            "url": "http://localhost:3201/api/v10/teresa/voice-config",
+            "status": 401
+          },
+          {
+            "url": "http://localhost:3201/api/v10/teresa/voice-config",
+            "status": 401
+          },
+          {
+            "url": "http://localhost:3201/api/v8/admin/flags",
+            "status": 404
+          },
+          {
+            "url": "http://localhost:3201/api/v8/admin/flags",
+            "status": 404
+          }
+        ]
+      },
+      {
+        "user": "adminB",
+        "email": "rn-g6-user-b-admin@consultify.local",
+        "finalPath": "/results/kpi",
+        "reachedResults": true,
+        "screenshot": "/Users/piotrwisniewski/rn-g2-lanes/g6-matrix/docs/qa/screens/rn-g6-uicx/role-adminB.png",
+        "consoleErrors": [
+          "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)"
+        ],
+        "netErrors": [
+          {
+            "url": "http://localhost:3201/api/v10/teresa/voice-config",
+            "status": 401
+          },
+          {
+            "url": "http://localhost:3201/api/v10/teresa/voice-config",
+            "status": 401
+          },
+          {
+            "url": "http://localhost:3201/api/v8/admin/flags",
+            "status": 404
+          },
+          {
+            "url": "http://localhost:3201/api/v8/admin/flags",
+            "status": 404
+          }
+        ]
+      }
+    ],
+    "presentationMatrix": [
+      {
+        "name": "kpi-1440-light-pl",
+        "path": "/results/kpi?ff_resultsVNextKpi=1",
+        "viewport": {
+          "width": 1440,
+          "height": 900
+        },
+        "theme": "light",
+        "lang": "pl",
+        "screenshot": "/Users/piotrwisniewski/rn-g2-lanes/g6-matrix/docs/qa/screens/rn-g6-uicx/kpi-1440-light-pl.png",
+        "consoleErrors": [
+          "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)"
+        ],
+        "netErrors": [
+          {
+            "url": "http://localhost:3201/api/v10/teresa/voice-config",
+            "status": 401
+          },
+          {
+            "url": "http://localhost:3201/api/v10/teresa/voice-config",
+            "status": 401
+          },
+          {
+            "url": "http://localhost:3201/api/v8/admin/flags",
+            "status": 404
+          },
+          {
+            "url": "http://localhost:3201/api/v8/admin/flags",
+            "status": 404
+          }
+        ]
+      },
+      {
+        "name": "kpi-1440-dark-pl",
+        "path": "/results/kpi?ff_resultsVNextKpi=1",
+        "viewport": {
+          "width": 1440,
+          "height": 900
+        },
+        "theme": "dark",
+        "lang": "pl",
+        "screenshot": "/Users/piotrwisniewski/rn-g2-lanes/g6-matrix/docs/qa/screens/rn-g6-uicx/kpi-1440-dark-pl.png",
+        "consoleErrors": [
+          "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)"
+        ],
+        "netErrors": [
+          {
+            "url": "http://localhost:3201/api/v10/teresa/voice-config",
+            "status": 401
+          },
+          {
+            "url": "http://localhost:3201/api/v10/teresa/voice-config",
+            "status": 401
+          },
+          {
+            "url": "http://localhost:3201/api/v8/admin/flags",
+            "status": 404
+          },
+          {
+            "url": "http://localhost:3201/api/v8/admin/flags",
+            "status": 404
+          }
+        ]
+      },
+      {
+        "name": "kpi-1440-dark-en",
+        "path": "/results/kpi?ff_resultsVNextKpi=1",
+        "viewport": {
+          "width": 1440,
+          "height": 900
+        },
+        "theme": "dark",
+        "lang": "en",
+        "screenshot": "/Users/piotrwisniewski/rn-g2-lanes/g6-matrix/docs/qa/screens/rn-g6-uicx/kpi-1440-dark-en.png",
+        "consoleErrors": [
+          "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)"
+        ],
+        "netErrors": [
+          {
+            "url": "http://localhost:3201/api/v10/teresa/voice-config",
+            "status": 401
+          },
+          {
+            "url": "http://localhost:3201/api/v10/teresa/voice-config",
+            "status": 401
+          },
+          {
+            "url": "http://localhost:3201/api/v8/admin/flags",
+            "status": 404
+          },
+          {
+            "url": "http://localhost:3201/api/v8/admin/flags",
+            "status": 404
+          }
+        ]
+      },
+      {
+        "name": "kpi-1280-dark-pl",
+        "path": "/results/kpi?ff_resultsVNextKpi=1",
+        "viewport": {
+          "width": 1280,
+          "height": 720
+        },
+        "theme": "dark",
+        "lang": "pl",
+        "screenshot": "/Users/piotrwisniewski/rn-g2-lanes/g6-matrix/docs/qa/screens/rn-g6-uicx/kpi-1280-dark-pl.png",
+        "consoleErrors": [
+          "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)"
+        ],
+        "netErrors": [
+          {
+            "url": "http://localhost:3201/api/v10/teresa/voice-config",
+            "status": 401
+          },
+          {
+            "url": "http://localhost:3201/api/v10/teresa/voice-config",
+            "status": 401
+          },
+          {
+            "url": "http://localhost:3201/api/v8/admin/flags",
+            "status": 404
+          },
+          {
+            "url": "http://localhost:3201/api/v8/admin/flags",
+            "status": 404
+          }
+        ]
+      },
+      {
+        "name": "kpi-1600-dark-pl",
+        "path": "/results/kpi?ff_resultsVNextKpi=1",
+        "viewport": {
+          "width": 1600,
+          "height": 900
+        },
+        "theme": "dark",
+        "lang": "pl",
+        "screenshot": "/Users/piotrwisniewski/rn-g2-lanes/g6-matrix/docs/qa/screens/rn-g6-uicx/kpi-1600-dark-pl.png",
+        "consoleErrors": [
+          "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)"
+        ],
+        "netErrors": [
+          {
+            "url": "http://localhost:3201/api/v10/teresa/voice-config",
+            "status": 401
+          },
+          {
+            "url": "http://localhost:3201/api/v10/teresa/voice-config",
+            "status": 401
+          },
+          {
+            "url": "http://localhost:3201/api/v8/admin/flags",
+            "status": 404
+          },
+          {
+            "url": "http://localhost:3201/api/v8/admin/flags",
+            "status": 404
+          }
+        ]
+      },
+      {
+        "name": "kpi-1920-dark-pl",
+        "path": "/results/kpi?ff_resultsVNextKpi=1",
+        "viewport": {
+          "width": 1920,
+          "height": 1080
+        },
+        "theme": "dark",
+        "lang": "pl",
+        "screenshot": "/Users/piotrwisniewski/rn-g2-lanes/g6-matrix/docs/qa/screens/rn-g6-uicx/kpi-1920-dark-pl.png",
+        "consoleErrors": [
+          "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)"
+        ],
+        "netErrors": [
+          {
+            "url": "http://localhost:3201/api/v10/teresa/voice-config",
+            "status": 401
+          },
+          {
+            "url": "http://localhost:3201/api/v10/teresa/voice-config",
+            "status": 401
+          },
+          {
+            "url": "http://localhost:3201/api/v8/admin/flags",
+            "status": 404
+          },
+          {
+            "url": "http://localhost:3201/api/v8/admin/flags",
+            "status": 404
+          }
+        ]
+      },
+      {
+        "name": "kpi-tablet-dark-pl",
+        "path": "/results/kpi?ff_resultsVNextKpi=1",
+        "viewport": {
+          "width": 768,
+          "height": 1024
+        },
+        "theme": "dark",
+        "lang": "pl",
+        "screenshot": "/Users/piotrwisniewski/rn-g2-lanes/g6-matrix/docs/qa/screens/rn-g6-uicx/kpi-tablet-dark-pl.png",
+        "consoleErrors": [
+          "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)"
+        ],
+        "netErrors": [
+          {
+            "url": "http://localhost:3201/api/v10/teresa/voice-config",
+            "status": 401
+          },
+          {
+            "url": "http://localhost:3201/api/v10/teresa/voice-config",
+            "status": 401
+          },
+          {
+            "url": "http://localhost:3201/api/v8/admin/flags",
+            "status": 404
+          },
+          {
+            "url": "http://localhost:3201/api/v8/admin/flags",
+            "status": 404
+          }
+        ]
+      },
+      {
+        "name": "roi-1440-light-pl",
+        "path": "/results/roi?ff_resultsVNextRoi=1",
+        "viewport": {
+          "width": 1440,
+          "height": 900
+        },
+        "theme": "light",
+        "lang": "pl",
+        "screenshot": "/Users/piotrwisniewski/rn-g2-lanes/g6-matrix/docs/qa/screens/rn-g6-uicx/roi-1440-light-pl.png",
+        "consoleErrors": [
+          "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)"
+        ],
+        "netErrors": [
+          {
+            "url": "http://localhost:3201/api/v10/teresa/voice-config",
+            "status": 401
+          },
+          {
+            "url": "http://localhost:3201/api/v10/teresa/voice-config",
+            "status": 401
+          },
+          {
+            "url": "http://localhost:3201/api/v8/admin/flags",
+            "status": 404
+          },
+          {
+            "url": "http://localhost:3201/api/v8/admin/flags",
+            "status": 404
+          }
+        ]
+      },
+      {
+        "name": "roi-1440-dark-en",
+        "path": "/results/roi?ff_resultsVNextRoi=1",
+        "viewport": {
+          "width": 1440,
+          "height": 900
+        },
+        "theme": "dark",
+        "lang": "en",
+        "screenshot": "/Users/piotrwisniewski/rn-g2-lanes/g6-matrix/docs/qa/screens/rn-g6-uicx/roi-1440-dark-en.png",
+        "consoleErrors": [
+          "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)"
+        ],
+        "netErrors": [
+          {
+            "url": "http://localhost:3201/api/v10/teresa/voice-config",
+            "status": 401
+          },
+          {
+            "url": "http://localhost:3201/api/v10/teresa/voice-config",
+            "status": 401
+          },
+          {
+            "url": "http://localhost:3201/api/v8/admin/flags",
+            "status": 404
+          },
+          {
+            "url": "http://localhost:3201/api/v8/admin/flags",
+            "status": 404
+          }
+        ]
+      },
+      {
+        "name": "okr-1440-light-pl",
+        "path": "/results/okr?ff_resultsVNextOkr=1",
+        "viewport": {
+          "width": 1440,
+          "height": 900
+        },
+        "theme": "light",
+        "lang": "pl",
+        "screenshot": "/Users/piotrwisniewski/rn-g2-lanes/g6-matrix/docs/qa/screens/rn-g6-uicx/okr-1440-light-pl.png",
+        "consoleErrors": [
+          "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)"
+        ],
+        "netErrors": [
+          {
+            "url": "http://localhost:3201/api/v10/teresa/voice-config",
+            "status": 401
+          },
+          {
+            "url": "http://localhost:3201/api/v10/teresa/voice-config",
+            "status": 401
+          },
+          {
+            "url": "http://localhost:3201/api/v8/admin/flags",
+            "status": 404
+          },
+          {
+            "url": "http://localhost:3201/api/v8/admin/flags",
+            "status": 404
+          }
+        ]
+      },
+      {
+        "name": "okr-1440-dark-en",
+        "path": "/results/okr?ff_resultsVNextOkr=1",
+        "viewport": {
+          "width": 1440,
+          "height": 900
+        },
+        "theme": "dark",
+        "lang": "en",
+        "screenshot": "/Users/piotrwisniewski/rn-g2-lanes/g6-matrix/docs/qa/screens/rn-g6-uicx/okr-1440-dark-en.png",
+        "consoleErrors": [
+          "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)"
+        ],
+        "netErrors": [
+          {
+            "url": "http://localhost:3201/api/v10/teresa/voice-config",
+            "status": 401
+          },
+          {
+            "url": "http://localhost:3201/api/v10/teresa/voice-config",
+            "status": 401
+          },
+          {
+            "url": "http://localhost:3201/api/v8/admin/flags",
+            "status": 404
+          },
+          {
+            "url": "http://localhost:3201/api/v8/admin/flags",
+            "status": 404
+          }
+        ]
+      },
+      {
+        "name": "kpi-1280-125pct-dark-pl",
+        "note": "CSS zoom approximation, not real OS zoom",
+        "screenshot": "/Users/piotrwisniewski/rn-g2-lanes/g6-matrix/docs/qa/screens/rn-g6-uicx/kpi-1280-125pct-dark-pl.png",
+        "consoleErrors": [
+          "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)"
+        ],
+        "netErrors": [
+          {
+            "url": "http://localhost:3201/api/v10/teresa/voice-config",
+            "status": 401
+          },
+          {
+            "url": "http://localhost:3201/api/v10/teresa/voice-config",
+            "status": 401
+          },
+          {
+            "url": "http://localhost:3201/api/v8/admin/flags",
+            "status": 404
+          },
+          {
+            "url": "http://localhost:3201/api/v8/admin/flags",
+            "status": 404
+          }
+        ]
+      }
+    ],
+    "stateMatrix": [
+      {
+        "name": "kpi-full-active",
+        "requestedPath": "/results/kpi/4d5db4f2-454e-4813-8813-4d5db4454ebd?ff_resultsVNextKpi=1",
+        "finalPath": "/results/kpi/4d5db4f2-454e-4813-8813-4d5db4454ebd",
+        "redirected": false,
+        "screenshot": "/Users/piotrwisniewski/rn-g2-lanes/g6-matrix/docs/qa/screens/rn-g6-uicx/kpi-full-active.png",
+        "bodyTextSnippet": "LOCAL\n?\nHelp Center\nFeedback\nDocuments\n77\nSkip to main content\nResults\nData\nModel\nAnna Kowalska-Wróbel\nAK\nKPI-A-001\nSaved\nSuspend\nPerformance\nContract\nMeasurements\nDeviations\nCorrective actions\nInitiatives affecting KPI\nScorecards and contexts\nHistory / lineage\nActive\n\nLATEST MEASUREMENT\n\n-2,450,320.75\nPeriod: Jun 1, 2026 – Jun 30, 2026\ncritical\nverified\n\nPerformance and data quality are TWO INDEPENDENT dimensions (plan §4.3/§4.4) — never one field.\n\nOpen full measurement history\nACTIONS\nSuspend",
+        "consoleErrors": [
+          "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)"
+        ],
+        "netErrors": [
+          {
+            "url": "http://localhost:3201/api/v10/teresa/voice-config",
+            "status": 401
+          },
+          {
+            "url": "http://localhost:3201/api/v10/teresa/voice-config",
+            "status": 401
+          },
+          {
+            "url": "http://localhost:3201/api/v8/admin/flags",
+            "status": 404
+          },
+          {
+            "url": "http://localhost:3201/api/v8/admin/flags",
+            "status": 404
+          }
+        ],
+        "apiCallCount": 105
+      },
+      {
+        "name": "kpi-full-draft",
+        "requestedPath": "/results/kpi/4d5db4f4-454e-4813-8813-4d5db4454ebd?ff_resultsVNextKpi=1",
+        "finalPath": "/results/kpi/4d5db4f4-454e-4813-8813-4d5db4454ebd",
+        "redirected": false,
+        "screenshot": "/Users/piotrwisniewski/rn-g2-lanes/g6-matrix/docs/qa/screens/rn-g6-uicx/kpi-full-draft.png",
+        "bodyTextSnippet": "LOCAL\n?\nHelp Center\nFeedback\nDocuments\n77\nSkip to main content\nResults\nData\nModel\nAnna Kowalska-Wróbel\nAK\nKPI-A-003\nSaved\nActivate\nPerformance\nContract\nMeasurements\nDeviations\nCorrective actions\nInitiatives affecting KPI\nScorecards and contexts\nHistory / lineage\nDraft\n\nLATEST MEASUREMENT\n\n—\nNo measurements recorded yet.\nOpen full measurement history\nACTIONS\n\nActivation requires an approved KPI definition version (server-enforced — no GET exists for the version to verify this client-side).\n\nPROPE",
+        "consoleErrors": [
+          "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)"
+        ],
+        "netErrors": [
+          {
+            "url": "http://localhost:3201/api/v10/teresa/voice-config",
+            "status": 401
+          },
+          {
+            "url": "http://localhost:3201/api/v10/teresa/voice-config",
+            "status": 401
+          },
+          {
+            "url": "http://localhost:3201/api/v8/admin/flags",
+            "status": 404
+          },
+          {
+            "url": "http://localhost:3201/api/v8/admin/flags",
+            "status": 404
+          }
+        ],
+        "apiCallCount": 105
+      },
+      {
+        "name": "kpi-full-pending",
+        "requestedPath": "/results/kpi/4d5db4f5-454e-4813-8813-4d5db4454ebd?ff_resultsVNextKpi=1",
+        "finalPath": "/results/kpi/4d5db4f5-454e-4813-8813-4d5db4454ebd",
+        "redirected": false,
+        "screenshot": "/Users/piotrwisniewski/rn-g2-lanes/g6-matrix/docs/qa/screens/rn-g6-uicx/kpi-full-pending.png",
+        "bodyTextSnippet": "LOCAL\n?\nHelp Center\nFeedback\nDocuments\n77\nSkip to main content\nResults\nData\nModel\nAnna Kowalska-Wróbel\nAK\nKPI-A-004\nSaved\nActivate\nPerformance\nContract\nMeasurements\nDeviations\nCorrective actions\nInitiatives affecting KPI\nScorecards and contexts\nHistory / lineage\nPending approval\n\nLATEST MEASUREMENT\n\n—\nNo measurements recorded yet.\nOpen full measurement history\nACTIONS\n\nActivation requires an approved KPI definition version (server-enforced — no GET exists for the version to verify this client-si",
+        "consoleErrors": [
+          "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)"
+        ],
+        "netErrors": [
+          {
+            "url": "http://localhost:3201/api/v10/teresa/voice-config",
+            "status": 401
+          },
+          {
+            "url": "http://localhost:3201/api/v10/teresa/voice-config",
+            "status": 401
+          },
+          {
+            "url": "http://localhost:3201/api/v8/admin/flags",
+            "status": 404
+          },
+          {
+            "url": "http://localhost:3201/api/v8/admin/flags",
+            "status": 404
+          }
+        ],
+        "apiCallCount": 105
+      },
+      {
+        "name": "kpi-full-suspended",
+        "requestedPath": "/results/kpi/4d5db4f6-454e-4813-8813-4d5db4454ebd?ff_resultsVNextKpi=1",
+        "finalPath": "/results/kpi/4d5db4f6-454e-4813-8813-4d5db4454ebd",
+        "redirected": false,
+        "screenshot": "/Users/piotrwisniewski/rn-g2-lanes/g6-matrix/docs/qa/screens/rn-g6-uicx/kpi-full-suspended.png",
+        "bodyTextSnippet": "LOCAL\n?\nHelp Center\nFeedback\nDocuments\n77\nSkip to main content\nResults\nData\nModel\nAnna Kowalska-Wróbel\nAK\nKPI-A-005\nSaved\nActivate\nPerformance\nContract\nMeasurements\nDeviations\nCorrective actions\nInitiatives affecting KPI\nScorecards and contexts\nHistory / lineage\nSuspended\n\nLATEST MEASUREMENT\n\n—\nNo measurements recorded yet.\nOpen full measurement history\nACTIONS\nActivate\nPROPERTIES\nProperty\tValue\nOwner\t—\nProcess\t—\nResponse policy\t—\nCurrent definition version\t6cc45df1…\nCreated\tAug 12, 2026\nUpdated",
+        "consoleErrors": [
+          "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)"
+        ],
+        "netErrors": [
+          {
+            "url": "http://localhost:3201/api/v10/teresa/voice-config",
+            "status": 401
+          },
+          {
+            "url": "http://localhost:3201/api/v10/teresa/voice-config",
+            "status": 401
+          },
+          {
+            "url": "http://localhost:3201/api/v8/admin/flags",
+            "status": 404
+          },
+          {
+            "url": "http://localhost:3201/api/v8/admin/flags",
+            "status": 404
+          }
+        ],
+        "apiCallCount": 105
+      },
+      {
+        "name": "kpi-full-archived",
+        "requestedPath": "/results/kpi/4d5db4f7-454e-4813-8813-4d5db4454ebd?ff_resultsVNextKpi=1",
+        "finalPath": "/results/kpi/4d5db4f7-454e-4813-8813-4d5db4454ebd",
+        "redirected": false,
+        "screenshot": "/Users/piotrwisniewski/rn-g2-lanes/g6-matrix/docs/qa/screens/rn-g6-uicx/kpi-full-archived.png",
+        "bodyTextSnippet": "LOCAL\n?\nHelp Center\nFeedback\nDocuments\n77\nSkip to main content\nResults\nData\nModel\nAnna Kowalska-Wróbel\nAK\nKPI-A-006\nSaved\nActivate\nPerformance\nContract\nMeasurements\nDeviations\nCorrective actions\nInitiatives affecting KPI\nScorecards and contexts\nHistory / lineage\nArchived\n\nLATEST MEASUREMENT\n\n74\nPeriod: Jan 1, 2024 – Jan 31, 2024\nwarning\nestimated\n\nPerformance and data quality are TWO INDEPENDENT dimensions (plan §4.3/§4.4) — never one field.\n\nOpen full measurement history\nACTIONS\n\nKPI archived —",
+        "consoleErrors": [
+          "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)"
+        ],
+        "netErrors": [
+          {
+            "url": "http://localhost:3201/api/v10/teresa/voice-config",
+            "status": 401
+          },
+          {
+            "url": "http://localhost:3201/api/v10/teresa/voice-config",
+            "status": 401
+          },
+          {
+            "url": "http://localhost:3201/api/v8/admin/flags",
+            "status": 404
+          },
+          {
+            "url": "http://localhost:3201/api/v8/admin/flags",
+            "status": 404
+          }
+        ],
+        "apiCallCount": 105
+      },
+      {
+        "name": "kpi-scorecard",
+        "requestedPath": "/results/kpi/scorecards/a7a84b5c-cfae-4680-8680-a7a84bcfaea3?ff_resultsVNextKpi=1",
+        "finalPath": "/results/kpi/scorecards/a7a84b5c-cfae-4680-8680-a7a84bcfaea3",
+        "redirected": false,
+        "screenshot": "/Users/piotrwisniewski/rn-g2-lanes/g6-matrix/docs/qa/screens/rn-g6-uicx/kpi-scorecard.png",
+        "bodyTextSnippet": "LOCAL\n?\nHelp Center\nFeedback\nDocuments\n77\nSkip to main content\nResults\nData\nModel\nAnna Kowalska-Wróbel\nAK\nItems\nReview snapshots\nAdd KPI\nAll\n4\nPrimary\n1\nSupporting\n3\nKPI\n\t\nROLE\n\t\nSORT ORDER\n\t\nADDED BY\n\t\nADDED\n\t\n\n4d5db4f2…\t\nPrimary\n\t0\trn-g6-us…\tAug 12, 2026\t\n\n37d051ce…\t\nSupporting\n\t0\trn-g6-us…\tAug 12, 2026\t\n\n4d5db4f3…\t\nSupporting\n\t1\trn-g6-us…\tAug 12, 2026\t\n\n4d5db4f6…\t\nSupporting\n\t2\trn-g6-us…\tAug 12, 2026\t\nKarta wyników zarządu — segment przemysłowy Q2/Q3 2026\nActive\nOrganization\nAug 12, 2026\nDETA",
+        "consoleErrors": [
+          "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)"
+        ],
+        "netErrors": [
+          {
+            "url": "http://localhost:3201/api/v10/teresa/voice-config",
+            "status": 401
+          },
+          {
+            "url": "http://localhost:3201/api/v10/teresa/voice-config",
+            "status": 401
+          },
+          {
+            "url": "http://localhost:3201/api/v8/admin/flags",
+            "status": 404
+          },
+          {
+            "url": "http://localhost:3201/api/v8/admin/flags",
+            "status": 404
+          }
+        ],
+        "apiCallCount": 103
+      },
+      {
+        "name": "kpi-not-found",
+        "requestedPath": "/results/kpi/00000000-0000-0000-0000-000000000000?ff_resultsVNextKpi=1",
+        "finalPath": "/results/kpi/00000000-0000-0000-0000-000000000000",
+        "redirected": false,
+        "screenshot": "/Users/piotrwisniewski/rn-g2-lanes/g6-matrix/docs/qa/screens/rn-g6-uicx/kpi-not-found.png",
+        "bodyTextSnippet": "LOCAL\n?\nHelp Center\nFeedback\nDocuments\n77\nSkip to main content\nResults\nData\nModel\nAnna Kowalska-Wróbel\nAK\nYou don't have access to this record\n\nNo visibility record exists for this item — treated as denied by default.\n\nBack",
+        "consoleErrors": [
+          "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)"
+        ],
+        "netErrors": [
+          {
+            "url": "http://localhost:3201/api/v10/teresa/voice-config",
+            "status": 401
+          },
+          {
+            "url": "http://localhost:3201/api/v10/teresa/voice-config",
+            "status": 401
+          },
+          {
+            "url": "http://localhost:3201/api/v8/admin/flags",
+            "status": 404
+          },
+          {
+            "url": "http://localhost:3201/api/v8/admin/flags",
+            "status": 404
+          },
+          {
+            "url": "http://localhost:3201/api/vnext/results/kpi/00000000-0000-0000-0000-000000000000",
+            "status": 404
+          },
+          {
+            "url": "http://localhost:3201/api/vnext/results/kpi/00000000-0000-0000-0000-000000000000/measurements?limit=1",
+            "status": 404
+          },
+          {
+            "url": "http://localhost:3201/api/vnext/results/kpi/00000000-0000-0000-0000-000000000000/version",
+            "status": 404
+          }
+        ],
+        "apiCallCount": 105
+      },
+      {
+        "name": "roi-full-modeling",
+        "requestedPath": "/results/roi/cases/4d60dfca-463e-4b5e-8b5e-4d60df463e9a?ff_resultsVNextRoi=1",
+        "finalPath": "/results/roi/cases/4d60dfca-463e-4b5e-8b5e-4d60df463e9a",
+        "redirected": false,
+        "screenshot": "/Users/piotrwisniewski/rn-g2-lanes/g6-matrix/docs/qa/screens/rn-g6-uicx/roi-full-modeling.png",
+        "bodyTextSnippet": "LOCAL\n?\nHelp Center\nFeedback\nDocuments\n77\nSkip to main content\nResults\nData\nModel\nAnna Kowalska-Wróbel\nAK\nROI registry\nPredykcyjne utrzymanie ruchu — budowa uzasadnienia biznesowego\nBaseline & policy\nAssumptions\nCost lines\nBenefit lines\nScenarios\nCalculation runs\nBuild Case\n6\nDecision\n2\nRealize Value\n5\nLearn\n3\nSETTING\n\t\nSUMMARY\n\t\nCONFIDENCE\n\t\nUPDATED\n\t\n\nBaseline\tNo record\t—\t—\t\n\nCalculation policy\tNo record\t—\t—\t",
+        "consoleErrors": [
+          "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)"
+        ],
+        "netErrors": [
+          {
+            "url": "http://localhost:3201/api/v10/teresa/voice-config",
+            "status": 401
+          },
+          {
+            "url": "http://localhost:3201/api/v10/teresa/voice-config",
+            "status": 401
+          },
+          {
+            "url": "http://localhost:3201/api/v8/admin/flags",
+            "status": 404
+          },
+          {
+            "url": "http://localhost:3201/api/v8/admin/flags",
+            "status": 404
+          },
+          {
+            "url": "http://localhost:3201/api/vnext/results/roi/cases/4d60dfca-463e-4b5e-8b5e-4d60df463e9a/baseline",
+            "status": 404
+          },
+          {
+            "url": "http://localhost:3201/api/vnext/results/roi/cases/4d60dfca-463e-4b5e-8b5e-4d60df463e9a/calculation-policy",
+            "status": 404
+          },
+          {
+            "url": "http://localhost:3201/api/vnext/results/roi/cases/4d60dfca-463e-4b5e-8b5e-4d60df463e9a/calculation-policy",
+            "status": 404
+          },
+          {
+            "url": "http://localhost:3201/api/vnext/results/roi/cases/4d60dfca-463e-4b5e-8b5e-4d60df463e9a/baseline",
+            "status": 404
+          }
+        ],
+        "apiCallCount": 106
+      },
+      {
+        "name": "roi-full-approved",
+        "requestedPath": "/results/roi/cases/4d60dfcb-463e-4b5e-8b5e-4d60df463e9a?ff_resultsVNextRoi=1",
+        "finalPath": "/results/roi/cases/4d60dfcb-463e-4b5e-8b5e-4d60df463e9a",
+        "redirected": false,
+        "screenshot": "/Users/piotrwisniewski/rn-g2-lanes/g6-matrix/docs/qa/screens/rn-g6-uicx/roi-full-approved.png",
+        "bodyTextSnippet": "LOCAL\n?\nHelp Center\nFeedback\nDocuments\n77\nSkip to main content\nResults\nData\nModel\nAnna Kowalska-Wróbel\nAK\nROI registry\nCyfryzacja łańcucha dostaw — decyzja inwestycyjna zatwierdzona przez zarząd\nBaseline & policy\nAssumptions\nCost lines\nBenefit lines\nScenarios\nCalculation runs\nBuild Case\n6\nDecision\n2\nRealize Value\n5\nLearn\n3\nSETTING\n\t\nSUMMARY\n\t\nCONFIDENCE\n\t\nUPDATED\n\t\n\nBaseline\tNo record\t—\t—\t\n\nCalculation policy\tNo record\t—\t—\t",
+        "consoleErrors": [
+          "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)"
+        ],
+        "netErrors": [
+          {
+            "url": "http://localhost:3201/api/v10/teresa/voice-config",
+            "status": 401
+          },
+          {
+            "url": "http://localhost:3201/api/v10/teresa/voice-config",
+            "status": 401
+          },
+          {
+            "url": "http://localhost:3201/api/v8/admin/flags",
+            "status": 404
+          },
+          {
+            "url": "http://localhost:3201/api/v8/admin/flags",
+            "status": 404
+          },
+          {
+            "url": "http://localhost:3201/api/vnext/results/roi/cases/4d60dfcb-463e-4b5e-8b5e-4d60df463e9a/baseline",
+            "status": 404
+          },
+          {
+            "url": "http://localhost:3201/api/vnext/results/roi/cases/4d60dfcb-463e-4b5e-8b5e-4d60df463e9a/calculation-policy",
+            "status": 404
+          },
+          {
+            "url": "http://localhost:3201/api/vnext/results/roi/cases/4d60dfcb-463e-4b5e-8b5e-4d60df463e9a/baseline",
+            "status": 404
+          },
+          {
+            "url": "http://localhost:3201/api/vnext/results/roi/cases/4d60dfcb-463e-4b5e-8b5e-4d60df463e9a/calculation-policy",
+            "status": 404
+          }
+        ],
+        "apiCallCount": 106
+      },
+      {
+        "name": "roi-full-tracking",
+        "requestedPath": "/results/roi/cases/4d60dfcc-463e-4b5e-8b5e-4d60df463e9a?ff_resultsVNextRoi=1",
+        "finalPath": "/results/roi/cases/4d60dfcc-463e-4b5e-8b5e-4d60df463e9a",
+        "redirected": false,
+        "screenshot": "/Users/piotrwisniewski/rn-g2-lanes/g6-matrix/docs/qa/screens/rn-g6-uicx/roi-full-tracking.png",
+        "bodyTextSnippet": "LOCAL\n?\nHelp Center\nFeedback\nDocuments\n77\nSkip to main content\nResults\nData\nModel\nAnna Kowalska-Wróbel\nAK\nROI registry\nAutomatyzacja procesów zakupowych — realizacja wartości w toku\nBaseline & policy\nAssumptions\nCost lines\nBenefit lines\nScenarios\nCalculation runs\nBuild Case\n6\nDecision\n2\nRealize Value\n5\nLearn\n3\nSETTING\n\t\nSUMMARY\n\t\nCONFIDENCE\n\t\nUPDATED\n\t\n\nBaseline\tNo record\t—\t—\t\n\nCalculation policy\tNo record\t—\t—\t",
+        "consoleErrors": [
+          "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)"
+        ],
+        "netErrors": [
+          {
+            "url": "http://localhost:3201/api/v10/teresa/voice-config",
+            "status": 401
+          },
+          {
+            "url": "http://localhost:3201/api/v10/teresa/voice-config",
+            "status": 401
+          },
+          {
+            "url": "http://localhost:3201/api/v8/admin/flags",
+            "status": 404
+          },
+          {
+            "url": "http://localhost:3201/api/v8/admin/flags",
+            "status": 404
+          },
+          {
+            "url": "http://localhost:3201/api/vnext/results/roi/cases/4d60dfcc-463e-4b5e-8b5e-4d60df463e9a/baseline",
+            "status": 404
+          },
+          {
+            "url": "http://localhost:3201/api/vnext/results/roi/cases/4d60dfcc-463e-4b5e-8b5e-4d60df463e9a/calculation-policy",
+            "status": 404
+          },
+          {
+            "url": "http://localhost:3201/api/vnext/results/roi/cases/4d60dfcc-463e-4b5e-8b5e-4d60df463e9a/baseline",
+            "status": 404
+          },
+          {
+            "url": "http://localhost:3201/api/vnext/results/roi/cases/4d60dfcc-463e-4b5e-8b5e-4d60df463e9a/calculation-policy",
+            "status": 404
+          }
+        ],
+        "apiCallCount": 106
+      },
+      {
+        "name": "roi-full-pir",
+        "requestedPath": "/results/roi/cases/4d60dfcd-463e-4b5e-8b5e-4d60df463e9a?ff_resultsVNextRoi=1",
+        "finalPath": "/results/roi/cases/4d60dfcd-463e-4b5e-8b5e-4d60df463e9a",
+        "redirected": false,
+        "screenshot": "/Users/piotrwisniewski/rn-g2-lanes/g6-matrix/docs/qa/screens/rn-g6-uicx/roi-full-pir.png",
+        "bodyTextSnippet": "LOCAL\n?\nHelp Center\nFeedback\nDocuments\n77\nSkip to main content\nResults\nData\nModel\nAnna Kowalska-Wróbel\nAK\nROI registry\nRobotyzacja pakowania — przegląd po wdrożeniu (PIR) zamknięty\nBaseline & policy\nAssumptions\nCost lines\nBenefit lines\nScenarios\nCalculation runs\nBuild Case\n6\nDecision\n2\nRealize Value\n5\nLearn\n3\nSETTING\n\t\nSUMMARY\n\t\nCONFIDENCE\n\t\nUPDATED\n\t\n\nBaseline\tNo record\t—\t—\t\n\nCalculation policy\tNo record\t—\t—\t",
+        "consoleErrors": [
+          "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)"
+        ],
+        "netErrors": [
+          {
+            "url": "http://localhost:3201/api/v10/teresa/voice-config",
+            "status": 401
+          },
+          {
+            "url": "http://localhost:3201/api/v10/teresa/voice-config",
+            "status": 401
+          },
+          {
+            "url": "http://localhost:3201/api/v8/admin/flags",
+            "status": 404
+          },
+          {
+            "url": "http://localhost:3201/api/v8/admin/flags",
+            "status": 404
+          },
+          {
+            "url": "http://localhost:3201/api/vnext/results/roi/cases/4d60dfcd-463e-4b5e-8b5e-4d60df463e9a/baseline",
+            "status": 404
+          },
+          {
+            "url": "http://localhost:3201/api/vnext/results/roi/cases/4d60dfcd-463e-4b5e-8b5e-4d60df463e9a/calculation-policy",
+            "status": 404
+          },
+          {
+            "url": "http://localhost:3201/api/vnext/results/roi/cases/4d60dfcd-463e-4b5e-8b5e-4d60df463e9a/calculation-policy",
+            "status": 404
+          },
+          {
+            "url": "http://localhost:3201/api/vnext/results/roi/cases/4d60dfcd-463e-4b5e-8b5e-4d60df463e9a/baseline",
+            "status": 404
+          }
+        ],
+        "apiCallCount": 106
+      },
+      {
+        "name": "roi-full-changes-requested",
+        "requestedPath": "/results/roi/cases/4d60dfce-463e-4b5e-8b5e-4d60df463e9a?ff_resultsVNextRoi=1",
+        "finalPath": "/results/roi/cases/4d60dfce-463e-4b5e-8b5e-4d60df463e9a",
+        "redirected": false,
+        "screenshot": "/Users/piotrwisniewski/rn-g2-lanes/g6-matrix/docs/qa/screens/rn-g6-uicx/roi-full-changes-requested.png",
+        "bodyTextSnippet": "LOCAL\n?\nHelp Center\nFeedback\nDocuments\n77\nSkip to main content\nResults\nData\nModel\nAnna Kowalska-Wróbel\nAK\nROI registry\nMigracja platformy analitycznej do chmury — model odrzucony przez silnik obliczeniowy\nBaseline & policy\nAssumptions\nCost lines\nBenefit lines\nScenarios\nCalculation runs\nBuild Case\n6\nDecision\n2\nRealize Value\n5\nLearn\n3\nSETTING\n\t\nSUMMARY\n\t\nCONFIDENCE\n\t\nUPDATED\n\t\n\nBaseline\tNo record\t—\t—\t\n\nCalculation policy\tNo record\t—\t—\t",
+        "consoleErrors": [
+          "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)"
+        ],
+        "netErrors": [
+          {
+            "url": "http://localhost:3201/api/v10/teresa/voice-config",
+            "status": 401
+          },
+          {
+            "url": "http://localhost:3201/api/v10/teresa/voice-config",
+            "status": 401
+          },
+          {
+            "url": "http://localhost:3201/api/v8/admin/flags",
+            "status": 404
+          },
+          {
+            "url": "http://localhost:3201/api/v8/admin/flags",
+            "status": 404
+          },
+          {
+            "url": "http://localhost:3201/api/vnext/results/roi/cases/4d60dfce-463e-4b5e-8b5e-4d60df463e9a/calculation-policy",
+            "status": 404
+          },
+          {
+            "url": "http://localhost:3201/api/vnext/results/roi/cases/4d60dfce-463e-4b5e-8b5e-4d60df463e9a/baseline",
+            "status": 404
+          },
+          {
+            "url": "http://localhost:3201/api/vnext/results/roi/cases/4d60dfce-463e-4b5e-8b5e-4d60df463e9a/baseline",
+            "status": 404
+          },
+          {
+            "url": "http://localhost:3201/api/vnext/results/roi/cases/4d60dfce-463e-4b5e-8b5e-4d60df463e9a/calculation-policy",
+            "status": 404
+          }
+        ],
+        "apiCallCount": 106
+      },
+      {
+        "name": "roi-full-closed-locked",
+        "requestedPath": "/results/roi/cases/4d60dfcf-463e-4b5e-8b5e-4d60df463e9a?ff_resultsVNextRoi=1",
+        "finalPath": "/results/roi/cases/4d60dfcf-463e-4b5e-8b5e-4d60df463e9a",
+        "redirected": false,
+        "screenshot": "/Users/piotrwisniewski/rn-g2-lanes/g6-matrix/docs/qa/screens/rn-g6-uicx/roi-full-closed-locked.png",
+        "bodyTextSnippet": "LOCAL\n?\nHelp Center\nFeedback\nDocuments\n77\nSkip to main content\nResults\nData\nModel\nAnna Kowalska-Wróbel\nAK\nROI registry\nWdrożenie starego systemu raportowania — sprawa zamknięta, tylko odczyt\nBaseline & policy\nAssumptions\nCost lines\nBenefit lines\nScenarios\nCalculation runs\nBuild Case\n6\nDecision\n2\nRealize Value\n5\nLearn\n3\nSETTING\n\t\nSUMMARY\n\t\nCONFIDENCE\n\t\nUPDATED\n\t\n\nBaseline\tNo record\t—\t—\t\n\nCalculation policy\tNo record\t—\t—\t",
+        "consoleErrors": [
+          "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)"
+        ],
+        "netErrors": [
+          {
+            "url": "http://localhost:3201/api/v10/teresa/voice-config",
+            "status": 401
+          },
+          {
+            "url": "http://localhost:3201/api/v10/teresa/voice-config",
+            "status": 401
+          },
+          {
+            "url": "http://localhost:3201/api/v8/admin/flags",
+            "status": 404
+          },
+          {
+            "url": "http://localhost:3201/api/v8/admin/flags",
+            "status": 404
+          },
+          {
+            "url": "http://localhost:3201/api/vnext/results/roi/cases/4d60dfcf-463e-4b5e-8b5e-4d60df463e9a/baseline",
+            "status": 404
+          },
+          {
+            "url": "http://localhost:3201/api/vnext/results/roi/cases/4d60dfcf-463e-4b5e-8b5e-4d60df463e9a/calculation-policy",
+            "status": 404
+          },
+          {
+            "url": "http://localhost:3201/api/vnext/results/roi/cases/4d60dfcf-463e-4b5e-8b5e-4d60df463e9a/calculation-policy",
+            "status": 404
+          },
+          {
+            "url": "http://localhost:3201/api/vnext/results/roi/cases/4d60dfcf-463e-4b5e-8b5e-4d60df463e9a/baseline",
+            "status": 404
+          }
+        ],
+        "apiCallCount": 106
+      },
+      {
+        "name": "roi-not-found",
+        "requestedPath": "/results/roi/cases/00000000-0000-0000-0000-000000000000?ff_resultsVNextRoi=1",
+        "finalPath": "/results/roi/cases/00000000-0000-0000-0000-000000000000",
+        "redirected": false,
+        "screenshot": "/Users/piotrwisniewski/rn-g2-lanes/g6-matrix/docs/qa/screens/rn-g6-uicx/roi-not-found.png",
+        "bodyTextSnippet": "LOCAL\n?\nHelp Center\nFeedback\nDocuments\n77\nSkip to main content\nResults\nData\nModel\nAnna Kowalska-Wróbel\nAK\nYou don't have access to this record\n\nNo visibility record exists for this item — treated as denied by default.\n\nBack",
+        "consoleErrors": [
+          "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)"
+        ],
+        "netErrors": [
+          {
+            "url": "http://localhost:3201/api/v10/teresa/voice-config",
+            "status": 401
+          },
+          {
+            "url": "http://localhost:3201/api/v10/teresa/voice-config",
+            "status": 401
+          },
+          {
+            "url": "http://localhost:3201/api/v8/admin/flags",
+            "status": 404
+          },
+          {
+            "url": "http://localhost:3201/api/v8/admin/flags",
+            "status": 404
+          },
+          {
+            "url": "http://localhost:3201/api/vnext/results/roi/cases/00000000-0000-0000-0000-000000000000",
+            "status": 404
+          },
+          {
+            "url": "http://localhost:3201/api/vnext/results/roi/cases/00000000-0000-0000-0000-000000000000",
+            "status": 404
+          }
+        ],
+        "apiCallCount": 102
+      },
+      {
+        "name": "okr-full-active-watch",
+        "requestedPath": "/results/okr/sets/f772dd20-6d67-49a1-89a1-f772dd6d67ca?ff_resultsVNextOkr=1",
+        "finalPath": "/results/okr/sets/f772dd20-6d67-49a1-89a1-f772dd6d67ca",
+        "redirected": false,
+        "screenshot": "/Users/piotrwisniewski/rn-g2-lanes/g6-matrix/docs/qa/screens/rn-g6-uicx/okr-full-active-watch.png",
+        "bodyTextSnippet": "LOCAL\n?\nHelp Center\nFeedback\nDocuments\n77\nSkip to main content\nResults\nData\nModel\nAnna Kowalska-Wróbel\nAK\nOKR sets\nOKR zespołu operacyjnego — transformacja Q3 2026\nOverview\nObjectives & Key Results\nAlignment\nConversations & Support\nReview & Reflection\nHistory\nSet properties\nProperty\tValue\nStatus\t\nActive\n\nScope\tTeam\nOwner\trn-g6-us…\nReviewer\t—\nOverall progress\t58%\nOverall confidence\t\nMedium\n\nAttention\t\nWatch\n\nLast check-in\t—\nNext check-in due\t—\nCurrent version\t1\nApproved version\t—\nUpdated\tAug 12, ",
+        "consoleErrors": [
+          "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)"
+        ],
+        "netErrors": [
+          {
+            "url": "http://localhost:3201/api/v10/teresa/voice-config",
+            "status": 401
+          },
+          {
+            "url": "http://localhost:3201/api/v10/teresa/voice-config",
+            "status": 401
+          },
+          {
+            "url": "http://localhost:3201/api/v8/admin/flags",
+            "status": 404
+          },
+          {
+            "url": "http://localhost:3201/api/v8/admin/flags",
+            "status": 404
+          }
+        ],
+        "apiCallCount": 101
+      },
+      {
+        "name": "okr-full-draft-notcalc",
+        "requestedPath": "/results/okr/sets/87e7cc9e-4ace-4b11-bc31-75e63e792712?ff_resultsVNextOkr=1",
+        "finalPath": "/results/okr/sets/87e7cc9e-4ace-4b11-bc31-75e63e792712",
+        "redirected": false,
+        "screenshot": "/Users/piotrwisniewski/rn-g2-lanes/g6-matrix/docs/qa/screens/rn-g6-uicx/okr-full-draft-notcalc.png",
+        "bodyTextSnippet": "LOCAL\n?\nHelp Center\nFeedback\nDocuments\n77\nSkip to main content\nResults\nData\nModel\nAnna Kowalska-Wróbel\nAK\nOKR sets\nRN-G6 C3 — cel testowy not_calculable\nOverview\nObjectives & Key Results\nAlignment\nConversations & Support\nReview & Reflection\nHistory\nSet properties\nProperty\tValue\nStatus\t\nDraft\n\nScope\tTeam\nOwner\trn-g6-us…\nReviewer\trn-g6-us…\nOverall progress\t—\nOverall confidence\t—\nAttention\t\nNone\n\nLast check-in\t—\nNext check-in due\t—\nCurrent version\t1\nApproved version\t—\nUpdated\tAug 12, 2026\nSet lifec",
+        "consoleErrors": [
+          "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)"
+        ],
+        "netErrors": [
+          {
+            "url": "http://localhost:3201/api/v10/teresa/voice-config",
+            "status": 401
+          },
+          {
+            "url": "http://localhost:3201/api/v10/teresa/voice-config",
+            "status": 401
+          },
+          {
+            "url": "http://localhost:3201/api/v8/admin/flags",
+            "status": 404
+          },
+          {
+            "url": "http://localhost:3201/api/v8/admin/flags",
+            "status": 404
+          }
+        ],
+        "apiCallCount": 102
+      },
+      {
+        "name": "okr-full-closed-locked",
+        "requestedPath": "/results/okr/sets/644a4ebd-828e-486f-8a24-c0e6c0319913?ff_resultsVNextOkr=1",
+        "finalPath": "/results/okr/sets/644a4ebd-828e-486f-8a24-c0e6c0319913",
+        "redirected": false,
+        "screenshot": "/Users/piotrwisniewski/rn-g2-lanes/g6-matrix/docs/qa/screens/rn-g6-uicx/okr-full-closed-locked.png",
+        "bodyTextSnippet": "LOCAL\n?\nHelp Center\nFeedback\nDocuments\n77\nSkip to main content\nResults\nData\nModel\nAnna Kowalska-Wróbel\nAK\nOKR sets\nRN-G6 C3 Gold Flow — zestaw testowy Q3 2026\nOverview\nObjectives & Key Results\nAlignment\nConversations & Support\nReview & Reflection\nHistory\nSet properties\nProperty\tValue\nStatus\t\nClosed\n\nScope\tTeam\nOwner\trn-g6-us…\nReviewer\trn-g6-us…\nOverall progress\t86%\nOverall confidence\t\nHigh\n\nAttention\t\nWatch\n\nLast check-in\tAug 12, 2026\nNext check-in due\t—\nCurrent version\t1\nApproved version\t1\nUpda",
+        "consoleErrors": [
+          "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)"
+        ],
+        "netErrors": [
+          {
+            "url": "http://localhost:3201/api/v10/teresa/voice-config",
+            "status": 401
+          },
+          {
+            "url": "http://localhost:3201/api/v10/teresa/voice-config",
+            "status": 401
+          },
+          {
+            "url": "http://localhost:3201/api/v8/admin/flags",
+            "status": 404
+          },
+          {
+            "url": "http://localhost:3201/api/v8/admin/flags",
+            "status": 404
+          }
+        ],
+        "apiCallCount": 102
+      },
+      {
+        "name": "okr-not-found",
+        "requestedPath": "/results/okr/sets/00000000-0000-0000-0000-000000000000?ff_resultsVNextOkr=1",
+        "finalPath": "/results/okr/sets/00000000-0000-0000-0000-000000000000",
+        "redirected": false,
+        "screenshot": "/Users/piotrwisniewski/rn-g2-lanes/g6-matrix/docs/qa/screens/rn-g6-uicx/okr-not-found.png",
+        "bodyTextSnippet": "LOCAL\n?\nHelp Center\nFeedback\nDocuments\n77\nSkip to main content\nResults\nData\nModel\nAnna Kowalska-Wróbel\nAK\nYou don't have access to this record\n\nNo visibility record exists for this item — treated as denied by default.\n\nBack",
+        "consoleErrors": [
+          "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)"
+        ],
+        "netErrors": [
+          {
+            "url": "http://localhost:3201/api/v10/teresa/voice-config",
+            "status": 401
+          },
+          {
+            "url": "http://localhost:3201/api/v10/teresa/voice-config",
+            "status": 401
+          },
+          {
+            "url": "http://localhost:3201/api/v8/admin/flags",
+            "status": 404
+          },
+          {
+            "url": "http://localhost:3201/api/v8/admin/flags",
+            "status": 404
+          },
+          {
+            "url": "http://localhost:3201/api/vnext/results/okr/sets/00000000-0000-0000-0000-000000000000",
+            "status": 404
+          },
+          {
+            "url": "http://localhost:3201/api/vnext/results/okr/sets/00000000-0000-0000-0000-000000000000",
+            "status": 404
+          }
+        ],
+        "apiCallCount": 102
+      },
+      {
+        "name": "kpi-empty-orgB-my-tab",
+        "requestedPath": "/results/kpi?ff_resultsVNextKpi=1",
+        "finalPath": "/results/kpi",
+        "redirected": false,
+        "screenshot": "/Users/piotrwisniewski/rn-g2-lanes/g6-matrix/docs/qa/screens/rn-g6-uicx/kpi-empty-orgB-my-tab.png",
+        "bodyTextSnippet": "LOCAL\n?\nHelp Center\nFeedback\nDocuments\n77\nSkip to main content\nResults\nData\nModel\nMarek Zieliński\nMZ\nMy\nOrg\nScorecards\nNew KPI\nAll\n0\nDraft\n0\nPending approval\n0\nActive\n0\nSuspended\n0\nArchived\n0\nKPI CODE\n\t\nSTATUS\n\t\nOWNER\n\t\nPROCESS\n\t\nUPDATED\n\t\n\n\nNo rows match the current filters.",
+        "consoleErrors": [
+          "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)"
+        ],
+        "netErrors": [
+          {
+            "url": "http://localhost:3201/api/v10/teresa/voice-config",
+            "status": 401
+          },
+          {
+            "url": "http://localhost:3201/api/v10/teresa/voice-config",
+            "status": 401
+          },
+          {
+            "url": "http://localhost:3201/api/v8/admin/flags",
+            "status": 404
+          },
+          {
+            "url": "http://localhost:3201/api/v8/admin/flags",
+            "status": 404
+          }
+        ],
+        "apiCallCount": 100
+      },
+      {
+        "name": "okr-empty-orgB",
+        "requestedPath": "/results/okr?ff_resultsVNextOkr=1",
+        "finalPath": "/results/okr",
+        "redirected": false,
+        "screenshot": "/Users/piotrwisniewski/rn-g2-lanes/g6-matrix/docs/qa/screens/rn-g6-uicx/okr-empty-orgB.png",
+        "bodyTextSnippet": "LOCAL\n?\nHelp Center\nFeedback\nDocuments\n77\nSkip to main content\nResults\nData\nModel\nMarek Zieliński\nMZ\nOrganization\nMy\nCompany\nPrograms\nCycles\nAll\n0\nIn progress\n0\nIn review\n0\nActive\n0\nClosed / cancelled\n0\nOKR SET\n\t\nSTATUS\n\t\nSCOPE\n\t\nOWNER\n\t\nPROGRESS\n\t\nCONFIDENCE\n\t\nATTENTION\n\t\nUPDATED\n\t\n\n\nNo OKR sets yet\n\nNo OKR set has been created in this organization yet.",
+        "consoleErrors": [
+          "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)"
+        ],
+        "netErrors": [
+          {
+            "url": "http://localhost:3201/api/v10/teresa/voice-config",
+            "status": 401
+          },
+          {
+            "url": "http://localhost:3201/api/v10/teresa/voice-config",
+            "status": 401
+          },
+          {
+            "url": "http://localhost:3201/api/v8/admin/flags",
+            "status": 404
+          },
+          {
+            "url": "http://localhost:3201/api/v8/admin/flags",
+            "status": 404
+          }
+        ],
+        "apiCallCount": 102
+      }
+    ],
+    "networkFaultProbe": [
+      {
+        "name": "network-delay-8s",
+        "elapsedMs": 9887,
+        "midFlightScreenshot": "/Users/piotrwisniewski/rn-g2-lanes/g6-matrix/docs/qa/screens/rn-g6-uicx/kpi-network-delay-inflight.png",
+        "resolvedScreenshot": "/Users/piotrwisniewski/rn-g2-lanes/g6-matrix/docs/qa/screens/rn-g6-uicx/kpi-network-delay-resolved.png",
+        "consoleErrors": [
+          "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)"
+        ]
+      },
+      {
+        "name": "network-abort-error-and-retry",
+        "screenshot": "/Users/piotrwisniewski/rn-g2-lanes/g6-matrix/docs/qa/screens/rn-g6-uicx/kpi-network-abort-error-state.png",
+        "bodyTextSnippet": "LOCAL\n?\nHelp Center\nFeedback\nDocuments\n77\nSkip to main content\nResults\nData\nModel\nAnna Kowalska-Wróbel\nAK\nMy\nOrg\nScorecards\nNew KPI\nAll\n0\nDraft\n0\nPending approval\n0\nActive\n0\nSuspended\n0\nArchived\n0\nCould not reach the server. Check your connection and try again.\nTry again",
+        "hasRetryButton": false,
+        "retryResult": null,
+        "consoleErrors": [
+          "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "Failed to load resource: net::ERR_FAILED",
+          "[ResultsVNext] request failed: TypeError: Failed to fetch\n    at window.fetch (http://localhost:3201/src/services/feedbackCollector/NetworkBuffer.ts:43:32)\n    at fetchWithRetryInner (http://localhost:3201/src/services/api.ts:552:17)\n    at fetchWithRetry (http://localhost:3201/src/services/api.ts:513:21)\n    at Object.get (http://localhost:3201/src/services/api.ts:7992:23)\n    at listKpis (http://localhost:3201/src/components/ResultsVNext/kpiApi.ts:49:26)\n    at http://localhost:3201/src/components/ResultsVNext/ResultsKpiRegistryPage.tsx:508:27\n    at http://localhost:3201/src/components/ResultsVNext/ResultsKpiRegistryPage.tsx:518:10\n    at Object.react_stack_bottom_frame (http://localhost:3201/node_modules/.vite/deps/react-dom_client.js?v=3a04d7ee:18567:20)\n    at runWithFiberInDEV (http://localhost:3201/node_modules/.vite/deps/react-dom_client.js?v=3a04d7ee:997:72)\n    at commitHookEffectListMount (http://localhost:3201/node_modules/.vite/deps/react-dom_client.js?v=3a04d7ee:9411:163)",
+          "[ResultsVNext] request failed: TypeError: Failed to fetch\n    at window.fetch (http://localhost:3201/src/services/feedbackCollector/NetworkBuffer.ts:43:32)\n    at fetchWithRetryInner (http://localhost:3201/src/services/api.ts:552:17)\n    at fetchWithRetry (http://localhost:3201/src/services/api.ts:513:21)\n    at Object.get (http://localhost:3201/src/services/api.ts:7992:23)\n    at listKpis (http://localhost:3201/src/components/ResultsVNext/kpiApi.ts:49:26)\n    at http://localhost:3201/src/components/ResultsVNext/ResultsKpiRegistryPage.tsx:508:27\n    at http://localhost:3201/src/components/ResultsVNext/ResultsKpiRegistryPage.tsx:518:10\n    at Object.react_stack_bottom_frame (http://localhost:3201/node_modules/.vite/deps/react-dom_client.js?v=3a04d7ee:18567:20)\n    at runWithFiberInDEV (http://localhost:3201/node_modules/.vite/deps/react-dom_client.js?v=3a04d7ee:997:72)\n    at commitHookEffectListMount (http://localhost:3201/node_modules/.vite/deps/react-dom_client.js?v=3a04d7ee:9411:163)"
+        ]
+      }
+    ],
+    "accessibility": {
+      "domSignals": {
+        "tableRoleCount": 0,
+        "tabsRoleCount": 0,
+        "menuRoleCount": 0,
+        "dialogRoleCount": 0,
+        "ariaSortEls": [],
+        "ariaLiveEls": [],
+        "iconOnlyButtonsTotal": 0,
+        "iconOnlyButtonsWithAccessibleName": 0,
+        "iconOnlyButtonsMissingName": []
+      },
+      "contrastResults": [],
+      "screenshot": "/Users/piotrwisniewski/rn-g2-lanes/g6-matrix/docs/qa/screens/rn-g6-uicx/a11y-kpi-registry-org-tab.png"
+    },
+    "keyboardProbe": {
+      "keyboardReachedRow": {
+        "tag": "BUTTON",
+        "text": "",
+        "role": null,
+        "row": "KPI-G6-EVID-P0A-001Do zatwierdzeniarn-g6"
+      },
+      "enterNavigated": false,
+      "afterEnterPath": "/results/kpi",
+      "afterEnterScreenshot": "/Users/piotrwisniewski/rn-g2-lanes/g6-matrix/docs/qa/screens/rn-g6-uicx/kbd-after-enter-full-tool.png",
+      "escFromFullToolNoLayer": {
+        "beforeEscPath": "/results/kpi",
+        "afterEscPath": "/results/kpi",
+        "changed": false
+      },
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "screenshot": "/Users/piotrwisniewski/rn-g2-lanes/g6-matrix/docs/qa/screens/rn-g6-uicx/kbd-final-state.png"
+    },
+    "coldDeepLink": [
+      {
+        "name": "cold-deep-link-kpi-pending",
+        "requestedPath": "/results/kpi/4d5db4f5-454e-4813-8813-4d5db4454ebd?ff_resultsVNextKpi=1",
+        "finalPath": "/results/kpi/4d5db4f5-454e-4813-8813-4d5db4454ebd",
+        "openedCorrectObject": true,
+        "bodyTextSnippet": "LOCAL\n?\nHelp Center\nFeedback\nDocuments\n77\nSkip to main content\nResults\nData\nModel\nAnna Kowalska-Wróbel\nAK\nKPI-A-004\nSaved\nActivate\nPerformance\nContract\nMeasurements\nDeviations\nCorrective actions\nInitiatives affecting KPI\nScorecards and contexts\nHistory / lineage\nPending approval\n\nLATEST MEASUREMENT\n",
+        "screenshot": "/Users/piotrwisniewski/rn-g2-lanes/g6-matrix/docs/qa/screens/rn-g6-uicx/cold-deep-link-kpi-pending.png",
+        "consoleErrors": [
+          "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "Failed to load resource: the server responded with a status of 404 ()",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "Failed to load resource: the server responded with a status of 404 ()"
+        ],
+        "netErrors": [
+          {
+            "url": "http://localhost:3201/api/v10/teresa/voice-config",
+            "status": 401
+          },
+          {
+            "url": "http://localhost:3201/api/v10/teresa/voice-config",
+            "status": 401
+          },
+          {
+            "url": "http://localhost:3201/api/v8/admin/flags",
+            "status": 404
+          },
+          {
+            "url": "http://localhost:3201/api/v8/admin/flags",
+            "status": 404
+          }
+        ]
+      },
+      {
+        "name": "cold-deep-link-roi-tracking",
+        "requestedPath": "/results/roi/cases/4d60dfcc-463e-4b5e-8b5e-4d60df463e9a?ff_resultsVNextRoi=1",
+        "finalPath": "/results/roi/cases/4d60dfcc-463e-4b5e-8b5e-4d60df463e9a",
+        "openedCorrectObject": true,
+        "bodyTextSnippet": "LOCAL\n?\nHelp Center\nFeedback\nDocuments\n77\nSkip to main content\nResults\nData\nModel\nAnna Kowalska-Wróbel\nAK\nROI registry\nAutomatyzacja procesów zakupowych — realizacja wartości w toku\nBaseline & policy\nAssumptions\nCost lines\nBenefit lines\nScenarios\nCalculation runs\nBuild Case\n6\nDecision\n2\nRealize Valu",
+        "screenshot": "/Users/piotrwisniewski/rn-g2-lanes/g6-matrix/docs/qa/screens/rn-g6-uicx/cold-deep-link-roi-tracking.png",
+        "consoleErrors": [
+          "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)"
+        ],
+        "netErrors": [
+          {
+            "url": "http://localhost:3201/api/v10/teresa/voice-config",
+            "status": 401
+          },
+          {
+            "url": "http://localhost:3201/api/v10/teresa/voice-config",
+            "status": 401
+          },
+          {
+            "url": "http://localhost:3201/api/v8/admin/flags",
+            "status": 404
+          },
+          {
+            "url": "http://localhost:3201/api/v8/admin/flags",
+            "status": 404
+          },
+          {
+            "url": "http://localhost:3201/api/vnext/results/roi/cases/4d60dfcc-463e-4b5e-8b5e-4d60df463e9a/baseline",
+            "status": 404
+          },
+          {
+            "url": "http://localhost:3201/api/vnext/results/roi/cases/4d60dfcc-463e-4b5e-8b5e-4d60df463e9a/calculation-policy",
+            "status": 404
+          },
+          {
+            "url": "http://localhost:3201/api/vnext/results/roi/cases/4d60dfcc-463e-4b5e-8b5e-4d60df463e9a/calculation-policy",
+            "status": 404
+          },
+          {
+            "url": "http://localhost:3201/api/vnext/results/roi/cases/4d60dfcc-463e-4b5e-8b5e-4d60df463e9a/baseline",
+            "status": 404
+          }
+        ]
+      },
+      {
+        "name": "cold-deep-link-okr-active",
+        "requestedPath": "/results/okr/sets/f772dd20-6d67-49a1-89a1-f772dd6d67ca?ff_resultsVNextOkr=1",
+        "finalPath": "/results/okr/sets/f772dd20-6d67-49a1-89a1-f772dd6d67ca",
+        "openedCorrectObject": true,
+        "bodyTextSnippet": "LOCAL\n?\nHelp Center\nFeedback\nDocuments\n77\nSkip to main content\nResults\nData\nModel\nAnna Kowalska-Wróbel\nAK\nOKR sets\nOKR zespołu operacyjnego — transformacja Q3 2026\nOverview\nObjectives & Key Results\nAlignment\nConversations & Support\nReview & Reflection\nHistory\nSet properties\nProperty\tValue\nStatus\t\nAc",
+        "screenshot": "/Users/piotrwisniewski/rn-g2-lanes/g6-matrix/docs/qa/screens/rn-g6-uicx/cold-deep-link-okr-active.png",
+        "consoleErrors": [
+          "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "Failed to load resource: the server responded with a status of 404 (Not Found)"
+        ],
+        "netErrors": [
+          {
+            "url": "http://localhost:3201/api/v10/teresa/voice-config",
+            "status": 401
+          },
+          {
+            "url": "http://localhost:3201/api/v10/teresa/voice-config",
+            "status": 401
+          },
+          {
+            "url": "http://localhost:3201/api/v8/admin/flags",
+            "status": 404
+          },
+          {
+            "url": "http://localhost:3201/api/v8/admin/flags",
+            "status": 404
+          }
+        ]
+      }
+    ]
+  }
+}
