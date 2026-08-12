@@ -111,6 +111,31 @@ describe('computeYoyDelta', () => {
     expect(result.status).toBe('PRIOR_ZERO_PCT_UNDEFINED');
     expect(result.absoluteDelta).toBe(0);
   });
+
+  it('KONTROLA NEGATYWNA (Decimal, nie float — task #E3): current="0.2", prior="-0.1" ⇒ absoluteDelta DOKŁADNIE 0.3, NIE 0.30000000000000004', () => {
+    // `Number('0.2') - Number('-0.1')` w JS/IEEE-754 daje 0.30000000000000004 (ten sam artefakt
+    // co klasyczne `0.1 + 0.2` — subtraction of a negative is the same bit operation as addition,
+    // dowód: `node -e "console.log(0.2 - (-0.1))"` -> 0.30000000000000004). To DOKŁADNIE ta liczba,
+    // którą dostał weryfikator pakietu E przy sabotażu tej funkcji na float. `computeYoyDelta`
+    // musi liczyć na `Decimal` i zwrócić dokładne 0.3.
+    const floatArtifact = Number('0.2') - Number('-0.1');
+    expect(floatArtifact).toBe(0.30000000000000004);
+    expect(floatArtifact).not.toBe(0.3);
+
+    const result = computeYoyDelta(value('PRESENT_NONZERO', '0.2'), value('PRESENT_NONZERO', '-0.1'));
+    expect(result.status).toBe('COMPUTED');
+    expect(result.absoluteDelta).toBe(0.3);
+    expect(result.absoluteDelta).not.toBe(0.30000000000000004);
+  });
+
+  it('KONTROLA NEGATYWNA (Decimal precision on percentDelta too): current="1.1", prior="1" ⇒ percentDelta DOKŁADNIE 10, nie 9.999999999999998/10.000000000000002-style float noise', () => {
+    // (1.1 - 1) / 1 * 100 has its own well-known IEEE-754 wobble via the 1.1 - 1 subtraction;
+    // Decimal must give the algebraically exact result.
+    const result = computeYoyDelta(value('PRESENT_NONZERO', '1.1'), value('PRESENT_NONZERO', '1'));
+    expect(result.status).toBe('COMPUTED');
+    expect(result.absoluteDelta).toBe(0.1);
+    expect(result.percentDelta).toBe(10);
+  });
 });
 
 describe('groupAnalysisKpiValuesByKpi — jeden wiersz na KPI, wiele okresów', () => {

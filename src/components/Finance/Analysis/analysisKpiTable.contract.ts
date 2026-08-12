@@ -14,12 +14,28 @@
  * downstream.
  */
 
+import { Decimal } from 'decimal.js';
+
 import type { TableColumn, TableRow } from '../../standard/StandardTable';
 import type { AnalysisKpiTier, AnalysisKpiValueDto } from '../../../services/api/financeV2.types';
 import { financeValueDisplayReasonLabel, formatFinanceValueForDisplay } from '../../../services/api/financeV2.types';
 
 // ---------------------------------------------------------------------------
 // YoY delta — MISSING/NA nigdy nie stają się 0 przez odejmowanie/dzielenie.
+//
+// ★ Decimal, nie float (task #E3, ta sama dyscyplina co `analysisKpiCompute.ts`
+// — "korekta koordynatora 2026-08-12, master plan §2.4: wartość jako Decimal…
+// zaokrąglanie WYŁĄCZNIE na granicy prezentacji"). `valueDecimal` (string
+// pełnej precyzji z API) trafia PROSTO do `Decimal` — odejmowanie i dzielenie
+// poniżej są arytmetyką Decimal, nigdy `Number() - Number()`/`/`. `.toNumber()`
+// jest wołane RAZ, na samym końcu (granica prezentacji — `YoyDelta` jest
+// konsumowany przez `.toFixed(1)`/porównania sortowania, gdzie `number` jest
+// właściwym kształtem), nie w środku obliczeń.
+//
+// Konkretny przypadek (weryfikator pakietu E, sabotaż): current="0.2",
+// prior="-0.1" → `Number('0.2') - Number('-0.1')` daje `0.30000000000000004`
+// (IEEE-754, ten sam artefakt co klasyczne `0.1 + 0.2`) zamiast dokładnego
+// `0.3`. Regresja przypięta w `analysisKpiTable.contract.test.ts`.
 // ---------------------------------------------------------------------------
 
 export interface YoyDelta {
@@ -43,16 +59,17 @@ export function computeYoyDelta(
   if (!priorIsPresent || prior.valueDecimal === null) {
     return { status: 'MISSING_PRIOR', absoluteDelta: null, percentDelta: null };
   }
-  const currentNum = Number(current.valueDecimal);
-  const priorNum = Number(prior.valueDecimal);
-  const absoluteDelta = currentNum - priorNum;
-  if (priorNum === 0) {
+  const currentDecimal = new Decimal(current.valueDecimal);
+  const priorDecimal = new Decimal(prior.valueDecimal);
+  const absoluteDeltaDecimal = currentDecimal.minus(priorDecimal);
+  if (priorDecimal.isZero()) {
     // % zmiany od zera jest matematycznie nieokreślona (dzielenie przez 0) —
     // NIGDY nie renderuj 0%/Infinity%, pokaż wartość bezwzględną z jawnym
     // powodem braku procentu, nie fałszywym "0%".
-    return { status: 'PRIOR_ZERO_PCT_UNDEFINED', absoluteDelta, percentDelta: null };
+    return { status: 'PRIOR_ZERO_PCT_UNDEFINED', absoluteDelta: absoluteDeltaDecimal.toNumber(), percentDelta: null };
   }
-  return { status: 'COMPUTED', absoluteDelta, percentDelta: (absoluteDelta / priorNum) * 100 };
+  const percentDeltaDecimal = absoluteDeltaDecimal.dividedBy(priorDecimal).times(100);
+  return { status: 'COMPUTED', absoluteDelta: absoluteDeltaDecimal.toNumber(), percentDelta: percentDeltaDecimal.toNumber() };
 }
 
 // ---------------------------------------------------------------------------
