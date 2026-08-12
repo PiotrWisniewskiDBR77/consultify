@@ -1455,7 +1455,11 @@ export async function runMindmapAttachKnowledgeCallback(ctx: ActionContext): Pro
     };
   }
   dispatchMindmapAttachKnowledge(nodeId, ctx.ideaId || '');
-  return { ok: true, actionId: 'idea.node.mm_attach_knowledge', data: { nodeId } };
+  // RISK-30 follow-up (integrator, 2026-08-12): same shape as
+  // `runNodeEditLabelCallback` below -- a fire-and-forget CustomEvent on a
+  // TERESA-REACHABLE branch. Nothing observes whether the knowledge was
+  // actually attached, so `confirmed: false` is the only honest value.
+  return { ok: true, actionId: 'idea.node.mm_attach_knowledge', confirmed: false, data: { nodeId } };
 }
 
 export async function runNodeEditLabelCallback(ctx: ActionContext): Promise<ActionResult> {
@@ -1479,7 +1483,13 @@ export async function runNodeEditLabelCallback(ctx: ActionContext): Promise<Acti
     };
   }
   dispatchNodeUpdate(nodeId, { label });
-  return { ok: true, actionId: 'idea.node.edit', data: { nodeId } };
+  // RISK-30 follow-up (integrator, 2026-08-12): `dispatchNodeUpdate` is a
+  // fire-and-forget CustomEvent -- nothing here observes whether the node was
+  // actually relabelled. This branch is TERESA-REACHABLE (unlike the 59
+  // UI-closure sites closed by S22), so without `confirmed` Teresa could
+  // report a successful label edit that never happened. `confirmed: false` is
+  // the honest value until this dispatch grows an acknowledgement.
+  return { ok: true, actionId: 'idea.node.edit', confirmed: false, data: { nodeId } };
 }
 
 /**
