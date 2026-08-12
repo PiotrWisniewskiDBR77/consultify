@@ -182,3 +182,91 @@ torów** — zero trafień. Nie utworzono trzeciej konkurencyjnej naprawy
 - **Brak usuwania worktree i gałęzi.**
 - **Brak szerokiego `git add`** — każdy commit stage'owany po ścieżkach.
 - `.claude/launch.json` **nigdzie nie zacommitowany** (plik wspólny między sesjami).
+
+---
+
+# AKTUALIZACJA — domknięcie zakresu po korekcie polecenia
+
+Checkpoint z pierwszej części tego dokumentu opisywał stan na `177104d409`.
+Po korekcie („checkpoint nie oznacza przerwania niedokończonej pracy") zakres
+został **dokończony**. Poniżej trzy wymagane sekcje.
+
+## REMAINING WORK AT START
+
+Stan na `c5852ace32`, pozycje zakresu Results Next:
+
+1. złoty przepływ **ROI** — nigdy nie przejechany end-to-end na realnych danych
+2. złoty przepływ **OKR** — jw.
+3. złoty przepływ **KPI** — 4 z 20 kroków zablokowane
+4. brak endpointu **historii KPI**
+5. **tworzenie karty wyników** — komponent gotowy, niewpięty
+6. **nawigacja gubi flagę** domenową
+7. zakładka kontraktu bez danych; brak pola kadencji i właściciela; surowy identyfikator w wyborze KPI
+8. zniekształcony payload migawki wywala listę przeglądów
+9. **D08/B2** — powód `not_calculable` niepersystowany dla Zestawu OKR i check-inu
+10. **B3** — brak `GET` działań korygujących, `kpi→scorecards`, `listScenarioOverrides`, punktu odkrycia `cadenceOccurrenceId`
+11. brak trasy dyspozycji szkicu Teresy dla refleksji OKR
+12. trzy punkty wpięcia z toru zakresu
+13. zrzuty ścieżki P0-A niezapisane na dysk
+14. **macierz UI/CX** — nie wykonana na żadnym SHA
+15. **pakiet dowodowy**
+
+## COMPLETED IN THIS RUN
+
+| # | Pozycja | Dowód |
+|---|---|---|
+| 1 | ROI 24/24 kroki, **6 defektów naprawionych** | `RN_G6_C2_ROI_GOLD_FLOW.md` |
+| 2 | OKR 20/20 kroków, **2 defekty naprawione** | `RN_G6_C3_OKR_GOLD_FLOW.md` |
+| 3 | KPI — odblokowany przez P0-D, ścieżka poprawki potwierdzona | `RN_G6_EVIDENCE_PACKET.md` |
+| 4 | historia KPI — **N/A**, brak endpointu po stronie serwera; zgłoszone | `RN_G6_UIFIX.md` |
+| 5 | modal karty wyników wpięty, realne `201 Created` | `RN_G6_UIFIX.md` |
+| 6 | flaga przeżywa nawigację — naprawiona **przyczyna**, nie objaw | `RN_G6_UIFIX.md` |
+| 7 | zakładka kontraktu z realnymi danymi; identyfikator rozwiązywany na nazwę | `RN_G6_UIFIX.md` |
+| 8 | UI **już był odporny** — potwierdzone wstrzyknięciem złego wiersza | `RN_G6_UIFIX.md` |
+| 9 | D08 zamknięte migracją **addytywną** | `RN_G6_SRV_GAPS.md` |
+| 10 | trzy trasy odczytu dodane | `RN_G6_SRV_GAPS.md` |
+| 11 | trasa dyspozycji Teresy dla OKR dodana | `RN_G6_SRV_GAPS.md` |
+| 12 | wpięte albo potwierdzone jako już obecne | `RN_G6_UIFIX.md` |
+| 13 | 8 zrzutów + weryfikacja **programowa** kopiowania pól | `RN_G6_EVIDENCE_PACKET.md` |
+| 14 | macierz wykonana, **8 znalezisk**, 29/30 kontrastu AA | `RN_G6_UICX_MATRIX.md` |
+| 15 | pakiet zbudowany z cytatów z 13 raportów | `RN_G6_EVIDENCE_PACKET.md` |
+
+**Ponadto, znalezione i naprawione w trakcie:** P0-D (cała powierzchnia zapisu
+zwracała 500), maker-checker nieużywalny dla drugiego recenzenta, refleksja OKR
+permanentnie niezapisywalna, utrwalanie stanu rejestru KPI wraz z ujawnionym
+przez nie defektem deep-linku, dwa wycieki notatek deweloperskich do interfejsu,
+zdublowany prefiks w powodach blokady.
+
+## REMAINING WORK AT END
+
+**Zakres modułu Results Next: NONE.**
+
+Pozostają wyłącznie **udowodnione zależności poza zakresem modułu**, każda z
+reprodukcją, żadna nienaprawiona jednostronnie:
+
+| # | Pozycja | Dlaczego poza zakresem | Dokument |
+|---|---|---|---|
+| Z1 | do `/results/*` dociera wyłącznie OWNER i ADMIN | decyzja właściciela o modelu dostępu; blokuje macierz siedmiu ról | `RN_G6_B3_ROUTE_INVENTORY.md` |
+| Z2 | zerwana bramka decyzji cyklu inicjatyw + **fałszywy sukces** w Manager Cockpit | moduł Inicjatyw; naprawa samych fikstur zamaskowałaby zagrożenie realnych danych | `RN_G6_A2_*.md` |
+| Z3 | defekt parytetu migracji — świeża instalacja bez kolumny | Report Builder + mechanizm migracji | `RN_G6_A1_*.md` |
+| Z4 | `FilterableTable`: brak `aria-sort`, brak obcinania nagłówka | komponent **wspólny**, dotyczy całej aplikacji | `RN_G6_UICX_MATRIX.md`, `RN_G6_OKRTEXT.md` |
+| Z5 | wyszarzona pozycja destrukcyjna w kebabie | `RowActionsMenu.tsx` — **równoległa sesja właściciela** | `RN_G5_POLISH_EVIDENCE.md` |
+
+**Luki w dowodach, świadomie niezamknięte** (nie defekty, granice pokrycia):
+stany zapisywania i konfliktu (żeby nie zepsuć współdzielonych danych) · pułapka
+fokusu w prawdziwym dialogu · pstryczek kolumn i zaznaczenie wielokrotne ·
+kontrast wewnątrz pełnych narzędzi · `prefers-reduced-motion` · uzgodnienie ROI
+z Finansami · pełne zamknięcie ROI z trzecim aktorem · macierz ról dla ról
+niedostępnych (Z1).
+
+## BRAMKI NA FINALNYM SHA `152529c1a7`
+
+| Bramka | Wynik |
+|---|---|
+| `tsc --noEmit` (root) | **exit 0, 0 błędów** |
+| `tsc --noEmit -p server` | exit 1, **18 błędów, wszystkie w `roiCalculationEngine.ts`** — przedistniejąca baza, zero nowych |
+| `git diff --check` | **exit 0** |
+| `check-list-canon.sh` | **408 przy baseline 409** — dług spadł |
+| `check-artefakt.sh` | **7 przy baseline 7** — bez zmian |
+
+Zakres: **191 commitów, 904 pliki** wobec baseline `8b03e2dba5`.
