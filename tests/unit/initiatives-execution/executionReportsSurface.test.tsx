@@ -140,7 +140,7 @@ describe('ExecutionReportsSurface', () => {
     fireEvent.change(screen.getByLabelText('Report distribution distributedAt'), {
       target: { value: '2026-08-10T12:00' },
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Publish/share frozen approved snapshot' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Opublikuj zatwierdzoną migawkę' }));
     await waitFor(() =>
       expect(transitionReportRun).toHaveBeenCalledWith(
         'run-1',
@@ -151,7 +151,7 @@ describe('ExecutionReportsSurface', () => {
         })
       )
     );
-    expect(await screen.findByText(/Frozen JSON package retained/)).toBeInTheDocument();
+    expect(await screen.findByText(/Zamrożony pakiet pozostaje/)).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /download|export/i })).not.toBeInTheDocument();
   });
   it('uses only an exact PUBLISHED Definition version and supports its governed lifecycle', async () => {
@@ -166,7 +166,7 @@ describe('ExecutionReportsSurface', () => {
     fireEvent.change(screen.getByLabelText('Report Definition publish rationale'), {
       target: { value: 'Independent contract approval' },
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Publish Definition' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Opublikuj definicję' }));
     await waitFor(() =>
       expect(transitionReportDefinition).toHaveBeenCalledWith(
         'weekly',
@@ -181,6 +181,7 @@ describe('ExecutionReportsSurface', () => {
     fireEvent.change(screen.getByLabelText('ReportRun published Definition version'), {
       target: { value: 'weekly@2' },
     });
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Zaawansowany kontrakt JSON' }));
     fireEvent.change(screen.getByLabelText('ReportRun draft JSON'), {
       target: {
         value: JSON.stringify({
@@ -189,7 +190,7 @@ describe('ExecutionReportsSurface', () => {
         }),
       },
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Create or refresh ReportRun' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Utwórz lub odśwież raport' }));
     await waitFor(() =>
       expect(createReportRun).toHaveBeenCalledWith(
         'run-2',
@@ -200,13 +201,14 @@ describe('ExecutionReportsSurface', () => {
   it('creates a versioned Definition only with explicit project scope and no tenant-wide default', async () => {
     render(<ExecutionReportsSurface />);
     fireEvent.click(screen.getByRole('button', { name: 'Nowa definicja' }));
-    expect(screen.getByRole('button', { name: 'Create Definition' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Utwórz definicję' })).toBeDisabled();
     fireEvent.change(screen.getByLabelText('Report Definition ID'), {
       target: { value: 'project-report' },
     });
     fireEvent.change(screen.getByLabelText('Report Definition project IDs'), {
       target: { value: 'project-1\nproject-2' },
     });
+    fireEvent.click(screen.getByLabelText('Zaawansowany kontrakt definicji'));
     fireEvent.change(screen.getByLabelText('Report Definition contract JSON'), {
       target: {
         value: JSON.stringify({
@@ -227,7 +229,7 @@ describe('ExecutionReportsSurface', () => {
         }),
       },
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Create Definition' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Utwórz definicję' }));
     await waitFor(() =>
       expect(createReportDefinition).toHaveBeenCalledWith(
         'project-report',
@@ -258,9 +260,7 @@ describe('ExecutionReportsSurface', () => {
       fireEvent.change(screen.getByLabelText(`Report follow-up ${label}`), {
         target: { value },
       });
-    fireEvent.click(
-      screen.getByRole('button', { name: 'Create and link canonical follow-up Task' })
-    );
+    fireEvent.click(screen.getByRole('button', { name: 'Utwórz i powiąż zadanie następcze' }));
     await waitFor(() =>
       expect(createExecutionTask).toHaveBeenCalledWith(
         'case-1',
@@ -281,6 +281,6 @@ describe('ExecutionReportsSurface', () => {
         taskReceiptClientRequestId: expect.any(String),
       })
     );
-    expect(await screen.findByText(/Follow-up Task task-follow-1 v1/)).toBeInTheDocument();
+    expect(await screen.findByText(/Zadanie następcze task-follow-1 v1/)).toBeInTheDocument();
   });
 });

@@ -143,14 +143,18 @@ describe('CapacityScenarioSurface', () => {
     render(<CapacityScenarioSurface />);
     const row = (await screen.findByText('p1')).closest('tr')!;
     fireEvent.click(row);
-    expect(screen.getByText('Capacity constraint or period')).toBeInTheDocument();
+    expect(screen.getByText('Stan obciążenia i dowodów')).toBeInTheDocument();
     const layout = row.closest('div[tabindex="0"]')!;
     fireEvent.keyDown(layout, { key: 'Enter' });
     expect(
       await screen.findByRole('region', { name: 'Capacity Scenario Workbench' })
     ).toBeInTheDocument();
-    expect(screen.getAllByText('UNKNOWN — no numeric value').length).toBeGreaterThanOrEqual(2);
-    fireEvent.click(screen.getByText(/a1 · i1/));
+    expect(screen.getAllByRole('button', { name: 'Otwórz narzędzia obciążenia' })).toHaveLength(1);
+    expect(
+      screen.getAllByText('UNKNOWN — brak potwierdzonej wartości').length
+    ).toBeGreaterThanOrEqual(2);
+    fireEvent.click(screen.getByText(/role1 · okresy p1/));
+    fireEvent.click(screen.getByRole('button', { name: 'Zarządzaj zobowiązaniem' }));
     fireEvent.change(screen.getByLabelText('Capacity commitmentId'), { target: { value: 'c1' } });
     fireEvent.change(screen.getByLabelText('Capacity resourceManagerId'), {
       target: { value: 'rm' },
@@ -180,23 +184,29 @@ describe('CapacityScenarioSurface', () => {
     expect(
       await screen.findByRole('region', { name: 'Capacity options comparison' })
     ).toBeInTheDocument();
-    expect(screen.getByRole('region', { name: 'Capacity option Resequence' })).toBeInTheDocument();
-    expect(screen.getByRole('region', { name: 'Capacity option Split scope' })).toBeInTheDocument();
     expect(
-      screen.getByRole('region', { name: 'Capacity option Add capacity' })
+      screen.getByRole('region', { name: 'Opcja obciążenia: Zmień kolejność' })
     ).toBeInTheDocument();
     expect(
-      within(screen.getByRole('region', { name: 'Capacity option Split scope' })).getByText(
-        'UNKNOWN — no numeric value'
+      screen.getByRole('region', { name: 'Opcja obciążenia: Podziel zakres' })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('region', { name: 'Opcja obciążenia: Zwiększ dostępność' })
+    ).toBeInTheDocument();
+    expect(
+      within(screen.getByRole('region', { name: 'Opcja obciążenia: Podziel zakres' })).getByText(
+        'UNKNOWN — brak potwierdzonej wartości'
       )
     ).toBeInTheDocument();
     expect(screen.getByText(/assumption:SCOPE_SPLIT v1/)).toBeInTheDocument();
-    expect(screen.getAllByText(/Memberships: i1 v4/)).toHaveLength(3);
+    expect(screen.getAllByText(/Inicjatywy: i1 v4/)).toHaveLength(3);
     fireEvent.change(screen.getByLabelText('Capacity governed next input'), {
       target: { value: 'SCHEDULE_DECISION' },
     });
     fireEvent.click(
-      screen.getByRole('region', { name: 'Capacity option Add capacity' }).querySelector('button')!
+      screen
+        .getByRole('region', { name: 'Opcja obciążenia: Zwiększ dostępność' })
+        .querySelector('button')!
     );
     await waitFor(() =>
       expect(selectCapacityOption).toHaveBeenCalledWith(

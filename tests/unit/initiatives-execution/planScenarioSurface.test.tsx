@@ -93,6 +93,9 @@ describe('PlanScenarioSurface', () => {
     expect(
       await screen.findByRole('region', { name: 'Plan Scenario Workbench' })
     ).toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.queryByText('Plan initiative window')).not.toBeInTheDocument()
+    );
     expect(readPlanScenario).toHaveBeenCalledWith('plan-q4');
     expect(screen.getByLabelText('target initiative-1')).toHaveValue('2026-10-15T00:00');
     expect(screen.getByText('UNKNOWN: Supplier window unconfirmed')).toBeInTheDocument();

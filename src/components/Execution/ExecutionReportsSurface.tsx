@@ -25,6 +25,7 @@ interface Row extends TableRow {
   id: string;
   title: string;
   status: string;
+  rawStatus: string;
   definition: string;
   period: string;
   asOf: string;
@@ -35,6 +36,7 @@ interface DefinitionRow extends TableRow {
   id: string;
   title: string;
   state: string;
+  rawState: string;
   currentVersion: number;
   aggregateVersion: number;
   owner: string;
@@ -95,6 +97,29 @@ const reportPresets = [
   'failed',
   'recent',
 ] as const;
+const distributionLabels: Record<string, string> = {
+  receiptId: 'Identyfikator dystrybucji',
+  audience: 'Odbiorcy',
+  distributedAt: 'Data dystrybucji',
+};
+const followUpLabels: Record<string, string> = {
+  executionCaseId: 'Realizacja',
+  taskId: 'Identyfikator zadania',
+  title: 'Tytuł',
+  description: 'Opis',
+  assigneeId: 'Wykonawca',
+  ownerId: 'Właściciel',
+  dueAt: 'Termin',
+  slaAt: 'SLA',
+  evidenceRefs: 'Dowody',
+};
+const definitionBusinessLabels: Record<string, string> = {
+  purpose: 'Cel raportu',
+  audience: 'Odbiorcy (jeden w wierszu)',
+  cadence: 'Częstotliwość',
+  ownerId: 'Właściciel definicji',
+  approverId: 'Niezależny zatwierdzający',
+};
 export const ExecutionReportsSurface = ({
   activePreset,
   onCountsChange,
@@ -108,6 +133,14 @@ export const ExecutionReportsSurface = ({
     [showRunEditor, setShowRunEditor] = useState(false),
     [definitionId, setDefinitionId] = useState(''),
     [definitionJson, setDefinitionJson] = useState(''),
+    [advancedDefinitionContract, setAdvancedDefinitionContract] = useState(false),
+    [definitionBusiness, setDefinitionBusiness] = useState({
+      purpose: '',
+      audience: '',
+      cadence: '',
+      ownerId: '',
+      approverId: '',
+    }),
     [scopeProjectIds, setScopeProjectIds] = useState(''),
     [generalBacklogAllowed, setGeneralBacklogAllowed] = useState(false),
     [definitionRationale, setDefinitionRationale] = useState(''),
@@ -115,6 +148,16 @@ export const ExecutionReportsSurface = ({
     [executionCases, setExecutionCases] = useState<any[]>([]),
     [selectedId, setSelectedId] = useState<string | null>(null),
     [draftJson, setDraftJson] = useState(''),
+    [advancedRunContract, setAdvancedRunContract] = useState(false),
+    [refreshEditorOpen, setRefreshEditorOpen] = useState(false),
+    [runDraft, setRunDraft] = useState({
+      reportRunId: '',
+      audience: '',
+      scopeRefs: '',
+      periodStart: '',
+      periodEnd: '',
+      asOf: '',
+    }),
     [rationale, setRationale] = useState(''),
     [distribution, setDistribution] = useState({ receiptId: '', audience: '', distributedAt: '' }),
     [followUp, setFollowUp] = useState({
@@ -154,7 +197,8 @@ export const ExecutionReportsSurface = ({
         (b.items ?? []).map((x) => ({
           id: x.reportRunId,
           title: `${definitionNames.get(x.definitionRef.definitionId) ?? 'Raport'} · ${formatDate(x.asOf)}`,
-          status: x.status,
+          status: reportStatusLabel(x.status),
+          rawStatus: x.status,
           definition: `${definitionNames.get(x.definitionRef.definitionId) ?? x.definitionRef.definitionId} · v${x.definitionRef.version}`,
           period: `${formatDate(x.period.start)} – ${formatDate(x.period.end)}`,
           asOf: formatDate(x.asOf),
@@ -170,7 +214,8 @@ export const ExecutionReportsSurface = ({
           return {
             id: definition.definitionId,
             title: current?.name ?? definition.definitionId,
-            state: current?.state ?? 'UNKNOWN',
+            state: reportStatusLabel(current?.state ?? 'UNKNOWN'),
+            rawState: current?.state ?? 'UNKNOWN',
             currentVersion: definition.currentVersion,
             aggregateVersion: definition.version,
             owner: current?.ownerId ?? 'UNKNOWN',
@@ -207,7 +252,9 @@ export const ExecutionReportsSurface = ({
     const version =
       source?.versions?.find((entry: any) => entry.version === source.currentVersion) ?? source;
     const cadence = String(version?.cadence ?? source?.cadence ?? '').toUpperCase();
-    const status = String(item.kind === 'RUN' ? raw.status : raw.state).toUpperCase();
+    const status = String(
+      item.kind === 'RUN' ? (raw.rawStatus ?? raw.status) : (raw.rawState ?? raw.state)
+    ).toUpperCase();
     if (preset === 'all') return true;
     if (preset === 'weekly') return cadence === 'WEEKLY';
     if (preset === 'monthly') return cadence === 'MONTHLY';
@@ -242,7 +289,29 @@ export const ExecutionReportsSurface = ({
     return value;
   };
   const create = async () => {
-    const p = JSON.parse(draftJson);
+    const p = advancedRunContract
+      ? JSON.parse(draftJson)
+      : {
+          reportRunId: runDraft.reportRunId.trim(),
+          parentRunRef:
+            selected?.source?.status === 'PUBLISHED'
+              ? { reportRunId: selected.id, version: selected.version }
+              : null,
+          audience: runDraft.audience
+            .split('\n')
+            .map((value) => value.trim())
+            .filter(Boolean),
+          scopeRefs: runDraft.scopeRefs
+            .split('\n')
+            .map((value) => value.trim())
+            .filter(Boolean),
+          period: {
+            start: new Date(runDraft.periodStart).toISOString(),
+            end: new Date(runDraft.periodEnd).toISOString(),
+          },
+          asOf: new Date(runDraft.asOf).toISOString(),
+          sources: [],
+        };
     const [definitionRefId, versionText] = publishedDefinitionRef.split('@');
     const definition = definitions.find((row) => row.id === definitionRefId);
     const version = Number(versionText);
@@ -256,6 +325,8 @@ export const ExecutionReportsSurface = ({
       expectedVersion: 0,
       clientRequestId: cid(`create:${p.reportRunId}`),
     });
+    setAdvancedRunContract(false);
+    setRefreshEditorOpen(false);
     await load();
   };
   const definitionContent = () => {
@@ -268,6 +339,20 @@ export const ExecutionReportsSurface = ({
       throw new Error('Explicit authorized project scope required');
     return {
       ...content,
+      ...(definitionBusiness.purpose.trim() ? { purpose: definitionBusiness.purpose.trim() } : {}),
+      ...(definitionBusiness.audience.trim()
+        ? {
+            audience: definitionBusiness.audience
+              .split('\n')
+              .map((value) => value.trim())
+              .filter(Boolean),
+          }
+        : {}),
+      ...(definitionBusiness.cadence.trim() ? { cadence: definitionBusiness.cadence.trim() } : {}),
+      ...(definitionBusiness.ownerId.trim() ? { ownerId: definitionBusiness.ownerId.trim() } : {}),
+      ...(definitionBusiness.approverId.trim()
+        ? { approverId: definitionBusiness.approverId.trim() }
+        : {}),
       scope: { ...(content.scope ?? {}), projectIds, generalBacklogAllowed },
     };
   };
@@ -430,7 +515,7 @@ export const ExecutionReportsSurface = ({
           Definicje
         </button>
       </div>
-      {state === 'LOADING' && <p role="status">Loading ReportRuns</p>}
+      {state === 'LOADING' && <p role="status">Ładowanie raportów…</p>}
       {registerMode === 'DEFINITIONS' && (
         <section aria-label="Report Definitions" className="mt-4">
           <h3 className="font-semibold">Definicje raportów</h3>
@@ -458,13 +543,16 @@ export const ExecutionReportsSurface = ({
                   openLabel="Otwórz definicję"
                   meta={{
                     pills: [
-                      { label: row.state, tone: row.state === 'PUBLISHED' ? 'success' : 'neutral' },
+                      {
+                        label: row.state,
+                        tone: row.rawState === 'PUBLISHED' ? 'success' : 'neutral',
+                      },
                     ],
                     trailing: (
                       <span className="text-xs text-c-text-muted">v{row.currentVersion}</span>
                     ),
                     recommendation:
-                      row.state === 'PUBLISHED'
+                      row.rawState === 'PUBLISHED'
                         ? 'Gotowa do użycia'
                         : 'Dokończ walidację i zatwierdzenie',
                   }}
@@ -552,17 +640,60 @@ export const ExecutionReportsSurface = ({
                   className="block w-full rounded border border-c-border bg-c-surface p-2"
                 />
               </label>
-              <label className="mt-2 block text-xs">
-                Kontrakt definicji (tryb zaawansowany)
-                <textarea
-                  aria-label="Report Definition contract JSON"
-                  value={definitionJson}
-                  onChange={(event) => setDefinitionJson(event.target.value)}
-                  className="block min-h-40 w-full rounded border border-c-border bg-c-surface p-2 font-mono text-xs"
+              <div className="mt-2 grid grid-cols-1 gap-2 md:grid-cols-2">
+                {Object.entries(definitionBusiness).map(([key, value]) => (
+                  <label key={key} className="text-xs">
+                    {definitionBusinessLabels[key] ?? key}
+                    {key === 'purpose' || key === 'audience' ? (
+                      <textarea
+                        aria-label={`Report Definition business ${key}`}
+                        value={value}
+                        onChange={(event) =>
+                          setDefinitionBusiness((current) => ({
+                            ...current,
+                            [key]: event.target.value,
+                          }))
+                        }
+                        className="block min-h-20 w-full rounded border border-c-border bg-c-surface p-2"
+                      />
+                    ) : (
+                      <input
+                        aria-label={`Report Definition business ${key}`}
+                        value={value}
+                        onChange={(event) =>
+                          setDefinitionBusiness((current) => ({
+                            ...current,
+                            [key]: event.target.value,
+                          }))
+                        }
+                        className="block w-full rounded border border-c-border bg-c-surface p-2"
+                      />
+                    )}
+                  </label>
+                ))}
+              </div>
+              <label className="mt-3 flex items-center gap-2 text-xs">
+                <input
+                  type="checkbox"
+                  aria-label="Zaawansowany kontrakt definicji"
+                  checked={advancedDefinitionContract}
+                  onChange={(event) => setAdvancedDefinitionContract(event.target.checked)}
                 />
+                Pokaż kontrakt źródeł, formuł i dostępu (tryb zaawansowany)
               </label>
+              {advancedDefinitionContract && (
+                <label className="mt-2 block text-xs">
+                  Kontrakt źródeł, formuł i dostępu
+                  <textarea
+                    aria-label="Report Definition contract JSON"
+                    value={definitionJson}
+                    onChange={(event) => setDefinitionJson(event.target.value)}
+                    className="block min-h-40 w-full rounded border border-c-border bg-c-surface p-2 font-mono text-xs"
+                  />
+                </label>
+              )}
               <label className="mt-2 block text-xs">
-                Authorized project IDs (one per line)
+                Dozwolone projekty (jeden identyfikator w wierszu)
                 <textarea
                   aria-label="Report Definition project IDs"
                   value={scopeProjectIds}
@@ -577,15 +708,16 @@ export const ExecutionReportsSurface = ({
                   checked={generalBacklogAllowed}
                   onChange={(event) => setGeneralBacklogAllowed(event.target.checked)}
                 />
-                Include General Backlog explicitly
+                Uwzględnij jawnie backlog ogólny
               </label>
               {!scopeProjectIds.trim() && !generalBacklogAllowed && (
                 <p role="alert" className="mt-2 text-c-warning">
-                  Explicit project scope required. Tenant-wide default is forbidden.
+                  Wymagany jest jawny zakres projektów. Domyślny zakres całej organizacji jest
+                  niedozwolony.
                 </p>
               )}
               <label className="mt-2 block text-xs">
-                Independent publish rationale
+                Uzasadnienie niezależnego zatwierdzenia
                 <textarea
                   aria-label="Report Definition publish rationale"
                   value={definitionRationale}
@@ -599,7 +731,7 @@ export const ExecutionReportsSurface = ({
                   disabled={!scopeProjectIds.trim() && !generalBacklogAllowed}
                   onClick={() => void createDefinition()}
                 >
-                  Create Definition
+                  Utwórz definicję
                 </button>
                 <button
                   className="btn-secondary"
@@ -611,7 +743,7 @@ export const ExecutionReportsSurface = ({
                   }
                   onClick={() => void definitionAction('UPDATE_DRAFT')}
                 >
-                  Update draft
+                  Zapisz szkic
                 </button>
                 <button
                   className="btn-secondary"
@@ -622,7 +754,7 @@ export const ExecutionReportsSurface = ({
                   }
                   onClick={() => void definitionAction('VALIDATE')}
                 >
-                  Validate Definition
+                  Zweryfikuj definicję
                 </button>
                 <button
                   className="btn-secondary"
@@ -633,7 +765,7 @@ export const ExecutionReportsSurface = ({
                   }
                   onClick={() => void definitionAction('PUBLISH')}
                 >
-                  Publish Definition
+                  Opublikuj definicję
                 </button>
                 <button
                   className="btn-secondary"
@@ -645,12 +777,12 @@ export const ExecutionReportsSurface = ({
                   }
                   onClick={() => void definitionAction('CREATE_VERSION')}
                 >
-                  Create next version
+                  Utwórz kolejną wersję
                 </button>
               </div>
               {write === 'FAILED' && (
                 <p role="alert" className="mt-2 text-c-danger">
-                  Scope is empty, stale or unauthorized. Definition was not changed.
+                  Zakres jest pusty, nieaktualny albo niedozwolony. Definicja nie została zmieniona.
                 </p>
               )}
             </section>
@@ -771,88 +903,163 @@ export const ExecutionReportsSurface = ({
               Zamknij
             </button>
           </div>
-          <label className="mb-2 block text-xs">
-            Exact PUBLISHED Definition version
-            <select
-              aria-label="ReportRun published Definition version"
-              value={publishedDefinitionRef}
-              onChange={(event) => setPublishedDefinitionRef(event.target.value)}
-              className="block w-full rounded border border-c-border bg-c-surface p-2"
-            >
-              <option value="">Select PUBLISHED Definition version</option>
-              {definitions.flatMap((definition) =>
-                (definition.definition.versions ?? [])
-                  .filter((version: any) => version.state === 'PUBLISHED')
-                  .filter((version: any) => version.scope?.projectIds)
-                  .map((version: any) => (
-                    <option
-                      key={`${definition.id}@${version.definitionVersion}`}
-                      value={`${definition.id}@${version.definitionVersion}`}
-                    >
-                      {definition.title} · {definition.id} v{version.definitionVersion}
-                    </option>
-                  ))
-              )}
-            </select>
-          </label>
-          <textarea
-            aria-label="ReportRun draft JSON"
-            value={draftJson}
-            onChange={(e) => setDraftJson(e.target.value)}
-            className="min-h-36 w-full rounded border border-c-border bg-c-surface p-2 font-mono text-xs"
-          />
-          <button
-            className="btn-secondary"
-            disabled={!publishedDefinitionRef}
-            onClick={() => void create()}
-          >
-            Create or refresh ReportRun
-          </button>
-          <div className="mt-3 grid grid-cols-1 items-start gap-2 lg:grid-cols-2">
-            <button className="btn-secondary" onClick={() => void transition('VALIDATE')}>
-              Validate sources
+          {selected?.source.status === 'PUBLISHED' && !refreshEditorOpen && (
+            <button className="btn-primary mb-3" onClick={() => setRefreshEditorOpen(true)}>
+              Odśwież jako nowy szkic
             </button>
-            <button className="btn-secondary" onClick={() => void transition('FREEZE')}>
-              Freeze snapshot
-            </button>
-            <textarea
-              aria-label="Report approval rationale"
-              value={rationale}
-              onChange={(e) => setRationale(e.target.value)}
-              className="min-h-20 w-full rounded border border-c-border bg-c-surface p-2"
-            />
-            <button className="btn-secondary" onClick={() => void transition('DECIDE', 'APPROVED')}>
-              Independent approve
-            </button>
-            <button className="btn-secondary" onClick={() => void transition('DECIDE', 'RETURNED')}>
-              Return report
-            </button>
-          </div>
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
-            {Object.keys(distribution).map((k) => (
-              <label key={k} className="min-w-0 text-xs">
-                {k}
-                <input
-                  aria-label={`Report distribution ${k}`}
-                  type={k === 'distributedAt' ? 'datetime-local' : 'text'}
-                  value={(distribution as any)[k]}
-                  onChange={(e) => setDistribution((v) => ({ ...v, [k]: e.target.value }))}
-                  className="block w-full min-w-0 rounded border border-c-border bg-c-surface p-2"
-                />
+          )}
+          {(!selected || selected.source.status !== 'PUBLISHED' || refreshEditorOpen) && (
+            <>
+              <label className="mb-2 block text-xs">
+                Opublikowana definicja raportu
+                <select
+                  aria-label="ReportRun published Definition version"
+                  value={publishedDefinitionRef}
+                  onChange={(event) => setPublishedDefinitionRef(event.target.value)}
+                  className="block w-full rounded border border-c-border bg-c-surface p-2"
+                >
+                  <option value="">Wybierz opublikowaną definicję</option>
+                  {definitions.flatMap((definition) =>
+                    (definition.definition.versions ?? [])
+                      .filter((version: any) => version.state === 'PUBLISHED')
+                      .filter((version: any) => version.scope?.projectIds)
+                      .map((version: any) => (
+                        <option
+                          key={`${definition.id}@${version.definitionVersion}`}
+                          value={`${definition.id}@${version.definitionVersion}`}
+                        >
+                          {definition.title} · {definition.id} v{version.definitionVersion}
+                        </option>
+                      ))
+                  )}
+                </select>
               </label>
-            ))}
-          </div>
-          <button
-            className="btn-primary"
-            disabled={selected?.source.status !== 'APPROVED'}
-            onClick={() => void transition('PUBLISH')}
-          >
-            Publish/share frozen approved snapshot
-          </button>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                {[
+                  ['reportRunId', 'Identyfikator raportu', 'text'],
+                  ['periodStart', 'Początek okresu', 'datetime-local'],
+                  ['periodEnd', 'Koniec okresu', 'datetime-local'],
+                  ['asOf', 'Stan danych na', 'datetime-local'],
+                ].map(([key, label, type]) => (
+                  <label key={key} className="text-xs">
+                    {label}
+                    <input
+                      aria-label={`ReportRun ${key}`}
+                      type={type}
+                      value={runDraft[key as keyof typeof runDraft]}
+                      onChange={(event) =>
+                        setRunDraft((current) => ({ ...current, [key]: event.target.value }))
+                      }
+                      className="block w-full rounded border border-c-border bg-c-surface p-2"
+                    />
+                  </label>
+                ))}
+                <label className="text-xs sm:col-span-2">
+                  Odbiorcy — jedna grupa w wierszu
+                  <textarea
+                    aria-label="ReportRun audience"
+                    value={runDraft.audience}
+                    onChange={(event) =>
+                      setRunDraft((current) => ({ ...current, audience: event.target.value }))
+                    }
+                    className="block min-h-20 w-full rounded border border-c-border bg-c-surface p-2"
+                  />
+                </label>
+                <label className="text-xs sm:col-span-2 xl:col-span-1">
+                  Zakres — jedna referencja w wierszu
+                  <textarea
+                    aria-label="ReportRun scope refs"
+                    value={runDraft.scopeRefs}
+                    onChange={(event) =>
+                      setRunDraft((current) => ({ ...current, scopeRefs: event.target.value }))
+                    }
+                    className="block min-h-20 w-full rounded border border-c-border bg-c-surface p-2"
+                  />
+                </label>
+              </div>
+              <label className="mt-3 flex items-center gap-2 text-xs">
+                <input
+                  type="checkbox"
+                  checked={advancedRunContract}
+                  onChange={(event) => setAdvancedRunContract(event.target.checked)}
+                />
+                Zaawansowany kontrakt JSON
+              </label>
+              {advancedRunContract && (
+                <textarea
+                  aria-label="ReportRun draft JSON"
+                  value={draftJson}
+                  onChange={(e) => setDraftJson(e.target.value)}
+                  className="mt-2 min-h-36 w-full rounded border border-c-border bg-c-surface p-2 font-mono text-xs"
+                />
+              )}
+              <button
+                className="btn-primary mt-3"
+                disabled={
+                  !publishedDefinitionRef ||
+                  (!advancedRunContract &&
+                    (!runDraft.reportRunId ||
+                      !runDraft.periodStart ||
+                      !runDraft.periodEnd ||
+                      !runDraft.asOf))
+                }
+                onClick={() => void create()}
+              >
+                Utwórz lub odśwież raport
+              </button>
+              <div className="mt-3 grid grid-cols-1 items-start gap-2 lg:grid-cols-2">
+                <button className="btn-secondary" onClick={() => void transition('VALIDATE')}>
+                  Zweryfikuj źródła
+                </button>
+                <button className="btn-secondary" onClick={() => void transition('FREEZE')}>
+                  Zamroź migawkę
+                </button>
+                <textarea
+                  aria-label="Report approval rationale"
+                  value={rationale}
+                  onChange={(e) => setRationale(e.target.value)}
+                  className="min-h-20 w-full rounded border border-c-border bg-c-surface p-2"
+                />
+                <button
+                  className="btn-secondary"
+                  onClick={() => void transition('DECIDE', 'APPROVED')}
+                >
+                  Zatwierdź niezależnie
+                </button>
+                <button
+                  className="btn-secondary"
+                  onClick={() => void transition('DECIDE', 'RETURNED')}
+                >
+                  Zwróć raport
+                </button>
+              </div>
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
+                {Object.keys(distribution).map((k) => (
+                  <label key={k} className="min-w-0 text-xs">
+                    {distributionLabels[k] ?? k}
+                    <input
+                      aria-label={`Report distribution ${k}`}
+                      type={k === 'distributedAt' ? 'datetime-local' : 'text'}
+                      value={(distribution as any)[k]}
+                      onChange={(e) => setDistribution((v) => ({ ...v, [k]: e.target.value }))}
+                      className="block w-full min-w-0 rounded border border-c-border bg-c-surface p-2"
+                    />
+                  </label>
+                ))}
+              </div>
+              <button
+                className="btn-primary"
+                disabled={selected?.source.status !== 'APPROVED'}
+                onClick={() => void transition('PUBLISH')}
+              >
+                Opublikuj zatwierdzoną migawkę
+              </button>
+            </>
+          )}
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
             {Object.keys(followUp).map((k) => (
               <label key={k} className="min-w-0 text-xs">
-                {k}
+                {followUpLabels[k] ?? k}
                 {k === 'executionCaseId' ? (
                   <select
                     aria-label="Report follow-up executionCaseId"
@@ -862,7 +1069,7 @@ export const ExecutionReportsSurface = ({
                     }
                     className="block w-full rounded border border-c-border bg-c-surface p-2"
                   >
-                    <option value="">Select Execution Case</option>
+                    <option value="">Wybierz realizację</option>
                     {executionCases.map((item) => (
                       <option key={item.executionCaseId}>{item.executionCaseId}</option>
                     ))}
@@ -884,25 +1091,26 @@ export const ExecutionReportsSurface = ({
             disabled={!['APPROVED', 'PUBLISHED'].includes(selected?.source.status ?? '')}
             onClick={() => void createAndLinkFollowUp()}
           >
-            Create and link canonical follow-up Task
+            Utwórz i powiąż zadanie następcze
           </button>
-          {write === 'FAILED' && <p role="alert">No ReportRun transition was applied.</p>}
+          {write === 'FAILED' && <p role="alert">Nie zapisano zmiany raportu.</p>}
           {receipt && (
             <div role="status" className="rounded border border-c-success/40 p-3">
-              <strong>{receipt.status}</strong>
-              <p>Hash {receipt.contentHash ?? 'Not frozen'}</p>
+              <strong>{reportStatusLabel(receipt.status)}</strong>
+              <p>Hash migawki: {receipt.contentHash ?? 'Jeszcze nie zamrożono'}</p>
               {receipt.exportPackage && (
-                <p>Frozen JSON package retained in canonical ReportRun; no direct download.</p>
+                <p>Zamrożony pakiet pozostaje w kanonicznym raporcie i jest odtwarzalny.</p>
               )}
               {receipt.distributionReceipts?.map((d: any) => (
                 <p key={d.receiptId}>
-                  Distribution {d.receiptId} · {d.audience} · hash {d.contentHash}
+                  Dystrybucja {d.receiptId} · {d.audience} · hash {d.contentHash}
                 </p>
               ))}
               {receipt.followUpTaskRef && (
                 <p>
-                  Follow-up Task {receipt.followUpTaskRef.taskId} v{receipt.followUpTaskRef.version}{' '}
-                  · receipt {receipt.followUpTaskRef.receiptClientRequestId}
+                  Zadanie następcze {receipt.followUpTaskRef.taskId} v
+                  {receipt.followUpTaskRef.version} · potwierdzenie{' '}
+                  {receipt.followUpTaskRef.receiptClientRequestId}
                 </p>
               )}
             </div>

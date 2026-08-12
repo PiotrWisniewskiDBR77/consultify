@@ -19,6 +19,47 @@ import {
 import { type CanonicalMenu3Contract, countPresets } from './canonicalMenu3';
 
 type K = 'KNOWN' | 'ESTIMATED' | 'UNKNOWN' | 'UNCONFIRMED';
+const knowledgeLabel: Record<K, string> = {
+  KNOWN: 'Potwierdzone',
+  ESTIMATED: 'Szacowane',
+  UNKNOWN: 'Brak danych',
+  UNCONFIRMED: 'Niepotwierdzone',
+};
+const confidenceLabel: Record<string, string> = {
+  HIGH: 'Wysoka',
+  MEDIUM: 'Średnia',
+  LOW: 'Niska',
+  UNKNOWN: 'Brak danych',
+};
+const scenarioStateLabel: Record<string, string> = {
+  DRAFT: 'Szkic',
+  PUBLISHED: 'Opublikowany',
+  SUPERSEDED: 'Zastąpiony',
+};
+const rowKindLabel: Record<string, string> = {
+  PERIOD: 'Okres',
+  CONSTRAINT: 'Ograniczenie',
+};
+const criticalityLabel: Record<string, string> = {
+  KNOWN: 'Oceniona',
+  UNKNOWN: 'Do oceny',
+};
+const actorLabel = (value: string) =>
+  ({
+    'resource-manager': 'Resource Manager',
+    'capacity-owner': 'Właściciel obciążenia',
+    'controls-engineer': 'Controls Engineer',
+    'role:controls-engineer': 'Controls Engineer',
+  })[value] ?? value.replace(/^role:/, '').replaceAll('-', ' ');
+const formatPeriodDate = (value: string) => {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return 'UNKNOWN';
+  return new Intl.DateTimeFormat('pl-PL', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  }).format(date);
+};
 type Range = {
   knowledgeState: K;
   low: number | null;
@@ -219,6 +260,7 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract> = ({
     state: 'IDLE' | 'PENDING' | 'APPLIED' | 'FAILED';
     message: string;
   }>({ state: 'IDLE', message: '' });
+  const [commitmentEditorOpen, setCommitmentEditorOpen] = useState(false);
   const ids = useRef(new Map<string, string>());
   const load = useCallback(async () => {
     setState('LOADING');
@@ -348,6 +390,7 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract> = ({
       const version = String(receipt.aggregateVersion ?? Number(commitment.version) + 1);
       setCommitment((value) => ({ ...value, version }));
       setCommitmentWrite({ state: 'APPLIED', message: `${outcome} · v${version}` });
+      if (outcome === 'CONFIRMED') setCommitmentEditorOpen(false);
     } catch {
       setCommitmentWrite({ state: 'FAILED', message: 'Resource-manager decision failed; retry.' });
     }
@@ -390,9 +433,9 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract> = ({
   return (
     <section aria-label="Capacity scenarios" className="p-4">
       <header className="mb-3">
-        <h2 className="font-semibold">Capacity / Obciążenie</h2>
+        <h2 className="font-semibold">Obciążenie</h2>
         <p className="text-xs text-c-text-muted">
-          Scenario ranges are evidence states, not utilization or operational allocation.
+          Zakresy pokazują stan wiedzy i dowodów, a nie pozorną dokładność wykorzystania zasobów.
         </p>
       </header>
       <div className="mb-3 flex min-w-0 flex-wrap items-center gap-2">
@@ -411,7 +454,7 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract> = ({
           >
             {rows.map((row) => (
               <option key={row.id} value={row.id}>
-                {row.title} · {row.state} · v{row.version}
+                {row.title} · {scenarioStateLabel[row.state] ?? row.state} · v{row.version}
               </option>
             ))}
           </select>
@@ -432,28 +475,32 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract> = ({
         onOpenFull={showWorkspace}
         itemIds={visibleConstraintRows.map((row) => row.id)}
         getItemById={(id) => visibleConstraintRows.find((row) => row.id === id) ?? null}
+        previewOpen={!workspaceOpen && Boolean(selectedConstraintId)}
         renderPreview={(row) => (
           <StandardPreview
             embedded
             title={row.title}
             onClose={() => setSelectedConstraintId(null)}
             onOpenFull={showWorkspace}
+            openLabel="Otwórz narzędzia obciążenia"
             meta={{
               pills: [
-                { label: row.kind, tone: 'neutral' },
-                { label: row.criticality, tone: 'neutral' },
-                { label: row.confidence, tone: 'neutral' },
+                { label: rowKindLabel[row.kind] ?? row.kind, tone: 'neutral' },
+                { label: criticalityLabel[row.criticality] ?? row.criticality, tone: 'neutral' },
+                { label: confidenceLabel[row.confidence] ?? row.confidence, tone: 'neutral' },
               ],
-              trailing: <span>{row.owner}</span>,
+              trailing: <span>{actorLabel(row.owner)}</span>,
             }}
             details={{
-              label: 'Capacity constraint or period',
-              text: row.detail || 'Evidence ranges only; UNKNOWN is not zero or utilization.',
+              label: 'Stan obciążenia i dowodów',
+              text:
+                row.detail ||
+                'Zakresy są oparte na dostępnych dowodach; brak danych nie oznacza zera.',
               properties: [
-                { id: 'demand', label: 'Demand knowledge', value: row.demand },
-                { id: 'supply', label: 'Supply knowledge', value: row.supply },
-                { id: 'gap', label: 'Gap', value: row.gap },
-                { id: 'owner', label: 'Owner', value: row.owner },
+                { id: 'demand', label: 'Zapotrzebowanie', value: knowledgeLabel[row.demand as K] },
+                { id: 'supply', label: 'Dostępność', value: knowledgeLabel[row.supply as K] },
+                { id: 'gap', label: 'Luka', value: row.gap },
+                { id: 'owner', label: 'Właściciel', value: actorLabel(row.owner) },
               ],
             }}
             ai={{
@@ -473,7 +520,7 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract> = ({
                 {
                   id: 'open-workspace',
                   variant: 'neutral',
-                  label: 'Open workspace',
+                  label: 'Otwórz narzędzia obciążenia',
                   icon: Eye,
                   shortcut: 'O',
                   onClick: showWorkspace,
@@ -485,14 +532,50 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract> = ({
       >
         <StandardTable
           columns={[
-            { id: 'title', label: 'Period / constraint', sortable: true, width: '240px' },
-            { id: 'kind', label: 'Type', sortable: true, filterable: true },
-            { id: 'demand', label: 'Demand knowledge', sortable: true, filterable: true },
-            { id: 'supply', label: 'Supply knowledge', sortable: true, filterable: true },
-            { id: 'gap', label: 'Gap', sortable: true },
-            { id: 'confidence', label: 'Confidence', sortable: true, filterable: true },
-            { id: 'criticality', label: 'Criticality', sortable: true, filterable: true },
-            { id: 'owner', label: 'Owner', sortable: true, filterable: true },
+            { id: 'title', label: 'Okres / ograniczenie', sortable: true, width: '240px' },
+            {
+              id: 'kind',
+              label: 'Rodzaj',
+              sortable: true,
+              filterable: true,
+              render: (row) => rowKindLabel[row.kind] ?? row.kind,
+            },
+            {
+              id: 'demand',
+              label: 'Zapotrzebowanie',
+              sortable: true,
+              filterable: true,
+              render: (row) => knowledgeLabel[row.demand as K],
+            },
+            {
+              id: 'supply',
+              label: 'Dostępność',
+              sortable: true,
+              filterable: true,
+              render: (row) => knowledgeLabel[row.supply as K],
+            },
+            { id: 'gap', label: 'Luka', sortable: true },
+            {
+              id: 'confidence',
+              label: 'Pewność',
+              sortable: true,
+              filterable: true,
+              render: (row) => confidenceLabel[row.confidence] ?? row.confidence,
+            },
+            {
+              id: 'criticality',
+              label: 'Krytyczność',
+              sortable: true,
+              filterable: true,
+              render: (row) => criticalityLabel[row.criticality] ?? row.criticality,
+            },
+            {
+              id: 'owner',
+              label: 'Właściciel',
+              sortable: true,
+              filterable: true,
+              render: (row) => actorLabel(row.owner),
+            },
           ]}
           data={visibleConstraintRows}
           selectedRowId={selectedConstraintId}
@@ -502,7 +585,7 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract> = ({
             primary: [
               {
                 id: 'open-workspace',
-                label: 'Open workspace',
+                label: 'Otwórz narzędzia obciążenia',
                 icon: Eye,
                 onClick: showWorkspace,
               },
@@ -528,10 +611,10 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract> = ({
         >
           <div className="flex flex-wrap justify-between gap-3">
             <div>
-              <h3 className="font-semibold">Capacity Scenario Workbench</h3>
+              <h3 className="font-semibold">Narzędzia obciążenia</h3>
               <p className="text-xs">
-                Exact Plan {scenario.planScenarioId} v{scenario.planScenarioVersion} ·{' '}
-                {scenario.windowUnit} · {scenario.timezone}
+                Plan źródłowy · v{scenario.planScenarioVersion} · {scenario.windowUnit} ·{' '}
+                {scenario.timezone}
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -548,64 +631,47 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract> = ({
                 disabled={scenario.status !== 'DRAFT' || writeState === 'SAVING'}
                 onClick={() => void write('UPDATE')}
               >
-                Save draft
+                Zapisz szkic
               </button>
               <button
                 className="btn-primary"
                 disabled={scenario.status !== 'DRAFT' || writeState === 'SAVING'}
                 onClick={() => void write('PUBLISH')}
               >
-                Publish
+                Opublikuj
               </button>
             </div>
-          </div>
-          <div className="mt-4">
-            <StandardTable
-              columns={[
-                { id: 'title', label: 'Period / constraint', sortable: true },
-                { id: 'kind', label: 'Type', sortable: true },
-                { id: 'demand', label: 'Demand knowledge', sortable: true },
-                { id: 'supply', label: 'Supply knowledge', sortable: true },
-                { id: 'gap', label: 'Gap', sortable: true },
-                { id: 'confidence', label: 'Confidence', sortable: true },
-                { id: 'criticality', label: 'Criticality', sortable: true },
-                { id: 'owner', label: 'Owner', sortable: true },
-              ]}
-              data={visibleConstraintRows}
-              persistKey="initiatives.capacity-constraints.v1"
-              empty={{
-                title: 'No matching capacity records',
-                description: 'No constraint or period matches this preset.',
-              }}
-            />
           </div>
           {(writeState === 'CONFLICT' || writeState === 'FAILED') && (
             <p role="alert" className="text-c-danger">
               {writeState === 'CONFLICT'
-                ? 'Scenario changed; reload required.'
-                : 'No change was saved.'}
+                ? 'Wariant został zmieniony. Odśwież dane przed ponowną próbą.'
+                : 'Nie zapisano zmian.'}
             </p>
           )}
           <div className="mt-4 space-y-3">
             {scenario.periods.map((p) => (
               <article key={p.periodId} className="rounded border border-c-border p-3">
-                <strong>{p.periodId}</strong> {p.start} → {p.end}
+                <strong>{p.periodId}</strong>{' '}
+                <span className="text-sm text-c-text-muted">
+                  {formatPeriodDate(p.start)} – {formatPeriodDate(p.end)}
+                </span>
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  <RangeView label="Demand" value={p.demand} />
-                  <RangeView label="Supply" value={p.supply} />
+                  <RangeView label="Zapotrzebowanie" value={p.demand} />
+                  <RangeView label="Dostępność" value={p.supply} />
                 </div>
               </article>
             ))}
             <div>
-              <h4 className="font-medium">Constraints</h4>
+              <h4 className="font-medium">Ograniczenia</h4>
               {scenario.constraints.map((c) => (
                 <p key={c.constraintId}>
-                  {c.state} · {c.detail} · owner {c.ownerId}
+                  {knowledgeLabel[c.state]} · {c.detail} · właściciel {actorLabel(c.ownerId)}
                 </p>
               ))}
             </div>
             <div>
-              <h4 className="font-medium">Proposed assignments</h4>
+              <h4 className="font-medium">Proponowane przydziały</h4>
               {scenario.proposedAssignments.map((a) => (
                 <button
                   key={a.assignmentId}
@@ -618,8 +684,8 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract> = ({
                     }))
                   }
                 >
-                  {a.assignmentId} · {a.initiativeId} · {a.resourceOrRoleId} ·{' '}
-                  {a.demand.knowledgeState}
+                  {actorLabel(a.resourceOrRoleId)} · okresy {a.periodIds.join(', ')} ·{' '}
+                  {knowledgeLabel[a.demand.knowledgeState]}
                 </button>
               ))}
             </div>
@@ -632,88 +698,114 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract> = ({
               onSelect={(comparison, optionId) => void selectOption(comparison, optionId)}
               saving={writeState === 'SAVING'}
             />
-            <div className="grid grid-cols-1 gap-2 border-t border-c-border pt-3 sm:grid-cols-2">
-              {(
-                [
-                  'commitmentId',
-                  'assignmentId',
-                  'initiativeId',
-                  'resourceManagerId',
-                  'assigneeId',
-                  'expiresAt',
-                  'version',
-                ] as const
-              ).map((k) => (
-                <label key={k} className="text-xs">
-                  {k}
-                  <input
-                    aria-label={`Capacity ${k}`}
-                    type={k === 'expiresAt' ? 'datetime-local' : 'text'}
+            <div className="flex items-center justify-between border-t border-c-border pt-3">
+              <div>
+                <h4 className="font-medium">Zobowiązanie zasobowe</h4>
+                <p className="text-xs text-c-text-muted">
+                  Wniosek, akceptacja wskazanej osoby i decyzja Resource Managera są odrębnymi
+                  krokami.
+                </p>
+              </div>
+              <button
+                type="button"
+                className="btn-secondary"
+                onClick={() => setCommitmentEditorOpen((open) => !open)}
+              >
+                {commitmentEditorOpen ? 'Zamknij zobowiązanie' : 'Zarządzaj zobowiązaniem'}
+              </button>
+            </div>
+            {commitmentEditorOpen && (
+              <div className="grid grid-cols-1 gap-2 rounded border border-c-border p-3 sm:grid-cols-2">
+                {(
+                  [
+                    'commitmentId',
+                    'assignmentId',
+                    'initiativeId',
+                    'resourceManagerId',
+                    'assigneeId',
+                    'expiresAt',
+                    'version',
+                  ] as const
+                ).map((k) => (
+                  <label key={k} className="text-xs">
+                    {k}
+                    <input
+                      aria-label={`Capacity ${k}`}
+                      type={k === 'expiresAt' ? 'datetime-local' : 'text'}
+                      className="block w-full rounded border border-c-border bg-c-background p-2"
+                      value={commitment[k]}
+                      onChange={(e) => setCommitment((v) => ({ ...v, [k]: e.target.value }))}
+                    />
+                  </label>
+                ))}
+                <label className="text-xs">
+                  conditions
+                  <textarea
+                    aria-label="Capacity commitment conditions"
                     className="block w-full rounded border border-c-border bg-c-background p-2"
-                    value={commitment[k]}
-                    onChange={(e) => setCommitment((v) => ({ ...v, [k]: e.target.value }))}
+                    value={commitment.conditions}
+                    onChange={(e) => setCommitment((v) => ({ ...v, conditions: e.target.value }))}
                   />
                 </label>
-              ))}
-              <label className="text-xs">
-                conditions
-                <textarea
-                  aria-label="Capacity commitment conditions"
-                  className="block w-full rounded border border-c-border bg-c-background p-2"
-                  value={commitment.conditions}
-                  onChange={(e) => setCommitment((v) => ({ ...v, conditions: e.target.value }))}
-                />
-              </label>
-              <label className="text-xs">
-                rationale
-                <textarea
-                  aria-label="Capacity commitment rationale"
-                  className="block w-full rounded border border-c-border bg-c-background p-2"
-                  value={commitment.rationale}
-                  onChange={(e) => setCommitment((v) => ({ ...v, rationale: e.target.value }))}
-                />
-              </label>
-              <div className="col-span-2 flex flex-wrap gap-2">
-                <button
-                  className="btn-secondary"
-                  disabled={commitmentWrite.state === 'PENDING'}
-                  onClick={() => void request()}
-                >
-                  Request commitment
-                </button>
-                <button
-                  className="btn-secondary"
-                  disabled={commitmentWrite.state === 'PENDING'}
-                  onClick={() => void accept()}
-                >
-                  Assignee accept
-                </button>
-                <button
-                  className="btn-secondary"
-                  disabled={commitmentWrite.state === 'PENDING'}
-                  onClick={() => void decide('CONFIRMED')}
-                >
-                  RM confirm
-                </button>
-                <button
-                  className="btn-secondary"
-                  onClick={() => void decide('CONDITIONALLY_CONFIRMED')}
-                >
-                  RM conditional
-                </button>
-                <button className="btn-secondary" onClick={() => void decide('DECLINED')}>
-                  RM decline
-                </button>
+                <label className="text-xs">
+                  rationale
+                  <textarea
+                    aria-label="Capacity commitment rationale"
+                    className="block w-full rounded border border-c-border bg-c-background p-2"
+                    value={commitment.rationale}
+                    onChange={(e) => setCommitment((v) => ({ ...v, rationale: e.target.value }))}
+                  />
+                </label>
+                <div className="col-span-2 flex flex-wrap gap-2">
+                  <button
+                    className="btn-secondary"
+                    aria-label="Request commitment"
+                    disabled={commitmentWrite.state === 'PENDING'}
+                    onClick={() => void request()}
+                  >
+                    Wyślij wniosek
+                  </button>
+                  <button
+                    className="btn-secondary"
+                    aria-label="Assignee accept"
+                    disabled={commitmentWrite.state === 'PENDING'}
+                    onClick={() => void accept()}
+                  >
+                    Akceptacja wskazanej osoby
+                  </button>
+                  <button
+                    className="btn-secondary"
+                    aria-label="RM confirm"
+                    disabled={commitmentWrite.state === 'PENDING'}
+                    onClick={() => void decide('CONFIRMED')}
+                  >
+                    Potwierdź dostępność
+                  </button>
+                  <button
+                    className="btn-secondary"
+                    aria-label="RM conditional"
+                    onClick={() => void decide('CONDITIONALLY_CONFIRMED')}
+                  >
+                    Potwierdź warunkowo
+                  </button>
+                  <button
+                    className="btn-secondary"
+                    aria-label="RM decline"
+                    onClick={() => void decide('DECLINED')}
+                  >
+                    Odrzuć dostępność
+                  </button>
+                </div>
               </div>
-              {commitmentWrite.message ? (
-                <p
-                  className="col-span-2 text-xs text-c-text-muted"
-                  role={commitmentWrite.state === 'FAILED' ? 'alert' : 'status'}
-                >
-                  {commitmentWrite.message}
-                </p>
-              ) : null}
-            </div>
+            )}
+            {commitmentWrite.message ? (
+              <p
+                className="text-xs text-c-text-muted"
+                role={commitmentWrite.state === 'FAILED' ? 'alert' : 'status'}
+              >
+                {commitmentWrite.message}
+              </p>
+            ) : null}
           </div>
         </section>
       )}
@@ -723,24 +815,24 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract> = ({
 const RangeView = ({ label, value }: { label: string; value: Range }) => (
   <div>
     <h5>
-      {label}: {value.knowledgeState}
+      {label}: {knowledgeLabel[value.knowledgeState]}
     </h5>
     <p>
       {value.knowledgeState === 'UNKNOWN'
-        ? 'UNKNOWN — no numeric value'
+        ? 'UNKNOWN — brak potwierdzonej wartości'
         : `${value.low} / ${value.base} / ${value.high}`}
     </p>
     <p className="text-xs text-c-text-muted">
-      {value.sourceRef ? `${value.sourceRef} v${value.sourceVersion}` : value.reason} ·{' '}
-      {value.confidence} · owner {value.ownerId}
+      {knowledgeLabel[value.knowledgeState]} · pewność {value.confidence} · właściciel{' '}
+      {value.ownerId}
     </p>
   </div>
 );
 
 const optionLabels: Record<CapacityOption['kind'], string> = {
-  RESEQUENCE: 'Resequence',
-  SCOPE_SPLIT: 'Split scope',
-  ADD_CAPACITY: 'Add capacity',
+  RESEQUENCE: 'Zmień kolejność',
+  SCOPE_SPLIT: 'Podziel zakres',
+  ADD_CAPACITY: 'Zwiększ dostępność',
 };
 
 const OptionImpact = ({ label, value }: { label: string; value: OptionRange }) => (
@@ -748,7 +840,7 @@ const OptionImpact = ({ label, value }: { label: string; value: OptionRange }) =
     <dt className="text-xs font-medium">{label}</dt>
     <dd className="text-sm">
       {value.knowledgeState === 'UNKNOWN' || value.knowledgeState === 'UNCONFIRMED'
-        ? `${value.knowledgeState} — no numeric value`
+        ? `${value.knowledgeState} — brak potwierdzonej wartości`
         : `${value.low} / ${value.base} / ${value.high} ${value.unit}`}
     </dd>
     <dd className="text-xs text-c-text-muted">
@@ -776,14 +868,14 @@ const CapacityOptionsPanel = ({
   <section aria-label="Capacity options comparison" className="border-t border-c-border pt-4">
     <div className="flex flex-wrap items-end justify-between gap-3">
       <div>
-        <h4 className="font-medium">Capacity options</h4>
+        <h4 className="font-medium">Opcje rozwiązania ograniczeń</h4>
         <p className="text-xs text-c-text-muted">
-          Comparison only. Selection creates a governed next input; it does not change Plan,
-          baseline, allocation or commitment.
+          To jest wyłącznie porównanie. Wybór tworzy kontrolowany wniosek do kolejnej decyzji i nie
+          zmienia samodzielnie planu, bazowej wersji ani przydziału.
         </p>
       </div>
       <label className="text-xs">
-        Governed next input
+        Kolejna kontrolowana decyzja
         <select
           aria-label="Capacity governed next input"
           className="ml-2 rounded border border-c-border bg-c-background p-2"
@@ -792,13 +884,15 @@ const CapacityOptionsPanel = ({
             onNextInputKind(event.target.value as 'MATERIAL_CHANGE' | 'SCHEDULE_DECISION')
           }
         >
-          <option value="MATERIAL_CHANGE">Material Change</option>
-          <option value="SCHEDULE_DECISION">Schedule Decision</option>
+          <option value="MATERIAL_CHANGE">Zmiana planu</option>
+          <option value="SCHEDULE_DECISION">Decyzja harmonogramowa</option>
         </select>
       </label>
     </div>
     {comparisons.length === 0 ? (
-      <p className="mt-3 text-sm text-c-text-muted">No persisted comparison for this scenario.</p>
+      <p className="mt-3 text-sm text-c-text-muted">
+        Brak zapisanego porównania dla tego wariantu.
+      </p>
     ) : (
       comparisons.map((comparison) => (
         <article key={comparison.comparisonId} className="mt-3 rounded border border-c-border p-3">
@@ -815,38 +909,38 @@ const CapacityOptionsPanel = ({
             {comparison.options.map((option) => (
               <section
                 key={option.optionId}
-                aria-label={`Capacity option ${optionLabels[option.kind]}`}
+                aria-label={`Opcja obciążenia: ${optionLabels[option.kind]}`}
                 className={`rounded border p-3 ${comparison.selectedOptionId === option.optionId ? 'border-c-focus-solid' : 'border-c-border'}`}
               >
                 <h5 className="font-semibold">{optionLabels[option.kind]}</h5>
                 <p className="text-xs text-c-text-muted">{option.rationale}</p>
                 <dl className="mt-2 grid grid-cols-2 gap-2">
-                  <OptionImpact label="Date" value={option.impact.date} />
-                  <OptionImpact label="Scope" value={option.impact.scope} />
-                  <OptionImpact label="Cost" value={option.impact.cost} />
-                  <OptionImpact label="Risk" value={option.impact.risk} />
+                  <OptionImpact label="Termin" value={option.impact.date} />
+                  <OptionImpact label="Zakres" value={option.impact.scope} />
+                  <OptionImpact label="Koszt" value={option.impact.cost} />
+                  <OptionImpact label="Ryzyko" value={option.impact.risk} />
                 </dl>
                 <div className="mt-2 text-xs">
-                  <strong>Assumptions</strong>
+                  <strong>Założenia</strong>
                   {option.assumptions.map((assumption) => (
                     <p key={`${option.optionId}:${assumption.assumption}`}>
-                      {assumption.knowledgeState} · {assumption.assumption} · owner{' '}
+                      {assumption.knowledgeState} · {assumption.assumption} · właściciel{' '}
                       {assumption.ownerId} · {assumption.sourceRef.ref} v
                       {assumption.sourceRef.version}
                     </p>
                   ))}
                   <p>
-                    Memberships:{' '}
+                    Inicjatywy:{' '}
                     {option.affectedMemberships
                       .map((item) => `${item.initiativeId} v${item.membershipVersion}`)
-                      .join(', ') || 'none'}
+                      .join(', ') || 'brak'}
                   </p>
-                  <p>Periods: {option.affectedPeriods.join(', ') || 'none'}</p>
+                  <p>Okresy: {option.affectedPeriods.join(', ') || 'brak'}</p>
                   <p>
-                    Resources:{' '}
+                    Zasoby:{' '}
                     {option.affectedResources
                       .map((item) => `${item.resourceRef} v${item.version}`)
-                      .join(', ') || 'none'}
+                      .join(', ') || 'brak'}
                   </p>
                 </div>
                 <button
@@ -856,16 +950,16 @@ const CapacityOptionsPanel = ({
                   onClick={() => onSelect(comparison, option.optionId)}
                 >
                   {comparison.selectedOptionId === option.optionId
-                    ? 'Selected governed input'
-                    : 'Select as governed input'}
+                    ? 'Wybrano do dalszej decyzji'
+                    : 'Wybierz do dalszej decyzji'}
                 </button>
               </section>
             ))}
           </div>
           {comparison.nextGovernedInput && (
             <p role="status" className="mt-3 text-xs">
-              Governed input: {comparison.nextGovernedInput.kind} · option{' '}
-              {comparison.nextGovernedInput.optionId} · comparison v
+              Kontrolowany wniosek: {comparison.nextGovernedInput.kind} · opcja{' '}
+              {comparison.nextGovernedInput.optionId} · porównanie v
               {comparison.nextGovernedInput.comparisonVersion}
             </p>
           )}

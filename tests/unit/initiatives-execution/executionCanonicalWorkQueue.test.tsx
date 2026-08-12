@@ -79,9 +79,9 @@ describe('ExecutionCanonicalWorkQueue hardening parity', () => {
   it('accepts the same assignment and keeps canonical Task ID/version/status readback in My Work', async () => {
     render(<ExecutionCanonicalWorkQueue />);
     fireEvent.click(await screen.findByRole('button', { name: /task-1/i }));
-    expect(screen.getByText(/Task · task-1/)).toBeInTheDocument();
-    expect(screen.getByRole('alert')).toHaveTextContent('Blocked Task affects 1 Milestone');
-    fireEvent.click(screen.getByRole('button', { name: 'ACCEPT ASSIGNMENT' }));
+    expect(screen.getByText(/Zadanie · …task-1/)).toBeInTheDocument();
+    expect(screen.getByRole('alert')).toHaveTextContent('Zablokowane zadanie wpływa na 1');
+    fireEvent.click(screen.getByRole('button', { name: 'Akceptuj przypisanie' }));
     await waitFor(() =>
       expect(transitionCanonicalTask).toHaveBeenCalledWith(
         'case-1',
@@ -93,11 +93,11 @@ describe('ExecutionCanonicalWorkQueue hardening parity', () => {
         })
       )
     );
-    expect(screen.getByRole('status')).toHaveTextContent('task-1 · v7 · OPEN');
+    expect(screen.getByRole('status')).toHaveTextContent('…task-1 · v7 · Otwarte');
     expect(screen.getByText('v7')).toBeInTheDocument();
     expect(screen.getByRole('region', { name: 'Task milestone blast radius' })).toHaveTextContent(
-      'milestone-1 v5 · AT_RISK · BLOCKED'
+      'Kamień · …estone-1 v5 · Zagrożony · Zablokowany'
     );
-    expect(screen.getByText(/Forecast variance: \+3 days/)).toBeInTheDocument();
+    expect(screen.getByText(/Odchylenie prognozy: \+3 dni/)).toBeInTheDocument();
   });
 });

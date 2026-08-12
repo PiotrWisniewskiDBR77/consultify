@@ -548,6 +548,7 @@ export const PlanScenarioSurface: React.FC<Props> = ({
         onOpenFull={showWorkspace}
         itemIds={visiblePlanWindows.map((row) => row.id)}
         getItemById={(id) => visiblePlanWindows.find((row) => row.id === id) ?? null}
+        previewOpen={!workspaceOpen && Boolean(selectedWindowId)}
         renderPreview={(row) => (
           <StandardPreview
             embedded
@@ -591,7 +592,7 @@ export const PlanScenarioSurface: React.FC<Props> = ({
                 {
                   id: 'open-workspace',
                   variant: 'neutral',
-                  label: 'Open workspace',
+                  label: 'Otwórz narzędzia planu',
                   icon: Eye,
                   shortcut: 'O',
                   onClick: showWorkspace,
@@ -619,7 +620,7 @@ export const PlanScenarioSurface: React.FC<Props> = ({
             primary: [
               {
                 id: 'open-workspace',
-                label: 'Open workspace',
+                label: 'Otwórz narzędzia planu',
                 icon: Eye,
                 onClick: showWorkspace,
               },

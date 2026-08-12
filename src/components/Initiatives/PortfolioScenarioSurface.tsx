@@ -427,6 +427,7 @@ export const PortfolioScenarioSurface: React.FC<Props> = ({
         }}
         itemIds={visibleMembershipRows.map((row) => row.id)}
         getItemById={(id) => visibleMembershipRows.find((row) => row.id === id) ?? null}
+        previewOpen={!draft && Boolean(selectedMembershipId)}
         renderPreview={(row) => (
           <StandardPreview
             embedded

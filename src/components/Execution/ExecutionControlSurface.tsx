@@ -18,12 +18,44 @@ import {
 } from '@/services/initiatives-execution/runtimeApi';
 
 import { countExecutionPresets, type ExecutionMenu3Contract } from './canonicalMenu3';
+
+const interventionFieldLabels: Record<string, string> = {
+  interventionId: 'Identyfikator interwencji',
+  ownerId: 'Właściciel',
+  authorityId: 'Niezależny zatwierdzający',
+  slaAt: 'Termin decyzji',
+  hypotheses: 'Hipotezy',
+  evidenceRefs: 'Dowody',
+  counterEvidenceRefs: 'Kontrdowody',
+  unknowns: 'Niewiadome',
+  blastRadiusRefs: 'Wpływ na powiązane obiekty',
+  doNothingLabel: 'Opcja bez działania',
+  doNothingImpacts: 'Skutki braku działania',
+  actionOptionId: 'Identyfikator wariantu',
+  actionLabel: 'Nazwa działania',
+  actionImpacts: 'Skutki działania',
+  actionConfidence: 'Pewność',
+  actionReversibility: 'Odwracalność',
+};
+
+const applyFieldLabels: Record<string, string> = {
+  receiptId: 'Potwierdzenie komendy',
+  aggregateType: 'Typ obiektu',
+  aggregateId: 'Obiekt docelowy',
+  version: 'Wersja',
+  state: 'Oczekiwany stan',
+  verifyBy: 'Termin weryfikacji',
+  expectedEffect: 'Oczekiwany efekt',
+  measurementRef: 'Źródło pomiaru',
+  measurementVersion: 'Wersja pomiaru',
+};
 interface SignalRow extends TableRow {
   id: string;
   title: string;
   rule: string;
   source: string;
   severity: string;
+  rawSeverity: string;
   occurrences: number;
   updatedAt: string;
   version: number;
@@ -33,6 +65,7 @@ interface Row extends TableRow {
   id: string;
   title: string;
   status: string;
+  rawStatus: string;
   owner: string;
   authority: string;
   slaAt: string;
@@ -77,6 +110,37 @@ const formatDateTime = (value: string | null | undefined) => {
     minute: '2-digit',
   }).format(parsed);
 };
+const interventionStatusLabel = (value: string) =>
+  ({
+    DRAFT: 'Szkic',
+    PENDING_DECISION: 'Oczekuje na decyzję',
+    APPROVED: 'Zatwierdzona',
+    APPLIED: 'Zastosowana',
+    ESCALATED: 'Eskalowana',
+    CLOSED: 'Zamknięta',
+  })[value] ?? value;
+const signalRuleLabel = (value: string) =>
+  ({ STALE_MILESTONE: 'Nieaktualny kamień milowy', CAPACITY_CONFLICT: 'Konflikt obciążenia' })[
+    value
+  ] ?? value;
+const severityLabel = (value: string) =>
+  ({ WARNING: 'Ostrzeżenie', CRITICAL: 'Krytyczna' })[value] ?? value;
+const verificationOutcomeLabel = (value: string) =>
+  ({
+    EFFECTIVE: 'Skuteczna',
+    PARTIAL: 'Częściowo skuteczna',
+    INEFFECTIVE: 'Nieskuteczna',
+    NOT_VERIFIED: 'Niezweryfikowana',
+  })[value] ?? value;
+const signalFieldLabels: Record<string, string> = {
+  sourceId: 'Źródło sygnału',
+  sourceVersionKey: 'Rodzaj wersji źródła',
+  sourceVersion: 'Wersja źródła',
+  snapshotRef: 'Dowód / migawka źródła',
+  ruleId: 'Reguła wykrycia',
+  severity: 'Ważność',
+  occurredAt: 'Czas wystąpienia',
+};
 const controlPresets = [
   'needs-action',
   'critical',
@@ -105,6 +169,7 @@ export const ExecutionControlSurface = ({
     [advancedJson, setAdvancedJson] = useState(false),
     [showSignalForm, setShowSignalForm] = useState(false),
     [showInterventionForm, setShowInterventionForm] = useState(false),
+    [interventionComposerOpen, setInterventionComposerOpen] = useState(false),
     [signalForm, setSignalForm] = useState({
       kind: 'STALE_MILESTONE',
       sourceId: '',
@@ -150,6 +215,7 @@ export const ExecutionControlSurface = ({
       blastRadius:
         '{"tasks":{"knowledgeState":"KNOWN","refs":[]},"decisions":{"knowledgeState":"KNOWN","refs":[]},"milestones":{"knowledgeState":"KNOWN","refs":[]},"risks":{"knowledgeState":"KNOWN","refs":[]},"capacity":{"knowledgeState":"KNOWN","refs":[]},"approvals":{"knowledgeState":"KNOWN","refs":[]},"handoff":{"knowledgeState":"KNOWN","refs":[]}}',
     }),
+    [governedPlanOpen, setGovernedPlanOpen] = useState(false),
     [apply, setApply] = useState({
       receiptId: '',
       aggregateType: 'execution_task',
@@ -188,7 +254,8 @@ export const ExecutionControlSurface = ({
         (b.items ?? []).map((x) => ({
           id: x.interventionId,
           title: x.interventionId,
-          status: x.status,
+          status: interventionStatusLabel(x.status),
+          rawStatus: x.status,
           owner: x.ownerId,
           authority: x.authorityId,
           slaAt: formatDateTime(x.verifyBy ?? x.slaAt),
@@ -201,9 +268,10 @@ export const ExecutionControlSurface = ({
         (s.items ?? []).map((x) => ({
           id: x.signalId,
           title: x.signalId,
-          rule: x.ruleId,
+          rule: signalRuleLabel(x.ruleId),
           source: `${x.sourceType}:${x.sourceId}`,
-          severity: x.severity,
+          severity: severityLabel(x.severity),
+          rawSeverity: x.severity,
           occurrences: x.occurrences?.length ?? 0,
           updatedAt: x.updatedAt,
           version: x.version,
@@ -232,10 +300,15 @@ export const ExecutionControlSurface = ({
   );
   const matches = useCallback((item: (typeof controlItems)[number], preset: string) => {
     const raw = JSON.stringify(item.row).toUpperCase();
-    const status = String((item.row as any).status ?? '').toUpperCase();
+    const status = String(
+      (item.row as any).rawStatus ?? (item.row as any).status ?? ''
+    ).toUpperCase();
     if (preset === 'needs-action') return !['RESOLVED', 'CLOSED', 'EFFECTIVE'].includes(status);
     if (preset === 'critical')
-      return String((item.row as any).severity ?? '').toUpperCase() === 'CRITICAL';
+      return (
+        String((item.row as any).rawSeverity ?? (item.row as any).severity ?? '').toUpperCase() ===
+        'CRITICAL'
+      );
     if (preset === 'decisions') return /DECISION|APPROV/.test(raw);
     if (preset === 'schedule') return /SCHEDULE|MILESTONE|RESEQUENCE/.test(raw);
     if (preset === 'resources') return /RESOURCE|CAPACITY|ALLOCATION/.test(raw);
@@ -453,6 +526,7 @@ export const ExecutionControlSurface = ({
           aggregateVersion: result.aggregateVersion ?? 1,
         },
       });
+      setGovernedPlanOpen(false);
       setWrite('IDLE');
     } catch {
       setWrite('FAILED');
@@ -480,6 +554,7 @@ export const ExecutionControlSurface = ({
           <button
             className="btn-secondary"
             onClick={() => {
+              setInterventionComposerOpen(false);
               setShowInterventionForm(true);
               setShowSignalForm(true);
             }}
@@ -489,13 +564,16 @@ export const ExecutionControlSurface = ({
           <button
             className="btn-secondary"
             disabled={draftSignalIds.length === 0}
-            onClick={() => setShowInterventionForm(true)}
+            onClick={() => {
+              setShowInterventionForm(true);
+              setInterventionComposerOpen(true);
+            }}
           >
             Przygotuj interwencję
           </button>
         </div>
       </div>
-      {state === 'LOADING' && <p role="status">Loading interventions</p>}
+      {state === 'LOADING' && <p role="status">Ładowanie interwencji…</p>}
       {showInterventionForm && (
         <section aria-label="Intervention Signal Workbench" className="mt-4">
           <h3 className="font-semibold">Sygnały zarządcze</h3>
@@ -509,7 +587,7 @@ export const ExecutionControlSurface = ({
               </div>
               <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-4">
                 <label className="text-xs">
-                  Signal kind
+                  Rodzaj sygnału
                   <select
                     aria-label="Management signal kind"
                     value={signalForm.kind}
@@ -527,15 +605,15 @@ export const ExecutionControlSurface = ({
                     }}
                     className="block w-full rounded border border-c-border bg-c-surface p-2"
                   >
-                    <option value="STALE_MILESTONE">Stale Milestone</option>
-                    <option value="CAPACITY_CONFLICT">Capacity conflict</option>
+                    <option value="STALE_MILESTONE">Nieaktualny kamień milowy</option>
+                    <option value="CAPACITY_CONFLICT">Konflikt obciążenia</option>
                   </select>
                 </label>
                 {Object.keys(signalForm)
                   .filter((key) => key !== 'kind')
                   .map((key) => (
                     <label key={key} className="text-xs">
-                      {key}
+                      {signalFieldLabels[key] ?? key}
                       {key === 'severity' ? (
                         <select
                           aria-label={`Management signal ${key}`}
@@ -548,8 +626,8 @@ export const ExecutionControlSurface = ({
                           }
                           className="block w-full rounded border border-c-border bg-c-surface p-2"
                         >
-                          <option>WARNING</option>
-                          <option>CRITICAL</option>
+                          <option value="WARNING">Ostrzeżenie</option>
+                          <option value="CRITICAL">Krytyczna</option>
                         </select>
                       ) : (
                         <input
@@ -586,12 +664,13 @@ export const ExecutionControlSurface = ({
             onSelect={setSelectedSignalId}
             onOpenFull={(id) => {
               setShowInterventionForm(true);
+              setInterventionComposerOpen(true);
               setDraftSignalIds((current) => (current.includes(id) ? current : [...current, id]));
               setSelectedSignalId(null);
             }}
             itemIds={signalRows.map((row) => row.id)}
             getItemById={(id) => signalRows.find((row) => row.id === id) ?? null}
-            previewOpen={Boolean(selectedSignalId)}
+            previewOpen={!interventionComposerOpen && Boolean(selectedSignalId)}
             renderPreview={(row) => (
               <StandardPreview
                 embedded
@@ -599,6 +678,7 @@ export const ExecutionControlSurface = ({
                 onClose={() => setSelectedSignalId(null)}
                 onOpenFull={() => {
                   setShowInterventionForm(true);
+                  setInterventionComposerOpen(true);
                   setDraftSignalIds((current) =>
                     current.includes(row.id) ? current : [...current, row.id]
                   );
@@ -609,7 +689,7 @@ export const ExecutionControlSurface = ({
                   pills: [
                     {
                       label: row.severity,
-                      tone: row.severity === 'CRITICAL' ? 'danger' : 'warning',
+                      tone: row.rawSeverity === 'CRITICAL' ? 'danger' : 'warning',
                     },
                   ],
                   recommendation: `Project ${row.signal.projectId ?? 'UNKNOWN'} · Reguła ${row.rule}`,
@@ -661,6 +741,7 @@ export const ExecutionControlSurface = ({
               onRowClick={(row) => setSelectedSignalId(row.id)}
               onRowDoubleClick={(row) => {
                 setShowInterventionForm(true);
+                setInterventionComposerOpen(true);
                 setDraftSignalIds((current) =>
                   current.includes(row.id) ? current : [...current, row.id]
                 );
@@ -673,6 +754,7 @@ export const ExecutionControlSurface = ({
                     label: 'Przygotuj interwencję',
                     onClick: () => {
                       setShowInterventionForm(true);
+                      setInterventionComposerOpen(true);
                       setDraftSignalIds((current) =>
                         current.includes(row.id) ? current : [...current, row.id]
                       );
@@ -694,19 +776,25 @@ export const ExecutionControlSurface = ({
         onOpenFull={(id) => {
           setSelectedId(id);
           setShowInterventionForm(true);
+          setInterventionComposerOpen(true);
         }}
         itemIds={rows.map((r) => r.id)}
         getItemById={(id) => rows.find((r) => r.id === id) ?? null}
-        previewOpen={!showInterventionForm && Boolean(selectedId)}
+        previewOpen={!interventionComposerOpen && Boolean(selectedId)}
         renderPreview={(r) => (
           <StandardPreview
             embedded
             title={r.title}
             onClose={() => setSelectedId(null)}
-            onOpenFull={() => setShowInterventionForm(true)}
+            onOpenFull={() => {
+              setShowInterventionForm(true);
+              setInterventionComposerOpen(true);
+            }}
             openLabel="Otwórz interwencję"
             meta={{
-              pills: [{ label: r.status, tone: r.status === 'ESCALATED' ? 'danger' : 'neutral' }],
+              pills: [
+                { label: r.status, tone: r.rawStatus === 'ESCALATED' ? 'danger' : 'neutral' },
+              ],
               recommendation: r.source.selectedOptionId
                 ? `Wybrana opcja: ${r.source.selectedOptionId}`
                 : 'Wymaga wyboru ograniczonej interwencji',
@@ -746,6 +834,7 @@ export const ExecutionControlSurface = ({
           onRowDoubleClick={(r) => {
             setSelectedId(r.id);
             setShowInterventionForm(true);
+            setInterventionComposerOpen(true);
           }}
           rowMenu={(r) => ({
             primary: [
@@ -755,6 +844,7 @@ export const ExecutionControlSurface = ({
                 onClick: () => {
                   setSelectedId(r.id);
                   setShowInterventionForm(true);
+                  setInterventionComposerOpen(true);
                 },
               },
             ],
@@ -768,232 +858,272 @@ export const ExecutionControlSurface = ({
           }}
         />
       </TableWithPreviewLayout>
-      {showInterventionForm && (
+      {interventionComposerOpen && (
         <section
           aria-label="Intervention Workbench"
           className="mt-4 rounded border border-c-border p-4"
         >
           <div className="flex items-center justify-between gap-3">
             <h3 className="font-semibold">Projekt interwencji</h3>
-            <button className="btn-secondary" onClick={() => setShowInterventionForm(false)}>
+            <button className="btn-secondary" onClick={() => setInterventionComposerOpen(false)}>
               Zamknij
             </button>
           </div>
-          <p className="text-xs text-c-text-muted">
-            Selected exact signals: {draftSignalIds.join(', ') || 'None'}
-          </p>
-          <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
-            {Object.keys(guided).map((key) => {
-              const long = [
-                'hypotheses',
-                'evidenceRefs',
-                'counterEvidenceRefs',
-                'unknowns',
-                'blastRadiusRefs',
-                'doNothingImpacts',
-                'actionImpacts',
-              ].includes(key);
-              return (
-                <label key={key} className="text-xs">
-                  {key}
-                  {key === 'actionConfidence' || key === 'actionReversibility' ? (
-                    <select
-                      aria-label={`Intervention draft ${key}`}
-                      value={guided[key as keyof typeof guided]}
-                      onChange={(event) =>
-                        setGuided((current) => ({ ...current, [key]: event.target.value }))
-                      }
-                      className="block w-full rounded border border-c-border bg-c-surface p-2"
-                    >
-                      {(key === 'actionConfidence'
-                        ? ['UNKNOWN', 'LOW', 'MEDIUM', 'HIGH']
-                        : ['UNKNOWN', 'REVERSIBLE', 'PARTIALLY_REVERSIBLE', 'IRREVERSIBLE']
-                      ).map((option) => (
-                        <option key={option}>{option}</option>
-                      ))}
-                    </select>
-                  ) : long ? (
-                    <textarea
-                      aria-label={`Intervention draft ${key}`}
-                      value={guided[key as keyof typeof guided]}
-                      onChange={(event) =>
-                        setGuided((current) => ({ ...current, [key]: event.target.value }))
-                      }
-                      className="block min-h-20 w-full rounded border border-c-border bg-c-surface p-2"
-                    />
-                  ) : (
-                    <input
-                      aria-label={`Intervention draft ${key}`}
-                      type={key === 'slaAt' ? 'datetime-local' : 'text'}
-                      value={guided[key as keyof typeof guided]}
-                      onChange={(event) =>
-                        setGuided((current) => ({ ...current, [key]: event.target.value }))
-                      }
-                      className="block w-full rounded border border-c-border bg-c-surface p-2"
-                    />
-                  )}
+          {(!selected || selected.source.status === 'DRAFT') && (
+            <>
+              <p className="text-xs text-c-text-muted">Wybrane sygnały: {draftSignalIds.length}</p>
+              <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
+                {Object.keys(guided).map((key) => {
+                  const long = [
+                    'hypotheses',
+                    'evidenceRefs',
+                    'counterEvidenceRefs',
+                    'unknowns',
+                    'blastRadiusRefs',
+                    'doNothingImpacts',
+                    'actionImpacts',
+                  ].includes(key);
+                  return (
+                    <label key={key} className="text-xs">
+                      {interventionFieldLabels[key] ?? key}
+                      {key === 'actionConfidence' || key === 'actionReversibility' ? (
+                        <select
+                          aria-label={`Intervention draft ${key}`}
+                          value={guided[key as keyof typeof guided]}
+                          onChange={(event) =>
+                            setGuided((current) => ({ ...current, [key]: event.target.value }))
+                          }
+                          className="block w-full rounded border border-c-border bg-c-surface p-2"
+                        >
+                          {(key === 'actionConfidence'
+                            ? ['UNKNOWN', 'LOW', 'MEDIUM', 'HIGH']
+                            : ['UNKNOWN', 'REVERSIBLE', 'PARTIALLY_REVERSIBLE', 'IRREVERSIBLE']
+                          ).map((option) => (
+                            <option key={option}>{option}</option>
+                          ))}
+                        </select>
+                      ) : long ? (
+                        <textarea
+                          aria-label={`Intervention draft ${key}`}
+                          value={guided[key as keyof typeof guided]}
+                          onChange={(event) =>
+                            setGuided((current) => ({ ...current, [key]: event.target.value }))
+                          }
+                          className="block min-h-20 w-full rounded border border-c-border bg-c-surface p-2"
+                        />
+                      ) : (
+                        <input
+                          aria-label={`Intervention draft ${key}`}
+                          type={key === 'slaAt' ? 'datetime-local' : 'text'}
+                          value={guided[key as keyof typeof guided]}
+                          onChange={(event) =>
+                            setGuided((current) => ({ ...current, [key]: event.target.value }))
+                          }
+                          className="block w-full rounded border border-c-border bg-c-surface p-2"
+                        />
+                      )}
+                    </label>
+                  );
+                })}
+              </div>
+              <details className="mt-3">
+                <summary className="cursor-pointer text-sm">Zaawansowany kontrakt JSON</summary>
+                <label className="mt-2 flex items-center gap-2 text-xs">
+                  <input
+                    type="checkbox"
+                    checked={advancedJson}
+                    onChange={(event) => setAdvancedJson(event.target.checked)}
+                  />
+                  Użyj kontraktu JSON zamiast formularza
                 </label>
-              );
-            })}
-          </div>
-          <details className="mt-3">
-            <summary className="cursor-pointer text-sm">Advanced JSON</summary>
-            <label className="mt-2 flex items-center gap-2 text-xs">
-              <input
-                type="checkbox"
-                checked={advancedJson}
-                onChange={(event) => setAdvancedJson(event.target.checked)}
-              />
-              Use advanced JSON instead of guided fields
-            </label>
-            <textarea
-              aria-label="Intervention draft JSON"
-              value={draftJson}
-              onChange={(e) => setDraftJson(e.target.value)}
-              disabled={!advancedJson}
-              className="mt-2 min-h-32 w-full rounded border border-c-border bg-c-surface p-2 font-mono text-xs"
-            />
-          </details>
-          <button className="btn-secondary" onClick={() => void draft()}>
-            Draft or merge Intervention Case
-          </button>
-          <div className="mt-3 flex gap-2">
-            <button className="btn-secondary" onClick={() => void transition('REQUEST')}>
-              Request independent Decision
-            </button>
-            <input
-              aria-label="Intervention selected option"
-              value={selectedOption}
-              onChange={(e) => setSelectedOption(e.target.value)}
-            />
-            <textarea
-              aria-label="Intervention rationale"
-              value={rationale}
-              onChange={(e) => setRationale(e.target.value)}
-            />
-            <button className="btn-secondary" onClick={() => void transition('DECIDE')}>
-              Approve option
-            </button>
-          </div>
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
-            {Object.keys(apply).map((k) => (
-              <label key={k} className="text-xs">
-                {k}
-                <input
-                  aria-label={`Intervention ${k}`}
-                  type={k === 'verifyBy' ? 'datetime-local' : 'text'}
-                  value={(apply as any)[k]}
-                  onChange={(e) => setApply((v) => ({ ...v, [k]: e.target.value }))}
+                <textarea
+                  aria-label="Intervention draft JSON"
+                  value={draftJson}
+                  onChange={(e) => setDraftJson(e.target.value)}
+                  disabled={!advancedJson}
+                  className="mt-2 min-h-32 w-full rounded border border-c-border bg-c-surface p-2 font-mono text-xs"
                 />
-              </label>
-            ))}
-          </div>
-          <section
-            aria-label="Governed Plan resequence"
-            className="mt-4 rounded border border-c-border p-3"
-          >
-            <h4 className="font-medium">Governed Plan resequence</h4>
-            <p className="text-xs text-c-text-muted">
-              A selected Capacity Option RESEQUENCE creates one PLANNING_BASELINE Material Change.
-              Review and publish happen in My Work; APPLY consumes its exact receipt.
-            </p>
-            <label className="block text-xs">
-              Selected Capacity comparison
+              </details>
+              <button className="btn-primary mt-3" onClick={() => void draft()}>
+                Zapisz lub połącz sprawę interwencyjną
+              </button>
+            </>
+          )}
+          {(!selected || ['DRAFT', 'PENDING_DECISION'].includes(selected.source.status)) && (
+            <section className="mt-4 rounded border border-c-border p-3">
+              <h4 className="font-medium">Niezależna decyzja</h4>
+              <div className="mt-2 grid grid-cols-1 gap-2 md:grid-cols-[auto_1fr_2fr_auto]">
+                <button className="btn-secondary" onClick={() => void transition('REQUEST')}>
+                  Poproś o decyzję
+                </button>
+                <input
+                  aria-label="Intervention selected option"
+                  value={selectedOption}
+                  onChange={(e) => setSelectedOption(e.target.value)}
+                />
+                <textarea
+                  aria-label="Intervention rationale"
+                  value={rationale}
+                  onChange={(e) => setRationale(e.target.value)}
+                />
+                <button className="btn-secondary" onClick={() => void transition('DECIDE')}>
+                  Zatwierdź wariant
+                </button>
+              </div>
+            </section>
+          )}
+          <section className="mt-4 rounded border border-c-border p-3">
+            <h4 className="font-medium">Zastosowanie zatwierdzonej komendy</h4>
+            <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
+              {Object.keys(apply).map((k) => (
+                <label key={k} className="text-xs">
+                  {applyFieldLabels[k] ?? k}
+                  <input
+                    aria-label={`Intervention ${k}`}
+                    type={k === 'verifyBy' ? 'datetime-local' : 'text'}
+                    value={(apply as any)[k]}
+                    onChange={(e) => setApply((v) => ({ ...v, [k]: e.target.value }))}
+                    className="block w-full rounded border border-c-border bg-c-surface p-2"
+                  />
+                </label>
+              ))}
+            </div>
+            <div className="mt-4 flex items-center justify-between gap-3 rounded border border-c-border p-3">
+              <div>
+                <h4 className="font-medium">Zarządzana zmiana planu</h4>
+                <p className="text-xs text-c-text-muted">
+                  Zmiana kolejności przechodzi przez kontrolowaną zmianę planu i niezależne
+                  zatwierdzenie.
+                </p>
+              </div>
+              <button
+                type="button"
+                className="btn-secondary"
+                onClick={() => setGovernedPlanOpen((open) => !open)}
+              >
+                {governedPlanOpen ? 'Zamknij zmianę planu' : 'Przygotuj zmianę planu'}
+              </button>
+            </div>
+            {governedPlanOpen && (
+              <section
+                aria-label="Governed Plan resequence"
+                className="mt-3 rounded border border-c-border p-3"
+              >
+                <h4 className="font-medium">Zarządzana zmiana kolejności</h4>
+                <p className="text-xs text-c-text-muted">
+                  Wybrana opcja zmiany kolejności tworzy jedną kontrolowaną zmianę bazowego planu.
+                  Przegląd i publikacja odbywają się w Mojej pracy, a zastosowanie wymaga dokładnego
+                  potwierdzenia komendy.
+                </p>
+                <label className="block text-xs">
+                  Wybrane porównanie obciążenia
+                  <select
+                    aria-label="Governed comparison"
+                    value={governed.comparisonId}
+                    onChange={(e) =>
+                      setGoverned((v) => ({
+                        ...v,
+                        comparisonId: e.target.value,
+                        planScenarioId:
+                          capacityOptions.find((x) => x.comparisonId === e.target.value)?.planRef
+                            ?.scenarioId ?? '',
+                      }))
+                    }
+                    className="block w-full rounded border border-c-border bg-c-surface p-2"
+                  >
+                    <option value="">Wybierz dokładną opcję zmiany kolejności</option>
+                    {capacityOptions.map((x) => (
+                      <option key={x.comparisonId} value={x.comparisonId}>
+                        {x.comparisonId} v{x.version} · {x.selectedOptionId} · Plan{' '}
+                        {x.planRef.scenarioId} v{x.planRef.version}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+                  {Object.entries(governed)
+                    .filter(([key]) => key !== 'comparisonId')
+                    .map(([key, value]) => (
+                      <label key={key} className="text-xs">
+                        {key}
+                        {['oldSnapshot', 'newSnapshot', 'affected', 'blastRadius'].includes(key) ? (
+                          <textarea
+                            aria-label={`Governed ${key}`}
+                            className="block min-h-24 w-full rounded border border-c-border bg-c-surface p-2 font-mono"
+                            value={value}
+                            onChange={(e) => setGoverned((v) => ({ ...v, [key]: e.target.value }))}
+                          />
+                        ) : (
+                          <input
+                            aria-label={`Governed ${key}`}
+                            className="block w-full rounded border border-c-border bg-c-surface p-2"
+                            value={value}
+                            readOnly={key === 'planScenarioId'}
+                            onChange={(e) => setGoverned((v) => ({ ...v, [key]: e.target.value }))}
+                          />
+                        )}
+                      </label>
+                    ))}
+                </div>
+                <button
+                  className="btn-secondary mt-2"
+                  onClick={() => void createGovernedPlanChange()}
+                >
+                  Utwórz zarządzaną zmianę planu
+                </button>
+              </section>
+            )}
+            <button className="btn-primary mt-3" onClick={() => void transition('APPLY')}>
+              Zastosuj potwierdzoną komendę
+            </button>
+          </section>
+          <section className="mt-4 rounded border border-c-border p-3">
+            <h4 className="font-medium">Weryfikacja efektu</h4>
+            <div className="mt-2 grid grid-cols-1 gap-2 md:grid-cols-[220px_1fr_auto]">
               <select
-                aria-label="Governed comparison"
-                value={governed.comparisonId}
-                onChange={(e) =>
-                  setGoverned((v) => ({
-                    ...v,
-                    comparisonId: e.target.value,
-                    planScenarioId:
-                      capacityOptions.find((x) => x.comparisonId === e.target.value)?.planRef
-                        ?.scenarioId ?? '',
-                  }))
-                }
+                aria-label="Intervention verification outcome"
+                value={verifyOutcome}
+                onChange={(e) => setVerifyOutcome(e.target.value)}
                 className="block w-full rounded border border-c-border bg-c-surface p-2"
               >
-                <option value="">Select exact RESEQUENCE</option>
-                {capacityOptions.map((x) => (
-                  <option key={x.comparisonId} value={x.comparisonId}>
-                    {x.comparisonId} v{x.version} · {x.selectedOptionId} · Plan{' '}
-                    {x.planRef.scenarioId} v{x.planRef.version}
+                {['EFFECTIVE', 'PARTIAL', 'INEFFECTIVE', 'NOT_VERIFIED'].map((x) => (
+                  <option key={x} value={x}>
+                    {verificationOutcomeLabel(x)}
                   </option>
                 ))}
               </select>
-            </label>
-            <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
-              {Object.entries(governed)
-                .filter(([key]) => key !== 'comparisonId')
-                .map(([key, value]) => (
-                  <label key={key} className="text-xs">
-                    {key}
-                    {['oldSnapshot', 'newSnapshot', 'affected', 'blastRadius'].includes(key) ? (
-                      <textarea
-                        aria-label={`Governed ${key}`}
-                        className="block min-h-24 w-full rounded border border-c-border bg-c-surface p-2 font-mono"
-                        value={value}
-                        onChange={(e) => setGoverned((v) => ({ ...v, [key]: e.target.value }))}
-                      />
-                    ) : (
-                      <input
-                        aria-label={`Governed ${key}`}
-                        className="block w-full rounded border border-c-border bg-c-surface p-2"
-                        value={value}
-                        readOnly={key === 'planScenarioId'}
-                        onChange={(e) => setGoverned((v) => ({ ...v, [key]: e.target.value }))}
-                      />
-                    )}
-                  </label>
-                ))}
+              <textarea
+                aria-label="Intervention verification evidence"
+                value={verificationEvidence}
+                onChange={(e) => setVerificationEvidence(e.target.value)}
+                className="min-h-20 w-full rounded border border-c-border bg-c-surface p-2"
+              />
+              <button className="btn-secondary" onClick={() => void transition('VERIFY')}>
+                Zweryfikuj interwencję
+              </button>
             </div>
-            <button className="btn-secondary mt-2" onClick={() => void createGovernedPlanChange()}>
-              Create governed Plan Material Change
-            </button>
           </section>
-          <button className="btn-primary" onClick={() => void transition('APPLY')}>
-            Apply canonical receipt
-          </button>
-          <div>
-            <select
-              aria-label="Intervention verification outcome"
-              value={verifyOutcome}
-              onChange={(e) => setVerifyOutcome(e.target.value)}
-            >
-              {['EFFECTIVE', 'PARTIAL', 'INEFFECTIVE', 'NOT_VERIFIED'].map((x) => (
-                <option key={x}>{x}</option>
-              ))}
-            </select>
-            <textarea
-              aria-label="Intervention verification evidence"
-              value={verificationEvidence}
-              onChange={(e) => setVerificationEvidence(e.target.value)}
-            />
-            <button className="btn-secondary" onClick={() => void transition('VERIFY')}>
-              Verify intervention
-            </button>
-          </div>
-          {write === 'FAILED' && <p role="alert">No transition was applied.</p>}
+          {write === 'FAILED' && <p role="alert">Nie zastosowano zmiany.</p>}
           {receipt && (
             <div role="status" className="rounded border border-c-success/40 p-3">
-              <strong>{receipt.status}</strong>
+              <strong>{interventionStatusLabel(receipt.status)}</strong>
               {receipt.targetCommand && (
                 <p>
-                  Canonical target receipt {receipt.targetCommand.clientRequestId} ·{' '}
+                  Potwierdzenie komendy docelowej {receipt.targetCommand.clientRequestId} ·{' '}
                   {receipt.targetCommand.aggregateType}/{receipt.targetCommand.aggregateId} v
                   {receipt.targetCommand.aggregateVersion}
                 </p>
               )}
               {receipt.oldHash && (
                 <p>
-                  Plan before hash {receipt.oldHash} → proposed hash {receipt.newHash}
+                  Hash planu przed zmianą {receipt.oldHash} → po zmianie {receipt.newHash}
                 </p>
               )}
               {receipt.verification && (
                 <p>
                   {receipt.verification.outcome === 'EFFECTIVE'
-                    ? 'EFFECTIVE · CLOSED'
-                    : `${receipt.verification.outcome} · ESCALATED`}
+                    ? 'Skuteczna · zamknięta'
+                    : `${verificationOutcomeLabel(receipt.verification.outcome)} · eskalowana`}
                 </p>
               )}
             </div>

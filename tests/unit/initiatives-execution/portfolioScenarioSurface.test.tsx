@@ -103,6 +103,9 @@ describe('PortfolioScenarioSurface', () => {
     expect(
       screen.getByRole('region', { name: 'Portfolio Scenario Workbench' })
     ).toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.queryByText('Portfolio membership')).not.toBeInTheDocument()
+    );
     expect(screen.getByLabelText('Disposition initiative-1')).toHaveValue('INCLUDED');
     expect(screen.getByText('1/2/3 FTE')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Zamknij narzędzia portfela' }));

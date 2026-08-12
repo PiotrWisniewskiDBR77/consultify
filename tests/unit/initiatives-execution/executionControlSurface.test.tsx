@@ -127,6 +127,8 @@ describe('ExecutionControlSurface', () => {
     fireEvent.click(signalRow);
     fireEvent.click(screen.getByRole('button', { name: 'Dodaj do przygotowywanej interwencji' }));
     fireEvent.click(screen.getByRole('button', { name: 'Przygotuj interwencję' }));
+    await waitFor(() => expect(screen.queryByText('Sygnał zarządczy')).not.toBeInTheDocument());
+    fireEvent.click(screen.getByRole('button', { name: 'Przygotuj zmianę planu' }));
     fireEvent.change(screen.getByLabelText('Governed comparison'), { target: { value: 'cmp-1' } });
     for (const [label, value] of [
       ['proposalId', 'mc-1'],
@@ -137,7 +139,7 @@ describe('ExecutionControlSurface', () => {
       ['newSnapshot', '{"memberships":["b","a"]}'],
     ])
       fireEvent.change(screen.getByLabelText(`Governed ${label}`), { target: { value } });
-    fireEvent.click(screen.getByRole('button', { name: 'Create governed Plan Material Change' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Utwórz zarządzaną zmianę planu' }));
     await waitFor(() =>
       expect(createMaterialChange).toHaveBeenCalledWith(
         'mc-1',
@@ -158,8 +160,8 @@ describe('ExecutionControlSurface', () => {
         })
       )
     );
-    expect(await screen.findByText(/Plan before hash old-hash/)).toHaveTextContent(
-      'proposed hash new-hash'
+    expect(await screen.findByText(/Hash planu przed zmianą old-hash/)).toHaveTextContent(
+      'po zmianie new-hash'
     );
   });
   it('ingests a deduplicated exact occurrence and guides a multi-signal Intervention draft', async () => {
@@ -193,6 +195,7 @@ describe('ExecutionControlSurface', () => {
         })
       )
     );
+    fireEvent.click(screen.getByRole('button', { name: 'Przygotuj interwencję' }));
     for (const [label, value] of [
       ['interventionId', 'int-2'],
       ['ownerId', 'owner-2'],
@@ -208,7 +211,7 @@ describe('ExecutionControlSurface', () => {
       fireEvent.change(screen.getByLabelText(`Intervention draft ${label}`), {
         target: { value },
       });
-    fireEvent.click(screen.getByRole('button', { name: 'Draft or merge Intervention Case' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Zapisz lub połącz sprawę interwencyjną' }));
     await waitFor(() =>
       expect(draftIntervention).toHaveBeenCalledWith(
         'int-2',
@@ -228,6 +231,7 @@ describe('ExecutionControlSurface', () => {
     fireEvent.keyDown(row.closest('div[tabindex="0"]')!, { key: 'Enter' });
     expect(screen.getByText(/sig-1 v2/)).toBeInTheDocument();
     expect(screen.getByText(/DO_NOTHING: Do nothing/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Dodaj sygnał' }));
     const signalRow = (await screen.findByText('sig-1')).closest('tr')!;
     fireEvent.click(signalRow);
     fireEvent.click(screen.getByRole('button', { name: 'Dodaj do przygotowywanej interwencji' }));
@@ -235,7 +239,7 @@ describe('ExecutionControlSurface', () => {
     fireEvent.change(screen.getByLabelText('Intervention verification evidence'), {
       target: { value: 'measurement:v2' },
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Verify intervention' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Zweryfikuj interwencję' }));
     await waitFor(() =>
       expect(transitionIntervention).toHaveBeenCalledWith(
         'int-1',
@@ -247,6 +251,6 @@ describe('ExecutionControlSurface', () => {
         })
       )
     );
-    expect(await screen.findByText('EFFECTIVE · CLOSED')).toBeInTheDocument();
+    expect(await screen.findByText('Skuteczna · zamknięta')).toBeInTheDocument();
   });
 });

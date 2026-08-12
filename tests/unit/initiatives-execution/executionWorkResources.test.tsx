@@ -129,15 +129,15 @@ describe('Execution canonical work/resources', () => {
     const row = (await screen.findByText('Validate')).closest('tr')!;
     fireEvent.click(row);
     fireEvent.keyDown(row.closest('div[tabindex="0"]')!, { key: 'Enter' });
-    expect(screen.getAllByText('OPEN').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Otwarte').length).toBeGreaterThan(0);
     expect(
       screen.getByRole('region', { name: 'Execution Work item workspace' })
     ).toBeInTheDocument();
     expect(readExecutionWork).toHaveBeenCalledWith('case1');
     expect(screen.getByRole('region', { name: 'Task milestone blast radius' })).toHaveTextContent(
-      'milestone-1 v4 · AT_RISK · BLOCKED'
+      'Kamień · …estone-1 v4 · Zagrożony · Zablokowany'
     );
-    expect(screen.getByText(/Forecast variance: UNKNOWN/)).toBeInTheDocument();
+    expect(screen.getByText(/Odchylenie prognozy: NIEZNANA/)).toBeInTheDocument();
   });
   it('creates a canonical Milestone with exact Case and Handoff baseline versions', async () => {
     vi.mocked(createExecutionMilestone).mockResolvedValue({ response: {} });

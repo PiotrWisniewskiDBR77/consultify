@@ -49,6 +49,37 @@ interface Props {
 const taskTerminal = ['COMPLETED', 'CANCELED'];
 const decisionTerminal = ['APPROVED', 'CONDITIONALLY_APPROVED', 'REJECTED', 'RETURNED', 'CANCELED'];
 
+const statusLabel = (value: string) =>
+  ({
+    OPEN: 'Otwarte',
+    BLOCKED: 'Zablokowane',
+    COMPLETED: 'Zakończone',
+    CANCELED: 'Anulowane',
+    PENDING: 'Oczekuje na decyzję',
+    APPROVED: 'Zatwierdzone',
+    CONDITIONALLY_APPROVED: 'Zatwierdzone warunkowo',
+    REJECTED: 'Odrzucone',
+    RETURNED: 'Zwrócone',
+  })[value] ?? value.replaceAll('_', ' ');
+
+const assignmentLabel = (value: string) =>
+  ({
+    NOT_OFFERED: 'Nie zaproponowano',
+    OFFERED: 'Oczekuje na odpowiedź',
+    ACCEPTED: 'Zaakceptowane',
+    DECLINED: 'Odrzucone',
+  })[value] ?? value;
+
+const actionLabel = (value: TaskAction | DecisionAction) =>
+  ({
+    OFFER_ASSIGNMENT: 'Zaproponuj przypisanie',
+    ACCEPT_ASSIGNMENT: 'Akceptuj przypisanie',
+    DECLINE_ASSIGNMENT: 'Odrzuć przypisanie',
+    ESCALATE: 'Eskaluj',
+    REOPEN: 'Otwórz ponownie',
+    CANCEL: 'Anuluj',
+  })[value];
+
 export const CanonicalWorkHardeningPanel: React.FC<Props> = ({ item, actorId, onReadback }) => {
   const isTask = Boolean(item.taskId);
   const id = item.taskId ?? item.decisionId ?? '';
@@ -127,51 +158,53 @@ export const CanonicalWorkHardeningPanel: React.FC<Props> = ({ item, actorId, on
       className="space-y-3 rounded-md border border-c-border p-3"
     >
       <div className="flex flex-wrap items-center gap-2">
-        <strong>
-          {isTask ? 'Task' : 'Decision'} · {id}
+        <strong title={id}>
+          {isTask ? 'Zadanie' : 'Decyzja'} · …{id.slice(-8)}
         </strong>
         <span>v{item.version}</span>
-        <span>{item.status}</span>
+        <span>{statusLabel(item.status)}</span>
         <span className={overdue ? 'text-c-danger' : 'text-c-success'}>
-          {overdue ? 'OVERDUE' : 'SLA OK'}
+          {overdue ? 'Po terminie' : 'SLA w normie'}
         </span>
       </div>
       {isTask && (
         <div>
-          Assignment: {assignmentState}
+          Przypisanie: {assignmentLabel(assignmentState)}
           {item.assignment?.reason ? ` · ${item.assignment.reason}` : ''}
         </div>
       )}
       {item.escalation && (
         <div role="status">
-          Escalated {item.escalation.level} · {item.escalation.reason}
+          Eskalacja {item.escalation.level === 'CRITICAL' ? 'krytyczna' : 'ostrzegawcza'} ·{' '}
+          {item.escalation.reason}
         </div>
       )}
-      {item.cancelReason && <div>Cancellation: {item.cancelReason}</div>}
-      {item.reopenReason && <div>Reopened: {item.reopenReason}</div>}
+      {item.cancelReason && <div>Powód anulowania: {item.cancelReason}</div>}
+      {item.reopenReason && <div>Powód ponownego otwarcia: {item.reopenReason}</div>}
       {!actorId && (
         <div role="alert" className="text-c-warning">
-          Actor binding is unavailable. Governed actions are fail-closed.
+          Brak przypisania roli użytkownika. Akcje zarządcze są zablokowane.
         </div>
       )}
       <div className="rounded-md border border-c-border p-2 text-xs text-c-text-muted">
-        Direct reassignment is blocked. The owner must offer the existing assignment and the named
-        assignee must accept or decline it; identity changes require a separate governed command.
+        Bezpośrednia zmiana wykonawcy jest zablokowana. Właściciel proponuje przypisanie, a wskazany
+        wykonawca je akceptuje albo odrzuca. Zmiana osoby wymaga osobnej zatwierdzanej operacji.
       </div>
       {receipt && (
         <div role="status" className="text-c-success">
-          Canonical readback: {receipt.id} · v{receipt.version} · {receipt.status}
+          Potwierdzony zapis: …{receipt.id.slice(-8)} · v{receipt.version} ·{' '}
+          {statusLabel(receipt.status)}
         </div>
       )}
       {(state === 'CONFLICT' || state === 'FAILED') && (
         <div role="alert" className="text-c-danger">
           {state === 'CONFLICT'
-            ? 'The work item or parent Execution Case changed. Reload before retrying.'
-            : 'No change was recorded. Verify that you are the bound owner, assignee or authority.'}
+            ? 'Element pracy lub realizacja zostały zmienione. Odśwież dane przed ponowieniem.'
+            : 'Nie zapisano zmiany. Sprawdź, czy jesteś przypisanym właścicielem, wykonawcą lub osobą zatwierdzającą.'}
         </div>
       )}
       <label className="block">
-        <span className="mb-1 block text-c-text-muted">Controlled-action reason</span>
+        <span className="mb-1 block text-c-text-muted">Uzasadnienie operacji</span>
         <textarea
           aria-label="Controlled-action reason"
           className="min-h-20 w-full rounded-md border border-c-border bg-c-surface p-2"
@@ -181,15 +214,15 @@ export const CanonicalWorkHardeningPanel: React.FC<Props> = ({ item, actorId, on
       </label>
       {overdue && (
         <label className="block">
-          <span className="mb-1 block text-c-text-muted">Escalation level</span>
+          <span className="mb-1 block text-c-text-muted">Poziom eskalacji</span>
           <select
             aria-label="Escalation level"
             className="rounded-md border border-c-border bg-c-surface p-2"
             value={level}
             onChange={(event) => setLevel(event.target.value as 'WARNING' | 'CRITICAL')}
           >
-            <option>WARNING</option>
-            <option>CRITICAL</option>
+            <option value="WARNING">Ostrzeżenie</option>
+            <option value="CRITICAL">Krytyczny</option>
           </select>
         </label>
       )}
@@ -206,7 +239,7 @@ export const CanonicalWorkHardeningPanel: React.FC<Props> = ({ item, actorId, on
               disabled={(requiresReason && !reason.trim()) || state === 'SAVING'}
               onClick={() => void transition(action)}
             >
-              {action.replaceAll('_', ' ')}
+              {actionLabel(action)}
             </button>
           );
         })}

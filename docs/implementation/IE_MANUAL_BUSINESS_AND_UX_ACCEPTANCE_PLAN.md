@@ -1,10 +1,12 @@
 # Initiatives + Execution — manual business and UI/UX acceptance plan
 
-Status: `READY_FOR_REVIEW — automated gates pass; logged-in demo acceptance NOT VERIFIED`
+Status: `IN_EXECUTION — automated gates pass; logged-in demo acceptance NOT VERIFIED`
 
-Candidate under test: `codex/initiatives-execution-final-recovery` (final SHA pending)
+Demo base under test: `codex/initiatives-execution-final-candidate` at
+`856586f579e5a61b09586731ddce3971b843cf5d`. The current local acceptance correction set is
+uncommitted; a new exact candidate SHA is therefore still required before final demo acceptance.
 
-Runtime: `http://127.0.0.1:3000`
+Local diagnostic runtime: `http://127.0.0.1:3000` (not acceptance evidence)
 
 Demo acceptance runtime: `https://demo.consultify.ai` — DBR77 organization, project
 `DBR77 Demo — All Modules`, owner `piotr.wisniewski@dbr77.com`.
@@ -43,6 +45,37 @@ inputs, not substitutes for a business user completing the two journeys below in
 11. Loading, first-use empty, filtered empty, partial/stale, permission, write failure, read-back
     pending and version conflict preserve usable context and offer the correct recovery.
 12. Verify 1440x900, 1280x720, 1024 drawer fallback, 390x844, light/dark, 125% and 200% text.
+
+## 2A. Cross-application P0 gate
+
+These checks are performed across the two modules, not separately inside one screen.
+
+1. **Stable identity and return context.** Open one Initiative in Inicjatywy, follow its exact
+   relations through Portfolio, Plan, Capacity and accepted Handoff to Execution. The same
+   `initiativeId` remains visible throughout. Back restores the originating register, lens,
+   filters, columns, selection, scroll and keyboard focus. No second Card or shadow record appears.
+2. **My Work is a projection.** The same Task and Decision have identical ID, version and status in
+   Initiative Card, Execution Praca and My Work. A command from either surface updates canonical
+   truth. Projection lag is shown as pending with correlation ID, never as a locally forged success.
+3. **Authorization and isolation.** Repeat one representative read and write as authorized actor,
+   Viewer, unrelated-project user, foreign-tenant user, Admin without business binding and an actor
+   with expired delegation. Denial must conceal data where required and leave aggregate hash,
+   audit, outbox and receipt counts unchanged.
+4. **Concurrency and retry.** Two clients write the same expected version: one succeeds and one
+   receives 409 with current version and reconciliation data. Replaying the same request ID creates
+   one durable effect and returns the same canonical ID.
+5. **Degraded dependencies.** Fail or delay one source while loading a composite workspace. The
+   registry and successful sources remain usable; the failed source is named with as-of and scoped
+   retry. Capability-source failure closes writes. Draft, selection and context survive recovery.
+6. **Archive guard.** After Archive, ordinary Card, Task and Allocation writes, a second Archive and
+   a forged restore are rejected. Initiative version/lifecycle, work read-back, Archive Manifest,
+   audit, outbox and receipts remain unchanged.
+7. **Formatting and language.** Business copy is understandable in Polish; dates and numbers are
+   localized. Raw UUID, enum or ISO timestamp may appear in a technical lineage block, but never as
+   the primary row title, action label or user-facing status.
+8. **Observability and rollback.** Every failed material command exposes a request/correlation ID.
+   Health and logs distinguish application, database, Redis and migration failures. Rollback is
+   forward-only and preserves immutable history, audit, outbox and receipts.
 
 ## 3. Business case A — Initiatives: NordWerk Q4 change portfolio
 
@@ -292,6 +325,7 @@ PASS; global type-check PASS; production build PASS. Final human-interface accep
 demo account is `NOT VERIFIED`: both supported browser-control surfaces are temporarily blocked by an
 admin-enforced browser security policy. This must be retried; it may not be replaced by a fixture or
 API-only PASS.
+
 - The previously recorded six global TypeScript errors were corrected during candidate
   reconstruction. Repository-wide type-check and production build now pass. This is engineering
   evidence only; it does not replace the still-missing logged-in demo walkthrough.
@@ -300,7 +334,138 @@ The prior automated `ACCEPTED` record remains historical evidence. This independ
 reopened and cannot become PASS until every FAIL is corrected and all NOT VERIFIED steps have fresh
 runtime evidence.
 
-## 7. Canonical sources
+## 8. Current execution checkpoint — 2026-08-12
+
+- Exact demo runtime `/api/health.gitSha`:
+  `856586f579e5a61b09586731ddce3971b843cf5d`.
+- Demo `/ping` and `/api/health`: HTTP 200; PostgreSQL and Redis connected.
+- Initiatives/Execution plus shared table-contract suite: 60 files / 153 tests PASS.
+- Isolated local PostgreSQL realDB suite: 38 files / 88 tests PASS. Both
+  `IE_TEST_DATABASE_URL` and `DATABASE_URL` were explicitly bound to the same disposable local DB;
+  demo was not used as a destructive test database.
+- Full browser golden thread and WCAG 200% suite: 3/3 PASS on the local candidate runtime. The
+  golden thread covers the complete ACO lineage through Archive; the WCAG test covers all canonical
+  surfaces at 200% text resize.
+- Repository-wide `npm run type-check -- --pretty false`: PASS.
+- Focused ESLint for all changed production/test files: PASS.
+- `git diff --check`: PASS.
+- Production and staging were restored to prior compatible artifacts after a migration-checksum
+  incident; manual acceptance remains strictly scoped to `https://demo.consultify.ai`.
+- Logged-in manual functional and visual walkthrough remains `NOT VERIFIED`. The current agent
+  session exposes the open demo URL but no callable browser/Computer Use control channel, so it may
+  not claim interaction, DOM, keyboard, persistence or screenshot evidence. Resume from Section 2
+  as soon as browser control is enabled; do not replace this gate with API-only evidence.
+- Defects found and corrected locally during this execution: disabled row actions once again expose
+  their real business-lock reason; column visibility persistence and kebab/PPM/Shift+F10 parity are
+  now executable shared-table tests; the browser journey now explicitly closes Workbench, verifies
+  Preview, and reopens the exact Intervention/Report/Task before its next command instead of relying
+  on stale selection. Portfolio, Plan and Capacity now close Preview when their Workbench opens.
+  Sterowanie separates signal collection from the Intervention composer: `Dodaj sygnał` returns to
+  the register/Preview, while `Przygotuj interwencję` is the explicit Workbench transition. Focused
+  component regressions and the complete 3/3 browser rerun prove that competing surfaces no longer
+  remain open in these flows.
+- The fresh local screenshots are **not visual acceptance**. They identify issues that must be
+  checked and, when reproduced on the exact demo candidate, corrected before PASS: mixed Polish and
+  English action/status copy; raw UUID/enum/ISO values used too prominently; JSON editors visible as
+  primary authoring in Plan/Report/Allocation tools; and dense, weakly grouped action rows in several
+  Workbenches. Advanced JSON deliberately opened by a browser test is not itself a defect, but the
+  default collapsed state and a guided business form must be confirmed manually.
+
+Fresh repeatability checkpoint, 2026-08-12 07:40 Europe/Warsaw:
+
+- Initiatives/Execution unit suite: 59/59 files and 145/145 tests PASS;
+- shared `StandardTable` contract: 1/1 file and 8/8 tests PASS; combined: 60 files / 153 tests;
+- isolated PostgreSQL realDB suite: 38/38 files and 88/88 tests PASS;
+- browser golden thread plus WCAG 200%: 3/3 PASS in 1.3 minutes;
+- focused Reports regression after progressive-disclosure correction: 5/5 PASS;
+- repository-wide type-check, focused lint and `git diff --check`: PASS.
+
+Final automated checkpoint after the guided Report Definition correction, 2026-08-12 08:07
+Europe/Warsaw:
+
+- repository-wide type-check: PASS;
+- Initiatives/Execution plus shared table contract: 60/60 files and 153/153 tests PASS;
+- isolated PostgreSQL realDB: 38/38 files and 88/88 tests PASS;
+- full browser ACO golden thread plus WCAG 200%: 3/3 PASS in 56.2 seconds;
+- `git diff --check`: PASS.
+
+Fresh acceptance rerun after the final Capacity, Control and Reports copy/formatting corrections,
+2026-08-12 08:27 Europe/Warsaw:
+
+- repository-wide type-check: PASS;
+- Initiatives/Execution plus shared `StandardTable` contract: 60/60 files and 153/153 tests PASS;
+- isolated PostgreSQL realDB suite: 38/38 files and 88/88 tests PASS, with both
+  `IE_TEST_DATABASE_URL` and `DATABASE_URL` bound to the same disposable local database;
+- full browser ACO golden thread plus WCAG 200%: 3/3 PASS in 55.9 seconds;
+- logged-in demo walkthrough: `NOT VERIFIED` because this Codex session still has no callable
+  browser-control channel. The open demo tab is ambient state only and is not interaction evidence.
+
+The automated rerun proves repeatability of the local correction set. It does not change the demo
+runtime SHA and it does not satisfy the manual visual, keyboard, context-menu, persisted-column or
+Open/Back acceptance gates.
+
+This checkpoint proves the functional candidate, not the logged-in demo UX. The current demo still
+runs SHA `856586f579e5a61b09586731ddce3971b843cf5d`; the local corrections have no final candidate
+commit and were not deployed. No screenshot or fixture is treated as proof of the demo candidate.
+
+The current 39-file correction set is preserved outside the worktree at
+`/Users/piotrwisniewski/Developer/consultify-ie-backups/20260812-0800-ui-acceptance/changed-files.tar.gz`.
+Its sibling `.sha256` file records the verified checksum. The archive contains exactly the same 39
+paths as `git diff --name-only`. It is source-loss protection only, not Git-history, candidate-SHA
+or merge evidence.
+
+The current Codex task still has no callable Browser/Computer Use channel. The logged-in demo tab is
+visible only as ambient state and cannot be clicked, inspected or captured by the agent. Therefore
+the demo walkthrough, keyboard paths, persisted table settings and exact logged-in screenshots remain
+`NOT VERIFIED`. This is an environment limitation, not a functional PASS or FAIL.
+
+### Local candidate visual pre-audit — FAIL
+
+The fresh populated screenshots are sufficient to reject the current candidate visually even before
+the logged-in demo walkthrough. This does not replace demo acceptance; it prevents a false PASS:
+
+- `Sterowanie`: duplicate permanent forms were removed and signal collection, intervention authoring,
+  apply and verify are now progressively disclosed. The fresh screenshot is materially clearer, but
+  raw aggregate IDs, enum values and several technical field labels remain too prominent. Result:
+  `FAIL_COPY_AND_FORMATTING`.
+- `Obciążenie`: the duplicate register was removed, the commitment editor is collapsed behind an
+  explicit action and `UNKNOWN` remains literal. The Workbench is now scanable, but period dates,
+  source references and proposed-assignment identity still read like technical lineage rather than
+  business copy. Result: `FAIL_COPY_AND_FORMATTING`.
+- `Raporty`: the exact JSON contract is hidden behind an explicit advanced toggle and ordinary creation
+  uses a guided period/audience/scope form. Report Definition now also starts with purpose, audience,
+  cadence, owner, approver and scope; its source/formula/access JSON is hidden behind a separate
+  advanced toggle. A published Run hides lifecycle authoring behind `Odśwież jako nowy szkic`. The
+  golden evidence deliberately opens advanced mode, so it does not prove the default visual state.
+  Remaining raw source lineage and hashes still require logged-in manual review. Result:
+  `NOT_VERIFIED_MANUAL_VISUAL`.
+- Cross-screen: raw UUIDs, technical enum names and ISO timestamps remain too prominent; action rows are
+  insufficiently grouped; copy is not consistently localized. Result: `FAIL_COPY_AND_FORMATTING`.
+
+These defects are P0 for visual acceptance. Automated functional PASS remains valid, but the candidate
+must not be committed, deployed or manually accepted until the guided Workbench composition is fixed
+and fresh screenshots plus the logged-in demo walkthrough pass.
+
+### Final local automation checkpoint — 2026-08-12 08:58 Europe/Warsaw
+
+After the additional business-copy pass in `Obciążenie` and `Praca`, including localized canonical
+Task/Decision controls and Milestone blast-radius readback:
+
+- repository-wide type-check: PASS;
+- Initiatives/Execution unit suite: 59/59 files and 145/145 tests PASS;
+- isolated PostgreSQL realDB suite: 38/38 files and 88/88 tests PASS on a fresh disposable database,
+  executed sequentially to prevent migration/fixture deadlocks;
+- full ACO browser golden thread plus WCAG 200% and narrow responsive gate: 3/3 PASS in 54.7 seconds;
+- the first parallel realDB attempt is explicitly rejected as evidence because concurrent suites ran
+  the same migrations and cleanup against one database, producing deadlocks and fixture collisions;
+- logged-in demo walkthrough remains `NOT VERIFIED`: browser control is not callable in this task yet.
+
+The earlier visual FAIL observations are historical findings that drove the correction set, not a
+current acceptance verdict. Fresh automated screenshots show material improvement, but final visual
+PASS still requires the full-size logged-in demo walkthrough for all nine functions, including
+Settings2 persistence, preview, kebab/PPM parity, keyboard focus restoration and Open/Back context.
+
+## 9. Canonical sources
 
 - `docs/modules/INITIATIVES_EXECUTION_FUNCTIONS_CANON.md`
 - `docs/modules/initiatives-execution-canon/02_FUNCTIONAL_CONTRACTS.md`

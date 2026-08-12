@@ -57,12 +57,50 @@ interface Milestone {
   evidenceRefs: string[];
   sourceVersions: { executionCaseVersion: number; baselineVersion: number };
 }
+const workKindLabel: Record<WorkKind, string> = { TASK: 'Zadanie', DECISION: 'Decyzja' };
+const workStatusLabel: Record<string, string> = {
+  DRAFT: 'Szkic',
+  PENDING: 'Oczekuje na decyzję',
+  OPEN: 'Otwarte',
+  BLOCKED: 'Zablokowane',
+  COMPLETED: 'Wykonane',
+  CANCELED: 'Anulowane',
+  APPROVED: 'Zatwierdzone',
+  CONDITIONALLY_APPROVED: 'Zatwierdzone warunkowo',
+  REJECTED: 'Odrzucone',
+  RETURNED: 'Zwrócone',
+  READY: 'Gotowy',
+  AT_RISK: 'Zagrożony',
+  ACHIEVED: 'Osiągnięty',
+  UNKNOWN: 'Brak danych',
+};
+const actorLabel = (value: string) =>
+  ({
+    'execution-manager': 'Execution Manager',
+    'controls-engineer': 'Controls Engineer',
+  })[value] ?? value.replaceAll('-', ' ');
 const cols: TableColumn[] = [
-  { id: 'title', label: 'Work item', sortable: true, width: '240px' },
-  { id: 'kind', label: 'Type', sortable: true, filterable: true },
-  { id: 'status', label: 'Status', sortable: true },
-  { id: 'owner', label: 'Owner / authority', sortable: true },
-  { id: 'dueAt', label: 'Due / SLA', sortable: true },
+  { id: 'title', label: 'Element pracy', sortable: true, width: '240px' },
+  {
+    id: 'kind',
+    label: 'Rodzaj',
+    sortable: true,
+    filterable: true,
+    render: (row) => workKindLabel[row.kind as WorkKind] ?? row.kind,
+  },
+  {
+    id: 'status',
+    label: 'Status',
+    sortable: true,
+    render: (row) => <span role="status">{workStatusLabel[row.status] ?? row.status}</span>,
+  },
+  {
+    id: 'owner',
+    label: 'Właściciel / osoba decyzyjna',
+    sortable: true,
+    render: (row) => actorLabel(row.owner),
+  },
+  { id: 'dueAt', label: 'Termin / SLA', sortable: true },
 ];
 const workPresets = [
   'all',
@@ -527,8 +565,8 @@ export const ExecutionWorkSurface = ({ activePreset, onCountsChange }: Execution
           selectedId={selectedId}
           selectedItem={selected}
           onSelect={(id) => {
+            if (showWorkspace) return;
             setSelectedId(id);
-            setShowWorkspace(false);
           }}
           onOpenFull={(id) => {
             const row = rows.find((candidate) => candidate.id === id);
@@ -546,8 +584,11 @@ export const ExecutionWorkSurface = ({ activePreset, onCountsChange }: Execution
               openLabel="Otwórz element pracy"
               meta={{
                 pills: [
-                  { label: r.kind, tone: 'neutral' },
-                  { label: r.status, tone: r.status === 'COMPLETED' ? 'success' : 'info' },
+                  { label: workKindLabel[r.kind], tone: 'neutral' },
+                  {
+                    label: workStatusLabel[r.status] ?? r.status,
+                    tone: r.status === 'COMPLETED' ? 'success' : 'info',
+                  },
                 ],
                 trailing: <span className="text-xs">v{r.version}</span>,
                 recommendation: r.source.nextAction ?? 'Sprawdź kompletność i następny krok.',
@@ -556,20 +597,24 @@ export const ExecutionWorkSurface = ({ activePreset, onCountsChange }: Execution
                 label: 'Szczegóły pracy',
                 text: r.source.description || 'Brak dodatkowego opisu.',
                 properties: [
-                  { id: 'owner', label: 'Odpowiedzialny', value: r.owner || 'UNKNOWN' },
-                  { id: 'due', label: 'Termin / SLA', value: r.dueAt || 'UNKNOWN' },
-                  { id: 'case', label: 'Realizacja', value: r.executionCaseId },
+                  {
+                    id: 'owner',
+                    label: 'Odpowiedzialny',
+                    value: r.owner ? actorLabel(r.owner) : 'Brak przypisania',
+                  },
+                  { id: 'due', label: 'Termin / SLA', value: r.dueAt || 'Brak danych' },
+                  { id: 'case', label: 'Realizacja', value: `…${r.executionCaseId.slice(-8)}` },
                   {
                     id: 'evidence',
                     label: 'Dowody',
-                    value: r.source.evidenceRefs?.join(', ') || 'EVIDENCE_MISSING',
+                    value: r.source.evidenceRefs?.join(', ') || 'Brak wymaganych dowodów',
                   },
                 ],
                 onCopy: () => void navigator.clipboard?.writeText(r.title),
               }}
               relations={[
-                { label: `Realizacja · ${r.executionCaseId}`, onClick: () => undefined },
-                { label: `Inicjatywa · ${r.initiativeId}`, onClick: () => undefined },
+                { label: `Realizacja · …${r.executionCaseId.slice(-8)}`, onClick: () => undefined },
+                { label: `Inicjatywa · …${r.initiativeId.slice(-8)}`, onClick: () => undefined },
               ]}
               relationsEmptyLabel="Brak powiązań"
               actions={{
@@ -592,8 +637,8 @@ export const ExecutionWorkSurface = ({ activePreset, onCountsChange }: Execution
             data={visibleRows}
             selectedRowId={selectedId}
             onRowClick={(r) => {
+              if (showWorkspace) return;
               setSelectedId(r.id);
-              setShowWorkspace(false);
             }}
             onRowDoubleClick={(r) => {
               void openWorkspace(r as Row);
@@ -657,14 +702,14 @@ export const ExecutionWorkSurface = ({ activePreset, onCountsChange }: Execution
           aria-label="Execution Milestones"
           className="mt-4 rounded border border-c-border p-4"
         >
-          <h3 className="font-semibold">Milestones</h3>
+          <h3 className="font-semibold">Kamienie milowe</h3>
           <p className="text-xs text-c-text-muted">
-            Exact Case v{caseVersion || 'UNKNOWN'} · Handoff baseline {baselineRef.ref || 'UNKNOWN'}{' '}
-            v{baselineRef.version || 'UNKNOWN'}
+            Realizacja v{caseVersion || 'Brak danych'} · zaakceptowana wersja bazowa v
+            {baselineRef.version || 'Brak danych'}
           </p>
           {milestones.length === 0 ? (
             <p role="status" className="mt-2 text-sm text-c-text-muted">
-              No canonical Milestones.
+              Brak kanonicznych kamieni milowych.
             </p>
           ) : (
             <ul className="mt-2 grid gap-2 md:grid-cols-2">
@@ -672,18 +717,21 @@ export const ExecutionWorkSurface = ({ activePreset, onCountsChange }: Execution
                 <li key={m.milestoneId} className="rounded border border-c-border p-3 text-sm">
                   <strong>{m.title}</strong> · {m.milestoneId} v{m.version}
                   <div>
-                    {m.status} · readiness {m.readiness}
+                    {workStatusLabel[m.status] ?? m.status} · gotowość{' '}
+                    {workStatusLabel[m.readiness] ?? m.readiness}
                   </div>
-                  <div>Owner {m.ownerId}</div>
+                  <div>Właściciel: {actorLabel(m.ownerId)}</div>
                   <div>
-                    Target {m.targetAt ?? 'UNKNOWN'} · forecast {m.forecastAt ?? 'UNKNOWN'}
-                  </div>
-                  <div>
-                    Variance{' '}
-                    {m.forecastVarianceDays === null ? 'UNKNOWN' : `${m.forecastVarianceDays} days`}
+                    Termin {formatDateTime(m.targetAt)} · prognoza {formatDateTime(m.forecastAt)}
                   </div>
                   <div>
-                    Evidence {m.evidenceRefs.length ? m.evidenceRefs.join(', ') : 'UNKNOWN'}
+                    Odchylenie{' '}
+                    {m.forecastVarianceDays === null
+                      ? 'Brak danych'
+                      : `${m.forecastVarianceDays} dni`}
+                  </div>
+                  <div>
+                    Dowody: {m.evidenceRefs.length ? m.evidenceRefs.join(', ') : 'Brak danych'}
                   </div>
                   <div className="text-xs text-c-text-muted">
                     Case v{m.sourceVersions.executionCaseVersion} · baseline {m.baselineRef.ref} v

@@ -51,9 +51,9 @@ describe('CanonicalWorkHardeningPanel', () => {
   it('offers assignment without changing identity and reads back the exact Task ID/version/status', async () => {
     const onReadback = vi.fn();
     render(<CanonicalWorkHardeningPanel item={task} actorId="owner-1" onReadback={onReadback} />);
-    expect(screen.getByText('OVERDUE')).toBeInTheDocument();
-    expect(screen.getByText(/Direct reassignment is blocked/)).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'OFFER ASSIGNMENT' }));
+    expect(screen.getByText('Po terminie')).toBeInTheDocument();
+    expect(screen.getByText(/Bezpośrednia zmiana wykonawcy jest zablokowana/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Zaproponuj przypisanie' }));
     await waitFor(() =>
       expect(transitionCanonicalTask).toHaveBeenCalledWith(
         'case-1',
@@ -65,7 +65,7 @@ describe('CanonicalWorkHardeningPanel', () => {
         })
       )
     );
-    expect(screen.getByRole('status')).toHaveTextContent('task-1 · v5 · OPEN');
+    expect(screen.getByRole('status')).toHaveTextContent('…task-1 · v5 · Otwarte');
     expect(onReadback).toHaveBeenCalledWith(expect.objectContaining({ taskId: 'task-1' }), 5);
   });
 
@@ -93,11 +93,11 @@ describe('CanonicalWorkHardeningPanel', () => {
         }}
       />
     );
-    expect(screen.getByRole('button', { name: 'CANCEL' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Anuluj' })).toBeDisabled();
     fireEvent.change(screen.getByLabelText('Controlled-action reason'), {
       target: { value: 'Superseded by governing decision.' },
     });
-    fireEvent.click(screen.getByRole('button', { name: 'CANCEL' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Anuluj' }));
     await waitFor(() =>
       expect(transitionCanonicalDecision).toHaveBeenCalledWith(
         'case-1',

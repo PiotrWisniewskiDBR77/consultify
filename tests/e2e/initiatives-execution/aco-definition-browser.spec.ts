@@ -735,16 +735,14 @@ test('READY_FOR_DECISION → persistent published Portfolio Scenario without lif
   await expect(page.getByRole('combobox', { name: 'Active Capacity Scenario' })).toHaveValue(
     capacityScenarioId
   );
-  await page.getByRole('row', { name: /2026-P10 PERIOD/ }).click();
-  await page.getByRole('button', { name: 'Otwórz narzędzia obciążenia' }).click();
-  await expect(
-    page.getByText(new RegExp(`Exact Plan ${planScenarioId} v2`))
-  ).toBeVisible();
-  await expect(page.getByText('UNKNOWN — no numeric value').first()).toBeVisible();
-  await page.getByRole('button', { name: 'Publish', exact: true }).click();
+  await page.getByRole('row', { name: /2026-P10 Okres/ }).click();
+  await page.getByRole('button', { name: 'Otwórz narzędzia obciążenia', exact: true }).click();
+  await expect(page.getByText(/Plan źródłowy · v2/)).toBeVisible();
+  await expect(page.getByText('UNKNOWN — brak potwierdzonej wartości').first()).toBeVisible();
+  await page.getByRole('button', { name: 'Opublikuj', exact: true }).click();
   await expect(
     page.getByRole('combobox', { name: 'Active Capacity Scenario' }).locator('option:checked')
-  ).toHaveText(new RegExp(`${capacityScenarioId} · PUBLISHED · v2`));
+  ).toHaveText(new RegExp(`${capacityScenarioId} · Opublikowany · v2`));
   const publishedCapacity = await api(
     'initiative-owner',
     `/capacity-scenarios/${capacityScenarioId}`
@@ -823,10 +821,10 @@ test('READY_FOR_DECISION → persistent published Portfolio Scenario without lif
   await expect(optionsRegion.getByRole('region')).toHaveCount(3);
   await page.getByLabel('Capacity governed next input').selectOption('SCHEDULE_DECISION');
   await page
-    .getByRole('region', { name: 'Capacity option Resequence' })
-    .getByRole('button', { name: 'Select as governed input' })
+    .getByRole('region', { name: 'Opcja obciążenia: Zmień kolejność' })
+    .getByRole('button', { name: 'Wybierz do dalszej decyzji' })
     .click();
-  await expect(page.getByText(/Governed input: SCHEDULE_DECISION/)).toBeVisible();
+  await expect(page.getByText(/Kontrolowany wniosek: SCHEDULE_DECISION/)).toBeVisible();
   await page.screenshot({
     path: 'docs/implementation/evidence/aco-browser-capacity-options-step-27.png',
     fullPage: true,
@@ -834,7 +832,8 @@ test('READY_FOR_DECISION → persistent published Portfolio Scenario without lif
 
   const commitmentId = `aco-commitment-${runSuffix}`;
   await page.setExtraHTTPHeaders({ 'x-e2e-actor': 'resource-manager' });
-  await page.getByText(`aco-assignment-${runSuffix}`).click();
+  await page.getByText(/Controls Engineer · okresy 2026-P10/).click();
+  await page.getByRole('button', { name: 'Zarządzaj zobowiązaniem' }).click();
   await page.getByLabel('Capacity commitmentId').fill(commitmentId);
   await page.getByLabel('Capacity resourceManagerId').fill('resource-manager');
   await page.getByLabel('Capacity assigneeId').fill('controls-engineer');
@@ -1014,7 +1013,9 @@ test('READY_FOR_DECISION → persistent published Portfolio Scenario without lif
   await expect(realizationRow).toBeVisible();
   await realizationRow.click();
   await page.getByRole('button', { name: 'Otwórz', exact: true }).click();
-  await expect(page.getByText(new RegExp(`Execution Case .*${executionCaseId}`))).toBeVisible();
+  await expect(
+    page.getByRole('button', { name: `Execution Case ${executionCaseId}@v1`, exact: true })
+  ).toBeVisible();
   await page.screenshot({
     path: 'docs/implementation/evidence/aco-browser-execution-registry-step-34.png',
     fullPage: true,
@@ -1095,8 +1096,8 @@ test('READY_FOR_DECISION → persistent published Portfolio Scenario without lif
   await taskRow.click();
   await page.getByRole('button', { name: 'Otwórz element pracy' }).click();
   const blastRadius = page.getByRole('region', { name: 'Task milestone blast radius' });
-  await expect(blastRadius.getByText(new RegExp(milestoneId))).toBeVisible();
-  await expect(blastRadius.getByRole('alert')).toContainText('Blocked Task affects 1 Milestone');
+  await expect(blastRadius.locator(`[title="${milestoneId}"]`)).toBeVisible();
+  await expect(blastRadius.getByRole('alert')).toContainText('Zablokowane zadanie wpływa na 1');
   await page.screenshot({
     path: 'docs/implementation/evidence/aco-browser-execution-work-steps-35-37.png',
     fullPage: true,
@@ -1116,7 +1117,7 @@ test('READY_FOR_DECISION → persistent published Portfolio Scenario without lif
       return decision ? { status: decision.status, version: decision.version } : null;
     })
     .toEqual({ status: 'PENDING', version: 2 });
-  await expect(decisionRow.getByRole('status')).toContainText('Pending');
+  await expect(decisionRow.getByRole('status')).toContainText('Oczekuje na decyzję');
   await expect(decisionRow).toBeVisible();
   await decisionRow.dblclick();
   await expect(page.getByRole('region', { name: 'Governed Decision controls' })).toBeVisible();
@@ -1138,7 +1139,7 @@ test('READY_FOR_DECISION → persistent published Portfolio Scenario without lif
         ?.status;
     })
     .toBe('CONDITIONALLY_APPROVED');
-  await expect(decisionRow).toContainText(/conditionally approved/i);
+  await expect(decisionRow).toContainText(/zatwierdzone warunkowo/i);
   const conditionalWork = await api(
     'execution-manager',
     `/execution-cases/${executionCaseId}/work`
@@ -1295,6 +1296,7 @@ test('READY_FOR_DECISION → persistent published Portfolio Scenario without lif
   await expect(capacitySignalRow).toBeVisible();
   await capacitySignalRow.click();
   await page.getByRole('button', { name: 'Dodaj do przygotowywanej interwencji' }).click();
+  await page.getByRole('button', { name: 'Przygotuj interwencję' }).click();
 
   await page.getByLabel('Intervention draft interventionId').fill(interventionId);
   await page.getByLabel('Intervention draft ownerId').fill('execution-manager');
@@ -1327,28 +1329,29 @@ test('READY_FOR_DECISION → persistent published Portfolio Scenario without lif
     .fill(`${planScenarioId}|Order changes within the same published time basis`);
   await page.getByLabel('Intervention draft actionConfidence').selectOption('MEDIUM');
   await page.getByLabel('Intervention draft actionReversibility').selectOption('REVERSIBLE');
-  await page.getByRole('button', { name: 'Draft or merge Intervention Case' }).click();
+  await page.getByRole('button', { name: 'Zapisz lub połącz sprawę interwencyjną' }).click();
   const interventionRow = page.getByRole('row', { name: new RegExp(interventionId) });
-  await expect(interventionRow).toContainText('Draft');
+  await expect(interventionRow).toContainText('Szkic');
+  await page
+    .getByLabel('Intervention Workbench')
+    .getByRole('button', { name: 'Zamknij', exact: true })
+    .click();
   await interventionRow.click();
-  await expect(
-    page.getByRole('row', {
-      name: 'Niewiadome Supplier commissioning slot remains UNKNOWN.',
-    })
-  ).toBeVisible();
+  await expect(page.getByText('Supplier commissioning slot remains UNKNOWN.')).toBeVisible();
   await expect(
     page.getByText('ACTION: Apply independently approved Plan resequence', { exact: true })
   ).toBeVisible();
-  await page.getByRole('button', { name: 'Request independent Decision' }).click();
-  await expect(interventionRow).toContainText(/pending decision/i);
+  await page.getByRole('button', { name: /^(Open|Otwórz interwencję)$/ }).click();
+  await page.getByRole('button', { name: 'Poproś o decyzję' }).click();
+  await expect(interventionRow).toContainText(/oczekuje na decyzję/i);
   await interventionRow.click();
   await page.setExtraHTTPHeaders({ 'x-e2e-actor': 'intervention-authority' });
   await page.getByLabel('Intervention selected option').fill('governed-resequence');
   await page
     .getByLabel('Intervention rationale')
     .fill('The selected option is reversible and preserves exact lineage.');
-  await page.getByRole('button', { name: 'Approve option' }).click();
-  await expect(interventionRow).toContainText(/approved/i);
+  await page.getByRole('button', { name: 'Zatwierdź wariant' }).click();
+  await expect(interventionRow).toContainText(/zatwierdzona/i);
   await page.screenshot({
     path: 'docs/implementation/evidence/aco-browser-management-intervention-steps-40-42.png',
     fullPage: true,
@@ -1384,6 +1387,7 @@ test('READY_FOR_DECISION → persistent published Portfolio Scenario without lif
   const interventionAfterReload = page.getByRole('row', { name: new RegExp(interventionId) });
   await interventionAfterReload.click();
   await page.getByRole('button', { name: 'Open', exact: true }).click();
+  await page.getByRole('button', { name: 'Przygotuj zmianę planu' }).click();
   await page.getByLabel('Governed comparison').selectOption(interventionComparisonId);
   await page.getByLabel('Governed proposalId').fill(materialChangeId);
   await page.getByLabel('Governed oldSnapshot').fill(JSON.stringify(planBeforeChange));
@@ -1407,7 +1411,7 @@ test('READY_FOR_DECISION → persistent published Portfolio Scenario without lif
       handoff: knownImpact,
     })
   );
-  await page.getByRole('button', { name: 'Create governed Plan Material Change' }).click();
+  await page.getByRole('button', { name: 'Utwórz zarządzaną zmianę planu' }).click();
   await expect(
     page.getByRole('status').filter({ hasText: 'MATERIAL_CHANGE_DRAFTED' })
   ).toContainText('MATERIAL_CHANGE_DRAFTED');
@@ -1471,7 +1475,9 @@ test('READY_FOR_DECISION → persistent published Portfolio Scenario without lif
       tasks: [{ id: taskId, version: currentTaskForImpact.version }],
     },
   };
+  await page.getByRole('button', { name: 'Przygotuj zmianę planu' }).click();
   await page.getByLabel('Governed affected').fill(JSON.stringify(exactPlanChange));
+  await page.getByRole('button', { name: 'Zamknij zmianę planu' }).click();
   await page.getByLabel('Intervention receiptId').fill(publishReceiptId);
   await page.getByLabel('Intervention aggregateType').fill('material_change');
   await page.getByLabel('Intervention aggregateId').fill(materialChangeId);
@@ -1486,7 +1492,7 @@ test('READY_FOR_DECISION → persistent published Portfolio Scenario without lif
     .fill(`measurement:plan-resequence:${planScenarioId}`);
   await page.getByLabel('Intervention measurementVersion').fill('1');
   await page.setExtraHTTPHeaders({ 'x-e2e-actor': 'execution-manager' });
-  await page.getByRole('button', { name: 'Apply canonical receipt' }).click();
+  await page.getByRole('button', { name: 'Zastosuj potwierdzoną komendę' }).click();
   await expect(interventionAfterReload).toContainText(/verification due/i);
   await interventionAfterReload.click();
   await page.setExtraHTTPHeaders({ 'x-e2e-actor': 'portfolio-authority' });
@@ -1494,11 +1500,11 @@ test('READY_FOR_DECISION → persistent published Portfolio Scenario without lif
   await page
     .getByLabel('Intervention verification evidence')
     .fill(`measurement:plan-resequence:${planScenarioId}:ineffective:v1`);
-  await page.getByRole('button', { name: 'Verify intervention' }).click();
-  await expect(interventionAfterReload).toContainText(/escalated/i);
+  await page.getByRole('button', { name: 'Zweryfikuj interwencję' }).click();
+  await expect(interventionAfterReload).toContainText(/eskalowana/i);
   await expect(
-    page.getByRole('status').filter({ hasText: 'INEFFECTIVE · ESCALATED' })
-  ).toContainText('INEFFECTIVE · ESCALATED');
+    page.getByRole('status').filter({ hasText: 'Nieskuteczna · eskalowana' })
+  ).toContainText('Nieskuteczna · eskalowana');
   await page.screenshot({
     path: 'docs/implementation/evidence/aco-browser-plan-intervention-step-43.png',
     fullPage: true,
@@ -1534,21 +1540,22 @@ test('READY_FOR_DECISION → persistent published Portfolio Scenario without lif
   await page.setExtraHTTPHeaders({ 'x-e2e-actor': 'execution-manager' });
   await page.getByRole('button', { name: 'Nowa definicja' }).click();
   await page.getByLabel('Report Definition ID').fill(reportDefinitionId);
+  await page.getByLabel('Zaawansowany kontrakt definicji').check();
   await page.getByLabel('Report Definition contract JSON').fill(JSON.stringify(reportDefinition));
   await page.getByLabel('Report Definition project IDs').fill('operations-transformation-2027');
-  await page.getByRole('button', { name: 'Create Definition' }).click();
+  await page.getByRole('button', { name: 'Utwórz definicję' }).click();
   const definitionRow = page.getByRole('row', { name: /ACO execution control/ });
-  await expect(definitionRow).toContainText(/draft/i);
+  await expect(definitionRow).toContainText(/szkic/i);
   await definitionRow.click();
-  await page.getByRole('button', { name: 'Validate Definition' }).click();
-  await expect(definitionRow).toContainText(/validated/i);
+  await page.getByRole('button', { name: 'Zweryfikuj definicję' }).click();
+  await expect(definitionRow).toContainText(/zweryfikowan/i);
   await definitionRow.click();
   await page.setExtraHTTPHeaders({ 'x-e2e-actor': 'report-approver' });
   await page
     .getByLabel('Report Definition publish rationale')
     .fill('Independent approval of exact sources, freshness and access contract.');
-  await page.getByRole('button', { name: 'Publish Definition' }).click();
-  await expect(definitionRow).toContainText(/published/i);
+  await page.getByRole('button', { name: 'Opublikuj definicję' }).click();
+  await expect(definitionRow).toContainText(/opublikowan/i);
   await page.screenshot({
     path: 'docs/implementation/evidence/aco-browser-report-definition-step-44.png',
     fullPage: true,
@@ -1586,32 +1593,39 @@ test('READY_FOR_DECISION → persistent published Portfolio Scenario without lif
   await page
     .getByLabel('ReportRun published Definition version')
     .selectOption(`${reportDefinitionId}@1`);
+  await page.getByRole('checkbox', { name: 'Zaawansowany kontrakt JSON' }).check();
   await page.getByLabel('ReportRun draft JSON').fill(JSON.stringify(reportDraft));
-  await page.getByRole('button', { name: 'Create or refresh ReportRun' }).click();
+  await page.getByRole('button', { name: 'Utwórz lub odśwież raport' }).click();
   const reportRow = page
     .getByRole('row')
     .filter({ hasText: 'ACO execution control · 16 gru 2026' })
     .first();
-  await expect(reportRow).toContainText(/draft/i);
+  await expect(reportRow).toContainText(/szkic/i);
+  await page
+    .getByRole('heading', { name: 'Generator raportu' })
+    .locator('..')
+    .getByRole('button', { name: 'Zamknij', exact: true })
+    .click();
   await reportRow.click();
   await expect(page.getByText('CURRENT · FULL · confidence HIGH', { exact: true })).toBeVisible();
-  await page.getByRole('button', { name: 'Validate sources' }).click();
-  await expect(reportRow).toContainText(/validated/i);
+  await page.getByRole('button', { name: /^(Open|Otwórz raport)$/ }).click();
+  await page.getByRole('button', { name: 'Zweryfikuj źródła' }).click();
+  await expect(reportRow).toContainText(/zweryfikowan/i);
   await reportRow.click();
-  await page.getByRole('button', { name: 'Freeze snapshot' }).click();
-  await expect(reportRow).toContainText(/frozen/i);
+  await page.getByRole('button', { name: 'Zamroź migawkę' }).click();
+  await expect(reportRow).toContainText(/zamrożon/i);
   await reportRow.click();
   await page.setExtraHTTPHeaders({ 'x-e2e-actor': 'report-approver' });
   await page.getByLabel('Report approval rationale').fill('Independent source review accepted.');
-  await page.getByRole('button', { name: 'Independent approve', exact: true }).click();
-  await expect(reportRow).toContainText(/approved/i);
+  await page.getByRole('button', { name: 'Zatwierdź niezależnie', exact: true }).click();
+  await expect(reportRow).toContainText(/zatwierdzony/i);
   await reportRow.click();
   await page.setExtraHTTPHeaders({ 'x-e2e-actor': 'report-approver' });
   await page.getByLabel('Report distribution receiptId').fill(`aco-distribution-${runSuffix}`);
   await page.getByLabel('Report distribution audience').fill('Steering Committee');
   await page.getByLabel('Report distribution distributedAt').fill('2026-12-16T12:00');
-  await page.getByRole('button', { name: 'Publish/share frozen approved snapshot' }).click();
-  await expect(reportRow).toContainText(/published/i);
+  await page.getByRole('button', { name: 'Opublikuj zatwierdzoną migawkę' }).click();
+  await expect(reportRow).toContainText(/opublikowan/i);
   await expect(
     page.getByRole('status').filter({ hasText: `aco-distribution-${runSuffix}` })
   ).toContainText(`aco-distribution-${runSuffix}`);
@@ -1634,7 +1648,7 @@ test('READY_FOR_DECISION → persistent published Portfolio Scenario without lif
   await page
     .getByLabel('Report follow-up evidenceRefs')
     .fill(`report-run:${reportRunId}@5\nintervention:${interventionId}@5`);
-  await page.getByRole('button', { name: 'Create and link canonical follow-up Task' }).click();
+  await page.getByRole('button', { name: 'Utwórz i powiąż zadanie następcze' }).click();
   await expect(page.getByRole('status').filter({ hasText: reportFollowUpTaskId })).toContainText(
     reportFollowUpTaskId
   );
@@ -1662,13 +1676,20 @@ test('READY_FOR_DECISION → persistent published Portfolio Scenario without lif
       capturedAt: '2026-12-17T00:00:00.000Z',
     })),
   };
+  await page.getByRole('button', { name: 'Odśwież jako nowy szkic' }).click();
+  await page.getByRole('checkbox', { name: 'Zaawansowany kontrakt JSON' }).check();
   await page.getByLabel('ReportRun draft JSON').fill(JSON.stringify(refreshDraft));
-  await page.getByRole('button', { name: 'Create or refresh ReportRun' }).click();
+  await page.getByRole('button', { name: 'Utwórz lub odśwież raport' }).click();
   const refreshRow = page
     .getByRole('row')
     .filter({ hasText: 'ACO execution control · 17 gru 2026' })
     .first();
-  await expect(refreshRow).toContainText(/draft/i);
+  await expect(refreshRow).toContainText(/szkic/i);
+  await page
+    .getByRole('heading', { name: 'Generator raportu' })
+    .locator('..')
+    .getByRole('button', { name: 'Zamknij', exact: true })
+    .click();
   await refreshRow.click();
   await expect(page.getByText(`Parent ${reportRunId} v6`)).toBeVisible();
   await page.screenshot({
@@ -1684,14 +1705,24 @@ test('READY_FOR_DECISION → persistent published Portfolio Scenario without lif
   await expect(page.getByRole('row', { name: /Conditional follow-up/ })).toBeVisible();
   for (const deliveryTask of openDeliveryTasks) {
     await page.setExtraHTTPHeaders({ 'x-e2e-actor': deliveryTask.assigneeId });
+    const closeWorkspace = page.getByRole('button', { name: 'Zamknij workspace' });
+    if (await closeWorkspace.isVisible()) {
+      await closeWorkspace.click();
+      await expect(
+        page.getByRole('region', { name: 'Execution Work item workspace' })
+      ).toBeHidden();
+    }
     const taskRow = page.getByRole('row', { name: new RegExp(deliveryTask.title) });
-    await taskRow.dblclick();
+    await taskRow.click();
+    await page.getByRole('button', { name: /^(Open|Otwórz element pracy)$/ }).click();
+    const taskWorkspace = page.getByRole('region', { name: 'Execution Work item workspace' });
+    await expect(taskWorkspace.getByRole('heading', { name: deliveryTask.title })).toBeVisible();
     await expect(page.getByRole('region', { name: 'Governed Task controls' })).toBeVisible();
     await page
       .getByLabel('Work evidenceRefs')
       .fill(`delivery-evidence:${deliveryTask.taskId}:v${deliveryTask.version}`);
     await page.getByRole('button', { name: 'Oznacz jako wykonane' }).click();
-    await expect(taskRow).toContainText(/completed/i);
+    await expect(taskRow).toContainText(/wykonane/i);
   }
   const completedWork = await api('execution-manager', `/execution-cases/${executionCaseId}/work`);
   expect(completedWork.tasks.filter((item: { status: string }) => item.status === 'OPEN')).toEqual(
