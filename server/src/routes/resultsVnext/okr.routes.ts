@@ -1997,8 +1997,10 @@ router.post(
         return;
       }
       const body = req.body as import('zod').infer<typeof ProposeOkrAlignmentSchema>;
+      const access = await resolveAccess(req, auth);
       const outcome = await proposeAlignment({
         organizationId: auth.organizationId,
+        access,
         sourceObjectiveId: objectiveId,
         targetObjectiveId: body.targetObjectiveId,
         rationale: body.rationale ?? null,
@@ -2090,6 +2092,7 @@ router.post(
     try {
       const { alignmentId } = req.params as { alignmentId: string };
       const body = req.body as import('zod').infer<typeof AcceptOkrAlignmentSchema>;
+      const access = await resolveAccess(req, auth);
       const outcome = await acceptAlignment({
         alignmentId,
         organizationId: auth.organizationId,
@@ -2099,6 +2102,7 @@ router.post(
         idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
         correlationId: getCorrelationId(req),
         reason: body.reason ?? null,
+        access,
       });
       res.status(200).json({
         outcome: outcome.outcome,
@@ -2126,6 +2130,7 @@ router.post(
     try {
       const { alignmentId } = req.params as { alignmentId: string };
       const body = req.body as import('zod').infer<typeof RejectOkrAlignmentSchema>;
+      const access = await resolveAccess(req, auth);
       const outcome = await rejectAlignment({
         alignmentId,
         organizationId: auth.organizationId,
@@ -2135,6 +2140,7 @@ router.post(
         responseReason: body.responseReason ?? null,
         idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
         correlationId: getCorrelationId(req),
+        access,
       });
       res.status(200).json({
         outcome: outcome.outcome,
@@ -2164,6 +2170,7 @@ router.post(
     try {
       const { alignmentId } = req.params as { alignmentId: string };
       const body = req.body as import('zod').infer<typeof RemoveOkrAlignmentSchema>;
+      const access = await resolveAccess(req, auth);
       const outcome = await removeAlignment({
         alignmentId,
         organizationId: auth.organizationId,
@@ -2173,6 +2180,7 @@ router.post(
         idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
         correlationId: getCorrelationId(req),
         reason: body.reason ?? null,
+        access,
       });
       res.status(200).json({
         outcome: outcome.outcome,

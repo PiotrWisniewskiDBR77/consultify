@@ -56,6 +56,7 @@ import {
   type AtomicCommandOutcome,
   type AtomicEventInput,
 } from '../platform/atomicWrite.js';
+import { assertCommandCapability, type CommandAccessContext } from '../platform/commandCapabilityGuard.js';
 import { createObligation } from '../platform/obligations.js';
 import { VISIBILITY_CTE_PARAM_COUNT, wrapWithVisibilityScope } from '../platform/visibilityScopedQuery.js';
 
@@ -73,6 +74,35 @@ import {
 // ==========================================
 
 export const OKR_ALIGNMENT_AGGREGATE_TYPE = 'okr_alignment';
+
+/**
+ * RN-G5 — command capability names (docs/product/results-vnext/RN_G5_AUTHZ_DESIGN.md).
+ * NOTE unlike most gated commands in this package: every alignment command
+ * ALREADY carries a hardcoded, narrower ownership check of its own
+ * (`OkrAlignmentNotOwnerError` — design §H's own explicit AC, e.g.
+ * "caller is the SOURCE Objective's Owner"). This is not the silent-gap
+ * vulnerability class the rest of this package targets — it is a real,
+ * deliberate, pre-existing authorization rule. The RN-G5 gate below is
+ * added anyway, for TWO reasons, both additive, neither weakening the
+ * existing rule: (1) consistency — every write command in this package
+ * goes through the same primitive, so this domain's coverage table has no
+ * silent exception; (2) the RN-G5 gate runs FIRST and returns the same
+ * generic, non-leaking denial every other stranger-facing command does,
+ * rather than a stranger reaching `OkrAlignmentNotOwnerError` (whose
+ * message/details name the real owner's user id — a minor identity leak
+ * to an unauthorized caller the generic gate avoids). The old
+ * `OkrAlignmentNotOwnerError` check is left completely unchanged
+ * afterward — it still fires for anyone who passes the RN-G5 gate via
+ * capability but is not literally the Objective's Owner, preserving
+ * design §H's stated "Owner only, no exception" invariant exactly as
+ * before.
+ */
+export const OKR_ALIGNMENT_CAPABILITIES = {
+  propose: 'results.okr.alignment.propose',
+  accept: 'results.okr.alignment.accept',
+  reject: 'results.okr.alignment.reject',
+  remove: 'results.okr.alignment.remove',
+} as const;
 
 /** §-IO item 8 / design §I / §J item 8: a design ADDITION beyond the
  * literal AC table, stated explicitly (not silently assumed) — same class
@@ -310,6 +340,7 @@ export interface ProposeAlignmentInput {
   correlationId?: string;
   causationId?: string | null;
   reason?: string | null;
+  access: CommandAccessContext;
 }
 
 export interface ProposeAlignmentResult {
@@ -354,6 +385,7 @@ export async function proposeAlignment(
     correlationId,
     causationId = null,
     reason = null,
+    access,
   } = input;
 
   async function loadResult(client: PoolClient, alignmentId: string): Promise<ProposeAlignmentResult> {
@@ -383,6 +415,17 @@ export async function proposeAlignment(
       if (!source) throw new OkrObjectiveNotFoundError(sourceObjectiveId);
       const target = await loadObjectiveContextForAlignment(client, targetObjectiveId, organizationId);
       if (!target) throw new OkrObjectiveNotFoundError(targetObjectiveId);
+
+      // RN-G5: coarse gate first (generic denial for a total stranger),
+      // THEN the existing, unchanged, narrower OkrAlignmentNotOwnerError
+      // business rule — see this file's OKR_ALIGNMENT_CAPABILITIES comment
+      // for why both stay.
+      assertCommandCapability({
+        access,
+        actorUserId: proposedBy,
+        capability: OKR_ALIGNMENT_CAPABILITIES.propose,
+        responsibleUserIds: [source.ownerUserId],
+      });
 
       if (proposedBy !== source.ownerUserId) {
         throw new OkrAlignmentNotOwnerError(
@@ -520,6 +563,7 @@ export interface AcceptAlignmentInput {
   correlationId?: string;
   causationId?: string | null;
   reason?: string | null;
+  access: CommandAccessContext;
 }
 
 /**
@@ -543,6 +587,7 @@ export async function acceptAlignment(input: AcceptAlignmentInput): Promise<Atom
     correlationId,
     causationId = null,
     reason = null,
+    access,
   } = input;
 
   let beforeState: Record<string, unknown> | null = null;
@@ -564,6 +609,14 @@ export async function acceptAlignment(input: AcceptAlignmentInput): Promise<Atom
 
       const target = await loadObjectiveContextForAlignment(client, currentRow.target_objective_id, organizationId);
       if (!target) throw new OkrObjectiveNotFoundError(currentRow.target_objective_id);
+
+      assertCommandCapability({
+        access,
+        actorUserId,
+        capability: OKR_ALIGNMENT_CAPABILITIES.accept,
+        responsibleUserIds: [target.ownerUserId],
+      });
+
       if (actorUserId !== target.ownerUserId) {
         throw new OkrAlignmentNotOwnerError(
           `User ${actorUserId} may not accept alignment ${alignmentId}: not the target Objective's Owner`,
@@ -649,6 +702,7 @@ export interface RejectAlignmentInput {
   idempotencyKey: string;
   correlationId?: string;
   causationId?: string | null;
+  access: CommandAccessContext;
 }
 
 /** ★ Contains NO write to `okr_vnext_objectives`. */
@@ -663,6 +717,7 @@ export async function rejectAlignment(input: RejectAlignmentInput): Promise<Atom
     idempotencyKey,
     correlationId,
     causationId = null,
+    access,
   } = input;
 
   let beforeState: Record<string, unknown> | null = null;
@@ -684,6 +739,14 @@ export async function rejectAlignment(input: RejectAlignmentInput): Promise<Atom
 
       const target = await loadObjectiveContextForAlignment(client, currentRow.target_objective_id, organizationId);
       if (!target) throw new OkrObjectiveNotFoundError(currentRow.target_objective_id);
+
+      assertCommandCapability({
+        access,
+        actorUserId,
+        capability: OKR_ALIGNMENT_CAPABILITIES.reject,
+        responsibleUserIds: [target.ownerUserId],
+      });
+
       if (actorUserId !== target.ownerUserId) {
         throw new OkrAlignmentNotOwnerError(
           `User ${actorUserId} may not reject alignment ${alignmentId}: not the target Objective's Owner`,
@@ -750,6 +813,7 @@ export interface RemoveAlignmentInput {
   correlationId?: string;
   causationId?: string | null;
   reason?: string | null;
+  access: CommandAccessContext;
 }
 
 const OKR_ALIGNMENT_REMOVABLE_FROM_STATUSES: readonly string[] = ['proposed', 'accepted'];
@@ -775,6 +839,7 @@ export async function removeAlignment(input: RemoveAlignmentInput): Promise<Atom
     correlationId,
     causationId = null,
     reason = null,
+    access,
   } = input;
 
   let beforeState: Record<string, unknown> | null = null;
@@ -798,6 +863,13 @@ export async function removeAlignment(input: RemoveAlignmentInput): Promise<Atom
       if (!source) throw new OkrObjectiveNotFoundError(currentRow.source_objective_id);
       const target = await loadObjectiveContextForAlignment(client, currentRow.target_objective_id, organizationId);
       if (!target) throw new OkrObjectiveNotFoundError(currentRow.target_objective_id);
+
+      assertCommandCapability({
+        access,
+        actorUserId,
+        capability: OKR_ALIGNMENT_CAPABILITIES.remove,
+        responsibleUserIds: [source.ownerUserId, target.ownerUserId],
+      });
 
       if (actorUserId !== source.ownerUserId && actorUserId !== target.ownerUserId) {
         throw new OkrAlignmentNotOwnerError(
