@@ -18,10 +18,15 @@ import { Router } from 'express';
 import analysisRoutes from './analysis.routes.js';
 import artifactsRoutes from './artifacts.routes.js';
 import baselineRoutes from './baseline.routes.js';
+import commentsRoutes from './comments.routes.js';
+import compareRoutes from './compare.routes.js';
 import computeRoutes from './compute.routes.js';
 import crosscuttingRoutes from './crosscutting.routes.js';
+import exportImportRoutes from './export-import.routes.js';
+import lineageNavigatorRoutes from './lineage-navigator.routes.js';
 import modelsRoutes from './models.routes.js';
 import predictionRoutes from './prediction.routes.js';
+import savedViewsRoutes from './saved-views.routes.js';
 import statementsRoutes from './statements.routes.js';
 import valuationRoutes from './valuation.routes.js';
 import versionsRoutes from './versions.routes.js';
@@ -55,5 +60,25 @@ financeV2Router.use(crosscuttingRoutes);
 // bridge, Terminal/Sensitivity (method-scoped), Advisor. Own `/valuation/*` + `/valuation/methods/
 // :methodId/*` prefixes — no path overlap with any router above.
 financeV2Router.use(valuationRoutes);
+// Pakiet ROUTES_EXPOSURE — Lineage Navigator presentation surface (OWN-FIN-007/
+// OWN-FIN-022). Own path `/versions/:businessVersionId/lineage-navigator`,
+// distinct from `crosscuttingRoutes`'s raw-edges `/versions/:businessVersionId/
+// lineage` — no collision, both stay mounted.
+financeV2Router.use(lineageNavigatorRoutes);
+// Pakiet ROUTES_EXPOSURE — Compare engine (period/period, actual/forecast,
+// version/version, scenario/baseline, entity/entity, method/method). Own
+// `/compare/*` prefix, no collision with any router above.
+financeV2Router.use(compareRoutes);
+// Pakiet ROUTES_EXPOSURE — Comments/review-checklist (real, migrated tables).
+// Own `/comments/*` + `/review-checklist/*` prefixes, plus one read under the
+// existing `/versions/:businessVersionId` prefix (`has-unresolved-blocking-
+// comments`) that does not collide with any suffix versionsRoutes/
+// crosscuttingRoutes/lineageNavigatorRoutes already own.
+financeV2Router.use(commentsRoutes);
+// Pakiet ROUTES_EXPOSURE — Saved views (personal/team, shareable token). Own
+// `/saved-views/*` prefix, no collision.
+financeV2Router.use(savedViewsRoutes);
+// Pakiet ROUTES_EXPOSURE — Export/Import (.xlsx). Own `/export/*` + `/import/*` prefixes.
+financeV2Router.use(exportImportRoutes);
 
 export default financeV2Router;
