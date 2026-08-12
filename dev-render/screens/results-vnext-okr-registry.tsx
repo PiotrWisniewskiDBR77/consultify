@@ -419,7 +419,12 @@ if (!g.__OKR_REGISTRY_FETCH__) {
 // `results-vnext-kpi-tool.tsx`/`results-vnext-roi-registry.tsx` use) so the
 // Sets registry's "Otwórz obszar roboczy" `navigate()`, the `OkrSetToolPage`
 // cold direct-URL load, and its "back to registry" breadcrumb all exercise
-// the REAL router.
+// the REAL router. `PROGRAMS`/`.CYCLES` get plain marker routes (their own
+// real page is `OkrProgramsPage`/`OkrCyclesPage`, already covered by the
+// separate `results-vnext-okr-admin.tsx` harness) — this file's own job is
+// only to prove the two new registry buttons `navigate()` to the EXACT
+// right path, not to re-render those pages' own mock plumbing a second
+// time.
 const initialPath = view === 'set' ? ROUTES.RESULTS_OKR.SET.replace(':okrSetId', setIdParam) : ROUTES.RESULTS_OKR.ROOT;
 
 const ResultsVNextOkrRegistryScreen: React.FC = () => {
@@ -430,6 +435,14 @@ const ResultsVNextOkrRegistryScreen: React.FC = () => {
         <Routes>
           <Route path={ROUTES.RESULTS_OKR.ROOT} element={<ResultsOkrHub />} />
           <Route path={ROUTES.RESULTS_OKR.SET} element={<OkrSetToolPage />} />
+          <Route
+            path={ROUTES.RESULTS_OKR.PROGRAMS}
+            element={<div data-testid="dev-render-okr-programs-marker" className="p-6 text-c-text">Programy OKR (dev-render marker — realna strona: OkrProgramsPage, harness results-vnext-okr-admin.tsx)</div>}
+          />
+          <Route
+            path={ROUTES.RESULTS_OKR.CYCLES}
+            element={<div data-testid="dev-render-okr-cycles-marker" className="p-6 text-c-text">Cykle OKR (dev-render marker — realna strona: OkrCyclesPage, harness results-vnext-okr-admin.tsx)</div>}
+          />
         </Routes>
       </MemoryRouter>
     </div>
