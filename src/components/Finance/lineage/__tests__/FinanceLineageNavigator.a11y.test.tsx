@@ -16,23 +16,53 @@ import { FinanceLineageNavigator } from '../FinanceLineageNavigator';
 
 const MINIMAL_RESULT = {
   businessVersionId: 'bv-focus',
-  trail: { items: [], totalNodeCount: 0, hasAlternatePaths: false, unresolvedVersionIds: [], cycleVersionIds: [] },
-  relatedPanel: {
-    focus: {
-      versionId: 'bv-focus', artifactId: 'art-focus', artifactType: 'VALUATION_CASE', name: 'Valuation v1',
-      versionLabel: 'v1', periodLabel: null, status: 'DRAFT', freshness: 'STALE_SOURCE', variantLabel: null,
-    },
-    parents: [], indirectAncestors: [], children: [], indirectDescendants: [], siblings: [], createNew: [],
-    createNewBlockedReason: null, createNewBlockedLabel: null, focusBadges: [], terminalVisibility: 'show', hiddenTerminalCount: 0,
+  trail: {
+    items: [],
+    totalNodeCount: 0,
+    hasAlternatePaths: false,
+    unresolvedVersionIds: [],
     cycleVersionIds: [],
   },
-  fullGraphView: { id: 'finance.lineage.fullGraph', label: { key: 'x', pl: 'Pełny graf powiązań' }, auxiliary: true, defaultVisible: false },
+  relatedPanel: {
+    focus: {
+      versionId: 'bv-focus',
+      artifactId: 'art-focus',
+      artifactType: 'VALUATION_CASE',
+      name: 'Valuation v1',
+      versionLabel: 'v1',
+      periodLabel: null,
+      status: 'DRAFT',
+      freshness: 'STALE_SOURCE',
+      variantLabel: null,
+    },
+    parents: [],
+    indirectAncestors: [],
+    children: [],
+    indirectDescendants: [],
+    siblings: [],
+    createNew: [],
+    createNewBlockedReason: null,
+    createNewBlockedLabel: null,
+    focusBadges: [],
+    terminalVisibility: 'show',
+    hiddenTerminalCount: 0,
+    cycleVersionIds: [],
+  },
+  fullGraphView: {
+    id: 'finance.lineage.fullGraph',
+    label: { key: 'x', pl: 'Pełny graf powiązań' },
+    auxiliary: true,
+    defaultVisible: false,
+  },
 };
 
 beforeEach(() => {
   window.localStorage.clear();
   mockGetFinanceLineageNavigator.mockReset();
-  window.localStorage.setItem('consultify_feature_flags', JSON.stringify({ financeLineageNavigatorV1: true }));
+  window.localStorage.setItem(
+    'consultify_feature_flags',
+    JSON.stringify({ financeLineageNavigatorV1: true })
+  );
 });
 afterEach(() => {
   window.localStorage.clear();
@@ -51,14 +81,21 @@ describe('FinanceLineageNavigator — ogłaszanie stanów dynamicznych (a11y, Pa
     mockGetFinanceLineageNavigator.mockResolvedValueOnce(MINIMAL_RESULT);
     render(<FinanceLineageNavigator businessVersionId="bv-focus" />);
     await waitFor(() =>
-      expect(screen.getByTestId('finance-status-announcer')).toHaveTextContent('Łańcuch powiązań wczytany: 0 elementów.')
+      expect(screen.getByTestId('finance-status-announcer')).toHaveTextContent(
+        'Łańcuch powiązań wczytany: 0 elementów.'
+      )
     );
   });
 
   it('błąd → role="status" priority=assertive', async () => {
     mockGetFinanceLineageNavigator.mockRejectedValueOnce(new Error('boom'));
     render(<FinanceLineageNavigator businessVersionId="bv-focus" />);
-    await waitFor(() => expect(screen.getByTestId('finance-status-announcer')).toHaveAttribute('aria-live', 'assertive'));
+    await waitFor(() =>
+      expect(screen.getByTestId('finance-status-announcer')).toHaveAttribute(
+        'aria-live',
+        'assertive'
+      )
+    );
   });
 
   it('KONTROLA NEGATYWNA: przy fladze OFF brak jakiegokolwiek role="status"', () => {
@@ -78,21 +115,48 @@ describe('FinanceLineageNavigator — struktura role="list" (a11y, Pakiet I)', (
           {
             kind: 'node',
             metadata: {
-              versionId: 'bv-root', artifactId: 'art-root', artifactType: 'STATEMENT_PACK', name: 'Statement pack v3',
-              versionLabel: 'v3', periodLabel: null, status: 'APPROVED', freshness: 'CURRENT', variantLabel: null,
+              versionId: 'bv-root',
+              artifactId: 'art-root',
+              artifactType: 'STATEMENT_PACK',
+              name: 'Statement pack v3',
+              versionLabel: 'v3',
+              periodLabel: null,
+              status: 'APPROVED',
+              freshness: 'CURRENT',
+              variantLabel: null,
             },
-            displayName: 'Statement pack v3', isFocus: false, outgoingEdgeType: 'STATEMENT_TO_ANALYSIS', staleBadge: null, stateBadge: null, isDimmed: false,
+            displayName: 'Statement pack v3',
+            isFocus: false,
+            outgoingEdgeType: 'STATEMENT_TO_ANALYSIS',
+            staleBadge: null,
+            stateBadge: null,
+            isDimmed: false,
           },
           {
             kind: 'node',
             metadata: {
-              versionId: 'bv-focus', artifactId: 'art-focus', artifactType: 'VALUATION_CASE', name: 'Valuation v1',
-              versionLabel: 'v1', periodLabel: null, status: 'DRAFT', freshness: 'STALE_SOURCE', variantLabel: null,
+              versionId: 'bv-focus',
+              artifactId: 'art-focus',
+              artifactType: 'VALUATION_CASE',
+              name: 'Valuation v1',
+              versionLabel: 'v1',
+              periodLabel: null,
+              status: 'DRAFT',
+              freshness: 'STALE_SOURCE',
+              variantLabel: null,
             },
-            displayName: 'Valuation v1', isFocus: true, outgoingEdgeType: null, staleBadge: null, stateBadge: null, isDimmed: false,
+            displayName: 'Valuation v1',
+            isFocus: true,
+            outgoingEdgeType: null,
+            staleBadge: null,
+            stateBadge: null,
+            isDimmed: false,
           },
         ],
-        totalNodeCount: 2, hasAlternatePaths: false, unresolvedVersionIds: [], cycleVersionIds: [],
+        totalNodeCount: 2,
+        hasAlternatePaths: false,
+        unresolvedVersionIds: [],
+        cycleVersionIds: [],
       },
     };
     mockGetFinanceLineageNavigator.mockResolvedValueOnce(result);
@@ -103,7 +167,9 @@ describe('FinanceLineageNavigator — struktura role="list" (a11y, Pakiet I)', (
     // Dzieci NIE ukryte przed AT (aria-hidden) muszą być role=listitem — to
     // dokładnie to, co sprawdza axe (`aria-required-children`): aria-hidden
     // dzieci są wyjęte z drzewa dostępności, więc nie liczą się do wymogu.
-    const visibleChildren = Array.from(list.children).filter((c) => c.getAttribute('aria-hidden') !== 'true');
+    const visibleChildren = Array.from(list.children).filter(
+      (c) => c.getAttribute('aria-hidden') !== 'true'
+    );
     expect(visibleChildren.length).toBeGreaterThan(0);
     for (const child of visibleChildren) {
       expect(child).toHaveAttribute('role', 'listitem');

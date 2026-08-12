@@ -22,8 +22,9 @@ vi.mock('@/services/api/financeV2.api', () => ({
   deleteFinanceSavedView: (...args: unknown[]) => mockDeleteFinanceSavedView(...args),
 }));
 
-import { FinanceSavedViewsPanel } from '../FinanceSavedViewsPanel';
 import { emptyGridViewStateSnapshot } from '@/services/api/financeV2.types';
+
+import { FinanceSavedViewsPanel } from '../FinanceSavedViewsPanel';
 
 function sampleView(overrides: Partial<any> = {}) {
   return {
@@ -61,28 +62,56 @@ describe('FinanceSavedViewsPanel', () => {
   });
 
   it('flaga ON → grupuje widoki PERSONAL/TEAM z ludzką etykietą scope', async () => {
-    window.localStorage.setItem('consultify_feature_flags', JSON.stringify({ financeSavedViewsV1: true }));
-    mockListFinanceSavedViews.mockResolvedValueOnce([sampleView({ id: 'v-p', scope: 'PERSONAL', name: 'Osobisty' }), sampleView({ id: 'v-t', scope: 'TEAM', name: 'Zespołowy' })]);
+    window.localStorage.setItem(
+      'consultify_feature_flags',
+      JSON.stringify({ financeSavedViewsV1: true })
+    );
+    mockListFinanceSavedViews.mockResolvedValueOnce([
+      sampleView({ id: 'v-p', scope: 'PERSONAL', name: 'Osobisty' }),
+      sampleView({ id: 'v-t', scope: 'TEAM', name: 'Zespołowy' }),
+    ]);
     render(<FinanceSavedViewsPanel artifactId="art-1" />);
-    await waitFor(() => expect(screen.getByTestId('finance-saved-views-panel')).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByTestId('finance-saved-views-panel')).toBeInTheDocument()
+    );
     expect(mockListFinanceSavedViews).toHaveBeenCalledWith('art-1');
     const rows = screen.getAllByTestId('saved-view-row');
     expect(rows).toHaveLength(2);
-    expect(rows.map((r) => r.textContent)).toEqual([expect.stringContaining('Zespołowy'), expect.stringContaining('Osobisty')]); // TEAM group renders before PERSONAL
+    expect(rows.map((r) => r.textContent)).toEqual([
+      expect.stringContaining('Zespołowy'),
+      expect.stringContaining('Osobisty'),
+    ]); // TEAM group renders before PERSONAL
   });
 
   it('zapis woła createFinanceSavedView z bieżącym gridViewState/filters hosta i wybranym scope', async () => {
-    window.localStorage.setItem('consultify_feature_flags', JSON.stringify({ financeSavedViewsV1: true }));
+    window.localStorage.setItem(
+      'consultify_feature_flags',
+      JSON.stringify({ financeSavedViewsV1: true })
+    );
     mockListFinanceSavedViews.mockResolvedValueOnce([]);
     const gridViewState = { ...emptyGridViewStateSnapshot(), freezeColumnsCount: 2 };
     const filters = [{ type: 'missing', onlyMissing: true } as const];
-    render(<FinanceSavedViewsPanel artifactId="art-1" currentGridViewState={gridViewState} currentFilters={filters} />);
-    await waitFor(() => expect(screen.getByTestId('finance-saved-views-panel')).toBeInTheDocument());
+    render(
+      <FinanceSavedViewsPanel
+        artifactId="art-1"
+        currentGridViewState={gridViewState}
+        currentFilters={filters}
+      />
+    );
+    await waitFor(() =>
+      expect(screen.getByTestId('finance-saved-views-panel')).toBeInTheDocument()
+    );
 
-    fireEvent.change(screen.getByTestId('saved-view-name-input'), { target: { value: 'Nowy widok' } });
+    fireEvent.change(screen.getByTestId('saved-view-name-input'), {
+      target: { value: 'Nowy widok' },
+    });
     fireEvent.change(screen.getByTestId('saved-view-scope-select'), { target: { value: 'TEAM' } });
-    mockCreateFinanceSavedView.mockResolvedValueOnce(sampleView({ scope: 'TEAM', name: 'Nowy widok' }));
-    mockListFinanceSavedViews.mockResolvedValueOnce([sampleView({ scope: 'TEAM', name: 'Nowy widok' })]);
+    mockCreateFinanceSavedView.mockResolvedValueOnce(
+      sampleView({ scope: 'TEAM', name: 'Nowy widok' })
+    );
+    mockListFinanceSavedViews.mockResolvedValueOnce([
+      sampleView({ scope: 'TEAM', name: 'Nowy widok' }),
+    ]);
     fireEvent.click(screen.getByTestId('saved-view-save-submit'));
 
     await waitFor(() => expect(mockCreateFinanceSavedView).toHaveBeenCalledTimes(1));
@@ -96,10 +125,15 @@ describe('FinanceSavedViewsPanel', () => {
   });
 
   it('Usuń woła deleteFinanceSavedView(viewId) i odświeża listę', async () => {
-    window.localStorage.setItem('consultify_feature_flags', JSON.stringify({ financeSavedViewsV1: true }));
+    window.localStorage.setItem(
+      'consultify_feature_flags',
+      JSON.stringify({ financeSavedViewsV1: true })
+    );
     mockListFinanceSavedViews.mockResolvedValueOnce([sampleView({ id: 'v-del' })]);
     render(<FinanceSavedViewsPanel artifactId="art-1" />);
-    await waitFor(() => expect(screen.getByTestId('finance-saved-views-panel')).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByTestId('finance-saved-views-panel')).toBeInTheDocument()
+    );
 
     mockDeleteFinanceSavedView.mockResolvedValueOnce(null);
     mockListFinanceSavedViews.mockResolvedValueOnce([]);
@@ -108,10 +142,15 @@ describe('FinanceSavedViewsPanel', () => {
   });
 
   it('KONTROLA NEGATYWNA: usunięcie cudzego PERSONAL widoku → 403 FORBIDDEN honest-UI, przycisk zostaje (bramka jest serwerowa, nie UI)', async () => {
-    window.localStorage.setItem('consultify_feature_flags', JSON.stringify({ financeSavedViewsV1: true }));
+    window.localStorage.setItem(
+      'consultify_feature_flags',
+      JSON.stringify({ financeSavedViewsV1: true })
+    );
     mockListFinanceSavedViews.mockResolvedValueOnce([sampleView({ id: 'v-foreign' })]);
     render(<FinanceSavedViewsPanel artifactId="art-1" />);
-    await waitFor(() => expect(screen.getByTestId('finance-saved-views-panel')).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByTestId('finance-saved-views-panel')).toBeInTheDocument()
+    );
 
     const err = new Error('owner-only') as Error & { status?: number; data?: unknown };
     err.status = 403;

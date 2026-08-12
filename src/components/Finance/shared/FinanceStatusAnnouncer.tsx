@@ -23,9 +23,17 @@ export interface FinanceStatusAnnouncerProps {
   priority?: 'polite' | 'assertive';
 }
 
-export function FinanceStatusAnnouncer({ message, priority = 'polite' }: FinanceStatusAnnouncerProps): React.ReactElement {
+export function FinanceStatusAnnouncer({
+  message,
+  priority = 'polite',
+}: FinanceStatusAnnouncerProps): React.ReactElement {
   return (
-    <div role="status" aria-live={priority} className="sr-only" data-testid="finance-status-announcer">
+    <div
+      role="status"
+      aria-live={priority}
+      className="sr-only"
+      data-testid="finance-status-announcer"
+    >
       {message}
     </div>
   );

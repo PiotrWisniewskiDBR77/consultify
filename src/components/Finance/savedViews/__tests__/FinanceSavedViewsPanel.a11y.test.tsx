@@ -45,7 +45,10 @@ beforeEach(() => {
   mockListFinanceSavedViews.mockReset();
   mockCreateFinanceSavedView.mockReset();
   mockDeleteFinanceSavedView.mockReset();
-  window.localStorage.setItem('consultify_feature_flags', JSON.stringify({ financeSavedViewsV1: true }));
+  window.localStorage.setItem(
+    'consultify_feature_flags',
+    JSON.stringify({ financeSavedViewsV1: true })
+  );
 });
 afterEach(() => {
   window.localStorage.clear();
@@ -61,7 +64,9 @@ describe('FinanceSavedViewsPanel — ogłaszanie stanów dynamicznych (a11y, Pak
     fireEvent.click(screen.getByTestId('saved-view-copy-link'));
 
     await waitFor(() =>
-      expect(screen.getByTestId('finance-status-announcer')).toHaveTextContent('Link do widoku „Mój widok kwartalny" skopiowany.')
+      expect(screen.getByTestId('finance-status-announcer')).toHaveTextContent(
+        'Link do widoku „Mój widok kwartalny" skopiowany.'
+      )
     );
   });
 
@@ -74,13 +79,20 @@ describe('FinanceSavedViewsPanel — ogłaszanie stanów dynamicznych (a11y, Pak
 
     fireEvent.click(screen.getByTestId('saved-view-delete'));
 
-    await waitFor(() => expect(screen.getByTestId('finance-status-announcer')).toHaveTextContent('Widok usunięty.'));
+    await waitFor(() =>
+      expect(screen.getByTestId('finance-status-announcer')).toHaveTextContent('Widok usunięty.')
+    );
   });
 
   it('błąd ładowania → role="status" priority=assertive', async () => {
     mockListFinanceSavedViews.mockRejectedValueOnce(new Error('boom'));
     render(<FinanceSavedViewsPanel artifactId="art-1" />);
-    await waitFor(() => expect(screen.getByTestId('finance-status-announcer')).toHaveAttribute('aria-live', 'assertive'));
+    await waitFor(() =>
+      expect(screen.getByTestId('finance-status-announcer')).toHaveAttribute(
+        'aria-live',
+        'assertive'
+      )
+    );
   });
 
   it('KONTROLA NEGATYWNA: przy fladze OFF brak jakiegokolwiek role="status"', () => {
@@ -96,7 +108,9 @@ describe('FinanceSavedViewsPanel — dostępne nazwy / kontrast (a11y, Pakiet I)
     mockListFinanceSavedViews.mockResolvedValueOnce([]);
     render(<FinanceSavedViewsPanel artifactId="art-1" />);
     await screen.findByTestId('finance-saved-views-panel');
-    expect(screen.getByLabelText('Widoczność zapisywanego widoku')).toBe(screen.getByTestId('saved-view-scope-select'));
+    expect(screen.getByLabelText('Widoczność zapisywanego widoku')).toBe(
+      screen.getByTestId('saved-view-scope-select')
+    );
   });
 
   it('"Zastosuj"/"Kopiuj link" NIE używają surowego `text-c-focus` (za mały kontrast — axe, PRZED naprawą)', async () => {

@@ -58,7 +58,11 @@ const SAMPLE: any = {
         displayName: 'Valuation v1',
         isFocus: true,
         outgoingEdgeType: null,
-        staleBadge: { kind: 'SOURCE_CHANGED', label: { key: 'x', pl: 'Źródło się zmieniło' }, severity: 'warning' },
+        staleBadge: {
+          kind: 'SOURCE_CHANGED',
+          label: { key: 'x', pl: 'Źródło się zmieniło' },
+          severity: 'warning',
+        },
         stateBadge: null,
         isDimmed: false,
       },
@@ -87,13 +91,27 @@ const SAMPLE: any = {
     siblings: [],
     createNew: [],
     createNewBlockedReason: 'NO_DOWNSTREAM_TYPE',
-    createNewBlockedLabel: { key: 'finance.lineage.createNew.blocked.noDownstream', pl: 'Brak typu docelowego, który można utworzyć stąd.' },
-    focusBadges: [{ kind: 'SOURCE_CHANGED', label: { key: 'x', pl: 'Źródło się zmieniło' }, severity: 'warning' }],
+    createNewBlockedLabel: {
+      key: 'finance.lineage.createNew.blocked.noDownstream',
+      pl: 'Brak typu docelowego, który można utworzyć stąd.',
+    },
+    focusBadges: [
+      {
+        kind: 'SOURCE_CHANGED',
+        label: { key: 'x', pl: 'Źródło się zmieniło' },
+        severity: 'warning',
+      },
+    ],
     terminalVisibility: 'dim',
     hiddenTerminalCount: 1,
     cycleVersionIds: [],
   },
-  fullGraphView: { id: 'finance.lineage.fullGraph', label: { key: 'x', pl: 'Pełny graf powiązań' }, auxiliary: true, defaultVisible: false },
+  fullGraphView: {
+    id: 'finance.lineage.fullGraph',
+    label: { key: 'x', pl: 'Pełny graf powiązań' },
+    auxiliary: true,
+    defaultVisible: false,
+  },
 };
 
 beforeEach(() => {
@@ -113,13 +131,21 @@ describe('FinanceLineageNavigator', () => {
   });
 
   it('flaga ON → woła getFinanceLineageNavigator(businessVersionId, opts) i renderuje trail + panel Powiązane', async () => {
-    window.localStorage.setItem('consultify_feature_flags', JSON.stringify({ financeLineageNavigatorV1: true }));
+    window.localStorage.setItem(
+      'consultify_feature_flags',
+      JSON.stringify({ financeLineageNavigatorV1: true })
+    );
     mockGetFinanceLineageNavigator.mockResolvedValueOnce(SAMPLE);
 
     render(<FinanceLineageNavigator businessVersionId="bv-focus" maxDepth={4} />);
 
-    await waitFor(() => expect(screen.getByTestId('finance-lineage-navigator')).toBeInTheDocument());
-    expect(mockGetFinanceLineageNavigator).toHaveBeenCalledWith('bv-focus', expect.objectContaining({ maxDepth: 4 }));
+    await waitFor(() =>
+      expect(screen.getByTestId('finance-lineage-navigator')).toBeInTheDocument()
+    );
+    expect(mockGetFinanceLineageNavigator).toHaveBeenCalledWith(
+      'bv-focus',
+      expect.objectContaining({ maxDepth: 4 })
+    );
 
     // Breadcrumb: oba realne węzły + jeden zwinięty.
     expect(screen.getAllByTestId('lineage-trail-node')).toHaveLength(2);
@@ -129,7 +155,9 @@ describe('FinanceLineageNavigator', () => {
 
     // Panel Powiązane: licznik rodziców, blokada „+ Nowy" z ludzkim tekstem (nie surowy kod).
     expect(screen.getByTestId('lineage-related-panel')).toBeInTheDocument();
-    expect(screen.getByText('Brak typu docelowego, który można utworzyć stąd.')).toBeInTheDocument();
+    expect(
+      screen.getByText('Brak typu docelowego, który można utworzyć stąd.')
+    ).toBeInTheDocument();
     expect(screen.queryByText('NO_DOWNSTREAM_TYPE')).not.toBeInTheDocument();
 
     // Status/freshness renderują się jako etykieta PL, nigdy surowy token enum.
@@ -140,8 +168,14 @@ describe('FinanceLineageNavigator', () => {
   });
 
   it('błąd serwera (404 NOT_FOUND) → honest-UI komunikat, nie surowy JSON', async () => {
-    window.localStorage.setItem('consultify_feature_flags', JSON.stringify({ financeLineageNavigatorV1: true }));
-    const err = new Error('Business version not found') as Error & { status?: number; data?: unknown };
+    window.localStorage.setItem(
+      'consultify_feature_flags',
+      JSON.stringify({ financeLineageNavigatorV1: true })
+    );
+    const err = new Error('Business version not found') as Error & {
+      status?: number;
+      data?: unknown;
+    };
     err.status = 404;
     err.data = { code: 'NOT_FOUND' };
     mockGetFinanceLineageNavigator.mockRejectedValueOnce(err);
@@ -154,11 +188,16 @@ describe('FinanceLineageNavigator', () => {
   });
 
   it('KONTROLA NEGATYWNA: klik węzła wywołuje onNavigate z prawdziwym versionId/artifactType, zwinięty węzeł jest disabled i nic nie woła', async () => {
-    window.localStorage.setItem('consultify_feature_flags', JSON.stringify({ financeLineageNavigatorV1: true }));
+    window.localStorage.setItem(
+      'consultify_feature_flags',
+      JSON.stringify({ financeLineageNavigatorV1: true })
+    );
     mockGetFinanceLineageNavigator.mockResolvedValueOnce(SAMPLE);
     const onNavigate = vi.fn();
     render(<FinanceLineageNavigator businessVersionId="bv-focus" onNavigate={onNavigate} />);
-    await waitFor(() => expect(screen.getByTestId('finance-lineage-navigator')).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByTestId('finance-lineage-navigator')).toBeInTheDocument()
+    );
 
     const nodes = screen.getAllByTestId('lineage-trail-node');
     nodes[0].closest('button')!.click();

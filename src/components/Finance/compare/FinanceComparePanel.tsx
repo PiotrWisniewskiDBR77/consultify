@@ -22,24 +22,24 @@ import { FinanceStatusAnnouncer } from '@/components/Finance/shared/FinanceStatu
 import { useFinanceCompareFlag } from '@/hooks/useFinanceCompareFlag';
 import {
   compareFinanceActualVsForecast,
-  compareFinanceEntities,
-  compareFinancePeriods,
-  compareFinanceScenarios,
-  compareFinanceValuationMethods,
-  compareFinanceVersions,
   type CompareFinanceActualVsForecastParams,
+  compareFinanceEntities,
   type CompareFinanceEntitiesParams,
+  compareFinancePeriods,
   type CompareFinancePeriodsParams,
+  compareFinanceScenarios,
   type CompareFinanceScenariosParams,
+  compareFinanceValuationMethods,
   type CompareFinanceValuationMethodsParams,
+  compareFinanceVersions,
   type CompareFinanceVersionsParams,
 } from '@/services/api/financeV2.api';
 import {
   compareComparisonTypeLabel,
   compareDiffKindLabel,
-  describeFinanceV2Error,
   type CompareResultDto,
   type CompareRowDto,
+  describeFinanceV2Error,
 } from '@/services/api/financeV2.types';
 
 export type FinanceCompareRequest =
@@ -123,7 +123,10 @@ function downloadCsv(rows: CompareRowDto[]): void {
   URL.revokeObjectURL(url);
 }
 
-export function FinanceComparePanel({ request, className }: FinanceComparePanelProps): React.ReactElement | null {
+export function FinanceComparePanel({
+  request,
+  className,
+}: FinanceComparePanelProps): React.ReactElement | null {
   const { enabled } = useFinanceCompareFlag();
   const [state, setState] = useState<LoadState>({ kind: 'loading' });
   const [onlyMaterial, setOnlyMaterial] = useState(false);
@@ -178,13 +181,19 @@ export function FinanceComparePanel({ request, className }: FinanceComparePanelP
 
   if (state.kind === 'loading') {
     content = (
-      <div className={`rounded-lg border border-c-border-subtle bg-c-surface p-3 ${className ?? ''}`} data-testid="compare-panel-loading">
+      <div
+        className={`rounded-lg border border-c-border-subtle bg-c-surface p-3 ${className ?? ''}`}
+        data-testid="compare-panel-loading"
+      >
         <p className="text-xs text-c-text-secondary">Liczenie porównania…</p>
       </div>
     );
   } else if (state.kind === 'error') {
     content = (
-      <div className={`rounded-lg border border-c-danger/40 bg-c-surface p-3 ${className ?? ''}`} data-testid="compare-panel-error">
+      <div
+        className={`rounded-lg border border-c-danger/40 bg-c-surface p-3 ${className ?? ''}`}
+        data-testid="compare-panel-error"
+      >
         <p className="text-sm font-medium text-c-danger">{state.title}</p>
         <p className="text-xs text-c-text-secondary">{state.detail}</p>
       </div>
@@ -192,85 +201,109 @@ export function FinanceComparePanel({ request, className }: FinanceComparePanelP
   } else {
     const { result } = state;
     content = (
-    <div className={`flex flex-col gap-3 rounded-lg border border-c-border-subtle bg-c-surface p-3 ${className ?? ''}`} data-testid="finance-compare-panel">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm font-semibold text-c-text-primary">{compareComparisonTypeLabel(result.comparisonType)}</p>
-          <p className="text-xs text-c-text-secondary">
-            {result.sourceA.label} vs {result.sourceB.label} · próg istotności {result.materialityThresholdPct}%
-          </p>
+      <div
+        className={`flex flex-col gap-3 rounded-lg border border-c-border-subtle bg-c-surface p-3 ${className ?? ''}`}
+        data-testid="finance-compare-panel"
+      >
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-semibold text-c-text-primary">
+              {compareComparisonTypeLabel(result.comparisonType)}
+            </p>
+            <p className="text-xs text-c-text-secondary">
+              {result.sourceA.label} vs {result.sourceB.label} · próg istotności{' '}
+              {result.materialityThresholdPct}%
+            </p>
+          </div>
+          <button
+            type="button"
+            className="rounded-md border border-c-border-subtle bg-c-surface-raised px-2.5 py-1.5 text-xs font-medium text-c-text-primary hover:bg-c-surface focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+            onClick={() => downloadCsv(visibleRows)}
+            data-testid="compare-export-diff"
+          >
+            Eksport różnic (.csv)
+          </button>
         </div>
-        <button
-          type="button"
-          className="rounded-md border border-c-border-subtle bg-c-surface-raised px-2.5 py-1.5 text-xs font-medium text-c-text-primary hover:bg-c-surface focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
-          onClick={() => downloadCsv(visibleRows)}
-          data-testid="compare-export-diff"
+
+        <div
+          className="grid grid-cols-3 gap-2 text-xs sm:grid-cols-6"
+          data-testid="compare-summary"
         >
-          Eksport różnic (.csv)
-        </button>
-      </div>
+          <SummaryTile label="Wiersze" value={result.summary.totalRows} />
+          <SummaryTile label="Obie strony" value={result.summary.bothPresent} />
+          <SummaryTile label="Brak w A" value={result.summary.missingInA} />
+          <SummaryTile label="Brak w B" value={result.summary.missingInB} />
+          <SummaryTile label="Niezgodność walut" value={result.summary.currencyMismatch} />
+          <SummaryTile label="Istotne" value={result.summary.materialCount} />
+        </div>
 
-      <div className="grid grid-cols-3 gap-2 text-xs sm:grid-cols-6" data-testid="compare-summary">
-        <SummaryTile label="Wiersze" value={result.summary.totalRows} />
-        <SummaryTile label="Obie strony" value={result.summary.bothPresent} />
-        <SummaryTile label="Brak w A" value={result.summary.missingInA} />
-        <SummaryTile label="Brak w B" value={result.summary.missingInB} />
-        <SummaryTile label="Niezgodność walut" value={result.summary.currencyMismatch} />
-        <SummaryTile label="Istotne" value={result.summary.materialCount} />
-      </div>
+        <label className="flex items-center gap-2 text-xs text-c-text-secondary">
+          <input
+            type="checkbox"
+            checked={onlyMaterial}
+            onChange={(e) => setOnlyMaterial(e.target.checked)}
+            className="h-3.5 w-3.5 rounded border-c-border-subtle text-c-focus focus:ring-c-focus"
+            data-testid="compare-only-material-toggle"
+          />
+          Pokaż tylko istotne różnice
+        </label>
 
-      <label className="flex items-center gap-2 text-xs text-c-text-secondary">
-        <input
-          type="checkbox"
-          checked={onlyMaterial}
-          onChange={(e) => setOnlyMaterial(e.target.checked)}
-          className="h-3.5 w-3.5 rounded border-c-border-subtle text-c-focus focus:ring-c-focus"
-          data-testid="compare-only-material-toggle"
-        />
-        Pokaż tylko istotne różnice
-      </label>
-
-      <div className="max-h-96 overflow-auto rounded-md border border-c-border-subtle" data-testid="compare-rows-scroll">
-        {/* §27-exempt: archetyp Excel — wiersze to WYLICZONE różnice (A/B/Δ/Δ%),
+        <div
+          className="max-h-96 overflow-auto rounded-md border border-c-border-subtle"
+          data-testid="compare-rows-scroll"
+        >
+          {/* §27-exempt: archetyp Excel — wiersze to WYLICZONE różnice (A/B/Δ/Δ%),
             nie rekordy encji o stałym schemacie z klikiem-otwiera-rekord
             (docs/ui-standards/DOKTRYNA_TABELA_NIE_EXCEL.md #2), więc StandardTable
             nie pasuje — tak samo jak grid założeń w AssumptionsView.tsx. */}
-        <table className="w-full text-left text-xs" /* §27-exempt */>
-          <thead className="sticky top-0 bg-c-surface-raised text-c-text-secondary" /* §27-exempt */>
-            <tr>
-              <th className="px-2 py-1.5 font-medium">Wymiary</th>
-              <th className="px-2 py-1.5 font-medium">A</th>
-              <th className="px-2 py-1.5 font-medium">B</th>
-              <th className="px-2 py-1.5 font-medium">Δ</th>
-              <th className="px-2 py-1.5 font-medium">Δ%</th>
-              <th className="px-2 py-1.5 font-medium">Stan</th>
-            </tr>
-          </thead>
-          <tbody /* §27-exempt */>
-            {visibleRows.length === 0 ? (
+          <table className="w-full text-left text-xs" /* §27-exempt */>
+            <thead
+              className="sticky top-0 bg-c-surface-raised text-c-text-secondary" /* §27-exempt */
+            >
               <tr>
-                <td colSpan={6} className="px-2 py-4 text-center text-c-text-secondary">
-                  Brak wierszy do pokazania.
-                </td>
+                <th className="px-2 py-1.5 font-medium">Wymiary</th>
+                <th className="px-2 py-1.5 font-medium">A</th>
+                <th className="px-2 py-1.5 font-medium">B</th>
+                <th className="px-2 py-1.5 font-medium">Δ</th>
+                <th className="px-2 py-1.5 font-medium">Δ%</th>
+                <th className="px-2 py-1.5 font-medium">Stan</th>
               </tr>
-            ) : (
-              visibleRows.map((row) => (
-                <tr key={row.matchKey} className="border-t border-c-border-subtle" data-material={row.materialityFlag ? 'true' : 'false'}>
-                  <td className="px-2 py-1.5 text-c-text-primary">{Object.values(row.dimensions).join(' · ') || '—'}</td>
-                  <td className="px-2 py-1.5">{formatNumber(row.a.fullUnitValue)}</td>
-                  <td className="px-2 py-1.5">{formatNumber(row.b.fullUnitValue)}</td>
-                  <td className={`px-2 py-1.5 ${row.absoluteDiff !== null && row.absoluteDiff < 0 ? 'text-c-danger' : ''}`}>
-                    {formatNumber(row.absoluteDiff)}
+            </thead>
+            <tbody /* §27-exempt */>
+              {visibleRows.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="px-2 py-4 text-center text-c-text-secondary">
+                    Brak wierszy do pokazania.
                   </td>
-                  <td className="px-2 py-1.5">{formatPct(row.pctDiff)}</td>
-                  <td className="px-2 py-1.5 text-c-text-secondary">{compareDiffKindLabel(row.diffKind)}</td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+              ) : (
+                visibleRows.map((row) => (
+                  <tr
+                    key={row.matchKey}
+                    className="border-t border-c-border-subtle"
+                    data-material={row.materialityFlag ? 'true' : 'false'}
+                  >
+                    <td className="px-2 py-1.5 text-c-text-primary">
+                      {Object.values(row.dimensions).join(' · ') || '—'}
+                    </td>
+                    <td className="px-2 py-1.5">{formatNumber(row.a.fullUnitValue)}</td>
+                    <td className="px-2 py-1.5">{formatNumber(row.b.fullUnitValue)}</td>
+                    <td
+                      className={`px-2 py-1.5 ${row.absoluteDiff !== null && row.absoluteDiff < 0 ? 'text-c-danger' : ''}`}
+                    >
+                      {formatNumber(row.absoluteDiff)}
+                    </td>
+                    <td className="px-2 py-1.5">{formatPct(row.pctDiff)}</td>
+                    <td className="px-2 py-1.5 text-c-text-secondary">
+                      {compareDiffKindLabel(row.diffKind)}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
-    </div>
     );
   }
 

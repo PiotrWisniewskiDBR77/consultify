@@ -35,7 +35,10 @@ beforeEach(() => {
   mockApply.mockReset();
   (URL as unknown as { createObjectURL: unknown }).createObjectURL = vi.fn(() => 'blob:mock-url');
   (URL as unknown as { revokeObjectURL: unknown }).revokeObjectURL = vi.fn();
-  window.localStorage.setItem('consultify_feature_flags', JSON.stringify({ financeExportImportV1: true }));
+  window.localStorage.setItem(
+    'consultify_feature_flags',
+    JSON.stringify({ financeExportImportV1: true })
+  );
 });
 afterEach(() => {
   window.localStorage.clear();
@@ -48,54 +51,98 @@ describe('FinanceExportImportPanel — dostępna nazwa pola pliku (a11y, Pakiet 
     // `getByLabelText` przechodzi TYLKO gdy istnieje realne programowe
     // powiązanie label↔input (htmlFor/id, aria-labelledby, wrapping) —
     // dokładnie to, czego brakowało PRZED naprawą.
-    expect(screen.getByLabelText('Wybierz plik do importu (.xlsx)')).toBe(screen.getByTestId('import-file-input'));
+    expect(screen.getByLabelText('Wybierz plik do importu (.xlsx)')).toBe(
+      screen.getByTestId('import-file-input')
+    );
   });
 });
 
 describe('FinanceExportImportPanel — ogłaszanie stanów dynamicznych (a11y, Pakiet I)', () => {
   it('eksport: role="status" przechodzi Eksportuję…→komunikat gotowości', async () => {
     let resolveExport!: (v: unknown) => void;
-    mockExport.mockReturnValueOnce(new Promise((resolve) => { resolveExport = resolve; }));
+    mockExport.mockReturnValueOnce(
+      new Promise((resolve) => {
+        resolveExport = resolve;
+      })
+    );
     render(<FinanceExportImportPanel {...PROPS} />);
 
     fireEvent.click(screen.getByTestId('export-button'));
     await waitFor(() =>
-      expect(screen.getAllByTestId('finance-status-announcer').some((el) => el.textContent === 'Eksportuję plik .xlsx…')).toBe(true)
+      expect(
+        screen
+          .getAllByTestId('finance-status-announcer')
+          .some((el) => el.textContent === 'Eksportuję plik .xlsx…')
+      ).toBe(true)
     );
 
-    resolveExport({ blob: new Blob(['x']), filename: 'export.xlsx', manifest: { businessVersionNo: 3, defaultUnit: 'THOUSANDS', source: 'x' } });
+    resolveExport({
+      blob: new Blob(['x']),
+      filename: 'export.xlsx',
+      manifest: { businessVersionNo: 3, defaultUnit: 'THOUSANDS', source: 'x' },
+    });
     await waitFor(() =>
-      expect(screen.getAllByTestId('finance-status-announcer').some((el) => el.textContent?.includes('Eksport gotowy'))).toBe(true)
+      expect(
+        screen
+          .getAllByTestId('finance-status-announcer')
+          .some((el) => el.textContent?.includes('Eksport gotowy'))
+      ).toBe(true)
     );
   });
 
   it('import: role="status" przechodzi Wczytuję plik…→Liczę podgląd różnic…→Zapisuję…→podsumowanie', async () => {
-    mockParse.mockResolvedValueOnce({ manifest: { businessVersionNo: 3 }, manifestIssues: [], rows: [{ a: 1 }] });
-    mockPreview.mockResolvedValueOnce({ ok: true, diff: { toAdd: [1], toChange: [], toClear: [], unchangedCount: 0 }, rowErrors: [], manifestCheck: { ok: true, issues: [] } });
-    mockApply.mockResolvedValueOnce({ appliedCount: { added: 1, changed: 0, cleared: 0 }, newWorkingRevisionId: 'wr-2' });
+    mockParse.mockResolvedValueOnce({
+      manifest: { businessVersionNo: 3 },
+      manifestIssues: [],
+      rows: [{ a: 1 }],
+    });
+    mockPreview.mockResolvedValueOnce({
+      ok: true,
+      diff: { toAdd: [1], toChange: [], toClear: [], unchangedCount: 0 },
+      rowErrors: [],
+      manifestCheck: { ok: true, issues: [] },
+    });
+    mockApply.mockResolvedValueOnce({
+      appliedCount: { added: 1, changed: 0, cleared: 0 },
+      newWorkingRevisionId: 'wr-2',
+    });
     render(<FinanceExportImportPanel {...PROPS} />);
 
     const file = new File(['x'], 'plik.xlsx');
     fireEvent.change(screen.getByTestId('import-file-input'), { target: { files: [file] } });
     await waitFor(() =>
-      expect(screen.getAllByTestId('finance-status-announcer').some((el) => el.textContent?.includes('Manifest OK'))).toBe(true)
+      expect(
+        screen
+          .getAllByTestId('finance-status-announcer')
+          .some((el) => el.textContent?.includes('Manifest OK'))
+      ).toBe(true)
     );
 
     fireEvent.click(screen.getByTestId('import-preview-button'));
     await waitFor(() =>
-      expect(screen.getAllByTestId('finance-status-announcer').some((el) => el.textContent?.includes('Podgląd gotowy'))).toBe(true)
+      expect(
+        screen
+          .getAllByTestId('finance-status-announcer')
+          .some((el) => el.textContent?.includes('Podgląd gotowy'))
+      ).toBe(true)
     );
 
     fireEvent.click(screen.getByTestId('import-apply-button'));
     await waitFor(() =>
-      expect(screen.getAllByTestId('finance-status-announcer').some((el) => el.textContent?.includes('Zastosowano'))).toBe(true)
+      expect(
+        screen
+          .getAllByTestId('finance-status-announcer')
+          .some((el) => el.textContent?.includes('Zastosowano'))
+      ).toBe(true)
     );
   });
 
   it('błąd importu → role="status" priority=assertive', async () => {
     mockParse.mockRejectedValueOnce(new Error('boom'));
     render(<FinanceExportImportPanel {...PROPS} />);
-    fireEvent.change(screen.getByTestId('import-file-input'), { target: { files: [new File(['x'], 'plik.xlsx')] } });
+    fireEvent.change(screen.getByTestId('import-file-input'), {
+      target: { files: [new File(['x'], 'plik.xlsx')] },
+    });
     await waitFor(() => {
       const announcers = screen.getAllByTestId('finance-status-announcer');
       expect(announcers.some((el) => el.getAttribute('aria-live') === 'assertive')).toBe(true);

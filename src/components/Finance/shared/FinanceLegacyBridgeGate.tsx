@@ -21,10 +21,13 @@ import { AlertTriangle, Link2 } from 'lucide-react';
 import React from 'react';
 
 import { LoadingState } from '@/components/shared/states';
-import { financeLegacyBridgeQuarantineReasonLabel, type LegacyFinanceTable } from '@/services/api/financeV2.types';
+import {
+  financeLegacyBridgeQuarantineReasonLabel,
+  type LegacyFinanceTable,
+} from '@/services/api/financeV2.types';
 
 import { EmptyStateInline } from '../../shared/NModeBlocks/EmptyStateInline';
-import { useFinanceLegacyBridge, type FinanceLegacyBridgeResolved } from './useFinanceLegacyBridge';
+import { type FinanceLegacyBridgeResolved, useFinanceLegacyBridge } from './useFinanceLegacyBridge';
 
 export interface FinanceLegacyBridgeGateProps {
   legacyTable: LegacyFinanceTable;
@@ -59,7 +62,12 @@ export const FinanceLegacyBridgeGate: React.FC<FinanceLegacyBridgeGateProps> = (
           // ★ NAPRAWA (zaszyty prefiks "+" — patrz `EmptyStateInline.tsx`'s own
           // header comment): "Spróbuj ponownie" nie tworzy nowego obiektu, więc
           // `showPrefix: false, neutralAccent: true`.
-          action={{ label: 'Spróbuj ponownie', onClick: retry, showPrefix: false, neutralAccent: true }}
+          action={{
+            label: 'Spróbuj ponownie',
+            onClick: retry,
+            showPrefix: false,
+            neutralAccent: true,
+          }}
         />
       </div>
     );
@@ -86,7 +94,12 @@ export const FinanceLegacyBridgeGate: React.FC<FinanceLegacyBridgeGateProps> = (
           hint={hint}
           // "Wróć do listy" nie tworzy nowego obiektu — patrz komentarz przy
           // "Spróbuj ponownie" wyżej.
-          action={{ label: 'Wróć do listy', onClick: onBackToList, showPrefix: false, neutralAccent: true }}
+          action={{
+            label: 'Wróć do listy',
+            onClick: onBackToList,
+            showPrefix: false,
+            neutralAccent: true,
+          }}
         />
       </div>
     );

@@ -24,7 +24,11 @@ import { FinanceComparePanel, type FinanceCompareRequest } from '../FinanceCompa
 
 const REQUEST: FinanceCompareRequest = {
   kind: 'periods',
-  params: { artifactRef: { artifactType: 'STATEMENT_PACK', artifactId: 'art-1', businessVersionId: 'bv-1' }, periodIdA: 'p1', periodIdB: 'p2' },
+  params: {
+    artifactRef: { artifactType: 'STATEMENT_PACK', artifactId: 'art-1', businessVersionId: 'bv-1' },
+    periodIdA: 'p1',
+    periodIdB: 'p2',
+  },
 };
 
 function sampleResult() {
@@ -36,7 +40,15 @@ function sampleResult() {
     ignoreDimensions: ['periodId'],
     materialityThresholdPct: 5,
     onlyMaterial: false,
-    summary: { totalRows: 1, bothPresent: 1, missingInA: 0, missingInB: 0, missingInBoth: 0, currencyMismatch: 0, materialCount: 0 },
+    summary: {
+      totalRows: 1,
+      bothPresent: 1,
+      missingInA: 0,
+      missingInB: 0,
+      missingInBoth: 0,
+      currencyMismatch: 0,
+      materialCount: 0,
+    },
     rows: [],
   };
 }
@@ -44,7 +56,10 @@ function sampleResult() {
 beforeEach(() => {
   window.localStorage.clear();
   mockComparePeriods.mockReset();
-  window.localStorage.setItem('consultify_feature_flags', JSON.stringify({ financeCompareV1: true }));
+  window.localStorage.setItem(
+    'consultify_feature_flags',
+    JSON.stringify({ financeCompareV1: true })
+  );
 });
 afterEach(() => {
   window.localStorage.clear();
@@ -63,7 +78,9 @@ describe('FinanceComparePanel — ogłaszanie stanów dynamicznych (a11y, Pakiet
   it('po sukcesie treść role="status" zmienia się na komunikat gotowości', async () => {
     mockComparePeriods.mockResolvedValueOnce(sampleResult());
     render(<FinanceComparePanel request={REQUEST} />);
-    await waitFor(() => expect(screen.getByTestId('finance-status-announcer')).toHaveTextContent('Porównanie gotowe.'));
+    await waitFor(() =>
+      expect(screen.getByTestId('finance-status-announcer')).toHaveTextContent('Porównanie gotowe.')
+    );
   });
 
   it('po błędzie role="status" ma priority=assertive i niesie komunikat błędu', async () => {

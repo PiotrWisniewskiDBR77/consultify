@@ -18,13 +18,17 @@ import React, { useEffect, useState } from 'react';
 
 import { FinanceStatusAnnouncer } from '@/components/Finance/shared/FinanceStatusAnnouncer';
 import { useFinanceSavedViewsFlag } from '@/hooks/useFinanceSavedViewsFlag';
-import { createFinanceSavedView, deleteFinanceSavedView, listFinanceSavedViews } from '@/services/api/financeV2.api';
+import {
+  createFinanceSavedView,
+  deleteFinanceSavedView,
+  listFinanceSavedViews,
+} from '@/services/api/financeV2.api';
 import {
   describeFinanceV2Error,
   emptyGridViewStateSnapshot,
-  financeSavedViewScopeLabel,
   type FinanceSavedViewDto,
   type FinanceSavedViewScope,
+  financeSavedViewScopeLabel,
   type GridViewStateSnapshotInput,
   type SavedViewFilterInput,
 } from '@/services/api/financeV2.types';
@@ -132,7 +136,10 @@ export function FinanceSavedViewsPanel({
   if (state.kind === 'loading') {
     announcerMessage = 'Ładowanie zapisanych widoków…';
     content = (
-      <div className={`rounded-lg border border-c-border-subtle bg-c-surface p-3 ${className ?? ''}`} data-testid="saved-views-panel-loading">
+      <div
+        className={`rounded-lg border border-c-border-subtle bg-c-surface p-3 ${className ?? ''}`}
+        data-testid="saved-views-panel-loading"
+      >
         <p className="text-xs text-c-text-secondary">Ładowanie zapisanych widoków…</p>
       </div>
     );
@@ -140,7 +147,10 @@ export function FinanceSavedViewsPanel({
     announcerMessage = `Błąd: ${state.title}`;
     announcerPriority = 'assertive';
     content = (
-      <div className={`rounded-lg border border-c-danger/40 bg-c-surface p-3 ${className ?? ''}`} data-testid="saved-views-panel-error">
+      <div
+        className={`rounded-lg border border-c-danger/40 bg-c-surface p-3 ${className ?? ''}`}
+        data-testid="saved-views-panel-error"
+      >
         <p className="text-sm font-medium text-c-danger">{state.title}</p>
         <p className="text-xs text-c-text-secondary">{state.detail}</p>
       </div>
@@ -151,53 +161,74 @@ export function FinanceSavedViewsPanel({
     const teamViews = views.filter((v) => v.scope === 'TEAM');
     announcerMessage = actionMessage ?? 'Zapisane widoki wczytane.';
     content = (
-    <div className={`flex flex-col gap-4 rounded-lg border border-c-border-subtle bg-c-surface p-3 ${className ?? ''}`} data-testid="finance-saved-views-panel">
-      <p className="text-xs font-semibold text-c-text-secondary">Zapisane widoki</p>
+      <div
+        className={`flex flex-col gap-4 rounded-lg border border-c-border-subtle bg-c-surface p-3 ${className ?? ''}`}
+        data-testid="finance-saved-views-panel"
+      >
+        <p className="text-xs font-semibold text-c-text-secondary">Zapisane widoki</p>
 
-      {rowError ? (
-        <div role="alert" className="rounded-md border border-c-danger/40 bg-c-danger/10 px-2 py-1.5 text-xs text-c-danger" data-testid="saved-views-row-error">
-          {rowError}
-        </div>
-      ) : null}
+        {rowError ? (
+          <div
+            role="alert"
+            className="rounded-md border border-c-danger/40 bg-c-danger/10 px-2 py-1.5 text-xs text-c-danger"
+            data-testid="saved-views-row-error"
+          >
+            {rowError}
+          </div>
+        ) : null}
 
-      <ViewGroup title="Zespołowe" views={teamViews} onApplyView={onApplyView} onDelete={handleDelete} onCopyShareLink={handleCopyShareLink} copiedViewId={copiedViewId} />
-      <ViewGroup title="Osobiste" views={personalViews} onApplyView={onApplyView} onDelete={handleDelete} onCopyShareLink={handleCopyShareLink} copiedViewId={copiedViewId} />
-
-      <div className="flex flex-col gap-1.5 rounded-md border border-c-border-subtle p-2">
-        <p className="text-xs font-medium text-c-text-primary">Zapisz bieżący widok</p>
-        <input
-          className="rounded-md border border-c-border-subtle bg-c-surface-raised p-1.5 text-xs text-c-text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
-          placeholder="Nazwa widoku…"
-          value={newViewName}
-          onChange={(e) => setNewViewName(e.target.value)}
-          data-testid="saved-view-name-input"
+        <ViewGroup
+          title="Zespołowe"
+          views={teamViews}
+          onApplyView={onApplyView}
+          onDelete={handleDelete}
+          onCopyShareLink={handleCopyShareLink}
+          copiedViewId={copiedViewId}
         />
-        <div className="flex items-center gap-2">
-          {/* ★ NAPRAWA a11y (Pakiet I, wymaganie #5): `<select>` bez etykiety
+        <ViewGroup
+          title="Osobiste"
+          views={personalViews}
+          onApplyView={onApplyView}
+          onDelete={handleDelete}
+          onCopyShareLink={handleCopyShareLink}
+          copiedViewId={copiedViewId}
+        />
+
+        <div className="flex flex-col gap-1.5 rounded-md border border-c-border-subtle p-2">
+          <p className="text-xs font-medium text-c-text-primary">Zapisz bieżący widok</p>
+          <input
+            className="rounded-md border border-c-border-subtle bg-c-surface-raised p-1.5 text-xs text-c-text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+            placeholder="Nazwa widoku…"
+            value={newViewName}
+            onChange={(e) => setNewViewName(e.target.value)}
+            data-testid="saved-view-name-input"
+          />
+          <div className="flex items-center gap-2">
+            {/* ★ NAPRAWA a11y (Pakiet I, wymaganie #5): `<select>` bez etykiety
               (axe: "select-name" critical) — "Zapisz bieżący widok" wyżej jest
               nagłówkiem sekcji, nie programowo powiązaną etykietą TEGO pola. */}
-          <select
-            aria-label="Widoczność zapisywanego widoku"
-            className="rounded-md border border-c-border-subtle bg-c-surface-raised p-1.5 text-xs text-c-text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
-            value={newViewScope}
-            onChange={(e) => setNewViewScope(e.target.value as FinanceSavedViewScope)}
-            data-testid="saved-view-scope-select"
-          >
-            <option value="PERSONAL">{financeSavedViewScopeLabel('PERSONAL')}</option>
-            <option value="TEAM">{financeSavedViewScopeLabel('TEAM')}</option>
-          </select>
-          <button
-            type="button"
-            disabled={!newViewName.trim()}
-            className="rounded-md border border-c-border-subtle bg-c-surface-raised px-2.5 py-1.5 text-xs font-medium text-c-text-primary hover:bg-c-surface disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
-            onClick={handleSave}
-            data-testid="saved-view-save-submit"
-          >
-            Zapisz widok
-          </button>
+            <select
+              aria-label="Widoczność zapisywanego widoku"
+              className="rounded-md border border-c-border-subtle bg-c-surface-raised p-1.5 text-xs text-c-text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+              value={newViewScope}
+              onChange={(e) => setNewViewScope(e.target.value as FinanceSavedViewScope)}
+              data-testid="saved-view-scope-select"
+            >
+              <option value="PERSONAL">{financeSavedViewScopeLabel('PERSONAL')}</option>
+              <option value="TEAM">{financeSavedViewScopeLabel('TEAM')}</option>
+            </select>
+            <button
+              type="button"
+              disabled={!newViewName.trim()}
+              className="rounded-md border border-c-border-subtle bg-c-surface-raised px-2.5 py-1.5 text-xs font-medium text-c-text-primary hover:bg-c-surface disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+              onClick={handleSave}
+              data-testid="saved-view-save-submit"
+            >
+              Zapisz widok
+            </button>
+          </div>
         </div>
       </div>
-    </div>
     );
   }
 
@@ -226,26 +257,47 @@ function ViewGroup({
 }): React.ReactElement {
   return (
     <div>
-      <p className="mb-1 text-[11px] font-semibold text-c-text-secondary">{title} ({views.length})</p>
+      <p className="mb-1 text-[11px] font-semibold text-c-text-secondary">
+        {title} ({views.length})
+      </p>
       {views.length === 0 ? (
         <p className="text-xs text-c-text-secondary">Brak.</p>
       ) : (
         <ul className="flex flex-col gap-1">
           {views.map((view) => (
-            <li key={view.id} className="flex items-center justify-between gap-2 rounded-md border border-c-border-subtle px-2 py-1.5" data-testid="saved-view-row">
+            <li
+              key={view.id}
+              className="flex items-center justify-between gap-2 rounded-md border border-c-border-subtle px-2 py-1.5"
+              data-testid="saved-view-row"
+            >
               <span className="text-xs text-c-text-primary">{view.name}</span>
               <div className="flex items-center gap-1.5">
                 {/* ★ NAPRAWA a11y (Pakiet I): `--c-focus` to `rgba(37,99,235,0.4)`
                     (40% krycia, pierścień fokusa) — jako kolor tekstu dawał
                     1.8:1 (axe, próg 4.5:1). `text-c-focus-solid` (pełne krycie
                     `#2563eb`) to właściwy token do tekstu linków. */}
-                <button type="button" className="text-[11px] font-medium text-c-focus-solid hover:underline" onClick={() => onApplyView?.(view)} data-testid="saved-view-apply">
+                <button
+                  type="button"
+                  className="text-[11px] font-medium text-c-focus-solid hover:underline"
+                  onClick={() => onApplyView?.(view)}
+                  data-testid="saved-view-apply"
+                >
                   Zastosuj
                 </button>
-                <button type="button" className="text-[11px] font-medium text-c-focus-solid hover:underline" onClick={() => onCopyShareLink(view)} data-testid="saved-view-copy-link">
+                <button
+                  type="button"
+                  className="text-[11px] font-medium text-c-focus-solid hover:underline"
+                  onClick={() => onCopyShareLink(view)}
+                  data-testid="saved-view-copy-link"
+                >
                   {copiedViewId === view.id ? 'Skopiowano' : 'Kopiuj link'}
                 </button>
-                <button type="button" className="text-[11px] font-medium text-c-danger hover:underline" onClick={() => onDelete(view.id)} data-testid="saved-view-delete">
+                <button
+                  type="button"
+                  className="text-[11px] font-medium text-c-danger hover:underline"
+                  onClick={() => onDelete(view.id)}
+                  data-testid="saved-view-delete"
+                >
                   Usuń
                 </button>
               </div>

@@ -33,13 +33,43 @@ function sampleResult() {
     ignoreDimensions: ['periodId'],
     materialityThresholdPct: 5,
     onlyMaterial: false,
-    summary: { totalRows: 2, bothPresent: 2, missingInA: 0, missingInB: 0, missingInBoth: 0, currencyMismatch: 0, materialCount: 1 },
+    summary: {
+      totalRows: 2,
+      bothPresent: 2,
+      missingInA: 0,
+      missingInB: 0,
+      missingInBoth: 0,
+      currencyMismatch: 0,
+      materialCount: 1,
+    },
     rows: [
       {
         matchKey: 'REVENUE',
         dimensions: { canonicalLineId: 'REVENUE' },
-        a: { presence: 'PRESENT', valueStatus: 'PRESENT_NONZERO', businessVersionId: 'bv-1', cellRef: null, fullUnitValue: 100000, rawValueDecimal: '100000', unit: 'UNITS', multiplier: '1', nativeCurrency: 'PLN', presentationCurrency: 'PLN' },
-        b: { presence: 'PRESENT', valueStatus: 'PRESENT_NONZERO', businessVersionId: 'bv-1', cellRef: null, fullUnitValue: 120000, rawValueDecimal: '120000', unit: 'UNITS', multiplier: '1', nativeCurrency: 'PLN', presentationCurrency: 'PLN' },
+        a: {
+          presence: 'PRESENT',
+          valueStatus: 'PRESENT_NONZERO',
+          businessVersionId: 'bv-1',
+          cellRef: null,
+          fullUnitValue: 100000,
+          rawValueDecimal: '100000',
+          unit: 'UNITS',
+          multiplier: '1',
+          nativeCurrency: 'PLN',
+          presentationCurrency: 'PLN',
+        },
+        b: {
+          presence: 'PRESENT',
+          valueStatus: 'PRESENT_NONZERO',
+          businessVersionId: 'bv-1',
+          cellRef: null,
+          fullUnitValue: 120000,
+          rawValueDecimal: '120000',
+          unit: 'UNITS',
+          multiplier: '1',
+          nativeCurrency: 'PLN',
+          presentationCurrency: 'PLN',
+        },
         diffKind: 'BOTH_PRESENT',
         absoluteDiff: 20000,
         pctDiff: 0.2,
@@ -49,8 +79,30 @@ function sampleResult() {
       {
         matchKey: 'COGS',
         dimensions: { canonicalLineId: 'COGS' },
-        a: { presence: 'PRESENT', valueStatus: 'PRESENT_NONZERO', businessVersionId: 'bv-1', cellRef: null, fullUnitValue: -50000, rawValueDecimal: '-50000', unit: 'UNITS', multiplier: '1', nativeCurrency: 'PLN', presentationCurrency: 'PLN' },
-        b: { presence: 'PRESENT', valueStatus: 'PRESENT_NONZERO', businessVersionId: 'bv-1', cellRef: null, fullUnitValue: -51000, rawValueDecimal: '-51000', unit: 'UNITS', multiplier: '1', nativeCurrency: 'PLN', presentationCurrency: 'PLN' },
+        a: {
+          presence: 'PRESENT',
+          valueStatus: 'PRESENT_NONZERO',
+          businessVersionId: 'bv-1',
+          cellRef: null,
+          fullUnitValue: -50000,
+          rawValueDecimal: '-50000',
+          unit: 'UNITS',
+          multiplier: '1',
+          nativeCurrency: 'PLN',
+          presentationCurrency: 'PLN',
+        },
+        b: {
+          presence: 'PRESENT',
+          valueStatus: 'PRESENT_NONZERO',
+          businessVersionId: 'bv-1',
+          cellRef: null,
+          fullUnitValue: -51000,
+          rawValueDecimal: '-51000',
+          unit: 'UNITS',
+          multiplier: '1',
+          nativeCurrency: 'PLN',
+          presentationCurrency: 'PLN',
+        },
         diffKind: 'BOTH_PRESENT',
         absoluteDiff: -1000,
         pctDiff: 0.02,
@@ -63,7 +115,11 @@ function sampleResult() {
 
 const REQUEST: FinanceCompareRequest = {
   kind: 'periods',
-  params: { artifactRef: { artifactType: 'STATEMENT_PACK', artifactId: 'art-1', businessVersionId: 'bv-1' }, periodIdA: 'p1', periodIdB: 'p2' },
+  params: {
+    artifactRef: { artifactType: 'STATEMENT_PACK', artifactId: 'art-1', businessVersionId: 'bv-1' },
+    periodIdA: 'p1',
+    periodIdB: 'p2',
+  },
 };
 
 beforeEach(() => {
@@ -85,7 +141,10 @@ describe('FinanceComparePanel', () => {
   });
 
   it('flaga ON + request.kind="periods" → woła compareFinancePeriods, renderuje summary + wiersze', async () => {
-    window.localStorage.setItem('consultify_feature_flags', JSON.stringify({ financeCompareV1: true }));
+    window.localStorage.setItem(
+      'consultify_feature_flags',
+      JSON.stringify({ financeCompareV1: true })
+    );
     mockComparePeriods.mockResolvedValueOnce(sampleResult());
 
     render(<FinanceComparePanel request={REQUEST} />);
@@ -102,11 +161,19 @@ describe('FinanceComparePanel', () => {
   });
 
   it('request.kind="versions" → woła compareFinanceVersions, NIE compareFinancePeriods', async () => {
-    window.localStorage.setItem('consultify_feature_flags', JSON.stringify({ financeCompareV1: true }));
+    window.localStorage.setItem(
+      'consultify_feature_flags',
+      JSON.stringify({ financeCompareV1: true })
+    );
     mockCompareVersions.mockResolvedValueOnce({ ...sampleResult(), comparisonType: 'VERSION' });
     const versionsRequest: FinanceCompareRequest = {
       kind: 'versions',
-      params: { artifactType: 'BASELINE_MODEL', artifactId: 'art-1', businessVersionIdA: 'bv-a', businessVersionIdB: 'bv-b' },
+      params: {
+        artifactType: 'BASELINE_MODEL',
+        artifactId: 'art-1',
+        businessVersionIdA: 'bv-a',
+        businessVersionIdB: 'bv-b',
+      },
     };
     render(<FinanceComparePanel request={versionsRequest} />);
     await waitFor(() => expect(screen.getByTestId('finance-compare-panel')).toBeInTheDocument());
@@ -115,7 +182,10 @@ describe('FinanceComparePanel', () => {
   });
 
   it('filtr „tylko istotne" ukrywa niematerialny wiersz BEZ nowego wywołania sieci', async () => {
-    window.localStorage.setItem('consultify_feature_flags', JSON.stringify({ financeCompareV1: true }));
+    window.localStorage.setItem(
+      'consultify_feature_flags',
+      JSON.stringify({ financeCompareV1: true })
+    );
     mockComparePeriods.mockResolvedValueOnce(sampleResult());
     render(<FinanceComparePanel request={REQUEST} />);
     await waitFor(() => expect(screen.getByTestId('finance-compare-panel')).toBeInTheDocument());
@@ -131,7 +201,10 @@ describe('FinanceComparePanel', () => {
   });
 
   it('KONTROLA NEGATYWNA: błąd 403 ORGANIZATION_MISMATCH → honest-UI komunikat, nie surowy kod', async () => {
-    window.localStorage.setItem('consultify_feature_flags', JSON.stringify({ financeCompareV1: true }));
+    window.localStorage.setItem(
+      'consultify_feature_flags',
+      JSON.stringify({ financeCompareV1: true })
+    );
     const err = new Error('cross-tenant') as Error & { status?: number; data?: unknown };
     err.status = 403;
     err.data = { code: 'ORGANIZATION_MISMATCH' };

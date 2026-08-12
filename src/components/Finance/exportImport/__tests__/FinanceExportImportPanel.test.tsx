@@ -71,21 +71,35 @@ describe('FinanceExportImportPanel', () => {
   });
 
   it('eksport → woła exportFinanceStatementPackXlsx(artifactId, businessVersionId), pokazuje manifest', async () => {
-    window.localStorage.setItem('consultify_feature_flags', JSON.stringify({ financeExportImportV1: true }));
-    mockExport.mockResolvedValueOnce({ blob: new Blob(['x']), manifest: SAMPLE_MANIFEST, filename: 'art-1-v3.xlsx' });
+    window.localStorage.setItem(
+      'consultify_feature_flags',
+      JSON.stringify({ financeExportImportV1: true })
+    );
+    mockExport.mockResolvedValueOnce({
+      blob: new Blob(['x']),
+      manifest: SAMPLE_MANIFEST,
+      filename: 'art-1-v3.xlsx',
+    });
     render(<FinanceExportImportPanel {...PROPS} />);
     fireEvent.click(screen.getByTestId('export-button'));
     await waitFor(() => expect(mockExport).toHaveBeenCalledWith('art-1', 'bv-1'));
-    await waitFor(() => expect(screen.getByTestId('export-manifest-summary')).toHaveTextContent('v3'));
+    await waitFor(() =>
+      expect(screen.getByTestId('export-manifest-summary')).toHaveTextContent('v3')
+    );
   });
 
   it('import: parse → preview → apply, w tej kolejności, z realnymi danymi przekazywanymi między krokami', async () => {
-    window.localStorage.setItem('consultify_feature_flags', JSON.stringify({ financeExportImportV1: true }));
+    window.localStorage.setItem(
+      'consultify_feature_flags',
+      JSON.stringify({ financeExportImportV1: true })
+    );
     const rows = [{ __rowNumber: 2, canonicalLineId: 'REVENUE' }];
     mockParse.mockResolvedValueOnce({ manifest: SAMPLE_MANIFEST, manifestIssues: [], rows });
     render(<FinanceExportImportPanel {...PROPS} />);
 
-    const file = new File(['xlsx-bytes'], 'plik.xlsx', { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const file = new File(['xlsx-bytes'], 'plik.xlsx', {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    });
     fireEvent.change(screen.getByTestId('import-file-input'), { target: { files: [file] } });
 
     await waitFor(() => expect(mockParse).toHaveBeenCalledWith(file, 'plik.xlsx'));
@@ -93,18 +107,39 @@ describe('FinanceExportImportPanel', () => {
     // Scoped do sekcji widocznej treści: Pakiet I (a11y) dodał RÓWNOLEGŁY,
     // zawsze zamontowany `role="status"` (sr-only) z tym samym komunikatem —
     // `within(...)` odróżnia widoczny akapit od live-region ogłoszenia.
-    expect(within(screen.getByTestId('import-parsed')).getByText(/Wczytano 1 wierszy/)).toBeInTheDocument();
+    expect(
+      within(screen.getByTestId('import-parsed')).getByText(/Wczytano 1 wierszy/)
+    ).toBeInTheDocument();
 
     const preview = {
       ok: true,
       manifestCheck: { ok: true, issues: [] },
-      diff: { toAdd: [], toChange: [{ cellKey: 'k1', cellRef: {}, before: { status: 'PRESENT_NONZERO', valueDecimal: '100' }, after: { rowNumber: 2, cellKey: 'k1', cellRef: {}, value: {} } }], toClear: [], unchangedCount: 3 },
+      diff: {
+        toAdd: [],
+        toChange: [
+          {
+            cellKey: 'k1',
+            cellRef: {},
+            before: { status: 'PRESENT_NONZERO', valueDecimal: '100' },
+            after: { rowNumber: 2, cellKey: 'k1', cellRef: {}, value: {} },
+          },
+        ],
+        toClear: [],
+        unchangedCount: 3,
+      },
       rowErrors: [],
       totalRows: 1,
     };
     mockPreview.mockResolvedValueOnce(preview);
     fireEvent.click(screen.getByTestId('import-preview-button'));
-    await waitFor(() => expect(mockPreview).toHaveBeenCalledWith({ artifactId: 'art-1', businessVersionId: 'bv-1', manifest: SAMPLE_MANIFEST, rows }));
+    await waitFor(() =>
+      expect(mockPreview).toHaveBeenCalledWith({
+        artifactId: 'art-1',
+        businessVersionId: 'bv-1',
+        manifest: SAMPLE_MANIFEST,
+        rows,
+      })
+    );
     await waitFor(() => expect(screen.getByTestId('import-preview')).toBeInTheDocument());
     expect(screen.getByTestId('import-apply-button')).not.toBeDisabled();
 
@@ -119,7 +154,13 @@ describe('FinanceExportImportPanel', () => {
     fireEvent.click(screen.getByTestId('import-apply-button'));
     await waitFor(() => expect(mockApply).toHaveBeenCalledTimes(1));
     const applyCallArgs = mockApply.mock.calls[0][0];
-    expect(applyCallArgs).toMatchObject({ artifactId: 'art-1', businessVersionId: 'bv-1', expectedWorkingRevisionId: 'wr-1', manifest: SAMPLE_MANIFEST, rows });
+    expect(applyCallArgs).toMatchObject({
+      artifactId: 'art-1',
+      businessVersionId: 'bv-1',
+      expectedWorkingRevisionId: 'wr-1',
+      manifest: SAMPLE_MANIFEST,
+      rows,
+    });
     expect(typeof applyCallArgs.batchIdempotencyKey).toBe('string');
     expect(applyCallArgs.batchIdempotencyKey.length).toBeGreaterThan(0);
 
@@ -127,8 +168,15 @@ describe('FinanceExportImportPanel', () => {
   });
 
   it('KONTROLA NEGATYWNA: preview.ok=false (rowErrors) → przycisk „Zastosuj" DISABLED, applyFinanceImport nigdy nie wołany', async () => {
-    window.localStorage.setItem('consultify_feature_flags', JSON.stringify({ financeExportImportV1: true }));
-    mockParse.mockResolvedValueOnce({ manifest: SAMPLE_MANIFEST, manifestIssues: [], rows: [{ __rowNumber: 2 }] });
+    window.localStorage.setItem(
+      'consultify_feature_flags',
+      JSON.stringify({ financeExportImportV1: true })
+    );
+    mockParse.mockResolvedValueOnce({
+      manifest: SAMPLE_MANIFEST,
+      manifestIssues: [],
+      rows: [{ __rowNumber: 2 }],
+    });
     render(<FinanceExportImportPanel {...PROPS} />);
     const file = new File(['x'], 'plik.xlsx');
     fireEvent.change(screen.getByTestId('import-file-input'), { target: { files: [file] } });
@@ -151,13 +199,28 @@ describe('FinanceExportImportPanel', () => {
   });
 
   it('KONTROLA NEGATYWNA: 409 WORKING_REVISION_CONFLICT na apply → honest-UI komunikat, nie surowy kod', async () => {
-    window.localStorage.setItem('consultify_feature_flags', JSON.stringify({ financeExportImportV1: true }));
-    mockParse.mockResolvedValueOnce({ manifest: SAMPLE_MANIFEST, manifestIssues: [], rows: [{ __rowNumber: 2 }] });
+    window.localStorage.setItem(
+      'consultify_feature_flags',
+      JSON.stringify({ financeExportImportV1: true })
+    );
+    mockParse.mockResolvedValueOnce({
+      manifest: SAMPLE_MANIFEST,
+      manifestIssues: [],
+      rows: [{ __rowNumber: 2 }],
+    });
     render(<FinanceExportImportPanel {...PROPS} />);
-    fireEvent.change(screen.getByTestId('import-file-input'), { target: { files: [new File(['x'], 'plik.xlsx')] } });
+    fireEvent.change(screen.getByTestId('import-file-input'), {
+      target: { files: [new File(['x'], 'plik.xlsx')] },
+    });
     await waitFor(() => expect(screen.getByTestId('import-parsed')).toBeInTheDocument());
 
-    mockPreview.mockResolvedValueOnce({ ok: true, manifestCheck: { ok: true, issues: [] }, diff: { toAdd: [], toChange: [], toClear: [], unchangedCount: 1 }, rowErrors: [], totalRows: 1 });
+    mockPreview.mockResolvedValueOnce({
+      ok: true,
+      manifestCheck: { ok: true, issues: [] },
+      diff: { toAdd: [], toChange: [], toClear: [], unchangedCount: 1 },
+      rowErrors: [],
+      totalRows: 1,
+    });
     fireEvent.click(screen.getByTestId('import-preview-button'));
     await waitFor(() => expect(screen.getByTestId('import-apply-button')).not.toBeDisabled());
 
