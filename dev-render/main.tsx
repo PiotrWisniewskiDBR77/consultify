@@ -145,6 +145,7 @@ const FinanceAnalysisWorkspaceScreen = React.lazy(() => import('./screens/financ
 const FinanceValuationWorkspaceScreen = React.lazy(() => import('./screens/finance-valuation-workspace'));
 const FinanceLineageNavigatorScreen = React.lazy(() => import('./screens/finance-lineage-navigator'));
 const FinanceComparePanelScreen = React.lazy(() => import('./screens/finance-compare-panel'));
+const FinanceCommentsPanelScreen = React.lazy(() => import('./screens/finance-comments-panel'));
 const GenDeckContentHintsScreen = React.lazy(() => import('./screens/gen-deck-content-hints'));
 const GenExcelTemplatesTabScreen = React.lazy(() => import('./screens/gen-excel-templates-tab'));
 const GenWordContentHintsScreen = React.lazy(() => import('./screens/gen-word-content-hints'));
@@ -654,6 +655,10 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'finance-compare-panel': {
     label: 'AP-CLIENT (Gate J) — REAL <FinanceComparePanel> (5 osi, Δ/%, filtr istotności, eksport CSV) — &scene=default|off, flaga financeCompareV1 default OFF',
     render: () => <FinanceComparePanelScreen />,
+  },
+  'finance-comments-panel': {
+    label: 'AP-CLIENT (Gate J) — REAL <FinanceCommentsPanel> (kotwice, wzmianki, resolve/reopen, checklist maker-checker) — &scene=default|off, flaga financeCommentsV1 default OFF',
+    render: () => <FinanceCommentsPanelScreen />,
   },
   'execution-change-signals': {
     label:
