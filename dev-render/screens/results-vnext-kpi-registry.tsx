@@ -37,15 +37,61 @@
  *   &kpiId=<id>                        deep-link smoke: 'kpi-1' resolves,
  *                                       anything else 404s -> forbidden state
  *   &ff=off                            force the flag OFF (disabled panel)
+ *
+ * RN-G5 (2026-08-12) — create/edit/submit/approve/reject mocks, mirroring
+ * the real routes' contract (`kpi.routes.ts`/`kpiDefinitionCommands.ts`):
+ * every GET response below is STILL the bare `rvn_kpi_definitions` row
+ * (kpiCode/status/owner only, no name/geometry — see the real
+ * `kpiRepository.ts`'s `getKpi`/`listKpis`, bare `SELECT kd.*`) — the mock
+ * deliberately does NOT enrich GET with version data the real backend can't
+ * produce; only the five WRITE endpoints' responses carry the version, same
+ * as production. A floating "Przełącz aktora" button (bottom-right, harness
+ * chrome only — not part of any production component) swaps
+ * `useAppStore`'s `currentUser` between two fixed identities WITHOUT
+ * unmounting the page, so a create->edit->submit->approve click-through can
+ * demonstrate the self-approval denial (same actor tries to approve their
+ * own submission -> 403) and then a second actor approving successfully —
+ * both against the SAME in-memory `knownVersions` the production component
+ * holds, exactly like two different real logged-in sessions would use two
+ * different JWTs against the same server-held CAS state.
  */
-import React from 'react';
+import React, { useState } from 'react';
 import { MemoryRouter } from 'react-router-dom';
 
 import { ResultsKpiRegistryPage } from '../../src/components/ResultsVNext/ResultsKpiRegistryPage';
 import { Api } from '../../src/services/api';
+import { useAppStore } from '../../src/store/useAppStore';
 import { seedRealisticSession } from '../mocks/seedStore';
 
 seedRealisticSession();
+
+const ACTOR_PIOTR = {
+  id: 'user-piotr-demo',
+  firstName: 'Piotr',
+  lastName: 'Wiśniewski',
+  email: 'piotr.wisniewski@dbr77.com',
+  companyName: 'DBR77 Sp. z o.o.',
+  role: 'ADMIN',
+  status: 'active',
+  isAuthenticated: true,
+  accessLevel: 'full',
+  preferredLanguage: 'pl',
+  organizationId: 'org-dbr77-demo',
+  organizationName: 'DBR77 Sp. z o.o.',
+  isDemo: true,
+} as any;
+
+const ACTOR_ANNA = {
+  ...ACTOR_PIOTR,
+  id: 'user-anna',
+  firstName: 'Anna',
+  lastName: 'Kowalska',
+  email: 'anna.kowalska@dbr77.com',
+} as any;
+
+function currentActorId(): string {
+  return useAppStore.getState().currentUser?.id ?? 'user-piotr-demo';
+}
 
 const params = new URLSearchParams(window.location.search);
 const state = params.get('state') || 'ready';
@@ -153,6 +199,111 @@ const MOCK_KPIS: MockKpi[] = [
     updatedAt: '2026-08-06T08:00:00Z',
   },
 ];
+
+// RN-G5 (2026-08-12) — definition-version fixtures, one per MOCK_KPIS row's
+// `currentDefinitionVersionId`. NEVER returned by any GET mock below (see
+// file header) — only readable through the write-endpoint mocks, exactly
+// mirroring the real backend gap `kpiApi.ts`'s RN-G5 note documents.
+interface MockKpiDefinitionVersion {
+  definitionVersionId: string;
+  kpiId: string;
+  organizationId: string;
+  versionNumber: number;
+  name: string;
+  description: string | null;
+  unit: string | null;
+  targetGeometry: 'threshold_min' | 'threshold_max' | 'range' | 'exact' | 'binary' | 'custom';
+  targetValue: number | null;
+  targetMin: number | null;
+  targetMax: number | null;
+  warningLow: number | null;
+  warningHigh: number | null;
+  criticalLow: number | null;
+  criticalHigh: number | null;
+  binarySuccessValue: number | null;
+  formulaText: string | null;
+  approvalStatus: 'draft' | 'submitted' | 'approved' | 'rejected';
+  effectiveFrom: string | null;
+  effectiveTo: string | null;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+  submittedBy: string | null;
+  submittedAt: string | null;
+  approvedBy: string | null;
+  approvedAt: string | null;
+  rejectedBy: string | null;
+  rejectedAt: string | null;
+  rejectionReason: string | null;
+  rowVersion: number;
+}
+
+const MOCK_KPI_VERSIONS: Record<string, MockKpiDefinitionVersion> = {
+  'ver-1': {
+    definitionVersionId: 'ver-1', kpiId: 'kpi-1', organizationId: 'org-dbr77-demo', versionNumber: 1,
+    name: 'OEE linii pakowania', description: 'Całkowita efektywność wyposażenia dla linii L3.', unit: '%',
+    targetGeometry: 'threshold_min', targetValue: 85, targetMin: null, targetMax: null,
+    warningLow: 75, warningHigh: null, criticalLow: 60, criticalHigh: null, binarySuccessValue: null, formulaText: null,
+    approvalStatus: 'approved', effectiveFrom: '2026-06-01T08:00:00Z', effectiveTo: null,
+    createdBy: 'user-piotr-demo', createdAt: '2026-06-01T08:00:00Z', updatedAt: '2026-06-01T09:00:00Z',
+    submittedBy: 'user-piotr-demo', submittedAt: '2026-06-01T08:30:00Z',
+    approvedBy: 'user-anna', approvedAt: '2026-06-01T09:00:00Z',
+    rejectedBy: null, rejectedAt: null, rejectionReason: null, rowVersion: 3,
+  },
+  'ver-2': {
+    definitionVersionId: 'ver-2', kpiId: 'kpi-2', organizationId: 'org-dbr77-demo', versionNumber: 1,
+    name: 'Pokrycie audytów dostawców', description: null, unit: '%',
+    targetGeometry: 'threshold_min', targetValue: 90, targetMin: null, targetMax: null,
+    warningLow: 75, warningHigh: null, criticalLow: null, criticalHigh: null, binarySuccessValue: null, formulaText: null,
+    approvalStatus: 'draft', effectiveFrom: null, effectiveTo: null,
+    createdBy: 'user-anna', createdAt: '2026-08-01T08:00:00Z', updatedAt: '2026-08-01T08:00:00Z',
+    submittedBy: null, submittedAt: null, approvedBy: null, approvedAt: null,
+    rejectedBy: null, rejectedAt: null, rejectionReason: null, rowVersion: 1,
+  },
+  'ver-3': {
+    definitionVersionId: 'ver-3', kpiId: 'kpi-3', organizationId: 'org-dbr77-demo', versionNumber: 1,
+    name: 'Redukcja kosztów pracy', description: null, unit: 'PLN',
+    targetGeometry: 'threshold_max', targetValue: 500000, targetMin: null, targetMax: null,
+    warningLow: null, warningHigh: 550000, criticalLow: null, criticalHigh: 600000, binarySuccessValue: null, formulaText: null,
+    approvalStatus: 'approved', effectiveFrom: '2026-05-12T08:00:00Z', effectiveTo: null,
+    createdBy: 'user-marek', createdAt: '2026-05-12T08:00:00Z', updatedAt: '2026-05-12T09:00:00Z',
+    submittedBy: 'user-marek', submittedAt: '2026-05-12T08:30:00Z',
+    approvedBy: 'user-piotr-demo', approvedAt: '2026-05-12T09:00:00Z',
+    rejectedBy: null, rejectedAt: null, rejectionReason: null, rowVersion: 3,
+  },
+  'ver-4': {
+    definitionVersionId: 'ver-4', kpiId: 'kpi-4', organizationId: 'org-dbr77-demo', versionNumber: 1,
+    name: 'Cykl zamknięcia miesiąca', description: null, unit: 'dni',
+    targetGeometry: 'threshold_max', targetValue: 5, targetMin: null, targetMax: null,
+    warningLow: null, warningHigh: 7, criticalLow: null, criticalHigh: 10, binarySuccessValue: null, formulaText: null,
+    approvalStatus: 'approved', effectiveFrom: '2026-01-10T08:00:00Z', effectiveTo: null,
+    createdBy: 'user-piotr-demo', createdAt: '2026-01-10T08:00:00Z', updatedAt: '2026-01-10T09:00:00Z',
+    submittedBy: 'user-piotr-demo', submittedAt: '2026-01-10T08:30:00Z',
+    approvedBy: 'user-anna', approvedAt: '2026-01-10T09:00:00Z',
+    rejectedBy: null, rejectedAt: null, rejectionReason: null, rowVersion: 3,
+  },
+  'ver-5': {
+    definitionVersionId: 'ver-5', kpiId: 'kpi-5', organizationId: 'org-dbr77-demo', versionNumber: 1,
+    name: 'Zgłoszenia do zatwierdzenia', description: null, unit: 'szt.',
+    targetGeometry: 'exact', targetValue: 0, targetMin: null, targetMax: null,
+    warningLow: 0, warningHigh: 2, criticalLow: null, criticalHigh: 5, binarySuccessValue: null, formulaText: null,
+    approvalStatus: 'submitted', effectiveFrom: null, effectiveTo: null,
+    createdBy: 'user-anna', createdAt: '2026-08-06T08:00:00Z', updatedAt: '2026-08-06T08:00:00Z',
+    submittedBy: 'user-anna', submittedAt: '2026-08-06T08:00:00Z',
+    approvedBy: null, approvedAt: null, rejectedBy: null, rejectedAt: null, rejectionReason: null, rowVersion: 1,
+  },
+};
+
+let mockKpiSeq = 0;
+function nextMockKpiId(): string {
+  mockKpiSeq += 1;
+  return `kpi-new-${mockKpiSeq}`;
+}
+let mockVersionSeq = 0;
+function nextMockVersionId(): string {
+  mockVersionSeq += 1;
+  return `ver-new-${mockVersionSeq}`;
+}
 
 interface MockMeasurement {
   measurementId: string;
@@ -330,6 +481,7 @@ function filterCurrent(rows: MockMeasurement[]): MockMeasurement[] {
 
 const realGet = Api.get.bind(Api);
 const realPost = Api.post.bind(Api);
+const realPut = Api.put.bind(Api);
 
 Api.get = (async (url: string) => {
   if (url.startsWith('/vnext/results/kpi/') && url.includes('/measurements')) {
@@ -392,7 +544,188 @@ Api.get = (async (url: string) => {
   return realGet(url);
 }) as typeof Api.get;
 
+function versionToDto(v: MockKpiDefinitionVersion) {
+  return { ...v };
+}
+
 Api.post = (async (url: string, data: any) => {
+  // RN-G5 (2026-08-12) — POST /vnext/results/kpi (createKpiDraft). Mirrors
+  // `kpiDefinitionCommands.ts`'s `createKpiDraft`: creates BOTH the KPI root
+  // row (status 'draft') and its version-1 row (approvalStatus 'draft') in
+  // one shot, `createdBy`/`submittedBy` etc. resolved from the CURRENT actor
+  // (`currentActorId()`), never client-supplied — same as the real route
+  // reading `auth.userId`.
+  if (url === '/vnext/results/kpi') {
+    const kpiId = nextMockKpiId();
+    const versionId = nextMockVersionId();
+    const now = new Date().toISOString();
+    const actor = currentActorId();
+    const kpi: MockKpi = {
+      kpiId,
+      organizationId: 'org-dbr77-demo',
+      kpiCode: data.kpiCode,
+      status: 'draft',
+      currentDefinitionVersionId: versionId,
+      primaryProcessId: null,
+      responsePolicyId: null,
+      ownerUserId: actor,
+      rowVersion: 1,
+      createdBy: actor,
+      createdAt: now,
+      updatedAt: now,
+    };
+    const version: MockKpiDefinitionVersion = {
+      definitionVersionId: versionId,
+      kpiId,
+      organizationId: 'org-dbr77-demo',
+      versionNumber: 1,
+      name: data.name,
+      description: data.description ?? null,
+      unit: data.unit ?? null,
+      targetGeometry: data.targetGeometry,
+      targetValue: data.targetValue ?? null,
+      targetMin: data.targetMin ?? null,
+      targetMax: data.targetMax ?? null,
+      warningLow: data.warningLow ?? null,
+      warningHigh: data.warningHigh ?? null,
+      criticalLow: data.criticalLow ?? null,
+      criticalHigh: data.criticalHigh ?? null,
+      binarySuccessValue: data.binarySuccessValue ?? null,
+      formulaText: data.formulaText ?? null,
+      approvalStatus: 'draft',
+      effectiveFrom: null,
+      effectiveTo: null,
+      createdBy: actor,
+      createdAt: now,
+      updatedAt: now,
+      submittedBy: null,
+      submittedAt: null,
+      approvedBy: null,
+      approvedAt: null,
+      rejectedBy: null,
+      rejectedAt: null,
+      rejectionReason: null,
+      rowVersion: 1,
+    };
+    MOCK_KPIS.unshift(kpi);
+    MOCK_KPI_VERSIONS[versionId] = version;
+    MOCK_MEASUREMENTS[kpiId] = [];
+    return { outcome: 'applied', eventId: `evt-${kpiId}`, resultingVersion: 1, kpi, definitionVersion: versionToDto(version) };
+  }
+
+  // RN-G5 — POST /vnext/results/kpi/:kpiId/submit (submitKpiDefinition).
+  const submitMatch = url.match(/\/vnext\/results\/kpi\/([^/]+)\/submit$/);
+  if (submitMatch) {
+    const [, kpiId] = submitMatch;
+    const kpi = MOCK_KPIS.find((k) => k.kpiId === kpiId);
+    const version = kpi?.currentDefinitionVersionId ? MOCK_KPI_VERSIONS[kpi.currentDefinitionVersionId] : undefined;
+    if (!kpi || !version) {
+      const err: any = new Error('KPI not found');
+      err.status = 404;
+      throw err;
+    }
+    if (version.approvalStatus !== 'draft') {
+      const err: any = new Error(`Definition version ${version.definitionVersionId} is "${version.approvalStatus}" — only a draft may be submitted`);
+      err.status = 409;
+      err.data = { code: 'NOT_A_DRAFT' };
+      throw err;
+    }
+    if (data.expectedVersion !== version.rowVersion) {
+      const err: any = new Error(`Version conflict: expected ${data.expectedVersion}, current ${version.rowVersion}`);
+      err.status = 409;
+      err.data = { code: 'VERSION_CONFLICT', currentVersion: version.rowVersion, expectedVersion: data.expectedVersion };
+      throw err;
+    }
+    version.approvalStatus = 'submitted';
+    version.submittedBy = currentActorId();
+    version.submittedAt = new Date().toISOString();
+    version.rowVersion += 1;
+    version.updatedAt = version.submittedAt;
+    if (kpi.status === 'draft') kpi.status = 'pending_approval';
+    kpi.updatedAt = version.updatedAt;
+    return { outcome: 'applied', eventId: `evt-${version.definitionVersionId}-submit`, resultingVersion: version.rowVersion, definitionVersion: versionToDto(version) };
+  }
+
+  // RN-G5 — POST .../definition-versions/:versionId/approve — self-approval
+  // denial FIRST, before the state-transition check, mirroring
+  // `approveDefinitionVersion`'s own doc comment.
+  const approveMatch = url.match(/\/vnext\/results\/kpi\/([^/]+)\/definition-versions\/([^/]+)\/approve$/);
+  if (approveMatch) {
+    const [, kpiId, versionId] = approveMatch;
+    const version = MOCK_KPI_VERSIONS[versionId];
+    if (!version || version.kpiId !== kpiId) {
+      const err: any = new Error('Definition version not found for this KPI');
+      err.status = 404;
+      throw err;
+    }
+    const actor = currentActorId();
+    if (version.submittedBy === actor) {
+      const err: any = new Error(`User ${actor} may not approve definition version ${versionId}: matches its own submitted_by`);
+      err.status = 403;
+      err.data = { code: 'SELF_APPROVAL_DENIED', definitionVersionId: versionId, approverId: actor, reasonField: 'submitted_by' };
+      throw err;
+    }
+    if (version.createdBy === actor) {
+      const err: any = new Error(`User ${actor} may not approve definition version ${versionId}: matches its own created_by`);
+      err.status = 403;
+      err.data = { code: 'SELF_APPROVAL_DENIED', definitionVersionId: versionId, approverId: actor, reasonField: 'created_by' };
+      throw err;
+    }
+    if (version.approvalStatus !== 'submitted') {
+      const err: any = new Error(`Definition version ${versionId} is "${version.approvalStatus}" — only a submitted version may be approved`);
+      err.status = 409;
+      err.data = { code: 'NOT_SUBMITTED' };
+      throw err;
+    }
+    if (data.expectedVersion !== version.rowVersion) {
+      const err: any = new Error(`Version conflict: expected ${data.expectedVersion}, current ${version.rowVersion}`);
+      err.status = 409;
+      err.data = { code: 'VERSION_CONFLICT', currentVersion: version.rowVersion, expectedVersion: data.expectedVersion };
+      throw err;
+    }
+    version.approvalStatus = 'approved';
+    version.approvedBy = actor;
+    version.approvedAt = new Date().toISOString();
+    version.effectiveFrom = version.effectiveFrom ?? version.approvedAt;
+    version.rowVersion += 1;
+    version.updatedAt = version.approvedAt;
+    return { outcome: 'applied', eventId: `evt-${versionId}-approve`, resultingVersion: version.rowVersion, definitionVersion: versionToDto(version) };
+  }
+
+  // RN-G5 — POST .../definition-versions/:versionId/reject.
+  const rejectMatch = url.match(/\/vnext\/results\/kpi\/([^/]+)\/definition-versions\/([^/]+)\/reject$/);
+  if (rejectMatch) {
+    const [, kpiId, versionId] = rejectMatch;
+    const version = MOCK_KPI_VERSIONS[versionId];
+    const kpi = MOCK_KPIS.find((k) => k.kpiId === kpiId);
+    if (!version || version.kpiId !== kpiId || !kpi) {
+      const err: any = new Error('Definition version not found for this KPI');
+      err.status = 404;
+      throw err;
+    }
+    if (version.approvalStatus !== 'submitted') {
+      const err: any = new Error(`Definition version ${versionId} is "${version.approvalStatus}" — only a submitted version may be rejected`);
+      err.status = 409;
+      err.data = { code: 'NOT_SUBMITTED' };
+      throw err;
+    }
+    if (data.expectedVersion !== version.rowVersion) {
+      const err: any = new Error(`Version conflict: expected ${data.expectedVersion}, current ${version.rowVersion}`);
+      err.status = 409;
+      err.data = { code: 'VERSION_CONFLICT', currentVersion: version.rowVersion, expectedVersion: data.expectedVersion };
+      throw err;
+    }
+    version.approvalStatus = 'rejected';
+    version.rejectedBy = currentActorId();
+    version.rejectedAt = new Date().toISOString();
+    version.rejectionReason = data.rejectionReason;
+    version.rowVersion += 1;
+    version.updatedAt = version.rejectedAt;
+    if (kpi.status === 'pending_approval') kpi.status = 'draft';
+    kpi.updatedAt = version.updatedAt;
+    return { outcome: 'applied', eventId: `evt-${versionId}-reject`, resultingVersion: version.rowVersion, definitionVersion: versionToDto(version) };
+  }
+
   const lifecycleMatch = url.match(/\/vnext\/results\/kpi\/([^/]+)\/(activate|suspend|archive)$/);
   if (lifecycleMatch) {
     const [, kpiId, action] = lifecycleMatch;
@@ -486,18 +819,89 @@ Api.post = (async (url: string, data: any) => {
   return realPost(url, data);
 }) as typeof Api.post;
 
+// RN-G5 — PUT /vnext/results/kpi/:kpiId/draft (editKpiDraft). Mirrors
+// `editDraft`'s own guard: only a 'draft'-approvalStatus version may be
+// edited (409 NOT_A_DRAFT otherwise — e.g. after a reject, see
+// `kpiDefinitionCommands.ts`'s comment on why there is no amend/re-draft
+// command in this package's scope).
+Api.put = (async (url: string, data: any) => {
+  const draftMatch = url.match(/\/vnext\/results\/kpi\/([^/]+)\/draft$/);
+  if (draftMatch) {
+    const [, kpiId] = draftMatch;
+    const kpi = MOCK_KPIS.find((k) => k.kpiId === kpiId);
+    const version = kpi?.currentDefinitionVersionId ? MOCK_KPI_VERSIONS[kpi.currentDefinitionVersionId] : undefined;
+    if (!kpi || !version) {
+      const err: any = new Error('KPI not found');
+      err.status = 404;
+      throw err;
+    }
+    if (version.approvalStatus !== 'draft') {
+      const err: any = new Error(`Definition version ${version.definitionVersionId} is "${version.approvalStatus}" — only a draft may be edited`);
+      err.status = 409;
+      err.data = { code: 'NOT_A_DRAFT' };
+      throw err;
+    }
+    if (data.expectedVersion !== version.rowVersion) {
+      const err: any = new Error(`Version conflict: expected ${data.expectedVersion}, current ${version.rowVersion}`);
+      err.status = 409;
+      err.data = { code: 'VERSION_CONFLICT', currentVersion: version.rowVersion, expectedVersion: data.expectedVersion };
+      throw err;
+    }
+    if (data.name !== undefined) version.name = data.name;
+    if (data.description !== undefined) version.description = data.description;
+    if (data.unit !== undefined) version.unit = data.unit;
+    if (data.targetGeometry !== undefined) version.targetGeometry = data.targetGeometry;
+    if (data.targetValue !== undefined) version.targetValue = data.targetValue;
+    if (data.targetMin !== undefined) version.targetMin = data.targetMin;
+    if (data.targetMax !== undefined) version.targetMax = data.targetMax;
+    if (data.warningLow !== undefined) version.warningLow = data.warningLow;
+    if (data.warningHigh !== undefined) version.warningHigh = data.warningHigh;
+    if (data.criticalLow !== undefined) version.criticalLow = data.criticalLow;
+    if (data.criticalHigh !== undefined) version.criticalHigh = data.criticalHigh;
+    if (data.binarySuccessValue !== undefined) version.binarySuccessValue = data.binarySuccessValue;
+    if (data.formulaText !== undefined) version.formulaText = data.formulaText;
+    version.rowVersion += 1;
+    version.updatedAt = new Date().toISOString();
+    return { outcome: 'applied', eventId: `evt-${version.definitionVersionId}-edit`, resultingVersion: version.rowVersion, definitionVersion: versionToDto(version) };
+  }
+  return realPut(url, data);
+}) as typeof Api.put;
+
 // sticky-defect1a (2026-08-11): `ResultsKpiRegistryPage` calls `useNavigate()`
 // internally, which throws outside a Router context — this screen never had
 // one (pre-existing gap, reproduced identically on unmodified HEAD via
 // `git stash`, unrelated to the FilterableTable sticky-column fix). Wrapping
 // only HERE (harness-only file) so the P2 regression screenshot can actually
 // render the page instead of the React error boundary.
-const ResultsVNextKpiRegistryScreen: React.FC = () => (
-  <div className="h-screen bg-c-bg text-c-text">
-    <MemoryRouter initialEntries={['/results/kpi']}>
-      <ResultsKpiRegistryPage />
-    </MemoryRouter>
-  </div>
-);
+//
+// RN-G5 — "Przełącz aktora" floating button (harness chrome only, see file
+// header) swaps `useAppStore`'s `currentUser` between Piotr/Anna WITHOUT
+// unmounting `ResultsKpiRegistryPage`, so its `knownVersions` in-memory
+// cache survives the swap — the only way to demo a create->submit->approve
+// click-through with a REAL second actor in a single-tab harness (see file
+// header note for why this is a legitimate simulation, not a shortcut
+// around the self-approval rule).
+const ResultsVNextKpiRegistryScreen: React.FC = () => {
+  const [actor, setActor] = useState<'piotr' | 'anna'>('piotr');
+  return (
+    <div className="h-screen bg-c-bg text-c-text relative">
+      <MemoryRouter initialEntries={['/results/kpi']}>
+        <ResultsKpiRegistryPage />
+      </MemoryRouter>
+      <button
+        type="button"
+        data-testid="harness-actor-switch"
+        onClick={() => {
+          const next = actor === 'piotr' ? 'anna' : 'piotr';
+          useAppStore.setState({ currentUser: next === 'piotr' ? ACTOR_PIOTR : ACTOR_ANNA } as any);
+          setActor(next);
+        }}
+        className="fixed bottom-3 right-3 z-[9999] rounded-full border border-c-border bg-c-surface-raised px-3 py-1.5 text-[11px] font-semibold text-c-text shadow-lg"
+      >
+        Aktor: {actor === 'piotr' ? 'Piotr' : 'Anna'} (kliknij, aby przełączyć)
+      </button>
+    </div>
+  );
+};
 
 export default ResultsVNextKpiRegistryScreen;
