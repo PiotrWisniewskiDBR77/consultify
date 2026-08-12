@@ -3347,6 +3347,9 @@ async function handleOkrCheckInAssist(
     throw new TeresaCopilotError('OKR KeyResult not found or not visible to approving user', 'P08_OKR_VISIBILITY_STALE');
   }
 
+  // RN-G5: recordCheckIn now requires an `access` context — resolved for
+  // the REAL human userId, same pattern as every other Teresa handoff fix.
+  const access = await resolveEffectiveAccess({ userId, organizationId });
   const outcome = await recordCheckIn({
     keyResultId,
     organizationId,
@@ -3362,6 +3365,7 @@ async function handleOkrCheckInAssist(
     idempotencyKey: proposalId,
     correlationId: context.runtime_binding?.conversation_id ?? undefined,
     reason: `Teresa check_in_assist: ${assist.note}`,
+    access,
   });
   await recordTeresaOkrHandoffResult(proposalId, organizationId, outcome.result.checkIn.checkInId);
   return {

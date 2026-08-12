@@ -1838,6 +1838,7 @@ router.post(
         return;
       }
       const body = req.body as import('zod').infer<typeof RecordOkrCheckInSchema>;
+      const access = await resolveAccess(req, auth);
       const outcome = await recordCheckIn({
         keyResultId,
         organizationId: auth.organizationId,
@@ -1855,6 +1856,7 @@ router.post(
         idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
         correlationId: getCorrelationId(req),
         reason: body.reason ?? null,
+        access,
       });
       res.status(outcome.outcome === 'applied' ? 201 : 200).json({
         outcome: outcome.outcome,
@@ -1894,6 +1896,7 @@ router.post(
         return;
       }
       const body = req.body as import('zod').infer<typeof CorrectOkrCheckInSchema>;
+      const access = await resolveAccess(req, auth);
       const outcome = await correctCheckIn({
         checkInId: checkinId,
         organizationId: auth.organizationId,
@@ -1906,6 +1909,7 @@ router.post(
         actorEffectiveRole: auth.role,
         idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
         correlationId: getCorrelationId(req),
+        access,
       });
       res.status(outcome.outcome === 'applied' ? 201 : 200).json({
         outcome: outcome.outcome,
