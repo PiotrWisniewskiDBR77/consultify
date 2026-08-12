@@ -458,8 +458,10 @@ router.post(
     if (!auth) return;
     try {
       const body = req.body as import('zod').infer<typeof CreateOkrProgramSchema>;
+      const access = await resolveAccess(req, auth);
       const outcome = await createProgram({
         organizationId: auth.organizationId,
+        access,
         name: body.name,
         cycleModel: body.cycleModel,
         annualDirectionEnabled: body.annualDirectionEnabled,
@@ -567,9 +569,11 @@ router.patch(
         return;
       }
       const body = req.body as import('zod').infer<typeof EditOkrProgramDraftSchema>;
+      const access = await resolveAccess(req, auth);
       const outcome = await editProgramDraft({
         programId,
         organizationId: auth.organizationId,
+        access,
         expectedVersion: body.expectedVersion,
         name: body.name,
         cycleModel: body.cycleModel,
@@ -629,9 +633,11 @@ router.post(
         return;
       }
       const body = req.body as import('zod').infer<typeof PublishOkrProgramSchema>;
+      const access = await resolveAccess(req, auth);
       const outcome = await publishProgram({
         programId,
         organizationId: auth.organizationId,
+        access,
         expectedVersion: body.expectedVersion,
         actorUserId: auth.userId,
         actorEffectiveRole: auth.role,
