@@ -1444,8 +1444,18 @@ export async function advanceRun(runId: string, actorUserId: string): Promise<Ad
       const targetType = nodeTypeById.get(targetNodeId);
       if (!targetType) continue; // no node-type fact to record against — nothing to state
       await executionGraphService.recordNodeResultAcceptance({
-        nodeRunId: deterministicSkippedNodeRunId(runRow.run_id, targetNodeId),
-        runId: runRow.run_id,
+        // `id` (not `runRow.run_id`) deliberately: this closure is a nested
+        // `function` declaration capturing `runRow` from the enclosing
+        // `advanceRun` scope, so TS control-flow narrowing from the
+        // `if (!runRow) throw ...` guard above (line ~1322) does not carry
+        // into it — TS cannot prove no reassignment happens between the
+        // guard and an eventual call to this closure. `id` is the exact
+        // same run id `runRow` was queried by (`WHERE run_id = ?`, [id]),
+        // is a plain string with no null in its type, and is never
+        // reassigned, so it carries the same fact without asking the
+        // compiler to trust a closure-crossing narrowing it can't verify.
+        nodeRunId: deterministicSkippedNodeRunId(id, targetNodeId),
+        runId: id,
         nodeType: targetType as CaseExecutionNodeType,
         nodeCompletionState: 'SKIPPED',
         resultAcceptance: 'NOT_APPLICABLE',

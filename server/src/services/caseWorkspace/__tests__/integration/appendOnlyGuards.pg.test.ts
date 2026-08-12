@@ -154,7 +154,16 @@ suite('case_workspace append-only DB guards (R3-P1) — real trigger enforcement
           ])
         );
         expect(err.message).toMatch(/append-only/);
-        expect(err.message).toMatch(/delivered_at, delivery_attempt_count and last_delivery_error/);
+        // `next_retry_at` was added as a fourth mutable delivery-bookkeeping
+        // column by migration 20260812a_case_workspace_outbox_next_retry_at
+        // (per-row retry backoff), which widened the trigger's own message
+        // to match. Keep this assertion listing all four permitted columns
+        // by name (not a vague /append-only/ alone) — the precision here IS
+        // the security property under test: the guard permits EXACTLY the
+        // delivery-bookkeeping columns and nothing else.
+        expect(err.message).toMatch(
+          /delivered_at, delivery_attempt_count, last_delivery_error and next_retry_at/
+        );
 
         // Confirm the row is genuinely unchanged, not just that the statement threw.
         const read = await control.query(`SELECT event_type FROM case_workspace_event_outbox WHERE event_id = $1`, [
