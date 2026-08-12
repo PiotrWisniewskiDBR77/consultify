@@ -16,6 +16,10 @@
 import { fetchWithRetry, getHeaders, handleResponse } from './baseClient';
 import { v8Get, v8Post } from './v8/client';
 import type {
+  AnalysisComputeResultDto,
+  AnalysisKpiCatalogEntryDto,
+  AnalysisKpiTier,
+  AnalysisKpiValueDto,
   BaselineAssumptionDto,
   BaselineAssumptionUpsertInput,
   BaselineAssumptionUpsertResultDto,
@@ -484,6 +488,60 @@ export async function listBaselineOutputs(
 }
 // --- /PKG-F Baseline ---
 
+// --- PKG-E Analysis ---
+// Analysis (KPI) — analysis.routes.ts (Pakiet B2, ten pakiet — Pakiet E — jest
+// pierwszym frontendowym konsumentem, `grep -rn "analysis/kpi-catalog" src/`
+// dawał 0 trafień przed tym plikiem).
+//
+// UWAGA (scalenie fan-in wave 1): Pakiet E niezależnie zdefiniował TAKŻE
+// `renameFinanceArtifact`/`RenameFinanceArtifactResultDto` (ten sam gap,
+// ten sam endpoint `POST /artifacts/:id/rename`, ten sam kształt żądania i
+// odpowiedzi jak Pakietu F). Ponieważ obie implementacje są funkcjonalnie
+// identyczne (różni je wyłącznie nazwa lokalnego aliasu typu wyniku), scalenie
+// zachowuje TYLKO wersję Pakietu F (wyżej, `FinanceRenameArtifactResultDto`
+// w `financeV2.types.ts`) i pomija duplikat z Pakietu E — patrz
+// FANIN_WAVE1_report.md §konflikty semantyczne.
+// ---------------------------------------------------------------------------
+
+export interface GetAnalysisKpiCatalogParams {
+  tier?: AnalysisKpiTier;
+  includeAllStatuses?: boolean;
+}
+
+export async function getAnalysisKpiCatalog(
+  params: GetAnalysisKpiCatalogParams = {}
+): Promise<AnalysisKpiCatalogEntryDto[]> {
+  const query = new URLSearchParams();
+  if (params.tier) query.set('tier', params.tier);
+  if (params.includeAllStatuses) query.set('includeAllStatuses', 'true');
+  const qs = query.toString();
+  return v8Get<AnalysisKpiCatalogEntryDto[]>(`${BASE}/analysis/kpi-catalog${qs ? `?${qs}` : ''}`);
+}
+
+export interface ComputeAnalysisKpisApiParams {
+  businessVersionId: string;
+  attemptReadinessTransition?: boolean;
+  /** Wymagane przez serwer TYLKO gdy `attemptReadinessTransition=true` (analysis.routes.ts:89-93). */
+  expectedVersion?: number;
+}
+
+export async function computeAnalysisKpis(
+  params: ComputeAnalysisKpisApiParams
+): Promise<AnalysisComputeResultDto> {
+  return v8Post<AnalysisComputeResultDto>(
+    `${BASE}/analysis/${encodeURIComponent(params.businessVersionId)}/compute`,
+    {
+      attemptReadinessTransition: params.attemptReadinessTransition === true,
+      ...(params.expectedVersion !== undefined ? { expectedVersion: params.expectedVersion } : {}),
+    }
+  );
+}
+
+export async function getAnalysisKpiValues(businessVersionId: string): Promise<AnalysisKpiValueDto[]> {
+  return v8Get<AnalysisKpiValueDto[]>(`${BASE}/analysis/${encodeURIComponent(businessVersionId)}/kpi-values`);
+}
+// --- /PKG-E Analysis ---
+
 export const FinanceV2Api = {
   createFinanceArtifact,
   getFinanceArtifact,
@@ -516,6 +574,10 @@ export const FinanceV2Api = {
   runFinancePredictionPreflight,
   runFinancePredictionCalculate,
   listFinanceExceptionsOpen,
+  // --- PKG-E Analysis --- (renameFinanceArtifact już wyżej — wspólna z Pakietem F, patrz uwaga przy definicji).
+  getAnalysisKpiCatalog,
+  computeAnalysisKpis,
+  getAnalysisKpiValues,
 };
 
 // ---------------------------------------------------------------------------

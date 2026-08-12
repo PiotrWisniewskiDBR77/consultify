@@ -1,0 +1,444 @@
+/**
+ * Pakiet E — Workspace Analizy Historycznej. Spina: `FinanceWorkspaceBar`
+ * (Pakiet C, powłoka lifecycle/identity) + `AnalysisKpiTable` (tabela KPI,
+ * OWN-FIN-014) + `AnalysisKpiDetailCard` (karta szczegółowa) +
+ * `AnalysisCreatorWizard` (kreator — otwierany z pustego stanu/CTA). Logika
+ * lifecycle/CTA/gate'ów żyje w `analysisWorkspace.contract.ts` (testowana
+ * bez DOM); ten plik tylko ładuje dane, trzyma stan UI i tłumaczy kliknięcia
+ * na wywołania `FinanceV2Api`.
+ *
+ * ★ UCZCIWOŚĆ WOBEC BACKENDU (patrz też nagłówki `analysisCreatorWizard.contract.ts`
+ * i `AnalysisCreatorWizard.tsx`):
+ *   - `includedInReportByKpiCode`/`markedAsModelInputByKpiCode` — stan
+ *     WYŁĄCZNIE w pamięci komponentu. `analysis.routes.ts` nie ma endpointu
+ *     zapisu tych flag (tylko `kpi-catalog`/`compute`/`kpi-values`, GET/GET/POST)
+ *     — odświeżenie strony je resetuje. Nie udawane jako trwałe.
+ *   - `periodColumns` są WYPROWADZONE z `periodId` obecnych w
+ *     `GET /analysis/:id/kpi-values` (unikalne, posortowane leksykograficznie)
+ *     — nie istnieje dziś endpoint zwracający czytelną etykietę okresu, więc
+ *     etykietą kolumny jest surowe `periodId`, jawnie oznaczone w komentarzu
+ *     poniżej (nie zmyślona nazwa typu "Q1 2026").
+ *   - Krok kreatora "Utwórz i przelicz" woła REALNE `createFinanceArtifact`+
+ *     `computeAnalysisKpis` — jeśli backend odpowie `NO_SOURCE_STATEMENT_PACK_EDGE`
+ *     (bo nie ma writer'a lineage), UI pokazuje ten honest błąd, nie fejkuje sukcesu.
+ *   - `requiresReason` (np. `reopen`/`request_changes`) — `FinanceWorkspaceBar`
+ *     (Pakiet C) ma dziś UI TYLKO dla `requiresConfirmation`, nie dla zbierania
+ *     powodu tekstowego (zweryfikowane czytaniem całego pliku — `ConfirmDestructiveDialog`
+ *     istnieje, żaden komponent zbierania tekstu nie istnieje). Ten plik używa
+ *     natywnego `window.prompt` jako świadomego, udokumentowanego obejścia tej
+ *     luki (nie cichego pominięcia wymogu powodu) — do czasu, aż Pakiet C doda
+ *     właściwy dialog.
+ *
+ * UI za flagą `financeAnalysisWorkspaceV1`, domyślnie OFF (CLAUDE.md #7) —
+ * ten komponent jest montowany TYLKO gdy caller sprawdził flagę.
+ */
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+
+import { FinanceWorkspaceBar } from '../shared/FinanceWorkspaceBar';
+import type {
+  WorkspaceBarEvaluationContext,
+  WorkspaceBarLifecycleTransition,
+  WorkspaceBarMoreMenuItem,
+} from '../shared/financeWorkspaceBar.contract';
+import {
+  ANALYSIS_HAS_KPIS_GATE,
+  buildAnalysisWorkspaceBarConfig,
+  canSubmitAnalysisForReview,
+  resolveAnalysisPrimaryCta,
+  type AnalysisCompleteness,
+} from './analysisWorkspace.contract';
+import { AnalysisKpiTable, type AnalysisKpiTablePeriodColumn } from './AnalysisKpiTable';
+import { AnalysisKpiDetailCard, type AnalysisKpiHistoryEntry, type AnalysisKpiPeriodSeriesPoint } from './AnalysisKpiDetailCard';
+import { AnalysisCreatorWizard } from './AnalysisCreatorWizard';
+import { computeYoyDelta, groupAnalysisKpiValuesByKpi, type AnalysisKpiCatalogFormulaInfo } from './analysisKpiTable.contract';
+import type { AnalysisCreatorDraftPayload, AnalysisCreatorPeriodOption, AnalysisCreatorSourceOption } from './analysisCreatorWizard.contract';
+import {
+  createFinanceArtifact,
+  computeAnalysisKpis,
+  getAnalysisKpiCatalog,
+  getAnalysisKpiValues,
+  getFinanceArtifact,
+  getFinanceBusinessVersion,
+  renameFinanceArtifact,
+  transitionFinanceVersion,
+  approveFinanceModel,
+  reopenFinanceModel,
+  type RoutableTransitionAction,
+} from '../../../services/api/financeV2.api';
+import {
+  describeFinanceV2Error,
+  type AnalysisKpiCatalogEntryDto,
+  type AnalysisKpiValueDto,
+  type BusinessVersionStatus,
+  type FinanceArtifactFreshness,
+  type FinanceRole,
+} from '../../../services/api/financeV2.types';
+
+export interface AnalysisWorkspaceProps {
+  artifactId: string;
+  businessVersionId: string;
+  role: FinanceRole;
+  onNavigateBack: () => void;
+  /** Kreator kroki 1/2 — brak endpointu listującego (patrz nagłówek), caller dostarcza kandydatów. Domyślnie puste — kreator pokaże uczciwy pusty stan, nie zmyśloną listę. */
+  creatorSourceOptions?: AnalysisCreatorSourceOption[];
+  creatorPeriodOptions?: AnalysisCreatorPeriodOption[];
+  creatorAvailableLineCodes?: string[];
+}
+
+interface LoadState {
+  loading: boolean;
+  error: string | null;
+}
+
+export function AnalysisWorkspace(props: AnalysisWorkspaceProps): React.ReactElement {
+  const {
+    artifactId,
+    businessVersionId,
+    role,
+    onNavigateBack,
+    creatorSourceOptions = [],
+    creatorPeriodOptions = [],
+    creatorAvailableLineCodes = [],
+  } = props;
+
+  const [load, setLoad] = useState<LoadState>({ loading: true, error: null });
+  const [name, setName] = useState('Analiza');
+  const [status, setStatus] = useState<BusinessVersionStatus>('DRAFT');
+  const [freshness, setFreshness] = useState<FinanceArtifactFreshness>('NEVER_COMPUTED');
+  const [versionNo, setVersionNo] = useState(1);
+  const [version, setVersion] = useState(1);
+  const [kpiValues, setKpiValues] = useState<AnalysisKpiValueDto[]>([]);
+  const [catalog, setCatalog] = useState<AnalysisKpiCatalogEntryDto[]>([]);
+
+  const [selectedKpiCode, setSelectedKpiCode] = useState<string | null>(null);
+  const [wizardOpen, setWizardOpen] = useState(false);
+  const [wizardSubmitting, setWizardSubmitting] = useState(false);
+  const [wizardSubmitError, setWizardSubmitError] = useState<string | null>(null);
+  const [computing, setComputing] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [includedInReportByKpiCode, setIncludedInReportByKpiCode] = useState<Record<string, boolean>>({});
+  const [markedAsModelInputByKpiCode, setMarkedAsModelInputByKpiCode] = useState<Record<string, boolean>>({});
+
+  const reload = useCallback(async () => {
+    setLoad({ loading: true, error: null });
+    try {
+      const [artifact, bv, values, cat] = await Promise.all([
+        getFinanceArtifact(artifactId),
+        getFinanceBusinessVersion(businessVersionId),
+        getAnalysisKpiValues(businessVersionId),
+        getAnalysisKpiCatalog(),
+      ]);
+      setName(artifact.naturalKey ?? 'Analiza bez nazwy');
+      setStatus(bv.status);
+      setFreshness(bv.freshness);
+      setVersionNo(bv.versionNo);
+      setVersion(bv.version);
+      setKpiValues(values);
+      setCatalog(cat);
+      setLoad({ loading: false, error: null });
+    } catch (err) {
+      setLoad({ loading: false, error: describeFinanceV2Error(err).detail });
+    }
+  }, [artifactId, businessVersionId]);
+
+  useEffect(() => {
+    void reload();
+  }, [reload]);
+
+  // Okresy — wyprowadzone z periodId obecnych w kpiValues (brak dziś endpointu
+  // etykiet okresów, patrz nagłówek pliku). Posortowane leksykograficznie —
+  // deterministycznie, niezależnie od kolejności odpowiedzi API.
+  const periodColumns: AnalysisKpiTablePeriodColumn[] = useMemo(() => {
+    const ids = [...new Set(kpiValues.map((v) => v.periodId))].sort((a, b) => a.localeCompare(b));
+    return ids.map((id) => ({ id, label: id }));
+  }, [kpiValues]);
+
+  const groups = useMemo(() => groupAnalysisKpiValuesByKpi(kpiValues, periodColumns.map((p) => p.id)), [kpiValues, periodColumns]);
+
+  const completeness: AnalysisCompleteness = useMemo(() => {
+    const selectedKpiCount = groups.length;
+    const computedValueCount = groups.filter((g) => g.latestValue.value.status === 'PRESENT_ZERO' || g.latestValue.value.status === 'PRESENT_NONZERO').length;
+    return { selectedKpiCount, computedValueCount };
+  }, [groups]);
+
+  const freshnessIsStale = freshness === 'STALE_SOURCE' || freshness === 'STALE_ASSUMPTIONS';
+  const cta = resolveAnalysisPrimaryCta(status, completeness, freshnessIsStale);
+
+  const workspaceConfig = useMemo(
+    () =>
+      buildAnalysisWorkspaceBarConfig(
+        {
+          artifactId,
+          businessVersionId,
+          versionNo,
+          name,
+          status,
+          freshness,
+          hasUncommittedWorkingRevision: status === 'DRAFT',
+          role,
+        },
+        completeness
+      ),
+    [artifactId, businessVersionId, versionNo, name, status, freshness, role, completeness]
+  );
+
+  const evaluationContext: WorkspaceBarEvaluationContext = {
+    status,
+    role,
+    freshness,
+    gates: { [ANALYSIS_HAS_KPIS_GATE]: completeness.selectedKpiCount > 0 },
+  };
+
+  const formulaInfoByKpiCode: Record<string, AnalysisKpiCatalogFormulaInfo | undefined> = useMemo(() => {
+    const map: Record<string, AnalysisKpiCatalogFormulaInfo | undefined> = {};
+    for (const c of catalog) {
+      map[c.kpiCode] = {
+        formulaDisplay: c.description ?? c.kpiCode,
+        interpretationGeneral: c.description ?? '—',
+        downstreamUses: [],
+      };
+    }
+    return map;
+  }, [catalog]);
+
+  async function handleCompute(): Promise<void> {
+    setComputing(true);
+    setActionError(null);
+    try {
+      await computeAnalysisKpis({ businessVersionId });
+      await reload();
+    } catch (err) {
+      setActionError(describeFinanceV2Error(err).detail);
+    } finally {
+      setComputing(false);
+    }
+  }
+
+  async function handlePrimaryAction(): Promise<void> {
+    setActionError(null);
+    switch (cta.id) {
+      case 'configure_kpis':
+        setWizardOpen(true);
+        return;
+      case 'compute_first_time':
+      case 'recompute':
+        await handleCompute();
+        return;
+      case 'submit_for_review': {
+        const gate = canSubmitAnalysisForReview(completeness);
+        if (!gate.ok) {
+          setActionError(gate.messagePl);
+          return;
+        }
+        try {
+          const result = await transitionFinanceVersion({ businessVersionId, action: 'submit_for_review', expectedVersion: version });
+          setStatus(result.status);
+          setVersion(result.version);
+        } catch (err) {
+          setActionError(describeFinanceV2Error(err).detail);
+        }
+        return;
+      }
+      case 'view_review':
+        // Brak osobnego ekranu przeglądu w zakresie tego pakietu — status jest
+        // już widoczny w odznace lifecycle paska; brak akcji nie jest błędem.
+        return;
+      case 'reopen_or_new_version': {
+        const reason = window.prompt('Powód ponownego otwarcia analizy:', '') ?? '';
+        if (!reason.trim()) return;
+        try {
+          const result = await reopenFinanceModel({ modelArtifactId: artifactId, reason, idempotencyKey: `analysis-reopen-${businessVersionId}-${Date.now()}` });
+          // Wymóg #8 (Approved niemutowalne): TA wersja (businessVersionId w
+          // propsach) zostaje bez zmian — reopen utworzył NOWĄ wersję
+          // (`result.businessVersionId`), do której ten komponent nie ma
+          // callbacku nawigacji (poza zakresem propsów tego pakietu). Komunikat
+          // zamiast cichego no-op lub błędnego przełączenia widoku na starą wersję.
+          setActionError(`Utworzono nową wersję roboczą (v${result.versionNo}, id ${result.businessVersionId}). Otwórz ją z listy wersji artefaktu.`);
+        } catch (err) {
+          setActionError(describeFinanceV2Error(err).detail);
+        }
+        return;
+      }
+      default: {
+        const _exhaustive: never = cta.id;
+        return _exhaustive;
+      }
+    }
+  }
+
+  async function handleLifecycleTransition(transition: WorkspaceBarLifecycleTransition): Promise<void> {
+    setActionError(null);
+    let reason: string | undefined;
+    if (transition.requiresReason) {
+      // Świadome obejście luki Pakietu C — patrz nagłówek pliku.
+      const entered = window.prompt(`Podaj powód: ${transition.label.pl}`, '');
+      if (entered === null) return; // anulowane
+      reason = entered;
+    }
+    try {
+      if (transition.action === 'approve') {
+        const result = await approveFinanceModel({ modelArtifactId: artifactId, expectedVersion: version });
+        if (result.success) await reload();
+        return;
+      }
+      if (transition.action === 'reopen' || transition.action === 'new_version') {
+        const result = await reopenFinanceModel({
+          modelArtifactId: artifactId,
+          reason: reason ?? (transition.action === 'new_version' ? 'Nowa wersja' : ''),
+          idempotencyKey: `analysis-${transition.action}-${businessVersionId}-${Date.now()}`,
+        });
+        // Patrz komentarz w `handlePrimaryAction`'s reopen_or_new_version — TA
+        // wersja zostaje bez zmian (Approved niemutowalne), nowa wersja wymaga
+        // nawigacji spoza tego komponentu.
+        setActionError(`Utworzono nową wersję roboczą (v${result.versionNo}, id ${result.businessVersionId}). Otwórz ją z listy wersji artefaktu.`);
+        return;
+      }
+      if (transition.action === 'save_draft') {
+        // Brak dziś endpointu zapisu treści draftu Analysis poza KPI (patrz
+        // nagłówek pliku) — status pozostaje DRAFT, nic do wysłania.
+        return;
+      }
+      const result = await transitionFinanceVersion({
+        businessVersionId,
+        action: transition.action as RoutableTransitionAction,
+        expectedVersion: version,
+        reason,
+      });
+      setStatus(result.status);
+      setVersion(result.version);
+    } catch (err) {
+      setActionError(describeFinanceV2Error(err).detail);
+    }
+  }
+
+  function handleMoreItem(item: WorkspaceBarMoreMenuItem): void {
+    if (item.id === 'more.archive') {
+      void transitionFinanceVersion({ businessVersionId, action: 'archive', expectedVersion: version })
+        .then((result) => {
+          setStatus(result.status);
+          setVersion(result.version);
+        })
+        .catch((err) => setActionError(describeFinanceV2Error(err).detail));
+      return;
+    }
+    // duplicate/export/history — poza zakresem tego pakietu (brak backendu/ekranu docelowego).
+  }
+
+  async function handleCommitRename(nextName: string): Promise<{ ok: true } | { ok: false; message: string }> {
+    try {
+      await renameFinanceArtifact(artifactId, nextName);
+      setName(nextName);
+      return { ok: true };
+    } catch (err) {
+      return { ok: false, message: describeFinanceV2Error(err).detail };
+    }
+  }
+
+  async function handleWizardComplete(payload: AnalysisCreatorDraftPayload): Promise<void> {
+    void payload; // patrz nagłówek: żaden dzisiejszy endpoint nie przyjmuje source/periods/KPI selection.
+    setWizardSubmitting(true);
+    setWizardSubmitError(null);
+    try {
+      await createFinanceArtifact({ artifactType: 'HISTORICAL_ANALYSIS' });
+      await computeAnalysisKpis({ businessVersionId });
+      setWizardOpen(false);
+      await reload();
+    } catch (err) {
+      setWizardSubmitError(describeFinanceV2Error(err).detail);
+    } finally {
+      setWizardSubmitting(false);
+    }
+  }
+
+  const selectedGroup = selectedKpiCode ? groups.find((g) => g.kpiCode === selectedKpiCode) ?? null : null;
+
+  return (
+    <div className="flex h-full min-h-0 flex-col bg-c-bg" data-testid="analysis-workspace">
+      <FinanceWorkspaceBar
+        config={workspaceConfig}
+        evaluationContext={evaluationContext}
+        contextValues={{ type: 'Analiza historyczna', lastCompute: load.loading ? undefined : new Date().toISOString() }}
+        onNavigateBack={onNavigateBack}
+        onSelectView={() => {}}
+        onPrimaryAction={() => void handlePrimaryAction()}
+        onLifecycleTransition={(t) => void handleLifecycleTransition(t)}
+        onMoreItem={handleMoreItem}
+        onEnterFocusMode={() => {}}
+        onCommitRename={handleCommitRename}
+      />
+
+      {actionError ? (
+        <div className="border-b border-c-danger/30 bg-c-danger/10 px-4 py-2 text-sm text-c-text" data-testid="analysis-workspace-action-error">
+          {actionError}
+        </div>
+      ) : null}
+
+      <div className="flex min-h-0 flex-1">
+        <div className="min-w-0 flex-1 overflow-auto">
+          <AnalysisKpiTable
+            businessVersionId={businessVersionId}
+            kpiValues={kpiValues}
+            formulaInfoByKpiCode={formulaInfoByKpiCode}
+            periodColumns={periodColumns}
+            includedInReportByKpiCode={includedInReportByKpiCode}
+            markedAsModelInputByKpiCode={markedAsModelInputByKpiCode}
+            selectedKpiCode={selectedKpiCode}
+            onOpenDetail={setSelectedKpiCode}
+            onToggleIncludedInReport={(kpiCode, next) => setIncludedInReportByKpiCode((m) => ({ ...m, [kpiCode]: next }))}
+            onMarkAsModelInput={(kpiCode) => setMarkedAsModelInputByKpiCode((m) => ({ ...m, [kpiCode]: true }))}
+            isApproved={status === 'APPROVED'}
+            loading={load.loading}
+            error={load.error}
+            onRetry={() => void reload()}
+            onConfigureKpis={() => setWizardOpen(true)}
+          />
+        </div>
+
+        {selectedGroup ? (
+          <AnalysisKpiDetailCard
+            kpiValue={selectedGroup.latestValue}
+            formulaInfo={formulaInfoByKpiCode[selectedGroup.kpiCode] ?? null}
+            yoyDelta={computeYoyDelta(selectedGroup.latestValue.value, selectedGroup.priorPeriodValue)}
+            periodSeries={buildPeriodSeries(selectedGroup.periodValuesByColumnId, periodColumns)}
+            history={buildHistoryPlaceholder(selectedGroup.latestValue)}
+            sourceLineageLabel="Pakiet sprawozdań źródłowych (lineage) — szczegóły dostępne po dodaniu endpointu listującego."
+            onClose={() => setSelectedKpiCode(null)}
+          />
+        ) : null}
+      </div>
+
+      {wizardOpen ? (
+        <AnalysisCreatorWizard
+          sourceOptions={creatorSourceOptions}
+          periodOptions={creatorPeriodOptions}
+          catalog={catalog}
+          availableLineCodesForPreflight={creatorAvailableLineCodes}
+          onClose={() => setWizardOpen(false)}
+          onComplete={(payload) => void handleWizardComplete(payload)}
+          submitting={wizardSubmitting}
+          submitErrorMessage={wizardSubmitError}
+        />
+      ) : null}
+    </div>
+  );
+}
+
+function buildPeriodSeries(
+  periodValuesByColumnId: Record<string, AnalysisKpiValueDto['value'] | undefined>,
+  periodColumns: AnalysisKpiTablePeriodColumn[]
+): AnalysisKpiPeriodSeriesPoint[] {
+  return periodColumns.map((col) => ({
+    periodLabel: col.label,
+    value: periodValuesByColumnId[col.id] ?? { status: 'MISSING', valueDecimal: null, nativeCurrency: '', presentationCurrency: '', unit: '', multiplier: '1' },
+    isForecast: false, // brak dziś sygnału historyczny/prognoza z GET /analysis/:id/kpi-values (patrz nagłówek pliku).
+  }));
+}
+
+function buildHistoryPlaceholder(kpiValue: AnalysisKpiValueDto): AnalysisKpiHistoryEntry[] {
+  // Brak dziś endpointu historii wersji per wartość KPI — pusta lista jest
+  // honest (karta pokazuje "Brak wcześniejszych wersji"), nie zmyślona.
+  void kpiValue;
+  return [];
+}
+
+export default AnalysisWorkspace;

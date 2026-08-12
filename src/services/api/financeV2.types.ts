@@ -371,6 +371,92 @@ export interface FinanceReopenModelResultDto {
   idempotentReplay: boolean;
 }
 
+// --- PKG-E Analysis ---
+// Pakiet E — Analysis (KPI), `/analysis/*`. Port pole-po-polu z
+// `server/src/routes/v8/finance-v2/analysis.routes.ts` (przeczytany w całości
+// 2026-08-11, Pakiet B2/DEC-FIN-012, trójwarstwowy katalog KPI).
+// ---------------------------------------------------------------------------
+
+/** analysis.routes.ts:42-47 — `tier` query param dla `GET /analysis/kpi-catalog`. */
+export const AnalysisKpiTierValues = ['UNIVERSAL', 'INDUSTRY', 'ORG_CUSTOM'] as const;
+export type AnalysisKpiTier = (typeof AnalysisKpiTierValues)[number];
+
+/**
+ * analysis.routes.ts:69 `negativeDenominatorPolicy` — jedyne miejsce, gdzie
+ * backend deklaruje politykę ujemnego mianownika PER KPI (DEC-FIN-003).
+ * Wartości portowane z `kpiComputeService.ts:206` (komentarz przy funkcji
+ * negującej wartość — `FORCE_NA` jest jedyną wartością realnie zaobserwowaną
+ * w tamtym komentarzu; pozostałe dwie są udokumentowanym rozszerzeniem
+ * kontraktu backendowego, ten klient jest wobec nich neutralny — traktuje
+ * każdą nieznaną wartość jak `FORCE_NA`, nigdy jak "policz mimo to").
+ */
+export const AnalysisNegativeDenominatorPolicyValues = ['FORCE_NA', 'ALLOW_NEGATIVE_RATIO', 'FLAG_ONLY'] as const;
+export type AnalysisNegativeDenominatorPolicy = (typeof AnalysisNegativeDenominatorPolicyValues)[number];
+
+/** analysis.routes.ts:55-71 (GET /analysis/kpi-catalog), jeden wpis katalogu. */
+export interface AnalysisKpiCatalogEntryDto {
+  kpiCatalogId: string;
+  kpiCode: string;
+  catalogVersion: number;
+  status: string;
+  tier: AnalysisKpiTier;
+  industryCode: string | null;
+  category: string | null;
+  kpiName: string;
+  description: string | null;
+  unitType: string;
+  compileStatus: string;
+  resolvedOutputUnit: string | null;
+  periodConvention: string | null;
+  negativeDenominatorPolicy: AnalysisNegativeDenominatorPolicy | string;
+  requiredCanonicalLineCodes: string[] | null;
+}
+
+/** analysis.routes.ts:112-121 (POST /analysis/:businessVersionId/compute), sukces. */
+export interface AnalysisComputeResultDto {
+  jobId: string;
+  jobStatus: ComputeJobStatus;
+  resultsCount: number;
+  results: unknown[];
+  readiness: unknown | null;
+}
+
+/** analysis.routes.ts:107-110 — kody błędu specyficzne dla domeny Analysis. */
+export const ANALYSIS_COMPUTE_NOT_FOUND_CODES = ['NO_SOURCE_STATEMENT_PACK_EDGE', 'BUSINESS_VERSION_NOT_FOUND'] as const;
+
+/** analysis.routes.ts:143-170 (GET /analysis/:businessVersionId/kpi-values), jeden wiersz. */
+export interface AnalysisKpiValueDto {
+  kpiValueId: string;
+  kpiCatalogId: string;
+  kpiCode: string;
+  kpiName: string;
+  category: string | null;
+  tier: AnalysisKpiTier;
+  unitType: string;
+  entityId: string;
+  periodId: string;
+  value: {
+    status: FinanceValueStatus;
+    valueDecimal: string | null;
+    nativeCurrency: string;
+    presentationCurrency: string;
+    unit: string;
+    multiplier: string;
+  };
+  qualityFlag: string | null;
+  deltaVsPriorPeriod: string | null;
+  deltaPctVsPriorPeriod: string | null;
+  interpretationText: string | null;
+  /** Realny gap backendu (brak writera `finance_analysis_benchmarks`) — zawsze `null` dziś, analysis.routes.ts:165-167. */
+  benchmark: { rangeLow: string; rangeHigh: string; source: string; asOf: string; industryCode: string } | null;
+  createdAt: string;
+  updatedAt: string;
+}
+// --- /PKG-E Analysis (types) — dwie dodatkowe `case` gałęzie PKG-E żyją niżej,
+// WEWNĄTRZ współdzielonej `describeFinanceV2Error` (NO_SOURCE_STATEMENT_PACK_EDGE/
+// BUSINESS_VERSION_NOT_FOUND) — czysto addytywne nowe etykiety `case`, żadna
+// cudza gałąź nie zmieniona. ---
+
 // ---------------------------------------------------------------------------
 // Błąd — kształt `{error, code, ...extra}` (_shared.ts:56-58, models.routes.ts).
 //
@@ -585,6 +671,20 @@ export function describeFinanceV2Error(err: unknown): { title: string; detail: s
   switch (code) {
     case 'NOT_FOUND':
       return { title: 'Nie znaleziono', detail: 'Ten artefakt lub wersja już nie istnieje albo nie masz do niej dostępu.', code };
+    case 'NO_SOURCE_STATEMENT_PACK_EDGE':
+      // Pakiet E — realny, potwierdzony gap: `POST /analysis/:id/compute` (analysis.routes.ts:108)
+      // wymaga istniejącej krawędzi lineage do źródłowego Statement Pack, ale
+      // żaden router `finance-v2` nie eksponuje jej zapisu (grep potwierdzony
+      // 2026-08-11 — patrz PKG_E_ANALYSIS_report.md §"Blocked"). Ten komunikat
+      // jest Honest UI, nie ukrywa przyczyny za ogólnym „coś poszło nie tak".
+      return {
+        title: 'Brak połączenia ze źródłowym pakietem sprawozdań',
+        detail:
+          'Ta analiza nie ma jeszcze ustalonego źródła danych (Statement Pack Version). Wróć do kreatora i wybierz źródło ponownie.',
+        code,
+      };
+    case 'BUSINESS_VERSION_NOT_FOUND':
+      return { title: 'Wersja analizy nie istnieje', detail: 'Ta wersja analizy została usunięta lub nie masz do niej dostępu.', code };
     case 'VERSION_CONFLICT':
       return {
         title: 'Ktoś inny zmienił ten rekord',
