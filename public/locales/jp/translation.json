@@ -550,6 +550,65 @@
         "hardGate": "ハードゲート",
         "score": "スコア"
       }
+    },
+    "whiteboard": {
+      "selection": {
+        "tidyBoard": "ボードを整理",
+        "tidySelection": "選択範囲を自動整列"
+      },
+      "empty": {
+        "affinityMap": "親和図",
+        "brainstorm": "ブレインストーミング",
+        "workshopWall": "ワークショップウォール"
+      },
+      "ai": {
+        "needsRealLabels": "テーマを見つける前に、付箋やテキストノートの少なくとも1つに実際の名前を付けてください。対象範囲内のすべてがまだ「新しいメモ」や「テキスト」のようなデフォルト名のままなので、AIが意味のあるグループ化を行えません。"
+      },
+      "toast": {
+        "pasted": "貼り付けました",
+        "tidiedBoard": "ボードを整理しました",
+        "tidiedSelection": "選択範囲を整列しました",
+        "frameEmpty": "フレームに内容がありません",
+        "frameNoSelection": "まずロック解除された要素を選択してください（このフレームの外側）",
+        "frameAdded": "フレームに追加しました",
+        "frameReleaseOne": "フレームから削除しました",
+        "frameAlreadyFits": "フレームはすでに内容に合わせて調整されています",
+        "frameResized": "内容に合わせてフレームのサイズを変更しました",
+        "frameDeletedReleased": "フレームを削除し、内容を解放しました",
+        "frameDeletedWithContents": "フレームと内容を削除しました"
+      },
+      "toolbarExtra": {
+        "insert": "挿入",
+        "tidyBoard": "ボードを整理"
+      },
+      "styleBar": {
+        "ariaLabel": "要素のスタイル",
+        "color": "色を設定",
+        "clearColor": "色をリセット",
+        "fontSize": "フォントサイズ {{step}}",
+        "bold": "太字"
+      },
+      "reactions": {
+        "removeReaction": "リアクションを取り消す",
+        "addReaction": "リアクションを追加",
+        "reactWith": "{{emoji}} でリアクション",
+        "openTray": "リアクションを追加"
+      },
+      "linkedArtifactsCount_one": "リンクされたアーティファクト {{count}} 件",
+      "linkedArtifactsCount_other": "リンクされたアーティファクト {{count}} 件",
+      "convertedBadge": "変換済み"
+    },
+    "knowledge": {
+      "cardNodes": {
+        "evidenceDefault": "根拠",
+        "idPrefix": "ID: {{id}}",
+        "knowledgeDefault": "ナレッジ",
+        "noteBadge": "メモ",
+        "typeArtifact": "アーティファクト",
+        "typeDocument": "ドキュメント",
+        "typeNote": "メモ",
+        "typeUrl": "URL"
+      }
     }
   },
   "step1": {
@@ -2958,5 +3017,509 @@
       "reportTypeSteeringCommittee": "Steering committee",
       "reportTypeCisoSecurity": "CISO / Security"
     }
+  },
+  "formBuilder": {
+    "title": "フォームビルダー",
+    "tabFields": "フィールド",
+    "tabSettings": "設定",
+    "tabPreview": "プレビュー",
+    "fieldListHint": "ドラッグして並び替え。表示・非表示を切り替え、各フィールドを設定します。",
+    "moveUp": "上に移動",
+    "moveDown": "下に移動",
+    "toggleRequired": "必須の切り替え",
+    "required": "必須",
+    "optional": "任意",
+    "showField": "フィールドを表示",
+    "hideField": "フィールドを非表示",
+    "customLabel": "カスタムラベル",
+    "helpText": "ヘルプテキスト",
+    "helpTextPlaceholder": "このフィールドの説明...",
+    "defaultValue": "デフォルト値",
+    "conditionalVisibility": "条件付き表示",
+    "selectField": "フィールドを選択...",
+    "opEquals": "次と等しい",
+    "opNotEquals": "次と等しくない",
+    "opIsEmpty": "空である",
+    "opIsNotEmpty": "空でない",
+    "condValue": "値...",
+    "formName": "フォーム名",
+    "formDescription": "説明",
+    "slug": "URLスラッグ",
+    "submitMessage": "成功メッセージ",
+    "redirectUrl": "リダイレクトURL（任意）",
+    "notificationEmail": "通知先メール（任意）",
+    "notificationEmailHint": "新しい回答が送信されるとメールを受信します",
+    "allowMultiple": "複数回の送信を許可",
+    "requireAuth": "認証を必須にする",
+    "submit": "送信",
+    "save": "保存",
+    "shareLink": "共有リンク",
+    "copied": "コピーしました！",
+    "submissions": "件の回答"
+  },
+  "formsIndex": {
+    "title": "フォーム",
+    "createForm": "フォームを作成",
+    "newFormName": "新しいフォーム",
+    "createError": "フォームの作成に失敗しました",
+    "deleted": "フォームを削除しました",
+    "deleteError": "フォームの削除に失敗しました",
+    "shareUpdated": "共有設定を更新しました",
+    "shareError": "共有設定の更新に失敗しました",
+    "loadError": "フォームの読み込みに失敗しました",
+    "emptyTitle": "フォームを作成してデータを収集",
+    "emptyDescription": "フォームを使えば誰からでも構造化されたデータを収集できます。公開フォームにはログインは不要です。",
+    "created": "作成日",
+    "responses": "件の回答",
+    "copied": "コピーしました！",
+    "copyLink": "リンクをコピー",
+    "sharing": "共有",
+    "sharePublic": "公開",
+    "shareOrg": "組織内のみ",
+    "shareAuth": "認証済みユーザー",
+    "preview": "プレビュー",
+    "manageIntake": "受付管理（非公開リンク）",
+    "edit": "編集",
+    "confirmDelete": "確認"
+  },
+  "interfacesIndex": {
+    "title": "インターフェース",
+    "createInterface": "インターフェースを作成",
+    "chooseTemplate": "テンプレートを選択",
+    "createError": "インターフェースの作成に失敗しました",
+    "deleted": "インターフェースを削除しました",
+    "deleteError": "インターフェースの削除に失敗しました",
+    "saveError": "インターフェースの保存に失敗しました",
+    "emptyTitle": "データのカスタムビューを作成",
+    "emptyDescription": "インターフェースを使うと、ダッシュボード、詳細ビュー、カスタムレイアウトを作成できます。",
+    "lastModified": "最終更新",
+    "blocks": "個のブロック",
+    "copied": "コピーしました！",
+    "share": "共有",
+    "edit": "編集",
+    "confirmDelete": "確認",
+    "tplBlank": "白紙",
+    "tplBlankDesc": "空のキャンバス",
+    "tplDashboard": "ダッシュボード",
+    "tplDashboardDesc": "グラフブロックがあらかじめ設定済み",
+    "tplFormView": "フォームビュー",
+    "tplFormViewDesc": "データ入力に最適化",
+    "tplRecordDetail": "レコード詳細",
+    "tplRecordDetailDesc": "すべてのフィールドを含む単一レコードのビュー"
+  },
+  "mindmap": {
+    "aiExpandTargetNodeMissing": "そのノードはキャンバス上に存在しません。展開する別のノードを選択してください。"
+  },
+  "ideas": {
+    "table": {
+      "csvImportBlockedAtCap": "テーブルが{{max}}行の上限に達しています。これ以上インポートする前に行を削除してください。",
+      "csvImportTruncatedAtCap": "{{total}}行中{{imported}}行をインポートしました。テーブルの上限は{{max}}行です。{{skipped}}行はインポートされませんでした。",
+      "rowRenderCapBanner": "{{total}}行中最初の{{shown}}行を表示しています。テーブルの応答性を保つため、残り{{hidden}}行は描画されません。すべて確認するにはエクスポートまたはフィルタしてください。",
+      "publicForm": {
+        "linkExpires": "この非公開リンクは{{date}}に失効します。",
+        "noFieldsShared": "送信者はまだあなたとフィールドを共有していません。",
+        "noOptionsConfigured": "選択肢が設定されていません",
+        "poweredBy": "Consultify Table Platform 提供",
+        "poweredByPrivate": "Consultify Table Platform 提供 · 非公開リンク",
+        "responseRecorded": "回答を記録しました！",
+        "selectOption": "選択してください...",
+        "submitAnother": "別の回答を送信",
+        "uploadFile": "ファイルをアップロード"
+      },
+      "quickActions": {
+        "viewNotFound": "ビューが見つかりません: {{viewId}}",
+        "columnNotFound": "列が見つかりません: {{colKey}}",
+        "columnNameRequired": "名前を変更するには新しい列名を入力してください。",
+        "rowIdRequired": "テーブルの行IDを入力してください。",
+        "cellTargetMissing": "対象セルがありません"
+      },
+      "summaryDashboard": {
+        "max": "最大",
+        "min": "最小"
+      },
+      "viewRouter": {
+        "densityCompact": "コンパクト",
+        "densityNormal": "標準",
+        "densityComfortable": "ゆったり",
+        "rowDensity": "行の密度",
+        "filterColumn": "フィルター…",
+        "filterColumnAria": "フィルター条件",
+        "resizeColumn": "列幅を変更",
+        "sortColumn": "{{name}}で並び替え",
+        "selectRow": "行を選択"
+      },
+      "alreadyEmpty": "セルはすでに空です",
+      "areYouSureYouWantToDeleteThisColumn": "この列を削除してもよろしいですか？この操作は元に戻せません。",
+      "cellActions": "セル操作",
+      "columnActions": "列操作",
+      "edgeKind": "種類",
+      "groupBy": "グループ化",
+      "lockedReason": "テーブルはロックされています",
+      "noGrouping": "グループ化なし",
+      "readOnlyCell": "セルは読み取り専用です",
+      "rowActions": "行操作",
+      "savedViewActions": "保存済みビューの操作",
+      "typeCannotExpand": "タイプセルは展開できません",
+      "emptyFilterState": {
+        "headline": "このフィルターに該当する結果はありません",
+        "description": "有効なフィルターに一致するレコードがありません。すべてのレコードを表示するにはフィルターを解除してください。",
+        "clearFilters": "フィルターを解除"
+      },
+      "email": "メール",
+      "provenanceRecordId": "レコード: {{id}}…",
+      "provenanceRunId": "実行: {{id}}…",
+      "validationBadgeAdmin": "管理者",
+      "webhookUrl": "Webhook URL",
+      "intakeJwt": {
+        "failedToLoad": "受付コンテキストの読み込みに失敗しました",
+        "subjectRequired": "受信者の件名は必須です",
+        "subjectTooLong": "件名は{{max}}文字以内にしてください",
+        "linkIssued": "受付リンクを発行しました",
+        "failedToIssue": "リンクの発行に失敗しました: {{message}}",
+        "unknown": "不明",
+        "failedToCopy": "クリップボードへのコピーに失敗しました",
+        "allowListSaved": "許可リストを保存しました",
+        "failedToSaveAllowList": "許可リストの保存に失敗しました: {{message}}",
+        "panelAriaLabel": "フォーム受付設定",
+        "panelTitle": "フォーム受付（非公開リンク）",
+        "closePanel": "受付パネルを閉じる",
+        "loadingContext": "受付コンテキストを読み込み中…",
+        "summaryAriaLabel": "受付の概要",
+        "summary": "概要",
+        "targetTable": "対象テーブル",
+        "allowList": "許可リスト",
+        "allConfiguredFields": "設定済みのすべてのフィールド",
+        "hardExpiry": "厳格な失効日時",
+        "none": "なし",
+        "status": "状態",
+        "published": "公開済み",
+        "draftWontVerify": "下書き（リンクは検証されません）",
+        "allowListEditorAriaLabel": "許可リストエディター",
+        "fieldAllowList": "フィールド許可リスト",
+        "selectAll": "すべて選択",
+        "clearAllowList": "許可リストをクリア（フォームのフィールドを使用）",
+        "clear": "クリア",
+        "allowListHint": "許可リストが空の場合、フォームに設定されたフィールドが使用されます。一部のみ選択すると、受信者が送信できる項目が制限されます。",
+        "noConfiguredFields": "このフォームにはまだフィールドが設定されていません。",
+        "saveAllowList": "許可リストを保存",
+        "issueLinkAriaLabel": "受付リンクを発行",
+        "issuePrivateLink": "非公開リンクを発行",
+        "recipientSubject": "受信者の件名（メールまたはラベル）",
+        "recipientSubjectAriaLabel": "受信者の件名",
+        "expiresIn": "有効期限",
+        "issueLink": "リンクを発行",
+        "publishFirst": "先にフォームを公開してください。下書きのフォームでは非公開リンクは検証されません。",
+        "copied": "コピーしました",
+        "copyUrl": "URLをコピー",
+        "expires": "{{date}}に失効",
+        "copyToken": "トークンをコピー",
+        "ttl1Day": "1日",
+        "ttl7Days": "7日",
+        "ttl30Days": "30日",
+        "ttl90Days": "90日",
+        "fieldCount_one": "{{count}} 件のフィールド",
+        "fieldCount_other": "{{count}} 件のフィールド"
+      },
+      "recordDetails": "レコード詳細"
+    },
+    "mindmap": {
+      "resetView": "表示をリセット"
+    },
+    "financial": {
+      "dialogTitle": "財務ケース",
+      "costDrivers": "コストドライバー",
+      "benefitDrivers": "便益ドライバー",
+      "addCost": "コストドライバーを追加",
+      "addBenefit": "便益ドライバーを追加",
+      "collapsePeriods": "月次期間を折りたたむ",
+      "expandPeriods": "月次期間を編集",
+      "col": {
+        "label": "ドライバー",
+        "type": "種類",
+        "category": "カテゴリー",
+        "unit": "単位",
+        "total": "合計",
+        "confidence": "確信度",
+        "evidence": "根拠"
+      },
+      "monthlyValues": "月次値",
+      "months": "か月",
+      "labelPlaceholder": "無題のドライバー",
+      "categoryPlaceholder": "カテゴリー",
+      "confidenceHigh": "高",
+      "confidenceMedium": "中",
+      "confidenceLow": "低",
+      "removeDriver": "ドライバーを削除",
+      "noDriversYet": "ドライバーはまだありません。",
+      "currency": "通貨",
+      "horizon": "期間",
+      "discountRate": "割引率",
+      "scenarioMultipliers": "シナリオ倍率（基準比）",
+      "recompute": "再計算",
+      "lastComputed": "最終計算日時",
+      "evidenceHealth": "根拠の健全性",
+      "evidenceNeeded": "根拠が必要です",
+      "evidenceMissingFor": "根拠が必要: {{list}}",
+      "driverCounts": "ドライバー",
+      "minimumsNotMet": "承認ケースにはそれぞれ{{min}}件以上が必要です",
+      "engineNotWired": "このビルドでは計算エンジンが接続されていません。数値は捏造されていません。",
+      "convert": {
+        "reasonStale": "まずケースを再計算してください。古いケースは変換できません。",
+        "reasonNotBuilt": "管理された下流アーティファクトへの変換は、このリリースではまだ実装されていません（エピックE11）。"
+      },
+      "analytics": "分析",
+      "cost": "コスト",
+      "benefit": "便益",
+      "costShort": "コスト",
+      "benefitShort": "便益",
+      "chart": {
+        "cashFlow": {
+          "title": "累積キャッシュフロー",
+          "subtitle": "ケースがゼロを超えるのはいつですか（回収）？"
+        },
+        "composition": {
+          "title": "便益・コストの内訳",
+          "subtitle": "各期間を動かしている要因は何ですか（基準シナリオ）？"
+        },
+        "range": {
+          "title": "シナリオ範囲（NPV）",
+          "subtitle": "基準 vs 上振れ vs 下振れ",
+          "subtitleSpread": "シナリオ間の差: {{spread}}"
+        },
+        "sensitivity": {
+          "title": "感応度",
+          "subtitle": "どのドライバー前提がNPVに最も影響しますか（±20%）？",
+          "low": "-20%",
+          "high": "+20%"
+        },
+        "noResult": "このグラフを表示するには再計算してください。",
+        "noSensitivity": "エンジンから感応度の行がまだ返されていません。"
+      },
+      "evidenceCount_one": "{{count}} 件の情報源",
+      "evidenceCount_other": "{{count}} 件の情報源",
+      "staleLabel": "古い"
+    }
+  },
+  "myWorkIdeas": {
+    "processFlowTool": {
+      "nodeLimitWarning": "ステップ数の上限（{{warn}}ステップ）に近づいています。複数のフローへの分割を検討してください。",
+      "nodeLimitReached": "ステップ数の上限（最大{{limit}}）に達しました。ステップを削除するか、プロセスを複数のフローに分割してください。",
+      "cannotDeleteLastLane": "これはプロセスに残っている唯一のレーンであり、削除できません。ステップを移動したい場合は先に別のレーンを追加するか、削除する代わりにこのレーンの名前を変更してください。",
+      "aiRewriteStep": "AI：ステップを書き直す",
+      "nodeTooltip": {
+        "accept": "承認",
+        "automation": "自動化: {{level}}",
+        "cost": "コスト:",
+        "duration": "所要時間:",
+        "owner": "担当者:",
+        "status": "状態:",
+        "attachmentCount_one": "添付ファイル {{count}} 件",
+        "attachmentCount_other": "添付ファイル {{count}} 件"
+      }
+    },
+    "drawingLayer": {
+      "kbToggleLabel": "キーボードで描画",
+      "kbCanvasRole": "描画キャンバス",
+      "kbCanvasLabel": "描画キャンバス。矢印キーでカーソルを移動し、スペースまたはEnterでストロークを開始・終了し、Escapeで確定します。",
+      "kbInstructions": "キーボード描画モード：矢印キーで描画カーソルを移動し、スペースまたはEnterでペンの上げ下げを切り替え、Escapeで現在のストロークを確定してキャンバスに追加します。Shiftと矢印キーの組み合わせで大きく移動します。",
+      "kbModeEntered": "キーボード描画モードです。矢印キーでカーソルを移動し、スペースまたはEnterでペンを開始・停止し、Escapeでストロークを終了します。",
+      "kbPenDown": "ペンダウン。矢印キーで移動して描画します。",
+      "kbPenUp": "ペンアップ。移動して位置を調整するか、Escapeを押してストロークを終了します。",
+      "kbStrokeCompleted": "ストロークが完了し、キャンバスに追加されました。",
+      "kbStrokeDiscarded": "ストロークが描画されていません。追加するものはありません。",
+      "kbStatusPenDown": "ペンダウン",
+      "kbStatusPenUp": "ペンアップ"
+    }
+  },
+  "processFlow": {
+    "toolbar": {
+      "lanesCount": "レーン {{value}}",
+      "aiCoach": "AIコーチ"
+    },
+    "propertiesPanel": {
+      "systemLabel": "システム",
+      "unitMin": "分"
+    },
+    "contextMenu": {
+      "menuAriaLabel": "プロセスフローの操作"
+    },
+    "laneSystem": {
+      "moveUp": "レーンを上に移動",
+      "moveDown": "レーンを下に移動",
+      "changeColor": "レーンの色を変更",
+      "deleteLane": "レーンを削除"
+    }
+  },
+  "myWorkTable": {
+    "governedModels": {
+      "formulaAvg": "平均",
+      "formulaCount": "件数",
+      "formulaExpression": "式",
+      "formulaSum": "合計"
+    },
+    "connectorWizard": {
+      "apiKey": "APIキー",
+      "apiToken": "APIトークン",
+      "baseId": "ベースID",
+      "database": "データベース",
+      "email": "メール",
+      "host": "ホスト",
+      "jqlLabel": "JQL（{{optional}}）",
+      "port": "ポート",
+      "schema": "スキーマ",
+      "spreadsheetId": "スプレッドシートID"
+    },
+    "addColumnDialog": {
+      "nameRequired": "作成する前にフィールドに名前を付けてください。",
+      "duplicateName": "「{{name}}」という名前のフィールドは既に存在します。別の名前を選んでください。",
+      "enterToCreate": "Enterキーを押すと作成してさらに追加できます。",
+      "preview": "プレビュー",
+      "untitledField": "無題のフィールド",
+      "addedThisSession": "このセッションで追加",
+      "undo": "元に戻す",
+      "done": "完了",
+      "addAnother": "フィールドを作成してさらに追加",
+      "addedCount": "このセッションで{{count}}件のフィールドを追加しました。続けるか「完了」を押してください。"
+    },
+    "aiTableAssistant": {
+      "cancel": "キャンセル",
+      "cancelled": "コマンドをキャンセルしました。",
+      "send": "送信",
+      "closeAssistant": "アシスタントを閉じる",
+      "commandRequired": "送信する前にコマンドを入力してください。",
+      "columnNotFound": "このテーブルに列「{{column}}」が見つかりませんでした。",
+      "noRowsToAdd": "AIは追加する行を返しませんでした。",
+      "noChanges": "このコマンドはどの変更にも対応していません。",
+      "transportError": "AIサービスに接続できませんでした。接続を確認して再試行してください。",
+      "retry": "再試行",
+      "edit": "編集",
+      "historyLabel": "コマンド履歴",
+      "statusPending": "処理中…",
+      "statusApplied": "適用済み",
+      "statusProposal": "提案準備完了",
+      "statusUnsupported": "非対応",
+      "statusValidation": "このコマンドを実行できませんでした",
+      "statusTransport": "接続の問題",
+      "statusCancelled": "キャンセル済み"
+    },
+    "fieldProposal": {
+      "refreshTitle": "アーティファクトから更新",
+      "autofillTitle": "アーティファクトから自動入力",
+      "summary": "{{rows}} 行 · 変更対象 {{cells}} フィールド",
+      "selectAll": "すべて選択",
+      "deselectAll": "選択を解除",
+      "dismiss": "閉じる",
+      "empty": "（空）",
+      "reject": "却下",
+      "apply": "適用（{{count}}）",
+      "applied": "{{count}} 件のフィールドを適用しました",
+      "fieldCount_one": "{{count}} 件のフィールド",
+      "fieldCount_other": "{{count}} 件のフィールド"
+    },
+    "aiCell": {
+      "pending": "AI処理待ち…",
+      "promptTooltip": "AIプロンプト: {{template}}"
+    },
+    "cellEditor": {
+      "list": "リスト"
+    },
+    "chartConfigPanel": {
+      "aggAverage": "平均",
+      "aggCount": "件数",
+      "aggMax": "最大",
+      "aggMin": "最小",
+      "aggregation": "集計",
+      "aggSum": "合計",
+      "chartType": "グラフの種類",
+      "chartTypeBar": "棒グラフ",
+      "chartTypeDonut": "ドーナツ",
+      "chartTypeLine": "折れ線",
+      "chartTypePie": "円グラフ",
+      "noneCountOnly": "なし（件数のみ）",
+      "selectField": "フィールドを選択...",
+      "title": "タイトル",
+      "titlePlaceholder": "グラフのタイトル...",
+      "xAxisField": "X軸フィールド",
+      "yAxisField": "Y軸フィールド",
+      "yAxisFieldHint": "（数値、任意）"
+    },
+    "extensionHost": {
+      "closeExtension": "拡張機能を閉じる",
+      "extension": "拡張機能",
+      "loading": "読み込み中...",
+      "scopeCount_one": "スコープ {{count}} 件",
+      "scopeCount_other": "スコープ {{count}} 件"
+    },
+    "extensionMarketplace": {
+      "browseMarketplace": "マーケットプレイスを見る",
+      "byAuthor": "作者: {{author}}",
+      "categoryAll": "すべて",
+      "categoryAutomation": "自動化",
+      "categoryIntegration": "連携",
+      "categoryUtility": "ユーティリティ",
+      "categoryVisualization": "可視化",
+      "checkBackLater": "後でまた確認するか、独自のものを登録してください。",
+      "install": "インストール",
+      "installedCount": "インストール済み（{{count}}）",
+      "installing": "インストール中...",
+      "loadingExtensions": "拡張機能を読み込み中...",
+      "marketplace": "マーケットプレイス",
+      "noneAvailable": "利用可能な拡張機能はまだありません。",
+      "noneInstalled": "拡張機能はインストールされていません。",
+      "open": "開く",
+      "scopeMetadataRead": "スキーマの読み取り",
+      "scopeMetadataWrite": "スキーマの変更",
+      "scopeNetwork": "ネットワークアクセス",
+      "scopeRecordsRead": "レコードの読み取り",
+      "scopeRecordsWrite": "レコードの書き込み",
+      "scopeUi": "UIコントロール",
+      "uninstall": "アンインストール",
+      "installCount_one": "インストール数 {{count}}",
+      "installCount_other": "インストール数 {{count}}"
+    },
+    "offlineIndicator": {
+      "hoursAgo": "{{count}}時間前",
+      "justNow": "たった今",
+      "lastSync": "最終同期: {{time}}",
+      "minutesAgo": "{{count}}分前",
+      "offline": "オフライン",
+      "syncing": "同期中...",
+      "syncNow": "今すぐ同期",
+      "pendingChanges_one": "保留中の変更 {{count}} 件",
+      "pendingChanges_other": "保留中の変更 {{count}} 件"
+    },
+    "sourceReferenceCell": {
+      "blocked": "ブロック済み",
+      "externalBlocked": "このフィールドでは外部ソースは許可されていません",
+      "internalSource": "内部ソース {{id}}",
+      "invalidLength": "source_referenceの値が無効です（長さ {{length}}）",
+      "invalidShape": "source_referenceの値の形式が認識できません",
+      "noSource": "ソースなし",
+      "source": "ソース"
+    },
+    "syncManager": {
+      "csvUrl": "CSVのURL",
+      "googleSheetsUrl": "Google SheetsのURL"
+    },
+    "voiceImageInput": {
+      "previewAlt": "プレビュー"
+    }
+  },
+  "myWorkMindmap": {
+    "ctxMenu": {
+      "group": {
+        "data": "データ",
+        "appearance": "外観",
+        "expert": "上級者向けツール",
+        "more": "その他"
+      },
+      "scopeSelection": "選択範囲",
+      "scopeBranch": "ブランチ",
+      "scopeDocument": "ドキュメント"
+    }
+  },
+  "canvasEditBar": {
+    "edgeLabel": "ラベル",
+    "edgeCondition": "接続タイプ"
   }
 }

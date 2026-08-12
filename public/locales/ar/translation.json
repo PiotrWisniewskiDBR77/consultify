@@ -550,6 +550,69 @@
         "hardGate": "بوابة صارمة",
         "score": "النتيجة"
       }
+    },
+    "whiteboard": {
+      "selection": {
+        "tidyBoard": "ترتيب اللوحة",
+        "tidySelection": "ترتيب التحديد تلقائيًا"
+      },
+      "empty": {
+        "affinityMap": "خريطة التقارب",
+        "brainstorm": "عصف ذهني",
+        "workshopWall": "لوحة ورشة العمل"
+      },
+      "ai": {
+        "needsRealLabels": "أعطِ اسمًا حقيقيًا لملاحظة لاصقة أو نصية واحدة على الأقل قبل البحث عن السمات — كل ما في النطاق لا يزال يحمل اسمًا افتراضيًا مثل «ملاحظة جديدة» أو «نص»، لذا لا يوجد لدى الذكاء الاصطناعي ما يجمعه بشكل ذي معنى."
+      },
+      "toast": {
+        "pasted": "تم اللصق",
+        "tidiedBoard": "تم ترتيب اللوحة",
+        "tidiedSelection": "تم ترتيب التحديد",
+        "frameEmpty": "الإطار لا يحتوي على محتوى",
+        "frameNoSelection": "حدد عناصر غير مقفلة أولًا (خارج هذا الإطار)",
+        "frameAdded": "تمت الإضافة إلى الإطار",
+        "frameReleaseOne": "تمت الإزالة من الإطار",
+        "frameAlreadyFits": "الإطار متناسب بالفعل مع محتواه",
+        "frameResized": "تم تغيير حجم الإطار ليتناسب مع المحتوى",
+        "frameDeletedReleased": "تم حذف الإطار وتحرير محتواه",
+        "frameDeletedWithContents": "تم حذف الإطار ومحتواه"
+      },
+      "toolbarExtra": {
+        "insert": "إدراج",
+        "tidyBoard": "ترتيب اللوحة"
+      },
+      "styleBar": {
+        "ariaLabel": "نمط العنصر",
+        "color": "تعيين اللون",
+        "clearColor": "إعادة تعيين اللون",
+        "fontSize": "حجم الخط {{step}}",
+        "bold": "غامق"
+      },
+      "reactions": {
+        "removeReaction": "إزالة تفاعلك",
+        "addReaction": "إضافة تفاعلك",
+        "reactWith": "تفاعل بـ {{emoji}}",
+        "openTray": "إضافة تفاعل"
+      },
+      "linkedArtifactsCount_zero": "{{count}} عنصر مرتبط",
+      "linkedArtifactsCount_one": "{{count}} عنصر مرتبط",
+      "linkedArtifactsCount_two": "{{count}} عنصران مرتبطان",
+      "linkedArtifactsCount_few": "{{count}} عناصر مرتبطة",
+      "linkedArtifactsCount_many": "{{count}} عنصرًا مرتبطًا",
+      "linkedArtifactsCount_other": "{{count}} عنصر مرتبط",
+      "convertedBadge": "تم التحويل"
+    },
+    "knowledge": {
+      "cardNodes": {
+        "evidenceDefault": "دليل",
+        "idPrefix": "المعرّف: {{id}}",
+        "knowledgeDefault": "معرفة",
+        "noteBadge": "ملاحظة",
+        "typeArtifact": "عنصر",
+        "typeDocument": "مستند",
+        "typeNote": "ملاحظة",
+        "typeUrl": "الرابط"
+      }
     }
   },
   "step1": {
@@ -2968,5 +3031,537 @@
       "reportTypeSteeringCommittee": "Steering committee",
       "reportTypeCisoSecurity": "CISO / Security"
     }
+  },
+  "formBuilder": {
+    "title": "منشئ النماذج",
+    "tabFields": "الحقول",
+    "tabSettings": "الإعدادات",
+    "tabPreview": "معاينة",
+    "fieldListHint": "اسحب لإعادة الترتيب. بدّل ظهور كل حقل وقم بتهيئته.",
+    "moveUp": "نقل للأعلى",
+    "moveDown": "نقل للأسفل",
+    "toggleRequired": "تبديل الإلزامية",
+    "required": "إلزامي",
+    "optional": "اختياري",
+    "showField": "إظهار الحقل",
+    "hideField": "إخفاء الحقل",
+    "customLabel": "تسمية مخصصة",
+    "helpText": "نص المساعدة",
+    "helpTextPlaceholder": "تعليمات لهذا الحقل...",
+    "defaultValue": "القيمة الافتراضية",
+    "conditionalVisibility": "ظهور شرطي",
+    "selectField": "اختر حقلًا...",
+    "opEquals": "يساوي",
+    "opNotEquals": "لا يساوي",
+    "opIsEmpty": "فارغ",
+    "opIsNotEmpty": "غير فارغ",
+    "condValue": "القيمة...",
+    "formName": "اسم النموذج",
+    "formDescription": "الوصف",
+    "slug": "معرّف الرابط",
+    "submitMessage": "رسالة النجاح",
+    "redirectUrl": "رابط إعادة التوجيه (اختياري)",
+    "notificationEmail": "بريد الإشعارات (اختياري)",
+    "notificationEmailHint": "احصل على بريد إلكتروني عند إرسال رد جديد",
+    "allowMultiple": "السماح بإرسالات متعددة",
+    "requireAuth": "طلب المصادقة",
+    "submit": "إرسال",
+    "save": "حفظ",
+    "shareLink": "رابط المشاركة",
+    "copied": "تم النسخ!",
+    "submissions": "الإرسالات"
+  },
+  "formsIndex": {
+    "title": "النماذج",
+    "createForm": "إنشاء نموذج",
+    "newFormName": "نموذج جديد",
+    "createError": "فشل إنشاء النموذج",
+    "deleted": "تم حذف النموذج",
+    "deleteError": "فشل حذف النموذج",
+    "shareUpdated": "تم تحديث المشاركة",
+    "shareError": "فشل تحديث المشاركة",
+    "loadError": "فشل تحميل النماذج",
+    "emptyTitle": "أنشئ نموذجًا لجمع البيانات",
+    "emptyDescription": "تتيح لك النماذج جمع بيانات منظمة من أي شخص — لا حاجة لتسجيل الدخول للنماذج العامة.",
+    "created": "تاريخ الإنشاء",
+    "responses": "الردود",
+    "copied": "تم النسخ!",
+    "copyLink": "نسخ الرابط",
+    "sharing": "المشاركة",
+    "sharePublic": "عام",
+    "shareOrg": "المؤسسة فقط",
+    "shareAuth": "المستخدمون المصادَق عليهم",
+    "preview": "معاينة",
+    "manageIntake": "إدارة الاستقبال (رابط خاص)",
+    "edit": "تعديل",
+    "confirmDelete": "تأكيد"
+  },
+  "interfacesIndex": {
+    "title": "الواجهات",
+    "createInterface": "إنشاء واجهة",
+    "chooseTemplate": "اختر قالبًا",
+    "createError": "فشل إنشاء الواجهة",
+    "deleted": "تم حذف الواجهة",
+    "deleteError": "فشل حذف الواجهة",
+    "saveError": "فشل حفظ الواجهة",
+    "emptyTitle": "أنشئ عروضًا مخصصة لبياناتك",
+    "emptyDescription": "تتيح لك الواجهات إنشاء لوحات معلومات وعروض تفصيلية وتخطيطات مخصصة.",
+    "lastModified": "آخر تعديل",
+    "blocks": "كتل",
+    "copied": "تم النسخ!",
+    "share": "مشاركة",
+    "edit": "تعديل",
+    "confirmDelete": "تأكيد",
+    "tplBlank": "فارغ",
+    "tplBlankDesc": "لوحة فارغة",
+    "tplDashboard": "لوحة معلومات",
+    "tplDashboardDesc": "مُهيأ مسبقًا بكتل رسوم بيانية",
+    "tplFormView": "عرض النموذج",
+    "tplFormViewDesc": "مُحسَّن لإدخال البيانات",
+    "tplRecordDetail": "تفاصيل السجل",
+    "tplRecordDetailDesc": "عرض سجل واحد بجميع الحقول"
+  },
+  "mindmap": {
+    "aiExpandTargetNodeMissing": "لم تعد هذه العقدة موجودة على اللوحة — اختر عقدة أخرى للتوسيع."
+  },
+  "ideas": {
+    "table": {
+      "csvImportBlockedAtCap": "وصل الجدول إلى الحد الأقصى البالغ {{max}} صفًا — احذف صفوفًا قبل استيراد المزيد.",
+      "csvImportTruncatedAtCap": "تم استيراد {{imported}} من أصل {{total}} صفًا — الحد الأقصى للجدول هو {{max}} صفًا. لم يتم استيراد {{skipped}} صفًا.",
+      "rowRenderCapBanner": "يتم عرض أول {{shown}} من أصل {{total}} صفًا — لا يتم عرض {{hidden}} صفًا إضافيًا للحفاظ على استجابة الجدول. صدّر أو صفِّ لرؤية الباقي.",
+      "publicForm": {
+        "linkExpires": "تنتهي صلاحية هذا الرابط الخاص في {{date}}.",
+        "noFieldsShared": "لم يشارك المرسل أي حقول معك بعد.",
+        "noOptionsConfigured": "لم يتم تهيئة أي خيارات",
+        "poweredBy": "بدعم من منصة Consultify Table",
+        "poweredByPrivate": "بدعم من منصة Consultify Table · رابط خاص",
+        "responseRecorded": "تم تسجيل الرد!",
+        "selectOption": "اختر...",
+        "submitAnother": "إرسال رد آخر",
+        "uploadFile": "رفع ملف"
+      },
+      "quickActions": {
+        "viewNotFound": "العرض غير موجود: {{viewId}}",
+        "columnNotFound": "العمود غير موجود: {{colKey}}",
+        "columnNameRequired": "أدخل اسمًا جديدًا للعمود لإعادة تسميته.",
+        "rowIdRequired": "أدخل معرّف صف الجدول.",
+        "cellTargetMissing": "الخلية المستهدفة مفقودة"
+      },
+      "summaryDashboard": {
+        "max": "الحد الأقصى",
+        "min": "الحد الأدنى"
+      },
+      "viewRouter": {
+        "densityCompact": "مضغوط",
+        "densityNormal": "عادي",
+        "densityComfortable": "مريح",
+        "rowDensity": "كثافة الصفوف",
+        "filterColumn": "تصفية…",
+        "filterColumnAria": "التصفية حسب",
+        "resizeColumn": "تغيير حجم العمود",
+        "sortColumn": "الفرز حسب {{name}}",
+        "selectRow": "تحديد الصف"
+      },
+      "alreadyEmpty": "الخلية فارغة بالفعل",
+      "areYouSureYouWantToDeleteThisColumn": "هل تريد بالتأكيد حذف هذا العمود؟ لا يمكن التراجع عن هذا الإجراء.",
+      "cellActions": "إجراءات الخلية",
+      "columnActions": "إجراءات العمود",
+      "edgeKind": "النوع",
+      "groupBy": "تجميع حسب",
+      "lockedReason": "الجدول مقفل",
+      "noGrouping": "بلا تجميع",
+      "readOnlyCell": "الخلية للقراءة فقط",
+      "rowActions": "إجراءات الصف",
+      "savedViewActions": "إجراءات العرض المحفوظ",
+      "typeCannotExpand": "لا يمكن توسيع خلية النوع",
+      "emptyFilterState": {
+        "headline": "لا توجد نتائج لهذا الفلتر",
+        "description": "لا يطابق أي سجل الفلاتر النشطة. امسح الفلاتر لرؤية جميع السجلات.",
+        "clearFilters": "مسح الفلاتر"
+      },
+      "email": "البريد الإلكتروني",
+      "provenanceRecordId": "السجل: {{id}}…",
+      "provenanceRunId": "التشغيل: {{id}}…",
+      "validationBadgeAdmin": "مسؤول",
+      "webhookUrl": "رابط الويب هوك",
+      "intakeJwt": {
+        "failedToLoad": "فشل تحميل سياق الاستقبال",
+        "subjectRequired": "موضوع المستلم مطلوب",
+        "subjectTooLong": "يجب ألا يتجاوز الموضوع {{max}} حرفًا",
+        "linkIssued": "تم إصدار رابط الاستقبال",
+        "failedToIssue": "فشل إصدار الرابط: {{message}}",
+        "unknown": "غير معروف",
+        "failedToCopy": "فشل النسخ إلى الحافظة",
+        "allowListSaved": "تم حفظ القائمة المسموح بها",
+        "failedToSaveAllowList": "فشل حفظ القائمة المسموح بها: {{message}}",
+        "panelAriaLabel": "إعدادات استقبال النموذج",
+        "panelTitle": "استقبال النموذج (رابط خاص)",
+        "closePanel": "إغلاق لوحة الاستقبال",
+        "loadingContext": "جارٍ تحميل سياق الاستقبال…",
+        "summaryAriaLabel": "ملخص الاستقبال",
+        "summary": "الملخص",
+        "targetTable": "الجدول المستهدف",
+        "allowList": "القائمة المسموح بها",
+        "allConfiguredFields": "جميع الحقول المهيأة",
+        "hardExpiry": "انتهاء صارم",
+        "none": "بلا",
+        "status": "الحالة",
+        "published": "منشور",
+        "draftWontVerify": "مسودة (لن يتم التحقق من الروابط)",
+        "allowListEditorAriaLabel": "محرر القائمة المسموح بها",
+        "fieldAllowList": "قائمة الحقول المسموح بها",
+        "selectAll": "تحديد الكل",
+        "clearAllowList": "مسح القائمة المسموح بها (استخدام حقول النموذج)",
+        "clear": "مسح",
+        "allowListHint": "عند ترك القائمة المسموح بها فارغة، يتم الرجوع إلى الحقول المهيأة في النموذج. اختيار مجموعة فرعية يحدّ مما يمكن للمستلمين إرساله.",
+        "noConfiguredFields": "لا يحتوي النموذج على حقول مهيأة بعد.",
+        "saveAllowList": "حفظ القائمة المسموح بها",
+        "issueLinkAriaLabel": "إصدار رابط الاستقبال",
+        "issuePrivateLink": "إصدار رابط خاص",
+        "recipientSubject": "موضوع المستلم (بريد إلكتروني أو تسمية)",
+        "recipientSubjectAriaLabel": "موضوع المستلم",
+        "expiresIn": "تنتهي الصلاحية خلال",
+        "issueLink": "إصدار الرابط",
+        "publishFirst": "انشر النموذج أولًا؛ لن يتم التحقق من الروابط الخاصة على نموذج في وضع المسودة.",
+        "copied": "تم النسخ",
+        "copyUrl": "نسخ الرابط",
+        "expires": "تنتهي الصلاحية في {{date}}",
+        "copyToken": "نسخ الرمز",
+        "ttl1Day": "يوم واحد",
+        "ttl7Days": "7 أيام",
+        "ttl30Days": "30 يومًا",
+        "ttl90Days": "90 يومًا",
+        "fieldCount_zero": "{{count}} حقل",
+        "fieldCount_one": "{{count}} حقل",
+        "fieldCount_two": "{{count}} حقلان",
+        "fieldCount_few": "{{count}} حقول",
+        "fieldCount_many": "{{count}} حقلًا",
+        "fieldCount_other": "{{count}} حقل"
+      },
+      "recordDetails": "تفاصيل السجل"
+    },
+    "mindmap": {
+      "resetView": "إعادة تعيين العرض"
+    },
+    "financial": {
+      "dialogTitle": "الحالة المالية",
+      "costDrivers": "محركات التكلفة",
+      "benefitDrivers": "محركات المنفعة",
+      "addCost": "إضافة محرك تكلفة",
+      "addBenefit": "إضافة محرك منفعة",
+      "collapsePeriods": "طي الفترات الشهرية",
+      "expandPeriods": "تعديل الفترات الشهرية",
+      "col": {
+        "label": "المحرك",
+        "type": "النوع",
+        "category": "الفئة",
+        "unit": "الوحدة",
+        "total": "الإجمالي",
+        "confidence": "مستوى الثقة",
+        "evidence": "الدليل"
+      },
+      "monthlyValues": "القيم الشهرية",
+      "months": "شهر",
+      "labelPlaceholder": "محرك بلا عنوان",
+      "categoryPlaceholder": "الفئة",
+      "confidenceHigh": "مرتفع",
+      "confidenceMedium": "متوسط",
+      "confidenceLow": "منخفض",
+      "removeDriver": "إزالة المحرك",
+      "noDriversYet": "لا توجد محركات بعد.",
+      "currency": "العملة",
+      "horizon": "الأفق الزمني",
+      "discountRate": "معدل الخصم",
+      "scenarioMultipliers": "مضاعف السيناريو (مقابل الأساس)",
+      "recompute": "إعادة الحساب",
+      "lastComputed": "آخر حساب",
+      "evidenceHealth": "جودة الأدلة",
+      "evidenceNeeded": "الأدلة مطلوبة",
+      "evidenceMissingFor": "الأدلة مطلوبة لـ: {{list}}",
+      "driverCounts": "المحركات",
+      "minimumsNotMet": "يتطلب ≥{{min}} من كل نوع لحالة القبول",
+      "engineNotWired": "محرك الحساب غير متصل في هذا الإصدار — لا يتم اختلاق أي أرقام.",
+      "convert": {
+        "reasonStale": "أعد حساب الحالة أولًا — لا يمكن تحويل حالة قديمة.",
+        "reasonNotBuilt": "التحويل إلى عنصر تابع خاضع للحوكمة غير مُنفَّذ بعد في هذا الإصدار (المهمة الكبرى E11)."
+      },
+      "analytics": "التحليلات",
+      "cost": "التكلفة",
+      "benefit": "المنفعة",
+      "costShort": "التكلفة",
+      "benefitShort": "المنفعة",
+      "chart": {
+        "cashFlow": {
+          "title": "التدفق النقدي التراكمي",
+          "subtitle": "متى تتجاوز الحالة الصفر (فترة الاسترداد)؟"
+        },
+        "composition": {
+          "title": "تركيبة المنفعة / التكلفة",
+          "subtitle": "ما الذي يقود كل فترة (سيناريو الأساس)؟"
+        },
+        "range": {
+          "title": "نطاق السيناريو (صافي القيمة الحالية)",
+          "subtitle": "الأساس مقابل التفاؤلي مقابل التشاؤمي",
+          "subtitleSpread": "الفارق بين السيناريوهات: {{spread}}"
+        },
+        "sensitivity": {
+          "title": "الحساسية",
+          "subtitle": "أي افتراض محرك يؤثر أكثر على صافي القيمة الحالية (±20%)؟",
+          "low": "-20%",
+          "high": "+20%"
+        },
+        "noResult": "أعد الحساب لرؤية هذا الرسم البياني.",
+        "noSensitivity": "لم يُرجع المحرك أي صفوف حساسية بعد."
+      },
+      "evidenceCount_zero": "{{count}} مصدر",
+      "evidenceCount_one": "{{count}} مصدر",
+      "evidenceCount_two": "{{count}} مصدران",
+      "evidenceCount_few": "{{count}} مصادر",
+      "evidenceCount_many": "{{count}} مصدرًا",
+      "evidenceCount_other": "{{count}} مصدر",
+      "staleLabel": "قديم"
+    }
+  },
+  "myWorkIdeas": {
+    "processFlowTool": {
+      "nodeLimitWarning": "أنت تقترب من الحد الأقصى للخطوات ({{warn}} خطوة). فكر في التقسيم إلى عدة مخططات.",
+      "nodeLimitReached": "تم بلوغ الحد الأقصى للخطوات (الحد الأقصى {{limit}}). يرجى حذف بعض الخطوات أو تقسيم العملية إلى عدة مخططات.",
+      "cannotDeleteLastLane": "هذا هو المسار الوحيد المتبقي في العملية — لا يمكن حذفه. أضف مسارًا آخر أولًا إذا أردت نقل خطواته إليه، أو أعد تسمية هذا المسار بدلًا من حذفه.",
+      "aiRewriteStep": "الذكاء الاصطناعي: إعادة صياغة الخطوة",
+      "nodeTooltip": {
+        "accept": "قبول",
+        "automation": "الأتمتة: {{level}}",
+        "cost": "التكلفة:",
+        "duration": "المدة:",
+        "owner": "المسؤول:",
+        "status": "الحالة:",
+        "attachmentCount_zero": "{{count}} مرفق",
+        "attachmentCount_one": "{{count}} مرفق",
+        "attachmentCount_two": "{{count}} مرفقان",
+        "attachmentCount_few": "{{count}} مرفقات",
+        "attachmentCount_many": "{{count}} مرفقًا",
+        "attachmentCount_other": "{{count}} مرفق"
+      }
+    },
+    "drawingLayer": {
+      "kbToggleLabel": "الرسم باستخدام لوحة المفاتيح",
+      "kbCanvasRole": "لوحة الرسم",
+      "kbCanvasLabel": "لوحة الرسم. استخدم مفاتيح الأسهم لتحريك المؤشر، ومفتاح المسافة أو Enter لبدء الرسمة أو إيقافها، وEscape لإنهائها.",
+      "kbInstructions": "وضع الرسم بلوحة المفاتيح: تحرّك مفاتيح الأسهم مؤشر الرسم، ويبدّل مفتاح المسافة أو Enter القلم بين الرفع والخفض، وينهي Escape الرسمة الحالية ويضيفها إلى اللوحة. يؤدي الضغط على Shift مع مفتاح سهم إلى التحرك بخطوات أكبر.",
+      "kbModeEntered": "وضع الرسم بلوحة المفاتيح. تحرّك مفاتيح الأسهم المؤشر، ويبدأ مفتاح المسافة أو Enter القلم أو يوقفه، وينهي Escape الرسمة.",
+      "kbPenDown": "القلم مخفوض. تحرّك بمفاتيح الأسهم للرسم.",
+      "kbPenUp": "القلم مرفوع. تحرّك لإعادة التموضع، أو اضغط Escape لإنهاء الرسمة.",
+      "kbStrokeCompleted": "تم إكمال الرسمة وإضافتها إلى اللوحة.",
+      "kbStrokeDiscarded": "لم تُرسم أي رسمة — لا يوجد ما يُضاف.",
+      "kbStatusPenDown": "القلم مخفوض",
+      "kbStatusPenUp": "القلم مرفوع"
+    }
+  },
+  "processFlow": {
+    "toolbar": {
+      "lanesCount": "المسارات {{value}}",
+      "aiCoach": "مدرّب الذكاء الاصطناعي"
+    },
+    "propertiesPanel": {
+      "systemLabel": "النظام",
+      "unitMin": "دقيقة"
+    },
+    "contextMenu": {
+      "menuAriaLabel": "إجراءات مخطط سير العملية"
+    },
+    "laneSystem": {
+      "moveUp": "نقل المسار للأعلى",
+      "moveDown": "نقل المسار للأسفل",
+      "changeColor": "تغيير لون المسار",
+      "deleteLane": "حذف المسار"
+    }
+  },
+  "myWorkTable": {
+    "governedModels": {
+      "formulaAvg": "المتوسط",
+      "formulaCount": "العدد",
+      "formulaExpression": "التعبير",
+      "formulaSum": "المجموع"
+    },
+    "connectorWizard": {
+      "apiKey": "مفتاح API",
+      "apiToken": "رمز API",
+      "baseId": "معرّف القاعدة",
+      "database": "قاعدة البيانات",
+      "email": "البريد الإلكتروني",
+      "host": "المضيف",
+      "jqlLabel": "JQL ({{optional}})",
+      "port": "المنفذ",
+      "schema": "المخطط",
+      "spreadsheetId": "معرّف جدول البيانات"
+    },
+    "addColumnDialog": {
+      "nameRequired": "أعطِ الحقل اسمًا قبل إنشائه.",
+      "duplicateName": "يوجد بالفعل حقل باسم «{{name}}» — اختر اسمًا مختلفًا.",
+      "enterToCreate": "اضغط Enter للإنشاء وإضافة حقل آخر.",
+      "preview": "معاينة",
+      "untitledField": "حقل بلا عنوان",
+      "addedThisSession": "أُضيف في هذه الجلسة",
+      "undo": "تراجع",
+      "done": "تم",
+      "addAnother": "إنشاء حقل وإضافة آخر",
+      "addedCount": "تمت إضافة {{count}} حقل في هذه الجلسة — تابع أو اضغط تم."
+    },
+    "aiTableAssistant": {
+      "cancel": "إلغاء",
+      "cancelled": "تم إلغاء الأمر.",
+      "send": "إرسال",
+      "closeAssistant": "إغلاق المساعد",
+      "commandRequired": "اكتب أمرًا قبل الإرسال.",
+      "columnNotFound": "لم يتم العثور على العمود «{{column}}» في هذا الجدول.",
+      "noRowsToAdd": "لم يُرجع الذكاء الاصطناعي أي صفوف لإضافتها.",
+      "noChanges": "لم يتطابق هذا الأمر مع أي تغيير.",
+      "transportError": "تعذر الوصول إلى خدمة الذكاء الاصطناعي. تحقق من اتصالك وأعد المحاولة.",
+      "retry": "إعادة المحاولة",
+      "edit": "تعديل",
+      "historyLabel": "سجل الأوامر",
+      "statusPending": "جارٍ العمل عليه…",
+      "statusApplied": "تم التطبيق",
+      "statusProposal": "الاقتراح جاهز",
+      "statusUnsupported": "غير مدعوم",
+      "statusValidation": "تعذر تنفيذ هذا الأمر",
+      "statusTransport": "مشكلة في الاتصال",
+      "statusCancelled": "تم الإلغاء"
+    },
+    "fieldProposal": {
+      "refreshTitle": "التحديث من العناصر",
+      "autofillTitle": "التعبئة التلقائية من العناصر",
+      "summary": "{{rows}} صفًا · {{cells}} حقلًا للتغيير",
+      "selectAll": "تحديد الكل",
+      "deselectAll": "إلغاء تحديد الكل",
+      "dismiss": "تجاهل",
+      "empty": "(فارغ)",
+      "reject": "رفض",
+      "apply": "تطبيق ({{count}})",
+      "applied": "تم تطبيق {{count}} حقل",
+      "fieldCount_zero": "{{count}} حقل",
+      "fieldCount_one": "{{count}} حقل",
+      "fieldCount_two": "{{count}} حقلان",
+      "fieldCount_few": "{{count}} حقول",
+      "fieldCount_many": "{{count}} حقلًا",
+      "fieldCount_other": "{{count}} حقل"
+    },
+    "aiCell": {
+      "pending": "الذكاء الاصطناعي قيد الانتظار…",
+      "promptTooltip": "موجّه الذكاء الاصطناعي: {{template}}"
+    },
+    "cellEditor": {
+      "list": "قائمة"
+    },
+    "chartConfigPanel": {
+      "aggAverage": "المتوسط",
+      "aggCount": "العدد",
+      "aggMax": "الحد الأقصى",
+      "aggMin": "الحد الأدنى",
+      "aggregation": "التجميع",
+      "aggSum": "المجموع",
+      "chartType": "نوع الرسم البياني",
+      "chartTypeBar": "أعمدة",
+      "chartTypeDonut": "دائري مفرغ",
+      "chartTypeLine": "خطي",
+      "chartTypePie": "دائري",
+      "noneCountOnly": "بلا (العدد فقط)",
+      "selectField": "اختر حقلًا...",
+      "title": "العنوان",
+      "titlePlaceholder": "عنوان الرسم البياني...",
+      "xAxisField": "حقل المحور السيني",
+      "yAxisField": "حقل المحور الصادي",
+      "yAxisFieldHint": "(رقمي، اختياري)"
+    },
+    "extensionHost": {
+      "closeExtension": "إغلاق الإضافة",
+      "extension": "الإضافة",
+      "loading": "جارٍ التحميل...",
+      "scopeCount_zero": "{{count}} نطاق",
+      "scopeCount_one": "{{count}} نطاق",
+      "scopeCount_two": "{{count}} نطاقان",
+      "scopeCount_few": "{{count}} نطاقات",
+      "scopeCount_many": "{{count}} نطاقًا",
+      "scopeCount_other": "{{count}} نطاق"
+    },
+    "extensionMarketplace": {
+      "browseMarketplace": "تصفح المتجر",
+      "byAuthor": "بواسطة {{author}}",
+      "categoryAll": "الكل",
+      "categoryAutomation": "الأتمتة",
+      "categoryIntegration": "التكامل",
+      "categoryUtility": "أداة مساعدة",
+      "categoryVisualization": "التصور المرئي",
+      "checkBackLater": "تحقق مرة أخرى لاحقًا أو سجّل إضافتك الخاصة.",
+      "install": "تثبيت",
+      "installedCount": "مثبّت ({{count}})",
+      "installing": "جارٍ التثبيت...",
+      "loadingExtensions": "جارٍ تحميل الإضافات...",
+      "marketplace": "المتجر",
+      "noneAvailable": "لا توجد إضافات متاحة بعد.",
+      "noneInstalled": "لا توجد إضافات مثبّتة.",
+      "open": "فتح",
+      "scopeMetadataRead": "قراءة المخطط",
+      "scopeMetadataWrite": "تعديل المخطط",
+      "scopeNetwork": "الوصول إلى الشبكة",
+      "scopeRecordsRead": "قراءة السجلات",
+      "scopeRecordsWrite": "كتابة السجلات",
+      "scopeUi": "عناصر تحكم الواجهة",
+      "uninstall": "إلغاء التثبيت",
+      "installCount_zero": "{{count}} تثبيت",
+      "installCount_one": "{{count}} تثبيت",
+      "installCount_two": "{{count}} تثبيتان",
+      "installCount_few": "{{count}} تثبيتات",
+      "installCount_many": "{{count}} تثبيتًا",
+      "installCount_other": "{{count}} تثبيت"
+    },
+    "offlineIndicator": {
+      "hoursAgo": "قبل {{count}} س",
+      "justNow": "الآن",
+      "lastSync": "آخر مزامنة: {{time}}",
+      "minutesAgo": "قبل {{count}} د",
+      "offline": "غير متصل",
+      "syncing": "جارٍ المزامنة...",
+      "syncNow": "مزامنة الآن",
+      "pendingChanges_zero": "{{count}} تغيير معلّق",
+      "pendingChanges_one": "{{count}} تغيير معلّق",
+      "pendingChanges_two": "{{count}} تغييران معلّقان",
+      "pendingChanges_few": "{{count}} تغييرات معلّقة",
+      "pendingChanges_many": "{{count}} تغييرًا معلّقًا",
+      "pendingChanges_other": "{{count}} تغيير معلّق"
+    },
+    "sourceReferenceCell": {
+      "blocked": "محظور",
+      "externalBlocked": "المصادر الخارجية غير مسموح بها لهذا الحقل",
+      "internalSource": "مصدر داخلي {{id}}",
+      "invalidLength": "قيمة source_reference غير صالحة (الطول {{length}})",
+      "invalidShape": "قيمة source_reference ذات شكل غير معروف",
+      "noSource": "بلا مصدر",
+      "source": "المصدر"
+    },
+    "syncManager": {
+      "csvUrl": "رابط CSV",
+      "googleSheetsUrl": "رابط Google Sheets"
+    },
+    "voiceImageInput": {
+      "previewAlt": "معاينة"
+    }
+  },
+  "myWorkMindmap": {
+    "ctxMenu": {
+      "group": {
+        "data": "البيانات",
+        "appearance": "المظهر",
+        "expert": "أدوات متقدمة",
+        "more": "المزيد"
+      },
+      "scopeSelection": "التحديد",
+      "scopeBranch": "الفرع",
+      "scopeDocument": "المستند"
+    }
+  },
+  "canvasEditBar": {
+    "edgeLabel": "التسمية",
+    "edgeCondition": "نوع الاتصال"
   }
 }

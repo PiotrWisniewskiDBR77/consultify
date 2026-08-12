@@ -550,6 +550,66 @@
         "hardGate": "Hard gate",
         "score": "Puntuación"
       }
+    },
+    "whiteboard": {
+      "selection": {
+        "tidyBoard": "Ordenar pizarra",
+        "tidySelection": "Organizar selección automáticamente"
+      },
+      "empty": {
+        "affinityMap": "Mapa de afinidad",
+        "brainstorm": "Lluvia de ideas",
+        "workshopWall": "Muro de taller"
+      },
+      "ai": {
+        "needsRealLabels": "Asigna un nombre real a al menos una nota adhesiva o de texto antes de buscar temas: todo lo que hay en el alcance todavía tiene un nombre predeterminado como «Nueva nota» o «Texto», así que la IA no tiene nada significativo que agrupar."
+      },
+      "toast": {
+        "pasted": "Pegado",
+        "tidiedBoard": "Pizarra ordenada",
+        "tidiedSelection": "Selección organizada",
+        "frameEmpty": "El marco no tiene contenido",
+        "frameNoSelection": "Selecciona primero elementos desbloqueados (fuera de este marco)",
+        "frameAdded": "Añadido al marco",
+        "frameReleaseOne": "Eliminado del marco",
+        "frameAlreadyFits": "El marco ya se ajusta a su contenido",
+        "frameResized": "Marco redimensionado para ajustarse al contenido",
+        "frameDeletedReleased": "Marco eliminado, contenido liberado",
+        "frameDeletedWithContents": "Marco y su contenido eliminados"
+      },
+      "toolbarExtra": {
+        "insert": "Insertar",
+        "tidyBoard": "Ordenar pizarra"
+      },
+      "styleBar": {
+        "ariaLabel": "Estilo del elemento",
+        "color": "Definir color",
+        "clearColor": "Restablecer color",
+        "fontSize": "Tamaño de fuente {{step}}",
+        "bold": "Negrita"
+      },
+      "reactions": {
+        "removeReaction": "Quitar tu reacción",
+        "addReaction": "Añadir tu reacción",
+        "reactWith": "Reaccionar con {{emoji}}",
+        "openTray": "Añadir reacción"
+      },
+      "linkedArtifactsCount_one": "{{count}} artefacto vinculado",
+      "linkedArtifactsCount_other": "{{count}} artefactos vinculados",
+      "convertedBadge": "Convertido",
+      "linkedArtifactsCount_many": "{{count}} artefactos vinculados"
+    },
+    "knowledge": {
+      "cardNodes": {
+        "evidenceDefault": "Evidencia",
+        "idPrefix": "ID: {{id}}",
+        "knowledgeDefault": "Conocimiento",
+        "noteBadge": "Nota",
+        "typeArtifact": "Artefacto",
+        "typeDocument": "Documento",
+        "typeNote": "Nota",
+        "typeUrl": "URL"
+      }
     }
   },
   "step1": {
@@ -2968,5 +3028,516 @@
       "reportTypeSteeringCommittee": "Steering committee",
       "reportTypeCisoSecurity": "CISO / Security"
     }
+  },
+  "formBuilder": {
+    "title": "Creador de formularios",
+    "tabFields": "Campos",
+    "tabSettings": "Configuración",
+    "tabPreview": "Vista previa",
+    "fieldListHint": "Arrastra para reordenar. Alterna la visibilidad y configura cada campo.",
+    "moveUp": "Subir",
+    "moveDown": "Bajar",
+    "toggleRequired": "Alternar obligatorio",
+    "required": "Obligatorio",
+    "optional": "Opcional",
+    "showField": "Mostrar campo",
+    "hideField": "Ocultar campo",
+    "customLabel": "Etiqueta personalizada",
+    "helpText": "Texto de ayuda",
+    "helpTextPlaceholder": "Instrucciones para este campo...",
+    "defaultValue": "Valor predeterminado",
+    "conditionalVisibility": "Visibilidad condicional",
+    "selectField": "Seleccionar campo...",
+    "opEquals": "es igual a",
+    "opNotEquals": "no es igual a",
+    "opIsEmpty": "está vacío",
+    "opIsNotEmpty": "no está vacío",
+    "condValue": "Valor...",
+    "formName": "Nombre del formulario",
+    "formDescription": "Descripción",
+    "slug": "Slug de URL",
+    "submitMessage": "Mensaje de éxito",
+    "redirectUrl": "URL de redirección (opcional)",
+    "notificationEmail": "Correo de notificación (opcional)",
+    "notificationEmailHint": "Recibe un correo cuando se envíe una nueva respuesta",
+    "allowMultiple": "Permitir múltiples envíos",
+    "requireAuth": "Requerir autenticación",
+    "submit": "Enviar",
+    "save": "Guardar",
+    "shareLink": "Enlace para compartir",
+    "copied": "¡Copiado!",
+    "submissions": "envíos"
+  },
+  "formsIndex": {
+    "title": "Formularios",
+    "createForm": "Crear formulario",
+    "newFormName": "Nuevo formulario",
+    "createError": "No se pudo crear el formulario",
+    "deleted": "Formulario eliminado",
+    "deleteError": "No se pudo eliminar el formulario",
+    "shareUpdated": "Uso compartido actualizado",
+    "shareError": "No se pudo actualizar el uso compartido",
+    "loadError": "No se pudieron cargar los formularios",
+    "emptyTitle": "Crea un formulario para recopilar datos",
+    "emptyDescription": "Los formularios te permiten recopilar datos estructurados de cualquier persona; no se requiere inicio de sesión para los formularios públicos.",
+    "created": "Creado",
+    "responses": "respuestas",
+    "copied": "¡Copiado!",
+    "copyLink": "Copiar enlace",
+    "sharing": "Compartir",
+    "sharePublic": "Público",
+    "shareOrg": "Solo organización",
+    "shareAuth": "Usuarios autenticados",
+    "preview": "Vista previa",
+    "manageIntake": "Gestionar admisión (enlace privado)",
+    "edit": "Editar",
+    "confirmDelete": "Confirmar"
+  },
+  "interfacesIndex": {
+    "title": "Interfaces",
+    "createInterface": "Crear interfaz",
+    "chooseTemplate": "Elige una plantilla",
+    "createError": "No se pudo crear la interfaz",
+    "deleted": "Interfaz eliminada",
+    "deleteError": "No se pudo eliminar la interfaz",
+    "saveError": "No se pudo guardar la interfaz",
+    "emptyTitle": "Crea vistas personalizadas de tus datos",
+    "emptyDescription": "Las interfaces te permiten crear paneles, vistas de detalle y diseños personalizados.",
+    "lastModified": "Última modificación",
+    "blocks": "bloques",
+    "copied": "¡Copiado!",
+    "share": "Compartir",
+    "edit": "Editar",
+    "confirmDelete": "Confirmar",
+    "tplBlank": "En blanco",
+    "tplBlankDesc": "Lienzo vacío",
+    "tplDashboard": "Panel",
+    "tplDashboardDesc": "Preconfigurado con bloques de gráficos",
+    "tplFormView": "Vista de formulario",
+    "tplFormViewDesc": "Optimizado para introducir datos",
+    "tplRecordDetail": "Detalle de registro",
+    "tplRecordDetailDesc": "Vista de un solo registro con todos los campos"
+  },
+  "mindmap": {
+    "aiExpandTargetNodeMissing": "Ese nodo ya no está en el lienzo: elige otro nodo para expandir."
+  },
+  "ideas": {
+    "table": {
+      "csvImportBlockedAtCap": "La tabla ha alcanzado el límite de {{max}} filas: elimina filas antes de importar más.",
+      "csvImportTruncatedAtCap": "Se importaron {{imported}} de {{total}} filas: el límite de la tabla es de {{max}} filas. No se importaron {{skipped}} filas.",
+      "rowRenderCapBanner": "Mostrando las primeras {{shown}} de {{total}} filas: no se muestran {{hidden}} más para mantener la tabla ágil. Exporta o filtra para ver el resto.",
+      "publicForm": {
+        "linkExpires": "Este enlace privado caduca el {{date}}.",
+        "noFieldsShared": "El remitente aún no ha compartido ningún campo contigo.",
+        "noOptionsConfigured": "No hay opciones configuradas",
+        "poweredBy": "Desarrollado con Consultify Table Platform",
+        "poweredByPrivate": "Desarrollado con Consultify Table Platform · Enlace privado",
+        "responseRecorded": "¡Respuesta registrada!",
+        "selectOption": "Seleccionar...",
+        "submitAnother": "Enviar otra respuesta",
+        "uploadFile": "Subir un archivo"
+      },
+      "quickActions": {
+        "viewNotFound": "Vista no encontrada: {{viewId}}",
+        "columnNotFound": "Columna no encontrada: {{colKey}}",
+        "columnNameRequired": "Proporciona un nuevo nombre de columna para renombrarla.",
+        "rowIdRequired": "Proporciona el ID de fila de la tabla.",
+        "cellTargetMissing": "Falta la celda de destino"
+      },
+      "summaryDashboard": {
+        "max": "Máx.",
+        "min": "Mín."
+      },
+      "viewRouter": {
+        "densityCompact": "Compacta",
+        "densityNormal": "Normal",
+        "densityComfortable": "Cómoda",
+        "rowDensity": "Densidad de filas",
+        "filterColumn": "Filtrar…",
+        "filterColumnAria": "Filtrar por",
+        "resizeColumn": "Redimensionar columna",
+        "sortColumn": "Ordenar por {{name}}",
+        "selectRow": "Seleccionar fila"
+      },
+      "alreadyEmpty": "La celda ya está vacía",
+      "areYouSureYouWantToDeleteThisColumn": "¿Seguro que quieres eliminar esta columna? Esta acción no se puede deshacer.",
+      "cellActions": "Acciones de celda",
+      "columnActions": "Acciones de columna",
+      "edgeKind": "Tipo",
+      "groupBy": "Agrupar por",
+      "lockedReason": "La tabla está bloqueada",
+      "noGrouping": "Sin agrupación",
+      "readOnlyCell": "La celda es de solo lectura",
+      "rowActions": "Acciones de fila",
+      "savedViewActions": "Acciones de vista guardada",
+      "typeCannotExpand": "La celda de tipo no se puede expandir",
+      "emptyFilterState": {
+        "headline": "Sin resultados para este filtro",
+        "description": "Ningún registro coincide con los filtros activos. Borra los filtros para ver todos los registros.",
+        "clearFilters": "Borrar filtros"
+      },
+      "email": "Correo electrónico",
+      "provenanceRecordId": "Registro: {{id}}…",
+      "provenanceRunId": "Ejecución: {{id}}…",
+      "validationBadgeAdmin": "admin",
+      "webhookUrl": "URL del webhook",
+      "intakeJwt": {
+        "failedToLoad": "No se pudo cargar el contexto de admisión",
+        "subjectRequired": "El asunto del destinatario es obligatorio",
+        "subjectTooLong": "El asunto debe tener {{max}} caracteres o menos",
+        "linkIssued": "Enlace de admisión emitido",
+        "failedToIssue": "No se pudo emitir el enlace: {{message}}",
+        "unknown": "desconocido",
+        "failedToCopy": "No se pudo copiar al portapapeles",
+        "allowListSaved": "Lista de permitidos guardada",
+        "failedToSaveAllowList": "No se pudo guardar la lista de permitidos: {{message}}",
+        "panelAriaLabel": "Configuración de admisión del formulario",
+        "panelTitle": "Admisión del formulario (enlace privado)",
+        "closePanel": "Cerrar panel de admisión",
+        "loadingContext": "Cargando contexto de admisión…",
+        "summaryAriaLabel": "Resumen de admisión",
+        "summary": "Resumen",
+        "targetTable": "Tabla de destino",
+        "allowList": "Lista de permitidos",
+        "allConfiguredFields": "Todos los campos configurados",
+        "hardExpiry": "Caducidad estricta",
+        "none": "Ninguno",
+        "status": "Estado",
+        "published": "Publicado",
+        "draftWontVerify": "Borrador (los enlaces no se verificarán)",
+        "allowListEditorAriaLabel": "Editor de la lista de permitidos",
+        "fieldAllowList": "Lista de permitidos de campos",
+        "selectAll": "Seleccionar todo",
+        "clearAllowList": "Borrar lista de permitidos (usar campos del formulario)",
+        "clear": "Borrar",
+        "allowListHint": "Una lista de permitidos vacía recurre a los campos configurados del formulario. Seleccionar un subconjunto limita lo que los destinatarios pueden enviar.",
+        "noConfiguredFields": "El formulario aún no tiene campos configurados.",
+        "saveAllowList": "Guardar lista de permitidos",
+        "issueLinkAriaLabel": "Emitir enlace de admisión",
+        "issuePrivateLink": "Emitir enlace privado",
+        "recipientSubject": "Asunto del destinatario (correo o etiqueta)",
+        "recipientSubjectAriaLabel": "Asunto del destinatario",
+        "expiresIn": "Caduca en",
+        "issueLink": "Emitir enlace",
+        "publishFirst": "Publica primero el formulario; los enlaces privados no se verificarán en un formulario en borrador.",
+        "copied": "Copiado",
+        "copyUrl": "Copiar URL",
+        "expires": "Caduca el {{date}}",
+        "copyToken": "Copiar token",
+        "ttl1Day": "1 día",
+        "ttl7Days": "7 días",
+        "ttl30Days": "30 días",
+        "ttl90Days": "90 días",
+        "fieldCount_one": "{{count}} campo",
+        "fieldCount_other": "{{count}} campos",
+        "fieldCount_many": "{{count}} campos"
+      },
+      "recordDetails": "Detalles del registro"
+    },
+    "mindmap": {
+      "resetView": "Restablecer vista"
+    },
+    "financial": {
+      "dialogTitle": "Caso financiero",
+      "costDrivers": "Impulsores de costes",
+      "benefitDrivers": "Impulsores de beneficios",
+      "addCost": "Añadir impulsor de coste",
+      "addBenefit": "Añadir impulsor de beneficio",
+      "collapsePeriods": "Contraer períodos mensuales",
+      "expandPeriods": "Editar períodos mensuales",
+      "col": {
+        "label": "Impulsor",
+        "type": "Tipo",
+        "category": "Categoría",
+        "unit": "Unidad",
+        "total": "Total",
+        "confidence": "Confianza",
+        "evidence": "Evidencia"
+      },
+      "monthlyValues": "Valores mensuales",
+      "months": "mes",
+      "labelPlaceholder": "Impulsor sin título",
+      "categoryPlaceholder": "Categoría",
+      "confidenceHigh": "Alta",
+      "confidenceMedium": "Media",
+      "confidenceLow": "Baja",
+      "removeDriver": "Eliminar impulsor",
+      "noDriversYet": "Aún no hay impulsores.",
+      "currency": "Moneda",
+      "horizon": "Horizonte",
+      "discountRate": "Tasa de descuento",
+      "scenarioMultipliers": "Multiplicador de escenario (frente a Base)",
+      "recompute": "Recalcular",
+      "lastComputed": "Último cálculo",
+      "evidenceHealth": "Estado de la evidencia",
+      "evidenceNeeded": "Evidencia necesaria",
+      "evidenceMissingFor": "Evidencia necesaria: {{list}}",
+      "driverCounts": "Impulsores",
+      "minimumsNotMet": "Se necesitan ≥{{min}} de cada uno para el caso de aceptación",
+      "engineNotWired": "El motor de cálculo no está conectado en esta versión: no se está inventando ningún número.",
+      "convert": {
+        "reasonStale": "Recalcula primero el caso: un caso obsoleto no se puede convertir.",
+        "reasonNotBuilt": "La conversión a un artefacto posterior gobernado aún no está implementada en esta versión (épica E11)."
+      },
+      "analytics": "Analítica",
+      "cost": "Coste",
+      "benefit": "Beneficio",
+      "costShort": "coste",
+      "benefitShort": "beneficio",
+      "chart": {
+        "cashFlow": {
+          "title": "Flujo de caja acumulado",
+          "subtitle": "¿Cuándo cruza el caso el cero (recuperación)?"
+        },
+        "composition": {
+          "title": "Composición de beneficio / coste",
+          "subtitle": "¿Qué impulsa cada período (escenario Base)?"
+        },
+        "range": {
+          "title": "Rango de escenarios (VAN)",
+          "subtitle": "Base frente a Optimista frente a Pesimista",
+          "subtitleSpread": "Dispersión entre escenarios: {{spread}}"
+        },
+        "sensitivity": {
+          "title": "Sensibilidad",
+          "subtitle": "¿Qué supuesto de impulsor afecta más al VAN (±20 %)?",
+          "low": "-20 %",
+          "high": "+20 %"
+        },
+        "noResult": "Recalcula para ver este gráfico.",
+        "noSensitivity": "El motor aún no ha devuelto filas de sensibilidad."
+      },
+      "evidenceCount_one": "{{count}} fuente",
+      "evidenceCount_other": "{{count}} fuentes",
+      "staleLabel": "obsoleto",
+      "evidenceCount_many": "{{count}} fuentes"
+    }
+  },
+  "myWorkIdeas": {
+    "processFlowTool": {
+      "nodeLimitWarning": "Te estás acercando al límite de pasos ({{warn}} pasos). Considera dividir en varios flujos.",
+      "nodeLimitReached": "Se alcanzó el límite de pasos (máximo {{limit}}). Elimina algunos pasos o divide el proceso en varios flujos.",
+      "cannotDeleteLastLane": "Este es el único carril que queda en el proceso: no se puede eliminar. Añade otro carril primero si quieres mover sus pasos allí, o renombra este carril en lugar de eliminarlo.",
+      "aiRewriteStep": "IA: reescribir paso",
+      "nodeTooltip": {
+        "accept": "Aceptar",
+        "automation": "Automatización: {{level}}",
+        "cost": "Coste:",
+        "duration": "Duración:",
+        "owner": "Responsable:",
+        "status": "Estado:",
+        "attachmentCount_one": "{{count}} archivo adjunto",
+        "attachmentCount_other": "{{count}} archivos adjuntos",
+        "attachmentCount_many": "{{count}} archivos adjuntos"
+      }
+    },
+    "drawingLayer": {
+      "kbToggleLabel": "Dibujar con teclado",
+      "kbCanvasRole": "lienzo de dibujo",
+      "kbCanvasLabel": "Lienzo de dibujo. Usa las flechas para mover el cursor, Espacio o Intro para iniciar o detener un trazo, y Escape para finalizarlo.",
+      "kbInstructions": "Modo de dibujo con teclado: las flechas mueven el cursor de dibujo, Espacio o Intro alterna el lápiz entre bajado y levantado, Escape finaliza el trazo actual y lo añade al lienzo. Mayús. más una flecha mueve en pasos más grandes.",
+      "kbModeEntered": "Modo de dibujo con teclado. Las flechas mueven el cursor, Espacio o Intro inicia o detiene el lápiz, Escape finaliza el trazo.",
+      "kbPenDown": "Lápiz bajado. Muévete con las flechas para dibujar.",
+      "kbPenUp": "Lápiz levantado. Muévete para reposicionar, o pulsa Escape para finalizar el trazo.",
+      "kbStrokeCompleted": "Trazo completado y añadido al lienzo.",
+      "kbStrokeDiscarded": "No se dibujó ningún trazo: nada que añadir.",
+      "kbStatusPenDown": "Lápiz bajado",
+      "kbStatusPenUp": "Lápiz levantado"
+    }
+  },
+  "processFlow": {
+    "toolbar": {
+      "lanesCount": "Carriles {{value}}",
+      "aiCoach": "Asistente IA"
+    },
+    "propertiesPanel": {
+      "systemLabel": "Sistema",
+      "unitMin": "min"
+    },
+    "contextMenu": {
+      "menuAriaLabel": "Acciones de flujo de proceso"
+    },
+    "laneSystem": {
+      "moveUp": "Subir carril",
+      "moveDown": "Bajar carril",
+      "changeColor": "Cambiar color del carril",
+      "deleteLane": "Eliminar carril"
+    }
+  },
+  "myWorkTable": {
+    "governedModels": {
+      "formulaAvg": "PROMEDIO",
+      "formulaCount": "CONTAR",
+      "formulaExpression": "Expresión",
+      "formulaSum": "SUMA"
+    },
+    "connectorWizard": {
+      "apiKey": "Clave de API",
+      "apiToken": "Token de API",
+      "baseId": "ID de base",
+      "database": "Base de datos",
+      "email": "Correo electrónico",
+      "host": "Host",
+      "jqlLabel": "JQL ({{optional}})",
+      "port": "Puerto",
+      "schema": "Esquema",
+      "spreadsheetId": "ID de hoja de cálculo"
+    },
+    "addColumnDialog": {
+      "nameRequired": "Asigna un nombre al campo antes de crearlo.",
+      "duplicateName": "Ya existe un campo llamado «{{name}}»: elige un nombre diferente.",
+      "enterToCreate": "Pulsa Intro para crear y añadir otro.",
+      "preview": "Vista previa",
+      "untitledField": "Campo sin título",
+      "addedThisSession": "Añadido en esta sesión",
+      "undo": "Deshacer",
+      "done": "Hecho",
+      "addAnother": "Crear campo y añadir otro",
+      "addedCount": "{{count}} campo(s) añadido(s) en esta sesión: continúa o pulsa Hecho."
+    },
+    "aiTableAssistant": {
+      "cancel": "Cancelar",
+      "cancelled": "Comando cancelado.",
+      "send": "Enviar",
+      "closeAssistant": "Cerrar asistente",
+      "commandRequired": "Escribe un comando antes de enviarlo.",
+      "columnNotFound": "No se encontró la columna «{{column}}» en esta tabla.",
+      "noRowsToAdd": "La IA no devolvió ninguna fila para añadir.",
+      "noChanges": "Este comando no se corresponde con ningún cambio.",
+      "transportError": "No se pudo contactar con el servicio de IA. Comprueba tu conexión e inténtalo de nuevo.",
+      "retry": "Reintentar",
+      "edit": "Editar",
+      "historyLabel": "Historial de comandos",
+      "statusPending": "Trabajando en ello…",
+      "statusApplied": "Aplicado",
+      "statusProposal": "Propuesta lista",
+      "statusUnsupported": "No admitido",
+      "statusValidation": "No se pudo ejecutar este comando",
+      "statusTransport": "Problema de conexión",
+      "statusCancelled": "Cancelado"
+    },
+    "fieldProposal": {
+      "refreshTitle": "Actualizar desde artefactos",
+      "autofillTitle": "Autocompletar desde artefactos",
+      "summary": "{{rows}} filas · {{cells}} campos por cambiar",
+      "selectAll": "Seleccionar todo",
+      "deselectAll": "Deseleccionar todo",
+      "dismiss": "Descartar",
+      "empty": "(vacío)",
+      "reject": "Rechazar",
+      "apply": "Aplicar ({{count}})",
+      "applied": "Se aplicaron {{count}} campo(s)",
+      "fieldCount_one": "{{count}} campo",
+      "fieldCount_other": "{{count}} campos",
+      "fieldCount_many": "{{count}} campos"
+    },
+    "aiCell": {
+      "pending": "IA pendiente…",
+      "promptTooltip": "Prompt de IA: {{template}}"
+    },
+    "cellEditor": {
+      "list": "Lista"
+    },
+    "chartConfigPanel": {
+      "aggAverage": "Promedio",
+      "aggCount": "Contar",
+      "aggMax": "Máx.",
+      "aggMin": "Mín.",
+      "aggregation": "Agregación",
+      "aggSum": "Suma",
+      "chartType": "Tipo de gráfico",
+      "chartTypeBar": "Barras",
+      "chartTypeDonut": "Anillo",
+      "chartTypeLine": "Línea",
+      "chartTypePie": "Circular",
+      "noneCountOnly": "Ninguno (solo conteo)",
+      "selectField": "Seleccionar campo...",
+      "title": "Título",
+      "titlePlaceholder": "Título del gráfico...",
+      "xAxisField": "Campo del eje X",
+      "yAxisField": "Campo del eje Y",
+      "yAxisFieldHint": "(numérico, opcional)"
+    },
+    "extensionHost": {
+      "closeExtension": "Cerrar extensión",
+      "extension": "Extensión",
+      "loading": "Cargando...",
+      "scopeCount_one": "{{count}} ámbito",
+      "scopeCount_other": "{{count}} ámbitos",
+      "scopeCount_many": "{{count}} ámbitos"
+    },
+    "extensionMarketplace": {
+      "browseMarketplace": "Explorar mercado",
+      "byAuthor": "por {{author}}",
+      "categoryAll": "Todas",
+      "categoryAutomation": "Automatización",
+      "categoryIntegration": "Integración",
+      "categoryUtility": "Utilidad",
+      "categoryVisualization": "Visualización",
+      "checkBackLater": "Vuelve más tarde o registra la tuya propia.",
+      "install": "Instalar",
+      "installedCount": "Instaladas ({{count}})",
+      "installing": "Instalando...",
+      "loadingExtensions": "Cargando extensiones...",
+      "marketplace": "Mercado",
+      "noneAvailable": "Aún no hay extensiones disponibles.",
+      "noneInstalled": "No hay extensiones instaladas.",
+      "open": "Abrir",
+      "scopeMetadataRead": "Leer esquema",
+      "scopeMetadataWrite": "Modificar esquema",
+      "scopeNetwork": "Acceso a la red",
+      "scopeRecordsRead": "Leer registros",
+      "scopeRecordsWrite": "Escribir registros",
+      "scopeUi": "Controles de interfaz",
+      "uninstall": "Desinstalar",
+      "installCount_one": "{{count}} instalación",
+      "installCount_other": "{{count}} instalaciones",
+      "installCount_many": "{{count}} instalaciones"
+    },
+    "offlineIndicator": {
+      "hoursAgo": "hace {{count}} h",
+      "justNow": "justo ahora",
+      "lastSync": "Última sincronización: {{time}}",
+      "minutesAgo": "hace {{count}} min",
+      "offline": "Sin conexión",
+      "syncing": "Sincronizando...",
+      "syncNow": "Sincronizar ahora",
+      "pendingChanges_one": "{{count}} cambio pendiente",
+      "pendingChanges_other": "{{count}} cambios pendientes",
+      "pendingChanges_many": "{{count}} cambios pendientes"
+    },
+    "sourceReferenceCell": {
+      "blocked": "Bloqueado",
+      "externalBlocked": "No se permiten fuentes externas para este campo",
+      "internalSource": "Fuente interna {{id}}",
+      "invalidLength": "Valor de source_reference no válido (longitud {{length}})",
+      "invalidShape": "El valor de source_reference tiene un formato no reconocido",
+      "noSource": "Sin fuente",
+      "source": "Fuente"
+    },
+    "syncManager": {
+      "csvUrl": "URL de CSV",
+      "googleSheetsUrl": "URL de Google Sheets"
+    },
+    "voiceImageInput": {
+      "previewAlt": "Vista previa"
+    }
+  },
+  "myWorkMindmap": {
+    "ctxMenu": {
+      "group": {
+        "data": "Datos",
+        "appearance": "Apariencia",
+        "expert": "Herramientas expertas",
+        "more": "Más"
+      },
+      "scopeSelection": "Selección",
+      "scopeBranch": "Rama",
+      "scopeDocument": "Documento"
+    }
+  },
+  "canvasEditBar": {
+    "edgeLabel": "Etiqueta",
+    "edgeCondition": "Tipo de conexión"
   }
 }

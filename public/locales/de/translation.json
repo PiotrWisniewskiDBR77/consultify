@@ -550,6 +550,65 @@
         "hardGate": "Hard Gate",
         "score": "Punktzahl"
       }
+    },
+    "whiteboard": {
+      "selection": {
+        "tidyBoard": "Board aufräumen",
+        "tidySelection": "Auswahl automatisch anordnen"
+      },
+      "empty": {
+        "affinityMap": "Affinitätsdiagramm",
+        "brainstorm": "Brainstorming",
+        "workshopWall": "Workshop-Wand"
+      },
+      "ai": {
+        "needsRealLabels": "Gib mindestens einer Haftnotiz oder Textnotiz einen echten Namen, bevor du nach Themen suchst — alles im aktuellen Bereich trägt noch einen Standardnamen wie „Neue Notiz“ oder „Text“, sodass die KI nichts Sinnvolles gruppieren kann."
+      },
+      "toast": {
+        "pasted": "Eingefügt",
+        "tidiedBoard": "Board aufgeräumt",
+        "tidiedSelection": "Auswahl angeordnet",
+        "frameEmpty": "Rahmen hat keinen Inhalt",
+        "frameNoSelection": "Wähle zuerst entsperrte Elemente aus (außerhalb dieses Rahmens)",
+        "frameAdded": "Zum Rahmen hinzugefügt",
+        "frameReleaseOne": "Aus Rahmen entfernt",
+        "frameAlreadyFits": "Rahmen passt sich bereits an seinen Inhalt an",
+        "frameResized": "Rahmengröße an Inhalt angepasst",
+        "frameDeletedReleased": "Rahmen gelöscht, Inhalt freigegeben",
+        "frameDeletedWithContents": "Rahmen und Inhalt gelöscht"
+      },
+      "toolbarExtra": {
+        "insert": "Einfügen",
+        "tidyBoard": "Board aufräumen"
+      },
+      "styleBar": {
+        "ariaLabel": "Elementstil",
+        "color": "Farbe festlegen",
+        "clearColor": "Farbe zurücksetzen",
+        "fontSize": "Schriftgröße {{step}}",
+        "bold": "Fett"
+      },
+      "reactions": {
+        "removeReaction": "Deine Reaktion entfernen",
+        "addReaction": "Deine Reaktion hinzufügen",
+        "reactWith": "Mit {{emoji}} reagieren",
+        "openTray": "Reaktion hinzufügen"
+      },
+      "linkedArtifactsCount_one": "{{count}} verknüpftes Artefakt",
+      "linkedArtifactsCount_other": "{{count}} verknüpfte Artefakte",
+      "convertedBadge": "Konvertiert"
+    },
+    "knowledge": {
+      "cardNodes": {
+        "evidenceDefault": "Beleg",
+        "idPrefix": "ID: {{id}}",
+        "knowledgeDefault": "Wissen",
+        "noteBadge": "Notiz",
+        "typeArtifact": "Artefakt",
+        "typeDocument": "Dokument",
+        "typeNote": "Notiz",
+        "typeUrl": "URL"
+      }
     }
   },
   "step1": {
@@ -3073,5 +3132,509 @@
       "reportTypeSteeringCommittee": "Steering committee",
       "reportTypeCisoSecurity": "CISO / Security"
     }
+  },
+  "formBuilder": {
+    "tabFields": "Felder",
+    "tabSettings": "Einstellungen",
+    "tabPreview": "Vorschau",
+    "fieldListHint": "Ziehen zum Umsortieren. Sichtbarkeit umschalten und jedes Feld konfigurieren.",
+    "moveUp": "Nach oben",
+    "moveDown": "Nach unten",
+    "toggleRequired": "Pflichtfeld umschalten",
+    "required": "Erforderlich",
+    "optional": "Optional",
+    "showField": "Feld anzeigen",
+    "hideField": "Feld ausblenden",
+    "customLabel": "Eigene Bezeichnung",
+    "helpText": "Hilfetext",
+    "helpTextPlaceholder": "Hinweise zu diesem Feld …",
+    "defaultValue": "Standardwert",
+    "conditionalVisibility": "Bedingte Sichtbarkeit",
+    "selectField": "Feld auswählen …",
+    "opEquals": "ist gleich",
+    "opNotEquals": "ist ungleich",
+    "opIsEmpty": "ist leer",
+    "opIsNotEmpty": "ist nicht leer",
+    "condValue": "Wert …",
+    "formName": "Formularname",
+    "formDescription": "Beschreibung",
+    "slug": "URL-Slug",
+    "submitMessage": "Erfolgsmeldung",
+    "redirectUrl": "Weiterleitungs-URL (optional)",
+    "notificationEmail": "Benachrichtigungs-E-Mail (optional)",
+    "notificationEmailHint": "Erhalte eine E-Mail, wenn eine neue Antwort eingereicht wird",
+    "allowMultiple": "Mehrfache Einreichungen zulassen",
+    "requireAuth": "Authentifizierung erforderlich",
+    "submit": "Absenden",
+    "save": "Speichern",
+    "shareLink": "Freigabelink",
+    "copied": "Kopiert!",
+    "submissions": "Einreichungen",
+    "title": "Formular-Editor"
+  },
+  "formsIndex": {
+    "title": "Formulare",
+    "createForm": "Formular erstellen",
+    "newFormName": "Neues Formular",
+    "createError": "Formular konnte nicht erstellt werden",
+    "deleted": "Formular gelöscht",
+    "deleteError": "Formular konnte nicht gelöscht werden",
+    "shareUpdated": "Freigabe aktualisiert",
+    "shareError": "Freigabe konnte nicht aktualisiert werden",
+    "loadError": "Formulare konnten nicht geladen werden",
+    "emptyTitle": "Erstelle ein Formular, um Daten zu erfassen",
+    "emptyDescription": "Mit Formularen kannst du strukturierte Daten von jedem erfassen — für öffentliche Formulare ist keine Anmeldung erforderlich.",
+    "created": "Erstellt",
+    "responses": "Antworten",
+    "copied": "Kopiert!",
+    "copyLink": "Link kopieren",
+    "sharing": "Freigabe",
+    "sharePublic": "Öffentlich",
+    "shareOrg": "Nur Organisation",
+    "shareAuth": "Angemeldete Benutzer",
+    "preview": "Vorschau",
+    "manageIntake": "Aufnahme verwalten (privater Link)",
+    "edit": "Bearbeiten",
+    "confirmDelete": "Bestätigen"
+  },
+  "interfacesIndex": {
+    "title": "Oberflächen",
+    "createInterface": "Oberfläche erstellen",
+    "chooseTemplate": "Vorlage auswählen",
+    "createError": "Oberfläche konnte nicht erstellt werden",
+    "deleted": "Oberfläche gelöscht",
+    "deleteError": "Oberfläche konnte nicht gelöscht werden",
+    "saveError": "Oberfläche konnte nicht gespeichert werden",
+    "emptyTitle": "Erstelle individuelle Ansichten deiner Daten",
+    "emptyDescription": "Mit Oberflächen kannst du Dashboards, Detailansichten und individuelle Layouts erstellen.",
+    "lastModified": "Zuletzt geändert",
+    "blocks": "Blöcke",
+    "copied": "Kopiert!",
+    "share": "Teilen",
+    "edit": "Bearbeiten",
+    "confirmDelete": "Bestätigen",
+    "tplBlank": "Leer",
+    "tplBlankDesc": "Leere Fläche",
+    "tplDashboard": "Dashboard",
+    "tplDashboardDesc": "Vorkonfiguriert mit Diagrammblöcken",
+    "tplFormView": "Formularansicht",
+    "tplFormViewDesc": "Für Dateneingabe optimiert",
+    "tplRecordDetail": "Datensatzdetail",
+    "tplRecordDetailDesc": "Einzelansicht eines Datensatzes mit allen Feldern"
+  },
+  "mindmap": {
+    "aiExpandTargetNodeMissing": "Dieser Knoten befindet sich nicht mehr auf der Fläche — wähle einen anderen Knoten zum Erweitern."
+  },
+  "ideas": {
+    "table": {
+      "csvImportBlockedAtCap": "Die Tabelle hat das Limit von {{max}} Zeilen erreicht — entferne Zeilen, bevor du weitere importierst.",
+      "csvImportTruncatedAtCap": "{{imported}} von {{total}} Zeilen importiert — das Tabellenlimit liegt bei {{max}} Zeilen. {{skipped}} Zeilen wurden nicht importiert.",
+      "rowRenderCapBanner": "Zeige die ersten {{shown}} von {{total}} Zeilen — {{hidden}} weitere werden nicht angezeigt, damit die Tabelle reaktionsschnell bleibt. Exportiere oder filtere, um den Rest zu sehen.",
+      "publicForm": {
+        "linkExpires": "Dieser private Link läuft am {{date}} ab.",
+        "noFieldsShared": "Der Absender hat noch keine Felder mit dir geteilt.",
+        "noOptionsConfigured": "Keine Optionen konfiguriert",
+        "poweredBy": "Bereitgestellt von Consultify Table Platform",
+        "poweredByPrivate": "Bereitgestellt von Consultify Table Platform · Privater Link",
+        "responseRecorded": "Antwort gespeichert!",
+        "selectOption": "Auswählen …",
+        "submitAnother": "Weitere Antwort einreichen",
+        "uploadFile": "Datei hochladen"
+      },
+      "quickActions": {
+        "viewNotFound": "Ansicht nicht gefunden: {{viewId}}",
+        "columnNotFound": "Spalte nicht gefunden: {{colKey}}",
+        "columnNameRequired": "Gib einen neuen Spaltennamen an, um sie umzubenennen.",
+        "rowIdRequired": "Gib die Zeilen-ID der Tabelle an.",
+        "cellTargetMissing": "Ziel-Zelle fehlt"
+      },
+      "summaryDashboard": {
+        "max": "Max.",
+        "min": "Min."
+      },
+      "viewRouter": {
+        "densityCompact": "Kompakt",
+        "densityNormal": "Normal",
+        "densityComfortable": "Komfortabel",
+        "rowDensity": "Zeilendichte",
+        "filterColumn": "Filtern …",
+        "filterColumnAria": "Filtern nach",
+        "resizeColumn": "Spaltenbreite ändern",
+        "sortColumn": "Sortieren nach {{name}}",
+        "selectRow": "Zeile auswählen"
+      },
+      "alreadyEmpty": "Zelle ist bereits leer",
+      "areYouSureYouWantToDeleteThisColumn": "Möchtest du diese Spalte wirklich löschen? Dies kann nicht rückgängig gemacht werden.",
+      "cellActions": "Zellaktionen",
+      "columnActions": "Spaltenaktionen",
+      "edgeKind": "Art",
+      "groupBy": "Gruppieren nach",
+      "lockedReason": "Tabelle ist gesperrt",
+      "noGrouping": "Keine Gruppierung",
+      "readOnlyCell": "Zelle ist schreibgeschützt",
+      "rowActions": "Zeilenaktionen",
+      "savedViewActions": "Aktionen für gespeicherte Ansicht",
+      "typeCannotExpand": "Typzelle kann nicht erweitert werden",
+      "emptyFilterState": {
+        "headline": "Keine Ergebnisse für diesen Filter",
+        "description": "Kein Datensatz entspricht den aktiven Filtern. Filter zurücksetzen, um alle Datensätze zu sehen.",
+        "clearFilters": "Filter zurücksetzen"
+      },
+      "email": "E-Mail",
+      "provenanceRecordId": "Datensatz: {{id}} …",
+      "provenanceRunId": "Lauf: {{id}} …",
+      "validationBadgeAdmin": "Admin",
+      "webhookUrl": "Webhook-URL",
+      "intakeJwt": {
+        "failedToLoad": "Aufnahmekontext konnte nicht geladen werden",
+        "subjectRequired": "Betreff des Empfängers ist erforderlich",
+        "subjectTooLong": "Betreff darf höchstens {{max}} Zeichen lang sein",
+        "linkIssued": "Aufnahmelink ausgestellt",
+        "failedToIssue": "Link konnte nicht ausgestellt werden: {{message}}",
+        "unknown": "unbekannt",
+        "failedToCopy": "Kopieren in die Zwischenablage fehlgeschlagen",
+        "allowListSaved": "Freigabeliste gespeichert",
+        "failedToSaveAllowList": "Freigabeliste konnte nicht gespeichert werden: {{message}}",
+        "panelAriaLabel": "Einstellungen für Formularaufnahme",
+        "panelTitle": "Formularaufnahme (privater Link)",
+        "closePanel": "Aufnahmebereich schließen",
+        "loadingContext": "Aufnahmekontext wird geladen …",
+        "summaryAriaLabel": "Aufnahmeübersicht",
+        "summary": "Übersicht",
+        "targetTable": "Zieltabelle",
+        "allowList": "Freigabeliste",
+        "allConfiguredFields": "Alle konfigurierten Felder",
+        "hardExpiry": "Feste Ablaufzeit",
+        "none": "Keine",
+        "status": "Status",
+        "published": "Veröffentlicht",
+        "draftWontVerify": "Entwurf (Links werden nicht verifiziert)",
+        "allowListEditorAriaLabel": "Editor für Freigabeliste",
+        "fieldAllowList": "Feld-Freigabeliste",
+        "selectAll": "Alle auswählen",
+        "clearAllowList": "Freigabeliste leeren (Formularfelder verwenden)",
+        "clear": "Leeren",
+        "allowListHint": "Eine leere Freigabeliste greift auf die konfigurierten Formularfelder zurück. Die Auswahl einer Teilmenge schränkt ein, was Empfänger einreichen können.",
+        "noConfiguredFields": "Das Formular hat noch keine konfigurierten Felder.",
+        "saveAllowList": "Freigabeliste speichern",
+        "issueLinkAriaLabel": "Aufnahmelink ausstellen",
+        "issuePrivateLink": "Privaten Link ausstellen",
+        "recipientSubject": "Betreff des Empfängers (E-Mail oder Bezeichnung)",
+        "recipientSubjectAriaLabel": "Betreff des Empfängers",
+        "expiresIn": "Läuft ab in",
+        "issueLink": "Link ausstellen",
+        "publishFirst": "Veröffentliche zuerst das Formular; private Links werden bei einem Entwurf nicht verifiziert.",
+        "copied": "Kopiert",
+        "copyUrl": "URL kopieren",
+        "expires": "Läuft ab am {{date}}",
+        "copyToken": "Token kopieren",
+        "ttl1Day": "1 Tag",
+        "ttl7Days": "7 Tage",
+        "ttl30Days": "30 Tage",
+        "ttl90Days": "90 Tage",
+        "fieldCount_one": "{{count}} Feld",
+        "fieldCount_other": "{{count}} Felder"
+      },
+      "recordDetails": "Datensatzdetails"
+    },
+    "mindmap": {
+      "resetView": "Ansicht zurücksetzen"
+    },
+    "financial": {
+      "dialogTitle": "Wirtschaftlichkeitsrechnung",
+      "costDrivers": "Kostentreiber",
+      "benefitDrivers": "Nutzentreiber",
+      "addCost": "Kostentreiber hinzufügen",
+      "addBenefit": "Nutzentreiber hinzufügen",
+      "collapsePeriods": "Monatsperioden einklappen",
+      "expandPeriods": "Monatsperioden bearbeiten",
+      "col": {
+        "label": "Treiber",
+        "type": "Typ",
+        "category": "Kategorie",
+        "unit": "Einheit",
+        "total": "Gesamt",
+        "confidence": "Konfidenz",
+        "evidence": "Beleg"
+      },
+      "monthlyValues": "Monatswerte",
+      "months": "Mon.",
+      "labelPlaceholder": "Unbenannter Treiber",
+      "categoryPlaceholder": "Kategorie",
+      "confidenceHigh": "Hoch",
+      "confidenceMedium": "Mittel",
+      "confidenceLow": "Niedrig",
+      "removeDriver": "Treiber entfernen",
+      "noDriversYet": "Noch keine Treiber.",
+      "currency": "Währung",
+      "horizon": "Zeithorizont",
+      "discountRate": "Diskontsatz",
+      "scenarioMultipliers": "Szenario-Multiplikator (vs. Basis)",
+      "recompute": "Neu berechnen",
+      "lastComputed": "Zuletzt berechnet",
+      "evidenceHealth": "Belegqualität",
+      "evidenceNeeded": "Belege erforderlich",
+      "evidenceMissingFor": "Belege erforderlich: {{list}}",
+      "driverCounts": "Treiber",
+      "minimumsNotMet": "Benötigt ≥{{min}} von jedem für den Akzeptanzfall",
+      "engineNotWired": "Berechnungs-Engine ist in diesem Build nicht angebunden — es werden keine Zahlen erfunden.",
+      "convert": {
+        "reasonStale": "Berechne den Fall zuerst neu — ein veralteter Fall kann nicht konvertiert werden.",
+        "reasonNotBuilt": "Die Umwandlung in ein nachgelagertes, verwaltetes Artefakt ist in dieser Version noch nicht implementiert (Epic E11)."
+      },
+      "analytics": "Analysen",
+      "cost": "Kosten",
+      "benefit": "Nutzen",
+      "costShort": "Kosten",
+      "benefitShort": "Nutzen",
+      "chart": {
+        "cashFlow": {
+          "title": "Kumulierter Cashflow",
+          "subtitle": "Wann überschreitet der Fall die Nulllinie (Amortisation)?"
+        },
+        "composition": {
+          "title": "Zusammensetzung von Nutzen / Kosten",
+          "subtitle": "Was treibt jede Periode an (Basisszenario)?"
+        },
+        "range": {
+          "title": "Szenariobandbreite (Kapitalwert)",
+          "subtitle": "Basis vs. Optimistisch vs. Pessimistisch",
+          "subtitleSpread": "Spanne über Szenarien: {{spread}}"
+        },
+        "sensitivity": {
+          "title": "Sensitivität",
+          "subtitle": "Welche Treiberannahme beeinflusst den Kapitalwert am stärksten (±20 %)?",
+          "low": "-20 %",
+          "high": "+20 %"
+        },
+        "noResult": "Neu berechnen, um dieses Diagramm zu sehen.",
+        "noSensitivity": "Die Engine hat noch keine Sensitivitätszeilen zurückgegeben."
+      },
+      "evidenceCount_one": "{{count}} Quelle",
+      "evidenceCount_other": "{{count}} Quellen",
+      "staleLabel": "veraltet"
+    }
+  },
+  "myWorkIdeas": {
+    "processFlowTool": {
+      "nodeLimitWarning": "Du näherst dich dem Schrittlimit ({{warn}} Schritte). Erwäge eine Aufteilung in mehrere Abläufe.",
+      "nodeLimitReached": "Schrittlimit erreicht (maximal {{limit}}). Bitte lösche einige Schritte oder teile den Prozess in mehrere Abläufe auf.",
+      "cannotDeleteLastLane": "Dies ist die einzige verbleibende Spur im Prozess — sie kann nicht gelöscht werden. Füge zuerst eine weitere Spur hinzu, wenn du die Schritte dorthin verschieben möchtest, oder benenne diese Spur stattdessen um.",
+      "aiRewriteStep": "KI: Schritt umschreiben",
+      "nodeTooltip": {
+        "accept": "Akzeptieren",
+        "automation": "Automatisierung: {{level}}",
+        "cost": "Kosten:",
+        "duration": "Dauer:",
+        "owner": "Verantwortlich:",
+        "status": "Status:",
+        "attachmentCount_one": "{{count}} Anhang",
+        "attachmentCount_other": "{{count}} Anhänge"
+      }
+    },
+    "drawingLayer": {
+      "kbToggleLabel": "Mit Tastatur zeichnen",
+      "kbCanvasRole": "Zeichenfläche",
+      "kbCanvasLabel": "Zeichenfläche. Verwende die Pfeiltasten, um den Cursor zu bewegen, Leertaste oder Eingabetaste, um einen Strich zu starten oder zu beenden, und Escape, um ihn abzuschließen.",
+      "kbInstructions": "Tastaturzeichenmodus: Die Pfeiltasten bewegen den Zeichencursor, Leertaste oder Eingabetaste setzt den Stift ab oder hebt ihn an, Escape schließt den aktuellen Strich ab und fügt ihn der Fläche hinzu. Umschalt plus Pfeiltaste bewegt in größeren Schritten.",
+      "kbModeEntered": "Tastaturzeichenmodus. Die Pfeiltasten bewegen den Cursor, Leertaste oder Eingabetaste startet oder stoppt den Stift, Escape beendet den Strich.",
+      "kbPenDown": "Stift abgesetzt. Mit den Pfeiltasten bewegen, um zu zeichnen.",
+      "kbPenUp": "Stift angehoben. Bewegen, um neu zu positionieren, oder Escape drücken, um den Strich abzuschließen.",
+      "kbStrokeCompleted": "Strich abgeschlossen und zur Fläche hinzugefügt.",
+      "kbStrokeDiscarded": "Kein Strich gezeichnet — nichts hinzuzufügen.",
+      "kbStatusPenDown": "Stift abgesetzt",
+      "kbStatusPenUp": "Stift angehoben"
+    }
+  },
+  "processFlow": {
+    "toolbar": {
+      "lanesCount": "Spuren {{value}}",
+      "aiCoach": "KI-Coach"
+    },
+    "propertiesPanel": {
+      "systemLabel": "System",
+      "unitMin": "Min."
+    },
+    "contextMenu": {
+      "menuAriaLabel": "Prozessablauf-Aktionen"
+    },
+    "laneSystem": {
+      "moveUp": "Spur nach oben verschieben",
+      "moveDown": "Spur nach unten verschieben",
+      "changeColor": "Spurfarbe ändern",
+      "deleteLane": "Spur löschen"
+    }
+  },
+  "myWorkTable": {
+    "governedModels": {
+      "formulaAvg": "MITTELWERT",
+      "formulaCount": "ANZAHL",
+      "formulaExpression": "Ausdruck",
+      "formulaSum": "SUMME"
+    },
+    "connectorWizard": {
+      "apiKey": "API-Schlüssel",
+      "apiToken": "API-Token",
+      "baseId": "Basis-ID",
+      "database": "Datenbank",
+      "email": "E-Mail",
+      "host": "Host",
+      "jqlLabel": "JQL ({{optional}})",
+      "port": "Port",
+      "schema": "Schema",
+      "spreadsheetId": "Tabellen-ID"
+    },
+    "addColumnDialog": {
+      "nameRequired": "Gib dem Feld einen Namen, bevor du es erstellst.",
+      "duplicateName": "Ein Feld namens „{{name}}“ existiert bereits — wähle einen anderen Namen.",
+      "enterToCreate": "Eingabetaste drücken, um zu erstellen und ein weiteres hinzuzufügen.",
+      "preview": "Vorschau",
+      "untitledField": "Unbenanntes Feld",
+      "addedThisSession": "In dieser Sitzung hinzugefügt",
+      "undo": "Rückgängig",
+      "done": "Fertig",
+      "addAnother": "Feld erstellen und weiteres hinzufügen",
+      "addedCount": "{{count}} Feld(er) in dieser Sitzung hinzugefügt — mach weiter oder klicke auf Fertig."
+    },
+    "aiTableAssistant": {
+      "cancel": "Abbrechen",
+      "cancelled": "Befehl abgebrochen.",
+      "send": "Senden",
+      "closeAssistant": "Assistent schließen",
+      "commandRequired": "Gib einen Befehl ein, bevor du sendest.",
+      "columnNotFound": "Die Spalte „{{column}}“ wurde in dieser Tabelle nicht gefunden.",
+      "noRowsToAdd": "Die KI hat keine hinzuzufügenden Zeilen zurückgegeben.",
+      "noChanges": "Dieser Befehl entspricht keiner Änderung.",
+      "transportError": "Der KI-Dienst konnte nicht erreicht werden. Verbindung prüfen und erneut versuchen.",
+      "retry": "Erneut versuchen",
+      "edit": "Bearbeiten",
+      "historyLabel": "Befehlsverlauf",
+      "statusPending": "Wird bearbeitet …",
+      "statusApplied": "Angewendet",
+      "statusProposal": "Vorschlag bereit",
+      "statusUnsupported": "Nicht unterstützt",
+      "statusValidation": "Befehl konnte nicht ausgeführt werden",
+      "statusTransport": "Verbindungsproblem",
+      "statusCancelled": "Abgebrochen"
+    },
+    "fieldProposal": {
+      "refreshTitle": "Aus Artefakten aktualisieren",
+      "autofillTitle": "Aus Artefakten automatisch ausfüllen",
+      "summary": "{{rows}} Zeilen · {{cells}} zu ändernde Felder",
+      "selectAll": "Alle auswählen",
+      "deselectAll": "Alle abwählen",
+      "dismiss": "Verwerfen",
+      "empty": "(leer)",
+      "reject": "Ablehnen",
+      "apply": "Anwenden ({{count}})",
+      "applied": "{{count}} Feld(er) angewendet",
+      "fieldCount_one": "{{count}} Feld",
+      "fieldCount_other": "{{count}} Felder"
+    },
+    "aiCell": {
+      "pending": "KI ausstehend …",
+      "promptTooltip": "KI-Prompt: {{template}}"
+    },
+    "cellEditor": {
+      "list": "Liste"
+    },
+    "chartConfigPanel": {
+      "aggAverage": "Durchschnitt",
+      "aggCount": "Anzahl",
+      "aggMax": "Max.",
+      "aggMin": "Min.",
+      "aggregation": "Aggregation",
+      "aggSum": "Summe",
+      "chartType": "Diagrammtyp",
+      "chartTypeBar": "Balken",
+      "chartTypeDonut": "Donut",
+      "chartTypeLine": "Linie",
+      "chartTypePie": "Kreis",
+      "noneCountOnly": "Keine (nur Anzahl)",
+      "selectField": "Feld auswählen …",
+      "title": "Titel",
+      "titlePlaceholder": "Diagrammtitel …",
+      "xAxisField": "X-Achsen-Feld",
+      "yAxisField": "Y-Achsen-Feld",
+      "yAxisFieldHint": "(numerisch, optional)"
+    },
+    "extensionHost": {
+      "closeExtension": "Erweiterung schließen",
+      "extension": "Erweiterung",
+      "loading": "Wird geladen …",
+      "scopeCount_one": "{{count}} Berechtigung",
+      "scopeCount_other": "{{count}} Berechtigungen"
+    },
+    "extensionMarketplace": {
+      "browseMarketplace": "Marktplatz durchsuchen",
+      "byAuthor": "von {{author}}",
+      "categoryAll": "Alle",
+      "categoryAutomation": "Automatisierung",
+      "categoryIntegration": "Integration",
+      "categoryUtility": "Dienstprogramm",
+      "categoryVisualization": "Visualisierung",
+      "checkBackLater": "Schau später wieder vorbei oder registriere deine eigene.",
+      "install": "Installieren",
+      "installedCount": "Installiert ({{count}})",
+      "installing": "Wird installiert …",
+      "loadingExtensions": "Erweiterungen werden geladen …",
+      "marketplace": "Marktplatz",
+      "noneAvailable": "Noch keine Erweiterungen verfügbar.",
+      "noneInstalled": "Keine Erweiterungen installiert.",
+      "open": "Öffnen",
+      "scopeMetadataRead": "Schema lesen",
+      "scopeMetadataWrite": "Schema ändern",
+      "scopeNetwork": "Netzwerkzugriff",
+      "scopeRecordsRead": "Datensätze lesen",
+      "scopeRecordsWrite": "Datensätze schreiben",
+      "scopeUi": "UI-Steuerelemente",
+      "uninstall": "Deinstallieren",
+      "installCount_one": "{{count}} Installation",
+      "installCount_other": "{{count}} Installationen"
+    },
+    "offlineIndicator": {
+      "hoursAgo": "vor {{count}} Std.",
+      "justNow": "gerade eben",
+      "lastSync": "Letzte Synchronisierung: {{time}}",
+      "minutesAgo": "vor {{count}} Min.",
+      "offline": "Offline",
+      "syncing": "Synchronisierung läuft …",
+      "syncNow": "Jetzt synchronisieren",
+      "pendingChanges_one": "{{count}} ausstehende Änderung",
+      "pendingChanges_other": "{{count}} ausstehende Änderungen"
+    },
+    "sourceReferenceCell": {
+      "blocked": "Blockiert",
+      "externalBlocked": "Externe Quellen sind für dieses Feld nicht zulässig",
+      "internalSource": "Interne Quelle {{id}}",
+      "invalidLength": "source_reference-Wert ungültig (Länge {{length}})",
+      "invalidShape": "source_reference-Wert hat ein nicht erkanntes Format",
+      "noSource": "Keine Quelle",
+      "source": "Quelle"
+    },
+    "syncManager": {
+      "csvUrl": "CSV-URL",
+      "googleSheetsUrl": "Google Sheets-URL"
+    },
+    "voiceImageInput": {
+      "previewAlt": "Vorschau"
+    }
+  },
+  "myWorkMindmap": {
+    "ctxMenu": {
+      "group": {
+        "data": "Daten",
+        "appearance": "Erscheinungsbild",
+        "expert": "Experten-Tools",
+        "more": "Mehr"
+      },
+      "scopeSelection": "Auswahl",
+      "scopeBranch": "Zweig",
+      "scopeDocument": "Dokument"
+    }
+  },
+  "canvasEditBar": {
+    "edgeLabel": "Bezeichnung",
+    "edgeCondition": "Verbindungstyp"
   }
 }
