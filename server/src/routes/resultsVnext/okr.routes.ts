@@ -2671,8 +2671,10 @@ router.post(
         return;
       }
       const body = req.body as import('zod').infer<typeof PostOkrCommentSchema>;
+      const access = await resolveAccess(req, auth);
       const outcome = await postComment({
         setId,
+        access,
         objectiveId,
         keyResultId: body.keyResultId ?? null,
         organizationId: auth.organizationId,
@@ -2714,8 +2716,10 @@ router.post(
         return;
       }
       const body = req.body as import('zod').infer<typeof PostOkrRecognitionSchema>;
+      const access = await resolveAccess(req, auth);
       const outcome = await postRecognition({
         setId,
+        access,
         objectiveId,
         keyResultId: body.keyResultId ?? null,
         organizationId: auth.organizationId,
@@ -2758,8 +2762,10 @@ router.post(
         return;
       }
       const body = req.body as import('zod').infer<typeof RaiseOkrSupportRequestSchema>;
+      const access = await resolveAccess(req, auth);
       const outcome = await raiseSupportRequest({
         setId,
+        access,
         objectiveId,
         keyResultId: body.keyResultId ?? null,
         organizationId: auth.organizationId,
@@ -2835,6 +2841,7 @@ router.post(
         return;
       }
       const body = req.body as import('zod').infer<typeof AcknowledgeOkrSupportRequestSchema>;
+      const access = await resolveAccess(req, auth);
       const outcome = await acknowledgeSupportRequest({
         requestId,
         organizationId: auth.organizationId,
@@ -2844,6 +2851,7 @@ router.post(
         idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
         correlationId: getCorrelationId(req),
         reason: body.reason ?? null,
+        access,
       });
       res.status(200).json({
         outcome: outcome.outcome,
@@ -2876,6 +2884,7 @@ router.post(
         return;
       }
       const body = req.body as import('zod').infer<typeof ResolveOkrSupportRequestSchema>;
+      const access = await resolveAccess(req, auth);
       const outcome = await resolveSupportRequest({
         requestId,
         organizationId: auth.organizationId,
@@ -2886,6 +2895,7 @@ router.post(
         idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
         correlationId: getCorrelationId(req),
         reason: body.reason ?? null,
+        access,
       });
       res.status(200).json({
         outcome: outcome.outcome,
@@ -2918,6 +2928,7 @@ router.post(
         return;
       }
       const body = req.body as import('zod').infer<typeof DismissOkrSupportRequestSchema>;
+      const access = await resolveAccess(req, auth);
       const outcome = await dismissSupportRequest({
         requestId,
         organizationId: auth.organizationId,
@@ -2928,6 +2939,7 @@ router.post(
         idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
         correlationId: getCorrelationId(req),
         reason: body.reason ?? null,
+        access,
       });
       res.status(200).json({
         outcome: outcome.outcome,

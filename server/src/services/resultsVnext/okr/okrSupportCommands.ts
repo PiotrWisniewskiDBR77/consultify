@@ -34,6 +34,7 @@ import {
   type AtomicCommandOutcome,
   type AtomicEventInput,
 } from '../platform/atomicWrite.js';
+import { assertCommandCapability, type CommandAccessContext } from '../platform/commandCapabilityGuard.js';
 import { completeObligation, createObligation } from '../platform/obligations.js';
 
 import { OKR_EVENT_SOURCE } from './okrProgramCommands.js';
@@ -124,6 +125,24 @@ async function assertObjectiveAndKeyResultBelongToSet(
   }
 }
 
+// RN-G5 — command capability names (docs/product/results-vnext/RN_G5_AUTHZ_DESIGN.md).
+// postComment/postRecognition/raiseSupportRequest are deliberately left
+// UNGATED (see each command's own `void access` comment below) — same
+// "brand-new row, no baseline capability path exists in this package's
+// allowlist, restricting to admin-only would be a real functional
+// regression" shape as createKpiDraft/createOkrSet, but for a DIFFERENT
+// underlying reason: this file's own header states the INTENDED model is
+// "org membership plus the route layer's ABAC pre-fetch of the parent Set"
+// — team-wide-by-design, not owner/reviewer-restricted (unlike everything
+// else in the OKR domain). acknowledgeSupportRequest/resolveSupportRequest/
+// dismissSupportRequest act on an EXISTING request with a real assignee, so
+// those three ARE gated.
+export const OKR_SUPPORT_CAPABILITIES = {
+  acknowledge: 'results.okr.support.acknowledge',
+  resolve: 'results.okr.support.resolve',
+  dismiss: 'results.okr.support.dismiss',
+} as const;
+
 async function loadSupportRequestForUpdate(
   client: PoolClient,
   requestId: string,
@@ -153,6 +172,7 @@ export interface PostCommentInput {
   correlationId?: string;
   causationId?: string | null;
   reason?: string | null;
+  access: CommandAccessContext;
 }
 
 export async function postComment(input: PostCommentInput): Promise<AtomicCommandOutcome<OkrSupportRequest>> {
@@ -168,6 +188,7 @@ export async function postComment(input: PostCommentInput): Promise<AtomicComman
     correlationId,
     causationId = null,
     reason = null,
+    access,
   } = input;
 
   if (!body || !body.trim()) {
@@ -177,6 +198,11 @@ export async function postComment(input: PostCommentInput): Promise<AtomicComman
   return executeAtomicCreate<OkrSupportRequest>({
     organizationId,
     applyMutation: async (client) => {
+      // RN-G5 DECISION (documented, not an oversight): see this file's own
+      // OKR_SUPPORT_CAPABILITIES comment — commenting is team-wide-by-design,
+      // not owner/reviewer-restricted.
+      void access;
+
       await assertObjectiveAndKeyResultBelongToSet(client, { setId, objectiveId, keyResultId, organizationId });
       const insertResult = await client.query<OkrSupportRequestRow>(
         `INSERT INTO okr_vnext_support_requests
@@ -236,6 +262,7 @@ export interface PostRecognitionInput {
   correlationId?: string;
   causationId?: string | null;
   reason?: string | null;
+  access: CommandAccessContext;
 }
 
 export async function postRecognition(input: PostRecognitionInput): Promise<AtomicCommandOutcome<OkrSupportRequest>> {
@@ -252,6 +279,7 @@ export async function postRecognition(input: PostRecognitionInput): Promise<Atom
     correlationId,
     causationId = null,
     reason = null,
+    access,
   } = input;
 
   if (!body || !body.trim()) {
@@ -261,6 +289,9 @@ export async function postRecognition(input: PostRecognitionInput): Promise<Atom
   return executeAtomicCreate<OkrSupportRequest>({
     organizationId,
     applyMutation: async (client) => {
+      // RN-G5 DECISION: same as postComment — team-wide-by-design.
+      void access;
+
       await assertObjectiveAndKeyResultBelongToSet(client, { setId, objectiveId, keyResultId, organizationId });
 
       // Fail-closed on program.recognition_enabled = false, checked via the
@@ -344,6 +375,7 @@ export interface RaiseSupportRequestInput {
   correlationId?: string;
   causationId?: string | null;
   reason?: string | null;
+  access: CommandAccessContext;
 }
 
 export async function raiseSupportRequest(
@@ -363,6 +395,7 @@ export async function raiseSupportRequest(
     correlationId,
     causationId = null,
     reason = null,
+    access,
   } = input;
 
   if (!body || !body.trim()) {
@@ -375,6 +408,11 @@ export async function raiseSupportRequest(
   return executeAtomicCreate<OkrSupportRequest>({
     organizationId,
     applyMutation: async (client) => {
+      // RN-G5 DECISION: same as postComment — team-wide-by-design (anyone
+      // who can see the Set may raise a support request against it and
+      // assign it to whoever they choose).
+      void access;
+
       await assertObjectiveAndKeyResultBelongToSet(client, { setId, objectiveId, keyResultId, organizationId });
 
       if (originCheckInId) {
@@ -460,6 +498,7 @@ export interface AcknowledgeSupportRequestInput {
   correlationId?: string;
   causationId?: string | null;
   reason?: string | null;
+  access: CommandAccessContext;
 }
 
 export async function acknowledgeSupportRequest(
@@ -475,6 +514,7 @@ export async function acknowledgeSupportRequest(
     correlationId,
     causationId = null,
     reason = null,
+    access,
   } = input;
 
   let beforeState: Record<string, unknown> | null = null;
@@ -486,6 +526,13 @@ export async function acknowledgeSupportRequest(
     loadForUpdate: loadSupportRequestForUpdate,
     getCurrentVersion: supportRequestRowVersion,
     applyMutation: async (client, currentRow, nextVersion) => {
+      assertCommandCapability({
+        access,
+        actorUserId,
+        capability: OKR_SUPPORT_CAPABILITIES.acknowledge,
+        responsibleUserIds: [currentRow.assigned_to_user_id, currentRow.created_by],
+      });
+
       if (currentRow.kind !== 'support_request' || currentRow.status !== 'open') {
         throw new OkrSupportRequestValidationError(
           `Support request ${requestId} is not open (kind=${currentRow.kind}, status=${currentRow.status})`,
@@ -553,6 +600,7 @@ export interface ResolveSupportRequestInput {
   correlationId?: string;
   causationId?: string | null;
   reason?: string | null;
+  access: CommandAccessContext;
 }
 
 export async function resolveSupportRequest(
@@ -569,6 +617,7 @@ export async function resolveSupportRequest(
     correlationId,
     causationId = null,
     reason = null,
+    access,
   } = input;
 
   if (!resolutionNote || !resolutionNote.trim()) {
@@ -584,6 +633,13 @@ export async function resolveSupportRequest(
     loadForUpdate: loadSupportRequestForUpdate,
     getCurrentVersion: supportRequestRowVersion,
     applyMutation: async (client, currentRow, nextVersion) => {
+      assertCommandCapability({
+        access,
+        actorUserId,
+        capability: OKR_SUPPORT_CAPABILITIES.resolve,
+        responsibleUserIds: [currentRow.assigned_to_user_id, currentRow.created_by],
+      });
+
       if (currentRow.kind !== 'support_request' || !['open', 'acknowledged'].includes(currentRow.status ?? '')) {
         throw new OkrSupportRequestValidationError(
           `Support request ${requestId} cannot be resolved from its current state (kind=${currentRow.kind}, status=${currentRow.status})`,
@@ -663,6 +719,7 @@ export interface DismissSupportRequestInput {
   correlationId?: string;
   causationId?: string | null;
   reason?: string | null;
+  access: CommandAccessContext;
 }
 
 export async function dismissSupportRequest(
@@ -679,6 +736,7 @@ export async function dismissSupportRequest(
     correlationId,
     causationId = null,
     reason = null,
+    access,
   } = input;
 
   if (!dismissedReason || !dismissedReason.trim()) {
@@ -694,6 +752,13 @@ export async function dismissSupportRequest(
     loadForUpdate: loadSupportRequestForUpdate,
     getCurrentVersion: supportRequestRowVersion,
     applyMutation: async (client, currentRow, nextVersion) => {
+      assertCommandCapability({
+        access,
+        actorUserId,
+        capability: OKR_SUPPORT_CAPABILITIES.dismiss,
+        responsibleUserIds: [currentRow.assigned_to_user_id, currentRow.created_by],
+      });
+
       if (currentRow.kind !== 'support_request' || !['open', 'acknowledged'].includes(currentRow.status ?? '')) {
         throw new OkrSupportRequestValidationError(
           `Support request ${requestId} cannot be dismissed from its current state (kind=${currentRow.kind}, status=${currentRow.status})`,
