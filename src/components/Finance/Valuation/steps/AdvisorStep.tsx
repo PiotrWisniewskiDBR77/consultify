@@ -67,7 +67,7 @@ export function AdvisorStep(props: AdvisorStepProps): React.ReactElement {
   const grouped = groupAdvisorFindingsByKind(view);
 
   return (
-    <div className="max-w-3xl space-y-4" data-testid="valuation-advisor-step">
+    <div className="max-w-5xl space-y-4" data-testid="valuation-advisor-step">
       <h2 className="text-sm font-semibold text-c-text">Doradca wyceny</h2>
       <p className="text-xs text-c-text-muted">
         Doradca odczytuje dane, formułuje fakty i hipotezy oraz wskazuje dowody — <strong>nie zatwierdza decyzji</strong>{' '}

@@ -69,7 +69,7 @@ export function AssumptionsStep(props: AssumptionsStepProps): React.ReactElement
   }
 
   return (
-    <div className="max-w-2xl space-y-4" data-testid="valuation-assumptions-step">
+    <div className="max-w-5xl space-y-4" data-testid="valuation-assumptions-step">
       <h2 className="text-sm font-semibold text-c-text">Założenia — WACC i struktura kapitału</h2>
 
       <div

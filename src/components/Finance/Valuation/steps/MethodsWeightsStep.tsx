@@ -68,7 +68,7 @@ export function MethodsWeightsStep(props: MethodsWeightsStepProps): React.ReactE
   }
 
   return (
-    <div className="max-w-3xl space-y-4" data-testid="valuation-methods-step">
+    <div className="max-w-5xl space-y-4" data-testid="valuation-methods-step">
       <h2 className="text-sm font-semibold text-c-text">Metody wyceny i wagi koszyka rekomendacji</h2>
 
       {/* §27-exempt: wewnętrzna tabela edytora koszyka metod wyceny (edycja checkbox/waga per wiersz), nie ekran listowy modułu — docs/ui-standards/DOKTRYNA_TABELA_NIE_EXCEL.md */}
