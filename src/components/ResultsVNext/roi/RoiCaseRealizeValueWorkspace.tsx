@@ -33,6 +33,7 @@ import {
   getRoiCaseBenefitsRealization,
   listRoiActualEntries,
   listRoiActualSnapshots,
+  listRoiApprovalSnapshots,
   listRoiForecastVersions,
   listRoiVariances,
   addRoiVarianceCause,
@@ -46,6 +47,7 @@ import {
   verifyRoiActualEntry,
   type RoiActualEntry,
   type RoiActualSnapshot,
+  type RoiApprovalSnapshot,
   type RoiCaseBenefitsRealizationView,
   type RoiForecastVersion,
   type RoiVariance,
@@ -174,6 +176,30 @@ export const RoiCaseRealizeValueWorkspace: React.FC<RoiCaseRealizeValueWorkspace
     setVarLoading(true); setVarError(null);
     listRoiVariances(roiCase.caseId).then(setVariances).catch((e) => setVarError(messageOf(e))).finally(() => setVarLoading(false));
   }, [roiCase.caseId]);
+
+  // RN-G6-C2: the "Record variance" form's approval-snapshot picker was
+  // hardcoded to an empty array (`approvalSnapshots={[]}` below), which
+  // meant `comparisonType: 'approved_vs_forecast'`/`'approved_vs_actual'`
+  // could NEVER be submitted successfully through the UI — the server
+  // requires `referenceApprovalSnapshotId` for those two comparison types
+  // (409 "requires both a approved reference and a forecast reference",
+  // reproduced live) but the dropdown offering it always showed only "—".
+  // Fetched lazily alongside variances (same real endpoint
+  // `RoiCaseDecisionWorkspace.tsx`'s own Approval snapshots tab already
+  // uses), not a new one.
+  const [approvalSnapshots, setApprovalSnapshots] = useState<RoiApprovalSnapshot[]>([]);
+  useEffect(() => {
+    if (tab !== 'variances') return;
+    let cancelled = false;
+    listRoiApprovalSnapshots(roiCase.caseId)
+      .then((rows) => { if (!cancelled) setApprovalSnapshots(rows); })
+      .catch(() => {
+        /* Non-blocking — a fetch failure here just leaves the picker
+         * empty (same honest-gap behavior as before this fix, for THIS
+         * one sub-resource only), it never blocks the rest of the tab. */
+      });
+    return () => { cancelled = true; };
+  }, [tab, roiCase.caseId]);
 
   // ── Benefits realization (single-row view) ────────────────────────────
   const [benefitsRealization, setBenefitsRealization] = useState<RoiCaseBenefitsRealizationView | null | undefined>(undefined);
@@ -434,7 +460,7 @@ export const RoiCaseRealizeValueWorkspace: React.FC<RoiCaseRealizeValueWorkspace
         />
         <RoiVarianceFormModal
           open={varFormOpen}
-          approvalSnapshots={[]}
+          approvalSnapshots={approvalSnapshots}
           forecastVersions={forecastVersions ?? []}
           actualSnapshots={actualSnapshots ?? []}
           onClose={() => (varWrite.busy ? undefined : setVarFormOpen(false))}
