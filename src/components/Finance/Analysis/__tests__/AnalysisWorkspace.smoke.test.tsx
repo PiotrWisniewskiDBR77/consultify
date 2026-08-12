@@ -10,7 +10,9 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { clearFeatureFlagOverrides, setFeatureFlagOverrides } from '@/test-utils/featureFlagOverrides';
 
 import type { AnalysisKpiCatalogEntryDto, AnalysisKpiValueDto, FinanceArtifactDetailDto, FinanceBusinessVersionDetailDto } from '../../../../services/api/financeV2.types';
 
@@ -95,8 +97,17 @@ function setupHappyPathMocks(kpiValues: AnalysisKpiValueDto[] = []): void {
   apiMocks.getAnalysisKpiCatalog.mockResolvedValue(CATALOG);
 }
 
+// AP_MOUNT §A: `AnalysisWorkspace` teraz SAM odczytuje `financeAnalysisWorkspaceV1`
+// i renderuje `null` przy OFF — file-scope hook włącza flagę (ten sam
+// local-override mechanizm co realny harness/użytkownik) dla WSZYSTKICH
+// `describe` bloków w tym pliku.
+beforeEach(() => {
+  setFeatureFlagOverrides({ financeAnalysisWorkspaceV1: true });
+});
+
 afterEach(() => {
   vi.clearAllMocks();
+  clearFeatureFlagOverrides();
 });
 
 describe('AnalysisWorkspace — montowanie realnego komponentu (jsdom)', () => {

@@ -30,10 +30,19 @@
  *     właściwy dialog.
  *
  * UI za flagą `financeAnalysisWorkspaceV1`, domyślnie OFF (CLAUDE.md #7) —
- * ten komponent jest montowany TYLKO gdy caller sprawdził flagę.
+ * eksportowany `AnalysisWorkspace` odczytuje `useFinanceAnalysisWorkspaceFlag()`
+ * SAM (nie tylko caller): przy `false` zwraca `null` PRZED zamontowaniem
+ * `AnalysisWorkspaceInner`, więc `reload()` (który dziś odpala się w
+ * `useEffect` NA MOUNCIE, 4 równoległe wywołania API) nigdy się nie uruchamia.
+ *
+ * ★ D/E (AP_MOUNT §D/§E): ten plik wcześniej NIE miał `FinanceErrorBoundary`
+ * ani realnego `useFinanceFocusMode` (`onEnterFocusMode` był no-opem) —
+ * dodane tutaj, tym samym wzorcem co Baseline/Prediction/Valuation
+ * (Pakiet C już to zapewnia dla tamtych trzech).
  */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
+import { FinanceErrorBoundary } from '../shared/FinanceErrorBoundary';
 import { FinanceWorkspaceBar } from '../shared/FinanceWorkspaceBar';
 import type {
   WorkspaceBarEvaluationContext,
@@ -50,6 +59,8 @@ import {
 import { AnalysisKpiTable, type AnalysisKpiTablePeriodColumn } from './AnalysisKpiTable';
 import { AnalysisKpiDetailCard, type AnalysisKpiHistoryEntry, type AnalysisKpiPeriodSeriesPoint } from './AnalysisKpiDetailCard';
 import { AnalysisCreatorWizard } from './AnalysisCreatorWizard';
+import { useFinanceAnalysisWorkspaceFlag } from '../../../hooks/useFinanceAnalysisWorkspaceFlag';
+import { useFinanceFocusMode } from '../../../hooks/useFinanceFocusMode';
 import { computeYoyDelta, groupAnalysisKpiValuesByKpi, type AnalysisKpiCatalogFormulaInfo } from './analysisKpiTable.contract';
 import type { AnalysisCreatorDraftPayload, AnalysisCreatorPeriodOption, AnalysisCreatorSourceOption } from './analysisCreatorWizard.contract';
 import {
@@ -90,7 +101,19 @@ interface LoadState {
   error: string | null;
 }
 
-export function AnalysisWorkspace(props: AnalysisWorkspaceProps): React.ReactElement {
+/**
+ * Gate publiczny (CLAUDE.md #7/#9): przy `financeAnalysisWorkspaceV1` OFF
+ * zwraca `null` PRZED zamontowaniem `AnalysisWorkspaceInner` — `reload()`
+ * (4 równoległe wywołania API w `useEffect` na mouncie) nigdy się nie
+ * uruchamia. Flaga jest jedynym hookiem tego komponentu.
+ */
+export function AnalysisWorkspace(props: AnalysisWorkspaceProps): React.ReactElement | null {
+  const { enabled } = useFinanceAnalysisWorkspaceFlag();
+  if (!enabled) return null;
+  return <AnalysisWorkspaceInner {...props} />;
+}
+
+function AnalysisWorkspaceInner(props: AnalysisWorkspaceProps): React.ReactElement {
   const {
     artifactId,
     businessVersionId,
@@ -118,6 +141,16 @@ export function AnalysisWorkspace(props: AnalysisWorkspaceProps): React.ReactEle
   const [actionError, setActionError] = useState<string | null>(null);
   const [includedInReportByKpiCode, setIncludedInReportByKpiCode] = useState<Record<string, boolean>>({});
   const [markedAsModelInputByKpiCode, setMarkedAsModelInputByKpiCode] = useState<Record<string, boolean>>({});
+
+  // Analiza ma JEDEN widok (brak zakładek) — `activeViewId` stały; kontrakt
+  // Focus Mode (Pakiet C) i tak wymaga jakiegoś id. Stan roboczy (selekcja
+  // KPI + toggle'e raportu/model-inputu + otwarty kreator) wchodzi jako
+  // referencja `workspaceState`, więc toggle focus mode NIGDY go nie resetuje
+  // (dowód "nie refetchuje" — patrz `__tests__/AnalysisWorkspace.focusMode.test.tsx`).
+  const focusMode = useFinanceFocusMode({
+    workspaceState: { selectedKpiCode, wizardOpen, includedInReportByKpiCode, markedAsModelInputByKpiCode },
+    activeViewId: 'analysis',
+  });
 
   const reload = useCallback(async () => {
     setLoad({ loading: true, error: null });
@@ -363,7 +396,7 @@ export function AnalysisWorkspace(props: AnalysisWorkspaceProps): React.ReactEle
         onPrimaryAction={() => void handlePrimaryAction()}
         onLifecycleTransition={(t) => void handleLifecycleTransition(t)}
         onMoreItem={handleMoreItem}
-        onEnterFocusMode={() => {}}
+        onEnterFocusMode={() => focusMode.enter('finance-workspace-bar-fullscreen')}
         onCommitRename={handleCommitRename}
       />
 
@@ -373,39 +406,41 @@ export function AnalysisWorkspace(props: AnalysisWorkspaceProps): React.ReactEle
         </div>
       ) : null}
 
-      <div className="flex min-h-0 flex-1">
-        <div className="min-w-0 flex-1 overflow-auto">
-          <AnalysisKpiTable
-            businessVersionId={businessVersionId}
-            kpiValues={kpiValues}
-            formulaInfoByKpiCode={formulaInfoByKpiCode}
-            periodColumns={periodColumns}
-            includedInReportByKpiCode={includedInReportByKpiCode}
-            markedAsModelInputByKpiCode={markedAsModelInputByKpiCode}
-            selectedKpiCode={selectedKpiCode}
-            onOpenDetail={setSelectedKpiCode}
-            onToggleIncludedInReport={(kpiCode, next) => setIncludedInReportByKpiCode((m) => ({ ...m, [kpiCode]: next }))}
-            onMarkAsModelInput={(kpiCode) => setMarkedAsModelInputByKpiCode((m) => ({ ...m, [kpiCode]: true }))}
-            isApproved={status === 'APPROVED'}
-            loading={load.loading}
-            error={load.error}
-            onRetry={() => void reload()}
-            onConfigureKpis={() => setWizardOpen(true)}
-          />
-        </div>
+      <FinanceErrorBoundary documentLabel={name} onRetry={() => void reload()} onBackToList={onNavigateBack}>
+        <div className="flex min-h-0 flex-1">
+          <div className="min-w-0 flex-1 overflow-auto">
+            <AnalysisKpiTable
+              businessVersionId={businessVersionId}
+              kpiValues={kpiValues}
+              formulaInfoByKpiCode={formulaInfoByKpiCode}
+              periodColumns={periodColumns}
+              includedInReportByKpiCode={includedInReportByKpiCode}
+              markedAsModelInputByKpiCode={markedAsModelInputByKpiCode}
+              selectedKpiCode={selectedKpiCode}
+              onOpenDetail={setSelectedKpiCode}
+              onToggleIncludedInReport={(kpiCode, next) => setIncludedInReportByKpiCode((m) => ({ ...m, [kpiCode]: next }))}
+              onMarkAsModelInput={(kpiCode) => setMarkedAsModelInputByKpiCode((m) => ({ ...m, [kpiCode]: true }))}
+              isApproved={status === 'APPROVED'}
+              loading={load.loading}
+              error={load.error}
+              onRetry={() => void reload()}
+              onConfigureKpis={() => setWizardOpen(true)}
+            />
+          </div>
 
-        {selectedGroup ? (
-          <AnalysisKpiDetailCard
-            kpiValue={selectedGroup.latestValue}
-            formulaInfo={formulaInfoByKpiCode[selectedGroup.kpiCode] ?? null}
-            yoyDelta={computeYoyDelta(selectedGroup.latestValue.value, selectedGroup.priorPeriodValue)}
-            periodSeries={buildPeriodSeries(selectedGroup.periodValuesByColumnId, periodColumns)}
-            history={buildHistoryPlaceholder(selectedGroup.latestValue)}
-            sourceLineageLabel="Pakiet sprawozdań źródłowych (lineage) — szczegóły dostępne po dodaniu endpointu listującego."
-            onClose={() => setSelectedKpiCode(null)}
-          />
-        ) : null}
-      </div>
+          {selectedGroup ? (
+            <AnalysisKpiDetailCard
+              kpiValue={selectedGroup.latestValue}
+              formulaInfo={formulaInfoByKpiCode[selectedGroup.kpiCode] ?? null}
+              yoyDelta={computeYoyDelta(selectedGroup.latestValue.value, selectedGroup.priorPeriodValue)}
+              periodSeries={buildPeriodSeries(selectedGroup.periodValuesByColumnId, periodColumns)}
+              history={buildHistoryPlaceholder(selectedGroup.latestValue)}
+              sourceLineageLabel="Pakiet sprawozdań źródłowych (lineage) — szczegóły dostępne po dodaniu endpointu listującego."
+              onClose={() => setSelectedKpiCode(null)}
+            />
+          ) : null}
+        </div>
+      </FinanceErrorBoundary>
 
       {wizardOpen ? (
         <AnalysisCreatorWizard

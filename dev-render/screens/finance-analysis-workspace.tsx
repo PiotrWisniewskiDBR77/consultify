@@ -18,6 +18,16 @@ import React from 'react';
 import { AnalysisWorkspace } from '../../src/components/Finance/Analysis/AnalysisWorkspace';
 import type { AnalysisCreatorPeriodOption, AnalysisCreatorSourceOption } from '../../src/components/Finance/Analysis/analysisCreatorWizard.contract';
 
+// AP_MOUNT §A: `AnalysisWorkspace` now reads `financeAnalysisWorkspaceV1`
+// itself (not just its caller) and renders `null` when OFF — force it ON via
+// the same localStorage-backed local override the hook reads at init.
+try {
+  const existing = JSON.parse(localStorage.getItem('consultify_feature_flags') || '{}');
+  localStorage.setItem('consultify_feature_flags', JSON.stringify({ ...existing, financeAnalysisWorkspaceV1: true }));
+} catch {
+  // ignore — harness-only convenience
+}
+
 const params = new URLSearchParams(window.location.search);
 type Scene = 'draft-empty' | 'draft-with-kpis' | 'approved' | 'missing-values';
 const scene: Scene = (params.get('scene') as Scene) || 'draft-empty';
