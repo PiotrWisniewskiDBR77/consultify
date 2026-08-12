@@ -345,7 +345,10 @@ function handleRoiRouteError(res: Response, err: unknown, op: string): void {
   // is a finer-grained business rule that only fires for actors who already
   // passed this gate).
   if (err instanceof CommandCapabilityDeniedError) {
-    res.status(403).json({ error: err.message, code: err.code, details: err.details });
+    // RN-G5 fix: same rationale as kpi.routes.ts's identical branch —
+    // `details.capability` is server-side-log-only, never wire.
+    logger.warn(`[resultsVnext/roi.routes] ${op} denied`, { capability: err.details.capability });
+    res.status(403).json({ error: err.message, code: err.code });
     return;
   }
   // ROI-E003 §7: checked FIRST, ahead of the generic conflict/validation 409
@@ -584,6 +587,7 @@ router.patch(
         return;
       }
       const body = req.body as import('zod').infer<typeof UpdateRoiCaseDetailsSchema>;
+      const access = await resolveAccess(req, auth);
       const outcome = await updateRoiCaseDetails({
         caseId,
         organizationId: auth.organizationId,
@@ -599,6 +603,7 @@ router.patch(
         idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
         correlationId: getCorrelationId(req),
         reason: body.reason ?? null,
+        access,
       });
       res.status(200).json({
         outcome: outcome.outcome,
@@ -636,6 +641,7 @@ router.post(
         return;
       }
       const body = req.body as import('zod').infer<typeof ArchiveRoiCaseSchema>;
+      const access = await resolveAccess(req, auth);
       const outcome = await archiveRoiCase({
         caseId,
         organizationId: auth.organizationId,
@@ -645,6 +651,7 @@ router.post(
         idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
         correlationId: getCorrelationId(req),
         reason: body.reason ?? null,
+        access,
       });
       res.status(200).json({
         outcome: outcome.outcome,
@@ -683,6 +690,7 @@ function mountTransitionRoute(path: string, op: string, runner: typeof startMode
           return;
         }
         const body = req.body as import('zod').infer<typeof RoiCaseTransitionSchema>;
+        const access = await resolveAccess(req, auth);
         const outcome = await runner({
           caseId,
           organizationId: auth.organizationId,
@@ -692,6 +700,7 @@ function mountTransitionRoute(path: string, op: string, runner: typeof startMode
           idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
           correlationId: getCorrelationId(req),
           reason: body.reason ?? null,
+          access,
         });
         res.status(200).json({
           outcome: outcome.outcome,
