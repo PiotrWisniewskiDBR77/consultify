@@ -97,6 +97,14 @@ function baseProps(): TableToolbarProps {
     ideaId: 'idea-1',
     nodesUndo: { canUndo: false, canRedo: false, undo: vi.fn(), redo: vi.fn() },
     onPlatformUndo: vi.fn(),
+    // RISK-06 (integration fix, 2026-08-12): `onShowRecordTemplateManager` became a
+    // REQUIRED prop when the dead `RecordTemplateManager` mount was wired into the
+    // real platform toolbar. Deliberately kept required rather than optional — an
+    // optional handler would let a future consumer drop the wiring silently, which
+    // is exactly the dead-mount failure RISK-06 was filed for. Caught only by the
+    // full client type-check; the stream that added it ran targeted vitest, which
+    // passes regardless because JS does not enforce the prop contract at runtime.
+    onShowRecordTemplateManager: vi.fn(),
     onCSVImport: vi.fn(),
     onExportCSV: vi.fn(),
     onCopyToClipboard: vi.fn(),
