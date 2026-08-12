@@ -1,0 +1,339 @@
+{
+  "run": {
+    "runId": "cwrun-a2ebbba2cecd6a6a7cd8b2c4eb1727a1",
+    "organizationId": "e4-org-7e8ff7ca-c900-4db4-ac8d-586b624a7c91",
+    "projectId": "e4-project-7e8ff7ca-c900-4db4-ac8d-586b624a7c91",
+    "caseId": "case-32c24553-de1a-4c84-b6d1-e14009376280",
+    "casePlanVersionId": "planv-85650402-3fa5-4892-9ced-57e071800670",
+    "graphDigest": "sha256:40d52fff22510ffa4bd8be671f41dfff02d6a4588b00eca62d0a8185f7d51bb2",
+    "status": "COMPLETED",
+    "outcomeStatus": "ACCEPTED",
+    "initiatedBy": "e4-user-driver-303b3707-cafe-4d8d-9504-e0278b1d8718",
+    "correlationId": null,
+    "idempotencyKey": "e4-run-9e38e93f-808c-4108-a17f-6edd6ed556c5",
+    "version": 6,
+    "createdAt": "2026-08-12T11:07:35.404Z",
+    "startedAt": "2026-08-12T11:07:35.504Z",
+    "completedAt": "2026-08-12T11:37:35.545Z",
+    "updatedAt": "2026-08-12T11:37:35.558Z"
+  },
+  "runDurationMs": 1800041,
+  "backoffProbe": {
+    "eventId": "cwevt-e4-backoff-43810cda-71bc-4ba2-a184-632717d73272",
+    "eventType": "longrun.backoff.probe",
+    "schemaVersion": 1,
+    "organizationId": "e4-org-7e8ff7ca-c900-4db4-ac8d-586b624a7c91",
+    "projectId": null,
+    "aggregateType": "CASE",
+    "aggregateId": "case-32c24553-de1a-4c84-b6d1-e14009376280",
+    "aggregateVersion": null,
+    "caseId": "case-32c24553-de1a-4c84-b6d1-e14009376280",
+    "runId": null,
+    "nodeRunId": null,
+    "attemptId": null,
+    "actorUserId": "e4-user-driver-303b3707-cafe-4d8d-9504-e0278b1d8718",
+    "correlationId": "e4-corr-backoff-cwevt-e4-backoff-43810cda-71bc-4ba2-a184-632717d73272",
+    "causationId": null,
+    "correlationKey": null,
+    "sequenceNumber": 149,
+    "occurredAt": "2026-08-12T11:07:35.351Z",
+    "redactedSummary": {},
+    "payloadRef": null,
+    "deliveredAt": "2026-08-12T11:08:17.697Z",
+    "deliveryAttemptCount": 3,
+    "lastDeliveryError": null,
+    "nextRetryAt": null,
+    "createdAt": "2026-08-12T11:07:35.351Z"
+  },
+  "backoffDeliveryTimestamps": [
+    1786532855368,
+    1786532861445,
+    1786532873572,
+    1786532897698
+  ],
+  "deadLetterProbe": {
+    "eventId": "cwevt-e4-deadletter-c4668142-6229-4766-b4ca-73e98800c73d",
+    "eventType": "longrun.deadletter.probe",
+    "schemaVersion": 1,
+    "organizationId": "e4-org-7e8ff7ca-c900-4db4-ac8d-586b624a7c91",
+    "projectId": null,
+    "aggregateType": "CASE",
+    "aggregateId": "case-32c24553-de1a-4c84-b6d1-e14009376280",
+    "aggregateVersion": null,
+    "caseId": "case-32c24553-de1a-4c84-b6d1-e14009376280",
+    "runId": null,
+    "nodeRunId": null,
+    "attemptId": null,
+    "actorUserId": "e4-user-driver-303b3707-cafe-4d8d-9504-e0278b1d8718",
+    "correlationId": "e4-corr-deadletter-cwevt-e4-deadletter-c4668142-6229-4766-b4ca-73e98800c73d",
+    "causationId": null,
+    "correlationKey": null,
+    "sequenceNumber": 150,
+    "occurredAt": "2026-08-12T11:07:35.351Z",
+    "redactedSummary": {},
+    "payloadRef": null,
+    "deliveredAt": null,
+    "deliveryAttemptCount": 10,
+    "lastDeliveryError": "synthetic permanent failure — always dead-letters",
+    "nextRetryAt": "2026-08-12T11:22:12.383Z",
+    "createdAt": "2026-08-12T11:07:35.351Z"
+  },
+  "reconciliationSample": {
+    "sampledCount": 1,
+    "sample": [
+      {
+        "eventId": "cwevt-e4-deadletter-c4668142-6229-4766-b4ca-73e98800c73d",
+        "eventType": "longrun.deadletter.probe",
+        "deliveryAttemptCount": 10,
+        "lastDeliveryError": "synthetic permanent failure — always dead-letters"
+      }
+    ]
+  },
+  "correlationChain": [
+    {
+      "event_type": "run.bound_to_plan_version",
+      "aggregate_type": "RUN",
+      "sequence_number": "152",
+      "node_run_id": null,
+      "correlation_id": "corr-f4a3f8b1-3b58-41b6-902e-b36b7246c663"
+    },
+    {
+      "event_type": "run.created",
+      "aggregate_type": "RUN",
+      "sequence_number": "153",
+      "node_run_id": null,
+      "correlation_id": "corr-378c26cf-7e13-4d0b-adc1-46ed2aea998c"
+    },
+    {
+      "event_type": "node.run_created",
+      "aggregate_type": "NODE_RUN",
+      "sequence_number": "154",
+      "node_run_id": "cwnode-4b3f2453-ced4-43b9-9d77-b84c881bb2a1",
+      "correlation_id": "corr-46450245-b2d0-445b-b52d-204eebadef5a"
+    },
+    {
+      "event_type": "run.started",
+      "aggregate_type": "RUN",
+      "sequence_number": "155",
+      "node_run_id": null,
+      "correlation_id": "corr-31cc3698-7768-452e-adb5-196be7795197"
+    },
+    {
+      "event_type": "node.claimed",
+      "aggregate_type": "NODE_RUN",
+      "sequence_number": "156",
+      "node_run_id": "cwnode-4b3f2453-ced4-43b9-9d77-b84c881bb2a1",
+      "correlation_id": "corr-c844f561-7645-4994-9d32-58eb539bbf0f"
+    },
+    {
+      "event_type": "node.attempt_started",
+      "aggregate_type": "NODE_RUN",
+      "sequence_number": "157",
+      "node_run_id": "cwnode-4b3f2453-ced4-43b9-9d77-b84c881bb2a1",
+      "correlation_id": "corr-99eef3bb-580c-4fef-a6dd-d037181de33c"
+    },
+    {
+      "event_type": "node.attempt_completed",
+      "aggregate_type": "NODE_RUN",
+      "sequence_number": "158",
+      "node_run_id": "cwnode-4b3f2453-ced4-43b9-9d77-b84c881bb2a1",
+      "correlation_id": "corr-277673ac-5a3e-47e1-a0ad-4fb501e8ec17"
+    },
+    {
+      "event_type": "node.run_created",
+      "aggregate_type": "NODE_RUN",
+      "sequence_number": "159",
+      "node_run_id": "cwnode-992935ed-71b3-4645-908e-7a4f374ffb0e",
+      "correlation_id": "corr-8ce2475d-cfa5-4364-9780-e2a0a8e607c6"
+    },
+    {
+      "event_type": "node.claimed",
+      "aggregate_type": "NODE_RUN",
+      "sequence_number": "160",
+      "node_run_id": "cwnode-992935ed-71b3-4645-908e-7a4f374ffb0e",
+      "correlation_id": "corr-bbacaaca-6a43-46a3-a3b6-f280b0032741"
+    },
+    {
+      "event_type": "node.attempt_started",
+      "aggregate_type": "NODE_RUN",
+      "sequence_number": "161",
+      "node_run_id": "cwnode-992935ed-71b3-4645-908e-7a4f374ffb0e",
+      "correlation_id": "corr-437420aa-6bb4-4562-a9e8-8f254d92769d"
+    },
+    {
+      "event_type": "node.attempt_completed",
+      "aggregate_type": "NODE_RUN",
+      "sequence_number": "162",
+      "node_run_id": "cwnode-992935ed-71b3-4645-908e-7a4f374ffb0e",
+      "correlation_id": "corr-4bacc183-b25a-4ff5-82bb-9c97b953f9d9"
+    },
+    {
+      "event_type": "run.advanced",
+      "aggregate_type": "RUN",
+      "sequence_number": "163",
+      "node_run_id": null,
+      "correlation_id": "corr-8660597c-7317-4738-85c8-eea0e565234e"
+    },
+    {
+      "event_type": "node.run_created",
+      "aggregate_type": "NODE_RUN",
+      "sequence_number": "164",
+      "node_run_id": "cwnode-951369d9-d69c-45b6-be12-0aaa4c0c0f3f",
+      "correlation_id": "corr-2dfb60de-9e73-4e27-90dc-1ae128db2dc8"
+    },
+    {
+      "event_type": "run.retry_node_resumed",
+      "aggregate_type": "RUN",
+      "sequence_number": "165",
+      "node_run_id": null,
+      "correlation_id": "corr-35c924ec-2e7b-4705-85ae-631e49ee115f"
+    },
+    {
+      "event_type": "node.claimed",
+      "aggregate_type": "NODE_RUN",
+      "sequence_number": "166",
+      "node_run_id": "cwnode-951369d9-d69c-45b6-be12-0aaa4c0c0f3f",
+      "correlation_id": "corr-bdaf7c66-96c9-44b1-9bb1-e3bdaab0f876"
+    },
+    {
+      "event_type": "node.attempt_started",
+      "aggregate_type": "NODE_RUN",
+      "sequence_number": "167",
+      "node_run_id": "cwnode-951369d9-d69c-45b6-be12-0aaa4c0c0f3f",
+      "correlation_id": "corr-27478156-f5bc-4d6e-b277-8ac8da565065"
+    },
+    {
+      "event_type": "node.attempt_completed",
+      "aggregate_type": "NODE_RUN",
+      "sequence_number": "168",
+      "node_run_id": "cwnode-951369d9-d69c-45b6-be12-0aaa4c0c0f3f",
+      "correlation_id": "corr-fac2cdc5-146e-424a-83d0-d2d6d0480288"
+    },
+    {
+      "event_type": "node.claimed",
+      "aggregate_type": "NODE_RUN",
+      "sequence_number": "169",
+      "node_run_id": "cwnode-951369d9-d69c-45b6-be12-0aaa4c0c0f3f",
+      "correlation_id": "corr-ec27e7f5-5b9d-4aa9-87cd-9c983357107d"
+    },
+    {
+      "event_type": "node.attempt_started",
+      "aggregate_type": "NODE_RUN",
+      "sequence_number": "170",
+      "node_run_id": "cwnode-951369d9-d69c-45b6-be12-0aaa4c0c0f3f",
+      "correlation_id": "corr-2aeebe1f-b0fa-412a-be41-1822e1f4f2fe"
+    },
+    {
+      "event_type": "node.lease_reclaimed",
+      "aggregate_type": "NODE_RUN",
+      "sequence_number": "171",
+      "node_run_id": "cwnode-951369d9-d69c-45b6-be12-0aaa4c0c0f3f",
+      "correlation_id": "corr-54c67d41-e936-41de-a9be-a420956efad6"
+    },
+    {
+      "event_type": "node.attempt_started",
+      "aggregate_type": "NODE_RUN",
+      "sequence_number": "172",
+      "node_run_id": "cwnode-951369d9-d69c-45b6-be12-0aaa4c0c0f3f",
+      "correlation_id": "corr-7e157873-1209-4f93-a332-587058f0613e"
+    },
+    {
+      "event_type": "node.attempt_completed",
+      "aggregate_type": "NODE_RUN",
+      "sequence_number": "173",
+      "node_run_id": "cwnode-951369d9-d69c-45b6-be12-0aaa4c0c0f3f",
+      "correlation_id": "corr-c7817020-1689-40e7-bf97-218b14980c60"
+    },
+    {
+      "event_type": "node.run_created",
+      "aggregate_type": "NODE_RUN",
+      "sequence_number": "174",
+      "node_run_id": "cwnode-5a8d8347-24f0-4bef-a346-813eeeb80302",
+      "correlation_id": "corr-0909925e-8d7a-4ad1-ac62-8239382c28ed"
+    },
+    {
+      "event_type": "node.claimed",
+      "aggregate_type": "NODE_RUN",
+      "sequence_number": "175",
+      "node_run_id": "cwnode-5a8d8347-24f0-4bef-a346-813eeeb80302",
+      "correlation_id": "corr-fed7865d-f178-49ac-81a5-d99b90ae11b3"
+    },
+    {
+      "event_type": "node.attempt_started",
+      "aggregate_type": "NODE_RUN",
+      "sequence_number": "176",
+      "node_run_id": "cwnode-5a8d8347-24f0-4bef-a346-813eeeb80302",
+      "correlation_id": "corr-dcfd5005-896c-4ac0-88e7-43d3c9582f24"
+    },
+    {
+      "event_type": "wait.registered",
+      "aggregate_type": "WAIT",
+      "sequence_number": "177",
+      "node_run_id": "cwnode-5a8d8347-24f0-4bef-a346-813eeeb80302",
+      "correlation_id": "corr-35c6c8ce-70ce-4d55-ab97-d5625b9ac8d0"
+    },
+    {
+      "event_type": "wait.claimed",
+      "aggregate_type": "WAIT",
+      "sequence_number": "178",
+      "node_run_id": "cwnode-5a8d8347-24f0-4bef-a346-813eeeb80302",
+      "correlation_id": "corr-5944f162-ce9c-4cbb-a706-dbca04b72258"
+    },
+    {
+      "event_type": "wait.satisfied",
+      "aggregate_type": "WAIT",
+      "sequence_number": "179",
+      "node_run_id": "cwnode-5a8d8347-24f0-4bef-a346-813eeeb80302",
+      "correlation_id": "corr-43210b35-4973-4064-a4f1-96fb2065b276"
+    },
+    {
+      "event_type": "node.attempt_completed",
+      "aggregate_type": "NODE_RUN",
+      "sequence_number": "180",
+      "node_run_id": "cwnode-5a8d8347-24f0-4bef-a346-813eeeb80302",
+      "correlation_id": "corr-51cf8e51-79b1-4cc3-8beb-aa9386f92915"
+    },
+    {
+      "event_type": "node.run_created",
+      "aggregate_type": "NODE_RUN",
+      "sequence_number": "181",
+      "node_run_id": "cwnode-c0c73d95-cac3-49e0-a8ef-c80361461956",
+      "correlation_id": "corr-24949c84-ce1d-4119-aa43-55d7ca150b74"
+    },
+    {
+      "event_type": "node.claimed",
+      "aggregate_type": "NODE_RUN",
+      "sequence_number": "182",
+      "node_run_id": "cwnode-c0c73d95-cac3-49e0-a8ef-c80361461956",
+      "correlation_id": "corr-4b0f981e-f27b-4740-b0d4-f46e80f4ea60"
+    },
+    {
+      "event_type": "node.attempt_started",
+      "aggregate_type": "NODE_RUN",
+      "sequence_number": "183",
+      "node_run_id": "cwnode-c0c73d95-cac3-49e0-a8ef-c80361461956",
+      "correlation_id": "corr-1730bf54-f0ae-4b8e-9260-b832dbeeb9db"
+    },
+    {
+      "event_type": "node.attempt_completed",
+      "aggregate_type": "NODE_RUN",
+      "sequence_number": "184",
+      "node_run_id": "cwnode-c0c73d95-cac3-49e0-a8ef-c80361461956",
+      "correlation_id": "corr-34fc66e0-53a5-4c45-99d5-cfffe389f1ce"
+    },
+    {
+      "event_type": "run.advanced",
+      "aggregate_type": "RUN",
+      "sequence_number": "185",
+      "node_run_id": null,
+      "correlation_id": "corr-e3b2e3b4-4ae4-4cd1-b255-d25f611e47dc"
+    },
+    {
+      "event_type": "run.outcome_recorded",
+      "aggregate_type": "RUN",
+      "sequence_number": "186",
+      "node_run_id": null,
+      "correlation_id": "corr-5e1b4eb4-55a8-4642-9397-b6c9ab37f77f"
+    }
+  ]
+}
