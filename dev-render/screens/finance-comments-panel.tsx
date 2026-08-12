@@ -62,13 +62,43 @@ let comments = [
 ];
 
 let checklist = [
-  { id: 'item-1', businessVersionId: BV_ID, item: 'Zweryfikuj sumy kontrolne wobec pakietu sprawozdań FY2025', required: true, checkedBy: 'analityk.dbr77', checkedAt: '2026-08-11T12:05:00.000Z', createdBy: 'piotr.wisniewski', createdAt: '2026-08-10T09:00:00.000Z' },
-  { id: 'item-2', businessVersionId: BV_ID, item: 'Potwierdź, że model nie ma ujemnej gotówki bez plugu', required: true, checkedBy: null, checkedAt: null, createdBy: 'piotr.wisniewski', createdAt: '2026-08-10T09:00:00.000Z' },
-  { id: 'item-3', businessVersionId: BV_ID, item: 'Sprawdź spójność stawki podatkowej z założeniami', required: false, checkedBy: null, checkedAt: null, createdBy: 'piotr.wisniewski', createdAt: '2026-08-10T09:00:00.000Z' },
+  {
+    id: 'item-1',
+    businessVersionId: BV_ID,
+    item: 'Zweryfikuj sumy kontrolne wobec pakietu sprawozdań FY2025',
+    required: true,
+    checkedBy: 'analityk.dbr77',
+    checkedAt: '2026-08-11T12:05:00.000Z',
+    createdBy: 'piotr.wisniewski',
+    createdAt: '2026-08-10T09:00:00.000Z',
+  },
+  {
+    id: 'item-2',
+    businessVersionId: BV_ID,
+    item: 'Potwierdź, że model nie ma ujemnej gotówki bez plugu',
+    required: true,
+    checkedBy: null,
+    checkedAt: null,
+    createdBy: 'piotr.wisniewski',
+    createdAt: '2026-08-10T09:00:00.000Z',
+  },
+  {
+    id: 'item-3',
+    businessVersionId: BV_ID,
+    item: 'Sprawdź spójność stawki podatkowej z założeniami',
+    required: false,
+    checkedBy: null,
+    checkedAt: null,
+    createdBy: 'piotr.wisniewski',
+    createdAt: '2026-08-10T09:00:00.000Z',
+  },
 ];
 
 function json(data: unknown, status = 200): Response {
-  return new Response(JSON.stringify({ data }), { status, headers: { 'Content-Type': 'application/json' } });
+  return new Response(JSON.stringify({ data }), {
+    status,
+    headers: { 'Content-Type': 'application/json' },
+  });
 }
 
 const g = window as unknown as { __COMMENTS_PANEL_FETCH__?: boolean };
@@ -82,16 +112,24 @@ if (!g.__COMMENTS_PANEL_FETCH__) {
 
     if (url.includes('/comments/') && url.endsWith('/resolve')) {
       const id = url.split('/comments/')[1].split('/resolve')[0];
-      comments = comments.map((c) => (c.id === id ? { ...c, resolvedBy: 'piotr.wisniewski', resolvedAt: new Date().toISOString() } : c));
+      comments = comments.map((c) =>
+        c.id === id
+          ? { ...c, resolvedBy: 'piotr.wisniewski', resolvedAt: new Date().toISOString() }
+          : c
+      );
       return json(comments.find((c) => c.id === id));
     }
     if (url.includes('/comments/') && url.endsWith('/reopen')) {
       const id = url.split('/comments/')[1].split('/reopen')[0];
-      comments = comments.map((c) => (c.id === id ? { ...c, resolvedBy: null, resolvedAt: null } : c));
+      comments = comments.map((c) =>
+        c.id === id ? { ...c, resolvedBy: null, resolvedAt: null } : c
+      );
       return json(comments.find((c) => c.id === id));
     }
     if (url.includes('/has-unresolved-blocking-comments')) {
-      return json({ hasUnresolvedBlockingComments: comments.some((c) => c.isBlocking && !c.resolvedAt) });
+      return json({
+        hasUnresolvedBlockingComments: comments.some((c) => c.isBlocking && !c.resolvedAt),
+      });
     }
     if (url.includes('/comments') && method === 'POST') {
       const body = init?.body ? JSON.parse(String(init.body)) : {};
@@ -117,17 +155,32 @@ if (!g.__COMMENTS_PANEL_FETCH__) {
 
     if (url.includes('/review-checklist/') && url.endsWith('/check')) {
       const id = url.split('/review-checklist/')[1].split('/check')[0];
-      checklist = checklist.map((i) => (i.id === id ? { ...i, checkedBy: 'piotr.wisniewski', checkedAt: new Date().toISOString() } : i));
+      checklist = checklist.map((i) =>
+        i.id === id
+          ? { ...i, checkedBy: 'piotr.wisniewski', checkedAt: new Date().toISOString() }
+          : i
+      );
       return json(checklist.find((i) => i.id === id));
     }
     if (url.includes('/review-checklist/') && url.endsWith('/uncheck')) {
       const id = url.split('/review-checklist/')[1].split('/uncheck')[0];
-      checklist = checklist.map((i) => (i.id === id ? { ...i, checkedBy: null, checkedAt: null } : i));
+      checklist = checklist.map((i) =>
+        i.id === id ? { ...i, checkedBy: null, checkedAt: null } : i
+      );
       return json(checklist.find((i) => i.id === id));
     }
     if (url.includes('/review-checklist') && method === 'POST') {
       const body = init?.body ? JSON.parse(String(init.body)) : {};
-      const created = { id: `item-${checklist.length + 1}`, businessVersionId: BV_ID, item: body.item ?? '', required: Boolean(body.required), checkedBy: null, checkedAt: null, createdBy: 'piotr.wisniewski', createdAt: new Date().toISOString() };
+      const created = {
+        id: `item-${checklist.length + 1}`,
+        businessVersionId: BV_ID,
+        item: body.item ?? '',
+        required: Boolean(body.required),
+        checkedBy: null,
+        checkedAt: null,
+        createdBy: 'piotr.wisniewski',
+        createdAt: new Date().toISOString(),
+      };
       checklist = [...checklist, created];
       return json(created, 201);
     }
@@ -150,7 +203,11 @@ function SimulatedMenu1(): React.ReactElement {
 
 export default function FinanceCommentsPanelScreen(): React.ReactElement {
   return (
-    <div className="min-h-screen bg-c-bg p-6" data-testid="finance-comments-panel-screen" data-scene={scene}>
+    <div
+      className="min-h-screen bg-c-bg p-6"
+      data-testid="finance-comments-panel-screen"
+      data-scene={scene}
+    >
       <SimulatedMenu1 />
       <div className="mx-auto mt-4 max-w-xl">
         <FinanceCommentsPanel artifactId={ARTIFACT_ID} businessVersionId={BV_ID} />

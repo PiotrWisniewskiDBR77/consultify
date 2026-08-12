@@ -33,17 +33,27 @@ import { AppProviders } from '../../src/providers/AppProviders';
 // `dev-render/screens/assessment-menu3-status-chips.tsx`.
 try {
   const existing = JSON.parse(localStorage.getItem('consultify_feature_flags') || '{}');
-  localStorage.setItem('consultify_feature_flags', JSON.stringify({ ...existing, financePredictionWorkspaceV1: true }));
+  localStorage.setItem(
+    'consultify_feature_flags',
+    JSON.stringify({ ...existing, financePredictionWorkspaceV1: true })
+  );
 } catch {
   // ignore — harness-only convenience
 }
 
 const PredictionWorkspaceLazy = React.lazy(() =>
-  import('../../src/components/Finance/Prediction/PredictionWorkspace').then((m) => ({ default: m.PredictionWorkspace }))
+  import('../../src/components/Finance/Prediction/PredictionWorkspace').then((m) => ({
+    default: m.PredictionWorkspace,
+  }))
 );
 
 const params = new URLSearchParams(window.location.search);
-const MODE = params.get('mode') === 'B' ? 'DRIVER_OVERRIDE' : params.get('mode') === 'C' ? 'FUNDAMENTAL_INITIATIVE' : 'STANDARD_BASE';
+const MODE =
+  params.get('mode') === 'B'
+    ? 'DRIVER_OVERRIDE'
+    : params.get('mode') === 'C'
+      ? 'FUNDAMENTAL_INITIATIVE'
+      : 'STANDARD_BASE';
 const BRIDGE = (params.get('bridge') as 'ok' | 'missing' | 'notfound' | 'error' | null) ?? 'ok';
 const BV_ID = 'bv-prediction-demo-1';
 
@@ -59,13 +69,19 @@ if (!g.__PREDICTION_WORKSPACE_FETCH__) {
   window.fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
     const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
     const json = (data: unknown, status = 200): Response =>
-      new Response(JSON.stringify({ data }), { status, headers: { 'Content-Type': 'application/json' } });
+      new Response(JSON.stringify({ data }), {
+        status,
+        headers: { 'Content-Type': 'application/json' },
+      });
     // Error envelope shape is `{error, code}` at the TOP LEVEL (matches the
     // real server's `sendError()` — `_shared.ts` — and what
     // `handleResponse()`/`baseClient.ts` reads as `err.data.code`), NOT
     // wrapped in `{data: ...}` like a success body.
     const errorJson = (error: string, code: string, status: number): Response =>
-      new Response(JSON.stringify({ error, code }), { status, headers: { 'Content-Type': 'application/json' } });
+      new Response(JSON.stringify({ error, code }), {
+        status,
+        headers: { 'Content-Type': 'application/json' },
+      });
 
     if (url.includes('/locales/')) return realFetch(input as RequestInfo, init);
 
@@ -251,7 +267,8 @@ const initialDraft = {
   scenarioMode: MODE as 'STANDARD_BASE' | 'DRIVER_OVERRIDE' | 'FUNDAMENTAL_INITIATIVE',
   name: 'DBR77 — Scenariusz FY2026 (demo)',
   driverOverrides: MODE === 'DRIVER_OVERRIDE' ? [demoDriverOverride] : [],
-  initiatives: MODE === 'FUNDAMENTAL_INITIATIVE' ? [demoInitiative, demoInitiative2, demoInitiative3] : [],
+  initiatives:
+    MODE === 'FUNDAMENTAL_INITIATIVE' ? [demoInitiative, demoInitiative2, demoInitiative3] : [],
   impacts: MODE === 'FUNDAMENTAL_INITIATIVE' ? [demoImpact, demoImpact2, demoImpact3] : [],
   financing: [],
   lastAssumptionChangeAt: '2026-08-12T09:00:00Z',

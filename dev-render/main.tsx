@@ -139,16 +139,30 @@ const FinanceFocusModeScreen = React.lazy(() => import('./screens/finance-focus-
 const FinanceStatementPackWorkspaceV2Screen = React.lazy(
   () => import('./screens/finance-statement-pack-workspace-v2')
 );
-const FinanceBaselineWorkspaceScreen = React.lazy(() => import('./screens/finance-baseline-workspace'));
-const FinancePredictionWorkspaceScreen = React.lazy(() => import('./screens/finance-prediction-workspace'));
+const FinanceBaselineWorkspaceScreen = React.lazy(
+  () => import('./screens/finance-baseline-workspace')
+);
+const FinancePredictionWorkspaceScreen = React.lazy(
+  () => import('./screens/finance-prediction-workspace')
+);
 const FinanceIdBridgeScreen = React.lazy(() => import('./screens/finance-id-bridge'));
-const FinanceAnalysisWorkspaceScreen = React.lazy(() => import('./screens/finance-analysis-workspace'));
-const FinanceValuationWorkspaceScreen = React.lazy(() => import('./screens/finance-valuation-workspace'));
-const FinanceLineageNavigatorScreen = React.lazy(() => import('./screens/finance-lineage-navigator'));
+const FinanceAnalysisWorkspaceScreen = React.lazy(
+  () => import('./screens/finance-analysis-workspace')
+);
+const FinanceValuationWorkspaceScreen = React.lazy(
+  () => import('./screens/finance-valuation-workspace')
+);
+const FinanceLineageNavigatorScreen = React.lazy(
+  () => import('./screens/finance-lineage-navigator')
+);
 const FinanceComparePanelScreen = React.lazy(() => import('./screens/finance-compare-panel'));
 const FinanceCommentsPanelScreen = React.lazy(() => import('./screens/finance-comments-panel'));
-const FinanceSavedViewsPanelScreen = React.lazy(() => import('./screens/finance-saved-views-panel'));
-const FinanceExportImportPanelScreen = React.lazy(() => import('./screens/finance-export-import-panel'));
+const FinanceSavedViewsPanelScreen = React.lazy(
+  () => import('./screens/finance-saved-views-panel')
+);
+const FinanceExportImportPanelScreen = React.lazy(
+  () => import('./screens/finance-export-import-panel')
+);
 const GenDeckContentHintsScreen = React.lazy(() => import('./screens/gen-deck-content-hints'));
 const GenExcelTemplatesTabScreen = React.lazy(() => import('./screens/gen-excel-templates-tab'));
 const GenWordContentHintsScreen = React.lazy(() => import('./screens/gen-word-content-hints'));
@@ -662,19 +676,23 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     render: () => <FinanceLineageNavigatorScreen />,
   },
   'finance-compare-panel': {
-    label: 'AP-CLIENT (Gate J) — REAL <FinanceComparePanel> (5 osi, Δ/%, filtr istotności, eksport CSV) — &scene=default|off, flaga financeCompareV1 default OFF',
+    label:
+      'AP-CLIENT (Gate J) — REAL <FinanceComparePanel> (5 osi, Δ/%, filtr istotności, eksport CSV) — &scene=default|off, flaga financeCompareV1 default OFF',
     render: () => <FinanceComparePanelScreen />,
   },
   'finance-comments-panel': {
-    label: 'AP-CLIENT (Gate J) — REAL <FinanceCommentsPanel> (kotwice, wzmianki, resolve/reopen, checklist maker-checker) — &scene=default|off, flaga financeCommentsV1 default OFF',
+    label:
+      'AP-CLIENT (Gate J) — REAL <FinanceCommentsPanel> (kotwice, wzmianki, resolve/reopen, checklist maker-checker) — &scene=default|off, flaga financeCommentsV1 default OFF',
     render: () => <FinanceCommentsPanelScreen />,
   },
   'finance-saved-views-panel': {
-    label: 'AP-CLIENT (Gate J) — REAL <FinanceSavedViewsPanel> (PERSONAL/TEAM, zapis, link, usuń) — &scene=default|off, flaga financeSavedViewsV1 default OFF',
+    label:
+      'AP-CLIENT (Gate J) — REAL <FinanceSavedViewsPanel> (PERSONAL/TEAM, zapis, link, usuń) — &scene=default|off, flaga financeSavedViewsV1 default OFF',
     render: () => <FinanceSavedViewsPanelScreen />,
   },
   'finance-export-import-panel': {
-    label: 'AP-CLIENT (Gate J) — REAL <FinanceExportImportPanel> (.xlsx eksport+manifest, import parse→preview→apply transakcyjny) — &scene=default|off, flaga financeExportImportV1 default OFF',
+    label:
+      'AP-CLIENT (Gate J) — REAL <FinanceExportImportPanel> (.xlsx eksport+manifest, import parse→preview→apply transakcyjny) — &scene=default|off, flaga financeExportImportV1 default OFF',
     render: () => <FinanceExportImportPanelScreen />,
   },
   'execution-change-signals': {

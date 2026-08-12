@@ -61,12 +61,29 @@ function xlsxResponse(): Response {
 }
 
 function json(data: unknown, status = 200): Response {
-  return new Response(JSON.stringify({ data }), { status, headers: { 'Content-Type': 'application/json' } });
+  return new Response(JSON.stringify({ data }), {
+    status,
+    headers: { 'Content-Type': 'application/json' },
+  });
 }
 
 const IMPORT_ROWS = [
-  { __rowNumber: 2, entityCode: 'PARENT', canonicalLineId: 'REVENUE', periodLabel: '02/2026', status: 'PRESENT_NONZERO', valueDecimal: '431000' },
-  { __rowNumber: 3, entityCode: 'PARENT', canonicalLineId: 'COGS', periodLabel: '02/2026', status: 'PRESENT_NONZERO', valueDecimal: '-251500' },
+  {
+    __rowNumber: 2,
+    entityCode: 'PARENT',
+    canonicalLineId: 'REVENUE',
+    periodLabel: '02/2026',
+    status: 'PRESENT_NONZERO',
+    valueDecimal: '431000',
+  },
+  {
+    __rowNumber: 3,
+    entityCode: 'PARENT',
+    canonicalLineId: 'COGS',
+    periodLabel: '02/2026',
+    status: 'PRESENT_NONZERO',
+    valueDecimal: '-251500',
+  },
 ];
 
 const g = window as unknown as { __EXPORT_IMPORT_PANEL_FETCH__?: boolean };
@@ -91,13 +108,23 @@ if (!g.__EXPORT_IMPORT_PANEL_FETCH__) {
               cellKey: 'REVENUE-02/2026',
               cellRef: {},
               before: { status: 'PRESENT_NONZERO', valueDecimal: '420000' },
-              after: { rowNumber: 2, cellKey: 'REVENUE-02/2026', cellRef: {}, value: { status: 'PRESENT_NONZERO', valueDecimal: '431000' } },
+              after: {
+                rowNumber: 2,
+                cellKey: 'REVENUE-02/2026',
+                cellRef: {},
+                value: { status: 'PRESENT_NONZERO', valueDecimal: '431000' },
+              },
             },
             {
               cellKey: 'COGS-02/2026',
               cellRef: {},
               before: { status: 'PRESENT_NONZERO', valueDecimal: '-243600' },
-              after: { rowNumber: 3, cellKey: 'COGS-02/2026', cellRef: {}, value: { status: 'PRESENT_NONZERO', valueDecimal: '-251500' } },
+              after: {
+                rowNumber: 3,
+                cellKey: 'COGS-02/2026',
+                cellRef: {},
+                value: { status: 'PRESENT_NONZERO', valueDecimal: '-251500' },
+              },
             },
           ],
           toClear: [],
@@ -107,7 +134,11 @@ if (!g.__EXPORT_IMPORT_PANEL_FETCH__) {
         totalRows: IMPORT_ROWS.length,
       });
     }
-    if (url.includes('/api/')) return new Response(JSON.stringify({ data: [] }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+    if (url.includes('/api/'))
+      return new Response(JSON.stringify({ data: [] }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      });
     return realFetch(input as RequestInfo, init);
   };
 }
@@ -127,17 +158,27 @@ export default function FinanceExportImportPanelScreen(): React.ReactElement {
   useEffect(() => {
     if (scene === 'off') return;
     const t = window.setTimeout(() => {
-      const btn = document.querySelector('[data-testid="export-button"]') as HTMLButtonElement | null;
+      const btn = document.querySelector(
+        '[data-testid="export-button"]'
+      ) as HTMLButtonElement | null;
       btn?.click();
     }, 300);
     return () => window.clearTimeout(t);
   }, []);
 
   return (
-    <div className="min-h-screen bg-c-bg p-6" data-testid="finance-export-import-panel-screen" data-scene={scene}>
+    <div
+      className="min-h-screen bg-c-bg p-6"
+      data-testid="finance-export-import-panel-screen"
+      data-scene={scene}
+    >
       <SimulatedMenu1 />
       <div className="mx-auto mt-4 max-w-md">
-        <FinanceExportImportPanel artifactId={ARTIFACT_ID} businessVersionId={BV_ID} expectedWorkingRevisionId="wr-dbr77-3" />
+        <FinanceExportImportPanel
+          artifactId={ARTIFACT_ID}
+          businessVersionId={BV_ID}
+          expectedWorkingRevisionId="wr-dbr77-3"
+        />
       </div>
     </div>
   );

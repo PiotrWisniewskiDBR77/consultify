@@ -15,15 +15,21 @@
  */
 import React from 'react';
 
+import type {
+  AnalysisCreatorPeriodOption,
+  AnalysisCreatorSourceOption,
+} from '../../src/components/Finance/Analysis/analysisCreatorWizard.contract';
 import { AnalysisWorkspace } from '../../src/components/Finance/Analysis/AnalysisWorkspace';
-import type { AnalysisCreatorPeriodOption, AnalysisCreatorSourceOption } from '../../src/components/Finance/Analysis/analysisCreatorWizard.contract';
 
 // AP_MOUNT §A: `AnalysisWorkspace` now reads `financeAnalysisWorkspaceV1`
 // itself (not just its caller) and renders `null` when OFF — force it ON via
 // the same localStorage-backed local override the hook reads at init.
 try {
   const existing = JSON.parse(localStorage.getItem('consultify_feature_flags') || '{}');
-  localStorage.setItem('consultify_feature_flags', JSON.stringify({ ...existing, financeAnalysisWorkspaceV1: true }));
+  localStorage.setItem(
+    'consultify_feature_flags',
+    JSON.stringify({ ...existing, financeAnalysisWorkspaceV1: true })
+  );
 } catch {
   // ignore — harness-only convenience
 }
@@ -169,30 +175,225 @@ function kpiValue(overrides: Record<string, unknown>): Record<string, unknown> {
 const KPI_VALUES_BY_SCENE: Record<Scene, Record<string, unknown>[]> = {
   'draft-empty': [],
   'draft-with-kpis': [
-    kpiValue({ kpiValueId: 'kv-gm-2025', kpiCode: 'GROSS_MARGIN_PCT', kpiName: 'Marża brutto', periodId: 'p-2025', value: { status: 'PRESENT_NONZERO', valueDecimal: '0.35', nativeCurrency: 'PLN', presentationCurrency: 'PLN', unit: 'UNITS', multiplier: '1' } }),
-    kpiValue({ kpiValueId: 'kv-gm-2026', kpiCode: 'GROSS_MARGIN_PCT', kpiName: 'Marża brutto', periodId: 'p-2026', value: { status: 'PRESENT_NONZERO', valueDecimal: '0.4', nativeCurrency: 'PLN', presentationCurrency: 'PLN', unit: 'UNITS', multiplier: '1' }, interpretationText: 'Marża rośnie dzięki niższym kosztom materiałów.' }),
-    kpiValue({ kpiValueId: 'kv-eb-2025', kpiCode: 'EBITDA_MARGIN_PCT', kpiName: 'Marża EBITDA', periodId: 'p-2025', value: { status: 'PRESENT_NONZERO', valueDecimal: '0.12', nativeCurrency: 'PLN', presentationCurrency: 'PLN', unit: 'UNITS', multiplier: '1' } }),
-    kpiValue({ kpiValueId: 'kv-eb-2026', kpiCode: 'EBITDA_MARGIN_PCT', kpiName: 'Marża EBITDA', periodId: 'p-2026', value: { status: 'PRESENT_ZERO', valueDecimal: '0', nativeCurrency: 'PLN', presentationCurrency: 'PLN', unit: 'UNITS', multiplier: '1' } }),
+    kpiValue({
+      kpiValueId: 'kv-gm-2025',
+      kpiCode: 'GROSS_MARGIN_PCT',
+      kpiName: 'Marża brutto',
+      periodId: 'p-2025',
+      value: {
+        status: 'PRESENT_NONZERO',
+        valueDecimal: '0.35',
+        nativeCurrency: 'PLN',
+        presentationCurrency: 'PLN',
+        unit: 'UNITS',
+        multiplier: '1',
+      },
+    }),
+    kpiValue({
+      kpiValueId: 'kv-gm-2026',
+      kpiCode: 'GROSS_MARGIN_PCT',
+      kpiName: 'Marża brutto',
+      periodId: 'p-2026',
+      value: {
+        status: 'PRESENT_NONZERO',
+        valueDecimal: '0.4',
+        nativeCurrency: 'PLN',
+        presentationCurrency: 'PLN',
+        unit: 'UNITS',
+        multiplier: '1',
+      },
+      interpretationText: 'Marża rośnie dzięki niższym kosztom materiałów.',
+    }),
+    kpiValue({
+      kpiValueId: 'kv-eb-2025',
+      kpiCode: 'EBITDA_MARGIN_PCT',
+      kpiName: 'Marża EBITDA',
+      periodId: 'p-2025',
+      value: {
+        status: 'PRESENT_NONZERO',
+        valueDecimal: '0.12',
+        nativeCurrency: 'PLN',
+        presentationCurrency: 'PLN',
+        unit: 'UNITS',
+        multiplier: '1',
+      },
+    }),
+    kpiValue({
+      kpiValueId: 'kv-eb-2026',
+      kpiCode: 'EBITDA_MARGIN_PCT',
+      kpiName: 'Marża EBITDA',
+      periodId: 'p-2026',
+      value: {
+        status: 'PRESENT_ZERO',
+        valueDecimal: '0',
+        nativeCurrency: 'PLN',
+        presentationCurrency: 'PLN',
+        unit: 'UNITS',
+        multiplier: '1',
+      },
+    }),
     // ★ FIXC: 2025 was previously missing entirely for this KPI (only 2026 existed, as NA) —
     // real analyses show both periods where data exists; 2025 has real inventory data.
-    kpiValue({ kpiValueId: 'kv-inv-2025', kpiCode: 'INVENTORY_DAYS', kpiName: 'Dni zapasów', category: 'Operacje', tier: 'INDUSTRY', periodId: 'p-2025', value: { status: 'PRESENT_NONZERO', valueDecimal: '58', nativeCurrency: 'PLN', presentationCurrency: 'PLN', unit: 'DAYS', multiplier: '1' } }),
-    kpiValue({ kpiValueId: 'kv-inv-2026', kpiCode: 'INVENTORY_DAYS', kpiName: 'Dni zapasów', category: 'Operacje', tier: 'INDUSTRY', periodId: 'p-2026', value: { status: 'NA', valueDecimal: null, nativeCurrency: 'PLN', presentationCurrency: 'PLN', unit: 'DAYS', multiplier: '1' } }),
+    kpiValue({
+      kpiValueId: 'kv-inv-2025',
+      kpiCode: 'INVENTORY_DAYS',
+      kpiName: 'Dni zapasów',
+      category: 'Operacje',
+      tier: 'INDUSTRY',
+      periodId: 'p-2025',
+      value: {
+        status: 'PRESENT_NONZERO',
+        valueDecimal: '58',
+        nativeCurrency: 'PLN',
+        presentationCurrency: 'PLN',
+        unit: 'DAYS',
+        multiplier: '1',
+      },
+    }),
+    kpiValue({
+      kpiValueId: 'kv-inv-2026',
+      kpiCode: 'INVENTORY_DAYS',
+      kpiName: 'Dni zapasów',
+      category: 'Operacje',
+      tier: 'INDUSTRY',
+      periodId: 'p-2026',
+      value: {
+        status: 'NA',
+        valueDecimal: null,
+        nativeCurrency: 'PLN',
+        presentationCurrency: 'PLN',
+        unit: 'DAYS',
+        multiplier: '1',
+      },
+    }),
     // ★ FIXC: three more KPIs (below), completing the MANUFACTURING recommended set — see CATALOG
     // comment above. Only 2026 for REVENUE_GROWTH_YOY (a YoY metric needs no separate 2025 row,
     // it already compares against 2025 internally) — same shape choice the existing KPIs made
     // (EBITDA_MARGIN_PCT/GROSS_MARGIN_PCT show both periods because they ARE point-in-time).
-    kpiValue({ kpiValueId: 'kv-revg-2026', kpiCode: 'REVENUE_GROWTH_YOY', kpiName: 'Wzrost przychodów r/r', category: 'Wzrost', periodId: 'p-2026', value: { status: 'PRESENT_NONZERO', valueDecimal: '0.08', nativeCurrency: 'PLN', presentationCurrency: 'PLN', unit: 'UNITS', multiplier: '1' }, interpretationText: 'Wzrost napędzany nowym kontraktem B2B (Q2 wdrożenie).' }),
-    kpiValue({ kpiValueId: 'kv-nm-2025', kpiCode: 'NET_MARGIN_PCT', kpiName: 'Marża netto', periodId: 'p-2025', value: { status: 'PRESENT_NONZERO', valueDecimal: '0.06', nativeCurrency: 'PLN', presentationCurrency: 'PLN', unit: 'UNITS', multiplier: '1' } }),
-    kpiValue({ kpiValueId: 'kv-nm-2026', kpiCode: 'NET_MARGIN_PCT', kpiName: 'Marża netto', periodId: 'p-2026', value: { status: 'PRESENT_NONZERO', valueDecimal: '0.09', nativeCurrency: 'PLN', presentationCurrency: 'PLN', unit: 'UNITS', multiplier: '1' } }),
-    kpiValue({ kpiValueId: 'kv-at-2025', kpiCode: 'ASSET_TURNOVER', kpiName: 'Rotacja aktywów', category: 'Operacje', tier: 'INDUSTRY', periodId: 'p-2025', value: { status: 'PRESENT_NONZERO', valueDecimal: '1.4', nativeCurrency: 'PLN', presentationCurrency: 'PLN', unit: 'UNITS', multiplier: '1' } }),
-    kpiValue({ kpiValueId: 'kv-at-2026', kpiCode: 'ASSET_TURNOVER', kpiName: 'Rotacja aktywów', category: 'Operacje', tier: 'INDUSTRY', periodId: 'p-2026', value: { status: 'PRESENT_NONZERO', valueDecimal: '1.5', nativeCurrency: 'PLN', presentationCurrency: 'PLN', unit: 'UNITS', multiplier: '1' } }),
+    kpiValue({
+      kpiValueId: 'kv-revg-2026',
+      kpiCode: 'REVENUE_GROWTH_YOY',
+      kpiName: 'Wzrost przychodów r/r',
+      category: 'Wzrost',
+      periodId: 'p-2026',
+      value: {
+        status: 'PRESENT_NONZERO',
+        valueDecimal: '0.08',
+        nativeCurrency: 'PLN',
+        presentationCurrency: 'PLN',
+        unit: 'UNITS',
+        multiplier: '1',
+      },
+      interpretationText: 'Wzrost napędzany nowym kontraktem B2B (Q2 wdrożenie).',
+    }),
+    kpiValue({
+      kpiValueId: 'kv-nm-2025',
+      kpiCode: 'NET_MARGIN_PCT',
+      kpiName: 'Marża netto',
+      periodId: 'p-2025',
+      value: {
+        status: 'PRESENT_NONZERO',
+        valueDecimal: '0.06',
+        nativeCurrency: 'PLN',
+        presentationCurrency: 'PLN',
+        unit: 'UNITS',
+        multiplier: '1',
+      },
+    }),
+    kpiValue({
+      kpiValueId: 'kv-nm-2026',
+      kpiCode: 'NET_MARGIN_PCT',
+      kpiName: 'Marża netto',
+      periodId: 'p-2026',
+      value: {
+        status: 'PRESENT_NONZERO',
+        valueDecimal: '0.09',
+        nativeCurrency: 'PLN',
+        presentationCurrency: 'PLN',
+        unit: 'UNITS',
+        multiplier: '1',
+      },
+    }),
+    kpiValue({
+      kpiValueId: 'kv-at-2025',
+      kpiCode: 'ASSET_TURNOVER',
+      kpiName: 'Rotacja aktywów',
+      category: 'Operacje',
+      tier: 'INDUSTRY',
+      periodId: 'p-2025',
+      value: {
+        status: 'PRESENT_NONZERO',
+        valueDecimal: '1.4',
+        nativeCurrency: 'PLN',
+        presentationCurrency: 'PLN',
+        unit: 'UNITS',
+        multiplier: '1',
+      },
+    }),
+    kpiValue({
+      kpiValueId: 'kv-at-2026',
+      kpiCode: 'ASSET_TURNOVER',
+      kpiName: 'Rotacja aktywów',
+      category: 'Operacje',
+      tier: 'INDUSTRY',
+      periodId: 'p-2026',
+      value: {
+        status: 'PRESENT_NONZERO',
+        valueDecimal: '1.5',
+        nativeCurrency: 'PLN',
+        presentationCurrency: 'PLN',
+        unit: 'UNITS',
+        multiplier: '1',
+      },
+    }),
   ],
   approved: [
-    kpiValue({ kpiValueId: 'kv-gm-2026', kpiCode: 'GROSS_MARGIN_PCT', kpiName: 'Marża brutto', periodId: 'p-2026', value: { status: 'PRESENT_NONZERO', valueDecimal: '0.4', nativeCurrency: 'PLN', presentationCurrency: 'PLN', unit: 'UNITS', multiplier: '1' } }),
+    kpiValue({
+      kpiValueId: 'kv-gm-2026',
+      kpiCode: 'GROSS_MARGIN_PCT',
+      kpiName: 'Marża brutto',
+      periodId: 'p-2026',
+      value: {
+        status: 'PRESENT_NONZERO',
+        valueDecimal: '0.4',
+        nativeCurrency: 'PLN',
+        presentationCurrency: 'PLN',
+        unit: 'UNITS',
+        multiplier: '1',
+      },
+    }),
   ],
   'missing-values': [
-    kpiValue({ kpiValueId: 'kv-gm-2026', kpiCode: 'GROSS_MARGIN_PCT', kpiName: 'Marża brutto', periodId: 'p-2026', value: { status: 'MISSING', valueDecimal: null, nativeCurrency: 'PLN', presentationCurrency: 'PLN', unit: 'UNITS', multiplier: '1' } }),
-    kpiValue({ kpiValueId: 'kv-inv-2026', kpiCode: 'INVENTORY_DAYS', kpiName: 'Dni zapasów', category: 'Operacje', tier: 'INDUSTRY', periodId: 'p-2026', value: { status: 'NOT_APPLICABLE', valueDecimal: null, nativeCurrency: 'PLN', presentationCurrency: 'PLN', unit: 'DAYS', multiplier: '1' } }),
+    kpiValue({
+      kpiValueId: 'kv-gm-2026',
+      kpiCode: 'GROSS_MARGIN_PCT',
+      kpiName: 'Marża brutto',
+      periodId: 'p-2026',
+      value: {
+        status: 'MISSING',
+        valueDecimal: null,
+        nativeCurrency: 'PLN',
+        presentationCurrency: 'PLN',
+        unit: 'UNITS',
+        multiplier: '1',
+      },
+    }),
+    kpiValue({
+      kpiValueId: 'kv-inv-2026',
+      kpiCode: 'INVENTORY_DAYS',
+      kpiName: 'Dni zapasów',
+      category: 'Operacje',
+      tier: 'INDUSTRY',
+      periodId: 'p-2026',
+      value: {
+        status: 'NOT_APPLICABLE',
+        valueDecimal: null,
+        nativeCurrency: 'PLN',
+        presentationCurrency: 'PLN',
+        unit: 'DAYS',
+        multiplier: '1',
+      },
+    }),
   ],
 };
 
@@ -211,16 +412,26 @@ const NAME_BY_SCENE: Record<Scene, string> = {
 };
 
 function jsonResponse(body: unknown, status = 200): Response {
-  return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { 'Content-Type': 'application/json' },
+  });
 }
 
 const realFetch = window.fetch.bind(window);
 window.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
-  const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : (input as Request).url;
+  const url =
+    typeof input === 'string'
+      ? input
+      : input instanceof URL
+        ? input.toString()
+        : (input as Request).url;
 
   if (url.includes('/api/v8/finance-v2/artifacts/') && url.includes('/rename')) {
     const body = init?.body ? JSON.parse(String(init.body)) : {};
-    return jsonResponse({ data: { artifactId: ARTIFACT_ID, naturalKey: body.naturalKey ?? NAME_BY_SCENE[scene] } });
+    return jsonResponse({
+      data: { artifactId: ARTIFACT_ID, naturalKey: body.naturalKey ?? NAME_BY_SCENE[scene] },
+    });
   }
   if (url.includes(`/api/v8/finance-v2/artifacts/${ARTIFACT_ID}`)) {
     return jsonResponse({
@@ -280,7 +491,15 @@ window.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
     return jsonResponse({ data: KPI_VALUES_BY_SCENE[scene] });
   }
   if (url.includes('/api/v8/finance-v2/analysis/') && url.includes('/compute')) {
-    return jsonResponse({ data: { jobId: 'job-demo-1', jobStatus: 'succeeded', resultsCount: KPI_VALUES_BY_SCENE[scene].length, results: [], readiness: null } });
+    return jsonResponse({
+      data: {
+        jobId: 'job-demo-1',
+        jobStatus: 'succeeded',
+        resultsCount: KPI_VALUES_BY_SCENE[scene].length,
+        results: [],
+        readiness: null,
+      },
+    });
   }
   return realFetch(input as any, init);
 }) as typeof window.fetch;

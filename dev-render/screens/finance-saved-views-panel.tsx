@@ -33,7 +33,11 @@ let views = [
     scope: 'TEAM',
     ownerUserId: 'analityk.dbr77',
     name: 'Widok zespołu — tylko rentowność',
-    viewState: { schemaVersion: 1, gridViewState: emptyGridViewStateSnapshot(), filters: [{ type: 'category', values: ['PROFITABILITY'] }] },
+    viewState: {
+      schemaVersion: 1,
+      gridViewState: emptyGridViewStateSnapshot(),
+      filters: [{ type: 'category', values: ['PROFITABILITY'] }],
+    },
     shareToken: 'share-team-1',
     createdBy: 'analityk.dbr77',
     createdAt: '2026-08-05T10:00:00.000Z',
@@ -46,7 +50,11 @@ let views = [
     scope: 'PERSONAL',
     ownerUserId: 'piotr.wisniewski',
     name: 'Mój widok — braki danych',
-    viewState: { schemaVersion: 1, gridViewState: emptyGridViewStateSnapshot(), filters: [{ type: 'missing', onlyMissing: true }] },
+    viewState: {
+      schemaVersion: 1,
+      gridViewState: emptyGridViewStateSnapshot(),
+      filters: [{ type: 'missing', onlyMissing: true }],
+    },
     shareToken: 'share-personal-1',
     createdBy: 'piotr.wisniewski',
     createdAt: '2026-08-09T10:00:00.000Z',
@@ -55,7 +63,10 @@ let views = [
 ];
 
 function json(data: unknown, status = 200): Response {
-  return new Response(JSON.stringify({ data }), { status, headers: { 'Content-Type': 'application/json' } });
+  return new Response(JSON.stringify({ data }), {
+    status,
+    headers: { 'Content-Type': 'application/json' },
+  });
 }
 
 const g = window as unknown as { __SAVED_VIEWS_PANEL_FETCH__?: boolean };
@@ -76,7 +87,11 @@ if (!g.__SAVED_VIEWS_PANEL_FETCH__) {
         scope: body.scope ?? 'PERSONAL',
         ownerUserId: 'piotr.wisniewski',
         name: body.name ?? '',
-        viewState: { schemaVersion: 1, gridViewState: body.gridViewState, filters: body.filters ?? [] },
+        viewState: {
+          schemaVersion: 1,
+          gridViewState: body.gridViewState,
+          filters: body.filters ?? [],
+        },
         shareToken: `share-${views.length + 1}`,
         createdBy: 'piotr.wisniewski',
         createdAt: new Date().toISOString(),
@@ -109,7 +124,11 @@ function SimulatedMenu1(): React.ReactElement {
 
 export default function FinanceSavedViewsPanelScreen(): React.ReactElement {
   return (
-    <div className="min-h-screen bg-c-bg p-6" data-testid="finance-saved-views-panel-screen" data-scene={scene}>
+    <div
+      className="min-h-screen bg-c-bg p-6"
+      data-testid="finance-saved-views-panel-screen"
+      data-scene={scene}
+    >
       <SimulatedMenu1 />
       <div className="mx-auto mt-4 max-w-md">
         <FinanceSavedViewsPanel artifactId={ARTIFACT_ID} onApplyView={() => {}} />

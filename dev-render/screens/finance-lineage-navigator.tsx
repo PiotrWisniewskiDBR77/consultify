@@ -105,7 +105,11 @@ const SAMPLE_NAVIGATOR = {
         displayName: 'Model bazowy FY2026',
         isFocus: false,
         outgoingEdgeType: 'MODEL_TO_SCENARIO',
-        staleBadge: { kind: 'SOURCE_CHANGED', label: { key: 'x', pl: 'Źródło się zmieniło' }, severity: 'warning' },
+        staleBadge: {
+          kind: 'SOURCE_CHANGED',
+          label: { key: 'x', pl: 'Źródło się zmieniło' },
+          severity: 'warning',
+        },
         stateBadge: null,
         isDimmed: false,
       },
@@ -200,7 +204,11 @@ const SAMPLE_NAVIGATOR = {
       {
         targetArtifactType: 'REPORT_EXPORT',
         label: { key: 'finance.lineage.createNew.reportExport', pl: '+ Nowy: Eksport raportu' },
-        preselectedSource: { artifactId: 'art-dbr77-valuation', artifactType: 'VALUATION_CASE', businessVersionId: BV_FOCUS },
+        preselectedSource: {
+          artifactId: 'art-dbr77-valuation',
+          artifactType: 'VALUATION_CASE',
+          businessVersionId: BV_FOCUS,
+        },
       },
     ],
     createNewBlockedReason: null,
@@ -210,7 +218,12 @@ const SAMPLE_NAVIGATOR = {
     hiddenTerminalCount: 0,
     cycleVersionIds: [],
   },
-  fullGraphView: { id: 'finance.lineage.fullGraph', label: { key: 'x', pl: 'Pełny graf powiązań' }, auxiliary: true, defaultVisible: false },
+  fullGraphView: {
+    id: 'finance.lineage.fullGraph',
+    label: { key: 'x', pl: 'Pełny graf powiązań' },
+    auxiliary: true,
+    defaultVisible: false,
+  },
 };
 
 const g = window as unknown as { __LINEAGE_NAVIGATOR_FETCH__?: boolean };
@@ -223,17 +236,30 @@ if (!g.__LINEAGE_NAVIGATOR_FETCH__) {
 
     if (url.includes('/lineage-navigator')) {
       if (scene === 'error') {
-        return new Response(JSON.stringify({ error: 'Business version not found', code: 'NOT_FOUND' }), {
-          status: 404,
-          headers: { 'Content-Type': 'application/json' },
-        });
+        return new Response(
+          JSON.stringify({ error: 'Business version not found', code: 'NOT_FOUND' }),
+          {
+            status: 404,
+            headers: { 'Content-Type': 'application/json' },
+          }
+        );
       }
-      return new Response(JSON.stringify({ data: SAMPLE_NAVIGATOR, meta: { version: 'v2', contract: 'finance_v3_canonical_v1' } }), {
+      return new Response(
+        JSON.stringify({
+          data: SAMPLE_NAVIGATOR,
+          meta: { version: 'v2', contract: 'finance_v3_canonical_v1' },
+        }),
+        {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
+    }
+    if (url.includes('/api/'))
+      return new Response(JSON.stringify({ data: [] }), {
         status: 200,
         headers: { 'Content-Type': 'application/json' },
       });
-    }
-    if (url.includes('/api/')) return new Response(JSON.stringify({ data: [] }), { status: 200, headers: { 'Content-Type': 'application/json' } });
     return realFetch(input as RequestInfo, init);
   };
 }
@@ -250,10 +276,18 @@ function SimulatedMenu1(): React.ReactElement {
 
 export default function FinanceLineageNavigatorScreen(): React.ReactElement {
   return (
-    <div className="min-h-screen bg-c-bg p-6" data-testid="finance-lineage-navigator-screen" data-scene={scene}>
+    <div
+      className="min-h-screen bg-c-bg p-6"
+      data-testid="finance-lineage-navigator-screen"
+      data-scene={scene}
+    >
       <SimulatedMenu1 />
       <div className="mx-auto mt-4 max-w-xl">
-        <FinanceLineageNavigator businessVersionId={BV_FOCUS} onNavigate={() => {}} onCreateNew={() => {}} />
+        <FinanceLineageNavigator
+          businessVersionId={BV_FOCUS}
+          onNavigate={() => {}}
+          onCreateNew={() => {}}
+        />
       </div>
     </div>
   );

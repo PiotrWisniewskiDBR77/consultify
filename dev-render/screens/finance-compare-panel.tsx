@@ -11,7 +11,10 @@
  */
 import React from 'react';
 
-import { FinanceComparePanel, type FinanceCompareRequest } from '../../src/components/Finance/compare/FinanceComparePanel';
+import {
+  FinanceComparePanel,
+  type FinanceCompareRequest,
+} from '../../src/components/Finance/compare/FinanceComparePanel';
 import { FINANCE_COMPARE_FLAG_ID } from '../../src/hooks/useFinanceCompareFlag';
 
 const params = new URLSearchParams(window.location.search);
@@ -30,7 +33,11 @@ const scene = (params.get('scene') as 'default' | 'off' | null) ?? 'default';
 const REQUEST: FinanceCompareRequest = {
   kind: 'periods',
   params: {
-    artifactRef: { artifactType: 'STATEMENT_PACK', artifactId: 'art-dbr77-statement', businessVersionId: 'bv-dbr77-statement-3' },
+    artifactRef: {
+      artifactType: 'STATEMENT_PACK',
+      artifactId: 'art-dbr77-statement',
+      businessVersionId: 'bv-dbr77-statement-3',
+    },
     periodIdA: 'per-2025-12',
     periodIdB: 'per-2026-01',
     labelA: 'Grudzień 2025',
@@ -84,8 +91,16 @@ const ROWS = [
 const SAMPLE_RESULT = {
   comparisonType: 'PERIOD',
   generatedAt: '2026-08-12T00:00:00.000Z',
-  sourceA: { artifactType: 'STATEMENT_PACK', businessVersionId: 'bv-dbr77-statement-3', label: 'Grudzień 2025' },
-  sourceB: { artifactType: 'STATEMENT_PACK', businessVersionId: 'bv-dbr77-statement-3', label: 'Styczeń 2026' },
+  sourceA: {
+    artifactType: 'STATEMENT_PACK',
+    businessVersionId: 'bv-dbr77-statement-3',
+    label: 'Grudzień 2025',
+  },
+  sourceB: {
+    artifactType: 'STATEMENT_PACK',
+    businessVersionId: 'bv-dbr77-statement-3',
+    label: 'Styczeń 2026',
+  },
   ignoreDimensions: ['periodId'],
   materialityThresholdPct: 5,
   onlyMaterial: false,
@@ -109,9 +124,16 @@ if (!g.__COMPARE_PANEL_FETCH__) {
     const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
     if (url.includes('/locales/')) return realFetch(input as RequestInfo, init);
     if (url.includes('/compare/periods')) {
-      return new Response(JSON.stringify({ data: SAMPLE_RESULT, meta: {} }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+      return new Response(JSON.stringify({ data: SAMPLE_RESULT, meta: {} }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      });
     }
-    if (url.includes('/api/')) return new Response(JSON.stringify({ data: [] }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+    if (url.includes('/api/'))
+      return new Response(JSON.stringify({ data: [] }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      });
     return realFetch(input as RequestInfo, init);
   };
 }
@@ -128,7 +150,11 @@ function SimulatedMenu1(): React.ReactElement {
 
 export default function FinanceComparePanelScreen(): React.ReactElement {
   return (
-    <div className="min-h-screen bg-c-bg p-6" data-testid="finance-compare-panel-screen" data-scene={scene}>
+    <div
+      className="min-h-screen bg-c-bg p-6"
+      data-testid="finance-compare-panel-screen"
+      data-scene={scene}
+    >
       <SimulatedMenu1 />
       <div className="mx-auto mt-4 max-w-3xl">
         <FinanceComparePanel request={REQUEST} />

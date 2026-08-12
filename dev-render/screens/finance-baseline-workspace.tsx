@@ -29,9 +29,13 @@
  */
 import React from 'react';
 
-import { BaselineWorkspace, type BaselineWorkspaceProps, type BaselineWorkspaceView } from '../../src/components/Finance/BaselineWorkspace';
 import type { AssumptionRowSpec } from '../../src/components/Finance/baseline/AssumptionsView';
 import type { PeriodMeta } from '../../src/components/Finance/baseline/CalculationsView';
+import {
+  BaselineWorkspace,
+  type BaselineWorkspaceProps,
+  type BaselineWorkspaceView,
+} from '../../src/components/Finance/BaselineWorkspace';
 import type {
   BaselineAssumptionDto,
   BaselineComputeResultDto,
@@ -44,7 +48,10 @@ import type {
 // the same localStorage-backed local override the hook reads at init.
 try {
   const existing = JSON.parse(localStorage.getItem('consultify_feature_flags') || '{}');
-  localStorage.setItem('consultify_feature_flags', JSON.stringify({ ...existing, financeBaselineWorkspaceV1: true }));
+  localStorage.setItem(
+    'consultify_feature_flags',
+    JSON.stringify({ ...existing, financeBaselineWorkspaceV1: true })
+  );
 } catch {
   // ignore — harness-only convenience
 }
@@ -69,16 +76,96 @@ const OPENING_BS_PERIOD_ID = 'per-2025-12';
 
 // ── Założenia — jedno na typ harmonogramu (7), pełny grid (V-5: brak martwej
 // przestrzeni — realistyczna liczba wierszy z realnym źródłem/jakością). ──
-const ASSUMPTION_SPECS: Array<{ scheduleType: BaselineAssumptionDto['scheduleType']; driverCode: string; value: string; unit: string; rule: BaselineAssumptionDto['rule']; quality: BaselineAssumptionDto['quality']; historical: string }> = [
-  { scheduleType: 'revenue_pvm', driverCode: 'REVENUE_GROWTH_YOY', value: '0.12', unit: 'PCT', rule: 'GROWTH_RATE', quality: 'CONFIRMED', historical: '0.08' },
-  { scheduleType: 'cogs_opex', driverCode: 'COGS_PCT_OF_REVENUE', value: '0.58', unit: 'PCT', rule: 'HISTORICAL_AVERAGE', quality: 'CONFIRMED', historical: '0.6' },
-  { scheduleType: 'cogs_opex', driverCode: 'OPEX_PCT_OF_REVENUE', value: '0.22', unit: 'PCT', rule: 'HISTORICAL_AVERAGE', quality: 'ESTIMATED', historical: '0.24' },
-  { scheduleType: 'wc_dso_dio_dpo', driverCode: 'DSO_DAYS', value: '45', unit: 'DAYS', rule: 'HISTORICAL_AVERAGE', quality: 'CONFIRMED', historical: '42' },
-  { scheduleType: 'wc_dso_dio_dpo', driverCode: 'DIO_DAYS', value: '30', unit: 'DAYS', rule: 'HISTORICAL_AVERAGE', quality: 'ESTIMATED', historical: '28' },
-  { scheduleType: 'wc_dso_dio_dpo', driverCode: 'DPO_DAYS', value: '35', unit: 'DAYS', rule: 'MANUAL_OVERRIDE', quality: 'DEGRADED_INSUFFICIENT_HISTORY', historical: '31' },
-  { scheduleType: 'capex_depreciation', driverCode: 'CAPEX_PCT_OF_REVENUE', value: '0.04', unit: 'PCT', rule: 'FIXED_VALUE', quality: 'ESTIMATED', historical: '0.05' },
-  { scheduleType: 'debt_maturity', driverCode: 'CASH_INTEREST_RATE_ANNUAL_PCT', value: '0.055', unit: 'PCT', rule: 'FIXED_VALUE', quality: 'CONFIRMED', historical: '0.05' },
-  { scheduleType: 'tax_nol', driverCode: 'STATUTORY_TAX_RATE_PCT', value: '0.19', unit: 'PCT', rule: 'FIXED_VALUE', quality: 'CONFIRMED', historical: '0.19' },
+const ASSUMPTION_SPECS: Array<{
+  scheduleType: BaselineAssumptionDto['scheduleType'];
+  driverCode: string;
+  value: string;
+  unit: string;
+  rule: BaselineAssumptionDto['rule'];
+  quality: BaselineAssumptionDto['quality'];
+  historical: string;
+}> = [
+  {
+    scheduleType: 'revenue_pvm',
+    driverCode: 'REVENUE_GROWTH_YOY',
+    value: '0.12',
+    unit: 'PCT',
+    rule: 'GROWTH_RATE',
+    quality: 'CONFIRMED',
+    historical: '0.08',
+  },
+  {
+    scheduleType: 'cogs_opex',
+    driverCode: 'COGS_PCT_OF_REVENUE',
+    value: '0.58',
+    unit: 'PCT',
+    rule: 'HISTORICAL_AVERAGE',
+    quality: 'CONFIRMED',
+    historical: '0.6',
+  },
+  {
+    scheduleType: 'cogs_opex',
+    driverCode: 'OPEX_PCT_OF_REVENUE',
+    value: '0.22',
+    unit: 'PCT',
+    rule: 'HISTORICAL_AVERAGE',
+    quality: 'ESTIMATED',
+    historical: '0.24',
+  },
+  {
+    scheduleType: 'wc_dso_dio_dpo',
+    driverCode: 'DSO_DAYS',
+    value: '45',
+    unit: 'DAYS',
+    rule: 'HISTORICAL_AVERAGE',
+    quality: 'CONFIRMED',
+    historical: '42',
+  },
+  {
+    scheduleType: 'wc_dso_dio_dpo',
+    driverCode: 'DIO_DAYS',
+    value: '30',
+    unit: 'DAYS',
+    rule: 'HISTORICAL_AVERAGE',
+    quality: 'ESTIMATED',
+    historical: '28',
+  },
+  {
+    scheduleType: 'wc_dso_dio_dpo',
+    driverCode: 'DPO_DAYS',
+    value: '35',
+    unit: 'DAYS',
+    rule: 'MANUAL_OVERRIDE',
+    quality: 'DEGRADED_INSUFFICIENT_HISTORY',
+    historical: '31',
+  },
+  {
+    scheduleType: 'capex_depreciation',
+    driverCode: 'CAPEX_PCT_OF_REVENUE',
+    value: '0.04',
+    unit: 'PCT',
+    rule: 'FIXED_VALUE',
+    quality: 'ESTIMATED',
+    historical: '0.05',
+  },
+  {
+    scheduleType: 'debt_maturity',
+    driverCode: 'CASH_INTEREST_RATE_ANNUAL_PCT',
+    value: '0.055',
+    unit: 'PCT',
+    rule: 'FIXED_VALUE',
+    quality: 'CONFIRMED',
+    historical: '0.05',
+  },
+  {
+    scheduleType: 'tax_nol',
+    driverCode: 'STATUTORY_TAX_RATE_PCT',
+    value: '0.19',
+    unit: 'PCT',
+    rule: 'FIXED_VALUE',
+    quality: 'CONFIRMED',
+    historical: '0.19',
+  },
 ];
 
 const ASSUMPTION_ROW_ORDER: AssumptionRowSpec[] = ASSUMPTION_SPECS.map((s) => ({
@@ -100,7 +187,11 @@ const MOCK_ASSUMPTIONS: BaselineAssumptionDto[] = ASSUMPTION_SPECS.map((s, i) =>
     status: 'PRESENT_NONZERO',
     valueDecimal: s.value,
     unit: s.unit,
-    sourceRef: { historicalValueDecimal: s.historical, statementPackLabel: 'Pakiet sprawozdań FY2025', analysisVersionLabel: 'Analiza v3' },
+    sourceRef: {
+      historicalValueDecimal: s.historical,
+      statementPackLabel: 'Pakiet sprawozdań FY2025',
+      analysisVersionLabel: 'Analiza v3',
+    },
   },
   // `.toFixed(4)` — bez tego JS zmiennoprzecinkowe artefakty (np. `0.58 - 0.1`
   // = `0.48000000000000004`) trafiały wprost do UI i wizualnie ucinały się w
@@ -115,7 +206,11 @@ const MOCK_ASSUMPTIONS: BaselineAssumptionDto[] = ASSUMPTION_SPECS.map((s, i) =>
 
 // ── Wyliczenia — pełny zestaw 31 linii kanonicznych x 3 okresy. W scenie
 // "fundinggap" CASH spada poniżej zera w 02/2026 i 03/2026 (bez plugu). ──
-const CANONICAL_LINES: Array<{ code: string; statementType: 'P&L' | 'BS' | 'CF'; values: [number, number, number] }> = [
+const CANONICAL_LINES: Array<{
+  code: string;
+  statementType: 'P&L' | 'BS' | 'CF';
+  values: [number, number, number];
+}> = [
   { code: 'REVENUE', statementType: 'P&L', values: [420000, 431000, 448000] },
   { code: 'COGS', statementType: 'P&L', values: [-243600, -250000, -260000] },
   { code: 'GROSS_MARGIN', statementType: 'P&L', values: [176400, 181000, 188000] },
@@ -155,7 +250,12 @@ const CASH_BY_SCENE: Record<'default' | 'fundinggap', [number, number, number]> 
   fundinggap: [24200, -85000, -130400],
 };
 
-function outputRow(lineCode: string, statementType: 'P&L' | 'BS' | 'CF', periodIndex: number, value: number): BaselineOutputDto {
+function outputRow(
+  lineCode: string,
+  statementType: 'P&L' | 'BS' | 'CF',
+  periodIndex: number,
+  value: number
+): BaselineOutputDto {
   const period = FORECAST_PERIODS[periodIndex];
   return {
     outputId: `out-${lineCode}-${period.periodId}`,
@@ -182,7 +282,9 @@ function outputRow(lineCode: string, statementType: 'P&L' | 'BS' | 'CF', periodI
 }
 
 const MOCK_OUTPUTS: BaselineOutputDto[] = [
-  ...CANONICAL_LINES.flatMap((line) => line.values.map((v, i) => outputRow(line.code, line.statementType, i, v))),
+  ...CANONICAL_LINES.flatMap((line) =>
+    line.values.map((v, i) => outputRow(line.code, line.statementType, i, v))
+  ),
   ...CASH_BY_SCENE[scene].map((v, i) => outputRow('CASH', 'BS', i, v)),
 ];
 
@@ -212,7 +314,10 @@ if (!g.__BASELINE_WORKSPACE_FETCH__) {
   window.fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
     const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
     const json = (data: unknown, status = 200): Response =>
-      new Response(JSON.stringify({ data }), { status, headers: { 'Content-Type': 'application/json' } });
+      new Response(JSON.stringify({ data }), {
+        status,
+        headers: { 'Content-Type': 'application/json' },
+      });
 
     if (url.includes('/locales/')) return realFetch(input as RequestInfo, init);
 
@@ -224,10 +329,17 @@ if (!g.__BASELINE_WORKSPACE_FETCH__) {
     }
     if (url.includes(`/baseline/${BV_ID}/outputs`)) return json(MOCK_OUTPUTS);
     if (url.includes(`/baseline/${BV_ID}/compute`)) return json(MOCK_COMPUTE_RESULT);
-    if (url.includes('/artifacts/') && url.includes('/rename')) return json({ artifactId: ARTIFACT_ID, naturalKey: 'Nowa nazwa (dev-render)' });
-    if (url.includes('/versions/') && url.includes('/transitions')) return json({ status: statusOverride, version: 1 });
-    if (url.includes('/models/') && url.includes('/approve')) return new Response(JSON.stringify({ success: true, status: 'APPROVED' }), { status: 200, headers: { 'Content-Type': 'application/json' } });
-    if (url.includes('/models/') && url.includes('/reopen')) return json({ status: 'DRAFT', versionNo: 2 });
+    if (url.includes('/artifacts/') && url.includes('/rename'))
+      return json({ artifactId: ARTIFACT_ID, naturalKey: 'Nowa nazwa (dev-render)' });
+    if (url.includes('/versions/') && url.includes('/transitions'))
+      return json({ status: statusOverride, version: 1 });
+    if (url.includes('/models/') && url.includes('/approve'))
+      return new Response(JSON.stringify({ success: true, status: 'APPROVED' }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    if (url.includes('/models/') && url.includes('/reopen'))
+      return json({ status: 'DRAFT', versionNo: 2 });
 
     if (url.includes('/api/')) return json([]);
     return realFetch(input as RequestInfo, init);
@@ -272,7 +384,11 @@ function SimulatedMenu1(): React.ReactElement {
 
 export default function FinanceBaselineWorkspaceScreen(): React.ReactElement {
   return (
-    <div className="min-h-screen bg-c-bg" data-testid="finance-baseline-workspace-screen" data-scene={scene}>
+    <div
+      className="min-h-screen bg-c-bg"
+      data-testid="finance-baseline-workspace-screen"
+      data-scene={scene}
+    >
       <SimulatedMenu1 />
       <BaselineWorkspace {...buildProps()} />
     </div>

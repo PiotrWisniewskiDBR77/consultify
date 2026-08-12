@@ -18,8 +18,8 @@
  */
 import React from 'react';
 
-import { ValuationWorkspace } from '../../src/components/Finance/Valuation/ValuationWorkspace';
 import type { ValuationWorkspaceApi } from '../../src/components/Finance/Valuation/ValuationWorkspace';
+import { ValuationWorkspace } from '../../src/components/Finance/Valuation/ValuationWorkspace';
 import type {
   ValuationAdvisorFindingStoredDto,
   ValuationMethodDto,
@@ -34,7 +34,10 @@ import type {
 // the same localStorage-backed local override the hook reads at init.
 try {
   const existing = JSON.parse(localStorage.getItem('consultify_feature_flags') || '{}');
-  localStorage.setItem('consultify_feature_flags', JSON.stringify({ ...existing, financeValuationWorkspaceV1: true }));
+  localStorage.setItem(
+    'consultify_feature_flags',
+    JSON.stringify({ ...existing, financeValuationWorkspaceV1: true })
+  );
 } catch {
   // ignore — harness-only convenience
 }
@@ -79,10 +82,38 @@ const MOCK_WACC: ValuationWaccInputsRawDto = {
 };
 
 const MOCK_METHODS: ValuationMethodDto[] = [
-  { methodId: 'm-dcf', methodType: 'DCF_FCFF', readiness: 'READY', result: { status: 'PRESENT_NONZERO', valueDecimal: '184500000' }, isInRecommendationBasket: true, weightPct: '60' },
-  { methodId: 'm-comps', methodType: 'TRADING_COMPS', readiness: 'READY', result: { status: 'PRESENT_NONZERO', valueDecimal: '201000000' }, isInRecommendationBasket: true, weightPct: '40' },
-  { methodId: 'm-prec', methodType: 'PRECEDENT_TRANSACTIONS', readiness: 'NOT_CONFIGURED', result: { status: 'NA', valueDecimal: null }, isInRecommendationBasket: false, weightPct: null },
-  { methodId: 'm-asset', methodType: 'ASSET_BASED', readiness: 'DATA_INCOMPLETE', result: { status: 'MISSING', valueDecimal: null }, isInRecommendationBasket: false, weightPct: null },
+  {
+    methodId: 'm-dcf',
+    methodType: 'DCF_FCFF',
+    readiness: 'READY',
+    result: { status: 'PRESENT_NONZERO', valueDecimal: '184500000' },
+    isInRecommendationBasket: true,
+    weightPct: '60',
+  },
+  {
+    methodId: 'm-comps',
+    methodType: 'TRADING_COMPS',
+    readiness: 'READY',
+    result: { status: 'PRESENT_NONZERO', valueDecimal: '201000000' },
+    isInRecommendationBasket: true,
+    weightPct: '40',
+  },
+  {
+    methodId: 'm-prec',
+    methodType: 'PRECEDENT_TRANSACTIONS',
+    readiness: 'NOT_CONFIGURED',
+    result: { status: 'NA', valueDecimal: null },
+    isInRecommendationBasket: false,
+    weightPct: null,
+  },
+  {
+    methodId: 'm-asset',
+    methodType: 'ASSET_BASED',
+    readiness: 'DATA_INCOMPLETE',
+    result: { status: 'MISSING', valueDecimal: null },
+    isInRecommendationBasket: false,
+    weightPct: null,
+  },
 ];
 
 const MOCK_RESULTS: ValuationResultsDto = {
@@ -99,8 +130,18 @@ const MOCK_RESULTS: ValuationResultsDto = {
     status: 'READY',
     weightedEnterpriseValue: 191400000,
     contributions: [
-      { methodType: 'DCF_FCFF', weightPct: 60, resultEvDecimal: 184500000, contribution: 110700000 },
-      { methodType: 'TRADING_COMPS', weightPct: 40, resultEvDecimal: 201000000, contribution: 80400000 },
+      {
+        methodType: 'DCF_FCFF',
+        weightPct: 60,
+        resultEvDecimal: 184500000,
+        contribution: 110700000,
+      },
+      {
+        methodType: 'TRADING_COMPS',
+        weightPct: 40,
+        resultEvDecimal: 201000000,
+        contribution: 80400000,
+      },
     ],
   },
   methods: MOCK_METHODS,
@@ -121,16 +162,39 @@ const MOCK_RESULTS: ValuationResultsDto = {
     },
   ],
   bridge: {
-    header: { id: 'bridge-1', as_of_date: '2026-08-01', enterprise_value_decimal: '191400000', equity_value_decimal: '171400000' },
+    header: {
+      id: 'bridge-1',
+      as_of_date: '2026-08-01',
+      enterprise_value_decimal: '191400000',
+      equity_value_decimal: '171400000',
+    },
     components: [
-      { id: 'bc-1', sequence_order: 1, component_kind: 'DEBT', sign: 'SUBTRACT_FROM_EV', amount_decimal: '25000000' },
-      { id: 'bc-2', sequence_order: 2, component_kind: 'CASH', sign: 'ADD_TO_EV', amount_decimal: '5000000' },
+      {
+        id: 'bc-1',
+        sequence_order: 1,
+        component_kind: 'DEBT',
+        sign: 'SUBTRACT_FROM_EV',
+        amount_decimal: '25000000',
+      },
+      {
+        id: 'bc-2',
+        sequence_order: 2,
+        component_kind: 'CASH',
+        sign: 'ADD_TO_EV',
+        amount_decimal: '5000000',
+      },
     ],
   },
   sensitivityGrids: [],
   usableCompsByMethodId: { 'm-comps': 7 },
   methodAgreementWarnings: [
-    { ruleId: 'ADV-R11', kind: 'RISK', title: 'Rozbieżność metod', narrative: 'DCF i porównywalne różnią się o 8,2% — w normie, ale warto odnotować.', confidence: 'MEDIUM' },
+    {
+      ruleId: 'ADV-R11',
+      kind: 'RISK',
+      title: 'Rozbieżność metod',
+      narrative: 'DCF i porównywalne różnią się o 8,2% — w normie, ale warto odnotować.',
+      confidence: 'MEDIUM',
+    },
   ],
 };
 
@@ -143,7 +207,9 @@ function buildMonotonicGrid(): ValuationSensitivityGridRawDto {
       const g = gAxis[r - 1];
       const wacc = waccAxis[c - 1];
       const undefinedCell = g >= wacc;
-      const value = undefinedCell ? null : Math.round(184500000 * (1 + (g - 2.5) * 0.04 - (wacc - 9.3) * 0.06));
+      const value = undefinedCell
+        ? null
+        : Math.round(184500000 * (1 + (g - 2.5) * 0.04 - (wacc - 9.3) * 0.06));
       cells.push({
         id: `cell-${r}-${c}`,
         row_index: r,
@@ -156,7 +222,15 @@ function buildMonotonicGrid(): ValuationSensitivityGridRawDto {
     }
   }
   return {
-    grid: { id: 'grid-1', organization_id: 'org-1', method_id: 'm-dcf', grid_label: 'PRIMARY', row_axis_variable: 'terminal_g_pct', column_axis_variable: 'wacc_pct', grid_status: 'COMPLETE' },
+    grid: {
+      id: 'grid-1',
+      organization_id: 'org-1',
+      method_id: 'm-dcf',
+      grid_label: 'PRIMARY',
+      row_axis_variable: 'terminal_g_pct',
+      column_axis_variable: 'wacc_pct',
+      grid_status: 'COMPLETE',
+    },
     cells,
   };
 }
@@ -168,8 +242,24 @@ const MOCK_ADVISOR_FINDINGS: ValuationAdvisorFindingStoredDto[] = [
     compute_snapshot_id: 'snap-1',
     output_kind: 'FACT',
     title: 'Udział wartości terminalnej w EV: 58,3%',
-    narrative: 'Wartość terminalna metody DCF/FCFF stanowi 58,3% wyliczonej EV — mierzone bezpośrednio z tabeli terminal.',
-    evidence_ref: { ruleId: 'ADV-R01', generator: 'RULE_ENGINE', rulesVersion: '1', pointers: [{ table: 'finance_valuation_terminal', column: 'terminal_share_pct', rowId: 't-1', observedValue: 58.3, label: 'Udział wartości terminalnej' }], derived: {}, impactUnit: 'PCT' },
+    narrative:
+      'Wartość terminalna metody DCF/FCFF stanowi 58,3% wyliczonej EV — mierzone bezpośrednio z tabeli terminal.',
+    evidence_ref: {
+      ruleId: 'ADV-R01',
+      generator: 'RULE_ENGINE',
+      rulesVersion: '1',
+      pointers: [
+        {
+          table: 'finance_valuation_terminal',
+          column: 'terminal_share_pct',
+          rowId: 't-1',
+          observedValue: 58.3,
+          label: 'Udział wartości terminalnej',
+        },
+      ],
+      derived: {},
+      impactUnit: 'PCT',
+    },
     driver_ref: 'TERMINAL_SHARE',
     impact_decimal: '58.3',
     confidence: 'HIGH',
@@ -187,8 +277,16 @@ const MOCK_ADVISOR_FINDINGS: ValuationAdvisorFindingStoredDto[] = [
     compute_snapshot_id: 'snap-1',
     output_kind: 'HYPOTHESIS',
     title: 'Terminal g nie jest w pełni spójne z reinwestycja × ROIC',
-    narrative: 'Wejścia sugerują implikowane g ≈ 2,5% (38% reinwestycji × 6,6% ROIC), zbieżne z przyjętym g=2,5% — brak istotnej rozbieżności.',
-    evidence_ref: { ruleId: 'ADV-R06', generator: 'RULE_ENGINE', rulesVersion: '1', pointers: [], derived: { impliedG: 2.5 }, impactUnit: 'PP' },
+    narrative:
+      'Wejścia sugerują implikowane g ≈ 2,5% (38% reinwestycji × 6,6% ROIC), zbieżne z przyjętym g=2,5% — brak istotnej rozbieżności.',
+    evidence_ref: {
+      ruleId: 'ADV-R06',
+      generator: 'RULE_ENGINE',
+      rulesVersion: '1',
+      pointers: [],
+      derived: { impliedG: 2.5 },
+      impactUnit: 'PP',
+    },
     driver_ref: 'TERMINAL_G_CONSISTENCY',
     impact_decimal: null,
     confidence: 'MEDIUM',
@@ -262,16 +360,33 @@ function makeMockApi(): ValuationWorkspaceApi {
     }),
     getValuationWaccInputs: async () => MOCK_WACC,
     upsertValuationWaccInputs: async (_bv, params) => ({ ...MOCK_WACC, ...(params as any) }),
-    listValuationMethods: async () => ({ methods: MOCK_METHODS, weightedRecommendation: MOCK_RESULTS.weightedRecommendation }),
+    listValuationMethods: async () => ({
+      methods: MOCK_METHODS,
+      weightedRecommendation: MOCK_RESULTS.weightedRecommendation,
+    }),
     createValuationMethod: async () => MOCK_METHODS[0],
-    setValuationMethodBasketWeights: async () => ({ methods: MOCK_METHODS, weightedRecommendation: MOCK_RESULTS.weightedRecommendation }),
+    setValuationMethodBasketWeights: async () => ({
+      methods: MOCK_METHODS,
+      weightedRecommendation: MOCK_RESULTS.weightedRecommendation,
+    }),
     getValuationResults: async () => MOCK_RESULTS,
     getValuationSensitivityGrid: async () => buildMonotonicGrid(),
-    generateValuationAdvisorOutput: async () => ({ variantId: BV_ID, computeSnapshotId: 'snap-2', findings: [], countsByKind: { FACT: 0, HYPOTHESIS: 0, RISK: 0, QUESTION: 0, ACTION: 0 } }),
+    generateValuationAdvisorOutput: async () => ({
+      variantId: BV_ID,
+      computeSnapshotId: 'snap-2',
+      findings: [],
+      countsByKind: { FACT: 0, HYPOTHESIS: 0, RISK: 0, QUESTION: 0, ACTION: 0 },
+    }),
     listValuationAdvisorOutputs: async () => MOCK_ADVISOR_FINDINGS,
   };
 }
 
 export default function FinanceValuationWorkspaceScreen(): React.ReactElement {
-  return <ValuationWorkspace businessVersionId={BV_ID} api={makeMockApi()} initialStepId={INITIAL_STEP} />;
+  return (
+    <ValuationWorkspace
+      businessVersionId={BV_ID}
+      api={makeMockApi()}
+      initialStepId={INITIAL_STEP}
+    />
+  );
 }
