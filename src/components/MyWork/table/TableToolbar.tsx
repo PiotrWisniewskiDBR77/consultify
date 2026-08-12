@@ -16,6 +16,7 @@ import {
   ChevronDown,
   ClipboardCopy,
   Columns3,
+  Copy,
   Download,
   Eye,
   EyeOff,
@@ -154,6 +155,8 @@ export interface TableToolbarProps {
   onShowSharingManager: () => void;
   onShowDistributionManager: () => void;
   onShowConsultifyLink: () => void;
+  /** RISK-06 — opens RecordTemplateManager (was a dead mount, zero UI imports). */
+  onShowRecordTemplateManager: () => void;
   /** Heatmap state */
   heatmapColumns: Set<string>;
   showHeatmap: boolean;
@@ -1021,6 +1024,19 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
                   icon: Rocket,
                   label: t('ideas.table.automations', 'Automations'),
                   onClick: props.onShowAutomationsManager,
+                  show: usePlatform,
+                },
+                // RISK-06 — RecordTemplateManager (create/edit/delete/use
+                // saved field-value templates for this table) was built with
+                // a real backend (server/src/routes/table-platform.routes.ts
+                // `/tables/:tableId/record-templates`) and two registered
+                // actions (`table.record_template.*`) but zero UI imports.
+                // Wired here — same "Tools" section as Automations/Data
+                // Sync/Sharing, all usePlatform-only table-management dialogs.
+                {
+                  icon: Copy,
+                  label: t('ideas.table.recordTemplates.recordTemplatesTitle', 'Record Templates'),
+                  onClick: props.onShowRecordTemplateManager,
                   show: usePlatform,
                 },
                 {

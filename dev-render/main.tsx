@@ -188,6 +188,9 @@ const KartaNotificationScreen = React.lazy(() => import('./screens/karta-notific
 const KartaTaskScreen = React.lazy(() => import('./screens/karta-task'));
 const PreviewZakladkiScreen = React.lazy(() => import('./screens/preview-4-zakladki'));
 const IdeaTableToolKebabScreen = React.lazy(() => import('./screens/idea-table-tool-kebab'));
+const IdeaTableRecordTemplatesScreen = React.lazy(
+  () => import('./screens/idea-table-record-templates')
+);
 const IdeaTableToolEmptyFilterScreen = React.lazy(
   () => import('./screens/idea-table-tool-empty-filter')
 );
@@ -410,6 +413,10 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'idea-table-tool-kebab': {
     label: 'IDEE Table — K1 kebab wiersza (PlatformGridView, prawy-klik) — audyt-idee 2026-07-22',
     render: () => <IdeaTableToolKebabScreen />,
+  },
+  'idea-table-record-templates': {
+    label: 'IDEE Table — RecordTemplateManager (RISK-06 dead-mount wiring) — 2026-08-12',
+    render: () => <IdeaTableRecordTemplatesScreen />,
   },
   'idea-table-tool-paste': {
     label: 'IDEE Table — Ctrl/Cmd+V wklejanie (PlatformGridView, Z16b domknięcie) — 2026-07-22',

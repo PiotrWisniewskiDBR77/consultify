@@ -19,6 +19,7 @@ import {
   ChevronDown,
   ClipboardCopy,
   Columns3,
+  Copy,
   Download,
   Eye,
   EyeOff,
@@ -137,7 +138,12 @@ import {
 } from './table/csvUtils';
 import { DistributionManager } from './table/distribution/DistributionManager';
 import { DistributionBuilder } from './table/DistributionBuilder';
-import { applyCsvImportCap, computeRowRenderCap, MAX_TABLE_ROWS } from './table/tableRowLimits';
+import {
+  applyCsvImportCap,
+  applyRowAddCap,
+  computeRowRenderCap,
+  MAX_TABLE_ROWS,
+} from './table/tableRowLimits';
 import { computeHeatmapStyles, HeatmapControls } from './table/EmbeddedAnalytics';
 import { ExportToPresentation } from './table/ExportToPresentation';
 import { FilterBuilder } from './table/FilterBuilder';
@@ -164,6 +170,7 @@ import { MatrixView } from './table/MatrixView';
 import { MobileToolbarMenu } from './table/MobileToolbarMenu';
 import { PresenceIndicators } from './table/PresenceIndicators';
 import { RecordExpandModal } from './table/RecordExpandModal';
+import { RecordTemplateManager } from './table/RecordTemplateManager';
 import { RowDetailPanel } from './table/RowDetailPanel';
 import { type RowTemplate, RowTemplatePicker } from './table/RowTemplatePicker';
 import { SharingManager } from './table/sharing/SharingManager';
@@ -837,6 +844,10 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
   const [showDistributionBuilder, setShowDistributionBuilder] = useState(false);
   const [showAutomationsManager, setShowAutomationsManager] = useState(false);
   const [showSyncManager, setShowSyncManager] = useState(false);
+  // RISK-06 — RecordTemplateManager mount: reachable from the kebab's
+  // "Platforma" section (usePlatform only — it needs real TablePlatformField
+  // schema and a real tableId, see RecordTemplateManager's own props).
+  const [showRecordTemplateManager, setShowRecordTemplateManager] = useState(false);
   const [showSharingManager, setShowSharingManager] = useState(false);
   const [showDistributionManager, setShowDistributionManager] = useState(false);
   const [showConsultifyLink, setShowConsultifyLink] = useState(false);
@@ -1233,6 +1244,11 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
   );
 
   // ── Framework apply ────────────────────────────────────────────────────────
+  // RISK-36: framework apply is a multi-row entry path exactly like CSV
+  // import — it must obey the same MAX_TABLE_ROWS ceiling (checked against
+  // the RESULTING count, `applyRowAddCap`'s convention) and never truncate
+  // silently. Columns still land even when every row is capped/blocked: the
+  // framework's schema is useful on its own, rows can be added manually.
   const handleFrameworkApply = useCallback(
     (fwColumns: ColumnDef[], fwRows: TableNode[]) => {
       setColumns((prev) => {
@@ -1240,18 +1256,115 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
         const newCols = fwColumns.filter((c) => !existingKeys.has(c.key));
         return [...prev, ...newCols];
       });
-      nodesUndo.push([...nodes, ...fwRows]);
-      trackFunnelEvent('ideas_table_framework_applied', { ideaId, rowCount: fwRows.length });
+      const capDecision = applyRowAddCap(nodes.length, fwRows);
+      if (capDecision.blocked) {
+        toast.error(
+          t(
+            'ideas.table.frameworkApplyBlockedAtCap',
+            'Table has reached the {{max}}-row limit — remove rows before applying this framework.',
+            { max: MAX_TABLE_ROWS }
+          )
+        );
+        return;
+      }
+      const { rowsToAdd, truncatedCount } = capDecision;
+      nodesUndo.push([...nodes, ...rowsToAdd]);
+      if (truncatedCount > 0) {
+        toast.error(
+          t(
+            'ideas.table.frameworkApplyTruncatedAtCap',
+            'Added {{added}} of {{total}} framework rows — table limit is {{max}} rows. {{skipped}} rows were not added.',
+            {
+              added: rowsToAdd.length,
+              total: fwRows.length,
+              max: MAX_TABLE_ROWS,
+              skipped: truncatedCount,
+            }
+          )
+        );
+      }
+      trackFunnelEvent('ideas_table_framework_applied', {
+        ideaId,
+        rowCount: rowsToAdd.length,
+        truncated: truncatedCount > 0,
+      });
     },
-    [ideaId, nodes, nodesUndo]
+    [ideaId, nodes, nodesUndo, t]
   );
 
   // ── AI add rows ────────────────────────────────────────────────────────────
+  // RISK-36: fan-in point for every AI-driven multi-row add (AITableAssistant,
+  // AITableProposal, AICopilotMode, VoiceImageInput all call this one
+  // callback) — guarding it here covers all four entry points at once.
   const handleAIAddRows = useCallback(
     (newRows: TableNode[]) => {
-      nodesUndo.push([...nodes, ...newRows]);
+      const capDecision = applyRowAddCap(nodes.length, newRows);
+      if (capDecision.blocked) {
+        toast.error(
+          t(
+            'ideas.table.aiAddRowsBlockedAtCap',
+            'Table has reached the {{max}}-row limit — remove rows before adding more with AI.',
+            { max: MAX_TABLE_ROWS }
+          )
+        );
+        return;
+      }
+      const { rowsToAdd, truncatedCount } = capDecision;
+      nodesUndo.push([...nodes, ...rowsToAdd]);
+      if (truncatedCount > 0) {
+        toast.error(
+          t(
+            'ideas.table.aiAddRowsTruncatedAtCap',
+            'Added {{added}} of {{total}} AI-generated rows — table limit is {{max}} rows. {{skipped}} rows were not added.',
+            {
+              added: rowsToAdd.length,
+              total: newRows.length,
+              max: MAX_TABLE_ROWS,
+              skipped: truncatedCount,
+            }
+          )
+        );
+      }
+      trackFunnelEvent('ideas_table_row_added', {
+        ideaId,
+        source: 'ai_add_rows',
+        rowCount: rowsToAdd.length,
+        truncated: truncatedCount > 0,
+      });
     },
-    [nodes, nodesUndo]
+    [ideaId, nodes, nodesUndo, t]
+  );
+
+  // ── Record template use (RISK-06 wiring) ────────────────────────────────────
+  // `RecordTemplateManager.handleUse` already strips `_is_template`/
+  // `_template_name` before calling this — `data` is plain pre-filled field
+  // values. Single-row add, same client-side nodesUndo.push pattern already
+  // used by `handleAddRow`/`handleTemplateSelect`/the kanban·calendar·grid
+  // "add record" path (LegacyViewRouter onAddRecord below) — not a RISK-36
+  // multi-row path, so no cap check (matches those siblings' convention).
+  const handleUseRecordTemplate = useCallback(
+    (data: Record<string, unknown>) => {
+      if (locked) return;
+      const id = `node-${Date.now()}`;
+      const now = new Date().toISOString();
+      const newNode: TableNode = {
+        id,
+        type: 'idea',
+        data: {
+          label: '',
+          status: 'todo',
+          ...data,
+          created_time: now,
+          created_by: currentUserId,
+          last_edited_time: now,
+          last_edited_by: currentUserId,
+        },
+        position: { x: 0, y: 0 },
+      };
+      nodesUndo.push([...nodes, newNode]);
+      trackFunnelEvent('ideas_table_row_added', { ideaId, source: 'record_template' });
+    },
+    [currentUserId, ideaId, locked, nodes, nodesUndo]
   );
 
   // ── Color palette auto-assign ─────────────────────────────────────────────
@@ -2379,6 +2492,20 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
             show: usePlatform && !locked,
           },
           {
+            // RISK-06 — was a dead mount (component + its two
+            // `table.record_template.*` registry actions, zero UI imports).
+            // Wired here: same "Platforma" section as Automations/Data Sync/
+            // Sharing (also usePlatform-only, also schema/table-management
+            // dialogs) — where a user managing this table would look for
+            // saved field-value templates.
+            id: 'record-templates',
+            label: t('ideas.table.recordTemplates.recordTemplatesTitle', 'Record Templates'),
+            icon: Copy,
+            onClick: () => setShowRecordTemplateManager(true),
+            show: usePlatform,
+            testId: 'idea-table-overflow-record-templates',
+          },
+          {
             id: 'automations',
             label: t('ideas.table.automations', 'Automations'),
             icon: Rocket,
@@ -2487,6 +2614,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
               onShowSharingManager={() => setShowSharingManager(true)}
               onShowDistributionManager={() => setShowDistributionManager(true)}
               onShowConsultifyLink={() => setShowConsultifyLink(true)}
+              onShowRecordTemplateManager={() => setShowRecordTemplateManager(true)}
               heatmapColumns={heatmapColumns}
               showHeatmap={showHeatmap}
               onToggleHeatmap={() => setShowHeatmap((p) => !p)}
@@ -4710,6 +4838,18 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
         onSelect={handleTemplateSelect}
         anchorRect={addRowBtnRect}
       />
+
+      {/* Record Template Manager (RISK-06 — reached from kebab "Platforma" › Record Templates) */}
+      {usePlatform && (
+        <RecordTemplateManager
+          open={showRecordTemplateManager}
+          onClose={() => setShowRecordTemplateManager(false)}
+          tableId={platformTableId ?? ideaId}
+          fields={platformIntegration.platformFields}
+          onUseTemplate={handleUseRecordTemplate}
+          locked={locked}
+        />
+      )}
 
       {/* AI Categorize Tool */}
       <AICategorizeTool
