@@ -1,27 +1,49 @@
 /**
  * RoiCaseLearnWorkspace — the LEARN phase of the ROI Case FULL TOOL. Three
- * Menu 2 sub-views: PIR (schedule + list/detail + draft edit + Teresa-draft
- * disposition), Finance links (create/delete), Finance reconciliations
- * (open + status update). Variances/causes stay in the Realize Value phase
- * (`RoiCaseRealizeValueWorkspace.tsx`) — they are raised during tracking,
- * not exclusively a Learn-phase artifact, and the task brief's own grouping
- * list keeps "wariancje i przyczyny" adjacent to "wykonania"/"prognozy",
- * not PIR.
+ * Menu 2 sub-views: PIR (schedule + list/detail + draft edit + ask-Teresa +
+ * Teresa-draft disposition), Finance links (create/delete), Finance
+ * reconciliations (open + status update). Variances/causes stay in the
+ * Realize Value phase (`RoiCaseRealizeValueWorkspace.tsx`) — they are
+ * raised during tracking, not exclusively a Learn-phase artifact, and the
+ * task brief's own grouping list keeps "wariancje i przyczyny" adjacent to
+ * "wykonania"/"prognozy", not PIR.
  *
- * D13 — Teresa proposes, never decides: the Teresa-draft-disposition modal
- * only RECORDS a human decision on an already-generated draft
- * (`teresaDraftLessonsPayload`, produced elsewhere by the backend); this
- * package never calls anything that generates that draft.
+ * D13 — Teresa proposes, never decides. TWO separate, sequential gates:
+ *  1. GENERATION (`askTeresaTarget` / `TeresaProposalPanel`, RN-G4 lane
+ *     `teresa`, FALA 2 2026-08-11): runs the full P08 propose→approve/
+ *     reject→execute→audit lifecycle against the REAL
+ *     `POST /api/v8/teresa/proposal*` surface
+ *     (`teresaCopilotService.ts`'s `handleRoiPirLessonsDraft` →
+ *     `recordRoiPirTeresaLessonsDraft`), writing ONLY
+ *     `teresa_draft_lessons_payload`/`teresa_draft_generated_at`.
+ *  2. DISPOSITION (`teresaTarget` / `RoiPirTeresaDispositionModal`,
+ *     pre-existing, ROI-E006): RECORDS a human decision on the
+ *     already-generated draft — this modal never generates or decides,
+ *     only records — and is the ONLY path that can move a Teresa draft into
+ *     `lessons_learned`.
+ * The manual path (`RoiPirDraftEditModal` + `updateRoiPostInvestmentReviewDraft`)
+ * never calls Teresa at all and stays reachable regardless of her
+ * availability — see `onManualFallback` below and
+ * `TeresaUnavailableBanner`.
  */
 import { CalendarClock, Link2, Plus } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 
 import type { StandardModuleTab, TableRow } from '@/components/standard';
+import { useAppStore } from '@/store/useAppStore';
 
 import { ResultsVNextRegistryShell } from '../ResultsVNextRegistryShell';
+import { TeresaProposalPanel } from '../teresa/TeresaProposalPanel';
 import type { RoiCaseListItem } from './roiApi';
 import {
+  buildRoiPirLessonsDraftHandoffContext,
+  buildRoiPirLessonsDraftSuggestion,
+  buildRoiPirLessonsDraftTargetPayload,
+  roiPirTeresaConsequencePreview,
+} from './roiTeresaLessonsDraft';
+import {
   createRoiFinanceLink,
+  getRoiPostInvestmentReview,
   listRoiFinanceLinks,
   listRoiFinanceReconciliations,
   listRoiPostInvestmentReviews,
@@ -88,6 +110,13 @@ export const RoiCaseLearnWorkspace: React.FC<RoiCaseLearnWorkspaceProps> = ({ ro
   const [draftEditTarget, setDraftEditTarget] = useState<RoiPostInvestmentReview | null>(null);
   const [teresaTarget, setTeresaTarget] = useState<RoiPostInvestmentReview | null>(null);
   const [pirWrite, setPirWrite] = useState<WriteState>(IDLE_WRITE);
+  // RN-G4 lane `teresa` — GENERATION gate (see file header). `askTeresaKey`
+  // is a fresh idempotency key per open ATTEMPT (same convention as
+  // `newRoiIdempotencyKey()` everywhere else in this file); regenerated
+  // each time the panel opens, not on every render.
+  const [askTeresaTarget, setAskTeresaTarget] = useState<RoiPostInvestmentReview | null>(null);
+  const [askTeresaKey, setAskTeresaKey] = useState('');
+  const currentOrganization = useAppStore((s) => s.currentOrganization);
 
   const loadPirs = useCallback(() => {
     setPirLoading(true); setPirError(null);
@@ -276,6 +305,7 @@ export const RoiCaseLearnWorkspace: React.FC<RoiCaseLearnWorkspaceProps> = ({ ro
             onPreview: (r) => setSelectedPirId(r.pirId),
             onEditDraft: (r) => { setPirWrite(IDLE_WRITE); setDraftEditTarget(r); },
             onTeresaDisposition: (r) => { setPirWrite(IDLE_WRITE); setTeresaTarget(r); },
+            onAskTeresa: (r) => { setAskTeresaKey(newRoiIdempotencyKey()); setAskTeresaTarget(r); },
           }),
           defaultSort: { columnId: 'startedAt', direction: 'desc' },
         }}
@@ -318,6 +348,55 @@ export const RoiCaseLearnWorkspace: React.FC<RoiCaseLearnWorkspaceProps> = ({ ro
         }}
         isPolish={isPolish} busy={pirWrite.busy} errorMessage={pirWrite.error} isConflict={pirWrite.isConflict}
       />
+      {askTeresaTarget ? (() => {
+        const suggestion = buildRoiPirLessonsDraftSuggestion({ roiCase, pir: askTeresaTarget, isPolish });
+        return (
+          <TeresaProposalPanel
+            open={!!askTeresaTarget}
+            onClose={() => setAskTeresaTarget(null)}
+            isPolish={isPolish}
+            title={isPolish ? 'Poproś Teresę o szkic wniosków' : 'Ask Teresa for a lessons draft'}
+            targetModule="roi"
+            sessionId={`roi-pir-teresa-${roiCase.caseId}`}
+            idempotencyKey={askTeresaKey}
+            buildHandoffContext={() =>
+              buildRoiPirLessonsDraftHandoffContext({
+                roiCase,
+                pir: askTeresaTarget,
+                organizationId: currentOrganization?.id ?? roiCase.organizationId,
+                suggestion,
+                sessionId: `roi-pir-teresa-${roiCase.caseId}`,
+              })
+            }
+            buildTargetPayload={() =>
+              buildRoiPirLessonsDraftTargetPayload({ pir: askTeresaTarget, caseId: roiCase.caseId, suggestion })
+            }
+            renderProposedChange={() => (
+              <p className="whitespace-pre-wrap" data-testid="teresa-roi-draft-text">
+                {suggestion.draftLessonsText}
+              </p>
+            )}
+            evidenceBreakdown={suggestion.evidenceBreakdown}
+            evidencePointers={suggestion.evidencePointers}
+            consequencePreview={roiPirTeresaConsequencePreview(askTeresaTarget, isPolish)}
+            onCompleted={() => {
+              // D13 "przeładowanie i zimne otwarcie" — re-fetch the PIR from
+              // the server rather than approximating the write locally, so
+              // the row the disposition step opens next is the real,
+              // server-truth state (teresaDraftLessonsPayload/
+              // teresaDraftGeneratedAt as actually persisted).
+              getRoiPostInvestmentReview(roiCase.caseId, askTeresaTarget.pirId).then((fresh) => {
+                if (fresh) setPirs((prev) => (prev ?? []).map((p) => (p.pirId === fresh.pirId ? fresh : p)));
+              });
+            }}
+            onManualFallback={() => {
+              setAskTeresaTarget(null);
+              setPirWrite(IDLE_WRITE);
+              setDraftEditTarget(askTeresaTarget);
+            }}
+          />
+        );
+      })() : null}
     </>
   );
 };

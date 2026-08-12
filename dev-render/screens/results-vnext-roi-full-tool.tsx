@@ -55,6 +55,27 @@ const harnessParams = new URLSearchParams(window.location.search);
  * only gates the top-level list" convention `results-vnext-kpi-registry.tsx`
  * documents for its own `measState`). */
 const registryState = harnessParams.get('state') || 'ready';
+// RN-G4 lane `teresa` (FALA 2, 2026-08-11) — two DELIBERATE, DOCUMENTED
+// scenario toggles for the Teresa governance surface (`TeresaProposalPanel`),
+// independent of `registryState` above (same "only gates what it names"
+// convention as `measState` in `results-vnext-kpi-registry.tsx`):
+//   &teresaDown=1      — every `POST /v8/teresa/proposal*` call REJECTS the
+//                        fetch promise (a real transport failure, not a
+//                        4xx/5xx body) so `TeresaProposalPanel` reaches its
+//                        `phase:'unavailable'` state and
+//                        `TeresaUnavailableBanner`'s manual fallback.
+//   &teresaRace=1      — the FIRST `execute` call against `pir-2`
+//                        deterministically simulates a concurrent human
+//                        recording a disposition on that PIR between
+//                        "approve" and "execute" (a real race the server's
+//                        own guard exists to catch —
+//                        `roiPirCommands.ts` L863-870,
+//                        `DISPOSITION_ALREADY_RECORDED`) — NOT a fabricated
+//                        error code, the exact real guard condition
+//                        (`teresa_draft_disposition !== null`) is evaluated
+//                        against the just-mutated row.
+const teresaDown = harnessParams.get('teresaDown') === '1';
+const teresaRace = harnessParams.get('teresaRace') === '1';
 
 try {
   window.localStorage.setItem('ff.results_vnext_roi_registry', '1');
@@ -137,7 +158,32 @@ const actualEntries: any[] = [];
 const actualSnapshots: any[] = [];
 const variances: any[] = [];
 const varianceCauses: Record<string, any[]> = {};
-const pirs: any[] = [];
+// RN-G4 lane `teresa` (FALA 2, 2026-08-11) — two seeded PIRs so the "Ask
+// Teresa" -> propose -> approve/reject -> execute -> disposition -> audit
+// loop is reachable end-to-end via clicking, plus a second PIR reserved for
+// the deterministic execute-time-denial demo (see `raceOnExecute` below).
+const pirs: any[] = [
+  {
+    pirId: 'pir-1', caseId: CASE_ID, organizationId: ORG_ID, sequenceNumber: 1,
+    status: 'draft', startedBy: USER_ID, startedAt: '2026-08-05T09:00:00Z',
+    reviewSnapshotHash: 'snap-hash-pir-1', outcome: null, lessonsLearned: null,
+    recommendation: null, openVarianceWaiverReason: null,
+    teresaDraftLessonsPayload: null, teresaDraftGeneratedAt: null,
+    teresaDraftDisposition: null, teresaDraftDispositionBy: null, teresaDraftDispositionAt: null,
+    finalizedBy: null, finalizedAt: null, rowVersion: 1,
+    createdBy: USER_ID, createdAt: '2026-08-05T09:00:00Z', updatedBy: null, updatedAt: '2026-08-05T09:00:00Z',
+  },
+  {
+    pirId: 'pir-2', caseId: CASE_ID, organizationId: ORG_ID, sequenceNumber: 2,
+    status: 'draft', startedBy: USER_ID, startedAt: '2026-08-07T09:00:00Z',
+    reviewSnapshotHash: 'snap-hash-pir-2', outcome: null, lessonsLearned: null,
+    recommendation: null, openVarianceWaiverReason: null,
+    teresaDraftLessonsPayload: null, teresaDraftGeneratedAt: null,
+    teresaDraftDisposition: null, teresaDraftDispositionBy: null, teresaDraftDispositionAt: null,
+    finalizedBy: null, finalizedAt: null, rowVersion: 1,
+    createdBy: USER_ID, createdAt: '2026-08-07T09:00:00Z', updatedBy: null, updatedAt: '2026-08-07T09:00:00Z',
+  },
+];
 const financeLinks: any[] = [];
 const financeReconciliations: any[] = [];
 
@@ -146,6 +192,187 @@ function jsonResponse(body: unknown, status = 200): Response {
 }
 function errorResponse(message: string, status: number, code?: string): Response {
   return jsonResponse({ error: message, code }, status);
+}
+
+// ==========================================================================
+// RN-G4 lane `teresa` (FALA 2, 2026-08-11) — stateful mock of the REAL P08
+// Teresa proposal lifecycle (`server/src/routes/v8/teresa.routes.ts`,
+// `/api/v8/teresa/proposal*`). Mirrors the real
+// `ActionEnvelopeState`/`TeresaChatProposalEnvelope` shapes exactly (see
+// `src/components/ResultsVNext/teresa/teresaHandoffTypes.ts`) so the REAL
+// production `TeresaProposalPanel` component — mounted here with zero
+// reimplementation, same doctrine as the rest of this file — drives it
+// unmodified. Only the ONE landed ROI advisor mode (`pir_lessons_draft`) is
+// implemented; execute() mutates the SAME `pirs` array the PIR tab already
+// reads, so approving+executing here is immediately visible in the table
+// and unlocks the pre-existing "Decyzja o szkicu Teresy" disposition step.
+// ==========================================================================
+type TeresaEnvelopeState = 'proposal' | 'pending_approval' | 'approved' | 'executing' | 'completed' | 'undone' | 'rejected';
+interface TeresaMockProposal {
+  id: string;
+  state: TeresaEnvelopeState;
+  targetModule: string;
+  targetPayload: any;
+  handoffContext: any;
+  auditTrail: Array<{ id: string; proposal_id: string; action: string; actor: string; timestamp: string; from_state: TeresaEnvelopeState | null; to_state: TeresaEnvelopeState; detail: any }>;
+}
+const teresaProposals = new Map<string, TeresaMockProposal>();
+let teresaSeq = 0;
+let teresaRaceConsumed = false;
+
+function teresaAuditEntry(p: TeresaMockProposal, action: string, actor: string, from: TeresaEnvelopeState | null, to: TeresaEnvelopeState, detail: any) {
+  const entry = { id: `taudit-${(teresaSeq += 1)}`, proposal_id: p.id, action, actor, timestamp: new Date().toISOString(), from_state: from, to_state: to, detail };
+  p.auditTrail.push(entry);
+  return entry;
+}
+
+function teresaAllowedActions(state: TeresaEnvelopeState): string[] {
+  switch (state) {
+    case 'proposal':
+    case 'pending_approval':
+      return ['approve', 'reject', 'navigate'];
+    case 'approved':
+      return ['execute', 'reject', 'navigate'];
+    case 'completed':
+    case 'executing':
+    case 'undone':
+    case 'rejected':
+      return ['navigate'];
+    default:
+      return ['navigate'];
+  }
+}
+
+function teresaEnvelope(p: TeresaMockProposal) {
+  const intent = String(p.handoffContext?.user_intent || 'Teresa proposal');
+  return {
+    proposalId: p.id,
+    contractId: 'teresa_copilot_v1',
+    title: intent.length > 72 ? `${intent.slice(0, 71)}…` : intent,
+    summary: p.handoffContext?.proposed_next_action?.handoff_intent || intent,
+    state: p.state,
+    approvalState: p.state === 'approved' ? 'approved' : p.state === 'completed' || p.state === 'undone' ? 'completed' : p.state === 'rejected' ? 'rejected' : 'awaiting_review',
+    allowedActions: teresaAllowedActions(p.state),
+    targetModule: p.targetModule,
+    targetLabel: p.targetModule.toUpperCase(),
+    handoffIntent: String(p.handoffContext?.proposed_next_action?.handoff_intent || 'open'),
+    previewLines: [],
+    auditCount: p.auditTrail.length,
+    resultRef: null,
+    degraded: null,
+  };
+}
+
+/** `sub` is already the path with the `/v8/teresa` prefix stripped, e.g.
+ * `/proposal`, `/proposal/:id/approve`, `/audit/:id` — the caller
+ * (`window.fetch` override below) does the prefix match/strip once, the
+ * same convention the pre-existing ROI branch in this file uses for its
+ * own `/vnext/results/roi` prefix. */
+async function handleTeresaProposalRoute(sub: string, method: string, body: any): Promise<Response | null> {
+  const segs = sub.split('/').filter(Boolean); // ['proposal', ':id'?, 'approve'|'reject'|'execute'?] | ['audit', ':id'] | ['proposals']
+
+  if (teresaDown && sub === '/proposal' && method === 'POST') {
+    // Real transport failure — the fetch PROMISE rejects, matching what a
+    // genuinely unreachable server looks like from the client's `fetch()`.
+    throw new Error('dev-render teresaDown=1: simulated network failure contacting Teresa');
+  }
+
+  if (segs[0] === 'proposal' && segs.length === 1 && method === 'POST') {
+    const id = `tprop-${(teresaSeq += 1)}`;
+    const p: TeresaMockProposal = { id, state: 'proposal', targetModule: body.targetModule, targetPayload: body.targetPayload, handoffContext: body.handoffContext, auditTrail: [] };
+    teresaAuditEntry(p, 'proposal_created', 'teresa', null, 'proposal', { target_module: body.targetModule });
+    teresaProposals.set(id, p);
+    return jsonResponse({ data: teresaEnvelope(p), meta: { action: 'proposal_created' } }, 201);
+  }
+
+  if (segs[0] === 'proposal' && segs.length === 2 && method === 'GET') {
+    const p = teresaProposals.get(segs[1]);
+    if (!p) return errorResponse('Proposal not found', 404, 'P08_PROPOSAL_NOT_FOUND');
+    return jsonResponse({ data: teresaEnvelope(p) });
+  }
+
+  if (segs[0] === 'proposal' && segs.length === 3 && segs[2] === 'approve' && method === 'POST') {
+    const p = teresaProposals.get(segs[1]);
+    if (!p) return errorResponse('Proposal not found', 404, 'P08_PROPOSAL_NOT_FOUND');
+    const from = p.state;
+    p.state = 'approved';
+    teresaAuditEntry(p, 'approved', 'user:user-piotr-demo', from, 'approved', null);
+    return jsonResponse({ data: teresaEnvelope(p), meta: { action: 'approved' } });
+  }
+
+  if (segs[0] === 'proposal' && segs.length === 3 && segs[2] === 'reject' && method === 'POST') {
+    const p = teresaProposals.get(segs[1]);
+    if (!p) return errorResponse('Proposal not found', 404, 'P08_PROPOSAL_NOT_FOUND');
+    const from = p.state;
+    p.state = 'rejected';
+    teresaAuditEntry(p, 'rejected', 'user:user-piotr-demo', from, 'rejected', body?.reason ? { reason: body.reason } : null);
+    return jsonResponse({ data: teresaEnvelope(p), meta: { action: 'rejected' } });
+  }
+
+  if (segs[0] === 'proposal' && segs.length === 3 && segs[2] === 'execute' && method === 'POST') {
+    const p = teresaProposals.get(segs[1]);
+    if (!p) return errorResponse('Proposal not found', 404, 'P08_PROPOSAL_NOT_FOUND');
+    if (p.state !== 'approved') return errorResponse(`Cannot execute proposal in state: ${p.state}`, 400, 'P08_INVALID_STATE_TRANSITION');
+    teresaAuditEntry(p, 'execution_started', 'user:user-piotr-demo', 'approved', 'executing', null);
+
+    // ROI pir_lessons_draft — the one wired-up mode.
+    if (p.targetModule === 'roi') {
+      const roiCtx = p.targetPayload?.roi_handoff_context;
+      const pirId = roiCtx?.target_resource?.resource_id;
+      const pir = pirs.find((x) => x.pirId === pirId);
+      if (teresaRace && pirId === 'pir-2' && !teresaRaceConsumed) {
+        // Deliberately-scripted concurrency scenario (see the `teresaRace`
+        // header comment above) — simulate a human recording a disposition
+        // on THIS pir between approve and execute, then evaluate the SAME
+        // real guard `recordRoiPirTeresaLessonsDraft` uses.
+        teresaRaceConsumed = true;
+        if (pir) pir.teresaDraftDisposition = 'rejected';
+      }
+      if (!pir) {
+        const execution = { success: false, proposal_id: p.id, target_module: 'roi', state: 'rejected' as TeresaEnvelopeState, audit_entry_id: '', error: `PIR ${pirId} not found`, degraded: 'tool_unavailable' };
+        p.state = 'rejected';
+        teresaAuditEntry(p, 'execution_failed', 'teresa:system', 'executing', 'rejected', { error: execution.error });
+        return jsonResponse({ data: { execution, proposal: teresaEnvelope(p) }, meta: { action: 'executed' } }, 500);
+      }
+      if (pir.status !== 'draft') {
+        const error = `PIR ${pirId} is "${pir.status}" — Teresa may only draft lessons while the PIR is a draft`;
+        const execution = { success: false, proposal_id: p.id, target_module: 'roi', state: 'rejected' as TeresaEnvelopeState, audit_entry_id: '', error, degraded: 'tool_unavailable' };
+        p.state = 'rejected';
+        const auditEntry = teresaAuditEntry(p, 'execution_failed', 'teresa:system', 'executing', 'rejected', { error });
+        execution.audit_entry_id = auditEntry.id;
+        return jsonResponse({ data: { execution, proposal: teresaEnvelope(p) }, meta: { action: 'executed' } }, 500);
+      }
+      if (pir.teresaDraftDisposition !== null) {
+        const error = `PIR ${pirId} already has a recorded Teresa draft disposition ("${pir.teresaDraftDisposition}") — regenerating would silently invalidate a human decision`;
+        const execution = { success: false, proposal_id: p.id, target_module: 'roi', state: 'rejected' as TeresaEnvelopeState, audit_entry_id: '', error, degraded: 'tool_unavailable' };
+        p.state = 'rejected';
+        const auditEntry = teresaAuditEntry(p, 'execution_failed', 'teresa:system', 'executing', 'rejected', { error });
+        execution.audit_entry_id = auditEntry.id;
+        return jsonResponse({ data: { execution, proposal: teresaEnvelope(p) }, meta: { action: 'executed' } }, 500);
+      }
+      pir.teresaDraftLessonsPayload = roiCtx.pir_lessons_draft;
+      pir.teresaDraftGeneratedAt = new Date().toISOString();
+      pir.rowVersion += 1;
+      pir.updatedAt = new Date().toISOString();
+      p.state = 'completed';
+      const auditEntry = teresaAuditEntry(p, 'execution_completed', 'roi_service', 'executing', 'completed', { handoff_result: { handoff: 'roi', advisor_mode: 'pir_lessons_draft', pir_id: pirId, real_entity: true } });
+      const execution = { success: true, proposal_id: p.id, target_module: 'roi', state: 'completed' as TeresaEnvelopeState, audit_entry_id: auditEntry.id, handoff_result: { pir_id: pirId, real_entity: true } };
+      return jsonResponse({ data: { execution, proposal: teresaEnvelope(p) }, meta: { action: 'executed' } });
+    }
+
+    const execution = { success: false, proposal_id: p.id, target_module: p.targetModule, state: 'rejected' as TeresaEnvelopeState, audit_entry_id: '', error: `dev-render mock: target_module "${p.targetModule}" not implemented`, degraded: 'tool_unavailable' };
+    p.state = 'rejected';
+    teresaAuditEntry(p, 'execution_failed', 'teresa:system', 'executing', 'rejected', { error: execution.error });
+    return jsonResponse({ data: { execution, proposal: teresaEnvelope(p) }, meta: { action: 'executed' } }, 500);
+  }
+
+  if (segs[0] === 'audit' && segs.length === 2 && method === 'GET') {
+    const p = teresaProposals.get(segs[1]);
+    if (!p) return errorResponse('Proposal not found', 404, 'P08_PROPOSAL_NOT_FOUND');
+    return jsonResponse({ data: p.auditTrail, meta: { count: p.auditTrail.length } });
+  }
+
+  return errorResponse(`dev-render Teresa mock: unmatched ${method} ${sub}`, 404, 'MOCK_UNMATCHED');
 }
 
 // ==========================================================================
@@ -159,6 +386,22 @@ if (!g.__RVN_ROI_FULL_TOOL_FETCH__) {
   window.fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
     const rawUrl = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
     if (rawUrl.includes('/locales/')) return realFetch(input as RequestInfo, init);
+
+    // RN-G4 lane `teresa` (FALA 2, 2026-08-11) — P08 Teresa proposal
+    // lifecycle, checked BEFORE the ROI-specific match below (disjoint path
+    // prefixes, order doesn't matter functionally, but keeping the newer
+    // block first makes it easier to find). Same `(\/.*)?$` capture +
+    // `split('?')` convention the ROI branch below already uses.
+    const teresaMatch = rawUrl.match(/\/v8\/teresa(\/.*)?$/);
+    if (teresaMatch) {
+      const method = (init?.method ?? 'GET').toUpperCase();
+      const [teresaSub] = (teresaMatch[1] ?? '/').split('?');
+      const teresaBody: any = init?.body ? JSON.parse(String(init.body)) : {};
+      const resp = await handleTeresaProposalRoute(teresaSub, method, teresaBody);
+      if (resp) return resp;
+      return realFetch(input as RequestInfo, init);
+    }
+
     const m = rawUrl.match(/\/vnext\/results\/roi(\/.*)?$/);
     if (!m) return realFetch(input as RequestInfo, init);
 
