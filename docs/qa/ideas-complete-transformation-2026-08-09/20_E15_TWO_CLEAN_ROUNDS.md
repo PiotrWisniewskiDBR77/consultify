@@ -324,3 +324,64 @@ name because what they tested moved.
 Neither item changes the `NOT_READY` recommendation's substance — see
 `24_FINAL_ACCEPTANCE.md` §11. The only residual blocking
 `READY_FOR_CODEX_REVIEW` is the owner's visual acceptance.
+
+---
+
+## FINAL ROUNDS 2026-08-12 — run by the integrator at the post-regression-fix SHA
+
+Supplied here because the documentation stream correctly recorded this as
+`NOT VERIFIED` at the time it wrote: it had the gate figures for the targeted
+table suites, the Playwright contract and `tsc`, but the two full E15 rounds had
+not yet been run against the code that closed the `Updated`/actions overlap.
+They have now been run. This section is the missing evidence, not a restatement.
+
+**SHA under test:** `6b28161bc4` — code-final. Everything after it is
+documentation only and cannot move a test result; that claim is checkable with
+`git diff --name-only 6b28161bc4..HEAD`, which touches nothing under `src/`,
+`server/`, `tests/` or `dev-render/`.
+
+**Scope proven from each run's own JSON, never from the typed command line** —
+the failure mode this document was retracted for once already:
+
+| | Baseline `9d17cac114` | Round 1 | Round 2 |
+|---|---:|---:|---:|
+| Test files | 155 | **214** | **214** |
+| Colocated `src/**/__tests__` | 33 | **59** | **59** |
+| Tests collected | 887 | **1296** | **1296** |
+| Tests failed | 132 | **121** | **121** |
+| `whiteboardContextMenu.keyboard.integration` | present, 4/4 | present, 4/4 | present, 4/4 |
+| New failing tests vs baseline | — | **0** | **0** |
+| Tests fixed vs baseline | — | **8** | **8** |
+| Round 1 vs Round 2 differences | — | — | **0 — zero flakiness** |
+
+Both rounds `--retry=0`, real exit code 1 on each, which is expected: the
+baseline itself carries 132 failures and neither side is green.
+
+### The mechanical verdict is still `NOT CLEAN`, and it stays that way
+
+Two items are flagged. Both are adjudicated below with evidence; neither is an
+open defect. **The comparison script was deliberately NOT given an exceptions
+list to turn either of them green** — a detector that can be taught to ignore
+its own findings stops being a detector.
+
+1. **`tests/components/MyWork/ContextMenuPortal.test.tsx` — at baseline, absent
+   on the candidate.** Deleted by `93ebc3aa20`, this programme's first commit,
+   together with the component it covered. The deletion was legitimate: the
+   context-menu unification re-homed the behaviour into the shared
+   `CanvasContextMenu`, which portals via
+   `createPortal(menu, portalTarget ?? document.body)`. The **assertion** going
+   with it was not. Coverage was restored as
+   `tests/components/MyWork/canvasContextMenu.portal.test.tsx`. The comparison
+   still flags the old path because it compares by path and cannot know about a
+   deliberate re-home — the detector working correctly, not a defect.
+2. **Three tests gone from `tests/unit/mindmap/dp5HeuristicAiGating.test.tsx`** —
+   deliberately superseded by the E10 work that moved whole-map AI generators out
+   of the node context menu into the pane menu. The replacements assert both the
+   new location and the removal of the old. The file gained tests overall.
+
+### Why these rounds matter more than the previous set
+
+They were run after a regression the owner personally rejected — the pinned
+actions column occluding the `Updated` column — was diagnosed as **two**
+independent defects and closed. The rounds confirm that closing them introduced
+no new failure anywhere in the Idea Workspace surface and lost no test.
