@@ -509,6 +509,68 @@ E15 two-round result. See `24_FINAL_ACCEPTANCE.md`.
   after the `idea_financial_cases` migration).
 - Real-DB tests need **both** `RUN_DB_TESTS=1` and `MOCK_DB=false`.
   `NODE_ENV=test` alone silently substitutes a DB mock.
-- `scripts/check-actions.sh` is currently rc=1 for the documented, deliberate
-  reason above — do not treat that as a regression to chase without first
-  reading `10_FINANCIAL_CASE_ACCEPTANCE.md` §6.9.
+- `scripts/check-actions.sh` was rc=1 as of this section's original writing —
+  **now closed, see the corrections section below.**
+
+## CORRECTIONS AND FINAL NUMBERS — 2026-08-12 (integration branch, HEAD `bcdda752b7`)
+
+The section above (headed "MULTI-STREAM WAVE") was written against HEAD
+`6fec03f7a0` on a satellite worktree. Three code commits then landed directly
+on the canonical integration branch (`codex/ideas-transformation-20260809`),
+none by stream S11-DOCS, and this program's documentation was re-based onto
+that integrated tip. This section supersedes the stale lines above rather
+than editing them in place.
+
+### Candidate identity (current)
+
+| | |
+|---|---|
+| HEAD (documentation) | **`bcdda752b7`** |
+| Code-final SHA (E15 measured here) | **`f5cdc7b867`** |
+| Position vs `origin/demo` | **62 ahead, 2 behind** (comparison base stays frozen at `9d17cac114`, unchanged reasoning from above) |
+
+Three commits landed after `6fec03f7a0`:
+
+- `fe2b8b7a82` — restored `tests/components/MyWork/ContextMenuPortal.test.tsx`
+  (deleted by this program's first commit) as
+  `canvasContextMenu.portal.test.tsx`, with stronger, re-home-aware
+  assertions and a negative control.
+- `a537a022e2` — closed the `check-actions.sh` gate this section previously
+  reported as rc=1: routed `FinancialCaseDialog`'s save/save-and-close/retry
+  through `IDEA_ACTION_REGISTRY` (`table.financial_case.{save,save_and_close,retry}`,
+  mirroring `table.record_template.*`, ids in R11's `ORIGINAL_ORDER`). Also
+  fixed a latent bug: `save()`/`load()` now return a truthful
+  `Promise<boolean>`, so `confirmed` reflects a real landed save.
+- `f5cdc7b867` — fixed a cross-file type error in the confidentiality gate's
+  `t` typing, found only by a full serialized `tsc` on the integrated tree
+  (invisible to any stream, which runs targeted vitest + esbuild only).
+  Client `tsc`: exit 0, 0 errors. Server `tsc`: exit 0, 0 errors.
+
+### Three corrections to the section above
+
+1. **The "second worktree" paragraph in `RESUME_HANDOFF.md` was wrong and has
+   been deleted.** `ideas-transform/consultify` is the canonical integration
+   worktree, not a diverged fork — every stream branch was cut from it and
+   cherry-picked back into it.
+2. **The locale-key figure is 478 EN / 494 PL**, not the "445/461" this
+   section's wave table cited — that mid-wave count predated the last three
+   locale-touching streams and undercounted. 478/494 is confirmed by a direct
+   diff against `9d17cac114` at this HEAD.
+3. **`check-actions.sh` is now rc=0 at 234 actions · 124 runtime strings ·
+   7 events · 4 API methods** (was 231/124/7/4 and rc=1). See `a537a022e2`
+   above.
+
+### Gate board (supersedes the wave table's E15/check-actions rows)
+
+| Gate | State | Evidence |
+|---|---|---|
+| 1 — type-check | **PASS** at `f5cdc7b867`, client + server, serialized | commit `f5cdc7b867` |
+| E15 — two clean rounds | **RUN at `f5cdc7b867`.** 212 files / 1291 tests, 0 new failures, 8 fixed, 0 round-to-round drift. **Mechanical verdict NOT CLEAN** — 2 flagged items, both adjudicated (context-menu-portal test restoration; 3 dp5Heuristic tests deliberately superseded by E10), neither an open defect. | `20_E15_TWO_CLEAN_ROUNDS.md` |
+| `scripts/check-actions.sh` | **rc=0** (234·124·7·4) | commit `a537a022e2` |
+
+**Recommendation: `NOT_READY` for Codex review — unchanged in substance, but
+now for a single reason.** Type-check is PASS, persistence and visual gates
+are closed, and E15 has run with a fully-adjudicated NOT CLEAN verdict (not
+silently rounded up to clean). The only remaining item is the **owner's
+visual acceptance**, which no agent may substitute for. See
+`24_FINAL_ACCEPTANCE.md` for the full closure table.

@@ -409,3 +409,42 @@ separates "which layer catches it" from "does something catch it."
 No database rows were left behind: the stale-version sub-test's probe rows are
 deleted by the suite's own teardown, confirmed by a residue count query
 returning 0 both before and after this section's extra sabotage runs.
+
+## 8. 2026-08-12 (later the same day) — §6.9's guard failure is CLOSED
+
+Commit `a537a022e2`, landed on the integration branch after §7 was written.
+§6.9's `check-actions.sh` rc=1 is no longer true of this tree.
+
+**What changed, and how, matching §6.9's own prepared-fix shape but taking
+the registry route rather than `--update`:**
+`table.financial_case.save`, `table.financial_case.save_and_close`, and
+`table.financial_case.retry` were added to
+`src/actions/registry/tableActions.ts` — mirroring `table.record_template.*`
+rather than `IdeaBusinessCaseSection.tsx`'s `sharedActions.ts` route §6.9
+proposed, because `sharedActions.ts` was still off-limits (stream S5). The
+three ids were placed respecting rule R11's `ORIGINAL_ORDER` requirement, not
+merely appended to the end. `FinancialCaseDialog.tsx`'s three handlers
+(`persistence.save()`, `saveAndClose()`, the retry) now route through
+`runIdeaAction(...)`.
+
+**A latent bug surfaced and was fixed in the same commit:**
+`useIdeaFinancialCasePersistence.ts`'s `save()`/`load()` previously reported
+success in the sense of "the call did not throw." They now return a truthful
+`Promise<boolean>`, so the registry's `ActionResult.confirmed` reflects an
+actual landed save — never `true` on a 409 (stale version) or a transport
+error. This closes the same class of "reported ok without confirming" defect
+§7's OCC section and RISK-30 elsewhere in this package both document —
+another instance of the program's recurring lesson that a layer reporting
+success for work it never confirmed is the default failure mode to check for,
+not an edge case.
+
+**Verification:**
+```
+bash scripts/check-actions.sh; echo rc=$?
+→ rc=0
+   akcji: 234 · stringów runtime: 124 · zdarzeń: 7 · metod API: 4
+```
+(was rc=1, 231/124/7/4, before this commit).
+`tests/components/MyWork/table/financial/FinancialCaseDialog.persistence.test.tsx`:
+10/10 pass. `check-action-coverage.sh` and `check-gestosc.sh` also rc=0 on
+this commit's files.

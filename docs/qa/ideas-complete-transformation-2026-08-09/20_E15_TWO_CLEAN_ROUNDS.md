@@ -234,17 +234,93 @@ and is indistinguishable from a filter matching everything and passing.
 
 ---
 
-## Re-verified at `6fec03f7a0` (stream S11-DOCS, 2026-08-12)
+## Re-verified and RE-RUN at `f5cdc7b867` (2026-08-12)
 
-**NOT re-run at this SHA.** The two-clean-rounds result above (208 files /
-1239 tests, two identical rounds, 0 lost tests, 0 new failures) was executed
-at `c5b1b6e6b9`, which is **16 commits behind** this wave's HEAD
-(`6fec03f7a0`). Per the "standing rule" above, that scope is not this
-candidate's scope until it is re-run and re-proven at `6fec03f7a0` — the
-result at `c5b1b6e6b9` is kept here as history, not re-attested as current.
+The two-clean-rounds result above (208 files / 1239 tests) was executed at
+`c5b1b6e6b9`, **16 commits behind** the candidate this section reports on
+(`f5cdc7b867`, the final code SHA of this wave — only documentation commits
+follow it). Per the "standing rule" above, that older scope is history, not
+this candidate's proof. **This section is the actual re-run at the current
+SHA.**
 
-The owner is running the two-round regression at `6fec03f7a0` separately from
-this documentation pass and will supply the numbers. A marked placeholder for
-that result lives in `24_FINAL_ACCEPTANCE.md` §10 — do not treat this
-file's historical PASS as a current one, and do not infer a fresh PASS from
-its absence here.
+### Numbers, both rounds `--retry=0`, scope proven from each run's own JSON
+
+| | Baseline `9d17cac114` | Round 1 | Round 2 |
+|---|---:|---:|---:|
+| Test files | 155 | **212** | **212** |
+| Colocated `src/**/__tests__` | 33 | **59** | **59** |
+| Tests collected | 887 | **1291** | **1291** |
+| Tests failed | 132 | **121** | **121** |
+| `whiteboardContextMenu.keyboard.integration` | present, 4/4 | present, 4/4 | present, 4/4 |
+| New failing tests vs baseline | — | **0** | **0** |
+| Tests fixed vs baseline | — | **8** | **8** |
+| Round 1 vs Round 2 differences | — | — | **0 — zero flakiness** |
+
+Real exit code **1** on both rounds — expected, not concealed: the baseline
+itself carries 132 failures, so neither side is green, and a `1` here is not
+a sign of a broken run.
+
+### Mechanical verdict: **NOT CLEAN** — reported as such, not rounded up
+
+The comparison script's job is to flag every file-set difference between
+baseline and candidate, the same "per test AND by test count per file"
+discipline §1 above established. It flagged two items. Both are adjudicated
+below with evidence; **neither is an open product defect**, but the honest
+mechanical verdict is NOT CLEAN and this file says so rather than reporting
+"clean" because the aggregate numbers look good.
+
+**Item 1 — `tests/components/MyWork/ContextMenuPortal.test.tsx`: present at
+baseline, absent on the candidate.**
+
+Deleted by `93ebc3aa20` — this program's **first** commit — together with the
+`ContextMenuPortal` component it covered. Before concluding anything, the
+re-home was verified in code: the covered behaviour now lives in the shared
+`CanvasContextMenu`, which portals via `createPortal(menu, portalTarget ??
+document.body)`. **The component deletion was legitimate. The assertion
+going with it was not** — from `93ebc3aa20` until this fix, nothing proved
+context menus still escape the canvas's transformed stacking context, which
+makes "correct" indistinguishable from "correct by accident." A React-Flow
+canvas ancestor carries a CSS transform, and a transformed ancestor
+establishes a containing block for `position:fixed` descendants — a menu
+rendered inside the canvas subtree instead of portalled out would be
+positioned and clipped against the panned/zoomed canvas instead of the
+viewport.
+
+**Fixed:** restored as `tests/components/MyWork/canvasContextMenu.portal.test.tsx`
+(commit `fe2b8b7a82`). Three assertions: the menu is not reachable from
+inside the transformed host subtree; no ancestor of the portalled menu
+carries a transform (stronger than pinning one specific parent — survives a
+future change of portal target); the menu is still `position: fixed`, since
+the portal is only load-bearing in combination with that. Negative control:
+replacing `createPortal(menu, target)` with a plain in-place `{menu}` turns
+it red on two independent assertions (`expected <div role=menu> to be null`,
+`expected [Array(1)] to deeply equal []`). Restored, green again.
+
+The comparison still flags the old filename, and it is right to: it compares
+by path and cannot know a deliberate re-home happened. **That is the detector
+working correctly, not a defect in this candidate.**
+
+**Note for the record — how this hid from the earlier "two clean rounds":**
+that pass (§ above, `c5b1b6e6b9`) reported "0 files losing tests" and did not
+catch this, because that comparison only looked at files present on **both**
+sides. A file that vanishes entirely never entered its comparison set at
+all — it is a distinct failure mode from a file losing some-but-not-all of
+its tests, and needs its own check (a set-difference on filenames, not a
+per-file test-count diff).
+
+**Item 2 — three tests gone from `tests/unit/mindmap/dp5HeuristicAiGating.test.tsx`.**
+
+Not lost — deliberately superseded by the E10 work, which moved whole-map AI
+generators out of the node context menu into the pane menu. The replacement
+tests assert both the new location (`pane_dependencies` disabled/enabled
+states) and the explicit removal of the old
+(`"E10: ctx_ai_deepen no longer exists (merged into ctx_ai_expand)"`,
+`"E10: whole-map AI generators no longer render inside the node menu"`). Net
+effect: the file gained tests overall; three specific ones were replaced by
+name because what they tested moved.
+
+### Recommendation impact
+
+Neither item changes the `NOT_READY` recommendation's substance — see
+`24_FINAL_ACCEPTANCE.md` §11. The only residual blocking
+`READY_FOR_CODEX_REVIEW` is the owner's visual acceptance.

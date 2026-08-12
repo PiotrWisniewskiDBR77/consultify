@@ -235,3 +235,12 @@ than rewritten in place:
 **Not re-verified this wave:** whether every individual QG-02/04/05 DoD clause
 still holds line-by-line at `6fec03f7a0` was not re-read; the gate-board-level
 RESOLVED status is carried forward, not re-derived from scratch.
+
+**CORRECTION, same day (HEAD `bcdda752b7`):** QG-05 (full type-check) is now
+independently, freshly confirmed — client `tsc` exit 0 / 0 errors, server
+`tsc` exit 0 / 0 errors, both serialized, at code-final SHA `f5cdc7b867`.
+Two cross-file type defects were found and fixed to get there; see that
+commit's body and `RESUME_HANDOFF.md` §1. Also: the action registry grew
+231→**234** actions this same day (`a537a022e2`, closing a `check-actions.sh`
+gate failure by routing three `FinancialCaseDialog` commands through the
+registry) — `check-actions.sh` is now rc=0.
