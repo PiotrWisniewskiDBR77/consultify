@@ -29,7 +29,7 @@ const sampleState = {
       id: 'task-123',
       type: 'task' as const,
       name: 'Confidential task belonging to user A',
-      status: 'open',
+      status: 'todo' as const,
     },
   ],
   activeDocumentId: 'task-123',
