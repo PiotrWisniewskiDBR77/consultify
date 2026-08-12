@@ -197,6 +197,26 @@ export const FinanceArtifactFreshnessValues = [
 ] as const;
 export type FinanceArtifactFreshness = (typeof FinanceArtifactFreshnessValues)[number];
 
+/** Polish label for `FinanceArtifactFreshness` — never render the raw enum token. First real client-side consumer: `FinanceLineageNavigator` (AP-CLIENT). */
+export function financeArtifactFreshnessLabel(freshness: FinanceArtifactFreshness): string {
+  switch (freshness) {
+    case 'NEVER_COMPUTED':
+      return 'Nigdy nie przeliczone';
+    case 'CURRENT':
+      return 'Aktualne';
+    case 'STALE_SOURCE':
+      return 'Nieaktualne (źródło się zmieniło)';
+    case 'STALE_ASSUMPTIONS':
+      return 'Nieaktualne (założenia się zmieniły)';
+    case 'COMPUTE_FAILED':
+      return 'Błąd przeliczenia';
+    default: {
+      const _exhaustive: never = freshness;
+      return _exhaustive;
+    }
+  }
+}
+
 // ---------------------------------------------------------------------------
 // AP-00 — ArtifactRef. Źródło: server/src/types/finance/ArtifactRef.ts:29-119
 // ---------------------------------------------------------------------------

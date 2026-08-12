@@ -19,6 +19,7 @@ vi.mock('../baseClient', async () => {
 
 import { fetchWithRetry } from '../baseClient';
 import { applyFinanceImport, exportFinanceStatementPackXlsx, parseFinanceImportXlsx, previewFinanceImport } from '../financeV2.api';
+import type { FinanceExcelManifestDto } from '../financeV2.types';
 
 const mockedFetch = fetchWithRetry as unknown as ReturnType<typeof vi.fn>;
 
@@ -37,7 +38,7 @@ function jsonResponse(status: number, body: unknown): Response {
   return response as unknown as Response;
 }
 
-const SAMPLE_MANIFEST = {
+const SAMPLE_MANIFEST: FinanceExcelManifestDto = {
   manifestVersion: 1,
   source: 'consultify-finance-v3-ap02',
   exportId: 'exp-1',
