@@ -51,6 +51,22 @@ vi.mock('../../server/src/utils/Logger.js', () => ({
   default: { info: vi.fn(), error: vi.fn(), warn: vi.fn(), debug: vi.fn() },
 }));
 
+// RN-G5: teresaCopilotService.ts's KPI handoff handlers now resolve a real
+// access context (resolveTeresaKpiAccess -> resolveEffectiveAccess) before
+// calling createKpiDraft/editDraft/submitRootCause (all three now RN-G5-
+// gated commands). That function reads through queryHelpers.js's
+// getDatabase() singleton — a different DB access path than the DbPromise
+// mock above — so it needs its own mock here. Wildcard: this suite tests
+// the handoff plumbing (actor identity, receipts, error propagation), not
+// authorization — the guard's own ALLOW/DENY logic has its own dedicated
+// coverage (commandCapabilityGuard.test.ts, the RN-G5 real-Postgres
+// security suite).
+vi.mock('../../server/src/services/effectiveAccessService.js', () => ({
+  resolveEffectiveAccess: vi.fn(async () => ({ capabilities: ['*'], platformRole: null })),
+  hasEffectiveCapability: (access: { capabilities: string[] }, capability: string) =>
+    access.capabilities.includes('*') || access.capabilities.includes(capability),
+}));
+
 const mockCreateKpiDraft = vi.fn();
 const mockEditDraft = vi.fn();
 vi.mock('../../server/src/services/resultsVnext/kpi/kpiDefinitionCommands.js', () => ({
