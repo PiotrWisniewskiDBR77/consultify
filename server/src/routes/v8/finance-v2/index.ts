@@ -18,6 +18,7 @@ import { Router } from 'express';
 import analysisRoutes from './analysis.routes.js';
 import artifactsRoutes from './artifacts.routes.js';
 import baselineRoutes from './baseline.routes.js';
+import compareRoutes from './compare.routes.js';
 import computeRoutes from './compute.routes.js';
 import crosscuttingRoutes from './crosscutting.routes.js';
 import lineageNavigatorRoutes from './lineage-navigator.routes.js';
@@ -61,5 +62,9 @@ financeV2Router.use(valuationRoutes);
 // distinct from `crosscuttingRoutes`'s raw-edges `/versions/:businessVersionId/
 // lineage` — no collision, both stay mounted.
 financeV2Router.use(lineageNavigatorRoutes);
+// Pakiet ROUTES_EXPOSURE — Compare engine (period/period, actual/forecast,
+// version/version, scenario/baseline, entity/entity, method/method). Own
+// `/compare/*` prefix, no collision with any router above.
+financeV2Router.use(compareRoutes);
 
 export default financeV2Router;
