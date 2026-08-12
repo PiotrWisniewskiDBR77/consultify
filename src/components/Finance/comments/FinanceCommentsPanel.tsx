@@ -17,6 +17,7 @@
  */
 import React, { useEffect, useState } from 'react';
 
+import { FinanceStatusAnnouncer } from '@/components/Finance/shared/FinanceStatusAnnouncer';
 import { useFinanceCommentsFlag } from '@/hooks/useFinanceCommentsFlag';
 import {
   addFinanceReviewChecklistItem,
@@ -59,6 +60,11 @@ export function FinanceCommentsPanel({ artifactId, businessVersionId, className 
   const [draftMentions, setDraftMentions] = useState('');
   const [newChecklistItem, setNewChecklistItem] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  // ★ NAPRAWA a11y (Pakiet I, wymaganie #7): akcje (dodaj/rozwiąż/otwórz
+  // ponownie/checklist) zapisują się w tle bez żadnego wizualnego "toast" —
+  // jedyny sygnał był wzrokowy (lista się przerysowuje). `actionMessage`
+  // niesie ten sam komunikat do stałego `role="status"` poniżej.
+  const [actionMessage, setActionMessage] = useState<string | null>(null);
 
   const load = React.useCallback(() => {
     if (!enabled) return;
@@ -97,6 +103,7 @@ export function FinanceCommentsPanel({ artifactId, businessVersionId, className 
       setDraftBody('');
       setDraftBlocking(false);
       setDraftMentions('');
+      setActionMessage('Komentarz dodany.');
       load();
     } catch (err) {
       setState({ kind: 'error', ...describeFinanceV2Error(err) });
@@ -108,6 +115,7 @@ export function FinanceCommentsPanel({ artifactId, businessVersionId, className 
   async function handleResolve(commentId: string) {
     try {
       await resolveFinanceComment(commentId);
+      setActionMessage('Komentarz oznaczony jako rozwiązany.');
       load();
     } catch (err) {
       setState({ kind: 'error', ...describeFinanceV2Error(err) });
@@ -117,6 +125,7 @@ export function FinanceCommentsPanel({ artifactId, businessVersionId, className 
   async function handleReopen(commentId: string) {
     try {
       await reopenFinanceComment(commentId);
+      setActionMessage('Komentarz otwarty ponownie.');
       load();
     } catch (err) {
       setState({ kind: 'error', ...describeFinanceV2Error(err) });
@@ -128,6 +137,7 @@ export function FinanceCommentsPanel({ artifactId, businessVersionId, className 
     try {
       await addFinanceReviewChecklistItem({ businessVersionId, item: newChecklistItem.trim(), required: true });
       setNewChecklistItem('');
+      setActionMessage('Pozycja checklisty dodana.');
       load();
     } catch (err) {
       setState({ kind: 'error', ...describeFinanceV2Error(err) });
@@ -138,8 +148,10 @@ export function FinanceCommentsPanel({ artifactId, businessVersionId, className 
     try {
       if (item.checkedBy) {
         await uncheckFinanceReviewChecklistItem(item.id);
+        setActionMessage(`Odznaczono: ${item.item}.`);
       } else {
         await checkFinanceReviewChecklistItem(item.id);
+        setActionMessage(`Odhaczono: ${item.item}.`);
       }
       load();
     } catch (err) {
@@ -149,18 +161,24 @@ export function FinanceCommentsPanel({ artifactId, businessVersionId, className 
 
   if (state.kind === 'loading') {
     return (
-      <div className={`rounded-lg border border-c-border-subtle bg-c-surface p-3 ${className ?? ''}`} data-testid="comments-panel-loading">
-        <p className="text-xs text-c-text-secondary">Ładowanie komentarzy…</p>
-      </div>
+      <>
+        <FinanceStatusAnnouncer message="Ładowanie komentarzy…" />
+        <div className={`rounded-lg border border-c-border-subtle bg-c-surface p-3 ${className ?? ''}`} data-testid="comments-panel-loading">
+          <p className="text-xs text-c-text-secondary">Ładowanie komentarzy…</p>
+        </div>
+      </>
     );
   }
 
   if (state.kind === 'error') {
     return (
-      <div className={`rounded-lg border border-c-danger/40 bg-c-surface p-3 ${className ?? ''}`} data-testid="comments-panel-error">
-        <p className="text-sm font-medium text-c-danger">{state.title}</p>
-        <p className="text-xs text-c-text-secondary">{state.detail}</p>
-      </div>
+      <>
+        <FinanceStatusAnnouncer message={`Błąd: ${state.title}`} priority="assertive" />
+        <div className={`rounded-lg border border-c-danger/40 bg-c-surface p-3 ${className ?? ''}`} data-testid="comments-panel-error">
+          <p className="text-sm font-medium text-c-danger">{state.title}</p>
+          <p className="text-xs text-c-text-secondary">{state.detail}</p>
+        </div>
+      </>
     );
   }
 
@@ -169,6 +187,7 @@ export function FinanceCommentsPanel({ artifactId, businessVersionId, className 
 
   return (
     <div className={`flex flex-col gap-4 rounded-lg border border-c-border-subtle bg-c-surface p-3 ${className ?? ''}`} data-testid="finance-comments-panel">
+      <FinanceStatusAnnouncer message={actionMessage ?? 'Komentarze wczytane.'} />
       {hasUnresolvedBlocking ? (
         <div className="rounded-md border border-c-danger/40 bg-c-danger/10 px-3 py-2 text-xs text-c-danger" data-testid="comments-blocking-banner">
           Są nierozwiązane komentarze blokujące — zatwierdzenie tej wersji jest wstrzymane do ich rozwiązania.

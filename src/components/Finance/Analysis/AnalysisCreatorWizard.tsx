@@ -21,7 +21,9 @@
  * callera (`AnalysisWorkspace.tsx`).
  */
 import { AlertTriangle, Check, ChevronLeft, ChevronRight, Plus, Search, X } from 'lucide-react';
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
+
+import { useDialogA11y } from '@/components/ui/primitives/useDialogA11y';
 
 import { BusinessVersionStatusValues, businessVersionStatusLabel, type AnalysisKpiCatalogEntryDto, type BusinessVersionStatus } from '../../../services/api/financeV2.types';
 import {
@@ -121,8 +123,18 @@ export function AnalysisCreatorWizard(props: AnalysisCreatorWizardProps): React.
   const customFormulaValidation =
     customFormulaDraft.trim().length > 0 ? validateCustomFormula(customFormulaDraft, availableLineCodesForPreflight) : null;
 
+  // ★ NAPRAWA a11y (Pakiet I): `role="dialog"` był deklaratywny bez żadnej
+  // faktycznej semantyki — brak pułapki fokusa (Tab uciekał pod tło), brak
+  // Escape, brak przywrócenia fokusa na przycisk-wyzwalacz ("Konfiguruj KPI"
+  // w `AnalysisKpiTable`, który NIE odmontowuje się pod kreatorem, więc
+  // domyślne przechwycenie `document.activeElement` w `useDialogA11y`
+  // wystarcza bez dodatkowego fallbacku).
+  const dialogContainerRef = useRef<HTMLDivElement>(null);
+  useDialogA11y({ open: true, onClose, containerRef: dialogContainerRef });
+
   return (
     <div
+      ref={dialogContainerRef}
       role="dialog"
       aria-modal="true"
       aria-label="Kreator analizy"

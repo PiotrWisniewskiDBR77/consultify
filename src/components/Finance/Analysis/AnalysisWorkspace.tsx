@@ -150,6 +150,14 @@ function AnalysisWorkspaceInner(props: AnalysisWorkspaceProps): React.ReactEleme
   const focusMode = useFinanceFocusMode({
     workspaceState: { selectedKpiCode, wizardOpen, includedInReportByKpiCode, markedAsModelInputByKpiCode },
     activeViewId: 'analysis',
+    // ★ NAPRAWA a11y (Pakiet I): `AnalysisCreatorWizard` teraz NAPRAWDĘ
+    // zamyka się na Escape (przedtem nie miał żadnej obsługi klawiatury —
+    // patrz `AnalysisCreatorWizard.tsx`). Bez tego `escapeContext.modalOpen`
+    // Escape wykonywałby DWIE rzeczy naraz przy otwartym kreatorze w focus
+    // mode: zamykał kreator I wychodził z focus mode — ten hook już ma
+    // gotową precedencję (`resolveEscapeKey`) na dokładnie ten przypadek,
+    // po prostu nigdy nie dostawał prawdziwego stanu modala.
+    escapeContext: { modalOpen: wizardOpen },
   });
 
   const reload = useCallback(async () => {

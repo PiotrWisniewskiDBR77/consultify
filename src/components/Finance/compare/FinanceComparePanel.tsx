@@ -18,6 +18,7 @@
  */
 import React, { useEffect, useMemo, useState } from 'react';
 
+import { FinanceStatusAnnouncer } from '@/components/Finance/shared/FinanceStatusAnnouncer';
 import { useFinanceCompareFlag } from '@/hooks/useFinanceCompareFlag';
 import {
   compareFinanceActualVsForecast,
@@ -151,20 +152,41 @@ export function FinanceComparePanel({ request, className }: FinanceComparePanelP
 
   if (!enabled) return null;
 
+  // ★ NAPRAWA a11y (Pakiet I, wymaganie #7 "ogłaszanie stanów dynamicznych"):
+  // przeliczenie porównania trwa (compute po stronie serwera) i wcześniej nic
+  // nie mówiło czytnikowi ekranu, że stan się zmienił — trzeba było wzrokowo
+  // zauważyć zamianę treści. `liveMessage` to STAŁY, zawsze zamontowany
+  // `role="status"` (niewidoczny wizualnie), więc zmiana jego tekstu jest
+  // ogłaszana niezależnie od tego, że widoczna treść poniżej wymienia się na
+  // inny DOM (loading→error/loaded).
+  const liveMessage =
+    state.kind === 'loading'
+      ? 'Liczenie porównania…'
+      : state.kind === 'error'
+        ? `Błąd porównania: ${state.title}`
+        : 'Porównanie gotowe.';
+  const livePriority = state.kind === 'error' ? 'assertive' : 'polite';
+
   if (state.kind === 'loading') {
     return (
-      <div className={`rounded-lg border border-c-border-subtle bg-c-surface p-3 ${className ?? ''}`} data-testid="compare-panel-loading">
-        <p className="text-xs text-c-text-secondary">Liczenie porównania…</p>
-      </div>
+      <>
+        <FinanceStatusAnnouncer message={liveMessage} priority={livePriority} />
+        <div className={`rounded-lg border border-c-border-subtle bg-c-surface p-3 ${className ?? ''}`} data-testid="compare-panel-loading">
+          <p className="text-xs text-c-text-secondary">Liczenie porównania…</p>
+        </div>
+      </>
     );
   }
 
   if (state.kind === 'error') {
     return (
-      <div className={`rounded-lg border border-c-danger/40 bg-c-surface p-3 ${className ?? ''}`} data-testid="compare-panel-error">
-        <p className="text-sm font-medium text-c-danger">{state.title}</p>
-        <p className="text-xs text-c-text-secondary">{state.detail}</p>
-      </div>
+      <>
+        <FinanceStatusAnnouncer message={liveMessage} priority={livePriority} />
+        <div className={`rounded-lg border border-c-danger/40 bg-c-surface p-3 ${className ?? ''}`} data-testid="compare-panel-error">
+          <p className="text-sm font-medium text-c-danger">{state.title}</p>
+          <p className="text-xs text-c-text-secondary">{state.detail}</p>
+        </div>
+      </>
     );
   }
 
@@ -172,6 +194,7 @@ export function FinanceComparePanel({ request, className }: FinanceComparePanelP
 
   return (
     <div className={`flex flex-col gap-3 rounded-lg border border-c-border-subtle bg-c-surface p-3 ${className ?? ''}`} data-testid="finance-compare-panel">
+      <FinanceStatusAnnouncer message={liveMessage} priority={livePriority} />
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm font-semibold text-c-text-primary">{compareComparisonTypeLabel(result.comparisonType)}</p>
@@ -210,8 +233,12 @@ export function FinanceComparePanel({ request, className }: FinanceComparePanelP
       </label>
 
       <div className="max-h-96 overflow-auto rounded-md border border-c-border-subtle" data-testid="compare-rows-scroll">
-        <table className="w-full text-left text-xs">
-          <thead className="sticky top-0 bg-c-surface-raised text-c-text-secondary">
+        {/* §27-exempt: archetyp Excel — wiersze to WYLICZONE różnice (A/B/Δ/Δ%),
+            nie rekordy encji o stałym schemacie z klikiem-otwiera-rekord
+            (docs/ui-standards/DOKTRYNA_TABELA_NIE_EXCEL.md #2), więc StandardTable
+            nie pasuje — tak samo jak grid założeń w AssumptionsView.tsx. */}
+        <table className="w-full text-left text-xs" /* §27-exempt */>
+          <thead className="sticky top-0 bg-c-surface-raised text-c-text-secondary" /* §27-exempt */>
             <tr>
               <th className="px-2 py-1.5 font-medium">Wymiary</th>
               <th className="px-2 py-1.5 font-medium">A</th>
@@ -221,7 +248,7 @@ export function FinanceComparePanel({ request, className }: FinanceComparePanelP
               <th className="px-2 py-1.5 font-medium">Stan</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody /* §27-exempt */>
             {visibleRows.length === 0 ? (
               <tr>
                 <td colSpan={6} className="px-2 py-4 text-center text-c-text-secondary">

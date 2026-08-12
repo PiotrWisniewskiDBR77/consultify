@@ -16,6 +16,7 @@
  */
 import React, { useEffect, useState } from 'react';
 
+import { FinanceStatusAnnouncer } from '@/components/Finance/shared/FinanceStatusAnnouncer';
 import { useFinanceSavedViewsFlag } from '@/hooks/useFinanceSavedViewsFlag';
 import { createFinanceSavedView, deleteFinanceSavedView, listFinanceSavedViews } from '@/services/api/financeV2.api';
 import {
@@ -55,6 +56,12 @@ export function FinanceSavedViewsPanel({
   const [newViewScope, setNewViewScope] = useState<FinanceSavedViewScope>('PERSONAL');
   const [rowError, setRowError] = useState<string | null>(null);
   const [copiedViewId, setCopiedViewId] = useState<string | null>(null);
+  // ★ NAPRAWA a11y (Pakiet I, wymaganie #7): "Kopiuj link" zmieniał TYLKO
+  // widoczny tekst przycisku na "Skopiowano" (2s) — czytnik ekranu, który
+  // nie ma fokusu na tym konkretnym przycisku w danej chwili, nigdy się o
+  // tym nie dowiadywał. `actionMessage` niesie ten sam komunikat do stałego
+  // `role="status"`.
+  const [actionMessage, setActionMessage] = useState<string | null>(null);
 
   const load = React.useCallback(() => {
     if (!enabled) return;
@@ -81,6 +88,7 @@ export function FinanceSavedViewsPanel({
         filters: currentFilters ?? [],
       });
       setNewViewName('');
+      setActionMessage('Widok zapisany.');
       load();
     } catch (err) {
       setRowError(describeFinanceV2Error(err).detail);
@@ -91,6 +99,7 @@ export function FinanceSavedViewsPanel({
     setRowError(null);
     try {
       await deleteFinanceSavedView(viewId);
+      setActionMessage('Widok usunięty.');
       load();
     } catch (err) {
       setRowError(describeFinanceV2Error(err).detail);
@@ -103,23 +112,30 @@ export function FinanceSavedViewsPanel({
       navigator.clipboard.writeText(url).catch(() => {});
     }
     setCopiedViewId(view.id);
+    setActionMessage(`Link do widoku „${view.name}" skopiowany.`);
     window.setTimeout(() => setCopiedViewId((cur) => (cur === view.id ? null : cur)), 2000);
   }
 
   if (state.kind === 'loading') {
     return (
-      <div className={`rounded-lg border border-c-border-subtle bg-c-surface p-3 ${className ?? ''}`} data-testid="saved-views-panel-loading">
-        <p className="text-xs text-c-text-secondary">Ładowanie zapisanych widoków…</p>
-      </div>
+      <>
+        <FinanceStatusAnnouncer message="Ładowanie zapisanych widoków…" />
+        <div className={`rounded-lg border border-c-border-subtle bg-c-surface p-3 ${className ?? ''}`} data-testid="saved-views-panel-loading">
+          <p className="text-xs text-c-text-secondary">Ładowanie zapisanych widoków…</p>
+        </div>
+      </>
     );
   }
 
   if (state.kind === 'error') {
     return (
-      <div className={`rounded-lg border border-c-danger/40 bg-c-surface p-3 ${className ?? ''}`} data-testid="saved-views-panel-error">
-        <p className="text-sm font-medium text-c-danger">{state.title}</p>
-        <p className="text-xs text-c-text-secondary">{state.detail}</p>
-      </div>
+      <>
+        <FinanceStatusAnnouncer message={`Błąd: ${state.title}`} priority="assertive" />
+        <div className={`rounded-lg border border-c-danger/40 bg-c-surface p-3 ${className ?? ''}`} data-testid="saved-views-panel-error">
+          <p className="text-sm font-medium text-c-danger">{state.title}</p>
+          <p className="text-xs text-c-text-secondary">{state.detail}</p>
+        </div>
+      </>
     );
   }
 
@@ -129,10 +145,11 @@ export function FinanceSavedViewsPanel({
 
   return (
     <div className={`flex flex-col gap-4 rounded-lg border border-c-border-subtle bg-c-surface p-3 ${className ?? ''}`} data-testid="finance-saved-views-panel">
+      <FinanceStatusAnnouncer message={actionMessage ?? 'Zapisane widoki wczytane.'} />
       <p className="text-xs font-semibold text-c-text-secondary">Zapisane widoki</p>
 
       {rowError ? (
-        <div className="rounded-md border border-c-danger/40 bg-c-danger/10 px-2 py-1.5 text-xs text-c-danger" data-testid="saved-views-row-error">
+        <div role="alert" className="rounded-md border border-c-danger/40 bg-c-danger/10 px-2 py-1.5 text-xs text-c-danger" data-testid="saved-views-row-error">
           {rowError}
         </div>
       ) : null}

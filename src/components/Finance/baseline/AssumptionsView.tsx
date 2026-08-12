@@ -13,7 +13,9 @@
  * ★ V-5: brak martwej przestrzeni — grid wypełnia pełną szerokość
  * (`w-full`, kolumny `minmax`, nie stałe px).
  */
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
+
+import { useDialogA11y } from '@/components/ui/primitives/useDialogA11y';
 
 import {
   formatFinanceValueForDisplay,
@@ -104,6 +106,18 @@ export function AssumptionsView({ editor, rowOrder, periodLabelById, readOnly = 
   const { cells, setCellValue, resetCellToServer, undo, redo, canUndo, canRedo, dirtyCount, preflightWarnings, saving, save, saveError } = editor;
   const [confirmingDespiteWarnings, setConfirmingDespiteWarnings] = useState(false);
 
+  // ★ NAPRAWA a11y (Pakiet I): dialog potwierdzenia zapisu mimo ostrzeżeń
+  // nie miał pułapki fokusa/Escape/przywrócenia. Wyzwalacz („Zapisz zestaw
+  // założeń", `baseline-assumptions-save`) NIE odmontowuje się pod dialogiem
+  // — domyślne przechwycenie `document.activeElement` w `useDialogA11y`
+  // wystarczy, bez fallbacku.
+  const confirmDialogContainerRef = useRef<HTMLDivElement>(null);
+  useDialogA11y({
+    open: confirmingDespiteWarnings,
+    onClose: () => setConfirmingDespiteWarnings(false),
+    containerRef: confirmDialogContainerRef,
+  });
+
   const requestSave = useCallback(() => {
     if (preflightWarnings.length > 0) {
       setConfirmingDespiteWarnings(true);
@@ -191,6 +205,7 @@ export function AssumptionsView({ editor, rowOrder, periodLabelById, readOnly = 
       {confirmingDespiteWarnings && (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4" role="presentation" onMouseDown={() => setConfirmingDespiteWarnings(false)}>
           <div
+            ref={confirmDialogContainerRef}
             role="alertdialog"
             aria-modal="true"
             aria-label="Potwierdź zapis zestawu założeń mimo ostrzeżeń"
