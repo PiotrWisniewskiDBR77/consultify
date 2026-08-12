@@ -223,4 +223,145 @@ describe.skipIf(!REAL_PG)('Finance v2 ROUTES_EXPOSURE — Lineage Navigator (rea
     const legitRead = await request(appA).get(`/api/v8/finance-v2/versions/${baselineBvId}/lineage-navigator`);
     expect(legitRead.status).toBe(200);
   });
+
+  // -----------------------------------------------------------------
+  // POST /versions/lineage-edges — the write half of the same gap
+  // (flagged mid-package by an independent verifier: insertEdge() had ZERO
+  // production callers, only test fixtures, so the whole DAG this file's
+  // read side displays could not be built through the API at all).
+  // -----------------------------------------------------------------
+
+  it('MOUNT PROOF: valid context + REAL router, unknown sourceVersionId -> 404 WITH {code:"NOT_FOUND"}', async () => {
+    const res = await request(appA)
+      .post('/api/v8/finance-v2/versions/lineage-edges')
+      .send({
+        sourceVersionId: randomUUID(),
+        sourceArtifactType: 'STATEMENT_PACK',
+        targetVersionId: baselineBvId,
+        targetArtifactType: 'BASELINE_MODEL',
+        edgeType: 'STATEMENT_TO_MODEL',
+        transformationKind: 'MANUAL_LINK',
+      });
+    expect(res.status).toBe(404);
+    expect(res.body).toHaveProperty('code', 'NOT_FOUND');
+  });
+
+  it('END-TO-END: create an edge via HTTP, confirm by independent SQL, then read it back through the lineage-navigator route (closes the write->read loop)', async () => {
+    const analysis = await av.createArtifact({ organizationId: orgA, artifactType: 'HISTORICAL_ANALYSIS', createdBy: userA });
+    const analysisBvId = analysis.businessVersion.business_version_id;
+
+    const createRes = await request(appA)
+      .post('/api/v8/finance-v2/versions/lineage-edges')
+      .send({
+        sourceVersionId: stmtBvId,
+        sourceArtifactType: 'STATEMENT_PACK',
+        targetVersionId: analysisBvId,
+        targetArtifactType: 'HISTORICAL_ANALYSIS',
+        edgeType: 'STATEMENT_TO_ANALYSIS',
+        transformationKind: 'MANUAL_LINK',
+      });
+    expect(createRes.status).toBe(201);
+    expect(createRes.body.data.sourceVersionId).toBe(stmtBvId);
+    expect(createRes.body.data.targetVersionId).toBe(analysisBvId);
+    expect(createRes.body.data.edgeType).toBe('STATEMENT_TO_ANALYSIS');
+    expect(createRes.body.data.authorId).toBe(userA);
+    expect(createRes.body.data.createdAt).toBeTruthy();
+    const edgeId = createRes.body.data.edgeId;
+
+    // Independent SQL confirmation — not just "the HTTP response looked right".
+    const sqlRow = await withPinnedPostgresTransaction((tx) =>
+      tx.queryOne<{
+        id: string;
+        organization_id: string;
+        source_version_id: string;
+        target_version_id: string;
+        edge_type: string;
+        transformation_kind: string;
+        author_id: string;
+      }>(`SELECT * FROM finance_lineage_edges WHERE id = ?`, [edgeId])
+    );
+    expect(sqlRow).toBeTruthy();
+    expect(sqlRow!.organization_id).toBe(orgA);
+    expect(sqlRow!.source_version_id).toBe(stmtBvId);
+    expect(sqlRow!.target_version_id).toBe(analysisBvId);
+    expect(sqlRow!.edge_type).toBe('STATEMENT_TO_ANALYSIS');
+    expect(sqlRow!.author_id).toBe(userA);
+
+    // Read it back through the lineage-navigator route — the new edge must appear as a direct
+    // child of the Statement Pack and a direct (indirect from focus's perspective) ancestor of
+    // the new Analysis version's own related panel.
+    const readBack = await request(appA).get(`/api/v8/finance-v2/versions/${analysisBvId}/lineage-navigator`);
+    expect(readBack.status).toBe(200);
+    const parentTypes = readBack.body.data.relatedPanel.parents.map((g: any) => g.artifactType);
+    expect(parentTypes).toEqual(['STATEMENT_PACK']);
+    expect(readBack.body.data.relatedPanel.parents[0].entries[0].metadata.versionId).toBe(stmtBvId);
+  });
+
+  it('APPEND-ONLY / DUPLICATE: re-creating the exact same edge (source, target, edgeType) already inserted in beforeAll -> 409 DUPLICATE_EDGE', async () => {
+    const res = await request(appA)
+      .post('/api/v8/finance-v2/versions/lineage-edges')
+      .send({
+        sourceVersionId: stmtBvId,
+        sourceArtifactType: 'STATEMENT_PACK',
+        targetVersionId: baselineBvId,
+        targetArtifactType: 'BASELINE_MODEL',
+        edgeType: 'STATEMENT_TO_MODEL',
+        transformationKind: 'MANUAL_LINK',
+      });
+    expect(res.status).toBe(409);
+    expect(res.body).toHaveProperty('code', 'DUPLICATE_EDGE');
+  });
+
+  it('CYCLE REJECTION: a backward edge (Baseline Model -> Statement Pack, rank 2 -> rank 0) is rejected with 409 LINEAGE_CYCLE_REJECTED, no row inserted', async () => {
+    const before = await withPinnedPostgresTransaction((tx) =>
+      tx.queryAll<{ id: string }>(`SELECT id FROM finance_lineage_edges WHERE organization_id = ?`, [orgA])
+    );
+
+    const res = await request(appA)
+      .post('/api/v8/finance-v2/versions/lineage-edges')
+      .send({
+        sourceVersionId: baselineBvId,
+        sourceArtifactType: 'BASELINE_MODEL',
+        targetVersionId: stmtBvId,
+        targetArtifactType: 'STATEMENT_PACK',
+        edgeType: 'STATEMENT_TO_MODEL', // rank check runs regardless of edge_type semantics
+        transformationKind: 'MANUAL_LINK',
+      });
+    expect(res.status).toBe(409);
+    expect(res.body).toHaveProperty('code', 'LINEAGE_CYCLE_REJECTED');
+
+    const after = await withPinnedPostgresTransaction((tx) =>
+      tx.queryAll<{ id: string }>(`SELECT id FROM finance_lineage_edges WHERE organization_id = ?`, [orgA])
+    );
+    expect(after.length).toBe(before.length); // rejected, not silently inserted
+  });
+
+  it('CROSS-TENANT EDGE CREATION: org B tries to link org A\'s own two business_version_id -> 404 NOT_FOUND, SQL confirms zero new edges for org B and org A edge count unchanged', async () => {
+    const beforeA = await withPinnedPostgresTransaction((tx) =>
+      tx.queryAll<{ id: string }>(`SELECT id FROM finance_lineage_edges WHERE organization_id = ?`, [orgA])
+    );
+
+    const res = await request(appB)
+      .post('/api/v8/finance-v2/versions/lineage-edges')
+      .send({
+        sourceVersionId: stmtBvId, // org A's real version
+        sourceArtifactType: 'STATEMENT_PACK',
+        targetVersionId: baselineBvId, // org A's real version
+        targetArtifactType: 'BASELINE_MODEL',
+        edgeType: 'STATEMENT_TO_MODEL',
+        transformationKind: 'MANUAL_LINK',
+      });
+    expect(res.status).toBe(404);
+    expect(res.body).toHaveProperty('code', 'NOT_FOUND');
+
+    const orgBEdges = await withPinnedPostgresTransaction((tx) =>
+      tx.queryAll<{ id: string }>(`SELECT id FROM finance_lineage_edges WHERE organization_id = ?`, [orgB])
+    );
+    expect(orgBEdges.length).toBe(0);
+
+    const afterA = await withPinnedPostgresTransaction((tx) =>
+      tx.queryAll<{ id: string }>(`SELECT id FROM finance_lineage_edges WHERE organization_id = ?`, [orgA])
+    );
+    expect(afterA.length).toBe(beforeA.length);
+  });
 });

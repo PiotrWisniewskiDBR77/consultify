@@ -36,6 +36,20 @@
  * `finance_stmt_periods` rows) — inventing one here would be exactly the
  * kind of new domain concept this package's mandate (additive HTTP surface
  * only, no new semantics) is meant to avoid.
+ *
+ * ★ `POST /versions/lineage-edges` — the write half of this same gap,
+ * flagged mid-package by an independent verifier (Pakiet H, Enterprise
+ * Valuation): `lineageService.insertEdge()` had ZERO production callers
+ * anywhere in the repo, ONLY test fixtures — meaning the entire Statement ->
+ * Analysis -> Baseline -> Prediction -> Valuation DAG this file's read side
+ * exists to display could not be BUILT through the API at all. This endpoint
+ * is a thin wrapper: all rank/cycle validation, the assumption-hash
+ * requirement rule, and tenant isolation are enforced by `insertEdge()`
+ * itself (app-level pre-check) and the `finance_lineage_edges` migration's
+ * own triggers/composite FKs (DB-level, authoritative) — this router adds
+ * only the pre-check that turns a cross-tenant `source`/`targetVersionId`
+ * into a clean 404 instead of a raw FK-violation 500 (same pattern
+ * `comments.routes.ts`'s `POST /comments` uses for the identical reason).
  */
 
 import type { Response } from 'express';
@@ -49,8 +63,14 @@ import {
   listBusinessVersions,
 } from '../../../services/finance/canonical/artifactVersionService.js';
 import type { BusinessVersionStatus } from '../../../services/finance/canonical/lifecycleService.js';
-import { getAncestors, getDescendants, type LineageEdgeRow } from '../../../services/finance/canonical/lineageService.js';
-import type { FinanceArtifactType } from '../../../types/finance/ArtifactRef.js';
+import {
+  getAncestors,
+  getDescendants,
+  insertEdge,
+  type InsertEdgeParams,
+  type LineageEdgeRow,
+} from '../../../services/finance/canonical/lineageService.js';
+import { FinanceArtifactTypeValues, type FinanceArtifactType } from '../../../types/finance/ArtifactRef.js';
 import type { FinanceArtifactFreshness } from '../../../types/finance/financeValueSemantics.js';
 import {
   ARTIFACT_TYPE_LABEL_PL,
@@ -139,6 +159,130 @@ const TERMINAL_VISIBILITY_VALUES: readonly LineageTerminalVisibility[] = ['show'
 function isTerminalVisibility(value: unknown): value is LineageTerminalVisibility {
   return typeof value === 'string' && (TERMINAL_VISIBILITY_VALUES as readonly string[]).includes(value);
 }
+
+// ---------------------------------------------------------------------------
+// POST /versions/lineage-edges — create one append-only lineage edge.
+// body: { sourceVersionId, sourceArtifactType, targetVersionId, targetArtifactType,
+//         edgeType, transformationKind, assumptionSnapshotHash?, assumptionSnapshotId?, computeRunId? }
+// ---------------------------------------------------------------------------
+
+// Mirrors `LineageEdgeType`/`LineageTransformationKind` (lineageService.ts) — that file exports
+// them as TYPES only (no runtime array), so this list is a local, deliberately duplicated
+// allowlist. Kept in sync manually; the `finance_lineage_edges` CHECK constraints are the
+// authoritative backstop if the two ever drift (a stale allowlist here fails CLOSED — it would
+// reject a newly-added legal value with 400, never accept an illegal one).
+const LINEAGE_EDGE_TYPE_VALUES = [
+  'STATEMENT_TO_ANALYSIS',
+  'STATEMENT_TO_MODEL',
+  'ANALYSIS_TO_MODEL',
+  'MODEL_TO_SCENARIO',
+  'MODEL_TO_VALUATION',
+  'SCENARIO_TO_VALUATION',
+  'VERSION_TO_REPORT',
+  'VERSION_TO_MANAGEMENT_ADJUSTED_VARIANT',
+] as const;
+
+const LINEAGE_TRANSFORMATION_KIND_VALUES = [
+  'COMPUTE',
+  'MANUAL_LINK',
+  'PROMOTION',
+  'RESTATEMENT_CARRY',
+  'REOPEN_CARRY',
+  'RETRACTION',
+] as const;
+
+function httpStatusForInsertEdgeError(code: string): number {
+  switch (code) {
+    case 'LINEAGE_CYCLE_REJECTED':
+      return 409;
+    case 'DUPLICATE_EDGE':
+      return 409;
+    case 'ASSUMPTION_SNAPSHOT_HASH_REQUIRED':
+    case 'ASSUMPTION_SNAPSHOT_HASH_FORBIDDEN':
+      return 400;
+    default:
+      return 400;
+  }
+}
+
+router.post(
+  '/versions/lineage-edges',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    const body = req.body ?? {};
+
+    if (typeof body.sourceVersionId !== 'string' || !body.sourceVersionId) {
+      return sendError(res, 400, 'INVALID_BODY', 'sourceVersionId is required');
+    }
+    if (typeof body.targetVersionId !== 'string' || !body.targetVersionId) {
+      return sendError(res, 400, 'INVALID_BODY', 'targetVersionId is required');
+    }
+    if (!(FinanceArtifactTypeValues as readonly string[]).includes(body.sourceArtifactType)) {
+      return sendError(res, 400, 'INVALID_BODY', `sourceArtifactType must be one of ${FinanceArtifactTypeValues.join(', ')}`);
+    }
+    if (!(FinanceArtifactTypeValues as readonly string[]).includes(body.targetArtifactType)) {
+      return sendError(res, 400, 'INVALID_BODY', `targetArtifactType must be one of ${FinanceArtifactTypeValues.join(', ')}`);
+    }
+    if (!(LINEAGE_EDGE_TYPE_VALUES as readonly string[]).includes(body.edgeType)) {
+      return sendError(res, 400, 'INVALID_BODY', `edgeType must be one of ${LINEAGE_EDGE_TYPE_VALUES.join(', ')}`);
+    }
+    if (!(LINEAGE_TRANSFORMATION_KIND_VALUES as readonly string[]).includes(body.transformationKind)) {
+      return sendError(res, 400, 'INVALID_BODY', `transformationKind must be one of ${LINEAGE_TRANSFORMATION_KIND_VALUES.join(', ')}`);
+    }
+
+    // Tenant-scoped existence pre-check on BOTH ends — without it, a foreign
+    // source/targetVersionId surfaces as a raw Postgres FK-violation 500
+    // (`fk_finance_lineage_source`/`fk_finance_lineage_target`) instead of a
+    // clean 404. The FK stays the authoritative enforcement; this is purely
+    // an error-shape improvement, same convention `comments.routes.ts` uses.
+    const [sourceVersion, targetVersion] = await Promise.all([
+      getBusinessVersion(organizationId, body.sourceVersionId),
+      getBusinessVersion(organizationId, body.targetVersionId),
+    ]);
+    if (!sourceVersion) {
+      return sendError(res, 404, 'NOT_FOUND', 'sourceVersionId not found in this organization');
+    }
+    if (!targetVersion) {
+      return sendError(res, 404, 'NOT_FOUND', 'targetVersionId not found in this organization');
+    }
+
+    const params: InsertEdgeParams = {
+      organizationId,
+      sourceVersionId: body.sourceVersionId,
+      sourceArtifactType: body.sourceArtifactType as FinanceArtifactType,
+      targetVersionId: body.targetVersionId,
+      targetArtifactType: body.targetArtifactType as FinanceArtifactType,
+      edgeType: body.edgeType,
+      transformationKind: body.transformationKind,
+      authorId: userId,
+      assumptionSnapshotHash: typeof body.assumptionSnapshotHash === 'string' ? body.assumptionSnapshotHash : undefined,
+      assumptionSnapshotId: typeof body.assumptionSnapshotId === 'string' ? body.assumptionSnapshotId : undefined,
+      computeRunId: typeof body.computeRunId === 'string' ? body.computeRunId : undefined,
+    };
+
+    const result = await insertEdge(params);
+    if (!result.ok) {
+      return sendError(res, httpStatusForInsertEdgeError(result.code), result.code, result.message);
+    }
+
+    const edge = result.edge;
+    return res.status(201).json({
+      data: {
+        edgeId: edge.id,
+        sourceVersionId: edge.source_version_id,
+        sourceArtifactType: edge.source_artifact_type,
+        targetVersionId: edge.target_version_id,
+        targetArtifactType: edge.target_artifact_type,
+        edgeType: edge.edge_type,
+        transformationKind: edge.transformation_kind,
+        assumptionSnapshotHash: edge.assumption_snapshot_hash,
+        authorId: edge.author_id,
+        createdAt: edge.created_at,
+      },
+      meta: financeV2Meta(),
+    });
+  })
+);
 
 // ---------------------------------------------------------------------------
 // GET /versions/:businessVersionId/lineage-navigator — compact trail + Related panel
