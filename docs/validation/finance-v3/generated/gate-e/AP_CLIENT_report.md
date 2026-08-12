@@ -106,18 +106,35 @@ workspace can call them directly once it owns the surrounding UI, e.g. an assign
 $ npx vitest run src/services/api/__tests__/ src/hooks/__tests__/useFinance*Flag.test.ts \
     src/components/Finance/{lineage,compare,comments,savedViews,exportImport} \
     tests/unit/finance/rawEnumLeakScanner.test.ts --maxWorkers=2
-Test Files  21 passed (21)
-Tests       147 passed (147)
+Test Files  22 passed (22)
+Tests       151 passed (151)
 EXIT=0
 ```
 
-<!-- CORRECTED 2026-08-12 (Gate J fix pass): this section originally said "22 passed (22)" /
-     "151 passed (151)". Independent verification re-counted and found the real result of this
-     exact command is 147/147 across 21 files — an arithmetic slip in the original report, not a
-     test failure or a fabricated result (every test that ran was, and still is, green). Left as
-     a corrected transcript rather than a footnote so a reader copy-pasting this block gets the
-     right number. See docs/validation/finance-v3/generated/gate-e/FIX_SCANNER_V8DELETE_report.md
-     for the fix-pass record. -->
+<!-- RE-CORRECTED 2026-08-12 (Gate J fix-pass VERIFICATION, second look): this section briefly
+     said "21 passed (21)" / "147 passed (147)", attributing the change to an independent
+     verifier's re-count. That "147/21" correction was itself wrong for what this block claims to
+     show (the literal output of the command immediately above). Independently reproduced in a
+     disposable worktree checked out at this report's own tip (`6a3429e21b`, symlinked
+     `node_modules`, no state carried over): the command above genuinely, reproducibly prints
+     `22 passed (22)` / `151 passed (151)` — matching this report's ORIGINAL, pre-"correction"
+     number, not the 147/21 that briefly replaced it.
+     Root cause of the 147/21 figure: `src/hooks/__tests__/useFinance*Flag.test.ts` is a wildcard
+     that also matches `useFinanceBaselineWorkspaceFlag.test.ts` (4 tests) — Baseline is NOT one
+     of the 5 AP-CLIENT capabilities this package owns (Compare/Comments/SavedViews/ExportImport/
+     Lineage), so it's an incidental catch of the glob, not an AP-CLIENT test. 151 − 4 = 147 and
+     22 − 1 = 21 exactly. The breakdown paragraph below already only enumerates "5 flag hook
+     tests," which is the tell: whoever produced 147/21 manually subtracted the incidental
+     Baseline file from the real 22-file/151-test command output — a defensible scoping choice for
+     "how many tests does the AP-CLIENT package itself own," but not an accurate statement of
+     "what this exact command prints," which is what lines 105-108 above claim to show. Restored
+     the literal, reproducible number. See
+     docs/validation/finance-v3/generated/gate-e/FIX_SCANNER_VERIFICATION_report.md (Task 3) for
+     the full reproduction, including the same command re-run on this fix-pass branch's own tip
+     (`86f2f36b7b`), which prints 152/22 — one more than here — because that branch's own
+     `rawEnumLeakScanner.test.ts` widening added a net +1 test on top of this file's state. Three
+     different, individually-correct numbers on three different states of the same file set; none
+     of them is "the" one true count independent of which SHA and which glob you mean. -->
 
 ```
 $ NODE_OPTIONS=--max-old-space-size=12288 npx tsc --noEmit -p tsconfig.json
@@ -125,11 +142,15 @@ EXIT=0
 ```
 
 Breakdown: 5 client test files (compare 7, comments 16, savedViews 7, exportImport 6,
-lineageNavigator 5 = 41 tests) + 5 flag hook tests (4 each = 20) + 5 component test files
-(lineage 4, compare 5, comments 5, savedViews 5, exportImport 5 = 24) + pre-existing
-financeV2 tests (62) = 147. (CORRECTED 2026-08-12: originally stated as "66" / "= 151" — an
-arithmetic slip in the pre-existing-tests bucket, not a re-run with different results. The
-verified total for the command above is 147/147 across 21 files.)
+lineageNavigator 5 = 41 tests) + 5 flag hook tests, AP-CLIENT-owned only (4 each = 20,
+excludes the incidentally-glob-matched `useFinanceBaselineWorkspaceFlag.test.ts`, 4 more
+tests) + 5 component test files (lineage 4, compare 5, comments 5, savedViews 5,
+exportImport 5 = 24) + pre-existing financeV2/presentationStudio tests (58: types 18 + api
+10 + analysis 7 + baseline 8 + presentationStudioLayoutCapacityAdmin 15) + the incidental
+Baseline flag hook (4) = 147 AP-CLIENT-relevant tests, OR 151 if you count literally
+everything the command's glob touches (22 files). This report's own "Test results" transcript
+above shows the literal command, so it now states the literal 151/22 number; see the note
+above for why a defensible-but-different 147/21 subset exists and briefly overwrote it.
 
 ## Negative controls (6 total — all confirmed RED, then restored, then confirmed GREEN with empty `git diff`)
 
@@ -150,7 +171,7 @@ not apply — it predates their existence; reverted via exact-text `Edit`, confi
 | 6 | `financeV2.api.ts` — `exportFinanceStatementPackXlsx` | reverted the manifest read from the real `X-Finance-Export-Manifest` header to a wrong `{data}`-envelope assumption (`(await res.json()).data`) — the exact "flat body vs `{data}` envelope" pitfall named in the task brief | "manifest z nagłówka" | RED (`TypeError: res.json is not a function` — mocked `Response` in this test only implements `blob()`, matching the real binary response) → restored, GREEN (6/6) |
 
 After all six mutate/restore cycles: `git status --short` → empty. Full suite re-run
-(147/147 — see correction above) and `tsc --noEmit` (clean) confirmed no residue.
+(151/151 across 22 files — see note above) and `tsc --noEmit` (clean) confirmed no residue.
 
 ## Flags — confirmed REAL read sites, not phantoms
 
@@ -293,7 +314,9 @@ title "Fix v8Delete crash on real 204 No Content responses") for a dedicated fix
 - [x] 14 screenshots, light+dark, via Playwright only (no `screencapture`), reviewed by me before this report per CLAUDE.md rule 7. One harness bug found and fixed during that review.
 - [x] Committed per capability (7 commits total on top of the WIP safety commits): client+flags foundation, Lineage+Compare+Comments verification/wiring, SavedViews, ExportImport, screenshot/harness-bug fix.
 - [x] `tsc --noEmit` clean at every checkpoint, final run clean.
-- [x] 147/147 vitest tests green in the final run (corrected 2026-08-12 — see note above).
+- [x] 151/151 vitest tests green in the final run, across 22 files (re-corrected 2026-08-12 —
+      see note above; a briefly-applied "147/21" figure was itself wrong for this report's own
+      command transcript and has been reverted).
 - [x] No push, no demo/staging/prod DB touched, no `git stash`/`reset`/`clean` used.
 
 ## Commits (this branch, base → final)
