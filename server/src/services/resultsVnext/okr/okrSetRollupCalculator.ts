@@ -90,9 +90,30 @@ export interface ComputeSetRollupResult {
   attentionState: OkrSetAttentionState;
   lastCheckinAt: string | null;
   nextCheckinDueAt: string | null;
+  /** RN-G6-SRV / D08 (docs/product/results-vnext/RN_G2_OPEN_QUESTIONS_UI.md
+   * §OQ-UI-C): the progress half of `reason` below, split out into its own
+   * field so `applySetRollupUpdate` can persist it onto
+   * `okr_vnext_sets.overall_progress_reason` — the Set-level counterpart of
+   * `okr_vnext_objectives.progress_calc_reason`/
+   * `okr_vnext_key_results.progress_calc_reason`, which already round-trip
+   * this same "not_calculable: ..." vs a real derivation correctly. Always
+   * starts with `not_calculable:` when `overallProgress` is `null`,
+   * mirroring `calculateObjectiveProgressRollup`'s/
+   * `calculateKeyResultProgress`'s own convention one layer down. */
+  overallProgressReason: string;
+  /** Same rationale as `overallProgressReason`, for
+   * `okr_vnext_sets.overall_confidence_reason`. */
+  overallConfidenceReason: string;
   /** Audit trail, mirrors OKR-F-009-AC-02's "every calculated value stores
    * ... reason" — one combined reason string covering progress, confidence,
-   * and attention derivation (design §7.3's own `reason: string` field). */
+   * and attention derivation (design §7.3's own `reason: string` field).
+   * Kept alongside the two split fields above for backward compatibility
+   * with existing callers/tests that read the combined string; every piece
+   * of information it carries is also available individually via
+   * `overallProgressReason`/`overallConfidenceReason` (attention's own
+   * reason has no dedicated DB column yet — no AC/decision names one — so
+   * it stays only in this combined string, same "restated, not silently
+   * dropped" posture the file header already takes for `action_required`). */
   reason: string;
 }
 
@@ -158,6 +179,8 @@ export function computeSetRollup(input: ComputeSetRollupInput): ComputeSetRollup
     attentionState,
     lastCheckinAt,
     nextCheckinDueAt,
+    overallProgressReason: progressReason,
+    overallConfidenceReason: confidenceReason,
     reason: `${progressReason} | ${confidenceReason} | ${attentionReason}`,
   };
 }

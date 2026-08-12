@@ -251,4 +251,49 @@ describe('OKR-E004 computeSetRollup (pure)', () => {
     expect(typeof result.reason).toBe('string');
     expect(result.reason.length).toBeGreaterThan(0);
   });
+
+  // ==========================================
+  // RN-G6-SRV / D08 (docs/product/results-vnext/RN_G2_OPEN_QUESTIONS_UI.md
+  // §OQ-UI-C): `overallProgressReason`/`overallConfidenceReason` are the
+  // split-out fields `applySetRollupUpdate` now persists onto
+  // `okr_vnext_sets.overall_progress_reason`/`overall_confidence_reason`.
+  // Before this fix they were computed here and thrown away — asserted
+  // directly so a future regression collapsing them back into only the
+  // combined `reason` string fails HERE, not silently at the DB layer.
+  // ==========================================
+
+  it('zero Objectives: overallProgressReason/overallConfidenceReason both carry an explicit not_calculable: prefix', () => {
+    const result = computeSetRollup({
+      objectives: [],
+      objectiveRollupModel: 'equal_average',
+      objectiveConfidenceModel: 'lowest_kr',
+      anyKeyResultStale: false,
+      lastCheckinAt: null,
+      nextCheckinDueAt: null,
+    });
+    expect(result.overallProgress).toBeNull();
+    expect(result.overallConfidence).toBeNull();
+    expect(result.overallProgressReason).toMatch(/^not_calculable:/);
+    expect(result.overallConfidenceReason).toMatch(/^not_calculable:/);
+    // The combined `reason` field must still carry both halves — kept for
+    // backward compatibility, not replaced by the split fields.
+    expect(result.reason).toContain(result.overallProgressReason);
+    expect(result.reason).toContain(result.overallConfidenceReason);
+  });
+
+  it('non-empty, calculable Set: overallProgressReason/overallConfidenceReason are distinct, non-empty strings that do NOT start with not_calculable:', () => {
+    const result = computeSetRollup({
+      objectives: [objective({ progress: 0.5, confidence: 'high' })],
+      objectiveRollupModel: 'equal_average',
+      objectiveConfidenceModel: 'lowest_kr',
+      anyKeyResultStale: false,
+      lastCheckinAt: null,
+      nextCheckinDueAt: null,
+    });
+    expect(result.overallProgress).not.toBeNull();
+    expect(result.overallProgressReason.length).toBeGreaterThan(0);
+    expect(result.overallProgressReason).not.toMatch(/^not_calculable:/);
+    expect(result.overallConfidenceReason.length).toBeGreaterThan(0);
+    expect(result.overallProgressReason).not.toBe(result.overallConfidenceReason);
+  });
 });
