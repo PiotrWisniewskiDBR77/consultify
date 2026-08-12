@@ -11,6 +11,18 @@
  * adjusted. Gdy `sourceRef` jest `null` (brak dowodu źródłowego zapisanego
  * dla tej wartości) — pokazujemy to WPROST, nie pomijamy sekcję po cichu
  * (Honest UI, CANON.md §4.1).
+ *
+ * ★ ODTWARZALNY ŁAŃCUCH (brief pkt 4) — drugi, niezależny krok dowodu: obok
+ * `sourceRef` własnego `FinanceValue` (dowód NA POZIOMIE linii kanonicznej),
+ * opcjonalny `mappingRow` pokazuje JAK wartość źródłowa trafiła do tej linii
+ * (bucket/sourceAmount/mappedAmount/sourceRowRef z wiersza rekoncyliacji,
+ * `findReconciliationDetailRowForCell` w `deriveStatementTable.ts`). Trzy
+ * stany propa są rozróżnione WPROST (honest — `undefined` ≠ `null` ≠ obiekt):
+ *   `undefined` — nie wybrano przebiegu rekoncyliacji, więc krok mapowania
+ *                 nie został jeszcze poszukany (sekcja NIE renderuje się);
+ *   `null`      — przebieg wybrany i wczytany, ale ŻADEN wiersz nie pasuje
+ *                 do tej komórki (widoczne wprost, nie ukryte);
+ *   obiekt      — dopasowany wiersz mapowania.
  */
 
 import React from 'react';
@@ -19,6 +31,7 @@ import {
   financeValueDisplayReasonLabel,
   formatFinanceValueForDisplay,
 } from '@/services/api/financeV2.types';
+import type { ReconciliationDetailRowDto } from '@/services/api/financeV2.types';
 
 import type { StatementTableCell } from './deriveStatementTable';
 
@@ -27,10 +40,12 @@ export interface SourceEvidencePanelProps {
   periodLabel: string;
   cell: StatementTableCell | null;
   emptyLabel: string;
+  /** Patrz komentarz pliku — `undefined` = mapowanie nie wyszukane, `null` = wyszukane i brak dopasowania. */
+  mappingRow?: ReconciliationDetailRowDto | null;
 }
 
 export function SourceEvidencePanel(props: SourceEvidencePanelProps): React.ReactElement {
-  const { rowLabel, periodLabel, cell, emptyLabel } = props;
+  const { rowLabel, periodLabel, cell, emptyLabel, mappingRow } = props;
 
   if (!cell) {
     return (
@@ -126,6 +141,44 @@ export function SourceEvidencePanel(props: SourceEvidencePanelProps): React.Reac
           </p>
         )}
       </div>
+
+      {mappingRow !== undefined && (
+        <div className="mt-4 border-t border-c-border-subtle pt-3" data-testid="source-evidence-mapping">
+          <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-c-text-muted">
+            Ścieżka mapowania (rekoncyliacja)
+          </p>
+          {mappingRow === null ? (
+            <p className="text-[11px] text-c-text-muted" data-testid="source-evidence-mapping-missing">
+              Wybrany przebieg rekoncyliacji nie zawiera wiersza mapowania dla tej komórki.
+            </p>
+          ) : (
+            <dl className="space-y-1 rounded-lg bg-c-surface-raised p-2 text-[11px]" data-testid="source-evidence-mapping-row">
+              <div className="flex items-baseline justify-between gap-2">
+                <dt className="text-c-text-muted">Bucket</dt>
+                <dd className="font-mono text-c-text" data-testid="source-evidence-mapping-bucket">
+                  {mappingRow.bucket}
+                </dd>
+              </div>
+              <div className="flex items-baseline justify-between gap-2">
+                <dt className="text-c-text-muted">Kwota źródłowa</dt>
+                <dd className="font-mono text-c-text">{mappingRow.sourceAmount ?? '—'}</dd>
+              </div>
+              <div className="flex items-baseline justify-between gap-2">
+                <dt className="text-c-text-muted">Kwota zmapowana</dt>
+                <dd className="font-mono text-c-text">{mappingRow.mappedAmount ?? '—'}</dd>
+              </div>
+              {mappingRow.sourceRowRef && (
+                <div className="flex items-baseline justify-between gap-2">
+                  <dt className="text-c-text-muted">sourceRowRef</dt>
+                  <dd className="font-mono text-c-text" data-testid="source-evidence-mapping-source-row-ref">
+                    {JSON.stringify(mappingRow.sourceRowRef)}
+                  </dd>
+                </div>
+              )}
+            </dl>
+          )}
+        </div>
+      )}
     </div>
   );
 }

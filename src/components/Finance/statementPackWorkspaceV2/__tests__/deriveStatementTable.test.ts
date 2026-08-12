@@ -1,8 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import type { StatementLineDto } from '@/services/api/financeV2.types';
+import type { ReconciliationDetailRowDto, StatementLineDto } from '@/services/api/financeV2.types';
 
-import { deriveStatementTable, pickHeaderCurrencyAndScale } from '../deriveStatementTable';
+import {
+  deriveStatementTable,
+  findReconciliationDetailRowForCell,
+  pickHeaderCurrencyAndScale,
+} from '../deriveStatementTable';
 
 function line(overrides: Partial<StatementLineDto> & { stmtLineId: string }): StatementLineDto {
   return {
@@ -184,5 +188,73 @@ describe('pickHeaderCurrencyAndScale', () => {
 
   it('returns null when there are no lines at all — honest absence, not a fabricated default', () => {
     expect(pickHeaderCurrencyAndScale(deriveStatementTable([]))).toBeNull();
+  });
+});
+
+function reconRow(overrides: Partial<ReconciliationDetailRowDto> & { id: string }): ReconciliationDetailRowDto {
+  return {
+    id: overrides.id,
+    canonicalLineId: 'canon-revenue',
+    entityId: 'entity-1',
+    periodId: 'period-1',
+    bucket: 'MAPPED',
+    sourceAmount: '1000000',
+    mappedAmount: '1000000',
+    duplicateOfRowId: null,
+    reclassTargetLineId: null,
+    eliminationCounterpartyEntityId: null,
+    reasonCode: null,
+    sourceRowRef: { file: 'trial_balance.csv', row: 42 },
+    ...overrides,
+  };
+}
+
+// ★ Dowód „odtwarzalnego łańcucha" (brief pkt 4): od zaprezentowanej komórki
+// (canonicalLineId+periodId+entityId) do jej wiersza mapowania rekoncyliacji
+// (sourceAmount/mappedAmount/sourceRowRef) — dopasowanie STRUKTURALNE, nie po
+// nazwie/etykiecie (żaden z tych DTO nie niesie nazwy linii).
+describe('findReconciliationDetailRowForCell', () => {
+  it('finds the reconciliation row that maps to a presented cell, by (canonicalLineId, periodId, entityId)', () => {
+    const rows = [
+      reconRow({ id: 'r1', canonicalLineId: 'canon-cogs', periodId: 'period-1', entityId: 'entity-1' }),
+      reconRow({ id: 'r2', canonicalLineId: 'canon-revenue', periodId: 'period-1', entityId: 'entity-1' }),
+      reconRow({ id: 'r3', canonicalLineId: 'canon-revenue', periodId: 'period-2', entityId: 'entity-1' }),
+    ];
+    const match = findReconciliationDetailRowForCell(
+      { canonicalLineId: 'canon-revenue', periodId: 'period-1', entityId: 'entity-1' },
+      rows
+    );
+    expect(match?.id).toBe('r2');
+    expect(match?.sourceRowRef).toEqual({ file: 'trial_balance.csv', row: 42 });
+  });
+
+  it('returns null (honest absence) when no row matches — never guesses the nearest one', () => {
+    const rows = [reconRow({ id: 'r1', canonicalLineId: 'canon-cogs', periodId: 'period-1', entityId: 'entity-1' })];
+    expect(
+      findReconciliationDetailRowForCell(
+        { canonicalLineId: 'canon-revenue', periodId: 'period-1', entityId: 'entity-1' },
+        rows
+      )
+    ).toBeNull();
+  });
+
+  it('returns null for cells without a canonicalLineId (lineCode fallback rows cannot be reconciled by definition)', () => {
+    const rows = [reconRow({ id: 'r1', canonicalLineId: 'canon-revenue', periodId: 'period-1', entityId: 'entity-1' })];
+    expect(findReconciliationDetailRowForCell({ canonicalLineId: null, periodId: 'period-1', entityId: 'entity-1' }, rows)).toBeNull();
+  });
+
+  // KONTROLA NEGATYWNA: zmiana JEDNEGO pola dopasowania (entityId) musi zerwać dopasowanie.
+  it('NEGATIVE CONTROL — changing only entityId breaks the match even when canonicalLineId+periodId still agree', () => {
+    const rows = [reconRow({ id: 'r1', canonicalLineId: 'canon-revenue', periodId: 'period-1', entityId: 'entity-1' })];
+    const sameEntity = findReconciliationDetailRowForCell(
+      { canonicalLineId: 'canon-revenue', periodId: 'period-1', entityId: 'entity-1' },
+      rows
+    );
+    expect(sameEntity?.id).toBe('r1');
+    const differentEntity = findReconciliationDetailRowForCell(
+      { canonicalLineId: 'canon-revenue', periodId: 'period-1', entityId: 'entity-2' },
+      rows
+    );
+    expect(differentEntity).toBeNull();
   });
 });

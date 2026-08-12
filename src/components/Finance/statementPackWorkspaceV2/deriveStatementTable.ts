@@ -9,7 +9,7 @@
  * dowód wykrywania duplikatów/niespójności jednostek nie zależał od renderu.
  */
 
-import type { StatementLineDto } from '@/services/api/financeV2.types';
+import type { ReconciliationDetailRowDto, StatementLineDto } from '@/services/api/financeV2.types';
 
 export interface StatementPeriodColumn {
   periodId: string;
@@ -189,6 +189,39 @@ export function pickHeaderCurrencyAndScale(
     for (const period of table.periods) {
       const cell = row.cellsByPeriodId[period.periodId];
       if (cell) return { currency: cell.value.presentationCurrency, unit: cell.value.unit };
+    }
+  }
+  return null;
+}
+
+/**
+ * ★ ODTWARZALNY ŁAŃCUCH (brief Pakietu D, punkt 4): "źródło → mapping →
+ * canonical line → presentation" — od zaprezentowanej liczby (komórka
+ * `CanonicalStatementTableV2`) do jej dowodu MAPOWANIA (nie mylić z
+ * `FinanceValue.sourceRef`, który jest dowodem na poziomie samej linii
+ * kanonicznej — to jest DRUGI, niezależny krok w łańcuchu: wiersz
+ * rekoncyliacji z `GET /statements/reconciliation-runs/:id`, który niesie
+ * `sourceAmount`/`mappedAmount`/`sourceRowRef` i `bucket`, czyli JAK dana
+ * wartość źródłowa trafiła do tej linii kanonicznej).
+ *
+ * Dopasowanie po (canonicalLineId, periodId, entityId) — strukturalne pola
+ * WSPÓLNE `StatementTableCell`/`ReconciliationDetailRowDto`, NIGDY po
+ * etykiecie/nazwie. Gdy `canonicalLineId` komórki jest `null` (linia bez
+ * przypisania, `usesLineCodeFallback`), dopasowanie po definicji zawodzi
+ * (rekoncyliacja operuje na canonicalLineId) — honest `null`, nie zgadywanie.
+ */
+export function findReconciliationDetailRowForCell(
+  target: { canonicalLineId: string | null; periodId: string; entityId: string },
+  rows: readonly ReconciliationDetailRowDto[]
+): ReconciliationDetailRowDto | null {
+  if (!target.canonicalLineId) return null;
+  for (const row of rows) {
+    if (
+      row.canonicalLineId === target.canonicalLineId &&
+      row.periodId === target.periodId &&
+      row.entityId === target.entityId
+    ) {
+      return row;
     }
   }
   return null;
