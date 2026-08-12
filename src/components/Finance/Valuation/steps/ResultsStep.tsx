@@ -63,7 +63,8 @@ export function ResultsStep(props: ResultsStepProps): React.ReactElement {
         </div>
       )}
 
-      <table className="w-full text-left text-xs" data-testid="results-methods-table"> {/* §27-exempt: wewnętrzna tabela breakdown metod wyceny w artefakcie Wyniki, nie ekran listowy modułu */}
+      {/* §27-exempt: wewnętrzna tabela breakdown metod wyceny w artefakcie Wyniki, nie ekran listowy modułu — docs/ui-standards/DOKTRYNA_TABELA_NIE_EXCEL.md */}
+      <table className="w-full text-left text-xs" data-testid="results-methods-table" data-canon="§27-exempt">
         <thead>
           <tr className="border-b border-c-border-subtle text-c-text-muted">
             <th className="py-1.5 pr-2">Metoda</th>

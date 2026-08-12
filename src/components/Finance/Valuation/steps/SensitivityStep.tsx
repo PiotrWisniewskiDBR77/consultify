@@ -119,8 +119,9 @@ export function SensitivityStep(props: SensitivityStepProps): React.ReactElement
             {integrity.ok && 'Siatka 5×5: kształt i monotoniczność OK.'}
           </div>
 
+          {/* §27-exempt: numeryczna macierz 5x5 (WACC x g), nie lista rekordów — docs/ui-standards/DOKTRYNA_TABELA_NIE_EXCEL.md */}
           {integrity.ok && (
-            <table className="border-collapse text-center text-xs" data-testid="sensitivity-grid-table"> {/* §27-exempt: numeryczna macierz 5x5 (WACC x g), nie lista rekordów */}
+            <table className="border-collapse text-center text-xs" data-testid="sensitivity-grid-table" data-canon="§27-exempt">
               <caption className="sr-only">Siatka wrażliwości EV: wiersze = wzrost terminalny g, kolumny = WACC</caption>
               <thead>
                 <tr>

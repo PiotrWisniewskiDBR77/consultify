@@ -71,7 +71,8 @@ export function MethodsWeightsStep(props: MethodsWeightsStepProps): React.ReactE
     <div className="max-w-3xl space-y-4" data-testid="valuation-methods-step">
       <h2 className="text-sm font-semibold text-c-text">Metody wyceny i wagi koszyka rekomendacji</h2>
 
-      <table className="w-full text-left text-xs" data-testid="methods-table"> {/* §27-exempt: wewnętrzna tabela edytora koszyka metod wyceny (edycja checkbox/waga per wiersz), nie ekran listowy modułu */}
+      {/* §27-exempt: wewnętrzna tabela edytora koszyka metod wyceny (edycja checkbox/waga per wiersz), nie ekran listowy modułu — docs/ui-standards/DOKTRYNA_TABELA_NIE_EXCEL.md */}
+      <table className="w-full text-left text-xs" data-testid="methods-table" data-canon="§27-exempt">
         <thead>
           <tr className="border-b border-c-border-subtle text-c-text-muted">
             <th className="py-1.5 pr-2">Metoda</th>
