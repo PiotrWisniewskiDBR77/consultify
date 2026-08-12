@@ -88,6 +88,7 @@ import {
   RoiApiError,
   startModelingRoiCase,
   startPirRoiCase,
+  submitRoiCaseForApprovalCase,
   type RoiCalculationRunSummary,
   type RoiCaseListItem,
   type RoiOrgBenefitsRealizationRow,
@@ -146,6 +147,8 @@ async function runRoiTransition(
       return startModelingRoiCase(caseId, { expectedVersion, reason, idempotencyKey });
     case 'ready_for_review':
       return markRoiCaseReadyForReview(caseId, { expectedVersion, reason, idempotencyKey });
+    case 'submit_for_approval':
+      return submitRoiCaseForApprovalCase(caseId, { expectedVersion, reason, idempotencyKey });
     case 'approve':
       return approveRoiCase(caseId, { expectedVersion, reason, idempotencyKey });
     case 'reject':

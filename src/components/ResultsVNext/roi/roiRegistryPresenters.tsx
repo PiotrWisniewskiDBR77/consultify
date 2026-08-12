@@ -55,6 +55,7 @@ import {
 const ROI_TRANSITION_ORDER: RoiTransitionId[] = [
   'start_modeling',
   'ready_for_review',
+  'submit_for_approval',
   'approve',
   'reject',
   'request_changes',

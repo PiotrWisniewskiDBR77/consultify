@@ -335,6 +335,9 @@ export function formatRoiDate(value: string | null, isPolish: boolean): string {
 //  - ready-for-review    : status !== 'modeling' → reject (+ economic-model guard:
 //                          successful/fresh calc run, no unresolved double-counting)
 //                          same file L991-999
+//  - submit-for-approval : status not in ('ready_for_review','changes_requested')
+//                          → reject (+ SAME economic-model guard re-checked)
+//                          `server/src/services/resultsVnext/roi/roiCaseApprovalCommands.ts` L236-254
 //  - approve            : status !== 'submitted_for_approval' → reject
 //                          `server/src/services/resultsVnext/roi/roiCaseApprovalCommands.ts` L347
 //  - reject              : status !== 'submitted_for_approval' → reject
@@ -363,6 +366,7 @@ export function formatRoiDate(value: string | null, isPolish: boolean): string {
 export type RoiTransitionId =
   | 'start_modeling'
   | 'ready_for_review'
+  | 'submit_for_approval'
   | 'approve'
   | 'reject'
   | 'request_changes'
@@ -418,6 +422,16 @@ export const ROI_TRANSITIONS: Record<RoiTransitionId, RoiTransitionDefinition> =
     disabledReason: {
       pl: 'Dostępne tylko w statusie „Modelowanie”, po udanym przebiegu kalkulacji.',
       en: 'Only available while Modeling, after a successful calculation run.',
+    },
+  },
+  submit_for_approval: {
+    id: 'submit_for_approval',
+    label: { pl: 'Zgłoś do zatwierdzenia', en: 'Submit for approval' },
+    fromStatuses: ['ready_for_review', 'changes_requested'],
+    reasonRequired: false,
+    disabledReason: {
+      pl: 'Dostępne tylko w statusie „Gotowe do przeglądu” lub „Poproszono o poprawki”.',
+      en: 'Only available while Ready for review or Changes requested.',
     },
   },
   approve: {

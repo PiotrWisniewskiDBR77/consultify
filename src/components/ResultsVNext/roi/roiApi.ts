@@ -451,6 +451,28 @@ export async function markRoiCaseReadyForReview(
   );
 }
 
+/** POST .../transitions/submit-for-approval — same `RoiCaseTransitionSchema`
+ * body shape (expectedVersion + optional reason), ready_for_review OR
+ * changes_requested → submitted_for_approval, re-checks the SAME
+ * fresh-calculation-run/no-unresolved-double-counting guard as
+ * `ready-for-review` (`roiCaseApprovalCommands.ts` `submitRoiCaseForApproval`,
+ * L203-260). Found alongside `start-modeling`/`ready-for-review` — no
+ * frontend caller existed for this endpoint either, which would have left
+ * a case stuck at `ready_for_review` forever with no way to reach
+ * `submitted_for_approval` (and therefore no way to ever exercise
+ * approve/reject/request-changes, all of which require that exact
+ * status). */
+export async function submitRoiCaseForApprovalCase(
+  caseId: string,
+  input: { expectedVersion: number; reason?: string | null; idempotencyKey: string }
+): Promise<RoiTransitionResult> {
+  return mutateJson<RoiTransitionResult>(
+    'POST',
+    `/vnext/results/roi/cases/${encodeURIComponent(caseId)}/transitions/submit-for-approval`,
+    input
+  );
+}
+
 /** POST .../transitions/approve — `RoiCaseTransitionSchema` (expectedVersion
  * + optional reason). Response carries `{case, snapshot}`; only `case`
  * matters to the registry (`roi.routes.ts` L1800-1832). */
