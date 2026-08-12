@@ -96,7 +96,8 @@ describe('OKR-E008 — /okr/my vs /okr/team-health vs /okr/company parity (D-OKR
       createdBy: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `e008-parity-create-program-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     await programCommands.publishProgram({
       programId: program.result.programId,
       organizationId: ORG_ID,
@@ -104,7 +105,8 @@ describe('OKR-E008 — /okr/my vs /okr/team-health vs /okr/company parity (D-OKR
       actorUserId: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `e008-parity-publish-program-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const cycle = await cycleCommands.createCycle({
       organizationId: ORG_ID,
       programId: program.result.programId,
@@ -113,7 +115,8 @@ describe('OKR-E008 — /okr/my vs /okr/team-health vs /okr/company parity (D-OKR
       createdBy: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `e008-parity-create-cycle-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
     // scope_type='company': scope_id = organization_id (D4 sentinel).
     const set = await setCommands.createOkrSet({
@@ -127,7 +130,8 @@ describe('OKR-E008 — /okr/my vs /okr/team-health vs /okr/company parity (D-OKR
       createdBy: USER_OWNER,
       actorEffectiveRole: 'member',
       idempotencyKey: `e008-parity-create-set-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     setId = set.result.set.setId;
   }, 30_000);
 
@@ -175,7 +179,8 @@ describe('OKR-E008 — /okr/my vs /okr/team-health vs /okr/company parity (D-OKR
       actorUserId: USER_OWNER,
       actorEffectiveRole: 'member',
       idempotencyKey: `e008-parity-update-draft-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     expect(outcome.resultingVersion).toBe(beforeRow.rowVersion + 1);
 
     const myOkrSets = await listMyOkrSets({ userId: USER_OWNER, organizationId: ORG_ID });

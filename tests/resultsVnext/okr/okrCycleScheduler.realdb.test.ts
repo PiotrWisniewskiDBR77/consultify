@@ -68,7 +68,8 @@ async function createActiveProgram(): Promise<{ organizationId: string; programI
     createdBy: USER_ADMIN,
     actorEffectiveRole: 'admin',
     idempotencyKey: `create-program-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   const published = await publishProgram({
     programId: created.result.programId,
     organizationId,
@@ -76,7 +77,8 @@ async function createActiveProgram(): Promise<{ organizationId: string; programI
     actorUserId: USER_ADMIN,
     actorEffectiveRole: 'admin',
     idempotencyKey: `publish-program-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   return {
     organizationId,
     programId: created.result.programId,
@@ -189,7 +191,8 @@ describe('OKR-E001 Cycle scheduler — two-call idempotency (real Postgres)', ()
         createdBy: USER_ADMIN,
         actorEffectiveRole: 'admin',
         idempotencyKey: `create-cycle-due-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       const cycleId = created.result.cycleId;
       expect(created.result.status).toBe('planned');
 
@@ -237,7 +240,8 @@ describe('OKR-E001 Cycle scheduler — two-call idempotency (real Postgres)', ()
       createdBy: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `create-cycle-nothing-due-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
     const firstRun = await proposeAndExecuteDueCycleTransitions({ organizationId });
     expect(firstRun.transitioned).toEqual([]);

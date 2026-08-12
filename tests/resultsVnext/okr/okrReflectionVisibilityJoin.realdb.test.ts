@@ -154,7 +154,8 @@ describe('OKR-E007 Reflection/Review visibility-join — ::text cast forces real
         actorUserId: USER_OWNER,
         actorEffectiveRole: 'member',
         idempotencyKey: `submit-manager-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
       const { rowVersion } = await readSetVersionAndStatus(client, fixture.setId);
       await narrowOkrSetVisibility({
@@ -165,7 +166,8 @@ describe('OKR-E007 Reflection/Review visibility-join — ::text cast forces real
         actorUserId: USER_OWNER,
         actorEffectiveRole: 'member',
         idempotencyKey: `narrow-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
       // The row genuinely exists — proven by a direct, un-visibility-scoped
       // SELECT.
@@ -205,7 +207,8 @@ describe('OKR-E007 Reflection/Review visibility-join — ::text cast forces real
         actorUserId: USER_OWNER,
         actorEffectiveRole: 'member',
         idempotencyKey: `reflect-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
       const { rowVersion } = await readSetVersionAndStatus(client, fixture.setId);
       await narrowOkrSetVisibility({
@@ -216,7 +219,8 @@ describe('OKR-E007 Reflection/Review visibility-join — ::text cast forces real
         actorUserId: USER_OWNER,
         actorEffectiveRole: 'member',
         idempotencyKey: `narrow-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
       // Bare join WITHOUT the cast: Postgres rejects the type mismatch
       // outright (42883 operator does not exist: text = uuid) — proving

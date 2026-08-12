@@ -99,7 +99,8 @@ async function createFullFixture(ownerId: string): Promise<Fixture> {
     createdBy: USER_ADMIN,
     actorEffectiveRole: 'admin',
     idempotencyKey: `create-program-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   await publishProgram({
     programId: created.result.programId,
     organizationId,
@@ -107,7 +108,8 @@ async function createFullFixture(ownerId: string): Promise<Fixture> {
     actorUserId: USER_ADMIN,
     actorEffectiveRole: 'admin',
     idempotencyKey: `publish-program-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   const cycle = await createCycle({
     organizationId,
     programId: created.result.programId,
@@ -116,7 +118,8 @@ async function createFullFixture(ownerId: string): Promise<Fixture> {
     createdBy: USER_ADMIN,
     actorEffectiveRole: 'admin',
     idempotencyKey: `create-cycle-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   const set = await createOkrSet({
     organizationId,
     programId: created.result.programId,
@@ -128,7 +131,8 @@ async function createFullFixture(ownerId: string): Promise<Fixture> {
     createdBy: USER_ADMIN,
     actorEffectiveRole: 'admin',
     idempotencyKey: `create-set-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   const objective = await createObjective({
     setId: set.result.set.setId,
     organizationId,
@@ -137,7 +141,8 @@ async function createFullFixture(ownerId: string): Promise<Fixture> {
     createdBy: ownerId,
     actorEffectiveRole: 'member',
     idempotencyKey: `create-obj-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   return {
     organizationId,
     programId: created.result.programId,
@@ -259,7 +264,8 @@ describe('OKR-E003 createKeyResult — measurement_type gating, progress engine 
         createdBy: `${USER_OWNER}-mvp`,
         actorEffectiveRole: 'member',
         idempotencyKey: `create-kr-${measurementType}-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       expect(outcome.result.measurementType).toBe(measurementType);
     }
   });
@@ -284,7 +290,8 @@ describe('OKR-E003 createKeyResult — measurement_type gating, progress engine 
             createdBy: `${USER_OWNER}-notimpl`,
             actorEffectiveRole: 'member',
             idempotencyKey: `create-kr-${measurementType}-${randomUUID()}`,
-          });
+        access: { capabilities: ['*'], platformRole: null },
+});
         } catch (err) {
           caught = err;
         }
@@ -321,7 +328,8 @@ describe('OKR-E003 createKeyResult — measurement_type gating, progress engine 
         createdBy: `${USER_OWNER}-currency`,
         actorEffectiveRole: 'member',
         idempotencyKey: `create-kr-currency-missing-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
     } catch (err) {
       caught = err;
     }
@@ -345,7 +353,8 @@ describe('OKR-E003 createKeyResult — measurement_type gating, progress engine 
         createdBy: `${USER_OWNER}-range`,
         actorEffectiveRole: 'member',
         idempotencyKey: `create-kr-range-missing-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
     } catch (err) {
       caught = err;
     }
@@ -377,7 +386,8 @@ describe('OKR-E003 createKeyResult — measurement_type gating, progress engine 
         createdBy: `${USER_OWNER}-rollup`,
         actorEffectiveRole: 'member',
         idempotencyKey: `create-kr-increase-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       expect(Number(kr1.result.progress)).toBeCloseTo(0.5, 10);
       expect(kr1.result.progressCalcReason).toContain('increase:');
 
@@ -405,7 +415,8 @@ describe('OKR-E003 createKeyResult — measurement_type gating, progress engine 
       createdBy: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `create-program-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     await publishProgram({
       programId: createdProgram.result.programId,
       organizationId,
@@ -413,7 +424,8 @@ describe('OKR-E003 createKeyResult — measurement_type gating, progress engine 
       actorUserId: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `publish-program-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const cycle = await createCycle({
       organizationId,
       programId: createdProgram.result.programId,
@@ -422,7 +434,8 @@ describe('OKR-E003 createKeyResult — measurement_type gating, progress engine 
       createdBy: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `create-cycle-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const set = await createOkrSet({
       organizationId,
       programId: createdProgram.result.programId,
@@ -434,7 +447,8 @@ describe('OKR-E003 createKeyResult — measurement_type gating, progress engine 
       createdBy: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `create-set-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const objective = await createObjective({
       setId: set.result.set.setId,
       organizationId,
@@ -443,7 +457,8 @@ describe('OKR-E003 createKeyResult — measurement_type gating, progress engine 
       createdBy: ownerId,
       actorEffectiveRole: 'member',
       idempotencyKey: `create-obj-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
     // KR1: reach 5/10 = 0.5
     await createKeyResult({
@@ -458,7 +473,8 @@ describe('OKR-E003 createKeyResult — measurement_type gating, progress engine 
       createdBy: ownerId,
       actorEffectiveRole: 'member',
       idempotencyKey: `create-kr1-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     // KR2: reach 9/10 = 0.9
     await createKeyResult({
       objectiveId: objective.result.objectiveId,
@@ -472,7 +488,8 @@ describe('OKR-E003 createKeyResult — measurement_type gating, progress engine 
       createdBy: ownerId,
       actorEffectiveRole: 'member',
       idempotencyKey: `create-kr2-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
     // (0.5 + 0.9) / 2 = 0.7
     const objRow = await client.query<{ progress: string | null; progress_calc_reason: string | null }>(
@@ -510,7 +527,8 @@ describe('OKR-E003 createKeyResult — measurement_type gating, progress engine 
         createdBy: `${USER_OWNER}-pinned`,
         actorEffectiveRole: 'member',
         idempotencyKey: `create-kr-pinned-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       expect(kr.result.progressCalcPolicyVersionId).toBe(pinnedPolicyVersionId);
 
       // Republish the Program with a DIFFERENT objective_rollup_model — a
@@ -528,7 +546,8 @@ describe('OKR-E003 createKeyResult — measurement_type gating, progress engine 
         actorUserId: USER_ADMIN,
         actorEffectiveRole: 'admin',
         idempotencyKey: `edit-program-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       await publishProgram({
         programId: fx.programId,
         organizationId: fx.organizationId,
@@ -536,7 +555,8 @@ describe('OKR-E003 createKeyResult — measurement_type gating, progress engine 
         actorUserId: USER_ADMIN,
         actorEffectiveRole: 'admin',
         idempotencyKey: `republish-program-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
       const policyVersionCount = await client.query<{ count: string }>(
         `SELECT COUNT(*)::text AS count FROM okr_vnext_program_policy_versions WHERE program_id = $1`,
@@ -564,7 +584,8 @@ describe('OKR-E003 createKeyResult — measurement_type gating, progress engine 
         actorUserId: `${USER_OWNER}-pinned`,
         actorEffectiveRole: 'member',
         idempotencyKey: `update-kr-pinned-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       expect(updated.result.progressCalcPolicyVersionId).toBe(pinnedPolicyVersionId);
       expect(updated.result.progressCalcPolicyVersionId).not.toBe(
         (
@@ -634,7 +655,8 @@ describe('OKR-E003 createKeyResult — measurement_type gating, progress engine 
       createdBy: `${USER_OWNER}-sourceref`,
       actorEffectiveRole: 'member',
       idempotencyKey: `create-kr-sourceref-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     expect(kr.result.sourceType).toBe('connector');
     expect(kr.result.sourceReference).toBe('nonexistent-kpi-id-12345');
   });

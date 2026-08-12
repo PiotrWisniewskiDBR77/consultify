@@ -136,7 +136,8 @@ describe('OKR-E006 Support request lifecycle (real Postgres)', () => {
       createdBy: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `create-program-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     await publishProgram({
       programId: created.result.programId,
       organizationId: ORG_ID,
@@ -144,7 +145,8 @@ describe('OKR-E006 Support request lifecycle (real Postgres)', () => {
       actorUserId: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `publish-program-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const cycle = await createCycle({
       organizationId: ORG_ID,
       programId: created.result.programId,
@@ -153,7 +155,8 @@ describe('OKR-E006 Support request lifecycle (real Postgres)', () => {
       createdBy: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `create-cycle-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const set = await createOkrSet({
       organizationId: ORG_ID,
       programId: created.result.programId,
@@ -166,7 +169,8 @@ describe('OKR-E006 Support request lifecycle (real Postgres)', () => {
       createdBy: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `create-set-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     setId = set.result.set.setId;
 
     const objective = await createObjective({
@@ -177,7 +181,8 @@ describe('OKR-E006 Support request lifecycle (real Postgres)', () => {
       createdBy: USER_OWNER,
       actorEffectiveRole: 'member',
       idempotencyKey: `create-objective-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     objectiveId = objective.result.objectiveId;
 
     const keyResult = await createKeyResult({
@@ -192,7 +197,8 @@ describe('OKR-E006 Support request lifecycle (real Postgres)', () => {
       createdBy: USER_OWNER,
       actorEffectiveRole: 'member',
       idempotencyKey: `create-kr-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     keyResultId = keyResult.result.keyResultId;
   }, 30_000);
 
@@ -240,7 +246,8 @@ describe('OKR-E006 Support request lifecycle (real Postgres)', () => {
       createdBy: USER_OWNER,
       actorEffectiveRole: 'member',
       idempotencyKey: `post-comment-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     expect(outcome.outcome).toBe('applied');
     expect(outcome.result.kind).toBe('comment');
     expect(outcome.result.status).toBeNull();
@@ -257,7 +264,8 @@ describe('OKR-E006 Support request lifecycle (real Postgres)', () => {
       createdBy: USER_OWNER,
       actorEffectiveRole: 'member',
       idempotencyKey: `raise-sr-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     expect(raised.outcome).toBe('applied');
     expect(raised.result.kind).toBe('support_request');
     expect(raised.result.status).toBe('open');
@@ -280,7 +288,8 @@ describe('OKR-E006 Support request lifecycle (real Postgres)', () => {
       actorUserId: USER_MANAGER,
       actorEffectiveRole: 'member',
       idempotencyKey: `ack-sr-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     expect(acknowledged.result.status).toBe('acknowledged');
 
     // Obligation is NOT completed by acknowledge — only by resolve/dismiss.
@@ -300,7 +309,8 @@ describe('OKR-E006 Support request lifecycle (real Postgres)', () => {
       actorUserId: USER_MANAGER,
       actorEffectiveRole: 'member',
       idempotencyKey: `resolve-sr-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     expect(resolved.result.status).toBe('resolved');
     expect(resolved.result.resolutionNote).toBe('Vendor access granted.');
 
@@ -324,7 +334,8 @@ describe('OKR-E006 Support request lifecycle (real Postgres)', () => {
       createdBy: USER_OWNER,
       actorEffectiveRole: 'member',
       idempotencyKey: `raise-sr-dismiss-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const requestId = raised.result.requestId;
 
     // No self-approval-denial guard: the SAME user who raised it (the KR
@@ -337,7 +348,8 @@ describe('OKR-E006 Support request lifecycle (real Postgres)', () => {
       actorUserId: USER_OWNER,
       actorEffectiveRole: 'member',
       idempotencyKey: `dismiss-sr-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     expect(dismissed.result.status).toBe('dismissed');
 
     const obligation = await client.query(
@@ -361,7 +373,8 @@ describe('OKR-E006 Support request lifecycle (real Postgres)', () => {
         createdBy: USER_OWNER,
         actorEffectiveRole: 'member',
         idempotencyKey: `raise-sr-no-assignee-${randomUUID()}`,
-      })
+        access: { capabilities: ['*'], platformRole: null },
+})
     ).rejects.toBeInstanceOf(OkrSupportRequestValidationError);
   });
 
@@ -374,7 +387,8 @@ describe('OKR-E006 Support request lifecycle (real Postgres)', () => {
       createdBy: USER_OWNER,
       actorEffectiveRole: 'member',
       idempotencyKey: `comment-for-ack-reject-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     await expect(
       acknowledgeSupportRequest({
         requestId: comment.result.requestId,
@@ -383,7 +397,8 @@ describe('OKR-E006 Support request lifecycle (real Postgres)', () => {
         actorUserId: USER_MANAGER,
         actorEffectiveRole: 'member',
         idempotencyKey: `ack-comment-reject-${randomUUID()}`,
-      })
+        access: { capabilities: ['*'], platformRole: null },
+})
     ).rejects.toBeInstanceOf(OkrSupportRequestValidationError);
   });
 });

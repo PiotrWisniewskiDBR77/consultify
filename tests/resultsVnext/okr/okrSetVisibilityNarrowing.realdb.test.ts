@@ -88,7 +88,8 @@ async function addSufficientKeyResultCoverage(setId: string, organizationId: str
     createdBy: ownerUserId,
     actorEffectiveRole: 'member',
     idempotencyKey: `fixture-objective-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   for (let i = 0; i < 2; i += 1) {
     await createKeyResult({
       objectiveId: objective.result.objectiveId,
@@ -102,7 +103,8 @@ async function addSufficientKeyResultCoverage(setId: string, organizationId: str
       createdBy: ownerUserId,
       actorEffectiveRole: 'member',
       idempotencyKey: `fixture-kr-${i}-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
   }
 }
 
@@ -136,7 +138,8 @@ async function createOrgWithCeilingAndDraftSet(
     createdBy: USER_ADMIN,
     actorEffectiveRole: 'admin',
     idempotencyKey: `create-program-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   await publishProgram({
     programId: created.result.programId,
     organizationId,
@@ -144,7 +147,8 @@ async function createOrgWithCeilingAndDraftSet(
     actorUserId: USER_ADMIN,
     actorEffectiveRole: 'admin',
     idempotencyKey: `publish-program-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   const cycle = await createCycle({
     organizationId,
     programId: created.result.programId,
@@ -153,7 +157,8 @@ async function createOrgWithCeilingAndDraftSet(
     createdBy: USER_ADMIN,
     actorEffectiveRole: 'admin',
     idempotencyKey: `create-cycle-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   const set = await createOkrSet({
     organizationId,
     programId: created.result.programId,
@@ -166,7 +171,8 @@ async function createOrgWithCeilingAndDraftSet(
     createdBy: USER_ADMIN,
     actorEffectiveRole: 'admin',
     idempotencyKey: `create-set-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   return { organizationId, setId: set.result.set.setId, rowVersion: set.result.set.rowVersion };
 }
 
@@ -301,7 +307,8 @@ describe('OKR-E002 narrowOkrSetVisibility — every narrowing accepted, every wi
             actorUserId: USER_OWNER,
             actorEffectiveRole: 'member',
             idempotencyKey: `narrow-${ceilingMode}-${candidateMode}-${randomUUID()}`,
-          });
+        access: { capabilities: ['*'], platformRole: null },
+});
           expect(outcome.result.visibilityMode).toBe(candidateMode);
           currentVersion = outcome.result.set.rowVersion;
 
@@ -320,7 +327,8 @@ describe('OKR-E002 narrowOkrSetVisibility — every narrowing accepted, every wi
               actorUserId: USER_OWNER,
               actorEffectiveRole: 'member',
               idempotencyKey: `narrow-${ceilingMode}-${candidateMode}-rejected-${randomUUID()}`,
-            })
+        access: { capabilities: ['*'], platformRole: null },
+})
           ).rejects.toBeInstanceOf(OkrSetVisibilityWideningDeniedError);
           // rowVersion must NOT have advanced on a rejected attempt.
           const row = await client.query<{ row_version: number }>(`SELECT row_version FROM okr_vnext_sets WHERE set_id = $1`, [
@@ -349,7 +357,8 @@ describe('OKR-E002 narrowOkrSetVisibility — every narrowing accepted, every wi
         actorUserId: USER_OWNER,
         actorEffectiveRole: 'member',
         idempotencyKey: `submit-active-narrow-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       const approved = await approveOkrSet({
         setId,
         organizationId,
@@ -357,7 +366,8 @@ describe('OKR-E002 narrowOkrSetVisibility — every narrowing accepted, every wi
         approverId: USER_REVIEWER,
         actorEffectiveRole: 'member',
         idempotencyKey: `approve-active-narrow-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       const activated = await runOkrSetLifecycleTransition(OKR_SET_ACTIVATE_SPEC, {
         setId,
         organizationId,
@@ -378,7 +388,8 @@ describe('OKR-E002 narrowOkrSetVisibility — every narrowing accepted, every wi
         actorUserId: USER_OWNER,
         actorEffectiveRole: 'member',
         idempotencyKey: `narrow-while-active-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       expect(narrowed.result.set.status).toBe('active');
       expect(narrowed.result.visibilityMode).toBe('RESTRICTED_ACL');
 
@@ -403,7 +414,8 @@ describe('OKR-E002 narrowOkrSetVisibility — every narrowing accepted, every wi
         actorUserId: USER_OWNER,
         actorEffectiveRole: 'member',
         idempotencyKey: `submit-scope-active-narrow-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       const scopeApproved = await approveOkrSet({
         setId: scopeSetId,
         organizationId: scopeOrgId,
@@ -411,7 +423,8 @@ describe('OKR-E002 narrowOkrSetVisibility — every narrowing accepted, every wi
         approverId: USER_REVIEWER,
         actorEffectiveRole: 'member',
         idempotencyKey: `approve-scope-active-narrow-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       const scopeActivated = await runOkrSetLifecycleTransition(OKR_SET_ACTIVATE_SPEC, {
         setId: scopeSetId,
         organizationId: scopeOrgId,
@@ -430,7 +443,8 @@ describe('OKR-E002 narrowOkrSetVisibility — every narrowing accepted, every wi
           actorUserId: USER_OWNER,
           actorEffectiveRole: 'member',
           idempotencyKey: `widen-while-active-rejected-${randomUUID()}`,
-        })
+        access: { capabilities: ['*'], platformRole: null },
+})
       ).rejects.toBeInstanceOf(OkrSetVisibilityWideningDeniedError);
     }
   );
@@ -464,7 +478,8 @@ describe('OKR-E002 narrowOkrSetVisibility — every narrowing accepted, every wi
         actorUserId: USER_OWNER,
         actorEffectiveRole: 'member',
         idempotencyKey: `narrow-cancelled-rejected-${randomUUID()}`,
-      })
+        access: { capabilities: ['*'], platformRole: null },
+})
     ).rejects.toThrow();
   });
 });

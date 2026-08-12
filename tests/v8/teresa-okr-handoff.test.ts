@@ -40,6 +40,19 @@ vi.mock('../../server/src/utils/Logger.js', () => ({
   default: { info: vi.fn(), error: vi.fn(), warn: vi.fn(), debug: vi.fn() },
 }));
 
+// RN-G5: teresaCopilotService.ts's OKR handoff handlers now resolve a real
+// access context (resolveEffectiveAccess) before calling createObjective/
+// recordCheckIn (both now RN-G5-gated commands) — same mock/rationale as
+// tests/v8/teresa-kpi-handoff.test.ts's identical addition (a different DB
+// access path — queryHelpers.js's getDatabase() singleton — than the
+// DbPromise mock above, so it needs its own mock here). This suite tests
+// handoff plumbing, not authorization.
+vi.mock('../../server/src/services/effectiveAccessService.js', () => ({
+  resolveEffectiveAccess: vi.fn(async () => ({ capabilities: ['*'], platformRole: null })),
+  hasEffectiveCapability: (access: { capabilities: string[] }, capability: string) =>
+    access.capabilities.includes('*') || access.capabilities.includes(capability),
+}));
+
 // The 6 OKR-domain import lines teresaCopilotService.ts actually carries
 // (pinned by tests/resultsVnext/teresa-okr-forbidden-verbs.test.ts).
 const mockCreateObjective = vi.fn();

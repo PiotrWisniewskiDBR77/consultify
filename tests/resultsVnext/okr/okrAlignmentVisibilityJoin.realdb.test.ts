@@ -179,7 +179,8 @@ describe('OKR-E005 — Alignment ::text cast + cross-visibility isolation (real 
       createdBy: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `create-program-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     await publishProgram({
       programId: program.result.programId,
       organizationId,
@@ -187,7 +188,8 @@ describe('OKR-E005 — Alignment ::text cast + cross-visibility isolation (real 
       actorUserId: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `publish-program-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const cycle = await createCycle({
       organizationId,
       programId: program.result.programId,
@@ -196,7 +198,8 @@ describe('OKR-E005 — Alignment ::text cast + cross-visibility isolation (real 
       createdBy: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `create-cycle-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
     // Set #1: default OPEN_ORG visibility (createOkrSet's own default,
     // per the org's active domain='okr' policy — publishProgram's own P3).
@@ -211,7 +214,8 @@ describe('OKR-E005 — Alignment ::text cast + cross-visibility isolation (real 
       createdBy: USER_OWNER,
       actorEffectiveRole: 'member',
       idempotencyKey: `create-set-visible-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     visibleSetId = visibleSet.result.set.setId;
 
     // Set #2: narrowed to RESTRICTED_ACL, no ACL grant to USER_VIEWER
@@ -227,7 +231,8 @@ describe('OKR-E005 — Alignment ::text cast + cross-visibility isolation (real 
       createdBy: USER_OWNER,
       actorEffectiveRole: 'member',
       idempotencyKey: `create-set-hidden-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     hiddenSetId = hiddenSet.result.set.setId;
     await narrowOkrSetVisibility({
       setId: hiddenSetId,
@@ -237,7 +242,8 @@ describe('OKR-E005 — Alignment ::text cast + cross-visibility isolation (real 
       actorUserId: USER_OWNER,
       actorEffectiveRole: 'member',
       idempotencyKey: `narrow-hidden-set-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
     async function makeObjective(setId: string, title: string): Promise<string> {
       const objective = await createObjective({
@@ -248,7 +254,8 @@ describe('OKR-E005 — Alignment ::text cast + cross-visibility isolation (real 
         createdBy: USER_OWNER,
         actorEffectiveRole: 'member',
         idempotencyKey: `create-obj-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       return objective.result.objectiveId;
     }
 
@@ -271,7 +278,8 @@ describe('OKR-E005 — Alignment ::text cast + cross-visibility isolation (real 
         proposedBy: USER_OWNER,
         actorEffectiveRole: 'member',
         idempotencyKey: `propose-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       await acceptAlignment({
         alignmentId: propose.result.alignment.alignmentId,
         organizationId,
@@ -279,7 +287,8 @@ describe('OKR-E005 — Alignment ::text cast + cross-visibility isolation (real 
         actorUserId: USER_OWNER,
         actorEffectiveRole: 'member',
         idempotencyKey: `accept-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       return propose.result.alignment.alignmentId;
     }
 

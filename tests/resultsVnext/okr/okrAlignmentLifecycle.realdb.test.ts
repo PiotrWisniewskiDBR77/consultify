@@ -102,7 +102,8 @@ describe('OKR-E005 — Alignment lifecycle transitions (real Postgres)', () => {
       createdBy: ownerUserId,
       actorEffectiveRole: 'member',
       idempotencyKey: `create-obj-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     return objective.result.objectiveId;
   }
 
@@ -171,7 +172,8 @@ describe('OKR-E005 — Alignment lifecycle transitions (real Postgres)', () => {
       createdBy: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `create-program-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     await publishProgram({
       programId: program.result.programId,
       organizationId,
@@ -179,7 +181,8 @@ describe('OKR-E005 — Alignment lifecycle transitions (real Postgres)', () => {
       actorUserId: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `publish-program-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const cycle = await createCycle({
       organizationId,
       programId: program.result.programId,
@@ -188,7 +191,8 @@ describe('OKR-E005 — Alignment lifecycle transitions (real Postgres)', () => {
       createdBy: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `create-cycle-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const set = await createOkrSet({
       organizationId,
       programId: program.result.programId,
@@ -200,7 +204,8 @@ describe('OKR-E005 — Alignment lifecycle transitions (real Postgres)', () => {
       createdBy: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `create-set-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     setId = set.result.set.setId;
   }, 30_000);
 
@@ -252,7 +257,8 @@ describe('OKR-E005 — Alignment lifecycle transitions (real Postgres)', () => {
       proposedBy: USER_A,
       actorEffectiveRole: 'member',
       idempotencyKey: `propose-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     expect(propose.result.alignment.status).toBe('proposed');
     expect(propose.result.alignment.rowVersion).toBe(1);
 
@@ -263,7 +269,8 @@ describe('OKR-E005 — Alignment lifecycle transitions (real Postgres)', () => {
       actorUserId: USER_B,
       actorEffectiveRole: 'member',
       idempotencyKey: `accept-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     expect(accept.result.status).toBe('accepted');
     expect(accept.result.respondedBy).toBe(USER_B);
     expect(accept.result.respondedAt).not.toBeNull();
@@ -280,7 +287,8 @@ describe('OKR-E005 — Alignment lifecycle transitions (real Postgres)', () => {
       proposedBy: USER_A,
       actorEffectiveRole: 'member',
       idempotencyKey: `propose-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const reject = await rejectAlignment({
       alignmentId: propose.result.alignment.alignmentId,
       organizationId,
@@ -289,7 +297,8 @@ describe('OKR-E005 — Alignment lifecycle transitions (real Postgres)', () => {
       actorEffectiveRole: 'member',
       responseReason: 'wrong scope',
       idempotencyKey: `reject-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     expect(reject.result.status).toBe('rejected');
     expect(reject.result.responseReason).toBe('wrong scope');
     expect(reject.result.respondedBy).toBe(USER_B);
@@ -305,7 +314,8 @@ describe('OKR-E005 — Alignment lifecycle transitions (real Postgres)', () => {
       proposedBy: USER_A,
       actorEffectiveRole: 'member',
       idempotencyKey: `propose-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const remove = await removeAlignment({
       alignmentId: propose.result.alignment.alignmentId,
       organizationId,
@@ -313,7 +323,8 @@ describe('OKR-E005 — Alignment lifecycle transitions (real Postgres)', () => {
       actorUserId: USER_A, // source Owner withdraws their own unanswered proposal
       actorEffectiveRole: 'member',
       idempotencyKey: `remove-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     expect(remove.result.status).toBe('removed');
     expect(remove.result.removedBy).toBe(USER_A);
   });
@@ -328,7 +339,8 @@ describe('OKR-E005 — Alignment lifecycle transitions (real Postgres)', () => {
       proposedBy: USER_A,
       actorEffectiveRole: 'member',
       idempotencyKey: `propose-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const accept = await acceptAlignment({
       alignmentId: propose.result.alignment.alignmentId,
       organizationId,
@@ -336,7 +348,8 @@ describe('OKR-E005 — Alignment lifecycle transitions (real Postgres)', () => {
       actorUserId: USER_B,
       actorEffectiveRole: 'member',
       idempotencyKey: `accept-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const remove = await removeAlignment({
       alignmentId: propose.result.alignment.alignmentId,
       organizationId,
@@ -344,7 +357,8 @@ describe('OKR-E005 — Alignment lifecycle transitions (real Postgres)', () => {
       actorUserId: USER_B, // TARGET Owner removes
       actorEffectiveRole: 'member',
       idempotencyKey: `remove-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     expect(remove.result.status).toBe('removed');
     expect(remove.result.removedBy).toBe(USER_B);
   });
@@ -359,7 +373,8 @@ describe('OKR-E005 — Alignment lifecycle transitions (real Postgres)', () => {
       proposedBy: USER_A,
       actorEffectiveRole: 'member',
       idempotencyKey: `propose-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     try {
       await removeAlignment({
         alignmentId: propose.result.alignment.alignmentId,
@@ -368,7 +383,8 @@ describe('OKR-E005 — Alignment lifecycle transitions (real Postgres)', () => {
         actorUserId: USER_ADMIN, // neither source nor target owner
         actorEffectiveRole: 'admin',
         idempotencyKey: `remove-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       expect.unreachable('expected removeAlignment to throw');
     } catch (err) {
       expect(err).toBeInstanceOf(OkrAlignmentNotOwnerError);
@@ -386,7 +402,8 @@ describe('OKR-E005 — Alignment lifecycle transitions (real Postgres)', () => {
       proposedBy: USER_A,
       actorEffectiveRole: 'member',
       idempotencyKey: `propose-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const accept = await acceptAlignment({
       alignmentId: propose.result.alignment.alignmentId,
       organizationId,
@@ -394,7 +411,8 @@ describe('OKR-E005 — Alignment lifecycle transitions (real Postgres)', () => {
       actorUserId: USER_B,
       actorEffectiveRole: 'member',
       idempotencyKey: `accept-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     try {
       await acceptAlignment({
         alignmentId: propose.result.alignment.alignmentId,
@@ -403,7 +421,8 @@ describe('OKR-E005 — Alignment lifecycle transitions (real Postgres)', () => {
         actorUserId: USER_B,
         actorEffectiveRole: 'member',
         idempotencyKey: `accept-again-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       expect.unreachable('expected acceptAlignment to throw');
     } catch (err) {
       expect(err).toBeInstanceOf(OkrAlignmentValidationError);
@@ -421,7 +440,8 @@ describe('OKR-E005 — Alignment lifecycle transitions (real Postgres)', () => {
       proposedBy: USER_A,
       actorEffectiveRole: 'member',
       idempotencyKey: `propose-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const reject = await rejectAlignment({
       alignmentId: propose.result.alignment.alignmentId,
       organizationId,
@@ -429,7 +449,8 @@ describe('OKR-E005 — Alignment lifecycle transitions (real Postgres)', () => {
       actorUserId: USER_B,
       actorEffectiveRole: 'member',
       idempotencyKey: `reject-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     try {
       await removeAlignment({
         alignmentId: propose.result.alignment.alignmentId,
@@ -438,7 +459,8 @@ describe('OKR-E005 — Alignment lifecycle transitions (real Postgres)', () => {
         actorUserId: USER_A,
         actorEffectiveRole: 'member',
         idempotencyKey: `remove-rejected-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       expect.unreachable('expected removeAlignment to throw');
     } catch (err) {
       expect(err).toBeInstanceOf(OkrAlignmentValidationError);
@@ -456,7 +478,8 @@ describe('OKR-E005 — Alignment lifecycle transitions (real Postgres)', () => {
       proposedBy: USER_A,
       actorEffectiveRole: 'member',
       idempotencyKey: `propose-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     await expect(
       acceptAlignment({
         alignmentId: propose.result.alignment.alignmentId,
@@ -465,7 +488,8 @@ describe('OKR-E005 — Alignment lifecycle transitions (real Postgres)', () => {
         actorUserId: USER_B,
         actorEffectiveRole: 'member',
         idempotencyKey: `accept-stale-${randomUUID()}`,
-      })
+        access: { capabilities: ['*'], platformRole: null },
+})
     ).rejects.toThrow(AtomicWriteConflictError);
   });
 
@@ -478,7 +502,8 @@ describe('OKR-E005 — Alignment lifecycle transitions (real Postgres)', () => {
         actorUserId: USER_B,
         actorEffectiveRole: 'member',
         idempotencyKey: `accept-missing-${randomUUID()}`,
-      })
+        access: { capabilities: ['*'], platformRole: null },
+})
     ).rejects.toThrow(AtomicWriteAggregateNotFoundError);
   });
 
@@ -495,7 +520,8 @@ describe('OKR-E005 — Alignment lifecycle transitions (real Postgres)', () => {
         proposedBy: USER_A,
         actorEffectiveRole: 'member',
         idempotencyKey: `propose-1-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       expect(firstPropose.result.created).toBe(true);
 
       await rejectAlignment({
@@ -505,7 +531,8 @@ describe('OKR-E005 — Alignment lifecycle transitions (real Postgres)', () => {
         actorUserId: USER_B,
         actorEffectiveRole: 'member',
         idempotencyKey: `reject-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
       const secondPropose = await proposeAlignment({
         organizationId,
@@ -514,7 +541,8 @@ describe('OKR-E005 — Alignment lifecycle transitions (real Postgres)', () => {
         proposedBy: USER_A,
         actorEffectiveRole: 'member',
         idempotencyKey: `propose-2-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       expect(secondPropose.result.created).toBe(true);
       expect(secondPropose.result.alignment.alignmentId).not.toBe(firstPropose.result.alignment.alignmentId);
       expect(secondPropose.result.alignment.status).toBe('proposed');
@@ -534,7 +562,8 @@ describe('OKR-E005 — Alignment lifecycle transitions (real Postgres)', () => {
         proposedBy: USER_A,
         actorEffectiveRole: 'member',
         idempotencyKey: `propose-1-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       const firstAccept = await acceptAlignment({
         alignmentId: firstPropose.result.alignment.alignmentId,
         organizationId,
@@ -542,7 +571,8 @@ describe('OKR-E005 — Alignment lifecycle transitions (real Postgres)', () => {
         actorUserId: USER_B,
         actorEffectiveRole: 'member',
         idempotencyKey: `accept-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       await removeAlignment({
         alignmentId: firstPropose.result.alignment.alignmentId,
         organizationId,
@@ -550,7 +580,8 @@ describe('OKR-E005 — Alignment lifecycle transitions (real Postgres)', () => {
         actorUserId: USER_A,
         actorEffectiveRole: 'member',
         idempotencyKey: `remove-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
       const secondPropose = await proposeAlignment({
         organizationId,
@@ -559,7 +590,8 @@ describe('OKR-E005 — Alignment lifecycle transitions (real Postgres)', () => {
         proposedBy: USER_A,
         actorEffectiveRole: 'member',
         idempotencyKey: `propose-2-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       expect(secondPropose.result.created).toBe(true);
       expect(secondPropose.result.alignment.alignmentId).not.toBe(firstPropose.result.alignment.alignmentId);
     }
@@ -578,7 +610,8 @@ describe('OKR-E005 — Alignment lifecycle transitions (real Postgres)', () => {
         proposedBy: USER_A,
         actorEffectiveRole: 'member',
         idempotencyKey: `propose-1-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       expect(firstPropose.result.created).toBe(true);
 
       const secondPropose = await proposeAlignment({
@@ -588,7 +621,8 @@ describe('OKR-E005 — Alignment lifecycle transitions (real Postgres)', () => {
         proposedBy: USER_A,
         actorEffectiveRole: 'member',
         idempotencyKey: `propose-2-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       expect(secondPropose.result.created).toBe(false);
       expect(secondPropose.result.alignment.alignmentId).toBe(firstPropose.result.alignment.alignmentId);
     }

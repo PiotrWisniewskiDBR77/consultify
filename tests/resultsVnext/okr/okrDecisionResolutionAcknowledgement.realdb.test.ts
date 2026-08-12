@@ -95,7 +95,8 @@ async function raiseAndRequestDecision(): Promise<{ requestId: string; linkId: s
     createdBy: USER_OWNER,
     actorEffectiveRole: 'member',
     idempotencyKey: `raise-sr-ack-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   const outcome = await requestDecisionFromSupportRequest({
     requestId: raised.result.requestId,
     organizationId: ORG_ID,
@@ -105,7 +106,8 @@ async function raiseAndRequestDecision(): Promise<{ requestId: string; linkId: s
     requestedBy: USER_OWNER,
     actorEffectiveRole: 'member',
     idempotencyKey: `request-decision-ack-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   return {
     requestId: raised.result.requestId,
     linkId: outcome.result.decisionLink.linkId,
@@ -178,7 +180,8 @@ describe('OKR-E006 acknowledgeDecisionResolution — terminal-outcome guard + ev
       createdBy: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `create-program-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     await publishProgram({
       programId: created.result.programId,
       organizationId: ORG_ID,
@@ -186,7 +189,8 @@ describe('OKR-E006 acknowledgeDecisionResolution — terminal-outcome guard + ev
       actorUserId: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `publish-program-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const cycle = await createCycle({
       organizationId: ORG_ID,
       programId: created.result.programId,
@@ -195,7 +199,8 @@ describe('OKR-E006 acknowledgeDecisionResolution — terminal-outcome guard + ev
       createdBy: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `create-cycle-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const set = await createOkrSet({
       organizationId: ORG_ID,
       programId: created.result.programId,
@@ -208,7 +213,8 @@ describe('OKR-E006 acknowledgeDecisionResolution — terminal-outcome guard + ev
       createdBy: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `create-set-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     setId = set.result.set.setId;
     const objective = await createObjective({
       setId,
@@ -218,7 +224,8 @@ describe('OKR-E006 acknowledgeDecisionResolution — terminal-outcome guard + ev
       createdBy: USER_OWNER,
       actorEffectiveRole: 'member',
       idempotencyKey: `create-objective-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     objectiveId = objective.result.objectiveId;
   }, 30_000);
 
@@ -269,7 +276,8 @@ describe('OKR-E006 acknowledgeDecisionResolution — terminal-outcome guard + ev
         actorUserId: USER_MANAGER,
         actorEffectiveRole: 'member',
         idempotencyKey: `ack-pending-${randomUUID()}`,
-      })
+        access: { capabilities: ['*'], platformRole: null },
+})
     ).rejects.toBeInstanceOf(OkrDecisionNotYetResolvedError);
   });
 
@@ -287,7 +295,8 @@ describe('OKR-E006 acknowledgeDecisionResolution — terminal-outcome guard + ev
       actorUserId: USER_MANAGER,
       actorEffectiveRole: 'member',
       idempotencyKey: `ack-approved-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
     expect(outcome.result.decisionLink.resolutionAcknowledged).toBe(true);
     expect(outcome.result.decisionStatus).toBe('approved');
@@ -314,7 +323,8 @@ describe('OKR-E006 acknowledgeDecisionResolution — terminal-outcome guard + ev
         actorUserId: USER_MANAGER,
         actorEffectiveRole: 'member',
         idempotencyKey: `ack-approved-again-${randomUUID()}`,
-      })
+        access: { capabilities: ['*'], platformRole: null },
+})
     ).rejects.toThrow(/already/);
   });
 

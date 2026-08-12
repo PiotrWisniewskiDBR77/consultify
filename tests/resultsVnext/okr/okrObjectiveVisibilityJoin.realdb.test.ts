@@ -159,7 +159,8 @@ describe('OKR-E003 Objective/KeyResult visibility-join — ::text cast forces re
       createdBy: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `create-program-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     await publishProgram({
       programId: program.result.programId,
       organizationId,
@@ -167,7 +168,8 @@ describe('OKR-E003 Objective/KeyResult visibility-join — ::text cast forces re
       actorUserId: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `publish-program-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const cycle = await createCycle({
       organizationId,
       programId: program.result.programId,
@@ -176,7 +178,8 @@ describe('OKR-E003 Objective/KeyResult visibility-join — ::text cast forces re
       createdBy: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `create-cycle-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const set = await createOkrSet({
       organizationId,
       programId: program.result.programId,
@@ -188,7 +191,8 @@ describe('OKR-E003 Objective/KeyResult visibility-join — ::text cast forces re
       createdBy: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `create-set-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     setId = set.result.set.setId;
     const objective = await createObjective({
       setId,
@@ -198,7 +202,8 @@ describe('OKR-E003 Objective/KeyResult visibility-join — ::text cast forces re
       createdBy: USER_OWNER,
       actorEffectiveRole: 'member',
       idempotencyKey: `create-obj-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     objectiveId = objective.result.objectiveId;
     const keyResult = await createKeyResult({
       objectiveId,
@@ -212,7 +217,8 @@ describe('OKR-E003 Objective/KeyResult visibility-join — ::text cast forces re
       createdBy: USER_OWNER,
       actorEffectiveRole: 'member',
       idempotencyKey: `create-kr-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     keyResultId = keyResult.result.keyResultId;
   }, 30_000);
 

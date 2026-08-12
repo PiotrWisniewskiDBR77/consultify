@@ -146,7 +146,8 @@ describe('OKR-E007 carryForwardOkrSet — lineage, dedupe, source/target guards 
       actorUserId: USER_OWNER,
       actorEffectiveRole: 'member',
       idempotencyKey: `close-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
     // A second Cycle, same Program, status='planned' (createCycle's own
     // starting status) — the realistic "carry into next quarter" target.
@@ -166,7 +167,8 @@ describe('OKR-E007 carryForwardOkrSet — lineage, dedupe, source/target guards 
       createdBy: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `create-target-cycle-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
     return { organizationId, fixture, targetCycleId: targetCycle.result.cycleId };
   }
@@ -181,7 +183,8 @@ describe('OKR-E007 carryForwardOkrSet — lineage, dedupe, source/target guards 
       actorUserId: USER_OWNER,
       actorEffectiveRole: 'member',
       idempotencyKey: `carry-forward-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
     expect(result.created).toBe(true);
     expect(result.carriedSet.setId).not.toBe(fixture.setId);
@@ -221,7 +224,8 @@ describe('OKR-E007 carryForwardOkrSet — lineage, dedupe, source/target guards 
       actorUserId: USER_OWNER,
       actorEffectiveRole: 'member',
       idempotencyKey: `carry-forward-1-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const second = await carryForwardOkrSet({
       sourceSetId: fixture.setId,
       targetCycleId,
@@ -229,7 +233,8 @@ describe('OKR-E007 carryForwardOkrSet — lineage, dedupe, source/target guards 
       actorUserId: USER_OWNER,
       actorEffectiveRole: 'member',
       idempotencyKey: `carry-forward-2-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     expect(second.created).toBe(false);
     expect(second.carriedSet.setId).toBe(first.carriedSet.setId);
 
@@ -266,7 +271,8 @@ describe('OKR-E007 carryForwardOkrSet — lineage, dedupe, source/target guards 
       createdBy: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `create-target-cycle-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
     await expect(
       carryForwardOkrSet({
@@ -276,7 +282,8 @@ describe('OKR-E007 carryForwardOkrSet — lineage, dedupe, source/target guards 
         actorUserId: USER_OWNER,
         actorEffectiveRole: 'member',
         idempotencyKey: `carry-forward-guard-${randomUUID()}`,
-      })
+        access: { capabilities: ['*'], platformRole: null },
+})
     ).rejects.toThrow(OkrSetValidationError);
   });
 
@@ -314,7 +321,8 @@ describe('OKR-E007 carryForwardOkrSet — lineage, dedupe, source/target guards 
         actorUserId: USER_OWNER,
         actorEffectiveRole: 'member',
         idempotencyKey: `carry-forward-cycleguard-${randomUUID()}`,
-      })
+        access: { capabilities: ['*'], platformRole: null },
+})
     ).rejects.toThrow(OkrCycleValidationError);
   });
 });

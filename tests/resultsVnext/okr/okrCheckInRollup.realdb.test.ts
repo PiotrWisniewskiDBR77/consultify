@@ -123,7 +123,8 @@ async function buildActiveSetFixture(
     // (serialized as NULL by node-postgres, tripping the NOT NULL
     // constraint). Only include the key when a real value was requested.
     ...(programOverrides.objectiveRollupModel ? { objectiveRollupModel: programOverrides.objectiveRollupModel } : {}),
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   await publishProgram({
     programId: createdProgram.result.programId,
     organizationId,
@@ -131,7 +132,8 @@ async function buildActiveSetFixture(
     actorUserId: USER_ADMIN,
     actorEffectiveRole: 'admin',
     idempotencyKey: `publish-program-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   const cycle = await createCycle({
     organizationId,
     programId: createdProgram.result.programId,
@@ -140,7 +142,8 @@ async function buildActiveSetFixture(
     createdBy: USER_ADMIN,
     actorEffectiveRole: 'admin',
     idempotencyKey: `create-cycle-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   const set = await createOkrSet({
     organizationId,
     programId: createdProgram.result.programId,
@@ -153,7 +156,8 @@ async function buildActiveSetFixture(
     createdBy: ownerId,
     actorEffectiveRole: 'member',
     idempotencyKey: `create-set-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   const objective = await createObjective({
     setId: set.result.set.setId,
     organizationId,
@@ -162,7 +166,8 @@ async function buildActiveSetFixture(
     createdBy: ownerId,
     actorEffectiveRole: 'member',
     idempotencyKey: `create-obj-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   const kr1 = await createKeyResult({
     objectiveId: objective.result.objectiveId,
     organizationId,
@@ -176,7 +181,8 @@ async function buildActiveSetFixture(
     createdBy: ownerId,
     actorEffectiveRole: 'member',
     idempotencyKey: `create-kr1-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   const kr2 = await createKeyResult({
     objectiveId: objective.result.objectiveId,
     organizationId,
@@ -190,7 +196,8 @@ async function buildActiveSetFixture(
     createdBy: ownerId,
     actorEffectiveRole: 'member',
     idempotencyKey: `create-kr2-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
   const submitted = await submitOkrSetForApproval({
     setId: set.result.set.setId,
@@ -199,7 +206,8 @@ async function buildActiveSetFixture(
     actorUserId: ownerId,
     actorEffectiveRole: 'member',
     idempotencyKey: `submit-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   const approved = await approveOkrSet({
     setId: set.result.set.setId,
     organizationId,
@@ -207,7 +215,8 @@ async function buildActiveSetFixture(
     approverId,
     actorEffectiveRole: 'admin',
     idempotencyKey: `approve-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   const activated = await runOkrSetLifecycleTransition(OKR_SET_ACTIVATE_SPEC, {
     setId: set.result.set.setId,
     organizationId,
@@ -379,7 +388,8 @@ describe('OKR-E004 recordCheckIn KR/Objective/Set write-through + rollup (real P
       submittedBy: fx.ownerId,
       actorEffectiveRole: 'member',
       idempotencyKey: `checkin-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     expect(outcome.outcome).toBe('applied');
     // increase geometry: (40 - 0) / (100 - 0) = 0.4
     expect(Number(outcome.result.keyResult.progress)).toBeCloseTo(0.4, 10);
@@ -414,7 +424,8 @@ describe('OKR-E004 recordCheckIn KR/Objective/Set write-through + rollup (real P
       submittedBy: fx.ownerId,
       actorEffectiveRole: 'member',
       idempotencyKey: `checkin-value-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
     const qualitative = await recordCheckIn({
       keyResultId: fx.keyResultId1,
@@ -425,7 +436,8 @@ describe('OKR-E004 recordCheckIn KR/Objective/Set write-through + rollup (real P
       submittedBy: fx.ownerId,
       actorEffectiveRole: 'member',
       idempotencyKey: `checkin-qualitative-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     expect(qualitative.result.checkIn.newValue).toBeNull();
     expect(qualitative.result.checkIn.previousValue).toBe('25');
     // KR's own current_value stays 25, not clobbered to null.
@@ -450,7 +462,8 @@ describe('OKR-E004 recordCheckIn KR/Objective/Set write-through + rollup (real P
       submittedBy: fx.ownerId,
       actorEffectiveRole: 'member',
       idempotencyKey: `checkin-kr1-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     // KR2: increase 0->50, checked in at 50 => progress 1.0
     const secondOutcome = await recordCheckIn({
       keyResultId: fx.keyResultId2,
@@ -461,7 +474,8 @@ describe('OKR-E004 recordCheckIn KR/Objective/Set write-through + rollup (real P
       submittedBy: fx.ownerId,
       actorEffectiveRole: 'member',
       idempotencyKey: `checkin-kr2-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
     // Objective progress = equal_average(0.5, 1.0) = 0.75
     const objRow = await client.query<{ progress: string }>(
@@ -500,7 +514,8 @@ describe('OKR-E004 recordCheckIn KR/Objective/Set write-through + rollup (real P
       submittedBy: fx.ownerId,
       actorEffectiveRole: 'member',
       idempotencyKey: `checkin-lowconf-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     expect(outcome.outcome).toBe('applied');
 
     const obligationRow = await client.query<{ status: string; assignee_user_id: string; obligation_type: string }>(
@@ -556,7 +571,8 @@ describe('OKR-E004 recordCheckIn KR/Objective/Set write-through + rollup (real P
         submittedBy: fx.ownerId,
         actorEffectiveRole: 'member',
         idempotencyKey: `checkin-occA-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
       const statuses = await client.query<{ cadence_occurrence_id: string; status: string }>(
         `SELECT cadence_occurrence_id, status FROM rvn_platform_obligations
@@ -584,7 +600,8 @@ describe('OKR-E004 recordCheckIn KR/Objective/Set write-through + rollup (real P
       createdBy: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `create-program-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     await publishProgram({
       programId: createdProgram.result.programId,
       organizationId,
@@ -592,7 +609,8 @@ describe('OKR-E004 recordCheckIn KR/Objective/Set write-through + rollup (real P
       actorUserId: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `publish-program-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const cycle = await createCycle({
       organizationId,
       programId: createdProgram.result.programId,
@@ -601,7 +619,8 @@ describe('OKR-E004 recordCheckIn KR/Objective/Set write-through + rollup (real P
       createdBy: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `create-cycle-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const set = await createOkrSet({
       organizationId,
       programId: createdProgram.result.programId,
@@ -613,7 +632,8 @@ describe('OKR-E004 recordCheckIn KR/Objective/Set write-through + rollup (real P
       createdBy: ownerId,
       actorEffectiveRole: 'member',
       idempotencyKey: `create-set-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const objective = await createObjective({
       setId: set.result.set.setId,
       organizationId,
@@ -622,7 +642,8 @@ describe('OKR-E004 recordCheckIn KR/Objective/Set write-through + rollup (real P
       createdBy: ownerId,
       actorEffectiveRole: 'member',
       idempotencyKey: `create-obj-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const kr = await createKeyResult({
       objectiveId: objective.result.objectiveId,
       organizationId,
@@ -635,7 +656,8 @@ describe('OKR-E004 recordCheckIn KR/Objective/Set write-through + rollup (real P
       createdBy: ownerId,
       actorEffectiveRole: 'member',
       idempotencyKey: `create-kr-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const generated = await generateCadenceOccurrences({ organizationId, cycleId: cycle.result.cycleId });
 
     let caught: unknown;
@@ -649,7 +671,8 @@ describe('OKR-E004 recordCheckIn KR/Objective/Set write-through + rollup (real P
         submittedBy: ownerId,
         actorEffectiveRole: 'member',
         idempotencyKey: `checkin-draft-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
     } catch (err) {
       caught = err;
     }

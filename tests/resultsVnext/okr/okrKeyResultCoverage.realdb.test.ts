@@ -95,7 +95,8 @@ async function createProgramCycleAndSet(
     createdBy: USER_ADMIN,
     actorEffectiveRole: 'admin',
     idempotencyKey: `create-program-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   await publishProgram({
     programId: created.result.programId,
     organizationId,
@@ -103,7 +104,8 @@ async function createProgramCycleAndSet(
     actorUserId: USER_ADMIN,
     actorEffectiveRole: 'admin',
     idempotencyKey: `publish-program-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   const cycle = await createCycle({
     organizationId,
     programId: created.result.programId,
@@ -112,7 +114,8 @@ async function createProgramCycleAndSet(
     createdBy: USER_ADMIN,
     actorEffectiveRole: 'admin',
     idempotencyKey: `create-cycle-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   const set = await createOkrSet({
     organizationId,
     programId: created.result.programId,
@@ -125,7 +128,8 @@ async function createProgramCycleAndSet(
     createdBy: USER_ADMIN,
     actorEffectiveRole: 'admin',
     idempotencyKey: `create-set-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   return { organizationId, setId: set.result.set.setId };
 }
 
@@ -143,7 +147,8 @@ async function addKeyResults(objectiveId: string, organizationId: string, ownerI
       createdBy: ownerId,
       actorEffectiveRole: 'member',
       idempotencyKey: `create-kr-${i}-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
   }
 }
 
@@ -254,7 +259,8 @@ describe('OKR-E003 hasSufficientKeyResultCoverage / submitOkrSetForApproval — 
         actorUserId: `${USER_OWNER}-noobj`,
         actorEffectiveRole: 'member',
         idempotencyKey: `submit-noobj-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
     } catch (err) {
       caught = err;
     }
@@ -272,7 +278,8 @@ describe('OKR-E003 hasSufficientKeyResultCoverage / submitOkrSetForApproval — 
       createdBy: `${USER_OWNER}-below`,
       actorEffectiveRole: 'member',
       idempotencyKey: `create-obj-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const setRow = () => client.query<{ row_version: number }>(`SELECT row_version FROM okr_vnext_sets WHERE set_id = $1`, [setId]);
 
     // 0 KRs.
@@ -285,7 +292,8 @@ describe('OKR-E003 hasSufficientKeyResultCoverage / submitOkrSetForApproval — 
         actorUserId: `${USER_OWNER}-below`,
         actorEffectiveRole: 'member',
         idempotencyKey: `submit-0kr-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
     } catch (err) {
       caught0 = err;
     }
@@ -309,7 +317,8 @@ describe('OKR-E003 hasSufficientKeyResultCoverage / submitOkrSetForApproval — 
         actorUserId: `${USER_OWNER}-below`,
         actorEffectiveRole: 'member',
         idempotencyKey: `submit-1kr-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
     } catch (err) {
       caught1 = err;
     }
@@ -324,7 +333,8 @@ describe('OKR-E003 hasSufficientKeyResultCoverage / submitOkrSetForApproval — 
       actorUserId: `${USER_OWNER}-below`,
       actorEffectiveRole: 'member',
       idempotencyKey: `submit-2kr-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     expect(submitted.result.status).toBe('submitted');
   });
 
@@ -338,7 +348,8 @@ describe('OKR-E003 hasSufficientKeyResultCoverage / submitOkrSetForApproval — 
       createdBy: `${USER_OWNER}-perobj`,
       actorEffectiveRole: 'member',
       idempotencyKey: `create-obj-a-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const objectiveB = await createObjective({
       setId,
       organizationId,
@@ -347,7 +358,8 @@ describe('OKR-E003 hasSufficientKeyResultCoverage / submitOkrSetForApproval — 
       createdBy: `${USER_OWNER}-perobj`,
       actorEffectiveRole: 'member',
       idempotencyKey: `create-obj-b-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     await addKeyResults(objectiveA.result.objectiveId, organizationId, `${USER_OWNER}-perobj`, 2);
     await addKeyResults(objectiveB.result.objectiveId, organizationId, `${USER_OWNER}-perobj`, 1);
 
@@ -363,7 +375,8 @@ describe('OKR-E003 hasSufficientKeyResultCoverage / submitOkrSetForApproval — 
         actorUserId: `${USER_OWNER}-perobj`,
         actorEffectiveRole: 'member',
         idempotencyKey: `submit-perobj-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
     } catch (err) {
       caught = err;
     }
@@ -384,7 +397,8 @@ describe('OKR-E003 hasSufficientKeyResultCoverage / submitOkrSetForApproval — 
       createdBy: `${USER_OWNER}-cancelkr`,
       actorEffectiveRole: 'member',
       idempotencyKey: `create-obj-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const kr1 = await createKeyResult({
       objectiveId: objective.result.objectiveId,
       organizationId,
@@ -397,7 +411,8 @@ describe('OKR-E003 hasSufficientKeyResultCoverage / submitOkrSetForApproval — 
       createdBy: `${USER_OWNER}-cancelkr`,
       actorEffectiveRole: 'member',
       idempotencyKey: `create-kr1-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     await addKeyResults(objective.result.objectiveId, organizationId, `${USER_OWNER}-cancelkr`, 1);
 
     // Direct repository-function check (not just the route-level guard via
@@ -419,7 +434,8 @@ describe('OKR-E003 hasSufficientKeyResultCoverage / submitOkrSetForApproval — 
       actorUserId: `${USER_OWNER}-cancelkr`,
       actorEffectiveRole: 'member',
       idempotencyKey: `cancel-kr1-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
     const setRow = await client.query<{ row_version: number }>(`SELECT row_version FROM okr_vnext_sets WHERE set_id = $1`, [
       setId,
@@ -433,7 +449,8 @@ describe('OKR-E003 hasSufficientKeyResultCoverage / submitOkrSetForApproval — 
         actorUserId: `${USER_OWNER}-cancelkr`,
         actorEffectiveRole: 'member',
         idempotencyKey: `submit-after-cancel-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
     } catch (err) {
       caught = err;
     }
@@ -455,7 +472,8 @@ describe('OKR-E003 hasSufficientKeyResultCoverage / submitOkrSetForApproval — 
         createdBy: ownerId,
         actorEffectiveRole: 'member',
         idempotencyKey: `create-obj-${scopeType}-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       await addKeyResults(objective.result.objectiveId, organizationId, ownerId, 1);
 
       const setRow = await client.query<{ row_version: number }>(`SELECT row_version FROM okr_vnext_sets WHERE set_id = $1`, [
@@ -470,7 +488,8 @@ describe('OKR-E003 hasSufficientKeyResultCoverage / submitOkrSetForApproval — 
           actorUserId: ownerId,
           actorEffectiveRole: 'member',
           idempotencyKey: `submit-scope-${scopeType}-${randomUUID()}`,
-        });
+        access: { capabilities: ['*'], platformRole: null },
+});
       } catch (err) {
         caught = err;
       }

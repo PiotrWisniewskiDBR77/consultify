@@ -155,7 +155,8 @@ describe('OKR-E006 requestDecisionFromSupportRequest — Decisions seam (real Po
       createdBy: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `create-program-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     await publishProgram({
       programId: created.result.programId,
       organizationId: ORG_ID,
@@ -163,7 +164,8 @@ describe('OKR-E006 requestDecisionFromSupportRequest — Decisions seam (real Po
       actorUserId: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `publish-program-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const cycle = await createCycle({
       organizationId: ORG_ID,
       programId: created.result.programId,
@@ -172,7 +174,8 @@ describe('OKR-E006 requestDecisionFromSupportRequest — Decisions seam (real Po
       createdBy: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `create-cycle-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const set = await createOkrSet({
       organizationId: ORG_ID,
       programId: created.result.programId,
@@ -185,7 +188,8 @@ describe('OKR-E006 requestDecisionFromSupportRequest — Decisions seam (real Po
       createdBy: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `create-set-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     setId = set.result.set.setId;
     const objective = await createObjective({
       setId,
@@ -195,7 +199,8 @@ describe('OKR-E006 requestDecisionFromSupportRequest — Decisions seam (real Po
       createdBy: USER_OWNER,
       actorEffectiveRole: 'member',
       idempotencyKey: `create-objective-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     objectiveId = objective.result.objectiveId;
   }, 30_000);
 
@@ -248,7 +253,8 @@ describe('OKR-E006 requestDecisionFromSupportRequest — Decisions seam (real Po
         createdBy: USER_OWNER,
         actorEffectiveRole: 'member',
         idempotencyKey: `raise-sr-decision-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       const requestId = raised.result.requestId;
 
       const outcome = await requestDecisionFromSupportRequest({
@@ -261,7 +267,8 @@ describe('OKR-E006 requestDecisionFromSupportRequest — Decisions seam (real Po
         requestedBy: USER_OWNER,
         actorEffectiveRole: 'member',
         idempotencyKey: `request-decision-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
       expect(outcome.outcome).toBe('applied');
       const { decisionLink, supportRequest } = outcome.result;
@@ -297,7 +304,8 @@ describe('OKR-E006 requestDecisionFromSupportRequest — Decisions seam (real Po
           requestedBy: USER_OWNER,
           actorEffectiveRole: 'member',
           idempotencyKey: `request-decision-second-${randomUUID()}`,
-        })
+        access: { capabilities: ['*'], platformRole: null },
+})
       ).rejects.toThrow(/already has a Decision requested/);
     }
   );

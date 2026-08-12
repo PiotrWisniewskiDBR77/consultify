@@ -101,7 +101,8 @@ async function createActiveProgram(): Promise<{ organizationId: string; programI
     createdBy: USER_ADMIN,
     actorEffectiveRole: 'admin',
     idempotencyKey: `create-program-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   const published = await publishProgram({
     programId: created.result.programId,
     organizationId,
@@ -109,7 +110,8 @@ async function createActiveProgram(): Promise<{ organizationId: string; programI
     actorUserId: USER_ADMIN,
     actorEffectiveRole: 'admin',
     idempotencyKey: `publish-program-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   return {
     organizationId,
     programId: created.result.programId,
@@ -214,7 +216,8 @@ describe('OKR-E001 Cycle lifecycle — program-not-active guard, transitions, ca
       createdBy: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `create-program-draft-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
     await expect(
       createCycle({
@@ -225,7 +228,8 @@ describe('OKR-E001 Cycle lifecycle — program-not-active guard, transitions, ca
         createdBy: USER_ADMIN,
         actorEffectiveRole: 'admin',
         idempotencyKey: `create-cycle-guard-draft-${randomUUID()}`,
-      })
+        access: { capabilities: ['*'], platformRole: null },
+})
     ).rejects.toBeInstanceOf(OkrCycleProgramNotActiveError);
 
     // Fail-closed BEFORE any INSERT — zero Cycle rows for this Program.
@@ -251,7 +255,8 @@ describe('OKR-E001 Cycle lifecycle — program-not-active guard, transitions, ca
           createdBy: USER_ADMIN,
           actorEffectiveRole: 'admin',
           idempotencyKey: `create-cycle-guard-suspended-${randomUUID()}`,
-        })
+        access: { capabilities: ['*'], platformRole: null },
+})
       ).rejects.toBeInstanceOf(OkrCycleProgramNotActiveError);
 
       const rows = await client.query(`SELECT cycle_id FROM okr_vnext_cycles WHERE program_id = $1`, [programId]);
@@ -270,7 +275,8 @@ describe('OKR-E001 Cycle lifecycle — program-not-active guard, transitions, ca
         createdBy: USER_ADMIN,
         actorEffectiveRole: 'admin',
         idempotencyKey: `create-cycle-guard-missing-${randomUUID()}`,
-      })
+        access: { capabilities: ['*'], platformRole: null },
+})
     ).rejects.toBeInstanceOf(AtomicWriteAggregateNotFoundError);
   });
 
@@ -289,7 +295,8 @@ describe('OKR-E001 Cycle lifecycle — program-not-active guard, transitions, ca
       createdBy: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `create-cycle-success-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     expect(outcome.outcome).toBe('applied');
     expect(outcome.result.status).toBe('planned');
     expect(outcome.result.policyVersionId).toBe(program.rows[0].active_policy_version_id);
@@ -312,7 +319,8 @@ describe('OKR-E001 Cycle lifecycle — program-not-active guard, transitions, ca
         createdBy: USER_ADMIN,
         actorEffectiveRole: 'admin',
         idempotencyKey: `create-cycle-pipeline-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       const cycleId = created.result.cycleId;
 
       // Out-of-order: cannot activate directly from 'planned'.
@@ -398,7 +406,8 @@ describe('OKR-E001 Cycle lifecycle — program-not-active guard, transitions, ca
       createdBy: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `create-cycle-cancel-planned-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const cancelled = await runOkrCycleLifecycleTransition(OKR_CYCLE_CANCEL_SPEC, {
       cycleId: created.result.cycleId,
       organizationId,
@@ -420,7 +429,8 @@ describe('OKR-E001 Cycle lifecycle — program-not-active guard, transitions, ca
       createdBy: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `create-cycle-cancel-drafting-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const drafting = await runOkrCycleLifecycleTransition(OKR_CYCLE_OPEN_DRAFTING_SPEC, {
       cycleId: created.result.cycleId,
       organizationId,
@@ -450,7 +460,8 @@ describe('OKR-E001 Cycle lifecycle — program-not-active guard, transitions, ca
       createdBy: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `create-cycle-cancel-active-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const drafting = await runOkrCycleLifecycleTransition(OKR_CYCLE_OPEN_DRAFTING_SPEC, {
       cycleId: created.result.cycleId,
       organizationId,
@@ -488,7 +499,8 @@ describe('OKR-E001 Cycle lifecycle — program-not-active guard, transitions, ca
       createdBy: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `create-cycle-cancel-review-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const drafting = await runOkrCycleLifecycleTransition(OKR_CYCLE_OPEN_DRAFTING_SPEC, {
       cycleId: created.result.cycleId,
       organizationId,
@@ -534,7 +546,8 @@ describe('OKR-E001 Cycle lifecycle — program-not-active guard, transitions, ca
       createdBy: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `create-cycle-cancel-closed-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const drafting = await runOkrCycleLifecycleTransition(OKR_CYCLE_OPEN_DRAFTING_SPEC, {
       cycleId: created.result.cycleId,
       organizationId,

@@ -184,7 +184,8 @@ describe('OKR-E001 publishProgram — policy-version immutability + visibility-p
         createdBy: USER_ADMIN,
         actorEffectiveRole: 'admin',
         idempotencyKey: `create-program-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       expect(created.outcome).toBe('applied');
       const programId = created.result.programId;
       expect(created.result.status).toBe('draft');
@@ -198,7 +199,8 @@ describe('OKR-E001 publishProgram — policy-version immutability + visibility-p
         actorUserId: USER_ADMIN,
         actorEffectiveRole: 'admin',
         idempotencyKey: `publish-v1-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       expect(firstPublish.outcome).toBe('applied');
       expect(firstPublish.result.program.status).toBe('active');
       expect(firstPublish.result.policyVersion.versionNumber).toBe(1);
@@ -217,7 +219,8 @@ describe('OKR-E001 publishProgram — policy-version immutability + visibility-p
         createdBy: USER_ADMIN,
         actorEffectiveRole: 'admin',
         idempotencyKey: `create-cycle-a-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       expect(cycleCreated.outcome).toBe('applied');
       expect(cycleCreated.result.policyVersionId).toBe(v1PolicyVersionId);
       const cycleAId = cycleCreated.result.cycleId;
@@ -232,7 +235,8 @@ describe('OKR-E001 publishProgram — policy-version immutability + visibility-p
         actorUserId: USER_ADMIN,
         actorEffectiveRole: 'admin',
         idempotencyKey: `edit-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       expect(edited.outcome).toBe('applied');
       expect(edited.result.krMinRequired).toBe(4);
 
@@ -243,7 +247,8 @@ describe('OKR-E001 publishProgram — policy-version immutability + visibility-p
         actorUserId: USER_ADMIN,
         actorEffectiveRole: 'admin',
         idempotencyKey: `publish-v2-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       expect(secondPublish.outcome).toBe('applied');
       expect(secondPublish.result.policyVersion.versionNumber).toBe(2);
       expect(secondPublish.result.policyVersion.snapshot.krMinRequired).toBe(4);
@@ -287,7 +292,8 @@ describe('OKR-E001 publishProgram — policy-version immutability + visibility-p
         createdBy: USER_ADMIN,
         actorEffectiveRole: 'admin',
         idempotencyKey: `create-program-vis-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       const programId = created.result.programId;
 
       const firstPublish = await publishProgram({
@@ -297,7 +303,8 @@ describe('OKR-E001 publishProgram — policy-version immutability + visibility-p
         actorUserId: USER_ADMIN,
         actorEffectiveRole: 'admin',
         idempotencyKey: `publish-vis-v1-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       expect(firstPublish.outcome).toBe('applied');
 
       const activeAfterFirst = await client.query<{
@@ -330,7 +337,8 @@ describe('OKR-E001 publishProgram — policy-version immutability + visibility-p
         actorUserId: USER_ADMIN,
         actorEffectiveRole: 'admin',
         idempotencyKey: `edit-vis-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
       const secondPublish = await publishProgram({
         programId,
@@ -339,7 +347,8 @@ describe('OKR-E001 publishProgram — policy-version immutability + visibility-p
         actorUserId: USER_ADMIN,
         actorEffectiveRole: 'admin',
         idempotencyKey: `publish-vis-v2-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       expect(secondPublish.outcome).toBe('applied');
 
       const afterSecond = await client.query<{
@@ -383,7 +392,8 @@ describe('OKR-E001 publishProgram — policy-version immutability + visibility-p
         createdBy: USER_ADMIN,
         actorEffectiveRole: 'admin',
         idempotencyKey: `create-single-active-a-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       const firstPublish = await publishProgram({
         programId: first.result.programId,
         organizationId: ORG_ID,
@@ -391,7 +401,8 @@ describe('OKR-E001 publishProgram — policy-version immutability + visibility-p
         actorUserId: USER_ADMIN,
         actorEffectiveRole: 'admin',
         idempotencyKey: `publish-single-active-a-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       expect(firstPublish.result.program.status).toBe('active');
 
       const second = await createProgram({
@@ -400,7 +411,8 @@ describe('OKR-E001 publishProgram — policy-version immutability + visibility-p
         createdBy: USER_ADMIN,
         actorEffectiveRole: 'admin',
         idempotencyKey: `create-single-active-b-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       expect(second.result.status).toBe('draft');
 
       let rejection: unknown;
@@ -412,7 +424,8 @@ describe('OKR-E001 publishProgram — policy-version immutability + visibility-p
           actorUserId: USER_ADMIN,
           actorEffectiveRole: 'admin',
           idempotencyKey: `publish-single-active-b-${randomUUID()}`,
-        });
+        access: { capabilities: ['*'], platformRole: null },
+});
       } catch (err) {
         rejection = err;
       }

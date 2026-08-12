@@ -89,7 +89,8 @@ async function addSufficientKeyResultCoverage(setId: string, organizationId: str
     createdBy: ownerUserId,
     actorEffectiveRole: 'member',
     idempotencyKey: `fixture-objective-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   for (let i = 0; i < 2; i += 1) {
     await createKeyResult({
       objectiveId: objective.result.objectiveId,
@@ -103,7 +104,8 @@ async function addSufficientKeyResultCoverage(setId: string, organizationId: str
       createdBy: ownerUserId,
       actorEffectiveRole: 'member',
       idempotencyKey: `fixture-kr-${i}-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
   }
 }
 
@@ -129,7 +131,8 @@ async function createProgramAndCycle(): Promise<{ organizationId: string; progra
     createdBy: USER_ADMIN,
     actorEffectiveRole: 'admin',
     idempotencyKey: `create-program-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   await publishProgram({
     programId: created.result.programId,
     organizationId,
@@ -137,7 +140,8 @@ async function createProgramAndCycle(): Promise<{ organizationId: string; progra
     actorUserId: USER_ADMIN,
     actorEffectiveRole: 'admin',
     idempotencyKey: `publish-program-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   const cycle = await createCycle({
     organizationId,
     programId: created.result.programId,
@@ -146,7 +150,8 @@ async function createProgramAndCycle(): Promise<{ organizationId: string; progra
     createdBy: USER_ADMIN,
     actorEffectiveRole: 'admin',
     idempotencyKey: `create-cycle-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   return { organizationId, programId: created.result.programId, cycleId: cycle.result.cycleId };
 }
 
@@ -173,7 +178,8 @@ async function createActiveSetWithApproval(suffix: string): Promise<{
     createdBy: USER_ADMIN,
     actorEffectiveRole: 'admin',
     idempotencyKey: `create-set-${suffix}-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   await addSufficientKeyResultCoverage(created.result.set.setId, organizationId, ownerId);
   const submitted = await submitOkrSetForApproval({
     setId: created.result.set.setId,
@@ -182,7 +188,8 @@ async function createActiveSetWithApproval(suffix: string): Promise<{
     actorUserId: ownerId,
     actorEffectiveRole: 'member',
     idempotencyKey: `submit-${suffix}-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   const approved = await approveOkrSet({
     setId: created.result.set.setId,
     organizationId,
@@ -190,7 +197,8 @@ async function createActiveSetWithApproval(suffix: string): Promise<{
     approverId: USER_REVIEWER,
     actorEffectiveRole: 'member',
     idempotencyKey: `approve-${suffix}-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   const activated = await runOkrSetLifecycleTransition(OKR_SET_ACTIVATE_SPEC, {
     setId: created.result.set.setId,
     organizationId,
@@ -341,7 +349,8 @@ describe('OKR-E002 recordOkrSetMaterialChange — active-only guard, version inc
       createdBy: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `create-set-draft-guard-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
     let caught: unknown;
     try {
@@ -355,7 +364,8 @@ describe('OKR-E002 recordOkrSetMaterialChange — active-only guard, version inc
         requestedBy: ownerId,
         actorEffectiveRole: 'member',
         idempotencyKey: `matchange-draft-guard-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
     } catch (err) {
       caught = err;
     }
@@ -384,7 +394,8 @@ describe('OKR-E002 recordOkrSetMaterialChange — active-only guard, version inc
       createdBy: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `create-set-approved-guard-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     await addSufficientKeyResultCoverage(created.result.set.setId, organizationId, ownerId);
     const submitted = await submitOkrSetForApproval({
       setId: created.result.set.setId,
@@ -393,7 +404,8 @@ describe('OKR-E002 recordOkrSetMaterialChange — active-only guard, version inc
       actorUserId: ownerId,
       actorEffectiveRole: 'member',
       idempotencyKey: `submit-approved-guard-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const approved = await approveOkrSet({
       setId: created.result.set.setId,
       organizationId,
@@ -401,7 +413,8 @@ describe('OKR-E002 recordOkrSetMaterialChange — active-only guard, version inc
       approverId: USER_REVIEWER,
       actorEffectiveRole: 'member',
       idempotencyKey: `approve-approved-guard-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
     await expect(
       recordOkrSetMaterialChange({
@@ -414,7 +427,8 @@ describe('OKR-E002 recordOkrSetMaterialChange — active-only guard, version inc
         requestedBy: ownerId,
         actorEffectiveRole: 'member',
         idempotencyKey: `matchange-approved-guard-${randomUUID()}`,
-      })
+        access: { capabilities: ['*'], platformRole: null },
+})
     ).rejects.toBeInstanceOf(OkrSetValidationError);
   });
 
@@ -445,7 +459,8 @@ describe('OKR-E002 recordOkrSetMaterialChange — active-only guard, version inc
         requestedBy: USER_OWNER,
         actorEffectiveRole: 'member',
         idempotencyKey: `matchange-title-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
       expect(outcome.outcome).toBe('applied');
       expect(outcome.result.set.title).toBe('Revised title after activation');
@@ -511,7 +526,8 @@ describe('OKR-E002 recordOkrSetMaterialChange — active-only guard, version inc
       requestedBy: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `matchange-owner-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     expect(ownerChange.result.version.versionNumber).toBe(2);
     expect(ownerChange.result.set.ownerUserId).toBe(NEW_OWNER);
     expect(ownerChange.result.set.currentVersion).toBe(2);
@@ -526,7 +542,8 @@ describe('OKR-E002 recordOkrSetMaterialChange — active-only guard, version inc
       requestedBy: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `matchange-reviewer-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     expect(reviewerChange.result.version.versionNumber).toBe(3);
     expect(reviewerChange.result.set.reviewerUserId).toBe(NEW_REVIEWER);
     expect(reviewerChange.result.set.currentVersion).toBe(3);

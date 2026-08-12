@@ -156,7 +156,8 @@ describe('OKR-E007 finalScoreOkrSet — scoring-model dispatch + upsert + status
       actorUserId: USER_OWNER,
       actorEffectiveRole: 'member',
       idempotencyKey: `final-score-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     expect(outcome.outcome).toBe('applied');
     expect(outcome.result.scoredObjectives).toHaveLength(1);
     expect(outcome.result.scoredObjectives[0]!.finalScore).toBeCloseTo(0.5, 5);
@@ -182,7 +183,8 @@ describe('OKR-E007 finalScoreOkrSet — scoring-model dispatch + upsert + status
       actorUserId: USER_OWNER,
       actorEffectiveRole: 'member',
       idempotencyKey: `final-score-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     expect(outcome.result.scoredObjectives[0]!.finalScore).toBeCloseTo(50, 5);
   });
 
@@ -196,7 +198,8 @@ describe('OKR-E007 finalScoreOkrSet — scoring-model dispatch + upsert + status
       actorUserId: USER_OWNER,
       actorEffectiveRole: 'member',
       idempotencyKey: `final-score-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     expect(outcome.result.scoredObjectives[0]!.finalScore).toBeNull();
     expect(outcome.result.scoredObjectives[0]!.scoringModelUnsupported).toBe(true);
 
@@ -218,7 +221,8 @@ describe('OKR-E007 finalScoreOkrSet — scoring-model dispatch + upsert + status
       actorUserId: USER_OWNER,
       actorEffectiveRole: 'member',
       idempotencyKey: `final-score-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     expect(outcome.result.scoredObjectives[0]!.finalScore).toBeNull();
     expect(outcome.result.scoredObjectives[0]!.scoringModelUnsupported).toBe(true);
   });
@@ -233,7 +237,8 @@ describe('OKR-E007 finalScoreOkrSet — scoring-model dispatch + upsert + status
       actorUserId: USER_OWNER,
       actorEffectiveRole: 'member',
       idempotencyKey: `final-score-1-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     expect(first.outcome).toBe('applied');
 
     const secondVersion = await readSetVersionAndStatus(client, fixture.setId);
@@ -244,7 +249,8 @@ describe('OKR-E007 finalScoreOkrSet — scoring-model dispatch + upsert + status
       actorUserId: USER_OWNER,
       actorEffectiveRole: 'member',
       idempotencyKey: `final-score-2-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     expect(second.outcome).toBe('applied');
 
     const countResult = await client.query<{ count: string }>(
@@ -273,7 +279,8 @@ describe('OKR-E007 finalScoreOkrSet — scoring-model dispatch + upsert + status
         actorUserId: USER_OWNER,
         actorEffectiveRole: 'member',
         idempotencyKey: `final-score-guard-${randomUUID()}`,
-      })
+        access: { capabilities: ['*'], platformRole: null },
+})
     ).rejects.toThrow(OkrSetValidationError);
   });
 });

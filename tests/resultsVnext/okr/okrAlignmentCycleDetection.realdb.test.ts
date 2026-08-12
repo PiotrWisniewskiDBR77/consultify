@@ -99,7 +99,8 @@ describe('OKR-E005 — graph-reachability cycle detection (real Postgres)', () =
       createdBy: USER_OWNER,
       actorEffectiveRole: 'member',
       idempotencyKey: `create-obj-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     return objective.result.objectiveId;
   }
 
@@ -111,7 +112,8 @@ describe('OKR-E005 — graph-reachability cycle detection (real Postgres)', () =
       proposedBy: USER_OWNER,
       actorEffectiveRole: 'member',
       idempotencyKey: `propose-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     return acceptAlignment({
       alignmentId: propose.result.alignment.alignmentId,
       organizationId,
@@ -119,7 +121,8 @@ describe('OKR-E005 — graph-reachability cycle detection (real Postgres)', () =
       actorUserId: USER_OWNER,
       actorEffectiveRole: 'member',
       idempotencyKey: `accept-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
   }
 
   beforeAll(async () => {
@@ -180,7 +183,8 @@ describe('OKR-E005 — graph-reachability cycle detection (real Postgres)', () =
       createdBy: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `create-program-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     await publishProgram({
       programId: program.result.programId,
       organizationId,
@@ -188,7 +192,8 @@ describe('OKR-E005 — graph-reachability cycle detection (real Postgres)', () =
       actorUserId: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `publish-program-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const cycle = await createCycle({
       organizationId,
       programId: program.result.programId,
@@ -197,7 +202,8 @@ describe('OKR-E005 — graph-reachability cycle detection (real Postgres)', () =
       createdBy: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `create-cycle-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const set = await createOkrSet({
       organizationId,
       programId: program.result.programId,
@@ -209,7 +215,8 @@ describe('OKR-E005 — graph-reachability cycle detection (real Postgres)', () =
       createdBy: USER_OWNER,
       actorEffectiveRole: 'member',
       idempotencyKey: `create-set-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     setId = set.result.set.setId;
   }, 30_000);
 
@@ -265,7 +272,8 @@ describe('OKR-E005 — graph-reachability cycle detection (real Postgres)', () =
         proposedBy: USER_OWNER,
         actorEffectiveRole: 'member',
         idempotencyKey: `propose-back-${randomUUID()}`,
-      })
+        access: { capabilities: ['*'], platformRole: null },
+})
     ).rejects.toThrow(OkrAlignmentCycleDetectedError);
   });
 
@@ -287,7 +295,8 @@ describe('OKR-E005 — graph-reachability cycle detection (real Postgres)', () =
           proposedBy: USER_OWNER,
           actorEffectiveRole: 'member',
           idempotencyKey: `propose-close-${randomUUID()}`,
-        })
+        access: { capabilities: ['*'], platformRole: null },
+})
       ).rejects.toThrow(OkrAlignmentCycleDetectedError);
     }
   );
@@ -309,7 +318,8 @@ describe('OKR-E005 — graph-reachability cycle detection (real Postgres)', () =
         proposedBy: USER_OWNER,
         actorEffectiveRole: 'member',
         idempotencyKey: `propose-disjoint-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       expect(outcome.result.created).toBe(true);
     }
   );
@@ -332,7 +342,8 @@ describe('OKR-E005 — graph-reachability cycle detection (real Postgres)', () =
         proposedBy: USER_OWNER,
         actorEffectiveRole: 'member',
         idempotencyKey: `propose-bc-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       expect(proposeBC.result.created).toBe(true);
 
       // 3. C->A proposed — ALSO acyclic at this moment (B->C is still only
@@ -345,7 +356,8 @@ describe('OKR-E005 — graph-reachability cycle detection (real Postgres)', () =
         proposedBy: USER_OWNER,
         actorEffectiveRole: 'member',
         idempotencyKey: `propose-ca-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       expect(proposeCA.result.created).toBe(true);
 
       // 4. Accept B->C — still acyclic (C's only accepted outgoing edge
@@ -357,7 +369,8 @@ describe('OKR-E005 — graph-reachability cycle detection (real Postgres)', () =
         actorUserId: USER_OWNER,
         actorEffectiveRole: 'member',
         idempotencyKey: `accept-bc-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       expect(acceptBC.result.status).toBe('accepted');
 
       // 5. NOW accept C->A — the accepted graph is A->B->C, and accepting
@@ -372,7 +385,8 @@ describe('OKR-E005 — graph-reachability cycle detection (real Postgres)', () =
           actorUserId: USER_OWNER,
           actorEffectiveRole: 'member',
           idempotencyKey: `accept-ca-${randomUUID()}`,
-        })
+        access: { capabilities: ['*'], platformRole: null },
+})
       ).rejects.toThrow(OkrAlignmentCycleDetectedError);
 
       // Sanity: C->A is still 'proposed' (the rejected accept must not have

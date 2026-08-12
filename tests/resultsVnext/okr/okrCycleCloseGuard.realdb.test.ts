@@ -165,7 +165,8 @@ describe('OKR-E007 Cycle-close guard (D9) — rejects with open Sets, succeeds o
       createdBy: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `create-program-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     await publishProgram({
       programId: program.result.programId,
       organizationId,
@@ -173,7 +174,8 @@ describe('OKR-E007 Cycle-close guard (D9) — rejects with open Sets, succeeds o
       actorUserId: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `publish-program-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const cycle = await createCycle({
       organizationId,
       programId: program.result.programId,
@@ -182,7 +184,8 @@ describe('OKR-E007 Cycle-close guard (D9) — rejects with open Sets, succeeds o
       createdBy: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `create-cycle-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     return { organizationId, programId: program.result.programId, cycleId: cycle.result.cycleId, cycleVersion: cycle.result.rowVersion };
   }
 
@@ -199,7 +202,8 @@ describe('OKR-E007 Cycle-close guard (D9) — rejects with open Sets, succeeds o
       createdBy: USER_OWNER,
       actorEffectiveRole: 'member',
       idempotencyKey: `create-set-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const setId = set.result.set.setId;
 
     const reviewVersion = await driveCycleToReview(organizationId, cycleId, cycleVersion);
@@ -239,7 +243,8 @@ describe('OKR-E007 Cycle-close guard (D9) — rejects with open Sets, succeeds o
       createdBy: USER_OWNER,
       actorEffectiveRole: 'member',
       idempotencyKey: `create-set-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const setId = set.result.set.setId;
 
     const reviewVersion = await driveCycleToReview(organizationId, cycleId, cycleVersion);

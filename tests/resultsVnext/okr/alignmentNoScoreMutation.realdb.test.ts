@@ -115,6 +115,7 @@ describe('OKR-E005 — no-score-inheritance behavioral proof, Layers 3+4 of 4 (r
       createdBy: ownerUserId,
       actorEffectiveRole: 'member',
       idempotencyKey: `create-obj-${randomUUID()}`,
+      access: { capabilities: ['*'], platformRole: null },
     });
     await createKeyResult({
       objectiveId: objective.result.objectiveId,
@@ -128,6 +129,7 @@ describe('OKR-E005 — no-score-inheritance behavioral proof, Layers 3+4 of 4 (r
       createdBy: ownerUserId,
       actorEffectiveRole: 'member',
       idempotencyKey: `create-kr-${randomUUID()}`,
+      access: { capabilities: ['*'], platformRole: null },
     });
     return objective.result.objectiveId;
   }
@@ -211,6 +213,7 @@ describe('OKR-E005 — no-score-inheritance behavioral proof, Layers 3+4 of 4 (r
       createdBy: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `create-program-${randomUUID()}`,
+      access: { capabilities: ['*'], platformRole: null },
     });
     await publishProgram({
       programId: program.result.programId,
@@ -219,6 +222,7 @@ describe('OKR-E005 — no-score-inheritance behavioral proof, Layers 3+4 of 4 (r
       actorUserId: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `publish-program-${randomUUID()}`,
+      access: { capabilities: ['*'], platformRole: null },
     });
     const cycle = await createCycle({
       organizationId,
@@ -228,6 +232,7 @@ describe('OKR-E005 — no-score-inheritance behavioral proof, Layers 3+4 of 4 (r
       createdBy: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `create-cycle-${randomUUID()}`,
+      access: { capabilities: ['*'], platformRole: null },
     });
     cycleId = cycle.result.cycleId;
     const set = await createOkrSet({
@@ -241,6 +246,7 @@ describe('OKR-E005 — no-score-inheritance behavioral proof, Layers 3+4 of 4 (r
       createdBy: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `create-set-${randomUUID()}`,
+      access: { capabilities: ['*'], platformRole: null },
     });
     setId = set.result.set.setId;
   }, 30_000);
@@ -305,6 +311,7 @@ describe('OKR-E005 — no-score-inheritance behavioral proof, Layers 3+4 of 4 (r
       proposedBy: USER_A,
       actorEffectiveRole: 'member',
       idempotencyKey: `propose-${randomUUID()}`,
+      access: { capabilities: ['*'], platformRole: null },
     });
 
     expect(await selectObjectiveRow(sourceId)).toEqual(sourceBefore);
@@ -317,6 +324,7 @@ describe('OKR-E005 — no-score-inheritance behavioral proof, Layers 3+4 of 4 (r
       actorUserId: USER_B,
       actorEffectiveRole: 'member',
       idempotencyKey: `accept-${randomUUID()}`,
+      access: { capabilities: ['*'], platformRole: null },
     });
 
     expect(await selectObjectiveRow(sourceId)).toEqual(sourceBefore);
@@ -341,6 +349,7 @@ describe('OKR-E005 — no-score-inheritance behavioral proof, Layers 3+4 of 4 (r
       proposedBy: USER_A,
       actorEffectiveRole: 'member',
       idempotencyKey: `propose-${randomUUID()}`,
+      access: { capabilities: ['*'], platformRole: null },
     });
 
     expect(await selectObjectiveRow(sourceId)).toEqual(sourceBefore);
@@ -354,6 +363,7 @@ describe('OKR-E005 — no-score-inheritance behavioral proof, Layers 3+4 of 4 (r
       actorEffectiveRole: 'member',
       responseReason: 'not a good fit',
       idempotencyKey: `reject-${randomUUID()}`,
+      access: { capabilities: ['*'], platformRole: null },
     });
 
     expect(await selectObjectiveRow(sourceId)).toEqual(sourceBefore);
@@ -380,6 +390,7 @@ describe('OKR-E005 — no-score-inheritance behavioral proof, Layers 3+4 of 4 (r
         proposedBy: USER_A,
         actorEffectiveRole: 'member',
         idempotencyKey: `propose-${randomUUID()}`,
+        access: { capabilities: ['*'], platformRole: null },
       });
       expect(await selectObjectiveRow(sourceId)).toEqual(sourceBefore);
       expect(await selectObjectiveRow(targetId)).toEqual(targetBefore);
@@ -391,6 +402,7 @@ describe('OKR-E005 — no-score-inheritance behavioral proof, Layers 3+4 of 4 (r
         actorUserId: USER_B,
         actorEffectiveRole: 'member',
         idempotencyKey: `accept-${randomUUID()}`,
+        access: { capabilities: ['*'], platformRole: null },
       });
       expect(await selectObjectiveRow(sourceId)).toEqual(sourceBefore);
       expect(await selectObjectiveRow(targetId)).toEqual(targetBefore);
@@ -402,6 +414,7 @@ describe('OKR-E005 — no-score-inheritance behavioral proof, Layers 3+4 of 4 (r
         actorUserId: USER_A,
         actorEffectiveRole: 'member',
         idempotencyKey: `remove-${randomUUID()}`,
+        access: { capabilities: ['*'], platformRole: null },
       });
       expect(await selectObjectiveRow(sourceId)).toEqual(sourceBefore);
       expect(await selectObjectiveRow(targetId)).toEqual(targetBefore);

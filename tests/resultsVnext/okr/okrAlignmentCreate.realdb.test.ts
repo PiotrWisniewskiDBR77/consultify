@@ -149,7 +149,8 @@ describe('OKR-E005 — proposeAlignment: self-loop / owner / visibility / dedupe
       createdBy: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `create-program-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     await publishProgram({
       programId: program.result.programId,
       organizationId,
@@ -157,7 +158,8 @@ describe('OKR-E005 — proposeAlignment: self-loop / owner / visibility / dedupe
       actorUserId: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `publish-program-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const cycle = await createCycle({
       organizationId,
       programId: program.result.programId,
@@ -166,7 +168,8 @@ describe('OKR-E005 — proposeAlignment: self-loop / owner / visibility / dedupe
       createdBy: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `create-cycle-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
     const set = await createOkrSet({
       organizationId,
@@ -179,7 +182,8 @@ describe('OKR-E005 — proposeAlignment: self-loop / owner / visibility / dedupe
       createdBy: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `create-set-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     setId = set.result.set.setId;
 
     const objA = await createObjective({
@@ -190,7 +194,8 @@ describe('OKR-E005 — proposeAlignment: self-loop / owner / visibility / dedupe
       createdBy: USER_A,
       actorEffectiveRole: 'member',
       idempotencyKey: `create-obj-a-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     objectiveA = objA.result.objectiveId;
 
     const objB = await createObjective({
@@ -201,7 +206,8 @@ describe('OKR-E005 — proposeAlignment: self-loop / owner / visibility / dedupe
       createdBy: USER_B,
       actorEffectiveRole: 'member',
       idempotencyKey: `create-obj-b-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     objectiveB = objB.result.objectiveId;
 
     // Second Set, same Cycle, narrowed to RESTRICTED_ACL with no grant to
@@ -217,7 +223,8 @@ describe('OKR-E005 — proposeAlignment: self-loop / owner / visibility / dedupe
       createdBy: USER_D,
       actorEffectiveRole: 'member',
       idempotencyKey: `create-restricted-set-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     restrictedSetId = restrictedSet.result.set.setId;
     await narrowOkrSetVisibility({
       setId: restrictedSetId,
@@ -227,7 +234,8 @@ describe('OKR-E005 — proposeAlignment: self-loop / owner / visibility / dedupe
       actorUserId: USER_D,
       actorEffectiveRole: 'member',
       idempotencyKey: `narrow-restricted-set-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const objD = await createObjective({
       setId: restrictedSetId,
       organizationId,
@@ -236,7 +244,8 @@ describe('OKR-E005 — proposeAlignment: self-loop / owner / visibility / dedupe
       createdBy: USER_D,
       actorEffectiveRole: 'member',
       idempotencyKey: `create-obj-d-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     objectiveDRestricted = objD.result.objectiveId;
   }, 30_000);
 
@@ -289,7 +298,8 @@ describe('OKR-E005 — proposeAlignment: self-loop / owner / visibility / dedupe
         proposedBy: USER_A,
         actorEffectiveRole: 'member',
         idempotencyKey: `propose-self-${randomUUID()}`,
-      })
+        access: { capabilities: ['*'], platformRole: null },
+})
     ).rejects.toThrow(OkrAlignmentValidationError);
 
     try {
@@ -300,7 +310,8 @@ describe('OKR-E005 — proposeAlignment: self-loop / owner / visibility / dedupe
         proposedBy: USER_A,
         actorEffectiveRole: 'member',
         idempotencyKey: `propose-self-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       expect.unreachable('expected proposeAlignment to throw');
     } catch (err) {
       expect(err).toBeInstanceOf(OkrAlignmentValidationError);

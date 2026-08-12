@@ -146,7 +146,8 @@ describe('OKR-E008 recordOkrReflectionTeresaDraft / recordOkrReflectionTeresaDra
       actorUserId: USER_OWNER,
       actorEffectiveRole: 'teresa_initiated',
       idempotencyKey: `e008-teresa-draft-create-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
     expect(outcome.outcome).toBe('applied');
     expect(outcome.resultingVersion).toBe(1);
@@ -179,7 +180,8 @@ describe('OKR-E008 recordOkrReflectionTeresaDraft / recordOkrReflectionTeresaDra
       actorUserId: USER_OWNER,
       actorEffectiveRole: 'teresa_initiated',
       idempotencyKey: `e008-teresa-draft-regen-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
     expect(outcome.outcome).toBe('applied');
     expect(outcome.resultingVersion).toBe(before!.row_version + 1);
@@ -203,7 +205,8 @@ describe('OKR-E008 recordOkrReflectionTeresaDraft / recordOkrReflectionTeresaDra
         actorUserId: USER_OWNER,
         actorEffectiveRole: 'teresa_initiated',
         idempotencyKey: `e008-teresa-draft-stale-${randomUUID()}`,
-      })
+        access: { capabilities: ['*'], platformRole: null },
+})
     ).rejects.toMatchObject({ code: 'STALE_VERSION' });
   });
 
@@ -220,7 +223,8 @@ describe('OKR-E008 recordOkrReflectionTeresaDraft / recordOkrReflectionTeresaDra
       actorUserId: USER_REVIEWER,
       actorEffectiveRole: 'member',
       idempotencyKey: `e008-teresa-disposition-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
     expect(outcome.outcome).toBe('applied');
 
@@ -250,7 +254,8 @@ describe('OKR-E008 recordOkrReflectionTeresaDraft / recordOkrReflectionTeresaDra
         actorUserId: USER_OWNER,
         actorEffectiveRole: 'teresa_initiated',
         idempotencyKey: `e008-teresa-draft-blocked-${randomUUID()}`,
-      })
+        access: { capabilities: ['*'], platformRole: null },
+})
     ).rejects.toMatchObject({ code: 'DISPOSITION_ALREADY_RECORDED' });
   });
 
@@ -273,7 +278,8 @@ describe('OKR-E008 recordOkrReflectionTeresaDraft / recordOkrReflectionTeresaDra
       actorUserId: USER_OWNER,
       actorEffectiveRole: 'member',
       idempotencyKey: `e008-human-reflection-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
     expect(outcome.outcome).toBe('applied');
 

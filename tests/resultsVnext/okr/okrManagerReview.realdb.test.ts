@@ -131,7 +131,8 @@ describe('OKR-E007 manager/self review — D6 self-approval denial (both branche
       actorUserId: USER_OWNER,
       actorEffectiveRole: 'member',
       idempotencyKey: `submit-manager-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     expect(outcome.outcome).toBe('applied');
     expect(outcome.result.status).toBe('submitted');
     expect(outcome.result.reviewType).toBe('manager');
@@ -157,7 +158,8 @@ describe('OKR-E007 manager/self review — D6 self-approval denial (both branche
         actorUserId: USER_REVIEWER, // NOT the owner
         actorEffectiveRole: 'member',
         idempotencyKey: `submit-self-nonowner-${randomUUID()}`,
-      })
+        access: { capabilities: ['*'], platformRole: null },
+})
     ).rejects.toThrow(OkrReviewValidationError);
 
     const outcome = await submitOkrSetSelfReview({
@@ -167,7 +169,8 @@ describe('OKR-E007 manager/self review — D6 self-approval denial (both branche
       actorUserId: USER_OWNER,
       actorEffectiveRole: 'member',
       idempotencyKey: `submit-self-owner-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     expect(outcome.outcome).toBe('applied');
     expect(outcome.result.reviewType).toBe('self');
     expect(outcome.result.status).toBe('submitted');
@@ -187,7 +190,8 @@ describe('OKR-E007 manager/self review — D6 self-approval denial (both branche
       actorUserId: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `submit-manager-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
     let caught: unknown;
     try {
@@ -198,7 +202,8 @@ describe('OKR-E007 manager/self review — D6 self-approval denial (both branche
         actorUserId: USER_ADMIN, // matches submitted_by
         actorEffectiveRole: 'admin',
         idempotencyKey: `approve-self-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
     } catch (err) {
       caught = err;
     }
@@ -220,7 +225,8 @@ describe('OKR-E007 manager/self review — D6 self-approval denial (both branche
       actorUserId: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `submit-manager-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
     let caught: unknown;
     try {
@@ -231,7 +237,8 @@ describe('OKR-E007 manager/self review — D6 self-approval denial (both branche
         actorUserId: USER_OWNER, // matches set.owner_user_id, NOT submitted_by
         actorEffectiveRole: 'member',
         idempotencyKey: `approve-owner-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
     } catch (err) {
       caught = err;
     }
@@ -250,7 +257,8 @@ describe('OKR-E007 manager/self review — D6 self-approval denial (both branche
       actorUserId: USER_OWNER,
       actorEffectiveRole: 'member',
       idempotencyKey: `submit-manager-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const outcome = await approveOkrSetManagerReview({
       setId: fixture.setId,
       organizationId: fixture.organizationId,
@@ -259,7 +267,8 @@ describe('OKR-E007 manager/self review — D6 self-approval denial (both branche
       actorUserId: USER_REVIEWER,
       actorEffectiveRole: 'member',
       idempotencyKey: `approve-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     expect(outcome.outcome).toBe('applied');
     expect(outcome.result.status).toBe('approved');
     expect(outcome.result.outcome).toBe('looks good');
@@ -275,7 +284,8 @@ describe('OKR-E007 manager/self review — D6 self-approval denial (both branche
       actorUserId: USER_OWNER,
       actorEffectiveRole: 'member',
       idempotencyKey: `submit-manager-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const outcome = await requestChangesOnOkrSetManagerReview({
       setId: fixture.setId,
       organizationId: fixture.organizationId,
@@ -284,7 +294,8 @@ describe('OKR-E007 manager/self review — D6 self-approval denial (both branche
       actorUserId: USER_OWNER,
       actorEffectiveRole: 'member',
       idempotencyKey: `request-changes-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     expect(outcome.outcome).toBe('applied');
     expect(outcome.result.status).toBe('changes_requested');
   });
@@ -298,7 +309,8 @@ describe('OKR-E007 manager/self review — D6 self-approval denial (both branche
       actorUserId: USER_OWNER,
       actorEffectiveRole: 'member',
       idempotencyKey: `submit-1-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const declined = await requestChangesOnOkrSetManagerReview({
       setId: fixture.setId,
       organizationId: fixture.organizationId,
@@ -307,7 +319,8 @@ describe('OKR-E007 manager/self review — D6 self-approval denial (both branche
       actorUserId: USER_REVIEWER,
       actorEffectiveRole: 'member',
       idempotencyKey: `request-changes-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const resubmitted = await submitOkrSetForManagerReview({
       setId: fixture.setId,
       organizationId: fixture.organizationId,
@@ -315,7 +328,8 @@ describe('OKR-E007 manager/self review — D6 self-approval denial (both branche
       actorUserId: USER_OWNER,
       actorEffectiveRole: 'member',
       idempotencyKey: `submit-2-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     expect(resubmitted.result.status).toBe('submitted');
 
     const countResult = await client.query<{ count: string }>(
@@ -334,7 +348,8 @@ describe('OKR-E007 manager/self review — D6 self-approval denial (both branche
       actorUserId: USER_OWNER,
       actorEffectiveRole: 'member',
       idempotencyKey: `submit-manager-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const commented = await recordOkrSetReviewComment({
       setId: fixture.setId,
       organizationId: fixture.organizationId,
@@ -346,7 +361,8 @@ describe('OKR-E007 manager/self review — D6 self-approval denial (both branche
       actorUserId: USER_REVIEWER,
       actorEffectiveRole: 'member',
       idempotencyKey: `comment-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     expect(commented.result.status).toBe('submitted');
     expect(commented.result.comments).toHaveLength(1);
     expect(commented.result.comments[0]!.text).toBe('left a note');

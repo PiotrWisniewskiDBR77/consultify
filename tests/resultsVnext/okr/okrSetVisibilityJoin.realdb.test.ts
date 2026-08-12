@@ -222,7 +222,8 @@ describe('OKR-E002 Set visibility-join regression — TEXT/UUID cast forces real
       createdBy: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `create-program-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const published = await publishProgram({
       programId: created.result.programId,
       organizationId: ORG_ID,
@@ -230,7 +231,8 @@ describe('OKR-E002 Set visibility-join regression — TEXT/UUID cast forces real
       actorUserId: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `publish-program-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     programId = created.result.programId;
     const cycle = await createCycle({
       organizationId: ORG_ID,
@@ -240,7 +242,8 @@ describe('OKR-E002 Set visibility-join regression — TEXT/UUID cast forces real
       createdBy: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `create-cycle-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     cycleId = cycle.result.cycleId;
 
     const policyRow = await client.query<{ policy_id: string }>(
