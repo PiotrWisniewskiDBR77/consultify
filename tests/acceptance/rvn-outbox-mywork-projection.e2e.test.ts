@@ -207,6 +207,7 @@ async function openRealDeviationCase(params: {
     recordedBy: params.ownerUserId,
     actorEffectiveRole: 'consultant',
     idempotencyKey: params.idempotencyKey,
+    access: { capabilities: ['*'], platformRole: null },
   });
   expect(outcome.outcome).toBe('applied');
 
@@ -246,6 +247,7 @@ async function closeRealDeviationCase(params: {
     actorUserId: params.ownerUserId,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `${params.idemPrefix}--ack`,
+    access: { capabilities: ['*'], platformRole: null },
   });
   expect(ack.outcome).toBe('applied');
 
@@ -256,6 +258,7 @@ async function closeRealDeviationCase(params: {
     actorUserId: params.ownerUserId,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `${params.idemPrefix}--rootcause`,
+    access: { capabilities: ['*'], platformRole: null },
     rootCauseSummary: 'RN-G3 fixture root cause',
     rootCauseCategory: 'process',
   });
@@ -270,6 +273,7 @@ async function closeRealDeviationCase(params: {
     actorUserId: params.ownerUserId,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `${params.idemPrefix}--action`,
+    access: { capabilities: ['*'], platformRole: null },
   });
   expect(action.outcome).toBe('applied');
 
@@ -280,6 +284,7 @@ async function closeRealDeviationCase(params: {
     actorUserId: params.ownerUserId,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `${params.idemPrefix}--plan`,
+    access: { capabilities: ['*'], platformRole: null },
   });
   expect(plan.outcome).toBe('applied');
 
@@ -290,6 +295,7 @@ async function closeRealDeviationCase(params: {
     approverId: params.approverUserId,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `${params.idemPrefix}--approve`,
+    access: { capabilities: ['*'], platformRole: null },
   });
   expect(approved.outcome).toBe('applied');
 
@@ -301,6 +307,7 @@ async function closeRealDeviationCase(params: {
     actorUserId: params.ownerUserId,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `${params.idemPrefix}--action-active`,
+    access: { capabilities: ['*'], platformRole: null },
   });
   expect(activated.outcome).toBe('applied');
   expect(activated.result.caseAutoTransitionedToExecuting).toBe(true);
@@ -312,6 +319,7 @@ async function closeRealDeviationCase(params: {
     actorUserId: params.ownerUserId,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `${params.idemPrefix}--verify`,
+    access: { capabilities: ['*'], platformRole: null },
     verificationWindowStart: '2026-02-01T00:00:00.000Z',
     verificationWindowEnd: '2026-02-07T00:00:00.000Z',
     outcome: 'effective',
@@ -326,6 +334,7 @@ async function closeRealDeviationCase(params: {
     actorUserId: params.ownerUserId,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `${params.idemPrefix}--close`,
+    access: { capabilities: ['*'], platformRole: null },
   });
   expect(closed.outcome).toBe('applied');
   expect(closed.result.status).toBe('closed');
@@ -510,6 +519,7 @@ describe('RN-G3 · outbox dispatcher + mywork_projection consumer (8 acceptance 
         kpiId,
         versionId,
         idempotencyKey: `${MARKER}--proof1--measure`,
+        access: { capabilities: ['*'], platformRole: null },
       });
 
       const client = pgClient();
@@ -633,6 +643,7 @@ describe('RN-G3 · outbox dispatcher + mywork_projection consumer (8 acceptance 
       kpiId,
       versionId,
       idempotencyKey: `${MARKER}--proof2--measure`,
+      access: { capabilities: ['*'], platformRole: null },
     });
 
     const client = pgClient();
@@ -705,6 +716,7 @@ describe('RN-G3 · outbox dispatcher + mywork_projection consumer (8 acceptance 
       kpiId,
       versionId,
       idempotencyKey: `${MARKER}--proof3--measure`,
+      access: { capabilities: ['*'], platformRole: null },
     });
 
     const tickResult = await runOutboxDispatchTick();
@@ -748,6 +760,7 @@ describe('RN-G3 · outbox dispatcher + mywork_projection consumer (8 acceptance 
       kpiId,
       versionId,
       idempotencyKey: `${MARKER}--proof4--measure`,
+      access: { capabilities: ['*'], platformRole: null },
     });
 
     const readClient = pgClient();
@@ -834,6 +847,7 @@ describe('RN-G3 · outbox dispatcher + mywork_projection consumer (8 acceptance 
       kpiId,
       versionId,
       idempotencyKey: `${MARKER}--proof5--measure`,
+      access: { capabilities: ['*'], platformRole: null },
     });
 
     const client = pgClient();
@@ -910,6 +924,7 @@ describe('RN-G3 · outbox dispatcher + mywork_projection consumer (8 acceptance 
         kpiId,
         versionId,
         idempotencyKey: `${MARKER}--proof6--measure`,
+        access: { capabilities: ['*'], platformRole: null },
       });
 
       const groupName = `${MARKER}--proof6--dead-letter-group`;
@@ -1066,6 +1081,7 @@ describe('RN-G3 · outbox dispatcher + mywork_projection consumer (8 acceptance 
           kpiId,
           versionId,
           idempotencyKey: `${MARKER}--proof6b--measure`,
+          access: { capabilities: ['*'], platformRole: null },
         });
 
         expect(UNBUILT_CONSUMER_GROUPS.has(syntheticUnbuiltGroup)).toBe(true);
@@ -1134,6 +1150,7 @@ describe('RN-G3 · outbox dispatcher + mywork_projection consumer (8 acceptance 
       kpiId,
       versionId,
       idempotencyKey: `${MARKER}--proof7--measure`,
+      access: { capabilities: ['*'], platformRole: null },
     });
 
     await runOutboxDispatchTick();
@@ -1230,6 +1247,7 @@ describe('RN-G3 · outbox dispatcher + mywork_projection consumer (8 acceptance 
       kpiId: kpiIdA,
       versionId: versionIdA,
       idempotencyKey: `${MARKER}--proof8--measure-a`,
+      access: { capabilities: ['*'], platformRole: null },
     });
 
     // Org B gets its OWN real KPI + measurement + real (auto-generated,
@@ -1245,6 +1263,7 @@ describe('RN-G3 · outbox dispatcher + mywork_projection consumer (8 acceptance 
       kpiId: kpiIdB,
       versionId: versionIdB,
       idempotencyKey: `${MARKER}--proof8--measure-b-natural`,
+      access: { capabilities: ['*'], platformRole: null },
     });
     expect(naturalCaseIdB).not.toBe(caseIdA); // case_id is a UUID PK — never collides naturally
 

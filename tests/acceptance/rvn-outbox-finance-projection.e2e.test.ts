@@ -273,6 +273,7 @@ async function buildApprovedCase(params: {
     createdBy: ownerUserId,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `${MARKER}--${suffix}--create-${randomUUID()}`,
+    access: { capabilities: ['*'], platformRole: null },
   });
   const caseId = createOutcome.result.case.caseId;
 
@@ -291,6 +292,7 @@ async function buildApprovedCase(params: {
       actorUserId: ownerUserId,
       actorEffectiveRole: 'consultant',
       idempotencyKey: `${MARKER}--${suffix}--link-${randomUUID()}`,
+      access: { capabilities: ['*'], platformRole: null },
     });
     linkId = linkOutcome.result.linkId;
     if (params.link.trackedMetric !== undefined || params.link.pinnedFinanceValue !== undefined) {
@@ -305,6 +307,7 @@ async function buildApprovedCase(params: {
     actorUserId: ownerUserId,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `${MARKER}--${suffix}--start-${randomUUID()}`,
+    access: { capabilities: ['*'], platformRole: null },
   });
 
   await captureOrUpdateBaseline({
@@ -317,6 +320,7 @@ async function buildApprovedCase(params: {
     actorId: ownerUserId,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `${MARKER}--${suffix}--baseline-${randomUUID()}`,
+    access: { capabilities: ['*'], platformRole: null },
   });
 
   const costLineOutcome = await addCostLine({
@@ -331,6 +335,7 @@ async function buildApprovedCase(params: {
     actorUserId: ownerUserId,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `${MARKER}--${suffix}--cost-${randomUUID()}`,
+    access: { capabilities: ['*'], platformRole: null },
   });
   const benefitLineOutcome = await addBenefitLine({
     caseId,
@@ -345,6 +350,7 @@ async function buildApprovedCase(params: {
     actorUserId: ownerUserId,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `${MARKER}--${suffix}--benefit-${randomUUID()}`,
+    access: { capabilities: ['*'], platformRole: null },
   });
 
   await createRoiCalculationRun({
@@ -354,6 +360,7 @@ async function buildApprovedCase(params: {
     actorUserId: ownerUserId,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `${MARKER}--${suffix}--run-${randomUUID()}`,
+    access: { capabilities: ['*'], platformRole: null },
   });
 
   const readyOutcome = await markReadyForReview({
@@ -363,6 +370,7 @@ async function buildApprovedCase(params: {
     actorUserId: ownerUserId,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `${MARKER}--${suffix}--ready-${randomUUID()}`,
+    access: { capabilities: ['*'], platformRole: null },
   });
   const submitOutcome = await submitRoiCaseForApproval({
     caseId,
@@ -371,6 +379,7 @@ async function buildApprovedCase(params: {
     actorUserId: ownerUserId,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `${MARKER}--${suffix}--submit-${randomUUID()}`,
+    access: { capabilities: ['*'], platformRole: null },
   });
   const approveOutcome = await approveRoiCase({
     caseId,
@@ -379,6 +388,7 @@ async function buildApprovedCase(params: {
     approverId,
     actorEffectiveRole: 'admin',
     idempotencyKey: `${MARKER}--${suffix}--approve-${randomUUID()}`,
+    access: { capabilities: ['*'], platformRole: null },
   });
 
   return {
@@ -406,6 +416,7 @@ async function startTracking(params: {
     actorUserId: params.ownerUserId,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `${MARKER}--tracking-${randomUUID()}`,
+    access: { capabilities: ['*'], platformRole: null },
   });
   return outcome.resultingVersion;
 }
@@ -445,6 +456,7 @@ async function buildDraftCaseWithLink(params: {
     createdBy: ownerUserId,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `${MARKER}--${suffix}--create-${randomUUID()}`,
+    access: { capabilities: ['*'], platformRole: null },
   });
   const caseId = createOutcome.result.case.caseId;
 
@@ -460,6 +472,7 @@ async function buildDraftCaseWithLink(params: {
     actorUserId: ownerUserId,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `${MARKER}--${suffix}--link-${randomUUID()}`,
+    access: { capabilities: ['*'], platformRole: null },
   });
 
   return { caseId, linkId: linkOutcome.result.linkId };
@@ -1344,6 +1357,7 @@ describe('RN-G6 · finance_projection consumer (eight acceptance proofs + three 
       recordedBy: OWNER_A,
       actorEffectiveRole: 'consultant',
       idempotencyKey: `${MARKER}--p7--actual-entry-${randomUUID()}`,
+      access: { capabilities: ['*'], platformRole: null },
     });
     void costEntry;
     const snapshotOutcome = await publishRoiActualSnapshot({
@@ -1354,6 +1368,7 @@ describe('RN-G6 · finance_projection consumer (eight acceptance proofs + three 
       publishedBy: OWNER_A,
       actorEffectiveRole: 'consultant',
       idempotencyKey: `${MARKER}--p7--actual-snapshot-${randomUUID()}`,
+      access: { capabilities: ['*'], platformRole: null },
     });
     rowVersion = snapshotOutcome.resultingVersion;
     expect(snapshotOutcome.result.totalActualCosts).toBe(1800);
@@ -1557,6 +1572,7 @@ describe('RN-G6 · finance_projection consumer (eight acceptance proofs + three 
       actorUserId: OWNER_A,
       actorEffectiveRole: 'consultant',
       idempotencyKey: `${MARKER}--neg2--forecast-${randomUUID()}`,
+      access: { capabilities: ['*'], platformRole: null },
     });
     rowVersion = forecastOutcome.resultingVersion;
     expect(forecastOutcome.result.totalCosts).toBe(1500);
@@ -1617,6 +1633,7 @@ describe('RN-G6 · finance_projection consumer (eight acceptance proofs + three 
       recordedBy: OWNER_A,
       actorEffectiveRole: 'consultant',
       idempotencyKey: `${MARKER}--neg2--actual-entry-${randomUUID()}`,
+      access: { capabilities: ['*'], platformRole: null },
     });
     void actualEntry;
     const actualOutcome = await publishRoiActualSnapshot({
@@ -1627,6 +1644,7 @@ describe('RN-G6 · finance_projection consumer (eight acceptance proofs + three 
       publishedBy: OWNER_A,
       actorEffectiveRole: 'consultant',
       idempotencyKey: `${MARKER}--neg2--actual-${randomUUID()}`,
+      access: { capabilities: ['*'], platformRole: null },
     });
     expect(actualOutcome.result.totalActualCosts).toBe(1800);
 

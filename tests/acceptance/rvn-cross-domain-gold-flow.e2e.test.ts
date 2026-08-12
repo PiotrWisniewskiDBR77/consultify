@@ -201,6 +201,7 @@ async function openRealDeviationCase(params: {
     recordedBy: params.ownerUserId,
     actorEffectiveRole: 'consultant',
     idempotencyKey: params.idempotencyKey,
+    access: { capabilities: ['*'], platformRole: null },
   });
   expect(outcome.outcome).toBe('applied');
 
@@ -236,6 +237,7 @@ async function closeRealDeviationCase(params: {
     actorUserId: params.ownerUserId,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `${params.idemPrefix}--ack`,
+    access: { capabilities: ['*'], platformRole: null },
   });
   expect(ack.outcome).toBe('applied');
 
@@ -246,6 +248,7 @@ async function closeRealDeviationCase(params: {
     actorUserId: params.ownerUserId,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `${params.idemPrefix}--rootcause`,
+    access: { capabilities: ['*'], platformRole: null },
     rootCauseSummary: 'RN-G0 gold-flow fixture root cause',
     rootCauseCategory: 'process',
   });
@@ -260,6 +263,7 @@ async function closeRealDeviationCase(params: {
     actorUserId: params.ownerUserId,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `${params.idemPrefix}--action`,
+    access: { capabilities: ['*'], platformRole: null },
   });
   expect(action.outcome).toBe('applied');
 
@@ -270,6 +274,7 @@ async function closeRealDeviationCase(params: {
     actorUserId: params.ownerUserId,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `${params.idemPrefix}--plan`,
+    access: { capabilities: ['*'], platformRole: null },
   });
   expect(plan.outcome).toBe('applied');
 
@@ -280,6 +285,7 @@ async function closeRealDeviationCase(params: {
     approverId: params.approverUserId,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `${params.idemPrefix}--approve`,
+    access: { capabilities: ['*'], platformRole: null },
   });
   expect(approved.outcome).toBe('applied');
 
@@ -291,6 +297,7 @@ async function closeRealDeviationCase(params: {
     actorUserId: params.ownerUserId,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `${params.idemPrefix}--action-active`,
+    access: { capabilities: ['*'], platformRole: null },
   });
   expect(activated.outcome).toBe('applied');
   expect(activated.result.caseAutoTransitionedToExecuting).toBe(true);
@@ -302,6 +309,7 @@ async function closeRealDeviationCase(params: {
     actorUserId: params.ownerUserId,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `${params.idemPrefix}--verify`,
+    access: { capabilities: ['*'], platformRole: null },
     verificationWindowStart: '2026-02-01T00:00:00.000Z',
     verificationWindowEnd: '2026-02-07T00:00:00.000Z',
     outcome: 'effective',
@@ -316,6 +324,7 @@ async function closeRealDeviationCase(params: {
     actorUserId: params.ownerUserId,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `${params.idemPrefix}--close`,
+    access: { capabilities: ['*'], platformRole: null },
   });
   expect(closed.outcome).toBe('applied');
   expect(closed.result.status).toBe('closed');
@@ -373,6 +382,7 @@ async function buildApprovedRoiCaseWithMatchingLink(params: {
     createdBy: ownerUserId,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `${MARKER}--${suffix}--create-${randomUUID()}`,
+    access: { capabilities: ['*'], platformRole: null },
   });
   const caseId = createOutcome.result.case.caseId;
   trackEvent(orgId, caseId, 'roi.case_created');
@@ -390,6 +400,7 @@ async function buildApprovedRoiCaseWithMatchingLink(params: {
     actorUserId: ownerUserId,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `${MARKER}--${suffix}--link-${randomUUID()}`,
+    access: { capabilities: ['*'], platformRole: null },
   });
   const linkId = linkOutcome.result.linkId;
   trackEvent(orgId, caseId, 'roi.finance_link_created');
@@ -415,6 +426,7 @@ async function buildApprovedRoiCaseWithMatchingLink(params: {
     actorUserId: ownerUserId,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `${MARKER}--${suffix}--start-${randomUUID()}`,
+    access: { capabilities: ['*'], platformRole: null },
   });
   trackEvent(orgId, caseId, 'roi.case_modeling_started');
 
@@ -428,6 +440,7 @@ async function buildApprovedRoiCaseWithMatchingLink(params: {
     actorId: ownerUserId,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `${MARKER}--${suffix}--baseline-${randomUUID()}`,
+    access: { capabilities: ['*'], platformRole: null },
   });
   trackEvent(orgId, caseId, 'roi.baseline_captured');
 
@@ -443,6 +456,7 @@ async function buildApprovedRoiCaseWithMatchingLink(params: {
     actorUserId: ownerUserId,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `${MARKER}--${suffix}--cost-${randomUUID()}`,
+    access: { capabilities: ['*'], platformRole: null },
   });
   trackEvent(orgId, caseId, 'roi.cost_line_added');
 
@@ -459,6 +473,7 @@ async function buildApprovedRoiCaseWithMatchingLink(params: {
     actorUserId: ownerUserId,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `${MARKER}--${suffix}--benefit-${randomUUID()}`,
+    access: { capabilities: ['*'], platformRole: null },
   });
   trackEvent(orgId, caseId, 'roi.benefit_line_added');
 
@@ -469,6 +484,7 @@ async function buildApprovedRoiCaseWithMatchingLink(params: {
     actorUserId: ownerUserId,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `${MARKER}--${suffix}--run-${randomUUID()}`,
+    access: { capabilities: ['*'], platformRole: null },
   });
   trackEvent(orgId, caseId, 'roi.calculation_run_completed');
 
@@ -479,6 +495,7 @@ async function buildApprovedRoiCaseWithMatchingLink(params: {
     actorUserId: ownerUserId,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `${MARKER}--${suffix}--ready-${randomUUID()}`,
+    access: { capabilities: ['*'], platformRole: null },
   });
   trackEvent(orgId, caseId, 'roi.case_ready_for_review');
 
@@ -489,6 +506,7 @@ async function buildApprovedRoiCaseWithMatchingLink(params: {
     actorUserId: ownerUserId,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `${MARKER}--${suffix}--submit-${randomUUID()}`,
+    access: { capabilities: ['*'], platformRole: null },
   });
   trackEvent(orgId, caseId, 'roi.case_submitted_for_approval');
 
@@ -499,6 +517,7 @@ async function buildApprovedRoiCaseWithMatchingLink(params: {
     approverId,
     actorEffectiveRole: 'admin',
     idempotencyKey: `${MARKER}--${suffix}--approve-${randomUUID()}`,
+    access: { capabilities: ['*'], platformRole: null },
   });
   // approveRoiCase is itself a compound command: it freezes the baseline and
   // the economic model (their own events, same transaction) BEFORE writing
@@ -841,6 +860,7 @@ describe('RN-G0 · cross-domain gold-flow (KPI + ROI + outbox as one product)', 
       kpiId: kpiIdA,
       versionId: versionIdA,
       idempotencyKey: `${MARKER}--step1--measure`,
+      access: { capabilities: ['*'], platformRole: null },
     });
     trackEvent(ORG_A, kpiIdA, 'kpi.measurement_recorded');
     trackEvent(ORG_A, deviationCaseIdA, 'kpi.deviation_opened');
@@ -1068,6 +1088,7 @@ describe('RN-G0 · cross-domain gold-flow (KPI + ROI + outbox as one product)', 
         actorUserId: OWNER_A,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `${MARKER}--step6--tracking-${randomUUID()}`,
+        access: { capabilities: ['*'], platformRole: null },
       });
       trackEvent(ORG_A, roiCaseA.caseId, 'roi.tracking_started');
       return outcome.resultingVersion;
@@ -1087,6 +1108,7 @@ describe('RN-G0 · cross-domain gold-flow (KPI + ROI + outbox as one product)', 
       recordedBy: OWNER_A,
       actorEffectiveRole: 'consultant',
       idempotencyKey: `${MARKER}--step6--actual-entry-${randomUUID()}`,
+      access: { capabilities: ['*'], platformRole: null },
     });
     void costEntry;
     trackEvent(ORG_A, roiCaseA.caseId, 'roi.actual_recorded');
@@ -1099,6 +1121,7 @@ describe('RN-G0 · cross-domain gold-flow (KPI + ROI + outbox as one product)', 
       publishedBy: OWNER_A,
       actorEffectiveRole: 'consultant',
       idempotencyKey: `${MARKER}--step6--actual-snapshot-${randomUUID()}`,
+      access: { capabilities: ['*'], platformRole: null },
     });
     trackEvent(ORG_A, roiCaseA.caseId, 'roi.actual_snapshot_published');
     expect(snapshotOutcome.result.totalActualCosts).toBe(1800);
@@ -1239,6 +1262,7 @@ describe('RN-G0 · cross-domain gold-flow (KPI + ROI + outbox as one product)', 
       kpiId: kpiIdB,
       versionId: versionIdB,
       idempotencyKey: `${MARKER}--step8--measure-b`,
+      access: { capabilities: ['*'], platformRole: null },
     });
     trackEvent(ORG_B, kpiIdB, 'kpi.measurement_recorded');
     trackEvent(ORG_B, deviationCaseIdB, 'kpi.deviation_opened');

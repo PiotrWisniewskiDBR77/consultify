@@ -278,6 +278,7 @@ describe('RN-G4 · Point 7+8 — security negatives (foreign tenant, restricted 
       createdBy: OWNER,
       actorEffectiveRole: 'member',
       idempotencyKey: `${MARKER}--create-scorecard-${randomUUID()}`,
+      access: { capabilities: ['*'], platformRole: null },
     });
     scorecardId = scorecardOutcome.result.scorecard.scorecardId;
 
@@ -290,6 +291,7 @@ describe('RN-G4 · Point 7+8 — security negatives (foreign tenant, restricted 
       actorUserId: OWNER,
       actorEffectiveRole: 'member',
       idempotencyKey: `${MARKER}--add-open-${randomUUID()}`,
+      access: { capabilities: ['*'], platformRole: null },
     });
     const addRestricted = await addScorecardItem({
       scorecardId,
@@ -300,6 +302,7 @@ describe('RN-G4 · Point 7+8 — security negatives (foreign tenant, restricted 
       actorUserId: OWNER,
       actorEffectiveRole: 'member',
       idempotencyKey: `${MARKER}--add-restricted-${randomUUID()}`,
+      access: { capabilities: ['*'], platformRole: null },
     });
 
     const draftOutcome = await createReviewSnapshot({
@@ -310,6 +313,7 @@ describe('RN-G4 · Point 7+8 — security negatives (foreign tenant, restricted 
       createdBy: OWNER,
       actorEffectiveRole: 'member',
       idempotencyKey: `${MARKER}--create-snapshot-${randomUUID()}`,
+      access: { capabilities: ['*'], platformRole: null },
     });
     snapshotId = draftOutcome.result.snapshotId;
 
@@ -321,6 +325,7 @@ describe('RN-G4 · Point 7+8 — security negatives (foreign tenant, restricted 
       publishedBy: OWNER,
       actorEffectiveRole: 'member',
       idempotencyKey: `${MARKER}--publish-${randomUUID()}`,
+      access: { capabilities: ['*'], platformRole: null },
     });
     expect(publishOutcome.result.status).toBe('published');
     const publishedKpiIds = publishOutcome.result.items.map((i) => i.kpiId).sort();

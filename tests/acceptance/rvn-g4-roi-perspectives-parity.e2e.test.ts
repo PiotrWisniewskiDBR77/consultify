@@ -226,6 +226,7 @@ describe('RN-G4 · Point 6, ROI leg — individual (getRoiCase) and organization
       createdBy: OWNER,
       actorEffectiveRole: 'consultant',
       idempotencyKey: `${MARKER}--create-${randomUUID()}`,
+      access: { capabilities: ['*'], platformRole: null },
     });
     caseId = createOutcome.result.case.caseId;
 
@@ -236,6 +237,7 @@ describe('RN-G4 · Point 6, ROI leg — individual (getRoiCase) and organization
       actorUserId: OWNER,
       actorEffectiveRole: 'consultant',
       idempotencyKey: `${MARKER}--start-${randomUUID()}`,
+      access: { capabilities: ['*'], platformRole: null },
     });
     await captureOrUpdateBaseline({
       organizationId: ORG_ID,
@@ -247,6 +249,7 @@ describe('RN-G4 · Point 6, ROI leg — individual (getRoiCase) and organization
       actorId: OWNER,
       actorEffectiveRole: 'consultant',
       idempotencyKey: `${MARKER}--baseline-${randomUUID()}`,
+      access: { capabilities: ['*'], platformRole: null },
     });
     const costLineOutcome = await addCostLine({
       caseId,
@@ -260,6 +263,7 @@ describe('RN-G4 · Point 6, ROI leg — individual (getRoiCase) and organization
       actorUserId: OWNER,
       actorEffectiveRole: 'consultant',
       idempotencyKey: `${MARKER}--cost-${randomUUID()}`,
+      access: { capabilities: ['*'], platformRole: null },
     });
     costLineId = costLineOutcome.result.costLineId;
     await addBenefitLine({
@@ -275,6 +279,7 @@ describe('RN-G4 · Point 6, ROI leg — individual (getRoiCase) and organization
       actorUserId: OWNER,
       actorEffectiveRole: 'consultant',
       idempotencyKey: `${MARKER}--benefit-${randomUUID()}`,
+      access: { capabilities: ['*'], platformRole: null },
     });
     await createRoiCalculationRun({
       organizationId: ORG_ID,
@@ -283,6 +288,7 @@ describe('RN-G4 · Point 6, ROI leg — individual (getRoiCase) and organization
       actorUserId: OWNER,
       actorEffectiveRole: 'consultant',
       idempotencyKey: `${MARKER}--run-${randomUUID()}`,
+      access: { capabilities: ['*'], platformRole: null },
     });
     const readyOutcome = await markReadyForReview({
       caseId,
@@ -291,6 +297,7 @@ describe('RN-G4 · Point 6, ROI leg — individual (getRoiCase) and organization
       actorUserId: OWNER,
       actorEffectiveRole: 'consultant',
       idempotencyKey: `${MARKER}--ready-${randomUUID()}`,
+      access: { capabilities: ['*'], platformRole: null },
     });
     const submitOutcome = await submitRoiCaseForApproval({
       caseId,
@@ -299,6 +306,7 @@ describe('RN-G4 · Point 6, ROI leg — individual (getRoiCase) and organization
       actorUserId: OWNER,
       actorEffectiveRole: 'consultant',
       idempotencyKey: `${MARKER}--submit-${randomUUID()}`,
+      access: { capabilities: ['*'], platformRole: null },
     });
     const approveOutcome = await approveRoiCase({
       caseId,
@@ -307,6 +315,7 @@ describe('RN-G4 · Point 6, ROI leg — individual (getRoiCase) and organization
       approverId: APPROVER,
       actorEffectiveRole: 'admin',
       idempotencyKey: `${MARKER}--approve-${randomUUID()}`,
+      access: { capabilities: ['*'], platformRole: null },
     });
     rowVersionAfterApproval = approveOutcome.resultingVersion;
 
@@ -317,6 +326,7 @@ describe('RN-G4 · Point 6, ROI leg — individual (getRoiCase) and organization
       actorUserId: OWNER,
       actorEffectiveRole: 'consultant',
       idempotencyKey: `${MARKER}--tracking-${randomUUID()}`,
+      access: { capabilities: ['*'], platformRole: null },
     });
 
     // Individual perspective.
@@ -353,6 +363,7 @@ describe('RN-G4 · Point 6, ROI leg — individual (getRoiCase) and organization
       recordedBy: OWNER,
       actorEffectiveRole: 'consultant',
       idempotencyKey: `${MARKER}--actual-entry-${randomUUID()}`,
+      access: { capabilities: ['*'], platformRole: null },
     });
 
     const snapshotOutcome = await publishRoiActualSnapshot({
@@ -363,6 +374,7 @@ describe('RN-G4 · Point 6, ROI leg — individual (getRoiCase) and organization
       publishedBy: OWNER,
       actorEffectiveRole: 'consultant',
       idempotencyKey: `${MARKER}--actual-snapshot-${randomUUID()}`,
+      access: { capabilities: ['*'], platformRole: null },
     });
 
     // Individual perspective, re-read fresh — the case's own rowVersion

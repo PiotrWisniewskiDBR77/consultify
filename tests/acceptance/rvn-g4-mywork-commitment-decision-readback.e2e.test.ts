@@ -175,6 +175,7 @@ describe('RN-G4 · Point 4+5 — MyWork obligation triggers the right domain com
       createdBy: ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `${MARKER}--create-program-${randomUUID()}`,
+      access: { capabilities: ['*'], platformRole: null },
     });
     programId = program.result.programId;
     await publishProgram({
@@ -184,6 +185,7 @@ describe('RN-G4 · Point 4+5 — MyWork obligation triggers the right domain com
       actorUserId: ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `${MARKER}--publish-program-${randomUUID()}`,
+      access: { capabilities: ['*'], platformRole: null },
     });
 
     const cycle = await createCycle({
@@ -194,6 +196,7 @@ describe('RN-G4 · Point 4+5 — MyWork obligation triggers the right domain com
       createdBy: ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `${MARKER}--create-cycle-${randomUUID()}`,
+      access: { capabilities: ['*'], platformRole: null },
     });
     cycleId = cycle.result.cycleId;
 
@@ -209,6 +212,7 @@ describe('RN-G4 · Point 4+5 — MyWork obligation triggers the right domain com
       createdBy: OWNER,
       actorEffectiveRole: 'member',
       idempotencyKey: `${MARKER}--create-set-${randomUUID()}`,
+      access: { capabilities: ['*'], platformRole: null },
     });
     setId = set.result.set.setId;
 
@@ -220,6 +224,7 @@ describe('RN-G4 · Point 4+5 — MyWork obligation triggers the right domain com
       createdBy: OWNER,
       actorEffectiveRole: 'member',
       idempotencyKey: `${MARKER}--create-objective-${randomUUID()}`,
+      access: { capabilities: ['*'], platformRole: null },
     });
     objectiveId = objective.result.objectiveId;
   }, 30_000);
@@ -273,6 +278,7 @@ describe('RN-G4 · Point 4+5 — MyWork obligation triggers the right domain com
       createdBy: OWNER,
       actorEffectiveRole: 'member',
       idempotencyKey: `${MARKER}--raise-direct-${randomUUID()}`,
+      access: { capabilities: ['*'], platformRole: null },
     });
     const requestId = raised.result.requestId;
 
@@ -293,6 +299,7 @@ describe('RN-G4 · Point 4+5 — MyWork obligation triggers the right domain com
       actorUserId: MANAGER,
       actorEffectiveRole: 'member',
       idempotencyKey: `${MARKER}--resolve-direct-${randomUUID()}`,
+      access: { capabilities: ['*'], platformRole: null },
     });
     expect(resolveOutcome.result.status).toBe('resolved');
 
@@ -323,6 +330,7 @@ describe('RN-G4 · Point 4+5 — MyWork obligation triggers the right domain com
       createdBy: OWNER,
       actorEffectiveRole: 'member',
       idempotencyKey: `${MARKER}--raise-escalate-${randomUUID()}`,
+      access: { capabilities: ['*'], platformRole: null },
     });
     const requestId = raised.result.requestId;
 
@@ -342,6 +350,7 @@ describe('RN-G4 · Point 4+5 — MyWork obligation triggers the right domain com
       requestedBy: MANAGER,
       actorEffectiveRole: 'member',
       idempotencyKey: `${MARKER}--request-decision-${randomUUID()}`,
+      access: { capabilities: ['*'], platformRole: null },
     });
     const linkId = decisionOutcome.result.decisionLink.linkId;
     const decisionId = decisionOutcome.result.decisionLink.decisionId;
@@ -381,6 +390,7 @@ describe('RN-G4 · Point 4+5 — MyWork obligation triggers the right domain com
         actorUserId: MANAGER,
         actorEffectiveRole: 'member',
         idempotencyKey: `${MARKER}--ack-too-early-${randomUUID()}`,
+        access: { capabilities: ['*'], platformRole: null },
       })
     ).rejects.toThrow(/has not reached a terminal outcome|DECISION_NOT_YET_RESOLVED/i);
 
@@ -410,6 +420,7 @@ describe('RN-G4 · Point 4+5 — MyWork obligation triggers the right domain com
       actorUserId: MANAGER,
       actorEffectiveRole: 'member',
       idempotencyKey: `${MARKER}--ack-real-${randomUUID()}`,
+      access: { capabilities: ['*'], platformRole: null },
     });
     expect(ackOutcome.result.decisionLink.resolutionAcknowledged).toBe(true);
     expect(ackOutcome.result.decisionStatus).toBe('approved');
@@ -451,6 +462,7 @@ describe('RN-G4 · Point 4+5 — MyWork obligation triggers the right domain com
       createdBy: OWNER,
       actorEffectiveRole: 'member',
       idempotencyKey: `${MARKER}--raise-scheduled-${randomUUID()}`,
+      access: { capabilities: ['*'], platformRole: null },
     });
     const requestId = raised.result.requestId;
 
@@ -463,6 +475,7 @@ describe('RN-G4 · Point 4+5 — MyWork obligation triggers the right domain com
       requestedBy: MANAGER,
       actorEffectiveRole: 'member',
       idempotencyKey: `${MARKER}--request-decision-scheduled-${randomUUID()}`,
+      access: { capabilities: ['*'], platformRole: null },
     });
     const decisionId = decisionOutcome.result.decisionLink.decisionId;
 
