@@ -25,6 +25,7 @@ import crosscuttingRoutes from './crosscutting.routes.js';
 import lineageNavigatorRoutes from './lineage-navigator.routes.js';
 import modelsRoutes from './models.routes.js';
 import predictionRoutes from './prediction.routes.js';
+import savedViewsRoutes from './saved-views.routes.js';
 import statementsRoutes from './statements.routes.js';
 import valuationRoutes from './valuation.routes.js';
 import versionsRoutes from './versions.routes.js';
@@ -73,5 +74,8 @@ financeV2Router.use(compareRoutes);
 // comments`) that does not collide with any suffix versionsRoutes/
 // crosscuttingRoutes/lineageNavigatorRoutes already own.
 financeV2Router.use(commentsRoutes);
+// Pakiet ROUTES_EXPOSURE — Saved views (personal/team, shareable token). Own
+// `/saved-views/*` prefix, no collision.
+financeV2Router.use(savedViewsRoutes);
 
 export default financeV2Router;
