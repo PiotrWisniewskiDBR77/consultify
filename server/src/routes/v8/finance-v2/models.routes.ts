@@ -40,6 +40,7 @@ import { Router } from 'express';
 import type { AuthRequest } from '../../../middleware/auth.middleware.js';
 import { getV8Context } from '../../../middleware/v8Auth.middleware.js';
 import {
+  APPROVE_ALLOWED_ROLES,
   approveVersion,
   getArtifact,
   reopenVersion,
@@ -105,6 +106,21 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId, userId, userRole } = getV8Context(req);
     const artifactId = String(req.params.modelId || '');
+    const role = mapOrgRoleToFinanceRole(userRole);
+
+    // P0 fix — ROUTE-LEVEL role gate, independent of and redundant with the
+    // gate inside `approveVersion()` itself (defense-in-depth, same pattern
+    // as `versions.routes.ts`'s `transitions` route relying on
+    // `validateTransition`'s role check while ALSO being a distinct
+    // enforcement point from the service). A caller with a forbidden role is
+    // rejected here before any DB round-trip at all — the service-layer
+    // check below still fires independently for any other caller of
+    // `approveVersion` (there are none in production today, but the
+    // function itself must never rely solely on this route not to be
+    // bypassed by a future second caller).
+    if (!APPROVE_ALLOWED_ROLES.includes(role)) {
+      return res.status(403).json({ error: `Role ${role} may not approve`, code: 'FORBIDDEN' });
+    }
 
     const artifact = await getArtifact(organizationId, artifactId);
     if (!artifact) {
@@ -128,7 +144,7 @@ router.post(
       organizationId,
       businessVersionId: current.business_version_id,
       actorId: userId,
-      role: mapOrgRoleToFinanceRole(userRole),
+      role,
       expectedVersion: expectedVersion ?? current.version,
       idempotencyKey: readIdempotencyKey(req),
     });
@@ -146,7 +162,7 @@ router.post(
             ? 404
             : result.code === 'STATE_PRECONDITION_FAILED'
               ? 409
-              : result.code === 'SELF_APPROVAL_FORBIDDEN'
+              : result.code === 'SELF_APPROVAL_FORBIDDEN' || result.code === 'FORBIDDEN'
                 ? 403
                 : result.code === 'APPROVAL_BLOCKED' || result.code === 'WORKING_REVISION_NOT_FOUND'
                   ? 422
