@@ -99,6 +99,11 @@ const knownTimeBasis = (scenario: PlanScenario | null) =>
     Array.isArray(scenario.periods) &&
     scenario.periods.length
   );
+const planStatusLabel: Record<PlanScenario['status'], string> = {
+  DRAFT: 'Szkic',
+  PUBLISHED: 'Opublikowany',
+  SUPERSEDED: 'Zastąpiony',
+};
 
 const planPresets = [
   'unscheduled',
@@ -527,7 +532,8 @@ export const PlanScenarioSurface: React.FC<Props> = ({
           >
             {rows.map((row) => (
               <option key={row.id} value={row.id}>
-                {row.title} · {row.state} · v{row.version}
+                {row.title} · {planStatusLabel[row.state as PlanScenario['status']]} · v
+                {row.version}
               </option>
             ))}
           </select>

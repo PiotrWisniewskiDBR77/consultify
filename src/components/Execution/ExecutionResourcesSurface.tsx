@@ -27,6 +27,18 @@ const resourcePresets = [
   'team',
   'initiative',
 ] as const;
+const allocationStatusLabel = (value?: string) =>
+  ({
+    PROPOSED: 'Propozycja',
+    REQUESTED: 'Oczekuje na akceptację',
+    ASSIGNEE_ACCEPTED: 'Zaakceptowane przez wykonawcę',
+    CONFIRMED: 'Potwierdzone',
+    CONDITIONALLY_CONFIRMED: 'Potwierdzone warunkowo',
+    DECLINED: 'Odrzucone',
+    ENDED: 'Zakończone',
+  })[value ?? ''] ??
+  value?.toLowerCase().replaceAll('_', ' ') ??
+  'Brak danych';
 const allocationSourceSummary = (item: any) => {
   const refs = [
     ['Dostępność', item.availabilityRef],
@@ -118,7 +130,14 @@ export const ExecutionResourcesSurface = ({
   const columns: TableColumn[] = [
     { id: 'assigneeId', label: 'Osoba', sortable: true, width: '220px' },
     { id: 'taskTitle', label: 'Zadanie', sortable: true, width: '280px' },
-    { id: 'status', label: 'Status', sortable: true, filterable: true, width: '160px' },
+    {
+      id: 'status',
+      label: 'Status',
+      sortable: true,
+      filterable: true,
+      width: '200px',
+      render: (row) => allocationStatusLabel(String(row.status)),
+    },
     { id: 'periodLabel', label: 'Okres', width: '180px' },
     { id: 'demandLabel', label: 'Zapotrzebowanie', width: '150px' },
     { id: 'evidenceLabel', label: 'Dane', width: '140px' },
@@ -298,7 +317,10 @@ export const ExecutionResourcesSurface = ({
                 openLabel="Otwórz przydział"
                 meta={{
                   pills: [
-                    { label: item.status, tone: item.status === 'CONFIRMED' ? 'success' : 'info' },
+                    {
+                      label: allocationStatusLabel(item.status),
+                      tone: item.status === 'CONFIRMED' ? 'success' : 'info',
+                    },
                     { label: item.demand?.knowledgeState || 'UNKNOWN', tone: 'neutral' },
                   ],
                   trailing: <span className="text-xs">v{item.version}</span>,
@@ -410,7 +432,7 @@ export const ExecutionResourcesSurface = ({
             <div>
               <h3 className="font-semibold">Przydział {selected.allocationId}</h3>
               <p className="text-xs text-c-text-muted">
-                {selected.status} · {selected.assigneeId || 'UNKNOWN'}
+                {allocationStatusLabel(selected.status)} · {selected.assigneeId || 'Brak danych'}
               </p>
             </div>
             <button className="btn-secondary" onClick={() => setShowWorkspace(false)}>

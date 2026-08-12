@@ -84,6 +84,8 @@ describe('PlanScenarioSurface', () => {
 
   it('loads the persistent register and opens exact Plan Workbench with Enter', async () => {
     render(<PlanScenarioSurface initiatives={[{ id: 'initiative-1', name: 'Automation' }]} />);
+    expect((await screen.findByLabelText('Active Plan Scenario')).textContent).toContain('Szkic');
+    expect(screen.queryByText(/\bDRAFT\b/)).not.toBeInTheDocument();
     const row = (await screen.findByText('Automation')).closest('tr')!;
     fireEvent.click(row);
     expect(screen.getByText('Plan initiative window')).toBeInTheDocument();

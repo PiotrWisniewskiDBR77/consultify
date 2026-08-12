@@ -81,6 +81,8 @@ describe('PortfolioScenarioSurface', () => {
     const membershipRow = (await screen.findByText('Automation')).closest('tr')!;
     fireEvent.click(membershipRow);
     expect(screen.getByText('Portfolio membership')).toBeInTheDocument();
+    expect(screen.queryAllByText('NOT REQUESTED')).toHaveLength(0);
+    expect(screen.getAllByText('Nie przekazano do decyzji').length).toBeGreaterThan(0);
     await waitFor(() =>
       expect(onCountsChange).toHaveBeenCalledWith(
         expect.objectContaining({ current: 1, included: 1, excluded: 0 })

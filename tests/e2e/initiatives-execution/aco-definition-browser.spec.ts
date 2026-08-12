@@ -473,7 +473,7 @@ test('READY_FOR_DECISION → persistent published Portfolio Scenario without lif
   await page.getByRole('button', { name: 'Publish scenario' }).click();
   await expect(page.getByText(`Scenario Workbench · ${portfolioScenarioId} v2`)).toBeVisible();
   await expect(
-    page.getByRole('region', { name: 'Portfolio Scenario Workbench' }).getByText('PUBLISHED')
+    page.getByRole('region', { name: 'Portfolio Scenario Workbench' }).getByText('Opublikowany')
   ).toBeVisible();
   await expect(page.getByText('Unknown').first()).toBeVisible();
   await page.screenshot({
@@ -1222,21 +1222,21 @@ test('READY_FOR_DECISION → persistent published Portfolio Scenario without lif
       name: new RegExp(`controls-engineer.*${taskId.slice(-8)}`, 'i'),
     })
     .filter({ has: page.getByRole('button', { name: 'Row actions' }) });
-  await expect(allocationRow).toContainText('Proposed');
+  await expect(allocationRow).toContainText('Propozycja');
   await allocationRow.click();
   await page.getByLabel('Allocation rationale').fill('Request exact-window controls capacity.');
   await page.getByRole('button', { name: 'Przekaż do akceptacji' }).click();
-  await expect(allocationRow).toContainText('Requested');
+  await expect(allocationRow).toContainText('Oczekuje na akceptację');
   await allocationRow.click();
   await page.setExtraHTTPHeaders({ 'x-e2e-actor': 'controls-engineer' });
   await page.getByLabel('Allocation rationale').fill('I accept the exact-window assignment.');
   await page.getByRole('button', { name: 'Akceptuj przydział' }).click();
-  await expect(allocationRow).toContainText('Assignee accepted');
+  await expect(allocationRow).toContainText('Zaakceptowane przez wykonawcę');
   await allocationRow.click();
   await page.setExtraHTTPHeaders({ 'x-e2e-actor': 'resource-manager' });
   await page.getByLabel('Allocation rationale').fill('Capacity evidence verified and confirmed.');
   await page.getByRole('button', { name: 'Potwierdź', exact: true }).click();
-  await expect(allocationRow).toContainText('Confirmed');
+  await expect(allocationRow).toContainText('Potwierdzone');
   const allocationReadback = await api(
     'resource-manager',
     `/execution-cases/${executionCaseId}/allocations`

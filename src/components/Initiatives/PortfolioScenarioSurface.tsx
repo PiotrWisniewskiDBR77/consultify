@@ -95,6 +95,27 @@ const portfolioPresets = [
   'duplicates',
 ] as const;
 
+const decisionLabel = (status: string): string => {
+  const labels: Record<string, string> = {
+    NOT_REQUESTED: 'Nie przekazano do decyzji',
+    REQUESTING: 'Przekazywanie do decyzji',
+    PENDING: 'Oczekuje na decyzję',
+    APPROVED: 'Zatwierdzona',
+    CONDITIONALLY_APPROVED: 'Zatwierdzona warunkowo',
+    RETURNED: 'Zwrócona',
+    DEFERRED: 'Odroczona',
+    REJECTED: 'Odrzucona',
+    MERGED: 'Połączona',
+    FAILED: 'Błąd przekazania',
+  };
+  return labels[status] ?? 'Stan nieznany';
+};
+const scenarioStatusLabel: Record<Scenario['status'], string> = {
+  DRAFT: 'Szkic',
+  PUBLISHED: 'Opublikowany',
+  SUPERSEDED: 'Zastąpiony',
+};
+
 export const PortfolioScenarioSurface: React.FC<Props> = ({
   portfolioId,
   initiatives,
@@ -135,7 +156,7 @@ export const PortfolioScenarioSurface: React.FC<Props> = ({
       coverage: membership.coverage.state,
       overlap: membership.overlap.state === 'UNKNOWN' ? 'UNKNOWN' : membership.overlap.value.length,
       demand: membership.roughDemand.state,
-      decision: decisionStatus[membership.initiativeId] ?? 'NOT_REQUESTED',
+      decision: decisionLabel(decisionStatus[membership.initiativeId] ?? 'NOT_REQUESTED'),
       scenario: activeScenario?.scenarioId ?? 'UNKNOWN',
       scenarioVersion: activeScenario?.scenarioVersion ?? 0,
       membership,
@@ -357,7 +378,8 @@ export const PortfolioScenarioSurface: React.FC<Props> = ({
               {!rows.length && <option value="">Brak wariantu</option>}
               {rows.map((row) => (
                 <option key={row.id} value={row.id}>
-                  {row.title} · {row.status} · v{row.version}
+                  {row.title} · {scenarioStatusLabel[row.status as Scenario['status']]} · v
+                  {row.version}
                 </option>
               ))}
             </select>
@@ -538,7 +560,7 @@ export const PortfolioScenarioSurface: React.FC<Props> = ({
             <h3 className="font-semibold">
               Scenario Workbench · {draft.scenarioId} v{draft.scenarioVersion}
             </h3>
-            <span className="text-xs text-c-text-muted">{draft.status}</span>
+            <span className="text-xs text-c-text-muted">{scenarioStatusLabel[draft.status]}</span>
             <div className="ml-auto flex gap-2">
               <button
                 className="btn-ghost"

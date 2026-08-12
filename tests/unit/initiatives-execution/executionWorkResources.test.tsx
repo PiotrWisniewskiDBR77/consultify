@@ -199,5 +199,7 @@ describe('Execution canonical work/resources', () => {
     expect(
       screen.getByRole('region', { name: 'Operational Allocation workspace' })
     ).toBeInTheDocument();
+    expect(screen.getByText(/Propozycja · u1/)).toBeInTheDocument();
+    expect(screen.queryByText(/\bPROPOSED\b/)).not.toBeInTheDocument();
   });
 });
