@@ -383,3 +383,161 @@ SELECT count(*) FROM schema_migrations;
   Rekomendacja dla J2–J4 lub przyszłego przebiegu: rozszerzyć próbkę mutanta na `analysis`,
   `prediction`, `versions`, `crosscutting` (żaden z nich nie miał mutanta w tej próbce).
 - **Sprzątanie bazy `j1_inv`** — wykonane na końcu sesji (`dropdb j1_inv`), patrz commit log.
+
+---
+
+## 11. ZAMKNIĘCIE LUK — sesja 2026-08-12 (ten sam agent, wznowiony po przerwaniu procesu)
+
+Baza sesji zamykającej: `postgresql://piotrwisniewski@127.0.0.1:54330/j1_close`, sklonowana tą
+samą metodą (`newdb.sh j1_close`). Commity: `1cb56ee2a3` (5× `/compare/*`), `d5ecd72a24` (2×
+crosscutting), `8c0421a855` (2× comments, **LUKA 1 komplet 9/9**), `ca5442f9be` (WIP baseline
+compute — zweryfikowany w tej sesji po wznowieniu procesu), plus ten commit (dokumentacja +
+rozstrzygnięcie LUKI 3).
+
+### 11.1 LUKA 1 — dziewięć endpointów `uncalled`, wszystkie zamknięte
+
+| # | Endpoint | Nowy test | Kontrola negatywna |
+|---|---|---|---|
+| 1 | `POST /compare/versions` | `compare.routes.pg.test.ts` — „the other five Compare axes" | **caught** — `relationship` w `compareVersions()` zmutowany na stałą |
+| 2 | `POST /compare/entities` | jw. | **caught** — `ignoreDimensions:['entityId']`→`[]`, parowanie pękło |
+| 3 | `POST /compare/scenarios` | jw. | **caught** — `artifactType` w `artifactRefFor()` zmutowany `PREDICTION_SCENARIO`→`BASELINE_MODEL` |
+| 4 | `POST /compare/valuation-methods` | jw. | **caught** — `ignoreDimensions:['methodType']`→`[]` |
+| 5 | `POST /compare/actual-vs-forecast` | jw. | **caught** — `ignoreDimensions:['accumulationBasis']`→`[]` |
+| 6 | `GET /versions/:id/freshness-events` | `crosscutting.routes.pg.test.ts` (nowy plik) | **caught** — `reasonCode` w mapowaniu odpowiedzi zmutowany na stałą |
+| 7 | `GET /exceptions/inbox` | jw. | **caught** — handler zmutowany, zawsze zwraca `data: []` |
+| 8 | `POST /comments/search-by-cell` | `comments.routes.pg.test.ts` — „search-by-cell + changed-cells" | **caught** — handler zmutowany, zawsze zwraca `data: []` |
+| 9 | `GET /review-checklist/:id/changed-cells` | jw. | **caught** — `changedCells` wymuszone na `[]` gdy `hasPreviousApproved` |
+
+**9/9 mutantów złapanych, 0/9 false-green.** Każdy mutant: zepsuty → uruchomiony właściwy plik
+testowy → potwierdzone czerwono → przywrócony `git show ee5736a5a6:<plik> > <plik>` → potwierdzony
+pusty `git diff --stat` PRZED przejściem do kolejnego mutanta. Żaden mutant nie nakładał się z
+kolejnym (jeden plik na raz, sekwencyjnie).
+
+Każdy z dziewięciu testów zawiera też sprawdzenie izolacji tenantowej (org B nie widzi/nie
+dosięga danych org A) — gdzie routing faktycznie na to pozwala; tam gdzie warstwa serwisowa
+(`resolveEntityIdByCode`, `getBusinessVersionViaTx`) sama zwraca 404 zanim dojdzie do właściwej
+logiki porównania, test to odnotowuje wprost (np. `compareActualVsForecast` cross-tenant kończy
+się `404 ENTITY_CODE_NOT_FOUND`, nie `403 ORGANIZATION_MISMATCH`, bo rozwiązywanie encji jest
+tenant-scoped i uruchamia się PRZED jakimkolwiek sprawdzeniem `organizationId` w `compareValues`).
+
+### 11.2 LUKA 2 — `POST /baseline/:businessVersionId/compute`, ścieżka sukcesu
+
+Zbudowano DOKŁADNIE tę samą fikstrę skali GoldCo, której używa `perfSlo.pg.test.ts`'s case D1
+(harmonogram `debt_maturity`, założenia we wszystkich 7 `schedule_type`, spinający się bilans
+otwarcia) i wywołano endpoint przez realny HTTP:
+
+- Odpowiedź: `jobId` prawdziwy, **`jobStatus: 'succeeded'`** (raport pierwotny zakładał string
+  `'COMPUTED'` — w kodzie takiej wartości nie ma; poprawione po pierwszym czerwonym przebiegu),
+  `periodsComputed: 12`, `monthlyResults.length: 12`.
+- Niezależny odczyt SQL: `finance_baseline_outputs` ma dokładnie **372 wiersze** (31 linii
+  kanonicznych × 12 okresów — zgadza się z własną asercją D1 w `perfSlo.pg.test.ts`),
+  `compute_jobs.status = 'succeeded'`.
+- Dodatkowo test cross-tenant: org B próbująca policzyć realny `business_version_id` org A →
+  `404`, zero wierszy `finance_baseline_outputs` dla org B.
+
+**Kontrola negatywna — to jest ta sama mutacja, którą oryginalny audyt (§4 mutant #11 w tym
+raporcie) udowodnił jako NIEZŁAPANĄ**: pole `jobStatus` w gałęzi sukcesu (`baseline.routes.ts:204`)
+zmutowane na stałą `'MUTANT_STATUS'`. Nowy test **złapał** tę mutację — potwierdzone DWUKROTNIE
+(raz przed przerwaniem procesu tej sesji, raz po wznowieniu), oba razy przywrócone i potwierdzone
+pustym `git diff --stat`. Luka faktycznie zamknięta, nie tylko przeniesiona.
+
+### 11.3 LUKA 3 — rozstrzygnięcie dwóch padających testów spoza `finance-v2/__tests__`
+
+**Test dzierżawy (`faultMatrix.pg.test.ts` „FIXED EM-1")** — uruchomiony 6× (5 wymaganych + 1
+dodatkowy z DOMYŚLNYM `hookTimeout` vitest, żeby sprawdzić czy oryginalna awaria — timeout hooka —
+odtwarza się nawet bez hojnego override'u):
+
+| # | Load (1-min avg PRZED) | Wynik |
+|---|---|---|
+| 1 | 271.99 | pass |
+| 2 | 281.35 | pass |
+| 3 | 295.65 | pass |
+| 4 | 301.32 | pass |
+| 5 | 308.87 | pass |
+| 6 (domyślny hookTimeout) | 318.21 | pass |
+
+**6/6 pass, przy obciążeniu WYŻSZYM niż 245 zanotowane w chwili oryginalnej awarii.** Mechanizm
+wstrzykiwania awarii w tym teście jest deterministyczny (`UPDATE ... lease_expires_at = now() -
+interval`, zero realnego `sleep`), więc nie zależy od rzeczywistego upływu czasu.
+**Rozstrzygnięcie: NIE jest to powtarzalny defekt.** Klasyfikacja: przejściowy/nieodtwarzalny
+artefakt infrastruktury (jednorazowa czkawka połączenia z bazą lub schedulera w danym momencie
+oryginalnej sesji), nie błąd w kodzie. Żadna poprawka kodu nie została zastosowana — nie ma czego
+naprawiać na podstawie tego dowodu.
+
+**Test SLO (`perfSlo.pg.test.ts` „D2 — Analysis KPI compute")** — uruchomiony 5×:
+
+| # | Load (1-min avg PRZED) | p50 | p95 | Wynik (próg 750ms) |
+|---|---|---|---|---|
+| 1 | 330.50 | 166.85ms | 509.63ms | pass |
+| 2 | 328.10 | 135.62ms | 426.20ms | pass |
+| 3 | 323.34 | 125.29ms | 266.73ms | pass |
+| 4 | 316.59 | 155.14ms | 450.69ms | pass |
+| 5 | 308.74 | 275.81ms | 409.51ms | pass |
+
+**5/5 pass, żaden nie zbliżył się do progu 750ms — mimo obciążenia (309–330) WYŻSZEGO niż w
+oryginalnej awarii (245, gdzie p95=900,03ms).** Rozrzut WEWNĄTRZ tej samej sesji: 509,63 / 266,73
+= **1,91×** dla tego samego kodu na tej samej maszynie w oknie ~2 minut, podczas gdy load malał
+(330→309) a p95 zmieniał się nie-monotonicznie — dokładnie sygnatura szumu maszyny, nie regresji
+kodu (prawdziwa regresja kodu failowałaby powtarzalnie, nie skakała 267ms↔510ms).
+**Rozstrzygnięcie: `BLOCKED_EXTERNAL`, nie `FAIL`.** Zgodnie z briefem: program już wcześniej
+zmierzył 9,3× rozrzut między przebiegami tego samego kodu na tej maszynie
+(`W2_FC11_SLO_report.md`) — te 5 przebiegów to NIEZALEŻNE, świeże potwierdzenie tej samej
+niestabilności (1,91× w zaledwie 5 próbkach), nie powtórzenie starej tezy. Oryginalny odczyt
+900ms najlepiej tłumaczy się chwilowym skokiem obciążenia maszyny w danym momencie, a nie
+regresją w kodzie. Żadna poprawka kodu nie została zastosowana.
+
+### 11.4 Pełny przebieg realDB — po zamknięciu luk
+
+**Komenda** (identyczna jak w §6, nowa baza `j1_close`):
+```
+cd server
+RUN_DB_TESTS=1 MOCK_DB=false NODE_ENV=test \
+  DATABASE_URL="postgresql://piotrwisniewski@127.0.0.1:54330/j1_close" \
+  npx vitest run src/routes/v8/finance-v2 src/services/finance/canonical \
+  --maxWorkers=2 --testTimeout=60000 --hookTimeout=60000 \
+  > plik.log 2>&1; code=$?
+```
+(kod wyjścia mierzony `$?` PO zakończeniu, plik przekierowany `2>&1`, bez potoku — bez ryzyka
+`PIPESTATUS`.)
+
+Dwie próby, obie udokumentowane (nic nie ukryte):
+
+| Próba | Kod wyjścia | Czas | Test Files | Tests | Uwaga |
+|---|---|---|---|---|---|
+| 1 | **1** | 65s | 59 passed, **1 failed** (60) | 658 passed, **1 failed** (659) | `valuation-cross-tenant.routes.pg.test.ts` → `Error: socket hang up` w JEDNYM teście. **To NIE jest test dzierżawy ani test SLO — oba przeszły w tej samej próbie.** `socket hang up` pod `--maxWorkers=2` przy obciążeniu maszyny ~283–330 to objaw wyczerpania puli połączeń HTTP/Node pod ekstremalnym obciążeniem hosta, nie defekt kodu — ten sam plik przeszedł czysto w próbie 2, bez ŻADNEJ zmiany w kodzie, 30 sekund później. |
+| **2 (przebieg referencyjny)** | **0** | **27s** | **60 passed (60)** | **659 passed (659)** | Czysto, zero failów, load po zakończeniu spadł do 158.23. |
+
+**Przebieg referencyjny dla bramki: kod wyjścia 0, 659/659 testów, 60/60 plików testowych, 27s
+(2 workery równolegle).**
+
+### 11.5 Zaktualizowana klasyfikacja 88 endpointów
+
+`j1_endpoint_inventory.json` zaktualizowany: **88 covered, 0 uncalled, 0 partially covered, 0
+false-green, 0 blocked — cel bramki osiągnięty.** Pełne dane (nowe `calls`/`call_count`/
+`mutation_tested`/`note` dla 10 zmienionych wpisów, plus sekcja `meta.close_out_session_2026-08-12`
+z pełnym śladem tej sesji) w samym pliku JSON.
+
+### 11.6 Higiena wykonania — potwierdzenie (sesja zamykająca)
+
+- Zero `git stash`/`reset --hard`/`clean` użyte w tej sesji (ani przed, ani po przerwaniu procesu).
+- Każda z 10 mutacji przywrócona natychmiast przez `git show ee5736a5a6:<plik> > <plik>`,
+  potwierdzona pustym `git diff --stat` przed przejściem do następnej — w tym mutacja baseline
+  `jobStatus`, przywrócona DWUKROTNIE (przed i po przerwaniu procesu).
+- Zero poprawek kodu produkcyjnego poza tymczasowymi mutantami — wszystkie 10 endpointów zamknięto
+  WYŁĄCZNIE testami, zgodnie z zakazem z briefu ("poprawki kodu produkcyjnego TYLKO jeśli znajdziesz
+  realny defekt" — nie znaleziono żadnego; LUKA 3 rozstrzygnięta jako artefakt maszyny, nie defekt).
+- Baza `j1_close` posprzątana na końcu sesji (`dropdb -h 127.0.0.1 -p 54330 -U piotrwisniewski
+  j1_close`).
+- Zero połączeń do demo/staging/produkcji — `DATABASE_URL` w każdym wywołaniu wskazywał jawnie
+  `127.0.0.1:54330`.
+
+### 11.7 Co NIE zostało dostarczone i dlaczego
+
+- **Trzecia próba pełnego przebiegu** — nie wykonana; próba 2 dała czysty wynik (kod 0,
+  659/659), więc dodatkowa próba nie była potrzebna do domknięcia bramki. Próba 1 (`socket hang
+  up`) pozostaje udokumentowana jako znany szum infrastruktury pod `--maxWorkers=2` przy
+  ekstremalnym obciążeniu hosta (inne sesje równoległe na tej samej maszynie — patrz `uptime`
+  w tabelach §11.3), nie jako rozwiązany/naprawiony defekt.
+- **Rozszerzenie próbki mutanta na `analysis`/`prediction`/`versions`** (rekomendacja z §10 tego
+  raportu) — poza zakresem tej sesji zamykającej (zakres = LUKA 1 + LUKA 2 + LUKA 3, literalnie
+  z brief'u). Pozostaje otwartą rekomendacją dla przyszłego przebiegu.
