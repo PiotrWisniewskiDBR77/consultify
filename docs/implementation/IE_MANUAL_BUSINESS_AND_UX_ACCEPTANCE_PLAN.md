@@ -2,12 +2,13 @@
 
 Status: `AUTOMATED PASS — logged-in manual demo acceptance NOT VERIFIED`
 
-Automated code candidate under test: `codex/initiatives-execution-final-candidate` at
-`178471b0523421d619b549df1f286f08544aca0d`. The documentation/evidence-only commit
-`fb0e648ce0ac2ed714b9b96f63f7eac01fea8d60` contains the same application code and is the exact
-Railway demo artifact reported by `/api/health.gitSha`; PostgreSQL and Redis are connected. The
-automated acceptance set is green. The logged-in, human-scale manual walkthrough of all nine
-functions remains a separate open gate and must not be inferred from Playwright evidence.
+Candidate branch: `codex/initiatives-execution-final-candidate`. The exact immutable candidate is
+the clean branch HEAD that must equal both `origin/codex/initiatives-execution-final-candidate` and
+Railway demo `/api/health.gitSha` at acceptance time. The signed external deployment receipt stored
+next to the pre-migration rollback backup records that SHA and deployment ID without creating a
+self-referential documentation commit. PostgreSQL and Redis must both be connected. The logged-in,
+human-scale walkthrough of all nine functions remains a separate open gate and must not be inferred
+from Playwright evidence.
 
 Local diagnostic runtime: `http://127.0.0.1:3000` (not acceptance evidence)
 

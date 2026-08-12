@@ -3,17 +3,16 @@
 This log records candidate evidence. `PASS` here does not by itself change a task to `ACCEPTED` and
 does not imply runtime, browser, deployment or release acceptance.
 
-## 2026-08-12 — exact demo candidate `178471b` automated checkpoint
+## 2026-08-12 — final-candidate automated checkpoint
 
 - branch: `codex/initiatives-execution-final-candidate`;
-- tested application-code candidate: `178471b0523421d619b549df1f286f08544aca0d`;
-- exact deployed artifact after adding only this documentation and refreshed evidence:
-  `fb0e648ce0ac2ed714b9b96f63f7eac01fea8d60`;
-- Railway demo deployment: `aed3a7f1-6799-4e6e-a0c6-0bd2836d0cc8`, terminal `SUCCESS`;
+- exact candidate identity is resolved at acceptance time by equality of clean local HEAD, pushed
+  branch HEAD and Railway demo `/api/health.gitSha`;
+- the immutable external receipt beside the rollback backup records exact SHA, deployment ID,
+  health response, test commands and results; storing it outside this Git tree avoids changing the
+  candidate merely to record its own hash;
 - `https://demo.consultify.ai/ping`: `pong`;
-- `https://demo.consultify.ai/api/health`: application `ok`, PostgreSQL connected, Redis connected,
-  exact `gitSha=fb0e648ce0ac2ed714b9b96f63f7eac01fea8d60` after deployment
-  `106d2e31-e943-4185-b54b-f9b7b3a99666` reached `SUCCESS`;
+- `https://demo.consultify.ai/api/health`: application `ok`, PostgreSQL connected, Redis connected;
 - demo migration pre-deploy: 460 runtime files reconciled, 83 approved historical checksum variants
   accepted without rewriting history, 211 legacy NULL rows left explicitly unverifiable, database
   ready before traffic;
