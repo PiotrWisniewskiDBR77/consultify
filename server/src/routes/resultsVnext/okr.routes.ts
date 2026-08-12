@@ -28,6 +28,7 @@ import { randomUUID } from 'node:crypto';
 
 import type { Response } from 'express';
 import { Router } from 'express';
+import { z } from 'zod';
 
 import { verifyToken } from '../../middleware/auth.middleware.js';
 import { demoContextMiddleware } from '../../middleware/demoGuard.middleware.js';
@@ -160,10 +161,12 @@ import {
 import {
   finalScoreOkrSet,
   recordObjectiveReflection,
+  recordOkrReflectionTeresaDraftDisposition,
   OkrReflectionNotFoundError,
   OkrReflectionValidationError,
   OkrSetReflectionRequiredError,
 } from '../../services/resultsVnext/okr/okrReflectionCommands.js';
+import { OKR_REFLECTION_TERESA_DRAFT_DISPOSITIONS } from '../../services/resultsVnext/okr/okrReflectionTypes.js';
 import {
   approveOkrSetManagerReview,
   listOkrSetReviews,
@@ -247,6 +250,27 @@ import {
   RequestOkrDecisionSchema,
   ResolveOkrSupportRequestSchema,
 } from '../../validators/resultsVnextOkr.validators.js';
+
+// ==========================================
+// RN-G6-SRV / Task 3 — route-local body schema for the new
+// recordOkrReflectionTeresaDraftDisposition route below. Declared here
+// rather than added to `resultsVnextOkr.validators.ts` — that file sits
+// outside this pass's own allowlist (same rationale
+// `kpiDeviation.routes.ts`/`kpiScorecard.routes.ts` state in their own B3
+// additions). Deliberately narrower than ROI's sibling
+// `RecordRoiPirTeresaDraftDispositionSchema` (no `finalLessonsText` field —
+// `recordOkrReflectionTeresaDraftDisposition`'s own doc comment states why:
+// OKR's reflection narrative is five separate structured fields with no
+// single "final text" this command could honestly copy, so it only ever
+// writes `teresa_draft_disposition`/`_by`/`_at`).
+// ==========================================
+
+const RecordOkrReflectionTeresaDraftDispositionSchema = z.object({
+  expectedVersion: z.number().int().nonnegative(),
+  disposition: z.enum(OKR_REFLECTION_TERESA_DRAFT_DISPOSITIONS),
+  reason: z.string().max(2000).nullable().optional(),
+  idempotencyKey: z.string().min(1).max(200).optional(),
+});
 
 const router = Router();
 
@@ -2297,6 +2321,63 @@ router.post(
       });
     } catch (err) {
       handleOkrRouteError(res, err, 'recordObjectiveReflection');
+    }
+  }
+);
+
+// ==========================================
+// POST /api/vnext/results/okr/objectives/:objectiveId/reflection/teresa-draft-disposition
+// — recordOkrReflectionTeresaDraftDisposition (RN-G6-SRV / Task 3)
+//
+// Analogous to ROI's `POST .../post-investment-reviews/:pirId/teresa-draft-
+// disposition` (roi.routes.ts, recordRoiPirTeresaDraftDisposition) — the
+// command already existed and was fully covered at the service layer
+// (tests/resultsVnext/okr/okrReflectionTeresaDraft.realdb.test.ts) but had
+// ZERO route wiring anywhere in this file; the front end deliberately did
+// not build a button calling a route that did not exist, and said so in UI
+// text. This closes that gap so a second Teresa-disposition surface (OKR,
+// alongside ROI's PIR one) can be wired up at all.
+// ==========================================
+
+router.post(
+  '/objectives/:objectiveId/reflection/teresa-draft-disposition',
+  validateParams(OkrObjectiveIdParamsSchema),
+  validateBody(RecordOkrReflectionTeresaDraftDispositionSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { objectiveId } = req.params as { objectiveId: string };
+      const body = req.body as import('zod').infer<typeof RecordOkrReflectionTeresaDraftDispositionSchema>;
+      // Same D06-posture existence+visibility pre-check
+      // recordObjectiveReflection uses immediately above — generic 404 for
+      // "not found" and "not visible" alike, never distinguishing the two.
+      const existingObjective = await getObjective({ userId: auth.userId, organizationId: auth.organizationId, objectiveId });
+      if (!existingObjective) {
+        res.status(404).json({ error: 'OKR Objective not found', code: 'NOT_FOUND' });
+        return;
+      }
+      const access = await resolveAccess(req, auth);
+      const outcome = await recordOkrReflectionTeresaDraftDisposition({
+        objectiveId,
+        organizationId: auth.organizationId,
+        expectedVersion: body.expectedVersion,
+        disposition: body.disposition,
+        actorUserId: auth.userId,
+        actorEffectiveRole: auth.role,
+        idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
+        correlationId: getCorrelationId(req),
+        reason: body.reason ?? null,
+        access,
+      });
+      res.status(200).json({
+        outcome: outcome.outcome,
+        eventId: outcome.eventId,
+        resultingVersion: outcome.resultingVersion,
+        reflection: outcome.result,
+      });
+    } catch (err) {
+      handleOkrRouteError(res, err, 'recordOkrReflectionTeresaDraftDisposition');
     }
   }
 );
