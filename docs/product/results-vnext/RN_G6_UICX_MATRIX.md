@@ -713,12 +713,18 @@ uruchomione bezpośrednio przez `npx`, nie przez launch.json/preview_start).
 
 ---
 
-## 10. Sprzątanie na koniec sesji
+## 10. Stan środowiska na koniec tej sesji
 
-Własny backend (`:3101`, PID zmienny — sprawdzony `lsof -iTCP -sTCP:LISTEN`
-przed zamknięciem) i frontend (`:3201`) zatrzymane precyzyjnymi PID-ami po
-zakończeniu przebiegu skryptów. Postgres współdzielony (PID `38806`)
-POZOSTAWIONY URUCHOMIONY — używają go inne tory i sesja właściciela, zgodnie
-z instrukcją „NIE ZABIJAJ". Żadne dane w bazie nie zostały zmienione przez
-tę sesję (tylko odczyty SELECT do ustalenia ID + normalny ruch GET z
-aplikacji).
+Własny backend (port `3101`, PID `11392` w chwili pisania tego zdania,
+sprawdzony `lsof -iTCP -sTCP:LISTEN`) i własny frontend (port `3201`, PID
+`11842`) **POZOSTAWIONE URUCHOMIONE** — na wypadek gdyby orkiestrator albo
+kolejny tor chciał domknąć NIEWYKONANE pozycje z §8 bez ponownego stawiania
+środowiska od zera (uruchomienie zajmuje ~30-60s, patrz runbook §3).
+Zatrzymanie: `kill 11392 11842` (dokładne PID-y, NIE `pkill -f`) — do
+wykonania przez kolejnego operatora tego worktree, jeśli środowisko nie jest
+już potrzebne. Postgres współdzielony (PID `38806`) POZOSTAWIONY
+URUCHOMIONY — używają go inne tory i sesja właściciela, zgodnie z
+instrukcją „NIE ZABIJAJ". Porty `3097`/`3197` (żywa sesja właściciela)
+nietknięte przez cały przebieg. Żadne dane w bazie nie zostały zmienione
+przez tę sesję (tylko odczyty SELECT do ustalenia ID + normalny ruch
+GET/POST-logowania z aplikacji — zero Suspend/Approve/Archive/Submit/Edit).
