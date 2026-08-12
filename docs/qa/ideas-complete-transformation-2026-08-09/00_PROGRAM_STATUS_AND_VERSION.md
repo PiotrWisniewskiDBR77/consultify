@@ -574,3 +574,41 @@ are closed, and E15 has run with a fully-adjudicated NOT CLEAN verdict (not
 silently rounded up to clean). The only remaining item is the **owner's
 visual acceptance**, which no agent may substitute for. See
 `24_FINAL_ACCEPTANCE.md` for the full closure table.
+
+---
+
+## CORRECTION 2026-08-12 (S14-EPICS) — the "single reason" line above is
+## withdrawn; the owner rejected it
+
+The paragraph immediately above, and the epic table further up this file
+("Epic E00–E15 status (per doc-11 §4)", 2026-08-10/QG-06 section — itself
+already several corrections out of date and left here only as history, not
+as this file's current position), both describe this program as one owner
+click-through away from `READY_FOR_CODEX_REVIEW`. **The owner explicitly
+rejected that framing.** An independent epic-by-epic investigation
+(worktree `ideas-streams/s2-locale`, branch `codex/ideas-s14-epics`, no code
+changes — investigation and documentation only) re-established the real
+state of every epic directly against the code at this SHA and found it does
+not hold: **11 of 16 epics carry a verdict of PARTIAL, NOT DONE or NOT
+VERIFIED**, for reasons that have nothing to do with anyone's eyes on a
+screenshot — E01 has no acceptance evidence at all; E03's acceptance has
+never run; E04–E07's own DoD scenarios (not just "wired to the registry")
+have never run; E08/E09/E11 are persistence-proven on an isolated local
+database only, and E08/E09 additionally ship behind default-OFF flags; E10
+has zero real-model Teresa runtime verification; E12 has a permission-model
+gap visual review cannot touch; a newly-confirmed Idea Table kebab defect at
+1280×800 is open (being fixed by a parallel stream); E14's SLOs were never
+measured outside two specific numbers the owner explicitly deferred; and
+E15's regression run is scoped to the Idea Workspace surface, not the full
+repository, with several genuinely open, un-accepted P2/P3 risk rows.
+
+**Full corrected closure table, per-epic evidence, and the corrected
+recommendation:** `24_FINAL_ACCEPTANCE.md` §3, §5, §7, §9, §11 (rewritten by
+the same session). This file's own epic table above (dated 2026-08-10) is
+now superseded by that document, not by this paragraph — treat
+`24_FINAL_ACCEPTANCE.md` as the current epic-status source of truth going
+forward, and this file's table as a historical record of what an earlier
+pass believed.
+
+**Recommendation stays `NOT_READY`** — for the eleven-plus-item list above,
+not for a single owner-acceptance line.
