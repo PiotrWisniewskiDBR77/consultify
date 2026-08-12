@@ -190,7 +190,7 @@ function PredictionWorkspaceInner(props: PredictionWorkspaceProps): React.ReactE
         <EmptyStateInline
           message="Nie można otworzyć tego scenariusza — brak połączenia z realnym rekordem w nowym systemie."
           hint="Ten wiersz nie ma jeszcze odpowiednika w nowym systemie (nie został przeniesiony). Żadne dane nie zostały pobrane."
-          action={{ label: 'Wróć do listy', onClick: () => props.onNavigateBack?.(), showPrefix: false }}
+          action={{ label: 'Wróć do listy', onClick: () => props.onNavigateBack?.(), showPrefix: false, neutralAccent: true }}
         />
       </div>
     );
@@ -201,7 +201,7 @@ function PredictionWorkspaceInner(props: PredictionWorkspaceProps): React.ReactE
         <EmptyStateInline
           message="Nie znaleziono tej wersji scenariusza w nowym systemie."
           hint="Rekord mógł zostać usunięty albo nie masz do niego dostępu. Żadne dane nie zostały pobrane."
-          action={{ label: 'Wróć do listy', onClick: () => props.onNavigateBack?.(), showPrefix: false }}
+          action={{ label: 'Wróć do listy', onClick: () => props.onNavigateBack?.(), showPrefix: false, neutralAccent: true }}
         />
       </div>
     );
@@ -212,7 +212,7 @@ function PredictionWorkspaceInner(props: PredictionWorkspaceProps): React.ReactE
         <EmptyStateInline
           message="Nie udało się sprawdzić tego scenariusza."
           hint={mountCheck.message}
-          action={{ label: 'Spróbuj ponownie', onClick: () => setCheckAttempt((n) => n + 1), showPrefix: false }}
+          action={{ label: 'Spróbuj ponownie', onClick: () => setCheckAttempt((n) => n + 1), showPrefix: false, neutralAccent: true }}
         />
       </div>
     );

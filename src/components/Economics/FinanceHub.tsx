@@ -2999,7 +2999,7 @@ export const FinanceHub: React.FC = () => {
                       label: t('common.backToList', 'Wróć do listy'),
                       onClick: handleShowList,
                       // Nawigacja powrotna, nie tworzenie nowego obiektu — bez "+".
-                      showPrefix: false,
+                      showPrefix: false, neutralAccent: true,
                     }}
                   />
                 </div>

@@ -39,6 +39,20 @@ export interface EmptyStateInlineProps {
      * creation should pass `showPrefix: false`.
      */
     showPrefix?: boolean;
+    /**
+     * Neutralny token akcentowy zamiast domyślnego `text-primary-500`.
+     *
+     * ★ DLACZEGO OPCJONALNE, A NIE BEZWARUNKOWE: `text-primary-500` to w tym repo crimson
+     * `#85182F`, zarezerwowany kanonem (CLAUDE.md #3) dla semantyki krytycznej — użycie go na
+     * linku nawigacyjnym rozmywa sygnał. Naprawa jest więc słuszna WSZĘDZIE, nie tylko w Finance.
+     * Ale zmiana bezwarunkowa dotyka wyglądu ośmiu ekranów poza Finance (KpisSection,
+     * InsightCreatorModal, InsightViewer, CalendarView, HomeView, IdeaProcessFlowTool,
+     * IdeaTableTool), których właściciele o tym nie wiedzą — a sesja jest w trybie kontrolowanego
+     * zamrożenia, gdzie zmiany poza własnym zakresem są zabronione.
+     * Dlatego Finance włącza to jawnie, a rozszerzenie na resztę produktu wymaga osobnej decyzji
+     * właściciela. Patrz zadanie „--c-focus jako kolor tekstu poza Finance".
+     */
+    neutralAccent?: boolean;
   };
   /** Use dashed border style (default: true) */
   dashed?: boolean;
@@ -76,7 +90,7 @@ export const EmptyStateInline: React.FC<EmptyStateInlineProps> = ({
           // `text-c-focus-solid` to ten sam neutralny-akcentowy niebieski token używany dla
           // równoważnych linków-akcji gdzie indziej w tym repo (np. Finance panels:
           // "Zastosuj"/"Otwórz ponownie"/"Kopiuj link").
-          className="mt-2 text-xs font-medium text-c-focus-solid hover:underline transition-colors disabled:opacity-40"
+          className={`mt-2 text-xs font-medium hover:underline transition-colors disabled:opacity-40 ${action.neutralAccent ? 'text-c-focus-solid' : 'text-primary-500'}`}
         >
           {action.showPrefix === false ? action.label : `+ ${action.label}`}
         </button>

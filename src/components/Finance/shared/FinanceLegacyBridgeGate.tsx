@@ -58,8 +58,8 @@ export const FinanceLegacyBridgeGate: React.FC<FinanceLegacyBridgeGateProps> = (
           hint={state.message}
           // ★ NAPRAWA (zaszyty prefiks "+" — patrz `EmptyStateInline.tsx`'s own
           // header comment): "Spróbuj ponownie" nie tworzy nowego obiektu, więc
-          // `showPrefix: false`.
-          action={{ label: 'Spróbuj ponownie', onClick: retry, showPrefix: false }}
+          // `showPrefix: false, neutralAccent: true`.
+          action={{ label: 'Spróbuj ponownie', onClick: retry, showPrefix: false, neutralAccent: true }}
         />
       </div>
     );
@@ -86,7 +86,7 @@ export const FinanceLegacyBridgeGate: React.FC<FinanceLegacyBridgeGateProps> = (
           hint={hint}
           // "Wróć do listy" nie tworzy nowego obiektu — patrz komentarz przy
           // "Spróbuj ponownie" wyżej.
-          action={{ label: 'Wróć do listy', onClick: onBackToList, showPrefix: false }}
+          action={{ label: 'Wróć do listy', onClick: onBackToList, showPrefix: false, neutralAccent: true }}
         />
       </div>
     );
