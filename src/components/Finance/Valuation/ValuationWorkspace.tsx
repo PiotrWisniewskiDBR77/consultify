@@ -19,20 +19,6 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useFinanceFocusMode } from '@/hooks/useFinanceFocusMode';
 import { useFinanceValuationWorkspaceFlag } from '@/hooks/useFinanceValuationWorkspaceFlag';
 import {
-  describeFinanceV2Error,
-  type ValuationAdvisorFindingGeneratedDto,
-  type ValuationAdvisorFindingStoredDto,
-  type ValuationCompareVariantsResultDto,
-  type ValuationLineageDto,
-  type ValuationMethodDto,
-  type ValuationMethodType,
-  type ValuationResultsDto,
-  type ValuationSensitivityGridRawDto,
-  type ValuationVariantDto,
-  type ValuationWaccInputsRawDto,
-  type ValuationWeightedRecommendationDto,
-} from '@/services/api/financeV2.types';
-import {
   createValuationMethod,
   generateValuationAdvisorOutput,
   getFinanceVersionLineage,
@@ -47,10 +33,29 @@ import {
   type UpsertValuationWaccInputsParams,
   type ValuationBasketUpdate,
 } from '@/services/api/financeV2.api';
+import {
+  describeFinanceV2Error,
+  type ValuationAdvisorFindingGeneratedDto,
+  type ValuationAdvisorFindingStoredDto,
+  type ValuationCompareVariantsResultDto,
+  type ValuationLineageDto,
+  type ValuationMethodDto,
+  type ValuationMethodType,
+  type ValuationResultsDto,
+  type ValuationSensitivityGridRawDto,
+  type ValuationVariantDto,
+  type ValuationWaccInputsRawDto,
+  type ValuationWeightedRecommendationDto,
+} from '@/services/api/financeV2.types';
 
 import { FinanceErrorBoundary } from '../shared/FinanceErrorBoundary';
 import { FinanceWorkspaceBar } from '../shared/FinanceWorkspaceBar';
-import { ENABLEMENT_ALWAYS, type WorkspaceBarConfig, type WorkspaceBarEvaluationContext, type WorkspaceBarViewStateKind } from '../shared/financeWorkspaceBar.contract';
+import {
+  ENABLEMENT_ALWAYS,
+  type WorkspaceBarConfig,
+  type WorkspaceBarEvaluationContext,
+  type WorkspaceBarViewStateKind,
+} from '../shared/financeWorkspaceBar.contract';
 import { AdvisorStep } from './steps/AdvisorStep';
 import { AssumptionsStep } from './steps/AssumptionsStep';
 import { ExportStep } from './steps/ExportStep';
@@ -63,7 +68,15 @@ import { SourceStep } from './steps/SourceStep';
 // The seven canonical steps, in order — never reorderable by a caller.
 // ---------------------------------------------------------------------------
 
-export const VALUATION_STEP_IDS = ['source', 'assumptions', 'methods', 'results', 'sensitivity', 'advisor', 'export'] as const;
+export const VALUATION_STEP_IDS = [
+  'source',
+  'assumptions',
+  'methods',
+  'results',
+  'sensitivity',
+  'advisor',
+  'export',
+] as const;
 export type ValuationStepId = (typeof VALUATION_STEP_IDS)[number];
 
 const STEP_LABELS: Record<ValuationStepId, string> = {
@@ -131,7 +144,13 @@ export function ValuationWorkspace(props: ValuationWorkspaceProps): React.ReactE
 }
 
 function ValuationWorkspaceInner(props: ValuationWorkspaceProps): React.ReactElement {
-  const { businessVersionId, api = REAL_VALUATION_WORKSPACE_API, initialStepId = 'source', onNavigateBack = () => {}, role = 'preparer' } = props;
+  const {
+    businessVersionId,
+    api = REAL_VALUATION_WORKSPACE_API,
+    initialStepId = 'source',
+    onNavigateBack = () => {},
+    role = 'preparer',
+  } = props;
 
   const [activeStep, setActiveStep] = useState<ValuationStepId>(initialStepId);
   const [variant, setVariant] = useState<ValuationVariantDto | null>(null);
@@ -139,9 +158,14 @@ function ValuationWorkspaceInner(props: ValuationWorkspaceProps): React.ReactEle
 
   const [lineage, setLineage] = useState<ValuationLineageDto | null>(null);
   const [wacc, setWacc] = useState<ValuationWaccInputsRawDto | null>(null);
-  const [methodsData, setMethodsData] = useState<{ methods: ValuationMethodDto[]; weightedRecommendation: ValuationWeightedRecommendationDto } | null>(null);
+  const [methodsData, setMethodsData] = useState<{
+    methods: ValuationMethodDto[];
+    weightedRecommendation: ValuationWeightedRecommendationDto;
+  } | null>(null);
   const [results, setResults] = useState<ValuationResultsDto | null>(null);
-  const [advisorFindings, setAdvisorFindings] = useState<(ValuationAdvisorFindingGeneratedDto | ValuationAdvisorFindingStoredDto)[] | null>(null);
+  const [advisorFindings, setAdvisorFindings] = useState<
+    (ValuationAdvisorFindingGeneratedDto | ValuationAdvisorFindingStoredDto)[] | null
+  >(null);
 
   const [reloadNonce, setReloadNonce] = useState(0);
 
@@ -168,15 +192,30 @@ function ValuationWorkspaceInner(props: ValuationWorkspaceProps): React.ReactEle
   useEffect(() => {
     let cancelled = false;
     if (activeStep === 'source') {
-      api.getFinanceVersionLineage(businessVersionId).then((l) => !cancelled && setLineage(l)).catch(() => undefined);
+      api
+        .getFinanceVersionLineage(businessVersionId)
+        .then((l) => !cancelled && setLineage(l))
+        .catch(() => undefined);
     } else if (activeStep === 'assumptions') {
-      api.getValuationWaccInputs(businessVersionId).then((w) => !cancelled && setWacc(w)).catch(() => !cancelled && setWacc(null));
+      api
+        .getValuationWaccInputs(businessVersionId)
+        .then((w) => !cancelled && setWacc(w))
+        .catch(() => !cancelled && setWacc(null));
     } else if (activeStep === 'methods' || activeStep === 'sensitivity') {
-      api.listValuationMethods(businessVersionId).then((m) => !cancelled && setMethodsData(m)).catch(() => undefined);
+      api
+        .listValuationMethods(businessVersionId)
+        .then((m) => !cancelled && setMethodsData(m))
+        .catch(() => undefined);
     } else if (activeStep === 'results') {
-      api.getValuationResults(businessVersionId).then((r) => !cancelled && setResults(r)).catch(() => undefined);
+      api
+        .getValuationResults(businessVersionId)
+        .then((r) => !cancelled && setResults(r))
+        .catch(() => undefined);
     } else if (activeStep === 'advisor') {
-      api.listValuationAdvisorOutputs(businessVersionId).then((f) => !cancelled && setAdvisorFindings(f)).catch(() => undefined);
+      api
+        .listValuationAdvisorOutputs(businessVersionId)
+        .then((f) => !cancelled && setAdvisorFindings(f))
+        .catch(() => undefined);
     }
     return () => {
       cancelled = true;
@@ -197,7 +236,11 @@ function ValuationWorkspaceInner(props: ValuationWorkspaceProps): React.ReactEle
       source: lineage ? (lineage.ancestors.length > 0 ? 'ready' : 'blocked') : null,
       assumptions: wacc ? 'ready' : null,
       methods: methodsData ? (readyMethods > 0 ? 'ready' : 'incomplete') : null,
-      results: results ? (results.headlineEnterpriseValue.value !== null ? 'ready' : 'incomplete') : null,
+      results: results
+        ? results.headlineEnterpriseValue.value !== null
+          ? 'ready'
+          : 'incomplete'
+        : null,
       sensitivity: null, // computed lazily inside SensitivityStep (needs a method selection first)
       advisor: advisorFindings ? (advisorFindings.length > 0 ? 'ready' : 'not-configured') : null,
       export: 'not-applicable', // no dedicated export endpoint exists in B3 at this base SHA — see report
@@ -206,16 +249,36 @@ function ValuationWorkspaceInner(props: ValuationWorkspaceProps): React.ReactEle
 
   const config: WorkspaceBarConfig = useMemo(() => {
     const name = variant?.name ?? 'Wycena przedsiębiorstwa';
-    const status = (variant?.status as WorkspaceBarEvaluationContext['status'] | undefined) ?? 'DRAFT';
-    const freshness = (variant?.freshness as WorkspaceBarConfig['identity']['freshness'] | undefined) ?? 'NEVER_COMPUTED';
+    const status =
+      (variant?.status as WorkspaceBarEvaluationContext['status'] | undefined) ?? 'DRAFT';
+    const freshness =
+      (variant?.freshness as WorkspaceBarConfig['identity']['freshness'] | undefined) ??
+      'NEVER_COMPUTED';
     return {
       moduleId: 'valuation',
       artifactType: 'VALUATION_CASE',
       identity: {
-        artifactRef: { artifactType: 'VALUATION_CASE', businessVersionId, artifactId: businessVersionId },
-        back: { targetListRoute: '/finance/valuation', label: { key: 'back', pl: 'Wróć do listy' } },
-        name: { value: name, editable: false, editableBlockedReason: 'INSUFFICIENT_ROLE', maxChars: 120, layoutBudgetChars: 60 },
-        version: { label: variant ? `v${variant.versionNo}` : 'v—', businessVersionId, hasUncommittedWorkingRevision: false },
+        artifactRef: {
+          artifactType: 'VALUATION_CASE',
+          businessVersionId,
+          artifactId: businessVersionId,
+        },
+        back: {
+          targetListRoute: '/finance/valuation',
+          label: { key: 'back', pl: 'Wróć do listy' },
+        },
+        name: {
+          value: name,
+          editable: false,
+          editableBlockedReason: 'INSUFFICIENT_ROLE',
+          maxChars: 120,
+          layoutBudgetChars: 60,
+        },
+        version: {
+          label: variant ? `v${variant.versionNo}` : 'v—',
+          businessVersionId,
+          hasUncommittedWorkingRevision: false,
+        },
         status,
         freshness,
         contextFields: ['type', 'source'],
@@ -225,7 +288,15 @@ function ValuationWorkspaceInner(props: ValuationWorkspaceProps): React.ReactEle
         views: VALUATION_STEP_IDS.map((id) => ({
           id,
           label: { key: `valuation.step.${id}`, pl: STEP_LABELS[id] },
-          state: stepState[id] ? { kind: stepState[id] as WorkspaceBarViewStateKind, label: { key: `valuation.step.${id}.state`, pl: stepStateLabel(stepState[id] as WorkspaceBarViewStateKind) } } : null,
+          state: stepState[id]
+            ? {
+                kind: stepState[id] as WorkspaceBarViewStateKind,
+                label: {
+                  key: `valuation.step.${id}.state`,
+                  pl: stepStateLabel(stepState[id] as WorkspaceBarViewStateKind),
+                },
+              }
+            : null,
         })),
         activeViewId: activeStep,
         placement: 'separate-row', // 7 steps > WORKSPACE_BAR_INLINE_VIEW_LIMIT (2)
@@ -279,7 +350,9 @@ function ValuationWorkspaceInner(props: ValuationWorkspaceProps): React.ReactEle
   }
 
   async function handleGenerateAdvisor(): Promise<void> {
-    const generated = await api.generateValuationAdvisorOutput(businessVersionId, { persist: true });
+    const generated = await api.generateValuationAdvisorOutput(businessVersionId, {
+      persist: true,
+    });
     setAdvisorFindings(generated.findings);
   }
 
@@ -288,18 +361,28 @@ function ValuationWorkspaceInner(props: ValuationWorkspaceProps): React.ReactEle
       <FinanceWorkspaceBar
         config={config}
         evaluationContext={evaluationContext}
-        contextValues={{ type: 'Wycena przedsiębiorstwa', source: lineage?.ancestors[0]?.sourceVersionId ?? 'nie połączono' }}
+        contextValues={{
+          type: 'Wycena przedsiębiorstwa',
+          source: lineage?.ancestors[0]?.sourceVersionId ?? 'nie połączono',
+        }}
         onNavigateBack={onNavigateBack}
         onSelectView={(viewId) => setActiveStep(viewId as ValuationStepId)}
         onPrimaryAction={refreshActiveStep}
         onLifecycleTransition={() => {}}
         onMoreItem={() => {}}
         onEnterFocusMode={() => focusMode.enter('fullscreen.toggle', 'toggle-control')}
-        onCommitRename={async () => ({ ok: false, message: 'Zmiana nazwy wariantu wyceny nie jest częścią tego pakietu.' })}
+        onCommitRename={async () => ({
+          ok: false,
+          message: 'Zmiana nazwy wariantu wyceny nie jest częścią tego pakietu.',
+        })}
       />
 
       {variantError && !focusMode.active && (
-        <div role="alert" className="mx-6 mt-4 rounded-lg border border-c-danger/30 bg-c-danger/10 px-4 py-2 text-sm text-c-danger" data-testid="valuation-variant-error">
+        <div
+          role="alert"
+          className="mx-6 mt-4 rounded-lg border border-c-danger/30 bg-c-danger/10 px-4 py-2 text-sm text-c-danger"
+          data-testid="valuation-variant-error"
+        >
           {variantError}
         </div>
       )}
@@ -309,13 +392,38 @@ function ValuationWorkspaceInner(props: ValuationWorkspaceProps): React.ReactEle
             after a crash must remount a clean boundary, not keep showing the previous step's
             fallback UI forever. Without this key, React reuses the same class-component
             instance across steps and `hasError` would never reset on navigation. */}
-        <FinanceErrorBoundary key={activeStep} documentLabel={`Wycena — ${STEP_LABELS[activeStep]}`} onRetry={refreshActiveStep} onBackToList={onNavigateBack}>
-          {activeStep === 'source' && <SourceStep businessVersionId={businessVersionId} variant={variant} lineage={lineage} />}
+        <FinanceErrorBoundary
+          key={activeStep}
+          documentLabel={`Wycena — ${STEP_LABELS[activeStep]}`}
+          onRetry={refreshActiveStep}
+          onBackToList={onNavigateBack}
+        >
+          {activeStep === 'source' && (
+            <SourceStep businessVersionId={businessVersionId} variant={variant} lineage={lineage} />
+          )}
           {activeStep === 'assumptions' && <AssumptionsStep wacc={wacc} onSave={handleSaveWacc} />}
-          {activeStep === 'methods' && <MethodsWeightsStep methodsData={methodsData} onCreateMethod={handleCreateMethod} onSaveBasket={handleSaveBasket} />}
+          {activeStep === 'methods' && (
+            <MethodsWeightsStep
+              methodsData={methodsData}
+              onCreateMethod={handleCreateMethod}
+              onSaveBasket={handleSaveBasket}
+            />
+          )}
           {activeStep === 'results' && <ResultsStep results={results} />}
-          {activeStep === 'sensitivity' && <SensitivityStep businessVersionId={businessVersionId} methodsData={methodsData} getGrid={api.getValuationSensitivityGrid} />}
-          {activeStep === 'advisor' && <AdvisorStep findings={advisorFindings} status={config.identity.status} onGenerate={handleGenerateAdvisor} />}
+          {activeStep === 'sensitivity' && (
+            <SensitivityStep
+              businessVersionId={businessVersionId}
+              methodsData={methodsData}
+              getGrid={api.getValuationSensitivityGrid}
+            />
+          )}
+          {activeStep === 'advisor' && (
+            <AdvisorStep
+              findings={advisorFindings}
+              status={config.identity.status}
+              onGenerate={handleGenerateAdvisor}
+            />
+          )}
           {activeStep === 'export' && <ExportStep />}
         </FinanceErrorBoundary>
       </main>

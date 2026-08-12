@@ -11,16 +11,20 @@
 import React from 'react';
 
 import {
-  BusinessVersionStatusValues,
+  type BusinessVersionStatus,
   businessVersionStatusLabel,
+  BusinessVersionStatusValues,
   describeFinanceV2Error,
   valuationAdvisorConfidenceLabel,
-  type BusinessVersionStatus,
   type ValuationAdvisorFindingGeneratedDto,
   type ValuationAdvisorFindingStoredDto,
 } from '@/services/api/financeV2.types';
 
-import { groupAdvisorFindingsByKind, normalizeAdvisorFinding, type ValuationAdvisorFindingView } from '../valuationMath';
+import {
+  groupAdvisorFindingsByKind,
+  normalizeAdvisorFinding,
+  type ValuationAdvisorFindingView,
+} from '../valuationMath';
 
 export interface AdvisorStepProps {
   findings: (ValuationAdvisorFindingGeneratedDto | ValuationAdvisorFindingStoredDto)[] | null;
@@ -72,15 +76,15 @@ export function AdvisorStep(props: AdvisorStepProps): React.ReactElement {
     <div className="max-w-5xl space-y-4" data-testid="valuation-advisor-step">
       <h2 className="text-sm font-semibold text-c-text">Doradca wyceny</h2>
       <p className="text-xs text-c-text-muted">
-        Doradca odczytuje dane, formułuje fakty i hipotezy oraz wskazuje dowody — <strong>nie zatwierdza decyzji</strong>{' '}
-        i nie zastępuje zatwierdzenia przez człowieka. Działa wyłącznie na świeżej, jeszcze niezatwierdzonej wersji
-        kandydackiej.
+        Doradca odczytuje dane, formułuje fakty i hipotezy oraz wskazuje dowody —{' '}
+        <strong>nie zatwierdza decyzji</strong> i nie zastępuje zatwierdzenia przez człowieka.
+        Działa wyłącznie na świeżej, jeszcze niezatwierdzonej wersji kandydackiej.
       </p>
 
       {!canGenerate && (
         <p role="alert" className="text-xs text-c-warning" data-testid="advisor-blocked-status">
-          Ta wersja ma status „{statusLabel(status)}" — Doradca nie generuje nowych wniosków dla wersji zatwierdzonych/terminalnych
-          (DEC-FIN-006).
+          Ta wersja ma status „{statusLabel(status)}" — Doradca nie generuje nowych wniosków dla
+          wersji zatwierdzonych/terminalnych (DEC-FIN-006).
         </p>
       )}
 
@@ -119,7 +123,11 @@ export function AdvisorStep(props: AdvisorStepProps): React.ReactElement {
             <p className="text-xs font-semibold text-c-text">{KIND_LABELS[kind]}</p>
             <ul className="mt-1 space-y-2">
               {grouped[kind].map((f) => (
-                <li key={f.id} className="rounded-lg border border-c-border-subtle bg-c-surface p-3" data-testid="advisor-finding">
+                <li
+                  key={f.id}
+                  className="rounded-lg border border-c-border-subtle bg-c-surface p-3"
+                  data-testid="advisor-finding"
+                >
                   <div className="flex items-center gap-2">
                     <span
                       className={`rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase ${f.isFactual ? 'bg-c-text/10 text-c-text' : 'bg-c-warning/10 text-c-warning'}`}
@@ -128,14 +136,18 @@ export function AdvisorStep(props: AdvisorStepProps): React.ReactElement {
                       {f.isFactual ? 'Fakt' : 'Hipoteza / ocena'}
                     </span>
                     {f.confidence && (
-                      <span className="text-[10px] text-c-text-muted">Pewność: {valuationAdvisorConfidenceLabel(f.confidence)}</span>
+                      <span className="text-[10px] text-c-text-muted">
+                        Pewność: {valuationAdvisorConfidenceLabel(f.confidence)}
+                      </span>
                     )}
                     {f.isFrozen && <span className="text-[10px] text-c-text-muted">Zamrożone</span>}
                     {f.isStale && <span className="text-[10px] text-c-warning">Nieaktualne</span>}
                   </div>
                   <p className="mt-1 text-sm text-c-text">{f.title}</p>
                   <p className="mt-0.5 text-xs text-c-text-muted">{f.narrative}</p>
-                  <p className="mt-1 text-[10px] text-c-text-muted">Dowody: {f.evidencePointerCount}</p>
+                  <p className="mt-1 text-[10px] text-c-text-muted">
+                    Dowody: {f.evidencePointerCount}
+                  </p>
                 </li>
               ))}
             </ul>

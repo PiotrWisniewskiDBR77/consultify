@@ -12,13 +12,22 @@
  */
 import React, { useState } from 'react';
 
-import { describeFinanceV2Error, valuationMethodTypeLabel, type ValuationMethodDto, type ValuationSensitivityGridRawDto, type ValuationWeightedRecommendationDto } from '@/services/api/financeV2.types';
+import {
+  describeFinanceV2Error,
+  type ValuationMethodDto,
+  valuationMethodTypeLabel,
+  type ValuationSensitivityGridRawDto,
+  type ValuationWeightedRecommendationDto,
+} from '@/services/api/financeV2.types';
 
 import { assertSensitivityGridIntegrity } from '../valuationMath';
 
 export interface SensitivityStepProps {
   businessVersionId: string;
-  methodsData: { methods: ValuationMethodDto[]; weightedRecommendation: ValuationWeightedRecommendationDto } | null;
+  methodsData: {
+    methods: ValuationMethodDto[];
+    weightedRecommendation: ValuationWeightedRecommendationDto;
+  } | null;
   getGrid: (methodId: string, gridLabel: string) => Promise<ValuationSensitivityGridRawDto>;
 }
 
@@ -70,7 +79,9 @@ export function SensitivityStep(props: SensitivityStepProps): React.ReactElement
 
   return (
     <div className="max-w-5xl space-y-4" data-testid="valuation-sensitivity-step">
-      <h2 className="text-sm font-semibold text-c-text">Wrażliwość — WACC × wzrost terminalny (5×5)</h2>
+      <h2 className="text-sm font-semibold text-c-text">
+        Wrażliwość — WACC × wzrost terminalny (5×5)
+      </h2>
 
       <div className="flex flex-wrap items-end gap-2">
         <label className="flex flex-col gap-1 text-xs text-c-text-secondary">
@@ -123,14 +134,19 @@ export function SensitivityStep(props: SensitivityStepProps): React.ReactElement
             className={`rounded-lg border px-3 py-2 text-xs ${integrity.ok ? 'border-c-success/30 bg-c-success/10 text-c-success' : 'border-c-danger/30 bg-c-danger/10 text-c-danger'}`}
           >
             {!integrity.shape.ok && integrity.shape.message}
-            {integrity.shape.ok && integrity.monotonicityViolation && `Naruszenie monotoniczności: ${integrity.monotonicityViolation}`}
+            {integrity.shape.ok &&
+              integrity.monotonicityViolation &&
+              `Naruszenie monotoniczności: ${integrity.monotonicityViolation}`}
             {integrity.ok && 'Siatka 5×5: kształt i monotoniczność OK.'}
           </div>
 
           {/* §27-exempt: numeryczna macierz 5x5 (WACC x g), nie lista rekordów — docs/ui-standards/DOKTRYNA_TABELA_NIE_EXCEL.md */}
-          {integrity.ok && (
+          {integrity.ok &&
+            // prettier-ignore
             <table className="border-collapse text-center text-xs" data-testid="sensitivity-grid-table" data-canon="§27-exempt">
-              <caption className="sr-only">Siatka wrażliwości EV: wiersze = wzrost terminalny g, kolumny = WACC</caption>
+              <caption className="sr-only">
+                Siatka wrażliwości EV: wiersze = wzrost terminalny g, kolumny = WACC
+              </caption>
               <thead>
                 <tr>
                   <th className="p-1 text-c-text-muted">g \ WACC</th>
@@ -147,7 +163,9 @@ export function SensitivityStep(props: SensitivityStepProps): React.ReactElement
               <tbody>
                 {[1, 2, 3, 4, 5].map((r) => (
                   <tr key={r}>
-                    <th className="p-1 text-c-text-muted">{grid.cells.find((x) => x.row_index === r)?.row_axis_value ?? r}</th>
+                    <th className="p-1 text-c-text-muted">
+                      {grid.cells.find((x) => x.row_index === r)?.row_axis_value ?? r}
+                    </th>
                     {[1, 2, 3, 4, 5].map((c) => {
                       const cell = grid.cells.find((x) => x.row_index === r && x.col_index === c);
                       return (
@@ -163,8 +181,7 @@ export function SensitivityStep(props: SensitivityStepProps): React.ReactElement
                   </tr>
                 ))}
               </tbody>
-            </table>
-          )}
+            </table>}
         </>
       )}
     </div>

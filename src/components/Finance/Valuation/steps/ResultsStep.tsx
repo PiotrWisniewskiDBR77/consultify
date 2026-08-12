@@ -12,8 +12,8 @@ import React from 'react';
 
 import { valuationMethodTypeLabel, type ValuationResultsDto } from '@/services/api/financeV2.types';
 
-import { ValuationValueCell } from '../ValuationValueCell';
 import { computeMethodResultRange } from '../valuationMath';
+import { ValuationValueCell } from '../ValuationValueCell';
 
 export interface ResultsStepProps {
   results: ValuationResultsDto | null;
@@ -66,11 +66,13 @@ export function ResultsStep(props: ResultsStepProps): React.ReactElement {
           Przedział wyników metod: <span className="font-mono">{fmt(range.min as number)}</span> –{' '}
           <span className="font-mono">{fmt(range.max as number)}</span>
           {range.spreadPct !== null && ` (rozrzut ${range.spreadPct.toFixed(1)}%)`}
-          {range.hasMaterialDisagreement && ' — istotna rozbieżność między metodami, nie traktuj nagłówka jako pewnika.'}
+          {range.hasMaterialDisagreement &&
+            ' — istotna rozbieżność między metodami, nie traktuj nagłówka jako pewnika.'}
         </div>
       )}
 
       {/* §27-exempt: wewnętrzna tabela breakdown metod wyceny w artefakcie Wyniki, nie ekran listowy modułu — docs/ui-standards/DOKTRYNA_TABELA_NIE_EXCEL.md */}
+      {/* prettier-ignore */}
       <table className="w-full text-left text-xs" data-testid="results-methods-table" data-canon="§27-exempt">
         <thead>
           <tr className="border-b border-c-border-subtle text-c-text-muted">
@@ -87,7 +89,9 @@ export function ResultsStep(props: ResultsStepProps): React.ReactElement {
               <td className="py-1.5 pr-2">
                 <ValuationValueCell status={m.result.status} valueDecimal={m.result.valueDecimal} />
               </td>
-              <td className="py-1.5 pr-2 text-c-text-muted">{m.isInRecommendationBasket ? 'Tak' : 'Nie'}</td>
+              <td className="py-1.5 pr-2 text-c-text-muted">
+                {m.isInRecommendationBasket ? 'Tak' : 'Nie'}
+              </td>
               <td className="py-1.5 pr-2 text-c-text-muted">{m.weightPct ?? '—'}</td>
             </tr>
           ))}
@@ -106,13 +110,20 @@ export function ResultsStep(props: ResultsStepProps): React.ReactElement {
       )}
 
       {results.bridge && (
-        <div className="rounded-xl border border-c-border-subtle bg-c-surface p-4" data-testid="results-bridge-summary">
+        <div
+          className="rounded-xl border border-c-border-subtle bg-c-surface p-4"
+          data-testid="results-bridge-summary"
+        >
           <p className="text-xs font-semibold text-c-text">Most EV → Equity</p>
           <dl className="mt-1 grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-c-text-muted">
             <dt>EV</dt>
-            <dd className="text-c-text">{fmtDecimalString(results.bridge.header.enterprise_value_decimal)}</dd>
+            <dd className="text-c-text">
+              {fmtDecimalString(results.bridge.header.enterprise_value_decimal)}
+            </dd>
             <dt>Equity Value</dt>
-            <dd className="text-c-text">{fmtDecimalString(results.bridge.header.equity_value_decimal)}</dd>
+            <dd className="text-c-text">
+              {fmtDecimalString(results.bridge.header.equity_value_decimal)}
+            </dd>
           </dl>
         </div>
       )}
@@ -125,7 +136,9 @@ export function ResultsStep(props: ResultsStepProps): React.ReactElement {
   );
 }
 
-function headlineSourceLabel(source: ValuationResultsDto['headlineEnterpriseValue']['source']): string {
+function headlineSourceLabel(
+  source: ValuationResultsDto['headlineEnterpriseValue']['source']
+): string {
   switch (source) {
     case 'BRIDGE':
       return 'Most EV→Equity (zapisany)';

@@ -11,8 +11,11 @@
  */
 import React, { useState } from 'react';
 
-import { describeFinanceV2Error, type ValuationWaccInputsRawDto } from '@/services/api/financeV2.types';
 import type { UpsertValuationWaccInputsParams } from '@/services/api/financeV2.api';
+import {
+  describeFinanceV2Error,
+  type ValuationWaccInputsRawDto,
+} from '@/services/api/financeV2.types';
 
 import { assertWaccConsistency } from '../valuationMath';
 
@@ -50,9 +53,19 @@ export function AssumptionsStep(props: AssumptionsStepProps): React.ReactElement
   // real DCF run exists, the honest comparison is "does WACC's own declared convention satisfy
   // the engine's fixed NOMINAL/POST_TAX requirement", using WACC's own currency as the target
   // (a currency MISMATCH can only be detected once an actual FCFF currency is known).
-  const consistency = assertWaccConsistency({ nominalOrReal: draft.nominalOrReal, preOrPostTax: draft.preOrPostTax, currency: draft.currency }, draft.currency);
+  const consistency = assertWaccConsistency(
+    {
+      nominalOrReal: draft.nominalOrReal,
+      preOrPostTax: draft.preOrPostTax,
+      currency: draft.currency,
+    },
+    draft.currency
+  );
 
-  function setField<K extends keyof UpsertValuationWaccInputsParams>(key: K, value: UpsertValuationWaccInputsParams[K]): void {
+  function setField<K extends keyof UpsertValuationWaccInputsParams>(
+    key: K,
+    value: UpsertValuationWaccInputsParams[K]
+  ): void {
     setDraft((d) => ({ ...d, [key]: value }));
   }
 
@@ -125,14 +138,17 @@ export function AssumptionsStep(props: AssumptionsStepProps): React.ReactElement
             data-testid="wacc-risk-free-rate"
             className="rounded-md border border-c-border-subtle bg-c-surface px-2 py-1 text-sm text-c-text"
             value={draft.riskFreeRatePct ?? ''}
-            onChange={(e) => setField('riskFreeRatePct', e.target.value === '' ? null : Number(e.target.value))}
+            onChange={(e) =>
+              setField('riskFreeRatePct', e.target.value === '' ? null : Number(e.target.value))
+            }
           />
         </label>
       </div>
 
       {wacc?.wacc_computed_pct !== undefined && wacc?.wacc_computed_pct !== null && (
         <p className="text-xs text-c-text-muted">
-          Ostatnio obliczony WACC: <span className="font-mono text-c-text">{wacc.wacc_computed_pct}%</span>
+          Ostatnio obliczony WACC:{' '}
+          <span className="font-mono text-c-text">{wacc.wacc_computed_pct}%</span>
         </p>
       )}
 

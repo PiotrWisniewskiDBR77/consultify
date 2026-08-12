@@ -21,7 +21,10 @@ import { render, screen } from '@testing-library/react';
 import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { clearFeatureFlagOverrides, setFeatureFlagOverrides } from '@/test-utils/featureFlagOverrides';
+import {
+  clearFeatureFlagOverrides,
+  setFeatureFlagOverrides,
+} from '@/test-utils/featureFlagOverrides';
 
 const apiMocks = vi.hoisted(() => ({
   getFinanceBusinessVersion: vi.fn(),
@@ -67,7 +70,9 @@ afterEach(() => {
 
 describe('PredictionWorkspace — flag gate (AP_MOUNT §A)', () => {
   it('OFF (default): renders nothing and calls zero Prediction network functions', () => {
-    const { container } = render(<PredictionWorkspace artifactId="artifact-1" businessVersionId="bv-flag-1" />);
+    const { container } = render(
+      <PredictionWorkspace artifactId="artifact-1" businessVersionId="bv-flag-1" />
+    );
     expect(container).toBeEmptyDOMElement();
     expect(apiMocks.getFinanceBusinessVersion).not.toHaveBeenCalled();
     expect(apiMocks.runFinancePredictionPreflight).not.toHaveBeenCalled();

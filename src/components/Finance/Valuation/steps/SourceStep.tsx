@@ -63,7 +63,9 @@ export function SourceStep(props: SourceStepProps): React.ReactElement {
   // ★ FIXC: full chain, chronological (root/oldest first) — the DB query has no ORDER BY of its
   // own (`SELECT DISTINCT ... FROM ancestors`, see `lineageService.ts`), so this component owns
   // the display order rather than depending on incidental SQL row order.
-  const sourceEdges = lineage ? [...lineage.ancestors].sort((a, b) => a.createdAt.localeCompare(b.createdAt)) : [];
+  const sourceEdges = lineage
+    ? [...lineage.ancestors].sort((a, b) => a.createdAt.localeCompare(b.createdAt))
+    : [];
   const immediateEdge = sourceEdges[sourceEdges.length - 1] ?? null;
 
   return (
@@ -71,8 +73,9 @@ export function SourceStep(props: SourceStepProps): React.ReactElement {
       <h2 className="text-sm font-semibold text-c-text">Źródło wyceny</h2>
       <p className="text-xs text-c-text-muted">
         Ta wersja wyceny (<span className="font-mono">{businessVersionId}</span>
-        {variant ? `, wariant „${variant.name}"` : ''}) musi wskazywać dokładną, zatwierdzoną wersję Baseline/Scenario
-        — nigdy „najnowszą". Poniżej pokazujemy realny, pełny łańcuch pochodzenia (lineage) z rejestru, nie deklarację.
+        {variant ? `, wariant „${variant.name}"` : ''}) musi wskazywać dokładną, zatwierdzoną wersję
+        Baseline/Scenario — nigdy „najnowszą". Poniżej pokazujemy realny, pełny łańcuch pochodzenia
+        (lineage) z rejestru, nie deklarację.
       </p>
 
       {lineage === null && (
@@ -84,23 +87,34 @@ export function SourceStep(props: SourceStepProps): React.ReactElement {
       {lineage && sourceEdges.length > 0 && (
         <div className="space-y-3" data-testid="source-edge-present">
           <p className="text-sm text-c-text">
-            Powiązano z wersją źródłową <span className="font-mono">{immediateEdge?.sourceVersionId}</span> (
-            {immediateEdge ? financeArtifactTypeLabel(immediateEdge.sourceArtifactType) : '—'}) przez łańcuch{' '}
-            {sourceEdges.length} {sourceEdges.length === 1 ? 'powiązania' : 'powiązań'} pochodzenia.
+            Powiązano z wersją źródłową{' '}
+            <span className="font-mono">{immediateEdge?.sourceVersionId}</span> (
+            {immediateEdge ? financeArtifactTypeLabel(immediateEdge.sourceArtifactType) : '—'})
+            przez łańcuch {sourceEdges.length}{' '}
+            {sourceEdges.length === 1 ? 'powiązania' : 'powiązań'} pochodzenia.
           </p>
           {sourceEdges.map((edge, index) => (
-            <div key={edge.edgeId} className="rounded-xl border border-c-border-subtle bg-c-surface p-4" data-testid={`source-edge-${edge.edgeId}`}>
+            <div
+              key={edge.edgeId}
+              className="rounded-xl border border-c-border-subtle bg-c-surface p-4"
+              data-testid={`source-edge-${edge.edgeId}`}
+            >
               <p className="text-xs font-semibold uppercase tracking-wide text-c-text-muted">
-                Krok {index + 1}/{sourceEdges.length} · {financeArtifactTypeLabel(edge.sourceArtifactType)} → {financeArtifactTypeLabel(edge.targetArtifactType)}
+                Krok {index + 1}/{sourceEdges.length} ·{' '}
+                {financeArtifactTypeLabel(edge.sourceArtifactType)} →{' '}
+                {financeArtifactTypeLabel(edge.targetArtifactType)}
               </p>
               <p className="mt-1 text-sm text-c-text">
-                <span className="font-mono">{edge.sourceVersionId}</span> → <span className="font-mono">{edge.targetVersionId}</span>
+                <span className="font-mono">{edge.sourceVersionId}</span> →{' '}
+                <span className="font-mono">{edge.targetVersionId}</span>
               </p>
               <dl className="mt-2 grid grid-cols-2 gap-x-6 gap-y-3 text-xs text-c-text-muted md:grid-cols-4">
                 <dt>Typ powiązania</dt>
                 <dd className="text-c-text">{formatFreeformLineageCode(edge.edgeType)}</dd>
                 <dt>Typ transformacji</dt>
-                <dd className="text-c-text">{financeLineageTransformationKindLabel(edge.transformationKind)}</dd>
+                <dd className="text-c-text">
+                  {financeLineageTransformationKindLabel(edge.transformationKind)}
+                </dd>
                 <dt>Hash migawki założeń</dt>
                 <dd className="font-mono text-c-text">{edge.assumptionSnapshotHash ?? '—'}</dd>
                 <dt>Compute run</dt>
@@ -118,13 +132,18 @@ export function SourceStep(props: SourceStepProps): React.ReactElement {
       )}
 
       {lineage && sourceEdges.length === 0 && (
-        <div className="rounded-xl border border-c-warning/30 bg-c-warning/10 p-4" data-testid="source-edge-missing">
+        <div
+          className="rounded-xl border border-c-warning/30 bg-c-warning/10 p-4"
+          data-testid="source-edge-missing"
+        >
           <p className="text-sm font-medium text-c-text">Brak powiązania ze źródłem</p>
           <p className="mt-1 text-xs text-c-text-muted">
-            Ten wariant nie ma dziś zapisanego powiązania (lineage edge) z żadną wersją Baseline/Scenario. Obliczenie
-            DCF/FCFF zwróci błąd <span className="font-mono">NO_VALUATION_SOURCE_EDGE</span>, dopóki powiązanie nie
-            powstanie. W tym pakiecie (B3, baza {'​'}9604652e27) nie istnieje endpoint tworzący to powiązanie —
-            zgłoszone jako luka w raporcie odbiorowym, nie naprawione tutaj (poza allowlistą tego pakietu).
+            Ten wariant nie ma dziś zapisanego powiązania (lineage edge) z żadną wersją
+            Baseline/Scenario. Obliczenie DCF/FCFF zwróci błąd{' '}
+            <span className="font-mono">NO_VALUATION_SOURCE_EDGE</span>, dopóki powiązanie nie
+            powstanie. W tym pakiecie (B3, baza {'​'}9604652e27) nie istnieje endpoint tworzący to
+            powiązanie — zgłoszone jako luka w raporcie odbiorowym, nie naprawione tutaj (poza
+            allowlistą tego pakietu).
           </p>
         </div>
       )}

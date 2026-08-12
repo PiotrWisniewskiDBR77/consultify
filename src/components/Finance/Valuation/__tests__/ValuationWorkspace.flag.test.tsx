@@ -18,7 +18,10 @@ import { render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { clearFeatureFlagOverrides, setFeatureFlagOverrides } from '@/test-utils/featureFlagOverrides';
+import {
+  clearFeatureFlagOverrides,
+  setFeatureFlagOverrides,
+} from '@/test-utils/featureFlagOverrides';
 
 import type { ValuationWorkspaceApi } from '../ValuationWorkspace';
 import { ValuationWorkspace } from '../ValuationWorkspace';
@@ -26,10 +29,19 @@ import { ValuationWorkspace } from '../ValuationWorkspace';
 function fakeApi(): ValuationWorkspaceApi {
   return {
     getValuationVariant: vi.fn().mockResolvedValue({
-      businessVersionId: 'bv-1', caseId: 'case-1', name: 'Wycena testowa', description: null,
-      status: 'DRAFT', freshness: 'CURRENT', versionNo: 1, createdBy: 'user-1', createdAt: '2026-08-01T00:00:00Z',
+      businessVersionId: 'bv-1',
+      caseId: 'case-1',
+      name: 'Wycena testowa',
+      description: null,
+      status: 'DRAFT',
+      freshness: 'CURRENT',
+      versionNo: 1,
+      createdBy: 'user-1',
+      createdAt: '2026-08-01T00:00:00Z',
     }),
-    getFinanceVersionLineage: vi.fn().mockResolvedValue({ businessVersionId: 'bv-1', ancestors: [], descendants: [] }),
+    getFinanceVersionLineage: vi
+      .fn()
+      .mockResolvedValue({ businessVersionId: 'bv-1', ancestors: [], descendants: [] }),
     getValuationWaccInputs: vi.fn().mockResolvedValue(null),
     upsertValuationWaccInputs: vi.fn(),
     listValuationMethods: vi.fn().mockResolvedValue({ methods: [], weightedRecommendation: {} }),

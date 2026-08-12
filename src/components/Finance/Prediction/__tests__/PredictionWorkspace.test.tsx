@@ -28,7 +28,10 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { clearFeatureFlagOverrides, setFeatureFlagOverrides } from '@/test-utils/featureFlagOverrides';
+import {
+  clearFeatureFlagOverrides,
+  setFeatureFlagOverrides,
+} from '@/test-utils/featureFlagOverrides';
 
 import type { FinanceBusinessVersionDetailDto } from '../../../../services/api/financeV2.types';
 import { createEmptyScenarioDraft } from '../predictionScenarioModel';
@@ -94,7 +97,9 @@ describe('PredictionWorkspace — smoke render (real businessVersionId confirmed
 
   it('gdy businessVersionId jest potwierdzony ale bez zapisanej treści, ekran mówi to WPROST (baner), nie pokazuje cichego formularza', async () => {
     render(<PredictionWorkspace artifactId="artifact-1" businessVersionId="bv-prediction-1" />);
-    await waitFor(() => expect(screen.getByTestId('prediction-honest-scratch-banner')).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByTestId('prediction-honest-scratch-banner')).toBeInTheDocument()
+    );
     expect(screen.getByTestId('prediction-honest-scratch-banner').textContent).toMatch(
       /nowy szkic|odczyt zapisanej treści scenariusza nie jest dziś dostępny/
     );
@@ -102,7 +107,9 @@ describe('PredictionWorkspace — smoke render (real businessVersionId confirmed
 
   it('przełączenie widoku na Modele/Wyniki faktycznie zmienia DOM (real render, nie atrapa)', async () => {
     render(<PredictionWorkspace artifactId="artifact-1" businessVersionId="bv-prediction-1" />);
-    await waitFor(() => expect(screen.getByTestId('prediction-assumptions-view')).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByTestId('prediction-assumptions-view')).toBeInTheDocument()
+    );
     expect(screen.queryByTestId('prediction-results-view')).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('tab', { name: /Modele\/Wyniki/i }));
     await waitFor(() => expect(screen.getByTestId('prediction-results-view')).toBeInTheDocument());
@@ -111,13 +118,29 @@ describe('PredictionWorkspace — smoke render (real businessVersionId confirmed
 
   it('KONTROLA NEGATYWNA: zmiana initialDraft.name propaguje się do wyświetlanej nazwy (dowód, że renderuje realne propsy)', async () => {
     const draft = createEmptyScenarioDraft({ name: 'Scenariusz XYZ-Unikalny' });
-    render(<PredictionWorkspace artifactId="artifact-1" businessVersionId="bv-prediction-1" initialDraft={draft} />);
-    await waitFor(() => expect(screen.getByTestId('finance-workspace-bar-name')).toHaveTextContent('Scenariusz XYZ-Unikalny'));
+    render(
+      <PredictionWorkspace
+        artifactId="artifact-1"
+        businessVersionId="bv-prediction-1"
+        initialDraft={draft}
+      />
+    );
+    await waitFor(() =>
+      expect(screen.getByTestId('finance-workspace-bar-name')).toHaveTextContent(
+        'Scenariusz XYZ-Unikalny'
+      )
+    );
   });
 
   it('tryb C (fundamentalny) renderuje panel inicjatyw z przyciskiem "Dodaj inicjatywę"', async () => {
     const draft = createEmptyScenarioDraft({ name: 'x', scenarioMode: 'FUNDAMENTAL_INITIATIVE' });
-    render(<PredictionWorkspace artifactId="artifact-1" businessVersionId="bv-prediction-1" initialDraft={draft} />);
+    render(
+      <PredictionWorkspace
+        artifactId="artifact-1"
+        businessVersionId="bv-prediction-1"
+        initialDraft={draft}
+      />
+    );
     await waitFor(() => expect(screen.getByTestId('add-initiative')).toBeInTheDocument());
   });
 
@@ -131,9 +154,15 @@ describe('PredictionWorkspace — smoke render (real businessVersionId confirmed
     await waitFor(() => expect(screen.getByTestId('finance-workspace-bar')).toBeInTheDocument());
     const preflightButton = screen.getByRole('button', { name: /Uruchom preflight/i });
     fireEvent.click(preflightButton);
-    await waitFor(() => expect(screen.getByTestId('prediction-status-message')).toBeInTheDocument());
-    expect(screen.getByTestId('prediction-status-message').textContent).toMatch(/nie istnieje albo nie masz do niej dostępu/);
-    expect(apiMocks.runFinancePredictionPreflight).toHaveBeenCalledWith({ businessVersionId: 'bv-prediction-1' });
+    await waitFor(() =>
+      expect(screen.getByTestId('prediction-status-message')).toBeInTheDocument()
+    );
+    expect(screen.getByTestId('prediction-status-message').textContent).toMatch(
+      /nie istnieje albo nie masz do niej dostępu/
+    );
+    expect(apiMocks.runFinancePredictionPreflight).toHaveBeenCalledWith({
+      businessVersionId: 'bv-prediction-1',
+    });
   });
 });
 
@@ -158,7 +187,13 @@ describe('PredictionWorkspace — ANTY-CICHA-PUSTKA (ID_BRIDGE Gate E)', () => {
   });
 
   it('★ podsunięty identyfikator, którego nie da się rozwiązać (businessVersionId=null, most nie znalazł odpowiednika) -> JAWNY komunikat, ZERO wywołań sieciowych, formularz NIGDY nie renderuje się', async () => {
-    render(<PredictionWorkspace artifactId="artifact-1" businessVersionId={null} onNavigateBack={() => {}} />);
+    render(
+      <PredictionWorkspace
+        artifactId="artifact-1"
+        businessVersionId={null}
+        onNavigateBack={() => {}}
+      />
+    );
 
     // Jawny sygnał, natychmiast, bez potrzeby czekania na sieć — bo nie ma czego odpytać.
     expect(screen.getByTestId('prediction-mount-no-id')).toBeInTheDocument();
@@ -177,16 +212,30 @@ describe('PredictionWorkspace — ANTY-CICHA-PUSTKA (ID_BRIDGE Gate E)', () => {
 
   it('businessVersionId ustawiony, ale rekord nie istnieje w nowym systemie (404) -> JAWNY komunikat "nie znaleziono", nie pusty formularz', async () => {
     apiMocks.getFinanceBusinessVersion.mockRejectedValue(apiError(404, 'NOT_FOUND'));
-    render(<PredictionWorkspace artifactId="artifact-1" businessVersionId="bv-does-not-exist" onNavigateBack={() => {}} />);
+    render(
+      <PredictionWorkspace
+        artifactId="artifact-1"
+        businessVersionId="bv-does-not-exist"
+        onNavigateBack={() => {}}
+      />
+    );
 
-    await waitFor(() => expect(screen.getByTestId('prediction-mount-not-found')).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByTestId('prediction-mount-not-found')).toBeInTheDocument()
+    );
     expect(screen.getByTestId('prediction-mount-not-found').textContent).toMatch(/Nie znaleziono/);
     expect(screen.queryByTestId('prediction-assumptions-view')).not.toBeInTheDocument();
   });
 
   it('błąd sieci/serwera przy sprawdzaniu businessVersionId -> JAWNY komunikat błędu z przyciskiem "Spróbuj ponownie", nie pusty formularz', async () => {
     apiMocks.getFinanceBusinessVersion.mockRejectedValue(apiError(500, 'INTERNAL_ERROR'));
-    render(<PredictionWorkspace artifactId="artifact-1" businessVersionId="bv-1" onNavigateBack={() => {}} />);
+    render(
+      <PredictionWorkspace
+        artifactId="artifact-1"
+        businessVersionId="bv-1"
+        onNavigateBack={() => {}}
+      />
+    );
 
     await waitFor(() => expect(screen.getByTestId('prediction-mount-error')).toBeInTheDocument());
     expect(screen.queryByTestId('prediction-assumptions-view')).not.toBeInTheDocument();
@@ -196,12 +245,20 @@ describe('PredictionWorkspace — ANTY-CICHA-PUSTKA (ID_BRIDGE Gate E)', () => {
   it('"Spróbuj ponownie" po błędzie faktycznie odpytuje serwer jeszcze raz i przechodzi do prawdziwego workspace po sukcesie', async () => {
     apiMocks.getFinanceBusinessVersion.mockRejectedValueOnce(apiError(500, 'INTERNAL_ERROR'));
     apiMocks.getFinanceBusinessVersion.mockResolvedValueOnce(CONFIRMED_VERSION);
-    render(<PredictionWorkspace artifactId="artifact-1" businessVersionId="bv-1" onNavigateBack={() => {}} />);
+    render(
+      <PredictionWorkspace
+        artifactId="artifact-1"
+        businessVersionId="bv-1"
+        onNavigateBack={() => {}}
+      />
+    );
 
     await waitFor(() => expect(screen.getByTestId('prediction-mount-error')).toBeInTheDocument());
     fireEvent.click(screen.getByRole('button', { name: /Spróbuj ponownie/i }));
 
-    await waitFor(() => expect(screen.getByTestId('prediction-assumptions-view')).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByTestId('prediction-assumptions-view')).toBeInTheDocument()
+    );
     expect(apiMocks.getFinanceBusinessVersion).toHaveBeenCalledTimes(2);
   });
 
@@ -212,12 +269,20 @@ describe('PredictionWorkspace — ANTY-CICHA-PUSTKA (ID_BRIDGE Gate E)', () => {
         resolvePromise = resolve;
       })
     );
-    render(<PredictionWorkspace artifactId="artifact-1" businessVersionId="bv-1" onNavigateBack={() => {}} />);
+    render(
+      <PredictionWorkspace
+        artifactId="artifact-1"
+        businessVersionId="bv-1"
+        onNavigateBack={() => {}}
+      />
+    );
 
     expect(screen.getByTestId('prediction-mount-checking')).toBeInTheDocument();
     expect(screen.queryByTestId('prediction-assumptions-view')).not.toBeInTheDocument();
 
     resolvePromise(CONFIRMED_VERSION);
-    await waitFor(() => expect(screen.getByTestId('prediction-assumptions-view')).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByTestId('prediction-assumptions-view')).toBeInTheDocument()
+    );
   });
 });

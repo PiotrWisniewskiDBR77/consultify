@@ -9,7 +9,10 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { clearFeatureFlagOverrides, setFeatureFlagOverrides } from '@/test-utils/featureFlagOverrides';
+import {
+  clearFeatureFlagOverrides,
+  setFeatureFlagOverrides,
+} from '@/test-utils/featureFlagOverrides';
 
 import type { FinanceBusinessVersionDetailDto } from '../../../../services/api/financeV2.types';
 
@@ -60,26 +63,42 @@ describe('PredictionWorkspace — Focus Mode no-refetch (AP_MOUNT §E)', () => {
     apiMocks.getFinanceBusinessVersion.mockResolvedValue(CONFIRMED_VERSION);
     setFeatureFlagOverrides({ financePredictionWorkspaceV1: true });
     const draft = createEmptyScenarioDraft({ name: 'Scenariusz zachowany' });
-    render(<PredictionWorkspace artifactId="artifact-1" businessVersionId="bv-focus-1" initialDraft={draft} />);
+    render(
+      <PredictionWorkspace
+        artifactId="artifact-1"
+        businessVersionId="bv-focus-1"
+        initialDraft={draft}
+      />
+    );
 
-    await waitFor(() => expect(screen.getByTestId('prediction-assumptions-view')).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByTestId('prediction-assumptions-view')).toBeInTheDocument()
+    );
     expect(apiMocks.runFinancePredictionPreflight).not.toHaveBeenCalled();
     expect(apiMocks.runFinancePredictionCalculate).not.toHaveBeenCalled();
 
     fireEvent.click(screen.getByTestId('finance-workspace-bar-fullscreen'));
-    await waitFor(() => expect(document.body.classList.contains('finance-focus-mode-active')).toBe(true));
+    await waitFor(() =>
+      expect(document.body.classList.contains('finance-focus-mode-active')).toBe(true)
+    );
 
     expect(screen.getByTestId('prediction-assumptions-view')).toBeInTheDocument();
-    expect(screen.getByTestId('finance-workspace-bar-name')).toHaveTextContent('Scenariusz zachowany');
+    expect(screen.getByTestId('finance-workspace-bar-name')).toHaveTextContent(
+      'Scenariusz zachowany'
+    );
     expect(apiMocks.runFinancePredictionPreflight).not.toHaveBeenCalled();
     expect(apiMocks.runFinancePredictionCalculate).not.toHaveBeenCalled();
 
     fireEvent.keyDown(document, { key: 'Escape' });
-    await waitFor(() => expect(document.body.classList.contains('finance-focus-mode-active')).toBe(false));
+    await waitFor(() =>
+      expect(document.body.classList.contains('finance-focus-mode-active')).toBe(false)
+    );
 
     expect(apiMocks.runFinancePredictionPreflight).not.toHaveBeenCalled();
     expect(apiMocks.runFinancePredictionCalculate).not.toHaveBeenCalled();
     expect(screen.getByTestId('prediction-assumptions-view')).toBeInTheDocument();
-    expect(screen.getByTestId('finance-workspace-bar-name')).toHaveTextContent('Scenariusz zachowany');
+    expect(screen.getByTestId('finance-workspace-bar-name')).toHaveTextContent(
+      'Scenariusz zachowany'
+    );
   });
 });

@@ -19,7 +19,10 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { clearFeatureFlagOverrides, setFeatureFlagOverrides } from '@/test-utils/featureFlagOverrides';
+import {
+  clearFeatureFlagOverrides,
+  setFeatureFlagOverrides,
+} from '@/test-utils/featureFlagOverrides';
 
 import type { ValuationWorkspaceApi } from '../ValuationWorkspace';
 import { ValuationWorkspace } from '../ValuationWorkspace';
@@ -54,10 +57,14 @@ function baseVariant() {
 function makeApi(overrides: Partial<ValuationWorkspaceApi> = {}): ValuationWorkspaceApi {
   return {
     getValuationVariant: vi.fn().mockResolvedValue(baseVariant()),
-    getFinanceVersionLineage: vi.fn().mockResolvedValue({ businessVersionId: BV_ID, ancestors: [], descendants: [] }),
+    getFinanceVersionLineage: vi
+      .fn()
+      .mockResolvedValue({ businessVersionId: BV_ID, ancestors: [], descendants: [] }),
     getValuationWaccInputs: vi.fn().mockResolvedValue(null),
     upsertValuationWaccInputs: vi.fn(),
-    listValuationMethods: vi.fn().mockResolvedValue({ methods: [], weightedRecommendation: { status: 'NO_BASKET' } }),
+    listValuationMethods: vi
+      .fn()
+      .mockResolvedValue({ methods: [], weightedRecommendation: { status: 'NO_BASKET' } }),
     createValuationMethod: vi.fn(),
     setValuationMethodBasketWeights: vi.fn(),
     getValuationResults: vi.fn().mockResolvedValue(null),
@@ -71,13 +78,19 @@ function makeApi(overrides: Partial<ValuationWorkspaceApi> = {}): ValuationWorks
 describe('ValuationWorkspace — nawigacja siedmiu kroków', () => {
   it('renderuje krok Source jako domyślny i pokazuje nazwę wariantu w pasku', async () => {
     render(<ValuationWorkspace businessVersionId={BV_ID} api={makeApi()} />);
-    await waitFor(() => expect(screen.getByTestId('finance-workspace-bar-name')).toHaveTextContent('DBR77 — Wycena FY2026'));
+    await waitFor(() =>
+      expect(screen.getByTestId('finance-workspace-bar-name')).toHaveTextContent(
+        'DBR77 — Wycena FY2026'
+      )
+    );
     expect(screen.getByTestId('valuation-source-step')).toBeInTheDocument();
   });
 
   it('klik w krok "Metody i wagi" przełącza widoczną treść, zachowując pasek', async () => {
     render(<ValuationWorkspace businessVersionId={BV_ID} api={makeApi()} />);
-    await waitFor(() => expect(screen.getByTestId('finance-workspace-bar-name')).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByTestId('finance-workspace-bar-name')).toBeInTheDocument()
+    );
 
     fireEvent.click(screen.getByText('Metody i wagi'));
 
@@ -100,15 +113,38 @@ describe('ValuationWorkspace — nawigacja siedmiu kroków', () => {
 describe('ValuationWorkspace — N/A vs PLN 0 (OWN-FIN-021 punkt 3)', () => {
   const methodsWithMixedStatuses = {
     methods: [
-      { methodId: 'm-zero', methodType: 'DCF_FCFF' as const, readiness: 'READY' as const, result: { status: 'PRESENT_ZERO' as const, valueDecimal: '0' }, isInRecommendationBasket: false, weightPct: null },
-      { methodId: 'm-na', methodType: 'TRADING_COMPS' as const, readiness: 'NOT_CONFIGURED' as const, result: { status: 'NA' as const, valueDecimal: null }, isInRecommendationBasket: false, weightPct: null },
-      { methodId: 'm-missing', methodType: 'ASSET_BASED' as const, readiness: 'DATA_INCOMPLETE' as const, result: { status: 'MISSING' as const, valueDecimal: null }, isInRecommendationBasket: false, weightPct: null },
+      {
+        methodId: 'm-zero',
+        methodType: 'DCF_FCFF' as const,
+        readiness: 'READY' as const,
+        result: { status: 'PRESENT_ZERO' as const, valueDecimal: '0' },
+        isInRecommendationBasket: false,
+        weightPct: null,
+      },
+      {
+        methodId: 'm-na',
+        methodType: 'TRADING_COMPS' as const,
+        readiness: 'NOT_CONFIGURED' as const,
+        result: { status: 'NA' as const, valueDecimal: null },
+        isInRecommendationBasket: false,
+        weightPct: null,
+      },
+      {
+        methodId: 'm-missing',
+        methodType: 'ASSET_BASED' as const,
+        readiness: 'DATA_INCOMPLETE' as const,
+        result: { status: 'MISSING' as const, valueDecimal: null },
+        isInRecommendationBasket: false,
+        weightPct: null,
+      },
     ],
     weightedRecommendation: { status: 'NO_BASKET' as const },
   };
 
   it('renderuje PRESENT_ZERO jako "0", a NA/MISSING jako "—" z widocznym powodem — nigdy jako "0"', async () => {
-    const api = makeApi({ listValuationMethods: vi.fn().mockResolvedValue(methodsWithMixedStatuses) });
+    const api = makeApi({
+      listValuationMethods: vi.fn().mockResolvedValue(methodsWithMixedStatuses),
+    });
     render(<ValuationWorkspace businessVersionId={BV_ID} api={api} initialStepId="methods" />);
 
     const zeroRow = await screen.findByTestId('method-row-DCF_FCFF');
@@ -130,7 +166,9 @@ describe('ValuationWorkspace — N/A vs PLN 0 (OWN-FIN-021 punkt 3)', () => {
   });
 
   it('KONTROLA NEGATYWNA: NA i MISSING muszą wyglądać RÓŻNIE od PRESENT_ZERO — same "0" dla wszystkich trzech byłoby błędem, który ten test wykrywa', async () => {
-    const api = makeApi({ listValuationMethods: vi.fn().mockResolvedValue(methodsWithMixedStatuses) });
+    const api = makeApi({
+      listValuationMethods: vi.fn().mockResolvedValue(methodsWithMixedStatuses),
+    });
     render(<ValuationWorkspace businessVersionId={BV_ID} api={api} initialStepId="methods" />);
     const naRow = await screen.findByTestId('method-row-TRADING_COMPS');
     const naCellText = within(naRow).getByTestId('valuation-value-cell').textContent;
@@ -143,7 +181,10 @@ describe('ValuationWorkspace — lokalny ErrorBoundary (OWN-FIN-002)', () => {
     // `results.methods` is undefined — ResultsStep's `computeMethodResultRange(results.methods)`
     // calls `.filter` on it and throws a real TypeError, exercising the ACTUAL error boundary,
     // not a manufactured `throw` inside a test-only component.
-    const brokenResults = { businessVersionId: BV_ID, headlineEnterpriseValue: { source: 'NONE', value: null, pointer: null } } as any;
+    const brokenResults = {
+      businessVersionId: BV_ID,
+      headlineEnterpriseValue: { source: 'NONE', value: null, pointer: null },
+    } as any;
     const api = makeApi({ getValuationResults: vi.fn().mockResolvedValue(brokenResults) });
 
     const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
@@ -195,7 +236,9 @@ describe('ValuationWorkspace — honest PL variant-load error message (ID_BRIDGE
   const RAW_UGLY_MESSAGE = 'TypeError: Failed to fetch';
 
   it('a rejected getValuationVariant() surfaces a Polish honest message, NEVER the raw Error.message', async () => {
-    const api = makeApi({ getValuationVariant: vi.fn().mockRejectedValue(new Error(RAW_UGLY_MESSAGE)) });
+    const api = makeApi({
+      getValuationVariant: vi.fn().mockRejectedValue(new Error(RAW_UGLY_MESSAGE)),
+    });
     render(<ValuationWorkspace businessVersionId={BV_ID} api={api} />);
 
     await waitFor(() => expect(screen.getByTestId('valuation-variant-error')).toBeInTheDocument());
@@ -206,11 +249,16 @@ describe('ValuationWorkspace — honest PL variant-load error message (ID_BRIDGE
   });
 
   it('a rejected getValuationVariant() with a NOT_FOUND-shaped error surfaces the dedicated Polish NOT_FOUND message', async () => {
-    const notFound = Object.assign(new Error('not found'), { status: 404, data: { code: 'NOT_FOUND', error: 'not found' } });
+    const notFound = Object.assign(new Error('not found'), {
+      status: 404,
+      data: { code: 'NOT_FOUND', error: 'not found' },
+    });
     const api = makeApi({ getValuationVariant: vi.fn().mockRejectedValue(notFound) });
     render(<ValuationWorkspace businessVersionId={BV_ID} api={api} />);
 
     await waitFor(() => expect(screen.getByTestId('valuation-variant-error')).toBeInTheDocument());
-    expect(screen.getByTestId('valuation-variant-error').textContent).toMatch(/nie istnieje albo nie masz do niej dostępu/);
+    expect(screen.getByTestId('valuation-variant-error').textContent).toMatch(
+      /nie istnieje albo nie masz do niej dostępu/
+    );
   });
 });

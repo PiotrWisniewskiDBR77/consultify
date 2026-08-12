@@ -6,15 +6,27 @@
  */
 import React, { useEffect, useState } from 'react';
 
-import type { ValuationMethodDto, ValuationMethodType, ValuationWeightedRecommendationDto } from '@/services/api/financeV2.types';
-import { describeFinanceV2Error, ValuationMethodTypeValues, valuationMethodReadinessLabel, valuationMethodTypeLabel } from '@/services/api/financeV2.types';
 import type { ValuationBasketUpdate } from '@/services/api/financeV2.api';
+import type {
+  ValuationMethodDto,
+  ValuationMethodType,
+  ValuationWeightedRecommendationDto,
+} from '@/services/api/financeV2.types';
+import {
+  describeFinanceV2Error,
+  valuationMethodReadinessLabel,
+  valuationMethodTypeLabel,
+  ValuationMethodTypeValues,
+} from '@/services/api/financeV2.types';
 
-import { ValuationValueCell } from '../ValuationValueCell';
 import { validateBasketWeights } from '../valuationMath';
+import { ValuationValueCell } from '../ValuationValueCell';
 
 export interface MethodsWeightsStepProps {
-  methodsData: { methods: ValuationMethodDto[]; weightedRecommendation: ValuationWeightedRecommendationDto } | null;
+  methodsData: {
+    methods: ValuationMethodDto[];
+    weightedRecommendation: ValuationWeightedRecommendationDto;
+  } | null;
   onCreateMethod: (methodType: ValuationMethodType) => Promise<void>;
   onSaveBasket: (updates: ValuationBasketUpdate[]) => Promise<void>;
 }
@@ -26,7 +38,11 @@ interface DraftRow {
 }
 
 function toDraftRows(methods: readonly ValuationMethodDto[]): DraftRow[] {
-  return methods.map((m) => ({ methodId: m.methodId, isInRecommendationBasket: m.isInRecommendationBasket, weightPct: m.weightPct === null ? null : Number(m.weightPct) }));
+  return methods.map((m) => ({
+    methodId: m.methodId,
+    isInRecommendationBasket: m.isInRecommendationBasket,
+    weightPct: m.weightPct === null ? null : Number(m.weightPct),
+  }));
 }
 
 export function MethodsWeightsStep(props: MethodsWeightsStepProps): React.ReactElement {
@@ -70,9 +86,12 @@ export function MethodsWeightsStep(props: MethodsWeightsStepProps): React.ReactE
 
   return (
     <div className="max-w-5xl space-y-4" data-testid="valuation-methods-step">
-      <h2 className="text-sm font-semibold text-c-text">Metody wyceny i wagi koszyka rekomendacji</h2>
+      <h2 className="text-sm font-semibold text-c-text">
+        Metody wyceny i wagi koszyka rekomendacji
+      </h2>
 
       {/* §27-exempt: wewnętrzna tabela edytora koszyka metod wyceny (edycja checkbox/waga per wiersz), nie ekran listowy modułu — docs/ui-standards/DOKTRYNA_TABELA_NIE_EXCEL.md */}
+      {/* prettier-ignore */}
       <table className="w-full text-left text-xs" data-testid="methods-table" data-canon="§27-exempt">
         <thead>
           <tr className="border-b border-c-border-subtle text-c-text-muted">
@@ -87,18 +106,34 @@ export function MethodsWeightsStep(props: MethodsWeightsStepProps): React.ReactE
           {methods.map((m) => {
             const row = draftRows.find((r) => r.methodId === m.methodId);
             return (
-              <tr key={m.methodId} className="border-b border-c-border-subtle/60" data-testid={`method-row-${m.methodType}`}>
-                <td className="py-1.5 pr-2 text-c-text">{valuationMethodTypeLabel(m.methodType)}</td>
-                <td className="py-1.5 pr-2 text-c-text-muted">{valuationMethodReadinessLabel(m.readiness)}</td>
+              <tr
+                key={m.methodId}
+                className="border-b border-c-border-subtle/60"
+                data-testid={`method-row-${m.methodType}`}
+              >
+                <td className="py-1.5 pr-2 text-c-text">
+                  {valuationMethodTypeLabel(m.methodType)}
+                </td>
+                <td className="py-1.5 pr-2 text-c-text-muted">
+                  {valuationMethodReadinessLabel(m.readiness)}
+                </td>
                 <td className="py-1.5 pr-2">
-                  <ValuationValueCell status={m.result.status} valueDecimal={m.result.valueDecimal} />
+                  <ValuationValueCell
+                    status={m.result.status}
+                    valueDecimal={m.result.valueDecimal}
+                  />
                 </td>
                 <td className="py-1.5 pr-2">
                   <input
                     type="checkbox"
                     data-testid={`method-basket-checkbox-${m.methodType}`}
                     checked={row?.isInRecommendationBasket ?? false}
-                    onChange={(e) => updateRow(m.methodId, { isInRecommendationBasket: e.target.checked, weightPct: e.target.checked ? (row?.weightPct ?? 0) : null })}
+                    onChange={(e) =>
+                      updateRow(m.methodId, {
+                        isInRecommendationBasket: e.target.checked,
+                        weightPct: e.target.checked ? (row?.weightPct ?? 0) : null,
+                      })
+                    }
                   />
                 </td>
                 <td className="py-1.5 pr-2">
@@ -107,7 +142,11 @@ export function MethodsWeightsStep(props: MethodsWeightsStepProps): React.ReactE
                     data-testid={`method-weight-input-${m.methodType}`}
                     disabled={!row?.isInRecommendationBasket}
                     value={row?.weightPct ?? ''}
-                    onChange={(e) => updateRow(m.methodId, { weightPct: e.target.value === '' ? null : Number(e.target.value) })}
+                    onChange={(e) =>
+                      updateRow(m.methodId, {
+                        weightPct: e.target.value === '' ? null : Number(e.target.value),
+                      })
+                    }
                     className="w-16 rounded-md border border-c-border-subtle bg-c-surface px-1.5 py-0.5 text-c-text disabled:opacity-40"
                   />
                 </td>
@@ -137,7 +176,10 @@ export function MethodsWeightsStep(props: MethodsWeightsStepProps): React.ReactE
 
       {weightedRecommendation.status === 'READY' && (
         <p className="text-xs text-c-text-muted" data-testid="weighted-recommendation-summary">
-          Ważona rekomendacja: <span className="font-mono text-c-text">{weightedRecommendation.weightedEnterpriseValue.toLocaleString('pl-PL')}</span>
+          Ważona rekomendacja:{' '}
+          <span className="font-mono text-c-text">
+            {weightedRecommendation.weightedEnterpriseValue.toLocaleString('pl-PL')}
+          </span>
         </p>
       )}
       {weightedRecommendation.status === 'INCOMPLETE' && (

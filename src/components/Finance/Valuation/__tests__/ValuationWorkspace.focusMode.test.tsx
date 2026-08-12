@@ -9,7 +9,10 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { clearFeatureFlagOverrides, setFeatureFlagOverrides } from '@/test-utils/featureFlagOverrides';
+import {
+  clearFeatureFlagOverrides,
+  setFeatureFlagOverrides,
+} from '@/test-utils/featureFlagOverrides';
 
 import type { ValuationWorkspaceApi } from '../ValuationWorkspace';
 import { ValuationWorkspace } from '../ValuationWorkspace';
@@ -19,10 +22,19 @@ const BV_ID = 'bv-focus-1';
 function fakeApi(): ValuationWorkspaceApi {
   return {
     getValuationVariant: vi.fn().mockResolvedValue({
-      businessVersionId: BV_ID, caseId: 'case-1', name: 'Wycena Focus Mode', description: null,
-      status: 'DRAFT', freshness: 'CURRENT', versionNo: 1, createdBy: 'user-1', createdAt: '2026-08-01T00:00:00Z',
+      businessVersionId: BV_ID,
+      caseId: 'case-1',
+      name: 'Wycena Focus Mode',
+      description: null,
+      status: 'DRAFT',
+      freshness: 'CURRENT',
+      versionNo: 1,
+      createdBy: 'user-1',
+      createdAt: '2026-08-01T00:00:00Z',
     }),
-    getFinanceVersionLineage: vi.fn().mockResolvedValue({ businessVersionId: BV_ID, ancestors: [], descendants: [] }),
+    getFinanceVersionLineage: vi
+      .fn()
+      .mockResolvedValue({ businessVersionId: BV_ID, ancestors: [], descendants: [] }),
     getValuationWaccInputs: vi.fn().mockResolvedValue(null),
     upsertValuationWaccInputs: vi.fn(),
     listValuationMethods: vi.fn().mockResolvedValue({ methods: [], weightedRecommendation: {} }),
@@ -55,7 +67,9 @@ describe('ValuationWorkspace — Focus Mode no-refetch (AP_MOUNT §E)', () => {
     expect(screen.getByTestId('valuation-source-step')).toBeInTheDocument();
 
     fireEvent.click(screen.getByTestId('finance-workspace-bar-fullscreen'));
-    await waitFor(() => expect(document.body.classList.contains('finance-focus-mode-active')).toBe(true));
+    await waitFor(() =>
+      expect(document.body.classList.contains('finance-focus-mode-active')).toBe(true)
+    );
 
     const totalAfterEnter = (Object.values(api) as ReturnType<typeof vi.fn>[]).reduce(
       (sum, fn) => sum + fn.mock.calls.length,
@@ -65,7 +79,9 @@ describe('ValuationWorkspace — Focus Mode no-refetch (AP_MOUNT §E)', () => {
     expect(screen.getByTestId('valuation-source-step')).toBeInTheDocument();
 
     fireEvent.keyDown(document, { key: 'Escape' });
-    await waitFor(() => expect(document.body.classList.contains('finance-focus-mode-active')).toBe(false));
+    await waitFor(() =>
+      expect(document.body.classList.contains('finance-focus-mode-active')).toBe(false)
+    );
 
     const totalAfterExit = (Object.values(api) as ReturnType<typeof vi.fn>[]).reduce(
       (sum, fn) => sum + fn.mock.calls.length,
