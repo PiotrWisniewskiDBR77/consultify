@@ -97,6 +97,19 @@ let approverToken: string;
 let otherToken: string;
 let stackReason: string | undefined;
 
+/**
+ * A DISPOSABLE co-member of `cw-local-org`, used ONLY for the "revoking
+ * membership mid-chain" negative control below. It must never be SEED_USER
+ * (or APPROVER): those identities are shared with
+ * `liveStack.e2e.part2.pg.test.ts`, which vitest runs concurrently as a
+ * separate file by default, and suspending a SHARED identity's membership
+ * mid-suite produces spurious 403/404s in the sibling file's in-flight
+ * requests. See `ControlDb.createTestUser` in `liveStackHarness.ts` for the
+ * full mechanism this was confirmed against.
+ */
+let revokeUserId: string;
+let revokeToken: string;
+
 /** Shared state threaded through the scenarios, in the order a human moves. */
 const state: {
   caseId?: string;
@@ -129,9 +142,16 @@ beforeAll(async () => {
 
   await db.ensureProject(PROJECT_ID, SEED_USER.organizationId, `E2E ${SUFFIX}`);
   await db.ensureProject(LIGHT_PROJECT_ID, SEED_USER.organizationId, `E2E LIGHT ${SUFFIX}`);
+
+  const revokeUser = await db.createTestUser(SEED_USER.organizationId, `revoke-${SUFFIX}`);
+  revokeUserId = revokeUser.userId;
+  revokeToken = await login(revokeUser.email, revokeUser.password);
 }, 120_000);
 
 afterAll(async () => {
+  if (db && revokeUserId) {
+    await db.deleteTestUser(revokeUserId);
+  }
   await db?.close();
 });
 
@@ -976,29 +996,42 @@ describe('9. Cross-tenant and revoked membership', () => {
       await db.rows(`SELECT 1 FROM case_plan_versions WHERE case_id = $1`, [state.caseId])
     ).length;
 
-    await db.setMembershipStatus(SEED_USER.userId, SEED_USER.organizationId, 'SUSPENDED');
+    // Uses the DISPOSABLE `revokeToken` identity, never SEED_USER's `token`:
+    // SEED_USER is shared with `liveStack.e2e.part2.pg.test.ts`, which vitest
+    // runs concurrently as a separate file, and suspending a SHARED
+    // identity's org membership mid-suite races that file's in-flight
+    // requests into spurious 403/404s. `revokeUserId` is a co-member of the
+    // SAME org (`cw-local-org`) created solely for this test, so the
+    // membership-gate behaviour under test is identical while nothing
+    // outside this test observes the suspension.
+    await db.setMembershipStatus(revokeUserId, SEED_USER.organizationId, 'SUSPENDED');
     try {
-      const list = await api(token, 'GET', '/case-workspace/cases');
+      const list = await api(revokeToken, 'GET', '/case-workspace/cases');
       expect(list.status).toBe(403);
 
-      const read = await api(token, 'GET', `/case-workspace/cases/${state.caseId}`);
+      const read = await api(revokeToken, 'GET', `/case-workspace/cases/${state.caseId}`);
       expect(read.status).toBe(404);
 
-      const mutate = await api(token, 'POST', `/case-workspace/cases/${state.caseId}/status`, {
-        targetStatus: 'BLOCKED',
-        reason: 'po odebraniu członkostwa',
-      });
+      const mutate = await api(
+        revokeToken,
+        'POST',
+        `/case-workspace/cases/${state.caseId}/status`,
+        {
+          targetStatus: 'BLOCKED',
+          reason: 'po odebraniu członkostwa',
+        }
+      );
       expect(mutate.status).toBe(404);
 
       const newPlan = await api(
-        token,
+        revokeToken,
         'POST',
         `/case-workspace/cases/${state.caseId}/plan-versions`,
         { semanticGraph: validGraph(`revoked-${SUFFIX}`) }
       );
       expect(newPlan.status).toBe(404);
 
-      const create = await api(token, 'POST', '/case-workspace/cases', {
+      const create = await api(revokeToken, 'POST', '/case-workspace/cases', {
         projectId: PROJECT_ID,
         contractedClosureType: 'DELIVERY_COMPLETED',
       });
@@ -1016,12 +1049,12 @@ describe('9. Cross-tenant and revoked membership', () => {
       ).length;
       expect(planCountAfter).toBe(planCountBefore);
     } finally {
-      await db.setMembershipStatus(SEED_USER.userId, SEED_USER.organizationId, 'ACTIVE');
+      await db.setMembershipStatus(revokeUserId, SEED_USER.organizationId, 'ACTIVE');
     }
 
     // Restoring membership restores access — proving the block was the
     // membership check and not some unrelated breakage.
-    const restored = await api(token, 'GET', '/case-workspace/cases');
+    const restored = await api(revokeToken, 'GET', '/case-workspace/cases');
     expect(restored.status).toBe(200);
   });
 });

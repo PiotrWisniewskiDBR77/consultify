@@ -59,6 +59,7 @@
 
 import { randomUUID } from 'node:crypto';
 
+import bcrypt from 'bcryptjs';
 import pg from 'pg';
 
 export const BACKEND =
@@ -315,6 +316,63 @@ export class ControlDb {
       `UPDATE organization_members SET status = $3 WHERE user_id = $1 AND organization_id = $2`,
       [userId, orgId, status]
     );
+  }
+
+  /**
+   * Mints a DISPOSABLE user, an ACTIVE member of `orgId`, with a real bcrypt
+   * hash (same `bcryptjs` library `AuthController.comparePassword` verifies
+   * against — see `scripts/dev/case-workspace-seed-local.mjs` for the same
+   * pattern), so it can log in through the real `/api/auth/login` route.
+   *
+   * WHY THIS EXISTS: `SEED_USER` is the one identity every e2e file in this
+   * directory authenticates as. Vitest runs test FILES as separate,
+   * concurrent workers by default (no `fileParallelism: false` is set in
+   * `vitest.config.ts`), so any test that mutates a property of `SEED_USER`'s
+   * identity that is checked on EVERY authenticated request — its
+   * `organization_members.status` — has a window where a sibling file's
+   * in-flight request, authenticated with the very same token, observes the
+   * mutation and fails with a spurious 403/404. Confirmed by running
+   * `liveStack.e2e.pg.test.ts` + `liveStack.e2e.part2.pg.test.ts` together:
+   * part 1's "revoking membership mid-chain" test suspends
+   * `organization_members` for (`cw-local-user`, `cw-local-org`) for the
+   * duration of a few HTTP round-trips, and part 2's requests — authenticated
+   * as the SAME `cw-local-user` token — land inside that window and get 404
+   * (single-resource read) / 403 (mutation), exactly the codes the revoke
+   * test itself asserts for ITS OWN requests.
+   *
+   * A test that means to exercise "membership revoked" must therefore do so
+   * on a throwaway co-member of the org, never on `SEED_USER` (or any other
+   * identity a sibling file also authenticates as, e.g. `APPROVER`).
+   */
+  async createTestUser(orgId: string, tag: string): Promise<{
+    userId: string;
+    email: string;
+    password: string;
+  }> {
+    const unique = randomUUID().slice(0, 8);
+    const userId = `cw-e2e-user-${tag}-${unique}`;
+    const email = `cw.e2e.${tag}.${unique}@local.test`;
+    const password = `CwE2e!${unique}Aa1`;
+    const passwordHash = await bcrypt.hash(password, 10);
+
+    await this.pool.query(
+      `INSERT INTO users (id, organization_id, email, password, first_name, last_name, role, status)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, 'active')`,
+      [userId, orgId, email, passwordHash, 'CW', 'E2E', 'ADMIN']
+    );
+    await this.pool.query(
+      `INSERT INTO organization_members (id, organization_id, user_id, role, status)
+       VALUES ($1, $2, $3, 'OWNER', 'ACTIVE')`,
+      [`cw-e2e-member-${userId}`, orgId, userId]
+    );
+
+    return { userId, email, password };
+  }
+
+  /** Cleanup counterpart to {@link createTestUser}. */
+  async deleteTestUser(userId: string): Promise<void> {
+    await this.pool.query(`DELETE FROM organization_members WHERE user_id = $1`, [userId]);
+    await this.pool.query(`DELETE FROM users WHERE id = $1`, [userId]);
   }
 
   async close(): Promise<void> {
