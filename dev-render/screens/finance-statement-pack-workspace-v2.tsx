@@ -33,6 +33,17 @@ import type {
   VersionLineageDto,
 } from '../../src/services/api/financeV2.types';
 
+// AP_MOUNT §A/§C: `StatementPackWorkspaceV2` now reads
+// `financeStatementPackWorkspaceV2` itself (not just its caller) and renders
+// `null` when OFF — force it ON via the same localStorage-backed local
+// override the hook reads at init.
+try {
+  const existing = JSON.parse(localStorage.getItem('consultify_feature_flags') || '{}');
+  localStorage.setItem('consultify_feature_flags', JSON.stringify({ ...existing, financeStatementPackWorkspaceV2: true }));
+} catch {
+  // ignore — harness-only convenience
+}
+
 const params = new URLSearchParams(window.location.search);
 const state = params.get('state') || 'populated';
 
@@ -183,6 +194,76 @@ function buildFetchers(currentState: string) {
     publishReport: () => delay(undefined, 500),
   };
 }
+
+// ── Tożsamość paska (§C) — `StatementPackWorkspaceV2` ładuje ją teraz
+// bezpośrednio przez `getFinanceBusinessVersion`/`getFinanceArtifact`
+// (financeV2.api.ts named exports, poza `fetchers` DI), więc — tak jak
+// `finance-analysis-workspace.tsx` (identyczny wzorzec) — przechwytujemy na
+// poziomie `window.fetch`. ─────────────────────────────────────────────────
+const BV_ID = 'bv-statement-pack-dbr77-3';
+const ARTIFACT_ID = 'artifact-statement-pack-dbr77';
+
+function jsonResponse(body: unknown, status = 200): Response {
+  return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
+}
+
+const realFetch = window.fetch.bind(window);
+window.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
+  const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : (input as Request).url;
+
+  if (url.includes(`/api/v8/finance-v2/artifacts/${ARTIFACT_ID}/rename`)) {
+    const body = init?.body ? JSON.parse(String(init.body)) : {};
+    return jsonResponse({ data: { artifactId: ARTIFACT_ID, naturalKey: body.naturalKey ?? 'Sprawozdanie DBR77 FY2025' } });
+  }
+  if (url.includes(`/api/v8/finance-v2/artifacts/${ARTIFACT_ID}`)) {
+    return jsonResponse({
+      data: {
+        artifactId: ARTIFACT_ID,
+        artifactType: 'STATEMENT_PACK',
+        naturalKey: 'Sprawozdanie DBR77 FY2025',
+        createdAt: '2026-07-01T00:00:00Z',
+        archivedAt: null,
+        archivedReason: null,
+        currentBusinessVersion: { businessVersionId: BV_ID, versionNo: 3, version: 1, status: 'DRAFT', freshness: 'CURRENT', freshnessReason: null, riskTier: 'LOW' },
+      },
+    });
+  }
+  if (url.includes(`/api/v8/finance-v2/versions/${BV_ID}/transitions`)) {
+    const body = init?.body ? JSON.parse(String(init.body)) : {};
+    return jsonResponse({ data: { status: body.action === 'submit_for_review' ? 'READY_FOR_REVIEW' : 'DRAFT', version: 2 } });
+  }
+  if (url.includes(`/api/v8/finance-v2/versions/${BV_ID}`)) {
+    return jsonResponse({
+      data: {
+        businessVersionId: BV_ID,
+        artifactId: ARTIFACT_ID,
+        versionNo: 3,
+        version: 1,
+        status: 'DRAFT',
+        freshness: 'CURRENT',
+        freshnessReason: null,
+        staleSince: null,
+        riskTier: 'LOW',
+        versionKind: 'MAIN',
+        parentVersionId: null,
+        supersededByVersionId: null,
+        computeSnapshotId: null,
+        computeRunId: null,
+        contentSemanticHash: null,
+        submittedBy: null,
+        submittedAt: null,
+        approvedBy: null,
+        approvedAt: null,
+        reopenReason: null,
+        reopenedBy: null,
+        reopenedAt: null,
+        createdAt: '2026-07-01T00:00:00Z',
+        updatedAt: '2026-08-11T09:05:00Z',
+      },
+    });
+  }
+  return realFetch(input as any, init);
+}) as typeof window.fetch;
 
 export default function FinanceStatementPackWorkspaceV2Screen(): React.ReactElement {
   const fetchers = buildFetchers(state);

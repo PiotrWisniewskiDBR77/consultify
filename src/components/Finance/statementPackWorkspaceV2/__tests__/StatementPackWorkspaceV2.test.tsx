@@ -19,8 +19,9 @@
  */
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { clearFeatureFlagOverrides, setFeatureFlagOverrides } from '@/test-utils/featureFlagOverrides';
 import type {
   LineageEdgeDto,
   ReconciliationRunDetailDto,
@@ -34,6 +35,17 @@ import {
   type ReportArtifactRef,
   type StatementPackWorkspaceV2Fetchers,
 } from '../StatementPackWorkspaceV2';
+
+// AP_MOUNT §A/§C: `StatementPackWorkspaceV2` teraz SAM odczytuje
+// `financeStatementPackWorkspaceV2` i renderuje `null` przy OFF — file-scope
+// hook włącza flagę (ten sam local-override mechanizm co realny
+// harness/użytkownik) dla WSZYSTKICH `describe` bloków w tym pliku.
+beforeEach(() => {
+  setFeatureFlagOverrides({ financeStatementPackWorkspaceV2: true });
+});
+afterEach(() => {
+  clearFeatureFlagOverrides();
+});
 
 function line(overrides: Partial<StatementLineDto> & { stmtLineId: string }): StatementLineDto {
   return {
@@ -84,6 +96,20 @@ function makeFetchers(overrides: Partial<StatementPackWorkspaceV2Fetchers> = {})
       version: 1,
     })),
     publishReport: vi.fn(async () => {}),
+    // §C — tożsamość/lifecycle paska: fakes by default, no real network call,
+    // consistent with the DI pattern the rest of this file already uses.
+    getIdentity: vi.fn(async () => ({
+      artifactId: 'art-statement-pack-1',
+      name: 'Sprawozdanie testowe',
+      status: 'DRAFT' as const,
+      freshness: 'CURRENT' as const,
+      versionNo: 1,
+      version: 1,
+    })),
+    renameArtifact: vi.fn(async () => {}),
+    transitionVersion: vi.fn(async () => ({ status: 'READY_FOR_REVIEW' as const, version: 2 })),
+    approveModel: vi.fn(async () => {}),
+    reopenModel: vi.fn(async () => ({ status: 'DRAFT' as const, versionNo: 2 })),
     ...overrides,
   };
 }
