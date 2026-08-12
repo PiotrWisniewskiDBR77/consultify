@@ -23,7 +23,7 @@
  *     approve-gate screenshots) — default 0 (current user is a third party,
  *     shows every lifecycle button's disabled-with-reason state)
  */
-import React from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { OkrSetWorkspace } from '../../src/components/ResultsVNext/okr/OkrSetWorkspace';
@@ -421,7 +421,12 @@ const g = window as unknown as { __OKR_WORKSPACE_FETCH__?: boolean };
 if (!g.__OKR_WORKSPACE_FETCH__) {
   g.__OKR_WORKSPACE_FETCH__ = true;
   const realFetch = window.fetch.bind(window);
+  // Mirror the component's own initial `set` (incl. `asOwner` override) so
+  // a lifecycle transition's response doesn't silently revert `ownerUserId`
+  // back to the un-overridden mock — the fetch stub's mutable copy must
+  // start from the SAME state the screen renders first, not a fresh one.
   let currentSet = mockSet(setStatus);
+  if (asOwner) currentSet.ownerUserId = 'user-current';
 
   window.fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
     const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
@@ -539,8 +544,24 @@ if (!g.__OKR_WORKSPACE_FETCH__) {
 const ResultsVNextOkrWorkspaceScreen: React.FC = () => {
   const { i18n } = useTranslation();
   const isPolish = !!i18n.language?.startsWith('pl');
-  const set = mockSet(setStatus);
-  if (asOwner) set.ownerUserId = 'user-current';
+  const [set, setSet] = useState<OkrSetDto>(() => {
+    const initial = mockSet(setStatus);
+    if (asOwner) initial.ownerUserId = 'user-current';
+    return initial;
+  });
+  const [backToSetsClicked, setBackToSetsClicked] = useState(false);
+
+  if (backToSetsClicked) {
+    return (
+      <div className="h-screen bg-c-bg text-c-text flex items-center justify-center">
+        <p className="text-sm text-c-text-secondary">
+          {isPolish
+            ? 'Wrócono z pełnego narzędzia OKR (onBackToSets). Ten harness nie ma rejestru do pokazania — zobacz results-vnext-okr-registry.'
+            : 'Returned from the OKR full tool (onBackToSets). This harness has no registry to show — see results-vnext-okr-registry.'}
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="h-screen bg-c-bg text-c-text">
@@ -548,8 +569,8 @@ const ResultsVNextOkrWorkspaceScreen: React.FC = () => {
         set={set}
         isPolish={isPolish}
         setsLabel={isPolish ? 'Zestawy OKR' : 'OKR sets'}
-        onBackToSets={() => {}}
-        onSetChanged={() => {}}
+        onBackToSets={() => setBackToSetsClicked(true)}
+        onSetChanged={(updated) => setSet(updated)}
       />
     </div>
   );
