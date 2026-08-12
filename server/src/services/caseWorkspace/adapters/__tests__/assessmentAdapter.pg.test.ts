@@ -87,9 +87,10 @@ import { ensureAssessmentSchema } from '../../../../controllers/AssessmentContro
 import {
   ASSESSMENT_CREATE_CAPABILITY_ID,
   ASSESSMENT_CREATE_CAPABILITY_VERSION,
+  assessmentCreateRegistrationInput,
+  buildAssessmentCreateBinding,
   getAssessmentReadback,
-  registerAssessmentCreateAdapterBinding,
-  registerAssessmentCreateCapability,
+  type AssessmentAdapterDeps,
 } from '../assessmentAdapter.js';
 
 const CONNECTION_STRING = process.env.DATABASE_URL ?? '';
@@ -221,6 +222,66 @@ async function teardownFixture(control: Pool, fixture: Fixture): Promise<void> {
   await control.query(`DELETE FROM organizations WHERE id = $1`, [fixture.orgId]).catch(() => undefined);
 }
 
+// ---------------------------------------------------------------------------
+// PRIVATE, per-run-unique capability id — NOT the platform-global
+// ASSESSMENT_CREATE_CAPABILITY_ID constant.
+//
+// Cross-file collision (packet H4, 2026-08-12, same class as documentsAdapter
+// H1): `case_workspace_capabilities` is UNIQUE on (capability_id,
+// capability_version) with NO organization scoping
+// (capabilityRegistryService.ts:496), and vitest runs test FILES
+// concurrently by default (server/vitest.config.ts sets no
+// fileParallelism:false). This file's OLD beforeAll registered its row under
+// the real, platform-global ASSESSMENT_CREATE_CAPABILITY_ID for the entire
+// suite's lifetime. capabilityBootstrap.pg.test.ts's
+// deleteBuiltinCapabilityRows() (its tests 1, 3-7) issues
+// `DELETE FROM case_workspace_capabilities WHERE capability_id = $1` for
+// ASSESSMENT_CREATE_CAPABILITY_ID as pre-cleanup for its own "zero
+// registrations" assertions against the real builtin ids
+// `registerBuiltinCapabilityAdapters` uses at real process boot. When that
+// delete lands mid-suite, this file's dispatch fails with
+// CAPABILITY_NOT_FOUND.
+//
+// Reproduced 3/3 runs paired with capabilityBootstrap.pg.test.ts alone
+// (assessmentAdapter's own tests failed each time, on different assertions:
+// the cross-tenant refusal, the partial-failure recovery, and the stable
+// deep-link test, all with errorCode/outcome flipping to
+// CAPABILITY_NOT_FOUND/FAILED where SUCCEEDED/CAPABILITY_UNAUTHORIZED was
+// expected). DB readback: polling
+// `SELECT count(*) FROM case_workspace_capabilities WHERE capability_id =
+// 'case-workspace.assessment.create'` every 20ms during a 4-file run showed
+// the row flip 0->1->0->1->0->1->0 repeatedly across the run's ~13-second
+// window — this file's row is provably not exclusively owned by this suite
+// for its duration (see this packet's final report for the full transition
+// log).
+//
+// Fix: same private-id shape as documentsAdapter.pg.test.ts /
+// resultsAdapter.pg.test.ts — this file registers its OWN test row instead,
+// so no other file's cleanup — targeted at the real, fixed builtin id — can
+// ever delete it. The registry/binding PLUMBING (registerCapabilityWithAdapter,
+// registerCapabilityBinding) and the HANDLER code under test
+// (buildAssessmentCreateBinding, the exported, unmodified production
+// function from assessmentAdapter.ts) are identical to what the real id
+// uses — only the capability_id STRING used as the registry/dispatch key is
+// test-private. This suite needs *a* capability of the right shape to
+// dispatch through (including exercising its OWN Assessment-specific RBAC
+// gate) — it does not exist to prove the REAL builtin id specifically is
+// reachable, so the advisory-lock shape capabilityBootstrap.pg.test.ts /
+// capabilityBootWiring.pg.test.ts use would be the wrong fix here: those
+// two files call the real aggregate boot entry points that hard-code the
+// seven real ids internally and so have no id to swap without gutting what
+// they exist to prove; this file has no such constraint.
+const ASSESSMENT_ADAPTER_PG_TEST_RUN_ID = randomUUID();
+const ASSESSMENT_TEST_CAPABILITY_ID = `${ASSESSMENT_CREATE_CAPABILITY_ID}.pgtest.${ASSESSMENT_ADAPTER_PG_TEST_RUN_ID}`;
+
+function resetAssessmentTestBinding(deps: AssessmentAdapterDeps = {}): void {
+  capabilityAdapterService.registerCapabilityBinding(
+    ASSESSMENT_TEST_CAPABILITY_ID,
+    ASSESSMENT_CREATE_CAPABILITY_VERSION,
+    buildAssessmentCreateBinding(deps)
+  );
+}
+
 function buildEnvelope(params: {
   orgId: string;
   actorId: string;
@@ -228,7 +289,7 @@ function buildEnvelope(params: {
   idempotencyKey?: string;
 }): CapabilityExecutionEnvelope {
   return {
-    capabilityId: ASSESSMENT_CREATE_CAPABILITY_ID,
+    capabilityId: ASSESSMENT_TEST_CAPABILITY_ID,
     capabilityVersion: ASSESSMENT_CREATE_CAPABILITY_VERSION,
     organizationId: params.orgId,
     actor: { type: 'HUMAN', actorId: params.actorId },
@@ -250,10 +311,16 @@ suite('assessmentAdapter — Assessment create capability, dispatched end-to-end
     ]);
     const registrarActorId = await seedUser(control, registrarOrgId, 'registrar');
     await seedMemberWithRole(control, registrarOrgId, registrarActorId, 'ADMIN');
-    await registerAssessmentCreateCapability({
-      createdByActorId: registrarActorId,
-      callerOrganizationId: registrarOrgId,
-    });
+    // Private test id — NOT registerAssessmentCreateCapability, which
+    // hard-codes the platform-global ASSESSMENT_CREATE_CAPABILITY_ID.
+    // registerCapabilityWithAdapter is the same production registration
+    // primitive that helper calls internally; only the capabilityId field of
+    // the input is overridden.
+    await capabilityAdapterService.registerCapabilityWithAdapter(
+      { ...assessmentCreateRegistrationInput(registrarActorId), capabilityId: ASSESSMENT_TEST_CAPABILITY_ID },
+      buildAssessmentCreateBinding(),
+      registrarOrgId
+    );
   }, 60_000);
 
   afterAll(async () => {
@@ -262,11 +329,11 @@ suite('assessmentAdapter — Assessment create capability, dispatched end-to-end
         `DELETE FROM case_workspace_capability_idempotency_keys
           WHERE capability_registry_id IN (
             SELECT capability_registry_id FROM case_workspace_capabilities WHERE capability_id = $1)`,
-        [ASSESSMENT_CREATE_CAPABILITY_ID]
+        [ASSESSMENT_TEST_CAPABILITY_ID]
       )
       .catch(() => undefined);
     await control
-      .query(`DELETE FROM case_workspace_capabilities WHERE capability_id = $1`, [ASSESSMENT_CREATE_CAPABILITY_ID])
+      .query(`DELETE FROM case_workspace_capabilities WHERE capability_id = $1`, [ASSESSMENT_TEST_CAPABILITY_ID])
       .catch(() => undefined);
     await control
       .query(`DELETE FROM organization_members WHERE organization_id = $1`, [registrarOrgId])
@@ -277,9 +344,11 @@ suite('assessmentAdapter — Assessment create capability, dispatched end-to-end
   }, 60_000);
 
   afterEach(() => {
-    // Reset to the real, production binding after any test that injected a
-    // custom one — never let a stubbed dependency leak into the next test.
-    registerAssessmentCreateAdapterBinding();
+    // Reset to the real, production binding (rebound at THIS file's private
+    // test id — see the block above this describe) after any test that
+    // injected a custom one — never let a stubbed dependency leak into the
+    // next test.
+    resetAssessmentTestBinding();
   });
 
   async function assessmentCountForOrg(orgId: string): Promise<number> {
@@ -467,7 +536,7 @@ suite('assessmentAdapter — Assessment create capability, dispatched end-to-end
   it('still creates the assessment when the artifact-link step fails, surfaces it, and stays re-linkable', async () => {
     const fixture = await seedFixture(control, 'partial');
     try {
-      registerAssessmentCreateAdapterBinding({
+      resetAssessmentTestBinding({
         linkArtifactToCase: async () => {
           throw new Error('injected_link_failure');
         },
@@ -617,7 +686,7 @@ suite('assessmentAdapter — Assessment create capability, dispatched end-to-end
   it('[negative control] surfaces a failure instead of a false success when the write silently persists nothing', async () => {
     const fixture = await seedFixture(control, 'negctrl');
     try {
-      registerAssessmentCreateAdapterBinding({
+      resetAssessmentTestBinding({
         // Mimics the exact observable shape of a DbPromise fallback-swallow:
         // a plausible id is returned, but nothing was actually written.
         createAssessment: async () => randomUUID(),

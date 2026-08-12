@@ -78,8 +78,9 @@ import { getScorecard } from '../../../results/kpiScorecardService.js';
 import {
   RESULTS_SCORECARD_CREATE_CAPABILITY_ID,
   RESULTS_SCORECARD_CREATE_CAPABILITY_VERSION,
-  registerResultsScorecardCreateAdapterBinding,
-  registerResultsScorecardCreateCapability,
+  buildResultsScorecardCreateBinding,
+  resultsScorecardCreateRegistrationInput,
+  type ResultsAdapterDeps,
 } from '../resultsAdapter.js';
 import {
   buildEnvelope,
@@ -138,9 +139,69 @@ if (!REACHABLE) {
 
 const suite = REACHABLE ? describe.sequential : describe.skip;
 
+// ---------------------------------------------------------------------------
+// PRIVATE, per-run-unique capability id — NOT the platform-global
+// RESULTS_SCORECARD_CREATE_CAPABILITY_ID constant.
+//
+// Cross-file collision (packet H4, 2026-08-12, same class as documentsAdapter
+// H1 / assessmentAdapter H3): `case_workspace_capabilities` is UNIQUE on
+// (capability_id, capability_version) with NO organization scoping
+// (capabilityRegistryService.ts:496), and vitest runs test FILES
+// concurrently by default (server/vitest.config.ts sets no
+// fileParallelism:false). This file's OLD beforeAll registered its row under
+// the real, platform-global RESULTS_SCORECARD_CREATE_CAPABILITY_ID for the
+// entire suite's lifetime — the exact shape assessmentAdapter.pg.test.ts had
+// before its own fix, and the exact shape
+// capabilityBootstrap.pg.test.ts's deleteBuiltinCapabilityRows() (its tests
+// 1, 3-7) targets as pre-cleanup for its OWN "zero registrations" assertions
+// against the real builtin ids `registerBuiltinCapabilityAdapters` uses at
+// real process boot.
+//
+// DB readback proof this file's row IS churned by that cross-file delete,
+// not merely a theoretical risk: polling
+// `SELECT count(*) FROM case_workspace_capabilities WHERE capability_id =
+// 'case-workspace.results.scorecard.create'` every 20ms while running this
+// file alongside assessmentAdapter.pg.test.ts + capabilityBootstrap.pg.test.ts
+// + capabilityBootWiring.pg.test.ts showed the SAME 0->1->0->1->0 churn on
+// this file's real-id row as on assessmentAdapter's (both flipped at
+// +7.6-7.9s, +10.0-11.1s, +11.9-11.3s, +13.0-14.1s — see this packet's final
+// report). That run happened not to land a failing assertion on THIS file
+// (assessmentAdapter's slower, ensureAssessmentSchema-heavy suite keeps its
+// row live for a longer, more collision-prone window, which is why it fails
+// far more often empirically), but the row is demonstrably not exclusively
+// owned by this suite for its duration — a genuine, reproducible defect of
+// the same class, not a false alarm.
+//
+// Fix: this file registers its OWN test row under a private id instead, so
+// no other file's cleanup — targeted at the real, fixed builtin id — can
+// ever delete it, and this file's own dispatch never collides with another
+// file's "zero registrations for the real id" assertion either. The
+// registry/binding PLUMBING (registerCapabilityWithAdapter,
+// registerCapabilityBinding) and the HANDLER code under test
+// (buildResultsScorecardCreateBinding, the exported, unmodified production
+// function from resultsAdapter.ts) are identical to what the real id uses —
+// only the capability_id STRING used as the registry/dispatch key is
+// test-private. This suite needs *a* capability of the right shape to
+// dispatch through — it does not exist to prove the REAL builtin id
+// specifically is reachable (that is capabilityBootstrap.pg.test.ts's and
+// capabilityBootWiring.pg.test.ts's job) — so the advisory-lock shape those
+// two files use would be the wrong fix here: it would only add contention
+// with a resource this file doesn't need to touch, whereas a private id
+// removes the contention entirely.
+const RESULTS_ADAPTER_PG_TEST_RUN_ID = randomUUID();
+const RESULTS_TEST_CAPABILITY_ID = `${RESULTS_SCORECARD_CREATE_CAPABILITY_ID}.pgtest.${RESULTS_ADAPTER_PG_TEST_RUN_ID}`;
+
+function resetResultsTestBinding(deps: ResultsAdapterDeps = {}): void {
+  capabilityAdapterService.registerCapabilityBinding(
+    RESULTS_TEST_CAPABILITY_ID,
+    RESULTS_SCORECARD_CREATE_CAPABILITY_VERSION,
+    buildResultsScorecardCreateBinding(deps)
+  );
+}
+
 suite('resultsAdapter — Results scorecard-create capability, dispatched end-to-end through executeCapability', () => {
   let control: Pool;
-  /** The registry row is registered ONCE for the whole file (platform-global, fixed capabilityId/version). */
+  /** The registry row is registered ONCE for the whole file, under this file's PRIVATE test capability id (see the block above this describe). */
   let registrarOrgId: string;
 
   beforeAll(async () => {
@@ -151,10 +212,16 @@ suite('resultsAdapter — Results scorecard-create capability, dispatched end-to
       'Results adapter registrar org',
     ]);
     const registrarActorId = await seedMemberedUser(control, registrarOrgId, 'registrar', 'ADMIN');
-    await registerResultsScorecardCreateCapability({
-      createdByActorId: registrarActorId,
-      callerOrganizationId: registrarOrgId,
-    });
+    // Private test id — NOT registerResultsScorecardCreateCapability, which
+    // hard-codes the platform-global RESULTS_SCORECARD_CREATE_CAPABILITY_ID.
+    // registerCapabilityWithAdapter is the same production registration
+    // primitive that helper calls internally; only the capabilityId field of
+    // the input is overridden.
+    await capabilityAdapterService.registerCapabilityWithAdapter(
+      { ...resultsScorecardCreateRegistrationInput(registrarActorId), capabilityId: RESULTS_TEST_CAPABILITY_ID },
+      buildResultsScorecardCreateBinding(),
+      registrarOrgId
+    );
   }, 60_000);
 
   afterAll(async () => {
@@ -163,13 +230,11 @@ suite('resultsAdapter — Results scorecard-create capability, dispatched end-to
         `DELETE FROM case_workspace_capability_idempotency_keys
           WHERE capability_registry_id IN (
             SELECT capability_registry_id FROM case_workspace_capabilities WHERE capability_id = $1)`,
-        [RESULTS_SCORECARD_CREATE_CAPABILITY_ID]
+        [RESULTS_TEST_CAPABILITY_ID]
       )
       .catch(() => undefined);
     await control
-      .query(`DELETE FROM case_workspace_capabilities WHERE capability_id = $1`, [
-        RESULTS_SCORECARD_CREATE_CAPABILITY_ID,
-      ])
+      .query(`DELETE FROM case_workspace_capabilities WHERE capability_id = $1`, [RESULTS_TEST_CAPABILITY_ID])
       .catch(() => undefined);
     await control
       .query(`DELETE FROM organization_members WHERE organization_id = $1`, [registrarOrgId])
@@ -180,9 +245,11 @@ suite('resultsAdapter — Results scorecard-create capability, dispatched end-to
   }, 60_000);
 
   afterEach(() => {
-    // Reset to the real, production binding after any test that injected a
-    // custom one — never let a stubbed dependency leak into the next test.
-    registerResultsScorecardCreateAdapterBinding();
+    // Reset to the real, production binding (rebound at THIS file's private
+    // test id — see the block above this describe) after any test that
+    // injected a custom one — never let a stubbed dependency leak into the
+    // next test.
+    resetResultsTestBinding();
   });
 
   async function scorecardCountForOrg(orgId: string): Promise<number> {
@@ -226,7 +293,7 @@ suite('resultsAdapter — Results scorecard-create capability, dispatched end-to
     try {
       const result = await capabilityAdapterService.executeCapability(
         buildEnvelope({
-          capabilityId: RESULTS_SCORECARD_CREATE_CAPABILITY_ID,
+          capabilityId: RESULTS_TEST_CAPABILITY_ID,
           capabilityVersion: RESULTS_SCORECARD_CREATE_CAPABILITY_VERSION,
           orgId: fixture.orgId,
           actorId: fixture.actorId,
@@ -272,7 +339,7 @@ suite('resultsAdapter — Results scorecard-create capability, dispatched end-to
     try {
       const badInput = await capabilityAdapterService.executeCapability(
         buildEnvelope({
-          capabilityId: RESULTS_SCORECARD_CREATE_CAPABILITY_ID,
+          capabilityId: RESULTS_TEST_CAPABILITY_ID,
           capabilityVersion: RESULTS_SCORECARD_CREATE_CAPABILITY_VERSION,
           orgId: fixture.orgId,
           actorId: fixture.actorId,
@@ -291,7 +358,7 @@ suite('resultsAdapter — Results scorecard-create capability, dispatched end-to
 
       const noAccess = await capabilityAdapterService.executeCapability(
         buildEnvelope({
-          capabilityId: RESULTS_SCORECARD_CREATE_CAPABILITY_ID,
+          capabilityId: RESULTS_TEST_CAPABILITY_ID,
           capabilityVersion: RESULTS_SCORECARD_CREATE_CAPABILITY_VERSION,
           orgId: strangerOrgId,
           actorId: strangerActorId,
@@ -323,7 +390,7 @@ suite('resultsAdapter — Results scorecard-create capability, dispatched end-to
       const key1 = `idem-${randomUUID()}`;
       const first = await capabilityAdapterService.executeCapability(
         buildEnvelope({
-          capabilityId: RESULTS_SCORECARD_CREATE_CAPABILITY_ID,
+          capabilityId: RESULTS_TEST_CAPABILITY_ID,
           capabilityVersion: RESULTS_SCORECARD_CREATE_CAPABILITY_VERSION,
           orgId: fixture.orgId,
           actorId: fixture.actorId,
@@ -336,7 +403,7 @@ suite('resultsAdapter — Results scorecard-create capability, dispatched end-to
 
       const replay = await capabilityAdapterService.executeCapability(
         buildEnvelope({
-          capabilityId: RESULTS_SCORECARD_CREATE_CAPABILITY_ID,
+          capabilityId: RESULTS_TEST_CAPABILITY_ID,
           capabilityVersion: RESULTS_SCORECARD_CREATE_CAPABILITY_VERSION,
           orgId: fixture.orgId,
           actorId: fixture.actorId,
@@ -352,7 +419,7 @@ suite('resultsAdapter — Results scorecard-create capability, dispatched end-to
       const key2 = `idem-${randomUUID()}`;
       const rejected = await capabilityAdapterService.executeCapability(
         buildEnvelope({
-          capabilityId: RESULTS_SCORECARD_CREATE_CAPABILITY_ID,
+          capabilityId: RESULTS_TEST_CAPABILITY_ID,
           capabilityVersion: RESULTS_SCORECARD_CREATE_CAPABILITY_VERSION,
           orgId: fixture.orgId,
           actorId: fixture.actorId,
@@ -367,7 +434,7 @@ suite('resultsAdapter — Results scorecard-create capability, dispatched end-to
       const key3 = `idem-${randomUUID()}`;
       const second = await capabilityAdapterService.executeCapability(
         buildEnvelope({
-          capabilityId: RESULTS_SCORECARD_CREATE_CAPABILITY_ID,
+          capabilityId: RESULTS_TEST_CAPABILITY_ID,
           capabilityVersion: RESULTS_SCORECARD_CREATE_CAPABILITY_VERSION,
           orgId: fixture.orgId,
           actorId: fixture.actorId,
@@ -391,7 +458,7 @@ suite('resultsAdapter — Results scorecard-create capability, dispatched end-to
   it('still creates the scorecard when the artifact-link step fails, surfaces it, and stays re-linkable', async () => {
     const fixture = await seedCaseFixture(control, 'results-partial');
     try {
-      registerResultsScorecardCreateAdapterBinding({
+      resetResultsTestBinding({
         linkArtifactToCase: async () => {
           throw new Error('injected_link_failure');
         },
@@ -399,7 +466,7 @@ suite('resultsAdapter — Results scorecard-create capability, dispatched end-to
 
       const result = await capabilityAdapterService.executeCapability(
         buildEnvelope({
-          capabilityId: RESULTS_SCORECARD_CREATE_CAPABILITY_ID,
+          capabilityId: RESULTS_TEST_CAPABILITY_ID,
           capabilityVersion: RESULTS_SCORECARD_CREATE_CAPABILITY_VERSION,
           orgId: fixture.orgId,
           actorId: fixture.actorId,
@@ -473,7 +540,7 @@ suite('resultsAdapter — Results scorecard-create capability, dispatched end-to
       // AND to otherOrgId, but the ENVELOPE claims otherOrgId for THIS Case.
       const result = await capabilityAdapterService.executeCapability(
         buildEnvelope({
-          capabilityId: RESULTS_SCORECARD_CREATE_CAPABILITY_ID,
+          capabilityId: RESULTS_TEST_CAPABILITY_ID,
           capabilityVersion: RESULTS_SCORECARD_CREATE_CAPABILITY_VERSION,
           orgId: otherOrgId,
           actorId: fixture.actorId,
@@ -496,7 +563,7 @@ suite('resultsAdapter — Results scorecard-create capability, dispatched end-to
       const strangerActorId = await seedMemberedUser(control, strangerOrgId, 'stranger2');
       const strangerResult = await capabilityAdapterService.executeCapability(
         buildEnvelope({
-          capabilityId: RESULTS_SCORECARD_CREATE_CAPABILITY_ID,
+          capabilityId: RESULTS_TEST_CAPABILITY_ID,
           capabilityVersion: RESULTS_SCORECARD_CREATE_CAPABILITY_VERSION,
           orgId: strangerOrgId,
           actorId: strangerActorId,
@@ -533,7 +600,7 @@ suite('resultsAdapter — Results scorecard-create capability, dispatched end-to
     try {
       const result = await capabilityAdapterService.executeCapability(
         buildEnvelope({
-          capabilityId: RESULTS_SCORECARD_CREATE_CAPABILITY_ID,
+          capabilityId: RESULTS_TEST_CAPABILITY_ID,
           capabilityVersion: RESULTS_SCORECARD_CREATE_CAPABILITY_VERSION,
           orgId: fixture.orgId,
           actorId: fixture.actorId,
@@ -581,7 +648,7 @@ suite('resultsAdapter — Results scorecard-create capability, dispatched end-to
     try {
       const result = await capabilityAdapterService.executeCapability(
         buildEnvelope({
-          capabilityId: RESULTS_SCORECARD_CREATE_CAPABILITY_ID,
+          capabilityId: RESULTS_TEST_CAPABILITY_ID,
           capabilityVersion: RESULTS_SCORECARD_CREATE_CAPABILITY_VERSION,
           orgId: fixture.orgId,
           actorId: fixture.actorId,
