@@ -116,36 +116,42 @@ export function FinanceSavedViewsPanel({
     window.setTimeout(() => setCopiedViewId((cur) => (cur === view.id ? null : cur)), 2000);
   }
 
+  // ★ NAPRAWA a11y (Pakiet I, wymaganie #7 — MutationObserver defekt): patrz
+  // ten sam komentarz w `FinanceCommentsPanel.tsx` — wcześniej `loading`/`error`
+  // (korzeń `<>`) i `loaded` (korzeń `<div data-testid="finance-saved-views-panel">`)
+  // były TRZEMA różnymi `return`, więc zmiana `state.kind` odmontowywała cały
+  // poddrzew wraz z `FinanceStatusAnnouncer` zamiast mutować jego tekst
+  // (`handleDelete`/`handleSave` przechodzą przez `loading` → 0 mutacji;
+  // `handleCopyShareLink` NIE zmienia `state.kind` → realna mutacja — dokładnie
+  // rozbieżność zmierzona `MutationObserver`em). JEDEN stabilny korzeń `<>`
+  // dla wszystkich trzech stanów, ogłoszenie zawsze pierwszym dzieckiem.
+  let announcerMessage: string;
+  let announcerPriority: 'polite' | 'assertive' = 'polite';
+  let content: React.ReactNode;
+
   if (state.kind === 'loading') {
-    return (
-      <>
-        <FinanceStatusAnnouncer message="Ładowanie zapisanych widoków…" />
-        <div className={`rounded-lg border border-c-border-subtle bg-c-surface p-3 ${className ?? ''}`} data-testid="saved-views-panel-loading">
-          <p className="text-xs text-c-text-secondary">Ładowanie zapisanych widoków…</p>
-        </div>
-      </>
+    announcerMessage = 'Ładowanie zapisanych widoków…';
+    content = (
+      <div className={`rounded-lg border border-c-border-subtle bg-c-surface p-3 ${className ?? ''}`} data-testid="saved-views-panel-loading">
+        <p className="text-xs text-c-text-secondary">Ładowanie zapisanych widoków…</p>
+      </div>
     );
-  }
-
-  if (state.kind === 'error') {
-    return (
-      <>
-        <FinanceStatusAnnouncer message={`Błąd: ${state.title}`} priority="assertive" />
-        <div className={`rounded-lg border border-c-danger/40 bg-c-surface p-3 ${className ?? ''}`} data-testid="saved-views-panel-error">
-          <p className="text-sm font-medium text-c-danger">{state.title}</p>
-          <p className="text-xs text-c-text-secondary">{state.detail}</p>
-        </div>
-      </>
+  } else if (state.kind === 'error') {
+    announcerMessage = `Błąd: ${state.title}`;
+    announcerPriority = 'assertive';
+    content = (
+      <div className={`rounded-lg border border-c-danger/40 bg-c-surface p-3 ${className ?? ''}`} data-testid="saved-views-panel-error">
+        <p className="text-sm font-medium text-c-danger">{state.title}</p>
+        <p className="text-xs text-c-text-secondary">{state.detail}</p>
+      </div>
     );
-  }
-
-  const { views } = state;
-  const personalViews = views.filter((v) => v.scope === 'PERSONAL');
-  const teamViews = views.filter((v) => v.scope === 'TEAM');
-
-  return (
+  } else {
+    const { views } = state;
+    const personalViews = views.filter((v) => v.scope === 'PERSONAL');
+    const teamViews = views.filter((v) => v.scope === 'TEAM');
+    announcerMessage = actionMessage ?? 'Zapisane widoki wczytane.';
+    content = (
     <div className={`flex flex-col gap-4 rounded-lg border border-c-border-subtle bg-c-surface p-3 ${className ?? ''}`} data-testid="finance-saved-views-panel">
-      <FinanceStatusAnnouncer message={actionMessage ?? 'Zapisane widoki wczytane.'} />
       <p className="text-xs font-semibold text-c-text-secondary">Zapisane widoki</p>
 
       {rowError ? (
@@ -192,6 +198,14 @@ export function FinanceSavedViewsPanel({
         </div>
       </div>
     </div>
+    );
+  }
+
+  return (
+    <>
+      <FinanceStatusAnnouncer message={announcerMessage} priority={announcerPriority} />
+      {content}
+    </>
   );
 }
 
