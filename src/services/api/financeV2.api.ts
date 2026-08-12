@@ -16,6 +16,14 @@
 import { fetchWithRetry, getHeaders, handleResponse } from './baseClient';
 import { v8Get, v8Post } from './v8/client';
 import type {
+  BaselineAssumptionDto,
+  BaselineAssumptionUpsertInput,
+  BaselineAssumptionUpsertResultDto,
+  BaselineComputeParams,
+  BaselineComputeResultDto,
+  BaselineOutputDto,
+  BaselineScheduleType,
+  BaselineStatementType,
   FinanceApproveModelResultDto,
   FinanceArtifactDetailDto,
   FinanceArtifactType,
@@ -26,6 +34,7 @@ import type {
   FinanceComputeSnapshotResultDto,
   FinanceCreateArtifactResultDto,
   FinanceEnqueueJobResultDto,
+  FinanceRenameArtifactResultDto,
   FinanceReopenModelResultDto,
   FinanceTransitionResultDto,
   LifecycleAction,
@@ -99,6 +108,13 @@ export async function listFinanceArtifactVersions(
 export async function getFinanceArtifactCapabilities(artifactId: string): Promise<FinanceCapabilitiesDto> {
   return v8Get<FinanceCapabilitiesDto>(`${BASE}/artifacts/${encodeURIComponent(artifactId)}/capabilities`);
 }
+
+// --- PKG-F Baseline ---
+/** artifacts.routes.ts:249-293 (D3 fix, Pakiet B2) — OWN-FIN-011 rename kontrolowany: serwer sam bramkuje `canRenameArtifact`/`validateWorkspaceName` (403 z `STATUS_IMMUTABLE`/`INSUFFICIENT_ROLE`, 400 z kodem walidacji nazwy). Używane przez `BaselineWorkspace.handleCommitRename`. */
+export async function renameFinanceArtifact(artifactId: string, naturalKey: string): Promise<FinanceRenameArtifactResultDto> {
+  return v8Post<FinanceRenameArtifactResultDto>(`${BASE}/artifacts/${encodeURIComponent(artifactId)}/rename`, { naturalKey });
+}
+// --- /PKG-F Baseline ---
 
 // ---------------------------------------------------------------------------
 // Versions — versions.routes.ts
@@ -388,11 +404,89 @@ export async function getFinanceVersionLineage(
   );
 }
 
+// --- PKG-F Baseline ---
+// Pakiet F — Baseline (`server/src/routes/v8/finance-v2/baseline.routes.ts`,
+// pakiet B2). Cztery endpointy: odczyt/zapis wsadowy założeń, compute,
+// odczyt wyliczeń.
+// ---------------------------------------------------------------------------
+
+const BASELINE_BASE = `${BASE}/baseline`;
+
+export interface ListBaselineAssumptionsParams {
+  scheduleType?: BaselineScheduleType;
+  entityId?: string;
+}
+
+export async function listBaselineAssumptions(
+  businessVersionId: string,
+  params: ListBaselineAssumptionsParams = {}
+): Promise<BaselineAssumptionDto[]> {
+  const qs = new URLSearchParams();
+  if (params.scheduleType) qs.set('scheduleType', params.scheduleType);
+  if (params.entityId) qs.set('entityId', params.entityId);
+  const suffix = qs.toString() ? `?${qs.toString()}` : '';
+  return v8Get<BaselineAssumptionDto[]>(
+    `${BASELINE_BASE}/${encodeURIComponent(businessVersionId)}/assumptions${suffix}`
+  );
+}
+
+/** Zapis wsadowy — UPSERT (ON CONFLICT po kluczu komórki, baseline.routes.ts:101-155). Bezpieczne do ponowienia z tym samym zestawem — nie duplikuje wierszy. */
+export async function upsertBaselineAssumptions(
+  businessVersionId: string,
+  assumptions: BaselineAssumptionUpsertInput[]
+): Promise<BaselineAssumptionUpsertResultDto> {
+  return v8Post<BaselineAssumptionUpsertResultDto>(
+    `${BASELINE_BASE}/${encodeURIComponent(businessVersionId)}/assumptions`,
+    { assumptions }
+  );
+}
+
+/**
+ * Uwaga (OWN-FIN-018, „Compute kończy się timeoutem bez wyniku"): `v8Post`
+ * dziedziczy `fetchWithRetry`'ego twardy 20s timeout
+ * (`src/services/api/baseClient.ts`). Ten klient NIE łapie timeoutu tutaj —
+ * `describeFinanceV2Error` (financeV2.types.ts) już przeformułowuje surowy
+ * `„Request timed out"` na komunikat PL, ale sam FAKT „czy compute się mimo
+ * to zakończył po stronie serwera" musi rozstrzygnąć CALLER (odczytem
+ * `listBaselineOutputs`/`getFinanceBusinessVersion` po timeoucie) — ten
+ * moduł tylko woła endpoint, nie ukrywa niepewności. Patrz `useBaselineCompute`
+ * (`src/components/Finance/baseline/useBaselineCompute.ts`) po realizację tej
+ * ścieżki odzysku.
+ */
+export async function computeBaseline(params: BaselineComputeParams): Promise<BaselineComputeResultDto> {
+  return v8Post<BaselineComputeResultDto>(`${BASELINE_BASE}/${encodeURIComponent(params.businessVersionId)}/compute`, {
+    entityId: params.entityId,
+    forecastPeriodIds: params.forecastPeriodIds,
+    openingBalanceSheetPeriodId: params.openingBalanceSheetPeriodId,
+    ...(params.engineManifestId ? { engineManifestId: params.engineManifestId } : {}),
+  });
+}
+
+export interface ListBaselineOutputsParams {
+  statementType?: BaselineStatementType;
+  entityId?: string;
+  periodId?: string;
+}
+
+export async function listBaselineOutputs(
+  businessVersionId: string,
+  params: ListBaselineOutputsParams = {}
+): Promise<BaselineOutputDto[]> {
+  const qs = new URLSearchParams();
+  if (params.statementType) qs.set('statementType', params.statementType);
+  if (params.entityId) qs.set('entityId', params.entityId);
+  if (params.periodId) qs.set('periodId', params.periodId);
+  const suffix = qs.toString() ? `?${qs.toString()}` : '';
+  return v8Get<BaselineOutputDto[]>(`${BASELINE_BASE}/${encodeURIComponent(businessVersionId)}/outputs${suffix}`);
+}
+// --- /PKG-F Baseline ---
+
 export const FinanceV2Api = {
   createFinanceArtifact,
   getFinanceArtifact,
   listFinanceArtifactVersions,
   getFinanceArtifactCapabilities,
+  renameFinanceArtifact,
   getFinanceBusinessVersion,
   transitionFinanceVersion,
   createFinanceComputeSnapshot,
@@ -408,4 +502,10 @@ export const FinanceV2Api = {
   listStatementReconciliationRuns,
   getStatementReconciliationRun,
   getFinanceVersionLineage,
+  // --- PKG-F Baseline ---
+  listBaselineAssumptions,
+  upsertBaselineAssumptions,
+  computeBaseline,
+  listBaselineOutputs,
+  // --- /PKG-F Baseline ---
 };

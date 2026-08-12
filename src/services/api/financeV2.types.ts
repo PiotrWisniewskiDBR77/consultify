@@ -269,6 +269,14 @@ export interface FinanceBusinessVersionSummaryDto {
   approvedAt: string | null;
 }
 
+// --- PKG-F Baseline ---
+/** artifacts.routes.ts:288-291 (POST /artifacts/:id/rename), sukces. Używane przez `BaselineWorkspace.handleCommitRename`. */
+export interface FinanceRenameArtifactResultDto {
+  artifactId: string;
+  naturalKey: string | null;
+}
+// --- /PKG-F Baseline ---
+
 /** artifacts.routes.ts:214-234 (GET /artifacts/:id/capabilities). */
 export interface FinanceCapabilitiesDto {
   artifactId: string;
@@ -602,3 +610,205 @@ export function describeFinanceV2Error(err: unknown): { title: string; detail: s
       };
   }
 }
+
+// --- PKG-F Baseline ---
+// Pakiet F — Baseline (`/baseline/*`). Źródło:
+// server/src/routes/v8/finance-v2/baseline.routes.ts (czytane w całości
+// 2026-08-11) + server/src/services/finance/canonical/baselineComputeService.ts
+// (BASELINE_SCHEDULE_TYPES:725-729, BASELINE_ASSUMPTION_RULES:732-735,
+// BASELINE_ASSUMPTION_QUALITIES:738, CANONICAL_CODES:112-120,
+// STATEMENT_TYPE_OF:122-129). Kształt DTO PORTOWANY pole-po-polu z routera
+// (nie zgadywany) — `server/**` poza allowlistą tego pakietu.
+// Blok ciągnie się do końca pliku (ostatni blok pliku na 2026-08-11).
+// ---------------------------------------------------------------------------
+
+export const BaselineScheduleTypeValues = [
+  'revenue_pvm',
+  'headcount',
+  'cogs_opex',
+  'wc_dso_dio_dpo',
+  'capex_depreciation',
+  'leases',
+  'debt_maturity',
+  'tax_nol',
+  'equity_re',
+] as const;
+export type BaselineScheduleType = (typeof BaselineScheduleTypeValues)[number];
+
+export const BaselineAssumptionRuleValues = [
+  'HISTORICAL_AVERAGE',
+  'GROWTH_RATE',
+  'FIXED_VALUE',
+  'LINKED_TO_ANALYSIS_KPI',
+  'FORMULA',
+  'MANUAL_OVERRIDE',
+] as const;
+export type BaselineAssumptionRule = (typeof BaselineAssumptionRuleValues)[number];
+
+export const BaselineAssumptionQualityValues = ['CONFIRMED', 'ESTIMATED', 'DEGRADED_INSUFFICIENT_HISTORY'] as const;
+export type BaselineAssumptionQuality = (typeof BaselineAssumptionQualityValues)[number];
+
+/** baseline.routes.ts:75-90 — węższy kształt wartości niż `FinanceValue` (brak native/presentation currency, multiplier, isAdjustment). */
+export interface BaselineAssumptionValue {
+  status: FinanceValueStatus;
+  valueDecimal: string | null;
+  unit: string;
+  sourceRef: Record<string, unknown> | null;
+}
+
+/** baseline.routes.ts:74-92 (GET .../assumptions), jeden wiersz. */
+export interface BaselineAssumptionDto {
+  assumptionId: string;
+  scheduleType: BaselineScheduleType;
+  driverCode: string;
+  entityId: string;
+  periodId: string;
+  basePeriodId: string | null;
+  rule: BaselineAssumptionRule;
+  value: BaselineAssumptionValue;
+  rangeLow: string | null;
+  rangeHigh: string | null;
+  quality: BaselineAssumptionQuality;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** baseline.routes.ts:116-146 — wejście POST batch (ciało). */
+export interface BaselineAssumptionUpsertInput {
+  scheduleType: BaselineScheduleType;
+  driverCode: string;
+  entityId: string;
+  periodId: string;
+  basePeriodId?: string | null;
+  rule: BaselineAssumptionRule;
+  valueStatus: FinanceValueStatus;
+  valueDecimal?: number | null;
+  unit: string;
+  sourceRef?: Record<string, unknown> | null;
+  rangeLow?: number | null;
+  rangeHigh?: number | null;
+  quality: BaselineAssumptionQuality;
+}
+
+/** baseline.routes.ts:150-153 (POST .../assumptions), sukces. */
+export interface BaselineAssumptionUpsertResultDto {
+  businessVersionId: string;
+  writtenCount: number;
+  assumptions: Array<{ assumptionId: string; scheduleType: BaselineScheduleType; driverCode: string; entityId: string; periodId: string }>;
+}
+
+/** baseline.routes.ts:159-191 — wejście POST compute (ciało). */
+export interface BaselineComputeParams {
+  businessVersionId: string;
+  entityId: string;
+  forecastPeriodIds: string[];
+  openingBalanceSheetPeriodId: string;
+  engineManifestId?: string;
+}
+
+/**
+ * baselineComputeService.ts `PeriodComputeSummary` (linia ~631-638) — jeden
+ * miesiąc obliczenia. `qualityFlag: 'FUNDING_GAP'` gdy `cash < 0` — TO jest
+ * źródło alarmu luki finansowania (DEC-FIN-002): silnik NIGDY nie podnosi
+ * gotówki do zera (brak plugu), tylko oznacza okres flagą.
+ */
+export interface BaselinePeriodComputeSummaryDto {
+  periodId: string;
+  converged: boolean;
+  iterationsUsed: number;
+  cash: number;
+  netIncome: number;
+  qualityFlag: 'FUNDING_GAP' | null;
+}
+
+/** baseline.routes.ts:203-206 (POST .../compute), sukces. */
+export interface BaselineComputeResultDto {
+  jobId: string;
+  jobStatus: string;
+  periodsComputed: number;
+  monthlyResults: BaselinePeriodComputeSummaryDto[];
+}
+
+/**
+ * baseline.routes.ts:195-201 — błąd compute. `NO_SOURCE_STATEMENT_PACK_EDGE`/
+ * `NO_BASELINE_MODEL_ROW` → 404; wszystko inne → 409 (m.in.
+ * `CIRCULARITY_NOT_CONVERGED` z `failedAtPeriodId`/`partialResults`,
+ * `TIE_OUT_FAILED`, `FORECAST_PERIOD_COUNT_MISMATCH`,
+ * `MISSING_DEBT_MATURITY_SCHEDULE`, `JOB_NOT_RUNNING`).
+ */
+export interface BaselineComputeErrorExtra {
+  failedAtPeriodId?: string;
+  partialResults?: BaselinePeriodComputeSummaryDto[];
+}
+
+export const BASELINE_SCHEDULE_TYPE_LABELS_PL: Record<BaselineScheduleType, string> = {
+  revenue_pvm: 'Przychody (cena/wolumen/mix)',
+  headcount: 'Zatrudnienie',
+  cogs_opex: 'Koszty (COGS/OPEX)',
+  wc_dso_dio_dpo: 'Kapitał obrotowy (DSO/DIO/DPO)',
+  capex_depreciation: 'CAPEX i amortyzacja',
+  leases: 'Leasingi',
+  debt_maturity: 'Harmonogram zadłużenia',
+  tax_nol: 'Podatek',
+  equity_re: 'Kapitał własny / zyski zatrzymane',
+};
+
+export const BASELINE_ASSUMPTION_RULE_LABELS_PL: Record<BaselineAssumptionRule, string> = {
+  HISTORICAL_AVERAGE: 'Średnia historyczna',
+  GROWTH_RATE: 'Stopa wzrostu',
+  FIXED_VALUE: 'Wartość stała',
+  LINKED_TO_ANALYSIS_KPI: 'Powiązane z KPI analizy',
+  FORMULA: 'Formuła',
+  MANUAL_OVERRIDE: 'Ręczna korekta',
+};
+
+export const BASELINE_ASSUMPTION_QUALITY_LABELS_PL: Record<BaselineAssumptionQuality, string> = {
+  CONFIRMED: 'Potwierdzona',
+  ESTIMATED: 'Szacowana',
+  DEGRADED_INSUFFICIENT_HISTORY: 'Ograniczona (za mało historii)',
+};
+
+// ---------------------------------------------------------------------------
+// Baseline outputs — baseline.routes.ts:215-265 (GET .../outputs)
+// ---------------------------------------------------------------------------
+
+export interface BaselineOutputValue {
+  status: FinanceValueStatus;
+  valueDecimal: string | null;
+  nativeCurrency: string;
+  presentationCurrency: string;
+  unit: 'UNITS' | 'THOUSANDS' | 'MILLIONS' | 'BILLIONS';
+  multiplier: string;
+}
+
+export type BaselineStatementType = 'P&L' | 'BS' | 'CF';
+export type BaselineValueKind = 'ACTUAL' | 'FORECAST';
+
+/** baselineComputeService.ts CANONICAL_CODES (112-120) — jedna linia kanoniczna z jej grupą sprawozdania. */
+export const BASELINE_CANONICAL_LINE_ORDER: readonly string[] = [
+  'REVENUE', 'COGS', 'GROSS_MARGIN', 'OPEX', 'EBITDA', 'DEPRECIATION', 'EBIT',
+  'INTEREST_EXPENSE', 'TAX_EXPENSE', 'NET_INCOME',
+  'CASH', 'AR', 'INVENTORY', 'CURRENT_ASSETS', 'FIXED_ASSETS', 'TOTAL_ASSETS',
+  'AP', 'CURRENT_LIABILITIES', 'LONG_TERM_DEBT', 'TOTAL_LIABILITIES',
+  'EQUITY', 'TOTAL_LIABILITIES_EQUITY', 'RETAINED_EARNINGS', 'DIVIDENDS_DECLARED', 'WORKING_CAPITAL',
+  'CFO', 'CFI', 'CFF', 'NET_CHANGE_CASH', 'CAPEX', 'FCF',
+];
+
+/** baseline.routes.ts:240-260, jeden wiersz. */
+export interface BaselineOutputDto {
+  outputId: string;
+  statementType: BaselineStatementType;
+  canonicalLineId: string;
+  lineCode: string;
+  entityId: string;
+  periodId: string;
+  periodLabel: string;
+  consolidationScope: string;
+  value: BaselineOutputValue;
+  valueKind: BaselineValueKind;
+  drivingScheduleType: string | null;
+  createdBy: string;
+  createdAt: string;
+}
+// --- /PKG-F Baseline ---
