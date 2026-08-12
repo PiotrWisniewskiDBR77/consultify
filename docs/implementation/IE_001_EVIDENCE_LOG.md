@@ -5,6 +5,21 @@ does not imply runtime, browser, deployment or release acceptance.
 
 ## 2026-08-12 — final-candidate automated checkpoint
 
+Latest correction checkpoint:
+
+- exact production/test tree: `e320ab345670950d015fd6915743760717ecb4c7`;
+- local HEAD equals pushed branch HEAD and worktree is clean;
+- Railway demo deployment `84180969-478c-4dad-98e6-75e22cb86dd6`: SUCCESS;
+- demo `/api/health.gitSha`: exact candidate SHA; PostgreSQL/Redis connected;
+- unit 59 files / 147 tests PASS;
+- isolated PostgreSQL realDB 78 suites / 89 tests PASS;
+- browser ACO 1–59 plus WCAG/responsive: 3/3 PASS;
+- repository TypeScript, scoped ESLint and diff-check: PASS;
+- immutable external receipt and rollback copy:
+  `/Users/piotrwisniewski/Developer/consultify-ie-backups/20260812-final-e320ab345/`;
+- logged-in manual demo interaction on this exact SHA remains `NOT VERIFIED`. Historical manual
+  evidence from earlier candidates is not accepted as current runtime proof.
+
 - branch: `codex/initiatives-execution-final-candidate`;
 - exact candidate identity is resolved at acceptance time by equality of clean local HEAD, pushed
   branch HEAD and Railway demo `/api/health.gitSha`;

@@ -1,6 +1,6 @@
 # EPIC IE-001 — Initiative to Effectiveness, one governed golden thread
 
-Status: `ACCEPTED CANDIDATE — automated, realDB, browser and logged-in demo gates passed`
+Status: `ACCEPTED AUTOMATED CANDIDATE — logged-in manual gate pending on current SHA`
 Owner: Product + Engineering
 Implementation branch: `codex/initiatives-execution-final-candidate`
 Baseline: `635fd2d48d5a396c45bcb43b7f363535403ecf93`
@@ -17,9 +17,11 @@ commit is unavailable from the remote, so the candidate was reconstructed on
 `codex/initiatives-execution-final-candidate`. The code candidate
 `cd5f5f858390d82694926e130ea77faa97f855ad` passed the strict Railway build and was deployed to
 `https://demo.consultify.ai` as deployment `d4bc7cd4-46cd-435c-bdc0-3440995d26fa`. A later corrected
-candidate completed logged-in nine-function acceptance on Piotr's owner account; the exact SHA,
-deployment, health, interactions and screenshots are recorded in `IE_FINAL_CANDIDATE_MANIFEST.md`.
-Production release remains a separate, unauthorized gate.
+candidate completed a historical logged-in nine-function walkthrough on Piotr's owner account.
+That walkthrough does not transfer to the later correction SHA. The current exact candidate,
+deployment, automated evidence and remaining terminal gate are recorded in
+`IE_FINAL_CANDIDATE_MANIFEST.md` and in the external immutable receipt. Production release remains
+a separate, unauthorized gate.
 
 ## 2. Scope
 

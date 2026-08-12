@@ -47,7 +47,32 @@ The archive contains the 45 tracked changed paths and intentionally excludes thi
 manifest to avoid a self-referential archive checksum. It is recovery evidence for changed files
 only, not Git reachability, deployment or acceptance evidence.
 
-## Final demo acceptance checkpoint — 2026-08-12 11:35 Europe/Warsaw
+## Current correction and deployment checkpoint — 2026-08-12 19:17 Europe/Warsaw
+
+The current correction candidate is `e320ab345670950d015fd6915743760717ecb4c7` on
+`codex/initiatives-execution-final-candidate`. Local HEAD and pushed branch HEAD are equal and the
+worktree is clean. The candidate was deployed only to Railway `demo` as deployment
+`84180969-478c-4dad-98e6-75e22cb86dd6`; `/api/health.gitSha` returns the exact candidate SHA and
+PostgreSQL/Redis are connected.
+
+Evidence on this exact production/test tree:
+
+- Initiatives/Execution unit: 59 files / 147 tests PASS;
+- isolated PostgreSQL realDB: 78 suites / 89 tests PASS;
+- ACO browser golden thread plus WCAG 200% and 390x844: 3/3 PASS;
+- repository TypeScript, scoped ESLint and diff-check: PASS.
+
+The browser rerun required only acceptance-locator alignment after the canonical UI started showing
+business labels instead of technical identifiers; trace/readback proved the underlying command and
+state transitions were correct. The refreshed screenshots are stored under
+`docs/implementation/evidence/aco-browser-*.png`.
+
+The logged-in manual nine-function walkthrough on Piotr's account remains `NOT VERIFIED` for this
+current SHA. The earlier walkthrough below is historical evidence for an earlier candidate and must
+not be promoted to current acceptance. The external receipt and rollback database copy are in
+`/Users/piotrwisniewski/Developer/consultify-ie-backups/20260812-final-e320ab345/`.
+
+## Historical demo acceptance checkpoint — 2026-08-12 11:35 Europe/Warsaw
 
 The corrected code candidate `bda1293c1e1e8bf02719c4e76ce300f3841f9cf8` was pushed to
 `origin/codex/initiatives-execution-final-candidate` and deployed only to Railway environment
