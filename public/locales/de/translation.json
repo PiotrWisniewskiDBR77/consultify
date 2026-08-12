@@ -3335,7 +3335,11 @@
         "fieldCount_one": "{{count}} Feld",
         "fieldCount_other": "{{count}} Felder"
       },
-      "recordDetails": "Datensatzdetails"
+      "recordDetails": "Datensatzdetails",
+      "aiAddRowsBlockedAtCap": "Die Tabelle hat das Limit von {{max}} Zeilen erreicht — entferne Zeilen, bevor du mit KI weitere hinzufügst.",
+      "aiAddRowsTruncatedAtCap": "{{added}} von {{total}} KI-generierten Zeilen hinzugefügt — das Tabellenlimit liegt bei {{max}} Zeilen. {{skipped}} Zeilen wurden nicht hinzugefügt.",
+      "frameworkApplyBlockedAtCap": "Die Tabelle hat das Limit von {{max}} Zeilen erreicht — entferne Zeilen, bevor du dieses Framework anwendest.",
+      "frameworkApplyTruncatedAtCap": "{{added}} von {{total}} Framework-Zeilen hinzugefügt — das Tabellenlimit liegt bei {{max}} Zeilen. {{skipped}} Zeilen wurden nicht hinzugefügt."
     },
     "mindmap": {
       "resetView": "Ansicht zurücksetzen"
@@ -3412,7 +3416,26 @@
       },
       "evidenceCount_one": "{{count}} Quelle",
       "evidenceCount_other": "{{count}} Quellen",
-      "staleLabel": "veraltet"
+      "staleLabel": "veraltet",
+      "persistence": {
+        "loading": "Wird geladen…",
+        "saving": "Wird gespeichert…",
+        "saved": "Gespeichert",
+        "unsaved": "Nicht gespeicherte Änderungen",
+        "save": "Speichern",
+        "conflict": "Von jemand anderem geändert",
+        "conflictBody": "Jemand anderes hat diese Wirtschaftlichkeitsrechnung gespeichert, während du sie bearbeitet hast. Deine Änderungen sind noch vorhanden — lade die andere Version oder speichere erneut, um sie zu überschreiben.",
+        "reload": "Andere Version laden",
+        "error": "Speichern fehlgeschlagen",
+        "retry": "Erneut versuchen",
+        "retrySave": "Speichern erneut versuchen",
+        "unavailable": "Nicht gespeichert — kein Idea-Kontext",
+        "confirmTitle": "Nicht gespeicherte Änderungen",
+        "confirmBody": "Diese Wirtschaftlichkeitsrechnung hat nicht gespeicherte Änderungen.",
+        "keepEditing": "Weiter bearbeiten",
+        "discard": "Änderungen verwerfen",
+        "saveAndClose": "Speichern und schließen"
+      }
     }
   },
   "myWorkIdeas": {
@@ -3444,6 +3467,20 @@
       "kbStrokeDiscarded": "Kein Strich gezeichnet — nichts hinzuzufügen.",
       "kbStatusPenDown": "Stift abgesetzt",
       "kbStatusPenUp": "Stift angehoben"
+    },
+    "workspaceTools": {
+      "confidentiality": "Vertraulichkeit",
+      "confidentialityStandard": "Standard",
+      "confidentialityConfidential": "Vertraulich",
+      "confidentialityRestricted": "Eingeschränkt",
+      "confidentialityUnauthorized": "Du hast keine Berechtigung, das zu ändern",
+      "confidentialityDowngradeTitle": "Vertraulichkeit herabstufen?",
+      "confidentialityDowngradeDescription": "„{{title}}“ wird von {{from}} auf {{to}} geändert.",
+      "confidentialityDowngradeRestrictedWarning": "Dadurch wird die Sperre für KI-Prompts und Datei-Exporte (Mind Map, Tabelle, Whiteboard, Process Flow) aufgehoben — jeder, der diese Idee öffnen kann, kann ihren Inhalt an ein KI-Modell senden oder exportieren.",
+      "confidentialityDowngradeConfirm": "Schutz herabstufen",
+      "confidentialityDowngradeCancel": "Abbrechen",
+      "confidentialityChanged": "Vertraulichkeit aktualisiert",
+      "confidentialityChangeFailed": "Vertraulichkeit konnte nicht aktualisiert werden"
     }
   },
   "processFlow": {

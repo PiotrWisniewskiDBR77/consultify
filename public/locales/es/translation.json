@@ -3232,7 +3232,11 @@
         "fieldCount_other": "{{count}} campos",
         "fieldCount_many": "{{count}} campos"
       },
-      "recordDetails": "Detalles del registro"
+      "recordDetails": "Detalles del registro",
+      "aiAddRowsBlockedAtCap": "La tabla ha alcanzado el límite de {{max}} filas: elimina filas antes de añadir más con IA.",
+      "aiAddRowsTruncatedAtCap": "Se añadieron {{added}} de {{total}} filas generadas por IA: el límite de la tabla es de {{max}} filas. No se añadieron {{skipped}} filas.",
+      "frameworkApplyBlockedAtCap": "La tabla ha alcanzado el límite de {{max}} filas: elimina filas antes de aplicar este framework.",
+      "frameworkApplyTruncatedAtCap": "Se añadieron {{added}} de {{total}} filas del framework: el límite de la tabla es de {{max}} filas. No se añadieron {{skipped}} filas."
     },
     "mindmap": {
       "resetView": "Restablecer vista"
@@ -3310,7 +3314,26 @@
       "evidenceCount_one": "{{count}} fuente",
       "evidenceCount_other": "{{count}} fuentes",
       "staleLabel": "obsoleto",
-      "evidenceCount_many": "{{count}} fuentes"
+      "evidenceCount_many": "{{count}} fuentes",
+      "persistence": {
+        "loading": "Cargando…",
+        "saving": "Guardando…",
+        "saved": "Guardado",
+        "unsaved": "Cambios sin guardar",
+        "save": "Guardar",
+        "conflict": "Modificado por otra persona",
+        "conflictBody": "Otra persona guardó este caso financiero mientras lo editabas. Tus cambios siguen aquí: recarga su versión o guarda de nuevo para sobrescribirla.",
+        "reload": "Recargar la suya",
+        "error": "Error al guardar",
+        "retry": "Reintentar",
+        "retrySave": "Intentar guardar de nuevo",
+        "unavailable": "No guardado: sin contexto de idea",
+        "confirmTitle": "Cambios sin guardar",
+        "confirmBody": "Este caso financiero tiene cambios sin guardar.",
+        "keepEditing": "Seguir editando",
+        "discard": "Descartar cambios",
+        "saveAndClose": "Guardar y cerrar"
+      }
     }
   },
   "myWorkIdeas": {
@@ -3343,6 +3366,20 @@
       "kbStrokeDiscarded": "No se dibujó ningún trazo: nada que añadir.",
       "kbStatusPenDown": "Lápiz bajado",
       "kbStatusPenUp": "Lápiz levantado"
+    },
+    "workspaceTools": {
+      "confidentiality": "Confidencialidad",
+      "confidentialityStandard": "Estándar",
+      "confidentialityConfidential": "Confidencial",
+      "confidentialityRestricted": "Restringido",
+      "confidentialityUnauthorized": "No tienes permiso para cambiar esto",
+      "confidentialityDowngradeTitle": "¿Reducir la confidencialidad?",
+      "confidentialityDowngradeDescription": "\"{{title}}\" cambiará de {{from}} a {{to}}.",
+      "confidentialityDowngradeRestrictedWarning": "Esto elimina el bloqueo de las instrucciones de IA y las exportaciones de archivos (mapa mental, tabla, pizarra, flujo de proceso): cualquiera que pueda abrir esta idea podrá enviar su contenido a un modelo de IA o exportarlo.",
+      "confidentialityDowngradeConfirm": "Reducir protección",
+      "confidentialityDowngradeCancel": "Cancelar",
+      "confidentialityChanged": "Confidencialidad actualizada",
+      "confidentialityChangeFailed": "No se pudo actualizar la confidencialidad"
     }
   },
   "processFlow": {

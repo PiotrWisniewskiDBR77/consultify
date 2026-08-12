@@ -3238,7 +3238,11 @@
         "fieldCount_many": "{{count}} حقلًا",
         "fieldCount_other": "{{count}} حقل"
       },
-      "recordDetails": "تفاصيل السجل"
+      "recordDetails": "تفاصيل السجل",
+      "aiAddRowsBlockedAtCap": "وصل الجدول إلى الحد الأقصى البالغ {{max}} صفًا — احذف صفوفًا قبل إضافة المزيد باستخدام الذكاء الاصطناعي.",
+      "aiAddRowsTruncatedAtCap": "تمت إضافة {{added}} من أصل {{total}} صفًا تم إنشاؤها بالذكاء الاصطناعي — الحد الأقصى للجدول هو {{max}} صفًا. لم تتم إضافة {{skipped}} صفًا.",
+      "frameworkApplyBlockedAtCap": "وصل الجدول إلى الحد الأقصى البالغ {{max}} صفًا — احذف صفوفًا قبل تطبيق هذا الإطار.",
+      "frameworkApplyTruncatedAtCap": "تمت إضافة {{added}} من أصل {{total}} صفًا من الإطار — الحد الأقصى للجدول هو {{max}} صفًا. لم تتم إضافة {{skipped}} صفًا."
     },
     "mindmap": {
       "resetView": "إعادة تعيين العرض"
@@ -3319,7 +3323,26 @@
       "evidenceCount_few": "{{count}} مصادر",
       "evidenceCount_many": "{{count}} مصدرًا",
       "evidenceCount_other": "{{count}} مصدر",
-      "staleLabel": "قديم"
+      "staleLabel": "قديم",
+      "persistence": {
+        "loading": "جارٍ التحميل…",
+        "saving": "جارٍ الحفظ…",
+        "saved": "تم الحفظ",
+        "unsaved": "تغييرات غير محفوظة",
+        "save": "حفظ",
+        "conflict": "تم التغيير من قِبل شخص آخر",
+        "conflictBody": "قام شخص آخر بحفظ هذه الحالة المالية أثناء تعديلك لها. تغييراتك ما زالت موجودة — أعد تحميل نسخته أو احفظ مرة أخرى للاستبدال.",
+        "reload": "إعادة تحميل نسخته",
+        "error": "فشل الحفظ",
+        "retry": "إعادة المحاولة",
+        "retrySave": "أعد محاولة الحفظ",
+        "unavailable": "لم يتم الحفظ — لا يوجد سياق فكرة",
+        "confirmTitle": "تغييرات غير محفوظة",
+        "confirmBody": "تحتوي هذه الحالة المالية على تغييرات غير محفوظة.",
+        "keepEditing": "متابعة التعديل",
+        "discard": "تجاهل التغييرات",
+        "saveAndClose": "حفظ وإغلاق"
+      }
     }
   },
   "myWorkIdeas": {
@@ -3355,6 +3378,20 @@
       "kbStrokeDiscarded": "لم تُرسم أي رسمة — لا يوجد ما يُضاف.",
       "kbStatusPenDown": "القلم مخفوض",
       "kbStatusPenUp": "القلم مرفوع"
+    },
+    "workspaceTools": {
+      "confidentiality": "السرية",
+      "confidentialityStandard": "قياسي",
+      "confidentialityConfidential": "سري",
+      "confidentialityRestricted": "مقيّد",
+      "confidentialityUnauthorized": "ليس لديك إذن لتغيير هذا",
+      "confidentialityDowngradeTitle": "تخفيض مستوى السرية؟",
+      "confidentialityDowngradeDescription": "سيتغير \"{{title}}\" من {{from}} إلى {{to}}.",
+      "confidentialityDowngradeRestrictedWarning": "هذا يزيل الحظر عن طلبات الذكاء الاصطناعي وتصدير الملفات (الخريطة الذهنية، الجدول، السبورة، مخطط سير العمل) — سيتمكن أي شخص يمكنه فتح هذه الفكرة من إرسال محتواها إلى نموذج ذكاء اصطناعي أو تصديره.",
+      "confidentialityDowngradeConfirm": "تخفيض الحماية",
+      "confidentialityDowngradeCancel": "إلغاء",
+      "confidentialityChanged": "تم تحديث السرية",
+      "confidentialityChangeFailed": "تعذّر تحديث السرية"
     }
   },
   "processFlow": {

@@ -3220,7 +3220,11 @@
         "fieldCount_one": "{{count}} 件のフィールド",
         "fieldCount_other": "{{count}} 件のフィールド"
       },
-      "recordDetails": "レコード詳細"
+      "recordDetails": "レコード詳細",
+      "aiAddRowsBlockedAtCap": "テーブルが{{max}}行の上限に達しています。AIでこれ以上追加する前に行を削除してください。",
+      "aiAddRowsTruncatedAtCap": "AIが生成した{{total}}行中{{added}}行を追加しました。テーブルの上限は{{max}}行です。{{skipped}}行は追加されませんでした。",
+      "frameworkApplyBlockedAtCap": "テーブルが{{max}}行の上限に達しています。このフレームワークを適用する前に行を削除してください。",
+      "frameworkApplyTruncatedAtCap": "フレームワークの{{total}}行中{{added}}行を追加しました。テーブルの上限は{{max}}行です。{{skipped}}行は追加されませんでした。"
     },
     "mindmap": {
       "resetView": "表示をリセット"
@@ -3297,7 +3301,26 @@
       },
       "evidenceCount_one": "{{count}} 件の情報源",
       "evidenceCount_other": "{{count}} 件の情報源",
-      "staleLabel": "古い"
+      "staleLabel": "古い",
+      "persistence": {
+        "loading": "読み込み中…",
+        "saving": "保存中…",
+        "saved": "保存済み",
+        "unsaved": "未保存の変更",
+        "save": "保存",
+        "conflict": "他のユーザーによって変更されました",
+        "conflictBody": "編集中に他のユーザーがこの財務ケースを保存しました。あなたの変更内容はまだここにあります。相手のバージョンを再読み込みするか、再度保存して上書きしてください。",
+        "reload": "相手のバージョンを再読み込み",
+        "error": "保存に失敗しました",
+        "retry": "再試行",
+        "retrySave": "もう一度保存する",
+        "unavailable": "保存されていません — アイデアのコンテキストがありません",
+        "confirmTitle": "未保存の変更",
+        "confirmBody": "この財務ケースには未保存の変更があります。",
+        "keepEditing": "編集を続ける",
+        "discard": "変更を破棄",
+        "saveAndClose": "保存して閉じる"
+      }
     }
   },
   "myWorkIdeas": {
@@ -3329,6 +3352,20 @@
       "kbStrokeDiscarded": "ストロークが描画されていません。追加するものはありません。",
       "kbStatusPenDown": "ペンダウン",
       "kbStatusPenUp": "ペンアップ"
+    },
+    "workspaceTools": {
+      "confidentiality": "機密レベル",
+      "confidentialityStandard": "標準",
+      "confidentialityConfidential": "機密",
+      "confidentialityRestricted": "制限",
+      "confidentialityUnauthorized": "これを変更する権限がありません",
+      "confidentialityDowngradeTitle": "機密レベルを下げますか？",
+      "confidentialityDowngradeDescription": "「{{title}}」は{{from}}から{{to}}に変更されます。",
+      "confidentialityDowngradeRestrictedWarning": "これにより、AIプロンプトとファイルエクスポート（マインドマップ、テーブル、ホワイトボード、プロセスフロー）へのブロックが解除されます。このアイデアを開ける人は誰でも、その内容をAIモデルに送信したりエクスポートしたりできるようになります。",
+      "confidentialityDowngradeConfirm": "保護レベルを下げる",
+      "confidentialityDowngradeCancel": "キャンセル",
+      "confidentialityChanged": "機密レベルを更新しました",
+      "confidentialityChangeFailed": "機密レベルの更新に失敗しました"
     }
   },
   "processFlow": {
