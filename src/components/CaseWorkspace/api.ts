@@ -44,7 +44,10 @@ import type {
   CaseRun,
   CaseStatus,
   CaseWait,
+  ClosureAxisStatus,
+  ClosureType,
   ConfirmedWorkOrderRecord,
+  OutcomeAxisStatus,
   PlanGraphEnvelope,
   PlanValidationResult,
   StartRunOutcome,
@@ -632,6 +635,100 @@ export function cancelCase(
     (updated) => updated,
     options?.idempotencyKey
   );
+}
+
+// ── ZAMKNIĘCIE ─────────────────────────────────────────────────────────────
+/**
+ * `00_CASE_WORKSPACE_CANON.md:84`/`12_CASE_WORKSPACE_MODULE_SSOT.md §6.4`:
+ * Delivery/Decision/Implementation/Outcome są ODDZIELNYMI poziomami zamknięcia
+ * (cztery niezależne kolumny `*_status` w `case_core`), ale `CLOSED` zapisuje
+ * JEDEN niezmienny `CaseClosureRecord` z jednym kontraktowym typem
+ * (`04_DOMAIN_RUNTIME_AND_STATE_MACHINES.md §4.1`). Stąd DWIE komendy:
+ *
+ *  · `updateCaseClosureAxis`  — POST /cases/:caseId/closure-axis, wolno wołać
+ *    wielokrotnie, po jednej osi na wywołanie (`caseCoreService.
+ *    updateClosureAxisStatus`);
+ *  · `recordCaseClosure`      — POST /cases/:caseId/closure, WOLNO wywołać
+ *    NAJWYŻEJ RAZ na zlecenie (`caseCoreService.recordClosure` odrzuca drugie
+ *    wywołanie jako `case_closure_already_recorded` → 409). Serwis SAM
+ *    krzyżowo sprawdza `closureType` z odpowiadającą mu osią (poza
+ *    `COMPLETED_PARTIAL`, który wymaga zamiast tego `evidenceRef` albo już
+ *    zapisanego `acceptanceCriteriaRef`) — ten klient tego nie zgaduje,
+ *    wysyła to, co użytkownik wybrał, i pokazuje realną odmowę serwera.
+ *
+ * `recordCaseClosure` SAMO NIE zamyka zlecenia: `caseCoreService.
+ * recordClosure`'s własny komentarz mówi to wprost — „Does NOT itself
+ * transition case_status — call transitionStatus(..., 'CLOSED') afterward".
+ * `closeCase` niżej to WŁAŚNIE ten drugi krok (cienki alias na
+ * `transitionCaseStatus(caseId, 'CLOSED', …)`, już zdefiniowane wyżej) —
+ * ekran wywołuje obie komendy po kolei, z osobnym autorytatywnym odczytem po
+ * KAŻDEJ z nich, nigdy jednym „atomowym" wywołaniem, którego serwer nie ma.
+ *
+ * Żadna z tych tras nie przyjmuje `expectedVersion` — `caseCoreService.ts`
+ * liczy wersję sam pod `FOR UPDATE` (jak `/status`/`/cancel` wyżej), a
+ * konflikt zgłasza jako `case_closure_already_recorded` (409) albo
+ * `case_status_transition_not_allowed` (409), nie jako rozjazd wersji.
+ */
+
+/** `caseCoreService.ts`'s `ClosureAxis` — brak w `./types` (backend jest jedynym źródłem), więc żyje tu. */
+export type CaseClosureAxis = 'delivery' | 'decision' | 'implementation' | 'outcome';
+
+/** POST /cases/:caseId/closure-axis — updateClosureAxisStatus. Readback: GET /cases/:caseId. */
+export function updateCaseClosureAxis(
+  caseId: string,
+  axis: CaseClosureAxis,
+  status: ClosureAxisStatus | OutcomeAxisStatus,
+  options?: CommandOptions
+): Promise<CaseCommandResult<CaseCoreView>> {
+  return runCommand<CaseCoreView, CaseCoreView>(
+    (key) =>
+      send({
+        method: 'POST',
+        path: `/cases/${encodeURIComponent(caseId)}/closure-axis`,
+        body: { axis, status },
+        idempotencyKey: key,
+      }),
+    () => getCase(caseId),
+    (updated) => updated,
+    options?.idempotencyKey
+  );
+}
+
+/**
+ * POST /cases/:caseId/closure — recordClosure. Callable AT MOST ONCE per
+ * Case (`case_closure_already_recorded` → 409 on a second call — a real
+ * conflict, not a version mismatch). `evidenceRef` is required by the server
+ * only for `closureType: 'COMPLETED_PARTIAL'` when the Case has no
+ * `acceptanceCriteriaRef` already on file (`case_closure_partial_requires_
+ * evidence_or_acceptance_criteria` → 409 otherwise).
+ */
+export function recordCaseClosure(
+  caseId: string,
+  closureType: ClosureType,
+  evidenceRef: string | null,
+  options?: CommandOptions
+): Promise<CaseCommandResult<CaseCoreView>> {
+  return runCommand<CaseCoreView, CaseCoreView>(
+    (key) =>
+      send({
+        method: 'POST',
+        path: `/cases/${encodeURIComponent(caseId)}/closure`,
+        body: { closureType, evidenceRef: evidenceRef ?? null },
+        idempotencyKey: key,
+      }),
+    () => getCase(caseId),
+    (updated) => updated,
+    options?.idempotencyKey
+  );
+}
+
+/** Zamknij zlecenie PO zarejestrowaniu closure_type: alias `transitionCaseStatus(…, 'CLOSED')`. */
+export function closeCase(
+  caseId: string,
+  reason?: string,
+  options?: CommandOptions
+): Promise<CaseCommandResult<CaseCoreView>> {
+  return transitionCaseStatus(caseId, 'CLOSED', reason, options);
 }
 
 // ── PROPOZYCJE: zatwierdź / odrzuć / poproś o zmiany / odłóż ─────────────────

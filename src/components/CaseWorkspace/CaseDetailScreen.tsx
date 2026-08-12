@@ -77,6 +77,8 @@ import {
   autonomyPolicyLabel,
   caseProfileLabel,
   caseStatusLabel,
+  closureAxisLabel,
+  closureAxisStatusLabel,
   closureTypeLabel,
   governanceTierLabel,
   linkedTypeLabel,
@@ -85,6 +87,8 @@ import {
 } from '@/utils/enumLabels';
 
 import {
+  type CaseClosureAxis,
+  closeCase,
   createPlanDraft,
   getCase,
   getCaseIntakeSummary,
@@ -99,9 +103,11 @@ import {
   newIdempotencyKey,
   publishPlanVersion,
   proposePlanVersion,
+  recordCaseClosure,
   requestChangesOnPlanVersion,
   settleSection,
   toFailure,
+  updateCaseClosureAxis,
   validatePlanVersion,
   withdrawPlanVersion,
 } from './api';
@@ -130,12 +136,15 @@ import type {
   CaseActionProposal,
   CaseApiFailure,
   CaseArtifactLink,
+  ClosureAxisStatus,
   CaseCoreView,
   CaseHistoryEvent,
   CaseIntakeSummary,
   CasePlanVersion,
   CaseRun,
   CaseWait,
+  ClosureType,
+  OutcomeAxisStatus,
   PlanGraphEnvelope,
   PlanValidationResult,
   ValueMeasurement,
@@ -146,8 +155,11 @@ import {
   type CommandNotice,
   CommandDialog,
   FOCUS_RING,
+  FORM_INPUT_CLASS,
   formatDate,
   formatDateTime,
+  FormDialog,
+  FormField,
   PartialBanner,
   StatusTag,
   TechnicalId,
@@ -508,6 +520,68 @@ type PendingPlanCommand =
   | { kind: 'plan-request-changes'; plan: CasePlanVersion }
   | { kind: 'plan-withdraw'; plan: CasePlanVersion };
 
+/*
+ * ── ZAMKNIĘCIE: cztery niezależne osie + jeden rekord zamknięcia ───────────
+ *
+ * Kanon (`00_CASE_WORKSPACE_CANON.md:84`, `12_CASE_WORKSPACE_MODULE_SSOT.md
+ * §6.4`): Delivery/Decision/Implementation/Outcome to ODDZIELNE poziomy
+ * zamknięcia — cztery osobne kolumny na `case_core`, nigdy jedna zlepiona.
+ * Ale `CLOSED` zapisuje JEDEN niezmienny rekord z JEDNYM kontraktowym typem
+ * (`04_DOMAIN_RUNTIME_AND_STATE_MACHINES.md §4.1: "CLOSED records one
+ * immutable CaseClosureRecord with the contracted closure type"`). Ten ekran
+ * odzwierciedla dokładnie to: cztery wiersze osi (edytowalne niezależnie,
+ * `updateCaseClosureAxis`) + jeden wybór typu zamknięcia (`recordCaseClosure`
+ * + `closeCase`), nie cztery osobne "zamknij".
+ *
+ * `CLOSURE_TYPE_AXIS` niżej jest LUSTRZANYM odbiciem (wyświetleniowym,
+ * NIGDY autorytatywnym) tej samej tabeli w `caseCoreService.ts` (komentarz
+ * przy `CLOSURE_TYPE_AXIS` tamże, ok. linii 236) — używana WYŁĄCZNIE do
+ * pokazania użytkownikowi, jakiej osi wymaga wybrany typ zamknięcia, zanim
+ * kliknie. Serwer i tak sprawdza to sam (`case_closure_axis_not_ready:<oś>`
+ * → 409) — ten ekran świadomie NIE blokuje wysyłki na podstawie tej mapy: oś
+ * jest widoczna wprost w tym samym oknie (wiersze niżej), więc próba z osią
+ * nieukończoną jest ŚWIADOMYM wyborem użytkownika, nie ślepym atakiem na
+ * przycisk, który "zwykle zawodzi" — i pokazuje PRAWDZIWĄ odmowę serwera.
+ */
+const CLOSURE_TYPE_AXIS: Record<Exclude<ClosureType, 'COMPLETED_PARTIAL'>, CaseClosureAxis> = {
+  DELIVERY_COMPLETED: 'delivery',
+  DECISION_COMPLETED: 'decision',
+  IMPLEMENTATION_COMPLETED: 'implementation',
+  OUTCOME_VALIDATED: 'outcome',
+};
+
+const CLOSURE_AXES: readonly CaseClosureAxis[] = [
+  'delivery',
+  'decision',
+  'implementation',
+  'outcome',
+];
+
+/** Dozwolone wartości per oś — `outcome` ma `VALIDATED`, pozostałe trzy mają `COMPLETED` (`caseCoreService.ts:817-818`). */
+const CLOSURE_AXIS_STANDARD_VALUES: readonly ClosureAxisStatus[] = [
+  'NOT_APPLICABLE',
+  'PENDING',
+  'COMPLETED',
+];
+const CLOSURE_AXIS_OUTCOME_VALUES: readonly OutcomeAxisStatus[] = [
+  'NOT_APPLICABLE',
+  'PENDING',
+  'VALIDATED',
+];
+
+function closureAxisValue(
+  caseItem: CaseCoreView,
+  axis: CaseClosureAxis
+): ClosureAxisStatus | OutcomeAxisStatus {
+  if (axis === 'delivery') return caseItem.deliveryStatus;
+  if (axis === 'decision') return caseItem.decisionStatus;
+  if (axis === 'implementation') return caseItem.implementationStatus;
+  return caseItem.outcomeStatus;
+}
+
+/** Terminalne stany zlecenia (`ALLOWED_STATUS_TRANSITIONS` w `caseCoreService.ts`) — z nich CLOSED nie jest już osiągalne. */
+const ZLECENIE_TERMINALNE = new Set(['CLOSED', 'FAILED', 'CANCELLED']);
+
 export const CaseDetailScreen: React.FC = () => {
   const { caseId = '' } = useParams();
   const navigate = useNavigate();
@@ -805,6 +879,158 @@ export const CaseDetailScreen: React.FC = () => {
       setLoading(false);
     }
   }, [caseId, tokenPrzeladowania]);
+
+  /*
+   * ── ZAMKNIĘCIE: stan okna komendy ───────────────────────────────────────
+   *
+   * Ten sam wzorzec co `RezultatyView.tsx`'s `pendingArtifactCommand` (jedno
+   * okno `FormDialog`, klucz idempotencji per INTENCJA, dialog zamyka się
+   * PO KAŻDYM wyniku — sukces, świadoma odmowa i błąd sieci wszystkie trzy,
+   * bo `CommandBanner` w panelu „Akcje" i tak niesie wynik dalej).
+   *
+   * `axisNotice` jest CELOWO osobny od `closureNotice`: zapis osi
+   * (`zmienOsZamkniecia`) dzieje się PODCZAS gdy okno jest otwarte (autozapis
+   * przy zmianie `<select>`, okno NIE zamyka się), więc jego wynik musi być
+   * widoczny WEWNĄTRZ okna. `closureNotice` to wynik głównego potwierdzenia
+   * (`recordCaseClosure` + `closeCase`), pokazywany w panelu „Akcje" PO
+   * zamknięciu okna — dokładnie jak `planNotice`.
+   */
+  const [closureDialogOpen, setClosureDialogOpen] = useState(false);
+  const [closureCommandBusy, setClosureCommandBusy] = useState(false);
+  const [closureNotice, setClosureNotice] = useState<CommandNotice | null>(null);
+  const [axisNotice, setAxisNotice] = useState<CommandNotice | null>(null);
+  const [axisSaving, setAxisSaving] = useState<Partial<Record<CaseClosureAxis, boolean>>>({});
+  const [closureTypeForm, setClosureTypeForm] = useState<ClosureType>('COMPLETED_PARTIAL');
+  const [closureEvidenceForm, setClosureEvidenceForm] = useState('');
+  const closureIntentKeysRef = useRef<Map<string, string>>(new Map());
+  const keyForClosureIntent = useCallback((intent: string) => {
+    const existing = closureIntentKeysRef.current.get(intent);
+    if (existing) return existing;
+    const fresh = newIdempotencyKey();
+    closureIntentKeysRef.current.set(intent, fresh);
+    return fresh;
+  }, []);
+  const powrotFokusuZamknieciaRef = useRef<HTMLElement | null>(null);
+
+  const otworzDialogZamkniecia = useCallback(() => {
+    if (!bundle) return;
+    powrotFokusuZamknieciaRef.current = (document.activeElement as HTMLElement) ?? null;
+    setClosureTypeForm(bundle.caseItem.contractedClosureType);
+    setClosureEvidenceForm(bundle.caseItem.closureEvidenceRef ?? '');
+    setAxisNotice(null);
+    setAxisSaving({});
+    setClosureDialogOpen(true);
+  }, [bundle]);
+
+  const zamknijDialogZamkniecia = useCallback(() => {
+    setClosureDialogOpen(false);
+    setAxisNotice(null);
+    powrotFokusuZamknieciaRef.current?.focus();
+    powrotFokusuZamknieciaRef.current = null;
+  }, []);
+
+  /** Autozapis jednej osi — okno NIE zamyka się, wynik idzie do `axisNotice`. */
+  const zmienOsZamkniecia = useCallback(
+    async (axis: CaseClosureAxis, status: ClosureAxisStatus | OutcomeAxisStatus) => {
+      if (!bundle) return;
+      const caseId2 = bundle.caseItem.caseId;
+      const intent = `closure-axis:${caseId2}:${axis}:${status}`;
+      const idempotencyKey = keyForClosureIntent(intent);
+      setAxisSaving((prev) => ({ ...prev, [axis]: true }));
+      const result = await updateCaseClosureAxis(caseId2, axis, status, { idempotencyKey });
+      setAxisSaving((prev) => ({ ...prev, [axis]: false }));
+      if (!result.ok) {
+        setAxisNotice({
+          tone:
+            result.failure.kind === 'conflict' || result.failure.kind === 'invalid'
+              ? 'warning'
+              : 'critical',
+          text: result.failure.message,
+          refresh: result.failure.refreshSuggested,
+        });
+        return;
+      }
+      closureIntentKeysRef.current.delete(intent);
+      setAxisNotice({
+        tone: 'success',
+        text:
+          result.readback === 'confirmed'
+            ? `Poziom „${closureAxisLabel(axis, true)}" ustawiony na „${closureAxisStatusLabel(status, true).toLowerCase()}".`
+            : 'Zapisano, ale nie udało się potwierdzić stanu ponownym odczytem. Odśwież dane.',
+      });
+      await load();
+    },
+    [bundle, keyForClosureIntent, load]
+  );
+
+  /** Główne potwierdzenie: zarejestruj zamknięcie (jeśli jeszcze nie ma) + przejdź do CLOSED. */
+  const potwierdzZamkniecie = useCallback(async () => {
+    if (!bundle) return;
+    const caseId2 = bundle.caseItem.caseId;
+    const jużZarejestrowane = Boolean(bundle.caseItem.closureType);
+    setClosureCommandBusy(true);
+    try {
+      if (!jużZarejestrowane) {
+        const evidence = closureEvidenceForm.trim() || null;
+        const recordIntent = `closure-record:${caseId2}:${closureTypeForm}`;
+        const recordKey = keyForClosureIntent(recordIntent);
+        const recordResult = await recordCaseClosure(caseId2, closureTypeForm, evidence, {
+          idempotencyKey: recordKey,
+        });
+        if (!recordResult.ok) {
+          // Nic nie zostało zmienione — bez `load()`, zgodnie z regułą
+          // `toCommandFailure` w `api.ts` (§3: nieudana komenda = brak mutacji).
+          setClosureNotice({
+            tone:
+              recordResult.failure.kind === 'conflict' || recordResult.failure.kind === 'invalid'
+                ? 'warning'
+                : 'critical',
+            text: recordResult.failure.message,
+            refresh: recordResult.failure.refreshSuggested,
+          });
+          return;
+        }
+        closureIntentKeysRef.current.delete(recordIntent);
+      }
+
+      const closeIntent = `closure-transition:${caseId2}`;
+      const closeKey = keyForClosureIntent(closeIntent);
+      const closeResult = await closeCase(caseId2, undefined, { idempotencyKey: closeKey });
+      if (!closeResult.ok) {
+        // `closure_type` MÓGŁ się właśnie zapisać wyżej nawet gdy TO przejście
+        // padło (dwa osobne kroki na serwerze) — odśwież, żeby ekran pokazał
+        // prawdziwy stan (closure_type ustawiony, case_status wciąż nie CLOSED),
+        // nie ten sprzed pierwszego kroku.
+        if (!jużZarejestrowane) await load();
+        setClosureNotice({
+          tone:
+            closeResult.failure.kind === 'conflict' || closeResult.failure.kind === 'invalid'
+              ? 'warning'
+              : 'critical',
+          text: jużZarejestrowane
+            ? closeResult.failure.message
+            : `Zamknięcie zostało zarejestrowane (typ: „${closureTypeLabel(closureTypeForm, true)}"), ale przejście zlecenia do stanu „Zamknięte" nie powiodło się: ${closeResult.failure.message}`,
+          refresh: true,
+        });
+        return;
+      }
+      closureIntentKeysRef.current.delete(closeIntent);
+      setClosureNotice({
+        tone: 'success',
+        text:
+          closeResult.readback === 'confirmed'
+            ? `Zlecenie zamknięte jako „${closureTypeLabel(closeResult.value.closureType ?? closureTypeForm, true).toLowerCase()}".`
+            : 'Zlecenie zostało zamknięte, ale nie udało się potwierdzić stanu ponownym odczytem. Odśwież dane.',
+      });
+      await load();
+    } finally {
+      setClosureCommandBusy(false);
+      setClosureDialogOpen(false);
+      setAxisNotice(null);
+      powrotFokusuZamknieciaRef.current?.focus();
+      powrotFokusuZamknieciaRef.current = null;
+    }
+  }, [bundle, closureTypeForm, closureEvidenceForm, keyForClosureIntent, load]);
 
   useEffect(() => {
     void load();
@@ -1442,6 +1668,20 @@ export const CaseDetailScreen: React.FC = () => {
           value: bundle.caseItem.closedAt ? formatDateTime(bundle.caseItem.closedAt) : 'nie',
           mono: true,
         },
+        {
+          id: 'typ-zamkniecia-kontrakt',
+          label: 'Kontraktowy typ zamknięcia',
+          value: closureTypeLabel(bundle.caseItem.contractedClosureType, true),
+        },
+        ...(bundle.caseItem.closureType
+          ? [
+              {
+                id: 'typ-zamkniecia-zarejestrowany',
+                label: 'Zarejestrowany typ zamknięcia',
+                value: closureTypeLabel(bundle.caseItem.closureType, true),
+              },
+            ]
+          : []),
       ]
     : [];
 
@@ -1610,6 +1850,31 @@ export const CaseDetailScreen: React.FC = () => {
     }
   }
 
+  /*
+   * ── ZAMKNIĘCIE: przycisk wjazdowy ──────────────────────────────────────
+   *
+   * Pokazywany WYŁĄCZNIE gdy stan zlecenia realnie na to pozwala
+   * (`ZLECENIE_TERMINALNE` — CLOSED/FAILED/CANCELLED nie mają krawędzi do
+   * CLOSED w `ALLOWED_STATUS_TRANSITIONS`, `caseCoreService.ts:197-204`) —
+   * dokładnie reguła właściciela „nie pokazuj przycisku, który zawsze
+   * zawiedzie". `closureType` już zarejestrowany, a `case_status` jeszcze nie
+   * CLOSED, to realny stan naprawy po przerwanej sekwencji (np. drugi krok
+   * `closeCase` padł na 409 przy poprzedniej próbie) — etykieta się zmienia,
+   * ale przycisk i okno są te same.
+   */
+  const zamknieciePrzycisk = bundle?.caseItem.closureType
+    ? 'Dokończ zamknięcie zlecenia'
+    : 'Zamknij zlecenie';
+  const zamkniecieDostepne =
+    Boolean(bundle) && !ZLECENIE_TERMINALNE.has(bundle?.caseItem.caseStatus ?? '');
+  // DOKTRYNA_GESTOSCI §1: pasek główny ≤ 5 widocznych akcji. Zamknięcie jest
+  // rzadką, terminalną akcją (nie codzienną jak „Wczytaj ponownie") — gdy
+  // pozostałe akcje już wypełniają limit, zamknięcie idzie do „…", nie
+  // wypycha nic innego i nie łamie limitu.
+  const widocznychAkcjiBezZamkniecia =
+    (pokazZatwierdzIRozpocznij ? 1 : 0) + planActionButtons.length + 2;
+  const zamkniecieWPaskuGlownym = zamkniecieDostepne && widocznychAkcjiBezZamkniecia < 5;
+
   const prawyPanel = {
     actions: {
       label: 'Akcje',
@@ -1652,6 +1917,22 @@ export const CaseDetailScreen: React.FC = () => {
                     },
                   ]
                 : []),
+              ...(zamkniecieWPaskuGlownym
+                ? [
+                    {
+                      buttons: [
+                        {
+                          label: closureCommandBusy ? 'Wysyłam…' : zamknieciePrzycisk,
+                          icon: Lock,
+                          colorScheme: 'primary' as const,
+                          flex: true,
+                          disabled: closureCommandBusy,
+                          onClick: otworzDialogZamkniecia,
+                        },
+                      ],
+                    },
+                  ]
+                : []),
               {
                 buttons: [
                   {
@@ -1671,6 +1952,19 @@ export const CaseDetailScreen: React.FC = () => {
                 ],
               },
             ]}
+            overflowActions={
+              zamkniecieDostepne && !zamkniecieWPaskuGlownym
+                ? [
+                    {
+                      label: zamknieciePrzycisk,
+                      icon: Lock,
+                      colorScheme: 'primary' as const,
+                      disabled: closureCommandBusy,
+                      onClick: otworzDialogZamkniecia,
+                    },
+                  ]
+                : undefined
+            }
           />
           {lightStart.status === 'refused' ? (
             <div className="mt-2 rounded-lg border border-c-border-subtle bg-c-surface-raised px-3 py-2 text-xs text-c-text-secondary">
@@ -1695,11 +1989,17 @@ export const CaseDetailScreen: React.FC = () => {
             onRefresh={() => void load()}
             onDismiss={() => setPlanNotice(null)}
           />
+          <CommandBanner
+            notice={closureNotice}
+            onRefresh={() => void load()}
+            onDismiss={() => setClosureNotice(null)}
+          />
         </div>
       ),
       actionIds: [
         ...(pokazZatwierdzIRozpocznij ? ['zatwierdz-i-rozpocznij'] : []),
         ...planActionButtons.map((btn) => btn.id),
+        ...(zamkniecieDostepne ? ['zamknij-zlecenie'] : []),
         'wczytaj-ponownie',
         'wroc-do-listy',
       ],
@@ -1988,6 +2288,138 @@ export const CaseDetailScreen: React.FC = () => {
           onConfirm={(reason) => void runPlanCommand(reason)}
           {...planDialogConfig(planPending)}
         />
+      ) : null}
+
+      {/*
+       * ── ZAMKNIĘCIE — jedno okno, dwie sekcje ────────────────────────────
+       * Sekcja 1: cztery osie (autozapis per wiersz — `zmienOsZamkniecia`).
+       * Sekcja 2: wybór typu zamknięcia (tylko dopóki `closureType` jest
+       * `null` — po zarejestrowaniu jest NIEZMIENNY, `CW-RT-027`) + dowód.
+       * Potwierdzenie okna wykonuje `potwierdzZamkniecie` (rejestracja, jeśli
+       * potrzebna, potem przejście do CLOSED) — `FormDialog` samo nie wie nic
+       * o kolejności komend, tylko renderuje powłokę i woła `onConfirm`.
+       */}
+      {bundle ? (
+        <FormDialog
+          open={closureDialogOpen}
+          title={zamknieciePrzycisk}
+          description={
+            bundle.caseItem.closureType
+              ? 'Zamknięcie zostało już zarejestrowane i jest niezmienne — zostaje tylko przejście zlecenia do stanu „Zamknięte".'
+              : 'Zlecenie przejdzie do stanu „Zamknięte" z jednym, niezmiennym rekordem zamknięcia (CW-RT-027) — nie da się go później przepisać ani cofnąć z tego ekranu. Kontynuacja pracy po zamknięciu wymaga nowego przebiegu, zlecenia-następcy albo powiązanego zlecenia typu Monitoring.'
+          }
+          confirmLabel={closureCommandBusy ? 'Wysyłam…' : zamknieciePrzycisk}
+          busy={closureCommandBusy}
+          confirmDisabled={
+            closureCommandBusy ||
+            (!bundle.caseItem.closureType &&
+              closureTypeForm === 'COMPLETED_PARTIAL' &&
+              !closureEvidenceForm.trim() &&
+              !bundle.caseItem.acceptanceCriteriaRef)
+          }
+          onConfirm={() => void potwierdzZamkniecie()}
+          onCancel={zamknijDialogZamkniecia}
+        >
+          <CommandBanner
+            notice={axisNotice}
+            onRefresh={() => void load()}
+            onDismiss={() => setAxisNotice(null)}
+          />
+          <div>
+            <span className="block text-xs font-medium uppercase tracking-wide text-c-text-muted">
+              Poziomy zamknięcia (CW-00-016/017 — niezależne, jeden nie zastępuje drugiego)
+            </span>
+            <div className="mt-1.5 space-y-1.5">
+              {CLOSURE_AXES.map((axis) => {
+                const wartosci =
+                  axis === 'outcome' ? CLOSURE_AXIS_OUTCOME_VALUES : CLOSURE_AXIS_STANDARD_VALUES;
+                const biezaca = closureAxisValue(bundle.caseItem, axis);
+                return (
+                  <div
+                    key={axis}
+                    className="flex items-center justify-between gap-2 rounded-lg border border-c-border-subtle px-2.5 py-1.5"
+                  >
+                    <span className="text-sm text-c-text">{closureAxisLabel(axis, true)}</span>
+                    <div className="flex items-center gap-2">
+                      {axisSaving[axis] ? (
+                        <span className="text-xs text-c-text-muted">Zapisywanie…</span>
+                      ) : null}
+                      <select
+                        value={biezaca}
+                        disabled={Boolean(axisSaving[axis])}
+                        onChange={(event) =>
+                          void zmienOsZamkniecia(
+                            axis,
+                            event.target.value as ClosureAxisStatus | OutcomeAxisStatus
+                          )
+                        }
+                        className={`${FORM_INPUT_CLASS} w-auto`}
+                      >
+                        {wartosci.map((wartosc) => (
+                          <option key={wartosc} value={wartosc}>
+                            {closureAxisStatusLabel(wartosc, true)}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+          {bundle.caseItem.closureType ? (
+            <p className="text-xs text-c-text-secondary">
+              Zarejestrowano jako „{closureTypeLabel(bundle.caseItem.closureType, true)}"
+              {bundle.caseItem.closedAt ? ` (${formatDateTime(bundle.caseItem.closedAt)})` : ''}.
+              {bundle.caseItem.closureEvidenceRef
+                ? ` Dowód: ${bundle.caseItem.closureEvidenceRef}`
+                : ''}
+            </p>
+          ) : (
+            <>
+              <FormField
+                label="Typ zamknięcia"
+                required
+                helpText={
+                  closureTypeForm !== 'COMPLETED_PARTIAL'
+                    ? `Wymaga poziomu „${closureAxisLabel(CLOSURE_TYPE_AXIS[closureTypeForm as Exclude<ClosureType, 'COMPLETED_PARTIAL'>], true)}" ustawionego na „${closureTypeForm === 'OUTCOME_VALIDATED' ? closureAxisStatusLabel('VALIDATED', true) : closureAxisStatusLabel('COMPLETED', true)}" — serwer odmówi (409), jeśli poziom wyżej jeszcze na to nie wskazuje.`
+                    : 'Wymaga dowodu/opisu pozostałego zakresu poniżej albo już zapisanych kryteriów odbioru zlecenia.'
+                }
+              >
+                <select
+                  value={closureTypeForm}
+                  onChange={(event) => setClosureTypeForm(event.target.value as ClosureType)}
+                  className={FORM_INPUT_CLASS}
+                >
+                  <option value={bundle.caseItem.contractedClosureType}>
+                    Zgodnie z kontraktem —{' '}
+                    {closureTypeLabel(bundle.caseItem.contractedClosureType, true)}
+                  </option>
+                  {bundle.caseItem.contractedClosureType !== 'COMPLETED_PARTIAL' ? (
+                    <option value="COMPLETED_PARTIAL">
+                      Częściowo — {closureTypeLabel('COMPLETED_PARTIAL', true)}
+                    </option>
+                  ) : null}
+                </select>
+              </FormField>
+              <FormField
+                label="Dowód / opis pozostałego zakresu"
+                required={
+                  closureTypeForm === 'COMPLETED_PARTIAL' && !bundle.caseItem.acceptanceCriteriaRef
+                }
+                helpText="Wskaźnik na dowód dostarczenia/decyzji/wdrożenia/efektu — np. link do raportu odbioru albo notatki z decyzji sponsora."
+              >
+                <textarea
+                  value={closureEvidenceForm}
+                  onChange={(event) => setClosureEvidenceForm(event.target.value)}
+                  rows={3}
+                  placeholder="np. link do raportu odbioru, notatka z decyzji sponsora…"
+                  className={FORM_INPUT_CLASS}
+                />
+              </FormField>
+            </>
+          )}
+        </FormDialog>
       ) : null}
     </div>
   );
