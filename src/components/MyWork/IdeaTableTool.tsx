@@ -4879,6 +4879,12 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
           onClose={() => setShowFinancialCase(false)}
           readOnly={locked}
           onStatusChange={handleFinancialStatusChange}
+          // S6-E09 (RISK-12): the ONE prop that turns the dialog from a
+          // scratchpad that silently discarded the user's work into a
+          // persisted artifact. Load/save/conflict all live inside the
+          // dialog, so this file gains exactly one line. Same convention as
+          // `IdeaDecisionLogPanel` below.
+          ideaId={ideaId}
         />
       )}
 

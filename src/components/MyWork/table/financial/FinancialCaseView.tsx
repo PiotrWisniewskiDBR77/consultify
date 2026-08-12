@@ -35,7 +35,12 @@ import { FinancialCharts } from './FinancialCharts';
 import { FinancialConversionActions } from './FinancialConversionActions';
 import { createEmptyDriver } from './financialDefaults';
 import { FinancialDriverTable } from './FinancialDriverTable';
-import type { FinancialCaseInput, FinancialCaseStatus, FinancialComputeFn } from './financialTypes';
+import type {
+  FinancialCaseInput,
+  FinancialCaseResult,
+  FinancialCaseStatus,
+  FinancialComputeFn,
+} from './financialTypes';
 import { useFinancialCase } from './useFinancialCase';
 
 export interface FinancialCaseViewProps {
@@ -48,6 +53,15 @@ export interface FinancialCaseViewProps {
   readOnly?: boolean;
   /** Reports the live stale/fresh status — see file header (epic B4). */
   onStatusChange?: (status: FinancialCaseStatus, lastComputedAt: string | null) => void;
+  /**
+   * S6-E09: reports the last COMPUTED snapshot so the persistence layer can
+   * store it alongside the inputs. `onCaseChange` carries inputs only; without
+   * this, a saved case would reopen with drivers but no numbers and no way to
+   * tell "never computed" from "computed, snapshot lost". `null` is passed
+   * honestly whenever there is no valid result (empty/stale/blocked/error) —
+   * a stale result is never forwarded as if it still described the inputs.
+   */
+  onResultChange?: (result: FinancialCaseResult | null, lastComputedAt: string | null) => void;
 }
 
 export const FinancialCaseView: React.FC<FinancialCaseViewProps> = ({
@@ -56,6 +70,7 @@ export const FinancialCaseView: React.FC<FinancialCaseViewProps> = ({
   onCaseChange,
   readOnly = false,
   onStatusChange,
+  onResultChange,
 }) => {
   const { t } = useTranslation();
   const resolvedComputeFn = computeFn === null ? undefined : (computeFn ?? computeIdeaFinancialCase);
@@ -65,6 +80,15 @@ export const FinancialCaseView: React.FC<FinancialCaseViewProps> = ({
     onStatusChange?.(fc.status, fc.lastComputedAt);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fc.status, fc.lastComputedAt]);
+
+  // Only a `fresh` result describes the CURRENT inputs. Any other status means
+  // the stored snapshot would be a lie about the drivers it ships next to, so
+  // we forward null instead (Z3: never present a number that no longer holds).
+  useEffect(() => {
+    const isFresh = fc.status === 'fresh';
+    onResultChange?.(isFresh ? fc.result : null, isFresh ? fc.lastComputedAt : null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fc.status, fc.result, fc.lastComputedAt]);
 
   const handleAddDriver = useCallback(
     (kind: 'cost' | 'benefit') => {

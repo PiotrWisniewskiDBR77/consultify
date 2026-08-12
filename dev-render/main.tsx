@@ -20,6 +20,9 @@ import { createRoot } from 'react-dom/client';
 import { Toaster } from 'react-hot-toast';
 
 import PanelUwag from './PanelUwag';
+const IdeaFinancialCasePersistenceScreen = React.lazy(
+  () => import('./screens/idea-financial-case-persistence')
+);
 const MaterialyLauncherScreen = React.lazy(() => import('./screens/materialy-launcher'));
 const MaterialyTemplateLibrarySliceScreen = React.lazy(
   () => import('./screens/materialy-template-library-slice')
@@ -255,6 +258,11 @@ const Mw007CalendarNarrowViewportScreen = React.lazy(
 );
 
 const SCREENS: Record<string, { label: string; render: () => React.ReactElement }> = {
+  'idea-financial-case-persistence': {
+    label:
+      'E09 RISK-12 — REALNY <FinancialCaseDialog> z REALNYM zapisem: ?state=empty|loading|dirty|saving|saved|error|conflict|reopened (stanowy mock transportu)',
+    render: () => <IdeaFinancialCasePersistenceScreen />,
+  },
   'mw-007-calendar-narrow-viewport': {
     label:
       'MW-07 Codex FINAL UX FIX_REQUIRED — REALNY <CalendarView>: sidebar nie nachodzi na grid poniżej breakpointu mobile (useIsMobile + Drawer)',

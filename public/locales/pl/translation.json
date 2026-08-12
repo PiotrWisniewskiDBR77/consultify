@@ -28798,7 +28798,26 @@
       "evidenceCount_few": "{{count}} źródła",
       "evidenceCount_many": "{{count}} źródeł",
       "evidenceCount_other": "{{count}} źródła",
-      "staleLabel": "nieaktualne"
+      "staleLabel": "nieaktualne",
+      "persistence": {
+        "loading": "Wczytywanie…",
+        "saving": "Zapisywanie…",
+        "saved": "Zapisano",
+        "unsaved": "Niezapisane zmiany",
+        "save": "Zapisz",
+        "conflict": "Zmienione przez kogoś innego",
+        "conflictBody": "Ktoś inny zapisał ten case finansowy w trakcie Twojej edycji. Twoje zmiany nadal tu są — wczytaj jego wersję albo zapisz ponownie, żeby ją nadpisać.",
+        "reload": "Wczytaj jego wersję",
+        "error": "Zapis nie powiódł się",
+        "retry": "Spróbuj ponownie",
+        "retrySave": "Spróbuj zapisać ponownie",
+        "unavailable": "Bez zapisu — brak kontekstu idei",
+        "confirmTitle": "Niezapisane zmiany",
+        "confirmBody": "Ten case finansowy ma niezapisane zmiany.",
+        "keepEditing": "Wróć do edycji",
+        "discard": "Odrzuć zmiany",
+        "saveAndClose": "Zapisz i zamknij"
+      }
     }
   },
   "notebook": {

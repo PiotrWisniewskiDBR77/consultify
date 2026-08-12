@@ -199,3 +199,107 @@ implementer's own commit message had asserted away.
 - Behaviour with a real LLM provider configured — proven only that the gate
   intercepts BEFORE any LLM call is attempted.
 - Full-repo schema convergence, still broken (RISK-24).
+
+## UPDATE 2026-08-12 (stream S6-E09) — chain 9: E09 financial case
+
+New numbered chain, added to the 8/8 matrix above. Same isolated Postgres
+(`127.0.0.1:54331/ideas_e12`), same genuine cold reopen (`resetConnection()` →
+`pool.end()` + globals cleared + brand-new express app), same direct-SQL
+readback discipline.
+
+| Chain | save | refresh | cold reopen | direct-SQL readback | Verdict |
+|---|---|---|---|---|---|
+| **9. Financial case (E09)** | ✓ | ✓ | ✓ | ✓ | **PASS** |
+
+### Migration applied at this gate
+
+`server/migrations/20260812_idea_financial_case.sql` — `idea_financial_cases`.
+Additive (one new table, one FK, two indexes; no ALTER/DROP on anything
+existing). Applied with `psql -v ON_ERROR_STOP=1 -f`, **three runs, exit 0 /
+0 / 0**, `\d idea_financial_cases` byte-identical across runs (idempotency
+proven by diff, not by reading the `IF NOT EXISTS` clauses). Objects confirmed
+from `information_schema.columns`, `pg_indexes` and `pg_constraint` — not from
+the migration runner's own report, which reports a failed migration as
+`skipped` and still exits 0. The database went 1011 → 1012 tables.
+
+### Command and real exit code
+
+```
+NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false E2E_MODE=true POSTGRES_SKIP_INIT_IN_TEST=1 \
+DATABASE_URL=postgres://postgres@127.0.0.1:54331/ideas_e12 \
+npx vitest run tests/integration/e09-financial-case-persistence.realdb.test.ts --retry=0
+→ exit 0 · Test Files 1 passed (1) · Tests 6 passed (6)
+```
+
+Six sub-chains: (1) save → mutate → warm refresh → cold reopen → API readback →
+direct-SQL readback; (2) optimistic concurrency, stale version → 409 with the
+physical row proven UNCHANGED; (3) cross-org read and write both refused, with
+the 404 body asserted not to leak org A content; (4) foreign-org case row →
+403, owner column proven unchanged; (5) six invalid bodies → 400, zero rows
+created; (6) audit before/after.
+
+### Audit trail — verified by querying the table, not by reading the middleware
+
+`requireAudit.middleware.ts`'s allow-list once dropped `before`/`after` for
+every caller (0 of 8 `IDEA_UPDATE` rows carried a payload), so the middleware
+was not trusted. A probe wrote through the real routers and deliberately did
+not clean up, then plain `psql` read `audit_events`:
+
+```
+action      | IDEA_FINANCIAL_CASE_UPDATE
+before_json | {"version":0,"driverCount":0,"currency":null,"horizonMonths":null,"discountRatePct":null,"lastComputedAt":null}
+after_json  | {"version":1,"driverCount":1,"currency":"PLN","horizonMonths":12,"discountRatePct":10,"lastComputedAt":null}
+
+action      | IDEA_FINANCIAL_CASE_UPDATE
+before_json | {"version":1,"driverCount":1,"currency":"PLN","horizonMonths":12,"discountRatePct":10,"lastComputedAt":null}
+after_json  | {"version":2,"driverCount":1,"currency":"EUR","horizonMonths":36,"discountRatePct":10,"lastComputedAt":"2026-05-05T05:05:05.000Z"}
+```
+
+Non-null on both sides and genuinely DIFFERENT on every tracked field — not the
+"records who, never what" failure the middleware header describes. Precision
+worth keeping: this proves the allow-list fix **works end to end in this tree**,
+not that the bug never existed. `IDEA_CREATE` still shows `before_json` NULL,
+which is correct — a create has no before-state. Probe rows deleted; residue
+query returns 0/0/0.
+
+One correction for the record: `AuditEventsService.log` writes to
+**`audit_events`** (INSERTs at lines 58 and 84), not `role_change_audit_events`
+— the latter has matching column names, is created only by
+`DatabaseInitializer`/`effectiveAccessService`, exists in no migration, and is
+absent from `ideas_e12`. It is irrelevant to the idea audit path. A column-name
+grep is not a writer.
+
+### Negative control
+
+Sabotage target `lastComputedAt` **inside `case_json`**, specifically because
+no column `DEFAULT` can reach a JSON sub-field — the vacuous-green mode that
+burned this program earlier is structurally unavailable here. Dropping that one
+line: **exit 1**, `AssertionError: expected null to be '2026-02-03T10:11:12.000Z'`
+at the cold-reopen readback. Restored, re-run → exit 0, 6/6.
+
+### RISK-24, second concrete instance
+
+Creating an Idea against this database logs, every time:
+
+```
+[DB:Promise] Error: relation "organization_context_snapshots" does not exist
+[Postgres] Failed SQL: INSERT INTO organization_context_snapshots
+         (organization_id, schema_version, snapshot_json, rebuilt_at) VALUES ($1,$2,$3,$4)
+```
+
+Swallowed by the fire-and-forget `.catch(warn)` on
+`organizationContextService.recordMyWorkIdea(...)` in the idea create/update
+handlers (`server/src/routes/my-work.routes.ts`, the "Fire-and-forget
+org-context capture" site next to `IDEA_UPDATE` at ~L3330), so it never fails
+the request. Pre-existing and unrelated to E09, but it means the 1012-table
+database behind every runtime claim in this program is a **partial** schema,
+and any org-context behaviour measured on it is measuring a stub.
+
+### Still NOT VERIFIED at this chain
+
+- No owner browser click-through; the feature stays behind `ff_ideaFinancialCase`
+  (default OFF).
+- Concurrency proven sequentially (stale version → 409). Two genuinely
+  simultaneous writers were not executed; the SQL compare-and-swap is what
+  would hold under a real race.
+- Never run against demo/prod/dev.

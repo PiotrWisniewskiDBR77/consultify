@@ -27663,7 +27663,26 @@
       },
       "evidenceCount_one": "{{count}} source",
       "evidenceCount_other": "{{count}} sources",
-      "staleLabel": "stale"
+      "staleLabel": "stale",
+      "persistence": {
+        "loading": "Loading…",
+        "saving": "Saving…",
+        "saved": "Saved",
+        "unsaved": "Unsaved changes",
+        "save": "Save",
+        "conflict": "Changed by someone else",
+        "conflictBody": "Someone else saved this financial case while you were editing. Your changes are still here — reload their version or save again to overwrite.",
+        "reload": "Reload theirs",
+        "error": "Save failed",
+        "retry": "Retry",
+        "retrySave": "Try saving again",
+        "unavailable": "Not saved — no idea context",
+        "confirmTitle": "Unsaved changes",
+        "confirmBody": "This financial case has unsaved changes.",
+        "keepEditing": "Keep editing",
+        "discard": "Discard changes",
+        "saveAndClose": "Save and close"
+      }
     }
   },
   "notebook": {

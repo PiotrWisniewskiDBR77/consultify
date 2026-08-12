@@ -104,14 +104,23 @@ export function useFinancialCase(options: UseFinancialCaseOptions = {}) {
     [drivers, setDrivers]
   );
 
-  const setCaseMeta = useCallback((patch: Partial<Omit<FinancialCaseInput, 'drivers'>>) => {
-    setCaseMetaState((prev) => {
-      const next = { ...prev, ...patch };
-      return next;
-    });
-    setStatus((s) => (s === 'fresh' || s === 'error' || s === 'blocked' ? 'stale' : s));
-    setErrorMessage(null);
-  }, []);
+  const setCaseMeta = useCallback(
+    (patch: Partial<Omit<FinancialCaseInput, 'drivers'>>) => {
+      const next = { ...caseMeta, ...patch };
+      setCaseMetaState(next);
+      setStatus((s) => (s === 'fresh' || s === 'error' || s === 'blocked' ? 'stale' : s));
+      setErrorMessage(null);
+      // S6-E09: case-meta edits (currency, horizon, discount rate, start
+      // period) MUST notify `onCaseChange` too. Before persistence existed
+      // this callback only fired from `markDirty` (driver edits), so changing
+      // the discount rate left the owner of the case — now the save path —
+      // believing nothing had changed. Closing the dialog would then discard
+      // that edit while reporting no unsaved work: a silent discard of
+      // exactly the kind RISK-12 is about.
+      onCaseChange?.({ ...next, drivers });
+    },
+    [caseMeta, drivers, onCaseChange]
+  );
 
   const recompute = useCallback(async () => {
     if (drivers.length === 0) {

@@ -173,3 +173,174 @@ runs.
 
 This is scoped, not estimated in hours — the owner (Piotr) decides whether/when to build it per
 CLAUDE.md's "silniki NAJPIERW" ordering and the current program priorities.
+
+## 6. 2026-08-12 — RISK-12 CLOSED: the save path is built. §5.4 verdict (c) is SUPERSEDED
+
+Stream S6-E09, worktree `codex/ideas-s6-e09`, base `edb38d6a29`. The owner
+decided all P1–P3 in this program get fixed, so §5.7's scoped gap was built
+rather than left for a decision. **§5.4's verdict (c) ("there is no save path
+at all, and the UI silently discards the user's work") is no longer true of
+this tree.** §5.1–§5.3 remain accurate as history and as the reason the design
+is shaped the way it is; §5.5's `noPersistence` test is superseded (see §6.7).
+
+### 6.1 What was built
+
+| Layer | File | Note |
+|---|---|---|
+| Migration | `server/migrations/20260812_idea_financial_case.sql` | `idea_financial_cases`, additive + idempotent, **applied** to the isolated DB |
+| Service | `server/src/services/ideaFinancialCaseService.ts` | get/upsert, org-scoped, real compare-and-swap OCC |
+| Routes | `server/src/routes/ideaFinancialCase.routes.ts` | `GET|PUT /api/idea-financial-case/:ideaId` |
+| Mount | `server/src/Gateway.ts` | import + `app.use`, beside the business-case router |
+| API client | `src/services/api/ideaFinancialCase.api.ts` | does NOT fail open on load (see §6.5) |
+| Persistence hook | `src/components/MyWork/table/financial/useIdeaFinancialCasePersistence.ts` | load/save/conflict state machine |
+| Dialog wiring | `FinancialCaseDialog.tsx` | passes `initialCase` + `onCaseChange`, owns the save UX |
+| Mount site | `IdeaTableTool.tsx` L4736-4748 | **one prop added** (`ideaId`); everything else lives in the dialog |
+
+`FinancialCaseView` gained one optional prop (`onResultChange`) so the last
+COMPUTED snapshot can be persisted next to the inputs; it forwards `null`
+whenever status is not `fresh`, so a stored result never describes drivers it
+no longer matches.
+
+### 6.2 Migration proof — real psql exit codes, not the runner's own report
+
+`migrate.postgres.ts --safe` reports a failed migration as `skipped` and exits
+0, so it was not used. Direct `psql -v ON_ERROR_STOP=1 -f`, three runs against
+`127.0.0.1:54331/ideas_e12`:
+
+```
+RUN 1 exit=0   CREATE TABLE / CREATE INDEX / CREATE INDEX
+RUN 2 exit=0   NOTICE: ... already exists, skipping  (x3)
+RUN 3 exit=0   NOTICE: ... already exists, skipping  (x3)
+diff run1 vs run2 → IDENTICAL      diff run2 vs run3 → IDENTICAL   (\d idea_financial_cases)
+```
+
+Objects proven from the catalog, not from the file:
+
+```
+information_schema.columns → id, idea_id, organization_id (all text NOT NULL),
+  case_json text NOT NULL DEFAULT '{}'::text, version integer NOT NULL DEFAULT 1,
+  created_by, updated_by (text NULL), created_at, updated_at (timestamp, CURRENT_TIMESTAMP)
+pg_indexes → idea_financial_cases_pkey (UNIQUE, id)
+             ux_idea_financial_cases_idea_id (UNIQUE, idea_id)
+             idx_idea_financial_cases_org_id (organization_id)
+pg_constraint → FOREIGN KEY (idea_id) REFERENCES my_ideas(id) ON DELETE CASCADE
+                PRIMARY KEY (id)
+```
+
+`UNIQUE(idea_id)` was confirmed against the model before being enforced:
+`IdeaTableTool.tsx` mounts exactly one `<FinancialCaseDialog>` per Idea Table
+instance (not per row), and its own B4 comment states "One Financial Case per
+Idea Table tool instance ... there is exactly one financial case to be
+stale/fresh about". E08 enforces the same rule the same way.
+
+### 6.3 Runtime chain — 6/6 green, real exit code
+
+```
+NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false E2E_MODE=true POSTGRES_SKIP_INIT_IN_TEST=1 \
+DATABASE_URL=postgres://postgres@127.0.0.1:54331/ideas_e12 \
+npx vitest run tests/integration/e09-financial-case-persistence.realdb.test.ts --retry=0
+→ real exit code 0, Test Files 1 passed, Tests 6 passed (6)
+```
+
+BOTH `RUN_DB_TESTS=1` and `MOCK_DB=false` are set: `NODE_ENV=test` alone
+substitutes a DB mock and the suite would go green against nothing.
+
+### 6.4 Falsifiability — the suite was proven able to fail
+
+Sabotage target: `lastComputedAt` **inside the `case_json` envelope**, chosen
+deliberately because a column `DEFAULT` has already produced one vacuous green
+in this program and **no column default can reach a JSON sub-field** — the
+failure mode is unavailable by construction, not by hope. Removing that one
+line from the service's serializer:
+
+```
+→ real exit code 1, Tests 1 failed | 5 passed
+AssertionError: expected null to be '2026-02-03T10:11:12.000Z'
+  at e09-financial-case-persistence.realdb.test.ts:393  (cold-reopen readback)
+```
+
+Restored immediately; `grep -c SABOTAGE` on the service → 0; re-run → exit 0,
+6/6.
+
+### 6.5 Design decisions worth defending
+
+- **Explicit Save button, not debounced autosave.** Recorded in
+  `useIdeaFinancialCasePersistence.ts`'s header: autosave would (a) bump
+  `version` continuously and 409 every other editor out, (b) persist
+  half-typed drivers as real stored model rows, (c) hide transport failures
+  behind a toast nobody reads. The cost — closing could discard unsent work —
+  is paid off by a close-confirmation, not left as a footnote.
+- **The read does NOT fail open.** `ideaBusinessCase.api.ts` collapses "no row"
+  and "server down" into `null`. Here they are distinct: a load failure renders
+  an error with a retry, never an empty case the user would start typing into.
+- **Whole-case PUT, not per-driver PATCH** (§5.7 point 4): drivers, case meta
+  and the result snapshot are one consistent unit; a per-driver patch would let
+  the stored result describe a driver set that no longer exists.
+- **403 vs 404.** An idea the caller cannot see → **404** (non-disclosure,
+  matching E08). A case row owned by a different org for an idea the caller CAN
+  see → **403** `IDEA_FINANCIAL_CASE_FOREIGN_ORG`, because 404 there would be a
+  lie the caller can disprove with `GET /my-ideas/:id`. This is a deliberate
+  divergence from `ideaBusinessCase.routes.ts`, which returns 404 for both.
+
+### 6.6 A defect found by LOOKING at a screenshot, not by a test
+
+The first implementation derived `dirty` from `status` alone. After a FAILED
+save the status is `error`, so Save became disabled and the error bar's only
+button called `reload()` — refetching the server copy **over the user's unsent
+edits**. That is RISK-12's silent discard re-created through the error path,
+and every test passed. It was visible in `e09-financial-case-error.png` (a
+greyed-out Save next to a red failure). Fixed: `dirty` now also covers
+`error` with pending edits, and the button retries the SAVE
+("Spróbuj zapisać ponownie") rather than refetching. Two regression tests pin
+it. Recorded because it is the clearest evidence in this package that the
+screenshot step is a real gate, not decoration.
+
+### 6.7 The `noPersistence` test was replaced, not deleted
+
+`tests/components/MyWork/table/financial/FinancialCaseDialog.noPersistence.test.tsx`
+asserted zero `fetch` calls and that a typed driver was GONE after reopening.
+It was correct under verdict (c) and is now factually wrong — keeping it would
+mean the suite actively defends the defect. It is replaced by
+`FinancialCaseDialog.persistence.test.tsx`, where every claim it made has an
+inverted counterpart (zero fetches → a real save call; driver gone → driver
+survives; and its "sanity: marker present first" vacuity guard is kept as-is).
+
+### 6.8 Still NOT VERIFIED
+
+- **No browser click-through by the owner.** Evidence is the dev-render harness
+  (real component, real hook, real API module, stubbed transport) plus the
+  real-DB suite. The flag `ff_ideaFinancialCase` stays default OFF (CLAUDE.md #7).
+- **Never executed against demo/prod/dev** — isolated ephemeral Postgres only.
+- **`scripts/check-actions.sh` does not pass** — see §6.9.
+- Concurrency is proven by a sequential stale-version test, **not** by two
+  genuinely simultaneous writers. The SQL-level compare-and-swap
+  (`WHERE ... AND version = ?`) is what would hold under a real race; that
+  specific race was not executed.
+- Pre-existing i18n gaps visible in the captures, NOT introduced here and NOT
+  fixed here: `FinancialCaseSummaryPanel` renders "No drivers yet" and
+  "Stale — recompute needed", and `FinancialConversionActions` renders
+  "Convert to Financial Model" / "Convert to Budget", all in English inside the
+  Polish UI.
+
+### 6.9 Known guard failure (honest, not silenced)
+
+`bash scripts/check-actions.sh; echo rc=$?` → **rc=1**. R10 flags three
+command-verb handlers in `FinancialCaseDialog.tsx` (L194 `persistence.save()`,
+L240 `saveAndClose()`, L279 the retry) as not traceable to
+`IDEA_ACTION_REGISTRY`. The heuristic is CORRECT — these are genuine commands.
+
+It was not silenced with `--update` (the baseline's own header forbids that for
+new violations) and not fixed, because the fix requires adding an `ActionDef` to
+`src/actions/registry/sharedActions.ts` — a file stream S5 is actively
+rewriting, which the orchestrator explicitly placed off-limits, and whose
+`runPanelUiOnlyCallback` helper (the one E08's `idea.workspace.business_case_save`
+uses) is itself being changed by that work. Landing an entry now would collide
+and be immediately reworked.
+
+Prepared fix for whoever lands it after S5: mirror
+`idea.workspace.business_case_save` exactly — add
+`'idea.workspace.financial_case_save'` to the id list in
+`src/actions/ideaActionRegistry.ts`, an `ActionDef` in `registry/sharedActions.ts`
+(`scope: 'workspace'`, `surfaces: ['panel']`, `mutates: true`), and route the
+dialog's save through `runIdeaAction(...)` the way
+`IdeaBusinessCaseSection.tsx:539` does.
