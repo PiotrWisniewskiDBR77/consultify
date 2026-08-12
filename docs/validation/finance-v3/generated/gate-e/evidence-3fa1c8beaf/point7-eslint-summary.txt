@@ -1,0 +1,279 @@
+ESLint summary — 129 changed files (git diff --name-only ee5736a5a6..HEAD, filtered to .ts/.tsx/.js/.jsx)
+Command: npx eslint --format json <129 files>
+
+TOTAL errors=0 warnings=226
+
+Per-file (only files with any message):
+dev-render/main.tsx: errors=0 warnings=15
+  [WARN] no-restricted-syntax L563: Hardcoded hex color detected. Use a Tailwind token (crimson-*, navy-*, danger-*, etc.) instead.
+  [WARN] no-restricted-syntax L567: Hardcoded hex color detected. Use a Tailwind token (crimson-*, navy-*, danger-*, etc.) instead.
+  [WARN] no-restricted-syntax L596: Hardcoded hex color detected. Use a Tailwind token (crimson-*, navy-*, danger-*, etc.) instead.
+  [WARN] no-restricted-syntax L600: Hardcoded hex color detected. Use a Tailwind token (crimson-*, navy-*, danger-*, etc.) instead.
+  [WARN] no-restricted-syntax L604: Hardcoded hex color detected. Use a Tailwind token (crimson-*, navy-*, danger-*, etc.) instead.
+  [WARN] no-restricted-syntax L764: Hardcoded hex color detected. Use a Tailwind token (crimson-*, navy-*, danger-*, etc.) instead.
+  [WARN] no-restricted-syntax L768: Hardcoded hex color detected. Use a Tailwind token (crimson-*, navy-*, danger-*, etc.) instead.
+  [WARN] no-restricted-syntax L772: Hardcoded hex color detected. Use a Tailwind token (crimson-*, navy-*, danger-*, etc.) instead.
+  [WARN] no-restricted-syntax L794: Hardcoded hex color detected. Use a Tailwind token (crimson-*, navy-*, danger-*, etc.) instead.
+  [WARN] @typescript-eslint/no-non-null-assertion L969: Forbidden non-null assertion.
+  [WARN] react-refresh/only-export-components L971: Fast refresh only works when a file has exports. Move your component(s) to a separate file.
+  [WARN] no-restricted-syntax L973: Inline style={{}} is banned outside src/components/ui/. Use Tailwind design tokens (crimson-*, navy-*, token-*).
+  [WARN] no-restricted-syntax L1002: Inline style={{}} is banned outside src/components/ui/. Use Tailwind design tokens (crimson-*, navy-*, token-*).
+  [WARN] no-restricted-syntax L1016: Inline style={{}} is banned outside src/components/ui/. Use Tailwind design tokens (crimson-*, navy-*, token-*).
+  [WARN] no-restricted-syntax L1016: Hardcoded hex color detected. Use a Tailwind token (crimson-*, navy-*, danger-*, etc.) instead.
+dev-render/screens/finance-analysis-workspace.tsx: errors=0 warnings=2
+  [WARN] @typescript-eslint/no-explicit-any L504: Unexpected any. Specify a different type.
+  [WARN] no-restricted-syntax L526: Inline style={{}} is banned outside src/components/ui/. Use Tailwind design tokens (crimson-*, navy-*, token-*).
+dev-render/screens/finance-baseline-workspace.tsx: errors=0 warnings=1
+  [WARN] @typescript-eslint/no-non-null-assertion L303: Forbidden non-null assertion.
+dev-render/screens/finance-id-bridge.tsx: errors=0 warnings=1
+  [WARN] no-restricted-syntax L123: Inline style={{}} is banned outside src/components/ui/. Use Tailwind design tokens (crimson-*, navy-*, token-*).
+dev-render/screens/finance-prediction-workspace.tsx: errors=0 warnings=1
+  [WARN] no-restricted-syntax L294: Inline style={{}} is banned outside src/components/ui/. Use Tailwind design tokens (crimson-*, navy-*, token-*).
+dev-render/screens/finance-statement-pack-workspace-v2.tsx: errors=0 warnings=1
+  [WARN] (ignored/parse) L?: File ignored because of a matching ignore pattern. Use "--no-ignore" to disable file ignore settings or use "--no-warn-ignored" to suppress this warning.
+dev-render/screens/finance-valuation-workspace.tsx: errors=0 warnings=3
+  [WARN] @typescript-eslint/no-explicit-any L46: Unexpected any. Specify a different type.
+  [WARN] @typescript-eslint/no-explicit-any L148: Unexpected any. Specify a different type.
+  [WARN] @typescript-eslint/no-explicit-any L362: Unexpected any. Specify a different type.
+server/scripts/finance-v3-audit/j2-crosstenant-probe.ts: errors=0 warnings=1
+  [WARN] (ignored/parse) L?: File ignored because of a matching ignore pattern. Use "--no-ignore" to disable file ignore settings or use "--no-warn-ignored" to suppress this warning.
+server/scripts/finance-v3-audit/j3-concurrency-probe.ts: errors=0 warnings=1
+  [WARN] (ignored/parse) L?: File ignored because of a matching ignore pattern. Use "--no-ignore" to disable file ignore settings or use "--no-warn-ignored" to suppress this warning.
+server/scripts/finance-v3-audit/j4-rbac-probe.ts: errors=0 warnings=1
+  [WARN] (ignored/parse) L?: File ignored because of a matching ignore pattern. Use "--no-ignore" to disable file ignore settings or use "--no-warn-ignored" to suppress this warning.
+server/src/routes/v8/finance-v2/__tests__/approveRbacGate.pg.test.ts: errors=0 warnings=6
+  [WARN] @typescript-eslint/no-explicit-any L78: Unexpected any. Specify a different type.
+  [WARN] @typescript-eslint/no-explicit-any L84: Unexpected any. Specify a different type.
+  [WARN] @typescript-eslint/no-explicit-any L84: Unexpected any. Specify a different type.
+  [WARN] @typescript-eslint/no-explicit-any L84: Unexpected any. Specify a different type.
+  [WARN] @typescript-eslint/no-explicit-any L84: Unexpected any. Specify a different type.
+  [WARN] @typescript-eslint/no-explicit-any L111: Unexpected any. Specify a different type.
+server/src/routes/v8/finance-v2/__tests__/baseline.routes.pg.test.ts: errors=0 warnings=14
+  [WARN] @typescript-eslint/no-explicit-any L49: Unexpected any. Specify a different type.
+  [WARN] @typescript-eslint/no-explicit-any L55: Unexpected any. Specify a different type.
+  [WARN] @typescript-eslint/no-explicit-any L55: Unexpected any. Specify a different type.
+  [WARN] @typescript-eslint/no-explicit-any L55: Unexpected any. Specify a different type.
+  [WARN] @typescript-eslint/no-explicit-any L55: Unexpected any. Specify a different type.
+  [WARN] @typescript-eslint/no-non-null-assertion L241: Forbidden non-null assertion.
+  [WARN] @typescript-eslint/no-non-null-assertion L310: Forbidden non-null assertion.
+  [WARN] @typescript-eslint/no-non-null-assertion L337: Forbidden non-null assertion.
+  [WARN] @typescript-eslint/no-non-null-assertion L414: Forbidden non-null assertion.
+  [WARN] @typescript-eslint/no-explicit-any L562: Unexpected any. Specify a different type.
+  [WARN] @typescript-eslint/no-explicit-any L568: Unexpected any. Specify a different type.
+  [WARN] @typescript-eslint/no-explicit-any L568: Unexpected any. Specify a different type.
+  [WARN] @typescript-eslint/no-explicit-any L568: Unexpected any. Specify a different type.
+  [WARN] @typescript-eslint/no-explicit-any L568: Unexpected any. Specify a different type.
+server/src/routes/v8/finance-v2/__tests__/comments.routes.pg.test.ts: errors=0 warnings=29
+  [WARN] @typescript-eslint/no-explicit-any L45: Unexpected any. Specify a different type.
+  [WARN] @typescript-eslint/no-explicit-any L51: Unexpected any. Specify a different type.
+  [WARN] @typescript-eslint/no-explicit-any L51: Unexpected any. Specify a different type.
+  [WARN] @typescript-eslint/no-explicit-any L51: Unexpected any. Specify a different type.
+  [WARN] @typescript-eslint/no-explicit-any L51: Unexpected any. Specify a different type.
+  [WARN] @typescript-eslint/no-explicit-any L156: Unexpected any. Specify a different type.
+  [WARN] @typescript-eslint/no-explicit-any L169: Unexpected any. Specify a different type.
+  [WARN] @typescript-eslint/no-explicit-any L173: Unexpected any. Specify a different type.
+  [WARN] @typescript-eslint/no-explicit-any L181: Unexpected any. Specify a different type.
+  [WARN] @typescript-eslint/no-explicit-any L317: Unexpected any. Specify a different type.
+  [WARN] @typescript-eslint/no-explicit-any L377: Unexpected any. Specify a different type.
+  [WARN] @typescript-eslint/no-non-null-assertion L393: Forbidden non-null assertion.
+  [WARN] @typescript-eslint/no-non-null-assertion L400: Forbidden non-null assertion.
+  [WARN] @typescript-eslint/no-non-null-assertion L413: Forbidden non-null assertion.
+  [WARN] @typescript-eslint/no-non-null-assertion L416: Forbidden non-null assertion.
+  [WARN] @typescript-eslint/no-explicit-any L446: Unexpected any. Specify a different type.
+  [WARN] @typescript-eslint/no-explicit-any L447: Unexpected any. Specify a different type.
+  [WARN] @typescript-eslint/no-explicit-any L460: Unexpected any. Specify a different type.
+  [WARN] @typescript-eslint/no-non-null-assertion L529: Forbidden non-null assertion.
+  [WARN] @typescript-eslint/no-non-null-assertion L559: Forbidden non-null assertion.
+  [WARN] @typescript-eslint/no-non-null-assertion L569: Forbidden non-null assertion.
+  [WARN] @typescript-eslint/no-non-null-assertion L591: Forbidden non-null assertion.
+  [WARN] @typescript-eslint/no-non-null-assertion L592: Forbidden non-null assertion.
+  [WARN] @typescript-eslint/no-non-null-assertion L593: Forbidden non-null assertion.
+  [WARN] @typescript-eslint/no-non-null-assertion L594: Forbidden non-null assertion.
+  [WARN] @typescript-eslint/no-non-null-assertion L595: Forbidden non-null assertion.
+  [WARN] @typescript-eslint/no-explicit-any L606: Unexpected any. Specify a different type.
+  [WARN] @typescript-eslint/no-explicit-any L610: Unexpected any. Specify a different type.
+  [WARN] @typescript-eslint/no-explicit-any L615: Unexpected any. Specify a different type.
+server/src/routes/v8/finance-v2/__tests__/compare.routes.pg.test.ts: errors=0 warnings=12
+  [WARN] @typescript-eslint/no-explicit-any L51: Unexpected any. Specify a different type.
+  [WARN] @typescript-eslint/no-explicit-any L57: Unexpected any. Specify a different type.
+  [WARN] @typescript-eslint/no-explicit-any L57: Unexpected any. Specify a different type.
+  [WARN] @typescript-eslint/no-explicit-any L57: Unexpected any. Specify a different type.
+  [WARN] @typescript-eslint/no-explicit-any L57: Unexpected any. Specify a different type.
+  [WARN] @typescript-eslint/no-non-null-assertion L108: Forbidden non-null assertion.
+  [WARN] @typescript-eslint/no-non-null-assertion L132: Forbidden non-null assertion.
+  [WARN] @typescript-eslint/no-non-null-assertion L139: Forbidden non-null assertion.
+  [WARN] @typescript-eslint/no-non-null-assertion L142: Forbidden non-null assertion.
+  [WARN] @typescript-eslint/no-non-null-assertion L143: Forbidden non-null assertion.
+  [WARN] @typescript-eslint/no-explicit-any L645: Unexpected any. Specify a different type.
+  [WARN] @typescript-eslint/no-explicit-any L650: Unexpected any. Specify a different type.
+server/src/routes/v8/finance-v2/__tests__/cross-tenant.routes.pg.test.ts: errors=0 warnings=5
+  [WARN] @typescript-eslint/no-explicit-any L42: Unexpected any. Specify a different type.
+  [WARN] @typescript-eslint/no-explicit-any L48: Unexpected any. Specify a different type.
+  [WARN] @typescript-eslint/no-explicit-any L48: Unexpected any. Specify a different type.
+  [WARN] @typescript-eslint/no-explicit-any L48: Unexpected any. Specify a different type.
+  [WARN] @typescript-eslint/no-explicit-any L48: Unexpected any. Specify a different type.
+server/src/routes/v8/finance-v2/__tests__/crosscutting.routes.pg.test.ts: errors=0 warnings=5
+  [WARN] @typescript-eslint/no-explicit-any L57: Unexpected any. Specify a different type.
+  [WARN] @typescript-eslint/no-explicit-any L63: Unexpected any. Specify a different type.
+  [WARN] @typescript-eslint/no-explicit-any L63: Unexpected any. Specify a different type.
+  [WARN] @typescript-eslint/no-explicit-any L63: Unexpected any. Specify a different type.
+  [WARN] @typescript-eslint/no-explicit-any L63: Unexpected any. Specify a different type.
+server/src/routes/v8/finance-v2/__tests__/export-import.routes.pg.test.ts: errors=0 warnings=22
+  [WARN] @typescript-eslint/no-explicit-any L34: Unexpected any. Specify a different type.
+  [WARN] @typescript-eslint/no-explicit-any L60: Unexpected any. Specify a different type.
+  [WARN] @typescript-eslint/no-explicit-any L66: Unexpected any. Specify a different type.
+  [WARN] @typescript-eslint/no-explicit-any L66: Unexpected any. Specify a different type.
+  [WARN] @typescript-eslint/no-explicit-any L66: Unexpected any. Specify a different type.
+  [WARN] @typescript-eslint/no-explicit-any L66: Unexpected any. Specify a different type.
+  [WARN] @typescript-eslint/no-non-null-assertion L118: Forbidden non-null assertion.
+  [WARN] @typescript-eslint/no-non-null-assertion L142: Forbidden non-null assertion.
+  [WARN] @typescript-eslint/no-non-null-assertion L145: Forbidden non-null assertion.
+  [WARN] @typescript-eslint/no-explicit-any L184: Unexpected any. Specify a different type.
+  [WARN] @typescript-eslint/no-explicit-any L205: Unexpected any. Specify a different type.
+  [WARN] @typescript-eslint/no-explicit-any L206: Unexpected any. Specify a different type.
+  [WARN] @typescript-eslint/no-explicit-any L236: Unexpected any. Specify a different type.
+  [WARN] @typescript-eslint/no-explicit-any L259: Unexpected any. Specify a different type.
+  [WARN] @typescript-eslint/no-non-null-assertion L267: Forbidden non-null assertion.
+  [WARN] @typescript-eslint/no-non-null-assertion L274: Forbidden non-null assertion.
+  [WARN] @typescript-eslint/no-non-null-assertion L283: Forbidden non-null assertion.
+  [WARN] @typescript-eslint/no-non-null-assertion L291: Forbidden non-null assertion.
+  [WARN] @typescript-eslint/no-explicit-any L302: Unexpected any. Specify a different type.
+  [WARN] @typescript-eslint/no-non-null-assertion L308: Forbidden non-null assertion.
+  [WARN] @typescript-eslint/no-non-null-assertion L324: Forbidden non-null assertion.
+  [WARN] @typescript-eslint/no-non-null-assertion L341: Forbidden non-null assertion.
+server/src/routes/v8/finance-v2/__tests__/legacy-id-bridge.routes.pg.test.ts: errors=0 warnings=1
+  [WARN] @typescript-eslint/no-explicit-any L118: Unexpected any. Specify a different type.
+server/src/routes/v8/finance-v2/__tests__/saved-views.routes.pg.test.ts: errors=0 warnings=9
+  [WARN] @typescript-eslint/no-explicit-any L55: Unexpected any. Specify a different type.
+  [WARN] @typescript-eslint/no-explicit-any L61: Unexpected any. Specify a different type.
+  [WARN] @typescript-eslint/no-explicit-any L61: Unexpected any. Specify a different type.
+  [WARN] @typescript-eslint/no-explicit-any L61: Unexpected any. Specify a different type.
+  [WARN] @typescript-eslint/no-explicit-any L61: Unexpected any. Specify a different type.
+  [WARN] @typescript-eslint/no-explicit-any L177: Unexpected any. Specify a different type.
+  [WARN] @typescript-eslint/no-explicit-any L183: Unexpected any. Specify a different type.
+  [WARN] @typescript-eslint/no-explicit-any L225: Unexpected any. Specify a different type.
+  [WARN] @typescript-eslint/no-non-null-assertion L341: Forbidden non-null assertion.
+server/src/services/finance/canonical/artifactVersionService.ts: errors=0 warnings=1
+  [WARN] @typescript-eslint/no-explicit-any L1427: Unexpected any. Specify a different type.
+server/src/services/finance/canonical/computeJobService.ts: errors=0 warnings=6
+  [WARN] @typescript-eslint/no-explicit-any L153: Unexpected any. Specify a different type.
+  [WARN] @typescript-eslint/no-explicit-any L533: Unexpected any. Specify a different type.
+  [WARN] no-console L595: Unexpected console statement.
+  [WARN] @typescript-eslint/no-explicit-any L601: Unexpected any. Specify a different type.
+  [WARN] no-console L602: Unexpected console statement.
+  [WARN] @typescript-eslint/no-unused-vars L862: 'row' is defined but never used. Allowed unused args must match /^_/u.
+src/components/Economics/FinanceHub.tsx: errors=0 warnings=28
+  [WARN] @typescript-eslint/no-unused-vars L30: 'Copy' is defined but never used. Allowed unused vars must match /^_/u.
+  [WARN] @typescript-eslint/no-unused-vars L73: 'API_URL' is defined but never used. Allowed unused vars must match /^_/u.
+  [WARN] @typescript-eslint/no-unused-vars L73: 'getHeaders' is defined but never used. Allowed unused vars must match /^_/u.
+  [WARN] @typescript-eslint/no-explicit-any L242: Unexpected any. Specify a different type.
+  [WARN] react-refresh/only-export-components L308: Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+  [WARN] @typescript-eslint/no-explicit-any L620: Unexpected any. Specify a different type.
+  [WARN] @typescript-eslint/no-explicit-any L622: Unexpected any. Specify a different type.
+  [WARN] @typescript-eslint/no-explicit-any L644: Unexpected any. Specify a different type.
+  [WARN] @typescript-eslint/no-explicit-any L648: Unexpected any. Specify a different type.
+  [WARN] @typescript-eslint/no-explicit-any L696: Unexpected any. Specify a different type.
+  [WARN] @typescript-eslint/no-explicit-any L710: Unexpected any. Specify a different type.
+  [WARN] react-hooks/exhaustive-deps L764: React Hook useCallback has missing dependencies: 'setActiveDocumentId' and 'setOpenDocuments'. Either include them or remove the dependency array.
+  [WARN] react-hooks/exhaustive-deps L774: React Hook useCallback has missing dependencies: 'setActiveDocumentId' and 'setOpenDocuments'. Either include them or remove the dependency array.
+  [WARN] react-hooks/exhaustive-deps L800: React Hook useCallback has a missing dependency: 'setActiveDocumentId'. Either include it or remove the dependency array.
+  [WARN] @typescript-eslint/no-explicit-any L949: Unexpected any. Specify a different type.
+  [WARN] @typescript-eslint/no-explicit-any L1126: Unexpected any. Specify a different type.
+  [WARN] @typescript-eslint/no-explicit-any L1132: Unexpected any. Specify a different type.
+  [WARN] @typescript-eslint/no-explicit-any L1139: Unexpected any. Specify a different type.
+  [WARN] @typescript-eslint/no-explicit-any L1145: Unexpected any. Specify a different type.
+  [WARN] @typescript-eslint/no-explicit-any L1154: Unexpected any. Specify a different type.
+  [WARN] @typescript-eslint/no-explicit-any L1805: Unexpected any. Specify a different type.
+  [WARN] @typescript-eslint/no-explicit-any L2207: Unexpected any. Specify a different type.
+  [WARN] @typescript-eslint/no-explicit-any L2391: Unexpected any. Specify a different type.
+  [WARN] @typescript-eslint/no-explicit-any L3038: Unexpected any. Specify a different type.
+  [WARN] @typescript-eslint/no-explicit-any L3046: Unexpected any. Specify a different type.
+  [WARN] @typescript-eslint/no-explicit-any L3051: Unexpected any. Specify a different type.
+  [WARN] @typescript-eslint/no-explicit-any L3064: Unexpected any. Specify a different type.
+  [WARN] @typescript-eslint/no-explicit-any L3388: Unexpected any. Specify a different type.
+src/components/Finance/Analysis/AnalysisWorkspace.tsx: errors=0 warnings=1
+  [WARN] @typescript-eslint/no-unused-vars L152: 'computing' is assigned a value but never used. Allowed unused vars must match /^_/u.
+src/components/Finance/Analysis/__tests__/AnalysisWorkspace.focusMode.test.tsx: errors=0 warnings=1
+  [WARN] @typescript-eslint/no-non-null-assertion L87: Forbidden non-null assertion.
+src/components/Finance/FinancialStatementPackWorkspace.tsx: errors=0 warnings=21
+  [WARN] @typescript-eslint/no-explicit-any L265: Unexpected any. Specify a different type.
+  [WARN] @typescript-eslint/no-explicit-any L281: Unexpected any. Specify a different type.
+  [WARN] @typescript-eslint/no-explicit-any L282: Unexpected any. Specify a different type.
+  [WARN] @typescript-eslint/no-explicit-any L330: Unexpected any. Specify a different type.
+  [WARN] no-restricted-syntax L352: Inline style={{}} is banned outside src/components/ui/. Use Tailwind design tokens (crimson-*, navy-*, token-*).
+  [WARN] @typescript-eslint/no-explicit-any L451: Unexpected any. Specify a different type.
+  [WARN] @typescript-eslint/no-explicit-any L466: Unexpected any. Specify a different type.
+  [WARN] @typescript-eslint/no-explicit-any L475: Unexpected any. Specify a different type.
+  [WARN] @typescript-eslint/no-non-null-assertion L496: Forbidden non-null assertion.
+  [WARN] @typescript-eslint/no-non-null-assertion L496: Forbidden non-null assertion.
+  [WARN] react-hooks/exhaustive-deps L500: The 'childStatements' logical expression could make the dependencies of useMemo Hook (at line 510) change on every render. To fix this, wrap the initialization of 'childStatements' in its own useMemo() Hook.
+  [WARN] react-hooks/exhaustive-deps L500: The 'childStatements' logical expression could make the dependencies of useEffect Hook (at line 517) change on every render. To fix this, wrap the initialization of 'childStatements' in its own useMemo() Hook.
+  [WARN] react-hooks/exhaustive-deps L500: The 'childStatements' logical expression could make the dependencies of useMemo Hook (at line 677) change on every render. To fix this, wrap the initialization of 'childStatements' in its own useMemo() Hook.
+  [WARN] @typescript-eslint/no-explicit-any L538: Unexpected any. Specify a different type.
+  [WARN] @typescript-eslint/no-explicit-any L557: Unexpected any. Specify a different type.
+  [WARN] @typescript-eslint/no-unused-vars L569: 'e' is defined but never used. Allowed unused caught errors must match /^_/u.
+  [WARN] @typescript-eslint/no-explicit-any L569: Unexpected any. Specify a different type.
+  [WARN] @typescript-eslint/no-non-null-assertion L1069: Forbidden non-null assertion.
+  [WARN] @typescript-eslint/no-non-null-assertion L1121: Forbidden non-null assertion.
+  [WARN] @typescript-eslint/no-non-null-assertion L1165: Forbidden non-null assertion.
+  [WARN] no-restricted-syntax L1378: Inline style={{}} is banned outside src/components/ui/. Use Tailwind design tokens (crimson-*, navy-*, token-*).
+src/components/Finance/Prediction/PredictionWorkspace.tsx: errors=0 warnings=1
+  [WARN] @typescript-eslint/no-unused-vars L152: 'setExceptionLedger' is assigned a value but never used. Allowed unused vars must match /^_/u.
+src/components/Finance/Valuation/ValuationWorkspace.tsx: errors=0 warnings=3
+  [WARN] @typescript-eslint/no-unused-vars L40: 'ValuationCompareVariantsResultDto' is defined but never used. Allowed unused vars must match /^_/u.
+  [WARN] @typescript-eslint/no-unused-vars L45: 'ValuationSensitivityGridRawDto' is defined but never used. Allowed unused vars must match /^_/u.
+  [WARN] react-refresh/only-export-components L111: Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+src/components/Finance/Valuation/__tests__/ValuationWorkspace.test.tsx: errors=0 warnings=1
+  [WARN] @typescript-eslint/no-explicit-any L187: Unexpected any. Specify a different type.
+src/components/Finance/baseline/AssumptionsView.tsx: errors=0 warnings=10
+  [WARN] no-restricted-syntax L291: Inline style={{}} is banned outside src/components/ui/. Use Tailwind design tokens (crimson-*, navy-*, token-*).
+  [WARN] no-restricted-syntax L294: Inline style={{}} is banned outside src/components/ui/. Use Tailwind design tokens (crimson-*, navy-*, token-*).
+  [WARN] no-restricted-syntax L297: Inline style={{}} is banned outside src/components/ui/. Use Tailwind design tokens (crimson-*, navy-*, token-*).
+  [WARN] no-restricted-syntax L309: Inline style={{}} is banned outside src/components/ui/. Use Tailwind design tokens (crimson-*, navy-*, token-*).
+  [WARN] no-restricted-syntax L312: Inline style={{}} is banned outside src/components/ui/. Use Tailwind design tokens (crimson-*, navy-*, token-*).
+  [WARN] no-restricted-syntax L315: Inline style={{}} is banned outside src/components/ui/. Use Tailwind design tokens (crimson-*, navy-*, token-*).
+  [WARN] no-restricted-syntax L318: Inline style={{}} is banned outside src/components/ui/. Use Tailwind design tokens (crimson-*, navy-*, token-*).
+  [WARN] no-restricted-syntax L321: Inline style={{}} is banned outside src/components/ui/. Use Tailwind design tokens (crimson-*, navy-*, token-*).
+  [WARN] no-restricted-syntax L324: Inline style={{}} is banned outside src/components/ui/. Use Tailwind design tokens (crimson-*, navy-*, token-*).
+  [WARN] no-restricted-syntax L327: Inline style={{}} is banned outside src/components/ui/. Use Tailwind design tokens (crimson-*, navy-*, token-*).
+src/components/Finance/baseline/useBaselineAssumptionsEditor.ts: errors=0 warnings=1
+  [WARN] @typescript-eslint/no-unused-vars L172: 'applyChanges' is assigned a value but never used. Allowed unused vars must match /^_/u.
+src/components/Finance/comments/__tests__/FinanceCommentsPanel.test.tsx: errors=0 warnings=2
+  [WARN] @typescript-eslint/no-explicit-any L65: Unexpected any. Specify a different type.
+  [WARN] @typescript-eslint/no-explicit-any L65: Unexpected any. Specify a different type.
+src/components/Finance/exportImport/__tests__/FinanceExportImportPanel.test.tsx: errors=0 warnings=2
+  [WARN] @typescript-eslint/no-explicit-any L55: Unexpected any. Specify a different type.
+  [WARN] @typescript-eslint/no-explicit-any L56: Unexpected any. Specify a different type.
+src/components/Finance/lineage/__tests__/FinanceLineageNavigator.test.tsx: errors=0 warnings=3
+  [WARN] @typescript-eslint/no-explicit-any L20: Unexpected any. Specify a different type.
+  [WARN] @typescript-eslint/no-non-null-assertion L203: Forbidden non-null assertion.
+  [WARN] @typescript-eslint/no-non-null-assertion L206: Forbidden non-null assertion.
+src/components/Finance/savedViews/__tests__/FinanceSavedViewsPanel.test.tsx: errors=0 warnings=1
+  [WARN] @typescript-eslint/no-explicit-any L29: Unexpected any. Specify a different type.
+src/components/Finance/shared/__tests__/FinanceWorkspaceBar.confirmDialog.a11y.test.tsx: errors=0 warnings=2
+  [WARN] @typescript-eslint/no-non-null-assertion L205: Forbidden non-null assertion.
+  [WARN] @typescript-eslint/no-non-null-assertion L206: Forbidden non-null assertion.
+src/components/Finance/statementPackWorkspaceV2/CanonicalStatementTableV2.tsx: errors=0 warnings=1
+  [WARN] (ignored/parse) L?: File ignored because of a matching ignore pattern. Use "--no-ignore" to disable file ignore settings or use "--no-warn-ignored" to suppress this warning.
+src/components/Finance/statementPackWorkspaceV2/StatementPackWorkspaceV2.tsx: errors=0 warnings=1
+  [WARN] (ignored/parse) L?: File ignored because of a matching ignore pattern. Use "--no-ignore" to disable file ignore settings or use "--no-warn-ignored" to suppress this warning.
+src/components/Finance/statementPackWorkspaceV2/__tests__/CanonicalStatementTableV2.test.tsx: errors=0 warnings=1
+  [WARN] @typescript-eslint/no-unused-vars L155: 'i' is defined but never used. Allowed unused args must match /^_/u.
+src/components/Finance/statementPackWorkspaceV2/__tests__/StatementPackWorkspaceV2.test.tsx: errors=0 warnings=1
+  [WARN] @typescript-eslint/no-unused-vars L25: 'LineageEdgeDto' is defined but never used. Allowed unused vars must match /^_/u.
+src/services/api/__tests__/financeV2.comments.api.test.ts: errors=0 warnings=1
+  [WARN] @typescript-eslint/no-explicit-any L271: Unexpected any. Specify a different type.
+src/services/api/__tests__/financeV2.compare.api.test.ts: errors=0 warnings=1
+  [WARN] @typescript-eslint/no-explicit-any L197: Unexpected any. Specify a different type.
+src/services/api/__tests__/financeV2.exportImport.api.test.ts: errors=0 warnings=1
+  [WARN] @typescript-eslint/no-explicit-any L186: Unexpected any. Specify a different type.
+src/services/api/__tests__/financeV2.lineageNavigator.api.test.ts: errors=0 warnings=1
+  [WARN] @typescript-eslint/no-explicit-any L188: Unexpected any. Specify a different type.
+src/services/api/__tests__/financeV2.savedViews.api.test.ts: errors=0 warnings=1
+  [WARN] @typescript-eslint/no-explicit-any L135: Unexpected any. Specify a different type.
+src/services/api/financeV2.api.ts: errors=0 warnings=1
+  [WARN] @typescript-eslint/no-unused-vars L85: 'ValuationLineageDto' is defined but never used. Allowed unused vars must match /^_/u.
+tests/components/Finance/SourceStep.fixc-lineage-chain.verify.test.tsx: errors=0 warnings=1
+  [WARN] (ignored/parse) L?: File ignored because of a matching ignore pattern. Use "--no-ignore" to disable file ignore settings or use "--no-warn-ignored" to suppress this warning.
+tests/unit/finance/rawEnumLeakScanner.test.ts: errors=0 warnings=1
+  [WARN] (ignored/parse) L?: File ignored because of a matching ignore pattern. Use "--no-ignore" to disable file ignore settings or use "--no-warn-ignored" to suppress this warning.

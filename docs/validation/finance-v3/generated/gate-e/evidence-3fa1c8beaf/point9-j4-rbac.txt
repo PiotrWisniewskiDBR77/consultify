@@ -1,0 +1,73 @@
+2026-08-12 23:38:45:3845 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-08-12 23:38:45:3845 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-08-12 23:38:45:3845 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-08-12 23:38:45:3845 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-08-12 23:38:45:3845 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+2026-08-12 23:38:46:3846 [32minfo[39m: [32m[Postgres] Initializing connection pool...[39m
+2026-08-12 23:38:46:3846 [32minfo[39m: [32m[DB Config] DATABASE_URL: SET[39m
+2026-08-12 23:38:46:3846 [32minfo[39m: [32m[DB Config] DB_TYPE: postgres[39m
+2026-08-12 23:38:46:3846 [32minfo[39m: [32m[DB Config] Using PostgreSQL[39m
+2026-08-12 23:38:46:3846 [32minfo[39m: [32m[Postgres] Config:[39m {"host":"127.0.0.1","database":"gate_final_j4","max":10}
+2026-08-12 23:38:46:3846 [32minfo[39m: [32m[Postgres] Checking/Initializing Schema...[39m
+2026-08-12 23:38:46:3846 [32minfo[39m: [32m[Postgres] Testing connection (attempt 1/3)...[39m
+2026-08-12 23:38:46:3846 [37mdebug[39m: [37m[Postgres] Client connected[39m
+2026-08-12 23:38:46:3846 [37mdebug[39m: [37m[Postgres] Client connected[39m
+2026-08-12 23:38:46:3846 [32minfo[39m: [32m[Postgres] Connection test successful (PostgreSQL verified):[39m {"current_time":"2026-08-12T21:38:46.470Z"}
+[PASS] RULE-MATRIX-LEGAL-T2 — legal transition submit_for_review from DRAFT succeeds for its allowed role
+[PASS] RULE-MATRIX-LEGAL-T3 — legal transition withdraw from READY_FOR_REVIEW succeeds for its allowed role
+[PASS] RULE-MATRIX-LEGAL-T4 — legal transition start_review from READY_FOR_REVIEW succeeds for its allowed role
+[PASS] RULE-MATRIX-LEGAL-T5 — legal transition withdraw from IN_REVIEW succeeds for its allowed role
+[PASS] RULE-MATRIX-LEGAL-T6 — legal transition request_changes from IN_REVIEW succeeds for its allowed role
+[PASS] RULE-MATRIX-LEGAL-T7 — legal transition resume_editing from NEEDS_CHANGES succeeds for its allowed role
+[PASS] RULE-MATRIX-LEGAL-T10 — legal transition archive from APPROVED succeeds for its allowed role
+[PASS] RULE-MATRIX-LEGAL-T11 — legal transition invalidate from APPROVED succeeds for its allowed role
+[PASS] RULE-MATRIX-VIEWER-SUBMIT — viewer tries submit_for_review on a DRAFT (not preparer/finance_admin)
+2026-08-12 23:38:47:3847 [37mdebug[39m: [37m[Postgres] subscription_plans normalize legacy nulls: column "is_active" does not exist[39m
+2026-08-12 23:38:47:3847 [37mdebug[39m: [37m[Postgres] Client connected[39m
+[PASS] RULE-MATRIX-PREPARER-STARTREVIEW — preparer tries start_review (T4, reviewer/approver/finance_admin only)
+[PASS] RULE-MATRIX-VIEWER-ARCHIVE — viewer tries archive on an APPROVED version
+[PASS] RULE-MATRIX-INVALIDATE-NO-REASON — approver invalidates APPROVED without a reason (requiresReason=true)
+2026-08-12 23:38:47:3847 [32minfo[39m: [32m[Postgres] Verifying/Creating Indexes...[39m
+[PASS] RULE-MATRIX-ARCHIVED-RESURRECT — approver tries submit_for_review on an already-ARCHIVED version (terminal -> non-terminal)
+[PASS] RULE-MATRIX-INVALIDATED-ARCHIVE — approver tries archive on an already-INVALIDATED version (terminal, zero outgoing transitions)
+2026-08-12 23:38:47:3847 [37mdebug[39m: [37m[Postgres] Skipping created_by index on webhooks: column "created_by" does not exist[39m
+2026-08-12 23:38:47:3847 [37mdebug[39m: [37m[Postgres] Client connected[39m
+2026-08-12 23:38:47:3847 [32minfo[39m: [32m[Postgres] Schema Check Complete.[39m
+2026-08-12 23:38:47:3847 [32minfo[39m: [32m[Postgres] Verified table exists: organizations[39m
+2026-08-12 23:38:47:3847 [32minfo[39m: [32m[Postgres] Verified table exists: users[39m
+2026-08-12 23:38:47:3847 [32minfo[39m: [32m[Postgres] Verified table exists: sessions[39m
+2026-08-12 23:38:47:3847 [32minfo[39m: [32m[Postgres] Verified table exists: projects[39m
+2026-08-12 23:38:47:3847 [32minfo[39m: [32m[Postgres] Verified table exists: tasks[39m
+[PASS] RULE-MATRIX-APPROVED-EDIT-VIA-TRANSITIONS — preparer tries withdraw (edit-shaped) on an APPROVED version — no such (from=APPROVED, action=withdraw) transition exists
+2026-08-12 23:38:47:3847 [32minfo[39m: [32m[Postgres] Verified table exists: teams[39m
+2026-08-12 23:38:47:3847 [32minfo[39m: [32m[Postgres] Verified table exists: invitations[39m
+2026-08-12 23:38:47:3847 [32minfo[39m: [32m[Postgres] Verified table exists: notifications[39m
+2026-08-12 23:38:47:3847 [32minfo[39m: [32m[Postgres] Verified table exists: settings[39m
+2026-08-12 23:38:47:3847 [32minfo[39m: [32m[Postgres] Schema initialization completed successfully[39m
+[PASS] RULE-REVIEWER-UNREACHABLE — STRUCTURAL FINDING: mapOrgRoleToFinanceRole (_shared.ts + models.routes.ts private copy) never returns 'reviewer' for any real org role (owner/admin->approver, editor/finance_editor->preparer, finance_admin->finance_admin, everything else->viewer) — reviewer-only matrix cells are unreachable via HTTP by a real user today
+[PASS] RULE-P0-VIEWER-APPROVE — P0: a user whose org role maps to FinanceRole viewer (not the submitter) calls POST /models/:id/approve on an IN_REVIEW version
+[PASS] RULE-P0-PREPARER-APPROVE-NOT-SUBMITTER — preparer (FinanceRole preparer, not approver/finance_admin), not the submitter, calls approve on an IN_REVIEW version
+[PASS] RULE-SOD-LITERAL-SELF-APPROVE — same user submits (submitted_by) AND tries to approve a HIGH_RISK artifact — must be blocked by checkSelfApproval identity check
+[PASS] RULE-SOD-EDITOR-NOT-SUBMITTER-GAP — GAP: the working revision editor (finance_working_revisions.edited_by) is a different physical user from submitted_by, and also holds approver rights via org role — approveVersion() has no editorUserIds data source in production (autosaveService never writes artifact_lifecycle_events; the route never passes editorUserIds/reviewStartedBy), so self-approval-by-editor is not caught even though the ADR (WP-B02 7.2.6) says it should be
+[PASS] RULE-SOD-DUAL-ROLE-USER — user who holds preparer AND approver (via two org-role contexts) submitted as themselves, then tries to approve as themselves — identity check must still fire
+[PASS] RULE-SOD-LOW-TIER-NO-GATE — LOW risk tier (HISTORICAL_ANALYSIS default) has no SoD gate by design — a different approver may approve regardless of who prepared it
+[PASS] RULE-EMERGENCY-OVERRIDE-NOT-IMPLEMENTED — emergency/break-glass approval override — checked whether it exists at all
+[PASS] RULE-IMMUT-NO-MUTATING-ROUTES — PUT/PATCH/DELETE on /versions/:id and /artifacts/:id — no such route is mounted anywhere in finance-v2
+[PASS] RULE-IMMUT-REAPPROVE-VIA-ROUTE — re-approve an already-APPROVED artifact via the real route (models.routes.ts only ever looks up IN_REVIEW versions)
+[PASS] RULE-IMMUT-DIRECT-SQL-TAMPER — direct UPDATE of content_semantic_hash on an APPROVED row via raw SQL on a SEPARATE connection (bypasses the app entirely) — trg_finance_bv_immutability must reject it
+[PASS] RULE-IMMUT-DIRECT-SQL-DELETE — direct hard-DELETE of an APPROVED business_versions row via raw SQL — no BEFORE DELETE deny trigger exists on this table; only FK RESTRICT from dependent rows (finance_stmt_lines, finance_compute_snapshots, etc.) defends it
+[PASS] RULE-REOPEN-PRESERVES-PARENT — reopen() creates vN+1=DRAFT via INSERT; vN (APPROVED) must be byte-identical before/after, confirmed by independent SQL read
+[PASS] RULE-REOPEN-VIEWER-FORBIDDEN — viewer tries to reopen an APPROVED version (reopenVersion() checks REOPEN_ALLOWED_ROLES explicitly, unlike approveVersion())
+[PASS] RULE-APPROVAL-BLOCKED-SECURITY-EXCEPTION — approve is attempted while an OPEN SECURITY-severity exception is attached to the version (approveVersion() step a3)
+[PASS] RULE-DRAFT-DELETE — Draft (no children) deletable per permissions, Draft WITH children not deletable — checked whether ANY delete capability exists for finance_artifacts/finance_business_versions
+[PASS] RULE-NA-EXCLUDED-VS-FORGOTTEN — known open defect (CONFIRM, not fix): a canonical line the analyst deliberately EXCLUDEs (excludeKind=ANALYST_DECISION) never gets a finance_stmt_lines row at all (mapStatementLines `continue`s before the INSERT for the EXCLUDED branch) — identical, at the finance_stmt_lines table the KPI engine actually reads, to a canonical line nobody ever mapped
+[PASS] RULE-CROSSORG-GET-VERSION — GET /versions/:id with an org-A caller and an org-B businessVersionId (substituted identifier) — must fail closed as NOT_FOUND, not leak the other tenant's row
+[PASS] RULE-CROSSORG-TRANSITION — org-A caller POSTs a transition against org-B businessVersionId (substituted identifier)
+[PASS] RULE-CROSSORG-APPROVE — org-A approver POSTs approve against org-B artifactId (substituted identifier) — getArtifact/findCurrentArtifactVersion are org-scoped
+[PASS] RULE-CAPABILITY-NOT-A-GATE — capabilities read for a viewer correctly omits 'approve' from allowedActions, but the real approve endpoint does not consult capabilities/allowedActionsFromStatus at all — it must reject independently of what capabilities says
+[PASS] RULE-RLS-RESTRICTED-ROLE — LOCAL-ONLY check, does NOT replace a Railway measurement: under a freshly-created NOSUPERUSER NOBYPASSRLS role (not postgres), with SET LOCAL app.organization_id set correctly, does the compute_jobs tenant_isolation policy actually hide the other tenant row? This answers "is the policy written correctly", not "is production protected" (production still connects as postgres superuser, which unconditionally bypasses RLS even with FORCE — see 20260826_finance_v3_w2_rls_pilot_policies.sql header, unchanged by this probe).
+
+=========================================
+j4-rbac-probe: 37 checks, 0 FAIL, duration 4228ms
+=========================================
+
