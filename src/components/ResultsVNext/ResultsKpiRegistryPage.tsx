@@ -823,7 +823,7 @@ export const ResultsKpiRegistryPage: React.FC = () => {
           })
           .catch((err) => {
             setFormIsConflict(isConflictError(err));
-            setFormError(err instanceof Error ? err.message : String(err));
+            setFormError(toUserFacingErrorMessage(err, isPolish));
           })
           .finally(() => setFormBusy(false));
         return;
@@ -848,7 +848,7 @@ export const ResultsKpiRegistryPage: React.FC = () => {
         })
         .catch((err) => {
           setFormIsConflict(isConflictError(err));
-          setFormError(err instanceof Error ? err.message : String(err));
+          setFormError(toUserFacingErrorMessage(err, isPolish));
         })
         .finally(() => setFormBusy(false));
     },
@@ -889,7 +889,7 @@ export const ResultsKpiRegistryPage: React.FC = () => {
       const handleError = (err: unknown) => {
         setTransitionIsConflict(isConflictError(err));
         setTransitionIsSelfApprovalDenied(isSelfApprovalDeniedError(err));
-        setTransitionError(err instanceof Error ? err.message : String(err));
+        setTransitionError(toUserFacingErrorMessage(err, isPolish));
       };
 
       let call: Promise<KpiDefinitionVersionDto>;
