@@ -142,6 +142,7 @@ const FinanceStatementPackWorkspaceV2Screen = React.lazy(
 const FinanceBaselineWorkspaceScreen = React.lazy(() => import('./screens/finance-baseline-workspace'));
 const FinancePredictionWorkspaceScreen = React.lazy(() => import('./screens/finance-prediction-workspace'));
 const FinanceAnalysisWorkspaceScreen = React.lazy(() => import('./screens/finance-analysis-workspace'));
+const FinanceValuationWorkspaceScreen = React.lazy(() => import('./screens/finance-valuation-workspace'));
 const GenDeckContentHintsScreen = React.lazy(() => import('./screens/gen-deck-content-hints'));
 const GenExcelTemplatesTabScreen = React.lazy(() => import('./screens/gen-excel-templates-tab'));
 const GenWordContentHintsScreen = React.lazy(() => import('./screens/gen-word-content-hints'));
@@ -637,6 +638,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'PKG_E — REAL <AnalysisWorkspace> (Analysis KPI table+detail+creator) — &scene=draft-empty|draft-with-kpis|approved|missing-values',
     render: () => <FinanceAnalysisWorkspaceScreen />,
+  },
+  'finance-valuation-workspace': {
+    label:
+      'PKG_H — REAL <ValuationWorkspace> (Enterprise Valuation, 7 kroków Source→Assumptions→Methods→Results→Sensitivity→Advisor→Export) — &step=source|assumptions|methods|results|sensitivity|advisor|export &sourceLinked=1|0 &name=<string>',
+    render: () => <FinanceValuationWorkspaceScreen />,
   },
   'execution-change-signals': {
     label:
