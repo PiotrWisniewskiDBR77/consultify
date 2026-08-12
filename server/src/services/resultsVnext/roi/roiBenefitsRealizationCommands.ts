@@ -36,9 +36,19 @@ import type { PoolClient } from 'pg';
 
 import { computeStateHash } from '../kpi/kpiDefinitionCommands.js';
 import { executeAtomicCommand, type AtomicCommandOutcome, type AtomicEventInput } from '../platform/atomicWrite.js';
+import {
+  assertCommandCapability,
+  type CommandAccessContext,
+} from '../platform/commandCapabilityGuard.js';
 import { createObligation } from '../platform/obligations.js';
 
 import { ROI_EVENT_SOURCE, ROI_TRACKING_ACTIVE_STATUSES, RoiCaseValidationError } from './roiCaseCommands.js';
+
+// RN-G5 — command capability names (docs/product/results-vnext/RN_G5_AUTHZ_DESIGN.md)
+export const ROI_BENEFITS_REALIZATION_CAPABILITIES = {
+  start: 'results.roi.benefits_realization.start',
+  cancelCase: 'results.roi.case.cancel',
+} as const;
 import { toRoiCase, type RoiCase, type RoiCaseRow } from './roiTypes.js';
 
 // Design §2: obligation type created alongside startRoiCaseBenefitsRealization
@@ -77,6 +87,7 @@ export interface StartRoiCaseBenefitsRealizationInput {
   correlationId?: string;
   causationId?: string | null;
   reason?: string | null;
+  access: CommandAccessContext;
 }
 
 /**
@@ -106,6 +117,7 @@ export async function startRoiCaseBenefitsRealization(
     correlationId,
     causationId = null,
     reason = null,
+    access,
   } = input;
 
   let beforeState: Record<string, unknown> | null = null;
@@ -117,6 +129,13 @@ export async function startRoiCaseBenefitsRealization(
     loadForUpdate: loadRoiCaseForUpdate,
     getCurrentVersion: caseRowVersion,
     applyMutation: async (client, currentRow, nextVersion) => {
+      assertCommandCapability({
+        access,
+        actorUserId,
+        capability: ROI_BENEFITS_REALIZATION_CAPABILITIES.start,
+        responsibleUserIds: [currentRow.owner_user_id],
+      });
+
       // Decision D2 (AC-01): status-only guard — this NEVER reads or joins
       // `initiatives.status`. Do not "improve" this by adding an Initiative
       // -status check; that would silently reintroduce the coupling AC-01
@@ -204,6 +223,7 @@ export interface CancelRoiCaseInput {
   idempotencyKey: string;
   correlationId?: string;
   causationId?: string | null;
+  access: CommandAccessContext;
 }
 
 /**
@@ -232,6 +252,7 @@ export async function cancelRoiCase(input: CancelRoiCaseInput): Promise<AtomicCo
     idempotencyKey,
     correlationId,
     causationId = null,
+    access,
   } = input;
 
   let beforeState: Record<string, unknown> | null = null;
@@ -243,6 +264,13 @@ export async function cancelRoiCase(input: CancelRoiCaseInput): Promise<AtomicCo
     loadForUpdate: loadRoiCaseForUpdate,
     getCurrentVersion: caseRowVersion,
     applyMutation: async (client, currentRow, nextVersion) => {
+      assertCommandCapability({
+        access,
+        actorUserId,
+        capability: ROI_BENEFITS_REALIZATION_CAPABILITIES.cancelCase,
+        responsibleUserIds: [currentRow.owner_user_id],
+      });
+
       if (!ROI_TRACKING_ACTIVE_STATUSES.includes(currentRow.status)) {
         throw new RoiCaseValidationError(
           `ROI case ${caseId} is "${currentRow.status}" — only a case that has started tracking may be cancelled`,

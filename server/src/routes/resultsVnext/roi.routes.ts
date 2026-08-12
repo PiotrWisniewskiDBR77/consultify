@@ -2717,6 +2717,7 @@ router.post(
       const { caseId } = req.params as { caseId: string };
       if (!(await requireExistingRoiCase(auth, caseId, res))) return;
       const body = req.body as import('zod').infer<typeof RoiCaseCancellationSchema>;
+      const access = await resolveAccess(req, auth);
       const outcome = await cancelRoiCase({
         caseId,
         organizationId: auth.organizationId,
@@ -2726,6 +2727,7 @@ router.post(
         actorEffectiveRole: auth.role,
         idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
         correlationId: getCorrelationId(req),
+        access,
       });
       res.status(200).json({
         outcome: outcome.outcome,
