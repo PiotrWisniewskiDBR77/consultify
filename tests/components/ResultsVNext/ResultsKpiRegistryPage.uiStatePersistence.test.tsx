@@ -217,4 +217,24 @@ describe('ResultsKpiRegistryPage — RN-G6 UI state persistence (tab/chip/select
     // the link.
     await waitFor(() => expect(screen.getAllByText('MY-KPI-001').length).toBeGreaterThan(1));
   });
+
+  it('deep link (?kpiId=) still resolves when a restored "My" tab or status chip would otherwise hide the record (caught live during the dowód run)', async () => {
+    makeFakeBackend();
+    // Seed a PRIOR session that would strand the deep link TWO ways at once:
+    // 'my' scopes to the current user's own rows (ORG-DRAFT-002 is owned by
+    // 'user-anna', not the logged-in test user), AND the 'active' chip
+    // excludes ORG-DRAFT-002's own 'draft' status.
+    window.sessionStorage.setItem(
+      'results-vnext.kpi-registry.ui-state',
+      JSON.stringify({ tab: 'my', statusFilter: 'active', selectedId: null, selectedScorecardId: null })
+    );
+
+    (window.location as unknown as { search: string }).search = '?kpiId=kpi-org-draft';
+    renderPage('/results/kpi?kpiId=kpi-org-draft');
+
+    // Visible (table row + preview header) only if BOTH the tab bumped to
+    // "Org" AND the status chip was cleared.
+    await waitFor(() => expect(screen.getAllByText('ORG-DRAFT-002').length).toBeGreaterThan(1));
+    expect(screen.getByRole('tab', { name: 'Organizacja' })).toHaveAttribute('aria-selected', 'true');
+  });
 });

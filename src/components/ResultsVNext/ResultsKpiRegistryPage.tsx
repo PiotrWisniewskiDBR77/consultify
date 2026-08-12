@@ -848,13 +848,23 @@ export const ResultsKpiRegistryPage: React.FC = () => {
           setForbidden({ reason: 'NO_VISIBILITY_RECORD' });
         } else {
           setSelectedId(kpi.kpiId);
-          // RN-G6 — a `tab` restored from a PRIOR session (see
-          // `UI_STATE_KEY` above) could be 'scorecards', whose branch never
-          // renders the KPI table/preview at all — `selectedId` would be set
-          // but invisible, silently breaking this exact deep link. Bumping
-          // off 'scorecards' only (never touching a restored 'my'/'org',
-          // which already rendered this domain before this fix existed).
-          setTab((t) => (t === 'scorecards' ? 'org' : t));
+          // RN-G6 — a deep link must always land on a VISIBLE record. Two
+          // independent ways a `tab`/`statusFilter` restored/persisted from a
+          // PRIOR session (see `UI_STATE_KEY` above) could hide the resolved
+          // KPI despite `selectedId` being set correctly, caught live by this
+          // package's own dowód run (`docs/qa/screens/rn-g6-kpitab/07-*`):
+          //  1. `tab === 'scorecards'` never renders the KPI table/preview
+          //     branch at all.
+          //  2. `tab === 'my'` scopes to `ownerUserId === currentUser.id` —
+          //     invisible if the deep-linked KPI belongs to someone else.
+          // Bumping to 'org' covers both (never touches a restored 'org' that
+          // already renders every KPI). `statusFilter` is cleared the same
+          // way `handleFormSubmit`'s create branch below already does for a
+          // freshly-created row ("ensure the row is visible regardless of
+          // prior filter") — the identical rule, applied to the identical
+          // failure mode.
+          setStatusFilter(null);
+          setTab((t) => (t === 'scorecards' || (t === 'my' && kpi.ownerUserId !== currentUser?.id) ? 'org' : t));
         }
       } catch {
         if (!cancelled) setForbidden({ reason: 'NO_VISIBILITY_RECORD' });
