@@ -48,18 +48,31 @@ const SAMPLE_COMMENT = {
   updatedAt: 't',
 };
 
-function mockLoadOnce(overrides: { comments?: unknown[]; checklist?: unknown[]; blocking?: boolean } = {}) {
+function mockLoadOnce(
+  overrides: { comments?: unknown[]; checklist?: unknown[]; blocking?: boolean } = {}
+) {
   mockListFinanceComments.mockResolvedValueOnce(overrides.comments ?? [SAMPLE_COMMENT]);
   mockListFinanceReviewChecklist.mockResolvedValueOnce(overrides.checklist ?? []);
-  mockHasUnresolvedBlocking.mockResolvedValueOnce({ hasUnresolvedBlockingComments: overrides.blocking ?? false });
+  mockHasUnresolvedBlocking.mockResolvedValueOnce({
+    hasUnresolvedBlockingComments: overrides.blocking ?? false,
+  });
 }
 
 beforeEach(() => {
   window.localStorage.clear();
-  for (const m of [mockListFinanceComments, mockListFinanceReviewChecklist, mockHasUnresolvedBlocking, mockResolveFinanceComment, mockReopenFinanceComment]) {
+  for (const m of [
+    mockListFinanceComments,
+    mockListFinanceReviewChecklist,
+    mockHasUnresolvedBlocking,
+    mockResolveFinanceComment,
+    mockReopenFinanceComment,
+  ]) {
     m.mockReset();
   }
-  window.localStorage.setItem('consultify_feature_flags', JSON.stringify({ financeCommentsV1: true }));
+  window.localStorage.setItem(
+    'consultify_feature_flags',
+    JSON.stringify({ financeCommentsV1: true })
+  );
 });
 afterEach(() => {
   window.localStorage.clear();
@@ -86,7 +99,11 @@ describe('FinanceCommentsPanel — ogłaszanie stanów dynamicznych (a11y, Pakie
 
     fireEvent.click(screen.getByText('Oznacz jako rozwiązany'));
 
-    await waitFor(() => expect(screen.getByTestId('finance-status-announcer')).toHaveTextContent('Komentarz oznaczony jako rozwiązany.'));
+    await waitFor(() =>
+      expect(screen.getByTestId('finance-status-announcer')).toHaveTextContent(
+        'Komentarz oznaczony jako rozwiązany.'
+      )
+    );
   });
 
   it('błąd ładowania → role="status" priority=assertive', async () => {
@@ -100,7 +117,9 @@ describe('FinanceCommentsPanel — ogłaszanie stanów dynamicznych (a11y, Pakie
 
   it('KONTROLA NEGATYWNA: przy fladze OFF brak jakiegokolwiek role="status" (panel nie renderuje nic)', () => {
     window.localStorage.clear();
-    const { container } = render(<FinanceCommentsPanel artifactId="art-1" businessVersionId="bv-1" />);
+    const { container } = render(
+      <FinanceCommentsPanel artifactId="art-1" businessVersionId="bv-1" />
+    );
     expect(container.firstChild).toBeNull();
     expect(screen.queryByTestId('finance-status-announcer')).not.toBeInTheDocument();
   });
@@ -108,7 +127,20 @@ describe('FinanceCommentsPanel — ogłaszanie stanów dynamicznych (a11y, Pakie
 
 describe('FinanceCommentsPanel — dostępne nazwy / kontrast (a11y, Pakiet I)', () => {
   it('pozycja checklisty ma programowo powiązaną etykietę (axe: "label" critical, PRZED naprawą)', async () => {
-    mockLoadOnce({ checklist: [{ id: 'item-1', businessVersionId: 'bv-1', item: 'Zweryfikuj sumy kontrolne', required: true, checkedBy: null, checkedAt: null, createdBy: 'u-1', createdAt: 't' }] });
+    mockLoadOnce({
+      checklist: [
+        {
+          id: 'item-1',
+          businessVersionId: 'bv-1',
+          item: 'Zweryfikuj sumy kontrolne',
+          required: true,
+          checkedBy: null,
+          checkedAt: null,
+          createdBy: 'u-1',
+          createdAt: 't',
+        },
+      ],
+    });
     render(<FinanceCommentsPanel artifactId="art-1" businessVersionId="bv-1" />);
     await screen.findByTestId('finance-comments-panel');
     expect(screen.getByLabelText('Zweryfikuj sumy kontrolne')).toBeInTheDocument();

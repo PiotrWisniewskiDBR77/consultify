@@ -20,15 +20,15 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import {
   listBaselineAssumptions,
-  upsertBaselineAssumptions,
   type ListBaselineAssumptionsParams,
+  upsertBaselineAssumptions,
 } from '@/services/api/financeV2.api';
 import {
-  describeFinanceV2Error,
   type BaselineAssumptionDto,
   type BaselineAssumptionQuality,
   type BaselineAssumptionRule,
   type BaselineScheduleType,
+  describeFinanceV2Error,
   type FinanceValueStatus,
 } from '@/services/api/financeV2.types';
 
@@ -57,7 +57,11 @@ export interface AssumptionDraftPatch {
 
 interface UndoEntry {
   kind: 'cell' | 'batch';
-  changes: Array<{ key: string; before: AssumptionDraftPatch | undefined; after: AssumptionDraftPatch }>;
+  changes: Array<{
+    key: string;
+    before: AssumptionDraftPatch | undefined;
+    after: AssumptionDraftPatch;
+  }>;
 }
 
 export interface EffectiveAssumptionCell {
@@ -122,7 +126,15 @@ export function useBaselineAssumptionsEditor(
   const serverByKey = useMemo(() => {
     const m = new Map<string, BaselineAssumptionDto>();
     for (const r of rows) {
-      m.set(cellKeyOf({ scheduleType: r.scheduleType, driverCode: r.driverCode, entityId: r.entityId, periodId: r.periodId }), r);
+      m.set(
+        cellKeyOf({
+          scheduleType: r.scheduleType,
+          driverCode: r.driverCode,
+          entityId: r.entityId,
+          periodId: r.periodId,
+        }),
+        r
+      );
     }
     return m;
   }, [rows]);
@@ -168,37 +180,37 @@ export function useBaselineAssumptionsEditor(
     []
   );
 
-  const setCellValue = useCallback(
-    (key: AssumptionCellKey, patch: AssumptionDraftPatch) => {
-      const k = cellKeyOf(key);
+  const setCellValue = useCallback((key: AssumptionCellKey, patch: AssumptionDraftPatch) => {
+    const k = cellKeyOf(key);
+    setDrafts((prev) => {
+      const before = prev[k];
+      const after = { ...before, ...patch };
+      setUndoStack((stack) => [...stack, { kind: 'cell', changes: [{ key: k, before, after }] }]);
+      setRedoStack([]);
+      return { ...prev, [k]: after };
+    });
+  }, []);
+
+  const pasteBatch = useCallback(
+    (entries: Array<{ key: AssumptionCellKey; patch: AssumptionDraftPatch }>) => {
+      if (entries.length === 0) return;
       setDrafts((prev) => {
-        const before = prev[k];
-        const after = { ...before, ...patch };
-        setUndoStack((stack) => [...stack, { kind: 'cell', changes: [{ key: k, before, after }] }]);
+        const next = { ...prev };
+        const changes: UndoEntry['changes'] = [];
+        for (const e of entries) {
+          const k = cellKeyOf(e.key);
+          const before = next[k];
+          const after = { ...before, ...e.patch };
+          changes.push({ key: k, before, after });
+          next[k] = after;
+        }
+        setUndoStack((stack) => [...stack, { kind: 'batch', changes }]);
         setRedoStack([]);
-        return { ...prev, [k]: after };
+        return next;
       });
     },
     []
   );
-
-  const pasteBatch = useCallback((entries: Array<{ key: AssumptionCellKey; patch: AssumptionDraftPatch }>) => {
-    if (entries.length === 0) return;
-    setDrafts((prev) => {
-      const next = { ...prev };
-      const changes: UndoEntry['changes'] = [];
-      for (const e of entries) {
-        const k = cellKeyOf(e.key);
-        const before = next[k];
-        const after = { ...before, ...e.patch };
-        changes.push({ key: k, before, after });
-        next[k] = after;
-      }
-      setUndoStack((stack) => [...stack, { kind: 'batch', changes }]);
-      setRedoStack([]);
-      return next;
-    });
-  }, []);
 
   const resetCellToServer = useCallback((key: AssumptionCellKey) => {
     const k = cellKeyOf(key);
@@ -207,7 +219,10 @@ export function useBaselineAssumptionsEditor(
       const before = prev[k];
       const next = { ...prev };
       delete next[k];
-      setUndoStack((stack) => [...stack, { kind: 'cell', changes: [{ key: k, before, after: {} }] }]);
+      setUndoStack((stack) => [
+        ...stack,
+        { kind: 'cell', changes: [{ key: k, before, after: {} }] },
+      ]);
       setRedoStack([]);
       return next;
     });
@@ -261,11 +276,24 @@ export function useBaselineAssumptionsEditor(
             ? Number(server.value.valueDecimal)
             : null;
       const unit = server?.value.unit ?? 'PCT';
-      const rangeLow = draft?.rangeLow !== undefined ? draft.rangeLow : server?.rangeLow !== null && server?.rangeLow !== undefined ? Number(server.rangeLow) : null;
-      const rangeHigh = draft?.rangeHigh !== undefined ? draft.rangeHigh : server?.rangeHigh !== null && server?.rangeHigh !== undefined ? Number(server.rangeHigh) : null;
+      const rangeLow =
+        draft?.rangeLow !== undefined
+          ? draft.rangeLow
+          : server?.rangeLow !== null && server?.rangeLow !== undefined
+            ? Number(server.rangeLow)
+            : null;
+      const rangeHigh =
+        draft?.rangeHigh !== undefined
+          ? draft.rangeHigh
+          : server?.rangeHigh !== null && server?.rangeHigh !== undefined
+            ? Number(server.rangeHigh)
+            : null;
       const quality = draft?.quality ?? server?.quality ?? null;
       const outOfSafeRange =
-        valueDecimal !== null && rangeLow !== null && rangeHigh !== null && (valueDecimal < rangeLow || valueDecimal > rangeHigh);
+        valueDecimal !== null &&
+        rangeLow !== null &&
+        rangeHigh !== null &&
+        (valueDecimal < rangeLow || valueDecimal > rangeHigh);
       out.set(k, {
         key: k,
         server,
@@ -294,7 +322,9 @@ export function useBaselineAssumptionsEditor(
     return warnings;
   }, [cells]);
 
-  const save = useCallback(async (): Promise<{ ok: true; writtenCount: number } | { ok: false; message: string }> => {
+  const save = useCallback(async (): Promise<
+    { ok: true; writtenCount: number } | { ok: false; message: string }
+  > => {
     const dirtyKeys = Object.keys(drafts);
     if (dirtyKeys.length === 0) return { ok: true, writtenCount: 0 };
     setSaving(true);
@@ -302,7 +332,12 @@ export function useBaselineAssumptionsEditor(
     try {
       const inputs = dirtyKeys
         .map((k) => {
-          const [scheduleType, driverCode, entityId, periodId] = k.split('::') as [BaselineScheduleType, string, string, string];
+          const [scheduleType, driverCode, entityId, periodId] = k.split('::') as [
+            BaselineScheduleType,
+            string,
+            string,
+            string,
+          ];
           const cell = cells.get(k);
           if (!cell || cell.rule === null || cell.quality === null) return null;
           return {
@@ -322,7 +357,11 @@ export function useBaselineAssumptionsEditor(
         .filter((x): x is NonNullable<typeof x> => x !== null);
       if (inputs.length === 0) {
         setSaving(false);
-        return { ok: false, message: 'Brakuje reguły lub jakości dla przynajmniej jednej zmienionej komórki — nie da się zapisać.' };
+        return {
+          ok: false,
+          message:
+            'Brakuje reguły lub jakości dla przynajmniej jednej zmienionej komórki — nie da się zapisać.',
+        };
       }
       const result = await upsertBaselineAssumptions(businessVersionId, inputs);
       await reload();

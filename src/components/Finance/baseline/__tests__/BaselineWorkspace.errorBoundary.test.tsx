@@ -10,7 +10,10 @@ import { render, screen, within } from '@testing-library/react';
 import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { clearFeatureFlagOverrides, setFeatureFlagOverrides } from '@/test-utils/featureFlagOverrides';
+import {
+  clearFeatureFlagOverrides,
+  setFeatureFlagOverrides,
+} from '@/test-utils/featureFlagOverrides';
 
 vi.mock('@/services/api/financeV2.api', () => ({
   approveFinanceModel: vi.fn(),
@@ -32,7 +35,9 @@ vi.mock('../AssumptionsView', () => ({
 import { BaselineWorkspace, type BaselineWorkspaceProps } from '../../BaselineWorkspace';
 import type { PeriodMeta } from '../CalculationsView';
 
-const FORECAST_PERIODS: PeriodMeta[] = [{ periodId: 'per-2026-01', label: '01/2026', yearMonth: '2026-01' }];
+const FORECAST_PERIODS: PeriodMeta[] = [
+  { periodId: 'per-2026-01', label: '01/2026', yearMonth: '2026-01' },
+];
 
 function baseProps(overrides: Partial<BaselineWorkspaceProps> = {}): BaselineWorkspaceProps {
   return {

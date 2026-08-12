@@ -16,13 +16,12 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 
 import { useDialogA11y } from '@/components/ui/primitives/useDialogA11y';
-
 import {
-  formatFinanceValueForDisplay,
   type BaselineAssumptionDto,
   type BaselineAssumptionQuality,
   type BaselineAssumptionRule,
   type FinanceValue,
+  formatFinanceValueForDisplay,
 } from '@/services/api/financeV2.types';
 
 import {
@@ -31,7 +30,10 @@ import {
   controlKindForUnit,
   driverLabel,
 } from './baselineLabels';
-import type { AssumptionCellKey, UseBaselineAssumptionsEditorResult } from './useBaselineAssumptionsEditor';
+import type {
+  AssumptionCellKey,
+  UseBaselineAssumptionsEditorResult,
+} from './useBaselineAssumptionsEditor';
 import { cellKeyOf } from './useBaselineAssumptionsEditor';
 
 /** Który harmonogram zasila które linie wyliczeń — port `DRIVING_SCHEDULE_TYPE` (baselineComputeService.ts:132-140), odwrócony do „podgląd wpływu". */
@@ -102,8 +104,26 @@ export interface AssumptionsViewProps {
   readOnly?: boolean;
 }
 
-export function AssumptionsView({ editor, rowOrder, periodLabelById, readOnly = false }: AssumptionsViewProps): React.ReactElement {
-  const { cells, setCellValue, resetCellToServer, undo, redo, canUndo, canRedo, dirtyCount, preflightWarnings, saving, save, saveError } = editor;
+export function AssumptionsView({
+  editor,
+  rowOrder,
+  periodLabelById,
+  readOnly = false,
+}: AssumptionsViewProps): React.ReactElement {
+  const {
+    cells,
+    setCellValue,
+    resetCellToServer,
+    undo,
+    redo,
+    canUndo,
+    canRedo,
+    dirtyCount,
+    preflightWarnings,
+    saving,
+    save,
+    saveError,
+  } = editor;
   const [confirmingDespiteWarnings, setConfirmingDespiteWarnings] = useState(false);
 
   // ★ NAPRAWA a11y (Pakiet I): dialog potwierdzenia zapisu mimo ostrzeżeń
@@ -139,14 +159,20 @@ export function AssumptionsView({ editor, rowOrder, periodLabelById, readOnly = 
         .map((line) => line.split('\t')[0]?.trim())
         .filter((v) => v !== undefined && v !== '');
       if (values.length === 0) return;
-      const entries: Array<{ key: AssumptionCellKey; patch: { valueDecimal: number | null; valueStatus: 'PRESENT_NONZERO' | 'PRESENT_ZERO' } }> = [];
+      const entries: Array<{
+        key: AssumptionCellKey;
+        patch: { valueDecimal: number | null; valueStatus: 'PRESENT_NONZERO' | 'PRESENT_ZERO' };
+      }> = [];
       for (let i = 0; i < values.length && startIndex + i < rowOrder.length; i++) {
         const spec = rowOrder[startIndex + i];
         const parsed = Number(values[i].replace(',', '.').replace('%', ''));
         if (Number.isNaN(parsed)) continue;
         entries.push({
           key: spec,
-          patch: { valueDecimal: parsed, valueStatus: parsed === 0 ? 'PRESENT_ZERO' : 'PRESENT_NONZERO' },
+          patch: {
+            valueDecimal: parsed,
+            valueStatus: parsed === 0 ? 'PRESENT_ZERO' : 'PRESENT_NONZERO',
+          },
         });
       }
       if (entries.length > 0) editor.pasteBatch(entries);
@@ -155,14 +181,20 @@ export function AssumptionsView({ editor, rowOrder, periodLabelById, readOnly = 
   );
 
   return (
-    <div className="flex h-full w-full flex-col overflow-hidden" data-testid="baseline-assumptions-view">
+    <div
+      className="flex h-full w-full flex-col overflow-hidden"
+      data-testid="baseline-assumptions-view"
+    >
       <div className="flex items-center justify-between gap-3 border-b border-c-border-subtle px-4 py-2">
         <div className="flex items-center gap-2 text-xs text-c-text-muted">
           <span data-testid="baseline-assumptions-dirty-count">
             {dirtyCount > 0 ? `${dirtyCount} niezapisanych zmian` : 'Brak niezapisanych zmian'}
           </span>
           {preflightWarnings.length > 0 && (
-            <span className="rounded-full bg-c-warning/10 px-2 py-0.5 font-medium text-c-warning" data-testid="baseline-preflight-warning-count">
+            <span
+              className="rounded-full bg-c-warning/10 px-2 py-0.5 font-medium text-c-warning"
+              data-testid="baseline-preflight-warning-count"
+            >
               {preflightWarnings.length} do sprawdzenia przed zatwierdzeniem
             </span>
           )}
@@ -198,12 +230,19 @@ export function AssumptionsView({ editor, rowOrder, periodLabelById, readOnly = 
         </div>
       </div>
       {saveError && (
-        <p role="alert" className="border-b border-c-border-subtle bg-c-danger/5 px-4 py-1.5 text-xs text-c-danger">
+        <p
+          role="alert"
+          className="border-b border-c-border-subtle bg-c-danger/5 px-4 py-1.5 text-xs text-c-danger"
+        >
           Nie udało się zapisać: {saveError}
         </p>
       )}
       {confirmingDespiteWarnings && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4" role="presentation" onMouseDown={() => setConfirmingDespiteWarnings(false)}>
+        <div
+          className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4"
+          role="presentation"
+          onMouseDown={() => setConfirmingDespiteWarnings(false)}
+        >
           <div
             ref={confirmDialogContainerRef}
             role="alertdialog"
@@ -215,8 +254,10 @@ export function AssumptionsView({ editor, rowOrder, periodLabelById, readOnly = 
           >
             <p className="text-sm font-semibold text-c-text">Zestaw założeń ma ostrzeżenia</p>
             <p className="mt-1 text-sm text-c-text-secondary">
-              {preflightWarnings.length} {preflightWarnings.length === 1 ? 'komórka wymaga' : 'komórek wymaga'} uwagi (brak danych lub
-              wartość poza bezpiecznym zakresem). Możesz zapisać mimo to — wyliczenia będą to odzwierciedlać.
+              {preflightWarnings.length}{' '}
+              {preflightWarnings.length === 1 ? 'komórka wymaga' : 'komórek wymaga'} uwagi (brak
+              danych lub wartość poza bezpiecznym zakresem). Możesz zapisać mimo to — wyliczenia
+              będą to odzwierciedlać.
             </p>
             <div className="mt-4 flex justify-end gap-2">
               <button
@@ -243,12 +284,19 @@ export function AssumptionsView({ editor, rowOrder, periodLabelById, readOnly = 
       )}
       {/* `pb-16`: patrz uzasadnienie w `CalculationsView.tsx` (punkt 1 orkiestratora) — ostatni wiersz nie chowa się pod pływającą kontrolką w rogu przy przewinięciu do końca. */}
       <div className="flex-1 overflow-auto pb-16">
+        {/* prettier-ignore */}
         <table /* §27-exempt: archetyp Excel — grid komórek edytowalnych (reguła/wartość/zakres) z formułami silnika, nie lista rekordów encji (docs/ui-standards/DOKTRYNA_TABELA_NIE_EXCEL.md #2) */ className="w-full min-w-[1200px] border-collapse text-sm" role="table" data-testid="baseline-assumptions-table">
           <thead className="sticky top-0 z-10 bg-c-surface-raised text-[11px] font-semibold uppercase tracking-wide text-c-text-muted">
             <tr>
-              <th className="px-3 py-2 text-left" style={{ minWidth: 220 }}>Założenie</th>
-              <th className="px-3 py-2 text-right" style={{ minWidth: 110 }}>Wart. historyczna</th>
-              <th className="px-3 py-2 text-left" style={{ minWidth: 90 }}>Okres bazowy</th>
+              <th className="px-3 py-2 text-left" style={{ minWidth: 220 }}>
+                Założenie
+              </th>
+              <th className="px-3 py-2 text-right" style={{ minWidth: 110 }}>
+                Wart. historyczna
+              </th>
+              <th className="px-3 py-2 text-left" style={{ minWidth: 90 }}>
+                Okres bazowy
+              </th>
               {/*
                 ★ NAPRAWA punktu 4 orkiestratora: „Reguła kalibracji" (najdłuższa
                 etykieta „Powiązane z KPI analizy" ~23 znaki) i „Jakość"
@@ -258,13 +306,27 @@ export function AssumptionsView({ editor, rowOrder, periodLabelById, readOnly = 
                 zmierzone pod realne etykiety z `baselineLabels.ts`
                 (`BASELINE_RULE_LABELS`/opcje jakości), nie zgadywane.
               */}
-              <th className="px-3 py-2 text-left" style={{ minWidth: 210 }}>Reguła kalibracji</th>
-              <th className="px-3 py-2 text-left" style={{ minWidth: 170 }}>Źródło</th>
-              <th className="px-3 py-2 text-right" style={{ minWidth: 140 }}>Wartość prognozy</th>
-              <th className="px-3 py-2 text-left" style={{ minWidth: 180 }}>Bezpieczny zakres</th>
-              <th className="px-3 py-2 text-left" style={{ minWidth: 140 }}>Jakość</th>
-              <th className="px-3 py-2 text-left" style={{ minWidth: 140 }}>Podgląd wpływu</th>
-              <th className="px-3 py-2 text-center" style={{ minWidth: 90 }}>Akcje</th>
+              <th className="px-3 py-2 text-left" style={{ minWidth: 210 }}>
+                Reguła kalibracji
+              </th>
+              <th className="px-3 py-2 text-left" style={{ minWidth: 170 }}>
+                Źródło
+              </th>
+              <th className="px-3 py-2 text-right" style={{ minWidth: 140 }}>
+                Wartość prognozy
+              </th>
+              <th className="px-3 py-2 text-left" style={{ minWidth: 180 }}>
+                Bezpieczny zakres
+              </th>
+              <th className="px-3 py-2 text-left" style={{ minWidth: 140 }}>
+                Jakość
+              </th>
+              <th className="px-3 py-2 text-left" style={{ minWidth: 140 }}>
+                Podgląd wpływu
+              </th>
+              <th className="px-3 py-2 text-center" style={{ minWidth: 90 }}>
+                Akcje
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -273,8 +335,16 @@ export function AssumptionsView({ editor, rowOrder, periodLabelById, readOnly = 
               const cell = cells.get(key);
               const server = cell?.server ?? null;
               const historical = historicalValueOf(server);
-              const historicalDisplay = historical ? formatFinanceValueForDisplay(historical) : { text: '—', isMissingLikeGlyph: true };
-              const valueDisplay = formatFinanceValueForDisplay({ status: cell?.valueStatus ?? 'MISSING', valueDecimal: cell?.valueDecimal !== null && cell?.valueDecimal !== undefined ? String(cell.valueDecimal) : null });
+              const historicalDisplay = historical
+                ? formatFinanceValueForDisplay(historical)
+                : { text: '—', isMissingLikeGlyph: true };
+              const valueDisplay = formatFinanceValueForDisplay({
+                status: cell?.valueStatus ?? 'MISSING',
+                valueDecimal:
+                  cell?.valueDecimal !== null && cell?.valueDecimal !== undefined
+                    ? String(cell.valueDecimal)
+                    : null,
+              });
               const control = controlKindForUnit(cell?.unit ?? 'PCT');
               const warning = preflightByKey.get(key);
               const feeds = SCHEDULE_FEEDS_LINES[spec.scheduleType] ?? [];
@@ -287,12 +357,18 @@ export function AssumptionsView({ editor, rowOrder, periodLabelById, readOnly = 
                 >
                   <td className="px-3 py-2">
                     <div className="font-medium text-c-text">{driverLabel(spec.driverCode)}</div>
-                    <div className="text-xs text-c-text-muted">{BASELINE_SCHEDULE_TYPE_LABELS[spec.scheduleType]}</div>
+                    <div className="text-xs text-c-text-muted">
+                      {BASELINE_SCHEDULE_TYPE_LABELS[spec.scheduleType]}
+                    </div>
                   </td>
-                  <td className={`px-3 py-2 text-right tabular-nums ${historicalDisplay.isMissingLikeGlyph ? 'text-c-text-muted' : 'text-c-text'}`}>
+                  <td
+                    className={`px-3 py-2 text-right tabular-nums ${historicalDisplay.isMissingLikeGlyph ? 'text-c-text-muted' : 'text-c-text'}`}
+                  >
                     {historicalDisplay.text}
                   </td>
-                  <td className="px-3 py-2 text-xs text-c-text-secondary">{periodLabelOf(server?.basePeriodId ?? spec.periodId, periodLabelById)}</td>
+                  <td className="px-3 py-2 text-xs text-c-text-secondary">
+                    {periodLabelOf(server?.basePeriodId ?? spec.periodId, periodLabelById)}
+                  </td>
                   <td className="px-3 py-2">
                     {/* ★ NAPRAWA a11y (Pakiet I, wymaganie #5): `<select>` bez
                         nazwy (axe: "select-name" critical, 18 wystąpień w tym
@@ -302,7 +378,9 @@ export function AssumptionsView({ editor, rowOrder, periodLabelById, readOnly = 
                       aria-label={`Reguła kalibracji — ${driverLabel(spec.driverCode)}`}
                       disabled={readOnly}
                       value={cell?.rule ?? 'MANUAL_OVERRIDE'}
-                      onChange={(e) => setCellValue(spec, { rule: e.target.value as BaselineAssumptionRule })}
+                      onChange={(e) =>
+                        setCellValue(spec, { rule: e.target.value as BaselineAssumptionRule })
+                      }
                       className="w-full rounded-md border border-c-border-subtle bg-c-bg px-2 py-1 text-xs text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                       data-testid={`baseline-assumption-rule-${index}`}
                     >
@@ -313,7 +391,9 @@ export function AssumptionsView({ editor, rowOrder, periodLabelById, readOnly = 
                       ))}
                     </select>
                   </td>
-                  <td className="px-3 py-2 text-xs text-c-text-secondary">{sourceLabelOf(server)}</td>
+                  <td className="px-3 py-2 text-xs text-c-text-secondary">
+                    {sourceLabelOf(server)}
+                  </td>
                   <td className="px-3 py-2 text-right">
                     {control === 'percent-stepper' ? (
                       <div className="flex items-center justify-end gap-1">
@@ -325,7 +405,12 @@ export function AssumptionsView({ editor, rowOrder, periodLabelById, readOnly = 
                           onChange={(e) =>
                             setCellValue(spec, {
                               valueDecimal: e.target.value === '' ? null : Number(e.target.value),
-                              valueStatus: e.target.value === '' ? 'MISSING' : Number(e.target.value) === 0 ? 'PRESENT_ZERO' : 'PRESENT_NONZERO',
+                              valueStatus:
+                                e.target.value === ''
+                                  ? 'MISSING'
+                                  : Number(e.target.value) === 0
+                                    ? 'PRESENT_ZERO'
+                                    : 'PRESENT_NONZERO',
                             })
                           }
                           onPaste={(e) => {
@@ -351,7 +436,12 @@ export function AssumptionsView({ editor, rowOrder, periodLabelById, readOnly = 
                           onChange={(e) =>
                             setCellValue(spec, {
                               valueDecimal: e.target.value === '' ? null : Number(e.target.value),
-                              valueStatus: e.target.value === '' ? 'MISSING' : Number(e.target.value) === 0 ? 'PRESENT_ZERO' : 'PRESENT_NONZERO',
+                              valueStatus:
+                                e.target.value === ''
+                                  ? 'MISSING'
+                                  : Number(e.target.value) === 0
+                                    ? 'PRESENT_ZERO'
+                                    : 'PRESENT_NONZERO',
                             })
                           }
                           onPaste={(e) => {
@@ -365,12 +455,17 @@ export function AssumptionsView({ editor, rowOrder, periodLabelById, readOnly = 
                           data-testid={`baseline-assumption-value-${index}`}
                           aria-label={`Wartość prognozy — ${driverLabel(spec.driverCode)}`}
                         />
-                        <span className="text-[10px] text-c-text-muted">{cell?.unit === 'DAYS' ? 'dni' : cell?.unit === 'MONTHS' ? 'mies.' : ''}</span>
+                        <span className="text-[10px] text-c-text-muted">
+                          {cell?.unit === 'DAYS' ? 'dni' : cell?.unit === 'MONTHS' ? 'mies.' : ''}
+                        </span>
                       </div>
                     )}
                   </td>
                   <td className="px-3 py-2">
-                    {cell?.rangeLow !== null && cell?.rangeHigh !== null && cell?.rangeLow !== undefined && cell?.rangeHigh !== undefined ? (
+                    {cell?.rangeLow !== null &&
+                    cell?.rangeHigh !== null &&
+                    cell?.rangeLow !== undefined &&
+                    cell?.rangeHigh !== undefined ? (
                       <div className="flex items-center gap-1 text-xs text-c-text-secondary">
                         {/* ★ NAPRAWA a11y (Pakiet I, wymaganie #5): pola zakresu
                             bez aria-label (axe: "label" critical). */}
@@ -388,7 +483,9 @@ export function AssumptionsView({ editor, rowOrder, periodLabelById, readOnly = 
                           type="number"
                           disabled={readOnly}
                           value={roundForRangeDisplay(cell.rangeHigh)}
-                          onChange={(e) => setCellValue(spec, { rangeHigh: Number(e.target.value) })}
+                          onChange={(e) =>
+                            setCellValue(spec, { rangeHigh: Number(e.target.value) })
+                          }
                           className="w-20 rounded-md border border-c-border-subtle bg-c-bg px-1.5 py-1 text-right tabular-nums focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                           data-testid={`baseline-assumption-range-high-${index}`}
                           aria-label={`Bezpieczny zakres — górna granica — ${driverLabel(spec.driverCode)}`}
@@ -398,7 +495,10 @@ export function AssumptionsView({ editor, rowOrder, periodLabelById, readOnly = 
                       <span className="text-xs text-c-text-muted">Bez limitu</span>
                     )}
                     {cell?.outOfSafeRange && (
-                      <p className="mt-0.5 text-[10px] font-medium text-c-danger" data-testid={`baseline-assumption-outofrange-${index}`}>
+                      <p
+                        className="mt-0.5 text-[10px] font-medium text-c-danger"
+                        data-testid={`baseline-assumption-outofrange-${index}`}
+                      >
                         Poza bezpiecznym zakresem
                       </p>
                     )}
@@ -408,7 +508,9 @@ export function AssumptionsView({ editor, rowOrder, periodLabelById, readOnly = 
                       aria-label={`Jakość — ${driverLabel(spec.driverCode)}`}
                       disabled={readOnly}
                       value={cell?.quality ?? 'ESTIMATED'}
-                      onChange={(e) => setCellValue(spec, { quality: e.target.value as BaselineAssumptionQuality })}
+                      onChange={(e) =>
+                        setCellValue(spec, { quality: e.target.value as BaselineAssumptionQuality })
+                      }
                       className="w-full rounded-md border border-c-border-subtle bg-c-bg px-2 py-1 text-xs text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                       data-testid={`baseline-assumption-quality-${index}`}
                     >
@@ -417,7 +519,9 @@ export function AssumptionsView({ editor, rowOrder, periodLabelById, readOnly = 
                       <option value="DEGRADED_INSUFFICIENT_HISTORY">Ograniczona</option>
                     </select>
                   </td>
-                  <td className="px-3 py-2 text-xs text-c-text-muted">{feeds.length > 0 ? `Zasila: ${feeds.join(', ')}` : '—'}</td>
+                  <td className="px-3 py-2 text-xs text-c-text-muted">
+                    {feeds.length > 0 ? `Zasila: ${feeds.join(', ')}` : '—'}
+                  </td>
                   <td className="px-3 py-2 text-center">
                     <button
                       type="button"

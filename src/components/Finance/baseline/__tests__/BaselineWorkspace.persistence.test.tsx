@@ -17,7 +17,10 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { clearFeatureFlagOverrides, setFeatureFlagOverrides } from '@/test-utils/featureFlagOverrides';
+import {
+  clearFeatureFlagOverrides,
+  setFeatureFlagOverrides,
+} from '@/test-utils/featureFlagOverrides';
 
 const apiMocks = vi.hoisted(() => ({
   approveFinanceModel: vi.fn(),
@@ -34,7 +37,9 @@ vi.mock('@/services/api/financeV2.api', () => apiMocks);
 import { BaselineWorkspace, type BaselineWorkspaceProps } from '../../BaselineWorkspace';
 import type { PeriodMeta } from '../CalculationsView';
 
-const FORECAST_PERIODS: PeriodMeta[] = [{ periodId: 'per-2026-01', label: '01/2026', yearMonth: '2026-01' }];
+const FORECAST_PERIODS: PeriodMeta[] = [
+  { periodId: 'per-2026-01', label: '01/2026', yearMonth: '2026-01' },
+];
 
 function baseProps(overrides: Partial<BaselineWorkspaceProps> = {}): BaselineWorkspaceProps {
   return {
@@ -63,10 +68,15 @@ afterEach(() => {
 describe('BaselineWorkspace — persistence + cold reopen (AP_MOUNT §6)', () => {
   it('a committed rename is sent to the real API, and a cold-reopened instance shows the persisted name', async () => {
     setFeatureFlagOverrides({ financeBaselineWorkspaceV1: true });
-    apiMocks.renameFinanceArtifact.mockResolvedValue({ artifactId: 'artifact-1', naturalKey: 'Model bazowy — PO zmianie' });
+    apiMocks.renameFinanceArtifact.mockResolvedValue({
+      artifactId: 'artifact-1',
+      naturalKey: 'Model bazowy — PO zmianie',
+    });
 
     const { unmount } = render(<BaselineWorkspace {...baseProps()} />);
-    expect(screen.getByTestId('finance-workspace-bar-name')).toHaveTextContent('Model bazowy — przed zmianą');
+    expect(screen.getByTestId('finance-workspace-bar-name')).toHaveTextContent(
+      'Model bazowy — przed zmianą'
+    );
 
     // Real user action: click the name, edit it, commit.
     fireEvent.click(screen.getByTestId('finance-workspace-bar-name'));
@@ -76,7 +86,10 @@ describe('BaselineWorkspace — persistence + cold reopen (AP_MOUNT §6)', () =>
 
     // The REAL API function was called with the REAL new value.
     await waitFor(() =>
-      expect(apiMocks.renameFinanceArtifact).toHaveBeenCalledWith('artifact-1', 'Model bazowy — PO zmianie')
+      expect(apiMocks.renameFinanceArtifact).toHaveBeenCalledWith(
+        'artifact-1',
+        'Model bazowy — PO zmianie'
+      )
     );
 
     // Cold reopen: unmount (no client state survives), remount as a FRESH
@@ -86,7 +99,9 @@ describe('BaselineWorkspace — persistence + cold reopen (AP_MOUNT §6)', () =>
     // simulates the caller re-fetching and passing the persisted value).
     unmount();
     render(<BaselineWorkspace {...baseProps({ name: 'Model bazowy — PO zmianie' })} />);
-    expect(screen.getByTestId('finance-workspace-bar-name')).toHaveTextContent('Model bazowy — PO zmianie');
+    expect(screen.getByTestId('finance-workspace-bar-name')).toHaveTextContent(
+      'Model bazowy — PO zmianie'
+    );
     expect(screen.queryByText('Model bazowy — przed zmianą')).not.toBeInTheDocument();
   });
 });

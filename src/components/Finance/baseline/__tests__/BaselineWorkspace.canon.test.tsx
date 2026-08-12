@@ -20,7 +20,10 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { clearFeatureFlagOverrides, setFeatureFlagOverrides } from '@/test-utils/featureFlagOverrides';
+import {
+  clearFeatureFlagOverrides,
+  setFeatureFlagOverrides,
+} from '@/test-utils/featureFlagOverrides';
 
 vi.mock('@/services/api/financeV2.api', () => ({
   approveFinanceModel: vi.fn(),
@@ -43,7 +46,12 @@ const FORECAST_PERIODS: PeriodMeta[] = [
 ];
 
 const ASSUMPTION_ROW_ORDER: AssumptionRowSpec[] = [
-  { scheduleType: 'revenue_pvm', driverCode: 'REVENUE_GROWTH_YOY', entityId: 'ent-1', periodId: 'per-2026-01' },
+  {
+    scheduleType: 'revenue_pvm',
+    driverCode: 'REVENUE_GROWTH_YOY',
+    entityId: 'ent-1',
+    periodId: 'per-2026-01',
+  },
 ];
 
 function baseProps(overrides: Partial<BaselineWorkspaceProps> = {}): BaselineWorkspaceProps {
@@ -84,7 +92,10 @@ describe('BaselineWorkspace — V-1/V-2/V-3/V-6 (dowód programowy)', () => {
     const tabs = within(tablist).getAllByRole('tab');
     expect(tabs).toHaveLength(2);
     expect(tabs.map((t) => t.textContent)).toEqual(
-      expect.arrayContaining([expect.stringContaining('Założenia'), expect.stringContaining('Wyliczenia')])
+      expect.arrayContaining([
+        expect.stringContaining('Założenia'),
+        expect.stringContaining('Wyliczenia'),
+      ])
     );
   });
 
@@ -125,7 +136,9 @@ describe('BaselineWorkspace — V-1/V-2/V-3/V-6 (dowód programowy)', () => {
   it('Za mount wczytuje realne założenia z API (dowód naprawy: editor.reload() był NIGDY wołany na mount przed poprawką tego pakietu)', async () => {
     const { listBaselineAssumptions } = await import('@/services/api/financeV2.api');
     render(<BaselineWorkspace {...baseProps()} />);
-    await waitFor(() => expect(listBaselineAssumptions).toHaveBeenCalledWith('bv-1', { entityId: 'ent-1' }));
+    await waitFor(() =>
+      expect(listBaselineAssumptions).toHaveBeenCalledWith('bv-1', { entityId: 'ent-1' })
+    );
   });
 
   it('KONTROLA NEGATYWNA (wykonana realnie, nie tylko opisana): dopisanie trzeciego widoku ("Zdarzenia") do configu zaczerwieniło ten i dwa inne testy — patrz raport §3', async () => {

@@ -20,7 +20,11 @@ vi.mock('@/services/api/financeV2.api', () => ({
   listBaselineOutputs: vi.fn(),
 }));
 
-import { listBaselineAssumptions, listBaselineOutputs, upsertBaselineAssumptions } from '@/services/api/financeV2.api';
+import {
+  listBaselineAssumptions,
+  listBaselineOutputs,
+  upsertBaselineAssumptions,
+} from '@/services/api/financeV2.api';
 
 import { useBaselineAssumptionsEditor } from '../useBaselineAssumptionsEditor';
 import { useBaselineOutputs } from '../useBaselineOutputs';
@@ -39,7 +43,9 @@ afterEach(() => {
 describe('useBaselineAssumptionsEditor — honest PL error message (ID_BRIDGE, Gate E)', () => {
   it('reload() failure surfaces a Polish honest message, NEVER the raw Error.message', async () => {
     mockedListAssumptions.mockRejectedValue(new Error(RAW_UGLY_MESSAGE));
-    const { result } = renderHook(() => useBaselineAssumptionsEditor('bv-1', { entityId: 'ent-1' }));
+    const { result } = renderHook(() =>
+      useBaselineAssumptionsEditor('bv-1', { entityId: 'ent-1' })
+    );
 
     await waitFor(() => expect(result.current.loading).toBe(false));
 
@@ -51,13 +57,25 @@ describe('useBaselineAssumptionsEditor — honest PL error message (ID_BRIDGE, G
   it('save() failure surfaces a Polish honest message, NEVER the raw Error.message', async () => {
     mockedListAssumptions.mockResolvedValue([]);
     mockedUpsertAssumptions.mockRejectedValue(new Error(RAW_UGLY_MESSAGE));
-    const { result } = renderHook(() => useBaselineAssumptionsEditor('bv-1', { entityId: 'ent-1' }));
+    const { result } = renderHook(() =>
+      useBaselineAssumptionsEditor('bv-1', { entityId: 'ent-1' })
+    );
     await waitFor(() => expect(result.current.loading).toBe(false));
 
     act(() => {
       result.current.setCellValue(
-        { scheduleType: 'revenue_pvm', driverCode: 'REVENUE_GROWTH_YOY', entityId: 'ent-1', periodId: 'p-1' },
-        { rule: 'FIXED_VALUE', valueStatus: 'PRESENT_NONZERO', valueDecimal: 0.1, quality: 'CONFIRMED' }
+        {
+          scheduleType: 'revenue_pvm',
+          driverCode: 'REVENUE_GROWTH_YOY',
+          entityId: 'ent-1',
+          periodId: 'p-1',
+        },
+        {
+          rule: 'FIXED_VALUE',
+          valueStatus: 'PRESENT_NONZERO',
+          valueDecimal: 0.1,
+          quality: 'CONFIRMED',
+        }
       );
     });
 
@@ -67,7 +85,9 @@ describe('useBaselineAssumptionsEditor — honest PL error message (ID_BRIDGE, G
     });
 
     expect(saveResult?.ok).toBe(false);
-    expect(saveResult && 'message' in saveResult ? saveResult.message : undefined).not.toBe(RAW_UGLY_MESSAGE);
+    expect(saveResult && 'message' in saveResult ? saveResult.message : undefined).not.toBe(
+      RAW_UGLY_MESSAGE
+    );
     expect(result.current.saveError).toBe('Spróbuj ponownie za chwilę.');
   });
 });

@@ -64,8 +64,12 @@ const SAMPLE_CHECKLIST_ITEM = {
 
 function mockLoadOnce(overrides: { comments?: any[]; checklist?: any[]; blocking?: boolean } = {}) {
   mockListFinanceComments.mockResolvedValueOnce(overrides.comments ?? [SAMPLE_COMMENT]);
-  mockListFinanceReviewChecklist.mockResolvedValueOnce(overrides.checklist ?? [SAMPLE_CHECKLIST_ITEM]);
-  mockHasUnresolvedBlocking.mockResolvedValueOnce({ hasUnresolvedBlockingComments: overrides.blocking ?? true });
+  mockListFinanceReviewChecklist.mockResolvedValueOnce(
+    overrides.checklist ?? [SAMPLE_CHECKLIST_ITEM]
+  );
+  mockHasUnresolvedBlocking.mockResolvedValueOnce({
+    hasUnresolvedBlockingComments: overrides.blocking ?? true,
+  });
 }
 
 beforeEach(() => {
@@ -91,7 +95,9 @@ afterEach(() => {
 
 describe('FinanceCommentsPanel', () => {
   it('flaga domyślnie OFF → renderuje null, ZERO wywołań listFinanceComments', () => {
-    const { container } = render(<FinanceCommentsPanel artifactId="art-1" businessVersionId="bv-1" />);
+    const { container } = render(
+      <FinanceCommentsPanel artifactId="art-1" businessVersionId="bv-1" />
+    );
     expect(container.firstChild).toBeNull();
     expect(mockListFinanceComments).not.toHaveBeenCalled();
     expect(mockListFinanceReviewChecklist).not.toHaveBeenCalled();
@@ -99,7 +105,10 @@ describe('FinanceCommentsPanel', () => {
   });
 
   it('flaga ON → ładuje komentarze + checklist + banner blokujący', async () => {
-    window.localStorage.setItem('consultify_feature_flags', JSON.stringify({ financeCommentsV1: true }));
+    window.localStorage.setItem(
+      'consultify_feature_flags',
+      JSON.stringify({ financeCommentsV1: true })
+    );
     mockLoadOnce();
     render(<FinanceCommentsPanel artifactId="art-1" businessVersionId="bv-1" />);
 
@@ -114,13 +123,20 @@ describe('FinanceCommentsPanel', () => {
   });
 
   it('dodanie komentarza woła createFinanceComment z body/isBlocking/mentions i odświeża listę', async () => {
-    window.localStorage.setItem('consultify_feature_flags', JSON.stringify({ financeCommentsV1: true }));
+    window.localStorage.setItem(
+      'consultify_feature_flags',
+      JSON.stringify({ financeCommentsV1: true })
+    );
     mockLoadOnce({ comments: [] });
     render(<FinanceCommentsPanel artifactId="art-1" businessVersionId="bv-1" />);
     await waitFor(() => expect(screen.getByTestId('finance-comments-panel')).toBeInTheDocument());
 
-    fireEvent.change(screen.getByTestId('comment-composer-body'), { target: { value: 'Nowy komentarz' } });
-    fireEvent.change(screen.getByTestId('comment-composer-mentions'), { target: { value: 'u-5, u-6' } });
+    fireEvent.change(screen.getByTestId('comment-composer-body'), {
+      target: { value: 'Nowy komentarz' },
+    });
+    fireEvent.change(screen.getByTestId('comment-composer-mentions'), {
+      target: { value: 'u-5, u-6' },
+    });
     fireEvent.click(screen.getByTestId('comment-composer-blocking'));
 
     mockCreateFinanceComment.mockResolvedValueOnce(SAMPLE_COMMENT);
@@ -139,7 +155,10 @@ describe('FinanceCommentsPanel', () => {
   });
 
   it('resolve/reopen wołają właściwy endpoint po commentId', async () => {
-    window.localStorage.setItem('consultify_feature_flags', JSON.stringify({ financeCommentsV1: true }));
+    window.localStorage.setItem(
+      'consultify_feature_flags',
+      JSON.stringify({ financeCommentsV1: true })
+    );
     mockLoadOnce();
     render(<FinanceCommentsPanel artifactId="art-1" businessVersionId="bv-1" />);
     await waitFor(() => expect(screen.getByTestId('finance-comments-panel')).toBeInTheDocument());
@@ -157,7 +176,10 @@ describe('FinanceCommentsPanel', () => {
   });
 
   it('KONTROLA NEGATYWNA: błąd 404 przy ładowaniu → honest-UI komunikat, nie surowy kod', async () => {
-    window.localStorage.setItem('consultify_feature_flags', JSON.stringify({ financeCommentsV1: true }));
+    window.localStorage.setItem(
+      'consultify_feature_flags',
+      JSON.stringify({ financeCommentsV1: true })
+    );
     const err = new Error('not found') as Error & { status?: number; data?: unknown };
     err.status = 404;
     err.data = { code: 'NOT_FOUND' };

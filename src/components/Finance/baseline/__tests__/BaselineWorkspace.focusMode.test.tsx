@@ -9,7 +9,10 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { clearFeatureFlagOverrides, setFeatureFlagOverrides } from '@/test-utils/featureFlagOverrides';
+import {
+  clearFeatureFlagOverrides,
+  setFeatureFlagOverrides,
+} from '@/test-utils/featureFlagOverrides';
 
 const apiMocks = vi.hoisted(() => ({
   approveFinanceModel: vi.fn(),
@@ -26,7 +29,9 @@ vi.mock('@/services/api/financeV2.api', () => apiMocks);
 import { BaselineWorkspace, type BaselineWorkspaceProps } from '../../BaselineWorkspace';
 import type { PeriodMeta } from '../CalculationsView';
 
-const FORECAST_PERIODS: PeriodMeta[] = [{ periodId: 'per-2026-01', label: '01/2026', yearMonth: '2026-01' }];
+const FORECAST_PERIODS: PeriodMeta[] = [
+  { periodId: 'per-2026-01', label: '01/2026', yearMonth: '2026-01' },
+];
 
 function baseProps(overrides: Partial<BaselineWorkspaceProps> = {}): BaselineWorkspaceProps {
   return {
@@ -59,24 +64,40 @@ describe('BaselineWorkspace — Focus Mode no-refetch (AP_MOUNT §E)', () => {
 
     await waitFor(() => expect(apiMocks.listBaselineOutputs).toHaveBeenCalledTimes(1));
     const callCountBefore =
-      apiMocks.listBaselineAssumptions.mock.calls.length + apiMocks.listBaselineOutputs.mock.calls.length;
+      apiMocks.listBaselineAssumptions.mock.calls.length +
+      apiMocks.listBaselineOutputs.mock.calls.length;
 
-    expect(screen.getByTestId('baseline-workspace')).toHaveAttribute('data-active-view', 'wyliczenia');
+    expect(screen.getByTestId('baseline-workspace')).toHaveAttribute(
+      'data-active-view',
+      'wyliczenia'
+    );
 
     fireEvent.click(screen.getByTestId('finance-workspace-bar-fullscreen'));
-    await waitFor(() => expect(document.body.classList.contains('finance-focus-mode-active')).toBe(true));
+    await waitFor(() =>
+      expect(document.body.classList.contains('finance-focus-mode-active')).toBe(true)
+    );
 
     const callCountAfterEnter =
-      apiMocks.listBaselineAssumptions.mock.calls.length + apiMocks.listBaselineOutputs.mock.calls.length;
+      apiMocks.listBaselineAssumptions.mock.calls.length +
+      apiMocks.listBaselineOutputs.mock.calls.length;
     expect(callCountAfterEnter).toBe(callCountBefore);
-    expect(screen.getByTestId('baseline-workspace')).toHaveAttribute('data-active-view', 'wyliczenia');
+    expect(screen.getByTestId('baseline-workspace')).toHaveAttribute(
+      'data-active-view',
+      'wyliczenia'
+    );
 
     fireEvent.keyDown(document, { key: 'Escape' });
-    await waitFor(() => expect(document.body.classList.contains('finance-focus-mode-active')).toBe(false));
+    await waitFor(() =>
+      expect(document.body.classList.contains('finance-focus-mode-active')).toBe(false)
+    );
 
     const callCountAfterExit =
-      apiMocks.listBaselineAssumptions.mock.calls.length + apiMocks.listBaselineOutputs.mock.calls.length;
+      apiMocks.listBaselineAssumptions.mock.calls.length +
+      apiMocks.listBaselineOutputs.mock.calls.length;
     expect(callCountAfterExit).toBe(callCountBefore);
-    expect(screen.getByTestId('baseline-workspace')).toHaveAttribute('data-active-view', 'wyliczenia');
+    expect(screen.getByTestId('baseline-workspace')).toHaveAttribute(
+      'data-active-view',
+      'wyliczenia'
+    );
   });
 });

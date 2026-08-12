@@ -5,7 +5,7 @@
 import { useCallback, useEffect, useState } from 'react';
 
 import { listBaselineOutputs, type ListBaselineOutputsParams } from '@/services/api/financeV2.api';
-import { describeFinanceV2Error, type BaselineOutputDto } from '@/services/api/financeV2.types';
+import { type BaselineOutputDto, describeFinanceV2Error } from '@/services/api/financeV2.types';
 
 export interface UseBaselineOutputsResult {
   outputs: BaselineOutputDto[];

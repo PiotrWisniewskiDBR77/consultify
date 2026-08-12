@@ -17,7 +17,10 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { clearFeatureFlagOverrides, setFeatureFlagOverrides } from '@/test-utils/featureFlagOverrides';
+import {
+  clearFeatureFlagOverrides,
+  setFeatureFlagOverrides,
+} from '@/test-utils/featureFlagOverrides';
 
 // jsdom never computes layout, so `offsetParent` is always null — the
 // `useDialogA11y` focus-trap uses it to skip hidden elements. Stub it (same
@@ -47,9 +50,16 @@ import { BaselineWorkspace, type BaselineWorkspaceProps } from '../../BaselineWo
 import type { AssumptionRowSpec } from '../AssumptionsView';
 import type { PeriodMeta } from '../CalculationsView';
 
-const FORECAST_PERIODS: PeriodMeta[] = [{ periodId: 'per-2026-01', label: '01/2026', yearMonth: '2026-01' }];
+const FORECAST_PERIODS: PeriodMeta[] = [
+  { periodId: 'per-2026-01', label: '01/2026', yearMonth: '2026-01' },
+];
 const ASSUMPTION_ROW_ORDER: AssumptionRowSpec[] = [
-  { scheduleType: 'revenue_pvm', driverCode: 'REVENUE_GROWTH_YOY', entityId: 'ent-1', periodId: 'per-2026-01' },
+  {
+    scheduleType: 'revenue_pvm',
+    driverCode: 'REVENUE_GROWTH_YOY',
+    entityId: 'ent-1',
+    periodId: 'per-2026-01',
+  },
 ];
 
 function baseProps(overrides: Partial<BaselineWorkspaceProps> = {}): BaselineWorkspaceProps {
@@ -104,7 +114,9 @@ describe('BaselineWorkspace — dialog „Podaj powód" (a11y, Pakiet I)', () =>
 
     fireEvent.keyDown(document, { key: 'Escape' });
 
-    await waitFor(() => expect(screen.queryByTestId('baseline-reason-dialog')).not.toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.queryByTestId('baseline-reason-dialog')).not.toBeInTheDocument()
+    );
     await waitFor(() => expect(lifecycleTrigger).toHaveFocus());
   });
 
@@ -130,7 +142,9 @@ describe('BaselineWorkspace — dialog „Podaj powód" (a11y, Pakiet I)', () =>
     await openReasonDialog();
 
     fireEvent.keyDown(document, { key: 'Escape' });
-    await waitFor(() => expect(screen.queryByTestId('baseline-reason-dialog')).not.toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.queryByTestId('baseline-reason-dialog')).not.toBeInTheDocument()
+    );
 
     fireEvent.keyDown(document, { key: 'Escape' });
     expect(screen.queryByTestId('baseline-reason-dialog')).not.toBeInTheDocument();
