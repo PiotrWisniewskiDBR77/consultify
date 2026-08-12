@@ -144,7 +144,7 @@ describe('CalculationsView — test anty-plug (DEC-FIN-002)', () => {
 
   it('KONTROLA NEGATYWNA: bez okresów FUNDING_GAP w monthlyResults, alarm NIE renderuje się (dowód, że alarm nie jest zawsze-włączony)', () => {
     const props = baseProps();
-    const noGap = props.monthlyResults.map((r) => ({ ...r, qualityFlag: null as const }));
+    const noGap = props.monthlyResults.map((r) => ({ ...r, qualityFlag: null }));
     render(<CalculationsView {...props} monthlyResults={noGap} />);
     expect(screen.queryByTestId('baseline-funding-gap-alarm')).not.toBeInTheDocument();
   });
