@@ -15,7 +15,20 @@
  *  · Plan · Realizacja · Rezultaty to KANONICZNA nawigacja powłoki (lewa
  *    kolumna `NModeLeftNav`), nie własny pasek zakładek,
  *  · prawy panel to accordion o stałej kolejności Akcje · Właściwości ·
- *    Powiązania · Źródła i założenia · Historia (Komentarze jawnie pominięte),
+ *    Powiązania · Źródła i założenia · Historia.
+ *
+ *    UWAGA — sekcja `Komentarze`: §10.2 i §11.2 WYMAGAJĄ jej jako czwartej
+ *    z pięciu i zakazują zmian panelu per archetyp; §18.1 powtarza to w DoD.
+ *    (§13.1 pomija ją w tabeli per-artefakt, ale pomija tam też obowiązkowe
+ *    `Akcje` — ta kolumna opisuje treść różnicującą, nie znosi wymagania.)
+ *    Wcześniejsza wersja tego nagłówka powoływała się na §10.2/§11.2 jako
+ *    UZASADNIENIE pominięcia — czyli na sekcje mówiące dokładnie odwrotnie.
+ *    Właściwa podstawa to decyzja właściciela **OD-12** (2026-08-12):
+ *    Case Workspace nie ma żadnej funkcji komentarzy (brak tabeli, serwisu,
+ *    tras i funkcji klienckiej), więc spełnienie wymagania to nowy zakres
+ *    produktowy, a nie poprawka odstępstwa. Świadomie odroczone poza V1 jako
+ *    `DEFERRED_POST_V1`, jawnie odnotowane w
+ *    `11_OWNER_DECISION_REGISTER.md` i w `VISUAL_TRIADA_SPEC_A_LEDGER.csv`.
  *  · projekcja planu (Prosty/Ekspercki/Lista) siedzi w slocie `toolbar`
  *    (`NModeToolbar`) — jedyna dozwolona droga własnego paska (SPEC-N §2.4).
  *
