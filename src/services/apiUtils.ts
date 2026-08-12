@@ -7,10 +7,41 @@ import { tokenService } from './tokenService';
 
 export const API_URL = '/api';
 
+// RN-G6 P0 fix (F1): this header is sent to Results Next KPI/ROI/OKR write
+// endpoints, which pass it through to `PlatformEventEnvelope.correlationId`
+// and from there into `rvn_platform_events.correlation_id` — a Postgres
+// `UUID NOT NULL` column (server/migrations/20260809_rvn_platform_events_outbox.sql).
+// The previous generator (`Math.random().toString(36)...`) produced a token
+// like "k3j9x2..." that is NOT a UUID, so every write on a fresh browser
+// session failed with "invalid input syntax for type uuid" (500). Use the
+// same UUID generator already used throughout this codebase (see
+// `createIdempotencyKey.ts`, `kpiApi.ts`, `roiApi.ts`, `okrAdminApi.ts`, ...)
+// instead of inventing a second one.
+//
+// A stored value from BEFORE this fix is still sitting in `sessionStorage`
+// for any tab/session that was already open — reusing the old generator's
+// output silently would keep those sessions broken forever. RESULTS_UUID_RE
+// rejects anything that isn't UUID-shaped so a stale non-UUID value is
+// discarded and replaced, not trusted.
+const RESULTS_UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function generateCorrelationId(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  // Defensive fallback for the rare environment without crypto.randomUUID
+  // (e.g. non-HTTPS/non-localhost context) — still UUID-shaped, unlike the
+  // generator this replaces.
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === 'x' ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
+
 let correlationId = sessionStorage.getItem('correlationId');
-if (!correlationId) {
-  correlationId =
-    Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+if (!correlationId || !RESULTS_UUID_RE.test(correlationId)) {
+  correlationId = generateCorrelationId();
   sessionStorage.setItem('correlationId', correlationId);
 }
 

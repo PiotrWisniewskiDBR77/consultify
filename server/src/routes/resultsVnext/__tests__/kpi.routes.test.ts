@@ -40,6 +40,7 @@ const mockVerifyMeasurement = vi.fn();
 const mockDisputeMeasurement = vi.fn();
 
 const mockGetKpi = vi.fn();
+const mockGetKpiCurrentDefinitionVersion = vi.fn();
 const mockListKpis = vi.fn();
 const mockListMeasurements = vi.fn();
 
@@ -112,6 +113,7 @@ vi.mock('../../../services/resultsVnext/kpi/kpiMeasurementCommands.js', async (i
 
 vi.mock('../../../services/resultsVnext/kpi/kpiRepository.js', () => ({
   getKpi: (...args: unknown[]) => mockGetKpi(...args),
+  getKpiCurrentDefinitionVersion: (...args: unknown[]) => mockGetKpiCurrentDefinitionVersion(...args),
   listKpis: (...args: unknown[]) => mockListKpis(...args),
   listMeasurements: (...args: unknown[]) => mockListMeasurements(...args),
 }));
@@ -321,6 +323,141 @@ describe('POST /api/vnext/results/kpi + GET /:kpiId — create -> get roundtrip'
       .send({ kpiCode: 'NPS' });
     expect(response.status).toBe(400);
     expect(mockCreateKpiDraft).not.toHaveBeenCalled();
+  });
+});
+
+// ==========================================
+// RN-G6 P0 fix (F1B) — GET /:kpiId/version (maker-checker unblock)
+// ==========================================
+
+describe('GET /api/vnext/results/kpi/:kpiId/version — getKpiCurrentDefinitionVersion (F1B)', () => {
+  it('returns the current definition version for a visible KPI (the read a second reviewer needs)', async () => {
+    const version = {
+      definitionVersionId: VERSION_ID,
+      kpiId: KPI_ID,
+      name: 'Customer NPS',
+      unit: null,
+      targetGeometry: 'threshold_min',
+      approvalStatus: 'submitted',
+      rowVersion: 2,
+    };
+    mockGetKpiCurrentDefinitionVersion.mockResolvedValue(version);
+
+    const response = await request(createApp()).get(`/api/vnext/results/kpi/${KPI_ID}/version`);
+
+    expect(response.status).toBe(200);
+    expect(response.body.definitionVersion).toEqual(version);
+    expect(mockGetKpiCurrentDefinitionVersion).toHaveBeenCalledWith({
+      userId: 'user-1',
+      organizationId: 'org-1',
+      kpiId: KPI_ID,
+    });
+  });
+
+  it('returns a GENERIC 404 (D06) when the repository returns null — covers BOTH "does not exist" and "not visible to this actor", indistinguishably', async () => {
+    mockGetKpiCurrentDefinitionVersion.mockResolvedValue(null);
+
+    const response = await request(createApp()).get(`/api/vnext/results/kpi/${KPI_ID}/version`);
+
+    expect(response.status).toBe(404);
+    expect(response.body.code).toBe('NOT_FOUND');
+    // The denial must not leak WHY — no distinct "forbidden" vs "not found"
+    // signal, same contract GET /:kpiId already has (see the roundtrip
+    // describe block above).
+    expect(response.body.error).not.toMatch(/forbidden|denied|visib/i);
+  });
+
+  it('propagates a repository error through the same error mapper as every other KPI route (no bespoke handling)', async () => {
+    mockGetKpiCurrentDefinitionVersion.mockRejectedValue(new Error('db exploded'));
+
+    const response = await request(createApp()).get(`/api/vnext/results/kpi/${KPI_ID}/version`);
+
+    expect(response.status).toBe(500);
+  });
+});
+
+// ==========================================
+// RN-G6 P0 fix (F1) — X-Correlation-ID validation
+// ==========================================
+//
+// Root cause: the OLD client generator produced a non-UUID token that used
+// to flow straight through to the command layer and on into a Postgres
+// `UUID NOT NULL` column, crashing every write with a 500. `getCorrelationId`
+// (server/src/routes/resultsVnext/correlationId.ts) now validates UUID shape
+// and resolves to `undefined` for anything else, letting the EXISTING
+// `correlationId ?? randomUUID()` fallback already inside every resultsVnext
+// command function (e.g. kpiDefinitionCommands.ts) mint a fresh one instead
+// — this file tests the boundary (what the command function RECEIVES), not
+// that downstream fallback itself (that's covered by the command's own
+// existing tests).
+
+describe('X-Correlation-ID validation (RN-G6 P0 fix — F1)', () => {
+  beforeEach(() => {
+    mockCreateKpiDraft.mockResolvedValue({
+      outcome: 'applied',
+      eventId: 'evt-1',
+      resultingVersion: 1,
+      result: { kpi: kpiFixture(), definitionVersion: {} },
+    });
+  });
+
+  const createBody = {
+    kpiCode: 'NPS',
+    name: 'Customer NPS',
+    targetGeometry: 'threshold_min',
+    targetValue: 80,
+  };
+
+  it('rejects a non-UUID X-Correlation-ID header — the command layer receives undefined, NEVER the malformed value (this is the exact shape the old client bug produced)', async () => {
+    const oldBuggyValue =
+      Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+
+    await request(createApp())
+      .post('/api/vnext/results/kpi')
+      .set('X-Correlation-ID', oldBuggyValue)
+      .send(createBody);
+
+    expect(mockCreateKpiDraft).toHaveBeenCalledTimes(1);
+    const args = mockCreateKpiDraft.mock.calls[0][0];
+    expect(args.correlationId).toBeUndefined();
+  });
+
+  it('passes through a well-formed UUID header unchanged', async () => {
+    const validUuid = '4d60dfca-1111-4aaa-8bbb-000000000001';
+
+    await request(createApp())
+      .post('/api/vnext/results/kpi')
+      .set('X-Correlation-ID', validUuid)
+      .send(createBody);
+
+    expect(mockCreateKpiDraft.mock.calls[0][0].correlationId).toBe(validUuid);
+  });
+
+  it('resolves to undefined (letting the command layer mint its own) when no header is sent at all', async () => {
+    await request(createApp()).post('/api/vnext/results/kpi').send(createBody);
+
+    expect(mockCreateKpiDraft.mock.calls[0][0].correlationId).toBeUndefined();
+  });
+
+  it('rejects an empty-string header the same way as a malformed one', async () => {
+    await request(createApp())
+      .post('/api/vnext/results/kpi')
+      .set('X-Correlation-ID', '')
+      .send(createBody);
+
+    expect(mockCreateKpiDraft.mock.calls[0][0].correlationId).toBeUndefined();
+  });
+
+  it('rejects a header that is merely alphanumeric-safe but not UUID-shaped (the apiLoggingMiddleware sanitizer alone would accept this — this route must not)', async () => {
+    // Matches apiLogging.middleware.ts's SAFE_CORRELATION_ID
+    // (`/^[A-Za-z0-9._~-]+$/`) — proves this route's validation is a STRICTER,
+    // independent check, not a rename of that sanitizer.
+    await request(createApp())
+      .post('/api/vnext/results/kpi')
+      .set('X-Correlation-ID', 'safe-but-not-a-uuid-123')
+      .send(createBody);
+
+    expect(mockCreateKpiDraft.mock.calls[0][0].correlationId).toBeUndefined();
   });
 });
 

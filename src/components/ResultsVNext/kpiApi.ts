@@ -12,19 +12,24 @@
  * wire-shape types the same way). Keep these in sync by hand if the server
  * DTOs change shape.
  *
- * -- CONFIRMED BACKEND GAP (see RN_G2 P1 report): `GET /kpi` and
- * `GET /kpi/:kpiId` both return the bare `rvn_kpi_definitions` row
- * (`KpiDefinition` — kpiCode/status/owner/timestamps only). There is NO GET
- * endpoint anywhere in `kpi.routes.ts`/`kpiPerspectives.routes.ts` that
- * returns the joined `rvn_kpi_definition_versions` row (name/unit/target
- * geometry/approval status) — only the three WRITE endpoints that mutate a
- * version (`createKpiDraft`, `approveDefinitionVersion`,
- * `rejectDefinitionVersion`) return it, as a side effect of the mutation.
+ * -- CONFIRMED BACKEND GAP (see RN_G2 P1 report), PARTIALLY CLOSED by the
+ * RN-G6 P0 fix (F1B, `getKpiCurrentDefinitionVersion` below): `GET /kpi` and
+ * `GET /kpi/:kpiId` still both return the bare `rvn_kpi_definitions` row
+ * (`KpiDefinition` — kpiCode/status/owner/timestamps only) — this module
+ * still cannot resolve a KPI's display *name* or target/current-value
+ * fields from the LIST/single-row endpoints, only from a lazily-fetched
+ * latest measurement's `actualValue` (unchanged). What F1B added is
+ * `GET /kpi/:kpiId/version`, which DOES return the joined
+ * `rvn_kpi_definition_versions` row (name/unit/target geometry/approval
+ * status/CAS `rowVersion`) for a single KPI on demand — see
+ * `getKpiCurrentDefinitionVersion` below and
+ * `ResultsKpiRegistryPage.tsx`'s "knownVersions" note for why this
+ * specifically was P0 (maker-checker was unusable for a second reviewer
+ * without it). The three WRITE endpoints that mutate a version
+ * (`createKpiDraft`, `approveDefinitionVersion`, `rejectDefinitionVersion`)
+ * still also return it as a side effect of the mutation, as before.
  * `listMyKpis`/`listOrganizationKpiAttention` are an obligations/attention
  * feed and an aggregate-stats view respectively — neither is a KPI-row list.
- * Practical effect: this module cannot honestly resolve a KPI's display
- * *name* (only its `kpiCode`) or its target/current-value fields anywhere
- * except a lazily-fetched latest measurement's `actualValue`.
  *
  * -- RN-G2 §G #7 (2026-08-10): added the four measurement WRITE commands
  * (`recordKpiMeasurement`/`correctKpiMeasurement`/`verifyKpiMeasurement`/
@@ -253,6 +258,29 @@ export async function getKpi(kpiId: string): Promise<KpiDefinitionDto | null> {
   try {
     const resp = await Api.get(`/vnext/results/kpi/${encodeURIComponent(kpiId)}`);
     return (resp?.kpi ?? null) as KpiDefinitionDto | null;
+  } catch (err) {
+    if (isNotFoundError(err)) return null;
+    throw err;
+  }
+}
+
+/**
+ * `GET /api/vnext/results/kpi/:kpiId/version` (RN-G6 P0 fix — F1B) — the
+ * endpoint that closes the "CONFIRMED BACKEND GAP" this file's own header
+ * used to describe: until now, `knownVersions` in
+ * `ResultsKpiRegistryPage.tsx` could ONLY be populated from a write this
+ * same browser tab performed, so a second reviewer who opened a KPI a
+ * colleague had just submitted saw Approve/Reject permanently locked — the
+ * maker-checker workflow had no working "checker" for anyone but the maker.
+ * Same 404-means-either-thing contract as `getKpi` above (D06 generic
+ * denial — never distinguishes "doesn't exist" from "exists, not visible").
+ */
+export async function getKpiCurrentDefinitionVersion(
+  kpiId: string
+): Promise<KpiDefinitionVersionDto | null> {
+  try {
+    const resp = await Api.get(`/vnext/results/kpi/${encodeURIComponent(kpiId)}/version`);
+    return (resp?.definitionVersion ?? null) as KpiDefinitionVersionDto | null;
   } catch (err) {
     if (isNotFoundError(err)) return null;
     throw err;

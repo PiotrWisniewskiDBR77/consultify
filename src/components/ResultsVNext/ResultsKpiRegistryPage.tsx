@@ -60,24 +60,23 @@
  * `approve/rejectDefinitionVersion` — it was impossible to create a KPI
  * through the UI at all (verified by grep, see `kpiApi.ts`'s RN-G5 note).
  *
- * `knownVersions` below is the load-bearing piece: `kpiApi.ts`'s RN-G5 note
- * explains WHY it exists — there is no GET anywhere that returns a
- * `rvn_kpi_definition_versions` row, so the version's own `rowVersion` (the
- * CAS `expectedVersion` every one of the five write commands requires) is
- * only ever knowable from THIS client's own prior write response for that
- * exact version. `knownVersions` caches that response, in memory, for the
- * lifetime of this page — populated ONLY by create/edit/submit/approve/
- * reject's own return values, NEVER guessed or defaulted. Edit/Submit/
- * Approve/Reject are offered (row menu + preview) ONLY when a KPI's version
- * is in this map; otherwise they render LOCKED with an honest reason
- * (TRIADA §C3 "visible, disabled, with a reason" — same discipline
- * `noApprovedVersionReason` below already applies to Activate) rather than
- * silently 409ing against a guessed `expectedVersion`. This is a real
- * backend-gap consequence, not a UI shortcut — a future GET endpoint
- * returning the version (out of this package's allowlist:
- * `server/src/services/resultsVnext/**`/`server/src/routes/resultsVnext/**`)
- * would let any KPI's version-level actions unlock regardless of session
- * history.
+ * `knownVersions` below is the load-bearing piece for CAS `expectedVersion`
+ * on every write. It is populated two ways: (1) create/edit/submit/approve/
+ * reject's own return values (the original, write-response-only source —
+ * kept as-is, never guessed or defaulted), and (2) as of the RN-G6 P0 fix
+ * (F1B) below, a lazy `GET /vnext/results/kpi/:kpiId/version` fetch on
+ * selection (`getKpiCurrentDefinitionVersion` effect further down this
+ * file). Before F1B, source (1) was the ONLY source — no GET anywhere
+ * returned a `rvn_kpi_definition_versions` row, so a KPI's version was
+ * knowable ONLY from THIS client's own prior write, which meant a maker's
+ * submission was permanently un-checkable by any OTHER reviewer's browser
+ * session: the entire point of maker-checker (a second person approves) was
+ * unusable for anyone but the first person. Edit/Submit/Approve/Reject are
+ * still offered (row menu + preview) ONLY when a KPI's version is in this
+ * map — now reliably true for any visible KPI once selected, not just ones
+ * this tab itself wrote — otherwise they render LOCKED with an honest
+ * reason (TRIADA §C3 "visible, disabled, with a reason", same discipline
+ * `noApprovedVersionReason` below already applies to Activate).
  */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -113,6 +112,7 @@ import {
   listKpiMeasurements,
   listKpis,
   getKpi,
+  getKpiCurrentDefinitionVersion,
   newKpiIdempotencyKey,
   rejectKpiDefinitionVersion,
   reviseKpiDefinition,
@@ -791,6 +791,35 @@ export const ResultsKpiRegistryPage: React.FC = () => {
       })
       .catch(() => {
         if (!cancelled) setMeasurement(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedId]);
+
+  // RN-G6 P0 fix (F1B) — lazy per-selection definition-version fetch, same
+  // pattern as the measurement effect directly above. This is what makes
+  // maker-checker actually work for a SECOND person: before this endpoint
+  // existed (see file header "knownVersions" note), `knownVersions` could
+  // only ever contain a version THIS tab itself had written, so a fresh
+  // reviewer opening a colleague's submission saw Approve/Reject
+  // permanently locked with "no known version" — not because they lacked
+  // permission, but because nothing had ever told the client what the
+  // current version even was. A denied/invisible KPI resolves to `null`
+  // here (same D06-generic 404 `getKpi` already uses) and simply leaves
+  // `knownVersions` unchanged — never inserts a fake entry.
+  useEffect(() => {
+    if (!selectedId) return;
+    let cancelled = false;
+    getKpiCurrentDefinitionVersion(selectedId)
+      .then((version) => {
+        if (cancelled || !version) return;
+        setKnownVersions((prev) => ({ ...prev, [selectedId]: version }));
+      })
+      .catch(() => {
+        // Honest-missing-data discipline (file header): a failed fetch
+        // leaves the row exactly as locked as it already was, never throws
+        // into the render path.
       });
     return () => {
       cancelled = true;

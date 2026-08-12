@@ -92,6 +92,7 @@ import {
 } from '../../services/resultsVnext/kpi/kpiMeasurementCommands.js';
 import {
   getKpi,
+  getKpiCurrentDefinitionVersion,
   listKpis,
   listMeasurements,
 } from '../../services/resultsVnext/kpi/kpiRepository.js';
@@ -111,6 +112,7 @@ import {
 } from '../../services/resultsVnext/platform/commandCapabilityGuard.js';
 import type { AuthenticatedRequest } from '../../types/index.js';
 import logger from '../../utils/Logger.js';
+import { getCorrelationId } from './correlationId.js';
 import {
   ApproveDefinitionVersionSchema,
   CorrectMeasurementSchema,
@@ -175,15 +177,10 @@ function normalizeOptionalString(value: unknown): string | undefined {
   return trimmed || undefined;
 }
 
-/** Established repo convention (documents.routes.ts, conversations.routes.ts,
- * report-builder.routes.ts, ...): prefer a correlation id a prior middleware
- * already attached to the request, fall back to the client-supplied header. */
-function getCorrelationId(req: AuthenticatedRequest): string | undefined {
-  return (
-    normalizeOptionalString(req.correlationId) ||
-    normalizeOptionalString(req.get?.('X-Correlation-ID'))
-  );
-}
+// getCorrelationId moved to ./correlationId.js (RN-G6 P0 fix — F1): shared,
+// UUID-shape-validated implementation for all resultsVnext routes instead of
+// six copies each trusting the header/attached value as-is once non-empty.
+// See that file's doc comment for the full root-cause writeup.
 
 function resolveIdempotencyKey(bodyKey: string | undefined | null): string {
   return normalizeOptionalString(bodyKey ?? undefined) || randomUUID();
@@ -395,6 +392,41 @@ router.get(
       res.status(200).json({ kpi });
     } catch (err) {
       handleKpiRouteError(res, err, 'getKpi');
+    }
+  }
+);
+
+// ==========================================
+// GET /api/vnext/results/kpi/:kpiId/version — getKpiCurrentDefinitionVersion
+// (RN-G6 P0 fix — F1B: the maker-checker read this domain never had — see
+// kpiRepository.ts's `getKpiCurrentDefinitionVersion` doc comment for the
+// full root-cause writeup and ResultsKpiRegistryPage.tsx's `knownVersions`
+// note for the client-side symptom this endpoint unblocks.)
+// ==========================================
+
+router.get(
+  '/:kpiId/version',
+  validateParams(KpiIdParamsSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { kpiId } = req.params as { kpiId: string };
+      const definitionVersion = await getKpiCurrentDefinitionVersion({
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        kpiId,
+      });
+      if (!definitionVersion) {
+        // D06 — same generic 404 as `getKpi` above, for the same reason:
+        // "does not exist" and "exists but not visible to you" must be
+        // indistinguishable from the response alone.
+        res.status(404).json({ error: 'KPI not found', code: 'NOT_FOUND' });
+        return;
+      }
+      res.status(200).json({ definitionVersion });
+    } catch (err) {
+      handleKpiRouteError(res, err, 'getKpiCurrentDefinitionVersion');
     }
   }
 );
