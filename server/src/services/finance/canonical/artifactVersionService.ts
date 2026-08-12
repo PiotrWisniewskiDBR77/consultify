@@ -642,7 +642,27 @@ export type ApproveErrorCode =
   | 'STATE_PRECONDITION_FAILED'
   | 'APPROVAL_BLOCKED'
   | 'SELF_APPROVAL_FORBIDDEN'
-  | 'WORKING_REVISION_NOT_FOUND';
+  | 'WORKING_REVISION_NOT_FOUND'
+  | 'FORBIDDEN';
+
+/**
+ * P0 fix (2026-08-12, `docs/validation/finance-v3/generated/gate-e/P0_APPROVE_RBAC_FIX_report.md`).
+ * `approveVersion()` used to declare `params.role: FinanceRole` and never read
+ * it anywhere in its body — every authenticated org member, including
+ * `viewer`, could approve an `IN_REVIEW` version (confirmed by the J4 probe's
+ * `RULE-P0-VIEWER-APPROVE`/`RULE-P0-PREPARER-APPROVE-NOT-SUBMITTER` checks).
+ * `/capabilities` (`allowedActionsFromStatus` below) already correctly
+ * restricted the `approve` action to exactly this set for an `IN_REVIEW`
+ * version — this constant makes the real endpoint agree with what the UI
+ * hint already promised, instead of trusting nothing at all. Deliberately
+ * NOT copied from `REOPEN_ALLOWED_ROLES`: reopen and approve are different
+ * actions with potentially different authorized sets, and the source of
+ * truth for "who may approve" is `allowedActionsFromStatus`'s own
+ * `currentStatus === 'IN_REVIEW' && (role === 'approver' || role ===
+ * 'finance_admin')` branch above (WP-B02 §4.3), not the reopen list — they
+ * happen to be identical today, not by construction.
+ */
+export const APPROVE_ALLOWED_ROLES: readonly FinanceRole[] = ['approver', 'finance_admin'];
 
 export type ApproveResult =
   | {
@@ -704,6 +724,16 @@ export interface ApproveVersionParams {
  * and the corrected WP-B02_lifecycle_concurrency_ADR.md §5/§6.4).
  */
 export async function approveVersion(params: ApproveVersionParams): Promise<ApproveResult> {
+  // P0 fix — role gate, checked before ANY transaction/DB round-trip, mirroring
+  // `reopenVersion()`'s early `REOPEN_ALLOWED_ROLES` check above (both run
+  // before `withPinnedPostgresTransaction`, ahead of even the idempotency-replay
+  // lookup — a caller with the wrong role must never observe a cached
+  // successful result either). See `APPROVE_ALLOWED_ROLES`'s own comment for
+  // why this set, not `REOPEN_ALLOWED_ROLES`, is the source of truth here.
+  if (!APPROVE_ALLOWED_ROLES.includes(params.role)) {
+    return { ok: false, code: 'FORBIDDEN', message: `Role ${params.role} may not approve` };
+  }
+
   return withPinnedPostgresTransaction(async (tx) => {
     if (params.idempotencyKey) {
       const replay = await tx.queryOne<{ business_version_id: string; to_status: BusinessVersionStatus; snapshot_id: string | null }>(
