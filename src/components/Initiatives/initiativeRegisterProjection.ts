@@ -127,10 +127,20 @@ export const lifecycleToInitiativeStatus = (lifecycle: string): InitiativeStatus
 
 /** One canonical adapter used by both the Initiatives and Execution registers. */
 export const toCanonicalInitiativeRegisterItem = (
-  record: RegisteredInitiativeReadModel
+  record: RegisteredInitiativeReadModel,
+  actor?: { id?: string | null; displayName?: string | null }
 ): PortfolioInitiative => {
   const { initiative, updatedAt } = record;
   const projection = projectCanonicalInitiativeRegisterRow(record);
+  const ownerId = initiative.initiativeOwnerId?.trim() || '';
+  const ownerDisplayName =
+    ownerId && actor?.id === ownerId && actor.displayName?.trim()
+      ? actor.displayName.trim()
+      : ownerId && !/^[0-9a-f]{8}-[0-9a-f-]{27,}$/i.test(ownerId)
+        ? ownerId.replace(/[-_]+/g, ' ').replace(/\b\w/g, (letter) => letter.toUpperCase())
+        : ownerId
+          ? 'Przypisany właściciel'
+          : '';
   return {
     ...projection,
     name: initiative.title,
@@ -145,10 +155,10 @@ export const toCanonicalInitiativeRegisterItem = (
     projectId: initiative.projectId,
     sourceId: initiative.source.sourceId,
     sourceType: initiative.source.sourceType,
-    ownerBusiness: initiative.initiativeOwnerId
+    ownerBusiness: ownerId
       ? {
-          id: initiative.initiativeOwnerId,
-          firstName: initiative.initiativeOwnerId,
+          id: ownerId,
+          firstName: ownerDisplayName,
           lastName: '',
         }
       : undefined,

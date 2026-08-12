@@ -430,8 +430,17 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         if (searchQuery) params.append('search', searchQuery);
 
         const canonical = await listRegisteredInitiatives();
-        const canonicalRows: PortfolioInitiative[] = canonical.initiatives.map(
-          toCanonicalInitiativeRegisterItem
+        const currentUserName =
+          (currentUser as any)?.displayName ||
+          [(currentUser as any)?.firstName, (currentUser as any)?.lastName]
+            .filter(Boolean)
+            .join(' ') ||
+          null;
+        const canonicalRows: PortfolioInitiative[] = canonical.initiatives.map((record) =>
+          toCanonicalInitiativeRegisterItem(record, {
+            id: (currentUser as any)?.id,
+            displayName: currentUserName,
+          })
         );
         const response: { initiatives: PortfolioInitiative[] } = {
           initiatives: canonicalRows.filter((initiative) => {
@@ -514,6 +523,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
       allowDemoData,
       activeStatusFilter,
       activeLifecyclePreset,
+      currentUser,
       filters.priority,
       initiativesDemoData,
       mergeShowcaseInitiatives,

@@ -443,8 +443,8 @@ export const PortfolioScenarioSurface: React.FC<Props> = ({
                 { label: row.confidence, tone: 'neutral' },
               ],
               trailing: (
-                <span>
-                  {row.scenario}:v{row.scenarioVersion}
+                <span title={`${row.scenario}:v${row.scenarioVersion}`}>
+                  Wariant v{row.scenarioVersion}
                 </span>
               ),
             }}
@@ -486,7 +486,7 @@ export const PortfolioScenarioSurface: React.FC<Props> = ({
       >
         <StandardTable
           columns={[
-            { id: 'title', label: 'Initiative', sortable: true, width: '28%' },
+            { id: 'title', label: 'Initiative', sortable: true, width: '280px' },
             { id: 'disposition', label: 'Include state', sortable: true, filterable: true },
             { id: 'rank', label: 'Rank', sortable: true },
             { id: 'confidence', label: 'Confidence', sortable: true, filterable: true },

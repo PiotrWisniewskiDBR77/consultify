@@ -8,6 +8,7 @@ import {
   readExecutionCase,
   readRegisteredInitiative,
 } from '@/services/initiatives-execution/runtimeApi';
+import { useAppStore } from '@/store/useAppStore';
 import type { PortfolioInitiative } from '@/types';
 
 import { AcceptanceRequesterPanel } from './AcceptanceRequesterPanel';
@@ -105,6 +106,16 @@ export const ExecutionRealizationsSurface = ({
   activePreset,
   onCountsChange,
 }: { scope: 'active' | 'all' } & ExecutionMenu3Contract) => {
+  const currentUserId = useAppStore((store) => store.currentUser?.id ?? null);
+  const currentUserDisplayName = useAppStore((store) => {
+    const user = store.currentUser as any;
+    return (
+      user?.displayName ||
+      user?.name ||
+      [user?.firstName, user?.lastName].filter(Boolean).join(' ') ||
+      null
+    );
+  });
   const [state, setState] = useState<'LOADING' | 'READY' | 'ERROR'>('LOADING');
   const [rows, setRows] = useState<ExecutionRow[]>([]);
   const [initiativeRows, setInitiativeRows] = useState<ExecutionInitiativeRow[]>([]);
@@ -126,7 +137,10 @@ export const ExecutionRealizationsSurface = ({
           return {
             execution: buildRow(summary, full.detail ?? {}),
             initiative: {
-              ...toCanonicalInitiativeRegisterItem(initiative),
+              ...toCanonicalInitiativeRegisterItem(initiative, {
+                id: currentUserId,
+                displayName: currentUserDisplayName,
+              }),
               executionCaseId,
             } as ExecutionInitiativeRow,
           };
@@ -142,7 +156,7 @@ export const ExecutionRealizationsSurface = ({
     } catch {
       setState('ERROR');
     }
-  }, [scope]);
+  }, [currentUserDisplayName, currentUserId, scope]);
 
   useEffect(() => {
     void load();

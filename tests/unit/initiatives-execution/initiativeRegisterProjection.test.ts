@@ -4,6 +4,7 @@ import {
   INITIATIVE_LIFECYCLE_PRESETS,
   lifecycleMatchesPreset,
   projectCanonicalInitiativeRegisterRow,
+  toCanonicalInitiativeRegisterItem,
 } from '../../../src/components/Initiatives/initiativeRegisterProjection';
 
 const record = (overrides: Record<string, unknown> = {}) => ({
@@ -67,5 +68,21 @@ describe('canonical Initiative register projection', () => {
     expect(row.healthState).toBe('UNKNOWN');
     expect(row.plannedWindow).toBeNull();
     expect(row.nextAction).toBe('Monitoruj realizację');
+  });
+
+  it('renders a recognizable owner label instead of exposing a raw principal identifier', () => {
+    const currentOwner = toCanonicalInitiativeRegisterItem(
+      record({ initiativeOwnerId: 'd2b6a316-08c5-47cf-9bf7-4ba50311d5a2' }) as any,
+      { id: 'd2b6a316-08c5-47cf-9bf7-4ba50311d5a2', displayName: 'Piotr Wiśniewski' }
+    );
+    const namedRole = toCanonicalInitiativeRegisterItem(
+      record({ initiativeOwnerId: 'operations-owner' }) as any
+    );
+
+    expect(currentOwner.ownerBusiness).toMatchObject({
+      id: 'd2b6a316-08c5-47cf-9bf7-4ba50311d5a2',
+      firstName: 'Piotr Wiśniewski',
+    });
+    expect(namedRole.ownerBusiness?.firstName).toBe('Operations Owner');
   });
 });
