@@ -29,6 +29,7 @@ import type { Response } from 'express';
 import { Router } from 'express';
 import multer from 'multer';
 
+import { withPinnedPostgresTransaction } from '../../../database/PostgresDatabase.js';
 import type { AuthRequest } from '../../../middleware/auth.middleware.js';
 import { getV8Context } from '../../../middleware/v8Auth.middleware.js';
 import { exportFinanceStatementPack } from '../../../services/finance/canonical/financeExportService.js';
@@ -112,6 +113,30 @@ router.post(
     if (typeof body.businessVersionId !== 'string' || !body.businessVersionId) {
       return sendError(res, 400, 'INVALID_BODY', 'businessVersionId is required');
     }
+
+    // Gate E FIX-B (proof-gaps pass, 2026-08-12) — LUKA 3: ownership checked BEFORE the remaining
+    // body-shape checks (manifest/rows) and BEFORE any diff computation. Previously this route had
+    // NO ownership check at all — `previewFinanceImport()` always returned 200, with
+    // `manifestCheck`/`rowErrors` the only signal something was wrong (a cross-tenant
+    // businessVersionId behaved identically to a genuinely-nonexistent one: both left every
+    // taxonomy lookup empty). That is a weak, inconsistent response shape compared to every other
+    // tenant-scoped denial in this surface (uniform 404) — no leak, no write (both confirmed by the
+    // pre-existing CROSS-TENANT test this fix updates), but a needless exception to the pattern.
+    // Scoped to (business_version_id, organization_id, artifact_id) together — the same three-way
+    // check `applyFinanceImport()` already does for the SAME two ids (`financeImportService.ts`'s
+    // `currentBv` lookup) — so a well-formed body whose artifactId and businessVersionId belong to
+    // DIFFERENT artifacts (even both under the caller's own org) is also correctly rejected, not
+    // just a straightforward cross-org attempt.
+    const businessVersion = await withPinnedPostgresTransaction((tx) =>
+      tx.queryOne<{ business_version_id: string }>(
+        `SELECT business_version_id FROM finance_business_versions WHERE business_version_id = ? AND organization_id = ? AND artifact_id = ?`,
+        [body.businessVersionId, organizationId, body.artifactId]
+      )
+    );
+    if (!businessVersion) {
+      return sendError(res, 404, 'NOT_FOUND', 'Artifact or business version not found in this organization');
+    }
+
     if (typeof body.manifest !== 'object' || body.manifest === null) {
       return sendError(res, 400, 'INVALID_BODY', 'manifest is required (from a prior POST /import/parse call)');
     }

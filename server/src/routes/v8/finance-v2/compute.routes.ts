@@ -22,6 +22,15 @@
  * as a gap in the report (services/finance/canonical/computeJobService.ts
  * is out of this package's write-allowlist — `server/src/services/finance/**`
  * is explicitly NOT allowed to be modified here).
+ *
+ * Gate E FIX-B (proof-gaps pass, 2026-08-12): the above write-allowlist note is now historical for
+ * ONE narrow addition — `computeJobService.ts`'s `enqueue()` used to let a cross-tenant
+ * `inputArtifactId`'s raw Postgres FK-violation (`fk_compute_jobs_artifact_org`) propagate as an
+ * unhandled 500 (see `cross-tenant.routes.pg.test.ts`'s own comment documenting this as a known
+ * defect at the time). `enqueue()` now throws a typed `ComputeJobArtifactMismatchError` for exactly
+ * that one constraint; this router catches it below and returns the same 404 shape every other
+ * tenant-scoped denial in this router already uses. No other `computeJobService.ts` behavior
+ * changed.
  */
 
 import type { Response } from 'express';
@@ -29,7 +38,14 @@ import { Router } from 'express';
 
 import type { AuthRequest } from '../../../middleware/auth.middleware.js';
 import { getV8Context } from '../../../middleware/v8Auth.middleware.js';
-import { cancelJob, enqueue, getJob, getJobOutput, type EnqueueJobParams } from '../../../services/finance/canonical/computeJobService.js';
+import {
+  cancelJob,
+  ComputeJobArtifactMismatchError,
+  enqueue,
+  getJob,
+  getJobOutput,
+  type EnqueueJobParams,
+} from '../../../services/finance/canonical/computeJobService.js';
 import { asyncHandler } from '../../../utils/asyncHandler.js';
 import { financeV2Meta, readIdempotencyKey, sendError } from './_shared.js';
 
@@ -85,7 +101,21 @@ router.post(
       maxAttempts: typeof body.maxAttempts === 'number' ? body.maxAttempts : undefined,
     };
 
-    const result = await enqueue(params);
+    // Gate E FIX-B LUKA 3: a cross-tenant (or simply nonexistent-in-this-org) inputArtifactId trips
+    // the composite FK `fk_compute_jobs_artifact_org` at the DB layer. Before this fix that raw
+    // Postgres error reached `asyncHandler` unhandled -> 500. Caught here and mapped to the SAME
+    // 404 shape every other tenant-scoped denial in this router already uses (GET/cancel above) —
+    // a typed 4xx, not a leak of the underlying constraint violation, and not distinguishable from
+    // "this artifactId never existed at all" (uniform, per the FIX-B brief).
+    let result: Awaited<ReturnType<typeof enqueue>>;
+    try {
+      result = await enqueue(params);
+    } catch (error) {
+      if (error instanceof ComputeJobArtifactMismatchError) {
+        return sendError(res, 404, error.code, error.message);
+      }
+      throw error;
+    }
 
     return res.status(result.wasExisting ? 200 : 201).json({
       data: { ...jobToDto(result.job), wasExisting: result.wasExisting },

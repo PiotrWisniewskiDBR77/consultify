@@ -304,16 +304,28 @@ describe.skipIf(!REAL_PG)('Finance v2 ROUTES_EXPOSURE — Export/Import (real HT
     expect(res.body).toHaveProperty('code', 'NOT_FOUND');
   });
 
-  it('CROSS-TENANT: org B previewing an import against org A\'s businessVersionId -> preview response is not "ok" (manifest org mismatch or NOT_FOUND-shaped 404), never a leaked diff', async () => {
+  // Gate E FIX-B (proof-gaps pass, 2026-08-12) — LUKA 3: `/import/preview` used to have NO ownership
+  // check at all — every cross-tenant attempt fell through to a 200 with `data.ok: false` (the
+  // manifest-org-mismatch / empty-taxonomy-lookup shape below), a weak oracle compared to the
+  // uniform 404 every other tenant-scoped denial in this surface returns. Fixed:
+  // `export-import.routes.ts`'s `/import/preview` handler now checks (business_version_id,
+  // organization_id, artifact_id) ownership BEFORE calling `previewFinanceImport()` at all.
+
+  it('CROSS-TENANT: org B previewing an import against org A\'s businessVersionId -> uniform 404 NOT_FOUND, never a 200 diff-shaped response', async () => {
     const res = await request(appB)
       .post('/api/v8/finance-v2/import/preview')
       .send({ artifactId, businessVersionId: bvId, manifest: parsedManifest, rows: parsedRows });
-    // previewFinanceImport itself has no NOT_FOUND branch (it is a pure diff computation scoped by
-    // the caller's own organizationId at the SQL layer) — org B's context makes every taxonomy
-    // lookup empty, so every row becomes a rowError, and manifestCheck fails on organizationId.
-    expect(res.status).toBe(200);
-    expect(res.body.data.ok).toBe(false);
-    expect(res.body.data.manifestCheck.ok).toBe(false);
-    expect(res.body.data.manifestCheck.issues.join(' ')).toContain('organizationId');
+    expect(res.status).toBe(404);
+    expect(res.body).toHaveProperty('code', 'NOT_FOUND');
+    expect(res.body).not.toHaveProperty('data');
+  });
+
+  it('CROSS-TENANT: org B previewing an import against org A\'s businessVersionId with a MALFORMED body (missing rows) -> SAME uniform 404 NOT_FOUND, NOT 400 INVALID_BODY', async () => {
+    const res = await request(appB)
+      .post('/api/v8/finance-v2/import/preview')
+      .send({ artifactId, businessVersionId: bvId, manifest: parsedManifest }); // no `rows` at all
+    expect(res.status).toBe(404);
+    expect(res.body).toHaveProperty('code', 'NOT_FOUND');
+    expect(res.body.code).not.toBe('INVALID_BODY');
   });
 });
