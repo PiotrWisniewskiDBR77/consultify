@@ -32,6 +32,35 @@
  * `listKpiMeasurements`. See each function's own doc comment for the
  * contract details (append-only supersession, no CAS, no role gate — all
  * verified against the real router/commands, not assumed).
+ *
+ * -- RN-G5 (2026-08-12): added the definition-side WRITE commands
+ * (`createKpiDraft`/`editKpiDraft`/`submitKpiDefinition`/
+ * `approveKpiDefinitionVersion`/`rejectKpiDefinitionVersion`) — until this
+ * package, NOTHING in this file (or anywhere in
+ * `src/components/ResultsVNext/`) called `POST /kpi`, `PUT /:id/draft`,
+ * `POST /:id/submit`, or either `.../definition-versions/:id/(approve|reject)`
+ * — verified by grepping this whole tree for `createKpiDraft`/`submitKpi`/
+ * `approveDefinitionVersion` before writing this: every prior hit was this
+ * file's OWN doc comments, never a call site. It was impossible to create a
+ * KPI through the UI at all.
+ *
+ * Every one of these five, per `kpiDefinitionCommands.ts`
+ * (`server/src/services/resultsVnext/kpi/kpiDefinitionCommands.ts`), is CAS'd
+ * on the definition VERSION's own `rowVersion` (`expectedVersion` in the
+ * request body) — NOT the parent KPI's `rowVersion`. Combined with the
+ * "CONFIRMED BACKEND GAP" above (no GET ever returns the version), this means
+ * a caller can only safely know the correct `expectedVersion` to send for a
+ * version it just created or itself just mutated (the version DTO comes back
+ * as part of every one of these five responses) — never for a version loaded
+ * cold from a `GET /kpi`/`GET /kpi/:id` list/row alone. `ResultsKpiRegistryPage.tsx`
+ * keeps an in-memory `knownVersions` map (populated ONLY from these five
+ * functions' own return values) for exactly this reason, and locks
+ * edit/submit/approve/reject with an honest reason when a KPI's version isn't
+ * in that map — see that file's own header comment for the full design note.
+ * This is a real, load-bearing consequence of the backend gap, not a UI
+ * choice that could be designed away without a new GET endpoint (out of this
+ * package's allowlist — `server/src/services/resultsVnext/**`/
+ * `server/src/routes/resultsVnext/**` are the parallel safety track's files).
  */
 import { Api } from '@/services/api';
 
@@ -55,6 +84,22 @@ export const KPI_DATA_QUALITY_STATUSES = [
 ] as const;
 export type KpiDataQualityStatus = (typeof KPI_DATA_QUALITY_STATUSES)[number];
 
+/** Mirrors `kpiTypes.ts`'s `KPI_TARGET_GEOMETRIES` — 'binary' is the
+ * zero-event-compliance geometry (`binarySuccessValue`, not the numeric
+ * bound columns the other five use). */
+export const KPI_TARGET_GEOMETRIES = [
+  'threshold_min',
+  'threshold_max',
+  'range',
+  'exact',
+  'binary',
+  'custom',
+] as const;
+export type KpiTargetGeometry = (typeof KPI_TARGET_GEOMETRIES)[number];
+
+export const KPI_APPROVAL_STATUSES = ['draft', 'submitted', 'approved', 'rejected'] as const;
+export type KpiApprovalStatus = (typeof KPI_APPROVAL_STATUSES)[number];
+
 /** Wire shape of `rvn_kpi_definitions`, camelCased server-side by `toKpiDefinition`. */
 export interface KpiDefinitionDto {
   kpiId: string;
@@ -69,6 +114,44 @@ export interface KpiDefinitionDto {
   createdBy: string;
   createdAt: string;
   updatedAt: string;
+}
+
+/** Wire shape of `rvn_kpi_definition_versions`, camelCased server-side by
+ * `toKpiDefinitionVersion` — ONLY ever reachable from the response of one of
+ * the five write commands below (see file header "CONFIRMED BACKEND GAP" /
+ * RN-G5 note), never from a GET. */
+export interface KpiDefinitionVersionDto {
+  definitionVersionId: string;
+  kpiId: string;
+  organizationId: string;
+  versionNumber: number;
+  name: string;
+  description: string | null;
+  unit: string | null;
+  targetGeometry: KpiTargetGeometry;
+  targetValue: number | null;
+  targetMin: number | null;
+  targetMax: number | null;
+  warningLow: number | null;
+  warningHigh: number | null;
+  criticalLow: number | null;
+  criticalHigh: number | null;
+  binarySuccessValue: number | null;
+  formulaText: string | null;
+  approvalStatus: KpiApprovalStatus;
+  effectiveFrom: string | null;
+  effectiveTo: string | null;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+  submittedBy: string | null;
+  submittedAt: string | null;
+  approvedBy: string | null;
+  approvedAt: string | null;
+  rejectedBy: string | null;
+  rejectedAt: string | null;
+  rejectionReason: string | null;
+  rowVersion: number;
 }
 
 /** Wire shape of `rvn_kpi_measurements`, camelCased server-side by `toKpiMeasurement`. */
@@ -116,6 +199,28 @@ export function httpErrorCode(err: unknown): string | undefined {
   return isHttpError(err) ? err.data?.code : undefined;
 }
 
+/** `handleKpiRouteError`'s 409 branch (`AtomicWriteConflictError` /
+ * `KpiDefinitionValidationError`) — a real CAS/state-transition conflict,
+ * distinct from a validation 400 or a not-found 404. */
+export function isConflictError(err: unknown): boolean {
+  return isHttpError(err) && err.status === 409;
+}
+
+/** `handleKpiRouteError`'s 403 branch — `SelfApprovalDeniedError`
+ * specifically (`kpiDefinitionCommands.ts`: `submitted_by`/`created_by` ===
+ * the approver). No other write endpoint in `kpi.routes.ts` returns 403. */
+export function isSelfApprovalDeniedError(err: unknown): boolean {
+  return isHttpError(err) && err.status === 403;
+}
+
+/** New idempotency key per form OPEN (not per submit) — same convention as
+ * `roiApi.ts`'s `newRoiIdempotencyKey`: a retry within the same open (e.g.
+ * after a transient network error) reuses it, so a double-send can never
+ * create two KPIs / apply the same submit/approve/reject twice. */
+export function newKpiIdempotencyKey(): string {
+  return crypto.randomUUID();
+}
+
 export interface ListKpisParams {
   status?: KpiStatus;
   limit?: number;
@@ -147,6 +252,191 @@ export async function getKpi(kpiId: string): Promise<KpiDefinitionDto | null> {
     if (isNotFoundError(err)) return null;
     throw err;
   }
+}
+
+// ==========================================
+// RN-G5 (2026-08-12) — definition-side WRITE commands: create -> edit draft
+// -> submit -> approve/reject. Contracts verified by reading the real router
+// (`kpi.routes.ts`) and commands (`kpiDefinitionCommands.ts`) before writing
+// this — see file header note.
+// ==========================================
+
+export interface CreateKpiDraftInput {
+  kpiCode: string;
+  name: string;
+  description?: string | null;
+  unit?: string | null;
+  targetGeometry: KpiTargetGeometry;
+  targetValue?: number | null;
+  targetMin?: number | null;
+  targetMax?: number | null;
+  warningLow?: number | null;
+  warningHigh?: number | null;
+  criticalLow?: number | null;
+  criticalHigh?: number | null;
+  binarySuccessValue?: number | null;
+  formulaText?: string | null;
+  reason?: string | null;
+  idempotencyKey: string;
+}
+
+export interface CreateKpiDraftResult {
+  kpi: KpiDefinitionDto;
+  definitionVersion: KpiDefinitionVersionDto;
+}
+
+/** `POST /api/vnext/results/kpi` — the ONLY create endpoint (creates the
+ * `rvn_kpi_definitions` root row AND its version-1
+ * `rvn_kpi_definition_versions` row in one atomic write). `ownerUserId` is
+ * deliberately NOT accepted here — the route defaults it to the caller
+ * (`ownerUserId ?? createdBy`, `kpi.routes.ts`), and (per this file's header
+ * "CONFIRMED BACKEND GAP" note) there is no generally-available "list org
+ * members" endpoint a normal member can call to populate a picker for
+ * anyone else anyway (same reasoning `RoiCaseCreateModal.tsx` documents for
+ * ROI's owner field). */
+export async function createKpiDraft(input: CreateKpiDraftInput): Promise<CreateKpiDraftResult> {
+  const resp = await Api.post('/vnext/results/kpi', {
+    kpiCode: input.kpiCode,
+    name: input.name,
+    description: input.description ?? null,
+    unit: input.unit ?? null,
+    targetGeometry: input.targetGeometry,
+    targetValue: input.targetValue ?? null,
+    targetMin: input.targetMin ?? null,
+    targetMax: input.targetMax ?? null,
+    warningLow: input.warningLow ?? null,
+    warningHigh: input.warningHigh ?? null,
+    criticalLow: input.criticalLow ?? null,
+    criticalHigh: input.criticalHigh ?? null,
+    binarySuccessValue: input.binarySuccessValue ?? null,
+    formulaText: input.formulaText ?? null,
+    reason: input.reason ?? null,
+    idempotencyKey: input.idempotencyKey,
+  });
+  return { kpi: resp?.kpi as KpiDefinitionDto, definitionVersion: resp?.definitionVersion as KpiDefinitionVersionDto };
+}
+
+export interface EditKpiDraftInput {
+  /** CAS — the definition version's OWN `rowVersion` (see file header), NOT
+   * the parent KPI's. Must come from a `KpiDefinitionVersionDto` this client
+   * itself received (create/edit/submit/approve/reject response) — never
+   * guessed. */
+  expectedVersion: number;
+  name?: string;
+  description?: string | null;
+  unit?: string | null;
+  targetGeometry?: KpiTargetGeometry;
+  targetValue?: number | null;
+  targetMin?: number | null;
+  targetMax?: number | null;
+  warningLow?: number | null;
+  warningHigh?: number | null;
+  criticalLow?: number | null;
+  criticalHigh?: number | null;
+  binarySuccessValue?: number | null;
+  formulaText?: string | null;
+  reason?: string | null;
+  idempotencyKey: string;
+}
+
+/** `PUT /api/vnext/results/kpi/:kpiId/draft` — 409 `NOT_A_DRAFT` when the
+ * current version's `approvalStatus` isn't `'draft'` (`editDraft`'s own
+ * guard, `kpiDefinitionCommands.ts`). */
+export async function editKpiDraft(
+  kpiId: string,
+  input: EditKpiDraftInput
+): Promise<KpiDefinitionVersionDto> {
+  const resp = await Api.put(`/vnext/results/kpi/${encodeURIComponent(kpiId)}/draft`, {
+    expectedVersion: input.expectedVersion,
+    name: input.name,
+    description: input.description,
+    unit: input.unit,
+    targetGeometry: input.targetGeometry,
+    targetValue: input.targetValue,
+    targetMin: input.targetMin,
+    targetMax: input.targetMax,
+    warningLow: input.warningLow,
+    warningHigh: input.warningHigh,
+    criticalLow: input.criticalLow,
+    criticalHigh: input.criticalHigh,
+    binarySuccessValue: input.binarySuccessValue,
+    formulaText: input.formulaText,
+    reason: input.reason ?? null,
+    idempotencyKey: input.idempotencyKey,
+  });
+  return resp?.definitionVersion as KpiDefinitionVersionDto;
+}
+
+export interface SubmitKpiDefinitionInput {
+  expectedVersion: number;
+  reason?: string | null;
+  idempotencyKey: string;
+}
+
+/** `POST /api/vnext/results/kpi/:kpiId/submit` — draft -> submitted (version)
+ * / draft -> pending_approval (KPI root). 409 `NOT_A_DRAFT` if already
+ * submitted/approved/rejected. */
+export async function submitKpiDefinition(
+  kpiId: string,
+  input: SubmitKpiDefinitionInput
+): Promise<KpiDefinitionVersionDto> {
+  const resp = await Api.post(`/vnext/results/kpi/${encodeURIComponent(kpiId)}/submit`, {
+    expectedVersion: input.expectedVersion,
+    reason: input.reason ?? null,
+    idempotencyKey: input.idempotencyKey,
+  });
+  return resp?.definitionVersion as KpiDefinitionVersionDto;
+}
+
+export interface ApproveKpiDefinitionVersionInput {
+  expectedVersion: number;
+  reason?: string | null;
+  idempotencyKey: string;
+}
+
+/** `POST .../definition-versions/:versionId/approve` — submitted -> approved.
+ * 403 `SELF_APPROVAL_DENIED` when the caller is the version's own
+ * `submittedBy`/`createdBy` (`SelfApprovalDeniedError`,
+ * `kpiDefinitionCommands.ts` — checked server-side, first, before any write;
+ * this client never tries to pre-guess it). 409 `NOT_SUBMITTED` if the
+ * version isn't currently `'submitted'`. */
+export async function approveKpiDefinitionVersion(
+  kpiId: string,
+  versionId: string,
+  input: ApproveKpiDefinitionVersionInput
+): Promise<KpiDefinitionVersionDto> {
+  const resp = await Api.post(
+    `/vnext/results/kpi/${encodeURIComponent(kpiId)}/definition-versions/${encodeURIComponent(versionId)}/approve`,
+    { expectedVersion: input.expectedVersion, reason: input.reason ?? null, idempotencyKey: input.idempotencyKey }
+  );
+  return resp?.definitionVersion as KpiDefinitionVersionDto;
+}
+
+export interface RejectKpiDefinitionVersionInput {
+  expectedVersion: number;
+  rejectionReason: string;
+  idempotencyKey: string;
+}
+
+/** `POST .../definition-versions/:versionId/reject` — submitted -> rejected
+ * (version) / pending_approval -> draft (KPI root, so it can be edited and
+ * resubmitted). `rejectionReason` is REQUIRED non-empty
+ * (`RejectDefinitionVersionSchema.rejectionReason: z.string().min(1)`) — NOT
+ * the optional `reason` the other four commands take. */
+export async function rejectKpiDefinitionVersion(
+  kpiId: string,
+  versionId: string,
+  input: RejectKpiDefinitionVersionInput
+): Promise<KpiDefinitionVersionDto> {
+  const resp = await Api.post(
+    `/vnext/results/kpi/${encodeURIComponent(kpiId)}/definition-versions/${encodeURIComponent(versionId)}/reject`,
+    {
+      expectedVersion: input.expectedVersion,
+      rejectionReason: input.rejectionReason,
+      idempotencyKey: input.idempotencyKey,
+    }
+  );
+  return resp?.definitionVersion as KpiDefinitionVersionDto;
 }
 
 export interface ListKpiMeasurementsParams {
