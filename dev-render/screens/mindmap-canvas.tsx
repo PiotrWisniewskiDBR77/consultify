@@ -107,6 +107,22 @@ const INITIAL_MAP = {
           parentId: 'branch-scope',
         },
       },
+      // S9-GATE4EVIDENCE / Mission A: głębokość 3 (center→branch→idea→ten
+      // węzeł) NIE istniała w żadnym fixture harnessu — S1-CONTRAST zmierzył
+      // tylko depth 2 i nazwał depth 3 „hipotetyczną". `getNodeDepth()`
+      // (mindMapNodeModel.ts) liczy głębokość z realnego łańcucha krawędzi,
+      // więc ten węzeł faktycznie renderuje się z `opacity-80` (depthOpacity
+      // w IdeaRecommendationMap.tsx:1385) — patrz `e-scope-1-detail` niżej.
+      {
+        id: 'idea-scope-1-detail',
+        type: 'idea',
+        position: { x: 200, y: -80 },
+        data: {
+          label: 'Szablon change-request w dwóch językach (PL/EN)',
+          kind: 'idea',
+          parentId: 'idea-scope-1',
+        },
+      },
       // 2:00 — Efektywność zespołu
       {
         id: 'branch-team',
@@ -243,6 +259,13 @@ const INITIAL_MAP = {
       { id: 'e-c-governance', source: 'center-1', target: 'branch-governance', type: 'gradient' },
       { id: 'e-scope-1', source: 'branch-scope', target: 'idea-scope-1', type: 'gradient' },
       { id: 'e-scope-2', source: 'branch-scope', target: 'idea-scope-2', type: 'gradient' },
+      // depth 3: idea-scope-1 (depth 2) → idea-scope-1-detail (depth 3).
+      {
+        id: 'e-scope-1-detail',
+        source: 'idea-scope-1',
+        target: 'idea-scope-1-detail',
+        type: 'gradient',
+      },
       { id: 'e-team-1', source: 'branch-team', target: 'idea-team-1', type: 'gradient' },
       { id: 'e-team-2', source: 'branch-team', target: 'idea-team-2', type: 'gradient' },
       { id: 'e-quality-1', source: 'branch-quality', target: 'idea-quality-1', type: 'gradient' },

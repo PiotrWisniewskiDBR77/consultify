@@ -1763,11 +1763,34 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
                   // 3.22:1 at depth 2 (this badge inherits the node's depth-based fade,
                   // `depthOpacity` above — opacity-90 at depth 2, opacity-80 at depth
                   // 3+) against the 4.5:1 WCAG 1.4.3 text bar. text-c-text-secondary
-                  // clears it in both themes (8.26:1 dark / 5.41:1 light at depth 2 —
+                  // cleared it in both themes AT DEPTH 2 (8.92:1 dark / 5.60:1 light —
                   // see docs/qa/ideas-complete-transformation-2026-08-09/21_FOCUS_AND_CONTRAST.md
-                  // §8) and replaces the raw Tailwind slate-* with a design token.
+                  // §8), but S1-CONTRAST only measured depth 2 and called depth 3+
+                  // "hypothetical". S9-GATE4EVIDENCE (2026-08-12) built a real
+                  // depth-3 node (dev-render/screens/mindmap-canvas.tsx,
+                  // idea-scope-1-detail) and measured it: at opacity-80 (depth 3+),
+                  // text-c-text-secondary composites to 4.41:1 in LIGHT theme — a
+                  // real, reachable sub-4.5 failure (dark stays fine at 7.22:1,
+                  // min-opacity for text-c-text-secondary to clear 4.5:1 is 0.8096,
+                  // i.e. the depth-3 fade of 0.8 misses by less than 0.01 alpha).
+                  //
+                  // Fix: text-c-text (the strong-text token, NEVER the tailwind
+                  // "primary" family — every shade of that is crimson) instead
+                  // of text-c-text-secondary. Three options were
+                  // weighed: (1) exempt the badge from depthOpacity entirely —
+                  // rejected, it would need moving the badge outside the node's
+                  // opacity stacking context (portal/absolute overlay), a much
+                  // bigger structural change for a 1-line contrast fix; (2) raise
+                  // the depth-3 opacity value itself — rejected, that refades the
+                  // WHOLE node (border+bg+every child), not just this label, losing
+                  // the depth-hierarchy visual the opacity ladder exists for;
+                  // (3) THIS: strengthen only the badge's own color token. Clears
+                  // with margin at every depth in both themes (light: 9.32:1 at
+                  // depth3 / 13.01:1 at depth2; dark: 11.48:1 at depth3 / 14.43:1 at
+                  // depth2 — computed via scripts/contrast-ratio.mjs), so it never
+                  // regresses if the opacity ladder changes again later.
                   <div
-                    className="text-[8px] text-c-text-secondary ml-auto"
+                    className="text-[8px] text-c-text ml-auto"
                     title={`Depth ${depth}`}
                   >
                     L{depth}
