@@ -2429,6 +2429,7 @@ router.post(
       const { caseId } = req.params as { caseId: string };
       if (!(await requireExistingRoiCase(auth, caseId, res))) return;
       const body = req.body as import('zod').infer<typeof PublishRoiActualSnapshotSchema>;
+      const access = await resolveAccess(req, auth);
       const outcome = await publishRoiActualSnapshot({
         caseId,
         organizationId: auth.organizationId,
@@ -2439,6 +2440,7 @@ router.post(
         idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
         correlationId: getCorrelationId(req),
         reason: body.reason ?? null,
+        access,
       });
       res.status(outcome.outcome === 'applied' ? 201 : 200).json({
         outcome: outcome.outcome,
@@ -2522,6 +2524,7 @@ router.post(
       const { caseId } = req.params as { caseId: string };
       if (!(await requireExistingRoiCase(auth, caseId, res))) return;
       const body = req.body as import('zod').infer<typeof RecordVarianceSchema>;
+      const access = await resolveAccess(req, auth);
       const outcome = await recordVariance({
         caseId,
         organizationId: auth.organizationId,
@@ -2536,6 +2539,7 @@ router.post(
         idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
         correlationId: getCorrelationId(req),
         reason: body.reason ?? null,
+        access,
       });
       res.status(outcome.outcome === 'applied' ? 201 : 200).json({
         outcome: outcome.outcome,
@@ -2579,6 +2583,7 @@ router.patch(
     try {
       const { caseId, varianceId } = req.params as { caseId: string; varianceId: string };
       const body = req.body as import('zod').infer<typeof UpdateVarianceStatusSchema>;
+      const access = await resolveAccess(req, auth);
       const outcome = await updateVarianceStatus({
         varianceId,
         caseId,
@@ -2591,6 +2596,7 @@ router.patch(
         idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
         correlationId: getCorrelationId(req),
         reason: body.reason ?? null,
+        access,
       });
       res.status(200).json({
         outcome: outcome.outcome,
@@ -2616,6 +2622,7 @@ router.post(
     try {
       const { varianceId } = req.params as { caseId: string; varianceId: string };
       const body = req.body as import('zod').infer<typeof AddVarianceCauseSchema>;
+      const access = await resolveAccess(req, auth);
       const outcome = await addVarianceCause({
         varianceId,
         organizationId: auth.organizationId,
@@ -2627,6 +2634,7 @@ router.post(
         idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
         correlationId: getCorrelationId(req),
         reason: body.reason ?? null,
+        access,
       });
       res.status(outcome.outcome === 'applied' ? 201 : 200).json({
         outcome: outcome.outcome,
@@ -2650,6 +2658,7 @@ router.delete(
     try {
       const { varianceId, causeId } = req.params as { caseId: string; varianceId: string; causeId: string };
       const body = req.body as import('zod').infer<typeof RemoveVarianceCauseSchema>;
+      const access = await resolveAccess(req, auth);
       const outcome = await removeVarianceCause({
         causeId,
         varianceId,
@@ -2659,6 +2668,7 @@ router.delete(
         idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
         correlationId: getCorrelationId(req),
         reason: body.reason ?? null,
+        access,
       });
       res.status(200).json({
         outcome: outcome.outcome,
