@@ -30,4 +30,3 @@
       Tests  24 skipped (24)
    Start at  21:55:35
    Duration  474ms (transform 76ms, setup 0ms, import 103ms, tests 0ms, environment 0ms)
-

@@ -109,4 +109,3 @@ stdout | src/services/finance/canonical/__tests__/canonicalServices.pg.test.ts >
       Tests  24 passed (24)
    Start at  21:55:31
    Duration  2.49s (transform 512ms, setup 0ms, import 105ms, tests 1.93s, environment 0ms)
-

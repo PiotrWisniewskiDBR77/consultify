@@ -66,5 +66,3 @@ AssertionError: expected 410 to be 201 // Object.is equality
     1789|     expect(res.body.data?.success).toBe(true);
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
-
-
