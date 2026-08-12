@@ -40,6 +40,10 @@ import {
   type AtomicCommandOutcome,
   type AtomicEventInput,
 } from '../platform/atomicWrite.js';
+import {
+  assertCommandCapability,
+  type CommandAccessContext,
+} from '../platform/commandCapabilityGuard.js';
 import { attachSourceEventId, createObligation } from '../platform/obligations.js';
 
 import { computeStateHash, KPI_EVENT_SOURCE } from './kpiDefinitionCommands.js';
@@ -60,6 +64,31 @@ import type { KpiMeasurementRow } from './kpiTypes.js';
 
 export const EXPLAIN_DEVIATION_OBLIGATION_TYPE = 'explain_warning_critical_deviation';
 export const DEVIATION_CASE_REFERENCE_TYPE = 'deviation_case';
+
+// ==========================================
+// RN-G5 — command capability names (docs/product/results-vnext/RN_G5_AUTHZ_DESIGN.md)
+//
+// Dotted-family convention already used by the rest of this codebase's
+// capability strings (see effectiveAccessService.ts's CANVAS_MEMBER_CAPABILITIES
+// / FACTORY_ROLE_TEMPLATES, e.g. `initiative.raid.manage`). SUPERADMIN/OWNER/
+// ADMIN pass every one of these automatically via the '*' wildcard
+// `resolveEffectiveAccess` grants them — these strings only matter for a
+// regular member who has (or has not) been explicitly granted one, OR who
+// is the case's own owner_user_id/manager_user_id (checked by the SAME
+// guard call, see commandCapabilityGuard.ts).
+// ==========================================
+export const DEVIATION_CAPABILITIES = {
+  acknowledge: 'results.kpi.deviation.acknowledge',
+  submitRootCause: 'results.kpi.deviation.submit_root_cause',
+  submitPlan: 'results.kpi.deviation.submit_plan',
+  approvePlan: 'results.kpi.deviation.approve_plan',
+  recordRecoveryObservation: 'results.kpi.deviation.record_recovery_observation',
+  submitEffectivenessVerification: 'results.kpi.deviation.submit_effectiveness_verification',
+  close: 'results.kpi.deviation.close',
+  escalate: 'results.kpi.deviation.escalate',
+  deescalate: 'results.kpi.deviation.deescalate',
+  reopen: 'results.kpi.deviation.reopen',
+} as const;
 
 // ==========================================
 // ERRORS
@@ -377,6 +406,8 @@ export interface CloseDeviationCaseInput {
   correlationId?: string;
   causationId?: string | null;
   reason?: string | null;
+  /** RN-G5: resolved once by the route via `resolveEffectiveAccess`. */
+  access: CommandAccessContext;
 }
 
 export async function closeDeviationCase(
@@ -384,7 +415,7 @@ export async function closeDeviationCase(
 ): Promise<AtomicCommandOutcome<DeviationCase>> {
   const {
     caseId, organizationId, expectedVersion, actorUserId, actorEffectiveRole,
-    idempotencyKey, correlationId, causationId = null, reason = null,
+    idempotencyKey, correlationId, causationId = null, reason = null, access,
   } = input;
 
   let beforeState: Record<string, unknown> | null = null;
@@ -397,6 +428,16 @@ export async function closeDeviationCase(
     loadForUpdate: loadDeviationCaseForUpdate,
     getCurrentVersion: caseRowVersion,
     applyMutation: async (client, currentRow, nextVersion) => {
+      // RN-G5: authorization FIRST, before any read/write past the row lock
+      // loadForUpdate already took — see commandCapabilityGuard.ts's header
+      // for why this runs before any domain-state check.
+      assertCommandCapability({
+        access,
+        actorUserId,
+        capability: DEVIATION_CAPABILITIES.close,
+        responsibleUserIds: [currentRow.owner_user_id, currentRow.manager_user_id],
+      });
+
       if (currentRow.status !== 'verification') {
         throw new KpiDeviationValidationError(
           `Case ${caseId} is "${currentRow.status}" — only a case in "verification" may be closed`,
@@ -495,14 +536,14 @@ interface BaseCaseCommandInput {
 // acknowledgeDeviationCase: open -> analysis_required
 // ==========================================
 
-export type AcknowledgeDeviationCaseInput = BaseCaseCommandInput;
+export type AcknowledgeDeviationCaseInput = BaseCaseCommandInput & { access: CommandAccessContext };
 
 export async function acknowledgeDeviationCase(
   input: AcknowledgeDeviationCaseInput
 ): Promise<AtomicCommandOutcome<DeviationCase>> {
   const {
     caseId, organizationId, expectedVersion, actorUserId, actorEffectiveRole,
-    idempotencyKey, correlationId, causationId = null, reason = null,
+    idempotencyKey, correlationId, causationId = null, reason = null, access,
   } = input;
 
   let beforeState: Record<string, unknown> | null = null;
@@ -514,6 +555,13 @@ export async function acknowledgeDeviationCase(
     loadForUpdate: loadDeviationCaseForUpdate,
     getCurrentVersion: caseRowVersion,
     applyMutation: async (client, currentRow, nextVersion) => {
+      assertCommandCapability({
+        access,
+        actorUserId,
+        capability: DEVIATION_CAPABILITIES.acknowledge,
+        responsibleUserIds: [currentRow.owner_user_id, currentRow.manager_user_id],
+      });
+
       if (currentRow.status !== 'open') {
         throw new KpiDeviationValidationError(
           `Case ${caseId} is "${currentRow.status}" — only an "open" case may be acknowledged`,
@@ -576,6 +624,7 @@ export interface SubmitRootCauseInput extends BaseCaseCommandInput {
   recurrenceFlag?: boolean;
   expectedRecoveryDate?: string | null;
   expectedRecoveryValue?: number | null;
+  access: CommandAccessContext;
 }
 
 export async function submitRootCause(
@@ -585,7 +634,7 @@ export async function submitRootCause(
     caseId, organizationId, expectedVersion, actorUserId, actorEffectiveRole,
     idempotencyKey, correlationId, causationId = null, reason = null,
     rootCauseSummary = null, rootCauseCategory = null, recurrenceFlag = false,
-    expectedRecoveryDate = null, expectedRecoveryValue = null,
+    expectedRecoveryDate = null, expectedRecoveryValue = null, access,
   } = input;
 
   let beforeState: Record<string, unknown> | null = null;
@@ -598,6 +647,13 @@ export async function submitRootCause(
     loadForUpdate: loadDeviationCaseForUpdate,
     getCurrentVersion: caseRowVersion,
     applyMutation: async (client, currentRow, nextVersion) => {
+      assertCommandCapability({
+        access,
+        actorUserId,
+        capability: DEVIATION_CAPABILITIES.submitRootCause,
+        responsibleUserIds: [currentRow.owner_user_id, currentRow.manager_user_id],
+      });
+
       if (currentRow.status !== 'analysis_required') {
         throw new KpiDeviationValidationError(
           `Case ${caseId} is "${currentRow.status}" — root cause may only be submitted while "analysis_required"`,
@@ -682,14 +738,14 @@ export async function submitRootCause(
 // submitPlan: plan_required -> plan_submitted (guard: >=1 corrective action)
 // ==========================================
 
-export type SubmitPlanInput = BaseCaseCommandInput;
+export type SubmitPlanInput = BaseCaseCommandInput & { access: CommandAccessContext };
 
 export async function submitPlan(
   input: SubmitPlanInput
 ): Promise<AtomicCommandOutcome<DeviationCase>> {
   const {
     caseId, organizationId, expectedVersion, actorUserId, actorEffectiveRole,
-    idempotencyKey, correlationId, causationId = null, reason = null,
+    idempotencyKey, correlationId, causationId = null, reason = null, access,
   } = input;
 
   let beforeState: Record<string, unknown> | null = null;
@@ -701,6 +757,13 @@ export async function submitPlan(
     loadForUpdate: loadDeviationCaseForUpdate,
     getCurrentVersion: caseRowVersion,
     applyMutation: async (client, currentRow, nextVersion) => {
+      assertCommandCapability({
+        access,
+        actorUserId,
+        capability: DEVIATION_CAPABILITIES.submitPlan,
+        responsibleUserIds: [currentRow.owner_user_id, currentRow.manager_user_id],
+      });
+
       if (currentRow.status !== 'plan_required') {
         throw new KpiDeviationValidationError(
           `Case ${caseId} is "${currentRow.status}" — a plan may only be submitted while "plan_required"`,
@@ -772,6 +835,7 @@ export async function submitPlan(
 
 export interface ApprovePlanInput extends BaseCaseCommandInput {
   approverId: string;
+  access: CommandAccessContext;
 }
 
 export async function approvePlan(
@@ -779,7 +843,7 @@ export async function approvePlan(
 ): Promise<AtomicCommandOutcome<DeviationCase>> {
   const {
     caseId, organizationId, expectedVersion, approverId, actorEffectiveRole,
-    idempotencyKey, correlationId, causationId = null, reason = null,
+    idempotencyKey, correlationId, causationId = null, reason = null, access,
   } = input;
 
   let beforeState: Record<string, unknown> | null = null;
@@ -791,8 +855,20 @@ export async function approvePlan(
     loadForUpdate: loadDeviationCaseForUpdate,
     getCurrentVersion: caseRowVersion,
     applyMutation: async (client, currentRow, nextVersion) => {
-      // Self-approval denial FIRST, before any write — same discipline as
-      // kpiDefinitionCommands.approveDefinitionVersion.
+      // RN-G5: coarse authorization FIRST — "can this actor touch
+      // approvePlan at all" — BEFORE the maker-checker self-approval check
+      // below, which is a finer-grained business rule ("even an authorized
+      // approver may not approve their own submission"). See
+      // commandCapabilityGuard.ts's header for the full ordering rationale.
+      assertCommandCapability({
+        access,
+        actorUserId: approverId,
+        capability: DEVIATION_CAPABILITIES.approvePlan,
+        responsibleUserIds: [currentRow.owner_user_id, currentRow.manager_user_id],
+      });
+
+      // Self-approval denial SECOND, still before any write — same
+      // discipline as kpiDefinitionCommands.approveDefinitionVersion.
       if (currentRow.plan_submitted_by === approverId) {
         throw new DeviationSelfApprovalDeniedError(caseId, approverId, 'plan_submitted_by');
       }
@@ -859,6 +935,7 @@ export async function approvePlan(
 
 export interface RecordRecoveryObservationInput extends BaseCaseCommandInput {
   recoveryObservationMeasurementId: string;
+  access: CommandAccessContext;
 }
 
 export async function recordRecoveryObservation(
@@ -867,7 +944,7 @@ export async function recordRecoveryObservation(
   const {
     caseId, organizationId, expectedVersion, actorUserId, actorEffectiveRole,
     idempotencyKey, correlationId, causationId = null, reason = null,
-    recoveryObservationMeasurementId,
+    recoveryObservationMeasurementId, access,
   } = input;
 
   let beforeState: Record<string, unknown> | null = null;
@@ -879,6 +956,13 @@ export async function recordRecoveryObservation(
     loadForUpdate: loadDeviationCaseForUpdate,
     getCurrentVersion: caseRowVersion,
     applyMutation: async (client, currentRow, nextVersion) => {
+      assertCommandCapability({
+        access,
+        actorUserId,
+        capability: DEVIATION_CAPABILITIES.recordRecoveryObservation,
+        responsibleUserIds: [currentRow.owner_user_id, currentRow.manager_user_id],
+      });
+
       if (currentRow.status !== 'executing') {
         throw new KpiDeviationValidationError(
           `Case ${caseId} is "${currentRow.status}" — a recovery observation may only be recorded while "executing"`,
@@ -956,6 +1040,7 @@ export interface SubmitEffectivenessVerificationInput extends BaseCaseCommandInp
   outcome: EffectivenessVerificationStatus;
   rationale?: string | null;
   measurementIds?: string[];
+  access: CommandAccessContext;
 }
 
 export interface SubmitEffectivenessVerificationResult {
@@ -970,7 +1055,7 @@ export async function submitEffectivenessVerification(
     caseId, organizationId, expectedVersion, actorUserId, actorEffectiveRole,
     idempotencyKey, correlationId, causationId = null, reason = null,
     verificationWindowStart, verificationWindowEnd, outcome, rationale = null,
-    measurementIds = [],
+    measurementIds = [], access,
   } = input;
 
   let beforeState: Record<string, unknown> | null = null;
@@ -982,6 +1067,13 @@ export async function submitEffectivenessVerification(
     loadForUpdate: loadDeviationCaseForUpdate,
     getCurrentVersion: caseRowVersion,
     applyMutation: async (client, currentRow, nextVersion) => {
+      assertCommandCapability({
+        access,
+        actorUserId,
+        capability: DEVIATION_CAPABILITIES.submitEffectivenessVerification,
+        responsibleUserIds: [currentRow.owner_user_id, currentRow.manager_user_id],
+      });
+
       if (currentRow.status !== 'executing' && currentRow.status !== 'recovery_observed') {
         throw new KpiDeviationValidationError(
           `Case ${caseId} is "${currentRow.status}" — an effectiveness verification may only be submitted while "executing" or "recovery_observed"`,
@@ -1067,16 +1159,18 @@ export async function submitEffectivenessVerification(
 
 export interface EscalateDeviationCaseInput extends BaseCaseCommandInput {
   escalatedReason?: string | null;
+  access: CommandAccessContext;
 }
 
 async function runEscalationOverlay(
   eventType: string,
   escalated: boolean,
+  capability: string,
   input: EscalateDeviationCaseInput
 ): Promise<AtomicCommandOutcome<DeviationCase>> {
   const {
     caseId, organizationId, expectedVersion, actorUserId, actorEffectiveRole,
-    idempotencyKey, correlationId, causationId = null, reason = null, escalatedReason = null,
+    idempotencyKey, correlationId, causationId = null, reason = null, escalatedReason = null, access,
   } = input;
 
   let beforeState: Record<string, unknown> | null = null;
@@ -1088,6 +1182,13 @@ async function runEscalationOverlay(
     loadForUpdate: loadDeviationCaseForUpdate,
     getCurrentVersion: caseRowVersion,
     applyMutation: async (client, currentRow, nextVersion) => {
+      assertCommandCapability({
+        access,
+        actorUserId,
+        capability,
+        responsibleUserIds: [currentRow.owner_user_id, currentRow.manager_user_id],
+      });
+
       if (currentRow.status === 'closed') {
         throw new KpiDeviationValidationError(
           `Case ${caseId} is "closed" — escalation overlay cannot change on a closed case`,
@@ -1155,13 +1256,23 @@ async function runEscalationOverlay(
 export function escalateDeviationCase(
   input: EscalateDeviationCaseInput
 ): Promise<AtomicCommandOutcome<DeviationCase>> {
-  return runEscalationOverlay('kpi.deviation_manager_escalated', true, input);
+  return runEscalationOverlay(
+    'kpi.deviation_manager_escalated',
+    true,
+    DEVIATION_CAPABILITIES.escalate,
+    input
+  );
 }
 
 export function deescalateDeviationCase(
   input: EscalateDeviationCaseInput
 ): Promise<AtomicCommandOutcome<DeviationCase>> {
-  return runEscalationOverlay('kpi.deviation_deescalated', false, input);
+  return runEscalationOverlay(
+    'kpi.deviation_deescalated',
+    false,
+    DEVIATION_CAPABILITIES.deescalate,
+    input
+  );
 }
 
 // ==========================================
@@ -1184,6 +1295,7 @@ export interface ReopenDeviationCaseInput {
   triggerMeasurementId?: string;
   ownerUserId?: string;
   managerUserId?: string | null;
+  access: CommandAccessContext;
 }
 
 export async function reopenDeviationCase(
@@ -1192,7 +1304,7 @@ export async function reopenDeviationCase(
   const {
     priorCaseId, organizationId, actorUserId, actorEffectiveRole, idempotencyKey,
     correlationId, causationId = null, reason = null,
-    triggerMeasurementId, ownerUserId, managerUserId,
+    triggerMeasurementId, ownerUserId, managerUserId, access,
   } = input;
 
   return executeAtomicCreate<DeviationCase>({
@@ -1208,6 +1320,17 @@ export async function reopenDeviationCase(
           priorCaseId,
         });
       }
+
+      // RN-G5: the prior (closed) case's own owner/manager are the
+      // "responsible people" for a reopen — there is no new row yet to read
+      // them off, but the case being reopened already has them.
+      assertCommandCapability({
+        access,
+        actorUserId,
+        capability: DEVIATION_CAPABILITIES.reopen,
+        responsibleUserIds: [prior.owner_user_id, prior.manager_user_id],
+      });
+
       if (prior.status !== 'closed') {
         throw new KpiDeviationValidationError(
           `Deviation case ${priorCaseId} is "${prior.status}" — only a closed case may be reopened`,
