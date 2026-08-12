@@ -27,10 +27,12 @@ Na gałęzi `codex/finance-v3-complete-product-integration` (worktree `~/consult
 
 ## PUNKT STARTU
 
-- Gałąź integracyjna: **`codex/finance-v3-complete-product-integration` @ `45c39d68d0`**
-  (+ commit dokumentacyjny z handoffem).
+- Gałąź integracyjna: **`codex/finance-v3-complete-product-integration` @ `49071c3e2d`**
+  (kanoniczny SHA po Gate 0 VERIFIED 2026-08-12 — zob. `GATE_0_TRUST_REBUILD_2026-08-12.md`
+  w tym katalogu; poprzedni punkt startu `45c39d68d0` jest przodkiem tego SHA).
 - Stan: migracje STRICT **exit 0 / 637**, `tsc -p server` **exit 0 zero linii**,
-  **32 endpointy** `/api/v8/finance-v2/*` (na starcie poprzedniej sesji: **2**).
+  **32 endpointy** `/api/v8/finance-v2/*` (na starcie poprzedniej sesji: **2**; na gałęzi B3
+  dochodzi do **53**).
 - **NOT PUSHED / NOT MERGED / NOT DEPLOYED / STAGING NOT VERIFIED / PRODUCTION NOT VERIFIED.**
 
 ## ZAKAZ BEZWZGLĘDNY
@@ -47,7 +49,11 @@ jako UNVERIFIED**. Kolejność:
 
 1. **B3 — Valuation API** (`codex/fv3p-b3-valuationapi` @ `9604652e27`).
    Doszedł najdalej: **53 endpointy** na swojej gałęzi (21 nowych `/finance-v2/valuation/*`).
-   Ma **napisane, ale nieuruchomione** dwa pliki testów. Domknij: uruchom je, udowodnij montaż
+   Ma **dwa pliki testów ZACOMMITOWANE w `9604652e27`** (`valuation.routes.pg.test.ts` 655 linii +
+   `valuation-cross-tenant.routes.pg.test.ts` 256 linii, razem 911 linii), ale **nigdy
+   nieuruchomione i niezweryfikowane** — Git potwierdził, że są w commicie; wcześniejsze
+   sformułowanie „niezacommitowane" było błędne, patrz `GATE_0_TRUST_REBUILD_2026-08-12.md` §7.
+   Domknij: uruchom je, udowodnij montaż
    wzorcem **`404` z `code:'NOT_FOUND'` vs `404` bez `code`** (`401` niczego nie dowodzi — auth
    stoi przed routingiem), macierz cross-tenant z **niezależnym odczytem SQL**, oraz **twardy
    dowód, że metoda bez kompletnych danych zwraca `N/A`, a NIGDY `PLN 0`** (DEC-FIN-005).
@@ -81,14 +87,25 @@ jako UNVERIFIED**. Kolejność:
   nie przeszła.
 - **Commit po każdym etapie** — sesje bywają przerywane.
 
-## DWANAŚCIE PUŁAPEK ŚRODOWISKOWYCH
+## TRZYNAŚCIE PUŁAPEK ŚRODOWISKOWYCH
 
-Są w §10 handoffu. Najgroźniejsze trzy:
+Dwanaście jest w §10 handoffu. Najgroźniejsze trzy z tych dwunastu:
 - bramka DB wymaga **trzech** zmiennych naraz, inaczej podłączysz się do cudzej bazy
   **zamiast się pominąć**;
 - **`tsc` pada z exit 134 (OOM) i przy zerze błędów wygląda na sukces** — sprawdzaj kod wyjścia;
 - **`server/tsconfig.json` wyklucza `**/*.test.ts`** → zmiana sygnatury funkcji nie ma **żadnej**
   automatycznej ochrony; po każdej grepuj wywołujących w `server/src` **oraz** `tests/`.
+
+**★ Trzynasta pułapka (nowa, 2026-08-12):** `server/src/config/databaseTargetResolver.ts`
+(funkcja `assertResolvedDatabaseUrlIsReachable`) **odrzuca adresy localhost**, chyba że
+`allowLocalDatabaseForTests()` jest prawdziwe — czyli wymaga `NODE_ENV=test` albo `CI=true`
+albo zmiennych `VITEST*`/`JEST_WORKER_ID`. Bez tego migracje STRICT na lokalnej bazie padają
+z komunikatem „Selected DATABASE_URL points to local host 127.0.0.1". **Ta pułapka zazębia się
+z pułapką bramki DB powyżej i trzeba je czytać razem**: `NODE_ENV=test` jest **konieczne**, żeby
+w ogóle połączyć się z lokalną bazą — ale `NODE_ENV=test` **bez** `RUN_DB_TESTS=1` daje **cichy
+mock** (zielono, zero wartości dowodowej). Komplet wymaganych zmiennych to **cztery naraz**:
+`RUN_DB_TESTS=1`, `MOCK_DB=false`, `NODE_ENV=test` oraz jawny `DATABASE_URL`.
+Szczegóły: `GATE_0_TRUST_REBUILD_2026-08-12.md` §9.
 
 ## CZEGO NIE DA SIĘ ZROBIĆ LOKALNIE
 
@@ -96,7 +113,16 @@ FC-12 (recenzent CFO) · aktywacja RLS (least-privileged rola DB na Railway — 
 RLS zawsze, nawet z `FORCE`**) · cutover/rollback/shadow parity (brak stagingu) · SLO produkcyjne
 (rozrzut 9,3× na laptopie). **Nie próbuj — zapisz jako `BLOCKED_EXTERNAL`.**
 
-**Do warstwy UI nie ruszaj bez decyzji Piotra na zrzutach** — reguła #7. Wszystko, co wizualne,
-ma iść **za flagą domyślnie OFF** do jego akceptu.
+## REGUŁA UI — CO WOLNO, CZEGO NIE WOLNO (reguła #7 CLAUDE.md)
+
+**WOLNO:**
+- kontynuować lokalną implementację UI **za feature flags domyślnie OFF**;
+- renderować lokalnie;
+- tworzyć zrzuty.
+
+**NIE WOLNO:**
+- włączać UI **domyślnie**;
+- wdrażać;
+- uznawać czegokolwiek za **zaakceptowane wizualnie** bez przeglądu Piotra **ekran po ekranie**.
 
 Nie wracaj z kolejnym planem. Zacznij wykonywanie.

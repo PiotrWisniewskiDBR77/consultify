@@ -5,7 +5,7 @@ Aktualizowany **po** integracji pakietu, nigdy na podstawie deklaracji subagenta
 
 - **Gałąź integracyjna:** `codex/finance-v3-complete-product-integration`
 - **Baza:** `8f16403ff6` (documentary tip poprzedniej sesji) + `d06a8d5965` (korekta z sesji równoległych)
-- **Bieżący tip integracyjny:** `1a6c507f0d`
+- **Bieżący tip integracyjny:** `49071c3e2d`
 - **Status:** `IN_PROGRESS`
 - **NOT PUSHED / NOT MERGED / NOT DEPLOYED / STAGING NOT VERIFIED / PRODUCTION NOT VERIFIED**
 
@@ -74,15 +74,17 @@ FALA D (po D–H)
 
 | Pakiet | Owner | Gałąź | Base SHA | Tip SHA | Zależności | Audyt | Fan-in | Status |
 |---|---|---|---|---|---|---|---|---|
-| A — Determinism audit | SONNET | `codex/fv3p-a-determinism` | `dec4586cd1` | — | — | — | — | `IN_PROGRESS` |
-| B — API & runtime | SONNET | `codex/fv3p-b-api` | `dec4586cd1` | — | — | — | — | `IN_PROGRESS` |
+| A — Determinism audit | SONNET | `codex/fv3p-a-determinism` | `dec4586cd1` | `1ac575a661` | — | OPUS: `PARTIAL` (brak fikstury e2e dla `runOverlayCompute`/`runPreflight` — nie ma jej nigdzie w repo) | **scalone** | `PARTIAL` |
+| B — API & runtime | SONNET | `codex/fv3p-b-api` | `dec4586cd1` | `40ff98a94e` | — | OPUS: `PASS` | **scalone** | `PASS` |
 | M — UI/API inventory | SONNET | `codex/fv3p-m-inventory` | `585af4ce4b` | `1a6c507f0d` | — | OPUS: `PASS` | **scalone** | `PASS` |
-| C — Shared UI platform | — | — | — | — | B, M | — | — | `PENDING` |
-| D — Statements | — | — | — | — | B, C | — | — | `PENDING` |
-| E — Analysis | — | — | — | — | B, C | — | — | `PENDING` |
-| F — Baseline Models | — | — | — | — | B, C | — | — | `PENDING` |
-| G — Prediction | — | — | — | — | B, C, F | — | — | `PENDING` |
-| H — Valuation | — | — | — | — | B, C, F, G | — | — | `PENDING` |
+| B2 — Domain API | SONNET | `codex/fv3p-b2-domainapi` | — | `d0a9f13acb` | B | OPUS: `PASS` z uwagą (agent zadeklarował 2 zmienione pliki serwisowe, zmienił 6; wszystkie addytywne, sprawdzone) | **scalone** | `PASS` |
+| C — Shared UI platform | SONNET | `codex/fv3p-c-uiplatform` | — | `ffc4c168ad` | B, M | OPUS: `PARTIAL` (`CompactLineageTrail` i `RelatedArtifactsDrawer` niepokryte) | **scalone** | `PARTIAL` |
+| B3 — Valuation API | SONNET | `codex/fv3p-b3-valuationapi` | `45c39d68d0` | `9604652e27` | B, C | — | **NIESCALONY** | `UNVERIFIED_WIP` — w toku domykania |
+| D — Statements | SONNET | `codex/fv3p-d-statements` | `45c39d68d0` | `53c2a6e382` | B, C | — | **NIESCALONY** | `UNVERIFIED_WIP` — w toku |
+| E — Analysis | SONNET | `codex/fv3p-e-analysis` | `45c39d68d0` | `1aa63c0385` | B, C | — | **NIESCALONY** | `UNVERIFIED_WIP` — w toku |
+| F — Baseline Models | SONNET | `codex/fv3p-f-baseline` | `45c39d68d0` | `2057e0c888` | B, C | — | **NIESCALONY** | `UNVERIFIED_WIP` — w toku |
+| G — Prediction | — | `codex/fv3p-g-prediction` | `49071c3e2d` | — | B, C, F | — | — | `IN_PROGRESS` (uruchomiony 2026-08-12) |
+| H — Valuation | — | `codex/fv3p-h-valuation` | `9604652e27` (tip B3, bo H potrzebuje endpointów wyceny) | — | B, C, F, G | — | — | `PENDING` |
 | I — A11y/design-system | — | — | — | — | D–H | — | — | `PENDING` |
 | J — RealDB/security | — | — | — | — | B | — | — | `PENDING` |
 | K — Browser E2E/visual | — | — | — | — | D–H | — | — | `PENDING` |
@@ -160,6 +162,18 @@ Te sześć pozycji wchodzi do zakresu pakietu **F (Baseline Models)** jako tward
 
 ---
 
+## 5B. STAN ZMIERZONY NA `49071c3e2d`
+
+Pełny protokół i uzasadnienie: `GATE_0_TRUST_REBUILD_2026-08-12.md` w tym katalogu.
+
+| Bramka | Wynik |
+|---|---|
+| Migracje STRICT, świeża baza (bez `--safe`) | exit 0, **637/637** |
+| `tsc -p server` | exit 0, zero linii |
+| Powierzchnia HTTP `/api/v8/finance-v2/*` | **32 endpointy** (na gałęzi B3 dochodzi do **53**) |
+
+---
+
 ## 6. HISTORIA INTEGRACJI
 
 | Data | SHA | Co |
@@ -167,6 +181,7 @@ Te sześć pozycji wchodzi do zakresu pakietu **F (Baseline Models)** jako tward
 | 2026-08-11 | `dec4586cd1` | utworzenie gałęzi z `8f16403ff6` + korekta `d06a8d5965` (root-cause EV → harness rollup, nie `sumFlow`) |
 | 2026-08-11 | `585af4ce4b` | execution ledger |
 | 2026-08-11 | `1a6c507f0d` | **pakiet M** — inwentaryzacja UI, naprawa harnessu, 7 zrzutów |
+| 2026-08-12 | `49071c3e2d` | **Gate 0 VERIFIED** — odbudowa zaufania do Git po incydencie iCloud „Operation not permitted"; kanoniczny SHA dalszej pracy `49071c3e2d`; szczegóły w `GATE_0_TRUST_REBUILD_2026-08-12.md` |
 
 ### Pakiet M — wynik odbioru przez OPUS: `PASS`
 
