@@ -91,7 +91,7 @@ export function AnalysisKpiDetailCard(props: AnalysisKpiDetailCardProps): React.
         <button
           type="button"
           onClick={onClose}
-          className="min-h-11 min-w-11 inline-flex items-center justify-center rounded-lg text-c-text-muted hover:text-c-text hover:bg-c-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+          className="min-h-11 min-w-11 inline-flex items-center justify-center rounded-lg text-c-text-muted hover:text-c-text hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
           aria-label="Zamknij kartę szczegółową"
           data-testid="analysis-kpi-detail-close"
         >

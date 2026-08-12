@@ -16,6 +16,8 @@ import {
 import {
   buildAnalysisKpiColumns,
   computeYoyDelta,
+  formatBenchmarkText,
+  formatYoyDeltaText,
   groupAnalysisKpiValuesByKpi,
   selectExportColumns,
   toAnalysisKpiTableRow,
@@ -254,6 +256,31 @@ describe('buildAnalysisKpiColumns', () => {
       { id: 'p4', label: '2026P' },
     ]);
     expect(fourYears.length).toBe(twoYears.length + 3);
+  });
+
+  it('KONTROLA NEGATYWNA (defekt złapany zrzutem DOM, patrz AnalysisWorkspace.smoke.test.tsx): kolumny yoyDelta/benchmark MAJĄ `render`, bo ich dane w wierszu są OBIEKTAMI — StandardTable bez `render` próbowałby wrzucić obiekt wprost jako React child i wysypać się w runtime', () => {
+    const columns = buildAnalysisKpiColumns([{ id: 'p1', label: '2025' }]);
+    const yoyCol = columns.find((c) => c.id === 'yoyDelta');
+    const benchmarkCol = columns.find((c) => c.id === 'benchmark');
+    expect(typeof yoyCol?.render).toBe('function');
+    expect(typeof benchmarkCol?.render).toBe('function');
+  });
+});
+
+describe('formatYoyDeltaText / formatBenchmarkText — komórki NIE-string bezpieczne do renderu', () => {
+  it('formatYoyDeltaText: COMPUTED renderuje procent ze znakiem, MISSING_*/undefined renderują "—" (nigdy surowy obiekt)', () => {
+    expect(formatYoyDeltaText({ status: 'COMPUTED', absoluteDelta: 20, percentDelta: 20 })).toBe('+20.0%');
+    expect(formatYoyDeltaText({ status: 'COMPUTED', absoluteDelta: -5, percentDelta: -12.34 })).toBe('-12.3%');
+    expect(formatYoyDeltaText({ status: 'MISSING_CURRENT', absoluteDelta: null, percentDelta: null })).toBe('—');
+    expect(formatYoyDeltaText({ status: 'MISSING_PRIOR', absoluteDelta: null, percentDelta: null })).toBe('—');
+    expect(formatYoyDeltaText({ status: 'PRIOR_ZERO_PCT_UNDEFINED', absoluteDelta: 50, percentDelta: null })).toContain('nieokreślony');
+  });
+
+  it('formatBenchmarkText: null ⇒ "—"; obecny benchmark ⇒ tekst czytelny dla człowieka', () => {
+    expect(formatBenchmarkText(null)).toBe('—');
+    expect(formatBenchmarkText({ rangeLow: '0.3', rangeHigh: '0.5', source: 'Damodaran', asOf: '2026-01-01', industryCode: 'SAAS' })).toBe(
+      '0.3–0.5 (SAAS) · Damodaran'
+    );
   });
 });
 

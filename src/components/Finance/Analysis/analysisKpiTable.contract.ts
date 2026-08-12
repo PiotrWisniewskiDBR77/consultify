@@ -221,6 +221,37 @@ export function toAnalysisKpiTableRow(input: AnalysisKpiTableRowInput): TableRow
 }
 
 // ---------------------------------------------------------------------------
+// Formatowanie komórek NIE-string (`StandardTable`/`FilterableTable` bez
+// `column.render` robi `row[column.id]` wprost — obiekt (`YoyDelta`,
+// `benchmark`) rzucony w React jako dziecko wywala runtime "Objects are not
+// valid as a React child". Złapane REALNYM zrzutem/testem DOM
+// (`AnalysisWorkspace.smoke.test.tsx`), nie samą logiką — dokładnie dlatego,
+// że logika (`toAnalysisKpiTableRow`) nie renderuje niczego, więc test czystej
+// funkcji nie widzi tego defektu.
+// ---------------------------------------------------------------------------
+
+export function formatYoyDeltaText(yoy: YoyDelta): string {
+  switch (yoy.status) {
+    case 'COMPUTED':
+      return yoy.percentDelta === null ? '—' : `${yoy.percentDelta >= 0 ? '+' : ''}${yoy.percentDelta.toFixed(1)}%`;
+    case 'PRIOR_ZERO_PCT_UNDEFINED':
+      return yoy.absoluteDelta === null ? '—' : `${yoy.absoluteDelta >= 0 ? '+' : ''}${yoy.absoluteDelta} (% nieokreślony)`;
+    case 'MISSING_CURRENT':
+    case 'MISSING_PRIOR':
+      return '—';
+    default: {
+      const _exhaustive: never = yoy.status;
+      return _exhaustive;
+    }
+  }
+}
+
+export function formatBenchmarkText(benchmark: AnalysisKpiValueDto['benchmark']): string {
+  if (!benchmark) return '—';
+  return `${benchmark.rangeLow}–${benchmark.rangeHigh} (${benchmark.industryCode}) · ${benchmark.source}`;
+}
+
+// ---------------------------------------------------------------------------
 // Kolumny — persystencja widoku (widoczność/kolejność/pin) jest już
 // zaimplementowana w `StandardTable` (prop `persistKey`, localStorage) — ten
 // plik dostarcza tylko definicje. Kolumny okresów są DYNAMICZNE (per
@@ -253,8 +284,9 @@ export function buildAnalysisKpiColumns(periodLabels: readonly { id: string; lab
       align: 'right',
       sortable: true,
       sortAccessor: (row: TableRow) => (row.yoyDelta as YoyDelta).percentDelta ?? Number.NEGATIVE_INFINITY,
+      render: (row: TableRow) => formatYoyDeltaText(row.yoyDelta as YoyDelta),
     },
-    { id: 'benchmark', label: 'Benchmark branżowy', align: 'left' },
+    { id: 'benchmark', label: 'Benchmark branżowy', align: 'left', render: (row: TableRow) => formatBenchmarkText(row.benchmark as AnalysisKpiValueDto['benchmark']) },
     { id: 'interpretationSpecific', label: 'Interpretacja wyniku', align: 'left' },
     { id: 'qualityFlag', label: 'Jakość / dostępność', align: 'center', filterable: true },
     { id: 'downstreamUses', label: 'Przeznaczenie', align: 'left' },
