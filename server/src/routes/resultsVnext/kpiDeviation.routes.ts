@@ -68,6 +68,7 @@ import {
   validateParams,
   validateQuery,
 } from '../../middleware/validation.middleware.js';
+import { resolveEffectiveAccess } from '../../services/effectiveAccessService.js';
 import {
   addCorrectiveAction,
   updateCorrectiveAction,
@@ -95,6 +96,10 @@ import {
   AtomicWriteAggregateNotFoundError,
   AtomicWriteConflictError,
 } from '../../services/resultsVnext/platform/atomicWrite.js';
+import {
+  CommandCapabilityDeniedError,
+  type CommandAccessContext,
+} from '../../services/resultsVnext/platform/commandCapabilityGuard.js';
 import type { AuthenticatedRequest } from '../../types/index.js';
 import logger from '../../utils/Logger.js';
 import {
@@ -141,6 +146,27 @@ function requireAuth(req: AuthenticatedRequest, res: Response): RouteAuth | null
   return { organizationId, userId, role: req.user?.role ? String(req.user.role) : 'member' };
 }
 
+/**
+ * RN-G5: resolves the REAL effective access context (capabilities +
+ * platformRole) for the authenticated actor — this is what
+ * `commandCapabilityGuard.ts`'s `assertCommandCapability` checks inside each
+ * command's `applyMutation`, replacing the previous behavior where
+ * `auth.role` (a raw, sometimes-defaulted-to-'member' string) was threaded
+ * through only for audit logging and never actually checked. No `projectId`
+ * is passed — the KPI deviation domain has no project association (its
+ * aggregates are organization-scoped), so only the org-level baseline
+ * (`APPLICATION_ROLE_BASELINE_CAPABILITIES`) plus OWNER/ADMIN/SUPERADMIN's
+ * `'*'` apply; see RN_G5_AUTHZ_DESIGN.md for the known limitation this
+ * implies for explicit per-member capability grants in this domain.
+ */
+async function resolveAccess(req: AuthenticatedRequest, auth: RouteAuth): Promise<CommandAccessContext> {
+  return resolveEffectiveAccess({
+    userId: auth.userId,
+    organizationId: auth.organizationId,
+    applicationRole: req.user?.role,
+  });
+}
+
 function normalizeOptionalString(value: unknown): string | undefined {
   if (typeof value !== 'string') return undefined;
   const trimmed = value.trim();
@@ -164,6 +190,10 @@ function resolveIdempotencyKey(bodyKey: string | undefined | null): string {
  * a stack trace) as `kpi.routes.ts`'s `handleKpiRouteError`.
  */
 function handleDeviationRouteError(res: Response, err: unknown, op: string): void {
+  if (err instanceof CommandCapabilityDeniedError) {
+    res.status(403).json({ error: err.message, code: err.code, details: err.details });
+    return;
+  }
   if (err instanceof DeviationSelfApprovalDeniedError) {
     res.status(403).json({ error: err.message, code: err.code, details: err.details });
     return;
@@ -280,6 +310,7 @@ router.post(
     try {
       const { caseId } = req.params as { caseId: string };
       const body = req.body as import('zod').infer<typeof DeviationCaseCaseActionSchema>;
+      const access = await resolveAccess(req, auth);
       const outcome = await acknowledgeDeviationCase({
         caseId,
         organizationId: auth.organizationId,
@@ -289,6 +320,7 @@ router.post(
         idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
         correlationId: getCorrelationId(req),
         reason: body.reason ?? null,
+        access,
       });
       res.status(200).json({
         outcome: outcome.outcome,
@@ -316,6 +348,7 @@ router.put(
     try {
       const { caseId } = req.params as { caseId: string };
       const body = req.body as import('zod').infer<typeof SubmitRootCauseSchema>;
+      const access = await resolveAccess(req, auth);
       const outcome = await submitRootCause({
         caseId,
         organizationId: auth.organizationId,
@@ -330,6 +363,7 @@ router.put(
         idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
         correlationId: getCorrelationId(req),
         reason: body.reason ?? null,
+        access,
       });
       res.status(200).json({
         outcome: outcome.outcome,
@@ -449,6 +483,7 @@ router.post(
     try {
       const { caseId } = req.params as { caseId: string };
       const body = req.body as import('zod').infer<typeof DeviationCaseCaseActionSchema>;
+      const access = await resolveAccess(req, auth);
       const outcome = await submitPlan({
         caseId,
         organizationId: auth.organizationId,
@@ -458,6 +493,7 @@ router.post(
         idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
         correlationId: getCorrelationId(req),
         reason: body.reason ?? null,
+        access,
       });
       res.status(200).json({
         outcome: outcome.outcome,
@@ -485,6 +521,7 @@ router.post(
     try {
       const { caseId } = req.params as { caseId: string };
       const body = req.body as import('zod').infer<typeof DeviationCaseCaseActionSchema>;
+      const access = await resolveAccess(req, auth);
       const outcome = await approvePlan({
         caseId,
         organizationId: auth.organizationId,
@@ -500,6 +537,7 @@ router.post(
         idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
         correlationId: getCorrelationId(req),
         reason: body.reason ?? null,
+        access,
       });
       res.status(200).json({
         outcome: outcome.outcome,
@@ -527,6 +565,7 @@ router.post(
     try {
       const { caseId } = req.params as { caseId: string };
       const body = req.body as import('zod').infer<typeof RecordRecoveryObservationSchema>;
+      const access = await resolveAccess(req, auth);
       const outcome = await recordRecoveryObservation({
         caseId,
         organizationId: auth.organizationId,
@@ -537,6 +576,7 @@ router.post(
         idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
         correlationId: getCorrelationId(req),
         reason: body.reason ?? null,
+        access,
       });
       res.status(200).json({
         outcome: outcome.outcome,
@@ -564,6 +604,7 @@ router.post(
     try {
       const { caseId } = req.params as { caseId: string };
       const body = req.body as import('zod').infer<typeof SubmitEffectivenessVerificationSchema>;
+      const access = await resolveAccess(req, auth);
       const outcome = await submitEffectivenessVerification({
         caseId,
         organizationId: auth.organizationId,
@@ -578,6 +619,7 @@ router.post(
         idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
         correlationId: getCorrelationId(req),
         reason: body.reason ?? null,
+        access,
       });
       res.status(outcome.outcome === 'applied' ? 201 : 200).json({
         outcome: outcome.outcome,
@@ -606,6 +648,7 @@ router.post(
     try {
       const { caseId } = req.params as { caseId: string };
       const body = req.body as import('zod').infer<typeof DeviationCaseCaseActionSchema>;
+      const access = await resolveAccess(req, auth);
       const outcome = await closeDeviationCase({
         caseId,
         organizationId: auth.organizationId,
@@ -615,6 +658,7 @@ router.post(
         idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
         correlationId: getCorrelationId(req),
         reason: body.reason ?? null,
+        access,
       });
       res.status(200).json({
         outcome: outcome.outcome,
@@ -649,6 +693,7 @@ function mountEscalationRoute(
       try {
         const { caseId } = req.params as { caseId: string };
         const body = req.body as import('zod').infer<typeof EscalationOverlaySchema>;
+        const access = await resolveAccess(req, auth);
         const outcome = await runner({
           caseId,
           organizationId: auth.organizationId,
@@ -659,6 +704,7 @@ function mountEscalationRoute(
           idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
           correlationId: getCorrelationId(req),
           reason: body.reason ?? null,
+          access,
         });
         res.status(200).json({
           outcome: outcome.outcome,
@@ -692,6 +738,7 @@ router.post(
     try {
       const { caseId } = req.params as { caseId: string };
       const body = req.body as import('zod').infer<typeof ReopenDeviationCaseSchema>;
+      const access = await resolveAccess(req, auth);
       const outcome = await reopenDeviationCase({
         priorCaseId: caseId,
         organizationId: auth.organizationId,
@@ -703,6 +750,7 @@ router.post(
         triggerMeasurementId: body.triggerMeasurementId,
         ownerUserId: body.ownerUserId ?? undefined,
         managerUserId: body.managerUserId ?? undefined,
+        access,
       });
       res.status(outcome.outcome === 'applied' ? 201 : 200).json({
         outcome: outcome.outcome,
