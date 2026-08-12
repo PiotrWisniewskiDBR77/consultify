@@ -39,7 +39,7 @@ type Args = {
   from?: string;
 };
 
-type Migration = {
+export type Migration = {
   version: string;
   filename: string;
   filepath: string;
@@ -324,7 +324,12 @@ function phaseAndKeyFor(m: Migration): { phase: number; key: string } {
   return { phase: 3, key: f };
 }
 
-function compareMigrationOrder(a: Migration, b: Migration): number {
+// Exported (E8) so the ordering contract is directly testable without
+// executing main() — see
+// tests/integration/migration-ordering-parity.realdb.test.ts, which checks
+// this comparator against the SAME producer-before-consumer property
+// asserted for the other two automatic/manual runtime mechanisms.
+export function compareMigrationOrder(a: Migration, b: Migration): number {
   const pa = phaseAndKeyFor(a);
   const pb = phaseAndKeyFor(b);
   if (pa.phase !== pb.phase) return pa.phase - pb.phase;
@@ -475,6 +480,68 @@ async function applySql(pool: Pool, m: Migration) {
   await pool.query(sql);
 }
 
+// ---------------------------------------------------------------------------
+// `--safe` semantics (E8, docs/product/case-workspace/evidence/
+// e7-migration-paths-2026-08-12/MIGRATION_PATH_ASSESSMENT.md §5)
+// ---------------------------------------------------------------------------
+// Before this fix, `--safe` treated EVERY error identically: record
+// status='skipped', continue, and — if nothing later throws — print
+// "✅ Postgres migrations complete" and exit 0. That is the exact
+// `db:migrate --safe` trap this program has already been burned by once
+// (see MEMORY.md `audyt-bazy-danych-2026-08-06.md`): a migration that never
+// actually applied is reported as success, under a status name ("skipped")
+// that reads as "intentionally not needed" rather than "failed". Any CI gate
+// or human checking only the exit code or the banner sees green.
+//
+// `--safe` clearly exists for a real, narrow reason: tolerate a migration
+// that fails because the object it creates ALREADY EXISTS — e.g. because a
+// different migration mechanism (DatabaseInitializer.ts's own runner, or a
+// prior partial run of this same script) got there first. That is exactly
+// the scenario MIGRATION_PATH_ASSESSMENT.md §2 documents between this script
+// and DatabaseInitializer.ts's `tp_migration_history`-tracked runner. It was
+// never meant to swallow a migration that is genuinely broken (bad SQL,
+// missing dependency, permission error, etc).
+//
+// Fix: classify the failure. BENIGN (already-exists-class) errors keep the
+// exact previous behavior — recorded 'skipped', loop continues, does not
+// fail the run. GENUINE failures are recorded 'failed' (not 'skipped', so a
+// future `schema_migrations` reader sees the truth) and the run now REFUSES
+// to report success: no "✅ ... complete" banner, and the process exits
+// non-zero (via the same `main().catch()` → `process.exit(1)` path already
+// used for the non-`--safe` case), even though `--safe` still let every
+// OTHER pending migration in the batch attempt to run (so one genuinely
+// broken, unrelated migration does not block a caller who only needs a
+// handful of specific tables to exist — the documented reason `--safe` is
+// used as a best-effort bootstrap across dozens of this program's
+// `realdb.test.ts` acceptance gates).
+//
+// Verified empirically before landing this: a real, from-scratch run of
+// `migrate.postgres.ts --safe` against a genuinely empty local Postgres
+// (this session's `cw_e8_safe` scratch DB) applied all 598 discovered
+// migrations with ZERO failures (benign or genuine) — the historical "50+
+// migrations fail on a clean Postgres" note in
+// docs/testing/RELEASE_READINESS_SHORTCOMINGS.md is stale; this program's
+// prior migration-ordering/repair work already closed that gap. So this
+// change does not regress today's bootstrap flows; it only changes what
+// happens the NEXT time a migration genuinely breaks, which is exactly the
+// point.
+//
+// Deliberately duplicates (does not import) DatabaseInitializer.ts's
+// `isAlreadyExists` heuristic in runTablePlatformMigrations() — same four
+// substrings, same narrow intent. Not shared code: this packet's allowlist
+// does not permit adding a new shared module, and the two runners already
+// have independent discovery/sort machinery for the same reason (see
+// migrationRunner.ts's SAME_PREFIX_ORDER comment). Keep both in sync if the
+// classification ever needs to widen.
+function isBenignAlreadyAppliedError(msg: string): boolean {
+  return (
+    msg.includes('already exists') ||
+    msg.includes('duplicate key') ||
+    msg.includes('duplicate_column') ||
+    msg.includes('duplicate_object')
+  );
+}
+
 async function applyJs(pool: Pool, m: Migration) {
   const mod = await import(pathToFileUrl(m.filepath));
   if (typeof mod.up !== 'function') {
@@ -563,6 +630,12 @@ async function main() {
     // eslint-disable-next-line no-console
     console.log(`Applying migrations: ${pending.length}`);
 
+    // Filenames that genuinely failed under --safe (not the benign
+    // already-applied class) — tracked so the run can refuse to report
+    // success even though --safe let it keep going past them. See the
+    // `isBenignAlreadyAppliedError` comment above for the full rationale.
+    const genuineFailures: string[] = [];
+
     for (const m of pending) {
       const started = Date.now();
       try {
@@ -582,13 +655,45 @@ async function main() {
         console.error(`✗ ${m.filename}: ${msg}`);
 
         if (safe) {
-          await recordResult(pool, m, 'skipped', Date.now() - started, `skipped:${m.checksum}`);
+          const benign = isBenignAlreadyAppliedError(msg);
+          if (benign) {
+            await recordResult(
+              pool,
+              m,
+              'skipped',
+              Date.now() - started,
+              `skipped:${m.checksum}`
+            );
+          } else {
+            // Genuine failure: recorded as 'failed' (truthful status), NOT
+            // 'skipped'. --safe still lets the batch continue to the next
+            // migration (a best-effort bootstrap should not let one broken,
+            // unrelated file block every other table a caller may need),
+            // but this run can no longer end with "✅ ... complete" — see
+            // the check after this loop.
+            // eslint-disable-next-line no-console
+            console.error(`  (--safe: genuine failure, NOT already-applied — recording 'failed')`);
+            await recordResult(pool, m, 'failed', Date.now() - started);
+            genuineFailures.push(m.filename);
+          }
           continue;
         }
 
         await recordResult(pool, m, 'failed', Date.now() - started);
         throw e;
       }
+    }
+
+    if (genuineFailures.length > 0) {
+      // Thrown (not process.exit() here) so the `finally` block below still
+      // runs and closes the pool cleanly; caught by main().catch() further
+      // down, which prints the failure and exits 1 — the same non-zero exit
+      // path already used for the non-safe case, so callers checking exit
+      // code (not just stdout text) see the truth either way.
+      throw new Error(
+        `${genuineFailures.length} migration(s) genuinely failed under --safe ` +
+          `(recorded status='failed', not swallowed as 'skipped'): ${genuineFailures.join(', ')}`
+      );
     }
 
     // eslint-disable-next-line no-console
@@ -598,8 +703,21 @@ async function main() {
   }
 }
 
-main().catch((e) => {
-  // eslint-disable-next-line no-console
-  console.error('❌ Postgres migrate failed:', e?.message || e);
-  process.exit(1);
-});
+// Run only when executed directly (`tsx server/scripts/migrate.postgres.ts`),
+// not when imported — E8 exports `compareMigrationOrder`/`Migration` above
+// for a parity test, and an unconditional top-level `main()` call would
+// otherwise connect to a real database and attempt a full migration run as
+// a side effect of merely importing this module for its ordering function.
+// No behavior change for the actual CLI entry point: `import.meta.url` and
+// `process.argv[1]` still match exactly the same way they always did when
+// this file is run via tsx.
+const isDirectCliInvocation =
+  process.argv[1] != null && import.meta.url === pathToFileURL(process.argv[1]).href;
+
+if (isDirectCliInvocation) {
+  main().catch((e) => {
+    // eslint-disable-next-line no-console
+    console.error('❌ Postgres migrate failed:', e?.message || e);
+    process.exit(1);
+  });
+}
