@@ -295,7 +295,15 @@ export const ResultsRoiHub: React.FC = () => {
       .then((list) =>
         setInitiatives(
           [...list]
-            .map((i) => ({ id: i.id, title: i.title }))
+            // RN-G6-C2: the live `getInitiatives()` response carries `name`,
+            // NOT the stale `Initiative.title` the TS client declares — the
+            // exact gotcha already documented and defensively handled in
+            // `InitiativeObservabilityTable.tsx` ("row.title || row.name ||
+            // row.id"), missed here. Without this fallback every quick-create
+            // initiative picker load throws `Cannot read properties of
+            // undefined (reading 'localeCompare')` on the very first sort —
+            // reproduced live while running the ROI gold flow end-to-end.
+            .map((i) => ({ id: i.id, title: i.title || (i as unknown as { name?: string }).name || i.id }))
             .sort((a, b) => a.title.localeCompare(b.title))
         )
       )
@@ -583,7 +591,25 @@ export const ResultsRoiHub: React.FC = () => {
             buildRoiCaseRowMenu(row as unknown as RoiCaseListItem, isPolish, {
               onPreview: (r) => setSelectedCaseId(r.caseId),
               onTransition: (r, id) => openTransition(r, id),
-              onModel: (r) => navigate(ROUTES.RESULTS_ROI.CASE.replace(':roiCaseId', r.caseId)),
+              // RN-G6-C2: `navigate(path)` alone drops the current query
+              // string — since the ROI domain flag
+              // (`?ff_resultsVNextRoi=1`) resolves query → localStorage →
+              // env → default-OFF (`resultsVNextFeatureFlags.ts`), a user
+              // who reached this registry ONLY via the URL flag (not
+              // localStorage/env) lost it on this exact navigation and
+              // landed on the full tool's "ROI tool — not yet enabled"
+              // fallback — a dead end reproduced live while running the
+              // ROI gold flow end-to-end (same class of gap the KPI
+              // runbook's testdrive card already calls out as a known,
+              // unfixed issue for that domain's equivalent navigation).
+              // Preserving `location.search` on this one call is a local,
+              // minimal fix — it does not touch the shared flag file or any
+              // other domain's navigation.
+              onModel: (r) =>
+                navigate({
+                  pathname: ROUTES.RESULTS_ROI.CASE.replace(':roiCaseId', r.caseId),
+                  search: window.location.search,
+                }),
             }),
           defaultSort: { columnId: 'updatedAt', direction: 'desc' },
         }}

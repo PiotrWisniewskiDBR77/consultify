@@ -82,7 +82,16 @@ export const RoiCaseToolPage: React.FC = () => {
     void loadCase();
   }, [enabled, loadCase]);
 
-  const goToRegistry = useCallback(() => navigate(ROUTES.RESULTS_ROI.ROOT), [navigate]);
+  // RN-G6-C2: preserve the current query string (carries
+  // `?ff_resultsVNextRoi=1` when the flag was set via URL rather than
+  // localStorage/env — see `ResultsRoiHub.tsx`'s `onModel` comment for the
+  // matching fix on the way IN to this page) — otherwise every "back to
+  // registry" click loses the flag and the registry itself falls back to
+  // its own "not yet enabled" state for a URL-flag-only session.
+  const goToRegistry = useCallback(
+    () => navigate({ pathname: ROUTES.RESULTS_ROI.ROOT, search: window.location.search }),
+    [navigate]
+  );
 
   if (!enabled) {
     return (
