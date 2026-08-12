@@ -33,6 +33,7 @@ import type { OkrSetDto } from './okrApi';
 import { listObjectivesForSet, type OkrObjectiveWithKeyResultsDto } from './okrObjectiveApi';
 import { OkrActionDialog } from './OkrActionDialog';
 import { OkrCarryForwardDialog } from './OkrCarryForwardDialog';
+import { toUserFacingErrorMessage } from '../shared/errorMessage';
 import {
   approveOkrSetManagerReview,
   carryForwardOkrSet,
@@ -98,7 +99,16 @@ export const OkrReviewReflectionView: React.FC<OkrReviewReflectionViewProps> = (
         setReviews(r);
         setObjectives(o);
       })
-      .catch((err) => setError(err instanceof Error ? err.message : String(err)));
+      // RN-G5 polish: plain list-load failure (reviews + objectives), no
+      // server business-rule payload involved here — unlike the write
+      // actions below (`run()`, request-changes, carry-forward), which stay
+      // untouched: this file's own header documents that a Close-gate
+      // rejection is deliberately surfaced verbatim ("the honest source of
+      // truth"), since the client cannot know the pinned policy value any
+      // other way. This catch has no such rationale — it is the ordinary
+      // "couldn't load the tab" case, so it gets the same translated,
+      // generic message every other ResultsVNext load failure gets.
+      .catch((err) => setError(toUserFacingErrorMessage(err, isPolish)));
   }, [set.setId]);
 
   useEffect(() => {
