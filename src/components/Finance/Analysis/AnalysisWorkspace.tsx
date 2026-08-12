@@ -157,7 +157,7 @@ function AnalysisWorkspaceInner(props: AnalysisWorkspaceProps): React.ReactEleme
     // mode: zamykał kreator I wychodził z focus mode — ten hook już ma
     // gotową precedencję (`resolveEscapeKey`) na dokładnie ten przypadek,
     // po prostu nigdy nie dostawał prawdziwego stanu modala.
-    escapeContext: { modalOpen: wizardOpen },
+    escapeContext: { modalOpen: wizardOpen, commandPaletteOpen: false, popoverOpen: false, cellEditing: false },
   });
 
   const reload = useCallback(async () => {

@@ -426,7 +426,7 @@ function StatementPackWorkspaceV2Inner(props: StatementPackWorkspaceV2Props): Re
     activeViewId: 'statements',
     // ★ NAPRAWA a11y (Pakiet I): sam wzorzec co `BaselineWorkspace.tsx` —
     // dialog "Podaj powód" teraz naprawdę zamyka się na Escape.
-    escapeContext: { modalOpen: pendingReasonFor !== null },
+    escapeContext: { modalOpen: pendingReasonFor !== null, commandPaletteOpen: false, popoverOpen: false, cellEditing: false },
   });
 
   // ── Odśwież (akcja primary paska) — ręczne przeładowanie wszystkich trzech

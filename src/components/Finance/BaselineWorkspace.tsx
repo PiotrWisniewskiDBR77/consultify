@@ -161,7 +161,7 @@ function BaselineWorkspaceInner(props: BaselineWorkspaceProps): React.ReactEleme
     // zamykałoby OBA naraz — hook już ma gotową precedencję
     // (`escapeContext.modalOpen`, patrz `useFinanceFocusMode.ts`), tylko
     // nigdy nie dostawał prawdziwego stanu tego dialogu.
-    escapeContext: { modalOpen: pendingReasonFor !== null },
+    escapeContext: { modalOpen: pendingReasonFor !== null, commandPaletteOpen: false, popoverOpen: false, cellEditing: false },
   });
 
   async function runCompute(): Promise<void> {
