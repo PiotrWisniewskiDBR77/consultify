@@ -141,6 +141,19 @@ export const EVENT_TYPE_CONSUMER_GROUPS: Readonly<Record<string, readonly string
   'kpi.deviation_effectiveness_verified': ['mywork_projection'],
   'kpi.deviation_closed': ['mywork_projection'],
   'kpi.deviation_reopened': ['mywork_projection'],
+  // RN_G6_A3 FIX (2026-08-12): `kpi.deviation_manager_escalated`
+  // (`escalateDeviationCase`, kpiDeviationCommands.ts:1259) was NOT actually
+  // present here despite that command's own doc comment (line ~1252)
+  // claiming "registered in atomicWrite.ts's EVENT_TYPE_CONSUMER_GROUPS
+  // under the same rationale [as kpi.deviation_escalated]" — a second,
+  // independent instance of the exact same defect class this package fixes
+  // for kpi.definition_revised (a comment asserting registration that the
+  // map itself does not carry), found by this package's own static
+  // event-type scan (tests/resultsVnext/platform/eventClassificationContract.test.ts).
+  // Filled in now, same target as its sibling `kpi.deviation_escalated`
+  // immediately above (a manual escalation overlay is exactly as
+  // MyWork-relevant as the automatic one).
+  'kpi.deviation_manager_escalated': ['mywork_projection'],
 
   // KPI-E004 (docs/product/results-vnext/KPI_E004_DESIGN.md §B/§D) —
   // Scorecards. The design doc's own task spec names 3 explicitly
@@ -392,6 +405,20 @@ export const EVENT_TYPE_CONSUMER_GROUPS: Readonly<Record<string, readonly string
   // only, same default every other domain entry in this map uses.
   'okr_set.final_scored': ['mywork_projection'],
   'okr_set.objective_reflection_recorded': ['mywork_projection'],
+  // RN_G6_A3 FIX (2026-08-12): `okr_set.objective_reflection_teresa_draft_recorded`
+  // (`recordOkrReflectionTeresaDraft`) and
+  // `okr_set.objective_reflection_teresa_draft_disposition_recorded`
+  // (`recordOkrReflectionTeresaDraftDisposition`), both okrReflectionCommands.ts,
+  // were missing from this map entirely — the same defect class this
+  // package fixes for `kpi.definition_revised`, found by this package's own
+  // static event-type scan (tests/resultsVnext/platform/
+  // eventClassificationContract.test.ts). Same "advisory/in-flight Teresa
+  // draft, not yet a human-dispositioned/finalized fact" classification the
+  // ROI-E008/E006 block above already uses for
+  // `roi.pir_teresa_draft_disposition_recorded`/
+  // `roi.pir_teresa_lessons_draft_recorded` — 'mywork_projection' only.
+  'okr_set.objective_reflection_teresa_draft_recorded': ['mywork_projection'],
+  'okr_set.objective_reflection_teresa_draft_disposition_recorded': ['mywork_projection'],
   'okr_set.review_opened': ['mywork_projection'],
   'okr_set.review_submitted': ['mywork_projection'],
   'okr_set.review_approved': ['mywork_projection'],
@@ -448,11 +475,99 @@ export const EVENT_TYPE_CONSUMER_GROUPS: Readonly<Record<string, readonly string
   'okr_support.decision_resolution_acknowledged': ['mywork_projection'],
 };
 
+// ==========================================
+// AUDIT-ONLY CLASSIFICATION (RN_G6_A3, 2026-08-12)
+// ==========================================
+
 /**
- * Resolves the consumer groups for an `event_type`. Unknown event types
- * resolve to an empty list (no outbox fan-out) rather than throwing — a
- * domain forgetting to register its event_type here should not crash the
- * write, but it IS silently dropping delivery, so this logs a warning.
+ * `event_type`s that are DELIBERATELY classified as audit-only / no-fanout —
+ * the event is still written to `rvn_platform_events` (the durable audit
+ * log — tenant/actor/before-after state are never lost), it simply has no
+ * outbox `consumer_group` to fan out to, ON PURPOSE, not by omission.
+ *
+ * Why this needs its own registry instead of just leaving the event_type out
+ * of `EVENT_TYPE_CONSUMER_GROUPS` (the previous state of the world):
+ * `resolveConsumerGroups` could not tell "nobody has classified this yet"
+ * (a bug — see `kpi.definition_revised`'s own incident: `reviseDefinition`
+ * shipped, in production, logging `event_type has no registered
+ * consumer_group` on every single call, indistinguishable in the logs from
+ * a genuine forgotten registration) apart from "somebody looked at this and
+ * decided it should never fan out" (not a bug). Both states produced the
+ * IDENTICAL warning log line and the IDENTICAL `[]` return from the old
+ * single-map version of this function. This registry makes the second state
+ * an explicit, greppable, positively-asserted fact instead of an absence —
+ * see `tests/resultsVnext/platform/eventClassificationContract.test.ts`,
+ * which enforces that EVERY event_type actually emitted anywhere under
+ * `resultsVnext/**` is a member of EXACTLY ONE of
+ * {`EVENT_TYPE_CONSUMER_GROUPS` key with a non-empty array,
+ * `AUDIT_ONLY_EVENT_TYPES` member} — never neither (the original bug shape)
+ * and never both (see the disjointness check below).
+ *
+ * `kpi.definition_revised` (`reviseDefinition`, kpiDefinitionCommands.ts —
+ * RN_G6_P0A): investigated, not assumed. The task that produced this fix
+ * hypothesized "if `kpi.definition_rejected` creates an obligation for the
+ * owner, `kpi.definition_revised` probably closes it" — checked against the
+ * actual code, not the hypothesis: `rvn_platform_obligations` (the one real
+ * obligation-tracking table this platform has) is written ONLY by
+ * `kpiDeviationCommands.ts` (`openOrEscalateDeviationCase` /
+ * `resolveDeviationCase`) — grep confirms zero references anywhere in
+ * `kpiDefinitionCommands.ts`. `rejectDefinitionVersion` creates NO
+ * obligation row and (like every other `kpi.definition_*` event —
+ * `myworkProjectionConsumer.ts`'s `dispatchMyWorkProjection` switch only
+ * has real handlers for `kpi.deviation_opened`/`kpi.deviation_closed`/
+ * `roi.case_approved`/`okr_support.decision_requested`, see that file's own
+ * "Event-type coverage" header comment) triggers no notification either.
+ * The premise was false — there is no obligation for `revised` to close.
+ * On its own merits: `reviseDefinition` inserts a brand-new sibling row with
+ * `approval_status = 'draft'` — the exact same post-state `createKpiDraft`/
+ * `editDraft` produce, neither of which creates an obligation, decides
+ * anything (no `decisions` table interaction anywhere in this file), sends
+ * anyone a notification, or touches a financial projection (KPI definitions
+ * carry no cost/benefit data — only `roi.*` events ever route to
+ * `finance_projection` above). Nobody needs to act BECAUSE of a revision by
+ * itself; the review cycle only restarts when the owner later calls
+ * `submitDefinition` again, which is its own, already-registered,
+ * `kpi.definition_submitted` event. `revised` is a pure fact for the audit
+ * trail ("this owner created version N+1 from a rejected version N, on this
+ * date, for this reason") — audit-only is the correct, checked
+ * classification, not a placeholder.
+ */
+export const AUDIT_ONLY_EVENT_TYPES: ReadonlySet<string> = new Set(['kpi.definition_revised']);
+
+// Fail fast at module load, not at some future write time: an event_type
+// cannot be simultaneously "routes to a real consumer group" (a key in
+// EVENT_TYPE_CONSUMER_GROUPS with >=1 entries) and "explicitly audit-only,
+// no fanout" (a member of AUDIT_ONLY_EVENT_TYPES) — that would be an
+// ambiguous, self-contradicting classification, not a valid third state.
+// `eventClassificationContract.test.ts` also asserts this (so a CI run
+// still catches it even if this module is imported in a context that
+// swallows a thrown error), but throwing here means a local `import` alone
+// — before any test runner is involved — cannot silently carry the
+// contradiction.
+for (const auditOnlyType of AUDIT_ONLY_EVENT_TYPES) {
+  const registered = EVENT_TYPE_CONSUMER_GROUPS[auditOnlyType];
+  if (registered && registered.length > 0) {
+    throw new Error(
+      `[resultsVnext/platform/atomicWrite] event_type "${auditOnlyType}" is classified as BOTH ` +
+        'routable (EVENT_TYPE_CONSUMER_GROUPS) and audit-only (AUDIT_ONLY_EVENT_TYPES) — pick one'
+    );
+  }
+}
+
+/**
+ * Resolves the consumer groups for an `event_type`. Three possible outcomes:
+ *   1. Registered + routable (`EVENT_TYPE_CONSUMER_GROUPS[eventType]` is a
+ *      non-empty array) — returns it, no log.
+ *   2. Explicitly audit-only (`AUDIT_ONLY_EVENT_TYPES.has(eventType)`) —
+ *      returns `[]`, logs at `debug` (expected, intentional, not a defect).
+ *   3. Unclassified (neither of the above — nobody has looked at this
+ *      event_type yet) — returns `[]`, logs at `warn` (this IS the "somebody
+ *      forgot" signal `kpi.definition_revised` itself produced in
+ *      production before this fix — kept at `warn`, not silenced, precisely
+ *      so a truly NEW forgotten registration is still visible in the logs
+ *      the same way this one was; the CI-time backstop for this same class
+ *      of gap is `eventClassificationContract.test.ts`, not this log line
+ *      alone).
  *
  * Exported (KPI-E003) so a caller that manually inserts an
  * `rvn_platform_events` row OUTSIDE `executeAtomicCommand`/
@@ -464,6 +579,14 @@ export const EVENT_TYPE_CONSUMER_GROUPS: Readonly<Record<string, readonly string
  * out to the outbox identically instead of re-deriving this lookup.
  */
 export function resolveConsumerGroups(eventType: string): readonly string[] {
+  if (AUDIT_ONLY_EVENT_TYPES.has(eventType)) {
+    logger.debug(
+      '[resultsVnext/platform/atomicWrite] event_type is classified audit-only — outbox fan-out intentionally skipped (not a defect)',
+      { eventType }
+    );
+    return [];
+  }
+
   const groups = EVENT_TYPE_CONSUMER_GROUPS[eventType];
   if (!groups || groups.length === 0) {
     logger.warn(
