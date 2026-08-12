@@ -39,6 +39,7 @@ import {
   type AtomicCommandOutcome,
   type AtomicEventInput,
 } from '../platform/atomicWrite.js';
+import { assertCommandCapability, type CommandAccessContext } from '../platform/commandCapabilityGuard.js';
 
 import { OKR_EVENT_SOURCE } from './okrProgramCommands.js';
 import type { OkrProgramPolicySnapshot } from './okrProgramTypes.js';
@@ -95,6 +96,13 @@ export class OkrObjectiveNotFoundError extends Error {
     this.details = { objectiveId };
   }
 }
+
+// RN-G5 — command capability names (docs/product/results-vnext/RN_G5_AUTHZ_DESIGN.md)
+export const OKR_OBJECTIVE_CAPABILITIES = {
+  create: 'results.okr.objective.create',
+  update: 'results.okr.objective.update',
+  cancel: 'results.okr.objective.cancel',
+} as const;
 
 // ==========================================
 // SHARED HELPERS (also imported by okrKeyResultCommands.ts)
@@ -398,6 +406,7 @@ export interface CreateObjectiveInput {
   correlationId?: string;
   causationId?: string | null;
   reason?: string | null;
+  access: CommandAccessContext;
 }
 
 /**
@@ -421,12 +430,29 @@ export async function createObjective(input: CreateObjectiveInput): Promise<Atom
     correlationId,
     causationId = null,
     reason = null,
+    access,
   } = input;
 
   return executeAtomicCreate<OkrObjective>({
     organizationId,
     applyMutation: async (client) => {
-      await assertSetEditableForUpdate(client, setId, organizationId, 'createObjective');
+      const setRow = await assertSetEditableForUpdate(client, setId, organizationId, 'createObjective');
+
+      // RN-G5: no Objective row exists yet to carry its own responsible
+      // person, so this CREATE is authorized off the parent Set's own
+      // owner/reviewer (the Set is already loaded above by
+      // assertSetEditableForUpdate) — same "gate CREATE on the parent
+      // aggregate's responsible people" shape as ROI's child-entity
+      // commands (`roiAssumptionCommands.ts` et al., via
+      // `assertCaseEditableForUpdate`). `ownerUserId` on the input is
+      // caller-supplied content (who the NEW Objective's owner will be),
+      // never trusted as an authorization signal.
+      assertCommandCapability({
+        access,
+        actorUserId: createdBy,
+        capability: OKR_OBJECTIVE_CAPABILITIES.create,
+        responsibleUserIds: [setRow.owner_user_id, setRow.reviewer_user_id],
+      });
 
       if (ambitionType !== 'standard') {
         const { snapshot } = await resolveOkrCyclePinnedPolicySnapshot(client, setId, organizationId);
@@ -524,6 +550,7 @@ export interface UpdateObjectiveInput {
   correlationId?: string;
   causationId?: string | null;
   reason?: string | null;
+  access: CommandAccessContext;
 }
 
 export async function updateObjective(input: UpdateObjectiveInput): Promise<AtomicCommandOutcome<OkrObjective>> {
@@ -544,6 +571,7 @@ export async function updateObjective(input: UpdateObjectiveInput): Promise<Atom
     correlationId,
     causationId = null,
     reason = null,
+    access,
   } = input;
 
   let beforeState: Record<string, unknown> | null = null;
@@ -555,6 +583,14 @@ export async function updateObjective(input: UpdateObjectiveInput): Promise<Atom
     loadForUpdate: loadObjectiveForUpdate,
     getCurrentVersion: objectiveRowVersion,
     applyMutation: async (client, currentRow, nextVersion) => {
+      // RN-G5: coarse authorization FIRST, before any business rule below.
+      assertCommandCapability({
+        access,
+        actorUserId,
+        capability: OKR_OBJECTIVE_CAPABILITIES.update,
+        responsibleUserIds: [currentRow.owner_user_id],
+      });
+
       await assertSetEditableForUpdate(client, currentRow.set_id, organizationId, 'updateObjective');
       const { snapshot, policyVersionId } = await resolveOkrCyclePinnedPolicySnapshot(
         client,
@@ -682,6 +718,7 @@ export interface CancelObjectiveInput {
   correlationId?: string;
   causationId?: string | null;
   reason?: string | null;
+  access: CommandAccessContext;
 }
 
 /**
@@ -705,6 +742,7 @@ export async function cancelObjective(input: CancelObjectiveInput): Promise<Atom
     correlationId,
     causationId = null,
     reason = null,
+    access,
   } = input;
 
   let beforeState: Record<string, unknown> | null = null;
@@ -716,6 +754,13 @@ export async function cancelObjective(input: CancelObjectiveInput): Promise<Atom
     loadForUpdate: loadObjectiveForUpdate,
     getCurrentVersion: objectiveRowVersion,
     applyMutation: async (client, currentRow, nextVersion) => {
+      assertCommandCapability({
+        access,
+        actorUserId,
+        capability: OKR_OBJECTIVE_CAPABILITIES.cancel,
+        responsibleUserIds: [currentRow.owner_user_id],
+      });
+
       await assertSetEditableForUpdate(client, currentRow.set_id, organizationId, 'cancelObjective');
       if (!OKR_OBJECTIVE_CANCEL_FROM_STATUSES.includes(currentRow.status)) {
         throw new OkrObjectiveValidationError(

@@ -22,6 +22,7 @@ import {
   type AtomicCommandOutcome,
   type AtomicEventInput,
 } from '../platform/atomicWrite.js';
+import { assertCommandCapability, type CommandAccessContext } from '../platform/commandCapabilityGuard.js';
 
 import {
   assertSetEditableForUpdate,
@@ -66,6 +67,13 @@ export class OkrKeyResultNotFoundError extends Error {
     this.details = { keyResultId };
   }
 }
+
+// RN-G5 — command capability names (docs/product/results-vnext/RN_G5_AUTHZ_DESIGN.md)
+export const OKR_KEY_RESULT_CAPABILITIES = {
+  create: 'results.okr.key_result.create',
+  update: 'results.okr.key_result.update',
+  cancel: 'results.okr.key_result.cancel',
+} as const;
 
 // ==========================================
 // D-E3-4: MVP-supported measurement_type gate
@@ -142,6 +150,7 @@ export interface CreateKeyResultInput {
   correlationId?: string;
   causationId?: string | null;
   reason?: string | null;
+  access: CommandAccessContext;
 }
 
 export async function createKeyResult(input: CreateKeyResultInput): Promise<AtomicCommandOutcome<OkrKeyResult>> {
@@ -172,6 +181,7 @@ export async function createKeyResult(input: CreateKeyResultInput): Promise<Atom
     correlationId,
     causationId = null,
     reason = null,
+    access,
   } = input;
 
   let resolvedSetId = '';
@@ -179,13 +189,25 @@ export async function createKeyResult(input: CreateKeyResultInput): Promise<Atom
   return executeAtomicCreate<OkrKeyResult>({
     organizationId,
     applyMutation: async (client) => {
-      const objectiveResult = await client.query<{ objective_id: string; set_id: string }>(
-        `SELECT objective_id, set_id FROM okr_vnext_objectives WHERE objective_id = $1 AND organization_id = $2 FOR UPDATE`,
+      const objectiveResult = await client.query<{ objective_id: string; set_id: string; owner_user_id: string }>(
+        `SELECT objective_id, set_id, owner_user_id FROM okr_vnext_objectives WHERE objective_id = $1 AND organization_id = $2 FOR UPDATE`,
         [objectiveId, organizationId]
       );
       const objectiveRow = objectiveResult.rows[0];
       if (!objectiveRow) throw new OkrObjectiveNotFoundError(objectiveId);
       resolvedSetId = objectiveRow.set_id;
+
+      // RN-G5: no KeyResult row exists yet — gated on the parent
+      // Objective's own owner (same "CREATE gated on parent aggregate's
+      // responsible person" shape as createObjective on the Set's
+      // owner/reviewer). `ownerUserId` on the input is caller-supplied
+      // content (the NEW KR's owner-to-be), never an authorization signal.
+      assertCommandCapability({
+        access,
+        actorUserId: createdBy,
+        capability: OKR_KEY_RESULT_CAPABILITIES.create,
+        responsibleUserIds: [objectiveRow.owner_user_id],
+      });
 
       await assertSetEditableForUpdate(client, objectiveRow.set_id, organizationId, 'createKeyResult');
       assertMeasurementTypeImplemented(measurementType);
@@ -344,6 +366,7 @@ export interface UpdateKeyResultInput {
   correlationId?: string;
   causationId?: string | null;
   reason?: string | null;
+  access: CommandAccessContext;
 }
 
 export async function updateKeyResult(input: UpdateKeyResultInput): Promise<AtomicCommandOutcome<OkrKeyResult>> {
@@ -376,6 +399,7 @@ export async function updateKeyResult(input: UpdateKeyResultInput): Promise<Atom
     correlationId,
     causationId = null,
     reason = null,
+    access,
   } = input;
 
   let beforeState: Record<string, unknown> | null = null;
@@ -387,6 +411,13 @@ export async function updateKeyResult(input: UpdateKeyResultInput): Promise<Atom
     loadForUpdate: loadKeyResultForUpdate,
     getCurrentVersion: keyResultRowVersion,
     applyMutation: async (client, currentRow, nextVersion) => {
+      assertCommandCapability({
+        access,
+        actorUserId,
+        capability: OKR_KEY_RESULT_CAPABILITIES.update,
+        responsibleUserIds: [currentRow.owner_user_id],
+      });
+
       await assertSetEditableForUpdate(client, currentRow.set_id, organizationId, 'updateKeyResult');
 
       const mergedMeasurementType = measurementType ?? currentRow.measurement_type;
@@ -561,6 +592,7 @@ export interface CancelKeyResultInput {
   correlationId?: string;
   causationId?: string | null;
   reason?: string | null;
+  access: CommandAccessContext;
 }
 
 export async function cancelKeyResult(input: CancelKeyResultInput): Promise<AtomicCommandOutcome<OkrKeyResult>> {
@@ -574,6 +606,7 @@ export async function cancelKeyResult(input: CancelKeyResultInput): Promise<Atom
     correlationId,
     causationId = null,
     reason = null,
+    access,
   } = input;
 
   let beforeState: Record<string, unknown> | null = null;
@@ -585,6 +618,13 @@ export async function cancelKeyResult(input: CancelKeyResultInput): Promise<Atom
     loadForUpdate: loadKeyResultForUpdate,
     getCurrentVersion: keyResultRowVersion,
     applyMutation: async (client, currentRow, nextVersion) => {
+      assertCommandCapability({
+        access,
+        actorUserId,
+        capability: OKR_KEY_RESULT_CAPABILITIES.cancel,
+        responsibleUserIds: [currentRow.owner_user_id],
+      });
+
       await assertSetEditableForUpdate(client, currentRow.set_id, organizationId, 'cancelKeyResult');
       if (!OKR_KEY_RESULT_CANCEL_FROM_STATUSES.includes(currentRow.status)) {
         throw new OkrKeyResultValidationError(
