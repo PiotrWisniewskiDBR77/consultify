@@ -65,6 +65,7 @@ import {
   validateParams,
   validateQuery,
 } from '../../middleware/validation.middleware.js';
+import { resolveEffectiveAccess } from '../../services/effectiveAccessService.js';
 import { KpiNoActiveVisibilityPolicyError } from '../../services/resultsVnext/kpi/kpiDefinitionCommands.js';
 import {
   activateScorecard,
@@ -94,6 +95,10 @@ import {
   AtomicWriteAggregateNotFoundError,
   AtomicWriteConflictError,
 } from '../../services/resultsVnext/platform/atomicWrite.js';
+import {
+  CommandCapabilityDeniedError,
+  type CommandAccessContext,
+} from '../../services/resultsVnext/platform/commandCapabilityGuard.js';
 import {
   VISIBILITY_CTE_PARAM_COUNT,
   wrapWithVisibilityScope,
@@ -165,12 +170,37 @@ function resolveIdempotencyKey(bodyKey: string | undefined | null): string {
 }
 
 /**
+ * RN-G5 (docs/product/results-vnext/RN_G5_AUTHZ_DESIGN.md): resolves the
+ * REAL effective access context (capabilities + platformRole) for the
+ * authenticated actor — this is what `commandCapabilityGuard.ts`'s
+ * `assertCommandCapability` checks inside every scorecard command's
+ * `applyMutation`. Same shape/rationale as `kpiDeviation.routes.ts`'s own
+ * `resolveAccess` — no `projectId` (Scorecards are organization-scoped, no
+ * project association), so only the org-level baseline plus OWNER/ADMIN/
+ * SUPERADMIN's `'*'` apply.
+ */
+async function resolveAccess(req: AuthenticatedRequest, auth: RouteAuth): Promise<CommandAccessContext> {
+  return resolveEffectiveAccess({
+    userId: auth.userId,
+    organizationId: auth.organizationId,
+    applicationRole: req.user?.role,
+  });
+}
+
+/**
  * Shared error -> HTTP mapping for every write endpoint below. Same shape
  * (typed error classes checked first, generic 500 fallback last, never leak
  * a stack trace) as `kpi.routes.ts`'s `handleKpiRouteError` /
  * `kpiDeviation.routes.ts`'s `handleDeviationRouteError`.
  */
 function handleScorecardRouteError(res: Response, err: unknown, op: string): void {
+  if (err instanceof CommandCapabilityDeniedError) {
+    // RN-G5: same rationale as kpiDeviation.routes.ts's identical branch —
+    // `details.capability` is server-side-log-only, never wire.
+    logger.warn(`[resultsVnext/kpiScorecard.routes] ${op} denied`, { capability: err.details.capability });
+    res.status(403).json({ error: err.message, code: err.code });
+    return;
+  }
   if (err instanceof AtomicWriteConflictError) {
     res.status(409).json({ error: err.message, code: err.code, ...(err.details || {}) });
     return;
@@ -243,6 +273,7 @@ router.post(
     if (!auth) return;
     try {
       const body = req.body as import('zod').infer<typeof CreateScorecardSchema>;
+      const access = await resolveAccess(req, auth);
       const outcome = await createScorecard({
         organizationId: auth.organizationId,
         name: body.name,
@@ -257,6 +288,7 @@ router.post(
         idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
         correlationId: getCorrelationId(req),
         reason: body.reason ?? null,
+        access,
       });
       res.status(outcome.outcome === 'applied' ? 201 : 200).json({
         outcome: outcome.outcome,
@@ -360,6 +392,7 @@ router.post(
     try {
       const { scorecardId } = req.params as { scorecardId: string };
       const body = req.body as import('zod').infer<typeof AddScorecardItemSchema>;
+      const access = await resolveAccess(req, auth);
       const outcome = await addScorecardItem({
         scorecardId,
         organizationId: auth.organizationId,
@@ -373,6 +406,7 @@ router.post(
         role: body.role,
         sortOrder: body.sortOrder,
         displayConfig: body.displayConfig ?? null,
+        access,
       });
       res.status(outcome.outcome === 'applied' ? 201 : 200).json({
         outcome: outcome.outcome,
@@ -401,6 +435,7 @@ router.delete(
     try {
       const { scorecardId, itemId } = req.params as { scorecardId: string; itemId: string };
       const body = req.body as import('zod').infer<typeof RemoveScorecardItemSchema>;
+      const access = await resolveAccess(req, auth);
       const outcome = await removeScorecardItem({
         scorecardId,
         organizationId: auth.organizationId,
@@ -411,6 +446,7 @@ router.delete(
         correlationId: getCorrelationId(req),
         reason: body.reason ?? null,
         itemId,
+        access,
       });
       res.status(200).json({
         outcome: outcome.outcome,
@@ -440,6 +476,7 @@ router.patch(
     try {
       const { scorecardId } = req.params as { scorecardId: string };
       const body = req.body as import('zod').infer<typeof ReorderScorecardItemsSchema>;
+      const access = await resolveAccess(req, auth);
       const outcome = await reorderScorecardItems({
         scorecardId,
         organizationId: auth.organizationId,
@@ -450,6 +487,7 @@ router.patch(
         correlationId: getCorrelationId(req),
         reason: body.reason ?? null,
         items: body.items,
+        access,
       });
       res.status(200).json({
         outcome: outcome.outcome,
@@ -506,6 +544,7 @@ function mountLifecycleRoute(path: string, op: string, runner: typeof activateSc
       try {
         const { scorecardId } = req.params as { scorecardId: string };
         const body = req.body as import('zod').infer<typeof ScorecardLifecycleActionSchema>;
+        const access = await resolveAccess(req, auth);
         const outcome = await runner({
           scorecardId,
           organizationId: auth.organizationId,
@@ -515,6 +554,7 @@ function mountLifecycleRoute(path: string, op: string, runner: typeof activateSc
           idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
           correlationId: getCorrelationId(req),
           reason: body.reason ?? null,
+          access,
         });
         res.status(200).json({
           outcome: outcome.outcome,
@@ -547,6 +587,7 @@ router.post(
     try {
       const { scorecardId } = req.params as { scorecardId: string };
       const body = req.body as import('zod').infer<typeof CreateReviewSnapshotSchema>;
+      const access = await resolveAccess(req, auth);
       const outcome = await createReviewSnapshot({
         scorecardId,
         organizationId: auth.organizationId,
@@ -557,6 +598,7 @@ router.post(
         idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
         correlationId: getCorrelationId(req),
         reason: body.reason ?? null,
+        access,
       });
       res.status(outcome.outcome === 'applied' ? 201 : 200).json({
         outcome: outcome.outcome,
@@ -659,6 +701,7 @@ router.post(
         snapshotId: string;
       };
       const body = req.body as import('zod').infer<typeof PublishReviewSnapshotSchema>;
+      const access = await resolveAccess(req, auth);
       const outcome = await publishReviewSnapshot({
         snapshotId,
         scorecardId,
@@ -668,6 +711,7 @@ router.post(
         actorEffectiveRole: auth.role,
         idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
         correlationId: getCorrelationId(req),
+        access,
         reason: body.reason ?? null,
       });
       res.status(200).json({

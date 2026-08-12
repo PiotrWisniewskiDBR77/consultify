@@ -11,7 +11,16 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
  * and tests/resultsVnext/kpi/organizationKpiAttention.realdb.test.ts for the
  * direct-on-Postgres counterparts these unit tests are explicitly NOT a
  * substitute for.
+ *
+ * RN-G5 (docs/product/results-vnext/RN_G5_AUTHZ_DESIGN.md): every command
+ * called in this file now requires an `access: CommandAccessContext` field.
+ * This file's own scenarios are about ACTIVE_IMPACT_EXISTS/NOT_PROPOSED/
+ * self-approval guards, not authorization — a WILDCARD_ACCESS fixture
+ * (capabilities: ['*']) is passed to every call so none of them are
+ * incidentally gated by the NEW RN-G5 check.
  */
+
+const WILDCARD_ACCESS = { capabilities: ['*'], platformRole: null } as const;
 
 let currentImpact: Record<string, unknown> | null = null;
 let currentDefinitionVersionId: string | null = 'def-version-current';
@@ -216,6 +225,7 @@ describe('proposeInitiativeKpiImpact — at most one active impact per (kpi, ini
         proposedBy: 'user-1',
         actorEffectiveRole: 'consultant',
         idempotencyKey: 'idem-propose-1',
+        access: WILDCARD_ACCESS,
       })
     ).rejects.toBeInstanceOf(KpiInitiativeImpactValidationError);
 
@@ -235,6 +245,7 @@ describe('proposeInitiativeKpiImpact — at most one active impact per (kpi, ini
       proposedBy: 'user-1',
       actorEffectiveRole: 'consultant',
       idempotencyKey: 'idem-propose-2',
+      access: WILDCARD_ACCESS,
     });
 
     expect(outcome.outcome).toBe('applied');
@@ -260,6 +271,7 @@ describe('commitInitiativeKpiImpact — freezes baseline from the latest measure
       committedBy: 'user-committer',
       actorEffectiveRole: 'consultant',
       idempotencyKey: 'idem-commit-1',
+      access: WILDCARD_ACCESS,
     });
 
     expect(outcome.outcome).toBe('applied');
@@ -289,6 +301,7 @@ describe('commitInitiativeKpiImpact — freezes baseline from the latest measure
       committedBy: 'user-committer',
       actorEffectiveRole: 'consultant',
       idempotencyKey: 'idem-commit-2',
+      access: WILDCARD_ACCESS,
     });
 
     expect(outcome.result.impact.status).toBe('committed');
@@ -308,6 +321,7 @@ describe('commitInitiativeKpiImpact — freezes baseline from the latest measure
         committedBy: 'user-committer',
         actorEffectiveRole: 'consultant',
         idempotencyKey: 'idem-commit-3',
+        access: WILDCARD_ACCESS,
       })
     ).rejects.toMatchObject({ code: 'NOT_PROPOSED' });
   });
@@ -328,6 +342,7 @@ describe('recordReviewedAttribution — self-approval denial', () => {
         reviewedBy: 'user-committer',
         actorEffectiveRole: 'consultant',
         idempotencyKey: 'idem-review-1',
+        access: WILDCARD_ACCESS,
       })
     ).rejects.toBeInstanceOf(InitiativeKpiImpactSelfApprovalDeniedError);
 
@@ -347,6 +362,7 @@ describe('recordReviewedAttribution — self-approval denial', () => {
       reviewedBy: 'user-reviewer',
       actorEffectiveRole: 'consultant',
       idempotencyKey: 'idem-review-2',
+      access: WILDCARD_ACCESS,
     });
 
     expect(outcome.outcome).toBe('applied');

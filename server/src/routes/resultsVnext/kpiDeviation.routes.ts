@@ -394,6 +394,7 @@ router.post(
     try {
       const { caseId } = req.params as { caseId: string };
       const body = req.body as import('zod').infer<typeof AddCorrectiveActionSchema>;
+      const access = await resolveAccess(req, auth);
       const outcome = await addCorrectiveAction({
         deviationCaseId: caseId,
         organizationId: auth.organizationId,
@@ -407,6 +408,7 @@ router.post(
         idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
         correlationId: getCorrelationId(req),
         reason: body.reason ?? null,
+        access,
       });
       res.status(outcome.outcome === 'applied' ? 201 : 200).json({
         outcome: outcome.outcome,
@@ -441,6 +443,7 @@ router.patch(
         return;
       }
       const body = req.body as import('zod').infer<typeof UpdateCorrectiveActionSchema>;
+      const access = await resolveAccess(req, auth);
       const outcome = await updateCorrectiveAction({
         actionId,
         organizationId: auth.organizationId,
@@ -457,6 +460,7 @@ router.patch(
         idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
         correlationId: getCorrelationId(req),
         reason: body.reason ?? null,
+        access,
       });
       res.status(200).json({
         outcome: outcome.outcome,

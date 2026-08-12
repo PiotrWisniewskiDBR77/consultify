@@ -18,6 +18,25 @@
  * row — it inherits visibility from `kpi_id` (`resourceType:'kpi'`), same as
  * KPI-E003's deviation cases/corrective actions (design §C: "Initiative
  * (legacy module) does not participate in RVN ABAC").
+ *
+ * RN-G5 (docs/product/results-vnext/RN_G5_AUTHZ_DESIGN.md): all four commands
+ * gated with `assertCommandCapability`. This table has no `owner_user_id`/
+ * `manager_user_id` of its own (§C: it inherits visibility, not ownership,
+ * from `kpi_id`) — so "the record's own designated responsible people" is
+ * the OWNING KPI's `owner_user_id` (`rvn_kpi_definitions.owner_user_id`),
+ * fetched via a local `loadKpiOwnerUserId` helper — same name/shape as the
+ * identically-purposed, deliberately NOT-shared helpers in
+ * `kpiDefinitionCommands.ts`/`kpiMeasurementCommands.ts` (each file keeps its
+ * own copy rather than importing one; see kpiMeasurementCommands.ts's header
+ * for why: no actor-fallback, a guard must see the real owner or `null`).
+ * `proposeInitiativeKpiImpact` has no impact row yet at authorization time,
+ * but `kpiId` IS already a known input (the KPI itself already exists), so
+ * the owner lookup runs against that input directly — unlike
+ * `createKpiDraft`/`createScorecard` (which create the TOP of a new
+ * ownership chain and are therefore capability-only), this command creates a
+ * CHILD of an already-owned parent, the same "lock/read the parent, check
+ * the parent's responsible people" shape `kpiScorecardCommands.ts`'s
+ * `addScorecardItem` and this package's own `addCorrectiveAction` use.
  */
 import { randomUUID } from 'node:crypto';
 
@@ -29,6 +48,10 @@ import {
   type AtomicCommandOutcome,
   type AtomicEventInput,
 } from '../platform/atomicWrite.js';
+import {
+  assertCommandCapability,
+  type CommandAccessContext,
+} from '../platform/commandCapabilityGuard.js';
 
 import { computeStateHash, KPI_EVENT_SOURCE } from './kpiDefinitionCommands.js';
 import {
@@ -37,6 +60,33 @@ import {
   type InitiativeKpiImpactDirection,
   type InitiativeKpiImpactRow,
 } from './kpiInitiativeImpactTypes.js';
+
+// ==========================================
+// RN-G5 — command capability names (docs/product/results-vnext/RN_G5_AUTHZ_DESIGN.md)
+// Dotted convention matching this file's own event-type naming
+// (`kpi.initiative_impact_proposed`/`_committed`/`_reviewed`/`_superseded`).
+// ==========================================
+export const KPI_INITIATIVE_IMPACT_CAPABILITIES = {
+  propose: 'results.kpi.initiative_impact.propose',
+  commit: 'results.kpi.initiative_impact.commit',
+  review: 'results.kpi.initiative_impact.review',
+  supersede: 'results.kpi.initiative_impact.supersede',
+} as const;
+
+/**
+ * See file header — the owning KPI's REAL `owner_user_id` (or `null` if
+ * unset), never a fallback to the acting user. Deliberately a local copy,
+ * not imported from `kpiDefinitionCommands.ts`/`kpiMeasurementCommands.ts` —
+ * same "each file keeps its own minimal copy" convention those two already
+ * follow for this exact query.
+ */
+async function loadKpiOwnerUserId(client: PoolClient, kpiId: string): Promise<string | null> {
+  const result = await client.query<{ owner_user_id: string | null }>(
+    `SELECT owner_user_id FROM rvn_kpi_definitions WHERE kpi_id = $1`,
+    [kpiId]
+  );
+  return result.rows[0]?.owner_user_id ?? null;
+}
 
 /**
  * `PlatformEventEnvelope.aggregateType` (eventEnvelope.ts) is typed as
@@ -120,6 +170,8 @@ export interface ProposeInitiativeKpiImpactInput {
   correlationId?: string;
   causationId?: string | null;
   reason?: string | null;
+  /** RN-G5: resolved once by the route via `resolveEffectiveAccess`. */
+  access: CommandAccessContext;
 }
 
 export async function proposeInitiativeKpiImpact(
@@ -138,11 +190,24 @@ export async function proposeInitiativeKpiImpact(
     correlationId,
     causationId = null,
     reason = null,
+    access,
   } = input;
 
   return executeAtomicCreate<{ impact: InitiativeKpiImpact }>({
     organizationId,
     applyMutation: async (client) => {
+      // RN-G5: authorization FIRST, before any other read — see file header
+      // for why the OWNING KPI's owner is what's checked (no impact row
+      // exists yet, but kpiId is already a known input referencing an
+      // existing, already-owned KPI).
+      const ownerUserId = await loadKpiOwnerUserId(client, kpiId);
+      assertCommandCapability({
+        access,
+        actorUserId: proposedBy,
+        capability: KPI_INITIATIVE_IMPACT_CAPABILITIES.propose,
+        responsibleUserIds: [ownerUserId],
+      });
+
       // Best-effort pre-check for a friendly typed error instead of a raw
       // 23505 surfacing from the INSERT below — the real guarantee is the
       // DB-level partial unique index
@@ -229,6 +294,8 @@ export interface CommitInitiativeKpiImpactInput {
   correlationId?: string;
   causationId?: string | null;
   reason?: string | null;
+  /** RN-G5: resolved once by the route via `resolveEffectiveAccess`. */
+  access: CommandAccessContext;
 }
 
 interface LatestMeasurementRow {
@@ -287,6 +354,7 @@ export async function commitInitiativeKpiImpact(
     correlationId,
     causationId = null,
     reason = null,
+    access,
   } = input;
 
   let beforeState: Record<string, unknown> | null = null;
@@ -298,6 +366,15 @@ export async function commitInitiativeKpiImpact(
     loadForUpdate: loadInitiativeKpiImpactForUpdate,
     getCurrentVersion: impactRowVersion,
     applyMutation: async (client, currentRow, nextVersion) => {
+      // RN-G5: authorization FIRST, before the domain-state check below.
+      const ownerUserId = await loadKpiOwnerUserId(client, currentRow.kpi_id);
+      assertCommandCapability({
+        access,
+        actorUserId: committedBy,
+        capability: KPI_INITIATIVE_IMPACT_CAPABILITIES.commit,
+        responsibleUserIds: [ownerUserId],
+      });
+
       if (currentRow.status !== 'proposed') {
         throw new KpiInitiativeImpactValidationError(
           `Impact ${impactId} is "${currentRow.status}" — only a "proposed" impact may be committed`,
@@ -419,15 +496,19 @@ export interface RecordReviewedAttributionInput {
   correlationId?: string;
   causationId?: string | null;
   reason?: string | null;
+  /** RN-G5: resolved once by the route via `resolveEffectiveAccess`. */
+  access: CommandAccessContext;
 }
 
 /**
- * Self-approval denial FIRST, before any write (design §C.3: "reviewedBy
- * MUST differ from committedBy for a material review — server-side
- * enforced"). Mirrors `approveDefinitionVersion`/`approvePlan`'s discipline
- * exactly: the check runs inside `applyMutation`, after `loadForUpdate`'s
- * `SELECT ... FOR UPDATE` has already locked the row but before anything is
- * written.
+ * RN-G5: coarse authorization FIRST, maker-checker self-approval denial
+ * SECOND — same ordering/rationale as `approveDefinitionVersion`/
+ * `approvePlan` (see `commandCapabilityGuard.ts`'s header for why). Design
+ * §C.3's own self-approval rule ("reviewedBy MUST differ from committedBy
+ * for a material review — server-side enforced") is unchanged, just no
+ * longer the first thing checked. Both checks run inside `applyMutation`,
+ * after `loadForUpdate`'s `SELECT ... FOR UPDATE` has already locked the row
+ * but before anything is written.
  */
 export async function recordReviewedAttribution(
   input: RecordReviewedAttributionInput
@@ -445,6 +526,7 @@ export async function recordReviewedAttribution(
     correlationId,
     causationId = null,
     reason = null,
+    access,
   } = input;
 
   let beforeState: Record<string, unknown> | null = null;
@@ -456,7 +538,15 @@ export async function recordReviewedAttribution(
     loadForUpdate: loadInitiativeKpiImpactForUpdate,
     getCurrentVersion: impactRowVersion,
     applyMutation: async (client, currentRow, nextVersion) => {
-      // Self-approval denial — FIRST, before any write.
+      const ownerUserId = await loadKpiOwnerUserId(client, currentRow.kpi_id);
+      assertCommandCapability({
+        access,
+        actorUserId: reviewedBy,
+        capability: KPI_INITIATIVE_IMPACT_CAPABILITIES.review,
+        responsibleUserIds: [ownerUserId],
+      });
+
+      // Self-approval denial — SECOND, still before any write.
       if (currentRow.committed_by === reviewedBy) {
         throw new InitiativeKpiImpactSelfApprovalDeniedError(impactId, reviewedBy);
       }
@@ -541,6 +631,8 @@ export interface SupersedeInitiativeKpiImpactInput {
   correlationId?: string;
   causationId?: string | null;
   reason?: string | null;
+  /** RN-G5: resolved once by the route via `resolveEffectiveAccess`. */
+  access: CommandAccessContext;
 }
 
 export interface SupersedeInitiativeKpiImpactResult {
@@ -572,6 +664,7 @@ export async function supersedeInitiativeKpiImpact(
     correlationId,
     causationId = null,
     reason = null,
+    access,
   } = input;
 
   let beforeState: Record<string, unknown> | null = null;
@@ -583,6 +676,15 @@ export async function supersedeInitiativeKpiImpact(
     loadForUpdate: loadInitiativeKpiImpactForUpdate,
     getCurrentVersion: impactRowVersion,
     applyMutation: async (client, currentRow, nextVersion) => {
+      // RN-G5: authorization FIRST, before the domain-state check below.
+      const ownerUserId = await loadKpiOwnerUserId(client, currentRow.kpi_id);
+      assertCommandCapability({
+        access,
+        actorUserId,
+        capability: KPI_INITIATIVE_IMPACT_CAPABILITIES.supersede,
+        responsibleUserIds: [ownerUserId],
+      });
+
       if (currentRow.status !== 'proposed' && currentRow.status !== 'committed') {
         throw new KpiInitiativeImpactValidationError(
           `Impact ${impactId} is "${currentRow.status}" — only a "proposed" or "committed" impact may be superseded`,

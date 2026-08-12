@@ -36,6 +36,23 @@
  *    live-data materialization at this step (that happens only at publish).
  *  - `publishReviewSnapshot` — `executeAtomicCommand` CAS'd on the
  *    snapshot's own `row_version`, §B verbatim.
+ *
+ * RN-G5 (docs/product/results-vnext/RN_G5_AUTHZ_DESIGN.md): every command in
+ * this file gated with `assertCommandCapability`. `createScorecard` is the
+ * one CAPABILITY-ONLY gate (no scorecard exists yet — same shape
+ * `createKpiDraft`/`proposeInitiativeKpiImpact`'s create step would be if
+ * gated) — unlike `createKpiDraft`, this one IS gated (no e2e/Teresa flow
+ * dependency on it was found the way KPI_G5_AUTHZ_DESIGN.md §6.1 documents
+ * for that command). Every other command CAS's/locks an existing
+ * `rvn_kpi_scorecards` row (directly, or via the snapshot's own
+ * `scorecard_id`) and authorizes against that scorecard's own
+ * `owner_user_id` — the ONE field this domain has (no manager concept, per
+ * `kpiScorecardTypes.ts`'s `KpiScorecardRow`). `publishReviewSnapshot` is
+ * the one command whose CAS'd row (a review snapshot) carries no
+ * `owner_user_id` of its own — it resolves the PARENT scorecard's owner via
+ * a small extra `SELECT`, same "child row, parent's responsible people"
+ * shape `kpiCorrectiveActionCommands.ts`'s `addCorrectiveAction` and
+ * `kpiInitiativeImpactCommands.ts` use.
  */
 import { randomUUID } from 'node:crypto';
 
@@ -47,6 +64,10 @@ import {
   type AtomicCommandOutcome,
   type AtomicEventInput,
 } from '../platform/atomicWrite.js';
+import {
+  assertCommandCapability,
+  type CommandAccessContext,
+} from '../platform/commandCapabilityGuard.js';
 import { getActiveVisibilityPolicy } from '../platform/visibilityResolver.js';
 import { wrapWithVisibilityScope, VISIBILITY_CTE_PARAM_COUNT } from '../platform/visibilityScopedQuery.js';
 
@@ -78,6 +99,27 @@ export const KPI_SCORECARD_EVENT_SOURCE = 'resultsVnext.kpiScorecard';
  * kept as a distinct exported constant here since it documents a
  * Scorecard-specific decision, not a re-export of the KPI one. */
 export const KPI_SCORECARD_VISIBILITY_DOMAIN = 'kpi';
+
+// ==========================================
+// RN-G5 — command capability names (docs/product/results-vnext/RN_G5_AUTHZ_DESIGN.md)
+// Dotted convention matching this file's own event-type naming
+// (`scorecard.created`/`.membership_changed`/`.activated`/`.review_created`/
+// `.review_published`, etc).
+// ==========================================
+export const KPI_SCORECARD_CAPABILITIES = {
+  /** No scorecard exists yet — capability-only, no owner override (see
+   * commandCapabilityGuard.ts's own doc comment on `responsibleUserIds`
+   * being optional). */
+  create: 'results.kpi.scorecard.create',
+  addItem: 'results.kpi.scorecard.item.add',
+  removeItem: 'results.kpi.scorecard.item.remove',
+  reorderItems: 'results.kpi.scorecard.item.reorder',
+  activate: 'results.kpi.scorecard.activate',
+  suspend: 'results.kpi.scorecard.suspend',
+  archive: 'results.kpi.scorecard.archive',
+  createReviewSnapshot: 'results.kpi.scorecard.review.create',
+  publishReviewSnapshot: 'results.kpi.scorecard.review.publish',
+} as const;
 
 // ==========================================
 // ERRORS
@@ -137,6 +179,8 @@ export interface CreateScorecardInput {
   correlationId?: string;
   causationId?: string | null;
   reason?: string | null;
+  /** RN-G5: resolved once by the route via `resolveEffectiveAccess`. */
+  access: CommandAccessContext;
 }
 
 export interface CreateScorecardResult {
@@ -161,6 +205,7 @@ export async function createScorecard(
     correlationId,
     causationId = null,
     reason = null,
+    access,
   } = input;
 
   let visibilityPolicyVersion: string | undefined;
@@ -168,6 +213,14 @@ export async function createScorecard(
   return executeAtomicCreate<CreateScorecardResult>({
     organizationId,
     applyMutation: async (client) => {
+      // RN-G5: capability-only — no scorecard row exists yet (see file
+      // header for why, unlike createKpiDraft, this one IS gated).
+      assertCommandCapability({
+        access,
+        actorUserId: createdBy,
+        capability: KPI_SCORECARD_CAPABILITIES.create,
+      });
+
       // Decyzja #1: reuse the 'kpi' domain policy — fail closed, same
       // discipline as createKpiDraft (decyzja #11 of KPI-E001/E002).
       const policy = await getActiveVisibilityPolicy(client, {
@@ -267,6 +320,8 @@ interface BaseScorecardCommandInput {
   correlationId?: string;
   causationId?: string | null;
   reason?: string | null;
+  /** RN-G5: resolved once by the route via `resolveEffectiveAccess`. */
+  access: CommandAccessContext;
 }
 
 /** Membership mutations are illegal once a scorecard is archived — not
@@ -316,6 +371,7 @@ export async function addScorecardItem(
     role = 'supporting',
     sortOrder = 0,
     displayConfig = null,
+    access,
   } = input;
 
   let beforeState: Record<string, unknown> | null = null;
@@ -327,6 +383,14 @@ export async function addScorecardItem(
     loadForUpdate: loadScorecardForUpdate,
     getCurrentVersion: scorecardRowVersion,
     applyMutation: async (client, currentRow, nextVersion) => {
+      // RN-G5: authorization FIRST, before the archived-status check below.
+      assertCommandCapability({
+        access,
+        actorUserId,
+        capability: KPI_SCORECARD_CAPABILITIES.addItem,
+        responsibleUserIds: [currentRow.owner_user_id],
+      });
+
       assertScorecardNotArchived(currentRow, scorecardId);
       beforeState = toScorecardSummary(currentRow);
 
@@ -435,6 +499,7 @@ export async function removeScorecardItem(
     causationId = null,
     reason = null,
     itemId,
+    access,
   } = input;
 
   let beforeState: Record<string, unknown> | null = null;
@@ -446,6 +511,14 @@ export async function removeScorecardItem(
     loadForUpdate: loadScorecardForUpdate,
     getCurrentVersion: scorecardRowVersion,
     applyMutation: async (client, currentRow, nextVersion) => {
+      // RN-G5: authorization FIRST.
+      assertCommandCapability({
+        access,
+        actorUserId,
+        capability: KPI_SCORECARD_CAPABILITIES.removeItem,
+        responsibleUserIds: [currentRow.owner_user_id],
+      });
+
       beforeState = toScorecardSummary(currentRow);
 
       const deleteResult = await client.query(
@@ -534,6 +607,7 @@ export async function reorderScorecardItems(
     causationId = null,
     reason = null,
     items,
+    access,
   } = input;
 
   let beforeState: Record<string, unknown> | null = null;
@@ -545,6 +619,14 @@ export async function reorderScorecardItems(
     loadForUpdate: loadScorecardForUpdate,
     getCurrentVersion: scorecardRowVersion,
     applyMutation: async (client, currentRow, nextVersion) => {
+      // RN-G5: authorization FIRST.
+      assertCommandCapability({
+        access,
+        actorUserId,
+        capability: KPI_SCORECARD_CAPABILITIES.reorderItems,
+        responsibleUserIds: [currentRow.owner_user_id],
+      });
+
       beforeState = toScorecardSummary(currentRow);
 
       const updatedItems: KpiScorecardItem[] = [];
@@ -618,6 +700,8 @@ interface ScorecardLifecycleTransitionSpec {
   toStatus: KpiScorecardLifecycleStatus;
   /** Decyzja #5: activateScorecard requires >=1 member. */
   requiresAtLeastOneMember: boolean;
+  /** RN-G5: capability gating this specific transition. */
+  capability: string;
 }
 
 async function runScorecardLifecycleTransition(
@@ -634,6 +718,7 @@ async function runScorecardLifecycleTransition(
     correlationId,
     causationId = null,
     reason = null,
+    access,
   } = input;
 
   let beforeState: Record<string, unknown> | null = null;
@@ -645,6 +730,15 @@ async function runScorecardLifecycleTransition(
     loadForUpdate: loadScorecardForUpdate,
     getCurrentVersion: scorecardRowVersion,
     applyMutation: async (client, currentRow, nextVersion) => {
+      // RN-G5: authorization FIRST — KpiScorecardRow already carries
+      // owner_user_id, no extra lookup needed.
+      assertCommandCapability({
+        access,
+        actorUserId,
+        capability: spec.capability,
+        responsibleUserIds: [currentRow.owner_user_id],
+      });
+
       if (!spec.fromStatuses.includes(currentRow.lifecycle_status)) {
         throw new KpiScorecardValidationError(
           `Scorecard ${scorecardId} is "${currentRow.lifecycle_status}" — cannot transition to "${spec.toStatus}" from there`,
@@ -717,6 +811,7 @@ export function activateScorecard(input: BaseScorecardCommandInput): Promise<Ato
       fromStatuses: ['draft', 'suspended'],
       toStatus: 'active',
       requiresAtLeastOneMember: true,
+      capability: KPI_SCORECARD_CAPABILITIES.activate,
     },
     input
   );
@@ -729,6 +824,7 @@ export function suspendScorecard(input: BaseScorecardCommandInput): Promise<Atom
       fromStatuses: ['active'],
       toStatus: 'suspended',
       requiresAtLeastOneMember: false,
+      capability: KPI_SCORECARD_CAPABILITIES.suspend,
     },
     input
   );
@@ -741,6 +837,7 @@ export function archiveScorecard(input: BaseScorecardCommandInput): Promise<Atom
       fromStatuses: ['draft', 'active', 'suspended'],
       toStatus: 'archived',
       requiresAtLeastOneMember: false,
+      capability: KPI_SCORECARD_CAPABILITIES.archive,
     },
     input
   );
@@ -762,6 +859,8 @@ export interface CreateReviewSnapshotInput {
   correlationId?: string;
   causationId?: string | null;
   reason?: string | null;
+  /** RN-G5: resolved once by the route via `resolveEffectiveAccess`. */
+  access: CommandAccessContext;
 }
 
 export async function createReviewSnapshot(
@@ -778,6 +877,7 @@ export async function createReviewSnapshot(
     correlationId,
     causationId = null,
     reason = null,
+    access,
   } = input;
 
   return executeAtomicCreate<KpiScorecardReviewSnapshot>({
@@ -785,9 +885,16 @@ export async function createReviewSnapshot(
     applyMutation: async (client) => {
       // Not pinned by decision #8 explicitly (which only fixes the create
       // shape) — this package's own minimal guard, existence + archived
-      // check, mirroring addCorrectiveAction's parent-existence check.
-      const scorecardResult = await client.query<{ lifecycle_status: KpiScorecardLifecycleStatus }>(
-        `SELECT lifecycle_status FROM rvn_kpi_scorecards WHERE scorecard_id = $1 AND organization_id = $2`,
+      // check, mirroring addCorrectiveAction's parent-existence check. Also
+      // the RN-G5 authorization source: no snapshot row exists yet, so the
+      // PARENT scorecard's own owner_user_id is what's checked (same "lock/
+      // read the parent, check the parent's responsible people" shape
+      // addScorecardItem/addCorrectiveAction use).
+      const scorecardResult = await client.query<{
+        lifecycle_status: KpiScorecardLifecycleStatus;
+        owner_user_id: string;
+      }>(
+        `SELECT lifecycle_status, owner_user_id FROM rvn_kpi_scorecards WHERE scorecard_id = $1 AND organization_id = $2`,
         [scorecardId, organizationId]
       );
       const scorecardRow = scorecardResult.rows[0];
@@ -796,6 +903,14 @@ export async function createReviewSnapshot(
           scorecardId,
         });
       }
+
+      assertCommandCapability({
+        access,
+        actorUserId: createdBy,
+        capability: KPI_SCORECARD_CAPABILITIES.createReviewSnapshot,
+        responsibleUserIds: [scorecardRow.owner_user_id],
+      });
+
       if (scorecardRow.lifecycle_status === 'archived') {
         throw new KpiScorecardValidationError(
           `Scorecard ${scorecardId} is "archived" — a new review snapshot cannot be started`,
@@ -889,6 +1004,8 @@ export interface PublishReviewSnapshotInput {
   correlationId?: string;
   causationId?: string | null;
   reason?: string | null;
+  /** RN-G5: resolved once by the route via `resolveEffectiveAccess`. */
+  access: CommandAccessContext;
 }
 
 export interface PublishReviewSnapshotResult {
@@ -925,6 +1042,7 @@ export async function publishReviewSnapshot(
     correlationId,
     causationId = null,
     reason = null,
+    access,
   } = input;
 
   let beforeState: Record<string, unknown> | null = null;
@@ -937,6 +1055,25 @@ export async function publishReviewSnapshot(
     loadForUpdate: loadSnapshotForUpdate,
     getCurrentVersion: snapshotRowVersion,
     applyMutation: async (client, currentRow, nextVersion) => {
+      // RN-G5: authorization FIRST, before the SCORECARD_MISMATCH/NOT_A_DRAFT
+      // checks below — a review snapshot row carries no owner_user_id of its
+      // own (unlike a scorecard row), so the PARENT scorecard's owner is
+      // resolved via `currentRow.scorecard_id` — the snapshot's OWN,
+      // already-locked true parent, not the caller-supplied `scorecardId`
+      // input (which may not even match, that mismatch is exactly what the
+      // very next check below catches — authorization must not depend on an
+      // as-yet-unverified caller claim).
+      const scorecardOwnerResult = await client.query<{ owner_user_id: string }>(
+        `SELECT owner_user_id FROM rvn_kpi_scorecards WHERE scorecard_id = $1 AND organization_id = $2`,
+        [currentRow.scorecard_id, organizationId]
+      );
+      assertCommandCapability({
+        access,
+        actorUserId: publishedBy,
+        capability: KPI_SCORECARD_CAPABILITIES.publishReviewSnapshot,
+        responsibleUserIds: [scorecardOwnerResult.rows[0]?.owner_user_id ?? null],
+      });
+
       if (currentRow.scorecard_id !== scorecardId) {
         throw new KpiScorecardValidationError(
           `Snapshot ${snapshotId} does not belong to scorecard ${scorecardId}`,
