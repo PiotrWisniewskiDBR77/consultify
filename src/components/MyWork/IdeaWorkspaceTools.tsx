@@ -47,6 +47,7 @@ import {
   Lightbulb,
   Link2,
   ListChecks,
+  Lock,
   MessageSquare,
   MessageSquarePlus,
   MousePointerClick,
@@ -226,6 +227,33 @@ interface IdeaWorkspaceToolsProps {
   branch: string;
   area: string;
   priority: number;
+  /**
+   * E12 — security classification (RISK-22). Optional/undefined on any host
+   * that hasn't wired it yet — treated exactly like 'standard' when absent
+   * (see myIdeasTypes.ts IdeaConfidentiality) so no caller is forced to
+   * thread it through before it renders.
+   */
+  confidentiality?: 'standard' | 'confidential' | 'restricted';
+  /** Capability flag — GET /my-ideas(/:id) `confidentialitySupported`. The
+   * pill hides entirely when false: a DB without the additive migration
+   * can't persist the value, so offering the control would be a false
+   * promise (same honest-degrade rule as maturityGatesSupported). */
+  confidentialitySupported?: boolean;
+  /** True while a confidentiality PUT is in flight — disables the control
+   * so a second click can't race the first. */
+  confidentialitySaving?: boolean;
+  /**
+   * Defense-in-depth UI gate: false renders the current level as a
+   * non-interactive badge instead of a clickable control. Every production
+   * caller today can only ever load an Idea it owns (GET/PUT /my-ideas/:id
+   * are both scoped `WHERE user_id = ?`), so this always resolves true in
+   * practice — the real authorization boundary is that server-side
+   * ownership scope, not this flag. Kept so a future non-owner surface
+   * (if one is ever built) fails closed by default rather than needing a
+   * new prop invented under pressure.
+   */
+  canEditConfidentiality?: boolean;
+  onConfidentialityChange?: (next: 'standard' | 'confidential' | 'restricted') => void;
   isDraft: boolean;
   isAccepted: boolean;
   saving: boolean;
@@ -403,6 +431,33 @@ const PRIORITY_COLORS: Record<number, string> = {
   100: 'bg-danger-50 text-danger-700 dark:bg-danger-500/10 dark:text-danger-300',
 };
 
+/**
+ * E12 — same "danger token for the genuinely critical state" precedent as
+ * PRIORITY_COLORS[100] above (TRIADA_KANON.md §A10: red is reserved for
+ * critical semantics, never used as a UI/CTA/focus color). 'restricted'
+ * blocks 8 AI/export endpoints server-side — that IS a critical state, so
+ * the `danger` semantic token applies deliberately here, same as the
+ * Critical priority tier. This is the `c-*`/`danger-*` semantic scale, never
+ * `primary-*` (which is crimson brand accent, banned as a UI color).
+ */
+type IdeaConfidentialityLevel = 'standard' | 'confidential' | 'restricted';
+const CONFIDENTIALITY_COLORS: Record<IdeaConfidentialityLevel, string> = {
+  standard: 'bg-slate-100 text-slate-600 dark:bg-slate-700/40 dark:text-slate-300',
+  confidential: 'bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300',
+  restricted: 'bg-danger-50 text-danger-700 dark:bg-danger-500/10 dark:text-danger-300',
+};
+const CONFIDENTIALITY_LEVELS: readonly IdeaConfidentialityLevel[] = [
+  'standard',
+  'confidential',
+  'restricted',
+];
+/** Downgrade = moving left in this list (restricted -> confidential -> standard). */
+const CONFIDENTIALITY_RANK: Record<IdeaConfidentialityLevel, number> = {
+  standard: 0,
+  confidential: 1,
+  restricted: 2,
+};
+
 export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
   open,
   onClose,
@@ -414,6 +469,11 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
   branch,
   area,
   priority,
+  confidentiality = 'standard',
+  confidentialitySupported = false,
+  confidentialitySaving = false,
+  canEditConfidentiality = true,
+  onConfidentialityChange,
   isDraft,
   isAccepted,
   saving,
@@ -567,6 +627,7 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
   const [branchEditing, setBranchEditing] = useState(false);
   const [areaEditing, setAreaEditing] = useState(false);
   const [priorityOpen, setPriorityOpen] = useState(false);
+  const [confidentialityOpen, setConfidentialityOpen] = useState(false);
   const branchRef = useRef<HTMLInputElement>(null);
   const areaRef = useRef<HTMLInputElement>(null);
 
@@ -587,6 +648,21 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
     [onPriorityChange, onSave]
   );
 
+  // E12 — unlike Priority above, this does NOT optimistically apply here.
+  // The pill only ever displays the `confidentiality` PROP (owned by the
+  // host — IdeaMapWorkspace's `handleConfidentialityChange`), which decides
+  // whether a downgrade needs confirmation and only calls back with the new
+  // value after a successful PUT. That keeps "no false success" true even
+  // if this component re-renders mid-request.
+  const handleConfidentialitySelect = useCallback(
+    (level: IdeaConfidentialityLevel) => {
+      setConfidentialityOpen(false);
+      if (level === confidentiality) return;
+      onConfidentialityChange?.(level);
+    },
+    [confidentiality, onConfidentialityChange]
+  );
+
   // PIATA kopia etykiet narzedzi — i jedyna, ktora zostala z „Mapa rekomendacji"
   // (zgloszenie Piotra 2026-07-24: w kolumnie ma byc czytelnie „Mapa mysli").
   // Czytamy z tego samego SSOT co lista, przelacznik i rail.
@@ -604,6 +680,21 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
   ];
   const currentPriorityLabel =
     priorityOptions.find((o) => o.value === normalizedPriority)?.label ?? 'Medium';
+
+  // E12 — confidentiality options + labels (RISK-22).
+  const confidentialityOptions: Array<{ value: IdeaConfidentialityLevel; label: string }> = [
+    { value: 'standard', label: t('myWorkIdeas.workspaceTools.confidentialityStandard') },
+    { value: 'confidential', label: t('myWorkIdeas.workspaceTools.confidentialityConfidential') },
+    { value: 'restricted', label: t('myWorkIdeas.workspaceTools.confidentialityRestricted') },
+  ];
+  const normalizedConfidentiality: IdeaConfidentialityLevel = CONFIDENTIALITY_LEVELS.includes(
+    confidentiality as IdeaConfidentialityLevel
+  )
+    ? (confidentiality as IdeaConfidentialityLevel)
+    : 'standard';
+  const currentConfidentialityLabel =
+    confidentialityOptions.find((o) => o.value === normalizedConfidentiality)?.label ??
+    confidentialityOptions[0].label;
 
   // Visual map (icon + gradient) keyed by target id; labels/desc/status come from the SSOT registry.
   const CONVERT_VISUALS: Record<
@@ -1252,6 +1343,71 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
                           </div>
                         )}
                       </div>
+
+                      {/*
+                       * E12 (RISK-22) — confidentiality pill. Hidden entirely when
+                       * confidentialitySupported is false: a database without the
+                       * additive migration can't persist the value, so offering the
+                       * control here would be a false promise (same honest-degrade
+                       * rule as maturityGatesSupported above).
+                       */}
+                      {confidentialitySupported && (
+                        <div className="relative">
+                          {canEditConfidentiality ? (
+                            <button
+                              onClick={() => setConfidentialityOpen((v) => !v)}
+                              disabled={confidentialitySaving}
+                              data-testid="idea-confidentiality-pill"
+                              className={`inline-flex items-center gap-1 h-7 px-2.5 rounded-lg text-xs font-medium transition-colors disabled:opacity-50 ${CONFIDENTIALITY_COLORS[normalizedConfidentiality]}`}
+                            >
+                              {normalizedConfidentiality === 'restricted' ? (
+                                <Lock size={11} className="shrink-0" />
+                              ) : (
+                                <Shield size={11} className="shrink-0" />
+                              )}
+                              {currentConfidentialityLabel}
+                              <ChevronDown size={10} className="opacity-60" />
+                            </button>
+                          ) : (
+                            <span
+                              data-testid="idea-confidentiality-pill"
+                              title={t('myWorkIdeas.workspaceTools.confidentialityUnauthorized')}
+                              className={`inline-flex items-center gap-1 h-7 px-2.5 rounded-lg text-xs font-medium opacity-70 cursor-not-allowed ${CONFIDENTIALITY_COLORS[normalizedConfidentiality]}`}
+                            >
+                              {normalizedConfidentiality === 'restricted' ? (
+                                <Lock size={11} className="shrink-0" />
+                              ) : (
+                                <Shield size={11} className="shrink-0" />
+                              )}
+                              {currentConfidentialityLabel}
+                            </span>
+                          )}
+                          {confidentialityOpen && canEditConfidentiality && (
+                            <div
+                              data-testid="idea-confidentiality-menu"
+                              className="absolute top-full left-0 mt-1 z-[120] w-40 rounded-xl bg-white dark:bg-navy-900 shadow-xl py-1"
+                            >
+                              {confidentialityOptions.map((o) => (
+                                <button
+                                  key={o.value}
+                                  data-testid={`idea-confidentiality-option-${o.value}`}
+                                  onClick={() => handleConfidentialitySelect(o.value)}
+                                  className={`w-full text-left px-3 py-1.5 text-xs transition-colors ${
+                                    o.value === normalizedConfidentiality
+                                      ? 'font-semibold text-c-info bg-c-info/5'
+                                      : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/[0.03]'
+                                  }`}
+                                >
+                                  <span
+                                    className={`inline-block w-2 h-2 rounded-full mr-2 ${CONFIDENTIALITY_COLORS[o.value].split(' ')[0]}`}
+                                  />
+                                  {o.label}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>

@@ -131,6 +131,7 @@ import { useConfirmDialog } from './shared/ConfirmDialog';
 import { KeyboardShortcutsHelp } from './shared/KeyboardShortcutsHelp';
 import { countNodesByFamily, type ObjectFamily } from './superCanvasTypes';
 import { type TransformInput, transformSelection } from './transforms/crossToolTransform';
+import { useIdeaConfidentialityGate } from './useIdeaConfidentialityGate';
 
 // React StrictMode can remount brand-new workspaces in development.
 // Keep one creation request per temporary draft id to avoid duplicate ideas.
@@ -362,6 +363,18 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   const [branch, setBranch] = useState<string>('');
   const [area, setArea] = useState<string>('');
   const [priority, setPriority] = useState<number>(50);
+
+  // E12 (RISK-22) — confidentiality gate. Extracted to useIdeaConfidentialityGate
+  // (src/components/MyWork/useIdeaConfidentialityGate.ts) so the confirm/save/
+  // revert logic is one directly-testable unit instead of inline state here.
+  const {
+    confidentiality,
+    confidentialitySupported,
+    confidentialitySaving,
+    hydrateFromIdea: hydrateConfidentiality,
+    handleConfidentialityChange: handleConfidentialityChangeForId,
+    confidentialityDowngradeDialog,
+  } = useIdeaConfidentialityGate({ t, isPolish, title });
 
   // E08 (idea maturity model) — real signals for ideaMaturityModel.ts, read
   // straight off the same `idea`/`created` objects already fetched below
@@ -1615,6 +1628,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         );
         setMaturityGates((created as any)?.maturityGates ?? {});
         setMaturityGatesSupported(Boolean((created as any)?.maturityGatesSupported));
+        hydrateConfidentiality(created as any);
         onSaved(created as MyIdea);
         setDirty(true);
 
@@ -1682,6 +1696,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         setIdeaEvidenceRefsCount(Array.isArray(idea?.evidenceRefs) ? idea.evidenceRefs.length : 0);
         setMaturityGates(idea?.maturityGates ?? {});
         setMaturityGatesSupported(Boolean(idea?.maturityGatesSupported));
+        hydrateConfidentiality(idea);
 
         try {
           const mapRes = await Api.getMyIdeaMap(String(idea?.id || ideaId), {
@@ -3451,6 +3466,22 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
       toast.error(err?.message || (isPolish ? 'Nie udało się usunąć' : 'Failed to delete'));
     }
   }, [realId, confirmDeleteIdea, isPolish, title, navigate]);
+
+  /**
+   * E12 (RISK-22) — sets `my_ideas.confidentiality` via `PUT /my-ideas/:id`
+   * (server/src/routes/my-work.routes.ts ~3217-3230; validated + audited
+   * there — before/after confidentiality lands in the IDEA_UPDATE audit
+   * event). The confirm/save/revert logic lives in useIdeaConfidentialityGate
+   * (src/components/MyWork/useIdeaConfidentialityGate.ts) — this is just the
+   * `realId` binding, so the pill in IdeaWorkspaceTools.tsx doesn't need to
+   * know the idea id itself.
+   */
+  const handleConfidentialityChange = useCallback(
+    (next: 'standard' | 'confidential' | 'restricted') =>
+      handleConfidentialityChangeForId(realId, next),
+    [handleConfidentialityChangeForId, realId]
+  );
+
   // Duplicate: clone the idea + its map on the server, then deep-link into the
   // NEW copy's workspace on the same tool the user is currently in (backend drops
   // promotion state and suffixes the title with (kopia)/(copy)).
@@ -3621,6 +3652,10 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
       branch,
       area,
       priority,
+      confidentiality,
+      confidentialitySupported,
+      confidentialitySaving,
+      onConfidentialityChange: handleConfidentialityChange,
       isDraft,
       isAccepted,
       saving,
@@ -3736,6 +3771,10 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
       branch,
       area,
       priority,
+      confidentiality,
+      confidentialitySupported,
+      confidentialitySaving,
+      handleConfidentialityChange,
       isDraft,
       isAccepted,
       saving,
@@ -4671,6 +4710,9 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
 
         {/* Z-menu1-delete: Menu 1 kebab "Usuń" confirm dialog */}
         {deleteIdeaDialog}
+
+        {/* E12 (RISK-22): confidentiality downgrade confirm dialog */}
+        {confidentialityDowngradeDialog}
 
         {/* Z-menu1-history: Menu 1 kebab "Historia" — all canvas tools */}
         <SnapshotHistory

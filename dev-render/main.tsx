@@ -138,6 +138,9 @@ const GenWordContentHintsScreen = React.lazy(() => import('./screens/gen-word-co
 const DeckQualityBadgeScreen = React.lazy(() => import('./screens/deck-quality-badge'));
 const WordQualityBadgeScreen = React.lazy(() => import('./screens/word-quality-badge'));
 const I18nFala1SmokeScreen = React.lazy(() => import('./screens/i18n-fala1-smoke'));
+const IdeaConfidentialityControlScreen = React.lazy(
+  () => import('./screens/idea-confidentiality-control')
+);
 const IdeaTemplatesCatalogScreen = React.lazy(() => import('./screens/idea-templates-catalog'));
 const IdeasTeresaPanelScreen = React.lazy(() => import('./screens/ideas-teresa-panel'));
 const MelsCanvasWorkspaceScreen = React.lazy(() => import('./screens/melscanvas-workspace'));
@@ -749,6 +752,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'ideas-teresa-panel': {
     label: 'D16/D17 JEDEN prawy panel idei = dok Teresy (IdeaRightPanel)',
     render: () => <IdeasTeresaPanelScreen />,
+  },
+  'idea-confidentiality-control': {
+    label:
+      'RISK-22 Poufność Idei — REALNY IdeaWorkspaceTools w IdeaRightPanel (?lang=pl|en, ?level=, ?fail=1)',
+    render: () => <IdeaConfidentialityControlScreen />,
   },
   'idea-templates-catalog': {
     label: '#10-AB Baza ~40 startowych szablonów konsultingowych (7 kategorii)',

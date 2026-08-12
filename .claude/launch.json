@@ -8,6 +8,12 @@
       "port": 3079
     },
     {
+      "name": "s8-confid-idea-confidentiality",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["vite", "--config", "dev-render/vite.config.ts", "--port", "3822"],
+      "port": 3822
+    },
+    {
       "name": "fala8-table-parity",
       "runtimeExecutable": "npx",
       "runtimeArgs": [
