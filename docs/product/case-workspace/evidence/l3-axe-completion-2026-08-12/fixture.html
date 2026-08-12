@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<!--
+  L3 — standalone, backend-independent reproduction of the 3 elements named in
+  Gap 1 (org-avatar chip "CW", "Wczytaj ponownie" button, "Wróć do listy
+  zleceń" button), byte-for-byte copied class strings from:
+    - src/layouts/MainLayout.tsx:330 (header bar)
+    - src/components/layout/UserProfileMenu.tsx:262-272 (avatar chip)
+    - src/components/standard/ArtifactRightPanel.tsx:311 (right-panel <aside>)
+    - src/components/shared/PreviewPane/previewStyles.ts (PREVIEW_PILL_BASE,
+      COLOR_MAP.neutral) via PreviewActionBar.tsx's actionPillClass() output
+  This exists as a durable, backend-independent CROSS-CHECK of the live
+  measurements in README.md — not the primary evidence (the live sweep is).
+-->
+<html>
+<head>
+<meta charset="utf-8" />
+<link rel="stylesheet" href="./compiled.css" />
+<style>
+  body { margin: 0; font-family: sans-serif; }
+  .demo-row { display: flex; gap: 24px; padding: 24px; }
+</style>
+</head>
+<body class="bg-c-bg">
+
+  <!-- ================= Org-avatar chip ================= -->
+  <!-- Real ancestor: MainLayout.tsx:330 header bar (opaque bg-white / dark:bg-navy-900) -->
+  <div id="avatar-header" class="relative z-50 h-12 border-b border-slate-200 dark:border-navy-800 bg-white dark:bg-navy-900 shadow-sm dark:shadow-none flex items-center justify-between px-3 transition-colors duration-300">
+    <span></span>
+    <div class="flex items-center gap-4">
+      <div class="relative">
+        <!-- UserProfileMenu.tsx:250-277 -->
+        <button class="flex items-center gap-2 hover:bg-slate-50 dark:hover:bg-white/5 rounded-lg p-1 transition-colors cursor-pointer text-left focus:outline-none">
+          <div class="text-right hidden md:block">
+            <div class="text-xs font-semibold text-navy-900 dark:text-white">Case Workspace</div>
+          </div>
+          <div class="w-8 h-8 rounded-full bg-transparent border border-slate-300 dark:border-navy-600 flex items-center justify-center relative overflow-hidden">
+            <div id="avatar-chip" class="w-full h-full rounded-full bg-transparent flex items-center justify-center text-[11px] font-medium text-slate-500 dark:text-slate-400">CW</div>
+          </div>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= Right-panel action buttons ================= -->
+  <!-- Real ancestor: ArtifactRightPanel.tsx:311 <aside> (opaque bg-c-surface) -->
+  <aside id="panel-aside" class="shrink-0 h-full overflow-y-auto bg-c-surface border-l border-c-border-subtle" style="width: 320px;">
+    <section class="border-b border-c-border-subtle last:border-b-0">
+      <div class="px-4 pb-4 pt-1">
+        <div class="space-y-2.5 py-1">
+          <div class="flex gap-2 items-stretch">
+            <!-- previewStyles.ts PREVIEW_PILL_BASE + COLOR_MAP.neutral, via actionPillClass('neutral', 'flex-1 w-full') -->
+            <button id="btn-reload" class="inline-flex items-center justify-center gap-1.5 h-9 rounded-full border px-3 text-xs font-medium transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] flex-1 w-full">
+              Wczytaj ponownie
+            </button>
+            <button id="btn-back" class="inline-flex items-center justify-center gap-1.5 h-9 rounded-full border px-3 text-xs font-medium transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] flex-1 w-full">
+              Wróć do listy zleceń
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </aside>
+
+</body>
+</html>
