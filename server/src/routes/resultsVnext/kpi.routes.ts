@@ -197,7 +197,12 @@ function resolveIdempotencyKey(bodyKey: string | undefined | null): string {
  */
 function handleKpiRouteError(res: Response, err: unknown, op: string): void {
   if (err instanceof CommandCapabilityDeniedError) {
-    res.status(403).json({ error: err.message, code: err.code, details: err.details });
+    // RN-G5 fix: `details.capability` is documented in commandCapabilityGuard.ts
+    // as "for server-side logging ... not for reconstructing the access model
+    // from the wire" — it must NOT go in the HTTP response body. Log it
+    // server-side only; the client gets the generic message/code alone.
+    logger.warn(`[resultsVnext/kpi.routes] ${op} denied`, { capability: err.details.capability });
+    res.status(403).json({ error: err.message, code: err.code });
     return;
   }
   if (err instanceof SelfApprovalDeniedError) {

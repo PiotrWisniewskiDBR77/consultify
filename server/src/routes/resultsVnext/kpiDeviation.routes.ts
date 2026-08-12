@@ -191,7 +191,10 @@ function resolveIdempotencyKey(bodyKey: string | undefined | null): string {
  */
 function handleDeviationRouteError(res: Response, err: unknown, op: string): void {
   if (err instanceof CommandCapabilityDeniedError) {
-    res.status(403).json({ error: err.message, code: err.code, details: err.details });
+    // RN-G5 fix: same rationale as kpi.routes.ts's identical branch —
+    // `details.capability` is server-side-log-only, never wire.
+    logger.warn(`[resultsVnext/kpiDeviation.routes] ${op} denied`, { capability: err.details.capability });
+    res.status(403).json({ error: err.message, code: err.code });
     return;
   }
   if (err instanceof DeviationSelfApprovalDeniedError) {
