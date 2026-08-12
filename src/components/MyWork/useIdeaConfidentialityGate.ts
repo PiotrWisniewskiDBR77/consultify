@@ -17,6 +17,7 @@
  *     caller (IdeaWorkspaceTools) hides the control entirely when it's
  *     false rather than offering a control that can't persist.
  */
+import type { TFunction } from 'i18next';
 import { useCallback, useState } from 'react';
 import toast from 'react-hot-toast';
 
@@ -51,14 +52,25 @@ function normalizeLevel(value: unknown): IdeaConfidentialityLevel {
     : 'standard';
 }
 
-type TFn = (key: string, defaultValueOrOptions?: unknown, options?: unknown) => string;
+// Integration fix (2026-08-12): this hook originally declared its own narrow
+// `type TFn = (key: string, ...) => string` — the ONLY such alias in the
+// codebase. i18next's real `TFunction` is a richer overloaded signature and is
+// not assignable to it, so the client type-check failed at the single real
+// caller (`IdeaMapWorkspace.tsx:377`, which passes `useTranslation()`'s `t`).
+// The rest of the repo already types an injected `t` as `TFunction`
+// (`ConvertToConfirmation.tsx:44`, `DecisionsPanelContent.tsx:304/362/510/641`),
+// so this follows the existing convention instead of widening a bespoke alias.
+//
+// Caught only by the full `tsc` on the integrated tree: targeted vitest passes
+// regardless (types are erased at runtime) and esbuild does not type-check, and
+// the stream that wrote this hook was barred from running a full type-check.
 
 export interface UseIdeaConfidentialityGateArgs {
   /** react-i18next's `t` — used for pill/dialog copy (locale keys in both
    * public/locales/pl and public/locales/en; PL/EN fallback literals are
    * passed alongside every key so a missing key never surfaces to a user
    * as a raw dotted path). */
-  t: TFn;
+  t: TFunction;
   isPolish: boolean;
   /** Idea title — named in the downgrade-confirmation description. */
   title: string;
