@@ -20,7 +20,6 @@ import { ReconciliationLedgerPanel } from '../ReconciliationLedgerPanel';
 
 function run(overrides: Partial<ReconciliationRunSummaryDto> & { reconciliationRunId: string }): ReconciliationRunSummaryDto {
   return {
-    reconciliationRunId: overrides.reconciliationRunId,
     artifactId: 'artifact-1',
     businessVersionId: 'bv-1',
     sourceSystem: 'SAP_EXPORT',
@@ -50,7 +49,6 @@ function run(overrides: Partial<ReconciliationRunSummaryDto> & { reconciliationR
 
 function detailRow(overrides: Partial<ReconciliationDetailRowDto> & { id: string }): ReconciliationDetailRowDto {
   return {
-    id: overrides.id,
     canonicalLineId: 'canon-revenue',
     entityId: 'entity-1',
     periodId: 'period-1',

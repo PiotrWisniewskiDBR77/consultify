@@ -9,7 +9,7 @@
  * dowód wykrywania duplikatów/niespójności jednostek nie zależał od renderu.
  */
 
-import type { ReconciliationDetailRowDto, StatementLineDto } from '@/services/api/financeV2.types';
+import type { FinanceValue, ReconciliationDetailRowDto, StatementLineDto } from '@/services/api/financeV2.types';
 
 const LINE_CODE_FALLBACK_PREFIX = 'linecode:';
 
@@ -177,7 +177,7 @@ export function deriveStatementTable(lines: readonly StatementLineDto[]): Derive
 /** Bierze pierwszą realną (PRESENT_*) wartość dla waluty/skali nagłówka tabeli — honest fallback gdy brak danych: `null`. */
 export function pickHeaderCurrencyAndScale(
   table: DerivedStatementTable
-): { currency: string; unit: string } | null {
+): { currency: string; unit: FinanceValue['unit'] } | null {
   for (const row of table.rows) {
     for (const period of table.periods) {
       const cell = row.cellsByPeriodId[period.periodId];

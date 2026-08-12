@@ -15,7 +15,6 @@ import { CanonicalStatementTableV2 } from '../CanonicalStatementTableV2';
 
 function line(overrides: Partial<StatementLineDto> & { stmtLineId: string }): StatementLineDto {
   return {
-    stmtLineId: overrides.stmtLineId,
     statementType: 'P&L',
     canonicalLineId: 'canon-revenue',
     lineCode: 'REVENUE',
