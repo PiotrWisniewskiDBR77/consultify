@@ -33,6 +33,10 @@ import type { PoolClient } from 'pg';
 
 import { computeStateHash } from '../kpi/kpiDefinitionCommands.js';
 import { executeAtomicCommand, executeAtomicCreate, type AtomicCommandOutcome, type AtomicEventInput } from '../platform/atomicWrite.js';
+import {
+  assertCommandCapability,
+  type CommandAccessContext,
+} from '../platform/commandCapabilityGuard.js';
 
 import { RoiEconomicModelNotEditableError } from './roiCalculationPolicyCommands.js';
 import { NON_EDITABLE_STATUSES, ROI_EVENT_SOURCE } from './roiCaseCommands.js';
@@ -58,20 +62,39 @@ export class RoiBenefitEvidenceLinkValidationError extends Error {
   }
 }
 
+// RN-G5 — command capability names (docs/product/results-vnext/RN_G5_AUTHZ_DESIGN.md)
+export const ROI_BENEFIT_EVIDENCE_LINK_CAPABILITIES = {
+  add: 'results.roi.benefit_evidence_link.add',
+  remove: 'results.roi.benefit_evidence_link.remove',
+  flagDisputed: 'results.roi.benefit_evidence_link.flag_disputed',
+  flagFreshness: 'results.roi.benefit_evidence_link.flag_freshness',
+} as const;
+
+/** RN-G5: authorization runs FIRST — same rationale as roiAssumptionCommands.ts's
+ * identical helper (that file's own doc comment has the full rationale). */
 async function assertCaseEditableForUpdate(
   client: PoolClient,
   caseId: string,
   organizationId: string,
-  op: string
+  op: string,
+  auth: { access: CommandAccessContext; actorUserId: string; capability: string }
 ): Promise<void> {
-  const caseResult = await client.query<{ status: string }>(
-    `SELECT status FROM rvn_roi_cases WHERE case_id = $1 AND organization_id = $2 FOR UPDATE`,
+  const caseResult = await client.query<{ status: string; owner_user_id: string }>(
+    `SELECT status, owner_user_id FROM rvn_roi_cases WHERE case_id = $1 AND organization_id = $2 FOR UPDATE`,
     [caseId, organizationId]
   );
   const caseRow = caseResult.rows[0];
   if (!caseRow) {
     throw new Error(`[${op}] case ${caseId} not found`);
   }
+
+  assertCommandCapability({
+    access: auth.access,
+    actorUserId: auth.actorUserId,
+    capability: auth.capability,
+    responsibleUserIds: [caseRow.owner_user_id],
+  });
+
   if (NON_EDITABLE_STATUSES.includes(caseRow.status as (typeof NON_EDITABLE_STATUSES)[number])) {
     throw new RoiEconomicModelNotEditableError(caseId, caseRow.status);
   }
@@ -96,6 +119,7 @@ export interface AddBenefitEvidenceLinkInput {
   correlationId?: string;
   causationId?: string | null;
   reason?: string | null;
+  access: CommandAccessContext;
 }
 
 export async function addBenefitEvidenceLink(
@@ -116,12 +140,17 @@ export async function addBenefitEvidenceLink(
     correlationId,
     causationId = null,
     reason = null,
+    access,
   } = input;
 
   return executeAtomicCreate<RoiBenefitEvidenceLink>({
     organizationId,
     applyMutation: async (client) => {
-      await assertCaseEditableForUpdate(client, caseId, organizationId, 'addBenefitEvidenceLink');
+      await assertCaseEditableForUpdate(client, caseId, organizationId, 'addBenefitEvidenceLink', {
+        access,
+        actorUserId,
+        capability: ROI_BENEFIT_EVIDENCE_LINK_CAPABILITIES.add,
+      });
 
       const benefitLineResult = await client.query<{ benefit_line_id: string }>(
         `SELECT benefit_line_id FROM rvn_roi_benefit_lines
@@ -243,6 +272,7 @@ export interface RemoveBenefitEvidenceLinkInput {
   correlationId?: string;
   causationId?: string | null;
   reason?: string | null;
+  access: CommandAccessContext;
 }
 
 /** Hard delete — `rvn_roi_benefit_evidence_links` has no `deleted_at` column
@@ -263,6 +293,7 @@ export async function removeBenefitEvidenceLink(
     correlationId,
     causationId = null,
     reason = null,
+    access,
   } = input;
 
   let beforeState: Record<string, unknown> | null = null;
@@ -274,7 +305,11 @@ export async function removeBenefitEvidenceLink(
     loadForUpdate: loadEvidenceLinkForUpdate,
     getCurrentVersion: evidenceLinkRowVersion,
     applyMutation: async (client, currentRow, _nextVersion) => {
-      await assertCaseEditableForUpdate(client, caseId, organizationId, 'removeBenefitEvidenceLink');
+      await assertCaseEditableForUpdate(client, caseId, organizationId, 'removeBenefitEvidenceLink', {
+        access,
+        actorUserId,
+        capability: ROI_BENEFIT_EVIDENCE_LINK_CAPABILITIES.remove,
+      });
       beforeState = { link: toRoiBenefitEvidenceLink(currentRow) };
       await client.query(`DELETE FROM rvn_roi_benefit_evidence_links WHERE link_id = $1`, [linkId]);
       return { linkId };
@@ -326,12 +361,16 @@ export interface FlagBenefitEvidenceLinkDisputedInput {
   correlationId?: string;
   causationId?: string | null;
   reason?: string | null;
+  access: CommandAccessContext;
 }
 
 /** Not gated by `NON_EDITABLE_STATUSES`/case-editable — flagging a link
  * stale/disputed is an evidence-quality signal, legitimately raised at any
  * point in the case's lifecycle (including post-approval, mirroring
- * `double_counting_resolution_note`'s own "stays editable" carve-out). */
+ * `double_counting_resolution_note`'s own "stays editable" carve-out). RN-G5
+ * gate IS still checked (this remains a WRITE) — the case's owner_user_id
+ * is fetched fresh here since this function, unlike add/remove above,
+ * never otherwise reads the case row. */
 export async function flagBenefitEvidenceLinkDisputed(
   input: FlagBenefitEvidenceLinkDisputedInput
 ): Promise<AtomicCommandOutcome<RoiBenefitEvidenceLink>> {
@@ -348,6 +387,7 @@ export async function flagBenefitEvidenceLinkDisputed(
     correlationId,
     causationId = null,
     reason = null,
+    access,
   } = input;
 
   let beforeState: Record<string, unknown> | null = null;
@@ -359,6 +399,17 @@ export async function flagBenefitEvidenceLinkDisputed(
     loadForUpdate: loadEvidenceLinkForUpdate,
     getCurrentVersion: evidenceLinkRowVersion,
     applyMutation: async (client, currentRow, nextVersion) => {
+      const caseOwnerResult = await client.query<{ owner_user_id: string }>(
+        `SELECT owner_user_id FROM rvn_roi_cases WHERE case_id = $1 AND organization_id = $2`,
+        [caseId, organizationId]
+      );
+      assertCommandCapability({
+        access,
+        actorUserId,
+        capability: ROI_BENEFIT_EVIDENCE_LINK_CAPABILITIES.flagDisputed,
+        responsibleUserIds: [caseOwnerResult.rows[0]?.owner_user_id ?? null],
+      });
+
       beforeState = { link: toRoiBenefitEvidenceLink(currentRow) };
       const mergedNotes = notes !== undefined ? notes : currentRow.notes;
       const updateResult = await client.query<RoiBenefitEvidenceLinkRow>(
@@ -417,6 +468,7 @@ export interface FlagEvidenceLinkFreshnessCheckInput {
   correlationId?: string;
   causationId?: string | null;
   reason?: string | null;
+  access: CommandAccessContext;
 }
 
 /** Not gated by `NON_EDITABLE_STATUSES`/case-editable, same rationale as
@@ -441,6 +493,7 @@ export async function flagEvidenceLinkFreshnessCheck(
     correlationId,
     causationId = null,
     reason = null,
+    access,
   } = input;
 
   let beforeState: Record<string, unknown> | null = null;
@@ -456,6 +509,18 @@ export async function flagEvidenceLinkFreshnessCheck(
           { linkId, caseId }
         );
       }
+
+      const caseOwnerResult = await client.query<{ owner_user_id: string }>(
+        `SELECT owner_user_id FROM rvn_roi_cases WHERE case_id = $1 AND organization_id = $2`,
+        [caseId, organizationId]
+      );
+      assertCommandCapability({
+        access,
+        actorUserId,
+        capability: ROI_BENEFIT_EVIDENCE_LINK_CAPABILITIES.flagFreshness,
+        responsibleUserIds: [caseOwnerResult.rows[0]?.owner_user_id ?? null],
+      });
+
       beforeState = { link: toRoiBenefitEvidenceLink(currentRow) };
 
       const updateResult = await client.query<RoiBenefitEvidenceLinkRow>(

@@ -18,6 +18,10 @@ import type { PoolClient } from 'pg';
 
 import { computeStateHash } from '../kpi/kpiDefinitionCommands.js';
 import { executeAtomicCommand, executeAtomicCreate, type AtomicCommandOutcome, type AtomicEventInput } from '../platform/atomicWrite.js';
+import {
+  assertCommandCapability,
+  type CommandAccessContext,
+} from '../platform/commandCapabilityGuard.js';
 
 import { RoiEconomicModelNotEditableError } from './roiCalculationPolicyCommands.js';
 import { NON_EDITABLE_STATUSES, ROI_EVENT_SOURCE } from './roiCaseCommands.js';
@@ -55,20 +59,38 @@ export class RoiBenefitLineValidationError extends Error {
   }
 }
 
+// RN-G5 — command capability names (docs/product/results-vnext/RN_G5_AUTHZ_DESIGN.md)
+export const ROI_BENEFIT_LINE_CAPABILITIES = {
+  add: 'results.roi.benefit_line.add',
+  update: 'results.roi.benefit_line.update',
+  remove: 'results.roi.benefit_line.remove',
+} as const;
+
+/** RN-G5: authorization runs FIRST — same rationale as roiAssumptionCommands.ts's
+ * identical helper (that file's own doc comment has the full rationale). */
 async function assertCaseEditableForUpdate(
   client: PoolClient,
   caseId: string,
   organizationId: string,
-  op: string
+  op: string,
+  auth: { access: CommandAccessContext; actorUserId: string; capability: string }
 ): Promise<void> {
-  const caseResult = await client.query<{ status: string }>(
-    `SELECT status FROM rvn_roi_cases WHERE case_id = $1 AND organization_id = $2 FOR UPDATE`,
+  const caseResult = await client.query<{ status: string; owner_user_id: string }>(
+    `SELECT status, owner_user_id FROM rvn_roi_cases WHERE case_id = $1 AND organization_id = $2 FOR UPDATE`,
     [caseId, organizationId]
   );
   const caseRow = caseResult.rows[0];
   if (!caseRow) {
     throw new Error(`[${op}] case ${caseId} not found`);
   }
+
+  assertCommandCapability({
+    access: auth.access,
+    actorUserId: auth.actorUserId,
+    capability: auth.capability,
+    responsibleUserIds: [caseRow.owner_user_id],
+  });
+
   if (NON_EDITABLE_STATUSES.includes(caseRow.status as (typeof NON_EDITABLE_STATUSES)[number])) {
     throw new RoiEconomicModelNotEditableError(caseId, caseRow.status);
   }
@@ -124,6 +146,7 @@ export interface AddBenefitLineInput {
   correlationId?: string;
   causationId?: string | null;
   reason?: string | null;
+  access: CommandAccessContext;
 }
 
 export async function addBenefitLine(input: AddBenefitLineInput): Promise<AtomicCommandOutcome<RoiBenefitLine>> {
@@ -153,6 +176,7 @@ export async function addBenefitLine(input: AddBenefitLineInput): Promise<Atomic
     correlationId,
     causationId = null,
     reason = null,
+    access,
   } = input;
 
   assertFinancialAmountRule(isFinancial, amount, currency);
@@ -160,7 +184,11 @@ export async function addBenefitLine(input: AddBenefitLineInput): Promise<Atomic
   return executeAtomicCreate<RoiBenefitLine>({
     organizationId,
     applyMutation: async (client) => {
-      await assertCaseEditableForUpdate(client, caseId, organizationId, 'addBenefitLine');
+      await assertCaseEditableForUpdate(client, caseId, organizationId, 'addBenefitLine', {
+        access,
+        actorUserId,
+        capability: ROI_BENEFIT_LINE_CAPABILITIES.add,
+      });
 
       const insertResult = await client.query<RoiBenefitLineRow>(
         `INSERT INTO rvn_roi_benefit_lines
@@ -272,6 +300,7 @@ export interface UpdateBenefitLineInput {
   correlationId?: string;
   causationId?: string | null;
   reason?: string | null;
+  access: CommandAccessContext;
 }
 
 export async function updateBenefitLine(input: UpdateBenefitLineInput): Promise<AtomicCommandOutcome<RoiBenefitLine>> {
@@ -286,6 +315,7 @@ export async function updateBenefitLine(input: UpdateBenefitLineInput): Promise<
     correlationId,
     causationId = null,
     reason = null,
+    access,
     ...edits
   } = input;
 
@@ -311,7 +341,11 @@ export async function updateBenefitLine(input: UpdateBenefitLineInput): Promise<
       if (currentRow.frozen_at !== null && !onlyResolutionNoteChanging) {
         throw new RoiBenefitLineFrozenError(benefitLineId);
       }
-      await assertCaseEditableForUpdate(client, caseId, organizationId, 'updateBenefitLine');
+      await assertCaseEditableForUpdate(client, caseId, organizationId, 'updateBenefitLine', {
+        access,
+        actorUserId,
+        capability: ROI_BENEFIT_LINE_CAPABILITIES.update,
+      });
 
       beforeState = { benefitLine: toRoiBenefitLine(currentRow) };
 
@@ -429,6 +463,7 @@ export interface RemoveBenefitLineInput {
   correlationId?: string;
   causationId?: string | null;
   reason?: string | null;
+  access: CommandAccessContext;
 }
 
 export async function removeBenefitLine(input: RemoveBenefitLineInput): Promise<AtomicCommandOutcome<RoiBenefitLine>> {
@@ -443,6 +478,7 @@ export async function removeBenefitLine(input: RemoveBenefitLineInput): Promise<
     correlationId,
     causationId = null,
     reason = null,
+    access,
   } = input;
 
   let beforeState: Record<string, unknown> | null = null;
@@ -457,7 +493,11 @@ export async function removeBenefitLine(input: RemoveBenefitLineInput): Promise<
       if (currentRow.frozen_at !== null) {
         throw new RoiBenefitLineFrozenError(benefitLineId);
       }
-      await assertCaseEditableForUpdate(client, caseId, organizationId, 'removeBenefitLine');
+      await assertCaseEditableForUpdate(client, caseId, organizationId, 'removeBenefitLine', {
+        access,
+        actorUserId,
+        capability: ROI_BENEFIT_LINE_CAPABILITIES.remove,
+      });
 
       beforeState = { benefitLine: toRoiBenefitLine(currentRow) };
 

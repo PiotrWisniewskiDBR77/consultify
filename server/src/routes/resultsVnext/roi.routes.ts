@@ -945,6 +945,7 @@ router.post(
       const { caseId } = req.params as { caseId: string };
       if (!(await requireExistingRoiCase(auth, caseId, res))) return;
       const body = req.body as import('zod').infer<typeof AddAssumptionSchema>;
+      const access = await resolveAccess(req, auth);
       const outcome = await addAssumption({
         caseId,
         organizationId: auth.organizationId,
@@ -965,6 +966,7 @@ router.post(
         idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
         correlationId: getCorrelationId(req),
         reason: body.reason ?? null,
+        access,
       });
       res.status(outcome.outcome === 'applied' ? 201 : 200).json({
         outcome: outcome.outcome,
@@ -988,6 +990,7 @@ router.patch(
     try {
       const { caseId, assumptionId } = req.params as { caseId: string; assumptionId: string };
       const body = req.body as import('zod').infer<typeof UpdateAssumptionSchema>;
+      const access = await resolveAccess(req, auth);
       const outcome = await updateAssumption({
         assumptionId,
         caseId,
@@ -1010,6 +1013,7 @@ router.patch(
         idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
         correlationId: getCorrelationId(req),
         reason: body.reason ?? null,
+        access,
       });
       res.status(200).json({
         outcome: outcome.outcome,
@@ -1033,6 +1037,7 @@ router.delete(
     try {
       const { caseId, assumptionId } = req.params as { caseId: string; assumptionId: string };
       const body = req.body as import('zod').infer<typeof RemoveAssumptionSchema>;
+      const access = await resolveAccess(req, auth);
       const outcome = await removeAssumption({
         assumptionId,
         caseId,
@@ -1043,6 +1048,7 @@ router.delete(
         idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
         correlationId: getCorrelationId(req),
         reason: body.reason ?? null,
+        access,
       });
       res.status(200).json({
         outcome: outcome.outcome,
@@ -1112,6 +1118,7 @@ router.post(
       const { caseId } = req.params as { caseId: string };
       if (!(await requireExistingRoiCase(auth, caseId, res))) return;
       const body = req.body as import('zod').infer<typeof AddCostLineSchema>;
+      const access = await resolveAccess(req, auth);
       const outcome = await addCostLine({
         caseId,
         organizationId: auth.organizationId,
@@ -1133,6 +1140,7 @@ router.post(
         idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
         correlationId: getCorrelationId(req),
         reason: body.reason ?? null,
+        access,
       });
       res.status(outcome.outcome === 'applied' ? 201 : 200).json({
         outcome: outcome.outcome,
@@ -1156,6 +1164,7 @@ router.patch(
     try {
       const { caseId, costLineId } = req.params as { caseId: string; costLineId: string };
       const body = req.body as import('zod').infer<typeof UpdateCostLineSchema>;
+      const access = await resolveAccess(req, auth);
       const outcome = await updateCostLine({
         costLineId,
         caseId,
@@ -1179,6 +1188,7 @@ router.patch(
         idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
         correlationId: getCorrelationId(req),
         reason: body.reason ?? null,
+        access,
       });
       res.status(200).json({
         outcome: outcome.outcome,
@@ -1202,6 +1212,7 @@ router.delete(
     try {
       const { caseId, costLineId } = req.params as { caseId: string; costLineId: string };
       const body = req.body as import('zod').infer<typeof RemoveCostLineSchema>;
+      const access = await resolveAccess(req, auth);
       const outcome = await removeCostLine({
         costLineId,
         caseId,
@@ -1212,6 +1223,7 @@ router.delete(
         idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
         correlationId: getCorrelationId(req),
         reason: body.reason ?? null,
+        access,
       });
       res.status(200).json({
         outcome: outcome.outcome,
@@ -1281,6 +1293,7 @@ router.post(
       const { caseId } = req.params as { caseId: string };
       if (!(await requireExistingRoiCase(auth, caseId, res))) return;
       const body = req.body as import('zod').infer<typeof AddBenefitLineSchema>;
+      const access = await resolveAccess(req, auth);
       const outcome = await addBenefitLine({
         caseId,
         organizationId: auth.organizationId,
@@ -1306,6 +1319,7 @@ router.post(
         idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
         correlationId: getCorrelationId(req),
         reason: body.reason ?? null,
+        access,
       });
       res.status(outcome.outcome === 'applied' ? 201 : 200).json({
         outcome: outcome.outcome,
@@ -1329,6 +1343,7 @@ router.patch(
     try {
       const { caseId, benefitLineId } = req.params as { caseId: string; benefitLineId: string };
       const body = req.body as import('zod').infer<typeof UpdateBenefitLineSchema>;
+      const access = await resolveAccess(req, auth);
       const outcome = await updateBenefitLine({
         benefitLineId,
         caseId,
@@ -1356,6 +1371,7 @@ router.patch(
         idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
         correlationId: getCorrelationId(req),
         reason: body.reason ?? null,
+        access,
       });
       res.status(200).json({
         outcome: outcome.outcome,
@@ -1379,6 +1395,7 @@ router.delete(
     try {
       const { caseId, benefitLineId } = req.params as { caseId: string; benefitLineId: string };
       const body = req.body as import('zod').infer<typeof RemoveBenefitLineSchema>;
+      const access = await resolveAccess(req, auth);
       const outcome = await removeBenefitLine({
         benefitLineId,
         caseId,
@@ -1389,6 +1406,7 @@ router.delete(
         idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
         correlationId: getCorrelationId(req),
         reason: body.reason ?? null,
+        access,
       });
       res.status(200).json({
         outcome: outcome.outcome,
@@ -1443,6 +1461,7 @@ router.post(
       const { caseId, benefitLineId } = req.params as { caseId: string; benefitLineId: string };
       if (!(await requireExistingRoiCase(auth, caseId, res))) return;
       const body = req.body as import('zod').infer<typeof AddBenefitEvidenceLinkSchema>;
+      const access = await resolveAccess(req, auth);
       const outcome = await addBenefitEvidenceLink({
         benefitLineId,
         caseId,
@@ -1457,6 +1476,7 @@ router.post(
         idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
         correlationId: getCorrelationId(req),
         reason: body.reason ?? null,
+        access,
       });
       res.status(outcome.outcome === 'applied' ? 201 : 200).json({
         outcome: outcome.outcome,
@@ -1480,6 +1500,7 @@ router.delete(
     try {
       const { caseId, linkId } = req.params as { caseId: string; benefitLineId: string; linkId: string };
       const body = req.body as import('zod').infer<typeof RemoveBenefitEvidenceLinkSchema>;
+      const access = await resolveAccess(req, auth);
       const outcome = await removeBenefitEvidenceLink({
         linkId,
         caseId,
@@ -1490,6 +1511,7 @@ router.delete(
         idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
         correlationId: getCorrelationId(req),
         reason: body.reason ?? null,
+        access,
       });
       res.status(200).json({
         outcome: outcome.outcome,
@@ -1559,6 +1581,7 @@ router.post(
       const { caseId } = req.params as { caseId: string };
       if (!(await requireExistingRoiCase(auth, caseId, res))) return;
       const body = req.body as import('zod').infer<typeof AddScenarioSchema>;
+      const access = await resolveAccess(req, auth);
       const outcome = await addScenario({
         caseId,
         organizationId: auth.organizationId,
@@ -1570,6 +1593,7 @@ router.post(
         idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
         correlationId: getCorrelationId(req),
         reason: body.reason ?? null,
+        access,
       });
       res.status(outcome.outcome === 'applied' ? 201 : 200).json({
         outcome: outcome.outcome,
@@ -1593,6 +1617,7 @@ router.patch(
     try {
       const { caseId, scenarioId } = req.params as { caseId: string; scenarioId: string };
       const body = req.body as import('zod').infer<typeof UpdateScenarioSchema>;
+      const access = await resolveAccess(req, auth);
       const outcome = await updateScenario({
         scenarioId,
         caseId,
@@ -1605,6 +1630,7 @@ router.patch(
         idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
         correlationId: getCorrelationId(req),
         reason: body.reason ?? null,
+        access,
       });
       res.status(200).json({
         outcome: outcome.outcome,
@@ -1628,6 +1654,7 @@ router.delete(
     try {
       const { caseId, scenarioId } = req.params as { caseId: string; scenarioId: string };
       const body = req.body as import('zod').infer<typeof RemoveScenarioSchema>;
+      const access = await resolveAccess(req, auth);
       const outcome = await removeScenario({
         scenarioId,
         caseId,
@@ -1638,6 +1665,7 @@ router.delete(
         idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
         correlationId: getCorrelationId(req),
         reason: body.reason ?? null,
+        access,
       });
       res.status(200).json({
         outcome: outcome.outcome,
@@ -1663,6 +1691,7 @@ router.post(
     try {
       const { caseId, scenarioId } = req.params as { caseId: string; scenarioId: string };
       const body = req.body as import('zod').infer<typeof SetScenarioOverrideSchema>;
+      const access = await resolveAccess(req, auth);
       const outcome = await setScenarioOverride({
         scenarioId,
         caseId,
@@ -1678,6 +1707,7 @@ router.post(
         idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
         correlationId: getCorrelationId(req),
         reason: body.reason ?? null,
+        access,
       });
       res.status(200).json({
         outcome: outcome.outcome,
@@ -1705,6 +1735,7 @@ router.delete(
         overrideId: string;
       };
       const body = req.body as import('zod').infer<typeof RemoveScenarioOverrideSchema>;
+      const access = await resolveAccess(req, auth);
       const outcome = await removeScenarioOverride({
         overrideId,
         scenarioId,
@@ -1716,6 +1747,7 @@ router.delete(
         idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
         correlationId: getCorrelationId(req),
         reason: body.reason ?? null,
+        access,
       });
       res.status(200).json({
         outcome: outcome.outcome,
@@ -3183,6 +3215,7 @@ router.post(
     try {
       const { caseId, linkId } = req.params as { caseId: string; benefitLineId: string; linkId: string };
       const body = req.body as import('zod').infer<typeof FreshnessCheckSchema>;
+      const access = await resolveAccess(req, auth);
       const outcome = await flagEvidenceLinkFreshnessCheck({
         linkId,
         caseId,
@@ -3192,6 +3225,7 @@ router.post(
         idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
         correlationId: getCorrelationId(req),
         reason: body.reason ?? null,
+        access,
       });
       res.status(200).json({
         outcome: outcome.outcome,
