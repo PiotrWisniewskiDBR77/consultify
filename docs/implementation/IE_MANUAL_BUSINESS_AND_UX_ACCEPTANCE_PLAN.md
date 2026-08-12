@@ -1,6 +1,6 @@
 # Initiatives + Execution — manual business and UI/UX acceptance plan
 
-Status: `IN_EXECUTION — automated gates pass; logged-in demo acceptance NOT VERIFIED`
+Status: `PASS — exact-SHA automated and logged-in demo acceptance complete`
 
 Demo base under test: `codex/initiatives-execution-final-candidate` at
 `856586f579e5a61b09586731ddce3971b843cf5d`. The current local acceptance correction set is
@@ -335,6 +335,32 @@ reopened and cannot become PASS until every FAIL is corrected and all NOT VERIFI
 runtime evidence.
 
 ## 8. Current execution checkpoint — 2026-08-12
+
+### 8.0 Closure update — 2026-08-12 11:35 Europe/Warsaw
+
+The prior `NOT VERIFIED` entries below are retained as chronological evidence of earlier blocked
+attempts; they are superseded by this closure update. The corrected candidate
+`bda1293c1e1e8bf02719c4e76ce300f3841f9cf8` was deployed to Railway demo and its exact identity was
+proved by `/api/health.gitSha` after correcting stale pinned build-identity variables.
+
+The logged-in owner-account pass covered all four Initiatives functions and all five Execution
+functions at 1440x900. For every function the run proved the canonical table, Settings2 chooser,
+single-click Preview and capability-derived row action contract. Populated rows proved kebab,
+right-click and Shift+F10 parity; `Realizacje` additionally proved the honest `Active` empty state and
+the archived record through `All` + `Closing`. Explicit Open paths entered the exact Card/Workbench
+and closed Preview. A named optional column persisted its visibility through reload and was restored.
+There was no page overflow, loading error, browser exception or raw owner UUID. Clean screenshots are
+`evidence/ie-demo-final-*-1440x900.png`.
+
+Disposition by function: Inicjatywy PASS; Portfel PASS; Plan PASS; Obciążenie PASS; Realizacje PASS;
+Praca PASS; Zasoby PASS; Sterowanie PASS; Raporty PASS. The complete destructive lifecycle and
+negative-authority proof remains the isolated PostgreSQL ACO 1–59 journey; shared demo data was not
+mutated to repeat that proof.
+
+Accepted residuals: mixed global English chrome and Polish domain copy under the owner's English
+locale; separately identifiable earlier manual and golden-lineage Initiative rows on demo; historical
+migration checksum warnings with all migrations up to date. These do not falsify the module behavior
+or evidence and are tracked as application-wide localization/demo-data/operations debt.
 
 - Exact demo runtime `/api/health.gitSha`:
   `856586f579e5a61b09586731ddce3971b843cf5d`.

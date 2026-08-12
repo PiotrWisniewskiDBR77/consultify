@@ -207,5 +207,7 @@ adds 12 narrow `390x844` and 12 matching 200% text-resize PNGs across all nine f
 Source, Card and My Work. The full browser composition passes `3/3`. Product Owner acceptance was
 granted for the historical isolated candidate on 2026-08-11. IE-090 remains automated `ACCEPTED`.
 The reconstructed code candidate `cd5f5f858390d82694926e130ea77faa97f855ad` is deployed on Railway
-demo as `d4bc7cd4-46cd-435c-bdc0-3440995d26fa`. Manual logged-in demo acceptance remains
-`NOT VERIFIED` and is the final gate before IE-099 can be closed.
+demo as `d4bc7cd4-46cd-435c-bdc0-3440995d26fa`. The corrected final candidate later passed the
+logged-in nine-function demo walkthrough on Piotr's owner account. Exact SHA, deployment identity,
+health, table/Preview/Workbench interactions, persisted-column proof and screenshots are recorded in
+`IE_FINAL_CANDIDATE_MANIFEST.md`; IE-099 can proceed to owner review without an engineering blocker.

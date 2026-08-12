@@ -47,15 +47,49 @@ The archive contains the 45 tracked changed paths and intentionally excludes thi
 manifest to avoid a self-referential archive checksum. It is recovery evidence for changed files
 only, not Git reachability, deployment or acceptance evidence.
 
-## Remaining release gates
+## Final demo acceptance checkpoint — 2026-08-12 11:35 Europe/Warsaw
 
-1. Create and record one candidate commit SHA.
-2. Push only the candidate branch and deploy that exact SHA to the Railway demo environment.
-3. Prove `/api/health` reports the candidate SHA and dependencies are healthy.
-4. Execute the logged-in, full-size, nine-function manual acceptance from
-   `IE_MANUAL_BUSINESS_AND_UX_ACCEPTANCE_PLAN.md` on Piotr's account.
-5. Correct every FAIL, repeat all affected gates on a new exact candidate SHA, and update this
-   manifest. `NOT VERIFIED` is not acceptance.
+The corrected code candidate `bda1293c1e1e8bf02719c4e76ce300f3841f9cf8` was pushed to
+`origin/codex/initiatives-execution-final-candidate` and deployed only to Railway environment
+`demo`. Deployment `bf4c00a2-fe68-4244-bb9a-eb0b9a4e222d` succeeded, but the runtime exposed a
+stale manually pinned build identity. The demo variables `APP_BUILD_SHA` and `GIT_SHA` were corrected
+to the candidate, causing replacement deployment `d67e049f-3eb4-4592-b089-28133c77aab1`.
+Authoritative read-back then proved:
+
+- `/ping` -> `200 pong`;
+- `/api/health.status` -> `ok`;
+- `/api/health.gitSha` -> `bda1293c1e1e8bf02719c4e76ce300f3841f9cf8`;
+- PostgreSQL and Redis -> `connected`;
+- 458 application migrations up to date and 445 Table Platform migrations already applied.
+
+A logged-in full-size walkthrough was executed on Piotr's owner account at 1440x900 against this
+exact runtime. All nine functions rendered their canonical table, Menu 2/3 and Settings2 chooser;
+all populated registers exposed Preview, capability-driven kebab, right-click and Shift+F10 parity.
+`Realizacje` correctly rendered a first-use empty state under `Active`; switching to `All` plus
+`Closing` exposed the archived ACO Initiative and its exact Execution Case. Explicit `Open` paths
+were proved for all nine workspaces, including Initiative Card, Execution Case, Intervention and
+Report Run. Preview closed on Workbench entry. There was no document-level horizontal overflow,
+load-error copy, page exception or raw owner UUID. Named optional-column visibility persisted after
+reload under the screen-specific `persistKey` and was restored after the check.
+
+Clean screenshots from the exact deployment are committed as
+`docs/implementation/evidence/ie-demo-final-*-1440x900.png`. The local isolated PostgreSQL and full
+ACO/WCAG evidence recorded below remains the destructive and lifecycle acceptance source; demo was
+used only for non-destructive logged-in UI acceptance.
+
+Accepted residuals, not release blockers for these two modules:
+
+- the owner account's global locale is English while several domain labels remain Polish, so shared
+  chrome such as `Open` can coexist with Polish domain copy; this is application-wide localization
+  debt, not a missing command or false result;
+- demo contains both golden-lineage and earlier manually created Initiative rows. They remain
+  separately identifiable canonical records; no destructive cleanup was authorized;
+- migration logs report historical rows without recorded checksums and approved historical checksum
+  variants, but all migrations are up to date and history was not rewritten.
+
+The documentation/evidence commit that contains this checkpoint must be redeployed once more so one
+final SHA identifies code and the complete evidence packet. Production and the separate staging
+environment remain untouched and unauthorized.
 
 ## Candidate correction checkpoint — 2026-08-12 10:35 Europe/Warsaw
 

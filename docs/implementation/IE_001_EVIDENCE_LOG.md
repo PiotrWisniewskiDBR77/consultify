@@ -199,7 +199,7 @@ acceptance record below.
 - Product Owner accepted the complete Initiatives + Execution candidate after the documented
   unit, realDB, browser, UI/UX, responsive, accessibility and authorization evidence passed;
 - IE-010 through IE-091 were accepted for the historical isolated candidate. IE-099 for the
-  reconstructed deployed candidate remains `READY_FOR_REVIEW` until logged-in manual demo
+  reconstructed deployed candidate remained `READY_FOR_REVIEW` until logged-in manual demo
   acceptance is recorded;
 - six global TypeScript errors in unrelated AIChat, Document Studio and Presentations paths are
   explicitly excluded from the Initiatives/Execution acceptance gate; no error points to the
@@ -273,3 +273,25 @@ in the final handoff. A commit cannot truthfully contain its own cryptographic S
   healthy accepted candidate. The availability of the prior image and procedure is verified;
   measured RPO/RTO and a live rollback drill remain `NOT VERIFIED` and require release-owner
   authorization.
+
+## 2026-08-12 — corrected final candidate and logged-in demo acceptance
+
+- code candidate `bda1293c1e1e8bf02719c4e76ce300f3841f9cf8` passed repository type-check,
+  59/59 Initiatives/Execution unit files with 146/146 tests, 38/38 isolated realDB files with
+  88/88 tests, the full ACO/WCAG Playwright suite 3/3, focused ESLint and `git diff --check`;
+- Railway demo deployment `d67e049f-3eb4-4592-b089-28133c77aab1` reached `SUCCESS`; `/ping`
+  returned `pong`, `/api/health` returned `ok`, PostgreSQL/Redis `connected`, and exact
+  `gitSha=bda1293c1e1e8bf02719c4e76ce300f3841f9cf8`;
+- the first deployment exposed a stale manually pinned build identity. `APP_BUILD_SHA` and
+  `GIT_SHA` were corrected to the exact candidate before any manual PASS was claimed;
+- logged-in full-size acceptance on Piotr's owner account covered all nine functions: canonical
+  tables, Menu 2/3, Settings2, Preview, kebab/PPM/Shift+F10 parity, explicit Open/Workbench,
+  Preview closure, Back and named-column persistence across reload;
+- clean 1440x900 screenshots for all nine functions are stored as
+  `evidence/ie-demo-final-*-1440x900.png`; there was no page overflow, loading failure, browser
+  exception or raw owner UUID;
+- `Realizacje` proved both the honest Active empty state and the archived record through All plus
+  Closing. The shared demo database was not used for destructive lifecycle repetition; the isolated
+  ACO 1–59 realDB/browser proof remains authoritative for writes and negative authority;
+- IE-099 has no remaining engineering or runtime acceptance blocker and is `READY_FOR_OWNER_REVIEW`.
+  Production release, measured RPO/RTO and a live rollback drill remain separate and unauthorized.

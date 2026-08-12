@@ -1,6 +1,6 @@
 # EPIC IE-001 — Initiative to Effectiveness, one governed golden thread
 
-Status: `AUTOMATED ACCEPTED — exact-SHA demo deployed; manual demo NOT VERIFIED`
+Status: `ACCEPTED CANDIDATE — automated, realDB, browser and logged-in demo gates passed`
 Owner: Product + Engineering
 Implementation branch: `codex/initiatives-execution-final-candidate`
 Baseline: `635fd2d48d5a396c45bcb43b7f363535403ecf93`
@@ -16,8 +16,10 @@ Automated implementation disposition (2026-08-11): `ACCEPTED`. The canonical bac
 commit is unavailable from the remote, so the candidate was reconstructed on
 `codex/initiatives-execution-final-candidate`. The code candidate
 `cd5f5f858390d82694926e130ea77faa97f855ad` passed the strict Railway build and was deployed to
-`https://demo.consultify.ai` as deployment `d4bc7cd4-46cd-435c-bdc0-3440995d26fa`. Manual acceptance
-on the logged-in demo and release disposition remain open gates.
+`https://demo.consultify.ai` as deployment `d4bc7cd4-46cd-435c-bdc0-3440995d26fa`. A later corrected
+candidate completed logged-in nine-function acceptance on Piotr's owner account; the exact SHA,
+deployment, health, interactions and screenshots are recorded in `IE_FINAL_CANDIDATE_MANIFEST.md`.
+Production release remains a separate, unauthorized gate.
 
 ## 2. Scope
 
@@ -163,11 +165,11 @@ aggregate/audit/outbox/receipt mutation.
 The historical isolated candidate was accepted on 2026-08-11. During reconstruction the previously
 reported global TypeScript failures were corrected and repository-wide type-check and production
 build now pass. This does not turn historical evidence into proof of the reconstructed release:
-manual logged-in demo acceptance is still required.
+manual logged-in demo acceptance was completed by the corrected candidate; see the final manifest.
 
 Current verification evidence: full browser composition `3/3 PASS` covering Source/Card, ACO 1–59
 and the nine-function WCAG/responsive matrix; unit `59/59 files, 144/144 tests`; isolated sequential
 realDB `38/38 files, 88/88 tests`; lint with zero errors across every changed/untracked TypeScript
 and TSX path; `git diff --check`; authorization negative matrix; WCAG 200% text resize and `390x844`
 narrow responsive checks; repository-wide type-check and production build. Manual demo acceptance
-is explicitly `NOT VERIFIED`.
+was explicitly `NOT VERIFIED` at that historical checkpoint and is now superseded by the final manifest.
