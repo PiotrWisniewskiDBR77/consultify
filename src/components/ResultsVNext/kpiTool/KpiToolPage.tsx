@@ -102,9 +102,11 @@ import {
   activateKpi,
   archiveKpi,
   getKpi,
+  getKpiCurrentDefinitionVersion,
   listKpiMeasurements,
   suspendKpi,
   type KpiDefinitionDto,
+  type KpiDefinitionVersionDto,
   type KpiMeasurementDto,
   type KpiStatus,
 } from '../kpiApi';
@@ -126,10 +128,13 @@ import {
   DEVIATION_CASE_STATUS_TONE,
   DEVIATION_SEVERITY_TONE,
   INITIATIVE_KPI_IMPACT_STATUS_TONE,
+  KPI_APPROVAL_STATUS_TONE,
   deviationCaseStatusLabel,
   deviationSeverityLabel,
   escalatedOverlayLabel,
   initiativeKpiImpactStatusLabel,
+  kpiApprovalStatusLabel,
+  kpiTargetGeometryLabel,
 } from './kpiToolMappers';
 
 const STATUS_TONE: Record<KpiStatus, 'info' | 'warning' | 'success' | 'neutral'> = {
@@ -179,6 +184,60 @@ function formatDate(iso: string | null | undefined, isPolish: boolean): string {
   return d.toLocaleDateString(isPolish ? 'pl-PL' : 'en-US', { year: 'numeric', month: 'short', day: 'numeric' });
 }
 
+function honestNumber(value: number | null): React.ReactNode {
+  return <HonestValueCell value={value} align="right" />;
+}
+
+/** Contract section (task 3) — exactly the bound fields
+ * `targetGeometryEvaluator.ts` reads for this geometry, same set
+ * `KpiDraftFormModal.tsx`'s edit form shows (that file's own per-geometry
+ * `{targetGeometry === '...' ? ... : null}` blocks), read-only here via
+ * `HonestValueCell` so a genuinely-never-set bound reads "—", never `0`. */
+function targetGeometryRows(v: KpiDefinitionVersionDto, isPolish: boolean): ArtifactPropertyRow[] {
+  switch (v.targetGeometry) {
+    case 'threshold_min':
+      return [
+        { id: 'targetValue', label: isPolish ? 'Próg (min.)' : 'Threshold (min)', value: honestNumber(v.targetValue), mono: true },
+        { id: 'warningLow', label: isPolish ? 'Ostrzeżenie od' : 'Warning from', value: honestNumber(v.warningLow), mono: true },
+        { id: 'criticalLow', label: isPolish ? 'Krytyczne od' : 'Critical from', value: honestNumber(v.criticalLow), mono: true },
+      ];
+    case 'threshold_max':
+      return [
+        { id: 'targetValue', label: isPolish ? 'Próg (maks.)' : 'Threshold (max)', value: honestNumber(v.targetValue), mono: true },
+        { id: 'warningHigh', label: isPolish ? 'Ostrzeżenie do' : 'Warning up to', value: honestNumber(v.warningHigh), mono: true },
+        { id: 'criticalHigh', label: isPolish ? 'Krytyczne do' : 'Critical up to', value: honestNumber(v.criticalHigh), mono: true },
+      ];
+    case 'range':
+      return [
+        { id: 'targetMin', label: isPolish ? 'Cel od' : 'Target from', value: honestNumber(v.targetMin), mono: true },
+        { id: 'targetMax', label: isPolish ? 'Cel do' : 'Target to', value: honestNumber(v.targetMax), mono: true },
+        { id: 'warningLow', label: isPolish ? 'Ostrzeżenie od' : 'Warning from', value: honestNumber(v.warningLow), mono: true },
+        { id: 'warningHigh', label: isPolish ? 'Ostrzeżenie do' : 'Warning to', value: honestNumber(v.warningHigh), mono: true },
+      ];
+    case 'exact':
+      return [
+        { id: 'targetValue', label: isPolish ? 'Wartość dokładna' : 'Exact value', value: honestNumber(v.targetValue), mono: true },
+        { id: 'warningLow', label: isPolish ? 'Tolerancja od' : 'Tolerance from', value: honestNumber(v.warningLow), mono: true },
+        { id: 'warningHigh', label: isPolish ? 'Tolerancja do' : 'Tolerance to', value: honestNumber(v.warningHigh), mono: true },
+        { id: 'criticalLow', label: isPolish ? 'Krytyczne od' : 'Critical from', value: honestNumber(v.criticalLow), mono: true },
+        { id: 'criticalHigh', label: isPolish ? 'Krytyczne do' : 'Critical to', value: honestNumber(v.criticalHigh), mono: true },
+      ];
+    case 'binary':
+      return [
+        {
+          id: 'binarySuccessValue',
+          label: isPolish ? 'Wartość sukcesu (0 lub 1)' : 'Success value (0 or 1)',
+          value: honestNumber(v.binarySuccessValue),
+          mono: true,
+        },
+      ];
+    case 'custom':
+      return [{ id: 'formulaText', label: isPolish ? 'Formuła' : 'Formula', value: v.formulaText ?? '—' }];
+    default:
+      return [];
+  }
+}
+
 const GapNotice: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <div
     role="note"
@@ -204,6 +263,14 @@ export const KpiToolPage: React.FC = () => {
   const [pending, setPending] = useState<'activate' | 'suspend' | 'archive' | null>(null);
 
   const [measurement, setMeasurement] = useState<KpiMeasurementDto | null | 'loading'>(null);
+  // RN-G6 UI fix (task 3) — Contract section previously showed ONLY the raw
+  // `currentDefinitionVersionId` (fields from `GET /kpi/:kpiId` alone), even
+  // though `GET /kpi/:kpiId/version` (P0-D, `getKpiCurrentDefinitionVersion`
+  // in `../kpiApi.ts`) now returns the joined name/unit/target-geometry row.
+  // `null` here means "fetch completed, nothing visible/found" (D06-generic
+  // 404, same discipline `ResultsKpiRegistryPage.tsx`'s own effect uses for
+  // this same call) — never conflated with `'loading'`.
+  const [definitionVersion, setDefinitionVersion] = useState<KpiDefinitionVersionDto | null | 'loading'>('loading');
   const [deviationCases, setDeviationCases] = useState<DeviationCaseDto[] | 'loading'>('loading');
   const [initiativeImpacts, setInitiativeImpacts] = useState<InitiativeKpiImpactDto[] | 'loading'>('loading');
   const [impactBusy, setImpactBusy] = useState(false);
@@ -255,6 +322,14 @@ export const KpiToolPage: React.FC = () => {
     listKpiMeasurements(kpiId, { limit: 1 })
       .then((list) => setMeasurement(list[0] ?? null))
       .catch(() => setMeasurement(null));
+  }, [enabled, kpiId]);
+
+  useEffect(() => {
+    if (!enabled || !kpiId) return;
+    setDefinitionVersion('loading');
+    getKpiCurrentDefinitionVersion(kpiId)
+      .then((version) => setDefinitionVersion(version))
+      .catch(() => setDefinitionVersion(null));
   }, [enabled, kpiId]);
 
   const loadDeviationCases = useCallback(() => {
@@ -549,6 +624,13 @@ export const KpiToolPage: React.FC = () => {
   };
 
   // ── Section 2: Contract ──
+  // RN-G6 UI fix (task 3) — was a permanent "no GET returns this" notice
+  // with only the raw version ID visible. `GET /kpi/:kpiId/version` (P0-D)
+  // now exists, fetched above into `definitionVersion` — this section shows
+  // the real name/unit/target-geometry/approval-status data whenever that
+  // fetch resolves, and only falls back to an honest gap notice while
+  // loading or if the fetch genuinely comes back empty (D06-generic, same
+  // as any other visibility-denied read in this package).
   const contractSection: NModeSection = {
     id: 'contract',
     icon: FileText,
@@ -557,12 +639,48 @@ export const KpiToolPage: React.FC = () => {
     alwaysShow: true,
     component: (
       <div className="space-y-3">
-        <GapNotice>
-          {t(
-            'Żaden GET nie zwraca złączonej wersji definicji (nazwa/jednostka/geometria celu żyją wyłącznie w rvn_kpi_definition_versions, zwracane tylko jako efekt uboczny zapisu — createKpiDraft/approveDefinitionVersion/rejectDefinitionVersion). Poniżej wyłącznie pola dostępne z GET /kpi/:kpiId.',
-            'No GET returns the joined definition version (name/unit/target geometry live only on rvn_kpi_definition_versions, returned only as a write side-effect — createKpiDraft/approveDefinitionVersion/rejectDefinitionVersion). Below are only the fields reachable from GET /kpi/:kpiId.'
-          )}
-        </GapNotice>
+        {definitionVersion === 'loading' ? (
+          <p className="text-sm text-c-text-muted">{t('Ładowanie…', 'Loading…')}</p>
+        ) : definitionVersion === null ? (
+          <GapNotice>
+            {t(
+              'Nie udało się wczytać złączonej wersji definicji (GET /kpi/:kpiId/version) — poniżej wyłącznie pola dostępne z GET /kpi/:kpiId.',
+              'Could not load the joined definition version (GET /kpi/:kpiId/version) — below are only the fields reachable from GET /kpi/:kpiId.'
+            )}
+          </GapNotice>
+        ) : (
+          <ArtifactPropertiesTable
+            rows={[
+              { id: 'name', label: t('Nazwa', 'Name'), value: definitionVersion.name },
+              { id: 'description', label: t('Opis', 'Description'), value: definitionVersion.description ?? '—' },
+              { id: 'unit', label: t('Jednostka', 'Unit'), value: definitionVersion.unit ?? '—' },
+              {
+                id: 'targetGeometry',
+                label: t('Geometria celu', 'Target geometry'),
+                value: kpiTargetGeometryLabel(definitionVersion.targetGeometry, isPolish),
+              },
+              ...targetGeometryRows(definitionVersion, isPolish),
+              {
+                id: 'approvalStatus',
+                label: t('Status zatwierdzenia', 'Approval status'),
+                value: (
+                  <StatusChip
+                    tone={KPI_APPROVAL_STATUS_TONE[definitionVersion.approvalStatus]}
+                    label={kpiApprovalStatusLabel(definitionVersion.approvalStatus, isPolish)}
+                  />
+                ),
+              },
+              {
+                id: 'versionNumber',
+                label: t('Numer wersji', 'Version number'),
+                value: definitionVersion.versionNumber,
+                mono: true,
+              },
+            ]}
+            propertyLabel={t('Właściwość', 'Property')}
+            valueLabel={t('Wartość', 'Value')}
+          />
+        )}
         <ArtifactPropertiesTable
           rows={[
             { id: 'kpiCode', label: t('Kod KPI', 'KPI code'), value: kpi.kpiCode },

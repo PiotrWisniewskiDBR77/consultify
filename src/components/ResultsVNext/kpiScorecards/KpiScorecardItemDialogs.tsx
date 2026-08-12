@@ -9,13 +9,20 @@
  *
  * `AddKpiScorecardItemModal` has NO KPI picker fetching its own list — the
  * caller (`ResultsKpiScorecardDetailPage.tsx`) already has no "list all
- * KPIs" fetch wired either, so this dialog takes a free-text `kpiId` field
- * (same honesty posture `RoiCaseCreateModal.tsx`'s header documents for its
- * own optional fields with no real picker backing them: the org-wide
+ * KPIs" fetch wired either, so this dialog still takes a free-text `kpiId`
+ * field (same honesty posture `RoiCaseCreateModal.tsx`'s header documents
+ * for its own optional fields with no real picker backing them: the org-wide
  * `GET /vnext/results/kpi` list exists, but wiring a full autocomplete
  * picker here is out of this package's scope — server-side validation
  * (`AddScorecardItemSchema`: `kpiId: z.string().uuid()`) still rejects a
  * malformed id honestly, this is not a fabricated success path).
+ *
+ * RN-G6 UI fix (task 3, 2026-08-12): typing a raw UUID with zero confirmation
+ * of WHICH KPI it names was the actual complaint — `getKpiCurrentDefinitionVersion`
+ * (`GET /kpi/:kpiId/version`, P0-D — the same read task 3's Contract-tab fix
+ * uses) now resolves it to a real name, shown live below the field, so the
+ * id is still what gets submitted (no picker exists to replace it) but the
+ * person typing it can SEE they pasted the right one before clicking Add.
  */
 import { AlertTriangle, Plus, Trash2 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
@@ -23,6 +30,7 @@ import React, { useEffect, useState } from 'react';
 import { MENU_1_PRIMARY_CTA } from '@/components/shared/ModuleMenu3';
 import { Modal } from '@/components/ui/primitives';
 
+import { getKpiCurrentDefinitionVersion } from '../kpiApi';
 import { KPI_SCORECARD_ITEM_ROLES, type KpiScorecardItemRole } from './kpiScorecardApi';
 import { kpiScorecardItemRoleLabel } from './kpiScorecardMappers';
 
@@ -77,6 +85,11 @@ export const AddKpiScorecardItemModal: React.FC<AddKpiScorecardItemModalProps> =
   const [role, setRole] = useState<KpiScorecardItemRole>('primary');
   const [reason, setReason] = useState('');
   const [touched, setTouched] = useState(false);
+  // RN-G6 UI fix — resolved name for whatever id is currently typed.
+  // 'loading' while a lookup is in flight, `null` once a lookup finished and
+  // found nothing (not found / no visibility) — never conflated, same
+  // honest-missing convention this package uses elsewhere.
+  const [resolvedName, setResolvedName] = useState<string | null | 'loading'>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -84,7 +97,35 @@ export const AddKpiScorecardItemModal: React.FC<AddKpiScorecardItemModalProps> =
     setRole('primary');
     setReason('');
     setTouched(false);
+    setResolvedName(null);
   }, [open]);
+
+  // Debounced live resolve — same UUID-shape pre-check the server's own
+  // `z.string().uuid()` uses, just to avoid firing a request on every
+  // keystroke of an obviously-incomplete id.
+  useEffect(() => {
+    const trimmed = kpiId.trim();
+    const looksLikeUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(trimmed);
+    if (!looksLikeUuid) {
+      setResolvedName(null);
+      return;
+    }
+    let cancelled = false;
+    setResolvedName('loading');
+    const timer = setTimeout(() => {
+      getKpiCurrentDefinitionVersion(trimmed)
+        .then((version) => {
+          if (!cancelled) setResolvedName(version?.name ?? null);
+        })
+        .catch(() => {
+          if (!cancelled) setResolvedName(null);
+        });
+    }, 300);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [kpiId]);
 
   const kpiIdError = touched && !kpiId.trim();
 
@@ -137,6 +178,20 @@ export const AddKpiScorecardItemModal: React.FC<AddKpiScorecardItemModalProps> =
           />
           {kpiIdError ? (
             <p className="mt-1 text-[11px] text-c-danger">{isPolish ? 'KPI jest wymagane' : 'KPI is required'}</p>
+          ) : resolvedName === 'loading' ? (
+            <p className="mt-1 text-[11px] text-c-text-muted" data-testid="kpi-scorecard-add-item-resolve-loading">
+              {isPolish ? 'Sprawdzanie…' : 'Checking…'}
+            </p>
+          ) : resolvedName ? (
+            <p className="mt-1 text-[11px] text-c-success" data-testid="kpi-scorecard-add-item-resolve-name">
+              {isPolish ? `Rozpoznano: ${resolvedName}` : `Resolved: ${resolvedName}`}
+            </p>
+          ) : kpiId.trim() ? (
+            <p className="mt-1 text-[11px] text-c-text-muted" data-testid="kpi-scorecard-add-item-resolve-empty">
+              {isPolish
+                ? 'Nie rozpoznano nazwy dla tego identyfikatora (nie znaleziono lub brak widoczności).'
+                : 'Could not resolve a name for this id (not found or no visibility).'}
+            </p>
           ) : null}
         </div>
         <div>
