@@ -148,6 +148,13 @@ export const ROUTES = {
   RESULTS_ROI: {
     ROOT: '/results/roi',
     CASE: '/results/roi/cases/:roiCaseId',
+    // RN-G5 scopegap task 3 (§G #11) — organization PIR-outcomes perspective
+    // (`GET /api/vnext/results/roi/org/pir-outcomes`). Own top-level route
+    // (not a `ResultsRoiHub.tsx` tab) because that hub file is out of this
+    // package's edit allowlist — see RN_G5_SCOPEGAP_DESIGN.md §3 for the
+    // ready-to-paste diff that folds this into the hub as a third Menu 2 tab
+    // once that file is next touched by its owning workstream.
+    PIR_OUTCOMES: '/results/roi/pir-outcomes',
   },
   RESULTS_OKR: {
     ROOT: '/results/okr',
@@ -159,6 +166,11 @@ export const ROUTES = {
     PROGRAMS: '/results/okr/programs',
     CYCLES: '/results/okr/cycles',
   },
+  // RN-G5 scopegap task 1 (§G #30) — cross-cutting "Attention" view over the
+  // KPI + OKR manager attention read-models. D10: ONE view, not a fourth
+  // registry namespace — a bare top-level route, not `RESULTS_ATTENTION.ROOT`
+  // nested-object shape the three real registries use.
+  RESULTS_ATTENTION: '/results/attention',
   CONCLUSIONS: '/conclusions',
   MCP_IRIS: '/mcp/iris',
   MCP_MARKETPLACE: '/mcp/marketplace',

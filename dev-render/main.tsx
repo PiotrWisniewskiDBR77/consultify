@@ -283,6 +283,10 @@ const ResultsVNextKpiToolScreen = React.lazy(
 const ResultsVNextLegacyArchiveScreen = React.lazy(
   () => import('./screens/results-vnext-legacy-archive')
 );
+const ResultsVNextAttentionScreen = React.lazy(() => import('./screens/results-vnext-attention'));
+const ResultsVNextRoiPirOutcomesScreen = React.lazy(
+  () => import('./screens/results-vnext-roi-pir-outcomes')
+);
 const RnG3ClassLRecordShellScreen = React.lazy(() => import('./screens/rn-g3-class-l-record-shell'));
 
 const SCREENS: Record<string, { label: string; render: () => React.ReactElement }> = {
@@ -345,6 +349,16 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'RN-G2 R09-3 — REALNY <ResultsVNextLegacyArchivePanel> (kpi/roi/okr .../legacy index, tylko do odczytu, prep pod kolejną falę — NIEPODPIĘty do żadnego huba). &domain=kpi|roi|okr &state=ready|loading|empty|error',
     render: () => <ResultsVNextLegacyArchiveScreen />,
+  },
+  'results-vnext-attention': {
+    label:
+      'RN-G5 §G #30 — REALNY <ResultsAttentionPage> (przekrojowy widok KPI+OKR attention/team-health, Api.get stubbed). Menu2 KPI/OKR, Menu3 = bucket (real counts). &kpiState=ready|loading|empty|error &okrState=ready|loading|empty|error &ff=off',
+    render: () => <ResultsVNextAttentionScreen />,
+  },
+  'results-vnext-roi-pir-outcomes': {
+    label:
+      'RN-G5 §G #11 — REALNY <RoiPirOutcomesTab> przez <ResultsRoiPirOutcomesPage> (ROI org PIR-outcomes, window.fetch stubbed dla /org/pir-outcomes). Gotowy do wpięcia jako 3. zakładka ResultsRoiHub. &state=ready|loading|empty|error &ff=off',
+    render: () => <ResultsVNextRoiPirOutcomesScreen />,
   },
   'rn-g3-class-l-record-shell': {
     label:

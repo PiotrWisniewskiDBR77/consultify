@@ -41,11 +41,11 @@
  * visual-distinctness QA axis is N/A for this domain (documented, not
  * fabricated — see the dev-render harness screen header for the same note).
  */
-import { Api } from '@/services/api';
+import { Api, API_URL, getHeaders } from '@/services/api';
 
 import { isNotFoundError } from '../kpiApi';
 
-export { isNotFoundError } from '../kpiApi';
+export { isNotFoundError, httpErrorCode, type HttpError } from '../kpiApi';
 
 // ==========================================
 // ENUMS (mirror the CHECK constraints in `kpiScorecardTypes.ts` /
@@ -326,3 +326,259 @@ export const suspendKpiScorecard = (input: KpiScorecardLifecycleActionInput) =>
   postScorecardLifecycleAction('suspend', input);
 export const archiveKpiScorecard = (input: KpiScorecardLifecycleActionInput) =>
   postScorecardLifecycleAction('archive', input);
+
+// ==========================================
+// RN-G5 §G #8 — write commands the read-only P1 package deliberately left
+// out (`kpiScorecardPresenters.tsx`'s "not built" row-menu notes). Every
+// shape below mirrors the matching Zod schema in
+// `resultsVnextKpiScorecard.validators.ts` 1:1 (read directly, not
+// guessed) and the route's own response envelope
+// (`kpiScorecard.routes.ts`).
+// ==========================================
+
+function newScorecardIdempotencyKey(): string {
+  return crypto.randomUUID();
+}
+
+/** `Api.delete` (`services/api.ts`) never sends a body — but
+ * `DELETE .../items/:itemId` requires one (`RemoveScorecardItemSchema`:
+ * `expectedVersion`/`reason`/`idempotencyKey`, `kpiScorecard.routes.ts`
+ * L394-426). Same gap `roiApi.ts`'s own `mutateJson` header comment
+ * documents and works around for its sibling ROI DELETE-with-body
+ * endpoints — this is the same fix, scoped locally to this file rather than
+ * widening the shared `Api` object's `delete()` signature app-wide. */
+async function deleteWithBody<T>(path: string, body: unknown): Promise<T> {
+  const url = `${API_URL}${path}`;
+  const res = await fetch(url, {
+    method: 'DELETE',
+    headers: { ...getHeaders(), 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  let payload: unknown = null;
+  try {
+    payload = await res.json();
+  } catch {
+    // non-JSON body — fall through, res.ok still gates below
+  }
+  if (!res.ok) {
+    const data = (payload ?? {}) as { error?: string; code?: string; details?: Record<string, unknown> };
+    const err = new Error(data.error || `Request failed (${res.status})`) as Error & {
+      status?: number;
+      data?: typeof data;
+    };
+    err.status = res.status;
+    err.data = data;
+    throw err;
+  }
+  return payload as T;
+}
+
+// ==========================================
+// createScorecard — POST /api/vnext/results/kpi/scorecards
+// ==========================================
+
+export interface CreateKpiScorecardInput {
+  name: string;
+  description?: string | null;
+  scopeType: KpiScorecardScopeType;
+  scopeId?: string | null;
+  ownerUserId?: string | null;
+  reviewFrequency: KpiScorecardReviewFrequency;
+  sensitivity?: string | null;
+  reason?: string | null;
+}
+
+export interface KpiScorecardWriteOutcome {
+  outcome: 'applied' | 'already_applied';
+  eventId: string;
+  resultingVersion: number;
+}
+
+export async function createKpiScorecard(
+  input: CreateKpiScorecardInput
+): Promise<KpiScorecardWriteOutcome & { scorecard: KpiScorecardDto }> {
+  const resp = await Api.post('/vnext/results/kpi/scorecards', {
+    name: input.name,
+    description: input.description ?? null,
+    scopeType: input.scopeType,
+    scopeId: input.scopeId ?? null,
+    ownerUserId: input.ownerUserId ?? null,
+    reviewFrequency: input.reviewFrequency,
+    sensitivity: input.sensitivity ?? null,
+    reason: input.reason ?? null,
+    idempotencyKey: newScorecardIdempotencyKey(),
+  });
+  return {
+    outcome: resp?.outcome,
+    eventId: resp?.eventId,
+    resultingVersion: resp?.resultingVersion,
+    scorecard: resp?.scorecard as KpiScorecardDto,
+  };
+}
+
+// ==========================================
+// addScorecardItem — POST .../:scorecardId/items
+// ==========================================
+
+export interface AddKpiScorecardItemInput {
+  scorecardId: string;
+  expectedVersion: number;
+  kpiId: string;
+  role?: KpiScorecardItemRole;
+  sortOrder?: number;
+  reason?: string | null;
+}
+
+export async function addKpiScorecardItem(
+  input: AddKpiScorecardItemInput
+): Promise<KpiScorecardWriteOutcome & { scorecard: KpiScorecardDto; item: KpiScorecardItemDto }> {
+  const resp = await Api.post(
+    `/vnext/results/kpi/scorecards/${encodeURIComponent(input.scorecardId)}/items`,
+    {
+      expectedVersion: input.expectedVersion,
+      kpiId: input.kpiId,
+      role: input.role,
+      sortOrder: input.sortOrder,
+      reason: input.reason ?? null,
+      idempotencyKey: newScorecardIdempotencyKey(),
+    }
+  );
+  return {
+    outcome: resp?.outcome,
+    eventId: resp?.eventId,
+    resultingVersion: resp?.resultingVersion,
+    scorecard: resp?.scorecard as KpiScorecardDto,
+    item: resp?.item as KpiScorecardItemDto,
+  };
+}
+
+// ==========================================
+// removeScorecardItem — DELETE .../:scorecardId/items/:itemId
+// ==========================================
+
+export interface RemoveKpiScorecardItemInput {
+  scorecardId: string;
+  itemId: string;
+  expectedVersion: number;
+  reason?: string | null;
+}
+
+export async function removeKpiScorecardItem(
+  input: RemoveKpiScorecardItemInput
+): Promise<KpiScorecardWriteOutcome & { scorecard: KpiScorecardDto; removedItemId: string }> {
+  return deleteWithBody(
+    `/vnext/results/kpi/scorecards/${encodeURIComponent(input.scorecardId)}/items/${encodeURIComponent(input.itemId)}`,
+    {
+      expectedVersion: input.expectedVersion,
+      reason: input.reason ?? null,
+      idempotencyKey: newScorecardIdempotencyKey(),
+    }
+  );
+}
+
+// ==========================================
+// reorderScorecardItems — PATCH .../:scorecardId/items/reorder (decision #4:
+// item `role` change folded in here too, per validator/route)
+// ==========================================
+
+export interface ReorderKpiScorecardItemSpec {
+  itemId: string;
+  sortOrder: number;
+  role?: KpiScorecardItemRole;
+}
+
+export interface ReorderKpiScorecardItemsInput {
+  scorecardId: string;
+  expectedVersion: number;
+  items: ReorderKpiScorecardItemSpec[];
+  reason?: string | null;
+}
+
+export async function reorderKpiScorecardItems(
+  input: ReorderKpiScorecardItemsInput
+): Promise<KpiScorecardWriteOutcome & { scorecard: KpiScorecardDto; items: KpiScorecardItemDto[] }> {
+  const resp = await Api.patch(
+    `/vnext/results/kpi/scorecards/${encodeURIComponent(input.scorecardId)}/items/reorder`,
+    {
+      expectedVersion: input.expectedVersion,
+      items: input.items,
+      reason: input.reason ?? null,
+      idempotencyKey: newScorecardIdempotencyKey(),
+    }
+  );
+  return {
+    outcome: resp?.outcome,
+    eventId: resp?.eventId,
+    resultingVersion: resp?.resultingVersion,
+    scorecard: resp?.scorecard as KpiScorecardDto,
+    items: (resp?.items ?? []) as KpiScorecardItemDto[],
+  };
+}
+
+// ==========================================
+// createReviewSnapshot — POST .../:scorecardId/review-snapshots
+// ==========================================
+
+export interface CreateKpiScorecardReviewSnapshotInput {
+  scorecardId: string;
+  reviewPeriodStart: string;
+  reviewPeriodEnd: string;
+  reason?: string | null;
+}
+
+export async function createKpiScorecardReviewSnapshot(
+  input: CreateKpiScorecardReviewSnapshotInput
+): Promise<KpiScorecardWriteOutcome & { snapshot: KpiScorecardReviewSnapshotDto }> {
+  const resp = await Api.post(
+    `/vnext/results/kpi/scorecards/${encodeURIComponent(input.scorecardId)}/review-snapshots`,
+    {
+      reviewPeriodStart: input.reviewPeriodStart,
+      reviewPeriodEnd: input.reviewPeriodEnd,
+      reason: input.reason ?? null,
+      idempotencyKey: newScorecardIdempotencyKey(),
+    }
+  );
+  return {
+    outcome: resp?.outcome,
+    eventId: resp?.eventId,
+    resultingVersion: resp?.resultingVersion,
+    snapshot: resp?.snapshot as KpiScorecardReviewSnapshotDto,
+  };
+}
+
+// ==========================================
+// publishReviewSnapshot — POST .../review-snapshots/:snapshotId/publish
+// -- D07 REMINDER (see kpiScorecardPresenters.tsx header): the RESPONSE of
+// this call carries `snapshot.snapshotPayload` for the PUBLISHER's own
+// visibility at publish time (decision #6a) — callers of this function MUST
+// NOT render `.snapshotPayload` from the response either (same non-leak
+// discipline as every read path in this package). It is accepted here only
+// to update the snapshot's metadata (status/publishedAt/publishedBy) in
+// local state, never to display item facts.
+// ==========================================
+
+export interface PublishKpiScorecardReviewSnapshotInput {
+  scorecardId: string;
+  snapshotId: string;
+  expectedVersion: number;
+  reason?: string | null;
+}
+
+export async function publishKpiScorecardReviewSnapshot(
+  input: PublishKpiScorecardReviewSnapshotInput
+): Promise<KpiScorecardWriteOutcome & { snapshot: KpiScorecardReviewSnapshotDto }> {
+  const resp = await Api.post(
+    `/vnext/results/kpi/scorecards/${encodeURIComponent(input.scorecardId)}/review-snapshots/${encodeURIComponent(input.snapshotId)}/publish`,
+    {
+      expectedVersion: input.expectedVersion,
+      reason: input.reason ?? null,
+      idempotencyKey: newScorecardIdempotencyKey(),
+    }
+  );
+  return {
+    outcome: resp?.outcome,
+    eventId: resp?.eventId,
+    resultingVersion: resp?.resultingVersion,
+    snapshot: resp?.snapshot as KpiScorecardReviewSnapshotDto,
+  };
+}

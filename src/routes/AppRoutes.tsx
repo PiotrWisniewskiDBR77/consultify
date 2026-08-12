@@ -129,6 +129,18 @@ const OkrProgramsPage = lazyWithRetry(() =>
 const OkrCyclesPage = lazyWithRetry(() =>
   import('@/components/ResultsVNext/okr/OkrCyclesPage').then((m) => ({ default: m.default }))
 );
+// RN-G5 scopegap task 1 (§G #30) — cross-cutting Attention view
+// (`ROUTES.RESULTS_ATTENTION`), D10: one view, not a fourth registry.
+const ResultsAttentionPage = lazyWithRetry(() =>
+  import('@/components/ResultsVNext/attention/ResultsAttentionPage').then((m) => ({ default: m.default }))
+);
+// RN-G5 scopegap task 3 (§G #11) — ROI org PIR-outcomes perspective
+// (`ROUTES.RESULTS_ROI.PIR_OUTCOMES`), standalone route until
+// `ResultsRoiHub.tsx` (out of this package's allowlist) folds it in as a
+// third Menu 2 tab — see `RoiPirOutcomesTab.tsx`'s own header.
+const ResultsRoiPirOutcomesPage = lazyWithRetry(() =>
+  import('@/components/ResultsVNext/roi/ResultsRoiPirOutcomesPage').then((m) => ({ default: m.default }))
+);
 // RN-G3 lane (2026-08-11) — full KPI tool, klasa L (`/results/kpi/:kpiId`,
 // D03) + Deviation Case subview (`/results/kpi/:kpiId/deviation-cases/:caseId`,
 // D05 — subview of the tool, not a top-level registry). See
@@ -2677,6 +2689,32 @@ export const AppRoutes: React.FC = () => {
             </BetaGate>
           }
         />
+        {/* RN-G5 scopegap task 3 (§G #11) — ROI org PIR-outcomes perspective,
+            standalone route (see ResultsRoiPirOutcomesPage.tsx header for why
+            it isn't a ResultsRoiHub.tsx tab yet). Same entitlement chain +
+            same `roiRegistry` flag gate as ROUTES.RESULTS_ROI.ROOT above. */}
+        <Route
+          path={ROUTES.RESULTS_ROI.PIR_OUTCOMES}
+          element={
+            <BetaGate moduleId="MODULE_BENEFITS">
+              <MainLayout
+                breadcrumbs={
+                  breadcrumbs || [t('sidebar.results', 'Results'), t('results.roi', 'ROI'), t('results.roiPirOutcomes', 'PIR outcomes')]
+                }
+                noPadding
+              >
+                <ProductionModuleGate
+                  enabled={!hideNonCoreModulesOnPublicProduction}
+                  moduleName="Results"
+                >
+                  <RouteErrorBoundary>
+                    <ResultsRoiPirOutcomesPage />
+                  </RouteErrorBoundary>
+                </ProductionModuleGate>
+              </MainLayout>
+            </BetaGate>
+          }
+        />
         <Route
           path={ROUTES.RESULTS_OKR.ROOT}
           element={
@@ -2766,6 +2804,30 @@ export const AppRoutes: React.FC = () => {
                 >
                   <RouteErrorBoundary>
                     <OkrCyclesPage />
+                  </RouteErrorBoundary>
+                </ProductionModuleGate>
+              </MainLayout>
+            </BetaGate>
+          }
+        />
+        {/* RN-G5 scopegap task 1 (§G #30) — cross-cutting Attention view over
+            KPI + OKR manager attention read-models. D10: one view, not a
+            fourth registry — gated behind BOTH kpiRegistry AND okrRegistry
+            (ResultsAttentionPage.tsx header explains why, not a new flag). */}
+        <Route
+          path={ROUTES.RESULTS_ATTENTION}
+          element={
+            <BetaGate moduleId="MODULE_BENEFITS">
+              <MainLayout
+                breadcrumbs={breadcrumbs || [t('sidebar.results', 'Results'), t('results.attention', 'Attention')]}
+                noPadding
+              >
+                <ProductionModuleGate
+                  enabled={!hideNonCoreModulesOnPublicProduction}
+                  moduleName="Results"
+                >
+                  <RouteErrorBoundary>
+                    <ResultsAttentionPage />
                   </RouteErrorBoundary>
                 </ProductionModuleGate>
               </MainLayout>

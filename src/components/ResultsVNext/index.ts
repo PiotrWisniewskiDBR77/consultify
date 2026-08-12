@@ -73,6 +73,18 @@ export { ResultsKpiScorecardDetailPage } from './kpiScorecards/ResultsKpiScoreca
 // `KpiDeviationCaseSubview.tsx` (screens).
 export { KpiToolPage } from './kpiTool/KpiToolPage';
 export { KpiDeviationCaseSubview } from './kpiTool/KpiDeviationCaseSubview';
+// RN-G5 scopegap task 1 (§G #30) — cross-cutting Attention view
+// (`/results/attention`). See `attention/` subfolder: `attentionApi.ts`
+// (fetch client for the 3 previously-unconsumed attention/team-health
+// endpoints), `attentionPresenters.tsx` (bucket registry + generic row
+// preview), `ResultsAttentionPage.tsx` (screen).
+export { ResultsAttentionPage } from './attention/ResultsAttentionPage';
+// RN-G5 scopegap task 3 (§G #11) — ROI org PIR-outcomes perspective, a
+// standalone route + self-contained tab component ready to fold into
+// `ResultsRoiHub.tsx` as a third Menu 2 tab (see `RoiPirOutcomesTab.tsx`
+// header).
+export { RoiPirOutcomesTab } from './roi/RoiPirOutcomesTab';
+export { ResultsRoiPirOutcomesPage } from './roi/ResultsRoiPirOutcomesPage';
 export {
   isResultsVNextFlagEnabled,
   RESULTS_VNEXT_FLAG_KEYS,

@@ -327,6 +327,50 @@ export async function listOrgRoiBenefitsRealization(): Promise<RoiOrgBenefitsRea
 }
 
 // ==========================================
+// RN-G5 §G #11 — GET /api/vnext/results/roi/org/pir-outcomes
+// (`listOrganizationRoiPirOutcomes`, `roiOrgPerspectiveRepository.ts`
+// L277-360, route at `roiPerspectives.routes.ts` L104-116). Response
+// envelope key is `outcomes` (verified directly from the route — distinct
+// from `listOrgRoiBenefitsRealization`'s `attention` key above, NOT a typo).
+// ==========================================
+
+export const ROI_PIR_OUTCOMES = [
+  'benefits_fully_realized',
+  'benefits_partially_realized',
+  'benefits_not_realized',
+] as const;
+export type RoiPirOutcome = (typeof ROI_PIR_OUTCOMES)[number];
+
+export interface RoiOrgPirOutcomeCaseRow {
+  caseId: string;
+  initiativeId: string;
+  title: string;
+  status: RoiCaseStatus;
+  /** `null` for a case still mid-review (`status='post_investment_review'`,
+   * PIR row still `status='draft'`) — a real, expected state, never
+   * defaulted to a fabricated outcome (D08). */
+  pirOutcome: RoiPirOutcome | null;
+  benefitsRealizationPct: number | null;
+  /** `null` while the PIR row is still `draft`. */
+  finalizedAt: string | null;
+}
+
+export interface RoiOrgPirOutcomes {
+  cases: RoiOrgPirOutcomeCaseRow[];
+  portfolioTotals: {
+    closedCaseCount: number;
+    fullyRealizedCount: number;
+    partiallyRealizedCount: number;
+    notRealizedCount: number;
+  };
+}
+
+export async function listOrgRoiPirOutcomes(): Promise<RoiOrgPirOutcomes> {
+  const { outcomes } = await getJson<{ outcomes: RoiOrgPirOutcomes }>('/vnext/results/roi/org/pir-outcomes');
+  return outcomes;
+}
+
+// ==========================================
 // POST /api/vnext/results/roi/cases — quick create
 // (`roi.routes.ts` L439-474, body = `CreateRoiCaseSchema`,
 // `resultsVnextRoi.validators.ts` L84-94)
