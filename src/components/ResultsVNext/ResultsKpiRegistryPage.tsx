@@ -52,6 +52,32 @@
  * preview builders and `./kpiScorecards/ResultsKpiScorecardDetailPage.tsx`
  * for the `/results/kpi/scorecards/:scorecardId` full-record route this tab
  * links into ("Otwórz kartę"/"Otwórz pełną kartę").
+ *
+ * -- RN-G5 (2026-08-12) — "Nowy KPI" quick-create (`KpiDraftFormModal.tsx`,
+ * `mode="create"`) plus the rest of the gold flow (`RN-E2E-KPI-001` §6):
+ * edit draft -> submit -> approve/reject (`KpiTransitionDialog.tsx`). Before
+ * this package NOTHING in this tree called `createKpiDraft`/`submitKpi*`/
+ * `approve/rejectDefinitionVersion` — it was impossible to create a KPI
+ * through the UI at all (verified by grep, see `kpiApi.ts`'s RN-G5 note).
+ *
+ * `knownVersions` below is the load-bearing piece: `kpiApi.ts`'s RN-G5 note
+ * explains WHY it exists — there is no GET anywhere that returns a
+ * `rvn_kpi_definition_versions` row, so the version's own `rowVersion` (the
+ * CAS `expectedVersion` every one of the five write commands requires) is
+ * only ever knowable from THIS client's own prior write response for that
+ * exact version. `knownVersions` caches that response, in memory, for the
+ * lifetime of this page — populated ONLY by create/edit/submit/approve/
+ * reject's own return values, NEVER guessed or defaulted. Edit/Submit/
+ * Approve/Reject are offered (row menu + preview) ONLY when a KPI's version
+ * is in this map; otherwise they render LOCKED with an honest reason
+ * (TRIADA §C3 "visible, disabled, with a reason" — same discipline
+ * `noApprovedVersionReason` below already applies to Activate) rather than
+ * silently 409ing against a guessed `expectedVersion`. This is a real
+ * backend-gap consequence, not a UI shortcut — a future GET endpoint
+ * returning the version (out of this package's allowlist:
+ * `server/src/services/resultsVnext/**`/`server/src/routes/resultsVnext/**`)
+ * would let any KPI's version-level actions unlock regardless of session
+ * history.
  */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -68,21 +94,32 @@ import {
 import { StatusChip, type StatusTone } from '@/components/ui/primitives';
 import { useAppStore } from '@/store/useAppStore';
 import { ROUTES } from '@/routes/routeConfig';
-import { Blocks } from 'lucide-react';
+import { Blocks, Plus } from 'lucide-react';
 
 import { HonestValueCell } from './HonestValue';
 import {
   activateKpi,
+  approveKpiDefinitionVersion,
   archiveKpi,
+  createKpiDraft,
+  editKpiDraft,
+  isConflictError,
+  isSelfApprovalDeniedError,
   type KpiDefinitionDto,
+  type KpiDefinitionVersionDto,
   type KpiMeasurementDto,
   KPI_STATUSES,
   type KpiStatus,
   listKpiMeasurements,
   listKpis,
   getKpi,
+  newKpiIdempotencyKey,
+  rejectKpiDefinitionVersion,
+  submitKpiDefinition,
   suspendKpi,
 } from './kpiApi';
+import { KpiDraftFormModal, type KpiDraftFormValues } from './KpiDraftFormModal';
+import { KpiTransitionDialog, type KpiTransitionKind } from './KpiTransitionDialog';
 import { LifecycleLockBadge, lockedRowMenuAction } from './LifecycleLockBadge';
 import { isResultsVNextFlagEnabled } from './resultsVNextFeatureFlags';
 import type { ResultsVNextForbiddenDetail } from './types';
@@ -148,9 +185,23 @@ function ownerDisplay(
 }
 
 type PendingAction = { kpiId: string; action: 'activate' | 'suspend' | 'archive' } | null;
+type DefPendingAction = { kpiId: string; kind: 'submit' | 'approve' | 'reject' } | null;
 
-interface RowMenuContext {
+/** RN-G5 — shared by `buildRowMenu`'s and `buildPreview`'s own (differently-
+ * shaped) context objects, so `buildDefinitionActions` below works for both
+ * without either function's ctx type needing to match the other 1:1. */
+interface DefinitionActionsContext {
   isPolish: boolean;
+  /** RN-G5 — see file header "knownVersions" note. */
+  knownVersions: Record<string, KpiDefinitionVersionDto>;
+  defPending: DefPendingAction;
+  onEditDraft: (row: KpiDefinitionDto) => void;
+  onSubmitDefinition: (row: KpiDefinitionDto) => void;
+  onApproveDefinition: (row: KpiDefinitionDto) => void;
+  onRejectDefinition: (row: KpiDefinitionDto) => void;
+}
+
+interface RowMenuContext extends DefinitionActionsContext {
   pending: PendingAction;
   onOpen: (kpiId: string) => void;
   onOpenTool: (kpiId: string) => void;
@@ -158,6 +209,82 @@ interface RowMenuContext {
   onActivate: (row: KpiDefinitionDto) => void;
   onSuspend: (row: KpiDefinitionDto) => void;
   onArchive: (row: KpiDefinitionDto) => void;
+}
+
+/** RN-G5 — the honest lock reason shown when a KPI's definition version was
+ * never created/mutated by THIS browser tab (see file header "knownVersions"
+ * note) — used by both the row menu (as a `note`) and the preview pane. */
+function noKnownVersionReason(isPolish: boolean): string {
+  return isPolish
+    ? 'Brak danych wersji definicji w tej sesji — żaden GET nie zwraca wersji (luka backendu). Dostępne tylko tam, gdzie szkic był tworzony/edytowany w tej karcie.'
+    : 'No definition-version data in this session — no GET returns the version (backend gap). Only available where the draft was created/edited in this tab.';
+}
+
+const REJECTED_NO_AMEND_REASON = {
+  pl: 'Wersja odrzucona — utworzenie nowej (poprawionej) wersji nie jest jeszcze zaimplementowane po stronie backendu.',
+  en: 'Version rejected — creating a new (amended) version is not implemented on the backend yet.',
+};
+
+/** RN-G5 — the definition-lifecycle entries (edit/submit/approve/reject),
+ * shared by `buildRowMenu` and `buildPreview` so both surfaces apply the
+ * exact same gating (see file header "knownVersions" note). Only meaningful
+ * while the KPI root is `draft`/`pending_approval` — `active`/`suspended`/
+ * `archived` KPIs have no in-flight definition version to act on (amendment
+ * flows are out of scope, see `kpiDefinitionCommands.ts`'s own comments on
+ * `activateKpi`'s `fromStatuses`). */
+function buildDefinitionActions(
+  row: KpiDefinitionDto,
+  ctx: DefinitionActionsContext
+): { id: string; label: string; onClick: () => void; disabled?: boolean; note?: string; kind: 'edit' | 'submit' | 'approve' | 'reject' }[] {
+  const t = (pl: string, en: string) => (ctx.isPolish ? pl : en);
+  if (row.status !== 'draft' && row.status !== 'pending_approval') return [];
+  const known = ctx.knownVersions[row.kpiId] ?? null;
+  const isBusy = ctx.defPending?.kpiId === row.kpiId;
+  const reasonUnknown = noKnownVersionReason(ctx.isPolish);
+  const out: ReturnType<typeof buildDefinitionActions> = [];
+
+  if (row.status === 'draft') {
+    if (known && known.approvalStatus === 'rejected') {
+      const reason = t(REJECTED_NO_AMEND_REASON.pl, REJECTED_NO_AMEND_REASON.en);
+      out.push({ id: 'edit-draft', label: t('Edytuj szkic', 'Edit draft'), onClick: () => {}, disabled: true, note: reason, kind: 'edit' });
+      return out;
+    }
+    out.push({
+      id: 'edit-draft',
+      label: t('Edytuj szkic', 'Edit draft'),
+      onClick: () => ctx.onEditDraft(row),
+      disabled: !known || isBusy,
+      note: known ? undefined : reasonUnknown,
+      kind: 'edit',
+    });
+    out.push({
+      id: 'submit-definition',
+      label: t('Zgłoś do zatwierdzenia', 'Submit for approval'),
+      onClick: () => ctx.onSubmitDefinition(row),
+      disabled: !known || isBusy,
+      note: known ? undefined : reasonUnknown,
+      kind: 'submit',
+    });
+  } else {
+    // pending_approval
+    out.push({
+      id: 'approve-definition',
+      label: t('Zatwierdź', 'Approve'),
+      onClick: () => ctx.onApproveDefinition(row),
+      disabled: !known || isBusy,
+      note: known ? undefined : reasonUnknown,
+      kind: 'approve',
+    });
+    out.push({
+      id: 'reject-definition',
+      label: t('Odrzuć', 'Reject'),
+      onClick: () => ctx.onRejectDefinition(row),
+      disabled: !known || isBusy,
+      note: known ? undefined : reasonUnknown,
+      kind: 'reject',
+    });
+  }
+  return out;
 }
 
 function buildColumns(isPolish: boolean, currentUserId: string | null | undefined): TableColumn[] {
@@ -247,6 +374,12 @@ function buildRowMenu(row: KpiDefinitionDto, ctx: RowMenuContext): StandardRowMe
     ];
   }
 
+  const defActions = buildDefinitionActions(row, ctx).map((a) =>
+    a.disabled
+      ? lockedRowMenuAction({ id: a.id, label: a.label }, a.note ?? '')
+      : { id: a.id, label: a.label, onClick: a.onClick }
+  );
+
   return {
     primary: [
       { id: 'open', label: t('Otwórz', 'Open'), onClick: () => ctx.onOpen(row.kpiId) },
@@ -257,6 +390,9 @@ function buildRowMenu(row: KpiDefinitionDto, ctx: RowMenuContext): StandardRowMe
       // RN-G2 §G #7 — sub-view entry point (see ResultsKpiMeasurementsPanel.tsx
       // header for the "why here, not a new tab/route" placement decision).
       { id: 'measurements', label: t('Pomiary', 'Measurements'), onClick: () => ctx.onOpenMeasurements(row) },
+      // RN-G5 — definition-lifecycle entries (edit/submit/approve/reject),
+      // gated by `buildDefinitionActions` (see its own doc comment).
+      ...defActions,
     ],
     statusTransitions,
     universalHandlers: isArchived
@@ -277,12 +413,18 @@ function buildPreview(
     currentUserId: string | null | undefined;
     measurement: KpiMeasurementDto | null | 'loading';
     pending: PendingAction;
+    knownVersions: Record<string, KpiDefinitionVersionDto>;
+    defPending: DefPendingAction;
     onClose: () => void;
     onOpenFull: () => void;
     onOpenMeasurements: (row: KpiDefinitionDto) => void;
     onActivate: (row: KpiDefinitionDto) => void;
     onSuspend: (row: KpiDefinitionDto) => void;
     onArchive: (row: KpiDefinitionDto) => void;
+    onEditDraft: (row: KpiDefinitionDto) => void;
+    onSubmitDefinition: (row: KpiDefinitionDto) => void;
+    onApproveDefinition: (row: KpiDefinitionDto) => void;
+    onRejectDefinition: (row: KpiDefinitionDto) => void;
   }
 ): StandardPreviewProps {
   const t = (pl: string, en: string) => (ctx.isPolish ? pl : en);
@@ -294,6 +436,34 @@ function buildPreview(
   const measurement: KpiMeasurementDto | null =
     ctx.measurement === 'loading' ? null : ctx.measurement;
   const lang = ctx.isPolish ? 'pl-PL' : 'en-US';
+
+  // RN-G5 — see `buildDefinitionActions`'s own doc comment for gating rules.
+  const defActions = buildDefinitionActions(row, ctx);
+  // `StandardPreviewAction` has no note/tooltip field (unlike the row menu's
+  // `note`) and its own contract caps labels at 22 chars
+  // (`previewContract.ts` `PREVIEW_ACTION_LABEL_TOO_LONG`) — appending a
+  // "— locked" suffix broke that contract for the longer labels. Preview
+  // relies on `disabled` alone here (same as the pre-existing archived-KPI
+  // "Zablokowane" entry above); the row menu's `note` is where the actual
+  // reason text lives.
+  const defResolutions = defActions
+    .filter((a) => a.kind === 'approve' || a.kind === 'reject')
+    .map((a) => ({
+      id: a.id,
+      variant: (a.kind === 'approve' ? 'positive' : 'destructive') as 'positive' | 'destructive',
+      label: a.label,
+      onClick: a.onClick,
+      disabled: a.disabled,
+    }));
+  const defInformational = defActions
+    .filter((a) => a.kind === 'edit' || a.kind === 'submit')
+    .map((a) => ({
+      id: a.id,
+      variant: 'neutral' as const,
+      label: a.label,
+      onClick: a.onClick,
+      disabled: a.disabled,
+    }));
 
   const lockBadge =
     row.status === 'archived' ? (
@@ -366,6 +536,10 @@ function buildPreview(
       disabledTooltip: t('Wkrótce', 'Coming soon'),
     },
     relations: [],
+    // RN-G5 — definition-lifecycle actions (edit/submit -> informational,
+    // approve/reject -> resolutions, mirroring StandardPreviewActions' own
+    // "resolutions = decisions, informational = everything else" split),
+    // same `buildDefinitionActions` gating `buildRowMenu` uses.
     actions:
       row.status === 'archived'
         ? {
@@ -414,7 +588,8 @@ function buildPreview(
                         disabled: isBusy,
                       },
                     ]
-                  : [],
+                  // draft / pending_approval — RN-G5 approve/reject.
+                  : defResolutions,
             informational: [
               {
                 id: 'measurements',
@@ -422,6 +597,8 @@ function buildPreview(
                 label: t('Otwórz pomiary', 'Open measurements'),
                 onClick: () => ctx.onOpenMeasurements(row),
               },
+              // RN-G5 — draft / pending_approval edit/submit entries.
+              ...defInformational,
               {
                 id: 'archive',
                 variant: 'neutral',
@@ -456,6 +633,33 @@ export const ResultsKpiRegistryPage: React.FC = () => {
   const [measurement, setMeasurement] = useState<KpiMeasurementDto | null | 'loading'>(null);
   const [pending, setPending] = useState<PendingAction>(null);
   const [forbidden, setForbidden] = useState<ResultsVNextForbiddenDetail | null>(null);
+
+  // RN-G5 — see file header "knownVersions" note: the ONLY source of a
+  // KPI's definition-version `rowVersion` (CAS `expectedVersion`), keyed by
+  // `kpiId`, populated exclusively from create/edit/submit/approve/reject's
+  // own responses.
+  const [knownVersions, setKnownVersions] = useState<Record<string, KpiDefinitionVersionDto>>({});
+
+  // Create/edit draft form modal — one shared modal, `formMode` picks
+  // create vs. edit and `formTargetKpi` carries which row is being edited
+  // (`null` in create mode).
+  const [formOpen, setFormOpen] = useState(false);
+  const [formMode, setFormMode] = useState<'create' | 'edit'>('create');
+  const [formTargetKpi, setFormTargetKpi] = useState<KpiDefinitionDto | null>(null);
+  const [formBusy, setFormBusy] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [formIsConflict, setFormIsConflict] = useState(false);
+  const [formIdempotencyKey, setFormIdempotencyKey] = useState('');
+
+  // Submit/approve/reject reason dialog — one shared dialog, keyed by
+  // {row, kind}, same convention `RoiTransitionDialog`/`transition` uses in
+  // `ResultsRoiHub.tsx`.
+  const [transition, setTransition] = useState<{ row: KpiDefinitionDto; kind: KpiTransitionKind } | null>(null);
+  const [defPending, setDefPending] = useState<DefPendingAction>(null);
+  const [transitionError, setTransitionError] = useState<string | null>(null);
+  const [transitionIsConflict, setTransitionIsConflict] = useState(false);
+  const [transitionIsSelfApprovalDenied, setTransitionIsSelfApprovalDenied] = useState(false);
+  const [transitionIdempotencyKey, setTransitionIdempotencyKey] = useState('');
 
   // RN-G2 P1 #8 — Scorecards tab state (own fetch, own selection, own
   // pending-action tracking; entirely separate from the KPI-definition
@@ -553,6 +757,146 @@ export const ResultsKpiRegistryPage: React.FC = () => {
       }
     },
     [fetchRows]
+  );
+
+  // ==========================================
+  // RN-G5 — create / edit draft / submit / approve / reject
+  // ==========================================
+
+  const openCreateForm = useCallback(() => {
+    setFormMode('create');
+    setFormTargetKpi(null);
+    setFormError(null);
+    setFormIsConflict(false);
+    // Fresh idempotency key per OPEN, not per submit — same convention as
+    // `RoiCaseCreateModal`'s `newRoiIdempotencyKey` usage: a retry within
+    // the same open reuses it, so a double-send can never create two KPIs.
+    setFormIdempotencyKey(newKpiIdempotencyKey());
+    setFormOpen(true);
+  }, []);
+
+  const openEditForm = useCallback((row: KpiDefinitionDto) => {
+    setFormMode('edit');
+    setFormTargetKpi(row);
+    setFormError(null);
+    setFormIsConflict(false);
+    setFormIdempotencyKey(newKpiIdempotencyKey());
+    setFormOpen(true);
+  }, []);
+
+  const handleFormSubmit = useCallback(
+    (values: KpiDraftFormValues) => {
+      setFormBusy(true);
+      setFormError(null);
+      setFormIsConflict(false);
+      if (formMode === 'create') {
+        createKpiDraft({ ...values, idempotencyKey: formIdempotencyKey })
+          .then(({ kpi, definitionVersion }) => {
+            setKnownVersions((prev) => ({ ...prev, [kpi.kpiId]: definitionVersion }));
+            setRows((prev) => [kpi, ...prev.filter((r) => r.kpiId !== kpi.kpiId)]);
+            setSelectedId(kpi.kpiId);
+            setStatusFilter(null); // ensure the new row is visible regardless of prior filter
+            setFormOpen(false);
+          })
+          .catch((err) => {
+            setFormIsConflict(isConflictError(err));
+            setFormError(err instanceof Error ? err.message : String(err));
+          })
+          .finally(() => setFormBusy(false));
+        return;
+      }
+      // edit — requires a known version (the row menu/preview only ever
+      // reach here when one exists, see `buildDefinitionActions`).
+      const kpiId = formTargetKpi?.kpiId;
+      const known = kpiId ? knownVersions[kpiId] : undefined;
+      if (!kpiId || !known) {
+        setFormError(
+          isPolish
+            ? 'Brak znanej wersji definicji — nie można bezpiecznie wysłać CAS.'
+            : 'No known definition version — cannot safely send a CAS write.'
+        );
+        setFormBusy(false);
+        return;
+      }
+      editKpiDraft(kpiId, { ...values, expectedVersion: known.rowVersion, idempotencyKey: formIdempotencyKey })
+        .then((definitionVersion) => {
+          setKnownVersions((prev) => ({ ...prev, [kpiId]: definitionVersion }));
+          setFormOpen(false);
+        })
+        .catch((err) => {
+          setFormIsConflict(isConflictError(err));
+          setFormError(err instanceof Error ? err.message : String(err));
+        })
+        .finally(() => setFormBusy(false));
+    },
+    [formMode, formIdempotencyKey, formTargetKpi, knownVersions, isPolish]
+  );
+
+  const openTransition = useCallback((row: KpiDefinitionDto, kind: KpiTransitionKind) => {
+    setTransitionError(null);
+    setTransitionIsConflict(false);
+    setTransitionIsSelfApprovalDenied(false);
+    setTransitionIdempotencyKey(newKpiIdempotencyKey());
+    setTransition({ row, kind });
+  }, []);
+
+  const handleTransitionSubmit = useCallback(
+    (reason: string | null) => {
+      if (!transition) return;
+      const { row, kind } = transition;
+      const known = knownVersions[row.kpiId];
+      if (!known) {
+        setTransitionError(
+          isPolish
+            ? 'Brak znanej wersji definicji — nie można bezpiecznie wysłać CAS.'
+            : 'No known definition version — cannot safely send a CAS write.'
+        );
+        return;
+      }
+      setDefPending({ kpiId: row.kpiId, kind });
+      setTransitionError(null);
+      setTransitionIsConflict(false);
+      setTransitionIsSelfApprovalDenied(false);
+
+      const applyResult = (definitionVersion: KpiDefinitionVersionDto) => {
+        setKnownVersions((prev) => ({ ...prev, [row.kpiId]: definitionVersion }));
+        setTransition(null);
+        void fetchRows(); // KPI-root status (draft <-> pending_approval) may have changed.
+      };
+      const handleError = (err: unknown) => {
+        setTransitionIsConflict(isConflictError(err));
+        setTransitionIsSelfApprovalDenied(isSelfApprovalDeniedError(err));
+        setTransitionError(err instanceof Error ? err.message : String(err));
+      };
+
+      let call: Promise<KpiDefinitionVersionDto>;
+      if (kind === 'submit') {
+        call = submitKpiDefinition(row.kpiId, {
+          expectedVersion: known.rowVersion,
+          reason,
+          idempotencyKey: transitionIdempotencyKey,
+        });
+      } else if (kind === 'approve') {
+        call = approveKpiDefinitionVersion(row.kpiId, known.definitionVersionId, {
+          expectedVersion: known.rowVersion,
+          reason,
+          idempotencyKey: transitionIdempotencyKey,
+        });
+      } else {
+        // reject — rejectionReason is REQUIRED; `KpiTransitionDialog` already
+        // blocks submit with an empty one, so `reason` here is non-null.
+        call = rejectKpiDefinitionVersion(row.kpiId, known.definitionVersionId, {
+          expectedVersion: known.rowVersion,
+          rejectionReason: reason ?? '',
+          idempotencyKey: transitionIdempotencyKey,
+        });
+      }
+      call
+        .then(applyResult)
+        .catch(handleError)
+        .finally(() => setDefPending(null));
+    },
+    [transition, knownVersions, transitionIdempotencyKey, isPolish, fetchRows]
   );
 
   const fetchScorecardRows = useCallback(async () => {
@@ -774,56 +1118,125 @@ export const ResultsKpiRegistryPage: React.FC = () => {
       buildRowMenu(row as unknown as KpiDefinitionDto, {
         isPolish,
         pending,
+        knownVersions,
+        defPending,
         onOpen: (kpiId) => setSelectedId(kpiId),
         onOpenTool: (kpiId) => navigate(ROUTES.RESULTS_KPI.TOOL.replace(':kpiId', kpiId)),
         onOpenMeasurements: (r) => setMeasurementsKpi(r),
         onActivate: (r) => void runLifecycleAction(r, 'activate'),
         onSuspend: (r) => void runLifecycleAction(r, 'suspend'),
         onArchive: (r) => void runLifecycleAction(r, 'archive'),
+        onEditDraft: (r) => openEditForm(r),
+        onSubmitDefinition: (r) => openTransition(r, 'submit'),
+        onApproveDefinition: (r) => openTransition(r, 'approve'),
+        onRejectDefinition: (r) => openTransition(r, 'reject'),
       }),
     defaultSort: { columnId: 'updatedAt', direction: 'desc' },
   };
 
+  const editTarget = formTargetKpi ? knownVersions[formTargetKpi.kpiId] : undefined;
+
   return (
-    <div className="h-full" data-testid="results-vnext-kpi-registry-page">
-      <ResultsVNextRegistryShell
-        domain="kpi"
-        moduleBar={{
-          tabs: [
-            { id: 'my', label: isPolish ? 'Moje' : 'My' },
-            { id: 'org', label: isPolish ? 'Organizacja' : 'Org' },
-            { id: 'scorecards', label: isPolish ? 'Karty wyników' : 'Scorecards' },
-          ],
-          activeTab: tab,
-          onTabChange: (id) => setTab(id === 'org' ? 'org' : id === 'scorecards' ? 'scorecards' : 'my'),
-          showTabCounts: false,
-          viewModes: ['table'],
-          viewMode: 'table',
-          chips,
-          activeChip: statusFilter ?? 'all',
-          onChipChange: (id) => setStatusFilter(id === 'all' ? null : (id as KpiStatus)),
-        }}
-        table={table}
-        preview={
-          selectedRow
-            ? buildPreview(selectedRow, {
-                isPolish,
-                currentUserId: currentUser?.id,
-                measurement,
-                pending,
-                onClose: () => setSelectedId(null),
-                onOpenFull: () => navigate(ROUTES.RESULTS_KPI.TOOL.replace(':kpiId', selectedRow.kpiId)),
-                onOpenMeasurements: (r) => setMeasurementsKpi(r),
-                onActivate: (r) => void runLifecycleAction(r, 'activate'),
-                onSuspend: (r) => void runLifecycleAction(r, 'suspend'),
-                onArchive: (r) => void runLifecycleAction(r, 'archive'),
-              })
-            : null
+    <>
+      <div className="h-full" data-testid="results-vnext-kpi-registry-page">
+        <ResultsVNextRegistryShell
+          domain="kpi"
+          moduleBar={{
+            tabs: [
+              { id: 'my', label: isPolish ? 'Moje' : 'My' },
+              { id: 'org', label: isPolish ? 'Organizacja' : 'Org' },
+              { id: 'scorecards', label: isPolish ? 'Karty wyników' : 'Scorecards' },
+            ],
+            activeTab: tab,
+            onTabChange: (id) => setTab(id === 'org' ? 'org' : id === 'scorecards' ? 'scorecards' : 'my'),
+            showTabCounts: false,
+            viewModes: ['table'],
+            viewMode: 'table',
+            chips,
+            activeChip: statusFilter ?? 'all',
+            onChipChange: (id) => setStatusFilter(id === 'all' ? null : (id as KpiStatus)),
+            // RN-G5 — "Nowy KPI" quick-create (see file header). Only on
+            // this tab (`my`/`org` — this whole branch never renders for
+            // `scorecards`, see the `tab === 'scorecards'` early return
+            // above), same "quick create has no meaning on a different
+            // registry" precedent `ResultsRoiHub.tsx` documents for its own
+            // "Benefits realization" tab.
+            primaryCta: {
+              label: isPolish ? 'Nowy KPI' : 'New KPI',
+              icon: Plus,
+              onClick: openCreateForm,
+              testId: 'kpi-registry-create-cta',
+            },
+          }}
+          table={table}
+          preview={
+            selectedRow
+              ? buildPreview(selectedRow, {
+                  isPolish,
+                  currentUserId: currentUser?.id,
+                  measurement,
+                  pending,
+                  knownVersions,
+                  defPending,
+                  onClose: () => setSelectedId(null),
+                  onOpenFull: () => navigate(ROUTES.RESULTS_KPI.TOOL.replace(':kpiId', selectedRow.kpiId)),
+                  onOpenMeasurements: (r) => setMeasurementsKpi(r),
+                  onActivate: (r) => void runLifecycleAction(r, 'activate'),
+                  onSuspend: (r) => void runLifecycleAction(r, 'suspend'),
+                  onArchive: (r) => void runLifecycleAction(r, 'archive'),
+                  onEditDraft: (r) => openEditForm(r),
+                  onSubmitDefinition: (r) => openTransition(r, 'submit'),
+                  onApproveDefinition: (r) => openTransition(r, 'approve'),
+                  onRejectDefinition: (r) => openTransition(r, 'reject'),
+                })
+              : null
+          }
+          forbidden={forbidden}
+          onForbiddenBack={() => setForbidden(null)}
+        />
+      </div>
+      <KpiDraftFormModal
+        open={formOpen}
+        mode={formMode}
+        onClose={() => (formBusy ? undefined : setFormOpen(false))}
+        onSubmit={handleFormSubmit}
+        isPolish={isPolish}
+        initialValues={
+          formMode === 'edit' && editTarget
+            ? {
+                name: editTarget.name,
+                description: editTarget.description,
+                unit: editTarget.unit,
+                targetGeometry: editTarget.targetGeometry,
+                targetValue: editTarget.targetValue,
+                targetMin: editTarget.targetMin,
+                targetMax: editTarget.targetMax,
+                warningLow: editTarget.warningLow,
+                warningHigh: editTarget.warningHigh,
+                criticalLow: editTarget.criticalLow,
+                criticalHigh: editTarget.criticalHigh,
+                binarySuccessValue: editTarget.binarySuccessValue,
+                formulaText: editTarget.formulaText,
+              }
+            : undefined
         }
-        forbidden={forbidden}
-        onForbiddenBack={() => setForbidden(null)}
+        busy={formBusy}
+        errorMessage={formError}
+        isConflict={formIsConflict}
       />
-    </div>
+      <KpiTransitionDialog
+        open={!!transition}
+        kind={transition?.kind ?? null}
+        kpiCode={transition?.row.kpiCode ?? ''}
+        isPolish={isPolish}
+        onClose={() => (defPending ? undefined : setTransition(null))}
+        onSubmit={handleTransitionSubmit}
+        busy={!!defPending}
+        errorMessage={transitionError}
+        isConflict={transitionIsConflict}
+        isSelfApprovalDenied={transitionIsSelfApprovalDenied}
+      />
+    </>
   );
 };
 
