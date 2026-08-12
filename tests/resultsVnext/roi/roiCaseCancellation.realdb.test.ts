@@ -128,7 +128,8 @@ async function buildTrackingCase(suffix: string): Promise<TrackingCaseFixture> {
     actorUserId: USER_MAKER,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `start-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
   await captureOrUpdateBaseline({
     organizationId: ORG_ID,
@@ -140,7 +141,8 @@ async function buildTrackingCase(suffix: string): Promise<TrackingCaseFixture> {
     actorId: USER_MAKER,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `baseline-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
   const costLineOutcome = await addCostLine({
     caseId,
@@ -154,7 +156,8 @@ async function buildTrackingCase(suffix: string): Promise<TrackingCaseFixture> {
     actorUserId: USER_MAKER,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `cost-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   const benefitLineOutcome = await addBenefitLine({
     caseId,
     organizationId: ORG_ID,
@@ -168,7 +171,8 @@ async function buildTrackingCase(suffix: string): Promise<TrackingCaseFixture> {
     actorUserId: USER_MAKER,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `benefit-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
   await createRoiCalculationRun({
     organizationId: ORG_ID,
@@ -177,7 +181,8 @@ async function buildTrackingCase(suffix: string): Promise<TrackingCaseFixture> {
     actorUserId: USER_MAKER,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `run-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
   const readyOutcome = await markReadyForReview({
     caseId,
@@ -186,7 +191,8 @@ async function buildTrackingCase(suffix: string): Promise<TrackingCaseFixture> {
     actorUserId: USER_MAKER,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `ready-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   const submitOutcome = await submitRoiCaseForApproval({
     caseId,
     organizationId: ORG_ID,
@@ -212,7 +218,8 @@ async function buildTrackingCase(suffix: string): Promise<TrackingCaseFixture> {
     actorUserId: USER_MAKER,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `tracking-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
   return {
     caseId,
@@ -384,7 +391,8 @@ describe('ROI-E005 cancelRoiCase (real Postgres)', () => {
         actorUserId: USER_MAKER,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `cancel-guard-${randomUUID()}`,
-      })
+        access: { capabilities: ['*'], platformRole: null },
+})
     ).rejects.toThrow(RoiCaseValidationError);
 
     const row = await client.query<{ status: string }>(`SELECT status FROM rvn_roi_cases WHERE case_id = $1`, [
@@ -405,7 +413,8 @@ describe('ROI-E005 cancelRoiCase (real Postgres)', () => {
       actorUserId: USER_MAKER,
       actorEffectiveRole: 'consultant',
       idempotencyKey: `cancel-reason-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
     expect(outcome.outcome).toBe('applied');
     expect(outcome.result.status).toBe('cancelled');
@@ -462,7 +471,8 @@ describe('ROI-E005 cancelRoiCase (real Postgres)', () => {
         publishedBy: USER_MAKER,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `snapshot-ac04-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       expect(snapshotOutcome.outcome).toBe('applied');
 
       // Full-row snapshot of BOTH actual entries and the actual snapshot,
@@ -492,7 +502,8 @@ describe('ROI-E005 cancelRoiCase (real Postgres)', () => {
         actorUserId: USER_MAKER,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `cancel-ac04-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       expect(cancelOutcome.outcome).toBe('applied');
       expect(cancelOutcome.result.status).toBe('cancelled');
 

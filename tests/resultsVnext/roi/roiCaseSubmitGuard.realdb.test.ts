@@ -130,7 +130,8 @@ async function buildReadyForReviewCase(initiativeId: string): Promise<{
     actorUserId: USER_MAKER,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `start-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
   await captureOrUpdateBaseline({
     organizationId: ORG_ID,
@@ -142,7 +143,8 @@ async function buildReadyForReviewCase(initiativeId: string): Promise<{
     actorId: USER_MAKER,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `baseline-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
   const costLineOutcome = await addCostLine({
     caseId,
@@ -156,7 +158,8 @@ async function buildReadyForReviewCase(initiativeId: string): Promise<{
     actorUserId: USER_MAKER,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `cost-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   await addBenefitLine({
     caseId,
     organizationId: ORG_ID,
@@ -169,7 +172,8 @@ async function buildReadyForReviewCase(initiativeId: string): Promise<{
     actorUserId: USER_MAKER,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `benefit-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
   await createRoiCalculationRun({
     organizationId: ORG_ID,
@@ -178,7 +182,8 @@ async function buildReadyForReviewCase(initiativeId: string): Promise<{
     actorUserId: USER_MAKER,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `run-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
   const readyOutcome = await markReadyForReview({
     caseId,
@@ -187,7 +192,8 @@ async function buildReadyForReviewCase(initiativeId: string): Promise<{
     actorUserId: USER_MAKER,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `ready-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   expect(readyOutcome.result.status).toBe('ready_for_review');
 
   return {
@@ -345,7 +351,8 @@ describe('ROI-E003 submit guard (AC-01) + edit-lock (D3/D4) — real Postgres', 
         actorId: USER_MAKER,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `break-baseline-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
       await expect(
         submitRoiCaseForApproval({
@@ -401,7 +408,8 @@ describe('ROI-E003 submit guard (AC-01) + edit-lock (D3/D4) — real Postgres', 
           actorUserId: USER_MAKER,
           actorEffectiveRole: 'consultant',
           idempotencyKey: `edit-cost-blocked-${randomUUID()}`,
-        })
+        access: { capabilities: ['*'], platformRole: null },
+})
       ).rejects.toBeInstanceOf(RoiEconomicModelNotEditableError);
 
       // Half 2 (D4, NEW in this epic): a baseline edit is now ALSO blocked
@@ -420,7 +428,8 @@ describe('ROI-E003 submit guard (AC-01) + edit-lock (D3/D4) — real Postgres', 
           actorId: USER_MAKER,
           actorEffectiveRole: 'consultant',
           idempotencyKey: `edit-baseline-blocked-${randomUUID()}`,
-        });
+        access: { capabilities: ['*'], platformRole: null },
+});
       } catch (err) {
         baselineEditError = err;
       }

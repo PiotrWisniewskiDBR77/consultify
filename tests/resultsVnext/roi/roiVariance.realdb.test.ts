@@ -126,7 +126,8 @@ async function buildForecastedCase(suffix: string): Promise<VarianceFixture> {
     actorUserId: USER_MAKER,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `start-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
   await captureOrUpdateBaseline({
     organizationId: ORG_ID,
@@ -138,7 +139,8 @@ async function buildForecastedCase(suffix: string): Promise<VarianceFixture> {
     actorId: USER_MAKER,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `baseline-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
   const costLineOutcome = await addCostLine({
     caseId,
@@ -152,7 +154,8 @@ async function buildForecastedCase(suffix: string): Promise<VarianceFixture> {
     actorUserId: USER_MAKER,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `cost-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   await addBenefitLine({
     caseId,
     organizationId: ORG_ID,
@@ -166,7 +169,8 @@ async function buildForecastedCase(suffix: string): Promise<VarianceFixture> {
     actorUserId: USER_MAKER,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `benefit-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
   await createRoiCalculationRun({
     organizationId: ORG_ID,
@@ -175,7 +179,8 @@ async function buildForecastedCase(suffix: string): Promise<VarianceFixture> {
     actorUserId: USER_MAKER,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `run-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
   const readyOutcome = await markReadyForReview({
     caseId,
@@ -184,7 +189,8 @@ async function buildForecastedCase(suffix: string): Promise<VarianceFixture> {
     actorUserId: USER_MAKER,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `ready-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   const submitOutcome = await submitRoiCaseForApproval({
     caseId,
     organizationId: ORG_ID,
@@ -210,7 +216,8 @@ async function buildForecastedCase(suffix: string): Promise<VarianceFixture> {
     actorUserId: USER_MAKER,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `tracking-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
   // Forecast WITH an override — a real, nonzero variance vs the frozen
   // approved model (1000 -> 1500).
@@ -223,7 +230,8 @@ async function buildForecastedCase(suffix: string): Promise<VarianceFixture> {
     actorUserId: USER_MAKER,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `forecast-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
   return {
     caseId,
@@ -380,7 +388,8 @@ describe('ROI-E004 Variance commands — AC-05 (real Postgres)', () => {
       createdBy: USER_MAKER,
       actorEffectiveRole: 'consultant',
       idempotencyKey: `variance-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
     expect(outcome.outcome).toBe('applied');
     const variance = outcome.result;
@@ -403,7 +412,8 @@ describe('ROI-E004 Variance commands — AC-05 (real Postgres)', () => {
       createdBy: USER_MAKER,
       actorEffectiveRole: 'consultant',
       idempotencyKey: `variance-2-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const varianceId = recordOutcome.result.varianceId;
 
     const updateOutcome = await updateVarianceStatus({
@@ -416,7 +426,8 @@ describe('ROI-E004 Variance commands — AC-05 (real Postgres)', () => {
       actorUserId: USER_MAKER,
       actorEffectiveRole: 'consultant',
       idempotencyKey: `update-status-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     expect(updateOutcome.result.status).toBe('explained');
     expect(updateOutcome.result.ownerUserId).toBe(USER_APPROVER);
     // Facts unchanged by the status update.
@@ -434,7 +445,8 @@ describe('ROI-E004 Variance commands — AC-05 (real Postgres)', () => {
         actorUserId: USER_MAKER,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `update-status-stale-${randomUUID()}`,
-      })
+        access: { capabilities: ['*'], platformRole: null },
+})
     ).rejects.toThrow(AtomicWriteConflictError);
   });
 
@@ -450,7 +462,8 @@ describe('ROI-E004 Variance commands — AC-05 (real Postgres)', () => {
       createdBy: USER_MAKER,
       actorEffectiveRole: 'consultant',
       idempotencyKey: `variance-3-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const varianceId = recordOutcome.result.varianceId;
 
     const causeOutcome = await addVarianceCause({
@@ -462,7 +475,8 @@ describe('ROI-E004 Variance commands — AC-05 (real Postgres)', () => {
       createdBy: USER_MAKER,
       actorEffectiveRole: 'consultant',
       idempotencyKey: `cause-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     expect(causeOutcome.outcome).toBe('applied');
     expect(causeOutcome.result.varianceId).toBe(varianceId);
 
@@ -479,7 +493,8 @@ describe('ROI-E004 Variance commands — AC-05 (real Postgres)', () => {
       actorUserId: USER_MAKER,
       actorEffectiveRole: 'consultant',
       idempotencyKey: `remove-cause-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
     const listAfter = await client.query<{ count: string }>(
       `SELECT COUNT(*)::text AS count FROM rvn_roi_variance_causes WHERE variance_id = $1`,
@@ -500,7 +515,8 @@ describe('ROI-E004 Variance commands — AC-05 (real Postgres)', () => {
       createdBy: USER_MAKER,
       actorEffectiveRole: 'consultant',
       idempotencyKey: `variance-4-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const varianceId = recordOutcome.result.varianceId;
 
     await expect(

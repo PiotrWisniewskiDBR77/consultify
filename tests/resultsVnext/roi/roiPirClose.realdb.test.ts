@@ -55,7 +55,8 @@ async function completePirDraft(pirId: string, caseId: string, expectedVersion: 
     actorUserId: USER_OWNER,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `draft-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
 }
 
 describe('ROI-E006 closeRoiCase (real Postgres)', () => {
@@ -113,7 +114,8 @@ describe('ROI-E006 closeRoiCase (real Postgres)', () => {
         actorUserId: USER_CLOSER,
         actorEffectiveRole: 'admin',
         idempotencyKey: `close-guard-${randomUUID()}`,
-      })
+        access: { capabilities: ['*'], platformRole: null },
+})
     ).rejects.toThrow(modules.RoiCaseValidationError);
   });
 
@@ -136,7 +138,8 @@ describe('ROI-E006 closeRoiCase (real Postgres)', () => {
         actorUserId: USER_CLOSER,
         actorEffectiveRole: 'admin',
         idempotencyKey: `close-openvar-${randomUUID()}`,
-      })
+        access: { capabilities: ['*'], platformRole: null },
+})
     ).rejects.toMatchObject({ code: 'OPEN_VARIANCES_UNRESOLVED' });
 
     const caseRow = await client.query<{ status: string }>(`SELECT status FROM rvn_roi_cases WHERE case_id = $1`, [started.caseId]);
@@ -162,7 +165,8 @@ describe('ROI-E006 closeRoiCase (real Postgres)', () => {
       actorUserId: USER_CLOSER,
       actorEffectiveRole: 'admin',
       idempotencyKey: `close-waived-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
     expect(outcome.outcome).toBe('applied');
     expect(outcome.result.case.status).toBe('closed');
@@ -190,7 +194,8 @@ describe('ROI-E006 closeRoiCase (real Postgres)', () => {
         actorUserId: USER_CLOSER,
         actorEffectiveRole: 'admin',
         idempotencyKey: `close-incomplete-${randomUUID()}`,
-      })
+        access: { capabilities: ['*'], platformRole: null },
+})
     ).rejects.toMatchObject({ code: 'PIR_INCOMPLETE' });
   });
 

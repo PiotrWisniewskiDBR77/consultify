@@ -96,7 +96,8 @@ describe('ROI-E006 startRoiCasePostInvestmentReview (real Postgres)', () => {
         actorUserId: USER_OWNER,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `start-guard-${randomUUID()}`,
-      })
+        access: { capabilities: ['*'], platformRole: null },
+})
     ).rejects.toThrow(modules.RoiCaseValidationError);
   });
 
@@ -131,7 +132,8 @@ describe('ROI-E006 startRoiCasePostInvestmentReview (real Postgres)', () => {
         actorUserId: USER_OWNER,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `start-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
       expect(startOutcome.outcome).toBe('applied');
       expect(startOutcome.result.case.status).toBe('post_investment_review');
@@ -181,7 +183,8 @@ describe('ROI-E006 startRoiCasePostInvestmentReview (real Postgres)', () => {
         actorUserId: USER_OWNER,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `start-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       const pirId = startOutcome.result.pir.pirId;
       const frozenHash = startOutcome.result.pir.reviewSnapshotHash;
       const frozenPayloadJson = JSON.stringify(startOutcome.result.pir.reviewSnapshotPayload);

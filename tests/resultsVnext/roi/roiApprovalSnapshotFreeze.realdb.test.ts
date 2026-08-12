@@ -136,7 +136,8 @@ async function buildReadyCaseWithFullEconomicModel(initiativeId: string): Promis
     actorUserId: USER_MAKER,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `start-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
   await captureOrUpdateBaseline({
     organizationId: ORG_ID,
@@ -148,7 +149,8 @@ async function buildReadyCaseWithFullEconomicModel(initiativeId: string): Promis
     actorId: USER_MAKER,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `baseline-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
   await captureOrUpdateCalculationPolicy({
     organizationId: ORG_ID,
@@ -158,7 +160,8 @@ async function buildReadyCaseWithFullEconomicModel(initiativeId: string): Promis
     actorId: USER_MAKER,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `policy-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
   const assumptionOutcome = await addAssumption({
     caseId,
@@ -169,7 +172,8 @@ async function buildReadyCaseWithFullEconomicModel(initiativeId: string): Promis
     actorUserId: USER_MAKER,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `assumption-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   const costLineOutcome = await addCostLine({
     caseId,
     organizationId: ORG_ID,
@@ -182,7 +186,8 @@ async function buildReadyCaseWithFullEconomicModel(initiativeId: string): Promis
     actorUserId: USER_MAKER,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `cost-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   const benefitLineOutcome = await addBenefitLine({
     caseId,
     organizationId: ORG_ID,
@@ -195,7 +200,8 @@ async function buildReadyCaseWithFullEconomicModel(initiativeId: string): Promis
     actorUserId: USER_MAKER,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `benefit-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   const scenarioOutcome = await addScenario({
     caseId,
     organizationId: ORG_ID,
@@ -204,7 +210,8 @@ async function buildReadyCaseWithFullEconomicModel(initiativeId: string): Promis
     actorUserId: USER_MAKER,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `scenario-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
   await createRoiCalculationRun({
     organizationId: ORG_ID,
@@ -213,7 +220,8 @@ async function buildReadyCaseWithFullEconomicModel(initiativeId: string): Promis
     actorUserId: USER_MAKER,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `run-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
   const readyOutcome = await markReadyForReview({
     caseId,
@@ -222,7 +230,8 @@ async function buildReadyCaseWithFullEconomicModel(initiativeId: string): Promis
     actorUserId: USER_MAKER,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `ready-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
   return {
     caseId,
@@ -581,7 +590,8 @@ describe('ROI-E003 approval-driven freeze/unfreeze — real Postgres', () => {
       actorUserId: USER_MAKER,
       actorEffectiveRole: 'consultant',
       idempotencyKey: `edit-after-changes-requested-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     expect(editOutcome.outcome).toBe('applied');
     expect(editOutcome.result.amount).toBe(1500);
   });

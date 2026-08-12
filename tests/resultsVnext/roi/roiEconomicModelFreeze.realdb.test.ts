@@ -226,7 +226,8 @@ describe('ROI-E002 economic-model freeze — triggers + freezeRoiEconomicModel c
         actorId: USER_OWNER,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `policy-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       const assumptionOutcome = await addAssumption({
         caseId,
         organizationId: ORG_ID,
@@ -236,7 +237,8 @@ describe('ROI-E002 economic-model freeze — triggers + freezeRoiEconomicModel c
         actorUserId: USER_OWNER,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `assumption-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       const costLineOutcome = await addCostLine({
         caseId,
         organizationId: ORG_ID,
@@ -249,7 +251,8 @@ describe('ROI-E002 economic-model freeze — triggers + freezeRoiEconomicModel c
         actorUserId: USER_OWNER,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `cost-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       const benefitLineOutcome = await addBenefitLine({
         caseId,
         organizationId: ORG_ID,
@@ -262,7 +265,8 @@ describe('ROI-E002 economic-model freeze — triggers + freezeRoiEconomicModel c
         actorUserId: USER_OWNER,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `benefit-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       const scenarioOutcome = await addScenario({
         caseId,
         organizationId: ORG_ID,
@@ -271,7 +275,8 @@ describe('ROI-E002 economic-model freeze — triggers + freezeRoiEconomicModel c
         actorUserId: USER_OWNER,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `scenario-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
       // Freeze — the cross-epic contract ROI-E003's future approveRoiCase
       // will call on the same pinned client as the approval CAS; here
@@ -349,7 +354,8 @@ describe('ROI-E002 economic-model freeze — triggers + freezeRoiEconomicModel c
         actorUserId: USER_OWNER,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `resolve-note-postfreeze-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       expect(commandLayerNoteUpdate.outcome).toBe('applied');
       expect(commandLayerNoteUpdate.result.doubleCountingResolutionNote).toBe('resolved via command layer, post-freeze');
 
@@ -365,7 +371,8 @@ describe('ROI-E002 economic-model freeze — triggers + freezeRoiEconomicModel c
           actorUserId: USER_OWNER,
           actorEffectiveRole: 'consultant',
           idempotencyKey: `try-edit-amount-postfreeze-${randomUUID()}`,
-        })
+        access: { capabilities: ['*'], platformRole: null },
+})
       ).rejects.toBeInstanceOf(RoiBenefitLineFrozenError);
     }
   );

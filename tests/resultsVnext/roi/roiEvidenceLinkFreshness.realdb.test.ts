@@ -186,7 +186,8 @@ async function buildCaseWithEvidenceLink(suffix: string): Promise<CaseWithEviden
     actorUserId: USER_MAKER,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `benefit-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   const benefitLineId = benefitLineOutcome.result.benefitLineId;
 
   const kpiId = randomUUID();
@@ -204,7 +205,8 @@ async function buildCaseWithEvidenceLink(suffix: string): Promise<CaseWithEviden
     actorUserId: USER_MAKER,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `evidence-link-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
   return { caseId, benefitLineId, linkId: linkOutcome.result.linkId, kpiId, v1Id, v2Id };
 }
@@ -370,7 +372,8 @@ describe('ROI-E007 Evidence-link freshness (real Postgres)', () => {
         actorUserId: USER_MAKER,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `freshness-check-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       expect(checkOutcome.outcome).toBe('applied');
       expect(checkOutcome.result.freshnessCheckedAt).not.toBeNull();
       // Untouched by this command.

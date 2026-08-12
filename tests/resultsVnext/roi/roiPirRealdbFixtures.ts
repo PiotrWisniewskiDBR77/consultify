@@ -199,7 +199,8 @@ export async function buildCaseThroughTracking(
     actorUserId: ownerUserId,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `start-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
   await modules.captureOrUpdateBaseline({
     organizationId,
@@ -211,7 +212,8 @@ export async function buildCaseThroughTracking(
     actorId: ownerUserId,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `baseline-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
   await modules.addCostLine({
     caseId,
@@ -225,7 +227,8 @@ export async function buildCaseThroughTracking(
     actorUserId: ownerUserId,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `cost-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   await modules.addBenefitLine({
     caseId,
     organizationId,
@@ -239,7 +242,8 @@ export async function buildCaseThroughTracking(
     actorUserId: ownerUserId,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `benefit-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
   await modules.createRoiCalculationRun({
     organizationId,
@@ -248,7 +252,8 @@ export async function buildCaseThroughTracking(
     actorUserId: ownerUserId,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `run-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
   const readyOutcome = await modules.markReadyForReview({
     caseId,
@@ -257,7 +262,8 @@ export async function buildCaseThroughTracking(
     actorUserId: ownerUserId,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `ready-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   // RN-G5: this fixture exercises the full ROI case decision flow, not
   // authorization — the wildcard makes the new command-capability guard
   // (commandCapabilityGuard.ts) always ALLOW, preserving every consuming
@@ -288,6 +294,7 @@ export async function buildCaseThroughTracking(
     actorUserId: ownerUserId,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `tracking-${randomUUID()}`,
+    access: { capabilities: ['*'], platformRole: null },
   });
 
   return { caseId, initiativeId, ownerUserId, rowVersion: trackingOutcome.resultingVersion };
@@ -308,6 +315,7 @@ export async function buildCaseThroughBenefitsRealization(
     actorUserId: params.ownerUserId,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `br-${randomUUID()}`,
+    access: { capabilities: ['*'], platformRole: null },
   });
   return { ...tracking, rowVersion: outcome.resultingVersion };
 }
@@ -327,6 +335,7 @@ export async function buildCaseThroughPirDue(
     actorUserId: params.ownerUserId,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `due-${randomUUID()}`,
+    access: { capabilities: ['*'], platformRole: null },
   });
   return { ...br, rowVersion: outcome.resultingVersion };
 }
@@ -364,6 +373,7 @@ export async function buildCaseThroughPirStarted(
     actorUserId: starterUserId,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `startpir-${randomUUID()}`,
+    access: { capabilities: ['*'], platformRole: null },
   });
   return {
     ...due,

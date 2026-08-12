@@ -434,7 +434,8 @@ describe('ROI-E005 AC-02 — ROI obligations survive a REAL Initiative closure (
         actorUserId: USER_OWNER,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `start-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       await captureOrUpdateBaseline({
         organizationId: ORG_ID,
         caseId,
@@ -445,7 +446,8 @@ describe('ROI-E005 AC-02 — ROI obligations survive a REAL Initiative closure (
         actorId: USER_OWNER,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `baseline-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       await addCostLine({
         caseId,
         organizationId: ORG_ID,
@@ -458,7 +460,8 @@ describe('ROI-E005 AC-02 — ROI obligations survive a REAL Initiative closure (
         actorUserId: USER_OWNER,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `cost-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       await addBenefitLine({
         caseId,
         organizationId: ORG_ID,
@@ -472,7 +475,8 @@ describe('ROI-E005 AC-02 — ROI obligations survive a REAL Initiative closure (
         actorUserId: USER_OWNER,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `benefit-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       await createRoiCalculationRun({
         organizationId: ORG_ID,
         caseId,
@@ -480,7 +484,8 @@ describe('ROI-E005 AC-02 — ROI obligations survive a REAL Initiative closure (
         actorUserId: USER_OWNER,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `run-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       const readyOutcome = await markReadyForReview({
         caseId,
         organizationId: ORG_ID,
@@ -488,7 +493,8 @@ describe('ROI-E005 AC-02 — ROI obligations survive a REAL Initiative closure (
         actorUserId: USER_OWNER,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `ready-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       const submitRoiOutcome = await submitRoiCaseForApproval({
         caseId,
         organizationId: ORG_ID,
@@ -514,7 +520,8 @@ describe('ROI-E005 AC-02 — ROI obligations survive a REAL Initiative closure (
         actorUserId: USER_OWNER,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `tracking-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       const benefitsRealizationOutcome = await startRoiCaseBenefitsRealization({
         caseId,
         organizationId: ORG_ID,
@@ -522,7 +529,8 @@ describe('ROI-E005 AC-02 — ROI obligations survive a REAL Initiative closure (
         actorUserId: USER_OWNER,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `br-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       expect(benefitsRealizationOutcome.outcome).toBe('applied');
       expect(benefitsRealizationOutcome.result.status).toBe('benefits_realization');
 

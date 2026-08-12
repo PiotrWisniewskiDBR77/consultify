@@ -207,7 +207,8 @@ describe('ROI-E007 Finance Link commands (real Postgres)', () => {
       actorUserId: USER_MAKER,
       actorEffectiveRole: 'consultant',
       idempotencyKey: `fin-link-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     expect(outcome.outcome).toBe('applied');
     const link = outcome.result;
     expect(link.caseId).toBe(fixture.caseId);
@@ -245,7 +246,8 @@ describe('ROI-E007 Finance Link commands (real Postgres)', () => {
       actorUserId: USER_MAKER,
       actorEffectiveRole: 'consultant',
       idempotencyKey: `fin-link-fabricated-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     // No existence-validation error of any kind — the write simply succeeds.
     expect(outcome.outcome).toBe('applied');
     expect(outcome.result.financeArtifactType).toBe('totally_made_up_artifact_type');
@@ -265,7 +267,8 @@ describe('ROI-E007 Finance Link commands (real Postgres)', () => {
       actorUserId: USER_MAKER,
       actorEffectiveRole: 'consultant',
       idempotencyKey: `fin-link-3a-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     await createRoiFinanceLink({
       caseId: fixture.caseId,
       organizationId: ORG_ID,
@@ -278,7 +281,8 @@ describe('ROI-E007 Finance Link commands (real Postgres)', () => {
       actorUserId: USER_MAKER,
       actorEffectiveRole: 'consultant',
       idempotencyKey: `fin-link-3b-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
     const links = await listRoiFinanceLinks({ userId: USER_MAKER, organizationId: ORG_ID, caseId: fixture.caseId });
     expect(links).toHaveLength(2);
@@ -299,7 +303,8 @@ describe('ROI-E007 Finance Link commands (real Postgres)', () => {
       actorUserId: USER_MAKER,
       actorEffectiveRole: 'consultant',
       idempotencyKey: `fin-link-4-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const linkId = createOutcome.result.linkId;
 
     const removeOutcome = await removeRoiFinanceLink({
@@ -310,7 +315,8 @@ describe('ROI-E007 Finance Link commands (real Postgres)', () => {
       actorUserId: USER_MAKER,
       actorEffectiveRole: 'consultant',
       idempotencyKey: `remove-fin-link-4-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     expect(removeOutcome.result.linkId).toBe(linkId);
 
     const links = await listRoiFinanceLinks({ userId: USER_MAKER, organizationId: ORG_ID, caseId: fixture.caseId });
@@ -341,7 +347,8 @@ describe('ROI-E007 Finance Link commands (real Postgres)', () => {
         actorUserId: USER_MAKER,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `fin-link-5-${randomUUID()}`,
-      })
+        access: { capabilities: ['*'], platformRole: null },
+})
     ).rejects.toThrow(RoiEconomicModelNotEditableError);
   });
 });

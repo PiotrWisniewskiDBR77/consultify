@@ -285,7 +285,8 @@ describe('ROI-E003 approval-snapshot visibility join + D11 read-time KPI redacti
         actorUserId: USER_GRANTEE,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `start-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
       await captureOrUpdateBaseline({
         organizationId: ORG_ID,
@@ -297,7 +298,8 @@ describe('ROI-E003 approval-snapshot visibility join + D11 read-time KPI redacti
         actorId: USER_GRANTEE,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `baseline-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
       await addCostLine({
         caseId,
@@ -311,7 +313,8 @@ describe('ROI-E003 approval-snapshot visibility join + D11 read-time KPI redacti
         actorUserId: USER_GRANTEE,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `cost-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       const benefitLineOutcome = await addBenefitLine({
         caseId,
         organizationId: ORG_ID,
@@ -324,7 +327,8 @@ describe('ROI-E003 approval-snapshot visibility join + D11 read-time KPI redacti
         actorUserId: USER_GRANTEE,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `benefit-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
       const kpiId = randomUUID();
       const definitionVersionId = randomUUID();
@@ -340,7 +344,8 @@ describe('ROI-E003 approval-snapshot visibility join + D11 read-time KPI redacti
         actorUserId: USER_GRANTEE,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `link-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
       await createRoiCalculationRun({
         organizationId: ORG_ID,
@@ -349,7 +354,8 @@ describe('ROI-E003 approval-snapshot visibility join + D11 read-time KPI redacti
         actorUserId: USER_GRANTEE,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `run-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
       const readyOutcome = await markReadyForReview({
         caseId,
@@ -358,7 +364,8 @@ describe('ROI-E003 approval-snapshot visibility join + D11 read-time KPI redacti
         actorUserId: USER_GRANTEE,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `ready-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       const submitOutcome = await submitRoiCaseForApproval({
         caseId,
         organizationId: ORG_ID,

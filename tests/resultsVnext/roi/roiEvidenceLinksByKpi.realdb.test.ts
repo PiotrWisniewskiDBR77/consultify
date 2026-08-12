@@ -218,7 +218,8 @@ describe('ROI-E007 listRoiEvidenceLinksByKpi — reverse KPI->ROI read, two-laye
       actorUserId: USER_GRANTEE,
       actorEffectiveRole: 'consultant',
       idempotencyKey: `benefit-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     benefitLineId = benefitLineOutcome.result.benefitLineId;
 
     kpiId = randomUUID();
@@ -235,7 +236,8 @@ describe('ROI-E007 listRoiEvidenceLinksByKpi — reverse KPI->ROI read, two-laye
       actorUserId: USER_GRANTEE,
       actorEffectiveRole: 'consultant',
       idempotencyKey: `evidence-link-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     linkId = linkOutcome.result.linkId;
   }, 30_000);
 

@@ -287,7 +287,8 @@ describe('ROI-E002 economic-model visibility-join regression (real Postgres)', (
         actorUserId: USER_GRANTEE,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `start-modeling-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
       await captureOrUpdateCalculationPolicy({
         organizationId: ORG_ID,
@@ -297,7 +298,8 @@ describe('ROI-E002 economic-model visibility-join regression (real Postgres)', (
         actorId: USER_GRANTEE,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `policy-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       const assumptionOutcome = await addAssumption({
         caseId,
         organizationId: ORG_ID,
@@ -307,7 +309,8 @@ describe('ROI-E002 economic-model visibility-join regression (real Postgres)', (
         actorUserId: USER_GRANTEE,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `assumption-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       await addCostLine({
         caseId,
         organizationId: ORG_ID,
@@ -320,7 +323,8 @@ describe('ROI-E002 economic-model visibility-join regression (real Postgres)', (
         actorUserId: USER_GRANTEE,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `cost-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       const benefitOutcome = await addBenefitLine({
         caseId,
         organizationId: ORG_ID,
@@ -333,7 +337,8 @@ describe('ROI-E002 economic-model visibility-join regression (real Postgres)', (
         actorUserId: USER_GRANTEE,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `benefit-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       const scenarioOutcome = await addScenario({
         caseId,
         organizationId: ORG_ID,
@@ -342,7 +347,8 @@ describe('ROI-E002 economic-model visibility-join regression (real Postgres)', (
         actorUserId: USER_GRANTEE,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `scenario-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       const runOutcome = await createRoiCalculationRun({
         organizationId: ORG_ID,
         caseId,
@@ -350,7 +356,8 @@ describe('ROI-E002 economic-model visibility-join regression (real Postgres)', (
         actorUserId: USER_GRANTEE,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `run-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
       // Grantee sees everything.
       expect(await repo.getCalculationPolicy({ userId: USER_GRANTEE, organizationId: ORG_ID, caseId })).not.toBeNull();
@@ -422,7 +429,8 @@ describe('ROI-E002 economic-model visibility-join regression (real Postgres)', (
         actorUserId: USER_GRANTEE,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `benefit-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
       const kpiId = randomUUID();
       const definitionVersionId = randomUUID();
@@ -438,7 +446,8 @@ describe('ROI-E002 economic-model visibility-join regression (real Postgres)', (
         actorUserId: USER_GRANTEE,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `link-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
       // USER_GRANTEE has both case AND KPI visibility — full hydration.
       const granteeLinks = await repo.listBenefitEvidenceLinks({

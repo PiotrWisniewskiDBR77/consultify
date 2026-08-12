@@ -66,7 +66,8 @@ async function closeWithOutcome(
     actorUserId: started.ownerUserId,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `draft-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   await modules.closeRoiCase({
     caseId: started.caseId,
     organizationId: ORG_ID,
@@ -74,7 +75,8 @@ async function closeWithOutcome(
     actorUserId: USER_CLOSER,
     actorEffectiveRole: 'admin',
     idempotencyKey: `close-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
 }
 
 describe('ROI-E006 listOrganizationRoiPirOutcomes (real Postgres)', () => {

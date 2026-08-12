@@ -113,7 +113,8 @@ async function buildApprovedCase(initiativeSuffix: string): Promise<{ caseId: st
     actorUserId: USER_MAKER,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `start-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
   const baselineOutcome = await captureOrUpdateBaseline({
     organizationId: ORG_ID,
@@ -125,7 +126,8 @@ async function buildApprovedCase(initiativeSuffix: string): Promise<{ caseId: st
     actorId: USER_MAKER,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `baseline-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   void baselineOutcome;
 
   await addCostLine({
@@ -140,7 +142,8 @@ async function buildApprovedCase(initiativeSuffix: string): Promise<{ caseId: st
     actorUserId: USER_MAKER,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `cost-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   await addBenefitLine({
     caseId,
     organizationId: ORG_ID,
@@ -154,7 +157,8 @@ async function buildApprovedCase(initiativeSuffix: string): Promise<{ caseId: st
     actorUserId: USER_MAKER,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `benefit-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
   await createRoiCalculationRun({
     organizationId: ORG_ID,
@@ -163,7 +167,8 @@ async function buildApprovedCase(initiativeSuffix: string): Promise<{ caseId: st
     actorUserId: USER_MAKER,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `run-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
   const readyOutcome = await markReadyForReview({
     caseId,
@@ -172,7 +177,8 @@ async function buildApprovedCase(initiativeSuffix: string): Promise<{ caseId: st
     actorUserId: USER_MAKER,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `ready-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   const submitOutcome = await submitRoiCaseForApproval({
     caseId,
     organizationId: ORG_ID,
@@ -330,7 +336,8 @@ describe('ROI-E004 startRoiCaseTracking (real Postgres)', () => {
       actorUserId: USER_MAKER,
       actorEffectiveRole: 'consultant',
       idempotencyKey: `tracking-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
     expect(outcome.outcome).toBe('applied');
     expect(outcome.result.status).toBe('tracking');
@@ -364,7 +371,8 @@ describe('ROI-E004 startRoiCaseTracking (real Postgres)', () => {
       actorUserId: USER_MAKER,
       actorEffectiveRole: 'consultant',
       idempotencyKey: `tracking-2-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
     await expect(
       startRoiCaseTracking({
@@ -374,7 +382,8 @@ describe('ROI-E004 startRoiCaseTracking (real Postgres)', () => {
         actorUserId: USER_MAKER,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `tracking-3-${randomUUID()}`,
-      })
+        access: { capabilities: ['*'], platformRole: null },
+})
     ).rejects.toThrow(RoiCaseValidationError);
   });
 
@@ -402,7 +411,8 @@ describe('ROI-E004 startRoiCaseTracking (real Postgres)', () => {
       actorUserId: USER_MAKER,
       actorEffectiveRole: 'consultant',
       idempotencyKey: `tracking-4-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     expect(outcome.outcome).toBe('applied');
     expect(outcome.result.status).toBe('tracking');
 

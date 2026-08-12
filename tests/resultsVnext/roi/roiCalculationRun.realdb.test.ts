@@ -100,7 +100,8 @@ async function createFixtureCase(): Promise<{ caseId: string; rowVersion: number
     actorUserId: USER_OWNER,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `start-modeling-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   // Baseline requirement of E001's own guard — captured up front so every
   // deny/eligible check below isolates the ECONOMIC MODEL gate, not E001's.
   await captureOrUpdateBaseline({
@@ -113,7 +114,8 @@ async function createFixtureCase(): Promise<{ caseId: string; rowVersion: number
     actorId: USER_OWNER,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `capture-baseline-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   return { caseId: outcome.result.case.caseId, rowVersion: outcome.result.case.rowVersion };
 }
 
@@ -244,7 +246,8 @@ describe('ROI-E002 calculation run + readiness guard (real Postgres)', () => {
         actorUserId: USER_OWNER,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `add-cost-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       await addBenefitLine({
         caseId,
         organizationId: ORG_ID,
@@ -260,7 +263,8 @@ describe('ROI-E002 calculation run + readiness guard (real Postgres)', () => {
         actorUserId: USER_OWNER,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `add-benefit-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
       const runOutcome = await createRoiCalculationRun({
         organizationId: ORG_ID,
@@ -269,7 +273,8 @@ describe('ROI-E002 calculation run + readiness guard (real Postgres)', () => {
         actorUserId: USER_OWNER,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `calc-run-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       expect(runOutcome.outcome).toBe('applied');
       expect(runOutcome.result.status).toBe('completed');
       expect(runOutcome.result.totalCosts).toBe(10000);
@@ -323,7 +328,8 @@ describe('ROI-E002 calculation run + readiness guard (real Postgres)', () => {
         actorUserId: USER_OWNER,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `add-cost-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       await createRoiCalculationRun({
         organizationId: ORG_ID,
         caseId,
@@ -331,7 +337,8 @@ describe('ROI-E002 calculation run + readiness guard (real Postgres)', () => {
         actorUserId: USER_OWNER,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `calc-run-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
       // Mutate the economic model AFTER the run — a new cost line changes
       // the current-state hash without a fresh run existing for it.
@@ -347,7 +354,8 @@ describe('ROI-E002 calculation run + readiness guard (real Postgres)', () => {
         actorUserId: USER_OWNER,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `add-cost-2-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
       const client2 = await acquirePgClient();
       try {
@@ -382,7 +390,8 @@ describe('ROI-E002 calculation run + readiness guard (real Postgres)', () => {
         actorUserId: USER_OWNER,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `add-benefit-a-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       await addBenefitLine({
         caseId,
         organizationId: ORG_ID,
@@ -397,7 +406,8 @@ describe('ROI-E002 calculation run + readiness guard (real Postgres)', () => {
         actorUserId: USER_OWNER,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `add-benefit-b-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
       const staleRun = await createRoiCalculationRun({
         organizationId: ORG_ID,
@@ -406,7 +416,8 @@ describe('ROI-E002 calculation run + readiness guard (real Postgres)', () => {
         actorUserId: USER_OWNER,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `calc-run-dc-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       expect(staleRun.result.hasUnresolvedDoubleCounting).toBe(true);
 
       const client2 = await acquirePgClient();
@@ -431,7 +442,8 @@ describe('ROI-E002 calculation run + readiness guard (real Postgres)', () => {
         actorUserId: USER_OWNER,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `resolve-dc-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
       const freshRun = await createRoiCalculationRun({
         organizationId: ORG_ID,
@@ -440,7 +452,8 @@ describe('ROI-E002 calculation run + readiness guard (real Postgres)', () => {
         actorUserId: USER_OWNER,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `calc-run-dc-resolved-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       expect(freshRun.result.hasUnresolvedDoubleCounting).toBe(false);
 
       const client3 = await acquirePgClient();
