@@ -5,12 +5,40 @@
  * Backs the `case_plan_versions` and `case_plan_view_state` tables added in
  * server/migrations/20260809_case_workspace_case_plan_version.sql. Those
  * tables are keyed by FK to `case_core(case_id)` (packet collision-avoidance
- * mandate — this service only ever SELECTs `case_core`, and only inside a
- * `SELECT ... FOR UPDATE` in createPlanDraft to confirm the case exists and
- * to serialize concurrent draft creation for that case_id; it never
- * INSERT/UPDATE/DELETEs case_core, including its own current_plan_version_id
- * column — see open_questions below) and never references Finance or
- * Results tables/routes.
+ * mandate — this service only ever SELECTs `case_core`, except for the one
+ * narrow, additive write described below; it never touches any other
+ * `case_core` column) and never references Finance or Results tables/routes.
+ *
+ * `case_core.current_plan_version_id` sync (CW N1, 2026-08-12 — resolves
+ * open_question #4 below, which is kept for history): this service is the
+ * sole writer of that column. Semantics settled: it names "the CasePlanVersion
+ * currently PUBLISHED for this Case", the same reading CW-P02's own design
+ * decision #4 already assumed for the pre-this-fix fallback ("callers query
+ * `case_plan_versions WHERE case_id=? AND status='PUBLISHED'` directly" —
+ * docs/product/case-workspace/acceptance/PACKET_REGISTRY.md §"CW-P02 ...
+ * design decisions", item 4). It is NOT "the plan a Run is bound to" (that is
+ * `Run.casePlanVersionId`, frozen independently per 04_DOMAIN_RUNTIME_AND_
+ * STATE_MACHINES.md §3.4 "Starting a Run freezes the exact CasePlanVersion")
+ * and NOT "the latest version regardless of status" (a DRAFT/IN_REVIEW row is
+ * never "current" in this sense — nothing is published yet). Only
+ * publishPlanVersion (sets it to the newly PUBLISHED row, unconditionally —
+ * it is always correct for a case_core row to point at whatever this
+ * transaction just made PUBLISHED, previous value or not) and
+ * withdrawPlanVersion (clears it back to NULL, conditionally on the column
+ * still pointing at the row being withdrawn, so this write never clobbers an
+ * unrelated value it doesn't understand) touch it. proposePlanVersion and
+ * requestChangesOnPlanVersion never do: neither ever acts on a PUBLISHED row
+ * (see ALLOWED_TRANSITIONS), so the column can never have been pointing at
+ * the row they mutate. Both writes happen on the SAME `client` as the status
+ * UPDATE they follow, inside the one already-open `withPgTransaction` block,
+ * so a later failure (e.g. an oversized outbox payload) rolls back the
+ * case_core write together with the status change — never a lying pointer
+ * left behind by a partially-committed command. Neither write touches
+ * `case_core.version` (the OCC counter other case_core mutators depend on);
+ * this is a denormalized, best-effort projection of plan-publication state,
+ * not a coordination-sensitive field, so it is deliberately excluded from
+ * that OCC scheme (same category of decision as this file's own
+ * putViewState/open_question #8).
  *
  * req_id coverage (docs/product/case-workspace/acceptance/
  * FUNCTIONAL_REQUIREMENT_COVERAGE.csv, epics column contains "E2"):
@@ -78,13 +106,24 @@
  *      severity='DEFERRED_EXTERNAL', never silently passing. Callers/tests
  *      must not treat publishPlanVersion() as GR-036-complete until that
  *      registry lands.
- *   4. Whether case_core.current_plan_version_id (an existing CW-P01 column)
- *      should be kept in sync by this service, a separate orchestration
- *      layer, or dropped in favor of callers querying
- *      `case_plan_versions WHERE case_id=? AND status='PUBLISHED'` directly
- *      is unresolved — this packet's mandate forbids writing to case_core at
- *      all, so publishPlanVersion() leaves that column untouched. Flag for
- *      whoever owns the E4 Run-binding packet.
+ *   4. RESOLVED 2026-08-12 (CW N1). case_core.current_plan_version_id (an
+ *      existing CW-P01 column) is now kept in sync by THIS service: see the
+ *      file header above for the settled semantics ("currently PUBLISHED",
+ *      not "Run-bound" or "latest-any-status") and which methods write it.
+ *      Originally left unresolved/unwritten because CW-P02's own mandate
+ *      forbade writing case_core at all (collision-avoidance during a period
+ *      with 15+ concurrently active branches touching case_core's
+ *      migration) — that constraint no longer applies to this narrow,
+ *      additive, already-existing-column write. Superseded the fallback
+ *      PACKET_REGISTRY.md decision #4 ("stays unsynced (NULL) for now").
+ *      Consequence this resolution does NOT cover: a plan version that is
+ *      DRAFT/IN_REVIEW (created, proposed, sent back for changes) is never
+ *      reflected here, by design — only a PUBLISHED plan is "current" in
+ *      this column's sense. A caller that wants "the plan version the user
+ *      is actively authoring right now, regardless of its status" needs a
+ *      client-side or session-scoped pointer for that (see
+ *      CaseDetailScreen.tsx's `pinnedPlanVersionId`, which this resolution
+ *      does not make redundant for that reason).
  *   5. Cycle detection in validatePlanVersion() treats ANY cycle among
  *      SEQUENCE/CONDITIONAL edges as UNCONTROLLED_CYCLE because CW-GR-008's
  *      GraphNode schema has no explicit loop-policy/max-iterations field.
@@ -1314,6 +1353,31 @@ export async function publishPlanVersion(
     const updatedRow = updated.rows[0];
     if (!updatedRow) throw new Error('plan_version_conflict');
 
+    // case_core.current_plan_version_id sync (see this file's header —
+    // "currently PUBLISHED", resolved open_question #4): unconditional SET,
+    // same transaction/client as the status UPDATE above, so a later failure
+    // in this same withPgTransaction block (e.g. an oversized outbox
+    // payload) rolls this back together with the status change — never a
+    // pointer left committed without the publish it describes, or vice
+    // versa. Unconditional because a fresh publish is always correct to
+    // claim this column regardless of whatever it held before (including a
+    // stale NULL left by a Case published before this sync existed).
+    // rowCount is asserted at exactly 1: case_plan_versions FKs to
+    // case_core(case_id), so a 0-row result here would mean the row this
+    // transaction is holding under FOR UPDATE lost its own case_core parent
+    // mid-transaction — a data-integrity condition worth surfacing loudly,
+    // not swallowing as a silent no-op (DbPromise.run()-style success with
+    // fallback:true has bitten this program before; this driver does not do
+    // that, but the explicit assertion costs nothing and documents the
+    // invariant either way).
+    const caseCoreSync = await client.query(
+      `UPDATE case_core SET current_plan_version_id = ? WHERE case_id = ?`,
+      [updatedRow.case_plan_version_id, updatedRow.case_id]
+    );
+    if (caseCoreSync.rowCount !== 1) {
+      throw new Error('plan_publish_case_core_sync_failed');
+    }
+
     const scope = await loadCaseScope(client, updatedRow.case_id);
 
     // EVENT_TAXONOMY.md §2 `publishPlanVersion -> case.plan.published`, and,
@@ -1408,6 +1472,24 @@ export async function withdrawPlanVersion(
     );
     const updatedRow = updated.rows[0];
     if (!updatedRow) throw new Error('plan_version_conflict');
+
+    // case_core.current_plan_version_id sync (see this file's header —
+    // "currently PUBLISHED", resolved open_question #4): clear it back to
+    // NULL, same transaction/client as the status UPDATE above so a later
+    // failure (e.g. an oversized outbox payload) rolls this back together
+    // with the WITHDRAWN transition. CONDITIONAL on the column still
+    // pointing at the row being withdrawn — unlike publish's unconditional
+    // SET, a 0-row result here is an expected, silent no-op, not an error:
+    // a Case published before this sync existed may still have this column
+    // NULL (the exact gap this fix closes going forward, not retroactively
+    // backfilled), and a future bug could point it somewhere unrelated —
+    // either way, this write must never clobber a value it did not itself
+    // put there.
+    await client.query(
+      `UPDATE case_core SET current_plan_version_id = NULL
+        WHERE case_id = ? AND current_plan_version_id = ?`,
+      [updatedRow.case_id, updatedRow.case_plan_version_id]
+    );
 
     // EVENT_TAXONOMY.md §2 `withdrawPlanVersion -> case.plan.withdrawn`.
     const scope = await loadCaseScope(client, updatedRow.case_id);

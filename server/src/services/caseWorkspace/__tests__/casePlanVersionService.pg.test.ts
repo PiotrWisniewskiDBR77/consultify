@@ -1161,4 +1161,103 @@ suite('casePlanVersionService — Case Plan Version against a real PostgreSQL (C
       await teardown([orgId], [projectId], [actorId]);
     }
   }, 30_000);
+
+  // -------------------------------------------------------------------------
+  // 8. case_core.current_plan_version_id sync (CW N1) — publish sets it,
+  //    a subsequent publish (replan/supersede) overwrites it, withdraw
+  //    clears it back to NULL; a non-publishing transition (requestChanges)
+  //    never touches it because it never acted on a PUBLISHED row.
+  // -------------------------------------------------------------------------
+  async function readCaseCoreCurrentPlanVersionId(caseId: string): Promise<string | null> {
+    const result = await control.query<{ current_plan_version_id: string | null }>(
+      `SELECT current_plan_version_id FROM case_core WHERE case_id = $1`,
+      [caseId]
+    );
+    return result.rows[0]?.current_plan_version_id ?? null;
+  }
+
+  it('publishPlanVersion sets case_core.current_plan_version_id; a replanning publish overwrites it; withdrawPlanVersion clears it back to NULL', async () => {
+    const { orgId, projectId, caseId, actorId } = await seedOrgProjectCase('current-plan-sync');
+    try {
+      // Freshly created Case: no plan published yet.
+      expect(await readCaseCoreCurrentPlanVersionId(caseId)).toBeNull();
+
+      // -- v1: draft -> propose -> publish. Never-published-before request
+      //    changes must not touch case_core at all (it acted on an
+      //    IN_REVIEW row, never a PUBLISHED one).
+      const draftA = await casePlanVersionService.createPlanDraft({
+        caseId,
+        semanticGraph: validGraph('sync-a1'),
+        createdByActorId: actorId,
+      });
+      const proposedA = await casePlanVersionService.proposePlanVersion(
+        draftA.casePlanVersionId,
+        { actorUserId: actorId },
+        draftA.version
+      );
+      const sentBackA = await casePlanVersionService.requestChangesOnPlanVersion(
+        proposedA.casePlanVersionId,
+        { actorUserId: actorId },
+        'needs another pass',
+        proposedA.version
+      );
+      expect(sentBackA.status).toBe('DRAFT');
+      expect(await readCaseCoreCurrentPlanVersionId(caseId)).toBeNull();
+
+      const reproposedA = await casePlanVersionService.proposePlanVersion(
+        sentBackA.casePlanVersionId,
+        { actorUserId: actorId },
+        sentBackA.version
+      );
+      const publishedA = await casePlanVersionService.publishPlanVersion(
+        reproposedA.casePlanVersionId,
+        { actorUserId: actorId },
+        reproposedA.version
+      );
+      expect(publishedA.status).toBe('PUBLISHED');
+
+      // -- THE CORE ASSERTION: publish sets the pointer, read back out of
+      //    band (never trusting the service's own return value as proof).
+      expect(await readCaseCoreCurrentPlanVersionId(caseId)).toBe(draftA.casePlanVersionId);
+
+      // -- v2: replan against v1 (supersede), draft -> propose -> publish.
+      const draftB = await casePlanVersionService.createPlanDraft({
+        caseId,
+        supersedesPlanVersionId: publishedA.casePlanVersionId,
+        semanticGraph: validGraph('sync-b1'),
+        createdByActorId: actorId,
+      });
+      const proposedB = await casePlanVersionService.proposePlanVersion(
+        draftB.casePlanVersionId,
+        { actorUserId: actorId },
+        draftB.version
+      );
+      const publishedB = await casePlanVersionService.publishPlanVersion(
+        draftB.casePlanVersionId,
+        { actorUserId: actorId },
+        proposedB.version
+      );
+      expect(publishedB.status).toBe('PUBLISHED');
+
+      // v1 is now SUPERSEDED — the pointer must have moved to v2, not stayed
+      // on v1 and not gone NULL.
+      expect(await readCaseCoreCurrentPlanVersionId(caseId)).toBe(draftB.casePlanVersionId);
+      const rowA_afterSupersede = await readPlanVersionRow(draftA.casePlanVersionId);
+      expect(rowA_afterSupersede?.status).toBe('SUPERSEDED');
+
+      // -- Withdraw v2 (the only PUBLISHED row): the pointer must clear back
+      //    to NULL, an honest "no plan currently published", not left
+      //    dangling on a WITHDRAWN row's id.
+      const withdrawnB = await casePlanVersionService.withdrawPlanVersion(
+        draftB.casePlanVersionId,
+        { actorUserId: actorId },
+        'pausing this engagement',
+        publishedB.version
+      );
+      expect(withdrawnB.status).toBe('WITHDRAWN');
+      expect(await readCaseCoreCurrentPlanVersionId(caseId)).toBeNull();
+    } finally {
+      await teardown([orgId], [projectId], [actorId]);
+    }
+  }, 30_000);
 });
