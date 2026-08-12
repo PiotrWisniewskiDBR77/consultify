@@ -159,35 +159,44 @@ export function FinanceCommentsPanel({ artifactId, businessVersionId, className 
     }
   }
 
+  // ★ NAPRAWA a11y (Pakiet I, wymaganie #7 — MutationObserver defekt): wcześniej
+  // `<FinanceStatusAnnouncer>` był renderowany OSOBNO w KAŻDYM warunkowym
+  // `return` (loading/error/loaded), ale te trzy gałęzie owijały go w RÓŻNE
+  // korzenie (`<>...</>` dla loading/error, `<div data-testid="finance-comments-panel">`
+  // dla loaded) — React przy zmianie typu korzenia ODMONTOWUJE cały poprzedni
+  // poddrzew i montuje nowy, więc `FinanceStatusAnnouncer` dostawał ŚWIEŻY węzeł
+  // DOM zamiast mutacji istniejącego tekstu (potwierdzone `MutationObserver`em:
+  // "Oznacz jako rozwiązany" przechodzi przez `loading`, więc 0 mutacji;
+  // "Kopiuj link" nie zmienia `state.kind`, więc realna mutacja `characterData`).
+  // Naprawa: JEDEN stabilny korzeń (`<>`) dla WSZYSTKICH trzech stanów, z
+  // `FinanceStatusAnnouncer` jako zawsze pierwszym dzieckiem — tylko `content`
+  // (drugie dziecko) zmienia kształt między stanami, węzeł ogłoszenia trwa.
+  let announcerMessage: string;
+  let announcerPriority: 'polite' | 'assertive' = 'polite';
+  let content: React.ReactNode;
+
   if (state.kind === 'loading') {
-    return (
-      <>
-        <FinanceStatusAnnouncer message="Ładowanie komentarzy…" />
-        <div className={`rounded-lg border border-c-border-subtle bg-c-surface p-3 ${className ?? ''}`} data-testid="comments-panel-loading">
-          <p className="text-xs text-c-text-secondary">Ładowanie komentarzy…</p>
-        </div>
-      </>
+    announcerMessage = 'Ładowanie komentarzy…';
+    content = (
+      <div className={`rounded-lg border border-c-border-subtle bg-c-surface p-3 ${className ?? ''}`} data-testid="comments-panel-loading">
+        <p className="text-xs text-c-text-secondary">Ładowanie komentarzy…</p>
+      </div>
     );
-  }
-
-  if (state.kind === 'error') {
-    return (
-      <>
-        <FinanceStatusAnnouncer message={`Błąd: ${state.title}`} priority="assertive" />
-        <div className={`rounded-lg border border-c-danger/40 bg-c-surface p-3 ${className ?? ''}`} data-testid="comments-panel-error">
-          <p className="text-sm font-medium text-c-danger">{state.title}</p>
-          <p className="text-xs text-c-text-secondary">{state.detail}</p>
-        </div>
-      </>
+  } else if (state.kind === 'error') {
+    announcerMessage = `Błąd: ${state.title}`;
+    announcerPriority = 'assertive';
+    content = (
+      <div className={`rounded-lg border border-c-danger/40 bg-c-surface p-3 ${className ?? ''}`} data-testid="comments-panel-error">
+        <p className="text-sm font-medium text-c-danger">{state.title}</p>
+        <p className="text-xs text-c-text-secondary">{state.detail}</p>
+      </div>
     );
-  }
-
-  const { comments, checklist, hasUnresolvedBlocking } = state;
-  const requiredChecked = checklist.filter((i) => i.required).every((i) => i.checkedBy);
-
-  return (
+  } else {
+    const { comments, checklist, hasUnresolvedBlocking } = state;
+    const requiredChecked = checklist.filter((i) => i.required).every((i) => i.checkedBy);
+    announcerMessage = actionMessage ?? 'Komentarze wczytane.';
+    content = (
     <div className={`flex flex-col gap-4 rounded-lg border border-c-border-subtle bg-c-surface p-3 ${className ?? ''}`} data-testid="finance-comments-panel">
-      <FinanceStatusAnnouncer message={actionMessage ?? 'Komentarze wczytane.'} />
       {/* ★ NAPRAWA a11y (Pakiet I): `text-c-danger` na tle `bg-c-danger/10`
           mierzył 3.92:1 (axe, próg 4.5:1) — ten sam odcień w tle i tekście
           obniża kontrast mimo że c-danger na czystej powierzchni przechodzi.
@@ -328,6 +337,14 @@ export function FinanceCommentsPanel({ artifactId, businessVersionId, className 
         </div>
       </div>
     </div>
+    );
+  }
+
+  return (
+    <>
+      <FinanceStatusAnnouncer message={announcerMessage} priority={announcerPriority} />
+      {content}
+    </>
   );
 }
 

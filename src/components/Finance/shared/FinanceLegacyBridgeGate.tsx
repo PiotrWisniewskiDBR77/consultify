@@ -21,7 +21,7 @@ import { AlertTriangle, Link2 } from 'lucide-react';
 import React from 'react';
 
 import { LoadingState } from '@/components/shared/states';
-import type { LegacyFinanceTable } from '@/services/api/financeV2.types';
+import { financeLegacyBridgeQuarantineReasonLabel, type LegacyFinanceTable } from '@/services/api/financeV2.types';
 
 import { EmptyStateInline } from '../../shared/NModeBlocks/EmptyStateInline';
 import { useFinanceLegacyBridge, type FinanceLegacyBridgeResolved } from './useFinanceLegacyBridge';
@@ -56,18 +56,27 @@ export const FinanceLegacyBridgeGate: React.FC<FinanceLegacyBridgeGateProps> = (
           icon={AlertTriangle}
           message="Nie udało się sprawdzić tego rekordu w nowym systemie."
           hint={state.message}
-          action={{ label: 'Spróbuj ponownie', onClick: retry }}
+          // ★ NAPRAWA (zaszyty prefiks "+" — patrz `EmptyStateInline.tsx`'s own
+          // header comment): "Spróbuj ponownie" nie tworzy nowego obiektu, więc
+          // `showPrefix: false`.
+          action={{ label: 'Spróbuj ponownie', onClick: retry, showPrefix: false }}
         />
       </div>
     );
   }
 
   if (state.kind === 'unresolved') {
+    // ★ NAPRAWA (surowy `mapping_reason` na ekranie — patrz
+    // `financeLegacyBridgeQuarantineReasonLabel`'s own header comment for the
+    // full incident): NIGDY interpolować `state.reason` wprost do tekstu
+    // widocznego dla użytkownika — to backendowy kod/zdanie diagnostyczne
+    // (`approved_without_snapshot`, `pack_status=...;...`), nie treść po
+    // polsku. Etykieta poniżej tłumaczy znane powody na uczciwe, polskie
+    // zdania i ma jeden bezpieczny fallback dla nieznanych wartości — nigdy
+    // nie echouje surowego stringa.
     const hint =
       state.code === 'QUARANTINED'
-        ? state.reason
-          ? `Ten rekord został celowo pominięty przy przenoszeniu do nowego systemu. Powód: ${state.reason}.`
-          : 'Ten rekord został celowo pominięty przy przenoszeniu do nowego systemu.'
+        ? `Ten rekord został celowo pominięty przy przenoszeniu do nowego systemu. ${financeLegacyBridgeQuarantineReasonLabel(state.reason)}`
         : 'Ten rekord jeszcze nie ma odpowiednika w nowym systemie (nie został jeszcze przeniesiony).';
     return (
       <div className="p-4" data-testid="finance-bridge-unresolved">
@@ -75,7 +84,9 @@ export const FinanceLegacyBridgeGate: React.FC<FinanceLegacyBridgeGateProps> = (
           icon={Link2}
           message="Nie można otworzyć tego rekordu w nowym module."
           hint={hint}
-          action={{ label: 'Wróć do listy', onClick: onBackToList }}
+          // "Wróć do listy" nie tworzy nowego obiektu — patrz komentarz przy
+          // "Spróbuj ponownie" wyżej.
+          action={{ label: 'Wróć do listy', onClick: onBackToList, showPrefix: false }}
         />
       </div>
     );

@@ -167,34 +167,32 @@ export function FinanceComparePanel({ request, className }: FinanceComparePanelP
         : 'Porównanie gotowe.';
   const livePriority = state.kind === 'error' ? 'assertive' : 'polite';
 
+  // ★ NAPRAWA a11y (Pakiet I, wymaganie #7 — MutationObserver defekt): patrz
+  // ten sam komentarz w `FinanceCommentsPanel.tsx`. `liveMessage`/`livePriority`
+  // liczone wyżej były już wspólne, ale renderowane w TRZECH różnych korzeniach
+  // (`<>` dla loading/error, `<div data-testid="finance-compare-panel">` dla
+  // loaded) — zmiana `state.kind` odmontowywała cały poddrzew, więc
+  // `FinanceStatusAnnouncer` dostawał świeży węzeł zamiast mutacji tekstu.
+  // JEDEN stabilny korzeń `<>` dla wszystkich trzech stanów.
+  let content: React.ReactNode;
+
   if (state.kind === 'loading') {
-    return (
-      <>
-        <FinanceStatusAnnouncer message={liveMessage} priority={livePriority} />
-        <div className={`rounded-lg border border-c-border-subtle bg-c-surface p-3 ${className ?? ''}`} data-testid="compare-panel-loading">
-          <p className="text-xs text-c-text-secondary">Liczenie porównania…</p>
-        </div>
-      </>
+    content = (
+      <div className={`rounded-lg border border-c-border-subtle bg-c-surface p-3 ${className ?? ''}`} data-testid="compare-panel-loading">
+        <p className="text-xs text-c-text-secondary">Liczenie porównania…</p>
+      </div>
     );
-  }
-
-  if (state.kind === 'error') {
-    return (
-      <>
-        <FinanceStatusAnnouncer message={liveMessage} priority={livePriority} />
-        <div className={`rounded-lg border border-c-danger/40 bg-c-surface p-3 ${className ?? ''}`} data-testid="compare-panel-error">
-          <p className="text-sm font-medium text-c-danger">{state.title}</p>
-          <p className="text-xs text-c-text-secondary">{state.detail}</p>
-        </div>
-      </>
+  } else if (state.kind === 'error') {
+    content = (
+      <div className={`rounded-lg border border-c-danger/40 bg-c-surface p-3 ${className ?? ''}`} data-testid="compare-panel-error">
+        <p className="text-sm font-medium text-c-danger">{state.title}</p>
+        <p className="text-xs text-c-text-secondary">{state.detail}</p>
+      </div>
     );
-  }
-
-  const { result } = state;
-
-  return (
+  } else {
+    const { result } = state;
+    content = (
     <div className={`flex flex-col gap-3 rounded-lg border border-c-border-subtle bg-c-surface p-3 ${className ?? ''}`} data-testid="finance-compare-panel">
-      <FinanceStatusAnnouncer message={liveMessage} priority={livePriority} />
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm font-semibold text-c-text-primary">{compareComparisonTypeLabel(result.comparisonType)}</p>
@@ -273,6 +271,14 @@ export function FinanceComparePanel({ request, className }: FinanceComparePanelP
         </table>
       </div>
     </div>
+    );
+  }
+
+  return (
+    <>
+      <FinanceStatusAnnouncer message={liveMessage} priority={livePriority} />
+      {content}
+    </>
   );
 }
 

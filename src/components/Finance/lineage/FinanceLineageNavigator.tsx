@@ -169,35 +169,36 @@ export function FinanceLineageNavigator({
 
   if (!enabled) return null;
 
+  // ★ NAPRAWA a11y (Pakiet I, wymaganie #7 — MutationObserver defekt): patrz
+  // ten sam komentarz w `FinanceCommentsPanel.tsx`. JEDEN stabilny korzeń `<>`
+  // dla wszystkich trzech stanów, ogłoszenie zawsze pierwszym dzieckiem — nie
+  // odmontowuje się przy `loading` → `loaded` (np. po zmianie `businessVersionId`).
+  let announcerMessage: string;
+  let announcerPriority: 'polite' | 'assertive' = 'polite';
+  let content: React.ReactNode;
+
   if (state.kind === 'loading') {
-    return (
-      <>
-        <FinanceStatusAnnouncer message="Ładowanie powiązań…" />
-        <div className={`rounded-lg border border-c-border-subtle bg-c-surface p-3 ${className ?? ''}`} data-testid="lineage-navigator-loading">
-          <p className="text-xs text-c-text-secondary">Ładowanie powiązań…</p>
-        </div>
-      </>
+    announcerMessage = 'Ładowanie powiązań…';
+    content = (
+      <div className={`rounded-lg border border-c-border-subtle bg-c-surface p-3 ${className ?? ''}`} data-testid="lineage-navigator-loading">
+        <p className="text-xs text-c-text-secondary">Ładowanie powiązań…</p>
+      </div>
     );
-  }
-
-  if (state.kind === 'error') {
-    return (
-      <>
-        <FinanceStatusAnnouncer message={`Błąd: ${state.title}`} priority="assertive" />
-        <div className={`rounded-lg border border-c-danger/40 bg-c-surface p-3 ${className ?? ''}`} data-testid="lineage-navigator-error">
-          <p className="text-sm font-medium text-c-danger">{state.title}</p>
-          <p className="text-xs text-c-text-secondary">{state.detail}</p>
-        </div>
-      </>
+  } else if (state.kind === 'error') {
+    announcerMessage = `Błąd: ${state.title}`;
+    announcerPriority = 'assertive';
+    content = (
+      <div className={`rounded-lg border border-c-danger/40 bg-c-surface p-3 ${className ?? ''}`} data-testid="lineage-navigator-error">
+        <p className="text-sm font-medium text-c-danger">{state.title}</p>
+        <p className="text-xs text-c-text-secondary">{state.detail}</p>
+      </div>
     );
-  }
-
-  const { data } = state;
-  const { trail, relatedPanel } = data;
-
-  return (
+  } else {
+    const { data } = state;
+    const { trail, relatedPanel } = data;
+    announcerMessage = `Łańcuch powiązań wczytany: ${trail.items.length} elementów.`;
+    content = (
     <div className={`flex flex-col gap-4 rounded-lg border border-c-border-subtle bg-c-surface p-3 ${className ?? ''}`} data-testid="finance-lineage-navigator">
-      <FinanceStatusAnnouncer message={`Łańcuch powiązań wczytany: ${trail.items.length} elementów.`} />
       <div>
         <p className="mb-2 text-xs font-semibold text-c-text-secondary">Łańcuch powiązań</p>
         <div className="flex flex-wrap items-center gap-1.5" data-testid="lineage-trail" role="list" aria-label="Łańcuch powiązań">
@@ -289,6 +290,14 @@ export function FinanceLineageNavigator({
         Świeżość ogniska: {financeArtifactFreshnessLabel(relatedPanel.focus.freshness)}
       </p>
     </div>
+    );
+  }
+
+  return (
+    <>
+      <FinanceStatusAnnouncer message={announcerMessage} priority={announcerPriority} />
+      {content}
+    </>
   );
 }
 

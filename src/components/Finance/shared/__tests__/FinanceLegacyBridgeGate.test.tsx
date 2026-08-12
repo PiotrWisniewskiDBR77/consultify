@@ -127,7 +127,38 @@ describe('FinanceLegacyBridgeGate — UNRESOLVED (anti-silent-emptiness for the 
 
     await waitFor(() => expect(screen.getByTestId('finance-bridge-unresolved')).toBeInTheDocument());
     expect(childRenderSpy).not.toHaveBeenCalled();
-    expect(screen.getByTestId('finance-bridge-unresolved').textContent).toContain('approved_without_snapshot');
+    // ★ NAPRAWA (Gate E FIXA — surowy `mapping_reason` na ekranie): ten test
+    // dawniej ASERTOWAŁ raw string `approved_without_snapshot` jako
+    // OCZEKIWANE zachowanie, betonując dokładnie tę klasę defektu (kod
+    // techniczny z backendu wprost w polskim UI), przeciw której cały pakiet
+    // mostu (Zadanie 3, "brak surowych stringów") jest napisany. Teraz
+    // asertuje odwrotnie: ludzka polska etykieta MUSI się pojawić, surowy kod
+    // NIGDY nie może pojawić się w widocznym tekście.
+    const text = screen.getByTestId('finance-bridge-unresolved').textContent ?? '';
+    expect(text).not.toContain('approved_without_snapshot');
+    expect(text).toMatch(/zatwierdzony.*bez zapisanej migawki danych/);
+  });
+
+  it('★ NAPRAWA: nieznana/wolna-tekstowa wartość mapping_reason (np. zdanie z `;`/`=`) dostaje bezpieczny ogólny fallback, NIGDY nie jest echowana wprost', async () => {
+    apiMocks.resolveLegacyFinanceArtifact.mockResolvedValue({
+      status: 'QUARANTINED',
+      mappingConfidence: 'EXCLUDE_WITH_REASON',
+      reason: 'pack_status=draft;pack_readiness_status=pending',
+    });
+    const childRenderSpy = vi.fn().mockReturnValue(<div data-testid="mounted-workspace" />);
+
+    render(
+      <FinanceLegacyBridgeGate legacyTable="financial_statement_packs" legacyId="legacy-pack-1" onBackToList={() => {}}>
+        {childRenderSpy}
+      </FinanceLegacyBridgeGate>
+    );
+
+    await waitFor(() => expect(screen.getByTestId('finance-bridge-unresolved')).toBeInTheDocument());
+    const text = screen.getByTestId('finance-bridge-unresolved').textContent ?? '';
+    expect(text).not.toContain('pack_status=draft');
+    expect(text).not.toContain(';');
+    expect(text).not.toContain('=');
+    expect(text).toMatch(/techniczny zapis zespołu ds. migracji danych/);
   });
 });
 
