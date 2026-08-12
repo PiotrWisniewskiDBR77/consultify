@@ -3,6 +3,37 @@
 This log records candidate evidence. `PASS` here does not by itself change a task to `ACCEPTED` and
 does not imply runtime, browser, deployment or release acceptance.
 
+## 2026-08-12 — exact demo candidate `178471b` automated checkpoint
+
+- branch: `codex/initiatives-execution-final-candidate`;
+- tested and deployed candidate: `178471b0523421d619b549df1f286f08544aca0d`;
+- Railway demo deployment: `aed3a7f1-6799-4e6e-a0c6-0bd2836d0cc8`, terminal `SUCCESS`;
+- `https://demo.consultify.ai/ping`: `pong`;
+- `https://demo.consultify.ai/api/health`: application `ok`, PostgreSQL connected, Redis connected,
+  exact `gitSha=178471b0523421d619b549df1f286f08544aca0d`;
+- demo migration pre-deploy: 460 runtime files reconciled, 83 approved historical checksum variants
+  accepted without rewriting history, 211 legacy NULL rows left explicitly unverifiable, database
+  ready before traffic;
+- local rollback backup before migration:
+  `/Users/piotrwisniewski/Developer/consultify-ie-backups/20260812-demo-pre-migration/demo-before-checksum-ledger.dump`,
+  SHA-256 `54feafc98f842a1546228af37ce060ebebfac5292c552551ff5e8b77d1a856fa`;
+- Initiatives/Execution unit suite: 59/59 files, 146/146 tests PASS;
+- isolated PostgreSQL realDB suite: 39/39 files, 89/89 tests PASS, including the governed NordWerk
+  three-Initiative portfolio/plan/capacity case and authorization boundary matrix;
+- complete ACO browser golden thread: 2/2 PASS through Initiatives, Portfolio, Plan, Capacity,
+  Schedule/Handoff, Execution, Reports, Results, Closure and Archive;
+- WCAG/browser geometry gate: 1/1 PASS across 12 canonical surfaces at 200% text and 390x844;
+- repository-wide TypeScript: PASS with 8 GB heap;
+- `git diff --check`: PASS;
+- the first two full realDB attempts each reported one transient HTTP `socket hang up` while another
+  stale full-repository Vitest runner was consuming the same machine. Both affected tests passed in
+  isolation; after terminating only that stale runner, the complete sequential realDB suite passed
+  39/39 and 89/89 without retry;
+- logged-in manual demo interaction remains `NOT VERIFIED`: this Codex task has the open authenticated
+  browser only as ambient state and exposes no callable Browser/Computer Use control channel. No
+  keyboard, context-menu, Settings persistence, Open/Back or expert visual score is claimed from the
+  automated harness.
+
 ## 2026-08-09 — foundation and Source Validation candidate
 
 - isolated worktree: `/Users/piotrwisniewski/Developer/consultify-initiatives-execution-20260809`;

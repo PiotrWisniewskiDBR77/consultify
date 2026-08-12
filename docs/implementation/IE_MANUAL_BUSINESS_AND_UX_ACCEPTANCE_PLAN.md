@@ -1,10 +1,12 @@
 # Initiatives + Execution — manual business and UI/UX acceptance plan
 
-Status: `PASS — exact-SHA automated and logged-in demo acceptance complete`
+Status: `AUTOMATED PASS — logged-in manual demo acceptance NOT VERIFIED`
 
 Demo base under test: `codex/initiatives-execution-final-candidate` at
-`856586f579e5a61b09586731ddce3971b843cf5d`. The current local acceptance correction set is
-uncommitted; a new exact candidate SHA is therefore still required before final demo acceptance.
+`178471b0523421d619b549df1f286f08544aca0d`. Railway demo reports this exact identity through
+`/api/health.gitSha`; PostgreSQL and Redis are connected. The automated acceptance set is green on
+this candidate. The logged-in, human-scale manual walkthrough of all nine functions remains a
+separate open gate and must not be inferred from Playwright evidence.
 
 Local diagnostic runtime: `http://127.0.0.1:3000` (not acceptance evidence)
 
