@@ -112,6 +112,7 @@ import {
   listBenefitLines,
   listCalculationRuns,
   listCostLines,
+  listScenarioOverrides,
   listScenarios,
 } from '../../services/resultsVnext/roi/roiEconomicModelRepository.js';
 import { getRoiBaseline, getRoiCase, listRoiCases } from '../../services/resultsVnext/roi/roiRepository.js';
@@ -1716,6 +1717,37 @@ router.post(
       });
     } catch (err) {
       handleRoiRouteError(res, err, 'setScenarioOverride');
+    }
+  }
+);
+
+// ---------- GET .../scenarios/:scenarioId/overrides — listScenarioOverrides ----------
+//
+// RN-G6-SRV / B3: the read side of `setScenarioOverride`/`removeScenarioOverride`
+// above was missing entirely — an override could be SET and REMOVED but never
+// READ back through any API (`roiEconomicModelRepository.ts`'s own
+// `listScenarioOverrides`, fully visibility-scoped via `wrapWithVisibilityScope`
+// / resourceType `ROI_RESOURCE_TYPE`, inherited through the parent scenario's
+// own `case_id` — see that function's header comment — already existed and was
+// simply never wired to a route). Thin wrapper only, no new query logic.
+
+router.get(
+  '/cases/:caseId/scenarios/:scenarioId/overrides',
+  validateParams(RoiScenarioParamsSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { caseId, scenarioId } = req.params as { caseId: string; scenarioId: string };
+      const overrides = await listScenarioOverrides({
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        caseId,
+        scenarioId,
+      });
+      res.status(200).json({ overrides });
+    } catch (err) {
+      handleRoiRouteError(res, err, 'listScenarioOverrides');
     }
   }
 );

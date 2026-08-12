@@ -43,20 +43,28 @@
  * two domains have separate aggregates"). Mapped to 403 below exactly as the
  * brief specifies for "SelfApprovalDeniedError", just via the real class name.
  *
- * -- DESIGN NOTE (out of scope, confirmed against KPI_E003_DESIGN.md §D):
- * this file implements only the routes the task brief lists. It does NOT add
- * `GET .../corrective-actions` or `GET .../effectiveness-verifications`
- * list endpoints even though `kpiDeviationRepository.ts` already exports
- * `listCorrectiveActions`/`listEffectivenessVerifications` — neither route
- * appears in the task's endpoint list or in KPI_E003_DESIGN.md §D's file
- * table, so adding them here would be scope creep beyond what was asked;
- * left for a future package alongside the other explicitly-deferred §D items
- * (MyWork UI wiring, response-policy CRUD).
+ * -- RN-G6-SRV / B3 (closed the gap the note below used to document): this
+ * file now DOES add `GET .../corrective-actions` and
+ * `GET .../effectiveness-verifications` list endpoints —
+ * `kpiDeviationRepository.ts` already exported `listCorrectiveActions`/
+ * `listEffectivenessVerifications`, fully visibility-scoped
+ * (`buildVisibilityScopedCte`, resourceType `'kpi'`, inherited via the
+ * case's own `kpi_id` — same posture that file's own header documents for
+ * every read in it), so both routes below are a thin HTTP wrapper only,
+ * zero new query logic. Query-param schemas are declared LOCALLY in this
+ * file (`ListCorrectiveActionsQuerySchema`/
+ * `ListEffectivenessVerificationsQuerySchema` below) rather than added to
+ * `resultsVnextKpiDeviation.validators.ts` — that file is outside this
+ * package's own file allowlist for this pass, and a route-local Zod schema
+ * is a strictly additive, self-contained way to keep the validation this
+ * file's every other endpoint already has without touching a file shared
+ * with a concurrently-running sibling package.
  */
 import { randomUUID } from 'node:crypto';
 
 import type { Response } from 'express';
 import { Router } from 'express';
+import { z } from 'zod';
 
 import { acquirePgClient } from '../../database/PostgresDatabase.js';
 import { verifyToken } from '../../middleware/auth.middleware.js';
@@ -89,9 +97,11 @@ import {
 } from '../../services/resultsVnext/kpi/kpiDeviationCommands.js';
 import {
   getDeviationCase,
+  listCorrectiveActions,
   listDeviationCases,
+  listEffectivenessVerifications,
 } from '../../services/resultsVnext/kpi/kpiDeviationRepository.js';
-import type { CorrectiveActionRow } from '../../services/resultsVnext/kpi/kpiDeviationTypes.js';
+import { CORRECTIVE_ACTION_STATUSES, type CorrectiveActionRow } from '../../services/resultsVnext/kpi/kpiDeviationTypes.js';
 import {
   AtomicWriteAggregateNotFoundError,
   AtomicWriteConflictError,
@@ -116,6 +126,25 @@ import {
   SubmitRootCauseSchema,
   UpdateCorrectiveActionSchema,
 } from '../../validators/resultsVnextKpiDeviation.validators.js';
+
+// ==========================================
+// RN-G6-SRV / B3 — route-local query schemas for the two new read
+// endpoints below. Same field shapes (`limit`/`offset` coercion, enum
+// re-use of the domain's own CHECK-constraint array) as
+// `ListDeviationCasesQuerySchema` above; declared here rather than in
+// `resultsVnextKpiDeviation.validators.ts` — see file header note.
+// ==========================================
+
+const ListCorrectiveActionsQuerySchema = z.object({
+  status: z.enum(CORRECTIVE_ACTION_STATUSES).optional(),
+  limit: z.coerce.number().int().positive().max(500).optional(),
+  offset: z.coerce.number().int().nonnegative().optional(),
+});
+
+const ListEffectivenessVerificationsQuerySchema = z.object({
+  limit: z.coerce.number().int().positive().max(500).optional(),
+  offset: z.coerce.number().int().nonnegative().optional(),
+});
 
 const router = Router();
 
@@ -422,6 +451,41 @@ router.post(
 );
 
 // ==========================================
+// GET .../:caseId/corrective-actions — listCorrectiveActions (RN-G6-SRV / B3)
+// ==========================================
+
+router.get(
+  '/:caseId/corrective-actions',
+  validateParams(CaseIdParamsSchema),
+  validateQuery(ListCorrectiveActionsQuerySchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { caseId } = req.params as { caseId: string };
+      const query = req.query as unknown as import('zod').infer<typeof ListCorrectiveActionsQuerySchema>;
+      // No separate "case not found" 404 here, matching this file's own
+      // `listDeviationCases`/`listScorecardItems`-style precedent: the
+      // repository call is visibility-scoped by the same `resourceType:
+      // 'kpi'` join the case read uses, so an invisible or nonexistent
+      // caseId returns an empty list rather than leaking existence via a
+      // 404-vs-empty-200 distinction (D06).
+      const actions = await listCorrectiveActions({
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        deviationCaseId: caseId,
+        status: query.status,
+        limit: query.limit,
+        offset: query.offset,
+      });
+      res.status(200).json({ actions });
+    } catch (err) {
+      handleDeviationRouteError(res, err, 'listCorrectiveActions');
+    }
+  }
+);
+
+// ==========================================
 // PATCH .../:caseId/corrective-actions/:actionId — updateCorrectiveAction
 // ==========================================
 
@@ -636,6 +700,37 @@ router.post(
       });
     } catch (err) {
       handleDeviationRouteError(res, err, 'submitEffectivenessVerification');
+    }
+  }
+);
+
+// ==========================================
+// GET .../:caseId/effectiveness-verifications — listEffectivenessVerifications
+// (RN-G6-SRV / B3)
+// ==========================================
+
+router.get(
+  '/:caseId/effectiveness-verifications',
+  validateParams(CaseIdParamsSchema),
+  validateQuery(ListEffectivenessVerificationsQuerySchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { caseId } = req.params as { caseId: string };
+      const query = req.query as unknown as import('zod').infer<typeof ListEffectivenessVerificationsQuerySchema>;
+      // Same D06 posture as listCorrectiveActions above — visibility-scoped
+      // by the repository, no separate case-existence check here.
+      const verifications = await listEffectivenessVerifications({
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        deviationCaseId: caseId,
+        limit: query.limit,
+        offset: query.offset,
+      });
+      res.status(200).json({ verifications });
+    } catch (err) {
+      handleDeviationRouteError(res, err, 'listEffectivenessVerifications');
     }
   }
 );

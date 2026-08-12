@@ -54,6 +54,7 @@ import { randomUUID } from 'node:crypto';
 
 import type { Response } from 'express';
 import { Router } from 'express';
+import { z } from 'zod';
 
 import { acquirePgClient } from '../../database/PostgresDatabase.js';
 import { verifyToken } from '../../middleware/auth.middleware.js';
@@ -121,6 +122,15 @@ import {
   ScorecardSnapshotIdParamsSchema,
   ScorecardStatusQuerySchema,
 } from '../../validators/resultsVnextKpiScorecard.validators.js';
+
+// RN-G6-SRV / B3 — route-local param schema for the new reverse `kpi ->
+// scorecards` lookup below. Declared here rather than added to
+// `resultsVnextKpiScorecard.validators.ts` — same rationale
+// `kpiDeviation.routes.ts`'s own new B3 routes give in their file header
+// (that validators file sits outside this pass's own allowlist).
+const KpiIdParamsSchema = z.object({
+  kpiId: z.string().uuid(),
+});
 
 const router = Router();
 
@@ -260,6 +270,61 @@ async function loadVisibleScorecard(
   }
 }
 
+/**
+ * RN-G6-SRV / B3 — reverse `kpi -> scorecards` lookup ("show cards this KPI
+ * is on"). Every existing scorecard route is scoped BY a scorecard; nothing
+ * answered this direction before.
+ *
+ * Two-step visibility, deliberately NOT a single joined query:
+ *   1. Confirm the CALLER can see the KPI itself (resourceType `'kpi'`) —
+ *      `kpiScorecardRepository.ts`'s own header states AC #4's rule that
+ *      item-level KPI visibility is checked independently of
+ *      scorecard-level visibility and never substituted for it
+ *      (`listScorecardItems`/`getScorecardStatusDistribution` already do
+ *      this for the forward direction; this is that same rule applied to
+ *      the reverse one). If the KPI itself is invisible, returns `[]`
+ *      without distinguishing "KPI invisible" from "KPI has no scorecards"
+ *      (D06) — the route below never learns which case it hit.
+ *   2. Only once step 1 passes: list scorecards containing this `kpiId` as
+ *      an item, scoped by the reader's OWN scorecard-level visibility
+ *      (resourceType `'kpi_scorecard'`) — same CTE `listScorecards` already
+ *      uses. A scorecard the reader cannot see is never named, even though
+ *      the KPI on it is visible — scorecard membership is itself
+ *      information the scorecard's own visibility policy governs.
+ */
+async function listVisibleScorecardsForKpi(
+  userId: string,
+  organizationId: string,
+  kpiId: string
+): Promise<KpiScorecard[]> {
+  const kpiVisibility = await wrapWithVisibilityScope(
+    `SELECT 1 FROM rvn_visible_resources vr
+      WHERE vr.resource_type = 'kpi' AND vr.resource_id = $${VISIBILITY_CTE_PARAM_COUNT + 1}`,
+    { userId, organizationId, resourceType: 'kpi' }
+  );
+  const client = await acquirePgClient();
+  try {
+    const kpiVisibleResult = await client.query(kpiVisibility.sql, [...kpiVisibility.values, kpiId]);
+    if (kpiVisibleResult.rows.length === 0) return [];
+
+    const wrapped = await wrapWithVisibilityScope(
+      `SELECT DISTINCT sc.* FROM rvn_kpi_scorecards sc
+         INNER JOIN rvn_kpi_scorecard_items si ON si.scorecard_id = sc.scorecard_id
+         INNER JOIN rvn_visible_resources vr
+                 ON vr.resource_type = 'kpi_scorecard' AND vr.resource_id = sc.scorecard_id::text
+        WHERE sc.organization_id = $1 AND si.organization_id = $1
+          AND si.kpi_id = $${VISIBILITY_CTE_PARAM_COUNT + 1}
+        ORDER BY sc.updated_at DESC`,
+      { userId, organizationId, resourceType: 'kpi_scorecard' }
+    );
+    const values = [...wrapped.values, kpiId];
+    const result = await client.query<KpiScorecardRow>(wrapped.sql, values);
+    return result.rows.map(toKpiScorecard);
+  } finally {
+    client.release();
+  }
+}
+
 // ==========================================
 // POST /api/vnext/results/kpi/scorecards — createScorecard
 // ==========================================
@@ -373,6 +438,33 @@ router.get(
       res.status(200).json({ items });
     } catch (err) {
       handleScorecardRouteError(res, err, 'listScorecardItems');
+    }
+  }
+);
+
+// ==========================================
+// GET /api/vnext/results/kpi/scorecards/for-kpi/:kpiId —
+// listVisibleScorecardsForKpi (RN-G6-SRV / B3, reverse lookup)
+//
+// Nested under this router's own `/scorecards` prefix (not `kpi.routes.ts`,
+// which owns bare `GET /:kpiId` — same mount-order hazard this file's own
+// header already documents for the collision between the two routers'
+// prefixes) — `for-kpi/:kpiId` is two path segments, so it can never be
+// confused with `/:scorecardId` above regardless of registration order.
+// ==========================================
+
+router.get(
+  '/for-kpi/:kpiId',
+  validateParams(KpiIdParamsSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { kpiId } = req.params as { kpiId: string };
+      const scorecards = await listVisibleScorecardsForKpi(auth.userId, auth.organizationId, kpiId);
+      res.status(200).json({ scorecards });
+    } catch (err) {
+      handleScorecardRouteError(res, err, 'listVisibleScorecardsForKpi');
     }
   }
 );
