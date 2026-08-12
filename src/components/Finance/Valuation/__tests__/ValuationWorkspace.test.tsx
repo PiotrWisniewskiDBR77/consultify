@@ -184,3 +184,33 @@ describe('ValuationWorkspace — lokalny ErrorBoundary (OWN-FIN-002)', () => {
     expect(screen.queryByTestId('finance-error-boundary')).not.toBeInTheDocument();
   });
 });
+
+// =============================================================================================
+// ID_BRIDGE (Gate E) — "raw string leak" fix. Before this fix, `variantError` was set to the raw
+// `err.message` (e.g. a bare fetch/network error string) — CLAUDE.md task brief: "Baseline i
+// Valuation pokazują dziś surowy nieprzetłumaczony string". This is the load path a legacy id
+// resolved through `FinanceLegacyBridgeGate` actually hits first (`getValuationVariant` on mount).
+// =============================================================================================
+describe('ValuationWorkspace — honest PL variant-load error message (ID_BRIDGE, Gate E)', () => {
+  const RAW_UGLY_MESSAGE = 'TypeError: Failed to fetch';
+
+  it('a rejected getValuationVariant() surfaces a Polish honest message, NEVER the raw Error.message', async () => {
+    const api = makeApi({ getValuationVariant: vi.fn().mockRejectedValue(new Error(RAW_UGLY_MESSAGE)) });
+    render(<ValuationWorkspace businessVersionId={BV_ID} api={api} />);
+
+    await waitFor(() => expect(screen.getByTestId('valuation-variant-error')).toBeInTheDocument());
+    const text = screen.getByTestId('valuation-variant-error').textContent;
+    expect(text).not.toBe(RAW_UGLY_MESSAGE);
+    expect(text).not.toContain('TypeError');
+    expect(text).toBe('Spróbuj ponownie za chwilę.');
+  });
+
+  it('a rejected getValuationVariant() with a NOT_FOUND-shaped error surfaces the dedicated Polish NOT_FOUND message', async () => {
+    const notFound = Object.assign(new Error('not found'), { status: 404, data: { code: 'NOT_FOUND', error: 'not found' } });
+    const api = makeApi({ getValuationVariant: vi.fn().mockRejectedValue(notFound) });
+    render(<ValuationWorkspace businessVersionId={BV_ID} api={api} />);
+
+    await waitFor(() => expect(screen.getByTestId('valuation-variant-error')).toBeInTheDocument());
+    expect(screen.getByTestId('valuation-variant-error').textContent).toMatch(/nie istnieje albo nie masz do niej dostępu/);
+  });
+});

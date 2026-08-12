@@ -13,6 +13,7 @@ import React from 'react';
 import {
   BusinessVersionStatusValues,
   businessVersionStatusLabel,
+  describeFinanceV2Error,
   valuationAdvisorConfidenceLabel,
   type BusinessVersionStatus,
   type ValuationAdvisorFindingGeneratedDto,
@@ -57,7 +58,8 @@ export function AdvisorStep(props: AdvisorStepProps): React.ReactElement {
     try {
       await onGenerate();
     } catch (err) {
-      setGenError(err instanceof Error ? err.message : 'Generowanie nie powiodło się.');
+      // ID_BRIDGE (Gate E) fix: honest-UI PL message (CANON §4.1) — było `err.message` surowe.
+      setGenError(describeFinanceV2Error(err).detail);
     } finally {
       setGenerating(false);
     }

@@ -5,7 +5,7 @@
 import { useCallback, useEffect, useState } from 'react';
 
 import { listBaselineOutputs, type ListBaselineOutputsParams } from '@/services/api/financeV2.api';
-import type { BaselineOutputDto } from '@/services/api/financeV2.types';
+import { describeFinanceV2Error, type BaselineOutputDto } from '@/services/api/financeV2.types';
 
 export interface UseBaselineOutputsResult {
   outputs: BaselineOutputDto[];
@@ -30,7 +30,8 @@ export function useBaselineOutputs(
       const rows = await listBaselineOutputs(businessVersionId, params);
       setOutputs(rows);
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+      // ID_BRIDGE (Gate E) fix: honest-UI PL message (CANON §4.1), było `e.message` surowe.
+      setError(describeFinanceV2Error(e).detail);
     } finally {
       setLoading(false);
     }

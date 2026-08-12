@@ -7,7 +7,7 @@
 import React, { useEffect, useState } from 'react';
 
 import type { ValuationMethodDto, ValuationMethodType, ValuationWeightedRecommendationDto } from '@/services/api/financeV2.types';
-import { ValuationMethodTypeValues, valuationMethodReadinessLabel, valuationMethodTypeLabel } from '@/services/api/financeV2.types';
+import { describeFinanceV2Error, ValuationMethodTypeValues, valuationMethodReadinessLabel, valuationMethodTypeLabel } from '@/services/api/financeV2.types';
 import type { ValuationBasketUpdate } from '@/services/api/financeV2.api';
 
 import { ValuationValueCell } from '../ValuationValueCell';
@@ -61,7 +61,8 @@ export function MethodsWeightsStep(props: MethodsWeightsStepProps): React.ReactE
     try {
       await onSaveBasket(draftRows);
     } catch (err) {
-      setSaveError(err instanceof Error ? err.message : 'Zapis koszyka wag nie powiódł się.');
+      // ID_BRIDGE (Gate E) fix: honest-UI PL message (CANON §4.1) — było `err.message` surowe.
+      setSaveError(describeFinanceV2Error(err).detail);
     } finally {
       setSaving(false);
     }

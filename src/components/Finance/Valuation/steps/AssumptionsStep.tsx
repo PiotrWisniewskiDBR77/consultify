@@ -11,7 +11,7 @@
  */
 import React, { useState } from 'react';
 
-import type { ValuationWaccInputsRawDto } from '@/services/api/financeV2.types';
+import { describeFinanceV2Error, type ValuationWaccInputsRawDto } from '@/services/api/financeV2.types';
 import type { UpsertValuationWaccInputsParams } from '@/services/api/financeV2.api';
 
 import { assertWaccConsistency } from '../valuationMath';
@@ -62,7 +62,8 @@ export function AssumptionsStep(props: AssumptionsStepProps): React.ReactElement
     try {
       await onSave(draft);
     } catch (err) {
-      setSaveError(err instanceof Error ? err.message : 'Zapis nie powiódł się.');
+      // ID_BRIDGE (Gate E) fix: honest-UI PL message (CANON §4.1) — było `err.message` surowe.
+      setSaveError(describeFinanceV2Error(err).detail);
     } finally {
       setSaving(false);
     }
