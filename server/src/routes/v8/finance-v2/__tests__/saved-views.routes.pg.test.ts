@@ -108,8 +108,14 @@ describe.skipIf(!REAL_PG)('Finance v2 ROUTES_EXPOSURE — Saved views (real HTTP
       .send({ artifactId, scope: 'PERSONAL', name: 'My missing-cells view', gridViewState: EMPTY_GRID_VIEW_STATE, filters: [{ type: 'missing', onlyMissing: true }] });
     expect(res.status).toBe(201);
     expect(res.body.data.scope).toBe('PERSONAL');
-    expect(res.body.data.owner_user_id).toBe(userA);
-    expect(res.body.data.share_token).toBeTruthy();
+    expect(res.body.data.ownerUserId).toBe(userA);
+    expect(res.body.data.shareToken).toBeTruthy();
+    // DTO shape: camelCase only, no raw snake_case columns, no internal organization_id leak.
+    expect(res.body.data).not.toHaveProperty('owner_user_id');
+    expect(res.body.data).not.toHaveProperty('share_token');
+    expect(res.body.data).not.toHaveProperty('organization_id');
+    expect(res.body.data).not.toHaveProperty('artifact_id');
+    expect(res.body.data.artifactId).toBe(artifactId);
     personalViewId = res.body.data.id;
   });
 
@@ -164,7 +170,7 @@ describe.skipIf(!REAL_PG)('Finance v2 ROUTES_EXPOSURE — Saved views (real HTTP
       .send({ artifactId, scope: 'TEAM', name: 'Team shared view', gridViewState: EMPTY_GRID_VIEW_STATE });
     expect(res.status).toBe(201);
     teamViewId = res.body.data.id;
-    teamShareToken = res.body.data.share_token;
+    teamShareToken = res.body.data.shareToken;
 
     const otherRead = await request(appA2).get(`/api/v8/finance-v2/saved-views/${teamViewId}`);
     expect(otherRead.status).toBe(200);
@@ -201,7 +207,7 @@ describe.skipIf(!REAL_PG)('Finance v2 ROUTES_EXPOSURE — Saved views (real HTTP
 
   it('GET /saved-views/shared/:token — a PERSONAL view\'s token does NOT resolve for a non-owner same-org user', async () => {
     const personalView = await request(appA).get(`/api/v8/finance-v2/saved-views/${personalViewId}`);
-    const personalToken = personalView.body.data.share_token;
+    const personalToken = personalView.body.data.shareToken;
 
     const otherUser = await request(appA2).get(`/api/v8/finance-v2/saved-views/shared/${personalToken}`);
     expect(otherUser.status).toBe(404);

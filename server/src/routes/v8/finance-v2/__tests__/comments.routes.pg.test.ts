@@ -102,7 +102,14 @@ describe.skipIf(!REAL_PG)('Finance v2 ROUTES_EXPOSURE — Comments + Review chec
     expect(res.status).toBe(201);
     expect(res.body.data.body).toBe('Please double-check this line.');
     expect(res.body.data.mentions).toEqual([userA2]);
-    expect(res.body.data.is_blocking).toBe(false);
+    expect(res.body.data.isBlocking).toBe(false);
+    // DTO shape: camelCase only, no raw snake_case columns, no internal organization_id leak.
+    expect(res.body.data).not.toHaveProperty('is_blocking');
+    expect(res.body.data).not.toHaveProperty('organization_id');
+    expect(res.body.data).not.toHaveProperty('artifact_id');
+    expect(res.body.data).not.toHaveProperty('business_version_id');
+    expect(res.body.data.artifactId).toBe(artifactId);
+    expect(res.body.data.businessVersionId).toBe(bvId);
     commentId = res.body.data.id;
   });
 
@@ -152,17 +159,21 @@ describe.skipIf(!REAL_PG)('Finance v2 ROUTES_EXPOSURE — Comments + Review chec
   it('POST /comments/:id/assign then GET .../assignment — round-trips', async () => {
     const assignRes = await request(appA).post(`/api/v8/finance-v2/comments/${commentId}/assign`).send({ assigneeId: userB });
     expect(assignRes.status).toBe(201);
-    expect(assignRes.body.data.assignee_id).toBe(userB);
+    expect(assignRes.body.data.assigneeId).toBe(userB);
+    expect(assignRes.body.data).not.toHaveProperty('assignee_id');
+    expect(assignRes.body.data).not.toHaveProperty('organization_id');
+    expect(assignRes.body.data.commentId).toBe(commentId);
 
     const getRes = await request(appA).get(`/api/v8/finance-v2/comments/${commentId}/assignment`);
     expect(getRes.status).toBe(200);
-    expect(getRes.body.data.assignee_id).toBe(userB);
+    expect(getRes.body.data.assigneeId).toBe(userB);
   });
 
   it('POST /comments/:id/resolve then reopen — round-trips resolved_at null<->set', async () => {
     const resolveRes = await request(appA).post(`/api/v8/finance-v2/comments/${commentId}/resolve`);
     expect(resolveRes.status).toBe(200);
-    expect(resolveRes.body.data.resolved_at).not.toBeNull();
+    expect(resolveRes.body.data.resolvedAt).not.toBeNull();
+    expect(resolveRes.body.data).not.toHaveProperty('resolved_at');
 
     const doubleResolve = await request(appA).post(`/api/v8/finance-v2/comments/${commentId}/resolve`);
     expect(doubleResolve.status).toBe(409);
@@ -170,7 +181,7 @@ describe.skipIf(!REAL_PG)('Finance v2 ROUTES_EXPOSURE — Comments + Review chec
 
     const reopenRes = await request(appA).post(`/api/v8/finance-v2/comments/${commentId}/reopen`);
     expect(reopenRes.status).toBe(200);
-    expect(reopenRes.body.data.resolved_at).toBeNull();
+    expect(reopenRes.body.data.resolvedAt).toBeNull();
 
     const doubleReopen = await request(appA).post(`/api/v8/finance-v2/comments/${commentId}/reopen`);
     expect(doubleReopen.status).toBe(409);
@@ -217,7 +228,9 @@ describe.skipIf(!REAL_PG)('Finance v2 ROUTES_EXPOSURE — Comments + Review chec
 
     const checkRes = await request(appA).post(`/api/v8/finance-v2/review-checklist/${checklistItemId}/check`);
     expect(checkRes.status).toBe(200);
-    expect(checkRes.body.data.checked_at).not.toBeNull();
+    expect(checkRes.body.data.checkedAt).not.toBeNull();
+    expect(checkRes.body.data).not.toHaveProperty('checked_at');
+    expect(checkRes.body.data).not.toHaveProperty('organization_id');
 
     const after = await request(appA).get(`/api/v8/finance-v2/review-checklist/${bvId}/all-required-checked`);
     expect(after.status).toBe(200);
@@ -231,7 +244,7 @@ describe.skipIf(!REAL_PG)('Finance v2 ROUTES_EXPOSURE — Comments + Review chec
   it('POST /review-checklist/:id/required=false then uncheck — item no longer blocks all-required-checked even unchecked', async () => {
     const uncheckRes = await request(appA).post(`/api/v8/finance-v2/review-checklist/${checklistItemId}/uncheck`);
     expect(uncheckRes.status).toBe(200);
-    expect(uncheckRes.body.data.checked_at).toBeNull();
+    expect(uncheckRes.body.data.checkedAt).toBeNull();
 
     const requiredRes = await request(appA).post(`/api/v8/finance-v2/review-checklist/${checklistItemId}/required`).send({ required: false });
     expect(requiredRes.status).toBe(200);

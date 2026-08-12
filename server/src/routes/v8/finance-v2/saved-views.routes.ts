@@ -24,11 +24,46 @@ import {
   listSavedViews,
   resolveSharedView,
   updateSavedView,
+  type FinanceSavedViewRow,
+  type LoadedSavedView,
 } from '../../../services/finance/canonical/savedViewService.js';
 import { asyncHandler } from '../../../utils/asyncHandler.js';
 import { financeV2Meta, sendError } from './_shared.js';
 
 const router = Router();
+
+// ---------------------------------------------------------------------------
+// Row -> DTO mapping (camelCase, internal columns dropped) — same local
+// `toDto`-style convention `crosscutting.routes.ts` and `comments.routes.ts`
+// already use in this package. `organization_id` is deliberately dropped:
+// every query here is already `WHERE organization_id = ?`, so it is always
+// the caller's own org and carries no information the client doesn't
+// already have. `columnAvailability` is only present on `LoadedSavedView`
+// (get/list/shared reads, which run `resolveColumnAvailability`) — create
+// and update deliberately return the plain, unloaded row today (same
+// behavior as before this change), so the DTO includes the field only when
+// the input row actually has it.
+// ---------------------------------------------------------------------------
+
+function toSavedViewDto(row: FinanceSavedViewRow | LoadedSavedView) {
+  const dto: Record<string, unknown> = {
+    id: row.id,
+    artifactId: row.artifact_id,
+    artifactType: row.artifact_type,
+    scope: row.scope,
+    ownerUserId: row.owner_user_id,
+    name: row.name,
+    viewState: row.view_state,
+    shareToken: row.share_token,
+    createdBy: row.created_by,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+  if ('columnAvailability' in row) {
+    dto.columnAvailability = row.columnAvailability;
+  }
+  return dto;
+}
 
 function httpStatusForSavedViewError(code: string): number {
   switch (code) {
@@ -74,7 +109,7 @@ router.post(
     if (!result.ok) {
       return sendError(res, httpStatusForSavedViewError(result.code), result.code, result.message);
     }
-    return res.status(201).json({ data: result.view, meta: financeV2Meta() });
+    return res.status(201).json({ data: toSavedViewDto(result.view), meta: financeV2Meta() });
   })
 );
 
@@ -91,7 +126,7 @@ router.get(
       return sendError(res, 400, 'INVALID_QUERY', 'artifactId is required');
     }
     const views = await listSavedViews({ organizationId, artifactId, requesterUserId: userId });
-    return res.status(200).json({ data: views, meta: financeV2Meta() });
+    return res.status(200).json({ data: views.map(toSavedViewDto), meta: financeV2Meta() });
   })
 );
 
@@ -111,7 +146,7 @@ router.get(
     if (!result.ok) {
       return sendError(res, 404, result.code, result.message);
     }
-    return res.status(200).json({ data: result.view, meta: financeV2Meta() });
+    return res.status(200).json({ data: toSavedViewDto(result.view), meta: financeV2Meta() });
   })
 );
 
@@ -127,7 +162,7 @@ router.get(
     if (!result.ok) {
       return sendError(res, 404, result.code, result.message);
     }
-    return res.status(200).json({ data: result.view, meta: financeV2Meta() });
+    return res.status(200).json({ data: toSavedViewDto(result.view), meta: financeV2Meta() });
   })
 );
 
@@ -153,7 +188,7 @@ router.patch(
     if (!result.ok) {
       return sendError(res, httpStatusForSavedViewError(result.code), result.code, result.message);
     }
-    return res.status(200).json({ data: result.view, meta: financeV2Meta() });
+    return res.status(200).json({ data: toSavedViewDto(result.view), meta: financeV2Meta() });
   })
 );
 
