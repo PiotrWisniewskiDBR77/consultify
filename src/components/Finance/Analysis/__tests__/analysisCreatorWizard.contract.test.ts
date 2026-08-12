@@ -17,7 +17,9 @@ import {
   previousStep,
   runAnalysisPreflightCheck,
   toggleKpiSelected,
+  togglePeriodSelected,
   applyIndustryRecommendations,
+  type AnalysisCreatorPeriodOption,
   type AnalysisCreatorState,
 } from '../analysisCreatorWizard.contract';
 
@@ -94,6 +96,31 @@ describe('canNavigateToStep — KONTROLA NEGATYWNA: nie da się przeskoczyć kro
 
   it('source_version zawsze osiągalne (pierwszy krok, brak warunków wstępnych)', () => {
     expect(canNavigateToStep('source_version', createInitialAnalysisCreatorState())).toBe(true);
+  });
+});
+
+describe('togglePeriodSelected — add/remove z auto-sortem chronologicznym', () => {
+  const periodOptions: AnalysisCreatorPeriodOption[] = [
+    { periodId: 'p-2023', label: '2023', isForecast: false, chronologicalIndex: 0 },
+    { periodId: 'p-2024', label: '2024', isForecast: false, chronologicalIndex: 1 },
+    { periodId: 'p-2025', label: '2025', isForecast: false, chronologicalIndex: 2 },
+  ];
+
+  it('KONTROLA NEGATYWNA: kliknięcie w kolejności 2025 → 2023 → 2024 daje wynik POSORTOWANY chronologicznie, nie w kolejności kliknięć', () => {
+    let state = createInitialAnalysisCreatorState();
+    state = togglePeriodSelected(state, periodOptions, 'p-2025');
+    state = togglePeriodSelected(state, periodOptions, 'p-2023');
+    state = togglePeriodSelected(state, periodOptions, 'p-2024');
+    expect(state.selectedPeriodIds).toEqual(['p-2023', 'p-2024', 'p-2025']);
+  });
+
+  it('odznaczenie usuwa dokładnie ten okres, reszta zostaje posortowana', () => {
+    let state = createInitialAnalysisCreatorState();
+    state = togglePeriodSelected(state, periodOptions, 'p-2023');
+    state = togglePeriodSelected(state, periodOptions, 'p-2024');
+    state = togglePeriodSelected(state, periodOptions, 'p-2025');
+    state = togglePeriodSelected(state, periodOptions, 'p-2024');
+    expect(state.selectedPeriodIds).toEqual(['p-2023', 'p-2025']);
   });
 });
 

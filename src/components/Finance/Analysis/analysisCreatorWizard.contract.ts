@@ -175,6 +175,24 @@ export function previousStep(state: AnalysisCreatorState): AnalysisCreatorStepId
 }
 
 // ---------------------------------------------------------------------------
+// Krok 2 — okresy: add/remove z auto-sortem CHRONOLOGICZNYM (nie kolejnością
+// kliknięć) — `AnalysisKpiTable`/`groupAnalysisKpiValuesByKpi` zakładają, że
+// kolumny okresów przychodzą najstarszy→najnowszy.
+// ---------------------------------------------------------------------------
+
+export function togglePeriodSelected(
+  state: AnalysisCreatorState,
+  periodOptions: readonly AnalysisCreatorPeriodOption[],
+  periodId: string
+): AnalysisCreatorState {
+  const has = state.selectedPeriodIds.includes(periodId);
+  const nextIds = has ? state.selectedPeriodIds.filter((id) => id !== periodId) : [...state.selectedPeriodIds, periodId];
+  const chronoIndexByPeriodId = new Map(periodOptions.map((p) => [p.periodId, p.chronologicalIndex] as const));
+  nextIds.sort((a, b) => (chronoIndexByPeriodId.get(a) ?? 0) - (chronoIndexByPeriodId.get(b) ?? 0));
+  return { ...state, selectedPeriodIds: nextIds };
+}
+
+// ---------------------------------------------------------------------------
 // Krok 4 — katalog KPI: add/remove (piaskownica selekcji) + rekomendacja
 // branżowa ADDYTYWNA (nigdy nie kasuje ręcznego wyboru użytkownika, tylko
 // uzupełnia braki — inaczej zmiana branży w kroku 3 cofnęłaby pracę
