@@ -2,7 +2,7 @@
 
 > Wygenerowane automatycznie przez `scripts/case-workspace/ledger-report.mjs`.
 > NIE edytowac recznie — kazdy przebieg nadpisuje ten plik od zera.
-> Odcisk tresci wejsciowej (sha256 nazw+bajtow wszystkich *.csv, sortowane): `e4e6465f041d8940f1779d5d8c97df3d378ab817172554747e459110b41840b7`
+> Odcisk tresci wejsciowej (sha256 nazw+bajtow wszystkich *.csv, sortowane): `77dba34395bc981f30ba5a4fecb523b48bf2b0bde7edb36c7979ec22757c3544`
 > Ten odcisk (nie znacznik czasu) dowodzi determinizmu: dwa przebiegi na tych samych
 > plikach wejsciowych daja identyczny odcisk i bajtowo identyczny plik wyjsciowy.
 
@@ -34,16 +34,16 @@ jest liczony podwojnie) i liczy rozklad statusow po wierszach **efektywnych**.
 | LEGACY_MIGRATION_PARITY.csv | 32 | tak | row_id | tak |
 | RESPONSIVE_ACCESSIBILITY_LEDGER.csv | 32 | tak | row_id | tak |
 | SECURITY_RESILIENCE_MATRIX.csv | 104 | tak | row_id | tak |
-| TRACEABILITY_AUTH_ROUTES.csv | 214 | tak | requirement_id | brak |
+| TRACEABILITY_AUTH_ROUTES.csv | 214 | tak | row_id | tak |
 | VISUAL_TRIADA_SPEC_A_LEDGER.csv | 235 | tak | row_id | tak |
 
 ## LACZNY rozklad statusow — WIERSZE EFEKTYWNE (po rozwiazaniu supersedes_row_id)
 
 Suma wierszy surowych (wszystkie pliki, wliczajac te bez kolumny status): **2189**
 
-Suma wierszy efektywnych (po deduplikacji lancuchow supersedes, tylko pliki z kolumna status): **1719**
+Suma wierszy efektywnych (po deduplikacji lancuchow supersedes, tylko pliki z kolumna status): **1682**
 
-NOT_IMPLEMENTED: **1273**, PARTIAL: **227**, IMPLEMENTED_AND_PROVEN: **198**, EVIDENCE_MISSING: **16**, OUT_OF_SCOPE_THIS_WAVE: **5**
+NOT_IMPLEMENTED: **1273**, PARTIAL: **227**, IMPLEMENTED_AND_PROVEN: **161**, EVIDENCE_MISSING: **16**, OUT_OF_SCOPE_THIS_WAVE: **5**
 
 **GAP != 0.** Statusy niedomkniete obecne w wierszach efektywnych: PARTIAL=227, EVIDENCE_MISSING=16, NOT_IMPLEMENTED=1273 (razem **1516** wierszy). Nie mozna deklarowac "zero GAP".
 
@@ -215,9 +215,10 @@ Powyzsze liczby sa raportem dla koordynatora, ktory stempluje realny SHA po scal
 ### TRACEABILITY_AUTH_ROUTES.csv
 
 - Wiersze surowe: **214**
-- Kolumna `supersedes_row_id`: brak w tym pliku — wszystkie wiersze traktowane jako efektywne.
-- Wiersze efektywne: **214**
-- Rozklad statusow (efektywne): IMPLEMENTED_AND_PROVEN: **126**, PARTIAL: **57**, NOT_IMPLEMENTED: **31**
+- Z tego zastapione przez nowszy wiersz (supersedes_row_id, wylaczone z rozkladu efektywnego): **37**
+- Wiersze efektywne: **177**
+- Rozklad statusow (efektywne): IMPLEMENTED_AND_PROVEN: **89**, PARTIAL: **57**, NOT_IMPLEMENTED: **31**
+- Rozklad statusow (surowe, przed dedup): IMPLEMENTED_AND_PROVEN: **126**, PARTIAL: **57**, NOT_IMPLEMENTED: **31**
 - Wiersze efektywne bez dowodu (pusty test_ref lub pusty evidence_ref): **15**
 
 ### VISUAL_TRIADA_SPEC_A_LEDGER.csv
@@ -249,47 +250,8 @@ Dla kazdego wiersza efektywnego ze statusem IMPLEMENTED_AND_PROVEN/PASS skrypt r
 w nawiasie) i sprawdza kazdy wzgledem systemu plikow (dla golych nazw plikow — dodatkowo
 przeszukuje cale repo po nazwie, zeby nie dawac falszywych alarmow na skrocone referencje).
 
-**Znaleziono 37** wpis(y) niespojne — to realne znalezisko, nie szum:
-
-| Plik rejestru | ID wiersza | Powod | Surowy test_ref |
-|---|---|---|---|
-| TRACEABILITY_AUTH_ROUTES.csv | CW-RT-012;CW-GR-023 | test_ref = "PENDING" (sentinel, nie plik) | `PENDING` |
-| TRACEABILITY_AUTH_ROUTES.csv | CW-01-026-INV1 | test_ref = "PENDING" (sentinel, nie plik) | `PENDING` |
-| TRACEABILITY_AUTH_ROUTES.csv | CW-GR-029;CW-GR-030 | test_ref = "PENDING" (sentinel, nie plik) | `PENDING` |
-| TRACEABILITY_AUTH_ROUTES.csv | CW-00-020-INV6;CW-RT-018 | test_ref = "PENDING" (sentinel, nie plik) | `PENDING` |
-| TRACEABILITY_AUTH_ROUTES.csv | CW-RT-013;CW-02-011;CW-02-024 | test_ref = "PENDING" (sentinel, nie plik) | `PENDING` |
-| TRACEABILITY_AUTH_ROUTES.csv | CW-00-020-INV6;CW-RT-017 | test_ref = "PENDING" (sentinel, nie plik) | `PENDING` |
-| TRACEABILITY_AUTH_ROUTES.csv | CW-RT-020;CW-DOD-B5 | test_ref = "PENDING" (sentinel, nie plik) | `PENDING` |
-| TRACEABILITY_AUTH_ROUTES.csv | CW-RT-021;CW-DOD-I6 | test_ref = "PENDING" (sentinel, nie plik) | `PENDING` |
-| TRACEABILITY_AUTH_ROUTES.csv | CW-01-016;CW-01-026-INV12;CW-00-020-INV13 | test_ref = "PENDING" (sentinel, nie plik) | `PENDING` |
-| TRACEABILITY_AUTH_ROUTES.csv | CW-00-020-INV13 | test_ref = "PENDING" (sentinel, nie plik) | `PENDING` |
-| TRACEABILITY_AUTH_ROUTES.csv | CW-00-020-INV13;CW-03-017;CW-DOD-B2 | test_ref = "PENDING" (sentinel, nie plik) | `PENDING` |
-| TRACEABILITY_AUTH_ROUTES.csv | CW-02-032 | test_ref = "PENDING" (sentinel, nie plik) | `PENDING` |
-| TRACEABILITY_AUTH_ROUTES.csv | CW-02-032;CW-01-004 | test_ref = "PENDING" (sentinel, nie plik) | `PENDING` |
-| TRACEABILITY_AUTH_ROUTES.csv | CW-02-032;CW-01-026-INV9 | test_ref = "PENDING" (sentinel, nie plik) | `PENDING` |
-| TRACEABILITY_AUTH_ROUTES.csv | CW-RT-014;CW-GR-029 | test_ref = "PENDING" (sentinel, nie plik) | `PENDING` |
-| TRACEABILITY_AUTH_ROUTES.csv | CW-GR-029;CW-GR-030 | test_ref = "PENDING" (sentinel, nie plik) | `PENDING` |
-| TRACEABILITY_AUTH_ROUTES.csv | CW-RT-014;CW-GR-029 | test_ref = "PENDING" (sentinel, nie plik) | `PENDING` |
-| TRACEABILITY_AUTH_ROUTES.csv | CW-GR-029;CW-GR-030 | test_ref = "PENDING" (sentinel, nie plik) | `PENDING` |
-| TRACEABILITY_AUTH_ROUTES.csv | CW-RT-024 | test_ref = "PENDING" (sentinel, nie plik) | `PENDING` |
-| TRACEABILITY_AUTH_ROUTES.csv | CW-RT-024;CW-GR-033;CW-02-031;CW-03-017;CW-01-004 | test_ref = "PENDING" (sentinel, nie plik) | `PENDING` |
-| TRACEABILITY_AUTH_ROUTES.csv | CW-01-026-INV9;CW-02-031 | test_ref = "PENDING" (sentinel, nie plik) | `PENDING` |
-| TRACEABILITY_AUTH_ROUTES.csv | CW-GR-037 | test_ref = "PENDING" (sentinel, nie plik) | `PENDING` |
-| TRACEABILITY_AUTH_ROUTES.csv | CW-GR-037 | test_ref = "PENDING" (sentinel, nie plik) | `PENDING` |
-| TRACEABILITY_AUTH_ROUTES.csv | CW-GR-037 | test_ref = "PENDING" (sentinel, nie plik) | `PENDING` |
-| TRACEABILITY_AUTH_ROUTES.csv | CW-RT-037 | test_ref = "PENDING" (sentinel, nie plik) | `PENDING` |
-| TRACEABILITY_AUTH_ROUTES.csv | CW-RT-037;CW-RT-035 | test_ref = "PENDING" (sentinel, nie plik) | `PENDING` |
-| TRACEABILITY_AUTH_ROUTES.csv | CW-RT-037 | test_ref = "PENDING" (sentinel, nie plik) | `PENDING` |
-| TRACEABILITY_AUTH_ROUTES.csv | CW-DOD-J3 | test_ref = "PENDING" (sentinel, nie plik) | `PENDING` |
-| TRACEABILITY_AUTH_ROUTES.csv | CW-DOD-J3 | test_ref = "PENDING" (sentinel, nie plik) | `PENDING` |
-| TRACEABILITY_AUTH_ROUTES.csv | CW-DOD-J3 | test_ref = "PENDING" (sentinel, nie plik) | `PENDING` |
-| TRACEABILITY_AUTH_ROUTES.csv | CW-DOD-J1 | test_ref = "PENDING" (sentinel, nie plik) | `PENDING` |
-| TRACEABILITY_AUTH_ROUTES.csv | CW-DOD-J1;CW-DOD-J2 | test_ref = "PENDING" (sentinel, nie plik) | `PENDING` |
-| TRACEABILITY_AUTH_ROUTES.csv | CW-DOD-J3 | test_ref = "PENDING" (sentinel, nie plik) | `PENDING` |
-| TRACEABILITY_AUTH_ROUTES.csv | CW-DOD-J5 | test_ref = "PENDING" (sentinel, nie plik) | `PENDING` |
-| TRACEABILITY_AUTH_ROUTES.csv | CW-DOD-J5;CW-DOD-J6 | test_ref = "PENDING" (sentinel, nie plik) | `PENDING` |
-| TRACEABILITY_AUTH_ROUTES.csv | CW-DOD-J5 | test_ref = "PENDING" (sentinel, nie plik) | `PENDING` |
-| TRACEABILITY_AUTH_ROUTES.csv | CW-RT-026;CW-RT-044;-U4 | test_ref to opis, nie sciezka pliku: "LIVE-U4 browser+realDB run" | `server/src/services/caseWorkspace/__tests__/caseCoreService.pg.test.ts (realDB outbox assertion; branch(es) NOT yet asserted: case.failed)\|L…` |
+**Sprawdzone: ZERO niespojnosci.** Kazdy `test_ref` na wierszu IMPLEMENTED_AND_PROVEN/PASS
+wskazuje na plik, ktory realnie istnieje w repo.
 
 ## Uwagi metodologiczne
 
@@ -300,7 +262,8 @@ przeszukuje cale repo po nazwie, zeby nie dawac falszywych alarmow na skrocone r
 - Pliki `CODEBASE_CONVERGENCE_MAP.csv` i `CARTESIAN_UX_COVERAGE.csv` nie maja uzytecznej
   kolumny `status` (pierwszy: brak kolumny w ogole; drugi: 0 wierszy) — wylaczone z rozkladu
   statusow, ale ich liczba wierszy jest wliczona w tabele zrodel powyzej.
-- `TRACEABILITY_AUTH_ROUTES.csv` nie ma kolumny `supersedes_row_id` — wszystkie jego wiersze
-  sa traktowane jako efektywne wprost.
+- Pliki bez kolumny `supersedes_row_id` (CARTESIAN_UX_COVERAGE.csv): wszystkie ich
+  wiersze sa traktowane jako efektywne wprost — dla tych plikow ten skrypt nie moze wykryc
+  duplikatow append-only (stara wersja wiersza zastapiona nowszym nadal liczy sie osobno).
 - Ten plik i skrypt, ktory go generuje, NIE modyfikuja zadnego pliku CSV — rejestry naleza
   do innych agentow rownoleglej pracy.

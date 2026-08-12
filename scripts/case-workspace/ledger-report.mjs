@@ -641,6 +641,18 @@ for (const f of perFile) {
 
 const reqGroups = buildRequirementGroups(perFile);
 
+// Files that have a `status` column (so the effective/raw distinction is
+// meaningful for them) but no `supersedes_row_id` column — for these, the
+// append-only dedup this script performs (section 2/3 of the header comment)
+// cannot run, so every historical row still counts as "effective" even if a
+// newer row has already replaced it. Computed from the parsed fields, not
+// hardcoded by filename, so this statement can never go stale the way a
+// filename-hardcoded one did (TRACEABILITY_AUTH_ROUTES.csv used to be named
+// here explicitly; it now has the column like every other ledger).
+const filesWithoutSupersedes = perFile
+  .filter((f) => f.hasStatus && !f.hasSupersedes)
+  .map((f) => f.file);
+
 // ---------------------------------------------------------------------------
 // Render Markdown
 // ---------------------------------------------------------------------------
@@ -900,8 +912,14 @@ lines.push('  wezel koncowy lancucha — nie trzeba go jawnie przechodzic.');
 lines.push('- Pliki `CODEBASE_CONVERGENCE_MAP.csv` i `CARTESIAN_UX_COVERAGE.csv` nie maja uzytecznej');
 lines.push('  kolumny `status` (pierwszy: brak kolumny w ogole; drugi: 0 wierszy) — wylaczone z rozkladu');
 lines.push('  statusow, ale ich liczba wierszy jest wliczona w tabele zrodel powyzej.');
-lines.push('- `TRACEABILITY_AUTH_ROUTES.csv` nie ma kolumny `supersedes_row_id` — wszystkie jego wiersze');
-lines.push('  sa traktowane jako efektywne wprost.');
+if (filesWithoutSupersedes.length > 0) {
+  lines.push(`- Pliki bez kolumny \`supersedes_row_id\` (${filesWithoutSupersedes.join(', ')}): wszystkie ich`);
+  lines.push('  wiersze sa traktowane jako efektywne wprost — dla tych plikow ten skrypt nie moze wykryc');
+  lines.push('  duplikatow append-only (stara wersja wiersza zastapiona nowszym nadal liczy sie osobno).');
+} else {
+  lines.push('- Wszystkie pliki z kolumna `status` maja tez kolumne `supersedes_row_id` — dedup');
+  lines.push('  append-only dziala jednolicie dla kazdego z nich (brak pliku traktowanego jako wyjatek).');
+}
 lines.push('- Ten plik i skrypt, ktory go generuje, NIE modyfikuja zadnego pliku CSV — rejestry naleza');
 lines.push('  do innych agentow rownoleglej pracy.');
 lines.push('');
