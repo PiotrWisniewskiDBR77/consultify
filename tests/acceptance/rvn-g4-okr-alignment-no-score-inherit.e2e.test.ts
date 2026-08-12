@@ -405,6 +405,39 @@ describe('RN-G4 · Point 3 — OKR alignment does not auto-inherit final scoring
       idempotencyKey: `${MARKER}--accept-${randomUUID()}`,
     });
     expect(acceptOutcome.result.status).toBe('accepted');
+
+    // Independent DB-level readback (RN-G5 strengthening — the two checks
+    // above only assert the commands' OWN echoed return values; nothing
+    // upstream re-reads okr_vnext_alignments itself, so a command that
+    // silently no-oped but still returned a fabricated
+    // {status:'accepted'} response would not have been caught). This has
+    // no dedicated repository read function in this codebase (same
+    // precedent as the direct `decisions`/`okr_vnext_reflections` reads
+    // elsewhere in this file and in okrAlignmentCycleMismatch-adjacent
+    // realdb tests) — confirms the row genuinely exists, with the right
+    // source/target/relation/status, independent of what the commands
+    // claimed.
+    const alignmentClient = pgClient();
+    await alignmentClient.connect();
+    try {
+      const row = await alignmentClient.query<{
+        source_objective_id: string;
+        target_objective_id: string;
+        relation: string;
+        status: string;
+      }>(
+        `SELECT source_objective_id, target_objective_id, relation, status
+           FROM okr_vnext_alignments WHERE alignment_id = $1 AND organization_id = $2`,
+        [alignmentId, ORG_ID]
+      );
+      expect(row.rows).toHaveLength(1);
+      expect(row.rows[0]!.source_objective_id).toBe(child.objectiveId);
+      expect(row.rows[0]!.target_objective_id).toBe(parent.objectiveId);
+      expect(row.rows[0]!.relation).toBe('contributes_to');
+      expect(row.rows[0]!.status).toBe('accepted');
+    } finally {
+      await alignmentClient.end();
+    }
   });
 
   it('Step 2 — finalScoreOkrSet on the PARENT Set writes a real score for the parent Objective and does not touch the child Objective at all', async () => {

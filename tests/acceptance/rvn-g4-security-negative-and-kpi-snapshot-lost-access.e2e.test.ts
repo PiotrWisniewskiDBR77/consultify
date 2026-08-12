@@ -365,8 +365,18 @@ describe('RN-G4 · Point 7+8 — security negatives (foreign tenant, restricted 
     expect(contentHashAfter).toBe(contentHashBefore);
 
     // statusCounts on the SERVED response is recomputed for the redacted
-    // set only (not the frozen count including the now-invisible KPI).
-    expect(readbackAfterRevoke!.snapshotPayload?.statusCounts.safe ?? 0).toBeLessThanOrEqual(1);
+    // set only (not the frozen count including the now-invisible KPI) —
+    // exact value, not a loose upper bound: kpiOpenId's fixture measurement
+    // is 'on_target' (see insertFixtureKpi), so after redaction exactly ONE
+    // safe item should remain. A loose `toBeLessThanOrEqual(1)` would also
+    // pass on an under-count (0), silently hiding a "redaction ate a KPI it
+    // shouldn't have" bug — strengthened per RN-G5 negative-control review.
+    expect(readbackAfterRevoke!.snapshotPayload?.statusCounts).toEqual({
+      safe: 1,
+      warning: 0,
+      critical: 0,
+      missing: 0,
+    });
   });
 
   it('Point 7 — restricted outsider (in-org, NEVER had ACL) sees the same redacted view via the public path, only OPEN_ORG data', async () => {
