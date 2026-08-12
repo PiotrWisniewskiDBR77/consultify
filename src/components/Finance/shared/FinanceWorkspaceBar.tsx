@@ -531,13 +531,19 @@ function ViewTab({
 }
 
 function ViewStateBadge({ state }: { state: NonNullable<WorkspaceBarConfig['viewNavigation']['views'][number]['state']> }): React.ReactElement {
+  // ★ NAPRAWA a11y (Pakiet I): przy 10px `text-c-warning` mierzył 4.31:1
+  // (axe, próg 4.5:1) na tle karty zakładki — surowy token semantyczny jest
+  // kalibrowany pod większe elementy (kropki/ikony), nie mikro-tekst.
+  // `text-amber-900`/dark `amber-300` to ta sama konwencja co `StatusChip`
+  // TONE_SHELL (zweryfikowana tam kontrastowo) — analogicznie dla
+  // success/danger, żeby nie zostawić utajonej wersji tego samego defektu.
   const toneClass =
     state.kind === 'ready'
-      ? 'text-c-success'
+      ? 'text-emerald-800 dark:text-emerald-300'
       : state.kind === 'stale'
-        ? 'text-c-warning'
+        ? 'text-amber-900 dark:text-amber-300'
         : state.kind === 'blocked'
-          ? 'text-c-danger'
+          ? 'text-red-800 dark:text-red-300'
           : 'text-c-text-muted';
   return <span className={`text-[10px] font-semibold uppercase tracking-wide ${toneClass}`}>{state.label.pl}</span>;
 }

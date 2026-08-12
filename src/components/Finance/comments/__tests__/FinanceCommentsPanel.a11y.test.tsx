@@ -105,3 +105,24 @@ describe('FinanceCommentsPanel — ogłaszanie stanów dynamicznych (a11y, Pakie
     expect(screen.queryByTestId('finance-status-announcer')).not.toBeInTheDocument();
   });
 });
+
+describe('FinanceCommentsPanel — dostępne nazwy / kontrast (a11y, Pakiet I)', () => {
+  it('pozycja checklisty ma programowo powiązaną etykietę (axe: "label" critical, PRZED naprawą)', async () => {
+    mockLoadOnce({ checklist: [{ id: 'item-1', businessVersionId: 'bv-1', item: 'Zweryfikuj sumy kontrolne', required: true, checkedBy: null, checkedAt: null, createdBy: 'u-1', createdAt: 't' }] });
+    render(<FinanceCommentsPanel artifactId="art-1" businessVersionId="bv-1" />);
+    await screen.findByTestId('finance-comments-panel');
+    expect(screen.getByLabelText('Zweryfikuj sumy kontrolne')).toBeInTheDocument();
+  });
+
+  it('"Oznacz jako rozwiązany"/"Blokujący" NIE używają surowego `text-c-focus`/`text-c-danger` (za mały kontrast — axe, PRZED naprawą)', async () => {
+    mockLoadOnce({ comments: [{ ...SAMPLE_COMMENT, isBlocking: true }] });
+    render(<FinanceCommentsPanel artifactId="art-1" businessVersionId="bv-1" />);
+    await screen.findByTestId('finance-comments-panel');
+    const resolveButton = screen.getByText('Oznacz jako rozwiązany');
+    expect(resolveButton.className).not.toMatch(/text-c-focus(?!-solid)\b/);
+    expect(resolveButton.className).toMatch(/text-c-focus-solid/);
+    const blockingBadge = screen.getByText('Blokujący');
+    expect(blockingBadge.className).not.toMatch(/\btext-c-danger\b/);
+    expect(blockingBadge.className).toMatch(/text-red-800/);
+  });
+});

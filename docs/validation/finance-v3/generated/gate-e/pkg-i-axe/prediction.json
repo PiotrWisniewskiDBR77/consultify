@@ -1,0 +1,109 @@
+{
+  "id": "prediction",
+  "url": "http://localhost:58023/?screen=finance-prediction-workspace&mode=A&view=assumptions",
+  "violations": [
+    {
+      "id": "landmark-one-main",
+      "impact": "moderate",
+      "description": "Ensure the document has a main landmark",
+      "help": "Document should have one main landmark",
+      "helpUrl": "https://dequeuniversity.com/rules/axe/4.13/landmark-one-main?application=axeAPI",
+      "nodeCount": 1,
+      "nodes": [
+        {
+          "target": [
+            "html"
+          ],
+          "html": "<html lang=\"pl\" dir=\"ltr\">",
+          "failureSummary": "Fix all of the following:\n  Document does not have a main landmark"
+        }
+      ]
+    },
+    {
+      "id": "page-has-heading-one",
+      "impact": "moderate",
+      "description": "Ensure that the page, or at least one of its frames contains a level-one heading",
+      "help": "Page should contain a level-one heading",
+      "helpUrl": "https://dequeuniversity.com/rules/axe/4.13/page-has-heading-one?application=axeAPI",
+      "nodeCount": 1,
+      "nodes": [
+        {
+          "target": [
+            "html"
+          ],
+          "html": "<html lang=\"pl\" dir=\"ltr\">",
+          "failureSummary": "Fix all of the following:\n  Page must have a level-one heading"
+        }
+      ]
+    },
+    {
+      "id": "region",
+      "impact": "moderate",
+      "description": "Ensure all page content is contained by landmarks",
+      "help": "All page content should be contained by landmarks",
+      "helpUrl": "https://dequeuniversity.com/rules/axe/4.13/region?application=axeAPI",
+      "nodeCount": 6,
+      "nodes": [
+        {
+          "target": [
+            ".tabular-nums"
+          ],
+          "html": "<span class=\"tabular-nums\">v1</span>",
+          "failureSummary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        },
+        {
+          "target": [
+            ".rounded-full > span:nth-child(3)"
+          ],
+          "html": "<span>Wersja robocza</span>",
+          "failureSummary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        },
+        {
+          "target": [
+            ".rounded-full > .text-c-text-muted"
+          ],
+          "html": "<span class=\"text-c-text-muted\">· robocza</span>",
+          "failureSummary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        },
+        {
+          "target": [
+            ".md\\:flex"
+          ],
+          "html": "<div class=\"hidden shrink-0 items-center gap-1 rounded-lg bg-c-surface-raised p-1 md:flex\" role=\"tablist\">",
+          "failureSummary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        },
+        {
+          "target": [
+            ".min-h-0.flex-1"
+          ],
+          "html": "<div class=\"min-h-0 flex-1\">",
+          "failureSummary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        },
+        {
+          "target": [
+            "a"
+          ],
+          "html": "<a href=\"/odbior.html\" title=\"Wróć do listy obiekt...\" style=\"padding: 10px 15px; ...\">",
+          "failureSummary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        }
+      ]
+    }
+  ],
+  "incomplete": [
+    {
+      "id": "bypass",
+      "impact": "serious",
+      "description": "Ensure each page has at least one mechanism for a user to bypass navigation and jump straight to the content",
+      "nodeCount": 1,
+      "nodes": [
+        {
+          "target": [
+            "html"
+          ],
+          "html": "<html lang=\"pl\" dir=\"ltr\">",
+          "failureSummary": "Fix any of the following:\n  No valid skip link found\n  Page does not have a heading\n  Page does not have a landmark region"
+        }
+      ]
+    }
+  ]
+}

@@ -90,3 +90,23 @@ describe('FinanceSavedViewsPanel — ogłaszanie stanów dynamicznych (a11y, Pak
     expect(screen.queryByTestId('finance-status-announcer')).not.toBeInTheDocument();
   });
 });
+
+describe('FinanceSavedViewsPanel — dostępne nazwy / kontrast (a11y, Pakiet I)', () => {
+  it('select widoczności ma aria-label (axe: "select-name" critical, PRZED naprawą)', async () => {
+    mockListFinanceSavedViews.mockResolvedValueOnce([]);
+    render(<FinanceSavedViewsPanel artifactId="art-1" />);
+    await screen.findByTestId('finance-saved-views-panel');
+    expect(screen.getByLabelText('Widoczność zapisywanego widoku')).toBe(screen.getByTestId('saved-view-scope-select'));
+  });
+
+  it('"Zastosuj"/"Kopiuj link" NIE używają surowego `text-c-focus` (za mały kontrast — axe, PRZED naprawą)', async () => {
+    mockListFinanceSavedViews.mockResolvedValueOnce([sampleView()]);
+    render(<FinanceSavedViewsPanel artifactId="art-1" />);
+    await screen.findByTestId('finance-saved-views-panel');
+    const applyButton = screen.getByTestId('saved-view-apply');
+    expect(applyButton.className).not.toMatch(/text-c-focus(?!-solid)\b/);
+    expect(applyButton.className).toMatch(/text-c-focus-solid/);
+    const copyButton = screen.getByTestId('saved-view-copy-link');
+    expect(copyButton.className).toMatch(/text-c-focus-solid/);
+  });
+});

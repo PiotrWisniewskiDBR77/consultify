@@ -167,7 +167,11 @@ export function FinanceSavedViewsPanel({
           data-testid="saved-view-name-input"
         />
         <div className="flex items-center gap-2">
+          {/* ★ NAPRAWA a11y (Pakiet I, wymaganie #5): `<select>` bez etykiety
+              (axe: "select-name" critical) — "Zapisz bieżący widok" wyżej jest
+              nagłówkiem sekcji, nie programowo powiązaną etykietą TEGO pola. */}
           <select
+            aria-label="Widoczność zapisywanego widoku"
             className="rounded-md border border-c-border-subtle bg-c-surface-raised p-1.5 text-xs text-c-text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
             value={newViewScope}
             onChange={(e) => setNewViewScope(e.target.value as FinanceSavedViewScope)}
@@ -217,10 +221,14 @@ function ViewGroup({
             <li key={view.id} className="flex items-center justify-between gap-2 rounded-md border border-c-border-subtle px-2 py-1.5" data-testid="saved-view-row">
               <span className="text-xs text-c-text-primary">{view.name}</span>
               <div className="flex items-center gap-1.5">
-                <button type="button" className="text-[11px] font-medium text-c-focus hover:underline" onClick={() => onApplyView?.(view)} data-testid="saved-view-apply">
+                {/* ★ NAPRAWA a11y (Pakiet I): `--c-focus` to `rgba(37,99,235,0.4)`
+                    (40% krycia, pierścień fokusa) — jako kolor tekstu dawał
+                    1.8:1 (axe, próg 4.5:1). `text-c-focus-solid` (pełne krycie
+                    `#2563eb`) to właściwy token do tekstu linków. */}
+                <button type="button" className="text-[11px] font-medium text-c-focus-solid hover:underline" onClick={() => onApplyView?.(view)} data-testid="saved-view-apply">
                   Zastosuj
                 </button>
-                <button type="button" className="text-[11px] font-medium text-c-focus hover:underline" onClick={() => onCopyShareLink(view)} data-testid="saved-view-copy-link">
+                <button type="button" className="text-[11px] font-medium text-c-focus-solid hover:underline" onClick={() => onCopyShareLink(view)} data-testid="saved-view-copy-link">
                   {copiedViewId === view.id ? 'Skopiowano' : 'Kopiuj link'}
                 </button>
                 <button type="button" className="text-[11px] font-medium text-c-danger hover:underline" onClick={() => onDelete(view.id)} data-testid="saved-view-delete">

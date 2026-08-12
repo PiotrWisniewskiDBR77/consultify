@@ -203,17 +203,24 @@ export function FinanceLineageNavigator({
         <div className="flex flex-wrap items-center gap-1.5" data-testid="lineage-trail" role="list" aria-label="Łańcuch powiązań">
           {trail.items.map((item, idx) => (
             <React.Fragment key={item.kind === 'node' ? item.metadata.versionId : `collapsed-${idx}`}>
-              {idx > 0 ? <span className="text-c-text-secondary">→</span> : null}
-              <button
-                type="button"
-                className="cursor-pointer rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus disabled:cursor-default"
-                disabled={item.kind === 'collapsed'}
-                onClick={() => {
-                  if (item.kind === 'node' && onNavigate) onNavigate(item.metadata.versionId, item.metadata.artifactType);
-                }}
-              >
-                <TrailItemView item={item} />
-              </button>
+              {/* ★ NAPRAWA a11y (Pakiet I): `role="list"` wymaga, żeby WSZYSTKIE
+                  bezpośrednie dzieci miały rolę listitem (axe: "aria-required-children"
+                  critical — <button> jako bezpośrednie dziecko nie spełniał tego).
+                  Separator strzałki jest dekoracją — `aria-hidden` wyjmuje go z
+                  drzewa dostępności, więc nie musi (i nie powinien) być listitem. */}
+              {idx > 0 ? <span className="text-c-text-secondary" aria-hidden="true">→</span> : null}
+              <span role="listitem">
+                <button
+                  type="button"
+                  className="cursor-pointer rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus disabled:cursor-default"
+                  disabled={item.kind === 'collapsed'}
+                  onClick={() => {
+                    if (item.kind === 'node' && onNavigate) onNavigate(item.metadata.versionId, item.metadata.artifactType);
+                  }}
+                >
+                  <TrailItemView item={item} />
+                </button>
+              </span>
             </React.Fragment>
           ))}
         </div>

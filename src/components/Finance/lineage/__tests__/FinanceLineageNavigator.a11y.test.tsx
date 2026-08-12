@@ -68,3 +68,47 @@ describe('FinanceLineageNavigator — ogłaszanie stanów dynamicznych (a11y, Pa
     expect(screen.queryByTestId('finance-status-announcer')).not.toBeInTheDocument();
   });
 });
+
+describe('FinanceLineageNavigator — struktura role="list" (a11y, Pakiet I)', () => {
+  it('każde dziecko bezpośrednie role="list" jest role="listitem" (axe: "aria-required-children" critical, PRZED naprawą — <button> był bezpośrednim dzieckiem)', async () => {
+    const result = {
+      ...MINIMAL_RESULT,
+      trail: {
+        items: [
+          {
+            kind: 'node',
+            metadata: {
+              versionId: 'bv-root', artifactId: 'art-root', artifactType: 'STATEMENT_PACK', name: 'Statement pack v3',
+              versionLabel: 'v3', periodLabel: null, status: 'APPROVED', freshness: 'CURRENT', variantLabel: null,
+            },
+            displayName: 'Statement pack v3', isFocus: false, outgoingEdgeType: 'STATEMENT_TO_ANALYSIS', staleBadge: null, stateBadge: null, isDimmed: false,
+          },
+          {
+            kind: 'node',
+            metadata: {
+              versionId: 'bv-focus', artifactId: 'art-focus', artifactType: 'VALUATION_CASE', name: 'Valuation v1',
+              versionLabel: 'v1', periodLabel: null, status: 'DRAFT', freshness: 'STALE_SOURCE', variantLabel: null,
+            },
+            displayName: 'Valuation v1', isFocus: true, outgoingEdgeType: null, staleBadge: null, stateBadge: null, isDimmed: false,
+          },
+        ],
+        totalNodeCount: 2, hasAlternatePaths: false, unresolvedVersionIds: [], cycleVersionIds: [],
+      },
+    };
+    mockGetFinanceLineageNavigator.mockResolvedValueOnce(result);
+    render(<FinanceLineageNavigator businessVersionId="bv-focus" />);
+
+    const list = await screen.findByTestId('lineage-trail');
+    expect(list).toHaveAttribute('role', 'list');
+    // Dzieci NIE ukryte przed AT (aria-hidden) muszą być role=listitem — to
+    // dokładnie to, co sprawdza axe (`aria-required-children`): aria-hidden
+    // dzieci są wyjęte z drzewa dostępności, więc nie liczą się do wymogu.
+    const visibleChildren = Array.from(list.children).filter((c) => c.getAttribute('aria-hidden') !== 'true');
+    expect(visibleChildren.length).toBeGreaterThan(0);
+    for (const child of visibleChildren) {
+      expect(child).toHaveAttribute('role', 'listitem');
+    }
+    const separator = screen.getByText('→');
+    expect(separator).toHaveAttribute('aria-hidden', 'true');
+  });
+});

@@ -1,0 +1,146 @@
+{
+  "id": "statement-pack-v2",
+  "url": "http://localhost:58023/?screen=finance-statement-pack-workspace-v2&state=populated",
+  "violations": [
+    {
+      "id": "landmark-one-main",
+      "impact": "moderate",
+      "description": "Ensure the document has a main landmark",
+      "help": "Document should have one main landmark",
+      "helpUrl": "https://dequeuniversity.com/rules/axe/4.13/landmark-one-main?application=axeAPI",
+      "nodeCount": 1,
+      "nodes": [
+        {
+          "target": [
+            "html"
+          ],
+          "html": "<html lang=\"pl\" dir=\"ltr\">",
+          "failureSummary": "Fix all of the following:\n  Document does not have a main landmark"
+        }
+      ]
+    },
+    {
+      "id": "page-has-heading-one",
+      "impact": "moderate",
+      "description": "Ensure that the page, or at least one of its frames contains a level-one heading",
+      "help": "Page should contain a level-one heading",
+      "helpUrl": "https://dequeuniversity.com/rules/axe/4.13/page-has-heading-one?application=axeAPI",
+      "nodeCount": 1,
+      "nodes": [
+        {
+          "target": [
+            "html"
+          ],
+          "html": "<html lang=\"pl\" dir=\"ltr\">",
+          "failureSummary": "Fix all of the following:\n  Page must have a level-one heading"
+        }
+      ]
+    },
+    {
+      "id": "region",
+      "impact": "moderate",
+      "description": "Ensure all page content is contained by landmarks",
+      "help": "All page content should be contained by landmarks",
+      "helpUrl": "https://dequeuniversity.com/rules/axe/4.13/region?application=axeAPI",
+      "nodeCount": 7,
+      "nodes": [
+        {
+          "target": [
+            ".mb-2"
+          ],
+          "html": "<div class=\"mb-2 font-mono text-[10px] text-c-text-muted\">state=<b>populated</b> (populated|empty|missing)</div>",
+          "failureSummary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        },
+        {
+          "target": [
+            ".sm\\:inline-flex > .tabular-nums"
+          ],
+          "html": "<span class=\"tabular-nums\">v3</span>",
+          "failureSummary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        },
+        {
+          "target": [
+            ".sm\\:inline-flex > span:nth-child(3)"
+          ],
+          "html": "<span>Wersja robocza</span>",
+          "failureSummary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        },
+        {
+          "target": [
+            ".p-1"
+          ],
+          "html": "<div class=\"hidden shrink-0 items-center gap-1 rounded-lg bg-c-surface-raised p-1 md:flex\" role=\"tablist\">",
+          "failureSummary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        },
+        {
+          "target": [
+            ".p-3 > .min-w-0.flex-1"
+          ],
+          "html": "<div class=\"min-w-0 flex-1\">",
+          "failureSummary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        },
+        {
+          "target": [
+            ".w-80 > .rounded-xl.bg-c-surface.border:nth-child(1)"
+          ],
+          "html": "<div class=\"rounded-xl border border-c-border-subtle bg-c-surface\"><div class=\"p-4 text-xs text-c-text-muted\" data-testid=\"source-evidence-panel-empty\">Kliknij komórkę w tabeli, żeby zobaczyć jej dowód źródłowy.</div></div>",
+          "failureSummary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        },
+        {
+          "target": [
+            "a"
+          ],
+          "html": "<a href=\"/odbior.html\" title=\"Wróć do listy obiekt...\" style=\"padding: 10px 15px; ...\">",
+          "failureSummary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        }
+      ]
+    }
+  ],
+  "incomplete": [
+    {
+      "id": "aria-prohibited-attr",
+      "impact": "serious",
+      "description": "Ensure ARIA attributes are not prohibited for an element's role",
+      "nodeCount": 1,
+      "nodes": [
+        {
+          "target": [
+            "div[data-testid=\"canonical-statement-table-v2\"]"
+          ],
+          "html": "<div class=\"flex h-full flex-col overflow-hidden rounded-xl border border-c-border-subtle bg-c-surface\" data-testid=\"canonical-statement-table-v2\" aria-label=\"Tabela sprawozdania finansowego\">",
+          "failureSummary": "Fix all of the following:\n  aria-label attribute is not well supported on a div with no valid role attribute."
+        }
+      ]
+    },
+    {
+      "id": "bypass",
+      "impact": "serious",
+      "description": "Ensure each page has at least one mechanism for a user to bypass navigation and jump straight to the content",
+      "nodeCount": 1,
+      "nodes": [
+        {
+          "target": [
+            "html"
+          ],
+          "html": "<html lang=\"pl\" dir=\"ltr\">",
+          "failureSummary": "Fix any of the following:\n  No valid skip link found\n  Page does not have a heading\n  Page does not have a landmark region"
+        }
+      ]
+    },
+    {
+      "id": "color-contrast",
+      "impact": "serious",
+      "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+      "nodeCount": 1,
+      "nodes": [
+        {
+          "target": [
+            "div[data-testid=\"statement-report-step-publish\"] > .pl-7.gap-2.flex > .text-\\[10px\\].text-c-text-muted"
+          ],
+          "html": "<span class=\"text-[10px] text-c-text-muted\" data-testid=\"statement-report-step-reason-publish\">Najpierw otwórz wynik (krok 2).</span>",
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it partially overlaps other elements"
+        }
+      ]
+    }
+  ]
+}

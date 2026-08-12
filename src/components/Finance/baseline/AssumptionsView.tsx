@@ -294,7 +294,12 @@ export function AssumptionsView({ editor, rowOrder, periodLabelById, readOnly = 
                   </td>
                   <td className="px-3 py-2 text-xs text-c-text-secondary">{periodLabelOf(server?.basePeriodId ?? spec.periodId, periodLabelById)}</td>
                   <td className="px-3 py-2">
+                    {/* ★ NAPRAWA a11y (Pakiet I, wymaganie #5): `<select>` bez
+                        nazwy (axe: "select-name" critical, 18 wystąpień w tym
+                        widoku) — nagłówek kolumny "Reguła kalibracji" nie jest
+                        programowo powiązany z KAŻDYM wierszem selecta. */}
                     <select
+                      aria-label={`Reguła kalibracji — ${driverLabel(spec.driverCode)}`}
                       disabled={readOnly}
                       value={cell?.rule ?? 'MANUAL_OVERRIDE'}
                       onChange={(e) => setCellValue(spec, { rule: e.target.value as BaselineAssumptionRule })}
@@ -367,6 +372,8 @@ export function AssumptionsView({ editor, rowOrder, periodLabelById, readOnly = 
                   <td className="px-3 py-2">
                     {cell?.rangeLow !== null && cell?.rangeHigh !== null && cell?.rangeLow !== undefined && cell?.rangeHigh !== undefined ? (
                       <div className="flex items-center gap-1 text-xs text-c-text-secondary">
+                        {/* ★ NAPRAWA a11y (Pakiet I, wymaganie #5): pola zakresu
+                            bez aria-label (axe: "label" critical). */}
                         <input
                           type="number"
                           disabled={readOnly}
@@ -374,8 +381,9 @@ export function AssumptionsView({ editor, rowOrder, periodLabelById, readOnly = 
                           onChange={(e) => setCellValue(spec, { rangeLow: Number(e.target.value) })}
                           className="w-20 rounded-md border border-c-border-subtle bg-c-bg px-1.5 py-1 text-right tabular-nums focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                           data-testid={`baseline-assumption-range-low-${index}`}
+                          aria-label={`Bezpieczny zakres — dolna granica — ${driverLabel(spec.driverCode)}`}
                         />
-                        <span>–</span>
+                        <span aria-hidden="true">–</span>
                         <input
                           type="number"
                           disabled={readOnly}
@@ -383,6 +391,7 @@ export function AssumptionsView({ editor, rowOrder, periodLabelById, readOnly = 
                           onChange={(e) => setCellValue(spec, { rangeHigh: Number(e.target.value) })}
                           className="w-20 rounded-md border border-c-border-subtle bg-c-bg px-1.5 py-1 text-right tabular-nums focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                           data-testid={`baseline-assumption-range-high-${index}`}
+                          aria-label={`Bezpieczny zakres — górna granica — ${driverLabel(spec.driverCode)}`}
                         />
                       </div>
                     ) : (
@@ -396,6 +405,7 @@ export function AssumptionsView({ editor, rowOrder, periodLabelById, readOnly = 
                   </td>
                   <td className="px-3 py-2">
                     <select
+                      aria-label={`Jakość — ${driverLabel(spec.driverCode)}`}
                       disabled={readOnly}
                       value={cell?.quality ?? 'ESTIMATED'}
                       onChange={(e) => setCellValue(spec, { quality: e.target.value as BaselineAssumptionQuality })}

@@ -205,6 +205,13 @@ describe('CanonicalStatementTableV2', () => {
       />
     );
     expect(screen.getByText('korekta')).toBeInTheDocument();
+    // ★ Pakiet I (a11y): `text-c-warning` na 9px na tle `bg-c-warning/10`
+    // mierzył 3.92:1 (axe, próg WCAG AA 4.5:1) — ten sam odcień w tle i
+    // tekście obniża kontrast. `text-amber-900`/dark `amber-300` to
+    // konwencja `StatusChip` TONE_SHELL (zweryfikowana kontrastowo tam).
+    const badge = screen.getByText('korekta');
+    expect(badge.className).not.toMatch(/\btext-c-warning\b/);
+    expect(badge.className).toMatch(/text-amber-900/);
   });
 
   // KONTROLA NEGATYWNA: zmiana wartości w mocku MUSI zmienić DOM.

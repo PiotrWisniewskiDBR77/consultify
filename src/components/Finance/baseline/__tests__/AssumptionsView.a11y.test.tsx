@@ -90,3 +90,36 @@ describe('AssumptionsView — dialog potwierdzenia zapisu mimo ostrzeżeń (a11y
     expect(screen.queryByTestId('baseline-assumptions-preflight-confirm')).not.toBeInTheDocument();
   });
 });
+
+describe('AssumptionsView — dostępne nazwy pól grida (a11y, Pakiet I)', () => {
+  it('pola "Bezpieczny zakres" (dolna/górna granica) i selecty reguły/jakości mają aria-label per wiersz (axe: "label"/"select-name" critical, PRZED naprawą)', () => {
+    const rowOrder = [{ scheduleType: 'revenue_pvm' as const, driverCode: 'REVENUE_GROWTH_YOY', entityId: 'ent-1', periodId: 'per-2026-01' }];
+    const key = 'revenue_pvm::REVENUE_GROWTH_YOY::ent-1::per-2026-01';
+    const cells = new Map([
+      [
+        key,
+        {
+          key,
+          server: null,
+          draft: null,
+          dirty: false,
+          rule: 'MANUAL_OVERRIDE' as const,
+          valueStatus: 'PRESENT_NONZERO' as const,
+          valueDecimal: 0.05,
+          unit: 'PCT',
+          rangeLow: 0.02,
+          rangeHigh: 0.12,
+          quality: 'ESTIMATED' as const,
+          localComment: null,
+          outOfSafeRange: false,
+        },
+      ],
+    ]);
+    render(<AssumptionsView editor={fakeEditor({ cells })} rowOrder={rowOrder} />);
+
+    expect(screen.getByLabelText(/Bezpieczny zakres — dolna granica/)).toBe(screen.getByTestId('baseline-assumption-range-low-0'));
+    expect(screen.getByLabelText(/Bezpieczny zakres — górna granica/)).toBe(screen.getByTestId('baseline-assumption-range-high-0'));
+    expect(screen.getByLabelText(/Reguła kalibracji/)).toBe(screen.getByTestId('baseline-assumption-rule-0'));
+    expect(screen.getByLabelText(/Jakość/)).toBe(screen.getByTestId('baseline-assumption-quality-0'));
+  });
+});
