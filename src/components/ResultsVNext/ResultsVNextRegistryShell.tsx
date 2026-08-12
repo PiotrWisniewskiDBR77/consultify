@@ -125,6 +125,31 @@ export const ResultsVNextRegistryShell: React.FC<ResultsVNextRegistryShellProps>
     const onClose = preview.onClose;
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key !== 'Escape') return;
+      // R (tor PLATFORMY, 2026-08-12, P1 nr 3) — kanon: „Esc zwija jedną
+      // warstwę naraz". Kiedy kebab wiersza (`RowActionsMenu`, popover
+      // `role="menu"`) jest otwarty NAD tym preview, to on jest warstwą
+      // najbardziej lokalną i MUSI dostać ten Escape jako pierwszy/jedyny —
+      // nie dotykamy `RowActionsMenu.tsx` (zajęty przez równoległą sesję),
+      // więc rozpoznajemy jego otwarty stan z zewnątrz po jego już-stabilnym
+      // publicznym kontrakcie DOM (`role="menu"`), bez zakładania niczego o
+      // jego wewnętrznej implementacji.
+      //
+      // Przyczyna źródłowa zmierzona instrumentacją (Playwright, patrz
+      // raport wykonawcy): `RowActionsMenu`'s escape-listener `useEffect`
+      // ma w zależnościach `flatItems`/`nextEnabledIndex` — pochodne od
+      // propa `sections`, który u KAŻDEGO wywołującego (w tym tego ekranu)
+      // jest nową referencją przy każdym renderze rodzica. Gdy TA powłoka
+      // zamykała preview na Escape, wymuszała pełny re-render tabeli w tej
+      // samej klatce, co kasowało i odtwarzało listener kebaba W TRAKCIE
+      // wysyłki tego samego zdarzenia (`removeEventListener` przed jego
+      // wywołaniem = przeglądarka pomija ten listener dla BIEŻĄCEGO
+      // zdarzenia, zgodnie z WHATWG DOM) — kebab tracił swój Escape, a
+      // preview i tak się zamykało. Efekt: „kebab nie reaguje na Escape".
+      // Ta wczesna decyzja usuwa przyczynę, nie tylko objaw: powłoka w
+      // ogóle nie rusza swojego stanu, dopóki kebab jest otwarty.
+      if (typeof document !== 'undefined' && document.querySelector('[role="menu"]')) {
+        return;
+      }
       event.preventDefault();
       onClose();
     };

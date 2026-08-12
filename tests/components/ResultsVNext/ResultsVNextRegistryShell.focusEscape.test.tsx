@@ -88,4 +88,61 @@ describe('ResultsVNextRegistryShell · Esc-to-close i powrót fokusu', () => {
     expect(() => rerender(<Harness open={false} onClose={onClose} />)).not.toThrow();
     unmount();
   });
+
+  /**
+   * P1 nr 3 (tor PLATFORMY, 2026-08-12) — „kebab wiersza w ogóle nie
+   * reaguje na Escape" na `results-vnext-registry-shell`, 3/3 powtórzeń
+   * (realny Playwright, zob. raport wykonawcy). Zmierzona przyczyna: kebab
+   * wiersza (`RowActionsMenu`, `role="menu"`) ma WŁASNY listener Escape, ale
+   * jego `useEffect` ma w zależnościach `flatItems`/`nextEnabledIndex`
+   * pochodne propa `sections`, który jest nową referencją przy każdym
+   * renderze rodzica. Gdy TA powłoka (przed poprawką) zamykała preview na
+   * Escape, wymuszała pełny re-render tabeli w tej samej klatce, co
+   * kasowało i odtwarzało listener kebaba W TRAKCIE wysyłki tego samego
+   * zdarzenia — przeglądarka pomija listenery usunięte w trakcie własnej
+   * wysyłki (WHATWG DOM), więc kebab tracił swój Escape, a preview i tak
+   * się zamykało. Kanon: „Esc zwija jedną warstwę naraz" — więc gdy kebab
+   * (rozpoznawany z zewnątrz po jego stabilnym kontrakcie DOM `role="menu"`,
+   * bez dotykania `RowActionsMenu.tsx`) jest otwarty, ta powłoka MUSI
+   * pominąć zamknięcie preview i oddać Escape wyłącznie jemu.
+   */
+  it('Escape NIE zamyka preview, gdy otwarty jest kebab wiersza (role="menu") — jedna warstwa naraz', () => {
+    const onClose = vi.fn();
+    render(<Harness open onClose={onClose} />);
+
+    const menu = document.createElement('div');
+    menu.setAttribute('role', 'menu');
+    document.body.appendChild(menu);
+
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(onClose).not.toHaveBeenCalled();
+
+    menu.remove();
+  });
+
+  it('Escape zamyka preview normalnie, gdy kebab NIE jest otwarty', () => {
+    const onClose = vi.fn();
+    render(<Harness open onClose={onClose} />);
+
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('drugi Escape (po zamknięciu kebaba) zamyka preview — dwie warstwy, dwa Escape', () => {
+    const onClose = vi.fn();
+    render(<Harness open onClose={onClose} />);
+
+    const menu = document.createElement('div');
+    menu.setAttribute('role', 'menu');
+    document.body.appendChild(menu);
+
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(onClose).not.toHaveBeenCalled();
+
+    // Kebab się zamknął (symulacja: RowActionsMenu usunęło swój popover).
+    menu.remove();
+
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
 });
