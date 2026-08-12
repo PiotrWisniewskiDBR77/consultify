@@ -15805,7 +15805,12 @@
       "urlReady": "Link processed."
     },
     "stopTTS": "Stop reading",
-    "sidebarEmptyHint": "Ask Teresa from this side panel when you need quick context or next-step help."
+    "sidebarEmptyHint": "Ask Teresa from this side panel when you need quick context or next-step help.",
+    "teresaAction": {
+      "unconfirmed": "I don't have confirmation that the “{{action}}” action actually happened — nothing confirmed it. Check manually before assuming it's done.",
+      "error": "The “{{action}}” action failed — an error occurred. Nothing was confirmed as done.",
+      "refusedNoReason": "I did not perform the “{{action}}” action — the registry refused without giving a reason."
+    }
   },
   "agentAudit": {
     "title": "Agent Audit Layer",

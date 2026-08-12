@@ -108,6 +108,48 @@ export function runUiClosure(run: unknown): {
 }
 
 /**
+ * ★ RISK-30 (S22-TERESA, 2026-08-12) — Async twin of `runUiClosure`, for the
+ * remaining 58 UI-closure call sites in this file ★
+ *
+ * `runUiClosure` above is synchronous: it calls `run()` and inspects the
+ * return value immediately. Fine for the 57 of these 58 sites whose closure
+ * is a plain synchronous `() => void` (a menu item / toolbar button doing a
+ * local `setState` or a fire-and-forget bus dispatch) — but one site
+ * (`runPanelUiOnlyCallback`, the right-panel business-case save) already
+ * `await`s its closure because it performs a real network call, and the
+ * caller needs the save to actually finish before returning `ok: true`.
+ *
+ * `await`-ing a value that is not a Promise resolves to that value on the
+ * next microtask — a no-op in effect for the 57 synchronous closures, and the
+ * ONLY correct behaviour for the one asynchronous one. One implementation
+ * therefore covers both without any call site needing to know which kind of
+ * closure it holds — this is the "widen `run`'s contract centrally" move
+ * from the RISK-30 remainder: a single type/helper change instead of 58
+ * bespoke edits.
+ *
+ * `ok` is UNCHANGED by this helper (stays `true` — "accepted and
+ * dispatched", per `ActionResult.ok`'s documented meaning). `confirmed`
+ * follows the exact same three-way rule as `runUiClosure`:
+ *   • closure returns a `QuickActionOutcome` → honoured literally,
+ *   • closure returns `true`               → confirmed, no detail,
+ *   • closure returns `false`/`undefined`/anything else (the overwhelming
+ *     majority — plain `() => void` UI closures never report back) →
+ *     `confirmed: false`. NOT a regression: these call sites never claimed
+ *     `confirmed: true` before this migration either (the field didn't
+ *     exist); they now say the honest, previously-undeclared truth.
+ */
+export async function runUiClosureAsync(run: unknown): Promise<{
+  confirmed: boolean;
+  outcome?: QuickActionOutcome;
+}> {
+  const returned = await (run as () => unknown)();
+  if (isQuickActionOutcome(returned)) return { confirmed: returned.ok, outcome: returned };
+  if (returned === true) return { confirmed: true, outcome: { ok: true } };
+  if (returned === false) return { confirmed: false };
+  return { confirmed: false };
+}
+
+/**
  * Szyna węzłowa Mapy myśli (`IdeaMapWorkspace.tsx` nasłuchuje i deleguje do
  * `useMindMapQuickActions`). Używana WYŁĄCZNIE dla akcji Mapy — poza Mapą
  * nikt jej nie słucha, co było źródłem martwego „Auto-układu" w Przepływie.
@@ -307,8 +349,8 @@ export async function runEdgeParamCallback(
 ): Promise<ActionResult> {
   const run = ctx.params?.run;
   if (ctx.source === 'ui' && typeof run === 'function') {
-    (run as () => void)();
-    return { ok: true, actionId };
+    const ui = await runUiClosureAsync(run);
+    return { ok: true, actionId, confirmed: ui.confirmed };
   }
 
   const edgeId =
@@ -370,8 +412,8 @@ export async function runToolbarUiOnlyCallback(actionId: string, ctx: ActionCont
         'Ta akcja działa dziś wyłącznie z górnego paska narzędzi Tablicy — nie mam jeszcze sposobu wywołania jej z czatu.',
     };
   }
-  (run as () => void)();
-  return { ok: true, actionId };
+  const ui = await runUiClosureAsync(run);
+  return { ok: true, actionId, confirmed: ui.confirmed };
 }
 
 /**
@@ -398,8 +440,8 @@ export async function runToolbarBusAction(
 ): Promise<ActionResult> {
   const run = ctx.params?.run;
   if (ctx.source === 'ui' && typeof run === 'function') {
-    (run as () => void)();
-    return { ok: true, actionId };
+    const ui = await runUiClosureAsync(run);
+    return { ok: true, actionId, confirmed: ui.confirmed };
   }
   return runByTool(actionId, map, ctx);
 }
@@ -426,8 +468,8 @@ export async function runContextMenuUiOnlyCallback(
         'Ta akcja działa dziś wyłącznie z menu kontekstowego (prawy klik) Tablicy — nie mam jeszcze sposobu wywołania jej z czatu.',
     };
   }
-  (run as () => void)();
-  return { ok: true, actionId };
+  const ui = await runUiClosureAsync(run);
+  return { ok: true, actionId, confirmed: ui.confirmed };
 }
 
 /**
@@ -454,8 +496,8 @@ export async function runMindmapPaneUiOnlyCallback(
         'Ta akcja działa dziś wyłącznie z menu kontekstowego (prawy klik na tło) Mapy myśli — nie mam jeszcze sposobu wywołania jej z czatu.',
     };
   }
-  (run as () => void)();
-  return { ok: true, actionId };
+  const ui = await runUiClosureAsync(run);
+  return { ok: true, actionId, confirmed: ui.confirmed };
 }
 
 /**
@@ -479,8 +521,8 @@ export async function runKeyboardOnlyCallback(actionId: string, ctx: ActionConte
         'Ta akcja działa dziś wyłącznie ze skrótu klawiszowego — nie mam jeszcze sposobu wywołania jej z czatu.',
     };
   }
-  (run as () => void)();
-  return { ok: true, actionId };
+  const ui = await runUiClosureAsync(run);
+  return { ok: true, actionId, confirmed: ui.confirmed };
 }
 
 /**
@@ -501,8 +543,8 @@ export async function runPanelUiOnlyCallback(actionId: string, ctx: ActionContex
         'Ta akcja działa dziś wyłącznie z prawego panelu — nie mam jeszcze sposobu wywołania jej z czatu.',
     };
   }
-  await (run as () => void | Promise<void>)();
-  return { ok: true, actionId };
+  const ui = await runUiClosureAsync(run);
+  return { ok: true, actionId, confirmed: ui.confirmed };
 }
 
 /**
@@ -532,8 +574,8 @@ export async function runMindmapAiSuggestionApplyUiOnlyCallback(
         'Ta akcja działa dziś wyłącznie z otwartego panelu szczegółów węzła, na już wygenerowanej sugestii AI — nie mam jak wskazać konkretnej sugestii z czatu. Mogę za to wygenerować i wstawić nowe węzły przez „AI: rozwiń mapę" (pełny cykl podgląd→akceptacja).',
     };
   }
-  (run as () => void)();
-  return { ok: true, actionId };
+  const ui = await runUiClosureAsync(run);
+  return { ok: true, actionId, confirmed: ui.confirmed };
 }
 
 /**
@@ -585,8 +627,8 @@ export async function runMindmapNodeUiOnlyCallback(
         'Ta akcja działa dziś wyłącznie z menu kontekstowego (prawy klik na węzeł) Mapy myśli — nie mam jeszcze sposobu wywołania jej z czatu.',
     };
   }
-  (run as () => void)();
-  return { ok: true, actionId };
+  const ui = await runUiClosureAsync(run);
+  return { ok: true, actionId, confirmed: ui.confirmed };
 }
 
 /**
@@ -606,8 +648,8 @@ export async function runMindmapNodeBusAction(
 ): Promise<ActionResult> {
   const run = ctx.params?.run;
   if (ctx.source === 'ui' && typeof run === 'function') {
-    (run as () => void)();
-    return { ok: true, actionId };
+    const ui = await runUiClosureAsync(run);
+    return { ok: true, actionId, confirmed: ui.confirmed };
   }
   return runByTool(actionId, map, ctx, ctx.params);
 }
@@ -634,8 +676,8 @@ export async function runProcessFlowNodeUiOnlyCallback(
         'Ta akcja działa dziś wyłącznie z menu węzła (prawy klik) lub pływającego paska Przepływu — nie mam jeszcze sposobu wywołania jej z czatu.',
     };
   }
-  (run as () => void)();
-  return { ok: true, actionId };
+  const ui = await runUiClosureAsync(run);
+  return { ok: true, actionId, confirmed: ui.confirmed };
 }
 
 /**
@@ -806,8 +848,8 @@ export async function runProcessFlowToolbarUiOnlyCallback(
         'Ta akcja działa dziś wyłącznie z górnego paska Przepływu (menu „Więcej") — nie mam jeszcze sposobu wywołania jej z czatu.',
     };
   }
-  (run as () => void)();
-  return { ok: true, actionId };
+  const ui = await runUiClosureAsync(run);
+  return { ok: true, actionId, confirmed: ui.confirmed };
 }
 
 /**
@@ -834,8 +876,8 @@ export async function runProcessFlowPaneUiOnlyCallback(
         'Ta akcja działa dziś wyłącznie z menu tła (prawy klik na puste miejsce) Przepływu — nie mam jeszcze sposobu wywołania jej z czatu.',
     };
   }
-  (run as () => void)();
-  return { ok: true, actionId };
+  const ui = await runUiClosureAsync(run);
+  return { ok: true, actionId, confirmed: ui.confirmed };
 }
 
 /** Wskaźnik akcja TORU (lane) → jej mapa runtime, ten sam kształt co
@@ -1004,8 +1046,8 @@ export const RUNTIME_FRAME_ACTION_MAPS: Partial<Record<string, ToolActionMap>> =
 export async function runFrameParamCallback(actionId: string, ctx: ActionContext): Promise<ActionResult> {
   const run = ctx.params?.run;
   if (ctx.source === 'ui' && typeof run === 'function') {
-    (run as () => void)();
-    return { ok: true, actionId };
+    const ui = await runUiClosureAsync(run);
+    return { ok: true, actionId, confirmed: ui.confirmed };
   }
 
   const frameId =
@@ -1038,8 +1080,8 @@ export async function runFrameNodeParamCallback(ctx: ActionContext): Promise<Act
   const actionId = 'idea.node.remove_from_frame';
   const run = ctx.params?.run;
   if (ctx.source === 'ui' && typeof run === 'function') {
-    (run as () => void)();
-    return { ok: true, actionId };
+    const ui = await runUiClosureAsync(run);
+    return { ok: true, actionId, confirmed: ui.confirmed };
   }
   const nodeId =
     typeof ctx.params?.nodeId === 'string' && ctx.params.nodeId
@@ -1078,8 +1120,8 @@ export async function runProcessFlowAIRewriteStepCallback(ctx: ActionContext): P
   const actionId = 'idea.node.pf_ai_rewrite_step';
   const run = ctx.params?.run;
   if (ctx.source === 'ui' && typeof run === 'function') {
-    (run as () => void)();
-    return { ok: true, actionId };
+    const ui = await runUiClosureAsync(run);
+    return { ok: true, actionId, confirmed: ui.confirmed };
   }
   const nodeId =
     typeof ctx.params?.nodeId === 'string' && ctx.params.nodeId
@@ -1137,8 +1179,8 @@ export async function runProcessFlowConvertInitiativeCallback(ctx: ActionContext
   const actionId = 'idea.node.pf_convert_initiative';
   const run = ctx.params?.run;
   if (ctx.source === 'ui' && typeof run === 'function') {
-    (run as () => void)();
-    return { ok: true, actionId };
+    const ui = await runUiClosureAsync(run);
+    return { ok: true, actionId, confirmed: ui.confirmed };
   }
   const nodeId =
     typeof ctx.params?.nodeId === 'string' && ctx.params.nodeId
@@ -1198,8 +1240,8 @@ export async function runProcessFlowConvertTargetCallback(
 ): Promise<ActionResult> {
   const run = ctx.params?.run;
   if (ctx.source === 'ui' && typeof run === 'function') {
-    (run as () => void)();
-    return { ok: true, actionId };
+    const ui = await runUiClosureAsync(run);
+    return { ok: true, actionId, confirmed: ui.confirmed };
   }
   const nodeId =
     typeof ctx.params?.nodeId === 'string' && ctx.params.nodeId
@@ -1260,8 +1302,8 @@ export async function runProcessFlowConvertAnalysisCallback(ctx: ActionContext):
   const actionId = 'idea.node.pf_convert_analysis';
   const run = ctx.params?.run;
   if (ctx.source === 'ui' && typeof run === 'function') {
-    (run as () => void)();
-    return { ok: true, actionId };
+    const ui = await runUiClosureAsync(run);
+    return { ok: true, actionId, confirmed: ui.confirmed };
   }
   return {
     ok: false,
@@ -1345,8 +1387,8 @@ export async function runMindmapNodeConvertAction(
 ): Promise<ActionResult> {
   const run = ctx.params?.run;
   if (ctx.source === 'ui' && typeof run === 'function') {
-    (run as () => void)();
-    return { ok: true, actionId };
+    const ui = await runUiClosureAsync(run);
+    return { ok: true, actionId, confirmed: ui.confirmed };
   }
   const nodeId =
     typeof ctx.params?.nodeId === 'string' && ctx.params.nodeId
@@ -1396,8 +1438,8 @@ export function dispatchMindmapAttachKnowledge(nodeId: string, ideaId: string) {
 export async function runMindmapAttachKnowledgeCallback(ctx: ActionContext): Promise<ActionResult> {
   const run = ctx.params?.run;
   if (ctx.source === 'ui' && typeof run === 'function') {
-    (run as () => void)();
-    return { ok: true, actionId: 'idea.node.mm_attach_knowledge' };
+    const ui = await runUiClosureAsync(run);
+    return { ok: true, actionId: 'idea.node.mm_attach_knowledge', confirmed: ui.confirmed };
   }
   const nodeId =
     typeof ctx.params?.nodeId === 'string' && ctx.params.nodeId
@@ -1419,8 +1461,8 @@ export async function runMindmapAttachKnowledgeCallback(ctx: ActionContext): Pro
 export async function runNodeEditLabelCallback(ctx: ActionContext): Promise<ActionResult> {
   const run = ctx.params?.run;
   if (ctx.source === 'ui' && typeof run === 'function') {
-    (run as () => void)();
-    return { ok: true, actionId: 'idea.node.edit' };
+    const ui = await runUiClosureAsync(run);
+    return { ok: true, actionId: 'idea.node.edit', confirmed: ui.confirmed };
   }
   const nodeId =
     typeof ctx.params?.nodeId === 'string' && ctx.params.nodeId
@@ -2112,8 +2154,8 @@ export async function runTableSavedViewRenameCallback(ctx: ActionContext): Promi
   const actionId = 'idea.view.saved_view_rename';
   const run = ctx.params?.run;
   if (ctx.source === 'ui' && typeof run === 'function') {
-    (run as () => void)();
-    return { ok: true, actionId };
+    const ui = await runUiClosureAsync(run);
+    return { ok: true, actionId, confirmed: ui.confirmed };
   }
   const viewId = typeof ctx.params?.viewId === 'string' ? ctx.params.viewId : undefined;
   const guard = tableSavedViewGuard(actionId, viewId);
@@ -2129,8 +2171,8 @@ export async function runTableSavedViewUpdateCallback(ctx: ActionContext): Promi
   const actionId = 'idea.view.saved_view_update';
   const run = ctx.params?.run;
   if (ctx.source === 'ui' && typeof run === 'function') {
-    (run as () => void)();
-    return { ok: true, actionId };
+    const ui = await runUiClosureAsync(run);
+    return { ok: true, actionId, confirmed: ui.confirmed };
   }
   const viewId = typeof ctx.params?.viewId === 'string' ? ctx.params.viewId : undefined;
   const guard = tableSavedViewGuard(actionId, viewId);
@@ -2146,8 +2188,8 @@ export async function runTableSavedViewDeleteCallback(ctx: ActionContext): Promi
   const actionId = 'idea.view.saved_view_delete';
   const run = ctx.params?.run;
   if (ctx.source === 'ui' && typeof run === 'function') {
-    (run as () => void)();
-    return { ok: true, actionId };
+    const ui = await runUiClosureAsync(run);
+    return { ok: true, actionId, confirmed: ui.confirmed };
   }
   const viewId = typeof ctx.params?.viewId === 'string' ? ctx.params.viewId : undefined;
   const guard = tableSavedViewGuard(actionId, viewId);
@@ -2177,8 +2219,8 @@ export async function runTableToolbarUiOnlyCallback(
         'Ta akcja działa dziś wyłącznie z górnego paska narzędzi Tabeli (widok platformowy) — nie mam jeszcze sposobu wywołania jej z czatu.',
     };
   }
-  (run as () => void)();
-  return { ok: true, actionId };
+  const ui = await runUiClosureAsync(run);
+  return { ok: true, actionId, confirmed: ui.confirmed };
 }
 
 /**
@@ -2198,8 +2240,8 @@ export async function runTableChatToSchemaProposeCallback(ctx: ActionContext): P
         'Ta akcja działa dziś wyłącznie z otwartego panelu Chat-to-Schema Tabeli — nie mam jeszcze sposobu wywołania jej z czatu.',
     };
   }
-  (run as () => void)();
-  return { ok: true, actionId };
+  const ui = await runUiClosureAsync(run);
+  return { ok: true, actionId, confirmed: ui.confirmed };
 }
 
 /**
@@ -2223,16 +2265,16 @@ export async function runTableToolbarOrKeyboardCallback(
         'Ta akcja działa dziś wyłącznie z klawiatury lub górnego paska narzędzi Tabeli — nie mam jeszcze sposobu wywołania jej z czatu.',
     };
   }
-  (run as () => void)();
-  return { ok: true, actionId };
+  const ui = await runUiClosureAsync(run);
+  return { ok: true, actionId, confirmed: ui.confirmed };
 }
 
 export async function runTablePlatformSavedViewRenameCallback(ctx: ActionContext): Promise<ActionResult> {
   const actionId = 'idea.view.table_platform_saved_view_rename';
   const run = ctx.params?.run;
   if (ctx.source === 'ui' && typeof run === 'function') {
-    (run as () => void)();
-    return { ok: true, actionId };
+    const ui = await runUiClosureAsync(run);
+    return { ok: true, actionId, confirmed: ui.confirmed };
   }
   const viewId = typeof ctx.params?.viewId === 'string' ? ctx.params.viewId : undefined;
   const guard = tableSavedViewGuard(actionId, viewId);
@@ -2248,8 +2290,8 @@ export async function runTablePlatformSavedViewDeleteCallback(ctx: ActionContext
   const actionId = 'idea.view.table_platform_saved_view_delete';
   const run = ctx.params?.run;
   if (ctx.source === 'ui' && typeof run === 'function') {
-    (run as () => void)();
-    return { ok: true, actionId };
+    const ui = await runUiClosureAsync(run);
+    return { ok: true, actionId, confirmed: ui.confirmed };
   }
   const viewId = typeof ctx.params?.viewId === 'string' ? ctx.params.viewId : undefined;
   const guard = tableSavedViewGuard(actionId, viewId);
@@ -2361,8 +2403,8 @@ export async function runTableColumnRenameCallback(ctx: ActionContext): Promise<
   const actionId = 'idea.column.rename';
   const run = ctx.params?.run;
   if (ctx.source === 'ui' && typeof run === 'function') {
-    (run as () => void)();
-    return { ok: true, actionId };
+    const ui = await runUiClosureAsync(run);
+    return { ok: true, actionId, confirmed: ui.confirmed };
   }
   const colKey = typeof ctx.params?.colKey === 'string' ? ctx.params.colKey : undefined;
   const guard = tableColumnGuard(actionId, colKey);
@@ -2378,8 +2420,8 @@ export async function runTableColumnSortCallback(ctx: ActionContext): Promise<Ac
   const actionId = 'idea.column.sort';
   const run = ctx.params?.run;
   if (ctx.source === 'ui' && typeof run === 'function') {
-    (run as () => void)();
-    return { ok: true, actionId };
+    const ui = await runUiClosureAsync(run);
+    return { ok: true, actionId, confirmed: ui.confirmed };
   }
   const colKey = typeof ctx.params?.colKey === 'string' ? ctx.params.colKey : undefined;
   const guard = tableColumnGuard(actionId, colKey);
@@ -2391,8 +2433,8 @@ export async function runTableColumnHideCallback(ctx: ActionContext): Promise<Ac
   const actionId = 'idea.column.hide';
   const run = ctx.params?.run;
   if (ctx.source === 'ui' && typeof run === 'function') {
-    (run as () => void)();
-    return { ok: true, actionId };
+    const ui = await runUiClosureAsync(run);
+    return { ok: true, actionId, confirmed: ui.confirmed };
   }
   const colKey = typeof ctx.params?.colKey === 'string' ? ctx.params.colKey : undefined;
   const guard = tableColumnGuard(actionId, colKey);
@@ -2404,8 +2446,8 @@ export async function runTableColumnDeleteCallback(ctx: ActionContext): Promise<
   const actionId = 'idea.column.delete';
   const run = ctx.params?.run;
   if (ctx.source === 'ui' && typeof run === 'function') {
-    (run as () => void)();
-    return { ok: true, actionId };
+    const ui = await runUiClosureAsync(run);
+    return { ok: true, actionId, confirmed: ui.confirmed };
   }
   const colKey = typeof ctx.params?.colKey === 'string' ? ctx.params.colKey : undefined;
   const guard = tableColumnGuard(actionId, colKey);
@@ -2495,8 +2537,8 @@ export async function runTableRowEditCallback(ctx: ActionContext): Promise<Actio
   const actionId = 'table.row.edit';
   const run = ctx.params?.run;
   if (ctx.source === 'ui' && typeof run === 'function') {
-    (run as () => void)();
-    return { ok: true, actionId };
+    const ui = await runUiClosureAsync(run);
+    return { ok: true, actionId, confirmed: ui.confirmed };
   }
   const rowId = typeof ctx.params?.rowId === 'string' ? ctx.params.rowId : undefined;
   const guard = tableRowGuard(actionId, rowId);
@@ -2508,8 +2550,8 @@ export async function runTableRowNoteCallback(ctx: ActionContext): Promise<Actio
   const actionId = 'table.row.note';
   const run = ctx.params?.run;
   if (ctx.source === 'ui' && typeof run === 'function') {
-    (run as () => void)();
-    return { ok: true, actionId };
+    const ui = await runUiClosureAsync(run);
+    return { ok: true, actionId, confirmed: ui.confirmed };
   }
   const rowId = typeof ctx.params?.rowId === 'string' ? ctx.params.rowId : undefined;
   const guard = tableRowGuard(actionId, rowId);
@@ -2521,8 +2563,8 @@ export async function runTableRowDuplicateCallback(ctx: ActionContext): Promise<
   const actionId = 'table.row.duplicate';
   const run = ctx.params?.run;
   if (ctx.source === 'ui' && typeof run === 'function') {
-    (run as () => void)();
-    return { ok: true, actionId };
+    const ui = await runUiClosureAsync(run);
+    return { ok: true, actionId, confirmed: ui.confirmed };
   }
   const rowId = typeof ctx.params?.rowId === 'string' ? ctx.params.rowId : undefined;
   const guard = tableRowGuard(actionId, rowId);
@@ -2534,8 +2576,8 @@ export async function runTableRowDeleteCallback(ctx: ActionContext): Promise<Act
   const actionId = 'table.row.delete';
   const run = ctx.params?.run;
   if (ctx.source === 'ui' && typeof run === 'function') {
-    (run as () => void)();
-    return { ok: true, actionId };
+    const ui = await runUiClosureAsync(run);
+    return { ok: true, actionId, confirmed: ui.confirmed };
   }
   const rowId = typeof ctx.params?.rowId === 'string' ? ctx.params.rowId : undefined;
   const guard = tableRowGuard(actionId, rowId);
@@ -2567,8 +2609,8 @@ export async function runTableCellUiOnlyCallback(
         'Ta akcja działa dziś wyłącznie z menu kontekstowego (prawy klik) komórki Tabeli — nie mam jeszcze sposobu wywołania jej z czatu.',
     };
   }
-  (run as () => void)();
-  return { ok: true, actionId };
+  const ui = await runUiClosureAsync(run);
+  return { ok: true, actionId, confirmed: ui.confirmed };
 }
 
 /**
@@ -2586,8 +2628,8 @@ export async function runTableCellClearCallback(ctx: ActionContext): Promise<Act
   const actionId = 'idea.cell.clear';
   const run = ctx.params?.run;
   if (ctx.source === 'ui' && typeof run === 'function') {
-    (run as () => void)();
-    return { ok: true, actionId };
+    const ui = await runUiClosureAsync(run);
+    return { ok: true, actionId, confirmed: ui.confirmed };
   }
   const rowId = typeof ctx.params?.rowId === 'string' ? ctx.params.rowId : undefined;
   const colKey = typeof ctx.params?.colKey === 'string' ? ctx.params.colKey : undefined;
@@ -2661,8 +2703,8 @@ export async function runTableDistributionCreateCallback(
 ): Promise<ActionResult> {
   const run = ctx.params?.run;
   if (ctx.source === 'ui' && typeof run === 'function') {
-    (run as () => void)();
-    return { ok: true, actionId };
+    const ui = await runUiClosureAsync(run);
+    return { ok: true, actionId, confirmed: ui.confirmed };
   }
   const baseId = typeof ctx.params?.baseId === 'string' ? ctx.params.baseId : undefined;
   const name = typeof ctx.params?.name === 'string' ? ctx.params.name.trim() : '';
@@ -2704,8 +2746,8 @@ export async function runTableDistributionExecuteCallback(
 ): Promise<ActionResult> {
   const run = ctx.params?.run;
   if (ctx.source === 'ui' && typeof run === 'function') {
-    (run as () => void)();
-    return { ok: true, actionId };
+    const ui = await runUiClosureAsync(run);
+    return { ok: true, actionId, confirmed: ui.confirmed };
   }
   const distributionId =
     typeof ctx.params?.distributionId === 'string' ? ctx.params.distributionId : undefined;
@@ -2730,8 +2772,8 @@ export async function runTableDistributionDeleteCallback(
 ): Promise<ActionResult> {
   const run = ctx.params?.run;
   if (ctx.source === 'ui' && typeof run === 'function') {
-    (run as () => void)();
-    return { ok: true, actionId };
+    const ui = await runUiClosureAsync(run);
+    return { ok: true, actionId, confirmed: ui.confirmed };
   }
   const distributionId =
     typeof ctx.params?.distributionId === 'string' ? ctx.params.distributionId : undefined;
@@ -2772,8 +2814,8 @@ export async function runTableDateDependencySaveCallback(ctx: ActionContext): Pr
   const actionId = 'table.date_dependency.save';
   const run = ctx.params?.run;
   if (ctx.source === 'ui' && typeof run === 'function') {
-    (run as () => void)();
-    return { ok: true, actionId };
+    const ui = await runUiClosureAsync(run);
+    return { ok: true, actionId, confirmed: ui.confirmed };
   }
   const tableId = typeof ctx.params?.tableId === 'string' ? ctx.params.tableId : undefined;
   const startDateFieldId =
@@ -2805,8 +2847,8 @@ export async function runTableDateDependencyRecalculateCallback(
   const actionId = 'table.date_dependency.recalculate';
   const run = ctx.params?.run;
   if (ctx.source === 'ui' && typeof run === 'function') {
-    (run as () => void)();
-    return { ok: true, actionId };
+    const ui = await runUiClosureAsync(run);
+    return { ok: true, actionId, confirmed: ui.confirmed };
   }
   const tableId = typeof ctx.params?.tableId === 'string' ? ctx.params.tableId : undefined;
   const startDateFieldId =
@@ -2847,8 +2889,8 @@ export async function runTableRecordTemplateDeleteCallback(ctx: ActionContext): 
   const actionId = 'table.record_template.delete';
   const run = ctx.params?.run;
   if (ctx.source === 'ui' && typeof run === 'function') {
-    (run as () => void)();
-    return { ok: true, actionId };
+    const ui = await runUiClosureAsync(run);
+    return { ok: true, actionId, confirmed: ui.confirmed };
   }
   const templateId = typeof ctx.params?.templateId === 'string' ? ctx.params.templateId : undefined;
   if (!templateId) {
@@ -2870,8 +2912,8 @@ export async function runTableRecordTemplateSaveCallback(ctx: ActionContext): Pr
   const actionId = 'table.record_template.save';
   const run = ctx.params?.run;
   if (ctx.source === 'ui' && typeof run === 'function') {
-    (run as () => void)();
-    return { ok: true, actionId };
+    const ui = await runUiClosureAsync(run);
+    return { ok: true, actionId, confirmed: ui.confirmed };
   }
   const name = typeof ctx.params?.name === 'string' ? ctx.params.name.trim() : '';
   const data =
@@ -2963,8 +3005,8 @@ export async function runTableAutomationRunNowCallback(ctx: ActionContext): Prom
   const actionId = 'table.automation.run_now';
   const run = ctx.params?.run;
   if (ctx.source === 'ui' && typeof run === 'function') {
-    (run as () => void)();
-    return { ok: true, actionId };
+    const ui = await runUiClosureAsync(run);
+    return { ok: true, actionId, confirmed: ui.confirmed };
   }
   const automationId =
     typeof ctx.params?.automationId === 'string' ? ctx.params.automationId : undefined;
@@ -2987,8 +3029,8 @@ export async function runTableAutomationDeleteCallback(ctx: ActionContext): Prom
   const actionId = 'table.automation.delete';
   const run = ctx.params?.run;
   if (ctx.source === 'ui' && typeof run === 'function') {
-    (run as () => void)();
-    return { ok: true, actionId };
+    const ui = await runUiClosureAsync(run);
+    return { ok: true, actionId, confirmed: ui.confirmed };
   }
   const automationId =
     typeof ctx.params?.automationId === 'string' ? ctx.params.automationId : undefined;
@@ -3012,8 +3054,8 @@ export async function runTableWebhookRelayDeleteCallback(ctx: ActionContext): Pr
   const actionId = 'table.webhook_relay.delete';
   const run = ctx.params?.run;
   if (ctx.source === 'ui' && typeof run === 'function') {
-    (run as () => void)();
-    return { ok: true, actionId };
+    const ui = await runUiClosureAsync(run);
+    return { ok: true, actionId, confirmed: ui.confirmed };
   }
   const relayId = typeof ctx.params?.relayId === 'string' ? ctx.params.relayId : undefined;
   if (!relayId) {
@@ -3036,8 +3078,8 @@ export async function runTableFormShareModeChangeCallback(ctx: ActionContext): P
   const actionId = 'table.form.share_mode_change';
   const run = ctx.params?.run;
   if (ctx.source === 'ui' && typeof run === 'function') {
-    (run as () => void)();
-    return { ok: true, actionId };
+    const ui = await runUiClosureAsync(run);
+    return { ok: true, actionId, confirmed: ui.confirmed };
   }
   const formId = typeof ctx.params?.formId === 'string' ? ctx.params.formId : undefined;
   const mode = typeof ctx.params?.mode === 'string' ? ctx.params.mode : undefined;
@@ -3073,8 +3115,8 @@ export async function runTableFormDeleteCallback(ctx: ActionContext): Promise<Ac
   const actionId = 'table.form.delete';
   const run = ctx.params?.run;
   if (ctx.source === 'ui' && typeof run === 'function') {
-    (run as () => void)();
-    return { ok: true, actionId };
+    const ui = await runUiClosureAsync(run);
+    return { ok: true, actionId, confirmed: ui.confirmed };
   }
   const formId = typeof ctx.params?.formId === 'string' ? ctx.params.formId : undefined;
   if (!formId) {
@@ -3096,8 +3138,8 @@ export async function runTableFormIntakeSaveAllowListCallback(ctx: ActionContext
   const actionId = 'table.form_intake.save_allow_list';
   const run = ctx.params?.run;
   if (ctx.source === 'ui' && typeof run === 'function') {
-    (run as () => void)();
-    return { ok: true, actionId };
+    const ui = await runUiClosureAsync(run);
+    return { ok: true, actionId, confirmed: ui.confirmed };
   }
   const formId = typeof ctx.params?.formId === 'string' ? ctx.params.formId : undefined;
   if (!formId) {
@@ -3124,8 +3166,8 @@ export async function runTableInterfaceDeleteCallback(ctx: ActionContext): Promi
   const actionId = 'table.interface.delete';
   const run = ctx.params?.run;
   if (ctx.source === 'ui' && typeof run === 'function') {
-    (run as () => void)();
-    return { ok: true, actionId };
+    const ui = await runUiClosureAsync(run);
+    return { ok: true, actionId, confirmed: ui.confirmed };
   }
   const interfaceId =
     typeof ctx.params?.interfaceId === 'string' ? ctx.params.interfaceId : undefined;
@@ -3149,8 +3191,8 @@ export async function runTableSharingInviteCallback(ctx: ActionContext): Promise
   const actionId = 'table.sharing.invite';
   const run = ctx.params?.run;
   if (ctx.source === 'ui' && typeof run === 'function') {
-    (run as () => void)();
-    return { ok: true, actionId };
+    const ui = await runUiClosureAsync(run);
+    return { ok: true, actionId, confirmed: ui.confirmed };
   }
   const baseId = typeof ctx.params?.baseId === 'string' ? ctx.params.baseId : undefined;
   const email = typeof ctx.params?.email === 'string' ? ctx.params.email.trim() : '';
@@ -3180,8 +3222,8 @@ export async function runTableSharingRemoveCollaboratorCallback(
   const actionId = 'table.sharing.remove_collaborator';
   const run = ctx.params?.run;
   if (ctx.source === 'ui' && typeof run === 'function') {
-    (run as () => void)();
-    return { ok: true, actionId };
+    const ui = await runUiClosureAsync(run);
+    return { ok: true, actionId, confirmed: ui.confirmed };
   }
   const baseId = typeof ctx.params?.baseId === 'string' ? ctx.params.baseId : undefined;
   const userId = typeof ctx.params?.userId === 'string' ? ctx.params.userId : undefined;
@@ -3209,8 +3251,8 @@ export async function runTableSyncCreateCallback(ctx: ActionContext): Promise<Ac
   const actionId = 'table.sync.create';
   const run = ctx.params?.run;
   if (ctx.source === 'ui' && typeof run === 'function') {
-    (run as () => void)();
-    return { ok: true, actionId };
+    const ui = await runUiClosureAsync(run);
+    return { ok: true, actionId, confirmed: ui.confirmed };
   }
   const sourceTableId =
     typeof ctx.params?.sourceTableId === 'string' ? ctx.params.sourceTableId : undefined;
@@ -3244,8 +3286,8 @@ export async function runTableSyncRunNowCallback(ctx: ActionContext): Promise<Ac
   const actionId = 'table.sync.run_now';
   const run = ctx.params?.run;
   if (ctx.source === 'ui' && typeof run === 'function') {
-    (run as () => void)();
-    return { ok: true, actionId };
+    const ui = await runUiClosureAsync(run);
+    return { ok: true, actionId, confirmed: ui.confirmed };
   }
   const syncId = typeof ctx.params?.syncId === 'string' ? ctx.params.syncId : undefined;
   if (!syncId) {
@@ -3267,8 +3309,8 @@ export async function runTableSyncDeleteCallback(ctx: ActionContext): Promise<Ac
   const actionId = 'table.sync.delete';
   const run = ctx.params?.run;
   if (ctx.source === 'ui' && typeof run === 'function') {
-    (run as () => void)();
-    return { ok: true, actionId };
+    const ui = await runUiClosureAsync(run);
+    return { ok: true, actionId, confirmed: ui.confirmed };
   }
   const syncId = typeof ctx.params?.syncId === 'string' ? ctx.params.syncId : undefined;
   if (!syncId) {

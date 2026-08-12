@@ -16651,7 +16651,12 @@
       "urlReady": "Link przetworzony."
     },
     "stopTTS": "Zatrzymaj czytanie",
-    "sidebarEmptyHint": "Opisz tutaj, jaki materiał potrzebujesz — Teresa zaplanuje strukturę i napisze pierwszą wersję na Twoich oczach."
+    "sidebarEmptyHint": "Opisz tutaj, jaki materiał potrzebujesz — Teresa zaplanuje strukturę i napisze pierwszą wersję na Twoich oczach.",
+    "teresaAction": {
+      "unconfirmed": "Nie mam potwierdzenia, że akcja „{{action}}” się wykonała — nic tego nie potwierdziło. Sprawdź ręcznie, zanim uznasz to za zrobione.",
+      "error": "Nie udało się wykonać akcji „{{action}}” — wystąpił błąd. Nic nie zostało potwierdzone jako zrobione.",
+      "refusedNoReason": "Nie wykonałem akcji „{{action}}” — rejestr odmówił bez podania powodu."
+    }
   },
   "agentAudit": {
     "title": "Warstwa audytu agentów",
