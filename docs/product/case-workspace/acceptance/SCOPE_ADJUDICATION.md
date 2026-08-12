@@ -680,3 +680,133 @@ the historical range `git diff --check 9d17cac114..HEAD` still reports the
 original two violations because that range diffs committed history and
 this actor made no commit (explicitly out of scope) — it will read clean
 once the coordinator commits this pass's fix on top of `HEAD`.
+
+### 9. Packet E2 (2026-08-12, HEAD `a565ce454c`) — the 39/18-row resolution,
+### F2 + owner-decision handoff sync, remaining `UNCOMMITTED-WORKTREE` retirement
+
+Scope: the 39 `IMPLEMENTED_AND_PROVEN` rows with a broken `test_ref` (§ below
+of `LEDGER_SNAPSHOT.md`, "Niespojnosc..."), the 18 corpus-SHA rows (§8.4(c)
+above), syncing `RESUME_HANDOFF_2026-08-12.md` §5.1/§5.2/§5.3 to the F2 fix
+and the two now-frozen owner decisions, and the remaining 65
+`UNCOMMITTED-WORKTREE` rows §8.4(b)/§8.6 explicitly deferred. Touched only
+`docs/product/case-workspace/acceptance/*.csv`, `LEDGER_SNAPSHOT.md`, this
+file, `RESUME_HANDOFF_2026-08-12.md`, and re-ran (never edited)
+`scripts/case-workspace/ledger-report.mjs`. No product code, no test file.
+
+**39-row pass.** Every row individually inspected, not batch-flipped. 13 of
+39 personally re-verified against a real, currently-passing Postgres test
+(ran each cited/corrected test file fresh — 16/16, 9/9, 22/22, 14/14, 16/16,
+11/11, 12/12 depending on file — status **kept** `IMPLEMENTED_AND_PROVEN`,
+`test_ref` corrected to name the specific `it()` by name and line). 26 of 39
+**downgraded to `PARTIAL`**, append-only, each with a specific stated gap:
+either the cited function has literally zero test calls anywhere in the repo
+(9 rows), or it is exercised functionally but its claimed
+`authorization_predicate` is never tested with a no-membership/cross-org
+actor against a real DB row (15 rows — a mocked route-wiring test exists for
+some of these and is cited as partial corroboration, explicitly labeled as
+NOT equivalent to a real-DB proof), or the row's live-browser evidence
+artifacts (`u4-report*.json`) do not exist anywhere in the repo while the
+underlying static/source-level claim was independently re-confirmed by grep
+(2 EPIC_DOD_COVERAGE.csv rows, crimson-purity and StandardTable composition).
+Full 39-row table is in this worker's session report to the coordinator
+(not duplicated here to keep this file from doubling in size); the
+authoritative record is the CSV rows themselves
+(`-U1`/`-U6` suffixes, `claude-e2-ledger-hygiene`, 2026-08-12).
+
+**Structural caveat inherited from `TRACEABILITY_AUTH_ROUTES.csv` having no
+`supersedes_row_id` column (unchanged by this pass — a pre-existing gap, see
+§8.4(d)):** 37 of the 39 rows live in that file. Appending a corrected row
+does NOT remove the original `PENDING`-test_ref row from the file — both
+now coexist as "effective" per the generator's own logic (it has no
+supersedes mechanism to resolve for this file). `LEDGER_SNAPSHOT.md`'s
+"niespojnosc" count therefore still reads **37** (down from 39 only because
+the 2 `EPIC_DOD_COVERAGE.csv` rows *do* have a working supersedes chain and
+were fully removed from the effective set) — this is expected and
+documented, not an error: read the `-U1`/`-U6`-suffixed rows as the
+authoritative, current answer for each requirement_id; the original
+`PENDING` rows are left in place as history, per the append-only rule, and
+because this actor's allowlist does not include `ledger-report.mjs`'s
+supersede-resolution *logic* for a file that structurally lacks the column
+it depends on (adding that logic was judged out of scope for this packet —
+flagging it here for whoever next touches the generator).
+
+**18-corpus-SHA-row pass.** All 18 have a proper `supersedes_row_id` chain
+in their source files, so this is a clean append with no duplicate-counting
+caveat (`ledger-report.mjs`'s own hygiene counter for corpus-SHA misuse on
+`IMPLEMENTED_AND_PROVEN` rows is now **0**, re-measured, not asserted).
+Personally re-ran all 7 distinct test files these 18 rows cite — all pass.
+While re-verifying, found and corrected **5 real test_ref line-number
+drifts** (not corpus-SHA-related, an independent finding from reading the
+cited lines): `CW-GR-025`, `CW-GR-044`, `CW-GR-045`, `CW-GC-E-03` (all
+citing lines that, at the file's *current* state, land inside a different,
+unrelated test than the one the row's evidence prose describes — e.g.
+`CW-GC-E-03` cited a line inside the REJECT-decision test instead of the
+expired-review-window test that actually proves its claim), and `CW-GR-028`
+(one of its two citations resolves to an unrelated quarantine-404 test;
+dropped rather than repeated). All 5 claims were still independently
+provable from the SAME test file at a DIFFERENT, correct line — status kept
+`IMPLEMENTED_AND_PROVEN` in every case, `test_ref` corrected. This is offered
+as a general caution for the corpus: bare `file:line` citations drift
+silently as other agents edit shared test files, and nothing catches that
+automatically — the parser only checks the *file* exists, not that the line
+still names the claimed test.
+
+**F2 / owner-decision handoff sync (Task 3).** `RESUME_HANDOFF_2026-08-12.md`
+§5.1 previously described the e2e-files-together failure as open; it was
+fixed in commit `a565ce454c` (shared-mutable-identity race between two
+concurrently-run e2e files, confirmed mechanism, 34/34 on 3 consecutive
+together-runs per the coordinator's own independent re-verification). This
+pass updated §5.1 to read as resolved (not re-diagnosed) and recorded both
+owner decisions from §5.2/§5.3 as **FROZEN**:
+`OD-CW-BOOTSTRAP-20260812` (synthetic service-principal identity in a
+disposable org, fails closed, no fallback to "first ADMIN") and
+`OD-CW-DEMO-20260812` (mutating-test ban on demo/staging stays; read-only
+recon allowed; not a blocker for this candidate). Full text is in the
+handoff file itself, not duplicated here.
+
+**Remaining `UNCOMMITTED-WORKTREE` rows (65) — resolved this pass**,
+completing what §8.6 explicitly deferred ("this actor narrowed it
+deliberately... flagging that interpretation here explicitly so the
+coordinator can override it if the intent was literally all 71"). This
+packet's own brief named the cleanup without the PROVEN-only narrowing, so
+all 65 remaining rows (`EPIC_DOD_COVERAGE.csv`: 53, `SECURITY_RESILIENCE_MATRIX.csv`:
+4, `API_EVENT_SCHEMA_COVERAGE.csv`: 4, `GOLDEN_CASE_EVIDENCE_LEDGER.csv`: 3,
+`LEGACY_MIGRATION_PARITY.csv`: 1) got a `-UW1` append-only superseding row:
+`candidate_sha` corrected from the sentinel to `PENDING-CANDIDATE-SHA`,
+**status/test_ref/evidence_ref left completely unchanged** — this is a pure
+metadata-hygiene fix, not a re-verification of those 65 rows' underlying
+evidence (none were `IMPLEMENTED_AND_PROVEN`/`PASS` to begin with, reconfirmed
+defensively before writing). `ledger-report.mjs`'s hygiene counter for this
+sentinel is now **0** across the whole corpus (was 71 before C5's 6, 65
+before this pass's 65).
+
+**`TRACEABILITY_AUTH_ROUTES.csv` SHA gap (Task 4 point 2) — already closed by
+C5 (§8.6), reconfirmed here, not redone.** The file's `candidate_sha` column
+exists (added by C5) and every one of its 214 rows (177 original + 37 new
+from this pass's 39-row resolution) carries the literal placeholder
+`PENDING-CANDIDATE-SHA` — **zero real commit SHAs anywhere in this file**,
+by design: this worktree carries no candidate commit yet, and stamping one
+per row before the coordinator freezes a `CANDIDATE_SHA` would misrepresent
+which code state each row was actually accepted against (some rows in this
+pass were verified against HEAD `a565ce454c` PLUS other agents' concurrent
+uncommitted edits — a mixed state no single SHA could honestly name). This
+is the explicit documentation of the structural gap the task asked for, not
+a workaround: the column is real, present on every row, and honestly empty
+of a commit until freeze time.
+
+**GAP counter — not reduced mechanically.** Every status change in this
+pass is individually justified above (13 rows upgraded with a newly-run,
+newly-cited real test; 26 rows downgraded with a stated missing test). No
+row was flipped to make a counter look better; several rows that could have
+been left `IMPLEMENTED_AND_PROVEN` on a technicality (a passing but
+unrelated route-wiring test) were downgraded instead once the mismatch was
+found. Net effect on `ledger-report.mjs`'s effective-row distribution:
+`IMPLEMENTED_AND_PROVEN` 187→198 (+13 upgraded, −2 EPIC rows properly
+superseded out), `PARTIAL` 201→227 (+24 `TRACEABILITY_AUTH_ROUTES.csv` +2
+`EPIC_DOD_COVERAGE.csv`), everything else unchanged. Re-measured with
+`node scripts/case-workspace/ledger-report.mjs` after every batch of edits,
+not asserted from memory.
+
+**Determinism proof (Task 5), generated BEFORE this packet's own CSV edits
+were finalized, then re-verified AFTER — see this worker's session report
+for the literal `cmp`/`sha256sum` output pasted in full; not duplicated here.**

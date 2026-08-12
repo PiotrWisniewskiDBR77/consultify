@@ -1,9 +1,20 @@
 # Case Workspace V1 — HANDOFF, 2026-08-12
 
 > **Status: `WORK_IN_PROGRESS — NOT A CANDIDATE`.**
-> Nie zgłaszam `READY_FOR_CODEX_REVIEW`. Powód jest konkretny i wypisany
-> w §5: jeden otwarty, powtarzalny defekt (F2) i dwie otwarte decyzje
-> właściciela, bez których siedem capability jest w produkcji nieosiągalnych.
+> Nie zgłaszam `READY_FOR_CODEX_REVIEW`. Powód pierwotny (2026-08-12, przy
+> commicie tworzącym ten plik) jest wypisany w §5: jeden otwarty, powtarzalny
+> defekt (F2) i dwie otwarte decyzje właściciela.
+>
+> **AKTUALIZACJA (packet E2, 2026-08-12 14:10, ten sam dzień, HEAD
+> `a565ce454c`): F2 jest ROZWIĄZANE, obie decyzje właściciela z §5.2/§5.3 są
+> ZAMROŻONE (FROZEN).** Zobacz §5.1/§5.2/§5.3 poniżej — treść tam jest teraz
+> aktualna, nie historyczna. Status pliku **pozostaje** `WORK_IN_PROGRESS —
+> NOT A CANDIDATE` mimo to: §5.4 wciąż ma otwarte pozycje (39/18-wierszowe
+> ustalenia rejestru zostały rozwiązane przez packet E2 — patrz §5.4 — ale
+> `createNativeDeck`, walidator OpenAPI offline, Run 30-minutowy i pełna
+> macierz a11y NIE zostały tym packetem dotknięte, są poza jego allowlistą).
+> Packet E2 NIE ogłasza `FINAL PASS` i NIE stempluje `CANDIDATE_SHA` — to
+> decyzja koordynatora.
 
 ---
 
@@ -55,7 +66,7 @@ konfiguracji kłamie o drugiej. Mierz osobno.
 |---|---|---|
 | suita CW bez e2e | **603 / 603 PASS** (76 plików) | backend **DOWN** |
 | e2e, pliki osobno | 10/10 i 24/24 | backend **UP** |
-| **e2e, oba pliki razem** | **2 FAILED / 32 passed** | backend UP — **§5.1** |
+| **e2e, oba pliki razem** | 2 FAILED / 32 passed (pierwotnie) → **34/34 PASS po naprawie a565ce454c** | backend UP — **§5.1 ROZWIĄZANE** |
 | `server tsc --noEmit` | **EXIT 0** | — |
 | `frontend tsc --noEmit` | **EXIT 0**, 0 błędów, 0 markerów crasha | — |
 | `git diff --check BASE..HEAD` | **EXIT 0** | po commicie |
@@ -121,7 +132,14 @@ dead-letter, rekonsyliacja, metryki.
 
 ## 5. CO JEST OTWARTE — czytaj to przed ogłoszeniem czegokolwiek
 
-### 5.1 F2 — dwa pliki e2e nie mogą działać razem (POWTARZALNE)
+### 5.1 F2 — ROZWIĄZANE (commit `a565ce454c`)
+
+> **Ta sekcja opisywała otwarty defekt do 2026-08-12; treść poniżej to stan
+> PO naprawie, zapisana przez packet E2 tego samego dnia. Nie re-diagnozuję
+> mechanizmu — potwierdzam wynik, który koordynator już zweryfikował
+> niezależnie od pakietu naprawczego.**
+
+Historyczny obraz (do naprawy):
 
 ```
 osobno:  liveStack.e2e.part2.pg.test.ts  -> 10/10 (dwukrotnie)
@@ -131,41 +149,105 @@ RAZEM:   vitest run .../e2e/              -> 2 failed / 32 passed
          × confirming an OLD digest ... fails closed  expected 403 to be 200
 ```
 
-**To, KTÓRE testy padają, zmienia się między przebiegami** — wcześniejszy
-przebieg dał tylko drugą awarię.
+**Potwierdzony mechanizm** (commit `a565ce454c`, komunikat commita — nie
+zgadywany, zmierzony): oba pliki e2e uwierzytelniały się przez prawdziwe HTTP
+jako **ta sama zaseedowana tożsamość** (`SEED_USER`, `cw-local-user` /
+`cw-local-org`). `server/vitest.config.ts` nie ustawia `fileParallelism:false`,
+więc vitest v4 uruchamia oba PLIKI jako współbieżne workery. Test
+"revoking membership mid-chain" w `liveStack.e2e.pg.test.ts` **zawiesza** wiersz
+`organization_members` tej wspólnej tożsamości, asercjuje że dostęp jest
+zablokowany, po czym go przywraca. Równoległe żądania z `part2`, uwierzytelnione
+jako ta sama tożsamość, trafiały w to okno zawieszenia i dostawały **dokładnie
+te same kody**, których sam test revoke oczekuje dla siebie: 404 na odczycie
+Case, 403 na mutacji.
 
-Znaczenie: twierdzenie „Golden Cases przechodzą" jest prawdziwe **wyłącznie
-przy plikach uruchamianych osobno**, a to nie jest legalna bramka. Kanoniczny
-przebieg pełnej suity obejmuje oba pliki.
+**Klasyfikacja: izolacja testów, NIE defekt produktu.** 403/404 to POPRAWNE
+zachowanie produkcyjne — dokładnie to, co test revoke ma udowadniać. Defektem
+było dzielenie jednej, mutowalnej, żywej tożsamości między dwoma niezależnymi
+plikami. **Nie znaleziono żadnego przecieku cross-tenant/cross-org** — to była
+hipoteza do wykluczenia, i została wykluczona, nie potwierdzona.
 
-Nie rozstrzygnięto, czy to izolacja testów, czy realny defekt produktu
-(przeciek stanu / cross-tenant, który interferencja tylko ujawnia). Pakiet F2
-miał to udowodnić, nie zgadnąć.
+Naprawa: test revoke działa teraz na jednorazowym współ-membrze tworzonym per
+przebieg (prawdziwy hash bcryptjs, logowanie przez realny endpoint
+`/api/auth/login` — zero ręcznie klejonych tokenów), zawieszanym i
+przywracanym zamiast `SEED_USER`. `part2` nie wymagał zmian — nigdy nie
+mutował współdzielonego stanu, był tylko przypadkową ofiarą.
 
-### 5.2 Decyzja właściciela — tożsamość bootstrapowa
+**Dowód po naprawie**: koordynator zweryfikował niezależnie od pakietu — 3
+kolejne przebiegi RAZEM: **34/34 PASS**, 0 wyciekłych wierszy fixture
+`cw-e2e-user-%` po zakończeniu. Sam pakiet zaraportował 5 kolejnych
+zielonych przebiegów. Packet E2 (2026-08-12, w ramach 39-wierszowego
+przeglądu rejestru) nie powtarzał tego pomiaru — uznaje ustalenie
+koordynatora za rozstrzygające i nie re-diagnozuje.
 
-Podłączenie adapterów jest w kodzie zrobione, ale **za dwiema zmiennymi
-środowiskowymi**: `CASE_WORKSPACE_CAPABILITY_BOOT_ACTOR_ID` i
-`CASE_WORKSPACE_CAPABILITY_BOOT_ORG_ID`. Dopóki nie wskazują realnego ADMIN-a
-i realnej organizacji, blok loguje ostrzeżenie i nic nie robi — czyli
-**siedem capability nadal jest nieosiągalnych w tym środowisku**.
+Zaflagowane, NIE naprawione (osobny, mniejszy problem): `deleteTestUser` nie
+jest owinięty w `try/finally` wokół całej suity, więc rzut wewnątrz
+`beforeAll` po utworzeniu użytkownika mógłby zostawić wiersz-sierotę. To
+istniejący wcześniej wzorzec w tym harnessie, dotyczy obsługi błędów całej
+suity, nie błędu izolacji opisanego wyżej.
 
-W kodzie **nie istnieje** konwencja „platform-admin bootstrap identity" dla
-RBAC Case Workspace. To decyzja właściciela, nie do wymyślenia przez agenta.
+### 5.2 Decyzja właściciela — tożsamość bootstrapowa — **ZAMROŻONA
+(`OD-CW-BOOTSTRAP-20260812`)**
 
-### 5.3 Decyzja właściciela — testowanie na demo
+> Historyczny opis problemu (podłączenie adapterów gotowe w kodzie, ale za
+> dwiema pustymi zmiennymi środowiskowymi, więc siedem capability
+> nieosiągalnych) pozostaje aktualny jako OPIS STANU KODU. To, co się
+> zmieniło 2026-08-12: właściciel podjął i **zamroził** decyzję, jak ta
+> tożsamość ma wyglądać. Nie jest to już "bez odpowiedzi".
 
-Piotr poprosił o testy na demo (DBR77, `piotr.wisniewski@dbr77.com`).
-To zderza się z twardą regułą tego programu (zakaz zapisów do demo/staging,
-wyłącznie disposable PG i dane syntetyczne). Testy Case Workspace **piszą**.
-Przedstawione warianty: (a) zostajemy lokalnie, (b) odczyt-only na demo,
-(c) świadome zniesienie zakazu. **Bez odpowiedzi.**
+**`OD-CW-BOOTSTRAP-20260812` (FROZEN):** bootstrap capability używa
+DEDYKOWANEJ, SYNTETYCZNEJ tożsamości serwisowej (service principal) w
+jednorazowej (disposable) organizacji testowej, z minimalną rolą ADMIN.
+Identyfikatory pochodzą WYŁĄCZNIE z `CASE_WORKSPACE_CAPABILITY_BOOT_ACTOR_ID` /
+`CASE_WORKSPACE_CAPABILITY_BOOT_ORG_ID` — nic nie jest zaszyte na sztywno w
+kodzie. Zero sekretów w repo, logach czy dowodach akceptacyjnych. Brakująca
+lub nieprawidłowa konfiguracja **FAILS CLOSED** — blok bootstrapu nigdy nie
+wolno cofnąć do fallbacku „pierwszy ADMIN w bazie". Odwołane członkostwo lub
+zła organizacja blokują bootstrap. Ponowny boot jest idempotentny. Wiązanie
+w pamięci NIGDY nie omija trwałego rejestru ani RBAC.
 
-### 5.4 Znane, zgłoszone, nienaprawione
+Produkcja będzie później potrzebować realnej, administracyjnie
+wystawionej tożsamości serwisowej — **ten kandydat dowodzi kontraktu
+wyłącznie na syntetycznej, jednorazowej organizacji**, nie zastępuje
+produkcyjnego provisioningu.
+
+### 5.3 Decyzja właściciela — testowanie na demo — **ZAMROŻONA
+(`OD-CW-DEMO-20260812`)**
+
+> Historyczne pytanie (Piotr poprosił o testy na demo, co zderza się z
+> zakazem zapisów) ma teraz odpowiedź właściciela — nie jest to już
+> "bez odpowiedzi".
+
+**`OD-CW-DEMO-20260812` (FROZEN):** zakaz MUTUJĄCYCH testów na demo/staging
+**ZOSTAJE W MOCY**. Dozwolone: jednorazowa (disposable) baza PostgreSQL,
+dane syntetyczne, lokalny prawdziwy backend, oraz WYŁĄCZNIE odczytowy
+(read-only) rekonesans na demo. Zabronione na demo: tworzenie Case'ów,
+uruchamianie Runów, rejestrowanie capability, tworzenie fixture'ów, zapisy
+inbox/outbox, zmiany członkostwa, testowanie retry/approval/migracji,
+`dev:staging`, `dev:railway`. **To NIE jest blocker dla tego kandydata** —
+program ma pełną ścieżkę weryfikacji bez demo (disposable PG lokalnie).
+
+### 5.4 Znane, zgłoszone — status po packet E2 (2026-08-12)
 
 - **39 wierszy `IMPLEMENTED_AND_PROVEN`, których `test_ref` nie wskazuje
-  istniejącego pliku.** Znalezione przez C5, nierozwiązane.
-- 18 wierszy z SHA korpusu dokumentów użytym jako SHA kodu — oflagowane.
+  istniejącego pliku.** Znalezione przez C5. **ROZWIĄZANE przez packet E2**
+  (append-only): 13 potwierdzone realnym testem PG (naprawiony `test_ref`,
+  status bez zmian), 26 obniżone do `PARTIAL` (2 w `EPIC_DOD_COVERAGE.csv`
+  przez czysty `supersedes_row_id`, 24 w `TRACEABILITY_AUTH_ROUTES.csv` przez
+  dopisane wiersze — ten plik NIE MA kolumny `supersedes_row_id`, więc stare
+  36 wierszy PENDING nadal fizycznie istnieje w CSV i nadal liczy się jako
+  "niespójne" w `LEDGER_SNAPSHOT.md`; nowe wiersze są autorytatywne, stare są
+  historią). Pełna tabela 39/39 w raporcie packetu E2.
+- 18 wierszy z SHA korpusu dokumentów użytym jako SHA kodu. **ROZWIĄZANE
+  przez packet E2**: wszystkie 18 mają teraz `-U2` wiersz nadpisujący
+  (`supersedes_row_id` — oba pliki źródłowe MAJĄ tę kolumnę, więc to czysty
+  append-only bez osieroconych duplikatów w rozkładzie efektywnym).
+  Przy okazji re-weryfikacji znaleziono i skorygowano 5 przypadków realnego
+  DRYFU numeru linii w `test_ref` (plik wciąż istniał i test wciąż
+  przechodził, ale cytowana linia trafiała w INNY test niż deklarowany —
+  np. `CW-GC-E-03` wskazywał linię wewnątrz testu REJECT-decyzji zamiast
+  testu wygasłego okna przeglądu). Status pozostał `IMPLEMENTED_AND_PROVEN`
+  dla wszystkich 18 — poprawiono cytaty, nie osłabiono dowodu.
 - `createNativeDeck` **w ogóle nie sprawdza wyniku zapisu** — gorszy wariant
   klasy `DbPromise`-swallow niż ten z Finance. Adapter się broni ponownym
   odczytem, ale sam serwis został nienaprawiony (poza allowlistą).
@@ -232,10 +314,21 @@ Przedstawione warianty: (a) zostajemy lokalnie, (b) odczyt-only na demo,
 
 ## 8. Co zrobić w następnej kolejności
 
-1. **Domknąć F2** — bez tego nie ma legalnej bramki Golden Cases.
-2. **Uzyskać od właściciela dwie decyzje** z §5.2 i §5.3.
-3. **Rozstrzygnąć 39 wierszy PROVEN bez realnego `test_ref`** — dopóki żyją,
-   liczby w rejestrach nie znaczą tego, co obiecują.
+> **Zaktualizowane przez packet E2, 2026-08-12.** Punkty 1-3 poniżej były
+> otwarte w wersji pierwotnej tego pliku; wszystkie trzy są teraz zamknięte
+> (patrz §5.1/§5.2/§5.3/§5.4). Zostawione tu jako ślad historyczny —
+> NIE usuwam punktów, tylko odnotowuję rozwiązanie przy każdym.
+
+1. ~~**Domknąć F2**~~ — **ROZWIĄZANE** (`a565ce454c`, §5.1).
+2. ~~**Uzyskać od właściciela dwie decyzje** z §5.2 i §5.3~~ — **ZAMROŻONE**
+   (`OD-CW-BOOTSTRAP-20260812`, `OD-CW-DEMO-20260812`, §5.2/§5.3).
+3. ~~**Rozstrzygnąć 39 wierszy PROVEN bez realnego `test_ref`**~~ —
+   **ROZWIĄZANE** (packet E2, append-only, §5.4). Przy okazji rozwiązano też
+   powiązane 18 wierszy z SHA korpusu zamiast SHA kodu (§5.4).
 4. Zamknąć `EVIDENCE_MISSING`: walidator OpenAPI offline, Run 30-minutowy,
-   pełna macierz a11y.
-5. Dopiero potem rozważać kandydata. `FINAL PASS` należy do Codex i właściciela.
+   pełna macierz a11y. **Wciąż otwarte** — poza allowlistą packetu E2.
+   `createNativeDeck` bez sprawdzenia wyniku zapisu (§5.4) — również wciąż
+   otwarte, poza allowlistą.
+5. Dopiero potem rozważać kandydata. `FINAL PASS` należy do Codex i
+   właściciela. Packet E2 NIE stempluje `CANDIDATE_SHA` — zostaje
+   `PENDING-CANDIDATE-SHA` dla koordynatora.

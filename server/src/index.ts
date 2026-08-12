@@ -1892,23 +1892,22 @@ if (startServer && shouldStartHttpServer) {
     // and the seven capabilities remain UNREACHABLE in that environment. The
     // wiring defect is fixed here; provisioning the identity is not.
     try {
-      const bootActorId = process.env.CASE_WORKSPACE_CAPABILITY_BOOT_ACTOR_ID;
-      const bootOrgId = process.env.CASE_WORKSPACE_CAPABILITY_BOOT_ORG_ID;
-      if (bootActorId && bootOrgId) {
-        const { registerBuiltinCapabilityAdapters } = await import(
-          './services/caseWorkspace/adapters/index.js'
-        );
-        await registerBuiltinCapabilityAdapters({
-          createdByActorId: bootActorId,
-          callerOrganizationId: bootOrgId,
-        });
-        logger.info('[Server] Case Workspace capability adapters registered (7 capabilities).');
-      } else {
+      const { bootstrapCaseWorkspaceCapabilities } = await import(
+        './services/caseWorkspace/capabilityBootstrap.js'
+      );
+      const bootResult = await bootstrapCaseWorkspaceCapabilities();
+      if (bootResult.status === 'REGISTERED') {
+        logger.info('[Server] Case Workspace capability adapters registered (7 adapters).');
+      } else if (bootResult.status === 'SKIPPED_MISSING_CONFIG') {
         logger.warn(
           '[Server] Case Workspace capability adapters NOT registered: set ' +
-            'CASE_WORKSPACE_CAPABILITY_BOOT_ACTOR_ID and CASE_WORKSPACE_CAPABILITY_BOOT_ORG_ID ' +
-            'to a real ADMIN actor/org to enable them.'
+            'CASE_WORKSPACE_CAPABILITY_BOOT_ACTOR_ID and CASE_WORKSPACE_CAPABILITY_BOOT_ORG_ID to a ' +
+            'dedicated synthetic service principal (ADMIN of a disposable test organization) to enable them.'
         );
+      } else {
+        // REFUSED_NOT_ORG_MEMBER / REFUSED_INSUFFICIENT_ROLE / REFUSED_UNEXPECTED /
+        // FAILED_DURING_REGISTRATION — never the configured actor/org id, only the status.
+        logger.warn(`[Server] Case Workspace capability adapters NOT registered: ${bootResult.status}.`);
       }
     } catch (err: any) {
       logger.warn('[Server] Case Workspace capability adapters not started:', err?.message);

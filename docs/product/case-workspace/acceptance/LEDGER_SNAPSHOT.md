@@ -2,7 +2,7 @@
 
 > Wygenerowane automatycznie przez `scripts/case-workspace/ledger-report.mjs`.
 > NIE edytowac recznie — kazdy przebieg nadpisuje ten plik od zera.
-> Odcisk tresci wejsciowej (sha256 nazw+bajtow wszystkich *.csv, sortowane): `9eb2785b147c04d37484650367d68eb5a66bccfba8d32ed32e2cd644a5a26125`
+> Odcisk tresci wejsciowej (sha256 nazw+bajtow wszystkich *.csv, sortowane): `e4e6465f041d8940f1779d5d8c97df3d378ab817172554747e459110b41840b7`
 > Ten odcisk (nie znacznik czasu) dowodzi determinizmu: dwa przebiegi na tych samych
 > plikach wejsciowych daja identyczny odcisk i bajtowo identyczny plik wyjsciowy.
 
@@ -24,32 +24,32 @@ jest liczony podwojnie) i liczy rozklad statusow po wierszach **efektywnych**.
 
 | Plik | Wiersze (surowe) | Kolumna status | row_id/requirement_id | supersedes_row_id |
 |---|---:|:---:|:---:|:---:|
-| API_EVENT_SCHEMA_COVERAGE.csv | 62 | tak | row_id | tak |
+| API_EVENT_SCHEMA_COVERAGE.csv | 71 | tak | row_id | tak |
 | CARTESIAN_UX_COVERAGE.csv | 0 | tak | brak | brak |
 | CODEBASE_CONVERGENCE_MAP.csv | 49 | BRAK | brak | brak |
 | CUSTOMER_JOURNEY_LEDGER.csv | 37 | tak | row_id | tak |
-| EPIC_DOD_COVERAGE.csv | 360 | tak | row_id | tak |
+| EPIC_DOD_COVERAGE.csv | 415 | tak | row_id | tak |
 | FUNCTIONAL_REQUIREMENT_COVERAGE.csv | 901 | tak | row_id | tak |
-| GOLDEN_CASE_EVIDENCE_LEDGER.csv | 83 | tak | row_id | tak |
-| LEGACY_MIGRATION_PARITY.csv | 31 | tak | row_id | tak |
+| GOLDEN_CASE_EVIDENCE_LEDGER.csv | 99 | tak | row_id | tak |
+| LEGACY_MIGRATION_PARITY.csv | 32 | tak | row_id | tak |
 | RESPONSIVE_ACCESSIBILITY_LEDGER.csv | 32 | tak | row_id | tak |
-| SECURITY_RESILIENCE_MATRIX.csv | 100 | tak | row_id | tak |
-| TRACEABILITY_AUTH_ROUTES.csv | 177 | tak | requirement_id | brak |
+| SECURITY_RESILIENCE_MATRIX.csv | 104 | tak | row_id | tak |
+| TRACEABILITY_AUTH_ROUTES.csv | 214 | tak | requirement_id | brak |
 | VISUAL_TRIADA_SPEC_A_LEDGER.csv | 235 | tak | row_id | tak |
 
 ## LACZNY rozklad statusow — WIERSZE EFEKTYWNE (po rozwiazaniu supersedes_row_id)
 
-Suma wierszy surowych (wszystkie pliki, wliczajac te bez kolumny status): **2067**
+Suma wierszy surowych (wszystkie pliki, wliczajac te bez kolumny status): **2189**
 
-Suma wierszy efektywnych (po deduplikacji lancuchow supersedes, tylko pliki z kolumna status): **1682**
+Suma wierszy efektywnych (po deduplikacji lancuchow supersedes, tylko pliki z kolumna status): **1719**
 
-NOT_IMPLEMENTED: **1273**, PARTIAL: **201**, IMPLEMENTED_AND_PROVEN: **187**, EVIDENCE_MISSING: **16**, OUT_OF_SCOPE_THIS_WAVE: **5**
+NOT_IMPLEMENTED: **1273**, PARTIAL: **227**, IMPLEMENTED_AND_PROVEN: **198**, EVIDENCE_MISSING: **16**, OUT_OF_SCOPE_THIS_WAVE: **5**
 
-**GAP != 0.** Statusy niedomkniete obecne w wierszach efektywnych: PARTIAL=201, EVIDENCE_MISSING=16, NOT_IMPLEMENTED=1273 (razem **1490** wierszy). Nie mozna deklarowac "zero GAP".
+**GAP != 0.** Statusy niedomkniete obecne w wierszach efektywnych: PARTIAL=227, EVIDENCE_MISSING=16, NOT_IMPLEMENTED=1273 (razem **1516** wierszy). Nie mozna deklarowac "zero GAP".
 
 ### (dla porownania) rozklad surowy — WSZYSTKIE wiersze, bez dedup supersedes
 
-NOT_IMPLEMENTED: **1479**, PARTIAL: **259**, IMPLEMENTED_AND_PROVEN: **197**, BLOCKED_ON_UI: **44**, EVIDENCE_MISSING: **34**, OUT_OF_SCOPE_THIS_WAVE: **5**
+NOT_IMPLEMENTED: **1487**, PARTIAL: **328**, IMPLEMENTED_AND_PROVEN: **228**, EVIDENCE_MISSING: **48**, BLOCKED_ON_UI: **44**, OUT_OF_SCOPE_THIS_WAVE: **5**
 
 ## Deduplikacja semantyczna wymagan (grupy, nie wystapienia)
 
@@ -74,7 +74,7 @@ Rozklad statusow **na poziomie grupy** (kazda grupa liczona RAZ, jej "najlepszym
 sposrod czlonkow — ranga: IMPLEMENTED_AND_PROVEN/PASS > PARTIAL > OUT_OF_SCOPE_THIS_WAVE >
 EVIDENCE_MISSING > BLOCKED* > NOT_IMPLEMENTED):
 
-NOT_IMPLEMENTED: **597**, PARTIAL: **147**, IMPLEMENTED_AND_PROVEN: **71**, EVIDENCE_MISSING: **16**, OUT_OF_SCOPE_THIS_WAVE: **5**
+NOT_IMPLEMENTED: **597**, PARTIAL: **149**, IMPLEMENTED_AND_PROVEN: **69**, EVIDENCE_MISSING: **16**, OUT_OF_SCOPE_THIS_WAVE: **5**
 
 **To NIE zastepuje ani nie zmniejsza licznika GAP z sekcji powyzej.** Zaden status w zadnym
 pliku CSV nie zostal zmieniony przez ten skrypt — to jest DRUGA, jawnie oznaczona miara: ile
@@ -98,10 +98,10 @@ swoja kopie dowodem, drugi nie) — nie sa rozwiazywane przez ten skrypt, tylko 
 | Durable command set: Case (CreateCase, ClarifyCaseGoal, ChangeCaseScope, AssignCaseOwner, RaiseGover… | API_EVENT_SCHEMA_COVERAGE.csv:CW-RT-043=PARTIAL; FUNCTIONAL_REQUIREMENT_COVERAGE.csv:CW-RT-043=NOT_IMPLEMENTED |
 | Case API: POST /api/cases; GET /api/cases/:caseId; PATCH /api/cases/:caseId; POST /api/cases/:caseId… | API_EVENT_SCHEMA_COVERAGE.csv:CW-GR-023=PARTIAL; FUNCTIONAL_REQUIREMENT_COVERAGE.csv:CW-GR-023=NOT_IMPLEMENTED |
 | Plan and graph API: POST /api/cases/:caseId/plans; GET/PATCH .../plans/:planVersionId; POST .../plan… | API_EVENT_SCHEMA_COVERAGE.csv:CW-GR-024=PARTIAL; FUNCTIONAL_REQUIREMENT_COVERAGE.csv:CW-GR-024=NOT_IMPLEMENTED |
-| Draft mutations require expectedVersion. Published versions reject mutation. Layout-only changes use… | API_EVENT_SCHEMA_COVERAGE.csv:CW-GR-025=IMPLEMENTED_AND_PROVEN; FUNCTIONAL_REQUIREMENT_COVERAGE.csv:CW-GR-025=NOT_IMPLEMENTED |
 | Runtime API: POST /api/cases/:caseId/runs; GET /api/runs/:runId; GET /api/runs/:runId/node-runs; POS… | API_EVENT_SCHEMA_COVERAGE.csv:CW-GR-026=PARTIAL; FUNCTIONAL_REQUIREMENT_COVERAGE.csv:CW-GR-026=NOT_IMPLEMENTED |
 | Proposals and approvals API: GET /api/work/proposals/:proposalId; POST /api/work/proposals/:proposal… | API_EVENT_SCHEMA_COVERAGE.csv:CW-GR-027=PARTIAL; FUNCTIONAL_REQUIREMENT_COVERAGE.csv:CW-GR-027=NOT_IMPLEMENTED |
-| Decision requests carry proposalVersion, payloadDigest and idempotency key. The server returns autho… | API_EVENT_SCHEMA_COVERAGE.csv:CW-GR-028=IMPLEMENTED_AND_PROVEN; FUNCTIONAL_REQUIREMENT_COVERAGE.csv:CW-GR-028=NOT_IMPLEMENTED |
+| Capability Registry and Plays API: GET /api/capabilities?availability=&ownerModule=&cursor=; GET /ap… | API_EVENT_SCHEMA_COVERAGE.csv:CW-GR-029=PARTIAL; FUNCTIONAL_REQUIREMENT_COVERAGE.csv:CW-GR-029=NOT_IMPLEMENTED |
+| Artifacts and evidence API: POST /api/cases/:caseId/artifacts; DELETE /api/cases/:caseId/artifacts/:… | API_EVENT_SCHEMA_COVERAGE.csv:CW-GR-033=PARTIAL; FUNCTIONAL_REQUIREMENT_COVERAGE.csv:CW-GR-033=NOT_IMPLEMENTED |
 
 ## Higiena dowodowa: sentinel `UNCOMMITTED-WORKTREE` i SHA korpusu wymagan w `candidate_sha`
 
@@ -111,31 +111,10 @@ niezacommitowanym, wspoldzielonym worktree — nie jako trwaly dowod), ani SHA k
 (`80d75f24ce01751639e572226f4e52b30503cd22`, patrz `PACKET_REGISTRY.md` linia 5: "Corpus
 commit:" — to commit DOKUMENTOW zrodlowych, nie kodu) uzytego tak, jakby byl dowodem code-review.
 
-Wiersze efektywne z `candidate_sha` zaczynajacym sie od `UNCOMMITTED-WORKTREE`: **65**
+Wiersze efektywne z `candidate_sha` zaczynajacym sie od `UNCOMMITTED-WORKTREE`: **0**
   z tego o statusie IMPLEMENTED_AND_PROVEN/PASS (najbardziej niepokojace — dowod "trwaly" na wierszu z sentinelem roboczym): **0**
 
-Wiersze efektywne o statusie IMPLEMENTED_AND_PROVEN/PASS, ktorych `candidate_sha` jest SHA korpusu wymagan (mylnie uzyty jako dowod kodu): **18**
-
-| Plik | ID | status |
-|---|---|---|
-| API_EVENT_SCHEMA_COVERAGE.csv | CW-00-020-INV10 | IMPLEMENTED_AND_PROVEN |
-| API_EVENT_SCHEMA_COVERAGE.csv | CW-GR-025 | IMPLEMENTED_AND_PROVEN |
-| API_EVENT_SCHEMA_COVERAGE.csv | CW-GR-028 | IMPLEMENTED_AND_PROVEN |
-| API_EVENT_SCHEMA_COVERAGE.csv | SEC-020 | IMPLEMENTED_AND_PROVEN |
-| API_EVENT_SCHEMA_COVERAGE.csv | SEC-025 | IMPLEMENTED_AND_PROVEN |
-| GOLDEN_CASE_EVIDENCE_LEDGER.csv | CW-GR-044 | IMPLEMENTED_AND_PROVEN |
-| GOLDEN_CASE_EVIDENCE_LEDGER.csv | CW-GR-045 | IMPLEMENTED_AND_PROVEN |
-| GOLDEN_CASE_EVIDENCE_LEDGER.csv | CW-GR-050 | IMPLEMENTED_AND_PROVEN |
-| GOLDEN_CASE_EVIDENCE_LEDGER.csv | CW-GC-B-05 | IMPLEMENTED_AND_PROVEN |
-| GOLDEN_CASE_EVIDENCE_LEDGER.csv | CW-GC-B-10 | IMPLEMENTED_AND_PROVEN |
-| GOLDEN_CASE_EVIDENCE_LEDGER.csv | CW-GC-C-02 | IMPLEMENTED_AND_PROVEN |
-| GOLDEN_CASE_EVIDENCE_LEDGER.csv | CW-GC-D-01 | IMPLEMENTED_AND_PROVEN |
-| GOLDEN_CASE_EVIDENCE_LEDGER.csv | CW-GC-D-02 | IMPLEMENTED_AND_PROVEN |
-| GOLDEN_CASE_EVIDENCE_LEDGER.csv | CW-GC-D-03 | IMPLEMENTED_AND_PROVEN |
-| GOLDEN_CASE_EVIDENCE_LEDGER.csv | CW-GC-D-04 | IMPLEMENTED_AND_PROVEN |
-| GOLDEN_CASE_EVIDENCE_LEDGER.csv | CW-GC-E-02 | IMPLEMENTED_AND_PROVEN |
-| GOLDEN_CASE_EVIDENCE_LEDGER.csv | CW-GC-E-03 | IMPLEMENTED_AND_PROVEN |
-| GOLDEN_CASE_EVIDENCE_LEDGER.csv | CW-GC-READ-01 | IMPLEMENTED_AND_PROVEN |
+Wiersze efektywne o statusie IMPLEMENTED_AND_PROVEN/PASS, ktorych `candidate_sha` jest SHA korpusu wymagan (mylnie uzyty jako dowod kodu): **0**
 
 Wiersze efektywne o statusie IMPLEMENTED_AND_PROVEN/PASS w pliku, ktory w ogole NIE MA kolumny `candidate_sha` (strukturalnie niemozliwe do zweryfikowania, wobec jakiego stanu kodu wiersz zostal przyjety): **0**
 
@@ -149,11 +128,11 @@ Powyzsze liczby sa raportem dla koordynatora, ktory stempluje realny SHA po scal
 
 ### API_EVENT_SCHEMA_COVERAGE.csv
 
-- Wiersze surowe: **62**
-- Z tego zastapione przez nowszy wiersz (supersedes_row_id, wylaczone z rozkladu efektywnego): **4**
+- Wiersze surowe: **71**
+- Z tego zastapione przez nowszy wiersz (supersedes_row_id, wylaczone z rozkladu efektywnego): **13**
 - Wiersze efektywne: **58**
 - Rozklad statusow (efektywne): PARTIAL: **35**, NOT_IMPLEMENTED: **18**, IMPLEMENTED_AND_PROVEN: **5**
-- Rozklad statusow (surowe, przed dedup): PARTIAL: **39**, NOT_IMPLEMENTED: **18**, IMPLEMENTED_AND_PROVEN: **5**
+- Rozklad statusow (surowe, przed dedup): PARTIAL: **43**, NOT_IMPLEMENTED: **18**, IMPLEMENTED_AND_PROVEN: **10**
 - Wiersze efektywne bez dowodu (pusty test_ref lub pusty evidence_ref): **15**
 
 ### CARTESIAN_UX_COVERAGE.csv
@@ -182,11 +161,11 @@ Powyzsze liczby sa raportem dla koordynatora, ktory stempluje realny SHA po scal
 
 ### EPIC_DOD_COVERAGE.csv
 
-- Wiersze surowe: **360**
-- Z tego zastapione przez nowszy wiersz (supersedes_row_id, wylaczone z rozkladu efektywnego): **250**
+- Wiersze surowe: **415**
+- Z tego zastapione przez nowszy wiersz (supersedes_row_id, wylaczone z rozkladu efektywnego): **305**
 - Wiersze efektywne: **110**
-- Rozklad statusow (efektywne): PARTIAL: **72**, EVIDENCE_MISSING: **13**, IMPLEMENTED_AND_PROVEN: **12**, NOT_IMPLEMENTED: **8**, OUT_OF_SCOPE_THIS_WAVE: **5**
-- Rozklad statusow (surowe, przed dedup): NOT_IMPLEMENTED: **140**, PARTIAL: **123**, BLOCKED_ON_UI: **44**, EVIDENCE_MISSING: **29**, IMPLEMENTED_AND_PROVEN: **19**, OUT_OF_SCOPE_THIS_WAVE: **5**
+- Rozklad statusow (efektywne): PARTIAL: **74**, EVIDENCE_MISSING: **13**, IMPLEMENTED_AND_PROVEN: **10**, NOT_IMPLEMENTED: **8**, OUT_OF_SCOPE_THIS_WAVE: **5**
+- Rozklad statusow (surowe, przed dedup): PARTIAL: **157**, NOT_IMPLEMENTED: **148**, BLOCKED_ON_UI: **44**, EVIDENCE_MISSING: **42**, IMPLEMENTED_AND_PROVEN: **19**, OUT_OF_SCOPE_THIS_WAVE: **5**
 - Wiersze efektywne bez dowodu (pusty test_ref lub pusty evidence_ref): **32**
 
 ### FUNCTIONAL_REQUIREMENT_COVERAGE.csv
@@ -200,20 +179,20 @@ Powyzsze liczby sa raportem dla koordynatora, ktory stempluje realny SHA po scal
 
 ### GOLDEN_CASE_EVIDENCE_LEDGER.csv
 
-- Wiersze surowe: **83**
-- Z tego zastapione przez nowszy wiersz (supersedes_row_id, wylaczone z rozkladu efektywnego): **5**
+- Wiersze surowe: **99**
+- Z tego zastapione przez nowszy wiersz (supersedes_row_id, wylaczone z rozkladu efektywnego): **21**
 - Wiersze efektywne: **78**
 - Rozklad statusow (efektywne): NOT_IMPLEMENTED: **31**, PARTIAL: **30**, IMPLEMENTED_AND_PROVEN: **14**, EVIDENCE_MISSING: **3**
-- Rozklad statusow (surowe, przed dedup): PARTIAL: **32**, NOT_IMPLEMENTED: **31**, IMPLEMENTED_AND_PROVEN: **15**, EVIDENCE_MISSING: **5**
+- Rozklad statusow (surowe, przed dedup): PARTIAL: **34**, NOT_IMPLEMENTED: **31**, IMPLEMENTED_AND_PROVEN: **28**, EVIDENCE_MISSING: **6**
 - Wiersze efektywne bez dowodu (pusty test_ref lub pusty evidence_ref): **32**
 
 ### LEGACY_MIGRATION_PARITY.csv
 
-- Wiersze surowe: **31**
-- Z tego zastapione przez nowszy wiersz (supersedes_row_id, wylaczone z rozkladu efektywnego): **1**
+- Wiersze surowe: **32**
+- Z tego zastapione przez nowszy wiersz (supersedes_row_id, wylaczone z rozkladu efektywnego): **2**
 - Wiersze efektywne: **30**
 - Rozklad statusow (efektywne): NOT_IMPLEMENTED: **29**, PARTIAL: **1**
-- Rozklad statusow (surowe, przed dedup): NOT_IMPLEMENTED: **30**, PARTIAL: **1**
+- Rozklad statusow (surowe, przed dedup): NOT_IMPLEMENTED: **30**, PARTIAL: **2**
 - Wiersze efektywne bez dowodu (pusty test_ref lub pusty evidence_ref): **29**
 
 ### RESPONSIVE_ACCESSIBILITY_LEDGER.csv
@@ -226,19 +205,19 @@ Powyzsze liczby sa raportem dla koordynatora, ktory stempluje realny SHA po scal
 
 ### SECURITY_RESILIENCE_MATRIX.csv
 
-- Wiersze surowe: **100**
-- Z tego zastapione przez nowszy wiersz (supersedes_row_id, wylaczone z rozkladu efektywnego): **8**
+- Wiersze surowe: **104**
+- Z tego zastapione przez nowszy wiersz (supersedes_row_id, wylaczone z rozkladu efektywnego): **12**
 - Wiersze efektywne: **92**
 - Rozklad statusow (efektywne): NOT_IMPLEMENTED: **86**, PARTIAL: **4**, IMPLEMENTED_AND_PROVEN: **2**
-- Rozklad statusow (surowe, przed dedup): NOT_IMPLEMENTED: **92**, IMPLEMENTED_AND_PROVEN: **4**, PARTIAL: **4**
+- Rozklad statusow (surowe, przed dedup): NOT_IMPLEMENTED: **92**, PARTIAL: **8**, IMPLEMENTED_AND_PROVEN: **4**
 - Wiersze efektywne bez dowodu (pusty test_ref lub pusty evidence_ref): **86**
 
 ### TRACEABILITY_AUTH_ROUTES.csv
 
-- Wiersze surowe: **177**
+- Wiersze surowe: **214**
 - Kolumna `supersedes_row_id`: brak w tym pliku — wszystkie wiersze traktowane jako efektywne.
-- Wiersze efektywne: **177**
-- Rozklad statusow (efektywne): IMPLEMENTED_AND_PROVEN: **113**, PARTIAL: **33**, NOT_IMPLEMENTED: **31**
+- Wiersze efektywne: **214**
+- Rozklad statusow (efektywne): IMPLEMENTED_AND_PROVEN: **126**, PARTIAL: **57**, NOT_IMPLEMENTED: **31**
 - Wiersze efektywne bez dowodu (pusty test_ref lub pusty evidence_ref): **15**
 
 ### VISUAL_TRIADA_SPEC_A_LEDGER.csv
@@ -270,12 +249,10 @@ Dla kazdego wiersza efektywnego ze statusem IMPLEMENTED_AND_PROVEN/PASS skrypt r
 w nawiasie) i sprawdza kazdy wzgledem systemu plikow (dla golych nazw plikow — dodatkowo
 przeszukuje cale repo po nazwie, zeby nie dawac falszywych alarmow na skrocone referencje).
 
-**Znaleziono 39** wpis(y) niespojne — to realne znalezisko, nie szum:
+**Znaleziono 37** wpis(y) niespojne — to realne znalezisko, nie szum:
 
 | Plik rejestru | ID wiersza | Powod | Surowy test_ref |
 |---|---|---|---|
-| EPIC_DOD_COVERAGE.csv | CW-DOD-F5-U5 | test_ref to opis, nie sciezka pliku: "LIVE-U4 browser run" | `LIVE-U4 browser run (u4-report-addendum.json C_crimson_live)\|docs/qa/screens/case-workspace-e2e/_raport.json` |
-| EPIC_DOD_COVERAGE.csv | CW-DOD-F1-U5 | test_ref to opis, nie sciezka pliku: "LIVE-U4 browser run" | `LIVE-U4 browser run (u4-report-addendum2.json detail.rawTables=0; u4-report.json S1/S2 real StandardTable rows and rowMenu)` |
 | TRACEABILITY_AUTH_ROUTES.csv | CW-RT-012;CW-GR-023 | test_ref = "PENDING" (sentinel, nie plik) | `PENDING` |
 | TRACEABILITY_AUTH_ROUTES.csv | CW-01-026-INV1 | test_ref = "PENDING" (sentinel, nie plik) | `PENDING` |
 | TRACEABILITY_AUTH_ROUTES.csv | CW-GR-029;CW-GR-030 | test_ref = "PENDING" (sentinel, nie plik) | `PENDING` |
