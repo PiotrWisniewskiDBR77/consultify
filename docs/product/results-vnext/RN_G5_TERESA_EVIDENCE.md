@@ -246,7 +246,79 @@ proven by prior sessions per repo history): `roiPirTeresaDisposition
   advice (this repo's whole-app bundle, not something this lane's ~15 new/
   changed files could plausibly be the sole cause of, though I did not
   diff a clean baseline build to confirm that precisely).
-- `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit` → **[FILLED IN BELOW]**
+- `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit` → **PASS, EXIT 0**
+  (verified by the successor session that took over after this session's
+  network crash — see §12).
+
+## 12. Successor verification pass (2026-08-12, after a network-crash handoff)
+
+A different session picked up this work uncommitted after the above author
+crashed mid-run. Before trusting any claim in §1-11, the successor
+independently re-verified rather than copying this document's numbers
+forward:
+
+- **Committed** the WIP in 3 commits (shared Teresa panel + ROI wiring;
+  KPI `reflection_rca` wiring; this evidence packet + screenshots) —
+  `git log --oneline -3` on `rn-g5-teresa` shows them in that order.
+- **Re-read every file in the diff** (all 11 WIP files + all new KPI-lane
+  files) end to end — confirmed the assessment in §1 is accurate, not
+  self-graded fiction.
+- **`tsc --noEmit`**: ran it fresh, `EXIT_CODE=0`, empty output (0 lines) —
+  the one fix described in §1 (`errorText` branch) is real and holds.
+- **`bash scripts/check-list-canon.sh`** (full-repo fallback, staging was
+  empty after commit): `EXIT 0`, 408 violations vs baseline 409 — debt
+  DROPPED by 1, does not increase.
+- **`bash scripts/check-artefakt.sh`**: `EXIT 0`, 7/7, baseline unchanged.
+- **`grep -rn "window\.\(prompt\|confirm\|alert\)(" src/components/ResultsVNext/`**:
+  one hit, the same pre-existing removal-comment in `OkrCarryForwardDialog.tsx`
+  — confirmed, not an executable dialog.
+- **`git diff --check`**: clean.
+- **`npx esbuild dev-render/screens/results-vnext-teresa-kpi-deviation.tsx --loader:.tsx=tsx --jsx=automatic --outfile=/dev/null`**:
+  `EXIT 0` (tsc does not cover `dev-render/`, per `tsconfig.json`'s
+  `include`, so this is the correct substitute gate, not a full build).
+- **Re-ran all 6 Teresa-relevant test files together** (not the full
+  suite): `tests/resultsVnext/teresa-{kpi,roi,okr}-forbidden-verbs.test.ts`,
+  `tests/components/ResultsVNext/teresa/TeresaProposalPanel.test.tsx`,
+  `tests/resultsVnext/kpi/teresaKpiRcaWorkspace.component.test.tsx`,
+  `tests/components/ResultsVNext/KpiDeviationCaseSubview.test.tsx` — **33
+  passed, 0 failed, 0 skipped**, matching §7's table exactly.
+- **Independently reproduced TWO of §6's negative controls from scratch**
+  (did not just trust the prior session's narrative of having done them):
+  1. Sabotaged `TeresaProposalPanel.tsx`'s `handleApprove` to call
+     `handleExecute()` immediately after a successful approve (the exact
+     "Teresa zatwierdza sama" failure mode). RED: 2 tests failed in
+     `TeresaProposalPanel.test.tsx` (execute fired before the explicit
+     click, `teresa-execute` testid never reached in its expected state);
+     in `teresaKpiRcaWorkspace.component.test.tsx` the happy-path test
+     failed on `expect(executeTeresaProposal).not.toHaveBeenCalled()`
+     with "actually been called 1 times" — the literal assertion this
+     lane's design depends on. Reverted via `cp` from a pre-sabotage copy;
+     `git diff --stat` on the file was empty (byte-for-byte restore); both
+     files green again (9/9 passed).
+  2. Sabotaged `KpiDeviationCaseSubview.tsx`'s "Ask Teresa" button to
+     `disabled={false}` (hard-coded, ignoring form state). RED:
+     `teresaKpiRcaWorkspace.component.test.tsx`'s first test failed
+     (`toBeDisabled()` — "Received element is not disabled"). Reverted via
+     `cp`; `git diff --stat` empty; full 4-test file green again.
+- **Visually inspected 4 of the 7 screenshots** (01, 02, 04, 05, 07) pixel
+  by pixel via the Read tool, not just trusted the filenames: each matches
+  its claimed phase (disabled state with empty fields, open proposal with
+  evidence sections populated, unavailable banner with the real network
+  error string, denied-execute red banner with the exact guard message,
+  and the post-close case screen showing Phase 2 done / Phase 3 active /
+  CAS version bumped 2→3). Did NOT inspect 03 or 06 individually — flagged
+  as not independently re-verified (though their names and the passing
+  automated tests covering the same states make fabrication unlikely).
+- **Did NOT re-run**: `npx vite build` (§8's claimed 29m35s pass is
+  UNVERIFIED by this successor — time budget did not allow a second
+  30-minute build on a lane whose files hadn't changed since that claimed
+  run) and the real-Postgres test (§5 — UNVERIFIED by this successor; no
+  ephemeral Postgres was built this pass). Both are flagged NIEZMIERZONE
+  for this verification pass specifically, not for the lane as a whole.
+- **Did NOT independently verify**: cross-tenant/restricted-outsider
+  behavior, idempotency-on-retry, or capability-preflight-as-distinct-step
+  — §10 already flags these as gaps in the original author's own evidence
+  and this successor found no new information to close them.
 
 ## 9. Interactive proof — screenshots (real production component, real clicks)
 

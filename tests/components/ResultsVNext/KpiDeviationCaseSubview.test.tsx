@@ -51,7 +51,8 @@ vi.mock('../../../src/services/api', () => ({
   // this file's own scenarios never click "Ask Teresa" — a module-load-time
   // failure, not a test-scenario one. Values are never exercised here (no
   // scenario below opens the Teresa panel); see
-  // `KpiDeviationCaseSubviewTeresaRca.test.tsx` for the dedicated coverage.
+  // `tests/resultsVnext/kpi/teresaKpiRcaWorkspace.component.test.tsx` for
+  // the dedicated coverage.
   API_URL: '/api',
   getHeaders: () => ({}),
 }));
