@@ -66,6 +66,14 @@ export { OkrCyclesPage } from './okr/OkrCyclesPage';
 // `kpiScorecardPresenters.tsx` (StandardTable/Preview builders shared by the
 // live screens and the dev-render QA harness).
 export { ResultsKpiScorecardDetailPage } from './kpiScorecards/ResultsKpiScorecardDetailPage';
+// RN-G6 UI fix (2026-08-12) — quick-create modal for `createKpiScorecard`,
+// wired into ResultsKpiRegistryPage.tsx's Scorecards tab (was a ready-to-
+// paste, not-yet-committed diff — RN_G5_SCOPEGAP_DESIGN.md §2).
+export {
+  CreateKpiScorecardModal,
+  type CreateKpiScorecardFormValues,
+  type CreateKpiScorecardModalProps,
+} from './kpiScorecards/CreateKpiScorecardModal';
 // RN-G3 lane (2026-08-11) — KPI full tool, klasa L (`/results/kpi/:kpiId`,
 // D03) + Deviation Case subview (D05). See `kpiTool/` subfolder:
 // `kpiDeviationApi.ts`/`kpiInitiativeImpactApi.ts` (fetch clients),

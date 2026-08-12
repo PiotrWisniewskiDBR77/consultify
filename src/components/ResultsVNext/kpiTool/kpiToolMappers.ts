@@ -19,7 +19,7 @@ import type {
   EffectivenessVerificationStatus,
 } from './kpiDeviationApi';
 import type { InitiativeKpiImpactStatus } from './kpiInitiativeImpactApi';
-import type { KpiPerformanceStatus, KpiDataQualityStatus } from '../kpiApi';
+import type { KpiApprovalStatus, KpiPerformanceStatus, KpiDataQualityStatus, KpiTargetGeometry } from '../kpiApi';
 
 export const DEVIATION_CASE_STATUS_TONE: Record<DeviationCaseStatus, StatusTone> = {
   open: 'danger',
@@ -169,3 +169,40 @@ export const DATA_QUALITY_STATUS_TONE: Record<KpiDataQualityStatus, StatusTone> 
   disputed: 'danger',
   estimated: 'warning',
 };
+
+// RN-G6 UI fix (2026-08-12) — Contract section, `getKpiCurrentDefinitionVersion`
+// (`GET /kpi/:kpiId/version`, P0-D) now used to show the joined definition
+// version's `approvalStatus`/`targetGeometry` — same duplicated-map
+// convention this file's header documents (mirrors
+// `KpiDraftFormModal.tsx`'s own `GEOMETRY_LABEL`, that file being outside
+// this package's edit allowlist).
+const KPI_APPROVAL_STATUS_LABEL: Record<KpiApprovalStatus, { pl: string; en: string }> = {
+  draft: { pl: 'Szkic', en: 'Draft' },
+  submitted: { pl: 'Zgłoszona', en: 'Submitted' },
+  approved: { pl: 'Zatwierdzona', en: 'Approved' },
+  rejected: { pl: 'Odrzucona', en: 'Rejected' },
+};
+
+export function kpiApprovalStatusLabel(status: KpiApprovalStatus, isPolish: boolean): string {
+  return isPolish ? KPI_APPROVAL_STATUS_LABEL[status].pl : KPI_APPROVAL_STATUS_LABEL[status].en;
+}
+
+export const KPI_APPROVAL_STATUS_TONE: Record<KpiApprovalStatus, StatusTone> = {
+  draft: 'neutral',
+  submitted: 'info',
+  approved: 'success',
+  rejected: 'danger',
+};
+
+const KPI_TARGET_GEOMETRY_LABEL: Record<KpiTargetGeometry, { pl: string; en: string }> = {
+  threshold_min: { pl: 'Próg minimalny (im więcej, tym lepiej)', en: 'Minimum threshold (higher is better)' },
+  threshold_max: { pl: 'Próg maksymalny (im mniej, tym lepiej)', en: 'Maximum threshold (lower is better)' },
+  range: { pl: 'Przedział', en: 'Range' },
+  exact: { pl: 'Wartość dokładna', en: 'Exact value' },
+  binary: { pl: 'Zero-jedynkowy (spełniony/niespełniony)', en: 'Binary (met/not met)' },
+  custom: { pl: 'Niestandardowy (formuła, bez oceny automatycznej)', en: 'Custom (formula, no automatic evaluation)' },
+};
+
+export function kpiTargetGeometryLabel(geometry: KpiTargetGeometry, isPolish: boolean): string {
+  return isPolish ? KPI_TARGET_GEOMETRY_LABEL[geometry].pl : KPI_TARGET_GEOMETRY_LABEL[geometry].en;
+}

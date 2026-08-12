@@ -23,12 +23,15 @@ import {
   escalatedOverlayLabel,
   initiativeKpiImpactStatusLabel,
   INITIATIVE_KPI_IMPACT_STATUS_TONE,
+  kpiApprovalStatusLabel,
+  KPI_APPROVAL_STATUS_TONE,
+  kpiTargetGeometryLabel,
   performanceStatusLabel,
   PERFORMANCE_STATUS_TONE,
 } from '../../../src/components/ResultsVNext/kpiTool/kpiToolMappers';
 import { DEVIATION_CASE_STATUSES, DEVIATION_SEVERITIES, CORRECTIVE_ACTION_STATUSES, EFFECTIVENESS_VERIFICATION_STATUSES } from '../../../src/components/ResultsVNext/kpiTool/kpiDeviationApi';
 import { INITIATIVE_KPI_IMPACT_STATUSES } from '../../../src/components/ResultsVNext/kpiTool/kpiInitiativeImpactApi';
-import { KPI_PERFORMANCE_STATUSES, KPI_DATA_QUALITY_STATUSES } from '../../../src/components/ResultsVNext/kpiApi';
+import { KPI_APPROVAL_STATUSES, KPI_PERFORMANCE_STATUSES, KPI_DATA_QUALITY_STATUSES, KPI_TARGET_GEOMETRIES } from '../../../src/components/ResultsVNext/kpiApi';
 
 describe('kpiToolMappers — deviation case status (9-state machine, KPI_E003_DESIGN.md L75-78)', () => {
   it('has exactly 9 states — never a 10th (escalated is a separate overlay)', () => {
@@ -131,5 +134,40 @@ describe('kpiToolMappers — KPI performance / data-quality (independent dimensi
   it('performance and data-quality enums do not overlap (two independent vocabularies)', () => {
     const overlap = KPI_PERFORMANCE_STATUSES.filter((p) => (KPI_DATA_QUALITY_STATUSES as readonly string[]).includes(p));
     expect(overlap).toHaveLength(0);
+  });
+});
+
+// RN-G6 UI fix (task 3, 2026-08-12) — the Contract section now renders the
+// real `getKpiCurrentDefinitionVersion` payload (approvalStatus/targetGeometry)
+// instead of only the raw currentDefinitionVersionId; these two maps are the
+// helpers that make that readable. Same "every enum member mapped, PL/EN
+// differ" discipline as the rest of this file.
+describe('kpiToolMappers — KPI approval status (Contract section, RN-G6 P0-D)', () => {
+  it('maps every KPI_APPROVAL_STATUSES member to a non-empty PL/EN label + tone', () => {
+    for (const status of KPI_APPROVAL_STATUSES) {
+      const pl = kpiApprovalStatusLabel(status, true);
+      const en = kpiApprovalStatusLabel(status, false);
+      expect(pl.length).toBeGreaterThan(0);
+      expect(en.length).toBeGreaterThan(0);
+      expect(pl).not.toBe(en);
+      expect(KPI_APPROVAL_STATUS_TONE[status]).toBeDefined();
+    }
+  });
+
+  it('approved is success tone, rejected is danger tone — never conflated', () => {
+    expect(KPI_APPROVAL_STATUS_TONE.approved).toBe('success');
+    expect(KPI_APPROVAL_STATUS_TONE.rejected).toBe('danger');
+  });
+});
+
+describe('kpiToolMappers — KPI target geometry label (Contract section)', () => {
+  it('maps every KPI_TARGET_GEOMETRIES member to a non-empty PL/EN label', () => {
+    for (const geometry of KPI_TARGET_GEOMETRIES) {
+      const pl = kpiTargetGeometryLabel(geometry, true);
+      const en = kpiTargetGeometryLabel(geometry, false);
+      expect(pl.length).toBeGreaterThan(0);
+      expect(en.length).toBeGreaterThan(0);
+      expect(pl).not.toBe(en);
+    }
   });
 });

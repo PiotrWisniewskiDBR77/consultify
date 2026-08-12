@@ -64,6 +64,11 @@ export interface KpiDraftFormInitialValues {
   criticalHigh?: number | null;
   binarySuccessValue?: number | null;
   formulaText?: string | null;
+  /** RN-G6 UI fix (task 3) — the KPI's real current owner (`KpiDefinitionDto.
+   * ownerUserId`, edit mode only — this DTO lives on the parent KPI row, not
+   * the definition version this form otherwise edits). Read-only display
+   * only, see the "Owner" block below for why there is no picker. */
+  ownerUserId?: string | null;
 }
 
 export interface KpiDraftFormModalProps {
@@ -73,6 +78,14 @@ export interface KpiDraftFormModalProps {
   onSubmit: (values: KpiDraftFormValues) => void;
   isPolish: boolean;
   initialValues?: KpiDraftFormInitialValues;
+  /** RN-G6 UI fix (task 3) — current user id, shown as the informational
+   * "Owner: You" line in create mode (mirrors `RoiCaseCreateModal.tsx`'s
+   * owner line). Only informational — `createKpiDraft` deliberately does not
+   * accept an `ownerUserId` override (see `kpiApi.ts`'s own doc comment on
+   * that function: the route defaults it to the caller, and there is no
+   * generally-available "list org members" endpoint a normal member could
+   * use to populate a picker for anyone else). */
+  currentUserId?: string | null;
   busy?: boolean;
   errorMessage?: string | null;
   isConflict?: boolean;
@@ -121,6 +134,7 @@ export const KpiDraftFormModal: React.FC<KpiDraftFormModalProps> = ({
   onSubmit,
   isPolish,
   initialValues,
+  currentUserId = null,
   busy = false,
   errorMessage = null,
   isConflict = false,
@@ -436,6 +450,41 @@ export const KpiDraftFormModal: React.FC<KpiDraftFormModalProps> = ({
             className={TEXTAREA_CLASS}
             data-testid="kpi-draft-reason"
           />
+        </div>
+
+        {/* RN-G6 UI fix (task 3) — read-only, not a picker: `createKpiDraft`
+            deliberately does not accept an owner override (see this file's
+            `currentUserId` prop doc comment), and there is no write endpoint
+            for changing an existing KPI's owner either — showing the real
+            value here closes the "no owner field anywhere" gap honestly,
+            without fabricating an edit affordance the backend cannot honor. */}
+        <div>
+          <div className={LABEL_CLASS}>{isPolish ? 'Właściciel' : 'Owner'}</div>
+          {mode === 'create' ? (
+            <p className="text-sm text-c-text-secondary">
+              {currentUserId ? (
+                <>
+                  {isPolish ? 'Ty' : 'You'}{' '}
+                  <span className="font-mono text-c-text-muted text-[12px]">({currentUserId})</span>
+                </>
+              ) : isPolish ? (
+                'Zostanie ustalony przez serwer.'
+              ) : (
+                'Will be resolved by the server.'
+              )}
+            </p>
+          ) : (
+            <p className="text-sm text-c-text-secondary">
+              {initialValues?.ownerUserId ? (
+                <span className="font-mono text-c-text-muted text-[12px]">{initialValues.ownerUserId}</span>
+              ) : (
+                '—'
+              )}{' '}
+              <span className="text-c-text-muted text-[11px]">
+                {isPolish ? '(nie do zmiany z tego formularza)' : '(not changeable from this form)'}
+              </span>
+            </p>
+          )}
         </div>
 
         {errorMessage ? (
