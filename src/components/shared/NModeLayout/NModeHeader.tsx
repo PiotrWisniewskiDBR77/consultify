@@ -348,11 +348,21 @@ export const NModeHeader: React.FC<NModeHeaderProps> = ({
       className="col-span-full border border-c-border bg-c-surface-raised/90 backdrop-blur-xl rounded-2xl overflow-hidden shadow-elevation-1"
     >
       <div className="flex items-center gap-4 px-5 py-3">
-        {/* Back button */}
+        {/* Back button — icon-only (ChevronLeft), so it needs an explicit
+            accessible name: axe-core (critical, 2026-08-12 sweep) found this
+            control had none on every N-mode detail screen. `onClose` is the
+            shared "go back to where you came from" handler every consumer
+            wires here (goToList/onBack/…, see NModeHeaderConfig.onClose) —
+            never a same-view dialog dismiss — so "Wstecz"/"Back" describes
+            the real action without overclaiming a specific destination.
+            Bilingual literal (not t()) mirrors `primaryAction.title` below:
+            this string is intentionally NOT in the translation catalogue. */}
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           onClick={onClose}
+          aria-label={isPolish ? 'Wstecz' : 'Back'}
+          title={isPolish ? 'Wstecz' : 'Back'}
           className="p-2 -ml-2 rounded-xl text-c-text-secondary hover:bg-state-hover transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
         >
           <ChevronLeft size={20} />

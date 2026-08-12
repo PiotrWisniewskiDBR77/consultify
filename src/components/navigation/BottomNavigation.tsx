@@ -158,7 +158,7 @@ export const BottomNavigation: React.FC = () => {
                                 ${
                                   active
                                     ? 'text-primary-600 dark:text-primary-400'
-                                    : 'text-slate-600 dark:text-slate-500 active:text-primary-600 dark:active:text-primary-400'
+                                    : 'text-slate-600 dark:text-c-text-muted active:text-primary-600 dark:active:text-primary-400'
                                 }
                             `}
             >
