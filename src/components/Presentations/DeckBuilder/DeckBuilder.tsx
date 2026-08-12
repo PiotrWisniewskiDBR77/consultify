@@ -1881,7 +1881,7 @@ export const DeckBuilder: React.FC = () => {
       initialColorSetId={deck.color_set_id || 'midnight_navy'}
       initialBrandKit={brandKit}
     >
-      <div className="h-screen flex flex-col bg-c-surface overflow-hidden">
+      <div className="h-full flex flex-col bg-c-surface overflow-hidden">
         {/* Top Bar */}
         <div className="relative">
           <DeckBuilderTopBar

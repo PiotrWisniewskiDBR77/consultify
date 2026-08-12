@@ -83,6 +83,7 @@ export interface ApprovalAssignmentRow {
   assignment_kind: string;
   artifact_type: string | null;
   artifact_id: string | null;
+  requested_by_user_id?: string | null;
 }
 
 export interface ArtifactApprovalStatus {
@@ -203,13 +204,19 @@ export async function submitForReview(params: {
   artifactType: string;
   artifactId: string;
   assignedToUserId: string;
-  submittedBy?: string;
+  submittedBy: string;
   slaDueAt?: Date;
 }): Promise<ApprovalAssignmentRow> {
   const { orgId, artifactType, artifactId, assignedToUserId, submittedBy, slaDueAt } = params;
 
-  if (!orgId || !artifactType || !artifactId || !assignedToUserId) {
-    throw makeError('orgId, artifactType, artifactId, assignedToUserId are required', 400);
+  if (!orgId || !artifactType || !artifactId || !assignedToUserId || !submittedBy) {
+    throw makeError(
+      'orgId, artifactType, artifactId, assignedToUserId, submittedBy are required',
+      400
+    );
+  }
+  if (assignedToUserId === submittedBy) {
+    throw makeError('Artifact requester cannot be assigned as its reviewer', 409);
   }
 
   const active = await findActiveArtifactAssignment(orgId, artifactType, artifactId);
@@ -224,8 +231,8 @@ export async function submitForReview(params: {
     db,
     `INSERT INTO approval_assignments
        (id, org_id, proposal_id, assigned_to_user_id, status, sla_due_at,
-        assignment_kind, artifact_type, artifact_id, created_at)
-     VALUES (?, ?, ?, ?, 'PENDING', ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
+        assignment_kind, artifact_type, artifact_id, requested_by_user_id, created_at)
+     VALUES (?, ?, ?, ?, 'PENDING', ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
     [
       id,
       orgId,
@@ -235,6 +242,7 @@ export async function submitForReview(params: {
       ARTIFACT_APPROVAL_KIND,
       artifactType,
       artifactId,
+      submittedBy,
     ],
     { fallback: false }
   );
@@ -279,6 +287,9 @@ export async function acknowledgeReview(params: {
   if (!active || active.status !== ARTIFACT_APPROVAL_STATUSES.PENDING) {
     throw makeError('No pending review found for this artifact', 404);
   }
+  if (active.assigned_to_user_id !== userId) {
+    throw makeError('Only the assigned reviewer may acknowledge this review', 403);
+  }
 
   const result = await DbPromise.run(
     db,
@@ -316,6 +327,12 @@ export async function approveArtifact(params: {
   const active = await findActiveArtifactAssignment(orgId, artifactType, artifactId);
   if (!active) {
     throw makeError('No active review found for this artifact', 404);
+  }
+  if (active.assigned_to_user_id !== approvedByUserId) {
+    throw makeError('Only the assigned reviewer may approve this artifact', 403);
+  }
+  if (active.requested_by_user_id === approvedByUserId) {
+    throw makeError('Artifact requester cannot approve their own submission', 403);
   }
 
   const result = await DbPromise.run(
@@ -357,6 +374,12 @@ export async function rejectArtifact(params: {
   const active = await findActiveArtifactAssignment(orgId, artifactType, artifactId);
   if (!active) {
     throw makeError('No active review found for this artifact', 404);
+  }
+  if (active.assigned_to_user_id !== rejectedByUserId) {
+    throw makeError('Only the assigned reviewer may reject this artifact', 403);
+  }
+  if (active.requested_by_user_id === rejectedByUserId) {
+    throw makeError('Artifact requester cannot reject their own submission', 403);
   }
 
   const result = await DbPromise.run(

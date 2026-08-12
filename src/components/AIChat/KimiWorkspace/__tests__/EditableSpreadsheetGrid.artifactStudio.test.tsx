@@ -176,6 +176,32 @@ describe('EditableSpreadsheetGrid Artifact Studio contract', () => {
     });
   });
 
+  it('opens the selected cell context menu with Shift+F10', () => {
+    const onSelectionContextMenu = vi.fn();
+    render(
+      <Harness
+        onSelectionChange={vi.fn()}
+        onSaveStateChange={vi.fn()}
+        onSelectionContextMenu={onSelectionContextMenu}
+      />
+    );
+
+    const cell = screen.getByText('-2,8').closest('[role="gridcell"]');
+    expect(cell).not.toBeNull();
+    fireEvent.click(cell!);
+    fireEvent.keyDown(cell!, { key: 'F10', shiftKey: true });
+
+    expect(onSelectionContextMenu).toHaveBeenCalledWith(
+      expect.objectContaining({
+        selection: expect.objectContaining({
+          kind: 'cell',
+          address: 'KPI Control!B3',
+          rawValue: '=B2-24',
+        }),
+      })
+    );
+  });
+
   it('clears and restores a rectangular range as one atomic persisted batch', async () => {
     const persistCells = vi.fn().mockResolvedValue(undefined);
     render(

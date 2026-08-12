@@ -214,17 +214,20 @@ export function statusColor(status: 'good' | 'warning' | 'critical', tokens: Des
   }
 }
 
-export function likelihoodImpactColor(
-  level: 'high' | 'medium' | 'low',
-  tokens: DesignTokens
-): string {
-  switch (level) {
+export function likelihoodImpactColor(level: string, tokens: DesignTokens): string {
+  switch (String(level).trim().toLowerCase()) {
     case 'high':
       return tokens.colors.danger;
     case 'medium':
       return tokens.colors.warning;
     case 'low':
       return tokens.colors.success;
+    default:
+      // Evidence-bound decks deliberately preserve UNKNOWN and may also carry
+      // qualitative impact labels.  Rendering an unrecognised value without a
+      // fill lets pptxgenjs fall back to black, which looks like a critical
+      // risk and invents meaning.  Use the neutral surface instead.
+      return tokens.colors.muted;
   }
 }
 

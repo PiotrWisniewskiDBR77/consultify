@@ -404,7 +404,7 @@ export const DeckBuilderMelsView: React.FC<DeckBuilderMelsViewProps> = ({
 
   return (
     <div
-      className="h-screen flex flex-col bg-c-surface overflow-hidden"
+      className="h-full flex flex-col bg-c-surface overflow-hidden"
       data-testid="deck-builder-mels-root"
     >
       {bannerSlot}

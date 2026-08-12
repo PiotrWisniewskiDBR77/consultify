@@ -49,6 +49,7 @@ export const CanvasContextMenu: React.FC<CanvasContextMenuProps> = ({
   );
   const [position, setPosition] = useState({ left: x, top: y });
   const [maxHeight, setMaxHeight] = useState<number | undefined>();
+  const firstEnabledIndex = items.findIndex((item) => !item.disabled);
 
   const closeAndRestore = React.useCallback(() => {
     onClose();
@@ -82,10 +83,22 @@ export const CanvasContextMenu: React.FC<CanvasContextMenuProps> = ({
         Math.min(y, bounds.bottom - Math.min(rect.height, availableHeight) - VIEWPORT_GAP)
       ),
     });
-    menu
-      .querySelector<HTMLButtonElement>('[role="menuitem"]:not(:disabled)')
-      ?.focus({ preventScroll: true });
-  }, [items.length, x, y]);
+    const firstEnabledItem = menu.querySelector<HTMLButtonElement>(
+      '[role="menuitem"]:not(:disabled)'
+    );
+    firstEnabledItem?.focus({ preventScroll: true });
+
+    // Portals and the browser's native Shift+F10 processing may both finish
+    // after this layout effect. Reassert initial focus once on the next frame,
+    // but only while focus is still outside this menu; never override keyboard
+    // navigation the user has already started inside it.
+    const focusFrame = requestAnimationFrame(() => {
+      if (!menu.contains(document.activeElement)) {
+        firstEnabledItem?.focus({ preventScroll: true });
+      }
+    });
+    return () => cancelAnimationFrame(focusFrame);
+  }, [firstEnabledIndex, items.length, x, y]);
 
   useEffect(() => {
     const onPointerDown = (event: MouseEvent) => {
@@ -162,6 +175,7 @@ export const CanvasContextMenu: React.FC<CanvasContextMenuProps> = ({
           <button
             type="button"
             role="menuitem"
+            autoFocus={index === firstEnabledIndex}
             disabled={item.disabled}
             aria-disabled={item.disabled || undefined}
             title={

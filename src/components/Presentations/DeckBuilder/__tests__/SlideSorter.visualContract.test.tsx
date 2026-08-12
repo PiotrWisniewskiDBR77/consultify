@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import type { DeckCard } from '../../wizard/types';
@@ -47,9 +47,9 @@ describe('SlideSorter visual and accessibility contract', () => {
     expect(screen.getByTitle(card.title)).toHaveTextContent(card.title);
   });
 
-  it('supports keyboard slide selection and labels icon-only controls', () => {
+  it('uses sibling controls without nested interactive elements', () => {
     const onSelect = vi.fn();
-    render(
+    const { container } = render(
       <SlideSorter
         cards={[card]}
         activeIndex={0}
@@ -64,10 +64,18 @@ describe('SlideSorter visual and accessibility contract', () => {
     expect(screen.getByRole('button', { name: 'Slide thumbnails' })).toBeVisible();
     expect(screen.getByRole('button', { name: 'Slide list' })).toBeVisible();
     expect(screen.getByRole('button', { name: 'Slide 1 actions' })).toBeVisible();
-    fireEvent.keyDown(
-      screen.getByRole('button', { name: 'Select slide 1: Board transformation update' }),
-      { key: 'Enter' }
-    );
+    const slideRow = screen.getByTestId('deck-slide-0');
+    const selectButton = within(slideRow).getByRole('button', {
+      name: 'Select slide 1: Board transformation update',
+    });
+    expect(selectButton).toHaveAttribute('aria-current', 'true');
+    expect(selectButton.querySelector('button, [role="button"]')).toBeNull();
+
+    fireEvent.click(selectButton);
     expect(onSelect).toHaveBeenCalledWith(0);
+
+    expect(
+      container.querySelector('button button, button [role="button"], [role="button"] button')
+    ).toBeNull();
   });
 });

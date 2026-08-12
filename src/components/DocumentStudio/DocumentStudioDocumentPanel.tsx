@@ -98,6 +98,7 @@ import { DocumentStudioFileMenu } from './DocumentStudioFileMenu';
 import { DocumentStudioQaPanel } from './DocumentStudioQaPanel';
 import { DocumentUndoRedoControls } from './DocumentUndoRedoControls';
 import { type DocumentAutosaveStatus, DocumentTipTapEditor } from './editor';
+import { useManualPrompt } from './editor/useManualPrompt';
 import type {
   DocumentAccessHistoryEntry,
   DocumentApprovalDecisionKind,
@@ -519,33 +520,54 @@ function OutlinePanel({
   sections,
   sourceCount,
   assumptionCount,
+  onAddSection,
+  onDuplicateSection,
+  collapsedSectionIds,
+  onToggleSection,
 }: {
   sections: DocumentSection[];
   sourceCount: number;
   assumptionCount: number;
+  onAddSection: () => void;
+  onDuplicateSection: (sectionId: string) => void;
+  collapsedSectionIds: ReadonlySet<string>;
+  onToggleSection: (sectionId: string) => void;
 }): React.ReactElement {
   const { t } = useTranslation();
+  const [openSectionMenuId, setOpenSectionMenuId] = useState<string | null>(null);
   return (
     <div className="flex h-full flex-col overflow-y-auto p-3">
-      <div className="mb-3 rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-3 text-xs">
-        <div className="font-medium text-c-text">
-          {t('documentStudio.panel.sectionsCount', {
-            defaultValue: '{{count}} sections',
-            count: sections.length,
-          })}
+      <div className="mb-3 flex items-start justify-between gap-2 rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-3 text-xs">
+        <div>
+          <div className="font-medium text-c-text">
+            {t('documentStudio.panel.sectionsCount', {
+              defaultValue: '{{count}} sections',
+              count: sections.length,
+            })}
+          </div>
+          <div className="mt-1 text-c-text-secondary">
+            {t('documentStudio.panel.sourcesAssumptions', {
+              defaultValue: '{{sources}} sources · {{assumptions}} assumptions',
+              sources: sourceCount,
+              assumptions: assumptionCount,
+            })}
+          </div>
         </div>
-        <div className="mt-1 text-c-text-secondary">
-          {t('documentStudio.panel.sourcesAssumptions', {
-            defaultValue: '{{sources}} sources · {{assumptions}} assumptions',
-            sources: sourceCount,
-            assumptions: assumptionCount,
-          })}
-        </div>
+        <button
+          type="button"
+          onClick={onAddSection}
+          className="shrink-0 rounded-md border border-c-border px-2 py-1 text-[11px] font-medium text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text"
+        >
+          {t('documentStudio.outline.addSection', '+ Add section')}
+        </button>
       </div>
       <nav aria-label={t('documentStudio.documentPanel.outlineAria', 'Document outline')}>
         <ol className="space-y-1.5">
           {sections.map((section, index) => (
-            <li key={section.sectionId}>
+            <li
+              key={section.sectionId}
+              className="group relative rounded-lg border border-transparent hover:border-c-border focus-within:border-c-border"
+            >
               <a
                 href={`#${section.sectionId}`}
                 className="block rounded-lg px-3 py-2 text-xs text-c-text transition-colors hover:bg-c-surface-raised hover:text-c-text"
@@ -560,6 +582,53 @@ function OutlinePanel({
                   })}
                 </span>
               </a>
+              <button
+                type="button"
+                aria-label={`Section actions ${section.title}`}
+                aria-haspopup="menu"
+                aria-expanded={openSectionMenuId === section.sectionId}
+                onClick={() =>
+                  setOpenSectionMenuId((current) =>
+                    current === section.sectionId ? null : section.sectionId
+                  )
+                }
+                className="absolute right-1 top-1 inline-flex h-7 w-7 items-center justify-center rounded-md text-c-text-secondary opacity-0 transition-opacity hover:bg-c-surface-raised hover:text-c-text focus:opacity-100 group-hover:opacity-100 group-focus-within:opacity-100"
+              >
+                <MoreHorizontal size={15} aria-hidden="true" />
+              </button>
+              {openSectionMenuId === section.sectionId ? (
+                <div
+                  role="menu"
+                  aria-label={`Section actions ${section.title}`}
+                  className="absolute right-1 top-9 z-20 min-w-32 rounded-lg border border-c-border bg-c-surface p-1 shadow-lg"
+                >
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={() => {
+                      onToggleSection(section.sectionId);
+                      setOpenSectionMenuId(null);
+                    }}
+                    className="block w-full rounded px-2 py-1.5 text-left text-xs text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text"
+                    aria-label={`${collapsedSectionIds.has(section.sectionId) ? 'Expand' : 'Collapse'} section ${section.title}`}
+                    aria-expanded={!collapsedSectionIds.has(section.sectionId)}
+                  >
+                    {collapsedSectionIds.has(section.sectionId) ? 'Expand' : 'Collapse'}
+                  </button>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={() => {
+                      onDuplicateSection(section.sectionId);
+                      setOpenSectionMenuId(null);
+                    }}
+                    className="block w-full rounded px-2 py-1.5 text-left text-xs text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text"
+                    aria-label={`Duplicate section ${section.title}`}
+                  >
+                    Duplicate
+                  </button>
+                </div>
+              ) : null}
             </li>
           ))}
         </ol>
@@ -1937,6 +2006,8 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
   const navigate = useNavigate();
   const openChatWithContext = useOpenChatWithContext();
   const artifactStudioMode = isArtifactStudioLaneEnabled('document');
+  const { requestText, promptDialog } = useManualPrompt();
+  const [collapsedSectionIds, setCollapsedSectionIds] = useState<Set<string>>(() => new Set());
   useEffect(() => {
     emitArtifactStudioShellSelected('document');
   }, []);
@@ -2158,6 +2229,89 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
     },
     [artifactId, onSchemaUpdated, schema.sections, schema.title, schema.updatedAt, t]
   );
+
+  const persistSectionStructure = useCallback(
+    async (nextSections: DocumentSection[]): Promise<void> => {
+      if (!schema.updatedAt) {
+        toast.error(t('documentStudio.outline.saveFailed', 'Nie udało się zapisać struktury.'));
+        return;
+      }
+      const normalized = nextSections.map((section, orderIndex) => ({ ...section, orderIndex }));
+      setAutosaveStatus('saving');
+      try {
+        const saved = await saveDocumentStudioManualContent(artifactId, {
+          sections: normalized,
+          expectedVersion: schema.updatedAt,
+        });
+        onSchemaUpdated(saved);
+        setAutosaveStatus('saved');
+      } catch (err) {
+        setAutosaveStatus(err instanceof DocumentManualSaveConflictError ? 'conflict' : 'error');
+        if (err instanceof DocumentManualSaveConflictError) {
+          try {
+            const fresh = await getDocumentStudioArtifact(artifactId);
+            onSchemaUpdated(fresh.schema);
+          } catch {
+            /* best-effort reconciliation */
+          }
+        }
+        toast.error(t('documentStudio.outline.saveFailed', 'Nie udało się zapisać struktury.'));
+      }
+    },
+    [artifactId, onSchemaUpdated, schema.updatedAt, t]
+  );
+
+  const handleAddSection = useCallback(async (): Promise<void> => {
+    const title = await requestText(
+      t('documentStudio.outline.newSectionPrompt', 'Nazwa nowej sekcji'),
+      t('documentStudio.outline.newSectionDefault', 'Nowa sekcja')
+    );
+    const trimmed = title?.trim();
+    if (!trimmed) return;
+    void persistSectionStructure([
+      ...schema.sections,
+      {
+        sectionId: `sec-${crypto.randomUUID()}`,
+        orderIndex: schema.sections.length,
+        level: 1,
+        title: trimmed,
+        blocks: [],
+        sourceRefs: [],
+      },
+    ]);
+  }, [persistSectionStructure, requestText, schema.sections, t]);
+
+  const handleDuplicateSection = useCallback(
+    (sectionId: string): void => {
+      const sourceIndex = schema.sections.findIndex((section) => section.sectionId === sectionId);
+      if (sourceIndex < 0) return;
+      const source = schema.sections[sourceIndex];
+      const duplicate: DocumentSection = {
+        ...source,
+        sectionId: `sec-${crypto.randomUUID()}`,
+        title: `${source.title} — kopia`,
+        blocks: source.blocks.map((block) => ({
+          ...block,
+          blockId: `blk-${crypto.randomUUID()}`,
+          content: structuredClone(block.content),
+        })),
+        sourceRefs: source.sourceRefs.map((ref) => ({ ...ref })),
+      };
+      const next = [...schema.sections];
+      next.splice(sourceIndex + 1, 0, duplicate);
+      void persistSectionStructure(next);
+    },
+    [persistSectionStructure, schema.sections]
+  );
+
+  const handleToggleSection = useCallback((sectionId: string): void => {
+    setCollapsedSectionIds((current) => {
+      const next = new Set(current);
+      if (next.has(sectionId)) next.delete(sectionId);
+      else next.add(sectionId);
+      return next;
+    });
+  }, []);
 
   const triggerTextDownload = (filename: string, content: string, mime: string): void => {
     const blob = new Blob([content], { type: mime });
@@ -2863,6 +3017,7 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
 
   const canvasContent = (
     <div className="relative flex min-h-full flex-col">
+      {promptDialog}
       {showSaveAsTemplateModal ? (
         <CreateTemplateFromArtifactModal
           artifactId={artifactId}
@@ -3315,6 +3470,10 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
                   sections={schema.sections}
                   sourceCount={sourceCount}
                   assumptionCount={assumptionCount}
+                  onAddSection={handleAddSection}
+                  onDuplicateSection={handleDuplicateSection}
+                  collapsedSectionIds={collapsedSectionIds}
+                  onToggleSection={handleToggleSection}
                 />
               )}
             </div>
@@ -3324,6 +3483,10 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
             sections={schema.sections}
             sourceCount={sourceCount}
             assumptionCount={assumptionCount}
+            onAddSection={handleAddSection}
+            onDuplicateSection={handleDuplicateSection}
+            collapsedSectionIds={collapsedSectionIds}
+            onToggleSection={handleToggleSection}
           />
         )
       }

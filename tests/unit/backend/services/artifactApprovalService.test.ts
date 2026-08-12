@@ -74,6 +74,7 @@ describe('ArtifactApprovalService (HP-7)', () => {
             org_id TEXT NOT NULL,
             proposal_id TEXT NOT NULL,
             assigned_to_user_id TEXT NOT NULL,
+            requested_by_user_id TEXT,
             status TEXT NOT NULL DEFAULT 'PENDING',
             sla_due_at TIMESTAMP NOT NULL,
             escalated_to_user_id TEXT,
@@ -130,6 +131,7 @@ describe('ArtifactApprovalService (HP-7)', () => {
       expect(assignment.assignment_kind).toBe('artifact');
       expect(assignment.artifact_type).toBe('insight');
       expect(assignment.artifact_id).toBe('insight-2');
+      expect(assignment.requested_by_user_id).toBe('author-1');
 
       const status = await ArtifactApprovalService.getArtifactApprovalStatus(
         ORG_ID,
@@ -145,6 +147,7 @@ describe('ArtifactApprovalService (HP-7)', () => {
         artifactType: 'decision',
         artifactId: 'decision-1',
         assignedToUserId: USER_ID,
+        submittedBy: 'author-1',
       });
 
       await expect(
@@ -153,6 +156,7 @@ describe('ArtifactApprovalService (HP-7)', () => {
           artifactType: 'decision',
           artifactId: 'decision-1',
           assignedToUserId: USER_ID,
+          submittedBy: 'author-1',
         })
       ).rejects.toMatchObject({ status: 409 });
     });
@@ -163,6 +167,7 @@ describe('ArtifactApprovalService (HP-7)', () => {
         artifactType: 'report',
         artifactId: 'report-1',
         assignedToUserId: USER_ID,
+        submittedBy: 'author-1',
       });
 
       const approved = await ArtifactApprovalService.approveArtifact({
@@ -181,12 +186,87 @@ describe('ArtifactApprovalService (HP-7)', () => {
       expect(status.state).toBe(ARTIFACT_STATES.APPROVED);
     });
 
+    it('rejects assigning the requester as reviewer before writing a row', async () => {
+      await expect(
+        ArtifactApprovalService.submitForReview({
+          orgId: ORG_ID,
+          artifactType: 'presentation_version',
+          artifactId: 'deck-self-review:v1',
+          assignedToUserId: 'author-1',
+          submittedBy: 'author-1',
+        })
+      ).rejects.toMatchObject({ status: 409 });
+
+      const status = await ArtifactApprovalService.getArtifactApprovalStatus(
+        ORG_ID,
+        'presentation_version',
+        'deck-self-review:v1'
+      );
+      expect(status.state).toBe(ARTIFACT_STATES.DRAFT);
+    });
+
+    it('allows only the assigned distinct reviewer to approve or reject', async () => {
+      await ArtifactApprovalService.submitForReview({
+        orgId: ORG_ID,
+        artifactType: 'workbook',
+        artifactId: 'workbook-four-eyes',
+        assignedToUserId: USER_ID,
+        submittedBy: 'author-1',
+      });
+
+      await expect(
+        ArtifactApprovalService.approveArtifact({
+          orgId: ORG_ID,
+          artifactType: 'workbook',
+          artifactId: 'workbook-four-eyes',
+          approvedByUserId: 'author-1',
+        })
+      ).rejects.toMatchObject({ status: 403 });
+      await expect(
+        ArtifactApprovalService.rejectArtifact({
+          orgId: ORG_ID,
+          artifactType: 'workbook',
+          artifactId: 'workbook-four-eyes',
+          rejectedByUserId: 'unassigned-reviewer',
+          reason: 'Must not be accepted from an unassigned actor',
+        })
+      ).rejects.toMatchObject({ status: 403 });
+
+      const approved = await ArtifactApprovalService.approveArtifact({
+        orgId: ORG_ID,
+        artifactType: 'workbook',
+        artifactId: 'workbook-four-eyes',
+        approvedByUserId: USER_ID,
+      });
+      expect(approved.status).toBe('DONE');
+    });
+
+    it('allows only the assigned reviewer to acknowledge', async () => {
+      await ArtifactApprovalService.submitForReview({
+        orgId: ORG_ID,
+        artifactType: 'presentation_version',
+        artifactId: 'deck-ack:v2',
+        assignedToUserId: USER_ID,
+        submittedBy: 'author-1',
+      });
+
+      await expect(
+        ArtifactApprovalService.acknowledgeReview({
+          orgId: ORG_ID,
+          artifactType: 'presentation_version',
+          artifactId: 'deck-ack:v2',
+          userId: 'unassigned-reviewer',
+        })
+      ).rejects.toMatchObject({ status: 403 });
+    });
+
     it('acknowledgeReview moves PENDING -> ACKED while staying in review state', async () => {
       await ArtifactApprovalService.submitForReview({
         orgId: ORG_ID,
         artifactType: 'initiative',
         artifactId: 'initiative-1',
         assignedToUserId: USER_ID,
+        submittedBy: 'author-1',
       });
 
       const acked = await ArtifactApprovalService.acknowledgeReview({
@@ -220,6 +300,7 @@ describe('ArtifactApprovalService (HP-7)', () => {
         artifactType: 'deck',
         artifactId: 'deck-1',
         assignedToUserId: USER_ID,
+        submittedBy: 'author-1',
       });
 
       const rejected = await ArtifactApprovalService.rejectArtifact({
@@ -244,6 +325,7 @@ describe('ArtifactApprovalService (HP-7)', () => {
         artifactType: 'deck',
         artifactId: 'deck-1',
         assignedToUserId: USER_ID,
+        submittedBy: 'author-1',
       });
       expect(resubmitted.status).toBe('PENDING');
 
@@ -277,6 +359,7 @@ describe('ArtifactApprovalService (HP-7)', () => {
         artifactType: 'insight',
         artifactId: 'shared-artifact-id',
         assignedToUserId: USER_ID,
+        submittedBy: 'author-1',
       });
 
       const otherOrgStatus = await ArtifactApprovalService.getArtifactApprovalStatus(
@@ -350,6 +433,7 @@ describe('ArtifactApprovalService (HP-7)', () => {
         artifactType: 'insight',
         artifactId: 'insight-no-collision',
         assignedToUserId: USER_ID,
+        submittedBy: 'author-1',
       });
 
       // WorkqueueService.getAssignmentByProposal looks up by proposal_id;

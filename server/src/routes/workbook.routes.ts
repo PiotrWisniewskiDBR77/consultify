@@ -409,11 +409,20 @@ type WorkbookCellStyleMutation = {
   patch: Partial<CellStyle>;
 };
 
+type WorkbookColumnMutation = {
+  type: 'setColumn';
+  sheetIndex: number;
+  columnIndex: number;
+  header: string;
+  width?: number;
+};
+
 type WorkbookMutation =
   | WorkbookCellMutation
   | WorkbookSheetMutation
   | WorkbookAxisMutation
-  | WorkbookCellStyleMutation;
+  | WorkbookCellStyleMutation
+  | WorkbookColumnMutation;
 
 type WorkbookAnchorTransform = WorkbookAxisMutation & { sheetId: string };
 
@@ -1265,6 +1274,13 @@ router.post(
 
     const rawTitle = typeof req.body?.title === 'string' ? req.body.title.trim() : '';
     const title = rawTitle || 'Pusty arkusz';
+    const sourcePack =
+      req.body?.sourcePack &&
+      typeof req.body.sourcePack === 'object' &&
+      !Array.isArray(req.body.sourcePack)
+        ? req.body.sourcePack
+        : {};
+    const evidenceRefs = Array.isArray(req.body?.evidenceRefs) ? req.body.evidenceRefs : [];
 
     // Naprawa 2026-07-28 ("jeden Excel na każdej ścieżce"): 0 kolumn/0 wierszy
     // dawało JSON-poprawną, ale bezużyteczną WorkbookSchema — EditableSpreadsheetGrid
@@ -1341,8 +1357,8 @@ router.post(
           null,
           JSON.stringify([]),
           JSON.stringify({}),
-          JSON.stringify({}),
-          JSON.stringify([]),
+          JSON.stringify(sourcePack),
+          JSON.stringify(evidenceRefs),
           JSON.stringify({}),
           user.id,
           generatedAt,
@@ -1396,6 +1412,8 @@ router.post(
       fileSize: buffer.length,
       validationErrors: [],
       artifactId,
+      sourcePack,
+      evidenceRefs,
       downloadUrl: `/api/workbook/${id}/download`,
       generatedAt,
     });
@@ -1417,24 +1435,9 @@ router.get(
 
     const { id } = req.params;
     const mode = asExportMode(req.query.mode);
-    const cached = workbookCache.get(id);
-
-    if (mode === 'draft' && cached?.organizationId === user.organizationId) {
-      res.setHeader(
-        'Content-Type',
-        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-      );
-      res.setHeader('X-Artifact-Export-Mode', 'draft');
-      res.setHeader('X-Artifact-Draft', 'true');
-      res.setHeader(
-        'Content-Disposition',
-        `attachment; filename="${draftFileName(cached.fileName)}"`
-      );
-      res.send(cached.buffer);
-      return;
-    }
-
-    // Try to regenerate from stored schema
+    // Always regenerate from the persisted schema. The in-memory buffer is a
+    // generation convenience, not an export authority: returning it after a
+    // command batch can silently export an older workbook than cold reopen.
     await ensureWorkbookSchema();
     const row = await queryHelpers.queryOne<{
       schema_json: string;
@@ -2080,11 +2083,9 @@ router.post(
     }
     const label = typeof req.body?.label === 'string' ? req.body.label.trim() : '';
     const sourceRef = typeof req.body?.sourceRef === 'string' ? req.body.sourceRef.trim() : null;
-    const sourceType =
-      typeof req.body?.sourceType === 'string' ? req.body.sourceType.trim() : null;
+    const sourceType = typeof req.body?.sourceType === 'string' ? req.body.sourceType.trim() : null;
     const sheetId = typeof req.body?.sheetId === 'string' ? req.body.sheetId : '';
-    const rangeRef =
-      typeof req.body?.range === 'string' ? req.body.range.trim().toUpperCase() : '';
+    const rangeRef = typeof req.body?.range === 'string' ? req.body.range.trim().toUpperCase() : '';
     const idempotencyKey =
       typeof req.body?.idempotencyKey === 'string' ? req.body.idempotencyKey.trim() : '';
     const baseVersion = Number(req.body?.baseVersion);
@@ -2189,7 +2190,9 @@ router.post(
       return true;
     });
     if (!persisted) {
-      res.status(409).json({ error: 'Workbook version conflict', code: 'WORKBOOK_VERSION_CONFLICT' });
+      res
+        .status(409)
+        .json({ error: 'Workbook version conflict', code: 'WORKBOOK_VERSION_CONFLICT' });
       return;
     }
     workbookCache.delete(req.params.id);
@@ -2226,7 +2229,9 @@ router.delete(
       return;
     }
     if (head.version !== baseVersion) {
-      res.status(409).json({ error: 'Workbook version conflict', code: 'WORKBOOK_VERSION_CONFLICT' });
+      res
+        .status(409)
+        .json({ error: 'Workbook version conflict', code: 'WORKBOOK_VERSION_CONFLICT' });
       return;
     }
     const binding = await queryHelpers.queryOne<{
@@ -2282,7 +2287,9 @@ router.delete(
       return true;
     });
     if (!persisted) {
-      res.status(409).json({ error: 'Workbook version conflict', code: 'WORKBOOK_VERSION_CONFLICT' });
+      res
+        .status(409)
+        .json({ error: 'Workbook version conflict', code: 'WORKBOOK_VERSION_CONFLICT' });
       return;
     }
     workbookCache.delete(req.params.id);

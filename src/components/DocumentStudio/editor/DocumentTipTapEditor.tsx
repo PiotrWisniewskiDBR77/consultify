@@ -198,6 +198,9 @@ export const DocumentTipTapEditor: React.FC<DocumentTipTapEditorProps> = ({
       editable,
       content: initialDoc as unknown as Record<string, unknown>,
       editorProps: {
+        attributes: {
+          'aria-label': 'Treść dokumentu',
+        },
         handleDOMEvents: {
           beforeinput: () => {
             userEditArmedRef.current = true;

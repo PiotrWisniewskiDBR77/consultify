@@ -238,15 +238,14 @@ export const EditableSpreadsheetGrid = React.forwardRef<EditableSpreadsheetGridH
       if (described) onSelectionChange?.(described);
     }, [activeRaw, describeSelection, onSelectionChange, selected]);
 
-    // Naprawa odkryta w render-verify (2026-07-28): po Escape/zatwierdzeniu
-    // edycji React odmontowuje `<input>` komórki, ale fokus NIE wraca sam do
-    // kontenera siatki — kolejne strzałki/Enter/Delete lądowały donikąd (klawiatura
-    // "martwa" po pierwszym Escape). Kontener musi przejąć fokus z powrotem,
-    // żeby nawigacja klawiaturą działała przez całą sesję edycji, nie tylko do
-    // pierwszego anulowania.
+    // Po Escape/zatwierdzeniu edycji przywracamy fokus do aktywnej komórki.
+    // Dzięki temu siatka ma jeden spójny kontrakt roving-focus: kliknięcie,
+    // klawiatura i menu kontekstowe mają ten sam element wywołujący.
     useEffect(() => {
       if (editingValue === null && selected) {
-        containerRef.current?.focus();
+        containerRef.current
+          ?.querySelector<HTMLElement>('[role="gridcell"][tabindex="0"]')
+          ?.focus();
       }
     }, [editingValue, selected]);
 
@@ -532,6 +531,26 @@ export const EditableSpreadsheetGrid = React.forwardRef<EditableSpreadsheetGridH
 
     const handleContainerKeyDown = useCallback(
       (e: React.KeyboardEvent<HTMLDivElement>) => {
+        if (
+          selected &&
+          onSelectionContextMenu &&
+          (e.key === 'ContextMenu' || (e.key === 'F10' && e.shiftKey))
+        ) {
+          const described = describeSelection(selected);
+          if (described) {
+            e.preventDefault();
+            const selectedCell = containerRef.current?.querySelector<HTMLElement>(
+              '[role="gridcell"][tabindex="0"]'
+            );
+            const rect = selectedCell?.getBoundingClientRect();
+            onSelectionContextMenu({
+              x: rect ? rect.left + Math.min(rect.width, 24) : 24,
+              y: rect ? rect.top + Math.min(rect.height, 24) : 24,
+              selection: described,
+            });
+            return;
+          }
+        }
         const handled = handleNavigationKey(e.key, {
           ctrlKey: e.ctrlKey,
           metaKey: e.metaKey,
@@ -540,7 +559,7 @@ export const EditableSpreadsheetGrid = React.forwardRef<EditableSpreadsheetGridH
         });
         if (handled) e.preventDefault();
       },
-      [handleNavigationKey]
+      [describeSelection, handleNavigationKey, onSelectionContextMenu, selected]
     );
 
     // Zabezpieczenie skupienia (odkryte w render-verify 2026-07-28): klik na
@@ -807,12 +826,11 @@ export const EditableSpreadsheetGrid = React.forwardRef<EditableSpreadsheetGridH
                               ? { ...current, endRowIndex: ri, endColIndex: ci }
                               : { rowIndex: ri, colIndex: ci }
                           );
-                          // Fokus SYNCHRONICZNIE w momencie kliknięcia (nie
-                          // czekając na useEffect po renderze) — <td> nie jest
-                          // fokusowalny, więc bez tego strzałka/Enter naciśnięte
-                          // od razu po kliknięciu mogą trafić w domyślny fokus
-                          // przeglądarki (body) zamiast w kontener siatki.
-                          containerRef.current?.focus();
+                          // Fokus pozostaje na konkretnej komórce. Zdarzenia
+                          // nawigacyjne bąbelkują do kontenera siatki, natomiast
+                          // Escape z menu kontekstowego może wrócić dokładnie do
+                          // elementu, który je otworzył.
+                          event.currentTarget.focus();
                         }}
                         onContextMenu={(event) => {
                           event.preventDefault();

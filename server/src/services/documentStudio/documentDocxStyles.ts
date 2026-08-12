@@ -342,6 +342,11 @@ export function buildDocxStyleConfig(
 ): Record<string, unknown> {
   const fonts = resolveDocxFonts(schema, formattingClass);
   const sizing = getSizingForClass(formattingClass);
+  // Word does not infer the proofing / assistive-technology language from
+  // visible content. Put the schema language on the default run so every
+  // paragraph inherits a real `w:lang` value unless a future inline run
+  // deliberately overrides it.
+  const documentLanguage = schema.language.toLowerCase().startsWith('pl') ? 'pl-PL' : 'en-US';
 
   // Slice E15.5.formatting.render — when the schema carries a
   // `headingStylesDetailed` override (E15.5 substrate), apply it on
@@ -382,7 +387,15 @@ export function buildDocxStyleConfig(
   return {
     default: {
       document: {
-        run: { font: fonts.body, size: sizing.body },
+        run: {
+          font: fonts.body,
+          size: sizing.body,
+          language: {
+            value: documentLanguage,
+            eastAsia: documentLanguage,
+            bidirectional: documentLanguage,
+          },
+        },
       },
       heading1: {
         run: {

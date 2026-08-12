@@ -275,6 +275,9 @@ const AMBER_WORDS =
 export function classifyStatus(value: unknown): SemaphoreStyle | null {
   const s = String(value ?? '').trim();
   if (!s || s.length > 40) return null;
+  // UNKNOWN is an evidence state, not a positive outcome. Keep it visually
+  // neutral even when surrounding copy contains words such as "ready".
+  if (/^(unknown|nieznane|brak danych|n\/a)$/i.test(s)) return SEMAPHORE.neutral;
   if (RED_WORDS.test(s)) return SEMAPHORE.red;
   if (AMBER_WORDS.test(s)) return SEMAPHORE.amber;
   if (GREEN_WORDS.test(s)) return SEMAPHORE.green;
@@ -414,6 +417,25 @@ export function addInfoSheet(wb: ExcelJS.Workbook, opts: InfoSheetOptions): void
       r++;
     });
   }
+  // Keep the compact metadata/index sheet on one printable page. Without an
+  // explicit area LibreOffice can split the two-column Info sheet vertically
+  // even though the content is short, producing an orphaned second page.
+  ws.pageSetup = {
+    ...(ws.pageSetup ?? {}),
+    orientation: 'portrait',
+    fitToPage: true,
+    fitToWidth: 1,
+    fitToHeight: 1,
+    printArea: `A1:B${Math.max(r - 1, 2)}`,
+    margins: {
+      left: 0.4,
+      right: 0.4,
+      top: 0.5,
+      bottom: 0.5,
+      header: 0.2,
+      footer: 0.2,
+    },
+  };
   // Note: tab position is determined by creation order in ExcelJS — callers
   // should create the Info sheet first if they want it as the leading tab.
 }
@@ -480,11 +502,21 @@ export function applyPrintSetup(ws: ExcelJS.Worksheet, sheetName: string): void 
   try {
     ws.pageSetup = {
       ...(ws.pageSetup ?? {}),
-      orientation: 'landscape',
+      // Most decision sheets are deliberately narrow (2–4 semantic columns).
+      // Portrait gives those exhibits materially better scale and avoids the
+      // "tiny table floating on a landscape page" failure. Wider datasets keep
+      // landscape so no column is clipped.
+      orientation: ws.columnCount <= 4 ? 'portrait' : 'landscape',
       fitToPage: true,
       fitToWidth: 1,
       fitToHeight: 0,
-      horizontalCentered: false,
+      showRowColHeaders: false,
+      showGridLines: false,
+      paperSize: 9,
+      // Small decision tables should read as deliberate one-page exhibits,
+      // not as raw cells stranded in the upper-left corner of a large page.
+      horizontalCentered: true,
+      verticalCentered: false,
       margins: {
         left: 0.4,
         right: 0.4,
@@ -502,4 +534,39 @@ export function applyPrintSetup(ws: ExcelJS.Worksheet, sheetName: string): void 
   } catch {
     /* print setup is cosmetic — never fail the build over it */
   }
+}
+
+/**
+ * Gives short operational exhibits enough physical presence on paper without
+ * changing values, formulas or provenance. A5 is intentional for narrow,
+ * short decision tables: it removes the large A4 void while retaining a
+ * readable one-page handout. Long-text source matrices remain A4.
+ */
+export function applyCompactPrintDensity(
+  ws: ExcelJS.Worksheet,
+  rowCount: number,
+  columnCount: number,
+  sheetName: string
+): void {
+  if (rowCount < 1 || rowCount > 12 || columnCount < 1 || columnCount > 4) return;
+  const isSourceMatrix = /source|evidence|provenance/i.test(sheetName);
+  const dataHeight = rowCount <= 4 ? 48 : rowCount <= 7 ? 34 : 25;
+  ws.getRow(1).height = 28;
+  for (let row = 2; row <= rowCount + 1; row++) {
+    ws.getRow(row).height = isSourceMatrix ? Math.max(dataHeight, 54) : dataHeight;
+    ws.getRow(row).eachCell((cell) => {
+      cell.font = { ...(cell.font ?? {}), size: Math.max(Number(cell.font?.size ?? 0), 11) };
+      cell.alignment = { ...(cell.alignment ?? {}), vertical: 'middle', wrapText: true };
+    });
+  }
+  ws.pageSetup = {
+    ...(ws.pageSetup ?? {}),
+    orientation: isSourceMatrix ? 'landscape' : 'portrait',
+    paperSize: isSourceMatrix ? 9 : 11,
+    fitToPage: true,
+    fitToWidth: 1,
+    fitToHeight: 1,
+    horizontalCentered: true,
+    verticalCentered: true,
+  };
 }
