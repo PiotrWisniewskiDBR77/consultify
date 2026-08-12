@@ -821,13 +821,66 @@ export async function approveVersion(params: ApproveVersionParams): Promise<Appr
       return { ok: false, code: 'APPROVAL_BLOCKED', message: 'Unresolved blocking comment(s) present' };
     }
 
+    // (a3c) maker-checker fix (2026-08-12, defect 2 of
+    // `docs/validation/finance-v3/generated/gate-e/P0_APPROVE_RBAC_FIX_report.md`
+    // — J4 probe's RULE-SOD-EDITOR-NOT-SUBMITTER-GAP). `params.editorUserIds`
+    // used to default to `[]` and NO production caller ever populated it (the
+    // route never passed it, and `autosaveService.checkpointOperationStack()`
+    // never wrote to `artifact_lifecycle_events`), so the (a4) SoD check below
+    // only ever caught literal self-approval-by-submitter, never
+    // self-approval-by-editor. Fix: `finance_working_revisions.edited_by` was
+    // ALREADY being recorded correctly — the gap was never missing data, only
+    // that nothing read it. This SELECT reconstructs "every actor who
+    // genuinely authored/edited this version's content" without needing a new
+    // `artifact_lifecycle_events` action type (the CHECK constraint in
+    // `20260809_finance_v3_b02_lifecycle_events.sql` has no value for
+    // edits/checkpoints — adding one would be a migration, out of scope here)
+    // and without any autosaveService.ts change.
+    //
+    // The `(checkpoint_source IS NOT NULL OR revision_seq = 1)` filter is
+    // load-bearing, not decoration — a first, broader version of this fix
+    // (counting EVERY `edited_by` on the business_version_id, no filter) broke
+    // 8 existing tests: `reopenVersion()`'s copy-on-write INSERT ALSO stamps
+    // `edited_by = <the actor who called reopen>` on the new working revision
+    // it mechanically clones (see that function, ~line 1195) — that actor is
+    // restricted to approver/finance_admin by `REOPEN_ALLOWED_ROLES`, and this
+    // codebase's own tests (e.g. `lineageFreshnessService.pg.test.ts`'s
+    // `reopenAndApprove` helper) legitimately have the SAME approver reopen
+    // AND later re-approve a MATERIAL/HIGH_RISK version — a real, intended
+    // workflow, not an attack. Counting that row as "editing" produced a false
+    // SELF_APPROVAL_FORBIDDEN. The reopen row is reliably distinguishable from
+    // a genuine edit: it never sets `checkpoint_source` (only
+    // `checkpointOperationStack()` does, for real autosave/explicit-save
+    // checkpoints) and its `revision_seq` is never 1 (revision_seq is
+    // artifact-scoped and monotonic — only `createArtifact()`'s very first
+    // working revision is ever 1, which legitimately DOES represent the
+    // creator's initial authorship of the content and is deliberately kept
+    // in). Merged with (not replacing) any caller-supplied
+    // `params.editorUserIds`, so a future caller with a richer source can only
+    // ever ADD conflicts, never lose enforcement by omitting the param. This
+    // closes editorUserIds's part of defect 2. It does NOT close
+    // `reviewStartedBy` — there is no `review_started_by` column on
+    // `finance_business_versions` at all (T4 `start_review` has no
+    // `ACTOR_FIELD_BY_ACTION` entry, unlike T2/T10), so the HIGH_RISK
+    // reviewer-conflict half of the SoD gate has no production data source
+    // and genuinely needs a schema migration — out of this fix's allowlist,
+    // left as a documented remaining gap.
+    const editorRows = await tx.queryAll<{ edited_by: string | null }>(
+      `SELECT DISTINCT edited_by FROM finance_working_revisions
+        WHERE business_version_id = ? AND organization_id = ? AND edited_by IS NOT NULL
+          AND (checkpoint_source IS NOT NULL OR revision_seq = 1)`,
+      [params.businessVersionId, params.organizationId]
+    );
+    const derivedEditorIds = editorRows.map((r) => r.edited_by).filter((id): id is string => Boolean(id));
+    const effectiveEditorUserIds = Array.from(new Set([...(params.editorUserIds ?? []), ...derivedEditorIds]));
+
     // (a4) SoD self-approval gate (WP-B02 §7.2.6).
     const riskTier = (current.risk_tier ?? 'LOW') as RiskTier;
     const sod = checkSelfApproval({
       riskTier,
       approverUserId: params.actorId,
       submittedBy: current.submitted_by,
-      editorUserIds: params.editorUserIds,
+      editorUserIds: effectiveEditorUserIds,
       reviewStartedBy: params.reviewStartedBy,
     });
     if (sod.forbidden) {
