@@ -1759,8 +1759,15 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
                   </span>
                 )}
                 {depth > 0 && (
+                  // RISK-35 (S1-CONTRAST, 2026-08-12): dark:text-slate-500 measured
+                  // 3.22:1 at depth 2 (this badge inherits the node's depth-based fade,
+                  // `depthOpacity` above — opacity-90 at depth 2, opacity-80 at depth
+                  // 3+) against the 4.5:1 WCAG 1.4.3 text bar. text-c-text-secondary
+                  // clears it in both themes (8.26:1 dark / 5.41:1 light at depth 2 —
+                  // see docs/qa/ideas-complete-transformation-2026-08-09/21_FOCUS_AND_CONTRAST.md
+                  // §8) and replaces the raw Tailwind slate-* with a design token.
                   <div
-                    className="text-[8px] text-slate-600 dark:text-slate-500 ml-auto"
+                    className="text-[8px] text-c-text-secondary ml-auto"
                     title={`Depth ${depth}`}
                   >
                     L{depth}
