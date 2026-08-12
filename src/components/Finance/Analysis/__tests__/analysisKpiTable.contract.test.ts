@@ -7,7 +7,12 @@
  */
 import { describe, expect, it } from 'vitest';
 
-import type { AnalysisKpiValueDto } from '../../../../services/api/financeV2.types';
+import {
+  financeValueDisplayReasonLabel,
+  formatFinanceValueForDisplay,
+  type AnalysisKpiValueDto,
+  type FinanceValueStatus,
+} from '../../../../services/api/financeV2.types';
 import {
   buildAnalysisKpiColumns,
   computeYoyDelta,
@@ -40,6 +45,36 @@ function kpiValue(overrides: Partial<AnalysisKpiValueDto> & Pick<AnalysisKpiValu
     ...overrides,
   };
 }
+
+describe('reużyte z Pakietu C — formatFinanceValueForDisplay/financeValueDisplayReasonLabel rozróżniają WSZYSTKIE PIĘĆ stanów (korekta koordynatora 2026-08-12: PRESENT_ZERO·PRESENT_NONZERO·MISSING·NA·NOT_APPLICABLE, nie trzy)', () => {
+  it('dwa stany OBECNE renderują liczbę (0 dla PRESENT_ZERO, prawdziwą wartość dla PRESENT_NONZERO) — nigdy glif braku', () => {
+    expect(formatFinanceValueForDisplay(value('PRESENT_ZERO', '0'))).toEqual({ text: '0', isMissingLikeGlyph: false, status: 'PRESENT_ZERO' });
+    expect(formatFinanceValueForDisplay(value('PRESENT_NONZERO', '42'))).toEqual({ text: '42', isMissingLikeGlyph: false, status: 'PRESENT_NONZERO' });
+  });
+
+  it('trzy stany BRAKU dzielą ten sam glif „—" (celowo, brief: rozróżnienie jest zadaniem etykiety obok, nie glifu), ale KAŻDY niesie WŁASNY status i WŁASNY, różny tekst powodu', () => {
+    const missing = formatFinanceValueForDisplay(value('MISSING', null));
+    const na = formatFinanceValueForDisplay(value('NA', null));
+    const notApplicable = formatFinanceValueForDisplay(value('NOT_APPLICABLE', null));
+    expect([missing.text, na.text, notApplicable.text]).toEqual(['—', '—', '—']);
+    expect([missing.status, na.status, notApplicable.status]).toEqual(['MISSING', 'NA', 'NOT_APPLICABLE']);
+
+    const reasons = [missing, na, notApplicable].map((d) => financeValueDisplayReasonLabel(d.status));
+    // KONTROLA NEGATYWNA: trzy RÓŻNE teksty powodu — gdyby dwa się pokrywały, użytkownik nie
+    // odróżniłby "brak danych źródłowych" od "nie dotyczy tego podmiotu" mimo identycznego glifu.
+    expect(new Set(reasons).size).toBe(3);
+    expect(reasons.every((r) => typeof r === 'string' && r.length > 0)).toBe(true);
+  });
+
+  it('dowód wyczerpania: dokładnie 5 statusów zdefiniowanych w typie, każdy przetestowany powyżej', () => {
+    const allStatuses: FinanceValueStatus[] = ['PRESENT_ZERO', 'PRESENT_NONZERO', 'MISSING', 'NA', 'NOT_APPLICABLE'];
+    expect(allStatuses).toHaveLength(5);
+    for (const status of allStatuses) {
+      const display = formatFinanceValueForDisplay(value(status, status.startsWith('PRESENT') ? '1' : null));
+      expect(display.status).toBe(status);
+    }
+  });
+});
 
 describe('computeYoyDelta', () => {
   it('oba obecne: 120 vs 100 ⇒ +20 / +20%', () => {
