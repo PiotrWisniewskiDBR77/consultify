@@ -403,11 +403,52 @@ export async function createRoiCase(input: CreateRoiCaseInput): Promise<CreateRo
 // endpoints this package is scoped to). Each mirrors its route's exact body
 // shape read from `roi.routes.ts`/the validator files cited in the file
 // header — no field invented beyond what the server schema declares.
+//
+// PLUS (RN-G6-C2, found while running the ROI gold flow end-to-end for the
+// first time on a real browser/real Postgres): `start-modeling` and
+// `ready-for-review` (`roi.routes.ts` L715-716, `mountTransitionRoute`,
+// same `RoiCaseTransitionSchema` body shape as `approve`/`start_pir`/
+// `close` above) existed server-side with a passing test suite but had ZERO
+// frontend callers anywhere in `src/` — a case created via "New ROI case"
+// stays in `draft` forever with no UI path to `modeling`, which silently
+// blocks calculation runs (`RUNNABLE_STATUSES = ['modeling',
+// 'ready_for_review']`, `RoiCaseModelWorkspace.tsx`) and therefore the rest
+// of the lifecycle. Added here as the same 9th/10th transition, not a new
+// pattern.
 // ==========================================
 
 export interface RoiTransitionResult {
   outcome: 'applied' | 'duplicate';
   case: RoiCaseListItem;
+}
+
+/** POST .../transitions/start-modeling — `RoiCaseTransitionSchema`
+ * (expectedVersion + optional reason), draft → modeling
+ * (`roiCaseCommands.ts` `startModeling`, L971-983). */
+export async function startModelingRoiCase(
+  caseId: string,
+  input: { expectedVersion: number; reason?: string | null; idempotencyKey: string }
+): Promise<RoiTransitionResult> {
+  return mutateJson<RoiTransitionResult>(
+    'POST',
+    `/vnext/results/roi/cases/${encodeURIComponent(caseId)}/transitions/start-modeling`,
+    input
+  );
+}
+
+/** POST .../transitions/ready-for-review — `RoiCaseTransitionSchema`
+ * (expectedVersion + optional reason), modeling → ready_for_review, guarded
+ * server-side by a successful/fresh calculation run + no unresolved
+ * double-counting (`roiCaseCommands.ts` `markReadyForReview`, L985-1003). */
+export async function markRoiCaseReadyForReview(
+  caseId: string,
+  input: { expectedVersion: number; reason?: string | null; idempotencyKey: string }
+): Promise<RoiTransitionResult> {
+  return mutateJson<RoiTransitionResult>(
+    'POST',
+    `/vnext/results/roi/cases/${encodeURIComponent(caseId)}/transitions/ready-for-review`,
+    input
+  );
 }
 
 /** POST .../transitions/approve — `RoiCaseTransitionSchema` (expectedVersion

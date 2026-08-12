@@ -82,9 +82,11 @@ import {
   listRoiCases,
   newRoiIdempotencyKey,
   rejectRoiCase,
+  markRoiCaseReadyForReview,
   reopenRoiCaseForRevision,
   requestChangesOnRoiCase,
   RoiApiError,
+  startModelingRoiCase,
   startPirRoiCase,
   type RoiCalculationRunSummary,
   type RoiCaseListItem,
@@ -140,6 +142,10 @@ async function runRoiTransition(
   idempotencyKey: string
 ): Promise<RoiTransitionResult> {
   switch (id) {
+    case 'start_modeling':
+      return startModelingRoiCase(caseId, { expectedVersion, reason, idempotencyKey });
+    case 'ready_for_review':
+      return markRoiCaseReadyForReview(caseId, { expectedVersion, reason, idempotencyKey });
     case 'approve':
       return approveRoiCase(caseId, { expectedVersion, reason, idempotencyKey });
     case 'reject':

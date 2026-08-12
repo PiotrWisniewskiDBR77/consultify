@@ -324,6 +324,17 @@ export function formatRoiDate(value: string | null, isPolish: boolean): string {
 // server's own status guard, NOT inferred/invented — citations point at the
 // exact guard line so a reviewer can diff this table against the code:
 //
+// PLUS (RN-G6-C2) start_modeling/ready_for_review — see `roiApi.ts`'s
+// header comment on `startModelingRoiCase`/`markRoiCaseReadyForReview` for
+// why these two were added: the endpoints existed server-side but had no
+// frontend caller, leaving every newly-created case permanently stuck in
+// `draft` with no UI path to a calculation-run-eligible status.
+//
+//  - start-modeling     : status !== 'draft' → reject
+//                          `server/src/services/resultsVnext/roi/roiCaseCommands.ts` L977 (fromStatuses)
+//  - ready-for-review    : status !== 'modeling' → reject (+ economic-model guard:
+//                          successful/fresh calc run, no unresolved double-counting)
+//                          same file L991-999
 //  - approve            : status !== 'submitted_for_approval' → reject
 //                          `server/src/services/resultsVnext/roi/roiCaseApprovalCommands.ts` L347
 //  - reject              : status !== 'submitted_for_approval' → reject
@@ -350,6 +361,8 @@ export function formatRoiDate(value: string | null, isPolish: boolean): string {
 // ==========================================
 
 export type RoiTransitionId =
+  | 'start_modeling'
+  | 'ready_for_review'
   | 'approve'
   | 'reject'
   | 'request_changes'
@@ -387,6 +400,26 @@ const ROI_TRACKING_ACTIVE_STATUSES_FOR_TRANSITIONS: readonly RoiCaseStatus[] = [
 ];
 
 export const ROI_TRANSITIONS: Record<RoiTransitionId, RoiTransitionDefinition> = {
+  start_modeling: {
+    id: 'start_modeling',
+    label: { pl: 'Rozpocznij modelowanie', en: 'Start modeling' },
+    fromStatuses: ['draft'],
+    reasonRequired: false,
+    disabledReason: {
+      pl: 'Rozpoczęcie modelowania dostępne tylko dla sprawy w statusie „Szkic”.',
+      en: 'Starting modeling is only available for a case in Draft status.',
+    },
+  },
+  ready_for_review: {
+    id: 'ready_for_review',
+    label: { pl: 'Oznacz jako gotowe do przeglądu', en: 'Mark ready for review' },
+    fromStatuses: ['modeling'],
+    reasonRequired: false,
+    disabledReason: {
+      pl: 'Dostępne tylko w statusie „Modelowanie”, po udanym przebiegu kalkulacji.',
+      en: 'Only available while Modeling, after a successful calculation run.',
+    },
+  },
   approve: {
     id: 'approve',
     label: { pl: 'Zaakceptuj', en: 'Approve' },
