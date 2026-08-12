@@ -24,6 +24,10 @@ import {
   type AtomicCommandOutcome,
   type AtomicEventInput,
 } from '../platform/atomicWrite.js';
+import {
+  assertCommandCapability,
+  type CommandAccessContext,
+} from '../platform/commandCapabilityGuard.js';
 
 import { unfreezeRoiBaseline, freezeRoiBaseline } from './roiBaselineCommands.js';
 import { ROI_EVENT_SOURCE, RoiCaseNotReadyForReviewError, RoiCaseValidationError } from './roiCaseCommands.js';
@@ -65,6 +69,22 @@ import { toRoiBaseline, toRoiCase, type RoiBaselineRow, type RoiCase, type RoiCa
  * domain's own `DeviationSelfApprovalDeniedError` (a separate class per
  * aggregate, not cross-domain reuse).
  */
+// ==========================================
+// RN-G5 — command capability names (docs/product/results-vnext/RN_G5_AUTHZ_DESIGN.md)
+// Same convention as kpiDeviationCommands.ts's DEVIATION_CAPABILITIES /
+// kpiDefinitionCommands.ts's KPI_DEFINITION_CAPABILITIES. Only the five ROI
+// case decision commands in THIS file are gated (RN-G5 pakiet scope) — the
+// rest of server/src/services/resultsVnext/roi/** is NOT covered by this
+// change; see the RN-G5 design doc's own "not measured" section.
+// ==========================================
+export const ROI_CASE_APPROVAL_CAPABILITIES = {
+  submitForApproval: 'results.roi.case.submit_for_approval',
+  approve: 'results.roi.case.approve',
+  reject: 'results.roi.case.reject',
+  requestChanges: 'results.roi.case.request_changes',
+  reopenForRevision: 'results.roi.case.reopen_for_revision',
+} as const;
+
 export class RoiSelfApprovalDeniedError extends Error {
   code = 'SELF_APPROVAL_DENIED';
   details: Record<string, unknown>;
@@ -177,6 +197,7 @@ export interface SubmitRoiCaseForApprovalInput {
   correlationId?: string;
   causationId?: string | null;
   reason?: string | null;
+  access: CommandAccessContext;
 }
 
 export async function submitRoiCaseForApproval(
@@ -192,6 +213,7 @@ export async function submitRoiCaseForApproval(
     correlationId,
     causationId = null,
     reason = null,
+    access,
   } = input;
 
   let beforeState: Record<string, unknown> | null = null;
@@ -203,6 +225,14 @@ export async function submitRoiCaseForApproval(
     loadForUpdate: loadRoiCaseForUpdate,
     getCurrentVersion: caseRowVersion,
     applyMutation: async (client, currentRow, nextVersion) => {
+      // RN-G5: authorization first.
+      assertCommandCapability({
+        access,
+        actorUserId,
+        capability: ROI_CASE_APPROVAL_CAPABILITIES.submitForApproval,
+        responsibleUserIds: [currentRow.owner_user_id],
+      });
+
       // 1. fromStatuses guard.
       if (currentRow.status !== 'ready_for_review' && currentRow.status !== 'changes_requested') {
         throw new RoiCaseValidationError(
@@ -303,6 +333,7 @@ export interface ApproveRoiCaseInput {
   correlationId?: string;
   causationId?: string | null;
   reason?: string | null;
+  access: CommandAccessContext;
 }
 
 export interface ApproveRoiCaseResult {
@@ -321,6 +352,7 @@ export async function approveRoiCase(input: ApproveRoiCaseInput): Promise<Atomic
     correlationId,
     causationId = null,
     reason = null,
+    access,
   } = input;
 
   let beforeState: Record<string, unknown> | null = null;
@@ -332,7 +364,17 @@ export async function approveRoiCase(input: ApproveRoiCaseInput): Promise<Atomic
     loadForUpdate: loadRoiCaseForUpdate,
     getCurrentVersion: caseRowVersion,
     applyMutation: async (client, currentRow, nextVersion) => {
-      // 1. Self-approval denial — FIRST, before any write (design §4.2/§6).
+      // RN-G5: coarse authorization FIRST, maker-checker self-approval
+      // SECOND — same ordering as kpiDeviationCommands.approvePlan /
+      // kpiDefinitionCommands.approveDefinitionVersion.
+      assertCommandCapability({
+        access,
+        actorUserId: approverId,
+        capability: ROI_CASE_APPROVAL_CAPABILITIES.approve,
+        responsibleUserIds: [currentRow.owner_user_id],
+      });
+
+      // 1. Self-approval denial — before any write (design §4.2/§6).
       // loadForUpdate's SELECT ... FOR UPDATE has already run (it is
       // executeAtomicCommand step 2, before this applyMutation), so the row
       // is locked, but nothing has been written yet when this check runs.
@@ -615,6 +657,7 @@ export interface RejectRoiCaseInput {
   idempotencyKey: string;
   correlationId?: string;
   causationId?: string | null;
+  access: CommandAccessContext;
 }
 
 /**
@@ -633,6 +676,7 @@ export async function rejectRoiCase(input: RejectRoiCaseInput): Promise<AtomicCo
     idempotencyKey,
     correlationId,
     causationId = null,
+    access,
   } = input;
 
   let beforeState: Record<string, unknown> | null = null;
@@ -644,6 +688,13 @@ export async function rejectRoiCase(input: RejectRoiCaseInput): Promise<AtomicCo
     loadForUpdate: loadRoiCaseForUpdate,
     getCurrentVersion: caseRowVersion,
     applyMutation: async (client, currentRow, nextVersion) => {
+      assertCommandCapability({
+        access,
+        actorUserId: rejectedBy,
+        capability: ROI_CASE_APPROVAL_CAPABILITIES.reject,
+        responsibleUserIds: [currentRow.owner_user_id],
+      });
+
       if (currentRow.status !== 'submitted_for_approval') {
         throw new RoiCaseValidationError(
           `ROI case ${caseId} is "${currentRow.status}" — only a case "submitted_for_approval" may be rejected`,
@@ -711,6 +762,7 @@ export interface RequestChangesOnRoiCaseInput {
   idempotencyKey: string;
   correlationId?: string;
   causationId?: string | null;
+  access: CommandAccessContext;
 }
 
 /**
@@ -733,6 +785,7 @@ export async function requestChangesOnRoiCase(
     idempotencyKey,
     correlationId,
     causationId = null,
+    access,
   } = input;
 
   let beforeState: Record<string, unknown> | null = null;
@@ -744,6 +797,13 @@ export async function requestChangesOnRoiCase(
     loadForUpdate: loadRoiCaseForUpdate,
     getCurrentVersion: caseRowVersion,
     applyMutation: async (client, currentRow, nextVersion) => {
+      assertCommandCapability({
+        access,
+        actorUserId,
+        capability: ROI_CASE_APPROVAL_CAPABILITIES.requestChanges,
+        responsibleUserIds: [currentRow.owner_user_id],
+      });
+
       if (currentRow.status !== 'submitted_for_approval') {
         throw new RoiCaseValidationError(
           `ROI case ${caseId} is "${currentRow.status}" — changes may only be requested on a case "submitted_for_approval"`,
@@ -811,6 +871,7 @@ export interface ReopenApprovedRoiCaseForRevisionInput {
   idempotencyKey: string;
   correlationId?: string;
   causationId?: string | null;
+  access: CommandAccessContext;
 }
 
 /**
@@ -835,6 +896,7 @@ export async function reopenApprovedRoiCaseForRevision(
     idempotencyKey,
     correlationId,
     causationId = null,
+    access,
   } = input;
 
   let beforeState: Record<string, unknown> | null = null;
@@ -846,6 +908,26 @@ export async function reopenApprovedRoiCaseForRevision(
     loadForUpdate: loadRoiCaseForUpdate,
     getCurrentVersion: caseRowVersion,
     applyMutation: async (client, currentRow, nextVersion) => {
+      // RN-G5 FIX (found during RN-G5 audit, 2026-08-12 — NOT part of the
+      // original ~11-commit pakiet: `access` was already threaded through
+      // this command's own input type and its route
+      // (roi.routes.ts POST /cases/:caseId/transitions/reopen-for-revision
+      // already resolved and passed a real CommandAccessContext), but this
+      // function never actually called assertCommandCapability — the one
+      // command in this file the design doc's own table claimed was gated
+      // ("5 of 5 commands in this file gated") that, in the actual code, was
+      // not. Any authenticated org member could reopen ANY approved ROI
+      // case for revision (unfreezing its baseline/economic model)
+      // regardless of ownership or capability. Same shape/ordering as this
+      // file's own approveRoiCase/rejectRoiCase/requestChangesOnRoiCase —
+      // guard FIRST, before the status check.
+      assertCommandCapability({
+        access,
+        actorUserId,
+        capability: ROI_CASE_APPROVAL_CAPABILITIES.reopenForRevision,
+        responsibleUserIds: [currentRow.owner_user_id],
+      });
+
       if (currentRow.status !== 'approved') {
         throw new RoiCaseValidationError(
           `ROI case ${caseId} is "${currentRow.status}" — only an "approved" case may be reopened for revision`,

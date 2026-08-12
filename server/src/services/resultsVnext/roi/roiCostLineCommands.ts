@@ -14,6 +14,10 @@ import type { PoolClient } from 'pg';
 
 import { computeStateHash } from '../kpi/kpiDefinitionCommands.js';
 import { executeAtomicCommand, executeAtomicCreate, type AtomicCommandOutcome, type AtomicEventInput } from '../platform/atomicWrite.js';
+import {
+  assertCommandCapability,
+  type CommandAccessContext,
+} from '../platform/commandCapabilityGuard.js';
 
 import { RoiEconomicModelNotEditableError } from './roiCalculationPolicyCommands.js';
 import { NON_EDITABLE_STATUSES, ROI_EVENT_SOURCE } from './roiCaseCommands.js';
@@ -40,20 +44,38 @@ export class RoiCostLineFrozenError extends Error {
   }
 }
 
+// RN-G5 — command capability names (docs/product/results-vnext/RN_G5_AUTHZ_DESIGN.md)
+export const ROI_COST_LINE_CAPABILITIES = {
+  add: 'results.roi.cost_line.add',
+  update: 'results.roi.cost_line.update',
+  remove: 'results.roi.cost_line.remove',
+} as const;
+
+/** RN-G5: authorization runs FIRST — same rationale as roiAssumptionCommands.ts's
+ * identical helper (that file's own doc comment has the full rationale). */
 async function assertCaseEditableForUpdate(
   client: PoolClient,
   caseId: string,
   organizationId: string,
-  op: string
+  op: string,
+  auth: { access: CommandAccessContext; actorUserId: string; capability: string }
 ): Promise<void> {
-  const caseResult = await client.query<{ status: string }>(
-    `SELECT status FROM rvn_roi_cases WHERE case_id = $1 AND organization_id = $2 FOR UPDATE`,
+  const caseResult = await client.query<{ status: string; owner_user_id: string }>(
+    `SELECT status, owner_user_id FROM rvn_roi_cases WHERE case_id = $1 AND organization_id = $2 FOR UPDATE`,
     [caseId, organizationId]
   );
   const caseRow = caseResult.rows[0];
   if (!caseRow) {
     throw new Error(`[${op}] case ${caseId} not found`);
   }
+
+  assertCommandCapability({
+    access: auth.access,
+    actorUserId: auth.actorUserId,
+    capability: auth.capability,
+    responsibleUserIds: [caseRow.owner_user_id],
+  });
+
   if (NON_EDITABLE_STATUSES.includes(caseRow.status as (typeof NON_EDITABLE_STATUSES)[number])) {
     throw new RoiEconomicModelNotEditableError(caseId, caseRow.status);
   }
@@ -85,6 +107,7 @@ export interface AddCostLineInput {
   correlationId?: string;
   causationId?: string | null;
   reason?: string | null;
+  access: CommandAccessContext;
 }
 
 export async function addCostLine(input: AddCostLineInput): Promise<AtomicCommandOutcome<RoiCostLine>> {
@@ -110,12 +133,17 @@ export async function addCostLine(input: AddCostLineInput): Promise<AtomicComman
     correlationId,
     causationId = null,
     reason = null,
+    access,
   } = input;
 
   return executeAtomicCreate<RoiCostLine>({
     organizationId,
     applyMutation: async (client) => {
-      await assertCaseEditableForUpdate(client, caseId, organizationId, 'addCostLine');
+      await assertCaseEditableForUpdate(client, caseId, organizationId, 'addCostLine', {
+        access,
+        actorUserId,
+        capability: ROI_COST_LINE_CAPABILITIES.add,
+      });
 
       const insertResult = await client.query<RoiCostLineRow>(
         `INSERT INTO rvn_roi_cost_lines
@@ -218,6 +246,7 @@ export interface UpdateCostLineInput {
   correlationId?: string;
   causationId?: string | null;
   reason?: string | null;
+  access: CommandAccessContext;
 }
 
 export async function updateCostLine(input: UpdateCostLineInput): Promise<AtomicCommandOutcome<RoiCostLine>> {
@@ -232,6 +261,7 @@ export async function updateCostLine(input: UpdateCostLineInput): Promise<Atomic
     correlationId,
     causationId = null,
     reason = null,
+    access,
     ...edits
   } = input;
 
@@ -247,7 +277,11 @@ export async function updateCostLine(input: UpdateCostLineInput): Promise<Atomic
       if (currentRow.frozen_at !== null) {
         throw new RoiCostLineFrozenError(costLineId);
       }
-      await assertCaseEditableForUpdate(client, caseId, organizationId, 'updateCostLine');
+      await assertCaseEditableForUpdate(client, caseId, organizationId, 'updateCostLine', {
+        access,
+        actorUserId,
+        capability: ROI_COST_LINE_CAPABILITIES.update,
+      });
 
       beforeState = { costLine: toRoiCostLine(currentRow) };
 
@@ -346,6 +380,7 @@ export interface RemoveCostLineInput {
   correlationId?: string;
   causationId?: string | null;
   reason?: string | null;
+  access: CommandAccessContext;
 }
 
 export async function removeCostLine(input: RemoveCostLineInput): Promise<AtomicCommandOutcome<RoiCostLine>> {
@@ -360,6 +395,7 @@ export async function removeCostLine(input: RemoveCostLineInput): Promise<Atomic
     correlationId,
     causationId = null,
     reason = null,
+    access,
   } = input;
 
   let beforeState: Record<string, unknown> | null = null;
@@ -374,7 +410,11 @@ export async function removeCostLine(input: RemoveCostLineInput): Promise<Atomic
       if (currentRow.frozen_at !== null) {
         throw new RoiCostLineFrozenError(costLineId);
       }
-      await assertCaseEditableForUpdate(client, caseId, organizationId, 'removeCostLine');
+      await assertCaseEditableForUpdate(client, caseId, organizationId, 'removeCostLine', {
+        access,
+        actorUserId,
+        capability: ROI_COST_LINE_CAPABILITIES.remove,
+      });
 
       beforeState = { costLine: toRoiCostLine(currentRow) };
 

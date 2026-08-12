@@ -121,7 +121,8 @@ describe('ROI-E006 AC-04 cold reopen (real Postgres, separate connection)', () =
         actorUserId: USER_OWNER,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `draft-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
       const closeOutcome = await modules.closeRoiCase({
         caseId: started.caseId,
@@ -130,7 +131,8 @@ describe('ROI-E006 AC-04 cold reopen (real Postgres, separate connection)', () =
         actorUserId: USER_CLOSER,
         actorEffectiveRole: 'admin',
         idempotencyKey: `close-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       expect(closeOutcome.result.pir.status).toBe('finalized');
       // The finalize step does not touch the frozen facts — confirmed here,
       // not just asserted: same hash/payload as captured at reviewer start.

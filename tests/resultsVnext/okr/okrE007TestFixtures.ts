@@ -145,7 +145,8 @@ export async function buildActiveOkrSetFixture(opts: OkrE007FixtureOptions): Pro
     actorEffectiveRole: 'admin',
     idempotencyKey: `e007-create-program-${randomUUID()}`,
     ...programPolicyOverrides,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   await programCommands.publishProgram({
     programId: program.result.programId,
     organizationId,
@@ -153,7 +154,8 @@ export async function buildActiveOkrSetFixture(opts: OkrE007FixtureOptions): Pro
     actorUserId: adminUserId,
     actorEffectiveRole: 'admin',
     idempotencyKey: `e007-publish-program-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
   const cycle = await cycleCommands.createCycle({
     organizationId,
@@ -163,7 +165,8 @@ export async function buildActiveOkrSetFixture(opts: OkrE007FixtureOptions): Pro
     createdBy: adminUserId,
     actorEffectiveRole: 'admin',
     idempotencyKey: `e007-create-cycle-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
   const set = await setCommands.createOkrSet({
     organizationId,
@@ -177,7 +180,8 @@ export async function buildActiveOkrSetFixture(opts: OkrE007FixtureOptions): Pro
     createdBy: ownerUserId,
     actorEffectiveRole: 'member',
     idempotencyKey: `e007-create-set-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   const setId = set.result.set.setId;
 
   const objectiveIds: string[] = [];
@@ -190,7 +194,8 @@ export async function buildActiveOkrSetFixture(opts: OkrE007FixtureOptions): Pro
       createdBy: ownerUserId,
       actorEffectiveRole: 'member',
       idempotencyKey: `e007-create-obj-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     objectiveIds.push(objective.result.objectiveId);
     for (const kr of objectiveSpec.keyResults) {
       await keyResultCommands.createKeyResult({
@@ -205,7 +210,8 @@ export async function buildActiveOkrSetFixture(opts: OkrE007FixtureOptions): Pro
         createdBy: ownerUserId,
         actorEffectiveRole: 'member',
         idempotencyKey: `e007-create-kr-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
     }
   }
 
@@ -216,7 +222,8 @@ export async function buildActiveOkrSetFixture(opts: OkrE007FixtureOptions): Pro
     actorUserId: ownerUserId,
     actorEffectiveRole: 'member',
     idempotencyKey: `e007-submit-set-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   const approved = await setCommands.approveOkrSet({
     setId,
     organizationId,
@@ -224,7 +231,8 @@ export async function buildActiveOkrSetFixture(opts: OkrE007FixtureOptions): Pro
     approverId: adminUserId,
     actorEffectiveRole: 'admin',
     idempotencyKey: `e007-approve-set-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   await setCommands.runOkrSetLifecycleTransition(setCommands.OKR_SET_ACTIVATE_SPEC, {
     setId,
     organizationId,
@@ -232,7 +240,8 @@ export async function buildActiveOkrSetFixture(opts: OkrE007FixtureOptions): Pro
     actorUserId: ownerUserId,
     actorEffectiveRole: 'member',
     idempotencyKey: `e007-activate-set-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
   return {
     organizationId,

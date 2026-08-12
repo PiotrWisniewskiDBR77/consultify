@@ -275,7 +275,8 @@ describe('ROI-E004 getRoiCaseCompareView — AC-04 (real Postgres)', () => {
       actorUserId: USER_MAKER,
       actorEffectiveRole: 'consultant',
       idempotencyKey: `start-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     await captureOrUpdateBaseline({
       organizationId: ORG_ID,
       caseId,
@@ -286,7 +287,8 @@ describe('ROI-E004 getRoiCaseCompareView — AC-04 (real Postgres)', () => {
       actorId: USER_MAKER,
       actorEffectiveRole: 'consultant',
       idempotencyKey: `baseline-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const costLineOutcome = await addCostLine({
       caseId,
       organizationId: ORG_ID,
@@ -299,7 +301,8 @@ describe('ROI-E004 getRoiCaseCompareView — AC-04 (real Postgres)', () => {
       actorUserId: USER_MAKER,
       actorEffectiveRole: 'consultant',
       idempotencyKey: `cost-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const benefitLineOutcome = await addBenefitLine({
       caseId,
       organizationId: ORG_ID,
@@ -313,7 +316,8 @@ describe('ROI-E004 getRoiCaseCompareView — AC-04 (real Postgres)', () => {
       actorUserId: USER_MAKER,
       actorEffectiveRole: 'consultant',
       idempotencyKey: `benefit-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     await createRoiCalculationRun({
       organizationId: ORG_ID,
       caseId,
@@ -321,7 +325,8 @@ describe('ROI-E004 getRoiCaseCompareView — AC-04 (real Postgres)', () => {
       actorUserId: USER_MAKER,
       actorEffectiveRole: 'consultant',
       idempotencyKey: `run-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const readyOutcome = await markReadyForReview({
       caseId,
       organizationId: ORG_ID,
@@ -329,7 +334,8 @@ describe('ROI-E004 getRoiCaseCompareView — AC-04 (real Postgres)', () => {
       actorUserId: USER_MAKER,
       actorEffectiveRole: 'consultant',
       idempotencyKey: `ready-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const submitOutcome = await submitRoiCaseForApproval({
       caseId,
       organizationId: ORG_ID,
@@ -337,7 +343,8 @@ describe('ROI-E004 getRoiCaseCompareView — AC-04 (real Postgres)', () => {
       actorUserId: USER_MAKER,
       actorEffectiveRole: 'consultant',
       idempotencyKey: `submit-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const approveOutcome = await approveRoiCase({
       caseId,
       organizationId: ORG_ID,
@@ -345,7 +352,8 @@ describe('ROI-E004 getRoiCaseCompareView — AC-04 (real Postgres)', () => {
       approverId: USER_APPROVER,
       actorEffectiveRole: 'admin',
       idempotencyKey: `approve-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const trackingOutcome = await startRoiCaseTracking({
       caseId,
       organizationId: ORG_ID,
@@ -353,7 +361,8 @@ describe('ROI-E004 getRoiCaseCompareView — AC-04 (real Postgres)', () => {
       actorUserId: USER_MAKER,
       actorEffectiveRole: 'consultant',
       idempotencyKey: `tracking-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
     // ---- STATE 2: approved is available, forecast/actual still missing ----
     const compare2 = await getRoiCaseCompareView({ userId: USER_MAKER, organizationId: ORG_ID, caseId });
@@ -370,7 +379,8 @@ describe('ROI-E004 getRoiCaseCompareView — AC-04 (real Postgres)', () => {
       actorUserId: USER_MAKER,
       actorEffectiveRole: 'consultant',
       idempotencyKey: `forecast-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
     // ---- STATE 3: approved + forecast available, actual still missing ----
     const compare3 = await getRoiCaseCompareView({ userId: USER_MAKER, organizationId: ORG_ID, caseId });
@@ -415,7 +425,8 @@ describe('ROI-E004 getRoiCaseCompareView — AC-04 (real Postgres)', () => {
       publishedBy: USER_MAKER,
       actorEffectiveRole: 'consultant',
       idempotencyKey: `snapshot-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     void snapshotOutcome;
 
     // ---- STATE 4: all three available for totalCosts/totalFinancialBenefits/

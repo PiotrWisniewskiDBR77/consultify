@@ -92,7 +92,8 @@ async function createProgramCycleAndSet(ownerId: string): Promise<{ organization
     createdBy: USER_ADMIN,
     actorEffectiveRole: 'admin',
     idempotencyKey: `create-program-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   await publishProgram({
     programId: created.result.programId,
     organizationId,
@@ -100,7 +101,8 @@ async function createProgramCycleAndSet(ownerId: string): Promise<{ organization
     actorUserId: USER_ADMIN,
     actorEffectiveRole: 'admin',
     idempotencyKey: `publish-program-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   const cycle = await createCycle({
     organizationId,
     programId: created.result.programId,
@@ -109,7 +111,8 @@ async function createProgramCycleAndSet(ownerId: string): Promise<{ organization
     createdBy: USER_ADMIN,
     actorEffectiveRole: 'admin',
     idempotencyKey: `create-cycle-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   const set = await createOkrSet({
     organizationId,
     programId: created.result.programId,
@@ -122,7 +125,8 @@ async function createProgramCycleAndSet(ownerId: string): Promise<{ organization
     createdBy: USER_ADMIN,
     actorEffectiveRole: 'admin',
     idempotencyKey: `create-set-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   return { organizationId, setId: set.result.set.setId };
 }
 
@@ -235,7 +239,8 @@ describe('OKR-E003 buildObjectivesSnapshotFragment / approveOkrSet — D8 closur
         createdBy: ownerId,
         actorEffectiveRole: 'member',
         idempotencyKey: `create-obj-a-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       const krKept = await createKeyResult({
         objectiveId: objectiveA.result.objectiveId,
         organizationId,
@@ -248,7 +253,8 @@ describe('OKR-E003 buildObjectivesSnapshotFragment / approveOkrSet — D8 closur
         createdBy: ownerId,
         actorEffectiveRole: 'member',
         idempotencyKey: `create-kr-kept-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       const krCancelled = await createKeyResult({
         objectiveId: objectiveA.result.objectiveId,
         organizationId,
@@ -261,7 +267,8 @@ describe('OKR-E003 buildObjectivesSnapshotFragment / approveOkrSet — D8 closur
         createdBy: ownerId,
         actorEffectiveRole: 'member',
         idempotencyKey: `create-kr-cancelled-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       await cancelKeyResult({
         keyResultId: krCancelled.result.keyResultId,
         organizationId,
@@ -269,7 +276,8 @@ describe('OKR-E003 buildObjectivesSnapshotFragment / approveOkrSet — D8 closur
         actorUserId: ownerId,
         actorEffectiveRole: 'member',
         idempotencyKey: `cancel-kr-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       // Objective A needs >=2 non-cancelled KRs to pass the submission
       // guard — add a second real one (krKept is #1).
       await createKeyResult({
@@ -284,7 +292,8 @@ describe('OKR-E003 buildObjectivesSnapshotFragment / approveOkrSet — D8 closur
         createdBy: ownerId,
         actorEffectiveRole: 'member',
         idempotencyKey: `create-kr-kept2-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
       // Objective B: cancelled entirely — excluded from the snapshot along
       // with everything under it.
@@ -296,7 +305,8 @@ describe('OKR-E003 buildObjectivesSnapshotFragment / approveOkrSet — D8 closur
         createdBy: ownerId,
         actorEffectiveRole: 'member',
         idempotencyKey: `create-obj-b-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       await cancelObjective({
         objectiveId: objectiveB.result.objectiveId,
         organizationId,
@@ -304,7 +314,8 @@ describe('OKR-E003 buildObjectivesSnapshotFragment / approveOkrSet — D8 closur
         actorUserId: ownerId,
         actorEffectiveRole: 'member',
         idempotencyKey: `cancel-obj-b-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
       const setRow = await client.query<{ row_version: number }>(`SELECT row_version FROM okr_vnext_sets WHERE set_id = $1`, [
         setId,
@@ -316,7 +327,8 @@ describe('OKR-E003 buildObjectivesSnapshotFragment / approveOkrSet — D8 closur
         actorUserId: ownerId,
         actorEffectiveRole: 'member',
         idempotencyKey: `submit-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       const approved = await approveOkrSet({
         setId,
         organizationId,
@@ -324,7 +336,8 @@ describe('OKR-E003 buildObjectivesSnapshotFragment / approveOkrSet — D8 closur
         approverId: USER_REVIEWER,
         actorEffectiveRole: 'member',
         idempotencyKey: `approve-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
       const dbRow = await client.query<{
         content_hash: string;
@@ -368,7 +381,8 @@ describe('OKR-E003 buildObjectivesSnapshotFragment / approveOkrSet — D8 closur
       createdBy: ownerId,
       actorEffectiveRole: 'member',
       idempotencyKey: `create-obj-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     for (let i = 0; i < 2; i += 1) {
       await createKeyResult({
         objectiveId: objective.result.objectiveId,
@@ -382,7 +396,8 @@ describe('OKR-E003 buildObjectivesSnapshotFragment / approveOkrSet — D8 closur
         createdBy: ownerId,
         actorEffectiveRole: 'member',
         idempotencyKey: `create-kr-${i}-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
     }
 
     const setRowV1 = await client.query<{ row_version: number }>(`SELECT row_version FROM okr_vnext_sets WHERE set_id = $1`, [
@@ -395,7 +410,8 @@ describe('OKR-E003 buildObjectivesSnapshotFragment / approveOkrSet — D8 closur
       actorUserId: ownerId,
       actorEffectiveRole: 'member',
       idempotencyKey: `submit-v1-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const approvedV1 = await approveOkrSet({
       setId,
       organizationId,
@@ -403,7 +419,8 @@ describe('OKR-E003 buildObjectivesSnapshotFragment / approveOkrSet — D8 closur
       approverId: USER_REVIEWER,
       actorEffectiveRole: 'member',
       idempotencyKey: `approve-v1-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     expect(approvedV1.result.snapshot.sequenceNumber).toBe(1);
 
     // Add a THIRD KeyResult before re-approval — v2's content must differ
@@ -429,7 +446,8 @@ describe('OKR-E003 buildObjectivesSnapshotFragment / approveOkrSet — D8 closur
       createdBy: ownerId,
       actorEffectiveRole: 'member',
       idempotencyKey: `create-kr-3-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     await client.query(`UPDATE okr_vnext_sets SET status = 'submitted' WHERE set_id = $1`, [setId]);
 
     const approvedV2 = await approveOkrSet({
@@ -439,7 +457,8 @@ describe('OKR-E003 buildObjectivesSnapshotFragment / approveOkrSet — D8 closur
       approverId: USER_REVIEWER,
       actorEffectiveRole: 'member',
       idempotencyKey: `approve-v2-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     expect(approvedV2.result.snapshot.sequenceNumber).toBe(2);
     expect(approvedV2.result.snapshot.snapshotId).not.toBe(approvedV1.result.snapshot.snapshotId);
 

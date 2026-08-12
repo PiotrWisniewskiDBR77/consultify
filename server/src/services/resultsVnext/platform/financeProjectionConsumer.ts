@@ -75,6 +75,7 @@ import logger from '../../../utils/Logger.js';
 import { ROI_COMPARE_METRICS, type RoiCompareMetric } from '../roi/roiCompareRepository.js';
 import { openRoiFinanceReconciliation } from '../roi/roiFinanceReconciliationCommands.js';
 
+import type { CommandAccessContext } from './commandCapabilityGuard.js';
 import type { RvnOutboxRow } from './outboxDrain.js';
 import type { RvnPlatformEventRow } from './consumerRegistry.js';
 
@@ -88,6 +89,26 @@ const CONSUMER_GROUP = 'finance_projection';
  * rather than the ruling's literal `null`.
  */
 export const FINANCE_PROJECTION_CONSUMER_ACTOR = 'system:finance_projection_consumer';
+
+/**
+ * RN-G5 — this consumer is not a human/HTTP actor (see the constant above:
+ * "No human triggers a divergence-detection reconciliation — this consumer
+ * is the sole caller, always with this identity"). It has no
+ * `organization_members` row and cannot go through `resolveEffectiveAccess`
+ * — there is no request to resolve it from. The reconciliation it opens is
+ * entirely server-computed from trusted event data (the projected ROI value
+ * vs. the pinned finance value already stored on the link), not from
+ * arbitrary user input, so a fixed wildcard access context for this one
+ * fixed system identity is the correct shape here — the same '*' wildcard
+ * `resolveEffectiveAccess` itself grants OWNER/ADMIN/SUPERADMIN, scoped to
+ * exactly the one command this consumer calls. This is not a guard bypass:
+ * `openRoiFinanceReconciliation`'s RN-G5 gate still runs and still requires
+ * this to be supplied — omitting it is a compile error, not a silent pass.
+ */
+const FINANCE_PROJECTION_CONSUMER_ACCESS: CommandAccessContext = {
+  capabilities: ['*'],
+  platformRole: null,
+};
 
 function isRoiCompareMetric(value: string): value is RoiCompareMetric {
   return (ROI_COMPARE_METRICS as readonly string[]).includes(value);
@@ -414,6 +435,7 @@ async function checkAndOpenDivergence(
       actorUserId: FINANCE_PROJECTION_CONSUMER_ACTOR,
       actorEffectiveRole: 'system',
       idempotencyKey: `finance-projection-divergence:${eventId}:${link.link_id}`,
+      access: FINANCE_PROJECTION_CONSUMER_ACCESS,
     });
     // Deliberately NOT trusting `outcome.result` here even on 'applied' —
     // re-reading below is the single code path for both 'applied' and

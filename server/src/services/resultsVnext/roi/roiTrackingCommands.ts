@@ -16,6 +16,10 @@ import type { PoolClient } from 'pg';
 
 import { computeStateHash } from '../kpi/kpiDefinitionCommands.js';
 import { executeAtomicCommand, type AtomicCommandOutcome, type AtomicEventInput } from '../platform/atomicWrite.js';
+import {
+  assertCommandCapability,
+  type CommandAccessContext,
+} from '../platform/commandCapabilityGuard.js';
 import { createObligation } from '../platform/obligations.js';
 
 import { ROI_EVENT_SOURCE, RoiCaseValidationError } from './roiCaseCommands.js';
@@ -53,7 +57,13 @@ export interface StartRoiCaseTrackingInput {
   correlationId?: string;
   causationId?: string | null;
   reason?: string | null;
+  access: CommandAccessContext;
 }
+
+// RN-G5 — command capability names (docs/product/results-vnext/RN_G5_AUTHZ_DESIGN.md)
+export const ROI_TRACKING_CAPABILITIES = {
+  start: 'results.roi.tracking.start',
+} as const;
 
 /**
  * Guard: `status === 'approved'` else `RoiCaseValidationError`
@@ -76,6 +86,7 @@ export async function startRoiCaseTracking(
     correlationId,
     causationId = null,
     reason = null,
+    access,
   } = input;
 
   let beforeState: Record<string, unknown> | null = null;
@@ -87,6 +98,13 @@ export async function startRoiCaseTracking(
     loadForUpdate: loadRoiCaseForUpdate,
     getCurrentVersion: caseRowVersion,
     applyMutation: async (client, currentRow, nextVersion) => {
+      assertCommandCapability({
+        access,
+        actorUserId,
+        capability: ROI_TRACKING_CAPABILITIES.start,
+        responsibleUserIds: [currentRow.owner_user_id],
+      });
+
       if (currentRow.status !== 'approved') {
         throw new RoiCaseValidationError(
           `ROI case ${caseId} is "${currentRow.status}" — only an "approved" case may start tracking`,

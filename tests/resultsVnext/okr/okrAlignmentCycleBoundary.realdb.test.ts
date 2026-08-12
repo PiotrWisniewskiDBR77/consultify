@@ -154,7 +154,8 @@ describe('OKR-E005 — cycle/org compatibility boundary (real Postgres)', () => 
       createdBy: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `create-program-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     await publishProgram({
       programId: program.result.programId,
       organizationId,
@@ -162,7 +163,8 @@ describe('OKR-E005 — cycle/org compatibility boundary (real Postgres)', () => 
       actorUserId: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `publish-program-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
     const cycleOne = await createCycle({
       organizationId,
@@ -172,7 +174,8 @@ describe('OKR-E005 — cycle/org compatibility boundary (real Postgres)', () => 
       createdBy: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `create-cycle-one-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     cycleOneId = cycleOne.result.cycleId;
 
     const cycleTwo = await createCycle({
@@ -191,7 +194,8 @@ describe('OKR-E005 — cycle/org compatibility boundary (real Postgres)', () => 
       createdBy: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `create-cycle-two-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     cycleTwoId = cycleTwo.result.cycleId;
 
     const setOne = await createOkrSet({
@@ -205,7 +209,8 @@ describe('OKR-E005 — cycle/org compatibility boundary (real Postgres)', () => 
       createdBy: USER_OWNER,
       actorEffectiveRole: 'member',
       idempotencyKey: `create-set-one-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     setInCycleOne = setOne.result.set.setId;
 
     const setTwo = await createOkrSet({
@@ -219,7 +224,8 @@ describe('OKR-E005 — cycle/org compatibility boundary (real Postgres)', () => 
       createdBy: USER_OWNER,
       actorEffectiveRole: 'member',
       idempotencyKey: `create-set-two-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     setInCycleTwo = setTwo.result.set.setId;
 
     const objOne = await createObjective({
@@ -230,7 +236,8 @@ describe('OKR-E005 — cycle/org compatibility boundary (real Postgres)', () => 
       createdBy: USER_OWNER,
       actorEffectiveRole: 'member',
       idempotencyKey: `create-obj-one-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     objectiveInCycleOne = objOne.result.objectiveId;
 
     const objTwo = await createObjective({
@@ -241,7 +248,8 @@ describe('OKR-E005 — cycle/org compatibility boundary (real Postgres)', () => 
       createdBy: USER_OWNER,
       actorEffectiveRole: 'member',
       idempotencyKey: `create-obj-two-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     objectiveInCycleTwo = objTwo.result.objectiveId;
 
     // --- org #2: a completely separate Program/Cycle/Set/Objective, for
@@ -252,7 +260,8 @@ describe('OKR-E005 — cycle/org compatibility boundary (real Postgres)', () => 
       createdBy: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `create-program-org2-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     await publishProgram({
       programId: programTwo.result.programId,
       organizationId: secondOrganizationId,
@@ -260,7 +269,8 @@ describe('OKR-E005 — cycle/org compatibility boundary (real Postgres)', () => 
       actorUserId: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `publish-program-org2-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const cycleOrg2 = await createCycle({
       organizationId: secondOrganizationId,
       programId: programTwo.result.programId,
@@ -269,7 +279,8 @@ describe('OKR-E005 — cycle/org compatibility boundary (real Postgres)', () => 
       createdBy: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `create-cycle-org2-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const setOrg2 = await createOkrSet({
       organizationId: secondOrganizationId,
       programId: programTwo.result.programId,
@@ -281,7 +292,8 @@ describe('OKR-E005 — cycle/org compatibility boundary (real Postgres)', () => 
       createdBy: USER_OWNER,
       actorEffectiveRole: 'member',
       idempotencyKey: `create-set-org2-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const objOrg2 = await createObjective({
       setId: setOrg2.result.set.setId,
       organizationId: secondOrganizationId,
@@ -290,7 +302,8 @@ describe('OKR-E005 — cycle/org compatibility boundary (real Postgres)', () => 
       createdBy: USER_OWNER,
       actorEffectiveRole: 'member',
       idempotencyKey: `create-obj-org2-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     objectiveInSecondOrg = objOrg2.result.objectiveId;
   }, 30_000);
 
@@ -344,7 +357,8 @@ describe('OKR-E005 — cycle/org compatibility boundary (real Postgres)', () => 
           proposedBy: USER_OWNER,
           actorEffectiveRole: 'member',
           idempotencyKey: `propose-cross-cycle-${randomUUID()}`,
-        })
+        access: { capabilities: ['*'], platformRole: null },
+})
       ).rejects.toThrow(OkrAlignmentCycleMismatchError);
 
       const rows = await client.query(
@@ -381,7 +395,8 @@ describe('OKR-E005 — cycle/org compatibility boundary (real Postgres)', () => 
         createdBy: USER_OWNER,
         actorEffectiveRole: 'member',
         idempotencyKey: `create-obj-three-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
       const outcome = await proposeAlignment({
         organizationId,
@@ -390,7 +405,8 @@ describe('OKR-E005 — cycle/org compatibility boundary (real Postgres)', () => 
         proposedBy: USER_OWNER,
         actorEffectiveRole: 'member',
         idempotencyKey: `propose-same-cycle-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       expect(outcome.result.created).toBe(true);
       expect(outcome.result.alignment.sourceCycleId).toBe(cycleOneId);
       expect(outcome.result.alignment.targetCycleId).toBe(cycleOneId);
@@ -408,7 +424,8 @@ describe('OKR-E005 — cycle/org compatibility boundary (real Postgres)', () => 
           proposedBy: USER_OWNER,
           actorEffectiveRole: 'member',
           idempotencyKey: `propose-cross-org-${randomUUID()}`,
-        })
+        access: { capabilities: ['*'], platformRole: null },
+})
       ).rejects.toThrow(OkrObjectiveNotFoundError);
 
       const rows = await client.query(

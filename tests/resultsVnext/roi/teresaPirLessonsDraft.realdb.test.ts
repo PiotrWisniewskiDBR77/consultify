@@ -126,6 +126,30 @@ describe('ROI-E008 recordRoiPirTeresaLessonsDraft + full P08 handoff (real Postg
 
     await insertOrganization(client, ORG_ID, 'ROI-E008 Teresa Lessons-Draft RealDB Org');
     await insertVisibilityPolicy(client, ORG_ID, 'roi', 'OPEN_ORG', USER_OWNER);
+
+    // RN-G5: recordRoiPirTeresaLessonsDraft/closeRoiCase/
+    // recordRoiPirTeresaDraftDisposition are now RN-G5-gated. This suite's
+    // actors (USER_APPROVER/USER_CLOSER) are NOT the ROI case's own
+    // owner_user_id (USER_OWNER) — the guard's ownership fallback would not
+    // cover them — so each gets a real `organization_members` ADMIN row
+    // (passes via the '*' wildcard), matching the actual production
+    // precondition (a real user always has SOME organization_members row;
+    // this fixture previously had none at all, an unrelated pre-existing
+    // gap this package's guard now makes visible). This suite tests PIR/
+    // Teresa handoff plumbing, not authorization.
+    for (const userId of [USER_OWNER, USER_APPROVER, USER_CLOSER]) {
+      await client.query(
+        `INSERT INTO users (id, organization_id, email, password, role, status, first_name, last_name)
+         VALUES ($1, $2, $3, 'x', 'CONSULTANT', 'active', 'RNG5', 'Test')
+         ON CONFLICT (id) DO NOTHING`,
+        [userId, ORG_ID, `${userId}@local.test`]
+      );
+      await client.query(
+        `INSERT INTO organization_members (id, organization_id, user_id, role, status)
+         VALUES ($1, $2, $3, 'ADMIN', 'ACTIVE') ON CONFLICT (organization_id, user_id) DO NOTHING`,
+        [`om-${userId}`, ORG_ID, userId]
+      );
+    }
   }, 30_000);
 
   afterAll(async () => {
@@ -136,6 +160,8 @@ describe('ROI-E008 recordRoiPirTeresaLessonsDraft + full P08 handoff (real Postg
     ]);
     await client.query(`DELETE FROM teresa_proposals WHERE organization_id = $1`, [ORG_ID]);
     await cleanupRoiPirFixtures(client, ORG_ID);
+    await client.query(`DELETE FROM organization_members WHERE organization_id = $1`, [ORG_ID]);
+    await client.query(`DELETE FROM users WHERE organization_id = $1`, [ORG_ID]);
     await client.end();
     if (modules.closePgPool) await modules.closePgPool();
   }, 30_000);
@@ -244,6 +270,7 @@ describe('ROI-E008 recordRoiPirTeresaLessonsDraft + full P08 handoff (real Postg
         actorUserId: USER_OWNER,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `disposition-${randomUUID()}`,
+        access: { capabilities: ['*'], platformRole: null },
       });
       expect(dispositionOutcome.outcome).toBe('applied');
       expect(dispositionOutcome.result.lessonsLearned).toBe(
@@ -276,6 +303,7 @@ describe('ROI-E008 recordRoiPirTeresaLessonsDraft + full P08 handoff (real Postg
             actorUserId: USER_OWNER,
             actorEffectiveRole: 'teresa_initiated',
             idempotencyKey: `draft-${randomUUID()}`,
+            access: { capabilities: ['*'], platformRole: null },
           })
       );
       expect(draftOutcome.outcome).toBe('applied');
@@ -288,6 +316,7 @@ describe('ROI-E008 recordRoiPirTeresaLessonsDraft + full P08 handoff (real Postg
           actorUserId: USER_CLOSER,
           actorEffectiveRole: 'admin',
           idempotencyKey: `close-${randomUUID()}`,
+          access: { capabilities: ['*'], platformRole: null },
         })
       ).rejects.toMatchObject({ code: 'PIR_INCOMPLETE' });
     }
@@ -310,6 +339,7 @@ describe('ROI-E008 recordRoiPirTeresaLessonsDraft + full P08 handoff (real Postg
         actorUserId: USER_OWNER,
         actorEffectiveRole: 'teresa_initiated',
         idempotencyKey: `draft1-${randomUUID()}`,
+        access: { capabilities: ['*'], platformRole: null },
       });
       expect(firstDraft.outcome).toBe('applied');
 
@@ -322,6 +352,7 @@ describe('ROI-E008 recordRoiPirTeresaLessonsDraft + full P08 handoff (real Postg
         actorUserId: USER_OWNER,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `disposition-${randomUUID()}`,
+        access: { capabilities: ['*'], platformRole: null },
       });
       expect(dispositionOutcome.result.teresaDraftDisposition).toBe('rejected');
 
@@ -336,6 +367,7 @@ describe('ROI-E008 recordRoiPirTeresaLessonsDraft + full P08 handoff (real Postg
           actorUserId: USER_OWNER,
           actorEffectiveRole: 'teresa_initiated',
           idempotencyKey: `draft2-${randomUUID()}`,
+          access: { capabilities: ['*'], platformRole: null },
         })
       ).rejects.toMatchObject({ code: 'DISPOSITION_ALREADY_RECORDED' });
     }
@@ -356,6 +388,7 @@ describe('ROI-E008 recordRoiPirTeresaLessonsDraft + full P08 handoff (real Postg
       actorUserId: USER_OWNER,
       actorEffectiveRole: 'consultant',
       idempotencyKey: `draft-${randomUUID()}`,
+      access: { capabilities: ['*'], platformRole: null },
     });
     const closeOutcome = await modules.closeRoiCase({
       caseId: started.caseId,
@@ -364,6 +397,7 @@ describe('ROI-E008 recordRoiPirTeresaLessonsDraft + full P08 handoff (real Postg
       actorUserId: USER_CLOSER,
       actorEffectiveRole: 'admin',
       idempotencyKey: `close-${randomUUID()}`,
+      access: { capabilities: ['*'], platformRole: null },
     });
     expect(closeOutcome.result.pir.status).toBe('finalized');
 
@@ -377,6 +411,7 @@ describe('ROI-E008 recordRoiPirTeresaLessonsDraft + full P08 handoff (real Postg
         actorUserId: USER_OWNER,
         actorEffectiveRole: 'teresa_initiated',
         idempotencyKey: `draft-finalized-${randomUUID()}`,
+        access: { capabilities: ['*'], platformRole: null },
       })
     ).rejects.toMatchObject({ code: 'NOT_EDITABLE' });
   });
@@ -396,6 +431,7 @@ describe('ROI-E008 recordRoiPirTeresaLessonsDraft + full P08 handoff (real Postg
         actorUserId: USER_OWNER,
         actorEffectiveRole: 'teresa_initiated',
         idempotencyKey: `draft-wrongcase-${randomUUID()}`,
+        access: { capabilities: ['*'], platformRole: null },
       })
     ).rejects.toMatchObject({ code: 'PIR_NOT_FOUND' });
   });

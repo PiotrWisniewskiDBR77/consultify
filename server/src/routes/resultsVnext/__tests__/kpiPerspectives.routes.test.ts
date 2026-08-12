@@ -87,6 +87,17 @@ vi.mock('../../../database/PostgresDatabase.js', () => ({
   acquirePgClient: async () => ({ query: vi.fn(), release: vi.fn() }),
 }));
 
+// RN-G5 (docs/product/results-vnext/RN_G5_AUTHZ_DESIGN.md): kpiPerspectives.routes.ts
+// now resolves REAL effective access via resolveEffectiveAccess() before
+// calling its commands — same mock shape as kpiDeviation.routes.test.ts's
+// identical mock (wildcard capability, so gating never blocks a scenario
+// this file's own test cases aren't about).
+vi.mock('../../../services/effectiveAccessService.js', () => ({
+  resolveEffectiveAccess: vi.fn(async () => ({ capabilities: ['*'], platformRole: null })),
+  hasEffectiveCapability: (access: { capabilities: string[] }, capability: string) =>
+    access.capabilities.includes('*') || access.capabilities.includes(capability),
+}));
+
 vi.mock('../../../services/resultsVnext/kpi/kpiPerspectivesRepository.js', () => ({
   listMyKpis: (...args: unknown[]) => mockListMyKpis(...args),
   listOrganizationKpiAttention: (...args: unknown[]) => mockListOrganizationKpiAttention(...args),

@@ -28,6 +28,7 @@ import {
   type AtomicCommandOutcome,
   type AtomicEventInput,
 } from '../platform/atomicWrite.js';
+import { assertCommandCapability, type CommandAccessContext } from '../platform/commandCapabilityGuard.js';
 import { publishVisibilityPolicy } from '../platform/visibilityResolver.js';
 
 import {
@@ -58,6 +59,15 @@ import {
  * visibility-policy DOMAIN string, a separate namespace). */
 export const OKR_VISIBILITY_DOMAIN = 'okr';
 export const OKR_PROGRAM_RESOURCE_TYPE = 'okr_program';
+
+// RN-G5 — command capability names (docs/product/results-vnext/RN_G5_AUTHZ_DESIGN.md).
+// Programs are plain RBAC (Decision P2: "Program is not an ABAC resource")
+// — no owner_user_id column, capability-only, no responsibleUserIds.
+export const OKR_PROGRAM_CAPABILITIES = {
+  create: 'results.okr.program.create',
+  editDraft: 'results.okr.program.edit_draft',
+  publish: 'results.okr.program.publish',
+} as const;
 
 export const OKR_EVENT_SOURCE = 'resultsVnext.okr';
 
@@ -162,6 +172,7 @@ export interface CreateOkrProgramInput extends OkrProgramPolicyFieldsInput {
   correlationId?: string;
   causationId?: string | null;
   reason?: string | null;
+  access: CommandAccessContext;
 }
 
 /**
@@ -181,6 +192,7 @@ export async function createProgram(
     correlationId,
     causationId = null,
     reason = null,
+    access,
     ...policyOverrides
   } = input;
 
@@ -189,6 +201,12 @@ export async function createProgram(
   return executeAtomicCreate<OkrProgram>({
     organizationId,
     applyMutation: async (client) => {
+      assertCommandCapability({
+        access,
+        actorUserId: createdBy,
+        capability: OKR_PROGRAM_CAPABILITIES.create,
+      });
+
       const insertResult = await client.query<OkrProgramRow>(
         `INSERT INTO okr_vnext_programs
            (organization_id, name, status, cycle_model, annual_direction_enabled,
@@ -284,6 +302,7 @@ export interface EditOkrProgramDraftInput extends OkrProgramPolicyFieldsInput {
   correlationId?: string;
   causationId?: string | null;
   reason?: string | null;
+  access: CommandAccessContext;
 }
 
 export async function editProgramDraft(
@@ -300,6 +319,7 @@ export async function editProgramDraft(
     causationId = null,
     reason = null,
     name,
+    access,
     ...policyOverrides
   } = input;
 
@@ -312,6 +332,12 @@ export async function editProgramDraft(
     loadForUpdate: loadOkrProgramForUpdate,
     getCurrentVersion: programRowVersion,
     applyMutation: async (client, currentRow, nextVersion) => {
+      assertCommandCapability({
+        access,
+        actorUserId,
+        capability: OKR_PROGRAM_CAPABILITIES.editDraft,
+      });
+
       if (!PROGRAM_EDITABLE_STATUSES.includes(currentRow.status)) {
         throw new OkrProgramValidationError(
           `OKR Program ${programId} is "${currentRow.status}" — draft fields may not be edited from this status`,
@@ -447,6 +473,7 @@ export interface PublishOkrProgramInput {
   correlationId?: string;
   causationId?: string | null;
   reason?: string | null;
+  access: CommandAccessContext;
 }
 
 export interface PublishOkrProgramResult {
@@ -483,6 +510,7 @@ export async function publishProgram(
     correlationId,
     causationId = null,
     reason = null,
+    access,
   } = input;
 
   let beforeState: Record<string, unknown> | null = null;
@@ -494,6 +522,12 @@ export async function publishProgram(
     loadForUpdate: loadOkrProgramForUpdate,
     getCurrentVersion: programRowVersion,
     applyMutation: async (client, currentRow, nextVersion) => {
+      assertCommandCapability({
+        access,
+        actorUserId,
+        capability: OKR_PROGRAM_CAPABILITIES.publish,
+      });
+
       beforeState = { program: toOkrProgram(currentRow) };
 
       // Step 1: next policy version_number for this program.

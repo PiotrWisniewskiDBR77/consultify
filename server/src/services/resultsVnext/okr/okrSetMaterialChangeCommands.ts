@@ -23,6 +23,7 @@ import type { PoolClient } from 'pg';
 
 import { computeStateHash } from '../kpi/kpiDefinitionCommands.js';
 import { executeAtomicCommand, type AtomicCommandOutcome, type AtomicEventInput } from '../platform/atomicWrite.js';
+import { assertCommandCapability, type CommandAccessContext } from '../platform/commandCapabilityGuard.js';
 
 import { OKR_EVENT_SOURCE } from './okrProgramCommands.js';
 import { OkrSetValidationError } from './okrSetCommands.js';
@@ -65,6 +66,9 @@ const FIELD_COLUMN: Record<OkrSetVersionFieldName, 'title' | 'owner_user_id' | '
   reviewer_user_id: 'reviewer_user_id',
 };
 
+// RN-G5 — command capability name (docs/product/results-vnext/RN_G5_AUTHZ_DESIGN.md).
+export const OKR_SET_MATERIAL_CHANGE_CAPABILITY = 'results.okr.set.record_material_change';
+
 export interface RecordOkrSetMaterialChangeInput {
   setId: string;
   organizationId: string;
@@ -77,6 +81,7 @@ export interface RecordOkrSetMaterialChangeInput {
   idempotencyKey: string;
   correlationId?: string;
   causationId?: string | null;
+  access: CommandAccessContext;
 }
 
 export interface RecordOkrSetMaterialChangeResult {
@@ -108,6 +113,7 @@ export async function recordOkrSetMaterialChange(
     idempotencyKey,
     correlationId,
     causationId = null,
+    access,
   } = input;
 
   let beforeState: Record<string, unknown> | null = null;
@@ -119,6 +125,13 @@ export async function recordOkrSetMaterialChange(
     loadForUpdate: loadOkrSetForUpdate,
     getCurrentVersion: setRowVersion,
     applyMutation: async (client, currentRow, nextVersion) => {
+      assertCommandCapability({
+        access,
+        actorUserId: requestedBy,
+        capability: OKR_SET_MATERIAL_CHANGE_CAPABILITY,
+        responsibleUserIds: [currentRow.owner_user_id, currentRow.reviewer_user_id],
+      });
+
       if (currentRow.status !== 'active') {
         throw new OkrSetValidationError(
           `OKR Set ${setId} is "${currentRow.status}" — material changes may only be recorded on an "active" Set`,

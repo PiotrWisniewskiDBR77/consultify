@@ -69,6 +69,7 @@ import type { PoolClient } from 'pg';
 
 import { computeStateHash } from '../kpi/kpiDefinitionCommands.js';
 import { executeAtomicCreate, type AtomicCommandOutcome, type AtomicEventInput } from '../platform/atomicWrite.js';
+import { assertCommandCapability, type CommandAccessContext } from '../platform/commandCapabilityGuard.js';
 import { completeObligation, createObligation } from '../platform/obligations.js';
 
 import { toOkrCheckIn, type OkrCheckIn, type OkrCheckInConfidence, type OkrCheckInRow, type OkrCheckInStatus } from './okrCheckInTypes.js';
@@ -136,6 +137,33 @@ export class OkrCheckInAlreadyExistsForOccurrenceError extends Error {
     this.details = { keyResultId, cadenceOccurrenceId, existingCheckInId };
   }
 }
+
+// RN-G5 — command capability names (docs/product/results-vnext/RN_G5_AUTHZ_DESIGN.md).
+// This file's own header previously documented "No KR-ownership
+// enforcement (submittedBy need not equal keyResult.ownerUserId) ...
+// consistent with EVERY other command in the landed OKR domain" — that
+// was the pre-RN-G5 gap this whole package targets, not a deliberate
+// final security decision. Gated here the same as every other domain:
+// the KR's own owner_user_id, already loaded via loadKeyResultForUpdate.
+//
+// `record` reuses the EXACT pre-existing capability string
+// `'okr.checkin.create'` (NOT a new `results.okr.*`-namespaced name) —
+// verified via grep that `effectiveAccessService.ts`'s
+// `APPLICATION_ROLE_BASELINE_CAPABILITIES.USER` already grants this
+// literal string to every plain USER-role member (line ~569: `USER:
+// [...CANVAS_MEMBER_CAPABILITIES, 'okr.checkin.create']`) — this repo's
+// ONE existing baseline capability grant for any non-admin OKR action.
+// Using a different string would silently strip every ordinary member's
+// pre-existing ability to check in on their own KRs (this package cannot
+// touch effectiveAccessService.ts to add a new baseline grant, so reusing
+// the one that already exists is the only way to avoid a regression).
+// `correct` has no such baseline precedent — capability-only via '*' or
+// an explicit grant, same as every other correction-style command
+// (correctMeasurement/correctActualEntry) in this package.
+export const OKR_CHECKIN_CAPABILITIES = {
+  record: 'okr.checkin.create',
+  correct: 'results.okr.checkin.correct',
+} as const;
 
 // ==========================================
 // SHARED HELPERS
@@ -397,6 +425,7 @@ export interface RecordCheckInInput {
   correlationId?: string;
   causationId?: string | null;
   reason?: string | null;
+  access: CommandAccessContext;
 }
 
 export interface RecordCheckInResult {
@@ -424,12 +453,21 @@ export async function recordCheckIn(input: RecordCheckInInput): Promise<AtomicCo
     correlationId,
     causationId = null,
     reason = null,
+    access,
   } = input;
 
   return executeAtomicCreate<RecordCheckInResult>({
     organizationId,
     applyMutation: async (client) => {
       const krRow = await loadKeyResultForUpdate(client, keyResultId, organizationId);
+
+      assertCommandCapability({
+        access,
+        actorUserId: submittedBy,
+        capability: OKR_CHECKIN_CAPABILITIES.record,
+        responsibleUserIds: [krRow.owner_user_id],
+      });
+
       if (krRow.status === 'cancelled') {
         throw new OkrCheckInValidationError(
           `Key Result ${keyResultId} is cancelled — check-ins are not accepted against a cancelled key result`,
@@ -654,6 +692,7 @@ export interface CorrectCheckInInput {
   idempotencyKey: string;
   correlationId?: string;
   causationId?: string | null;
+  access: CommandAccessContext;
 }
 
 export interface CorrectCheckInResult {
@@ -687,6 +726,7 @@ export async function correctCheckIn(input: CorrectCheckInInput): Promise<Atomic
     idempotencyKey,
     correlationId,
     causationId = null,
+    access,
   } = input;
 
   return executeAtomicCreate<CorrectCheckInResult>({
@@ -700,6 +740,14 @@ export async function correctCheckIn(input: CorrectCheckInInput): Promise<Atomic
       if (!originalRow) throw new OkrCheckInNotFoundError(checkInId);
 
       const krRow = await loadKeyResultForUpdate(client, originalRow.key_result_id, organizationId);
+
+      assertCommandCapability({
+        access,
+        actorUserId: submittedBy,
+        capability: OKR_CHECKIN_CAPABILITIES.correct,
+        responsibleUserIds: [krRow.owner_user_id],
+      });
+
       const setRow = await loadSetForUpdate(client, krRow.set_id, organizationId);
       const { policyVersionId, snapshot } = await resolveOkrCyclePinnedPolicySnapshot(client, krRow.set_id, organizationId);
 

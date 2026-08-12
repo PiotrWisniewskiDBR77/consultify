@@ -29,6 +29,10 @@ import type { PoolClient } from 'pg';
 
 import { computeStateHash } from '../kpi/kpiDefinitionCommands.js';
 import { executeAtomicCommand, type AtomicCommandOutcome, type AtomicEventInput } from '../platform/atomicWrite.js';
+import {
+  assertCommandCapability,
+  type CommandAccessContext,
+} from '../platform/commandCapabilityGuard.js';
 import { completeObligation, createObligation } from '../platform/obligations.js';
 
 import { CONFIRM_BENEFITS_REALIZATION_OBLIGATION_TYPE } from './roiBenefitsRealizationCommands.js';
@@ -147,6 +151,31 @@ function pirRowVersion(row: RoiPostInvestmentReviewRow): number {
   return row.row_version;
 }
 
+// RN-G5 — command capability names (docs/product/results-vnext/RN_G5_AUTHZ_DESIGN.md)
+export const ROI_PIR_CAPABILITIES = {
+  schedule: 'results.roi.pir.schedule',
+  markDue: 'results.roi.pir.mark_due',
+  start: 'results.roi.pir.start',
+  updateDraft: 'results.roi.pir.update_draft',
+  recordTeresaDisposition: 'results.roi.pir.record_teresa_disposition',
+  recordTeresaLessonsDraft: 'results.roi.pir.record_teresa_lessons_draft',
+  close: 'results.roi.case.close',
+} as const;
+
+/** `rvn_roi_post_investment_reviews` has no owner_user_id column of its own
+ * — the parent case's owner is the responsible person. */
+async function loadRoiCaseOwnerUserId(
+  client: PoolClient,
+  caseId: string,
+  organizationId: string
+): Promise<string | null> {
+  const result = await client.query<{ owner_user_id: string | null }>(
+    `SELECT owner_user_id FROM rvn_roi_cases WHERE case_id = $1 AND organization_id = $2`,
+    [caseId, organizationId]
+  );
+  return result.rows[0]?.owner_user_id ?? null;
+}
+
 // ==========================================
 // scheduleRoiCasePostInvestmentReview (D3/D4)
 // ==========================================
@@ -165,6 +194,7 @@ export interface ScheduleRoiCasePostInvestmentReviewInput {
   correlationId?: string;
   causationId?: string | null;
   reason?: string | null;
+  access: CommandAccessContext;
 }
 
 /**
@@ -188,6 +218,7 @@ export async function scheduleRoiCasePostInvestmentReview(
     correlationId,
     causationId = null,
     reason = null,
+    access,
   } = input;
 
   let beforeState: Record<string, unknown> | null = null;
@@ -199,6 +230,13 @@ export async function scheduleRoiCasePostInvestmentReview(
     loadForUpdate: loadRoiCaseForUpdate,
     getCurrentVersion: caseRowVersion,
     applyMutation: async (client, currentRow, nextVersion) => {
+      assertCommandCapability({
+        access,
+        actorUserId,
+        capability: ROI_PIR_CAPABILITIES.schedule,
+        responsibleUserIds: [currentRow.owner_user_id],
+      });
+
       if (!SCHEDULABLE_STATUSES.includes(currentRow.status)) {
         throw new RoiCaseValidationError(
           `ROI case ${caseId} is "${currentRow.status}" — a post-investment review may only be scheduled from "tracking" or "benefits_realization"`,
@@ -267,6 +305,7 @@ export interface MarkRoiCasePostInvestmentReviewDueInput {
   correlationId?: string;
   causationId?: string | null;
   reason?: string | null;
+  access: CommandAccessContext;
 }
 
 /**
@@ -292,6 +331,7 @@ export async function markRoiCasePostInvestmentReviewDue(
     correlationId,
     causationId = null,
     reason = null,
+    access,
   } = input;
 
   let beforeState: Record<string, unknown> | null = null;
@@ -303,6 +343,13 @@ export async function markRoiCasePostInvestmentReviewDue(
     loadForUpdate: loadRoiCaseForUpdate,
     getCurrentVersion: caseRowVersion,
     applyMutation: async (client, currentRow, nextVersion) => {
+      assertCommandCapability({
+        access,
+        actorUserId,
+        capability: ROI_PIR_CAPABILITIES.markDue,
+        responsibleUserIds: [currentRow.owner_user_id],
+      });
+
       if (currentRow.status !== 'benefits_realization') {
         throw new RoiCaseValidationError(
           `ROI case ${caseId} is "${currentRow.status}" — only a "benefits_realization" case may be marked PIR-due`,
@@ -394,6 +441,7 @@ export interface StartRoiCasePostInvestmentReviewInput {
   correlationId?: string;
   causationId?: string | null;
   reason?: string | null;
+  access: CommandAccessContext;
 }
 
 export interface StartRoiCasePostInvestmentReviewResult {
@@ -423,6 +471,7 @@ export async function startRoiCasePostInvestmentReview(
     correlationId,
     causationId = null,
     reason = null,
+    access,
   } = input;
 
   let beforeState: Record<string, unknown> | null = null;
@@ -434,6 +483,13 @@ export async function startRoiCasePostInvestmentReview(
     loadForUpdate: loadRoiCaseForUpdate,
     getCurrentVersion: caseRowVersion,
     applyMutation: async (client, currentRow, nextVersion) => {
+      assertCommandCapability({
+        access,
+        actorUserId,
+        capability: ROI_PIR_CAPABILITIES.start,
+        responsibleUserIds: [currentRow.owner_user_id],
+      });
+
       if (currentRow.status !== 'post_investment_review_due') {
         throw new RoiCaseValidationError(
           `ROI case ${caseId} is "${currentRow.status}" — only a "post_investment_review_due" case may start its post-investment review`,
@@ -573,6 +629,7 @@ export interface UpdateRoiPostInvestmentReviewDraftInput {
   correlationId?: string;
   causationId?: string | null;
   reason?: string | null;
+  access: CommandAccessContext;
 }
 
 /** CAS on the PIR row's OWN `row_version` (not the case's — same
@@ -593,6 +650,7 @@ export async function updateRoiPostInvestmentReviewDraft(
     correlationId,
     causationId = null,
     reason = null,
+    access,
     ...edits
   } = input;
 
@@ -608,6 +666,15 @@ export async function updateRoiPostInvestmentReviewDraft(
       if (currentRow.case_id !== caseId) {
         throw new RoiPirNotFoundError(caseId);
       }
+
+      const caseOwnerUserId = await loadRoiCaseOwnerUserId(client, caseId, organizationId);
+      assertCommandCapability({
+        access,
+        actorUserId,
+        capability: ROI_PIR_CAPABILITIES.updateDraft,
+        responsibleUserIds: [caseOwnerUserId],
+      });
+
       if (currentRow.status !== 'draft') {
         throw new RoiPirValidationError(
           `PIR ${pirId} is "${currentRow.status}" — the draft may not be edited once finalized`,
@@ -687,6 +754,7 @@ export interface RecordRoiPirTeresaDraftDispositionInput {
   correlationId?: string;
   causationId?: string | null;
   reason?: string | null;
+  access: CommandAccessContext;
 }
 
 /**
@@ -713,6 +781,7 @@ export async function recordRoiPirTeresaDraftDisposition(
     correlationId,
     causationId = null,
     reason = null,
+    access,
   } = input;
 
   if (disposition !== 'rejected' && !finalLessonsText) {
@@ -735,6 +804,15 @@ export async function recordRoiPirTeresaDraftDisposition(
       if (currentRow.case_id !== caseId) {
         throw new RoiPirNotFoundError(caseId);
       }
+
+      const caseOwnerUserId = await loadRoiCaseOwnerUserId(client, caseId, organizationId);
+      assertCommandCapability({
+        access,
+        actorUserId,
+        capability: ROI_PIR_CAPABILITIES.recordTeresaDisposition,
+        responsibleUserIds: [caseOwnerUserId],
+      });
+
       if (currentRow.status !== 'draft') {
         throw new RoiPirValidationError(
           `PIR ${pirId} is "${currentRow.status}" — the Teresa draft disposition may only be recorded while the PIR is a draft`,
@@ -809,6 +887,7 @@ export interface RecordRoiPirTeresaLessonsDraftInput {
   correlationId?: string;
   causationId?: string | null;
   reason?: string | null;
+  access: CommandAccessContext;
 }
 
 /**
@@ -839,6 +918,7 @@ export async function recordRoiPirTeresaLessonsDraft(
     correlationId,
     causationId = null,
     reason = null,
+    access,
   } = input;
 
   let beforeState: Record<string, unknown> | null = null;
@@ -853,6 +933,15 @@ export async function recordRoiPirTeresaLessonsDraft(
       if (currentRow.case_id !== caseId) {
         throw new RoiPirNotFoundError(caseId);
       }
+
+      const caseOwnerUserId = await loadRoiCaseOwnerUserId(client, caseId, organizationId);
+      assertCommandCapability({
+        access,
+        actorUserId,
+        capability: ROI_PIR_CAPABILITIES.recordTeresaLessonsDraft,
+        responsibleUserIds: [caseOwnerUserId],
+      });
+
       if (currentRow.status !== 'draft') {
         throw new RoiPirValidationError(
           `PIR ${pirId} is "${currentRow.status}" — Teresa may only draft lessons while the PIR is a draft`,
@@ -932,6 +1021,7 @@ export interface CloseRoiCaseInput {
   correlationId?: string;
   causationId?: string | null;
   reason?: string | null;
+  access: CommandAccessContext;
 }
 
 export interface CloseRoiCaseResult {
@@ -962,6 +1052,7 @@ export async function closeRoiCase(input: CloseRoiCaseInput): Promise<AtomicComm
     correlationId,
     causationId = null,
     reason = null,
+    access,
   } = input;
 
   let beforeState: Record<string, unknown> | null = null;
@@ -973,6 +1064,16 @@ export async function closeRoiCase(input: CloseRoiCaseInput): Promise<AtomicComm
     loadForUpdate: loadRoiCaseForUpdate,
     getCurrentVersion: caseRowVersion,
     applyMutation: async (client, currentRow, nextVersion) => {
+      // RN-G5: coarse authorization FIRST — before design §4.6's own Step 1,
+      // same ordering as every other guarded command (self-close denial,
+      // this file's own Step 3, is a finer-grained rule and stays after).
+      assertCommandCapability({
+        access,
+        actorUserId,
+        capability: ROI_PIR_CAPABILITIES.close,
+        responsibleUserIds: [currentRow.owner_user_id],
+      });
+
       // Step 1.
       if (currentRow.status !== 'post_investment_review') {
         throw new RoiCaseValidationError(

@@ -21,7 +21,17 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
  * kpiScorecardCommands.ts computes as `$${VISIBILITY_CTE_PARAM_COUNT + N}`
  * degrades to plain `$N` — the fake `query()` below can then pattern-match
  * the SQL text exactly as written in the source file.
+ *
+ * RN-G5 (docs/product/results-vnext/RN_G5_AUTHZ_DESIGN.md): every command
+ * called in this file now requires an `access: CommandAccessContext` field.
+ * This file's own scenarios are about the CAS/state-machine guards, not
+ * authorization — a WILDCARD_ACCESS fixture (capabilities: ['*']) is passed
+ * to every call so none of them are incidentally gated by the NEW RN-G5
+ * check, same "give X fixtures wildcard access" precedent already used for
+ * the OKR/ROI realdb fixtures elsewhere in this program.
  */
+
+const WILDCARD_ACCESS = { capabilities: ['*'], platformRole: null } as const;
 
 let currentScorecard: Record<string, unknown> | null = null;
 let currentSnapshot: Record<string, unknown> | null = null;
@@ -191,6 +201,7 @@ function basePublishInput(overrides: Record<string, unknown> = {}) {
     publishedBy: 'user-publisher',
     actorEffectiveRole: 'consultant',
     idempotencyKey: 'idem-1',
+    access: WILDCARD_ACCESS,
     ...overrides,
   };
 }
@@ -325,6 +336,7 @@ describe('ScorecardItem commands never write to KPI tables (AC #2, structural, n
       actorEffectiveRole: 'consultant',
       idempotencyKey: 'idem-add-1',
       kpiId: 'kpi-1',
+      access: WILDCARD_ACCESS,
     });
 
     expect(outcome.outcome).toBe('applied');
@@ -350,6 +362,7 @@ describe('ScorecardItem commands never write to KPI tables (AC #2, structural, n
       actorEffectiveRole: 'consultant',
       idempotencyKey: 'idem-remove-1',
       itemId: 'item-1',
+      access: WILDCARD_ACCESS,
     });
 
     // The DELETE branch isn't explicitly stubbed above (falls through to the
@@ -372,6 +385,7 @@ describe('ScorecardItem commands never write to KPI tables (AC #2, structural, n
       actorEffectiveRole: 'consultant',
       idempotencyKey: 'idem-reorder-1',
       items: [{ itemId: 'item-1', sortOrder: 2 }],
+      access: WILDCARD_ACCESS,
     });
 
     // Same rationale as removeScorecardItem above — the UPDATE on

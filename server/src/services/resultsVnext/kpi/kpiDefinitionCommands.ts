@@ -34,6 +34,10 @@ import {
   type AtomicCommandOutcome,
   type AtomicEventInput,
 } from '../platform/atomicWrite.js';
+import {
+  assertCommandCapability,
+  type CommandAccessContext,
+} from '../platform/commandCapabilityGuard.js';
 import { getActiveVisibilityPolicy } from '../platform/visibilityResolver.js';
 
 import {
@@ -58,6 +62,42 @@ import {
 export const KPI_VISIBILITY_DOMAIN = 'kpi';
 
 export const KPI_EVENT_SOURCE = 'resultsVnext.kpi';
+
+// ==========================================
+// RN-G5 — command capability names (docs/product/results-vnext/RN_G5_AUTHZ_DESIGN.md)
+// Same rationale/convention as kpiDeviationCommands.ts's DEVIATION_CAPABILITIES.
+// ==========================================
+export const KPI_DEFINITION_CAPABILITIES = {
+  /** No "record" exists yet at create time — capability-only, no owner/
+   * manager override (see commandCapabilityGuard.ts's own doc comment on
+   * `responsibleUserIds` being optional). */
+  create: 'results.kpi.definition.create',
+  editDraft: 'results.kpi.definition.edit_draft',
+  submit: 'results.kpi.definition.submit',
+  approve: 'results.kpi.definition.approve',
+  reject: 'results.kpi.definition.reject',
+  activate: 'results.kpi.definition.activate',
+  suspend: 'results.kpi.definition.suspend',
+  archive: 'results.kpi.definition.archive',
+} as const;
+
+/**
+ * `rvn_kpi_definition_versions` rows (the aggregate `editDraft`/
+ * `submitDefinition`/`approveDefinitionVersion`/`rejectDefinitionVersion`
+ * CAS against) carry no `owner_user_id` of their own — only the parent
+ * `rvn_kpi_definitions` row does (`kpiTypes.ts`'s `KpiDefinitionRow.owner_user_id`).
+ * Same shape as `kpiMeasurementCommands.ts`'s `resolveDeviationCaseOwner`,
+ * minus that helper's "fall back to the actor" behavior — a guard must see
+ * the REAL owner (or `null` if unset), never a value that would make the
+ * check trivially pass.
+ */
+async function loadKpiOwnerUserId(client: PoolClient, kpiId: string): Promise<string | null> {
+  const result = await client.query<{ owner_user_id: string | null }>(
+    `SELECT owner_user_id FROM rvn_kpi_definitions WHERE kpi_id = $1`,
+    [kpiId]
+  );
+  return result.rows[0]?.owner_user_id ?? null;
+}
 
 /**
  * `policyVersion` on every event built below other than `createKpiDraft`'s
@@ -226,6 +266,7 @@ export interface CreateKpiDraftInput {
   correlationId?: string;
   causationId?: string | null;
   reason?: string | null;
+  access: CommandAccessContext;
 }
 
 export interface CreateKpiDraftResult {
@@ -263,6 +304,7 @@ export async function createKpiDraft(
     correlationId,
     causationId = null,
     reason = null,
+    access,
   } = input;
 
   // Captured inside applyMutation, read by buildEvent — see file header.
@@ -271,6 +313,28 @@ export async function createKpiDraft(
   return executeAtomicCreate<CreateKpiDraftResult>({
     organizationId,
     applyMutation: async (client) => {
+      // RN-G5 DECISION (documented, not an oversight): createKpiDraft is
+      // deliberately left UNGATED by this pakiet, unlike every other
+      // command in this file. Reasons: (1) no record exists yet at create
+      // time, so there is no owner/manager fallback — a gate here would be
+      // capability-ONLY; (2) `results.kpi.definition.create` is not part of
+      // any baseline a regular member holds by default (effectiveAccessService.ts
+      // is out of this pakiet's allowlist — cannot add it there), so gating
+      // this specific command would deny it to every non-OWNER/ADMIN actor,
+      // including Teresa acting for a real user with no elevated
+      // organization_members role — verified this breaks a real, currently
+      // passing e2e gold flow (tests/resultsVnext/teresa-kpi-e2e-no-silent-approval.test.ts,
+      // draft_quality_review create path). Drafting your OWN new KPI is also
+      // materially lower-risk than the vulnerability this pakiet targets
+      // (approving/verifying/correcting an EXISTING, possibly someone
+      // else's, KPI) — a fresh draft is invisible/inert until it passes the
+      // separately-guarded submit/approve pipeline below, both of which ARE
+      // gated. `access` is still accepted on this input (kept for API
+      // consistency with every sibling command and to avoid a breaking
+      // signature change if a future pakiet adds the baseline capability),
+      // it is simply not asserted here.
+      void access;
+
       // Decyzja #11: fail closed if no active visibility policy exists for
       // this org/domain — never fabricate a default.
       const policy = await getActiveVisibilityPolicy(client, {
@@ -431,6 +495,7 @@ export interface EditDraftInput {
   correlationId?: string;
   causationId?: string | null;
   reason?: string | null;
+  access: CommandAccessContext;
 }
 
 export async function editDraft(
@@ -446,6 +511,7 @@ export async function editDraft(
     correlationId,
     causationId = null,
     reason = null,
+    access,
     ...edits
   } = input;
 
@@ -458,6 +524,14 @@ export async function editDraft(
     loadForUpdate: loadDefinitionVersionForUpdate,
     getCurrentVersion: versionRowVersion,
     applyMutation: async (client, currentRow, nextVersion) => {
+      const ownerUserId = await loadKpiOwnerUserId(client, currentRow.kpi_id);
+      assertCommandCapability({
+        access,
+        actorUserId,
+        capability: KPI_DEFINITION_CAPABILITIES.editDraft,
+        responsibleUserIds: [ownerUserId, currentRow.created_by],
+      });
+
       if (currentRow.approval_status !== 'draft') {
         throw new KpiDefinitionValidationError(
           `Definition version ${definitionVersionId} is "${currentRow.approval_status}" — only a draft may be edited`,
@@ -563,6 +637,7 @@ export interface SubmitDefinitionInput {
   correlationId?: string;
   causationId?: string | null;
   reason?: string | null;
+  access: CommandAccessContext;
 }
 
 export async function submitDefinition(
@@ -578,6 +653,7 @@ export async function submitDefinition(
     correlationId,
     causationId = null,
     reason = null,
+    access,
   } = input;
 
   let beforeState: Record<string, unknown> | null = null;
@@ -589,6 +665,14 @@ export async function submitDefinition(
     loadForUpdate: loadDefinitionVersionForUpdate,
     getCurrentVersion: versionRowVersion,
     applyMutation: async (client, currentRow, nextVersion) => {
+      const ownerUserId = await loadKpiOwnerUserId(client, currentRow.kpi_id);
+      assertCommandCapability({
+        access,
+        actorUserId,
+        capability: KPI_DEFINITION_CAPABILITIES.submit,
+        responsibleUserIds: [ownerUserId, currentRow.created_by],
+      });
+
       if (currentRow.approval_status !== 'draft') {
         throw new KpiDefinitionValidationError(
           `Definition version ${definitionVersionId} is "${currentRow.approval_status}" — only a draft may be submitted`,
@@ -676,6 +760,7 @@ export interface ApproveDefinitionVersionInput {
   correlationId?: string;
   causationId?: string | null;
   reason?: string | null;
+  access: CommandAccessContext;
 }
 
 /**
@@ -699,6 +784,7 @@ export async function approveDefinitionVersion(
     correlationId,
     causationId = null,
     reason = null,
+    access,
   } = input;
 
   let beforeState: Record<string, unknown> | null = null;
@@ -710,7 +796,17 @@ export async function approveDefinitionVersion(
     loadForUpdate: loadDefinitionVersionForUpdate,
     getCurrentVersion: versionRowVersion,
     applyMutation: async (client, currentRow, nextVersion) => {
-      // Self-approval denial — FIRST, before any write, per design doc §B.
+      // RN-G5: coarse authorization FIRST, then maker-checker self-approval
+      // SECOND — same ordering/rationale as kpiDeviationCommands.approvePlan.
+      const ownerUserId = await loadKpiOwnerUserId(client, currentRow.kpi_id);
+      assertCommandCapability({
+        access,
+        actorUserId: approverId,
+        capability: KPI_DEFINITION_CAPABILITIES.approve,
+        responsibleUserIds: [ownerUserId],
+      });
+
+      // Self-approval denial — SECOND, still before any write, per design doc §B.
       if (currentRow.submitted_by === approverId) {
         throw new SelfApprovalDeniedError(definitionVersionId, approverId, 'submitted_by');
       }
@@ -801,6 +897,7 @@ export interface RejectDefinitionVersionInput {
   idempotencyKey: string;
   correlationId?: string;
   causationId?: string | null;
+  access: CommandAccessContext;
 }
 
 export async function rejectDefinitionVersion(
@@ -816,6 +913,7 @@ export async function rejectDefinitionVersion(
     idempotencyKey,
     correlationId,
     causationId = null,
+    access,
   } = input;
 
   let beforeState: Record<string, unknown> | null = null;
@@ -827,6 +925,14 @@ export async function rejectDefinitionVersion(
     loadForUpdate: loadDefinitionVersionForUpdate,
     getCurrentVersion: versionRowVersion,
     applyMutation: async (client, currentRow, nextVersion) => {
+      const ownerUserId = await loadKpiOwnerUserId(client, currentRow.kpi_id);
+      assertCommandCapability({
+        access,
+        actorUserId: rejectedBy,
+        capability: KPI_DEFINITION_CAPABILITIES.reject,
+        responsibleUserIds: [ownerUserId],
+      });
+
       if (currentRow.approval_status !== 'submitted') {
         throw new KpiDefinitionValidationError(
           `Definition version ${definitionVersionId} is "${currentRow.approval_status}" — only a submitted version may be rejected`,
@@ -908,6 +1014,8 @@ interface KpiLifecycleTransitionSpec {
    * this status. Only `activateKpi` requires one — a KPI cannot go live
    * measuring against nothing approved yet. */
   requiresApprovedVersion: boolean;
+  /** RN-G5: capability gating this specific transition. */
+  capability: string;
 }
 
 async function runKpiLifecycleTransition(
@@ -922,6 +1030,7 @@ async function runKpiLifecycleTransition(
     correlationId?: string;
     causationId?: string | null;
     reason?: string | null;
+    access: CommandAccessContext;
   }
 ): Promise<AtomicCommandOutcome<KpiDefinition>> {
   const {
@@ -934,6 +1043,7 @@ async function runKpiLifecycleTransition(
     correlationId,
     causationId = null,
     reason = null,
+    access,
   } = input;
 
   let beforeState: Record<string, unknown> | null = null;
@@ -945,6 +1055,15 @@ async function runKpiLifecycleTransition(
     loadForUpdate: loadKpiDefinitionForUpdate,
     getCurrentVersion: definitionRowVersion,
     applyMutation: async (client, currentRow, nextVersion) => {
+      // RN-G5: KpiDefinitionRow already carries owner_user_id — no extra
+      // lookup needed, unlike the version-row commands above.
+      assertCommandCapability({
+        access,
+        actorUserId,
+        capability: spec.capability,
+        responsibleUserIds: [currentRow.owner_user_id],
+      });
+
       if (!spec.fromStatuses.includes(currentRow.status)) {
         throw new KpiDefinitionValidationError(
           `KPI ${kpiId} is "${currentRow.status}" — cannot transition to "${spec.toStatus}" from there`,
@@ -1029,6 +1148,7 @@ export interface KpiLifecycleInput {
   correlationId?: string;
   causationId?: string | null;
   reason?: string | null;
+  access: CommandAccessContext;
 }
 
 export function activateKpi(input: KpiLifecycleInput): Promise<AtomicCommandOutcome<KpiDefinition>> {
@@ -1047,6 +1167,7 @@ export function activateKpi(input: KpiLifecycleInput): Promise<AtomicCommandOutc
       fromStatuses: ['draft', 'pending_approval', 'suspended'],
       toStatus: 'active',
       requiresApprovedVersion: true,
+      capability: KPI_DEFINITION_CAPABILITIES.activate,
     },
     input
   );
@@ -1059,6 +1180,7 @@ export function suspendKpi(input: KpiLifecycleInput): Promise<AtomicCommandOutco
       fromStatuses: ['active'],
       toStatus: 'suspended',
       requiresApprovedVersion: false,
+      capability: KPI_DEFINITION_CAPABILITIES.suspend,
     },
     input
   );
@@ -1071,6 +1193,7 @@ export function archiveKpi(input: KpiLifecycleInput): Promise<AtomicCommandOutco
       fromStatuses: ['draft', 'active', 'suspended'],
       toStatus: 'archived',
       requiresApprovedVersion: false,
+      capability: KPI_DEFINITION_CAPABILITIES.archive,
     },
     input
   );

@@ -35,6 +35,16 @@ vi.mock('../../server/src/utils/Logger.js', () => ({
   default: { info: vi.fn(), error: vi.fn(), warn: vi.fn(), debug: vi.fn() },
 }));
 
+// RN-G5: teresaCopilotService.ts's ROI handoff handler now resolves a real
+// access context before calling recordRoiPirTeresaLessonsDraft (now
+// RN-G5-gated) — same rationale/mock as tests/v8/teresa-kpi-handoff.test.ts's
+// identical addition.
+vi.mock('../../server/src/services/effectiveAccessService.js', () => ({
+  resolveEffectiveAccess: vi.fn(async () => ({ capabilities: ['*'], platformRole: null })),
+  hasEffectiveCapability: (access: { capabilities: string[] }, capability: string) =>
+    access.capabilities.includes('*') || access.capabilities.includes(capability),
+}));
+
 const mockRecordRoiPirTeresaLessonsDraft = vi.fn();
 vi.mock('../../server/src/services/resultsVnext/roi/roiPirCommands.js', () => ({
   recordRoiPirTeresaLessonsDraft: (...args: unknown[]) => mockRecordRoiPirTeresaLessonsDraft(...args),

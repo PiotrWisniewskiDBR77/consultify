@@ -135,7 +135,8 @@ async function buildActiveSetFixture(): Promise<ActiveSetFixture> {
     createdBy: USER_ADMIN,
     actorEffectiveRole: 'admin',
     idempotencyKey: `create-program-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   await publishProgram({
     programId: createdProgram.result.programId,
     organizationId,
@@ -143,7 +144,8 @@ async function buildActiveSetFixture(): Promise<ActiveSetFixture> {
     actorUserId: USER_ADMIN,
     actorEffectiveRole: 'admin',
     idempotencyKey: `publish-program-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   const cycle = await createCycle({
     organizationId,
     programId: createdProgram.result.programId,
@@ -152,7 +154,8 @@ async function buildActiveSetFixture(): Promise<ActiveSetFixture> {
     createdBy: USER_ADMIN,
     actorEffectiveRole: 'admin',
     idempotencyKey: `create-cycle-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   const set = await createOkrSet({
     organizationId,
     programId: createdProgram.result.programId,
@@ -165,7 +168,8 @@ async function buildActiveSetFixture(): Promise<ActiveSetFixture> {
     createdBy: ownerId,
     actorEffectiveRole: 'member',
     idempotencyKey: `create-set-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   const objective = await createObjective({
     setId: set.result.set.setId,
     organizationId,
@@ -174,7 +178,8 @@ async function buildActiveSetFixture(): Promise<ActiveSetFixture> {
     createdBy: ownerId,
     actorEffectiveRole: 'member',
     idempotencyKey: `create-obj-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   const kr1 = await createKeyResult({
     objectiveId: objective.result.objectiveId,
     organizationId,
@@ -188,7 +193,8 @@ async function buildActiveSetFixture(): Promise<ActiveSetFixture> {
     createdBy: ownerId,
     actorEffectiveRole: 'member',
     idempotencyKey: `create-kr1-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   const kr2 = await createKeyResult({
     objectiveId: objective.result.objectiveId,
     organizationId,
@@ -202,7 +208,8 @@ async function buildActiveSetFixture(): Promise<ActiveSetFixture> {
     createdBy: ownerId,
     actorEffectiveRole: 'member',
     idempotencyKey: `create-kr2-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
   const submitted = await submitOkrSetForApproval({
     setId: set.result.set.setId,
@@ -211,7 +218,8 @@ async function buildActiveSetFixture(): Promise<ActiveSetFixture> {
     actorUserId: ownerId,
     actorEffectiveRole: 'member',
     idempotencyKey: `submit-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   const approved = await approveOkrSet({
     setId: set.result.set.setId,
     organizationId,
@@ -219,7 +227,8 @@ async function buildActiveSetFixture(): Promise<ActiveSetFixture> {
     approverId,
     actorEffectiveRole: 'admin',
     idempotencyKey: `approve-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   const activated = await runOkrSetLifecycleTransition(OKR_SET_ACTIVATE_SPEC, {
     setId: set.result.set.setId,
     organizationId,
@@ -227,7 +236,8 @@ async function buildActiveSetFixture(): Promise<ActiveSetFixture> {
     actorUserId: approverId,
     actorEffectiveRole: 'admin',
     idempotencyKey: `activate-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   expect(activated.result.status).toBe('active');
 
   const generated = await generateCadenceOccurrences({ organizationId, cycleId: cycle.result.cycleId });
@@ -379,7 +389,8 @@ describe('OKR-E004 recordCheckIn/correctCheckIn append-only + composite idempote
         submittedBy: fx.ownerId,
         actorEffectiveRole: 'member',
         idempotencyKey: `checkin-kr1-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       expect(outcome1.outcome).toBe('applied');
 
       const outcome2 = await recordCheckIn({
@@ -391,7 +402,8 @@ describe('OKR-E004 recordCheckIn/correctCheckIn append-only + composite idempote
         submittedBy: fx.ownerId,
         actorEffectiveRole: 'member',
         idempotencyKey: `checkin-kr2-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       expect(outcome2.outcome).toBe('applied');
       expect(outcome2.result.checkIn.keyResultId).toBe(fx.keyResultId2);
       expect(outcome2.result.checkIn.cadenceOccurrenceId).toBe(occurrenceId);
@@ -413,7 +425,8 @@ describe('OKR-E004 recordCheckIn/correctCheckIn append-only + composite idempote
         submittedBy: fx.ownerId,
         actorEffectiveRole: 'member',
         idempotencyKey: `checkin-first-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       expect(first.outcome).toBe('applied');
 
       let caught: unknown;
@@ -427,7 +440,8 @@ describe('OKR-E004 recordCheckIn/correctCheckIn append-only + composite idempote
           submittedBy: fx.ownerId,
           actorEffectiveRole: 'member',
           idempotencyKey: `checkin-duplicate-${randomUUID()}`,
-        });
+        access: { capabilities: ['*'], platformRole: null },
+});
       } catch (err) {
         caught = err;
       }
@@ -458,7 +472,8 @@ describe('OKR-E004 recordCheckIn/correctCheckIn append-only + composite idempote
           submittedBy: fx.ownerId,
           actorEffectiveRole: 'member',
           idempotencyKey: `checkin-after-poison-check-${randomUUID()}`,
-        });
+        access: { capabilities: ['*'], platformRole: null },
+});
         expect(next.outcome).toBe('applied');
       }
     }
@@ -481,7 +496,8 @@ describe('OKR-E004 recordCheckIn/correctCheckIn append-only + composite idempote
       submittedBy: fx.ownerId,
       actorEffectiveRole: 'member',
       idempotencyKey: `checkin-orig-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     expect(original.result.checkIn.newValue).toBe('10');
     expect(original.result.checkIn.correctionOfCheckInId).toBeNull();
 
@@ -493,7 +509,8 @@ describe('OKR-E004 recordCheckIn/correctCheckIn append-only + composite idempote
       submittedBy: fx.ownerId,
       actorEffectiveRole: 'member',
       idempotencyKey: `correct-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     expect(corrected.outcome).toBe('applied');
     expect(corrected.result.superseding.checkInId).not.toBe(original.result.checkIn.checkInId);
     expect(corrected.result.superseding.correctionOfCheckInId).toBe(original.result.checkIn.checkInId);
@@ -531,7 +548,8 @@ describe('OKR-E004 recordCheckIn/correctCheckIn append-only + composite idempote
         submittedBy: fx.ownerId,
         actorEffectiveRole: 'member',
         idempotencyKey: `correct-missing-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
     } catch (err) {
       caught = err;
     }

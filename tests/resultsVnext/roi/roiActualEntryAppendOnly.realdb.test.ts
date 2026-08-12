@@ -141,7 +141,8 @@ async function buildTrackingCase(suffix: string): Promise<TrackingCaseFixture> {
     actorUserId: USER_MAKER,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `start-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
   await captureOrUpdateBaseline({
     organizationId: ORG_ID,
@@ -153,7 +154,8 @@ async function buildTrackingCase(suffix: string): Promise<TrackingCaseFixture> {
     actorId: USER_MAKER,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `baseline-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
   const costLineOutcome = await addCostLine({
     caseId,
@@ -167,7 +169,8 @@ async function buildTrackingCase(suffix: string): Promise<TrackingCaseFixture> {
     actorUserId: USER_MAKER,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `cost-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   await addBenefitLine({
     caseId,
     organizationId: ORG_ID,
@@ -181,7 +184,8 @@ async function buildTrackingCase(suffix: string): Promise<TrackingCaseFixture> {
     actorUserId: USER_MAKER,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `benefit-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
   await createRoiCalculationRun({
     organizationId: ORG_ID,
@@ -190,7 +194,8 @@ async function buildTrackingCase(suffix: string): Promise<TrackingCaseFixture> {
     actorUserId: USER_MAKER,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `run-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
   const readyOutcome = await markReadyForReview({
     caseId,
@@ -199,7 +204,8 @@ async function buildTrackingCase(suffix: string): Promise<TrackingCaseFixture> {
     actorUserId: USER_MAKER,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `ready-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   const submitOutcome = await submitRoiCaseForApproval({
     caseId,
     organizationId: ORG_ID,
@@ -207,7 +213,8 @@ async function buildTrackingCase(suffix: string): Promise<TrackingCaseFixture> {
     actorUserId: USER_MAKER,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `submit-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   const approveOutcome = await approveRoiCase({
     caseId,
     organizationId: ORG_ID,
@@ -215,7 +222,8 @@ async function buildTrackingCase(suffix: string): Promise<TrackingCaseFixture> {
     approverId: USER_APPROVER,
     actorEffectiveRole: 'admin',
     idempotencyKey: `approve-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   await startRoiCaseTracking({
     caseId,
     organizationId: ORG_ID,
@@ -223,7 +231,8 @@ async function buildTrackingCase(suffix: string): Promise<TrackingCaseFixture> {
     actorUserId: USER_MAKER,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `tracking-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
   return { caseId, costLineId: costLineOutcome.result.costLineId };
 }
@@ -394,7 +403,8 @@ describe('ROI-E004 Actual entry append-only chain (real Postgres)', () => {
         recordedBy: USER_B,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `correct-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       const corrected = correctOutcome.result.superseding;
       expect(corrected.actualEntryId).not.toBe(original.actualEntryId);
       expect(corrected.correctionOfActualEntryId).toBe(original.actualEntryId);
@@ -414,7 +424,8 @@ describe('ROI-E004 Actual entry append-only chain (real Postgres)', () => {
           verifierId: USER_A,
           actorEffectiveRole: 'consultant',
           idempotencyKey: `verify-denied-${randomUUID()}`,
-        })
+        access: { capabilities: ['*'], platformRole: null },
+})
       ).rejects.toThrow(RoiActualSelfVerificationDeniedError);
 
       // No row was inserted by the denied attempt — chain is still exactly
@@ -435,7 +446,8 @@ describe('ROI-E004 Actual entry append-only chain (real Postgres)', () => {
         actorEffectiveRole: 'consultant',
         idempotencyKey: `verify-ok-${randomUUID()}`,
         notes: 'Confirmed against vendor statement',
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       const verified = verifyOutcome.result.superseding;
       expect(verified.correctionOfActualEntryId).toBe(corrected.actualEntryId);
       expect(verified.dataQualityStatus).toBe('verified');
@@ -451,7 +463,8 @@ describe('ROI-E004 Actual entry append-only chain (real Postgres)', () => {
         disputeReason: 'Vendor now claims a different total',
         actorEffectiveRole: 'consultant',
         idempotencyKey: `dispute-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       const disputed = disputeOutcome.result.superseding;
       expect(disputed.correctionOfActualEntryId).toBe(verified.actualEntryId);
       expect(disputed.dataQualityStatus).toBe('disputed');
@@ -488,7 +501,8 @@ describe('ROI-E004 Actual entry append-only chain (real Postgres)', () => {
         recordedBy: USER_B,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `correct-missing-${randomUUID()}`,
-      })
+        access: { capabilities: ['*'], platformRole: null },
+})
     ).rejects.toThrow(RoiActualEntryNotFoundError);
 
     await expect(
@@ -498,7 +512,8 @@ describe('ROI-E004 Actual entry append-only chain (real Postgres)', () => {
         verifierId: USER_C,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `verify-missing-${randomUUID()}`,
-      })
+        access: { capabilities: ['*'], platformRole: null },
+})
     ).rejects.toThrow(RoiActualEntryNotFoundError);
   });
 

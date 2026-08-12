@@ -98,7 +98,8 @@ async function createProgramCycleAndDraftSet(
     createdBy: USER_ADMIN,
     actorEffectiveRole: 'admin',
     idempotencyKey: `create-program-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   await publishProgram({
     programId: created.result.programId,
     organizationId,
@@ -106,7 +107,8 @@ async function createProgramCycleAndDraftSet(
     actorUserId: USER_ADMIN,
     actorEffectiveRole: 'admin',
     idempotencyKey: `publish-program-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   const cycle = await createCycle({
     organizationId,
     programId: created.result.programId,
@@ -115,7 +117,8 @@ async function createProgramCycleAndDraftSet(
     createdBy: USER_ADMIN,
     actorEffectiveRole: 'admin',
     idempotencyKey: `create-cycle-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   const set = await createOkrSet({
     organizationId,
     programId: created.result.programId,
@@ -127,7 +130,8 @@ async function createProgramCycleAndDraftSet(
     createdBy: USER_ADMIN,
     actorEffectiveRole: 'admin',
     idempotencyKey: `create-set-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   return { organizationId, setId: set.result.set.setId };
 }
 
@@ -234,7 +238,8 @@ describe('OKR-E003 createObjective — ambition_type gating, sort_order, Set-edi
       createdBy: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `create-obj-committed-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     expect(committed.result.ambitionType).toBe('committed');
 
     const aspirational = await createObjective({
@@ -246,7 +251,8 @@ describe('OKR-E003 createObjective — ambition_type gating, sort_order, Set-edi
       createdBy: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `create-obj-aspirational-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     expect(aspirational.result.ambitionType).toBe('aspirational');
   });
 
@@ -266,7 +272,8 @@ describe('OKR-E003 createObjective — ambition_type gating, sort_order, Set-edi
           createdBy: USER_ADMIN,
           actorEffectiveRole: 'admin',
           idempotencyKey: `create-obj-committed-disabled-${randomUUID()}`,
-        });
+        access: { capabilities: ['*'], platformRole: null },
+});
       } catch (err) {
         caughtCommitted = err;
       }
@@ -284,7 +291,8 @@ describe('OKR-E003 createObjective — ambition_type gating, sort_order, Set-edi
           createdBy: USER_ADMIN,
           actorEffectiveRole: 'admin',
           idempotencyKey: `create-obj-aspirational-disabled-${randomUUID()}`,
-        });
+        access: { capabilities: ['*'], platformRole: null },
+});
       } catch (err) {
         caughtAspirational = err;
       }
@@ -300,7 +308,8 @@ describe('OKR-E003 createObjective — ambition_type gating, sort_order, Set-edi
         createdBy: USER_ADMIN,
         actorEffectiveRole: 'admin',
         idempotencyKey: `create-obj-standard-disabled-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       expect(standard.result.ambitionType).toBe('standard');
 
       // No event/row leaked from the two rejected attempts.
@@ -324,7 +333,8 @@ describe('OKR-E003 createObjective — ambition_type gating, sort_order, Set-edi
       createdBy: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `create-obj-sort-1-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const second = await createObjective({
       setId,
       organizationId,
@@ -333,7 +343,8 @@ describe('OKR-E003 createObjective — ambition_type gating, sort_order, Set-edi
       createdBy: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `create-obj-sort-2-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const third = await createObjective({
       setId,
       organizationId,
@@ -342,7 +353,8 @@ describe('OKR-E003 createObjective — ambition_type gating, sort_order, Set-edi
       createdBy: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `create-obj-sort-3-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     expect(first.result.sortOrder).toBe(1);
     expect(second.result.sortOrder).toBe(2);
     expect(third.result.sortOrder).toBe(3);
@@ -364,7 +376,8 @@ describe('OKR-E003 createObjective — ambition_type gating, sort_order, Set-edi
       actorUserId: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `cancel-set-noteditable-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
     let caught: unknown;
     try {
@@ -376,7 +389,8 @@ describe('OKR-E003 createObjective — ambition_type gating, sort_order, Set-edi
         createdBy: USER_ADMIN,
         actorEffectiveRole: 'admin',
         idempotencyKey: `create-obj-noteditable-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
     } catch (err) {
       caught = err;
     }

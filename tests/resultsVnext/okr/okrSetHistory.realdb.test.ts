@@ -151,7 +151,8 @@ describe('OKR-E007 getOkrSetHistory — merged event+material-change timeline, v
       requestedBy: USER_OWNER,
       actorEffectiveRole: 'member',
       idempotencyKey: `material-change-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
     const result = await getOkrSetHistory({ userId: USER_OWNER, organizationId: fixture.organizationId, setId: fixture.setId });
 
@@ -184,7 +185,8 @@ describe('OKR-E007 getOkrSetHistory — merged event+material-change timeline, v
       actorUserId: USER_OWNER,
       actorEffectiveRole: 'member',
       idempotencyKey: `narrow-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
     const outsider = await getOkrSetHistory({ userId: USER_OUTSIDER, organizationId: fixture.organizationId, setId: fixture.setId });
     expect(outsider.entries).toEqual([]);
@@ -209,7 +211,8 @@ describe('OKR-E007 getOkrSetHistory — merged event+material-change timeline, v
       actorUserId: USER_OWNER,
       actorEffectiveRole: 'member',
       idempotencyKey: `open-review-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
     const fullPage = await getOkrSetHistory({ userId: USER_OWNER, organizationId: fixture.organizationId, setId: fixture.setId, limit: 500 });
     const totalEvents = fullPage.entries.filter(isEventEntry).length;

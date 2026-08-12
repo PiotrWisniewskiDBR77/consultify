@@ -26,6 +26,10 @@ import type { PoolClient } from 'pg';
 
 import { computeStateHash } from '../kpi/kpiDefinitionCommands.js';
 import { executeAtomicCommand, executeAtomicCreate, type AtomicCommandOutcome, type AtomicEventInput } from '../platform/atomicWrite.js';
+import {
+  assertCommandCapability,
+  type CommandAccessContext,
+} from '../platform/commandCapabilityGuard.js';
 
 import { ROI_EVENT_SOURCE } from './roiCaseCommands.js';
 import { ROI_COMPARE_METRICS, type RoiCompareMetric } from './roiCompareRepository.js';
@@ -158,6 +162,26 @@ const COMPARISON_TYPE_SCOPES: Record<RoiVarianceComparisonType, { baseline: Vari
   forecast_vs_actual: { baseline: 'forecast', comparison: 'actual' },
 };
 
+// RN-G5 — command capability names (docs/product/results-vnext/RN_G5_AUTHZ_DESIGN.md)
+export const ROI_VARIANCE_CAPABILITIES = {
+  record: 'results.roi.variance.record',
+  updateStatus: 'results.roi.variance.update_status',
+  addCause: 'results.roi.variance.add_cause',
+  removeCause: 'results.roi.variance.remove_cause',
+} as const;
+
+async function loadRoiCaseOwnerUserId(
+  client: PoolClient,
+  caseId: string,
+  organizationId: string
+): Promise<string | null> {
+  const result = await client.query<{ owner_user_id: string | null }>(
+    `SELECT owner_user_id FROM rvn_roi_cases WHERE case_id = $1 AND organization_id = $2`,
+    [caseId, organizationId]
+  );
+  return result.rows[0]?.owner_user_id ?? null;
+}
+
 // ==========================================
 // recordVariance
 // ==========================================
@@ -177,6 +201,7 @@ export interface RecordVarianceInput {
   correlationId?: string;
   causationId?: string | null;
   reason?: string | null;
+  access: CommandAccessContext;
 }
 
 export async function recordVariance(input: RecordVarianceInput): Promise<AtomicCommandOutcome<RoiVariance>> {
@@ -195,6 +220,7 @@ export async function recordVariance(input: RecordVarianceInput): Promise<Atomic
     correlationId,
     causationId = null,
     reason = null,
+    access,
   } = input;
 
   if (!ROI_COMPARE_METRICS.includes(metric)) {
@@ -220,6 +246,14 @@ export async function recordVariance(input: RecordVarianceInput): Promise<Atomic
   return executeAtomicCreate<RoiVariance>({
     organizationId,
     applyMutation: async (client) => {
+      const caseOwnerUserId = await loadRoiCaseOwnerUserId(client, caseId, organizationId);
+      assertCommandCapability({
+        access,
+        actorUserId: createdBy,
+        capability: ROI_VARIANCE_CAPABILITIES.record,
+        responsibleUserIds: [caseOwnerUserId],
+      });
+
       const baselineValue = await readScopedMetricValue(client, {
         scope: scopes.baseline,
         referenceId: baselineReferenceId,
@@ -332,6 +366,7 @@ export interface UpdateVarianceStatusInput {
   correlationId?: string;
   causationId?: string | null;
   reason?: string | null;
+  access: CommandAccessContext;
 }
 
 /** CAS on the variance's OWN `row_version` — a variance is not CAS'd
@@ -356,6 +391,7 @@ export async function updateVarianceStatus(
     correlationId,
     causationId = null,
     reason = null,
+    access,
   } = input;
 
   let beforeState: Record<string, unknown> | null = null;
@@ -370,6 +406,15 @@ export async function updateVarianceStatus(
       if (currentRow.case_id !== caseId) {
         throw new RoiVarianceNotFoundError(varianceId, organizationId);
       }
+
+      const caseOwnerUserId = await loadRoiCaseOwnerUserId(client, caseId, organizationId);
+      assertCommandCapability({
+        access,
+        actorUserId,
+        capability: ROI_VARIANCE_CAPABILITIES.updateStatus,
+        responsibleUserIds: [currentRow.owner_user_id, caseOwnerUserId],
+      });
+
       beforeState = { variance: toRoiVariance(currentRow) };
 
       const merged = {
@@ -436,6 +481,7 @@ export interface AddVarianceCauseInput {
   correlationId?: string;
   causationId?: string | null;
   reason?: string | null;
+  access: CommandAccessContext;
 }
 
 export async function addVarianceCause(input: AddVarianceCauseInput): Promise<AtomicCommandOutcome<RoiVarianceCause>> {
@@ -451,18 +497,28 @@ export async function addVarianceCause(input: AddVarianceCauseInput): Promise<At
     correlationId,
     causationId = null,
     reason = null,
+    access,
   } = input;
 
   return executeAtomicCreate<RoiVarianceCause>({
     organizationId,
     applyMutation: async (client) => {
-      const varianceResult = await client.query<{ variance_id: string; case_id: string }>(
-        `SELECT variance_id, case_id FROM rvn_roi_variances WHERE variance_id = $1 AND organization_id = $2`,
+      const varianceResult = await client.query<{ variance_id: string; case_id: string; owner_user_id: string | null }>(
+        `SELECT variance_id, case_id, owner_user_id FROM rvn_roi_variances WHERE variance_id = $1 AND organization_id = $2`,
         [varianceId, organizationId]
       );
-      if (!varianceResult.rows[0]) {
+      const varianceRow = varianceResult.rows[0];
+      if (!varianceRow) {
         throw new RoiVarianceNotFoundError(varianceId, organizationId);
       }
+
+      const caseOwnerUserId = await loadRoiCaseOwnerUserId(client, varianceRow.case_id, organizationId);
+      assertCommandCapability({
+        access,
+        actorUserId: createdBy,
+        capability: ROI_VARIANCE_CAPABILITIES.addCause,
+        responsibleUserIds: [varianceRow.owner_user_id, caseOwnerUserId],
+      });
 
       const insertResult = await client.query<RoiVarianceCauseRow>(
         `INSERT INTO rvn_roi_variance_causes (variance_id, organization_id, cause_category, contribution_pct, narrative, created_by)
@@ -516,6 +572,7 @@ export interface RemoveVarianceCauseInput {
   correlationId?: string;
   causationId?: string | null;
   reason?: string | null;
+  access: CommandAccessContext;
 }
 
 export interface RemoveVarianceCauseResult {
@@ -544,11 +601,28 @@ export async function removeVarianceCause(
     correlationId,
     causationId = null,
     reason = null,
+    access,
   } = input;
 
   return executeAtomicCreate<RemoveVarianceCauseResult>({
     organizationId,
     applyMutation: async (client) => {
+      const varianceResult = await client.query<{ case_id: string; owner_user_id: string | null }>(
+        `SELECT case_id, owner_user_id FROM rvn_roi_variances WHERE variance_id = $1 AND organization_id = $2`,
+        [varianceId, organizationId]
+      );
+      const varianceRow = varianceResult.rows[0];
+      if (!varianceRow) {
+        throw new RoiVarianceNotFoundError(varianceId, organizationId);
+      }
+      const caseOwnerUserId = await loadRoiCaseOwnerUserId(client, varianceRow.case_id, organizationId);
+      assertCommandCapability({
+        access,
+        actorUserId,
+        capability: ROI_VARIANCE_CAPABILITIES.removeCause,
+        responsibleUserIds: [varianceRow.owner_user_id, caseOwnerUserId],
+      });
+
       const deleteResult = await client.query<{ cause_id: string }>(
         `DELETE FROM rvn_roi_variance_causes WHERE cause_id = $1 AND variance_id = $2 AND organization_id = $3 RETURNING cause_id`,
         [causeId, varianceId, organizationId]

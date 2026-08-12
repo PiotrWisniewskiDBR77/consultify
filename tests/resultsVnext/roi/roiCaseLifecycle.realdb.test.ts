@@ -245,7 +245,8 @@ describe('ROI-E001 case lifecycle — startModeling/markReadyForReview guards + 
       actorUserId: USER_OWNER,
       actorEffectiveRole: 'consultant',
       idempotencyKey: `start-modeling-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     expect(outcome.outcome).toBe('applied');
     expect(outcome.result.status).toBe('modeling');
 
@@ -259,7 +260,8 @@ describe('ROI-E001 case lifecycle — startModeling/markReadyForReview guards + 
         actorUserId: USER_OWNER,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `start-modeling-again-${randomUUID()}`,
-      })
+        access: { capabilities: ['*'], platformRole: null },
+})
     ).rejects.toBeInstanceOf(RoiCaseValidationError);
   });
 
@@ -275,7 +277,8 @@ describe('ROI-E001 case lifecycle — startModeling/markReadyForReview guards + 
         actorUserId: USER_OWNER,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `start-modeling-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       expect(started.result.status).toBe('modeling');
 
       // Baseline is still the empty shell — guard must reject.
@@ -288,7 +291,8 @@ describe('ROI-E001 case lifecycle — startModeling/markReadyForReview guards + 
           actorUserId: USER_OWNER,
           actorEffectiveRole: 'consultant',
           idempotencyKey: `ready-for-review-empty-${randomUUID()}`,
-        });
+        access: { capabilities: ['*'], platformRole: null },
+});
       } catch (err) {
         rejection = err;
       }
@@ -311,7 +315,8 @@ describe('ROI-E001 case lifecycle — startModeling/markReadyForReview guards + 
         actorId: USER_OWNER,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `capture-partial-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       expect(partialCapture.result.currentMeasuredValue).toBe(42);
 
       let secondRejection: unknown;
@@ -323,7 +328,8 @@ describe('ROI-E001 case lifecycle — startModeling/markReadyForReview guards + 
           actorUserId: USER_OWNER,
           actorEffectiveRole: 'consultant',
           idempotencyKey: `ready-for-review-partial-${randomUUID()}`,
-        });
+        access: { capabilities: ['*'], platformRole: null },
+});
       } catch (err) {
         secondRejection = err;
       }
@@ -342,7 +348,8 @@ describe('ROI-E001 case lifecycle — startModeling/markReadyForReview guards + 
         actorId: USER_OWNER,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `capture-full-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
       // ROI-E002 §5: the guard now ALSO requires a successful, fresh
       // calculation run — without one, this would still throw
@@ -354,7 +361,8 @@ describe('ROI-E001 case lifecycle — startModeling/markReadyForReview guards + 
         actorUserId: USER_OWNER,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `calc-run-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       expect(runOutcome.result.status).toBe('completed');
 
       const readyOutcome = await markReadyForReview({
@@ -364,7 +372,8 @@ describe('ROI-E001 case lifecycle — startModeling/markReadyForReview guards + 
         actorUserId: USER_OWNER,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `ready-for-review-complete-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       expect(readyOutcome.outcome).toBe('applied');
       expect(readyOutcome.result.status).toBe('ready_for_review');
     }
@@ -383,7 +392,8 @@ describe('ROI-E001 case lifecycle — startModeling/markReadyForReview guards + 
         actorUserId: USER_OWNER,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `archive-draft-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       expect(draftArchive.outcome).toBe('applied');
       expect(draftArchive.result.status).toBe('draft');
       expect(draftArchive.result.archivedAt).not.toBeNull();
@@ -397,7 +407,8 @@ describe('ROI-E001 case lifecycle — startModeling/markReadyForReview guards + 
         actorUserId: USER_OWNER,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `re-archive-draft-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       expect(reArchive.outcome).toBe('applied');
       expect(reArchive.result.status).toBe('draft');
       expect(reArchive.result.archivedAt).not.toBeNull();
@@ -411,7 +422,8 @@ describe('ROI-E001 case lifecycle — startModeling/markReadyForReview guards + 
         actorUserId: USER_OWNER,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `start-modeling-for-archive-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       const modelingArchive = await archiveRoiCase({
         caseId: modelingCase.caseId,
         organizationId: ORG_ID,
@@ -419,7 +431,8 @@ describe('ROI-E001 case lifecycle — startModeling/markReadyForReview guards + 
         actorUserId: USER_OWNER,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `archive-modeling-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       expect(modelingArchive.outcome).toBe('applied');
       expect(modelingArchive.result.status).toBe('modeling');
       expect(modelingArchive.result.archivedAt).not.toBeNull();

@@ -125,7 +125,8 @@ async function buildCaseWithFinanceLink(suffix: string): Promise<CaseWithLinkFix
     actorUserId: USER_MAKER,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `fin-link-${suffix}-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
   return { caseId, linkId: linkOutcome.result.linkId, linkRowVersion: linkOutcome.result.rowVersion };
 }
@@ -247,7 +248,8 @@ describe('ROI-E007 Finance Reconciliation commands (real Postgres)', () => {
       actorUserId: USER_MAKER,
       actorEffectiveRole: 'consultant',
       idempotencyKey: `recon-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     expect(outcome.outcome).toBe('applied');
     const reconciliation = outcome.result;
     expect(reconciliation.caseId).toBe(fixture.caseId);
@@ -273,7 +275,8 @@ describe('ROI-E007 Finance Reconciliation commands (real Postgres)', () => {
         actorUserId: USER_MAKER,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `recon-bad-link-${randomUUID()}`,
-      })
+        access: { capabilities: ['*'], platformRole: null },
+})
     ).rejects.toThrow(RoiFinanceLinkNotFoundError);
   });
 
@@ -288,7 +291,8 @@ describe('ROI-E007 Finance Reconciliation commands (real Postgres)', () => {
       actorUserId: USER_MAKER,
       actorEffectiveRole: 'consultant',
       idempotencyKey: `recon-list-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const reconciliations = await listRoiFinanceReconciliations({
       userId: USER_MAKER,
       organizationId: ORG_ID,
@@ -309,7 +313,8 @@ describe('ROI-E007 Finance Reconciliation commands (real Postgres)', () => {
       actorUserId: USER_MAKER,
       actorEffectiveRole: 'consultant',
       idempotencyKey: `recon-cas-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const reconciliationId = openOutcome.result.reconciliationId;
 
     const updateOutcome = await updateRoiFinanceReconciliationStatus({
@@ -321,7 +326,8 @@ describe('ROI-E007 Finance Reconciliation commands (real Postgres)', () => {
       actorUserId: USER_MAKER,
       actorEffectiveRole: 'consultant',
       idempotencyKey: `recon-cas-update-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     expect(updateOutcome.result.status).toBe('investigating');
     // Not terminal — resolvedBy/resolvedAt stay unset.
     expect(updateOutcome.result.resolvedBy).toBeNull();
@@ -341,7 +347,8 @@ describe('ROI-E007 Finance Reconciliation commands (real Postgres)', () => {
         actorUserId: USER_MAKER,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `recon-cas-stale-${randomUUID()}`,
-      })
+        access: { capabilities: ['*'], platformRole: null },
+})
     ).rejects.toThrow(AtomicWriteConflictError);
   });
 
@@ -356,7 +363,8 @@ describe('ROI-E007 Finance Reconciliation commands (real Postgres)', () => {
       actorUserId: USER_MAKER,
       actorEffectiveRole: 'consultant',
       idempotencyKey: `recon-terminal-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
     const resolvedOutcome = await updateRoiFinanceReconciliationStatus({
       reconciliationId: openOutcome.result.reconciliationId,
@@ -368,7 +376,8 @@ describe('ROI-E007 Finance Reconciliation commands (real Postgres)', () => {
       actorUserId: USER_MAKER,
       actorEffectiveRole: 'consultant',
       idempotencyKey: `recon-resolve-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     expect(resolvedOutcome.result.status).toBe('resolved');
     expect(resolvedOutcome.result.resolvedBy).toBe(USER_MAKER);
     expect(resolvedOutcome.result.resolvedAt).not.toBeNull();
@@ -391,7 +400,8 @@ describe('ROI-E007 Finance Reconciliation commands (real Postgres)', () => {
         actorUserId: USER_MAKER,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `recon-fanout-open-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       const openedGroups = await outboxConsumerGroups('roi.finance_reconciliation_opened', fixture.caseId);
       expect(openedGroups).toEqual(['finance_projection', 'mywork_projection']);
 
@@ -405,7 +415,8 @@ describe('ROI-E007 Finance Reconciliation commands (real Postgres)', () => {
         actorUserId: USER_MAKER,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `recon-fanout-investigating-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       const investigatingGroups = await outboxConsumerGroups(
         'roi.finance_reconciliation_status_updated',
         fixture.caseId
@@ -428,7 +439,8 @@ describe('ROI-E007 Finance Reconciliation commands (real Postgres)', () => {
         actorUserId: USER_MAKER,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `recon-fanout-accepted-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       const resolvedGroups = await outboxConsumerGroups('roi.finance_reconciliation_resolved', fixture.caseId);
       expect(resolvedGroups).toEqual(['finance_projection', 'mywork_projection']);
     }

@@ -33,6 +33,10 @@ import {
   type AtomicCommandOutcome,
   type AtomicEventInput,
 } from '../platform/atomicWrite.js';
+import {
+  assertCommandCapability,
+  type CommandAccessContext,
+} from '../platform/commandCapabilityGuard.js';
 import { createObligation } from '../platform/obligations.js';
 import { getActiveVisibilityPolicy } from '../platform/visibilityResolver.js';
 
@@ -64,6 +68,21 @@ export const ROI_VISIBILITY_DOMAIN = 'roi';
 export const ROI_RESOURCE_TYPE = 'roi_case';
 
 export const ROI_EVENT_SOURCE = 'resultsVnext.roi';
+
+// ==========================================
+// RN-G5 — command capability names (docs/product/results-vnext/RN_G5_AUTHZ_DESIGN.md)
+// ==========================================
+export const ROI_CASE_CAPABILITIES = {
+  /** No record exists yet at create time — capability-only, no owner
+   * fallback possible. Same documented tradeoff as
+   * kpiDefinitionCommands.createKpiDraft. */
+  create: 'results.roi.case.create',
+  updateDetails: 'results.roi.case.update_details',
+  archive: 'results.roi.case.archive',
+  startModeling: 'results.roi.case.start_modeling',
+  markReadyForReview: 'results.roi.case.mark_ready_for_review',
+  reopenFromRejected: 'results.roi.case.reopen_from_rejected',
+} as const;
 
 /** Obligation type created alongside every new Case (design §4.1 point 2). */
 export const START_ROI_STUDY_OBLIGATION_TYPE = 'start_roi_study';
@@ -268,6 +287,19 @@ export async function createRoiCase(
   // convention as kpiDefinitionCommands.ts's file header explains.
   let visibilityPolicyVersion: string | undefined;
 
+  // RN-G5 DECISION (documented, not an oversight): createRoiCase is
+  // deliberately left UNGATED by this pakiet — same reasoning as
+  // kpiDefinitionCommands.createKpiDraft's identical decision. No record
+  // exists yet at create time (capability-only, no owner fallback);
+  // `results.roi.case.create` is not part of any baseline a regular member
+  // holds (effectiveAccessService.ts is out of allowlist); and ~30 existing
+  // test files call this as a foundational fixture step (grepped before
+  // deciding — a far larger blast radius than createKpiDraft's single
+  // breaking e2e file). Creating your OWN new case is also lower-risk than
+  // the named vulnerability (mutating/approving an EXISTING, possibly
+  // someone else's, case) — a fresh case is inert until it passes the
+  // separately-guarded submit/approve pipeline (roiCaseApprovalCommands.ts),
+  // which IS gated.
   return executeAtomicCreate<CreateRoiCaseResult>({
     organizationId,
     applyMutation: async (client) => {
@@ -532,6 +564,7 @@ export interface UpdateRoiCaseDetailsInput {
   correlationId?: string;
   causationId?: string | null;
   reason?: string | null;
+  access: CommandAccessContext;
 }
 
 /**
@@ -553,6 +586,7 @@ export async function updateRoiCaseDetails(
     correlationId,
     causationId = null,
     reason = null,
+    access,
     ...edits
   } = input;
 
@@ -565,6 +599,13 @@ export async function updateRoiCaseDetails(
     loadForUpdate: loadRoiCaseForUpdate,
     getCurrentVersion: caseRowVersion,
     applyMutation: async (client, currentRow, nextVersion) => {
+      assertCommandCapability({
+        access,
+        actorUserId,
+        capability: ROI_CASE_CAPABILITIES.updateDetails,
+        responsibleUserIds: [currentRow.owner_user_id],
+      });
+
       if (NON_EDITABLE_STATUSES.includes(currentRow.status)) {
         throw new RoiCaseValidationError(
           `ROI case ${caseId} is "${currentRow.status}" — details may not be edited from this status`,
@@ -653,6 +694,7 @@ export interface ArchiveRoiCaseInput {
   correlationId?: string;
   causationId?: string | null;
   reason?: string | null;
+  access: CommandAccessContext;
 }
 
 /**
@@ -675,6 +717,7 @@ export async function archiveRoiCase(
     correlationId,
     causationId = null,
     reason = null,
+    access,
   } = input;
 
   let beforeState: Record<string, unknown> | null = null;
@@ -686,6 +729,13 @@ export async function archiveRoiCase(
     loadForUpdate: loadRoiCaseForUpdate,
     getCurrentVersion: caseRowVersion,
     applyMutation: async (client, currentRow, nextVersion) => {
+      assertCommandCapability({
+        access,
+        actorUserId,
+        capability: ROI_CASE_CAPABILITIES.archive,
+        responsibleUserIds: [currentRow.owner_user_id],
+      });
+
       beforeState = { case: toRoiCase(currentRow) };
 
       if (currentRow.archived_at !== null) {
@@ -797,6 +847,8 @@ interface RoiCaseLifecycleTransitionSpec {
    * client/transaction, rather than being restricted to pure in-memory
    * row checks. Throws `RoiCaseNotReadyForReviewError` on failure. */
   guard?: (client: PoolClient, caseRow: RoiCaseRow, baselineRow: RoiBaselineRow) => Promise<RoiCaseReadyForReviewCheck>;
+  /** RN-G5: capability gating this specific transition. */
+  capability: string;
 }
 
 export interface RunRoiCaseLifecycleTransitionInput {
@@ -809,6 +861,7 @@ export interface RunRoiCaseLifecycleTransitionInput {
   correlationId?: string;
   causationId?: string | null;
   reason?: string | null;
+  access: CommandAccessContext;
 }
 
 /** Same `runKpiLifecycleTransition`-shaped helper as the KPI domain,
@@ -828,6 +881,7 @@ async function runRoiCaseLifecycleTransition(
     correlationId,
     causationId = null,
     reason = null,
+    access,
   } = input;
 
   let beforeState: Record<string, unknown> | null = null;
@@ -839,6 +893,13 @@ async function runRoiCaseLifecycleTransition(
     loadForUpdate: loadRoiCaseForUpdate,
     getCurrentVersion: caseRowVersion,
     applyMutation: async (client, currentRow, nextVersion) => {
+      assertCommandCapability({
+        access,
+        actorUserId,
+        capability: spec.capability,
+        responsibleUserIds: [currentRow.owner_user_id],
+      });
+
       if (!spec.fromStatuses.includes(currentRow.status)) {
         throw new RoiCaseValidationError(
           `ROI case ${caseId} is "${currentRow.status}" — cannot transition to "${spec.toStatus}" from there`,
@@ -915,6 +976,7 @@ export function startModeling(
       eventType: 'roi.case_modeling_started',
       fromStatuses: ['draft'],
       toStatus: 'modeling',
+      capability: ROI_CASE_CAPABILITIES.startModeling,
     },
     input
   );
@@ -928,6 +990,7 @@ export function markReadyForReview(
       eventType: 'roi.case_ready_for_review',
       fromStatuses: ['modeling'],
       toStatus: 'ready_for_review',
+      capability: ROI_CASE_CAPABILITIES.markReadyForReview,
       // ROI-E002 §5: wraps E001's own isRoiCaseReadyForReviewEligible with
       // the economic-model guard (successful+fresh calculation run, no
       // unresolved double-counting) — imported from the new file, not
@@ -954,7 +1017,12 @@ export function reopenRejectedRoiCase(
   input: RunRoiCaseLifecycleTransitionInput
 ): Promise<AtomicCommandOutcome<RoiCase>> {
   return runRoiCaseLifecycleTransition(
-    { eventType: 'roi.case_reopened_from_rejected', fromStatuses: ['rejected'], toStatus: 'modeling' },
+    {
+      eventType: 'roi.case_reopened_from_rejected',
+      fromStatuses: ['rejected'],
+      toStatus: 'modeling',
+      capability: ROI_CASE_CAPABILITIES.reopenFromRejected,
+    },
     input
   );
 }

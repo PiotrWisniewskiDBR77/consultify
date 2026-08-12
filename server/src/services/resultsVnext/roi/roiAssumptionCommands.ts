@@ -19,6 +19,10 @@ import type { PoolClient } from 'pg';
 
 import { computeStateHash } from '../kpi/kpiDefinitionCommands.js';
 import { executeAtomicCommand, executeAtomicCreate, type AtomicCommandOutcome, type AtomicEventInput } from '../platform/atomicWrite.js';
+import {
+  assertCommandCapability,
+  type CommandAccessContext,
+} from '../platform/commandCapabilityGuard.js';
 
 import { RoiEconomicModelNotEditableError } from './roiCalculationPolicyCommands.js';
 import { NON_EDITABLE_STATUSES, ROI_EVENT_SOURCE } from './roiCaseCommands.js';
@@ -43,20 +47,44 @@ export class RoiAssumptionFrozenError extends Error {
   }
 }
 
+// RN-G5 — command capability names (docs/product/results-vnext/RN_G5_AUTHZ_DESIGN.md)
+export const ROI_ASSUMPTION_CAPABILITIES = {
+  add: 'results.roi.assumption.add',
+  update: 'results.roi.assumption.update',
+  remove: 'results.roi.assumption.remove',
+} as const;
+
+/**
+ * RN-G5: authorization runs FIRST here (before the case-editable-status
+ * check below it always ran) — same "coarse gate before finer business
+ * rule" ordering the KPI/ROI approval commands use. The case row's
+ * owner_user_id (fetched in the SAME query this function already ran) is
+ * the responsible person for every child entity scoped to a case — there
+ * is no per-assumption/per-cost-line owner field of its own.
+ */
 async function assertCaseEditableForUpdate(
   client: PoolClient,
   caseId: string,
   organizationId: string,
-  op: string
+  op: string,
+  auth: { access: CommandAccessContext; actorUserId: string; capability: string }
 ): Promise<void> {
-  const caseResult = await client.query<{ status: string }>(
-    `SELECT status FROM rvn_roi_cases WHERE case_id = $1 AND organization_id = $2 FOR UPDATE`,
+  const caseResult = await client.query<{ status: string; owner_user_id: string }>(
+    `SELECT status, owner_user_id FROM rvn_roi_cases WHERE case_id = $1 AND organization_id = $2 FOR UPDATE`,
     [caseId, organizationId]
   );
   const caseRow = caseResult.rows[0];
   if (!caseRow) {
     throw new Error(`[${op}] case ${caseId} not found`);
   }
+
+  assertCommandCapability({
+    access: auth.access,
+    actorUserId: auth.actorUserId,
+    capability: auth.capability,
+    responsibleUserIds: [caseRow.owner_user_id],
+  });
+
   if (NON_EDITABLE_STATUSES.includes(caseRow.status as (typeof NON_EDITABLE_STATUSES)[number])) {
     throw new RoiEconomicModelNotEditableError(caseId, caseRow.status);
   }
@@ -87,6 +115,7 @@ export interface AddAssumptionInput {
   correlationId?: string;
   causationId?: string | null;
   reason?: string | null;
+  access: CommandAccessContext;
 }
 
 export async function addAssumption(input: AddAssumptionInput): Promise<AtomicCommandOutcome<RoiAssumption>> {
@@ -111,12 +140,17 @@ export async function addAssumption(input: AddAssumptionInput): Promise<AtomicCo
     correlationId,
     causationId = null,
     reason = null,
+    access,
   } = input;
 
   return executeAtomicCreate<RoiAssumption>({
     organizationId,
     applyMutation: async (client) => {
-      await assertCaseEditableForUpdate(client, caseId, organizationId, 'addAssumption');
+      await assertCaseEditableForUpdate(client, caseId, organizationId, 'addAssumption', {
+        access,
+        actorUserId,
+        capability: ROI_ASSUMPTION_CAPABILITIES.add,
+      });
 
       const insertResult = await client.query<RoiAssumptionRow>(
         `INSERT INTO rvn_roi_assumptions
@@ -216,6 +250,7 @@ export interface UpdateAssumptionInput {
   correlationId?: string;
   causationId?: string | null;
   reason?: string | null;
+  access: CommandAccessContext;
 }
 
 export async function updateAssumption(input: UpdateAssumptionInput): Promise<AtomicCommandOutcome<RoiAssumption>> {
@@ -230,6 +265,7 @@ export async function updateAssumption(input: UpdateAssumptionInput): Promise<At
     correlationId,
     causationId = null,
     reason = null,
+    access,
     ...edits
   } = input;
 
@@ -245,7 +281,11 @@ export async function updateAssumption(input: UpdateAssumptionInput): Promise<At
       if (currentRow.frozen_at !== null) {
         throw new RoiAssumptionFrozenError(assumptionId);
       }
-      await assertCaseEditableForUpdate(client, caseId, organizationId, 'updateAssumption');
+      await assertCaseEditableForUpdate(client, caseId, organizationId, 'updateAssumption', {
+        access,
+        actorUserId,
+        capability: ROI_ASSUMPTION_CAPABILITIES.update,
+      });
 
       beforeState = { assumption: toRoiAssumption(currentRow) };
 
@@ -337,6 +377,7 @@ export interface RemoveAssumptionInput {
   correlationId?: string;
   causationId?: string | null;
   reason?: string | null;
+  access: CommandAccessContext;
 }
 
 export async function removeAssumption(input: RemoveAssumptionInput): Promise<AtomicCommandOutcome<RoiAssumption>> {
@@ -351,6 +392,7 @@ export async function removeAssumption(input: RemoveAssumptionInput): Promise<At
     correlationId,
     causationId = null,
     reason = null,
+    access,
   } = input;
 
   let beforeState: Record<string, unknown> | null = null;
@@ -365,7 +407,11 @@ export async function removeAssumption(input: RemoveAssumptionInput): Promise<At
       if (currentRow.frozen_at !== null) {
         throw new RoiAssumptionFrozenError(assumptionId);
       }
-      await assertCaseEditableForUpdate(client, caseId, organizationId, 'removeAssumption');
+      await assertCaseEditableForUpdate(client, caseId, organizationId, 'removeAssumption', {
+        access,
+        actorUserId,
+        capability: ROI_ASSUMPTION_CAPABILITIES.remove,
+      });
 
       beforeState = { assumption: toRoiAssumption(currentRow) };
 

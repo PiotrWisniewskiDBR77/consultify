@@ -213,7 +213,8 @@ describe('ROI-E001 baseline — freeze-protection trigger (real Postgres)', () =
         actorId: USER_OWNER,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `capture-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       expect(captureOutcome.outcome).toBe('applied');
       expect(captureOutcome.result.currentMeasuredValue).toBe(100);
       expect(captureOutcome.result.frozenAt).toBeNull();
@@ -247,7 +248,8 @@ describe('ROI-E001 baseline — freeze-protection trigger (real Postgres)', () =
           actorId: USER_OWNER,
           actorEffectiveRole: 'consultant',
           idempotencyKey: `capture-after-freeze-${randomUUID()}`,
-        })
+        access: { capabilities: ['*'], platformRole: null },
+})
       ).rejects.toBeInstanceOf(RoiBaselineFrozenError);
 
       // The REAL guarantee: the DB TRIGGER itself rejects a raw UPDATE that

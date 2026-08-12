@@ -103,7 +103,8 @@ describe('ROI-E006 recordRoiPirTeresaDraftDisposition (real Postgres)', () => {
       actorUserId: USER_OWNER,
       actorEffectiveRole: 'consultant',
       idempotencyKey: `draft-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
     const dispositionOutcome = await modules.recordRoiPirTeresaDraftDisposition({
       pirId: started.pirId,
@@ -114,7 +115,8 @@ describe('ROI-E006 recordRoiPirTeresaDraftDisposition (real Postgres)', () => {
       actorUserId: USER_OWNER,
       actorEffectiveRole: 'consultant',
       idempotencyKey: `disposition-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
     expect(dispositionOutcome.outcome).toBe('applied');
     expect(dispositionOutcome.result.teresaDraftDisposition).toBe('rejected');
@@ -144,7 +146,8 @@ describe('ROI-E006 recordRoiPirTeresaDraftDisposition (real Postgres)', () => {
       actorUserId: USER_OWNER,
       actorEffectiveRole: 'consultant',
       idempotencyKey: `disposition-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
     expect(outcome.outcome).toBe('applied');
     expect(outcome.result.teresaDraftDisposition).toBe('accepted');
@@ -164,7 +167,8 @@ describe('ROI-E006 recordRoiPirTeresaDraftDisposition (real Postgres)', () => {
       actorUserId: USER_OWNER,
       actorEffectiveRole: 'consultant',
       idempotencyKey: `disposition-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
     expect(outcome.outcome).toBe('applied');
     expect(outcome.result.teresaDraftDisposition).toBe('edited_then_accepted');
@@ -186,7 +190,8 @@ describe('ROI-E006 recordRoiPirTeresaDraftDisposition (real Postgres)', () => {
         actorUserId: USER_OWNER,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `disposition-missing-${randomUUID()}`,
-      })
+        access: { capabilities: ['*'], platformRole: null },
+})
     ).rejects.toMatchObject({ code: 'FINAL_LESSONS_TEXT_REQUIRED' });
   });
 
@@ -202,7 +207,8 @@ describe('ROI-E006 recordRoiPirTeresaDraftDisposition (real Postgres)', () => {
       actorUserId: USER_OWNER,
       actorEffectiveRole: 'consultant',
       idempotencyKey: `draft-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const closeOutcome = await modules.closeRoiCase({
       caseId: started.caseId,
       organizationId: ORG_ID,
@@ -210,7 +216,8 @@ describe('ROI-E006 recordRoiPirTeresaDraftDisposition (real Postgres)', () => {
       actorUserId: USER_CLOSER,
       actorEffectiveRole: 'admin',
       idempotencyKey: `close-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     expect(closeOutcome.result.pir.status).toBe('finalized');
 
     await expect(
@@ -224,7 +231,8 @@ describe('ROI-E006 recordRoiPirTeresaDraftDisposition (real Postgres)', () => {
         actorUserId: USER_OWNER,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `disposition-finalized-${randomUUID()}`,
-      })
+        access: { capabilities: ['*'], platformRole: null },
+})
     ).rejects.toMatchObject({ code: 'NOT_EDITABLE' });
 
     // The DB's own freeze trigger backs this even against a raw UPDATE

@@ -71,7 +71,8 @@ async function driveCycleToReview(
     actorUserId: USER_ADMIN,
     actorEffectiveRole: 'admin',
     idempotencyKey: `open-drafting-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   const activated = await runOkrCycleLifecycleTransition(OKR_CYCLE_ACTIVATE_SPEC, {
     cycleId,
     organizationId,
@@ -79,7 +80,8 @@ async function driveCycleToReview(
     actorUserId: USER_ADMIN,
     actorEffectiveRole: 'admin',
     idempotencyKey: `activate-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   const reviewed = await runOkrCycleLifecycleTransition(OKR_CYCLE_OPEN_REVIEW_SPEC, {
     cycleId,
     organizationId,
@@ -87,7 +89,8 @@ async function driveCycleToReview(
     actorUserId: USER_ADMIN,
     actorEffectiveRole: 'admin',
     idempotencyKey: `open-review-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   return reviewed.resultingVersion;
 }
 
@@ -165,7 +168,8 @@ describe('OKR-E007 Cycle-close guard (D9) — rejects with open Sets, succeeds o
       createdBy: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `create-program-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     await publishProgram({
       programId: program.result.programId,
       organizationId,
@@ -173,7 +177,8 @@ describe('OKR-E007 Cycle-close guard (D9) — rejects with open Sets, succeeds o
       actorUserId: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `publish-program-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const cycle = await createCycle({
       organizationId,
       programId: program.result.programId,
@@ -182,7 +187,8 @@ describe('OKR-E007 Cycle-close guard (D9) — rejects with open Sets, succeeds o
       createdBy: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `create-cycle-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     return { organizationId, programId: program.result.programId, cycleId: cycle.result.cycleId, cycleVersion: cycle.result.rowVersion };
   }
 
@@ -199,7 +205,8 @@ describe('OKR-E007 Cycle-close guard (D9) — rejects with open Sets, succeeds o
       createdBy: USER_OWNER,
       actorEffectiveRole: 'member',
       idempotencyKey: `create-set-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const setId = set.result.set.setId;
 
     const reviewVersion = await driveCycleToReview(organizationId, cycleId, cycleVersion);
@@ -213,7 +220,8 @@ describe('OKR-E007 Cycle-close guard (D9) — rejects with open Sets, succeeds o
         actorUserId: USER_ADMIN,
         actorEffectiveRole: 'admin',
         idempotencyKey: `close-cycle-1-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
     } catch (err) {
       caught = err;
     }
@@ -239,7 +247,8 @@ describe('OKR-E007 Cycle-close guard (D9) — rejects with open Sets, succeeds o
       createdBy: USER_OWNER,
       actorEffectiveRole: 'member',
       idempotencyKey: `create-set-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const setId = set.result.set.setId;
 
     const reviewVersion = await driveCycleToReview(organizationId, cycleId, cycleVersion);
@@ -254,7 +263,8 @@ describe('OKR-E007 Cycle-close guard (D9) — rejects with open Sets, succeeds o
       actorUserId: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `cancel-set-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
     const outcome = await runOkrCycleLifecycleTransition(OKR_CYCLE_CLOSE_SPEC, {
       cycleId,
@@ -263,7 +273,8 @@ describe('OKR-E007 Cycle-close guard (D9) — rejects with open Sets, succeeds o
       actorUserId: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `close-cycle-2-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     expect(outcome.outcome).toBe('applied');
     expect(outcome.result.status).toBe('closed');
   });
@@ -278,7 +289,8 @@ describe('OKR-E007 Cycle-close guard (D9) — rejects with open Sets, succeeds o
       actorUserId: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `close-cycle-empty-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     expect(outcome.outcome).toBe('applied');
     expect(outcome.result.status).toBe('closed');
   });

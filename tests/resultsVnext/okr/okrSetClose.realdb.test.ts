@@ -150,7 +150,8 @@ describe('OKR-E007 closeOkrSet — three independent close gates + D10 no-self-c
       actorUserId: USER_OWNER,
       actorEffectiveRole: 'member',
       idempotencyKey: `open-review-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     return fixture;
   }
 
@@ -166,7 +167,8 @@ describe('OKR-E007 closeOkrSet — three independent close gates + D10 no-self-c
         actorUserId: USER_OWNER,
         actorEffectiveRole: 'member',
         idempotencyKey: `close-1-${randomUUID()}`,
-      })
+        access: { capabilities: ['*'], platformRole: null },
+})
     ).rejects.toThrow(OkrSetManagerReviewRequiredError);
 
     await submitOkrSetForManagerReview({
@@ -176,7 +178,8 @@ describe('OKR-E007 closeOkrSet — three independent close gates + D10 no-self-c
       actorUserId: USER_OWNER,
       actorEffectiveRole: 'member',
       idempotencyKey: `submit-manager-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     await approveOkrSetManagerReview({
       setId: fixture.setId,
       organizationId: fixture.organizationId,
@@ -184,7 +187,8 @@ describe('OKR-E007 closeOkrSet — three independent close gates + D10 no-self-c
       actorUserId: USER_REVIEWER,
       actorEffectiveRole: 'member',
       idempotencyKey: `approve-manager-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
     const { rowVersion: v2 } = await readSetVersionAndStatus(client, fixture.setId);
     const outcome = await closeOkrSet({
@@ -194,7 +198,8 @@ describe('OKR-E007 closeOkrSet — three independent close gates + D10 no-self-c
       actorUserId: USER_OWNER,
       actorEffectiveRole: 'member',
       idempotencyKey: `close-2-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     expect(outcome.outcome).toBe('applied');
     expect(outcome.result.set.status).toBe('closed');
   });
@@ -211,7 +216,8 @@ describe('OKR-E007 closeOkrSet — three independent close gates + D10 no-self-c
         actorUserId: USER_OWNER,
         actorEffectiveRole: 'member',
         idempotencyKey: `close-1-${randomUUID()}`,
-      })
+        access: { capabilities: ['*'], platformRole: null },
+})
     ).rejects.toThrow(OkrSetSelfReviewRequiredError);
 
     await submitOkrSetSelfReview({
@@ -221,7 +227,8 @@ describe('OKR-E007 closeOkrSet — three independent close gates + D10 no-self-c
       actorUserId: USER_OWNER,
       actorEffectiveRole: 'member',
       idempotencyKey: `submit-self-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
     const { rowVersion: v2 } = await readSetVersionAndStatus(client, fixture.setId);
     const outcome = await closeOkrSet({
@@ -231,7 +238,8 @@ describe('OKR-E007 closeOkrSet — three independent close gates + D10 no-self-c
       actorUserId: USER_OWNER,
       actorEffectiveRole: 'member',
       idempotencyKey: `close-2-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     expect(outcome.outcome).toBe('applied');
     expect(outcome.result.set.status).toBe('closed');
   });
@@ -248,7 +256,8 @@ describe('OKR-E007 closeOkrSet — three independent close gates + D10 no-self-c
         actorUserId: USER_OWNER,
         actorEffectiveRole: 'member',
         idempotencyKey: `close-1-${randomUUID()}`,
-      })
+        access: { capabilities: ['*'], platformRole: null },
+})
     ).rejects.toThrow(OkrSetReflectionRequiredError);
 
     const { rowVersion: v2 } = await readSetVersionAndStatus(client, fixture.setId);
@@ -259,7 +268,8 @@ describe('OKR-E007 closeOkrSet — three independent close gates + D10 no-self-c
       actorUserId: USER_OWNER,
       actorEffectiveRole: 'member',
       idempotencyKey: `final-score-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     await recordObjectiveReflection({
       objectiveId: fixture.objectiveIds[0]!,
       setId: fixture.setId,
@@ -274,7 +284,8 @@ describe('OKR-E007 closeOkrSet — three independent close gates + D10 no-self-c
       actorUserId: USER_OWNER,
       actorEffectiveRole: 'member',
       idempotencyKey: `reflect-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
     const { rowVersion: v3 } = await readSetVersionAndStatus(client, fixture.setId);
     const outcome = await closeOkrSet({
@@ -284,7 +295,8 @@ describe('OKR-E007 closeOkrSet — three independent close gates + D10 no-self-c
       actorUserId: USER_OWNER,
       actorEffectiveRole: 'member',
       idempotencyKey: `close-2-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     expect(outcome.outcome).toBe('applied');
     expect(outcome.result.set.status).toBe('closed');
 
@@ -311,7 +323,8 @@ describe('OKR-E007 closeOkrSet — three independent close gates + D10 no-self-c
         actorUserId: USER_OWNER, // the Set's own owner AND created_by
         actorEffectiveRole: 'member',
         idempotencyKey: `close-self-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       expect(outcome.outcome).toBe('applied');
       expect(outcome.result.set.status).toBe('closed');
 
@@ -346,7 +359,8 @@ describe('OKR-E007 closeOkrSet — three independent close gates + D10 no-self-c
         actorUserId: USER_OWNER,
         actorEffectiveRole: 'member',
         idempotencyKey: `close-notreview-${randomUUID()}`,
-      })
+        access: { capabilities: ['*'], platformRole: null },
+})
     ).rejects.toThrow();
   });
 });

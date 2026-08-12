@@ -128,6 +128,12 @@ function baseCommandInput(overrides: Record<string, unknown> = {}) {
     actorUserId: 'user-actor',
     actorEffectiveRole: 'consultant',
     idempotencyKey: 'idem-1',
+    // RN-G5: this suite tests STATE-MACHINE validation, not the
+    // command-capability guard — give every case the wildcard so the RBAC
+    // gate always ALLOWs and these tests keep exercising exactly what they
+    // exercised before (see commandCapabilityGuard.test.ts for guard
+    // coverage, and the RN-G5 security tests for the DENY path).
+    access: { capabilities: ['*'], platformRole: null },
     ...overrides,
   };
 }

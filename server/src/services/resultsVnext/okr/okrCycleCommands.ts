@@ -29,12 +29,28 @@ import {
   type AtomicCommandOutcome,
   type AtomicEventInput,
 } from '../platform/atomicWrite.js';
+import { assertCommandCapability, type CommandAccessContext } from '../platform/commandCapabilityGuard.js';
 
 import { OKR_EVENT_SOURCE } from './okrProgramCommands.js';
 import type { OkrProgramRow } from './okrProgramTypes.js';
 import { toOkrCycle, type OkrCycle, type OkrCycleRow, type OkrCycleStatus } from './okrCycleTypes.js';
 
 export const OKR_CYCLE_RESOURCE_TYPE = 'okr_cycle';
+
+// RN-G5 — command capability names (docs/product/results-vnext/RN_G5_AUTHZ_DESIGN.md).
+// Cycles (like Programs) are plain RBAC resources — no owner_user_id/
+// reviewer_user_id column exists anywhere on okr_vnext_cycles (unlike Sets/
+// Objectives/KeyResults, which are ABAC — see okrSetCommands.ts's own file
+// header for this exact distinction) — so every Cycle command here is
+// capability-only, no responsibleUserIds fallback.
+export const OKR_CYCLE_CAPABILITIES = {
+  create: 'results.okr.cycle.create',
+  openDrafting: 'results.okr.cycle.open_drafting',
+  activate: 'results.okr.cycle.activate',
+  openReview: 'results.okr.cycle.open_review',
+  close: 'results.okr.cycle.close',
+  cancel: 'results.okr.cycle.cancel',
+} as const;
 
 // ==========================================
 // ERRORS
@@ -131,6 +147,7 @@ export interface CreateOkrCycleInput {
   correlationId?: string;
   causationId?: string | null;
   reason?: string | null;
+  access: CommandAccessContext;
 }
 
 /** Decision P9: no exhaustive DB-level ordering CHECK across the 10 Cycle
@@ -207,6 +224,7 @@ export async function createCycle(
     correlationId,
     causationId = null,
     reason = null,
+    access,
   } = input;
 
   assertCycleTimestampOrdering(input);
@@ -214,6 +232,15 @@ export async function createCycle(
   return executeAtomicCreate<OkrCycle>({
     organizationId,
     applyMutation: async (client) => {
+      // RN-G5: capability-only (no owner/responsible person exists for a
+      // Cycle — plain RBAC resource, see OKR_CYCLE_CAPABILITIES's own
+      // comment).
+      assertCommandCapability({
+        access,
+        actorUserId: createdBy,
+        capability: OKR_CYCLE_CAPABILITIES.create,
+      });
+
       // Fail-closed guard (OKR-F-001-AC-02), BEFORE any INSERT. Locked on
       // the same transaction so a concurrent publish/suspend cannot race
       // this check.
@@ -321,6 +348,8 @@ export interface OkrCycleLifecycleTransitionSpec {
    * (`roiCaseCommands.ts`).
    */
   guard?: (client: PoolClient, cycleRow: OkrCycleRow) => Promise<void>;
+  /** RN-G5 capability gating this specific named transition. */
+  capability: string;
 }
 
 export interface RunOkrCycleLifecycleTransitionInput {
@@ -337,6 +366,7 @@ export interface RunOkrCycleLifecycleTransitionInput {
   correlationId?: string;
   causationId?: string | null;
   reason?: string | null;
+  access: CommandAccessContext;
 }
 
 /**
@@ -361,6 +391,7 @@ export async function runOkrCycleLifecycleTransition(
     correlationId,
     causationId = null,
     reason = null,
+    access,
   } = input;
 
   let beforeState: Record<string, unknown> | null = null;
@@ -372,6 +403,15 @@ export async function runOkrCycleLifecycleTransition(
     loadForUpdate: loadOkrCycleForUpdate,
     getCurrentVersion: cycleRowVersion,
     applyMutation: async (client, currentRow, nextVersion) => {
+      // RN-G5: capability-only (Cycle is plain RBAC, no owner column) —
+      // actorUserId may be null (scheduler-initiated), same system-wildcard
+      // pattern as okrSetCommands.ts's runOkrSetLifecycleTransition.
+      assertCommandCapability({
+        access,
+        actorUserId: actorUserId ?? '',
+        capability: spec.capability,
+      });
+
       if (!spec.fromStatuses.includes(currentRow.status)) {
         throw new OkrCycleValidationError(
           `OKR Cycle ${cycleId} is "${currentRow.status}" — cannot transition to "${spec.toStatus}" from there`,
@@ -443,18 +483,21 @@ export const OKR_CYCLE_OPEN_DRAFTING_SPEC: OkrCycleLifecycleTransitionSpec = {
   eventType: 'okr_cycle.drafting_opened',
   fromStatuses: ['planned'],
   toStatus: 'drafting',
+  capability: OKR_CYCLE_CAPABILITIES.openDrafting,
 };
 
 export const OKR_CYCLE_ACTIVATE_SPEC: OkrCycleLifecycleTransitionSpec = {
   eventType: 'okr_cycle.activated',
   fromStatuses: ['drafting'],
   toStatus: 'active',
+  capability: OKR_CYCLE_CAPABILITIES.activate,
 };
 
 export const OKR_CYCLE_OPEN_REVIEW_SPEC: OkrCycleLifecycleTransitionSpec = {
   eventType: 'okr_cycle.review_opened',
   fromStatuses: ['active'],
   toStatus: 'review',
+  capability: OKR_CYCLE_CAPABILITIES.openReview,
 };
 
 /** D9: guard added by OKR-E007 — a Cycle cannot close while any of its
@@ -466,6 +509,7 @@ export const OKR_CYCLE_CLOSE_SPEC: OkrCycleLifecycleTransitionSpec = {
   eventType: 'okr_cycle.closed',
   fromStatuses: ['review'],
   toStatus: 'closed',
+  capability: OKR_CYCLE_CAPABILITIES.close,
   guard: async (client, cycleRow) => {
     const openSets = await client.query<{ set_id: string }>(
       `SELECT set_id FROM okr_vnext_sets WHERE cycle_id = $1 AND status NOT IN ('closed','cancelled','not_required')`,
@@ -484,4 +528,5 @@ export const OKR_CYCLE_CANCEL_SPEC: OkrCycleLifecycleTransitionSpec = {
   eventType: 'okr_cycle.cancelled',
   fromStatuses: ['planned', 'drafting', 'active', 'review'],
   toStatus: 'cancelled',
+  capability: OKR_CYCLE_CAPABILITIES.cancel,
 };

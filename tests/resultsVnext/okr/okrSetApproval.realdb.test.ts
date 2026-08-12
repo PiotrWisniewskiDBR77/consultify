@@ -90,7 +90,8 @@ async function addSufficientKeyResultCoverage(setId: string, organizationId: str
     createdBy: ownerUserId,
     actorEffectiveRole: 'member',
     idempotencyKey: `fixture-objective-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   for (let i = 0; i < 2; i += 1) {
     await createKeyResult({
       objectiveId: objective.result.objectiveId,
@@ -104,7 +105,8 @@ async function addSufficientKeyResultCoverage(setId: string, organizationId: str
       createdBy: ownerUserId,
       actorEffectiveRole: 'member',
       idempotencyKey: `fixture-kr-${i}-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
   }
 }
 
@@ -130,7 +132,8 @@ async function createProgramAndCycle(): Promise<{ organizationId: string; progra
     createdBy: USER_ADMIN,
     actorEffectiveRole: 'admin',
     idempotencyKey: `create-program-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   await publishProgram({
     programId: created.result.programId,
     organizationId,
@@ -138,7 +141,8 @@ async function createProgramAndCycle(): Promise<{ organizationId: string; progra
     actorUserId: USER_ADMIN,
     actorEffectiveRole: 'admin',
     idempotencyKey: `publish-program-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   const cycle = await createCycle({
     organizationId,
     programId: created.result.programId,
@@ -147,7 +151,8 @@ async function createProgramAndCycle(): Promise<{ organizationId: string; progra
     createdBy: USER_ADMIN,
     actorEffectiveRole: 'admin',
     idempotencyKey: `create-cycle-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   return { organizationId, programId: created.result.programId, cycleId: cycle.result.cycleId };
 }
 
@@ -289,7 +294,8 @@ describe('OKR-E002 approveOkrSet — self-approval denial, snapshot, pointers, h
       createdBy: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `create-set-selfapprove-submitted-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     await addSufficientKeyResultCoverage(created.result.set.setId, organizationId, `${USER_OWNER}-submitted-branch`);
     const submitted = await submitOkrSetForApproval({
       setId: created.result.set.setId,
@@ -298,7 +304,8 @@ describe('OKR-E002 approveOkrSet — self-approval denial, snapshot, pointers, h
       actorUserId: `${USER_OWNER}-submitted-branch`,
       actorEffectiveRole: 'member',
       idempotencyKey: `submit-selfapprove-submitted-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     expect(submitted.result.submittedBy).toBe(`${USER_OWNER}-submitted-branch`);
 
     let caught: unknown;
@@ -312,7 +319,8 @@ describe('OKR-E002 approveOkrSet — self-approval denial, snapshot, pointers, h
         approverId: `${USER_OWNER}-submitted-branch`,
         actorEffectiveRole: 'member',
         idempotencyKey: `approve-selfapprove-submitted-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
     } catch (err) {
       caught = err;
     }
@@ -342,7 +350,8 @@ describe('OKR-E002 approveOkrSet — self-approval denial, snapshot, pointers, h
       createdBy: ownerId,
       actorEffectiveRole: 'member',
       idempotencyKey: `create-set-selfapprove-created-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     expect(created.result.set.createdBy).toBe(ownerId);
     await addSufficientKeyResultCoverage(created.result.set.setId, organizationId, ownerId);
 
@@ -355,7 +364,8 @@ describe('OKR-E002 approveOkrSet — self-approval denial, snapshot, pointers, h
       actorUserId: USER_DELEGATE,
       actorEffectiveRole: 'member',
       idempotencyKey: `submit-selfapprove-created-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     expect(submitted.result.submittedBy).toBe(USER_DELEGATE);
     expect(submitted.result.submittedBy).not.toBe(ownerId);
 
@@ -369,7 +379,8 @@ describe('OKR-E002 approveOkrSet — self-approval denial, snapshot, pointers, h
         approverId: ownerId,
         actorEffectiveRole: 'member',
         idempotencyKey: `approve-selfapprove-created-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
     } catch (err) {
       caught = err;
     }
@@ -392,7 +403,8 @@ describe('OKR-E002 approveOkrSet — self-approval denial, snapshot, pointers, h
       createdBy: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `create-set-genuine-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     await addSufficientKeyResultCoverage(created.result.set.setId, organizationId, ownerId);
     const submitted = await submitOkrSetForApproval({
       setId: created.result.set.setId,
@@ -401,7 +413,8 @@ describe('OKR-E002 approveOkrSet — self-approval denial, snapshot, pointers, h
       actorUserId: ownerId,
       actorEffectiveRole: 'member',
       idempotencyKey: `submit-genuine-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const approved = await approveOkrSet({
       setId: created.result.set.setId,
       organizationId,
@@ -409,7 +422,8 @@ describe('OKR-E002 approveOkrSet — self-approval denial, snapshot, pointers, h
       approverId: USER_REVIEWER,
       actorEffectiveRole: 'member',
       idempotencyKey: `approve-genuine-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     expect(approved.result.set.status).toBe('approved');
   });
 
@@ -435,7 +449,8 @@ describe('OKR-E002 approveOkrSet — self-approval denial, snapshot, pointers, h
         createdBy: USER_ADMIN,
         actorEffectiveRole: 'admin',
         idempotencyKey: `create-set-snapshot-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       await addSufficientKeyResultCoverage(created.result.set.setId, organizationId, ownerId);
       const submitted = await submitOkrSetForApproval({
         setId: created.result.set.setId,
@@ -444,7 +459,8 @@ describe('OKR-E002 approveOkrSet — self-approval denial, snapshot, pointers, h
         actorUserId: ownerId,
         actorEffectiveRole: 'member',
         idempotencyKey: `submit-snapshot-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       const approved = await approveOkrSet({
         setId: created.result.set.setId,
         organizationId,
@@ -452,7 +468,8 @@ describe('OKR-E002 approveOkrSet — self-approval denial, snapshot, pointers, h
         approverId: USER_REVIEWER,
         actorEffectiveRole: 'member',
         idempotencyKey: `approve-snapshot-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
       expect(approved.result.snapshot.sequenceNumber).toBe(1);
       expect(approved.result.set.approvedVersion).toBe(1);
@@ -541,7 +558,8 @@ describe('OKR-E002 approveOkrSet — self-approval denial, snapshot, pointers, h
         createdBy: USER_ADMIN,
         actorEffectiveRole: 'admin',
         idempotencyKey: `create-set-reseq-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       await addSufficientKeyResultCoverage(created.result.set.setId, organizationId, ownerId);
       const submitted = await submitOkrSetForApproval({
         setId: created.result.set.setId,
@@ -550,7 +568,8 @@ describe('OKR-E002 approveOkrSet — self-approval denial, snapshot, pointers, h
         actorUserId: ownerId,
         actorEffectiveRole: 'member',
         idempotencyKey: `submit-reseq-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       const firstApproval = await approveOkrSet({
         setId: created.result.set.setId,
         organizationId,
@@ -558,7 +577,8 @@ describe('OKR-E002 approveOkrSet — self-approval denial, snapshot, pointers, h
         approverId: USER_REVIEWER,
         actorEffectiveRole: 'member',
         idempotencyKey: `approve-reseq-1-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       expect(firstApproval.result.snapshot.sequenceNumber).toBe(1);
 
       const v1SnapshotBefore = await client.query<{ content_hash: string; snapshot_payload: unknown }>(
@@ -582,7 +602,8 @@ describe('OKR-E002 approveOkrSet — self-approval denial, snapshot, pointers, h
         approverId: USER_REVIEWER,
         actorEffectiveRole: 'member',
         idempotencyKey: `approve-reseq-2-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       expect(secondApproval.result.snapshot.sequenceNumber).toBe(2);
       expect(secondApproval.result.set.approvedVersion).toBe(2);
       expect(secondApproval.result.set.latestApprovedSnapshotId).toBe(secondApproval.result.snapshot.snapshotId);
@@ -626,7 +647,8 @@ describe('OKR-E002 approveOkrSet — self-approval denial, snapshot, pointers, h
       createdBy: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `create-set-immutable-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     await addSufficientKeyResultCoverage(created.result.set.setId, organizationId, ownerId);
     const submitted = await submitOkrSetForApproval({
       setId: created.result.set.setId,
@@ -635,7 +657,8 @@ describe('OKR-E002 approveOkrSet — self-approval denial, snapshot, pointers, h
       actorUserId: ownerId,
       actorEffectiveRole: 'member',
       idempotencyKey: `submit-immutable-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const approved = await approveOkrSet({
       setId: created.result.set.setId,
       organizationId,
@@ -643,7 +666,8 @@ describe('OKR-E002 approveOkrSet — self-approval denial, snapshot, pointers, h
       approverId: USER_REVIEWER,
       actorEffectiveRole: 'member',
       idempotencyKey: `approve-immutable-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
     const grants = await client.query<{ privilege_type: string; grantee: string }>(
       `SELECT privilege_type, grantee FROM information_schema.role_table_grants

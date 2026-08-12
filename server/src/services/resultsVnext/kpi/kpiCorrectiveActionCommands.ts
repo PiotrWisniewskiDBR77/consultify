@@ -19,6 +19,21 @@
  * `updateCorrectiveAction` is an `executeAtomicCommand` CAS'd on the
  * action's own `row_version` — same convention as every single-row mutation
  * elsewhere in this domain (`kpiDeviationCommands.ts`).
+ *
+ * RN-G5 (docs/product/results-vnext/RN_G5_AUTHZ_DESIGN.md): both commands
+ * gated with `assertCommandCapability`, same pattern/ordering as every other
+ * gated command in this domain — the guard runs FIRST inside `applyMutation`,
+ * before any domain-state check, right after the row it needs is locked.
+ * `addCorrectiveAction` has no action row of its own yet (it is the CREATE),
+ * so it authorizes against the PARENT deviation case's own responsible
+ * people (`owner_user_id`/`manager_user_id`) — same "lock the parent, check
+ * the parent's responsible people" shape `kpiScorecardCommands.ts`'s
+ * `addScorecardItem` uses for its own parent-scoped child creation.
+ * `updateCorrectiveAction` authorizes against the corrective action's OWN
+ * `owner_user_id` (`CorrectiveActionRow` already carries one, unlike a KPI
+ * definition version) — the case's owner/manager are deliberately NOT also
+ * consulted here: the action's designated owner is the person actually
+ * responsible for doing (and therefore updating) the work.
  */
 import { randomUUID } from 'node:crypto';
 
@@ -30,6 +45,10 @@ import {
   type AtomicCommandOutcome,
   type AtomicEventInput,
 } from '../platform/atomicWrite.js';
+import {
+  assertCommandCapability,
+  type CommandAccessContext,
+} from '../platform/commandCapabilityGuard.js';
 
 import { computeStateHash, KPI_EVENT_SOURCE } from './kpiDefinitionCommands.js';
 import { KpiDeviationValidationError } from './kpiDeviationCommands.js';
@@ -39,6 +58,18 @@ import {
   type CorrectiveActionRow,
   type CorrectiveActionStatus,
 } from './kpiDeviationTypes.js';
+
+// ==========================================
+// RN-G5 — command capability names (docs/product/results-vnext/RN_G5_AUTHZ_DESIGN.md)
+// Same dotted convention as kpiDeviationCommands.ts's DEVIATION_CAPABILITIES —
+// nested under the `deviation` family since corrective actions are children
+// of a deviation case (event types are already named
+// `kpi.deviation_corrective_action_added`/`_updated`, same nesting).
+// ==========================================
+export const KPI_CORRECTIVE_ACTION_CAPABILITIES = {
+  add: 'results.kpi.deviation.corrective_action.add',
+  update: 'results.kpi.deviation.corrective_action.update',
+} as const;
 
 // ==========================================
 // addCorrectiveAction
@@ -58,6 +89,8 @@ export interface AddCorrectiveActionInput {
   correlationId?: string;
   causationId?: string | null;
   reason?: string | null;
+  /** RN-G5: resolved once by the route via `resolveEffectiveAccess`. */
+  access: CommandAccessContext;
 }
 
 export async function addCorrectiveAction(
@@ -77,13 +110,19 @@ export async function addCorrectiveAction(
     correlationId,
     causationId = null,
     reason = null,
+    access,
   } = input;
 
   return executeAtomicCreate<CorrectiveAction>({
     organizationId,
     applyMutation: async (client) => {
-      const caseResult = await client.query<{ status: string }>(
-        `SELECT status FROM rvn_kpi_deviation_cases WHERE case_id = $1 AND organization_id = $2 FOR UPDATE`,
+      const caseResult = await client.query<{
+        status: string;
+        owner_user_id: string;
+        manager_user_id: string | null;
+      }>(
+        `SELECT status, owner_user_id, manager_user_id FROM rvn_kpi_deviation_cases
+          WHERE case_id = $1 AND organization_id = $2 FOR UPDATE`,
         [deviationCaseId, organizationId]
       );
       const caseRow = caseResult.rows[0];
@@ -92,6 +131,17 @@ export async function addCorrectiveAction(
           deviationCaseId,
         });
       }
+
+      // RN-G5: authorization FIRST, before the domain-state check below —
+      // see this file's own header comment for why the PARENT case's
+      // responsible people are what's checked (no action row exists yet).
+      assertCommandCapability({
+        access,
+        actorUserId,
+        capability: KPI_CORRECTIVE_ACTION_CAPABILITIES.add,
+        responsibleUserIds: [caseRow.owner_user_id, caseRow.manager_user_id],
+      });
+
       if (caseRow.status !== 'plan_required') {
         throw new KpiDeviationValidationError(
           `Deviation case ${deviationCaseId} is "${caseRow.status}" — corrective actions may only be added while "plan_required"`,
@@ -175,6 +225,8 @@ export interface UpdateCorrectiveActionInput {
   correlationId?: string;
   causationId?: string | null;
   reason?: string | null;
+  /** RN-G5: resolved once by the route via `resolveEffectiveAccess`. */
+  access: CommandAccessContext;
 }
 
 export interface UpdateCorrectiveActionResult {
@@ -200,6 +252,7 @@ export async function updateCorrectiveAction(
     correlationId,
     causationId = null,
     reason = null,
+    access,
     ...edits
   } = input;
 
@@ -213,6 +266,16 @@ export async function updateCorrectiveAction(
     loadForUpdate: loadCorrectiveActionForUpdate,
     getCurrentVersion: actionRowVersion,
     applyMutation: async (client, currentRow, nextVersion) => {
+      // RN-G5: authorization FIRST — the action's OWN designated owner (see
+      // file header for why the parent case's owner/manager are NOT also
+      // consulted here).
+      assertCommandCapability({
+        access,
+        actorUserId,
+        capability: KPI_CORRECTIVE_ACTION_CAPABILITIES.update,
+        responsibleUserIds: [currentRow.owner_user_id],
+      });
+
       if (currentRow.status === 'completed' || currentRow.status === 'cancelled') {
         throw new KpiDeviationValidationError(
           `Corrective action ${actionId} is "${currentRow.status}" — a terminal action cannot be updated`,

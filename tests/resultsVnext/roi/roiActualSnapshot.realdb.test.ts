@@ -117,7 +117,8 @@ async function buildTrackingCase(suffix: string): Promise<TrackingCaseFixture> {
     actorUserId: USER_MAKER,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `start-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
   await captureOrUpdateBaseline({
     organizationId: ORG_ID,
@@ -129,7 +130,8 @@ async function buildTrackingCase(suffix: string): Promise<TrackingCaseFixture> {
     actorId: USER_MAKER,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `baseline-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
   const costLineOutcome = await addCostLine({
     caseId,
@@ -143,7 +145,8 @@ async function buildTrackingCase(suffix: string): Promise<TrackingCaseFixture> {
     actorUserId: USER_MAKER,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `cost-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   const benefitLineOutcome = await addBenefitLine({
     caseId,
     organizationId: ORG_ID,
@@ -157,7 +160,8 @@ async function buildTrackingCase(suffix: string): Promise<TrackingCaseFixture> {
     actorUserId: USER_MAKER,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `benefit-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
   await createRoiCalculationRun({
     organizationId: ORG_ID,
@@ -166,7 +170,8 @@ async function buildTrackingCase(suffix: string): Promise<TrackingCaseFixture> {
     actorUserId: USER_MAKER,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `run-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
   const readyOutcome = await markReadyForReview({
     caseId,
@@ -175,7 +180,8 @@ async function buildTrackingCase(suffix: string): Promise<TrackingCaseFixture> {
     actorUserId: USER_MAKER,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `ready-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   const submitOutcome = await submitRoiCaseForApproval({
     caseId,
     organizationId: ORG_ID,
@@ -183,7 +189,8 @@ async function buildTrackingCase(suffix: string): Promise<TrackingCaseFixture> {
     actorUserId: USER_MAKER,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `submit-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   const approveOutcome = await approveRoiCase({
     caseId,
     organizationId: ORG_ID,
@@ -191,7 +198,8 @@ async function buildTrackingCase(suffix: string): Promise<TrackingCaseFixture> {
     approverId: USER_APPROVER,
     actorEffectiveRole: 'admin',
     idempotencyKey: `approve-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   const trackingOutcome = await startRoiCaseTracking({
     caseId,
     organizationId: ORG_ID,
@@ -199,7 +207,8 @@ async function buildTrackingCase(suffix: string): Promise<TrackingCaseFixture> {
     actorUserId: USER_MAKER,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `tracking-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
   return {
     caseId,
@@ -380,7 +389,8 @@ describe('ROI-E004 publishRoiActualSnapshot (real Postgres)', () => {
       verifierId: USER_APPROVER,
       actorEffectiveRole: 'admin',
       idempotencyKey: `verify-benefit-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
     const snapshotOutcome = await publishRoiActualSnapshot({
       caseId: fixture.caseId,
@@ -390,7 +400,8 @@ describe('ROI-E004 publishRoiActualSnapshot (real Postgres)', () => {
       publishedBy: USER_MAKER,
       actorEffectiveRole: 'consultant',
       idempotencyKey: `snapshot-1-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
     expect(snapshotOutcome.outcome).toBe('applied');
     const snapshot = snapshotOutcome.result;
@@ -422,7 +433,8 @@ describe('ROI-E004 publishRoiActualSnapshot (real Postgres)', () => {
       publishedBy: USER_MAKER,
       actorEffectiveRole: 'consultant',
       idempotencyKey: `snapshot-2a-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     expect(first.result.sequenceNumber).toBe(1);
     // No entries recorded yet — an honest zero-coverage rollup, not a
     // fabricated one.
@@ -437,7 +449,8 @@ describe('ROI-E004 publishRoiActualSnapshot (real Postgres)', () => {
       publishedBy: USER_MAKER,
       actorEffectiveRole: 'consultant',
       idempotencyKey: `snapshot-2b-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     expect(second.result.sequenceNumber).toBe(2);
 
     const caseRow = await client.query<{ current_actual_snapshot_id: string }>(

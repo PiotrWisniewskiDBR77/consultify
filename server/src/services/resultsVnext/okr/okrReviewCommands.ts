@@ -42,6 +42,7 @@ import {
   type AtomicEventInput,
   type ExistingEventRow,
 } from '../platform/atomicWrite.js';
+import { assertCommandCapability, type CommandAccessContext } from '../platform/commandCapabilityGuard.js';
 import { createObligation } from '../platform/obligations.js';
 import { VISIBILITY_CTE_PARAM_COUNT, wrapWithVisibilityScope } from '../platform/visibilityScopedQuery.js';
 
@@ -68,6 +69,15 @@ import {
  * forward-declaration posture `CONDUCT_PIR_OBLIGATION_TYPE` used before
  * ROI-E006 gave it a real completer. */
 export const MANAGER_REVIEW_OKR_SET_OBLIGATION_TYPE = 'manager_review_okr_set';
+
+// RN-G5 — command capability names (docs/product/results-vnext/RN_G5_AUTHZ_DESIGN.md).
+export const OKR_REVIEW_CAPABILITIES = {
+  submitSelf: 'results.okr.review.submit_self',
+  submitForManager: 'results.okr.review.submit_for_manager',
+  approveManager: 'results.okr.review.approve_manager',
+  requestChangesManager: 'results.okr.review.request_changes_manager',
+  recordComment: 'results.okr.review.record_comment',
+} as const;
 
 // ==========================================
 // ERRORS
@@ -242,6 +252,7 @@ export interface SubmitOkrSetSelfReviewInput {
   correlationId?: string;
   causationId?: string | null;
   reason?: string | null;
+  access: CommandAccessContext;
 }
 
 export async function submitOkrSetSelfReview(
@@ -257,12 +268,22 @@ export async function submitOkrSetSelfReview(
     correlationId,
     causationId = null,
     reason = null,
+    access,
   } = input;
 
   const client = await acquirePgClient();
   try {
     await client.query('BEGIN');
     const setRow = await lockOkrSetRow(client, setId, organizationId);
+
+    // RN-G5: coarse gate first, then the existing (unchanged) D6
+    // eligibility check.
+    assertCommandCapability({
+      access,
+      actorUserId,
+      capability: OKR_REVIEW_CAPABILITIES.submitSelf,
+      responsibleUserIds: [setRow.owner_user_id],
+    });
 
     // D6: plain eligibility guard, NOT a denial — the Program is asking
     // the owner to review themselves.
@@ -390,6 +411,7 @@ export interface SubmitOkrSetForManagerReviewInput {
   correlationId?: string;
   causationId?: string | null;
   reason?: string | null;
+  access: CommandAccessContext;
 }
 
 /** Owner-initiated, no self-check at submission time (mirrors E002's
@@ -412,12 +434,20 @@ export async function submitOkrSetForManagerReview(
     correlationId,
     causationId = null,
     reason = null,
+    access,
   } = input;
 
   const client = await acquirePgClient();
   try {
     await client.query('BEGIN');
     const setRow = await lockOkrSetRow(client, setId, organizationId);
+
+    assertCommandCapability({
+      access,
+      actorUserId,
+      capability: OKR_REVIEW_CAPABILITIES.submitForManager,
+      responsibleUserIds: [setRow.owner_user_id],
+    });
 
     if (!setRow.reviewer_user_id) {
       await client.query('ROLLBACK');
@@ -545,6 +575,7 @@ export interface ApproveOkrSetManagerReviewInput {
   correlationId?: string;
   causationId?: string | null;
   reason?: string | null;
+  access: CommandAccessContext;
 }
 
 export async function approveOkrSetManagerReview(
@@ -561,6 +592,7 @@ export async function approveOkrSetManagerReview(
     correlationId,
     causationId = null,
     reason = null,
+    access,
   } = input;
 
   const client = await acquirePgClient();
@@ -573,7 +605,17 @@ export async function approveOkrSetManagerReview(
       throw new OkrReviewNotFoundError(setId, 'manager');
     }
 
-    // D6: self-approval denial FIRST, before any other check/write.
+    // RN-G5: coarse gate FIRST, ahead of the D6 self-approval denial right
+    // below (same "coarse before fine" ordering as every other guarded
+    // command) — the designated reviewer is setRow.reviewer_user_id.
+    assertCommandCapability({
+      access,
+      actorUserId,
+      capability: OKR_REVIEW_CAPABILITIES.approveManager,
+      responsibleUserIds: [setRow.reviewer_user_id],
+    });
+
+    // D6: self-approval denial FIRST (of the pre-existing checks), before any other check/write.
     if (actorUserId === existingRow.submitted_by) {
       await client.query('ROLLBACK');
       throw new OkrManagerReviewSelfApprovalDeniedError(setId, actorUserId, 'submitted_by');
@@ -674,6 +716,7 @@ export interface RequestChangesOnOkrSetManagerReviewInput {
   idempotencyKey: string;
   correlationId?: string;
   causationId?: string | null;
+  access: CommandAccessContext;
 }
 
 /** No self-check (D6: declining someone else's submission isn't the
@@ -692,17 +735,26 @@ export async function requestChangesOnOkrSetManagerReview(
     idempotencyKey,
     correlationId,
     causationId = null,
+    access,
   } = input;
 
   const client = await acquirePgClient();
   try {
     await client.query('BEGIN');
-    await lockOkrSetRow(client, setId, organizationId);
+    const setRow = await lockOkrSetRow(client, setId, organizationId);
     const existingRow = await lockOkrReviewRow(client, setId, organizationId, 'manager');
     if (!existingRow) {
       await client.query('ROLLBACK');
       throw new OkrReviewNotFoundError(setId, 'manager');
     }
+
+    assertCommandCapability({
+      access,
+      actorUserId,
+      capability: OKR_REVIEW_CAPABILITIES.requestChangesManager,
+      responsibleUserIds: [setRow.reviewer_user_id],
+    });
+
     if (existingRow.row_version !== expectedVersion) {
       await client.query('ROLLBACK');
       throw new OkrReviewValidationError(
@@ -793,6 +845,7 @@ export interface RecordOkrSetReviewCommentInput {
   idempotencyKey: string;
   correlationId?: string;
   causationId?: string | null;
+  access: CommandAccessContext;
 }
 
 /** Appends one entry to the `comments` JSONB array WITHOUT changing
@@ -815,17 +868,32 @@ export async function recordOkrSetReviewComment(
     idempotencyKey,
     correlationId,
     causationId = null,
+    access,
   } = input;
 
   const client = await acquirePgClient();
   try {
     await client.query('BEGIN');
-    await lockOkrSetRow(client, setId, organizationId);
+    const setRow = await lockOkrSetRow(client, setId, organizationId);
     const existingRow = await lockOkrReviewRow(client, setId, organizationId, reviewType);
     if (!existingRow) {
       await client.query('ROLLBACK');
       throw new OkrReviewNotFoundError(setId, reviewType);
     }
+
+    // Either party in the review conversation (Set owner, who submits the
+    // self-review; Set reviewer, who decides the manager review) may leave
+    // a running comment — not restricted to whichever review row's own
+    // reviewType this particular call targets, since a manager may
+    // legitimately comment on context while a self-review is still open,
+    // and vice versa.
+    assertCommandCapability({
+      access,
+      actorUserId,
+      capability: OKR_REVIEW_CAPABILITIES.recordComment,
+      responsibleUserIds: [setRow.owner_user_id, setRow.reviewer_user_id],
+    });
+
     if (existingRow.row_version !== expectedVersion) {
       await client.query('ROLLBACK');
       throw new OkrReviewValidationError(

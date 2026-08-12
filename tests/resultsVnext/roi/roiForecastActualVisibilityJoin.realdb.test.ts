@@ -266,7 +266,8 @@ describe('ROI-E004 forecast/actual/variance visibility-join regression (real Pos
       actorUserId: USER_MAKER,
       actorEffectiveRole: 'consultant',
       idempotencyKey: `start-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     await captureOrUpdateBaseline({
       organizationId: ORG_ID,
       caseId,
@@ -277,7 +278,8 @@ describe('ROI-E004 forecast/actual/variance visibility-join regression (real Pos
       actorId: USER_MAKER,
       actorEffectiveRole: 'consultant',
       idempotencyKey: `baseline-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const costLineOutcome = await addCostLine({
       caseId,
       organizationId: ORG_ID,
@@ -290,7 +292,8 @@ describe('ROI-E004 forecast/actual/variance visibility-join regression (real Pos
       actorUserId: USER_MAKER,
       actorEffectiveRole: 'consultant',
       idempotencyKey: `cost-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     costLineId = costLineOutcome.result.costLineId;
     const benefitLineOutcome = await addBenefitLine({
       caseId,
@@ -305,7 +308,8 @@ describe('ROI-E004 forecast/actual/variance visibility-join regression (real Pos
       actorUserId: USER_MAKER,
       actorEffectiveRole: 'consultant',
       idempotencyKey: `benefit-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     benefitLineId = benefitLineOutcome.result.benefitLineId;
     await createRoiCalculationRun({
       organizationId: ORG_ID,
@@ -314,7 +318,8 @@ describe('ROI-E004 forecast/actual/variance visibility-join regression (real Pos
       actorUserId: USER_MAKER,
       actorEffectiveRole: 'consultant',
       idempotencyKey: `run-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const readyOutcome = await markReadyForReview({
       caseId,
       organizationId: ORG_ID,
@@ -322,7 +327,8 @@ describe('ROI-E004 forecast/actual/variance visibility-join regression (real Pos
       actorUserId: USER_MAKER,
       actorEffectiveRole: 'consultant',
       idempotencyKey: `ready-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const submitOutcome = await submitRoiCaseForApproval({
       caseId,
       organizationId: ORG_ID,
@@ -330,7 +336,8 @@ describe('ROI-E004 forecast/actual/variance visibility-join regression (real Pos
       actorUserId: USER_MAKER,
       actorEffectiveRole: 'consultant',
       idempotencyKey: `submit-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const approveOutcome = await approveRoiCase({
       caseId,
       organizationId: ORG_ID,
@@ -338,7 +345,8 @@ describe('ROI-E004 forecast/actual/variance visibility-join regression (real Pos
       approverId: USER_APPROVER,
       actorEffectiveRole: 'admin',
       idempotencyKey: `approve-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const trackingOutcome = await startRoiCaseTracking({
       caseId,
       organizationId: ORG_ID,
@@ -346,7 +354,8 @@ describe('ROI-E004 forecast/actual/variance visibility-join regression (real Pos
       actorUserId: USER_MAKER,
       actorEffectiveRole: 'consultant',
       idempotencyKey: `tracking-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
     const forecastOutcome = await createRoiForecastVersion({
       caseId,
@@ -356,7 +365,8 @@ describe('ROI-E004 forecast/actual/variance visibility-join regression (real Pos
       actorUserId: USER_MAKER,
       actorEffectiveRole: 'consultant',
       idempotencyKey: `forecast-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     forecastVersionId = forecastOutcome.result.forecastVersionId;
 
     const actualEntryOutcome = await recordActualEntry({
@@ -383,7 +393,8 @@ describe('ROI-E004 forecast/actual/variance visibility-join regression (real Pos
       publishedBy: USER_MAKER,
       actorEffectiveRole: 'consultant',
       idempotencyKey: `snapshot-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     actualSnapshotId = snapshotOutcome.result.actualSnapshotId;
 
     const varianceOutcome = await recordVariance({
@@ -396,7 +407,8 @@ describe('ROI-E004 forecast/actual/variance visibility-join regression (real Pos
       createdBy: USER_MAKER,
       actorEffectiveRole: 'consultant',
       idempotencyKey: `variance-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     varianceId = varianceOutcome.result.varianceId;
     await addVarianceCause({
       varianceId,
@@ -406,7 +418,8 @@ describe('ROI-E004 forecast/actual/variance visibility-join regression (real Pos
       createdBy: USER_MAKER,
       actorEffectiveRole: 'consultant',
       idempotencyKey: `cause-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
   }, 60_000);
 
   afterAll(async () => {

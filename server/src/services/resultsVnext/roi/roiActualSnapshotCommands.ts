@@ -40,6 +40,10 @@ import type { PoolClient } from 'pg';
 
 import { computeStateHash } from '../kpi/kpiDefinitionCommands.js';
 import { executeAtomicCommand, type AtomicCommandOutcome, type AtomicEventInput } from '../platform/atomicWrite.js';
+import {
+  assertCommandCapability,
+  type CommandAccessContext,
+} from '../platform/commandCapabilityGuard.js';
 
 import { ROI_EVENT_SOURCE, ROI_TRACKING_ACTIVE_STATUSES } from './roiCaseCommands.js';
 import { toDateOnlyString } from './roiCalculationRunCommands.js';
@@ -112,7 +116,13 @@ export interface PublishRoiActualSnapshotInput {
   correlationId?: string;
   causationId?: string | null;
   reason?: string | null;
+  access: CommandAccessContext;
 }
+
+// RN-G5 — command capability names (docs/product/results-vnext/RN_G5_AUTHZ_DESIGN.md)
+export const ROI_ACTUAL_SNAPSHOT_CAPABILITIES = {
+  publish: 'results.roi.actual_snapshot.publish',
+} as const;
 
 export async function publishRoiActualSnapshot(
   input: PublishRoiActualSnapshotInput
@@ -128,6 +138,7 @@ export async function publishRoiActualSnapshot(
     correlationId,
     causationId = null,
     reason = null,
+    access,
   } = input;
 
   return executeAtomicCommand<RoiCaseRow, RoiActualSnapshot>({
@@ -137,6 +148,13 @@ export async function publishRoiActualSnapshot(
     loadForUpdate: loadRoiCaseForUpdate,
     getCurrentVersion: caseRowVersion,
     applyMutation: async (client, currentRow, nextVersion) => {
+      assertCommandCapability({
+        access,
+        actorUserId: publishedBy,
+        capability: ROI_ACTUAL_SNAPSHOT_CAPABILITIES.publish,
+        responsibleUserIds: [currentRow.owner_user_id],
+      });
+
       // Decision D3: Actual writes (including publishing a rollup snapshot)
       // require ROI_TRACKING_ACTIVE_STATUSES specifically.
       if (!ROI_TRACKING_ACTIVE_STATUSES.includes(currentRow.status)) {

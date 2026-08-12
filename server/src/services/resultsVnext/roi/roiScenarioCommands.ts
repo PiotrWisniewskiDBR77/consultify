@@ -19,6 +19,10 @@ import type { PoolClient } from 'pg';
 
 import { computeStateHash } from '../kpi/kpiDefinitionCommands.js';
 import { executeAtomicCommand, executeAtomicCreate, type AtomicCommandOutcome, type AtomicEventInput } from '../platform/atomicWrite.js';
+import {
+  assertCommandCapability,
+  type CommandAccessContext,
+} from '../platform/commandCapabilityGuard.js';
 
 import { RoiEconomicModelNotEditableError } from './roiCalculationPolicyCommands.js';
 import { NON_EDITABLE_STATUSES, ROI_EVENT_SOURCE } from './roiCaseCommands.js';
@@ -58,20 +62,40 @@ export class RoiScenarioValidationError extends Error {
   }
 }
 
+// RN-G5 — command capability names (docs/product/results-vnext/RN_G5_AUTHZ_DESIGN.md)
+export const ROI_SCENARIO_CAPABILITIES = {
+  add: 'results.roi.scenario.add',
+  update: 'results.roi.scenario.update',
+  remove: 'results.roi.scenario.remove',
+  setOverride: 'results.roi.scenario.set_override',
+  removeOverride: 'results.roi.scenario.remove_override',
+} as const;
+
+/** RN-G5: authorization runs FIRST — same rationale as roiAssumptionCommands.ts's
+ * identical helper (that file's own doc comment has the full rationale). */
 async function assertCaseEditableForUpdate(
   client: PoolClient,
   caseId: string,
   organizationId: string,
-  op: string
+  op: string,
+  auth: { access: CommandAccessContext; actorUserId: string; capability: string }
 ): Promise<void> {
-  const caseResult = await client.query<{ status: string }>(
-    `SELECT status FROM rvn_roi_cases WHERE case_id = $1 AND organization_id = $2 FOR UPDATE`,
+  const caseResult = await client.query<{ status: string; owner_user_id: string }>(
+    `SELECT status, owner_user_id FROM rvn_roi_cases WHERE case_id = $1 AND organization_id = $2 FOR UPDATE`,
     [caseId, organizationId]
   );
   const caseRow = caseResult.rows[0];
   if (!caseRow) {
     throw new Error(`[${op}] case ${caseId} not found`);
   }
+
+  assertCommandCapability({
+    access: auth.access,
+    actorUserId: auth.actorUserId,
+    capability: auth.capability,
+    responsibleUserIds: [caseRow.owner_user_id],
+  });
+
   if (NON_EDITABLE_STATUSES.includes(caseRow.status as (typeof NON_EDITABLE_STATUSES)[number])) {
     throw new RoiEconomicModelNotEditableError(caseId, caseRow.status);
   }
@@ -93,6 +117,7 @@ export interface AddScenarioInput {
   correlationId?: string;
   causationId?: string | null;
   reason?: string | null;
+  access: CommandAccessContext;
 }
 
 export async function addScenario(input: AddScenarioInput): Promise<AtomicCommandOutcome<RoiScenario>> {
@@ -108,12 +133,17 @@ export async function addScenario(input: AddScenarioInput): Promise<AtomicComman
     correlationId,
     causationId = null,
     reason = null,
+    access,
   } = input;
 
   return executeAtomicCreate<RoiScenario>({
     organizationId,
     applyMutation: async (client) => {
-      await assertCaseEditableForUpdate(client, caseId, organizationId, 'addScenario');
+      await assertCaseEditableForUpdate(client, caseId, organizationId, 'addScenario', {
+        access,
+        actorUserId,
+        capability: ROI_SCENARIO_CAPABILITIES.add,
+      });
 
       const insertResult = await client.query<RoiScenarioRow>(
         `INSERT INTO rvn_roi_scenarios (case_id, organization_id, scenario_type, label, description, created_by)
@@ -185,6 +215,7 @@ export interface UpdateScenarioInput {
   correlationId?: string;
   causationId?: string | null;
   reason?: string | null;
+  access: CommandAccessContext;
 }
 
 /** `scenario_type` is intentionally not editable after creation — the
@@ -205,6 +236,7 @@ export async function updateScenario(input: UpdateScenarioInput): Promise<Atomic
     correlationId,
     causationId = null,
     reason = null,
+    access,
     ...edits
   } = input;
 
@@ -220,7 +252,11 @@ export async function updateScenario(input: UpdateScenarioInput): Promise<Atomic
       if (currentRow.frozen_at !== null) {
         throw new RoiScenarioFrozenError(scenarioId);
       }
-      await assertCaseEditableForUpdate(client, caseId, organizationId, 'updateScenario');
+      await assertCaseEditableForUpdate(client, caseId, organizationId, 'updateScenario', {
+        access,
+        actorUserId,
+        capability: ROI_SCENARIO_CAPABILITIES.update,
+      });
 
       beforeState = { scenario: toRoiScenario(currentRow) };
 
@@ -281,6 +317,7 @@ export interface RemoveScenarioInput {
   correlationId?: string;
   causationId?: string | null;
   reason?: string | null;
+  access: CommandAccessContext;
 }
 
 export async function removeScenario(input: RemoveScenarioInput): Promise<AtomicCommandOutcome<RoiScenario>> {
@@ -295,6 +332,7 @@ export async function removeScenario(input: RemoveScenarioInput): Promise<Atomic
     correlationId,
     causationId = null,
     reason = null,
+    access,
   } = input;
 
   let beforeState: Record<string, unknown> | null = null;
@@ -309,7 +347,11 @@ export async function removeScenario(input: RemoveScenarioInput): Promise<Atomic
       if (currentRow.frozen_at !== null) {
         throw new RoiScenarioFrozenError(scenarioId);
       }
-      await assertCaseEditableForUpdate(client, caseId, organizationId, 'removeScenario');
+      await assertCaseEditableForUpdate(client, caseId, organizationId, 'removeScenario', {
+        access,
+        actorUserId,
+        capability: ROI_SCENARIO_CAPABILITIES.remove,
+      });
 
       beforeState = { scenario: toRoiScenario(currentRow) };
 
@@ -392,6 +434,7 @@ export interface SetScenarioOverrideInput {
   correlationId?: string;
   causationId?: string | null;
   reason?: string | null;
+  access: CommandAccessContext;
 }
 
 /** `UNIQUE (scenario_id, target_type, target_id)` (design §3 DDL) makes
@@ -417,6 +460,7 @@ export async function setScenarioOverride(
     correlationId,
     causationId = null,
     reason = null,
+    access,
   } = input;
 
   return executeAtomicCommand<RoiScenarioRow, RoiScenarioOverride>({
@@ -427,7 +471,11 @@ export async function setScenarioOverride(
     getCurrentVersion: scenarioRowVersion,
     applyMutation: async (client, currentRow, nextVersion) => {
       assertScenarioIsCustom(currentRow);
-      await assertCaseEditableForUpdate(client, caseId, organizationId, 'setScenarioOverride');
+      await assertCaseEditableForUpdate(client, caseId, organizationId, 'setScenarioOverride', {
+        access,
+        actorUserId,
+        capability: ROI_SCENARIO_CAPABILITIES.setOverride,
+      });
 
       const upsertResult = await client.query<RoiScenarioOverrideRow>(
         `INSERT INTO rvn_roi_scenario_overrides
@@ -494,6 +542,7 @@ export interface RemoveScenarioOverrideInput {
   correlationId?: string;
   causationId?: string | null;
   reason?: string | null;
+  access: CommandAccessContext;
 }
 
 export async function removeScenarioOverride(
@@ -511,6 +560,7 @@ export async function removeScenarioOverride(
     correlationId,
     causationId = null,
     reason = null,
+    access,
   } = input;
 
   return executeAtomicCommand<RoiScenarioRow, { overrideId: string }>({
@@ -521,7 +571,11 @@ export async function removeScenarioOverride(
     getCurrentVersion: scenarioRowVersion,
     applyMutation: async (client, currentRow, nextVersion) => {
       assertScenarioIsCustom(currentRow);
-      await assertCaseEditableForUpdate(client, caseId, organizationId, 'removeScenarioOverride');
+      await assertCaseEditableForUpdate(client, caseId, organizationId, 'removeScenarioOverride', {
+        access,
+        actorUserId,
+        capability: ROI_SCENARIO_CAPABILITIES.removeOverride,
+      });
 
       const deleteResult = await client.query(
         `DELETE FROM rvn_roi_scenario_overrides WHERE override_id = $1 AND scenario_id = $2 AND organization_id = $3`,

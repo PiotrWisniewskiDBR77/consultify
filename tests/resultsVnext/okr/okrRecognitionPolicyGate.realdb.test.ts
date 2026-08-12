@@ -87,7 +87,8 @@ async function makeSetWithObjective(
     createdBy: USER_ADMIN,
     actorEffectiveRole: 'admin',
     idempotencyKey: `create-program-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   await publishProgram({
     programId: created.result.programId,
     organizationId,
@@ -95,7 +96,8 @@ async function makeSetWithObjective(
     actorUserId: USER_ADMIN,
     actorEffectiveRole: 'admin',
     idempotencyKey: `publish-program-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   const cycle = await createCycle({
     organizationId,
     programId: created.result.programId,
@@ -104,7 +106,8 @@ async function makeSetWithObjective(
     createdBy: USER_ADMIN,
     actorEffectiveRole: 'admin',
     idempotencyKey: `create-cycle-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   const set = await createOkrSet({
     organizationId,
     programId: created.result.programId,
@@ -116,7 +119,8 @@ async function makeSetWithObjective(
     createdBy: USER_ADMIN,
     actorEffectiveRole: 'admin',
     idempotencyKey: `create-set-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   const objective = await createObjective({
     setId: set.result.set.setId,
     organizationId,
@@ -125,7 +129,8 @@ async function makeSetWithObjective(
     createdBy: USER_OWNER,
     actorEffectiveRole: 'member',
     idempotencyKey: `create-objective-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   return { setId: set.result.set.setId, objectiveId: objective.result.objectiveId };
 }
 
@@ -214,7 +219,8 @@ describe('OKR-E006 postRecognition — program.recognition_enabled fail-closed g
       createdBy: USER_OWNER,
       actorEffectiveRole: 'member',
       idempotencyKey: `post-recognition-enabled-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     expect(outcome.outcome).toBe('applied');
     expect(outcome.result.kind).toBe('recognition');
     expect(outcome.result.recognitionVisibility).toBe('team');
@@ -234,7 +240,8 @@ describe('OKR-E006 postRecognition — program.recognition_enabled fail-closed g
         createdBy: USER_OWNER,
         actorEffectiveRole: 'member',
         idempotencyKey: `post-recognition-disabled-${randomUUID()}`,
-      })
+        access: { capabilities: ['*'], platformRole: null },
+})
     ).rejects.toBeInstanceOf(OkrRecognitionDisabledError);
 
     // Fail-CLOSED, not fail-open: no row was written.

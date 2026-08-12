@@ -167,7 +167,8 @@ describe('OKR-E008 Half C legacy isolation (real Postgres)', () => {
         createdBy: USER_ADMIN,
         actorEffectiveRole: 'admin',
         idempotencyKey: `okr-e008-legacy-iso-create-program-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       controlProgramId = created.result.programId;
 
       // ---- 2. Poison: raw pg.Client, bypassing every service, one row per

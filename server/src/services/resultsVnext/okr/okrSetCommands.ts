@@ -40,6 +40,7 @@ import {
   type AtomicCommandOutcome,
   type AtomicEventInput,
 } from '../platform/atomicWrite.js';
+import { assertCommandCapability, type CommandAccessContext } from '../platform/commandCapabilityGuard.js';
 import { createObligation } from '../platform/obligations.js';
 import { getActiveVisibilityPolicy } from '../platform/visibilityResolver.js';
 
@@ -70,6 +71,22 @@ import {
 // ==========================================
 
 export const OKR_SET_RESOURCE_TYPE = 'okr_set';
+
+// RN-G5 — command capability names (docs/product/results-vnext/RN_G5_AUTHZ_DESIGN.md).
+// createOkrSet is deliberately excluded — see its own RN-G5 comment below,
+// same "brand-new top-level aggregate, no responsible person yet exists"
+// shape as createRoiCase/createKpiDraft.
+export const OKR_SET_CAPABILITIES = {
+  updateDraft: 'results.okr.set.update_draft',
+  narrowVisibility: 'results.okr.set.narrow_visibility',
+  submitForApproval: 'results.okr.set.submit_for_approval',
+  approve: 'results.okr.set.approve',
+  requestChanges: 'results.okr.set.request_changes',
+  activate: 'results.okr.set.activate',
+  cancel: 'results.okr.set.cancel',
+  openReview: 'results.okr.set.open_review',
+  close: 'results.okr.set.close',
+} as const;
 
 /** D14 obligation types, plan §13's obligation catalog named literally. */
 export const DRAFT_OKR_SET_OBLIGATION_TYPE = 'draft_okr_set';
@@ -214,6 +231,7 @@ export interface CreateOkrSetInput {
   correlationId?: string;
   causationId?: string | null;
   reason?: string | null;
+  access: CommandAccessContext;
 }
 
 export interface CreateOkrSetResult {
@@ -267,6 +285,7 @@ export async function createOkrSet(
     correlationId,
     causationId = null,
     reason = null,
+    access,
   } = input;
 
   // Design §4.1: "including company, where the caller passes
@@ -286,6 +305,20 @@ export async function createOkrSet(
   return executeAtomicCreate<CreateOkrSetResult>({
     organizationId,
     applyMutation: async (client) => {
+      // RN-G5 DECISION (documented, not an oversight): createOkrSet is
+      // deliberately left UNGATED, same rationale as createRoiCase/
+      // createKpiDraft — no Set row exists yet at create time (nothing to
+      // read an owner/reviewer fallback from), no baseline capability path
+      // exists for a regular member (effectiveAccessService.ts is out of
+      // this package's allowlist), and creating your OWN new Set is
+      // materially lower-risk than the vulnerability this package targets
+      // (approving/closing an EXISTING, possibly someone else's, Set) — a
+      // fresh draft Set is inert until it passes the separately-guarded
+      // submit/approve pipeline, which IS gated below. `access` is still
+      // accepted on this input for API consistency with every sibling
+      // command, simply not asserted here.
+      void access;
+
       // Fail closed if no active visibility policy exists for this
       // org/domain — never fabricate a default (design §4.1).
       const policy = await getActiveVisibilityPolicy(client, {
@@ -476,6 +509,7 @@ export interface UpdateOkrSetDraftInput {
   correlationId?: string;
   causationId?: string | null;
   reason?: string | null;
+  access: CommandAccessContext;
 }
 
 export async function updateOkrSetDraft(
@@ -494,6 +528,7 @@ export async function updateOkrSetDraft(
     correlationId,
     causationId = null,
     reason = null,
+    access,
   } = input;
 
   let beforeState: Record<string, unknown> | null = null;
@@ -505,6 +540,13 @@ export async function updateOkrSetDraft(
     loadForUpdate: loadOkrSetForUpdate,
     getCurrentVersion: setRowVersion,
     applyMutation: async (client, currentRow, nextVersion) => {
+      assertCommandCapability({
+        access,
+        actorUserId,
+        capability: OKR_SET_CAPABILITIES.updateDraft,
+        responsibleUserIds: [currentRow.owner_user_id, currentRow.reviewer_user_id],
+      });
+
       if (!OKR_SET_DRAFT_EDITABLE_STATUSES.includes(currentRow.status)) {
         throw new OkrSetValidationError(
           `OKR Set ${setId} is "${currentRow.status}" — draft fields may not be edited from this status`,
@@ -615,6 +657,7 @@ export interface NarrowOkrSetVisibilityInput {
   correlationId?: string;
   causationId?: string | null;
   reason?: string | null;
+  access: CommandAccessContext;
 }
 
 export interface NarrowOkrSetVisibilityResult {
@@ -649,6 +692,7 @@ export async function narrowOkrSetVisibility(
     correlationId,
     causationId = null,
     reason = null,
+    access,
   } = input;
 
   let beforeState: Record<string, unknown> | null = null;
@@ -660,6 +704,13 @@ export async function narrowOkrSetVisibility(
     loadForUpdate: loadOkrSetForUpdate,
     getCurrentVersion: setRowVersion,
     applyMutation: async (client, currentRow, nextVersion) => {
+      assertCommandCapability({
+        access,
+        actorUserId,
+        capability: OKR_SET_CAPABILITIES.narrowVisibility,
+        responsibleUserIds: [currentRow.owner_user_id, currentRow.reviewer_user_id],
+      });
+
       if (!OKR_SET_NARROWABLE_STATUSES.includes(currentRow.status)) {
         throw new OkrSetValidationError(
           `OKR Set ${setId} is "${currentRow.status}" — visibility may not be narrowed from this status`,
@@ -770,6 +821,7 @@ export interface SubmitOkrSetForApprovalInput {
   correlationId?: string;
   causationId?: string | null;
   reason?: string | null;
+  access: CommandAccessContext;
 }
 
 export async function submitOkrSetForApproval(
@@ -785,6 +837,7 @@ export async function submitOkrSetForApproval(
     correlationId,
     causationId = null,
     reason = null,
+    access,
   } = input;
 
   let beforeState: Record<string, unknown> | null = null;
@@ -796,6 +849,13 @@ export async function submitOkrSetForApproval(
     loadForUpdate: loadOkrSetForUpdate,
     getCurrentVersion: setRowVersion,
     applyMutation: async (client, currentRow, nextVersion) => {
+      assertCommandCapability({
+        access,
+        actorUserId,
+        capability: OKR_SET_CAPABILITIES.submitForApproval,
+        responsibleUserIds: [currentRow.owner_user_id],
+      });
+
       if (!OKR_SET_SUBMIT_FROM_STATUSES.includes(currentRow.status)) {
         throw new OkrSetValidationError(
           `OKR Set ${setId} is "${currentRow.status}" — cannot submit for approval from there`,
@@ -913,6 +973,7 @@ export interface ApproveOkrSetInput {
   correlationId?: string;
   causationId?: string | null;
   reason?: string | null;
+  access: CommandAccessContext;
 }
 
 export interface ApproveOkrSetResult {
@@ -933,6 +994,7 @@ export async function approveOkrSet(
     correlationId,
     causationId = null,
     reason = null,
+    access,
   } = input;
 
   let beforeState: Record<string, unknown> | null = null;
@@ -944,7 +1006,19 @@ export async function approveOkrSet(
     loadForUpdate: loadOkrSetForUpdate,
     getCurrentVersion: setRowVersion,
     applyMutation: async (client, currentRow, nextVersion) => {
-      // 1. Self-approval denial — FIRST, before any write (D10/D11).
+      // RN-G5: coarse authorization FIRST, before the finer-grained
+      // self-approval business rule right below (same "coarse before fine"
+      // ordering as every other guarded command — a stranger with zero
+      // relationship to this Set should get the generic denial, not have
+      // self-approval's own row comparisons run for them).
+      assertCommandCapability({
+        access,
+        actorUserId: approverId,
+        capability: OKR_SET_CAPABILITIES.approve,
+        responsibleUserIds: [currentRow.reviewer_user_id],
+      });
+
+      // 1. Self-approval denial — FIRST (of the pre-existing checks), before any write (D10/D11).
       if (currentRow.submitted_by === approverId) {
         throw new OkrSetSelfApprovalDeniedError(setId, approverId, 'submitted_by');
       }
@@ -1051,6 +1125,7 @@ export interface RequestChangesOnOkrSetInput {
   idempotencyKey: string;
   correlationId?: string;
   causationId?: string | null;
+  access: CommandAccessContext;
 }
 
 /**
@@ -1071,6 +1146,7 @@ export async function requestChangesOnOkrSet(
     idempotencyKey,
     correlationId,
     causationId = null,
+    access,
   } = input;
 
   let beforeState: Record<string, unknown> | null = null;
@@ -1082,6 +1158,13 @@ export async function requestChangesOnOkrSet(
     loadForUpdate: loadOkrSetForUpdate,
     getCurrentVersion: setRowVersion,
     applyMutation: async (client, currentRow, nextVersion) => {
+      assertCommandCapability({
+        access,
+        actorUserId,
+        capability: OKR_SET_CAPABILITIES.requestChanges,
+        responsibleUserIds: [currentRow.reviewer_user_id],
+      });
+
       if (currentRow.status !== 'submitted') {
         throw new OkrSetValidationError(
           `OKR Set ${setId} is "${currentRow.status}" — changes may only be requested on a Set "submitted"`,
@@ -1143,6 +1226,9 @@ export interface OkrSetLifecycleTransitionSpec {
   eventType: string;
   fromStatuses: readonly OkrSetStatus[];
   toStatus: OkrSetStatus;
+  /** RN-G5 capability gating this specific named transition — see
+   * OKR_SET_ACTIVATE_SPEC/OKR_SET_CANCEL_SPEC/OKR_SET_OPEN_REVIEW_SPEC. */
+  capability: string;
 }
 
 export interface RunOkrSetLifecycleTransitionInput {
@@ -1155,6 +1241,7 @@ export interface RunOkrSetLifecycleTransitionInput {
   correlationId?: string;
   causationId?: string | null;
   reason?: string | null;
+  access: CommandAccessContext;
 }
 
 /**
@@ -1177,6 +1264,7 @@ export async function runOkrSetLifecycleTransition(
     correlationId,
     causationId = null,
     reason = null,
+    access,
   } = input;
 
   let beforeState: Record<string, unknown> | null = null;
@@ -1188,6 +1276,21 @@ export async function runOkrSetLifecycleTransition(
     loadForUpdate: loadOkrSetForUpdate,
     getCurrentVersion: setRowVersion,
     applyMutation: async (client, currentRow, nextVersion) => {
+      // RN-G5: actorUserId may be null (the Cycle scheduler's
+      // cascadeOkrSetsToReview calls this with actorUserId=null,
+      // actorEffectiveRole='system:okr_cycle_scheduler' — okrCycleScheduler.ts).
+      // A null actor can never match responsibleUserIds by construction (no
+      // row's owner/reviewer is ever the empty string), so a system caller
+      // MUST supply a capability-granting access context (same system
+      // wildcard pattern as financeProjectionConsumer.ts) — this is not a
+      // bypass, the gate still runs unconditionally either way.
+      assertCommandCapability({
+        access,
+        actorUserId: actorUserId ?? '',
+        capability: spec.capability,
+        responsibleUserIds: [currentRow.owner_user_id],
+      });
+
       if (!spec.fromStatuses.includes(currentRow.status)) {
         throw new OkrSetValidationError(
           `OKR Set ${setId} is "${currentRow.status}" — cannot transition to "${spec.toStatus}" from there`,
@@ -1256,6 +1359,7 @@ export const OKR_SET_ACTIVATE_SPEC: OkrSetLifecycleTransitionSpec = {
   eventType: 'okr_set.published',
   fromStatuses: ['approved'],
   toStatus: 'active',
+  capability: OKR_SET_CAPABILITIES.activate,
 };
 
 /** D15: a design addition beyond the epic ledger's own AC table, stated
@@ -1267,6 +1371,7 @@ export const OKR_SET_CANCEL_SPEC: OkrSetLifecycleTransitionSpec = {
   eventType: 'okr_set.cancelled',
   fromStatuses: ['draft', 'submitted', 'changes_requested', 'approved', 'active'],
   toStatus: 'cancelled',
+  capability: OKR_SET_CAPABILITIES.cancel,
 };
 
 /** OKR-E007 (design §4.4, OKR-F-021/022). Called explicitly (Set Owner/
@@ -1279,6 +1384,7 @@ export const OKR_SET_OPEN_REVIEW_SPEC: OkrSetLifecycleTransitionSpec = {
   eventType: 'okr_set.review_opened',
   fromStatuses: ['active'],
   toStatus: 'review',
+  capability: OKR_SET_CAPABILITIES.openReview,
 };
 
 // ==========================================
@@ -1295,6 +1401,7 @@ export interface CloseOkrSetInput {
   correlationId?: string;
   causationId?: string | null;
   reason?: string | null;
+  access: CommandAccessContext;
 }
 
 interface CloseGateReflectionRow {
@@ -1344,6 +1451,7 @@ export async function closeOkrSet(input: CloseOkrSetInput): Promise<AtomicComman
     correlationId,
     causationId = null,
     reason = null,
+    access,
   } = input;
 
   // Deferred imports (not top-level) purely to keep the circular-import
@@ -1362,6 +1470,20 @@ export async function closeOkrSet(input: CloseOkrSetInput): Promise<AtomicComman
     loadForUpdate: loadOkrSetForUpdate,
     getCurrentVersion: setRowVersion,
     applyMutation: async (client, currentRow, nextVersion) => {
+      // RN-G5: coarse authorization FIRST, before Step 1. Gated on BOTH
+      // owner and reviewer — closeOkrSet has no self-close denial by design
+      // (D10, see this function's own header comment: manager_review_required
+      // already structurally blocks self-close when that policy is on, and a
+      // parallel un-opt-outable check would silently override an explicit
+      // Program opt-out) — RBAC still answers the coarser "may this actor
+      // touch this Set's lifecycle at all" question a total stranger fails.
+      assertCommandCapability({
+        access,
+        actorUserId,
+        capability: OKR_SET_CAPABILITIES.close,
+        responsibleUserIds: [currentRow.owner_user_id, currentRow.reviewer_user_id],
+      });
+
       // Step 1.
       if (currentRow.status !== 'review') {
         throw new OkrSetValidationError(

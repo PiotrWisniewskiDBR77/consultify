@@ -47,6 +47,10 @@ import type { PoolClient } from 'pg';
 import { toNullableNumber } from '../kpi/kpiTypes.js';
 import { computeStateHash } from '../kpi/kpiDefinitionCommands.js';
 import { executeAtomicCreate, type AtomicCommandOutcome, type AtomicEventInput } from '../platform/atomicWrite.js';
+import {
+  assertCommandCapability,
+  type CommandAccessContext,
+} from '../platform/commandCapabilityGuard.js';
 
 import { ROI_EVENT_SOURCE, ROI_TRACKING_ACTIVE_STATUSES } from './roiCaseCommands.js';
 import {
@@ -100,6 +104,34 @@ export class RoiActualSelfVerificationDeniedError extends Error {
     this.name = 'RoiActualSelfVerificationDeniedError';
     this.details = { actualEntryId, verifierId, originalRecorderId };
   }
+}
+
+// RN-G5 — command capability names (docs/product/results-vnext/RN_G5_AUTHZ_DESIGN.md).
+// Scope note: same decision as kpiMeasurementCommands.ts — recordActualEntry
+// (new-fact ingestion) is left UNGATED, matching recordMeasurement's
+// documented rationale (high-frequency data-entry path, does not let an
+// actor touch anyone else's EXISTING work). correct/verify/dispute ARE
+// gated — they operate on an EXISTING entry, which is exactly the named
+// vulnerability's shape.
+export const ROI_ACTUAL_ENTRY_CAPABILITIES = {
+  correct: 'results.roi.actual_entry.correct',
+  verify: 'results.roi.actual_entry.verify',
+  dispute: 'results.roi.actual_entry.dispute',
+} as const;
+
+/** RN-G5: the case's owner_user_id, real value only — no fallback to the
+ * acting user (same discipline as kpiMeasurementCommands.ts's
+ * loadKpiOwnerUserId vs. resolveDeviationCaseOwner distinction). */
+async function loadRoiCaseOwnerUserId(
+  client: PoolClient,
+  caseId: string,
+  organizationId: string
+): Promise<string | null> {
+  const result = await client.query<{ owner_user_id: string | null }>(
+    `SELECT owner_user_id FROM rvn_roi_cases WHERE case_id = $1 AND organization_id = $2`,
+    [caseId, organizationId]
+  );
+  return result.rows[0]?.owner_user_id ?? null;
 }
 
 // ==========================================
@@ -323,6 +355,8 @@ interface InsertSupersedingActualEntryParams {
   verifiedAtOverride?: string | null;
   correctionReason: string | null;
   recordedBy: string;
+  capability: string;
+  access: CommandAccessContext;
 }
 
 interface SupersedingActualEntryResult {
@@ -344,6 +378,8 @@ async function insertSupersedingActualEntry(
     verifiedAtOverride,
     correctionReason,
     recordedBy,
+    capability,
+    access,
   } = params;
 
   const originalResult = await client.query<RoiActualEntryRow>(
@@ -354,6 +390,14 @@ async function insertSupersedingActualEntry(
   if (!originalRow) {
     throw new RoiActualEntryNotFoundError(originalActualEntryId, organizationId);
   }
+
+  const caseOwnerUserId = await loadRoiCaseOwnerUserId(client, originalRow.case_id, organizationId);
+  assertCommandCapability({
+    access,
+    actorUserId: recordedBy,
+    capability,
+    responsibleUserIds: [caseOwnerUserId],
+  });
 
   const amount = amountOverride !== undefined ? amountOverride : toNullableNumber(originalRow.amount);
   const currency = currencyOverride !== undefined ? currencyOverride : originalRow.currency;
@@ -475,6 +519,7 @@ export interface CorrectActualEntryInput {
   idempotencyKey: string;
   correlationId?: string;
   causationId?: string | null;
+  access: CommandAccessContext;
 }
 
 export async function correctActualEntry(
@@ -491,6 +536,7 @@ export async function correctActualEntry(
     idempotencyKey,
     correlationId,
     causationId = null,
+    access,
   } = input;
 
   return executeAtomicCreate<SupersedingActualEntryResult>({
@@ -506,6 +552,8 @@ export async function correctActualEntry(
         // state (matches KPI's correctMeasurement exactly).
         correctionReason,
         recordedBy,
+        capability: ROI_ACTUAL_ENTRY_CAPABILITIES.correct,
+        access,
       }),
     buildEvent: ({ result }) =>
       buildSupersedingEvent({
@@ -568,6 +616,7 @@ export interface VerifyActualEntryInput {
   correlationId?: string;
   causationId?: string | null;
   notes?: string | null;
+  access: CommandAccessContext;
 }
 
 export async function verifyActualEntry(
@@ -582,13 +631,33 @@ export async function verifyActualEntry(
     correlationId,
     causationId = null,
     notes = null,
+    access,
   } = input;
 
   return executeAtomicCreate<SupersedingActualEntryResult>({
     organizationId,
     applyMutation: async (client) => {
-      // Decision D10, checked FIRST, before any write — walks the FULL
-      // correction chain back to the original recorder, not just the
+      // RN-G5: coarse authorization FIRST — before D10's self-verification
+      // walk-back, same "coarse gate before finer business rule" ordering
+      // every other guarded command in this program uses.
+      const entryCaseResult = await client.query<{ case_id: string }>(
+        `SELECT case_id FROM rvn_roi_actual_entries WHERE actual_entry_id = $1 AND organization_id = $2`,
+        [actualEntryId, organizationId]
+      );
+      const entryCaseId = entryCaseResult.rows[0]?.case_id;
+      if (!entryCaseId) {
+        throw new RoiActualEntryNotFoundError(actualEntryId, organizationId);
+      }
+      const caseOwnerUserId = await loadRoiCaseOwnerUserId(client, entryCaseId, organizationId);
+      assertCommandCapability({
+        access,
+        actorUserId: verifierId,
+        capability: ROI_ACTUAL_ENTRY_CAPABILITIES.verify,
+        responsibleUserIds: [caseOwnerUserId],
+      });
+
+      // Decision D10, checked SECOND, still before any write — walks the
+      // FULL correction chain back to the original recorder, not just the
       // immediately-prior row.
       const originalRecorderId = await resolveOriginalActualEntryRecorder(client, organizationId, actualEntryId);
       if (originalRecorderId === verifierId) {
@@ -603,6 +672,8 @@ export async function verifyActualEntry(
         verifiedAtOverride: new Date().toISOString(),
         correctionReason: notes,
         recordedBy: verifierId,
+        capability: ROI_ACTUAL_ENTRY_CAPABILITIES.verify,
+        access,
       });
     },
     buildEvent: ({ result }) =>
@@ -633,6 +704,7 @@ export interface DisputeActualEntryInput {
   idempotencyKey: string;
   correlationId?: string;
   causationId?: string | null;
+  access: CommandAccessContext;
 }
 
 /**
@@ -654,6 +726,7 @@ export async function disputeActualEntry(
     idempotencyKey,
     correlationId,
     causationId = null,
+    access,
   } = input;
 
   return executeAtomicCreate<SupersedingActualEntryResult>({
@@ -671,6 +744,8 @@ export async function disputeActualEntry(
         verifiedAtOverride: null,
         correctionReason: disputeReason,
         recordedBy: disputedBy,
+        capability: ROI_ACTUAL_ENTRY_CAPABILITIES.dispute,
+        access,
       }),
     buildEvent: ({ result }) =>
       buildSupersedingEvent({

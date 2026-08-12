@@ -116,7 +116,8 @@ async function buildActiveSetFixtureNoOccurrences(): Promise<ActiveSetFixture> {
     createdBy: USER_ADMIN,
     actorEffectiveRole: 'admin',
     idempotencyKey: `create-program-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   await publishProgram({
     programId: createdProgram.result.programId,
     organizationId,
@@ -124,7 +125,8 @@ async function buildActiveSetFixtureNoOccurrences(): Promise<ActiveSetFixture> {
     actorUserId: USER_ADMIN,
     actorEffectiveRole: 'admin',
     idempotencyKey: `publish-program-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   const cycle = await createCycle({
     organizationId,
     programId: createdProgram.result.programId,
@@ -133,7 +135,8 @@ async function buildActiveSetFixtureNoOccurrences(): Promise<ActiveSetFixture> {
     createdBy: USER_ADMIN,
     actorEffectiveRole: 'admin',
     idempotencyKey: `create-cycle-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   const set = await createOkrSet({
     organizationId,
     programId: createdProgram.result.programId,
@@ -146,7 +149,8 @@ async function buildActiveSetFixtureNoOccurrences(): Promise<ActiveSetFixture> {
     createdBy: ownerId,
     actorEffectiveRole: 'member',
     idempotencyKey: `create-set-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   const objective = await createObjective({
     setId: set.result.set.setId,
     organizationId,
@@ -155,7 +159,8 @@ async function buildActiveSetFixtureNoOccurrences(): Promise<ActiveSetFixture> {
     createdBy: ownerId,
     actorEffectiveRole: 'member',
     idempotencyKey: `create-obj-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   const kr1 = await createKeyResult({
     objectiveId: objective.result.objectiveId,
     organizationId,
@@ -169,7 +174,8 @@ async function buildActiveSetFixtureNoOccurrences(): Promise<ActiveSetFixture> {
     createdBy: ownerId,
     actorEffectiveRole: 'member',
     idempotencyKey: `create-kr1-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   const kr2 = await createKeyResult({
     objectiveId: objective.result.objectiveId,
     organizationId,
@@ -183,7 +189,8 @@ async function buildActiveSetFixtureNoOccurrences(): Promise<ActiveSetFixture> {
     createdBy: ownerId,
     actorEffectiveRole: 'member',
     idempotencyKey: `create-kr2-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
   const submitted = await submitOkrSetForApproval({
     setId: set.result.set.setId,
@@ -192,7 +199,8 @@ async function buildActiveSetFixtureNoOccurrences(): Promise<ActiveSetFixture> {
     actorUserId: ownerId,
     actorEffectiveRole: 'member',
     idempotencyKey: `submit-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   const approved = await approveOkrSet({
     setId: set.result.set.setId,
     organizationId,
@@ -200,7 +208,8 @@ async function buildActiveSetFixtureNoOccurrences(): Promise<ActiveSetFixture> {
     approverId,
     actorEffectiveRole: 'admin',
     idempotencyKey: `approve-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   const activated = await runOkrSetLifecycleTransition(OKR_SET_ACTIVATE_SPEC, {
     setId: set.result.set.setId,
     organizationId,
@@ -208,7 +217,8 @@ async function buildActiveSetFixtureNoOccurrences(): Promise<ActiveSetFixture> {
     actorUserId: approverId,
     actorEffectiveRole: 'admin',
     idempotencyKey: `activate-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   expect(activated.result.status).toBe('active');
 
   return {

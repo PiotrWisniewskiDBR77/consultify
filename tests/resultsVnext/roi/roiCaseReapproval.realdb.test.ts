@@ -234,7 +234,8 @@ describe('ROI-E003 reapproval cycle — AC-06 (real Postgres)', () => {
         actorUserId: USER_MAKER,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `start-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
       await captureOrUpdateBaseline({
         organizationId: ORG_ID,
@@ -246,7 +247,8 @@ describe('ROI-E003 reapproval cycle — AC-06 (real Postgres)', () => {
         actorId: USER_MAKER,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `baseline-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
       await addCostLine({
         caseId,
@@ -260,7 +262,8 @@ describe('ROI-E003 reapproval cycle — AC-06 (real Postgres)', () => {
         actorUserId: USER_MAKER,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `cost-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       await addBenefitLine({
         caseId,
         organizationId: ORG_ID,
@@ -273,7 +276,8 @@ describe('ROI-E003 reapproval cycle — AC-06 (real Postgres)', () => {
         actorUserId: USER_MAKER,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `benefit-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
       await createRoiCalculationRun({
         organizationId: ORG_ID,
@@ -282,7 +286,8 @@ describe('ROI-E003 reapproval cycle — AC-06 (real Postgres)', () => {
         actorUserId: USER_MAKER,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `run-1-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
       const readyOutcome1 = await markReadyForReview({
         caseId,
@@ -291,7 +296,8 @@ describe('ROI-E003 reapproval cycle — AC-06 (real Postgres)', () => {
         actorUserId: USER_MAKER,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `ready-1-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       const submitOutcome1 = await submitRoiCaseForApproval({
         caseId,
         organizationId: ORG_ID,
@@ -299,7 +305,8 @@ describe('ROI-E003 reapproval cycle — AC-06 (real Postgres)', () => {
         actorUserId: USER_MAKER,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `submit-1-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
       // ---- v1 approval ----
       const approveOutcome1 = await approveRoiCase({
@@ -309,7 +316,8 @@ describe('ROI-E003 reapproval cycle — AC-06 (real Postgres)', () => {
         approverId: USER_APPROVER,
         actorEffectiveRole: 'admin',
         idempotencyKey: `approve-1-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       expect(approveOutcome1.result.snapshot.sequenceNumber).toBe(1);
       const v1SnapshotId = approveOutcome1.result.snapshot.snapshotId;
       const originalSnapshotId = approveOutcome1.result.case.originalApprovedSnapshotId;
@@ -333,7 +341,8 @@ describe('ROI-E003 reapproval cycle — AC-06 (real Postgres)', () => {
         actorEffectiveRole: 'consultant',
         reason: 'Baseline needs revision after downstream data correction',
         idempotencyKey: `reopen-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       expect(reopenOutcome.result.status).toBe('modeling');
       // History preserved — reopen does NOT touch approved_by/approved_at/
       // the pointer columns.
@@ -357,7 +366,8 @@ describe('ROI-E003 reapproval cycle — AC-06 (real Postgres)', () => {
         actorId: USER_MAKER,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `baseline-revision-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
       // ---- resubmit -> approve again ----
       const readyOutcome2 = await markReadyForReview({
@@ -367,7 +377,8 @@ describe('ROI-E003 reapproval cycle — AC-06 (real Postgres)', () => {
         actorUserId: USER_MAKER,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `ready-2-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       const submitOutcome2 = await submitRoiCaseForApproval({
         caseId,
         organizationId: ORG_ID,
@@ -375,7 +386,8 @@ describe('ROI-E003 reapproval cycle — AC-06 (real Postgres)', () => {
         actorUserId: USER_MAKER,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `submit-2-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
       const approveOutcome2 = await approveRoiCase({
         caseId,
@@ -384,7 +396,8 @@ describe('ROI-E003 reapproval cycle — AC-06 (real Postgres)', () => {
         approverId: USER_APPROVER,
         actorEffectiveRole: 'admin',
         idempotencyKey: `approve-2-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
       expect(approveOutcome2.result.snapshot.sequenceNumber).toBe(2);
       const v2SnapshotId = approveOutcome2.result.snapshot.snapshotId;

@@ -169,7 +169,8 @@ describe('OKR-E007 recordObjectiveReflection lifecycle + protect-frozen trigger 
       actorUserId: USER_OWNER,
       actorEffectiveRole: 'member',
       idempotencyKey: `reflect-create-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     expect(outcome.outcome).toBe('applied');
     expect(outcome.result.status).toBe('draft');
     expect(outcome.result.whatWorked).toBe('Shipped the feature early');
@@ -187,7 +188,8 @@ describe('OKR-E007 recordObjectiveReflection lifecycle + protect-frozen trigger 
       actorUserId: USER_OWNER,
       actorEffectiveRole: 'member',
       idempotencyKey: `reflect-create-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const second = await recordObjectiveReflection({
       objectiveId: fixture.objectiveIds[0]!,
       setId: fixture.setId,
@@ -202,7 +204,8 @@ describe('OKR-E007 recordObjectiveReflection lifecycle + protect-frozen trigger 
       actorUserId: USER_OWNER,
       actorEffectiveRole: 'member',
       idempotencyKey: `reflect-update-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     expect(second.outcome).toBe('applied');
     expect(second.result.whatWorked).toBe('v2');
     expect(second.result.disposition).toBe('complete');
@@ -225,7 +228,8 @@ describe('OKR-E007 recordObjectiveReflection lifecycle + protect-frozen trigger 
       actorUserId: USER_OWNER,
       actorEffectiveRole: 'member',
       idempotencyKey: `reflect-create-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     // The row now exists at row_version=1 — a second "create path"
     // (expectedVersion=0) call is a CAS mismatch, not a not-found: the
     // existing row IS found, its version just doesn't match what the
@@ -241,7 +245,8 @@ describe('OKR-E007 recordObjectiveReflection lifecycle + protect-frozen trigger 
         actorUserId: USER_OWNER,
         actorEffectiveRole: 'member',
         idempotencyKey: `reflect-race-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
     } catch (err) {
       caught = err;
     }
@@ -277,7 +282,8 @@ describe('OKR-E007 recordObjectiveReflection lifecycle + protect-frozen trigger 
       actorUserId: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `cancel-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
     // The Set-status guard reuses `OkrSetValidationError` (imported from
     // `okrSetCommands.ts`) — a Set-level precondition, not a
@@ -293,7 +299,8 @@ describe('OKR-E007 recordObjectiveReflection lifecycle + protect-frozen trigger 
         actorUserId: USER_OWNER,
         actorEffectiveRole: 'member',
         idempotencyKey: `reflect-cancelled-${randomUUID()}`,
-      })
+        access: { capabilities: ['*'], platformRole: null },
+})
     ).rejects.toThrow(OkrSetValidationError);
   });
 
@@ -308,7 +315,8 @@ describe('OKR-E007 recordObjectiveReflection lifecycle + protect-frozen trigger 
       actorUserId: USER_OWNER,
       actorEffectiveRole: 'member',
       idempotencyKey: `reflect-create-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     // Manually finalize (bypassing closeOkrSet's own orchestration — this
     // test targets the DB trigger, not the command layer).
     await client.query(
@@ -344,7 +352,8 @@ describe('OKR-E007 recordObjectiveReflection lifecycle + protect-frozen trigger 
         actorUserId: USER_OWNER,
         actorEffectiveRole: 'member',
         idempotencyKey: `open-review-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
       // Score BOTH Objectives (finalScoreOkrSet is a Set-level batch) so
       // the score-half of the gate is satisfied for both — isolating the
@@ -360,7 +369,8 @@ describe('OKR-E007 recordObjectiveReflection lifecycle + protect-frozen trigger 
         actorUserId: USER_OWNER,
         actorEffectiveRole: 'member',
         idempotencyKey: `final-score-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
       // Complete the narrative ONLY for the first Objective — the second
       // stays incomplete (this is the one gap the gate must report).
@@ -378,7 +388,8 @@ describe('OKR-E007 recordObjectiveReflection lifecycle + protect-frozen trigger 
         actorUserId: USER_OWNER,
         actorEffectiveRole: 'member',
         idempotencyKey: `reflect-complete-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
       const { rowVersion: reviewVersion2 } = await readSetVersionAndStatus(client, fixture.setId);
       let caught: unknown;
@@ -390,7 +401,8 @@ describe('OKR-E007 recordObjectiveReflection lifecycle + protect-frozen trigger 
           actorUserId: USER_OWNER,
           actorEffectiveRole: 'member',
           idempotencyKey: `close-${randomUUID()}`,
-        });
+        access: { capabilities: ['*'], platformRole: null },
+});
       } catch (err) {
         caught = err;
       }

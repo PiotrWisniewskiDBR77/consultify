@@ -19,6 +19,10 @@ import type { PoolClient } from 'pg';
 
 import { computeStateHash } from '../kpi/kpiDefinitionCommands.js';
 import { executeAtomicCommand, type AtomicCommandOutcome, type AtomicEventInput } from '../platform/atomicWrite.js';
+import {
+  assertCommandCapability,
+  type CommandAccessContext,
+} from '../platform/commandCapabilityGuard.js';
 
 import { NON_EDITABLE_STATUSES, ROI_EVENT_SOURCE } from './roiCaseCommands.js';
 import {
@@ -74,6 +78,11 @@ function policyRowVersion(row: RoiCalculationPolicyRow): number {
   return row.row_version;
 }
 
+// RN-G5 — command capability names (docs/product/results-vnext/RN_G5_AUTHZ_DESIGN.md)
+export const ROI_CALCULATION_POLICY_CAPABILITIES = {
+  captureOrUpdate: 'results.roi.calculation_policy.capture_or_update',
+} as const;
+
 // ==========================================
 // captureOrUpdateCalculationPolicy
 // ==========================================
@@ -96,6 +105,7 @@ export interface CaptureOrUpdateCalculationPolicyInput {
   correlationId?: string;
   causationId?: string | null;
   reason?: string | null;
+  access: CommandAccessContext;
 }
 
 export async function captureOrUpdateCalculationPolicy(
@@ -111,6 +121,7 @@ export async function captureOrUpdateCalculationPolicy(
     correlationId,
     causationId = null,
     reason = null,
+    access,
     ...edits
   } = input;
 
@@ -123,16 +134,24 @@ export async function captureOrUpdateCalculationPolicy(
     loadForUpdate: loadRoiCalculationPolicyForUpdate,
     getCurrentVersion: policyRowVersion,
     applyMutation: async (client, currentRow, nextVersion) => {
-      if (currentRow.frozen_at !== null) {
-        throw new RoiCalculationPolicyFrozenError(caseId, currentRow.policy_row_id);
-      }
-      const caseStatusResult = await client.query<{ status: string }>(
-        `SELECT status FROM rvn_roi_cases WHERE case_id = $1 AND organization_id = $2`,
+      const caseStatusResult = await client.query<{ status: string; owner_user_id: string }>(
+        `SELECT status, owner_user_id FROM rvn_roi_cases WHERE case_id = $1 AND organization_id = $2`,
         [caseId, organizationId]
       );
       const caseStatusRow = caseStatusResult.rows[0];
       if (!caseStatusRow) {
         throw new Error(`[captureOrUpdateCalculationPolicy] case ${caseId} not found`);
+      }
+
+      assertCommandCapability({
+        access,
+        actorUserId: actorId,
+        capability: ROI_CALCULATION_POLICY_CAPABILITIES.captureOrUpdate,
+        responsibleUserIds: [caseStatusRow.owner_user_id, currentRow.owner_user_id],
+      });
+
+      if (currentRow.frozen_at !== null) {
+        throw new RoiCalculationPolicyFrozenError(caseId, currentRow.policy_row_id);
       }
       if (NON_EDITABLE_STATUSES.includes(caseStatusRow.status as (typeof NON_EDITABLE_STATUSES)[number])) {
         throw new RoiEconomicModelNotEditableError(caseId, caseStatusRow.status);

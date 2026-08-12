@@ -12,6 +12,7 @@ import { randomUUID } from 'node:crypto';
 import { acquirePgClient } from '../../../database/PostgresDatabase.js';
 
 import { AtomicWriteConflictError } from '../platform/atomicWrite.js';
+import type { CommandAccessContext } from '../platform/commandCapabilityGuard.js';
 
 import type { OkrProgramPolicyVersionRow } from './okrProgramTypes.js';
 import {
@@ -31,6 +32,20 @@ import type { OkrSetRow } from './okrSetTypes.js';
  * `actorUserId` + a `'system:*'` role string — there is no separate
  * `actor_type` column anywhere in this schema. */
 export const OKR_CYCLE_SCHEDULER_ACTOR_ROLE = 'system:okr_cycle_scheduler';
+
+/**
+ * RN-G5 — this scheduler is not a human/HTTP actor (design §6.6: "there is
+ * no separate actor_type column", `actorUserId=null` is the platform's own
+ * convention for it). Both functions below call now-gated commands
+ * (`runOkrCycleLifecycleTransition`/`runOkrSetLifecycleTransition`) whose
+ * transitions here are entirely due-timestamp-driven, not arbitrary user
+ * input — same rationale/shape as
+ * `financeProjectionConsumer.ts`'s `FINANCE_PROJECTION_CONSUMER_ACCESS`.
+ */
+const OKR_CYCLE_SCHEDULER_ACCESS: CommandAccessContext = {
+  capabilities: ['*'],
+  platformRole: null,
+};
 
 // ==========================================
 // proposeAndExecuteDueCycleTransitions
@@ -106,6 +121,7 @@ export async function proposeAndExecuteDueCycleTransitions(
           actorEffectiveRole: OKR_CYCLE_SCHEDULER_ACTOR_ROLE,
           idempotencyKey: `okr-cycle-scheduler-${rule.spec.eventType}-${row.cycle_id}-${randomUUID()}`,
           reason: 'Scheduled transition — due timestamp passed',
+          access: OKR_CYCLE_SCHEDULER_ACCESS,
         });
         if (outcome.outcome === 'applied') {
           transitioned.push({ cycleId: row.cycle_id, toStatus: rule.spec.toStatus });
@@ -179,6 +195,7 @@ export async function cascadeOkrSetsToReview(
         actorEffectiveRole: OKR_CYCLE_SCHEDULER_ACTOR_ROLE,
         idempotencyKey: `okr-cycle-scheduler-${OKR_SET_OPEN_REVIEW_SPEC.eventType}-${setRow.set_id}-${randomUUID()}`,
         reason: 'Scheduled cascade — parent Cycle entered review',
+        access: OKR_CYCLE_SCHEDULER_ACCESS,
       });
       if (outcome.outcome === 'applied') {
         transitioned.push(setRow.set_id);

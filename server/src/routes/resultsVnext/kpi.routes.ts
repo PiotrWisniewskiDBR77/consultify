@@ -68,6 +68,7 @@ import {
   validateParams,
   validateQuery,
 } from '../../middleware/validation.middleware.js';
+import { resolveEffectiveAccess } from '../../services/effectiveAccessService.js';
 import {
   activateKpi,
   approveDefinitionVersion,
@@ -103,6 +104,10 @@ import {
   AtomicWriteAggregateNotFoundError,
   AtomicWriteConflictError,
 } from '../../services/resultsVnext/platform/atomicWrite.js';
+import {
+  CommandCapabilityDeniedError,
+  type CommandAccessContext,
+} from '../../services/resultsVnext/platform/commandCapabilityGuard.js';
 import type { AuthenticatedRequest } from '../../types/index.js';
 import logger from '../../utils/Logger.js';
 import {
@@ -152,6 +157,16 @@ function requireAuth(req: AuthenticatedRequest, res: Response): RouteAuth | null
   return { organizationId, userId, role: req.user?.role ? String(req.user.role) : 'member' };
 }
 
+/** RN-G5 — see kpiDeviation.routes.ts's identical helper for the full
+ * rationale (no projectId: this domain is organization-scoped). */
+async function resolveAccess(req: AuthenticatedRequest, auth: RouteAuth): Promise<CommandAccessContext> {
+  return resolveEffectiveAccess({
+    userId: auth.userId,
+    organizationId: auth.organizationId,
+    applicationRole: req.user?.role,
+  });
+}
+
 function normalizeOptionalString(value: unknown): string | undefined {
   if (typeof value !== 'string') return undefined;
   const trimmed = value.trim();
@@ -181,6 +196,15 @@ function resolveIdempotencyKey(bodyKey: string | undefined | null): string {
  * server-side and returns only a generic message + code to the client.
  */
 function handleKpiRouteError(res: Response, err: unknown, op: string): void {
+  if (err instanceof CommandCapabilityDeniedError) {
+    // RN-G5 fix: `details.capability` is documented in commandCapabilityGuard.ts
+    // as "for server-side logging ... not for reconstructing the access model
+    // from the wire" — it must NOT go in the HTTP response body. Log it
+    // server-side only; the client gets the generic message/code alone.
+    logger.warn(`[resultsVnext/kpi.routes] ${op} denied`, { capability: err.details.capability });
+    res.status(403).json({ error: err.message, code: err.code });
+    return;
+  }
   if (err instanceof SelfApprovalDeniedError) {
     res.status(403).json({ error: err.message, code: err.code, details: err.details });
     return;
@@ -281,6 +305,7 @@ router.post(
     if (!auth) return;
     try {
       const body = req.body as import('zod').infer<typeof CreateKpiDraftSchema>;
+      const access = await resolveAccess(req, auth);
       const outcome = await createKpiDraft({
         organizationId: auth.organizationId,
         kpiCode: body.kpiCode,
@@ -307,6 +332,7 @@ router.post(
         idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
         correlationId: getCorrelationId(req),
         reason: body.reason ?? null,
+        access,
       });
       res.status(outcome.outcome === 'applied' ? 201 : 200).json({
         outcome: outcome.outcome,
@@ -397,6 +423,7 @@ router.put(
         return;
       }
       const body = req.body as import('zod').infer<typeof EditKpiDraftSchema>;
+      const access = await resolveAccess(req, auth);
       const outcome = await editDraft({
         definitionVersionId: kpi.currentDefinitionVersionId,
         organizationId: auth.organizationId,
@@ -419,6 +446,7 @@ router.put(
         idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
         correlationId: getCorrelationId(req),
         reason: body.reason ?? null,
+        access,
       });
       res.status(200).json({
         outcome: outcome.outcome,
@@ -458,6 +486,7 @@ router.post(
         return;
       }
       const body = req.body as import('zod').infer<typeof SubmitDefinitionSchema>;
+      const access = await resolveAccess(req, auth);
       const outcome = await submitDefinition({
         definitionVersionId: kpi.currentDefinitionVersionId,
         organizationId: auth.organizationId,
@@ -467,6 +496,7 @@ router.post(
         idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
         correlationId: getCorrelationId(req),
         reason: body.reason ?? null,
+        access,
       });
       res.status(200).json({
         outcome: outcome.outcome,
@@ -501,6 +531,7 @@ router.post(
         return;
       }
       const body = req.body as import('zod').infer<typeof ApproveDefinitionVersionSchema>;
+      const access = await resolveAccess(req, auth);
       const outcome = await approveDefinitionVersion({
         definitionVersionId: versionId,
         organizationId: auth.organizationId,
@@ -510,6 +541,7 @@ router.post(
         idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
         correlationId: getCorrelationId(req),
         reason: body.reason ?? null,
+        access,
       });
       res.status(200).json({
         outcome: outcome.outcome,
@@ -544,6 +576,7 @@ router.post(
         return;
       }
       const body = req.body as import('zod').infer<typeof RejectDefinitionVersionSchema>;
+      const access = await resolveAccess(req, auth);
       const outcome = await rejectDefinitionVersion({
         definitionVersionId: versionId,
         organizationId: auth.organizationId,
@@ -553,6 +586,7 @@ router.post(
         actorEffectiveRole: auth.role,
         idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
         correlationId: getCorrelationId(req),
+        access,
       });
       res.status(200).json({
         outcome: outcome.outcome,
@@ -581,6 +615,7 @@ function mountLifecycleRoute(path: string, op: string, runner: typeof activateKp
       try {
         const { kpiId } = req.params as { kpiId: string };
         const body = req.body as import('zod').infer<typeof KpiLifecycleActionSchema>;
+        const access = await resolveAccess(req, auth);
         const outcome = await runner({
           kpiId,
           organizationId: auth.organizationId,
@@ -590,6 +625,7 @@ function mountLifecycleRoute(path: string, op: string, runner: typeof activateKp
           idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
           correlationId: getCorrelationId(req),
           reason: body.reason ?? null,
+          access,
         });
         res.status(200).json({
           outcome: outcome.outcome,
@@ -771,6 +807,7 @@ router.post(
         binarySuccessValue: version.binarySuccessValue,
       });
 
+      const access = await resolveAccess(req, auth);
       const outcome = await correctMeasurement({
         measurementId,
         organizationId: auth.organizationId,
@@ -781,6 +818,7 @@ router.post(
         actorEffectiveRole: auth.role,
         idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
         correlationId: getCorrelationId(req),
+        access,
       });
       res.status(outcome.outcome === 'applied' ? 201 : 200).json({
         outcome: outcome.outcome,
@@ -814,6 +852,7 @@ router.post(
         return;
       }
       const body = req.body as import('zod').infer<typeof VerifyMeasurementSchema>;
+      const access = await resolveAccess(req, auth);
       const outcome = await verifyMeasurement({
         measurementId,
         organizationId: auth.organizationId,
@@ -822,6 +861,7 @@ router.post(
         idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
         correlationId: getCorrelationId(req),
         notes: body.notes ?? null,
+        access,
       });
       res.status(outcome.outcome === 'applied' ? 201 : 200).json({
         outcome: outcome.outcome,
@@ -855,6 +895,7 @@ router.post(
         return;
       }
       const body = req.body as import('zod').infer<typeof DisputeMeasurementSchema>;
+      const access = await resolveAccess(req, auth);
       const outcome = await disputeMeasurement({
         measurementId,
         organizationId: auth.organizationId,
@@ -863,6 +904,7 @@ router.post(
         actorEffectiveRole: auth.role,
         idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
         correlationId: getCorrelationId(req),
+        access,
       });
       res.status(outcome.outcome === 'applied' ? 201 : 200).json({
         outcome: outcome.outcome,

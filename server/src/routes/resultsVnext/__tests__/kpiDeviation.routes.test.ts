@@ -70,6 +70,21 @@ vi.mock('../../../utils/Logger.js', () => ({
 vi.mock('../../../database/PostgresDatabase.js', () => ({
   acquirePgClient: async () => ({ query: mockDbQuery, release: mockDbRelease }),
 }));
+// RN-G5: every write route now resolves an access context via
+// resolveEffectiveAccess before calling its command — that function reads
+// through queryHelpers.js's getDatabase() singleton, a DIFFERENT DB access
+// path than the acquirePgClient mock above, so it is mocked directly here
+// (same pattern server/src/routes/security/__tests__/roles.routes.test.ts
+// already established for the same function). Defaults to the wildcard so
+// every existing scenario in this file — which is testing the HTTP
+// boundary, not authorization — keeps passing; the guard's own DENY path
+// has dedicated coverage elsewhere (commandCapabilityGuard.test.ts, the
+// RN-G5 real-Postgres security tests).
+vi.mock('../../../services/effectiveAccessService.js', () => ({
+  resolveEffectiveAccess: vi.fn(async () => ({ capabilities: ['*'], platformRole: null })),
+  hasEffectiveCapability: (access: { capabilities: string[] }, capability: string) =>
+    access.capabilities.includes('*') || access.capabilities.includes(capability),
+}));
 
 // kpi.routes.ts's own dependencies — mocked the same way kpi.routes.test.ts
 // does, so mounting that router alongside this one (to exercise the

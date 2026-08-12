@@ -55,6 +55,20 @@ const ORG_ID = `kpi-e004-it-org-${tag}`;
 const USER_A = `kpi-e004-it-user-a-${tag}`; // sees every KPI (RBAC override — org OWNER)
 const USER_B = `kpi-e004-it-user-b-${tag}`; // plain member — no override, no ownership
 
+/**
+ * RN-G5 (docs/product/results-vnext/RN_G5_AUTHZ_DESIGN.md): every
+ * kpiScorecardCommands.ts command called in this file now requires an
+ * `access: CommandAccessContext` field. This suite's own scenarios are
+ * about publish-supersede atomicity and the visibility non-leak guarantee,
+ * not command-layer authorization — USER_A is, in every scenario here,
+ * ALSO the real owner of the scorecard/KPI it acts on, so a wildcard grant
+ * changes nothing about which branch of the guard would have allowed the
+ * call; it is used here purely so this file does not also have to fake a
+ * real `resolveEffectiveAccess` DB round-trip for a concern orthogonal to
+ * what this suite proves.
+ */
+const WILDCARD_ACCESS = { capabilities: ['*'], platformRole: null } as const;
+
 let client: Client;
 let reachable = false;
 
@@ -280,6 +294,7 @@ describe('KPI-E004 — publish-supersede atomicity + dual-layer non-leak (real P
         createdBy: USER_A,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `create-scorecard-${kpiId}`,
+        access: WILDCARD_ACCESS,
       });
       const scorecardId = scorecardOutcome.result.scorecard.scorecardId;
 
@@ -290,6 +305,7 @@ describe('KPI-E004 — publish-supersede atomicity + dual-layer non-leak (real P
         actorUserId: USER_A,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `add-item-${kpiId}`,
+        access: WILDCARD_ACCESS,
         kpiId,
       });
 
@@ -305,6 +321,7 @@ describe('KPI-E004 — publish-supersede atomicity + dual-layer non-leak (real P
         createdBy: USER_A,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `draft1-${kpiId}`,
+        access: WILDCARD_ACCESS,
       });
       const draft2 = await createReviewSnapshot({
         scorecardId,
@@ -314,6 +331,7 @@ describe('KPI-E004 — publish-supersede atomicity + dual-layer non-leak (real P
         createdBy: USER_A,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `draft2-${kpiId}`,
+        access: WILDCARD_ACCESS,
       });
 
       const results = await Promise.allSettled([
@@ -325,6 +343,7 @@ describe('KPI-E004 — publish-supersede atomicity + dual-layer non-leak (real P
           publishedBy: USER_A,
           actorEffectiveRole: 'consultant',
           idempotencyKey: `publish-draft1-${kpiId}`,
+          access: WILDCARD_ACCESS,
         }),
         publishReviewSnapshot({
           snapshotId: draft2.result.snapshotId,
@@ -334,6 +353,7 @@ describe('KPI-E004 — publish-supersede atomicity + dual-layer non-leak (real P
           publishedBy: USER_A,
           actorEffectiveRole: 'consultant',
           idempotencyKey: `publish-draft2-${kpiId}`,
+          access: WILDCARD_ACCESS,
         }),
       ]);
 
@@ -430,6 +450,7 @@ describe('KPI-E004 — publish-supersede atomicity + dual-layer non-leak (real P
         createdBy: USER_A,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `create-scorecard-nonleak-${kpiVisible1}`,
+        access: WILDCARD_ACCESS,
       });
       const scorecardId = scorecardOutcome.result.scorecard.scorecardId;
 
@@ -442,6 +463,7 @@ describe('KPI-E004 — publish-supersede atomicity + dual-layer non-leak (real P
           actorUserId: USER_A,
           actorEffectiveRole: 'consultant',
           idempotencyKey: `add-item-nonleak-${kpiId}`,
+          access: WILDCARD_ACCESS,
           kpiId,
         });
         expectedVersion = addOutcome.result.scorecard.rowVersion;
@@ -455,6 +477,7 @@ describe('KPI-E004 — publish-supersede atomicity + dual-layer non-leak (real P
         createdBy: USER_A,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `draft-nonleak-${kpiVisible1}`,
+        access: WILDCARD_ACCESS,
       });
 
       // Published by USER_A, who CAN see all 3 KPIs (decision #6a: the
@@ -467,6 +490,7 @@ describe('KPI-E004 — publish-supersede atomicity + dual-layer non-leak (real P
         publishedBy: USER_A,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `publish-nonleak-${kpiVisible1}`,
+        access: WILDCARD_ACCESS,
       });
       expect(publishOutcome.outcome).toBe('applied');
       expect(publishOutcome.result.items).toHaveLength(3);

@@ -67,6 +67,16 @@ vi.mock('../../../utils/Logger.js', () => ({
 vi.mock('../../../database/PostgresDatabase.js', () => ({
   acquirePgClient: async () => ({ query: mockDbQuery, release: mockDbRelease }),
 }));
+// RN-G5: see kpiDeviation.routes.test.ts's identical mock for the full
+// rationale — resolveEffectiveAccess reads through a different DB access
+// path (queryHelpers.js's getDatabase()) than the acquirePgClient mock
+// above, so it needs its own mock. Defaults to the wildcard so every
+// existing HTTP-boundary scenario in this file keeps passing.
+vi.mock('../../../services/effectiveAccessService.js', () => ({
+  resolveEffectiveAccess: vi.fn(async () => ({ capabilities: ['*'], platformRole: null })),
+  hasEffectiveCapability: (access: { capabilities: string[] }, capability: string) =>
+    access.capabilities.includes('*') || access.capabilities.includes(capability),
+}));
 
 vi.mock('../../../services/resultsVnext/kpi/kpiDefinitionCommands.js', async (importOriginal) => {
   const actual =

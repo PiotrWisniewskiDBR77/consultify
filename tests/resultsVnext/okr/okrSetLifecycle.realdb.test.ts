@@ -92,7 +92,8 @@ async function addSufficientKeyResultCoverage(setId: string, organizationId: str
     createdBy: ownerUserId,
     actorEffectiveRole: 'member',
     idempotencyKey: `fixture-objective-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   for (let i = 0; i < 2; i += 1) {
     await createKeyResult({
       objectiveId: objective.result.objectiveId,
@@ -106,7 +107,8 @@ async function addSufficientKeyResultCoverage(setId: string, organizationId: str
       createdBy: ownerUserId,
       actorEffectiveRole: 'member',
       idempotencyKey: `fixture-kr-${i}-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
   }
 }
 
@@ -145,7 +147,8 @@ async function createProgramAndCycle(): Promise<{ organizationId: string; progra
     createdBy: USER_ADMIN,
     actorEffectiveRole: 'admin',
     idempotencyKey: `create-program-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   const published = await publishProgram({
     programId: created.result.programId,
     organizationId,
@@ -153,7 +156,8 @@ async function createProgramAndCycle(): Promise<{ organizationId: string; progra
     actorUserId: USER_ADMIN,
     actorEffectiveRole: 'admin',
     idempotencyKey: `publish-program-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   const cycle = await createCycle({
     organizationId,
     programId: created.result.programId,
@@ -162,7 +166,8 @@ async function createProgramAndCycle(): Promise<{ organizationId: string; progra
     createdBy: USER_ADMIN,
     actorEffectiveRole: 'admin',
     idempotencyKey: `create-cycle-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   void published;
   return { organizationId, programId: created.result.programId, cycleId: cycle.result.cycleId };
 }
@@ -290,7 +295,8 @@ describe('OKR-E002 Set lifecycle — submission guard, full pipeline, cancel, D3
       createdBy: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `create-set-no-reviewer-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     expect(created.result.set.reviewerUserId).toBeNull();
 
     await expect(
@@ -301,7 +307,8 @@ describe('OKR-E002 Set lifecycle — submission guard, full pipeline, cancel, D3
         actorUserId: USER_OWNER,
         actorEffectiveRole: 'member',
         idempotencyKey: `submit-no-reviewer-${randomUUID()}`,
-      })
+        access: { capabilities: ['*'], platformRole: null },
+})
     ).rejects.toBeInstanceOf(OkrSetNotReadyForSubmissionError);
   });
 
@@ -326,7 +333,8 @@ describe('OKR-E002 Set lifecycle — submission guard, full pipeline, cancel, D3
         createdBy: USER_ADMIN,
         actorEffectiveRole: 'admin',
         idempotencyKey: `create-set-pipeline-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       const setId = created.result.set.setId;
 
       // Out-of-order: cannot activate directly from 'draft'.
@@ -338,7 +346,8 @@ describe('OKR-E002 Set lifecycle — submission guard, full pipeline, cancel, D3
           actorUserId: USER_ADMIN,
           actorEffectiveRole: 'admin',
           idempotencyKey: `activate-out-of-order-${randomUUID()}`,
-        })
+        access: { capabilities: ['*'], platformRole: null },
+})
       ).rejects.toBeInstanceOf(OkrSetValidationError);
 
       await addSufficientKeyResultCoverage(setId, organizationId, USER_OWNER);
@@ -349,7 +358,8 @@ describe('OKR-E002 Set lifecycle — submission guard, full pipeline, cancel, D3
         actorUserId: USER_OWNER,
         actorEffectiveRole: 'member',
         idempotencyKey: `submit-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       expect(submitted.result.status).toBe('submitted');
       expect(submitted.result.submittedBy).toBe(USER_OWNER);
 
@@ -360,7 +370,8 @@ describe('OKR-E002 Set lifecycle — submission guard, full pipeline, cancel, D3
         approverId: USER_REVIEWER,
         actorEffectiveRole: 'member',
         idempotencyKey: `approve-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       expect(approved.result.set.status).toBe('approved');
       expect(approved.result.set.approvedBy).toBe(USER_REVIEWER);
       expect(approved.result.set.approvedVersion).toBe(1);
@@ -373,7 +384,8 @@ describe('OKR-E002 Set lifecycle — submission guard, full pipeline, cancel, D3
         actorUserId: USER_ADMIN,
         actorEffectiveRole: 'admin',
         idempotencyKey: `activate-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       expect(activated.result.status).toBe('active');
 
       // D9: activateOkrSet's event reuses the pre-existing 'okr_set.published'
@@ -395,7 +407,8 @@ describe('OKR-E002 Set lifecycle — submission guard, full pipeline, cancel, D3
           actorUserId: USER_ADMIN,
           actorEffectiveRole: 'admin',
           idempotencyKey: `activate-again-${randomUUID()}`,
-        })
+        access: { capabilities: ['*'], platformRole: null },
+})
       ).rejects.toBeInstanceOf(OkrSetValidationError);
     }
   );
@@ -421,7 +434,8 @@ describe('OKR-E002 Set lifecycle — submission guard, full pipeline, cancel, D3
         createdBy: USER_ADMIN,
         actorEffectiveRole: 'admin',
         idempotencyKey: `create-set-changes-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       const setId = created.result.set.setId;
 
       await expect(
@@ -433,7 +447,8 @@ describe('OKR-E002 Set lifecycle — submission guard, full pipeline, cancel, D3
           changeRequestNotes: 'too early',
           actorEffectiveRole: 'member',
           idempotencyKey: `request-changes-from-draft-${randomUUID()}`,
-        })
+        access: { capabilities: ['*'], platformRole: null },
+})
       ).rejects.toBeInstanceOf(OkrSetValidationError);
 
       await addSufficientKeyResultCoverage(setId, organizationId, USER_OWNER);
@@ -444,7 +459,8 @@ describe('OKR-E002 Set lifecycle — submission guard, full pipeline, cancel, D3
         actorUserId: USER_OWNER,
         actorEffectiveRole: 'member',
         idempotencyKey: `submit-for-changes-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
       const changesRequested = await requestChangesOnOkrSet({
         setId,
@@ -454,7 +470,8 @@ describe('OKR-E002 Set lifecycle — submission guard, full pipeline, cancel, D3
         changeRequestNotes: 'please add a reviewer note',
         actorEffectiveRole: 'member',
         idempotencyKey: `request-changes-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       expect(changesRequested.result.status).toBe('changes_requested');
       expect(changesRequested.result.changesRequestedReason).toBe('please add a reviewer note');
 
@@ -465,7 +482,8 @@ describe('OKR-E002 Set lifecycle — submission guard, full pipeline, cancel, D3
         actorUserId: USER_OWNER,
         actorEffectiveRole: 'member',
         idempotencyKey: `resubmit-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       expect(resubmitted.result.status).toBe('submitted');
     }
   );
@@ -487,7 +505,8 @@ describe('OKR-E002 Set lifecycle — submission guard, full pipeline, cancel, D3
       createdBy: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `create-set-cancel-draft-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const cancelled = await runOkrSetLifecycleTransition(OKR_SET_CANCEL_SPEC, {
       setId: created.result.set.setId,
       organizationId,
@@ -495,7 +514,8 @@ describe('OKR-E002 Set lifecycle — submission guard, full pipeline, cancel, D3
       actorUserId: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `cancel-draft-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     expect(cancelled.result.status).toBe('cancelled');
   });
 
@@ -515,7 +535,8 @@ describe('OKR-E002 Set lifecycle — submission guard, full pipeline, cancel, D3
       createdBy: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `create-set-cancel-submitted-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     await addSufficientKeyResultCoverage(s1.result.set.setId, organizationId, `${USER_OWNER}-s1`);
     const submitted1 = await submitOkrSetForApproval({
       setId: s1.result.set.setId,
@@ -524,7 +545,8 @@ describe('OKR-E002 Set lifecycle — submission guard, full pipeline, cancel, D3
       actorUserId: `${USER_OWNER}-s1`,
       actorEffectiveRole: 'member',
       idempotencyKey: `submit-cancel-submitted-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const cancelledFromSubmitted = await runOkrSetLifecycleTransition(OKR_SET_CANCEL_SPEC, {
       setId: s1.result.set.setId,
       organizationId,
@@ -532,7 +554,8 @@ describe('OKR-E002 Set lifecycle — submission guard, full pipeline, cancel, D3
       actorUserId: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `cancel-submitted-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     expect(cancelledFromSubmitted.result.status).toBe('cancelled');
 
     // approved
@@ -548,7 +571,8 @@ describe('OKR-E002 Set lifecycle — submission guard, full pipeline, cancel, D3
       createdBy: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `create-set-cancel-approved-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     await addSufficientKeyResultCoverage(s2.result.set.setId, organizationId, `${USER_OWNER}-s2`);
     const submitted2 = await submitOkrSetForApproval({
       setId: s2.result.set.setId,
@@ -557,7 +581,8 @@ describe('OKR-E002 Set lifecycle — submission guard, full pipeline, cancel, D3
       actorUserId: `${USER_OWNER}-s2`,
       actorEffectiveRole: 'member',
       idempotencyKey: `submit-cancel-approved-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const approved2 = await approveOkrSet({
       setId: s2.result.set.setId,
       organizationId,
@@ -565,7 +590,8 @@ describe('OKR-E002 Set lifecycle — submission guard, full pipeline, cancel, D3
       approverId: USER_REVIEWER,
       actorEffectiveRole: 'member',
       idempotencyKey: `approve-cancel-approved-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const cancelledFromApproved = await runOkrSetLifecycleTransition(OKR_SET_CANCEL_SPEC, {
       setId: s2.result.set.setId,
       organizationId,
@@ -573,7 +599,8 @@ describe('OKR-E002 Set lifecycle — submission guard, full pipeline, cancel, D3
       actorUserId: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `cancel-approved-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     expect(cancelledFromApproved.result.status).toBe('cancelled');
 
     // active
@@ -589,7 +616,8 @@ describe('OKR-E002 Set lifecycle — submission guard, full pipeline, cancel, D3
       createdBy: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `create-set-cancel-active-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     await addSufficientKeyResultCoverage(s3.result.set.setId, organizationId, `${USER_OWNER}-s3`);
     const submitted3 = await submitOkrSetForApproval({
       setId: s3.result.set.setId,
@@ -598,7 +626,8 @@ describe('OKR-E002 Set lifecycle — submission guard, full pipeline, cancel, D3
       actorUserId: `${USER_OWNER}-s3`,
       actorEffectiveRole: 'member',
       idempotencyKey: `submit-cancel-active-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const approved3 = await approveOkrSet({
       setId: s3.result.set.setId,
       organizationId,
@@ -606,7 +635,8 @@ describe('OKR-E002 Set lifecycle — submission guard, full pipeline, cancel, D3
       approverId: USER_REVIEWER,
       actorEffectiveRole: 'member',
       idempotencyKey: `approve-cancel-active-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const active3 = await runOkrSetLifecycleTransition(OKR_SET_ACTIVATE_SPEC, {
       setId: s3.result.set.setId,
       organizationId,
@@ -614,7 +644,8 @@ describe('OKR-E002 Set lifecycle — submission guard, full pipeline, cancel, D3
       actorUserId: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `activate-cancel-active-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const cancelledFromActive = await runOkrSetLifecycleTransition(OKR_SET_CANCEL_SPEC, {
       setId: s3.result.set.setId,
       organizationId,
@@ -622,7 +653,8 @@ describe('OKR-E002 Set lifecycle — submission guard, full pipeline, cancel, D3
       actorUserId: USER_ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `cancel-active-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     expect(cancelledFromActive.result.status).toBe('cancelled');
   });
 
@@ -646,7 +678,8 @@ describe('OKR-E002 Set lifecycle — submission guard, full pipeline, cancel, D3
         createdBy: USER_ADMIN,
         actorEffectiveRole: 'admin',
         idempotencyKey: `create-set-d3-cancel-a-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       expect(first.result.created).toBe(true);
 
       const cancelledFirst = await runOkrSetLifecycleTransition(OKR_SET_CANCEL_SPEC, {
@@ -656,7 +689,8 @@ describe('OKR-E002 Set lifecycle — submission guard, full pipeline, cancel, D3
         actorUserId: USER_ADMIN,
         actorEffectiveRole: 'admin',
         idempotencyKey: `cancel-set-d3-a-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       expect(cancelledFirst.result.status).toBe('cancelled');
 
       // Same exact tuple, brand-new attempt — must create a NEW Set, not
@@ -670,7 +704,8 @@ describe('OKR-E002 Set lifecycle — submission guard, full pipeline, cancel, D3
         createdBy: USER_ADMIN,
         actorEffectiveRole: 'admin',
         idempotencyKey: `create-set-d3-cancel-b-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       expect(second.result.created).toBe(true);
       expect(second.result.set.setId).not.toBe(first.result.set.setId);
       expect(second.result.set.status).toBe('draft');
@@ -694,7 +729,8 @@ describe('OKR-E002 Set lifecycle — submission guard, full pipeline, cancel, D3
         createdBy: USER_ADMIN,
         actorEffectiveRole: 'admin',
         idempotencyKey: `create-set-d3-closed-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       expect(first.result.created).toBe(true);
 
       // No E002 command reaches 'closed' — direct fixture manipulation,
@@ -711,7 +747,8 @@ describe('OKR-E002 Set lifecycle — submission guard, full pipeline, cancel, D3
         createdBy: USER_ADMIN,
         actorEffectiveRole: 'admin',
         idempotencyKey: `create-set-d3-closed-dup-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       expect(second.result.created).toBe(false);
       expect(second.result.set.setId).toBe(first.result.set.setId);
       expect(second.result.set.status).toBe('closed');

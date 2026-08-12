@@ -90,7 +90,8 @@ async function createProgramCycleAndSet(ownerId: string): Promise<{ organization
     createdBy: USER_ADMIN,
     actorEffectiveRole: 'admin',
     idempotencyKey: `create-program-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   await publishProgram({
     programId: created.result.programId,
     organizationId,
@@ -98,7 +99,8 @@ async function createProgramCycleAndSet(ownerId: string): Promise<{ organization
     actorUserId: USER_ADMIN,
     actorEffectiveRole: 'admin',
     idempotencyKey: `publish-program-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   const cycle = await createCycle({
     organizationId,
     programId: created.result.programId,
@@ -107,7 +109,8 @@ async function createProgramCycleAndSet(ownerId: string): Promise<{ organization
     createdBy: USER_ADMIN,
     actorEffectiveRole: 'admin',
     idempotencyKey: `create-cycle-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   const set = await createOkrSet({
     organizationId,
     programId: created.result.programId,
@@ -119,7 +122,8 @@ async function createProgramCycleAndSet(ownerId: string): Promise<{ organization
     createdBy: USER_ADMIN,
     actorEffectiveRole: 'admin',
     idempotencyKey: `create-set-${randomUUID()}`,
-  });
+        access: { capabilities: ['*'], platformRole: null },
+});
   return { organizationId, setId: set.result.set.setId };
 }
 
@@ -231,7 +235,8 @@ describe('OKR-E003 cancelObjective — guarded transition, NO cascade to child K
         createdBy: ownerId,
         actorEffectiveRole: 'member',
         idempotencyKey: `create-obj-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       const keyResult = await createKeyResult({
         objectiveId: objective.result.objectiveId,
         organizationId,
@@ -244,7 +249,8 @@ describe('OKR-E003 cancelObjective — guarded transition, NO cascade to child K
         createdBy: ownerId,
         actorEffectiveRole: 'member',
         idempotencyKey: `create-kr-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       // Move the KR to "on_track" — an explicit, owner-declared non-default
       // status (§-IO item 9) — before cancelling the parent.
       const onTrack = await updateKeyResult({
@@ -255,7 +261,8 @@ describe('OKR-E003 cancelObjective — guarded transition, NO cascade to child K
         actorUserId: ownerId,
         actorEffectiveRole: 'member',
         idempotencyKey: `update-kr-ontrack-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       expect(onTrack.result.status).toBe('on_track');
 
       const beforeCancelRow = await client.query(
@@ -279,7 +286,8 @@ describe('OKR-E003 cancelObjective — guarded transition, NO cascade to child K
         actorUserId: ownerId,
         actorEffectiveRole: 'member',
         idempotencyKey: `cancel-obj-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       expect(cancelled.result.status).toBe('cancelled');
 
       // The KR row is completely untouched — same status, same
@@ -309,7 +317,8 @@ describe('OKR-E003 cancelObjective — guarded transition, NO cascade to child K
         createdBy: ownerId,
         actorEffectiveRole: 'member',
         idempotencyKey: `create-obj-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       const keyResult = await createKeyResult({
         objectiveId: objective.result.objectiveId,
         organizationId,
@@ -322,7 +331,8 @@ describe('OKR-E003 cancelObjective — guarded transition, NO cascade to child K
         createdBy: ownerId,
         actorEffectiveRole: 'member',
         idempotencyKey: `create-kr-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       const atRisk = await updateKeyResult({
         keyResultId: keyResult.result.keyResultId,
         organizationId,
@@ -331,7 +341,8 @@ describe('OKR-E003 cancelObjective — guarded transition, NO cascade to child K
         actorUserId: ownerId,
         actorEffectiveRole: 'member',
         idempotencyKey: `update-kr-atrisk-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
       expect(atRisk.result.status).toBe('at_risk');
 
       const objectiveRowVersion = await client.query<{ row_version: number }>(
@@ -345,7 +356,8 @@ describe('OKR-E003 cancelObjective — guarded transition, NO cascade to child K
         actorUserId: ownerId,
         actorEffectiveRole: 'member',
         idempotencyKey: `cancel-obj-atrisk-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
       const krAfter = await client.query(`SELECT status FROM okr_vnext_key_results WHERE key_result_id = $1`, [
         keyResult.result.keyResultId,
@@ -369,7 +381,8 @@ describe('OKR-E003 cancelObjective — guarded transition, NO cascade to child K
       createdBy: ownerId,
       actorEffectiveRole: 'member',
       idempotencyKey: `create-obj-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     const firstCancel = await cancelObjective({
       objectiveId: objective.result.objectiveId,
       organizationId,
@@ -377,7 +390,8 @@ describe('OKR-E003 cancelObjective — guarded transition, NO cascade to child K
       actorUserId: ownerId,
       actorEffectiveRole: 'member',
       idempotencyKey: `cancel-obj-1-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
     expect(firstCancel.result.status).toBe('cancelled');
 
     let caught: unknown;
@@ -389,7 +403,8 @@ describe('OKR-E003 cancelObjective — guarded transition, NO cascade to child K
         actorUserId: ownerId,
         actorEffectiveRole: 'member',
         idempotencyKey: `cancel-obj-2-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
     } catch (err) {
       caught = err;
     }

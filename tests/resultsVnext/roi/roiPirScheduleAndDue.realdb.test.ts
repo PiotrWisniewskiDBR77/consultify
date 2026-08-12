@@ -98,7 +98,8 @@ describe('ROI-E006 scheduleRoiCasePostInvestmentReview / markRoiCasePostInvestme
       actorUserId: USER_OWNER,
       actorEffectiveRole: 'consultant',
       idempotencyKey: `schedule-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
     expect(outcome.outcome).toBe('applied');
     expect(outcome.result.status).toBe('tracking');
@@ -124,7 +125,8 @@ describe('ROI-E006 scheduleRoiCasePostInvestmentReview / markRoiCasePostInvestme
       actorUserId: USER_OWNER,
       actorEffectiveRole: 'consultant',
       idempotencyKey: `schedule-${randomUUID()}`,
-    });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
     expect(outcome.outcome).toBe('applied');
     expect(outcome.result.status).toBe('benefits_realization');
@@ -156,7 +158,8 @@ describe('ROI-E006 scheduleRoiCasePostInvestmentReview / markRoiCasePostInvestme
         actorUserId: USER_OWNER,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `schedule-guard-${randomUUID()}`,
-      })
+        access: { capabilities: ['*'], platformRole: null },
+})
     ).rejects.toThrow(modules.RoiCaseValidationError);
   });
 
@@ -180,7 +183,8 @@ describe('ROI-E006 scheduleRoiCasePostInvestmentReview / markRoiCasePostInvestme
         actorUserId: USER_OWNER,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `schedule-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
       // Confirm both obligations are 'open' BEFORE mark-due (the interesting
       // baseline this test's own assertions depend on).
@@ -200,7 +204,8 @@ describe('ROI-E006 scheduleRoiCasePostInvestmentReview / markRoiCasePostInvestme
         actorUserId: USER_OWNER,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `due-${randomUUID()}`,
-      });
+        access: { capabilities: ['*'], platformRole: null },
+});
 
       expect(dueOutcome.outcome).toBe('applied');
       expect(dueOutcome.result.status).toBe('post_investment_review_due');
@@ -239,7 +244,8 @@ describe('ROI-E006 scheduleRoiCasePostInvestmentReview / markRoiCasePostInvestme
         actorUserId: USER_OWNER,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `due-guard-${randomUUID()}`,
-      })
+        access: { capabilities: ['*'], platformRole: null },
+})
     ).rejects.toThrow(modules.RoiCaseValidationError);
 
     const row = await client.query<{ status: string }>(`SELECT status FROM rvn_roi_cases WHERE case_id = $1`, [tracking.caseId]);

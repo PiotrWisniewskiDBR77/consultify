@@ -95,6 +95,7 @@ import {
   validateParams,
   validateQuery,
 } from '../../middleware/validation.middleware.js';
+import { resolveEffectiveAccess } from '../../services/effectiveAccessService.js';
 import {
   commitInitiativeKpiImpact,
   InitiativeKpiImpactSelfApprovalDeniedError,
@@ -115,6 +116,10 @@ import {
   AtomicWriteAggregateNotFoundError,
   AtomicWriteConflictError,
 } from '../../services/resultsVnext/platform/atomicWrite.js';
+import {
+  CommandCapabilityDeniedError,
+  type CommandAccessContext,
+} from '../../services/resultsVnext/platform/commandCapabilityGuard.js';
 import type { AuthenticatedRequest } from '../../types/index.js';
 import logger from '../../utils/Logger.js';
 import {
@@ -172,11 +177,33 @@ function resolveIdempotencyKey(bodyKey: string | undefined | null): string {
 }
 
 /**
+ * RN-G5 (docs/product/results-vnext/RN_G5_AUTHZ_DESIGN.md): resolves the
+ * REAL effective access context for the authenticated actor — same shape as
+ * `kpiDeviation.routes.ts`/`kpiScorecard.routes.ts`'s own `resolveAccess`.
+ * No `projectId` — InitiativeKPIImpact is organization-scoped (design §C:
+ * "Initiative (legacy module) does not participate in RVN ABAC").
+ */
+async function resolveAccess(req: AuthenticatedRequest, auth: RouteAuth): Promise<CommandAccessContext> {
+  return resolveEffectiveAccess({
+    userId: auth.userId,
+    organizationId: auth.organizationId,
+    applicationRole: req.user?.role,
+  });
+}
+
+/**
  * Shared error -> HTTP mapping for every write endpoint below. See file
  * header for why this mapper has no `KpiNoActiveVisibilityPolicyError`
  * branch, unlike its siblings.
  */
 function handlePerspectivesRouteError(res: Response, err: unknown, op: string): void {
+  if (err instanceof CommandCapabilityDeniedError) {
+    // RN-G5: same rationale as kpiDeviation.routes.ts's identical branch —
+    // `details.capability` is server-side-log-only, never wire.
+    logger.warn(`[resultsVnext/kpiPerspectives.routes] ${op} denied`, { capability: err.details.capability });
+    res.status(403).json({ error: err.message, code: err.code });
+    return;
+  }
   if (err instanceof InitiativeKpiImpactSelfApprovalDeniedError) {
     res.status(403).json({ error: err.message, code: err.code, details: err.details });
     return;
@@ -275,6 +302,7 @@ router.post(
     if (!auth) return;
     try {
       const body = req.body as import('zod').infer<typeof ProposeInitiativeKpiImpactSchema>;
+      const access = await resolveAccess(req, auth);
       const outcome = await proposeInitiativeKpiImpact({
         organizationId: auth.organizationId,
         kpiId: body.kpiId,
@@ -287,6 +315,7 @@ router.post(
         idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
         correlationId: getCorrelationId(req),
         reason: body.reason ?? null,
+        access,
       });
       res.status(outcome.outcome === 'applied' ? 201 : 200).json({
         outcome: outcome.outcome,
@@ -314,6 +343,7 @@ router.post(
     try {
       const { impactId } = req.params as { impactId: string };
       const body = req.body as import('zod').infer<typeof CommitInitiativeKpiImpactSchema>;
+      const access = await resolveAccess(req, auth);
       const outcome = await commitInitiativeKpiImpact({
         organizationId: auth.organizationId,
         impactId,
@@ -323,6 +353,7 @@ router.post(
         idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
         correlationId: getCorrelationId(req),
         reason: body.reason ?? null,
+        access,
       });
       res.status(200).json({
         outcome: outcome.outcome,
@@ -352,6 +383,7 @@ router.post(
     try {
       const { impactId } = req.params as { impactId: string };
       const body = req.body as import('zod').infer<typeof RecordReviewedAttributionSchema>;
+      const access = await resolveAccess(req, auth);
       const outcome = await recordReviewedAttribution({
         organizationId: auth.organizationId,
         impactId,
@@ -364,6 +396,7 @@ router.post(
         idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
         correlationId: getCorrelationId(req),
         reason: body.reason ?? null,
+        access,
       });
       res.status(200).json({
         outcome: outcome.outcome,
@@ -394,6 +427,7 @@ router.post(
       const idempotencyKey = resolveIdempotencyKey(body.idempotencyKey);
       const correlationId = getCorrelationId(req);
       const reason = body.reason ?? null;
+      const access = await resolveAccess(req, auth);
       const outcome = await supersedeInitiativeKpiImpact({
         organizationId: auth.organizationId,
         impactId,
@@ -407,12 +441,14 @@ router.post(
           idempotencyKey,
           correlationId,
           reason,
+          access,
         },
         actorUserId: auth.userId,
         actorEffectiveRole: auth.role,
         idempotencyKey,
         correlationId,
         reason,
+        access,
       });
       res.status(200).json({
         outcome: outcome.outcome,

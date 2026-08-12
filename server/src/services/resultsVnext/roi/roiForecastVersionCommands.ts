@@ -20,6 +20,10 @@ import type { PoolClient } from 'pg';
 
 import { computeStateHash } from '../kpi/kpiDefinitionCommands.js';
 import { executeAtomicCommand, type AtomicCommandOutcome, type AtomicEventInput } from '../platform/atomicWrite.js';
+import {
+  assertCommandCapability,
+  type CommandAccessContext,
+} from '../platform/commandCapabilityGuard.js';
 
 import { ROI_EVENT_SOURCE, ROI_TRACKING_ACTIVE_STATUSES } from './roiCaseCommands.js';
 import {
@@ -104,7 +108,13 @@ export interface CreateRoiForecastVersionInput {
   idempotencyKey: string;
   correlationId?: string;
   causationId?: string | null;
+  access: CommandAccessContext;
 }
+
+// RN-G5 — command capability names (docs/product/results-vnext/RN_G5_AUTHZ_DESIGN.md)
+export const ROI_FORECAST_VERSION_CAPABILITIES = {
+  create: 'results.roi.forecast_version.create',
+} as const;
 
 export async function createRoiForecastVersion(
   input: CreateRoiForecastVersionInput
@@ -120,6 +130,7 @@ export async function createRoiForecastVersion(
     idempotencyKey,
     correlationId,
     causationId = null,
+    access,
   } = input;
 
   return executeAtomicCommand<RoiCaseRow, RoiForecastVersion>({
@@ -129,6 +140,13 @@ export async function createRoiForecastVersion(
     loadForUpdate: loadRoiCaseForUpdate,
     getCurrentVersion: caseRowVersion,
     applyMutation: async (client, currentRow, nextVersion) => {
+      assertCommandCapability({
+        access,
+        actorUserId,
+        capability: ROI_FORECAST_VERSION_CAPABILITIES.create,
+        responsibleUserIds: [currentRow.owner_user_id],
+      });
+
       if (!ROI_TRACKING_ACTIVE_STATUSES.includes(currentRow.status)) {
         throw new RoiForecastVersionValidationError(
           `ROI case ${caseId} is "${currentRow.status}" — a forecast version may only be published while the case is tracking`,

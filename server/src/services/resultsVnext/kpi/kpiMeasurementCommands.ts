@@ -52,10 +52,28 @@ import {
   type AtomicCommandOutcome,
   type AtomicEventInput,
 } from '../platform/atomicWrite.js';
+import {
+  assertCommandCapability,
+  type CommandAccessContext,
+} from '../platform/commandCapabilityGuard.js';
 
 import { computeStateHash, KPI_EVENT_SOURCE } from './kpiDefinitionCommands.js';
 import { openOrEscalateDeviationCase } from './kpiDeviationCommands.js';
 import { toKpiMeasurement, type KpiMeasurement, type KpiMeasurementRow } from './kpiTypes.js';
+
+// ==========================================
+// RN-G5 — command capability names (docs/product/results-vnext/RN_G5_AUTHZ_DESIGN.md)
+//
+// Scope note: per the RN-G5 task brief, only verify/dispute/correct are
+// gated here — `recordMeasurement` (new-fact ingestion, a high-frequency
+// import/connector path per this file's own header) is explicitly OUT of
+// this pakiet's scope and is left unguarded, same as before.
+// ==========================================
+export const KPI_MEASUREMENT_CAPABILITIES = {
+  verify: 'results.kpi.measurement.verify',
+  dispute: 'results.kpi.measurement.dispute',
+  correct: 'results.kpi.measurement.correct',
+} as const;
 
 /**
  * Resolves the deviation case's `owner_user_id` (decision #1 requires SOME
@@ -77,6 +95,22 @@ async function resolveDeviationCaseOwner(
     [kpiId]
   );
   return result.rows[0]?.owner_user_id ?? fallbackUserId;
+}
+
+/**
+ * RN-G5: the REAL KPI owner (or `null` if unset), never a fallback to the
+ * calling actor — unlike `resolveDeviationCaseOwner` above (which
+ * deliberately falls back to `fallbackUserId` so a deviation case is never
+ * left ownerless), a guard must see the actual owner or nothing, or the
+ * fallback would make the "is the actor the owner" check trivially true for
+ * every unowned KPI's measurements.
+ */
+async function loadKpiOwnerUserId(client: PoolClient, kpiId: string): Promise<string | null> {
+  const result = await client.query<{ owner_user_id: string | null }>(
+    `SELECT owner_user_id FROM rvn_kpi_definitions WHERE kpi_id = $1`,
+    [kpiId]
+  );
+  return result.rows[0]?.owner_user_id ?? null;
 }
 
 // ==========================================
@@ -253,6 +287,10 @@ interface InsertSupersedingMeasurementParams {
   dataQualityStatus?: KpiMeasurementRow['data_quality_status'];
   correctionReason: string | null;
   recordedBy: string;
+  /** RN-G5: capability gating this specific supersede action (verify/
+   * dispute/correct each pass their own). */
+  capability: string;
+  access: CommandAccessContext;
 }
 
 interface SupersedingMeasurementResult {
@@ -272,6 +310,8 @@ async function insertSupersedingMeasurement(
     dataQualityStatus,
     correctionReason,
     recordedBy,
+    capability,
+    access,
   } = params;
 
   const originalResult = await client.query<KpiMeasurementRow>(
@@ -282,6 +322,16 @@ async function insertSupersedingMeasurement(
   if (!originalRow) {
     throw new KpiMeasurementNotFoundError(originalMeasurementId, organizationId);
   }
+
+  // RN-G5: authorization BEFORE the superseding INSERT — the original row's
+  // kpi_id is now known, so the real KPI owner can be checked.
+  const ownerUserId = await loadKpiOwnerUserId(client, originalRow.kpi_id);
+  assertCommandCapability({
+    access,
+    actorUserId: recordedBy,
+    capability,
+    responsibleUserIds: [ownerUserId],
+  });
 
   const actualValue =
     actualValueOverride !== undefined ? actualValueOverride : originalRow.actual_value;
@@ -397,6 +447,7 @@ export interface CorrectMeasurementInput {
    * rationale, this is the correction-path counterpart. */
   deviationManagerUserId?: string | null;
   deviationResponseHoursOverride?: { warning: number; critical: number };
+  access: CommandAccessContext;
 }
 
 export async function correctMeasurement(
@@ -415,6 +466,7 @@ export async function correctMeasurement(
     causationId = null,
     deviationManagerUserId = null,
     deviationResponseHoursOverride,
+    access,
   } = input;
 
   return executeAtomicCreate<SupersedingMeasurementResult>({
@@ -433,6 +485,8 @@ export async function correctMeasurement(
         // own data_quality_status when omitted.
         correctionReason,
         recordedBy,
+        capability: KPI_MEASUREMENT_CAPABILITIES.correct,
+        access,
       });
 
       // Decision #3: same transaction as the correction's own INSERT — see
@@ -483,6 +537,7 @@ export interface VerifyMeasurementInput {
   correlationId?: string;
   causationId?: string | null;
   notes?: string | null;
+  access: CommandAccessContext;
 }
 
 export async function verifyMeasurement(
@@ -497,6 +552,7 @@ export async function verifyMeasurement(
     correlationId,
     causationId = null,
     notes = null,
+    access,
   } = input;
 
   return executeAtomicCreate<SupersedingMeasurementResult>({
@@ -508,6 +564,8 @@ export async function verifyMeasurement(
         dataQualityStatus: 'verified',
         correctionReason: notes,
         recordedBy: verifiedBy,
+        capability: KPI_MEASUREMENT_CAPABILITIES.verify,
+        access,
       }),
     buildEvent: ({ result }) =>
       buildSupersedingEvent({
@@ -538,6 +596,7 @@ export interface DisputeMeasurementInput {
   idempotencyKey: string;
   correlationId?: string;
   causationId?: string | null;
+  access: CommandAccessContext;
 }
 
 export async function disputeMeasurement(
@@ -552,6 +611,7 @@ export async function disputeMeasurement(
     idempotencyKey,
     correlationId,
     causationId = null,
+    access,
   } = input;
 
   return executeAtomicCreate<SupersedingMeasurementResult>({
@@ -563,6 +623,8 @@ export async function disputeMeasurement(
         dataQualityStatus: 'disputed',
         correctionReason: disputeReason,
         recordedBy: disputedBy,
+        capability: KPI_MEASUREMENT_CAPABILITIES.dispute,
+        access,
       }),
     buildEvent: ({ result }) =>
       buildSupersedingEvent({
