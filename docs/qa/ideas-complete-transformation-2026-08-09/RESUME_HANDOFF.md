@@ -157,7 +157,10 @@ itself, not a satellite this time):**
    §9), not the list itself. Candidate code identity for everything above:
    **`914759d4cb`** (last commit before this pass's own documentation
    commit). Documentation-final HEAD after this pass's single commit:
-   <<FINALNY_SHA_DO_UZUPELNIENIA>> — that commit rewrites this very file,
+   KANDYDAT KODU+DOKUMENTACJI: `83d6576c83e98b2316f02a6e5590b5d9cf3c24a6` — na tym SHA zmierzono E15, macierz wizualną
+i Golden Journey. FINALNY HEAD to commit uzupełniający niniejsze wyniki; jest on
+WYŁĄCZNIE dokumentacyjny (zero plików kodu), więc pomiary powyżej pozostają ważne.
+Finalny SHA odczytaj z `git log -1` — commit nie może zawierać własnego skrótu. — that commit rewrites this very file,
    so it cannot correctly cite its own hash; the immutable code receipt
    stays `914759d4cb`, and the documentation-final HEAD is the placeholder
    above, to be filled in from `git log -1` after this commit lands.

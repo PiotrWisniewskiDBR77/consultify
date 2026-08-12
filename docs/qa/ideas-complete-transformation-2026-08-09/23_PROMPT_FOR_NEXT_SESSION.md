@@ -21,7 +21,10 @@ uzgadniania.
 Worktree: /Users/piotrwisniewski/.codex/worktrees/ideas-transform/consultify
 Branch:   codex/ideas-transformation-20260809
 Kandydat kodu (SHA sprzed commita dokumentacyjnego tej fali): `914759d4cb`
-Finalny SHA (HEAD po commicie dokumentacyjnym tej fali): <<FINALNY_SHA_DO_UZUPELNIENIA>>
+Finalny SHA (HEAD po commicie dokumentacyjnym tej fali): KANDYDAT KODU+DOKUMENTACJI: `83d6576c83e98b2316f02a6e5590b5d9cf3c24a6` — na tym SHA zmierzono E15, macierz wizualną
+i Golden Journey. FINALNY HEAD to commit uzupełniający niniejsze wyniki; jest on
+WYŁĄCZNIE dokumentacyjny (zero plików kodu), więc pomiary powyżej pozostają ważne.
+Finalny SHA odczytaj z `git log -1` — commit nie może zawierać własnego skrótu.
   — commit dokumentacyjny sam zmienia HEAD i nie może cytować własnego
   hasha; przeczytaj `git log -1` po jego wylądowaniu, żeby wypełnić ten
   znacznik, zamiast zgadywać.
@@ -78,7 +81,25 @@ KROK 3 — otwarte sprawy, w kolejności ważności (żadna nie blokuje tylko dl
    pushować. To NOWY punkt na liście, nie było jawnie stwierdzone we wcześniejszych
    wersjach tego pliku.
 2) Właścicielski akcept wzrokowy (rule #7) — zamyka WYŁĄCZNIE RISK-19/matrycę wizualną,
-   nie zamyka niczego innego z tej listy. <<MACIERZ_WIZUALNA_DO_UZUPELNIENIA>>
+   nie zamyka niczego innego z tej listy. **MACIERZ WIZUALNA — 80 kombinacji, żywa aplikacja (2026-08-13).**
+4 narzędzia (Mind Map, Whiteboard, Process Flow, Table) x 4 rozdzielczości
+(1920x1080, 1280x720, 390x844, 1280x720@200% tekstu) x light/dark x PL/EN(+JA).
+- 1920x1080 i 1280x720: **PASS** dla wszystkich 4 narzędzi, obu motywów, PL i EN.
+  Zero przewijania poziomego strony, 0 przepełnień, 0 przycięć.
+- Regresja nakładania `Updated` vs kolumna akcji: **ZAMKNIĘTA** — zmierzony odstęp
+  +31 px (data kończy się na 1804, kebab zaczyna na 1835), `overlap: false`.
+- **1280x720 przy 200% powiększenia tekstu: FAIL** — wspólna powłoka (pasek zakładek
+  modułu) urywa się w połowie słowa bez uchwytu do przewijania; data i kebab przycięte
+  krawędzią. Dotyczy WSZYSTKICH 4 narzędzi → defekt powłoki, nie narzędzia.
+- **390x844: NIE JEST udowodnionym FAIL-em.** Automat zgłosił przepełnienie, ale zrzut
+  pokazuje dedykowany układ mobilny (hamburger, dolna nawigacja, zredukowana tabela).
+  Automat mierzył współrzędne paska desktopowego, który tam nie obowiązuje. NIEROZSTRZYGNIĘTE.
+- **Locale JA: FAIL** — `jaDetectedInMain=false` w 16/16 kombinacji. Japoński dociera do
+  powłoki (ヘルプセンター, フィードバック, ドキュメント), ale treść modułu renderuje
+  angielski fallback. PRZYCZYNA (zmierzona): moduł koduje binarny wybór `isPolish ? PL : EN`
+  w 60 miejscach zamiast `t()`. Na baseline `origin/demo` samo `IdeasTableContent.tsx` miało
+  49 takich wystąpień, kandydat ma 43 → program ten dług ZMNIEJSZYŁ, nie wprowadził.
+  To STAN ZASTANY, nie regresja migracji jp->ja.
 3) RISK-24 — konwergencja schematu na czystej bazie nadal zepsuta obydwoma runnerami.
    Ta fala rozwinęła MECHANIZM (nie naprawiła): `server/scripts/migrate.postgres.ts:555-558`
    z flagą `--safe` zapisuje padniętą migrację jako `skipped` i kończy z exit 0 ("✅ Postgres
@@ -107,11 +128,36 @@ KROK 3 — otwarte sprawy, w kolejności ważności (żadna nie blokuje tylko dl
    dosłownie, decyzją właściciela — maszyna miała obciążenie 84-832 z procesów niezwiązanych z
    Consultify. Nie opisuj żadnej z tych zmian jako poprawę bez czystej liczby.
 9) Golden journey (create → develop → convert, cross-tool) — NIE ZWERYFIKOWANE jako
-   jeden ciągły przebieg na żadnym SHA w historii programu. <<GOLDEN_JOURNEY_DO_UZUPELNIENIA>>
+   jeden ciągły przebieg na żadnym SHA w historii programu. **GOLDEN JOURNEY — PRZEJŚCIE Z REALNYM WYWOŁANIEM MODELU (2026-08-13).**
+Kroki 1-4, 7-10: PASS. Krok 5 (realna odpowiedź modelu): **PASS**.
+- model `openai/gpt-4o-mini`, provider `openrouter`, `degraded: null`,
+  tokeny 32 wej. / 50 wyj., odpowiedź 200 znaków, merytoryczna, po polsku.
+- Dwie blokady były SZTUCZNE i zostały zdjęte: (a) `E2E_MODE=true` w moim własnym
+  procesie backendu powodował bezwarunkowy short-circuit w `server/src/routes/ai.routes.ts:2077`
+  zwracający atrapę `E2E_OK: Received "..."` PRZED kontaktem z modelem; (b) brak
+  `OPENROUTER_API_KEY` (aplikacja routuje przez OpenRouter, nie bezpośrednio przez
+  OPENAI/ANTHROPIC). Po zdjęciu obu — realne wywołanie działa.
+- Izolacja bazy utrzymana przez cały czas: `127.0.0.1:54331/ideas_final`, zero połączeń
+  do demo/dev/produkcji (zweryfikowane `lsof` na PID procesu).
+- USTALENIE POZYTYWNE: przy braku providera Teresa NIE zmyśla sukcesu — zwraca jawne
+  `NO_LLM_PROVIDER`, `degraded:{mode:"blocked"}`, `confidence: 0`, `outputLength: 0`.
+- ŚCIEŻKA NEGATYWNA: PASS — jawny błąd, licznik prób (3/3), działający przycisk „Try again".
+- DROBNE RYZYKO: licznik `version` rośnie przy samym otwarciu warsztatu (78->83->86->88->90->93
+  bez zmiany treści). `version` NIE jest dowodem zmiany; dowodem są `nodes`/`edges`.
 10) `24_FINAL_ACCEPTANCE.md` §9 ma pełną listę jedenastu pierwotnych rezydualiów — jeden
     (E07 kebab/RISK-39) domknięty S20-DOCS, reszta otwarta. Przeczytaj tę listę w całości,
     nie tylko ten plik — ten plik jest skrótem, nie zamiennikiem.
-11) <<E15_WYNIK_DO_UZUPELNIENIA>> — miejsce na wynik następnego pełnego przebiegu E15,
+11) **E15 — DWIE STABILNE RUNDY (2026-08-13, SHA `83d6576c83`).**
+Zakres dowiedziony z JSON samego przebiegu: 216 plików / 1304 testy
+(`tests/components/MyWork` + `src/components/MyWork` + `tests/unit/mindmap`).
+Runda 1: 1183 PASS / 121 FAIL / 0 SKIP / 37 s. Runda 2: identycznie, 38 s.
+Porównanie PER TEST: **0 różnic**. `RecordExpandModal … Escape closes and
+restores focus` — który przy zamrożeniu 2026-08-12 był chwiejny i przesądził
+status BLOCKED — przeszedł w OBU rundach.
+A/B wobec zamrożenia: 121 czerwonych wtedy, 121 teraz, **0 nowych, 0 naprawionych**
+(identyczny zbiór) → cztery poprawki nie wniosły regresji.
+PUŁAPKA DO ZAPAMIĘTANIA: `npx vitest run` BEZ filtra katalogów uruchamia całe
+monorepo (3869 plików / 38 896 testów), a nie E15. Taki przebieg NIE jest E15. — miejsce na wynik następnego pełnego przebiegu E15,
     kiedy ktoś go uruchomi na aktualnym HEAD.
 
 ZAMKNIĘTE w tej i poprzednich falach, żeby nie tracić na to czasu (sprawdź

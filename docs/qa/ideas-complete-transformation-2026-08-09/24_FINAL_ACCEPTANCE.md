@@ -490,7 +490,10 @@ branch `codex/ideas-transformation-20260809`. Candidate code identity:
 **`914759d4cb`** — the last commit before this pass's own single
 documentation commit (which cannot correctly cite its own hash, since it
 rewrites this file). Documentation-final HEAD:
-<<FINALNY_SHA_DO_UZUPELNIENIA>>, to be read from `git log -1` after that
+KANDYDAT KODU+DOKUMENTACJI: `83d6576c83e98b2316f02a6e5590b5d9cf3c24a6` — na tym SHA zmierzono E15, macierz wizualną
+i Golden Journey. FINALNY HEAD to commit uzupełniający niniejsze wyniki; jest on
+WYŁĄCZNIE dokumentacyjny (zero plików kodu), więc pomiary powyżej pozostają ważne.
+Finalny SHA odczytaj z `git log -1` — commit nie może zawierać własnego skrótu., to be read from `git log -1` after that
 commit lands.
 
 ### Position and push status
