@@ -140,6 +140,7 @@ const FinanceStatementPackWorkspaceV2Screen = React.lazy(
   () => import('./screens/finance-statement-pack-workspace-v2')
 );
 const FinanceBaselineWorkspaceScreen = React.lazy(() => import('./screens/finance-baseline-workspace'));
+const FinancePredictionWorkspaceScreen = React.lazy(() => import('./screens/finance-prediction-workspace'));
 const GenDeckContentHintsScreen = React.lazy(() => import('./screens/gen-deck-content-hints'));
 const GenExcelTemplatesTabScreen = React.lazy(() => import('./screens/gen-excel-templates-tab'));
 const GenWordContentHintsScreen = React.lazy(() => import('./screens/gen-word-content-hints'));
@@ -626,6 +627,10 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'PKG_F — REAL <BaselineWorkspace> (Baseline Model, V-1..V-6 zamknięte) — &view=assumptions|wyliczenia &scene=default|fundinggap &status=DRAFT|APPROVED|IN_REVIEW',
     render: () => <FinanceBaselineWorkspaceScreen />,
+  },
+  'finance-prediction-workspace': {
+    label: 'PKG_G — REAL <PredictionWorkspace> (Prediction scenario builder + Modele/Wyniki) — &mode=A|B|C &view=assumptions|results',
+    render: () => <FinancePredictionWorkspaceScreen />,
   },
   'execution-change-signals': {
     label:

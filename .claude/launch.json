@@ -265,6 +265,19 @@
         "--strictPort"
       ],
       "port": 58023
+    },
+    {
+      "name": "fv3p-g-prediction",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "vite",
+        "--config",
+        "dev-render/vite.config.ts",
+        "--port",
+        "58028",
+        "--strictPort"
+      ],
+      "port": 58028
     }
   ]
 }
