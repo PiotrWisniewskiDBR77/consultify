@@ -35,6 +35,14 @@ const scene: Scene = (params.get('scene') as Scene) || 'draft-empty';
 const ARTIFACT_ID = 'art-demo-analysis-1';
 const BUSINESS_VERSION_ID = 'bv-demo-analysis-1';
 
+// ★ FIXC (martwa przestrzeń, gate-e): the catalog only had 3 KPIs, all from the SAME
+// `UNIVERSAL_RECOMMENDED_CODES`/`INDUSTRY_ADDITIONAL_CODES.MANUFACTURING` list
+// (`src/components/Finance/Analysis/analysisKpiCatalog.ts`) it is already a subset of — that list
+// names SIX codes for a manufacturing org (REVENUE_GROWTH_YOY/GROSS_MARGIN_PCT/EBITDA_MARGIN_PCT/
+// NET_MARGIN_PCT universal + INVENTORY_DAYS/ASSET_TURNOVER manufacturing-specific), and this
+// harness only ever populated three of them. Added the missing three so `draft-with-kpis` shows
+// the FULL recommended set for a MANUFACTURING org, not an arbitrarily truncated one — not a new
+// taxonomy, just completing the one the codebase already declares.
 const CATALOG = [
   {
     kpiCatalogId: 'cat-1',
@@ -87,6 +95,57 @@ const CATALOG = [
     negativeDenominatorPolicy: 'FORCE_NA',
     requiredCanonicalLineCodes: ['INVENTORY', 'COGS'],
   },
+  {
+    kpiCatalogId: 'cat-4',
+    kpiCode: 'REVENUE_GROWTH_YOY',
+    catalogVersion: 1,
+    status: 'ACTIVE',
+    tier: 'UNIVERSAL',
+    industryCode: null,
+    category: 'Wzrost',
+    kpiName: 'Wzrost przychodów r/r',
+    description: '(Przychody bieżący okres - Przychody rok wcześniej) / Przychody rok wcześniej',
+    unitType: 'PERCENT',
+    compileStatus: 'COMPILED',
+    resolvedOutputUnit: 'PERCENT',
+    periodConvention: 'POINT_IN_TIME',
+    negativeDenominatorPolicy: 'FORCE_NA',
+    requiredCanonicalLineCodes: ['REVENUE'],
+  },
+  {
+    kpiCatalogId: 'cat-5',
+    kpiCode: 'NET_MARGIN_PCT',
+    catalogVersion: 1,
+    status: 'ACTIVE',
+    tier: 'UNIVERSAL',
+    industryCode: null,
+    category: 'Rentowność',
+    kpiName: 'Marża netto',
+    description: 'Zysk netto / Przychody',
+    unitType: 'PERCENT',
+    compileStatus: 'COMPILED',
+    resolvedOutputUnit: 'PERCENT',
+    periodConvention: 'POINT_IN_TIME',
+    negativeDenominatorPolicy: 'FORCE_NA',
+    requiredCanonicalLineCodes: ['REVENUE', 'NET_INCOME'],
+  },
+  {
+    kpiCatalogId: 'cat-6',
+    kpiCode: 'ASSET_TURNOVER',
+    catalogVersion: 1,
+    status: 'ACTIVE',
+    tier: 'INDUSTRY',
+    industryCode: 'MANUFACTURING',
+    category: 'Operacje',
+    kpiName: 'Rotacja aktywów',
+    description: 'Przychody / Aktywa razem',
+    unitType: 'RATIO',
+    compileStatus: 'COMPILED',
+    resolvedOutputUnit: 'RATIO',
+    periodConvention: 'POINT_IN_TIME',
+    negativeDenominatorPolicy: 'FORCE_NA',
+    requiredCanonicalLineCodes: ['REVENUE', 'TOTAL_ASSETS'],
+  },
 ];
 
 function kpiValue(overrides: Record<string, unknown>): Record<string, unknown> {
@@ -114,7 +173,19 @@ const KPI_VALUES_BY_SCENE: Record<Scene, Record<string, unknown>[]> = {
     kpiValue({ kpiValueId: 'kv-gm-2026', kpiCode: 'GROSS_MARGIN_PCT', kpiName: 'Marża brutto', periodId: 'p-2026', value: { status: 'PRESENT_NONZERO', valueDecimal: '0.4', nativeCurrency: 'PLN', presentationCurrency: 'PLN', unit: 'UNITS', multiplier: '1' }, interpretationText: 'Marża rośnie dzięki niższym kosztom materiałów.' }),
     kpiValue({ kpiValueId: 'kv-eb-2025', kpiCode: 'EBITDA_MARGIN_PCT', kpiName: 'Marża EBITDA', periodId: 'p-2025', value: { status: 'PRESENT_NONZERO', valueDecimal: '0.12', nativeCurrency: 'PLN', presentationCurrency: 'PLN', unit: 'UNITS', multiplier: '1' } }),
     kpiValue({ kpiValueId: 'kv-eb-2026', kpiCode: 'EBITDA_MARGIN_PCT', kpiName: 'Marża EBITDA', periodId: 'p-2026', value: { status: 'PRESENT_ZERO', valueDecimal: '0', nativeCurrency: 'PLN', presentationCurrency: 'PLN', unit: 'UNITS', multiplier: '1' } }),
+    // ★ FIXC: 2025 was previously missing entirely for this KPI (only 2026 existed, as NA) —
+    // real analyses show both periods where data exists; 2025 has real inventory data.
+    kpiValue({ kpiValueId: 'kv-inv-2025', kpiCode: 'INVENTORY_DAYS', kpiName: 'Dni zapasów', category: 'Operacje', tier: 'INDUSTRY', periodId: 'p-2025', value: { status: 'PRESENT_NONZERO', valueDecimal: '58', nativeCurrency: 'PLN', presentationCurrency: 'PLN', unit: 'DAYS', multiplier: '1' } }),
     kpiValue({ kpiValueId: 'kv-inv-2026', kpiCode: 'INVENTORY_DAYS', kpiName: 'Dni zapasów', category: 'Operacje', tier: 'INDUSTRY', periodId: 'p-2026', value: { status: 'NA', valueDecimal: null, nativeCurrency: 'PLN', presentationCurrency: 'PLN', unit: 'DAYS', multiplier: '1' } }),
+    // ★ FIXC: three more KPIs (below), completing the MANUFACTURING recommended set — see CATALOG
+    // comment above. Only 2026 for REVENUE_GROWTH_YOY (a YoY metric needs no separate 2025 row,
+    // it already compares against 2025 internally) — same shape choice the existing KPIs made
+    // (EBITDA_MARGIN_PCT/GROSS_MARGIN_PCT show both periods because they ARE point-in-time).
+    kpiValue({ kpiValueId: 'kv-revg-2026', kpiCode: 'REVENUE_GROWTH_YOY', kpiName: 'Wzrost przychodów r/r', category: 'Wzrost', periodId: 'p-2026', value: { status: 'PRESENT_NONZERO', valueDecimal: '0.08', nativeCurrency: 'PLN', presentationCurrency: 'PLN', unit: 'UNITS', multiplier: '1' }, interpretationText: 'Wzrost napędzany nowym kontraktem B2B (Q2 wdrożenie).' }),
+    kpiValue({ kpiValueId: 'kv-nm-2025', kpiCode: 'NET_MARGIN_PCT', kpiName: 'Marża netto', periodId: 'p-2025', value: { status: 'PRESENT_NONZERO', valueDecimal: '0.06', nativeCurrency: 'PLN', presentationCurrency: 'PLN', unit: 'UNITS', multiplier: '1' } }),
+    kpiValue({ kpiValueId: 'kv-nm-2026', kpiCode: 'NET_MARGIN_PCT', kpiName: 'Marża netto', periodId: 'p-2026', value: { status: 'PRESENT_NONZERO', valueDecimal: '0.09', nativeCurrency: 'PLN', presentationCurrency: 'PLN', unit: 'UNITS', multiplier: '1' } }),
+    kpiValue({ kpiValueId: 'kv-at-2025', kpiCode: 'ASSET_TURNOVER', kpiName: 'Rotacja aktywów', category: 'Operacje', tier: 'INDUSTRY', periodId: 'p-2025', value: { status: 'PRESENT_NONZERO', valueDecimal: '1.4', nativeCurrency: 'PLN', presentationCurrency: 'PLN', unit: 'UNITS', multiplier: '1' } }),
+    kpiValue({ kpiValueId: 'kv-at-2026', kpiCode: 'ASSET_TURNOVER', kpiName: 'Rotacja aktywów', category: 'Operacje', tier: 'INDUSTRY', periodId: 'p-2026', value: { status: 'PRESENT_NONZERO', valueDecimal: '1.5', nativeCurrency: 'PLN', presentationCurrency: 'PLN', unit: 'UNITS', multiplier: '1' } }),
   ],
   approved: [
     kpiValue({ kpiValueId: 'kv-gm-2026', kpiCode: 'GROSS_MARGIN_PCT', kpiName: 'Marża brutto', periodId: 'p-2026', value: { status: 'PRESENT_NONZERO', valueDecimal: '0.4', nativeCurrency: 'PLN', presentationCurrency: 'PLN', unit: 'UNITS', multiplier: '1' } }),
