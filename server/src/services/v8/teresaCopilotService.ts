@@ -3140,11 +3140,16 @@ async function handleRoiPirLessonsDraft(
   if (!draft) throw new TeresaCopilotError('pir_lessons_draft payload missing', 'P08_ROI_INVALID_PAYLOAD');
   const { resource_id: pirId } = roiContext.target_resource;
 
+  // RN-G5: recordRoiPirTeresaLessonsDraft now requires an `access` context
+  // (commandCapabilityGuard.ts) — resolved for the REAL human userId, same
+  // pattern as resolveTeresaKpiAccess for the KPI handoff above.
+  const access = await resolveEffectiveAccess({ userId, organizationId });
   const outcome = await recordRoiPirTeresaLessonsDraft({
     pirId,
     caseId: roiContext.case_id,
     organizationId,
     expectedVersion: roiContext.expected_version,
+    access,
     // `RoiPirLessonsDraftPayload` (a specific interface, no index
     // signature) structurally satisfies `Record<string, unknown>` at
     // runtime (it IS a plain object) but not always under every tsconfig's
