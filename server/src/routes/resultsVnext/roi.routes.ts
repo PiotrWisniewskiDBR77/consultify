@@ -859,6 +859,7 @@ router.put(
       const { caseId } = req.params as { caseId: string };
       if (!(await requireExistingRoiCase(auth, caseId, res))) return;
       const body = req.body as import('zod').infer<typeof CaptureOrUpdateCalculationPolicySchema>;
+      const access = await resolveAccess(req, auth);
       const outcome = await captureOrUpdateCalculationPolicy({
         organizationId: auth.organizationId,
         caseId,
@@ -876,6 +877,7 @@ router.put(
         idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
         correlationId: getCorrelationId(req),
         reason: body.reason ?? null,
+        access,
       });
       res.status(200).json({
         outcome: outcome.outcome,
@@ -1774,6 +1776,7 @@ router.post(
       const { caseId } = req.params as { caseId: string };
       if (!(await requireExistingRoiCase(auth, caseId, res))) return;
       const body = req.body as import('zod').infer<typeof CreateRoiCalculationRunSchema>;
+      const access = await resolveAccess(req, auth);
       const outcome = await createRoiCalculationRun({
         organizationId: auth.organizationId,
         caseId,
@@ -1783,6 +1786,7 @@ router.post(
         idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
         correlationId: getCorrelationId(req),
         reason: body.reason ?? null,
+        access,
       });
       res.status(outcome.outcome === 'applied' ? 201 : 200).json({
         outcome: outcome.outcome,

@@ -25,6 +25,10 @@ import type { PoolClient } from 'pg';
 import { toNullableNumber } from '../kpi/kpiTypes.js';
 import { computeStateHash } from '../kpi/kpiDefinitionCommands.js';
 import { executeAtomicCreate, type AtomicCommandOutcome, type AtomicEventInput } from '../platform/atomicWrite.js';
+import {
+  assertCommandCapability,
+  type CommandAccessContext,
+} from '../platform/commandCapabilityGuard.js';
 
 import { ROI_CALCULATION_ENGINE_VERSION, runRoiCalculationEngine } from './engine/roiCalculationEngine.js';
 import type {
@@ -344,7 +348,13 @@ export interface CreateRoiCalculationRunInput {
   correlationId?: string;
   causationId?: string | null;
   reason?: string | null;
+  access: CommandAccessContext;
 }
+
+// RN-G5 — command capability names (docs/product/results-vnext/RN_G5_AUTHZ_DESIGN.md)
+export const ROI_CALCULATION_RUN_CAPABILITIES = {
+  create: 'results.roi.calculation_run.create',
+} as const;
 
 const RUNNABLE_STATUSES: ReadonlySet<string> = new Set(['modeling', 'ready_for_review']);
 
@@ -369,6 +379,7 @@ export async function createRoiCalculationRun(
     correlationId,
     causationId = null,
     reason = null,
+    access,
   } = input;
 
   return executeAtomicCreate<RoiCalculationRun>({
@@ -382,6 +393,14 @@ export async function createRoiCalculationRun(
       if (!caseRow) {
         throw new RoiCalculationRunValidationError(`ROI case ${caseId} not found`, 'CASE_NOT_FOUND', { caseId });
       }
+
+      assertCommandCapability({
+        access,
+        actorUserId,
+        capability: ROI_CALCULATION_RUN_CAPABILITIES.create,
+        responsibleUserIds: [caseRow.owner_user_id],
+      });
+
       if (!RUNNABLE_STATUSES.has(caseRow.status)) {
         throw new RoiCalculationRunValidationError(
           `ROI case ${caseId} is "${caseRow.status}" — a calculation run may only be created while "modeling" or "ready_for_review"`,
