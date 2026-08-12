@@ -429,17 +429,31 @@ export function buildKpiScorecardItemColumns(isPolish: boolean): TableColumn[] {
   ];
 }
 
-const ITEM_NOT_BUILT_NOTE = {
-  pl: 'Zmiana kolejności / usuwanie pozycji jeszcze nie zbudowane w tym pakiecie — rejestr jest list+preview (endpointy PATCH/DELETE istnieją po stronie serwera).',
-  en: 'Reordering / removing items is not built in this package yet — this is list+preview only (the PATCH/DELETE endpoints exist server-side).',
-};
+/** RN-G5 §G #8 — real reorder/remove wiring (was a client-side-only
+ * "not built" lock in the P1 read-only package). `isFirst`/`isLast` are
+ * computed by the caller from the CURRENTLY VISIBLE (post-role-filter) row
+ * order — moving an edge row in that direction is genuinely impossible, a
+ * real state lock (TRIADA §C3), not a "feature not built" one. */
+export interface KpiScorecardItemRowMenuHandlers {
+  onPreview: (row: KpiScorecardItemDto) => void;
+  onOpenKpi: (kpiId: string) => void;
+  onMoveUp: (row: KpiScorecardItemDto) => void;
+  onMoveDown: (row: KpiScorecardItemDto) => void;
+  onRemove: (row: KpiScorecardItemDto) => void;
+  isFirst: boolean;
+  isLast: boolean;
+  busy?: boolean;
+}
 
 export function buildKpiScorecardItemRowMenu(
   row: KpiScorecardItemDto,
   isPolish: boolean,
-  handlers: { onPreview: (row: KpiScorecardItemDto) => void; onOpenKpi: (kpiId: string) => void }
+  handlers: KpiScorecardItemRowMenuHandlers
 ): StandardRowMenu {
-  const notBuiltReason = isPolish ? ITEM_NOT_BUILT_NOTE.pl : ITEM_NOT_BUILT_NOTE.en;
+  const edgeReason = {
+    up: isPolish ? 'Ta pozycja jest już pierwsza.' : 'This item is already first.',
+    down: isPolish ? 'Ta pozycja jest już ostatnia.' : 'This item is already last.',
+  };
   return {
     primary: [
       {
@@ -449,22 +463,39 @@ export function buildKpiScorecardItemRowMenu(
       },
     ],
     statusTransitions: [
-      { id: 'reorder', label: isPolish ? 'Zmień kolejność' : 'Change order', disabled: true, note: notBuiltReason },
+      handlers.isFirst
+        ? lockedRowMenuAction({ id: 'move-up', label: isPolish ? 'Przenieś w górę' : 'Move up' }, edgeReason.up)
+        : {
+            id: 'move-up',
+            label: isPolish ? 'Przenieś w górę' : 'Move up',
+            onClick: () => handlers.onMoveUp(row),
+            disabled: handlers.busy,
+          },
+      handlers.isLast
+        ? lockedRowMenuAction({ id: 'move-down', label: isPolish ? 'Przenieś w dół' : 'Move down' }, edgeReason.down)
+        : {
+            id: 'move-down',
+            label: isPolish ? 'Przenieś w dół' : 'Move down',
+            onClick: () => handlers.onMoveDown(row),
+            disabled: handlers.busy,
+          },
     ],
     universalHandlers: {
       preview: () => handlers.onPreview(row),
     },
     destructive: {
       label: isPolish ? 'Usuń pozycję' : 'Remove item',
-      note: notBuiltReason,
+      onClick: () => handlers.onRemove(row),
     },
   };
 }
 
 export interface KpiScorecardItemPreviewCtx {
   isPolish: boolean;
+  busy?: boolean;
   onClose: () => void;
   onOpenKpi: (kpiId: string) => void;
+  onRemove: (row: KpiScorecardItemDto) => void;
 }
 
 export function buildKpiScorecardItemPreview(
@@ -500,6 +531,13 @@ export function buildKpiScorecardItemPreview(
           variant: 'neutral',
           label: t('Otwórz KPI', 'Open KPI'),
           onClick: () => ctx.onOpenKpi(row.kpiId),
+        },
+        {
+          id: 'remove-item',
+          variant: 'destructive',
+          label: t('Usuń pozycję', 'Remove item'),
+          onClick: () => ctx.onRemove(row),
+          disabled: ctx.busy,
         },
       ],
     },
@@ -562,27 +600,25 @@ export function buildKpiScorecardSnapshotColumns(isPolish: boolean): TableColumn
   ];
 }
 
-const SNAPSHOT_NOT_BUILT_NOTE = {
-  pl: 'Publikacja migawki jeszcze nie zbudowana w tym pakiecie — rejestr jest list+preview (endpoint POST .../publish istnieje po stronie serwera).',
-  en: 'Publishing a snapshot is not built in this package yet — this is list+preview only (the POST .../publish endpoint exists server-side).',
-};
-
 const SNAPSHOT_TERMINAL_NOTE = {
   pl: 'Migawka nie jest już szkicem — publikacja niedostępna.',
   en: 'Snapshot is no longer a draft — publishing is unavailable.',
 };
 
+export interface KpiScorecardSnapshotRowMenuHandlers {
+  onPreview: (row: KpiScorecardReviewSnapshotDto) => void;
+  onPublish: (row: KpiScorecardReviewSnapshotDto) => void;
+  busy?: boolean;
+}
+
 export function buildKpiScorecardSnapshotRowMenu(
   row: KpiScorecardReviewSnapshotDto,
   isPolish: boolean,
-  handlers: { onPreview: (row: KpiScorecardReviewSnapshotDto) => void }
+  handlers: KpiScorecardSnapshotRowMenuHandlers
 ): StandardRowMenu {
-  // Two DIFFERENT disabled reasons on purpose (TRIADA §C3 — distinguish a
-  // real business/state lock from "not built yet" in this package): draft
-  // rows COULD publish once the write path is built; published/superseded
-  // rows can NEVER publish again (real terminal state), regardless.
+  // Real terminal-state lock (TRIADA §C3) — published/superseded rows can
+  // NEVER publish again, regardless of who's asking.
   const isDraft = row.status === 'draft';
-  const reason = isPolish ? SNAPSHOT_NOT_BUILT_NOTE.pl : SNAPSHOT_NOT_BUILT_NOTE.en;
   const terminalReason = isPolish ? SNAPSHOT_TERMINAL_NOTE.pl : SNAPSHOT_TERMINAL_NOTE.en;
 
   return {
@@ -591,7 +627,12 @@ export function buildKpiScorecardSnapshotRowMenu(
     ],
     statusTransitions: [
       isDraft
-        ? { id: 'publish', label: isPolish ? 'Opublikuj' : 'Publish', disabled: true, note: reason }
+        ? {
+            id: 'publish',
+            label: isPolish ? 'Opublikuj' : 'Publish',
+            onClick: () => handlers.onPublish(row),
+            disabled: handlers.busy,
+          }
         : lockedRowMenuAction({ id: 'publish', label: isPolish ? 'Opublikuj' : 'Publish' }, terminalReason),
     ],
     universalHandlers: {
@@ -602,7 +643,9 @@ export function buildKpiScorecardSnapshotRowMenu(
 
 export interface KpiScorecardSnapshotPreviewCtx {
   isPolish: boolean;
+  busy?: boolean;
   onClose: () => void;
+  onPublish: (row: KpiScorecardReviewSnapshotDto) => void;
 }
 
 export function buildKpiScorecardSnapshotPreview(
@@ -610,6 +653,7 @@ export function buildKpiScorecardSnapshotPreview(
   ctx: KpiScorecardSnapshotPreviewCtx
 ): StandardPreviewProps {
   const t = (pl: string, en: string) => (ctx.isPolish ? pl : en);
+  const isDraft = row.status === 'draft';
   return {
     title: `${formatKpiScorecardDate(row.reviewPeriodStart, ctx.isPolish)} – ${formatKpiScorecardDate(row.reviewPeriodEnd, ctx.isPolish)}`,
     onClose: ctx.onClose,
@@ -617,11 +661,15 @@ export function buildKpiScorecardSnapshotPreview(
       pills: [
         { label: kpiScorecardSnapshotStatusLabel(row.status, ctx.isPolish), tone: KPI_SCORECARD_SNAPSHOT_STATUS_TONE[row.status] },
       ],
-      recommendation:
-        row.status === 'draft'
+      recommendation: isDraft
+        ? t(
+            'Szkic migawki — opublikuj, aby zastąpić poprzednią opublikowaną migawkę tej karty wyników.',
+            "Draft snapshot — publish it to replace this scorecard's previous published snapshot."
+          )
+        : row.status === 'superseded'
           ? t(
-              'Szkic migawki — publikacja jeszcze nie zbudowana w tym pakiecie.',
-              'Draft snapshot — publishing is not built in this package yet.'
+              'Migawka zastąpiona — nowsza migawka jest teraz opublikowana.',
+              'Snapshot superseded — a newer snapshot is now published.'
             )
           : undefined,
     },
@@ -644,5 +692,18 @@ export function buildKpiScorecardSnapshotPreview(
     },
     ai: { hints: [], disabled: true, disabledTooltip: t('Wkrótce', 'Coming soon') },
     relations: [],
+    actions: isDraft
+      ? {
+          resolutions: [
+            {
+              id: 'publish',
+              variant: 'positive',
+              label: t('Opublikuj', 'Publish'),
+              onClick: () => ctx.onPublish(row),
+              disabled: ctx.busy,
+            },
+          ],
+        }
+      : undefined,
   };
 }

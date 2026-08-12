@@ -53,7 +53,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { Blocks } from 'lucide-react';
+import { Blocks, Plus } from 'lucide-react';
 
 import { EmptyState } from '@/components/shared/states';
 import type { StandardCounterChip, StandardModuleTab } from '@/components/standard';
@@ -65,11 +65,17 @@ import { isResultsVNextFlagEnabled } from '../resultsVNextFeatureFlags';
 import type { ResultsVNextForbiddenDetail } from '../types';
 import {
   activateKpiScorecard,
+  addKpiScorecardItem,
   archiveKpiScorecard,
+  createKpiScorecardReviewSnapshot,
   getKpiScorecard,
   getKpiScorecardStatusDistribution,
+  httpErrorCode,
   listKpiScorecardItems,
   listKpiScorecardReviewSnapshots,
+  publishKpiScorecardReviewSnapshot,
+  removeKpiScorecardItem,
+  reorderKpiScorecardItems,
   suspendKpiScorecard,
   type KpiScorecardDto,
   type KpiScorecardItemDto,
@@ -87,10 +93,28 @@ import {
   buildKpiScorecardSnapshotPreview,
   buildKpiScorecardSnapshotRowMenu,
 } from './kpiScorecardPresenters';
-import { kpiScorecardItemRoleLabel, kpiScorecardSnapshotStatusLabel } from './kpiScorecardMappers';
+import {
+  formatKpiScorecardDate,
+  kpiScorecardItemRoleLabel,
+  kpiScorecardSnapshotStatusLabel,
+} from './kpiScorecardMappers';
+import {
+  AddKpiScorecardItemModal,
+  RemoveKpiScorecardItemDialog,
+  type AddKpiScorecardItemFormValues,
+} from './KpiScorecardItemDialogs';
+import {
+  CreateKpiScorecardReviewSnapshotModal,
+  PublishKpiScorecardReviewSnapshotDialog,
+  type CreateKpiScorecardReviewSnapshotFormValues,
+} from './KpiScorecardSnapshotDialogs';
 
 type DetailTab = 'items' | 'snapshots';
 type PendingAction = 'activate' | 'suspend' | 'archive' | null;
+
+function conflictFlag(err: unknown): boolean {
+  return httpErrorCode(err) === 'STALE_VERSION' || (err as { status?: number })?.status === 409;
+}
 
 function withId<T extends object>(row: T, idKey: keyof T): T & { id: string } {
   return { ...row, id: String(row[idKey]) };
@@ -205,11 +229,188 @@ export const ResultsKpiScorecardDetailPage: React.FC = () => {
     [navigate]
   );
 
+  // ==========================================
+  // RN-G5 §G #8 — item/snapshot write actions. Every one below CASes on
+  // `scorecard.rowVersion` (the scorecard aggregate's own version — see
+  // `kpiScorecardCommands.ts`'s `BaseScorecardCommandInput`, NOT a
+  // per-item/per-snapshot version) and reloads BOTH the scorecard record
+  // (rowVersion bumps on every write) and the affected list on success.
+  // ==========================================
+
+  const [addItemOpen, setAddItemOpen] = useState(false);
+  const [addItemBusy, setAddItemBusy] = useState(false);
+  const [addItemError, setAddItemError] = useState<string | null>(null);
+  const [addItemConflict, setAddItemConflict] = useState(false);
+
+  const [removeItemTarget, setRemoveItemTarget] = useState<KpiScorecardItemDto | null>(null);
+  const [removeItemBusy, setRemoveItemBusy] = useState(false);
+  const [removeItemError, setRemoveItemError] = useState<string | null>(null);
+  const [removeItemConflict, setRemoveItemConflict] = useState(false);
+
+  const [reorderBusy, setReorderBusy] = useState(false);
+
+  const [createSnapshotOpen, setCreateSnapshotOpen] = useState(false);
+  const [createSnapshotBusy, setCreateSnapshotBusy] = useState(false);
+  const [createSnapshotError, setCreateSnapshotError] = useState<string | null>(null);
+  const [createSnapshotConflict, setCreateSnapshotConflict] = useState(false);
+
+  const [publishTarget, setPublishTarget] = useState<KpiScorecardReviewSnapshotDto | null>(null);
+  const [publishBusy, setPublishBusy] = useState(false);
+  const [publishError, setPublishError] = useState<string | null>(null);
+  const [publishConflict, setPublishConflict] = useState(false);
+
+  const handleAddItem = useCallback(
+    async (values: AddKpiScorecardItemFormValues) => {
+      if (!scorecard) return;
+      setAddItemBusy(true);
+      setAddItemError(null);
+      setAddItemConflict(false);
+      try {
+        await addKpiScorecardItem({
+          scorecardId: scorecard.scorecardId,
+          expectedVersion: scorecard.rowVersion,
+          kpiId: values.kpiId,
+          role: values.role,
+          reason: values.reason,
+        });
+        setAddItemOpen(false);
+        await Promise.all([loadScorecard(), loadItems()]);
+        toast.success(isPolish ? 'Dodano KPI do karty wyników.' : 'KPI added to the scorecard.');
+      } catch (err) {
+        setAddItemError(err instanceof Error ? err.message : String(err));
+        setAddItemConflict(conflictFlag(err));
+      } finally {
+        setAddItemBusy(false);
+      }
+    },
+    [scorecard, loadScorecard, loadItems, isPolish]
+  );
+
+  const handleRemoveItem = useCallback(
+    async (reason: string | null) => {
+      if (!scorecard || !removeItemTarget) return;
+      setRemoveItemBusy(true);
+      setRemoveItemError(null);
+      setRemoveItemConflict(false);
+      try {
+        await removeKpiScorecardItem({
+          scorecardId: scorecard.scorecardId,
+          itemId: removeItemTarget.itemId,
+          expectedVersion: scorecard.rowVersion,
+          reason,
+        });
+        setRemoveItemTarget(null);
+        setSelectedItemId((cur) => (cur === removeItemTarget.itemId ? null : cur));
+        await Promise.all([loadScorecard(), loadItems()]);
+        toast.success(isPolish ? 'Usunięto pozycję.' : 'Item removed.');
+      } catch (err) {
+        setRemoveItemError(err instanceof Error ? err.message : String(err));
+        setRemoveItemConflict(conflictFlag(err));
+      } finally {
+        setRemoveItemBusy(false);
+      }
+    },
+    [scorecard, removeItemTarget, loadScorecard, loadItems, isPolish]
+  );
+
+  /** Swaps `row`'s `sortOrder` with its immediate neighbour in the FULL
+   * (unfiltered) item list — role-chip filtering only changes what is
+   * VISIBLE, never the real underlying order, so this always reads from
+   * `items` (the full array), not `filteredItems`. */
+  const moveItem = useCallback(
+    async (row: KpiScorecardItemDto, direction: 'up' | 'down') => {
+      if (!scorecard || !items) return;
+      const sorted = [...items].sort((a, b) => a.sortOrder - b.sortOrder);
+      const idx = sorted.findIndex((i) => i.itemId === row.itemId);
+      const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
+      if (idx < 0 || swapIdx < 0 || swapIdx >= sorted.length) return;
+      const a = sorted[idx];
+      const b = sorted[swapIdx];
+      setReorderBusy(true);
+      try {
+        await reorderKpiScorecardItems({
+          scorecardId: scorecard.scorecardId,
+          expectedVersion: scorecard.rowVersion,
+          items: [
+            { itemId: a.itemId, sortOrder: b.sortOrder },
+            { itemId: b.itemId, sortOrder: a.sortOrder },
+          ],
+        });
+        await Promise.all([loadScorecard(), loadItems()]);
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : String(err));
+      } finally {
+        setReorderBusy(false);
+      }
+    },
+    [scorecard, items, loadScorecard, loadItems]
+  );
+
+  const handleCreateSnapshot = useCallback(
+    async (values: CreateKpiScorecardReviewSnapshotFormValues) => {
+      if (!scorecard) return;
+      setCreateSnapshotBusy(true);
+      setCreateSnapshotError(null);
+      setCreateSnapshotConflict(false);
+      try {
+        await createKpiScorecardReviewSnapshot({
+          scorecardId: scorecard.scorecardId,
+          reviewPeriodStart: values.reviewPeriodStart,
+          reviewPeriodEnd: values.reviewPeriodEnd,
+          reason: values.reason,
+        });
+        setCreateSnapshotOpen(false);
+        await Promise.all([loadScorecard(), loadSnapshots()]);
+        toast.success(isPolish ? 'Utworzono migawkę przeglądu.' : 'Review snapshot created.');
+      } catch (err) {
+        setCreateSnapshotError(err instanceof Error ? err.message : String(err));
+        setCreateSnapshotConflict(conflictFlag(err));
+      } finally {
+        setCreateSnapshotBusy(false);
+      }
+    },
+    [scorecard, loadScorecard, loadSnapshots, isPolish]
+  );
+
+  const handlePublishSnapshot = useCallback(
+    async (reason: string | null) => {
+      if (!scorecard || !publishTarget) return;
+      setPublishBusy(true);
+      setPublishError(null);
+      setPublishConflict(false);
+      try {
+        await publishKpiScorecardReviewSnapshot({
+          scorecardId: scorecard.scorecardId,
+          snapshotId: publishTarget.snapshotId,
+          expectedVersion: scorecard.rowVersion,
+          reason,
+        });
+        setPublishTarget(null);
+        await Promise.all([loadScorecard(), loadSnapshots()]);
+        toast.success(isPolish ? 'Migawka opublikowana.' : 'Snapshot published.');
+      } catch (err) {
+        setPublishError(err instanceof Error ? err.message : String(err));
+        setPublishConflict(conflictFlag(err));
+      } finally {
+        setPublishBusy(false);
+      }
+    },
+    [scorecard, publishTarget, loadScorecard, loadSnapshots, isPolish]
+  );
+
   const filteredItems = useMemo(() => {
     if (!items) return [];
     if (itemRoleChip === 'all') return items;
     return items.filter((i) => i.role === itemRoleChip);
   }, [items, itemRoleChip]);
+
+  // Full (unfiltered) order — drives the row-menu's `isFirst`/`isLast` edge
+  // lock (see `moveItem` doc comment: role-chip filtering never changes the
+  // real underlying `sortOrder`, only what is visible).
+  const fullSortedItems = useMemo(
+    () => (items ? [...items].sort((a, b) => a.sortOrder - b.sortOrder) : []),
+    [items]
+  );
 
   const filteredSnapshots = useMemo(() => {
     if (!snapshots) return [];
@@ -321,6 +522,7 @@ export const ResultsKpiScorecardDetailPage: React.FC = () => {
       },
     ];
 
+    const isArchived = scorecard?.lifecycleStatus === 'archived';
     return (
       <div className="h-full" data-testid="results-vnext-kpi-scorecard-detail-page">
         <ResultsVNextRegistryShell
@@ -333,6 +535,25 @@ export const ResultsKpiScorecardDetailPage: React.FC = () => {
             chips,
             activeChip: snapshotStatusChip,
             onChipChange: (id) => setSnapshotStatusChip(id as 'all' | KpiScorecardSnapshotStatus),
+            primaryCta: {
+              label: isPolish ? 'Nowa migawka' : 'New snapshot',
+              icon: Plus,
+              onClick: () =>
+                isArchived
+                  ? toast.error(
+                      isPolish
+                        ? 'Karta wyników zarchiwizowana — nie można tworzyć nowych migawek.'
+                        : 'Scorecard is archived — new snapshots cannot be created.'
+                    )
+                  : setCreateSnapshotOpen(true),
+              locked: isArchived,
+              lockedReason: isArchived
+                ? isPolish
+                  ? 'Karta wyników zarchiwizowana — nie można tworzyć nowych migawek.'
+                  : 'Scorecard is archived — new snapshots cannot be created.'
+                : undefined,
+              testId: 'kpi-scorecard-new-snapshot-cta',
+            },
           }}
           table={{
             columns: buildKpiScorecardSnapshotColumns(isPolish),
@@ -346,8 +567,8 @@ export const ResultsKpiScorecardDetailPage: React.FC = () => {
                 ? {
                     title: isPolish ? 'Brak migawek przeglądu' : 'No review snapshots yet',
                     description: isPolish
-                      ? 'Ta karta wyników nie ma jeszcze żadnej migawki przeglądu.'
-                      : 'This scorecard has no review snapshot yet.',
+                      ? 'Utwórz pierwszą migawkę przeglądu dla tej karty wyników.'
+                      : 'Create the first review snapshot for this scorecard.',
                   }
                 : undefined,
             emptyMessage:
@@ -361,6 +582,8 @@ export const ResultsKpiScorecardDetailPage: React.FC = () => {
             rowMenu: (row) =>
               buildKpiScorecardSnapshotRowMenu(row as unknown as KpiScorecardReviewSnapshotDto, isPolish, {
                 onPreview: (r) => setSelectedSnapshotId(r.snapshotId),
+                onPublish: (r) => setPublishTarget(r),
+                busy: publishBusy,
               }),
             defaultSort: { columnId: 'createdAt', direction: 'desc' },
           }}
@@ -368,12 +591,37 @@ export const ResultsKpiScorecardDetailPage: React.FC = () => {
             selectedSnapshot
               ? buildKpiScorecardSnapshotPreview(selectedSnapshot, {
                   isPolish,
+                  busy: publishBusy,
                   onClose: () => setSelectedSnapshotId(null),
+                  onPublish: (r) => setPublishTarget(r),
                 })
               : scorecardOverviewPreview
           }
           forbidden={forbidden}
           onForbiddenBack={() => navigate(ROUTES.RESULTS_KPI.ROOT)}
+        />
+        <CreateKpiScorecardReviewSnapshotModal
+          open={createSnapshotOpen}
+          onClose={() => (createSnapshotBusy ? undefined : setCreateSnapshotOpen(false))}
+          onSubmit={(values) => void handleCreateSnapshot(values)}
+          isPolish={isPolish}
+          busy={createSnapshotBusy}
+          errorMessage={createSnapshotError}
+          isConflict={createSnapshotConflict}
+        />
+        <PublishKpiScorecardReviewSnapshotDialog
+          open={!!publishTarget}
+          periodLabel={
+            publishTarget
+              ? `${formatKpiScorecardDate(publishTarget.reviewPeriodStart, isPolish)} – ${formatKpiScorecardDate(publishTarget.reviewPeriodEnd, isPolish)}`
+              : ''
+          }
+          isPolish={isPolish}
+          onClose={() => (publishBusy ? undefined : setPublishTarget(null))}
+          onSubmit={(reason) => void handlePublishSnapshot(reason)}
+          busy={publishBusy}
+          errorMessage={publishError}
+          isConflict={publishConflict}
         />
       </div>
     );
@@ -394,6 +642,8 @@ export const ResultsKpiScorecardDetailPage: React.FC = () => {
     },
   ];
 
+  const isScorecardArchived = scorecard?.lifecycleStatus === 'archived';
+
   return (
     <div className="h-full" data-testid="results-vnext-kpi-scorecard-detail-page">
       <ResultsVNextRegistryShell
@@ -406,6 +656,25 @@ export const ResultsKpiScorecardDetailPage: React.FC = () => {
           chips: itemChips,
           activeChip: itemRoleChip,
           onChipChange: (id) => setItemRoleChip(id as 'all' | KpiScorecardItemRole),
+          primaryCta: {
+            label: isPolish ? 'Dodaj KPI' : 'Add KPI',
+            icon: Plus,
+            onClick: () =>
+              isScorecardArchived
+                ? toast.error(
+                    isPolish
+                      ? 'Karta wyników zarchiwizowana — nie można dodawać pozycji.'
+                      : 'Scorecard is archived — items cannot be added.'
+                  )
+                : setAddItemOpen(true),
+            locked: isScorecardArchived,
+            lockedReason: isScorecardArchived
+              ? isPolish
+                ? 'Karta wyników zarchiwizowana — nie można dodawać pozycji.'
+                : 'Scorecard is archived — items cannot be added.'
+              : undefined,
+            testId: 'kpi-scorecard-add-item-cta',
+          },
         }}
         table={{
           columns: buildKpiScorecardItemColumns(isPolish),
@@ -419,8 +688,8 @@ export const ResultsKpiScorecardDetailPage: React.FC = () => {
               ? {
                   title: isPolish ? 'Brak pozycji na karcie wyników' : 'No items on this scorecard',
                   description: isPolish
-                    ? 'Dodaj pierwszy KPI do tej karty wyników (poza zakresem tego pakietu).'
-                    : 'Add the first KPI to this scorecard (out of scope for this package).',
+                    ? 'Dodaj pierwszy KPI do tej karty wyników.'
+                    : 'Add the first KPI to this scorecard.',
                 }
               : undefined,
           emptyMessage:
@@ -435,16 +704,49 @@ export const ResultsKpiScorecardDetailPage: React.FC = () => {
             buildKpiScorecardItemRowMenu(row as unknown as KpiScorecardItemDto, isPolish, {
               onPreview: (r) => setSelectedItemId(r.itemId),
               onOpenKpi,
+              onMoveUp: (r) => void moveItem(r, 'up'),
+              onMoveDown: (r) => void moveItem(r, 'down'),
+              onRemove: (r) => setRemoveItemTarget(r),
+              isFirst: fullSortedItems[0]?.itemId === (row as unknown as KpiScorecardItemDto).itemId,
+              isLast:
+                fullSortedItems[fullSortedItems.length - 1]?.itemId ===
+                (row as unknown as KpiScorecardItemDto).itemId,
+              busy: reorderBusy,
             }),
           defaultSort: { columnId: 'sortOrder', direction: 'asc' },
         }}
         preview={
           selectedItem
-            ? buildKpiScorecardItemPreview(selectedItem, { isPolish, onClose: () => setSelectedItemId(null), onOpenKpi })
+            ? buildKpiScorecardItemPreview(selectedItem, {
+                isPolish,
+                busy: removeItemBusy,
+                onClose: () => setSelectedItemId(null),
+                onOpenKpi,
+                onRemove: (r) => setRemoveItemTarget(r),
+              })
             : scorecardOverviewPreview
         }
         forbidden={forbidden}
         onForbiddenBack={() => navigate(ROUTES.RESULTS_KPI.ROOT)}
+      />
+      <AddKpiScorecardItemModal
+        open={addItemOpen}
+        onClose={() => (addItemBusy ? undefined : setAddItemOpen(false))}
+        onSubmit={(values) => void handleAddItem(values)}
+        isPolish={isPolish}
+        busy={addItemBusy}
+        errorMessage={addItemError}
+        isConflict={addItemConflict}
+      />
+      <RemoveKpiScorecardItemDialog
+        open={!!removeItemTarget}
+        itemLabel={removeItemTarget ? removeItemTarget.kpiId : ''}
+        isPolish={isPolish}
+        onClose={() => (removeItemBusy ? undefined : setRemoveItemTarget(null))}
+        onSubmit={(reason) => void handleRemoveItem(reason)}
+        busy={removeItemBusy}
+        errorMessage={removeItemError}
+        isConflict={removeItemConflict}
       />
     </div>
   );
