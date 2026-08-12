@@ -17,6 +17,7 @@
  */
 import React, { useEffect, useState } from 'react';
 
+import { FinanceStatusAnnouncer } from '@/components/Finance/shared/FinanceStatusAnnouncer';
 import { useFinanceCommentsFlag } from '@/hooks/useFinanceCommentsFlag';
 import {
   addFinanceReviewChecklistItem,
@@ -59,6 +60,11 @@ export function FinanceCommentsPanel({ artifactId, businessVersionId, className 
   const [draftMentions, setDraftMentions] = useState('');
   const [newChecklistItem, setNewChecklistItem] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  // ★ NAPRAWA a11y (Pakiet I, wymaganie #7): akcje (dodaj/rozwiąż/otwórz
+  // ponownie/checklist) zapisują się w tle bez żadnego wizualnego "toast" —
+  // jedyny sygnał był wzrokowy (lista się przerysowuje). `actionMessage`
+  // niesie ten sam komunikat do stałego `role="status"` poniżej.
+  const [actionMessage, setActionMessage] = useState<string | null>(null);
 
   const load = React.useCallback(() => {
     if (!enabled) return;
@@ -97,6 +103,7 @@ export function FinanceCommentsPanel({ artifactId, businessVersionId, className 
       setDraftBody('');
       setDraftBlocking(false);
       setDraftMentions('');
+      setActionMessage('Komentarz dodany.');
       load();
     } catch (err) {
       setState({ kind: 'error', ...describeFinanceV2Error(err) });
@@ -108,6 +115,7 @@ export function FinanceCommentsPanel({ artifactId, businessVersionId, className 
   async function handleResolve(commentId: string) {
     try {
       await resolveFinanceComment(commentId);
+      setActionMessage('Komentarz oznaczony jako rozwiązany.');
       load();
     } catch (err) {
       setState({ kind: 'error', ...describeFinanceV2Error(err) });
@@ -117,6 +125,7 @@ export function FinanceCommentsPanel({ artifactId, businessVersionId, className 
   async function handleReopen(commentId: string) {
     try {
       await reopenFinanceComment(commentId);
+      setActionMessage('Komentarz otwarty ponownie.');
       load();
     } catch (err) {
       setState({ kind: 'error', ...describeFinanceV2Error(err) });
@@ -128,6 +137,7 @@ export function FinanceCommentsPanel({ artifactId, businessVersionId, className 
     try {
       await addFinanceReviewChecklistItem({ businessVersionId, item: newChecklistItem.trim(), required: true });
       setNewChecklistItem('');
+      setActionMessage('Pozycja checklisty dodana.');
       load();
     } catch (err) {
       setState({ kind: 'error', ...describeFinanceV2Error(err) });
@@ -138,8 +148,10 @@ export function FinanceCommentsPanel({ artifactId, businessVersionId, className 
     try {
       if (item.checkedBy) {
         await uncheckFinanceReviewChecklistItem(item.id);
+        setActionMessage(`Odznaczono: ${item.item}.`);
       } else {
         await checkFinanceReviewChecklistItem(item.id);
+        setActionMessage(`Odhaczono: ${item.item}.`);
       }
       load();
     } catch (err) {
@@ -149,18 +161,24 @@ export function FinanceCommentsPanel({ artifactId, businessVersionId, className 
 
   if (state.kind === 'loading') {
     return (
-      <div className={`rounded-lg border border-c-border-subtle bg-c-surface p-3 ${className ?? ''}`} data-testid="comments-panel-loading">
-        <p className="text-xs text-c-text-secondary">Ładowanie komentarzy…</p>
-      </div>
+      <>
+        <FinanceStatusAnnouncer message="Ładowanie komentarzy…" />
+        <div className={`rounded-lg border border-c-border-subtle bg-c-surface p-3 ${className ?? ''}`} data-testid="comments-panel-loading">
+          <p className="text-xs text-c-text-secondary">Ładowanie komentarzy…</p>
+        </div>
+      </>
     );
   }
 
   if (state.kind === 'error') {
     return (
-      <div className={`rounded-lg border border-c-danger/40 bg-c-surface p-3 ${className ?? ''}`} data-testid="comments-panel-error">
-        <p className="text-sm font-medium text-c-danger">{state.title}</p>
-        <p className="text-xs text-c-text-secondary">{state.detail}</p>
-      </div>
+      <>
+        <FinanceStatusAnnouncer message={`Błąd: ${state.title}`} priority="assertive" />
+        <div className={`rounded-lg border border-c-danger/40 bg-c-surface p-3 ${className ?? ''}`} data-testid="comments-panel-error">
+          <p className="text-sm font-medium text-c-danger">{state.title}</p>
+          <p className="text-xs text-c-text-secondary">{state.detail}</p>
+        </div>
+      </>
     );
   }
 
@@ -169,8 +187,13 @@ export function FinanceCommentsPanel({ artifactId, businessVersionId, className 
 
   return (
     <div className={`flex flex-col gap-4 rounded-lg border border-c-border-subtle bg-c-surface p-3 ${className ?? ''}`} data-testid="finance-comments-panel">
+      <FinanceStatusAnnouncer message={actionMessage ?? 'Komentarze wczytane.'} />
+      {/* ★ NAPRAWA a11y (Pakiet I): `text-c-danger` na tle `bg-c-danger/10`
+          mierzył 3.92:1 (axe, próg 4.5:1) — ten sam odcień w tle i tekście
+          obniża kontrast mimo że c-danger na czystej powierzchni przechodzi.
+          `text-red-800`/dark `red-300` to konwencja `StatusChip` TONE_SHELL. */}
       {hasUnresolvedBlocking ? (
-        <div className="rounded-md border border-c-danger/40 bg-c-danger/10 px-3 py-2 text-xs text-c-danger" data-testid="comments-blocking-banner">
+        <div className="rounded-md border border-c-danger/40 bg-c-danger/10 px-3 py-2 text-xs text-red-800 dark:text-red-300" data-testid="comments-blocking-banner">
           Są nierozwiązane komentarze blokujące — zatwierdzenie tej wersji jest wstrzymane do ich rozwiązania.
         </div>
       ) : null}
@@ -190,7 +213,7 @@ export function FinanceCommentsPanel({ artifactId, businessVersionId, className 
                 <p className="mt-1 text-xs text-c-text-primary">{comment.body}</p>
                 <div className="mt-1 flex flex-wrap items-center gap-2">
                   {comment.isBlocking ? (
-                    <span className="rounded-full border border-c-danger/40 bg-c-danger/10 px-1.5 py-0.5 text-[11px] text-c-danger">Blokujący</span>
+                    <span className="rounded-full border border-c-danger/40 bg-c-danger/10 px-1.5 py-0.5 text-[11px] text-red-800 dark:text-red-300">Blokujący</span>
                   ) : null}
                   {comment.mentions.length > 0 ? (
                     <span className="text-[11px] text-c-text-secondary">Wzmianki: {comment.mentions.join(', ')}</span>
@@ -198,12 +221,17 @@ export function FinanceCommentsPanel({ artifactId, businessVersionId, className 
                   {comment.resolvedAt ? (
                     <>
                       <span className="text-[11px] text-c-text-secondary">Rozwiązany {formatDate(comment.resolvedAt)}</span>
-                      <button type="button" className="text-[11px] font-medium text-c-focus hover:underline" onClick={() => handleReopen(comment.id)}>
+                      {/* ★ NAPRAWA a11y (Pakiet I): `--c-focus` to `rgba(37,99,235,0.4)`
+                          — 40% KRYCIA, zaprojektowany jako pierścień fokusa, NIE
+                          kolor tekstu. Jako `text-c-focus` dawał 1.8:1 (axe, próg
+                          4.5:1) — prawie niewidoczny link. `text-c-focus-solid`
+                          (`#2563eb`, pełne krycie) to właściwy token do tekstu. */}
+                      <button type="button" className="text-[11px] font-medium text-c-focus-solid hover:underline" onClick={() => handleReopen(comment.id)}>
                         Otwórz ponownie
                       </button>
                     </>
                   ) : (
-                    <button type="button" className="text-[11px] font-medium text-c-focus hover:underline" onClick={() => handleResolve(comment.id)}>
+                    <button type="button" className="text-[11px] font-medium text-c-focus-solid hover:underline" onClick={() => handleResolve(comment.id)}>
                       Oznacz jako rozwiązany
                     </button>
                   )}
@@ -263,13 +291,20 @@ export function FinanceCommentsPanel({ artifactId, businessVersionId, className 
         <ul className="flex flex-col gap-1" data-testid="checklist-items">
           {checklist.map((item) => (
             <li key={item.id} className="flex items-center gap-2 text-xs">
-              <input
-                type="checkbox"
-                checked={Boolean(item.checkedBy)}
-                onChange={() => handleToggleChecklistItem(item)}
-                className="h-3.5 w-3.5 rounded border-c-border-subtle text-c-focus focus:ring-c-focus"
-              />
-              <span className="text-c-text-primary">{item.item}</span>
+              {/* ★ NAPRAWA a11y (Pakiet I, wymaganie #5): checkbox nie miał
+                  ŻADNEJ programowo powiązanej nazwy (axe: "label" critical) —
+                  tekst pozycji był tylko wizualnie obok, nie <label>.
+                  Owinięcie w <label> daje niejawne (implicit) powiązanie bez
+                  zmiany layoutu/wyglądu. */}
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={Boolean(item.checkedBy)}
+                  onChange={() => handleToggleChecklistItem(item)}
+                  className="h-3.5 w-3.5 rounded border-c-border-subtle text-c-focus focus:ring-c-focus"
+                />
+                <span className="text-c-text-primary">{item.item}</span>
+              </label>
               {item.required ? <span className="text-[11px] text-c-text-secondary">(wymagane)</span> : null}
             </li>
           ))}

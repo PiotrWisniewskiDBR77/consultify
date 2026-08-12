@@ -1,0 +1,102 @@
+[
+  {
+    "id": "baseline",
+    "violationCount": 3,
+    "incompleteCount": 1,
+    "violationIds": [
+      "landmark-one-main",
+      "page-has-heading-one",
+      "region"
+    ]
+  },
+  {
+    "id": "statement-pack-v2",
+    "violationCount": 3,
+    "incompleteCount": 3,
+    "violationIds": [
+      "landmark-one-main",
+      "page-has-heading-one",
+      "region"
+    ]
+  },
+  {
+    "id": "prediction",
+    "violationCount": 3,
+    "incompleteCount": 1,
+    "violationIds": [
+      "landmark-one-main",
+      "page-has-heading-one",
+      "region"
+    ]
+  },
+  {
+    "id": "analysis",
+    "violationCount": 4,
+    "incompleteCount": 1,
+    "violationIds": [
+      "aria-prohibited-attr",
+      "landmark-one-main",
+      "page-has-heading-one",
+      "region"
+    ]
+  },
+  {
+    "id": "valuation",
+    "violationCount": 2,
+    "incompleteCount": 0,
+    "violationIds": [
+      "page-has-heading-one",
+      "region"
+    ]
+  },
+  {
+    "id": "lineage-navigator",
+    "violationCount": 3,
+    "incompleteCount": 2,
+    "violationIds": [
+      "landmark-one-main",
+      "page-has-heading-one",
+      "region"
+    ]
+  },
+  {
+    "id": "compare-panel",
+    "violationCount": 3,
+    "incompleteCount": 1,
+    "violationIds": [
+      "landmark-one-main",
+      "page-has-heading-one",
+      "region"
+    ]
+  },
+  {
+    "id": "comments-panel",
+    "violationCount": 3,
+    "incompleteCount": 1,
+    "violationIds": [
+      "landmark-one-main",
+      "page-has-heading-one",
+      "region"
+    ]
+  },
+  {
+    "id": "saved-views-panel",
+    "violationCount": 3,
+    "incompleteCount": 1,
+    "violationIds": [
+      "landmark-one-main",
+      "page-has-heading-one",
+      "region"
+    ]
+  },
+  {
+    "id": "export-import-panel",
+    "violationCount": 3,
+    "incompleteCount": 1,
+    "violationIds": [
+      "landmark-one-main",
+      "page-has-heading-one",
+      "region"
+    ]
+  }
+]

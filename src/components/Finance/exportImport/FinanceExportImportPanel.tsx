@@ -14,8 +14,9 @@
  * Za flagą `financeExportImportV1` (default OFF): przy `enabled=false`
  * renderuje `null` PRZED jakimkolwiek wywołaniem sieciowym.
  */
-import React, { useState } from 'react';
+import React, { useId, useState } from 'react';
 
+import { FinanceStatusAnnouncer } from '@/components/Finance/shared/FinanceStatusAnnouncer';
 import { useFinanceExportImportFlag } from '@/hooks/useFinanceExportImportFlag';
 import {
   applyFinanceImport,
@@ -34,6 +35,58 @@ export interface FinanceExportImportPanelProps {
 }
 
 type ExportState = { kind: 'idle' } | { kind: 'exporting' } | { kind: 'exported'; manifest: FinanceExcelManifestDto } | { kind: 'error'; title: string; detail: string };
+
+// ★ NAPRAWA a11y (Pakiet I, wymaganie #7 — "najczęściej pomijany punkt w
+// aplikacjach finansowych, gdzie compute trwa długo"): ten panel to
+// TRZYSTOPNIOWY przepływ (parse→podgląd różnic→zastosowanie transakcyjne),
+// każdy krok z realnym opóźnieniem sieciowym, a wcześniej WSZYSTKIE etapy
+// ("Wczytuję plik…", "Liczę podgląd różnic…", "Zapisuję…", błędy,
+// podsumowanie) były widoczne wyłącznie wzrokowo.
+function exportStateMessage(state: ExportState): string {
+  switch (state.kind) {
+    case 'idle':
+      return 'Eksport gotowy do uruchomienia.';
+    case 'exporting':
+      return 'Eksportuję plik .xlsx…';
+    case 'exported':
+      return `Eksport gotowy: wersja v${state.manifest.businessVersionNo}.`;
+    case 'error':
+      return `Błąd eksportu: ${state.title}`;
+    default: {
+      const _exhaustive: never = state;
+      return String(_exhaustive);
+    }
+  }
+}
+
+function importStateMessage(state: ImportState): string {
+  switch (state.kind) {
+    case 'idle':
+      return 'Import gotowy — wybierz plik .xlsx.';
+    case 'parsing':
+      return 'Wczytuję plik…';
+    case 'parsed':
+      return state.manifestIssues.length > 0
+        ? `Manifest ma problemy: ${state.manifestIssues.join('; ')}`
+        : `Wczytano ${state.rows.length} wierszy. Manifest OK.`;
+    case 'previewing':
+      return 'Liczę podgląd różnic…';
+    case 'previewed':
+      return state.preview.ok
+        ? `Podgląd gotowy: ${state.preview.diff.toAdd.length} dodanych, ${state.preview.diff.toChange.length} zmienionych, ${state.preview.diff.toClear.length} wyczyszczonych.`
+        : `Podgląd zablokowany: ${state.preview.rowErrors.length} błędów wierszy.`;
+    case 'applying':
+      return 'Zapisuję zmiany…';
+    case 'applied':
+      return `Zastosowano: dodane ${state.appliedCount.added}, zmienione ${state.appliedCount.changed}, wyczyszczone ${state.appliedCount.cleared}.`;
+    case 'error':
+      return `Błąd importu: ${state.title}`;
+    default: {
+      const _exhaustive: never = state;
+      return String(_exhaustive);
+    }
+  }
+}
 
 type ImportState =
   | { kind: 'idle' }
@@ -54,6 +107,7 @@ export function FinanceExportImportPanel({
   const { enabled } = useFinanceExportImportFlag();
   const [exportState, setExportState] = useState<ExportState>({ kind: 'idle' });
   const [importState, setImportState] = useState<ImportState>({ kind: 'idle' });
+  const importFileInputId = useId();
 
   if (!enabled) return null;
 
@@ -120,6 +174,14 @@ export function FinanceExportImportPanel({
 
   return (
     <div className={`flex flex-col gap-4 rounded-lg border border-c-border-subtle bg-c-surface p-3 ${className ?? ''}`} data-testid="finance-export-import-panel">
+      <FinanceStatusAnnouncer
+        message={exportStateMessage(exportState)}
+        priority={exportState.kind === 'error' ? 'assertive' : 'polite'}
+      />
+      <FinanceStatusAnnouncer
+        message={importStateMessage(importState)}
+        priority={importState.kind === 'error' ? 'assertive' : 'polite'}
+      />
       <div className="flex flex-col gap-1.5" data-testid="export-section">
         <p className="text-xs font-semibold text-c-text-secondary">Eksport (.xlsx)</p>
         <button
@@ -145,7 +207,20 @@ export function FinanceExportImportPanel({
 
       <div className="flex flex-col gap-2" data-testid="import-section">
         <p className="text-xs font-semibold text-c-text-secondary">Import (.xlsx) — transakcyjny, wszystko-albo-nic</p>
+        {/*
+          ★ NAPRAWA a11y (Pakiet I, wymaganie #5 "dostępne nazwy"): `<input
+          type="file">` bez powiązanej etykiety miał dostępną nazwę wyłącznie
+          z natywnego tekstu przycisku przeglądarki ("Choose File"/"Wybierz
+          plik") — nic nie mówiło, CZEGO ten plik dotyczy. `<label>`
+          jawnie powiązany przez `htmlFor`/`id` naprawia to bez zmiany
+          wyglądu (etykieta tekstowa i tak już była nad polem, teraz jest
+          też PROGRAMOWO powiązana).
+        */}
+        <label htmlFor={importFileInputId} className="text-xs font-medium text-c-text-primary">
+          Wybierz plik do importu (.xlsx)
+        </label>
         <input
+          id={importFileInputId}
           type="file"
           accept=".xlsx"
           data-testid="import-file-input"

@@ -29,10 +29,11 @@
  * akcepcie) — dostępny wyłącznie przez `dev-render/` i za flagą
  * `financeBaselineWorkspaceV1` (domyślnie OFF, CLAUDE.md #7).
  */
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import { FinanceErrorBoundary } from '@/components/Finance/shared/FinanceErrorBoundary';
 import { FinanceWorkspaceBar } from '@/components/Finance/shared/FinanceWorkspaceBar';
+import { useDialogA11y } from '@/components/ui/primitives/useDialogA11y';
 import {
   ENABLEMENT_ALWAYS,
   type WorkspaceBarConfig,
@@ -113,6 +114,28 @@ function BaselineWorkspaceInner(props: BaselineWorkspaceProps): React.ReactEleme
   const [pendingReasonFor, setPendingReasonFor] = useState<{ kind: 'transition'; action: RoutableTransitionAction; destructive: boolean } | { kind: 'reopen' } | null>(null);
   const [reasonDraft, setReasonDraft] = useState('');
 
+  // ★ NAPRAWA a11y (Pakiet I): dialog "Podaj powód" nie miał pułapki fokusa
+  // ani Escape/przywrócenia fokusa. Wyzwalacz to pozycja menu lifecycle w
+  // `FinanceWorkspaceBar`, która odmontowuje się PRZED wywołaniem tego
+  // callbacku (menu zamyka się na klik) W TYM SAMYM commit, co otwarcie tego
+  // dialogu — `document.activeElement`, który hook przechwytuje przy
+  // montowaniu, nie niesie więc użytecznej informacji o wyzwalaczu.
+  // Przywracamy fokus JAWNIE na trigger lifecycle (ten sam wzorzec co
+  // `FinanceWorkspaceBar.ConfirmDestructiveDialog` — `getFallbackFocusTarget`
+  // zostaje jako defensywny backstop).
+  const reasonDialogContainerRef = useRef<HTMLDivElement>(null);
+  function closeReasonDialog(): void {
+    document.querySelector<HTMLElement>('[data-testid="finance-workspace-bar-lifecycle-trigger"]')?.focus();
+    setPendingReasonFor(null);
+    setReasonDraft('');
+  }
+  useDialogA11y({
+    open: pendingReasonFor !== null,
+    onClose: closeReasonDialog,
+    containerRef: reasonDialogContainerRef,
+    getFallbackFocusTarget: () => document.querySelector<HTMLElement>('[data-testid="finance-workspace-bar-lifecycle-trigger"]'),
+  });
+
   const periodLabelById = useMemo(() => {
     const m: Record<string, string> = {};
     for (const p of forecastPeriods) m[p.periodId] = p.label;
@@ -132,6 +155,13 @@ function BaselineWorkspaceInner(props: BaselineWorkspaceProps): React.ReactEleme
   const focusMode = useFinanceFocusMode<{ activeView: BaselineWorkspaceView }>({
     workspaceState: { activeView },
     activeViewId: activeView,
+    // ★ NAPRAWA a11y (Pakiet I): dialog "Podaj powód" teraz NAPRAWDĘ zamyka
+    // się na Escape (przedtem nie miał obsługi klawiatury). Bez tego jedno
+    // wciśnięcie Escape przy otwartym dialogu W trybie pełnego obszaru
+    // zamykałoby OBA naraz — hook już ma gotową precedencję
+    // (`escapeContext.modalOpen`, patrz `useFinanceFocusMode.ts`), tylko
+    // nigdy nie dostawał prawdziwego stanu tego dialogu.
+    escapeContext: { modalOpen: pendingReasonFor !== null, commandPaletteOpen: false, popoverOpen: false, cellEditing: false },
   });
 
   async function runCompute(): Promise<void> {
@@ -294,8 +324,7 @@ function BaselineWorkspaceInner(props: BaselineWorkspaceProps): React.ReactEleme
     } catch (e) {
       setLifecycleError(describeFinanceV2Error(e).detail);
     } finally {
-      setPendingReasonFor(null);
-      setReasonDraft('');
+      closeReasonDialog();
     }
   }
 
@@ -360,8 +389,9 @@ function BaselineWorkspaceInner(props: BaselineWorkspaceProps): React.ReactEleme
       </div>
 
       {pendingReasonFor && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4" role="presentation" onMouseDown={() => setPendingReasonFor(null)}>
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4" role="presentation" onMouseDown={closeReasonDialog}>
           <div
+            ref={reasonDialogContainerRef}
             role="alertdialog"
             aria-modal="true"
             aria-label="Podaj powód"
@@ -381,10 +411,7 @@ function BaselineWorkspaceInner(props: BaselineWorkspaceProps): React.ReactEleme
             <div className="mt-4 flex justify-end gap-2">
               <button
                 type="button"
-                onClick={() => {
-                  setPendingReasonFor(null);
-                  setReasonDraft('');
-                }}
+                onClick={closeReasonDialog}
                 className="inline-flex min-h-[2.75rem] items-center rounded-lg border border-c-border-subtle px-3.5 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
               >
                 Anuluj

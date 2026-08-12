@@ -38,6 +38,7 @@
 
 import React, { useEffect, useId, useRef, useState } from 'react';
 
+import { useDialogA11y } from '@/components/ui/primitives/useDialogA11y';
 import { useOnClickOutside } from '@/hooks/useOnClickOutside';
 
 import {
@@ -126,6 +127,11 @@ export function FinanceWorkspaceBar(props: FinanceWorkspaceBarProps): React.Reac
   useOnClickOutside(contextRef, () => setContextOpen(false));
   useOnClickOutside(lifecycleRef, () => setLifecycleOpen(false));
   useOnClickOutside(moreRef, () => setMoreOpen(false));
+
+  function focusLifecycleOrMoreTrigger(kind: 'lifecycle' | 'more'): void {
+    const containerRef = kind === 'lifecycle' ? lifecycleRef : moreRef;
+    containerRef.current?.querySelector<HTMLButtonElement>('button')?.focus();
+  }
 
   const nameInputId = useId();
   const { identity, viewNavigation, actions } = config;
@@ -347,6 +353,7 @@ export function FinanceWorkspaceBar(props: FinanceWorkspaceBarProps): React.Reac
                 aria-expanded={lifecycleOpen}
                 onClick={() => setLifecycleOpen((v) => !v)}
                 className={`${CONTROL_BASE_CLASS} border-c-border-subtle text-c-text hover:bg-c-surface-raised`}
+                data-testid="finance-workspace-bar-lifecycle-trigger"
               >
                 {actions.lifecycle.label.pl}
                 <ChevronDownIcon />
@@ -391,6 +398,7 @@ export function FinanceWorkspaceBar(props: FinanceWorkspaceBarProps): React.Reac
                 aria-label={actions.more.label.pl}
                 onClick={() => setMoreOpen((v) => !v)}
                 className={`${CONTROL_BASE_CLASS} min-w-[2.75rem] text-c-text-secondary hover:bg-c-surface-raised`}
+                data-testid="finance-workspace-bar-more-trigger"
               >
                 <MoreIcon />
               </button>
@@ -464,13 +472,27 @@ export function FinanceWorkspaceBar(props: FinanceWorkspaceBarProps): React.Reac
       {pendingDestructive && (
         <ConfirmDestructiveDialog
           label={pendingDestructive.kind === 'lifecycle' ? pendingDestructive.transition.label.pl : pendingDestructive.item.label.pl}
-          onCancel={() => setPendingDestructive(null)}
+          onCancel={() => {
+            // ★ NAPRAWA a11y (Pakiet I): przywracamy fokus na trigger JAWNIE
+            // i SYNCHRONICZNIE, tu — zanim stan się zmieni i dialog
+            // odmontuje. `useDialogA11y`'s wbudowane "poprzedni aktywny
+            // element" nie jest tu użyteczne z zasady: wyzwalacz TEGO
+            // dialogu to zawsze pozycja menu (lifecycle/more), która
+            // odmontowuje się (bo menu się zamyka) W TYM SAMYM commit, co
+            // otwarcie dialogu — `document.activeElement` w momencie efektu
+            // montującego dialog jest więc zawsze "już nic" (obsłużone przez
+            // fallback hooka), nie faktyczny wyzwalacz. Bezpośredni fokus na
+            // trigger tu jest prostszy i pewny niezależnie od tej wyścigówki.
+            focusLifecycleOrMoreTrigger(pendingDestructive.kind);
+            setPendingDestructive(null);
+          }}
           onConfirm={() => {
             if (pendingDestructive.kind === 'lifecycle') {
               props.onLifecycleTransition(pendingDestructive.transition);
             } else {
               props.onMoreItem(pendingDestructive.item);
             }
+            focusLifecycleOrMoreTrigger(pendingDestructive.kind);
             setPendingDestructive(null);
           }}
         />
@@ -509,13 +531,19 @@ function ViewTab({
 }
 
 function ViewStateBadge({ state }: { state: NonNullable<WorkspaceBarConfig['viewNavigation']['views'][number]['state']> }): React.ReactElement {
+  // ★ NAPRAWA a11y (Pakiet I): przy 10px `text-c-warning` mierzył 4.31:1
+  // (axe, próg 4.5:1) na tle karty zakładki — surowy token semantyczny jest
+  // kalibrowany pod większe elementy (kropki/ikony), nie mikro-tekst.
+  // `text-amber-900`/dark `amber-300` to ta sama konwencja co `StatusChip`
+  // TONE_SHELL (zweryfikowana tam kontrastowo) — analogicznie dla
+  // success/danger, żeby nie zostawić utajonej wersji tego samego defektu.
   const toneClass =
     state.kind === 'ready'
-      ? 'text-c-success'
+      ? 'text-emerald-800 dark:text-emerald-300'
       : state.kind === 'stale'
-        ? 'text-c-warning'
+        ? 'text-amber-900 dark:text-amber-300'
         : state.kind === 'blocked'
-          ? 'text-c-danger'
+          ? 'text-red-800 dark:text-red-300'
           : 'text-c-text-muted';
   return <span className={`text-[10px] font-semibold uppercase tracking-wide ${toneClass}`}>{state.label.pl}</span>;
 }
@@ -582,21 +610,33 @@ function ConfirmDestructiveDialog({
   onConfirm: () => void;
 }): React.ReactElement {
   const confirmRef = useRef<HTMLButtonElement>(null);
-  useEffect(() => {
-    confirmRef.current?.focus();
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        onCancel();
-      }
-    };
-    document.addEventListener('keydown', onKeyDown);
-    return () => document.removeEventListener('keydown', onKeyDown);
-  }, [onCancel]);
+  const containerRef = useRef<HTMLDivElement>(null);
+  // ★ NAPRAWA a11y (Pakiet I): poprzednia wersja miała TYLKO Escape (bez
+  // pułapki fokusa Tab) — Tab mógł uciec pod przyciemnione tło.
+  // `useDialogA11y` daje pułapkę Tab + Escape + fokus początkowy. Fokus
+  // POWROTNY na wyzwalacz jest ustawiany JAWNIE przez `onCancel`/`onConfirm`
+  // (patrz `focusLifecycleOrMoreTrigger` w rodzicu) — NIE przez wbudowane
+  // "poprzedni aktywny element" hooka: wyzwalacz tego dialogu to zawsze
+  // pozycja menu (lifecycle/more), która odmontowuje się (menu się zamyka) W
+  // TYM SAMYM commit co otwarcie dialogu, więc `document.activeElement` w
+  // momencie montowania dialogu nie niesie użytecznej informacji o
+  // wyzwalaczu. `getFallbackFocusTarget` zostaje jako defensywny backstop
+  // (np. gdyby ktoś w przyszłości otworzył ten dialog spoza lifecycle/more).
+  useDialogA11y({
+    open: true,
+    onClose: onCancel,
+    containerRef,
+    initialFocusRef: confirmRef,
+    getFallbackFocusTarget: () =>
+      document.querySelector<HTMLElement>(
+        '[data-testid="finance-workspace-bar-lifecycle-trigger"], [data-testid="finance-workspace-bar-more-trigger"]'
+      ),
+  });
 
   return (
     <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4" role="presentation" onMouseDown={onCancel}>
       <div
+        ref={containerRef}
         role="alertdialog"
         aria-modal="true"
         aria-label={`Potwierdź: ${label}`}

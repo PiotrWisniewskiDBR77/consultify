@@ -137,8 +137,14 @@ export function CanonicalStatementTableV2(props: CanonicalStatementTableV2Props)
                 >
                   <span className="truncate">{label}</span>
                   {row.usesLineCodeFallback && (
+                    // ★ NAPRAWA a11y (Pakiet I): `text-c-warning` na 9px na tle
+                    // `bg-c-warning/10` mierzy 3.91:1 (axe) — token ten sam
+                    // odcień co tło (mniejszy kontrast niż jego własny kolor na
+                    // czystej powierzchni sugeruje). `text-amber-900`/dark
+                    // `amber-300` to ta sama konwencja co `StatusChip`
+                    // TONE_SHELL.warning (już zweryfikowana kontrastowo tam).
                     <span
-                      className="ml-1.5 shrink-0 rounded bg-c-warning/10 px-1 text-[9px] font-semibold uppercase text-c-warning"
+                      className="ml-1.5 shrink-0 rounded bg-c-warning/10 px-1 text-[9px] font-semibold uppercase text-amber-900 dark:text-amber-300"
                       title="Brak canonicalLineId — grupowane po kodzie źródłowym"
                     >
                       nieprzypisana
@@ -181,8 +187,9 @@ export function CanonicalStatementTableV2(props: CanonicalStatementTableV2Props)
                       }`}
                     >
                       {cell.value.isAdjustment && (
+                        // ★ NAPRAWA a11y (Pakiet I) — sam defekt co odznaka "nieprzypisana" wyżej.
                         <span
-                          className="rounded bg-c-warning/10 px-1 text-[9px] font-semibold uppercase text-c-warning"
+                          className="rounded bg-c-warning/10 px-1 text-[9px] font-semibold uppercase text-amber-900 dark:text-amber-300"
                           title={cell.value.adjustmentReason ? `Korekta zarządcza: ${cell.value.adjustmentReason}` : 'Korekta zarządcza'}
                         >
                           korekta

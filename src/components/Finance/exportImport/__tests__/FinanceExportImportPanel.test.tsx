@@ -10,7 +10,7 @@
  * `preview.ok !== true` — wszystko-albo-nic nigdy nie jest osiągalne z zepsutym podglądem,
  * (5) `applyFinanceImport` dostaje `batchIdempotencyKey`.
  */
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mockExport = vi.fn();
@@ -90,7 +90,10 @@ describe('FinanceExportImportPanel', () => {
 
     await waitFor(() => expect(mockParse).toHaveBeenCalledWith(file, 'plik.xlsx'));
     await waitFor(() => expect(screen.getByTestId('import-parsed')).toBeInTheDocument());
-    expect(screen.getByText(/Wczytano 1 wierszy/)).toBeInTheDocument();
+    // Scoped do sekcji widocznej treści: Pakiet I (a11y) dodał RÓWNOLEGŁY,
+    // zawsze zamontowany `role="status"` (sr-only) z tym samym komunikatem —
+    // `within(...)` odróżnia widoczny akapit od live-region ogłoszenia.
+    expect(within(screen.getByTestId('import-parsed')).getByText(/Wczytano 1 wierszy/)).toBeInTheDocument();
 
     const preview = {
       ok: true,

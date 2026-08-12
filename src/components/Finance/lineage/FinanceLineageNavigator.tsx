@@ -19,6 +19,7 @@
  */
 import React, { useEffect, useState } from 'react';
 
+import { FinanceStatusAnnouncer } from '@/components/Finance/shared/FinanceStatusAnnouncer';
 import { StatusChip, type StatusTone } from '@/components/ui/primitives/chips/StatusChip';
 import { getFinanceLineageNavigator } from '@/services/api/financeV2.api';
 import {
@@ -170,18 +171,24 @@ export function FinanceLineageNavigator({
 
   if (state.kind === 'loading') {
     return (
-      <div className={`rounded-lg border border-c-border-subtle bg-c-surface p-3 ${className ?? ''}`} data-testid="lineage-navigator-loading">
-        <p className="text-xs text-c-text-secondary">Ładowanie powiązań…</p>
-      </div>
+      <>
+        <FinanceStatusAnnouncer message="Ładowanie powiązań…" />
+        <div className={`rounded-lg border border-c-border-subtle bg-c-surface p-3 ${className ?? ''}`} data-testid="lineage-navigator-loading">
+          <p className="text-xs text-c-text-secondary">Ładowanie powiązań…</p>
+        </div>
+      </>
     );
   }
 
   if (state.kind === 'error') {
     return (
-      <div className={`rounded-lg border border-c-danger/40 bg-c-surface p-3 ${className ?? ''}`} data-testid="lineage-navigator-error">
-        <p className="text-sm font-medium text-c-danger">{state.title}</p>
-        <p className="text-xs text-c-text-secondary">{state.detail}</p>
-      </div>
+      <>
+        <FinanceStatusAnnouncer message={`Błąd: ${state.title}`} priority="assertive" />
+        <div className={`rounded-lg border border-c-danger/40 bg-c-surface p-3 ${className ?? ''}`} data-testid="lineage-navigator-error">
+          <p className="text-sm font-medium text-c-danger">{state.title}</p>
+          <p className="text-xs text-c-text-secondary">{state.detail}</p>
+        </div>
+      </>
     );
   }
 
@@ -190,22 +197,30 @@ export function FinanceLineageNavigator({
 
   return (
     <div className={`flex flex-col gap-4 rounded-lg border border-c-border-subtle bg-c-surface p-3 ${className ?? ''}`} data-testid="finance-lineage-navigator">
+      <FinanceStatusAnnouncer message={`Łańcuch powiązań wczytany: ${trail.items.length} elementów.`} />
       <div>
         <p className="mb-2 text-xs font-semibold text-c-text-secondary">Łańcuch powiązań</p>
         <div className="flex flex-wrap items-center gap-1.5" data-testid="lineage-trail" role="list" aria-label="Łańcuch powiązań">
           {trail.items.map((item, idx) => (
             <React.Fragment key={item.kind === 'node' ? item.metadata.versionId : `collapsed-${idx}`}>
-              {idx > 0 ? <span className="text-c-text-secondary">→</span> : null}
-              <button
-                type="button"
-                className="cursor-pointer rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus disabled:cursor-default"
-                disabled={item.kind === 'collapsed'}
-                onClick={() => {
-                  if (item.kind === 'node' && onNavigate) onNavigate(item.metadata.versionId, item.metadata.artifactType);
-                }}
-              >
-                <TrailItemView item={item} />
-              </button>
+              {/* ★ NAPRAWA a11y (Pakiet I): `role="list"` wymaga, żeby WSZYSTKIE
+                  bezpośrednie dzieci miały rolę listitem (axe: "aria-required-children"
+                  critical — <button> jako bezpośrednie dziecko nie spełniał tego).
+                  Separator strzałki jest dekoracją — `aria-hidden` wyjmuje go z
+                  drzewa dostępności, więc nie musi (i nie powinien) być listitem. */}
+              {idx > 0 ? <span className="text-c-text-secondary" aria-hidden="true">→</span> : null}
+              <span role="listitem">
+                <button
+                  type="button"
+                  className="cursor-pointer rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus disabled:cursor-default"
+                  disabled={item.kind === 'collapsed'}
+                  onClick={() => {
+                    if (item.kind === 'node' && onNavigate) onNavigate(item.metadata.versionId, item.metadata.artifactType);
+                  }}
+                >
+                  <TrailItemView item={item} />
+                </button>
+              </span>
             </React.Fragment>
           ))}
         </div>

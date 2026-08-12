@@ -48,7 +48,9 @@
  * (sourceRef), nie fabrykuje kroku 2.
  */
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+
+import { useDialogA11y } from '@/components/ui/primitives/useDialogA11y';
 
 import {
   approveFinanceModel,
@@ -232,6 +234,27 @@ function StatementPackWorkspaceV2Inner(props: StatementPackWorkspaceV2Props): Re
   const [pendingReasonFor, setPendingReasonFor] = useState<{ kind: 'transition'; action: RoutableTransitionAction; destructive: boolean } | { kind: 'reopen' } | null>(null);
   const [reasonDraft, setReasonDraft] = useState('');
 
+  // ★ NAPRAWA a11y (Pakiet I): sam wzorzec co `BaselineWorkspace.tsx` —
+  // dialog "Podaj powód" bez pułapki fokusa/przywrócenia. Wyzwalacz to
+  // pozycja menu lifecycle we wspólnym `FinanceWorkspaceBar`, która
+  // odmontowuje się (menu się zamyka) W TYM SAMYM commit co otwarcie tego
+  // dialogu — fokus powrotny ustawiamy więc JAWNIE (nie tylko przez
+  // wbudowane "poprzedni aktywny element" hooka, które w tym wyścigu nie
+  // niesie użytecznej informacji); `getFallbackFocusTarget` zostaje jako
+  // defensywny backstop.
+  const reasonDialogContainerRef = useRef<HTMLDivElement>(null);
+  function closeReasonDialog(): void {
+    document.querySelector<HTMLElement>('[data-testid="finance-workspace-bar-lifecycle-trigger"]')?.focus();
+    setPendingReasonFor(null);
+    setReasonDraft('');
+  }
+  useDialogA11y({
+    open: pendingReasonFor !== null,
+    onClose: closeReasonDialog,
+    containerRef: reasonDialogContainerRef,
+    getFallbackFocusTarget: () => document.querySelector<HTMLElement>('[data-testid="finance-workspace-bar-lifecycle-trigger"]'),
+  });
+
   useEffect(() => {
     let cancelled = false;
     fetchers
@@ -401,6 +424,9 @@ function StatementPackWorkspaceV2Inner(props: StatementPackWorkspaceV2Props): Re
   const focusMode = useFinanceFocusMode({
     workspaceState: { selection, selectedRunId, draftStatus, openStatus, publishStatus },
     activeViewId: 'statements',
+    // ★ NAPRAWA a11y (Pakiet I): sam wzorzec co `BaselineWorkspace.tsx` —
+    // dialog "Podaj powód" teraz naprawdę zamyka się na Escape.
+    escapeContext: { modalOpen: pendingReasonFor !== null, commandPaletteOpen: false, popoverOpen: false, cellEditing: false },
   });
 
   // ── Odśwież (akcja primary paska) — ręczne przeładowanie wszystkich trzech
@@ -489,8 +515,7 @@ function StatementPackWorkspaceV2Inner(props: StatementPackWorkspaceV2Props): Re
     } catch (e) {
       setLifecycleError(describeFinanceV2Error(e).detail);
     } finally {
-      setPendingReasonFor(null);
-      setReasonDraft('');
+      closeReasonDialog();
     }
   }
 
@@ -685,8 +710,9 @@ function StatementPackWorkspaceV2Inner(props: StatementPackWorkspaceV2Props): Re
       </FinanceErrorBoundary>
 
       {pendingReasonFor && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4" role="presentation" onMouseDown={() => setPendingReasonFor(null)}>
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4" role="presentation" onMouseDown={closeReasonDialog}>
           <div
+            ref={reasonDialogContainerRef}
             role="alertdialog"
             aria-modal="true"
             aria-label="Podaj powód"
@@ -706,10 +732,7 @@ function StatementPackWorkspaceV2Inner(props: StatementPackWorkspaceV2Props): Re
             <div className="mt-4 flex justify-end gap-2">
               <button
                 type="button"
-                onClick={() => {
-                  setPendingReasonFor(null);
-                  setReasonDraft('');
-                }}
+                onClick={closeReasonDialog}
                 className="inline-flex min-h-[2.75rem] items-center rounded-lg border border-c-border-subtle px-3.5 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
               >
                 Anuluj
