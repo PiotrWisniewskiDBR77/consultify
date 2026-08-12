@@ -1061,8 +1061,16 @@ async function main() {
     } catch (e: any) {
       outcome = `error: ${String(e?.message || e)}`;
     } finally {
+      // DROP ROLE fails while ANY privilege (including the DATABASE-level
+      // CONNECT grant, easy to forget since it is granted separately above)
+      // still references the role — both REVOKEs are required, not just the
+      // table-level one, or this leaks a role per run.
       try {
         await verifyClient.query(`REVOKE ALL ON compute_jobs FROM ${restrictedRole}`);
+      } catch {}
+      try {
+        const dbNameForCleanup = new URL(DATABASE_URL).pathname.replace(/^\//, '');
+        await verifyClient.query(`REVOKE ALL ON DATABASE ${dbNameForCleanup} FROM ${restrictedRole}`);
       } catch {}
       try {
         await verifyClient.query(`DROP ROLE IF EXISTS ${restrictedRole}`);
