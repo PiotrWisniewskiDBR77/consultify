@@ -52,7 +52,7 @@ import {
   runFinancePredictionCalculate,
   runFinancePredictionPreflight,
 } from '@/services/api/financeV2.api';
-import { describeFinanceV2Error, type FinanceBusinessVersionDetailDto } from '@/services/api/financeV2.types';
+import { businessVersionStatusLabel, describeFinanceV2Error, type FinanceBusinessVersionDetailDto } from '@/services/api/financeV2.types';
 
 import { createEmptyScenarioDraft, type CanonicalValueMap, type ExceptionLedgerEntry, type ScenarioDraft } from './predictionScenarioModel';
 import { buildPredictionEvaluationContext, buildPredictionWorkspaceBarConfig, PREDICTION_VIEW_IDS, type PredictionViewId } from './predictionWorkspaceBarConfig';
@@ -247,7 +247,7 @@ function PredictionWorkspaceInner(props: PredictionWorkspaceProps): React.ReactE
           role="status"
           data-testid="prediction-honest-scratch-banner"
         >
-          Realny rekord (wersja {mountCheck.version.versionNo}, status: {mountCheck.version.status}) został
+          Realny rekord (wersja {mountCheck.version.versionNo}, status: {businessVersionStatusLabel(mountCheck.version.status)}) został
           potwierdzony w nowym systemie. Ten ekran pokazuje nowy szkic założeń — odczyt zapisanej treści
           scenariusza nie jest dziś dostępny (brak endpointu GET), więc żadne wcześniejsze założenia nie
           zostały pobrane.

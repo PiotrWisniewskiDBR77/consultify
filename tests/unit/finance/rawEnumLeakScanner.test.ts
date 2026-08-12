@@ -50,15 +50,18 @@
  *
  * NEW LEAK FOUND when the scope widened to all of `Finance/**` (files that were never reachable
  * under the old two-directory scope):
- *   - `src/components/Finance/FinancialStatementPackWorkspace.tsx` renders `{file.status}` (raw
+ *   - `src/components/Finance/FinancialStatementPackWorkspace.tsx` rendered `{file.status}` (raw
  *     lowercase `pending`/`ready`/`recoverable` from `s.readinessStatus`, untranslated — the same
  *     file already has a `t(...)`-routed label for the sibling `packRow.status` a few hundred
- *     lines up, so this is the same bug family, just missed). NOT fixed in this pass: this file
- *     is a `*Workspace.tsx` file, and per this session's explicit hand-off boundary two other
- *     agents were concurrently editing FinanceHub.tsx and the workspace files it mounts
- *     (AP-mount / P0-RBAC packages). Editing a workspace file here risked colliding with that
- *     work. It is tracked below in `KNOWN_UNFIXED_LEAKS` with a staleness check so the exception
- *     cannot silently rot once someone does fix it.
+ *     lines up, so this was the same bug family, just missed). NOT fixed in the pass that found it
+ *     (this file is a `*Workspace.tsx` file and two other agents were concurrently editing
+ *     FinanceHub.tsx and the workspace files it mounts — AP-mount/P0-RBAC packages — at the time,
+ *     so it was tracked in `KNOWN_UNFIXED_LEAKS` instead of risking a collision). ★ FIXC
+ *     (gate-e, this session): that hand-off boundary has passed — fixed by reusing the EXACT SAME
+ *     three `t('finance.pack.status{Ready,Recovery,Draft}', ...)` keys the sibling `packRow.status`
+ *     ternary already used, same ternary shape, zero new i18n strings. `KNOWN_UNFIXED_LEAKS` entry
+ *     removed below (kept it would have made the staleness-check test fail, since the string it
+ *     names no longer matches anything).
  *
  * ══════════════════════════════════════════════════════════════════════════════════════════
  * EXTENDED SCOPE CONSIDERED: src/components/Economics/**
@@ -214,9 +217,11 @@ function listTsxFiles(dir: string): string[] {
  * reason (never "ran out of time" or "seemed low priority"). The staleness test below fails if an
  * entry stops being a real offender — remove the entry then, don't leave it as dead weight.
  */
-const KNOWN_UNFIXED_LEAKS = new Set<string>([
-  'src/components/Finance/FinancialStatementPackWorkspace.tsx: {file.status}',
-]);
+// ★ FIXC (gate-e): the one entry this set ever had (`FinancialStatementPackWorkspace.tsx:
+// {file.status}`) is fixed — see "NEW LEAK FOUND" doc comment above. Left empty rather than
+// deleted so a future genuinely-blocked leak has an obvious place to go, under the same rule:
+// only for a documented, session-specific reason an agent is barred from fixing on the spot.
+const KNOWN_UNFIXED_LEAKS = new Set<string>([]);
 
 describe('Finance/** — no raw SCREAMING_SNAKE_CASE enum leaks to rendered text', () => {
   const files = SCANNED_ROOTS.flatMap(listTsxFiles);

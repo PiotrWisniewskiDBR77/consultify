@@ -107,6 +107,16 @@ if (!g.__PREDICTION_WORKSPACE_FETCH__) {
 
 // Shapes taken directly from predictionScenarioModel.ts's own exported types (createEmptyScenarioDraft +
 // manual demo rows) — not invented ad hoc.
+//
+// ★ FIXC (martwa przestrzeń, gate-e): tryb C (FUNDAMENTAL_INITIATIVE) had exactly ONE initiative +
+// ONE impact in this harness — a real "łańcuch: inicjatywa → założenie → driver/KPI → linia
+// sprawozdania → prognoza" scenario realistically carries several concurrent initiatives (that is
+// the whole point of the mode — see FundamentalInitiativePanel's own header text). Added two more,
+// same DraftInitiative/DraftImpact shape, driver codes taken from ALREADY-EXISTING server test
+// fixtures (`predictionPreflightOrderDeterminism.test.ts`: REVENUE_GROWTH_YOY under revenue_pvm;
+// `baseline.routes.pg.test.ts`/`coldReopen.pg.test.ts`: DIO_DAYS under wc_dso_dio_dpo) — not
+// invented driver vocabulary — narratively consistent with the manufacturing/DBR77 story already
+// used elsewhere in this demo set (Analysis harness's INVENTORY_DAYS KPI).
 const demoInitiative = {
   id: 'init-demo-1',
   initiativeCode: 'PROD-EFF-5PCT',
@@ -120,6 +130,36 @@ const demoInitiative = {
   defaultDurationMonths: null,
   implementationCostDecimal: 150000,
   status: 'CONFIRMED' as const,
+};
+
+const demoInitiative2 = {
+  id: 'init-demo-2',
+  initiativeCode: 'REV-B2B-CONTRACT',
+  name: 'Nowy kontrakt B2B — wzrost przychodów',
+  description: 'Podpisany list intencyjny z klientem strategicznym, wdrożenie od Q2',
+  source: 'MANAGEMENT_PLAN',
+  owner: 'Anna Nowak (Dyrektor Sprzedaży)',
+  confidencePct: 60,
+  defaultStartPeriodId: 'p-2026-04',
+  defaultRampMonths: 4,
+  defaultDurationMonths: null,
+  implementationCostDecimal: 40000,
+  status: 'CONFIRMED' as const,
+};
+
+const demoInitiative3 = {
+  id: 'init-demo-3',
+  initiativeCode: 'WC-INVENTORY-OPT',
+  name: 'Optymalizacja zapasów magazynowych',
+  description: 'Wdrożenie systemu prognozowania popytu, redukcja dni zapasów',
+  source: 'MANAGEMENT_PLAN',
+  owner: 'Jan Kowalski (COO)',
+  confidencePct: 55,
+  defaultStartPeriodId: 'p-2026-05',
+  defaultRampMonths: 6,
+  defaultDurationMonths: null,
+  implementationCostDecimal: 90000,
+  status: 'DRAFT' as const,
 };
 
 const demoImpact = {
@@ -145,6 +185,52 @@ const demoImpact = {
   cannibalizesImpactId: null,
 };
 
+const demoImpact2 = {
+  id: 'impact-demo-2',
+  initiativeId: 'init-demo-2',
+  assumptionLabel: '8% wzrost przychodów rok-do-roku od kontraktu B2B',
+  driverScheduleType: 'revenue_pvm' as const,
+  driverCode: 'REVENUE_GROWTH_YOY',
+  kpiCatalogId: null,
+  statementLineCode: 'REVENUE',
+  entityId: 'entity-1',
+  amountKind: 'PERCENT_OF_BASE' as const,
+  amountDecimal: 0.08,
+  amountUnit: 'RATIO',
+  sign: 'POSITIVE' as const,
+  startPeriodId: 'p-2026-04',
+  rampMonths: 4,
+  durationMonths: null,
+  decayPctPerPeriod: null,
+  implementationCostDecimal: 40000,
+  confidencePct: 60,
+  probabilityPct: 70,
+  cannibalizesImpactId: null,
+};
+
+const demoImpact3 = {
+  id: 'impact-demo-3',
+  initiativeId: 'init-demo-3',
+  assumptionLabel: 'Redukcja dni zapasów (DIO) o 12 dni',
+  driverScheduleType: 'wc_dso_dio_dpo' as const,
+  driverCode: 'DIO_DAYS',
+  kpiCatalogId: null,
+  statementLineCode: 'INVENTORY',
+  entityId: 'entity-1',
+  amountKind: 'ABSOLUTE_AMOUNT' as const,
+  amountDecimal: -12,
+  amountUnit: 'DAYS',
+  sign: 'NEGATIVE' as const,
+  startPeriodId: 'p-2026-05',
+  rampMonths: 6,
+  durationMonths: null,
+  decayPctPerPeriod: null,
+  implementationCostDecimal: 90000,
+  confidencePct: 55,
+  probabilityPct: 65,
+  cannibalizesImpactId: null,
+};
+
 const demoDriverOverride = {
   id: 'ovr-demo-1',
   scheduleType: 'cogs_opex' as const,
@@ -165,8 +251,8 @@ const initialDraft = {
   scenarioMode: MODE as 'STANDARD_BASE' | 'DRIVER_OVERRIDE' | 'FUNDAMENTAL_INITIATIVE',
   name: 'DBR77 — Scenariusz FY2026 (demo)',
   driverOverrides: MODE === 'DRIVER_OVERRIDE' ? [demoDriverOverride] : [],
-  initiatives: MODE === 'FUNDAMENTAL_INITIATIVE' ? [demoInitiative] : [],
-  impacts: MODE === 'FUNDAMENTAL_INITIATIVE' ? [demoImpact] : [],
+  initiatives: MODE === 'FUNDAMENTAL_INITIATIVE' ? [demoInitiative, demoInitiative2, demoInitiative3] : [],
+  impacts: MODE === 'FUNDAMENTAL_INITIATIVE' ? [demoImpact, demoImpact2, demoImpact3] : [],
   financing: [],
   lastAssumptionChangeAt: '2026-08-12T09:00:00Z',
   lastComputeAt: '2026-08-11T09:00:00Z',

@@ -205,20 +205,54 @@ const MOCK_ADVISOR_FINDINGS: ValuationAdvisorFindingStoredDto[] = [
 function makeMockApi(): ValuationWorkspaceApi {
   return {
     getValuationVariant: async () => MOCK_VARIANT,
+    // ★ FIXC (martwa przestrzeń, gate-e): `getAncestors()` (server, `lineageService.ts`) is a
+    // RECURSIVE CTE that walks the whole chain feeding into a version, not just the direct edge —
+    // a real valuation typically descends Statement Pack -> Baseline -> Scenario -> Valuation.
+    // This harness previously supplied only ONE edge, which under-represented what `SourceStep`
+    // can legitimately receive and (before the same-session fix) is why the step under-rendered.
+    // Shape/edgeType/transformationKind conventions here match the ALREADY-EXISTING multi-edge
+    // demo chain in `dev-render/screens/finance-statement-pack-workspace-v2.tsx`
+    // (`derived_from`/`baseline_from_statement`) — not a new fabricated convention.
     getFinanceVersionLineage: async () => ({
       businessVersionId: BV_ID,
       ancestors: SOURCE_LINKED
         ? [
             {
-              edgeId: 'edge-1',
+              edgeId: 'edge-stmt-baseline-1',
+              sourceVersionId: 'bv-statement-pack-fy2025-approved',
+              sourceArtifactType: 'STATEMENT_PACK',
+              targetVersionId: 'bv-baseline-fy2025-approved',
+              targetArtifactType: 'BASELINE_MODEL',
+              edgeType: 'derived_from',
+              transformationKind: 'baseline_from_statement',
+              assumptionSnapshotHash: null,
+              computeRunId: 'run-baseline-1',
+              authorId: 'user-analyst-1',
+              createdAt: '2026-08-01T08:00:00Z',
+            },
+            {
+              edgeId: 'edge-baseline-scenario-1',
               sourceVersionId: 'bv-baseline-fy2025-approved',
               sourceArtifactType: 'BASELINE_MODEL',
+              targetVersionId: 'bv-prediction-demo-1',
+              targetArtifactType: 'PREDICTION_SCENARIO',
+              edgeType: 'derived_from',
+              transformationKind: 'scenario_from_baseline',
+              assumptionSnapshotHash: 'sha256:def456…',
+              computeRunId: 'run-scenario-1',
+              authorId: 'user-piotr',
+              createdAt: '2026-08-03T10:30:00Z',
+            },
+            {
+              edgeId: 'edge-scenario-valuation-1',
+              sourceVersionId: 'bv-prediction-demo-1',
+              sourceArtifactType: 'PREDICTION_SCENARIO',
               targetVersionId: BV_ID,
               targetArtifactType: 'VALUATION_CASE',
               edgeType: 'VALUATION_SOURCE',
-              transformationKind: 'VALUATION_FROM_BASELINE',
+              transformationKind: 'VALUATION_FROM_SCENARIO',
               assumptionSnapshotHash: 'sha256:abc123…',
-              computeRunId: 'run-1',
+              computeRunId: 'run-valuation-1',
               authorId: 'user-piotr',
               createdAt: '2026-08-05T09:05:00Z',
             },
