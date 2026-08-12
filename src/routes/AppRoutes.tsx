@@ -144,6 +144,23 @@ const KpiDeviationCaseSubview = lazyWithRetry(() =>
     default: m.default,
   }))
 );
+// RN-G5 (2026-08-12) — full ROI Case tool (`/results/roi/cases/:roiCaseId`)
+// + full OKR Set tool (`/results/okr/sets/:okrSetId`) deep-link routes. D03
+// (klasa L, no big editors in a preview) is already binding — these mount
+// the routes `routeConfig.ts` reserved for them (master plan §11) instead of
+// leaving them as unreachable dead constants. See
+// `src/components/ResultsVNext/roi/RoiCaseToolPage.tsx` /
+// `src/components/ResultsVNext/okr/OkrSetToolPage.tsx` headers.
+const RoiCaseToolPage = lazyWithRetry(() =>
+  import('@/components/ResultsVNext/roi/RoiCaseToolPage').then((m) => ({
+    default: m.default,
+  }))
+);
+const OkrSetToolPage = lazyWithRetry(() =>
+  import('@/components/ResultsVNext/okr/OkrSetToolPage').then((m) => ({
+    default: m.default,
+  }))
+);
 
 const ConclusionsHub = lazyWithRetry(() =>
   import('@/components/Conclusions/ConclusionsHub').then((m) => ({ default: m.default }))
@@ -2630,6 +2647,36 @@ export const AppRoutes: React.FC = () => {
             </BetaGate>
           }
         />
+        {/* RN-G5 (2026-08-12) — full ROI Case tool, klasa L (D03). Same
+            entitlement chain as ROUTES.RESULTS_ROI.ROOT above (reused, not
+            reinvented); internally gated by the SAME `roiRegistry` flag (one
+            flag per domain, resultsVNextFeatureFlags.ts convention). No
+            `breadcrumbs` override needed — `RoiCaseFullTool`'s own phase
+            workspaces render their own "ROI registry -> ..." breadcrumb via
+            `ResultsVNextRegistryShell`'s moduleBar, same as the KPI tool
+            route above. */}
+        <Route
+          path={ROUTES.RESULTS_ROI.CASE}
+          element={
+            <BetaGate moduleId="MODULE_BENEFITS">
+              <MainLayout
+                breadcrumbs={
+                  breadcrumbs || [t('sidebar.results', 'Results'), t('results.roi', 'ROI')]
+                }
+                noPadding
+              >
+                <ProductionModuleGate
+                  enabled={!hideNonCoreModulesOnPublicProduction}
+                  moduleName="Results"
+                >
+                  <RouteErrorBoundary>
+                    <RoiCaseToolPage />
+                  </RouteErrorBoundary>
+                </ProductionModuleGate>
+              </MainLayout>
+            </BetaGate>
+          }
+        />
         <Route
           path={ROUTES.RESULTS_OKR.ROOT}
           element={
@@ -2646,6 +2693,31 @@ export const AppRoutes: React.FC = () => {
                 >
                   <RouteErrorBoundary>
                     <ResultsOkrRegistryPage />
+                  </RouteErrorBoundary>
+                </ProductionModuleGate>
+              </MainLayout>
+            </BetaGate>
+          }
+        />
+        {/* RN-G5 (2026-08-12) — full OKR Set tool, klasa L (D03). Same
+            entitlement chain + same internal `okrRegistry` flag gate as
+            ROUTES.RESULTS_OKR.ROOT above. */}
+        <Route
+          path={ROUTES.RESULTS_OKR.SET}
+          element={
+            <BetaGate moduleId="MODULE_BENEFITS">
+              <MainLayout
+                breadcrumbs={
+                  breadcrumbs || [t('sidebar.results', 'Results'), t('results.okr', 'OKR')]
+                }
+                noPadding
+              >
+                <ProductionModuleGate
+                  enabled={!hideNonCoreModulesOnPublicProduction}
+                  moduleName="Results"
+                >
+                  <RouteErrorBoundary>
+                    <OkrSetToolPage />
                   </RouteErrorBoundary>
                 </ProductionModuleGate>
               </MainLayout>

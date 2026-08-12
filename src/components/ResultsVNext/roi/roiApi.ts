@@ -271,6 +271,35 @@ export async function listRoiCases(params: ListRoiCasesParams = {}): Promise<Roi
 }
 
 // ==========================================
+// GET /api/vnext/results/roi/cases/:caseId — RN-G5 (2026-08-12) deep-link
+// route (`/results/roi/cases/:roiCaseId`, `RoiCaseToolPage.tsx`). The route
+// handler already exists server-side (`roi.routes.ts` "GET
+// /cases/:caseId — getRoiCase", `includeArchived: true` — an archived case
+// must still resolve by known id, only the LIST default excludes it) but
+// had no client wrapper before this package (the registry's own lazy
+// per-row fetches only ever needed `listRoiCases`/
+// `getLatestRoiCalculationRun`). The 404 branch collapses "does not exist"
+// and "cross-tenant" into the SAME response (`getRoiCase`'s repository
+// query is itself organization-scoped — a cross-org id simply returns no
+// row, `roi.routes.ts` "GET /cases/:caseId" comment) — same shape as
+// `kpiApi.ts`'s `getKpi`/`okrApi.ts`'s `getOkrSet`, so callers use the
+// identical `NO_VISIBILITY_RECORD` fail-closed default rather than
+// inventing a reason the API never actually tells the client (D06/D07).
+// ==========================================
+
+export async function getRoiCase(caseId: string): Promise<RoiCaseListItem | null> {
+  try {
+    const { case: roiCase } = await getJson<{ case: RoiCaseListItem }>(
+      `/vnext/results/roi/cases/${encodeURIComponent(caseId)}`
+    );
+    return roiCase;
+  } catch (err) {
+    if (err instanceof RoiApiError && err.status === 404) return null;
+    throw err;
+  }
+}
+
+// ==========================================
 // GET /api/vnext/results/roi/cases/:caseId/calculation-runs
 // (registry+preview only ever needs the LATEST completed/failed run — the
 // full runs list/compare view is a later package, RN_G2_UI_SCOPE.md §G #15)
