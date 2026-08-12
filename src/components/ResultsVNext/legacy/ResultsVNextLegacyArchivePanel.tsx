@@ -44,11 +44,11 @@ import {
 import { Archive as ArchiveIcon } from 'lucide-react';
 
 import { ResultsVNextRegistryShell, type ResultsVNextTableProps } from '../ResultsVNextRegistryShell';
+import { toUserFacingErrorMessage } from '../shared/errorMessage';
 import type { ResultsVNextDomain } from '../types';
 import {
   type LegacyArchiveIndexRow,
   type LegacyArchiveOriginDomain,
-  LegacyArchiveApiError,
   listLegacyArchiveIndex,
 } from './legacyArchiveApi';
 
@@ -99,13 +99,13 @@ export const ResultsVNextLegacyArchivePanel: React.FC<ResultsVNextLegacyArchiveP
       })
       .catch((err: unknown) => {
         if (cancelled) return;
-        const message =
-          err instanceof LegacyArchiveApiError
-            ? err.message
-            : isPolish
-              ? 'Nie udało się wczytać archiwum.'
-              : 'Failed to load the archive.';
-        setError(message);
+        // RN-G5 polish: `LegacyArchiveApiError.message` is `body.error` —
+        // the RAW backend string (e.g. "Internal server error"), always
+        // English, occasionally a driver/DB-level string never meant for an
+        // end user. Screen gets a fixed, translated sentence; the raw
+        // detail still reaches telemetry via `toUserFacingErrorMessage`'s
+        // own `console.error` (see `../shared/errorMessage.ts`).
+        setError(toUserFacingErrorMessage(err, isPolish));
         setLoading(false);
       });
     return () => {

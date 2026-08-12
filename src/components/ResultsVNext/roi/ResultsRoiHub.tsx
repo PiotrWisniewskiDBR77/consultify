@@ -54,6 +54,7 @@ import { ResultsVNextRegistryShell } from '../ResultsVNextRegistryShell';
 import { RoiCaseFullTool } from './RoiCaseFullTool';
 import { RoiCaseCreateModal, type RoiCaseCreateFormValues, type RoiCaseCreateInitiativeOption } from './RoiCaseCreateModal';
 import { RoiTransitionDialog } from './RoiTransitionDialog';
+import { toUserFacingErrorMessage } from '../shared/errorMessage';
 import {
   approveRoiCase,
   cancelRoiCase,
@@ -184,7 +185,7 @@ export const ResultsRoiHub: React.FC = () => {
     listRoiCases({ limit: ROI_CASES_FETCH_LIMIT })
       .then((rows) => setCases(rows))
       .catch((err) =>
-        setCasesError(err instanceof Error ? err.message : String(err))
+        setCasesError(toUserFacingErrorMessage(err, isPolish))
       )
       .finally(() => setCasesLoading(false));
   }, []);
@@ -195,7 +196,7 @@ export const ResultsRoiHub: React.FC = () => {
     listOrgRoiBenefitsRealization()
       .then((res) => setBenefitsRows(res.cases))
       .catch((err) =>
-        setBenefitsError(err instanceof Error ? err.message : String(err))
+        setBenefitsError(toUserFacingErrorMessage(err, isPolish))
       )
       .finally(() => setBenefitsLoading(false));
   }, []);
@@ -230,7 +231,7 @@ export const ResultsRoiHub: React.FC = () => {
             .sort((a, b) => a.title.localeCompare(b.title))
         )
       )
-      .catch((err) => setInitiativesError(err instanceof Error ? err.message : String(err)))
+      .catch((err) => setInitiativesError(toUserFacingErrorMessage(err, isPolish)))
       .finally(() => setInitiativesLoading(false));
   }, []);
 
@@ -269,7 +270,7 @@ export const ResultsRoiHub: React.FC = () => {
         .catch((err) => {
           const isConflict = err instanceof RoiApiError && err.status === 409;
           setCreateIsConflict(isConflict);
-          setCreateError(err instanceof Error ? err.message : String(err));
+          setCreateError(toUserFacingErrorMessage(err, isPolish));
         })
         .finally(() => setCreateBusy(false));
     },
@@ -301,7 +302,7 @@ export const ResultsRoiHub: React.FC = () => {
         .catch((err) => {
           const isConflict = err instanceof RoiApiError && err.status === 409;
           setTransitionIsConflict(isConflict);
-          setTransitionError(err instanceof Error ? err.message : String(err));
+          setTransitionError(toUserFacingErrorMessage(err, isPolish));
         })
         .finally(() => setTransitionBusy(false));
     },

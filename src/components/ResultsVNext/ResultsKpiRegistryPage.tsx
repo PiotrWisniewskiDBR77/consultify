@@ -100,6 +100,7 @@ import {
   buildKpiScorecardRowMenu,
 } from './kpiScorecards/kpiScorecardPresenters';
 import { ResultsKpiMeasurementsPanel } from './kpiMeasurements/ResultsKpiMeasurementsPanel';
+import { toUserFacingErrorMessage } from './shared/errorMessage';
 
 const STATUS_TONE: Record<KpiStatus, StatusTone> = {
   draft: 'info',
@@ -482,7 +483,7 @@ export const ResultsKpiRegistryPage: React.FC = () => {
       const items = await listKpis({});
       setRows(items);
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      setError(toUserFacingErrorMessage(err, isPolish));
     } finally {
       setLoading(false);
     }
@@ -546,7 +547,7 @@ export const ResultsKpiRegistryPage: React.FC = () => {
         await runner({ kpiId: row.kpiId, expectedVersion: row.rowVersion });
         await fetchRows();
       } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
+        const message = toUserFacingErrorMessage(err, isPolish);
         toast.error(message);
       } finally {
         setPending(null);
@@ -562,7 +563,7 @@ export const ResultsKpiRegistryPage: React.FC = () => {
       const items = await listKpiScorecards({});
       setScorecardRows(items);
     } catch (err) {
-      setScorecardsError(err instanceof Error ? err.message : String(err));
+      setScorecardsError(toUserFacingErrorMessage(err, isPolish));
     } finally {
       setScorecardsLoading(false);
     }
@@ -583,7 +584,7 @@ export const ResultsKpiRegistryPage: React.FC = () => {
         await runner({ scorecardId: row.scorecardId, expectedVersion: row.rowVersion });
         await fetchScorecardRows();
       } catch (err) {
-        toast.error(err instanceof Error ? err.message : String(err));
+        toast.error(toUserFacingErrorMessage(err, isPolish));
       } finally {
         setScorecardPending(false);
       }

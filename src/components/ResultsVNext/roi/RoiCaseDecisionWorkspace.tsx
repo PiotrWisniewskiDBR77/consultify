@@ -33,6 +33,7 @@ import {
   withRoiFullToolId,
 } from './roiCaseFullToolPresenters';
 import { buildRoiCasePhaseChips, type RoiCasePhase } from './RoiCasePhaseNav';
+import { toUserFacingErrorMessage } from '../shared/errorMessage';
 
 type DecisionTab = 'approval-snapshots' | 'compare';
 
@@ -58,7 +59,7 @@ export const RoiCaseDecisionWorkspace: React.FC<RoiCaseDecisionWorkspaceProps> =
     setSnapshotsError(null);
     listRoiApprovalSnapshots(roiCase.caseId)
       .then((rows) => setSnapshots(rows))
-      .catch((err) => setSnapshotsError(err instanceof Error ? err.message : String(err)))
+      .catch((err) => setSnapshotsError(toUserFacingErrorMessage(err, isPolish)))
       .finally(() => setSnapshotsLoading(false));
   }, [roiCase.caseId]);
 
@@ -72,7 +73,7 @@ export const RoiCaseDecisionWorkspace: React.FC<RoiCaseDecisionWorkspaceProps> =
     setCompareError(null);
     getRoiCaseCompareView(roiCase.caseId)
       .then((v) => setCompare(v))
-      .catch((err) => setCompareError(err instanceof Error ? err.message : String(err)))
+      .catch((err) => setCompareError(toUserFacingErrorMessage(err, isPolish)))
       .finally(() => setCompareLoading(false));
   }, [roiCase.caseId]);
 

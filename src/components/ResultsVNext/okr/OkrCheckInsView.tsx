@@ -37,6 +37,7 @@ import {
 import { buildOkrCheckInColumns, buildOkrCheckInPreview, buildOkrCheckInRowMenu } from './okrCheckInPresenters';
 import { OkrCheckInCorrectDialog, type OkrCheckInCorrectFormValues } from './OkrCheckInCorrectDialog';
 import { OkrCheckInRecordDialog, type OkrCheckInRecordFormValues } from './OkrCheckInRecordDialog';
+import { toUserFacingErrorMessage } from '../shared/errorMessage';
 
 function withId<T extends { checkInId: string }>(row: T): T & { id: string } {
   return { ...row, id: row.checkInId };
@@ -84,7 +85,7 @@ export const OkrCheckInsView: React.FC<OkrCheckInsViewProps> = ({ set, keyResult
     setError(null);
     listCheckIns(keyResult.keyResultId)
       .then((rows) => setCheckIns(rows))
-      .catch((err) => setError(err instanceof Error ? err.message : String(err)))
+      .catch((err) => setError(toUserFacingErrorMessage(err, isPolish)))
       .finally(() => setLoading(false));
   }, [keyResult.keyResultId]);
 
@@ -118,7 +119,7 @@ export const OkrCheckInsView: React.FC<OkrCheckInsViewProps> = ({ set, keyResult
         .catch((err) => {
           const isConflict = err instanceof OkrCheckInApiError && err.status === 409;
           setRecordConflict(isConflict);
-          setRecordError(err instanceof Error ? err.message : String(err));
+          setRecordError(toUserFacingErrorMessage(err, isPolish));
         })
         .finally(() => setRecordBusy(false));
     },
@@ -140,7 +141,7 @@ export const OkrCheckInsView: React.FC<OkrCheckInsViewProps> = ({ set, keyResult
         .catch((err) => {
           const isConflict = err instanceof OkrCheckInApiError && err.status === 409;
           setCorrectConflict(isConflict);
-          setCorrectError(err instanceof Error ? err.message : String(err));
+          setCorrectError(toUserFacingErrorMessage(err, isPolish));
         })
         .finally(() => setCorrectBusy(false));
     },

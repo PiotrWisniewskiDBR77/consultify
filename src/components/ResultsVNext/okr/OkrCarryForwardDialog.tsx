@@ -27,6 +27,7 @@ import { Modal } from '@/components/ui/primitives';
 import { MENU_1_PRIMARY_CTA } from '@/components/shared/ModuleMenu3';
 
 import { listOkrCycles, type OkrCycleDto } from './okrAdminApi';
+import { toUserFacingErrorMessage } from '../shared/errorMessage';
 
 export interface OkrCarryForwardDialogProps {
   open: boolean;
@@ -91,7 +92,7 @@ export const OkrCarryForwardDialog: React.FC<OkrCarryForwardDialogProps> = ({
       })
       .catch((err) => {
         if (cancelled) return;
-        setLoadError(err instanceof Error ? err.message : String(err));
+        setLoadError(toUserFacingErrorMessage(err, isPolish));
         setCycles([]);
       });
     return () => {

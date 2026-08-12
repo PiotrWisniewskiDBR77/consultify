@@ -24,6 +24,7 @@ import { StatusChip } from '@/components/ui/primitives';
 
 import { HonestValueCell } from '../HonestValue';
 import type { OkrSetDto } from './okrApi';
+import { toUserFacingErrorMessage } from '../shared/errorMessage';
 import {
   formatOkrDate,
   formatOkrProgressPercent,
@@ -87,7 +88,7 @@ export const OkrSetOverviewView: React.FC<OkrSetOverviewViewProps> = ({ set, isP
         onSetChanged(res.set);
         setNotes('');
       })
-      .catch((err) => setError(err instanceof Error ? err.message : String(err)))
+      .catch((err) => setError(toUserFacingErrorMessage(err, isPolish)))
       .finally(() => setPending(null));
   };
 

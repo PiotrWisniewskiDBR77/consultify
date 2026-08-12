@@ -203,6 +203,17 @@ export interface DeviationCaseErrorDetail {
   code?: string;
   message: string;
   details?: Record<string, unknown>;
+  /** RN-G5 polish: true when `.message` is `httpErr.data.error` — a
+   * SERVER-AUTHORED business-rule string (`NOT_PLAN_REQUIRED`, "Self
+   * approval is not allowed", …). The subview shows THAT verbatim, by
+   * design (see its own header: "a server-side REJECTION … is shown
+   * verbatim via `errorDetail` — these are workflow/maker-checker rules,
+   * not ABAC visibility denials"). False means there was no such server
+   * payload and `.message` fell back to a raw JS/network-error string
+   * (e.g. `TypeError: Failed to fetch`) that was never meant for a user —
+   * the caller must translate that case via `toUserFacingErrorMessage`
+   * instead of rendering it. */
+  isServerMessage: boolean;
 }
 
 /** Reads `err.data.code`/`.error`/`.details` from a failed command call —
@@ -211,10 +222,12 @@ export interface DeviationCaseErrorDetail {
  * honest inline error instead of a raw toast string. */
 export function deviationErrorDetail(err: unknown): DeviationCaseErrorDetail {
   const httpErr = err as HttpError;
+  const serverMessage = httpErr?.data?.error;
   return {
     code: httpErr?.data?.code,
-    message: httpErr?.data?.error || (err instanceof Error ? err.message : String(err)),
+    message: serverMessage || (err instanceof Error ? err.message : String(err)),
     details: httpErr?.data?.details,
+    isServerMessage: !!serverMessage,
   };
 }
 

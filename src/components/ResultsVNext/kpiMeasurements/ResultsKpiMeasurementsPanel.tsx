@@ -65,6 +65,7 @@ import {
 } from './KpiMeasurementDataQualityModal';
 import { KpiMeasurementRecordModal } from './KpiMeasurementRecordModal';
 import { kpiDataQualityStatusLabel } from './kpiMeasurementMappers';
+import { toUserFacingErrorMessage } from '../shared/errorMessage';
 import {
   buildKpiMeasurementColumns,
   buildKpiMeasurementPreview,
@@ -80,8 +81,8 @@ export interface ResultsKpiMeasurementsPanelProps {
   onBack: () => void;
 }
 
-function errMessage(err: unknown): string {
-  return err instanceof Error ? err.message : String(err);
+function errMessage(err: unknown, isPolish: boolean): string {
+  return toUserFacingErrorMessage(err, isPolish);
 }
 
 export const ResultsKpiMeasurementsPanel: React.FC<ResultsKpiMeasurementsPanelProps> = ({
@@ -119,7 +120,7 @@ export const ResultsKpiMeasurementsPanel: React.FC<ResultsKpiMeasurementsPanelPr
       });
       setRows(items);
     } catch (err) {
-      setError(errMessage(err));
+      setError(errMessage(err, isPolish));
     } finally {
       setLoading(false);
     }
@@ -174,7 +175,7 @@ export const ResultsKpiMeasurementsPanel: React.FC<ResultsKpiMeasurementsPanelPr
         await fetchRows();
         setSelectedId(created.measurementId);
       } catch (err) {
-        setRecordError(errMessage(err));
+        setRecordError(errMessage(err, isPolish));
       } finally {
         setBusy(false);
       }
@@ -193,7 +194,7 @@ export const ResultsKpiMeasurementsPanel: React.FC<ResultsKpiMeasurementsPanelPr
         await fetchRows();
         setSelectedId(measurement.measurementId);
       } catch (err) {
-        setCorrectionError(errMessage(err));
+        setCorrectionError(errMessage(err, isPolish));
       } finally {
         setBusy(false);
       }
@@ -219,11 +220,11 @@ export const ResultsKpiMeasurementsPanel: React.FC<ResultsKpiMeasurementsPanelPr
       } catch (err) {
         const code = httpErrorCode(err);
         if (code === 'MEASUREMENT_NOT_FOUND') {
-          toast.error(errMessage(err));
+          toast.error(errMessage(err, isPolish));
           setDqTarget(null);
           await fetchRows();
         } else {
-          setDqError(errMessage(err));
+          setDqError(errMessage(err, isPolish));
         }
       } finally {
         setBusy(false);

@@ -123,6 +123,7 @@ import {
 } from './roiCaseFullToolPresenters';
 import { RoiCalculationRunTriggerModal, RoiKpiEvidenceLinkFormModal, RoiScenarioFormModal, RoiScenarioOverrideFormModal } from './RoiBuildCaseModals';
 import { buildRoiCasePhaseChips, type RoiCasePhase } from './RoiCasePhaseNav';
+import { toUserFacingErrorMessage } from '../shared/errorMessage';
 
 type ModelTab = 'settings' | 'assumptions' | 'cost-lines' | 'benefit-lines' | 'scenarios' | 'calculation-runs';
 
@@ -177,7 +178,7 @@ export const RoiCaseModelWorkspace: React.FC<RoiCaseModelWorkspaceProps> = ({ ro
     setScenariosError(null);
     listRoiScenarios(roiCase.caseId)
       .then((rows) => setScenarios(rows.filter((s) => !s.deletedAt)))
-      .catch((err) => setScenariosError(err instanceof Error ? err.message : String(err)))
+      .catch((err) => setScenariosError(toUserFacingErrorMessage(err, isPolish)))
       .finally(() => setScenariosLoading(false));
   }, [roiCase.caseId]);
 
@@ -195,7 +196,7 @@ export const RoiCaseModelWorkspace: React.FC<RoiCaseModelWorkspaceProps> = ({ ro
     setCalcRunsError(null);
     listRoiCalculationRuns(roiCase.caseId)
       .then((rows) => setCalcRuns(rows))
-      .catch((err) => setCalcRunsError(err instanceof Error ? err.message : String(err)))
+      .catch((err) => setCalcRunsError(toUserFacingErrorMessage(err, isPolish)))
       .finally(() => setCalcRunsLoading(false));
   }, [roiCase.caseId]);
 
@@ -217,7 +218,7 @@ export const RoiCaseModelWorkspace: React.FC<RoiCaseModelWorkspaceProps> = ({ ro
         setBaseline(b);
         setPolicy(p);
       })
-      .catch((err) => setSettingsError(err instanceof Error ? err.message : String(err)))
+      .catch((err) => setSettingsError(toUserFacingErrorMessage(err, isPolish)))
       .finally(() => setSettingsLoading(false));
   }, [roiCase.caseId]);
 
@@ -236,7 +237,7 @@ export const RoiCaseModelWorkspace: React.FC<RoiCaseModelWorkspaceProps> = ({ ro
     setAssumptionsError(null);
     listRoiAssumptions(roiCase.caseId)
       .then((rows) => setAssumptions(rows.filter((a) => !a.deletedAt)))
-      .catch((err) => setAssumptionsError(err instanceof Error ? err.message : String(err)))
+      .catch((err) => setAssumptionsError(toUserFacingErrorMessage(err, isPolish)))
       .finally(() => setAssumptionsLoading(false));
   }, [roiCase.caseId]);
 
@@ -255,7 +256,7 @@ export const RoiCaseModelWorkspace: React.FC<RoiCaseModelWorkspaceProps> = ({ ro
     setCostLinesError(null);
     listRoiCostLines(roiCase.caseId)
       .then((rows) => setCostLines(rows.filter((c) => !c.deletedAt)))
-      .catch((err) => setCostLinesError(err instanceof Error ? err.message : String(err)))
+      .catch((err) => setCostLinesError(toUserFacingErrorMessage(err, isPolish)))
       .finally(() => setCostLinesLoading(false));
   }, [roiCase.caseId]);
 
@@ -274,12 +275,12 @@ export const RoiCaseModelWorkspace: React.FC<RoiCaseModelWorkspaceProps> = ({ ro
     setBenefitLinesError(null);
     listRoiBenefitLines(roiCase.caseId)
       .then((rows) => setBenefitLines(rows.filter((b) => !b.deletedAt)))
-      .catch((err) => setBenefitLinesError(err instanceof Error ? err.message : String(err)))
+      .catch((err) => setBenefitLinesError(toUserFacingErrorMessage(err, isPolish)))
       .finally(() => setBenefitLinesLoading(false));
   }, [roiCase.caseId]);
 
   const conflictOf = (err: unknown) => err instanceof RoiApiError && err.status === 409;
-  const messageOf = (err: unknown) => (err instanceof Error ? err.message : String(err));
+  const messageOf = (err: unknown) => toUserFacingErrorMessage(err, isPolish);
 
   // ── KPI evidence links — nested under ONE selected benefit line ──────────
   // (roi.routes.ts L1368-1467). Fetched lazily only when a benefit line is
@@ -301,7 +302,7 @@ export const RoiCaseModelWorkspace: React.FC<RoiCaseModelWorkspaceProps> = ({ ro
     setEvidenceLinksError(null);
     listRoiBenefitEvidenceLinks(roiCase.caseId, selectedBenefitLineId)
       .then((rows) => { if (!cancelled) setEvidenceLinks(rows); })
-      .catch((err) => { if (!cancelled) setEvidenceLinksError(err instanceof Error ? err.message : String(err)); });
+      .catch((err) => { if (!cancelled) setEvidenceLinksError(toUserFacingErrorMessage(err, isPolish)); });
     return () => { cancelled = true; };
   }, [roiCase.caseId, selectedBenefitLineId]);
 

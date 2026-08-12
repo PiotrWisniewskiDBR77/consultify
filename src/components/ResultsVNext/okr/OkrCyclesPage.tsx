@@ -35,6 +35,7 @@ import {
   type OkrProgramDto,
 } from './okrAdminApi';
 import { formatOkrWorkspaceDate } from './okrWorkspaceMappers';
+import { toUserFacingErrorMessage } from '../shared/errorMessage';
 
 const CYCLE_STATUS_TONE: Record<OkrCycleStatus, 'neutral' | 'success' | 'warning' | 'danger'> = {
   planned: 'neutral',
@@ -96,7 +97,7 @@ const OkrCyclesPageContent: React.FC<{ isPolish: boolean }> = ({ isPolish }) => 
     setError(null);
     listOkrCycles()
       .then((rows) => setCycles(rows))
-      .catch((err) => setError(err instanceof Error ? err.message : String(err)))
+      .catch((err) => setError(toUserFacingErrorMessage(err, isPolish)))
       .finally(() => setLoading(false));
   }, []);
 
@@ -117,7 +118,7 @@ const OkrCyclesPageContent: React.FC<{ isPolish: boolean }> = ({ isPolish }) => 
     setError(null);
     fn()
       .then(() => load())
-      .catch((err) => setError(err instanceof Error ? err.message : String(err)));
+      .catch((err) => setError(toUserFacingErrorMessage(err, isPolish)));
   };
 
   const transitionInput = (c: OkrCycleDto): OkrCycleTransitionInput => ({ expectedVersion: c.rowVersion, idempotencyKey: newOkrAdminIdempotencyKey() });
@@ -237,7 +238,7 @@ const OkrCyclesPageContent: React.FC<{ isPolish: boolean }> = ({ isPolish }) => 
                     setFormOpen(false);
                     load();
                   })
-                  .catch((err) => setFormError(err instanceof Error ? err.message : String(err)))
+                  .catch((err) => setFormError(toUserFacingErrorMessage(err, isPolish)))
                   .finally(() => setBusy(false));
               }}
               data-testid="okr-cycle-form-submit"

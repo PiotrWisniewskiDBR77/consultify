@@ -39,6 +39,7 @@ import { getOkrSetChildEditLock } from './okrObjectiveMappers';
 import { buildOkrObjectiveColumns, buildOkrObjectivePreview, buildOkrObjectiveRowMenu } from './okrObjectivePresenters';
 import { OkrCancelDialog } from './OkrCancelDialog';
 import { OkrObjectiveFormModal, type OkrObjectiveFormValues } from './OkrObjectiveFormModal';
+import { toUserFacingErrorMessage } from '../shared/errorMessage';
 
 function resolveCurrentUserIdFromToken(): string | null {
   try {
@@ -88,7 +89,7 @@ export const OkrObjectivesView: React.FC<OkrObjectivesViewProps> = ({ set, isPol
     setError(null);
     listObjectivesForSet(set.setId)
       .then((rows) => setObjectives(rows))
-      .catch((err) => setError(err instanceof Error ? err.message : String(err)))
+      .catch((err) => setError(toUserFacingErrorMessage(err, isPolish)))
       .finally(() => setLoading(false));
   }, [set.setId]);
 
@@ -147,7 +148,7 @@ export const OkrObjectivesView: React.FC<OkrObjectivesViewProps> = ({ set, isPol
         .catch((err) => {
           const isConflict = err instanceof OkrObjectiveApiError && err.status === 409;
           setFormConflict(isConflict);
-          setFormError(err instanceof Error ? err.message : String(err));
+          setFormError(toUserFacingErrorMessage(err, isPolish));
         })
         .finally(() => setFormBusy(false));
     },
@@ -172,7 +173,7 @@ export const OkrObjectivesView: React.FC<OkrObjectivesViewProps> = ({ set, isPol
         .catch((err) => {
           const isConflict = err instanceof OkrObjectiveApiError && err.status === 409;
           setCancelConflict(isConflict);
-          setCancelError(err instanceof Error ? err.message : String(err));
+          setCancelError(toUserFacingErrorMessage(err, isPolish));
         })
         .finally(() => setCancelBusy(false));
     },

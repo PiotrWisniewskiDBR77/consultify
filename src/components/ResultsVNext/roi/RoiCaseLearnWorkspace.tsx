@@ -59,6 +59,7 @@ import {
 } from './RoiLearnModals';
 import { RoiRemoveLineItemDialog } from './RoiRemoveLineItemDialog';
 import { buildRoiCasePhaseChips, type RoiCasePhase } from './RoiCasePhaseNav';
+import { toUserFacingErrorMessage } from '../shared/errorMessage';
 
 type LearnTab = 'pir' | 'finance-links' | 'finance-reconciliations';
 
@@ -77,7 +78,7 @@ export const RoiCaseLearnWorkspace: React.FC<RoiCaseLearnWorkspaceProps> = ({ ro
   const [tab, setTab] = useState<LearnTab>('pir');
   const phaseChips = buildRoiCasePhaseChips(isPolish);
   const conflictOf = (err: unknown) => err instanceof RoiApiError && err.status === 409;
-  const messageOf = (err: unknown) => (err instanceof Error ? err.message : String(err));
+  const messageOf = (err: unknown) => toUserFacingErrorMessage(err, isPolish);
 
   // ── PIR ────────────────────────────────────────────────────────────────
   const [pirs, setPirs] = useState<RoiPostInvestmentReview[] | null>(null);
