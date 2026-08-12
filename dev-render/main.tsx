@@ -298,12 +298,12 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   },
   'results-vnext-roi-registry': {
     label:
-      'RN-G2 P2 — REALNY rejestr ROI (roiRegistryPresenters + ResultsVNextRegistryShell): All cases + Benefits realization, honest NPV/IRR/payback, lock badges. &tab=all|benefits &state=ready|loading|empty|error &selected=<caseId|none> &calc=loading|ready',
+      'RN-G2 P2 — REALNY route entry <ResultsRoiRegistryPage> (flaga roiRegistry: OFF -> EmptyState "results-vnext-roi-disabled", ON -> realny <ResultsRoiHub>): All cases + Benefits realization, honest NPV/IRR/payback, lock badges. &tab=all|benefits &state=ready|loading|empty|error &selected=<caseId|none> &calc=loading|ready &ff=off',
     render: () => <ResultsVNextRoiRegistryScreen />,
   },
   'results-vnext-roi-model': {
     label:
-      'RN-G2 §G #12-14 — REALNY pod-widok modelowania sprawy ROI (roiCaseDetailPresenters + ResultsVNextRegistryShell): Baseline+polityka (2-wierszowa tabela), Założenia/Koszty/Korzyści CRUD. &tab=settings|assumptions|cost-lines|benefit-lines &state=ready|loading|empty|error &selected=<id|none> &locked=1 &nullBaseline=1 &nullPolicy=1 &editBaseline=1 &editPolicy=1 &assumptionForm=create|edit &costLineForm=create|edit &benefitLineForm=create|edit &removeAssumption=1 &removeCostLine=1 &removeBenefitLine=1 &formState=idle|saving|error|conflict',
+      'RN-G2 §G #12-14 — REALNY <RoiCaseFullTool initialPhase="build"> -> <RoiCaseModelWorkspace>: Baseline+polityka (2-wierszowa tabela), Założenia/Koszty/Korzyści CRUD. &tab=settings|assumptions|cost-lines|benefit-lines &state=ready|loading|empty|error &selected=<id|none> &locked=1 &nullBaseline=1 &nullPolicy=1 &editBaseline=1 &editPolicy=1 &assumptionForm=create|edit &costLineForm=create|edit &benefitLineForm=create|edit &removeAssumption=1 &removeCostLine=1 &removeBenefitLine=1 &formState=idle|saving|error|conflict',
     render: () => <ResultsVNextRoiModelScreen />,
   },
   'results-vnext-roi-full-tool': {
@@ -313,7 +313,7 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   },
   'results-vnext-okr-registry': {
     label:
-      'RN-G2 P3 #23 — REALNY <ResultsOkrHub> (OQ-UI-I fix 2026-08-11: mounts the production component, window.fetch stubbed for /api/vnext/results/okr*, not a presenter reimplementation). Organization/My/Company tabs (real clicks, real fetch per tab), honest progress/confidence, lock badges, real ?setId= deep link. &state=ready|loading|empty|error',
+      'RN-G2 P3 #23 — REALNY route entry <ResultsOkrRegistryPage> (flaga okrRegistry: OFF -> EmptyState "results-vnext-okr-disabled", ON -> realny <ResultsOkrHub>), window.fetch stubbed for /api/vnext/results/okr*. Organization/My/Company tabs (real clicks, real fetch per tab), honest progress/confidence, lock badges, real ?setId= deep link. &state=ready|loading|empty|error &ff=off',
     render: () => <ResultsVNextOkrRegistryScreen />,
   },
   'results-vnext-okr-objectives': {
@@ -323,7 +323,7 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   },
   'results-vnext-okr-workspace': {
     label:
-      'RN-G3 lane okr full-tool task (2026-08-11) — REALNY <OkrSetWorkspace> (pełne narzędzie: Przegląd/Cele i KR/Dopasowania/Rozmowy i wsparcie/Przegląd i refleksja/Historia), window.fetch stubbed, real component + real tab clicks. &setStatus=<status> &asOwner=1',
+      'RN-G3 lane okr full-tool task (2026-08-11) — REALNY <OkrSetWorkspace> (pełne narzędzie: Przegląd/Cele i KR/Dopasowania/Rozmowy i wsparcie/Przegląd i refleksja/Historia), window.fetch stubbed, real component + real tab clicks; onSetChanged/onBackToSets real (harness state), status po przejściu cyklu życia faktycznie się odświeża. &setStatus=<status> &asOwner=1',
     render: () => <ResultsVNextOkrWorkspaceScreen />,
   },
   'results-vnext-okr-admin': {
@@ -333,7 +333,7 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   },
   'results-vnext-kpi-scorecards': {
     label:
-      'RN-G2 P1 #8 — REALNY rejestr Kart Wyników KPI (kpiScorecardPresenters + ResultsVNextRegistryShell): lista (zakładka Karty wyników) + szczegóły karty (Pozycje/Migawki), status GET .../status, lock NO_MEMBERS. &view=list|detail &tab=items|snapshots &state=ready|loading|empty|error|forbidden &selected=<id|none> &scorecard=sc-1|sc-2|sc-3|sc-4',
+      'RN-G2 P1 #8 — REALNY <ResultsKpiScorecardDetailPage> (trasa /results/kpi/scorecards/:scorecardId pod MemoryRouter, Api.get/Api.post stubbed) — szczegóły karty (Pozycje/Migawki), status GET .../status, lock NO_MEMBERS. Lista kart wyników = zakładka "Karty wyników" w results-vnext-kpi-registry (REALNY <ResultsKpiRegistryPage>), nie osobny ekran tutaj. &tab=items|snapshots &state=ready|loading|empty|error|forbidden &selected=<id|none> &scorecard=sc-1|sc-2|sc-3|sc-4',
     render: () => <ResultsVNextKpiScorecardsScreen />,
   },
   'results-vnext-kpi-tool': {

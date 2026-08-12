@@ -1,5 +1,17 @@
 /**
- * RN-G2 P3 #23 — visual QA harness for the OKR Set registry.
+ * RN-G2 P3 #23 — visual QA harness for the OKR Set registry route entry
+ * `ResultsOkrRegistryPage` (`src/components/ResultsVNext/ResultsOkrRegistryPage.tsx`,
+ * mounted at `AppRoutes.tsx:2648`) — the flag-gated shell that renders
+ * `EmptyState` (`data-testid="results-vnext-okr-disabled"`) when the
+ * `okrRegistry` flag is OFF, and `ResultsOkrHub` when it's ON.
+ *
+ * RN-G5 harness fix (blocker B1, remaining item #2): this screen previously
+ * mounted `ResultsOkrHub` directly, skipping the flag-gated route-entry
+ * shell entirely and setting no flag at all — zero coverage of (a) the
+ * actual production route entry, (b) the flag-OFF `EmptyState`. Pattern
+ * mirrors `results-vnext-kpi-registry.tsx`'s `&ff=off` param (see its
+ * header) — default mounts with the flag ON (localStorage), `&ff=off`
+ * mounts with it OFF so both states are screenshot-able.
  *
  * ── OQ-UI-I FIX (2026-08-11, RN-G3 lane `okr` full-tool task) ────────────
  * Independent verification found this screen did NOT mount the real
@@ -35,11 +47,21 @@
  *   &selected=<setId|none>        deep-link via `?setId=` (real Hub's own
  *                                  deep-link param) — 'none' leaves nothing
  *                                  selected.
+ *   &ff=off                       force the `okrRegistry` flag OFF — renders
+ *                                  the route entry's own `EmptyState`
+ *                                  (`data-testid="results-vnext-okr-disabled"`)
+ *                                  instead of `ResultsOkrHub`; default (ff
+ *                                  unset) renders the flag ON. EXPLICITLY
+ *                                  writes '0'/'1' to localStorage every
+ *                                  load (not a skipped write on off) so a
+ *                                  stale '1' from a prior visit in the same
+ *                                  browser session can't leak through and
+ *                                  fake an "off" screenshot.
  */
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { ResultsOkrHub } from '../../src/components/ResultsVNext/okr/ResultsOkrHub';
+import { ResultsOkrRegistryPage } from '../../src/components/ResultsVNext/ResultsOkrRegistryPage';
 import type { OkrSetDto } from '../../src/components/ResultsVNext/okr/okrApi';
 
 // ── Mock OKR Sets — one representative row per real status (all 10 from
@@ -351,6 +373,21 @@ const MOCK_SETS: OkrSetDto[] = [
 
 const params = new URLSearchParams(window.location.search);
 const state = params.get('state') || 'ready';
+const flagOff = params.get('ff') === 'off';
+
+try {
+  // EXPLICIT '0'/'1', never a skipped write: `localStorage` is shared
+  // across the whole harness origin, so a PRIOR visit without `&ff=off`
+  // can leave this key at '1'. Skipping the write on `&ff=off` (the
+  // initial, WRONG version of this fix) would then leave that stale '1' in
+  // place — `isResultsVNextFlagEnabled` reads localStorage BEFORE env/
+  // default, so the screen would silently render the HUB while claiming to
+  // prove the flag-OFF `EmptyState`. Caught by orchestrator review before
+  // commit — see `results-vnext-roi-registry.tsx`'s identical fix/comment.
+  window.localStorage.setItem('ff.results_vnext_okr_registry', flagOff ? '0' : '1');
+} catch {
+  // no-op — dev-render only
+}
 
 function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
@@ -390,7 +427,7 @@ const ResultsVNextOkrRegistryScreen: React.FC = () => {
   useTranslation();
   return (
     <div className="h-screen bg-c-bg text-c-text">
-      <ResultsOkrHub />
+      <ResultsOkrRegistryPage />
     </div>
   );
 };
