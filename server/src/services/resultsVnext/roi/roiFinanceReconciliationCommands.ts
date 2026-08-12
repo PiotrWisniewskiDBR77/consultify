@@ -27,6 +27,10 @@ import type { PoolClient } from 'pg';
 
 import { computeStateHash } from '../kpi/kpiDefinitionCommands.js';
 import { executeAtomicCommand, executeAtomicCreate, type AtomicCommandOutcome, type AtomicEventInput } from '../platform/atomicWrite.js';
+import {
+  assertCommandCapability,
+  type CommandAccessContext,
+} from '../platform/commandCapabilityGuard.js';
 
 import { ROI_EVENT_SOURCE } from './roiCaseCommands.js';
 import {
@@ -72,6 +76,24 @@ export class RoiFinanceReconciliationValidationError extends Error {
   }
 }
 
+// RN-G5 — command capability names (docs/product/results-vnext/RN_G5_AUTHZ_DESIGN.md)
+export const ROI_FINANCE_RECONCILIATION_CAPABILITIES = {
+  open: 'results.roi.finance_reconciliation.open',
+  updateStatus: 'results.roi.finance_reconciliation.update_status',
+} as const;
+
+async function loadRoiCaseOwnerUserId(
+  client: PoolClient,
+  caseId: string,
+  organizationId: string
+): Promise<string | null> {
+  const result = await client.query<{ owner_user_id: string | null }>(
+    `SELECT owner_user_id FROM rvn_roi_cases WHERE case_id = $1 AND organization_id = $2`,
+    [caseId, organizationId]
+  );
+  return result.rows[0]?.owner_user_id ?? null;
+}
+
 // ==========================================
 // openRoiFinanceReconciliation
 // ==========================================
@@ -89,6 +111,7 @@ export interface OpenRoiFinanceReconciliationInput {
   correlationId?: string;
   causationId?: string | null;
   reason?: string | null;
+  access: CommandAccessContext;
 }
 
 export async function openRoiFinanceReconciliation(
@@ -107,11 +130,20 @@ export async function openRoiFinanceReconciliation(
     correlationId,
     causationId = null,
     reason = null,
+    access,
   } = input;
 
   return executeAtomicCreate<RoiFinanceReconciliation>({
     organizationId,
     applyMutation: async (client) => {
+      const caseOwnerUserId = await loadRoiCaseOwnerUserId(client, caseId, organizationId);
+      assertCommandCapability({
+        access,
+        actorUserId,
+        capability: ROI_FINANCE_RECONCILIATION_CAPABILITIES.open,
+        responsibleUserIds: [caseOwnerUserId],
+      });
+
       const linkResult = await client.query<{ link_id: string }>(
         `SELECT link_id FROM rvn_roi_finance_links WHERE link_id = $1 AND case_id = $2 AND organization_id = $3`,
         [financeLinkId, caseId, organizationId]
@@ -192,6 +224,7 @@ export interface UpdateRoiFinanceReconciliationStatusInput {
   correlationId?: string;
   causationId?: string | null;
   reason?: string | null;
+  access: CommandAccessContext;
 }
 
 /** CAS on the reconciliation's OWN `row_version` — direct copy of
@@ -217,6 +250,7 @@ export async function updateRoiFinanceReconciliationStatus(
     correlationId,
     causationId = null,
     reason = null,
+    access,
   } = input;
 
   let beforeState: Record<string, unknown> | null = null;
@@ -232,6 +266,15 @@ export async function updateRoiFinanceReconciliationStatus(
       if (currentRow.case_id !== caseId) {
         throw new RoiFinanceReconciliationNotFoundError(reconciliationId, organizationId);
       }
+
+      const caseOwnerUserId = await loadRoiCaseOwnerUserId(client, caseId, organizationId);
+      assertCommandCapability({
+        access,
+        actorUserId,
+        capability: ROI_FINANCE_RECONCILIATION_CAPABILITIES.updateStatus,
+        responsibleUserIds: [caseOwnerUserId],
+      });
+
       beforeState = { reconciliation: toRoiFinanceReconciliation(currentRow) };
 
       isTerminalTransition = ROI_FINANCE_RECONCILIATION_TERMINAL_STATUSES.includes(status);

@@ -3049,6 +3049,7 @@ router.post(
       const { caseId } = req.params as { caseId: string };
       if (!(await requireExistingRoiCase(auth, caseId, res))) return;
       const body = req.body as import('zod').infer<typeof CreateRoiFinanceLinkSchema>;
+      const access = await resolveAccess(req, auth);
       const outcome = await createRoiFinanceLink({
         caseId,
         organizationId: auth.organizationId,
@@ -3066,6 +3067,7 @@ router.post(
         idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
         correlationId: getCorrelationId(req),
         reason: body.reason ?? null,
+        access,
       });
       res.status(outcome.outcome === 'applied' ? 201 : 200).json({
         outcome: outcome.outcome,
@@ -3089,6 +3091,7 @@ router.delete(
     try {
       const { caseId, linkId } = req.params as { caseId: string; linkId: string };
       const body = req.body as import('zod').infer<typeof RemoveRoiFinanceLinkSchema>;
+      const access = await resolveAccess(req, auth);
       const outcome = await removeRoiFinanceLink({
         linkId,
         caseId,
@@ -3099,6 +3102,7 @@ router.delete(
         idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
         correlationId: getCorrelationId(req),
         reason: body.reason ?? null,
+        access,
       });
       res.status(200).json({
         outcome: outcome.outcome,
@@ -3145,6 +3149,7 @@ router.post(
       const { caseId } = req.params as { caseId: string };
       if (!(await requireExistingRoiCase(auth, caseId, res))) return;
       const body = req.body as import('zod').infer<typeof OpenRoiFinanceReconciliationSchema>;
+      const access = await resolveAccess(req, auth);
       const outcome = await openRoiFinanceReconciliation({
         caseId,
         organizationId: auth.organizationId,
@@ -3157,6 +3162,7 @@ router.post(
         idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
         correlationId: getCorrelationId(req),
         reason: body.reason ?? null,
+        access,
       });
       res.status(outcome.outcome === 'applied' ? 201 : 200).json({
         outcome: outcome.outcome,
@@ -3180,6 +3186,7 @@ router.patch(
     try {
       const { caseId, reconciliationId } = req.params as { caseId: string; reconciliationId: string };
       const body = req.body as import('zod').infer<typeof UpdateRoiFinanceReconciliationStatusSchema>;
+      const access = await resolveAccess(req, auth);
       const outcome = await updateRoiFinanceReconciliationStatus({
         reconciliationId,
         caseId,
@@ -3192,6 +3199,7 @@ router.patch(
         idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
         correlationId: getCorrelationId(req),
         reason: body.reason ?? null,
+        access,
       });
       res.status(200).json({
         outcome: outcome.outcome,
