@@ -429,4 +429,255 @@ Touched outside the literal allowlist patterns, with reason:
 Nothing under `src/components/standard/**` or `src/components/shared/**`
 was touched. Nothing under `server/**` was touched (the KPI `reflection_rca`
 backend was already complete and already had a passing real-Postgres test
+before this session started — verified by running it, §5). [continued in
+§13 for the orchestrator follow-up round — see below; the sentence this
+interrupts continues unchanged after this insertion.]
+
+## 13. Orchestrator follow-up round (2026-08-12, same session as §12)
+
+The orchestrator reviewed §1-12 and rejected the packet as PARTIAL, not a
+candidate, on three specific, correct grounds. This section documents what
+was done in response — each grounded in a fresh measurement, not a
+re-assertion.
+
+### 13.1 OKR was completely unwired — now wired (one mode)
+
+Confirmed by exhaustive grep before starting (`grep -rln "teresaDraft|TeresaDisposition|reflection_synthesis|..." src/components/ResultsVNext/okr/` — zero hits, everywhere) that OKR had NO Teresa affordance of any kind, not even a stub. Researched all 5 server-side OKR advisor modes
+(`objective_draft`, `objective_quality_review`, `check_in_assist`,
+`manager_brief`, `reflection_synthesis`) via a dedicated research pass that
+read the real server code (`teresaCopilotService.ts` L3167-3443,
+`teresaCopilotCanon.ts` L295-410) rather than guessing. `reflection_synthesis`
+is the only true two-gate mode (structurally identical to ROI's
+`pir_lessons_draft`), so it was chosen and wired end-to-end:
+
+- `src/components/ResultsVNext/teresa/teresaHandoffTypes.ts` — added
+  `ResultsOkrHandoffContext`/`OkrReflectionSynthesisPayload`, verbatim
+  mirror of the server canon types, cited.
+- `src/components/ResultsVNext/okr/okrTeresaReflectionDraft.ts` (new) —
+  suggestion/handoff-context/target-payload/consequence-preview builders,
+  same convention as the ROI/KPI siblings.
+- `src/components/ResultsVNext/okr/OkrReviewReflectionView.tsx` (diff) —
+  "Poproś Teresę o szkic refleksji" next to each Objective's pre-existing
+  "Zapisz refleksję", full P08 propose→approve/reject→execute→audit via
+  the shared `TeresaProposalPanel`.
+- `dev-render/screens/results-vnext-teresa-okr-reflection.tsx` (new) +
+  `dev-render/main.tsx` registration (additive).
+- `tests/resultsVnext/okr/teresaOkrReflectionWorkspace.component.test.tsx`
+  (new, 3 tests).
+
+**A real, CONFIRMED server gap drove one honest design divergence from
+ROI**, discovered by grepping `server/src/routes/resultsVnext/okr.routes.ts`
+for `teresa-draft-disposition` (zero hits) versus ROI's real route at
+`server/src/routes/resultsVnext/roi.routes.ts:2798`
+(`POST .../post-investment-reviews/:pirId/teresa-draft-disposition`).
+`recordOkrReflectionTeresaDraftDisposition` exists as a server-side command
+function (and is exercised directly, bypassing HTTP, by the pre-existing
+`tests/resultsVnext/okr/okrReflectionTeresaDraft.realdb.test.ts`) but is
+never wired to an Express route. Since `server/**` is frozen for this lane,
+this wiring does NOT build a UI button that calls a route that doesn't
+exist. Instead: once Teresa's draft is generated and executed (full
+governed P08 lifecycle, same rigor as ROI/KPI, writing only
+`teresa_draft_reflection_payload`/`teresa_draft_generated_at` server-side),
+the draft text is offered back to the human as a **client-side-only**
+"Wstaw szkic Teresy do pól" convenience (zero network calls) that fills
+the pre-existing, human-editable reflection textareas. The pre-existing
+"Zapisz refleksję" button (untouched) remains the ONLY path that commits
+anything to the real narrative fields, with or without Teresa. This is
+disclosed in the UI's own consequence-preview copy, not just in code
+comments (see screenshot `17-okr-teresa-denied.png`, which shows the
+literal Polish sentence "serwer nie ma jeszcze osobnego punktu końcowego
+do zapisania decyzji o tym szkicu (potwierdzona luka)").
+
+Also confirmed and worked around: OKR has no `GET .../objectives/:id/reflection`
+endpoint (pre-existing gap, not introduced by this lane — the manual save
+path already had to cope with it via a session-scoped `reflectionVersions`
+cache). Teresa's own successful execute now feeds that SAME cache, reading
+the real CAS `row_version` verbatim from `execution.handoff_result.row_version`
+(`teresaCopilotService.ts`'s own `handleOkrReflectionSynthesis` return
+shape, read from source, not guessed) — proven by the happy-path test's
+final assertion (`recordObjectiveReflection` called with
+`expectedVersion: 1`, the version Teresa's mocked execute wrote, not a
+stale 0).
+
+Mock data in the new harness uses the CORRECT unclamped 0-1 progress
+fraction convention (`progress: '0.8333333333'`, `overallProgress: '0.625'`)
+per the orchestrator's explicit reminder and the codebase's own documented
+precedent of a formatter+mock-scale defect pair canceling out (`okrRegistryMappers.ts`
+L285-313) — verified by reading that file's own comment, not assumed.
+
+Screenshots: `docs/qa/screens/rn-g5-teresa-2026-08-12/09` through `17`
+(9 files) — baseline, propose, approved, completed, draft-convenience
+shown (fields still empty), draft inserted (still unsaved), saved,
+Teresa-unavailable/manual-fallback, execute-time-denial. All from real
+scripted Playwright clicks (`dev-render/shot.mjs`-style ad hoc script, not
+committed), zero console/network errors across all three scripted runs
+(happy / `&teresaDown=1` / `&teresaDeny=1`).
+
+Tests: 3/3 passed. One negative control performed and reverted
+byte-for-byte: sabotaged `onCompleted` to call `recordObjectiveReflection`
+directly on Teresa's execute success (the exact regression D13 forbids) —
+confirmed the happy-path test's structural assertion goes RED (`expected
+"vi.fn()" to not be called at all, but actually been called 1 times`),
+reverted, confirmed green again.
+
+**What this does NOT prove for OKR**: the disposition/second-gate decision
+does not exist in any form (confirmed gap, not attempted); no real-Postgres
+proof was run this round for `reflection_synthesis` specifically (the
+pre-existing `okrReflectionTeresaDraft.realdb.test.ts` was read but not
+re-run this round — NIEZMIERZONE); cross-tenant/restricted-outsider
+behavior for OKR specifically was not separately tested (covered generically
+at the shared-panel level instead, see §13.2).
+
+### 13.2 D13 points 5 and 7 — re-scoped to the correct layer and proven there
+
+The orchestrator's correction was structurally right: these are properties
+of the SHARED `TeresaProposalPanel`, not server-only concerns, and are
+provable client-side without touching `server/**`. New file:
+`tests/resultsVnext/teresa-panel-guards.component.test.tsx`, 6 tests, all
+against the real production `TeresaProposalPanel`.
+
+**Point 7 (retry doesn't duplicate)** — 3 tests, each a real measurement,
+not an assumption (two separate bugs were found and fixed IN THE TEST,
+not the component, by actually running them — see the file's own inline
+comments):
+1. Rapid double-click on "Wykonaj" before the network promise resolves:
+   `executeTeresaProposal` called exactly once. MEASURED finding: the
+   button doesn't merely `disabled={busy}` — `phase` leaves `'approved'`
+   entirely on click (→`'executing'`), and the whole button block is
+   gated on `phase === 'proposal' || phase === 'approved'`, so the
+   "Wykonaj" button UNMOUNTS on the first click, a stronger guarantee
+   than a disabled-attribute race. First draft of this test asserted
+   `.toBeDisabled()` and failed with "unable to find element" — fixed to
+   assert `.not.toBeInTheDocument()` instead, which is what actually
+   happens.
+2. A non-transport execute error (status 500, not 0) re-enables "Wykonaj";
+   the retry click re-issues the SAME `proposalId` exactly once — no new
+   proposal created (`createTeresaProposal` still called exactly once
+   total). First draft's mock for `approveTeresaProposal` used a static
+   `mockResolvedValue` that always echoed the FIRST proposal's id
+   regardless of which id was actually passed in — a self-inflicted false
+   positive/negative that made the component LOOK like it sent the wrong
+   id. Fixed to `mockImplementation` that echoes the real argument.
+3. A genuine TRANSPORT failure (status 0) during execute does NOT offer a
+   bare "retry the same execute" — it routes to `phase:'unavailable'` and
+   abandons the approved proposal; retry creates a FRESH proposal via
+   `startProposal()`, and the OLD proposal id is never executed a second
+   time (`executeTeresaProposal` calls: `('tprop-old')` then
+   `('tprop-new')`, never `('tprop-old')` twice). This is the client's own
+   deliberate safety property, not a gap: when delivery status is unknown,
+   guessing "safe to retry the same command" would be the actual D13
+   violation.
+
+**Point 5 (restricted/cross-tenant gets nothing, not even crumbs)** — 3
+tests, worst-case-error methodology (mock a DELIBERATELY leaky 403 body,
+as if a future server regression attached `details`, and prove the CLIENT
+structurally cannot surface it regardless):
+1. 403 at proposal-creation: `document.body.textContent` asserted to
+   contain NONE of `org-acme-secret`/`Acme Corp`/`existingProposalCount`/
+   `14`/`case-9`/`case-10`/`P08_CAPABILITY_DENIED` — only a generic banner
+   renders; the proposed-change/evidence/consequence-preview block (built
+   from ALREADY-VISIBLE caller data) does not render either, since `phase`
+   never reaches `'proposal'`.
+2. An empty/malformed success body (`createTeresaProposal` resolving to
+   `undefined` — the ABAC "don't confirm existence" pattern): does not
+   crash, does not print "undefined" anywhere in the DOM, and clicking
+   Approve on a missing proposal is a safe no-op (`approveTeresaProposal`
+   never called) rather than a `TypeError`.
+3. 403 at EXECUTE time with the same leaky `details` shape: same crumb-free
+   assertion, confirming the boundary holds at both call sites, not just
+   creation.
+
+One negative control performed and reverted byte-for-byte on this file:
+broke the phase-gating on the execute-button block (added `'executing'` to
+both the outer wrapper's and the inner button's render conditions, plus
+hard-coded `disabled={false}`), confirmed test 1 goes RED (`element IS in
+the document` where the assertion expected it gone), reverted, confirmed
+6/6 green again. First sabotage attempt (inner condition only) produced a
+FALSE GREEN — the outer wrapper still gated on the old condition, so the
+inner change never took effect; caught by actually re-running rather than
+trusting the edit, and fixed by sabotaging both conditions together.
+
+**What this does NOT prove**: these are CLIENT-layer guarantees. Whether
+the real server actually returns a generic-enough 403 message (not "Forbidden:
+org Acme Corp has 14 other cases") is a server-side responsibility, tracked
+as an external dependency on the parallel server track adding the
+capability gate inside commands (per the brief's own "KONTEKST" section) —
+not verified or claimed here.
+
+### 13.3 D13 point 1 — manual path proven to work WHILE Teresa is unreachable, not just "alongside her code"
+
+§4 point 1's original proof ("golden flow passes with Teresa's code loaded
+alongside it") was accurate but answered a weaker question than the
+requirement. New proof: a real scripted Playwright walkthrough against the
+dev-render KPI harness with `&teresaDown=1` held for the ENTIRE sequence —
+screenshots `08-manual-path-0` through `08-manual-path-4` in
+`docs/qa/screens/rn-g5-teresa-2026-08-12/`:
+0. Baseline, Phase 2 empty, `teresaDown=1` already active.
+1. Both root-cause fields filled.
+2. Click "Poproś Teresę o zapis przez pipeline" → real network-error
+   banner (`Network error contacting /api/v8/teresa/proposal: dev-render
+   teresaDown=1: simulated network failure contacting Teresa`).
+3. Click "Kontynuuj ręcznie" → panel closes, fields still populated
+   (Teresa never touched them).
+4. Click the PRE-EXISTING "Zapisz analizę" button (never calls Teresa) →
+   real save: toast "Analiza zapisana, przejście do planu", Phase 2 marked
+   done with the exact manually-typed text, Phase 3 becomes active,
+   "Wersja (CAS)" bumped 2→3.
+
+Measured, not just screenshotted: a DOM-text assertion in the script
+itself confirmed `CAS_VERSION_FOUND: 3`, `PHASE3_TEXT_PRESENT: true`,
+`RCA_TEXT_PERSISTED_ON_SCREEN: true`, and zero console errors across the
+whole 5-screenshot run — while `teresaDown=1` never let a single Teresa
+proposal succeed at any point.
+
+### 13.4 `npx vite build` run fresh by this session, not inherited
+
+The orchestrator explicitly declined to accept §8's inherited PASS claim
+(the prior session crashed mid-run). Ran it fresh this round:
+`✓ built in 3m 15s`, `10221 modules transformed` (same module count as the
+prior session's claim — consistent, not just re-asserted), `0` occurrences
+of the string "error" (case-insensitive) anywhere in the full build log,
+`dist/` populated with 437 files. Faster than the prior session's claimed
+29m35s, consistent with a less-contended host at run time (this session's
+`uptime` was not specifically recorded, but no other heavy `tsc`/`vite`
+processes were observed competing on this run's timeframe versus the
+first `tsc` run in §12, which DID share the host with an unrelated
+parallel-session `vite build` in a different worktree, confirmed by `ps
+aux` showing a different `rn-g2-lanes/g5-kpicreate` path).
+
+### 13.5 Updated gate table (this round, all fresh)
+
+| Gate | Result |
+|---|---|
+| `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit` | **EXIT 0**, empty output |
+| `npx vite build` | **PASS**, `✓ built in 3m 15s`, 10221 modules, 0 "error" occurrences |
+| `npx esbuild` on both dev-render Teresa harnesses + `dev-render/main.tsx` | **EXIT 0** each (one pre-existing, unrelated duplicate-object-key warning in `main.tsx` at the `document-studio-blocks-i18n` entries, confirmed via `git diff` to be untouched by this lane — not a regression introduced here) |
+| `bash scripts/check-list-canon.sh` | **EXIT 0**, 408 vs baseline 409 (debt dropped) |
+| `bash scripts/check-artefakt.sh` | **EXIT 0**, 7/7 |
+| `grep -rn "window\.\(prompt\|confirm\|alert\)("` | one hit, the same pre-existing removal-comment |
+| `git diff --check` | clean |
+| All 8 Teresa-relevant test files together | **42 passed, 0 failed, 0 skipped** |
+
+### 13.6 What THIS round still does not prove (mandatory honesty, unchanged categories from §10 unless noted)
+
+- OKR's other four advisor modes remain entirely unwired (unchanged from §10).
+- OKR's disposition/second-gate step does not exist in ANY form (a
+  stronger statement than §10's KPI equivalent, since OKR's gap is a
+  missing ROUTE, not a design choice) — flagged, not fixed, per the
+  frozen `server/**` boundary.
+- Cross-tenant/restricted-outsider behavior is now proven at the SHARED
+  PANEL layer (§13.2) but still NOT proven per-domain (KPI/ROI/OKR) against
+  a real server — still NIEZMIERZONE for the actual ABAC enforcement path,
+  same caveat as §10.
+- Idempotency-on-retry is now proven at the CLIENT layer (§13.2, point 7)
+  — whether the SERVER'S `idempotencyKey`/proposal-id handling is itself
+  idempotent under a genuine concurrent double-POST was not tested this
+  round either (still NIEZMIERZONE, server-side).
+- No real-Postgres run was performed this round for either KPI or OKR
+  (§5's KPI proof and the pre-existing OKR realdb test were both read, not
+  re-run).
+- Did not re-run `npm run test:component`/`test:l1`/full suites — only the
+  8 Teresa-relevant files (42 tests) plus the specific gates listed above,
+  per the "esbuild per plik, zakaz pełnego vitest u robotników" hygiene
+  rule. A full-suite regression elsewhere remains unmeasured.
 before this session started — verified by running it, §5).
