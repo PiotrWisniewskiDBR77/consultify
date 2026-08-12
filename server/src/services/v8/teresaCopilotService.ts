@@ -19,6 +19,7 @@ import type { OperationContract } from '../../types/operationContract.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
 import { ensureRunForAction, recordAIRunEvent } from '../aiRunLedgerService.js';
+import { resolveEffectiveAccess } from '../effectiveAccessService.js';
 import {
   applyWorkbookCommand,
   undoWorkbookCommand,
@@ -2794,6 +2795,22 @@ async function recordTeresaKpiHandoffResult(
   );
 }
 
+/**
+ * RN-G5: Teresa executes these KPI commands on behalf of the REAL human
+ * (`userId` above — never a 'teresa' sentinel, same discipline every
+ * `createdBy`/`actorUserId` in this section already follows). The
+ * command-layer capability guard (`commandCapabilityGuard.ts`) now requires
+ * an `access` context on every one of these calls exactly like the HTTP
+ * routes do — Teresa is not a separate trust boundary, so it resolves the
+ * SAME `resolveEffectiveAccess` the routes call, for the SAME real actor. No
+ * `applicationRole` is passed — `resolveEffectiveAccess` reads it straight
+ * from `organization_members` for this `userId`/`organizationId`, which is
+ * more trustworthy here than anything this chat-handoff payload could carry.
+ */
+async function resolveTeresaKpiAccess(userId: string, organizationId: string) {
+  return resolveEffectiveAccess({ userId, organizationId });
+}
+
 async function handleResultsKpiHandoff(
   proposalId: string,
   organizationId: string,
@@ -2840,6 +2857,7 @@ async function handleKpiDraftQualityReview(
     }
     // createKpiDraft() itself resolves the active visibility policy via
     // getActiveVisibilityPolicy() and fails closed if none exists.
+    const access = await resolveTeresaKpiAccess(userId, organizationId);
     const outcome = await createKpiDraft({
       organizationId,
       kpiCode: proposed.kpiCode,
@@ -2865,6 +2883,7 @@ async function handleKpiDraftQualityReview(
       idempotencyKey: proposalId,
       correlationId: context.runtime_binding?.conversation_id ?? undefined,
       reason: `Teresa draft_quality_review: ${draft.quality_review.purpose_question}`,
+      access,
     });
     await recordTeresaKpiHandoffResult(proposalId, organizationId, outcome.result.kpi.kpiId);
     return {
@@ -2902,6 +2921,7 @@ async function handleKpiDraftQualityReview(
     );
   }
   try {
+    const access = await resolveTeresaKpiAccess(userId, organizationId);
     const outcome = await editKpiDraft({
       definitionVersionId: currentKpi.currentDefinitionVersionId,
       organizationId,
@@ -2928,6 +2948,7 @@ async function handleKpiDraftQualityReview(
       idempotencyKey: proposalId,
       correlationId: context.runtime_binding?.conversation_id ?? undefined,
       reason: `Teresa draft_quality_review (re-review): ${draft.quality_review.purpose_question}`,
+      access,
     });
     await recordTeresaKpiHandoffResult(proposalId, organizationId, kpiId);
     return {
@@ -2998,6 +3019,10 @@ async function handleKpiReflectionRca(
   // plan_submitted_by/created_by === approverId. That check only works if
   // those columns hold a REAL human id — never a 'teresa' sentinel. So
   // actorUserId below MUST be userId, exactly like createdBy above.
+  // RN-G5: same rule now applies one level up — submitRootCause itself
+  // requires this real user to hold results.kpi.deviation.submit_root_cause
+  // OR be the case's own owner/manager (commandCapabilityGuard.ts).
+  const access = await resolveTeresaKpiAccess(userId, organizationId);
   const outcome = await submitRootCause({
     caseId: rca.case_id,
     organizationId,
@@ -3010,6 +3035,7 @@ async function handleKpiReflectionRca(
     rootCauseCategory: rca.proposed_root_cause_category,
     recurrenceFlag: rca.recurrence_flag,
     reason: 'Teresa reflection_rca draft, approved by user',
+    access,
   });
   await recordTeresaKpiHandoffResult(proposalId, organizationId, outcome.result.caseId);
   return {
