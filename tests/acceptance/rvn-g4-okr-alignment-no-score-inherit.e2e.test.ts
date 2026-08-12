@@ -139,6 +139,7 @@ async function buildActiveSetWithObjective(params: {
     createdBy: ownerUserId,
     actorEffectiveRole: 'member',
     idempotencyKey: `${MARKER}--create-set-${randomUUID()}`,
+    access: { capabilities: ['*'], platformRole: null },
   });
   const setId = set.result.set.setId;
 
@@ -150,6 +151,7 @@ async function buildActiveSetWithObjective(params: {
     createdBy: ownerUserId,
     actorEffectiveRole: 'member',
     idempotencyKey: `${MARKER}--create-obj-${randomUUID()}`,
+    access: { capabilities: ['*'], platformRole: null },
   });
   const objectiveId = objective.result.objectiveId;
 
@@ -169,6 +171,7 @@ async function buildActiveSetWithObjective(params: {
       createdBy: ownerUserId,
       actorEffectiveRole: 'member',
       idempotencyKey: `${MARKER}--create-kr-${randomUUID()}`,
+      access: { capabilities: ['*'], platformRole: null },
     });
   }
 
@@ -179,6 +182,7 @@ async function buildActiveSetWithObjective(params: {
     actorUserId: ownerUserId,
     actorEffectiveRole: 'member',
     idempotencyKey: `${MARKER}--submit-${randomUUID()}`,
+    access: { capabilities: ['*'], platformRole: null },
   });
   const approved = await approveOkrSet({
     setId,
@@ -187,6 +191,7 @@ async function buildActiveSetWithObjective(params: {
     approverId: ADMIN,
     actorEffectiveRole: 'admin',
     idempotencyKey: `${MARKER}--approve-${randomUUID()}`,
+    access: { capabilities: ['*'], platformRole: null },
   });
   const activated = await runOkrSetLifecycleTransition(OKR_SET_ACTIVATE_SPEC, {
     setId,
@@ -195,6 +200,7 @@ async function buildActiveSetWithObjective(params: {
     actorUserId: ownerUserId,
     actorEffectiveRole: 'member',
     idempotencyKey: `${MARKER}--activate-${randomUUID()}`,
+    access: { capabilities: ['*'], platformRole: null },
   });
 
   return { setId, objectiveId, rowVersionAfterActivate: activated.resultingVersion };
@@ -287,6 +293,7 @@ describe('RN-G4 · Point 3 — OKR alignment does not auto-inherit final scoring
       createdBy: ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `${MARKER}--create-program-${randomUUID()}`,
+      access: { capabilities: ['*'], platformRole: null },
     });
     programId = program.result.programId;
     await publishProgram({
@@ -296,6 +303,7 @@ describe('RN-G4 · Point 3 — OKR alignment does not auto-inherit final scoring
       actorUserId: ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `${MARKER}--publish-program-${randomUUID()}`,
+      access: { capabilities: ['*'], platformRole: null },
     });
 
     const cycle = await createCycle({
@@ -306,6 +314,7 @@ describe('RN-G4 · Point 3 — OKR alignment does not auto-inherit final scoring
       createdBy: ADMIN,
       actorEffectiveRole: 'admin',
       idempotencyKey: `${MARKER}--create-cycle-${randomUUID()}`,
+      access: { capabilities: ['*'], platformRole: null },
     });
     cycleId = cycle.result.cycleId;
 
@@ -392,6 +401,7 @@ describe('RN-G4 · Point 3 — OKR alignment does not auto-inherit final scoring
       proposedBy: CONTRIBUTOR,
       actorEffectiveRole: 'member',
       idempotencyKey: `${MARKER}--propose-${randomUUID()}`,
+      access: { capabilities: ['*'], platformRole: null },
     });
     alignmentId = proposeOutcome.result.alignment.alignmentId;
     expect(proposeOutcome.result.alignment.status).toBe('proposed');
@@ -403,6 +413,7 @@ describe('RN-G4 · Point 3 — OKR alignment does not auto-inherit final scoring
       actorUserId: MANAGER,
       actorEffectiveRole: 'member',
       idempotencyKey: `${MARKER}--accept-${randomUUID()}`,
+      access: { capabilities: ['*'], platformRole: null },
     });
     expect(acceptOutcome.result.status).toBe('accepted');
 
@@ -453,6 +464,7 @@ describe('RN-G4 · Point 3 — OKR alignment does not auto-inherit final scoring
       actorUserId: MANAGER,
       actorEffectiveRole: 'member',
       idempotencyKey: `${MARKER}--parent-open-review-${randomUUID()}`,
+      access: { capabilities: ['*'], platformRole: null },
     });
 
     const scoreOutcome = await finalScoreOkrSet({
@@ -462,6 +474,7 @@ describe('RN-G4 · Point 3 — OKR alignment does not auto-inherit final scoring
       actorUserId: MANAGER,
       actorEffectiveRole: 'member',
       idempotencyKey: `${MARKER}--parent-final-score-${randomUUID()}`,
+      access: { capabilities: ['*'], platformRole: null },
     });
     const parentScored = scoreOutcome.result.scoredObjectives.find((o) => o.objectiveId === parent.objectiveId);
     expect(parentScored).toBeTruthy();
@@ -506,6 +519,7 @@ describe('RN-G4 · Point 3 — OKR alignment does not auto-inherit final scoring
       actorUserId: CONTRIBUTOR,
       actorEffectiveRole: 'member',
       idempotencyKey: `${MARKER}--child-open-review-${randomUUID()}`,
+      access: { capabilities: ['*'], platformRole: null },
     });
 
     const scoreOutcome = await finalScoreOkrSet({
@@ -515,6 +529,7 @@ describe('RN-G4 · Point 3 — OKR alignment does not auto-inherit final scoring
       actorUserId: CONTRIBUTOR,
       actorEffectiveRole: 'member',
       idempotencyKey: `${MARKER}--child-final-score-${randomUUID()}`,
+      access: { capabilities: ['*'], platformRole: null },
     });
     const childScored = scoreOutcome.result.scoredObjectives.find((o) => o.objectiveId === child.objectiveId);
     expect(childScored).toBeTruthy();
