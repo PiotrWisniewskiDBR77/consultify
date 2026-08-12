@@ -17,7 +17,7 @@
  *
  * Two-level bucket picker (see `attentionPresenters.tsx` header for why —
  * no shared row shape exists to merge into one table):
- *  - Menu 2 tabs   = source ('kpi' | 'okr') — which backend aggregate.
+ *  - Menu 2 tab row picks source ('kpi' | 'okr') — which backend aggregate.
  *  - Menu 3 chips  = the named bucket within that source, REAL counts on
  *                    every chip (computed from the already-loaded
  *                    aggregate, no per-bucket fetch).

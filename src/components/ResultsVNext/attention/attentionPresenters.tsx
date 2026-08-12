@@ -12,8 +12,9 @@
  * THIRD, again-different aggregate). The shared UI pattern §G #30 asks for
  * is therefore NOT "one merged table" (impossible — no common columns
  * exist) but: ONE shell (`ResultsAttentionPage.tsx`), ONE mechanism for
- * picking which of the many named buckets is currently shown (Menu 2 tabs =
- * KPI/OKR source, Menu 3 chips = the named bucket within that source, real
+ * picking which of the many named buckets is currently shown (the Menu 2
+ * tab row picks the KPI/OKR source, Menu 3 chips pick the named bucket
+ * within that source, real
  * counts on every chip, exactly like every other RN-G5/RN-G2 chip-driven
  * bucket switch in this program), and ONE generic per-row preview
  * (`buildAttentionRowPreview` below) instead of N bespoke preview builders.

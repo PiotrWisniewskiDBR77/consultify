@@ -45,6 +45,23 @@
  *   2. Menu2 tab "Migawki przeglądu" -> chip "Opublikowane" -> row click
  *   3. kebab on an item -> "Otwórz KPI" (navigates to /results/kpi?kpiId=)
  *   4. record-overview preview (no row selected) -> lifecycle action
+ *   5. RN-G5 §G #8 additions: Menu1 primaryCta "Dodaj KPI" -> AddKpiScorecardItemModal
+ *      -> submit -> real POST .../items -> list refreshes
+ *   6. item kebab -> "Przenieś w górę/dół" -> real PATCH .../items/reorder
+ *   7. item kebab -> "Usuń pozycję" -> RemoveKpiScorecardItemDialog -> submit
+ *      -> real DELETE .../items/:itemId (window.fetch, NOT Api.delete — see
+ *      kpiScorecardApi.ts's `deleteWithBody` doc comment)
+ *   8. Menu2 tab "Migawki przeglądu" -> Menu1 primaryCta "Nowa migawka" ->
+ *      CreateKpiScorecardReviewSnapshotModal -> submit -> real POST
+ *      .../review-snapshots
+ *   9. draft snapshot row kebab -> "Opublikuj" -> PublishKpiScorecardReviewSnapshotDialog
+ *      -> submit -> real POST .../review-snapshots/:id/publish
+ *
+ * RN-G5 §G #8 NOTE: `Api.get`/`Api.post`/`Api.patch` are stubbed below (same
+ * convention as the pre-existing lifecycle stub) — `Api.delete` is NOT used
+ * by `removeKpiScorecardItem` (it never sends a body; the real DELETE
+ * .../items/:itemId endpoint requires one) so a `window.fetch` stub is
+ * ADDED alongside the `Api.*` ones, scoped to exactly that one URL pattern.
  */
 import React from 'react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
@@ -134,8 +151,12 @@ const MOCK_DISTRIBUTION: Record<string, any> = {
   'sc-4': { safe: 0, warning: 0, critical: 0, missing: 1, totalVisible: 1 },
 };
 
+let itemSeq = 100;
+let snapshotSeq = 100;
+
 const realGet = Api.get.bind(Api);
 const realPost = Api.post.bind(Api);
+const realPatch = Api.patch.bind(Api);
 
 Api.get = (async (url: string) => {
   const m = url.match(/^\/vnext\/results\/kpi\/scorecards\/([^/?]+)(\/.*)?$/);
@@ -167,6 +188,17 @@ Api.get = (async (url: string) => {
   return realGet(url);
 }) as typeof Api.get;
 
+function checkExpectedVersion(record: any, data: any): void {
+  if (record && typeof data?.expectedVersion === 'number' && data.expectedVersion !== record.rowVersion) {
+    const err: any = new Error(
+      `Scorecard was changed by someone else in the meantime (expected v${data.expectedVersion}, currently v${record.rowVersion}).`
+    );
+    err.status = 409;
+    err.data = { code: 'STALE_VERSION', currentVersion: record.rowVersion, expectedVersion: data.expectedVersion };
+    throw err;
+  }
+}
+
 Api.post = (async (url: string, data: any) => {
   const lifecycleMatch = url.match(/^\/vnext\/results\/kpi\/scorecards\/([^/]+)\/(activate|suspend|archive)$/);
   if (lifecycleMatch) {
@@ -185,8 +217,200 @@ Api.post = (async (url: string, data: any) => {
     }
     return { outcome: 'applied', scorecard: record };
   }
+
+  // RN-G5 §G #8 — POST .../items (addScorecardItem)
+  const addItemMatch = url.match(/^\/vnext\/results\/kpi\/scorecards\/([^/]+)\/items$/);
+  if (addItemMatch) {
+    const [, scorecardId] = addItemMatch;
+    const record = MOCK_SCORECARDS[scorecardId];
+    checkExpectedVersion(record, data);
+    const items = MOCK_ITEMS[scorecardId] ?? (MOCK_ITEMS[scorecardId] = []);
+    const maxSort = items.reduce((m, i) => Math.max(m, i.sortOrder), 0);
+    const item = {
+      itemId: `item-${(itemSeq += 1)}`,
+      scorecardId,
+      kpiId: data.kpiId,
+      organizationId: 'org-dbr77-demo',
+      role: data.role || 'primary',
+      sortOrder: typeof data.sortOrder === 'number' ? data.sortOrder : maxSort + 1,
+      displayConfig: null,
+      addedBy: 'user-piotr-demo',
+      addedAt: new Date().toISOString(),
+    };
+    items.push(item);
+    if (record) {
+      record.rowVersion += 1;
+      record.updatedAt = new Date().toISOString();
+    }
+    return { outcome: 'applied', eventId: `evt-${itemSeq}`, resultingVersion: record?.rowVersion, scorecard: record, item };
+  }
+
+  // RN-G5 §G #8 — POST .../review-snapshots (createReviewSnapshot)
+  const createSnapshotMatch = url.match(/^\/vnext\/results\/kpi\/scorecards\/([^/]+)\/review-snapshots$/);
+  if (createSnapshotMatch) {
+    const [, scorecardId] = createSnapshotMatch;
+    const record = MOCK_SCORECARDS[scorecardId];
+    const snapshots = MOCK_SNAPSHOTS[scorecardId] ?? (MOCK_SNAPSHOTS[scorecardId] = []);
+    const snapshot = {
+      snapshotId: `snap-${(snapshotSeq += 1)}`,
+      scorecardId,
+      organizationId: 'org-dbr77-demo',
+      reviewPeriodStart: data.reviewPeriodStart,
+      reviewPeriodEnd: data.reviewPeriodEnd,
+      snapshotPayload: null,
+      status: 'draft',
+      contentHash: null,
+      publishedBy: null,
+      publishedAt: null,
+      supersededBySnapshotId: null,
+      supersededAt: null,
+      rowVersion: 1,
+      createdBy: 'user-piotr-demo',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    snapshots.push(snapshot);
+    if (record) {
+      record.rowVersion += 1;
+      record.updatedAt = new Date().toISOString();
+    }
+    return { outcome: 'applied', eventId: `evt-snap-${snapshotSeq}`, resultingVersion: record?.rowVersion, snapshot };
+  }
+
+  // RN-G5 §G #8 — POST .../review-snapshots/:snapshotId/publish (publishReviewSnapshot)
+  // Response carries a POPULATED snapshotPayload (decision #6a, publisher-time
+  // filtered) — same real shape `publishKpiScorecardReviewSnapshot`'s own doc
+  // comment documents. Included here to exercise the D07 non-leak assertion
+  // against a REAL harness response, not just the unit test's hand-built mock.
+  const publishMatch = url.match(
+    /^\/vnext\/results\/kpi\/scorecards\/([^/]+)\/review-snapshots\/([^/]+)\/publish$/
+  );
+  if (publishMatch) {
+    const [, scorecardId, snapshotId] = publishMatch;
+    const record = MOCK_SCORECARDS[scorecardId];
+    const snapshots = MOCK_SNAPSHOTS[scorecardId] ?? [];
+    const snapshot = snapshots.find((s) => s.snapshotId === snapshotId);
+    if (!snapshot) {
+      const err: any = new Error('Snapshot not found');
+      err.status = 404;
+      throw err;
+    }
+    if (snapshot.status !== 'draft') {
+      const err: any = new Error('Snapshot is no longer a draft — publishing is unavailable.');
+      err.status = 409;
+      err.data = { code: 'SNAPSHOT_NOT_DRAFT' };
+      throw err;
+    }
+    // Supersede whatever was previously published, mirroring the real command.
+    const previouslyPublished = snapshots.find((s) => s.status === 'published');
+    if (previouslyPublished) {
+      previouslyPublished.status = 'superseded';
+      previouslyPublished.supersededBySnapshotId = snapshotId;
+      previouslyPublished.supersededAt = new Date().toISOString();
+    }
+    snapshot.status = 'published';
+    snapshot.publishedBy = 'user-piotr-demo';
+    snapshot.publishedAt = new Date().toISOString();
+    snapshot.contentHash = `hash-${snapshotId}`;
+    snapshot.snapshotPayload = {
+      items: (MOCK_ITEMS[scorecardId] ?? []).map((i: any) => ({
+        kpiId: i.kpiId,
+        definitionVersionId: 'defver-mock',
+        itemRole: i.role,
+        measurementId: 'meas-mock',
+        actualValue: 42.5,
+        unit: '%',
+        performanceStatus: 'on_target',
+        dataQualityStatus: 'verified',
+        periodStart: snapshot.reviewPeriodStart,
+        periodEnd: snapshot.reviewPeriodEnd,
+      })),
+      statusCounts: { safe: (MOCK_ITEMS[scorecardId] ?? []).length, warning: 0, critical: 0, missing: 0 },
+    };
+    if (record) {
+      record.rowVersion += 1;
+      record.updatedAt = new Date().toISOString();
+    }
+    return { outcome: 'applied', eventId: `evt-pub-${snapshotId}`, resultingVersion: record?.rowVersion, snapshot };
+  }
+
   return realPost(url, data);
 }) as typeof Api.post;
+
+// RN-G5 §G #8 — PATCH .../items/reorder (reorderScorecardItems)
+Api.patch = (async (url: string, data: any) => {
+  const reorderMatch = url.match(/^\/vnext\/results\/kpi\/scorecards\/([^/]+)\/items\/reorder$/);
+  if (reorderMatch) {
+    const [, scorecardId] = reorderMatch;
+    const record = MOCK_SCORECARDS[scorecardId];
+    checkExpectedVersion(record, data);
+    const items = MOCK_ITEMS[scorecardId] ?? [];
+    for (const spec of data.items ?? []) {
+      const item = items.find((i) => i.itemId === spec.itemId);
+      if (item) {
+        item.sortOrder = spec.sortOrder;
+        if (spec.role) item.role = spec.role;
+      }
+    }
+    if (record) {
+      record.rowVersion += 1;
+      record.updatedAt = new Date().toISOString();
+    }
+    return { outcome: 'applied', eventId: `evt-reorder-${scorecardId}`, resultingVersion: record?.rowVersion, scorecard: record, items };
+  }
+  return realPatch(url, data);
+}) as typeof Api.patch;
+
+// RN-G5 §G #8 — DELETE .../items/:itemId (removeScorecardItem). NOT stubbed
+// via `Api.delete` — `removeKpiScorecardItem` uses a raw `window.fetch`
+// (`kpiScorecardApi.ts`'s `deleteWithBody` helper), the same gap
+// `roiApi.ts`'s own `mutateJson` header comment documents for its sibling
+// ROI DELETE-with-body endpoints. Scoped to exactly this one URL pattern —
+// every other request (fonts, `/locales/`, anything else) passes through.
+const realFetch = window.fetch.bind(window);
+window.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
+  const rawUrl = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+  const removeItemMatch = rawUrl.match(
+    /\/vnext\/results\/kpi\/scorecards\/([^/]+)\/items\/([^/?]+)$/
+  );
+  if (removeItemMatch && (init?.method ?? 'GET').toUpperCase() === 'DELETE') {
+    const [, scorecardId, itemId] = removeItemMatch;
+    const record = MOCK_SCORECARDS[scorecardId];
+    const body = init?.body ? JSON.parse(String(init.body)) : {};
+    try {
+      checkExpectedVersion(record, body);
+    } catch (e: any) {
+      return new Response(JSON.stringify({ error: e.message, code: e.data?.code }), {
+        status: e.status,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+    const items = MOCK_ITEMS[scorecardId] ?? [];
+    const idx = items.findIndex((i: any) => i.itemId === itemId);
+    if (idx === -1) {
+      return new Response(JSON.stringify({ error: 'Item not found', code: 'NOT_FOUND' }), {
+        status: 404,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+    items.splice(idx, 1);
+    if (record) {
+      record.rowVersion += 1;
+      record.updatedAt = new Date().toISOString();
+    }
+    return new Response(
+      JSON.stringify({
+        outcome: 'applied',
+        eventId: `evt-remove-${itemId}`,
+        resultingVersion: record?.rowVersion,
+        scorecard: record,
+        removedItemId: itemId,
+      }),
+      { status: 200, headers: { 'Content-Type': 'application/json' } }
+    );
+  }
+  return realFetch(input as RequestInfo, init);
+}) as typeof window.fetch;
 
 const initialPath = `/results/kpi/scorecards/${encodeURIComponent(mockScorecardId)}`;
 
