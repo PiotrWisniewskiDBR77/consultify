@@ -67,8 +67,9 @@ import { getModel } from '../../../financialModelingService.js';
 import {
   FINANCE_MODEL_CREATE_CAPABILITY_ID,
   FINANCE_MODEL_CREATE_CAPABILITY_VERSION,
-  registerFinanceModelCreateAdapterBinding,
-  registerFinanceModelCreateCapability,
+  buildFinanceModelCreateBinding,
+  financeModelCreateRegistrationInput,
+  type FinanceAdapterDeps,
 } from '../../adapters/financeAdapter.js';
 import { buildEnvelope, seedCaseFixture, seedMember, seedMemberedUser, teardownCaseFixture } from './_fixtures.js';
 
@@ -121,10 +122,56 @@ if (!REACHABLE) {
 
 const suite = REACHABLE ? describe.sequential : describe.skip;
 
+// ---------------------------------------------------------------------------
+// PRIVATE, per-run-unique capability id — NOT the platform-global
+// FINANCE_MODEL_CREATE_CAPABILITY_ID constant.
+//
+// Cross-file collision REPRODUCED LIVE, repeatedly (this packet, P1,
+// 2026-08-12, same mechanism as the already-fixed documentsAdapter/
+// assessmentAdapter/resultsAdapter packet H1): `case_workspace_capabilities`
+// is UNIQUE on (capability_id, capability_version) with NO organization
+// scoping (capabilityRegistryService.ts:496). Vitest runs test FILES
+// concurrently by default (server/vitest.config.ts sets no
+// fileParallelism:false). `capabilityBootstrap.pg.test.ts`'s
+// `deleteBuiltinCapabilityRows()` (its tests 1, 3-7) issues `DELETE FROM
+// case_workspace_capabilities WHERE capability_id = $1` for the REAL
+// `FINANCE_MODEL_CREATE_CAPABILITY_ID` as pre-cleanup — a genuinely necessary
+// step for ITS OWN "zero registrations" assertions against the real builtin
+// ids `registerBuiltinCapabilityAdapters` uses at real process boot. Paired
+// against capabilityBootstrap.pg.test.ts alone (no other files), 3 of 8
+// consecutive runs produced real assertion failures, e.g.:
+//   AssertionError: expected 'CAPABILITY_NOT_FOUND' to be 'CAPABILITY_INTERNAL_ERROR'
+//     (this file's own negative-control test, dispatch failing with the
+//     registry row gone instead of reaching the adapter's own guard)
+//   AssertionError: finance: expected +0 to be 1 (capabilityBootstrap's own
+//     "all 8 builtin rows reachable" assertion)
+//   AssertionError: expected 'FAILED' to be 'SUCCEEDED' (this file's own
+//     stable-deep-link test)
+//
+// Fix: this file registers its OWN test row under a private id instead, so
+// no other file's cleanup — targeted at the real, fixed builtin id — can
+// ever delete it. The registry/binding PLUMBING (registerCapabilityWithAdapter,
+// registerCapabilityBinding) and the HANDLER code under test
+// (buildFinanceModelCreateBinding, an exported, unmodified production
+// function from financeAdapter.ts — including its own critical re-read guard
+// against createModel's DbPromise fallback-swallow defect, see
+// financeAdapter.ts's header) are identical to what the real id uses — only
+// the capability_id STRING used as the registry/dispatch key is test-private.
+const FINANCE_ADAPTER_PG_TEST_RUN_ID = randomUUID();
+const FINANCE_TEST_CAPABILITY_ID = `${FINANCE_MODEL_CREATE_CAPABILITY_ID}.pgtest.${FINANCE_ADAPTER_PG_TEST_RUN_ID}`;
+
 suite('financeAdapter — Finance model-create capability, dispatched end-to-end through executeCapability', () => {
   let control: Pool;
-  /** The registry row is registered ONCE for the whole file (platform-global, fixed capabilityId/version). */
+  /** The registry row is registered ONCE for the whole file, under FINANCE_TEST_CAPABILITY_ID (see block above). */
   let registrarOrgId: string;
+
+  function resetFinanceTestBinding(deps: FinanceAdapterDeps = {}): void {
+    capabilityAdapterService.registerCapabilityBinding(
+      FINANCE_TEST_CAPABILITY_ID,
+      FINANCE_MODEL_CREATE_CAPABILITY_VERSION,
+      buildFinanceModelCreateBinding(deps)
+    );
+  }
 
   beforeAll(async () => {
     control = new Pool({ connectionString: CONNECTION_STRING, max: 8 });
@@ -134,10 +181,17 @@ suite('financeAdapter — Finance model-create capability, dispatched end-to-end
       'Finance adapter registrar org',
     ]);
     const registrarActorId = await seedMemberedUser(control, registrarOrgId, 'registrar', 'ADMIN');
-    await registerFinanceModelCreateCapability({
-      createdByActorId: registrarActorId,
-      callerOrganizationId: registrarOrgId,
-    });
+    // Private test id (see the block above this describe) — NOT
+    // registerFinanceModelCreateCapability, which hard-codes the
+    // platform-global FINANCE_MODEL_CREATE_CAPABILITY_ID.
+    // registerCapabilityWithAdapter is the same production registration
+    // primitive that helper calls internally; only the capabilityId field of
+    // the input is overridden.
+    await capabilityAdapterService.registerCapabilityWithAdapter(
+      { ...financeModelCreateRegistrationInput(registrarActorId), capabilityId: FINANCE_TEST_CAPABILITY_ID },
+      buildFinanceModelCreateBinding(),
+      registrarOrgId
+    );
   }, 60_000);
 
   afterAll(async () => {
@@ -146,11 +200,11 @@ suite('financeAdapter — Finance model-create capability, dispatched end-to-end
         `DELETE FROM case_workspace_capability_idempotency_keys
           WHERE capability_registry_id IN (
             SELECT capability_registry_id FROM case_workspace_capabilities WHERE capability_id = $1)`,
-        [FINANCE_MODEL_CREATE_CAPABILITY_ID]
+        [FINANCE_TEST_CAPABILITY_ID]
       )
       .catch(() => undefined);
     await control
-      .query(`DELETE FROM case_workspace_capabilities WHERE capability_id = $1`, [FINANCE_MODEL_CREATE_CAPABILITY_ID])
+      .query(`DELETE FROM case_workspace_capabilities WHERE capability_id = $1`, [FINANCE_TEST_CAPABILITY_ID])
       .catch(() => undefined);
     await control
       .query(`DELETE FROM organization_members WHERE organization_id = $1`, [registrarOrgId])
@@ -161,9 +215,11 @@ suite('financeAdapter — Finance model-create capability, dispatched end-to-end
   }, 60_000);
 
   afterEach(() => {
-    // Reset to the real, production binding after any test that injected a
-    // custom one — never let a stubbed dependency leak into the next test.
-    registerFinanceModelCreateAdapterBinding();
+    // Reset to the real, production binding (rebound at THIS file's private
+    // test id — see the block above this describe) after any test that
+    // injected a custom one — never let a stubbed dependency leak into the
+    // next test.
+    resetFinanceTestBinding();
   });
 
   async function modelCountForOrg(orgId: string): Promise<number> {
@@ -194,7 +250,7 @@ suite('financeAdapter — Finance model-create capability, dispatched end-to-end
     try {
       const result = await capabilityAdapterService.executeCapability(
         buildEnvelope({
-          capabilityId: FINANCE_MODEL_CREATE_CAPABILITY_ID,
+          capabilityId: FINANCE_TEST_CAPABILITY_ID,
           capabilityVersion: FINANCE_MODEL_CREATE_CAPABILITY_VERSION,
           orgId: fixture.orgId,
           actorId: fixture.actorId,
@@ -241,7 +297,7 @@ suite('financeAdapter — Finance model-create capability, dispatched end-to-end
     try {
       const badInput = await capabilityAdapterService.executeCapability(
         buildEnvelope({
-          capabilityId: FINANCE_MODEL_CREATE_CAPABILITY_ID,
+          capabilityId: FINANCE_TEST_CAPABILITY_ID,
           capabilityVersion: FINANCE_MODEL_CREATE_CAPABILITY_VERSION,
           orgId: fixture.orgId,
           actorId: fixture.actorId,
@@ -260,7 +316,7 @@ suite('financeAdapter — Finance model-create capability, dispatched end-to-end
 
       const noAccess = await capabilityAdapterService.executeCapability(
         buildEnvelope({
-          capabilityId: FINANCE_MODEL_CREATE_CAPABILITY_ID,
+          capabilityId: FINANCE_TEST_CAPABILITY_ID,
           capabilityVersion: FINANCE_MODEL_CREATE_CAPABILITY_VERSION,
           orgId: strangerOrgId,
           actorId: strangerActorId,
@@ -291,7 +347,7 @@ suite('financeAdapter — Finance model-create capability, dispatched end-to-end
       const key1 = `idem-${randomUUID()}`;
       const first = await capabilityAdapterService.executeCapability(
         buildEnvelope({
-          capabilityId: FINANCE_MODEL_CREATE_CAPABILITY_ID,
+          capabilityId: FINANCE_TEST_CAPABILITY_ID,
           capabilityVersion: FINANCE_MODEL_CREATE_CAPABILITY_VERSION,
           orgId: fixture.orgId,
           actorId: fixture.actorId,
@@ -304,7 +360,7 @@ suite('financeAdapter — Finance model-create capability, dispatched end-to-end
 
       const replay = await capabilityAdapterService.executeCapability(
         buildEnvelope({
-          capabilityId: FINANCE_MODEL_CREATE_CAPABILITY_ID,
+          capabilityId: FINANCE_TEST_CAPABILITY_ID,
           capabilityVersion: FINANCE_MODEL_CREATE_CAPABILITY_VERSION,
           orgId: fixture.orgId,
           actorId: fixture.actorId,
@@ -320,7 +376,7 @@ suite('financeAdapter — Finance model-create capability, dispatched end-to-end
       const key2 = `idem-${randomUUID()}`;
       const rejected = await capabilityAdapterService.executeCapability(
         buildEnvelope({
-          capabilityId: FINANCE_MODEL_CREATE_CAPABILITY_ID,
+          capabilityId: FINANCE_TEST_CAPABILITY_ID,
           capabilityVersion: FINANCE_MODEL_CREATE_CAPABILITY_VERSION,
           orgId: fixture.orgId,
           actorId: fixture.actorId,
@@ -335,7 +391,7 @@ suite('financeAdapter — Finance model-create capability, dispatched end-to-end
       const key3 = `idem-${randomUUID()}`;
       const second = await capabilityAdapterService.executeCapability(
         buildEnvelope({
-          capabilityId: FINANCE_MODEL_CREATE_CAPABILITY_ID,
+          capabilityId: FINANCE_TEST_CAPABILITY_ID,
           capabilityVersion: FINANCE_MODEL_CREATE_CAPABILITY_VERSION,
           orgId: fixture.orgId,
           actorId: fixture.actorId,
@@ -358,7 +414,7 @@ suite('financeAdapter — Finance model-create capability, dispatched end-to-end
   it('still creates the financial model when the artifact-link step fails, surfaces it, and stays re-linkable', async () => {
     const fixture = await seedCaseFixture(control, 'finance-partial');
     try {
-      registerFinanceModelCreateAdapterBinding({
+      resetFinanceTestBinding({
         linkArtifactToCase: async () => {
           throw new Error('injected_link_failure');
         },
@@ -366,7 +422,7 @@ suite('financeAdapter — Finance model-create capability, dispatched end-to-end
 
       const result = await capabilityAdapterService.executeCapability(
         buildEnvelope({
-          capabilityId: FINANCE_MODEL_CREATE_CAPABILITY_ID,
+          capabilityId: FINANCE_TEST_CAPABILITY_ID,
           capabilityVersion: FINANCE_MODEL_CREATE_CAPABILITY_VERSION,
           orgId: fixture.orgId,
           actorId: fixture.actorId,
@@ -440,7 +496,7 @@ suite('financeAdapter — Finance model-create capability, dispatched end-to-end
       // AND to otherOrgId, but the ENVELOPE claims otherOrgId for THIS Case.
       const result = await capabilityAdapterService.executeCapability(
         buildEnvelope({
-          capabilityId: FINANCE_MODEL_CREATE_CAPABILITY_ID,
+          capabilityId: FINANCE_TEST_CAPABILITY_ID,
           capabilityVersion: FINANCE_MODEL_CREATE_CAPABILITY_VERSION,
           orgId: otherOrgId,
           actorId: fixture.actorId,
@@ -463,7 +519,7 @@ suite('financeAdapter — Finance model-create capability, dispatched end-to-end
       const strangerActorId = await seedMemberedUser(control, strangerOrgId, 'stranger2');
       const strangerResult = await capabilityAdapterService.executeCapability(
         buildEnvelope({
-          capabilityId: FINANCE_MODEL_CREATE_CAPABILITY_ID,
+          capabilityId: FINANCE_TEST_CAPABILITY_ID,
           capabilityVersion: FINANCE_MODEL_CREATE_CAPABILITY_VERSION,
           orgId: strangerOrgId,
           actorId: strangerActorId,
@@ -499,7 +555,7 @@ suite('financeAdapter — Finance model-create capability, dispatched end-to-end
     try {
       const result = await capabilityAdapterService.executeCapability(
         buildEnvelope({
-          capabilityId: FINANCE_MODEL_CREATE_CAPABILITY_ID,
+          capabilityId: FINANCE_TEST_CAPABILITY_ID,
           capabilityVersion: FINANCE_MODEL_CREATE_CAPABILITY_VERSION,
           orgId: fixture.orgId,
           actorId: fixture.actorId,
@@ -548,7 +604,7 @@ suite('financeAdapter — Finance model-create capability, dispatched end-to-end
     try {
       const result = await capabilityAdapterService.executeCapability(
         buildEnvelope({
-          capabilityId: FINANCE_MODEL_CREATE_CAPABILITY_ID,
+          capabilityId: FINANCE_TEST_CAPABILITY_ID,
           capabilityVersion: FINANCE_MODEL_CREATE_CAPABILITY_VERSION,
           orgId: fixture.orgId,
           actorId: fixture.actorId,

@@ -26,9 +26,10 @@ import * as artifactLinkService from '../../artifactLinkService.js';
 import {
   KPI_CREATE_CAPABILITY_ID,
   KPI_CREATE_CAPABILITY_VERSION,
+  buildKpiCreateBinding,
   getKpiReadback,
-  registerKpiCreateAdapterBinding,
-  registerKpiCreateCapability,
+  kpiCreateRegistrationInput,
+  type KpiAdapterDeps,
 } from '../../adapters/kpiAdapter.js';
 import { buildEnvelope, seedCaseFixture, seedMember, seedMemberedUser, teardownCaseFixture } from './_fixtures.js';
 
@@ -87,9 +88,52 @@ if (!REACHABLE) {
 
 const suite = REACHABLE ? describe.sequential : describe.skip;
 
+// ---------------------------------------------------------------------------
+// PRIVATE, per-run-unique capability id — NOT the platform-global
+// KPI_CREATE_CAPABILITY_ID constant.
+//
+// Cross-file collision REPRODUCED LIVE, repeatedly (this packet, P1,
+// 2026-08-12, same mechanism as the already-fixed documentsAdapter/
+// assessmentAdapter/resultsAdapter packet H1): `case_workspace_capabilities`
+// is UNIQUE on (capability_id, capability_version) with NO organization
+// scoping (capabilityRegistryService.ts:496). Vitest runs test FILES
+// concurrently by default (server/vitest.config.ts sets no
+// fileParallelism:false). `capabilityBootstrap.pg.test.ts`'s
+// `deleteBuiltinCapabilityRows()` (its tests 1, 3-7) issues `DELETE FROM
+// case_workspace_capabilities WHERE capability_id = $1` for the REAL
+// `KPI_CREATE_CAPABILITY_ID` as pre-cleanup — a genuinely necessary step for
+// ITS OWN "zero registrations" assertions against the real builtin ids
+// `registerBuiltinCapabilityAdapters` uses at real process boot. Paired
+// against capabilityBootstrap.pg.test.ts alone (no other files), 8
+// consecutive runs produced 6 distinct real assertion failures, e.g.:
+//   AssertionError: expected 'CAPABILITY_NOT_FOUND' to be 'CAPABILITY_UNAUTHORIZED'
+//   AssertionError: kpi: expected +0 to be 1 (capabilityBootstrap's own
+//     "all 8 builtin rows reachable" assertion)
+//   AssertionError: expected 'FAILED' to be 'SUCCEEDED' (this file's own
+//     stable-deep-link test, dispatch failing mid-run with the registry row
+//     deleted out from under it)
+//
+// Fix: this file registers its OWN test row under a private id instead, so
+// no other file's cleanup — targeted at the real, fixed builtin id — can
+// ever delete it. The registry/binding PLUMBING (registerCapabilityWithAdapter,
+// registerCapabilityBinding) and the HANDLER code under test
+// (buildKpiCreateBinding, an exported, unmodified production function from
+// kpiAdapter.ts) are identical to what the real id uses — only the
+// capability_id STRING used as the registry/dispatch key is test-private.
+const KPI_ADAPTER_PG_TEST_RUN_ID = randomUUID();
+const KPI_TEST_CAPABILITY_ID = `${KPI_CREATE_CAPABILITY_ID}.pgtest.${KPI_ADAPTER_PG_TEST_RUN_ID}`;
+
 suite('kpiAdapter — KPI capability, dispatched end-to-end through executeCapability', () => {
   let control: Pool;
   let registrarOrgId: string;
+
+  function resetKpiTestBinding(deps: KpiAdapterDeps = {}): void {
+    capabilityAdapterService.registerCapabilityBinding(
+      KPI_TEST_CAPABILITY_ID,
+      KPI_CREATE_CAPABILITY_VERSION,
+      buildKpiCreateBinding(deps)
+    );
+  }
 
   beforeAll(async () => {
     control = new Pool({ connectionString: CONNECTION_STRING, max: 8 });
@@ -99,10 +143,16 @@ suite('kpiAdapter — KPI capability, dispatched end-to-end through executeCapab
       'KPI adapter registrar org',
     ]);
     const registrarActorId = await seedMemberedUser(control, registrarOrgId, 'registrar', 'ADMIN');
-    await registerKpiCreateCapability({
-      createdByActorId: registrarActorId,
-      callerOrganizationId: registrarOrgId,
-    });
+    // Private test id (see the block above this describe) — NOT
+    // registerKpiCreateCapability, which hard-codes the platform-global
+    // KPI_CREATE_CAPABILITY_ID. registerCapabilityWithAdapter is the same
+    // production registration primitive that helper calls internally; only
+    // the capabilityId field of the input is overridden.
+    await capabilityAdapterService.registerCapabilityWithAdapter(
+      { ...kpiCreateRegistrationInput(registrarActorId), capabilityId: KPI_TEST_CAPABILITY_ID },
+      buildKpiCreateBinding(),
+      registrarOrgId
+    );
   }, 60_000);
 
   afterAll(async () => {
@@ -111,11 +161,11 @@ suite('kpiAdapter — KPI capability, dispatched end-to-end through executeCapab
         `DELETE FROM case_workspace_capability_idempotency_keys
           WHERE capability_registry_id IN (
             SELECT capability_registry_id FROM case_workspace_capabilities WHERE capability_id = $1)`,
-        [KPI_CREATE_CAPABILITY_ID]
+        [KPI_TEST_CAPABILITY_ID]
       )
       .catch(() => undefined);
     await control
-      .query(`DELETE FROM case_workspace_capabilities WHERE capability_id = $1`, [KPI_CREATE_CAPABILITY_ID])
+      .query(`DELETE FROM case_workspace_capabilities WHERE capability_id = $1`, [KPI_TEST_CAPABILITY_ID])
       .catch(() => undefined);
     await control
       .query(`DELETE FROM organization_members WHERE organization_id = $1`, [registrarOrgId])
@@ -126,7 +176,7 @@ suite('kpiAdapter — KPI capability, dispatched end-to-end through executeCapab
   }, 60_000);
 
   afterEach(() => {
-    registerKpiCreateAdapterBinding();
+    resetKpiTestBinding();
   });
 
   async function kpiCountForOrg(orgId: string): Promise<number> {
@@ -156,7 +206,7 @@ suite('kpiAdapter — KPI capability, dispatched end-to-end through executeCapab
     try {
       const result = await capabilityAdapterService.executeCapability(
         buildEnvelope({
-          capabilityId: KPI_CREATE_CAPABILITY_ID,
+          capabilityId: KPI_TEST_CAPABILITY_ID,
           capabilityVersion: KPI_CREATE_CAPABILITY_VERSION,
           orgId: fixture.orgId,
           actorId: fixture.actorId,
@@ -199,7 +249,7 @@ suite('kpiAdapter — KPI capability, dispatched end-to-end through executeCapab
     try {
       const badInput = await capabilityAdapterService.executeCapability(
         buildEnvelope({
-          capabilityId: KPI_CREATE_CAPABILITY_ID,
+          capabilityId: KPI_TEST_CAPABILITY_ID,
           capabilityVersion: KPI_CREATE_CAPABILITY_VERSION,
           orgId: fixture.orgId,
           actorId: fixture.actorId,
@@ -218,7 +268,7 @@ suite('kpiAdapter — KPI capability, dispatched end-to-end through executeCapab
 
       const noAccess = await capabilityAdapterService.executeCapability(
         buildEnvelope({
-          capabilityId: KPI_CREATE_CAPABILITY_ID,
+          capabilityId: KPI_TEST_CAPABILITY_ID,
           capabilityVersion: KPI_CREATE_CAPABILITY_VERSION,
           orgId: strangerOrgId,
           actorId: strangerActorId,
@@ -248,7 +298,7 @@ suite('kpiAdapter — KPI capability, dispatched end-to-end through executeCapab
       const key1 = `idem-${randomUUID()}`;
       const first = await capabilityAdapterService.executeCapability(
         buildEnvelope({
-          capabilityId: KPI_CREATE_CAPABILITY_ID,
+          capabilityId: KPI_TEST_CAPABILITY_ID,
           capabilityVersion: KPI_CREATE_CAPABILITY_VERSION,
           orgId: fixture.orgId,
           actorId: fixture.actorId,
@@ -261,7 +311,7 @@ suite('kpiAdapter — KPI capability, dispatched end-to-end through executeCapab
 
       const replay = await capabilityAdapterService.executeCapability(
         buildEnvelope({
-          capabilityId: KPI_CREATE_CAPABILITY_ID,
+          capabilityId: KPI_TEST_CAPABILITY_ID,
           capabilityVersion: KPI_CREATE_CAPABILITY_VERSION,
           orgId: fixture.orgId,
           actorId: fixture.actorId,
@@ -275,7 +325,7 @@ suite('kpiAdapter — KPI capability, dispatched end-to-end through executeCapab
       const key2 = `idem-${randomUUID()}`;
       const rejected = await capabilityAdapterService.executeCapability(
         buildEnvelope({
-          capabilityId: KPI_CREATE_CAPABILITY_ID,
+          capabilityId: KPI_TEST_CAPABILITY_ID,
           capabilityVersion: KPI_CREATE_CAPABILITY_VERSION,
           orgId: fixture.orgId,
           actorId: fixture.actorId,
@@ -289,7 +339,7 @@ suite('kpiAdapter — KPI capability, dispatched end-to-end through executeCapab
       const key3 = `idem-${randomUUID()}`;
       const second = await capabilityAdapterService.executeCapability(
         buildEnvelope({
-          capabilityId: KPI_CREATE_CAPABILITY_ID,
+          capabilityId: KPI_TEST_CAPABILITY_ID,
           capabilityVersion: KPI_CREATE_CAPABILITY_VERSION,
           orgId: fixture.orgId,
           actorId: fixture.actorId,
@@ -311,7 +361,7 @@ suite('kpiAdapter — KPI capability, dispatched end-to-end through executeCapab
   it('still creates the KPI definition when the artifact-link step fails, surfaces it, and stays re-linkable', async () => {
     const fixture = await seedCaseFixture(control, 'kpi-partial');
     try {
-      registerKpiCreateAdapterBinding({
+      resetKpiTestBinding({
         linkArtifactToCase: async () => {
           throw new Error('injected_link_failure');
         },
@@ -319,7 +369,7 @@ suite('kpiAdapter — KPI capability, dispatched end-to-end through executeCapab
 
       const result = await capabilityAdapterService.executeCapability(
         buildEnvelope({
-          capabilityId: KPI_CREATE_CAPABILITY_ID,
+          capabilityId: KPI_TEST_CAPABILITY_ID,
           capabilityVersion: KPI_CREATE_CAPABILITY_VERSION,
           orgId: fixture.orgId,
           actorId: fixture.actorId,
@@ -378,7 +428,7 @@ suite('kpiAdapter — KPI capability, dispatched end-to-end through executeCapab
 
       const result = await capabilityAdapterService.executeCapability(
         buildEnvelope({
-          capabilityId: KPI_CREATE_CAPABILITY_ID,
+          capabilityId: KPI_TEST_CAPABILITY_ID,
           capabilityVersion: KPI_CREATE_CAPABILITY_VERSION,
           orgId: otherOrgId,
           actorId: fixture.actorId,
@@ -415,7 +465,7 @@ suite('kpiAdapter — KPI capability, dispatched end-to-end through executeCapab
     try {
       const result = await capabilityAdapterService.executeCapability(
         buildEnvelope({
-          capabilityId: KPI_CREATE_CAPABILITY_ID,
+          capabilityId: KPI_TEST_CAPABILITY_ID,
           capabilityVersion: KPI_CREATE_CAPABILITY_VERSION,
           orgId: fixture.orgId,
           actorId: fixture.actorId,

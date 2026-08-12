@@ -24,9 +24,10 @@ import * as artifactLinkService from '../../artifactLinkService.js';
 import {
   INITIATIVE_CREATE_CAPABILITY_ID,
   INITIATIVE_CREATE_CAPABILITY_VERSION,
+  buildInitiativeCreateBinding,
   getInitiativeReadback,
-  registerInitiativeCreateAdapterBinding,
-  registerInitiativeCreateCapability,
+  initiativeCreateRegistrationInput,
+  type InitiativeAdapterDeps,
 } from '../../adapters/initiativeAdapter.js';
 import { buildEnvelope, seedCaseFixture, seedMember, seedMemberedUser, teardownCaseFixture } from './_fixtures.js';
 
@@ -79,9 +80,53 @@ if (!REACHABLE) {
 
 const suite = REACHABLE ? describe.sequential : describe.skip;
 
+// ---------------------------------------------------------------------------
+// PRIVATE, per-run-unique capability id — NOT the platform-global
+// INITIATIVE_CREATE_CAPABILITY_ID constant.
+//
+// Cross-file collision REPRODUCED LIVE (this packet, P1, 2026-08-12, same
+// mechanism as the already-fixed documentsAdapter/assessmentAdapter/
+// resultsAdapter packet H1): `case_workspace_capabilities` is UNIQUE on
+// (capability_id, capability_version) with NO organization scoping
+// (capabilityRegistryService.ts:496). Vitest runs test FILES concurrently by
+// default (server/vitest.config.ts sets no fileParallelism:false).
+// `capabilityBootstrap.pg.test.ts`'s `deleteBuiltinCapabilityRows()` (its
+// tests 1, 3-7) issues `DELETE FROM case_workspace_capabilities WHERE
+// capability_id = $1` for the REAL `INITIATIVE_CREATE_CAPABILITY_ID` as
+// pre-cleanup — a genuinely necessary step for ITS OWN "zero registrations"
+// assertions against the real builtin ids `registerBuiltinCapabilityAdapters`
+// uses at real process boot. When that delete lands between this file's
+// `beforeAll` registering its row and capabilityBootstrap's own row-count
+// assertion, capabilityBootstrap's own test 1 fails
+// (`AssertionError: initiative: expected +0 to be 1`) — reproduced live,
+// paired against capabilityBootstrap.pg.test.ts alone (no other files).
+// DB readback (polling `case_workspace_capabilities` every 100ms) additionally
+// showed a state where ONLY `case-workspace.initiative.create` had count 1
+// (all three sibling builtin ids at 0) — provably this file's own `beforeAll`
+// — immediately followed by that same row dropping to 0 well before this
+// file's own `afterAll`.
+//
+// Fix: this file registers its OWN test row under a private id instead, so
+// no other file's cleanup — targeted at the real, fixed builtin id — can
+// ever delete it. The registry/binding PLUMBING (registerCapabilityWithAdapter,
+// registerCapabilityBinding) and the HANDLER code under test
+// (buildInitiativeCreateBinding, an exported, unmodified production function
+// from initiativeAdapter.ts) are identical to what the real id uses — only
+// the capability_id STRING used as the registry/dispatch key is test-private.
+const INITIATIVE_ADAPTER_PG_TEST_RUN_ID = randomUUID();
+const INITIATIVE_TEST_CAPABILITY_ID = `${INITIATIVE_CREATE_CAPABILITY_ID}.pgtest.${INITIATIVE_ADAPTER_PG_TEST_RUN_ID}`;
+
 suite('initiativeAdapter — Initiative capability, dispatched end-to-end through executeCapability', () => {
   let control: Pool;
   let registrarOrgId: string;
+
+  function resetInitiativeTestBinding(deps: InitiativeAdapterDeps = {}): void {
+    capabilityAdapterService.registerCapabilityBinding(
+      INITIATIVE_TEST_CAPABILITY_ID,
+      INITIATIVE_CREATE_CAPABILITY_VERSION,
+      buildInitiativeCreateBinding(deps)
+    );
+  }
 
   beforeAll(async () => {
     control = new Pool({ connectionString: CONNECTION_STRING, max: 8 });
@@ -91,10 +136,17 @@ suite('initiativeAdapter — Initiative capability, dispatched end-to-end throug
       'Initiative adapter registrar org',
     ]);
     const registrarActorId = await seedMemberedUser(control, registrarOrgId, 'registrar', 'ADMIN');
-    await registerInitiativeCreateCapability({
-      createdByActorId: registrarActorId,
-      callerOrganizationId: registrarOrgId,
-    });
+    // Private test id (see the block above this describe) — NOT
+    // registerInitiativeCreateCapability, which hard-codes the
+    // platform-global INITIATIVE_CREATE_CAPABILITY_ID.
+    // registerCapabilityWithAdapter is the same production registration
+    // primitive that helper calls internally; only the capabilityId field of
+    // the input is overridden.
+    await capabilityAdapterService.registerCapabilityWithAdapter(
+      { ...initiativeCreateRegistrationInput(registrarActorId), capabilityId: INITIATIVE_TEST_CAPABILITY_ID },
+      buildInitiativeCreateBinding(),
+      registrarOrgId
+    );
   }, 60_000);
 
   afterAll(async () => {
@@ -103,11 +155,11 @@ suite('initiativeAdapter — Initiative capability, dispatched end-to-end throug
         `DELETE FROM case_workspace_capability_idempotency_keys
           WHERE capability_registry_id IN (
             SELECT capability_registry_id FROM case_workspace_capabilities WHERE capability_id = $1)`,
-        [INITIATIVE_CREATE_CAPABILITY_ID]
+        [INITIATIVE_TEST_CAPABILITY_ID]
       )
       .catch(() => undefined);
     await control
-      .query(`DELETE FROM case_workspace_capabilities WHERE capability_id = $1`, [INITIATIVE_CREATE_CAPABILITY_ID])
+      .query(`DELETE FROM case_workspace_capabilities WHERE capability_id = $1`, [INITIATIVE_TEST_CAPABILITY_ID])
       .catch(() => undefined);
     await control
       .query(`DELETE FROM organization_members WHERE organization_id = $1`, [registrarOrgId])
@@ -118,7 +170,7 @@ suite('initiativeAdapter — Initiative capability, dispatched end-to-end throug
   }, 60_000);
 
   afterEach(() => {
-    registerInitiativeCreateAdapterBinding();
+    resetInitiativeTestBinding();
   });
 
   async function initiativeCountForOrg(orgId: string): Promise<number> {
@@ -146,7 +198,7 @@ suite('initiativeAdapter — Initiative capability, dispatched end-to-end throug
     try {
       const result = await capabilityAdapterService.executeCapability(
         buildEnvelope({
-          capabilityId: INITIATIVE_CREATE_CAPABILITY_ID,
+          capabilityId: INITIATIVE_TEST_CAPABILITY_ID,
           capabilityVersion: INITIATIVE_CREATE_CAPABILITY_VERSION,
           orgId: fixture.orgId,
           actorId: fixture.actorId,
@@ -188,7 +240,7 @@ suite('initiativeAdapter — Initiative capability, dispatched end-to-end throug
     try {
       const badInput = await capabilityAdapterService.executeCapability(
         buildEnvelope({
-          capabilityId: INITIATIVE_CREATE_CAPABILITY_ID,
+          capabilityId: INITIATIVE_TEST_CAPABILITY_ID,
           capabilityVersion: INITIATIVE_CREATE_CAPABILITY_VERSION,
           orgId: fixture.orgId,
           actorId: fixture.actorId,
@@ -207,7 +259,7 @@ suite('initiativeAdapter — Initiative capability, dispatched end-to-end throug
 
       const noAccess = await capabilityAdapterService.executeCapability(
         buildEnvelope({
-          capabilityId: INITIATIVE_CREATE_CAPABILITY_ID,
+          capabilityId: INITIATIVE_TEST_CAPABILITY_ID,
           capabilityVersion: INITIATIVE_CREATE_CAPABILITY_VERSION,
           orgId: strangerOrgId,
           actorId: strangerActorId,
@@ -237,7 +289,7 @@ suite('initiativeAdapter — Initiative capability, dispatched end-to-end throug
       const key1 = `idem-${randomUUID()}`;
       const first = await capabilityAdapterService.executeCapability(
         buildEnvelope({
-          capabilityId: INITIATIVE_CREATE_CAPABILITY_ID,
+          capabilityId: INITIATIVE_TEST_CAPABILITY_ID,
           capabilityVersion: INITIATIVE_CREATE_CAPABILITY_VERSION,
           orgId: fixture.orgId,
           actorId: fixture.actorId,
@@ -250,7 +302,7 @@ suite('initiativeAdapter — Initiative capability, dispatched end-to-end throug
 
       const replay = await capabilityAdapterService.executeCapability(
         buildEnvelope({
-          capabilityId: INITIATIVE_CREATE_CAPABILITY_ID,
+          capabilityId: INITIATIVE_TEST_CAPABILITY_ID,
           capabilityVersion: INITIATIVE_CREATE_CAPABILITY_VERSION,
           orgId: fixture.orgId,
           actorId: fixture.actorId,
@@ -264,7 +316,7 @@ suite('initiativeAdapter — Initiative capability, dispatched end-to-end throug
       const key2 = `idem-${randomUUID()}`;
       const rejected = await capabilityAdapterService.executeCapability(
         buildEnvelope({
-          capabilityId: INITIATIVE_CREATE_CAPABILITY_ID,
+          capabilityId: INITIATIVE_TEST_CAPABILITY_ID,
           capabilityVersion: INITIATIVE_CREATE_CAPABILITY_VERSION,
           orgId: fixture.orgId,
           actorId: fixture.actorId,
@@ -278,7 +330,7 @@ suite('initiativeAdapter — Initiative capability, dispatched end-to-end throug
       const key3 = `idem-${randomUUID()}`;
       const second = await capabilityAdapterService.executeCapability(
         buildEnvelope({
-          capabilityId: INITIATIVE_CREATE_CAPABILITY_ID,
+          capabilityId: INITIATIVE_TEST_CAPABILITY_ID,
           capabilityVersion: INITIATIVE_CREATE_CAPABILITY_VERSION,
           orgId: fixture.orgId,
           actorId: fixture.actorId,
@@ -300,7 +352,7 @@ suite('initiativeAdapter — Initiative capability, dispatched end-to-end throug
   it('still creates the Initiative when the artifact-link step fails, surfaces it, and stays re-linkable', async () => {
     const fixture = await seedCaseFixture(control, 'initiative-partial');
     try {
-      registerInitiativeCreateAdapterBinding({
+      resetInitiativeTestBinding({
         linkArtifactToCase: async () => {
           throw new Error('injected_link_failure');
         },
@@ -308,7 +360,7 @@ suite('initiativeAdapter — Initiative capability, dispatched end-to-end throug
 
       const result = await capabilityAdapterService.executeCapability(
         buildEnvelope({
-          capabilityId: INITIATIVE_CREATE_CAPABILITY_ID,
+          capabilityId: INITIATIVE_TEST_CAPABILITY_ID,
           capabilityVersion: INITIATIVE_CREATE_CAPABILITY_VERSION,
           orgId: fixture.orgId,
           actorId: fixture.actorId,
@@ -367,7 +419,7 @@ suite('initiativeAdapter — Initiative capability, dispatched end-to-end throug
 
       const result = await capabilityAdapterService.executeCapability(
         buildEnvelope({
-          capabilityId: INITIATIVE_CREATE_CAPABILITY_ID,
+          capabilityId: INITIATIVE_TEST_CAPABILITY_ID,
           capabilityVersion: INITIATIVE_CREATE_CAPABILITY_VERSION,
           orgId: otherOrgId,
           actorId: fixture.actorId,
@@ -399,7 +451,7 @@ suite('initiativeAdapter — Initiative capability, dispatched end-to-end throug
     try {
       const result = await capabilityAdapterService.executeCapability(
         buildEnvelope({
-          capabilityId: INITIATIVE_CREATE_CAPABILITY_ID,
+          capabilityId: INITIATIVE_TEST_CAPABILITY_ID,
           capabilityVersion: INITIATIVE_CREATE_CAPABILITY_VERSION,
           orgId: fixture.orgId,
           actorId: fixture.actorId,

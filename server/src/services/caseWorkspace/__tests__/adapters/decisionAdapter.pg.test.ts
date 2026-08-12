@@ -57,8 +57,9 @@ import { getDecision } from '../../../decisionService.js';
 import {
   DECISION_CREATE_CAPABILITY_ID,
   DECISION_CREATE_CAPABILITY_VERSION,
-  registerDecisionCreateAdapterBinding,
-  registerDecisionCreateCapability,
+  buildDecisionCreateBinding,
+  decisionCreateRegistrationInput,
+  type DecisionAdapterDeps,
 } from '../../adapters/decisionAdapter.js';
 import { buildEnvelope, seedCaseFixture, seedMember, seedMemberedUser, teardownCaseFixture } from './_fixtures.js';
 
@@ -111,10 +112,63 @@ if (!REACHABLE) {
 
 const suite = REACHABLE ? describe.sequential : describe.skip;
 
+// ---------------------------------------------------------------------------
+// PRIVATE, per-run-unique capability id — NOT the platform-global
+// DECISION_CREATE_CAPABILITY_ID constant.
+//
+// Cross-file collision proven (this packet, P1, 2026-08-12, same mechanism as
+// the already-fixed documentsAdapter/assessmentAdapter/resultsAdapter
+// packet H1): `case_workspace_capabilities` is UNIQUE on (capability_id,
+// capability_version) with NO organization scoping
+// (capabilityRegistryService.ts:496). Vitest runs test FILES concurrently by
+// default (server/vitest.config.ts sets no fileParallelism:false).
+// `capabilityBootstrap.pg.test.ts`'s `deleteBuiltinCapabilityRows()` (its
+// tests 1, 3-7) issues `DELETE FROM case_workspace_capabilities WHERE
+// capability_id = $1` for the REAL `DECISION_CREATE_CAPABILITY_ID` as
+// pre-cleanup — a genuinely necessary step for ITS OWN "zero registrations"
+// assertions against the real builtin ids `registerBuiltinCapabilityAdapters`
+// uses at real process boot.
+//
+// DB readback proof (this packet, paired run against capabilityBootstrap.pg.
+// test.ts, polling `case_workspace_capabilities` every 100ms): a state where
+// ONLY `case-workspace.decision.create` had count 1 (all three sibling
+// builtin ids at 0) — which can only be this file's OWN `beforeAll`
+// registration landing before capabilityBootstrap's own boot registers the
+// others — was repeatedly followed within the SAME run by that row's count
+// dropping straight back to 0 well before this file's own `afterAll`, e.g.:
+//   19:47:56.523Z {"decision":1,"initiative":0,"kpi":0,"finance":0}
+//   19:48:02.204Z {"decision":0,"initiative":0,"kpi":0,"finance":0}
+// repeated across every one of 6 consecutive paired runs — i.e. this file's
+// registration is provably deleted out from under it by
+// capabilityBootstrap.pg.test.ts every single time, even though this
+// specific file's own assertions did not happen to land inside that narrow
+// window in ~25 sampled runs (unlike the sibling initiative/kpi/finance
+// adapter suites, which DID reproduce a live assertion failure from the
+// identical mechanism — see this packet's final report). Same danger, same
+// fix, applied uniformly rather than left as a live but rarely-observed race.
+//
+// Fix: this file registers its OWN test row under a private id instead, so
+// no other file's cleanup — targeted at the real, fixed builtin id — can
+// ever delete it. The registry/binding PLUMBING (registerCapabilityWithAdapter,
+// registerCapabilityBinding) and the HANDLER code under test
+// (buildDecisionCreateBinding, an exported, unmodified production function
+// from decisionAdapter.ts) are identical to what the real id uses — only the
+// capability_id STRING used as the registry/dispatch key is test-private.
+const DECISION_ADAPTER_PG_TEST_RUN_ID = randomUUID();
+const DECISION_TEST_CAPABILITY_ID = `${DECISION_CREATE_CAPABILITY_ID}.pgtest.${DECISION_ADAPTER_PG_TEST_RUN_ID}`;
+
 suite('decisionAdapter — Decision capability, dispatched end-to-end through executeCapability', () => {
   let control: Pool;
-  /** The registry row is registered ONCE for the whole file (platform-global, fixed capabilityId/version). */
+  /** The registry row is registered ONCE for the whole file, under DECISION_TEST_CAPABILITY_ID (see block above). */
   let registrarOrgId: string;
+
+  function resetDecisionTestBinding(deps: DecisionAdapterDeps = {}): void {
+    capabilityAdapterService.registerCapabilityBinding(
+      DECISION_TEST_CAPABILITY_ID,
+      DECISION_CREATE_CAPABILITY_VERSION,
+      buildDecisionCreateBinding(deps)
+    );
+  }
 
   beforeAll(async () => {
     control = new Pool({ connectionString: CONNECTION_STRING, max: 8 });
@@ -124,10 +178,16 @@ suite('decisionAdapter — Decision capability, dispatched end-to-end through ex
       'Decision adapter registrar org',
     ]);
     const registrarActorId = await seedMemberedUser(control, registrarOrgId, 'registrar', 'ADMIN');
-    await registerDecisionCreateCapability({
-      createdByActorId: registrarActorId,
-      callerOrganizationId: registrarOrgId,
-    });
+    // Private test id (see the block above this describe) — NOT
+    // registerDecisionCreateCapability, which hard-codes the platform-global
+    // DECISION_CREATE_CAPABILITY_ID. registerCapabilityWithAdapter is the
+    // same production registration primitive that helper calls internally;
+    // only the capabilityId field of the input is overridden.
+    await capabilityAdapterService.registerCapabilityWithAdapter(
+      { ...decisionCreateRegistrationInput(registrarActorId), capabilityId: DECISION_TEST_CAPABILITY_ID },
+      buildDecisionCreateBinding(),
+      registrarOrgId
+    );
   }, 60_000);
 
   afterAll(async () => {
@@ -136,11 +196,11 @@ suite('decisionAdapter — Decision capability, dispatched end-to-end through ex
         `DELETE FROM case_workspace_capability_idempotency_keys
           WHERE capability_registry_id IN (
             SELECT capability_registry_id FROM case_workspace_capabilities WHERE capability_id = $1)`,
-        [DECISION_CREATE_CAPABILITY_ID]
+        [DECISION_TEST_CAPABILITY_ID]
       )
       .catch(() => undefined);
     await control
-      .query(`DELETE FROM case_workspace_capabilities WHERE capability_id = $1`, [DECISION_CREATE_CAPABILITY_ID])
+      .query(`DELETE FROM case_workspace_capabilities WHERE capability_id = $1`, [DECISION_TEST_CAPABILITY_ID])
       .catch(() => undefined);
     await control
       .query(`DELETE FROM organization_members WHERE organization_id = $1`, [registrarOrgId])
@@ -151,9 +211,11 @@ suite('decisionAdapter — Decision capability, dispatched end-to-end through ex
   }, 60_000);
 
   afterEach(() => {
-    // Reset to the real, production binding after any test that injected a
-    // custom one — never let a stubbed dependency leak into the next test.
-    registerDecisionCreateAdapterBinding();
+    // Reset to the real, production binding (rebound at THIS file's private
+    // test id — see the block above this describe) after any test that
+    // injected a custom one — never let a stubbed dependency leak into the
+    // next test.
+    resetDecisionTestBinding();
   });
 
   async function decisionCountForOrg(orgId: string): Promise<number> {
@@ -182,7 +244,7 @@ suite('decisionAdapter — Decision capability, dispatched end-to-end through ex
     try {
       const result = await capabilityAdapterService.executeCapability(
         buildEnvelope({
-          capabilityId: DECISION_CREATE_CAPABILITY_ID,
+          capabilityId: DECISION_TEST_CAPABILITY_ID,
           capabilityVersion: DECISION_CREATE_CAPABILITY_VERSION,
           orgId: fixture.orgId,
           actorId: fixture.actorId,
@@ -226,7 +288,7 @@ suite('decisionAdapter — Decision capability, dispatched end-to-end through ex
     try {
       const badInput = await capabilityAdapterService.executeCapability(
         buildEnvelope({
-          capabilityId: DECISION_CREATE_CAPABILITY_ID,
+          capabilityId: DECISION_TEST_CAPABILITY_ID,
           capabilityVersion: DECISION_CREATE_CAPABILITY_VERSION,
           orgId: fixture.orgId,
           actorId: fixture.actorId,
@@ -245,7 +307,7 @@ suite('decisionAdapter — Decision capability, dispatched end-to-end through ex
 
       const noAccess = await capabilityAdapterService.executeCapability(
         buildEnvelope({
-          capabilityId: DECISION_CREATE_CAPABILITY_ID,
+          capabilityId: DECISION_TEST_CAPABILITY_ID,
           capabilityVersion: DECISION_CREATE_CAPABILITY_VERSION,
           orgId: strangerOrgId,
           actorId: strangerActorId,
@@ -276,7 +338,7 @@ suite('decisionAdapter — Decision capability, dispatched end-to-end through ex
       const key1 = `idem-${randomUUID()}`;
       const first = await capabilityAdapterService.executeCapability(
         buildEnvelope({
-          capabilityId: DECISION_CREATE_CAPABILITY_ID,
+          capabilityId: DECISION_TEST_CAPABILITY_ID,
           capabilityVersion: DECISION_CREATE_CAPABILITY_VERSION,
           orgId: fixture.orgId,
           actorId: fixture.actorId,
@@ -289,7 +351,7 @@ suite('decisionAdapter — Decision capability, dispatched end-to-end through ex
 
       const replay = await capabilityAdapterService.executeCapability(
         buildEnvelope({
-          capabilityId: DECISION_CREATE_CAPABILITY_ID,
+          capabilityId: DECISION_TEST_CAPABILITY_ID,
           capabilityVersion: DECISION_CREATE_CAPABILITY_VERSION,
           orgId: fixture.orgId,
           actorId: fixture.actorId,
@@ -305,7 +367,7 @@ suite('decisionAdapter — Decision capability, dispatched end-to-end through ex
       const key2 = `idem-${randomUUID()}`;
       const rejected = await capabilityAdapterService.executeCapability(
         buildEnvelope({
-          capabilityId: DECISION_CREATE_CAPABILITY_ID,
+          capabilityId: DECISION_TEST_CAPABILITY_ID,
           capabilityVersion: DECISION_CREATE_CAPABILITY_VERSION,
           orgId: fixture.orgId,
           actorId: fixture.actorId,
@@ -320,7 +382,7 @@ suite('decisionAdapter — Decision capability, dispatched end-to-end through ex
       const key3 = `idem-${randomUUID()}`;
       const second = await capabilityAdapterService.executeCapability(
         buildEnvelope({
-          capabilityId: DECISION_CREATE_CAPABILITY_ID,
+          capabilityId: DECISION_TEST_CAPABILITY_ID,
           capabilityVersion: DECISION_CREATE_CAPABILITY_VERSION,
           orgId: fixture.orgId,
           actorId: fixture.actorId,
@@ -343,7 +405,7 @@ suite('decisionAdapter — Decision capability, dispatched end-to-end through ex
   it('still creates the Decision when the artifact-link step fails, surfaces it, and stays re-linkable', async () => {
     const fixture = await seedCaseFixture(control, 'decision-partial');
     try {
-      registerDecisionCreateAdapterBinding({
+      resetDecisionTestBinding({
         linkArtifactToCase: async () => {
           throw new Error('injected_link_failure');
         },
@@ -351,7 +413,7 @@ suite('decisionAdapter — Decision capability, dispatched end-to-end through ex
 
       const result = await capabilityAdapterService.executeCapability(
         buildEnvelope({
-          capabilityId: DECISION_CREATE_CAPABILITY_ID,
+          capabilityId: DECISION_TEST_CAPABILITY_ID,
           capabilityVersion: DECISION_CREATE_CAPABILITY_VERSION,
           orgId: fixture.orgId,
           actorId: fixture.actorId,
@@ -424,7 +486,7 @@ suite('decisionAdapter — Decision capability, dispatched end-to-end through ex
       // AND to otherOrgId, but the ENVELOPE claims otherOrgId for THIS Case.
       const result = await capabilityAdapterService.executeCapability(
         buildEnvelope({
-          capabilityId: DECISION_CREATE_CAPABILITY_ID,
+          capabilityId: DECISION_TEST_CAPABILITY_ID,
           capabilityVersion: DECISION_CREATE_CAPABILITY_VERSION,
           orgId: otherOrgId,
           actorId: fixture.actorId,
@@ -447,7 +509,7 @@ suite('decisionAdapter — Decision capability, dispatched end-to-end through ex
       const strangerActorId = await seedMemberedUser(control, strangerOrgId, 'stranger2');
       const strangerResult = await capabilityAdapterService.executeCapability(
         buildEnvelope({
-          capabilityId: DECISION_CREATE_CAPABILITY_ID,
+          capabilityId: DECISION_TEST_CAPABILITY_ID,
           capabilityVersion: DECISION_CREATE_CAPABILITY_VERSION,
           orgId: strangerOrgId,
           actorId: strangerActorId,
@@ -483,7 +545,7 @@ suite('decisionAdapter — Decision capability, dispatched end-to-end through ex
     try {
       const result = await capabilityAdapterService.executeCapability(
         buildEnvelope({
-          capabilityId: DECISION_CREATE_CAPABILITY_ID,
+          capabilityId: DECISION_TEST_CAPABILITY_ID,
           capabilityVersion: DECISION_CREATE_CAPABILITY_VERSION,
           orgId: fixture.orgId,
           actorId: fixture.actorId,
