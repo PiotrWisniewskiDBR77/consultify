@@ -15,7 +15,7 @@
  */
 
 import type { TableColumn, TableRow } from '../../standard/StandardTable';
-import type { AnalysisKpiValueDto } from '../../../services/api/financeV2.types';
+import type { AnalysisKpiTier, AnalysisKpiValueDto } from '../../../services/api/financeV2.types';
 import { financeValueDisplayReasonLabel, formatFinanceValueForDisplay } from '../../../services/api/financeV2.types';
 
 // ---------------------------------------------------------------------------
@@ -56,8 +56,102 @@ export function computeYoyDelta(
 }
 
 // ---------------------------------------------------------------------------
-// Wiersz tabeli — spłaszczenie DTO backendu + pola pochodne (YoY, formuła,
-// interpretacja) do kształtu `TableRow` (StandardTable, `[key:string]:any`).
+// Grupowanie po KPI — `GET /analysis/:id/kpi-values` zwraca JEDEN wiersz PER
+// (kpiCode, periodId) (analysis.routes.ts:143-170, `AnalysisKpiValueDto.periodId`
+// jest polem obowiązkowym pojedynczego okresu). Brief wymaga jednego WIERSZA
+// TABELI per wskaźnik z wartościami "per okres (historyczne+prognozowane)" w
+// osobnych kolumnach — więc ten moduł grupuje DTO backendu PRZED zbudowaniem
+// `TableRow`, zamiast (błędnie) renderować jeden wiersz per (kpi, okres) z
+// zawsze pustymi kolumnami okresów.
+//
+// Determinizm (CLAUDE.md/brief §12 — "sortuj W PAMIĘCI przed
+// hashowaniem/sumowaniem, dodawanie float nie jest łączne"): ten moduł nie
+// sumuje liczb, ale ITERACJA po `Map` ma kolejność insercji, która zależy od
+// kolejności odpowiedzi API (niezagwarantowanej) — więc `kpiCode` jest jawnie
+// SORTOWANY przed zwróceniem wierszy, żeby dwa wywołania z tymi samymi
+// danymi (różna kolejność sieciowa) dały IDENTYCZNĄ kolejność wierszy.
+// ---------------------------------------------------------------------------
+
+export interface AnalysisKpiGroup {
+  kpiCode: string;
+  kpiName: string;
+  category: string | null;
+  tier: AnalysisKpiTier;
+  /** Wpis z najnowszego okresu spośród `periodColumnIdsChronological`, dla którego istnieje wiersz — steruje wartością bieżącą/YoY/kebab/detail. */
+  latestValue: AnalysisKpiValueDto;
+  /** Wartość z okresu bezpośrednio poprzedzającego `latestValue` (do YoY) — `null` gdy brak/pierwszy okres z danymi. */
+  priorPeriodValue: AnalysisKpiValueDto['value'] | null;
+  /** Wartość TEGO KPI w KAŻDYM okresie kolumnowym, kluczowana `periodId`==id kolumny. `undefined` = brak wiersza compute dla tego okresu (odróżnione od MISSING/NA, które SĄ wierszem ze statusem braku). */
+  periodValuesByColumnId: Record<string, AnalysisKpiValueDto['value'] | undefined>;
+}
+
+export function groupAnalysisKpiValuesByKpi(
+  kpiValues: readonly AnalysisKpiValueDto[],
+  periodColumnIdsChronological: readonly string[]
+): AnalysisKpiGroup[] {
+  const byKpiCode = new Map<string, AnalysisKpiValueDto[]>();
+  for (const entry of kpiValues) {
+    const bucket = byKpiCode.get(entry.kpiCode);
+    if (bucket) bucket.push(entry);
+    else byKpiCode.set(entry.kpiCode, [entry]);
+  }
+
+  const sortedKpiCodes = [...byKpiCode.keys()].sort((a, b) => a.localeCompare(b));
+  const result: AnalysisKpiGroup[] = [];
+
+  for (const kpiCode of sortedKpiCodes) {
+    const entries = byKpiCode.get(kpiCode)!;
+    const byPeriodId = new Map(entries.map((e) => [e.periodId, e] as const));
+
+    const periodValuesByColumnId: Record<string, AnalysisKpiValueDto['value'] | undefined> = {};
+    for (const columnId of periodColumnIdsChronological) {
+      periodValuesByColumnId[columnId] = byPeriodId.get(columnId)?.value;
+    }
+
+    let latestEntry: AnalysisKpiValueDto | null = null;
+    let priorPeriodValue: AnalysisKpiValueDto['value'] | null = null;
+    for (let i = periodColumnIdsChronological.length - 1; i >= 0; i -= 1) {
+      const match = byPeriodId.get(periodColumnIdsChronological[i]);
+      if (!match) continue;
+      latestEntry = match;
+      for (let j = i - 1; j >= 0; j -= 1) {
+        const priorMatch = byPeriodId.get(periodColumnIdsChronological[j]);
+        if (priorMatch) {
+          priorPeriodValue = priorMatch.value;
+          break;
+        }
+      }
+      break;
+    }
+
+    if (!latestEntry) {
+      // Żaden wpis nie pasuje do znanych kolumn okresów (np. caller nie podał
+      // `periodColumnIdsChronological` albo dane dotyczą okresu spoza
+      // aktualnego widoku) — fallback deterministyczny: sortuj kopię PO
+      // `periodId` (string, rosnąco) i weź ostatni, NIGDY nie ufaj kolejności
+      // insercji z sieci.
+      const sortedEntries = [...entries].sort((a, b) => a.periodId.localeCompare(b.periodId));
+      latestEntry = sortedEntries[sortedEntries.length - 1];
+    }
+
+    result.push({
+      kpiCode,
+      kpiName: latestEntry.kpiName,
+      category: latestEntry.category,
+      tier: latestEntry.tier,
+      latestValue: latestEntry,
+      priorPeriodValue,
+      periodValuesByColumnId,
+    });
+  }
+
+  return result;
+}
+
+// ---------------------------------------------------------------------------
+// Wiersz tabeli — spłaszczenie grupy (jeden KPI, wiele okresów) + pola
+// pochodne (YoY, formuła, interpretacja) do kształtu `TableRow` (StandardTable,
+// `[key:string]:any`).
 // ---------------------------------------------------------------------------
 
 export interface AnalysisKpiCatalogFormulaInfo {
@@ -67,38 +161,62 @@ export interface AnalysisKpiCatalogFormulaInfo {
 }
 
 export interface AnalysisKpiTableRowInput {
-  kpiValue: AnalysisKpiValueDto;
-  priorPeriodValue: AnalysisKpiValueDto['value'] | null;
+  group: AnalysisKpiGroup;
   formulaInfo: AnalysisKpiCatalogFormulaInfo | null;
   includedInReport: boolean;
   markedAsModelInput: boolean;
 }
 
+/** Komórka pojedynczego okresu — `undefined` (brak wiersza compute) dostaje WŁASNY powód, różny od MISSING/NA biznesowego. */
+function formatPeriodCell(value: AnalysisKpiValueDto['value'] | undefined): { text: string; isMissingLikeGlyph: boolean } {
+  if (value === undefined) {
+    return { text: '—', isMissingLikeGlyph: true };
+  }
+  return formatFinanceValueForDisplay(value);
+}
+
 export function toAnalysisKpiTableRow(input: AnalysisKpiTableRowInput): TableRow {
-  const display = formatFinanceValueForDisplay(input.kpiValue.value);
-  const yoy = computeYoyDelta(input.kpiValue.value, input.priorPeriodValue);
+  const { group } = input;
+  const display = formatFinanceValueForDisplay(group.latestValue.value);
+  const yoy = computeYoyDelta(group.latestValue.value, group.priorPeriodValue);
+
+  const periodCells: Record<string, string> = {};
+  const periodCellIsMissingLike: Record<string, boolean> = {};
+  for (const [columnId, value] of Object.entries(group.periodValuesByColumnId)) {
+    const cell = formatPeriodCell(value);
+    periodCells[`period.${columnId}`] = cell.text;
+    periodCellIsMissingLike[`period.${columnId}`] = cell.isMissingLikeGlyph;
+  }
+
   return {
-    id: input.kpiValue.kpiValueId,
-    kpiCode: input.kpiValue.kpiCode,
-    kpiName: input.kpiValue.kpiName,
-    category: input.kpiValue.category ?? '—',
-    tier: input.kpiValue.tier,
+    id: group.kpiCode,
+    kpiCode: group.kpiCode,
+    kpiName: group.kpiName,
+    category: group.category ?? '—',
+    tier: group.tier,
     valueDisplay: display.text,
     valueIsMissingLike: display.isMissingLikeGlyph,
-    valueStatus: input.kpiValue.value.status,
-    valueReason: financeValueDisplayReasonLabel(input.kpiValue.value.status),
+    valueStatus: group.latestValue.value.status,
+    valueReason: financeValueDisplayReasonLabel(group.latestValue.value.status),
     yoyDelta: yoy,
     formulaDisplay: input.formulaInfo?.formulaDisplay ?? '—',
     interpretationGeneral: input.formulaInfo?.interpretationGeneral ?? '—',
-    interpretationSpecific: input.kpiValue.interpretationText ?? '—',
-    benchmark: input.kpiValue.benchmark,
-    qualityFlag: input.kpiValue.qualityFlag ?? 'OK',
+    interpretationSpecific: group.latestValue.interpretationText ?? '—',
+    benchmark: group.latestValue.benchmark,
+    qualityFlag: group.latestValue.qualityFlag ?? 'OK',
     downstreamUses: input.formulaInfo?.downstreamUses ?? [],
     includedInReport: input.includedInReport,
     markedAsModelInput: input.markedAsModelInput,
-    // Zachowaj oryginalne DTO do karty szczegółowej (kebab/row click) —
-    // StandardTable nie interpretuje dodatkowych pól, tylko przekazuje `row`.
-    __kpiValue: input.kpiValue,
+    // Id reprezentatywnego wpisu backendu (najnowszy okres) — kebab/detail
+    // operują na TYM konkretnym `kpiValueId`, wiersz tabeli grupuje po `kpiCode`.
+    representativeKpiValueId: group.latestValue.kpiValueId,
+    ...periodCells,
+    __periodCellIsMissingLike: periodCellIsMissingLike,
+    // Zachowaj oryginalne DTO (najnowszy okres) do karty szczegółowej
+    // (kebab/row click) — StandardTable nie interpretuje dodatkowych pól,
+    // tylko przekazuje `row`.
+    __kpiValue: group.latestValue,
+    __periodValuesByColumnId: group.periodValuesByColumnId,
   };
 }
 

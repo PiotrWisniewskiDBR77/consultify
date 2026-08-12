@@ -12,6 +12,7 @@ import { StandardTable, type StandardRowMenu, type TableRow } from '../../standa
 import {
   analysisKpiTablePersistKey,
   buildAnalysisKpiColumns,
+  groupAnalysisKpiValuesByKpi,
   toAnalysisKpiTableRow,
   type AnalysisKpiCatalogFormulaInfo,
 } from './analysisKpiTable.contract';
@@ -24,34 +25,35 @@ export interface AnalysisKpiTablePeriodColumn {
 
 export interface AnalysisKpiTableProps {
   businessVersionId: string;
+  /** Może zawierać wiele wpisów PER (kpiCode, periodId) — tabela grupuje je do jednego wiersza na KPI (`groupAnalysisKpiValuesByKpi`). */
   kpiValues: AnalysisKpiValueDto[];
-  /** Wartość TEGO SAMEGO KPI w poprzednim okresie r/r, per `kpiValueId` — dostarczone przez callera (workspace zna sąsiednie okresy). */
-  priorPeriodValueByKpiValueId: Record<string, AnalysisKpiValueDto['value'] | undefined>;
   formulaInfoByKpiCode: Record<string, AnalysisKpiCatalogFormulaInfo | undefined>;
+  /** Kolejność CHRONOLOGICZNA (najstarszy→najnowszy) — steruje, który wpis jest "bieżący" (ostatnia kolumna z danymi) do YoY/kebab. */
   periodColumns: AnalysisKpiTablePeriodColumn[];
-  includedInReportByKpiValueId: Record<string, boolean>;
-  markedAsModelInputByKpiValueId: Record<string, boolean>;
-  selectedKpiValueId: string | null;
-  onOpenDetail: (kpiValueId: string) => void;
-  onToggleIncludedInReport: (kpiValueId: string, nextIncluded: boolean) => void;
+  includedInReportByKpiCode: Record<string, boolean>;
+  markedAsModelInputByKpiCode: Record<string, boolean>;
+  selectedKpiCode: string | null;
+  onOpenDetail: (kpiCode: string) => void;
+  onToggleIncludedInReport: (kpiCode: string, nextIncluded: boolean) => void;
   /** Brief: akcja wskazuje KONKRETNY artefakt/wersję docelową, nie mutuje Approved analysis w miejscu. */
-  onMarkAsModelInput: (kpiValueId: string) => void;
+  onMarkAsModelInput: (kpiCode: string) => void;
   isApproved: boolean;
   loading?: boolean;
   error?: string | null;
   onRetry?: () => void;
+  /** Brief §4 (ZAKAZ pustej analizy bez wyjścia) — otwiera krok wyboru KPI kreatora, gdy `kpiValues` jest puste. */
+  onConfigureKpis: () => void;
 }
 
 export function AnalysisKpiTable(props: AnalysisKpiTableProps): React.ReactElement {
   const {
     businessVersionId,
     kpiValues,
-    priorPeriodValueByKpiValueId,
     formulaInfoByKpiCode,
     periodColumns,
-    includedInReportByKpiValueId,
-    markedAsModelInputByKpiValueId,
-    selectedKpiValueId,
+    includedInReportByKpiCode,
+    markedAsModelInputByKpiCode,
+    selectedKpiCode,
     onOpenDetail,
     onToggleIncludedInReport,
     onMarkAsModelInput,
@@ -59,22 +61,27 @@ export function AnalysisKpiTable(props: AnalysisKpiTableProps): React.ReactEleme
     loading,
     error,
     onRetry,
+    onConfigureKpis,
   } = props;
 
   const columns = useMemo(() => buildAnalysisKpiColumns(periodColumns), [periodColumns]);
 
+  const groups = useMemo(
+    () => groupAnalysisKpiValuesByKpi(kpiValues, periodColumns.map((p) => p.id)),
+    [kpiValues, periodColumns]
+  );
+
   const data: TableRow[] = useMemo(
     () =>
-      kpiValues.map((kpiValue) =>
+      groups.map((group) =>
         toAnalysisKpiTableRow({
-          kpiValue,
-          priorPeriodValue: priorPeriodValueByKpiValueId[kpiValue.kpiValueId] ?? null,
-          formulaInfo: formulaInfoByKpiCode[kpiValue.kpiCode] ?? null,
-          includedInReport: includedInReportByKpiValueId[kpiValue.kpiValueId] ?? true,
-          markedAsModelInput: markedAsModelInputByKpiValueId[kpiValue.kpiValueId] ?? false,
+          group,
+          formulaInfo: formulaInfoByKpiCode[group.kpiCode] ?? null,
+          includedInReport: includedInReportByKpiCode[group.kpiCode] ?? true,
+          markedAsModelInput: markedAsModelInputByKpiCode[group.kpiCode] ?? false,
         })
       ),
-    [kpiValues, priorPeriodValueByKpiValueId, formulaInfoByKpiCode, includedInReportByKpiValueId, markedAsModelInputByKpiValueId]
+    [groups, formulaInfoByKpiCode, includedInReportByKpiCode, markedAsModelInputByKpiCode]
   );
 
   const rowMenu = (row: TableRow): StandardRowMenu => {
@@ -116,13 +123,15 @@ export function AnalysisKpiTable(props: AnalysisKpiTableProps): React.ReactEleme
       loading={loading}
       error={error ?? null}
       onRetry={onRetry}
-      selectedRowId={selectedKpiValueId}
+      selectedRowId={selectedKpiCode}
       onRowClick={(row) => onOpenDetail(String(row.id))}
       rowMenu={rowMenu}
       persistKey={analysisKpiTablePersistKey(businessVersionId)}
       empty={{
         title: 'Brak skonfigurowanych wskaźników',
         description: 'Ta analiza nie ma jeszcze żadnego wskaźnika KPI. Skonfiguruj wskaźniki, aby zobaczyć wyniki.',
+        actionLabel: 'Skonfiguruj wskaźniki',
+        onAction: onConfigureKpis,
       }}
     />
   );

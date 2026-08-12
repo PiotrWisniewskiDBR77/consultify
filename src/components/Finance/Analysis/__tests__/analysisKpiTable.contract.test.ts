@@ -1,7 +1,9 @@
 /**
  * OWN-FIN-014 — testy `analysisKpiTable.contract.ts`. Kontrole negatywne
- * wymagane brifem: "MISSING ≠ 0" w kontekście delty r/r, i "eksport używa
- * WYBRANEGO zestawu, nie widocznego".
+ * wymagane brifem: "MISSING ≠ 0" w kontekście delty r/r, "eksport używa
+ * WYBRANEGO zestawu, nie widocznego", i "wiersz niesie okresy" (jeden wiersz
+ * na KPI, wartości per okres w osobnych kolumnach — nie jeden wiersz na
+ * (kpi, okres) z zawsze pustymi kolumnami okresów).
  */
 import { describe, expect, it } from 'vitest';
 
@@ -9,6 +11,7 @@ import type { AnalysisKpiValueDto } from '../../../../services/api/financeV2.typ
 import {
   buildAnalysisKpiColumns,
   computeYoyDelta,
+  groupAnalysisKpiValuesByKpi,
   selectExportColumns,
   toAnalysisKpiTableRow,
   type AnalysisKpiTableRowInput,
@@ -16,6 +19,26 @@ import {
 
 function value(status: AnalysisKpiValueDto['value']['status'], valueDecimal: string | null): AnalysisKpiValueDto['value'] {
   return { status, valueDecimal, nativeCurrency: 'PLN', presentationCurrency: 'PLN', unit: 'UNITS', multiplier: '1' };
+}
+
+function kpiValue(overrides: Partial<AnalysisKpiValueDto> & Pick<AnalysisKpiValueDto, 'kpiValueId' | 'periodId' | 'value'>): AnalysisKpiValueDto {
+  return {
+    kpiCatalogId: 'cat-1',
+    kpiCode: 'GROSS_MARGIN_PCT',
+    kpiName: 'Marża brutto',
+    category: 'Rentowność',
+    tier: 'UNIVERSAL',
+    unitType: 'PERCENT',
+    entityId: 'ent-1',
+    qualityFlag: null,
+    deltaVsPriorPeriod: null,
+    deltaPctVsPriorPeriod: null,
+    interpretationText: null,
+    benchmark: null,
+    createdAt: '2026-08-11T00:00:00Z',
+    updatedAt: '2026-08-11T00:00:00Z',
+    ...overrides,
+  };
 }
 
 describe('computeYoyDelta', () => {
@@ -53,46 +76,97 @@ describe('computeYoyDelta', () => {
   });
 });
 
-describe('toAnalysisKpiTableRow', () => {
-  const baseKpiValue: AnalysisKpiValueDto = {
-    kpiValueId: 'kv-1',
-    kpiCatalogId: 'cat-1',
-    kpiCode: 'GROSS_MARGIN_PCT',
-    kpiName: 'Marża brutto',
-    category: 'Rentowność',
-    tier: 'UNIVERSAL',
-    unitType: 'PERCENT',
-    entityId: 'ent-1',
-    periodId: 'p-2026-q1',
-    value: value('PRESENT_NONZERO', '0.4'),
-    qualityFlag: null,
-    deltaVsPriorPeriod: null,
-    deltaPctVsPriorPeriod: null,
-    interpretationText: 'Marża rośnie dzięki niższym kosztom materiałów.',
-    benchmark: null,
-    createdAt: '2026-08-11T00:00:00Z',
-    updatedAt: '2026-08-11T00:00:00Z',
-  };
+describe('groupAnalysisKpiValuesByKpi — jeden wiersz na KPI, wiele okresów', () => {
+  const periods = ['p-2024', 'p-2025', 'p-2026'];
 
-  it('spłaszcza DTO do TableRow z id=kpiValueId i poprawnym formatowaniem wartości', () => {
+  it('scala trzy okresy tego samego KPI w JEDNĄ grupę z 3 kolumnami okresów wypełnionymi', () => {
+    const values: AnalysisKpiValueDto[] = [
+      kpiValue({ kpiValueId: 'kv-2024', periodId: 'p-2024', value: value('PRESENT_NONZERO', '0.30') }),
+      kpiValue({ kpiValueId: 'kv-2025', periodId: 'p-2025', value: value('PRESENT_NONZERO', '0.35') }),
+      kpiValue({ kpiValueId: 'kv-2026', periodId: 'p-2026', value: value('PRESENT_NONZERO', '0.40') }),
+    ];
+    const groups = groupAnalysisKpiValuesByKpi(values, periods);
+    expect(groups).toHaveLength(1);
+    expect(groups[0].kpiCode).toBe('GROSS_MARGIN_PCT');
+    expect(groups[0].periodValuesByColumnId['p-2024']?.valueDecimal).toBe('0.30');
+    expect(groups[0].periodValuesByColumnId['p-2025']?.valueDecimal).toBe('0.35');
+    expect(groups[0].periodValuesByColumnId['p-2026']?.valueDecimal).toBe('0.40');
+  });
+
+  it('"bieżąca" wartość i priorPeriodValue to najnowszy okres Z DANYMI i ten bezpośrednio przed nim, NIE ostatni element tablicy wejściowej', () => {
+    // Celowo w kolejności NIE-chronologicznej (dowód, że grupowanie sortuje wg periodColumnIdsChronological, nie wg kolejności sieci)
+    const values: AnalysisKpiValueDto[] = [
+      kpiValue({ kpiValueId: 'kv-2026', periodId: 'p-2026', value: value('PRESENT_NONZERO', '0.40') }),
+      kpiValue({ kpiValueId: 'kv-2024', periodId: 'p-2024', value: value('PRESENT_NONZERO', '0.30') }),
+      kpiValue({ kpiValueId: 'kv-2025', periodId: 'p-2025', value: value('PRESENT_NONZERO', '0.35') }),
+    ];
+    const groups = groupAnalysisKpiValuesByKpi(values, periods);
+    expect(groups[0].latestValue.kpiValueId).toBe('kv-2026');
+    expect(groups[0].priorPeriodValue?.valueDecimal).toBe('0.35');
+  });
+
+  it('KONTROLA NEGATYWNA: okres bez wiersza compute ⇒ `undefined` w periodValuesByColumnId, RÓŻNE od MISSING (który JEST wierszem)', () => {
+    const values: AnalysisKpiValueDto[] = [
+      kpiValue({ kpiValueId: 'kv-2025', periodId: 'p-2025', value: value('PRESENT_NONZERO', '0.35') }),
+    ];
+    const groups = groupAnalysisKpiValuesByKpi(values, periods);
+    expect(groups[0].periodValuesByColumnId['p-2024']).toBeUndefined();
+    expect(groups[0].periodValuesByColumnId['p-2026']).toBeUndefined();
+    expect(groups[0].periodValuesByColumnId['p-2025']?.status).toBe('PRESENT_NONZERO');
+  });
+
+  it('dwa różne KPI ⇒ dwie grupy, POSORTOWANE po kpiCode (determinizm, niezależnie od kolejności wejścia)', () => {
+    const values: AnalysisKpiValueDto[] = [
+      kpiValue({ kpiValueId: 'kv-b', kpiCode: 'NET_MARGIN_PCT', periodId: 'p-2025', value: value('PRESENT_NONZERO', '0.1') }),
+      kpiValue({ kpiValueId: 'kv-a', kpiCode: 'GROSS_MARGIN_PCT', periodId: 'p-2025', value: value('PRESENT_NONZERO', '0.4') }),
+    ];
+    const groups = groupAnalysisKpiValuesByKpi(values, periods);
+    expect(groups.map((g) => g.kpiCode)).toEqual(['GROSS_MARGIN_PCT', 'NET_MARGIN_PCT']);
+  });
+
+  it('kolejność wejścia odwrócona daje IDENTYCZNĄ kolejność grup wyjściowych (dowód determinizmu grupowania)', () => {
+    const forward: AnalysisKpiValueDto[] = [
+      kpiValue({ kpiValueId: 'kv-a', kpiCode: 'A_KPI', periodId: 'p-2025', value: value('PRESENT_NONZERO', '1') }),
+      kpiValue({ kpiValueId: 'kv-b', kpiCode: 'B_KPI', periodId: 'p-2025', value: value('PRESENT_NONZERO', '2') }),
+      kpiValue({ kpiValueId: 'kv-c', kpiCode: 'C_KPI', periodId: 'p-2025', value: value('PRESENT_NONZERO', '3') }),
+    ];
+    const reversed = [...forward].reverse();
+    const groupsForward = groupAnalysisKpiValuesByKpi(forward, periods).map((g) => g.kpiCode);
+    const groupsReversed = groupAnalysisKpiValuesByKpi(reversed, periods).map((g) => g.kpiCode);
+    expect(groupsForward).toEqual(groupsReversed);
+  });
+});
+
+describe('toAnalysisKpiTableRow', () => {
+  const periods = ['p-2025', 'p-2026'];
+  const baseValues: AnalysisKpiValueDto[] = [
+    kpiValue({ kpiValueId: 'kv-2025', periodId: 'p-2025', value: value('PRESENT_NONZERO', '0.35'), interpretationText: 'Marża rośnie dzięki niższym kosztom materiałów.' }),
+    kpiValue({ kpiValueId: 'kv-2026', periodId: 'p-2026', value: value('PRESENT_NONZERO', '0.4'), interpretationText: 'Marża rośnie dzięki niższym kosztom materiałów.' }),
+  ];
+
+  it('spłaszcza grupę do TableRow z id=kpiCode, poprawnym formatowaniem wartości i WYPEŁNIONYMI kolumnami okresów', () => {
+    const groups = groupAnalysisKpiValuesByKpi(baseValues, periods);
     const input: AnalysisKpiTableRowInput = {
-      kpiValue: baseKpiValue,
-      priorPeriodValue: null,
+      group: groups[0],
       formulaInfo: { formulaDisplay: '(Przychody − COGS) / Przychody', interpretationGeneral: 'Wyższa = lepiej', downstreamUses: ['Model bazowy'] },
       includedInReport: true,
       markedAsModelInput: false,
     };
     const row = toAnalysisKpiTableRow(input);
-    expect(row.id).toBe('kv-1');
+    expect(row.id).toBe('GROSS_MARGIN_PCT');
     expect(row.kpiName).toBe('Marża brutto');
     expect(row.valueIsMissingLike).toBe(false);
     expect(row.formulaDisplay).toBe('(Przychody − COGS) / Przychody');
+    // Dowód naprawy: kolumny okresów NIE są puste — niosą sformatowaną wartość TEGO okresu.
+    expect(row['period.p-2025']).toBe('0,35');
+    expect(row['period.p-2026']).toBe('0,4');
   });
 
   it('KONTROLA NEGATYWNA: KPI MISSING ⇒ wiersz ma valueIsMissingLike=true i valueDisplay="—", NIGDY "0"', () => {
+    const values: AnalysisKpiValueDto[] = [kpiValue({ kpiValueId: 'kv-2026', periodId: 'p-2026', value: value('MISSING', null) })];
+    const groups = groupAnalysisKpiValuesByKpi(values, periods);
     const input: AnalysisKpiTableRowInput = {
-      kpiValue: { ...baseKpiValue, value: value('MISSING', null) },
-      priorPeriodValue: null,
+      group: groups[0],
       formulaInfo: null,
       includedInReport: false,
       markedAsModelInput: false,
@@ -102,6 +176,16 @@ describe('toAnalysisKpiTableRow', () => {
     expect(row.valueDisplay).toBe('—');
     expect(row.valueDisplay).not.toBe('0');
     expect(row.valueReason).toBeTruthy();
+  });
+
+  it('KONTROLA NEGATYWNA: okres bez wiersza compute (undefined) ⇒ komórka okresu "—", ODRÓŻNIONA (__periodCellIsMissingLike) od realnego formatowania liczby', () => {
+    const values: AnalysisKpiValueDto[] = [kpiValue({ kpiValueId: 'kv-2026', periodId: 'p-2026', value: value('PRESENT_NONZERO', '0.4') })];
+    const groups = groupAnalysisKpiValuesByKpi(values, periods);
+    const row = toAnalysisKpiTableRow({ group: groups[0], formulaInfo: null, includedInReport: true, markedAsModelInput: false });
+    expect(row['period.p-2025']).toBe('—');
+    expect((row.__periodCellIsMissingLike as Record<string, boolean>)['period.p-2025']).toBe(true);
+    expect(row['period.p-2026']).toBe('0,4');
+    expect((row.__periodCellIsMissingLike as Record<string, boolean>)['period.p-2026']).toBe(false);
   });
 });
 
