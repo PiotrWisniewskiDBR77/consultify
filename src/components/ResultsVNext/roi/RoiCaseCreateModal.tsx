@@ -146,6 +146,20 @@ export const RoiCaseCreateModal: React.FC<RoiCaseCreateModalProps> = ({
 
   const initiativeError = touched && !initiativeId;
   const titleError = touched && !title.trim();
+  // RN-G6-C2: `analysisStart`/`analysisEnd` were the only two fields on this
+  // form treated as optional despite being unconditionally required before
+  // ANY calculation run can ever succeed (`roiCalculationRunCommands.ts`
+  // L287-291, `rvn_roi_cases.analysis_start`/`analysis_end` are nullable at
+  // the DB level but the calc-run guard rejects null unconditionally, no
+  // fallback) — AND there is no edit form anywhere in the ROI Case FULL TOOL
+  // that can set them after creation (`RoiCaseCreateModal.tsx` is the only
+  // file in the whole package that references either field). A case created
+  // without them was therefore PERMANENTLY stuck: unable to ever run a
+  // calculation, reproduced live while running the ROI gold flow end-to-end.
+  // Promoted to required here, same "touched reveals the message" pattern
+  // as initiative/title above.
+  const analysisStartError = touched && !analysisStart;
+  const analysisEndError = touched && !analysisEnd;
   const ownerMissing = !currentUserId;
 
   // The submit button stays CLICKABLE while required fields are empty —
@@ -162,15 +176,15 @@ export const RoiCaseCreateModal: React.FC<RoiCaseCreateModalProps> = ({
 
   const handleSubmit = () => {
     setTouched(true);
-    if (!initiativeId || !title.trim() || !currentUserId || !currency) return;
+    if (!initiativeId || !title.trim() || !currentUserId || !currency || !analysisStart || !analysisEnd) return;
     onSubmit({
       initiativeId,
       title: title.trim(),
       ownerUserId: currentUserId,
       currency,
       granularity,
-      analysisStart: analysisStart || null,
-      analysisEnd: analysisEnd || null,
+      analysisStart,
+      analysisEnd,
       reason: reason.trim() || null,
     });
   };
@@ -326,7 +340,16 @@ export const RoiCaseCreateModal: React.FC<RoiCaseCreateModalProps> = ({
               onChange={(e) => setAnalysisStart(e.target.value)}
               className={FIELD_CLASS}
               data-testid="roi-create-start"
+              aria-invalid={analysisStartError || undefined}
+              aria-describedby={analysisStartError ? 'roi-create-start-error' : undefined}
             />
+            {analysisStartError ? (
+              <p id="roi-create-start-error" className="mt-1 text-[11px] text-c-danger">
+                {isPolish
+                  ? 'Wymagane — bez tego nie da się uruchomić kalkulacji'
+                  : 'Required — a calculation cannot run without it'}
+              </p>
+            ) : null}
           </div>
           <div>
             <label className={LABEL_CLASS} htmlFor="roi-create-end">
@@ -339,7 +362,16 @@ export const RoiCaseCreateModal: React.FC<RoiCaseCreateModalProps> = ({
               onChange={(e) => setAnalysisEnd(e.target.value)}
               className={FIELD_CLASS}
               data-testid="roi-create-end"
+              aria-invalid={analysisEndError || undefined}
+              aria-describedby={analysisEndError ? 'roi-create-end-error' : undefined}
             />
+            {analysisEndError ? (
+              <p id="roi-create-end-error" className="mt-1 text-[11px] text-c-danger">
+                {isPolish
+                  ? 'Wymagane — bez tego nie da się uruchomić kalkulacji'
+                  : 'Required — a calculation cannot run without it'}
+              </p>
+            ) : null}
           </div>
         </div>
 
