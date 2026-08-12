@@ -785,6 +785,7 @@ describe('RN-G6 · finance_projection consumer (eight acceptance proofs + three 
           actorUserId: OWNER_A,
           actorEffectiveRole: 'consultant',
           idempotencyKey,
+          access: { capabilities: ['*'], platformRole: null },
         })
       ).rejects.toThrow(RoiEconomicModelNotEditableError);
 
