@@ -1313,6 +1313,7 @@ router.post(
         return;
       }
       const body = req.body as import('zod').infer<typeof RecordOkrSetMaterialChangeSchema>;
+      const access = await resolveAccess(req, auth);
       const outcome = await recordOkrSetMaterialChange({
         setId,
         organizationId: auth.organizationId,
@@ -1324,6 +1325,7 @@ router.post(
         actorEffectiveRole: auth.role,
         idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
         correlationId: getCorrelationId(req),
+        access,
       });
       res.status(200).json({
         outcome: outcome.outcome,
