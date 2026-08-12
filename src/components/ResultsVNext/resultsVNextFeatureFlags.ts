@@ -80,11 +80,40 @@ function readEnv(key: string): boolean {
   }
 }
 
+/**
+ * RN-G6 UI fix (2026-08-12) — persist an EXPLICIT query-string choice into
+ * localStorage. Root cause of "click Open, land on not yet enabled": in-app
+ * `navigate(path)` calls (e.g. registry → `/results/kpi/:kpiId`) build a bare
+ * path string and never carry the current `location.search` along, so a
+ * `?ff_resultsVNextKpi=1` typed once in the address bar is gone the instant
+ * the user clicks through — `isResultsVNextFlagEnabled` then falls through
+ * query(null) → localStorage(unset) → env(unset) → default `false`, even
+ * though the user just turned the flag on. Writing the explicit query value
+ * into localStorage the moment it is read means every subsequent read this
+ * session — including the ones triggered by an in-domain navigate() that
+ * dropped the query string — still lands on localStorage (already 2nd in the
+ * resolution order below) with the same value. This does NOT change any
+ * flag's default (still `false` with no query/localStorage/env present) and
+ * only ever fires on an EXPLICIT value in the URL, never automatically.
+ */
+function writeLocalStorage(key: string, value: boolean): void {
+  if (typeof window === 'undefined' || !window.localStorage) return;
+  try {
+    window.localStorage.setItem(key, value ? '1' : '0');
+  } catch {
+    // Ignore (private browsing / quota) — the query string still resolves
+    // this and every other read that keeps the param in the URL.
+  }
+}
+
 /** True when the given Results Next registry is enabled (default OFF everywhere). */
 export function isResultsVNextFlagEnabled(flag: ResultsVNextFlag): boolean {
   const keys = FLAGS[flag];
   const fromQuery = readQuery(keys.query);
-  if (fromQuery !== null) return fromQuery;
+  if (fromQuery !== null) {
+    writeLocalStorage(keys.localStorage, fromQuery);
+    return fromQuery;
+  }
   const fromLs = readLocalStorage(keys.localStorage);
   if (fromLs !== null) return fromLs;
   if (readEnv(keys.env)) return true;
