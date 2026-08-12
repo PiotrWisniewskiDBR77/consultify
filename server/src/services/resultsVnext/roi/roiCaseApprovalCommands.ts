@@ -896,6 +896,7 @@ export async function reopenApprovedRoiCaseForRevision(
     idempotencyKey,
     correlationId,
     causationId = null,
+    access,
   } = input;
 
   let beforeState: Record<string, unknown> | null = null;
@@ -907,6 +908,26 @@ export async function reopenApprovedRoiCaseForRevision(
     loadForUpdate: loadRoiCaseForUpdate,
     getCurrentVersion: caseRowVersion,
     applyMutation: async (client, currentRow, nextVersion) => {
+      // RN-G5 FIX (found during RN-G5 audit, 2026-08-12 — NOT part of the
+      // original ~11-commit pakiet: `access` was already threaded through
+      // this command's own input type and its route
+      // (roi.routes.ts POST /cases/:caseId/transitions/reopen-for-revision
+      // already resolved and passed a real CommandAccessContext), but this
+      // function never actually called assertCommandCapability — the one
+      // command in this file the design doc's own table claimed was gated
+      // ("5 of 5 commands in this file gated") that, in the actual code, was
+      // not. Any authenticated org member could reopen ANY approved ROI
+      // case for revision (unfreezing its baseline/economic model)
+      // regardless of ownership or capability. Same shape/ordering as this
+      // file's own approveRoiCase/rejectRoiCase/requestChangesOnRoiCase —
+      // guard FIRST, before the status check.
+      assertCommandCapability({
+        access,
+        actorUserId,
+        capability: ROI_CASE_APPROVAL_CAPABILITIES.reopenForRevision,
+        responsibleUserIds: [currentRow.owner_user_id],
+      });
+
       if (currentRow.status !== 'approved') {
         throw new RoiCaseValidationError(
           `ROI case ${caseId} is "${currentRow.status}" — only an "approved" case may be reopened for revision`,
