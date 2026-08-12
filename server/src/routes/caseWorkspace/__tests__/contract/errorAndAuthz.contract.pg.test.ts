@@ -343,37 +343,44 @@ suite('CONTRACT — error envelope and authorization over real Postgres', () => 
 
   /**
    * ===========================================================================
-   * KNOWN DEFECT — CW-SEC-ENUM-PLAYS-01 (characterization test, pins the BUG)
+   * CW-SEC-ENUM-PLAYS-01 — REGRESSION GUARD (the defect is fixed; this pins
+   * the FIXED behavior so it cannot silently come back)
    * ===========================================================================
-   * `play.routes.ts`'s header states that its by-id routes "404 (enumeration-
-   * safe, mirroring caseWorkspaceAuthContext's case_access_denied posture) if
-   * its organizationId does not match the authenticated actor's own org", and
-   * `requireOwnOrgDefinition`/`requireOwnOrgVersion` are written to do exactly
-   * that. They cannot, because the service call they make throws first:
+   * History: `play.routes.ts`'s by-id routes intend to 404 (enumeration-safe,
+   * mirroring caseWorkspaceAuthContext's case_access_denied posture) when the
+   * resource's organizationId does not match the actor's own org. They could
+   * not, because the service call they make threw first:
    *
-   *   playService.getProcessDefinition (playService.ts:761-763)
+   *   playService.getProcessDefinition
    *     if (!row) return null;                       // -> route 404
-   *     await requireOrgMember(actor, row.organization_id);  // -> THROWS 403
+   *     await requireOrgMember(actor, row.organization_id);  // -> THREW 403
    *
-   *   playService.getProcessVersion (playService.ts:1091-1097) — same shape.
+   *   playService.getProcessVersion — same shape.
    *
-   * So an outsider gets 403 for a processDefinitionId that EXISTS in another
+   * So an outsider got 403 for a processDefinitionId that EXISTS in another
    * tenant and 404 for one that does not: a working cross-tenant existence
    * oracle, precisely what SEC-009 exists to close.
    *
-   * That this is an oversight and not a deliberate posture is settled by the
-   * sibling that gets it right — `migrationReadinessService.
-   * getQuarantinedLegacyRecord` (migrationReadinessService.ts:1037-1042)
-   * catches `CaseWorkspaceAuthError` and returns null, so its route answers a
-   * uniform 404.
+   * FIXED in playService.ts: getProcessDefinition (~line 769) and
+   * getProcessVersion (~line 1117) now wrap `requireOrgMember` in
+   * `try { } catch (err) { if (err instanceof CaseWorkspaceAuthError) return null; throw err; }`
+   * — the same shape as the sibling that always got it right,
+   * `migrationReadinessService.getQuarantinedLegacyRecord`.
    *
-   * FIX (owner: the playService stream, NOT this test): give
-   * getProcessDefinition/getProcessVersion the same try/catch → `return null`
-   * treatment. When that lands, the two assertions marked `DEFECT:` below flip
-   * to the equality form already written beside them, and this test's name
-   * loses its prefix.
+   * The catch is deliberately NARROW: ONLY an authorization denial collapses to
+   * not-found. Every other error still propagates — a blanket catch would be a
+   * worse bug than the oracle it replaced. That property has its own dedicated
+   * guard in
+   * services/caseWorkspace/__tests__/security/playsEnumeration.security.pg.test.ts.
+   *
+   * NOTE on the collapse's visible side effect: because the auth error is
+   * swallowed at the service layer, callers downstream (e.g.
+   * instantiateProcessVersion) now surface a plain
+   * `Error('process_version_not_found')` rather than a `CaseWorkspaceAuthError`
+   * carrying `code: 'not_org_member'`. That is intended, not a lost check — the
+   * actor is still rejected and no plan draft is created.
    */
-  it('KNOWN DEFECT CW-SEC-ENUM-PLAYS-01 — cross-tenant Plays leak existence via 403-vs-404', async () => {
+  it('cross-tenant Plays do NOT leak existence via 403-vs-404 (CW-SEC-ENUM-PLAYS-01, fixed)', async () => {
     const fx = new ContractFixtures(control);
     try {
       const owner = await fx.seedFixture('play-owner');
@@ -418,16 +425,17 @@ suite('CONTRACT — error envelope and authorization over real Postgres', () => 
       expect(fakeDefinition.body.error.code).toBe('PROCESS_DEFINITION_NOT_FOUND');
       expect(fakeVersion.status).toBe(404);
 
-      // DEFECT: a REAL id in another tenant answers 403, which confirms it exists.
-      // Target once fixed: expect(realDefinition.status).toBe(fakeDefinition.status);
-      expect(realDefinition.status).toBe(403);
-      expect(realDefinition.body.error.code).toBe('NOT_ORG_MEMBER');
-      expect(realDefinition.status).not.toBe(fakeDefinition.status);
+      // FIXED: a REAL id in another tenant is now indistinguishable from a
+      // non-existent one — same status AND same error code, so there is no
+      // residual oracle in the body either.
+      expect(realDefinition.status).toBe(fakeDefinition.status);
+      expect(realDefinition.body.error.code).toBe(fakeDefinition.body.error.code);
+      expect(realDefinition.status).not.toBe(403);
 
-      // DEFECT: same leak on process versions.
-      // Target once fixed: expect(realVersion.status).toBe(fakeVersion.status);
-      expect(realVersion.status).toBe(403);
-      expect(realVersion.status).not.toBe(fakeVersion.status);
+      // FIXED: same on process versions.
+      expect(realVersion.status).toBe(fakeVersion.status);
+      expect(realVersion.body.error.code).toBe(fakeVersion.body.error.code);
+      expect(realVersion.status).not.toBe(403);
 
       // The tenant-scoped LIST is correct — the leak is confined to by-id reads.
       const list = await request(outsiderApp).get(`${BASE}/process-definitions`);

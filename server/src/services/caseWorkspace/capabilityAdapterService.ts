@@ -553,7 +553,48 @@ const ADAPTERS: Record<string, CapabilityAdapter> = {
  * executable.
  *
  * Requires ADMIN in the caller's organization — enforced inside
- * registerCapability, not re-implemented here.
+ * registerCapability, not re-implemented here. That check is NOT weakened by
+ * anything below; it still runs, unconditionally, before any row is written.
+ *
+ * ===========================================================================
+ * WHY THIS IS IDEMPOTENT ACROSS PROCESS BOOTS (E1, 2026-08-12)
+ * ===========================================================================
+ * The registry row is a PERSISTENT, once-only fact (UNIQUE on capabilityId +
+ * capabilityVersion — see capabilityRegistryService.ts's own header on
+ * registerCapability). The binding is an IN-MEMORY fact that dies with the
+ * process and MUST be re-established on every boot. Before this change the
+ * two were indistinguishable: a second boot against the same database hit the
+ * UNIQUE row and `registerCapability` threw `capability_already_registered`
+ * BEFORE `bindings.set` ever ran — so the binding was silently lost on every
+ * boot after the first, and `adapters/index.ts`'s `registerBuiltinCapability
+ * Adapters` (which awaits its seven `register*Capability` calls in sequence)
+ * would abort entirely after the FIRST duplicate, leaving the other six
+ * capabilities unbound too. That is the reason this program's seven adapters
+ * had zero production callers: the one function capable of wiring them was
+ * never safe to call more than once.
+ *
+ * The fix has two parts:
+ *   1. The binding is set FIRST, unconditionally, before the registry call.
+ *      A binding with no matching ACTIVE row is inert — `executeCapability`'s
+ *      own registry lookup (step 1) refuses an unregistered capability before
+ *      it ever reaches the binding map — so setting it early costs nothing
+ *      and is never itself a privilege grant. `binding` is always a value
+ *      this file's own seven callers construct from fixed, code-defined
+ *      handlers (see adapters/*.ts); it is never accepted from request input,
+ *      so bringing it forward a few lines does not open a new injection
+ *      surface.
+ *   2. `capability_already_registered` — and ONLY that specific error — is
+ *      treated as the expected "someone already created this row" outcome: it
+ *      is caught, the existing row is read back, and that row is returned
+ *      instead of the error propagating. Every OTHER failure from
+ *      `registerCapability` (a bad input, and in particular an
+ *      `insufficient_org_role`/`not_org_member` auth refusal from
+ *      `requireOrgRole`) still throws exactly as before — the binding is set,
+ *      but the row is not, so the capability stays unreachable via the API
+ *      until an authorized admin registers it for real. See
+ *      capabilityAdapterService.pg.test.ts's admin-refusal coverage and this
+ *      packet's capabilityBootWiring.pg.test.ts for the proof that a
+ *      non-admin actor is still refused.
  */
 export async function registerCapabilityWithAdapter(
   input: RegisterCapabilityInput,
@@ -570,9 +611,46 @@ export async function registerCapabilityWithAdapter(
   }
   if (!ADAPTERS[binding.kind]) throw new Error('capability_adapter_not_implemented');
 
-  const entry = await registerCapability(input, callerOrganizationId);
+  // Bind first (see the header above for why this ordering is what makes a
+  // second boot against the same database safe instead of fatal).
   bindings.set(bindingKey(capabilityId, capabilityVersion), binding);
-  return entry;
+
+  try {
+    return await registerCapability(input, callerOrganizationId);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    if (message !== 'capability_already_registered') {
+      // Anything else — including an ADMIN-role refusal — is a real failure
+      // and must surface exactly as it did before this change. The binding
+      // above stays set, but it is inert without a row (see header point 1).
+      throw error;
+    }
+    // Idempotent replay path: the row already exists (this is what the
+    // duplicate error proves), so re-registering it is not an error from a
+    // boot's point of view — read it back and return it instead. The actor
+    // used here already passed `requireOrgRole(..., 'ADMIN')` inside the
+    // `registerCapability` call above (that check runs BEFORE the duplicate
+    // check — see capabilityRegistryService.registerCapability), so it is
+    // certainly an org member and this readback does not need a separate
+    // authorization decision.
+    const createdByActorId = requireNonBlank(
+      input.createdByActorId,
+      'capability_created_by_actor_required'
+    );
+    const existing = await getCapabilityVersion(
+      capabilityId,
+      capabilityVersion,
+      createdByActorId,
+      callerOrganizationId
+    );
+    if (!existing) {
+      // The duplicate check proved the row exists; a null readback here means
+      // something else is wrong (e.g. the row belongs to an org the caller
+      // can no longer see) and must not be swallowed into a fake success.
+      throw new Error('capability_already_registered_readback_failed');
+    }
+    return existing;
+  }
 }
 
 /** Bind (or re-bind) an ALREADY-registered capability, e.g. on process boot. */

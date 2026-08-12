@@ -1869,6 +1869,51 @@ if (startServer && shouldStartHttpServer) {
       logger.warn('[Server] Case Workspace outbox worker not started:', err?.message);
     }
 
+    // Case Workspace capability adapters — the SEVEN module adapters
+    // (Decision/Initiative/KPI/Finance/Assessment/Results/Documents-and-
+    // Presentation) had ZERO production callers until this block: every one
+    // of them was dead code without it (verified 2026-08-12: `grep -rn
+    // registerBuiltinCapabilityAdapters server/src` outside adapters/index.ts
+    // returned only test files — the same defect class as the outbox worker
+    // directly above). registerBuiltinCapabilityAdapters is now idempotent
+    // across restarts (see capabilityAdapterService.registerCapabilityWithAdapter's
+    // header): a second boot against the same database re-registers the
+    // in-memory bindings and safely no-ops the already-existing registry rows
+    // instead of throwing capability_already_registered.
+    //
+    // registerCapability enforces ADMIN via requireOrgRole; this call does NOT
+    // weaken that check, so it needs a REAL admin actor in a REAL org. Both are
+    // read from env, which keeps this opt-in until an environment has a genuine
+    // platform-admin identity to register capability DEFINITIONS under.
+    //
+    // ⚠ OPEN OWNER DECISION (2026-08-12): no platform-admin bootstrap identity
+    // convention exists in this codebase for Case Workspace RBAC. Until these
+    // two env vars point at a real ADMIN actor/org, this block logs and no-ops,
+    // and the seven capabilities remain UNREACHABLE in that environment. The
+    // wiring defect is fixed here; provisioning the identity is not.
+    try {
+      const bootActorId = process.env.CASE_WORKSPACE_CAPABILITY_BOOT_ACTOR_ID;
+      const bootOrgId = process.env.CASE_WORKSPACE_CAPABILITY_BOOT_ORG_ID;
+      if (bootActorId && bootOrgId) {
+        const { registerBuiltinCapabilityAdapters } = await import(
+          './services/caseWorkspace/adapters/index.js'
+        );
+        await registerBuiltinCapabilityAdapters({
+          createdByActorId: bootActorId,
+          callerOrganizationId: bootOrgId,
+        });
+        logger.info('[Server] Case Workspace capability adapters registered (7 capabilities).');
+      } else {
+        logger.warn(
+          '[Server] Case Workspace capability adapters NOT registered: set ' +
+            'CASE_WORKSPACE_CAPABILITY_BOOT_ACTOR_ID and CASE_WORKSPACE_CAPABILITY_BOOT_ORG_ID ' +
+            'to a real ADMIN actor/org to enable them.'
+        );
+      }
+    } catch (err: any) {
+      logger.warn('[Server] Case Workspace capability adapters not started:', err?.message);
+    }
+
     // EXE-09: closure→Results/Finance delivery receipt reconciliation sweep.
     // Opt-OUT (on by default) — retries any closure_delivery_receipts row
     // whose Results/Finance leg is still PENDING/FAILED, so a failed or

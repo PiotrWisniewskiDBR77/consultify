@@ -72,7 +72,7 @@ import { randomUUID } from 'node:crypto';
 
 import { Pool } from 'pg';
 import request, { type Response } from 'supertest';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import {
   CONNECTION_STRING,
@@ -81,6 +81,45 @@ import {
   createContractApp,
   minimalGraph,
 } from '../../../../routes/caseWorkspace/__tests__/contract/contractHarness.js';
+
+/**
+ * ANTI-BLANKET-CATCH GUARD (used by the "non-authorization error still
+ * propagates" test below only — inert, `armed === false`, for every other
+ * test in this file, including the positive control).
+ *
+ * The fix under test in getProcessDefinition/getProcessVersion
+ * (playService.ts) is a NARROW catch: `catch (err) { if (err instanceof
+ * CaseWorkspaceAuthError) return null; throw err; }`. Proving that narrowness
+ * organically — by getting a genuinely broken, non-authorization error out of
+ * requireOrgMember through real inputs alone — is not reachable through this
+ * schema: both actorUserId and organization_id are validated non-blank
+ * upstream of every call this suite can make (requireNonBlank in
+ * getProcessDefinition/getProcessVersion; organization_id NOT NULL REFERENCES
+ * organizations(id) in the process_definitions table), and process_versions'
+ * process_definition_id FK is ON DELETE CASCADE, so a truly orphaned version
+ * row (the other genuine-error branch playService.ts's own comments describe)
+ * cannot be constructed by DELETE either. This module-level mock is the
+ * standard, precedented way this codebase proves the negative in that
+ * situation (see playService.pg.test.ts's `outboxBoom` for the identical
+ * pass-through-until-armed pattern): `requireOrgMember` runs for real except
+ * when explicitly armed, at which point it throws a plain, non-`snake_case`
+ * technical-sounding `Error` that is NOT a `CaseWorkspaceAuthError` instance
+ * — exactly the shape a real driver/SQL failure would have.
+ */
+const authBoom = vi.hoisted(() => ({ armed: false }));
+
+vi.mock('../../caseWorkspaceAuthContext.js', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../caseWorkspaceAuthContext.js')>();
+  return {
+    ...actual,
+    requireOrgMember: async (actorUserId: string, organizationId: string) => {
+      if (authBoom.armed) {
+        throw new Error('cw_test_forced_non_auth_failure');
+      }
+      return actual.requireOrgMember(actorUserId, organizationId);
+    },
+  };
+});
 
 const BASE = '/api/v8/case-workspace';
 
@@ -349,6 +388,132 @@ suite('play.routes.ts — cross-tenant Play existence oracle (CW-SEC-ENUM-PLAYS-
         list.body.data.map((d: { processDefinitionId: string }) => d.processDefinitionId)
       ).not.toContain(definitionId);
     } finally {
+      await deleteDefinitions(definitionIds);
+      await fx.teardown();
+    }
+  }, 60_000);
+
+  // ===========================================================================
+  // REVOKED MEMBERSHIP — a distinct scenario from "outsider with zero
+  // organization_members row at all" above: this actor WAS a member of the
+  // Play's own organization and has since been REVOKED.
+  // caseWorkspaceAuthContext.resolveActorMembership treats a non-ACTIVE row
+  // identically to no row at all (`if ((row.status ?? '').trim()...
+  // !== 'ACTIVE') return null;`), so requireOrgMember denies a REVOKED actor
+  // exactly the same way it denies a stranger — this proves
+  // getProcessDefinition/getProcessVersion's enumeration-safe collapse covers
+  // THAT path too, not only the "no row exists" path the main test above
+  // exercises.
+  // ===========================================================================
+  it('revoked membership: an actor whose organization_members row for the SAME org is REVOKED sees the identical enumeration-safe 404, not a distinguishable signal', async () => {
+    const fx = new ContractFixtures(control);
+    const definitionIds: string[] = [];
+    try {
+      const owner = await fx.seedFixture('plays-enum-revoked');
+      const revokedUserId = await fx.seedUser(owner.orgId, 'plays-enum-revoked-member');
+      await fx.seedMembership(owner.orgId, revokedUserId, 'MEMBER', 'REVOKED');
+
+      const ownerApp = createContractApp({
+        organizationId: owner.orgId,
+        userId: owner.memberUserId,
+        userRole: 'MEMBER',
+        isSuperAdmin: false,
+      });
+      const revokedApp = createContractApp({
+        organizationId: owner.orgId,
+        userId: revokedUserId,
+        userRole: 'MEMBER',
+        isSuperAdmin: false,
+      });
+
+      const definitionRes = await request(ownerApp)
+        .post(`${BASE}/process-definitions`)
+        .send({ name: `Enum probe play (revoked) ${randomUUID()}` });
+      expect(definitionRes.status).toBe(201);
+      const definitionId = definitionRes.body.data.processDefinitionId as string;
+      definitionIds.push(definitionId);
+
+      const versionRes = await request(ownerApp)
+        .post(`${BASE}/process-definitions/${definitionId}/versions`)
+        .send({ semanticGraph: minimalGraph() });
+      expect(versionRes.status).toBe(201);
+      const versionId = versionRes.body.data.processVersionId as string;
+
+      for (const probe of definitionRouteProbes) {
+        await expectIndistinguishable404(
+          revokedApp,
+          probe,
+          definitionId,
+          `procdef-does-not-exist-${randomUUID()}`
+        );
+      }
+      for (const probe of versionRouteProbes) {
+        await expectIndistinguishable404(revokedApp, probe, versionId, `procver-does-not-exist-${randomUUID()}`);
+      }
+    } finally {
+      await deleteDefinitions(definitionIds);
+      await fx.teardown();
+    }
+  }, 60_000);
+
+  // ===========================================================================
+  // ANTI-BLANKET-CATCH GUARD — the fix must catch ONLY CaseWorkspaceAuthError.
+  // A lazier fix (`catch { return null; }`, swallowing everything regardless
+  // of type) would ALSO close the enumeration oracle above, but would turn
+  // every genuinely broken read (a real SQL/driver failure, a bug) into a
+  // silent, misleading 404 "not found" — hiding real production incidents
+  // behind the exact same shape as a routine authorization denial. This test
+  // forces requireOrgMember (as called from inside getProcessDefinition) to
+  // throw a plain, non-CaseWorkspaceAuthError `Error` via the module mock
+  // above and asserts it is NOT swallowed: the response must be neither the
+  // enumeration-safe 404 nor a 403, but a distinctly different, propagated
+  // failure.
+  // ===========================================================================
+  it('anti-blanket-catch guard: a genuine non-authorization error out of requireOrgMember still propagates, is never reported as "not found"', async () => {
+    const fx = new ContractFixtures(control);
+    const definitionIds: string[] = [];
+    try {
+      const owner = await fx.seedFixture('plays-enum-propagate');
+      const ownerApp = createContractApp({
+        organizationId: owner.orgId,
+        userId: owner.memberUserId,
+        userRole: 'MEMBER',
+        isSuperAdmin: false,
+      });
+
+      const definitionRes = await request(ownerApp)
+        .post(`${BASE}/process-definitions`)
+        .send({ name: `Enum probe play (propagate) ${randomUUID()}` });
+      expect(definitionRes.status).toBe(201);
+      const definitionId = definitionRes.body.data.processDefinitionId as string;
+      definitionIds.push(definitionId);
+
+      // Baseline, unarmed: the route works normally for its own legitimate
+      // actor before we break anything.
+      const baseline = await request(ownerApp).get(`${BASE}/process-definitions/${definitionId}`);
+      expect(baseline.status).toBe(200);
+
+      authBoom.armed = true;
+      try {
+        const broken = await request(ownerApp).get(`${BASE}/process-definitions/${definitionId}`);
+        // NOT the enumeration-safe collapse (404) and NOT a 403 — a forced
+        // technical failure must be visibly distinct from both authorization
+        // outcomes, never disguised as either.
+        expect(broken.status).not.toBe(404);
+        expect(broken.status).not.toBe(403);
+        expect(broken.body.error.code).toBe('CW_TEST_FORCED_NON_AUTH_FAILURE');
+        expect(broken.body.error.message).toBe('cw_test_forced_non_auth_failure');
+      } finally {
+        authBoom.armed = false;
+      }
+
+      // Disarmed again: same actor, same real id, back to normal — proves
+      // the mock's own pass-through, not a broken fixture, produced the
+      // baseline 200 above.
+      const recovered = await request(ownerApp).get(`${BASE}/process-definitions/${definitionId}`);
+      expect(recovered.status).toBe(200);
+    } finally {
+      authBoom.armed = false;
       await deleteDefinitions(definitionIds);
       await fx.teardown();
     }

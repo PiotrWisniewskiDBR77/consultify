@@ -34,7 +34,17 @@
  * 3. RESTART RECOVERY — a worker is started, delivers something, is fully
  *    stopped AND has its in-process metrics reset (simulating a genuinely
  *    new process), and a fresh start recovers whatever was published while
- *    it was down — with NO redelivery of what already went out.
+ *    it was down — with NO redelivery of what already went out. AN
+ *    IN-PROCESS FAKE — see item 3b below for the real-process version of the
+ *    same claim.
+ * 3b. REAL SEPARATE-PROCESS RESTART (D3 packet) — the in-process fake above
+ *    cannot actually disprove a stranded row: nothing in it ever leaves this
+ *    ONE Node process/module registry either way. This case spawns two REAL
+ *    OS processes (`tsx` child processes running the actual production
+ *    `startCaseWorkspaceOutboxWorker()` entry point) — SIGKILLs the first
+ *    mid-drain, then starts a completely independent second one — and reads
+ *    the outcome straight from Postgres: every row reaches `delivered_at`,
+ *    none is left behind, and none gets more than one real delivery attempt.
  * 4. NO DUPLICATE EFFECT ON REPLAY — an already-delivered row is never
  *    reclaimed by a later tick, so a durable consumer counts each event
  *    exactly once across any number of ticks.
@@ -75,7 +85,12 @@
  * ticks or vice versa.
  */
 
+import { spawn } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import { Client, Pool } from 'pg';
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
@@ -212,6 +227,28 @@ suite('outboxWorker — the production outbox worker against a real PostgreSQL (
     return result.rows[0] ?? null;
   }
 
+  /**
+   * §8 PER-ROW backoff (server/migrations/
+   * 20260812a_case_workspace_outbox_next_retry_at.sql) means a row that just
+   * failed is NOT reclaimable on the very next tick anymore — see
+   * eventOutboxService.ts's own `computeRetryBackoffMs`. Every test in this
+   * file that loops ticks against a DELIBERATELY-FAILING event (dead-letter,
+   * adaptive-backoff, reconciliation) needs the row's `next_retry_at` moved
+   * into the past between iterations, exactly like an operator's "retry now"
+   * would — otherwise those loops would (correctly!) see `claimed: 0` and
+   * the tests would hang/fail for a reason that has nothing to do with what
+   * they are actually trying to prove. This is the SAME technique
+   * eventOutboxService.pg.test.ts's own retry test uses.
+   */
+  async function fastForwardRetry(orgId: string): Promise<void> {
+    await control.query(
+      `UPDATE case_workspace_event_outbox
+          SET next_retry_at = now() - interval '1 second'
+        WHERE organization_id = $1 AND delivered_at IS NULL`,
+      [orgId]
+    );
+  }
+
   // =========================================================================
   // 1. TICK METRICS — runOutboxWorkerTick()'s return value and
   //    getOutboxWorkerMetrics() both agree with Postgres.
@@ -266,6 +303,7 @@ suite('outboxWorker — the production outbox worker against a real PostgreSQL (
       const eventId = await publish(orgId, caseId, { eventType: 'case.activated' });
 
       for (let attempt = 1; attempt <= eventOutboxService.DEAD_LETTER_ATTEMPT_THRESHOLD; attempt += 1) {
+        if (attempt > 1) await fastForwardRetry(orgId); // bypass this row's own per-row backoff
         const tick = await outboxWorker.runOutboxWorkerTick({ organizationId: orgId });
         expect(tick).toMatchObject({ claimed: 1, delivered: 0, failed: 1 });
         const row = await readRow(eventId);
@@ -408,6 +446,297 @@ suite('outboxWorker — the production outbox worker against a real PostgreSQL (
       await teardown(orgId);
     }
   }, 60_000);
+
+  // =========================================================================
+  // 5. REAL SEPARATE-PROCESS RESTART — the test above proves the SAME
+  //    property with an in-process fake (`_resetOutboxWorkerForTests()` +
+  //    a fresh `startCaseWorkspaceOutboxWorker()` call, all in ONE Node
+  //    process/module registry). An in-process fake cannot actually
+  //    disprove "a process restart strands nothing" — module-level state
+  //    (subscriber closures over `deliveredBy`, `require` caching, the V8
+  //    heap itself) never leaves that one process either way, so it proves
+  //    at most that THIS FILE's OWN bookkeeping resets, not that a genuinely
+  //    different OS process picks up where a killed one left off. This test
+  //    spawns two REAL, SEPARATE `node`/`tsx` child processes — no shared
+  //    memory, no shared module registry, no shared metrics singleton with
+  //    the parent test process or with each other — and proves recovery
+  //    against Postgres alone, the only thing this design's header
+  //    ("restart does not lose or duplicate the effect") ever claims is
+  //    load-bearing.
+  // =========================================================================
+  it(
+    'a REAL separate OS process running startCaseWorkspaceOutboxWorker, SIGKILLed mid-drain, strands nothing: ' +
+      'a second, independently-spawned fresh process finishes the drain with no row left behind and no duplicate delivery',
+    async () => {
+      const { orgId, caseId } = scope('real-process-restart');
+      const EVENT_COUNT = 400;
+      const serverDir = path.resolve(fileURLToPath(new URL('../../../../../..', import.meta.url)));
+      const outboxWorkerAbsPath = path.resolve(
+        fileURLToPath(new URL('../../outboxWorker.ts', import.meta.url))
+      );
+      const tsxBin = path.join(serverDir, 'node_modules', '.bin', 'tsx');
+      let tmpDir: string | null = null;
+
+      /** Poll Postgres directly (never this process's own in-memory state) for the delivered-row count. */
+      async function readDeliveredCount(): Promise<number> {
+        const result = await control.query<{ n: string }>(
+          `SELECT count(*)::int AS n FROM case_workspace_event_outbox
+             WHERE organization_id = $1 AND delivered_at IS NOT NULL`,
+          [orgId]
+        );
+        return Number(result.rows[0]?.n ?? 0);
+      }
+
+      async function waitUntil(
+        predicate: () => Promise<boolean>,
+        timeoutMs: number,
+        pollMs = 100
+      ): Promise<boolean> {
+        const deadline = Date.now() + timeoutMs;
+        for (;;) {
+          if (await predicate()) return true;
+          if (Date.now() >= deadline) return false;
+          await new Promise((resolve) => setTimeout(resolve, pollMs));
+        }
+      }
+
+      function spawnWorkerProcess(): ReturnType<typeof spawn> {
+        const scriptPath = path.join(tmpDir!, `worker-${randomUUID()}.mjs`);
+        // Plain ESM importing the REAL production module by absolute path —
+        // its own relative imports ('../../utils/Logger.js', etc.) resolve
+        // from THAT file's real location on disk regardless of where this
+        // generated script physically sits, so it is the exact same code
+        // path `server/src/index.ts` itself uses in production (see
+        // outboxWorker.ts's own header: "startCaseWorkspaceOutboxWorker();
+        // called once at server boot").
+        const script = [
+          `import { startCaseWorkspaceOutboxWorker } from ${JSON.stringify(outboxWorkerAbsPath)};`,
+          `startCaseWorkspaceOutboxWorker({`,
+          `  forceEnable: true,`,
+          `  organizationId: ${JSON.stringify(orgId)},`,
+          `  intervalMs: 150,`,
+          `  batchSize: 20,`,
+          `});`,
+          // startCaseWorkspaceOutboxWorker's own timer is deliberately
+          // unref'd (its header: a worker must never keep a real server
+          // process alive by itself) — this generated script is nothing
+          // BUT the worker, so it needs its own explicit keep-alive or the
+          // event loop would drain and the process would exit immediately.
+          `setInterval(() => {}, 60_000);`,
+          `process.stdout.write('worker-process-ready\\n');`,
+        ].join('\n');
+        writeFileSync(scriptPath, script, 'utf8');
+
+        const child = spawn(tsxBin, [scriptPath], {
+          cwd: serverDir,
+          env: process.env, // inherits DATABASE_URL/RUN_DB_TESTS/MOCK_DB/DB_TYPE/NODE_ENV as-is
+          stdio: ['ignore', 'pipe', 'pipe'],
+          // DELIBERATE, and the reason killProcessTree() below exists: `tsx`
+          // (confirmed by inspecting the actually-running process tree while
+          // developing this test) does not exec-replace itself — the PID
+          // `spawn()` hands back is a `tsx` LAUNCHER process, which itself
+          // spawns a SEPARATE child (`node --require tsx/dist/preflight.cjs
+          // --import tsx/dist/loader.mjs <script>`) that is the one actually
+          // running startCaseWorkspaceOutboxWorker(). A plain
+          // `child.kill('SIGKILL')` only signals the launcher — the real
+          // worker grandchild survives as an orphan (observed directly:
+          // leaked `cw-outbox-restart-*` node processes still running
+          // minutes after a test run had already reported PASS). `detached:
+          // true` puts the launcher in its OWN process group so
+          // `killProcessTree()` can signal the WHOLE group with one call.
+          detached: true,
+        });
+        return child;
+      }
+
+      /**
+       * Kills the ENTIRE process tree rooted at `child` (see the `detached:
+       * true` comment above for why a plain `child.kill()` leaks tsx's real
+       * worker grandchild). `process.kill(-pid, signal)` — a NEGATIVE pid —
+       * is the POSIX convention for "signal every process in this group",
+       * which is exactly the group `detached: true` created. Falls back to a
+       * plain kill if the group signal itself fails (e.g. already exited).
+       */
+      function killProcessTree(child: ReturnType<typeof spawn>): void {
+        if (!child.pid) return;
+        try {
+          process.kill(-child.pid, 'SIGKILL');
+        } catch {
+          try {
+            child.kill('SIGKILL');
+          } catch {
+            // already gone — nothing left to clean up.
+          }
+        }
+      }
+
+      try {
+        tmpDir = mkdtempSync(path.join(tmpdir(), 'cw-outbox-restart-'));
+
+        // ---- SEED: EVENT_COUNT fresh pending rows ------------------------------
+        // A single bulk multi-row INSERT, not EVENT_COUNT sequential publish()
+        // calls: withPgTransaction() opens a DEDICATED pg.Client PER CALL (see
+        // queryHelpers.ts), so EVENT_COUNT of those sequentially measures
+        // connection-churn, not this test's actual subject (worker restart
+        // recovery) — confirmed empirically: 50 sequential publish() calls took
+        // ~10.5s in this same environment, which would blow this test's budget
+        // at EVENT_COUNT=400. Same technique and justification as
+        // __tests__/perf/outboxThroughput.perf.pg.test.ts's own Section 1 seed
+        // (see that file's header) — reproduces publishEvent's own column
+        // values/defaults exactly; what this test measures starts at
+        // dispatchPendingEvents, which cannot tell a bulk-seeded row from a
+        // service-published one.
+        const seedParams: unknown[] = [];
+        const seedRows: string[] = [];
+        let seedParamIndex = 1;
+        for (let i = 0; i < EVENT_COUNT; i += 1) {
+          const eventId = `cwevt-restart-${orgId}-${i}`;
+          seedParams.push(eventId, orgId, 'CASE', caseId, caseId, `cwworker-restart-actor-${i}`);
+          seedRows.push(
+            `($${seedParamIndex++}, 'case.real_process_restart_probe', 1, $${seedParamIndex++}, $${seedParamIndex++}, $${seedParamIndex++}, $${seedParamIndex++}, $${seedParamIndex++}, '{}'::jsonb)`
+          );
+        }
+        await control.query(
+          `INSERT INTO case_workspace_event_outbox
+             (event_id, event_type, schema_version, organization_id, aggregate_type, aggregate_id, case_id, actor_user_id, redacted_summary, correlation_id)
+           SELECT event_id, event_type, schema_version, organization_id, aggregate_type, aggregate_id, case_id, actor_user_id, redacted_summary,
+                  'cwworker-restart-corr-' || event_id
+             FROM (VALUES ${seedRows.join(',')}) AS t(event_id, event_type, schema_version, organization_id, aggregate_type, aggregate_id, case_id, actor_user_id, redacted_summary)`,
+          seedParams
+        );
+        const seededCount = await control.query<{ n: string }>(
+          `SELECT count(*)::int AS n FROM case_workspace_event_outbox WHERE organization_id = $1`,
+          [orgId]
+        );
+        expect(Number(seededCount.rows[0]?.n)).toBe(EVENT_COUNT);
+        expect(await readDeliveredCount()).toBe(0);
+
+        // ---- PROCESS A: a real, separate OS process starts draining ----------
+        const processA = spawnWorkerProcess();
+        const processAStderr: string[] = [];
+        processA.stderr?.on('data', (chunk) => processAStderr.push(String(chunk)));
+        let processAPid: number | undefined;
+        await new Promise<void>((resolve, reject) => {
+          const timer = setTimeout(
+            () => reject(new Error(`process A never signalled ready. stderr: ${processAStderr.join('')}`)),
+            15_000
+          );
+          processA.stdout?.on('data', (chunk) => {
+            if (String(chunk).includes('worker-process-ready')) {
+              clearTimeout(timer);
+              processAPid = processA.pid;
+              resolve();
+            }
+          });
+          processA.on('exit', (code) => {
+            clearTimeout(timer);
+            reject(new Error(`process A exited early (code ${code}). stderr: ${processAStderr.join('')}`));
+          });
+        });
+        expect(processAPid).toBeGreaterThan(0);
+
+        // ---- Wait for genuine MID-FLIGHT progress: some delivered, not all ----
+        const madeMidProgress = await waitUntil(async () => {
+          const n = await readDeliveredCount();
+          return n > 0 && n < EVENT_COUNT;
+        }, 20_000);
+        expect(madeMidProgress).toBe(true);
+        const midDeliveredCount = await readDeliveredCount();
+        expect(midDeliveredCount).toBeGreaterThan(0);
+        expect(midDeliveredCount).toBeLessThan(EVENT_COUNT);
+
+        // ---- THE CRASH: SIGKILL — no graceful shutdown, no chance to flush ----
+        // any in-memory state. This is deliberately the least forgiving kill
+        // signal available (SIGTERM would at least let handlers run).
+        // killProcessTree(), not a plain processA.kill(): see that helper's
+        // own comment — a plain kill leaves tsx's real worker grandchild
+        // process running, orphaned, which would make this "crash" a lie
+        // (the worker never actually stops) and leak a process per test run.
+        killProcessTree(processA);
+        await new Promise<void>((resolve) => {
+          processA.on('exit', () => resolve());
+          // Already-exited safety net.
+          setTimeout(resolve, 5_000);
+        });
+
+        // A moment for Postgres to notice the dead backend and release any
+        // locks it held — mirrors outboxWorker.pg.test.ts's own "stuck lease"
+        // test's same allowance.
+        await new Promise((resolve) => setTimeout(resolve, 500));
+
+        const afterKillDeliveredCount = await readDeliveredCount();
+        // Still genuinely partial — the kill actually interrupted real work,
+        // this is not a test that happened to race to completion first.
+        expect(afterKillDeliveredCount).toBeLessThan(EVENT_COUNT);
+
+        // ---- PROCESS B: a SECOND, INDEPENDENTLY-SPAWNED fresh process --------
+        // No relation whatsoever to process A beyond both reading the same
+        // Postgres rows — different PID, different V8 heap, different module
+        // registry, started fresh by THIS test, not "recovered" from A.
+        const processB = spawnWorkerProcess();
+        const processBStderr: string[] = [];
+        processB.stderr?.on('data', (chunk) => processBStderr.push(String(chunk)));
+        let processBPid: number | undefined;
+
+        try {
+          await new Promise<void>((resolve, reject) => {
+            const timer = setTimeout(
+              () => reject(new Error(`process B never signalled ready. stderr: ${processBStderr.join('')}`)),
+              15_000
+            );
+            processB.stdout?.on('data', (chunk) => {
+              if (String(chunk).includes('worker-process-ready')) {
+                clearTimeout(timer);
+                processBPid = processB.pid;
+                resolve();
+              }
+            });
+            processB.on('exit', (code) => {
+              clearTimeout(timer);
+              reject(new Error(`process B exited early (code ${code}). stderr: ${processBStderr.join('')}`));
+            });
+          });
+          expect(processBPid).toBeGreaterThan(0);
+          expect(processBPid).not.toBe(processAPid);
+
+          const fullyDrained = await waitUntil(async () => (await readDeliveredCount()) === EVENT_COUNT, 30_000);
+          expect(fullyDrained).toBe(true);
+        } finally {
+          killProcessTree(processB);
+        }
+
+        // ---- THE DECISIVE READS — straight from Postgres, not from either
+        // process's own in-memory metrics (both are gone/killed by now). ----
+        const finalRows = await control.query<{
+          event_id: string;
+          delivered_at: Date | null;
+          delivery_attempt_count: number;
+        }>(
+          `SELECT event_id, delivered_at, delivery_attempt_count
+             FROM case_workspace_event_outbox WHERE organization_id = $1`,
+          [orgId]
+        );
+        expect(finalRows.rows).toHaveLength(EVENT_COUNT);
+        // NOTHING STRANDED: every single row reached delivered_at, across
+        // TWO real, separate, killed-and-fresh OS processes.
+        expect(finalRows.rows.every((r) => r.delivered_at !== null)).toBe(true);
+        // NO DUPLICATE/RUNAWAY EFFECT: a row that was mid-flight when A was
+        // killed gets ONE more real attempt from B (SKIP LOCKED means A's own
+        // claiming transaction, whatever it had claimed, released those locks
+        // the instant the SIGKILL'd connection died — see outboxWorker.
+        // pg.test.ts's own "stuck lease" test for the same property), never
+        // an unbounded retry storm.
+        expect(finalRows.rows.every((r) => Number(r.delivery_attempt_count) <= 1)).toBe(true);
+
+        const finalBacklog = await eventOutboxService.getOutboxBacklog({ organizationId: orgId });
+        expect(finalBacklog.pending).toBe(0);
+      } finally {
+        if (tmpDir) rmSync(tmpDir, { recursive: true, force: true });
+        await teardown(orgId);
+      }
+    },
+    90_000
+  );
 
   // =========================================================================
   // 6. STUCK LEASE RECOVERY — no lease column exists; a crashed claiming
@@ -559,6 +888,11 @@ suite('outboxWorker — the production outbox worker against a real PostgreSQL (
       expect(tick1.failed).toBe(1);
       expect(outboxWorker.getOutboxWorkerMetrics().currentBackoffMultiplier).toBe(2);
 
+      // Bypass this row's own PER-ROW backoff (distinct from the
+      // tick-cadence multiplier this test is actually about) so the second
+      // tick can re-claim it immediately, same as the operator "retry now"
+      // shape used elsewhere in this file.
+      await fastForwardRetry(orgId);
       const tick2 = await outboxWorker.runOutboxWorkerTick({ organizationId: orgId });
       expect(tick2.failed).toBe(1);
       expect(outboxWorker.getOutboxWorkerMetrics().currentBackoffMultiplier).toBe(4);
@@ -588,6 +922,7 @@ suite('outboxWorker — the production outbox worker against a real PostgreSQL (
       const eventId = await publish(orgId, caseId, { eventType: 'case.reconciliation_probe' });
 
       for (let attempt = 1; attempt <= eventOutboxService.DEAD_LETTER_ATTEMPT_THRESHOLD; attempt += 1) {
+        if (attempt > 1) await fastForwardRetry(orgId); // bypass this row's own per-row backoff
         await outboxWorker.runOutboxWorkerTick({ organizationId: orgId });
       }
 

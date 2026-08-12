@@ -1,0 +1,40 @@
+{
+  "desktop-dark-table": "/Users/piotrwisniewski/dev/consultify-case-workspace-v1-20260809/docs/product/case-workspace/evidence/c4-deliverable-ui-2026-08-12/desktop-dark-four-states-table.png",
+  "desktop-light-table": "/Users/piotrwisniewski/dev/consultify-case-workspace-v1-20260809/docs/product/case-workspace/evidence/c4-deliverable-ui-2026-08-12/desktop-light-four-states-table.png",
+  "urlAfterOpen": "http://127.0.0.1:4501/my-work?decisionId=c4-evid-decision-0001",
+  "urlAfterBack": "http://127.0.0.1:4501/zlecenia/case-94b37954-c4a1-4417-8eed-9edefd570f95?zakladka=rezultaty",
+  "focusedAfterBackAriaLabel": null,
+  "focusedAfterBackOutline": "rgb(248, 250, 252) / none",
+  "urlAfterRefresh": "http://127.0.0.1:4501/zlecenia/case-94b37954-c4a1-4417-8eed-9edefd570f95?zakladka=rezultaty&widok-planu=prosty",
+  "deepLinkResolution": {
+    "data": {
+      "linkId": "cwlink-ff42e7a0-0348-4f02-9d09-e55a691c22ff",
+      "caseId": "case-94b37954-c4a1-4417-8eed-9edefd570f95",
+      "relation": "DELIVERABLE",
+      "state": "AVAILABLE",
+      "deepLink": {
+        "artifactType": "decision",
+        "artifactId": "c4-evid-decision-0001",
+        "artifactRevision": null
+      },
+      "isStale": false,
+      "staleReason": null,
+      "staleMarkedAt": null,
+      "unavailableReason": null,
+      "unavailableMarkedAt": null,
+      "unlinkReason": null,
+      "unlinkedAt": null,
+      "returnContext": {
+        "caseId": "case-94b37954-c4a1-4417-8eed-9edefd570f95",
+        "casePhase": "ACTIVE",
+        "resultsGroup": "NATIVE_DELIVERABLES",
+        "linkId": "cwlink-ff42e7a0-0348-4f02-9d09-e55a691c22ff",
+        "relation": "DELIVERABLE"
+      },
+      "resolvedAt": "2026-08-12T07:39:49.003Z"
+    }
+  },
+  "directDeepLinkUrl": "http://127.0.0.1:4501/my-work",
+  "mobile-dark-table": "/Users/piotrwisniewski/dev/consultify-case-workspace-v1-20260809/docs/product/case-workspace/evidence/c4-deliverable-ui-2026-08-12/mobile-dark-four-states-table.png",
+  "mobile-light-table": "/Users/piotrwisniewski/dev/consultify-case-workspace-v1-20260809/docs/product/case-workspace/evidence/c4-deliverable-ui-2026-08-12/mobile-light-four-states-table.png"
+}

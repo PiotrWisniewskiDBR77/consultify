@@ -53,10 +53,17 @@
  * rows with `FOR UPDATE SKIP LOCKED` (so N dispatchers never fight over the
  * same row — §12's "run two workers/schedulers against one ready item"), and
  * per row:
- *   - delivered   -> UPDATE delivered_at = now()
+ *   - delivered   -> UPDATE delivered_at = now(), next_retry_at = NULL
  *   - failed      -> delivery_attempt_count + 1, last_delivery_error set,
- *                    delivered_at LEFT NULL. Leaving it NULL *is* the retry
- *                    mechanism: the row simply re-appears in the next claim.
+ *                    delivered_at LEFT NULL, next_retry_at = now() +
+ *                    computeRetryBackoffMs(newAttemptCount) (server/
+ *                    migrations/20260812a_case_workspace_outbox_next_retry_at.sql).
+ *                    Leaving delivered_at NULL *is* the retry mechanism; the
+ *                    ROW simply re-appears in a later claim once
+ *                    next_retry_at elapses — a PER-ROW exponential backoff,
+ *                    capped at RETRY_BACKOFF_MAX_MS, distinct from
+ *                    outboxWorker.ts's own TICK-CADENCE backoff (which slows
+ *                    the whole worker loop, not one row).
  * Rows that have failed DEAD_LETTER_ATTEMPT_THRESHOLD times drop out of the
  * claim query (dead-letter) but stay fully readable through
  * listDeadLetterEvents() for reconciliation. Nothing is ever deleted here.
@@ -109,6 +116,48 @@ const OUTBOX_TABLE = 'case_workspace_event_outbox';
  * delivered.
  */
 export const DEAD_LETTER_ATTEMPT_THRESHOLD = 10;
+
+/**
+ * §8 PER-ROW retry backoff (server/migrations/
+ * 20260812a_case_workspace_outbox_next_retry_at.sql's `next_retry_at`
+ * column). Before that migration, the ONLY backoff in this system was
+ * outboxWorker.ts's TICK-CADENCE backoff (`currentBackoffMultiplier`), which
+ * slows the WHOLE worker loop when ANY row is failing — a single
+ * permanently-broken consumer for one event type would still have its own
+ * row re-claimed and re-tried on every tick at the (possibly still-fast)
+ * base interval. `next_retry_at` fixes that at the ROW level: a failed
+ * delivery schedules exactly this row's next eligible attempt at
+ * `now() + min(RETRY_BACKOFF_MAX_MS, RETRY_BACKOFF_BASE_MS * 2^(attempt-1))`
+ * (attempt = the delivery_attempt_count AFTER this failure, 1-based), and
+ * dispatchPendingEvents()'s claim query will not re-select the row before
+ * that instant. A fresh row (next_retry_at IS NULL) is eligible immediately,
+ * so a row's FIRST attempt is never delayed by this mechanism.
+ */
+export const RETRY_BACKOFF_BASE_MS = 1_000;
+/** Sane cap (§8 "exponential backoff with a sane cap") — 5 minutes. */
+export const RETRY_BACKOFF_MAX_MS = 5 * 60 * 1000;
+/**
+ * Ceiling on the exponent so `2 ** exponent` never approaches an unsafe
+ * JS number range for a pathological attempt count — irrelevant in practice
+ * since DEAD_LETTER_ATTEMPT_THRESHOLD (10) removes a row from the claim
+ * query long before this would matter, but kept explicit rather than
+ * implicit in float behavior.
+ */
+const RETRY_BACKOFF_MAX_EXPONENT = 20;
+
+/**
+ * §8 per-row exponential backoff, capped. `attemptNumber` is the
+ * delivery_attempt_count value AFTER the failure being scheduled (1-based:
+ * the first failure is attempt 1). Exported so a test can assert the exact
+ * schedule without duplicating the formula, and so a future caller computing
+ * an ETA for an operator dashboard has one source of truth for it.
+ */
+export function computeRetryBackoffMs(attemptNumber: number): number {
+  const attempt = Number.isFinite(attemptNumber) && attemptNumber > 0 ? Math.floor(attemptNumber) : 1;
+  const exponent = Math.min(attempt - 1, RETRY_BACKOFF_MAX_EXPONENT);
+  const delayMs = RETRY_BACKOFF_BASE_MS * Math.pow(2, exponent);
+  return Math.min(RETRY_BACKOFF_MAX_MS, delayMs);
+}
 
 /**
  * Hard ceiling on the serialized redacted summary. 8 KiB is generous for a
@@ -232,6 +281,11 @@ export interface OutboxEventRecord {
   deliveredAt: string | null;
   deliveryAttemptCount: number;
   lastDeliveryError: string | null;
+  /**
+   * §8 per-row retry schedule (RETRY_BACKOFF_*). `null` means "eligible
+   * immediately" — either never failed, or already delivered.
+   */
+  nextRetryAt: string | null;
   createdAt: string;
 }
 
@@ -259,6 +313,7 @@ interface OutboxEventRow {
   delivered_at: Date | string | null;
   delivery_attempt_count: number;
   last_delivery_error: string | null;
+  next_retry_at: Date | string | null;
   created_at: Date | string;
 }
 
@@ -346,6 +401,7 @@ function mapRow(row: OutboxEventRow): OutboxEventRecord {
     deliveredAt: normalizeTimestamp(row.delivered_at),
     deliveryAttemptCount: Number(row.delivery_attempt_count ?? 0),
     lastDeliveryError: row.last_delivery_error,
+    nextRetryAt: normalizeTimestamp(row.next_retry_at),
     createdAt: normalizeTimestamp(row.created_at) as string,
   };
 }
@@ -354,7 +410,7 @@ const SELECT_COLUMNS = `event_id, event_type, schema_version, organization_id, p
   aggregate_type, aggregate_id, aggregate_version, case_id, run_id, node_run_id, attempt_id,
   actor_user_id, correlation_id, causation_id, correlation_key, sequence_number, occurred_at,
   redacted_summary, payload_ref, delivered_at, delivery_attempt_count, last_delivery_error,
-  created_at`;
+  next_retry_at, created_at`;
 
 // ---------------------------------------------------------------------------
 // Redaction
@@ -555,6 +611,7 @@ export async function dispatchPendingEvents(
          FROM ${OUTBOX_TABLE}
         WHERE delivered_at IS NULL
           AND delivery_attempt_count < $1
+          AND (next_retry_at IS NULL OR next_retry_at <= now())
           AND ($2::text IS NULL OR organization_id = $2)
         ORDER BY sequence_number
         LIMIT $3
@@ -575,27 +632,35 @@ export async function dispatchPendingEvents(
         await deliverOne(event);
         await client.query(
           `UPDATE ${OUTBOX_TABLE}
-              SET delivered_at = now(), last_delivery_error = NULL
+              SET delivered_at = now(), last_delivery_error = NULL, next_retry_at = NULL
             WHERE event_id = $1`,
           [event.eventId]
         );
         result.delivered += 1;
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
-        // delivered_at stays NULL — that IS the retry. The row simply
-        // re-appears in the next claim until it succeeds or crosses
-        // DEAD_LETTER_ATTEMPT_THRESHOLD.
+        // delivered_at stays NULL — that IS the retry. The row re-appears in
+        // a later claim once next_retry_at elapses, until it succeeds or
+        // crosses DEAD_LETTER_ATTEMPT_THRESHOLD. attemptNumber is the
+        // delivery_attempt_count value AFTER this failure (row.
+        // delivery_attempt_count is the value BEFORE it, read by the claim
+        // SELECT above), so the backoff computed here matches the count this
+        // exact UPDATE is about to write.
+        const attemptNumber = Number(row.delivery_attempt_count ?? 0) + 1;
+        const backoffMs = computeRetryBackoffMs(attemptNumber);
         await client.query(
           `UPDATE ${OUTBOX_TABLE}
               SET delivery_attempt_count = delivery_attempt_count + 1,
-                  last_delivery_error = $2
+                  last_delivery_error = $2,
+                  next_retry_at = now() + ($3 || ' milliseconds')::interval
             WHERE event_id = $1`,
-          [event.eventId, message.slice(0, 2000)]
+          [event.eventId, message.slice(0, 2000), String(backoffMs)]
         );
         result.failed += 1;
         result.failedEventIds.push(event.eventId);
         logger.warn(
-          `[eventOutbox] delivery failed for ${event.eventId} (${event.eventType}): ${message}`
+          `[eventOutbox] delivery failed for ${event.eventId} (${event.eventType}), attempt ${attemptNumber}, ` +
+            `next retry in ${backoffMs}ms: ${message}`
         );
       }
     }

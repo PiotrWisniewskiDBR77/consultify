@@ -67,6 +67,7 @@
 import { readFileSync, writeFileSync, existsSync, statSync, readdirSync } from 'node:fs';
 import { join, relative, resolve, basename, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createHash } from 'node:crypto';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -243,6 +244,13 @@ function buildBasenameIndex() {
     } catch {
       return;
     }
+    // Sort for determinism: readdirSync order is filesystem-dependent and is
+    // NOT guaranteed stable run-to-run (e.g. on some filesystems/OSes). Since
+    // classifyCandidate() picks matches[0] for a bare-filename lookup, an
+    // unsorted walk could silently pick a different resolvedPath between two
+    // runs over identical inputs. Sorting by name makes the walk order (and
+    // therefore matches[0]) reproducible.
+    entries = entries.slice().sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
     for (const entry of entries) {
       if (EXCLUDED_DIRS.has(entry.name)) continue;
       const full = join(dir, entry.name);
@@ -642,8 +650,24 @@ function fmtDist(dist) {
   return entries.map(([k, v]) => `${k}: **${v}**`).join(', ');
 }
 
-function nowIso() {
-  return new Date().toISOString();
+// Deterministic content fingerprint of the input CSVs, used in place of a
+// wall-clock timestamp. Requirement (owner): two consecutive runs over
+// UNCHANGED inputs must produce BYTE-IDENTICAL output. A `new Date()`
+// timestamp violates that on every run regardless of whether any input
+// changed, which also dirties the worktree for no reason. This hash changes
+// if and only if the bytes of the input files change, so the snapshot is
+// reproducible for as long as the ledgers themselves are unchanged, and the
+// line still gives a cheap "did anything change" signal across commits.
+function inputFingerprint(files) {
+  const hash = createHash('sha256');
+  for (const path of files) {
+    // files are already filename-sorted by listCsvFiles()
+    hash.update(basename(path));
+    hash.update('\0');
+    hash.update(readFileSync(path));
+    hash.update('\0');
+  }
+  return hash.digest('hex');
 }
 
 const lines = [];
@@ -651,7 +675,9 @@ lines.push('# LEDGER_SNAPSHOT — parser rejestrow Case Workspace');
 lines.push('');
 lines.push('> Wygenerowane automatycznie przez `scripts/case-workspace/ledger-report.mjs`.');
 lines.push('> NIE edytowac recznie — kazdy przebieg nadpisuje ten plik od zera.');
-lines.push(`> Wygenerowano: ${nowIso()}`);
+lines.push(`> Odcisk tresci wejsciowej (sha256 nazw+bajtow wszystkich *.csv, sortowane): \`${inputFingerprint(csvFiles)}\``);
+lines.push('> Ten odcisk (nie znacznik czasu) dowodzi determinizmu: dwa przebiegi na tych samych');
+lines.push('> plikach wejsciowych daja identyczny odcisk i bajtowo identyczny plik wyjsciowy.');
 lines.push('');
 lines.push('## Jak uruchomic');
 lines.push('');
@@ -880,6 +906,12 @@ lines.push('- Ten plik i skrypt, ktory go generuje, NIE modyfikuja zadnego pliku
 lines.push('  do innych agentow rownoleglej pracy.');
 lines.push('');
 
+// Strip trailing empty entries so the file ends with exactly one newline
+// (no blank line at EOF) — `lines.push('')` used liberally above as a
+// paragraph separator would otherwise leave a trailing blank line, which is
+// both a whitespace-lint violation and another source of run-to-run diffs
+// in tooling that treats trailing whitespace/newlines specially.
+while (lines.length && lines[lines.length - 1] === '') lines.pop();
 writeFileSync(OUT_PATH, lines.join('\n') + '\n', 'utf8');
 
 // ---------------------------------------------------------------------------

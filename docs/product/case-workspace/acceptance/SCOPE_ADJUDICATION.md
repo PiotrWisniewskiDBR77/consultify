@@ -569,3 +569,114 @@ onto `TRACEABILITY_AUTH_ROUTES.csv` as a schema fix.
 - It does not stamp a `candidate_sha` anywhere — this worktree still has no
   commit, so §5's constraint still applies verbatim.
 
+### 8.6 Packet C5 (ledger hygiene / generator) — 2026-08-12
+
+Scope: `scripts/case-workspace/ledger-report.mjs` generator determinism, two
+whitespace-lint violations, and the highest-severity item named in §8.4(b) —
+the 6 `IMPLEMENTED_AND_PROVEN` rows sitting on an `UNCOMMITTED-WORKTREE`
+sentinel. This pass touched **only** the allowlisted files
+(`docs/product/case-workspace/acceptance/*.csv`,
+`LEDGER_SNAPSHOT.md`, this file, and the generator script itself); no
+product code and no test file was modified.
+
+**Generator non-determinism (fixed).** The generator stamped
+`new Date().toISOString()` into `LEDGER_SNAPSHOT.md` on every run, so two
+runs over byte-identical CSV inputs never matched and the worktree was
+dirtied on every invocation. Replaced with a sha256 fingerprint of the
+sorted input CSVs' names+bytes (changes if and only if an input file
+changes). Also hardened `buildBasenameIndex()`'s directory walk with an
+explicit sort (readdirSync order is filesystem-dependent, not guaranteed
+stable run-to-run, and could have silently changed which file a bare
+`test_ref` basename resolved to). Proof: two consecutive runs over the
+current CSVs, `cmp`'d and `sha256sum`'d byte-for-byte identical —
+`63b46193513df3298eb32adaf6e4293bb2bb67a4ea9e6cec57916b0e7c37e7eb` both
+times (see the worker's session transcript for the raw `cmp`/`shasum`
+output; not reproduced here since exact bytes will differ on the next CSV
+edit).
+
+**Trailing-blank-line-at-EOF (fixed).** `git diff --check` flagged
+`LEDGER_SNAPSHOT.md:339` and this file's own `:571` for a blank line at
+EOF. `LEDGER_SNAPSHOT.md`'s came from the generator itself (`lines.push('')`
+as the last element before `join('\n') + '\n'` doubles the trailing
+newline) — fixed in the generator (strip trailing empty entries before
+writing), not by hand-patching the output. This file's was a manual
+save artifact — trimmed directly.
+
+**The 6 `IMPLEMENTED_AND_PROVEN` + `UNCOMMITTED-WORKTREE` rows named in
+§8.4(b) (fixed via append-only superseding rows, not in-place edits).**
+For each of `CW-DOD-F5-U4`, `CW-DOD-F1-U4`, `CW-CANON-01-U4`
+(`EPIC_DOD_COVERAGE.csv`), `CW-GC-F-04-U1` (`GOLDEN_CASE_EVIDENCE_LEDGER.csv`),
+and `SEC-009-U1`, `CW-DOD-D6-U1` (`SECURITY_RESILIENCE_MATRIX.csv`): this
+actor personally re-ran, fresh, **every** test file each row's `test_ref`
+cites — `caseIntakeService.pg.test.ts` (6/6), the contract
+`idempotencyAndPagination.contract.pg.test.ts` (7/7),
+`newSurface.security.pg.test.ts` (13/13), `playService.pg.test.ts` (14/14),
+`caseCoreService.security.pg.test.ts` (10/10),
+`artifactLinkService.security.pg.test.ts` (11/11), and
+`planVersionEnumeration.security.pg.test.ts` — first attempt: 2/13 timed
+out at the default 30s under concurrent-worktree DB load from other agents
+sharing this Postgres instance; re-run at `--testTimeout=60000` (no other
+change): 13/13 passed, so this is recorded as shared-DB contention, not a
+regression, consistent with this program's known "concurrent worktree
+produces phantom failures" pattern (see `orkiestracja-jeden-worktree-jeden-agent`
+lesson). All cited command-line invocations matched the "HOW TO RUN TESTS"
+harness in the packet brief
+(`DB_TYPE=postgres LC_ALL=C NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false
+POSTGRES_SKIP_INIT_IN_TEST=1 DATABASE_URL=postgresql://case_workspace:case_workspace@127.0.0.1:55432/case_workspace_test`).
+Every cited test file passed. Appended one superseding row per original
+(`-U5`/`-U2` suffix per file's existing chain numbering,
+`supersedes_row_id` pointing at the row it replaces), **status carried
+forward unchanged** at `IMPLEMENTED_AND_PROVEN` (re-verified, not
+re-asserted), `candidate_sha` set to the literal placeholder
+`PENDING-CANDIDATE-SHA` (not a real commit — this worktree still has none;
+the coordinator stamps the real `CANDIDATE_SHA` at freeze time, per the
+packet brief, not this actor), and `evidence_ref` extended with a dated
+note recording exactly what was re-run and its result. **No original row
+was edited or deleted** — the six `-U4`/`-U1` rows are untouched in place
+and are simply no longer the effective (non-superseded) row for their id.
+Net effect on GAP: **zero** — these were already `IMPLEMENTED_AND_PROVEN`
+and remain `IMPLEMENTED_AND_PROVEN`; effective row count is unchanged
+(1682) because each new row supersedes exactly one old row.
+
+**The remaining 65 `UNCOMMITTED-WORKTREE` rows — deliberately left
+untouched.** Per the generator's own header comment, the sentinel is
+"allowed as a working format during shared, uncommitted work" — the
+integrity problem §8.4(b) identifies is specific to a row being read as
+*durable* proof (`IMPLEMENTED_AND_PROVEN`/`PASS`) while resting on a
+non-commit marker. The other 65 are `PARTIAL`/`NOT_IMPLEMENTED`/
+`EVIDENCE_MISSING` — none of them assert durable proof, so the sentinel is
+not misrepresenting anything on those rows today. This packet's brief named
+the `UNCOMMITTED-WORKTREE` cleanup as its Task 3 without narrowing to the
+proven subset; this actor narrowed it deliberately per the reasoning above
+and is flagging that interpretation here explicitly so the coordinator can
+override it if the intent was literally all 71.
+
+**§8.4(c) (18 rows, corpus-SHA misuse on `IMPLEMENTED_AND_PROVEN`) and
+§8.4(d) (113 `IMPLEMENTED_AND_PROVEN` rows with no `candidate_sha` column)
+— partially addressed.** (c) was **not** touched this pass (would require
+re-verifying 18 more rows' underlying evidence the same way as the six
+above; out of this packet's time budget — left open, still exactly as
+§8.4(c) describes it). (d) **was** addressed structurally: added a
+`candidate_sha` column to `TRACEABILITY_AUTH_ROUTES.csv` (which never had
+one — schema gap, not a per-row omission), inserted between its existing
+`evidence_ref` and `status` columns, populated `PENDING-CANDIDATE-SHA` for
+all 177 rows (113 `IMPLEMENTED_AND_PROVEN`, 33 `PARTIAL`, 31
+`NOT_IMPLEMENTED`) since this file has no `supersedes_row_id`/versioning
+mechanism to append a superseding row through. **No existing cell in that
+file — `status`, `test_ref`, `evidence_ref`, or otherwise — was changed**;
+`git diff` on the file shows exactly one new column inserted per row and
+nothing else. This closes §8.4(d)'s "structurally impossible to bind
+evidence to a commit" gap for the next pass that stamps real SHAs; it does
+not itself supply any real SHA.
+
+**Numbers re-measured, not repeated.** Ran
+`node scripts/case-workspace/ledger-report.mjs` before and after every
+change above. Final effective-row distribution: `NOT_IMPLEMENTED`=1273,
+`PARTIAL`=201, `IMPLEMENTED_AND_PROVEN`=187, `EVIDENCE_MISSING`=16,
+`OUT_OF_SCOPE_THIS_WAVE`=5 (sum 1682) — identical to what a prior session
+reported, now independently re-derived rather than repeated on trust.
+`git diff --check` (working tree) is clean (exit 0) after all edits above;
+the historical range `git diff --check 9d17cac114..HEAD` still reports the
+original two violations because that range diffs committed history and
+this actor made no commit (explicitly out of scope) — it will read clean
+once the coordinator commits this pass's fix on top of `HEAD`.

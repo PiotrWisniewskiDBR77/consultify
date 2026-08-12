@@ -29,18 +29,23 @@
  *      comment). Section 2 makes the audit executable instead of tribal
  *      knowledge, so a future field addition that reintroduces a collision
  *      turns this test red immediately.
- *   3. `eventInboxService.recordInboxProcessingFailure` has ZERO test coverage
- *      of its OWN retry/dead-letter transition logic anywhere in the repo —
- *      appendOnlyGuards.pg.test.ts exercises the raw SQL UPDATE *shape* the
- *      function issues, never the function itself, and grepping
- *      `server/src` finds no production caller at all (see this packet's own
- *      report: `receiveExternalEvent` always leaves a row at a TERMINAL
- *      status — APPLIED or REJECTED — inside the SAME transaction that
- *      inserted it, or rolls the INSERT back entirely on an uncaught
- *      exception, so no row it writes is ever durably left at RECEIVED for a
- *      later transient-failure handler to find). Section 3 proves the
- *      primitive itself is correct so that whichever future caller wires it
- *      in inherits a proven implementation, not an unexercised one.
+ *   3. `eventInboxService.recordInboxProcessingFailure` HAD zero test coverage
+ *      of its OWN retry/dead-letter transition logic anywhere in the repo, AND
+ *      zero production caller — grepping `server/src` found none, because
+ *      `receiveExternalEvent` always leaves a row at a TERMINAL status
+ *      (APPLIED or REJECTED) inside the SAME transaction that inserted it, or
+ *      rolls the INSERT back entirely on an uncaught exception, so no row it
+ *      writes is ever durably left at RECEIVED for a later transient-failure
+ *      handler to find. Section 3 proves the primitive itself is correct in
+ *      isolation. Section 3b (added by the D3 packet) closes the "zero
+ *      caller" half: `eventInboxService.runInboxReconciliationSweep()` — a
+ *      REAL caller, wired into `outboxWorker.ts`'s periodic reconciliation
+ *      cadence right alongside the pre-existing outbox dead-letter sweep —
+ *      detects a row that violates the "always terminal, never durably
+ *      RECEIVED" invariant above and calls `recordInboxProcessingFailure` on
+ *      it for real, proved end-to-end including a fault-injection run that
+ *      drives a manufactured stuck row all the way to DEAD_LETTER through
+ *      repeated sweeps.
  *   4. A tampered-replay attack: an attacker who observed a genuine signed
  *      delivery mutates the payload and resends it under the SAME eventId.
  *      Existing tests cover "duplicate delivery" (identical payload) and
@@ -442,9 +447,13 @@ suite('Stream E resilience gate — dual-write control, redaction audit, dead-le
 
   // ===========================================================================
   // SECTION 3 — recordInboxProcessingFailure: the unit-level proof the
-  // primitive is correct, since NOTHING in server/src calls it today.
+  // primitive is correct. See Section 3b below for the REAL production
+  // caller (runInboxReconciliationSweep, wired into outboxWorker.ts's
+  // periodic cadence) — this section is retained as-is because it still
+  // proves the primitive's OWN transition logic in isolation, which 3b does
+  // not re-prove.
   // ===========================================================================
-  describe('3. recordInboxProcessingFailure — retry + dead-letter transition (currently uncalled in production)', () => {
+  describe('3. recordInboxProcessingFailure — retry + dead-letter transition (unit-level proof of the primitive)', () => {
     async function insertReceivedInboxRow(suffix: string, orgId: string): Promise<string> {
       const inboxRecordId = `cwinbox-res-${suffix}`;
       await control.query(
@@ -556,6 +565,191 @@ suite('Stream E resilience gate — dual-write control, redaction audit, dead-le
         const row = await eventInboxService.getInboxRecord(inboxRecordId);
         expect(row?.status).toBe('REJECTED');
         expect(row?.processAttemptCount).toBe(0);
+      } finally {
+        await teardown(orgId);
+      }
+    });
+  });
+
+  // ===========================================================================
+  // SECTION 3b (D3 packet) — runInboxReconciliationSweep: the REAL production
+  // caller of recordInboxProcessingFailure, and the fault-injection proof that
+  // wiring is real, not merely present in the source file.
+  //
+  // WHY A "STUCK RECEIVED ROW" HAS TO BE MANUFACTURED, NOT PRODUCED
+  // -----------------------------------------------------------------------
+  // eventInboxService.runInboxReconciliationSweep()'s own header proves
+  // receiveExternalEvent() is atomic (one withPgTransaction, rolled back
+  // whole on any failure), so under NORMAL operation NO row is EVER durably
+  // observable at status='RECEIVED' — the sweep's whole reason to exist is to
+  // detect the invariant being violated, which by construction cannot happen
+  // through the real ingress path. This section manufactures the violation
+  // directly via raw SQL (the same technique Section 3 above already uses),
+  // which is the ONLY way to exercise this code at all — precisely mirroring
+  // how a real stuck row could arise (a future two-phase caller with a bug,
+  // an operator backfill, a compromised credential), not a synthetic
+  // shortcut around a real scenario.
+  // ===========================================================================
+  describe('3b. runInboxReconciliationSweep — the real wired caller of recordInboxProcessingFailure', () => {
+    async function insertReceivedInboxRowWithAge(
+      suffix: string,
+      orgId: string,
+      ageMs: number
+    ): Promise<string> {
+      const inboxRecordId = `cwinbox-sweep-${suffix}`;
+      await control.query(
+        `INSERT INTO case_workspace_event_inbox
+           (inbox_record_id, event_id, source, event_type, organization_id, correlation_key, payload_digest, received_at)
+         VALUES ($1, $2, 'cwres-sweep-webhook', 'signature.completed', $3, $4, 'sha256:cwressweep', now() - ($5 || ' milliseconds')::interval)`,
+        [inboxRecordId, `ext-evt-sweep-${suffix}`, orgId, `corrkey-sweep-${suffix}`, String(ageMs)]
+      );
+      return inboxRecordId;
+    }
+
+    async function teardown(orgId: string): Promise<void> {
+      await control
+        .query(`DELETE FROM case_workspace_event_inbox WHERE organization_id = $1`, [orgId])
+        .catch(() => undefined);
+      await control
+        .query(`DELETE FROM case_workspace_event_outbox WHERE organization_id = $1`, [orgId])
+        .catch(() => undefined);
+    }
+
+    it('ignores a RECEIVED row younger than staleAfterMs — a merely-in-flight row must never be touched', async () => {
+      const suffix = randomUUID();
+      const orgId = `cwres-sweep-org-${suffix}`;
+      try {
+        const inboxRecordId = await insertReceivedInboxRowWithAge(suffix, orgId, 1_000); // 1s old
+
+        const sweep = await eventInboxService.runInboxReconciliationSweep({
+          organizationId: orgId,
+          staleAfterMs: 5 * 60 * 1000,
+        });
+
+        expect(sweep).toEqual({ staleCount: 0, sample: [] });
+        const row = await eventInboxService.getInboxRecord(inboxRecordId);
+        expect(row?.status).toBe('RECEIVED');
+        expect(row?.processAttemptCount).toBe(0);
+      } finally {
+        await teardown(orgId);
+      }
+    });
+
+    it('finds a row manufactured stuck at RECEIVED past staleAfterMs, calls the REAL recordInboxProcessingFailure through the sweep (not a direct unit call), and reports it in the sample', async () => {
+      const suffix = randomUUID();
+      const orgId = `cwres-sweep-org-${suffix}`;
+      try {
+        const staleInboxRecordId = await insertReceivedInboxRowWithAge(suffix, orgId, 10 * 60 * 1000); // 10 min old
+        const freshSuffix = `${suffix}-fresh`;
+        const freshInboxRecordId = await insertReceivedInboxRowWithAge(freshSuffix, orgId, 1_000); // 1s old — control
+
+        const sweep = await eventInboxService.runInboxReconciliationSweep({
+          organizationId: orgId,
+          staleAfterMs: 5 * 60 * 1000,
+        });
+
+        expect(sweep.staleCount).toBe(1);
+        expect(sweep.sample).toEqual([
+          expect.objectContaining({
+            inboxRecordId: staleInboxRecordId,
+            source: 'cwres-sweep-webhook',
+            eventType: 'signature.completed',
+            organizationId: orgId,
+          }),
+        ]);
+        expect(sweep.sample[0]!.ageMs).toBeGreaterThanOrEqual(10 * 60 * 1000 - 2_000);
+
+        // THE DECISIVE PROOF: the stale row was actually processed by
+        // recordInboxProcessingFailure (process_attempt_count incremented,
+        // last_process_error set to the sweep's own diagnostic message) —
+        // reached through runInboxReconciliationSweep, never called directly
+        // in this test.
+        const processedRow = await eventInboxService.getInboxRecord(staleInboxRecordId);
+        expect(processedRow?.status).toBe('RECEIVED'); // one attempt, below INBOX_DEAD_LETTER_ATTEMPT_THRESHOLD
+        expect(processedRow?.processAttemptCount).toBe(1);
+        expect(processedRow?.lastProcessError).toContain('inbox_reconciliation_stale_received');
+
+        // The young control row is UNTOUCHED — the sweep is not a blunt
+        // "touch everything RECEIVED" operation.
+        const untouchedRow = await eventInboxService.getInboxRecord(freshInboxRecordId);
+        expect(untouchedRow?.status).toBe('RECEIVED');
+        expect(untouchedRow?.processAttemptCount).toBe(0);
+      } finally {
+        await teardown(orgId);
+      }
+    });
+
+    it('FAULT INJECTION: repeated sweeps drive a genuinely stuck row through retry to DEAD_LETTER, exactly like a real stuck-inbox incident would resolve — never silently stuck forever', async () => {
+      const suffix = randomUUID();
+      const orgId = `cwres-sweep-org-${suffix}`;
+      try {
+        const inboxRecordId = await insertReceivedInboxRowWithAge(
+          suffix,
+          orgId,
+          eventInboxService.RECEIVED_STALE_AFTER_MS + 60_000
+        );
+
+        let lastSweep: Awaited<ReturnType<typeof eventInboxService.runInboxReconciliationSweep>> | null = null;
+        for (let attempt = 1; attempt <= eventInboxService.INBOX_DEAD_LETTER_ATTEMPT_THRESHOLD; attempt += 1) {
+          lastSweep = await eventInboxService.runInboxReconciliationSweep({ organizationId: orgId });
+          const row = await eventInboxService.getInboxRecord(inboxRecordId);
+          if (attempt < eventInboxService.INBOX_DEAD_LETTER_ATTEMPT_THRESHOLD) {
+            // Still RECEIVED and therefore still "stale" by the sweep's own
+            // criteria (received_at does not move) — it keeps being found and
+            // retried on every sweep, exactly as an ops-facing reconciliation
+            // loop is supposed to behave.
+            expect(row?.status).toBe('RECEIVED');
+            expect(row?.processAttemptCount).toBe(attempt);
+            expect(lastSweep!.staleCount).toBe(1);
+          }
+        }
+
+        const finalRow = await eventInboxService.getInboxRecord(inboxRecordId);
+        expect(finalRow?.status).toBe('DEAD_LETTER');
+        expect(finalRow?.processAttemptCount).toBe(eventInboxService.INBOX_DEAD_LETTER_ATTEMPT_THRESHOLD);
+
+        // Dead-lettered => no longer "RECEIVED", so a further sweep finds
+        // nothing left to do for this row — it stops being reconciliation
+        // work and becomes a durably readable historical fact instead.
+        const sweepAfterDeadLetter = await eventInboxService.runInboxReconciliationSweep({
+          organizationId: orgId,
+        });
+        expect(sweepAfterDeadLetter).toEqual({ staleCount: 0, sample: [] });
+
+        // The dead-letter transition itself durably emitted the real event
+        // (recordInboxProcessingFailure's own behavior, reached here through
+        // the sweep, not a direct call).
+        const dlEvents = await control.query<{ n: string }>(
+          `SELECT count(*) AS n FROM case_workspace_event_outbox
+            WHERE organization_id = $1 AND event_type = 'inbox.event_dead_lettered'`,
+          [orgId]
+        );
+        expect(Number(dlEvents.rows[0]?.n)).toBe(1);
+      } finally {
+        await teardown(orgId);
+      }
+    }, 90_000); // 10 sequential sweeps, each a real DB round trip — generous budget under a loaded shared Postgres.
+
+    it('outboxWorker.runCaseWorkspaceInboxReconciliationSweep mirrors the sweep result onto getOutboxWorkerMetrics(), same as the outbox dead-letter sample', async () => {
+      const suffix = randomUUID();
+      const orgId = `cwres-sweep-org-${suffix}`;
+      try {
+        const inboxRecordId = await insertReceivedInboxRowWithAge(suffix, orgId, 10 * 60 * 1000);
+
+        expect(outboxWorker.getOutboxWorkerMetrics().lastInboxStaleSample).toEqual([]);
+
+        const sweep = await outboxWorker.runCaseWorkspaceInboxReconciliationSweep({
+          organizationId: orgId,
+          staleAfterMs: 5 * 60 * 1000,
+        });
+        expect(sweep.staleCount).toBe(1);
+
+        const metrics = outboxWorker.getOutboxWorkerMetrics();
+        expect(metrics.lastInboxStaleSample).toEqual(sweep.sample);
+        expect(metrics.lastInboxReconciliationAt).not.toBeNull();
+
+        const row = await eventInboxService.getInboxRecord(inboxRecordId);
+        expect(row?.processAttemptCount).toBe(1);
       } finally {
         await teardown(orgId);
       }
@@ -760,7 +954,7 @@ suite('Stream E resilience gate — dual-write control, redaction audit, dead-le
       } finally {
         await teardown(fixture);
       }
-    }, 30_000);
+    }, 60_000); // D3 packet: heavier fixture (Case+Plan+Run) observed timing out at 30s under a loaded shared Postgres — widened, no assertion changed.
   });
 
   // ===========================================================================
@@ -800,7 +994,20 @@ suite('Stream E resilience gate — dual-write control, redaction audit, dead-le
         try {
           // Drive the bad event to dead-letter; the good one delivers on the
           // very first tick and must never be reprocessed on later ticks.
+          // §8 PER-ROW backoff (server/migrations/
+          // 20260812a_case_workspace_outbox_next_retry_at.sql) means the bad
+          // event is not reclaimable on the very next tick anymore — fast-
+          // forward its next_retry_at between iterations, same "ops retry
+          // now" shape outboxWorker.pg.test.ts's own suite uses.
           for (let i = 0; i < eventOutboxService.DEAD_LETTER_ATTEMPT_THRESHOLD; i += 1) {
+            if (i > 0) {
+              await control.query(
+                `UPDATE case_workspace_event_outbox
+                    SET next_retry_at = now() - interval '1 second'
+                  WHERE organization_id = $1 AND delivered_at IS NULL`,
+                [orgId]
+              );
+            }
             await outboxWorker.runOutboxWorkerTick({ organizationId: orgId });
           }
 

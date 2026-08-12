@@ -73,6 +73,10 @@ import {
   listDeadLetterEvents,
   type DispatchPendingEventsResult,
 } from './eventOutboxService.js';
+import {
+  runInboxReconciliationSweep,
+  type InboxReconciliationSweepResult,
+} from './eventInboxService.js';
 
 // ---------------------------------------------------------------------------
 // Public types
@@ -189,6 +193,15 @@ export interface OutboxWorkerMetricsSnapshot {
   lastReconciliationAt: string | null;
   /** Most recent dead-letter reconciliation sample (bounded, event ids + attempt counts, no payload). */
   lastDeadLetterSample: DeadLetterSampleEntry[];
+  /**
+   * §8 inbox reconciliation — mirrors eventInboxService.runInboxReconciliationSweep()'s
+   * last result onto the same operator-facing snapshot as the outbox's own
+   * dead-letter sample. Non-zero here means the "receiveExternalEvent is
+   * atomic, so no row is ever durably RECEIVED" invariant was violated and a
+   * human needs to look — see that function's own header for why.
+   */
+  lastInboxReconciliationAt: string | null;
+  lastInboxStaleSample: InboxReconciliationSweepResult['sample'];
 }
 
 // ---------------------------------------------------------------------------
@@ -228,6 +241,8 @@ function freshMetrics(): OutboxWorkerMetricsSnapshot {
     tickDurationMsP95: null,
     lastReconciliationAt: null,
     lastDeadLetterSample: [],
+    lastInboxReconciliationAt: null,
+    lastInboxStaleSample: [],
   };
 }
 
@@ -471,6 +486,28 @@ export async function runOutboxReconciliationSweep(
   return { sampledCount: sample.length, sample };
 }
 
+/**
+ * §8 INBOX reconciliation, run on the same cadence as the outbox's own
+ * `runOutboxReconciliationSweep()` above. Thin wrapper: delegates to
+ * `eventInboxService.runInboxReconciliationSweep()` (the real detection +
+ * `recordInboxProcessingFailure()` logic — see that function's own header
+ * for why a stuck-RECEIVED row can only mean the atomicity invariant was
+ * violated) and mirrors the result onto `getOutboxWorkerMetrics()` so an
+ * operator reads ONE snapshot for both halves of the event spine. Safe to
+ * call directly (this packet's own tests do); the interval loop below also
+ * calls it periodically, right alongside the outbox sweep.
+ */
+export async function runCaseWorkspaceInboxReconciliationSweep(
+  options: { organizationId?: string; staleAfterMs?: number; sampleLimit?: number } = {}
+): Promise<InboxReconciliationSweepResult> {
+  const result = await runInboxReconciliationSweep(options);
+
+  metrics.lastInboxReconciliationAt = new Date().toISOString();
+  metrics.lastInboxStaleSample = result.sample;
+
+  return result;
+}
+
 // ---------------------------------------------------------------------------
 // startCaseWorkspaceOutboxWorker / stopCaseWorkspaceOutboxWorker — the
 // interval loop. See the header for the production call site.
@@ -553,6 +590,18 @@ export function startCaseWorkspaceOutboxWorker(options: OutboxWorkerOptions = {}
               (error: unknown) => {
                 logger.warn(
                   `[CaseWorkspaceOutboxWorker] reconciliation sweep failed (non-fatal): ${
+                    error instanceof Error ? error.message : String(error)
+                  }`
+                );
+              }
+            );
+            // Same cadence, the inbox half of the event spine (§8 "Failed
+            // outbox/inbox delivery has retry, dead-letter and
+            // reconciliation" — the inbox clause, not just the outbox one).
+            runCaseWorkspaceInboxReconciliationSweep({ organizationId: options.organizationId }).catch(
+              (error: unknown) => {
+                logger.warn(
+                  `[CaseWorkspaceOutboxWorker] inbox reconciliation sweep failed (non-fatal): ${
                     error instanceof Error ? error.message : String(error)
                   }`
                 );

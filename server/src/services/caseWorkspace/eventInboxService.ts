@@ -761,6 +761,13 @@ export async function receiveExternalEvent(
  * Crossing INBOX_DEAD_LETTER_ATTEMPT_THRESHOLD flips the row to DEAD_LETTER,
  * which removes it from listPendingInboxRecords() while leaving it fully
  * readable for reconciliation. Nothing is ever deleted here.
+ *
+ * PRODUCTION CALLER: `runInboxReconciliationSweep()` (below), wired into
+ * `outboxWorker.ts`'s periodic reconciliation cadence — see that function's
+ * own header for why "a row stuck at RECEIVED" can only ever legitimately
+ * happen as an invariant violation (receiveExternalEvent's own transaction
+ * is atomic) and why the sweep, not a direct call from the trust-boundary
+ * request path, is this function's correct real caller.
  */
 export async function recordInboxProcessingFailure(
   inboxRecordId: string,
@@ -809,6 +816,155 @@ export async function recordInboxProcessingFailure(
     }
     return mapRow(row);
   });
+}
+
+// ---------------------------------------------------------------------------
+// Reconciliation sweep — the REAL production caller of
+// recordInboxProcessingFailure (D3 packet finding, see below)
+// ---------------------------------------------------------------------------
+
+/**
+ * §8 "reconciliation" for the inbox — the mirror of outboxWorker.ts's
+ * `runOutboxReconciliationSweep()`, and the function that turns
+ * `recordInboxProcessingFailure` from a proven-but-uncalled primitive into a
+ * wired one.
+ *
+ * ===========================================================================
+ * WHY THIS IS THE RIGHT CALLER, GIVEN receiveExternalEvent() IS ATOMIC
+ * ===========================================================================
+ * `receiveExternalEvent()` (this file, above) runs GATE 2 (dedup INSERT)
+ * through GATE 4 (apply) inside ONE `withPgTransaction()` call. Postgres
+ * transactions are all-or-nothing: if anything after the INSERT throws, the
+ * INSERT is rolled back too (queryHelpers.ts's `withPgTransaction` always
+ * issues ROLLBACK on a caught error), so under NORMAL operation a row is
+ * NEVER durably observable at status 'RECEIVED' — by the time any OTHER
+ * transaction can see it, it has already committed to APPLIED or REJECTED
+ * (or never committed at all). That is why grepping `server/src` for a
+ * production caller of `recordInboxProcessingFailure` before this packet
+ * found none: nothing could ever legitimately reach it.
+ *
+ * That atomicity is a genuine invariant, not a gap — see
+ * `__tests__/integration/resilience.pg.test.ts` Section 1 for the same
+ * property proved on the outbox side (a two-transaction implementation IS
+ * detectably wrong; the one-transaction implementation IS detectably right).
+ * Re-architecting `receiveExternalEvent()` into a "commit RECEIVED first,
+ * apply later" two-phase design (the shape that WOULD leave rows for a retry
+ * WORKER to find) would reopen exactly the dual-write hole that design
+ * avoids, AND would break the existing dedup-early-return contract (a
+ * redelivery of a still-RECEIVED row would either be silently swallowed as
+ * "duplicate" without ever completing GATE 4, or would need a second,
+ * narrower re-architecture of the conflict branch — both out of proportion
+ * to this packet's own scope).
+ *
+ * The invariant "no row is ever durably RECEIVED" is exactly the kind of
+ * claim that SHOULD be checked in production, not merely asserted in a
+ * comment — a future code change, a manual `INSERT ... status='RECEIVED'`
+ * (an operator backfill, a migration, a compromised credential), or a bug in
+ * a future two-phase caller could all violate it silently. This sweep is
+ * that check: it looks for rows that HAVE, in fact, been left at RECEIVED
+ * for longer than any legitimate in-transaction window could ever take
+ * (`staleAfterMs`, default `RECEIVED_STALE_AFTER_MS` — minutes, not the
+ * milliseconds a real transaction takes), and for every one it finds, calls
+ * `recordInboxProcessingFailure()` — a REAL call site, reachable exactly
+ * when (and only when) the invariant above is ever actually violated. Under
+ * normal operation this returns `{ staleCount: 0, sample: [] }` forever; the
+ * fault-injection test in `resilience.pg.test.ts` proves the non-zero path
+ * by manufacturing the violation directly (the same technique
+ * `recordInboxProcessingFailure`'s own pre-existing unit tests already use),
+ * exactly like a real stuck-RECEIVED row would look from this function's
+ * point of view.
+ *
+ * Wired into the periodic cadence in outboxWorker.ts's interval loop
+ * (`OutboxWorkerOptions.reconciliationEveryNTicks`), alongside the existing
+ * `runOutboxReconciliationSweep()` — so the SAME production-boot-wired timer
+ * (`startCaseWorkspaceOutboxWorker()`, confirmed called from
+ * `server/src/index.ts`) is what actually invokes this in a running system,
+ * not merely a function nothing calls.
+ */
+export const RECEIVED_STALE_AFTER_MS = 5 * 60 * 1000;
+
+export interface InboxStaleSampleEntry {
+  inboxRecordId: string;
+  source: string;
+  eventType: string;
+  organizationId: string;
+  receivedAt: string;
+  ageMs: number;
+}
+
+export interface InboxReconciliationSweepResult {
+  /** Rows found stuck at RECEIVED past the staleness threshold and processed. */
+  staleCount: number;
+  /** Bounded sample (inbox id/source/type/org/age), for an operator dashboard. */
+  sample: InboxStaleSampleEntry[];
+}
+
+/**
+ * Finds `case_workspace_event_inbox` rows still at status='RECEIVED' whose
+ * `received_at` is older than `staleAfterMs` (default `RECEIVED_STALE_AFTER_MS`)
+ * — a duration no legitimate in-flight `receiveExternalEvent()` transaction
+ * could ever actually span — and calls `recordInboxProcessingFailure()` on
+ * each one, which bumps `process_attempt_count`/`last_process_error` and
+ * flips it to DEAD_LETTER once `INBOX_DEAD_LETTER_ATTEMPT_THRESHOLD` is
+ * crossed (durably emitting `inbox.event_dead_lettered`, same as any other
+ * caller of that function). Read-then-act, not a single UPDATE, because each
+ * stale row needs its OWN `recordInboxProcessingFailure()` transaction and
+ * its own attempt-count bookkeeping — sweeping is not itself the retry.
+ */
+export async function runInboxReconciliationSweep(
+  options: { organizationId?: string; staleAfterMs?: number; sampleLimit?: number } = {}
+): Promise<InboxReconciliationSweepResult> {
+  const organizationId = optionalTrimmed(options.organizationId);
+  const staleAfterMs =
+    Number.isFinite(options.staleAfterMs) && (options.staleAfterMs as number) > 0
+      ? (options.staleAfterMs as number)
+      : RECEIVED_STALE_AFTER_MS;
+  const sampleLimit =
+    Number.isInteger(options.sampleLimit) && (options.sampleLimit as number) > 0
+      ? (options.sampleLimit as number)
+      : 50;
+
+  const staleRows = await queryAll<InboxRow & { age_ms: string | number }>(
+    `SELECT ${SELECT_COLUMNS}, EXTRACT(EPOCH FROM (now() - received_at)) * 1000 AS age_ms
+       FROM ${INBOX_TABLE}
+      WHERE status = 'RECEIVED'
+        AND received_at < now() - (? || ' milliseconds')::interval
+        AND (?::text IS NULL OR organization_id = ?)
+      ORDER BY received_at ASC
+      LIMIT ?`,
+    [String(staleAfterMs), organizationId, organizationId, sampleLimit]
+  );
+
+  const sample: InboxStaleSampleEntry[] = [];
+  for (const row of staleRows) {
+    await recordInboxProcessingFailure(
+      row.inbox_record_id,
+      new Error(
+        `inbox_reconciliation_stale_received: row was still RECEIVED after ${Math.round(
+          Number(row.age_ms)
+        )}ms (threshold ${staleAfterMs}ms) — a legitimate receiveExternalEvent() transaction never takes ` +
+          'this long, so this row violates the "no row is ever durably RECEIVED" invariant and needs human review.'
+      )
+    );
+    sample.push({
+      inboxRecordId: row.inbox_record_id,
+      source: row.source,
+      eventType: row.event_type,
+      organizationId: row.organization_id,
+      receivedAt: normalizeTimestamp(row.received_at) as string,
+      ageMs: Math.round(Number(row.age_ms)),
+    });
+  }
+
+  if (sample.length > 0) {
+    logger.warn(
+      `[eventInbox] reconciliation sweep found ${sample.length} row(s) stuck at RECEIVED past ` +
+        `${staleAfterMs}ms — the "receiveExternalEvent is atomic" invariant was violated. First: ` +
+        `${sample[0]!.inboxRecordId} (${sample[0]!.source}/${sample[0]!.eventType}, age=${sample[0]!.ageMs}ms)`
+    );
+  }
+
+  return { staleCount: sample.length, sample };
 }
 
 // ---------------------------------------------------------------------------

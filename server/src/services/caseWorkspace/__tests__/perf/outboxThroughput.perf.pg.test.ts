@@ -106,6 +106,62 @@
  * report as a genuine, previously-undocumented finding, not fixed here
  * (`eventOutboxService.ts` and `server/migrations/**` are both outside this
  * packet's allowlist).
+ *
+ * ===========================================================================
+ * DISCOVERED RUNNING THIS SUITE FOR REAL (D3 packet) — Section 1/3 CAN FAIL
+ * on `case_workspace_test` for a REAL, IDENTIFIED, ENVIRONMENTAL reason that
+ * is NOT a bug in dispatchPendingEvents()/getOutboxBacklog()/outboxWorker.ts
+ * ===========================================================================
+ * A real run against `DATABASE_URL=...case_workspace_test` failed Section 1's
+ * `expect(backlogBeforeDrain.pending).toBe(EVENT_COUNT)` at 9958/10000 (42
+ * short) immediately after seeding, before this suite's own drain loop ever
+ * ran a single tick; Section 3 (the heap/worker-path test) then timed out at
+ * its full 300s budget. ROOT CAUSE, confirmed directly, not guessed:
+ *
+ *   1. `ps aux` on the machine running this suite showed THREE separate
+ *      `tsx src/index.ts` processes from THIS SAME worktree. One of them
+ *      (PORT=3001, NODE_ENV=development — the session's own long-running dev
+ *      backend, explicitly "the coordinator owns it" in this packet's own
+ *      operating rules) had `DATABASE_URL=postgresql://...@127.0.0.1:55432/
+ *      case_workspace_test` — the EXACT SAME database this suite's own
+ *      DATABASE_URL points at.
+ *   2. `NODE_ENV=development` on that process means `startCaseWorkspaceOutboxWorker()`'s
+ *      own `NODE_ENV==='test'` skip-gate (outboxWorker.ts) does NOT apply —
+ *      the REAL production interval loop (5s default tick, no
+ *      `organizationId` filter — dispatches across EVERY tenant by design)
+ *      is running continuously against that database, for real, the whole
+ *      time this suite (or anyone else's) runs against it.
+ *   3. Direct proof, queried straight from Postgres well after the failed
+ *      run's test PROCESS had already exited (so this cannot be this
+ *      suite's own drain loop): the org this run seeded 10,000 rows into
+ *      showed `delivered=2042` rows — climbing over time, entirely from that
+ *      OTHER process's own ticks, on a table this suite's own `DELETE` can
+ *      never clean up (see the note above) so it just sat there being
+ *      drained by someone else indefinitely.
+ *
+ * This is category (c) from this packet's own brief — "a shared, loaded
+ * machine can absolutely distort a throughput measurement" — in its most
+ * literal form: not merely CPU/IO contention, but a REAL, correctly-behaving
+ * consumer of the exact table this suite treats as its own private volume
+ * fixture. Re-measuring against an EMPTY, otherwise-unused database on the
+ * SAME Postgres server (`case_workspace_perf_probe`, already present
+ * alongside `case_workspace_test`/`cw_freshmig` at the time of this note —
+ * schema pre-applied, zero active connections, zero attached workers) PASSED
+ * all 3 tests cleanly (3/3, ~466s wall clock, no assertion failures) with the
+ * exact same code, proving the dispatch/backlog/worker-path logic itself is
+ * correct and the failure was never a logic bug. The system's own `uptime`
+ * during this investigation additionally showed a load average in the
+ * HUNDREDS (a `load average` of 700+ on what is normally a low double-digit-
+ * core machine) — corroborating "~9 other agents on the same Postgres" as a
+ * real, machine-wide condition, not merely a one-off contention on this one
+ * table.
+ *
+ * DO NOT "fix" a future red run here by loosening `toBe(EVENT_COUNT)` or the
+ * Section 3 timeout — re-point `DATABASE_URL` at an idle database on the same
+ * server (or wait for the coordinator's dev backend on port 3001 / the other
+ * concurrent agents to quiet down) and re-measure instead. Nothing about this
+ * finding is fixable from within this packet's allowlist (the coordinator
+ * owns port 3001; this suite cannot and must not stop or redirect it).
  */
 
 import { randomUUID } from 'node:crypto';

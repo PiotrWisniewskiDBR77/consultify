@@ -1,0 +1,55 @@
+{
+  "visibility": {
+    "visibilityState": "visible",
+    "hidden": false,
+    "hasFocus": true
+  },
+  "urlAfterOpen": "http://127.0.0.1:4501/my-work?decisionId=c4-evid-decision-0001",
+  "urlAfterBack": "http://127.0.0.1:4501/zlecenia/case-94b37954-c4a1-4417-8eed-9edefd570f95?zakladka=rezultaty",
+  "focusTrace": [
+    {
+      "tMs": 6,
+      "tag": "BUTTON",
+      "label": "Otwórz obiekt: Decyzja",
+      "outlineStyle": "solid"
+    }
+  ],
+  "ssLog": [
+    {
+      "op": "set",
+      "k": "zlecenia.powrot",
+      "t": 1786523645001
+    },
+    {
+      "op": "set",
+      "k": "consultify-endpoint-backoff",
+      "t": 1786523647850
+    },
+    {
+      "op": "remove",
+      "k": "zlecenia.powrot",
+      "t": 1786523649521
+    }
+  ],
+  "buttonStillPresent": true,
+  "announcementAfterBack": "Wróciłeś do zlecenia — kursor stoi przy: Decyzja. Sekcja: rezultaty.",
+  "urlAfterRefresh": "http://127.0.0.1:4501/zlecenia/case-94b37954-c4a1-4417-8eed-9edefd570f95?zakladka=rezultaty&widok-planu=prosty",
+  "refreshedRows": [
+    {
+      "label": "Otwórz obiekt: Wskaźnik",
+      "disabled": true
+    },
+    {
+      "label": "Otwórz obiekt: Zadanie",
+      "disabled": true
+    },
+    {
+      "label": "Otwórz obiekt: Inicjatywa (przypięta rewizja jest starsza)",
+      "disabled": false
+    },
+    {
+      "label": "Otwórz obiekt: Decyzja",
+      "disabled": false
+    }
+  ]
+}

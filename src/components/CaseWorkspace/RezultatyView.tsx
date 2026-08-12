@@ -1409,10 +1409,14 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
               pills: [
                 {
                   label: resultAcceptanceLabel(selectedNodeResult.resultAcceptance),
-                  tone:
-                    resultAcceptanceTone(selectedNodeResult.resultAcceptance) === 'critical'
-                      ? 'danger'
-                      : resultAcceptanceTone(selectedNodeResult.resultAcceptance),
+                  /* `resultAcceptanceTone` może zwrócić 'critical' (REJECTED), a
+                     `MetaPill.tone` tego nie zna — czerwień/crimson w tym repo to
+                     WYŁĄCZNIE semantyka krytyczna (TRIADA_KANON), więc 'critical'
+                     mapujemy na 'danger' (ten sam czerwony token), nigdy na 'info'. */
+                  tone: (() => {
+                    const acceptanceTone = resultAcceptanceTone(selectedNodeResult.resultAcceptance);
+                    return acceptanceTone === 'critical' ? 'danger' : acceptanceTone;
+                  })(),
                 },
                 { label: nodeCompletionStateLabel(selectedNodeResult.nodeCompletionState), tone: 'neutral' },
               ],

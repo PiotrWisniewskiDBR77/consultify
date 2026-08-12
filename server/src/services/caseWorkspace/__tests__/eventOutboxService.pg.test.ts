@@ -400,6 +400,14 @@ suite('eventOutboxService — transactional event outbox against a real PostgreS
         )
       );
 
+      // Captured BEFORE the failing dispatch call so the timing assertion
+      // below is monotonic and immune to how slow/loaded the machine running
+      // this suite is — it only needs "scheduled after this instant", never
+      // "scheduled within N ms of some later read", which is what made an
+      // earlier version of this assertion flaky under a heavily loaded
+      // shared Postgres (observed: a >4s gap between publish and the
+      // failure being recorded, purely from host contention).
+      const beforeFailingPassMs = Date.now();
       const failingPass = await eventOutboxService.dispatchPendingEvents({
         organizationId: orgId,
       });
@@ -410,8 +418,50 @@ suite('eventOutboxService — transactional event outbox against a real PostgreS
       expect(afterFirstFailure?.delivered_at).toBeNull(); // still owed — THIS is the retry
       expect(Number(afterFirstFailure?.delivery_attempt_count)).toBe(1);
       expect(afterFirstFailure?.last_delivery_error).toContain('consumer_projection_unavailable');
+      // §8 PER-ROW backoff (server/migrations/
+      // 20260812a_case_workspace_outbox_next_retry_at.sql): the failure UPDATE
+      // now ALSO schedules next_retry_at, computeRetryBackoffMs(1) in the future
+      // relative to when the failure was actually recorded.
+      expect(afterFirstFailure?.next_retry_at).not.toBeNull();
+      const scheduledRetryMs = new Date(afterFirstFailure!.next_retry_at as unknown as string).getTime();
+      // Monotonic lower bound only: the row's own scheduling logic runs
+      // `now() + computeRetryBackoffMs(1)` no earlier than this call started.
+      expect(scheduledRetryMs).toBeGreaterThanOrEqual(beforeFailingPassMs + eventOutboxService.computeRetryBackoffMs(1));
 
-      // Still pending => re-claimed on the next pass, and the counter grows.
+      // THE DECISIVE BACKOFF ASSERTION: a row still inside its backoff window
+      // must NOT be reclaimed — before this migration/change, a failed row
+      // was reclaimable on the very next tick with no delay whatsoever,
+      // which is exactly the "backoff is per-tick, not per-row" gap this
+      // packet closes. Pinned an hour into the future via raw SQL (rather
+      // than relying on the real ~1s RETRY_BACKOFF_BASE_MS window and an
+      // "immediate" re-dispatch call) so this assertion is deterministic
+      // regardless of how slow/loaded the machine running this suite is —
+      // the scheduling-at-write-time behavior is already asserted just
+      // above via `scheduledRetryMs`; this half only needs to prove the
+      // CLAIM QUERY actually honors next_retry_at, which it does regardless
+      // of which future instant is stored there.
+      await control.query(
+        `UPDATE case_workspace_event_outbox SET next_retry_at = now() + interval '1 hour' WHERE event_id = $1`,
+        [failingEventId]
+      );
+      const withinBackoffRedispatch = await eventOutboxService.dispatchPendingEvents({
+        organizationId: orgId,
+      });
+      expect(withinBackoffRedispatch).toMatchObject({ claimed: 0, delivered: 0, failed: 0 });
+      const stillAtOneAttempt = await readOutboxRow(failingEventId);
+      expect(Number(stillAtOneAttempt?.delivery_attempt_count)).toBe(1);
+
+      // Fast-forward the backoff window directly in Postgres (no real sleep):
+      // next_retry_at is one of the four columns the append-only guard
+      // trigger (widened by this same migration) allows to change, from ANY
+      // connection — exactly what a human/ops "retry now" action would do.
+      await control.query(
+        `UPDATE case_workspace_event_outbox SET next_retry_at = now() - interval '1 second' WHERE event_id = $1`,
+        [failingEventId]
+      );
+
+      // NOW it is eligible again, and the counter grows on this SECOND real
+      // attempt.
       const secondFailingPass = await eventOutboxService.dispatchPendingEvents({
         organizationId: orgId,
       });
@@ -419,6 +469,15 @@ suite('eventOutboxService — transactional event outbox against a real PostgreS
       const afterSecondFailure = await readOutboxRow(failingEventId);
       expect(afterSecondFailure?.delivered_at).toBeNull();
       expect(Number(afterSecondFailure?.delivery_attempt_count)).toBe(2);
+      // The SECOND failure's backoff must be LONGER than the first
+      // (exponential growth) — computeRetryBackoffMs(2) > computeRetryBackoffMs(1).
+      expect(eventOutboxService.computeRetryBackoffMs(2)).toBeGreaterThan(
+        eventOutboxService.computeRetryBackoffMs(1)
+      );
+      const secondScheduledRetryMs = new Date(
+        afterSecondFailure!.next_retry_at as unknown as string
+      ).getTime();
+      expect(secondScheduledRetryMs).toBeGreaterThan(scheduledRetryMs);
 
       // --- consumer recovers ------------------------------------------------
       unsubscribeFailing();
@@ -426,6 +485,14 @@ suite('eventOutboxService — transactional event outbox against a real PostgreS
       eventOutboxService.subscribeToOutboxDelivery((event) => {
         recovered.push(event.eventId);
       });
+
+      // Fast-forward the second (longer) backoff window too — same "ops
+      // retry now" shape as above, otherwise this recovery pass would itself
+      // be correctly withheld by the still-future next_retry_at.
+      await control.query(
+        `UPDATE case_workspace_event_outbox SET next_retry_at = now() - interval '1 second' WHERE event_id = $1`,
+        [failingEventId]
+      );
 
       const recoveryPass = await eventOutboxService.dispatchPendingEvents({
         organizationId: orgId,
@@ -438,6 +505,12 @@ suite('eventOutboxService — transactional event outbox against a real PostgreS
       expect(finalRow?.last_delivery_error).toBeNull();
       // The attempt history is preserved — retries are auditable, not erased.
       expect(Number(finalRow?.delivery_attempt_count)).toBe(2);
+      // A delivered row's backoff schedule is cleared — it is no longer
+      // meaningful once delivered_at is set (the claim query's own
+      // `delivered_at IS NULL` guard already excludes it either way, but a
+      // stale future next_retry_at on a delivered row would be a confusing
+      // read for reconciliation/operator tooling).
+      expect(finalRow?.next_retry_at).toBeNull();
     } finally {
       await teardown([orgId], [caseId]);
     }
@@ -725,11 +798,25 @@ suite('eventOutboxService — transactional event outbox against a real PostgreS
       });
 
       for (let attempt = 0; attempt < eventOutboxService.DEAD_LETTER_ATTEMPT_THRESHOLD - 1; attempt += 1) {
+        // §8 PER-ROW backoff: bypass this row's own next_retry_at between
+        // iterations (same "ops retry now" shape used throughout this
+        // packet's tests) — a fresh row has none, so the FIRST iteration
+        // needs no fast-forward.
+        if (attempt > 0) {
+          await control.query(
+            `UPDATE case_workspace_event_outbox SET next_retry_at = now() - interval '1 second' WHERE event_id = $1`,
+            [eventId]
+          );
+        }
         await eventOutboxService.dispatchPendingEvents({ organizationId: orgId });
         expect(await eventOutboxService.countDeadLetterEvents({ organizationId: orgId })).toBe(0);
       }
 
       // The Nth failure crosses the threshold.
+      await control.query(
+        `UPDATE case_workspace_event_outbox SET next_retry_at = now() - interval '1 second' WHERE event_id = $1`,
+        [eventId]
+      );
       await eventOutboxService.dispatchPendingEvents({ organizationId: orgId });
       const count = await eventOutboxService.countDeadLetterEvents({ organizationId: orgId });
       expect(count).toBe(1);

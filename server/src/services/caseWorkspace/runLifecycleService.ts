@@ -171,11 +171,11 @@ import {
 } from '../../utils/queryHelpers.js';
 import * as caseCoreService from './caseCoreService.js';
 import * as casePlanVersionService from './casePlanVersionService.js';
-import type { CanonicalGraph } from './casePlanVersionService.js';
+import type { CanonicalGraph, GraphEdge, GraphNode } from './casePlanVersionService.js';
 import { requireCaseAccess } from './caseWorkspaceAuthContext.js';
 import { publishEvent, redact } from './eventOutboxService.js';
 import * as executionGraphService from './executionGraphService.js';
-import type { CaseGatewayEvaluation } from './executionGraphService.js';
+import type { CaseExecutionNodeType, CaseGatewayEvaluation, CaseGatewayJoinPolicy } from './executionGraphService.js';
 import * as lightOneClickService from './lightOneClickService.js';
 import * as nodeRunService from './nodeRunService.js';
 import type { NodeRun, NodeRunStatus } from './nodeRunService.js';
@@ -369,6 +369,90 @@ function optionalTrimmed(value: string | null | undefined): string | null {
   if (value === null || value === undefined) return null;
   const normalized = String(value).trim();
   return normalized ? normalized : null;
+}
+
+/**
+ * Deterministic, derived from (runId, nodeId) — same reasoning as
+ * `deterministicRunId` above: mints the SAME synthetic identity for a
+ * dead-path-skipped node's audit acceptance row on every `advanceRun` call,
+ * so repeated calls (this call re-processing the same gateway across passes,
+ * a later call re-seeding an already-SUCCEEDED gateway, or two concurrent
+ * callers) converge on ONE row — `executionGraphService.
+ * recordNodeResultAcceptance`'s own `ON CONFLICT (node_run_id) DO NOTHING` +
+ * digest-compare idempotent-replay path — rather than throwing or
+ * duplicating. Deliberately NOT a real `nodeRunService.createNodeRun` row:
+ * see `recordUnselectedBranchesSkipped` inside `advanceRun` for why a
+ * DECISION_GATEWAY's not-selected branch must never get an actual NodeRun.
+ */
+function deterministicSkippedNodeRunId(runId: string, nodeId: string): string {
+  const hex = createHash('sha256')
+    .update(`case-workspace:run-lifecycle:v1:skip:${runId}:${nodeId}`)
+    .digest('hex');
+  return `cwskip-${hex.slice(0, 32)}`;
+}
+
+/**
+ * §4.4/CW-GR-037 join semantics. Resolves a PARALLEL_JOIN node's own
+ * `joinPolicy`/`joinRequiredCount` off its GraphNode data — an invented
+ * field name/shape, same caveat executionGraphService.ts's own header
+ * already flags for `join_required_count`/`join_branch_total_count` (open
+ * question #4 there: "not a canon-confirmed schema"). Missing/unset
+ * `joinPolicy` defaults to `ALL` — the ONLY policy this file previously
+ * hardcoded — so a graph that never sets it behaves EXACTLY as before
+ * (backward-compatible, never a silent behavior change for existing plans).
+ * `N_OF_M`'s `N` is validated `1 <= N <= M` (`M` = this node's own incoming
+ * branch count, passed in by the caller) — out-of-range, non-integer, or
+ * missing throws `run_lifecycle_join_required_count_invalid` rather than
+ * silently clamping or guessing; an unrecognized policy string throws
+ * `run_lifecycle_join_policy_invalid`. Pure and side-effect-free so both
+ * `startRun` (fail fast, before any NodeRun is minted) and `advanceRun`
+ * (defense in depth, at the exact moment the join is evaluated) can call it.
+ */
+function resolveJoinPolicy(
+  node: GraphNode | undefined,
+  branchTotalCount: number
+): { policy: CaseGatewayJoinPolicy; requiredCount: number | null } {
+  const rawPolicy = node?.joinPolicy;
+  const policy = (rawPolicy === undefined || rawPolicy === null ? 'ALL' : rawPolicy) as CaseGatewayJoinPolicy;
+  if (policy !== 'ALL' && policy !== 'ANY' && policy !== 'N_OF_M') {
+    throw new Error('run_lifecycle_join_policy_invalid');
+  }
+  if (policy !== 'N_OF_M') return { policy, requiredCount: null };
+
+  const rawCount = node?.joinRequiredCount;
+  const requiredCount = typeof rawCount === 'number' ? rawCount : Number(rawCount);
+  if (!Number.isInteger(requiredCount) || requiredCount < 1 || requiredCount > branchTotalCount) {
+    throw new Error('run_lifecycle_join_required_count_invalid');
+  }
+  return { policy: 'N_OF_M', requiredCount };
+}
+
+/** Every SEQUENCE/CONDITIONAL edge whose target is `nodeId` — the same
+ *  control-edge filter `advanceRun`'s own nested `incomingControlEdges`
+ *  applies, exposed here (graph-parameterized, no closure) so `startRun`'s
+ *  pre-flight `validateJoinPolicies` can use it too. */
+function countControlEdgesInto(graph: CanonicalGraph, nodeId: string): number {
+  return (graph.edges ?? []).filter(
+    (e: GraphEdge) =>
+      e.targetNodeId === nodeId && (!e.edgeType || e.edgeType === 'SEQUENCE' || e.edgeType === 'CONDITIONAL')
+  ).length;
+}
+
+/**
+ * §5's "reject cleanly" requirement for an out-of-range N_OF_M, applied
+ * BEFORE a Run's first NodeRun is ever minted: walks every PARALLEL_JOIN
+ * node in the graph and resolves its join policy purely for the validation
+ * side effect (a bad configuration throws here), so `startRun` refuses a
+ * malformed plan outright rather than only discovering it mid-Run once the
+ * join is actually reached. `advanceRun` calls this again at the top of its
+ * own run (defense in depth against a graph that somehow bypassed startRun's
+ * check) before it writes anything.
+ */
+function validateJoinPolicies(graph: CanonicalGraph): void {
+  for (const node of graph.nodes ?? []) {
+    if (String(node.type ?? '') !== 'PARALLEL_JOIN') continue;
+    resolveJoinPolicy(node, countControlEdgesInto(graph, node.nodeId));
+  }
 }
 
 function mapRow(row: CaseWorkspaceRunRow): Run {
@@ -706,6 +790,10 @@ export async function startRun(
     if (entryNodeIds.length === 0) {
       throw new Error('run_lifecycle_start_validation_failed');
     }
+    // Fail fast, before a single NodeRun exists: a malformed N_OF_M join
+    // (out of range, non-integer, or an unrecognized policy) refuses the
+    // Run outright rather than surfacing only once that join is reached.
+    validateJoinPolicies(graph);
 
     const nodeRunIds: string[] = [];
     for (const nodeId of entryNodeIds) {
@@ -858,20 +946,41 @@ export async function retryNode(
       throw new Error(`run_lifecycle_status_transition_not_allowed:${row.status}->RETRY_NODE`);
     }
 
+    const retryKey = optionalTrimmed(options.idempotencyKey ?? null) ?? `retry-${uuidv4()}`;
+    const nodeIdempotencyKey = `run:${row.run_id}:node:${node}:${retryKey}`;
+
+    // Idempotent replay FIRST, before the retryability precondition below:
+    // a NodeRun already minted under this EXACT idempotencyKey (this exact
+    // call replayed by the caller, or a concurrent duplicate serialized
+    // behind this transaction's own run-row FOR UPDATE lock) is returned
+    // UNCHANGED. This must run before the `latest` check, not after —
+    // `getLatestNodeRunForNode` reads whatever is CURRENTLY latest, which by
+    // the time of a replay already IS this retry's own READY row, and
+    // re-evaluating retryability against it would wrongly throw
+    // `run_lifecycle_node_not_retryable` for the very call that just
+    // succeeded (proved by this packet's own concurrency test — see
+    // runSemantics.pg.test.ts). Only reachable when the caller supplies an
+    // explicit, STABLE idempotencyKey; the default (`retry-${uuidv4()}`) is
+    // fresh every call by construction, so this never short-circuits an
+    // ordinary, distinct RetryNode.
+    const existingRetry = await nodeRunService.getNodeRunByIdempotencyKey(row.run_id, nodeIdempotencyKey, actor);
+    if (existingRetry) {
+      return { run: mapRow(row), nodeRun: existingRetry };
+    }
+
     const latest = await nodeRunService.getLatestNodeRunForNode(row.run_id, node, actor);
     if (!latest) throw new Error('run_lifecycle_node_never_ran');
     if (latest.status !== 'FAILED_TERMINAL' && latest.status !== 'CANCELLED') {
       throw new Error('run_lifecycle_node_not_retryable');
     }
 
-    const retryKey = optionalTrimmed(options.idempotencyKey ?? null) ?? `retry-${uuidv4()}`;
     const created = await nodeRunService.createNodeRun(
       {
         caseId: row.case_id,
         runId: row.run_id,
         nodeId: node,
         nodeVersionRef: latest.nodeVersionRef,
-        idempotencyKey: `run:${row.run_id}:node:${node}:${retryKey}`,
+        idempotencyKey: nodeIdempotencyKey,
         maxAttempts: options.maxAttempts,
         initialStatus: 'READY',
       },
@@ -1219,9 +1328,15 @@ export async function advanceRun(runId: string, actorUserId: string): Promise<Ad
   const planVersion = await casePlanVersionService.getPlanVersion(runRow.case_plan_version_id, actor);
   if (!planVersion) throw new Error('run_lifecycle_plan_version_not_found');
   const graph = planVersion.semanticGraph as CanonicalGraph;
+  // Defense in depth: startRun already refused a malformed N_OF_M join
+  // before this Run ever had a NodeRun; re-checking here means a graph that
+  // somehow bypassed that gate is still refused before advanceRun writes
+  // anything, rather than fabricating a wrong readiness decision.
+  validateJoinPolicies(graph);
   const graphNodes = Array.isArray(graph.nodes) ? graph.nodes : [];
   const graphEdges = Array.isArray(graph.edges) ? graph.edges : [];
   const nodeTypeById = new Map<string, string>(graphNodes.map((n) => [n.nodeId, String(n.type ?? '')]));
+  const graphNodeById = new Map<string, GraphNode>(graphNodes.map((n) => [n.nodeId, n]));
 
   const nodeRuns = await nodeRunService.listNodeRunsForRun(runRow.run_id, actor);
   const latestByNode = new Map<string, NodeRun>();
@@ -1244,7 +1359,13 @@ export async function advanceRun(runId: string, actorUserId: string): Promise<Ad
     if (nodeTypeById.get(nodeId) === 'DECISION_GATEWAY' && nodeRun.status === 'SUCCEEDED') {
       const evaluation = await executionGraphService.getGatewayEvaluation(nodeRun.nodeRunId, actor);
       if (!evaluation) throw new Error('run_lifecycle_gateway_evaluation_missing_after_success');
-      selectedEdgeIdByNode.set(nodeId, extractSelectedEdgeId(evaluation, nodeId, graph));
+      const selectedEdgeId = extractSelectedEdgeId(evaluation, nodeId, graph);
+      selectedEdgeIdByNode.set(nodeId, selectedEdgeId);
+      // Re-seeded every call for an already-SUCCEEDED gateway too — cheap
+      // and idempotent (see the function's own header) — so a crash between
+      // a PAST call's gateway resolution and its skip-recording is repaired
+      // here rather than staying a permanent audit gap.
+      await recordUnselectedBranchesSkipped(nodeId, nodeRun.nodeRunId, selectedEdgeId);
     }
   }
 
@@ -1267,6 +1388,81 @@ export async function advanceRun(runId: string, actorUserId: string): Promise<Ad
         e.targetNodeId === nodeId &&
         (!e.edgeType || e.edgeType === 'SEQUENCE' || e.edgeType === 'CONDITIONAL')
     );
+  }
+
+  function outgoingControlEdges(nodeId: string) {
+    return graphEdges.filter(
+      (e) =>
+        e.sourceNodeId === nodeId &&
+        (!e.edgeType || e.edgeType === 'SEQUENCE' || e.edgeType === 'CONDITIONAL')
+    );
+  }
+
+  /**
+   * CW-RT-037 audit closure for a resolved DECISION_GATEWAY: "the branch a
+   * DECISION_GATEWAY did not select" previously left NO row anywhere —
+   * enough to CLOSE a Run (the not-selected edge is simply never satisfied,
+   * so nothing downstream is ever fabricated — gatewayAdvance.pg.test.ts's
+   * own locked assertion that the not-selected branch's NodeRun `count` stays
+   * ZERO forever, which this function must never violate) but not enough to
+   * AUDIT it: nothing recorded that the branch was ever considered and
+   * deliberately routed around.
+   *
+   * Records a `case_workspace_node_result_acceptances` row
+   * (nodeCompletionState='SKIPPED', resultAcceptance='NOT_APPLICABLE',
+   * skipAuthorizedByGraphCondition=true, causedByGatewayNodeRunId=the
+   * gateway's own real NodeRun) for the not-selected edge's DIRECT target
+   * node — deliberately NEVER via `nodeRunService.createNodeRun` (that table
+   * has no FK on `node_run_id`; a synthetic, deterministic id is used
+   * instead, see `deterministicSkippedNodeRunId`). Only when that target
+   * node's ONLY incoming control edge is this exact gateway (a plain
+   * single-predecessor branch, the common/unambiguous shape): a node that
+   * ALSO has another, live predecessor is a genuine convergence point that
+   * may still become ready via that other edge, and marking it SKIPPED here
+   * would be a false statement, not an audit fact — it is simply left alone
+   * (no row, matching the pre-existing behavior for that shape). Idempotent
+   * by construction (deterministic id + recordNodeResultAcceptance's own
+   * `ON CONFLICT` replay), so calling this repeatedly — once per pass this
+   * gateway is re-seen READY-turned-SUCCEEDED across advanceRun calls — is
+   * safe and cheap, and is exactly the resilience a restart needs: a crash
+   * between the gateway's own resolution and this call is repaired by the
+   * very next advanceRun call re-seeding the same already-SUCCEEDED gateway.
+   */
+  async function recordUnselectedBranchesSkipped(
+    gatewayNodeId: string,
+    gatewayNodeRunId: string,
+    selectedEdgeId: string
+  ): Promise<void> {
+    for (const edge of outgoingControlEdges(gatewayNodeId)) {
+      if (edge.edgeId === selectedEdgeId) continue;
+      const targetNodeId = edge.targetNodeId;
+      if (latestByNode.has(targetNodeId)) continue; // a real NodeRun exists — never overwritten/duplicated here
+      const soleIncomingIsThisGateway = incomingControlEdges(targetNodeId).every(
+        (e) => e.sourceNodeId === gatewayNodeId
+      );
+      if (!soleIncomingIsThisGateway) continue; // a genuine convergence node — may still become ready elsewhere
+      const targetType = nodeTypeById.get(targetNodeId);
+      if (!targetType) continue; // no node-type fact to record against — nothing to state
+      await executionGraphService.recordNodeResultAcceptance({
+        nodeRunId: deterministicSkippedNodeRunId(runRow.run_id, targetNodeId),
+        runId: runRow.run_id,
+        nodeType: targetType as CaseExecutionNodeType,
+        nodeCompletionState: 'SKIPPED',
+        resultAcceptance: 'NOT_APPLICABLE',
+        skipAuthorizedByGraphCondition: true,
+        skipConditionRef: `ref:decision-gateway:${gatewayNodeId}:selected:${selectedEdgeId}`,
+        causedByGatewayNodeRunId: gatewayNodeRunId,
+        acceptanceInputSnapshot: {
+          gatewayNodeId,
+          gatewayNodeRunId,
+          selectedEdgeId,
+          unselectedEdgeId: edge.edgeId,
+          skippedNodeId: targetNodeId,
+        },
+        occurredAt: new Date().toISOString(),
+        recordedByActorId: actor,
+      });
+    }
   }
 
   const createdNodeRunIds: string[] = [];
@@ -1297,6 +1493,7 @@ export async function advanceRun(runId: string, actorUserId: string): Promise<Ad
       latestByNode.set(nodeId, resolved);
       successIds.add(nodeId);
       selectedEdgeIdByNode.set(nodeId, selectedEdgeId);
+      await recordUnselectedBranchesSkipped(nodeId, nodeRun.nodeRunId, selectedEdgeId);
       progressed = true;
     }
 
@@ -1305,19 +1502,33 @@ export async function advanceRun(runId: string, actorUserId: string): Promise<Ad
       if (latestByNode.has(node.nodeId)) continue; // already has a NodeRun
       const incoming = incomingControlEdges(node.nodeId);
       if (incoming.length === 0) continue; // not an entry node (those exist by startRun) and no predecessor — graph anomaly, never fabricated
-      // PARALLEL_JOIN is the ONLY node type that requires EVERY incoming
-      // branch (this packet's "wait for all" AND-join, join_policy ALL).
-      // Every other node — including a plain node where two DECISION_GATEWAY
-      // branches reconverge with no explicit join marker — fires once ANY
-      // ONE predecessor edge is satisfied (standard exclusive-gateway
-      // convergence: whichever branch actually ran continues the flow; there
-      // is no such thing as "wait for the branch that was never selected").
-      // `latestByNode.has(...)` above already makes this a one-shot creation
-      // regardless of how many predecessors eventually succeed.
-      const readySatisfied =
-        nodeTypeById.get(node.nodeId) === 'PARALLEL_JOIN'
-          ? incoming.every(edgeSatisfied)
-          : incoming.some(edgeSatisfied);
+      // PARALLEL_JOIN is the ONLY node type with a JOIN policy at all (ALL |
+      // ANY | N_OF_M, resolved off the node's own graph data — see
+      // resolveJoinPolicy's header; defaults to ALL, this file's original
+      // "wait for all" AND-join, so a graph that never sets `joinPolicy`
+      // behaves exactly as before). Every other node — including a plain
+      // node where two DECISION_GATEWAY branches reconverge with no explicit
+      // join marker — fires once ANY ONE predecessor edge is satisfied
+      // (standard exclusive-gateway convergence: whichever branch actually
+      // ran continues the flow; there is no such thing as "wait for the
+      // branch that was never selected"). `latestByNode.has(...)` above
+      // already makes this a one-shot creation regardless of how many
+      // predecessors eventually succeed.
+      const gatewayTypeForReadiness = nodeTypeById.get(node.nodeId);
+      let resolvedJoin: { policy: CaseGatewayJoinPolicy; requiredCount: number | null } | null = null;
+      let readySatisfied: boolean;
+      if (gatewayTypeForReadiness === 'PARALLEL_JOIN') {
+        resolvedJoin = resolveJoinPolicy(graphNodeById.get(node.nodeId), incoming.length);
+        const satisfiedCount = incoming.filter(edgeSatisfied).length;
+        readySatisfied =
+          resolvedJoin.policy === 'ALL'
+            ? satisfiedCount === incoming.length
+            : resolvedJoin.policy === 'ANY'
+              ? satisfiedCount >= 1
+              : satisfiedCount >= (resolvedJoin.requiredCount as number);
+      } else {
+        readySatisfied = incoming.some(edgeSatisfied);
+      }
       if (!readySatisfied) continue;
 
       const created = await nodeRunService.createNodeRun(
@@ -1335,24 +1546,28 @@ export async function advanceRun(runId: string, actorUserId: string): Promise<Ad
       latestByNode.set(node.nodeId, created);
       progressed = true;
 
-      const gatewayType = nodeTypeById.get(node.nodeId);
+      const gatewayType = gatewayTypeForReadiness;
       if (gatewayType === 'PARALLEL_SPLIT' || gatewayType === 'PARALLEL_JOIN') {
         // Mechanical, no business judgement: fan-out is unconditional, and
-        // this node was only just created because `incoming.every(...)`
-        // above already confirmed EVERY incoming branch is satisfied (the
-        // join's own "wait for all" rule) — so its own readiness already IS
-        // the deterministic fact. Recorded through the existing ledger
-        // (never a second one) for the SAME audit trail DECISION_GATEWAY's
-        // externally-recorded facts get, then resolved immediately. Contrast
-        // DECISION_GATEWAY (phase (a) above), whose branch choice this file
-        // can never invent and therefore only ever reads.
+        // this node was only just created because the readiness check above
+        // already confirmed its join policy (ALL/ANY/N_OF_M) is satisfied —
+        // so its own readiness already IS the deterministic fact. Recorded
+        // through the existing ledger (never a second one) for the SAME
+        // audit trail DECISION_GATEWAY's externally-recorded facts get, then
+        // resolved immediately. Contrast DECISION_GATEWAY (phase (a) above),
+        // whose branch choice this file can never invent and therefore only
+        // ever reads.
         const outgoing = graphEdges.filter((e) => e.sourceNodeId === node.nodeId);
         await executionGraphService.recordGatewayEvaluation({
           nodeRunId: created.nodeRunId,
           runId: runRow.run_id,
           gatewayNodeType: gatewayType,
-          ...(gatewayType === 'PARALLEL_JOIN'
-            ? { joinPolicy: 'ALL' as const, joinBranchTotalCount: incoming.length }
+          ...(gatewayType === 'PARALLEL_JOIN' && resolvedJoin
+            ? {
+                joinPolicy: resolvedJoin.policy,
+                joinRequiredCount: resolvedJoin.requiredCount,
+                joinBranchTotalCount: incoming.length,
+              }
             : {}),
           evaluationInputSnapshot: {
             nodeId: node.nodeId,

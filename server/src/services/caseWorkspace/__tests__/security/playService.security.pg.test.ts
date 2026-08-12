@@ -280,16 +280,38 @@ suite('playService — adversarial security (Stream E, CW-P08/E12)', () => {
   //     findings verified directly against the CURRENT code
   //     (server/src/services/caseWorkspace/playService.ts):
   //       1. instantiateProcessVersion now opens with
-  //          `await requireCaseAccess(actorUserId, targetCaseId);` (line
-  //          1204) — actor-authorization on top of the pre-existing
-  //          resource-to-resource organization_id consistency check. It
-  //          ALSO now calls `getProcessVersion(id, actorUserId)` (line 1186)
-  //          first, which itself calls
-  //          `requireOrgMember(actor, definitionRow.organization_id)` (line
-  //          879) — so a zero-standing actor is denied even earlier, at the
-  //          version-read step, with code 'not_org_member' rather than
-  //          'case_access_denied'.
-  //       2. isAuthorizedPublisher (line 571) no longer runs its own bespoke
+  //          `const version = await getProcessVersion(id, actorUserId);`
+  //          (~line 1622) — actor-authorization on top of the pre-existing
+  //          resource-to-resource organization_id consistency check — and
+  //          then `await requireCaseAccess(actorUserId, targetCaseId);`
+  //          (~line 1640) as a second, independent gate. getProcessVersion
+  //          itself calls `requireOrgMember(actor,
+  //          definitionRow.organization_id)` (caseWorkspaceAuthContext.ts),
+  //          so a zero-standing actor is denied even earlier, at the
+  //          version-read step.
+  //
+  //          IMPORTANT, and DIFFERENT from an earlier draft of this test:
+  //          getProcessVersion does NOT let that denial surface as a
+  //          distinguishable CaseWorkspaceAuthError('not_org_member', ...).
+  //          It was subsequently hardened for CW-SEC-ENUM-PLAYS-01 (a
+  //          separate, real 403-vs-404 existence-oracle finding on this
+  //          same by-id read: processVersionId is caller-supplied and
+  //          attacker-controlled, exactly the case the enumeration-oracle
+  //          decision in caseWorkspaceAuthContext.ts's header calls out as
+  //          needing the collapse, unlike the "organizationId already known
+  //          to the caller's session" case that header says keeps
+  //          'not_org_member' distinguishable). getProcessVersion now
+  //          catches CaseWorkspaceAuthError and returns null instead of
+  //          throwing, so instantiateProcessVersion's
+  //          `if (!version) throw new Error('process_version_not_found')`
+  //          fires — a plain, uncoded Error, identical to what a genuinely
+  //          nonexistent processVersionId would produce. The actor is still
+  //          rejected (this test's core property); only the error's SHAPE
+  //          changed, deliberately, as a side effect of closing the
+  //          enumeration oracle at the layer underneath this one. See
+  //          playsEnumeration.security.pg.test.ts for that fix's own
+  //          dedicated coverage.
+  //       2. isAuthorizedPublisher (~line 662) no longer runs its own bespoke
   //          `SELECT role FROM organization_members WHERE ...` query — it now
   //          delegates to `requireOrgRole(userId, orgId, 'ADMIN')` (the
   //          shared caseWorkspaceAuthContext primitive), which composes
@@ -313,15 +335,20 @@ suite('playService — adversarial security (Stream E, CW-P08/E12)', () => {
       try {
         // Denied at the FIRST actor-authorization checkpoint reached:
         // instantiateProcessVersion's own internal getProcessVersion(id,
-        // actorUserId) call (line 1186) requires org membership on the
-        // Play's organization before instantiateProcessVersion's own
-        // requireCaseAccess(actorUserId, targetCaseId) (line 1204) is even
-        // reached — so the observed code is 'not_org_member', not
-        // 'case_access_denied'. Asserted on .code per this packet's
-        // instructions, not by regexing .message.
+        // actorUserId) call requires org membership on the Play's
+        // organization before instantiateProcessVersion's own
+        // requireCaseAccess(actorUserId, targetCaseId) is even reached. The
+        // denial is NOT surfaced as CaseWorkspaceAuthError('not_org_member')
+        // though — getProcessVersion's CW-SEC-ENUM-PLAYS-01 hardening
+        // collapses that into `null`, so instantiateProcessVersion throws
+        // its own plain `process_version_not_found`, the SAME error a
+        // genuinely nonexistent processVersionId would produce (that
+        // collapse is the point: it is what keeps this by-id read from
+        // being a cross-tenant existence oracle). Asserted on .message,
+        // not .code — no CaseWorkspaceAuthError reaches this call site.
         await expect(
           playService.instantiateProcessVersion(versionId, caseId, { actorUserId: attackerUserId })
-        ).rejects.toMatchObject({ code: 'not_org_member' });
+        ).rejects.toThrow('process_version_not_found');
 
         const rows = await control.query(`SELECT case_plan_version_id FROM case_plan_versions WHERE case_id = $1`, [caseId]);
         expect(rows.rows).toHaveLength(0); // no plan draft was ever created

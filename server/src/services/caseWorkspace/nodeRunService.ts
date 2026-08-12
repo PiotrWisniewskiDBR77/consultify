@@ -1594,6 +1594,39 @@ export async function getLatestNodeRunForNode(
 }
 
 /**
+ * Idempotency-key lookup: the row (if any) already minted under
+ * (run_id, idempotency_key) — `createNodeRun`'s own idempotency identity
+ * (§3.4: "Idempotency identity is stable for the intended business effect"),
+ * exposed here read-only for a caller that must decide "was this exact
+ * command already applied?" WITHOUT attempting a write first. Read-only;
+ * returns null when no NodeRun was ever minted under this exact key.
+ *
+ * Exists for runLifecycleService.retryNode's own idempotent-replay path: a
+ * caller-supplied idempotencyKey is meaningless as a safety net if the
+ * command re-derives its precondition from `getLatestNodeRunForNode`
+ * (§4.5's "current state" reader) instead — by the time a replay runs, the
+ * FIRST call's own effect IS the latest NodeRun, so re-checking against
+ * "latest" wrongly refuses the replay as "not retryable" rather than
+ * recognizing it as the same command already having landed.
+ */
+export async function getNodeRunByIdempotencyKey(
+  runId: string,
+  idempotencyKey: string,
+  actorUserId: string
+): Promise<NodeRun | null> {
+  const id = requireNonBlank(runId, 'node_run_run_id_required');
+  const key = requireNonBlank(idempotencyKey, 'node_run_idempotency_key_required');
+  const actor = requireNonBlank(actorUserId, 'node_run_actor_required');
+  const row = await queryOne<NodeRunRow>(
+    `SELECT * FROM ${NODE_RUN_TABLE} WHERE run_id = ? AND idempotency_key = ?`,
+    [id, key]
+  );
+  if (!row) return null;
+  await requireCaseAccess(actor, row.case_id);
+  return mapRow(row);
+}
+
+/**
  * Scheduler candidate scan. "Report, don't decide" — it never claims anything;
  * the caller follows up with individually-atomic claimNodeRun() calls.
  * INTERNAL-ONLY: cross-case, cross-org by design.

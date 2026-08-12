@@ -40,6 +40,7 @@ function baseCase(partial: Partial<CaseCoreView> & Pick<CaseCoreView, 'caseId'>)
   return {
     projectId: `proj-${partial.caseId}`,
     organizationId: ORG,
+    caseName: 'Zlecenie',
     caseProfile: 'STANDARD',
     governanceTier: 'STANDARD',
     autonomyPolicy: 'ASK_MATERIAL_ACTIONS',
