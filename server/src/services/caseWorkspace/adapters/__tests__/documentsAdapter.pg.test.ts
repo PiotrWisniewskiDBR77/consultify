@@ -101,10 +101,12 @@ import {
   DOCUMENT_CREATE_CAPABILITY_VERSION,
   PRESENTATION_CREATE_CAPABILITY_ID,
   PRESENTATION_CREATE_CAPABILITY_VERSION,
-  registerDocumentCreateAdapterBinding,
-  registerDocumentCreateCapability,
-  registerPresentationCreateAdapterBinding,
-  registerPresentationCreateCapability,
+  buildDocumentCreateBinding,
+  buildPresentationCreateBinding,
+  documentCreateRegistrationInput,
+  presentationCreateRegistrationInput,
+  type DocumentsAdapterDeps,
+  type PresentationAdapterDeps,
 } from '../documentsAdapter.js';
 import {
   buildEnvelope,
@@ -171,6 +173,64 @@ if (!REACHABLE) {
 const suite = REACHABLE ? describe.sequential : describe.skip;
 
 // ---------------------------------------------------------------------------
+// PRIVATE, per-run-unique capability ids — NOT the platform-global
+// DOCUMENT_CREATE_CAPABILITY_ID / PRESENTATION_CREATE_CAPABILITY_ID
+// constants.
+//
+// Cross-file collision proven (packet H1, 2026-08-12): `case_workspace_
+// capabilities` is UNIQUE on (capability_id, capability_version) with NO
+// organization scoping (capabilityRegistryService.ts:496). Vitest runs test
+// FILES concurrently by default (server/vitest.config.ts sets no
+// fileParallelism:false). `capabilityBootstrap.pg.test.ts`'s
+// `deleteBuiltinCapabilityRows()` (its tests 1, 3-7) issues
+// `DELETE FROM case_workspace_capabilities WHERE capability_id = $1` for
+// BOTH `DOCUMENT_CREATE_CAPABILITY_ID` and `PRESENTATION_CREATE_CAPABILITY_ID`
+// as pre-cleanup — a genuinely necessary step for ITS OWN "zero
+// registrations" assertions against the REAL builtin ids
+// `registerBuiltinCapabilityAdapters` uses at real process boot. When that
+// delete lands between this file's `beforeAll` registering its row and this
+// file's own tests reading it, this file's dispatch fails with
+// `CAPABILITY_NOT_FOUND` (measured, reproduced 3/3 runs; DB readback showed
+// the row's count flip 0->1 at registration then straight back to 0 mid-run,
+// well before this file's own `afterAll` cleanup). `--no-file-parallelism`
+// across all three files turns the suite green, confirming concurrency (not
+// a product defect) is the vector.
+//
+// Fix: this file registers its OWN test rows under these private ids
+// instead, so no other file's cleanup — targeted at the real, fixed builtin
+// ids — can ever delete them, and this file's own dispatch never collides
+// with another file's "zero registrations for the real id" assertion
+// either. The registry/binding PLUMBING (registerCapabilityWithAdapter,
+// registerCapabilityBinding) and the HANDLER code under test
+// (buildDocumentCreateBinding/buildPresentationCreateBinding, both exported,
+// unmodified production functions from documentsAdapter.ts) are identical to
+// what the real ids use — only the capability_id STRING used as the
+// registry/dispatch key is test-private. Same isolation shape as this
+// program's already-fixed F2 defect (RESUME_HANDOFF_2026-08-12.md §5.1): two
+// independent test files sharing one mutable, platform-global row, one of
+// them mutating it while the other is mid-flight — fixed there by giving the
+// mutating test its own disposable identity instead of the shared one.
+const DOCUMENTS_ADAPTER_PG_TEST_RUN_ID = randomUUID();
+const DOCUMENT_TEST_CAPABILITY_ID = `${DOCUMENT_CREATE_CAPABILITY_ID}.pgtest.${DOCUMENTS_ADAPTER_PG_TEST_RUN_ID}`;
+const PRESENTATION_TEST_CAPABILITY_ID = `${PRESENTATION_CREATE_CAPABILITY_ID}.pgtest.${DOCUMENTS_ADAPTER_PG_TEST_RUN_ID}`;
+
+function resetDocumentTestBinding(deps: DocumentsAdapterDeps = {}): void {
+  capabilityAdapterService.registerCapabilityBinding(
+    DOCUMENT_TEST_CAPABILITY_ID,
+    DOCUMENT_CREATE_CAPABILITY_VERSION,
+    buildDocumentCreateBinding(deps)
+  );
+}
+
+function resetPresentationTestBinding(deps: PresentationAdapterDeps = {}): void {
+  capabilityAdapterService.registerCapabilityBinding(
+    PRESENTATION_TEST_CAPABILITY_ID,
+    PRESENTATION_CREATE_CAPABILITY_VERSION,
+    buildPresentationCreateBinding(deps)
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Shared control pool + cleanup helpers (both capabilities write to tables
 // `_fixtures.ts`'s `teardownCaseFixture` does not know about).
 // ---------------------------------------------------------------------------
@@ -216,18 +276,26 @@ suite('documentsAdapter — Documents + Presentation create capabilities, dispat
       'Documents/Presentation adapter registrar org',
     ]);
     const registrarActorId = await seedMemberedUser(control, registrarOrgId, 'registrar', 'ADMIN');
-    await registerDocumentCreateCapability({
-      createdByActorId: registrarActorId,
-      callerOrganizationId: registrarOrgId,
-    });
-    await registerPresentationCreateCapability({
-      createdByActorId: registrarActorId,
-      callerOrganizationId: registrarOrgId,
-    });
+    // Private test ids (see the block above this describe) — NOT
+    // registerDocumentCreateCapability/registerPresentationCreateCapability,
+    // which hard-code the platform-global DOCUMENT_CREATE_CAPABILITY_ID /
+    // PRESENTATION_CREATE_CAPABILITY_ID. registerCapabilityWithAdapter is the
+    // same production registration primitive those two helpers call
+    // internally; only the capabilityId field of the input is overridden.
+    await capabilityAdapterService.registerCapabilityWithAdapter(
+      { ...documentCreateRegistrationInput(registrarActorId), capabilityId: DOCUMENT_TEST_CAPABILITY_ID },
+      buildDocumentCreateBinding(),
+      registrarOrgId
+    );
+    await capabilityAdapterService.registerCapabilityWithAdapter(
+      { ...presentationCreateRegistrationInput(registrarActorId), capabilityId: PRESENTATION_TEST_CAPABILITY_ID },
+      buildPresentationCreateBinding(),
+      registrarOrgId
+    );
   }, 60_000);
 
   afterAll(async () => {
-    for (const capabilityId of [DOCUMENT_CREATE_CAPABILITY_ID, PRESENTATION_CREATE_CAPABILITY_ID]) {
+    for (const capabilityId of [DOCUMENT_TEST_CAPABILITY_ID, PRESENTATION_TEST_CAPABILITY_ID]) {
       await control
         .query(
           `DELETE FROM case_workspace_capability_idempotency_keys
@@ -249,10 +317,12 @@ suite('documentsAdapter — Documents + Presentation create capabilities, dispat
   }, 60_000);
 
   afterEach(() => {
-    // Reset to the real, production bindings after any test that injected a
-    // custom one — never let a stubbed dependency leak into the next test.
-    registerDocumentCreateAdapterBinding();
-    registerPresentationCreateAdapterBinding();
+    // Reset to the real, production bindings (rebound at THIS file's private
+    // test ids — see the block above this describe) after any test that
+    // injected a custom one — never let a stubbed dependency leak into the
+    // next test.
+    resetDocumentTestBinding();
+    resetPresentationTestBinding();
   });
 
   // =========================================================================
@@ -285,7 +355,7 @@ suite('documentsAdapter — Documents + Presentation create capabilities, dispat
       try {
         const result = await capabilityAdapterService.executeCapability(
           buildEnvelope({
-            capabilityId: DOCUMENT_CREATE_CAPABILITY_ID,
+            capabilityId: DOCUMENT_TEST_CAPABILITY_ID,
             capabilityVersion: DOCUMENT_CREATE_CAPABILITY_VERSION,
             orgId: fixture.orgId,
             actorId: fixture.actorId,
@@ -331,7 +401,7 @@ suite('documentsAdapter — Documents + Presentation create capabilities, dispat
       try {
         const badInput = await capabilityAdapterService.executeCapability(
           buildEnvelope({
-            capabilityId: DOCUMENT_CREATE_CAPABILITY_ID,
+            capabilityId: DOCUMENT_TEST_CAPABILITY_ID,
             capabilityVersion: DOCUMENT_CREATE_CAPABILITY_VERSION,
             orgId: fixture.orgId,
             actorId: fixture.actorId,
@@ -350,7 +420,7 @@ suite('documentsAdapter — Documents + Presentation create capabilities, dispat
 
         const noAccess = await capabilityAdapterService.executeCapability(
           buildEnvelope({
-            capabilityId: DOCUMENT_CREATE_CAPABILITY_ID,
+            capabilityId: DOCUMENT_TEST_CAPABILITY_ID,
             capabilityVersion: DOCUMENT_CREATE_CAPABILITY_VERSION,
             orgId: strangerOrgId,
             actorId: strangerActorId,
@@ -378,7 +448,7 @@ suite('documentsAdapter — Documents + Presentation create capabilities, dispat
         const key1 = `idem-${randomUUID()}`;
         const first = await capabilityAdapterService.executeCapability(
           buildEnvelope({
-            capabilityId: DOCUMENT_CREATE_CAPABILITY_ID,
+            capabilityId: DOCUMENT_TEST_CAPABILITY_ID,
             capabilityVersion: DOCUMENT_CREATE_CAPABILITY_VERSION,
             orgId: fixture.orgId,
             actorId: fixture.actorId,
@@ -391,7 +461,7 @@ suite('documentsAdapter — Documents + Presentation create capabilities, dispat
 
         const replay = await capabilityAdapterService.executeCapability(
           buildEnvelope({
-            capabilityId: DOCUMENT_CREATE_CAPABILITY_ID,
+            capabilityId: DOCUMENT_TEST_CAPABILITY_ID,
             capabilityVersion: DOCUMENT_CREATE_CAPABILITY_VERSION,
             orgId: fixture.orgId,
             actorId: fixture.actorId,
@@ -405,7 +475,7 @@ suite('documentsAdapter — Documents + Presentation create capabilities, dispat
         const key2 = `idem-${randomUUID()}`;
         const rejected = await capabilityAdapterService.executeCapability(
           buildEnvelope({
-            capabilityId: DOCUMENT_CREATE_CAPABILITY_ID,
+            capabilityId: DOCUMENT_TEST_CAPABILITY_ID,
             capabilityVersion: DOCUMENT_CREATE_CAPABILITY_VERSION,
             orgId: fixture.orgId,
             actorId: fixture.actorId,
@@ -419,7 +489,7 @@ suite('documentsAdapter — Documents + Presentation create capabilities, dispat
         const key3 = `idem-${randomUUID()}`;
         const second = await capabilityAdapterService.executeCapability(
           buildEnvelope({
-            capabilityId: DOCUMENT_CREATE_CAPABILITY_ID,
+            capabilityId: DOCUMENT_TEST_CAPABILITY_ID,
             capabilityVersion: DOCUMENT_CREATE_CAPABILITY_VERSION,
             orgId: fixture.orgId,
             actorId: fixture.actorId,
@@ -439,7 +509,7 @@ suite('documentsAdapter — Documents + Presentation create capabilities, dispat
     it('still creates the document when the artifact-link step fails, surfaces it, and stays re-linkable', async () => {
       const fixture = await seedCaseFixture(control, 'documents-partial');
       try {
-        registerDocumentCreateAdapterBinding({
+        resetDocumentTestBinding({
           linkArtifactToCase: async () => {
             throw new Error('injected_link_failure');
           },
@@ -447,7 +517,7 @@ suite('documentsAdapter — Documents + Presentation create capabilities, dispat
 
         const result = await capabilityAdapterService.executeCapability(
           buildEnvelope({
-            capabilityId: DOCUMENT_CREATE_CAPABILITY_ID,
+            capabilityId: DOCUMENT_TEST_CAPABILITY_ID,
             capabilityVersion: DOCUMENT_CREATE_CAPABILITY_VERSION,
             orgId: fixture.orgId,
             actorId: fixture.actorId,
@@ -504,7 +574,7 @@ suite('documentsAdapter — Documents + Presentation create capabilities, dispat
 
         const result = await capabilityAdapterService.executeCapability(
           buildEnvelope({
-            capabilityId: DOCUMENT_CREATE_CAPABILITY_ID,
+            capabilityId: DOCUMENT_TEST_CAPABILITY_ID,
             capabilityVersion: DOCUMENT_CREATE_CAPABILITY_VERSION,
             orgId: otherOrgId,
             actorId: fixture.actorId,
@@ -534,7 +604,7 @@ suite('documentsAdapter — Documents + Presentation create capabilities, dispat
       try {
         const result = await capabilityAdapterService.executeCapability(
           buildEnvelope({
-            capabilityId: DOCUMENT_CREATE_CAPABILITY_ID,
+            capabilityId: DOCUMENT_TEST_CAPABILITY_ID,
             capabilityVersion: DOCUMENT_CREATE_CAPABILITY_VERSION,
             orgId: fixture.orgId,
             actorId: fixture.actorId,
@@ -580,7 +650,7 @@ suite('documentsAdapter — Documents + Presentation create capabilities, dispat
         // via dependency injection instead, proving THIS adapter's own second,
         // independent readback (not documentStudioService.ts's internal one)
         // actually gates the outcome.
-        registerDocumentCreateAdapterBinding({
+        resetDocumentTestBinding({
           materializeDocumentArtifact: async () =>
             ({
               artifactId: `artifact-phantom-${randomUUID()}`,
@@ -590,7 +660,7 @@ suite('documentsAdapter — Documents + Presentation create capabilities, dispat
 
         const result = await capabilityAdapterService.executeCapability(
           buildEnvelope({
-            capabilityId: DOCUMENT_CREATE_CAPABILITY_ID,
+            capabilityId: DOCUMENT_TEST_CAPABILITY_ID,
             capabilityVersion: DOCUMENT_CREATE_CAPABILITY_VERSION,
             orgId: fixture.orgId,
             actorId: fixture.actorId,
@@ -629,7 +699,7 @@ suite('documentsAdapter — Documents + Presentation create capabilities, dispat
       try {
         const result = await capabilityAdapterService.executeCapability(
           buildEnvelope({
-            capabilityId: PRESENTATION_CREATE_CAPABILITY_ID,
+            capabilityId: PRESENTATION_TEST_CAPABILITY_ID,
             capabilityVersion: PRESENTATION_CREATE_CAPABILITY_VERSION,
             orgId: fixture.orgId,
             actorId: fixture.actorId,
@@ -680,7 +750,7 @@ suite('documentsAdapter — Documents + Presentation create capabilities, dispat
       try {
         const badInput = await capabilityAdapterService.executeCapability(
           buildEnvelope({
-            capabilityId: PRESENTATION_CREATE_CAPABILITY_ID,
+            capabilityId: PRESENTATION_TEST_CAPABILITY_ID,
             capabilityVersion: PRESENTATION_CREATE_CAPABILITY_VERSION,
             orgId: fixture.orgId,
             actorId: fixture.actorId,
@@ -699,7 +769,7 @@ suite('documentsAdapter — Documents + Presentation create capabilities, dispat
 
         const noAccess = await capabilityAdapterService.executeCapability(
           buildEnvelope({
-            capabilityId: PRESENTATION_CREATE_CAPABILITY_ID,
+            capabilityId: PRESENTATION_TEST_CAPABILITY_ID,
             capabilityVersion: PRESENTATION_CREATE_CAPABILITY_VERSION,
             orgId: strangerOrgId,
             actorId: strangerActorId,
@@ -727,7 +797,7 @@ suite('documentsAdapter — Documents + Presentation create capabilities, dispat
         const key1 = `idem-${randomUUID()}`;
         const first = await capabilityAdapterService.executeCapability(
           buildEnvelope({
-            capabilityId: PRESENTATION_CREATE_CAPABILITY_ID,
+            capabilityId: PRESENTATION_TEST_CAPABILITY_ID,
             capabilityVersion: PRESENTATION_CREATE_CAPABILITY_VERSION,
             orgId: fixture.orgId,
             actorId: fixture.actorId,
@@ -740,7 +810,7 @@ suite('documentsAdapter — Documents + Presentation create capabilities, dispat
 
         const replay = await capabilityAdapterService.executeCapability(
           buildEnvelope({
-            capabilityId: PRESENTATION_CREATE_CAPABILITY_ID,
+            capabilityId: PRESENTATION_TEST_CAPABILITY_ID,
             capabilityVersion: PRESENTATION_CREATE_CAPABILITY_VERSION,
             orgId: fixture.orgId,
             actorId: fixture.actorId,
@@ -754,7 +824,7 @@ suite('documentsAdapter — Documents + Presentation create capabilities, dispat
         const key2 = `idem-${randomUUID()}`;
         const rejected = await capabilityAdapterService.executeCapability(
           buildEnvelope({
-            capabilityId: PRESENTATION_CREATE_CAPABILITY_ID,
+            capabilityId: PRESENTATION_TEST_CAPABILITY_ID,
             capabilityVersion: PRESENTATION_CREATE_CAPABILITY_VERSION,
             orgId: fixture.orgId,
             actorId: fixture.actorId,
@@ -768,7 +838,7 @@ suite('documentsAdapter — Documents + Presentation create capabilities, dispat
         const key3 = `idem-${randomUUID()}`;
         const second = await capabilityAdapterService.executeCapability(
           buildEnvelope({
-            capabilityId: PRESENTATION_CREATE_CAPABILITY_ID,
+            capabilityId: PRESENTATION_TEST_CAPABILITY_ID,
             capabilityVersion: PRESENTATION_CREATE_CAPABILITY_VERSION,
             orgId: fixture.orgId,
             actorId: fixture.actorId,
@@ -788,7 +858,7 @@ suite('documentsAdapter — Documents + Presentation create capabilities, dispat
     it('still creates the deck when the artifact-link step fails, surfaces it, and stays re-linkable', async () => {
       const fixture = await seedCaseFixture(control, 'presentation-partial');
       try {
-        registerPresentationCreateAdapterBinding({
+        resetPresentationTestBinding({
           linkArtifactToCase: async () => {
             throw new Error('injected_link_failure');
           },
@@ -796,7 +866,7 @@ suite('documentsAdapter — Documents + Presentation create capabilities, dispat
 
         const result = await capabilityAdapterService.executeCapability(
           buildEnvelope({
-            capabilityId: PRESENTATION_CREATE_CAPABILITY_ID,
+            capabilityId: PRESENTATION_TEST_CAPABILITY_ID,
             capabilityVersion: PRESENTATION_CREATE_CAPABILITY_VERSION,
             orgId: fixture.orgId,
             actorId: fixture.actorId,
@@ -853,7 +923,7 @@ suite('documentsAdapter — Documents + Presentation create capabilities, dispat
 
         const result = await capabilityAdapterService.executeCapability(
           buildEnvelope({
-            capabilityId: PRESENTATION_CREATE_CAPABILITY_ID,
+            capabilityId: PRESENTATION_TEST_CAPABILITY_ID,
             capabilityVersion: PRESENTATION_CREATE_CAPABILITY_VERSION,
             orgId: otherOrgId,
             actorId: fixture.actorId,
@@ -883,7 +953,7 @@ suite('documentsAdapter — Documents + Presentation create capabilities, dispat
       try {
         const result = await capabilityAdapterService.executeCapability(
           buildEnvelope({
-            capabilityId: PRESENTATION_CREATE_CAPABILITY_ID,
+            capabilityId: PRESENTATION_TEST_CAPABILITY_ID,
             capabilityVersion: PRESENTATION_CREATE_CAPABILITY_VERSION,
             orgId: fixture.orgId,
             actorId: fixture.actorId,
@@ -946,7 +1016,7 @@ suite('documentsAdapter — Documents + Presentation create capabilities, dispat
     it('[negative control] surfaces a failure instead of a false success when the real INSERT violates the status CHECK constraint', async () => {
       const fixture = await seedCaseFixture(control, 'presentation-negctrl');
       try {
-        registerPresentationCreateAdapterBinding({
+        resetPresentationTestBinding({
           createNativeDeck: (params) =>
             realCreateNativeDeck({
               ...params,
@@ -957,7 +1027,7 @@ suite('documentsAdapter — Documents + Presentation create capabilities, dispat
 
         const result = await capabilityAdapterService.executeCapability(
           buildEnvelope({
-            capabilityId: PRESENTATION_CREATE_CAPABILITY_ID,
+            capabilityId: PRESENTATION_TEST_CAPABILITY_ID,
             capabilityVersion: PRESENTATION_CREATE_CAPABILITY_VERSION,
             orgId: fixture.orgId,
             actorId: fixture.actorId,
