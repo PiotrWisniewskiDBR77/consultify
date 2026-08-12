@@ -5,6 +5,41 @@ coordinator corrections and the E15 final numbers. This is the single entry
 point. Nothing here is a PASS claim beyond what its evidence column literally
 says.
 
+**UPDATE 2026-08-12 (S20-DOCS, worktree `ideas-streams/s2-locale`, branch
+`codex/ideas-s20-docs`, documentation only — no `src/`, `server/`, `tests/`,
+or `dev-render/` changes):**
+
+1. **This file's own "the only residual is the owner's visual acceptance"
+   line below (§2) is stale and was already superseded** — the owner
+   explicitly rejected that framing on 2026-08-12 (S14-EPICS), and the
+   current, corrected epic-by-epic status lives in
+   `24_FINAL_ACCEPTANCE.md` §3/§9/§11 and the tail of
+   `00_PROGRAM_STATUS_AND_VERSION.md` ("CORRECTION 2026-08-12 (S14-EPICS)").
+   Read those before trusting §2's gate board here. This pass did not rewrite
+   §2 in place (see the reasoning `00_PROGRAM_STATUS_AND_VERSION.md` gives
+   for the same choice: superseding a section rather than editing history in
+   place keeps the record of what an earlier pass believed auditable).
+2. **New code landed after this file's `f5cdc7b867` identity: new code-final
+   SHA `f86afc077f`.** Three commits (`a18b625a78` S13-STICKY,
+   `19f78356f9` S17-OVERLAPTEST, `f86afc077f` S18-NOOVERLAP, plus a test-only
+   fix `a11441233a` and an evidence-capture commit `6b28161bc4`) closed the
+   Idea Table's Updated/actions column-overlap regression at the 1280×800
+   acceptance viewport — filed and resolved as `RISK-39`. Full detail: §3
+   below, `16_OPEN_RISKS_AND_LIMITATIONS.csv` RISK-39,
+   `19_VISUAL_CX_MATRIX.md`'s "RISK-39" section.
+3. **Two methodological findings from this cycle, worth carrying forward
+   because they generalize beyond this one ticket** (see §8 below for where
+   they now sit alongside this program's existing method notes):
+   - A sabotage that breaks *compilation* (not just the target logic)
+     produces a red result for the wrong reason across an entire test file —
+     confirm the sabotaged code still compiles (e.g. an `esbuild` syntax
+     check) before trusting a red.
+   - A test that derives its own pass/fail strictness from measured runtime
+     state, instead of a fixed expectation, can be disarmed by the very
+     regression it exists to catch — a reverted fix can silently reclassify
+     itself into a "this case is exempt" branch and the test passes against
+     sabotaged code.
+
 ## 1. Candidate identity
 
 | | |
@@ -97,9 +132,22 @@ onto this branch. Full per-row rulings live in
   1280×800, the Idea Table's row-actions kebab is not in frame at rest in
   the true production wrapper, with no visible scroll hint (the container is
   genuinely scrollable — `TableWithPreviewLayout.tsx`'s inner div — just not
-  discoverable without prior knowledge). **Not yet triaged into its own risk
-  row** — flagged for the owner/next session, see
-  `19_VISUAL_CX_MATRIX.md` "PRODUCTION-SHAPE measurement" section.
+  discoverable without prior knowledge). At the time this section was
+  written it was not yet triaged into its own risk row.
+- **RISK-39 (P1) — NEW, filed and RESOLVED 2026-08-12 (S20-DOCS).** The
+  finding named directly above got a code fix (S13-STICKY, `a18b625a78`:
+  pin the row-actions column `sticky; right:0`), and that fix itself
+  regressed the same boundary — a width-proportional overflow at 1280×800
+  rest and a constant 8px sliver still covered at max scroll on every
+  viewport. The owner rejected treating this as an acceptable trade-off and
+  called it a regression to fix outright. S18-NOOVERLAP (`f86afc077f`)
+  fixed both defects; real-Chromium measurement across all four required
+  viewports is 0px overlap at 1280×800/1440×900 (no overflow at all) and
+  0px overlap at `scrollLeft=max` on 720×450/200%-zoom. Falsified by
+  sabotage. 19 evidence captures:
+  `docs/qa/ideas-table-overlap-s18-2026-08-12/`. Full record:
+  `16_OPEN_RISKS_AND_LIMITATIONS.csv` RISK-39,
+  `19_VISUAL_CX_MATRIX.md`'s "RISK-39" section.
 - **RISK-38 (P3, new)** — `Intl.PluralRules('jp')` silently resolves to
   `en-US` because `jp` is not a valid BCP47 subtag. Pre-existing, unrelated
   to this program's own changes, found while investigating RISK-26.
@@ -163,7 +211,7 @@ evidence; neither is an open defect:
 ## 5. Open items, honestly stated
 
 **Two P1/P2-adjacent items carry forward with a real residual** (the rest of
-the 38-row CSV / 40-row ledger is P2/P3 detail, mostly OPEN-and-documented
+the 39-row CSV / 42-row ledger is P2/P3 detail, mostly OPEN-and-documented
 rather than blocking):
 
 - **RISK-30 residual (P2)** — `confirmed:false` still posts no chat message,
@@ -185,8 +233,10 @@ rather than blocking):
   every idea create/update swallows the resulting SQL error via
   `.catch(warn)`.
 
-Plus the two un-triaged findings noted in §3 (production-shape kebab at
-1280×800; the `jp` plural-rules defect, now filed as RISK-38 but not fixed).
+Plus the `jp` plural-rules defect noted in §3 (RISK-38, pre-existing, filed
+but not fixed). The other item that used to sit in this "un-triaged" bucket
+— the production-shape kebab finding at 1280×800 — is no longer un-triaged:
+it is `RISK-39`, filed and RESOLVED, S20-DOCS, 2026-08-12 (see §3 above).
 
 **`check-actions.sh` is now rc=0 at 234/124/7/4** — the residual this file
 previously reported (3 unregistered `FinancialCaseDialog` handlers) was
@@ -270,6 +320,23 @@ because nothing this program touched overlaps them.
    under a full, serialized `tsc` on the integrated tree.
 7. **Never claim a gate is awaiting acceptance while your own reports
    contain open P1s or a visible collision.** That rule still holds.
+8. **A sabotage that breaks compilation is not evidence of anything (S20-DOCS,
+   RISK-39).** The first attempt at re-proving the Idea Table overlap
+   regression used a blunt regex that also turned a variable declaration
+   into a syntax error, so the build failed and every viewport "failed" for
+   the wrong reason. A red result is not evidence until you know *why* it is
+   red — confirm the sabotaged code still compiles (e.g. an `esbuild` syntax
+   check) before trusting a red.
+9. **A test that derives its own strictness from the state it is guarding
+   can be disarmed by the very defect it exists to catch (S20-DOCS,
+   RISK-39).** The first version of the overlap-geometry contract decided
+   whether a viewport had to be overlap-free at rest by checking the
+   *measured* `scrollMax` at that instant, instead of a fixed per-viewport
+   expectation. A regression that reintroduces overflow also reintroduces a
+   nonzero `scrollMax`, which silently reclassified the acceptance viewport
+   into an exception meant for a different, narrower one — and the test
+   PASSED against sabotaged code. Fixed by hard-coding the expectation per
+   viewport instead of deriving it from runtime state.
 
 ## 9. Document map
 
@@ -281,12 +348,13 @@ because nothing this program touched overlaps them.
 | `00_PROGRAM_STATUS_AND_VERSION.md` | gate board + dated corrections (read the tail first) |
 | `03_CODEX_QUALITY_BACKLOG.md` | QG-01…QG-06 with per-item evidence |
 | `13_RUNTIME_GATE_EVIDENCE.md` | migrations, E12 runtime, 9/9 persistence chains |
-| `16_OPEN_RISKS_AND_LIMITATIONS.csv` | **38 rows** — the honest ledger, statuses reconciled to the code at this HEAD |
-| `19_VISUAL_CX_MATRIX.md` | visual matrix, the 24-cell re-verification, and the production-shape kebab finding |
+| `16_OPEN_RISKS_AND_LIMITATIONS.csv` | **39 rows** — the honest ledger, statuses reconciled to the code at this HEAD (S20-DOCS added `RISK-39`) |
+| `19_VISUAL_CX_MATRIX.md` | visual matrix, the 24-cell re-verification, the production-shape kebab finding, and (new) the `RISK-39` overlap-fix section |
 | `20_E15_TWO_CLEAN_ROUNDS.md` | the retraction, the corrected `c5b1b6e6b9` re-run (historical), and the final `f5cdc7b867` run with its NOT CLEAN adjudications |
 | `21_FOCUS_AND_CONTRAST.md` | 40 focus captures, 87+ contrast measurements, the depth-3 closure |
-| `02_EXECUTION_LEDGER.csv` | 40 rows × 20 columns, guard-validated |
+| `02_EXECUTION_LEDGER.csv` | 42 rows × 20 columns, guard-validated |
 | `screenshots/` | 100+ captures; `g4v3__*`/`g4v4__*` are the newest Table sets |
+| `docs/qa/ideas-table-overlap-s18-2026-08-12/` | 19 captures for the `RISK-39` Updated/actions overlap fix |
 
 ## 10. First commands to resume
 
@@ -302,5 +370,10 @@ Expected: all `rc=0`.
 
 Then read: this file → `24_FINAL_ACCEPTANCE.md` → `22_CODEX_REVIEW_REPORT.md` →
 `16_OPEN_RISKS_AND_LIMITATIONS.csv` → `19_VISUAL_CX_MATRIX.md`'s
-PRODUCTION-SHAPE section (the un-triaged 1280×800 finding is your first
-open question).
+PRODUCTION-SHAPE section and, immediately after it, the "RISK-39" section
+that closes the finding PRODUCTION-SHAPE raised. **The 1280×800
+kebab/Updated-column finding is CLOSED as of 2026-08-12 (S20-DOCS,
+`f86afc077f`, RISK-39) — it is no longer your first open question.** Your
+first open question is now whichever item heads the current residual list
+in `24_FINAL_ACCEPTANCE.md` §9 (ten items as of this pass, item 7 marked
+closed there).

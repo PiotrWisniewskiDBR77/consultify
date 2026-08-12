@@ -16,6 +16,25 @@ establish the real residual list — it is longer than one item. Sections 1,
 (`bcdda752b7`/`f5cdc7b867`) and are marked inline wherever this session added
 or corrected something.
 
+**Documentation reconciliation, 2026-08-12 (S20-DOCS, worktree
+`ideas-streams/s2-locale`, branch `codex/ideas-s20-docs`, no code changes):**
+code moved further after S14-EPICS wrote the section above — three more
+commits landed on top of `f5cdc7b867`: `a18b625a78` (S13-STICKY, pinned the
+row-actions kebab to the sticky right edge, fixing the reachability half of
+what §3's E07 row below called an open defect, but regressing the
+Updated/actions column boundary in the process), `f86afc077f` (S18-NOOVERLAP,
+closed that regression — two independent defects, both real-Chromium
+measured), and `a11441233a` (fixed a self-disarming loophole in the geometry
+test itself). **New code-final SHA: `f86afc077f`** (the last commit touching
+`src/`; `a11441233a` and the evidence-capture commit `6b28161bc4` that follow
+it touch only `tests/` and PNGs). `f5cdc7b867` stays on record below exactly
+where the epic table cites it, because that is genuinely where E15's numbers
+were measured — swapping the string without re-running E15 would assert a
+false thing at a new SHA. The specific item this closes: §3's E07 row and
+§9 item 7, both updated in place below with the evidence; every other
+residual in §3/§5/§7/§9/§11 is untouched. Full record: `16_OPEN_RISKS_AND_LIMITATIONS.csv`
+RISK-39.
+
 ---
 
 ## 1. Candidate identity, runtime and worktree
@@ -101,15 +120,15 @@ explicitly labelled as harness evidence.
 | E04 — Mind Map | **PARTIAL** | Registry-wired (72 actions). The DoD scenario itself — 18+ node scene from zero, 20 mixed rapid sibling ops never creating two editors, two cross-links + comments/evidence + AI proposal surviving persistence, first-level PPM fitting 1280×800 — has never run against any SHA in this program. One visual-only fix landed (depth-3 badge contrast, RISK-35) — does not touch the functional DoD. |
 | E05 — Whiteboard | **PARTIAL** | Registry-wired (55 actions); real object clipboard (WB-CLIPBOARD-01) is now genuinely fixed AND its own ledger row reconciled (`REPAIRED_RETESTED`, 3/3 unit test). The DoD scenario (12 mixed inserts with no complete overlap, three clusters/four links/freehand/group/lock/layer persistence, AI coaching on default labels, connector PPM + real copy/paste as one user flow) has never run end-to-end. |
 | E06 — Process Flow | **PARTIAL** | Registry-wired (43 actions); the named lane-delete silent-no-op defect is fixed for the human-visible path (a toast now refuses). Residual, not closed: Teresa's acknowledgement of a refused lane action can still read as an unchallenged success (RISK-30 — 58 UI-closure sites, including some lane actions, still degrade to `confirmed:false` with no chat correction). The DoD scenario (complaint scene with lanes/Yes-No/correction loop, one creation path, immediate lane naming, editable/deletable edges, initial `Not validated`, Fit 25–300%, context-correct Insert/Split) has never run. Node-cap **performance is NOT MEASURED** — see the ACCEPTED_DEFERMENT note under §5/§7 (RISK-31): the owner explicitly chose not to force a number out of a measurement machine that was carrying a 84–832 load average from Teams/WindowServer/`syspolicyd`/an `xattr` sweep/`fileproviderd`; that deferment covers the *performance number only*, not the rest of this epic's DoD. |
-| E07 — Table P15 | **PARTIAL** | Registry-wired (60 actions, the largest per-tool count); `RecordTemplateManager`'s dead-mount defect is fixed and re-verified (reachable from `TableToolbar`'s Tools menu, accessible-name test with sabotage/restore). **Open product defect, not fixed here, being fixed by a parallel stream:** at 1280×800 in the true production wrapper (`IdeasTableContent` inside `TableWithPreviewLayout`, verified live via `getBoundingClientRect()`), columns sum to 1354px (select 40 + title 560 + stage 150 + tags 230 + tool 190 + date 128 + actions 56) against a 1280px viewport — the row-actions kebab sits ~74px past the visible edge with no visible scroll affordance at rest (confirmed reachable by scroll, not confirmed discoverable); clean at 1440×900 and 1920×1080. See `19_VISUAL_CX_MATRIX.md` "PRODUCTION-SHAPE measurement". The DoD scenario (11-row portfolio persistence, field-wizard interaction budget, CSV append/update/replace + recovery) has never run. Row-cap performance at N≥5,000/10,000 is **NOT MEASURED** — same owner ACCEPTED_DEFERMENT as E06 (RISK-36's performance dimension only). |
+| E07 — Table P15 | **PARTIAL** | Registry-wired (60 actions, the largest per-tool count); `RecordTemplateManager`'s dead-mount defect is fixed and re-verified (reachable from `TableToolbar`'s Tools menu, accessible-name test with sabotage/restore). **Kebab-reachability defect at 1280×800 — CLOSED this pass (S20-DOCS, `f86afc077f`), see RISK-39.** The fix (S13-STICKY, `a18b625a78`) that pinned the row-actions kebab to a sticky right edge to close the ~74px-past-the-edge finding this row previously described introduced its own regression at the same boundary — a width-proportional overflow at 1280×800 rest (Defect A) and a constant 8px sliver still covered at max scroll on every viewport (Defect B). Both are now fixed: real-Chromium measurement (`tests/e2e/ideas-table-overlap-geometry.spec.ts`, 4/4) shows 0px overlap and no horizontal overflow at all at 1280×800 and 1440×900, and 0px overlap at `scrollLeft=max` at 720×450 and 200%-zoom reflow (720×450 still shows an arithmetically-unavoidable 435px overlap at rest — 794px of fixed non-title columns against a 720px viewport — explicitly owner-accepted as the narrow-viewport exception, not a residual defect). Falsified by sabotage (reverting the fix reproduces the overlap, red only at the acceptance viewport). 19 evidence captures: `docs/qa/ideas-table-overlap-s18-2026-08-12/`. The DoD scenario (11-row portfolio persistence, field-wizard interaction budget, CSV append/update/replace + recovery) has never run. Row-cap performance at N≥5,000/10,000 is **NOT MEASURED** — same owner ACCEPTED_DEFERMENT as E06 (RISK-36's performance dimension only). |
 | E08 — Business case and decision governance | **PARTIAL** | Model/service/routes/panel + 9-dimension scoring + 4-outcome decision log exist and compile; ships behind `ff_ideaBusinessCase`, **default OFF** — confirmed by reading the flag file's own doc comment pattern (same convention as E09's flag, checked directly). Migrations applied and persistence-proven **on isolated local ephemeral Postgres only** (`127.0.0.1:5433x`) — never demo, dev or production. The DoD scenario (stage gates enforcing completeness, decision-summary traceability, score weight/override exposure, distinct Approve/Reject/Return/Defer persistence, reopen-versioning) has never run against a real backend a real user can reach. |
 | E09 — Financial case | **PARTIAL** | Confirmed this session by direct read: the calculation engine is genuinely wired (`FinancialCaseView.tsx:32,76` imports and defaults to `computeIdeaFinancialCase` from `./engineAdapter`, not a stub), and the save path is real (`server/src/services/ideaFinancialCaseService.ts`, `GET|PUT /api/idea-financial-case/:ideaId`, SQL compare-and-swap OCC, 6/6 real-DB pass with a two-stage falsifiability sabotage). Ships behind `ff_ideaFinancialCase` — confirmed default OFF by reading `src/utils/ideaFinancialCaseFlag.ts` directly (query → localStorage → env → **default false**). Persistence proven **isolated local DB only**, never demo/dev/prod. Residuals the program's own doc admits: concurrency proven by a *sequential* stale-version test, not two genuinely simultaneous writers; `FinancialCaseSummaryPanel`/`FinancialConversionActions` render English strings ("No drivers yet", "Stale — recompute needed", "Convert to Financial Model") inside the Polish UI, not fixed. The full compute→save→reopen→mutate→stale→recompute→convert/readback chain has not run as one scenario. |
 | E10 — AI and Teresa | **NOT DONE** | Every one of 234 registry actions carries a `teresa: {}` block (R9, structural parity) — but no session in this program's history has Teresa (a real chat/LLM call) actually invoke a registered action and had the result observed end-to-end. "No silent AI mutation" is *partly* addressed (RISK-30: 6/6 bus-dispatch sites plus the lane UI-closure branch now report a truthful `confirmed`), but the fix's own residual undercuts the DoD directly: 58 other UI-closure sites still degrade to `confirmed:false`, and `UnifiedChatPanel.tsx` only posts a correction when `result.message` is set — so a silent `confirmed:false` leaves the model's already-streamed "done" reply on screen, unchallenged. "Unsupported claims marked" and "every request terminates in proposal/result/error/cancel" have not been exercised against a live model call anywhere in this program. |
 | E11 — Conversion, import, export and templates | **PARTIAL** | `ConversionPreviewDialog` is genuinely mounted in `IdeaMapWorkspace.tsx` (the program's own re-check found it at two render sites, not a dangling import); the mandatory-preview gate and the Mind Map single-node-Convert-no-longer-cascades fix are real. The `mapping_version` migration is applied and read-back-proven **isolated local DB only**. No end-to-end conversion (Idea → Initiative/Task/Decision/Report/Presentation) has ever been observed writing a real backlink and being read back on any real database. "Exports are real/openable files" and "import recovery passes" have never been runtime-tested. |
 | E12 — Collaboration, security and resilience | **PARTIAL — cannot be closed by visual acceptance at all, per explicit owner instruction; kept PARTIAL regardless of what follows.** | Confirmed this session by direct read, independent of the program's own claim: the confidentiality write path is real (`server/src/routes/my-work.routes.ts:3217-3228` validates and sets the column on `PUT /my-ideas/:id`, both GET routes feature-detect it back) and the UI control genuinely ships in the production mount (`src/components/MyWork/IdeaWorkspaceTools.tsx` Metadata group, wired from `IdeaMapWorkspace.tsx:367-377,3479-3482` `useIdeaConfidentialityGate`, itself mounted by `MyWorkHub.tsx` as described above — not a dev-render-only composition). Stated plainly, and not something owner acceptance can fix: the permission model is **ownership-only** (`WHERE id = ? AND user_id = ? AND organization_id = ?`) — there is no "who may lower a security classification" convention anywhere in this codebase, so `restricted` protects an Idea from *others*, not from its own owner downgrading it. This session did not independently re-verify reconnect/dedup/offline-retry behavior beyond what the program's own mock-based E12 suite already claims. |
-| E13 — Visual system and CX | **PARTIAL — NOT "only owner acceptance remains".** | The contrast, focus-visible, and 200%-reflow/rail-collision fixes are real and were falsified before being accepted (five WCAG failures raised to their floors with `c-*` tokens; 40 `:focus-visible` captures; a real rail-overlap bug found and fixed, re-verified in 2 independent spot-checks). But: **(a)** the E07 kebab-at-1280×800 defect above is a genuine, currently-open visual/reachability defect on one of doc-11 §6's three mandatory acceptance viewports, found this wave and not yet triaged into its own numbered risk row; **(b)** the doc-11 §6 visual/CX matrix that ran was a *targeted* matrix of previously-known-defect cells (24 checksummed cells across 2 tools), not the full Pass A/B rebuild-the-scene-from-zero walkthrough across all four tools at all three viewports the protocol actually specifies; **(c)** the owner's visual acceptance itself (rule #7) has genuinely not been sought and no agent may substitute for it. All three are real, independent residuals — (c) alone would not justify `NOT_READY` on its own if (a) and (b) were closed, which they are not. |
+| E13 — Visual system and CX | **PARTIAL — NOT "only owner acceptance remains".** | The contrast, focus-visible, and 200%-reflow/rail-collision fixes are real and were falsified before being accepted (five WCAG failures raised to their floors with `c-*` tokens; 40 `:focus-visible` captures; a real rail-overlap bug found and fixed, re-verified in 2 independent spot-checks). But: **(a)** ~~the E07 kebab-at-1280×800 defect above is a genuine, currently-open visual/reachability defect on one of doc-11 §6's three mandatory acceptance viewports, found this wave and not yet triaged into its own numbered risk row~~ — **CLOSED this pass (S20-DOCS, `f86afc077f`)**, see the E07 row above and `16_OPEN_RISKS_AND_LIMITATIONS.csv` RISK-39; no longer a residual on this row; **(b)** the doc-11 §6 visual/CX matrix that ran was a *targeted* matrix of previously-known-defect cells (24 checksummed cells across 2 tools), not the full Pass A/B rebuild-the-scene-from-zero walkthrough across all four tools at all three viewports the protocol actually specifies; **(c)** the owner's visual acceptance itself (rule #7) has genuinely not been sought and no agent may substitute for it. (b) and (c) are real, independent residuals, and (c) alone would not justify `NOT_READY` on its own if (b) were closed, which it is not — this row stays PARTIAL on (b) and (c). |
 | E14 — Accessibility, locale, performance and observability | **NOT DONE** | Real fixes landed and are falsified: 2 keyboard P0s (global Tab hijack; Shift+Tab spawning a node), 74 modal overlays given dialog semantics, `:focus-visible` on canvas nodes, 478 EN / 494 PL locale keys added and back-filled into de/es/ar/jp (**corrected this session by direct diff against `origin/demo@9d17cac114`** — the program's own risk-CSV text still carries a stale 445/461 figure in one place even though its own later correction and this package's own §7 already say 478/494; see the correction note under §5). Genuinely unmet: 6+ hardcoded-English strings remain unfixed and named (`MindMap3DView.tsx:178`, `WhiteboardNodeReactions.tsx:111`, plural-unsafe artifact-count strings in `TextBlockNode.tsx`/`StickyNoteNode.tsx`, plus E09's `FinancialCaseSummaryPanel`/`FinancialConversionActions` above); the pseudo-locale/error-copy matrix required by doc-11 §3.8/§6 has never run anywhere in this program (no artifact under that name exists); `Intl.PluralRules('jp')` silently resolves to `en-US` (confirmed live this session: `node -e "console.log(new Intl.PluralRules('jp').resolvedOptions())"` → `{locale:'en-US',...}`) — filed as RISK-38, not fixed; none of the three canvas tools has real viewport virtualization by default (Table's fix is a hard row cap, not virtualization; Whiteboard/Process Flow's `<ReactFlow>` instances pass no `onlyRenderVisibleElements`; Mind Map has the mechanism but its flag defaults OFF) — this is a structural gap, not merely an unmeasured one; actual p50/p95 SLOs were never measured for **any** of the four tools (RISK-31/RISK-36's owner ACCEPTED_DEFERMENT covers exactly two specific numbers — Process Flow node-cap speed and Table row-cap at N≥5,000 — not the general E14 SLO requirement, which was never attempted at all, deferred or otherwise); "no sensitive canvas content in analytics" has no evidence of any kind in this package — telemetry/content-safety is **NOT VERIFIED**, not merely unmentioned. |
-| E15 — Final regression and evidence closure | **NOT DONE** | The mechanical run (212 files / 1291 tests at `f5cdc7b867`) is honestly reported as **NOT CLEAN** by the program's own adjudication — 2 flagged items, both individually explained with evidence and neither an open product defect (§4). That honesty is real progress and is preserved below. But the epic's DoD is not met on two further, independent grounds this session confirmed directly: **(1) scope.** The command that produced those numbers (`20_E15_TWO_CLEAN_ROUNDS.md` §1) is `npx vitest run tests/components/MyWork tests/unit/mindmap "src/components/MyWork/**/__tests__/**"` — the Idea Workspace surface only. No "full automation/manual rerun" (the epic's own Scope line) has ever executed in this program's history; `00_PROGRAM_STATUS_AND_VERSION.md`'s own "Still open" list already says so ("No full-repo test run"). **(2) unaccepted P2/P3.** The DoD requires "P2/P3 all implemented or explicitly owner-accepted as named limitation." Of the 38-row risk CSV, 7–8 rows are genuinely OPEN with no owner sign-off of any kind: RISK-13/15/16/17/18 (pre-existing test-failure classes, confirmed but not fixed), RISK-24 (full-repo schema convergence broken on a fresh DB by both runners — the 1012-table isolated DB behind every persistence claim in this package is itself a partial schema), RISK-30's residual, and RISK-38. Only RISK-31/RISK-36's *performance measurement* now carries an explicit owner ACCEPTED_DEFERMENT (§5) — every other open row does not. The new E07 kebab finding is not yet even a numbered risk row. |
+| E15 — Final regression and evidence closure | **NOT DONE** | The mechanical run (212 files / 1291 tests at `f5cdc7b867`) is honestly reported as **NOT CLEAN** by the program's own adjudication — 2 flagged items, both individually explained with evidence and neither an open product defect (§4). That honesty is real progress and is preserved below. But the epic's DoD is not met on two further, independent grounds this session confirmed directly: **(1) scope.** The command that produced those numbers (`20_E15_TWO_CLEAN_ROUNDS.md` §1) is `npx vitest run tests/components/MyWork tests/unit/mindmap "src/components/MyWork/**/__tests__/**"` — the Idea Workspace surface only. No "full automation/manual rerun" (the epic's own Scope line) has ever executed in this program's history; `00_PROGRAM_STATUS_AND_VERSION.md`'s own "Still open" list already says so ("No full-repo test run"). **(2) unaccepted P2/P3.** The DoD requires "P2/P3 all implemented or explicitly owner-accepted as named limitation." Of the 39-row risk CSV, 7–8 rows are genuinely OPEN with no owner sign-off of any kind: RISK-13/15/16/17/18 (pre-existing test-failure classes, confirmed but not fixed), RISK-24 (full-repo schema convergence broken on a fresh DB by both runners — the 1012-table isolated DB behind every persistence claim in this package is itself a partial schema), RISK-30's residual, and RISK-38. Only RISK-31/RISK-36's *performance measurement* now carries an explicit owner ACCEPTED_DEFERMENT (§5) — every other open row does not. The E07 kebab/Updated-column finding is now `RISK-39`, RESOLVED (S20-DOCS, `f86afc077f`) — no longer open, does not add to this count. |
 
 ## 4. E15 — final regression numbers (run at `f5cdc7b867`)
 
@@ -172,24 +191,27 @@ neither an open product defect:
 
 ## 5. P0–P3 totals and states
 
-Computed directly from `16_OPEN_RISKS_AND_LIMITATIONS.csv` (38 rows, real CSV
+Computed directly from `16_OPEN_RISKS_AND_LIMITATIONS.csv` (39 rows as of this
+pass — S20-DOCS added `RISK-39`, resolved, for the S13-STICKY/S18-NOOVERLAP
+regression-and-fix cycle closed this session, see §3's E07 row — real CSV
 parser, not text search):
 
 | Severity | Total rows | RESOLVED / CLOSED | PARTIAL | OPEN |
 |---|---|---|---|---|
 | P0 | 3 | **3** | 0 | 0 |
-| P1 | 16 | 12 | 4 | 0 |
+| P1 | 17 | 13 | 4 | 0 |
 | P2 | 11 | 7 | 1 | 3 |
 | P3 | 8 | 3 | 0 | 5 |
-| **Total** | **38** | **25** | **5** | **8** |
+| **Total** | **39** | **26** | **5** | **8** |
 
 **Zero open P0. Zero open P1** (the 4 P1 PARTIAL rows are RISK-19*, RISK-22,
 RISK-31, RISK-36 — each has a real, named, non-blocking residual, not an
-unaddressed core defect). All 8 fully-OPEN rows are P2/P3, individually
-itemized in the CSV with their own evidence. Independently recounted this
-session directly from the CSV with a real parser (`csv.DictReader`, not text
-search) — the P0 (3/3 resolved) and P1 (12 resolved/4 partial/0 open) rows
-match exactly; the P2 partial/open split depends on how `RISK-23` ("MITIGATED
+unaddressed core defect; `RISK-39` is P1 and RESOLVED, not one of the four).
+All 8 fully-OPEN rows are P2/P3, individually itemized in the CSV with their
+own evidence. Independently recounted this session directly from the CSV
+with a real parser (`csv.DictReader`, not text search) — the P0 (3/3
+resolved) and P1 (13 resolved/4 partial/0 open, post-`RISK-39`) rows match
+exactly; the P2 partial/open split depends on how `RISK-23` ("MITIGATED
 in the test... but the same trap applies to every other column with a
 non-null DEFAULT") is categorized — the CSV counts it OPEN, which is a
 defensible reading (the underlying trap is unresolved), not an error.
@@ -298,7 +320,8 @@ ended with a single external/owner blocker line. That is not the complete
 residual list; the epic table in §3 establishes eleven residuals that are
 not the owner's visual acceptance and would each independently need to close
 before `READY_FOR_CODEX_REVIEW`. Full detail: `16_OPEN_RISKS_AND_LIMITATIONS.csv`
-(38 rows).
+(39 rows as of S20-DOCS, 2026-08-12 — see item 7 below, the one item of the
+eleven that has since closed).
 
 **Technical/process residuals (not fixable by owner acceptance):**
 
@@ -324,17 +347,27 @@ before `READY_FOR_CODEX_REVIEW`. Full detail: `16_OPEN_RISKS_AND_LIMITATIONS.csv
    security classification" convention exists in this codebase; `restricted`
    protects an Idea from others, not from its own owner. This is a genuine
    product-design gap, not something a screenshot review resolves.
-7. **New, open product defect (not yet a numbered risk row):** at exactly
+7. ~~**New, open product defect (not yet a numbered risk row):** at exactly
    1280×800 — one of doc-11 §6's three mandatory acceptance viewports — the
    Idea Table's row-actions kebab sits ~74px past the visible viewport edge
    in the true production wrapper (columns sum to 1354px: select 40 + title
    560 + stage 150 + tags 230 + tool 190 + date 128 + actions 56), with no
-   visible scroll affordance at rest. Reachable via a real `overflow-auto`
-   container one component down (confirmed live this session by re-reading
-   `19_VISUAL_CX_MATRIX.md`'s DOM measurement), but not discoverable without
-   prior knowledge. **Being fixed by a parallel stream; this document records
-   it as open and does not mark it fixed** — the owner will supply the
-   closing evidence when that stream lands.
+   visible scroll affordance at rest.~~ **CLOSED, S20-DOCS, 2026-08-12
+   (`f86afc077f`), now filed as `RISK-39`.** The fix that closed the
+   reachability half of this finding (S13-STICKY, `a18b625a78`, sticky-right
+   pin on the actions column) itself regressed the same boundary — a
+   width-proportional overflow at 1280×800 rest and a constant 8px sliver
+   still covered at max scroll on every viewport. Both are now fixed and
+   real-Chromium measured: 0px overlap and no horizontal overflow at all at
+   1280×800/1440×900; 0px overlap at `scrollLeft=max` at 720×450/200%-zoom
+   (720×450 still shows an arithmetically-unavoidable 435px overlap at rest,
+   owner-accepted as the narrow-viewport exception, not a residual defect).
+   Falsified by sabotage (reverting the fix reproduces the overlap, red only
+   at the acceptance viewport). Evidence: `docs/qa/ideas-table-overlap-
+   s18-2026-08-12/` (19 captures); `tests/e2e/ideas-table-overlap-geometry.spec.ts`
+   (4/4). Full record: `16_OPEN_RISKS_AND_LIMITATIONS.csv` RISK-39. **This is
+   the one item of the original eleven that has closed — the other ten
+   remain open, as stated below.**
 8. **RISK-24 (P2)** — full-repo schema convergence is broken on a fresh
    database by both runners; the 1012-table isolated DB behind every
    persistence claim in this package is itself a partial schema. Two new
@@ -353,7 +386,7 @@ before `READY_FOR_CODEX_REVIEW`. Full detail: `16_OPEN_RISKS_AND_LIMITATIONS.csv
     attempted, deferred or otherwise); telemetry content-safety is NOT
     VERIFIED, with no evidence of any kind found in this package.
 11. **E15's regression scope is the Idea Workspace surface, not the full
-    repo**, and 7–8 of the CSV's 38 rows are genuinely OPEN with no owner
+    repo**, and 7–8 of the CSV's 39 rows are genuinely OPEN with no owner
     sign-off (RISK-13/15/16/17/18/24/30-residual/38) — the DoD's "P2/P3 all
     implemented or explicitly owner-accepted as named limitation" is not met.
 
@@ -364,16 +397,20 @@ evidence, not silently rounded up.
 **External/owner blocker (RISK-19 only):** the owner's visual acceptance
 (rule #7, no agent may substitute for it) closes exactly one thing —
 RISK-19/the visual-CX matrix's technical content. It does not close any of
-the eleven items above, and this document does not claim it would.
+the ten still-open items above (item 7 closed this pass, S20-DOCS — see
+above), and this document does not claim it would.
 
 ## 10. Evidence and ledger paths
 
-- `16_OPEN_RISKS_AND_LIMITATIONS.csv` — 38 rows, 7 columns, the honest risk
+- `16_OPEN_RISKS_AND_LIMITATIONS.csv` — 39 rows, 7 columns, the honest risk
   register.
-- `02_EXECUTION_LEDGER.csv` — 40 rows, 20 columns, `check-ledger-csv.sh` rc=0.
+- `02_EXECUTION_LEDGER.csv` — 42 rows, 20 columns, `check-ledger-csv.sh` rc=0.
 - `13_RUNTIME_GATE_EVIDENCE.md` — 9 persistence chains.
 - `19_VISUAL_CX_MATRIX.md`, `21_FOCUS_AND_CONTRAST.md` — visual/CX/contrast
   evidence.
+- `docs/qa/ideas-table-overlap-s18-2026-08-12/` — 19 captures for the
+  `RISK-39` Updated/actions overlap fix (1280×800, 1440×900, 720×450,
+  200%-zoom, light+dark, plus 1280×800 interaction states).
 - `10_FINANCIAL_CASE_ACCEPTANCE.md` — E09's full history through this wave's
   closure.
 - `20_E15_TWO_CLEAN_ROUNDS.md` — the final `f5cdc7b867` run and its NOT CLEAN
@@ -392,26 +429,32 @@ prior wording** ("the single named residual is the owner's visual
 acceptance"). That claim does not survive an epic-by-epic check: §3
 establishes that 15 of 16 epics (E01, E02, E03, E04, E05, E06, E07, E08, E09,
 E10, E11, E12, E13, E14, E15 — everything except E00) carry at least one
-PARTIAL/NOT DONE/NOT VERIFIED verdict, and §9 lists eleven concrete residuals
-that are not the owner's visual acceptance and that no amount of owner
-screenshot review would close: two epics (E01, E03) with essentially no
-acceptance evidence at all; four tools (E04–E07) whose registry wiring is
-real but whose actual DoD scenario has never been run; three features (E08,
-E09, E11) proven only against an isolated local database and, for two of
-them, shipping behind default-OFF flags; Teresa/AI with zero real-model
-runtime verification (E10); a permission-model gap in E12 that visual review
-cannot touch; a newly-confirmed, currently open UI defect (E07's kebab at
-1280×800, being fixed by a parallel stream); locale/a11y/performance gaps
-that were never measured, not merely deferred, outside two specific numbers
-the owner explicitly chose to defer; and an E15 regression run that is
-honestly NOT CLEAN, scoped to less than the full repository, and still
-carries several genuinely open, un-accepted P2/P3 rows.
+PARTIAL/NOT DONE/NOT VERIFIED verdict, and §9 originally listed eleven
+concrete residuals that are not the owner's visual acceptance and that no
+amount of owner screenshot review would close (one of the eleven — the E07
+kebab/Updated-column defect — has since closed this session, S20-DOCS,
+`f86afc077f`/`RISK-39`; the other ten have not): two epics (E01, E03) with
+essentially no acceptance evidence at all; four tools (E04–E07) whose
+registry wiring is real but whose actual DoD scenario has never been run;
+three features (E08, E09, E11) proven only against an isolated local
+database and, for two of them, shipping behind default-OFF flags; Teresa/AI
+with zero real-model runtime verification (E10); a permission-model gap in
+E12 that visual review cannot touch; locale/a11y/performance gaps that were
+never measured, not merely deferred, outside two specific numbers the owner
+explicitly chose to defer; and an E15 regression run that is honestly NOT
+CLEAN, scoped to less than the full repository, and still carries several
+genuinely open, un-accepted P2/P3 rows.
 
 None of this erases the real, falsified, evidence-backed work this program
 has done — the contrast fixes, the two keyboard P0s, the E09 financial-case
-save path, the E12 write path and UI, the RecordTemplateManager fix, and the
-honest NOT CLEAN E15 adjudication are all genuine and stand as recorded in
-§3–§8. But `READY_FOR_CODEX_REVIEW` requires all of E00–E15 closed under the
-full DoD, and that is not this package's state. The owner's visual
-acceptance remains necessary for RISK-19 specifically and cannot be supplied
-by any agent — but it is one item on a longer list, not the list.
+save path, the E12 write path and UI, the RecordTemplateManager fix, the
+Idea Table Updated/actions overlap fix (`RISK-39`), and the honest NOT CLEAN
+E15 adjudication are all genuine and stand as recorded in §3–§8. But
+`READY_FOR_CODEX_REVIEW` requires all of E00–E15 closed under the full DoD,
+and that is not this package's state — closing one of eleven residuals is
+real progress, not the finish line, and the owner has already rejected
+"your acceptance is the only blocker" as a framing once; this document does
+not repeat that mistake in a smaller form by treating "one fewer residual"
+as "basically done." The owner's visual acceptance remains necessary for
+RISK-19 specifically and cannot be supplied by any agent — but it is one
+item on a longer list, not the list.

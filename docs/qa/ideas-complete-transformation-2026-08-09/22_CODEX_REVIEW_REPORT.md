@@ -13,6 +13,15 @@ formal recommendation. This report exists so the review can start from facts
 rather than from a summary, and so the reviewer knows exactly which claims are
 backed by what.
 
+**Read §7 before trusting §1's "what blocks readiness now" line below.** This
+report's identity block (`bcdda752b7`/`f5cdc7b867`) and its §1 framing predate
+two later corrections: the owner rejected "only the owner's visual acceptance
+remains" as this program's residual (S14-EPICS, 2026-08-12 — the real list is
+in `24_FINAL_ACCEPTANCE.md` §3/§9/§11), and further code landed after
+`f5cdc7b867` closing one item of that list (S20-DOCS, 2026-08-12,
+`RISK-39`). §7 states both plainly rather than silently editing this report's
+history.
+
 ---
 
 ## 0. `origin/demo` moved during this wave — read before trusting any A/B claim below
@@ -141,11 +150,10 @@ Stated plainly, because the value of the rest depends on it.
 - **RISK-24 (schema convergence) is unchanged and still broken** on both
   runners, on a fresh database. Two new concrete instances were found this
   wave (see `16_OPEN_RISKS_AND_LIMITATIONS.csv`), not fixed.
-- **A NEW, narrower visual finding is open and untriaged**: at exactly
-  1280×800, the Idea Table's row-actions kebab is out of frame at rest in the
-  true production wrapper, with no visible scroll affordance. It is reachable
-  (a real scroll container exists one component down), not unreachable — but
-  not discoverable without prior knowledge. Not yet filed as its own risk row.
+- **The visual finding this report originally flagged as "open and
+  untriaged"** — at exactly 1280×800, the Idea Table's row-actions kebab out
+  of frame at rest in the true production wrapper — **has since been filed
+  and CLOSED**: `RISK-39`, S20-DOCS, 2026-08-12, `f86afc077f`. See §7.
 - **RISK-38 (the `jp` plural-rules defect) is filed, not fixed.** It predates
   this program and was explicitly left out of scope.
 - **E15's mechanical verdict is NOT CLEAN, and this report does not describe
@@ -200,7 +208,7 @@ file boundaries. Both fixed at integration (`f5cdc7b867`).
 ## 5. Where to look first
 
 1. `24_FINAL_ACCEPTANCE.md` — the formal recommendation and closure table.
-2. `16_OPEN_RISKS_AND_LIMITATIONS.csv` — 38 rows, statuses reconciled to the
+2. `16_OPEN_RISKS_AND_LIMITATIONS.csv` — 39 rows, statuses reconciled to the
    code at this SHA, in both directions (things closed *and* things newly
    found).
 3. `13_RUNTIME_GATE_EVIDENCE.md` — the strongest evidence in the package,
@@ -209,8 +217,8 @@ file boundaries. Both fixed at integration (`f5cdc7b867`).
    NOT CLEAN adjudications.
 5. `10_FINANCIAL_CASE_ACCEPTANCE.md` §6–§7 — RISK-12's full closure and the
    two-stage OCC sabotage.
-6. `19_VISUAL_CX_MATRIX.md` — the PRODUCTION-SHAPE section carries the one
-   new, untriaged finding from this wave.
+6. `19_VISUAL_CX_MATRIX.md` — the PRODUCTION-SHAPE section, and immediately
+   after it, the "RISK-39" section that closes the finding it raised.
 
 ## 6. Reproducing the evidence
 
@@ -225,3 +233,50 @@ strings · 7 events · 4 API methods).
 Real-DB suites need an isolated local Postgres plus **both** `RUN_DB_TESTS=1`
 and `MOCK_DB=false`; recipe in `13_RUNTIME_GATE_EVIDENCE.md` §2. Never demo,
 never production.
+
+---
+
+## 7. What changed after this report was written
+
+**S14-EPICS (2026-08-12, no code changes).** This report's §1 line — "What
+blocks readiness now: only the owner's visual acceptance" — is the exact
+framing the owner explicitly rejected the same day. An independent
+epic-by-epic investigation established eleven concrete, non-visual
+residuals; `24_FINAL_ACCEPTANCE.md` §3/§9/§11 is the corrected, current
+source of truth for epic status and residuals, not this section of this
+report.
+
+**S20-DOCS (2026-08-12, worktree `ideas-streams/s2-locale`, branch
+`codex/ideas-s20-docs`, documentation only).** Code moved further after this
+report's `f5cdc7b867` identity. Three commits — `a18b625a78` (S13-STICKY),
+`19f78356f9` (S17-OVERLAPTEST), `f86afc077f` (S18-NOOVERLAP) — plus a
+test-only fix (`a11441233a`) and an evidence-capture commit (`6b28161bc4`)
+closed one of the eleven residuals from S14-EPICS: the Idea Table
+Updated/actions column-overlap regression at the 1280×800 acceptance
+viewport, filed as `RISK-39` and RESOLVED. **New code-final SHA:
+`f86afc077f`.** This closes exactly one item; the other ten residuals
+`24_FINAL_ACCEPTANCE.md` §9 lists remain open, and the recommendation stays
+`NOT_READY` — see that document for the current, complete list.
+
+**Two methodological findings from the RISK-39 cycle, worth carrying
+forward because they generalize beyond this one ticket:**
+
+- A sabotage that breaks *compilation*, not just the target logic, produces
+  a red result for the wrong reason — the first sabotage attempt against
+  the fix used a blunt regex that also turned a variable declaration into a
+  syntax error, failing the build and reddening all four tested viewports
+  regardless of whether the real defect was present. Confirm the sabotaged
+  code still compiles (e.g. an `esbuild` syntax check) before trusting a
+  red.
+- A test that derives its own pass/fail strictness from measured runtime
+  state, instead of a fixed per-case expectation, can be disarmed by the
+  very regression it exists to catch. The first version of the geometry
+  contract decided whether the acceptance viewport had to be overlap-free
+  by checking the measured `scrollMax` at that instant; a reverted fix
+  reintroduces overflow, which reintroduces a nonzero `scrollMax`, which
+  silently reclassified the acceptance viewport into an exception meant for
+  a different, narrower one — and the test **passed** against sabotaged
+  code. Fixed by hard-coding the expectation per viewport.
+
+Full detail: `16_OPEN_RISKS_AND_LIMITATIONS.csv` RISK-39,
+`19_VISUAL_CX_MATRIX.md`'s "RISK-39" section, `RESUME_HANDOFF.md` §8.

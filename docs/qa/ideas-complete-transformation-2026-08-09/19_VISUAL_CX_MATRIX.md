@@ -510,3 +510,120 @@ across the set is whether the kebab column fits inside the viewport at all, exac
   scrollbar in the screenshot" as final.
 - Whether 1280×800 is genuinely the narrowest realistic viewport this table needs to support, or
   whether doc-11 §6 intends something narrower — not re-read in full for this task.
+
+---
+
+## UPDATE 2026-08-12 (S20-DOCS) — RISK-39: the kebab-reachability fix regressed the
+## Updated column, and that regression is now closed
+
+The PRODUCTION-SHAPE finding directly above ("at exactly 1280×800 the kebab is
+genuinely not in frame at rest") was picked up and fixed in the code by
+**S13-STICKY** (`a18b625a78`): the row-actions column was pinned
+`position: sticky; right: 0` instead of relying on horizontal scroll. That
+closed the reachability problem this section measured — but it opened a
+**new, different** one at the same boundary: the pinned column now sat on
+top of the `Updated` (date) column instead of merely being scrollable past
+it. The owner reviewed the result, rejected the framing that this was an
+acceptable "date visible OR action visible" trade-off, and classified it as
+a regression introduced by the sticky fix — to be fixed outright. It has
+been. Full write-up, falsifiability record and the two methodological
+findings from this cycle: `16_OPEN_RISKS_AND_LIMITATIONS.csv` RISK-39.
+
+### The four-viewport matrix (real Chromium, `tests/e2e/ideas-table-overlap-geometry.spec.ts`)
+
+| Viewport | at rest | at `scrollLeft=max` |
+|---|---|---|
+| 1280×800 | **0px overlap, scrollMax=0** (no horizontal overflow at all) | n/a |
+| 1440×900 | **0px, no overflow** | n/a |
+| 720×450 | 435px (arithmetically unavoidable — 794px of fixed, non-title columns vs a 720px viewport; owner-accepted as the narrow-viewport exception, not a defect) | **0px** |
+| 200% reflow | 515px | **0px** |
+
+The fix has two independent parts, both scoped to
+`src/components/MyWork/IdeasTableContent.tsx`:
+
+- **Width-proportional (Defect A).** The title column now flexes —
+  `renderedTitleWidth = clamp(360, min(persistedTitle, available - fixedSum), 900)`,
+  driven by a `ResizeObserver` on the scroll container and reusing the
+  existing `IDEAS_RESIZE_BOUNDS`. A manual drag-resize is still honoured
+  when there is room, since the persisted width stays the ceiling.
+  `tableMinWidth` was switched to the rendered width — otherwise the
+  table's own inline `minWidth` re-forced the very overflow the cells had
+  just stopped producing.
+- **Constant, viewport-independent (Defect B).** The sticky cell's `right`
+  offset is compensated by the scroll container's own trailing padding
+  (`TableWithPreviewLayout.tsx`'s `pr-2`), read from computed style, never
+  hard-coded, so the sticky anchor (padding-box edge) and `scrollWidth`
+  (border-box edge) stop disagreeing by that fixed 8px at every viewport.
+
+`TableWithPreviewLayout.tsx` (39 importers) was deliberately not touched —
+the scroll container is found by walking up from a local ref instead.
+
+### Falsifiability
+
+Sabotage variant 1 (revert Defect A's fix, keep the sticky pin and Defect
+B's fix): **1 failed / 3 passed**, red only at 1280×800, with the message
+`Updated column overlaps the pinned actions column by 75px
+(updated.right=1299, actions.left=1224)`. The selectivity is the point —
+only the acceptance viewport should break, and it is the only one that
+does.
+
+**Two things almost went wrong and are recorded so the next person does not
+repeat them:**
+
+1. The first sabotage attempt used a blunt regex that also rewrote the
+   `const renderedTitleWidth` declaration into a syntax error, so Vite
+   failed to compile and all four viewports "failed" for the wrong reason.
+   A red result is not evidence until you know *why* it is red. Re-run
+   surgically (usage sites only), with an `esbuild` syntax check confirming
+   the sabotaged code still compiled, before trusting the red.
+2. The first version of the geometry test derived its own overlap-at-rest
+   strictness from measured runtime state (`atZero.scrollMax === 0`), which
+   let sabotage variant 1 — restoring the overflow — silently reclassify
+   1280×800 into the "narrow viewport, overlap-at-rest-tolerated" exception
+   meant only for 720×450/200%-zoom, and the test **passed against
+   sabotaged code**. Fixed (`a11441233a`) by hard-coding a
+   `requireNoOverlapAtRest` flag per viewport instead of deriving it live.
+   A test that derives its own strictness from the state it is guarding can
+   be disarmed by the very defect it exists to catch.
+
+The jsdom suite (`IdeasTableContent.columnOverlap.test.tsx`) was reduced to
+the two assertions jsdom can genuinely prove (sticky-class presence, kebab
+reachability by role and accessible name) — no assertion anywhere now
+relies on a frozen stubbed rect; geometry is measured in a real browser.
+
+### Evidence
+
+19 captures: `docs/qa/ideas-table-overlap-s18-2026-08-12/` — 1280×800,
+1440×900, 720×450 and 200%-zoom reflow, light and dark, plus five
+1280×800 interaction states (hover, selected-with-preview, menu opened by
+mouse, menu opened by keyboard, focus ring on the kebab). 720×450 and the
+200% case are captured at rest **and** at `scrollLeft=max`, because a
+pinned cell overlaps different columns at different scroll positions and a
+single-position capture proves nothing about the scrolled state. 1280×800
+light was reviewed by eye: `Updated` renders in full, dates read
+`15/07/2026` rather than the previously-clipped `15/07/:`, the kebab is
+present in all five rows, and the date column ends cleanly before the
+pinned column.
+
+### Gates at this SHA (`f86afc077f`)
+
+Client `tsc` exit 0 / 0 errors; targeted table suites 24/24; Playwright
+contract 4/4; `check-actions.sh` 234·124·7·4 unchanged; `check-list-canon`,
+`check-artefakt`, `check-focus-canon`, `check-gestosc` (explicit files) all
+rc=0. No `src/`, `server/`, `tests/`, or `dev-render/` files were touched by
+this documentation pass (S20-DOCS) itself.
+
+### What this does NOT establish
+
+- This closes the PRODUCTION-SHAPE finding above and the E07/E13 residuals
+  that cited it (`24_FINAL_ACCEPTANCE.md` §3/§9, updated in the same pass).
+  It does not touch any other residual on this program's ledger — E04–E07's
+  own DoD scenarios, row-cap performance at N≥5,000/10,000, and everything
+  else `24_FINAL_ACCEPTANCE.md` §9 still lists remain exactly as open as
+  they were.
+- No native-browser (non-headless) re-check of scrollbar affordance was
+  done for this fix specifically — the 1280×800/1440×900 cells no longer
+  need one (zero overflow), so the open question from the PRODUCTION-SHAPE
+  section about scrollbar visibility is now moot for those two cells; it
+  remains unmeasured for 720×450/200%-zoom, where scrolling is still
+  required by design.

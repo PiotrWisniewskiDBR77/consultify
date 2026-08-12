@@ -612,3 +612,109 @@ pass believed.
 
 **Recommendation stays `NOT_READY`** — for the eleven-plus-item list above,
 not for a single owner-acceptance line.
+
+---
+
+## UPDATE 2026-08-12 (S20-DOCS) — one of the eleven residuals closed; new
+## code-final SHA; recommendation unchanged
+
+Worktree `ideas-streams/s2-locale`, branch `codex/ideas-s20-docs`,
+documentation reconciliation only — no `src/`, `server/`, `tests/`, or
+`dev-render/` changes made by this pass itself. This section records code
+that landed on this branch's history before this pass started, and
+reconciles the documentation to it.
+
+### Position vs `origin/demo`
+
+`git rev-list --left-right --count origin/demo...HEAD` from this worktree
+now reads **71 ahead, 2 behind** — up from the "62 ahead, 2 behind" cited
+earlier in this file and in `RESUME_HANDOFF.md`/`24_FINAL_ACCEPTANCE.md`/
+`22_CODEX_REVIEW_REPORT.md` (the 9 additional commits are the 5 code/test/
+evidence commits this section documents below, plus 4 documentation-only
+commits from the S14-EPICS/S11-DOCS passes that ran between them). Still
+**2 behind** — unchanged, the same "Slack Command Center hardening" drift
+those documents already establish has zero file overlap with this program.
+Not swept through every older occurrence of "62 ahead" in this package —
+those are historical statements about the position *at the SHA each of
+those documents names*, not claims about the position today.
+
+### What landed
+
+Three commits on top of the `f5cdc7b867` identity the S14-EPICS section
+above cites, plus a test-only fix and an evidence-capture commit:
+
+| Commit | What it did |
+|---|---|
+| `a18b625a78` (S13-STICKY) | Pinned the Idea Table's row-actions kebab to `position: sticky; right: 0`, closing the reachability half of the 1280×800 finding S14-EPICS listed as item 7 of its residual list — but regressed the same boundary in the process (see below). |
+| `19f78356f9` (S17-OVERLAPTEST) | Pinned a contract test for the resulting Updated/actions column overlap, using frozen jsdom-stub geometry captured from a real Playwright run. |
+| `f86afc077f` (S18-NOOVERLAP) | Fixed both regressions the sticky pin introduced (see below) and promoted the frozen jsdom-stub contract to a real Playwright measurement across the required viewport matrix. **New code-final SHA.** |
+| `a11441233a` | Fixed a self-disarming loophole in that Playwright spec itself (see "Two methodological findings" below). |
+| `6b28161bc4` | 19 evidence captures, `docs/qa/ideas-table-overlap-s18-2026-08-12/`. |
+
+### The regression, and why the owner rejected calling it a trade-off
+
+S13-STICKY's sticky-right pin introduced two independent, real-browser-
+measured defects at the Updated/actions boundary in
+`src/components/MyWork/IdeasTableContent.tsx`: a width-proportional
+overflow at 1280×800 rest (title column's real budget was 478px against a
+hard 560px width, given 794px of other fixed columns plus 8px of scroller
+padding at that viewport), and a constant 8px sliver of the Updated column
+still covered at maximum scroll at every viewport (the sticky cell's
+`right: 0` pins to the scroll container's padding-box edge while
+`scrollWidth` excludes that same padding, so scrolling to `scrollWidth`
+falls 8px short of the sticky cell's true position). **The owner rejected
+framing this as an acceptable "date visible OR action visible" trade-off**
+and classified it as a regression introduced by the sticky fix, to be fixed
+outright — not accepted as a named limitation. It has been: S18-NOOVERLAP
+closed both defects, real-Chromium measured 0px overlap at 1280×800/1440×900
+(the two required non-degraded viewports) and 0px overlap at
+`scrollLeft=max` on 720×450/200%-zoom (the two viewports where fixed
+columns alone already exceed the viewport — a 435px overlap at rest there
+is arithmetically unavoidable and owner-accepted, not a residual defect).
+Falsified by sabotage (revert the fix, keep the sticky pin: 1 failed / 3
+passed, red only at the acceptance viewport, with a named px-overlap
+message). Full record, including blast-radius verification and the
+rejected-and-tested alternatives nobody should retry:
+`16_OPEN_RISKS_AND_LIMITATIONS.csv` `RISK-39`.
+
+### Two methodological findings, recorded because they generalize
+
+1. **A sabotage that breaks compilation is not evidence of anything.** The
+   first attempt at re-proving the regression used a blunt regex that also
+   turned a variable declaration into a syntax error; the build failed and
+   every tested viewport "failed" for the wrong reason. A red result is not
+   evidence until you know *why* it is red — confirm the sabotaged code
+   still compiles (e.g. an `esbuild` syntax check) before trusting a red.
+2. **A test that derives its own strictness from the state it is guarding
+   can be disarmed by the very defect it exists to catch.** The first
+   version of `tests/e2e/ideas-table-overlap-geometry.spec.ts` decided
+   whether the acceptance viewport had to be overlap-free at rest by
+   checking the *measured* `scrollMax` at that instant. A reverted fix
+   reintroduces overflow, which reintroduces a nonzero `scrollMax`, which
+   silently reclassified the acceptance viewport into an exception meant
+   for a different, narrower one — and the test **passed** against
+   sabotaged code. Fixed (`a11441233a`) by hard-coding a
+   `requireNoOverlapAtRest` expectation per viewport instead of deriving it
+   live.
+
+### What this does and does not change
+
+- **`24_FINAL_ACCEPTANCE.md` §3's E07 row and §9's item 7** are updated in
+  place by this same pass to reflect the closure, with the evidence cited
+  there.
+- **`24_FINAL_ACCEPTANCE.md`'s §5 totals table** now reads 39 CSV rows / 17
+  P1 rows (13 resolved, up from 12) to include `RISK-39`.
+- **Every other residual in the eleven-item list above is untouched** — E01,
+  E03, E04–E07's own DoD scenarios, E08/E09/E11's isolated-DB-only
+  persistence, E10's zero real-model verification, E12's permission-model
+  gap, E14's unmeasured SLOs, and E15's scoped, NOT-CLEAN regression run all
+  remain exactly as open as this section already recorded them.
+- **Recommendation stays `NOT_READY`.** Closing one of eleven residuals is
+  real progress, not the finish line — the owner already rejected "your
+  acceptance is the only blocker" once, and this update does not repeat
+  that mistake in a smaller form by treating "one fewer item" as "basically
+  done."
+
+Full detail: `16_OPEN_RISKS_AND_LIMITATIONS.csv` RISK-39,
+`19_VISUAL_CX_MATRIX.md`'s "RISK-39" section, `24_FINAL_ACCEPTANCE.md`
+§3/§5/§9/§11, `RESUME_HANDOFF.md`, `22_CODEX_REVIEW_REPORT.md` §7.
