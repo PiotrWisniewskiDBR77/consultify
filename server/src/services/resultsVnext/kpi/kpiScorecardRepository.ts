@@ -11,17 +11,34 @@
  *   (a) `publishReviewSnapshot` (kpiScorecardCommands.ts) already filters
  *       the materialized payload to items the PUBLISHER could see at
  *       publish time (decision #6a).
- *   (b) THIS FILE's `getPublishedSnapshot` additionally re-filters the
- *       stored `snapshot_payload.items` to items the REQUESTING READER can
- *       currently see (decision #6b, the Integration Owner's own addition
- *       over both draft passes) — computed and applied at response time,
- *       NEVER persisted, NEVER changing `content_hash` (the hash validates
- *       the full *stored* row; what changes is what is *served* to an
- *       under-privileged caller). Without (b), a snapshot published by an
- *       authorized user who could see a restricted KPI would leak that
- *       KPI's frozen values to any other viewer who merely has
- *       scorecard-level visibility — exactly the design doc's own named P0
- *       risk ("Restricted KPI leaks in Scorecard totals").
+ *   (b) THIS FILE additionally re-filters the stored `snapshot_payload.items`
+ *       to items the REQUESTING READER can currently see (decision #6b, the
+ *       Integration Owner's own addition over both draft passes) — computed
+ *       and applied at response time, NEVER persisted, NEVER changing
+ *       `content_hash` (the hash validates the full *stored* row; what
+ *       changes is what is *served* to an under-privileged caller). Without
+ *       (b), a snapshot published by an authorized user who could see a
+ *       restricted KPI would leak that KPI's frozen values to any other
+ *       viewer who merely has scorecard-level visibility — exactly the
+ *       design doc's own named P0 risk ("Restricted KPI leaks in Scorecard
+ *       totals").
+ *
+ * P0-C (docs/product/results-vnext/RN_G2_OPEN_QUESTIONS_UI.md §OQ-UI-B,
+ * closed): layer (b) originally lived ONLY in `getPublishedSnapshot`.
+ * `listReviewSnapshots` returned the same `snapshot_payload` shape
+ * (published/superseded rows both carry a materialized payload) completely
+ * unfiltered — a reader who lost visibility to a KPI after publication, or
+ * an org member who only ever had scorecard-level (not per-item) access,
+ * could read that KPI's frozen values straight out of the history list even
+ * though the "published" detail read correctly hid them. `content_hash` of
+ * the STORED row never changed either way (proven by the P0-C test suite),
+ * which is exactly why this was invisible to a hash-equality check and had
+ * to be found by reading every read path by hand. Fixed by factoring layer
+ * (b)'s mechanism into `resolveVisibleKpiIdSet`/
+ * `redactSnapshotPayloadForReader` below and applying it in BOTH
+ * `getPublishedSnapshot` and `listReviewSnapshots` — one shared mechanism,
+ * so a future third read path cannot add payload exposure without reusing
+ * (or conspicuously skipping) the same redaction call.
  *
  * `listScorecards`/`getPublishedSnapshot`/`listReviewSnapshots` resolve
  * visibility against `resourceType: 'kpi_scorecard'` (scorecards DO carry
@@ -86,6 +103,64 @@ async function queryRows<T extends QueryResultRow>(
 ): Promise<T[]> {
   const result = await client.query<T>(sql, values);
   return result.rows;
+}
+
+// ==========================================
+// P0-C (OQ-UI-B close-out) — ONE shared read-time redaction mechanism for
+// `snapshot_payload`, used by BOTH `getPublishedSnapshot` (decision #6b,
+// pre-existing) AND `listReviewSnapshots` (this fix — previously returned
+// the stored payload verbatim, unfiltered by the REQUESTING READER's
+// CURRENT visibility, exactly the leak
+// docs/product/results-vnext/RN_G2_OPEN_QUESTIONS_UI.md §OQ-UI-B names).
+// Deliberately factored out here rather than left duplicated inline in each
+// function — a single mechanism is the whole point (§B decision #6b's own
+// header note: "not a third divergent visibility check").
+//
+// The stored row (and its `content_hash`) is NEVER mutated by this — it
+// only shapes what is *returned* to a given caller. `content_hash` on the
+// returned DTO is passed through byte-for-byte from the stored row even
+// when items are redacted out of `snapshotPayload`, so a caller can still
+// verify the artifact's identity without that value ever depending on who
+// is asking.
+// ==========================================
+
+/** Re-derive the READER's visible `kpi_id` set — same query shape
+ * `getPublishedSnapshot` already used, factored out so every caller shares
+ * one round trip instead of repeating the CTE per row. */
+async function resolveVisibleKpiIdSet(
+  client: PoolClient,
+  params: { userId: string; organizationId: string }
+): Promise<Set<string>> {
+  const cte = await buildVisibilityScopedCte({ ...params, resourceType: 'kpi' });
+  const rows = await queryRows<{ resource_id: string }>(
+    client,
+    `${cte.sql}\nSELECT resource_id FROM rvn_visible_resources WHERE resource_type = 'kpi'`,
+    cte.values
+  );
+  return new Set(rows.map((r) => r.resource_id));
+}
+
+/** Filters a stored snapshot row's `snapshot_payload.items` down to
+ * `visibleKpiIds` and recomputes `statusCounts` from ONLY the filtered set
+ * (AC #3 — a counter must never be able to imply the existence of an item
+ * the reader cannot see). Returns a new row object; never mutates `row` and
+ * never touches `row.content_hash`. */
+function redactSnapshotPayloadForReader(
+  row: KpiScorecardReviewSnapshotRow,
+  visibleKpiIds: Set<string>
+): KpiScorecardReviewSnapshotRow {
+  if (!row.snapshot_payload) return row;
+  const filteredItems: ScorecardSnapshotItemFact[] = row.snapshot_payload.items.filter((item) =>
+    visibleKpiIds.has(item.kpiId)
+  );
+  const filteredCounts: ScorecardStatusCounts = { safe: 0, warning: 0, critical: 0, missing: 0 };
+  for (const item of filteredItems) {
+    if (item.performanceStatus === 'on_target') filteredCounts.safe += 1;
+    else if (item.performanceStatus === 'warning') filteredCounts.warning += 1;
+    else if (item.performanceStatus === 'critical') filteredCounts.critical += 1;
+    else filteredCounts.missing += 1;
+  }
+  return { ...row, snapshot_payload: { items: filteredItems, statusCounts: filteredCounts } };
 }
 
 // ==========================================
@@ -250,42 +325,34 @@ export async function getPublishedSnapshot(
   // per-item KPI visibility, AC #4's item-level rule applied to a frozen
   // payload instead of a live join), filter, recompute statusCounts for the
   // RESPONSE ONLY — the stored row (and its content_hash, verified
-  // separately never to change) is never touched.
-  const visibleItemsCte = await buildVisibilityScopedCte({ userId, organizationId, resourceType: 'kpi' });
-  const visibleIdsResult = await withReadClient((c) =>
-    queryRows<{ resource_id: string }>(
-      c,
-      `${visibleItemsCte.sql}\nSELECT resource_id FROM rvn_visible_resources WHERE resource_type = 'kpi'`,
-      visibleItemsCte.values
-    )
-  );
-  const visibleKpiIds = new Set(visibleIdsResult.map((r) => r.resource_id));
-  const filteredItems: ScorecardSnapshotItemFact[] = (row.snapshot_payload.items ?? []).filter((item) =>
-    visibleKpiIds.has(item.kpiId)
-  );
-  const filteredCounts: ScorecardStatusCounts = { safe: 0, warning: 0, critical: 0, missing: 0 };
-  for (const item of filteredItems) {
-    if (item.performanceStatus === 'on_target') filteredCounts.safe += 1;
-    else if (item.performanceStatus === 'warning') filteredCounts.warning += 1;
-    else if (item.performanceStatus === 'critical') filteredCounts.critical += 1;
-    else filteredCounts.missing += 1;
-  }
-
-  return toKpiScorecardReviewSnapshot({
-    ...row,
-    snapshot_payload: { items: filteredItems, statusCounts: filteredCounts },
-  });
+  // separately never to change) is never touched. Shared with
+  // `listReviewSnapshots` below via `resolveVisibleKpiIdSet`/
+  // `redactSnapshotPayloadForReader` — ONE mechanism, not two.
+  const visibleKpiIds = await withReadClient((c) => resolveVisibleKpiIdSet(c, { userId, organizationId }));
+  return toKpiScorecardReviewSnapshot(redactSnapshotPayloadForReader(row, visibleKpiIds));
 }
 
 // ==========================================
-// listReviewSnapshots — history, summary rows (payload included as stored;
-// decision #6b's redaction does not apply to a bare listing the same way it
-// does to getPublishedSnapshot's single-row detail read — see design §C's
-// trailing comment. A caller rendering `snapshot_payload.items` from a
-// listReviewSnapshots row for a NON-publisher reader must still route
-// through getPublishedSnapshot for the currently-published one; superseded/
-// draft rows are not exposed as a standalone item-level detail surface by
-// this package).
+// listReviewSnapshots — history, summary rows.
+//
+// P0-C (OQ-UI-B, closed): this function USED TO return each row's
+// `snapshot_payload` exactly as stored, on the theory that decision #6b's
+// redaction only applied to `getPublishedSnapshot`'s single-row detail read.
+// That theory was wrong / incomplete — the whole reason UI-side code
+// (`kpiScorecardPresenters.tsx`'s own header, pre-P0-C) had to declare "we
+// simply never render `.snapshotPayload` from ANY response" as a permanent
+// workaround: any `status='published'` or `'superseded'` row returned here
+// carries the SAME materialized `snapshot_payload` (item facts +
+// statusCounts) `getPublishedSnapshot` filters, and a reader who lost access
+// to a KPI after publish (or never had it) would see it verbatim through
+// this endpoint even though `getPublishedSnapshot` correctly hides it. Fixed
+// by applying the exact same `resolveVisibleKpiIdSet`/
+// `redactSnapshotPayloadForReader` mechanism `getPublishedSnapshot` uses —
+// ONE shared redaction, not a second divergent one — computed ONCE per call
+// (not once per row) since every row in a single `listReviewSnapshots`
+// response is read by the same caller. Draft rows have `snapshot_payload =
+// NULL` (materialized only at publish, `kpiScorecardCommands.ts`'s
+// `createReviewSnapshot` header) so redaction is a no-op for them.
 // ==========================================
 
 export interface ListReviewSnapshotsParams {
@@ -326,5 +393,14 @@ export async function listReviewSnapshots(
   });
   const values = [...wrapped.values, ...trailingValues];
   const rows = await withReadClient((c) => queryRows<KpiScorecardReviewSnapshotRow>(c, wrapped.sql, values));
-  return rows.map(toKpiScorecardReviewSnapshot);
+  if (rows.length === 0) return [];
+
+  // Only pay for the extra visibility-CTE round trip when at least one row
+  // actually carries a materialized payload to redact (draft rows never
+  // do). Computed ONCE for the whole page, same reader for every row.
+  const hasAnyPayload = rows.some((r) => r.snapshot_payload !== null);
+  if (!hasAnyPayload) return rows.map(toKpiScorecardReviewSnapshot);
+
+  const visibleKpiIds = await withReadClient((c) => resolveVisibleKpiIdSet(c, { userId, organizationId }));
+  return rows.map((row) => toKpiScorecardReviewSnapshot(redactSnapshotPayloadForReader(row, visibleKpiIds)));
 }

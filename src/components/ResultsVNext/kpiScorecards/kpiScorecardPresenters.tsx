@@ -10,25 +10,33 @@
  * implementation, not two that can silently drift (same rationale
  * `../roi/roiRegistryPresenters.tsx`'s own header documents).
  *
- * -- SECURITY-HONESTY FINDING (read directly from
- * `kpiScorecardRepository.ts`'s own header comment, decision #6b): a review
- * snapshot's `snapshotPayload` (item facts + statusCounts) is filtered to the
- * REQUESTING READER's visibility ONLY by `getPublishedSnapshot` — a plain
- * `listReviewSnapshots` row's stored payload is NOT re-filtered per-reader
- * ("decision #6b's redaction does not apply to a bare listing the same way
- * it does to getPublishedSnapshot's single-row detail read... superseded/
- * draft rows are not exposed as a standalone item-level detail surface by
- * this package"). This package therefore NEVER renders `snapshotPayload`
- * contents (item facts / statusCounts) anywhere — snapshot rows show only
- * their own metadata (period/status/timestamps). The scorecard's honest
- * "state" instead comes from `GET .../status`
- * (`getKpiScorecardStatusDistribution` — a LIVE, already reader-scoped
- * query, not a stored/potentially-unfiltered payload) — see
- * `buildKpiScorecardOverviewPreview` below. Flagged as an open question in
- * the final report: a future package that wants to show a published
- * snapshot's frozen item facts must route through
- * `getPublishedKpiScorecardSnapshot` specifically (already exists in
- * `kpiScorecardApi.ts`, unused by this package on purpose).
+ * -- SECURITY-HONESTY FINDING, UPDATED BY P0-C (was: read directly from
+ * `kpiScorecardRepository.ts`'s own header comment, decision #6b — a review
+ * snapshot's `snapshotPayload` was filtered to the REQUESTING READER's
+ * visibility ONLY by `getPublishedSnapshot`; a plain `listReviewSnapshots`
+ * row's stored payload was NOT re-filtered per-reader, §OQ-UI-B). As of P0-C
+ * (docs/product/results-vnext/RN_G2_OPEN_QUESTIONS_UI.md §OQ-UI-B, closed),
+ * `kpiScorecardRepository.ts`'s `listReviewSnapshots` now applies the SAME
+ * `resolveVisibleKpiIdSet`/`redactSnapshotPayloadForReader` redaction
+ * `getPublishedSnapshot` always has — every server response this package can
+ * receive now carries an already-reader-scoped `snapshotPayload`, never a
+ * stored-but-unfiltered one.
+ *
+ * This package still deliberately NEVER renders `snapshotPayload` contents
+ * (item facts / statusCounts) anywhere — snapshot rows show only their own
+ * metadata (period/status/timestamps) — kept as defense-in-depth (belt +
+ * suspenders with the now-fixed server-side redaction), NOT because the data
+ * arriving in the response is unsafe. Do not read this restriction as "the
+ * data is unsafe, so don't render it"; read it as "an extra layer, on top of
+ * an already-safe response, in case a future response shape regresses". The
+ * scorecard's honest "state" for a LIVE (non-snapshot) view still comes from
+ * `GET .../status` (`getKpiScorecardStatusDistribution` — a LIVE,
+ * already reader-scoped query, not a stored payload) — see
+ * `buildKpiScorecardOverviewPreview` below. A future package that wants to
+ * show a published snapshot's frozen item facts can now route through
+ * either `getPublishedKpiScorecardSnapshot` OR a `listReviewSnapshots` row
+ * (already exists in `kpiScorecardApi.ts`) — both are reader-scoped as of
+ * P0-C.
  */
 import React from 'react';
 

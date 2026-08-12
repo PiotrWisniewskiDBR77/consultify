@@ -35,6 +35,37 @@
  *                                       lock); anything else -> 404 ->
  *                                       forbidden NO_VISIBILITY_RECORD
  *   &ff=off                            force the flag OFF (disabled panel)
+ *   &access=full|revoked               P0-C UI PROOF (RN_G2_OPEN_QUESTIONS_UI
+ *                                       .md §OQ-UI-B, only meaningful on
+ *                                       sc-2): simulates the CURRENT reader's
+ *                                       visibility to kpi-czas-przestoju-003
+ *                                       — 'full' (default) = reader can see
+ *                                       it; 'revoked' = reader lost access
+ *                                       AFTER the "Sierpień T1" snapshot was
+ *                                       published, mirroring EXACTLY what
+ *                                       `kpiScorecardRepository.ts`'s
+ *                                       `listReviewSnapshots`/
+ *                                       `getPublishedSnapshot` now compute
+ *                                       server-side (post-P0-C): the item
+ *                                       disappears from the Items tab, the
+ *                                       status distribution's counts drop,
+ *                                       AND the mock's own
+ *                                       `snapshotPayload.items`/`statusCounts`
+ *                                       for every published/superseded
+ *                                       snapshot are pre-filtered the SAME
+ *                                       way the real fixed repository would
+ *                                       filter them (the stored artifact
+ *                                       itself never changes — only what is
+ *                                       served — same contract as the real
+ *                                       fix). The Review-Snapshots preview
+ *                                       still shows ONLY metadata either way
+ *                                       (kpiScorecardPresenters.tsx's
+ *                                       deliberate non-render, kept as
+ *                                       defense-in-depth) — proving the
+ *                                       protected KPI is gone from what the
+ *                                       reader can reach through the real
+ *                                       component, not merely hidden by a
+ *                                       UI rendering choice.
  *
  * Menu 2 tab defaults to "Pozycje" (Items), same as the real page — no prop
  * exists to override it (state is internal to `ResultsKpiScorecardDetailPage`),
@@ -75,6 +106,9 @@ seedRealisticSession();
 const params = new URLSearchParams(window.location.search);
 const mockScorecardId = params.get('scorecardId') || 'sc-2';
 const flagOff = params.get('ff') === 'off';
+// P0-C UI PROOF — see header comment for `&access=`.
+const readerAccessRevoked = params.get('access') === 'revoked';
+const RESTRICTED_KPI_ID = 'kpi-czas-przestoju-003';
 
 if (!flagOff) {
   try {
@@ -133,11 +167,36 @@ const MOCK_ITEMS: Record<string, any[]> = {
   ],
 };
 
+// P0-C UI PROOF — sc-2's snap-1 (superseded) / snap-2 (published) rows carry
+// a POPULATED `snapshotPayload` including RESTRICTED_KPI_ID, exactly the
+// shape `publishReviewSnapshot` freezes into the real
+// `rvn_kpi_scorecard_review_snapshots` row. Below (after this const), if
+// `readerAccessRevoked`, both rows are re-filtered THE SAME WAY the fixed
+// `kpiScorecardRepository.ts`'s `resolveVisibleKpiIdSet`/
+// `redactSnapshotPayloadForReader` now do — items array narrowed,
+// statusCounts recomputed from the filtered set only, `contentHash` left
+// untouched. The mock's OWN stored objects are mutated once at module load
+// (there is no separate "stored vs served" split in this mock the way the
+// real DB row vs. API response split works) — good enough to prove the UI
+// consequence; the byte-identical `content_hash` proof itself is the
+// realdb suite's job (`tests/resultsVnext/kpi/kpiScorecardListSnapshotsNonLeak
+// .realdb.test.ts`), not this harness's.
+function buildSc2SnapshotPayload(actualValues: { open: number; defects: number; downtime: number }) {
+  return {
+    items: [
+      { kpiId: 'kpi-oee-linia-pakowania-001', definitionVersionId: 'defver-oee', itemRole: 'primary', measurementId: 'meas-oee', actualValue: actualValues.open, unit: '%', performanceStatus: 'on_target', dataQualityStatus: 'verified', periodStart: '2026-08-01T00:00:00Z', periodEnd: '2026-08-07T23:59:59Z' },
+      { kpiId: 'kpi-defekty-na-milion-002', definitionVersionId: 'defver-defekty', itemRole: 'primary', measurementId: 'meas-defekty', actualValue: actualValues.defects, unit: 'ppm', performanceStatus: 'warning', dataQualityStatus: 'verified', periodStart: '2026-08-01T00:00:00Z', periodEnd: '2026-08-07T23:59:59Z' },
+      { kpiId: RESTRICTED_KPI_ID, definitionVersionId: 'defver-przestoj', itemRole: 'supporting', measurementId: 'meas-przestoj', actualValue: actualValues.downtime, unit: 'h', performanceStatus: 'neutral', dataQualityStatus: 'unverified', periodStart: '2026-08-01T00:00:00Z', periodEnd: '2026-08-07T23:59:59Z' },
+    ],
+    statusCounts: { safe: 1, warning: 1, critical: 0, missing: 1 },
+  };
+}
+
 const MOCK_SNAPSHOTS: Record<string, any[]> = {
   'sc-1': [],
   'sc-2': [
-    { snapshotId: 'snap-1', scorecardId: 'sc-2', organizationId: 'org-dbr77-demo', reviewPeriodStart: '2026-07-01T00:00:00Z', reviewPeriodEnd: '2026-07-31T23:59:59Z', snapshotPayload: null, status: 'superseded', contentHash: 'hash-abc123def456', publishedBy: 'user-anna', publishedAt: '2026-08-01T10:00:00Z', supersededBySnapshotId: 'snap-2', supersededAt: '2026-08-05T10:00:00Z', rowVersion: 3, createdBy: 'user-anna', createdAt: '2026-07-31T18:00:00Z', updatedAt: '2026-08-05T10:00:00Z' },
-    { snapshotId: 'snap-2', scorecardId: 'sc-2', organizationId: 'org-dbr77-demo', reviewPeriodStart: '2026-08-01T00:00:00Z', reviewPeriodEnd: '2026-08-07T23:59:59Z', snapshotPayload: null, status: 'published', contentHash: 'hash-fed654cba321', publishedBy: 'user-anna', publishedAt: '2026-08-08T09:00:00Z', supersededBySnapshotId: null, supersededAt: null, rowVersion: 2, createdBy: 'user-anna', createdAt: '2026-08-07T18:00:00Z', updatedAt: '2026-08-08T09:00:00Z' },
+    { snapshotId: 'snap-1', scorecardId: 'sc-2', organizationId: 'org-dbr77-demo', reviewPeriodStart: '2026-07-01T00:00:00Z', reviewPeriodEnd: '2026-07-31T23:59:59Z', snapshotPayload: buildSc2SnapshotPayload({ open: 91.2, defects: 340, downtime: 4.5 }), status: 'superseded', contentHash: 'hash-abc123def456', publishedBy: 'user-anna', publishedAt: '2026-08-01T10:00:00Z', supersededBySnapshotId: 'snap-2', supersededAt: '2026-08-05T10:00:00Z', rowVersion: 3, createdBy: 'user-anna', createdAt: '2026-07-31T18:00:00Z', updatedAt: '2026-08-05T10:00:00Z' },
+    { snapshotId: 'snap-2', scorecardId: 'sc-2', organizationId: 'org-dbr77-demo', reviewPeriodStart: '2026-08-01T00:00:00Z', reviewPeriodEnd: '2026-08-07T23:59:59Z', snapshotPayload: buildSc2SnapshotPayload({ open: 93.4, defects: 298, downtime: 3.1 }), status: 'published', contentHash: 'hash-fed654cba321', publishedBy: 'user-anna', publishedAt: '2026-08-08T09:00:00Z', supersededBySnapshotId: null, supersededAt: null, rowVersion: 2, createdBy: 'user-anna', createdAt: '2026-08-07T18:00:00Z', updatedAt: '2026-08-08T09:00:00Z' },
     { snapshotId: 'snap-3', scorecardId: 'sc-2', organizationId: 'org-dbr77-demo', reviewPeriodStart: '2026-08-08T00:00:00Z', reviewPeriodEnd: '2026-08-14T23:59:59Z', snapshotPayload: null, status: 'draft', contentHash: null, publishedBy: null, publishedAt: null, supersededBySnapshotId: null, supersededAt: null, rowVersion: 1, createdBy: 'user-piotr-demo', createdAt: '2026-08-09T09:00:00Z', updatedAt: '2026-08-09T09:00:00Z' },
   ],
   'sc-3': [],
@@ -150,6 +209,30 @@ const MOCK_DISTRIBUTION: Record<string, any> = {
   'sc-3': { safe: 0, warning: 0, critical: 1, missing: 0, totalVisible: 1 },
   'sc-4': { safe: 0, warning: 0, critical: 0, missing: 1, totalVisible: 1 },
 };
+
+// P0-C UI PROOF — `&access=revoked`: apply the EXACT SAME redaction the
+// fixed repository applies server-side, to every read surface this reader
+// can reach through the real component (Items tab / status chip / snapshot
+// history rows) — the "stored" mock objects above stay as-is; this is the
+// "served to THIS reader" projection.
+if (readerAccessRevoked) {
+  MOCK_ITEMS['sc-2'] = (MOCK_ITEMS['sc-2'] ?? []).filter((i) => i.kpiId !== RESTRICTED_KPI_ID);
+  MOCK_DISTRIBUTION['sc-2'] = { safe: 1, warning: 1, critical: 0, missing: 0, totalVisible: 2 };
+  MOCK_SNAPSHOTS['sc-2'] = (MOCK_SNAPSHOTS['sc-2'] ?? []).map((snap) => {
+    if (!snap.snapshotPayload) return snap;
+    const filteredItems = snap.snapshotPayload.items.filter((i: any) => i.kpiId !== RESTRICTED_KPI_ID);
+    const statusCounts = { safe: 0, warning: 0, critical: 0, missing: 0 };
+    for (const item of filteredItems) {
+      if (item.performanceStatus === 'on_target') statusCounts.safe += 1;
+      else if (item.performanceStatus === 'warning') statusCounts.warning += 1;
+      else if (item.performanceStatus === 'critical') statusCounts.critical += 1;
+      else statusCounts.missing += 1;
+    }
+    // contentHash is left UNTOUCHED — same "served changes, stored/hash
+    // never does" contract the real fix guarantees.
+    return { ...snap, snapshotPayload: { items: filteredItems, statusCounts } };
+  });
+}
 
 let itemSeq = 100;
 let snapshotSeq = 100;
