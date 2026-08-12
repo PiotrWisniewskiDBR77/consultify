@@ -299,4 +299,244 @@ describe.skipIf(!REAL_PG)('Finance v2 ROUTES_EXPOSURE — Comments + Review chec
     expect(legit.status).toBe(200);
     expect(legit.body.data.length).toBeGreaterThan(0);
   });
+
+  // -----------------------------------------------------------------
+  // Gate J1 LUKA 1 — POST /comments/search-by-cell and
+  // GET /review-checklist/:id/changed-cells. Zero test calls anywhere before
+  // this (J1_ENDPOINT_INVENTORY_report.md section 5.1).
+  // -----------------------------------------------------------------
+
+  describe('search-by-cell + changed-cells', () => {
+    let financeStmtLinesCellRef: typeof import('../../../../types/finance/CellRef.js').financeStmtLinesCellRef;
+    let cellEntityId = '';
+    let cellCanonicalLineId = '';
+    let cellPeriodId = '';
+    let cellRefComment: any;
+    let anchoredCommentId = '';
+
+    beforeAll(async () => {
+      ({ financeStmtLinesCellRef } = await import('../../../../types/finance/CellRef.js'));
+
+      const entityRow = await withPinnedPostgresTransaction((tx) =>
+        tx.queryOne<{ id: string }>(
+          `INSERT INTO finance_stmt_entities (
+             organization_id, business_version_id, entity_code, legal_name, role,
+             consolidation_method, ownership_pct, functional_currency, created_by
+           ) VALUES (?, ?, ?, 'Search-by-cell Fixture Co', 'GROUP_PARENT', 'NOT_CONSOLIDATED', NULL, 'PLN', ?)
+           RETURNING id`,
+          [orgA, bvId, `CELL-${randomUUID().slice(0, 8)}`, userA]
+        )
+      );
+      cellEntityId = entityRow!.id;
+
+      const lineRow = await withPinnedPostgresTransaction((tx) =>
+        tx.queryOne<{ id: string }>(`SELECT id FROM financial_statement_lines WHERE statement_type = 'BS' AND is_system = true ORDER BY sort_order ASC LIMIT 1`)
+      );
+      cellCanonicalLineId = lineRow!.id;
+
+      const calRow = await withPinnedPostgresTransaction((tx) =>
+        tx.queryOne<{ fiscal_calendar_id: string }>(
+          `INSERT INTO finance_stmt_calendars (organization_id, calendar_type, fiscal_year_end_month, effective_from, created_by)
+           VALUES (?, 'STANDARD', 12, '2020-01-01', ?) RETURNING fiscal_calendar_id`,
+          [orgA, userA]
+        )
+      );
+      const perRow = await withPinnedPostgresTransaction((tx) =>
+        tx.queryOne<{ period_id: string }>(
+          `INSERT INTO finance_stmt_periods (organization_id, fiscal_calendar_id, period_type, fiscal_year, period_start, period_end, label, created_by)
+           VALUES (?, ?, 'FY', 2024, '2024-01-01', '2024-12-31', 'FY2024', ?) RETURNING period_id`,
+          [orgA, calRow!.fiscal_calendar_id, userA]
+        )
+      );
+      cellPeriodId = perRow!.period_id;
+
+      cellRefComment = financeStmtLinesCellRef({
+        organizationId: orgA,
+        businessVersionId: bvId,
+        entityId: cellEntityId,
+        canonicalLineId: cellCanonicalLineId,
+        consolidationScope: 'STANDALONE',
+        periodId: cellPeriodId,
+        accumulationBasis: 'FULL_YEAR',
+      });
+
+      const created = await request(appA)
+        .post('/api/v8/finance-v2/comments')
+        .send({ artifactId, businessVersionId: bvId, body: 'Anchored on a real cell — search-by-cell fixture', anchor: cellRefComment });
+      if (created.status !== 201) throw new Error(`fixture setup: anchored comment create failed: ${created.status} ${JSON.stringify(created.body)}`);
+      anchoredCommentId = created.body.data.id;
+    });
+
+    it('POST /comments/search-by-cell — the anchored comment round-trips; a DIFFERENT cellRef (different periodId) returns empty; SQL confirms the anchor JSON', async () => {
+      const hit = await request(appA).post('/api/v8/finance-v2/comments/search-by-cell').send({ businessVersionId: bvId, cellRef: cellRefComment });
+      expect(hit.status).toBe(200);
+      expect(hit.body.data.map((c: any) => c.id)).toContain(anchoredCommentId);
+      expect(hit.body.data.find((c: any) => c.id === anchoredCommentId).body).toBe('Anchored on a real cell — search-by-cell fixture');
+
+      const otherCellRef = { ...cellRefComment, rowKey: { ...cellRefComment.rowKey }, columnKey: { ...cellRefComment.columnKey, periodId: randomUUID() } };
+      const miss = await request(appA).post('/api/v8/finance-v2/comments/search-by-cell').send({ businessVersionId: bvId, cellRef: otherCellRef });
+      expect(miss.status).toBe(200);
+      expect(miss.body.data.map((c: any) => c.id)).not.toContain(anchoredCommentId);
+
+      const sqlRow = await withPinnedPostgresTransaction((tx) => tx.queryOne<{ anchor: string }>(`SELECT anchor::text AS anchor FROM finance_comments WHERE id = ?`, [anchoredCommentId]));
+      expect(sqlRow?.anchor).toContain(cellEntityId);
+    });
+
+    it('POST /comments/search-by-cell — an invalid cellRef -> 400 INVALID_CELL_REF', async () => {
+      const res = await request(appA).post('/api/v8/finance-v2/comments/search-by-cell').send({ businessVersionId: bvId, cellRef: { not: 'a cell ref' } });
+      expect(res.status).toBe(400);
+      expect(res.body).toHaveProperty('code', 'INVALID_CELL_REF');
+    });
+
+    it('CROSS-TENANT POST /comments/search-by-cell: org B, same real businessVersionId/cellRef as org A -> empty (org-scoped query, no leak)', async () => {
+      const res = await request(appB).post('/api/v8/finance-v2/comments/search-by-cell').send({ businessVersionId: bvId, cellRef: cellRefComment });
+      expect(res.status).toBe(200);
+      expect(res.body.data).toEqual([]);
+
+      const legit = await request(appA).post('/api/v8/finance-v2/comments/search-by-cell').send({ businessVersionId: bvId, cellRef: cellRefComment });
+      expect(legit.status).toBe(200);
+      expect(legit.body.data.length).toBeGreaterThan(0);
+    });
+
+    // -----------------------------------------------------------------
+    // changed-cells — a real bv1 -> bv2 finance_stmt_lines diff, addressed
+    // via the EXPLICIT previousApprovedBusinessVersionId query param (so this
+    // test does not need to drive the full submit/approve state machine —
+    // getChangedCellsForStatementPack only reads the two rows' cells, never
+    // their approval status, when the caller supplies the id explicitly).
+    // -----------------------------------------------------------------
+
+    let ccArtifactId = '';
+    let ccBv1 = '';
+    let ccBv2 = '';
+    let ccEntityCode = '';
+    let ccLineUnchanged = '';
+    let ccLineChanged = '';
+    let ccLineAdded = '';
+
+    beforeAll(async () => {
+      const stmt = await av.createArtifact({ organizationId: orgA, artifactType: 'STATEMENT_PACK', createdBy: userA });
+      ccArtifactId = stmt.artifact.artifact_id;
+      ccBv1 = stmt.businessVersion.business_version_id;
+      const engineManifestId = stmt.businessVersion.engine_manifest_id;
+
+      const bv2Row = await withPinnedPostgresTransaction((tx) =>
+        tx.queryOne<{ business_version_id: string }>(
+          `INSERT INTO finance_business_versions (
+             artifact_id, organization_id, version_no, engine_manifest_id, parent_version_id,
+             version_kind, restatement_reason, restatement_class, created_by
+           ) VALUES (?, ?, 2, ?, ?, 'RESTATED', 'J1 changed-cells fixture', 'ERROR_CORRECTION', ?)
+           RETURNING business_version_id`,
+          [ccArtifactId, orgA, engineManifestId, ccBv1, userA]
+        )
+      );
+      ccBv2 = bv2Row!.business_version_id;
+
+      ccEntityCode = `CC-${randomUUID().slice(0, 8)}`;
+      const entity1 = await withPinnedPostgresTransaction((tx) =>
+        tx.queryOne<{ id: string }>(
+          `INSERT INTO finance_stmt_entities (organization_id, business_version_id, entity_code, legal_name, role, consolidation_method, ownership_pct, functional_currency, created_by)
+           VALUES (?, ?, ?, 'CC Fixture Co v1', 'GROUP_PARENT', 'NOT_CONSOLIDATED', NULL, 'PLN', ?) RETURNING id`,
+          [orgA, ccBv1, ccEntityCode, userA]
+        )
+      );
+      const entity2 = await withPinnedPostgresTransaction((tx) =>
+        tx.queryOne<{ id: string }>(
+          `INSERT INTO finance_stmt_entities (organization_id, business_version_id, entity_code, legal_name, role, consolidation_method, ownership_pct, functional_currency, created_by)
+           VALUES (?, ?, ?, 'CC Fixture Co v2', 'GROUP_PARENT', 'NOT_CONSOLIDATED', NULL, 'PLN', ?) RETURNING id`,
+          [orgA, ccBv2, ccEntityCode, userA]
+        )
+      );
+
+      const lineRows = await withPinnedPostgresTransaction((tx) =>
+        tx.queryAll<{ id: string }>(`SELECT id FROM financial_statement_lines WHERE statement_type = 'BS' AND is_system = true ORDER BY sort_order ASC LIMIT 2`)
+      );
+      ccLineUnchanged = lineRows[0].id;
+      ccLineChanged = lineRows[1].id;
+      const plLineRow = await withPinnedPostgresTransaction((tx) =>
+        tx.queryOne<{ id: string }>(`SELECT id FROM financial_statement_lines WHERE statement_type = 'P&L' AND is_system = true ORDER BY sort_order ASC LIMIT 1`)
+      );
+      ccLineAdded = plLineRow!.id;
+
+      const perRow = await withPinnedPostgresTransaction((tx) =>
+        tx.queryOne<{ period_id: string }>(`SELECT period_id FROM finance_stmt_periods WHERE organization_id = ? LIMIT 1`, [orgA])
+      );
+      const ccPeriodId =
+        perRow?.period_id ??
+        (
+          await withPinnedPostgresTransaction((tx) =>
+            tx.queryOne<{ period_id: string }>(
+              `INSERT INTO finance_stmt_periods (organization_id, fiscal_calendar_id, period_type, fiscal_year, period_start, period_end, label, created_by)
+               VALUES (?, (SELECT fiscal_calendar_id FROM finance_stmt_calendars WHERE organization_id = ? LIMIT 1), 'FY', 2024, '2024-01-01', '2024-12-31', 'FY2024 CC', ?) RETURNING period_id`,
+              [orgA, orgA, userA]
+            )
+          )
+        )!.period_id;
+
+      async function insertLine(bvId2: string, entityId2: string, lineId: string, value: string) {
+        await withPinnedPostgresTransaction((tx) =>
+          tx.queryRun(
+            `INSERT INTO finance_stmt_lines (
+               id, organization_id, business_version_id, statement_type, canonical_line_id, entity_id, period_id,
+               accumulation_basis, consolidation_scope, value_status, value_decimal, native_currency,
+               presentation_currency, unit, multiplier, is_adjustment, sign_convention, accounting_policy, created_by
+             ) VALUES (?, ?, ?, 'BS', ?, ?, ?, 'FULL_YEAR', 'STANDALONE', 'PRESENT_NONZERO', ?, 'PLN', 'PLN', 'UNITS', '1', false, 'NATURAL', 'IFRS', ?)`,
+            [randomUUID(), orgA, bvId2, lineId, entityId2, ccPeriodId, value, userA]
+          )
+        );
+      }
+      // v1: unchanged line (100) + changed line (50). v2: unchanged line (100, same) + changed
+      // line (75, different) + a brand-new added line (30, absent from v1).
+      await insertLine(ccBv1, entity1!.id, ccLineUnchanged, '100');
+      await insertLine(ccBv1, entity1!.id, ccLineChanged, '50');
+      await insertLine(ccBv2, entity2!.id, ccLineUnchanged, '100');
+      await insertLine(ccBv2, entity2!.id, ccLineChanged, '75');
+      await insertLine(ccBv2, entity2!.id, ccLineAdded, '30');
+    });
+
+    it('GET /review-checklist/:id/changed-cells?previousApprovedBusinessVersionId= — returns exactly the changed+added lines, never the unchanged one; SQL confirms the values', async () => {
+      const res = await request(appA).get(`/api/v8/finance-v2/review-checklist/${ccBv2}/changed-cells?previousApprovedBusinessVersionId=${ccBv1}`);
+      expect(res.status).toBe(200);
+      expect(res.body.data.hasPreviousApproved).toBe(true);
+      expect(res.body.data.previousBusinessVersionId).toBe(ccBv1);
+      const changed = res.body.data.changedCells;
+      const byLine = new Map(changed.map((c: any) => [c.cellRef.rowKey.canonicalLineId, c]));
+
+      expect(byLine.has(ccLineUnchanged)).toBe(false); // never surfaced — identical on both sides
+
+      const changedEntry = byLine.get(ccLineChanged) as any;
+      expect(changedEntry).toBeTruthy();
+      expect(changedEntry.previous.valueDecimal).toBe('50');
+      expect(changedEntry.current.valueDecimal).toBe('75');
+
+      const addedEntry = byLine.get(ccLineAdded) as any;
+      expect(addedEntry).toBeTruthy();
+      expect(addedEntry.previous).toBeNull();
+      expect(addedEntry.current.valueDecimal).toBe('30');
+
+      const sqlRows = await withPinnedPostgresTransaction((tx) =>
+        tx.queryAll<{ canonical_line_id: string; value_decimal: string }>(`SELECT canonical_line_id, value_decimal FROM finance_stmt_lines WHERE business_version_id = ? ORDER BY canonical_line_id`, [
+          ccBv2,
+        ])
+      );
+      expect(sqlRows.find((r) => r.canonical_line_id === ccLineChanged)?.value_decimal).toBe('75');
+    });
+
+    it('GET /review-checklist/:id/changed-cells with NO baseline available (bv1 itself, no parent) -> hasPreviousApproved=false, changedCells=null', async () => {
+      const res = await request(appA).get(`/api/v8/finance-v2/review-checklist/${ccBv1}/changed-cells`);
+      expect(res.status).toBe(200);
+      expect(res.body.data.hasPreviousApproved).toBe(false);
+      expect(res.body.data.changedCells).toBeNull();
+    });
+
+    it('CROSS-TENANT GET /review-checklist/:id/changed-cells: org B, real org A ids -> 404 NOT_FOUND (org-scoped getBusinessVersion), org A\'s real diff still readable', async () => {
+      const res = await request(appB).get(`/api/v8/finance-v2/review-checklist/${ccBv2}/changed-cells?previousApprovedBusinessVersionId=${ccBv1}`);
+      expect(res.status).toBe(404);
+      expect(res.body).toHaveProperty('code', 'NOT_FOUND');
+
+      const legit = await request(appA).get(`/api/v8/finance-v2/review-checklist/${ccBv2}/changed-cells?previousApprovedBusinessVersionId=${ccBv1}`);
+      expect(legit.status).toBe(200);
+      expect(legit.body.data.changedCells.length).toBeGreaterThan(0);
+    });
+  });
 });
