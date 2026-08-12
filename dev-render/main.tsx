@@ -287,6 +287,9 @@ const RnG3ClassLRecordShellScreen = React.lazy(() => import('./screens/rn-g3-cla
 const ResultsVNextTeresaKpiDeviationScreen = React.lazy(
   () => import('./screens/results-vnext-teresa-kpi-deviation')
 );
+const ResultsVNextTeresaOkrReflectionScreen = React.lazy(
+  () => import('./screens/results-vnext-teresa-okr-reflection')
+);
 
 const SCREENS: Record<string, { label: string; render: () => React.ReactElement }> = {
   'results-vnext-registry-shell': {
@@ -348,6 +351,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'RN-G5 lane teresa (2026-08-12) — REALNY <KpiDeviationCaseSubview> Phase 2 "Poproś Teresę o zapis przez pipeline" (reflection_rca), window.fetch stubbed statefully for /api/v8/teresa/proposal* (P08) PLUS Api.get/post/put for /vnext/results/kpi*. Case starts at analysis_required. &teresaDown=1 (transport failure -> manual fallback) &teresaDeny=1 (first execute denies -> blocked banner, no silent success)',
     render: () => <ResultsVNextTeresaKpiDeviationScreen />,
+  },
+  'results-vnext-teresa-okr-reflection': {
+    label:
+      'RN-G5 lane teresa (2026-08-12) — REALNY <OkrReviewReflectionView> "Poproś Teresę o szkic refleksji" (reflection_synthesis), window.fetch stubbed statefully for /api/v8/teresa/proposal* (P08) PLUS /api/vnext/results/okr/*. Set status=review, one Objective. &teresaDown=1 (transport failure -> manual fallback) &teresaDeny=1 (first execute denies -> blocked banner, no silent success)',
+    render: () => <ResultsVNextTeresaOkrReflectionScreen />,
   },
   'results-vnext-legacy-archive': {
     label:

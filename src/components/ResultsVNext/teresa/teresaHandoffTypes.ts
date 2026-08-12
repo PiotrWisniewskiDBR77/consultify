@@ -122,6 +122,49 @@ export interface ResultsRoiHandoffContext {
 }
 
 // ────────────────────────────────────────────────────────────────
+// OKR-E008 — `reflection_synthesis`, the one governed OKR mode this lane
+// wires to a real UI surface (`okr/okrTeresaReflectionDraft.ts`).
+// Verbatim mirror of `ResultsOkrHandoffContext`/`OkrReflectionSynthesisPayload`
+// (`teresaCopilotCanon.ts` L385-410) — client-side re-declaration, not an
+// import, same convention as the rest of this file (`server/**` frozen for
+// this lane). Field names/shapes read directly off that file, not guessed:
+// `set_id` is REQUIRED (a real divergence from an earlier design draft,
+// per that file's own comment — `okr_vnext_reflections.set_id` is NOT
+// NULL and the reflection row may not exist yet on first draft).
+//
+// CONFIRMED SERVER GAP (read via `server/src/routes/resultsVnext/okr.routes.ts`,
+// grepped for `teresa-draft-disposition` — zero hits, vs. ROI's real route
+// at `roi.routes.ts` L2798): `recordOkrReflectionTeresaDraftDisposition`
+// exists as a command function but has NO REST route wired to it. Unlike
+// ROI, this lane's OKR UI therefore cannot offer a second, dedicated
+// "accept/reject the persisted draft" decision — see `okrTeresaReflectionDraft.ts`'s
+// own header for how this is handled honestly instead of silently building
+// a button that would call a route that does not exist.
+// ────────────────────────────────────────────────────────────────
+
+export type ResultsOkrAdvisorMode = 'reflection_synthesis';
+
+export type OkrReflectionSynthesisDispositionHint = 'complete' | 'carry_forward' | 'drop' | 'redefine' | null;
+
+export interface OkrReflectionSynthesisPayload {
+  set_id: string;
+  objective_id: string;
+  draft_reflection_text: string;
+  proposed_disposition_hint: OkrReflectionSynthesisDispositionHint;
+  evidence_breakdown: RoiPirLessonsAdvisorEvidenceBreakdown;
+}
+
+export interface ResultsOkrHandoffContext {
+  advisor_mode: ResultsOkrAdvisorMode;
+  target_resource: {
+    resource_type: 'okr_objective';
+    resource_id: string;
+  };
+  expected_version: number;
+  reflection_synthesis?: OkrReflectionSynthesisPayload;
+}
+
+// ────────────────────────────────────────────────────────────────
 // P08 action envelope + chat proposal envelope
 // (`teresaCopilotCanon.ts` L731-751, `teresaCopilotService.ts` L106-139)
 // ────────────────────────────────────────────────────────────────
