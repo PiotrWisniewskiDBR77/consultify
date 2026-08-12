@@ -30,10 +30,15 @@ import { demoContextMiddleware } from '../../middleware/demoGuard.middleware.js'
 import { apiAuthRateLimiter } from '../../middleware/rateLimiting.middleware.js';
 import { requireOrgAccess } from '../../middleware/rbac.middleware.js';
 import { validateBody, validateParams, validateQuery } from '../../middleware/validation.middleware.js';
+import { resolveEffectiveAccess } from '../../services/effectiveAccessService.js';
 import {
   AtomicWriteAggregateNotFoundError,
   AtomicWriteConflictError,
 } from '../../services/resultsVnext/platform/atomicWrite.js';
+import {
+  CommandCapabilityDeniedError,
+  type CommandAccessContext,
+} from '../../services/resultsVnext/platform/commandCapabilityGuard.js';
 import {
   captureOrUpdateBaseline,
   RoiBaselineFrozenError,
@@ -295,6 +300,19 @@ function requireAuth(req: AuthenticatedRequest, res: Response): RouteAuth | null
   return { organizationId, userId, role: req.user?.role ? String(req.user.role) : 'member' };
 }
 
+/** RN-G5 — see kpiDeviation.routes.ts's identical helper for the full
+ * rationale (no projectId: ROI cases are organization-scoped, not project-
+ * scoped, same as the KPI domain). Only the 5 case-decision commands in
+ * `roiCaseApprovalCommands.ts` are gated by this pakiet — see that file's
+ * own RN-G5 comment for the exact scope. */
+async function resolveAccess(req: AuthenticatedRequest, auth: RouteAuth): Promise<CommandAccessContext> {
+  return resolveEffectiveAccess({
+    userId: auth.userId,
+    organizationId: auth.organizationId,
+    applicationRole: req.user?.role,
+  });
+}
+
 function normalizeOptionalString(value: unknown): string | undefined {
   if (typeof value !== 'string') return undefined;
   const trimmed = value.trim();
@@ -322,6 +340,14 @@ function resolveIdempotencyKey(bodyKey: string | undefined | null): string {
  * `approveRoiCase`, not here.
  */
 function handleRoiRouteError(res: Response, err: unknown, op: string): void {
+  // RN-G5: checked FIRST — coarse authorization denial, ahead of every
+  // other error branch (including the self-approval one right below, which
+  // is a finer-grained business rule that only fires for actors who already
+  // passed this gate).
+  if (err instanceof CommandCapabilityDeniedError) {
+    res.status(403).json({ error: err.message, code: err.code, details: err.details });
+    return;
+  }
   // ROI-E003 §7: checked FIRST, ahead of the generic conflict/validation 409
   // branches — self-approval denial is a 403 (authorization), not a 409
   // (state-conflict).
@@ -1775,17 +1801,63 @@ router.get(
 // ROI-E003 — Decision & Approved routes (design §7)
 // ==========================================================================
 
-// ---------- POST .../transitions/submit-for-approval | reopen-after-rejection ----------
-// Both submitRoiCaseForApproval/reopenRejectedRoiCase have the identical
-// RunRoiCaseLifecycleTransitionInput-compatible signature startModeling/
-// markReadyForReview already have — reuse mountTransitionRoute rather than
-// hand-rolling an identical handler a third/fourth time.
+// ---------- POST .../transitions/submit-for-approval ----------
+// RN-G5: no longer routed through mountTransitionRoute — submitRoiCaseForApproval
+// now requires an `access` context (commandCapabilityGuard.ts) that
+// mountTransitionRoute's shared `runner` signature (still shaped after
+// startModeling/reopenRejectedRoiCase, neither of which is gated by this
+// pakiet) does not provide. Hand-rolled instead, same shape mountTransitionRoute
+// produces (bare RoiCase result), same pattern approveRoiCase/rejectRoiCase/
+// requestChangesOnRoiCase below already use for the same reason.
 
-mountTransitionRoute(
+router.post(
   '/cases/:caseId/transitions/submit-for-approval',
-  'submitRoiCaseForApproval',
-  submitRoiCaseForApproval
+  validateParams(RoiCaseIdParamsSchema),
+  validateBody(RoiCaseTransitionSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { caseId } = req.params as { caseId: string };
+      const existing = await getRoiCase({
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        caseId,
+        includeArchived: true,
+      });
+      if (!existing) {
+        res.status(404).json({ error: 'ROI case not found', code: 'NOT_FOUND' });
+        return;
+      }
+      const body = req.body as import('zod').infer<typeof RoiCaseTransitionSchema>;
+      const access = await resolveAccess(req, auth);
+      const outcome = await submitRoiCaseForApproval({
+        caseId,
+        organizationId: auth.organizationId,
+        expectedVersion: body.expectedVersion,
+        actorUserId: auth.userId,
+        actorEffectiveRole: auth.role,
+        idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
+        correlationId: getCorrelationId(req),
+        reason: body.reason ?? null,
+        access,
+      });
+      res.status(200).json({
+        outcome: outcome.outcome,
+        eventId: outcome.eventId,
+        resultingVersion: outcome.resultingVersion,
+        case: outcome.result,
+      });
+    } catch (err) {
+      handleRoiRouteError(res, err, 'submitRoiCaseForApproval');
+    }
+  }
 );
+
+// ---------- POST .../transitions/reopen-after-rejection ----------
+// reopenRejectedRoiCase (roiCaseCommands.ts) is NOT gated by this pakiet —
+// still routed through the generic mountTransitionRoute.
+
 mountTransitionRoute(
   '/cases/:caseId/transitions/reopen-after-rejection',
   'reopenRejectedRoiCase',
@@ -1808,6 +1880,7 @@ router.post(
       const { caseId } = req.params as { caseId: string };
       if (!(await requireExistingRoiCase(auth, caseId, res))) return;
       const body = req.body as import('zod').infer<typeof RoiCaseTransitionSchema>;
+      const access = await resolveAccess(req, auth);
       const outcome = await approveRoiCase({
         caseId,
         organizationId: auth.organizationId,
@@ -1817,6 +1890,7 @@ router.post(
         idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
         correlationId: getCorrelationId(req),
         reason: body.reason ?? null,
+        access,
       });
       res.status(200).json({
         outcome: outcome.outcome,
@@ -1844,6 +1918,7 @@ router.post(
       const { caseId } = req.params as { caseId: string };
       if (!(await requireExistingRoiCase(auth, caseId, res))) return;
       const body = req.body as import('zod').infer<typeof RejectRoiCaseSchema>;
+      const access = await resolveAccess(req, auth);
       const outcome = await rejectRoiCase({
         caseId,
         organizationId: auth.organizationId,
@@ -1853,6 +1928,7 @@ router.post(
         actorEffectiveRole: auth.role,
         idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
         correlationId: getCorrelationId(req),
+        access,
       });
       res.status(200).json({
         outcome: outcome.outcome,
@@ -1879,6 +1955,7 @@ router.post(
       const { caseId } = req.params as { caseId: string };
       if (!(await requireExistingRoiCase(auth, caseId, res))) return;
       const body = req.body as import('zod').infer<typeof RequestChangesOnRoiCaseSchema>;
+      const access = await resolveAccess(req, auth);
       const outcome = await requestChangesOnRoiCase({
         caseId,
         organizationId: auth.organizationId,
@@ -1888,6 +1965,7 @@ router.post(
         actorEffectiveRole: auth.role,
         idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
         correlationId: getCorrelationId(req),
+        access,
       });
       res.status(200).json({
         outcome: outcome.outcome,
@@ -1914,6 +1992,7 @@ router.post(
       const { caseId } = req.params as { caseId: string };
       if (!(await requireExistingRoiCase(auth, caseId, res))) return;
       const body = req.body as import('zod').infer<typeof ReopenApprovedRoiCaseForRevisionSchema>;
+      const access = await resolveAccess(req, auth);
       const outcome = await reopenApprovedRoiCaseForRevision({
         caseId,
         organizationId: auth.organizationId,
@@ -1923,6 +2002,7 @@ router.post(
         reason: body.reason,
         idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
         correlationId: getCorrelationId(req),
+        access,
       });
       res.status(200).json({
         outcome: outcome.outcome,

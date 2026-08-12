@@ -81,6 +81,20 @@ vi.mock('../../../services/resultsVnext/roi/roiRepository.js', () => ({
   getRoiBaseline: vi.fn(),
 }));
 
+// RN-G5: every write route in this file now resolves an access context via
+// resolveEffectiveAccess before calling its (mocked) command — mocked here
+// so this suite never touches the real DB layer that function reads
+// through (queryHelpers.js's getDatabase()). Defaults to the wildcard: this
+// file tests the HTTP boundary (validation, error mapping, the
+// getRoiCase-then-command plumbing), not authorization — the guard's own
+// ALLOW/DENY logic has dedicated coverage in commandCapabilityGuard.test.ts
+// and the RN-G5 real-Postgres security tests.
+vi.mock('../../../services/effectiveAccessService.js', () => ({
+  resolveEffectiveAccess: vi.fn(async () => ({ capabilities: ['*'], platformRole: null })),
+  hasEffectiveCapability: (access: { capabilities: string[] }, capability: string) =>
+    access.capabilities.includes('*') || access.capabilities.includes(capability),
+}));
+
 const { RoiSelfApprovalDeniedError } = await import('../../../services/resultsVnext/roi/roiCaseApprovalCommands.js');
 const { RoiCaseValidationError, RoiCaseNotReadyForReviewError } = await import(
   '../../../services/resultsVnext/roi/roiCaseCommands.js'
