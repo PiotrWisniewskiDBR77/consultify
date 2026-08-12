@@ -105,7 +105,9 @@ import {
   type FinanceModelRow,
   type FinanceRow,
   type FinanceStatementRow,
+  type FinanceStatus,
   type FinanceValuationRow,
+  type PredictionType,
   getTypeCode,
   KIND_ICONS,
   statusToItemStatus,
@@ -248,6 +250,87 @@ function buildFilterOptions(
   return out.sort((a, b) => a.label.localeCompare(b.label));
 }
 
+// AP_MOUNT §B — legacy `FinanceStatus` ('DRAFT'|'REVIEW'|'APPROVED', the OLD
+// `/api/v8/finance/*` vocabulary) has no exact match in finance-v2's
+// `BusinessVersionStatus` (8 values). Best-effort mapping, documented rather
+// than silently coerced — 'REVIEW' -> 'IN_REVIEW' is a judgment call (the old
+// system doesn't distinguish "submitted, not yet started" from "actively
+// being reviewed").
+function mapLegacyFinanceStatusToV3(status: FinanceStatus): BusinessVersionStatus {
+  switch (status) {
+    case 'DRAFT':
+      return 'DRAFT';
+    case 'REVIEW':
+      return 'IN_REVIEW';
+    case 'APPROVED':
+      return 'APPROVED';
+    default:
+      return 'DRAFT';
+  }
+}
+
+// AP_MOUNT §B — pure branch-selection logic for the Finance detail view,
+// extracted so it is unit-testable WITHOUT mounting the full `FinanceHub`
+// (a page-level component with a large provider/hook dependency graph).
+// This function is the actual source of truth the JSX below destructures —
+// not a parallel re-implementation that could drift.
+export interface FinanceDetailBranchFlags {
+  baseline: boolean;
+  prediction: boolean;
+  analysis: boolean;
+  valuation: boolean;
+}
+
+export interface FinanceDetailBranches {
+  isBudgetPrediction: boolean;
+  openStatement: boolean;
+  isModelWorkspace: boolean;
+  openAnalysis: boolean;
+  openValuation: boolean;
+  /** `true` only when the row is kind `'models'` AND the Baseline flag is ON. */
+  openV3Baseline: boolean;
+  /** `true` only when the row is kind `'prediction'` + predictionType `'model'` AND the Prediction flag is ON. */
+  openV3Prediction: boolean;
+  /** `true` only when `openAnalysis` AND the Analysis flag is ON. */
+  openV3Analysis: boolean;
+  /** `true` only when `openValuation` AND the Valuation flag is ON. */
+  openV3Valuation: boolean;
+  /** `true` if ANY of the four v3 branches above is active — used to suppress the generic header (v3 workspaces carry their own via `FinanceWorkspaceBar`). */
+  openFinanceV3: boolean;
+  needsFullHeight: boolean;
+}
+
+export function resolveFinanceDetailBranches(
+  kind: FinanceKind,
+  predictionType: PredictionType | undefined,
+  flags: FinanceDetailBranchFlags
+): FinanceDetailBranches {
+  const isBudgetPrediction = kind === 'prediction' && predictionType === 'budget';
+  const openStatement = kind === 'statements';
+  const isModelWorkspace = kind === 'models' || (kind === 'prediction' && predictionType === 'model');
+  const openAnalysis = kind === 'analysis' || kind === 'investment';
+  const openValuation = kind === 'valuation';
+  const openV3Baseline = kind === 'models' && flags.baseline;
+  const openV3Prediction = kind === 'prediction' && predictionType === 'model' && flags.prediction;
+  const openV3Analysis = openAnalysis && flags.analysis;
+  const openV3Valuation = openValuation && flags.valuation;
+  const openFinanceV3 = openV3Baseline || openV3Prediction || openV3Analysis || openV3Valuation;
+  const needsFullHeight = openStatement || isModelWorkspace || openAnalysis || isBudgetPrediction || openValuation;
+  return {
+    isBudgetPrediction,
+    openStatement,
+    isModelWorkspace,
+    openAnalysis,
+    openValuation,
+    openV3Baseline,
+    openV3Prediction,
+    openV3Analysis,
+    openV3Valuation,
+    openFinanceV3,
+    needsFullHeight,
+  };
+}
+
 // Empty-state icon per tab for the shared Models/Analysis/Prediction/Valuation/
 // Investment StandardTable block (canon A4, StandardTableEmpty.icon wants a
 // LucideIcon component, not the pre-rendered ReactNode in KIND_ICONS).
@@ -283,6 +366,17 @@ export const FinanceHub: React.FC = () => {
   const { openDocuments, setOpenDocuments, activeDocumentId, setActiveDocumentId } =
     useModuleOpenDocuments('finance');
   const [activeDocument, setActiveDocument] = useState<FinanceRow | null>(null);
+
+  // AP_MOUNT §B — read each Finance v3 mount flag ONCE at the top of the
+  // component (Rules of Hooks: unconditional call). All four default OFF
+  // (CLAUDE.md #7/#9) — `.enabled` is `false` unless a local override was set,
+  // so `detailContent` below falls through to the EXACT pre-existing legacy
+  // branch whenever a flag is OFF (see the negative-control proof in
+  // AP_MOUNT_report.md §B).
+  const financeV3PredictionFlag = useFinancePredictionWorkspaceFlag();
+  const financeV3BaselineFlag = useFinanceBaselineWorkspaceFlag();
+  const financeV3AnalysisFlag = useFinanceAnalysisWorkspaceFlag();
+  const financeV3ValuationFlag = useFinanceValuationWorkspaceFlag();
 
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
   const [exportTarget, setExportTarget] = useState<{
@@ -2679,20 +2773,55 @@ export const FinanceHub: React.FC = () => {
     if (!activeDocumentId || !activeDocument) return null;
     const code = getTypeCode(activeDocument.kind);
     const activeModelRow = activeDocument as FinanceModelRow;
-    const isBudgetPrediction =
-      activeDocument.kind === 'prediction' && activeModelRow.predictionType === 'budget';
-    const openStatement = activeDocument.kind === 'statements';
-    const isModelWorkspace =
-      activeDocument.kind === 'models' ||
-      (activeDocument.kind === 'prediction' && activeModelRow.predictionType === 'model');
-    const openAnalysis = activeDocument.kind === 'analysis' || activeDocument.kind === 'investment';
-    const openValuation = activeDocument.kind === 'valuation';
-    const needsFullHeight =
-      openStatement || isModelWorkspace || openAnalysis || isBudgetPrediction || openValuation;
+
+    // AP_MOUNT §B — Finance v3 mount branches. `resolveFinanceDetailBranches`
+    // is the ONE place that decides which detail component renders; each
+    // `openV3*` flag is `false` unless a local override was set (default OFF,
+    // CLAUDE.md #7/#9), and when ALL FOUR are `false` every field here is
+    // byte-identical to what this block computed before AP_MOUNT (see
+    // `resolveFinanceDetailBranches.test.ts` — same kind/predictionType in,
+    // same isBudgetPrediction/openStatement/isModelWorkspace/openAnalysis/
+    // openValuation/needsFullHeight out, verified by an exhaustive
+    // flags-all-false table plus a negative control).
+    //
+    // ★ KNOWN GAP (documented, not fixed here — out of AP_MOUNT's UI-mounting
+    // scope): `activeDocument.id`/`.status` come from the OLD `/api/v8/finance/*`
+    // list (`V8FinanceApi.getModels/getAnalyses/getValuations`, `FinanceStatus`
+    // = DRAFT|REVIEW|APPROVED) — a DIFFERENT data model than the NEW
+    // `/api/v8/finance-v2/*` canonical schema these v3 workspaces are built
+    // against (`BusinessVersionStatus`, 8 values, real `entityId`/period data).
+    // There is no ID bridge between the two systems today, so a row opened
+    // from today's list will pass an old-system id into a new-system
+    // component; the component's own honest-UI error handling (already
+    // proven in its unit tests) surfaces this as a visible error, never a
+    // crash or silent corruption — but it will NOT show real data until a
+    // data-model bridge exists (separate initiative, not part of this task).
+    const {
+      isBudgetPrediction,
+      openStatement,
+      isModelWorkspace,
+      openAnalysis,
+      openValuation,
+      openV3Baseline,
+      openV3Prediction,
+      openV3Analysis,
+      openV3Valuation,
+      openFinanceV3,
+      needsFullHeight,
+    } = resolveFinanceDetailBranches(activeDocument.kind, activeModelRow.predictionType, {
+      baseline: financeV3BaselineFlag.enabled,
+      prediction: financeV3PredictionFlag.enabled,
+      analysis: financeV3AnalysisFlag.enabled,
+      valuation: financeV3ValuationFlag.enabled,
+    });
+
     return (
       <div className="p-4 lg:p-6">
         <div className="bg-c-surface backdrop-blur border border-slate-200/60 dark:border-white/[0.03] rounded-xl overflow-hidden">
-          {!openStatement && (
+          {/* v3 branches carry their own identity/back-button in FinanceWorkspaceBar
+              (CLAUDE.md UI rule #1: zero repeated headers) — suppress this generic
+              header for them too, same as the existing `openStatement` suppression. */}
+          {!openStatement && !openFinanceV3 && (
             <div className="px-4 py-3 border-b border-c-border-subtle flex items-center justify-between">
               <div className="min-w-0">
                 <div className="text-[11px] uppercase tracking-wider text-c-text-muted">{code}</div>
@@ -2735,6 +2864,34 @@ export const FinanceHub: React.FC = () => {
                   onCreateModelFromPack={handleCreateModelFromStatement}
                   onCreateAnalysisFromPack={handleCreateAnalysisFromStatements}
                 />
+              ) : openV3Baseline ? (
+                // AP_MOUNT §B (Pakiet F) — `financeBaselineWorkspaceV1`. See the
+                // ID-space/entityId/forecastPeriods caveat above: this branch is a
+                // REAL mount (no harness, no mock), but the legacy list row cannot
+                // honestly supply entityId/forecastPeriods/assumptionRowOrder today
+                // — passed as empty (component renders its own honest empty state,
+                // never fabricated rows).
+                <FinanceV3BaselineWorkspace
+                  artifactId={activeDocument.id}
+                  businessVersionId={activeDocument.id}
+                  entityId=""
+                  name={activeDocument.title}
+                  status={mapLegacyFinanceStatusToV3(activeDocument.status)}
+                  freshness="NEVER_COMPUTED"
+                  version={1}
+                  role="preparer"
+                  forecastPeriods={[]}
+                  openingBalanceSheetPeriodId=""
+                  assumptionRowOrder={[]}
+                  contextValues={{ type: 'Model bazowy (Baseline)' }}
+                  onNavigateBack={handleShowList}
+                />
+              ) : openV3Prediction ? (
+                // AP_MOUNT §B (Pakiet G) — `financePredictionWorkspaceV1`.
+                <FinanceV3PredictionWorkspace
+                  artifactId={activeDocument.id}
+                  onNavigateBack={handleShowList}
+                />
               ) : isModelWorkspace ? (
                 // #82c/#82f — FinanceModelDocumentView (read-only P&L/BS/CF table) had no
                 // way to edit assumptions, add events, compute, approve, or refresh from
@@ -2748,11 +2905,26 @@ export const FinanceHub: React.FC = () => {
                   hideSidebar
                   onModelChanged={handleModelChanged}
                 />
+              ) : openV3Analysis ? (
+                // AP_MOUNT §B (Pakiet E) — `financeAnalysisWorkspaceV1`.
+                <FinanceV3AnalysisWorkspace
+                  artifactId={activeDocument.id}
+                  businessVersionId={activeDocument.id}
+                  role="preparer"
+                  onNavigateBack={handleShowList}
+                />
               ) : openAnalysis ? (
                 <FinancialAnalysisWorkspace
                   initialAnalysisId={activeDocument.id}
                   hideSidebar
                   onAnalysisChanged={handleAnalysisChanged}
+                />
+              ) : openV3Valuation ? (
+                // AP_MOUNT §B (Pakiet H) — `financeValuationWorkspaceV1`.
+                <FinanceV3ValuationWorkspace
+                  businessVersionId={activeDocument.id}
+                  role="preparer"
+                  onNavigateBack={handleShowList}
                 />
               ) : openValuation ? (
                 <ValuationWorkspace
@@ -2797,6 +2969,11 @@ export const FinanceHub: React.FC = () => {
     handleShowList,
     handleCreateModelFromStatement,
     handleCreateAnalysisFromStatements,
+    // AP_MOUNT §B
+    financeV3BaselineFlag.enabled,
+    financeV3PredictionFlag.enabled,
+    financeV3AnalysisFlag.enabled,
+    financeV3ValuationFlag.enabled,
   ]);
 
   const handleImportWizardComplete = useCallback(
