@@ -41,6 +41,22 @@
  *                                       (quick-create submit); default success
  *   &transitionResult=success|error|conflict   outcome of the NEXT transition
  *                                       POST; default success
+ *   &view=hub|case                     RN-G5 (2026-08-12): which real route
+ *                                       to mount at — `hub` (`/results/roi`,
+ *                                       `ResultsRoiHub`, default) or `case`
+ *                                       (`/results/roi/cases/:roiCaseId`,
+ *                                       `RoiCaseToolPage` — a REAL cold
+ *                                       direct-URL entry, not a click-through)
+ *   &caseId=<id>                       which case id the `case` view starts
+ *                                       on; default 'roi-case-1'.
+ *                                       'roi-case-9' is archived+cancelled
+ *                                       (honest read-only render). Any id NOT
+ *                                       in the mock DB (e.g. 'does-not-exist')
+ *                                       404s -> the SAME forbidden state a
+ *                                       cross-org id would (both collapse
+ *                                       into one response server-side,
+ *                                       D06/D07 — this mock does not fork
+ *                                       them either)
  *
  * Golden-flow click chain (see acceptance report for the actual run):
  *   1. row click on a case -> preview opens, lazy calc-run resolves
@@ -50,9 +66,11 @@
  *   5. Esc closes the last-opened modal; focus returns to its trigger
  */
 import React from 'react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
 
 import { ResultsRoiHub } from '../../src/components/ResultsVNext/roi/ResultsRoiHub';
+import { RoiCaseToolPage } from '../../src/components/ResultsVNext/roi/RoiCaseToolPage';
+import { ROUTES } from '../../src/routes/routeConfig';
 import { API_URL } from '../../src/services/api';
 import type { RoiCaseListItem, RoiCaseStatus, RoiCalculationRunSummary, RoiOrgBenefitsRealizationRow } from '../../src/components/ResultsVNext/roi/roiApi';
 
@@ -61,6 +79,8 @@ const registryState = harnessParams.get('state') || 'ready';
 const calcState = harnessParams.get('calc') || 'ready';
 const createResultParam = (harnessParams.get('createResult') as 'success' | 'error' | 'conflict' | null) ?? 'success';
 const transitionResultParam = (harnessParams.get('transitionResult') as 'success' | 'error' | 'conflict' | null) ?? 'success';
+const view = harnessParams.get('view') === 'case' ? 'case' : 'hub';
+const caseIdParam = harnessParams.get('caseId') || 'roi-case-1';
 
 try {
   window.localStorage.setItem('ff.results_vnext_roi_registry', '1');
@@ -149,6 +169,23 @@ const cases: RoiCaseListItem[] = [
     submittedAt: null, approvedAt: null, rejectedAt: null, rejectionReason: null,
     changesRequestedAt: null, changesRequestedReason: null, archivedAt: null,
     rowVersion: 1, createdAt: '2026-08-01T09:00:00Z', updatedAt: '2026-08-01T09:00:00Z',
+  },
+  // RN-G5 (2026-08-12) — ARCHIVED case, reachable ONLY via a direct id (the
+  // registry's default `listRoiCases` excludes archived rows server-side;
+  // `getRoiCase` uses `includeArchived: true` so a known id must still
+  // resolve — `roi.routes.ts` "GET /cases/:caseId" comment). Proves
+  // `RoiCaseToolPage`/`RoiCaseFullTool` render an honest, read-only view for
+  // a terminal+archived record instead of a blank/broken screen.
+  {
+    caseId: 'roi-case-9', organizationId: 'org-1', initiativeId: 'init-109',
+    title: 'Program pilotażowy IoT (zarchiwizowany)', ownerUserId: 'user-tomasz-nowak',
+    status: 'cancelled', currency: 'PLN', granularity: 'monthly',
+    analysisStart: '2025-01-01', analysisEnd: '2025-12-31',
+    nextActionType: null, nextActionDueAt: null, nextReviewAt: null,
+    submittedAt: '2025-02-01T09:00:00Z', approvedAt: null, rejectedAt: null, rejectionReason: null,
+    changesRequestedAt: null, changesRequestedReason: null,
+    archivedAt: '2025-12-15T09:00:00Z',
+    rowVersion: 4, createdAt: '2025-01-05T09:00:00Z', updatedAt: '2025-12-15T09:00:00Z',
   },
 ];
 
@@ -296,6 +333,14 @@ if (!g.__RVN_ROI_REGISTRY_FETCH__) {
     }
 
     if (seg[0] === 'cases' && seg.length === 2 && method === 'GET') {
+      // RN-G5 (2026-08-12) — the same `?state=` param the "All cases" list
+      // above respects, reused here for `RoiCaseToolPage`'s OWN load state
+      // (`?view=case`). A nonexistent id and a cross-org id are
+      // INDISTINGUISHABLE 404s (matches the real `getRoiCase` server route —
+      // organization-scoped query, no row for either case, D06/D07) — this
+      // mock does not special-case a "cross-org" id differently, on purpose.
+      if (registryState === 'loading') return new Promise(() => { /* never resolves */ });
+      if (registryState === 'error') return errorResponse('Upstream ROI service returned a 503.', 503, 'ROI_INTERNAL_ERROR');
       const found = cases.find((c) => c.caseId === seg[1]);
       return found ? jsonResponse({ case: found }) : errorResponse('ROI case not found', 404, 'NOT_FOUND');
     }
@@ -311,10 +356,26 @@ if (!g.__RVN_ROI_REGISTRY_FETCH__) {
   };
 }
 
+// RN-G5 (2026-08-12) — a REAL two-route `<Routes>` tree (same convention
+// `results-vnext-kpi-tool.tsx` established for the KPI tool), not a single
+// static entry — proves the "Open full tool" row action's `navigate()`,
+// the `RoiCaseToolPage` cold direct-URL load, and its "back to registry"
+// breadcrumb all exercise the REAL router, not a stubbed no-op. A
+// `/results/roi` marker distinct from the real `ResultsRoiHub` render is
+// deliberately NOT used here (unlike the KPI harness) — this screen's own
+// golden-flow click chain (see file header) already exercises the real Hub
+// at that path, so swapping it for a marker would break that chain when
+// `view=hub` (the default).
+const initialPath =
+  view === 'case' ? ROUTES.RESULTS_ROI.CASE.replace(':roiCaseId', caseIdParam) : ROUTES.RESULTS_ROI.ROOT;
+
 const ResultsVNextRoiRegistryScreen: React.FC = () => (
   <div className="h-screen bg-c-bg text-c-text">
-    <MemoryRouter initialEntries={['/results/roi']}>
-      <ResultsRoiHub />
+    <MemoryRouter initialEntries={[initialPath]}>
+      <Routes>
+        <Route path={ROUTES.RESULTS_ROI.ROOT} element={<ResultsRoiHub />} />
+        <Route path={ROUTES.RESULTS_ROI.CASE} element={<RoiCaseToolPage />} />
+      </Routes>
     </MemoryRouter>
   </div>
 );

@@ -35,12 +35,29 @@
  *   &selected=<setId|none>        deep-link via `?setId=` (real Hub's own
  *                                  deep-link param) — 'none' leaves nothing
  *                                  selected.
+ *   &view=hub|set                 RN-G5 (2026-08-12): which real route to
+ *                                  mount at — `hub` (`/results/okr`,
+ *                                  `ResultsOkrHub`, default) or `set`
+ *                                  (`/results/okr/sets/:okrSetId`,
+ *                                  `OkrSetToolPage` — a REAL cold direct-URL
+ *                                  entry, not a click-through).
+ *   &setId=<id>                   which set id the `set` view starts on
+ *                                  (default 'okr-set-5', an active set);
+ *                                  'okr-set-8' is closed/terminal (honest
+ *                                  read-only render). Any id NOT in
+ *                                  `MOCK_SETS` (e.g. 'does-not-exist') 404s
+ *                                  -> the SAME forbidden state a cross-org id
+ *                                  would (both collapse into one response
+ *                                  server-side, D06/D07).
  */
 import React from 'react';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 
 import { ResultsOkrHub } from '../../src/components/ResultsVNext/okr/ResultsOkrHub';
+import { OkrSetToolPage } from '../../src/components/ResultsVNext/okr/OkrSetToolPage';
 import type { OkrSetDto } from '../../src/components/ResultsVNext/okr/okrApi';
+import { ROUTES } from '../../src/routes/routeConfig';
 
 // ── Mock OKR Sets — one representative row per real status (all 10 from
 //    `OKR_SET_STATUSES`, including the two reserved/unreachable ones for
@@ -351,6 +368,18 @@ const MOCK_SETS: OkrSetDto[] = [
 
 const params = new URLSearchParams(window.location.search);
 const state = params.get('state') || 'ready';
+// RN-G5 (2026-08-12) — which real route to mount at, mirroring
+// `results-vnext-roi-registry.tsx`'s own `?view=`. `set` (a REAL cold
+// direct-URL entry to `OkrSetToolPage`) needs the `okrRegistry` flag ON —
+// unlike the rest of this file, which mounts `ResultsOkrHub` directly and so
+// never needed the flag before (that Hub itself doesn't gate on it).
+const view = params.get('view') === 'set' ? 'set' : 'hub';
+const setIdParam = params.get('setId') || 'okr-set-5';
+try {
+  window.localStorage.setItem('ff.results_vnext_okr_registry', '1');
+} catch {
+  // no-op — dev-render only
+}
 
 function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
@@ -386,11 +415,23 @@ if (!g.__OKR_REGISTRY_FETCH__) {
   };
 }
 
+// RN-G5 (2026-08-12) — a REAL two-route `<Routes>` tree (same convention
+// `results-vnext-kpi-tool.tsx`/`results-vnext-roi-registry.tsx` use) so the
+// Sets registry's "Otwórz obszar roboczy" `navigate()`, the `OkrSetToolPage`
+// cold direct-URL load, and its "back to registry" breadcrumb all exercise
+// the REAL router.
+const initialPath = view === 'set' ? ROUTES.RESULTS_OKR.SET.replace(':okrSetId', setIdParam) : ROUTES.RESULTS_OKR.ROOT;
+
 const ResultsVNextOkrRegistryScreen: React.FC = () => {
   useTranslation();
   return (
     <div className="h-screen bg-c-bg text-c-text">
-      <ResultsOkrHub />
+      <MemoryRouter initialEntries={[initialPath]}>
+        <Routes>
+          <Route path={ROUTES.RESULTS_OKR.ROOT} element={<ResultsOkrHub />} />
+          <Route path={ROUTES.RESULTS_OKR.SET} element={<OkrSetToolPage />} />
+        </Routes>
+      </MemoryRouter>
     </div>
   );
 };
