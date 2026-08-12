@@ -86,8 +86,11 @@ import {
   reopenRoiCaseForRevision,
   requestChangesOnRoiCase,
   RoiApiError,
+  markRoiCasePostInvestmentReviewDueCase,
   startModelingRoiCase,
   startPirRoiCase,
+  startRoiCaseBenefitsRealizationCase,
+  startRoiCaseTrackingCase,
   submitRoiCaseForApprovalCase,
   type RoiCalculationRunSummary,
   type RoiCaseListItem,
@@ -149,6 +152,12 @@ async function runRoiTransition(
       return markRoiCaseReadyForReview(caseId, { expectedVersion, reason, idempotencyKey });
     case 'submit_for_approval':
       return submitRoiCaseForApprovalCase(caseId, { expectedVersion, reason, idempotencyKey });
+    case 'start_tracking':
+      return startRoiCaseTrackingCase(caseId, { expectedVersion, reason, idempotencyKey });
+    case 'start_benefits_realization':
+      return startRoiCaseBenefitsRealizationCase(caseId, { expectedVersion, reason, idempotencyKey });
+    case 'mark_pir_due':
+      return markRoiCasePostInvestmentReviewDueCase(caseId, { expectedVersion, reason, idempotencyKey });
     case 'approve':
       return approveRoiCase(caseId, { expectedVersion, reason, idempotencyKey });
     case 'reject':

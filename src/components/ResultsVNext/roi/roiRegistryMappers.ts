@@ -338,6 +338,12 @@ export function formatRoiDate(value: string | null, isPolish: boolean): string {
 //  - submit-for-approval : status not in ('ready_for_review','changes_requested')
 //                          → reject (+ SAME economic-model guard re-checked)
 //                          `server/src/services/resultsVnext/roi/roiCaseApprovalCommands.ts` L236-254
+//  - start-tracking      : status !== 'approved' → reject
+//                          `server/src/services/resultsVnext/roi/roiTrackingCommands.ts` L106
+//  - start-benefits-realization : status !== 'tracking' → reject
+//                          `server/src/services/resultsVnext/roi/roiBenefitsRealizationCommands.ts` L143
+//  - mark-pir-due        : status !== 'benefits_realization' → reject
+//                          `server/src/services/resultsVnext/roi/roiPirCommands.ts` L353
 //  - approve            : status !== 'submitted_for_approval' → reject
 //                          `server/src/services/resultsVnext/roi/roiCaseApprovalCommands.ts` L347
 //  - reject              : status !== 'submitted_for_approval' → reject
@@ -371,6 +377,9 @@ export type RoiTransitionId =
   | 'reject'
   | 'request_changes'
   | 'reopen_for_revision'
+  | 'start_tracking'
+  | 'start_benefits_realization'
+  | 'mark_pir_due'
   | 'cancel'
   | 'start_pir'
   | 'close';
@@ -472,6 +481,36 @@ export const ROI_TRANSITIONS: Record<RoiTransitionId, RoiTransitionDefinition> =
     disabledReason: {
       pl: 'Ponowne otwarcie do rewizji dostępne tylko dla sprawy zaakceptowanej.',
       en: 'Reopening for revision is only available for an approved case.',
+    },
+  },
+  start_tracking: {
+    id: 'start_tracking',
+    label: { pl: 'Rozpocznij śledzenie', en: 'Start tracking' },
+    fromStatuses: ['approved'],
+    reasonRequired: false,
+    disabledReason: {
+      pl: 'Rozpoczęcie śledzenia dostępne tylko dla sprawy zaakceptowanej.',
+      en: 'Starting tracking is only available for an approved case.',
+    },
+  },
+  start_benefits_realization: {
+    id: 'start_benefits_realization',
+    label: { pl: 'Rozpocznij realizację korzyści', en: 'Start benefits realization' },
+    fromStatuses: ['tracking'],
+    reasonRequired: false,
+    disabledReason: {
+      pl: 'Dostępne tylko w statusie „Śledzenie”.',
+      en: 'Only available while Tracking.',
+    },
+  },
+  mark_pir_due: {
+    id: 'mark_pir_due',
+    label: { pl: 'Oznacz PIR jako wymagany', en: 'Mark PIR due' },
+    fromStatuses: ['benefits_realization'],
+    reasonRequired: false,
+    disabledReason: {
+      pl: 'Dostępne tylko w statusie „Realizacja korzyści”.',
+      en: 'Only available while Benefits realization.',
     },
   },
   cancel: {

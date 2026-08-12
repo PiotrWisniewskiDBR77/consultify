@@ -473,6 +473,55 @@ export async function submitRoiCaseForApprovalCase(
   );
 }
 
+/** POST .../transitions/start-tracking — `RoiCaseTransitionSchema`,
+ * approved → tracking (`roiTrackingCommands.ts` `startRoiCaseTracking`,
+ * L76-91) — same "found with no frontend caller" gap as the three
+ * transitions above. Without this one specifically, an approved case could
+ * never reach `tracking`, which gates forecast-version publish/actual-entry
+ * record/actual-snapshot publish (Realize Value phase) — i.e. the entire
+ * rest of the case lifecycle past approval was unreachable through the
+ * UI. */
+export async function startRoiCaseTrackingCase(
+  caseId: string,
+  input: { expectedVersion: number; reason?: string | null; idempotencyKey: string }
+): Promise<RoiTransitionResult> {
+  return mutateJson<RoiTransitionResult>(
+    'POST',
+    `/vnext/results/roi/cases/${encodeURIComponent(caseId)}/transitions/start-tracking`,
+    input
+  );
+}
+
+/** POST .../transitions/start-benefits-realization —
+ * `RoiCaseTransitionSchema`, tracking → benefits_realization
+ * (`roiBenefitsRealizationCommands.ts` L143-147). */
+export async function startRoiCaseBenefitsRealizationCase(
+  caseId: string,
+  input: { expectedVersion: number; reason?: string | null; idempotencyKey: string }
+): Promise<RoiTransitionResult> {
+  return mutateJson<RoiTransitionResult>(
+    'POST',
+    `/vnext/results/roi/cases/${encodeURIComponent(caseId)}/transitions/start-benefits-realization`,
+    input
+  );
+}
+
+/** POST .../transitions/mark-pir-due — `RoiCaseTransitionSchema`,
+ * benefits_realization → post_investment_review_due
+ * (`roiPirCommands.ts` L353-358). The last missing link in the chain —
+ * `start_pir`/`close` (already wired above) both require reaching this
+ * status first. */
+export async function markRoiCasePostInvestmentReviewDueCase(
+  caseId: string,
+  input: { expectedVersion: number; reason?: string | null; idempotencyKey: string }
+): Promise<RoiTransitionResult> {
+  return mutateJson<RoiTransitionResult>(
+    'POST',
+    `/vnext/results/roi/cases/${encodeURIComponent(caseId)}/transitions/mark-pir-due`,
+    input
+  );
+}
+
 /** POST .../transitions/approve — `RoiCaseTransitionSchema` (expectedVersion
  * + optional reason). Response carries `{case, snapshot}`; only `case`
  * matters to the registry (`roi.routes.ts` L1800-1832). */
