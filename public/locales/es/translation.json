@@ -3122,7 +3122,12 @@
     "tplRecordDetailDesc": "Vista de un solo registro con todos los campos"
   },
   "mindmap": {
-    "aiExpandTargetNodeMissing": "Ese nodo ya no está en el lienzo: elige otro nodo para expandir."
+    "aiExpandTargetNodeMissing": "Ese nodo ya no está en el lienzo: elige otro nodo para expandir.",
+    "persistence": {
+      "mapLoadErrorTitle": "Couldn't load this mind map",
+      "mapLoadErrorBody": "Something went wrong while loading your data. Nothing was lost — try again.",
+      "mapLoadErrorRetry": "Retry"
+    }
   },
   "ideas": {
     "table": {

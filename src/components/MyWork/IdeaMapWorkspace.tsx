@@ -4339,6 +4339,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
               externalRuntime={{
                 version: graphRuntime.graph.version,
                 loading: graphRuntime.loading,
+                loadError: graphRuntime.loadError,
                 saving: graphRuntime.saving,
                 lastSavedAt: graphRuntime.lastSavedAt,
                 syncState: graphRuntime.syncState,

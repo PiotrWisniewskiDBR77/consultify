@@ -185,6 +185,15 @@ export interface UseMindMapPersistenceOpts {
   externalRuntime?: {
     version: number;
     loading: boolean;
+    /**
+     * D2: set by useWorkspaceGraphRuntime.refresh() when GET /map fails.
+     * null while healthy / not yet attempted. Non-null means the LAST
+     * refresh attempt failed — hydrate() below uses this (together with
+     * "do we have zero real nodes") to tell a genuinely-new idea apart from
+     * a failed load, so it can show an explicit error instead of silently
+     * bootstrapping + persisting the starter template over a load failure.
+     */
+    loadError?: string | null;
     saving: boolean;
     lastSavedAt: number | null;
     syncState: IdeaMapSyncState;
@@ -234,6 +243,11 @@ export function useMindMapPersistence(opts: UseMindMapPersistenceOpts) {
   const [saving, setSaving] = useState(false);
   const [lastSavedAt, setLastSavedAt] = useState<number | null>(null);
   const [persistence, setPersistence] = useState<PersistenceStatus>('online');
+  // D2: non-null while the map failed to load AND we have no real graph to
+  // show (a genuinely new idea's empty starter template is NOT an error —
+  // only "GET /map rejected and we still have nothing" is). Consumers use
+  // this to render an explicit error + retry instead of an empty canvas.
+  const [mapLoadError, setMapLoadError] = useState<string | null>(null);
 
   const saveTimerRef = useRef<number | null>(null);
   const isHydratingRef = useRef(true);
@@ -249,6 +263,7 @@ export function useMindMapPersistence(opts: UseMindMapPersistenceOpts) {
   const lastKnownNodeCountRef = useRef(0);
   const runtimeVersion = externalRuntime?.version ?? null;
   const runtimeLoading = externalRuntime?.loading ?? false;
+  const runtimeLoadError = externalRuntime?.loadError ?? null;
   const runtimeSaving = externalRuntime?.saving ?? false;
   const runtimeLastSavedAt = externalRuntime?.lastSavedAt ?? null;
   const runtimeSyncState = externalRuntime?.syncState ?? null;
@@ -334,6 +349,7 @@ export function useMindMapPersistence(opts: UseMindMapPersistenceOpts) {
     runtimeExtensions,
     runtimeVersion,
     runtimeLoading,
+    runtimeLoadError,
   });
   useEffect(() => {
     runtimeDataRef.current = {
@@ -342,8 +358,16 @@ export function useMindMapPersistence(opts: UseMindMapPersistenceOpts) {
       runtimeExtensions,
       runtimeVersion,
       runtimeLoading,
+      runtimeLoadError,
     };
-  }, [runtimeNodes, runtimeEdges, runtimeExtensions, runtimeVersion, runtimeLoading]);
+  }, [
+    runtimeNodes,
+    runtimeEdges,
+    runtimeExtensions,
+    runtimeVersion,
+    runtimeLoading,
+    runtimeLoadError,
+  ]);
 
   const hydrate = useCallback(async () => {
     const {
@@ -352,6 +376,7 @@ export function useMindMapPersistence(opts: UseMindMapPersistenceOpts) {
       runtimeExtensions: rtExt,
       runtimeVersion: rtVer,
       runtimeLoading: rtLoading,
+      runtimeLoadError: rtLoadError,
     } = runtimeDataRef.current;
     if (externalRuntime) {
       // Bootstrap race guard (M06): hydrate() fires from the [ideaId] mount
@@ -370,11 +395,27 @@ export function useMindMapPersistence(opts: UseMindMapPersistenceOpts) {
       localVersionRef.current = Math.max(1, Number(rtVer || 1));
       const runtimeNodesSafe = Array.isArray(rtNodes) ? rtNodes : [];
       const runtimeEdgesSafe = Array.isArray(rtEdges) ? rtEdges : [];
-      const defaultGraph = shouldBootstrapStarterGraph(
+      const wouldBootstrapStarter = shouldBootstrapStarterGraph(
         runtimeNodesSafe as Node[],
         runtimeEdgesSafe as Edge[],
         rtVer
-      )
+      );
+      // D2: GET /map failed AND we have nothing real to fall back on. This is
+      // NOT the same as a genuinely new idea (which is also nodes:[] at
+      // version 1) — treating it that way used to silently bootstrap the
+      // 6-node starter template, render it as if it were the real map, and
+      // capture+sync it back to the server (a false "success" that could
+      // clobber real data once the transient failure clears). Surface the
+      // error instead and leave the canvas empty; the component renders an
+      // explicit error + retry state for `mapLoadError`.
+      if (rtLoadError && wouldBootstrapStarter) {
+        setMapLoadError(rtLoadError);
+        isHydratingRef.current = true;
+        skipNextAutoSaveRef.current = true;
+        return;
+      }
+      setMapLoadError(null);
+      const defaultGraph = wouldBootstrapStarter
         ? buildLocalDefaultIdeaMap(ideaId, ideaTitle, isPolish)
         : null;
       const nextNodes = defaultGraph ? defaultGraph.nodes : runtimeNodesSafe;
@@ -607,6 +648,23 @@ export function useMindMapPersistence(opts: UseMindMapPersistenceOpts) {
     hydrate();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [runtimeLoading, ideaId]);
+
+  // D2 recovery re-hydrate: the "hydrate once per idea" guard above only
+  // fires hydrate() on the FIRST loading→loaded transition. A later manual
+  // retry (retryLoadMap → externalRuntime.refresh()) also flips
+  // runtimeLoading true→false, but that guard has already latched, so
+  // nothing would otherwise re-run hydrate() to clear a stuck mapLoadError
+  // and pull in the now-successfully-loaded graph — even though the retry
+  // itself succeeded. (The version-jump effect below does not reliably cover
+  // this: a still-brand-new idea stays at version 1 across the retry.)
+  useEffect(() => {
+    if (!externalRuntime) return;
+    if (runtimeLoading) return;
+    if (runtimeLoadError) return;
+    if (!mapLoadError) return;
+    hydrate();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [runtimeLoading, runtimeLoadError]);
 
   // Re-hydrate ONLY when the runtime version jumps by more than 1 (external
   // change, e.g. conflict resolution or another user's save).  A +1 bump is
@@ -985,11 +1043,28 @@ export function useMindMapPersistence(opts: UseMindMapPersistenceOpts) {
     };
   }, []);
 
+  // D2: single retry entry point for the error state below. When the
+  // workspace-runtime path is active, retrying means re-running the actual
+  // GET /map — re-running hydrate() alone would only re-read the same
+  // (still-failed) cached runtime data. Falls back to hydrate() for the
+  // legacy standalone path, which does its own GET. externalRuntime.refresh()
+  // rethrows on failure (so other awaiters elsewhere still see it); the
+  // failure is already recorded in runtimeLoadError/mapLoadError, so swallow
+  // it here — the retry button doesn't need its own error handling.
+  const retryLoadMap = useCallback(() => {
+    if (externalRuntime?.refresh) {
+      return externalRuntime.refresh().catch(() => {});
+    }
+    return hydrate();
+  }, [externalRuntime, hydrate]);
+
   return {
     loading,
     saving,
     lastSavedAt,
     persistence,
+    mapLoadError,
+    retryLoadMap,
     setSaving,
     setLastSavedAt,
     isHydratingRef,

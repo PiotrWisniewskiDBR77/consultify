@@ -3226,7 +3226,12 @@
     "tplRecordDetailDesc": "Einzelansicht eines Datensatzes mit allen Feldern"
   },
   "mindmap": {
-    "aiExpandTargetNodeMissing": "Dieser Knoten befindet sich nicht mehr auf der Fläche — wähle einen anderen Knoten zum Erweitern."
+    "aiExpandTargetNodeMissing": "Dieser Knoten befindet sich nicht mehr auf der Fläche — wähle einen anderen Knoten zum Erweitern.",
+    "persistence": {
+      "mapLoadErrorTitle": "Couldn't load this mind map",
+      "mapLoadErrorBody": "Something went wrong while loading your data. Nothing was lost — try again.",
+      "mapLoadErrorRetry": "Retry"
+    }
   },
   "ideas": {
     "table": {

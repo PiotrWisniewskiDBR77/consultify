@@ -3125,7 +3125,12 @@
     "tplRecordDetailDesc": "عرض سجل واحد بجميع الحقول"
   },
   "mindmap": {
-    "aiExpandTargetNodeMissing": "لم تعد هذه العقدة موجودة على اللوحة — اختر عقدة أخرى للتوسيع."
+    "aiExpandTargetNodeMissing": "لم تعد هذه العقدة موجودة على اللوحة — اختر عقدة أخرى للتوسيع.",
+    "persistence": {
+      "mapLoadErrorTitle": "Couldn't load this mind map",
+      "mapLoadErrorBody": "Something went wrong while loading your data. Nothing was lost — try again.",
+      "mapLoadErrorRetry": "Retry"
+    }
   },
   "ideas": {
     "table": {

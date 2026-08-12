@@ -26890,7 +26890,10 @@
       "mapTableMissing": "Brakuje tabeli mapy — uruchom migracje DB.",
       "failedToLoadMap": "Nie udało się wczytać mapy",
       "conflictDetected": "Wykryto konflikt zmian. Odświeżam mapę z serwera.",
-      "failedToSaveMap": "Nie udało się zapisać mapy"
+      "failedToSaveMap": "Nie udało się zapisać mapy",
+      "mapLoadErrorTitle": "Nie udało się wczytać mapy myśli",
+      "mapLoadErrorBody": "Coś poszło nie tak podczas wczytywania danych. Nic nie zostało utracone — spróbuj ponownie.",
+      "mapLoadErrorRetry": "Ponów"
     },
     "quickActions": {
       "viewLevel": "Widok: poziom {{level}}",

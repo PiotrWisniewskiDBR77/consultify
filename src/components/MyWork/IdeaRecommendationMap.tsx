@@ -19,6 +19,7 @@ import {
   Paperclip,
   Pencil,
   Plus,
+  RefreshCw,
   Sparkles,
   StickyNote,
   Unlock,
@@ -1863,6 +1864,8 @@ type IdeaRecommendationMapProps = {
   externalRuntime?: {
     version: number;
     loading: boolean;
+    /** D2: non-null when the last GET /map attempt failed. See useMindMapPersistence. */
+    loadError?: string | null;
     saving: boolean;
     lastSavedAt: number | null;
     syncState: 'idle' | 'queued' | 'saving' | 'saved' | 'offline' | 'conflict';
@@ -2925,6 +2928,8 @@ function MindMapInner({
     saving,
     lastSavedAt,
     persistence,
+    mapLoadError,
+    retryLoadMap,
     setSaving,
     setLastSavedAt,
     scheduleSave,
@@ -2954,6 +2959,20 @@ function MindMapInner({
     refreshToken,
     externalRuntime,
   });
+
+  // D2: retry affordance for the map-load-error state below. Tracks its own
+  // in-flight flag (rather than reusing `loading`) so the retry button shows
+  // a spinner without flipping the whole canvas back to the full-screen
+  // loading state.
+  const [retryingMapLoad, setRetryingMapLoad] = useState(false);
+  const handleRetryMapLoad = useCallback(async () => {
+    setRetryingMapLoad(true);
+    try {
+      await retryLoadMap();
+    } finally {
+      setRetryingMapLoad(false);
+    }
+  }, [retryLoadMap]);
 
   const debouncedSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const nodesRef = useRef(nodes);
@@ -5927,7 +5946,7 @@ function MindMapInner({
         </div>
       )}
 
-      {!loading && (
+      {!loading && !mapLoadError && (
         <CanvasZoomControls
           isPolish={isPolish}
           selectedNodeId={selectedNodeIds[0] || null}
@@ -5952,6 +5971,40 @@ function MindMapInner({
       {loading ? (
         <div className="w-full h-full flex items-center justify-center">
           <Loader2 className="animate-spin text-amber-500" size={34} />
+        </div>
+      ) : mapLoadError ? (
+        // D2: GET /map failed and there is no real graph to fall back on —
+        // show an explicit, accessible error instead of silently rendering
+        // an empty/starter canvas that looks like a normal (if boring) map.
+        <div
+          role="alert"
+          aria-live="assertive"
+          className="w-full h-full flex flex-col items-center justify-center gap-4 bg-c-surface-raised dark:bg-c-surface p-8 text-center"
+        >
+          <div className="p-3 rounded-2xl bg-c-surface border border-c-danger">
+            <AlertTriangle size={32} className="text-c-danger" aria-hidden="true" />
+          </div>
+          <div>
+            <div className="text-sm font-semibold text-c-text mb-1">
+              {t('mindmap.persistence.mapLoadErrorTitle')}
+            </div>
+            <div className="text-xs text-c-text-secondary dark:text-c-text-muted max-w-sm">
+              {t('mindmap.persistence.mapLoadErrorBody')}
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={handleRetryMapLoad}
+            disabled={retryingMapLoad}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold bg-c-surface dark:bg-c-surface-raised text-c-text-secondary dark:text-c-text hover:bg-c-surface dark:hover:bg-c-surface-raised transition-colors disabled:opacity-60"
+          >
+            {retryingMapLoad ? (
+              <Loader2 size={14} className="animate-spin" aria-hidden="true" />
+            ) : (
+              <RefreshCw size={14} aria-hidden="true" />
+            )}
+            {t('mindmap.persistence.mapLoadErrorRetry')}
+          </button>
         </div>
       ) : (
         <MindMapIdeaIdContext.Provider value={ideaId}>

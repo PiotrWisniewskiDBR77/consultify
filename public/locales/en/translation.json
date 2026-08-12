@@ -25759,7 +25759,10 @@
       "mapTableMissing": "Map table missing — run DB migrations.",
       "failedToLoadMap": "Failed to load map",
       "conflictDetected": "Change conflict detected. Refreshing map from server.",
-      "failedToSaveMap": "Failed to save map"
+      "failedToSaveMap": "Failed to save map",
+      "mapLoadErrorTitle": "Couldn't load this mind map",
+      "mapLoadErrorBody": "Something went wrong while loading your data. Nothing was lost — try again.",
+      "mapLoadErrorRetry": "Retry"
     },
     "quickActions": {
       "viewLevel": "Showing level {{level}}",

@@ -3120,7 +3120,12 @@
         "tplRecordDetailDesc": "すべてのフィールドを含む単一レコードのビュー"
     },
     "mindmap": {
-        "aiExpandTargetNodeMissing": "そのノードはキャンバス上に存在しません。展開する別のノードを選択してください。"
+        "aiExpandTargetNodeMissing": "そのノードはキャンバス上に存在しません。展開する別のノードを選択してください。",
+        "persistence": {
+            "mapLoadErrorTitle": "Couldn't load this mind map",
+            "mapLoadErrorBody": "Something went wrong while loading your data. Nothing was lost — try again.",
+            "mapLoadErrorRetry": "Retry"
+        }
     },
     "ideas": {
         "table": {
