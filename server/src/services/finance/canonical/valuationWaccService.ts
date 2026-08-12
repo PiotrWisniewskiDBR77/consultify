@@ -29,6 +29,8 @@
  *   wacc = (targetEquityPct / 100) * costOfEquity + (targetDebtPct / 100) * costOfDebtAfterTax
  */
 
+import { randomUUID as uuidv4 } from 'node:crypto';
+
 import { withPinnedPostgresTransaction } from '../../../database/PostgresDatabase.js';
 
 // ---------------------------------------------------------------------------
@@ -225,4 +227,112 @@ export async function persistComputedWacc(
       [breakdown.waccPct, breakdown.betaRelevered, organizationId, businessVersionId]
     )
   );
+}
+
+// ---------------------------------------------------------------------------
+// Pakiet B3 (Valuation HTTP Surface) — thin writer. No production caller anywhere in the repo could
+// CREATE a `finance_valuation_wacc_inputs` row before this (grep-verified — only test fixtures
+// INSERT one directly); `persistComputedWacc()` above only ever UPDATEs a row that must already
+// exist. Without this, `runDcfFcffValuation()` could never be exercised through HTTP end-to-end
+// (it 404s/`NO_WACC_INPUTS`-fails on the very first call). Same documented gap-class as Pakiet B2's
+// `baselineComputeService.upsertAssumptionsBatch` (assumption authoring had zero writer either).
+// ---------------------------------------------------------------------------
+
+export type UpsertWaccInputsResult = { ok: true; wacc: WaccInputsRow } | { ok: false; code: 'BUSINESS_VERSION_NOT_FOUND'; message: string };
+
+export interface UpsertWaccInputsParams {
+  organizationId: string;
+  businessVersionId: string;
+  createdBy: string;
+  riskFreeRatePct?: number | null;
+  equityRiskPremiumPct?: number | null;
+  betaPeerSetRef?: unknown;
+  betaUnlevered?: number | null;
+  targetCapitalStructureDebtPct?: number | null;
+  targetCapitalStructureEquityPct?: number | null;
+  currentCapitalStructureDebtPct?: number | null;
+  currentCapitalStructureEquityPct?: number | null;
+  costOfDebtPretaxPct?: number | null;
+  creditSpreadPct?: number | null;
+  cashTaxRatePct?: number | null;
+  currency: string;
+  nominalOrReal: 'NOMINAL' | 'REAL';
+  preOrPostTax: 'PRE_TAX' | 'POST_TAX';
+}
+
+/**
+ * Upsert on `business_version_id` (the table's own unique constraint). Editing the inputs
+ * deliberately RESETS `wacc_computed_pct`/`beta_relevered` to NULL on an UPDATE — an edited input
+ * bundle whose old `wacc_computed_pct` is still visible would look freshly computed when it is
+ * actually stale (the exact "N/A never becomes a silent stale-looking number" discipline this whole
+ * program applies elsewhere); the caller must re-run `computeWacc()`/`persistComputedWacc()` (or the
+ * full `runDcfFcffValuation()`) to get a new value. On first INSERT both columns are simply NULL
+ * (nothing to reset).
+ */
+export async function upsertWaccInputs(params: UpsertWaccInputsParams): Promise<UpsertWaccInputsResult> {
+  return withPinnedPostgresTransaction(async (tx) => {
+    const bv = await tx.queryOne<{ business_version_id: string }>(
+      `SELECT business_version_id FROM finance_business_versions WHERE business_version_id = ? AND organization_id = ?`,
+      [params.businessVersionId, params.organizationId]
+    );
+    if (!bv) {
+      return {
+        ok: false,
+        code: 'BUSINESS_VERSION_NOT_FOUND',
+        message: `business_version ${params.businessVersionId} not found for organization ${params.organizationId}`,
+      } as const;
+    }
+
+    const row = await tx.queryOne<WaccInputsRow>(
+      `INSERT INTO finance_valuation_wacc_inputs (
+         id, organization_id, business_version_id, risk_free_rate_pct, equity_risk_premium_pct,
+         beta_peer_set_ref, beta_unlevered, target_capital_structure_debt_pct, target_capital_structure_equity_pct,
+         current_capital_structure_debt_pct, current_capital_structure_equity_pct, cost_of_debt_pretax_pct,
+         credit_spread_pct, cash_tax_rate_pct, currency, nominal_or_real, pre_or_post_tax, created_by
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+       ON CONFLICT (business_version_id) DO UPDATE SET
+         risk_free_rate_pct = EXCLUDED.risk_free_rate_pct,
+         equity_risk_premium_pct = EXCLUDED.equity_risk_premium_pct,
+         beta_peer_set_ref = EXCLUDED.beta_peer_set_ref,
+         beta_unlevered = EXCLUDED.beta_unlevered,
+         target_capital_structure_debt_pct = EXCLUDED.target_capital_structure_debt_pct,
+         target_capital_structure_equity_pct = EXCLUDED.target_capital_structure_equity_pct,
+         current_capital_structure_debt_pct = EXCLUDED.current_capital_structure_debt_pct,
+         current_capital_structure_equity_pct = EXCLUDED.current_capital_structure_equity_pct,
+         cost_of_debt_pretax_pct = EXCLUDED.cost_of_debt_pretax_pct,
+         credit_spread_pct = EXCLUDED.credit_spread_pct,
+         cash_tax_rate_pct = EXCLUDED.cash_tax_rate_pct,
+         currency = EXCLUDED.currency,
+         nominal_or_real = EXCLUDED.nominal_or_real,
+         pre_or_post_tax = EXCLUDED.pre_or_post_tax,
+         wacc_computed_pct = NULL,
+         beta_relevered = NULL,
+         updated_at = now()
+       WHERE finance_valuation_wacc_inputs.organization_id = ?
+       RETURNING *`,
+      [
+        uuidv4(),
+        params.organizationId,
+        params.businessVersionId,
+        params.riskFreeRatePct ?? null,
+        params.equityRiskPremiumPct ?? null,
+        params.betaPeerSetRef !== undefined ? JSON.stringify(params.betaPeerSetRef) : null,
+        params.betaUnlevered ?? null,
+        params.targetCapitalStructureDebtPct ?? null,
+        params.targetCapitalStructureEquityPct ?? null,
+        params.currentCapitalStructureDebtPct ?? null,
+        params.currentCapitalStructureEquityPct ?? null,
+        params.costOfDebtPretaxPct ?? null,
+        params.creditSpreadPct ?? null,
+        params.cashTaxRatePct ?? null,
+        params.currency,
+        params.nominalOrReal,
+        params.preOrPostTax,
+        params.createdBy,
+        params.organizationId,
+      ]
+    );
+    if (!row) throw new Error('upsertWaccInputs: no row returned (organization mismatch on conflict, or insert failure)');
+    return { ok: true, wacc: row } as const;
+  });
 }

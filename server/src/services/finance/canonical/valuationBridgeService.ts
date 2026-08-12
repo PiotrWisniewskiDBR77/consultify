@@ -154,3 +154,47 @@ export async function writeBridge(params: WriteBridgeParams): Promise<WriteBridg
 
   return { ok: true, bridgeId };
 }
+
+// ---------------------------------------------------------------------------
+// Pakiet B3 (Valuation HTTP Surface) — thin reader
+// ---------------------------------------------------------------------------
+
+export interface BridgeHeaderRow {
+  id: string;
+  organization_id: string;
+  business_version_id: string;
+  as_of_date: string;
+  enterprise_value_decimal: string | null;
+  equity_value_decimal: string | null;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface BridgeComponentRow {
+  id: string;
+  sequence_order: number;
+  component_kind: BridgeComponentKind;
+  sign: BridgeComponentSign;
+  amount_decimal: string;
+  as_of_date: string;
+  rationale: string | null;
+}
+
+export async function getBridge(
+  organizationId: string,
+  businessVersionId: string
+): Promise<{ header: BridgeHeaderRow; components: BridgeComponentRow[] } | null> {
+  return withPinnedPostgresTransaction(async (tx) => {
+    const header = await tx.queryOne<BridgeHeaderRow>(
+      `SELECT * FROM finance_valuation_ev_equity_bridge WHERE organization_id = ? AND business_version_id = ?`,
+      [organizationId, businessVersionId]
+    );
+    if (!header) return null;
+    const components = await tx.queryAll<BridgeComponentRow>(
+      `SELECT * FROM finance_valuation_ev_equity_bridge_components WHERE bridge_id = ? ORDER BY sequence_order`,
+      [header.id]
+    );
+    return { header, components };
+  });
+}

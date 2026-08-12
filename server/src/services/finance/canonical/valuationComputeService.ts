@@ -163,6 +163,75 @@ export async function setMethodBasket(params: { methodId: string; isInRecommenda
 }
 
 // ---------------------------------------------------------------------------
+// Pakiet B3 (Valuation HTTP Surface) — thin readers + one atomic batch writer for the basket
+// ---------------------------------------------------------------------------
+
+export async function listMethods(organizationId: string, businessVersionId: string): Promise<MethodRow[]> {
+  return withPinnedPostgresTransaction((tx) =>
+    tx.queryAll<MethodRow>(
+      `SELECT * FROM finance_valuation_methods WHERE organization_id = ? AND business_version_id = ? ORDER BY method_type`,
+      [organizationId, businessVersionId]
+    )
+  );
+}
+
+export async function getMethod(organizationId: string, methodId: string): Promise<MethodRow | null> {
+  return withPinnedPostgresTransaction((tx) =>
+    tx.queryOne<MethodRow>(`SELECT * FROM finance_valuation_methods WHERE organization_id = ? AND id = ?`, [organizationId, methodId])
+  );
+}
+
+export type SetBasketWeightsResult = { ok: true; methods: MethodRow[] } | { ok: false; code: 'METHOD_NOT_FOUND'; message: string };
+
+/**
+ * Writes ALL basket membership/weight changes for a variant in ONE call —
+ * `withPinnedPostgresTransaction` is one physical BEGIN...COMMIT per call — deliberately, because
+ * `trg_finance_valuation_methods_weight_sum` (WP-D09b migration 02) is a `DEFERRABLE INITIALLY
+ * DEFERRED` constraint trigger: it only evaluates the basket's weight sum once, at COMMIT, across
+ * every row touched inside that one transaction. A caller doing three separate one-method PATCH
+ * calls (34/33/33) would fail on the very first UPDATE (sum=34≠100); batching them here is what
+ * makes a legitimate multi-method rebalance possible at all — same "validate the whole transaction
+ * at COMMIT, not the first intermediate row" idiom the basket weight-sum trigger itself documents
+ * (WP-D09 section 7.3), and the same reason `writeSensitivityGrid()`/`upsertAssumptionsBatch()`
+ * (Pakiet B2) write their whole batch in one transaction too. Cross-check methods (never in the
+ * basket) simply pass `isInRecommendationBasket: false, weightPct: null` here — `weightPct` is
+ * physically NULL for them (`chk_finance_methods_weight_basket_only`), never mechanically part of
+ * the weighted sum (DEC-FIN-005 point 2 — "Cross-checki są NIEWAŻONE").
+ */
+export async function setBasketWeights(params: {
+  organizationId: string;
+  businessVersionId: string;
+  updates: readonly { methodId: string; isInRecommendationBasket: boolean; weightPct: number | null }[];
+}): Promise<SetBasketWeightsResult> {
+  return withPinnedPostgresTransaction(async (tx) => {
+    for (const u of params.updates) {
+      const method = await tx.queryOne<{ id: string }>(
+        `SELECT id FROM finance_valuation_methods WHERE id = ? AND organization_id = ? AND business_version_id = ?`,
+        [u.methodId, params.organizationId, params.businessVersionId]
+      );
+      if (!method) {
+        return {
+          ok: false,
+          code: 'METHOD_NOT_FOUND',
+          message: `method ${u.methodId} not found for business_version ${params.businessVersionId} / organization ${params.organizationId}`,
+        } as const;
+      }
+    }
+    for (const u of params.updates) {
+      await tx.queryRun(
+        `UPDATE finance_valuation_methods SET is_in_recommendation_basket = ?, weight_pct = ?, updated_at = now() WHERE id = ?`,
+        [u.isInRecommendationBasket, u.weightPct, u.methodId]
+      );
+    }
+    const methods = await tx.queryAll<MethodRow>(
+      `SELECT * FROM finance_valuation_methods WHERE organization_id = ? AND business_version_id = ? ORDER BY method_type`,
+      [params.organizationId, params.businessVersionId]
+    );
+    return { ok: true, methods } as const;
+  });
+}
+
+// ---------------------------------------------------------------------------
 // Comps readiness — "0 comps configured" vs "READY with an empty peer set" (WP-D09 section 11)
 // ---------------------------------------------------------------------------
 

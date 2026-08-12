@@ -270,6 +270,31 @@ export interface ValuationAdvisorSnapshot {
   usableCompsByMethodId: Record<string, number>;
 }
 
+// =============================================================================================
+// Pakiet B3 (Valuation HTTP Surface) — public read entry point for the "Wyniki" (results) HTTP
+// endpoint. `loadSnapshotInternal` below already reads every table the results contract needs
+// (methods/wacc/terminal/bridge/grids, org-scoped, one JOIN each) — this is a thin org/existence
+// check plus a pass-through to it, so the results router does not re-implement ~60 lines of the
+// exact same SQL a second time. Zero new reads, zero new domain logic.
+// =============================================================================================
+
+export type LoadValuationSnapshotResult = { ok: true; snapshot: ValuationAdvisorSnapshot } | { ok: false; code: 'VARIANT_NOT_FOUND' | 'ORGANIZATION_MISMATCH'; message: string };
+
+export async function loadValuationSnapshot(organizationId: string, businessVersionId: string): Promise<LoadValuationSnapshotResult> {
+  const bv = await withPinnedPostgresTransaction((tx) =>
+    tx.queryOne<{ business_version_id: string; organization_id: string; artifact_id: string; status: string; freshness: string }>(
+      `SELECT business_version_id, organization_id, artifact_id, status, freshness FROM finance_business_versions WHERE business_version_id = ?`,
+      [businessVersionId]
+    )
+  );
+  if (!bv) return { ok: false, code: 'VARIANT_NOT_FOUND', message: `No finance_business_versions row for ${businessVersionId}` };
+  if (bv.organization_id !== organizationId) {
+    return { ok: false, code: 'ORGANIZATION_MISMATCH', message: `Variant ${businessVersionId} does not belong to organization ${organizationId}` };
+  }
+  const snapshot = await loadSnapshotInternal(organizationId, businessVersionId, bv);
+  return { ok: true, snapshot };
+}
+
 async function loadSnapshotInternal(
   organizationId: string,
   businessVersionId: string,
