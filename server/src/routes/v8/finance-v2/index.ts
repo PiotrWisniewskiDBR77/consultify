@@ -18,6 +18,7 @@ import { Router } from 'express';
 import analysisRoutes from './analysis.routes.js';
 import artifactsRoutes from './artifacts.routes.js';
 import baselineRoutes from './baseline.routes.js';
+import commentsRoutes from './comments.routes.js';
 import compareRoutes from './compare.routes.js';
 import computeRoutes from './compute.routes.js';
 import crosscuttingRoutes from './crosscutting.routes.js';
@@ -66,5 +67,11 @@ financeV2Router.use(lineageNavigatorRoutes);
 // version/version, scenario/baseline, entity/entity, method/method). Own
 // `/compare/*` prefix, no collision with any router above.
 financeV2Router.use(compareRoutes);
+// Pakiet ROUTES_EXPOSURE — Comments/review-checklist (real, migrated tables).
+// Own `/comments/*` + `/review-checklist/*` prefixes, plus one read under the
+// existing `/versions/:businessVersionId` prefix (`has-unresolved-blocking-
+// comments`) that does not collide with any suffix versionsRoutes/
+// crosscuttingRoutes/lineageNavigatorRoutes already own.
+financeV2Router.use(commentsRoutes);
 
 export default financeV2Router;
