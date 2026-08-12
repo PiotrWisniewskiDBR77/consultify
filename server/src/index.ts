@@ -1764,9 +1764,13 @@ async function detectCrashLoop(): Promise<void> {
  * Slack Command Center — announce a completed deploy on #cf-progress ("🚀
  * Wdrożenie"). Gives the real-time "what shipped, when" visibility that was
  * missing (deploys previously had no Slack signal at all). Dedup'd by
- * env+gitSha (router's 30-min window) so a crash-loop restart on the SAME
- * commit doesn't spam; a genuinely new deploy always gets a fresh sha. No-op
- * fail-soft when gitSha/Slack env aren't configured (e.g. local dev).
+ * env+gitSha over a 12h DURABLE window (survives process restarts — a
+ * crash-loop or a rolling redeploy restarts the process, and the router's
+ * dedupe is DB-backed precisely so re-announcing the SAME commit doesn't
+ * spam; previously it was in-memory only and reset on every restart, which
+ * produced bursts of duplicate posts). A genuinely new deploy always gets a
+ * fresh sha and announces immediately. No-op fail-soft when gitSha/Slack env
+ * aren't configured (e.g. local dev).
  */
 async function announceDeploy(): Promise<void> {
   if (isTest) return;
@@ -1799,6 +1803,7 @@ async function announceDeploy(): Promise<void> {
       title: `${env}${branch ? ` (${branch})` : ''} — ${shortSha}`,
       text: commitMsg || 'Nowa wersja wdrożona.',
       dedupeKey: `deploy:${env}:${shortSha}`,
+      dedupeWindowMs: 12 * 60 * 60 * 1000, // 12h — covers restart storms, not just one process's lifetime
     });
   } catch (err) {
     logger.warn('[Server] announceDeploy failed (non-fatal):', {

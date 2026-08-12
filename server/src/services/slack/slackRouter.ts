@@ -13,6 +13,7 @@
  *  - it is fully fail-soft: it NEVER throws to the caller.
  */
 
+import { get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
 
 // ==========================================
@@ -33,8 +34,10 @@ export interface RouteToSlackEvent {
   blocks?: unknown[];
   /** Slack thread timestamp to reply into (Web API only). */
   threadTs?: string;
-  /** When set, identical dedupeKeys are suppressed for DEDUPE_WINDOW_MS. */
+  /** When set, identical dedupeKeys are suppressed for DEDUPE_WINDOW_MS (or dedupeWindowMs, if given). */
   dedupeKey?: string;
+  /** Override the default 30-min dedupe window for this event (e.g. a daily digest needs ~20h). */
+  dedupeWindowMs?: number;
   /**
    * Human category for the push notification headline (watch/phone), e.g.
    * "Błąd", "Pomysł", "Awaria", "Postęp", "Rejestracja". When set (with title),
@@ -126,21 +129,90 @@ export interface RouteToSlackResult {
 // DEDUP / THROTTLE
 // ==========================================
 
-// In-memory dedupe map (dedupeKey -> lastSentAt ms). Mirrors the throttle
-// pattern in server/src/services/systemAlertNotifier.ts. Cleared on restart —
-// acceptable for alert-suppression (a restart implies "state changed").
-const DEDUPE_WINDOW_MS = 30 * 60 * 1000; // 30 min
+// In-memory dedupe map (dedupeKey -> lastSentAt ms), as a fast same-process
+// pre-check. On its own this was NOT sufficient: it is cleared on every
+// process restart, and a redeploy or crash-loop restarts the process — so
+// e.g. `announceDeploy()`'s dedupeKey (same env+gitSha) re-fired on every
+// restart, producing a burst of identical "🚀 Wdrożenie" posts (observed:
+// 11 in ~1 min on #cf-progress for one commit). Backed below by a durable,
+// DB-persisted timestamp per key so the suppression survives restarts.
+const DEDUPE_WINDOW_MS = 30 * 60 * 1000; // 30 min (default; override via dedupeWindowMs)
 const dedupeMap = new Map<string, number>();
 
-function isDuplicate(dedupeKey?: string): boolean {
+let dedupeTableEnsured = false;
+async function ensureDedupeTable(): Promise<boolean> {
+  if (dedupeTableEnsured) return true;
+  try {
+    await dbRun(
+      `CREATE TABLE IF NOT EXISTS slack_router_dedupe (
+         dedupe_key TEXT PRIMARY KEY,
+         last_sent_at TIMESTAMP
+       )`
+    );
+    dedupeTableEnsured = true;
+    return true;
+  } catch (err) {
+    logger.warn('[SlackRouter] ensureDedupeTable failed — falling back to in-memory-only dedupe', {
+      error: err instanceof Error ? err.message : String(err),
+    });
+    return false;
+  }
+}
+
+async function isDuplicate(dedupeKey: string | undefined, windowMs: number): Promise<boolean> {
   if (!dedupeKey) return false;
   const now = Date.now();
-  const lastSentAt = dedupeMap.get(dedupeKey);
-  if (typeof lastSentAt === 'number' && now - lastSentAt < DEDUPE_WINDOW_MS) {
-    return true;
+
+  // Fast pre-check: covers repeated calls within the SAME process without a
+  // DB round trip (e.g. two callers racing on the same key milliseconds apart).
+  const cached = dedupeMap.get(dedupeKey);
+  if (typeof cached === 'number' && now - cached < windowMs) return true;
+
+  if (await ensureDedupeTable()) {
+    try {
+      const row = await dbGet<{ last_sent_at?: string }>(
+        `SELECT last_sent_at FROM slack_router_dedupe WHERE dedupe_key = ?`,
+        [dedupeKey]
+      );
+      if (row?.last_sent_at) {
+        const lastMs = new Date(row.last_sent_at).getTime();
+        if (Number.isFinite(lastMs) && now - lastMs < windowMs) {
+          dedupeMap.set(dedupeKey, lastMs);
+          return true;
+        }
+      }
+      const nowIso = new Date(now).toISOString();
+      const updated = await dbRun(
+        `UPDATE slack_router_dedupe SET last_sent_at = ? WHERE dedupe_key = ?`,
+        [nowIso, dedupeKey]
+      );
+      if (!updated || Number((updated as any).changes ?? 0) === 0) {
+        await dbRun(
+          `INSERT INTO slack_router_dedupe (dedupe_key, last_sent_at) VALUES (?, ?)`,
+          [dedupeKey, nowIso]
+        ).catch(() => {
+          // Lost a race to a concurrent insert for the same key — both sides
+          // agree "sent now", which is the correct outcome either way.
+        });
+      }
+    } catch (err) {
+      logger.warn('[SlackRouter] Durable dedupe check failed — falling back to in-memory only', {
+        dedupeKey,
+        error: err instanceof Error ? err.message : String(err),
+      });
+    }
   }
+
   dedupeMap.set(dedupeKey, now);
   return false;
+}
+
+/** Per-environment kill switch: `SLACK_DISABLED_<ENV>=true` silences ALL Slack
+ * traffic from that environment (e.g. a CI/candidate deploy target that
+ * should never page a human). Opt-in per env, off by default. */
+function isRouterDisabledForEnv(): boolean {
+  const suffix = envSuffix();
+  return /^(1|true|yes|on)$/i.test(String(process.env[`SLACK_DISABLED_${suffix}`] || '').trim());
 }
 
 // ==========================================
@@ -300,6 +372,13 @@ async function postViaWebhook(
  */
 export async function routeToSlack(rawEvent: RouteToSlackEvent): Promise<RouteToSlackResult> {
   try {
+    if (isRouterDisabledForEnv()) {
+      logger.debug('[SlackRouter] Disabled for this environment (SLACK_DISABLED_<ENV>) — message dropped', {
+        channel: rawEvent.channel,
+      });
+      return { ok: false, transport: 'none' };
+    }
+
     // Compose message. When a `category` is given we split the payload:
     //  - `text`  = natural-language PREVIEW (what the phone reads / shows on the
     //              lock screen — Slack uses `text` as the notification fallback),
@@ -317,10 +396,12 @@ export async function routeToSlack(rawEvent: RouteToSlackEvent): Promise<RouteTo
         }
       : rawEvent;
 
-    if (isDuplicate(event.dedupeKey)) {
-      logger.debug('[SlackRouter] Deduped (within 30m window)', {
+    const dedupeWindowMs = rawEvent.dedupeWindowMs ?? DEDUPE_WINDOW_MS;
+    if (await isDuplicate(event.dedupeKey, dedupeWindowMs)) {
+      logger.debug('[SlackRouter] Deduped (within window)', {
         channel: event.channel,
         dedupeKey: event.dedupeKey,
+        dedupeWindowMs,
       });
       return { ok: false, transport: 'none' };
     }
@@ -378,6 +459,19 @@ export async function routeToSlack(rawEvent: RouteToSlackEvent): Promise<RouteTo
 /** Test-only: clear the in-memory dedupe map. */
 export function __resetDedupeForTests(): void {
   dedupeMap.clear();
+}
+
+/** Test-only: clear the durable (DB-backed) dedupe table so tests that verify
+ * restart-survival can start from a clean slate. Best-effort. */
+export async function __resetDurableDedupeForTests(): Promise<void> {
+  dedupeMap.clear();
+  try {
+    if (await ensureDedupeTable()) {
+      await dbRun(`DELETE FROM slack_router_dedupe`);
+    }
+  } catch {
+    // test-only convenience — ignore
+  }
 }
 
 export default { routeToSlack };
