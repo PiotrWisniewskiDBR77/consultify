@@ -288,31 +288,37 @@ export const RoiFinanceLinkFormModal: React.FC<RoiFinanceLinkFormModalProps> = (
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className={LABEL_CLASS} htmlFor="roi-finance-artifact-type">{isPolish ? 'Typ artefaktu' : 'Artifact type'}</label>
-            <input id="roi-finance-artifact-type" autoFocus value={financeArtifactType} onChange={(e) => setFinanceArtifactType(e.target.value)} className={FIELD_CLASS} data-testid="roi-finance-artifact-type" aria-invalid={hasError(financeArtifactType) || undefined} />
+            <input id="roi-finance-artifact-type" autoFocus value={financeArtifactType} onChange={(e) => setFinanceArtifactType(e.target.value)} className={FIELD_CLASS} data-testid="roi-finance-artifact-type" aria-invalid={hasError(financeArtifactType) || undefined} aria-describedby={hasError(financeArtifactType) ? 'roi-finance-artifact-type-error' : undefined} />
+            {hasError(financeArtifactType) ? <p id="roi-finance-artifact-type-error" className="mt-1 text-[11px] text-c-danger">{isPolish ? 'Typ artefaktu jest wymagany' : 'Artifact type is required'}</p> : null}
           </div>
           <div>
             <label className={LABEL_CLASS} htmlFor="roi-finance-artifact-id">{isPolish ? 'ID artefaktu' : 'Artifact ID'}</label>
-            <input id="roi-finance-artifact-id" value={financeArtifactId} onChange={(e) => setFinanceArtifactId(e.target.value)} className={FIELD_CLASS} data-testid="roi-finance-artifact-id" aria-invalid={hasError(financeArtifactId) || undefined} />
+            <input id="roi-finance-artifact-id" value={financeArtifactId} onChange={(e) => setFinanceArtifactId(e.target.value)} className={FIELD_CLASS} data-testid="roi-finance-artifact-id" aria-invalid={hasError(financeArtifactId) || undefined} aria-describedby={hasError(financeArtifactId) ? 'roi-finance-artifact-id-error' : undefined} />
+            {hasError(financeArtifactId) ? <p id="roi-finance-artifact-id-error" className="mt-1 text-[11px] text-c-danger">{isPolish ? 'ID artefaktu jest wymagane' : 'Artifact ID is required'}</p> : null}
           </div>
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className={LABEL_CLASS} htmlFor="roi-finance-version-id">{isPolish ? 'ID wersji' : 'Version ID'}</label>
-            <input id="roi-finance-version-id" value={financeVersionId} onChange={(e) => setFinanceVersionId(e.target.value)} className={FIELD_CLASS} data-testid="roi-finance-version-id" aria-invalid={hasError(financeVersionId) || undefined} />
+            <input id="roi-finance-version-id" value={financeVersionId} onChange={(e) => setFinanceVersionId(e.target.value)} className={FIELD_CLASS} data-testid="roi-finance-version-id" aria-invalid={hasError(financeVersionId) || undefined} aria-describedby={hasError(financeVersionId) ? 'roi-finance-version-id-error' : undefined} />
+            {hasError(financeVersionId) ? <p id="roi-finance-version-id-error" className="mt-1 text-[11px] text-c-danger">{isPolish ? 'ID wersji jest wymagane' : 'Version ID is required'}</p> : null}
           </div>
           <div>
             <label className={LABEL_CLASS} htmlFor="roi-finance-source">{isPolish ? 'Źródło' : 'Source'}</label>
-            <input id="roi-finance-source" value={source} onChange={(e) => setSource(e.target.value)} className={FIELD_CLASS} data-testid="roi-finance-source" aria-invalid={hasError(source) || undefined} />
+            <input id="roi-finance-source" value={source} onChange={(e) => setSource(e.target.value)} className={FIELD_CLASS} data-testid="roi-finance-source" aria-invalid={hasError(source) || undefined} aria-describedby={hasError(source) ? 'roi-finance-source-error' : undefined} />
+            {hasError(source) ? <p id="roi-finance-source-error" className="mt-1 text-[11px] text-c-danger">{isPolish ? 'Źródło jest wymagane' : 'Source is required'}</p> : null}
           </div>
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className={LABEL_CLASS} htmlFor="roi-finance-as-of">{isPolish ? 'Stan na' : 'As of'}</label>
-            <input id="roi-finance-as-of" type="datetime-local" value={asOf} onChange={(e) => setAsOf(e.target.value)} className={FIELD_CLASS} data-testid="roi-finance-as-of" aria-invalid={hasError(asOf) || undefined} />
+            <input id="roi-finance-as-of" type="datetime-local" value={asOf} onChange={(e) => setAsOf(e.target.value)} className={FIELD_CLASS} data-testid="roi-finance-as-of" aria-invalid={hasError(asOf) || undefined} aria-describedby={hasError(asOf) ? 'roi-finance-as-of-error' : undefined} />
+            {hasError(asOf) ? <p id="roi-finance-as-of-error" className="mt-1 text-[11px] text-c-danger">{isPolish ? 'Data jest wymagana' : 'Date is required'}</p> : null}
           </div>
           <div>
             <label className={LABEL_CLASS} htmlFor="roi-finance-purpose">{isPolish ? 'Cel powiązania' : 'Link purpose'}</label>
-            <input id="roi-finance-purpose" value={linkPurpose} onChange={(e) => setLinkPurpose(e.target.value)} className={FIELD_CLASS} data-testid="roi-finance-purpose" aria-invalid={hasError(linkPurpose) || undefined} />
+            <input id="roi-finance-purpose" value={linkPurpose} onChange={(e) => setLinkPurpose(e.target.value)} className={FIELD_CLASS} data-testid="roi-finance-purpose" aria-invalid={hasError(linkPurpose) || undefined} aria-describedby={hasError(linkPurpose) ? 'roi-finance-purpose-error' : undefined} />
+            {hasError(linkPurpose) ? <p id="roi-finance-purpose-error" className="mt-1 text-[11px] text-c-danger">{isPolish ? 'Cel powiązania jest wymagany' : 'Link purpose is required'}</p> : null}
           </div>
         </div>
         <div className="grid grid-cols-2 gap-3">
@@ -384,19 +390,22 @@ export const RoiFinanceReconciliationFormModal: React.FC<RoiFinanceReconciliatio
         ) : (
           <div>
             <label className={LABEL_CLASS} htmlFor="roi-recon-link">{isPolish ? 'Powiązanie Finance' : 'Finance link'}</label>
-            <select id="roi-recon-link" value={financeLinkId} onChange={(e) => setFinanceLinkId(e.target.value)} className={FIELD_CLASS} data-testid="roi-recon-link" aria-invalid={linkError || undefined}>
+            <select id="roi-recon-link" value={financeLinkId} onChange={(e) => setFinanceLinkId(e.target.value)} className={FIELD_CLASS} data-testid="roi-recon-link" aria-invalid={linkError || undefined} aria-describedby={linkError ? 'roi-recon-link-error' : undefined}>
               {financeLinks.map((l) => (<option key={l.linkId} value={l.linkId}>{l.financeArtifactType} · {l.financeArtifactId}</option>))}
             </select>
+            {linkError ? <p id="roi-recon-link-error" className="mt-1 text-[11px] text-c-danger">{isPolish ? 'Wybierz powiązanie Finance' : 'Select a finance link'}</p> : null}
           </div>
         )}
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className={LABEL_CLASS} htmlFor="roi-recon-roi-value">{isPolish ? 'Wartość ROI (wymagana)' : 'ROI value (required)'}</label>
-            <input id="roi-recon-roi-value" type="number" value={roiValue} onChange={(e) => setRoiValue(e.target.value)} className={FIELD_CLASS} data-testid="roi-recon-roi-value" aria-invalid={roiError || undefined} />
+            <input id="roi-recon-roi-value" type="number" value={roiValue} onChange={(e) => setRoiValue(e.target.value)} className={FIELD_CLASS} data-testid="roi-recon-roi-value" aria-invalid={roiError || undefined} aria-describedby={roiError ? 'roi-recon-roi-value-error' : undefined} />
+            {roiError ? <p id="roi-recon-roi-value-error" className="mt-1 text-[11px] text-c-danger">{isPolish ? 'Wartość ROI jest wymagana' : 'ROI value is required'}</p> : null}
           </div>
           <div>
             <label className={LABEL_CLASS} htmlFor="roi-recon-finance-value">{isPolish ? 'Wartość Finance (wymagana)' : 'Finance value (required)'}</label>
-            <input id="roi-recon-finance-value" type="number" value={financeValue} onChange={(e) => setFinanceValue(e.target.value)} className={FIELD_CLASS} data-testid="roi-recon-finance-value" aria-invalid={financeError || undefined} />
+            <input id="roi-recon-finance-value" type="number" value={financeValue} onChange={(e) => setFinanceValue(e.target.value)} className={FIELD_CLASS} data-testid="roi-recon-finance-value" aria-invalid={financeError || undefined} aria-describedby={financeError ? 'roi-recon-finance-value-error' : undefined} />
+            {financeError ? <p id="roi-recon-finance-value-error" className="mt-1 text-[11px] text-c-danger">{isPolish ? 'Wartość Finance jest wymagana' : 'Finance value is required'}</p> : null}
           </div>
         </div>
         <div>

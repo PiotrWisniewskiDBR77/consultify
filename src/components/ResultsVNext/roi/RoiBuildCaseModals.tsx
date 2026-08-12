@@ -216,9 +216,10 @@ export const RoiScenarioOverrideFormModal: React.FC<RoiScenarioOverrideFormModal
         ) : (
           <div>
             <label className={LABEL_CLASS} htmlFor="roi-override-target">{isPolish ? 'Pozycja do nadpisania' : 'Target line item'}</label>
-            <select id="roi-override-target" value={targetId} onChange={(e) => setTargetId(e.target.value)} className={FIELD_CLASS} data-testid="roi-override-target" aria-invalid={targetError || undefined}>
+            <select id="roi-override-target" value={targetId} onChange={(e) => setTargetId(e.target.value)} className={FIELD_CLASS} data-testid="roi-override-target" aria-invalid={targetError || undefined} aria-describedby={targetError ? 'roi-override-target-error' : undefined}>
               {targetOptions.map((o) => (<option key={`${o.targetType}:${o.targetId}`} value={o.targetId}>{o.label}</option>))}
             </select>
+            {targetError ? <p id="roi-override-target-error" className="mt-1 text-[11px] text-c-danger">{isPolish ? 'Wybierz pozycję do nadpisania' : 'Select a target line item'}</p> : null}
           </div>
         )}
         <div className="grid grid-cols-2 gap-3">

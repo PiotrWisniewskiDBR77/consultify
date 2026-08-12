@@ -191,11 +191,13 @@ export const RoiActualEntryFormModal: React.FC<RoiActualEntryFormModalProps> = (
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className={LABEL_CLASS} htmlFor="roi-actual-period-start">{isPolish ? 'Początek okresu' : 'Period start'}</label>
-            <input id="roi-actual-period-start" type="date" value={periodStart} onChange={(e) => setPeriodStart(e.target.value)} className={FIELD_CLASS} data-testid="roi-actual-period-start" aria-invalid={periodStartError || undefined} />
+            <input id="roi-actual-period-start" type="date" value={periodStart} onChange={(e) => setPeriodStart(e.target.value)} className={FIELD_CLASS} data-testid="roi-actual-period-start" aria-invalid={periodStartError || undefined} aria-describedby={periodStartError ? 'roi-actual-period-start-error' : undefined} />
+            {periodStartError ? <p id="roi-actual-period-start-error" className="mt-1 text-[11px] text-c-danger">{isPolish ? 'Początek okresu jest wymagany' : 'Period start is required'}</p> : null}
           </div>
           <div>
             <label className={LABEL_CLASS} htmlFor="roi-actual-period-end">{isPolish ? 'Koniec okresu' : 'Period end'}</label>
-            <input id="roi-actual-period-end" type="date" value={periodEnd} onChange={(e) => setPeriodEnd(e.target.value)} className={FIELD_CLASS} data-testid="roi-actual-period-end" aria-invalid={periodEndError || undefined} />
+            <input id="roi-actual-period-end" type="date" value={periodEnd} onChange={(e) => setPeriodEnd(e.target.value)} className={FIELD_CLASS} data-testid="roi-actual-period-end" aria-invalid={periodEndError || undefined} aria-describedby={periodEndError ? 'roi-actual-period-end-error' : undefined} />
+            {periodEndError ? <p id="roi-actual-period-end-error" className="mt-1 text-[11px] text-c-danger">{isPolish ? 'Koniec okresu jest wymagany' : 'Period end is required'}</p> : null}
           </div>
         </div>
         <div className="grid grid-cols-2 gap-3">
