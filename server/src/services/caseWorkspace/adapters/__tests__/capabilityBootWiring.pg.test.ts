@@ -74,7 +74,7 @@
 
 import { randomUUID } from 'node:crypto';
 
-import { Pool } from 'pg';
+import { Pool, type PoolClient } from 'pg';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import * as capabilityAdapterService from '../../capabilityAdapterService.js';
@@ -138,6 +138,28 @@ if (!REACHABLE) {
 
 const suite = REACHABLE ? describe.sequential : describe.skip;
 
+// ---------------------------------------------------------------------------
+// PACKET H3, 2026-08-12 — cross-file serialization against
+// capabilityBootstrap.pg.test.ts. MUST be textually identical to the same
+// constant in that file. See that file's matching comment block (right
+// before its `suite(...)` call) for the full rationale: this file's test 1
+// calls the REAL, unmodified `registerBuiltinCapabilityAdapters` (this
+// file's whole reason to exist — proving that exact aggregate function is
+// safe across two real boots), which hard-codes the seven real builtin
+// capability id constants internally and offers no id-override parameter
+// (adapters/index.ts). capabilityBootstrap.pg.test.ts's test 1 calls the
+// config-loader layer that wraps the SAME function with the SAME real ids,
+// and several of its other tests delete-then-assert-zero against those same
+// real ids as pre-cleanup. Neither file's real-id-touching tests can be
+// isolated by swapping to a private id without gutting what each proves, so
+// a Postgres session-scoped advisory lock serializes the two files'
+// real-id-touching critical sections instead — same production code path,
+// same assertions, just no interleaving. This file's tests 2 and 3 use a
+// fully synthetic, per-run-unique capability id via
+// `registerCapabilityWithAdapter` directly (never through the aggregate
+// function) and are NOT wrapped — they never touch the real ids.
+const BUILTIN_CAPABILITY_CROSS_FILE_LOCK_KEY = 8_420_081_200;
+
 suite('capabilityBootWiring — registerBuiltinCapabilityAdapters is safe across repeated real process boots', () => {
   let control: Pool;
 
@@ -148,6 +170,23 @@ suite('capabilityBootWiring — registerBuiltinCapabilityAdapters is safe across
   afterAll(async () => {
     await control?.end().catch(() => undefined);
   }, 60_000);
+
+  // Acquire on a DEDICATED connection (not the shared `control` pool) —
+  // `pg_advisory_lock` is session-scoped, so the same physical connection
+  // must issue both the lock and the unlock. Blocks until
+  // capabilityBootstrap.pg.test.ts's matching holder (if any) releases.
+  async function acquireBuiltinCapabilityCrossFileLock(): Promise<PoolClient> {
+    const lockClient = await control.connect();
+    await lockClient.query('SELECT pg_advisory_lock($1)', [BUILTIN_CAPABILITY_CROSS_FILE_LOCK_KEY]);
+    return lockClient;
+  }
+
+  async function releaseBuiltinCapabilityCrossFileLock(lockClient: PoolClient): Promise<void> {
+    await lockClient
+      .query('SELECT pg_advisory_unlock($1)', [BUILTIN_CAPABILITY_CROSS_FILE_LOCK_KEY])
+      .catch(() => undefined);
+    lockClient.release();
+  }
 
   async function deleteDecisionCapabilityRegistryState(): Promise<void> {
     await control
@@ -181,6 +220,10 @@ suite('capabilityBootWiring — registerBuiltinCapabilityAdapters is safe across
     'boot 1 registers rows+bindings and dispatches; boot 2 against the SAME database ' +
       're-registers without throwing, does not duplicate the row, and still dispatches',
     async () => {
+      // Cross-file serialization against capabilityBootstrap.pg.test.ts —
+      // see the BUILTIN_CAPABILITY_CROSS_FILE_LOCK_KEY block above this
+      // describe for why an id-swap isn't the applicable fix here.
+      const lockClient = await acquireBuiltinCapabilityCrossFileLock();
       const registrarSuffix = randomUUID();
       const registrarOrgId = `cwtest-boot-wiring-registrar-${registrarSuffix}`;
       await control.query(`INSERT INTO organizations (id, name) VALUES ($1, $2)`, [
@@ -306,6 +349,7 @@ suite('capabilityBootWiring — registerBuiltinCapabilityAdapters is safe across
         await control.query(`DELETE FROM users WHERE organization_id = $1`, [registrarOrgId]).catch(() => undefined);
         await control.query(`DELETE FROM organizations WHERE id = $1`, [registrarOrgId]).catch(() => undefined);
         capabilityAdapterService.clearCapabilityBindings();
+        await releaseBuiltinCapabilityCrossFileLock(lockClient);
       }
     },
     // Raised from 90_000: this test drives TWO full

@@ -36,7 +36,7 @@
 
 import { randomUUID } from 'node:crypto';
 
-import { Pool } from 'pg';
+import { Pool, type PoolClient } from 'pg';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import * as capabilityAdapterService from '../../capabilityAdapterService.js';
@@ -136,6 +136,49 @@ const BUILTIN_CAPABILITIES: ReadonlyArray<{ id: string; version: string; label: 
   { id: PRESENTATION_CREATE_CAPABILITY_ID, version: PRESENTATION_CREATE_CAPABILITY_VERSION, label: 'presentation' },
 ];
 
+// ---------------------------------------------------------------------------
+// PACKET H3, 2026-08-12 — cross-file serialization against
+// capabilityBootWiring.pg.test.ts, NOT a private-id isolation.
+//
+// H1 fixed the documentsAdapter<->capabilityBootstrap collision by giving
+// documentsAdapter.pg.test.ts its OWN private, per-run-unique capability id
+// (that file merely needed *a* capability of the right shape to dispatch
+// through — swapping the id cost it nothing). That shape does NOT apply to
+// the collision this packet was assigned (capabilityBootstrap.pg.test.ts <->
+// capabilityBootWiring.pg.test.ts), because BOTH files' primary tests call
+// the REAL, unmodified aggregate entry point
+// (`bootstrapCaseWorkspaceCapabilities` here, `registerBuiltinCapabilityAdapters`
+// directly in the sibling file) — and that function hard-codes the seven
+// real builtin capability id constants internally (see adapters/index.ts:
+// `registerBuiltinCapabilityAdapters` takes no id-override parameter). There
+// is no id to swap without gutting what either file exists to prove: THIS
+// file proves the config-loader/authorization layer makes the REAL builtin
+// capabilities reachable after a REAL boot; the sibling proves the
+// lower-level aggregate wiring function itself survives a second real boot.
+// Both are the "authoritative" proof for their own layer; neither can be
+// downgraded to a synthetic id without losing that.
+//
+// The two files DO share exactly one contended resource though: the
+// `case_workspace_capabilities` rows for the 8 real builtin ids (table is
+// UNIQUE on (capability_id, capability_version), NO organization scoping —
+// capabilityRegistryService.ts:496), and vitest runs test FILES concurrently
+// by default (server/vitest.config.ts sets no fileParallelism:false, out of
+// this packet's allowlist to change). Reproduced 3/3 runs (see this packet's
+// final report for the DB readback: row count for the real ids observed
+// jumping 0->8 then dropping to 4 then 0 mid-run, well before either file's
+// own end-of-test cleanup).
+//
+// Fix: a Postgres session-scoped advisory lock, keyed on a fixed constant
+// that MUST be textually identical to the matching constant in
+// capabilityBootWiring.pg.test.ts, serializes each file's real-id-touching
+// critical section against the other's. This changes NOTHING about which
+// production code path either file calls or what either file asserts — it
+// only prevents the two from interleaving. Tests that use a fully synthetic,
+// per-run-unique capability id (this file's tests 8 and 9; the sibling
+// file's tests 2 and 3) never touch the real ids and are NOT wrapped —
+// wrapping them would only add contention with no correctness benefit.
+const BUILTIN_CAPABILITY_CROSS_FILE_LOCK_KEY = 8_420_081_200;
+
 suite('capabilityBootstrap — safe config loader for OD-CW-BOOTSTRAP-20260812', () => {
   let control: Pool;
 
@@ -150,6 +193,23 @@ suite('capabilityBootstrap — safe config loader for OD-CW-BOOTSTRAP-20260812',
   // ---------------------------------------------------------------------
   // Shared helpers
   // ---------------------------------------------------------------------
+
+  // Acquire on a DEDICATED connection (not the shared `control` pool) —
+  // `pg_advisory_lock` is session-scoped, so the same physical connection
+  // must issue both the lock and the unlock. Blocks until
+  // capabilityBootWiring.pg.test.ts's matching holder (if any) releases.
+  async function acquireBuiltinCapabilityCrossFileLock(): Promise<PoolClient> {
+    const lockClient = await control.connect();
+    await lockClient.query('SELECT pg_advisory_lock($1)', [BUILTIN_CAPABILITY_CROSS_FILE_LOCK_KEY]);
+    return lockClient;
+  }
+
+  async function releaseBuiltinCapabilityCrossFileLock(lockClient: PoolClient): Promise<void> {
+    await lockClient
+      .query('SELECT pg_advisory_unlock($1)', [BUILTIN_CAPABILITY_CROSS_FILE_LOCK_KEY])
+      .catch(() => undefined);
+    lockClient.release();
+  }
 
   async function deleteBuiltinCapabilityRows(): Promise<void> {
     for (const cap of BUILTIN_CAPABILITIES) {
@@ -212,6 +272,10 @@ suite('capabilityBootstrap — safe config loader for OD-CW-BOOTSTRAP-20260812',
       'reachable; 10: a real Decision command lands, proven via native-module readback; ' +
       '2: a second boot against the same database produces zero duplicate rows and stays reachable',
     async () => {
+      // Cross-file serialization against capabilityBootWiring.pg.test.ts —
+      // see the BUILTIN_CAPABILITY_CROSS_FILE_LOCK_KEY block above this
+      // describe for why an id-swap isn't the applicable fix here.
+      const lockClient = await acquireBuiltinCapabilityCrossFileLock();
       const registrarOrgId = await seedOrg('registrar');
       const registrarActorId = await seedMemberedUser(control, registrarOrgId, 'registrar', 'ADMIN');
       const fixture = await seedCaseFixture(control, 'e1-loader-happy');
@@ -346,6 +410,7 @@ suite('capabilityBootstrap — safe config loader for OD-CW-BOOTSTRAP-20260812',
         await deleteBuiltinCapabilityRows();
         await deleteOrg(registrarOrgId);
         capabilityAdapterService.clearCapabilityBindings();
+        await releaseBuiltinCapabilityCrossFileLock(lockClient);
       }
     },
     240_000
@@ -355,25 +420,33 @@ suite('capabilityBootstrap — safe config loader for OD-CW-BOOTSTRAP-20260812',
   // 3 — missing actor id.
   // ===========================================================================
   it('3: missing actor id -> bootstrap skips, zero registrations (asserted on the database)', async () => {
-    await deleteBuiltinCapabilityRows();
-    capabilityAdapterService.clearCapabilityBindings();
+    // Cross-file serialization — this test's own deleteBuiltinCapabilityRows()
+    // pre-cleanup (and its "zero registrations" assertion) targets the SAME
+    // real ids capabilityBootWiring.pg.test.ts's boot touches.
+    const lockClient = await acquireBuiltinCapabilityCrossFileLock();
+    try {
+      await deleteBuiltinCapabilityRows();
+      capabilityAdapterService.clearCapabilityBindings();
 
-    const env: CapabilityBootstrapEnv = {
-      [CASE_WORKSPACE_CAPABILITY_BOOT_ORG_ID_ENV_VAR]: `cwtest-e1-loader-missing-actor-${randomUUID()}`,
-      // ACTOR_ID_ENV_VAR deliberately absent.
-    };
+      const env: CapabilityBootstrapEnv = {
+        [CASE_WORKSPACE_CAPABILITY_BOOT_ORG_ID_ENV_VAR]: `cwtest-e1-loader-missing-actor-${randomUUID()}`,
+        // ACTOR_ID_ENV_VAR deliberately absent.
+      };
 
-    // Sanity on the pure loader itself.
-    const config = loadCapabilityBootstrapConfig(env);
-    expect(config.actorId).toBeNull();
+      // Sanity on the pure loader itself.
+      const config = loadCapabilityBootstrapConfig(env);
+      expect(config.actorId).toBeNull();
 
-    const result = await bootstrapCaseWorkspaceCapabilities(env);
-    expect(result.status).toBe('SKIPPED_MISSING_CONFIG');
-    expect(result.attempted).toBe(false);
+      const result = await bootstrapCaseWorkspaceCapabilities(env);
+      expect(result.status).toBe('SKIPPED_MISSING_CONFIG');
+      expect(result.attempted).toBe(false);
 
-    for (const cap of BUILTIN_CAPABILITIES) {
-      // eslint-disable-next-line no-await-in-loop
-      expect(await builtinCapabilityRowCount(cap.id, cap.version), cap.label).toBe(0);
+      for (const cap of BUILTIN_CAPABILITIES) {
+        // eslint-disable-next-line no-await-in-loop
+        expect(await builtinCapabilityRowCount(cap.id, cap.version), cap.label).toBe(0);
+      }
+    } finally {
+      await releaseBuiltinCapabilityCrossFileLock(lockClient);
     }
   });
 
@@ -381,24 +454,29 @@ suite('capabilityBootstrap — safe config loader for OD-CW-BOOTSTRAP-20260812',
   // 4 — missing org id.
   // ===========================================================================
   it('4: missing org id -> bootstrap skips, zero registrations (asserted on the database)', async () => {
-    await deleteBuiltinCapabilityRows();
-    capabilityAdapterService.clearCapabilityBindings();
+    const lockClient = await acquireBuiltinCapabilityCrossFileLock();
+    try {
+      await deleteBuiltinCapabilityRows();
+      capabilityAdapterService.clearCapabilityBindings();
 
-    const env: CapabilityBootstrapEnv = {
-      [CASE_WORKSPACE_CAPABILITY_BOOT_ACTOR_ID_ENV_VAR]: `cwtest-e1-loader-missing-org-${randomUUID()}`,
-      // ORG_ID_ENV_VAR deliberately absent.
-    };
+      const env: CapabilityBootstrapEnv = {
+        [CASE_WORKSPACE_CAPABILITY_BOOT_ACTOR_ID_ENV_VAR]: `cwtest-e1-loader-missing-org-${randomUUID()}`,
+        // ORG_ID_ENV_VAR deliberately absent.
+      };
 
-    const config = loadCapabilityBootstrapConfig(env);
-    expect(config.orgId).toBeNull();
+      const config = loadCapabilityBootstrapConfig(env);
+      expect(config.orgId).toBeNull();
 
-    const result = await bootstrapCaseWorkspaceCapabilities(env);
-    expect(result.status).toBe('SKIPPED_MISSING_CONFIG');
-    expect(result.attempted).toBe(false);
+      const result = await bootstrapCaseWorkspaceCapabilities(env);
+      expect(result.status).toBe('SKIPPED_MISSING_CONFIG');
+      expect(result.attempted).toBe(false);
 
-    for (const cap of BUILTIN_CAPABILITIES) {
-      // eslint-disable-next-line no-await-in-loop
-      expect(await builtinCapabilityRowCount(cap.id, cap.version), cap.label).toBe(0);
+      for (const cap of BUILTIN_CAPABILITIES) {
+        // eslint-disable-next-line no-await-in-loop
+        expect(await builtinCapabilityRowCount(cap.id, cap.version), cap.label).toBe(0);
+      }
+    } finally {
+      await releaseBuiltinCapabilityCrossFileLock(lockClient);
     }
   });
 
@@ -409,6 +487,7 @@ suite('capabilityBootstrap — safe config loader for OD-CW-BOOTSTRAP-20260812',
     const targetOrgId = await seedOrg('mismatch-target');
     const otherOrgId = await seedOrg('mismatch-other');
     const actorId = await seedMemberedUser(control, otherOrgId, 'admin-elsewhere', 'ADMIN');
+    const lockClient = await acquireBuiltinCapabilityCrossFileLock();
 
     try {
       await deleteBuiltinCapabilityRows();
@@ -431,6 +510,7 @@ suite('capabilityBootstrap — safe config loader for OD-CW-BOOTSTRAP-20260812',
       await deleteOrg(targetOrgId);
       await deleteOrg(otherOrgId);
       capabilityAdapterService.clearCapabilityBindings();
+      await releaseBuiltinCapabilityCrossFileLock(lockClient);
     }
   });
 
@@ -440,6 +520,7 @@ suite('capabilityBootstrap — safe config loader for OD-CW-BOOTSTRAP-20260812',
   it('6: actor with MEMBER role is refused, zero registrations', async () => {
     const orgId = await seedOrg('member-role');
     const actorId = await seedMemberedUser(control, orgId, 'plain-member', 'MEMBER');
+    const lockClient = await acquireBuiltinCapabilityCrossFileLock();
 
     try {
       await deleteBuiltinCapabilityRows();
@@ -461,6 +542,7 @@ suite('capabilityBootstrap — safe config loader for OD-CW-BOOTSTRAP-20260812',
     } finally {
       await deleteOrg(orgId);
       capabilityAdapterService.clearCapabilityBindings();
+      await releaseBuiltinCapabilityCrossFileLock(lockClient);
     }
   });
 
@@ -478,6 +560,7 @@ suite('capabilityBootstrap — safe config loader for OD-CW-BOOTSTRAP-20260812',
          VALUES ($1, $2, $3, 'ADMIN', 'REVOKED')`,
       [`cwtest-e1-loader-revoked-member-${randomUUID()}`, orgId, userId]
     );
+    const lockClient = await acquireBuiltinCapabilityCrossFileLock();
 
     try {
       await deleteBuiltinCapabilityRows();
@@ -502,6 +585,7 @@ suite('capabilityBootstrap — safe config loader for OD-CW-BOOTSTRAP-20260812',
     } finally {
       await deleteOrg(orgId);
       capabilityAdapterService.clearCapabilityBindings();
+      await releaseBuiltinCapabilityCrossFileLock(lockClient);
     }
   });
 
