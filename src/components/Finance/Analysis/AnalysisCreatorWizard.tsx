@@ -25,12 +25,23 @@ import React, { useMemo, useRef, useState } from 'react';
 
 import { useDialogA11y } from '@/components/ui/primitives/useDialogA11y';
 
-import { BusinessVersionStatusValues, businessVersionStatusLabel, type AnalysisKpiCatalogEntryDto, type BusinessVersionStatus } from '../../../services/api/financeV2.types';
 import {
-  ANALYSIS_CREATOR_GOALS,
+  type AnalysisKpiCatalogEntryDto,
+  type BusinessVersionStatus,
+  businessVersionStatusLabel,
+  BusinessVersionStatusValues,
+} from '../../../services/api/financeV2.types';
+import {
   ANALYSIS_CREATOR_GOAL_LABELS_PL,
-  ANALYSIS_CREATOR_STEPS,
+  ANALYSIS_CREATOR_GOALS,
   ANALYSIS_CREATOR_STEP_LABELS_PL,
+  ANALYSIS_CREATOR_STEPS,
+  type AnalysisCreatorDraftPayload,
+  type AnalysisCreatorGoal,
+  type AnalysisCreatorPeriodOption,
+  type AnalysisCreatorSourceOption,
+  type AnalysisCreatorState,
+  type AnalysisCreatorStepId,
   applyIndustryRecommendations,
   buildAnalysisCreatorDraftPayload,
   canNavigateToStep,
@@ -41,14 +52,13 @@ import {
   runAnalysisPreflightCheck,
   toggleKpiSelected,
   togglePeriodSelected,
-  type AnalysisCreatorDraftPayload,
-  type AnalysisCreatorGoal,
-  type AnalysisCreatorPeriodOption,
-  type AnalysisCreatorSourceOption,
-  type AnalysisCreatorState,
-  type AnalysisCreatorStepId,
 } from './analysisCreatorWizard.contract';
-import { ANALYSIS_INDUSTRY_PRESETS, industryLabelForCode, validateCustomFormula, type AnalysisIndustryCode } from './analysisKpiCatalog';
+import {
+  ANALYSIS_INDUSTRY_PRESETS,
+  type AnalysisIndustryCode,
+  industryLabelForCode,
+  validateCustomFormula,
+} from './analysisKpiCatalog';
 
 export interface AnalysisCreatorWizardProps {
   /** Kandydaci źródła — dostarczeni przez callera (dziś: mock/dev-render; produkcyjnie: brak endpointu listującego, patrz nagłówek pliku). */
@@ -74,13 +84,28 @@ function sourceStatusLabel(status: string): string {
 }
 
 export function AnalysisCreatorWizard(props: AnalysisCreatorWizardProps): React.ReactElement {
-  const { sourceOptions, periodOptions, catalog, availableLineCodesForPreflight, onClose, onComplete, submitting, submitErrorMessage } = props;
+  const {
+    sourceOptions,
+    periodOptions,
+    catalog,
+    availableLineCodesForPreflight,
+    onClose,
+    onComplete,
+    submitting,
+    submitErrorMessage,
+  } = props;
   const [state, setState] = useState<AnalysisCreatorState>(createInitialAnalysisCreatorState);
   const [kpiSearch, setKpiSearch] = useState('');
   const [customFormulaDraft, setCustomFormulaDraft] = useState('');
 
   const catalogEntryLike = useMemo(
-    () => catalog.map((c) => ({ kpiCode: c.kpiCode, tier: c.tier, industryCode: c.industryCode, status: c.status })),
+    () =>
+      catalog.map((c) => ({
+        kpiCode: c.kpiCode,
+        tier: c.tier,
+        industryCode: c.industryCode,
+        status: c.status,
+      })),
     [catalog]
   );
 
@@ -88,7 +113,11 @@ export function AnalysisCreatorWizard(props: AnalysisCreatorWizardProps): React.
     () =>
       runAnalysisPreflightCheck({
         selectedKpiCodes: state.selectedKpiCodes,
-        catalog: catalog.map((c) => ({ kpiCode: c.kpiCode, kpiName: c.kpiName, requiredCanonicalLineCodes: c.requiredCanonicalLineCodes })),
+        catalog: catalog.map((c) => ({
+          kpiCode: c.kpiCode,
+          kpiName: c.kpiName,
+          requiredCanonicalLineCodes: c.requiredCanonicalLineCodes,
+        })),
         availableLineCodes: availableLineCodesForPreflight,
       }),
     [state.selectedKpiCodes, catalog, availableLineCodesForPreflight]
@@ -121,7 +150,9 @@ export function AnalysisCreatorWizard(props: AnalysisCreatorWizardProps): React.
   }
 
   const customFormulaValidation =
-    customFormulaDraft.trim().length > 0 ? validateCustomFormula(customFormulaDraft, availableLineCodesForPreflight) : null;
+    customFormulaDraft.trim().length > 0
+      ? validateCustomFormula(customFormulaDraft, availableLineCodesForPreflight)
+      : null;
 
   // ★ NAPRAWA a11y (Pakiet I): `role="dialog"` był deklaratywny bez żadnej
   // faktycznej semantyki — brak pułapki fokusa (Tab uciekał pod tło), brak
@@ -147,7 +178,8 @@ export function AnalysisCreatorWizard(props: AnalysisCreatorWizardProps): React.
           <div className="min-w-0">
             <h2 className="text-sm font-semibold text-c-text">Kreator analizy</h2>
             <p className="text-xs text-c-text-muted">
-              Krok {currentIndex + 1} z {ANALYSIS_CREATOR_STEPS.length} — {ANALYSIS_CREATOR_STEP_LABELS_PL[state.currentStep]}
+              Krok {currentIndex + 1} z {ANALYSIS_CREATOR_STEPS.length} —{' '}
+              {ANALYSIS_CREATOR_STEP_LABELS_PL[state.currentStep]}
             </p>
           </div>
           <button
@@ -161,7 +193,10 @@ export function AnalysisCreatorWizard(props: AnalysisCreatorWizardProps): React.
           </button>
         </header>
 
-        <ol className="flex items-center gap-1 border-b border-c-border-subtle px-5 py-2 text-xs" aria-label="Kroki kreatora">
+        <ol
+          className="flex items-center gap-1 border-b border-c-border-subtle px-5 py-2 text-xs"
+          aria-label="Kroki kreatora"
+        >
           {ANALYSIS_CREATOR_STEPS.map((step, idx) => {
             const reachable = canNavigateToStep(step, state);
             const complete = isStepComplete(step, state) && idx < currentIndex;
@@ -185,7 +220,9 @@ export function AnalysisCreatorWizard(props: AnalysisCreatorWizardProps): React.
                   {complete ? <Check className="mr-1 inline h-3 w-3 text-c-success" /> : null}
                   {idx + 1}. {ANALYSIS_CREATOR_STEP_LABELS_PL[step]}
                 </button>
-                {idx < ANALYSIS_CREATOR_STEPS.length - 1 ? <ChevronRight className="h-3 w-3 text-c-text-muted" /> : null}
+                {idx < ANALYSIS_CREATOR_STEPS.length - 1 ? (
+                  <ChevronRight className="h-3 w-3 text-c-text-muted" />
+                ) : null}
               </li>
             );
           })}
@@ -195,9 +232,14 @@ export function AnalysisCreatorWizard(props: AnalysisCreatorWizardProps): React.
         <div className="flex-1 overflow-y-auto p-5">
           {state.currentStep === 'source_version' && (
             <div className="space-y-2" data-testid="analysis-creator-body-source_version">
-              <p className="text-xs text-c-text-muted mb-3">Wybierz pakiet sprawozdań (Statement Pack Version), z którego analiza pobierze dane źródłowe.</p>
+              <p className="text-xs text-c-text-muted mb-3">
+                Wybierz pakiet sprawozdań (Statement Pack Version), z którego analiza pobierze dane
+                źródłowe.
+              </p>
               {sourceOptions.length === 0 ? (
-                <p className="text-sm text-c-text-muted">Brak dostępnych źródeł — potrzebny jest zatwierdzony pakiet sprawozdań.</p>
+                <p className="text-sm text-c-text-muted">
+                  Brak dostępnych źródeł — potrzebny jest zatwierdzony pakiet sprawozdań.
+                </p>
               ) : (
                 sourceOptions.map((opt) => {
                   const selected = state.sourceVersionId === opt.statementPackVersionId;
@@ -206,9 +248,13 @@ export function AnalysisCreatorWizard(props: AnalysisCreatorWizardProps): React.
                       key={opt.statementPackVersionId}
                       type="button"
                       data-testid={`analysis-creator-source-${opt.statementPackVersionId}`}
-                      onClick={() => setState((s) => ({ ...s, sourceVersionId: opt.statementPackVersionId }))}
+                      onClick={() =>
+                        setState((s) => ({ ...s, sourceVersionId: opt.statementPackVersionId }))
+                      }
                       className={`flex w-full items-center justify-between rounded-lg border px-3 py-2.5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus ${
-                        selected ? 'border-c-border-strong bg-state-selected' : 'border-c-border-subtle hover:bg-c-surface-raised'
+                        selected
+                          ? 'border-c-border-strong bg-state-selected'
+                          : 'border-c-border-subtle hover:bg-c-surface-raised'
                       }`}
                     >
                       <span>
@@ -227,7 +273,9 @@ export function AnalysisCreatorWizard(props: AnalysisCreatorWizardProps): React.
 
           {state.currentStep === 'periods' && (
             <div className="space-y-2" data-testid="analysis-creator-body-periods">
-              <p className="text-xs text-c-text-muted mb-3">Wybierz okresy do analizy (historyczne i prognozowane).</p>
+              <p className="text-xs text-c-text-muted mb-3">
+                Wybierz okresy do analizy (historyczne i prognozowane).
+              </p>
               {periodOptions
                 .slice()
                 .sort((a, b) => a.chronologicalIndex - b.chronologicalIndex)
@@ -241,11 +289,15 @@ export function AnalysisCreatorWizard(props: AnalysisCreatorWizardProps): React.
                       <input
                         type="checkbox"
                         checked={selected}
-                        onChange={() => setState((s) => togglePeriodSelected(s, periodOptions, opt.periodId))}
+                        onChange={() =>
+                          setState((s) => togglePeriodSelected(s, periodOptions, opt.periodId))
+                        }
                         className="h-4 w-4 rounded border-c-border-subtle text-c-text focus-visible:ring-2 focus-visible:ring-c-focus"
                       />
                       <span className="text-sm text-c-text">{opt.label}</span>
-                      {opt.isForecast ? <span className="text-xs italic text-c-text-muted">prognoza</span> : null}
+                      {opt.isForecast ? (
+                        <span className="text-xs italic text-c-text-muted">prognoza</span>
+                      ) : null}
                     </label>
                   );
                 })}
@@ -255,7 +307,9 @@ export function AnalysisCreatorWizard(props: AnalysisCreatorWizardProps): React.
           {state.currentStep === 'industry_goal' && (
             <div className="space-y-5" data-testid="analysis-creator-body-industry_goal">
               <div>
-                <p className="mb-2 text-xs font-medium uppercase tracking-wide text-c-text-muted">Branża</p>
+                <p className="mb-2 text-xs font-medium uppercase tracking-wide text-c-text-muted">
+                  Branża
+                </p>
                 <div className="flex flex-wrap gap-2">
                   {ANALYSIS_INDUSTRY_PRESETS.map((preset) => (
                     <button
@@ -275,7 +329,9 @@ export function AnalysisCreatorWizard(props: AnalysisCreatorWizardProps): React.
                 </div>
               </div>
               <div>
-                <p className="mb-2 text-xs font-medium uppercase tracking-wide text-c-text-muted">Cel analizy (opcjonalny — doprecyzowuje rekomendacje)</p>
+                <p className="mb-2 text-xs font-medium uppercase tracking-wide text-c-text-muted">
+                  Cel analizy (opcjonalny — doprecyzowuje rekomendacje)
+                </p>
                 <div className="flex flex-wrap gap-2">
                   {ANALYSIS_CREATOR_GOALS.map((goal) => (
                     <button
@@ -309,12 +365,20 @@ export function AnalysisCreatorWizard(props: AnalysisCreatorWizardProps): React.
                 />
               </div>
               <p className="mb-2 text-xs text-c-text-muted">
-                Wybrano: <span className="font-medium text-c-text">{state.selectedKpiCodes.length}</span> wskaźnik(ów).
-                {state.selectedKpiCodes.length === 0 ? <span className="ml-1 text-c-danger">Wybierz przynajmniej jeden.</span> : null}
+                Wybrano:{' '}
+                <span className="font-medium text-c-text">{state.selectedKpiCodes.length}</span>{' '}
+                wskaźnik(ów).
+                {state.selectedKpiCodes.length === 0 ? (
+                  <span className="ml-1 text-c-danger">Wybierz przynajmniej jeden.</span>
+                ) : null}
               </p>
               <div className="space-y-1">
                 {catalog
-                  .filter((c) => c.kpiName.toLowerCase().includes(kpiSearch.toLowerCase()) || c.kpiCode.toLowerCase().includes(kpiSearch.toLowerCase()))
+                  .filter(
+                    (c) =>
+                      c.kpiName.toLowerCase().includes(kpiSearch.toLowerCase()) ||
+                      c.kpiCode.toLowerCase().includes(kpiSearch.toLowerCase())
+                  )
                   .map((c) => {
                     const selected = state.selectedKpiCodes.includes(c.kpiCode);
                     return (
@@ -332,7 +396,12 @@ export function AnalysisCreatorWizard(props: AnalysisCreatorWizardProps): React.
                         <span className="min-w-0">
                           <span className="block text-sm text-c-text">{c.kpiName}</span>
                           <span className="block text-xs text-c-text-muted">
-                            {c.category ?? 'Bez kategorii'} · {c.tier === 'UNIVERSAL' ? 'uniwersalny' : c.tier === 'INDUSTRY' ? 'branżowy' : 'własny organizacji'}
+                            {c.category ?? 'Bez kategorii'} ·{' '}
+                            {c.tier === 'UNIVERSAL'
+                              ? 'uniwersalny'
+                              : c.tier === 'INDUSTRY'
+                                ? 'branżowy'
+                                : 'własny organizacji'}
                           </span>
                         </span>
                       </label>
@@ -343,8 +412,9 @@ export function AnalysisCreatorWizard(props: AnalysisCreatorWizardProps): React.
               <div className="mt-4 rounded-lg border border-dashed border-c-border-subtle p-3">
                 <p className="mb-1 text-xs font-medium text-c-text">Własna formuła (piaskownica)</p>
                 <p className="mb-2 text-xs text-c-text-muted">
-                  Walidacja działa na żywo, bez `eval`. Zapisanie jako nowy wskaźnik katalogu wymaga endpointu backendowego, którego dziś nie ma —
-                  ta sekcja tylko sprawdza poprawność formuły.
+                  Walidacja działa na żywo, bez `eval`. Zapisanie jako nowy wskaźnik katalogu wymaga
+                  endpointu backendowego, którego dziś nie ma — ta sekcja tylko sprawdza poprawność
+                  formuły.
                 </p>
                 <input
                   value={customFormulaDraft}
@@ -373,22 +443,28 @@ export function AnalysisCreatorWizard(props: AnalysisCreatorWizardProps): React.
                 <div className="flex items-start gap-2 rounded-lg border border-c-success/30 bg-c-success/10 p-3">
                   <Check className="mt-0.5 h-4 w-4 shrink-0 text-c-success" />
                   <p className="text-sm text-c-text">
-                    Wszystkie wymagane składniki są dostępne dla {preflight.checkedKpiCount} wybranych wskaźników w wybranych okresach.
+                    Wszystkie wymagane składniki są dostępne dla {preflight.checkedKpiCount}{' '}
+                    wybranych wskaźników w wybranych okresach.
                   </p>
                 </div>
               ) : (
-                <div className="space-y-2 rounded-lg border border-c-warning/30 bg-c-warning/10 p-3" data-testid="analysis-creator-preflight-issues">
+                <div
+                  className="space-y-2 rounded-lg border border-c-warning/30 bg-c-warning/10 p-3"
+                  data-testid="analysis-creator-preflight-issues"
+                >
                   <div className="flex items-start gap-2">
                     <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-c-warning" />
                     <p className="text-sm text-c-text">
-                      {preflight.issues.length} z {preflight.checkedKpiCount} wybranych wskaźników ma brakujące składniki źródłowe w wybranych okresach.
-                      Te wskaźniki dadzą wynik „—” (brak danych), nie liczbę — możesz mimo to kontynuować.
+                      {preflight.issues.length} z {preflight.checkedKpiCount} wybranych wskaźników
+                      ma brakujące składniki źródłowe w wybranych okresach. Te wskaźniki dadzą wynik
+                      „—” (brak danych), nie liczbę — możesz mimo to kontynuować.
                     </p>
                   </div>
                   <ul className="ml-6 list-disc space-y-1 text-xs text-c-text-secondary">
                     {preflight.issues.map((issue) => (
                       <li key={issue.kpiCode}>
-                        <span className="font-medium text-c-text">{issue.kpiName}</span> — brakuje: {issue.missingLineCodes.join(', ')}
+                        <span className="font-medium text-c-text">{issue.kpiName}</span> — brakuje:{' '}
+                        {issue.missingLineCodes.join(', ')}
                       </li>
                     ))}
                   </ul>
@@ -408,16 +484,27 @@ export function AnalysisCreatorWizard(props: AnalysisCreatorWizardProps): React.
 
           {state.currentStep === 'create_compute' && (
             <div className="space-y-3" data-testid="analysis-creator-body-create_compute">
-              <p className="text-sm text-c-text">Gotowe do utworzenia. Kliknij „Utwórz i przelicz”, aby założyć analizę i uruchomić pierwsze przeliczenie.</p>
+              <p className="text-sm text-c-text">
+                Gotowe do utworzenia. Kliknij „Utwórz i przelicz”, aby założyć analizę i uruchomić
+                pierwsze przeliczenie.
+              </p>
               {draftPayload ? (
-                <pre className="overflow-x-auto rounded-lg bg-c-surface-raised p-3 text-xs text-c-text-secondary" data-testid="analysis-creator-payload-preview">
+                <pre
+                  className="overflow-x-auto rounded-lg bg-c-surface-raised p-3 text-xs text-c-text-secondary"
+                  data-testid="analysis-creator-payload-preview"
+                >
                   {JSON.stringify(draftPayload, null, 2)}
                 </pre>
               ) : (
-                <p className="text-sm text-c-danger">Kreator jest niekompletny — wróć i uzupełnij brakujące kroki.</p>
+                <p className="text-sm text-c-danger">
+                  Kreator jest niekompletny — wróć i uzupełnij brakujące kroki.
+                </p>
               )}
               {submitErrorMessage ? (
-                <div className="flex items-start gap-2 rounded-lg border border-c-danger/30 bg-c-danger/10 p-3" data-testid="analysis-creator-submit-error">
+                <div
+                  className="flex items-start gap-2 rounded-lg border border-c-danger/30 bg-c-danger/10 p-3"
+                  data-testid="analysis-creator-submit-error"
+                >
                   <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-c-danger" />
                   <p className="text-sm text-c-text">{submitErrorMessage}</p>
                 </div>

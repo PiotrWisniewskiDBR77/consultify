@@ -25,7 +25,10 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { clearFeatureFlagOverrides, setFeatureFlagOverrides } from '@/test-utils/featureFlagOverrides';
+import {
+  clearFeatureFlagOverrides,
+  setFeatureFlagOverrides,
+} from '@/test-utils/featureFlagOverrides';
 
 const apiMocks = vi.hoisted(() => ({
   getFinanceArtifact: vi.fn(),
@@ -50,15 +53,31 @@ afterEach(() => {
 
 describe('AnalysisWorkspace — Focus Mode no-refetch (AP_MOUNT §E)', () => {
   it('entering focus mode with the wizard open calls reload() zero additional times and preserves it; Escape closes the wizard (modal precedence) before a second Escape exits focus mode', async () => {
-    apiMocks.getFinanceArtifact.mockResolvedValue({ artifactId: 'art-1', naturalKey: 'Analiza', currentBusinessVersion: null });
+    apiMocks.getFinanceArtifact.mockResolvedValue({
+      artifactId: 'art-1',
+      naturalKey: 'Analiza',
+      currentBusinessVersion: null,
+    });
     apiMocks.getFinanceBusinessVersion.mockResolvedValue({
-      businessVersionId: 'bv-1', artifactId: 'art-1', versionNo: 1, version: 1, status: 'DRAFT', freshness: 'NEVER_COMPUTED',
+      businessVersionId: 'bv-1',
+      artifactId: 'art-1',
+      versionNo: 1,
+      version: 1,
+      status: 'DRAFT',
+      freshness: 'NEVER_COMPUTED',
     });
     apiMocks.getAnalysisKpiValues.mockResolvedValue([]);
     apiMocks.getAnalysisKpiCatalog.mockResolvedValue([]);
     setFeatureFlagOverrides({ financeAnalysisWorkspaceV1: true });
 
-    render(<AnalysisWorkspace artifactId="art-1" businessVersionId="bv-1" role="preparer" onNavigateBack={() => {}} />);
+    render(
+      <AnalysisWorkspace
+        artifactId="art-1"
+        businessVersionId="bv-1"
+        role="preparer"
+        onNavigateBack={() => {}}
+      />
+    );
     await waitFor(() => expect(apiMocks.getFinanceArtifact).toHaveBeenCalledTimes(1));
 
     // Open the wizard (UI state that must survive focus-mode toggling). Two
@@ -68,25 +87,42 @@ describe('AnalysisWorkspace — Focus Mode no-refetch (AP_MOUNT §E)', () => {
     fireEvent.click(ctaButtons[ctaButtons.length - 1]!);
     await waitFor(() => expect(screen.getByTestId('analysis-creator-wizard')).toBeInTheDocument());
 
-    const callsBefore = apiMocks.getFinanceArtifact.mock.calls.length + apiMocks.getAnalysisKpiValues.mock.calls.length;
+    const callsBefore =
+      apiMocks.getFinanceArtifact.mock.calls.length +
+      apiMocks.getAnalysisKpiValues.mock.calls.length;
 
     fireEvent.click(screen.getByTestId('finance-workspace-bar-fullscreen'));
-    await waitFor(() => expect(document.body.classList.contains('finance-focus-mode-active')).toBe(true));
+    await waitFor(() =>
+      expect(document.body.classList.contains('finance-focus-mode-active')).toBe(true)
+    );
 
-    expect(apiMocks.getFinanceArtifact.mock.calls.length + apiMocks.getAnalysisKpiValues.mock.calls.length).toBe(callsBefore);
+    expect(
+      apiMocks.getFinanceArtifact.mock.calls.length +
+        apiMocks.getAnalysisKpiValues.mock.calls.length
+    ).toBe(callsBefore);
     expect(screen.getByTestId('analysis-creator-wizard')).toBeInTheDocument();
 
     // First Escape: the wizard (modal) is the topmost layer — it closes,
     // focus mode is UNCHANGED (still active). This is the a11y-correct
     // precedence, not the focus-mode exit.
     fireEvent.keyDown(document, { key: 'Escape' });
-    await waitFor(() => expect(screen.queryByTestId('analysis-creator-wizard')).not.toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.queryByTestId('analysis-creator-wizard')).not.toBeInTheDocument()
+    );
     expect(document.body.classList.contains('finance-focus-mode-active')).toBe(true);
-    expect(apiMocks.getFinanceArtifact.mock.calls.length + apiMocks.getAnalysisKpiValues.mock.calls.length).toBe(callsBefore);
+    expect(
+      apiMocks.getFinanceArtifact.mock.calls.length +
+        apiMocks.getAnalysisKpiValues.mock.calls.length
+    ).toBe(callsBefore);
 
     // Second Escape: no modal left to consume it — NOW focus mode exits.
     fireEvent.keyDown(document, { key: 'Escape' });
-    await waitFor(() => expect(document.body.classList.contains('finance-focus-mode-active')).toBe(false));
-    expect(apiMocks.getFinanceArtifact.mock.calls.length + apiMocks.getAnalysisKpiValues.mock.calls.length).toBe(callsBefore);
+    await waitFor(() =>
+      expect(document.body.classList.contains('finance-focus-mode-active')).toBe(false)
+    );
+    expect(
+      apiMocks.getFinanceArtifact.mock.calls.length +
+        apiMocks.getAnalysisKpiValues.mock.calls.length
+    ).toBe(callsBefore);
   });
 });

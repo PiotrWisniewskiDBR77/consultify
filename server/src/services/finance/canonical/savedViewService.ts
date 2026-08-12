@@ -72,7 +72,10 @@ import { randomBytes } from 'node:crypto';
 import { z } from 'zod';
 
 import { withPinnedPostgresTransaction } from '../../../database/PostgresDatabase.js';
-import { FinanceArtifactTypeValues, type FinanceArtifactType } from '../../../types/finance/ArtifactRef.js';
+import {
+  type FinanceArtifactType,
+  FinanceArtifactTypeValues,
+} from '../../../types/finance/ArtifactRef.js';
 import { FinanceValueStatusValues } from '../../../types/finance/financeValueSemantics.js';
 import { GridViewState, type GridViewStateSnapshot } from '../grid/GridViewState.js';
 import { getArtifact } from './artifactVersionService.js';
@@ -113,7 +116,10 @@ export type FinanceKpiCategory = (typeof FinanceKpiCategoryValues)[number];
 
 const DecimalStringSchema = z
   .string()
-  .regex(/^-?\d+(\.\d+)?$/, 'must be a decimal string (optional leading "-", digits, optional "." + digits)');
+  .regex(
+    /^-?\d+(\.\d+)?$/,
+    'must be a decimal string (optional leading "-", digits, optional "." + digits)'
+  );
 
 export const SavedViewFilterCategorySchema = z.object({
   type: z.literal('category'),
@@ -326,7 +332,10 @@ async function resolveColumnAvailability(
 }
 
 async function loadSavedView(row: FinanceSavedViewRow): Promise<LoadedSavedView> {
-  const columnAvailability = await resolveColumnAvailability(row.organization_id, row.view_state.gridViewState);
+  const columnAvailability = await resolveColumnAvailability(
+    row.organization_id,
+    row.view_state.gridViewState
+  );
   return { ...row, columnAvailability };
 }
 
@@ -358,7 +367,9 @@ function generateShareToken(): string {
   return randomBytes(24).toString('base64url');
 }
 
-export async function createSavedView(params: CreateSavedViewParams): Promise<CreateSavedViewResult> {
+export async function createSavedView(
+  params: CreateSavedViewParams
+): Promise<CreateSavedViewResult> {
   // Gate E FIX-B (proof-gaps pass, 2026-08-12) — LUKA 3: ownership is checked BEFORE any body-shape
   // validation (name/filters/gridViewState), not after. Previously a cross-tenant artifactId
   // could surface as NAME_REQUIRED/INVALID_FILTERS/INVALID_GRID_VIEW_STATE (400) instead of the
@@ -370,7 +381,11 @@ export async function createSavedView(params: CreateSavedViewParams): Promise<Cr
   // derives it FROM the artifact row").
   const artifact = await getArtifact(params.organizationId, params.artifactId);
   if (!artifact) {
-    return { ok: false, code: 'ARTIFACT_NOT_FOUND', message: `No finance_artifacts row for artifact_id='${params.artifactId}' in this organization` };
+    return {
+      ok: false,
+      code: 'ARTIFACT_NOT_FOUND',
+      message: `No finance_artifacts row for artifact_id='${params.artifactId}' in this organization`,
+    };
   }
 
   if (!params.name || !params.name.trim()) {
@@ -382,7 +397,10 @@ export async function createSavedView(params: CreateSavedViewParams): Promise<Cr
     return { ok: false, code: 'INVALID_FILTERS', message: filtersResult.error.message };
   }
 
-  const gridViewSnapshot = params.gridViewState instanceof GridViewState ? params.gridViewState.toJSON() : params.gridViewState;
+  const gridViewSnapshot =
+    params.gridViewState instanceof GridViewState
+      ? params.gridViewState.toJSON()
+      : params.gridViewState;
   const snapshotResult = GridViewStateSnapshotSchema.safeParse(gridViewSnapshot);
   if (!snapshotResult.success) {
     return { ok: false, code: 'INVALID_GRID_VIEW_STATE', message: snapshotResult.error.message };
@@ -438,43 +456,68 @@ export interface UpdateSavedViewParams {
 
 export type UpdateSavedViewResult =
   | { ok: true; view: FinanceSavedViewRow }
-  | { ok: false; code: 'NOT_FOUND' | 'FORBIDDEN' | 'NAME_REQUIRED' | 'INVALID_FILTERS' | 'INVALID_GRID_VIEW_STATE'; message: string };
+  | {
+      ok: false;
+      code:
+        | 'NOT_FOUND'
+        | 'FORBIDDEN'
+        | 'NAME_REQUIRED'
+        | 'INVALID_FILTERS'
+        | 'INVALID_GRID_VIEW_STATE';
+      message: string;
+    };
 
-export async function updateSavedView(params: UpdateSavedViewParams): Promise<UpdateSavedViewResult> {
+export async function updateSavedView(
+  params: UpdateSavedViewParams
+): Promise<UpdateSavedViewResult> {
   const current = await withPinnedPostgresTransaction((tx) =>
-    tx.queryOne<FinanceSavedViewRow>(`SELECT * FROM finance_saved_views WHERE id = ? AND organization_id = ?`, [
-      params.viewId,
-      params.organizationId,
-    ])
+    tx.queryOne<FinanceSavedViewRow>(
+      `SELECT * FROM finance_saved_views WHERE id = ? AND organization_id = ?`,
+      [params.viewId, params.organizationId]
+    )
   );
   if (!current) return { ok: false, code: 'NOT_FOUND', message: 'Saved view not found' };
   if (current.owner_user_id !== params.requesterUserId) {
-    return { ok: false, code: 'FORBIDDEN', message: 'Only the owner may edit a saved view (personal or team-scoped)' };
+    return {
+      ok: false,
+      code: 'FORBIDDEN',
+      message: 'Only the owner may edit a saved view (personal or team-scoped)',
+    };
   }
   const normalizedCurrent = normalizeSavedViewRow(current);
 
   let name = normalizedCurrent.name;
   if (params.patch.name !== undefined) {
-    if (!params.patch.name.trim()) return { ok: false, code: 'NAME_REQUIRED', message: 'Saved view name must be non-empty' };
+    if (!params.patch.name.trim())
+      return { ok: false, code: 'NAME_REQUIRED', message: 'Saved view name must be non-empty' };
     name = params.patch.name;
   }
 
   let filters = normalizedCurrent.view_state.filters;
   if (params.patch.filters !== undefined) {
     const filtersResult = SavedViewFilterSetSchema.safeParse(params.patch.filters);
-    if (!filtersResult.success) return { ok: false, code: 'INVALID_FILTERS', message: filtersResult.error.message };
+    if (!filtersResult.success)
+      return { ok: false, code: 'INVALID_FILTERS', message: filtersResult.error.message };
     filters = filtersResult.data;
   }
 
   let gridViewState = normalizedCurrent.view_state.gridViewState;
   if (params.patch.gridViewState !== undefined) {
-    const snapshot = params.patch.gridViewState instanceof GridViewState ? params.patch.gridViewState.toJSON() : params.patch.gridViewState;
+    const snapshot =
+      params.patch.gridViewState instanceof GridViewState
+        ? params.patch.gridViewState.toJSON()
+        : params.patch.gridViewState;
     const snapshotResult = GridViewStateSnapshotSchema.safeParse(snapshot);
-    if (!snapshotResult.success) return { ok: false, code: 'INVALID_GRID_VIEW_STATE', message: snapshotResult.error.message };
+    if (!snapshotResult.success)
+      return { ok: false, code: 'INVALID_GRID_VIEW_STATE', message: snapshotResult.error.message };
     gridViewState = snapshotResult.data;
   }
 
-  const viewState: FinanceSavedViewState = { schemaVersion: FINANCE_SAVED_VIEW_STATE_SCHEMA_VERSION, gridViewState, filters };
+  const viewState: FinanceSavedViewState = {
+    schemaVersion: FINANCE_SAVED_VIEW_STATE_SCHEMA_VERSION,
+    gridViewState,
+    filters,
+  };
 
   const updated = await withPinnedPostgresTransaction((tx) =>
     tx.queryOne<FinanceSavedViewRow>(
@@ -487,7 +530,9 @@ export async function updateSavedView(params: UpdateSavedViewParams): Promise<Up
   return { ok: true, view: normalizeSavedViewRow(updated) };
 }
 
-export type DeleteSavedViewResult = { ok: true } | { ok: false; code: 'NOT_FOUND' | 'FORBIDDEN'; message: string };
+export type DeleteSavedViewResult =
+  | { ok: true }
+  | { ok: false; code: 'NOT_FOUND' | 'FORBIDDEN'; message: string };
 
 export async function deleteSavedView(
   organizationId: string,
@@ -495,15 +540,22 @@ export async function deleteSavedView(
   requesterUserId: string
 ): Promise<DeleteSavedViewResult> {
   return withPinnedPostgresTransaction(async (tx) => {
-    const current = await tx.queryOne<FinanceSavedViewRow>(`SELECT * FROM finance_saved_views WHERE id = ? AND organization_id = ?`, [
+    const current = await tx.queryOne<FinanceSavedViewRow>(
+      `SELECT * FROM finance_saved_views WHERE id = ? AND organization_id = ?`,
+      [viewId, organizationId]
+    );
+    if (!current) return { ok: false, code: 'NOT_FOUND', message: 'Saved view not found' };
+    if (current.owner_user_id !== requesterUserId) {
+      return {
+        ok: false,
+        code: 'FORBIDDEN',
+        message: 'Only the owner may delete a saved view (personal or team-scoped)',
+      };
+    }
+    await tx.queryRun(`DELETE FROM finance_saved_views WHERE id = ? AND organization_id = ?`, [
       viewId,
       organizationId,
     ]);
-    if (!current) return { ok: false, code: 'NOT_FOUND', message: 'Saved view not found' };
-    if (current.owner_user_id !== requesterUserId) {
-      return { ok: false, code: 'FORBIDDEN', message: 'Only the owner may delete a saved view (personal or team-scoped)' };
-    }
-    await tx.queryRun(`DELETE FROM finance_saved_views WHERE id = ? AND organization_id = ?`, [viewId, organizationId]);
     return { ok: true };
   });
 }
@@ -533,7 +585,9 @@ export async function listSavedViews(params: ListSavedViewsParams): Promise<Load
   return Promise.all(normalized.map(loadSavedView));
 }
 
-export type GetSavedViewResult = { ok: true; view: LoadedSavedView } | { ok: false; code: 'NOT_FOUND'; message: string };
+export type GetSavedViewResult =
+  | { ok: true; view: LoadedSavedView }
+  | { ok: false; code: 'NOT_FOUND'; message: string };
 
 /**
  * `NOT_FOUND` covers BOTH "no such row" and "row exists but this requester
@@ -541,9 +595,16 @@ export type GetSavedViewResult = { ok: true; view: LoadedSavedView } | { ok: fal
  * same error code for both, so this endpoint never discloses that a
  * personal view with a given id exists at all to a non-owner.
  */
-export async function getSavedView(organizationId: string, viewId: string, requesterUserId: string): Promise<GetSavedViewResult> {
+export async function getSavedView(
+  organizationId: string,
+  viewId: string,
+  requesterUserId: string
+): Promise<GetSavedViewResult> {
   const row = await withPinnedPostgresTransaction((tx) =>
-    tx.queryOne<FinanceSavedViewRow>(`SELECT * FROM finance_saved_views WHERE id = ? AND organization_id = ?`, [viewId, organizationId])
+    tx.queryOne<FinanceSavedViewRow>(
+      `SELECT * FROM finance_saved_views WHERE id = ? AND organization_id = ?`,
+      [viewId, organizationId]
+    )
   );
   if (!row) return { ok: false, code: 'NOT_FOUND', message: 'Saved view not found' };
   const normalized = normalizeSavedViewRow(row);
@@ -564,7 +625,9 @@ export interface ResolveSharedViewParams {
   requesterUserId: string;
 }
 
-export type ResolveSharedViewResult = { ok: true; view: LoadedSavedView } | { ok: false; code: 'NOT_FOUND'; message: string };
+export type ResolveSharedViewResult =
+  | { ok: true; view: LoadedSavedView }
+  | { ok: false; code: 'NOT_FOUND'; message: string };
 
 /**
  * Looks a saved view up by its opaque `share_token` ALONE (the only reader
@@ -581,9 +644,13 @@ export type ResolveSharedViewResult = { ok: true; view: LoadedSavedView } | { ok
  * Callers MUST NOT treat a successful resolve as authorization to read the
  * underlying artifact's data — see file header.
  */
-export async function resolveSharedView(params: ResolveSharedViewParams): Promise<ResolveSharedViewResult> {
+export async function resolveSharedView(
+  params: ResolveSharedViewParams
+): Promise<ResolveSharedViewResult> {
   const row = await withPinnedPostgresTransaction((tx) =>
-    tx.queryOne<FinanceSavedViewRow>(`SELECT * FROM finance_saved_views WHERE share_token = ?`, [params.shareToken])
+    tx.queryOne<FinanceSavedViewRow>(`SELECT * FROM finance_saved_views WHERE share_token = ?`, [
+      params.shareToken,
+    ])
   );
   if (!row) return { ok: false, code: 'NOT_FOUND', message: 'Saved view not found' };
   const normalized = normalizeSavedViewRow(row);

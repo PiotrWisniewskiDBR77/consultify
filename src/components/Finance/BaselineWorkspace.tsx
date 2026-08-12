@@ -33,7 +33,6 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import { FinanceErrorBoundary } from '@/components/Finance/shared/FinanceErrorBoundary';
 import { FinanceWorkspaceBar } from '@/components/Finance/shared/FinanceWorkspaceBar';
-import { useDialogA11y } from '@/components/ui/primitives/useDialogA11y';
 import {
   ENABLEMENT_ALWAYS,
   type WorkspaceBarConfig,
@@ -42,23 +41,24 @@ import {
   type WorkspaceBarLifecycleTransition,
   type WorkspaceBarMoreMenuItem,
 } from '@/components/Finance/shared/financeWorkspaceBar.contract';
+import { useDialogA11y } from '@/components/ui/primitives/useDialogA11y';
 import { useFinanceBaselineWorkspaceFlag } from '@/hooks/useFinanceBaselineWorkspaceFlag';
 import { useFinanceFocusMode } from '@/hooks/useFinanceFocusMode';
 import {
   approveFinanceModel,
-  reopenFinanceModel,
   renameFinanceArtifact,
-  transitionFinanceVersion,
+  reopenFinanceModel,
   type RoutableTransitionAction,
+  transitionFinanceVersion,
 } from '@/services/api/financeV2.api';
 import {
-  describeFinanceV2Error,
   type BusinessVersionStatus,
+  describeFinanceV2Error,
   type FinanceArtifactFreshness,
   type FinanceRole,
 } from '@/services/api/financeV2.types';
 
-import { AssumptionsView, type AssumptionRowSpec } from './baseline/AssumptionsView';
+import { type AssumptionRowSpec, AssumptionsView } from './baseline/AssumptionsView';
 import { CalculationsView, type PeriodMeta } from './baseline/CalculationsView';
 import { useBaselineAssumptionsEditor } from './baseline/useBaselineAssumptionsEditor';
 import { useBaselineCompute } from './baseline/useBaselineCompute';
@@ -88,7 +88,10 @@ export interface BaselineWorkspaceProps {
 
 const VIEW_NAV_STATE_READY = { kind: 'ready' as const, label: { key: 'ready', pl: 'Gotowe' } };
 const VIEW_NAV_STATE_STALE = { kind: 'stale' as const, label: { key: 'stale', pl: 'Nieaktualne' } };
-const VIEW_NAV_STATE_NOT_CONFIGURED = { kind: 'not-configured' as const, label: { key: 'brak', pl: 'Do uzupełnienia' } };
+const VIEW_NAV_STATE_NOT_CONFIGURED = {
+  kind: 'not-configured' as const,
+  label: { key: 'brak', pl: 'Do uzupełnienia' },
+};
 
 /**
  * Gate publiczny (CLAUDE.md #7/#9): przy `financeBaselineWorkspaceV1` OFF
@@ -104,14 +107,28 @@ export function BaselineWorkspace(props: BaselineWorkspaceProps): React.ReactEle
 }
 
 function BaselineWorkspaceInner(props: BaselineWorkspaceProps): React.ReactElement {
-  const { artifactId, businessVersionId, entityId, forecastPeriods, openingBalanceSheetPeriodId, assumptionRowOrder, readOnly = false } = props;
+  const {
+    artifactId,
+    businessVersionId,
+    entityId,
+    forecastPeriods,
+    openingBalanceSheetPeriodId,
+    assumptionRowOrder,
+    readOnly = false,
+  } = props;
 
-  const [activeView, setActiveView] = useState<BaselineWorkspaceView>(props.initialView ?? 'assumptions');
+  const [activeView, setActiveView] = useState<BaselineWorkspaceView>(
+    props.initialView ?? 'assumptions'
+  );
   const [name, setName] = useState(props.name);
   const [status, setStatus] = useState<BusinessVersionStatus>(props.status);
   const [version, setVersion] = useState(props.version);
   const [lifecycleError, setLifecycleError] = useState<string | null>(null);
-  const [pendingReasonFor, setPendingReasonFor] = useState<{ kind: 'transition'; action: RoutableTransitionAction; destructive: boolean } | { kind: 'reopen' } | null>(null);
+  const [pendingReasonFor, setPendingReasonFor] = useState<
+    | { kind: 'transition'; action: RoutableTransitionAction; destructive: boolean }
+    | { kind: 'reopen' }
+    | null
+  >(null);
   const [reasonDraft, setReasonDraft] = useState('');
 
   // ★ NAPRAWA a11y (Pakiet I): dialog "Podaj powód" nie miał pułapki fokusa
@@ -125,7 +142,9 @@ function BaselineWorkspaceInner(props: BaselineWorkspaceProps): React.ReactEleme
   // zostaje jako defensywny backstop).
   const reasonDialogContainerRef = useRef<HTMLDivElement>(null);
   function closeReasonDialog(): void {
-    document.querySelector<HTMLElement>('[data-testid="finance-workspace-bar-lifecycle-trigger"]')?.focus();
+    document
+      .querySelector<HTMLElement>('[data-testid="finance-workspace-bar-lifecycle-trigger"]')
+      ?.focus();
     setPendingReasonFor(null);
     setReasonDraft('');
   }
@@ -133,7 +152,10 @@ function BaselineWorkspaceInner(props: BaselineWorkspaceProps): React.ReactEleme
     open: pendingReasonFor !== null,
     onClose: closeReasonDialog,
     containerRef: reasonDialogContainerRef,
-    getFallbackFocusTarget: () => document.querySelector<HTMLElement>('[data-testid="finance-workspace-bar-lifecycle-trigger"]'),
+    getFallbackFocusTarget: () =>
+      document.querySelector<HTMLElement>(
+        '[data-testid="finance-workspace-bar-lifecycle-trigger"]'
+      ),
   });
 
   const periodLabelById = useMemo(() => {
@@ -161,7 +183,12 @@ function BaselineWorkspaceInner(props: BaselineWorkspaceProps): React.ReactEleme
     // zamykałoby OBA naraz — hook już ma gotową precedencję
     // (`escapeContext.modalOpen`, patrz `useFinanceFocusMode.ts`), tylko
     // nigdy nie dostawał prawdziwego stanu tego dialogu.
-    escapeContext: { modalOpen: pendingReasonFor !== null, commandPaletteOpen: false, popoverOpen: false, cellEditing: false },
+    escapeContext: {
+      modalOpen: pendingReasonFor !== null,
+      commandPaletteOpen: false,
+      popoverOpen: false,
+      cellEditing: false,
+    },
   });
 
   async function runCompute(): Promise<void> {
@@ -196,21 +223,34 @@ function BaselineWorkspaceInner(props: BaselineWorkspaceProps): React.ReactEleme
       back: { targetListRoute: '/finance', label: { key: 'back', pl: 'Wróć do listy' } },
       name: {
         value: name,
-        editable: !readOnly && ['DRAFT', 'READY_FOR_REVIEW', 'IN_REVIEW', 'NEEDS_CHANGES'].includes(status),
+        editable:
+          !readOnly && ['DRAFT', 'READY_FOR_REVIEW', 'IN_REVIEW', 'NEEDS_CHANGES'].includes(status),
         editableBlockedReason: status === 'APPROVED' ? 'STATUS_IMMUTABLE' : null,
         maxChars: 120,
         layoutBudgetChars: 60,
       },
-      version: { label: `v${version}`, businessVersionId, hasUncommittedWorkingRevision: editor.dirtyCount > 0 },
+      version: {
+        label: `v${version}`,
+        businessVersionId,
+        hasUncommittedWorkingRevision: editor.dirtyCount > 0,
+      },
       status,
       freshness: props.freshness,
-      contextFields: (Object.keys(props.contextValues) as WorkspaceBarContextField[]),
+      contextFields: Object.keys(props.contextValues) as WorkspaceBarContextField[],
     },
     viewNavigation: {
       kind: 'tabs',
       views: [
-        { id: 'assumptions', label: { key: 'assumptions', pl: 'Założenia' }, state: assumptionsViewState },
-        { id: 'wyliczenia', label: { key: 'wyliczenia', pl: 'Wyliczenia' }, state: wyliczeniaViewState },
+        {
+          id: 'assumptions',
+          label: { key: 'assumptions', pl: 'Założenia' },
+          state: assumptionsViewState,
+        },
+        {
+          id: 'wyliczenia',
+          label: { key: 'wyliczenia', pl: 'Wyliczenia' },
+          state: wyliczeniaViewState,
+        },
       ],
       activeViewId: activeView,
       placement: 'in-bar',
@@ -263,10 +303,18 @@ function BaselineWorkspaceInner(props: BaselineWorkspaceProps): React.ReactEleme
    * przypadków (`request_changes`/`invalidate`/`reopen`), zamiast wysyłać
    * `reason: ''`.
    */
-  async function performTransition(action: RoutableTransitionAction, reason: string | undefined): Promise<void> {
+  async function performTransition(
+    action: RoutableTransitionAction,
+    reason: string | undefined
+  ): Promise<void> {
     setLifecycleError(null);
     try {
-      const result = await transitionFinanceVersion({ businessVersionId, action, expectedVersion: version, reason });
+      const result = await transitionFinanceVersion({
+        businessVersionId,
+        action,
+        expectedVersion: version,
+        reason,
+      });
       setStatus(result.status);
       setVersion(result.version);
     } catch (e) {
@@ -274,7 +322,9 @@ function BaselineWorkspaceInner(props: BaselineWorkspaceProps): React.ReactEleme
     }
   }
 
-  async function handleLifecycleTransition(transition: WorkspaceBarLifecycleTransition): Promise<void> {
+  async function handleLifecycleTransition(
+    transition: WorkspaceBarLifecycleTransition
+  ): Promise<void> {
     if (transition.action === 'approve') {
       setLifecycleError(null);
       try {
@@ -313,11 +363,20 @@ function BaselineWorkspaceInner(props: BaselineWorkspaceProps): React.ReactEleme
     setLifecycleError(null);
     try {
       if (pendingReasonFor.kind === 'reopen') {
-        const result = await reopenFinanceModel({ modelArtifactId: artifactId, reason, idempotencyKey: `reopen:${artifactId}:${businessVersionId}:${Date.now()}` });
+        const result = await reopenFinanceModel({
+          modelArtifactId: artifactId,
+          reason,
+          idempotencyKey: `reopen:${artifactId}:${businessVersionId}:${Date.now()}`,
+        });
         setStatus(result.status);
         setVersion(result.versionNo);
       } else {
-        const result = await transitionFinanceVersion({ businessVersionId, action: pendingReasonFor.action, expectedVersion: version, reason });
+        const result = await transitionFinanceVersion({
+          businessVersionId,
+          action: pendingReasonFor.action,
+          expectedVersion: version,
+          reason,
+        });
         setStatus(result.status);
         setVersion(result.version);
       }
@@ -328,7 +387,9 @@ function BaselineWorkspaceInner(props: BaselineWorkspaceProps): React.ReactEleme
     }
   }
 
-  async function handleCommitRename(nextName: string): Promise<{ ok: true } | { ok: false; message: string }> {
+  async function handleCommitRename(
+    nextName: string
+  ): Promise<{ ok: true } | { ok: false; message: string }> {
     try {
       await renameFinanceArtifact(artifactId, nextName);
       setName(nextName);
@@ -339,7 +400,11 @@ function BaselineWorkspaceInner(props: BaselineWorkspaceProps): React.ReactEleme
   }
 
   return (
-    <div className="flex h-full min-h-screen w-full flex-col bg-c-bg" data-testid="baseline-workspace" data-active-view={activeView}>
+    <div
+      className="flex h-full min-h-screen w-full flex-col bg-c-bg"
+      data-testid="baseline-workspace"
+      data-active-view={activeView}
+    >
       <FinanceWorkspaceBar
         config={config}
         evaluationContext={evaluationContext}
@@ -354,7 +419,11 @@ function BaselineWorkspaceInner(props: BaselineWorkspaceProps): React.ReactEleme
       />
 
       {lifecycleError && (
-        <p role="alert" className="border-b border-c-border-subtle bg-c-danger/5 px-4 py-1.5 text-xs text-c-danger" data-testid="baseline-lifecycle-error">
+        <p
+          role="alert"
+          className="border-b border-c-border-subtle bg-c-danger/5 px-4 py-1.5 text-xs text-c-danger"
+          data-testid="baseline-lifecycle-error"
+        >
           {lifecycleError}
         </p>
       )}
@@ -363,12 +432,21 @@ function BaselineWorkspaceInner(props: BaselineWorkspaceProps): React.ReactEleme
       <div className="flex flex-1 flex-col overflow-hidden">
         <FinanceErrorBoundary
           key={activeView}
-          documentLabel={activeView === 'assumptions' ? `Założenia — ${name}` : `Wyliczenia — ${name}`}
-          onRetry={() => (activeView === 'assumptions' ? void editor.reload() : void outputsHook.reload())}
+          documentLabel={
+            activeView === 'assumptions' ? `Założenia — ${name}` : `Wyliczenia — ${name}`
+          }
+          onRetry={() =>
+            activeView === 'assumptions' ? void editor.reload() : void outputsHook.reload()
+          }
           onBackToList={props.onNavigateBack}
         >
           {activeView === 'assumptions' ? (
-            <AssumptionsView editor={editor} rowOrder={assumptionRowOrder} periodLabelById={periodLabelById} readOnly={readOnly} />
+            <AssumptionsView
+              editor={editor}
+              rowOrder={assumptionRowOrder}
+              periodLabelById={periodLabelById}
+              readOnly={readOnly}
+            />
           ) : (
             <CalculationsView
               outputs={outputsHook.outputs}
@@ -389,7 +467,11 @@ function BaselineWorkspaceInner(props: BaselineWorkspaceProps): React.ReactEleme
       </div>
 
       {pendingReasonFor && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4" role="presentation" onMouseDown={closeReasonDialog}>
+        <div
+          className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4"
+          role="presentation"
+          onMouseDown={closeReasonDialog}
+        >
           <div
             ref={reasonDialogContainerRef}
             role="alertdialog"
@@ -458,7 +540,11 @@ function lifecycleShortLabel(status: BusinessVersionStatus): string {
 
 /** Tylko przejścia z realnym odpowiednikiem w API (transitionFinanceVersion/approveFinanceModel/reopenFinanceModel) — bez fabrykowanych akcji. */
 function lifecycleTransitionsFor(status: BusinessVersionStatus): WorkspaceBarLifecycleTransition[] {
-  const t = (action: WorkspaceBarLifecycleTransition['action'], pl: string, opts: Partial<WorkspaceBarLifecycleTransition> = {}): WorkspaceBarLifecycleTransition => ({
+  const t = (
+    action: WorkspaceBarLifecycleTransition['action'],
+    pl: string,
+    opts: Partial<WorkspaceBarLifecycleTransition> = {}
+  ): WorkspaceBarLifecycleTransition => ({
     action,
     label: { key: action, pl },
     enablement: ENABLEMENT_ALWAYS,
@@ -470,7 +556,14 @@ function lifecycleTransitionsFor(status: BusinessVersionStatus): WorkspaceBarLif
 
   switch (status) {
     case 'DRAFT':
-      return [t('submit_for_review', 'Przekaż do przeglądu'), t('invalidate', 'Unieważnij', { destructive: true, requiresConfirmation: true, requiresReason: true })];
+      return [
+        t('submit_for_review', 'Przekaż do przeglądu'),
+        t('invalidate', 'Unieważnij', {
+          destructive: true,
+          requiresConfirmation: true,
+          requiresReason: true,
+        }),
+      ];
     case 'READY_FOR_REVIEW':
       return [t('start_review', 'Rozpocznij przegląd'), t('withdraw', 'Wycofaj z przeglądu')];
     case 'IN_REVIEW':
@@ -481,7 +574,13 @@ function lifecycleTransitionsFor(status: BusinessVersionStatus): WorkspaceBarLif
     case 'NEEDS_CHANGES':
       return [t('resume_editing', 'Wróć do edycji')];
     case 'APPROVED':
-      return [t('reopen', 'Otwórz ponownie', { destructive: true, requiresConfirmation: true, requiresReason: true })];
+      return [
+        t('reopen', 'Otwórz ponownie', {
+          destructive: true,
+          requiresConfirmation: true,
+          requiresReason: true,
+        }),
+      ];
     default:
       return [];
   }

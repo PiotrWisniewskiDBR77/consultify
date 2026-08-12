@@ -19,7 +19,10 @@ import { render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { clearFeatureFlagOverrides, setFeatureFlagOverrides } from '@/test-utils/featureFlagOverrides';
+import {
+  clearFeatureFlagOverrides,
+  setFeatureFlagOverrides,
+} from '@/test-utils/featureFlagOverrides';
 
 const apiMocks = vi.hoisted(() => ({
   getFinanceArtifact: vi.fn(),
@@ -45,7 +48,12 @@ afterEach(() => {
 describe('AnalysisWorkspace — flag gate (AP_MOUNT §A)', () => {
   it('OFF (default): renders nothing and calls zero of the four mount-time load functions', () => {
     const { container } = render(
-      <AnalysisWorkspace artifactId="art-1" businessVersionId="bv-1" role="preparer" onNavigateBack={() => {}} />
+      <AnalysisWorkspace
+        artifactId="art-1"
+        businessVersionId="bv-1"
+        role="preparer"
+        onNavigateBack={() => {}}
+      />
     );
     expect(container).toBeEmptyDOMElement();
     expect(apiMocks.getFinanceArtifact).not.toHaveBeenCalled();
@@ -55,14 +63,30 @@ describe('AnalysisWorkspace — flag gate (AP_MOUNT §A)', () => {
   });
 
   it('ON (local override): mounts and calls the four load functions', async () => {
-    apiMocks.getFinanceArtifact.mockResolvedValue({ artifactId: 'art-1', naturalKey: 'Analiza', currentBusinessVersion: null });
+    apiMocks.getFinanceArtifact.mockResolvedValue({
+      artifactId: 'art-1',
+      naturalKey: 'Analiza',
+      currentBusinessVersion: null,
+    });
     apiMocks.getFinanceBusinessVersion.mockResolvedValue({
-      businessVersionId: 'bv-1', artifactId: 'art-1', versionNo: 1, version: 1, status: 'DRAFT', freshness: 'NEVER_COMPUTED',
+      businessVersionId: 'bv-1',
+      artifactId: 'art-1',
+      versionNo: 1,
+      version: 1,
+      status: 'DRAFT',
+      freshness: 'NEVER_COMPUTED',
     });
     apiMocks.getAnalysisKpiValues.mockResolvedValue([]);
     apiMocks.getAnalysisKpiCatalog.mockResolvedValue([]);
     setFeatureFlagOverrides({ financeAnalysisWorkspaceV1: true });
-    render(<AnalysisWorkspace artifactId="art-1" businessVersionId="bv-1" role="preparer" onNavigateBack={() => {}} />);
+    render(
+      <AnalysisWorkspace
+        artifactId="art-1"
+        businessVersionId="bv-1"
+        role="preparer"
+        onNavigateBack={() => {}}
+      />
+    );
     expect(screen.getByTestId('analysis-workspace')).toBeInTheDocument();
     await waitFor(() => expect(apiMocks.getFinanceArtifact).toHaveBeenCalledTimes(1));
     expect(apiMocks.getFinanceBusinessVersion).toHaveBeenCalledTimes(1);

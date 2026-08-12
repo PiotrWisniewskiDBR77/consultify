@@ -12,9 +12,17 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { clearFeatureFlagOverrides, setFeatureFlagOverrides } from '@/test-utils/featureFlagOverrides';
+import {
+  clearFeatureFlagOverrides,
+  setFeatureFlagOverrides,
+} from '@/test-utils/featureFlagOverrides';
 
-import type { AnalysisKpiCatalogEntryDto, AnalysisKpiValueDto, FinanceArtifactDetailDto, FinanceBusinessVersionDetailDto } from '../../../../services/api/financeV2.types';
+import type {
+  AnalysisKpiCatalogEntryDto,
+  AnalysisKpiValueDto,
+  FinanceArtifactDetailDto,
+  FinanceBusinessVersionDetailDto,
+} from '../../../../services/api/financeV2.types';
 
 const apiMocks = vi.hoisted(() => ({
   getFinanceArtifact: vi.fn(),
@@ -114,7 +122,12 @@ describe('AnalysisWorkspace — montowanie realnego komponentu (jsdom)', () => {
   it('montuje się bez wyjątku i ładuje dane przez financeV2.api', async () => {
     setupHappyPathMocks();
     render(
-      <AnalysisWorkspace artifactId="art-1" businessVersionId="bv-1" role="preparer" onNavigateBack={() => {}} />
+      <AnalysisWorkspace
+        artifactId="art-1"
+        businessVersionId="bv-1"
+        role="preparer"
+        onNavigateBack={() => {}}
+      />
     );
     await waitFor(() => expect(apiMocks.getFinanceArtifact).toHaveBeenCalledWith('art-1'));
     expect(screen.getByTestId('analysis-workspace')).toBeInTheDocument();
@@ -123,7 +136,12 @@ describe('AnalysisWorkspace — montowanie realnego komponentu (jsdom)', () => {
   it('★ ZAKAZ pustej analizy: 0 KPI ⇒ tabela pokazuje CTA "Skonfiguruj wskaźniki", NIE pustkę bez akcji', async () => {
     setupHappyPathMocks([]); // brak wpisów KPI
     render(
-      <AnalysisWorkspace artifactId="art-1" businessVersionId="bv-1" role="preparer" onNavigateBack={() => {}} />
+      <AnalysisWorkspace
+        artifactId="art-1"
+        businessVersionId="bv-1"
+        role="preparer"
+        onNavigateBack={() => {}}
+      />
     );
     await waitFor(() => expect(apiMocks.getAnalysisKpiValues).toHaveBeenCalled());
     // CTA główny w pasku ORAZ w pustym stanie tabeli — oba muszą istnieć.
@@ -135,7 +153,12 @@ describe('AnalysisWorkspace — montowanie realnego komponentu (jsdom)', () => {
     setupHappyPathMocks([]);
     const user = userEvent.setup();
     render(
-      <AnalysisWorkspace artifactId="art-1" businessVersionId="bv-1" role="preparer" onNavigateBack={() => {}} />
+      <AnalysisWorkspace
+        artifactId="art-1"
+        businessVersionId="bv-1"
+        role="preparer"
+        onNavigateBack={() => {}}
+      />
     );
     await waitFor(() => expect(apiMocks.getAnalysisKpiValues).toHaveBeenCalled());
     const ctaButtons = await screen.findAllByText('Skonfiguruj wskaźniki');
@@ -156,7 +179,14 @@ describe('AnalysisWorkspace — montowanie realnego komponentu (jsdom)', () => {
         unitType: 'PERCENT',
         entityId: 'ent-1',
         periodId: 'p-2026',
-        value: { status: 'MISSING', valueDecimal: null, nativeCurrency: 'PLN', presentationCurrency: 'PLN', unit: 'UNITS', multiplier: '1' },
+        value: {
+          status: 'MISSING',
+          valueDecimal: null,
+          nativeCurrency: 'PLN',
+          presentationCurrency: 'PLN',
+          unit: 'UNITS',
+          multiplier: '1',
+        },
         qualityFlag: null,
         deltaVsPriorPeriod: null,
         deltaPctVsPriorPeriod: null,
@@ -168,7 +198,12 @@ describe('AnalysisWorkspace — montowanie realnego komponentu (jsdom)', () => {
     ];
     setupHappyPathMocks(kpiValues);
     render(
-      <AnalysisWorkspace artifactId="art-1" businessVersionId="bv-1" role="preparer" onNavigateBack={() => {}} />
+      <AnalysisWorkspace
+        artifactId="art-1"
+        businessVersionId="bv-1"
+        role="preparer"
+        onNavigateBack={() => {}}
+      />
     );
     await waitFor(() => expect(apiMocks.getAnalysisKpiValues).toHaveBeenCalled());
     await screen.findByText('Marża brutto');
@@ -182,7 +217,12 @@ describe('AnalysisCreatorWizard w AnalysisWorkspace — nawigacja krokami (jsdom
     setupHappyPathMocks([]);
     const user = userEvent.setup();
     render(
-      <AnalysisWorkspace artifactId="art-1" businessVersionId="bv-1" role="preparer" onNavigateBack={() => {}} />
+      <AnalysisWorkspace
+        artifactId="art-1"
+        businessVersionId="bv-1"
+        role="preparer"
+        onNavigateBack={() => {}}
+      />
     );
     await waitFor(() => expect(apiMocks.getAnalysisKpiValues).toHaveBeenCalled());
     const ctaButtons = await screen.findAllByText('Skonfiguruj wskaźniki');

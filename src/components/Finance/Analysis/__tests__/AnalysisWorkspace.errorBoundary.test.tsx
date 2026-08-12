@@ -10,7 +10,10 @@ import { render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { clearFeatureFlagOverrides, setFeatureFlagOverrides } from '@/test-utils/featureFlagOverrides';
+import {
+  clearFeatureFlagOverrides,
+  setFeatureFlagOverrides,
+} from '@/test-utils/featureFlagOverrides';
 
 const apiMocks = vi.hoisted(() => ({
   getFinanceArtifact: vi.fn(),
@@ -41,16 +44,32 @@ afterEach(() => {
 
 describe('AnalysisWorkspace — FinanceErrorBoundary (AP_MOUNT §D)', () => {
   it('a crash in the KPI table is caught locally — the bar survives outside the boundary', async () => {
-    apiMocks.getFinanceArtifact.mockResolvedValue({ artifactId: 'art-1', naturalKey: 'Analiza testowa', currentBusinessVersion: null });
+    apiMocks.getFinanceArtifact.mockResolvedValue({
+      artifactId: 'art-1',
+      naturalKey: 'Analiza testowa',
+      currentBusinessVersion: null,
+    });
     apiMocks.getFinanceBusinessVersion.mockResolvedValue({
-      businessVersionId: 'bv-1', artifactId: 'art-1', versionNo: 1, version: 1, status: 'DRAFT', freshness: 'NEVER_COMPUTED',
+      businessVersionId: 'bv-1',
+      artifactId: 'art-1',
+      versionNo: 1,
+      version: 1,
+      status: 'DRAFT',
+      freshness: 'NEVER_COMPUTED',
     });
     apiMocks.getAnalysisKpiValues.mockResolvedValue([]);
     apiMocks.getAnalysisKpiCatalog.mockResolvedValue([]);
     setFeatureFlagOverrides({ financeAnalysisWorkspaceV1: true });
 
     const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    render(<AnalysisWorkspace artifactId="art-1" businessVersionId="bv-1" role="preparer" onNavigateBack={() => {}} />);
+    render(
+      <AnalysisWorkspace
+        artifactId="art-1"
+        businessVersionId="bv-1"
+        role="preparer"
+        onNavigateBack={() => {}}
+      />
+    );
 
     await waitFor(() => expect(screen.getByTestId('finance-error-boundary')).toBeInTheDocument());
     // The bar is OUTSIDE the crashed content — name/identity is still live.

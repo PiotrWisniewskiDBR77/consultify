@@ -22,7 +22,7 @@
  */
 import { describe, expect, it } from 'vitest';
 
-import { resolveFinanceDetailBranches, type FinanceDetailBranchFlags } from '../FinanceHub';
+import { type FinanceDetailBranchFlags, resolveFinanceDetailBranches } from '../FinanceHub';
 import type { FinanceKind, PredictionType } from '../financeTypes';
 
 const ALL_FLAGS_OFF: FinanceDetailBranchFlags = {
@@ -37,11 +37,20 @@ const ALL_FLAGS_OFF: FinanceDetailBranchFlags = {
 function legacyExpected(kind: FinanceKind, predictionType: PredictionType | undefined) {
   const isBudgetPrediction = kind === 'prediction' && predictionType === 'budget';
   const openStatement = kind === 'statements';
-  const isModelWorkspace = kind === 'models' || (kind === 'prediction' && predictionType === 'model');
+  const isModelWorkspace =
+    kind === 'models' || (kind === 'prediction' && predictionType === 'model');
   const openAnalysis = kind === 'analysis' || kind === 'investment';
   const openValuation = kind === 'valuation';
-  const needsFullHeight = openStatement || isModelWorkspace || openAnalysis || isBudgetPrediction || openValuation;
-  return { isBudgetPrediction, openStatement, isModelWorkspace, openAnalysis, openValuation, needsFullHeight };
+  const needsFullHeight =
+    openStatement || isModelWorkspace || openAnalysis || isBudgetPrediction || openValuation;
+  return {
+    isBudgetPrediction,
+    openStatement,
+    isModelWorkspace,
+    openAnalysis,
+    openValuation,
+    needsFullHeight,
+  };
 }
 
 const ALL_KINDS: { kind: FinanceKind; predictionType?: PredictionType }[] = [
@@ -79,7 +88,10 @@ describe('resolveFinanceDetailBranches — AP_MOUNT §B', () => {
 
   describe('each flag ON only affects its own kind (no cross-talk)', () => {
     it('Baseline flag ON + kind=models -> openV3Baseline true, others still false', () => {
-      const r = resolveFinanceDetailBranches('models', undefined, { ...ALL_FLAGS_OFF, baseline: true });
+      const r = resolveFinanceDetailBranches('models', undefined, {
+        ...ALL_FLAGS_OFF,
+        baseline: true,
+      });
       expect(r.openV3Baseline).toBe(true);
       expect(r.openFinanceV3).toBe(true);
       expect(r.openV3Prediction).toBe(false);
@@ -88,38 +100,56 @@ describe('resolveFinanceDetailBranches — AP_MOUNT §B', () => {
     });
 
     it('Baseline flag ON + kind=valuation -> no v3 branch active (flag only gates its own kind)', () => {
-      const r = resolveFinanceDetailBranches('valuation', undefined, { ...ALL_FLAGS_OFF, baseline: true });
+      const r = resolveFinanceDetailBranches('valuation', undefined, {
+        ...ALL_FLAGS_OFF,
+        baseline: true,
+      });
       expect(r.openV3Baseline).toBe(false);
       expect(r.openFinanceV3).toBe(false);
       expect(r.openValuation).toBe(true); // legacy valuation branch still selected
     });
 
     it('Prediction flag ON + kind=prediction, predictionType=model -> openV3Prediction true', () => {
-      const r = resolveFinanceDetailBranches('prediction', 'model', { ...ALL_FLAGS_OFF, prediction: true });
+      const r = resolveFinanceDetailBranches('prediction', 'model', {
+        ...ALL_FLAGS_OFF,
+        prediction: true,
+      });
       expect(r.openV3Prediction).toBe(true);
       expect(r.openFinanceV3).toBe(true);
     });
 
     it('Prediction flag ON + kind=prediction, predictionType=budget -> v3 does NOT hijack the budget branch', () => {
-      const r = resolveFinanceDetailBranches('prediction', 'budget', { ...ALL_FLAGS_OFF, prediction: true });
+      const r = resolveFinanceDetailBranches('prediction', 'budget', {
+        ...ALL_FLAGS_OFF,
+        prediction: true,
+      });
       expect(r.openV3Prediction).toBe(false);
       expect(r.isBudgetPrediction).toBe(true);
       expect(r.openFinanceV3).toBe(false);
     });
 
     it('Analysis flag ON + kind=analysis -> openV3Analysis true', () => {
-      const r = resolveFinanceDetailBranches('analysis', undefined, { ...ALL_FLAGS_OFF, analysis: true });
+      const r = resolveFinanceDetailBranches('analysis', undefined, {
+        ...ALL_FLAGS_OFF,
+        analysis: true,
+      });
       expect(r.openV3Analysis).toBe(true);
       expect(r.openFinanceV3).toBe(true);
     });
 
     it('Analysis flag ON + kind=investment -> openV3Analysis true (investment shares the analysis branch)', () => {
-      const r = resolveFinanceDetailBranches('investment', undefined, { ...ALL_FLAGS_OFF, analysis: true });
+      const r = resolveFinanceDetailBranches('investment', undefined, {
+        ...ALL_FLAGS_OFF,
+        analysis: true,
+      });
       expect(r.openV3Analysis).toBe(true);
     });
 
     it('Valuation flag ON + kind=valuation -> openV3Valuation true', () => {
-      const r = resolveFinanceDetailBranches('valuation', undefined, { ...ALL_FLAGS_OFF, valuation: true });
+      const r = resolveFinanceDetailBranches('valuation', undefined, {
+        ...ALL_FLAGS_OFF,
+        valuation: true,
+      });
       expect(r.openV3Valuation).toBe(true);
       expect(r.openFinanceV3).toBe(true);
     });
@@ -127,7 +157,10 @@ describe('resolveFinanceDetailBranches — AP_MOUNT §B', () => {
 
   it('KONTROLA NEGATYWNA: this test file actually distinguishes v3-on from v3-off (sanity — a vacuously-true assertion would pass both ways)', () => {
     const off = resolveFinanceDetailBranches('models', undefined, ALL_FLAGS_OFF);
-    const on = resolveFinanceDetailBranches('models', undefined, { ...ALL_FLAGS_OFF, baseline: true });
+    const on = resolveFinanceDetailBranches('models', undefined, {
+      ...ALL_FLAGS_OFF,
+      baseline: true,
+    });
     expect(off.openV3Baseline).not.toBe(on.openV3Baseline);
   });
 });

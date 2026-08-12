@@ -19,7 +19,10 @@ import { render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { clearFeatureFlagOverrides, setFeatureFlagOverrides } from '@/test-utils/featureFlagOverrides';
+import {
+  clearFeatureFlagOverrides,
+  setFeatureFlagOverrides,
+} from '@/test-utils/featureFlagOverrides';
 
 import type { FinanceBusinessVersionDetailDto } from '../../../../services/api/financeV2.types';
 
@@ -74,7 +77,9 @@ describe('PredictionWorkspace — FinanceErrorBoundary (AP_MOUNT §D)', () => {
     apiMocks.getFinanceBusinessVersion.mockResolvedValue(CONFIRMED_VERSION);
     setFeatureFlagOverrides({ financePredictionWorkspaceV1: true });
     const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    expect(() => render(<PredictionWorkspace artifactId="artifact-1" businessVersionId="bv-eb-1" />)).not.toThrow();
+    expect(() =>
+      render(<PredictionWorkspace artifactId="artifact-1" businessVersionId="bv-eb-1" />)
+    ).not.toThrow();
     await waitFor(() => expect(screen.getByTestId('finance-error-boundary')).toBeInTheDocument());
     expect(screen.getByTestId('finance-error-boundary')).toHaveTextContent(/Ponów|Wróć do listy/);
     consoleErrorSpy.mockRestore();

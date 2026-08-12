@@ -55,10 +55,23 @@ import {
 } from '@/components/standard';
 import { MetaChip, statusChipTone } from '@/components/ui/primitives/chips';
 import { usePolicySnapshot } from '@/contexts/AccessPolicyContext';
+// AP_MOUNT §B — the four "finished, tested, unreachable" Finance v3 (AP-09/10/11)
+// detail workspaces (Prediction/Baseline/Analysis/Valuation, Pakiety G/F/E/H) each
+// read their OWN flag internally (AP_MOUNT §A) and render `null` at OFF, so importing
+// + conditionally rendering them here is safe by construction — no behaviour change
+// unless the flag is flipped. Named `FinanceV3*` locally: this file already declares
+// unrelated `ValuationWorkspace`/`FinancialAnalysisWorkspace` consts (the OLD
+// Benefits/M16 "Economics" workspaces, a separate system — see the ID-space caveat on
+// each v3 mount branch below).
+import { useFinanceAnalysisWorkspaceFlag } from '@/hooks/useFinanceAnalysisWorkspaceFlag';
+import { useFinanceBaselineWorkspaceFlag } from '@/hooks/useFinanceBaselineWorkspaceFlag';
+import { useFinancePredictionWorkspaceFlag } from '@/hooks/useFinancePredictionWorkspaceFlag';
+import { useFinanceValuationWorkspaceFlag } from '@/hooks/useFinanceValuationWorkspaceFlag';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { useV8FeatureFlag } from '@/hooks/useV8FeatureFlag';
 import { ROUTES } from '@/routes/routeConfig';
 import { Api, API_URL, getHeaders } from '@/services/api';
+import type { BusinessVersionStatus } from '@/services/api/financeV2.types';
 import {
   shouldFallbackToLegacyFinance,
   V8FinanceApi,
@@ -67,6 +80,10 @@ import {
 import { useAppStore } from '@/store/useAppStore';
 import { formatListDate } from '@/utils/listDateFormat';
 
+// ID_BRIDGE (Gate E) — legacy `/api/v8/finance/*` id -> canonical
+// `{artifactId, businessVersionId}` resolution gate, used by all four v3
+// mount branches below (openV3Baseline/Prediction/Analysis/Valuation).
+import { FinanceLegacyBridgeGate } from '../Finance/shared/FinanceLegacyBridgeGate';
 import { Menu3DropdownChip } from '../shared/Menu3DropdownChip';
 import {
   FilterChip,
@@ -107,9 +124,9 @@ import {
   type FinanceStatementRow,
   type FinanceStatus,
   type FinanceValuationRow,
-  type PredictionType,
   getTypeCode,
   KIND_ICONS,
+  type PredictionType,
   statusToItemStatus,
   statusToProgress,
 } from './financeTypes';
@@ -117,25 +134,6 @@ import { useFinanceData } from './hooks/useFinanceData';
 import { useFinanceLane } from './hooks/useFinanceLane';
 import { useFinanceRowActions } from './hooks/useFinanceRowActions';
 import { useFinanceSelection } from './hooks/useFinanceSelection';
-
-// AP_MOUNT §B — the four "finished, tested, unreachable" Finance v3 (AP-09/10/11)
-// detail workspaces (Prediction/Baseline/Analysis/Valuation, Pakiety G/F/E/H) each
-// read their OWN flag internally (AP_MOUNT §A) and render `null` at OFF, so importing
-// + conditionally rendering them here is safe by construction — no behaviour change
-// unless the flag is flipped. Named `FinanceV3*` locally: this file already declares
-// unrelated `ValuationWorkspace`/`FinancialAnalysisWorkspace` consts (the OLD
-// Benefits/M16 "Economics" workspaces, a separate system — see the ID-space caveat on
-// each v3 mount branch below).
-import { useFinanceAnalysisWorkspaceFlag } from '@/hooks/useFinanceAnalysisWorkspaceFlag';
-import { useFinanceBaselineWorkspaceFlag } from '@/hooks/useFinanceBaselineWorkspaceFlag';
-import { useFinancePredictionWorkspaceFlag } from '@/hooks/useFinancePredictionWorkspaceFlag';
-import { useFinanceValuationWorkspaceFlag } from '@/hooks/useFinanceValuationWorkspaceFlag';
-import type { BusinessVersionStatus } from '@/services/api/financeV2.types';
-
-// ID_BRIDGE (Gate E) — legacy `/api/v8/finance/*` id -> canonical
-// `{artifactId, businessVersionId}` resolution gate, used by all four v3
-// mount branches below (openV3Baseline/Prediction/Analysis/Valuation).
-import { FinanceLegacyBridgeGate } from '../Finance/shared/FinanceLegacyBridgeGate';
 
 // ---------------------------------------------------------------------------
 // H5.1 perf (code-splitting): heavy, on-demand surfaces are lazy-loaded so the
@@ -177,7 +175,9 @@ const FinancialStatementPackWorkspace = lazy(() =>
 // `FinanceV3*` to avoid colliding with the OLD `ValuationWorkspace`/
 // `FinancialAnalysisWorkspace` consts above (Benefits/M16, different system).
 const FinanceV3PredictionWorkspace = lazy(() =>
-  import('../Finance/Prediction/PredictionWorkspace').then((m) => ({ default: m.PredictionWorkspace }))
+  import('../Finance/Prediction/PredictionWorkspace').then((m) => ({
+    default: m.PredictionWorkspace,
+  }))
 );
 const FinanceV3BaselineWorkspace = lazy(() =>
   import('../Finance/BaselineWorkspace').then((m) => ({ default: m.BaselineWorkspace }))
@@ -312,7 +312,8 @@ export function resolveFinanceDetailBranches(
 ): FinanceDetailBranches {
   const isBudgetPrediction = kind === 'prediction' && predictionType === 'budget';
   const openStatement = kind === 'statements';
-  const isModelWorkspace = kind === 'models' || (kind === 'prediction' && predictionType === 'model');
+  const isModelWorkspace =
+    kind === 'models' || (kind === 'prediction' && predictionType === 'model');
   const openAnalysis = kind === 'analysis' || kind === 'investment';
   const openValuation = kind === 'valuation';
   const openV3Baseline = kind === 'models' && flags.baseline;
@@ -320,7 +321,8 @@ export function resolveFinanceDetailBranches(
   const openV3Analysis = openAnalysis && flags.analysis;
   const openV3Valuation = openValuation && flags.valuation;
   const openFinanceV3 = openV3Baseline || openV3Prediction || openV3Analysis || openV3Valuation;
-  const needsFullHeight = openStatement || isModelWorkspace || openAnalysis || isBudgetPrediction || openValuation;
+  const needsFullHeight =
+    openStatement || isModelWorkspace || openAnalysis || isBudgetPrediction || openValuation;
   return {
     isBudgetPrediction,
     openStatement,
@@ -2999,7 +3001,8 @@ export const FinanceHub: React.FC = () => {
                       label: t('common.backToList', 'Wróć do listy'),
                       onClick: handleShowList,
                       // Nawigacja powrotna, nie tworzenie nowego obiektu — bez "+".
-                      showPrefix: false, neutralAccent: true,
+                      showPrefix: false,
+                      neutralAccent: true,
                     }}
                   />
                 </div>

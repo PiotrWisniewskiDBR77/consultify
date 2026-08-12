@@ -52,10 +52,24 @@ import {
   runFinancePredictionCalculate,
   runFinancePredictionPreflight,
 } from '@/services/api/financeV2.api';
-import { businessVersionStatusLabel, describeFinanceV2Error, type FinanceBusinessVersionDetailDto } from '@/services/api/financeV2.types';
+import {
+  businessVersionStatusLabel,
+  describeFinanceV2Error,
+  type FinanceBusinessVersionDetailDto,
+} from '@/services/api/financeV2.types';
 
-import { createEmptyScenarioDraft, type CanonicalValueMap, type ExceptionLedgerEntry, type ScenarioDraft } from './predictionScenarioModel';
-import { buildPredictionEvaluationContext, buildPredictionWorkspaceBarConfig, PREDICTION_VIEW_IDS, type PredictionViewId } from './predictionWorkspaceBarConfig';
+import {
+  type CanonicalValueMap,
+  createEmptyScenarioDraft,
+  type ExceptionLedgerEntry,
+  type ScenarioDraft,
+} from './predictionScenarioModel';
+import {
+  buildPredictionEvaluationContext,
+  buildPredictionWorkspaceBarConfig,
+  PREDICTION_VIEW_IDS,
+  type PredictionViewId,
+} from './predictionWorkspaceBarConfig';
 import { ScenarioAssumptionsView } from './ScenarioAssumptionsView';
 import { ScenarioResultsView } from './ScenarioResultsView';
 
@@ -129,8 +143,12 @@ function PredictionWorkspaceInner(props: PredictionWorkspaceProps): React.ReactE
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [businessVersionId, checkAttempt]);
 
-  const [draft, setDraft] = useState<ScenarioDraft>(props.initialDraft ?? createEmptyScenarioDraft({ name: 'Nowy scenariusz' }));
-  const [activeViewId, setActiveViewId] = useState<PredictionViewId>(PREDICTION_VIEW_IDS.assumptions);
+  const [draft, setDraft] = useState<ScenarioDraft>(
+    props.initialDraft ?? createEmptyScenarioDraft({ name: 'Nowy scenariusz' })
+  );
+  const [activeViewId, setActiveViewId] = useState<PredictionViewId>(
+    PREDICTION_VIEW_IDS.assumptions
+  );
   const [exceptionLedger, setExceptionLedger] = useState<readonly ExceptionLedgerEntry[]>([]);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
@@ -138,7 +156,10 @@ function PredictionWorkspaceInner(props: PredictionWorkspaceProps): React.ReactE
   // preflight/calculate (which already gate on `draft.businessVersionId`)
   // work exactly as before this fix for a real, resolved record.
   useEffect(() => {
-    if (mountCheck.kind === 'confirmed' && draft.businessVersionId !== mountCheck.version.businessVersionId) {
+    if (
+      mountCheck.kind === 'confirmed' &&
+      draft.businessVersionId !== mountCheck.version.businessVersionId
+    ) {
       setDraft((d) => ({ ...d, businessVersionId: mountCheck.version.businessVersionId }));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -146,17 +167,34 @@ function PredictionWorkspaceInner(props: PredictionWorkspaceProps): React.ReactE
 
   const focusMode = useFinanceFocusMode({ workspaceState: draft, activeViewId });
 
-  const evaluationContext = buildPredictionEvaluationContext({ status: 'DRAFT', role: 'preparer', freshness: draft.lastComputeAt ? 'CURRENT' : 'NEVER_COMPUTED' });
-  const config = buildPredictionWorkspaceBarConfig({ draft, activeViewId, artifactId: props.artifactId, status: 'DRAFT', role: 'preparer', freshness: draft.lastComputeAt ? 'CURRENT' : 'NEVER_COMPUTED' });
+  const evaluationContext = buildPredictionEvaluationContext({
+    status: 'DRAFT',
+    role: 'preparer',
+    freshness: draft.lastComputeAt ? 'CURRENT' : 'NEVER_COMPUTED',
+  });
+  const config = buildPredictionWorkspaceBarConfig({
+    draft,
+    activeViewId,
+    artifactId: props.artifactId,
+    status: 'DRAFT',
+    role: 'preparer',
+    freshness: draft.lastComputeAt ? 'CURRENT' : 'NEVER_COMPUTED',
+  });
 
   async function handlePreflight(): Promise<void> {
     if (!draft.businessVersionId) {
-      setStatusMessage('Brak realnego scenariusza na serwerze — CRUD zapisu (driver overrides/inicjatywy/impact chain/financing) jeszcze nie istnieje (patrz raport pakietu G). Preflight działa tylko na już zapisanym businessVersionId.');
+      setStatusMessage(
+        'Brak realnego scenariusza na serwerze — CRUD zapisu (driver overrides/inicjatywy/impact chain/financing) jeszcze nie istnieje (patrz raport pakietu G). Preflight działa tylko na już zapisanym businessVersionId.'
+      );
       return;
     }
     try {
-      const result = await runFinancePredictionPreflight({ businessVersionId: draft.businessVersionId });
-      setStatusMessage(`Preflight: ${result.findingsCount} znalezisk, ${result.requiredResolutionsCount} wymaga rozstrzygnięcia.`);
+      const result = await runFinancePredictionPreflight({
+        businessVersionId: draft.businessVersionId,
+      });
+      setStatusMessage(
+        `Preflight: ${result.findingsCount} znalezisk, ${result.requiredResolutionsCount} wymaga rozstrzygnięcia.`
+      );
     } catch (err) {
       setStatusMessage(describeFinanceV2Error(err).detail);
     }
@@ -164,11 +202,18 @@ function PredictionWorkspaceInner(props: PredictionWorkspaceProps): React.ReactE
 
   async function handleCalculate(): Promise<void> {
     if (!draft.businessVersionId) {
-      setStatusMessage('Brak realnego scenariusza na serwerze — nie można wywołać /calculate bez zapisanego businessVersionId.');
+      setStatusMessage(
+        'Brak realnego scenariusza na serwerze — nie można wywołać /calculate bez zapisanego businessVersionId.'
+      );
       return;
     }
     try {
-      await runFinancePredictionCalculate({ businessVersionId: draft.businessVersionId, entityId: 'entity-1', forecastPeriodIds: [], openingBalanceSheetPeriodId: '' });
+      await runFinancePredictionCalculate({
+        businessVersionId: draft.businessVersionId,
+        entityId: 'entity-1',
+        forecastPeriodIds: [],
+        openingBalanceSheetPeriodId: '',
+      });
       setDraft((d) => ({ ...d, lastComputeAt: new Date().toISOString() }));
       setActiveViewId(PREDICTION_VIEW_IDS.results);
     } catch (err) {
@@ -190,7 +235,12 @@ function PredictionWorkspaceInner(props: PredictionWorkspaceProps): React.ReactE
         <EmptyStateInline
           message="Nie można otworzyć tego scenariusza — brak połączenia z realnym rekordem w nowym systemie."
           hint="Ten wiersz nie ma jeszcze odpowiednika w nowym systemie (nie został przeniesiony). Żadne dane nie zostały pobrane."
-          action={{ label: 'Wróć do listy', onClick: () => props.onNavigateBack?.(), showPrefix: false, neutralAccent: true }}
+          action={{
+            label: 'Wróć do listy',
+            onClick: () => props.onNavigateBack?.(),
+            showPrefix: false,
+            neutralAccent: true,
+          }}
         />
       </div>
     );
@@ -201,7 +251,12 @@ function PredictionWorkspaceInner(props: PredictionWorkspaceProps): React.ReactE
         <EmptyStateInline
           message="Nie znaleziono tej wersji scenariusza w nowym systemie."
           hint="Rekord mógł zostać usunięty albo nie masz do niego dostępu. Żadne dane nie zostały pobrane."
-          action={{ label: 'Wróć do listy', onClick: () => props.onNavigateBack?.(), showPrefix: false, neutralAccent: true }}
+          action={{
+            label: 'Wróć do listy',
+            onClick: () => props.onNavigateBack?.(),
+            showPrefix: false,
+            neutralAccent: true,
+          }}
         />
       </div>
     );
@@ -212,14 +267,23 @@ function PredictionWorkspaceInner(props: PredictionWorkspaceProps): React.ReactE
         <EmptyStateInline
           message="Nie udało się sprawdzić tego scenariusza."
           hint={mountCheck.message}
-          action={{ label: 'Spróbuj ponownie', onClick: () => setCheckAttempt((n) => n + 1), showPrefix: false, neutralAccent: true }}
+          action={{
+            label: 'Spróbuj ponownie',
+            onClick: () => setCheckAttempt((n) => n + 1),
+            showPrefix: false,
+            neutralAccent: true,
+          }}
         />
       </div>
     );
   }
 
   return (
-    <FinanceErrorBoundary documentLabel={draft.name} onRetry={() => setStatusMessage(null)} onBackToList={() => props.onNavigateBack?.()}>
+    <FinanceErrorBoundary
+      documentLabel={draft.name}
+      onRetry={() => setStatusMessage(null)}
+      onBackToList={() => props.onNavigateBack?.()}
+    >
       <div className="flex h-full min-h-0 flex-col bg-c-bg">
         <FinanceWorkspaceBar
           config={config}
@@ -247,22 +311,34 @@ function PredictionWorkspaceInner(props: PredictionWorkspaceProps): React.ReactE
           role="status"
           data-testid="prediction-honest-scratch-banner"
         >
-          Realny rekord (wersja {mountCheck.version.versionNo}, status: {businessVersionStatusLabel(mountCheck.version.status)}) został
-          potwierdzony w nowym systemie. Ten ekran pokazuje nowy szkic założeń — odczyt zapisanej treści
-          scenariusza nie jest dziś dostępny (brak endpointu GET), więc żadne wcześniejsze założenia nie
-          zostały pobrane.
+          Realny rekord (wersja {mountCheck.version.versionNo}, status:{' '}
+          {businessVersionStatusLabel(mountCheck.version.status)}) został potwierdzony w nowym
+          systemie. Ten ekran pokazuje nowy szkic założeń — odczyt zapisanej treści scenariusza nie
+          jest dziś dostępny (brak endpointu GET), więc żadne wcześniejsze założenia nie zostały
+          pobrane.
         </div>
 
         {statusMessage && (
-          <div className="border-b border-c-border-subtle bg-c-surface-raised px-4 py-2 text-sm text-c-text-secondary" role="status" data-testid="prediction-status-message">
+          <div
+            className="border-b border-c-border-subtle bg-c-surface-raised px-4 py-2 text-sm text-c-text-secondary"
+            role="status"
+            data-testid="prediction-status-message"
+          >
             {statusMessage}
           </div>
         )}
 
         <div className="min-h-0 flex-1">
-          {activeViewId === PREDICTION_VIEW_IDS.assumptions && <ScenarioAssumptionsView draft={draft} onChange={setDraft} />}
+          {activeViewId === PREDICTION_VIEW_IDS.assumptions && (
+            <ScenarioAssumptionsView draft={draft} onChange={setDraft} />
+          )}
           {activeViewId === PREDICTION_VIEW_IDS.results && (
-            <ScenarioResultsView draft={draft} scenarioValues={props.scenarioValues ?? {}} baselineValues={props.baselineValues ?? {}} exceptionLedger={exceptionLedger} />
+            <ScenarioResultsView
+              draft={draft}
+              scenarioValues={props.scenarioValues ?? {}}
+              baselineValues={props.baselineValues ?? {}}
+              exceptionLedger={exceptionLedger}
+            />
           )}
         </div>
       </div>

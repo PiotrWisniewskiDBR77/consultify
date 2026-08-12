@@ -23,7 +23,9 @@ beforeAll(() => {
   });
 });
 
-function baseProps(overrides: Partial<AnalysisCreatorWizardProps> = {}): AnalysisCreatorWizardProps {
+function baseProps(
+  overrides: Partial<AnalysisCreatorWizardProps> = {}
+): AnalysisCreatorWizardProps {
   return {
     sourceOptions: [],
     periodOptions: [],
@@ -98,7 +100,9 @@ describe('AnalysisCreatorWizard — pułapka fokusa/Escape/przywrócenie (a11y, 
     fireEvent.keyDown(document, { key: 'Escape' });
 
     expect(onCloseSpy).toHaveBeenCalledTimes(1);
-    await waitFor(() => expect(screen.queryByTestId('analysis-creator-wizard')).not.toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.queryByTestId('analysis-creator-wizard')).not.toBeInTheDocument()
+    );
     await waitFor(() => expect(trigger).toHaveFocus());
   });
 

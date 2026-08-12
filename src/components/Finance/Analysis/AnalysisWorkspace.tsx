@@ -42,6 +42,29 @@
  */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
+import { useFinanceAnalysisWorkspaceFlag } from '../../../hooks/useFinanceAnalysisWorkspaceFlag';
+import { useFinanceFocusMode } from '../../../hooks/useFinanceFocusMode';
+import {
+  approveFinanceModel,
+  computeAnalysisKpis,
+  createFinanceArtifact,
+  getAnalysisKpiCatalog,
+  getAnalysisKpiValues,
+  getFinanceArtifact,
+  getFinanceBusinessVersion,
+  renameFinanceArtifact,
+  reopenFinanceModel,
+  type RoutableTransitionAction,
+  transitionFinanceVersion,
+} from '../../../services/api/financeV2.api';
+import {
+  type AnalysisKpiCatalogEntryDto,
+  type AnalysisKpiValueDto,
+  type BusinessVersionStatus,
+  describeFinanceV2Error,
+  type FinanceArtifactFreshness,
+  type FinanceRole,
+} from '../../../services/api/financeV2.types';
 import { FinanceErrorBoundary } from '../shared/FinanceErrorBoundary';
 import { FinanceWorkspaceBar } from '../shared/FinanceWorkspaceBar';
 import type {
@@ -49,41 +72,30 @@ import type {
   WorkspaceBarLifecycleTransition,
   WorkspaceBarMoreMenuItem,
 } from '../shared/financeWorkspaceBar.contract';
+import { AnalysisCreatorWizard } from './AnalysisCreatorWizard';
+import type {
+  AnalysisCreatorDraftPayload,
+  AnalysisCreatorPeriodOption,
+  AnalysisCreatorSourceOption,
+} from './analysisCreatorWizard.contract';
+import {
+  AnalysisKpiDetailCard,
+  type AnalysisKpiHistoryEntry,
+  type AnalysisKpiPeriodSeriesPoint,
+} from './AnalysisKpiDetailCard';
+import { AnalysisKpiTable, type AnalysisKpiTablePeriodColumn } from './AnalysisKpiTable';
+import {
+  type AnalysisKpiCatalogFormulaInfo,
+  computeYoyDelta,
+  groupAnalysisKpiValuesByKpi,
+} from './analysisKpiTable.contract';
 import {
   ANALYSIS_HAS_KPIS_GATE,
+  type AnalysisCompleteness,
   buildAnalysisWorkspaceBarConfig,
   canSubmitAnalysisForReview,
   resolveAnalysisPrimaryCta,
-  type AnalysisCompleteness,
 } from './analysisWorkspace.contract';
-import { AnalysisKpiTable, type AnalysisKpiTablePeriodColumn } from './AnalysisKpiTable';
-import { AnalysisKpiDetailCard, type AnalysisKpiHistoryEntry, type AnalysisKpiPeriodSeriesPoint } from './AnalysisKpiDetailCard';
-import { AnalysisCreatorWizard } from './AnalysisCreatorWizard';
-import { useFinanceAnalysisWorkspaceFlag } from '../../../hooks/useFinanceAnalysisWorkspaceFlag';
-import { useFinanceFocusMode } from '../../../hooks/useFinanceFocusMode';
-import { computeYoyDelta, groupAnalysisKpiValuesByKpi, type AnalysisKpiCatalogFormulaInfo } from './analysisKpiTable.contract';
-import type { AnalysisCreatorDraftPayload, AnalysisCreatorPeriodOption, AnalysisCreatorSourceOption } from './analysisCreatorWizard.contract';
-import {
-  createFinanceArtifact,
-  computeAnalysisKpis,
-  getAnalysisKpiCatalog,
-  getAnalysisKpiValues,
-  getFinanceArtifact,
-  getFinanceBusinessVersion,
-  renameFinanceArtifact,
-  transitionFinanceVersion,
-  approveFinanceModel,
-  reopenFinanceModel,
-  type RoutableTransitionAction,
-} from '../../../services/api/financeV2.api';
-import {
-  describeFinanceV2Error,
-  type AnalysisKpiCatalogEntryDto,
-  type AnalysisKpiValueDto,
-  type BusinessVersionStatus,
-  type FinanceArtifactFreshness,
-  type FinanceRole,
-} from '../../../services/api/financeV2.types';
 
 export interface AnalysisWorkspaceProps {
   artifactId: string;
@@ -139,8 +151,12 @@ function AnalysisWorkspaceInner(props: AnalysisWorkspaceProps): React.ReactEleme
   const [wizardSubmitError, setWizardSubmitError] = useState<string | null>(null);
   const [computing, setComputing] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
-  const [includedInReportByKpiCode, setIncludedInReportByKpiCode] = useState<Record<string, boolean>>({});
-  const [markedAsModelInputByKpiCode, setMarkedAsModelInputByKpiCode] = useState<Record<string, boolean>>({});
+  const [includedInReportByKpiCode, setIncludedInReportByKpiCode] = useState<
+    Record<string, boolean>
+  >({});
+  const [markedAsModelInputByKpiCode, setMarkedAsModelInputByKpiCode] = useState<
+    Record<string, boolean>
+  >({});
 
   // Analiza ma JEDEN widok (brak zakładek) — `activeViewId` stały; kontrakt
   // Focus Mode (Pakiet C) i tak wymaga jakiegoś id. Stan roboczy (selekcja
@@ -148,7 +164,12 @@ function AnalysisWorkspaceInner(props: AnalysisWorkspaceProps): React.ReactEleme
   // referencja `workspaceState`, więc toggle focus mode NIGDY go nie resetuje
   // (dowód "nie refetchuje" — patrz `__tests__/AnalysisWorkspace.focusMode.test.tsx`).
   const focusMode = useFinanceFocusMode({
-    workspaceState: { selectedKpiCode, wizardOpen, includedInReportByKpiCode, markedAsModelInputByKpiCode },
+    workspaceState: {
+      selectedKpiCode,
+      wizardOpen,
+      includedInReportByKpiCode,
+      markedAsModelInputByKpiCode,
+    },
     activeViewId: 'analysis',
     // ★ NAPRAWA a11y (Pakiet I): `AnalysisCreatorWizard` teraz NAPRAWDĘ
     // zamyka się na Escape (przedtem nie miał żadnej obsługi klawiatury —
@@ -157,7 +178,12 @@ function AnalysisWorkspaceInner(props: AnalysisWorkspaceProps): React.ReactEleme
     // mode: zamykał kreator I wychodził z focus mode — ten hook już ma
     // gotową precedencję (`resolveEscapeKey`) na dokładnie ten przypadek,
     // po prostu nigdy nie dostawał prawdziwego stanu modala.
-    escapeContext: { modalOpen: wizardOpen, commandPaletteOpen: false, popoverOpen: false, cellEditing: false },
+    escapeContext: {
+      modalOpen: wizardOpen,
+      commandPaletteOpen: false,
+      popoverOpen: false,
+      cellEditing: false,
+    },
   });
 
   const reload = useCallback(async () => {
@@ -194,11 +220,22 @@ function AnalysisWorkspaceInner(props: AnalysisWorkspaceProps): React.ReactEleme
     return ids.map((id) => ({ id, label: id }));
   }, [kpiValues]);
 
-  const groups = useMemo(() => groupAnalysisKpiValuesByKpi(kpiValues, periodColumns.map((p) => p.id)), [kpiValues, periodColumns]);
+  const groups = useMemo(
+    () =>
+      groupAnalysisKpiValuesByKpi(
+        kpiValues,
+        periodColumns.map((p) => p.id)
+      ),
+    [kpiValues, periodColumns]
+  );
 
   const completeness: AnalysisCompleteness = useMemo(() => {
     const selectedKpiCount = groups.length;
-    const computedValueCount = groups.filter((g) => g.latestValue.value.status === 'PRESENT_ZERO' || g.latestValue.value.status === 'PRESENT_NONZERO').length;
+    const computedValueCount = groups.filter(
+      (g) =>
+        g.latestValue.value.status === 'PRESENT_ZERO' ||
+        g.latestValue.value.status === 'PRESENT_NONZERO'
+    ).length;
     return { selectedKpiCount, computedValueCount };
   }, [groups]);
 
@@ -230,17 +267,18 @@ function AnalysisWorkspaceInner(props: AnalysisWorkspaceProps): React.ReactEleme
     gates: { [ANALYSIS_HAS_KPIS_GATE]: completeness.selectedKpiCount > 0 },
   };
 
-  const formulaInfoByKpiCode: Record<string, AnalysisKpiCatalogFormulaInfo | undefined> = useMemo(() => {
-    const map: Record<string, AnalysisKpiCatalogFormulaInfo | undefined> = {};
-    for (const c of catalog) {
-      map[c.kpiCode] = {
-        formulaDisplay: c.description ?? c.kpiCode,
-        interpretationGeneral: c.description ?? '—',
-        downstreamUses: [],
-      };
-    }
-    return map;
-  }, [catalog]);
+  const formulaInfoByKpiCode: Record<string, AnalysisKpiCatalogFormulaInfo | undefined> =
+    useMemo(() => {
+      const map: Record<string, AnalysisKpiCatalogFormulaInfo | undefined> = {};
+      for (const c of catalog) {
+        map[c.kpiCode] = {
+          formulaDisplay: c.description ?? c.kpiCode,
+          interpretationGeneral: c.description ?? '—',
+          downstreamUses: [],
+        };
+      }
+      return map;
+    }, [catalog]);
 
   async function handleCompute(): Promise<void> {
     setComputing(true);
@@ -272,7 +310,11 @@ function AnalysisWorkspaceInner(props: AnalysisWorkspaceProps): React.ReactEleme
           return;
         }
         try {
-          const result = await transitionFinanceVersion({ businessVersionId, action: 'submit_for_review', expectedVersion: version });
+          const result = await transitionFinanceVersion({
+            businessVersionId,
+            action: 'submit_for_review',
+            expectedVersion: version,
+          });
           setStatus(result.status);
           setVersion(result.version);
         } catch (err) {
@@ -288,13 +330,19 @@ function AnalysisWorkspaceInner(props: AnalysisWorkspaceProps): React.ReactEleme
         const reason = window.prompt('Powód ponownego otwarcia analizy:', '') ?? '';
         if (!reason.trim()) return;
         try {
-          const result = await reopenFinanceModel({ modelArtifactId: artifactId, reason, idempotencyKey: `analysis-reopen-${businessVersionId}-${Date.now()}` });
+          const result = await reopenFinanceModel({
+            modelArtifactId: artifactId,
+            reason,
+            idempotencyKey: `analysis-reopen-${businessVersionId}-${Date.now()}`,
+          });
           // Wymóg #8 (Approved niemutowalne): TA wersja (businessVersionId w
           // propsach) zostaje bez zmian — reopen utworzył NOWĄ wersję
           // (`result.businessVersionId`), do której ten komponent nie ma
           // callbacku nawigacji (poza zakresem propsów tego pakietu). Komunikat
           // zamiast cichego no-op lub błędnego przełączenia widoku na starą wersję.
-          setActionError(`Utworzono nową wersję roboczą (v${result.versionNo}, id ${result.businessVersionId}). Otwórz ją z listy wersji artefaktu.`);
+          setActionError(
+            `Utworzono nową wersję roboczą (v${result.versionNo}, id ${result.businessVersionId}). Otwórz ją z listy wersji artefaktu.`
+          );
         } catch (err) {
           setActionError(describeFinanceV2Error(err).detail);
         }
@@ -307,7 +355,9 @@ function AnalysisWorkspaceInner(props: AnalysisWorkspaceProps): React.ReactEleme
     }
   }
 
-  async function handleLifecycleTransition(transition: WorkspaceBarLifecycleTransition): Promise<void> {
+  async function handleLifecycleTransition(
+    transition: WorkspaceBarLifecycleTransition
+  ): Promise<void> {
     setActionError(null);
     let reason: string | undefined;
     if (transition.requiresReason) {
@@ -318,7 +368,10 @@ function AnalysisWorkspaceInner(props: AnalysisWorkspaceProps): React.ReactEleme
     }
     try {
       if (transition.action === 'approve') {
-        const result = await approveFinanceModel({ modelArtifactId: artifactId, expectedVersion: version });
+        const result = await approveFinanceModel({
+          modelArtifactId: artifactId,
+          expectedVersion: version,
+        });
         if (result.success) await reload();
         return;
       }
@@ -331,7 +384,9 @@ function AnalysisWorkspaceInner(props: AnalysisWorkspaceProps): React.ReactEleme
         // Patrz komentarz w `handlePrimaryAction`'s reopen_or_new_version — TA
         // wersja zostaje bez zmian (Approved niemutowalne), nowa wersja wymaga
         // nawigacji spoza tego komponentu.
-        setActionError(`Utworzono nową wersję roboczą (v${result.versionNo}, id ${result.businessVersionId}). Otwórz ją z listy wersji artefaktu.`);
+        setActionError(
+          `Utworzono nową wersję roboczą (v${result.versionNo}, id ${result.businessVersionId}). Otwórz ją z listy wersji artefaktu.`
+        );
         return;
       }
       if (transition.action === 'save_draft') {
@@ -354,7 +409,11 @@ function AnalysisWorkspaceInner(props: AnalysisWorkspaceProps): React.ReactEleme
 
   function handleMoreItem(item: WorkspaceBarMoreMenuItem): void {
     if (item.id === 'more.archive') {
-      void transitionFinanceVersion({ businessVersionId, action: 'archive', expectedVersion: version })
+      void transitionFinanceVersion({
+        businessVersionId,
+        action: 'archive',
+        expectedVersion: version,
+      })
         .then((result) => {
           setStatus(result.status);
           setVersion(result.version);
@@ -365,7 +424,9 @@ function AnalysisWorkspaceInner(props: AnalysisWorkspaceProps): React.ReactEleme
     // duplicate/export/history — poza zakresem tego pakietu (brak backendu/ekranu docelowego).
   }
 
-  async function handleCommitRename(nextName: string): Promise<{ ok: true } | { ok: false; message: string }> {
+  async function handleCommitRename(
+    nextName: string
+  ): Promise<{ ok: true } | { ok: false; message: string }> {
     try {
       await renameFinanceArtifact(artifactId, nextName);
       setName(nextName);
@@ -391,14 +452,19 @@ function AnalysisWorkspaceInner(props: AnalysisWorkspaceProps): React.ReactEleme
     }
   }
 
-  const selectedGroup = selectedKpiCode ? groups.find((g) => g.kpiCode === selectedKpiCode) ?? null : null;
+  const selectedGroup = selectedKpiCode
+    ? (groups.find((g) => g.kpiCode === selectedKpiCode) ?? null)
+    : null;
 
   return (
     <div className="flex h-full min-h-0 flex-col bg-c-bg" data-testid="analysis-workspace">
       <FinanceWorkspaceBar
         config={workspaceConfig}
         evaluationContext={evaluationContext}
-        contextValues={{ type: 'Analiza historyczna', lastCompute: load.loading ? undefined : new Date().toISOString() }}
+        contextValues={{
+          type: 'Analiza historyczna',
+          lastCompute: load.loading ? undefined : new Date().toISOString(),
+        }}
         onNavigateBack={onNavigateBack}
         onSelectView={() => {}}
         onPrimaryAction={() => void handlePrimaryAction()}
@@ -409,12 +475,19 @@ function AnalysisWorkspaceInner(props: AnalysisWorkspaceProps): React.ReactEleme
       />
 
       {actionError ? (
-        <div className="border-b border-c-danger/30 bg-c-danger/10 px-4 py-2 text-sm text-c-text" data-testid="analysis-workspace-action-error">
+        <div
+          className="border-b border-c-danger/30 bg-c-danger/10 px-4 py-2 text-sm text-c-text"
+          data-testid="analysis-workspace-action-error"
+        >
           {actionError}
         </div>
       ) : null}
 
-      <FinanceErrorBoundary documentLabel={name} onRetry={() => void reload()} onBackToList={onNavigateBack}>
+      <FinanceErrorBoundary
+        documentLabel={name}
+        onRetry={() => void reload()}
+        onBackToList={onNavigateBack}
+      >
         <div className="flex min-h-0 flex-1">
           <div className="min-w-0 flex-1 overflow-auto">
             <AnalysisKpiTable
@@ -426,8 +499,12 @@ function AnalysisWorkspaceInner(props: AnalysisWorkspaceProps): React.ReactEleme
               markedAsModelInputByKpiCode={markedAsModelInputByKpiCode}
               selectedKpiCode={selectedKpiCode}
               onOpenDetail={setSelectedKpiCode}
-              onToggleIncludedInReport={(kpiCode, next) => setIncludedInReportByKpiCode((m) => ({ ...m, [kpiCode]: next }))}
-              onMarkAsModelInput={(kpiCode) => setMarkedAsModelInputByKpiCode((m) => ({ ...m, [kpiCode]: true }))}
+              onToggleIncludedInReport={(kpiCode, next) =>
+                setIncludedInReportByKpiCode((m) => ({ ...m, [kpiCode]: next }))
+              }
+              onMarkAsModelInput={(kpiCode) =>
+                setMarkedAsModelInputByKpiCode((m) => ({ ...m, [kpiCode]: true }))
+              }
               isApproved={status === 'APPROVED'}
               loading={load.loading}
               error={load.error}
@@ -440,7 +517,10 @@ function AnalysisWorkspaceInner(props: AnalysisWorkspaceProps): React.ReactEleme
             <AnalysisKpiDetailCard
               kpiValue={selectedGroup.latestValue}
               formulaInfo={formulaInfoByKpiCode[selectedGroup.kpiCode] ?? null}
-              yoyDelta={computeYoyDelta(selectedGroup.latestValue.value, selectedGroup.priorPeriodValue)}
+              yoyDelta={computeYoyDelta(
+                selectedGroup.latestValue.value,
+                selectedGroup.priorPeriodValue
+              )}
               periodSeries={buildPeriodSeries(selectedGroup.periodValuesByColumnId, periodColumns)}
               history={buildHistoryPlaceholder(selectedGroup.latestValue)}
               sourceLineageLabel="Pakiet sprawozdań źródłowych (lineage) — szczegóły dostępne po dodaniu endpointu listującego."
@@ -472,7 +552,14 @@ function buildPeriodSeries(
 ): AnalysisKpiPeriodSeriesPoint[] {
   return periodColumns.map((col) => ({
     periodLabel: col.label,
-    value: periodValuesByColumnId[col.id] ?? { status: 'MISSING', valueDecimal: null, nativeCurrency: '', presentationCurrency: '', unit: '', multiplier: '1' },
+    value: periodValuesByColumnId[col.id] ?? {
+      status: 'MISSING',
+      valueDecimal: null,
+      nativeCurrency: '',
+      presentationCurrency: '',
+      unit: '',
+      multiplier: '1',
+    },
     isForecast: false, // brak dziś sygnału historyczny/prognoza z GET /analysis/:id/kpi-values (patrz nagłówek pliku).
   }));
 }
