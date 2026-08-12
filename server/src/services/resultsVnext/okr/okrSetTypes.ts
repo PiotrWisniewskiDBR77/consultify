@@ -66,6 +66,15 @@ export interface OkrSetRow {
   latest_approved_snapshot_id: string | null;
   overall_progress: string | null;
   overall_confidence: OkrSetConfidence | null;
+  /** RN-G6-SRV / D08 (20260831_rvn_okr_not_calculable_reason.sql): the
+   * Set-level counterpart of `okr_vnext_objectives.progress_calc_reason` /
+   * `okr_vnext_key_results.progress_calc_reason` — `null` on any row never
+   * touched by `applySetRollupUpdate` since this migration landed (no
+   * backfill), always non-null (and prefixed `not_calculable:` when
+   * `overall_progress` is null) after. */
+  overall_progress_reason: string | null;
+  /** Same rationale as `overall_progress_reason`, for `overall_confidence`. */
+  overall_confidence_reason: string | null;
   attention_state: OkrSetAttentionState;
   last_checkin_at: string | null;
   next_checkin_due_at: string | null;
@@ -106,6 +115,9 @@ export interface OkrSet {
    * E002 command (design §3). */
   overallProgress: string | null;
   overallConfidence: OkrSetConfidence | null;
+  /** RN-G6-SRV / D08 — see `OkrSetRow.overall_progress_reason`. */
+  overallProgressReason: string | null;
+  overallConfidenceReason: string | null;
   attentionState: OkrSetAttentionState;
   lastCheckinAt: string | null;
   nextCheckinDueAt: string | null;
@@ -141,6 +153,8 @@ export function toOkrSet(row: OkrSetRow): OkrSet {
     latestApprovedSnapshotId: row.latest_approved_snapshot_id,
     overallProgress: row.overall_progress,
     overallConfidence: row.overall_confidence,
+    overallProgressReason: row.overall_progress_reason,
+    overallConfidenceReason: row.overall_confidence_reason,
     attentionState: row.attention_state,
     lastCheckinAt: row.last_checkin_at,
     nextCheckinDueAt: row.next_checkin_due_at,

@@ -46,6 +46,13 @@ export interface OkrCheckInRow {
   previous_value: string | null;
   new_value: string | null;
   calculated_progress: string | null;
+  /** RN-G6-SRV / D08 (20260831_rvn_okr_not_calculable_reason.sql): the same
+   * `calculateKeyResultProgress(...).reason` string this check-in's own
+   * `recordCheckIn`/`correctCheckIn` ALREADY computes and persists onto the
+   * sibling `okr_vnext_key_results.progress_calc_reason` — previously
+   * computed and discarded for the check-in row itself. `null` on any row
+   * written before this migration landed (no backfill). */
+  calculated_progress_reason: string | null;
   owner_declared_status: OkrCheckInStatus | null;
   system_suggested_status: OkrCheckInStatus | null;
   confidence: OkrCheckInConfidence | null;
@@ -70,6 +77,8 @@ export interface OkrCheckIn {
   previousValue: string | null;
   newValue: string | null;
   calculatedProgress: string | null;
+  /** RN-G6-SRV / D08 — see `OkrCheckInRow.calculated_progress_reason`. */
+  calculatedProgressReason: string | null;
   ownerDeclaredStatus: OkrCheckInStatus | null;
   systemSuggestedStatus: OkrCheckInStatus | null;
   confidence: OkrCheckInConfidence | null;
@@ -95,6 +104,7 @@ export function toOkrCheckIn(row: OkrCheckInRow): OkrCheckIn {
     previousValue: row.previous_value,
     newValue: row.new_value,
     calculatedProgress: row.calculated_progress,
+    calculatedProgressReason: row.calculated_progress_reason,
     ownerDeclaredStatus: row.owner_declared_status,
     systemSuggestedStatus: row.system_suggested_status,
     confidence: row.confidence,

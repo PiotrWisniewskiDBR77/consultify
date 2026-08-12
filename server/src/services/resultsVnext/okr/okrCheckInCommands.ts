@@ -307,8 +307,9 @@ export async function applySetRollupUpdate(
     `UPDATE okr_vnext_sets
         SET overall_progress = $1, overall_confidence = $2, attention_state = $3,
             last_checkin_at = $4, next_checkin_due_at = $5,
-            row_version = $6, updated_by = $7, updated_at = now()
-      WHERE set_id = $8
+            overall_progress_reason = $6, overall_confidence_reason = $7,
+            row_version = $8, updated_by = $9, updated_at = now()
+      WHERE set_id = $10
       RETURNING *`,
     [
       rollup.overallProgress,
@@ -316,6 +317,12 @@ export async function applySetRollupUpdate(
       rollup.attentionState,
       rollup.lastCheckinAt,
       rollup.nextCheckinDueAt,
+      // RN-G6-SRV / D08: Set-level counterpart of the Objective/KR
+      // `progress_calc_reason`/`confidence_calc_reason` columns — see
+      // 20260831_rvn_okr_not_calculable_reason.sql header for the full
+      // diagnosis of why these were computed but discarded until now.
+      rollup.overallProgressReason,
+      rollup.overallConfidenceReason,
       nextVersion,
       updatedBy,
       setRow.set_id,
@@ -513,11 +520,11 @@ export async function recordCheckIn(input: RecordCheckInInput): Promise<AtomicCo
         const insertResult = await client.query<OkrCheckInRow>(
           `INSERT INTO okr_vnext_checkins
              (organization_id, key_result_id, objective_id, set_id, cadence_occurrence_id,
-              previous_value, new_value, calculated_progress,
+              previous_value, new_value, calculated_progress, calculated_progress_reason,
               owner_declared_status, system_suggested_status,
               confidence, confidence_numeric_value,
               note, blocker, support_requested, evidence_refs, submitted_by)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
            RETURNING *`,
           [
             organizationId,
@@ -528,6 +535,10 @@ export async function recordCheckIn(input: RecordCheckInInput): Promise<AtomicCo
             previousValue,
             newValue,
             progressCalc.progress,
+            // RN-G6-SRV / D08: same reason string already persisted onto the
+            // sibling KR row below (`progress_calc_reason`) — previously
+            // computed here and discarded for the check-in's own row.
+            progressCalc.reason,
             ownerDeclaredStatus,
             systemSuggestedStatus,
             confidence ?? null,
@@ -773,12 +784,12 @@ export async function correctCheckIn(input: CorrectCheckInInput): Promise<Atomic
       const insertResult = await client.query<OkrCheckInRow>(
         `INSERT INTO okr_vnext_checkins
            (organization_id, key_result_id, objective_id, set_id, cadence_occurrence_id,
-            previous_value, new_value, calculated_progress,
+            previous_value, new_value, calculated_progress, calculated_progress_reason,
             owner_declared_status, system_suggested_status,
             confidence, confidence_numeric_value,
             note, blocker, support_requested, evidence_refs,
             correction_of_checkin_id, correction_reason, submitted_by)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
          RETURNING *`,
         [
           organizationId,
@@ -789,6 +800,8 @@ export async function correctCheckIn(input: CorrectCheckInInput): Promise<Atomic
           previousValue,
           mergedNewValue,
           progressCalc.progress,
+          // RN-G6-SRV / D08 — see recordCheckIn's identical comment above.
+          progressCalc.reason,
           mergedOwnerDeclaredStatus,
           systemSuggestedStatus,
           mergedConfidence,
