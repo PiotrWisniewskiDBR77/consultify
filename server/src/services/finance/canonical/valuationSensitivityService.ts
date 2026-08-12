@@ -175,7 +175,7 @@ export async function writeSensitivityGrid(params: WriteSensitivityGridParams): 
   }
 
   const gridId = uuidv4();
-  await withPinnedPostgresTransaction(async (tx) => {
+  const resolvedGridId = await withPinnedPostgresTransaction(async (tx) => {
     // P0 W9-C-4 fix: verify the method itself belongs to this organization
     // BEFORE touching the grid/cells tables at all. Without this, a caller
     // that already has (or forged) another tenant's methodId — the exact
@@ -237,7 +237,14 @@ export async function writeSensitivityGrid(params: WriteSensitivityGridParams): 
     return resolvedGridId;
   });
 
-  return { gridId };
+  // BUG FIX (Pakiet B3 review, gate-e): the pre-transaction `gridId` (freshly generated on EVERY
+  // call) was being returned unconditionally, even on the ON CONFLICT DO UPDATE branch — where the
+  // existing row keeps its OWN `id`, never the caller's fresh uuid. A repeat POST to the same
+  // (methodId, gridLabel) therefore echoed back a `gridId` that named zero rows in
+  // finance_valuation_sensitivity_grids/_cells (the real 25 cells sat under the OLD id). Must
+  // return the actual persisted row id (`resolvedGridId`, read back inside the transaction), not
+  // the locally-generated candidate that is only correct on first insert.
+  return { gridId: resolvedGridId };
 }
 
 // ---------------------------------------------------------------------------
