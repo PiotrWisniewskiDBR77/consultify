@@ -349,6 +349,7 @@ describe('RN-G4 · Point 1+2 — ROI Benefit optional KPI evidence link + Financ
       createdBy: OWNER,
       actorEffectiveRole: 'consultant',
       idempotencyKey: `${MARKER}--create-${randomUUID()}`,
+      access: { capabilities: ['*'], platformRole: null },
     });
     caseId = createOutcome.result.case.caseId;
     caseRowVersion = createOutcome.result.case.rowVersion;
@@ -368,6 +369,7 @@ describe('RN-G4 · Point 1+2 — ROI Benefit optional KPI evidence link + Financ
       actorUserId: OWNER,
       actorEffectiveRole: 'consultant',
       idempotencyKey: `${MARKER}--finlink-${randomUUID()}`,
+      access: { capabilities: ['*'], platformRole: null },
     });
     financeLinkId = linkOutcome.result.linkId;
     const pinClient = pgClient();
@@ -388,6 +390,7 @@ describe('RN-G4 · Point 1+2 — ROI Benefit optional KPI evidence link + Financ
       actorUserId: OWNER,
       actorEffectiveRole: 'consultant',
       idempotencyKey: `${MARKER}--start-${randomUUID()}`,
+      access: { capabilities: ['*'], platformRole: null },
     });
 
     await captureOrUpdateBaseline({
@@ -400,6 +403,7 @@ describe('RN-G4 · Point 1+2 — ROI Benefit optional KPI evidence link + Financ
       actorId: OWNER,
       actorEffectiveRole: 'consultant',
       idempotencyKey: `${MARKER}--baseline-${randomUUID()}`,
+      access: { capabilities: ['*'], platformRole: null },
     });
 
     const costLineOutcome = await addCostLine({
@@ -414,6 +418,7 @@ describe('RN-G4 · Point 1+2 — ROI Benefit optional KPI evidence link + Financ
       actorUserId: OWNER,
       actorEffectiveRole: 'consultant',
       idempotencyKey: `${MARKER}--cost-${randomUUID()}`,
+      access: { capabilities: ['*'], platformRole: null },
     });
     costLineId = costLineOutcome.result.costLineId;
 
@@ -431,6 +436,7 @@ describe('RN-G4 · Point 1+2 — ROI Benefit optional KPI evidence link + Financ
       actorUserId: OWNER,
       actorEffectiveRole: 'consultant',
       idempotencyKey: `${MARKER}--benefit-linked-${randomUUID()}`,
+      access: { capabilities: ['*'], platformRole: null },
     });
     linkedBenefitLineId = linkedBenefit.result.benefitLineId;
 
@@ -448,6 +454,7 @@ describe('RN-G4 · Point 1+2 — ROI Benefit optional KPI evidence link + Financ
       actorUserId: OWNER,
       actorEffectiveRole: 'consultant',
       idempotencyKey: `${MARKER}--benefit-unlinked-${randomUUID()}`,
+      access: { capabilities: ['*'], platformRole: null },
     });
     unlinkedBenefitLineId = unlinkedBenefit.result.benefitLineId;
 
@@ -462,6 +469,7 @@ describe('RN-G4 · Point 1+2 — ROI Benefit optional KPI evidence link + Financ
       actorUserId: OWNER,
       actorEffectiveRole: 'consultant',
       idempotencyKey: `${MARKER}--evidence-${randomUUID()}`,
+      access: { capabilities: ['*'], platformRole: null },
     });
     evidenceLinkId = evidenceOutcome.result.linkId;
     expect(evidenceOutcome.result.kpiId).toBe(kpiId);
@@ -513,6 +521,7 @@ describe('RN-G4 · Point 1+2 — ROI Benefit optional KPI evidence link + Financ
       actorUserId: OWNER,
       actorEffectiveRole: 'consultant',
       idempotencyKey: `${MARKER}--run-${randomUUID()}`,
+      access: { capabilities: ['*'], platformRole: null },
     });
 
     const readyOutcome = await markReadyForReview({
@@ -522,6 +531,7 @@ describe('RN-G4 · Point 1+2 — ROI Benefit optional KPI evidence link + Financ
       actorUserId: OWNER,
       actorEffectiveRole: 'consultant',
       idempotencyKey: `${MARKER}--ready-${randomUUID()}`,
+      access: { capabilities: ['*'], platformRole: null },
     });
 
     const submitOutcome = await submitRoiCaseForApproval({
@@ -531,6 +541,7 @@ describe('RN-G4 · Point 1+2 — ROI Benefit optional KPI evidence link + Financ
       actorUserId: OWNER,
       actorEffectiveRole: 'consultant',
       idempotencyKey: `${MARKER}--submit-${randomUUID()}`,
+      access: { capabilities: ['*'], platformRole: null },
     });
 
     const approveOutcome = await approveRoiCase({
@@ -540,6 +551,7 @@ describe('RN-G4 · Point 1+2 — ROI Benefit optional KPI evidence link + Financ
       approverId: APPROVER,
       actorEffectiveRole: 'admin',
       idempotencyKey: `${MARKER}--approve-${randomUUID()}`,
+      access: { capabilities: ['*'], platformRole: null },
     });
     expect(approveOutcome.result.case.status).toBe('approved');
     approvalSnapshotId = approveOutcome.result.snapshot.snapshotId;
@@ -588,6 +600,7 @@ describe('RN-G4 · Point 1+2 — ROI Benefit optional KPI evidence link + Financ
       actorUserId: OWNER,
       actorEffectiveRole: 'consultant',
       idempotencyKey: `${MARKER}--tracking-${randomUUID()}`,
+      access: { capabilities: ['*'], platformRole: null },
     });
     await runOutboxDispatchTick();
 
@@ -604,6 +617,7 @@ describe('RN-G4 · Point 1+2 — ROI Benefit optional KPI evidence link + Financ
       recordedBy: OWNER,
       actorEffectiveRole: 'consultant',
       idempotencyKey: `${MARKER}--actual-entry-${randomUUID()}`,
+      access: { capabilities: ['*'], platformRole: null },
     });
 
     const snapshotOutcome = await publishRoiActualSnapshot({
@@ -614,6 +628,7 @@ describe('RN-G4 · Point 1+2 — ROI Benefit optional KPI evidence link + Financ
       publishedBy: OWNER,
       actorEffectiveRole: 'consultant',
       idempotencyKey: `${MARKER}--actual-snapshot-${randomUUID()}`,
+      access: { capabilities: ['*'], platformRole: null },
     });
     expect(snapshotOutcome.result.totalActualCosts).toBe(1800);
 
