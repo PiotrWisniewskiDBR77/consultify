@@ -113,8 +113,8 @@ export const OkrSetOverviewView: React.FC<OkrSetOverviewViewProps> = ({ set, isP
           align="right"
           notCalculableReason={
             isPolish
-              ? 'Zestaw nie rozróżnia "brak danych" od "nieobliczalne" na drucie — patrz nagłówek okrWorkspaceApi.ts (OQ-UI-C).'
-              : 'The Set cannot distinguish "no data" from "not calculable" on the wire — see okrWorkspaceApi.ts header (OQ-UI-C).'
+              ? 'Postępu nie można obliczyć — nie da się ustalić, czy to brak danych, czy wzór, którego nie da się wyliczyć.'
+              : 'Progress cannot be calculated — it is not possible to tell whether this is missing data or a formula that cannot be computed.'
           }
           format={(v) => formatOkrProgressPercent(v, isPolish)}
         />
@@ -181,7 +181,14 @@ export const OkrSetOverviewView: React.FC<OkrSetOverviewViewProps> = ({ set, isP
     {
       id: 'requestChanges',
       label: isPolish ? 'Żądaj poprawek' : 'Request changes',
-      gate: requestChangesGate ?? (notes.trim() ? null : { pl: 'Podaj powód żądania poprawek.', en: 'Provide a reason for the change request.' }),
+      gate:
+        requestChangesGate ??
+        (notes.trim()
+          ? null
+          : {
+              pl: 'Żądanie poprawek: podaj powód żądania poprawek.',
+              en: 'Request changes: provide a reason for the change request.',
+            }),
       variant: 'ghost',
       needsNotes: true,
       onRun: () =>
@@ -263,7 +270,7 @@ export const OkrSetOverviewView: React.FC<OkrSetOverviewViewProps> = ({ set, isP
           .map((a) => (
             <p key={`gate-${a.id}`} className="mt-2 text-[11px] text-c-text-muted flex items-center gap-1">
               <AlertTriangle size={12} className="shrink-0" />
-              {a.label}: {isPolish ? a.gate!.pl : a.gate!.en}
+              {isPolish ? a.gate!.pl : a.gate!.en}
             </p>
           ))}
         {error ? (
@@ -276,8 +283,8 @@ export const OkrSetOverviewView: React.FC<OkrSetOverviewViewProps> = ({ set, isP
           <p className="mt-2 flex items-center gap-1 text-[11px] text-c-text-muted">
             <CheckCircle2 size={12} className="shrink-0" />
             {isPolish
-              ? 'Każdy przycisk stosuje regułę serwera 1:1 — patrz cytaty plik:linia w okrWorkspaceMappers.ts.'
-              : 'Every button mirrors the server rule 1:1 — see file:line citations in okrWorkspaceMappers.ts.'}
+              ? 'Dostępność każdego przycisku odzwierciedla regułę wymaganą przez serwer.'
+              : "Each button's availability reflects the rule enforced by the server."}
           </p>
         ) : null}
       </div>
