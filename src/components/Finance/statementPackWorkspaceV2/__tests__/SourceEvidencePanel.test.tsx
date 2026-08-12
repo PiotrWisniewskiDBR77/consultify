@@ -3,16 +3,26 @@
  *
  * `SourceEvidencePanel` — dowodzi:
  *   (a) missing ≠ zero ≠ N/A: TRZY różne stany braku/obecności renderują się
- *       jawnie różnie (status wypisany tekstem, wartość widoczna wyłącznie
- *       dla stanów PRESENT_*);
+ *       jawnie różnie (status wypisany LUDZKĄ etykietą PL —
+ *       `financeValueStatusLabel` — NIGDY surowym tokenem enuma jak
+ *       "PRESENT_NONZERO"; wartość widoczna wyłącznie dla stanów PRESENT_*);
  *   (b) drugi krok łańcucha dowodowego — `mappingRow` (undefined vs null vs
  *       obiekt) renderuje trzy jawnie różne stany, honest UI (CANON §4.1);
  *   (c) kontrole negatywne dla obu.
+ *
+ * ★ 2026-08-12: asercje statusu przepisane z surowego tokenu enuma
+ * (`toHaveTextContent('PRESENT_ZERO')` itd.) na ludzką etykietę PL — to była
+ * literalna treść defektu #3 zgłoszenia (Pakiet D wypuszczał surowy enum do
+ * UI jako etykietę), nie osłabienie testu: nadal PIĘĆ jawnie różnych,
+ * jednoznacznie sprawdzonych stanów, plus `data-value-status` (atrybut
+ * strukturalny, nie treść widoczna) nadal niesie surowy token dla
+ * ewentualnych narzędzi/testów potrzebujących go wprost.
  */
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 import { describe, expect, it } from 'vitest';
 
+import { financeValueStatusLabel } from '@/services/api/financeV2.types';
 import type { FinanceValue, ReconciliationDetailRowDto } from '@/services/api/financeV2.types';
 
 import type { StatementTableCell } from '../deriveStatementTable';
@@ -65,7 +75,10 @@ describe('SourceEvidencePanel — missing ≠ zero ≠ N/A', () => {
         emptyLabel="—"
       />
     );
-    expect(screen.getByTestId('source-evidence-status')).toHaveTextContent('PRESENT_ZERO');
+    expect(screen.getByTestId('source-evidence-status')).toHaveTextContent(financeValueStatusLabel('PRESENT_ZERO'));
+    // Nigdy surowy token enuma jako treść widoczna — tylko jako atrybut strukturalny.
+    expect(screen.getByTestId('source-evidence-status')).not.toHaveTextContent('PRESENT_ZERO');
+    expect(screen.getByTestId('source-evidence-status')).toHaveAttribute('data-value-status', 'PRESENT_ZERO');
     // Wartość jest w <dl> jako pierwszy Row "Wartość" — sprawdzamy globalnie brak "—" w tej wartości.
     expect(screen.queryByText('—', { selector: '.tabular-nums' })).not.toBeInTheDocument();
     expect(screen.getByText('0', { selector: '.tabular-nums' })).toBeInTheDocument();
@@ -80,7 +93,8 @@ describe('SourceEvidencePanel — missing ≠ zero ≠ N/A', () => {
         emptyLabel="—"
       />
     );
-    expect(screen.getByTestId('source-evidence-status')).toHaveTextContent('MISSING');
+    expect(screen.getByTestId('source-evidence-status')).toHaveTextContent(financeValueStatusLabel('MISSING'));
+    expect(screen.getByTestId('source-evidence-status')).toHaveAttribute('data-value-status', 'MISSING');
     expect(screen.getByText('Brak danych (luka źródłowa)')).toBeInTheDocument();
     expect(screen.queryByText('0', { selector: '.tabular-nums' })).not.toBeInTheDocument();
     expect(screen.getByTestId('source-evidence-ref-missing')).toBeInTheDocument();
@@ -95,7 +109,8 @@ describe('SourceEvidencePanel — missing ≠ zero ≠ N/A', () => {
         emptyLabel="—"
       />
     );
-    expect(screen.getByTestId('source-evidence-status')).toHaveTextContent('NA');
+    expect(screen.getByTestId('source-evidence-status')).toHaveTextContent(financeValueStatusLabel('NA'));
+    expect(screen.getByTestId('source-evidence-status')).toHaveAttribute('data-value-status', 'NA');
     expect(screen.getByText('Analityk oznaczył: nie dotyczy')).toBeInTheDocument();
     expect(screen.queryByText('Brak danych (luka źródłowa)')).not.toBeInTheDocument();
   });
@@ -112,7 +127,8 @@ describe('SourceEvidencePanel — missing ≠ zero ≠ N/A', () => {
         emptyLabel="—"
       />
     );
-    expect(screen.getByTestId('source-evidence-status')).toHaveTextContent('NOT_APPLICABLE');
+    expect(screen.getByTestId('source-evidence-status')).toHaveTextContent(financeValueStatusLabel('NOT_APPLICABLE'));
+    expect(screen.getByTestId('source-evidence-status')).toHaveAttribute('data-value-status', 'NOT_APPLICABLE');
     expect(screen.getByText('Pole strukturalnie nie istnieje dla tej linii/branży')).toBeInTheDocument();
     expect(screen.queryByText('Brak danych (luka źródłowa)')).not.toBeInTheDocument();
     expect(screen.queryByText('Analityk oznaczył: nie dotyczy')).not.toBeInTheDocument();
@@ -127,12 +143,13 @@ describe('SourceEvidencePanel — missing ≠ zero ≠ N/A', () => {
         emptyLabel="—"
       />
     );
-    expect(screen.getByTestId('source-evidence-status')).toHaveTextContent('PRESENT_NONZERO');
+    expect(screen.getByTestId('source-evidence-status')).toHaveTextContent(financeValueStatusLabel('PRESENT_NONZERO'));
+    expect(screen.getByTestId('source-evidence-status')).toHaveAttribute('data-value-status', 'PRESENT_NONZERO');
     expect(screen.getByText('1 000 000', { selector: '.tabular-nums' })).toBeInTheDocument();
   });
 
-  // KONTROLA NEGATYWNA: zmiana statusu z PRESENT_ZERO na MISSING musi zmienić DOM (glif i etykietę).
-  it('NEGATIVE CONTROL — rerender from PRESENT_ZERO to MISSING changes both the glyph and the reason text', () => {
+  // KONTROLA NEGATYWNA: zmiana statusu z PRESENT_ZERO na MISSING musi zmienić DOM (glif, etykietę statusu i powodu).
+  it('NEGATIVE CONTROL — rerender from PRESENT_ZERO to MISSING changes the glyph, the status label, and the reason text', () => {
     const { rerender } = render(
       <SourceEvidencePanel
         rowLabel="Revenue"
@@ -142,6 +159,7 @@ describe('SourceEvidencePanel — missing ≠ zero ≠ N/A', () => {
       />
     );
     expect(screen.getByText('0', { selector: '.tabular-nums' })).toBeInTheDocument();
+    expect(screen.getByTestId('source-evidence-status')).toHaveTextContent(financeValueStatusLabel('PRESENT_ZERO'));
     expect(screen.queryByText('Brak danych (luka źródłowa)')).not.toBeInTheDocument();
 
     rerender(
@@ -153,7 +171,16 @@ describe('SourceEvidencePanel — missing ≠ zero ≠ N/A', () => {
       />
     );
     expect(screen.queryByText('0', { selector: '.tabular-nums' })).not.toBeInTheDocument();
+    expect(screen.getByTestId('source-evidence-status')).toHaveTextContent(financeValueStatusLabel('MISSING'));
     expect(screen.getByText('Brak danych (luka źródłowa)')).toBeInTheDocument();
+  });
+
+  // KONTROLA NEGATYWNA (etykiety statusu): wszystkie pięć etykiet statusu są WZAJEMNIE różne —
+  // gdyby dwie się pokrywały, ten sam string renderowałby się dla dwóch różnych przyczyn.
+  it('NEGATIVE CONTROL — all five status labels are pairwise distinct (never two states sharing one label)', () => {
+    const statuses: FinanceValue['status'][] = ['PRESENT_ZERO', 'PRESENT_NONZERO', 'MISSING', 'NA', 'NOT_APPLICABLE'];
+    const labels = statuses.map((s) => financeValueStatusLabel(s));
+    expect(new Set(labels).size).toBe(statuses.length);
   });
 });
 

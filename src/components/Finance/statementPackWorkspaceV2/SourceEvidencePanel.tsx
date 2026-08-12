@@ -29,6 +29,7 @@ import React from 'react';
 
 import {
   financeValueDisplayReasonLabel,
+  financeValueStatusLabel,
   formatFinanceValueForDisplay,
 } from '@/services/api/financeV2.types';
 import type { ReconciliationDetailRowDto } from '@/services/api/financeV2.types';
@@ -73,8 +74,16 @@ export function SourceEvidencePanel(props: SourceEvidencePanelProps): React.Reac
           </span>
         </Row>
         <Row label="Status">
-          <span className="font-mono text-[11px] text-c-text-secondary" data-testid="source-evidence-status">
-            {cell.value.status}
+          {/* Etykieta ludzka PL (financeValueStatusLabel) — NIE surowy token enuma
+              (przed tą zmianą renderowało się np. "PRESENT_NONZERO" wprost jako
+              tekst widoczny dla użytkownika). `data-value-status` niesie surowy
+              token strukturalnie, dla testów/narzędzi — nigdy jako treść widoczna. */}
+          <span
+            className="text-[11px] text-c-text-secondary"
+            data-testid="source-evidence-status"
+            data-value-status={cell.value.status}
+          >
+            {financeValueStatusLabel(cell.value.status)}
           </span>
         </Row>
         {reason && (
