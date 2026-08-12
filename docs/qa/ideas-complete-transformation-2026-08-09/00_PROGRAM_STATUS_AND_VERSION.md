@@ -718,3 +718,91 @@ rejected-and-tested alternatives nobody should retry:
 Full detail: `16_OPEN_RISKS_AND_LIMITATIONS.csv` RISK-39,
 `19_VISUAL_CX_MATRIX.md`'s "RISK-39" section, `24_FINAL_ACCEPTANCE.md`
 §3/§5/§9/§11, `RESUME_HANDOFF.md`, `22_CODEX_REVIEW_REPORT.md` §7.
+
+---
+
+## UPDATE 2026-08-12 (this continuation) — four defects closed, hygiene, RISK-24
+## detail; recommendation unchanged
+
+Worktree `/Users/piotrwisniewski/.codex/worktrees/ideas-transform/consultify`,
+branch `codex/ideas-transformation-20260809` (the canonical integration
+branch itself). Candidate code identity: **`914759d4cb`** — the last commit
+before this pass's own documentation commit, which necessarily cannot cite
+its own hash (it rewrites this file); the documentation-final HEAD is
+<<FINALNY_SHA_DO_UZUPELNIENIA>>.
+
+### Position
+
+`git log --oneline 9d17cac114..HEAD | wc -l` = **83 commits** ahead of the
+frozen comparison base (41 inherited from prior streams/passes + this
+continuation's own commits). Still **2 behind** `origin/demo` — unchanged,
+same "Slack Command Center hardening" drift every earlier section already
+establishes has zero file overlap with this program. **This branch has
+never been pushed** — `git ls-remote origin
+'codex/ideas-transformation-20260809'` returns nothing and `git branch -r`
+lists no matching ref. **REMOTE REACHABILITY: NOT VERIFIED, PUSH
+AUTHORIZATION REQUIRED.**
+
+### (a) implementation candidate / (b) runtime odbiór / (c) integration — kept separate
+
+Per this program's own repeated rule (§8's method notes above): a passing
+targeted test is not owner acceptance, and owner acceptance is not a merge.
+None of the four items below has runtime (manual, in-app) odbiór or any
+integration beyond this local branch — both are **BLOCKED / EVIDENCE_MISSING**
+for all four.
+
+| Defect | Commit | What it was | Fix | Test evidence |
+|---|---|---|---|---|
+| D1 | `2771824f08` | `moduleHub.openDocuments.mywork` sessionStorage key was GLOBAL — two identities in one browser tab inherited each other's open document tabs | scoped key to `<organizationId>.<userId>`; read/write skipped without both ids; old unscoped key cleared | `MyWorkHub.storageScope.test.ts`, 6/6 |
+| D4 | `87360b62e9` | onboarding "Skip for now" force-navigated to `/chat` via `finishAndGo(DEFAULT_ENTRY_ROUTE)`, discarding the user's actual screen — **reproduced live**, `/my-work` → `/chat` | closes the modal, no navigation | 7/7 |
+| D2 | `499b4b98c2` | **DATA-LOSS class, not P2.** Unhandled `GET /map` failure left `graph` empty, which `shouldBootstrapStarterGraph()` read as "new idea," built a 6-node starter template, and **persisted it back over the real server map** via `runtimeCaptureGraph` (the code's own comment already named this: "overwriting the real server map"). Existing M06 guard covered only `rtLoading`, not the error case | explicit error state (`role="alert" aria-live="assertive"`) + focusable retry calling a real refresh | 3/3, sabotage → 2/3 red |
+| D3 | `914759d4cb` | `primeServerVersion()` trusted a local draft's `pending` flag with no version comparison — a stale draft could pin "Changes queued" forever; a genuinely queued draft was never auto-retried | `draftBaseVersion < serverVersion` comparison (stale → cleared) + immediate flush of a real pending draft | 2/2, sabotage → 2/2 red, plus a **live measurement**: "Changes queued" held ≥10 s, survived a full reload, still showing 96 s post-reload while the server already had version 9 (7 nodes/5 edges) |
+
+### Hygiene
+
+- `a64b2657be` — cleared all 20 non-CSV `git diff --check` findings (8 docs
+  + `src/actions/ideaActionRegistry.ts`). The 580 remaining findings are in
+  the program's 4 RFC-4180 evidence CSVs, deliberately left CRLF.
+- `b2438008fd` — 4× `TS2345` in the new D1 test, visible only to a FULL
+  `tsc`, never `esbuild`. **First `tsc` run returned `rc=134`
+  (SIGABRT/OOM) while its output read as "0 errors" — a FALSE GREEN.**
+  `NODE_OPTIONS=--max-old-space-size=8192` was required to see the 4 real
+  errors. Do not accept a bare `tsc` exit code on this machine without
+  checking it is not 134.
+
+### RISK-24 — mechanism detail (elaborates the existing CSV row; CSV itself not edited)
+
+- `server/scripts/migrate.postgres.ts:555-558`: with `--safe`, a failed
+  migration is recorded `skipped`, the loop continues, and the script still
+  prints `✅ Postgres migrations complete`, exit **0**.
+- Script naming is actively misleading: `db:migrate` / `db:migrate:strict` /
+  `db:migrate:postgres` are the SAME unflagged command; `db:migrate:unsafe-continue`
+  is the one that passes `--safe`. The word "safe" is on the dangerous one.
+- Second, independent mechanism: `DB_MANAGED_SCHEMA`
+  (`server/src/index.ts:239-244`, `server/src/database/PostgresDatabase.ts:477-479`)
+  can disable automatic DDL/migrations at server start entirely.
+- Consequence: two independent, separately-tracked paths change the
+  schema — a green migration run proves nothing about whether the live
+  schema matches what the code expects.
+
+### Locale gap (OPEN, not fixed by this pass)
+
+D2's new `mindmap.persistence` error-state keys (`mapLoadErrorTitle`,
+`mapLoadErrorBody`, `mapLoadErrorRetry`) are real, distinct EN/PL strings.
+`de`/`ar`/`ja`/`es` carry the raw ENGLISH text as PLACEHOLDERS (verified
+directly against each locale's `translation.json`) — same class of gap
+RISK-26 already tracks, a new instance of it, not a new pattern, and OPEN.
+
+### Recommendation
+
+**Unchanged: `NOT_READY`.** Four defects closed with candidate-level
+evidence (implementation + targeted test), on top of everything §9 of
+`24_FINAL_ACCEPTANCE.md` already lists as still open — this narrows one
+slice of the residual list, it does not close it. Owner visual acceptance,
+full-repo E15, RISK-24's schema convergence, and every other item in that
+list remain exactly as open as previously recorded, plus this branch is now
+additionally BLOCKED on push authorization before any external review can
+even begin.
+
+Full detail: `RESUME_HANDOFF.md` (same-dated update block, top of file),
+`24_FINAL_ACCEPTANCE.md` §12.

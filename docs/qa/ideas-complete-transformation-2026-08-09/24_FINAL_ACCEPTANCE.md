@@ -35,6 +35,14 @@ false thing at a new SHA. The specific item this closes: §3's E07 row and
 residual in §3/§5/§7/§9/§11 is untouched. Full record: `16_OPEN_RISKS_AND_LIMITATIONS.csv`
 RISK-39.
 
+**This continuation, 2026-08-12 (worktree
+`/Users/piotrwisniewski/.codex/worktrees/ideas-transform/consultify`, branch
+`codex/ideas-transformation-20260809` — the canonical integration branch
+itself, code changes made): four defects fixed at candidate level (D1/D2/D3/D4,
+new code-final SHA `914759d4cb`), documented in full in §12 below. §3's E04
+row and §9 item 8 (RISK-24) are updated in place with pointers to §12. This
+does not change the recommendation — see §12's closing note.**
+
 ---
 
 ## 1. Candidate identity, runtime and worktree
@@ -117,7 +125,7 @@ explicitly labelled as harness evidence.
 | E01 — One Idea data model and integrity | **NOT VERIFIED** | Literally no epic-level evidence exists anywhere in this package — no acceptance doc, no duplication-through-representation-cycle test, no two-users-different-views proof, no destructive-import preview/restore check. |
 | E02 — Action Registry | **PARTIAL** | Structural/machine-check DoD is satisfied (234 actions, `check-actions.sh` R1–R11); real-browser + real-Teresa (LLM) runtime invocation of any registered action has **never** happened in this program's history; `check-action-coverage.sh`'s repo-wide ratchet still carries 188 unregistered call sites in 89 files outside the Idea Workspace surface this program touched. |
 | E03 — Shell, navigation and ownership | **PARTIAL** | Implemented and mounted (chapter 13 N0–N8); its own source doc is headed "implemented candidate — acceptance evidence pending" and stays that way — no deep-link-survives-refresh, URL/tab/tool-agreement, or size/zoom essential-control check was ever run against a live route. |
-| E04 — Mind Map | **PARTIAL** | Registry-wired (72 actions). The DoD scenario itself — 18+ node scene from zero, 20 mixed rapid sibling ops never creating two editors, two cross-links + comments/evidence + AI proposal surviving persistence, first-level PPM fitting 1280×800 — has never run against any SHA in this program. One visual-only fix landed (depth-3 badge contrast, RISK-35) — does not touch the functional DoD. |
+| E04 — Mind Map | **PARTIAL** | Registry-wired (72 actions). The DoD scenario itself — 18+ node scene from zero, 20 mixed rapid sibling ops never creating two editors, two cross-links + comments/evidence + AI proposal surviving persistence, first-level PPM fitting 1280×800 — has never run against any SHA in this program. One visual-only fix landed (depth-3 badge contrast, RISK-35) — does not touch the functional DoD. **This continuation (2026-08-12, candidate `914759d4cb`, not owner/runtime-accepted, BLOCKED / EVIDENCE_MISSING for runtime odbiór):** closed a DATA-LOSS-class defect adjacent to this epic — a failed `GET /map` was silently read as "new idea" and the resulting 6-node starter template was persisted back over the real server map (D2, `499b4b98c2`, 3/3 test + sabotage 2/3 red); and a save-state indicator that could pin "Changes queued" forever on a stale local draft, never auto-retrying a genuinely queued one (D3, `914759d4cb`, 2/2 test + sabotage 2/2 red, plus a live reproduction of the pre-fix bug). Neither touches the DoD scenario above — the scenario itself is still un-run. |
 | E05 — Whiteboard | **PARTIAL** | Registry-wired (55 actions); real object clipboard (WB-CLIPBOARD-01) is now genuinely fixed AND its own ledger row reconciled (`REPAIRED_RETESTED`, 3/3 unit test). The DoD scenario (12 mixed inserts with no complete overlap, three clusters/four links/freehand/group/lock/layer persistence, AI coaching on default labels, connector PPM + real copy/paste as one user flow) has never run end-to-end. |
 | E06 — Process Flow | **PARTIAL** | Registry-wired (43 actions); the named lane-delete silent-no-op defect is fixed for the human-visible path (a toast now refuses). Residual, not closed: Teresa's acknowledgement of a refused lane action can still read as an unchallenged success (RISK-30 — 58 UI-closure sites, including some lane actions, still degrade to `confirmed:false` with no chat correction). The DoD scenario (complaint scene with lanes/Yes-No/correction loop, one creation path, immediate lane naming, editable/deletable edges, initial `Not validated`, Fit 25–300%, context-correct Insert/Split) has never run. Node-cap **performance is NOT MEASURED** — see the ACCEPTED_DEFERMENT note under §5/§7 (RISK-31): the owner explicitly chose not to force a number out of a measurement machine that was carrying a 84–832 load average from Teams/WindowServer/`syspolicyd`/an `xattr` sweep/`fileproviderd`; that deferment covers the *performance number only*, not the rest of this epic's DoD. |
 | E07 — Table P15 | **PARTIAL** | Registry-wired (60 actions, the largest per-tool count); `RecordTemplateManager`'s dead-mount defect is fixed and re-verified (reachable from `TableToolbar`'s Tools menu, accessible-name test with sabotage/restore). **Kebab-reachability defect at 1280×800 — CLOSED this pass (S20-DOCS, `f86afc077f`), see RISK-39.** The fix (S13-STICKY, `a18b625a78`) that pinned the row-actions kebab to a sticky right edge to close the ~74px-past-the-edge finding this row previously described introduced its own regression at the same boundary — a width-proportional overflow at 1280×800 rest (Defect A) and a constant 8px sliver still covered at max scroll on every viewport (Defect B). Both are now fixed: real-Chromium measurement (`tests/e2e/ideas-table-overlap-geometry.spec.ts`, 4/4) shows 0px overlap and no horizontal overflow at all at 1280×800 and 1440×900, and 0px overlap at `scrollLeft=max` at 720×450 and 200%-zoom reflow (720×450 still shows an arithmetically-unavoidable 435px overlap at rest — 794px of fixed non-title columns against a 720px viewport — explicitly owner-accepted as the narrow-viewport exception, not a residual defect). Falsified by sabotage (reverting the fix reproduces the overlap, red only at the acceptance viewport). 19 evidence captures: `docs/qa/ideas-table-overlap-s18-2026-08-12/`. The DoD scenario (11-row portfolio persistence, field-wizard interaction budget, CSV append/update/replace + recovery) has never run. Row-cap performance at N≥5,000/10,000 is **NOT MEASURED** — same owner ACCEPTED_DEFERMENT as E06 (RISK-36's performance dimension only). |
@@ -372,7 +380,22 @@ eleven that has since closed).
    database by both runners; the 1012-table isolated DB behind every
    persistence claim in this package is itself a partial schema. Two new
    concrete instances found this wave (`role_change_audit_events`,
-   `organization_context_snapshots`).
+   `organization_context_snapshots`). **This continuation (2026-08-12)
+   traced the mechanism further, still EVIDENCE_MISSING / OPEN, not
+   closed:** `server/scripts/migrate.postgres.ts:555-558` — with `--safe`,
+   a FAILED migration is recorded `skipped`, the run continues, and the
+   script still prints `✅ Postgres migrations complete` at exit **0** (a
+   broken migration is invisible in the exit code); the npm-script naming
+   compounds this — `db:migrate`/`db:migrate:strict`/`db:migrate:postgres`
+   are the SAME unflagged command, `db:migrate:unsafe-continue` is the one
+   that passes `--safe`, so the flag named "safe" is the dangerous one; a
+   second, wholly independent mechanism (`DB_MANAGED_SCHEMA`,
+   `server/src/index.ts:239-244`,
+   `server/src/database/PostgresDatabase.ts:477-479`) can disable
+   automatic DDL/migrations at server start entirely. Two separately-tracked
+   paths to change the schema means a green migration run proves nothing
+   about whether the live schema matches what the code expects. See §12
+   below.
 9. **RISK-38 (P3)** — `Intl.PluralRules('jp')` resolves to `en-US`,
    reconfirmed live this session; pre-existing, unrelated to this program,
    filed not fixed.
@@ -458,3 +481,134 @@ not repeat that mistake in a smaller form by treating "one fewer residual"
 as "basically done." The owner's visual acceptance remains necessary for
 RISK-19 specifically and cannot be supplied by any agent — but it is one
 item on a longer list, not the list.
+
+## 12. UPDATE 2026-08-12 (this continuation) — four defects closed, hygiene,
+## RISK-24 mechanism detail, remote-reachability gap
+
+Worktree `/Users/piotrwisniewski/.codex/worktrees/ideas-transform/consultify`,
+branch `codex/ideas-transformation-20260809`. Candidate code identity:
+**`914759d4cb`** — the last commit before this pass's own single
+documentation commit (which cannot correctly cite its own hash, since it
+rewrites this file). Documentation-final HEAD:
+<<FINALNY_SHA_DO_UZUPELNIENIA>>, to be read from `git log -1` after that
+commit lands.
+
+### Position and push status
+
+`git log --oneline 9d17cac114..HEAD | wc -l` = **83 commits** ahead of the
+frozen comparison base `origin/demo@9d17cac11484a82f729a51044e30453e39fbcb02`
+(41 inherited from prior streams/passes + this continuation's own commits).
+Still **2 behind** `origin/demo` — the same, already-established
+"Slack Command Center hardening" drift with zero file overlap with this
+program. **This branch has never been pushed:** `git ls-remote origin
+'codex/ideas-transformation-20260809'` returns nothing, `git branch -r`
+lists no matching ref. **REMOTE REACHABILITY: NOT VERIFIED, PUSH
+AUTHORIZATION REQUIRED** — a precondition this package did not carry before,
+because no prior pass stated it explicitly.
+
+### Three things kept separate, per this program's own rule (§8's method notes)
+
+For every item below: **(a) implementation candidate** exists, compiles,
+and has a passing targeted test — real. **(b) runtime/manual odbiór** —
+**BLOCKED / EVIDENCE_MISSING**, nobody has clicked through any of these
+four fixes in a running app against a real backend. **(c) integration**
+(merge/deploy/demo) — **BLOCKED / EVIDENCE_MISSING**, this branch is not
+even reachable on `origin` (see above), so integration cannot start.
+
+| Defect | Commit | Class | Fix, in one line | Test evidence |
+|---|---|---|---|---|
+| D1 | `2771824f08` | P2 — cross-identity data leak in the UI | scoped `moduleHub.openDocuments.mywork` sessionStorage key to `<organizationId>.<userId>`, cleared the old unscoped key | `MyWorkHub.storageScope.test.ts`, 6/6 |
+| D4 | `87360b62e9` | P2 — forced navigation away from the user's actual screen, reproduced live | "Skip for now" closes the onboarding modal without navigating | 7/7 |
+| D2 | `499b4b98c2` | **DATA-LOSS class** (raised from P2) — unhandled `GET /map` failure caused a 6-node starter template to be built and **persisted over the real server map** | explicit error state (`role="alert" aria-live="assertive"`) + focusable retry, no silent bootstrap-and-overwrite | 3/3, sabotage → 2/3 red |
+| D3 | `914759d4cb` | P2 — save-state indicator could pin "Changes queued" forever on a stale draft; a genuinely queued draft was never auto-retried | version comparison (`draftBaseVersion < serverVersion`) + immediate flush of a real pending draft | 2/2, sabotage → 2/2 red, plus a live reproduction: indicator stuck "Changes queued" 96 s post-reload while the server already had version 9 |
+
+### Hygiene
+
+- `a64b2657be` — cleared all 20 non-CSV `git diff --check` findings (8
+  documents + `src/actions/ideaActionRegistry.ts`). 580 findings remain,
+  all inside the program's 4 RFC-4180 evidence CSVs, deliberately CRLF and
+  not converted. Full run: `rc=2` / 580 findings / 0 conflict markers with
+  the CSVs included; `rc=0` / 0 findings / 0 conflict markers excluding
+  only those 4 files.
+- `b2438008fd` — 4× `TS2345` in the new D1 regression test (`status: 'open'`
+  is not a member of `ItemStatus`), visible only to a FULL, serialized
+  `tsc` — invisible to `esbuild`, which is all workers run. **The FIRST
+  `tsc` invocation against this tree returned `rc=134` (SIGABRT/OOM) while
+  its console output read as "0 errors" — a FALSE GREEN, not a pass.**
+  `NODE_OPTIONS=--max-old-space-size=8192` was required before the 4 real
+  errors surfaced. Repeating this program's own §8 method note in a new
+  form: do not trust a bare `tsc` exit code on this machine without first
+  checking it is not 134.
+
+### RISK-24 — mechanism-level detail (elaborates the existing CSV row; the CSV itself is not edited by this pass)
+
+`16_OPEN_RISKS_AND_LIMITATIONS.csv` RISK-24 already states, correctly, that
+full-repo schema convergence is broken on a fresh database. This pass
+traced *why* a "green migration" cannot be trusted as proof of anything,
+two independent mechanisms:
+
+1. `server/scripts/migrate.postgres.ts:555-558` — with `--safe`, a FAILED
+   migration is recorded as `skipped`, the loop continues past it, and the
+   script still prints `✅ Postgres migrations complete` and exits **0**.
+   A broken migration is invisible in the exit code.
+2. The npm-script naming actively misleads: `db:migrate`,
+   `db:migrate:strict` and `db:migrate:postgres` (`package.json`) are the
+   SAME unflagged command; `db:migrate:unsafe-continue` is the one that
+   passes `--safe`. The word "safe" is attached to the dangerous one.
+3. A second, wholly independent mechanism: `DB_MANAGED_SCHEMA`
+   (`server/src/index.ts:239-244`,
+   `server/src/database/PostgresDatabase.ts:477-479`) can disable
+   automatic DDL/migrations at server start entirely, separately from
+   anything the migration runner reports.
+
+**Consequence for this package's own claims:** every persistence chain in
+§6/§7 above ran against the isolated local DB behind RISK-24's own partial
+schema. That does not invalidate those chains (they proved what they
+proved, on the schema that existed), but it means "the migrations ran
+clean" can never, on its own, stand in for "the schema matches the code" —
+there are two independent, separately-tracked paths that can drift it, and
+this pass found no evidence either is reconciled against the other anywhere
+in this program's history. Status: **OPEN, EVIDENCE_MISSING** for
+convergence — not closed by this pass, only explained further.
+
+### Locale gap (OPEN, not closed by this pass)
+
+D2's new `mindmap.persistence` error-state keys (`mapLoadErrorTitle`,
+`mapLoadErrorBody`, `mapLoadErrorRetry`) are real, distinct EN/PL strings,
+confirmed by direct read of `public/locales/{en,pl}/translation.json`.
+`de`/`ar`/`ja`/`es` carry the identical raw ENGLISH text as PLACEHOLDERS
+(confirmed by direct read of each locale's `translation.json`) — not
+translations. This is the same class of gap `16_OPEN_RISKS_AND_LIMITATIONS.csv`
+RISK-26 already tracks for this program's earlier keys, a new instance of
+it, and it is OPEN, not done. Do not read this section as "locale is
+handled" — it explicitly is not, for these three keys, in four locales.
+
+### What this does and does not change
+
+- **§3's E04 row and §9 item 8 (RISK-24)** are updated in place above with
+  pointers to this section.
+- **Every other residual in §3/§5/§7/§9/§11 is untouched** — E01, E03,
+  E04's own DoD scenario (still un-run — the two fixes above are adjacent
+  to Mind Map, not the DoD scenario itself), E05–E07's own DoD scenarios,
+  E08/E09/E11's isolated-DB-only persistence, E10's zero real-model
+  verification, E12's permission-model gap, E14's unmeasured SLOs and
+  locale gaps (now including the new instance above), and E15's scoped,
+  NOT-CLEAN regression run all remain exactly as open as §3/§9 already
+  record them.
+- **New, not previously stated anywhere in this package: remote
+  reachability.** This branch has 0 refs on `origin`. Nothing in this
+  package can be reviewed, merged, or deployed until it is pushed with
+  explicit authorization — a precondition layered on top of, not a
+  replacement for, the owner's visual acceptance and every technical
+  residual in §9.
+
+### Recommendation
+
+**Unchanged: `NOT_READY`.** Four defects closed with candidate-level
+evidence — real fixes, real targeted tests, one of them (D2) closing a
+genuine data-loss path and one (D4) independently reproduced live before
+the fix — but none has runtime odbiór or integration, and the RISK-24 and
+locale gaps above are traced further, not resolved. This is real, narrow
+progress on top of an already-long, honestly-tracked residual list; it does
+not shorten that list to something close to done, and this document does
+not claim otherwise.

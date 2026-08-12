@@ -280,3 +280,19 @@ forward because they generalize beyond this one ticket:**
 
 Full detail: `16_OPEN_RISKS_AND_LIMITATIONS.csv` RISK-39,
 `19_VISUAL_CX_MATRIX.md`'s "RISK-39" section, `RESUME_HANDOFF.md` §8.
+
+**This continuation (2026-08-12, worktree
+`/Users/piotrwisniewski/.codex/worktrees/ideas-transform/consultify`, branch
+`codex/ideas-transformation-20260809`, code changes made).** Four more
+defects closed at candidate level (D1/D2/D3/D4 — one of them, D2, a
+data-loss-class defect where a failed `GET /map` silently overwrote the
+real server map with a starter template). **New code-final SHA:
+`914759d4cb`.** None of the four has runtime odbiór or integration —
+BLOCKED / EVIDENCE_MISSING for both, same as every other item on this
+report's residual list. Also newly established: **this branch has 0 refs
+on `origin` — REMOTE REACHABILITY: NOT VERIFIED, PUSH AUTHORIZATION
+REQUIRED** — a precondition layered on top of everything else this report
+and `24_FINAL_ACCEPTANCE.md` already require. Full detail:
+`24_FINAL_ACCEPTANCE.md` §12, `RESUME_HANDOFF.md` (top-of-file update
+block), `00_PROGRAM_STATUS_AND_VERSION.md` (tail section). Recommendation
+unchanged: `NOT_READY`.

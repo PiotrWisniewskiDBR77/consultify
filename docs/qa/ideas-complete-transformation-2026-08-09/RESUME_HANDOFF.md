@@ -40,6 +40,128 @@ or `dev-render/` changes):**
      itself into a "this case is exempt" branch and the test passes against
      sabotaged code.
 
+**UPDATE 2026-08-12 (this continuation, worktree
+`/Users/piotrwisniewski/.codex/worktrees/ideas-transform/consultify`, branch
+`codex/ideas-transformation-20260809` — the canonical integration branch
+itself, not a satellite this time):**
+
+1. **Four defects closed, candidate-level (implementation + targeted test)
+   only — NOT owner/runtime-accepted.** Splitting this cleanly, per this
+   program's own rule of not conflating the three: **(a) implementation
+   candidate** — exists, compiles, has a passing targeted test; **(b)
+   runtime/manual odbiór — BLOCKED / EVIDENCE_MISSING**, nobody has clicked
+   through any of these four fixes in a running app against a real backend;
+   **(c) integration into `demo`/production — BLOCKED / EVIDENCE_MISSING**,
+   this branch is not on `origin` at all (0 refs, see item 5 below).
+
+   - **D1** (`2771824f08`) — `moduleHub.openDocuments.mywork` sessionStorage
+     key was GLOBAL, unscoped to any identity: two identities in the same
+     browser tab inherited each other's open-document tabs. Scoped to
+     `moduleHub.openDocuments.mywork.<organizationId>.<userId>`; read/write
+     skipped without both ids present; the old unscoped key is cleared on
+     migration. Test: `src/components/MyWork/__tests__/MyWorkHub.storageScope.test.ts`,
+     6/6 — candidate-level only, not run against a live multi-identity
+     session.
+   - **D4** (`87360b62e9`) — onboarding "Skip for now" called
+     `finishAndGo(DEFAULT_ENTRY_ROUTE)`, force-navigating to `/chat`
+     regardless of where the user actually was. **Reproduced live** before
+     the fix: `location.pathname` flipped `/my-work` → `/chat` on Skip. Now
+     closes the modal without navigating. Test: 7/7.
+   - **D2** (`499b4b98c2`) — **raised from P2 to DATA-LOSS class.**
+     `useWorkspaceGraphRuntime.refresh()` had no `catch` around the
+     `GET /map` call: on failure, `graph` stayed at its untouched empty
+     initial state, `shouldBootstrapStarterGraph()` read that as "brand-new
+     idea," built a 6-node starter template, and **persisted it back to the
+     server via `runtimeCaptureGraph` — overwriting the real server map**
+     (the code's own pre-existing comment named this exact failure mode:
+     "overwriting the real server map"). The existing M06 guard only
+     covered `rtLoading`, never the error case. Fix: explicit error state
+     (`role="alert" aria-live="assertive"`) plus a focusable retry calling a
+     real refresh — no more silent bootstrap-and-overwrite on fetch failure.
+     Test: 3/3, sabotage → 2/3 red.
+   - **D3** (`914759d4cb`) — `primeServerVersion()` read a local draft's
+     `pending` flag with NO version comparison, so a stale draft could pin
+     the save-state indicator on "Changes queued" forever, and a genuinely
+     queued draft was never auto-retried. Fix: `draftBaseVersion <
+     serverVersion` comparison (stale → cleared) plus immediate flush of a
+     real pending draft. Test: 2/2, sabotage → 2/2 red. **Live measurement
+     confirming the pre-fix bug**, not just the unit test: after inserting
+     an object, the indicator held "Changes queued" ≥10 s, survived a full
+     reload (`navType === 'reload'`), and was still showing "Changes
+     queued" 96 s post-reload with no further edits — while the server
+     already had `GET /map` → 200, 7 nodes, 5 edges, version 9. Same root
+     cause as D3.
+
+2. **Hygiene.**
+   - `a64b2657be` — cleared all 20 non-CSV `git diff --check` whitespace
+     findings (8 docs + `src/actions/ideaActionRegistry.ts`). The remaining
+     580 findings live in the program's 4 RFC-4180 evidence CSVs and are
+     deliberately NOT converted (CRLF is correct there).
+   - `b2438008fd` — 4× `TS2345` in the new D1 regression test (`status:
+     'open'` is not a member of `ItemStatus`), found only by a FULL `tsc`,
+     never by `esbuild` (workers never type-check). **Worth repeating for
+     whoever resumes:** the FIRST `tsc` run against this tree returned
+     `rc=134` (SIGABRT/OOM) while printing what looked like "0 errors" —
+     that is a FALSE GREEN, not a pass. Only re-running with
+     `NODE_OPTIONS=--max-old-space-size=8192` surfaced the 4 real errors.
+     Do not trust a bare `tsc` exit code on this machine without checking
+     it is not 134.
+   - `diff --check` full run: `rc=2` / 580 findings / 0 conflict markers.
+     Same run excluding ONLY the 4 evidence CSVs under
+     `docs/qa/ideas-complete-transformation-2026-08-09/`: `rc=0` / 0
+     findings / 0 conflict markers. Those 4 CSVs are 100% CRLF (43/43,
+     265/265, 232/232, 40/40 lines) per RFC 4180 and are intentionally left
+     that way.
+
+3. **RISK-24 — the two-migration-mechanism problem, spelled out plainly.**
+   `16_OPEN_RISKS_AND_LIMITATIONS.csv` RISK-24 is NOT edited by this pass
+   (CSV files under this directory are out of scope for documentation
+   work) — this is a prose elaboration of the same already-filed finding,
+   not a new claim:
+   - `server/scripts/migrate.postgres.ts:555-558` — with `--safe`, a FAILED
+     migration is recorded as `skipped`, the loop continues, and the script
+     still prints `✅ Postgres migrations complete` and exits **0**. A
+     broken migration is invisible in the exit code.
+   - The npm-script names actively mislead: `db:migrate`,
+     `db:migrate:strict` and `db:migrate:postgres` are the SAME command
+     with no flag; `db:migrate:unsafe-continue` is the one that passes
+     `--safe`. The flag named "safe" is the dangerous one.
+   - A second, independent mechanism exists: `DB_MANAGED_SCHEMA`
+     (`server/src/index.ts:239-244`,
+     `server/src/database/PostgresDatabase.ts:477-479`) can disable
+     automatic DDL/migrations at server start entirely.
+   - **Consequence:** there are two independent paths to change the
+     schema, with separate bookkeeping. A "green migration" run proves
+     nothing about whether the live schema matches what the code expects.
+
+4. **Locale gap, stated plainly, not silently left implied-done.** The
+   `mindmap.persistence` error-state keys D2 added (`mapLoadErrorTitle`,
+   `mapLoadErrorBody`, `mapLoadErrorRetry`) are real, distinct EN/PL
+   strings — but `de`/`ar`/`ja`/`es` all carry the raw ENGLISH text as
+   PLACEHOLDERS (verified directly against
+   `public/locales/{de,ar,ja,es}/translation.json`), not translations. Same
+   class of gap RISK-26 already tracks for this program's earlier keys —
+   not a new pattern, just a new, OPEN instance of it.
+
+5. **Branch/remote state.** This branch has never been pushed:
+   `git ls-remote origin 'codex/ideas-transformation-20260809'` returns
+   nothing, `git branch -r` lists no matching ref. **REMOTE REACHABILITY:
+   NOT VERIFIED, PUSH AUTHORIZATION REQUIRED** before any of this can be
+   reviewed by anything outside this filesystem. Provenance:
+   `git log --oneline 9d17cac114..HEAD | wc -l` = **83 commits** ahead of
+   the frozen baseline (41 inherited from prior streams/passes + the
+   commits of this continuation).
+
+   Nothing here changes the recommendation: still `NOT_READY` — this
+   closes 4 defects off a long residual list (see `24_FINAL_ACCEPTANCE.md`
+   §9), not the list itself. Candidate code identity for everything above:
+   **`914759d4cb`** (last commit before this pass's own documentation
+   commit). Documentation-final HEAD after this pass's single commit:
+   <<FINALNY_SHA_DO_UZUPELNIENIA>> — that commit rewrites this very file,
+   so it cannot correctly cite its own hash; the immutable code receipt
+   stays `914759d4cb`, and the documentation-final HEAD is the placeholder
+   above, to be filled in from `git log -1` after this commit lands.
+
 ## 1. Candidate identity
 
 | | |
