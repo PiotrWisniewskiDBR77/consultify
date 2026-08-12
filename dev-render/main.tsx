@@ -206,6 +206,7 @@ const IdeaTableToolSortFilterScreen = React.lazy(
 );
 const IdeaTableToolGroupingScreen = React.lazy(() => import('./screens/idea-table-tool-grouping'));
 const IdeaTableScreen = React.lazy(() => import('./screens/idea-table'));
+const IdeaTableProductionScreen = React.lazy(() => import('./screens/idea-table-production'));
 const MindmapCanvasScreen = React.lazy(() => import('./screens/mindmap-canvas'));
 const MyWorkIdeaTopBarScreen = React.lazy(() => import('./screens/mywork-idea-topbar'));
 const TeresaConfirmChipScreen = React.lazy(() => import('./screens/teresa-confirm-chip'));
@@ -810,6 +811,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'idea-table': {
     label: 'IDEE — Idea jako tabela (pełny obiekt: lista + podgląd + prawy panel)',
     render: () => <IdeaTableScreen />,
+  },
+  'idea-table-production': {
+    label:
+      'IDEE — Idea jako tabela, KSZTAŁT PRODUKCYJNY (MyIdeasListContent.tsx:1785-1791, bez ArtifactRightPanel — S9-GATE4EVIDENCE TASK 1)',
+    render: () => <IdeaTableProductionScreen />,
   },
   'mindmap-canvas': {
     label: 'IDEE — Idea jako mapa myśli (pełny obiekt, archetyp Canvas)',

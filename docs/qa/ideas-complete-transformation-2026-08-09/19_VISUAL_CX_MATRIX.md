@@ -287,6 +287,21 @@ Both cells genuinely clear the collision. Consistent with the 24-cell PASS table
 
 ### Table recapture — 4 new `g4v3__table__1440x900__{light,dark}__{pl,en}.png` files
 
+> **⚠️ READ BEFORE CITING `g4v3__table__*` FOR ANYTHING OTHER THAN RISK-29's PANEL FIX.**
+> These four captures use `dev-render/screens/idea-table.tsx` — the **artifact/right-panel
+> composition** (`IdeasTableContent` next to the exploratory 320px `ArtifactRightPanel`, both
+> as siblings in a row flex). That composition does **not** exist in production and is **not**
+> representative of what a real user sees. The kebab and Date columns sit outside the frame in
+> this set **by construction** (the extra 320px panel leaves only ~1120px for a table whose
+> fixed columns need ~1354px) — that is a fact about this harness composition, not about the
+> Idea Table's real column layout. **`g4v3__table__*` is evidence for ONE thing only: that the
+> RISK-29 right-panel fix (the `min-w-0` wrapper, containing the table/panel boundary with no
+> overlap) still holds.** For what the Idea Table's column layout actually looks like to a real
+> user — no competing panel, the true `MyIdeasListContent.tsx:1785` wrapper — see
+> **"PRODUCTION-SHAPE measurement"** further below (`g4v4__table-production__*`). Do not use
+> `g4v3` to answer any question about whether the kebab is reachable in the real product; use
+> `g4v4` for that.
+
 Captured via a throwaway Playwright script (not committed — one-off capture, not reusable
 tooling) against this worktree's own dev server, `idea-table` screen, **with S1-CONTRAST's
 kebab-opacity fix in place** (cherry-picked commits `7fff6a1078`..`705c066180`, this stream).
@@ -312,10 +327,13 @@ sit past the visible edge at `scrollLeft: 0` in all four cells — confirmed by 
 to its max (`scrollLeft: 235`) and re-screenshotting: the kebab **is** there, legible, at the
 opacity S1's fix set (not part of the four required filenames — a supplementary check only).
 This is a property of this specific dev-render composition (table + an extra 320px artefact
-panel neither side reserves room for) at exactly 1440px — RISK-29's own corrected text already
-establishes that production (`MyIdeasListContent.tsx:1785`) has no such competing panel, so
-this is not expected to reproduce there. Not fixed, because it isn't a defect in the fixed
-code path — flagged for the record, not silently omitted.
+panel neither side reserves room for) at exactly 1440px. RISK-29's own corrected text already
+establishes that production (`MyIdeasListContent.tsx:1785`) has no such competing panel — **this
+was originally written as an expectation; it is now a measured fact, see "PRODUCTION-SHAPE
+measurement" below**, which finds the kebab genuinely clear at 1440px in the real wrapper (and
+NOT clear at 1280px, for an unrelated, real reason — the table's own fixed columns, no panel
+involved). Not fixed here, because it isn't a defect in the fixed code path — flagged for the
+record, not silently omitted.
 
 ### A stale-evidence finding, not something I introduced: RISK-29's "only light/pl recaptured" claim does not match what's on disk
 
@@ -372,3 +390,123 @@ status: RESOLVED — both halves closed. Zoom-200 rail overlap: RESOLVED, code
 I am not marking Gate 4 PASS and not claiming owner acceptance — both remain the owner's
 and the session coordinator's alone. This section only supplies the evidence trail and a
 proposed row for RISK-29; the CSV itself was left untouched by this stream.
+
+---
+
+## PRODUCTION-SHAPE measurement — S9-GATE4EVIDENCE, 2026-08-12, in response to a coordinator dispute
+
+The coordinator read this document's `g4v3` section (above) and disputed my claim that the
+kebab column, while out of frame at rest, was "safely contained by the table's own
+`overflow-x-auto`" — they grepped `IdeasTableContent.tsx`, `MyIdeasListContent.tsx`, and
+`dev-render/screens/idea-table.tsx` for `overflow-x`/`overflow-auto`/`overflow-scroll` and
+found no match, only `overflow-hidden` at `MyIdeasListContent.tsx:1785`. Read literally, that
+would mean the kebab is clipped with **no way to reach it** in production at any width below
+~1364px — a P1, and 1280×800 is one of doc-11 §6's three required acceptance viewports. They
+asked for a measurement, not an argument, and explicitly asked me to state a P1 plainly if the
+measurement confirmed it.
+
+### Where the missing scroll container actually lives
+
+The coordinator's grep was right about those three files and incomplete about the render
+chain: `IdeasTableContent.tsx:755` renders through `<TableWithPreviewLayout>`
+(`src/components/shared/TableWithPreviewLayout.tsx`), a fourth file not in their grep.
+`TableWithPreviewLayout.tsx:336-343`:
+
+```tsx
+<div ref={containerRef} className="relative flex h-full overflow-hidden gap-1.5" tabIndex={0}>
+  <div
+    className="app-table-scrollbar flex-1 min-w-0 overflow-auto pr-2 [scrollbar-gutter:stable]"
+    style={{ scrollbarGutter: 'stable' }}
+  >
+    {children}
+  </div>
+  ...
+```
+
+The outer `overflow-hidden` (a *second*, different one from `MyIdeasListContent.tsx:1785`'s) is
+real — it's what stops the page itself from growing a second, page-level horizontal scrollbar.
+The `<table>` sits inside `{children}`, which is the *inner* div, and that inner div has
+`overflow-auto`. Both `overflow-hidden` divs the coordinator found are real; neither of them is
+the whole story, because neither is the div the table actually scrolls inside.
+
+### Task 1 — measured in the true production shape, all three required viewports
+
+Built `dev-render/screens/idea-table-production.tsx`: `IdeasTableContent` wrapped in a
+byte-for-byte copy of `MyIdeasListContent.tsx:1786` + `:1791`'s className strings, full
+viewport, **no `ArtifactRightPanel`, no sibling of any kind** — registered as
+`?screen=idea-table-production`. (No persistent left nav exists above it in production either:
+`MyWorkHub.tsx`'s content area is `getMyWorkMainContentClassName()` → `flex-1 min-h-0`, no fixed
+width consumed — confirmed by reading that function, not assumed.)
+
+Live DOM measurement (`scrollDiv = document.querySelector('.app-table-scrollbar')`,
+`scrollDiv.getBoundingClientRect()`, `scrollWidth`/`clientWidth`, and the kebab button's own
+`getBoundingClientRect()`), at all three required viewports:
+
+| Viewport | `clientWidth` | `scrollWidth` | Max scroll | Kebab `left`/`right` | Kebab visible at rest? |
+|---|---|---|---|---|---|
+| **1280×800** | 1280 | 1355 | **75px** | 1311 / 1343 | **NO** — starts 31px past the visible edge |
+| **1440×900** | 1440 | 1440 | 0px | 1387 / 1419 | YES — fully in frame |
+| **1920×1080** | 1920 | 1920 | 0px | 1867 / 1899 | YES — fully in frame |
+
+`overflow-x` on `.app-table-scrollbar` is computed `auto` at every width (confirmed live, not
+assumed from the class name) — the reachability question is genuine (does scrolling work),
+not just theoretical: at 1280×800, `scrollDiv.scrollLeft = scrollDiv.scrollWidth` (i.e.
+programmatically scrolling to the end) was executed and re-screenshotted in the equivalent
+`g4v3`-composition check earlier in this document, and the kebab column rendered correctly once
+scrolled to.
+
+**Verdict, stated plainly as asked: this is NOT the P1 the coordinator's code-reading hypothesis
+raised.** The kebab is not unreachable — a real, working `overflow-auto` scroll container exists
+one component down from where the coordinator's grep stopped, and it clears the full 75px needed
+at the narrowest required viewport. **It is a real, smaller finding, not a phantom one:** at
+exactly 1280×800 — one of the three required acceptance viewports — the kebab is genuinely not
+in frame at rest, with no visible scrollbar rendered to hint that horizontal scroll is available
+(no `<table>`-adjacent scrollbar track/thumb was visible in any of the four 1280×800
+screenshots below). A user at that exact viewport would need to already know to scroll right to
+find row actions. 1440×900 and 1920×1080 — the other two required viewports — are both clean at
+rest, zero scroll needed. This is unrelated to RISK-29 (no panel is involved here at all — this
+reproduces with `IdeasTableContent` as the sole element on the page) and unrelated to RISK-35
+(not a contrast issue). Filed here as a new, distinct, narrower observation — not folded into
+the RISK-29 proposed text above, which is about the panel fix and the table-recapture backlog,
+neither of which this is.
+
+### Task 1 — 8 screenshots, `g4v4__table-production__{1280x800,1440x900}__{light,dark}__{pl,en}.png`
+
+Captured with a throwaway Playwright script (not committed) against the new
+`idea-table-production` screen. All eight opened and inspected with the Read tool myself. Per
+cell:
+
+| Cell | Kebab present & legible at rest |
+|---|---|
+| 1280×800 light/pl | **No** — Tytuł/Etap/Tagi/Narzędzie/Data all render cleanly, table's right edge sits flush with the viewport edge, no kebab column, no visible scrollbar |
+| 1280×800 dark/pl | Same — no kebab, no scrollbar hint |
+| 1280×800 light/en | Same — no kebab, no scrollbar hint |
+| 1280×800 dark/en | Same — no kebab, no scrollbar hint |
+| 1440×900 light/pl | **Yes** — kebab (⋮) legible in every row, plus a column-settings icon in the header |
+| 1440×900 dark/pl | Yes — same, correct dark tokens |
+| 1440×900 light/en | Yes — same, English chrome |
+| 1440×900 dark/en | Yes — same, English chrome + dark tokens |
+
+No clipping, no overlap, no broken layout in any of the eight — the ONLY variable that changes
+across the set is whether the kebab column fits inside the viewport at all, exactly as the
+`clientWidth`/`scrollWidth` numbers above predict.
+
+### Guards and commit
+
+- `check-gestosc.sh dev-render/screens/idea-table-production.tsx dev-render/main.tsx`: `rc=0`.
+- New files: `dev-render/screens/idea-table-production.tsx`, a two-line registration in
+  `dev-render/main.tsx` (`idea-table-production` screen key), and the 8 `g4v4__*` PNGs.
+- Not yet committed as of writing this section — see the final report for the commit SHA.
+
+### What this does NOT establish (still NOT VERIFIED)
+
+- Real idea titles/tags longer than this mock set could change the table's natural width and
+  shift exactly where the 1280×800 cutoff falls — not measured with realistic/worst-case data.
+- Whether the native OS/browser renders a persistent (always-visible) horizontal scrollbar for
+  `overflow-auto` at 1280×800 in a real end-user browser/OS combination (some platforms show
+  scrollbars only on hover or during active scroll) — this session's headless Playwright capture
+  does not settle that, and it matters for whether a real user would notice the affordance at
+  all. Recommend a manual check on the owner's actual browser before treating "no visible
+  scrollbar in the screenshot" as final.
+- Whether 1280×800 is genuinely the narrowest realistic viewport this table needs to support, or
+  whether doc-11 §6 intends something narrower — not re-read in full for this task.
