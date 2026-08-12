@@ -20,6 +20,7 @@ import artifactsRoutes from './artifacts.routes.js';
 import baselineRoutes from './baseline.routes.js';
 import computeRoutes from './compute.routes.js';
 import crosscuttingRoutes from './crosscutting.routes.js';
+import lineageNavigatorRoutes from './lineage-navigator.routes.js';
 import modelsRoutes from './models.routes.js';
 import predictionRoutes from './prediction.routes.js';
 import statementsRoutes from './statements.routes.js';
@@ -55,5 +56,10 @@ financeV2Router.use(crosscuttingRoutes);
 // bridge, Terminal/Sensitivity (method-scoped), Advisor. Own `/valuation/*` + `/valuation/methods/
 // :methodId/*` prefixes — no path overlap with any router above.
 financeV2Router.use(valuationRoutes);
+// Pakiet ROUTES_EXPOSURE — Lineage Navigator presentation surface (OWN-FIN-007/
+// OWN-FIN-022). Own path `/versions/:businessVersionId/lineage-navigator`,
+// distinct from `crosscuttingRoutes`'s raw-edges `/versions/:businessVersionId/
+// lineage` — no collision, both stay mounted.
+financeV2Router.use(lineageNavigatorRoutes);
 
 export default financeV2Router;
