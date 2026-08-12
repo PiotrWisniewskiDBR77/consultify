@@ -23,9 +23,20 @@
  * class of screen as `OkrSetOverviewView.tsx`) — no raw HTML table markup
  * anywhere, so `check-list-canon.sh` does not apply here the way it does to
  * the Objectives/KeyResults/CheckIns/Alignments/Support/History tabs.
+ *
+ * D13 (RN-G5 lane `teresa`, 2026-08-12): "Poproś Teresę o szkic refleksji"
+ * next to each Objective's "Zapisz refleksję" routes the `reflection_synthesis`
+ * advisor mode through the shared, governed P08 propose→approve/reject→
+ * execute→audit lifecycle (`okrTeresaReflectionDraft.ts`). See that file's
+ * header for a real, confirmed gap this wiring works around honestly: OKR
+ * has no REST route for a second "draft disposition" decision (unlike
+ * ROI), so Teresa's draft is offered back to the human as a client-side
+ * "insert into fields" convenience only — the pre-existing "Zapisz
+ * refleksję" button (untouched) remains the ONLY path that writes the real
+ * narrative fields, with or without Teresa's involvement.
  */
 import React, { useCallback, useEffect, useState } from 'react';
-import { AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Sparkles } from 'lucide-react';
 
 import { StatusChip } from '@/components/ui/primitives';
 
@@ -34,6 +45,14 @@ import { listObjectivesForSet, type OkrObjectiveWithKeyResultsDto } from './okrO
 import { OkrActionDialog } from './OkrActionDialog';
 import { OkrCarryForwardDialog } from './OkrCarryForwardDialog';
 import { toUserFacingErrorMessage } from '../shared/errorMessage';
+import { TeresaProposalPanel } from '../teresa/TeresaProposalPanel';
+import {
+  buildOkrReflectionHandoffContext,
+  buildOkrReflectionSuggestion,
+  buildOkrReflectionTargetPayload,
+  extractOkrReflectionRowVersionFromHandoffResult,
+  okrReflectionTeresaConsequencePreview,
+} from './okrTeresaReflectionDraft';
 import {
   approveOkrSetManagerReview,
   carryForwardOkrSet,
@@ -87,6 +106,17 @@ export const OkrReviewReflectionView: React.FC<OkrReviewReflectionViewProps> = (
   const [reflectionDrafts, setReflectionDrafts] = useState<
     Record<string, { whatWorked: string; whatDidNotWork: string; why: string; learning: string; nextCycleChange: string; disposition: OkrReflectionDisposition | '' }>
   >({});
+  // RN-G5 lane `teresa` (2026-08-12) — GENERATION gate for `reflection_synthesis`
+  // (see file header + `okrTeresaReflectionDraft.ts`). `askTeresaKey` is a
+  // fresh idempotency key per open ATTEMPT, same convention as ROI's
+  // `askTeresaKey` in `RoiCaseLearnWorkspace.tsx`.
+  const [askTeresaObjectiveId, setAskTeresaObjectiveId] = useState<string | null>(null);
+  const [askTeresaKey, setAskTeresaKey] = useState('');
+  // Teresa's draft text is NOT re-fetchable (no GET endpoint — see file
+  // header) — kept in local session state from the successful `execute`
+  // response only, purely so the human can review it and choose to insert
+  // it into the manual fields below. Never auto-inserted.
+  const [teresaDraftByObjective, setTeresaDraftByObjective] = useState<Record<string, string>>({});
 
   // TDZ FIX (2026-08-11): `load`, `selfReview` and `managerReview` used to be
   // declared BELOW the dialog callbacks that list them as dependencies, so the
@@ -370,32 +400,80 @@ export const OkrReviewReflectionView: React.FC<OkrReviewReflectionViewProps> = (
                     </select>
                   </div>
                 </div>
-                <button
-                  type="button"
-                  className={`${BTN_GHOST} mt-2`}
-                  disabled={pending !== null}
-                  data-testid={`okr-reflection-save-${o.objectiveId}`}
-                  onClick={() =>
-                    run(
-                      `reflection-${o.objectiveId}`,
-                      recordObjectiveReflection(o.objectiveId, {
-                        setId: set.setId,
-                        expectedVersion: savedVersion,
-                        whatWorked: draft.whatWorked || null,
-                        whatDidNotWork: draft.whatDidNotWork || null,
-                        why: draft.why || null,
-                        learning: draft.learning || null,
-                        nextCycleChange: draft.nextCycleChange || null,
-                        disposition: draft.disposition || null,
-                        idempotencyKey: newOkrWorkspaceIdempotencyKey(),
-                      }).then((res) => {
-                        setReflectionVersions((prev) => ({ ...prev, [o.objectiveId]: res.reflection.rowVersion }));
-                      })
-                    )
-                  }
-                >
-                  {pending === `reflection-${o.objectiveId}` ? (isPolish ? 'Zapisywanie…' : 'Saving…') : isPolish ? 'Zapisz refleksję' : 'Save reflection'}
-                </button>
+                <div className="flex flex-wrap items-center gap-2 mt-2">
+                  <button
+                    type="button"
+                    className={BTN_GHOST}
+                    disabled={pending !== null}
+                    data-testid={`okr-reflection-save-${o.objectiveId}`}
+                    onClick={() =>
+                      run(
+                        `reflection-${o.objectiveId}`,
+                        recordObjectiveReflection(o.objectiveId, {
+                          setId: set.setId,
+                          expectedVersion: savedVersion,
+                          whatWorked: draft.whatWorked || null,
+                          whatDidNotWork: draft.whatDidNotWork || null,
+                          why: draft.why || null,
+                          learning: draft.learning || null,
+                          nextCycleChange: draft.nextCycleChange || null,
+                          disposition: draft.disposition || null,
+                          idempotencyKey: newOkrWorkspaceIdempotencyKey(),
+                        }).then((res) => {
+                          setReflectionVersions((prev) => ({ ...prev, [o.objectiveId]: res.reflection.rowVersion }));
+                        })
+                      )
+                    }
+                  >
+                    {pending === `reflection-${o.objectiveId}` ? (isPolish ? 'Zapisywanie…' : 'Saving…') : isPolish ? 'Zapisz refleksję' : 'Save reflection'}
+                  </button>
+                  {/* RN-G5 lane `teresa` — GENERATION trigger. Always
+                      available (no state gate beyond `pending`) since a
+                      reflection draft is optional at any point before
+                      close, unlike KPI's phase-gated RCA action. */}
+                  <button
+                    type="button"
+                    className={BTN_GHOST}
+                    disabled={pending !== null}
+                    title={
+                      isPolish
+                        ? 'Poproś Teresę o szkic refleksji przez zarządzaną ścieżkę (propozycja → zatwierdzenie → wykonanie → audyt)'
+                        : "Ask Teresa for a reflection draft through the governed pipeline (propose → approve → execute → audit)"
+                    }
+                    data-testid={`okr-reflection-ask-teresa-${o.objectiveId}`}
+                    onClick={() => {
+                      setAskTeresaKey(`${o.objectiveId}-${Date.now()}`);
+                      setAskTeresaObjectiveId(o.objectiveId);
+                    }}
+                  >
+                    <Sparkles size={13} />
+                    {isPolish ? 'Poproś Teresę o szkic refleksji' : 'Ask Teresa for a reflection draft'}
+                  </button>
+                </div>
+                {teresaDraftByObjective[o.objectiveId] ? (
+                  <div
+                    className="mt-2 rounded-lg border border-c-border bg-c-surface-raised p-2"
+                    data-testid={`okr-reflection-teresa-draft-${o.objectiveId}`}
+                  >
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-c-text-muted mb-1">
+                      {isPolish ? 'Szkic Teresy (zapisany, jeszcze nie w polach)' : "Teresa's draft (saved, not yet in the fields)"}
+                    </p>
+                    <p className="text-xs text-c-text whitespace-pre-wrap">{teresaDraftByObjective[o.objectiveId]}</p>
+                    <button
+                      type="button"
+                      className={`${BTN_GHOST} mt-2`}
+                      data-testid={`okr-reflection-insert-teresa-draft-${o.objectiveId}`}
+                      onClick={() =>
+                        setReflectionDrafts((prev) => ({
+                          ...prev,
+                          [o.objectiveId]: { ...draftFor(o.objectiveId), whatWorked: teresaDraftByObjective[o.objectiveId] },
+                        }))
+                      }
+                    >
+                      {isPolish ? 'Wstaw szkic Teresy do pól' : "Insert Teresa's draft into the fields"}
+                    </button>
+                  </div>
+                ) : null}
               </div>
             );
           })}
@@ -468,6 +546,64 @@ export const OkrReviewReflectionView: React.FC<OkrReviewReflectionViewProps> = (
       errorMessage={carryForwardError}
       isConflict={carryForwardConflict}
     />
+
+    {askTeresaObjectiveId
+      ? (() => {
+          const objective = (objectives ?? []).find((o) => o.objectiveId === askTeresaObjectiveId);
+          if (!objective) return null;
+          const suggestion = buildOkrReflectionSuggestion({ set, objective, isPolish });
+          const sessionId = `okr-reflection-teresa-${objective.objectiveId}`;
+          const expectedVersion = reflectionVersions[objective.objectiveId] ?? 0;
+          return (
+            <TeresaProposalPanel
+              open={!!askTeresaObjectiveId}
+              onClose={() => setAskTeresaObjectiveId(null)}
+              isPolish={isPolish}
+              title={isPolish ? 'Poproś Teresę o szkic refleksji' : 'Ask Teresa for a reflection draft'}
+              targetModule="okr"
+              sessionId={sessionId}
+              idempotencyKey={askTeresaKey}
+              buildHandoffContext={() =>
+                buildOkrReflectionHandoffContext({
+                  set,
+                  objective,
+                  organizationId: set.organizationId,
+                  suggestion,
+                  sessionId,
+                })
+              }
+              buildTargetPayload={() =>
+                buildOkrReflectionTargetPayload({ set, objective, expectedVersion, suggestion })
+              }
+              renderProposedChange={() => (
+                <p className="whitespace-pre-wrap" data-testid="teresa-okr-draft-text">
+                  {suggestion.draftReflectionText}
+                </p>
+              )}
+              evidenceBreakdown={suggestion.evidenceBreakdown}
+              evidencePointers={suggestion.evidencePointers}
+              consequencePreview={okrReflectionTeresaConsequencePreview(isPolish)}
+              onCompleted={(execution) => {
+                // D13 "przeładowanie i zimne otwarcie": there is no GET
+                // endpoint to re-fetch the reflection row (documented gap,
+                // see `okrTeresaReflectionDraft.ts`), so — same convention
+                // as this component's OWN manual-save path just above —
+                // the CAS version Teresa's execute actually wrote is read
+                // straight from `handoff_result.row_version` and fed into
+                // the SAME session cache the manual path uses, so a
+                // following manual "Save reflection" does not stale-CAS
+                // against a version this client never learned about.
+                const rowVersion = extractOkrReflectionRowVersionFromHandoffResult(execution.handoff_result);
+                if (rowVersion != null) {
+                  setReflectionVersions((prev) => ({ ...prev, [objective.objectiveId]: rowVersion }));
+                }
+                setTeresaDraftByObjective((prev) => ({ ...prev, [objective.objectiveId]: suggestion.draftReflectionText }));
+              }}
+              onManualFallback={() => setAskTeresaObjectiveId(null)}
+            />
+          );
+        })()
+      : null}
     </>
   );
 };

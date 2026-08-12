@@ -97,3 +97,32 @@ export type {
   ResultsVNextDomain,
   ResultsVNextForbiddenDetail,
 } from './types';
+// RN-G4 lane `teresa` (FALA 2, 2026-08-11) — shared Teresa governance panel
+// (propose→approve/reject→execute→audit against the real P08
+// `/api/v8/teresa/proposal*` surface) + its supporting pieces. Domain call
+// sites live alongside each domain's own full-tool files (see
+// `roi/roiTeresaLessonsDraft.ts` for the one wired-up example, ROI's
+// `pir_lessons_draft` advisor mode).
+export { TeresaProposalPanel, type TeresaProposalPanelProps } from './teresa/TeresaProposalPanel';
+export {
+  TeresaEvidenceBreakdown,
+  type TeresaEvidenceBreakdownProps,
+  type TeresaEvidenceBreakdownValue,
+} from './teresa/TeresaEvidenceBreakdown';
+export {
+  TeresaUnavailableBanner,
+  type TeresaUnavailableBannerProps,
+} from './teresa/TeresaUnavailableBanner';
+export {
+  approveTeresaProposal,
+  createTeresaProposal,
+  executeTeresaProposal,
+  getTeresaAuditTrail,
+  getTeresaProposal,
+  rejectTeresaProposal,
+  TeresaProposalApiError,
+} from './teresa/teresaProposalApi';
+export type {
+  HandoffTargetModule as TeresaHandoffTargetModule,
+  TeresaHandoffContext,
+} from './teresa/teresaHandoffTypes';

@@ -572,14 +572,39 @@ export function buildRoiPirColumns(isPolish: boolean): TableColumn[] {
 export function buildRoiPirRowMenu(
   row: RoiPostInvestmentReview,
   isPolish: boolean,
-  handlers: { onPreview: (r: RoiPostInvestmentReview) => void; onEditDraft?: (r: RoiPostInvestmentReview) => void; onTeresaDisposition?: (r: RoiPostInvestmentReview) => void }
+  handlers: {
+    onPreview: (r: RoiPostInvestmentReview) => void;
+    onEditDraft?: (r: RoiPostInvestmentReview) => void;
+    onTeresaDisposition?: (r: RoiPostInvestmentReview) => void;
+    onAskTeresa?: (r: RoiPostInvestmentReview) => void;
+  }
 ): StandardRowMenu {
   const editable = row.status === 'draft';
   const lockedNote = isPolish ? 'PIR jest zamknięty — tylko do odczytu.' : 'PIR is finalized — read only.';
+  const alreadyDrafted = !!row.teresaDraftLessonsPayload;
+  const alreadyDraftedNote = isPolish
+    ? 'Szkic Teresy już istnieje dla tego PIR — najpierw podejmij decyzję o istniejącym szkicu.'
+    : 'A Teresa draft already exists for this PIR — decide on the existing draft first.';
   return {
     primary: [
       { id: 'open', label: isPolish ? 'Otwórz' : 'Open', onClick: () => handlers.onPreview(row) },
       ...(editable && handlers.onEditDraft ? [{ id: 'edit-draft', label: isPolish ? 'Edytuj szkic' : 'Edit draft', onClick: () => handlers.onEditDraft!(row) }] : []),
+      // RN-G4 lane `teresa` (FALA 2, 2026-08-11) — the GENERATION half of
+      // D13's two-gate structure (`onTeresaDisposition` below only ever
+      // recorded a decision on an already-generated draft; this is the new
+      // "ask Teresa" trigger that actually creates one, via the real P08
+      // proposal lifecycle — see `roiTeresaLessonsDraft.ts`). Visible even
+      // when disabled (TRIADA §C3 — OQ-UI-A's own "note flows regardless of
+      // R01" resolution) so the reason is never hidden.
+      ...(handlers.onAskTeresa
+        ? [{
+            id: 'ask-teresa',
+            label: isPolish ? 'Poproś Teresę o szkic wniosków' : 'Ask Teresa for a lessons draft',
+            onClick: () => handlers.onAskTeresa!(row),
+            disabled: !editable || alreadyDrafted,
+            note: !editable ? lockedNote : alreadyDrafted ? alreadyDraftedNote : undefined,
+          }]
+        : []),
       ...(editable && row.teresaDraftLessonsPayload && !row.teresaDraftDisposition && handlers.onTeresaDisposition
         ? [{ id: 'teresa-disposition', label: isPolish ? 'Decyzja o szkicu Teresy' : "Teresa draft decision", onClick: () => handlers.onTeresaDisposition!(row) }]
         : []),

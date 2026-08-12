@@ -43,6 +43,18 @@ vi.mock('../../../src/services/api', () => ({
     patch: vi.fn(),
     delete: vi.fn(),
   },
+  // RN-G5 lane `teresa` (2026-08-12) — added because this component now
+  // imports `TeresaProposalPanel` (the "Ask Teresa" action wired into Phase
+  // 2), whose `teresaProposalApi.ts` imports these two named exports from
+  // the real `@/services/api` at module scope. Without them the mock below
+  // throws at import time (`No "API_URL" export is defined...`) even though
+  // this file's own scenarios never click "Ask Teresa" — a module-load-time
+  // failure, not a test-scenario one. Values are never exercised here (no
+  // scenario below opens the Teresa panel); see
+  // `tests/resultsVnext/kpi/teresaKpiRcaWorkspace.component.test.tsx` for
+  // the dedicated coverage.
+  API_URL: '/api',
+  getHeaders: () => ({}),
 }));
 
 const navigateMock = vi.fn();
