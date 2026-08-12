@@ -2317,6 +2317,7 @@ router.post(
         return;
       }
       const body = req.body as import('zod').infer<typeof SubmitOkrSetReviewSchema>;
+      const access = await resolveAccess(req, auth);
       const outcome = await submitOkrSetSelfReview({
         setId,
         organizationId: auth.organizationId,
@@ -2326,6 +2327,7 @@ router.post(
         idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
         correlationId: getCorrelationId(req),
         reason: body.reason ?? null,
+        access,
       });
       res.status(200).json({
         outcome: outcome.outcome,
@@ -2358,6 +2360,7 @@ router.post(
         return;
       }
       const body = req.body as import('zod').infer<typeof SubmitOkrSetReviewSchema>;
+      const access = await resolveAccess(req, auth);
       const outcome = await submitOkrSetForManagerReview({
         setId,
         organizationId: auth.organizationId,
@@ -2367,6 +2370,7 @@ router.post(
         idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
         correlationId: getCorrelationId(req),
         reason: body.reason ?? null,
+        access,
       });
       res.status(200).json({
         outcome: outcome.outcome,
@@ -2399,6 +2403,7 @@ router.post(
         return;
       }
       const body = req.body as import('zod').infer<typeof ApproveOkrSetManagerReviewSchema>;
+      const access = await resolveAccess(req, auth);
       const outcome = await approveOkrSetManagerReview({
         setId,
         organizationId: auth.organizationId,
@@ -2409,6 +2414,7 @@ router.post(
         idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
         correlationId: getCorrelationId(req),
         reason: body.reason ?? null,
+        access,
       });
       res.status(200).json({
         outcome: outcome.outcome,
@@ -2441,6 +2447,7 @@ router.post(
         return;
       }
       const body = req.body as import('zod').infer<typeof RequestChangesOnOkrSetManagerReviewSchema>;
+      const access = await resolveAccess(req, auth);
       const outcome = await requestChangesOnOkrSetManagerReview({
         setId,
         organizationId: auth.organizationId,
@@ -2450,6 +2457,7 @@ router.post(
         actorEffectiveRole: auth.role,
         idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
         correlationId: getCorrelationId(req),
+        access,
       });
       res.status(200).json({
         outcome: outcome.outcome,
@@ -2482,6 +2490,7 @@ router.post(
         return;
       }
       const body = req.body as import('zod').infer<typeof RecordOkrSetReviewCommentSchema>;
+      const access = await resolveAccess(req, auth);
       const outcome = await recordOkrSetReviewComment({
         setId,
         organizationId: auth.organizationId,
@@ -2494,6 +2503,7 @@ router.post(
         actorEffectiveRole: auth.role,
         idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
         correlationId: getCorrelationId(req),
+        access,
       });
       res.status(200).json({
         outcome: outcome.outcome,
