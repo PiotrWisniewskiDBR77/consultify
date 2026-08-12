@@ -426,7 +426,7 @@ export async function runBaselineCompute(params: RunBaselineComputeParams): Prom
   const inputRevisionHash = createHash('sha256')
     .update(JSON.stringify({ businessVersionId: params.businessVersionId, entityId: params.entityId, forecastPeriodIds: params.forecastPeriodIds }))
     .digest('hex');
-  const { job } = await computeJobService.enqueue({
+  const { job, wasExisting } = await computeJobService.enqueue({
     organizationId: params.organizationId,
     jobType: 'BASELINE_COMPUTE',
     inputArtifactId: ctx.artifactId,
@@ -439,17 +439,47 @@ export async function runBaselineCompute(params: RunBaselineComputeParams): Prom
   // NEW-3 fix: self-claim the EXACT row just enqueued (by id, org-scoped) —
   // never the globally-oldest queued BASELINE_COMPUTE job across every
   // organization (see computeJobService.claimById doc comment).
-  const claimed = await computeJobService.claimById({
+  // P1 fix (idempotent compute retry): see valuationComputeService.ts's
+  // identical call for the full rationale — `wasExisting=true` means this
+  // exact idempotency key already has a job row, which `claimById()` alone
+  // cannot handle once that row is no longer `queued` (it used to crash with
+  // a raw Error on a byte-identical repeated POST).
+  const claimResult = await computeJobService.claimForCompute({
     organizationId: params.organizationId,
-    jobId: job.id,
+    job,
+    wasExisting,
     workerId: `baselineComputeService:${uuidv4()}`,
   });
-  if (!claimed) {
-    throw new Error(
-      `baselineComputeService: failed to self-claim just-enqueued job ${job.id} (organization ${params.organizationId}) — row is no longer 'queued' (concurrent claim or already terminal)`
-    );
+  if (claimResult.outcome === 'hard_error') {
+    return {
+      ok: false,
+      code: 'JOB_NOT_RUNNING',
+      message: `baselineComputeService: ${claimResult.message}`,
+    } as RunBaselineComputeResult;
   }
-  const runningJob = claimed;
+  if (claimResult.outcome === 'already_committed') {
+    // Idempotent replay: an earlier byte-identical call already computed and committed this
+    // result — never mint a second compute_jobs/compute_job_outputs row for the same
+    // idempotency key, and never re-run the solver loop. `periodsComputed` is read back for
+    // honesty (an HTTP caller must not see "0 periods computed" for a business version that
+    // demonstrably has output rows); `monthlyResults` is NOT reconstructed (this call's own
+    // solver loop never ran) — callers needing the full per-period figures read
+    // `finance_baseline_outputs`/`finance_baseline_solver_diagnostics` for `businessVersionId`
+    // directly, the same pattern `runStandardBase()` in predictionComputeService.ts already
+    // documents for its own passthrough case.
+    const priorPeriods = await withPinnedPostgresTransaction((tx) =>
+      tx.queryOne<{ n: string }>(`SELECT count(DISTINCT period_id)::text AS n FROM finance_baseline_outputs WHERE business_version_id = ?`, [
+        params.businessVersionId,
+      ])
+    );
+    return {
+      ok: true,
+      job: claimResult.job,
+      periodsComputed: Number(priorPeriods?.n ?? '0'),
+      monthlyResults: [],
+    } as RunBaselineComputeResult;
+  }
+  const runningJob = claimResult.job;
 
   // --- prior-period state, seeded from the opening (actual) balance sheet ---
   const other = (code: CanonicalCode) => ctx.openingCells.get(code) ?? 0;

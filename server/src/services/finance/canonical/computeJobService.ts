@@ -341,6 +341,104 @@ export async function claimById(params: ClaimByIdParams): Promise<ComputeJobRow 
   });
 }
 
+export interface ClaimForComputeParams {
+  organizationId: string;
+  /** The row `enqueue()` just returned (either freshly inserted or the pre-existing row). */
+  job: ComputeJobRow;
+  /** `enqueue()`'s own `wasExisting` flag for that same call. */
+  wasExisting: boolean;
+  workerId: string;
+  leaseDurationSeconds?: number;
+}
+
+export type ClaimForComputeResult =
+  /** Freshly claimed — proceed to run the domain compute and call `completeJobSuccess()`. */
+  | { outcome: 'claimed'; job: ComputeJobRow }
+  /**
+   * `wasExisting=true` and that existing job already reached `status='succeeded'` WITH a
+   * committed `compute_job_outputs` row — a byte-identical repeat of an already-completed
+   * request. The caller must NOT re-claim, re-run domain compute, or call
+   * `completeJobSuccess()` again; it should report success using `job`/`output` as-is. This is
+   * the idempotent-retry path (P1 fix, see `PKG_FIX_CANONICAL_report.md`).
+   */
+  | { outcome: 'already_committed'; job: ComputeJobRow; output: ComputeJobOutputRow }
+  /**
+   * Hard failure — the caller must return a typed error (`JOB_NOT_RUNNING` at every current call
+   * site) and must NOT report success. Three distinct situations collapse into this one outcome,
+   * all for the same reason: none of them is safe to silently resume or retry.
+   *   - `wasExisting=true` and the existing job is `running` — ANOTHER in-flight call (this
+   *     process or a concurrent one) already claimed this exact idempotency key and has not
+   *     finished yet. Per the kanon: a duplicate submitted while the original is still running is
+   *     a hard error, not something to wait on or silently no-op.
+   *   - `wasExisting=true` and the existing job is `succeeded` but has NO `compute_job_outputs`
+   *     row — a data inconsistency (should never happen; `completeJobSuccess()` writes the output
+   *     row and the `succeeded` status in the same transaction), never silently treated as success.
+   *   - `wasExisting=true` and the existing job is `failed`/`cancelled` — the idempotency key's
+   *     prior attempt is terminally dead; `claimById()` cannot resurrect it (it only matches
+   *     `status='queued'`), so there is nothing safe to resume.
+   *   - Freshly enqueued OR still-`queued` existing row, but `claimById()` itself returns `null`
+   *     (a genuine race — a concurrent caller claimed the same row a moment earlier).
+   */
+  | { outcome: 'hard_error'; code: 'NOT_RUNNING'; message: string };
+
+/**
+ * P1 fix (idempotent compute retry, `PKG_FIX_CANONICAL_report.md`): every one of the five
+ * `enqueue()` -> `claimById()` call sites (baselineComputeService.ts, kpiComputeService.ts,
+ * predictionComputeService.ts x2, valuationComputeService.ts) used to call `claimById()`
+ * UNCONDITIONALLY, ignoring `enqueue()`'s own `wasExisting` flag. `claimById()` only ever matches
+ * `status='queued'` rows (see its own doc comment) — so a byte-identical repeated POST, whose
+ * idempotency key matches an ALREADY-COMPLETED first call, hit a job row that is `succeeded`
+ * (never `queued` again), got `null` back, and the caller threw a raw, unhandled `Error` — a 500,
+ * not an idempotent replay of the first call's result. This helper is the single place that now
+ * decides, given `enqueue()`'s own result, whether to (a) claim normally, (b) short-circuit to the
+ * first call's already-committed output, or (c) hard-fail — see `ClaimForComputeResult` for the
+ * exact decision table. `NOT_RUNNING` (this helper's only failure code) vs
+ * `OUTPUT_ALREADY_COMMITTED` (this helper's `already_committed` outcome, named after
+ * `completeJobSuccess()`'s own code of the same meaning) is the SAME distinction the kanon draws
+ * for `completeJobSuccess()` itself: a job still `running` (not yet done) is NOT the same as a job
+ * whose output already landed, and the two must never be conflated.
+ */
+export async function claimForCompute(params: ClaimForComputeParams): Promise<ClaimForComputeResult> {
+  if (params.wasExisting) {
+    if (params.job.status === 'succeeded') {
+      const output = await getJobOutput(params.organizationId, params.job.id);
+      if (output) return { outcome: 'already_committed', job: params.job, output };
+      return {
+        outcome: 'hard_error',
+        code: 'NOT_RUNNING',
+        message: `Job ${params.job.id} is 'succeeded' but has no committed compute_job_outputs row (data inconsistency) — refusing to report a false success for a duplicate request`,
+      };
+    }
+    if (params.job.status !== 'queued') {
+      // 'running' (original attempt still in flight), 'failed', or 'cancelled': none of these can
+      // be safely resumed or re-claimed by a duplicate request under the SAME idempotency key.
+      return {
+        outcome: 'hard_error',
+        code: 'NOT_RUNNING',
+        message: `Job ${params.job.id} (idempotency key already in use) is '${params.job.status}', not 'queued' or 'succeeded' — a duplicate compute request cannot resume it (original may still be running, or it is terminally failed/cancelled)`,
+      };
+    }
+    // status === 'queued': the earlier duplicate enqueue beat this call here but neither has
+    // claimed yet (race between two near-simultaneous identical requests) — fall through to the
+    // normal claim attempt below, exactly like the freshly-inserted case.
+  }
+
+  const claimed = await claimById({
+    organizationId: params.organizationId,
+    jobId: params.job.id,
+    workerId: params.workerId,
+    leaseDurationSeconds: params.leaseDurationSeconds,
+  });
+  if (!claimed) {
+    return {
+      outcome: 'hard_error',
+      code: 'NOT_RUNNING',
+      message: `Failed to self-claim job ${params.job.id} — row is no longer 'queued' (concurrent claim raced this call, or it went terminal between enqueue and claim)`,
+    };
+  }
+  return { outcome: 'claimed', job: claimed };
+}
+
 export interface CompleteJobSuccessParams {
   jobId: string;
   organizationId: string;

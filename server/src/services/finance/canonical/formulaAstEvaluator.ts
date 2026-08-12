@@ -102,8 +102,28 @@ export type NegativeDenominatorPolicy = 'SHOW_WITH_FLAG' | 'FORCE_NA' | null;
 /** `finance_analysis_kpi_values.quality_flag` DB CHECK values — this module NEVER produces a value outside this set (see file header: task-level prose mentions "MISSING_INPUT" as an example, but that is not a DB-valid quality_flag; a missing input surfaces as `status='MISSING'` instead, per WP-D01's own value_status doctrine — see `kpiComputeService.ts` report discussion). */
 export type QualityFlag = 'DIVISION_BY_ZERO' | 'NEGATIVE_DENOMINATOR' | 'INSUFFICIENT_HISTORY' | 'ESTIMATED_ANNUALIZED';
 
-/** `finance_analysis_kpi_values.value_status` DB CHECK values this module can produce (never `'NA'` — that value_status is reserved for other domains/callers, not emitted by this evaluator). */
-export type EvalValueStatus = 'PRESENT_NONZERO' | 'PRESENT_ZERO' | 'MISSING' | 'NOT_APPLICABLE';
+/**
+ * `finance_analysis_kpi_values.value_status` DB CHECK values this module can produce.
+ *
+ * P1 fix (`PKG_FIX_CANONICAL_report.md`, defect 2 — "NA jest nieosiągalny"): this comment used to
+ * read "never `'NA'` — reserved for other domains/callers, not emitted by this evaluator", and that
+ * was true — `evaluateNode`'s divide/ratio branch mapped BOTH a zero denominator AND a MISSING
+ * denominator to `'NOT_APPLICABLE'`, so the DEC-FIN-005 guarantee ("brak danych daje N/A z powodem,
+ * NIGDY zero") had no live code path producing `NA` anywhere in this evaluator, confirmed by an
+ * independent oracle (GoldCo). Per the kanon's 5-state value type, a division whose denominator is
+ * missing or exactly zero is "cannot be computed" (`NA`), a strictly different fact from
+ * `NOT_APPLICABLE` ("this position does not apply to this entity/period" — e.g. `INSUFFICIENT_HISTORY`
+ * below, unaffected by this fix) and from `MISSING` ("the data itself is absent" — still used when the
+ * NUMERATOR, not the denominator, is missing). `NA` is fixed here to CARRY the reason code via
+ * `EvaluationResult.detail` (persisted to `finance_analysis_kpi_values.interpretation_text`), not via
+ * `quality_flag`: the DB CHECK `chk_finance_analysis_kpi_values_division_by_zero_shape`
+ * (`20260809_finance_v3_d03_analysis_01_tables.sql`) hard-requires `value_status='NOT_APPLICABLE'`
+ * whenever `quality_flag='DIVISION_BY_ZERO'` — a schema constraint this fix deliberately does NOT
+ * touch (outside this fix's allowlisted paths, and not necessary: `qualityFlag` stays `null` for the
+ * new `NA` branches below, so that CHECK is simply never exercised by this evaluator anymore, not
+ * violated).
+ */
+export type EvalValueStatus = 'PRESENT_NONZERO' | 'PRESENT_ZERO' | 'MISSING' | 'NA' | 'NOT_APPLICABLE';
 
 export interface EvaluationResult {
   status: EvalValueStatus;
@@ -165,14 +185,26 @@ interface InternalResult extends EvaluationResult {
 const MISSING: EvaluationResult = { status: 'MISSING', value: null, qualityFlag: null, detail: null };
 
 function isUnusable(r: EvaluationResult): boolean {
-  return r.status === 'MISSING' || r.status === 'NOT_APPLICABLE';
+  return r.status === 'MISSING' || r.status === 'NA' || r.status === 'NOT_APPLICABLE';
 }
 
-/** MISSING beats NOT_APPLICABLE beats a flagged-but-present value, when combining two unusable children — "cannot compute" always wins over "computed but flagged". */
+/**
+ * MISSING beats NA beats NOT_APPLICABLE beats a flagged-but-present value, when combining two
+ * unusable children — "the data itself is absent" is the most fundamental blocker, then "cannot be
+ * computed" (a nested divide-by-zero/missing-denominator propagating up through an outer add/
+ * subtract/multiply/divide), then "flagged as not applicable" is the mildest. P1 fix
+ * (`PKG_FIX_CANONICAL_report.md`, defect 2): the `NA` branch is new — without it, an `NA` result
+ * from a nested division would NOT be recognized as unusable by the old two-way check, and an outer
+ * arithmetic op would silently read its `null` value as a number.
+ */
 function propagateUnusable(left: EvaluationResult, right: EvaluationResult): EvaluationResult {
   if (left.status === 'MISSING' || right.status === 'MISSING') {
     const detail = left.status === 'MISSING' ? left.detail : right.detail;
     return { status: 'MISSING', value: null, qualityFlag: null, detail: detail ?? 'an operand is MISSING' };
+  }
+  if (left.status === 'NA' || right.status === 'NA') {
+    const na = left.status === 'NA' ? left : right;
+    return { status: 'NA', value: null, qualityFlag: na.qualityFlag, detail: na.detail ?? 'an operand is NA (cannot be computed)' };
   }
   // Both/either NOT_APPLICABLE.
   const flagged = left.status === 'NOT_APPLICABLE' ? left : right;
@@ -249,20 +281,58 @@ async function evaluateNode(node: FormulaNode, ctx: EvalContext): Promise<Intern
 
     case 'divide':
     case 'ratio': {
-      if (left.status === 'MISSING' || right.status === 'MISSING') return propagateUnusable(left, right);
-      if (right.status === 'NOT_APPLICABLE') return { ...propagateUnusable(left, right), denominator: right };
+      // P1 fix (`PKG_FIX_CANONICAL_report.md`, defect 2 — "NA jest nieosiągalny"): a MISSING
+      // DENOMINATOR makes the division mathematically undefined — but ONLY when there is
+      // otherwise a real, present NUMERATOR to divide. If the numerator is ITSELF unusable for
+      // any reason (`isUnusable`: MISSING, NA, or NOT_APPLICABLE — e.g. AVERAGE_BALANCE with no
+      // prior period surfaces as NOT_APPLICABLE/INSUFFICIENT_HISTORY, not literally 'MISSING'),
+      // this is not "an isolated math problem with the denominator", it is "there is no usable
+      // data here at all" — the standard MISSING-beats-NA-beats-NOT_APPLICABLE priority
+      // (`propagateUnusable`) applies instead (regression guard:
+      // `kpiComputeService.determinism.pg.test.ts`'s W3 fixture selects all 18 P0 KPI against a
+      // business version with ZERO source stmt lines and only ONE period on record — DSO/DIO/DPO
+      // there have a NOT_APPLICABLE numerator (INSUFFICIENT_HISTORY, single-period fixture) and a
+      // MISSING denominator; the whole thing must stay `MISSING`, not flip to `NA`, or a
+      // brand-new/empty Analysis would misleadingly read as "we tried to compute this and
+      // failed" instead of "nothing entered yet"). When the numerator IS a real present value
+      // (`PRESENT_ZERO`/`PRESENT_NONZERO` — SOME data genuinely exists), a missing denominator
+      // specifically is the blocker: `NA`, never `MISSING`, never a silently fabricated number.
+      // `qualityFlag` stays `null` here (not `'DIVISION_BY_ZERO'`) — see `EvalValueStatus`'s doc
+      // comment for why: the DB CHECK pairs that flag with `NOT_APPLICABLE`, not `NA`. The reason
+      // code instead travels in `detail` (persisted to `interpretation_text`), prefixed
+      // `NA_REASON:` so it is machine-parseable.
+      if (right.status === 'MISSING') {
+        if (isUnusable(left)) return propagateUnusable(left, right); // numerator ALSO unusable -> standard priority wins
+        return {
+          status: 'NA',
+          value: null,
+          qualityFlag: null,
+          // Preserves the denominator's own `detail` (e.g. "WRONG_PERIOD_TYPE_FOR_LTM: ...") rather
+          // than discarding it — the NA_REASON prefix says WHY this is NA at the divide level, the
+          // parenthetical keeps the underlying diagnostic from the operand that actually failed.
+          detail: `NA_REASON:DENOMINATOR_MISSING — cannot compute ${node.op}: denominator is MISSING${right.detail ? ` (${right.detail})` : ''}`,
+          denominator: right,
+        };
+      }
+      // NA denominator (e.g. a NESTED divide-by-zero one level down, like DSO's inner
+      // `REVENUE/DAYS_IN_PERIOD`) or NOT_APPLICABLE denominator (e.g. INSUFFICIENT_HISTORY)
+      // propagate as-is via propagateUnusable — the nested reason code survives in `detail`
+      // ("cannot compute" infects the whole tree, exactly like MISSING already did).
+      if (right.status === 'NA' || right.status === 'NOT_APPLICABLE') return { ...propagateUnusable(left, right), denominator: right };
       const denomValue = right.value as number;
       if (denomValue === 0) {
         const dbz: InternalResult = {
-          status: 'NOT_APPLICABLE',
+          status: 'NA',
           value: null,
-          qualityFlag: 'DIVISION_BY_ZERO',
-          detail: `${node.op} by zero`,
+          qualityFlag: null,
+          detail: `NA_REASON:DIVISION_BY_ZERO — ${node.op} by zero`,
           denominator: right,
         };
         return dbz;
       }
-      if (left.status === 'NOT_APPLICABLE') return { ...propagateUnusable(left, right), denominator: right };
+      // Numerator issues (denominator is confirmed present/nonzero at this point): MISSING/NA/
+      // NOT_APPLICABLE numerator propagates via the normal priority order.
+      if (isUnusable(left)) return { ...propagateUnusable(left, right), denominator: right };
       const result = numeric((left.value as number) / denomValue);
       return { ...result, denominator: right };
     }
@@ -293,10 +363,11 @@ export async function evaluateFormula(
   const rootIsDivisionShaped = formulaAst.node === 'operator' && (formulaAst.op === 'divide' || formulaAst.op === 'ratio');
 
   if (rootIsDivisionShaped && negativeDenominatorPolicy && result.denominator) {
-    // DIVISION_BY_ZERO already takes precedence (0 is not negative, so there is no overlap to
-    // arbitrate) and any already-unusable (MISSING/NOT_APPLICABLE) result is left exactly as-is.
+    // DIVISION_BY_ZERO/missing-denominator (now NA, P1 fix) already takes precedence (0 is not
+    // negative, so there is no overlap to arbitrate) and any already-unusable (MISSING/NA/
+    // NOT_APPLICABLE) result is left exactly as-is.
     const denom = result.denominator;
-    if (denom.status !== 'MISSING' && denom.status !== 'NOT_APPLICABLE' && (denom.value as number) < 0) {
+    if (denom.status !== 'MISSING' && denom.status !== 'NA' && denom.status !== 'NOT_APPLICABLE' && (denom.value as number) < 0) {
       if (negativeDenominatorPolicy === 'FORCE_NA') {
         // ADR 6.5: "value_status='NOT_APPLICABLE', quality_flag pozostaje NULL (to nie jest błąd
         // obliczeniowy, to jest polityczna decyzja)."
