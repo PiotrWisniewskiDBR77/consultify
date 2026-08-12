@@ -28,18 +28,18 @@ import { withPinnedPostgresTransaction } from '../../../database/PostgresDatabas
 import { EMPTY_WORKING_REVISION_CONTENT_HASH } from './contentHash.js';
 import type { FinanceArtifactType } from './lifecycleService.js';
 import {
-  propagateStalenessInTransaction,
-  type FreshnessPropagationSummary,
-} from './lineageFreshnessService.js';
-import {
+  type BusinessVersionStatus,
   checkSelfApproval,
   defaultRiskTierForArtifactType,
-  validateTransition,
-  type BusinessVersionStatus,
   type FinanceRole,
   type LifecycleAction,
   type RiskTier,
+  validateTransition,
 } from './lifecycleService.js';
+import {
+  type FreshnessPropagationSummary,
+  propagateStalenessInTransaction,
+} from './lineageFreshnessService.js';
 
 // ---------------------------------------------------------------------------
 // Row shapes
@@ -49,7 +49,11 @@ import {
 export type VersionKind = 'ORIGINAL' | 'RESTATED' | 'MANAGEMENT_ADJUSTED';
 
 /** WP-B06 §4.1 — `finance_business_versions.restatement_class` CHECK constraint values. */
-export type RestatementClass = 'ERROR_CORRECTION' | 'ACCOUNTING_POLICY_CHANGE' | 'RECLASSIFICATION' | 'OTHER';
+export type RestatementClass =
+  | 'ERROR_CORRECTION'
+  | 'ACCOUNTING_POLICY_CHANGE'
+  | 'RECLASSIFICATION'
+  | 'OTHER';
 
 export interface BusinessVersionRow {
   business_version_id: string;
@@ -127,7 +131,10 @@ const LEGACY_UNKNOWN_ENGINE_MANIFEST_SQL = `(SELECT engine_manifest_id FROM fina
 // Reads
 // ---------------------------------------------------------------------------
 
-export async function getArtifact(organizationId: string, artifactId: string): Promise<ArtifactRow | null> {
+export async function getArtifact(
+  organizationId: string,
+  artifactId: string
+): Promise<ArtifactRow | null> {
   return withPinnedPostgresTransaction((tx) =>
     tx.queryOne<ArtifactRow>(
       `SELECT * FROM finance_artifacts WHERE artifact_id = ? AND organization_id = ?`,
@@ -151,7 +158,11 @@ export async function getArtifact(organizationId: string, artifactId: string): P
  * addition" boundary as `computeJobService.getJobOutput` above) and pass
  * only an already-validated, already-normalized name.
  */
-export async function renameArtifact(organizationId: string, artifactId: string, naturalKey: string): Promise<ArtifactRow | null> {
+export async function renameArtifact(
+  organizationId: string,
+  artifactId: string,
+  naturalKey: string
+): Promise<ArtifactRow | null> {
   return withPinnedPostgresTransaction((tx) =>
     tx.queryOne<ArtifactRow>(
       `UPDATE finance_artifacts SET natural_key = ? WHERE artifact_id = ? AND organization_id = ? RETURNING *`,
@@ -213,7 +224,13 @@ export async function createArtifact(params: CreateArtifactParams): Promise<Crea
     const artifact = await tx.queryOne<ArtifactRow>(
       `INSERT INTO finance_artifacts (artifact_id, organization_id, artifact_type, natural_key, created_by)
        VALUES (?, ?, ?, ?, ?) RETURNING *`,
-      [artifactId, params.organizationId, params.artifactType, params.naturalKey ?? null, params.createdBy]
+      [
+        artifactId,
+        params.organizationId,
+        params.artifactType,
+        params.naturalKey ?? null,
+        params.createdBy,
+      ]
     );
     if (!artifact) throw new Error('finance_artifacts insert returned no row');
 
@@ -257,7 +274,14 @@ export async function createArtifact(params: CreateArtifactParams): Promise<Crea
          working_revision_id, artifact_id, organization_id, business_version_id, revision_seq, content_semantic_hash, is_current, edited_by
        ) VALUES (?, ?, ?, ?, 1, ?, true, ?)
        RETURNING *`,
-      [workingRevisionId, artifactId, params.organizationId, businessVersionId, initialContentSemanticHash, params.createdBy]
+      [
+        workingRevisionId,
+        artifactId,
+        params.organizationId,
+        businessVersionId,
+        initialContentSemanticHash,
+        params.createdBy,
+      ]
     );
     if (!workingRevision) throw new Error('finance_working_revisions insert returned no row');
 
@@ -273,7 +297,11 @@ export async function createArtifact(params: CreateArtifactParams): Promise<Crea
       [uuidv4(), params.organizationId, artifactId, businessVersionId, params.createdBy, riskTier]
     );
 
-    return { artifact, businessVersion: { ...businessVersion, source_working_revision_id: workingRevisionId }, workingRevision };
+    return {
+      artifact,
+      businessVersion: { ...businessVersion, source_working_revision_id: workingRevisionId },
+      workingRevision,
+    };
   });
 }
 
@@ -320,7 +348,12 @@ export async function stampWorkingRevisionComputeIdentity(
           SET content_semantic_hash = ?, compute_run_id = ?
         WHERE working_revision_id = ? AND organization_id = ?
         RETURNING *`,
-      [params.contentSemanticHash, params.computeRunId, params.workingRevisionId, params.organizationId]
+      [
+        params.contentSemanticHash,
+        params.computeRunId,
+        params.workingRevisionId,
+        params.organizationId,
+      ]
     )
   );
 }
@@ -365,7 +398,9 @@ export interface TransitionParams {
   reason?: string;
 }
 
-const ACTOR_FIELD_BY_ACTION: Partial<Record<TransitionParams['action'], { by: string; at: string }>> = {
+const ACTOR_FIELD_BY_ACTION: Partial<
+  Record<TransitionParams['action'], { by: string; at: string }>
+> = {
   submit_for_review: { by: 'submitted_by', at: 'submitted_at' },
   archive: { by: 'archived_by', at: 'archived_at' },
 };
@@ -393,7 +428,12 @@ export async function transition(params: TransitionParams): Promise<TransitionSe
       reasonProvided: Boolean(params.reason && params.reason.trim().length > 0),
     });
     if (!decision.ok) {
-      return { ok: false, code: decision.code, message: decision.message, currentStatus: current.status };
+      return {
+        ok: false,
+        code: decision.code,
+        message: decision.message,
+        currentStatus: current.status,
+      };
     }
 
     const actorFields = ACTOR_FIELD_BY_ACTION[params.action];
@@ -519,11 +559,19 @@ export interface ComputeSnapshotRow {
   created_at: string;
 }
 
-export type CreateComputeSnapshotErrorCode = 'NOT_FOUND' | 'INVALID_STATUS' | 'WORKING_REVISION_NOT_FOUND';
+export type CreateComputeSnapshotErrorCode =
+  | 'NOT_FOUND'
+  | 'INVALID_STATUS'
+  | 'WORKING_REVISION_NOT_FOUND';
 
 export type CreateComputeSnapshotResult =
   | { ok: true; computeSnapshotId: string; snapshot: ComputeSnapshotRow; reused: boolean }
-  | { ok: false; code: CreateComputeSnapshotErrorCode; message: string; currentStatus?: BusinessVersionStatus };
+  | {
+      ok: false;
+      code: CreateComputeSnapshotErrorCode;
+      message: string;
+      currentStatus?: BusinessVersionStatus;
+    };
 
 export interface CreateComputeSnapshotParams {
   organizationId: string;
@@ -573,7 +621,9 @@ const CREATE_SNAPSHOT_FORBIDDEN_STATUSES: readonly BusinessVersionStatus[] = [
  * own fresh INSERT otherwise. See that function's own comment for why reuse
  * is safe.
  */
-export async function createComputeSnapshot(params: CreateComputeSnapshotParams): Promise<CreateComputeSnapshotResult> {
+export async function createComputeSnapshot(
+  params: CreateComputeSnapshotParams
+): Promise<CreateComputeSnapshotResult> {
   return withPinnedPostgresTransaction(async (tx) => {
     const current = await tx.queryOne<BusinessVersionRow>(
       `SELECT * FROM finance_business_versions WHERE business_version_id = ? AND organization_id = ?`,
@@ -595,7 +645,11 @@ export async function createComputeSnapshot(params: CreateComputeSnapshotParams)
       [current.artifact_id, params.organizationId]
     );
     if (!workingRevision) {
-      return { ok: false, code: 'WORKING_REVISION_NOT_FOUND', message: 'No current working revision to snapshot' };
+      return {
+        ok: false,
+        code: 'WORKING_REVISION_NOT_FOUND',
+        message: 'No current working revision to snapshot',
+      };
     }
 
     const existing = await tx.queryOne<ComputeSnapshotRow>(
@@ -605,7 +659,12 @@ export async function createComputeSnapshot(params: CreateComputeSnapshotParams)
       [current.artifact_id, params.organizationId, workingRevision.working_revision_id]
     );
     if (existing) {
-      return { ok: true, computeSnapshotId: existing.compute_snapshot_id, snapshot: existing, reused: true };
+      return {
+        ok: true,
+        computeSnapshotId: existing.compute_snapshot_id,
+        snapshot: existing,
+        reused: true,
+      };
     }
 
     const computeSnapshotId = uuidv4();
@@ -736,7 +795,11 @@ export async function approveVersion(params: ApproveVersionParams): Promise<Appr
 
   return withPinnedPostgresTransaction(async (tx) => {
     if (params.idempotencyKey) {
-      const replay = await tx.queryOne<{ business_version_id: string; to_status: BusinessVersionStatus; snapshot_id: string | null }>(
+      const replay = await tx.queryOne<{
+        business_version_id: string;
+        to_status: BusinessVersionStatus;
+        snapshot_id: string | null;
+      }>(
         `SELECT business_version_id, to_status, snapshot_id FROM artifact_lifecycle_events
           WHERE organization_id = ? AND business_version_id = ? AND action = 'APPROVE' AND idempotency_key = ?
           ORDER BY created_at DESC LIMIT 1`,
@@ -801,7 +864,11 @@ export async function approveVersion(params: ApproveVersionParams): Promise<Appr
       [params.organizationId, params.businessVersionId]
     );
     if (blocking) {
-      return { ok: false, code: 'APPROVAL_BLOCKED', message: 'Blocking SECURITY exception is still OPEN' };
+      return {
+        ok: false,
+        code: 'APPROVAL_BLOCKED',
+        message: 'Blocking SECURITY exception is still OPEN',
+      };
     }
 
     // (a3b) no unresolved blocking comment (AP-06 — FINANCE_CRITICAL_REVIEW_ADDENDUM_2026-08-09.md
@@ -818,7 +885,11 @@ export async function approveVersion(params: ApproveVersionParams): Promise<Appr
       [params.organizationId, params.businessVersionId]
     );
     if (blockingComment) {
-      return { ok: false, code: 'APPROVAL_BLOCKED', message: 'Unresolved blocking comment(s) present' };
+      return {
+        ok: false,
+        code: 'APPROVAL_BLOCKED',
+        message: 'Unresolved blocking comment(s) present',
+      };
     }
 
     // (a3c) maker-checker fix (2026-08-12, defect 2 of
@@ -871,8 +942,12 @@ export async function approveVersion(params: ApproveVersionParams): Promise<Appr
           AND (checkpoint_source IS NOT NULL OR revision_seq = 1)`,
       [params.businessVersionId, params.organizationId]
     );
-    const derivedEditorIds = editorRows.map((r) => r.edited_by).filter((id): id is string => Boolean(id));
-    const effectiveEditorUserIds = Array.from(new Set([...(params.editorUserIds ?? []), ...derivedEditorIds]));
+    const derivedEditorIds = editorRows
+      .map((r) => r.edited_by)
+      .filter((id): id is string => Boolean(id));
+    const effectiveEditorUserIds = Array.from(
+      new Set([...(params.editorUserIds ?? []), ...derivedEditorIds])
+    );
 
     // (a4) SoD self-approval gate (WP-B02 §7.2.6).
     const riskTier = (current.risk_tier ?? 'LOW') as RiskTier;
@@ -915,7 +990,11 @@ export async function approveVersion(params: ApproveVersionParams): Promise<Appr
       [current.artifact_id, params.organizationId]
     );
     if (!workingRevision) {
-      return { ok: false, code: 'WORKING_REVISION_NOT_FOUND', message: 'No current working revision to freeze' };
+      return {
+        ok: false,
+        code: 'WORKING_REVISION_NOT_FOUND',
+        message: 'No current working revision to freeze',
+      };
     }
 
     const existingSnapshot = await tx.queryOne<{ compute_snapshot_id: string }>(
@@ -1051,7 +1130,13 @@ export async function approveVersion(params: ApproveVersionParams): Promise<Appr
       });
     }
 
-    return { ok: true, businessVersion: approved, computeSnapshotId, idempotentReplay: false, freshnessPropagation };
+    return {
+      ok: true,
+      businessVersion: approved,
+      computeSnapshotId,
+      idempotentReplay: false,
+      freshnessPropagation,
+    };
   });
 }
 
@@ -1076,7 +1161,13 @@ export type ReopenResult =
       workingRevision: WorkingRevisionRow;
       idempotentReplay: boolean;
     }
-  | { ok: false; code: ReopenErrorCode; message: string; existingDraftVersionId?: string; currentStatus?: BusinessVersionStatus };
+  | {
+      ok: false;
+      code: ReopenErrorCode;
+      message: string;
+      existingDraftVersionId?: string;
+      currentStatus?: BusinessVersionStatus;
+    };
 
 const REOPEN_ALLOWED_ROLES: readonly FinanceRole[] = ['approver', 'finance_admin'];
 
@@ -1129,7 +1220,10 @@ export async function reopenVersion(params: ReopenVersionParams): Promise<Reopen
   // restatement_class IS NOT NULL)`, WP-B06 §4.1) at the application layer so
   // a caller gets a clean 400-shaped error instead of a raw Postgres
   // check-violation surfacing from inside the transaction below.
-  if (params.versionKind === 'RESTATED' && (!params.restatementReason?.trim() || !params.restatementClass)) {
+  if (
+    params.versionKind === 'RESTATED' &&
+    (!params.restatementReason?.trim() || !params.restatementClass)
+  ) {
     return {
       ok: false,
       code: 'RESTATEMENT_METADATA_REQUIRED',
@@ -1218,8 +1312,10 @@ export async function reopenVersion(params: ReopenVersionParams): Promise<Reopen
       // on vN+1 itself, instead of leaving every reopened version defaulting to
       // version_kind='ORIGINAL' regardless of caller intent (WP-B06 §4.2).
       const versionKind: VersionKind = params.versionKind ?? 'ORIGINAL';
-      const restatementReason = versionKind === 'RESTATED' ? (params.restatementReason ?? null) : null;
-      const restatementClass = versionKind === 'RESTATED' ? (params.restatementClass ?? null) : null;
+      const restatementReason =
+        versionKind === 'RESTATED' ? (params.restatementReason ?? null) : null;
+      const restatementClass =
+        versionKind === 'RESTATED' ? (params.restatementClass ?? null) : null;
 
       const newBusinessVersionId = uuidv4();
       const newVersion = await tx.queryOne<BusinessVersionRow>(
@@ -1294,7 +1390,8 @@ export async function reopenVersion(params: ReopenVersionParams): Promise<Reopen
           params.actorId,
         ]
       );
-      if (!newWorkingRevision) throw new Error('finance_working_revisions insert (reopen) returned no row');
+      if (!newWorkingRevision)
+        throw new Error('finance_working_revisions insert (reopen) returned no row');
 
       await tx.queryRun(
         `UPDATE finance_business_versions SET source_working_revision_id = ? WHERE business_version_id = ?`,

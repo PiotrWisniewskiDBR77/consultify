@@ -37,17 +37,17 @@
 import type { Response } from 'express';
 import { Router } from 'express';
 
+import { withPinnedPostgresTransaction } from '../../../database/PostgresDatabase.js';
 import type { AuthRequest } from '../../../middleware/auth.middleware.js';
 import { getV8Context } from '../../../middleware/v8Auth.middleware.js';
 import {
   APPROVE_ALLOWED_ROLES,
   approveVersion,
+  type BusinessVersionRow,
   getArtifact,
   reopenVersion,
-  type BusinessVersionRow,
 } from '../../../services/finance/canonical/artifactVersionService.js';
 import type { FinanceRole } from '../../../services/finance/canonical/lifecycleService.js';
-import { withPinnedPostgresTransaction } from '../../../database/PostgresDatabase.js';
 import { asyncHandler } from '../../../utils/asyncHandler.js';
 
 const router = Router();
@@ -206,7 +206,10 @@ router.post(
       // backward-compatible with (see file header), so it enforces the ADR
       // requirement in full rather than the "optional" compromise F2/F4 use
       // for backward compatibility with pre-ADR legacy behavior.
-      return res.status(400).json({ error: 'Idempotency-Key header is required for this operation', code: 'IDEMPOTENCY_KEY_REQUIRED' });
+      return res.status(400).json({
+        error: 'Idempotency-Key header is required for this operation',
+        code: 'IDEMPOTENCY_KEY_REQUIRED',
+      });
     }
 
     const reason = typeof (req.body ?? {}).reason === 'string' ? (req.body.reason as string) : '';
@@ -245,7 +248,9 @@ router.post(
       return res.status(httpStatus).json({
         error: result.message,
         code: result.code,
-        ...(result.existingDraftVersionId ? { existingDraftVersionId: result.existingDraftVersionId } : {}),
+        ...(result.existingDraftVersionId
+          ? { existingDraftVersionId: result.existingDraftVersionId }
+          : {}),
       });
     }
 

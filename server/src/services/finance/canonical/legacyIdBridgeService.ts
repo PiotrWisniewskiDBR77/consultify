@@ -58,7 +58,11 @@ interface AliasRow {
   artifact_id: string;
   organization_id: string;
   business_version_id: string | null;
-  mapping_confidence: 'AUTO_MIGRATE' | 'MIGRATE_WITH_WARNING' | 'QUARANTINE' | 'EXCLUDE_WITH_REASON';
+  mapping_confidence:
+    | 'AUTO_MIGRATE'
+    | 'MIGRATE_WITH_WARNING'
+    | 'QUARANTINE'
+    | 'EXCLUDE_WITH_REASON';
   mapping_reason: string | null;
   created_at: string;
 }
@@ -117,7 +121,10 @@ export async function resolveLegacyFinanceArtifact(
     return { status: 'NOT_MIGRATED' };
   }
 
-  if (alias.mapping_confidence === 'QUARANTINE' || alias.mapping_confidence === 'EXCLUDE_WITH_REASON') {
+  if (
+    alias.mapping_confidence === 'QUARANTINE' ||
+    alias.mapping_confidence === 'EXCLUDE_WITH_REASON'
+  ) {
     return {
       status: 'QUARANTINED',
       mappingConfidence: alias.mapping_confidence,

@@ -50,7 +50,11 @@ import * as exceptionLedgerService from './exceptionLedgerService.js';
 
 export type ComputeJobStatus = 'queued' | 'running' | 'succeeded' | 'failed' | 'cancelled';
 export type ComputeJobOutcome = 'succeeded' | 'failed' | 'cancelled' | 'lease_expired' | 'killed';
-export type ComputeJobFreshness = 'CURRENT' | 'STALE_SOURCE' | 'STALE_ASSUMPTIONS' | 'COMPUTE_FAILED';
+export type ComputeJobFreshness =
+  | 'CURRENT'
+  | 'STALE_SOURCE'
+  | 'STALE_ASSUMPTIONS'
+  | 'COMPUTE_FAILED';
 
 export interface ComputeJobRow {
   id: string;
@@ -159,7 +163,10 @@ export async function enqueue(params: EnqueueJobParams): Promise<EnqueueJobResul
       `SELECT * FROM compute_jobs WHERE organization_id = ? AND job_type = ? AND idempotency_key = ?`,
       [params.organizationId, params.jobType, params.idempotencyKey]
     );
-    if (!existing) throw new Error('compute_jobs enqueue: ON CONFLICT DO NOTHING but no existing row found on read-back');
+    if (!existing)
+      throw new Error(
+        'compute_jobs enqueue: ON CONFLICT DO NOTHING but no existing row found on read-back'
+      );
     return { job: existing, wasExisting: true };
   });
 }
@@ -225,7 +232,9 @@ export async function claim(params: ClaimParams): Promise<ComputeJobRow[]> {
              LIMIT 1
           )
           RETURNING *`,
-        typeFilter ? [params.workerId, String(leaseSeconds), params.jobTypes] : [params.workerId, String(leaseSeconds)]
+        typeFilter
+          ? [params.workerId, String(leaseSeconds), params.jobTypes]
+          : [params.workerId, String(leaseSeconds)]
       );
       const job = rows[0];
       if (!job) break; // no more eligible rows (queue empty, all killed, or all at their concurrency cap)
@@ -270,7 +279,11 @@ export type HeartbeatResult =
 export async function heartbeat(params: HeartbeatParams): Promise<HeartbeatResult> {
   const leaseSeconds = params.leaseDurationSeconds ?? 300;
   return withPinnedPostgresTransaction(async (tx) => {
-    const updated = await tx.queryOne<{ id: string; attempt_count: number; lease_expires_at: string }>(
+    const updated = await tx.queryOne<{
+      id: string;
+      attempt_count: number;
+      lease_expires_at: string;
+    }>(
       `UPDATE compute_jobs
           SET lease_expires_at = now() + (? || ' seconds')::interval
         WHERE id = ? AND lease_owner = ? AND status = 'running'
@@ -284,10 +297,10 @@ export async function heartbeat(params: HeartbeatParams): Promise<HeartbeatResul
         message: `Job ${params.jobId} lease is no longer held by worker ${params.workerId} (reaped, cancelled, completed, or never claimed by this worker)`,
       };
     }
-    await tx.queryRun(`UPDATE compute_job_runs SET last_heartbeat_at = now() WHERE job_id = ? AND attempt_number = ?`, [
-      params.jobId,
-      updated.attempt_count,
-    ]);
+    await tx.queryRun(
+      `UPDATE compute_job_runs SET last_heartbeat_at = now() WHERE job_id = ? AND attempt_number = ?`,
+      [params.jobId, updated.attempt_count]
+    );
     return { ok: true, leaseExpiresAt: updated.lease_expires_at };
   });
 }
@@ -429,7 +442,9 @@ export type ClaimForComputeResult =
  * for `completeJobSuccess()` itself: a job still `running` (not yet done) is NOT the same as a job
  * whose output already landed, and the two must never be conflated.
  */
-export async function claimForCompute(params: ClaimForComputeParams): Promise<ClaimForComputeResult> {
+export async function claimForCompute(
+  params: ClaimForComputeParams
+): Promise<ClaimForComputeResult> {
   if (params.wasExisting) {
     if (params.job.status === 'succeeded') {
       const output = await getJobOutput(params.organizationId, params.job.id);
@@ -485,9 +500,14 @@ export type CompleteJobResult =
   | { ok: false; code: 'NOT_RUNNING' | 'OUTPUT_ALREADY_COMMITTED'; message: string };
 
 /** Commit a successful job's output (append-only `compute_job_outputs`) and mark the job succeeded. */
-export async function completeJobSuccess(params: CompleteJobSuccessParams): Promise<CompleteJobResult> {
+export async function completeJobSuccess(
+  params: CompleteJobSuccessParams
+): Promise<CompleteJobResult> {
   return withPinnedPostgresTransaction(async (tx) => {
-    const job = await tx.queryOne<ComputeJobRow>(`SELECT * FROM compute_jobs WHERE id = ? FOR UPDATE`, [params.jobId]);
+    const job = await tx.queryOne<ComputeJobRow>(
+      `SELECT * FROM compute_jobs WHERE id = ? FOR UPDATE`,
+      [params.jobId]
+    );
     if (!job || job.status !== 'running') {
       return { ok: false, code: 'NOT_RUNNING', message: `Job ${params.jobId} is not running` };
     }
@@ -513,7 +533,11 @@ export async function completeJobSuccess(params: CompleteJobSuccessParams): Prom
     } catch (error: any) {
       const message = String(error?.message || error);
       if (error?.code === '23505' || /compute_job_outputs_job_uq/.test(message)) {
-        return { ok: false, code: 'OUTPUT_ALREADY_COMMITTED', message: `Job ${params.jobId} already has a committed output` };
+        return {
+          ok: false,
+          code: 'OUTPUT_ALREADY_COMMITTED',
+          message: `Job ${params.jobId} already has a committed output`,
+        };
       }
       throw error;
     }
@@ -556,17 +580,29 @@ async function raiseDeadLetterException(job: ComputeJobRow): Promise<void> {
       organizationId: job.organization_id,
       artifactId: job.input_artifact_id,
       severity,
-      sourceRef: { jobId: job.id, jobType: job.job_type, attemptCount: job.attempt_count, maxAttempts: job.max_attempts },
+      sourceRef: {
+        jobId: job.id,
+        jobType: job.job_type,
+        attemptCount: job.attempt_count,
+        maxAttempts: job.max_attempts,
+      },
       reasonCode: 'COMPUTE_JOB_DEAD_LETTER',
       dedupKey: `compute-job-dlq:${job.id}`,
       raisedBy: 'system:compute-queue-dlq',
       evidence: job.error ? { lastError: job.error } : null,
     });
     if (!raised.ok) {
-      console.error(`[computeJobService] dead-letter exception for job ${job.id} rejected:`, raised.code, raised.message);
+      console.error(
+        `[computeJobService] dead-letter exception for job ${job.id} rejected:`,
+        raised.code,
+        raised.message
+      );
     }
   } catch (ledgerError: any) {
-    console.error(`[computeJobService] failed to raise dead-letter exception for job ${job.id}:`, ledgerError?.message || ledgerError);
+    console.error(
+      `[computeJobService] failed to raise dead-letter exception for job ${job.id}:`,
+      ledgerError?.message || ledgerError
+    );
   }
 }
 
@@ -589,10 +625,10 @@ export interface FailJobParams {
  */
 export async function failJob(params: FailJobParams): Promise<ComputeJobRow | null> {
   const updated = await withPinnedPostgresTransaction(async (tx) => {
-    const job = await tx.queryOne<ComputeJobRow>(`SELECT * FROM compute_jobs WHERE id = ? AND organization_id = ? FOR UPDATE`, [
-      params.jobId,
-      params.organizationId,
-    ]);
+    const job = await tx.queryOne<ComputeJobRow>(
+      `SELECT * FROM compute_jobs WHERE id = ? AND organization_id = ? FOR UPDATE`,
+      [params.jobId, params.organizationId]
+    );
     if (!job || job.status !== 'running') return null;
 
     const willRetry = job.attempt_count < job.max_attempts;
@@ -640,7 +676,11 @@ export async function failJob(params: FailJobParams): Promise<ComputeJobRow | nu
  * was actually `running` (a `queued` job never had a run row: `claim()` is
  * the only thing that inserts one).
  */
-export async function cancelJob(organizationId: string, jobId: string, reason: string): Promise<ComputeJobRow | null> {
+export async function cancelJob(
+  organizationId: string,
+  jobId: string,
+  reason: string
+): Promise<ComputeJobRow | null> {
   return withPinnedPostgresTransaction(async (tx) => {
     const before = await tx.queryOne<ComputeJobRow>(
       `SELECT * FROM compute_jobs WHERE id = ? AND organization_id = ? AND status IN ('queued', 'running') FOR UPDATE`,
@@ -670,7 +710,10 @@ export async function cancelJob(organizationId: string, jobId: string, reason: s
 
 export async function getJob(organizationId: string, jobId: string): Promise<ComputeJobRow | null> {
   return withPinnedPostgresTransaction((tx) =>
-    tx.queryOne<ComputeJobRow>(`SELECT * FROM compute_jobs WHERE id = ? AND organization_id = ?`, [jobId, organizationId])
+    tx.queryOne<ComputeJobRow>(`SELECT * FROM compute_jobs WHERE id = ? AND organization_id = ?`, [
+      jobId,
+      organizationId,
+    ])
   );
 }
 
@@ -704,7 +747,10 @@ export interface ComputeJobOutputRow {
   committed_at: string;
 }
 
-export async function getJobOutput(organizationId: string, jobId: string): Promise<ComputeJobOutputRow | null> {
+export async function getJobOutput(
+  organizationId: string,
+  jobId: string
+): Promise<ComputeJobOutputRow | null> {
   return withPinnedPostgresTransaction((tx) =>
     tx.queryOne<ComputeJobOutputRow>(
       `SELECT o.* FROM compute_job_outputs o
@@ -773,10 +819,18 @@ export async function reapExpiredLeases(params?: { batchSize?: number }): Promis
                     finished_at = now(), error = ?
               WHERE id = ? RETURNING *`,
         willRetry
-          ? [`lease expired: worker ${job.lease_owner ?? 'unknown'} did not renew before lease_expires_at`, String(30 * job.attempt_count), job.id]
-          : [`lease expired: worker ${job.lease_owner ?? 'unknown'} did not renew before lease_expires_at`, job.id]
+          ? [
+              `lease expired: worker ${job.lease_owner ?? 'unknown'} did not renew before lease_expires_at`,
+              String(30 * job.attempt_count),
+              job.id,
+            ]
+          : [
+              `lease expired: worker ${job.lease_owner ?? 'unknown'} did not renew before lease_expires_at`,
+              job.id,
+            ]
       );
-      if (!row) throw new Error(`reapExpiredLeases: requeue/fail update for job ${job.id} returned no row`);
+      if (!row)
+        throw new Error(`reapExpiredLeases: requeue/fail update for job ${job.id} returned no row`);
 
       await tx.queryRun(
         `UPDATE compute_job_runs SET outcome = 'lease_expired', finished_at = now()
@@ -836,18 +890,27 @@ export async function setKillSwitch(params: SetKillSwitchParams): Promise<void> 
 }
 
 /** Removes a kill switch scope entirely (claim() sees it as never having existed). */
-export async function clearKillSwitch(params: { organizationId: string | null; jobType: string | null }): Promise<void> {
+export async function clearKillSwitch(params: {
+  organizationId: string | null;
+  jobType: string | null;
+}): Promise<void> {
   await withPinnedPostgresTransaction((tx) =>
-    tx.queryRun(`DELETE FROM compute_kill_switches WHERE organization_id IS NOT DISTINCT FROM ? AND job_type IS NOT DISTINCT FROM ?`, [
-      params.organizationId,
-      params.jobType,
-    ])
+    tx.queryRun(
+      `DELETE FROM compute_kill_switches WHERE organization_id IS NOT DISTINCT FROM ? AND job_type IS NOT DISTINCT FROM ?`,
+      [params.organizationId, params.jobType]
+    )
   );
 }
 
-export async function isOrgComputeKilled(organizationId: string, jobType: string): Promise<boolean> {
+export async function isOrgComputeKilled(
+  organizationId: string,
+  jobType: string
+): Promise<boolean> {
   const row = await withPinnedPostgresTransaction((tx) =>
-    tx.queryOne<{ killed: boolean }>(`SELECT is_org_compute_killed(?, ?) AS killed`, [organizationId, jobType])
+    tx.queryOne<{ killed: boolean }>(`SELECT is_org_compute_killed(?, ?) AS killed`, [
+      organizationId,
+      jobType,
+    ])
   );
   return Boolean(row?.killed);
 }
@@ -870,7 +933,8 @@ export interface SetOrgConcurrencyLimitParams {
  * tightening, not a retroactive behaviour change for every existing caller.
  */
 export async function setOrgConcurrencyLimit(params: SetOrgConcurrencyLimitParams): Promise<void> {
-  if (!(params.maxConcurrent > 0)) throw new Error('setOrgConcurrencyLimit: maxConcurrent must be > 0');
+  if (!(params.maxConcurrent > 0))
+    throw new Error('setOrgConcurrencyLimit: maxConcurrent must be > 0');
   await withPinnedPostgresTransaction((tx) =>
     tx.queryRun(
       `INSERT INTO compute_org_concurrency_limits (id, organization_id, job_type, max_concurrent, updated_by)
@@ -882,10 +946,17 @@ export async function setOrgConcurrencyLimit(params: SetOrgConcurrencyLimitParam
   );
 }
 
-export async function getOrgConcurrencyLimit(organizationId: string, jobType: string): Promise<number> {
+export async function getOrgConcurrencyLimit(
+  organizationId: string,
+  jobType: string
+): Promise<number> {
   const row = await withPinnedPostgresTransaction((tx) =>
-    tx.queryOne<{ limit: number }>(`SELECT org_concurrency_limit(?, ?) AS limit`, [organizationId, jobType])
+    tx.queryOne<{ limit: number }>(`SELECT org_concurrency_limit(?, ?) AS limit`, [
+      organizationId,
+      jobType,
+    ])
   );
-  if (row == null || row.limit == null) throw new Error('org_concurrency_limit() returned no row/NULL — migration not applied?');
+  if (row == null || row.limit == null)
+    throw new Error('org_concurrency_limit() returned no row/NULL — migration not applied?');
   return row.limit;
 }

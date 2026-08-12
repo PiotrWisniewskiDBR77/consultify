@@ -42,9 +42,9 @@ import {
   cancelJob,
   ComputeJobArtifactMismatchError,
   enqueue,
+  type EnqueueJobParams,
   getJob,
   getJobOutput,
-  type EnqueueJobParams,
 } from '../../../services/finance/canonical/computeJobService.js';
 import { asyncHandler } from '../../../utils/asyncHandler.js';
 import { financeV2Meta, readIdempotencyKey, sendError } from './_shared.js';
@@ -81,11 +81,21 @@ router.post(
 
     const idempotencyKey = readIdempotencyKey(req);
     if (!idempotencyKey) {
-      return sendError(res, 400, 'IDEMPOTENCY_KEY_REQUIRED', 'Idempotency-Key header (or body.idempotencyKey) is required to enqueue a compute job');
+      return sendError(
+        res,
+        400,
+        'IDEMPOTENCY_KEY_REQUIRED',
+        'Idempotency-Key header (or body.idempotencyKey) is required to enqueue a compute job'
+      );
     }
     for (const field of ['jobType', 'inputArtifactId', 'inputRevisionHash', 'engineManifestId']) {
       if (typeof body[field] !== 'string' || !body[field].trim()) {
-        return sendError(res, 400, 'INVALID_BODY', `${field} is required and must be a non-empty string`);
+        return sendError(
+          res,
+          400,
+          'INVALID_BODY',
+          `${field} is required and must be a non-empty string`
+        );
       }
     }
 
@@ -165,7 +175,9 @@ router.get(
 
     const output = await getJobOutput(organizationId, jobId);
     if (!output) {
-      return sendError(res, 404, 'OUTPUT_NOT_READY', 'Compute job has no committed output yet', { jobStatus: job.status });
+      return sendError(res, 404, 'OUTPUT_NOT_READY', 'Compute job has no committed output yet', {
+        jobStatus: job.status,
+      });
     }
 
     return res.status(200).json({
@@ -193,7 +205,8 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId } = getV8Context(req);
     const jobId = String(req.params.jobId || '');
-    const reason = typeof (req.body ?? {}).reason === 'string' ? req.body.reason : 'Cancelled via API';
+    const reason =
+      typeof (req.body ?? {}).reason === 'string' ? req.body.reason : 'Cancelled via API';
 
     const updated = await cancelJob(organizationId, jobId, reason);
     if (!updated) {
@@ -201,7 +214,12 @@ router.post(
       // exist, belongs to another org, or is already terminal (queued/running
       // only are cancellable) — callers cannot distinguish "not yours" from
       // "already done" from "never existed".
-      return sendError(res, 404, 'NOT_FOUND', 'Compute job not found or not cancellable (already terminal)');
+      return sendError(
+        res,
+        404,
+        'NOT_FOUND',
+        'Compute job not found or not cancellable (already terminal)'
+      );
     }
 
     return res.status(200).json({ data: jobToDto(updated), meta: financeV2Meta() });

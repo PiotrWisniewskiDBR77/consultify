@@ -20,13 +20,13 @@ import { getArtifact } from '../../../services/finance/canonical/artifactVersion
 import {
   createSavedView,
   deleteSavedView,
+  type FinanceSavedViewRow,
   FinanceSavedViewScopeValues,
   getSavedView,
   listSavedViews,
+  type LoadedSavedView,
   resolveSharedView,
   updateSavedView,
-  type FinanceSavedViewRow,
-  type LoadedSavedView,
 } from '../../../services/finance/canonical/savedViewService.js';
 import { asyncHandler } from '../../../utils/asyncHandler.js';
 import { financeV2Meta, sendError } from './_shared.js';
@@ -98,11 +98,21 @@ router.post(
     // an INVALID_BODY 400 that happens to depend on what else was wrong with the rest of the body.
     const artifact = await getArtifact(organizationId, body.artifactId);
     if (!artifact) {
-      return sendError(res, 404, 'ARTIFACT_NOT_FOUND', `No finance_artifacts row for artifact_id='${body.artifactId}' in this organization`);
+      return sendError(
+        res,
+        404,
+        'ARTIFACT_NOT_FOUND',
+        `No finance_artifacts row for artifact_id='${body.artifactId}' in this organization`
+      );
     }
 
     if (!(FinanceSavedViewScopeValues as readonly string[]).includes(body.scope)) {
-      return sendError(res, 400, 'INVALID_BODY', `scope must be one of ${FinanceSavedViewScopeValues.join(', ')}`);
+      return sendError(
+        res,
+        400,
+        'INVALID_BODY',
+        `scope must be one of ${FinanceSavedViewScopeValues.join(', ')}`
+      );
     }
     if (typeof body.gridViewState !== 'object' || body.gridViewState === null) {
       return sendError(res, 400, 'INVALID_BODY', 'gridViewState is required');
@@ -193,7 +203,10 @@ router.patch(
       requesterUserId: userId,
       patch: {
         name: typeof body.name === 'string' ? body.name : undefined,
-        gridViewState: typeof body.gridViewState === 'object' && body.gridViewState !== null ? body.gridViewState : undefined,
+        gridViewState:
+          typeof body.gridViewState === 'object' && body.gridViewState !== null
+            ? body.gridViewState
+            : undefined,
         filters: Array.isArray(body.filters) ? body.filters : undefined,
       },
     });

@@ -32,18 +32,24 @@ import type { AuthRequest } from '../../../middleware/auth.middleware.js';
 import { getV8Context } from '../../../middleware/v8Auth.middleware.js';
 import {
   createArtifact,
+  type CreateArtifactParams,
   getArtifact,
   getBusinessVersion,
   listBusinessVersions,
   renameArtifact,
-  type CreateArtifactParams,
 } from '../../../services/finance/canonical/artifactVersionService.js';
-import { isLegacyFinanceTable, resolveLegacyFinanceArtifact } from '../../../services/finance/canonical/legacyIdBridgeService.js';
+import {
+  isLegacyFinanceTable,
+  resolveLegacyFinanceArtifact,
+} from '../../../services/finance/canonical/legacyIdBridgeService.js';
 import {
   allowedActionsFromStatus,
   type FinanceArtifactType,
 } from '../../../services/finance/canonical/lifecycleService.js';
-import { canRenameArtifact, validateWorkspaceName } from '../../../services/finance/workspace/workspaceBarContract.js';
+import {
+  canRenameArtifact,
+  validateWorkspaceName,
+} from '../../../services/finance/workspace/workspaceBarContract.js';
 import { asyncHandler } from '../../../utils/asyncHandler.js';
 import { financeV2Meta, mapOrgRoleToFinanceRole, sendError } from './_shared.js';
 
@@ -73,7 +79,12 @@ router.post(
     const body = req.body ?? {};
 
     if (!isValidArtifactType(body.artifactType)) {
-      return sendError(res, 400, 'INVALID_ARTIFACT_TYPE', `artifactType must be one of ${VALID_ARTIFACT_TYPES.join(', ')}`);
+      return sendError(
+        res,
+        400,
+        'INVALID_ARTIFACT_TYPE',
+        `artifactType must be one of ${VALID_ARTIFACT_TYPES.join(', ')}`
+      );
     }
 
     const params: CreateArtifactParams = {
@@ -142,7 +153,12 @@ router.get(
     const legacyId = String(req.params.legacyId || '');
 
     if (!isLegacyFinanceTable(legacyTable)) {
-      return sendError(res, 400, 'INVALID_LEGACY_TABLE', `legacyTable must be one of the known legacy Finance tables, got "${legacyTable}"`);
+      return sendError(
+        res,
+        400,
+        'INVALID_LEGACY_TABLE',
+        `legacyTable must be one of the known legacy Finance tables, got "${legacyTable}"`
+      );
     }
     if (!legacyId.trim()) {
       return sendError(res, 400, 'INVALID_LEGACY_ID', 'legacyId is required');
@@ -196,7 +212,10 @@ router.get(
 
     let currentVersion = null;
     if (artifact.current_business_version_id) {
-      currentVersion = await getBusinessVersion(organizationId, artifact.current_business_version_id);
+      currentVersion = await getBusinessVersion(
+        organizationId,
+        artifact.current_business_version_id
+      );
     }
     // `current_business_version_id` is only ever back-filled by future work
     // (createArtifact leaves it NULL, see that function's own INSERT list) —

@@ -32,17 +32,22 @@ import multer from 'multer';
 import { withPinnedPostgresTransaction } from '../../../database/PostgresDatabase.js';
 import type { AuthRequest } from '../../../middleware/auth.middleware.js';
 import { getV8Context } from '../../../middleware/v8Auth.middleware.js';
+import type { FinanceExcelManifest } from '../../../services/finance/canonical/financeExcelShared.js';
 import { exportFinanceStatementPack } from '../../../services/finance/canonical/financeExportService.js';
 import {
   applyFinanceImport,
+  type ApplyFinanceImportReopenParams,
   parseFinanceExcelBuffer,
   previewFinanceImport,
-  type ApplyFinanceImportReopenParams,
   type RawImportRow,
 } from '../../../services/finance/canonical/financeImportService.js';
-import type { FinanceExcelManifest } from '../../../services/finance/canonical/financeExcelShared.js';
 import { asyncHandler } from '../../../utils/asyncHandler.js';
-import { financeV2Meta, mapOrgRoleToFinanceRole, readIdempotencyKey, sendError } from './_shared.js';
+import {
+  financeV2Meta,
+  mapOrgRoleToFinanceRole,
+  readIdempotencyKey,
+  sendError,
+} from './_shared.js';
 
 const router = Router();
 
@@ -50,7 +55,8 @@ const xlsxUpload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 25 * 1024 * 1024 }, // 25MB — generous for a 5k x 60 statement pack (AP-02 size target)
   fileFilter: (_req, file, cb) => {
-    const okMime = file.mimetype === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+    const okMime =
+      file.mimetype === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
     const okExt = file.originalname.toLowerCase().endsWith('.xlsx');
     cb(null, okMime || okExt);
   },
@@ -74,8 +80,14 @@ router.get(
       const status = result.code === 'NOT_FOUND' ? 404 : 400;
       return sendError(res, status, result.code, result.message);
     }
-    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-    res.setHeader('Content-Disposition', `attachment; filename="${result.manifest.artifactId}-v${result.manifest.businessVersionNo}.xlsx"`);
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    );
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="${result.manifest.artifactId}-v${result.manifest.businessVersionNo}.xlsx"`
+    );
     res.setHeader('X-Finance-Export-Manifest', JSON.stringify(result.manifest));
     return res.status(200).send(result.workbookBuffer);
   })
@@ -134,14 +146,29 @@ router.post(
       )
     );
     if (!businessVersion) {
-      return sendError(res, 404, 'NOT_FOUND', 'Artifact or business version not found in this organization');
+      return sendError(
+        res,
+        404,
+        'NOT_FOUND',
+        'Artifact or business version not found in this organization'
+      );
     }
 
     if (typeof body.manifest !== 'object' || body.manifest === null) {
-      return sendError(res, 400, 'INVALID_BODY', 'manifest is required (from a prior POST /import/parse call)');
+      return sendError(
+        res,
+        400,
+        'INVALID_BODY',
+        'manifest is required (from a prior POST /import/parse call)'
+      );
     }
     if (!Array.isArray(body.rows)) {
-      return sendError(res, 400, 'INVALID_BODY', 'rows must be an array (from a prior POST /import/parse call)');
+      return sendError(
+        res,
+        400,
+        'INVALID_BODY',
+        'rows must be an array (from a prior POST /import/parse call)'
+      );
     }
 
     const result = await previewFinanceImport({
@@ -198,15 +225,31 @@ router.post(
     if (!Array.isArray(body.rows)) {
       return sendError(res, 400, 'INVALID_BODY', 'rows must be an array');
     }
-    const batchIdempotencyKey = readIdempotencyKey(req) ?? (typeof body.batchIdempotencyKey === 'string' ? body.batchIdempotencyKey : undefined);
+    const batchIdempotencyKey =
+      readIdempotencyKey(req) ??
+      (typeof body.batchIdempotencyKey === 'string' ? body.batchIdempotencyKey : undefined);
     if (!batchIdempotencyKey) {
-      return sendError(res, 400, 'INVALID_BODY', 'batchIdempotencyKey (or Idempotency-Key header) is required');
+      return sendError(
+        res,
+        400,
+        'INVALID_BODY',
+        'batchIdempotencyKey (or Idempotency-Key header) is required'
+      );
     }
 
     let reopen: ApplyFinanceImportReopenParams | undefined;
     if (body.reopen !== undefined && body.reopen !== null) {
-      if (typeof body.reopen.reason !== 'string' || !body.reopen.reason || typeof body.reopen.expectedVersion !== 'number') {
-        return sendError(res, 400, 'INVALID_BODY', 'reopen.reason (string) and reopen.expectedVersion (number) are required when reopen is supplied');
+      if (
+        typeof body.reopen.reason !== 'string' ||
+        !body.reopen.reason ||
+        typeof body.reopen.expectedVersion !== 'number'
+      ) {
+        return sendError(
+          res,
+          400,
+          'INVALID_BODY',
+          'reopen.reason (string) and reopen.expectedVersion (number) are required when reopen is supplied'
+        );
       }
       reopen = {
         reason: body.reopen.reason,
@@ -231,11 +274,19 @@ router.post(
     });
 
     if (!result.ok) {
-      return sendError(res, httpStatusForApplyImportError(result.code), result.code, result.message, {
-        ...(result.reopenRequired !== undefined ? { reopenRequired: result.reopenRequired } : {}),
-        ...(result.rowErrors !== undefined ? { rowErrors: result.rowErrors } : {}),
-        ...(result.currentWorkingRevisionId !== undefined ? { currentWorkingRevisionId: result.currentWorkingRevisionId } : {}),
-      });
+      return sendError(
+        res,
+        httpStatusForApplyImportError(result.code),
+        result.code,
+        result.message,
+        {
+          ...(result.reopenRequired !== undefined ? { reopenRequired: result.reopenRequired } : {}),
+          ...(result.rowErrors !== undefined ? { rowErrors: result.rowErrors } : {}),
+          ...(result.currentWorkingRevisionId !== undefined
+            ? { currentWorkingRevisionId: result.currentWorkingRevisionId }
+            : {}),
+        }
+      );
     }
 
     return res.status(200).json({
