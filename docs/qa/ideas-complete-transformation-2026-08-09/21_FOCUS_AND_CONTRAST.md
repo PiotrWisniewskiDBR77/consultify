@@ -477,3 +477,109 @@ VERIFIED via an automated repeatable check for rows 3 and 4**, only via the manu
   instances of the same `opacity-40`-on-`slate-600/500` or `c-text-muted`-on-tinted-background
   patterns elsewhere in the four tools or the other 26 `RowActionsMenu` call sites — those may
   or may not share the same defect class; not measured, not claimed fixed.
+
+## 9. RISK-35 follow-up — S9-GATE4EVIDENCE, 2026-08-12: the depth-3+ "L3" badge, closed
+
+§8.8's first bullet ("depth-3+ computes to ~4.27:1... not fixed, out of scope") is now closed.
+I did not accept "hypothetical" as a reason to leave it: `getNodeDepth()`
+(`mindMapNodeModel.ts:76-89`) walks the real edge chain to compute `_depth`, so depth 3 is
+reachable by production data whenever a node has a grandparent branch — the code branch was
+untested, not untestable.
+
+### 9.1 Method — built the missing depth-3 node, didn't argue from source
+
+No depth-3 node existed in the `mindmap-canvas` dev-render fixture (`§8.8` correctly says so).
+Added one: `idea-scope-1-detail`, child of the existing depth-2 `idea-scope-1`
+(`dev-render/screens/mindmap-canvas.tsx`). Loaded the harness for real, in both themes, and
+read the badge's LIVE `getComputedStyle` (resolved `color`, cumulative ancestor `opacity`) —
+not assumed from the Tailwind class in source. Cross-checked with a genuine canvas 2D
+rasterization (`ctx.fillStyle` = bg, `ctx.globalAlpha` = measured cumulative opacity,
+`ctx.fillStyle` = measured text color, `getImageData` readback) — the browser's own compositor,
+not my own arithmetic reimplementation of it. Both methods agreed to the pixel.
+
+### 9.2 Results
+
+| Depth | Theme | Text color (resolved) | Cumulative opacity | Backdrop | Composited | Ratio | Verdict |
+|---|---|---|---|---|---|---|---|
+| 2 | light | `rgb(71,85,105)` (`c-text-secondary`) | 0.9 | `--c-bg` `rgb(250,250,249)` | `rgb(89,102,119)` | 5.60:1 | PASS |
+| 3 | light | `rgb(71,85,105)` (`c-text-secondary`) | 0.8 | `--c-bg` `rgb(250,250,249)` | `rgb(107,118,134)` | **4.41:1** | **FAIL** |
+| 2 | dark | `rgb(184,196,214)` (`c-text-secondary`) | 0.9 | `--c-bg` `rgb(10,15,30)` | `rgb(167,178,196)` | 8.92:1 | PASS |
+| 3 | dark | `rgb(184,196,214)` (`c-text-secondary`) | 0.8 | `--c-bg` `rgb(10,15,30)` | `rgb(149,160,177)` | 7.22:1 | PASS |
+
+After the fix (`text-c-text` instead of `text-c-text-secondary`), re-measured live the same way:
+
+| Depth | Theme | Composited | Ratio | Verdict |
+|---|---|---|---|---|
+| 2 | light | `rgb(38,46,63)` | 13.01:1 | PASS |
+| 3 | light | `rgb(62,68,83)` | **9.32:1** | **PASS** |
+| 2 | dark | `rgb(221,224,229)` | 14.43:1 | PASS |
+| 3 | dark | `rgb(197,201,207)` | 11.48:1 | PASS |
+
+### 9.3 Why my depth-2 numbers (8.92 dark / 5.60 light) differ slightly from §8's row 3 (8.26 / 5.41)
+
+Both are real, both PASS, neither was wrong — they measured against a different backdrop, and
+I tracked down exactly why. §8's row 3 (and the matrix at line 151/153) compositc the text
+against `rgb(241,245,249)` — that is the node's OWN `bg-slate-100` background color, i.e. "if
+the node's background were opaque, what's the contrast of the text against it." My method
+composites against `--c-bg` `rgb(250,250,249)` — the true page canvas the ENTIRE node (text
+*and* its own background together) is faded onto, because the `opacity-90`/`opacity-80` class
+is on the outer node `<div>`, so the node's local background is *also* being faded by the same
+group opacity, not a stable opaque backdrop. I confirmed which is physically correct by reading
+the live DOM chain (`getComputedStyle` on every ancestor up to `<body>`): the node div with
+`bg-slate-100` has `opacity: 0.9` (or `0.8`) applied to itself, and the canvas behind it
+(`.mm-canvas.bg-c-bg`) has `opacity: 1`. A CSS group with `opacity < 1` is composited as a
+single flattened layer against whatever is *behind the whole group* — so the true final pixel
+blends toward `--c-bg`, not toward the node's own (also-fading) background. Reproducing §8's
+own method at depth 3 (`text-c-text-secondary` at 0.8 alpha against `rgb(241,245,249)` instead
+of `--c-bg`) gives **4.27:1** — matching the "~4.27:1" figure already on record — so both
+methods agree on the depth-3 FAIL verdict; the backdrop choice moved the number by ~3%, not the
+outcome. Flagging this for the record because an unexplained gap between two of this program's
+own measurements is exactly the kind of thing that should have a traceable cause, not just a
+"close enough."
+
+### 9.4 The fix and why this option, not the other two
+
+`src/components/MyWork/IdeaRecommendationMap.tsx` (the `L{depth}` badge, ~line 1790): swapped
+`text-c-text-secondary` → `text-c-text` (a `c-*` token, never `primary-*`). Three options
+weighed, in the commit message and here:
+
+1. **Exempt the badge from `depthOpacity`** — rejected. The badge sits inside the same `<div>`
+   whose `className` carries `depthOpacity`; exempting it would mean moving it out of that
+   div's stacking context entirely (portal, or an absolutely-positioned sibling), a materially
+   bigger structural change to fix a 1-line contrast issue.
+2. **Raise the depth-3 opacity value itself** (e.g. `opacity-80` → `opacity-85`) — rejected.
+   That value fades the WHOLE node (border, background, every child), not just this label;
+   changing it changes the depth-hierarchy visual for reasons unrelated to this one badge's
+   legibility, and reduces the ladder's usefulness as a signal.
+3. **Strengthen only the badge's own color token** (chosen) — a 1-line, badge-scoped change.
+   Clears with a wide margin (9.32:1 / 11.48:1 at the worst depth) so it stays clear even if the
+   opacity ladder changes again later, and doesn't touch anything else in the node's rendering.
+
+### 9.5 Negative control
+
+Reverted the one line back to `text-c-text-secondary`, reloaded the harness, re-read the live
+badge's `getComputedStyle` — reproduced `rgb(71,85,105)` at cumulative opacity `0.8`,
+i.e. the exact pre-fix 4.41:1 FAIL state. Restored the fix, reloaded, re-confirmed
+`text-c-text` / `rgb(15,23,42)` / 9.32:1 PASS. `git diff --stat` clean after restore (no
+residual diff from the revert/restore cycle — only the intended fix remains).
+
+### 9.6 Guards, tests, commit
+
+- `check-focus-canon.sh`, `check-list-canon.sh`, `check-artefakt.sh`, `check-ledger-csv.sh`: all
+  `rc=0` (the first pass of `check-artefakt.sh` caught a genuine false positive — my own
+  explanatory code comment contained the literal substring `primary-` inside prose about what
+  NOT to use; reworded the comment, re-ran, `rc=0`).
+- `check-gestosc.sh src/components/MyWork/IdeaRecommendationMap.tsx dev-render/screens/mindmap-canvas.tsx`: `rc=0`.
+- `npx vitest run tests/unit/mindmap/mindMapNodeModel.test.ts`: 6/6 passed (the depth-computation
+  logic this fix depends on; there is no existing dedicated test asserting the badge's own
+  Tailwind class, so none was run for that — the fix is a `className` swap, not new logic).
+- Commit (this worktree, not pushed): `55c8cf6f41` — `fix(ideas): close RISK-35's depth-3 gap
+  in the Mind Map badge (light theme)`.
+
+### 9.7 Still NOT VERIFIED
+
+- No automated, re-runnable contrast-assertion script was written for this specific check (same
+  gap §8.8 already notes for rows 3/4) — verified via live `getComputedStyle` + canvas
+  rasterization reads in this session's browser tab, not committed as a script.
+- No sweep for the same "text token composited against a `depthOpacity`-faded ancestor" pattern
+  elsewhere in the Mind Map or other tools — only this one badge was measured and fixed.

@@ -249,3 +249,126 @@ cited as acceptance evidence. The `g4v2__*` set replaces them.
   expected to hold, and that expectation is **not** evidence — it was not
   screenshotted.
 - Viewport widths between 720 and 1280, and heights between 450 and 800.
+
+---
+
+## RECAPTURE — Stream S9-GATE4EVIDENCE, 2026-08-12: g4v3 Table set + RISK-19/RISK-29 reconciliation
+
+This stream's Mission B/C: recapture the Idea Table evidence RISK-29 says is still missing,
+and independently re-verify the rail-collision fix RISK-19 says is done. Both traced, both
+spot-checked, findings below. **I did not edit `16_OPEN_RISKS_AND_LIMITATIONS.csv` — the
+proposed RISK-29 row text is at the bottom of this section, for the session owner to write.**
+
+### Independent trace of the `--mels-rail-gutter` fix (not taking RISK-19's word for it)
+
+Read the code myself, not just the doc above:
+
+- `src/components/shared/ExecutiveModuleShell/index.tsx:319-370` — `railGutter`/`railExtent`
+  state, measured via `ResizeObserver` + `getBoundingClientRect()` on
+  `[data-mels-floating-rail-surface]` (the rail is `createPortal`-ed to `document.body`, so a
+  tree-based measurement would read zero — the code explicitly guards against that). Line 488
+  sets `'--mels-rail-gutter': `${railExtent}px`` as a CSS custom property on the canvas-content
+  wrapper.
+- `src/components/MyWork/whiteboard/WhiteboardToolbar.tsx:277` — `style={{ paddingRight: 'var(--mels-rail-gutter, 0px)' }}`.
+- `src/components/MyWork/processflow/ProcessFlowToolbar.tsx:338` — same line, same pattern.
+
+Both toolbars consume the same measured variable the shell publishes. This is a real,
+measured-not-guessed fix (ResizeObserver, not a hardcoded px guess), independently confirmed.
+
+### Spot-check — 2 of the 24 `g4v2__*` 720×450 captures, opened and inspected myself
+
+- `g4v2__processflow__720x450__light__pl.png`: cropped and 3x-upscaled the top-right corner.
+  The "SEL" mode-badge chip sits fully clear of the floating right rail, with a visible gap
+  between the chip's right edge and the rail's rounded left edge. No overlap, no truncation.
+- `g4v2__whiteboard__720x450__dark__en.png`: same crop treatment. Same result — the "SEL" chip
+  clears the rail with a visible gap in dark theme too.
+
+Both cells genuinely clear the collision. Consistent with the 24-cell PASS table above.
+
+### Table recapture — 4 new `g4v3__table__1440x900__{light,dark}__{pl,en}.png` files
+
+Captured via a throwaway Playwright script (not committed — one-off capture, not reusable
+tooling) against this worktree's own dev server, `idea-table` screen, **with S1-CONTRAST's
+kebab-opacity fix in place** (cherry-picked commits `7fff6a1078`..`705c066180`, this stream).
+All four opened and inspected with the Read tool. Per cell:
+
+| Cell | 5 right-panel headers | Clipping | Overlap | Kebab at rest |
+|---|---|---|---|---|
+| light/pl | AKCJE·WŁAŚCIWOŚCI·POWIĄZANIA·KOMENTARZE·HISTORIA/AI, all in full | None | None | **Not in frame** — see below |
+| dark/pl | Same 5, all in full, correct dark tokens | None | None | Not in frame |
+| light/en | ACTIONS·PROPERTIES·RELATIONS·COMMENTS·HISTORY/AI, all in full | None | None | Not in frame |
+| dark/en | Same 5, all in full | None | None | Not in frame |
+
+**Kebab-at-rest finding (measured, not eyeballed):** at 1440px total width with the 320px
+`ArtifactRightPanel` reserved (`aside` rect confirmed `x:1120, width:320` via
+`getBoundingClientRect()`), the table's own fixed column widths (`select 40 + title 560 +
+stage 150 + tags 230 + tool 190 + date 128 + actions 56 = 1354px`) don't fit in the remaining
+`1120px`. The table's own `.app-table-scrollbar` div (`overflow-x: auto`) safely contains the
+overflow — confirmed `scrollWidth 1355` vs `clientWidth 1120`, **no visual overlap onto the
+panel** (this is NOT a repeat of the original `min-w-0` bug; that one had no scroll container
+and pushed the panel off-canvas). But it does mean the Data and row-actions (kebab) columns
+sit past the visible edge at `scrollLeft: 0` in all four cells — confirmed by DOM measurement
+(`kebabRect.right: 1343` vs the visible clip boundary at `1120`) and by scrolling the container
+to its max (`scrollLeft: 235`) and re-screenshotting: the kebab **is** there, legible, at the
+opacity S1's fix set (not part of the four required filenames — a supplementary check only).
+This is a property of this specific dev-render composition (table + an extra 320px artefact
+panel neither side reserves room for) at exactly 1440px — RISK-29's own corrected text already
+establishes that production (`MyIdeasListContent.tsx:1785`) has no such competing panel, so
+this is not expected to reproduce there. Not fixed, because it isn't a defect in the fixed
+code path — flagged for the record, not silently omitted.
+
+### A stale-evidence finding, not something I introduced: RISK-29's "only light/pl recaptured" claim does not match what's on disk
+
+Before capturing anything new, I read the FOUR existing `g4__table__baseline__1440x900__*`
+files (not just light/pl) to see what "not yet recaptured" would look like. All four are
+already clean — opened and inspected with the Read tool just now, same result as the new
+`g4v3` set (all 5 panel headers in full, no clipping, no overlap). Cross-checked against this
+same document's own **"RECAPTURE — Stream VISUAL-2, stamp `b03937fcf9`, 2026-08-10"** section
+above, which explicitly lists all four `g4__table__baseline__1440x900__*` files as
+"Recaptured (overwritten) — was FAIL (F-06), now PASS" and states "F-06 is CLOSED." That
+recapture predates this stream and predates RISK-35's kebab-contrast fix, but it is real and
+it is on disk now, independently re-verified by me. RISK-29's CSV text ("only light/pl has
+been recaptured so far") appears to be a documentation-sync gap against this same file, not
+against the product — the session that wrote RISK-29's "CORRECTED 2026-08-10" text and the
+session that ran Stream VISUAL-2's recapture were evidently not reconciled with each other.
+I did not resolve which came first; I only verified what's true of the files as they exist now.
+
+### Proposed corrected RISK-29 row (for the session owner to write — not written by me)
+
+```
+risk_id: RISK-29
+epic_id: E13
+category: visual
+description: [unchanged from the current CORRECTED 2026-08-10 text — the harness
+  root-cause analysis (min-w-0 missing, dev-render-only, zero production code
+  touched) still stands and was not re-litigated by this stream]
+evidence: [existing evidence line] || S9-GATE4EVIDENCE 2026-08-12: independently
+  traced the --mels-rail-gutter fix (ExecutiveModuleShell/index.tsx:319-370,488;
+  WhiteboardToolbar.tsx:277; ProcessFlowToolbar.tsx:338) and spot-checked
+  g4v2__processflow__720x450__light__pl.png + g4v2__whiteboard__720x450__dark__en.png
+  by eye — both clear, no overlap, no truncation. Recaptured all four Table cells
+  at 1440x900 with S1-CONTRAST's kebab fix in place: g4v3__table__1440x900__
+  {light,dark}__{pl,en}.png, all opened and inspected — 5/5 right-panel headers
+  render in full in every cell, zero clipping, zero overlap. Also independently
+  re-verified the pre-existing g4__table__baseline__1440x900__* set (all 4 cells,
+  not just light/pl) and found it already clean, per this doc's own Stream
+  VISUAL-2 section.
+severity: P2
+status: RESOLVED — both halves closed. Zoom-200 rail overlap: RESOLVED, code
+  fix traced independently and reproduced clear in 2 fresh spot-checks (in
+  addition to RISK-19's own 24-cell matrix). Table-evidence recapture: RESOLVED,
+  g4v3 4-cell set is the first evidence combining the harness fix AND the
+  RISK-35 kebab-contrast fix; the CSV's prior "only light/pl recaptured" claim
+  is superseded (contradicted by both the new g4v3 set and the pre-existing,
+  independently-re-verified g4__table__baseline__1440x900__* set). One
+  non-blocking finding carried forward, not a defect: at exactly 1440px in
+  this specific dev-render composition (table + the exploratory 320px
+  ArtifactRightPanel), the row-actions kebab needs a horizontal scroll to
+  reach — confirmed harmless (contained scroll, not a panel overlap) and
+  confirmed not expected to reproduce in production, which has no competing
+  panel at that width.
+```
+
+I am not marking Gate 4 PASS and not claiming owner acceptance — both remain the owner's
+and the session coordinator's alone. This section only supplies the evidence trail and a
+proposed row for RISK-29; the CSV itself was left untouched by this stream.
