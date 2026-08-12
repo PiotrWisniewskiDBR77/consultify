@@ -57,12 +57,30 @@
  *                                  stale '1' from a prior visit in the same
  *                                  browser session can't leak through and
  *                                  fake an "off" screenshot.
+ *   &view=hub|set                 RN-G5 (2026-08-12): which real route to
+ *                                  mount at — `hub` (`/results/okr`, the
+ *                                  flag-gated `ResultsOkrRegistryPage` route
+ *                                  entry, default) or `set`
+ *                                  (`/results/okr/sets/:okrSetId`,
+ *                                  `OkrSetToolPage` — a REAL cold direct-URL
+ *                                  entry, not a click-through).
+ *   &setId=<id>                   which set id the `set` view starts on
+ *                                  (default 'okr-set-5', an active set);
+ *                                  'okr-set-8' is closed/terminal (honest
+ *                                  read-only render). Any id NOT in
+ *                                  `MOCK_SETS` (e.g. 'does-not-exist') 404s
+ *                                  -> the SAME forbidden state a cross-org id
+ *                                  would (both collapse into one response
+ *                                  server-side, D06/D07).
  */
 import React from 'react';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 
 import { ResultsOkrRegistryPage } from '../../src/components/ResultsVNext/ResultsOkrRegistryPage';
+import { OkrSetToolPage } from '../../src/components/ResultsVNext/okr/OkrSetToolPage';
 import type { OkrSetDto } from '../../src/components/ResultsVNext/okr/okrApi';
+import { ROUTES } from '../../src/routes/routeConfig';
 
 // ── Mock OKR Sets — one representative row per real status (all 10 from
 //    `OKR_SET_STATUSES`, including the two reserved/unreachable ones for
@@ -375,6 +393,12 @@ const params = new URLSearchParams(window.location.search);
 const state = params.get('state') || 'ready';
 const flagOff = params.get('ff') === 'off';
 
+// RN-G5 (2026-08-12) — which real route to mount at, mirroring
+// `results-vnext-roi-registry.tsx`'s own `?view=`. `set` is a REAL cold
+// direct-URL entry to `OkrSetToolPage`, not a click-through.
+const view = params.get('view') === 'set' ? 'set' : 'hub';
+const setIdParam = params.get('setId') || 'okr-set-5';
+
 try {
   // EXPLICIT '0'/'1', never a skipped write: `localStorage` is shared
   // across the whole harness origin, so a PRIOR visit without `&ff=off`
@@ -384,6 +408,10 @@ try {
   // default, so the screen would silently render the HUB while claiming to
   // prove the flag-OFF `EmptyState`. Caught by orchestrator review before
   // commit — see `results-vnext-roi-registry.tsx`'s identical fix/comment.
+  //
+  // Integration note: `&ff=off` now also gates the `set` view, because both
+  // views mount behind the same domain flag. That is the honest behaviour —
+  // a disabled domain disables its deep link too.
   window.localStorage.setItem('ff.results_vnext_okr_registry', flagOff ? '0' : '1');
 } catch {
   // no-op — dev-render only
@@ -423,11 +451,41 @@ if (!g.__OKR_REGISTRY_FETCH__) {
   };
 }
 
+// RN-G5 (2026-08-12) — a REAL two-route `<Routes>` tree (same convention
+// `results-vnext-kpi-tool.tsx`/`results-vnext-roi-registry.tsx` use) so the
+// Sets registry's "Otwórz obszar roboczy" `navigate()`, the `OkrSetToolPage`
+// cold direct-URL load, and its "back to registry" breadcrumb all exercise
+// the REAL router. `PROGRAMS`/`.CYCLES` get plain marker routes (their own
+// real page is `OkrProgramsPage`/`OkrCyclesPage`, already covered by the
+// separate `results-vnext-okr-admin.tsx` harness) — this file's own job is
+// only to prove the two new registry buttons `navigate()` to the EXACT
+// right path, not to re-render those pages' own mock plumbing a second
+// time.
+const initialPath = view === 'set' ? ROUTES.RESULTS_OKR.SET.replace(':okrSetId', setIdParam) : ROUTES.RESULTS_OKR.ROOT;
+
 const ResultsVNextOkrRegistryScreen: React.FC = () => {
   useTranslation();
   return (
     <div className="h-screen bg-c-bg text-c-text">
-      <ResultsOkrRegistryPage />
+      <MemoryRouter initialEntries={[initialPath]}>
+        <Routes>
+          {/* Integration: the ROOT route mounts the flag-gated route entry
+              `ResultsOkrRegistryPage` (what AppRoutes.tsx:2648 actually
+              mounts), not `ResultsOkrHub` directly — that is the whole point
+              of the harness lane's B1 fix, and it composes with the deeplink
+              lane's routing structure rather than replacing it. */}
+          <Route path={ROUTES.RESULTS_OKR.ROOT} element={<ResultsOkrRegistryPage />} />
+          <Route path={ROUTES.RESULTS_OKR.SET} element={<OkrSetToolPage />} />
+          <Route
+            path={ROUTES.RESULTS_OKR.PROGRAMS}
+            element={<div data-testid="dev-render-okr-programs-marker" className="p-6 text-c-text">Programy OKR (dev-render marker — realna strona: OkrProgramsPage, harness results-vnext-okr-admin.tsx)</div>}
+          />
+          <Route
+            path={ROUTES.RESULTS_OKR.CYCLES}
+            element={<div data-testid="dev-render-okr-cycles-marker" className="p-6 text-c-text">Cykle OKR (dev-render marker — realna strona: OkrCyclesPage, harness results-vnext-okr-admin.tsx)</div>}
+          />
+        </Routes>
+      </MemoryRouter>
     </div>
   );
 };

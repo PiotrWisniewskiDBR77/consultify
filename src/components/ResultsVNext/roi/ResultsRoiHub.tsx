@@ -4,13 +4,29 @@
  * (§G #12, master plan §9 Etap 3 "quick create zapisujący prawdziwy Draft")
  * and 7 lifecycle transitions (§G #16 subset), built on the P0 shared shell
  * (`ResultsVNextRegistryShell`). PLUS (added RN-G2 §G #12-14 model-setup
- * package): the row-menu "Model case" action opens `RoiCaseModelWorkspace`
- * — a case-scoped pod-widok for Baseline+calculation-policy/Assumptions/
- * Cost lines/Benefit lines, switched by local state (`modelCase`), not a
- * new route (see that file's header comment for the placement rationale).
- * Deliberately NOT the rest of the 15-sub-resource ROI Case tool
- * (scenarios/forecast/actuals/variances/PIR/finance links — §G #15-21) —
- * those stay later packages.
+ * package, RE-ROUTED by RN-G5 2026-08-12): the row-menu "Open full tool"
+ * action `navigate()`s to `ROUTES.RESULTS_ROI.CASE`
+ * (`/results/roi/cases/:roiCaseId`, `RoiCaseToolPage.tsx`) — the FOUR-PHASE
+ * `RoiCaseFullTool` (Build Case → Decision → Realize Value → Learn), not a
+ * local-state swap anymore. See `RoiCaseToolPage.tsx`'s header for why: D03
+ * closed the "klasa S vs L" question a real route would have silently
+ * pre-decided, and a route is required for the deep-link/reload/cold-open
+ * contract (`RN_G2_UI_SCOPE.md` §H). Deliberately NOT the rest of the
+ * 15-sub-resource ROI Case tool beyond the four phases
+ * (scenarios/forecast/actuals/variances/PIR/finance links are INSIDE those
+ * phases already, per `RoiCaseFullTool.tsx`'s own phase breakdown).
+ *
+ * RETURN-CONTEXT PRESERVATION (RN-G5): navigating to the full tool and back
+ * unmounts/remounts this component (different `<Route>`s) — plain
+ * `useState` for `tab`/`chip`/the two selected-row ids would reset to
+ * defaults on return, silently discarding whatever filter/selection the
+ * user had. Restored from/persisted to `sessionStorage` under
+ * `results-vnext.roi-registry.ui-state` — ONE key for the whole SURFACE
+ * (tab-switch/reload/back-nav all share it), never a per-record key (D09's
+ * warning applies to this too, not just `StandardTable`'s own
+ * `persistKey`). `sessionStorage`, not `localStorage`: this is transient
+ * "where was I" navigation context, not a durable preference — a closed tab
+ * should not resurrect a stale selection days later.
  *
  * Two Menu 2 tabs, both real backend data, no fabricated rows:
  *  - "All cases"           → `GET /cases` (§C `roi.routes.ts`), the actual
@@ -44,14 +60,15 @@
  */
 import { Plus } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 
 import type { StandardCounterChip, StandardModuleTab, TableRow } from '@/components/standard';
 import { InitiativeApi } from '@/services/api/initiatives.api';
 import { tokenService } from '@/services/tokenService';
+import { ROUTES } from '@/routes/routeConfig';
 
 import { ResultsVNextRegistryShell } from '../ResultsVNextRegistryShell';
-import { RoiCaseFullTool } from './RoiCaseFullTool';
 import { RoiCaseCreateModal, type RoiCaseCreateFormValues, type RoiCaseCreateInitiativeOption } from './RoiCaseCreateModal';
 import { RoiTransitionDialog } from './RoiTransitionDialog';
 import { toUserFacingErrorMessage } from '../shared/errorMessage';
@@ -152,32 +169,65 @@ function withId<T extends { caseId: string }>(row: T): T & { id: string } {
   return { ...row, id: row.caseId };
 }
 
+// RN-G5 (2026-08-12) — see file header "RETURN-CONTEXT PRESERVATION". ONE
+// sessionStorage key for the whole surface, never per-record.
+const UI_STATE_KEY = 'results-vnext.roi-registry.ui-state';
+
+interface RoiHubUiState {
+  tab?: RoiTab;
+  chip?: 'all' | RoiStatusBucket;
+  selectedCaseId?: string | null;
+  selectedBenefitsCaseId?: string | null;
+}
+
+function readRoiHubUiState(): RoiHubUiState {
+  try {
+    const raw = window.sessionStorage.getItem(UI_STATE_KEY);
+    return raw ? (JSON.parse(raw) as RoiHubUiState) : {};
+  } catch {
+    return {};
+  }
+}
+
+function writeRoiHubUiState(state: RoiHubUiState): void {
+  try {
+    window.sessionStorage.setItem(UI_STATE_KEY, JSON.stringify(state));
+  } catch {
+    // no-op — sessionStorage unavailable (private mode) is not fatal, it
+    // only means the next mount starts from defaults instead of restoring.
+  }
+}
+
 export const ResultsRoiHub: React.FC = () => {
   const { i18n } = useTranslation();
   const isPolish = !!i18n.language?.startsWith('pl');
+  const navigate = useNavigate();
 
-  const [tab, setTab] = useState<RoiTab>('all');
-  const [chip, setChip] = useState<'all' | RoiStatusBucket>('all');
+  const restoredUiState = useMemo(() => readRoiHubUiState(), []);
+  const [tab, setTab] = useState<RoiTab>(restoredUiState.tab ?? 'all');
+  const [chip, setChip] = useState<'all' | RoiStatusBucket>(restoredUiState.chip ?? 'all');
 
   // "All cases" tab state
   const [cases, setCases] = useState<RoiCaseListItem[] | null>(null);
   const [casesError, setCasesError] = useState<string | null>(null);
   const [casesLoading, setCasesLoading] = useState(false);
-  const [selectedCaseId, setSelectedCaseId] = useState<string | null>(null);
+  const [selectedCaseId, setSelectedCaseId] = useState<string | null>(restoredUiState.selectedCaseId ?? null);
   const [calculationRun, setCalculationRun] = useState<RoiCalculationRunSummary | null | undefined>(undefined);
-  // RN-G2 §G #12-14 — case-scoped model-setup pod-widok. Non-null ⇒ the
-  // whole screen renders `RoiCaseModelWorkspace` instead of the registry
-  // (see that component's header comment for why this is local state, not
-  // a route). Holds the already-loaded `RoiCaseListItem`, not just an id —
-  // the workspace needs `status`/`currency`/`rowVersion` immediately, no
-  // redundant `GET /cases/:caseId` refetch.
-  const [modelCase, setModelCase] = useState<RoiCaseListItem | null>(null);
 
   // "Benefits realization" tab state
   const [benefitsRows, setBenefitsRows] = useState<RoiOrgBenefitsRealizationRow[] | null>(null);
   const [benefitsError, setBenefitsError] = useState<string | null>(null);
   const [benefitsLoading, setBenefitsLoading] = useState(false);
-  const [selectedBenefitsCaseId, setSelectedBenefitsCaseId] = useState<string | null>(null);
+  const [selectedBenefitsCaseId, setSelectedBenefitsCaseId] = useState<string | null>(
+    restoredUiState.selectedBenefitsCaseId ?? null
+  );
+
+  // RN-G5 — persist tab/chip/selection so navigating to the full tool
+  // (`ROUTES.RESULTS_ROI.CASE`) and back restores the list context instead
+  // of resetting to defaults on remount.
+  useEffect(() => {
+    writeRoiHubUiState({ tab, chip, selectedCaseId, selectedBenefitsCaseId });
+  }, [tab, chip, selectedCaseId, selectedBenefitsCaseId]);
 
   const loadCases = useCallback(() => {
     setCasesLoading(true);
@@ -363,15 +413,6 @@ export const ResultsRoiHub: React.FC = () => {
     [benefitsRows, selectedBenefitsCaseId]
   );
 
-  // RN-G2 §G #12-14 — case-scoped model workspace takes over the WHOLE
-  // screen (its own breadcrumb/tabs/table/preview, via the same
-  // `ResultsVNextRegistryShell`) while a case is selected for modeling;
-  // placed AFTER every hook above (rules of hooks) but before the two
-  // registry-tab branches below, which it replaces entirely.
-  if (modelCase) {
-    return <RoiCaseFullTool roiCase={modelCase} isPolish={isPolish} onBack={() => setModelCase(null)} />;
-  }
-
   const tabs: StandardModuleTab[] = [
     { id: 'all', label: isPolish ? 'Wszystkie sprawy' : 'All cases' },
     { id: 'benefits', label: isPolish ? 'Realizacja korzyści' : 'Benefits realization' },
@@ -524,7 +565,7 @@ export const ResultsRoiHub: React.FC = () => {
             buildRoiCaseRowMenu(row as unknown as RoiCaseListItem, isPolish, {
               onPreview: (r) => setSelectedCaseId(r.caseId),
               onTransition: (r, id) => openTransition(r, id),
-              onModel: (r) => setModelCase(r),
+              onModel: (r) => navigate(ROUTES.RESULTS_ROI.CASE.replace(':roiCaseId', r.caseId)),
             }),
           defaultSort: { columnId: 'updatedAt', direction: 'desc' },
         }}
