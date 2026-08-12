@@ -255,7 +255,7 @@ export async function reopenFinanceModel(
   );
 }
 
-// ---------------------------------------------------------------------------
+// --- PKG-E Analysis ---
 // Analysis (KPI) — analysis.routes.ts (Pakiet B2, ten pakiet — Pakiet E — jest
 // pierwszym frontendowym konsumentem, `grep -rn "analysis/kpi-catalog" src/`
 // dawał 0 trafień przed tym plikiem).
@@ -299,6 +299,30 @@ export async function getAnalysisKpiValues(businessVersionId: string): Promise<A
   return v8Get<AnalysisKpiValueDto[]>(`${BASE}/analysis/${encodeURIComponent(businessVersionId)}/kpi-values`);
 }
 
+/**
+ * `POST /artifacts/:artifactId/rename` (artifacts.routes.ts:249-289) — GENERYCZNY
+ * dla każdego `FinanceArtifactType` (rename gate to `canRenameArtifact(status,role)`,
+ * bez filtra typu artefaktu — czytane wprost z routera), ale żaden pakiet dotąd
+ * nie dodał klienta (`grep -rn "artifacts/.*rename\|renameFinanceArtifact" src/`
+ * dawał 0 trafień przed tym plikiem). Dodane tu, bo `AnalysisWorkspace.tsx`
+ * (Pakiet E) potrzebuje działającego `onCommitRename` dla `FinanceWorkspaceBar`
+ * (Pakiet C) — reużywalne przez każdy przyszły workspace, nie Analysis-specific.
+ */
+export interface RenameFinanceArtifactResultDto {
+  artifactId: string;
+  naturalKey: string | null;
+}
+
+export async function renameFinanceArtifact(
+  artifactId: string,
+  naturalKey: string
+): Promise<RenameFinanceArtifactResultDto> {
+  return v8Post<RenameFinanceArtifactResultDto>(`${BASE}/artifacts/${encodeURIComponent(artifactId)}/rename`, {
+    naturalKey,
+  });
+}
+// --- /PKG-E Analysis ---
+
 export const FinanceV2Api = {
   createFinanceArtifact,
   getFinanceArtifact,
@@ -316,4 +340,5 @@ export const FinanceV2Api = {
   getAnalysisKpiCatalog,
   computeAnalysisKpis,
   getAnalysisKpiValues,
+  renameFinanceArtifact,
 };

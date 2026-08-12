@@ -363,7 +363,7 @@ export interface FinanceReopenModelResultDto {
   idempotentReplay: boolean;
 }
 
-// ---------------------------------------------------------------------------
+// --- PKG-E Analysis ---
 // Pakiet E — Analysis (KPI), `/analysis/*`. Port pole-po-polu z
 // `server/src/routes/v8/finance-v2/analysis.routes.ts` (przeczytany w całości
 // 2026-08-11, Pakiet B2/DEC-FIN-012, trójwarstwowy katalog KPI).
@@ -444,6 +444,10 @@ export interface AnalysisKpiValueDto {
   createdAt: string;
   updatedAt: string;
 }
+// --- /PKG-E Analysis (types) — dwie dodatkowe `case` gałęzie PKG-E żyją niżej,
+// WEWNĄTRZ współdzielonej `describeFinanceV2Error` (NO_SOURCE_STATEMENT_PACK_EDGE/
+// BUSINESS_VERSION_NOT_FOUND) — czysto addytywne nowe etykiety `case`, żadna
+// cudza gałąź nie zmieniona. ---
 
 // ---------------------------------------------------------------------------
 // Błąd — kształt `{error, code, ...extra}` (_shared.ts:56-58, models.routes.ts).
