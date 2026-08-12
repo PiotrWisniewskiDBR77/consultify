@@ -40,7 +40,44 @@ Zielone bramki nie czynią produktu używalnym. Poniżej dlaczego.
 
 ---
 
-## BLOKER 1 — rdzeń V1 nie ma ścieżki użytkownika
+## AKTUALIZACJA — BLOKER 1 ZAMKNIĘTY (pakiety M1 + M2)
+
+> Sekcja poniżej opisuje stan **przed** naprawą. Zachowana, bo tłumaczy skalę
+> problemu. Stan aktualny:
+
+**Cykl planu i cykl approvali są podłączone i UDOWODNIONE — kod, backend, UI.**
+
+| warstwa | dowód |
+|---|---|
+| backend + współbieżność | przebieg API koordynatora: `DRAFT v1 → IN_REVIEW v2 → PUBLISHED v3`, stary `expectedVersion` → **409**, odczyt z bazy `PUBLISHED/3` |
+| UI — cykl planu | realne kliknięcia na czystym zleceniu, odczyt z bazy po **każdej** tranzycji, ścieżka replan (`supersedes_plan_version_id`) |
+| UI — cykl approvali | 4 tranzycje (submit/revoke/retry/mark-failed), każda z SQL-em i wynikiem |
+| konflikt | wersja podbita **poza aplikacją** → realne 409 → polski banner → **baza: zero mutacji** |
+| odmowa | `self_approval_forbidden` (GOV-022) → ludzki komunikat → **zero mutacji i zero wierszy decyzji** |
+| light/dark, desktop/mobile, refresh | potwierdzone |
+
+Ścieżka odmowy jest tu najcenniejsza: dowodzi, że governance jest egzekwowane
+**serwerowo**, a UI go nie udaje ani nie omija — dokładnie wg zamrożonej decyzji.
+
+**`transitionCaseStatus` NIGDY nie był luką** — mój audyt dał fałszywy alarm.
+`api.ts` opakowuje go w `startCase`/`pauseCase`/`resumeCase`, a `CasesListScreen`
+woła te trzy. Mój grep szukał surowej nazwy w `.tsx` i przegapił opakowania —
+lustrzane odbicie błędu metody, który wytknąłem innemu pakietowi.
+
+**Zostaje niepodłączone:** `markArtifactLinkStale`, `markArtifactLinkUnavailable`,
+`pinArtifactRevision`, `unlinkArtifactFromCase`, `updatePlanDraft` (brak edytora
+grafu w zakresie). Plus martwy duplikat `openArtifactLink` — żywa ścieżka używa
+`resolveArtifactLinkOpen`, więc scenariusz 12 jest nienaruszony (sprawdzone,
+zanim go podważyłem).
+
+**Nowa luka backendu, znaleziona przy okazji:** `case_core.current_plan_version_id`
+**nigdy nie jest zapisywany** przez serwis — potwierdzone na żywo, nadal `null`
+po publikacji. Serwis sam nazywa to otwartym pytaniem w swoim nagłówku. UI musiał
+to obejść przypięciem po stronie klienta.
+
+---
+
+## BLOKER 1 (stan pierwotny, przed M1/M2)
 
 **Zweryfikowane osobiście przez koordynatora, ogniwo po ogniwie:**
 
