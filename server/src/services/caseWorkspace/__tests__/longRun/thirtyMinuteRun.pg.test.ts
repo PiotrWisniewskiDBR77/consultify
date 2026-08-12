@@ -198,10 +198,22 @@ const suite = REACHABLE ? describe.sequential : describe.skip;
 // the entire real run before this was caught mid-run and fixed; that run's
 // evidence was recovered by moving the files from the wrong location — see
 // the packet report.
-const EVIDENCE_DIR = path.resolve(
-  fileURLToPath(new URL('../../../../../..', import.meta.url)),
-  'docs/product/case-workspace/evidence/e4-long-run-2026-08-12'
-);
+//
+// SECOND, SEPARATE HAZARD (found by the coordinator on 2026-08-12): this file
+// lives under src/services/caseWorkspace/, so it is matched by the DEFAULT
+// suite glob. Every full-suite run therefore re-ran the 30-minute gate (both
+// measured runs took ~1806s for exactly this reason) AND overwrote the
+// COMMITTED evidence of the accepted run — leaving a pack whose run.log came
+// from one execution and whose DB snapshots came from another. That is worse
+// than no evidence, because it looks consistent and is not.
+//
+// So the repo path is now OPT-IN. By default this test writes to a scratch
+// directory and the committed evidence is never touched. To produce a new
+// accepted evidence pack, set CW_LONGRUN_EVIDENCE_DIR explicitly.
+// Run this file on its own; exclude '**/longRun/**' from ordinary suite runs.
+const EVIDENCE_DIR = process.env.CW_LONGRUN_EVIDENCE_DIR
+  ? path.resolve(process.env.CW_LONGRUN_EVIDENCE_DIR)
+  : mkdtempSync(path.join(tmpdir(), 'cw-longrun-evidence-'));
 
 function evidencePath(name: string): string {
   return path.join(EVIDENCE_DIR, name);
