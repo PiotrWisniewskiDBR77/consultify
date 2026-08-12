@@ -101,6 +101,7 @@ import {
   type CommandAccessContext,
 } from '../../services/resultsVnext/platform/commandCapabilityGuard.js';
 import type { AuthenticatedRequest } from '../../types/index.js';
+import { getCorrelationId } from './correlationId.js';
 import logger from '../../utils/Logger.js';
 import {
   AddCorrectiveActionSchema,
@@ -173,12 +174,10 @@ function normalizeOptionalString(value: unknown): string | undefined {
   return trimmed || undefined;
 }
 
-function getCorrelationId(req: AuthenticatedRequest): string | undefined {
-  return (
-    normalizeOptionalString(req.correlationId) ||
-    normalizeOptionalString(req.get?.('X-Correlation-ID'))
-  );
-}
+// getCorrelationId moved to ./correlationId.js (RN-G6 P0 fix — F1): shared,
+// UUID-shape-validated implementation for all resultsVnext routes instead of
+// six copies each trusting the header/attached value as-is once non-empty.
+// See that file's doc comment for the full root-cause writeup.
 
 function resolveIdempotencyKey(bodyKey: string | undefined | null): string {
   return normalizeOptionalString(bodyKey ?? undefined) || randomUUID();
