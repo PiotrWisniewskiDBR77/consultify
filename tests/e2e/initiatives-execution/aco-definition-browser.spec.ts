@@ -1724,7 +1724,9 @@ test('READY_FOR_DECISION → persistent published Portfolio Scenario without lif
     }
     const taskRow = page.getByRole('row', { name: new RegExp(deliveryTask.title) });
     await taskRow.click();
-    await page.getByRole('button', { name: /^(Open|Otwórz element pracy)$/ }).click();
+    const taskPreview = page.getByRole('region', { name: 'Preview panel' });
+    await expect(taskPreview.getByText(deliveryTask.title, { exact: true })).toBeVisible();
+    await taskPreview.getByRole('button', { name: /^(Open|Otwórz element pracy)$/ }).click();
     const taskWorkspace = page.getByRole('region', { name: 'Execution Work item workspace' });
     await expect(taskWorkspace.getByRole('heading', { name: deliveryTask.title })).toBeVisible();
     await expect(page.getByRole('region', { name: 'Governed Task controls' })).toBeVisible();
