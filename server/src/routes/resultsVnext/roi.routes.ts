@@ -770,6 +770,7 @@ router.put(
         return;
       }
       const body = req.body as import('zod').infer<typeof CaptureOrUpdateBaselineSchema>;
+      const access = await resolveAccess(req, auth);
       const outcome = await captureOrUpdateBaseline({
         organizationId: auth.organizationId,
         caseId,
@@ -791,6 +792,7 @@ router.put(
         idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
         correlationId: getCorrelationId(req),
         reason: body.reason ?? null,
+        access,
       });
       res.status(200).json({
         outcome: outcome.outcome,

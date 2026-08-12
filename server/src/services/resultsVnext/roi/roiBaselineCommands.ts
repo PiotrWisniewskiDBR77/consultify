@@ -14,6 +14,10 @@ import {
   type AtomicCommandOutcome,
   type AtomicEventInput,
 } from '../platform/atomicWrite.js';
+import {
+  assertCommandCapability,
+  type CommandAccessContext,
+} from '../platform/commandCapabilityGuard.js';
 
 import { NON_EDITABLE_STATUSES, ROI_EVENT_SOURCE, RoiCaseValidationError } from './roiCaseCommands.js';
 import {
@@ -26,6 +30,15 @@ import {
 } from './roiTypes.js';
 
 const POLICY_VERSION_NOT_TRACKED = '';
+
+// RN-G5: freezeRoiBaseline/unfreezeRoiBaseline are NOT gated — internal
+// cross-epic contracts called only from roiCaseApprovalCommands.ts's
+// approveRoiCase/reopenApprovedRoiCaseForRevision (both already gated),
+// on the caller's own pinned client. Grepped: no route or other command
+// file calls either function directly.
+export const ROI_BASELINE_CAPABILITIES = {
+  captureOrUpdate: 'results.roi.baseline.capture_or_update',
+} as const;
 
 // ==========================================
 // ERRORS
@@ -92,6 +105,7 @@ export interface CaptureOrUpdateBaselineInput {
   correlationId?: string;
   causationId?: string | null;
   reason?: string | null;
+  access: CommandAccessContext;
 }
 
 /**
@@ -119,6 +133,7 @@ export async function captureOrUpdateBaseline(
     correlationId,
     causationId = null,
     reason = null,
+    access,
     ...edits
   } = input;
 
@@ -131,20 +146,32 @@ export async function captureOrUpdateBaseline(
     loadForUpdate: loadRoiBaselineForUpdate,
     getCurrentVersion: baselineRowVersion,
     applyMutation: async (client, currentRow, nextVersion) => {
-      if (currentRow.frozen_at !== null) {
-        throw new RoiBaselineFrozenError(caseId, currentRow.baseline_id);
-      }
-
       // ROI-E003 Decision D4: the baseline table was never wired to the
       // shared NON_EDITABLE_STATUSES constant by E001/E002 — a plain
       // status read closes that gap (e.g. a case in 'submitted_for_approval'
       // must not have its baseline edited even though `frozen_at` is still
       // NULL at that point — freezing only happens on actual approval).
-      const caseStatusResult = await client.query<{ status: RoiCaseStatus }>(
-        `SELECT status FROM rvn_roi_cases WHERE case_id = $1 AND organization_id = $2`,
+      // RN-G5 reuses this SAME query for the case's owner_user_id — the
+      // authoritative "who owns this case" field, checked alongside the
+      // baseline row's own (nullable) owner_user_id.
+      const caseRowResult = await client.query<{ status: RoiCaseStatus; owner_user_id: string }>(
+        `SELECT status, owner_user_id FROM rvn_roi_cases WHERE case_id = $1 AND organization_id = $2`,
         [caseId, organizationId]
       );
-      const caseStatus = caseStatusResult.rows[0]?.status;
+      const caseStatus = caseRowResult.rows[0]?.status;
+      const caseOwnerUserId = caseRowResult.rows[0]?.owner_user_id ?? null;
+
+      assertCommandCapability({
+        access,
+        actorUserId: actorId,
+        capability: ROI_BASELINE_CAPABILITIES.captureOrUpdate,
+        responsibleUserIds: [caseOwnerUserId, currentRow.owner_user_id],
+      });
+
+      if (currentRow.frozen_at !== null) {
+        throw new RoiBaselineFrozenError(caseId, currentRow.baseline_id);
+      }
+
       if (caseStatus && NON_EDITABLE_STATUSES.includes(caseStatus)) {
         throw new RoiCaseValidationError(
           `ROI case ${caseId} is "${caseStatus}" — baseline may not be edited from this status`,
