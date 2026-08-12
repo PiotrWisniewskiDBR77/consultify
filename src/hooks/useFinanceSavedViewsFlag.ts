@@ -9,7 +9,7 @@
  * i przy `false` zwraca `null` przed `listFinanceSavedViews`.
  */
 
-import { useFeatureFlags, type FeatureFlag, type UseFeatureFlagsReturn } from './useFeatureFlags';
+import { type FeatureFlag, useFeatureFlags, type UseFeatureFlagsReturn } from './useFeatureFlags';
 
 export const FINANCE_SAVED_VIEWS_FLAG_ID = 'financeSavedViewsV1';
 

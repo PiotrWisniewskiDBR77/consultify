@@ -14,7 +14,7 @@
  * wywołań sieciowych").
  */
 
-import { useFeatureFlags, type FeatureFlag, type UseFeatureFlagsReturn } from './useFeatureFlags';
+import { type FeatureFlag, useFeatureFlags, type UseFeatureFlagsReturn } from './useFeatureFlags';
 
 export const FINANCE_COMPARE_FLAG_ID = 'financeCompareV1';
 

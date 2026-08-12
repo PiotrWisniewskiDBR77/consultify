@@ -6,7 +6,10 @@
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { FINANCE_LINEAGE_NAVIGATOR_FLAG_ID, useFinanceLineageNavigatorFlag } from '../useFinanceLineageNavigatorFlag';
+import {
+  FINANCE_LINEAGE_NAVIGATOR_FLAG_ID,
+  useFinanceLineageNavigatorFlag,
+} from '../useFinanceLineageNavigatorFlag';
 
 beforeEach(() => {
   window.localStorage.clear();

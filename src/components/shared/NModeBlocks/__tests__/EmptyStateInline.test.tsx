@@ -35,7 +35,12 @@ describe('EmptyStateInline — honest neutral color + optional "+" prefix (Gate 
   // zamrożenia, więc Finance włącza ją jawnie, a rozszerzenie na resztę produktu wymaga decyzji
   // właściciela. Test sprawdza teraz OBA zachowania, żeby żadne nie mogło zniknąć niepostrzeżenie.
   it('domyślnie (bez `neutralAccent`) zachowuje dotychczasowy token — ZERO zmiany wizualnej poza Finance', () => {
-    render(<EmptyStateInline message="Brak danych." action={{ label: 'Wróć do listy', onClick: vi.fn() }} />);
+    render(
+      <EmptyStateInline
+        message="Brak danych."
+        action={{ label: 'Wróć do listy', onClick: vi.fn() }}
+      />
+    );
     const button = screen.getByRole('button', { name: /Wróć do listy/i });
     expect(button.className).toMatch(/text-primary-\d/);
     expect(button.className).not.toMatch(/text-c-focus-solid/);
@@ -54,18 +59,33 @@ describe('EmptyStateInline — honest neutral color + optional "+" prefix (Gate 
   });
 
   it('default behavior (no `showPrefix`) still prepends "+ " — every existing caller keeps its current look', () => {
-    render(<EmptyStateInline message="Brak elementów." action={{ label: 'Nowy element', onClick: vi.fn() }} />);
+    render(
+      <EmptyStateInline
+        message="Brak elementów."
+        action={{ label: 'Nowy element', onClick: vi.fn() }}
+      />
+    );
     expect(screen.getByRole('button', { name: '+ Nowy element' })).toBeInTheDocument();
   });
 
   it('`showPrefix: false` renders the label WITHOUT the "+ " prefix — for back-navigation/retry actions', () => {
-    render(<EmptyStateInline message="Nie można otworzyć." action={{ label: 'Wróć do listy', onClick: vi.fn(), showPrefix: false }} />);
+    render(
+      <EmptyStateInline
+        message="Nie można otworzyć."
+        action={{ label: 'Wróć do listy', onClick: vi.fn(), showPrefix: false }}
+      />
+    );
     expect(screen.getByRole('button', { name: 'Wróć do listy' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: '+ Wróć do listy' })).not.toBeInTheDocument();
   });
 
   it('KONTROLA NEGATYWNA (dokumentacyjna): `showPrefix: true` explicit renders the same as default (prefix present)', () => {
-    render(<EmptyStateInline message="Brak elementów." action={{ label: 'Nowy element', onClick: vi.fn(), showPrefix: true }} />);
+    render(
+      <EmptyStateInline
+        message="Brak elementów."
+        action={{ label: 'Nowy element', onClick: vi.fn(), showPrefix: true }}
+      />
+    );
     expect(screen.getByRole('button', { name: '+ Nowy element' })).toBeInTheDocument();
   });
 });

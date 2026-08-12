@@ -26,8 +26,8 @@ import {
   getFinanceCommentAssignment,
   getFinanceReviewChecklistChangedCells,
   hasUnresolvedBlockingFinanceComments,
-  listFinanceComments,
   listFinanceCommentMentionsForMe,
+  listFinanceComments,
   listFinanceReviewChecklist,
   reopenFinanceComment,
   resolveFinanceComment,
@@ -79,16 +79,26 @@ const SAMPLE_COMMENT = {
 describe('financeV2.api — AP-CLIENT Comments (komentarze)', () => {
   it('createFinanceComment → POST /comments z anchor=null gdy nie podano', async () => {
     mockedFetch.mockResolvedValueOnce(jsonResponse(201, { data: SAMPLE_COMMENT, meta: {} }));
-    const result = await createFinanceComment({ artifactId: 'art-1', businessVersionId: 'bv-1', body: 'Sprawdź tę linię' });
+    const result = await createFinanceComment({
+      artifactId: 'art-1',
+      businessVersionId: 'bv-1',
+      body: 'Sprawdź tę linię',
+    });
     const [url, init] = mockedFetch.mock.calls[0];
     expect(url).toBe('/api/v8/finance-v2/comments');
     expect(init.method).toBe('POST');
-    expect(JSON.parse(init.body)).toMatchObject({ artifactId: 'art-1', businessVersionId: 'bv-1', anchor: null });
+    expect(JSON.parse(init.body)).toMatchObject({
+      artifactId: 'art-1',
+      businessVersionId: 'bv-1',
+      anchor: null,
+    });
     expect(result.id).toBe('c-1');
   });
 
   it('resolveFinanceComment / reopenFinanceComment → POST na odpowiedni URL, bez body', async () => {
-    mockedFetch.mockResolvedValueOnce(jsonResponse(200, { data: { ...SAMPLE_COMMENT, resolvedBy: 'u-2' }, meta: {} }));
+    mockedFetch.mockResolvedValueOnce(
+      jsonResponse(200, { data: { ...SAMPLE_COMMENT, resolvedBy: 'u-2' }, meta: {} })
+    );
     await resolveFinanceComment('c-1');
     expect(mockedFetch.mock.calls[0][0]).toBe('/api/v8/finance-v2/comments/c-1/resolve');
 
@@ -99,7 +109,17 @@ describe('financeV2.api — AP-CLIENT Comments (komentarze)', () => {
 
   it('assignFinanceComment → POST /comments/:id/assign z assigneeId/dueDate', async () => {
     mockedFetch.mockResolvedValueOnce(
-      jsonResponse(201, { data: { id: 'a-1', commentId: 'c-1', assigneeId: 'u-9', dueDate: '2026-09-01', assignedBy: 'u-1', assignedAt: 't' }, meta: {} })
+      jsonResponse(201, {
+        data: {
+          id: 'a-1',
+          commentId: 'c-1',
+          assigneeId: 'u-9',
+          dueDate: '2026-09-01',
+          assignedBy: 'u-1',
+          assignedAt: 't',
+        },
+        meta: {},
+      })
     );
     const result = await assignFinanceComment('c-1', { assigneeId: 'u-9', dueDate: '2026-09-01' });
     const [url, init] = mockedFetch.mock.calls[0];
@@ -115,13 +135,22 @@ describe('financeV2.api — AP-CLIENT Comments (komentarze)', () => {
   });
 
   it('getFinanceComment → 404 NOT_FOUND trafia do .data.code', async () => {
-    mockedFetch.mockResolvedValueOnce(jsonResponse(404, { error: 'Comment not found', code: 'NOT_FOUND' }));
-    await expect(getFinanceComment('missing')).rejects.toMatchObject({ status: 404, data: { code: 'NOT_FOUND' } });
+    mockedFetch.mockResolvedValueOnce(
+      jsonResponse(404, { error: 'Comment not found', code: 'NOT_FOUND' })
+    );
+    await expect(getFinanceComment('missing')).rejects.toMatchObject({
+      status: 404,
+      data: { code: 'NOT_FOUND' },
+    });
   });
 
   it('listFinanceComments → GET /comments?artifactId=... z opcjami unresolvedOnly/blockingOnly', async () => {
     mockedFetch.mockResolvedValueOnce(jsonResponse(200, { data: [SAMPLE_COMMENT], meta: {} }));
-    const result = await listFinanceComments({ artifactId: 'art-1', unresolvedOnly: true, blockingOnly: true });
+    const result = await listFinanceComments({
+      artifactId: 'art-1',
+      unresolvedOnly: true,
+      blockingOnly: true,
+    });
     const [url] = mockedFetch.mock.calls[0];
     expect(url).toContain('artifactId=art-1');
     expect(url).toContain('unresolvedOnly=true');
@@ -131,7 +160,11 @@ describe('financeV2.api — AP-CLIENT Comments (komentarze)', () => {
 
   it('searchFinanceCommentsByCell → POST /comments/search-by-cell z businessVersionId + cellRef', async () => {
     mockedFetch.mockResolvedValueOnce(jsonResponse(200, { data: [SAMPLE_COMMENT], meta: {} }));
-    const cellRef = { organizationId: 'org-1', businessVersionId: 'bv-1', tableName: 'finance_stmt_lines' };
+    const cellRef = {
+      organizationId: 'org-1',
+      businessVersionId: 'bv-1',
+      tableName: 'finance_stmt_lines',
+    };
     await searchFinanceCommentsByCell('bv-1', cellRef);
     const [url, init] = mockedFetch.mock.calls[0];
     expect(url).toBe('/api/v8/finance-v2/comments/search-by-cell');
@@ -146,7 +179,9 @@ describe('financeV2.api — AP-CLIENT Comments (komentarze)', () => {
   });
 
   it('hasUnresolvedBlockingFinanceComments → GET /versions/:id/has-unresolved-blocking-comments', async () => {
-    mockedFetch.mockResolvedValueOnce(jsonResponse(200, { data: { hasUnresolvedBlockingComments: true }, meta: {} }));
+    mockedFetch.mockResolvedValueOnce(
+      jsonResponse(200, { data: { hasUnresolvedBlockingComments: true }, meta: {} })
+    );
     const result = await hasUnresolvedBlockingFinanceComments('bv-1');
     expect(result.hasUnresolvedBlockingComments).toBe(true);
   });
@@ -166,15 +201,25 @@ describe('financeV2.api — AP-CLIENT Comments (review checklist / maker-checker
 
   it('addFinanceReviewChecklistItem → POST /review-checklist', async () => {
     mockedFetch.mockResolvedValueOnce(jsonResponse(201, { data: SAMPLE_ITEM, meta: {} }));
-    const result = await addFinanceReviewChecklistItem({ businessVersionId: 'bv-1', item: 'Zweryfikuj sumy kontrolne', required: true });
+    const result = await addFinanceReviewChecklistItem({
+      businessVersionId: 'bv-1',
+      item: 'Zweryfikuj sumy kontrolne',
+      required: true,
+    });
     const [url, init] = mockedFetch.mock.calls[0];
     expect(url).toBe('/api/v8/finance-v2/review-checklist');
-    expect(JSON.parse(init.body)).toEqual({ businessVersionId: 'bv-1', item: 'Zweryfikuj sumy kontrolne', required: true });
+    expect(JSON.parse(init.body)).toEqual({
+      businessVersionId: 'bv-1',
+      item: 'Zweryfikuj sumy kontrolne',
+      required: true,
+    });
     expect(result.id).toBe('item-1');
   });
 
   it('checkFinanceReviewChecklistItem / uncheckFinanceReviewChecklistItem → POST na :id/check|uncheck', async () => {
-    mockedFetch.mockResolvedValueOnce(jsonResponse(200, { data: { ...SAMPLE_ITEM, checkedBy: 'u-2' }, meta: {} }));
+    mockedFetch.mockResolvedValueOnce(
+      jsonResponse(200, { data: { ...SAMPLE_ITEM, checkedBy: 'u-2' }, meta: {} })
+    );
     await checkFinanceReviewChecklistItem('item-1');
     expect(mockedFetch.mock.calls[0][0]).toBe('/api/v8/finance-v2/review-checklist/item-1/check');
 
@@ -184,7 +229,9 @@ describe('financeV2.api — AP-CLIENT Comments (review checklist / maker-checker
   });
 
   it('setFinanceReviewChecklistItemRequired → POST :id/required z {required}', async () => {
-    mockedFetch.mockResolvedValueOnce(jsonResponse(200, { data: { ...SAMPLE_ITEM, required: false }, meta: {} }));
+    mockedFetch.mockResolvedValueOnce(
+      jsonResponse(200, { data: { ...SAMPLE_ITEM, required: false }, meta: {} })
+    );
     await setFinanceReviewChecklistItemRequired('item-1', false);
     const [url, init] = mockedFetch.mock.calls[0];
     expect(url).toBe('/api/v8/finance-v2/review-checklist/item-1/required');
@@ -198,14 +245,19 @@ describe('financeV2.api — AP-CLIENT Comments (review checklist / maker-checker
   });
 
   it('allFinanceReviewChecklistRequiredChecked → GET .../all-required-checked', async () => {
-    mockedFetch.mockResolvedValueOnce(jsonResponse(200, { data: { allRequiredChecked: false }, meta: {} }));
+    mockedFetch.mockResolvedValueOnce(
+      jsonResponse(200, { data: { allRequiredChecked: false }, meta: {} })
+    );
     const result = await allFinanceReviewChecklistRequiredChecked('bv-1');
     expect(result.allRequiredChecked).toBe(false);
   });
 
   it('getFinanceReviewChecklistChangedCells → GET .../changed-cells z opcjonalnym previousApprovedBusinessVersionId', async () => {
     mockedFetch.mockResolvedValueOnce(
-      jsonResponse(200, { data: { hasPreviousApproved: true, previousBusinessVersionId: 'bv-0', changedCells: [] }, meta: {} })
+      jsonResponse(200, {
+        data: { hasPreviousApproved: true, previousBusinessVersionId: 'bv-0', changedCells: [] },
+        meta: {},
+      })
     );
     await getFinanceReviewChecklistChangedCells('bv-1', 'bv-0');
     const [url] = mockedFetch.mock.calls[0];
@@ -213,7 +265,9 @@ describe('financeV2.api — AP-CLIENT Comments (review checklist / maker-checker
   });
 
   it('KONTROLA NEGATYWNA: 409 na check() (już checked) trafia do .data.code, nie do .code', async () => {
-    mockedFetch.mockResolvedValueOnce(jsonResponse(409, { error: 'already checked', code: 'ALREADY_CHECKED' }));
+    mockedFetch.mockResolvedValueOnce(
+      jsonResponse(409, { error: 'already checked', code: 'ALREADY_CHECKED' })
+    );
     let caught: any;
     try {
       await checkFinanceReviewChecklistItem('item-1');

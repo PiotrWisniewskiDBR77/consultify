@@ -6,7 +6,10 @@
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { FINANCE_EXPORT_IMPORT_FLAG_ID, useFinanceExportImportFlag } from '../useFinanceExportImportFlag';
+import {
+  FINANCE_EXPORT_IMPORT_FLAG_ID,
+  useFinanceExportImportFlag,
+} from '../useFinanceExportImportFlag';
 
 beforeEach(() => {
   window.localStorage.clear();

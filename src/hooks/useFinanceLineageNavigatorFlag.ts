@@ -11,7 +11,7 @@
  * `getFinanceLineageNavigator`.
  */
 
-import { useFeatureFlags, type FeatureFlag, type UseFeatureFlagsReturn } from './useFeatureFlags';
+import { type FeatureFlag, useFeatureFlags, type UseFeatureFlagsReturn } from './useFeatureFlags';
 
 export const FINANCE_LINEAGE_NAVIGATOR_FLAG_ID = 'financeLineageNavigatorV1';
 

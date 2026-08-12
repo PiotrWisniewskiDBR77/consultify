@@ -14,7 +14,6 @@
  */
 
 import { fetchWithRetry, getHeaders, handleResponse } from './baseClient';
-import { v8Delete, v8Get, v8Patch, v8Post, v8PostMultipart, v8Put } from './v8/client';
 import type {
   AnalysisComputeResultDto,
   AnalysisKpiCatalogEntryDto,
@@ -28,28 +27,48 @@ import type {
   BaselineOutputDto,
   BaselineScheduleType,
   BaselineStatementType,
+  // --- AP-CLIENT ---
+  CompareErrorCodeDto,
+  CompareResultDto,
   FinanceApproveModelResultDto,
   FinanceArtifactDetailDto,
   FinanceArtifactType,
   FinanceBusinessVersionDetailDto,
   FinanceBusinessVersionSummaryDto,
   FinanceCapabilitiesDto,
+  FinanceCellRefInput,
+  FinanceChangedCellsResultDto,
+  FinanceCommentAssignmentDto,
+  FinanceCommentDto,
   FinanceComputeJobDto,
   FinanceComputeSnapshotResultDto,
   FinanceCreateArtifactResultDto,
   FinanceEnqueueJobResultDto,
+  FinanceExcelManifestDto,
   FinanceExceptionOpenDto,
+  FinanceImportApplyErrorCodeDto,
+  FinanceImportApplyResultDto,
+  FinanceImportParsedDto,
+  FinanceImportPreviewDto,
+  FinanceImportRawRow,
+  FinanceLineageEdgeCreatedDto,
+  FinanceLineageNavigatorDto,
   FinancePredictionCalculateResultDto,
   FinancePredictionPreflightResultDto,
   FinanceRenameArtifactResultDto,
   FinanceReopenModelResultDto,
+  FinanceReviewChecklistItemDto,
+  FinanceSavedViewDto,
+  FinanceSavedViewScope,
   FinanceTransitionResultDto,
+  GridViewStateSnapshotInput,
   LegacyBridgeResolutionDto,
   LegacyFinanceTable,
   LifecycleAction,
   ReconciliationRunDetailDto,
   ReconciliationRunSummaryDto,
   RunReconciliationResultDto,
+  SavedViewFilterInput,
   StatementLineDto,
   StatementMapResultDto,
   StatementMapResultSummaryDto,
@@ -61,8 +80,8 @@ import type {
   ValuationBridgeWriteResultDto,
   ValuationCaseDetailDto,
   ValuationCaseDto,
-  ValuationComputeDcfResultDto,
   ValuationCompareVariantsResultDto,
+  ValuationComputeDcfResultDto,
   ValuationLineageDto,
   ValuationMethodDto,
   ValuationMethodType,
@@ -74,27 +93,8 @@ import type {
   ValuationWaccInputsRawDto,
   ValuationWeightedRecommendationDto,
   VersionLineageDto,
-  // --- AP-CLIENT ---
-  CompareErrorCodeDto,
-  CompareResultDto,
-  FinanceCellRefInput,
-  FinanceChangedCellsResultDto,
-  FinanceCommentAssignmentDto,
-  FinanceCommentDto,
-  FinanceExcelManifestDto,
-  FinanceImportApplyErrorCodeDto,
-  FinanceImportApplyResultDto,
-  FinanceImportParsedDto,
-  FinanceImportPreviewDto,
-  FinanceImportRawRow,
-  FinanceLineageEdgeCreatedDto,
-  FinanceLineageNavigatorDto,
-  FinanceReviewChecklistItemDto,
-  FinanceSavedViewDto,
-  FinanceSavedViewScope,
-  GridViewStateSnapshotInput,
-  SavedViewFilterInput,
 } from './financeV2.types';
+import { v8Delete, v8Get, v8Patch, v8Post, v8PostMultipart, v8Put } from './v8/client';
 
 const BASE = '/finance-v2';
 const V8_BASE = '/api/v8';
@@ -175,14 +175,24 @@ export async function listFinanceArtifactVersions(
 }
 
 /** WP-B02 §4.3 `allowedActionsFromCurrentStatus` — steruje paskiem akcji `FinanceWorkspaceBar` (OWN-FIN-012). */
-export async function getFinanceArtifactCapabilities(artifactId: string): Promise<FinanceCapabilitiesDto> {
-  return v8Get<FinanceCapabilitiesDto>(`${BASE}/artifacts/${encodeURIComponent(artifactId)}/capabilities`);
+export async function getFinanceArtifactCapabilities(
+  artifactId: string
+): Promise<FinanceCapabilitiesDto> {
+  return v8Get<FinanceCapabilitiesDto>(
+    `${BASE}/artifacts/${encodeURIComponent(artifactId)}/capabilities`
+  );
 }
 
 // --- PKG-F Baseline ---
 /** artifacts.routes.ts:249-293 (D3 fix, Pakiet B2) — OWN-FIN-011 rename kontrolowany: serwer sam bramkuje `canRenameArtifact`/`validateWorkspaceName` (403 z `STATUS_IMMUTABLE`/`INSUFFICIENT_ROLE`, 400 z kodem walidacji nazwy). Używane przez `BaselineWorkspace.handleCommitRename`. */
-export async function renameFinanceArtifact(artifactId: string, naturalKey: string): Promise<FinanceRenameArtifactResultDto> {
-  return v8Post<FinanceRenameArtifactResultDto>(`${BASE}/artifacts/${encodeURIComponent(artifactId)}/rename`, { naturalKey });
+export async function renameFinanceArtifact(
+  artifactId: string,
+  naturalKey: string
+): Promise<FinanceRenameArtifactResultDto> {
+  return v8Post<FinanceRenameArtifactResultDto>(
+    `${BASE}/artifacts/${encodeURIComponent(artifactId)}/rename`,
+    { naturalKey }
+  );
 }
 // --- /PKG-F Baseline ---
 
@@ -193,7 +203,9 @@ export async function renameFinanceArtifact(artifactId: string, naturalKey: stri
 export async function getFinanceBusinessVersion(
   businessVersionId: string
 ): Promise<FinanceBusinessVersionDetailDto> {
-  return v8Get<FinanceBusinessVersionDetailDto>(`${BASE}/versions/${encodeURIComponent(businessVersionId)}`);
+  return v8Get<FinanceBusinessVersionDetailDto>(
+    `${BASE}/versions/${encodeURIComponent(businessVersionId)}`
+  );
 }
 
 /** `approve`/`reopen` NIE przechodzą tędy — patrz `approveFinanceModel`/`reopenFinanceModel` niżej (models.routes.ts, T8/T12). */
@@ -295,7 +307,9 @@ export async function pollFinanceComputeJobUntilSettled(
       return job;
     }
     if (Date.now() > deadline) {
-      const err = new Error('Compute job polling exceeded local timeout') as Error & { code?: string };
+      const err = new Error('Compute job polling exceeded local timeout') as Error & {
+        code?: string;
+      };
       err.code = 'CLIENT_POLL_TIMEOUT';
       throw err;
     }
@@ -320,8 +334,12 @@ export async function approveFinanceModel(
   // ten endpoint zwraca płaskie {success,status}, bez koperty {data}.
   return v8PostRawBody<FinanceApproveModelResultDto>(
     `${BASE}/models/${encodeURIComponent(params.modelArtifactId)}/approve`,
-    { ...(params.expectedVersion !== undefined ? { expectedVersion: params.expectedVersion } : {}) },
-    params.idempotencyKey ? { extraHeaders: { 'Idempotency-Key': params.idempotencyKey } } : undefined
+    {
+      ...(params.expectedVersion !== undefined ? { expectedVersion: params.expectedVersion } : {}),
+    },
+    params.idempotencyKey
+      ? { extraHeaders: { 'Idempotency-Key': params.idempotencyKey } }
+      : undefined
   );
 }
 
@@ -523,13 +541,18 @@ export async function upsertBaselineAssumptions(
  * (`src/components/Finance/baseline/useBaselineCompute.ts`) po realizację tej
  * ścieżki odzysku.
  */
-export async function computeBaseline(params: BaselineComputeParams): Promise<BaselineComputeResultDto> {
-  return v8Post<BaselineComputeResultDto>(`${BASELINE_BASE}/${encodeURIComponent(params.businessVersionId)}/compute`, {
-    entityId: params.entityId,
-    forecastPeriodIds: params.forecastPeriodIds,
-    openingBalanceSheetPeriodId: params.openingBalanceSheetPeriodId,
-    ...(params.engineManifestId ? { engineManifestId: params.engineManifestId } : {}),
-  });
+export async function computeBaseline(
+  params: BaselineComputeParams
+): Promise<BaselineComputeResultDto> {
+  return v8Post<BaselineComputeResultDto>(
+    `${BASELINE_BASE}/${encodeURIComponent(params.businessVersionId)}/compute`,
+    {
+      entityId: params.entityId,
+      forecastPeriodIds: params.forecastPeriodIds,
+      openingBalanceSheetPeriodId: params.openingBalanceSheetPeriodId,
+      ...(params.engineManifestId ? { engineManifestId: params.engineManifestId } : {}),
+    }
+  );
 }
 
 export interface ListBaselineOutputsParams {
@@ -547,7 +570,9 @@ export async function listBaselineOutputs(
   if (params.entityId) qs.set('entityId', params.entityId);
   if (params.periodId) qs.set('periodId', params.periodId);
   const suffix = qs.toString() ? `?${qs.toString()}` : '';
-  return v8Get<BaselineOutputDto[]>(`${BASELINE_BASE}/${encodeURIComponent(businessVersionId)}/outputs${suffix}`);
+  return v8Get<BaselineOutputDto[]>(
+    `${BASELINE_BASE}/${encodeURIComponent(businessVersionId)}/outputs${suffix}`
+  );
 }
 // --- /PKG-F Baseline ---
 
@@ -600,8 +625,12 @@ export async function computeAnalysisKpis(
   );
 }
 
-export async function getAnalysisKpiValues(businessVersionId: string): Promise<AnalysisKpiValueDto[]> {
-  return v8Get<AnalysisKpiValueDto[]>(`${BASE}/analysis/${encodeURIComponent(businessVersionId)}/kpi-values`);
+export async function getAnalysisKpiValues(
+  businessVersionId: string
+): Promise<AnalysisKpiValueDto[]> {
+  return v8Get<AnalysisKpiValueDto[]>(
+    `${BASE}/analysis/${encodeURIComponent(businessVersionId)}/kpi-values`
+  );
 }
 // --- /PKG-E Analysis ---
 
@@ -616,8 +645,14 @@ export async function getAnalysisKpiValues(businessVersionId: string): Promise<A
 
 // --- 1. Cases + Variants ---
 
-export async function createValuationCase(params: { name: string; description?: string | null }): Promise<ValuationCaseDto> {
-  return v8Post<ValuationCaseDto>(`${BASE}/valuation/cases`, { name: params.name, description: params.description ?? null });
+export async function createValuationCase(params: {
+  name: string;
+  description?: string | null;
+}): Promise<ValuationCaseDto> {
+  return v8Post<ValuationCaseDto>(`${BASE}/valuation/cases`, {
+    name: params.name,
+    description: params.description ?? null,
+  });
 }
 
 export async function listValuationCases(): Promise<ValuationCaseDto[]> {
@@ -636,23 +671,33 @@ export interface CreateValuationVariantParams {
   description?: string | null;
 }
 
-export async function createValuationVariant(params: CreateValuationVariantParams): Promise<ValuationVariantDto> {
-  return v8Post<ValuationVariantDto>(`${BASE}/valuation/cases/${encodeURIComponent(params.caseId)}/variants`, {
-    businessVersionId: params.businessVersionId,
-    name: params.name,
-    description: params.description ?? null,
-  });
+export async function createValuationVariant(
+  params: CreateValuationVariantParams
+): Promise<ValuationVariantDto> {
+  return v8Post<ValuationVariantDto>(
+    `${BASE}/valuation/cases/${encodeURIComponent(params.caseId)}/variants`,
+    {
+      businessVersionId: params.businessVersionId,
+      name: params.name,
+      description: params.description ?? null,
+    }
+  );
 }
 
 export async function getValuationVariant(businessVersionId: string): Promise<ValuationVariantDto> {
-  return v8Get<ValuationVariantDto>(`${BASE}/valuation/variants/${encodeURIComponent(businessVersionId)}`);
+  return v8Get<ValuationVariantDto>(
+    `${BASE}/valuation/variants/${encodeURIComponent(businessVersionId)}`
+  );
 }
 
 export async function renameValuationVariant(
   businessVersionId: string,
   params: { name?: string; description?: string | null }
 ): Promise<ValuationVariantDto> {
-  return v8Patch<ValuationVariantDto>(`${BASE}/valuation/variants/${encodeURIComponent(businessVersionId)}`, params);
+  return v8Patch<ValuationVariantDto>(
+    `${BASE}/valuation/variants/${encodeURIComponent(businessVersionId)}`,
+    params
+  );
 }
 
 export interface CompareValuationVariantsParams {
@@ -663,19 +708,25 @@ export interface CompareValuationVariantsParams {
   persist?: boolean;
 }
 
-export async function compareValuationVariants(params: CompareValuationVariantsParams): Promise<ValuationCompareVariantsResultDto> {
-  return v8Post<ValuationCompareVariantsResultDto>(`${BASE}/valuation/cases/${encodeURIComponent(params.caseId)}/compare-variants`, {
-    variantIdA: params.variantIdA,
-    variantIdB: params.variantIdB,
-    persist: params.persist === true,
-  });
+export async function compareValuationVariants(
+  params: CompareValuationVariantsParams
+): Promise<ValuationCompareVariantsResultDto> {
+  return v8Post<ValuationCompareVariantsResultDto>(
+    `${BASE}/valuation/cases/${encodeURIComponent(params.caseId)}/compare-variants`,
+    {
+      variantIdA: params.variantIdA,
+      variantIdB: params.variantIdB,
+      persist: params.persist === true,
+    }
+  );
 }
 
 // --- 2. Methods + weighted recommendation basket ---
 
-export async function listValuationMethods(
-  businessVersionId: string
-): Promise<{ methods: ValuationMethodDto[]; weightedRecommendation: ValuationWeightedRecommendationDto }> {
+export async function listValuationMethods(businessVersionId: string): Promise<{
+  methods: ValuationMethodDto[];
+  weightedRecommendation: ValuationWeightedRecommendationDto;
+}> {
   return v8Get(`${BASE}/valuation/variants/${encodeURIComponent(businessVersionId)}/methods`);
 }
 
@@ -683,7 +734,10 @@ export async function createValuationMethod(
   businessVersionId: string,
   params: { methodType: ValuationMethodType; applicabilityPolicyRef?: string | null }
 ): Promise<ValuationMethodDto> {
-  return v8Post<ValuationMethodDto>(`${BASE}/valuation/variants/${encodeURIComponent(businessVersionId)}/methods`, params);
+  return v8Post<ValuationMethodDto>(
+    `${BASE}/valuation/variants/${encodeURIComponent(businessVersionId)}/methods`,
+    params
+  );
 }
 
 export interface ValuationBasketUpdate {
@@ -697,14 +751,24 @@ export interface ValuationBasketUpdate {
 export async function setValuationMethodBasketWeights(
   businessVersionId: string,
   updates: ValuationBasketUpdate[]
-): Promise<{ methods: ValuationMethodDto[]; weightedRecommendation: ValuationWeightedRecommendationDto }> {
-  return v8Post(`${BASE}/valuation/variants/${encodeURIComponent(businessVersionId)}/methods/basket`, { updates });
+): Promise<{
+  methods: ValuationMethodDto[];
+  weightedRecommendation: ValuationWeightedRecommendationDto;
+}> {
+  return v8Post(
+    `${BASE}/valuation/variants/${encodeURIComponent(businessVersionId)}/methods/basket`,
+    { updates }
+  );
 }
 
 // --- 3. WACC inputs ---
 
-export async function getValuationWaccInputs(businessVersionId: string): Promise<ValuationWaccInputsRawDto> {
-  return v8Get<ValuationWaccInputsRawDto>(`${BASE}/valuation/variants/${encodeURIComponent(businessVersionId)}/wacc-inputs`);
+export async function getValuationWaccInputs(
+  businessVersionId: string
+): Promise<ValuationWaccInputsRawDto> {
+  return v8Get<ValuationWaccInputsRawDto>(
+    `${BASE}/valuation/variants/${encodeURIComponent(businessVersionId)}/wacc-inputs`
+  );
 }
 
 export interface UpsertValuationWaccInputsParams {
@@ -729,7 +793,10 @@ export async function upsertValuationWaccInputs(
   businessVersionId: string,
   params: UpsertValuationWaccInputsParams
 ): Promise<ValuationWaccInputsRawDto> {
-  return v8Put<ValuationWaccInputsRawDto>(`${BASE}/valuation/variants/${encodeURIComponent(businessVersionId)}/wacc-inputs`, params);
+  return v8Put<ValuationWaccInputsRawDto>(
+    `${BASE}/valuation/variants/${encodeURIComponent(businessVersionId)}/wacc-inputs`,
+    params
+  );
 }
 
 // --- 4. Compute (DCF/FCFF) + full Results ---
@@ -744,26 +811,37 @@ export interface RunValuationDcfComputeParams {
   openingWorkingCapital?: number | null;
 }
 
-export async function runValuationDcfCompute(params: RunValuationDcfComputeParams): Promise<ValuationComputeDcfResultDto> {
-  return v8Post<ValuationComputeDcfResultDto>(`${BASE}/valuation/variants/${encodeURIComponent(params.businessVersionId)}/compute/dcf`, {
-    entityId: params.entityId,
-    projectionYears: params.projectionYears,
-    terminal: { gPct: params.terminalGPct },
-    engineManifestId: params.engineManifestId,
-    requestId: params.requestId ?? null,
-    openingWorkingCapital: params.openingWorkingCapital ?? null,
-  });
+export async function runValuationDcfCompute(
+  params: RunValuationDcfComputeParams
+): Promise<ValuationComputeDcfResultDto> {
+  return v8Post<ValuationComputeDcfResultDto>(
+    `${BASE}/valuation/variants/${encodeURIComponent(params.businessVersionId)}/compute/dcf`,
+    {
+      entityId: params.entityId,
+      projectionYears: params.projectionYears,
+      terminal: { gPct: params.terminalGPct },
+      engineManifestId: params.engineManifestId,
+      requestId: params.requestId ?? null,
+      openingWorkingCapital: params.openingWorkingCapital ?? null,
+    }
+  );
 }
 
 /** The "Results" step's single call — EV, Equity, weighted range, per-method breakdown, WACC, terminal, bridge, sensitivity grids, method-agreement warnings. */
 export async function getValuationResults(businessVersionId: string): Promise<ValuationResultsDto> {
-  return v8Get<ValuationResultsDto>(`${BASE}/valuation/variants/${encodeURIComponent(businessVersionId)}/results`);
+  return v8Get<ValuationResultsDto>(
+    `${BASE}/valuation/variants/${encodeURIComponent(businessVersionId)}/results`
+  );
 }
 
 // --- 5. EV -> Equity bridge ---
 
-export async function getValuationBridge(businessVersionId: string): Promise<ValuationBridgeReadDto> {
-  return v8Get<ValuationBridgeReadDto>(`${BASE}/valuation/variants/${encodeURIComponent(businessVersionId)}/bridge`);
+export async function getValuationBridge(
+  businessVersionId: string
+): Promise<ValuationBridgeReadDto> {
+  return v8Get<ValuationBridgeReadDto>(
+    `${BASE}/valuation/variants/${encodeURIComponent(businessVersionId)}/bridge`
+  );
 }
 
 export interface WriteValuationBridgeParams {
@@ -773,18 +851,27 @@ export interface WriteValuationBridgeParams {
   components: ValuationBridgeComponentInput[];
 }
 
-export async function writeValuationBridge(params: WriteValuationBridgeParams): Promise<ValuationBridgeWriteResultDto> {
-  return v8Put<ValuationBridgeWriteResultDto>(`${BASE}/valuation/variants/${encodeURIComponent(params.businessVersionId)}/bridge`, {
-    asOfDate: params.asOfDate,
-    enterpriseValueDecimal: params.enterpriseValueDecimal,
-    components: params.components,
-  });
+export async function writeValuationBridge(
+  params: WriteValuationBridgeParams
+): Promise<ValuationBridgeWriteResultDto> {
+  return v8Put<ValuationBridgeWriteResultDto>(
+    `${BASE}/valuation/variants/${encodeURIComponent(params.businessVersionId)}/bridge`,
+    {
+      asOfDate: params.asOfDate,
+      enterpriseValueDecimal: params.enterpriseValueDecimal,
+      components: params.components,
+    }
+  );
 }
 
 // --- 6. Terminal value (read) + Sensitivity 5x5 ---
 
-export async function listValuationTerminalRows(methodId: string): Promise<ValuationTerminalRowRawDto[]> {
-  return v8Get<ValuationTerminalRowRawDto[]>(`${BASE}/valuation/methods/${encodeURIComponent(methodId)}/terminal`);
+export async function listValuationTerminalRows(
+  methodId: string
+): Promise<ValuationTerminalRowRawDto[]> {
+  return v8Get<ValuationTerminalRowRawDto[]>(
+    `${BASE}/valuation/methods/${encodeURIComponent(methodId)}/terminal`
+  );
 }
 
 export interface BuildValuationSensitivityGridParams {
@@ -802,20 +889,28 @@ export interface BuildValuationSensitivityGridParams {
   baseGPct: number;
 }
 
-export async function buildValuationSensitivityGrid(params: BuildValuationSensitivityGridParams): Promise<ValuationSensitivityWriteResultDto> {
-  return v8Post<ValuationSensitivityWriteResultDto>(`${BASE}/valuation/methods/${encodeURIComponent(params.methodId)}/sensitivity`, {
-    gridLabel: params.gridLabel,
-    rowAxisVariable: params.rowAxisVariable,
-    columnAxisVariable: params.columnAxisVariable,
-    axes: { wacc: params.waccAxis, terminalG: params.terminalGAxis },
-    years: params.years,
-    fcffTerminalYear: params.fcffTerminalYear,
-    baseWaccPct: params.baseWaccPct,
-    baseGPct: params.baseGPct,
-  });
+export async function buildValuationSensitivityGrid(
+  params: BuildValuationSensitivityGridParams
+): Promise<ValuationSensitivityWriteResultDto> {
+  return v8Post<ValuationSensitivityWriteResultDto>(
+    `${BASE}/valuation/methods/${encodeURIComponent(params.methodId)}/sensitivity`,
+    {
+      gridLabel: params.gridLabel,
+      rowAxisVariable: params.rowAxisVariable,
+      columnAxisVariable: params.columnAxisVariable,
+      axes: { wacc: params.waccAxis, terminalG: params.terminalGAxis },
+      years: params.years,
+      fcffTerminalYear: params.fcffTerminalYear,
+      baseWaccPct: params.baseWaccPct,
+      baseGPct: params.baseGPct,
+    }
+  );
 }
 
-export async function getValuationSensitivityGrid(methodId: string, gridLabel: string): Promise<ValuationSensitivityGridRawDto> {
+export async function getValuationSensitivityGrid(
+  methodId: string,
+  gridLabel: string
+): Promise<ValuationSensitivityGridRawDto> {
   return v8Get<ValuationSensitivityGridRawDto>(
     `${BASE}/valuation/methods/${encodeURIComponent(methodId)}/sensitivity/${encodeURIComponent(gridLabel)}`
   );
@@ -827,13 +922,20 @@ export async function generateValuationAdvisorOutput(
   businessVersionId: string,
   opts: { persist?: boolean } = {}
 ): Promise<ValuationAdvisorGenerateResultDto> {
-  return v8Post<ValuationAdvisorGenerateResultDto>(`${BASE}/valuation/variants/${encodeURIComponent(businessVersionId)}/advisor/generate`, {
-    persist: opts.persist !== false,
-  });
+  return v8Post<ValuationAdvisorGenerateResultDto>(
+    `${BASE}/valuation/variants/${encodeURIComponent(businessVersionId)}/advisor/generate`,
+    {
+      persist: opts.persist !== false,
+    }
+  );
 }
 
-export async function listValuationAdvisorOutputs(businessVersionId: string): Promise<ValuationAdvisorFindingStoredDto[]> {
-  return v8Get<ValuationAdvisorFindingStoredDto[]>(`${BASE}/valuation/variants/${encodeURIComponent(businessVersionId)}/advisor`);
+export async function listValuationAdvisorOutputs(
+  businessVersionId: string
+): Promise<ValuationAdvisorFindingStoredDto[]> {
+  return v8Get<ValuationAdvisorFindingStoredDto[]>(
+    `${BASE}/valuation/variants/${encodeURIComponent(businessVersionId)}/advisor`
+  );
 }
 
 // --- Cross-cutting, needed by the "Source" step (crosscutting.routes.ts, not Valuation-owned) ---
@@ -939,10 +1041,15 @@ export interface RunFinancePredictionPreflightParams {
 export async function runFinancePredictionPreflight(
   params: RunFinancePredictionPreflightParams
 ): Promise<FinancePredictionPreflightResultDto> {
-  return v8Post<FinancePredictionPreflightResultDto>(`${BASE}/prediction/${encodeURIComponent(params.businessVersionId)}/preflight`, {
-    ...(params.openingBalanceSheetPeriodId !== undefined ? { openingBalanceSheetPeriodId: params.openingBalanceSheetPeriodId } : {}),
-    ...(params.entityId !== undefined ? { entityId: params.entityId } : {}),
-  });
+  return v8Post<FinancePredictionPreflightResultDto>(
+    `${BASE}/prediction/${encodeURIComponent(params.businessVersionId)}/preflight`,
+    {
+      ...(params.openingBalanceSheetPeriodId !== undefined
+        ? { openingBalanceSheetPeriodId: params.openingBalanceSheetPeriodId }
+        : {}),
+      ...(params.entityId !== undefined ? { entityId: params.entityId } : {}),
+    }
+  );
 }
 
 export interface RunFinancePredictionCalculateParams {
@@ -956,16 +1063,23 @@ export interface RunFinancePredictionCalculateParams {
 export async function runFinancePredictionCalculate(
   params: RunFinancePredictionCalculateParams
 ): Promise<FinancePredictionCalculateResultDto> {
-  return v8Post<FinancePredictionCalculateResultDto>(`${BASE}/prediction/${encodeURIComponent(params.businessVersionId)}/calculate`, {
-    entityId: params.entityId,
-    forecastPeriodIds: params.forecastPeriodIds,
-    openingBalanceSheetPeriodId: params.openingBalanceSheetPeriodId,
-    ...(params.engineManifestId !== undefined ? { engineManifestId: params.engineManifestId } : {}),
-  });
+  return v8Post<FinancePredictionCalculateResultDto>(
+    `${BASE}/prediction/${encodeURIComponent(params.businessVersionId)}/calculate`,
+    {
+      entityId: params.entityId,
+      forecastPeriodIds: params.forecastPeriodIds,
+      openingBalanceSheetPeriodId: params.openingBalanceSheetPeriodId,
+      ...(params.engineManifestId !== undefined
+        ? { engineManifestId: params.engineManifestId }
+        : {}),
+    }
+  );
 }
 
 /** `crosscutting.routes.ts` `GET /exceptions/open` — rejestr wyjątków (DEC-FIN-009) dla widoku Modele/Wyniki. */
-export async function listFinanceExceptionsOpen(artifactId?: string): Promise<FinanceExceptionOpenDto[]> {
+export async function listFinanceExceptionsOpen(
+  artifactId?: string
+): Promise<FinanceExceptionOpenDto[]> {
   const qs = artifactId ? `?artifactId=${encodeURIComponent(artifactId)}` : '';
   return v8Get<FinanceExceptionOpenDto[]>(`${BASE}/exceptions/open${qs}`);
 }
@@ -1007,7 +1121,9 @@ export interface CompareFinancePeriodsParams {
 }
 
 /** `POST /compare/periods` — ta sama wersja/artefakt, dwa okresy (oś "okres/okres"). */
-export async function compareFinancePeriods(params: CompareFinancePeriodsParams): Promise<CompareResultDto> {
+export async function compareFinancePeriods(
+  params: CompareFinancePeriodsParams
+): Promise<CompareResultDto> {
   return v8Post<CompareResultDto>(`${COMPARE_BASE}/periods`, {
     artifactRef: params.artifactRef,
     periodIdA: params.periodIdA,
@@ -1041,7 +1157,9 @@ export interface CompareFinanceVersionsParams {
 }
 
 /** `POST /compare/versions` — dwa `business_version_id` TEGO SAMEGO artefaktu (oś "wersja/wersja"). */
-export async function compareFinanceVersions(params: CompareFinanceVersionsParams): Promise<CompareResultDto> {
+export async function compareFinanceVersions(
+  params: CompareFinanceVersionsParams
+): Promise<CompareResultDto> {
   return v8Post<CompareResultDto>(`${COMPARE_BASE}/versions`, {
     artifactType: params.artifactType,
     artifactId: params.artifactId,
@@ -1074,7 +1192,9 @@ export interface CompareFinanceEntitiesParams {
 }
 
 /** `POST /compare/entities` — ten sam okres, dwa podmioty w obrębie Statement Pack. */
-export async function compareFinanceEntities(params: CompareFinanceEntitiesParams): Promise<CompareResultDto> {
+export async function compareFinanceEntities(
+  params: CompareFinanceEntitiesParams
+): Promise<CompareResultDto> {
   return v8Post<CompareResultDto>(`${COMPARE_BASE}/entities`, {
     artifactRef: params.artifactRef,
     periodId: params.periodId,
@@ -1103,7 +1223,9 @@ export interface CompareFinanceScenariosParams {
 }
 
 /** `POST /compare/scenarios` — Base vs Upside/Downside (oś "scenariusz/baseline"). */
-export async function compareFinanceScenarios(params: CompareFinanceScenariosParams): Promise<CompareResultDto> {
+export async function compareFinanceScenarios(
+  params: CompareFinanceScenariosParams
+): Promise<CompareResultDto> {
   return v8Post<CompareResultDto>(`${COMPARE_BASE}/scenarios`, {
     businessVersionIdBase: params.businessVersionIdBase,
     businessVersionIdOther: params.businessVersionIdOther,
@@ -1127,7 +1249,9 @@ export interface CompareFinanceValuationMethodsParams {
 }
 
 /** `POST /compare/valuation-methods` — DCF vs comps (oś "metoda/metoda"), ta sama wersja. */
-export async function compareFinanceValuationMethods(params: CompareFinanceValuationMethodsParams): Promise<CompareResultDto> {
+export async function compareFinanceValuationMethods(
+  params: CompareFinanceValuationMethodsParams
+): Promise<CompareResultDto> {
   return v8Post<CompareResultDto>(`${COMPARE_BASE}/valuation-methods`, {
     businessVersionId: params.businessVersionId,
     methodTypeA: params.methodTypeA,
@@ -1139,8 +1263,16 @@ export async function compareFinanceValuationMethods(params: CompareFinanceValua
 }
 
 export interface CompareFinanceActualVsForecastParams {
-  actualArtifactRef: { artifactType: FinanceArtifactType; artifactId: string; businessVersionId: string };
-  forecastArtifactRef: { artifactType: FinanceArtifactType; artifactId: string; businessVersionId: string };
+  actualArtifactRef: {
+    artifactType: FinanceArtifactType;
+    artifactId: string;
+    businessVersionId: string;
+  };
+  forecastArtifactRef: {
+    artifactType: FinanceArtifactType;
+    artifactId: string;
+    businessVersionId: string;
+  };
   entityCode: string;
   periodIds: string[];
   accumulationBasis: string;
@@ -1151,7 +1283,9 @@ export interface CompareFinanceActualVsForecastParams {
 }
 
 /** `POST /compare/actual-vs-forecast` — Statement Pack (actual) vs Baseline/Scenario (forecast), oś "actual/forecast". */
-export async function compareFinanceActualVsForecast(params: CompareFinanceActualVsForecastParams): Promise<CompareResultDto> {
+export async function compareFinanceActualVsForecast(
+  params: CompareFinanceActualVsForecastParams
+): Promise<CompareResultDto> {
   return v8Post<CompareResultDto>(`${COMPARE_BASE}/actual-vs-forecast`, {
     actualArtifactRef: params.actualArtifactRef,
     forecastArtifactRef: params.forecastArtifactRef,
@@ -1181,7 +1315,9 @@ export interface CreateFinanceCommentParams {
   isBlocking?: boolean;
 }
 
-export async function createFinanceComment(params: CreateFinanceCommentParams): Promise<FinanceCommentDto> {
+export async function createFinanceComment(
+  params: CreateFinanceCommentParams
+): Promise<FinanceCommentDto> {
   return v8Post<FinanceCommentDto>(`${BASE}/comments`, {
     artifactId: params.artifactId,
     businessVersionId: params.businessVersionId,
@@ -1204,14 +1340,21 @@ export async function assignFinanceComment(
   commentId: string,
   params: { assigneeId: string; dueDate?: string }
 ): Promise<FinanceCommentAssignmentDto> {
-  return v8Post<FinanceCommentAssignmentDto>(`${BASE}/comments/${encodeURIComponent(commentId)}/assign`, {
-    assigneeId: params.assigneeId,
-    dueDate: params.dueDate,
-  });
+  return v8Post<FinanceCommentAssignmentDto>(
+    `${BASE}/comments/${encodeURIComponent(commentId)}/assign`,
+    {
+      assigneeId: params.assigneeId,
+      dueDate: params.dueDate,
+    }
+  );
 }
 
-export async function getFinanceCommentAssignment(commentId: string): Promise<FinanceCommentAssignmentDto | null> {
-  return v8Get<FinanceCommentAssignmentDto | null>(`${BASE}/comments/${encodeURIComponent(commentId)}/assignment`);
+export async function getFinanceCommentAssignment(
+  commentId: string
+): Promise<FinanceCommentAssignmentDto | null> {
+  return v8Get<FinanceCommentAssignmentDto | null>(
+    `${BASE}/comments/${encodeURIComponent(commentId)}/assignment`
+  );
 }
 
 export async function getFinanceComment(commentId: string): Promise<FinanceCommentDto> {
@@ -1226,7 +1369,9 @@ export interface ListFinanceCommentsParams {
   blockingOnly?: boolean;
 }
 
-export async function listFinanceComments(params: ListFinanceCommentsParams): Promise<FinanceCommentDto[]> {
+export async function listFinanceComments(
+  params: ListFinanceCommentsParams
+): Promise<FinanceCommentDto[]> {
   const qs = new URLSearchParams();
   if (params.artifactId) qs.set('artifactId', params.artifactId);
   if (params.businessVersionId) qs.set('businessVersionId', params.businessVersionId);
@@ -1240,7 +1385,10 @@ export async function searchFinanceCommentsByCell(
   businessVersionId: string,
   cellRef: FinanceCellRefInput
 ): Promise<FinanceCommentDto[]> {
-  return v8Post<FinanceCommentDto[]>(`${BASE}/comments/search-by-cell`, { businessVersionId, cellRef });
+  return v8Post<FinanceCommentDto[]>(`${BASE}/comments/search-by-cell`, {
+    businessVersionId,
+    cellRef,
+  });
 }
 
 /** `GET /comments/mentions/me` — TYLKO wzmianki wywołującego (serwer nie przyjmuje `userId` w query). */
@@ -1272,23 +1420,38 @@ export async function addFinanceReviewChecklistItem(
   });
 }
 
-export async function checkFinanceReviewChecklistItem(itemId: string): Promise<FinanceReviewChecklistItemDto> {
-  return v8Post<FinanceReviewChecklistItemDto>(`${BASE}/review-checklist/${encodeURIComponent(itemId)}/check`);
+export async function checkFinanceReviewChecklistItem(
+  itemId: string
+): Promise<FinanceReviewChecklistItemDto> {
+  return v8Post<FinanceReviewChecklistItemDto>(
+    `${BASE}/review-checklist/${encodeURIComponent(itemId)}/check`
+  );
 }
 
-export async function uncheckFinanceReviewChecklistItem(itemId: string): Promise<FinanceReviewChecklistItemDto> {
-  return v8Post<FinanceReviewChecklistItemDto>(`${BASE}/review-checklist/${encodeURIComponent(itemId)}/uncheck`);
+export async function uncheckFinanceReviewChecklistItem(
+  itemId: string
+): Promise<FinanceReviewChecklistItemDto> {
+  return v8Post<FinanceReviewChecklistItemDto>(
+    `${BASE}/review-checklist/${encodeURIComponent(itemId)}/uncheck`
+  );
 }
 
 export async function setFinanceReviewChecklistItemRequired(
   itemId: string,
   required: boolean
 ): Promise<FinanceReviewChecklistItemDto> {
-  return v8Post<FinanceReviewChecklistItemDto>(`${BASE}/review-checklist/${encodeURIComponent(itemId)}/required`, { required });
+  return v8Post<FinanceReviewChecklistItemDto>(
+    `${BASE}/review-checklist/${encodeURIComponent(itemId)}/required`,
+    { required }
+  );
 }
 
-export async function listFinanceReviewChecklist(businessVersionId: string): Promise<FinanceReviewChecklistItemDto[]> {
-  return v8Get<FinanceReviewChecklistItemDto[]>(`${BASE}/review-checklist/${encodeURIComponent(businessVersionId)}`);
+export async function listFinanceReviewChecklist(
+  businessVersionId: string
+): Promise<FinanceReviewChecklistItemDto[]> {
+  return v8Get<FinanceReviewChecklistItemDto[]>(
+    `${BASE}/review-checklist/${encodeURIComponent(businessVersionId)}`
+  );
 }
 
 export async function allFinanceReviewChecklistRequiredChecked(
@@ -1330,7 +1493,9 @@ export interface CreateFinanceSavedViewParams {
   filters?: SavedViewFilterInput[];
 }
 
-export async function createFinanceSavedView(params: CreateFinanceSavedViewParams): Promise<FinanceSavedViewDto> {
+export async function createFinanceSavedView(
+  params: CreateFinanceSavedViewParams
+): Promise<FinanceSavedViewDto> {
   return v8Post<FinanceSavedViewDto>(SAVED_VIEWS_BASE, {
     artifactId: params.artifactId,
     scope: params.scope,
@@ -1342,7 +1507,9 @@ export async function createFinanceSavedView(params: CreateFinanceSavedViewParam
 
 /** `GET /saved-views?artifactId=` — widoki TEAM na artefakcie + własne PERSONAL wywołującego. */
 export async function listFinanceSavedViews(artifactId: string): Promise<FinanceSavedViewDto[]> {
-  return v8Get<FinanceSavedViewDto[]>(`${SAVED_VIEWS_BASE}?artifactId=${encodeURIComponent(artifactId)}`);
+  return v8Get<FinanceSavedViewDto[]>(
+    `${SAVED_VIEWS_BASE}?artifactId=${encodeURIComponent(artifactId)}`
+  );
 }
 
 export async function getFinanceSharedSavedView(shareToken: string): Promise<FinanceSavedViewDto> {
@@ -1425,7 +1592,10 @@ export async function exportFinanceStatementPackXlsx(
 }
 
 /** `POST /import/parse` — multipart `.xlsx` upload (pole `file`). Tylko `.xlsx` — `.csv` świadomie poza zakresem tego routera (patrz nagłówek `export-import.routes.ts`). */
-export async function parseFinanceImportXlsx(file: Blob, filename: string): Promise<FinanceImportParsedDto> {
+export async function parseFinanceImportXlsx(
+  file: Blob,
+  filename: string
+): Promise<FinanceImportParsedDto> {
   const formData = new FormData();
   formData.append('file', file, filename);
   return v8PostMultipart<FinanceImportParsedDto>(`${BASE}/import/parse`, formData);
@@ -1439,7 +1609,9 @@ export interface PreviewFinanceImportParams {
 }
 
 /** `POST /import/preview` — read-only PODGLĄD RÓŻNIC przed zastosowaniem (nic nie zapisuje). */
-export async function previewFinanceImport(params: PreviewFinanceImportParams): Promise<FinanceImportPreviewDto> {
+export async function previewFinanceImport(
+  params: PreviewFinanceImportParams
+): Promise<FinanceImportPreviewDto> {
   return v8Post<FinanceImportPreviewDto>(`${BASE}/import/preview`, {
     artifactId: params.artifactId,
     businessVersionId: params.businessVersionId,
@@ -1470,7 +1642,9 @@ export interface ApplyFinanceImportParams {
 }
 
 /** `POST /import/apply` — JEDEN transakcyjny `Operation.batch`, wszystko-albo-nic (400/409/422 zamiast częściowego zastosowania). */
-export async function applyFinanceImport(params: ApplyFinanceImportParams): Promise<FinanceImportApplyResultDto> {
+export async function applyFinanceImport(
+  params: ApplyFinanceImportParams
+): Promise<FinanceImportApplyResultDto> {
   return v8Post<FinanceImportApplyResultDto>(
     `${BASE}/import/apply`,
     {
@@ -1527,7 +1701,9 @@ export interface CreateFinanceLineageEdgeParams {
 }
 
 /** `POST /versions/lineage-edges` — jedna, append-only krawędź lineage (rank/cykl/hash walidowane serwerowo). */
-export async function createFinanceLineageEdge(params: CreateFinanceLineageEdgeParams): Promise<FinanceLineageEdgeCreatedDto> {
+export async function createFinanceLineageEdge(
+  params: CreateFinanceLineageEdgeParams
+): Promise<FinanceLineageEdgeCreatedDto> {
   return v8Post<FinanceLineageEdgeCreatedDto>(`${BASE}/versions/lineage-edges`, params);
 }
 // --- /AP-CLIENT LineageNavigator ---

@@ -10,7 +10,7 @@
  * wywołaniem `exportFinanceStatementPackXlsx`/`parseFinanceImportXlsx`.
  */
 
-import { useFeatureFlags, type FeatureFlag, type UseFeatureFlagsReturn } from './useFeatureFlags';
+import { type FeatureFlag, useFeatureFlags, type UseFeatureFlagsReturn } from './useFeatureFlags';
 
 export const FINANCE_EXPORT_IMPORT_FLAG_ID = 'financeExportImportV1';
 

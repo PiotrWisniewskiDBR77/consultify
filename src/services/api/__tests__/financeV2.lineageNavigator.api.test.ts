@@ -93,13 +93,21 @@ const SAMPLE_NAVIGATOR = {
     siblings: [],
     createNew: [],
     createNewBlockedReason: 'NO_DOWNSTREAM_TYPE',
-    createNewBlockedLabel: { key: 'finance.lineage.createNew.blocked.noDownstream', pl: 'Brak typu docelowego' },
+    createNewBlockedLabel: {
+      key: 'finance.lineage.createNew.blocked.noDownstream',
+      pl: 'Brak typu docelowego',
+    },
     focusBadges: [],
     terminalVisibility: 'dim',
     hiddenTerminalCount: 0,
     cycleVersionIds: [],
   },
-  fullGraphView: { id: 'finance.lineage.fullGraph', label: { key: 'finance.lineage.fullGraph', pl: 'Pełny graf powiązań' }, auxiliary: true, defaultVisible: false },
+  fullGraphView: {
+    id: 'finance.lineage.fullGraph',
+    label: { key: 'finance.lineage.fullGraph', pl: 'Pełny graf powiązań' },
+    auxiliary: true,
+    defaultVisible: false,
+  },
 };
 
 describe('financeV2.api — AP-CLIENT LineageNavigator', () => {
@@ -115,7 +123,11 @@ describe('financeV2.api — AP-CLIENT LineageNavigator', () => {
 
   it('getFinanceLineageNavigator → dołącza maxDepth/maxTrailNodes/terminalVisibility jako query', async () => {
     mockedFetch.mockResolvedValueOnce(jsonResponse(200, { data: SAMPLE_NAVIGATOR, meta: {} }));
-    await getFinanceLineageNavigator('bv-focus', { maxDepth: 3, maxTrailNodes: 5, terminalVisibility: 'hide' });
+    await getFinanceLineageNavigator('bv-focus', {
+      maxDepth: 3,
+      maxTrailNodes: 5,
+      terminalVisibility: 'hide',
+    });
     const [url] = mockedFetch.mock.calls[0];
     expect(url).toContain('maxDepth=3');
     expect(url).toContain('maxTrailNodes=5');
@@ -123,7 +135,9 @@ describe('financeV2.api — AP-CLIENT LineageNavigator', () => {
   });
 
   it('getFinanceLineageNavigator → 404 NOT_FOUND (obcy business_version_id) trafia do .data.code', async () => {
-    mockedFetch.mockResolvedValueOnce(jsonResponse(404, { error: 'Business version not found', code: 'NOT_FOUND' }));
+    mockedFetch.mockResolvedValueOnce(
+      jsonResponse(404, { error: 'Business version not found', code: 'NOT_FOUND' })
+    );
     await expect(getFinanceLineageNavigator('foreign-bv')).rejects.toMatchObject({
       status: 404,
       data: { code: 'NOT_FOUND' },
@@ -159,12 +173,18 @@ describe('financeV2.api — AP-CLIENT LineageNavigator', () => {
     const [url, init] = mockedFetch.mock.calls[0];
     expect(url).toBe('/api/v8/finance-v2/versions/lineage-edges');
     expect(init.method).toBe('POST');
-    expect(JSON.parse(init.body)).toMatchObject({ sourceVersionId: 'bv-src', targetVersionId: 'bv-tgt', edgeType: 'STATEMENT_TO_ANALYSIS' });
+    expect(JSON.parse(init.body)).toMatchObject({
+      sourceVersionId: 'bv-src',
+      targetVersionId: 'bv-tgt',
+      edgeType: 'STATEMENT_TO_ANALYSIS',
+    });
     expect(result.edgeId).toBe('edge-1');
   });
 
   it('KONTROLA NEGATYWNA: createFinanceLineageEdge → 409 LINEAGE_CYCLE_REJECTED trafia do .data.code, nie do .code', async () => {
-    mockedFetch.mockResolvedValueOnce(jsonResponse(409, { error: 'Cycle rejected', code: 'LINEAGE_CYCLE_REJECTED' }));
+    mockedFetch.mockResolvedValueOnce(
+      jsonResponse(409, { error: 'Cycle rejected', code: 'LINEAGE_CYCLE_REJECTED' })
+    );
     let caught: any;
     try {
       await createFinanceLineageEdge({

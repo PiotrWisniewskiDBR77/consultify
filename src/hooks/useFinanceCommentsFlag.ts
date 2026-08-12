@@ -10,7 +10,7 @@
  * wywołaniem `listFinanceComments`/`listFinanceReviewChecklist`.
  */
 
-import { useFeatureFlags, type FeatureFlag, type UseFeatureFlagsReturn } from './useFeatureFlags';
+import { type FeatureFlag, useFeatureFlags, type UseFeatureFlagsReturn } from './useFeatureFlags';
 
 export const FINANCE_COMMENTS_FLAG_ID = 'financeCommentsV1';
 

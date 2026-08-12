@@ -58,26 +58,50 @@ function sampleCompareResult(comparisonType: string) {
     ignoreDimensions: [],
     materialityThresholdPct: 5,
     onlyMaterial: false,
-    summary: { totalRows: 1, bothPresent: 1, missingInA: 0, missingInB: 0, missingInBoth: 0, currencyMismatch: 0, materialCount: 0 },
+    summary: {
+      totalRows: 1,
+      bothPresent: 1,
+      missingInA: 0,
+      missingInB: 0,
+      missingInBoth: 0,
+      currencyMismatch: 0,
+      materialCount: 0,
+    },
     rows: [],
   };
 }
 
-const ARTIFACT_REF = { artifactType: 'STATEMENT_PACK' as const, artifactId: 'art-1', businessVersionId: 'bv-1' };
+const ARTIFACT_REF = {
+  artifactType: 'STATEMENT_PACK' as const,
+  artifactId: 'art-1',
+  businessVersionId: 'bv-1',
+};
 
 describe('financeV2.api — AP-CLIENT Compare', () => {
   it('compareFinancePeriods → POST /compare/periods z periodIdA/periodIdB', async () => {
-    mockedFetch.mockResolvedValueOnce(jsonResponse(200, { data: sampleCompareResult('PERIOD'), meta: {} }));
-    const result = await compareFinancePeriods({ artifactRef: ARTIFACT_REF, periodIdA: 'p1', periodIdB: 'p2' });
+    mockedFetch.mockResolvedValueOnce(
+      jsonResponse(200, { data: sampleCompareResult('PERIOD'), meta: {} })
+    );
+    const result = await compareFinancePeriods({
+      artifactRef: ARTIFACT_REF,
+      periodIdA: 'p1',
+      periodIdB: 'p2',
+    });
     const [url, init] = mockedFetch.mock.calls[0];
     expect(url).toBe('/api/v8/finance-v2/compare/periods');
     expect(init.method).toBe('POST');
-    expect(JSON.parse(init.body)).toMatchObject({ artifactRef: ARTIFACT_REF, periodIdA: 'p1', periodIdB: 'p2' });
+    expect(JSON.parse(init.body)).toMatchObject({
+      artifactRef: ARTIFACT_REF,
+      periodIdA: 'p1',
+      periodIdB: 'p2',
+    });
     expect(result.comparisonType).toBe('PERIOD');
   });
 
   it('compareFinanceVersions → POST /compare/versions z artifactType/businessVersionIdA/B', async () => {
-    mockedFetch.mockResolvedValueOnce(jsonResponse(200, { data: sampleCompareResult('VERSION'), meta: {} }));
+    mockedFetch.mockResolvedValueOnce(
+      jsonResponse(200, { data: sampleCompareResult('VERSION'), meta: {} })
+    );
     await compareFinanceVersions({
       artifactType: 'BASELINE_MODEL',
       artifactId: 'art-1',
@@ -86,38 +110,75 @@ describe('financeV2.api — AP-CLIENT Compare', () => {
     });
     const [url, init] = mockedFetch.mock.calls[0];
     expect(url).toBe('/api/v8/finance-v2/compare/versions');
-    expect(JSON.parse(init.body)).toMatchObject({ artifactType: 'BASELINE_MODEL', businessVersionIdA: 'bv-a', businessVersionIdB: 'bv-b' });
+    expect(JSON.parse(init.body)).toMatchObject({
+      artifactType: 'BASELINE_MODEL',
+      businessVersionIdA: 'bv-a',
+      businessVersionIdB: 'bv-b',
+    });
   });
 
   it('compareFinanceEntities → POST /compare/entities z periodId/entityIdA/B', async () => {
-    mockedFetch.mockResolvedValueOnce(jsonResponse(200, { data: { ...sampleCompareResult('ENTITY'), relationship: 'SUBSIDIARY' }, meta: {} }));
-    const result = await compareFinanceEntities({ artifactRef: ARTIFACT_REF, periodId: 'p1', entityIdA: 'e1', entityIdB: 'e2' });
+    mockedFetch.mockResolvedValueOnce(
+      jsonResponse(200, {
+        data: { ...sampleCompareResult('ENTITY'), relationship: 'SUBSIDIARY' },
+        meta: {},
+      })
+    );
+    const result = await compareFinanceEntities({
+      artifactRef: ARTIFACT_REF,
+      periodId: 'p1',
+      entityIdA: 'e1',
+      entityIdB: 'e2',
+    });
     const [url] = mockedFetch.mock.calls[0];
     expect(url).toBe('/api/v8/finance-v2/compare/entities');
     expect(result.relationship).toBe('SUBSIDIARY');
   });
 
   it('compareFinanceScenarios → POST /compare/scenarios z businessVersionIdBase/Other', async () => {
-    mockedFetch.mockResolvedValueOnce(jsonResponse(200, { data: sampleCompareResult('SCENARIO'), meta: {} }));
-    await compareFinanceScenarios({ businessVersionIdBase: 'bv-base', businessVersionIdOther: 'bv-upside' });
+    mockedFetch.mockResolvedValueOnce(
+      jsonResponse(200, { data: sampleCompareResult('SCENARIO'), meta: {} })
+    );
+    await compareFinanceScenarios({
+      businessVersionIdBase: 'bv-base',
+      businessVersionIdOther: 'bv-upside',
+    });
     const [url, init] = mockedFetch.mock.calls[0];
     expect(url).toBe('/api/v8/finance-v2/compare/scenarios');
-    expect(JSON.parse(init.body)).toMatchObject({ businessVersionIdBase: 'bv-base', businessVersionIdOther: 'bv-upside' });
+    expect(JSON.parse(init.body)).toMatchObject({
+      businessVersionIdBase: 'bv-base',
+      businessVersionIdOther: 'bv-upside',
+    });
   });
 
   it('compareFinanceValuationMethods → POST /compare/valuation-methods z methodTypeA/B', async () => {
-    mockedFetch.mockResolvedValueOnce(jsonResponse(200, { data: sampleCompareResult('VALUATION_METHOD'), meta: {} }));
-    await compareFinanceValuationMethods({ businessVersionId: 'bv-1', methodTypeA: 'DCF_FCFF', methodTypeB: 'TRADING_COMPS' });
+    mockedFetch.mockResolvedValueOnce(
+      jsonResponse(200, { data: sampleCompareResult('VALUATION_METHOD'), meta: {} })
+    );
+    await compareFinanceValuationMethods({
+      businessVersionId: 'bv-1',
+      methodTypeA: 'DCF_FCFF',
+      methodTypeB: 'TRADING_COMPS',
+    });
     const [url, init] = mockedFetch.mock.calls[0];
     expect(url).toBe('/api/v8/finance-v2/compare/valuation-methods');
-    expect(JSON.parse(init.body)).toMatchObject({ methodTypeA: 'DCF_FCFF', methodTypeB: 'TRADING_COMPS' });
+    expect(JSON.parse(init.body)).toMatchObject({
+      methodTypeA: 'DCF_FCFF',
+      methodTypeB: 'TRADING_COMPS',
+    });
   });
 
   it('compareFinanceActualVsForecast → POST /compare/actual-vs-forecast z dwoma ArtifactRef + periodIds', async () => {
-    mockedFetch.mockResolvedValueOnce(jsonResponse(200, { data: sampleCompareResult('ACTUAL_VS_FORECAST'), meta: {} }));
+    mockedFetch.mockResolvedValueOnce(
+      jsonResponse(200, { data: sampleCompareResult('ACTUAL_VS_FORECAST'), meta: {} })
+    );
     await compareFinanceActualVsForecast({
       actualArtifactRef: ARTIFACT_REF,
-      forecastArtifactRef: { artifactType: 'BASELINE_MODEL', artifactId: 'art-2', businessVersionId: 'bv-2' },
+      forecastArtifactRef: {
+        artifactType: 'BASELINE_MODEL',
+        artifactId: 'art-2',
+        businessVersionId: 'bv-2',
+      },
       entityCode: 'PARENT',
       periodIds: ['p1', 'p2'],
       accumulationBasis: 'YTD',
@@ -130,7 +191,9 @@ describe('financeV2.api — AP-CLIENT Compare', () => {
   });
 
   it('KONTROLA NEGATYWNA: błąd 403 ORGANIZATION_MISMATCH trafia do .data.code, nie do .code', async () => {
-    mockedFetch.mockResolvedValueOnce(jsonResponse(403, { error: 'cross-tenant artifactRef', code: 'ORGANIZATION_MISMATCH' }));
+    mockedFetch.mockResolvedValueOnce(
+      jsonResponse(403, { error: 'cross-tenant artifactRef', code: 'ORGANIZATION_MISMATCH' })
+    );
     let caught: any;
     try {
       await compareFinancePeriods({ artifactRef: ARTIFACT_REF, periodIdA: 'p1', periodIdB: 'p2' });

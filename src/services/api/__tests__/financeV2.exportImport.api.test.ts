@@ -18,7 +18,12 @@ vi.mock('../baseClient', async () => {
 });
 
 import { fetchWithRetry } from '../baseClient';
-import { applyFinanceImport, exportFinanceStatementPackXlsx, parseFinanceImportXlsx, previewFinanceImport } from '../financeV2.api';
+import {
+  applyFinanceImport,
+  exportFinanceStatementPackXlsx,
+  parseFinanceImportXlsx,
+  previewFinanceImport,
+} from '../financeV2.api';
 import type { FinanceExcelManifestDto } from '../financeV2.types';
 
 const mockedFetch = fetchWithRetry as unknown as ReturnType<typeof vi.fn>;
@@ -65,7 +70,9 @@ afterEach(() => {
 
 describe('financeV2.api — AP-CLIENT ExportImport', () => {
   it('exportFinanceStatementPackXlsx → GET binarny, manifest z nagłówka X-Finance-Export-Manifest', async () => {
-    const fakeBlob = new Blob(['xlsx-bytes'], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const fakeBlob = new Blob(['xlsx-bytes'], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    });
     const headerMap = new Map<string, string>([
       ['X-Finance-Export-Manifest', JSON.stringify(SAMPLE_MANIFEST)],
       ['Content-Disposition', 'attachment; filename="art-1-v3.xlsx"'],
@@ -96,8 +103,15 @@ describe('financeV2.api — AP-CLIENT ExportImport', () => {
   });
 
   it('parseFinanceImportXlsx → multipart POST /import/parse z polem "file"', async () => {
-    mockedFetch.mockResolvedValueOnce(jsonResponse(200, { data: { manifest: SAMPLE_MANIFEST, manifestIssues: [], rows: [] }, meta: {} }));
-    const file = new Blob(['fake-xlsx'], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    mockedFetch.mockResolvedValueOnce(
+      jsonResponse(200, {
+        data: { manifest: SAMPLE_MANIFEST, manifestIssues: [], rows: [] },
+        meta: {},
+      })
+    );
+    const file = new Blob(['fake-xlsx'], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    });
     const result = await parseFinanceImportXlsx(file, 'plik.xlsx');
     const [url, init] = mockedFetch.mock.calls[0];
     expect(url).toBe('/api/v8/finance-v2/import/parse');
@@ -120,7 +134,12 @@ describe('financeV2.api — AP-CLIENT ExportImport', () => {
         meta: {},
       })
     );
-    const result = await previewFinanceImport({ artifactId: 'art-1', businessVersionId: 'bv-1', manifest: SAMPLE_MANIFEST, rows: [] });
+    const result = await previewFinanceImport({
+      artifactId: 'art-1',
+      businessVersionId: 'bv-1',
+      manifest: SAMPLE_MANIFEST,
+      rows: [],
+    });
     const [url, init] = mockedFetch.mock.calls[0];
     expect(url).toBe('/api/v8/finance-v2/import/preview');
     expect(JSON.parse(init.body)).toMatchObject({ artifactId: 'art-1', businessVersionId: 'bv-1' });
@@ -158,7 +177,11 @@ describe('financeV2.api — AP-CLIENT ExportImport', () => {
 
   it('KONTROLA NEGATYWNA: applyFinanceImport → 409 WORKING_REVISION_CONFLICT (CAS pin nieaktualny) trafia do .data.code, wynik nigdy częściowy', async () => {
     mockedFetch.mockResolvedValueOnce(
-      jsonResponse(409, { error: 'stale revision', code: 'WORKING_REVISION_CONFLICT', currentWorkingRevisionId: 'wr-3' })
+      jsonResponse(409, {
+        error: 'stale revision',
+        code: 'WORKING_REVISION_CONFLICT',
+        currentWorkingRevisionId: 'wr-3',
+      })
     );
     let caught: any;
     try {

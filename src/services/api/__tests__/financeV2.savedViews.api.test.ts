@@ -102,11 +102,16 @@ describe('financeV2.api — AP-CLIENT SavedViews', () => {
 
   it('getFinanceSavedView → GET /saved-views/:id, 404 gdy nieznaleziony', async () => {
     mockedFetch.mockResolvedValueOnce(jsonResponse(404, { error: 'not found', code: 'NOT_FOUND' }));
-    await expect(getFinanceSavedView('missing')).rejects.toMatchObject({ status: 404, data: { code: 'NOT_FOUND' } });
+    await expect(getFinanceSavedView('missing')).rejects.toMatchObject({
+      status: 404,
+      data: { code: 'NOT_FOUND' },
+    });
   });
 
   it('updateFinanceSavedView → PATCH /saved-views/:id z podanymi polami', async () => {
-    mockedFetch.mockResolvedValueOnce(jsonResponse(200, { data: { ...SAMPLE_VIEW, name: 'Nowa nazwa' }, meta: {} }));
+    mockedFetch.mockResolvedValueOnce(
+      jsonResponse(200, { data: { ...SAMPLE_VIEW, name: 'Nowa nazwa' }, meta: {} })
+    );
     await updateFinanceSavedView('view-1', { name: 'Nowa nazwa' });
     const [url, init] = mockedFetch.mock.calls[0];
     expect(url).toBe('/api/v8/finance-v2/saved-views/view-1');
@@ -124,7 +129,9 @@ describe('financeV2.api — AP-CLIENT SavedViews', () => {
   });
 
   it('KONTROLA NEGATYWNA: updateFinanceSavedView → 403 FORBIDDEN (nie-owner) trafia do .data.code, nie do .code', async () => {
-    mockedFetch.mockResolvedValueOnce(jsonResponse(403, { error: 'owner-only', code: 'FORBIDDEN' }));
+    mockedFetch.mockResolvedValueOnce(
+      jsonResponse(403, { error: 'owner-only', code: 'FORBIDDEN' })
+    );
     let caught: any;
     try {
       await updateFinanceSavedView('view-1', { name: 'x' });
