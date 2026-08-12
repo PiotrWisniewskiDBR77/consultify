@@ -116,6 +116,20 @@ import { useFinanceLane } from './hooks/useFinanceLane';
 import { useFinanceRowActions } from './hooks/useFinanceRowActions';
 import { useFinanceSelection } from './hooks/useFinanceSelection';
 
+// AP_MOUNT §B — the four "finished, tested, unreachable" Finance v3 (AP-09/10/11)
+// detail workspaces (Prediction/Baseline/Analysis/Valuation, Pakiety G/F/E/H) each
+// read their OWN flag internally (AP_MOUNT §A) and render `null` at OFF, so importing
+// + conditionally rendering them here is safe by construction — no behaviour change
+// unless the flag is flipped. Named `FinanceV3*` locally: this file already declares
+// unrelated `ValuationWorkspace`/`FinancialAnalysisWorkspace` consts (the OLD
+// Benefits/M16 "Economics" workspaces, a separate system — see the ID-space caveat on
+// each v3 mount branch below).
+import { useFinanceAnalysisWorkspaceFlag } from '@/hooks/useFinanceAnalysisWorkspaceFlag';
+import { useFinanceBaselineWorkspaceFlag } from '@/hooks/useFinanceBaselineWorkspaceFlag';
+import { useFinancePredictionWorkspaceFlag } from '@/hooks/useFinancePredictionWorkspaceFlag';
+import { useFinanceValuationWorkspaceFlag } from '@/hooks/useFinanceValuationWorkspaceFlag';
+import type { BusinessVersionStatus } from '@/services/api/financeV2.types';
+
 // ---------------------------------------------------------------------------
 // H5.1 perf (code-splitting): heavy, on-demand surfaces are lazy-loaded so the
 // FinanceHub critical-path chunk no longer bundles the full editor suite +
@@ -151,6 +165,21 @@ const FinancialStatementPackWorkspace = lazy(() =>
   import('../Finance/FinancialStatementPackWorkspace').then((m) => ({
     default: m.FinancialStatementPackWorkspace,
   }))
+);
+// AP_MOUNT §B — Finance v3 (finance-v2 canonical) detail workspaces, aliased
+// `FinanceV3*` to avoid colliding with the OLD `ValuationWorkspace`/
+// `FinancialAnalysisWorkspace` consts above (Benefits/M16, different system).
+const FinanceV3PredictionWorkspace = lazy(() =>
+  import('../Finance/Prediction/PredictionWorkspace').then((m) => ({ default: m.PredictionWorkspace }))
+);
+const FinanceV3BaselineWorkspace = lazy(() =>
+  import('../Finance/BaselineWorkspace').then((m) => ({ default: m.BaselineWorkspace }))
+);
+const FinanceV3AnalysisWorkspace = lazy(() =>
+  import('../Finance/Analysis/AnalysisWorkspace').then((m) => ({ default: m.AnalysisWorkspace }))
+);
+const FinanceV3ValuationWorkspace = lazy(() =>
+  import('../Finance/Valuation/ValuationWorkspace').then((m) => ({ default: m.ValuationWorkspace }))
 );
 const CreateAnalysisModal = lazy(() =>
   import('./modals/CreateAnalysisModal').then((m) => ({ default: m.CreateAnalysisModal }))
