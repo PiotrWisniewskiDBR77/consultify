@@ -284,7 +284,7 @@ pustego stanu. `npx vitest run src/components/Finance` po zmianach: 44 plików /
 | `npx vitest run src --maxWorkers=2` (korzeń, filtr-substring `src`, obejmuje `src/**` I `server/src/**`) | 1037 (81 czerwonych, 68 skip) | 15021 (279 czerwonych, 646 skip, 8 todo) | **exit 1 — ale ZERO czerwonych w plikach dotkniętych tą sesją** (patrz niżej) | 651,9s |
 | `tsc -p . --noEmit` (korzeń, `NODE_OPTIONS=--max-old-space-size=12288`) | — | — | **PASS, exit 0, 0 błędów** | — |
 
-★ **Weryfikacja że 81 czerwonych plików to PRZEDISTNIEJĄCY dług, nie regresja tej sesji**: 
+★ **Weryfikacja że 81 czerwonych plików to PRZEDISTNIEJĄCY dług, nie regresja tej sesji**:
 `grep "^ FAIL "` na pełnym logu i przegląd wszystkich nazw plików — zero z nich leży pod
 `src/components/Finance/**`, `src/components/Economics/**` ani żadnym plikiem z `git diff --stat`
 tej sesji. Failures dotyczą niepowiązanych modułów (`AIChat/KimiWorkspace`, `Audit`, `Discovery`,
