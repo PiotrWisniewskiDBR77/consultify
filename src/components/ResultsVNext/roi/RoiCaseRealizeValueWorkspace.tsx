@@ -81,6 +81,7 @@ import {
   type RoiActualEntryActionKind,
 } from './RoiRealizeValueModals';
 import { buildRoiCasePhaseChips, type RoiCasePhase } from './RoiCasePhaseNav';
+import { toUserFacingErrorMessage } from '../shared/errorMessage';
 
 type RealizeTab = 'forecast-versions' | 'actuals' | 'actual-snapshots' | 'variances' | 'benefits-realization';
 
@@ -101,7 +102,7 @@ export const RoiCaseRealizeValueWorkspace: React.FC<RoiCaseRealizeValueWorkspace
   const [tab, setTab] = useState<RealizeTab>('forecast-versions');
   const phaseChips = buildRoiCasePhaseChips(isPolish);
   const conflictOf = (err: unknown) => err instanceof RoiApiError && err.status === 409;
-  const messageOf = (err: unknown) => (err instanceof Error ? err.message : String(err));
+  const messageOf = (err: unknown) => toUserFacingErrorMessage(err, isPolish);
   const trackable = ROI_TRACKING_ACTIVE_STATUSES.includes(roiCase.status);
   const trackableLockReason = isPolish
     ? 'Dostępne dopiero po rozpoczęciu śledzenia realizacji (statusy Śledzenie / Realizacja korzyści / PIR).'
