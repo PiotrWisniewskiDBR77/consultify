@@ -1,0 +1,33 @@
+=== finance-v2 + canonical real-DB pg tests: 49 files, run as 7 chunks of <=8 files (same vitest CLI flake on the full 49-file list; chunked run reproducible, all green) ===
+DATABASE_URL=postgresql://piotrwisniewski@127.0.0.1:54330/checkpoint_verify (RUN_DB_TESTS=1 MOCK_DB=false NODE_ENV=test)
+p2chunk_a_aa EXIT=0
+p2chunk_a_ab EXIT=0
+p2chunk_a_ac EXIT=0
+p2chunk_b_aa EXIT=0
+p2chunk_b_ab EXIT=0
+p2chunk_b_ac EXIT=0
+p2chunk_b_ad EXIT=0
+
+--- p2-p2chunk_a_aa.txt ---
+ Test Files  8 passed (8)
+      Tests  99 passed (99)
+--- p2-p2chunk_a_ab.txt ---
+ Test Files  8 passed (8)
+      Tests  64 passed (64)
+--- p2-p2chunk_a_ac.txt ---
+ Test Files  5 passed (5)
+      Tests  36 passed (36)
+--- p2-p2chunk_b_aa.txt ---
+ Test Files  8 passed (8)
+      Tests  89 passed (89)
+--- p2-p2chunk_b_ab.txt ---
+ Test Files  8 passed (8)
+      Tests  67 passed (67)
+--- p2-p2chunk_b_ac.txt ---
+ Test Files  8 passed (8)
+      Tests  91 passed (91)
+--- p2-p2chunk_b_ad.txt ---
+ Test Files  4 passed (4)
+      Tests  68 passed (68)
+
+TOTAL: 49 files, 514 tests, all passed. Total wall time: 50s (7 sequential chunk invocations).
