@@ -772,7 +772,7 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
             className="w-full table-fixed bg-c-surface"
             style={{ minWidth: tableMinWidth }}
           >
-            <thead className="sticky top-0 z-10 bg-c-surface-raised shadow-[0_1px_0_rgba(15,23,42,0.08)] backdrop-blur dark:shadow-[0_1px_0_rgba(255,255,255,0.10)]">
+            <thead className="sticky top-0 z-sticky bg-c-surface-raised shadow-[0_1px_0_rgba(15,23,42,0.08)] backdrop-blur dark:shadow-[0_1px_0_rgba(255,255,255,0.10)]">
               <tr className="border-b border-c-border-subtle">
                 <th className="px-2 py-3" style={{ width: columnWidths.select }}>
                   <button
@@ -952,8 +952,43 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                     />
                   </th>
                 ) : null}
+                {/*
+                  S13-STICKY (2026-08-12): pin the actions column to the right
+                  edge instead of letting it scroll off-screen. At 1280×800 in
+                  the true production shape (no sibling ArtifactRightPanel),
+                  DEFAULT_IDEAS_COLUMN_WIDTHS sums to 1354px against a 1280px
+                  viewport — the row kebab, the ONLY route to per-row actions,
+                  sat ~74px past the right edge at rest with no visible
+                  affordance (confirmed via getBoundingClientRect on the
+                  production-shape dev-render harness). `overflow-auto` on the
+                  scroll container (TableWithPreviewLayout.tsx) makes it
+                  technically reachable by scrolling, but that is not an
+                  acceptable route to the primary row action on a required
+                  acceptance viewport.
+                  Rejected alternatives:
+                    - Shrinking `title` 560→486 to force a fit: brittle,
+                      because every column here is user-resizable
+                      (handleColumnBoundaryResize) — any resize reintroduces
+                      the overflow.
+                    - Hiding `date` below a width threshold: loses data and
+                      still breaks under user resize.
+                  Sticky is robust to resizing, keeps every column reachable,
+                  and keeps the primary action permanently visible — the
+                  actual acceptance criterion.
+                  z-index: `z-sticky` (20, canon "sticky headers, command
+                  rows, chrome bars" — tailwind.config.js) on the header row
+                  (bumped here from a raw `z-10`, matching the precedent in
+                  ResizableTable/TableHeader.tsx) beats `z-canvas` (10, canon
+                  "in-flow raised content") on the body's sticky cells below,
+                  so the header's pinned corner always wins the header-row ×
+                  sticky-column intersection during scroll. Both stay well
+                  under `z-context-menu` (120) — the row menu portals straight
+                  to `document.body` (RowActionsMenu.tsx), a DOM sibling of
+                  the whole app root, so its stacking is independent of
+                  anything set here.
+                */}
                 <th
-                  className="relative px-3 py-2 text-right text-[11px] font-semibold uppercase tracking-wider text-c-text-muted"
+                  className="sticky right-0 z-sticky px-3 py-2 text-right text-[11px] font-semibold uppercase tracking-wider text-c-text-muted bg-c-surface-raised border-l border-c-border-subtle"
                   style={{ width: columnWidths.actions }}
                 >
                   <div className="flex items-center justify-end normal-case tracking-normal">
@@ -1008,6 +1043,21 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                   isChecked || isPreviewSelected || isFocused
                     ? 'opacity-100'
                     : 'opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus:opacity-100';
+
+                // S13-STICKY: the sticky actions cell needs its OWN opaque
+                // background — it overlays the data columns as they scroll
+                // underneath it, so it can't rely on the <tr> background
+                // showing through a transparent <td>. Mirrors the same four
+                // states the row's own className computes below (bg parts of
+                // SELECTED_ROW_CLASS / FOCUSED_ROW_CLASS / default+hover) so
+                // the pinned column reads as part of the row, not a foreign
+                // strip glued on top of it.
+                const stickyActionsCellBgClass =
+                  isPreviewSelected || isChecked
+                    ? 'bg-slate-100 dark:bg-white/[0.08]'
+                    : isFocused
+                      ? 'bg-slate-50/80 dark:bg-white/[0.04]'
+                      : 'bg-c-surface group-hover:bg-slate-100/80 dark:group-hover:bg-white/[0.04]';
 
                 const rowActionSections: RowActionSection[] = [
                   {
@@ -1305,7 +1355,15 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                       </td>
                     ) : null}
                     <td
-                      className="px-3 py-2.5 text-right align-middle"
+                      // S13-STICKY: pinned to the right edge (see the header
+                      // <th> comment above for the full "why sticky, not a
+                      // width squeeze" rationale + z-index reasoning).
+                      // `z-canvas` (10, canon "in-flow raised content") is
+                      // deliberately below the header's `z-sticky` (20) so
+                      // the corner cell never fights the header row for the
+                      // top spot, and both stay far under `z-context-menu`
+                      // (120) for the kebab's own portal-to-body menu.
+                      className={`sticky right-0 z-canvas px-3 py-2.5 text-right align-middle border-l border-c-border-subtle transition-colors ${stickyActionsCellBgClass}`}
                       style={{ width: columnWidths.actions }}
                       onClick={(event) => event.stopPropagation()}
                     >
