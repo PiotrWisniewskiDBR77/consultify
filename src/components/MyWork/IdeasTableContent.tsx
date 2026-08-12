@@ -1312,7 +1312,16 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                       <RowActionsMenu
                         sections={normalizeRowActionSections(rowActionSections)}
                         iconVariant="vertical"
-                        className="opacity-40 transition-opacity group-hover:opacity-100"
+                        // RISK-35 (S1-CONTRAST, 2026-08-12): opacity-40 at rest measured
+                        // 1.93:1 (light) / 1.61:1 (dark) against the 3:1 WCAG 1.4.11
+                        // non-text-contrast bar for this icon-only button — it is the
+                        // only route to per-row actions, so it must be legible before
+                        // the row is hovered, not just after. opacity-90 clears both
+                        // themes with margin (5.84:1 / 3.29:1 — see
+                        // docs/qa/ideas-complete-transformation-2026-08-09/21_FOCUS_AND_CONTRAST.md
+                        // §8) while keeping the hover reveal (opacity-100) visibly
+                        // stronger, preserving the "reveal on row hover" pattern.
+                        className="opacity-90 transition-opacity group-hover:opacity-100"
                       />
                     </td>
                   </tr>
