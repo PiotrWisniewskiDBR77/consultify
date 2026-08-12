@@ -12,7 +12,12 @@
  */
 import React from 'react';
 
-import type { ValuationLineageDto, ValuationVariantDto } from '@/services/api/financeV2.types';
+import {
+  financeArtifactTypeLabel,
+  financeLineageTransformationKindLabel,
+  type ValuationLineageDto,
+  type ValuationVariantDto,
+} from '@/services/api/financeV2.types';
 
 export interface SourceStepProps {
   businessVersionId: string;
@@ -43,11 +48,11 @@ export function SourceStep(props: SourceStepProps): React.ReactElement {
         <div className="rounded-xl border border-c-border-subtle bg-c-surface p-4" data-testid="source-edge-present">
           <p className="text-sm text-c-text">
             Powiązano z wersją źródłową <span className="font-mono">{sourceEdge.sourceVersionId}</span> (
-            {sourceEdge.sourceArtifactType})
+            {financeArtifactTypeLabel(sourceEdge.sourceArtifactType)})
           </p>
           <dl className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-c-text-muted">
             <dt>Typ transformacji</dt>
-            <dd className="text-c-text">{sourceEdge.transformationKind ?? '—'}</dd>
+            <dd className="text-c-text">{financeLineageTransformationKindLabel(sourceEdge.transformationKind)}</dd>
             <dt>Hash migawki założeń</dt>
             <dd className="font-mono text-c-text">{sourceEdge.assumptionSnapshotHash ?? '—'}</dd>
             <dt>Compute run</dt>

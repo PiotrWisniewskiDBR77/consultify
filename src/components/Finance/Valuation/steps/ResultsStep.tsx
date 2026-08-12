@@ -10,7 +10,7 @@
  */
 import React from 'react';
 
-import type { ValuationResultsDto } from '@/services/api/financeV2.types';
+import { valuationMethodTypeLabel, type ValuationResultsDto } from '@/services/api/financeV2.types';
 
 import { ValuationValueCell } from '../ValuationValueCell';
 import { computeMethodResultRange } from '../valuationMath';
@@ -21,6 +21,13 @@ export interface ResultsStepProps {
 
 function fmt(n: number): string {
   return n.toLocaleString('pl-PL', { maximumFractionDigits: 0 });
+}
+
+/** Decimal string -> pl-PL thousands-grouped display, `'—'` for null/unparsable (never a raw un-grouped digit string). */
+function fmtDecimalString(raw: string | null): string {
+  if (raw === null) return '—';
+  const n = Number(raw);
+  return Number.isFinite(n) ? fmt(n) : '—';
 }
 
 export function ResultsStep(props: ResultsStepProps): React.ReactElement {
@@ -76,7 +83,7 @@ export function ResultsStep(props: ResultsStepProps): React.ReactElement {
         <tbody>
           {results.methods.map((m) => (
             <tr key={m.methodId} className="border-b border-c-border-subtle/60">
-              <td className="py-1.5 pr-2 text-c-text">{m.methodType}</td>
+              <td className="py-1.5 pr-2 text-c-text">{valuationMethodTypeLabel(m.methodType)}</td>
               <td className="py-1.5 pr-2">
                 <ValuationValueCell status={m.result.status} valueDecimal={m.result.valueDecimal} />
               </td>
@@ -103,9 +110,9 @@ export function ResultsStep(props: ResultsStepProps): React.ReactElement {
           <p className="text-xs font-semibold text-c-text">Most EV → Equity</p>
           <dl className="mt-1 grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-c-text-muted">
             <dt>EV</dt>
-            <dd className="text-c-text">{results.bridge.header.enterprise_value_decimal ?? '—'}</dd>
+            <dd className="text-c-text">{fmtDecimalString(results.bridge.header.enterprise_value_decimal)}</dd>
             <dt>Equity Value</dt>
-            <dd className="text-c-text">{results.bridge.header.equity_value_decimal ?? '—'}</dd>
+            <dd className="text-c-text">{fmtDecimalString(results.bridge.header.equity_value_decimal)}</dd>
           </dl>
         </div>
       )}

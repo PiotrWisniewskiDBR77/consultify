@@ -151,6 +151,28 @@ export const FinanceArtifactTypeValues = [
 ] as const;
 export type FinanceArtifactType = (typeof FinanceArtifactTypeValues)[number];
 
+/** Polish label for an artifact type — never render `artifactType` raw (task #E2 enum-label sweep). */
+export function financeArtifactTypeLabel(artifactType: FinanceArtifactType): string {
+  switch (artifactType) {
+    case 'STATEMENT_PACK':
+      return 'Sprawozdanie finansowe';
+    case 'HISTORICAL_ANALYSIS':
+      return 'Analiza historyczna';
+    case 'BASELINE_MODEL':
+      return 'Model bazowy (Baseline)';
+    case 'PREDICTION_SCENARIO':
+      return 'Scenariusz predykcji';
+    case 'VALUATION_CASE':
+      return 'Wycena przedsiębiorstwa';
+    case 'REPORT_EXPORT':
+      return 'Eksport raportu';
+    default: {
+      const _exhaustive: never = artifactType;
+      return _exhaustive;
+    }
+  }
+}
+
 export interface ArtifactRef {
   organizationId: string;
   artifactType: FinanceArtifactType;
@@ -179,6 +201,38 @@ export const BusinessVersionStatusValues = [
   'INVALIDATED',
 ] as const;
 export type BusinessVersionStatus = (typeof BusinessVersionStatusValues)[number];
+
+/**
+ * Polish label for a business-version lifecycle status — never render `status` raw.
+ * Byte-identical wording to `FinanceWorkspaceBar.tsx`'s own (module-private) `STATUS_LABELS` map
+ * (WP-C02 chrome, frozen contract, out of this task's allowlist) — same source vocabulary, kept
+ * here as the shared, importable copy for every OTHER consumer of `BusinessVersionStatus` that
+ * isn't the workspace bar chrome itself.
+ */
+export function businessVersionStatusLabel(status: BusinessVersionStatus): string {
+  switch (status) {
+    case 'DRAFT':
+      return 'Wersja robocza';
+    case 'READY_FOR_REVIEW':
+      return 'Gotowe do przeglądu';
+    case 'IN_REVIEW':
+      return 'W przeglądzie';
+    case 'APPROVED':
+      return 'Zatwierdzone';
+    case 'NEEDS_CHANGES':
+      return 'Wymaga zmian';
+    case 'SUPERSEDED':
+      return 'Zastąpione';
+    case 'ARCHIVED':
+      return 'Zarchiwizowane';
+    case 'INVALIDATED':
+      return 'Unieważnione';
+    default: {
+      const _exhaustive: never = status;
+      return _exhaustive;
+    }
+  }
+}
 
 export const TERMINAL_BUSINESS_VERSION_STATUSES: readonly BusinessVersionStatus[] = [
   'SUPERSEDED',
@@ -698,8 +752,50 @@ export const ValuationMethodTypeValues = [
 ] as const;
 export type ValuationMethodType = (typeof ValuationMethodTypeValues)[number];
 
+/** Polish label for a valuation method type — never render `methodType` raw (DCF_FCFF, TRADING_COMPS, ... are internal codes, not UI text). DCF stays as the canonical abbreviation per product convention. */
+export function valuationMethodTypeLabel(methodType: ValuationMethodType): string {
+  switch (methodType) {
+    case 'DCF_FCFF':
+      return 'DCF (FCFF)';
+    case 'DCF_FCFE':
+      return 'DCF (FCFE)';
+    case 'DIVIDEND_DISCOUNT':
+      return 'Zdyskontowane dywidendy';
+    case 'TRADING_COMPS':
+      return 'Porównywalne spółki giełdowe';
+    case 'PRECEDENT_TRANSACTIONS':
+      return 'Transakcje precedensowe';
+    case 'ASSET_BASED':
+      return 'Metoda majątkowa';
+    case 'OTHER_WITH_POLICY':
+      return 'Inna (wg polityki)';
+    default: {
+      const _exhaustive: never = methodType;
+      return _exhaustive;
+    }
+  }
+}
+
 export const ValuationMethodReadinessValues = ['NOT_CONFIGURED', 'DATA_INCOMPLETE', 'READY', 'COMPUTE_FAILED'] as const;
 export type ValuationMethodReadiness = (typeof ValuationMethodReadinessValues)[number];
+
+/** Polish label for a valuation method's readiness state — never render `readiness` raw. */
+export function valuationMethodReadinessLabel(readiness: ValuationMethodReadiness): string {
+  switch (readiness) {
+    case 'NOT_CONFIGURED':
+      return 'Nieskonfigurowana';
+    case 'DATA_INCOMPLETE':
+      return 'Dane niekompletne';
+    case 'READY':
+      return 'Gotowa';
+    case 'COMPUTE_FAILED':
+      return 'Obliczenia nieudane';
+    default: {
+      const _exhaustive: never = readiness;
+      return _exhaustive;
+    }
+  }
+}
 
 /** Bit-identical to `FinanceValueStatus` above (`MethodResultValueStatus` in valuationComputeService.ts:49) — reused, not redeclared, so N/A-vs-zero logic is ONE place. */
 export type ValuationMethodResultStatus = FinanceValueStatus;
@@ -1064,6 +1160,22 @@ export type ValuationDcfErrorCode = (typeof ValuationDcfErrorCodeValues)[number]
 export type ValuationAdvisorOutputKind = 'FACT' | 'HYPOTHESIS' | 'RISK' | 'QUESTION' | 'ACTION';
 export type ValuationAdvisorConfidence = 'LOW' | 'MEDIUM' | 'HIGH';
 
+/** Polish label for an advisor finding's confidence — never render LOW/MEDIUM/HIGH raw. */
+export function valuationAdvisorConfidenceLabel(confidence: ValuationAdvisorConfidence): string {
+  switch (confidence) {
+    case 'LOW':
+      return 'Niska';
+    case 'MEDIUM':
+      return 'Średnia';
+    case 'HIGH':
+      return 'Wysoka';
+    default: {
+      const _exhaustive: never = confidence;
+      return _exhaustive;
+    }
+  }
+}
+
 export interface ValuationAdvisorEvidencePointerDto {
   table: string;
   column: string;
@@ -1176,6 +1288,31 @@ export interface ValuationLineageDto {
   businessVersionId: string;
   ancestors: ValuationLineageEdgeDto[];
   descendants: ValuationLineageEdgeDto[];
+}
+
+/**
+ * Polish label for a lineage `transformationKind` — never render the raw code (e.g.
+ * `VALUATION_FROM_BASELINE`). Open-ended (`string | null`, not a closed union — this file has no
+ * enum of every kind a `finance_lineage_edges` row can carry), so known codes get a real Polish
+ * sentence and anything else gets a readable fallback (underscores -> spaces, sentence case)
+ * instead of the raw SCREAMING_SNAKE_CASE token — the whole point being that NOTHING renders as a
+ * bare code, known or not.
+ */
+export function financeLineageTransformationKindLabel(kind: string | null): string {
+  if (kind === null) return '—';
+  switch (kind) {
+    case 'VALUATION_FROM_BASELINE':
+      return 'Wycena na bazie modelu bazowego (Baseline)';
+    case 'VALUATION_FROM_SCENARIO':
+      return 'Wycena na bazie scenariusza predykcji';
+    default:
+      return kind
+        .toLowerCase()
+        .split('_')
+        .filter(Boolean)
+        .map((word, i) => (i === 0 ? word.charAt(0).toUpperCase() + word.slice(1) : word))
+        .join(' ');
+  }
 }
 
 // --- /PKG-H Valuation ---

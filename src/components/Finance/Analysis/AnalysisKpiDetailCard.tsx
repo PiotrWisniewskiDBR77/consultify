@@ -11,6 +11,7 @@ import React from 'react';
 
 import type { AnalysisKpiValueDto } from '../../../services/api/financeV2.types';
 import { financeValueDisplayReasonLabel, formatFinanceValueForDisplay } from '../../../services/api/financeV2.types';
+import { industryLabelForCode } from './analysisKpiCatalog';
 import type { AnalysisKpiCatalogFormulaInfo } from './analysisKpiTable.contract';
 import type { YoyDelta } from './analysisKpiTable.contract';
 
@@ -144,7 +145,7 @@ export function AnalysisKpiDetailCard(props: AnalysisKpiDetailCardProps): React.
           <p className="text-xs font-medium text-c-text-muted uppercase tracking-wide mb-1">Benchmark branżowy</p>
           {kpiValue.benchmark ? (
             <p className="text-c-text">
-              {kpiValue.benchmark.rangeLow}–{kpiValue.benchmark.rangeHigh} ({kpiValue.benchmark.industryCode}) · źródło: {kpiValue.benchmark.source} ·{' '}
+              {kpiValue.benchmark.rangeLow}–{kpiValue.benchmark.rangeHigh} ({industryLabelForCode(kpiValue.benchmark.industryCode)}) · źródło: {kpiValue.benchmark.source} ·{' '}
               {kpiValue.benchmark.asOf}
             </p>
           ) : (

@@ -23,7 +23,7 @@
 import { AlertTriangle, Check, ChevronLeft, ChevronRight, Plus, Search, X } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 
-import type { AnalysisKpiCatalogEntryDto } from '../../../services/api/financeV2.types';
+import { BusinessVersionStatusValues, businessVersionStatusLabel, type AnalysisKpiCatalogEntryDto, type BusinessVersionStatus } from '../../../services/api/financeV2.types';
 import {
   ANALYSIS_CREATOR_GOALS,
   ANALYSIS_CREATOR_GOAL_LABELS_PL,
@@ -46,7 +46,7 @@ import {
   type AnalysisCreatorState,
   type AnalysisCreatorStepId,
 } from './analysisCreatorWizard.contract';
-import { ANALYSIS_INDUSTRY_PRESETS, validateCustomFormula, type AnalysisIndustryCode } from './analysisKpiCatalog';
+import { ANALYSIS_INDUSTRY_PRESETS, industryLabelForCode, validateCustomFormula, type AnalysisIndustryCode } from './analysisKpiCatalog';
 
 export interface AnalysisCreatorWizardProps {
   /** Kandydaci źródła — dostarczeni przez callera (dziś: mock/dev-render; produkcyjnie: brak endpointu listującego, patrz nagłówek pliku). */
@@ -63,6 +63,13 @@ export interface AnalysisCreatorWizardProps {
 }
 
 const STEP_INDEX_BY_ID = new Map(ANALYSIS_CREATOR_STEPS.map((s, i) => [s, i] as const));
+
+/** `AnalysisCreatorSourceOption.status` arrives as a loose `string` (contract file, not the shared enum) — label the known lifecycle statuses, fall back to the raw value only for something truly unrecognized. */
+function sourceStatusLabel(status: string): string {
+  return (BusinessVersionStatusValues as readonly string[]).includes(status)
+    ? businessVersionStatusLabel(status as BusinessVersionStatus)
+    : status;
+}
 
 export function AnalysisCreatorWizard(props: AnalysisCreatorWizardProps): React.ReactElement {
   const { sourceOptions, periodOptions, catalog, availableLineCodesForPreflight, onClose, onComplete, submitting, submitErrorMessage } = props;
@@ -195,7 +202,7 @@ export function AnalysisCreatorWizard(props: AnalysisCreatorWizardProps): React.
                       <span>
                         <span className="block text-sm font-medium text-c-text">{opt.label}</span>
                         <span className="block text-xs text-c-text-muted">
-                          {opt.entityLabel} · v{opt.versionNo} · {opt.status}
+                          {opt.entityLabel} · v{opt.versionNo} · {sourceStatusLabel(opt.status)}
                         </span>
                       </span>
                       {selected ? <Check className="h-4 w-4 text-c-text" /> : null}
@@ -378,7 +385,10 @@ export function AnalysisCreatorWizard(props: AnalysisCreatorWizardProps): React.
               <div className="rounded-lg border border-c-border-subtle p-3 text-xs text-c-text-secondary">
                 <p className="mb-1 font-medium text-c-text">Podsumowanie</p>
                 <p>Okresy: {state.selectedPeriodIds.length}</p>
-                <p>Branża: {state.industryCode ?? '—'}{state.goal ? ` · Cel: ${ANALYSIS_CREATOR_GOAL_LABELS_PL[state.goal]}` : ''}</p>
+                <p>
+                  Branża: {state.industryCode ? industryLabelForCode(state.industryCode) : '—'}
+                  {state.goal ? ` · Cel: ${ANALYSIS_CREATOR_GOAL_LABELS_PL[state.goal]}` : ''}
+                </p>
                 <p>Wskaźniki: {state.selectedKpiCodes.length}</p>
               </div>
             </div>
