@@ -735,7 +735,10 @@ test('READY_FOR_DECISION → persistent published Portfolio Scenario without lif
   await expect(page.getByRole('combobox', { name: 'Active Capacity Scenario' })).toHaveValue(
     capacityScenarioId
   );
-  await page.getByRole('row', { name: /2026-P10 Okres/ }).click();
+  // The canonical Capacity register now exposes the role / team / skill column
+  // between the period identity and type.  Keep the browser assertion bound to
+  // the business identity and row type without assuming adjacent columns.
+  await page.getByRole('row', { name: /2026-P10.*Okres/ }).click();
   await page.getByRole('button', { name: 'Otwórz narzędzia obciążenia', exact: true }).click();
   await expect(page.getByText(/Plan źródłowy · v2/)).toBeVisible();
   await expect(page.getByText('UNKNOWN — brak potwierdzonej wartości').first()).toBeVisible();
@@ -1012,10 +1015,8 @@ test('READY_FOR_DECISION → persistent published Portfolio Scenario without lif
   const realizationRow = page.getByRole('row', { name: /Automated Changeover Optimization/ });
   await expect(realizationRow).toBeVisible();
   await realizationRow.click();
-  await page.getByRole('button', { name: 'Otwórz', exact: true }).click();
-  await expect(
-    page.getByRole('button', { name: `Execution Case ${executionCaseId}@v1`, exact: true })
-  ).toBeVisible();
+  await page.getByRole('button', { name: 'Open', exact: true }).click();
+  await expect(page.getByText(`Execution Case ${executionCaseId} · v1 · Realizacja`)).toBeVisible();
   await page.screenshot({
     path: 'docs/implementation/evidence/aco-browser-execution-registry-step-34.png',
     fullPage: true,
@@ -1219,7 +1220,7 @@ test('READY_FOR_DECISION → persistent published Portfolio Scenario without lif
   await page.getByRole('button', { name: 'Zapisz propozycję' }).click();
   const allocationRow = page
     .getByRole('row', {
-      name: new RegExp(`controls-engineer.*${taskId.slice(-8)}`, 'i'),
+      name: new RegExp(`Controls Engineer.*${taskId.slice(-8)}`, 'i'),
     })
     .filter({ has: page.getByRole('button', { name: 'Row actions' }) });
   await expect(allocationRow).toContainText('Propozycja');
@@ -1277,9 +1278,11 @@ test('READY_FOR_DECISION → persistent published Portfolio Scenario without lif
   await page.getByRole('button', { name: 'Zapisz sygnał' }).click();
   await staleSignalRow.click();
   await expect(page.getByRole('row', { name: 'Wystąpienia 2' })).toBeVisible();
-  await expect(page.getByText(`milestone:${milestoneId}:stale:v2`, { exact: true })).toBeVisible();
   await expect(
-    page.getByText(`milestone:${milestoneId}:stale:v2:repeat`, { exact: true })
+    page.locator(`[title="Powiązany rekord — milestone:${milestoneId}:stale:v2"]`)
+  ).toBeVisible();
+  await expect(
+    page.locator(`[title="Powiązany rekord — milestone:${milestoneId}:stale:v2:repeat"]`)
   ).toBeVisible();
   await page.getByRole('button', { name: 'Dodaj do przygotowywanej interwencji' }).click();
 
@@ -1330,7 +1333,9 @@ test('READY_FOR_DECISION → persistent published Portfolio Scenario without lif
   await page.getByLabel('Intervention draft actionConfidence').selectOption('MEDIUM');
   await page.getByLabel('Intervention draft actionReversibility').selectOption('REVERSIBLE');
   await page.getByRole('button', { name: 'Zapisz lub połącz sprawę interwencyjną' }).click();
-  const interventionRow = page.getByRole('row', { name: new RegExp(interventionId) });
+  const interventionRow = page.getByRole('row', {
+    name: /Stale commissioning forecast and capacity conflict share the same Plan sequence\./,
+  });
   await expect(interventionRow).toContainText('Szkic');
   await page
     .getByLabel('Intervention Workbench')
@@ -1351,7 +1356,10 @@ test('READY_FOR_DECISION → persistent published Portfolio Scenario without lif
     .getByLabel('Intervention rationale')
     .fill('The selected option is reversible and preserves exact lineage.');
   await page.getByRole('button', { name: 'Zatwierdź wariant' }).click();
-  await expect(interventionRow).toContainText(/zatwierdzona/i);
+  const approvedInterventionRow = page.getByRole('row', {
+    name: /Apply independently approved Plan resequence/,
+  });
+  await expect(approvedInterventionRow).toContainText(/zatwierdzona/i);
   await page.screenshot({
     path: 'docs/implementation/evidence/aco-browser-management-intervention-steps-40-42.png',
     fullPage: true,
@@ -1384,7 +1392,9 @@ test('READY_FOR_DECISION → persistent published Portfolio Scenario without lif
   };
   const materialChangeId = `aco-plan-material-change-${runSuffix}`;
   await page.reload();
-  const interventionAfterReload = page.getByRole('row', { name: new RegExp(interventionId) });
+  const interventionAfterReload = page.getByRole('row', {
+    name: /Apply independently approved Plan resequence/,
+  });
   await interventionAfterReload.click();
   await page.getByRole('button', { name: 'Open', exact: true }).click();
   await page.getByRole('button', { name: 'Przygotuj zmianę planu' }).click();
