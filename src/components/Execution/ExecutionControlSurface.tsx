@@ -110,6 +110,16 @@ const formatDateTime = (value: string | null | undefined) => {
     minute: '2-digit',
   }).format(parsed);
 };
+const actorBusinessLabel = (value: string | null | undefined, fallback: string) =>
+  value
+    ? value.replace(/[-_]+/g, ' ').replace(/\b\w/g, (letter) => letter.toUpperCase())
+    : fallback;
+const interventionBusinessTitle = (intervention: any) =>
+  intervention.title ||
+  intervention.options?.find((option: any) => option.optionId === intervention.selectedOptionId)
+    ?.label ||
+  intervention.hypotheses?.[0] ||
+  `Interwencja operacyjna · ${intervention.interventionId}`;
 const interventionStatusLabel = (value: string) =>
   ({
     DRAFT: 'Szkic',
@@ -253,11 +263,11 @@ export const ExecutionControlSurface = ({
       setRows(
         (b.items ?? []).map((x) => ({
           id: x.interventionId,
-          title: x.interventionId,
+          title: interventionBusinessTitle(x),
           status: interventionStatusLabel(x.status),
           rawStatus: x.status,
-          owner: x.ownerId,
-          authority: x.authorityId,
+          owner: actorBusinessLabel(x.ownerName || x.ownerId, 'Nieprzypisany'),
+          authority: actorBusinessLabel(x.authorityName || x.authorityId, 'Nieustalony'),
           slaAt: formatDateTime(x.verifyBy ?? x.slaAt),
           rawSlaAt: x.verifyBy ?? x.slaAt ?? null,
           version: x.version,

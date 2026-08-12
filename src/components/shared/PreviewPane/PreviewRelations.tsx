@@ -3,6 +3,11 @@ import type { LucideIcon } from 'lucide-react';
 import React, { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import {
+  containsTechnicalIdentifier,
+  relationFallbackLabel,
+  resolveBusinessDisplayLabel,
+} from './businessDisplayLabel';
 import { PREVIEW_META_PILL, PREVIEW_RELATION_CHIP } from './previewStyles';
 
 export interface RelationPreview {
@@ -43,6 +48,13 @@ const HOVER_DELAY = 300;
 const RELATIONS_VISIBLE_MAX = 4;
 
 const RelationChip: React.FC<{ item: RelationItem; idx: number }> = ({ item, idx }) => {
+  const rawLabel = item.label;
+  const label = containsTechnicalIdentifier(rawLabel)
+    ? resolveBusinessDisplayLabel({
+        rawId: item.id ?? rawLabel,
+        fallback: relationFallbackLabel(item.type),
+      })
+    : rawLabel;
   // Lucide ≥0.400 uses React.forwardRef → typeof === 'object', not 'function'.
   // Accept both plain function components and forwardRef/memo objects ($$typeof).
   const Icon =
@@ -72,19 +84,19 @@ const RelationChip: React.FC<{ item: RelationItem; idx: number }> = ({ item, idx
   return (
     <span className="relative" onMouseEnter={handleEnter} onMouseLeave={handleLeave}>
       <Tag
-        key={`${item.label}-${idx}`}
+        key={`${rawLabel}-${idx}`}
         className={`${PREVIEW_RELATION_CHIP} ${tone}${item.onClick ? ' cursor-pointer hover:bg-slate-100/50 dark:hover:bg-white/[0.04]' : ''}`}
         onClick={item.onClick}
-        title={item.title ?? item.label}
+        title={item.title ?? (label === rawLabel ? rawLabel : `${label} — ${rawLabel}`)}
       >
         {Icon ? <Icon size={13} /> : (item.icon as React.ReactNode)}
         {item.value !== undefined ? (
           <>
-            <span className="font-medium">{item.label}</span>
+            <span className="font-medium">{label}</span>
             <span className="opacity-70">{String(item.value)}</span>
           </>
         ) : (
-          item.label
+          label
         )}
       </Tag>
 

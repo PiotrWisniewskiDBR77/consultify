@@ -1,4 +1,12 @@
 export {
+  type BusinessDisplayLabelInput,
+  containsTechnicalIdentifier,
+  isTechnicalIdentifier,
+  KNOWN_ROLE_DISPLAY_LABELS,
+  relationFallbackLabel,
+  resolveBusinessDisplayLabel,
+} from './businessDisplayLabel';
+export {
   type ActionButton,
   type ActionRow,
   PreviewActionBar,

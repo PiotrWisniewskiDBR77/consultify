@@ -127,6 +127,13 @@ const formatDateTime = (value: string | null | undefined) => {
     minute: '2-digit',
   }).format(parsed);
 };
+const businessLabel = (value: string | null | undefined, fallback: string) => {
+  if (!value) return fallback;
+  return value
+    .replace(/^(task|decision|case|initiative)[-_:]/i, '')
+    .replace(/[-_]+/g, ' ')
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+};
 export const ExecutionWorkSurface = ({ activePreset, onCountsChange }: ExecutionMenu3Contract) => {
   const actorId = useAppStore((store) => store.currentUser?.id ?? null);
   const [cases, setCases] = useState<Array<any>>([]),
@@ -262,6 +269,13 @@ export const ExecutionWorkSurface = ({ activePreset, onCountsChange }: Execution
     }
   };
   const selected = useMemo(() => rows.find((r) => r.id === selectedId) ?? null, [rows, selectedId]);
+  const caseLabel = useCallback(
+    (id: string) => {
+      const executionCase = cases.find((candidate) => candidate.executionCaseId === id);
+      return executionCase?.initiativeTitle || executionCase?.title || 'Powiązana realizacja';
+    },
+    [cases]
+  );
   const formFromRow = (row: Row) => {
     const source = row.source ?? {};
     return {
@@ -600,21 +614,23 @@ export const ExecutionWorkSurface = ({ activePreset, onCountsChange }: Execution
                   {
                     id: 'owner',
                     label: 'Odpowiedzialny',
-                    value: r.owner ? actorLabel(r.owner) : 'Brak przypisania',
+                    value: businessLabel(r.owner, 'Nieprzypisany'),
                   },
                   { id: 'due', label: 'Termin / SLA', value: r.dueAt || 'Brak danych' },
-                  { id: 'case', label: 'Realizacja', value: `…${r.executionCaseId.slice(-8)}` },
+                  { id: 'case', label: 'Realizacja', value: caseLabel(r.executionCaseId) },
                   {
                     id: 'evidence',
                     label: 'Dowody',
-                    value: r.source.evidenceRefs?.join(', ') || 'Brak wymaganych dowodów',
+                    value: r.source.evidenceRefs?.length
+                      ? `${r.source.evidenceRefs.length} powiązanych dowodów`
+                      : 'Brak wymaganych dowodów',
                   },
                 ],
                 onCopy: () => void navigator.clipboard?.writeText(r.title),
               }}
               relations={[
-                { label: `Realizacja · …${r.executionCaseId.slice(-8)}`, onClick: () => undefined },
-                { label: `Inicjatywa · …${r.initiativeId.slice(-8)}`, onClick: () => undefined },
+                { label: caseLabel(r.executionCaseId), onClick: () => undefined },
+                { label: 'Powiązana inicjatywa', onClick: () => undefined },
               ]}
               relationsEmptyLabel="Brak powiązań"
               actions={{
@@ -643,29 +659,62 @@ export const ExecutionWorkSurface = ({ activePreset, onCountsChange }: Execution
             onRowDoubleClick={(r) => {
               void openWorkspace(r as Row);
             }}
-            rowMenu={(row) => ({
-              primary: [
-                {
-                  id: 'open',
-                  label: 'Otwórz element pracy',
-                  icon: ArrowRight,
-                  onClick: () => {
-                    void openWorkspace(row as Row);
+            rowMenu={(row) => {
+              const work = row as Row;
+              const openWorkspaceForAction = () => {
+                setSelectedId(work.id);
+                setToolMode(work.kind);
+                void openWorkspace(work);
+              };
+              return {
+                primary: [
+                  {
+                    id: 'open',
+                    label: work.kind === 'TASK' ? 'Otwórz zadanie' : 'Otwórz decyzję',
+                    icon: ArrowRight,
+                    onClick: openWorkspaceForAction,
                   },
+                  ...(work.kind === 'TASK' && work.status !== 'COMPLETED'
+                    ? [
+                        {
+                          id: 'update-task',
+                          label: 'Zaktualizuj zadanie',
+                          onClick: openWorkspaceForAction,
+                        },
+                      ]
+                    : []),
+                  ...(work.kind === 'DECISION' && work.status === 'DRAFT'
+                    ? [
+                        {
+                          id: 'request-decision',
+                          label: 'Przekaż do decyzji',
+                          onClick: openWorkspaceForAction,
+                        },
+                      ]
+                    : []),
+                  ...(work.kind === 'DECISION' && work.status === 'PENDING'
+                    ? [
+                        {
+                          id: 'decide',
+                          label: 'Rozstrzygnij decyzję',
+                          onClick: openWorkspaceForAction,
+                        },
+                      ]
+                    : []),
+                ],
+                universalHandlers: {
+                  preview: () => {
+                    setSelectedId(String(row.id));
+                    setShowWorkspace(false);
+                  },
+                  archiveNote: 'Elementy pracy podlegają retencji Execution Case.',
                 },
-              ],
-              universalHandlers: {
-                preview: () => {
-                  setSelectedId(String(row.id));
-                  setShowWorkspace(false);
+                destructive: {
+                  label: 'Usuń',
+                  note: 'Kanoniczny element pracy nie może zostać usunięty.',
                 },
-                archiveNote: 'Elementy pracy podlegają retencji Execution Case.',
-              },
-              destructive: {
-                label: 'Usuń',
-                note: 'Kanoniczny element pracy nie może zostać usunięty.',
-              },
-            })}
+              };
+            }}
             persistKey="execution.work.canonical-register.v2"
           />
         </TableWithPreviewLayout>

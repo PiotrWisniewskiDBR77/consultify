@@ -191,7 +191,7 @@ describe('Execution canonical work/resources', () => {
     fireEvent.change(await screen.findByLabelText('Execution Case for resources'), {
       target: { value: 'case1' },
     });
-    const row = (await screen.findByText('u1')).closest('tr');
+    const row = (await screen.findByText('U1')).closest('tr');
     expect(row).toBeTruthy();
     fireEvent.click(row!);
     expect(screen.getByRole('button', { name: /^Otwórz przydział/ })).toBeInTheDocument();
@@ -199,7 +199,7 @@ describe('Execution canonical work/resources', () => {
     expect(
       screen.getByRole('region', { name: 'Operational Allocation workspace' })
     ).toBeInTheDocument();
-    expect(screen.getByText(/Propozycja · u1/)).toBeInTheDocument();
+    expect(screen.getByText(/Propozycja · U1/)).toBeInTheDocument();
     expect(screen.queryByText(/\bPROPOSED\b/)).not.toBeInTheDocument();
   });
 });

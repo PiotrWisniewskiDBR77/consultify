@@ -44,6 +44,7 @@ interface DefinitionRow extends TableRow {
   updatedAt: string;
   definition: any;
 }
+type ReportRegisterItem = { kind: 'DEFINITION'; row: DefinitionRow } | { kind: 'RUN'; row: Row };
 const formatDate = (value: unknown) => {
   if (!value) return 'UNKNOWN';
   const date = new Date(String(value));
@@ -68,6 +69,21 @@ const reportStatusLabel = (value: string) =>
   })[value] ||
   value ||
   'UNKNOWN';
+const referenceLabel = (value: string | null | undefined, fallback = '—') =>
+  value
+    ? value.replace(/^(execution_case|initiative|report|project)[-_:]?/i, '').replace(/[-_]+/g, ' ')
+    : fallback;
+const sourceTypeLabel = (value: string | null | undefined) =>
+  ({
+    execution_case: 'Realizacja',
+    execution_task: 'Zadanie',
+    execution_decision: 'Decyzja',
+    execution_milestone: 'Kamień milowy',
+    operational_allocation: 'Przydział zasobu',
+    intervention_case: 'Interwencja',
+    finance: 'Finanse',
+    results: 'Wyniki / KPI',
+  })[String(value ?? '').toLowerCase()] || 'Źródło';
 
 const columns: TableColumn[] = [
   { id: 'title', label: 'Raport', sortable: true, width: '280px' },
@@ -239,18 +255,13 @@ export const ExecutionReportsSurface = ({
     () => definitions.find((row) => row.id === selectedDefinitionId) ?? null,
     [definitions, selectedDefinitionId]
   );
-  const reportItems = useMemo(
-    () => [
-      ...definitions.map((row) => ({ kind: 'DEFINITION' as const, row })),
-      ...rows.map((row) => ({ kind: 'RUN' as const, row })),
-    ],
-    [definitions, rows]
-  );
-  const matches = useCallback((item: (typeof reportItems)[number], preset: string) => {
+  const matches = useCallback((item: ReportRegisterItem, preset: string) => {
     const raw = item.row as any;
     const source = item.kind === 'RUN' ? raw.source : raw.definition;
     const version =
-      source?.versions?.find((entry: any) => entry.version === source.currentVersion) ?? source;
+      source?.versions?.find(
+        (entry: any) => (entry.definitionVersion ?? entry.version) === source.currentVersion
+      ) ?? source;
     const cadence = String(version?.cadence ?? source?.cadence ?? '').toUpperCase();
     const status = String(
       item.kind === 'RUN' ? (raw.rawStatus ?? raw.status) : (raw.rawState ?? raw.state)
@@ -279,10 +290,13 @@ export const ExecutionReportsSurface = ({
     matches({ kind: 'DEFINITION', row }, activePreset ?? 'all')
   );
   const visibleRuns = rows.filter((row) => matches({ kind: 'RUN', row }, activePreset ?? 'all'));
-  useEffect(
-    () => onCountsChange?.(countExecutionPresets(reportItems, reportPresets, matches)),
-    [matches, onCountsChange, reportItems]
-  );
+  useEffect(() => {
+    const lensItems: ReportRegisterItem[] =
+      registerMode === 'DEFINITIONS'
+        ? definitions.map((row) => ({ kind: 'DEFINITION', row }))
+        : rows.map((row) => ({ kind: 'RUN', row }));
+    onCountsChange?.(countExecutionPresets(lensItems, reportPresets, matches));
+  }, [definitions, matches, onCountsChange, registerMode, rows]);
   const cid = (key: string) => {
     const value = ids.current.get(key) ?? crypto.randomUUID();
     ids.current.set(key, value);
@@ -558,33 +572,43 @@ export const ExecutionReportsSurface = ({
                   }}
                   details={{
                     label: 'Kontrakt raportu',
-                    text: version?.purpose || 'UNKNOWN',
+                    text: version?.purpose || '—',
                     properties: [
-                      { id: 'owner', label: 'Właściciel', value: version?.ownerId || 'UNASSIGNED' },
+                      {
+                        id: 'owner',
+                        label: 'Właściciel',
+                        value: referenceLabel(version?.ownerName || version?.ownerId),
+                      },
                       {
                         id: 'approver',
                         label: 'Zatwierdzający',
-                        value: version?.approverId || 'UNKNOWN',
+                        value: referenceLabel(version?.approverName || version?.approverId),
                       },
                       {
                         id: 'audience',
                         label: 'Odbiorcy',
-                        value: version?.audience?.join(', ') || 'UNKNOWN',
+                        value:
+                          version?.audience
+                            ?.map((value: string) => referenceLabel(value))
+                            .join(', ') || '—',
                       },
                       {
                         id: 'cadence',
                         label: 'Częstotliwość',
-                        value: version?.cadence || 'UNKNOWN',
+                        value: version?.cadence || '—',
                       },
                       {
                         id: 'scope',
                         label: 'Zakres projektów',
-                        value: version?.scope?.projectIds?.join(', ') || 'UNKNOWN',
+                        value:
+                          version?.scope?.projectIds
+                            ?.map((value: string) => referenceLabel(value))
+                            .join(', ') || '—',
                       },
                     ],
                   }}
                   relations={(version?.sourceBindings ?? []).map((source: any) => ({
-                    label: `${source.sourceType ?? 'Źródło'} · ${source.sourceId ?? 'UNKNOWN'}`,
+                    label: `${sourceTypeLabel(source.sourceType)} · ${referenceLabel(source.label || source.name || source.sourceId)}`,
                   }))}
                   relationsEmptyLabel="Brak źródeł definicji"
                 />
@@ -829,12 +853,17 @@ export const ExecutionReportsSurface = ({
                   {
                     id: 'audience',
                     label: 'Odbiorcy',
-                    value: r.source.audience?.join(', ') || 'UNKNOWN',
+                    value:
+                      r.source.audience?.map((value: string) => referenceLabel(value)).join(', ') ||
+                      '—',
                   },
                   {
                     id: 'scope',
                     label: 'Zakres',
-                    value: r.source.scopeRefs?.join(', ') || 'UNKNOWN',
+                    value:
+                      r.source.scopeRefs
+                        ?.map((value: string) => referenceLabel(value))
+                        .join(', ') || '—',
                   },
                   ...(r.source.parentRunRef
                     ? [
@@ -854,7 +883,7 @@ export const ExecutionReportsSurface = ({
                 ],
               }}
               relations={(r.source.sources ?? []).map((source: any) => ({
-                label: `${source.sourceType} · ${source.sourceId} · v${source.version}`,
+                label: `${sourceTypeLabel(source.sourceType)} · ${referenceLabel(source.label || source.name || source.sourceId)} · v${source.version}`,
                 value: `${source.freshness ?? 'UNKNOWN'} · ${source.accessState ?? 'UNKNOWN'} · confidence ${source.confidence ?? 'UNKNOWN'}`,
                 onClick: () => undefined,
               }))}

@@ -51,6 +51,7 @@ export interface CanonicalInitiativeRegisterProps {
   emptyTitle: string;
   emptyDescription: string;
   previewOpen?: boolean;
+  onResetFilters?: () => void;
   relationForRow?: (row: CanonicalInitiativeRow) => Array<{ label: string; onClick?: () => void }>;
 }
 
@@ -218,6 +219,7 @@ export const CanonicalInitiativeRegister = ({
   emptyTitle,
   emptyDescription,
   previewOpen,
+  onResetFilters,
   relationForRow,
 }: CanonicalInitiativeRegisterProps) => {
   const columns = useMemo(() => createCanonicalInitiativeRegisterColumns(), []);
@@ -332,7 +334,13 @@ export const CanonicalInitiativeRegister = ({
         rowDescription={(raw) => (raw as CanonicalInitiativeRow).summary || null}
         defaultSort={{ columnId: 'updatedAt', direction: 'desc' }}
         persistKey={persistKey}
-        empty={{ icon: Lightbulb, title: emptyTitle, description: emptyDescription }}
+        empty={{
+          icon: Lightbulb,
+          title: emptyTitle,
+          description: emptyDescription,
+          actionLabel: onResetFilters ? 'Wyczyść filtry' : undefined,
+          onAction: onResetFilters,
+        }}
         rowMenu={(raw): StandardRowMenu => {
           const row = raw as CanonicalInitiativeRow;
           return {

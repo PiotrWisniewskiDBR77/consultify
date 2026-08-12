@@ -1,15 +1,17 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { CanonicalInitiativeRegister } from '@/components/Initiatives/CanonicalInitiativeRegister';
-import { toCanonicalInitiativeRegisterItem } from '@/components/Initiatives/initiativeRegisterProjection';
-import type { TableRow } from '@/components/standard';
+import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
+import {
+  StandardPreview,
+  StandardTable,
+  type TableColumn,
+  type TableRow,
+} from '@/components/standard';
 import {
   listExecutionCases,
   readExecutionCase,
   readRegisteredInitiative,
 } from '@/services/initiatives-execution/runtimeApi';
-import { useAppStore } from '@/store/useAppStore';
-import type { PortfolioInitiative } from '@/types';
 
 import { AcceptanceRequesterPanel } from './AcceptanceRequesterPanel';
 import { countExecutionPresets, type ExecutionMenu3Contract } from './canonicalMenu3';
@@ -34,8 +36,6 @@ interface ExecutionRow extends TableRow {
   detail: Knowledge;
 }
 
-type ExecutionInitiativeRow = PortfolioInitiative & { executionCaseId: string };
-
 const roleLabel = (value: unknown): string => {
   const raw = String(value || '').trim();
   if (!raw) return '—';
@@ -56,9 +56,17 @@ const lifecycleLabel = (value: unknown): string => {
   return roleLabel(value);
 };
 
-const buildRow = (summary: Knowledge, detail: Knowledge): ExecutionRow => {
+const buildRow = (
+  summary: Knowledge,
+  detail: Knowledge,
+  initiativeReadback?: Knowledge
+): ExecutionRow => {
   const baseline = (detail.acceptedBaseline || {}) as Knowledge;
-  const scope = (baseline.scope || {}) as Knowledge;
+  const scope =
+    baseline.scope && typeof baseline.scope === 'object'
+      ? (baseline.scope as Knowledge)
+      : ({} as Knowledge);
+  const initiative = (initiativeReadback?.initiative || {}) as Knowledge;
   const lifecycle = lifecycleLabel(summary.state || detail.state);
   const isClosed = String(summary.state || detail.state).toUpperCase() === 'CLOSED';
   const handoffVersion = Number(detail.handoffPackageVersion || 0);
@@ -69,8 +77,8 @@ const buildRow = (summary: Knowledge, detail: Knowledge): ExecutionRow => {
 
   return {
     id: String(summary.executionCaseId),
-    title: String(scope.outcome || 'Realizacja bez nazwy biznesowej'),
-    description: String(scope.problem || 'Brak opisu problemu biznesowego.'),
+    title: String(initiative.title || scope.outcome || 'Realizacja bez nazwy biznesowej'),
+    description: String(initiative.problem || scope.problem || 'Brak opisu problemu biznesowego.'),
     initiativeId: String(summary.initiativeId || detail.initiativeId || ''),
     lifecycle,
     phase: phaseLabel(summary.state || detail.state, detail.deliveryState),
@@ -106,20 +114,8 @@ export const ExecutionRealizationsSurface = ({
   activePreset,
   onCountsChange,
 }: { scope: 'active' | 'all' } & ExecutionMenu3Contract) => {
-  const currentUserId = useAppStore((store) => store.currentUser?.id ?? null);
-  const currentUserDisplayName = useAppStore((store) => {
-    const user = store.currentUser as any;
-    return (
-      user?.displayName ||
-      user?.name ||
-      [user?.firstName, user?.lastName].filter(Boolean).join(' ') ||
-      null
-    );
-  });
   const [state, setState] = useState<'LOADING' | 'READY' | 'ERROR'>('LOADING');
   const [rows, setRows] = useState<ExecutionRow[]>([]);
-  const [initiativeRows, setInitiativeRows] = useState<ExecutionInitiativeRow[]>([]);
-  const [selectedInitiativeId, setSelectedInitiativeId] = useState<string | null>(null);
   const [selectedExecutionCaseId, setSelectedExecutionCaseId] = useState<string | null>(null);
   const [showWorkbench, setShowWorkbench] = useState(false);
 
@@ -134,29 +130,19 @@ export const ExecutionRealizationsSurface = ({
             readExecutionCase(executionCaseId) as Promise<{ detail?: Knowledge }>,
             readRegisteredInitiative(String(summary.initiativeId)),
           ]);
-          return {
-            execution: buildRow(summary, full.detail ?? {}),
-            initiative: {
-              ...toCanonicalInitiativeRegisterItem(initiative, {
-                id: currentUserId,
-                displayName: currentUserDisplayName,
-              }),
-              executionCaseId,
-            } as ExecutionInitiativeRow,
-          };
+          return buildRow(summary, full.detail ?? {}, initiative as Knowledge);
         })
       );
       const scoped =
         scope === 'active'
-          ? hydrated.filter(({ execution }) => execution.lifecycle !== 'Zamknięta')
+          ? hydrated.filter((execution) => execution.lifecycle !== 'Zamknięta')
           : hydrated;
-      setRows(scoped.map(({ execution }) => execution));
-      setInitiativeRows(scoped.map(({ initiative }) => initiative));
+      setRows(scoped);
       setState('READY');
     } catch {
       setState('ERROR');
     }
-  }, [currentUserDisplayName, currentUserId, scope]);
+  }, [scope]);
 
   useEffect(() => {
     void load();
@@ -181,18 +167,23 @@ export const ExecutionRealizationsSurface = ({
     () => rows.filter((row) => matches(row, activePreset ?? 'active')),
     [activePreset, matches, rows]
   );
-  const visibleInitiativeRows = useMemo(() => {
-    const ids = new Set(visibleRows.map((row) => row.initiativeId));
-    return initiativeRows.filter((row) => ids.has(row.id));
-  }, [initiativeRows, visibleRows]);
   const selected = useMemo(
     () => rows.find((row) => row.id === selectedExecutionCaseId) ?? null,
     [rows, selectedExecutionCaseId]
   );
-  const executionByInitiativeId = useMemo(
-    () => new Map(rows.map((row) => [row.initiativeId, row])),
-    [rows]
-  );
+
+  const columns: TableColumn[] = [
+    { id: 'title', label: 'Realizacja', sortable: true, width: '260px' },
+    { id: 'lifecycle', label: 'Stan', sortable: true, filterable: true, width: '140px' },
+    { id: 'phase', label: 'Faza', sortable: true, width: '170px' },
+    { id: 'owner', label: 'Manager realizacji', sortable: true, width: '190px' },
+    { id: 'handoffRef', label: 'Pakiet przekazania', width: '220px' },
+    { id: 'baselineRef', label: 'Zaakceptowana baza', width: '190px' },
+    { id: 'openGaps', label: 'Otwarte luki', sortable: true, align: 'right', width: '120px' },
+    { id: 'nextMilestone', label: 'Następny kamień milowy', width: '220px' },
+    { id: 'nextAction', label: 'Następne działanie', width: '180px' },
+    { id: 'updatedAt', label: 'Aktualizacja', sortable: true, width: '160px' },
+  ];
 
   useEffect(
     () => onCountsChange?.(countExecutionPresets(rows, presets, matches)),
@@ -201,45 +192,99 @@ export const ExecutionRealizationsSurface = ({
 
   return (
     <section aria-label="Realizacje" className="min-h-0 flex-1">
-      <CanonicalInitiativeRegister
-        rows={visibleInitiativeRows}
-        selectedId={selectedInitiativeId}
-        onSelect={(row) => {
-          setSelectedInitiativeId(row?.id ?? null);
-          setSelectedExecutionCaseId(
-            row ? (executionByInitiativeId.get(row.id)?.id ?? null) : null
-          );
+      {state === 'ERROR' ? (
+        <div role="alert">
+          Nie udało się załadować realizacji.{' '}
+          <button onClick={() => void load()}>Spróbuj ponownie</button>
+        </div>
+      ) : null}
+      <TableWithPreviewLayout<ExecutionRow>
+        selectedId={selectedExecutionCaseId}
+        selectedItem={selected}
+        onSelect={(id) => {
+          setSelectedExecutionCaseId(id);
           setShowWorkbench(false);
         }}
-        onOpen={(row) => {
-          const execution = executionByInitiativeId.get(row.id);
-          setSelectedInitiativeId(row.id);
-          setSelectedExecutionCaseId(execution?.id ?? null);
-          setShowWorkbench(Boolean(execution));
+        onOpenFull={(id) => {
+          setSelectedExecutionCaseId(id);
+          setShowWorkbench(true);
         }}
-        relationForRow={(row) => {
-          const execution = executionByInitiativeId.get(row.id);
-          return execution
-            ? [
-                {
-                  label: `Execution Case ${execution.id}@v${execution.version}`,
-                  onClick: () => {
-                    setSelectedExecutionCaseId(execution.id);
-                    setShowWorkbench(true);
-                  },
+        itemIds={visibleRows.map((row) => row.id)}
+        getItemById={(id) => rows.find((row) => row.id === id) ?? null}
+        previewOpen={!showWorkbench && Boolean(selectedExecutionCaseId)}
+        renderPreview={(row) => (
+          <StandardPreview
+            embedded
+            title={row.title}
+            onClose={() => setSelectedExecutionCaseId(null)}
+            onOpenFull={() => setShowWorkbench(true)}
+            openLabel="Otwórz"
+            meta={{
+              pills: [
+                { label: row.lifecycle, tone: row.lifecycle === 'Aktywna' ? 'success' : 'neutral' },
+                { label: row.phase, tone: 'info' },
+              ],
+              trailing: <span className="text-xs">v{row.version}</span>,
+              recommendation: row.nextAction,
+            }}
+            details={{
+              label: 'Szczegóły realizacji',
+              text: row.description,
+              properties: [
+                { id: 'manager', label: 'Manager', value: row.owner },
+                { id: 'handoff', label: 'Pakiet przekazania', value: row.handoffRef },
+                { id: 'baseline', label: 'Zaakceptowana baza', value: row.baselineRef },
+                { id: 'gaps', label: 'Otwarte luki', value: String(row.openGaps) },
+                { id: 'milestone', label: 'Następny kamień milowy', value: row.nextMilestone },
+              ],
+            }}
+            relations={[
+              { label: `Execution Case ${row.id}@v${row.version}` },
+              { label: `Inicjatywa · …${row.initiativeId.slice(-8)}` },
+              { label: `Pakiet przekazania · ${row.handoffRef}` },
+            ]}
+          />
+        )}
+      >
+        <StandardTable
+          columns={columns}
+          data={visibleRows}
+          loading={state === 'LOADING'}
+          selectedRowId={selectedExecutionCaseId}
+          onRowClick={(row) => {
+            setSelectedExecutionCaseId(String(row.id));
+            setShowWorkbench(false);
+          }}
+          onRowDoubleClick={(row) => {
+            setSelectedExecutionCaseId(String(row.id));
+            setShowWorkbench(true);
+          }}
+          rowMenu={(row) => ({
+            primary: [
+              {
+                id: 'open',
+                label: 'Otwórz realizację',
+                onClick: () => {
+                  setSelectedExecutionCaseId(String(row.id));
+                  setShowWorkbench(true);
                 },
-                { label: `Handoff ${execution.handoffRef}` },
-              ]
-            : [{ label: 'Execution Case UNKNOWN' }];
-        }}
-        persistKey="execution.canonical.executions.v1"
-        loading={state === 'LOADING'}
-        error={state === 'ERROR' ? 'Nie udało się załadować realizacji.' : null}
-        onRetry={() => void load()}
-        emptyTitle="Brak inicjatyw w realizacji"
-        emptyDescription="Inicjatywa pojawi się tutaj po zaakceptowaniu jej pakietu przekazania."
-        previewOpen={!showWorkbench && Boolean(selectedInitiativeId)}
-      />
+              },
+            ],
+            universalHandlers: {
+              preview: () => {
+                setSelectedExecutionCaseId(String(row.id));
+                setShowWorkbench(false);
+              },
+              archiveNote: 'Zamknięcie realizacji wymaga decyzji.',
+            },
+          })}
+          persistKey="execution.canonical.execution-cases.v2"
+          empty={{
+            title: 'Brak zaakceptowanych realizacji',
+            description: 'Realizacja pojawi się po zaakceptowaniu pakietu przekazania.',
+          }}
+        />
+      </TableWithPreviewLayout>
 
       {showWorkbench && selected ? (
         <div className="border-t border-c-border p-4" aria-label="Karta realizacji">

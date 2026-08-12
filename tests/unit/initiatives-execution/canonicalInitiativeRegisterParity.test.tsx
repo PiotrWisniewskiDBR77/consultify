@@ -40,27 +40,63 @@ describe('canonical Initiative register parity', () => {
     );
   });
 
-  it.each([
-    ['initiatives.canonical-register.v1'],
-    ['execution.canonical.executions.v1'],
-  ])('keeps identical presentation while routing Open for %s', (persistKey) => {
+  it.each([['initiatives.canonical-register.v1'], ['execution.canonical.executions.v1']])(
+    'keeps identical presentation while routing Open for %s',
+    (persistKey) => {
+      const onOpen = vi.fn();
+      render(
+        <CanonicalInitiativeRegister
+          rows={[row]}
+          selectedId="initiative-1"
+          onSelect={vi.fn()}
+          onOpen={onOpen}
+          persistKey={persistKey}
+          emptyTitle="Empty"
+          emptyDescription="Empty description"
+        />
+      );
+
+      expect(screen.getByRole('columnheader', { name: /^Inicjatywa/ })).toBeInTheDocument();
+      expect(screen.getByRole('columnheader', { name: /^Lifecycle/ })).toBeInTheDocument();
+      expect(screen.getAllByText('Spadek reklamacji o 20%').length).toBeGreaterThan(0);
+      fireEvent.click(screen.getAllByRole('button', { name: 'Otwórz' })[0]);
+      expect(onOpen).toHaveBeenCalledWith(row);
+    }
+  );
+
+  it('opens the selected Initiative with Enter and exposes filtered-empty reset', () => {
     const onOpen = vi.fn();
-    render(
+    const onResetFilters = vi.fn();
+    const { rerender } = render(
       <CanonicalInitiativeRegister
         rows={[row]}
         selectedId="initiative-1"
         onSelect={vi.fn()}
         onOpen={onOpen}
-        persistKey={persistKey}
+        onResetFilters={onResetFilters}
+        persistKey="initiatives.keyboard-reset.v1"
         emptyTitle="Empty"
         emptyDescription="Empty description"
       />
     );
-
-    expect(screen.getByRole('columnheader', { name: /^Inicjatywa/ })).toBeInTheDocument();
-    expect(screen.getByRole('columnheader', { name: /^Lifecycle/ })).toBeInTheDocument();
-    expect(screen.getAllByText('Spadek reklamacji o 20%').length).toBeGreaterThan(0);
-    fireEvent.click(screen.getAllByRole('button', { name: 'Otwórz' })[0]);
+    const workspace = screen.getByRole('region', { name: 'Table and preview workspace' });
+    workspace.focus();
+    fireEvent.keyDown(workspace, { key: 'Enter' });
     expect(onOpen).toHaveBeenCalledWith(row);
+
+    rerender(
+      <CanonicalInitiativeRegister
+        rows={[]}
+        selectedId={null}
+        onSelect={vi.fn()}
+        onOpen={onOpen}
+        onResetFilters={onResetFilters}
+        persistKey="initiatives.keyboard-reset.v1"
+        emptyTitle="Empty"
+        emptyDescription="Empty description"
+      />
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Wyczyść filtry' }));
+    expect(onResetFilters).toHaveBeenCalledTimes(1);
   });
 });

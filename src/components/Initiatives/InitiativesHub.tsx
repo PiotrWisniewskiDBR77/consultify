@@ -1110,6 +1110,15 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     setFilters({});
   }, []);
 
+  const handleResetInitiativeRegisterFilters = useCallback(() => {
+    handleClearFilters();
+    setSearchQuery('');
+    setActiveStatusFilter(null);
+    setActiveLifecyclePreset(null);
+    setScope('active');
+    handlePreviewSelection(null);
+  }, [handleClearFilters, handlePreviewSelection]);
+
   const handleShowList = useCallback(() => {
     setActiveDocumentId(null);
   }, []);
@@ -1767,6 +1776,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
               'initiatives.hub.noInitiativesFoundDesc',
               'No initiatives match the current filters. Try widening the search or clearing filters.'
             )}
+            onResetFilters={handleResetInitiativeRegisterFilters}
             relationForRow={(row) =>
               row.sourceType && row.sourceId
                 ? [

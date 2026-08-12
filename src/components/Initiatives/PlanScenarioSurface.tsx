@@ -211,7 +211,11 @@ export const PlanScenarioSurface: React.FC<Props> = ({
       return {
         id: window.initiativeId,
         title: names.get(window.initiativeId) ?? window.initiativeId,
+        backlogState: 'UNKNOWN',
+        earliest: formatDate(window.earliest),
         target: formatDate(window.target),
+        latest: formatDate(window.latest),
+        proposedWindow: `${formatDate(window.earliest)} → ${formatDate(window.target)} → ${formatDate(window.latest)}`,
         band:
           periodIndex < 0
             ? 'UNSCHEDULED'
@@ -224,6 +228,16 @@ export const PlanScenarioSurface: React.FC<Props> = ({
         capacity: unknownConstraint ? 'UNKNOWN' : 'KNOWN',
         confidence: window.confidence,
         conflict: unknownConstraint ? 'UNKNOWN' : 'NONE',
+        mandatoryDeadline: 'UNKNOWN',
+        costOfDelay: 'UNKNOWN',
+        roughDemand: 'UNKNOWN',
+        nextAction: !window.target
+          ? 'PROPOSE_WINDOW'
+          : unknownConstraint
+            ? 'RESOLVE_CAPACITY'
+            : window.dependencySnapshot.length
+              ? 'REVIEW_TENTATIVE_WINDOW'
+              : 'VALIDATE_DEPENDENCIES',
         published: draft?.status === 'PUBLISHED' ? 'PUBLISHED' : 'DRAFT',
       };
     });
@@ -611,12 +625,19 @@ export const PlanScenarioSurface: React.FC<Props> = ({
         <StandardTable
           columns={[
             { id: 'title', label: 'Initiative', sortable: true, width: '240px' },
-            { id: 'band', label: 'Window', sortable: true, filterable: true },
+            { id: 'backlogState', label: 'Backlog state', sortable: true, filterable: true },
+            { id: 'proposedWindow', label: 'Tentative earliest / target / latest', sortable: true },
+            { id: 'earliest', label: 'Earliest', sortable: true },
             { id: 'target', label: 'Proposed target', sortable: true },
-            { id: 'dependency', label: 'Dependencies', sortable: true, filterable: true },
-            { id: 'capacity', label: 'Capacity', sortable: true, filterable: true },
-            { id: 'confidence', label: 'Confidence', sortable: true, filterable: true },
+            { id: 'latest', label: 'Latest', sortable: true },
+            { id: 'dependency', label: 'Dependency readiness', sortable: true, filterable: true },
+            { id: 'mandatoryDeadline', label: 'Mandatory deadline', sortable: true },
+            { id: 'costOfDelay', label: 'Cost of delay', sortable: true },
+            { id: 'roughDemand', label: 'Rough demand', sortable: true },
+            { id: 'capacity', label: 'Capacity state', sortable: true, filterable: true },
+            { id: 'confidence', label: 'Schedule confidence', sortable: true, filterable: true },
             { id: 'conflict', label: 'Conflict', sortable: true, filterable: true },
+            { id: 'nextAction', label: 'Next action', sortable: true },
           ]}
           data={visiblePlanWindows}
           selectedRowId={selectedWindowId}

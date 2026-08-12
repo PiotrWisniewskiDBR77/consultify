@@ -31,6 +31,15 @@ interface Membership {
   roughDemand: TriState<{ unit: string; low: number; base: number; high: number }>;
   confidence: 'HIGH' | 'MEDIUM' | 'LOW' | 'UNKNOWN';
   rationale: string;
+  strategicFit?: TriState<number>;
+  expectedValue?: TriState<{ amount: number; currency: string; period?: string }>;
+  costEnvelope?: TriState<{ amount: number; currency: string }>;
+  risk?: TriState<string>;
+  readiness?: string;
+  coverageContribution?: TriState<number>;
+  overlapSynergy?: TriState<string[]>;
+  ownerId?: string | null;
+  mandatory?: boolean;
 }
 interface Scenario {
   scenarioId: string;
@@ -67,6 +76,8 @@ interface Props extends CanonicalMenu3Contract {
 }
 
 const unknown = <T,>(reason: string): TriState<T> => ({ state: 'UNKNOWN', value: null, reason });
+const triStateValue = <T,>(value: TriState<T> | undefined, format: (known: T) => string) =>
+  !value || value.state === 'UNKNOWN' ? 'UNKNOWN' : format(value.value);
 const emptyScenario = (scenarioId: string, portfolioId: string): Scenario => ({
   scenarioId,
   scenarioVersion: 0,
@@ -152,11 +163,30 @@ export const PortfolioScenarioSurface: React.FC<Props> = ({
       title: names.get(membership.initiativeId) ?? membership.initiativeId,
       disposition: membership.disposition,
       rank: membership.rank ?? 'UNKNOWN',
+      strategicFit: triStateValue(membership.strategicFit, String),
+      expectedValue: triStateValue(
+        membership.expectedValue,
+        (value) => `${value.amount} ${value.currency}${value.period ? ` / ${value.period}` : ''}`
+      ),
+      costEnvelope: triStateValue(
+        membership.costEnvelope,
+        (value) => `${value.amount} ${value.currency}`
+      ),
+      risk: triStateValue(membership.risk, String),
+      readiness: membership.readiness ?? 'UNKNOWN',
       confidence: membership.confidence,
-      coverage: membership.coverage.state,
-      overlap: membership.overlap.state === 'UNKNOWN' ? 'UNKNOWN' : membership.overlap.value.length,
-      demand: membership.roughDemand.state,
+      coverage: triStateValue(membership.coverageContribution ?? membership.coverage, String),
+      overlap: triStateValue(membership.overlapSynergy ?? membership.overlap, (value) =>
+        value.length ? value.join(', ') : '—'
+      ),
+      demand: triStateValue(
+        membership.roughDemand,
+        (value) => `${value.low}/${value.base}/${value.high} ${value.unit}`
+      ),
       decision: decisionLabel(decisionStatus[membership.initiativeId] ?? 'NOT_REQUESTED'),
+      owner: membership.ownerId || 'UNKNOWN',
+      mandatory:
+        membership.mandatory === true ? 'YES' : membership.mandatory === false ? 'NO' : 'UNKNOWN',
       scenario: activeScenario?.scenarioId ?? 'UNKNOWN',
       scenarioVersion: activeScenario?.scenarioVersion ?? 0,
       membership,
@@ -164,7 +194,8 @@ export const PortfolioScenarioSurface: React.FC<Props> = ({
   }, [activeScenario, decisionStatus, initiatives]);
   const matchesMembershipPreset = (row: (typeof membershipRows)[number], preset: string) => {
     if (preset === 'current') return true;
-    if (preset === 'unassigned' || preset === 'mandatory') return false;
+    if (preset === 'unassigned') return row.owner === 'UNKNOWN';
+    if (preset === 'mandatory') return row.mandatory === 'YES';
     if (['included', 'conditional', 'deferred', 'excluded'].includes(preset))
       return row.disposition === preset.toUpperCase();
     if (preset === 'low-confidence')
@@ -511,11 +542,17 @@ export const PortfolioScenarioSurface: React.FC<Props> = ({
             { id: 'title', label: 'Initiative', sortable: true, width: '280px' },
             { id: 'disposition', label: 'Include state', sortable: true, filterable: true },
             { id: 'rank', label: 'Rank', sortable: true },
+            { id: 'strategicFit', label: 'Strategic fit', sortable: true },
+            { id: 'expectedValue', label: 'Expected value', sortable: true },
+            { id: 'costEnvelope', label: 'Cost envelope', sortable: true },
+            { id: 'risk', label: 'Risk', sortable: true, filterable: true },
+            { id: 'readiness', label: 'Readiness', sortable: true, filterable: true },
             { id: 'confidence', label: 'Confidence', sortable: true, filterable: true },
             { id: 'coverage', label: 'Coverage', sortable: true },
-            { id: 'overlap', label: 'Overlap', sortable: true },
+            { id: 'overlap', label: 'Overlap / synergy', sortable: true },
             { id: 'demand', label: 'Rough demand', sortable: true },
             { id: 'decision', label: 'Decision', sortable: true },
+            { id: 'owner', label: 'Owner', sortable: true, filterable: true },
           ]}
           data={visibleMembershipRows}
           selectedRowId={selectedMembershipId}

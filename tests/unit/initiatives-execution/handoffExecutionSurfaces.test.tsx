@@ -141,7 +141,7 @@ describe('Handoff and Realizacje', () => {
     const row = (await screen.findByText('Program poprawy jakości')).closest('tr')!;
     fireEvent.click(row);
     expect(await screen.findByText('Execution Case case1@v1')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Otwórz' }));
+    fireEvent.click(screen.getByRole('button', { name: /Otwórz|Open/ }));
     expect(await screen.findByLabelText('Karta realizacji')).toBeInTheDocument();
     expect(screen.getAllByText(/Execution Case case1/).length).toBeGreaterThan(0);
   });

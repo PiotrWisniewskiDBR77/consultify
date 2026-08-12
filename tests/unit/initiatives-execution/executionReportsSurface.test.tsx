@@ -129,7 +129,7 @@ describe('ExecutionReportsSurface', () => {
     const row = (await screen.findByText(/Weekly execution · 08 sie 2026/)).closest('tr')!;
     fireEvent.click(row);
     fireEvent.keyDown(row.closest('div[tabindex="0"]')!, { key: 'Enter' });
-    expect(screen.getByText(/execution_case · case-1 · v3/)).toBeInTheDocument();
+    expect(screen.getByText(/Realizacja · case 1 · v3/)).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Nowy raport' }));
     fireEvent.change(screen.getByLabelText('Report distribution receiptId'), {
       target: { value: 'dist-1' },
@@ -159,9 +159,9 @@ describe('ExecutionReportsSurface', () => {
     fireEvent.click(await screen.findByRole('tab', { name: 'Definicje' }));
     const definitionRow = (await screen.findByText('Weekly execution')).closest('tr')!;
     fireEvent.click(definitionRow);
-    expect(screen.getAllByText('owner-1').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('approver-1').length).toBeGreaterThan(0);
-    expect(screen.getByText('project-1')).toBeInTheDocument();
+    expect(screen.getAllByText('owner 1').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('approver 1').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('1').length).toBeGreaterThan(0);
     fireEvent.click(screen.getByRole('button', { name: 'Nowa definicja' }));
     fireEvent.change(screen.getByLabelText('Report Definition publish rationale'), {
       target: { value: 'Independent contract approval' },

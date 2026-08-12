@@ -103,7 +103,7 @@ describe('ExecutionControlSurface', () => {
     render(<ExecutionControlSurface />);
     expect(await screen.findByRole('alert')).toHaveTextContent('Nie udało się załadować');
     fireEvent.click(screen.getByRole('button', { name: 'Spróbuj ponownie' }));
-    expect(await screen.findByText('int-1')).toBeInTheDocument();
+    expect(await screen.findByText(/Interwencja operacyjna/)).toBeInTheDocument();
     expect(listInterventions).toHaveBeenCalledTimes(2);
   });
 
@@ -112,7 +112,7 @@ describe('ExecutionControlSurface', () => {
     render(<ExecutionControlSurface activePreset="critical" onCountsChange={onCountsChange} />);
     fireEvent.click(screen.getByRole('button', { name: 'Dodaj sygnał' }));
     await screen.findByText('sig-1');
-    expect(screen.queryByText('int-1')).not.toBeInTheDocument();
+    expect(screen.queryByText(/Interwencja operacyjna/)).not.toBeInTheDocument();
     await waitFor(() =>
       expect(onCountsChange).toHaveBeenCalledWith(
         expect.objectContaining({ critical: 1, resolved: 0 })
@@ -121,7 +121,7 @@ describe('ExecutionControlSurface', () => {
   });
   it('creates governed PLANNING_BASELINE change from the exact selected RESEQUENCE option', async () => {
     render(<ExecutionControlSurface />);
-    await screen.findByText('int-1');
+    await screen.findByText(/Interwencja operacyjna/);
     fireEvent.click(screen.getByRole('button', { name: 'Dodaj sygnał' }));
     const signalRow = (await screen.findByText('sig-1')).closest('tr')!;
     fireEvent.click(signalRow);
@@ -226,7 +226,7 @@ describe('ExecutionControlSurface', () => {
   });
   it('opens stable Intervention ID by keyboard and closes only EFFECTIVE verification', async () => {
     render(<ExecutionControlSurface />);
-    const row = (await screen.findByText('int-1')).closest('tr')!;
+    const row = (await screen.findByText(/Interwencja operacyjna/)).closest('tr')!;
     fireEvent.click(row);
     fireEvent.keyDown(row.closest('div[tabindex="0"]')!, { key: 'Enter' });
     expect(screen.getByText(/sig-1 v2/)).toBeInTheDocument();

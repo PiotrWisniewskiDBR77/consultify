@@ -48,11 +48,25 @@ const allocationSourceSummary = (item: any) => {
     .filter(([, source]) => source?.ref)
     .map(
       ([label, source]) =>
-        `${label}: ${source.ref}@v${source.version ?? 'UNKNOWN'} · ${source.knowledgeState ?? 'UNKNOWN'}`
+        `${label}: ${source.knowledgeState ?? 'UNKNOWN'} · v${source.version ?? 'UNKNOWN'}`
     );
   if (item.costRef?.ref)
-    refs.push(`Koszt: ${item.costRef.ref}@v${item.costRef.version ?? 'UNKNOWN'}`);
+    refs.push(
+      `Koszt: ${item.costRef.knowledgeState ?? 'KNOWN'} · v${item.costRef.version ?? 'UNKNOWN'}`
+    );
   return refs.length ? refs.join(' · ') : 'EVIDENCE_MISSING';
+};
+const businessLabel = (value: string | null | undefined, fallback: string) =>
+  value
+    ? value.replace(/[-_]+/g, ' ').replace(/\b\w/g, (letter) => letter.toUpperCase())
+    : fallback;
+const knowledgeValue = (value: any) => {
+  if (!value || value.knowledgeState === 'UNKNOWN') return 'UNKNOWN';
+  if (value.knowledgeState === 'PARTIAL') return 'PARTIAL';
+  const amount = value.base ?? value.value ?? value.committed ?? value.estimated;
+  return amount === undefined || amount === null
+    ? (value.knowledgeState ?? 'UNKNOWN')
+    : String(amount);
 };
 export const ExecutionResourcesSurface = ({
   activePreset,
@@ -128,8 +142,15 @@ export const ExecutionResourcesSurface = ({
     }
   };
   const columns: TableColumn[] = [
-    { id: 'assigneeId', label: 'Osoba', sortable: true, width: '220px' },
-    { id: 'taskTitle', label: 'Zadanie', sortable: true, width: '280px' },
+    { id: 'resourceLabel', label: 'Osoba / zespół / rola', sortable: true, width: '220px' },
+    { id: 'periodLabel', label: 'Okres', width: '180px' },
+    { id: 'availabilityLabel', label: 'Dostępność', width: '150px' },
+    { id: 'demandLabel', label: 'Przydzielone', width: '150px' },
+    { id: 'remainingLabel', label: 'Pozostałe', width: '140px' },
+    { id: 'loadLabel', label: 'Zakres obciążenia', width: '160px' },
+    { id: 'skillLabel', label: 'Dopasowanie', width: '150px' },
+    { id: 'taskTitle', label: 'Dotknięta praca', sortable: true, width: '260px' },
+    { id: 'costLabel', label: 'Koszt / prognoza', width: '160px' },
     {
       id: 'status',
       label: 'Status',
@@ -138,24 +159,45 @@ export const ExecutionResourcesSurface = ({
       width: '200px',
       render: (row) => allocationStatusLabel(String(row.status)),
     },
-    { id: 'periodLabel', label: 'Okres', width: '180px' },
-    { id: 'demandLabel', label: 'Zapotrzebowanie', width: '150px' },
-    { id: 'evidenceLabel', label: 'Dane', width: '140px' },
+    { id: 'conflictLabel', label: 'Konflikt', width: '130px' },
+    { id: 'freshnessLabel', label: 'Świeżość', width: '130px' },
+    { id: 'nextActionLabel', label: 'Następne działanie', width: '220px' },
   ];
   const tableItems = useMemo(
     () =>
       items.map((item) => ({
         ...item,
         id: item.allocationId,
-        title: item.assigneeId || 'Nieprzypisana osoba',
+        title: businessLabel(
+          item.assigneeName || item.personName || item.roleName || item.assigneeId,
+          'Nieprzypisany zasób'
+        ),
+        resourceLabel: businessLabel(
+          item.assigneeName ||
+            item.personName ||
+            item.teamName ||
+            item.roleName ||
+            item.assigneeId ||
+            item.roleId,
+          'Nieprzypisany zasób'
+        ),
         description: item.taskTitle || `Zadanie ${String(item.taskId || '').slice(-8)}`,
         taskTitle: item.taskTitle || `Zadanie · ${String(item.taskId || '').slice(-8)}`,
-        periodLabel: item.timeBasis?.window || item.timeBasis?.windowUnit || '—',
-        demandLabel:
-          item.demand?.knowledgeState === 'UNKNOWN'
-            ? 'Brak danych'
-            : (item.demand?.base ?? item.demand?.value ?? '—'),
-        evidenceLabel: item.demand?.knowledgeState || '—',
+        periodLabel: item.timeBasis?.window || item.timeBasis?.windowUnit || 'UNKNOWN',
+        availabilityLabel: knowledgeValue(item.availability ?? item.supply),
+        demandLabel: knowledgeValue(item.demand),
+        remainingLabel: knowledgeValue(item.remainingDemand ?? item.remainingEstimate),
+        loadLabel:
+          item.load?.knowledgeState === 'UNKNOWN'
+            ? 'UNKNOWN'
+            : item.load?.low != null && item.load?.high != null
+              ? `${item.load.low}–${item.load.high}`
+              : 'UNKNOWN',
+        skillLabel: item.skillMatch?.label || item.skillMatch?.state || 'UNKNOWN',
+        costLabel: knowledgeValue(item.cost ?? item.costForecast),
+        conflictLabel: item.conflict?.state || item.assessment?.state || 'Nie oceniono',
+        freshnessLabel: item.freshness || item.availabilityRef?.freshness || 'UNKNOWN',
+        nextActionLabel: item.nextAction || 'Sprawdź dane i akceptację',
       })),
     [items]
   );
@@ -311,7 +353,10 @@ export const ExecutionResourcesSurface = ({
             renderPreview={(item) => (
               <StandardPreview
                 embedded
-                title={item.assigneeId || 'Nieprzypisana osoba'}
+                title={businessLabel(
+                  item.assigneeName || item.personName || item.roleName || item.assigneeId,
+                  'Nieprzypisany zasób'
+                )}
                 onClose={() => setSelected(null)}
                 onOpenFull={() => void openWorkspace(item)}
                 openLabel="Otwórz przydział"
@@ -357,8 +402,8 @@ export const ExecutionResourcesSurface = ({
                   onCopy: () => void navigator.clipboard?.writeText(item.allocationId),
                 }}
                 relations={[
-                  { label: `Realizacja · ${item.executionCaseId}`, onClick: () => undefined },
-                  { label: `Zadanie · ${item.taskId || 'UNKNOWN'}`, onClick: () => undefined },
+                  { label: 'Powiązana realizacja', onClick: () => undefined },
+                  { label: item.taskTitle || 'Powiązane zadanie', onClick: () => undefined },
                 ]}
                 relationsEmptyLabel="Brak powiązań"
                 actions={{
@@ -432,7 +477,14 @@ export const ExecutionResourcesSurface = ({
             <div>
               <h3 className="font-semibold">Przydział {selected.allocationId}</h3>
               <p className="text-xs text-c-text-muted">
-                {allocationStatusLabel(selected.status)} · {selected.assigneeId || 'Brak danych'}
+                {allocationStatusLabel(selected.status)} ·{' '}
+                {businessLabel(
+                  selected.assigneeName ||
+                    selected.personName ||
+                    selected.roleName ||
+                    selected.assigneeId,
+                  'Nieprzypisany zasób'
+                )}
               </p>
             </div>
             <button className="btn-secondary" onClick={() => setShowWorkspace(false)}>

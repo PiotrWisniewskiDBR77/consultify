@@ -183,12 +183,19 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract> = ({
   );
   const constraintRows = useMemo(() => {
     if (!scenario) return [];
+    const formatRange = (range: Range) =>
+      range.low == null || range.base == null || range.high == null
+        ? range.knowledgeState
+        : `${range.low}/${range.base}/${range.high} ${scenario.windowUnit}`;
     const periods = scenario.periods.map((period) => ({
       id: `period:${period.periodId}`,
       title: period.periodId,
       kind: 'PERIOD',
-      demand: period.demand.knowledgeState,
-      supply: period.supply.knowledgeState,
+      roleTeamSkill: 'UNKNOWN',
+      demand: formatRange(period.demand),
+      demandState: period.demand.knowledgeState,
+      supply: formatRange(period.supply),
+      supplyState: period.supply.knowledgeState,
       gap:
         period.demand.base != null && period.supply.base != null
           ? period.supply.base - period.demand.base
@@ -202,18 +209,31 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract> = ({
           ? 'UNKNOWN'
           : 'KNOWN',
       owner: period.supply.ownerId || 'UNKNOWN',
+      affectedInitiatives: new Set(
+        scenario.proposedAssignments
+          .filter((assignment) => assignment.periodIds.includes(period.periodId))
+          .map((assignment) => assignment.initiativeId)
+      ).size,
+      freshness: period.supply.asOf || period.demand.asOf || 'UNKNOWN',
+      proposedResponse: 'UNKNOWN',
       detail: '',
     }));
     const constraints = scenario.constraints.map((constraint) => ({
       id: `constraint:${constraint.constraintId}`,
       title: constraint.constraintId,
       kind: 'CONSTRAINT',
+      roleTeamSkill: 'UNKNOWN',
       demand: 'UNKNOWN',
+      demandState: 'UNKNOWN',
       supply: constraint.state,
+      supplyState: constraint.state,
       gap: 'UNKNOWN',
       confidence: 'UNKNOWN',
       criticality: constraint.state === 'UNKNOWN' ? 'UNKNOWN' : 'KNOWN',
       owner: constraint.ownerId || 'UNKNOWN',
+      affectedInitiatives: 'UNKNOWN',
+      freshness: 'UNKNOWN',
+      proposedResponse: 'UNKNOWN',
       detail: constraint.detail,
     }));
     return [...periods, ...constraints];
@@ -224,11 +244,11 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract> = ({
       : preset === 'critical'
         ? row.criticality === 'UNKNOWN'
         : preset === 'unknown-supply'
-          ? row.supply === 'UNKNOWN'
+          ? row.supplyState === 'UNKNOWN'
           : preset === 'missing-demand'
-            ? row.demand === 'UNKNOWN'
+            ? row.demandState === 'UNKNOWN'
             : preset === 'unconfirmed'
-              ? row.supply === 'UNCONFIRMED'
+              ? row.supplyState === 'UNCONFIRMED'
               : preset === 'resolved'
                 ? row.criticality === 'KNOWN'
                 : preset === 'skill-gaps'
@@ -534,6 +554,12 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract> = ({
           columns={[
             { id: 'title', label: 'Okres / ograniczenie', sortable: true, width: '240px' },
             {
+              id: 'roleTeamSkill',
+              label: 'Rola / zespół / kompetencja',
+              sortable: true,
+              filterable: true,
+            },
+            {
               id: 'kind',
               label: 'Rodzaj',
               sortable: true,
@@ -542,17 +568,15 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract> = ({
             },
             {
               id: 'demand',
-              label: 'Zapotrzebowanie',
+              label: 'Zapotrzebowanie low / base / high',
               sortable: true,
               filterable: true,
-              render: (row) => knowledgeLabel[row.demand as K],
             },
             {
               id: 'supply',
-              label: 'Dostępność',
+              label: 'Stan / zakres dostępności',
               sortable: true,
               filterable: true,
-              render: (row) => knowledgeLabel[row.supply as K],
             },
             { id: 'gap', label: 'Luka', sortable: true },
             {
@@ -576,6 +600,9 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract> = ({
               filterable: true,
               render: (row) => actorLabel(row.owner),
             },
+            { id: 'affectedInitiatives', label: 'Dotknięte inicjatywy', sortable: true },
+            { id: 'freshness', label: 'Aktualność założeń', sortable: true },
+            { id: 'proposedResponse', label: 'Proponowana reakcja', sortable: true },
           ]}
           data={visibleConstraintRows}
           selectedRowId={selectedConstraintId}
