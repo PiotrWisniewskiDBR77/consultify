@@ -136,6 +136,7 @@ const FinanceValuePanelsScreen = React.lazy(() => import('./screens/finance-valu
 const FinanceModelWorkspaceScreen = React.lazy(() => import('./screens/finance-model-workspace'));
 const FinanceWorkspaceBarScreen = React.lazy(() => import('./screens/finance-workspace-bar'));
 const FinanceFocusModeScreen = React.lazy(() => import('./screens/finance-focus-mode'));
+const FinancePredictionWorkspaceScreen = React.lazy(() => import('./screens/finance-prediction-workspace'));
 const GenDeckContentHintsScreen = React.lazy(() => import('./screens/gen-deck-content-hints'));
 const GenExcelTemplatesTabScreen = React.lazy(() => import('./screens/gen-excel-templates-tab'));
 const GenWordContentHintsScreen = React.lazy(() => import('./screens/gen-word-content-hints'));
@@ -612,6 +613,10 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'PKG_C — REAL Focus Mode (useFinanceFocusMode + FinanceWorkspaceBar, OWN-FIN-004) — &autofocus=1 &draft=<string>',
     render: () => <FinanceFocusModeScreen />,
+  },
+  'finance-prediction-workspace': {
+    label: 'PKG_G — REAL <PredictionWorkspace> (Prediction scenario builder + Modele/Wyniki) — &mode=A|B|C &view=assumptions|results',
+    render: () => <FinancePredictionWorkspaceScreen />,
   },
   'execution-change-signals': {
     label:

@@ -441,3 +441,99 @@ export function describeFinanceV2Error(err: unknown): { title: string; detail: s
       };
   }
 }
+
+// ---------------------------------------------------------------------------
+// --- PKG-G Prediction ---
+//
+// DTO kształty przepisane POLE-PO-POLU z realnie zamontowanego routera
+// `server/src/routes/v8/finance-v2/prediction.routes.ts` (Pakiet B2, DEC-FIN-004: preflight i
+// calculate są DWOMA OSOBNYMI endpointami, nigdy nie łączyć). `CanonicalCode` jest PORTEM
+// `baselineComputeService.ts:112-120` (`CANONICAL_CODES`) — server/** poza allowlistą tego pakietu.
+//
+// Wywóz z inwentaryzacji (zapisany też w PKG_G_PREDICTION_report.md): backend NIE MA jeszcze HTTP
+// CRUD do zapisu `finance_prediction_scenarios`/`_driver_overrides`/`_initiatives`/`_impact_chain`/
+// `_financing` — tylko te dwa endpointy odczytowo-analityczne (preflight) i wyliczeniowe (calculate)
+// istnieją. Typy poniżej pokrywają WYŁĄCZNIE to, co jest realnie zamontowane.
+// ---------------------------------------------------------------------------
+
+/** Port `server/src/services/finance/canonical/baselineComputeService.ts:112-120`, reużywany bit-identycznie przez prediction. */
+export const CANONICAL_CODE_VALUES = [
+  'REVENUE', 'COGS', 'GROSS_MARGIN', 'OPEX', 'EBITDA', 'DEPRECIATION', 'EBIT',
+  'INTEREST_EXPENSE', 'TAX_EXPENSE', 'NET_INCOME',
+  'CASH', 'AR', 'INVENTORY', 'CURRENT_ASSETS', 'FIXED_ASSETS', 'TOTAL_ASSETS',
+  'AP', 'CURRENT_LIABILITIES', 'LONG_TERM_DEBT', 'TOTAL_LIABILITIES',
+  'EQUITY', 'TOTAL_LIABILITIES_EQUITY', 'RETAINED_EARNINGS', 'DIVIDENDS_DECLARED', 'WORKING_CAPITAL',
+  'CFO', 'CFI', 'CFF', 'NET_CHANGE_CASH', 'CAPEX', 'FCF',
+] as const;
+export type CanonicalCode = (typeof CANONICAL_CODE_VALUES)[number];
+
+export const PREDICTION_FINDING_KIND_VALUES = ['OVERLAP_DOUBLE_COUNTING', 'CONTRADICTORY_SIGNS'] as const;
+export type PredictionFindingKind = (typeof PREDICTION_FINDING_KIND_VALUES)[number];
+
+/** `prediction.routes.ts` `POST /prediction/:businessVersionId/preflight`, sukces (201), jeden finding — pole-po-polu z `PreflightFindingPreview`. */
+export interface FinancePredictionPreflightFindingDto {
+  findingId: string;
+  findingKind: PredictionFindingKind;
+  entityId: string;
+  canonicalLineId: string;
+  periodId: string;
+  sourceCount: number;
+  /** Layer 1 (naiwna, jednostko-agnostyczna suma) — traceability, NIGDY liczba pokazywana użytkownikowi jako wynik. */
+  layer1CombinedImpactDecimal: number | null;
+  /** Layer 2 (realna waluta) — TA liczba idzie do UI. */
+  layer2CombinedImpactDecimal: number;
+  requiresResolution: boolean;
+}
+
+/** `prediction.routes.ts` `POST /prediction/:businessVersionId/preflight`, sukces (201) — pełna koperta `data`. */
+export interface FinancePredictionPreflightResultDto {
+  preflightRunId: string;
+  findingsCount: number;
+  requiredResolutionsCount: number;
+  findings: FinancePredictionPreflightFindingDto[];
+}
+
+/** `prediction.routes.ts` `POST /prediction/:businessVersionId/calculate`, mode='STANDARD_BASE'. */
+export interface FinancePredictionCalculateStandardBaseResultDto {
+  mode: 'STANDARD_BASE';
+  jobId: string;
+  jobStatus: ComputeJobStatus;
+  baselineJobId: string | null;
+  passthroughRowCount: number;
+}
+
+export interface FinancePredictionPeriodResultDto {
+  periodId: string;
+  values: Partial<Record<CanonicalCode, number>>;
+  varianceVsBaseline: Partial<Record<CanonicalCode, number>>;
+}
+
+/** `prediction.routes.ts` `POST /prediction/:businessVersionId/calculate`, każdy inny `scenario_mode`. */
+export interface FinancePredictionCalculateComputedResultDto {
+  mode: 'COMPUTED';
+  jobId: string;
+  jobStatus: ComputeJobStatus;
+  periodsComputed: number;
+  periods: FinancePredictionPeriodResultDto[];
+}
+
+export type FinancePredictionCalculateResultDto = FinancePredictionCalculateStandardBaseResultDto | FinancePredictionCalculateComputedResultDto;
+
+export const PREDICTION_SCENARIO_MODE_VALUES = ['STANDARD_BASE', 'STANDARD_UPSIDE', 'STANDARD_DOWNSIDE', 'DRIVER_OVERRIDE', 'FUNDAMENTAL_INITIATIVE'] as const;
+export type PredictionScenarioMode = (typeof PREDICTION_SCENARIO_MODE_VALUES)[number];
+
+/** `crosscutting.routes.ts` `GET /exceptions/open`, jeden wpis — reużywany przez widok Modele/Wyniki (rejestr wyjątków, DEC-FIN-009). */
+export interface FinanceExceptionOpenDto {
+  exceptionGroupId: string;
+  artifactId: string;
+  businessVersionId: string;
+  severity: string;
+  state: string;
+  sourceRef: unknown;
+  expected: unknown;
+  observed: unknown;
+  delta: unknown;
+  unit: string | null;
+  reasonCode: string | null;
+  createdAt: string;
+}

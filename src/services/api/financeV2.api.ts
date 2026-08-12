@@ -26,6 +26,9 @@ import type {
   FinanceComputeSnapshotResultDto,
   FinanceCreateArtifactResultDto,
   FinanceEnqueueJobResultDto,
+  FinanceExceptionOpenDto,
+  FinancePredictionCalculateResultDto,
+  FinancePredictionPreflightResultDto,
   FinanceReopenModelResultDto,
   FinanceTransitionResultDto,
   LifecycleAction,
@@ -265,4 +268,65 @@ export const FinanceV2Api = {
   pollFinanceComputeJobUntilSettled,
   approveFinanceModel,
   reopenFinanceModel,
+  // --- PKG-G Prediction --- (deklaracje funkcji są HOISTED — bezpieczne odwołanie mimo że
+  // ich definicja jest niżej w tym pliku; brak potrzeby placeholdera/reassignu).
+  runFinancePredictionPreflight,
+  runFinancePredictionCalculate,
+  listFinanceExceptionsOpen,
 };
+
+// ---------------------------------------------------------------------------
+// --- PKG-G Prediction ---
+//
+// Dwa endpointy Prediction realnie zamontowane przez Pakiet B2
+// (`server/src/routes/v8/finance-v2/prediction.routes.ts`) — DEC-FIN-004, DWA OSOBNE wywołania,
+// nigdy nie łączyć w jedno. `GET /exceptions/open` jest generycznym, już istniejącym endpointem
+// (`crosscutting.routes.ts`) — dopisany tu jako klient, bo widok Modele/Wyniki tego pakietu go
+// potrzebuje (rejestr wyjątków, DEC-FIN-009), a jeszcze nie miał klienta w tym pliku.
+//
+// ★ LUKA (zaraportowana w PKG_G_PREDICTION_report.md): backend NIE MA jeszcze HTTP CRUD do zapisu
+// `finance_prediction_scenarios`/`_driver_overrides`/`_initiatives`/`_impact_chain`/`_financing` —
+// scenario builder (tryby A/B/C) działa dziś na lokalnym draft state
+// (`src/components/Finance/Prediction/predictionScenarioModel.ts`), nie na tym kliencie. Ten klient
+// pokrywa WYŁĄCZNIE to, co jest realnie zamontowane po stronie serwera.
+// ---------------------------------------------------------------------------
+
+export interface RunFinancePredictionPreflightParams {
+  businessVersionId: string;
+  openingBalanceSheetPeriodId?: string;
+  entityId?: string;
+}
+
+export async function runFinancePredictionPreflight(
+  params: RunFinancePredictionPreflightParams
+): Promise<FinancePredictionPreflightResultDto> {
+  return v8Post<FinancePredictionPreflightResultDto>(`${BASE}/prediction/${encodeURIComponent(params.businessVersionId)}/preflight`, {
+    ...(params.openingBalanceSheetPeriodId !== undefined ? { openingBalanceSheetPeriodId: params.openingBalanceSheetPeriodId } : {}),
+    ...(params.entityId !== undefined ? { entityId: params.entityId } : {}),
+  });
+}
+
+export interface RunFinancePredictionCalculateParams {
+  businessVersionId: string;
+  entityId: string;
+  forecastPeriodIds: readonly string[];
+  openingBalanceSheetPeriodId: string;
+  engineManifestId?: string;
+}
+
+export async function runFinancePredictionCalculate(
+  params: RunFinancePredictionCalculateParams
+): Promise<FinancePredictionCalculateResultDto> {
+  return v8Post<FinancePredictionCalculateResultDto>(`${BASE}/prediction/${encodeURIComponent(params.businessVersionId)}/calculate`, {
+    entityId: params.entityId,
+    forecastPeriodIds: params.forecastPeriodIds,
+    openingBalanceSheetPeriodId: params.openingBalanceSheetPeriodId,
+    ...(params.engineManifestId !== undefined ? { engineManifestId: params.engineManifestId } : {}),
+  });
+}
+
+/** `crosscutting.routes.ts` `GET /exceptions/open` — rejestr wyjątków (DEC-FIN-009) dla widoku Modele/Wyniki. */
+export async function listFinanceExceptionsOpen(artifactId?: string): Promise<FinanceExceptionOpenDto[]> {
+  const qs = artifactId ? `?artifactId=${encodeURIComponent(artifactId)}` : '';
+  return v8Get<FinanceExceptionOpenDto[]>(`${BASE}/exceptions/open${qs}`);
+}
