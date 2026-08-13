@@ -32,6 +32,11 @@ import {
   assertNoPrivateRailwayDbHostOutsideRailway,
   resolveReachableDatabaseUrl,
 } from '../src/config/databaseTargetResolver.js';
+import { classifySqlChainChecksum } from '../src/services/releaseGate/sqlChainChecksumPolicy.js';
+import {
+  ATTESTED_VARIANT_LABEL,
+  attestPartnerUsersUuidVariant,
+} from '../src/services/releaseGate/schemaAttestation.js';
 
 type Args = {
   dir?: string;
@@ -478,12 +483,24 @@ async function getApplied(
 // condition.
 type ChecksumDrift = { filename: string; stored: string; current: string };
 
+export type DriftReport = {
+  drift: ChecksumDrift[];
+  unverifiable: string[];
+  /** files accepted via the reviewed per-file (stored,current) allowlist */
+  approvedVariants: string[];
+  /** files that additionally require live schema attestation before they may be accepted */
+  attestationRequired: string[];
+};
+
 function detectChecksumDrift(
   migrations: Migration[],
   applied: Map<string, { status: string; checksum: string | null }>
-): { drift: ChecksumDrift[]; unverifiable: string[] } {
+): DriftReport {
   const drift: ChecksumDrift[] = [];
   const unverifiable: string[] = [];
+  const approvedVariants: string[] = [];
+  const attestationRequired: string[] = [];
+
   for (const m of migrations) {
     const a = applied.get(m.filename);
     if (!a || a.status !== 'success') continue;
@@ -491,11 +508,21 @@ function detectChecksumDrift(
       unverifiable.push(m.filename);
       continue;
     }
-    if (a.checksum !== m.checksum) {
-      drift.push({ filename: m.filename, stored: a.checksum, current: m.checksum });
+    // Policy lives in one place and is keyed on filename + EXACT stored + EXACT current.
+    const verdict = classifySqlChainChecksum(m.filename, a.checksum, m.checksum);
+    if (verdict === 'MATCH') continue;
+    if (verdict === 'APPROVED_HISTORICAL_VARIANT') {
+      approvedVariants.push(m.filename);
+      continue;
     }
+    if (verdict === 'SCHEMA_ATTESTED_LEGACY_VARIANT') {
+      // Not acceptable on the checksum alone — the caller must attest the live schema.
+      attestationRequired.push(m.filename);
+      continue;
+    }
+    drift.push({ filename: m.filename, stored: a.checksum, current: m.checksum });
   }
-  return { drift, unverifiable };
+  return { drift, unverifiable, approvedVariants, attestationRequired };
 }
 
 async function recordResult(
@@ -700,11 +727,39 @@ async function main() {
     // Integrity gate: an already-applied migration whose bytes changed means the
     // database no longer matches the tree. Fail closed BEFORE applying anything
     // (including under --safe), so a drifted chain can never be extended.
-    const { drift, unverifiable } = detectChecksumDrift(filtered, applied);
+    const { drift, unverifiable, approvedVariants, attestationRequired } = detectChecksumDrift(
+      filtered,
+      applied
+    );
     if (unverifiable.length > 0) {
       // eslint-disable-next-line no-console
       console.warn(
         `[migrate.postgres] ${unverifiable.length} applied migration(s) have no stored checksum (legacy rows, not verifiable).`
+      );
+    }
+    if (approvedVariants.length > 0) {
+      // eslint-disable-next-line no-console
+      console.log(
+        `[migrate.postgres] ${approvedVariants.length} approved historical variant(s) accepted ` +
+          `(exact stored+current pair): ${approvedVariants.join(', ')}`
+      );
+    }
+    // Files whose checksum can never be traced to a commit are accepted ONLY if the live schema
+    // re-proves the known variant's post-state, in this same connection, on every run.
+    for (const filename of attestationRequired) {
+      const result = await attestPartnerUsersUuidVariant(pool);
+      const failed = result.checks.filter((c) => !c.ok);
+      if (!result.attested) {
+        throw new Error(
+          `${ATTESTED_VARIANT_LABEL} refused for ${filename}: ${result.failureReason}. ` +
+            `Failed checks: ${failed.map((c) => `${c.name} (expected ${c.expected}, got ${c.actual})`).join('; ')}. ` +
+            `Refusing to run (fail-closed).`
+        );
+      }
+      // eslint-disable-next-line no-console
+      console.log(
+        `[migrate.postgres] ${ATTESTED_VARIANT_LABEL} ${filename} — ` +
+          `${result.checks.length} schema postcondition(s) verified in-transaction.`
       );
     }
     if (drift.length > 0) {
