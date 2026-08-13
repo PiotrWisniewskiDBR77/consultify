@@ -289,6 +289,12 @@ export interface PrioritisationResult {
   readonly rankedUnitIds: readonly string[];
   readonly rationaleByUnitId: Readonly<Record<string, string>>;
   readonly parametersVersion: string;
+  /**
+   * Traceability for adapters whose engine has more than one calculation
+   * formula (e.g. SIRI TIER's `legacy_v1` vs `siri_pm_v2` — COORD-08).
+   * Optional so adapters without versioned engines are unaffected.
+   */
+  readonly calculationVersion?: string;
 }
 
 /** Honest refusal, used by adapters whose method content is not yet licensed. */
