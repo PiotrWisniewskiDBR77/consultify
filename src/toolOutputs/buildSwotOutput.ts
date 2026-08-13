@@ -39,11 +39,25 @@ export const SWOT_ENGINE_VERSION = '1.0.0';
 const IMPACT_WEIGHT: Record<SWOTItem['impact'], number> = { high: 3, medium: 2, low: 1 };
 
 /**
- * Mapuje status dowodu pozycji na wspólny język evidence.
- * `confirmed` → fakt; `declared-unconfirmed` → hipoteza. Brak stempla
- * traktujemy jako obserwację — nigdy jako fakt, bo brak pomiaru to nie pomiar.
+ * Mapuje dowód pozycji na wspólny język evidence (`EvidenceKind`).
+ *
+ * STREAM G1 (2026-08-13): `item.evidenceType` (fact/observation/hypothesis —
+ * `SWOTEvidenceType` in useToolStore.ts) is now settable by the user via the
+ * Build Phase UI (`EvidenceEditor.tsx`) and is EXACTLY the same union as
+ * `EvidenceKind` — a deliberate user choice about what KIND of claim this is.
+ * When present, it wins outright: it is more specific than the
+ * confirmed/declared axis below, which answers a different question (how
+ * HONEST are we about having proof, not what NATURE the claim has).
+ *
+ * Legacy fallback (items with no `evidenceType`, e.g. from before this
+ * stream, or accepted via a path that never set one): derive from
+ * `evidenceStatus` as before — `confirmed` → fakt; `declared` → hipoteza; no
+ * stamp at all → obserwacja (never fakt, bo brak pomiaru to nie pomiar).
  */
 export function toEvidenceKind(item: SWOTItem): EvidenceKind {
+  if (item.evidenceType === 'fact' || item.evidenceType === 'observation' || item.evidenceType === 'hypothesis') {
+    return item.evidenceType;
+  }
   const status = String(item.evidenceStatus ?? '');
   if (status === 'confirmed') return 'fact';
   if (status.startsWith('declared')) return 'hypothesis';

@@ -224,3 +224,188 @@ describe('SWOTBuildPhase — AI proposal accept/reject', () => {
     expect(items.items.find((i: any) => i.text === 'AI suggested weakness')).toBeUndefined();
   });
 });
+
+/**
+ * STREAM G1 (2026-08-13): before the fix, `acceptProposal()` here called
+ * `updateSWOTItem(id, {status:'accepted', proposalStatus:'accepted'})`
+ * directly, bypassing the evidence gate entirely — an AI proposal claiming
+ * `classification: 'core-competency'` with zero linked evidence sailed
+ * straight through to `accepted`. These tests prove the fix: the SAME
+ * canonical gate (config/swot/swotAcceptGate.ts) the store's own `acceptCard`
+ * uses now runs here too.
+ */
+describe('SWOTBuildPhase — AI proposal accept is gated (STREAM G1 fix)', () => {
+  beforeEach(() => {
+    resetStore();
+  });
+
+  it('BLOCKS accepting a strengths proposal that claims core-competency with no evidence', () => {
+    useToolStore.getState().addSWOTItem({
+      text: 'We are unmatched in the market',
+      quadrant: 'strengths',
+      impact: 'high',
+      source: 'ai',
+      confidence: 5,
+      status: 'proposed',
+      proposalStatus: 'ai-proposed',
+      classification: 'core-competency',
+    });
+
+    render(<Harness />);
+    const acceptButton = screen.getByRole('button', { name: KEYS.accept });
+    fireEvent.click(acceptButton);
+
+    // Still a proposal — the Accept/Reject buttons are still there, proving
+    // the item did NOT transition to 'accepted'.
+    expect(screen.getByRole('button', { name: KEYS.accept })).toBeInTheDocument();
+
+    const items = useToolStore.getState().currentSession?.inputData as any;
+    const item = items.items.find((i: any) => i.text === 'We are unmatched in the market');
+    expect(item.proposalStatus).toBe('ai-proposed');
+    expect(item.status).not.toBe('accepted');
+
+    // An actionable message is shown inline.
+    expect(
+      screen.getByText(/core competency|niche strength/i)
+    ).toBeInTheDocument();
+  });
+
+  it('ALLOWS accepting the same claim once a linked signal exists, and stamps evidenceStatus honestly', () => {
+    useToolStore.getState().addSWOTItem({
+      text: 'We are unmatched in the market',
+      quadrant: 'strengths',
+      impact: 'high',
+      source: 'ai',
+      confidence: 5,
+      status: 'proposed',
+      proposalStatus: 'ai-proposed',
+      classification: 'core-competency',
+      linkedSignalIds: ['signal-abc'],
+    });
+
+    render(<Harness />);
+    const acceptButton = screen.getByRole('button', { name: KEYS.accept });
+    fireEvent.click(acceptButton);
+
+    expect(screen.queryByRole('button', { name: KEYS.accept })).not.toBeInTheDocument();
+    const items = useToolStore.getState().currentSession?.inputData as any;
+    const item = items.items.find((i: any) => i.text === 'We are unmatched in the market');
+    expect(item.proposalStatus).toBe('accepted');
+    expect(item.status).toBe('accepted');
+    expect(item.evidenceStatus).toBe('confirmed');
+  });
+
+  it('a plain proposal with no classification claim is stamped "declared" honestly (never blocked)', () => {
+    useToolStore.getState().addSWOTItem({
+      text: 'Emerging regulatory opportunity',
+      quadrant: 'opportunities',
+      impact: 'medium',
+      source: 'ai',
+      confidence: 3,
+      status: 'proposed',
+      proposalStatus: 'ai-proposed',
+    });
+
+    render(<Harness />);
+    fireEvent.click(screen.getByRole('button', { name: KEYS.accept }));
+
+    const items = useToolStore.getState().currentSession?.inputData as any;
+    const item = items.items.find((i: any) => i.text === 'Emerging regulatory opportunity');
+    expect(item.proposalStatus).toBe('accepted');
+    expect(item.evidenceStatus).toBe('declared');
+  });
+
+  it('a quick-typed item (quick-add) is also stamped evidenceStatus: "declared"', () => {
+    render(<Harness />);
+    const [strengthsInput] = screen.getAllByPlaceholderText(KEYS.addPointPlaceholder);
+    fireEvent.change(strengthsInput, { target: { value: 'Quickly typed strength' } });
+    fireEvent.keyDown(strengthsInput, { key: 'Enter', code: 'Enter' });
+
+    const items = useToolStore.getState().currentSession?.inputData as any;
+    const item = items.items.find((i: any) => i.text === 'Quickly typed strength');
+    expect(item.status).toBe('accepted');
+    expect(item.proposalStatus).toBe('accepted');
+    expect(item.evidenceStatus).toBe('declared');
+  });
+});
+
+describe('SWOTBuildPhase — Evidence & classification editor (STREAM G1, Deliverable A)', () => {
+  beforeEach(() => {
+    resetStore();
+  });
+
+  function addAndOpenEvidencePanel(text: string) {
+    render(<Harness />);
+    const [strengthsInput] = screen.getAllByPlaceholderText(KEYS.addPointPlaceholder);
+    fireEvent.change(strengthsInput, { target: { value: text } });
+    fireEvent.keyDown(strengthsInput, { key: 'Enter', code: 'Enter' });
+    const toggle = screen.getByText('discoveryToolsTools.dynamicSwot.buildPhase.swotPoint')
+      .closest('div')?.parentElement?.parentElement as HTMLElement;
+    const evidenceToggle = within(toggle).getByRole('button', {
+      name: /Evidence & classification|Dowód i klasyfikacja/i,
+    });
+    fireEvent.click(evidenceToggle);
+    return toggle;
+  }
+
+  it('lets the user choose an evidence type, description, source, credibility and classification, and persists them', () => {
+    const card = addAndOpenEvidencePanel('Best delivery speed in the segment');
+
+    fireEvent.change(within(card).getByLabelText(/Evidence type|Typ dowodu/i), {
+      target: { value: 'fact' },
+    });
+    fireEvent.change(within(card).getByLabelText(/Evidence description|Opis dowodu/i), {
+      target: { value: '3 clients cited this in Q2 renewal calls.' },
+    });
+    fireEvent.change(within(card).getByLabelText(/^Source|Źródło/i), {
+      target: { value: 'Q2 renewal call notes' },
+    });
+    fireEvent.change(within(card).getByLabelText(/Strength \/ credibility|Siła \/ wiarygodność/i), {
+      target: { value: '5' },
+    });
+    fireEvent.change(within(card).getByLabelText(/Strength classification|Klasyfikacja siły/i), {
+      target: { value: 'niche-strength' },
+    });
+
+    const items = useToolStore.getState().currentSession?.inputData as any;
+    const item = items.items.find((i: any) => i.text === 'Best delivery speed in the segment');
+    expect(item.evidenceType).toBe('fact');
+    expect(item.evidenceNote).toBe('3 clients cited this in Q2 renewal calls.');
+    expect(item.evidenceSource).toBe('Q2 renewal call notes');
+    expect(item.confidence).toBe(5);
+    expect(item.classification).toBe('niche-strength');
+  });
+
+  it('round-trips through a save/reload cycle (JSON serialize -> normalize) with identical evidence fields', () => {
+    useToolStore.getState().addSWOTItem({
+      text: 'Reload-proof item',
+      quadrant: 'strengths',
+      impact: 'medium',
+      confidence: 4,
+      status: 'accepted',
+      proposalStatus: 'accepted',
+      evidenceType: 'observation',
+      evidenceNote: 'Seen in three client calls this quarter.',
+      evidenceSource: 'Sales call transcripts',
+      classification: 'niche-strength',
+    });
+
+    const before = useToolStore.getState().currentSession?.inputData;
+    // Simulate exactly what crosses the wire on save + reload: the session's
+    // inputData is JSON-serialized to the backend (ToolWorkspace.tsx's
+    // `Api.updateToolSession({ answers: currentSession.inputData, ... })`)
+    // and JSON-parsed back on load — no schema in between strips fields
+    // (server/src/validators/tool.validators.ts's `UpdateToolSessionSchema`
+    // treats `answers` as an opaque `z.record(string, unknown)`).
+    const roundTripped = JSON.parse(JSON.stringify(before));
+
+    const beforeItem = (before as any).items.find((i: any) => i.text === 'Reload-proof item');
+    const afterItem = (roundTripped as any).items.find(
+      (i: any) => i.text === 'Reload-proof item'
+    );
+    expect(afterItem).toEqual(beforeItem);
+    expect(afterItem.evidenceType).toBe('observation');
+    expect(afterItem.evidenceSource).toBe('Sales call transcripts');
+    expect(afterItem.classification).toBe('niche-strength');
+  });
+});
