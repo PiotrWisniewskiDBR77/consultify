@@ -385,3 +385,446 @@ export async function createInitiativeDraft(outputId: string, input: CreateIniti
   );
   return res.draft;
 }
+
+// ---------------------------------------------------------------------------
+// P0D — Outputs / Reports / Presentations / Initiative Drafts LISTING +
+// session lineage. Built against the parallel-team API contract described in
+// the P0D brief (paths agreed, response shape documented as "envelope
+// {success, data} OR raw — parse defensively"). AT THE TIME THIS WAS WRITTEN
+// the corresponding `router.get(...)` handlers for these paths did not yet
+// exist in `server/src/routes/method-core.routes.ts` (confirmed by reading
+// the file — only `/outputs/:id`, `/outputs/:id/report`,
+// `/outputs/:id/presentation` and `/outputs/:id/initiative-drafts` (POST)
+// existed). Everything below is written to the AGREED contract and parses
+// defensively (multiple plausible field names, envelope-or-raw), but has
+// NOT been exercised against a live matching server from this package —
+// say so plainly in any handoff, do not claim it as verified end-to-end.
+// ---------------------------------------------------------------------------
+
+/**
+ * Unwraps the `{success, data}` envelope the contract says the server MAY
+ * use, while also accepting a raw body (no envelope) — "parsuj defensywnie"
+ * per the P0D brief. Never throws: an unrecognized shape falls through to
+ * the caller's own defensive array/field extraction, which in turn falls
+ * back to an empty, honestly-empty result rather than a crash.
+ */
+function unwrapData<T>(body: unknown): T {
+  if (body && typeof body === 'object' && 'data' in (body as Record<string, unknown>)) {
+    const data = (body as Record<string, unknown>).data;
+    if (data !== undefined) return data as T;
+  }
+  return body as T;
+}
+
+/** First array found under any of `keys` on `data`, else `data` itself if it
+ * is already an array, else `[]`. Never fabricates rows. */
+function extractArray<T>(data: unknown, keys: readonly string[]): T[] {
+  if (Array.isArray(data)) return data as T[];
+  if (data && typeof data === 'object') {
+    const record = data as Record<string, unknown>;
+    for (const key of keys) {
+      const value = record[key];
+      if (Array.isArray(value)) return value as T[];
+    }
+  }
+  return [];
+}
+
+function extractNumber(data: unknown, keys: readonly string[]): number | null {
+  if (data && typeof data === 'object') {
+    const record = data as Record<string, unknown>;
+    for (const key of keys) {
+      const value = record[key];
+      if (typeof value === 'number' && Number.isFinite(value)) return value;
+    }
+  }
+  return null;
+}
+
+/** Supersession status shared by Outputs, Report/Presentation snapshots and
+ * Initiative Drafts (server: `ReportSupersedenceStatus` / `DraftSupersedenceStatus`). */
+export type MethodArtefactStatus = 'current' | 'superseded' | 'source_updated';
+
+/**
+ * One row of the org-wide (or session/project-scoped) Outputs list —
+ * `GET /api/method/outputs`. Deliberately a SUBSET of `MethodOutputSummary`'s
+ * sibling server type (`MethodOutputRecord`): only fields a list row plus its
+ * preview card can honestly show without a second fetch. `null`/absent
+ * fields stay `null` — nothing here is a fabricated default; see
+ * `normalizeOutputListItem` below.
+ */
+export interface MethodOutputListItem {
+  readonly id: string;
+  readonly organizationId: string | null;
+  readonly sessionId: string | null;
+  readonly module: string | null;
+  readonly methodPackId: string | null;
+  readonly methodPackVersion: string | null;
+  readonly outputVersion: number | null;
+  readonly revisionOfOutputId: string | null;
+  readonly scope: string | null;
+  readonly limitationsCount: number | null;
+  readonly findingsCount: number | null;
+  readonly contentHash: string | null;
+  readonly frozenAt: string | null;
+  readonly createdAt: string | null;
+  readonly demoBypassActive: boolean;
+  /** Present when the list endpoint itself resolves supersession per row
+   * (mirrors `GET /outputs/:id`'s `isSuperseded`/`supersededByOutputId`).
+   * `null` means the list row did not carry this — callers needing a
+   * guaranteed answer should fall back to `getOutput`/`listOutputRevisions`. */
+  readonly isSuperseded: boolean | null;
+  readonly supersededByOutputId: string | null;
+}
+
+function toNullableStr(value: unknown): string | null {
+  if (value == null) return null;
+  const s = String(value).trim();
+  return s ? s : null;
+}
+
+function toNullableNum(value: unknown): number | null {
+  return typeof value === 'number' && Number.isFinite(value) ? value : null;
+}
+
+function normalizeOutputListItem(row: unknown): MethodOutputListItem | null {
+  if (!row || typeof row !== 'object') return null;
+  const r = row as Record<string, unknown>;
+  const id = toNullableStr(r.id);
+  if (!id) return null;
+  const findings = Array.isArray(r.findings) ? r.findings.length : null;
+  const limitations = Array.isArray(r.limitations) ? r.limitations.length : null;
+  return {
+    id,
+    organizationId: toNullableStr(r.organizationId),
+    sessionId: toNullableStr(r.sessionId),
+    module: toNullableStr(r.module),
+    methodPackId: toNullableStr(r.methodPackId),
+    methodPackVersion: toNullableStr(r.methodPackVersion),
+    outputVersion: toNullableNum(r.outputVersion),
+    revisionOfOutputId: toNullableStr(r.revisionOfOutputId),
+    scope: toNullableStr(r.scope),
+    limitationsCount: toNullableNum(r.limitationsCount) ?? limitations,
+    findingsCount: toNullableNum(r.findingsCount) ?? findings,
+    contentHash: toNullableStr(r.contentHash),
+    frozenAt: toNullableStr(r.frozenAt),
+    createdAt: toNullableStr(r.createdAt),
+    demoBypassActive: r.demoBypassActive === true,
+    isSuperseded: typeof r.isSuperseded === 'boolean' ? r.isSuperseded : null,
+    supersededByOutputId: toNullableStr(r.supersededByOutputId),
+  };
+}
+
+export interface ListOutputsParams {
+  readonly sessionId?: string;
+  readonly projectId?: string;
+  readonly limit?: number;
+  readonly offset?: number;
+}
+
+export interface ListOutputsResult {
+  readonly outputs: readonly MethodOutputListItem[];
+  readonly total: number | null;
+}
+
+/** `GET /api/method/outputs?sessionId=&projectId=&limit=&offset=` — the
+ * org-wide (or scoped) Outputs list. This is the ONLY correct data source
+ * for an "Outputs" list screen — never `/api/artifacts` (a different,
+ * unrelated registry) and never a client-side reconstruction from a live
+ * session's in-memory state. */
+export async function listOutputs(params: ListOutputsParams = {}): Promise<ListOutputsResult> {
+  const qs = new URLSearchParams();
+  if (params.sessionId) qs.set('sessionId', params.sessionId);
+  if (params.projectId) qs.set('projectId', params.projectId);
+  if (params.limit != null) qs.set('limit', String(params.limit));
+  if (params.offset != null) qs.set('offset', String(params.offset));
+  const suffix = qs.toString() ? `?${qs.toString()}` : '';
+  const body = await handle<unknown>(
+    fetchWithRetry(`${BASE}/outputs${suffix}`, { method: 'GET', headers: getHeaders() })
+  );
+  const data = unwrapData<unknown>(body);
+  const rawRows = extractArray<unknown>(data, ['outputs', 'items', 'results']);
+  const outputs = rawRows
+    .map(normalizeOutputListItem)
+    .filter((o): o is MethodOutputListItem => o !== null);
+  return { outputs, total: extractNumber(data, ['total', 'count']) };
+}
+
+/** One entry in an Output's revision chain — `GET /outputs/:id/revisions`. */
+export interface MethodOutputRevisionSummary {
+  readonly id: string;
+  readonly outputVersion: number | null;
+  readonly status: MethodArtefactStatus | null;
+  readonly supersededByOutputId: string | null;
+  readonly frozenAt: string | null;
+  readonly contentHash: string | null;
+}
+
+function normalizeRevision(row: unknown): MethodOutputRevisionSummary | null {
+  if (!row || typeof row !== 'object') return null;
+  const r = row as Record<string, unknown>;
+  const id = toNullableStr(r.id);
+  if (!id) return null;
+  const statusRaw = toNullableStr(r.status);
+  const status: MethodArtefactStatus | null =
+    statusRaw === 'current' || statusRaw === 'superseded' || statusRaw === 'source_updated'
+      ? statusRaw
+      : null;
+  return {
+    id,
+    outputVersion: toNullableNum(r.outputVersion),
+    status,
+    supersededByOutputId: toNullableStr(r.supersededByOutputId),
+    frozenAt: toNullableStr(r.frozenAt),
+    contentHash: toNullableStr(r.contentHash),
+  };
+}
+
+/** `GET /api/method/outputs/:id/revisions` — the full revision chain for one
+ * Output's lineage, current vs superseded distinguished per row. */
+export async function listOutputRevisions(
+  outputId: string
+): Promise<readonly MethodOutputRevisionSummary[]> {
+  const body = await handle<unknown>(
+    fetchWithRetry(`${BASE}/outputs/${outputId}/revisions`, { method: 'GET', headers: getHeaders() })
+  );
+  const data = unwrapData<unknown>(body);
+  const rows = extractArray<unknown>(data, ['revisions', 'items']);
+  return rows.map(normalizeRevision).filter((r): r is MethodOutputRevisionSummary => r !== null);
+}
+
+/** Shared shape for a Report OR Presentation snapshot row (server:
+ * `MethodReportSnapshotRecord`, `kind` distinguishes the two — SAME
+ * immutable-snapshot discipline, same table). */
+export interface MethodArtefactSnapshotSummary {
+  readonly id: string;
+  readonly organizationId: string | null;
+  readonly outputId: string | null;
+  readonly sessionId: string | null;
+  readonly title: string | null;
+  readonly contentHash: string | null;
+  readonly status: MethodArtefactStatus | null;
+  readonly supersededByOutputId: string | null;
+  readonly supersededAt: string | null;
+  readonly createdAt: string | null;
+  readonly kind: 'report' | 'presentation' | null;
+  readonly demoBypassActive: boolean;
+}
+
+export interface MethodArtefactSnapshotDetail extends MethodArtefactSnapshotSummary {
+  /** Structured content as persisted server-side — never an image (screenshot
+   * ban, server-enforced). Shape is per-artefact and not further typed here. */
+  readonly content: unknown;
+}
+
+function normalizeArtefactSnapshot(row: unknown): MethodArtefactSnapshotSummary | null {
+  if (!row || typeof row !== 'object') return null;
+  const r = row as Record<string, unknown>;
+  const id = toNullableStr(r.id);
+  if (!id) return null;
+  const statusRaw = toNullableStr(r.status);
+  const status: MethodArtefactStatus | null =
+    statusRaw === 'current' || statusRaw === 'superseded' || statusRaw === 'source_updated'
+      ? statusRaw
+      : null;
+  const kindRaw = toNullableStr(r.kind);
+  const kind: 'report' | 'presentation' | null =
+    kindRaw === 'report' || kindRaw === 'presentation' ? kindRaw : null;
+  return {
+    id,
+    organizationId: toNullableStr(r.organizationId),
+    outputId: toNullableStr(r.outputId),
+    sessionId: toNullableStr(r.sessionId),
+    title: toNullableStr(r.title),
+    contentHash: toNullableStr(r.contentHash),
+    status,
+    supersededByOutputId: toNullableStr(r.supersededByOutputId),
+    supersededAt: toNullableStr(r.supersededAt),
+    createdAt: toNullableStr(r.createdAt),
+    kind,
+    demoBypassActive: r.demoBypassActive === true,
+  };
+}
+
+export interface ListArtefactSnapshotsParams {
+  readonly outputId?: string;
+  readonly sessionId?: string;
+}
+
+function buildQuery(params: Record<string, string | undefined>): string {
+  const qs = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    if (value) qs.set(key, value);
+  }
+  const s = qs.toString();
+  return s ? `?${s}` : '';
+}
+
+/** `GET /api/method/reports?outputId=&sessionId=` — Report snapshots
+ * (`kind === 'report'`). Org-wide when no filter is given. */
+export async function listReports(
+  params: ListArtefactSnapshotsParams = {}
+): Promise<readonly MethodArtefactSnapshotSummary[]> {
+  const body = await handle<unknown>(
+    fetchWithRetry(`${BASE}/reports${buildQuery(params)}`, { method: 'GET', headers: getHeaders() })
+  );
+  const data = unwrapData<unknown>(body);
+  const rows = extractArray<unknown>(data, ['reports', 'items']);
+  return rows
+    .map(normalizeArtefactSnapshot)
+    .filter((r): r is MethodArtefactSnapshotSummary => r !== null);
+}
+
+/** `GET /api/method/reports/:id` — one Report snapshot, WITH its persisted
+ * structured `content` (never reconstructed client-side). */
+export async function getReportSnapshot(id: string): Promise<MethodArtefactSnapshotDetail | null> {
+  const body = await handle<unknown>(
+    fetchWithRetry(`${BASE}/reports/${id}`, { method: 'GET', headers: getHeaders() })
+  );
+  const data = unwrapData<unknown>(body);
+  const row =
+    data && typeof data === 'object' && 'report' in (data as Record<string, unknown>)
+      ? (data as Record<string, unknown>).report
+      : data;
+  const summary = normalizeArtefactSnapshot(row);
+  if (!summary) return null;
+  const content = row && typeof row === 'object' ? (row as Record<string, unknown>).content : null;
+  return { ...summary, content: content ?? null };
+}
+
+/** `GET /api/method/presentations?outputId=` — same table/discipline as
+ * Reports, filtered to `kind === 'presentation'` server-side. */
+export async function listPresentations(
+  params: ListArtefactSnapshotsParams = {}
+): Promise<readonly MethodArtefactSnapshotSummary[]> {
+  const body = await handle<unknown>(
+    fetchWithRetry(`${BASE}/presentations${buildQuery(params)}`, {
+      method: 'GET',
+      headers: getHeaders(),
+    })
+  );
+  const data = unwrapData<unknown>(body);
+  const rows = extractArray<unknown>(data, ['presentations', 'items']);
+  return rows
+    .map(normalizeArtefactSnapshot)
+    .filter((r): r is MethodArtefactSnapshotSummary => r !== null);
+}
+
+/** `GET /api/method/presentations/:id` — one Presentation snapshot + content. */
+export async function getPresentationSnapshot(
+  id: string
+): Promise<MethodArtefactSnapshotDetail | null> {
+  const body = await handle<unknown>(
+    fetchWithRetry(`${BASE}/presentations/${id}`, { method: 'GET', headers: getHeaders() })
+  );
+  const data = unwrapData<unknown>(body);
+  const row =
+    data && typeof data === 'object' && 'presentation' in (data as Record<string, unknown>)
+      ? (data as Record<string, unknown>).presentation
+      : data;
+  const summary = normalizeArtefactSnapshot(row);
+  if (!summary) return null;
+  const content = row && typeof row === 'object' ? (row as Record<string, unknown>).content : null;
+  return { ...summary, content: content ?? null };
+}
+
+/** Initiative Proposal Draft row (server: `MethodInitiativeDraftRecord`).
+ * ★ A DRAFT, not a Registered Initiative — "Register as Initiative" is a
+ * separate human action in the Initiatives module, out of this API's reach. */
+export interface MethodInitiativeDraftSummary {
+  readonly id: string;
+  readonly organizationId: string | null;
+  readonly outputId: string | null;
+  readonly sessionId: string | null;
+  readonly title: string | null;
+  readonly summary: string | null;
+  readonly findingIds: readonly string[];
+  readonly rationale: string | null;
+  readonly expectedOutcome: string | null;
+  readonly confidence: 'low' | 'medium' | 'high' | null;
+  readonly status: MethodArtefactStatus | null;
+  readonly supersededByOutputId: string | null;
+  readonly supersededAt: string | null;
+  readonly createdAt: string | null;
+}
+
+function normalizeInitiativeDraft(row: unknown): MethodInitiativeDraftSummary | null {
+  if (!row || typeof row !== 'object') return null;
+  const r = row as Record<string, unknown>;
+  const id = toNullableStr(r.id);
+  if (!id) return null;
+  const statusRaw = toNullableStr(r.status);
+  const status: MethodArtefactStatus | null =
+    statusRaw === 'current' || statusRaw === 'superseded' || statusRaw === 'source_updated'
+      ? statusRaw
+      : null;
+  const confidenceRaw = toNullableStr(r.confidence);
+  const confidence: 'low' | 'medium' | 'high' | null =
+    confidenceRaw === 'low' || confidenceRaw === 'medium' || confidenceRaw === 'high'
+      ? confidenceRaw
+      : null;
+  return {
+    id,
+    organizationId: toNullableStr(r.organizationId),
+    outputId: toNullableStr(r.outputId),
+    sessionId: toNullableStr(r.sessionId),
+    title: toNullableStr(r.title),
+    summary: toNullableStr(r.summary),
+    findingIds: Array.isArray(r.findingIds) ? r.findingIds.map((f) => String(f)) : [],
+    rationale: toNullableStr(r.rationale),
+    expectedOutcome: toNullableStr(r.expectedOutcome),
+    confidence,
+    status,
+    supersededByOutputId: toNullableStr(r.supersededByOutputId),
+    supersededAt: toNullableStr(r.supersededAt),
+    createdAt: toNullableStr(r.createdAt),
+  };
+}
+
+/** `GET /api/method/initiative-drafts?outputId=` — Initiative Proposal
+ * Drafts. Org-wide when no filter is given. */
+export async function listInitiativeDrafts(
+  params: ListArtefactSnapshotsParams = {}
+): Promise<readonly MethodInitiativeDraftSummary[]> {
+  const body = await handle<unknown>(
+    fetchWithRetry(`${BASE}/initiative-drafts${buildQuery(params)}`, {
+      method: 'GET',
+      headers: getHeaders(),
+    })
+  );
+  const data = unwrapData<unknown>(body);
+  const rows = extractArray<unknown>(data, ['initiativeDrafts', 'drafts', 'items']);
+  return rows
+    .map(normalizeInitiativeDraft)
+    .filter((d): d is MethodInitiativeDraftSummary => d !== null);
+}
+
+/** `GET /api/method/initiative-drafts/:id` — one draft, full detail. */
+export async function getInitiativeDraft(id: string): Promise<MethodInitiativeDraftSummary | null> {
+  const body = await handle<unknown>(
+    fetchWithRetry(`${BASE}/initiative-drafts/${id}`, { method: 'GET', headers: getHeaders() })
+  );
+  const data = unwrapData<unknown>(body);
+  const row =
+    data && typeof data === 'object' && 'draft' in (data as Record<string, unknown>)
+      ? (data as Record<string, unknown>).draft
+      : data;
+  return normalizeInitiativeDraft(row);
+}
+
+/**
+ * `GET /api/method/sessions/:id/lineage` — "sesja → rewizje → Output →
+ * Report/Presentation → Initiative Proposal". The brief describes this shape
+ * in prose only (no field-level schema agreed yet), so this function
+ * deliberately returns the envelope-unwrapped body AS-IS (`unknown`) rather
+ * than guessing a schema and silently mis-normalizing it. Callers must parse
+ * defensively — see `ArtifactLineagePanel`'s `normalizeLineage`, which tries
+ * several plausible shapes and falls back to an honest "couldn't read this"
+ * state rather than rendering fabricated structure.
+ */
+export async function getSessionLineage(sessionId: string): Promise<unknown> {
+  const body = await handle<unknown>(
+    fetchWithRetry(`${BASE}/sessions/${sessionId}/lineage`, { method: 'GET', headers: getHeaders() })
+  );
+  return unwrapData<unknown>(body);
+}
