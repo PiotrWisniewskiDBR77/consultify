@@ -19,6 +19,7 @@
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { Mock } from 'vitest';
 
 import {
   __resetDocumentLifecycleForTests,
@@ -39,7 +40,7 @@ const ORG_B = 'org-B';
 const USER = 'user-1';
 const ARTIFACT = 'artifact-1';
 
-let auditPumpSpy: ReturnType<typeof vi.fn>;
+let auditPumpSpy: Mock<(entry: DocumentAuditEntry) => void>;
 
 beforeEach(async () => {
   await __resetDocumentLifecycleForTests();

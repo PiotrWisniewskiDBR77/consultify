@@ -790,8 +790,41 @@ export const Scheduler = {
     });
     this.jobs.push(job41);
 
+    // 42. Finance v3 compute job queue — lease reaper (WP-B04 ADR §5.3, EM-1
+    // closeout). Run every minute: the W9 fault matrix measured that an
+    // abandoned job (worker crash/OOM/deploy after claim(), before
+    // completeJobSuccess()/failJob()) stayed `running` FOREVER — claim()
+    // only looks at status='queued', so the row became permanently
+    // unreachable. reapExpiredLeases() (server/src/services/finance/canonical/
+    // computeJobService.ts) requeues it (with backoff) or dead-letters it
+    // (DLQ, raising an EM-6 exception-ledger entry) once its lease is past
+    // `lease_expires_at` with no heartbeat (EM-2) having renewed it.
+    // Default ON — this is a pure data-recovery safety net (nothing it does
+    // is reachable unless a lease has ALREADY expired), same category as
+    // job39 (artifact lineage reconciliation). Set
+    // COMPUTE_JOB_REAPER_CRON_ENABLED=false to disable.
+    const job42 = cron.schedule('* * * * *', async () => {
+      if (process.env.COMPUTE_JOB_REAPER_CRON_ENABLED === 'false') return;
+      try {
+        const { reapExpiredLeases } = await import(
+          '../services/finance/canonical/computeJobService.js'
+        );
+        const reaped = await reapExpiredLeases({ batchSize: 100 });
+        if (reaped.length > 0) {
+          logger.warn('[Scheduler] Compute job lease reaper reclaimed abandoned jobs', {
+            count: reaped.length,
+            requeued: reaped.filter((r) => r.outcome === 'requeued').length,
+            deadLettered: reaped.filter((r) => r.outcome === 'dead_lettered').length,
+          });
+        }
+      } catch (err: any) {
+        logger.error('[Scheduler] Compute job lease reaper tick failed:', err?.message || err);
+      }
+    });
+    this.jobs.push(job42);
+
     logger.info(
-      '[Scheduler] Jobs scheduled: Retention (Daily 3AM), Reconciliation (Weekly Sun 4AM), Trial/Demo (Daily 2:30AM), Metrics (Daily 2:45AM), SLA (Every 10min), Notifications (Every 10min), AI Budget (Monthly 1st), Scheduled Reports (Hourly), Scheduled Emails (Every 15min), AI Pattern Extraction (Every 6h), AI Consolidation (Daily 4:30AM), AI Cleanup (Weekly Mon 5AM), AI Memory Cleanup (Weekly Sun 2AM), Partial Response Cleanup (Hourly), Feedback Consolidation (Daily 4AM), Memory Cleanup (Every 6h), Webhook Retry (Every 5min), Auto Recovery (Every 2min), Invoice Reminders (Daily 9AM), Interview Reminders (Hourly), Idea Map Auto-Snapshots (Every 15min default), Agent Plan Scheduler (Every 2min), Artifact Lineage Reconciliation (Every 5min)'
+      '[Scheduler] Jobs scheduled: Retention (Daily 3AM), Reconciliation (Weekly Sun 4AM), Trial/Demo (Daily 2:30AM), Metrics (Daily 2:45AM), SLA (Every 10min), Notifications (Every 10min), AI Budget (Monthly 1st), Scheduled Reports (Hourly), Scheduled Emails (Every 15min), AI Pattern Extraction (Every 6h), AI Consolidation (Daily 4:30AM), AI Cleanup (Weekly Mon 5AM), AI Memory Cleanup (Weekly Sun 2AM), Partial Response Cleanup (Hourly), Feedback Consolidation (Daily 4AM), Memory Cleanup (Every 6h), Webhook Retry (Every 5min), Auto Recovery (Every 2min), Invoice Reminders (Daily 9AM), Interview Reminders (Hourly), Idea Map Auto-Snapshots (Every 15min default), Agent Plan Scheduler (Every 2min), Artifact Lineage Reconciliation (Every 5min), Compute Job Lease Reaper (Every 1min)'
     );
   },
   stop(): void {

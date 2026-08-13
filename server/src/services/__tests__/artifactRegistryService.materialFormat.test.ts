@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   mapArtifactRegistryListRow,
   resolvePersistedArtifactFormat,
-} from '../v8/artifactRegistryService';
+} from '../v8/artifactRegistryService.js';
 
 function listRow(overrides: Record<string, unknown>) {
   return {

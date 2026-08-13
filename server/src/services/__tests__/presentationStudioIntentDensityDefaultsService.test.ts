@@ -16,13 +16,13 @@
 
 import { describe, expect, it } from 'vitest';
 
-import type { OutlineItem } from '../presentationGeneratorService';
+import type { OutlineItem } from '../presentationGeneratorService.js';
 import {
   _intentDensityDefaultsForTests,
   applyIntentDensityDefaults,
   intentDensityDefaultsFor,
-} from '../presentationStudioIntentDensityDefaultsService';
-import { _pptxSupportedIntentsForTests } from '../presentationStudioLayoutAuditService';
+} from '../presentationStudioIntentDensityDefaultsService.js';
+import { _pptxSupportedIntentsForTests } from '../presentationStudioLayoutAuditService.js';
 
 function slide(partial: Partial<OutlineItem>): OutlineItem {
   return {

@@ -1,0 +1,125 @@
+=== ESLint summary (changed files scope) ===
+SHA: 57fe0543cc2b8a026d137451a65b18da67d8bd1e
+Command: npx eslint --quiet <115 files from: git diff --name-only --diff-filter=ACMR ee5736a5a6..HEAD | grep -E '\.(ts|tsx|js|jsx)$'>
+
+NOTE: ESLint 9.x with --quiet omits files with 0 remaining errors from JSON output entirely.
+Verified individually: 12 files are clean (errorCount=0): dev-render/screens/finance-statement-pack-workspace-v2.tsx,
+server/scripts/finance-v3-audit/{j2-crosstenant-probe,j3-concurrency-probe,j4-rbac-probe}.ts (also excluded by eslint.config ignores: server/scripts/**),
+src/components/Finance/statementPackWorkspaceV2/{CanonicalStatementTableV2,StatementPackWorkspaceV2}.tsx,
+src/hooks/__tests__/{useFinanceCommentsFlag,useFinanceCompareFlag,useFinanceSavedViewsFlag}.test.ts,
+src/services/api/v8/client.ts, src/test-utils/featureFlagOverrides.ts,
+tests/unit/finance/rawEnumLeakScanner.test.ts (also excluded by eslint.config ignores: tests/**).
+
+Result: 115 files targeted; 103 files with errors; total 2749 errors (2712 prettier/prettier + 37 simple-import-sort/imports).
+Exit code: 1
+
+=== rule breakdown ===
+2712 prettier/prettier
+  37 simple-import-sort/imports
+
+=== per-file error counts (all 103) ===
+files_with_errors: 103
+total_errors: 2749
+523 server/src/routes/v8/finance-v2/__tests__/compare.routes.pg.test.ts
+413 server/src/routes/v8/finance-v2/__tests__/comments.routes.pg.test.ts
+279 server/src/routes/v8/finance-v2/__tests__/approveRbacGate.pg.test.ts
+175 server/src/routes/v8/finance-v2/__tests__/crosscutting.routes.pg.test.ts
+165 server/src/routes/v8/finance-v2/__tests__/legacy-id-bridge.routes.pg.test.ts
+120 src/services/api/financeV2.api.ts
+50 src/services/api/financeV2.types.ts
+40 server/src/routes/v8/finance-v2/__tests__/baseline.routes.pg.test.ts
+37 src/components/Finance/Analysis/AnalysisWorkspace.tsx
+37 src/components/Finance/baseline/AssumptionsView.tsx
+37 src/components/Finance/baseline/useBaselineAssumptionsEditor.ts
+32 src/components/Finance/Analysis/AnalysisCreatorWizard.tsx
+28 src/components/Finance/BaselineWorkspace.tsx
+28 src/components/Finance/Valuation/ValuationWorkspace.tsx
+27 server/src/services/finance/canonical/artifactVersionService.ts
+27 src/components/Finance/shared/FinanceWorkspaceBar.tsx
+26 src/components/Finance/statementPackWorkspaceV2/__tests__/StatementPackWorkspaceV2.test.tsx
+23 dev-render/screens/finance-baseline-workspace.tsx
+23 src/components/Finance/exportImport/FinanceExportImportPanel.tsx
+22 dev-render/screens/finance-valuation-workspace.tsx
+21 src/components/Finance/comments/FinanceCommentsPanel.tsx
+20 src/components/Finance/Prediction/PredictionWorkspace.tsx
+18 src/components/Finance/lineage/FinanceLineageNavigator.tsx
+18 src/services/api/__tests__/financeV2.compare.api.test.ts
+17 src/components/Finance/Prediction/__tests__/PredictionWorkspace.test.tsx
+17 src/components/Finance/lineage/__tests__/FinanceLineageNavigator.a11y.test.tsx
+17 src/services/api/__tests__/financeV2.comments.api.test.ts
+16 dev-render/screens/finance-id-bridge.tsx
+15 dev-render/screens/finance-analysis-workspace.tsx
+15 src/components/Finance/exportImport/__tests__/FinanceExportImportPanel.test.tsx
+15 src/components/Finance/savedViews/__tests__/FinanceSavedViewsPanel.test.tsx
+14 dev-render/screens/finance-lineage-navigator.tsx
+14 src/components/Finance/Valuation/__tests__/ValuationWorkspace.test.tsx
+14 src/components/Finance/Valuation/steps/MethodsWeightsStep.tsx
+13 src/components/Finance/compare/FinanceComparePanel.tsx
+13 src/components/Finance/exportImport/__tests__/FinanceExportImportPanel.a11y.test.tsx
+13 src/components/Finance/savedViews/FinanceSavedViewsPanel.tsx
+13 src/components/Finance/shared/__tests__/FinanceWorkspaceBar.confirmDialog.a11y.test.tsx
+12 src/components/Economics/__tests__/resolveFinanceDetailBranches.test.ts
+12 src/components/Finance/lineage/__tests__/FinanceLineageNavigator.test.tsx
+12 src/components/Finance/shared/__tests__/FinanceLegacyBridgeGate.test.tsx
+12 src/components/Finance/statementPackWorkspaceV2/__tests__/StatementPackWorkspaceV2.focusMode.test.tsx
+11 dev-render/main.tsx
+11 dev-render/screens/finance-comments-panel.tsx
+11 src/components/Finance/Analysis/__tests__/AnalysisWorkspace.focusMode.test.tsx
+11 src/components/Finance/compare/__tests__/FinanceComparePanel.test.tsx
+10 src/components/Finance/Analysis/__tests__/AnalysisWorkspace.persistence.test.tsx
+10 src/components/Finance/baseline/__tests__/BaselineWorkspace.focusMode.test.tsx
+9 dev-render/screens/finance-export-import-panel.tsx
+9 src/components/Finance/comments/__tests__/FinanceCommentsPanel.test.tsx
+9 src/components/Finance/shared/__tests__/FinanceWorkspaceBar.contrast.a11y.test.tsx
+8 src/components/Finance/Analysis/__tests__/AnalysisWorkspace.smoke.test.tsx
+8 src/components/Finance/Valuation/steps/ResultsStep.tsx
+8 src/components/Finance/Valuation/steps/SensitivityStep.tsx
+7 dev-render/screens/finance-compare-panel.tsx
+7 src/components/Finance/Prediction/__tests__/PredictionWorkspace.focusMode.test.tsx
+7 src/components/Finance/Valuation/steps/AdvisorStep.tsx
+7 src/components/Finance/Valuation/steps/SourceStep.tsx
+7 src/components/Finance/baseline/__tests__/AssumptionsView.a11y.test.tsx
+7 src/components/Finance/comments/__tests__/FinanceCommentsPanel.a11y.test.tsx
+7 src/components/Finance/statementPackWorkspaceV2/__tests__/StatementPackWorkspaceV2.a11y.test.tsx
+7 src/components/Finance/statementPackWorkspaceV2/__tests__/StatementPackWorkspaceV2.persistence.test.tsx
+6 server/src/routes/v8/finance-v2/artifacts.routes.ts
+6 src/components/Finance/Valuation/__tests__/ValuationWorkspace.focusMode.test.tsx
+6 src/components/Finance/Valuation/steps/AssumptionsStep.tsx
+6 src/components/Finance/baseline/__tests__/BaselineWorkspace.persistence.test.tsx
+6 src/components/Finance/baseline/__tests__/honestErrorMessages.idBridge.test.ts
+6 src/components/Finance/statementPackWorkspaceV2/__tests__/CanonicalStatementTableV2.test.tsx
+6 src/services/api/__tests__/financeV2.exportImport.api.test.ts
+6 src/services/api/__tests__/financeV2.lineageNavigator.api.test.ts
+5 dev-render/screens/finance-prediction-workspace.tsx
+5 dev-render/screens/finance-saved-views-panel.tsx
+5 src/components/Finance/Analysis/__tests__/AnalysisWorkspace.flag.test.tsx
+5 src/components/Finance/baseline/__tests__/BaselineWorkspace.a11y.test.tsx
+5 src/components/Finance/savedViews/__tests__/FinanceSavedViewsPanel.a11y.test.tsx
+5 src/components/Finance/statementPackWorkspaceV2/__tests__/StatementPackWorkspaceV2.errorBoundary.test.tsx
+4 src/components/Economics/FinanceHub.tsx
+4 src/components/Finance/Analysis/__tests__/AnalysisWorkspace.errorBoundary.test.tsx
+4 src/components/Finance/Valuation/__tests__/ValuationWorkspace.flag.test.tsx
+4 src/components/Finance/baseline/__tests__/BaselineWorkspace.canon.test.tsx
+4 src/components/Finance/compare/__tests__/FinanceComparePanel.a11y.test.tsx
+4 src/components/Finance/statementPackWorkspaceV2/__tests__/StatementPackWorkspaceV2.flag.test.tsx
+3 server/src/routes/v8/finance-v2/models.routes.ts
+3 src/services/api/__tests__/financeV2.savedViews.api.test.ts
+2 server/src/services/finance/canonical/legacyIdBridgeService.ts
+2 src/components/Finance/Analysis/__tests__/AnalysisCreatorWizard.a11y.test.tsx
+2 src/components/Finance/Prediction/__tests__/PredictionWorkspace.errorBoundary.test.tsx
+2 src/components/Finance/Prediction/__tests__/PredictionWorkspace.flag.test.tsx
+2 src/components/Finance/Valuation/steps/ExportStep.tsx
+2 src/components/Finance/baseline/__tests__/BaselineWorkspace.errorBoundary.test.tsx
+2 src/components/Finance/baseline/__tests__/BaselineWorkspace.flag.test.tsx
+2 src/components/Finance/shared/FinanceStatusAnnouncer.tsx
+1 src/components/Finance/baseline/useBaselineOutputs.ts
+1 src/components/Finance/shared/FinanceLegacyBridgeGate.tsx
+1 src/components/Finance/shared/useFinanceLegacyBridge.ts
+1 src/hooks/__tests__/useFinanceExportImportFlag.test.ts
+1 src/hooks/__tests__/useFinanceLineageNavigatorFlag.test.ts
+1 src/hooks/useFinanceCommentsFlag.ts
+1 src/hooks/useFinanceCompareFlag.ts
+1 src/hooks/useFinanceExportImportFlag.ts
+1 src/hooks/useFinanceLineageNavigatorFlag.ts
+1 src/hooks/useFinanceSavedViewsFlag.ts
+1 src/services/api/v8/__tests__/client.test.ts

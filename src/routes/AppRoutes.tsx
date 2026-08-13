@@ -94,6 +94,85 @@ const ExecutionHub = lazyWithRetry(() =>
 const ResultsHub = lazyWithRetry(() =>
   import('@/components/Results/ResultsHub').then((m) => ({ default: m.default }))
 );
+// RN-G2 (2026-08-10) — Results Next registry shells (P0). New routes ALONGSIDE
+// the legacy ResultsHub above, not instead of it — see RN_G2_UI_SCOPE.md §E.
+const ResultsKpiRegistryPage = lazyWithRetry(() =>
+  import('@/components/ResultsVNext/ResultsKpiRegistryPage').then((m) => ({
+    default: m.default,
+  }))
+);
+const ResultsRoiRegistryPage = lazyWithRetry(() =>
+  import('@/components/ResultsVNext/ResultsRoiRegistryPage').then((m) => ({
+    default: m.default,
+  }))
+);
+const ResultsOkrRegistryPage = lazyWithRetry(() =>
+  import('@/components/ResultsVNext/ResultsOkrRegistryPage').then((m) => ({
+    default: m.default,
+  }))
+);
+// RN-G2 P1 #8 (2026-08-10) — KPI Scorecards detail route
+// (`/results/kpi/scorecards/:scorecardId`, master plan §11). List-only
+// surface (items + review snapshots as StandardTable tabs) inside the same
+// ResultsVNextRegistryShell the KPI registry uses — see the component's own
+// header comment for the deliberate archetype deferral.
+const ResultsKpiScorecardDetailPage = lazyWithRetry(() =>
+  import('@/components/ResultsVNext/kpiScorecards/ResultsKpiScorecardDetailPage').then((m) => ({
+    default: m.default,
+  }))
+);
+// RN-G3 lane `okr` full-tool task (2026-08-11) — Program/Cycle admin
+// surfaces (`ROUTES.RESULTS_OKR.PROGRAMS`/`.CYCLES`).
+const OkrProgramsPage = lazyWithRetry(() =>
+  import('@/components/ResultsVNext/okr/OkrProgramsPage').then((m) => ({ default: m.default }))
+);
+const OkrCyclesPage = lazyWithRetry(() =>
+  import('@/components/ResultsVNext/okr/OkrCyclesPage').then((m) => ({ default: m.default }))
+);
+// RN-G5 scopegap task 1 (§G #30) — cross-cutting Attention view
+// (`ROUTES.RESULTS_ATTENTION`), D10: one view, not a fourth registry.
+const ResultsAttentionPage = lazyWithRetry(() =>
+  import('@/components/ResultsVNext/attention/ResultsAttentionPage').then((m) => ({ default: m.default }))
+);
+// RN-G5 scopegap task 3 (§G #11) — ROI org PIR-outcomes perspective
+// (`ROUTES.RESULTS_ROI.PIR_OUTCOMES`), standalone route until
+// `ResultsRoiHub.tsx` (out of this package's allowlist) folds it in as a
+// third Menu 2 tab — see `RoiPirOutcomesTab.tsx`'s own header.
+const ResultsRoiPirOutcomesPage = lazyWithRetry(() =>
+  import('@/components/ResultsVNext/roi/ResultsRoiPirOutcomesPage').then((m) => ({ default: m.default }))
+);
+// RN-G3 lane (2026-08-11) — full KPI tool, klasa L (`/results/kpi/:kpiId`,
+// D03) + Deviation Case subview (`/results/kpi/:kpiId/deviation-cases/:caseId`,
+// D05 — subview of the tool, not a top-level registry). See
+// `src/components/ResultsVNext/kpiTool/KpiToolPage.tsx` header for the full
+// scope/gap disclosure.
+const KpiToolPage = lazyWithRetry(() =>
+  import('@/components/ResultsVNext/kpiTool/KpiToolPage').then((m) => ({
+    default: m.default,
+  }))
+);
+const KpiDeviationCaseSubview = lazyWithRetry(() =>
+  import('@/components/ResultsVNext/kpiTool/KpiDeviationCaseSubview').then((m) => ({
+    default: m.default,
+  }))
+);
+// RN-G5 (2026-08-12) — full ROI Case tool (`/results/roi/cases/:roiCaseId`)
+// + full OKR Set tool (`/results/okr/sets/:okrSetId`) deep-link routes. D03
+// (klasa L, no big editors in a preview) is already binding — these mount
+// the routes `routeConfig.ts` reserved for them (master plan §11) instead of
+// leaving them as unreachable dead constants. See
+// `src/components/ResultsVNext/roi/RoiCaseToolPage.tsx` /
+// `src/components/ResultsVNext/okr/OkrSetToolPage.tsx` headers.
+const RoiCaseToolPage = lazyWithRetry(() =>
+  import('@/components/ResultsVNext/roi/RoiCaseToolPage').then((m) => ({
+    default: m.default,
+  }))
+);
+const OkrSetToolPage = lazyWithRetry(() =>
+  import('@/components/ResultsVNext/okr/OkrSetToolPage').then((m) => ({
+    default: m.default,
+  }))
+);
 
 const ConclusionsHub = lazyWithRetry(() =>
   import('@/components/Conclusions/ConclusionsHub').then((m) => ({ default: m.default }))
@@ -2434,6 +2513,321 @@ export const AppRoutes: React.FC = () => {
                 >
                   <RouteErrorBoundary>
                     <ResultsHub />
+                  </RouteErrorBoundary>
+                </ProductionModuleGate>
+              </MainLayout>
+            </BetaGate>
+          }
+        />
+        {/* RN-G2 (2026-08-10) — Results Next registries: KPI / ROI / OKR.
+            EXACT-path routes new alongside the legacy `/results` route above
+            (React Router matches exact paths first, so no collision). Same
+            entitlement chain the legacy hub uses (BetaGate MODULE_BENEFITS +
+            ProductionModuleGate "Results") — reused, not reinvented, per
+            RN_G2_UI_SCOPE.md §E. Each page is internally gated OFF by its own
+            resultsVNextFeatureFlags.ts flag until its domain vertical ships
+            (P1/P2/P3) — see ResultsVNextRegistryRouteBase.tsx. */}
+        <Route
+          path={ROUTES.RESULTS_KPI.ROOT}
+          element={
+            <BetaGate moduleId="MODULE_BENEFITS">
+              <MainLayout
+                breadcrumbs={
+                  breadcrumbs || [t('sidebar.results', 'Results'), t('results.kpi', 'KPI')]
+                }
+                noPadding
+              >
+                <ProductionModuleGate
+                  enabled={!hideNonCoreModulesOnPublicProduction}
+                  moduleName="Results"
+                >
+                  <RouteErrorBoundary>
+                    <ResultsKpiRegistryPage />
+                  </RouteErrorBoundary>
+                </ProductionModuleGate>
+              </MainLayout>
+            </BetaGate>
+          }
+        />
+        {/* RN-G2 P1 #8 (2026-08-10) — KPI Scorecards detail. Same entitlement
+            chain as ROUTES.RESULTS_KPI.ROOT above (reused, not reinvented);
+            internally gated by the SAME `kpiRegistry` flag (one flag per
+            domain, not per screen — resultsVNextFeatureFlags.ts's own
+            documented convention). */}
+        <Route
+          path={ROUTES.RESULTS_KPI.SCORECARD}
+          element={
+            <BetaGate moduleId="MODULE_BENEFITS">
+              <MainLayout
+                breadcrumbs={
+                  breadcrumbs || [
+                    t('sidebar.results', 'Results'),
+                    t('results.kpi', 'KPI'),
+                    t('results.kpiScorecard', 'Scorecard'),
+                  ]
+                }
+                noPadding
+              >
+                <ProductionModuleGate
+                  enabled={!hideNonCoreModulesOnPublicProduction}
+                  moduleName="Results"
+                >
+                  <RouteErrorBoundary>
+                    <ResultsKpiScorecardDetailPage />
+                  </RouteErrorBoundary>
+                </ProductionModuleGate>
+              </MainLayout>
+            </BetaGate>
+          }
+        />
+        {/* RN-G3 lane (2026-08-11) — KPI full tool, klasa L (D03) + Deviation
+            Case subview (D05). Same entitlement chain as the routes above —
+            reused, not reinvented. Both internally gated by the SAME
+            `kpiRegistry` flag (one flag per domain, resultsVNextFeatureFlags.ts
+            convention). MainLayout omits `breadcrumbs` for the KPI tool route
+            since the shell itself (NModeShell/NModeHeader) already renders its
+            own identity chrome (back/title/kebab) — an app-level breadcrumb
+            bar on top would duplicate it, unlike the list-shell routes above
+            which have no such built-in identity header. */}
+        <Route
+          path={ROUTES.RESULTS_KPI.TOOL}
+          element={
+            <BetaGate moduleId="MODULE_BENEFITS">
+              <MainLayout
+                breadcrumbs={
+                  breadcrumbs || [t('sidebar.results', 'Results'), t('results.kpi', 'KPI')]
+                }
+                noPadding
+              >
+                <ProductionModuleGate
+                  enabled={!hideNonCoreModulesOnPublicProduction}
+                  moduleName="Results"
+                >
+                  <RouteErrorBoundary>
+                    <KpiToolPage />
+                  </RouteErrorBoundary>
+                </ProductionModuleGate>
+              </MainLayout>
+            </BetaGate>
+          }
+        />
+        <Route
+          path={ROUTES.RESULTS_KPI.DEVIATION_CASE}
+          element={
+            <BetaGate moduleId="MODULE_BENEFITS">
+              <MainLayout
+                breadcrumbs={
+                  breadcrumbs || [
+                    t('sidebar.results', 'Results'),
+                    t('results.kpi', 'KPI'),
+                    t('results.kpiDeviationCase', 'Deviation case'),
+                  ]
+                }
+                noPadding
+              >
+                <ProductionModuleGate
+                  enabled={!hideNonCoreModulesOnPublicProduction}
+                  moduleName="Results"
+                >
+                  <RouteErrorBoundary>
+                    <KpiDeviationCaseSubview />
+                  </RouteErrorBoundary>
+                </ProductionModuleGate>
+              </MainLayout>
+            </BetaGate>
+          }
+        />
+        <Route
+          path={ROUTES.RESULTS_ROI.ROOT}
+          element={
+            <BetaGate moduleId="MODULE_BENEFITS">
+              <MainLayout
+                breadcrumbs={
+                  breadcrumbs || [t('sidebar.results', 'Results'), t('results.roi', 'ROI')]
+                }
+                noPadding
+              >
+                <ProductionModuleGate
+                  enabled={!hideNonCoreModulesOnPublicProduction}
+                  moduleName="Results"
+                >
+                  <RouteErrorBoundary>
+                    <ResultsRoiRegistryPage />
+                  </RouteErrorBoundary>
+                </ProductionModuleGate>
+              </MainLayout>
+            </BetaGate>
+          }
+        />
+        {/* RN-G5 (2026-08-12) — full ROI Case tool, klasa L (D03). Same
+            entitlement chain as ROUTES.RESULTS_ROI.ROOT above (reused, not
+            reinvented); internally gated by the SAME `roiRegistry` flag (one
+            flag per domain, resultsVNextFeatureFlags.ts convention). No
+            `breadcrumbs` override needed — `RoiCaseFullTool`'s own phase
+            workspaces render their own "ROI registry -> ..." breadcrumb via
+            `ResultsVNextRegistryShell`'s moduleBar, same as the KPI tool
+            route above. */}
+        <Route
+          path={ROUTES.RESULTS_ROI.CASE}
+          element={
+            <BetaGate moduleId="MODULE_BENEFITS">
+              <MainLayout
+                breadcrumbs={
+                  breadcrumbs || [t('sidebar.results', 'Results'), t('results.roi', 'ROI')]
+                }
+                noPadding
+              >
+                <ProductionModuleGate
+                  enabled={!hideNonCoreModulesOnPublicProduction}
+                  moduleName="Results"
+                >
+                  <RouteErrorBoundary>
+                    <RoiCaseToolPage />
+                  </RouteErrorBoundary>
+                </ProductionModuleGate>
+              </MainLayout>
+            </BetaGate>
+          }
+        />
+        {/* RN-G5 scopegap task 3 (§G #11) — ROI org PIR-outcomes perspective,
+            standalone route (see ResultsRoiPirOutcomesPage.tsx header for why
+            it isn't a ResultsRoiHub.tsx tab yet). Same entitlement chain +
+            same `roiRegistry` flag gate as ROUTES.RESULTS_ROI.ROOT above. */}
+        <Route
+          path={ROUTES.RESULTS_ROI.PIR_OUTCOMES}
+          element={
+            <BetaGate moduleId="MODULE_BENEFITS">
+              <MainLayout
+                breadcrumbs={
+                  breadcrumbs || [t('sidebar.results', 'Results'), t('results.roi', 'ROI'), t('results.roiPirOutcomes', 'PIR outcomes')]
+                }
+                noPadding
+              >
+                <ProductionModuleGate
+                  enabled={!hideNonCoreModulesOnPublicProduction}
+                  moduleName="Results"
+                >
+                  <RouteErrorBoundary>
+                    <ResultsRoiPirOutcomesPage />
+                  </RouteErrorBoundary>
+                </ProductionModuleGate>
+              </MainLayout>
+            </BetaGate>
+          }
+        />
+        <Route
+          path={ROUTES.RESULTS_OKR.ROOT}
+          element={
+            <BetaGate moduleId="MODULE_BENEFITS">
+              <MainLayout
+                breadcrumbs={
+                  breadcrumbs || [t('sidebar.results', 'Results'), t('results.okr', 'OKR')]
+                }
+                noPadding
+              >
+                <ProductionModuleGate
+                  enabled={!hideNonCoreModulesOnPublicProduction}
+                  moduleName="Results"
+                >
+                  <RouteErrorBoundary>
+                    <ResultsOkrRegistryPage />
+                  </RouteErrorBoundary>
+                </ProductionModuleGate>
+              </MainLayout>
+            </BetaGate>
+          }
+        />
+        {/* RN-G5 (2026-08-12) — full OKR Set tool, klasa L (D03). Same
+            entitlement chain + same internal `okrRegistry` flag gate as
+            ROUTES.RESULTS_OKR.ROOT above. */}
+        <Route
+          path={ROUTES.RESULTS_OKR.SET}
+          element={
+            <BetaGate moduleId="MODULE_BENEFITS">
+              <MainLayout
+                breadcrumbs={
+                  breadcrumbs || [t('sidebar.results', 'Results'), t('results.okr', 'OKR')]
+                }
+                noPadding
+              >
+                <ProductionModuleGate
+                  enabled={!hideNonCoreModulesOnPublicProduction}
+                  moduleName="Results"
+                >
+                  <RouteErrorBoundary>
+                    <OkrSetToolPage />
+                  </RouteErrorBoundary>
+                </ProductionModuleGate>
+              </MainLayout>
+            </BetaGate>
+          }
+        />
+        {/* RN-G3 lane `okr` full-tool task (2026-08-11) — Program/Cycle admin
+            surfaces. Same entitlement chain + same internal `okrRegistry`
+            flag gate as ROUTES.RESULTS_OKR.ROOT above (one flag per domain,
+            not per screen — resultsVNextFeatureFlags.ts's own convention). */}
+        <Route
+          path={ROUTES.RESULTS_OKR.PROGRAMS}
+          element={
+            <BetaGate moduleId="MODULE_BENEFITS">
+              <MainLayout
+                breadcrumbs={
+                  breadcrumbs || [t('sidebar.results', 'Results'), t('results.okr', 'OKR'), t('results.okrPrograms', 'Programs')]
+                }
+                noPadding
+              >
+                <ProductionModuleGate
+                  enabled={!hideNonCoreModulesOnPublicProduction}
+                  moduleName="Results"
+                >
+                  <RouteErrorBoundary>
+                    <OkrProgramsPage />
+                  </RouteErrorBoundary>
+                </ProductionModuleGate>
+              </MainLayout>
+            </BetaGate>
+          }
+        />
+        <Route
+          path={ROUTES.RESULTS_OKR.CYCLES}
+          element={
+            <BetaGate moduleId="MODULE_BENEFITS">
+              <MainLayout
+                breadcrumbs={
+                  breadcrumbs || [t('sidebar.results', 'Results'), t('results.okr', 'OKR'), t('results.okrCycles', 'Cycles')]
+                }
+                noPadding
+              >
+                <ProductionModuleGate
+                  enabled={!hideNonCoreModulesOnPublicProduction}
+                  moduleName="Results"
+                >
+                  <RouteErrorBoundary>
+                    <OkrCyclesPage />
+                  </RouteErrorBoundary>
+                </ProductionModuleGate>
+              </MainLayout>
+            </BetaGate>
+          }
+        />
+        {/* RN-G5 scopegap task 1 (§G #30) — cross-cutting Attention view over
+            KPI + OKR manager attention read-models. D10: one view, not a
+            fourth registry — gated behind BOTH kpiRegistry AND okrRegistry
+            (ResultsAttentionPage.tsx header explains why, not a new flag). */}
+        <Route
+          path={ROUTES.RESULTS_ATTENTION}
+          element={
+            <BetaGate moduleId="MODULE_BENEFITS">
+              <MainLayout
+                breadcrumbs={breadcrumbs || [t('sidebar.results', 'Results'), t('results.attention', 'Attention')]}
+                noPadding
+              >
+                <ProductionModuleGate
+                  enabled={!hideNonCoreModulesOnPublicProduction}
+                  moduleName="Results"
+                >
+                  <RouteErrorBoundary>
+                    <ResultsAttentionPage />
                   </RouteErrorBoundary>
                 </ProductionModuleGate>
               </MainLayout>

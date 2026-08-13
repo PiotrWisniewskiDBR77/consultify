@@ -153,7 +153,7 @@ describe('virtualWorkerPreviewService', () => {
         workerIdOrSlug: 'anna',
         message: 'Test',
       })
-    ).rejects.toMatchObject<VirtualWorkerValidationError>({
+    ).rejects.toMatchObject({
       code: 'VW_PREVIEW_WORKER_NOT_READY',
     });
   });

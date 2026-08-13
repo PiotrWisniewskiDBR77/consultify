@@ -1,0 +1,123 @@
+{
+  "id": "baseline",
+  "url": "http://localhost:58023/?screen=finance-baseline-workspace&view=assumptions&scene=default",
+  "violations": [
+    {
+      "id": "landmark-one-main",
+      "impact": "moderate",
+      "description": "Ensure the document has a main landmark",
+      "help": "Document should have one main landmark",
+      "helpUrl": "https://dequeuniversity.com/rules/axe/4.13/landmark-one-main?application=axeAPI",
+      "nodeCount": 1,
+      "nodes": [
+        {
+          "target": [
+            "html"
+          ],
+          "html": "<html lang=\"pl\" dir=\"ltr\">",
+          "failureSummary": "Fix all of the following:\n  Document does not have a main landmark"
+        }
+      ]
+    },
+    {
+      "id": "page-has-heading-one",
+      "impact": "moderate",
+      "description": "Ensure that the page, or at least one of its frames contains a level-one heading",
+      "help": "Page should contain a level-one heading",
+      "helpUrl": "https://dequeuniversity.com/rules/axe/4.13/page-has-heading-one?application=axeAPI",
+      "nodeCount": 1,
+      "nodes": [
+        {
+          "target": [
+            "html"
+          ],
+          "html": "<html lang=\"pl\" dir=\"ltr\">",
+          "failureSummary": "Fix all of the following:\n  Page must have a level-one heading"
+        }
+      ]
+    },
+    {
+      "id": "region",
+      "impact": "moderate",
+      "description": "Ensure all page content is contained by landmarks",
+      "help": "All page content should be contained by landmarks",
+      "helpUrl": "https://dequeuniversity.com/rules/axe/4.13/region?application=axeAPI",
+      "nodeCount": 94,
+      "nodes": [
+        {
+          "target": [
+            ".h-10"
+          ],
+          "html": "<div class=\"flex h-10 items-center gap-4 border-b border-c-border-subtle bg-c-surface px-4 text-xs text-c-text-secondary\"><span class=\"font-semibold text-c-text\">Consultify</span><span>Finance</span><span class=\"text-c-text-muted\">(symulowane Menu 1 — nie część tego pakietu)</span></div>",
+          "failureSummary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        },
+        {
+          "target": [
+            ".rounded-full > .tabular-nums"
+          ],
+          "html": "<span class=\"tabular-nums\">v1</span>",
+          "failureSummary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        },
+        {
+          "target": [
+            ".rounded-full > span:nth-child(3)"
+          ],
+          "html": "<span>Wersja robocza</span>",
+          "failureSummary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        },
+        {
+          "target": [
+            ".p-1"
+          ],
+          "html": "<div class=\"hidden shrink-0 items-center gap-1 rounded-lg bg-c-surface-raised p-1 md:flex\" role=\"tablist\">",
+          "failureSummary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        },
+        {
+          "target": [
+            ".gap-2.flex.text-c-text-muted"
+          ],
+          "html": "<div class=\"flex items-center gap-2 text-xs text-c-text-muted\"><span data-testid=\"baseline-assumptions-dirty-count\">Brak niezapisanych zmian</span></div>",
+          "failureSummary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        },
+        {
+          "target": [
+            "thead"
+          ],
+          "html": "<thead class=\"sticky top-0 z-10 bg-c-surface-raised text-[11px] font-semibold uppercase tracking-wide text-c-text-muted\">",
+          "failureSummary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        },
+        {
+          "target": [
+            "tr[data-testid=\"baseline-assumption-row-0\"] > td:nth-child(1)"
+          ],
+          "html": "<td class=\"px-3 py-2\"><div class=\"font-medium text-c-text\">Wzrost przychodów r/r</div><div class=\"text-xs text-c-text-muted\">Przychody (cena/wolumen/mix)</div></td>",
+          "failureSummary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        },
+        {
+          "target": [
+            "tr[data-testid=\"baseline-assumption-row-0\"] > .tabular-nums.text-right.text-c-text"
+          ],
+          "html": "<td class=\"px-3 py-2 text-right tabular-nums text-c-text\">0,08</td>",
+          "failureSummary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        }
+      ]
+    }
+  ],
+  "incomplete": [
+    {
+      "id": "bypass",
+      "impact": "serious",
+      "description": "Ensure each page has at least one mechanism for a user to bypass navigation and jump straight to the content",
+      "nodeCount": 1,
+      "nodes": [
+        {
+          "target": [
+            "html"
+          ],
+          "html": "<html lang=\"pl\" dir=\"ltr\">",
+          "failureSummary": "Fix any of the following:\n  No valid skip link found\n  Page does not have a heading\n  Page does not have a landmark region"
+        }
+      ]
+    }
+  ]
+}

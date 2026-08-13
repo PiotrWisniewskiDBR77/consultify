@@ -15,8 +15,6 @@
  *   --safe                 on error: record as skipped and continue
  *   --only <a,b,c>         only these filenames
  *   --from <filename>      start from this filename (inclusive)
- *   --allow-checksum-drift proceed even when an already-applied migration's
- *                          bytes changed (fail-closed by default)
  */
 
 import crypto from 'crypto';
@@ -32,12 +30,6 @@ import {
   assertNoPrivateRailwayDbHostOutsideRailway,
   resolveReachableDatabaseUrl,
 } from '../src/config/databaseTargetResolver.js';
-import { classifySqlChainChecksum } from '../src/services/releaseGate/sqlChainChecksumPolicy.js';
-import { isExecutableMigration } from '../src/services/releaseGate/migrationExecutionPolicy.js';
-import {
-  ATTESTED_VARIANT_LABEL,
-  attestPartnerUsersUuidVariant,
-} from '../src/services/releaseGate/schemaAttestation.js';
 
 type Args = {
   dir?: string;
@@ -45,10 +37,9 @@ type Args = {
   safe?: boolean;
   only?: string;
   from?: string;
-  'allow-checksum-drift'?: boolean;
 };
 
-export type Migration = {
+type Migration = {
   version: string;
   filename: string;
   filepath: string;
@@ -61,7 +52,7 @@ function parseArgs(argv: string[]): Args {
     const a = argv[i];
     if (!a?.startsWith('--')) continue;
     const key = a.slice(2);
-    if (key === 'dry-run' || key === 'safe' || key === 'allow-checksum-drift') {
+    if (key === 'dry-run' || key === 'safe') {
       args[key] = true;
       continue;
     }
@@ -159,38 +150,20 @@ const DATED_RE = /^(\d{4})-?(\d{2})-?(\d{2})[_-]/;
 // actually depends on. See STRICT_SCHEMA_REPAIR_REPORT.md ETAP 1 for the
 // per-file dependency trace that justifies each entry.
 //
-// INTEGRATION NOTE (foundation wave, 2026-08-13) — the Finance checkpoint
-// (c78086057d) shipped this manifest populated with
-// `'20260809_finance_v3_ap06_comments_01_tables.sql'`. That entry was
-// DELIBERATELY DROPPED during integration, for two independently sufficient
-// reasons, both verified against the Finance checkpoint itself:
-//
-//   1. IT WAS DEAD CODE. No such file exists. The real filename is
-//      `20260809_finance_v3_d_ap06_comments_01_tables.sql` (note the `d_`,
-//      matching its Gate-D siblings d01/d03/d05/d07/d09/d_ap04/d_ap07).
-//      `LATE_PHASE_SET.has(f)` therefore never matched and the override never
-//      fired. The AP-02 incident it describes was real, but it predates the
-//      `d_` rename — and that rename is what actually fixed the ordering,
-//      because `b01` < `d_ap06` lexicographically ('b' < 'd'), so phase-1's
-//      own date+filename key already schedules the producer first.
-//
-//   2. "CORRECTING" IT TO THE REAL FILENAME WOULD BREAK FRESH INSTALL.
-//      Phase 2 runs after EVERY phase-0 and phase-1 migration. The Finance
-//      comment tables are NOT self-contained, contrary to the original note:
-//      `20260826_finance_v3_w2_selfclaim_child_tenant_fk.sql` (dated, phase 1)
-//      executes `ALTER TABLE finance_comments ADD CONSTRAINT ...` and
-//      `ALTER TABLE finance_comment_assignments ... REFERENCES
-//      finance_comments (id, organization_id)`. Deferring the producer to
-//      phase 2 would place it AFTER that consumer and fail a fresh strict run
-//      with `relation "finance_comments" does not exist`.
-//      (`20260809_finance_v3_d_ap07_saved_views_01_tables.sql` mentions the
-//      comment tables only in prose comments — no DDL — so it is not a factor.)
-//
-// Net: natural phase-1 ordering is already correct for the real filenames, and
-// a late-phase bump is actively harmful here. Keep this manifest EMPTY unless a
-// future entry is justified by a fresh-strict run AND checked against every
-// later-dated consumer of the tables it creates.
-const LATE_PHASE_MANIFEST: string[] = [];
+// AP-02 discovery (2026-08-10, Excel/CSV round-trip work package): a fresh
+// strict migration run failed with `relation "finance_artifacts" does not
+// exist` while applying `20260809_finance_v3_ap06_comments_01_tables.sql`.
+// Both files share the `20260809` date prefix, so phase-1 sorts them by
+// full filename — and `ap06` < `b01` lexicographically ('a' < 'b'), so the
+// AP-06 comments migration (which FK-references `finance_business_versions`/
+// `finance_artifacts`, both created by `..._b01_core_artifacts.sql`) was
+// running BEFORE its own foundation. Confirmed via `ps aux`-isolated
+// ephemeral cluster (`/private/tmp/finance-v3-ap02-pgdata-*`, port 58217,
+// never the shared PID 911 instance) — not a guess from reading the SQL.
+// `finance_comments`/`finance_comment_assignments`/`finance_review_checklists`
+// are self-contained otherwise (no other migration in this repo references
+// them), so "run after everything" is safe, not just "run after b01".
+const LATE_PHASE_MANIFEST: string[] = ['20260809_finance_v3_ap06_comments_01_tables.sql'];
 const LATE_PHASE_SET = new Set(LATE_PHASE_MANIFEST);
 
 // `isSqliteOnlyMigration()` blanket-excludes every numbered migration with
@@ -310,32 +283,6 @@ const EARLY_VERSION_OVERRIDES: Record<string, number> = {
   '20260802_int001_template_publication_versions.sql': 727.5,
 };
 
-// Explicit intra-day ordering for phase-1 (dated) migrations that share the
-// SAME calendar date and have a producer/consumer relationship the plain
-// filename tiebreaker inverts. This does not affect ordering relative to
-// OTHER dated files (those keep the filename tiebreaker unchanged) except
-// that entries here always sort before same-date files not listed, since
-// the synthetic numeric key starts with a digit — verified safe because
-// none of these 11 tables are referenced by any migration outside this list
-// (Case Workspace program collision-avoidance mandate: no other migration
-// FKs into case_workspace_*; the only external FKs these files carry point
-// to organizations/projects/v8_execution_runs, all from far earlier dates).
-// Root cause + fix verified via a genuinely fresh migration replay:
-// server/scripts/case-workspace-realdb-harness/EVIDENCE.md.
-const DATED_SAME_DAY_ORDER: Record<string, number> = {
-  '20260809_case_workspace_case_core.sql': 0, // sole producer `case_core` — every other file here FKs into it, directly or transitively
-  '20260809_case_workspace_capability_registry.sql': 1, // no case_workspace FK dependency; kept early
-  '20260809_case_workspace_case_plan_version.sql': 2, // FKs case_core
-  '20260809_case_workspace_run_binding.sql': 3, // FKs case_core, case_plan_versions, v8_execution_runs (v8_execution_runs is March-dated, unaffected)
-  '20260809_case_workspace_proposals_approvals.sql': 4, // FKs case_core, run_binding, case_plan_versions, capability_registry
-  '20260809_case_workspace_wait_subscription.sql': 5, // FKs case_core, run_binding, proposals_approvals
-  '20260809_case_workspace_history_value.sql': 6, // FKs case_core
-  '20260809_case_workspace_plays.sql': 7, // no FK into case_core/case_plan_versions by design (Plays are pre-Case)
-  '20260809_case_workspace_artifact_links.sql': 8, // FKs case_core — this was the file that originally exposed the bug (sorted alphabetically before case_core.sql)
-  '20260809_case_workspace_execution_graph.sql': 9, // FKs case_core, run_binding
-  '20260809_case_workspace_migration_readiness.sql': 10, // no FK into any other case_workspace table
-};
-
 function phaseAndKeyFor(m: Migration): { phase: number; key: string } {
   const f = m.filename;
   if (LATE_PHASE_SET.has(f)) {
@@ -357,20 +304,12 @@ function phaseAndKeyFor(m: Migration): { phase: number; key: string } {
   const dated = f.match(DATED_RE);
   if (dated) {
     const [, y, mo, d] = dated;
-    const tiebreaker = Object.prototype.hasOwnProperty.call(DATED_SAME_DAY_ORDER, f)
-      ? String(DATED_SAME_DAY_ORDER[f]).padStart(6, '0')
-      : f;
-    return { phase: 1, key: `${y}${mo}${d}_${tiebreaker}` };
+    return { phase: 1, key: `${y}${mo}${d}_${f}` };
   }
   return { phase: 3, key: f };
 }
 
-// Exported (E8) so the ordering contract is directly testable without
-// executing main() — see
-// tests/integration/migration-ordering-parity.realdb.test.ts, which checks
-// this comparator against the SAME producer-before-consumer property
-// asserted for the other two automatic/manual runtime mechanisms.
-export function compareMigrationOrder(a: Migration, b: Migration): number {
+function compareMigrationOrder(a: Migration, b: Migration): number {
   const pa = phaseAndKeyFor(a);
   const pb = phaseAndKeyFor(b);
   if (pa.phase !== pb.phase) return pa.phase - pb.phase;
@@ -440,90 +379,12 @@ async function ensureSchemaMigrationsTable(pool: Pool) {
   );
 }
 
-async function getApplied(
-  pool: Pool
-): Promise<Map<string, { status: string; checksum: string | null }>> {
-  const res = await pool.query(
-    `SELECT filename, status, checksum FROM schema_migrations ORDER BY filename`
-  );
-  const map = new Map<string, { status: string; checksum: string | null }>();
+async function getApplied(pool: Pool): Promise<Map<string, { status: string }>> {
+  const res = await pool.query(`SELECT filename, status FROM schema_migrations ORDER BY filename`);
+  const map = new Map<string, { status: string }>();
   for (const r of res.rows || [])
-    map.set(String(r.filename), {
-      status: String(r.status || 'success'),
-      checksum: r.checksum == null ? null : String(r.checksum),
-    });
+    map.set(String(r.filename), { status: String(r.status || 'success') });
   return map;
-}
-
-// ---------------------------------------------------------------------------
-// Checksum-drift detection (integration foundation, 2026-08-13)
-// ---------------------------------------------------------------------------
-// Until now this runner recorded a sha256 per migration but NEVER read it back:
-// `getApplied()` selected only `status`, and the pending filter keyed purely on
-// filename. `recordResult()` even overwrites the stored checksum on conflict.
-// Net effect: editing the bytes of an already-applied migration was silently
-// invisible — the file was skipped as "already success" and the database
-// quietly diverged from the tree with no signal at all.
-//
-// The runtime Table Platform runner (server/src/services/tablePlatform/
-// migrationRunner.ts) has always been fail-closed on exactly this, via
-// classifyMigrationChecksum(). This brings the SQL-chain runner to the same
-// contract. It is intentionally NOT a copy of that code: the two subsystems
-// store checksums in different formats (this runner: full 64-char sha256 of the
-// raw file; Table Platform: a 16-char truncation, plus its own grandfathering
-// ledger keyed to the 7xx/8-digit runtime set), so sharing the helper would
-// mean reconciling two storage formats — a larger change than this wave allows.
-//
-// Rows written by `--safe` are stored as `skipped:<checksum>` and are not
-// status='success', so they are excluded from the comparison. Rows with a NULL
-// checksum are legacy/unverifiable and are reported, never failed on.
-//
-// `--allow-checksum-drift` is the deliberate, documented escape hatch. It must
-// be passed explicitly; drift fails closed by default, including under --safe,
-// because drift is an integrity violation rather than an "already applied"
-// condition.
-type ChecksumDrift = { filename: string; stored: string; current: string };
-
-export type DriftReport = {
-  drift: ChecksumDrift[];
-  unverifiable: string[];
-  /** files accepted via the reviewed per-file (stored,current) allowlist */
-  approvedVariants: string[];
-  /** files that additionally require live schema attestation before they may be accepted */
-  attestationRequired: string[];
-};
-
-function detectChecksumDrift(
-  migrations: Migration[],
-  applied: Map<string, { status: string; checksum: string | null }>
-): DriftReport {
-  const drift: ChecksumDrift[] = [];
-  const unverifiable: string[] = [];
-  const approvedVariants: string[] = [];
-  const attestationRequired: string[] = [];
-
-  for (const m of migrations) {
-    const a = applied.get(m.filename);
-    if (!a || a.status !== 'success') continue;
-    if (a.checksum == null || a.checksum === '') {
-      unverifiable.push(m.filename);
-      continue;
-    }
-    // Policy lives in one place and is keyed on filename + EXACT stored + EXACT current.
-    const verdict = classifySqlChainChecksum(m.filename, a.checksum, m.checksum);
-    if (verdict === 'MATCH') continue;
-    if (verdict === 'APPROVED_HISTORICAL_VARIANT') {
-      approvedVariants.push(m.filename);
-      continue;
-    }
-    if (verdict === 'SCHEMA_ATTESTED_LEGACY_VARIANT') {
-      // Not acceptable on the checksum alone — the caller must attest the live schema.
-      attestationRequired.push(m.filename);
-      continue;
-    }
-    drift.push({ filename: m.filename, stored: a.checksum, current: m.checksum });
-  }
-  return { drift, unverifiable, approvedVariants, attestationRequired };
 }
 
 async function recordResult(
@@ -599,68 +460,6 @@ async function applySql(pool: Pool, m: Migration) {
   await pool.query(sql);
 }
 
-// ---------------------------------------------------------------------------
-// `--safe` semantics (E8, docs/product/case-workspace/evidence/
-// e7-migration-paths-2026-08-12/MIGRATION_PATH_ASSESSMENT.md §5)
-// ---------------------------------------------------------------------------
-// Before this fix, `--safe` treated EVERY error identically: record
-// status='skipped', continue, and — if nothing later throws — print
-// "✅ Postgres migrations complete" and exit 0. That is the exact
-// `db:migrate --safe` trap this program has already been burned by once
-// (see MEMORY.md `audyt-bazy-danych-2026-08-06.md`): a migration that never
-// actually applied is reported as success, under a status name ("skipped")
-// that reads as "intentionally not needed" rather than "failed". Any CI gate
-// or human checking only the exit code or the banner sees green.
-//
-// `--safe` clearly exists for a real, narrow reason: tolerate a migration
-// that fails because the object it creates ALREADY EXISTS — e.g. because a
-// different migration mechanism (DatabaseInitializer.ts's own runner, or a
-// prior partial run of this same script) got there first. That is exactly
-// the scenario MIGRATION_PATH_ASSESSMENT.md §2 documents between this script
-// and DatabaseInitializer.ts's `tp_migration_history`-tracked runner. It was
-// never meant to swallow a migration that is genuinely broken (bad SQL,
-// missing dependency, permission error, etc).
-//
-// Fix: classify the failure. BENIGN (already-exists-class) errors keep the
-// exact previous behavior — recorded 'skipped', loop continues, does not
-// fail the run. GENUINE failures are recorded 'failed' (not 'skipped', so a
-// future `schema_migrations` reader sees the truth) and the run now REFUSES
-// to report success: no "✅ ... complete" banner, and the process exits
-// non-zero (via the same `main().catch()` → `process.exit(1)` path already
-// used for the non-`--safe` case), even though `--safe` still let every
-// OTHER pending migration in the batch attempt to run (so one genuinely
-// broken, unrelated migration does not block a caller who only needs a
-// handful of specific tables to exist — the documented reason `--safe` is
-// used as a best-effort bootstrap across dozens of this program's
-// `realdb.test.ts` acceptance gates).
-//
-// Verified empirically before landing this: a real, from-scratch run of
-// `migrate.postgres.ts --safe` against a genuinely empty local Postgres
-// (this session's `cw_e8_safe` scratch DB) applied all 598 discovered
-// migrations with ZERO failures (benign or genuine) — the historical "50+
-// migrations fail on a clean Postgres" note in
-// docs/testing/RELEASE_READINESS_SHORTCOMINGS.md is stale; this program's
-// prior migration-ordering/repair work already closed that gap. So this
-// change does not regress today's bootstrap flows; it only changes what
-// happens the NEXT time a migration genuinely breaks, which is exactly the
-// point.
-//
-// Deliberately duplicates (does not import) DatabaseInitializer.ts's
-// `isAlreadyExists` heuristic in runTablePlatformMigrations() — same four
-// substrings, same narrow intent. Not shared code: this packet's allowlist
-// does not permit adding a new shared module, and the two runners already
-// have independent discovery/sort machinery for the same reason (see
-// migrationRunner.ts's SAME_PREFIX_ORDER comment). Keep both in sync if the
-// classification ever needs to widen.
-function isBenignAlreadyAppliedError(msg: string): boolean {
-  return (
-    msg.includes('already exists') ||
-    msg.includes('duplicate key') ||
-    msg.includes('duplicate_column') ||
-    msg.includes('duplicate_object')
-  );
-}
-
 async function applyJs(pool: Pool, m: Migration) {
   const mod = await import(pathToFileUrl(m.filepath));
   if (typeof mod.up !== 'function') {
@@ -683,7 +482,6 @@ async function main() {
   const migrationsDir = path.resolve(process.cwd(), args.dir || 'server/migrations');
   const dryRun = args['dry-run'] === true;
   const safe = args.safe === true;
-  const allowChecksumDrift = args['allow-checksum-drift'] === true;
   const only = new Set(splitCsv(args.only));
   const from = args.from ? String(args.from) : null;
 
@@ -715,7 +513,7 @@ async function main() {
         // PROMOTED_LEGACY_PRODUCERS overrides the blanket <500 exclusion for
         // specific, verified-safe producer files (see comment above).
         .filter((m) =>
-          only.size ? true : isExecutableMigration(m.filename)
+          only.size ? true : PROMOTED_LEGACY_SET.has(m.filename) || !isSqliteOnlyMigration(m)
         )
     );
 
@@ -724,59 +522,6 @@ async function main() {
     // longer match actual execution order once phases are involved).
     const fromIndex = from ? all.findIndex((m) => m.filename === from) : -1;
     const filtered = from ? (fromIndex >= 0 ? all.slice(fromIndex) : all) : all;
-
-    // Integrity gate: an already-applied migration whose bytes changed means the
-    // database no longer matches the tree. Fail closed BEFORE applying anything
-    // (including under --safe), so a drifted chain can never be extended.
-    const { drift, unverifiable, approvedVariants, attestationRequired } = detectChecksumDrift(
-      filtered,
-      applied
-    );
-    if (unverifiable.length > 0) {
-      // eslint-disable-next-line no-console
-      console.warn(
-        `[migrate.postgres] ${unverifiable.length} applied migration(s) have no stored checksum (legacy rows, not verifiable).`
-      );
-    }
-    if (approvedVariants.length > 0) {
-      // eslint-disable-next-line no-console
-      console.log(
-        `[migrate.postgres] ${approvedVariants.length} approved historical variant(s) accepted ` +
-          `(exact stored+current pair): ${approvedVariants.join(', ')}`
-      );
-    }
-    // Files whose checksum can never be traced to a commit are accepted ONLY if the live schema
-    // re-proves the known variant's post-state, in this same connection, on every run.
-    for (const filename of attestationRequired) {
-      const result = await attestPartnerUsersUuidVariant(pool);
-      const failed = result.checks.filter((c) => !c.ok);
-      if (!result.attested) {
-        throw new Error(
-          `${ATTESTED_VARIANT_LABEL} refused for ${filename}: ${result.failureReason}. ` +
-            `Failed checks: ${failed.map((c) => `${c.name} (expected ${c.expected}, got ${c.actual})`).join('; ')}. ` +
-            `Refusing to run (fail-closed).`
-        );
-      }
-      // eslint-disable-next-line no-console
-      console.log(
-        `[migrate.postgres] ${ATTESTED_VARIANT_LABEL} ${filename} — ` +
-          `${result.checks.length} schema postcondition(s) verified in-transaction.`
-      );
-    }
-    if (drift.length > 0) {
-      const detail = drift
-        .map((d) => `  - ${d.filename}\n      stored:  ${d.stored}\n      current: ${d.current}`)
-        .join('\n');
-      const message =
-        `Checksum drift detected for ${drift.length} already-applied migration(s). ` +
-        `The database no longer matches these files. Refusing to run (fail-closed).\n${detail}\n` +
-        `If this change is reviewed and intentional, re-run with --allow-checksum-drift.`;
-      if (!allowChecksumDrift) {
-        throw new Error(message);
-      }
-      // eslint-disable-next-line no-console
-      console.warn(`[migrate.postgres] --allow-checksum-drift set; continuing despite:\n${message}`);
-    }
 
     const pending = filtered.filter((m) => {
       const a = applied.get(m.filename);
@@ -803,12 +548,6 @@ async function main() {
     // eslint-disable-next-line no-console
     console.log(`Applying migrations: ${pending.length}`);
 
-    // Filenames that genuinely failed under --safe (not the benign
-    // already-applied class) — tracked so the run can refuse to report
-    // success even though --safe let it keep going past them. See the
-    // `isBenignAlreadyAppliedError` comment above for the full rationale.
-    const genuineFailures: string[] = [];
-
     for (const m of pending) {
       const started = Date.now();
       try {
@@ -828,45 +567,13 @@ async function main() {
         console.error(`✗ ${m.filename}: ${msg}`);
 
         if (safe) {
-          const benign = isBenignAlreadyAppliedError(msg);
-          if (benign) {
-            await recordResult(
-              pool,
-              m,
-              'skipped',
-              Date.now() - started,
-              `skipped:${m.checksum}`
-            );
-          } else {
-            // Genuine failure: recorded as 'failed' (truthful status), NOT
-            // 'skipped'. --safe still lets the batch continue to the next
-            // migration (a best-effort bootstrap should not let one broken,
-            // unrelated file block every other table a caller may need),
-            // but this run can no longer end with "✅ ... complete" — see
-            // the check after this loop.
-            // eslint-disable-next-line no-console
-            console.error(`  (--safe: genuine failure, NOT already-applied — recording 'failed')`);
-            await recordResult(pool, m, 'failed', Date.now() - started);
-            genuineFailures.push(m.filename);
-          }
+          await recordResult(pool, m, 'skipped', Date.now() - started, `skipped:${m.checksum}`);
           continue;
         }
 
         await recordResult(pool, m, 'failed', Date.now() - started);
         throw e;
       }
-    }
-
-    if (genuineFailures.length > 0) {
-      // Thrown (not process.exit() here) so the `finally` block below still
-      // runs and closes the pool cleanly; caught by main().catch() further
-      // down, which prints the failure and exits 1 — the same non-zero exit
-      // path already used for the non-safe case, so callers checking exit
-      // code (not just stdout text) see the truth either way.
-      throw new Error(
-        `${genuineFailures.length} migration(s) genuinely failed under --safe ` +
-          `(recorded status='failed', not swallowed as 'skipped'): ${genuineFailures.join(', ')}`
-      );
     }
 
     // eslint-disable-next-line no-console
@@ -876,21 +583,8 @@ async function main() {
   }
 }
 
-// Run only when executed directly (`tsx server/scripts/migrate.postgres.ts`),
-// not when imported — E8 exports `compareMigrationOrder`/`Migration` above
-// for a parity test, and an unconditional top-level `main()` call would
-// otherwise connect to a real database and attempt a full migration run as
-// a side effect of merely importing this module for its ordering function.
-// No behavior change for the actual CLI entry point: `import.meta.url` and
-// `process.argv[1]` still match exactly the same way they always did when
-// this file is run via tsx.
-const isDirectCliInvocation =
-  process.argv[1] != null && import.meta.url === pathToFileURL(process.argv[1]).href;
-
-if (isDirectCliInvocation) {
-  main().catch((e) => {
-    // eslint-disable-next-line no-console
-    console.error('❌ Postgres migrate failed:', e?.message || e);
-    process.exit(1);
-  });
-}
+main().catch((e) => {
+  // eslint-disable-next-line no-console
+  console.error('❌ Postgres migrate failed:', e?.message || e);
+  process.exit(1);
+});

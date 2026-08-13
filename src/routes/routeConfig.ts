@@ -123,6 +123,54 @@ export const ROUTES = {
   KPI_OKR: '/kpi-okr',
   BENEFITS: '/benefits',
   RESULTS: '/results',
+  // RN-G2 (2026-08-10) — Results Next registries. Nested objects mirror the
+  // ROUTES.DISCOVERY_TOOLS pattern. These are NEW exact-path routes that live
+  // alongside (not instead of) the legacy `RESULTS` route above — React
+  // Router matches exact paths, so `/results` and `/results/kpi` are
+  // different routes and do not collide. Master plan §11 routing contract
+  // (docs/product/results-vnext/01_RESULTS_MASTER_IMPLEMENTATION_PLAN.md).
+  // Already auth-protected + already resolve to the Results sidebar mirror
+  // via the `normalized.startsWith(ROUTES.RESULTS)` prefix check below —
+  // zero RouterSync changes required (verified, see RN_G2_UI_SCOPE.md §E).
+  RESULTS_KPI: {
+    ROOT: '/results/kpi',
+    SCORECARD: '/results/kpi/scorecards/:scorecardId',
+    // RN-G3 lane (2026-08-11) — full KPI tool, klasa L (D03) + Deviation
+    // Case subview (D05: subview of the tool, never a top-level registry —
+    // master plan §11's route list only names ROOT/SCORECARD; these two are
+    // additive, not a change to the frozen contract). React Router v6 ranks
+    // by specificity, so `/results/kpi/scorecards/:scorecardId` above still
+    // wins over `/results/kpi/:kpiId` for that literal path segment —
+    // verified against v6's route-ranking algorithm, not order-dependent.
+    TOOL: '/results/kpi/:kpiId',
+    DEVIATION_CASE: '/results/kpi/:kpiId/deviation-cases/:caseId',
+  },
+  RESULTS_ROI: {
+    ROOT: '/results/roi',
+    CASE: '/results/roi/cases/:roiCaseId',
+    // RN-G5 scopegap task 3 (§G #11) — organization PIR-outcomes perspective
+    // (`GET /api/vnext/results/roi/org/pir-outcomes`). Own top-level route
+    // (not a `ResultsRoiHub.tsx` tab) because that hub file is out of this
+    // package's edit allowlist — see RN_G5_SCOPEGAP_DESIGN.md §3 for the
+    // ready-to-paste diff that folds this into the hub as a third Menu 2 tab
+    // once that file is next touched by its owning workstream.
+    PIR_OUTCOMES: '/results/roi/pir-outcomes',
+  },
+  RESULTS_OKR: {
+    ROOT: '/results/okr',
+    SET: '/results/okr/sets/:okrSetId',
+    // RN-G3 lane `okr` full-tool task (2026-08-11) — Program/Cycle admin
+    // surfaces, OWN top-level routes per design §8.3 ("Program Settings and
+    // Cycle Management have their own governed admin routes/tools... not
+    // tabs belonging to a selected Set").
+    PROGRAMS: '/results/okr/programs',
+    CYCLES: '/results/okr/cycles',
+  },
+  // RN-G5 scopegap task 1 (§G #30) — cross-cutting "Attention" view over the
+  // KPI + OKR manager attention read-models. D10: ONE view, not a fourth
+  // registry namespace — a bare top-level route, not `RESULTS_ATTENTION.ROOT`
+  // nested-object shape the three real registries use.
+  RESULTS_ATTENTION: '/results/attention',
   CONCLUSIONS: '/conclusions',
   MCP_IRIS: '/mcp/iris',
   MCP_MARKETPLACE: '/mcp/marketplace',

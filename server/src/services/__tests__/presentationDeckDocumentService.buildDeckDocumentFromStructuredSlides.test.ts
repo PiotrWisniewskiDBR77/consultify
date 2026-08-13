@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   buildDeckDocumentFromStructuredSlides,
   normalizeDeckDocument,
-} from '../presentationDeckDocumentService';
+} from '../presentationDeckDocumentService.js';
 
 /**
  * MAT-007/009 — root-cause regression test.

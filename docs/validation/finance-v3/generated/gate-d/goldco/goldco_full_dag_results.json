@@ -1,0 +1,200 @@
+{
+  "meta": {
+    "orgId": "org-goldco-fulldag-53fe52e5-fd7d-4670-b953-64bab49e5d73",
+    "generatedAt": "2026-08-10T00:04:16.634Z",
+    "totalMs": 751
+  },
+  "businessVersionIds": {
+    "statement": {
+      "parentFY2023": "658a443a-3d4a-4c2f-8a0b-ba824627c9fd",
+      "parentFY2024Original": "f9a52636-e1c5-4a9b-bfb0-4b273f1325ce",
+      "parentFY2024Restated": "9f9f341f-b7d5-4fb4-ab82-5343ab12fa61",
+      "parentFY2025Annual": "fc220dbe-75b8-4c5a-9053-c2bba8daa736",
+      "groupFY2025Consolidated": "5b40a4af-79bf-461f-a338-fbacd7f3cfe4",
+      "baselineSource": "4d9cd6a8-7a21-4c43-9b15-a87d66b34312"
+    },
+    "analysis": "5efce4a0-9b7e-41c0-a953-1dba3d878ed1",
+    "baseline": "153fb4e1-5216-4df5-8e7c-6826fdd3505d",
+    "prediction": {
+      "base": "8c732e17-d504-42ce-a347-d2395b0b5898",
+      "efficiencyInitiative": "75ede533-7d06-4626-9a9b-52ff6928c4b1",
+      "downside": "35210710-ecb8-4523-b2cf-3b9770fca55a"
+    },
+    "valuation": {
+      "case": "6352ef0a-1be8-47c5-a0ac-86b8df017dc5",
+      "baselineVariant": "d86f7a94-0fee-403d-ad25-c6279cc187c3",
+      "downsideVariant": "b9c10897-70dd-4026-9b04-404fd7d7d183"
+    }
+  },
+  "keyResults": {
+    "restatementApproved": true,
+    "analysisKpiCount": 18,
+    "baselineDecemberCash": -6790388.458140919,
+    "baselineFundingGap": true,
+    "predictionConflictBlockedThenResolved": true,
+    "valuationBaselineEV": 238070438.17832354,
+    "valuationDownsideEV": 217489202.26712385,
+    "valuationCompsEV": 250424999.99999997,
+    "valuationExitMultipleTerminal": 267346800,
+    "sensitivityMonotonic": true,
+    "makerCheckerSelfApprovalRejected": true,
+    "makerCheckerDistinctApproverSucceeded": true,
+    "exportManifestReady": true,
+    "lineageReachesFullChain": true
+  },
+  "phaseTimings": [
+    {
+      "phase": "STATEMENT",
+      "ms": 410
+    },
+    {
+      "phase": "ANALYSIS",
+      "ms": 34
+    },
+    {
+      "phase": "BASELINE",
+      "ms": 99
+    },
+    {
+      "phase": "PREDICTION",
+      "ms": 165
+    },
+    {
+      "phase": "VALUATION_COMPUTE",
+      "ms": 33
+    },
+    {
+      "phase": "MAKER_CHECKER",
+      "ms": 7
+    },
+    {
+      "phase": "ADVISOR_AND_EXPORT",
+      "ms": 2
+    },
+    {
+      "phase": "LINEAGE_VERIFICATION",
+      "ms": 1
+    }
+  ],
+  "findings": [
+    {
+      "id": "IF-04",
+      "note": "Analysis (GROUP consolidated, PARENT+SUB) and Baseline (PARENT-only, P0 single-entity scope per WP-D06 section 5.1) are linked via ANALYSIS_TO_MODEL but describe DIFFERENT entity populations — real, not a bug, but worth a UI-level scope label on the lineage navigator so an analyst does not assume \"same numbers, just downstream\"."
+    }
+  ],
+  "log": [
+    "[periods] FY2023=a498dc17-da5c-42dd-8395-b7842f9983cc FY2024=77c26273-b4ad-4cde-bc09-43dd08952648 FY2025=286d4add-5f63-4bbb-b55a-c13e38eb187a FY2026=0c8f4640-c436-470a-be42-338d37be080b FY2027=c9ce4b12-abdb-4a9e-b295-c003bde4b59e FY2028=28b343bc-1807-4116-8d7e-dec01a67cbf5",
+    "[periods] 12 MONTH periods FY2025 (actuals), 12 MONTH periods FY2026 (forecast)",
+    "\n================ PHASE 1: STATEMENT ================",
+    "  [PARENT FY2023] reconciliation status=CLEAN residual=0 ready=true transitionOk=true",
+    "  [PARENT FY2023] approve ok=true",
+    "  [PARENT FY2024 ORIGINAL] reconciliation status=CLEAN residual=0 ready=true transitionOk=true",
+    "  [PARENT FY2024 ORIGINAL] approve ok=true",
+    "  [PARENT FY2024 RESTATED] reconciliation status=CLEAN residual=0 ready=true transitionOk=true",
+    "  [PARENT FY2024 RESTATED] approve ok=true",
+    "  [PARENT FY2024 RESTATED] reached APPROVED, business_version_id=9f9f341f-b7d5-4fb4-ab82-5343ab12fa61",
+    "  [PARENT FY2025 ANNUAL] reconciliation status=CLEAN residual=0 ready=true transitionOk=true",
+    "  [PARENT FY2025 ANNUAL] approve ok=true",
+    "  [SUB FY2023] reconciliation status=CLEAN residual=0 ready=true transitionOk=true",
+    "  [SUB FY2023] approve ok=true",
+    "  [SUB FY2024] reconciliation status=CLEAN residual=0 ready=true transitionOk=true",
+    "  [SUB FY2024] approve ok=true",
+    "  [SUB FY2025] reconciliation status=CLEAN residual=0 ready=true transitionOk=true",
+    "  [SUB FY2025] approve ok=true",
+    "  [GROUP FY2025 CONSOLIDATED] reconciliation status=WITHIN_TOLERANCE residual=-6640000 ready=true transitionOk=true",
+    "  [GROUP FY2025 CONSOLIDATED] approve ok=true",
+    "  [PARENT FY2025 BASELINE-SOURCE (monthly + Dec closing BS)] reconciliation status=CLEAN residual=0 ready=true transitionOk=true",
+    "  [PARENT FY2025 BASELINE-SOURCE (monthly + Dec closing BS)] approve ok=true",
+    "\n[PHASE 1 STATEMENT] complete. PARENT FY2025 annual bv=fc220dbe-75b8-4c5a-9053-c2bba8daa736, GROUP FY2025 consolidated bv=5b40a4af-79bf-461f-a338-fbacd7f3cfe4, baseline-source bv=4d9cd6a8-7a21-4c43-9b15-a87d66b34312",
+    "\n================ PHASE 2: ANALYSIS ================",
+    "[STATEMENT_TO_ANALYSIS] ok=true source=GROUP FY2025 consolidated (5b40a4af-79bf-461f-a338-fbacd7f3cfe4) -> analysis (5efce4a0-9b7e-41c0-a953-1dba3d878ed1)",
+    "[Analysis catalog] 18 ACTIVE P0 KPI rows found (18 expected, all UNIVERSAL tier — no separate MANUFACTURING tier exists in the P0 catalog, documented boundary, WP-D03 ADR section 91/375)",
+    "[Analysis] computed 18 KPI rows for GROUP FY2025 consolidated:",
+    "  CASH_CONVERSION_CYCLE: status=MISSING value=null qualityFlag=null",
+    "  CASH_RATIO: status=MISSING value=null qualityFlag=null",
+    "  CURRENT_RATIO: status=MISSING value=null qualityFlag=null",
+    "  DEBT_TO_EBITDA: status=MISSING value=null qualityFlag=null",
+    "  DEBT_TO_EQUITY: status=MISSING value=null qualityFlag=null",
+    "  DIO: status=MISSING value=null qualityFlag=null",
+    "  DPO: status=MISSING value=null qualityFlag=null",
+    "  DSO: status=MISSING value=null qualityFlag=null",
+    "  EBITDA_MARGIN_PCT: status=PRESENT_NONZERO value=0.1618048823477571 qualityFlag=null",
+    "  FCF_MARGIN: status=MISSING value=null qualityFlag=null",
+    "  GROSS_MARGIN_PCT: status=PRESENT_NONZERO value=0.35233982550453863 qualityFlag=null",
+    "  INTEREST_COVERAGE: status=PRESENT_NONZERO value=11.517355371900827 qualityFlag=null",
+    "  NET_MARGIN_PCT: status=PRESENT_NONZERO value=0.08966687230104874 qualityFlag=null",
+    "  OPERATING_CASH_FLOW_MARGIN: status=MISSING value=null qualityFlag=null",
+    "  QUICK_RATIO: status=MISSING value=null qualityFlag=null",
+    "  REVENUE_GROWTH_YOY: status=MISSING value=null qualityFlag=null",
+    "  ROA: status=MISSING value=null qualityFlag=null",
+    "  ROE: status=MISSING value=null qualityFlag=null",
+    "[Analysis] manufacturing-relevant subset (inventory/margin cycle): GROSS_MARGIN_PCT, EBITDA_MARGIN_PCT, DIO, DSO, DPO, CASH_CONVERSION_CYCLE",
+    "[Analysis] normalized-EBITDA comparability marker recorded via is_adjustment=true row on EBITDA_MARGIN_PCT (see adjustment_reason)",
+    "\n================ PHASE 3: BASELINE ================",
+    "[STATEMENT_TO_MODEL] ok=true source=baseline-source pack (4d9cd6a8-7a21-4c43-9b15-a87d66b34312) -> baseline (153fb4e1-5216-4df5-8e7c-6826fdd3505d)",
+    "[ANALYSIS_TO_MODEL] ok=true source=Analysis GROUP FY2025 (5efce4a0-9b7e-41c0-a953-1dba3d878ed1) -> baseline (153fb4e1-5216-4df5-8e7c-6826fdd3505d)",
+    "  [INTEGRATION FINDING IF-04] Analysis (GROUP consolidated, PARENT+SUB) and Baseline (PARENT-only, P0 single-entity scope per WP-D06 section 5.1) are linked via ANALYSIS_TO_MODEL but describe DIFFERENT entity populations — real, not a bug, but worth a UI-level scope label on the lineage navigator so an analyst does not assume \"same numbers, just downstream\".",
+    "[Baseline FY2026] 12 periods computed. December: cash=-6790388.458140919 netIncome=3247107.7907756357 qualityFlag=FUNDING_GAP",
+    "[Baseline FY2026] FUNDING_GAP confirmed on December — negative cash surfaced, never plugged, never blocked (DEC-FIN-002).",
+    "[Baseline FY2026 annual roll-up] EBIT=24462251.68 DEPRECIATION=7037748.32 CAPEX=9450000.00 WORKING_CAPITAL(closing)=45133803.19",
+    "[Baseline FY2027 continuation, +3%/yr off FY2026] EBIT=25196119.23 DEPRECIATION=7248880.77 CAPEX=9733500.00 WORKING_CAPITAL=46487817.28",
+    "[Baseline FY2028 continuation, +3%/yr off FY2026] EBIT=25952002.81 DEPRECIATION=7466347.19 CAPEX=10025505.00 WORKING_CAPITAL=47882451.80",
+    "\n================ PHASE 4: PREDICTION ================",
+    "[Prediction BASE] preflight ok=true findingsCount=0",
+    "[Prediction BASE] compute ok=true mode=STANDARD_BASE",
+    "[Prediction EFFICIENCY] preflight ok=true findingsCount=1 requiredResolutionsCount=1",
+    "  finding: kind=OVERLAP_DOUBLE_COUNTING period=719c4d3b-659f-4765-bd31-9b9d34ce7d75 sourceCount=2 layer1=0.5889010989010989 layer2=-232312.54 requiresResolution=true",
+    "[Prediction EFFICIENCY] compute BEFORE resolution: ok=false code=READINESS_GATE_FAILED",
+    "[Prediction EFFICIENCY] confirmed BLOCKED before resolution, as required.",
+    "[Prediction EFFICIENCY] compute AFTER resolution: ok=true mode=COMPUTED",
+    "  Jan-2026 COGS after resolution: 7210980 (combined effect of override + initiative, not double-counted)",
+    "[Prediction DOWNSIDE] preflight ok=true findingsCount=0",
+    "[Prediction DOWNSIDE] compute ok=true mode=COMPUTED",
+    "[Prediction DOWNSIDE FY2027 continuation, +2%/yr] EBIT=24040923.14 WORKING_CAPITAL=45547101.43",
+    "[Prediction DOWNSIDE FY2028 continuation, +2%/yr] EBIT=24521741.60 WORKING_CAPITAL=46458043.46",
+    "\n================ PHASE 5: VALUATION ================",
+    "[Valuation BASELINE] WACC=8.9258% terminalValue=272244344.28 EV=238070438.18 PLN",
+    "[Valuation DOWNSIDE] WACC=8.9258% terminalValue=246173407.87 EV=217489202.27 PLN",
+    "[Valuation] Downside EV < Baseline EV, as expected (217489202.27 < 238070438.18).",
+    "[Valuation BASELINE comps] avgEV/EBITDA multiple=7.95x on FY2026 EBITDA=31500000.00 -> comps EV=250425000.00 PLN",
+    "[Valuation BASELINE exit-multiple cross-check] 8x FY2028 EBITDA (33418350.00) = 267346800.00 PLN (cross-check only, terminal Gordon Growth remains primary)",
+    "[Valuation BASELINE recommendation] {\"status\":\"READY\",\"weightedEnterpriseValue\":238070438.17832354,\"contributions\":[{\"methodType\":\"DCF_FCFF\",\"weightPct\":100,\"resultEvDecimal\":238070438.17832354,\"contribution\":238070438.17832354}]}",
+    "[Valuation BASELINE sensitivity] 25 cells built, monotonicity violation: none",
+    "[Valuation BASELINE EV->Equity bridge] EV=238070438.18 -> Equity=203424438.18 PLN",
+    "[Advisor] pre-approval finance_compute_snapshots row created via artifactVersionService.createComputeSnapshot() (IF-19 fix): 147bcd7e-2285-4a74-8596-21a910f9b7f6 (reused=false)",
+    "[Advisor] 4 outputs written pre-approval (FACT/RISK/HYPOTHESIS/QUESTION), compute_snapshot_id=147bcd7e-2285-4a74-8596-21a910f9b7f6",
+    "[Advisor] pre-approval frozen state: 0/4 frozen (expected 0/4 — not yet approved)",
+    "\n--- Maker-checker (Valuation Case, HIGH_RISK tier) ---",
+    "[Maker-checker] SELF-approval attempt by preparer: ok=false code=SELF_APPROVAL_FORBIDDEN",
+    "[Maker-checker] self-approval correctly REJECTED.",
+    "[Maker-checker] reviewer-as-approver attempt: ok=false code=SELF_APPROVAL_FORBIDDEN",
+    "[Maker-checker] reviewer-as-approver correctly REJECTED (HIGH_RISK tier).",
+    "[Maker-checker] distinct approver (financeAdmin, != preparer, != reviewer): ok=true status=APPROVED",
+    "[Advisor] freeze check AFTER APPROVED business version: 4/4 rows have is_frozen=true",
+    "[Advisor] freeze-on-approval trigger CONFIRMED working with real data: all 4 rows frozen, frozen_at set.",
+    "[Advisor] post-approval new-write rejected as expected: true",
+    "\n--- Export manifest (WP-B06) ---",
+    "[Export manifest] id=fd2dd473-b8b1-465a-b58a-57af116bce97 status=READY primary_business_version_id=d86f7a94-0fee-403d-ad25-c6279cc187c3 (APPROVED source required and enforced live)",
+    "\n================ PHASE 6: LINEAGE VERIFICATION ================",
+    "[Lineage] getAncestors(baselineVariant=d86f7a94-0fee-403d-ad25-c6279cc187c3) returned 4 edges:",
+    "  HISTORICAL_ANALYSIS(5efce4a0) -[ANALYSIS_TO_MODEL]-> BASELINE_MODEL(153fb4e1)",
+    "  BASELINE_MODEL(153fb4e1) -[MODEL_TO_VALUATION]-> VALUATION_CASE(d86f7a94)",
+    "  STATEMENT_PACK(5b40a4af) -[STATEMENT_TO_ANALYSIS]-> HISTORICAL_ANALYSIS(5efce4a0)",
+    "  STATEMENT_PACK(4d9cd6a8) -[STATEMENT_TO_MODEL]-> BASELINE_MODEL(153fb4e1)",
+    "[Lineage] chain reaches original Statement Pack Version (baseline-source): true",
+    "[Lineage] chain reaches Analysis: true",
+    "[Lineage] chain reaches Baseline Model: true",
+    "[Lineage] CONFIRMED: the full DAG (Valuation -> Prediction/Baseline -> Analysis + Statement) is ONE queryable structure via finance_lineage_edges, not five separate islands.",
+    "[Lineage] downside variant ancestors: reachesPrediction=true reachesBaseline=true reachesStatement=true (5 edges total)",
+    "\n================ TIMING ================",
+    "  STATEMENT: 0.4s",
+    "  ANALYSIS: 0.0s",
+    "  BASELINE: 0.1s",
+    "  PREDICTION: 0.2s",
+    "  VALUATION_COMPUTE: 0.0s",
+    "  MAKER_CHECKER: 0.0s",
+    "  ADVISOR_AND_EXPORT: 0.0s",
+    "  LINEAGE_VERIFICATION: 0.0s",
+    "  TOTAL end-to-end (Statement -> Valuation, this script's own wall-clock): 0.8s"
+  ]
+}

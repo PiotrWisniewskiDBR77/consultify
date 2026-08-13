@@ -412,7 +412,13 @@ export const StandardPreview: React.FC<StandardPreviewProps> = ({
                   ? 'text-[var(--c-info)] bg-state-selected'
                   : 'text-c-text-muted hover:bg-state-hover'
               }`}
-              title={pinned ? 'Unpin' : 'Pin for comparison'}
+              // R09-2a (2026-08-10, defekt P2a): było na sztywno po angielsku
+              // niezależnie od języka konta — ten sam mechanizm co `common.retry`.
+              title={
+                pinned
+                  ? t('common.unpin', isPolish ? 'Odepnij' : 'Unpin')
+                  : t('common.pinForComparison', isPolish ? 'Przypnij do porównania' : 'Pin for comparison')
+              }
             >
               {pinned ? <PinOff size={13} /> : <Pin size={13} />}
             </button>
@@ -468,6 +474,24 @@ export const StandardPreview: React.FC<StandardPreviewProps> = ({
               {details.properties?.length ? (
                 <ArtifactPropertiesTable
                   rows={details.properties}
+                  // R09-2a correction (2026-08-10, per coordinator): reverted
+                  // to the original literal default. `ArtifactPropertiesTable`
+                  // itself has no hardcoded strings — it requires pre-
+                  // translated labels from the caller, and `propertyLabel`/
+                  // `valueLabel` ALREADY EXIST as `StandardPreviewDetails`
+                  // props (see the interface above) for exactly this. The
+                  // real defect is that no RN-G2 screen passes them yet — a
+                  // caller-side gap, not a missing mechanism here. Changing
+                  // THIS default would silently reshape every one of
+                  // StandardPreview's 100+ consumers at once; the correct,
+                  // minimal fix is each caller passing its own translated
+                  // `details.propertyLabel`/`valueLabel` (see
+                  // `ResultsVNextLegacyArchivePanel` for the pattern) — NOT a
+                  // change here. Flagged in the acceptance report as
+                  // follow-up work for the screens that don't yet do this
+                  // (`roiRegistryPresenters.tsx`, `ResultsKpiRegistryPage.tsx`,
+                  // `okrRegistryPresenters.tsx`, `kpiScorecardPresenters.tsx`)
+                  // — out of this package's scope, owned by other lanes.
                   propertyLabel={details.propertyLabel ?? 'Property'}
                   valueLabel={details.valueLabel ?? 'Value'}
                 />

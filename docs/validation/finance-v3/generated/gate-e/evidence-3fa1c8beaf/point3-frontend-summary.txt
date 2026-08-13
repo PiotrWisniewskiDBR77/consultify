@@ -1,0 +1,47 @@
+=== p3_batch_aa (18 files) ===
+ Test Files  18 passed (18)
+      Tests  173 passed (173)
+EXIT[p3_batch_aa]=0
+=== p3_batch_ab (18 files) ===
+ Test Files  18 passed (18)
+      Tests  183 passed (183)
+EXIT[p3_batch_ab]=0
+=== p3_batch_ac (18 files) ===
+ Test Files  18 passed (18)
+      Tests  90 passed (90)
+EXIT[p3_batch_ac]=0
+=== p3_batch_ad (18 files) ===
+ Test Files  18 passed (18)
+      Tests  119 passed (119)
+EXIT[p3_batch_ad]=0
+=== p3_batch_ae (18 files) ===
+ Test Files  18 passed (18)
+      Tests  157 passed (157)
+EXIT[p3_batch_ae]=0
+=== p3_batch_af (18 files) ===
+ FAIL  tests/unit/finance/financeFallbackGating.test.ts > beta gating — MODULE_ECONOMICS (Finance) is GA / open (M16 per D-A GA-set) > MODULE_ECONOMICS is registered as an open beta (badge only, not locked)
+ FAIL  tests/unit/finance/financeFallbackGating.test.ts > beta gating — MODULE_ECONOMICS (Finance) is GA / open (M16 per D-A GA-set) > MODULE_ECONOMICS is registered as an open beta (badge only, not locked)
+ FAIL  tests/unit/finance/financeFallbackGating.test.ts > lockClosedBetaModules — decorates Meeting menu item with the locked plate > locks MODULE_MEETING for a regular USER with BETA_LOCKED code + message
+ FAIL  tests/unit/finance/financeFallbackGating.test.ts > lockClosedBetaModules — decorates Meeting menu item with the locked plate > locks MODULE_MEETING for a regular USER with BETA_LOCKED code + message
+ Test Files  1 failed | 17 passed (18)
+      Tests  2 failed | 259 passed (261)
+EXIT[p3_batch_af]=1
+=== p3_batch_ag (18 files) ===
+ Test Files  18 passed (18)
+      Tests  233 passed (233)
+EXIT[p3_batch_ag]=0
+=== p3_batch_ah (18 files) ===
+ Test Files  18 passed (18)
+      Tests  190 passed (190)
+EXIT[p3_batch_ah]=0
+=== p3_batch_ai (11 files) ===
+ FAIL  tests/unit/results/resultsFinanceReconciliationService.postmortem.test.ts > resultsFinanceReconciliationService — O4.7 post-mortem wiring > real off-plan gap, no market-shift feed → postMortem.verdict = undetermined (not a guessed execution failure)
+ FAIL  tests/unit/results/resultsFinanceReconciliationService.postmortem.test.ts > resultsFinanceReconciliationService — O4.7 post-mortem wiring > real off-plan gap, no market-shift feed → postMortem.verdict = undetermined (not a guessed execution failure)
+ FAIL  tests/unit/results/resultsFinanceReconciliationService.postmortem.test.ts > resultsFinanceReconciliationService — O4.7 post-mortem wiring > within ±5% of plan → postMortem.verdict = on-plan (not undetermined)
+ FAIL  tests/unit/results/resultsFinanceReconciliationService.postmortem.test.ts > resultsFinanceReconciliationService — O4.7 post-mortem wiring > within ±5% of plan → postMortem.verdict = on-plan (not undetermined)
+ FAIL  tests/unit/results/resultsFinanceReconciliationService.postmortem.test.ts > resultsFinanceReconciliationService — O4.7 post-mortem wiring > persists postMortem as a sibling key inside conclusion_json (additive, no migration)
+ FAIL  tests/unit/results/resultsFinanceReconciliationService.postmortem.test.ts > resultsFinanceReconciliationService — O4.7 post-mortem wiring > persists postMortem as a sibling key inside conclusion_json (additive, no migration)
+ Test Files  1 failed | 10 passed (11)
+      Tests  3 failed | 160 passed (163)
+EXIT[p3_batch_ai]=1
+TOTAL_DURATION=94s

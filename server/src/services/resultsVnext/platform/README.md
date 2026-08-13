@@ -1,0 +1,1 @@
+Implementacja RN-G1 Platform Foundation wg `docs/product/results-vnext/RN_G1_PLATFORM_DESIGN.md`. Status: schema landed, TS scaffolding started, business logic NOT_IMPLEMENTED — patrz EXECUTION_LEDGER.md.

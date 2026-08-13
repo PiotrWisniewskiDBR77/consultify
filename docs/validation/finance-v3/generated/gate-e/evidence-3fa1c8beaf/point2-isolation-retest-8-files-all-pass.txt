@@ -1,0 +1,981 @@
+=== src/routes/v8/finance-v2/__tests__/baseline.routes.pg.test.ts (db=gate_final_iso_1) ===
+
+ RUN  v4.1.8 /Users/piotrwisniewski/consultify-wt/fv3-product/server
+
+stdout | src/routes/v8/finance-v2/__tests__/baseline.routes.pg.test.ts > Finance v2 Pakiet B2 — baseline (real HTTP + real PostgreSQL)
+2026-08-12 23:31:52:3152 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-08-12 23:31:52:3152 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-08-12 23:31:52:3152 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-08-12 23:31:52:3152 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-08-12 23:31:52:3152 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | src/routes/v8/finance-v2/__tests__/baseline.routes.pg.test.ts > Finance v2 Pakiet B2 — baseline (real HTTP + real PostgreSQL)
+2026-08-12 23:31:54:3154 [32minfo[39m: [32m[Postgres] Initializing connection pool...[39m
+2026-08-12 23:31:54:3154 [32minfo[39m: [32m[DB Config] DATABASE_URL: SET[39m
+2026-08-12 23:31:54:3154 [32minfo[39m: [32m[DB Config] DB_TYPE: postgres[39m
+2026-08-12 23:31:54:3154 [32minfo[39m: [32m[DB Config] Using PostgreSQL[39m
+2026-08-12 23:31:54:3154 [32minfo[39m: [32m[Postgres] Config:[39m {"host":"127.0.0.1","database":"gate_final_iso_1","max":10}
+2026-08-12 23:31:54:3154 [32minfo[39m: [32m[Postgres] Checking/Initializing Schema...[39m
+2026-08-12 23:31:54:3154 [32minfo[39m: [32m[Postgres] Testing connection (attempt 1/3)...[39m
+
+stdout | src/routes/v8/finance-v2/__tests__/baseline.routes.pg.test.ts > Finance v2 Pakiet B2 — baseline (real HTTP + real PostgreSQL)
+2026-08-12 23:31:54:3154 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | src/routes/v8/finance-v2/__tests__/baseline.routes.pg.test.ts > Finance v2 Pakiet B2 — baseline (real HTTP + real PostgreSQL)
+2026-08-12 23:31:54:3154 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | src/routes/v8/finance-v2/__tests__/baseline.routes.pg.test.ts > Finance v2 Pakiet B2 — baseline (real HTTP + real PostgreSQL)
+2026-08-12 23:31:54:3154 [32minfo[39m: [32m[Postgres] Connection test successful (PostgreSQL verified):[39m {"current_time":"2026-08-12T21:31:54.567Z"}
+
+ ✓ src/routes/v8/finance-v2/__tests__/baseline.routes.pg.test.ts > Finance v2 Pakiet B2 — baseline (real HTTP + real PostgreSQL) > POST /baseline/:id/assumptions batch-writes; GET reads back with the full value contract; a second POST upserts (not duplicates) 134ms
+ ✓ src/routes/v8/finance-v2/__tests__/baseline.routes.pg.test.ts > Finance v2 Pakiet B2 — baseline (real HTTP + real PostgreSQL) > POST /baseline/:id/assumptions with an invalid scheduleType -> 400 INVALID_BODY, no row written 16ms
+ ✓ src/routes/v8/finance-v2/__tests__/baseline.routes.pg.test.ts > Finance v2 Pakiet B2 — baseline (real HTTP + real PostgreSQL) > POST /baseline/:id/compute on a fresh Baseline Model with no STATEMENT_TO_MODEL lineage edge -> 404 NO_SOURCE_STATEMENT_PACK_EDGE (the real first gate `loadContext` checks, before even looking for a finance_baseline_models row) 15ms
+ ✓ src/routes/v8/finance-v2/__tests__/baseline.routes.pg.test.ts > Finance v2 Pakiet B2 — baseline (real HTTP + real PostgreSQL) > GET /baseline/:id/outputs reads a directly-seeded finance_baseline_outputs row with the full value contract 35ms
+stdout | src/routes/v8/finance-v2/__tests__/baseline.routes.pg.test.ts > Finance v2 Pakiet B2 — baseline (real HTTP + real PostgreSQL) > POST /baseline/:id/compute — real happy path (GoldCo fixture, real circularity solve) > converges to a real EV/output row set — {jobId, jobStatus, periodsComputed:12, monthlyResults}; SQL confirms 372 finance_baseline_outputs rows and finance_business_versions state
+2026-08-12 23:31:55:3155 [37mdebug[39m: [37m[Postgres] subscription_plans normalize legacy nulls: column "is_active" does not exist[39m
+
+stdout | src/routes/v8/finance-v2/__tests__/baseline.routes.pg.test.ts > Finance v2 Pakiet B2 — baseline (real HTTP + real PostgreSQL) > POST /baseline/:id/compute — real happy path (GoldCo fixture, real circularity solve) > converges to a real EV/output row set — {jobId, jobStatus, periodsComputed:12, monthlyResults}; SQL confirms 372 finance_baseline_outputs rows and finance_business_versions state
+2026-08-12 23:31:55:3155 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | src/routes/v8/finance-v2/__tests__/baseline.routes.pg.test.ts > Finance v2 Pakiet B2 — baseline (real HTTP + real PostgreSQL) > POST /baseline/:id/compute — real happy path (GoldCo fixture, real circularity solve) > converges to a real EV/output row set — {jobId, jobStatus, periodsComputed:12, monthlyResults}; SQL confirms 372 finance_baseline_outputs rows and finance_business_versions state
+2026-08-12 23:31:55:3155 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | src/routes/v8/finance-v2/__tests__/baseline.routes.pg.test.ts > Finance v2 Pakiet B2 — baseline (real HTTP + real PostgreSQL) > POST /baseline/:id/compute — real happy path (GoldCo fixture, real circularity solve) > converges to a real EV/output row set — {jobId, jobStatus, periodsComputed:12, monthlyResults}; SQL confirms 372 finance_baseline_outputs rows and finance_business_versions state
+2026-08-12 23:31:55:3155 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | src/routes/v8/finance-v2/__tests__/baseline.routes.pg.test.ts > Finance v2 Pakiet B2 — baseline (real HTTP + real PostgreSQL) > POST /baseline/:id/compute — real happy path (GoldCo fixture, real circularity solve) > converges to a real EV/output row set — {jobId, jobStatus, periodsComputed:12, monthlyResults}; SQL confirms 372 finance_baseline_outputs rows and finance_business_versions state
+2026-08-12 23:31:55:3155 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | src/routes/v8/finance-v2/__tests__/baseline.routes.pg.test.ts > Finance v2 Pakiet B2 — baseline (real HTTP + real PostgreSQL) > POST /baseline/:id/compute — real happy path (GoldCo fixture, real circularity solve) > converges to a real EV/output row set — {jobId, jobStatus, periodsComputed:12, monthlyResults}; SQL confirms 372 finance_baseline_outputs rows and finance_business_versions state
+2026-08-12 23:31:55:3155 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | src/routes/v8/finance-v2/__tests__/baseline.routes.pg.test.ts > Finance v2 Pakiet B2 — baseline (real HTTP + real PostgreSQL) > POST /baseline/:id/compute — real happy path (GoldCo fixture, real circularity solve) > converges to a real EV/output row set — {jobId, jobStatus, periodsComputed:12, monthlyResults}; SQL confirms 372 finance_baseline_outputs rows and finance_business_versions state
+2026-08-12 23:31:55:3155 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | src/routes/v8/finance-v2/__tests__/baseline.routes.pg.test.ts > Finance v2 Pakiet B2 — baseline (real HTTP + real PostgreSQL) > POST /baseline/:id/compute — real happy path (GoldCo fixture, real circularity solve) > converges to a real EV/output row set — {jobId, jobStatus, periodsComputed:12, monthlyResults}; SQL confirms 372 finance_baseline_outputs rows and finance_business_versions state
+2026-08-12 23:31:55:3155 [32minfo[39m: [32m[Postgres] Verifying/Creating Indexes...[39m
+
+stdout | src/routes/v8/finance-v2/__tests__/baseline.routes.pg.test.ts > Finance v2 Pakiet B2 — baseline (real HTTP + real PostgreSQL) > POST /baseline/:id/compute — real happy path (GoldCo fixture, real circularity solve) > converges to a real EV/output row set — {jobId, jobStatus, periodsComputed:12, monthlyResults}; SQL confirms 372 finance_baseline_outputs rows and finance_business_versions state
+2026-08-12 23:31:55:3155 [37mdebug[39m: [37m[Postgres] Skipping created_by index on webhooks: column "created_by" does not exist[39m
+
+stdout | src/routes/v8/finance-v2/__tests__/baseline.routes.pg.test.ts > Finance v2 Pakiet B2 — baseline (real HTTP + real PostgreSQL) > POST /baseline/:id/compute — real happy path (GoldCo fixture, real circularity solve) > converges to a real EV/output row set — {jobId, jobStatus, periodsComputed:12, monthlyResults}; SQL confirms 372 finance_baseline_outputs rows and finance_business_versions state
+2026-08-12 23:31:55:3155 [32minfo[39m: [32m[Postgres] Schema Check Complete.[39m
+
+stdout | src/routes/v8/finance-v2/__tests__/baseline.routes.pg.test.ts > Finance v2 Pakiet B2 — baseline (real HTTP + real PostgreSQL) > POST /baseline/:id/compute — real happy path (GoldCo fixture, real circularity solve) > converges to a real EV/output row set — {jobId, jobStatus, periodsComputed:12, monthlyResults}; SQL confirms 372 finance_baseline_outputs rows and finance_business_versions state
+2026-08-12 23:31:55:3155 [32minfo[39m: [32m[Postgres] Verified table exists: organizations[39m
+
+stdout | src/routes/v8/finance-v2/__tests__/baseline.routes.pg.test.ts > Finance v2 Pakiet B2 — baseline (real HTTP + real PostgreSQL) > POST /baseline/:id/compute — real happy path (GoldCo fixture, real circularity solve) > converges to a real EV/output row set — {jobId, jobStatus, periodsComputed:12, monthlyResults}; SQL confirms 372 finance_baseline_outputs rows and finance_business_versions state
+2026-08-12 23:31:55:3155 [32minfo[39m: [32m[Postgres] Verified table exists: users[39m
+
+stdout | src/routes/v8/finance-v2/__tests__/baseline.routes.pg.test.ts > Finance v2 Pakiet B2 — baseline (real HTTP + real PostgreSQL) > POST /baseline/:id/compute — real happy path (GoldCo fixture, real circularity solve) > converges to a real EV/output row set — {jobId, jobStatus, periodsComputed:12, monthlyResults}; SQL confirms 372 finance_baseline_outputs rows and finance_business_versions state
+2026-08-12 23:31:55:3155 [32minfo[39m: [32m[Postgres] Verified table exists: sessions[39m
+
+stdout | src/routes/v8/finance-v2/__tests__/baseline.routes.pg.test.ts > Finance v2 Pakiet B2 — baseline (real HTTP + real PostgreSQL) > POST /baseline/:id/compute — real happy path (GoldCo fixture, real circularity solve) > converges to a real EV/output row set — {jobId, jobStatus, periodsComputed:12, monthlyResults}; SQL confirms 372 finance_baseline_outputs rows and finance_business_versions state
+2026-08-12 23:31:55:3155 [32minfo[39m: [32m[Postgres] Verified table exists: projects[39m
+
+stdout | src/routes/v8/finance-v2/__tests__/baseline.routes.pg.test.ts > Finance v2 Pakiet B2 — baseline (real HTTP + real PostgreSQL) > POST /baseline/:id/compute — real happy path (GoldCo fixture, real circularity solve) > converges to a real EV/output row set — {jobId, jobStatus, periodsComputed:12, monthlyResults}; SQL confirms 372 finance_baseline_outputs rows and finance_business_versions state
+2026-08-12 23:31:55:3155 [32minfo[39m: [32m[Postgres] Verified table exists: tasks[39m
+
+stdout | src/routes/v8/finance-v2/__tests__/baseline.routes.pg.test.ts > Finance v2 Pakiet B2 — baseline (real HTTP + real PostgreSQL) > POST /baseline/:id/compute — real happy path (GoldCo fixture, real circularity solve) > converges to a real EV/output row set — {jobId, jobStatus, periodsComputed:12, monthlyResults}; SQL confirms 372 finance_baseline_outputs rows and finance_business_versions state
+2026-08-12 23:31:55:3155 [32minfo[39m: [32m[Postgres] Verified table exists: teams[39m
+
+stdout | src/routes/v8/finance-v2/__tests__/baseline.routes.pg.test.ts > Finance v2 Pakiet B2 — baseline (real HTTP + real PostgreSQL) > POST /baseline/:id/compute — real happy path (GoldCo fixture, real circularity solve) > converges to a real EV/output row set — {jobId, jobStatus, periodsComputed:12, monthlyResults}; SQL confirms 372 finance_baseline_outputs rows and finance_business_versions state
+2026-08-12 23:31:55:3155 [32minfo[39m: [32m[Postgres] Verified table exists: invitations[39m
+
+stdout | src/routes/v8/finance-v2/__tests__/baseline.routes.pg.test.ts > Finance v2 Pakiet B2 — baseline (real HTTP + real PostgreSQL) > POST /baseline/:id/compute — real happy path (GoldCo fixture, real circularity solve) > converges to a real EV/output row set — {jobId, jobStatus, periodsComputed:12, monthlyResults}; SQL confirms 372 finance_baseline_outputs rows and finance_business_versions state
+2026-08-12 23:31:55:3155 [32minfo[39m: [32m[Postgres] Verified table exists: notifications[39m
+
+stdout | src/routes/v8/finance-v2/__tests__/baseline.routes.pg.test.ts > Finance v2 Pakiet B2 — baseline (real HTTP + real PostgreSQL) > POST /baseline/:id/compute — real happy path (GoldCo fixture, real circularity solve) > converges to a real EV/output row set — {jobId, jobStatus, periodsComputed:12, monthlyResults}; SQL confirms 372 finance_baseline_outputs rows and finance_business_versions state
+2026-08-12 23:31:55:3155 [32minfo[39m: [32m[Postgres] Verified table exists: settings[39m
+
+stdout | src/routes/v8/finance-v2/__tests__/baseline.routes.pg.test.ts > Finance v2 Pakiet B2 — baseline (real HTTP + real PostgreSQL) > POST /baseline/:id/compute — real happy path (GoldCo fixture, real circularity solve) > converges to a real EV/output row set — {jobId, jobStatus, periodsComputed:12, monthlyResults}; SQL confirms 372 finance_baseline_outputs rows and finance_business_versions state
+2026-08-12 23:31:55:3155 [32minfo[39m: [32m[Postgres] Schema initialization completed successfully[39m
+
+ ✓ src/routes/v8/finance-v2/__tests__/baseline.routes.pg.test.ts > Finance v2 Pakiet B2 — baseline (real HTTP + real PostgreSQL) > POST /baseline/:id/compute — real happy path (GoldCo fixture, real circularity solve) > converges to a real EV/output row set — {jobId, jobStatus, periodsComputed:12, monthlyResults}; SQL confirms 372 finance_baseline_outputs rows and finance_business_versions state 1137ms
+ ✓ src/routes/v8/finance-v2/__tests__/baseline.routes.pg.test.ts > Finance v2 Pakiet B2 — baseline (real HTTP + real PostgreSQL) > POST /baseline/:id/compute — real happy path (GoldCo fixture, real circularity solve) > CROSS-TENANT: org B computing org A's real Baseline Model business_version_id -> 404, zero finance_baseline_outputs rows for org B 6ms
+
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+   Start at  23:31:51
+   Duration  4.63s (transform 1.56s, setup 0ms, import 249ms, tests 3.91s, environment 0ms)
+
+EXIT[src/routes/v8/finance-v2/__tests__/baseline.routes.pg.test.ts]=0
+=== src/services/finance/canonical/__tests__/coldReopen.pg.test.ts (db=gate_final_iso_2) ===
+
+ RUN  v4.1.8 /Users/piotrwisniewski/consultify-wt/fv3-product/server
+
+stdout | src/services/finance/canonical/__tests__/coldReopen.pg.test.ts > Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4
+2026-08-12 23:32:04:324 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-08-12 23:32:04:324 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-08-12 23:32:04:324 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-08-12 23:32:04:324 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-08-12 23:32:04:324 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | src/services/finance/canonical/__tests__/coldReopen.pg.test.ts > Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4
+2026-08-12 23:32:05:325 [32minfo[39m: [32m[Postgres] Initializing connection pool...[39m
+2026-08-12 23:32:05:325 [32minfo[39m: [32m[DB Config] DATABASE_URL: SET[39m
+2026-08-12 23:32:05:325 [32minfo[39m: [32m[DB Config] DB_TYPE: postgres[39m
+2026-08-12 23:32:05:325 [32minfo[39m: [32m[DB Config] Using PostgreSQL[39m
+2026-08-12 23:32:05:325 [32minfo[39m: [32m[Postgres] Config:[39m {"host":"127.0.0.1","database":"gate_final_iso_2","max":10}
+2026-08-12 23:32:05:325 [32minfo[39m: [32m[Postgres] Checking/Initializing Schema...[39m
+2026-08-12 23:32:05:325 [32minfo[39m: [32m[Postgres] Testing connection (attempt 1/3)...[39m
+
+stdout | src/services/finance/canonical/__tests__/coldReopen.pg.test.ts > Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4
+2026-08-12 23:32:05:325 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | src/services/finance/canonical/__tests__/coldReopen.pg.test.ts > Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4
+2026-08-12 23:32:05:325 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | src/services/finance/canonical/__tests__/coldReopen.pg.test.ts > Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4
+2026-08-12 23:32:05:325 [32minfo[39m: [32m[Postgres] Connection test successful (PostgreSQL verified):[39m {"current_time":"2026-08-12T21:32:05.867Z"}
+
+stdout | src/services/finance/canonical/__tests__/coldReopen.pg.test.ts > Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4
+2026-08-12 23:32:06:326 [37mdebug[39m: [37m[Postgres] subscription_plans normalize legacy nulls: column "is_active" does not exist[39m
+
+stdout | src/services/finance/canonical/__tests__/coldReopen.pg.test.ts > Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4
+2026-08-12 23:32:06:326 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | src/services/finance/canonical/__tests__/coldReopen.pg.test.ts > Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4
+2026-08-12 23:32:06:326 [32minfo[39m: [32m[Postgres] Verifying/Creating Indexes...[39m
+
+stdout | src/services/finance/canonical/__tests__/coldReopen.pg.test.ts > Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4
+2026-08-12 23:32:06:326 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | src/services/finance/canonical/__tests__/coldReopen.pg.test.ts > Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4
+2026-08-12 23:32:06:326 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | src/services/finance/canonical/__tests__/coldReopen.pg.test.ts > Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4
+2026-08-12 23:32:06:326 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | src/services/finance/canonical/__tests__/coldReopen.pg.test.ts > Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4
+2026-08-12 23:32:06:326 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | src/services/finance/canonical/__tests__/coldReopen.pg.test.ts > Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4
+2026-08-12 23:32:06:326 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | src/services/finance/canonical/__tests__/coldReopen.pg.test.ts > Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4
+2026-08-12 23:32:06:326 [37mdebug[39m: [37m[Postgres] Skipping created_by index on webhooks: column "created_by" does not exist[39m
+
+stdout | src/services/finance/canonical/__tests__/coldReopen.pg.test.ts > Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4
+2026-08-12 23:32:06:326 [32minfo[39m: [32m[Postgres] Schema Check Complete.[39m
+
+stdout | src/services/finance/canonical/__tests__/coldReopen.pg.test.ts > Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4
+2026-08-12 23:32:06:326 [32minfo[39m: [32m[Postgres] Verified table exists: organizations[39m
+
+stdout | src/services/finance/canonical/__tests__/coldReopen.pg.test.ts > Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4
+2026-08-12 23:32:06:326 [32minfo[39m: [32m[Postgres] Verified table exists: users[39m
+
+stdout | src/services/finance/canonical/__tests__/coldReopen.pg.test.ts > Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4
+2026-08-12 23:32:06:326 [32minfo[39m: [32m[Postgres] Verified table exists: sessions[39m
+
+stdout | src/services/finance/canonical/__tests__/coldReopen.pg.test.ts > Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4
+2026-08-12 23:32:06:326 [32minfo[39m: [32m[Postgres] Verified table exists: projects[39m
+
+stdout | src/services/finance/canonical/__tests__/coldReopen.pg.test.ts > Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4
+2026-08-12 23:32:06:326 [32minfo[39m: [32m[Postgres] Verified table exists: tasks[39m
+
+stdout | src/services/finance/canonical/__tests__/coldReopen.pg.test.ts > Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4
+2026-08-12 23:32:06:326 [32minfo[39m: [32m[Postgres] Verified table exists: teams[39m
+
+stdout | src/services/finance/canonical/__tests__/coldReopen.pg.test.ts > Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4
+2026-08-12 23:32:06:326 [32minfo[39m: [32m[Postgres] Verified table exists: invitations[39m
+
+stdout | src/services/finance/canonical/__tests__/coldReopen.pg.test.ts > Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4
+2026-08-12 23:32:06:326 [32minfo[39m: [32m[Postgres] Verified table exists: notifications[39m
+
+stdout | src/services/finance/canonical/__tests__/coldReopen.pg.test.ts > Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4
+2026-08-12 23:32:06:326 [32minfo[39m: [32m[Postgres] Verified table exists: settings[39m
+
+stdout | src/services/finance/canonical/__tests__/coldReopen.pg.test.ts > Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4
+2026-08-12 23:32:06:326 [32minfo[39m: [32m[Postgres] Schema initialization completed successfully[39m
+
+stdout | src/services/finance/canonical/__tests__/coldReopen.pg.test.ts > Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4 > FC-05.8 — an APPROVED Baseline Model cold-reopens bit-identically (values, snapshot, semantic hash, freshness), with no recompute
+2026-08-12 23:32:08:328 [32minfo[39m: [32m[Postgres] Closing connection pool...[39m
+
+ ✓ src/services/finance/canonical/__tests__/coldReopen.pg.test.ts > Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4 > FC-05.8 — an APPROVED Baseline Model cold-reopens bit-identically (values, snapshot, semantic hash, freshness), with no recompute 3262ms
+stdout | src/services/finance/canonical/__tests__/coldReopen.pg.test.ts > Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4 > FC-07.9 — an APPROVED Valuation variant cold-reopens with identical EV, all 25 sensitivity cells, bridge, method weights and a still-frozen Advisor output
+2026-08-12 23:32:11:3211 [32minfo[39m: [32m[Postgres] Initializing connection pool...[39m
+2026-08-12 23:32:11:3211 [32minfo[39m: [32m[Postgres] Config:[39m {"host":"127.0.0.1","database":"gate_final_iso_2","max":10}
+2026-08-12 23:32:11:3211 [32minfo[39m: [32m[Postgres] Checking/Initializing Schema...[39m
+2026-08-12 23:32:11:3211 [32minfo[39m: [32m[Postgres] Testing connection (attempt 1/3)...[39m
+
+stdout | src/services/finance/canonical/__tests__/coldReopen.pg.test.ts > Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4 > FC-07.9 — an APPROVED Valuation variant cold-reopens with identical EV, all 25 sensitivity cells, bridge, method weights and a still-frozen Advisor output
+2026-08-12 23:32:11:3211 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | src/services/finance/canonical/__tests__/coldReopen.pg.test.ts > Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4 > FC-07.9 — an APPROVED Valuation variant cold-reopens with identical EV, all 25 sensitivity cells, bridge, method weights and a still-frozen Advisor output
+2026-08-12 23:32:11:3211 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | src/services/finance/canonical/__tests__/coldReopen.pg.test.ts > Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4 > FC-07.9 — an APPROVED Valuation variant cold-reopens with identical EV, all 25 sensitivity cells, bridge, method weights and a still-frozen Advisor output
+2026-08-12 23:32:11:3211 [32minfo[39m: [32m[Postgres] Connection test successful (PostgreSQL verified):[39m {"current_time":"2026-08-12T21:32:11.721Z"}
+
+stdout | src/services/finance/canonical/__tests__/coldReopen.pg.test.ts > Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4 > FC-07.9 — an APPROVED Valuation variant cold-reopens with identical EV, all 25 sensitivity cells, bridge, method weights and a still-frozen Advisor output
+2026-08-12 23:32:11:3211 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | src/services/finance/canonical/__tests__/coldReopen.pg.test.ts > Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4 > FC-07.9 — an APPROVED Valuation variant cold-reopens with identical EV, all 25 sensitivity cells, bridge, method weights and a still-frozen Advisor output
+2026-08-12 23:32:11:3211 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | src/services/finance/canonical/__tests__/coldReopen.pg.test.ts > Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4 > FC-07.9 — an APPROVED Valuation variant cold-reopens with identical EV, all 25 sensitivity cells, bridge, method weights and a still-frozen Advisor output
+2026-08-12 23:32:11:3211 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | src/services/finance/canonical/__tests__/coldReopen.pg.test.ts > Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4 > FC-07.9 — an APPROVED Valuation variant cold-reopens with identical EV, all 25 sensitivity cells, bridge, method weights and a still-frozen Advisor output
+2026-08-12 23:32:11:3211 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | src/services/finance/canonical/__tests__/coldReopen.pg.test.ts > Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4 > FC-07.9 — an APPROVED Valuation variant cold-reopens with identical EV, all 25 sensitivity cells, bridge, method weights and a still-frozen Advisor output
+2026-08-12 23:32:11:3211 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | src/services/finance/canonical/__tests__/coldReopen.pg.test.ts > Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4 > FC-07.9 — an APPROVED Valuation variant cold-reopens with identical EV, all 25 sensitivity cells, bridge, method weights and a still-frozen Advisor output
+2026-08-12 23:32:11:3211 [32minfo[39m: [32m[Postgres] Closing connection pool...[39m
+
+stdout | src/services/finance/canonical/__tests__/coldReopen.pg.test.ts > Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4 > FC-07.9 — an APPROVED Valuation variant cold-reopens with identical EV, all 25 sensitivity cells, bridge, method weights and a still-frozen Advisor output
+2026-08-12 23:32:11:3211 [32minfo[39m: [32m[Postgres] Initializing connection pool...[39m
+2026-08-12 23:32:11:3211 [32minfo[39m: [32m[Postgres] Config:[39m {"host":"127.0.0.1","database":"gate_final_iso_2","max":10}
+2026-08-12 23:32:11:3211 [32minfo[39m: [32m[Postgres] Checking/Initializing Schema...[39m
+2026-08-12 23:32:11:3211 [32minfo[39m: [32m[Postgres] Testing connection (attempt 1/3)...[39m
+
+stdout | src/services/finance/canonical/__tests__/coldReopen.pg.test.ts > Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4 > FC-07.9 — an APPROVED Valuation variant cold-reopens with identical EV, all 25 sensitivity cells, bridge, method weights and a still-frozen Advisor output
+2026-08-12 23:32:11:3211 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | src/services/finance/canonical/__tests__/coldReopen.pg.test.ts > Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4 > FC-07.9 — an APPROVED Valuation variant cold-reopens with identical EV, all 25 sensitivity cells, bridge, method weights and a still-frozen Advisor output
+2026-08-12 23:32:11:3211 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | src/services/finance/canonical/__tests__/coldReopen.pg.test.ts > Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4 > FC-07.9 — an APPROVED Valuation variant cold-reopens with identical EV, all 25 sensitivity cells, bridge, method weights and a still-frozen Advisor output
+2026-08-12 23:32:11:3211 [32minfo[39m: [32m[Postgres] Connection test successful (PostgreSQL verified):[39m {"current_time":"2026-08-12T21:32:11.876Z"}
+
+stdout | src/services/finance/canonical/__tests__/coldReopen.pg.test.ts > Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4 > FC-07.9 — an APPROVED Valuation variant cold-reopens with identical EV, all 25 sensitivity cells, bridge, method weights and a still-frozen Advisor output
+2026-08-12 23:32:12:3212 [37mdebug[39m: [37m[Postgres] subscription_plans normalize legacy nulls: column "is_active" does not exist[39m
+
+stdout | src/services/finance/canonical/__tests__/coldReopen.pg.test.ts > Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4 > FC-07.9 — an APPROVED Valuation variant cold-reopens with identical EV, all 25 sensitivity cells, bridge, method weights and a still-frozen Advisor output
+2026-08-12 23:32:12:3212 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | src/services/finance/canonical/__tests__/coldReopen.pg.test.ts > Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4 > FC-07.9 — an APPROVED Valuation variant cold-reopens with identical EV, all 25 sensitivity cells, bridge, method weights and a still-frozen Advisor output
+2026-08-12 23:32:12:3212 [32minfo[39m: [32m[Postgres] Verifying/Creating Indexes...[39m
+
+stdout | src/services/finance/canonical/__tests__/coldReopen.pg.test.ts > Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4 > FC-07.9 — an APPROVED Valuation variant cold-reopens with identical EV, all 25 sensitivity cells, bridge, method weights and a still-frozen Advisor output
+2026-08-12 23:32:12:3212 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | src/services/finance/canonical/__tests__/coldReopen.pg.test.ts > Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4 > FC-07.9 — an APPROVED Valuation variant cold-reopens with identical EV, all 25 sensitivity cells, bridge, method weights and a still-frozen Advisor output
+2026-08-12 23:32:12:3212 [37mdebug[39m: [37m[Postgres] subscription_plans normalize legacy nulls: column "is_active" does not exist[39m
+
+stdout | src/services/finance/canonical/__tests__/coldReopen.pg.test.ts > Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4 > FC-07.9 — an APPROVED Valuation variant cold-reopens with identical EV, all 25 sensitivity cells, bridge, method weights and a still-frozen Advisor output
+2026-08-12 23:32:12:3212 [37mdebug[39m: [37m[Postgres] Skipping created_by index on webhooks: column "created_by" does not exist[39m
+
+stdout | src/services/finance/canonical/__tests__/coldReopen.pg.test.ts > Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4 > FC-07.9 — an APPROVED Valuation variant cold-reopens with identical EV, all 25 sensitivity cells, bridge, method weights and a still-frozen Advisor output
+2026-08-12 23:32:12:3212 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | src/services/finance/canonical/__tests__/coldReopen.pg.test.ts > Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4 > FC-07.9 — an APPROVED Valuation variant cold-reopens with identical EV, all 25 sensitivity cells, bridge, method weights and a still-frozen Advisor output
+2026-08-12 23:32:12:3212 [32minfo[39m: [32m[Postgres] Schema Check Complete.[39m
+
+stdout | src/services/finance/canonical/__tests__/coldReopen.pg.test.ts > Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4 > FC-07.9 — an APPROVED Valuation variant cold-reopens with identical EV, all 25 sensitivity cells, bridge, method weights and a still-frozen Advisor output
+2026-08-12 23:32:12:3212 [32minfo[39m: [32m[Postgres] Verified table exists: organizations[39m
+
+stdout | src/services/finance/canonical/__tests__/coldReopen.pg.test.ts > Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4 > FC-07.9 — an APPROVED Valuation variant cold-reopens with identical EV, all 25 sensitivity cells, bridge, method weights and a still-frozen Advisor output
+2026-08-12 23:32:12:3212 [32minfo[39m: [32m[Postgres] Verified table exists: users[39m
+
+stdout | src/services/finance/canonical/__tests__/coldReopen.pg.test.ts > Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4 > FC-07.9 — an APPROVED Valuation variant cold-reopens with identical EV, all 25 sensitivity cells, bridge, method weights and a still-frozen Advisor output
+2026-08-12 23:32:12:3212 [32minfo[39m: [32m[Postgres] Verified table exists: sessions[39m
+
+stdout | src/services/finance/canonical/__tests__/coldReopen.pg.test.ts > Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4 > FC-07.9 — an APPROVED Valuation variant cold-reopens with identical EV, all 25 sensitivity cells, bridge, method weights and a still-frozen Advisor output
+2026-08-12 23:32:12:3212 [32minfo[39m: [32m[Postgres] Verified table exists: projects[39m
+
+stdout | src/services/finance/canonical/__tests__/coldReopen.pg.test.ts > Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4 > FC-07.9 — an APPROVED Valuation variant cold-reopens with identical EV, all 25 sensitivity cells, bridge, method weights and a still-frozen Advisor output
+2026-08-12 23:32:12:3212 [32minfo[39m: [32m[Postgres] Verified table exists: tasks[39m
+
+stdout | src/services/finance/canonical/__tests__/coldReopen.pg.test.ts > Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4 > FC-07.9 — an APPROVED Valuation variant cold-reopens with identical EV, all 25 sensitivity cells, bridge, method weights and a still-frozen Advisor output
+2026-08-12 23:32:12:3212 [32minfo[39m: [32m[Postgres] Verified table exists: teams[39m
+
+stdout | src/services/finance/canonical/__tests__/coldReopen.pg.test.ts > Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4 > FC-07.9 — an APPROVED Valuation variant cold-reopens with identical EV, all 25 sensitivity cells, bridge, method weights and a still-frozen Advisor output
+2026-08-12 23:32:12:3212 [32minfo[39m: [32m[Postgres] Verified table exists: invitations[39m
+
+stdout | src/services/finance/canonical/__tests__/coldReopen.pg.test.ts > Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4 > FC-07.9 — an APPROVED Valuation variant cold-reopens with identical EV, all 25 sensitivity cells, bridge, method weights and a still-frozen Advisor output
+2026-08-12 23:32:12:3212 [32minfo[39m: [32m[Postgres] Verified table exists: notifications[39m
+
+stdout | src/services/finance/canonical/__tests__/coldReopen.pg.test.ts > Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4 > FC-07.9 — an APPROVED Valuation variant cold-reopens with identical EV, all 25 sensitivity cells, bridge, method weights and a still-frozen Advisor output
+2026-08-12 23:32:12:3212 [32minfo[39m: [32m[Postgres] Verified table exists: settings[39m
+
+stdout | src/services/finance/canonical/__tests__/coldReopen.pg.test.ts > Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4 > FC-07.9 — an APPROVED Valuation variant cold-reopens with identical EV, all 25 sensitivity cells, bridge, method weights and a still-frozen Advisor output
+2026-08-12 23:32:12:3212 [32minfo[39m: [32m[Postgres] Schema initialization completed successfully[39m
+
+stdout | src/services/finance/canonical/__tests__/coldReopen.pg.test.ts > Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4 > FC-07.9 — an APPROVED Valuation variant cold-reopens with identical EV, all 25 sensitivity cells, bridge, method weights and a still-frozen Advisor output
+2026-08-12 23:32:12:3212 [32minfo[39m: [32m[Postgres] Verifying/Creating Indexes...[39m
+
+stdout | src/services/finance/canonical/__tests__/coldReopen.pg.test.ts > Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4 > FC-07.9 — an APPROVED Valuation variant cold-reopens with identical EV, all 25 sensitivity cells, bridge, method weights and a still-frozen Advisor output
+2026-08-12 23:32:12:3212 [37mdebug[39m: [37m[Postgres] Skipping created_by index on webhooks: column "created_by" does not exist[39m
+
+stdout | src/services/finance/canonical/__tests__/coldReopen.pg.test.ts > Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4 > FC-07.9 — an APPROVED Valuation variant cold-reopens with identical EV, all 25 sensitivity cells, bridge, method weights and a still-frozen Advisor output
+2026-08-12 23:32:12:3212 [32minfo[39m: [32m[Postgres] Schema Check Complete.[39m
+
+stdout | src/services/finance/canonical/__tests__/coldReopen.pg.test.ts > Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4 > FC-07.9 — an APPROVED Valuation variant cold-reopens with identical EV, all 25 sensitivity cells, bridge, method weights and a still-frozen Advisor output
+2026-08-12 23:32:12:3212 [32minfo[39m: [32m[Postgres] Verified table exists: organizations[39m
+
+stdout | src/services/finance/canonical/__tests__/coldReopen.pg.test.ts > Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4 > FC-07.9 — an APPROVED Valuation variant cold-reopens with identical EV, all 25 sensitivity cells, bridge, method weights and a still-frozen Advisor output
+2026-08-12 23:32:12:3212 [32minfo[39m: [32m[Postgres] Verified table exists: users[39m
+
+stdout | src/services/finance/canonical/__tests__/coldReopen.pg.test.ts > Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4 > FC-07.9 — an APPROVED Valuation variant cold-reopens with identical EV, all 25 sensitivity cells, bridge, method weights and a still-frozen Advisor output
+2026-08-12 23:32:12:3212 [32minfo[39m: [32m[Postgres] Verified table exists: sessions[39m
+
+stdout | src/services/finance/canonical/__tests__/coldReopen.pg.test.ts > Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4 > FC-07.9 — an APPROVED Valuation variant cold-reopens with identical EV, all 25 sensitivity cells, bridge, method weights and a still-frozen Advisor output
+2026-08-12 23:32:12:3212 [32minfo[39m: [32m[Postgres] Verified table exists: projects[39m
+
+stdout | src/services/finance/canonical/__tests__/coldReopen.pg.test.ts > Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4 > FC-07.9 — an APPROVED Valuation variant cold-reopens with identical EV, all 25 sensitivity cells, bridge, method weights and a still-frozen Advisor output
+2026-08-12 23:32:12:3212 [32minfo[39m: [32m[Postgres] Verified table exists: tasks[39m
+
+stdout | src/services/finance/canonical/__tests__/coldReopen.pg.test.ts > Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4 > FC-07.9 — an APPROVED Valuation variant cold-reopens with identical EV, all 25 sensitivity cells, bridge, method weights and a still-frozen Advisor output
+2026-08-12 23:32:12:3212 [32minfo[39m: [32m[Postgres] Verified table exists: teams[39m
+
+stdout | src/services/finance/canonical/__tests__/coldReopen.pg.test.ts > Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4 > FC-07.9 — an APPROVED Valuation variant cold-reopens with identical EV, all 25 sensitivity cells, bridge, method weights and a still-frozen Advisor output
+2026-08-12 23:32:12:3212 [32minfo[39m: [32m[Postgres] Verified table exists: invitations[39m
+
+stdout | src/services/finance/canonical/__tests__/coldReopen.pg.test.ts > Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4 > FC-07.9 — an APPROVED Valuation variant cold-reopens with identical EV, all 25 sensitivity cells, bridge, method weights and a still-frozen Advisor output
+2026-08-12 23:32:12:3212 [32minfo[39m: [32m[Postgres] Verified table exists: notifications[39m
+
+stdout | src/services/finance/canonical/__tests__/coldReopen.pg.test.ts > Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4 > FC-07.9 — an APPROVED Valuation variant cold-reopens with identical EV, all 25 sensitivity cells, bridge, method weights and a still-frozen Advisor output
+2026-08-12 23:32:12:3212 [32minfo[39m: [32m[Postgres] Verified table exists: settings[39m
+
+stdout | src/services/finance/canonical/__tests__/coldReopen.pg.test.ts > Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4 > FC-07.9 — an APPROVED Valuation variant cold-reopens with identical EV, all 25 sensitivity cells, bridge, method weights and a still-frozen Advisor output
+2026-08-12 23:32:12:3212 [32minfo[39m: [32m[Postgres] Schema initialization completed successfully[39m
+
+ ✓ src/services/finance/canonical/__tests__/coldReopen.pg.test.ts > Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4 > FC-07.9 — an APPROVED Valuation variant cold-reopens with identical EV, all 25 sensitivity cells, bridge, method weights and a still-frozen Advisor output 3784ms
+stdout | src/services/finance/canonical/__tests__/coldReopen.pg.test.ts > Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4 > FC-12.4 — the whole approved chain (Statement -> Analysis -> Baseline -> Prediction -> Valuation) cold-reopens intact, lineage still navigable backwards, nothing spuriously stale
+2026-08-12 23:32:15:3215 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | src/services/finance/canonical/__tests__/coldReopen.pg.test.ts > Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4 > FC-12.4 — the whole approved chain (Statement -> Analysis -> Baseline -> Prediction -> Valuation) cold-reopens intact, lineage still navigable backwards, nothing spuriously stale
+2026-08-12 23:32:15:3215 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | src/services/finance/canonical/__tests__/coldReopen.pg.test.ts > Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4 > FC-12.4 — the whole approved chain (Statement -> Analysis -> Baseline -> Prediction -> Valuation) cold-reopens intact, lineage still navigable backwards, nothing spuriously stale
+2026-08-12 23:32:15:3215 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | src/services/finance/canonical/__tests__/coldReopen.pg.test.ts > Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4 > FC-12.4 — the whole approved chain (Statement -> Analysis -> Baseline -> Prediction -> Valuation) cold-reopens intact, lineage still navigable backwards, nothing spuriously stale
+2026-08-12 23:32:15:3215 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | src/services/finance/canonical/__tests__/coldReopen.pg.test.ts > Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4 > FC-12.4 — the whole approved chain (Statement -> Analysis -> Baseline -> Prediction -> Valuation) cold-reopens intact, lineage still navigable backwards, nothing spuriously stale
+2026-08-12 23:32:15:3215 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | src/services/finance/canonical/__tests__/coldReopen.pg.test.ts > Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4 > FC-12.4 — the whole approved chain (Statement -> Analysis -> Baseline -> Prediction -> Valuation) cold-reopens intact, lineage still navigable backwards, nothing spuriously stale
+2026-08-12 23:32:15:3215 [32minfo[39m: [32m[Postgres] Closing connection pool...[39m
+
+ ✓ src/services/finance/canonical/__tests__/coldReopen.pg.test.ts > Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4 > FC-12.4 — the whole approved chain (Statement -> Analysis -> Baseline -> Prediction -> Valuation) cold-reopens intact, lineage still navigable backwards, nothing spuriously stale 4121ms
+stdout | src/services/finance/canonical/__tests__/coldReopen.pg.test.ts > Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4 > FC-NEG — a single corrupted value after approval IS detected by the cold reopen, and the match returns after restore
+2026-08-12 23:32:22:3222 [32minfo[39m: [32m[Postgres] Initializing connection pool...[39m
+2026-08-12 23:32:22:3222 [32minfo[39m: [32m[Postgres] Config:[39m {"host":"127.0.0.1","database":"gate_final_iso_2","max":10}
+2026-08-12 23:32:22:3222 [32minfo[39m: [32m[Postgres] Checking/Initializing Schema...[39m
+2026-08-12 23:32:22:3222 [32minfo[39m: [32m[Postgres] Testing connection (attempt 1/3)...[39m
+
+stdout | src/services/finance/canonical/__tests__/coldReopen.pg.test.ts > Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4 > FC-NEG — a single corrupted value after approval IS detected by the cold reopen, and the match returns after restore
+2026-08-12 23:32:22:3222 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | src/services/finance/canonical/__tests__/coldReopen.pg.test.ts > Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4 > FC-NEG — a single corrupted value after approval IS detected by the cold reopen, and the match returns after restore
+2026-08-12 23:32:22:3222 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | src/services/finance/canonical/__tests__/coldReopen.pg.test.ts > Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4 > FC-NEG — a single corrupted value after approval IS detected by the cold reopen, and the match returns after restore
+2026-08-12 23:32:22:3222 [32minfo[39m: [32m[Postgres] Connection test successful (PostgreSQL verified):[39m {"current_time":"2026-08-12T21:32:22.859Z"}
+
+stdout | src/services/finance/canonical/__tests__/coldReopen.pg.test.ts > Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4 > FC-NEG — a single corrupted value after approval IS detected by the cold reopen, and the match returns after restore
+2026-08-12 23:32:23:3223 [37mdebug[39m: [37m[Postgres] subscription_plans normalize legacy nulls: column "is_active" does not exist[39m
+
+stdout | src/services/finance/canonical/__tests__/coldReopen.pg.test.ts > Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4 > FC-NEG — a single corrupted value after approval IS detected by the cold reopen, and the match returns after restore
+2026-08-12 23:32:23:3223 [32minfo[39m: [32m[Postgres] Verifying/Creating Indexes...[39m
+
+stdout | src/services/finance/canonical/__tests__/coldReopen.pg.test.ts > Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4 > FC-NEG — a single corrupted value after approval IS detected by the cold reopen, and the match returns after restore
+2026-08-12 23:32:23:3223 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | src/services/finance/canonical/__tests__/coldReopen.pg.test.ts > Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4 > FC-NEG — a single corrupted value after approval IS detected by the cold reopen, and the match returns after restore
+2026-08-12 23:32:23:3223 [37mdebug[39m: [37m[Postgres] Skipping created_by index on webhooks: column "created_by" does not exist[39m
+
+stdout | src/services/finance/canonical/__tests__/coldReopen.pg.test.ts > Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4 > FC-NEG — a single corrupted value after approval IS detected by the cold reopen, and the match returns after restore
+2026-08-12 23:32:24:3224 [32minfo[39m: [32m[Postgres] Schema Check Complete.[39m
+
+stdout | src/services/finance/canonical/__tests__/coldReopen.pg.test.ts > Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4 > FC-NEG — a single corrupted value after approval IS detected by the cold reopen, and the match returns after restore
+2026-08-12 23:32:24:3224 [32minfo[39m: [32m[Postgres] Verified table exists: organizations[39m
+
+stdout | src/services/finance/canonical/__tests__/coldReopen.pg.test.ts > Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4 > FC-NEG — a single corrupted value after approval IS detected by the cold reopen, and the match returns after restore
+2026-08-12 23:32:24:3224 [32minfo[39m: [32m[Postgres] Verified table exists: users[39m
+
+stdout | src/services/finance/canonical/__tests__/coldReopen.pg.test.ts > Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4 > FC-NEG — a single corrupted value after approval IS detected by the cold reopen, and the match returns after restore
+2026-08-12 23:32:24:3224 [32minfo[39m: [32m[Postgres] Verified table exists: sessions[39m
+
+stdout | src/services/finance/canonical/__tests__/coldReopen.pg.test.ts > Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4 > FC-NEG — a single corrupted value after approval IS detected by the cold reopen, and the match returns after restore
+2026-08-12 23:32:24:3224 [32minfo[39m: [32m[Postgres] Verified table exists: projects[39m
+
+stdout | src/services/finance/canonical/__tests__/coldReopen.pg.test.ts > Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4 > FC-NEG — a single corrupted value after approval IS detected by the cold reopen, and the match returns after restore
+2026-08-12 23:32:24:3224 [32minfo[39m: [32m[Postgres] Verified table exists: tasks[39m
+
+stdout | src/services/finance/canonical/__tests__/coldReopen.pg.test.ts > Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4 > FC-NEG — a single corrupted value after approval IS detected by the cold reopen, and the match returns after restore
+2026-08-12 23:32:24:3224 [32minfo[39m: [32m[Postgres] Verified table exists: teams[39m
+
+stdout | src/services/finance/canonical/__tests__/coldReopen.pg.test.ts > Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4 > FC-NEG — a single corrupted value after approval IS detected by the cold reopen, and the match returns after restore
+2026-08-12 23:32:24:3224 [32minfo[39m: [32m[Postgres] Verified table exists: invitations[39m
+
+stdout | src/services/finance/canonical/__tests__/coldReopen.pg.test.ts > Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4 > FC-NEG — a single corrupted value after approval IS detected by the cold reopen, and the match returns after restore
+2026-08-12 23:32:24:3224 [32minfo[39m: [32m[Postgres] Verified table exists: notifications[39m
+
+stdout | src/services/finance/canonical/__tests__/coldReopen.pg.test.ts > Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4 > FC-NEG — a single corrupted value after approval IS detected by the cold reopen, and the match returns after restore
+2026-08-12 23:32:24:3224 [32minfo[39m: [32m[Postgres] Verified table exists: settings[39m
+
+stdout | src/services/finance/canonical/__tests__/coldReopen.pg.test.ts > Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4 > FC-NEG — a single corrupted value after approval IS detected by the cold reopen, and the match returns after restore
+2026-08-12 23:32:24:3224 [32minfo[39m: [32m[Postgres] Schema initialization completed successfully[39m
+
+ ✓ src/services/finance/canonical/__tests__/coldReopen.pg.test.ts > Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4 > FC-NEG — a single corrupted value after approval IS detected by the cold reopen, and the match returns after restore 9831ms
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  23:32:03
+   Duration  25.84s (transform 1.28s, setup 0ms, import 319ms, tests 24.91s, environment 0ms)
+
+EXIT[src/services/finance/canonical/__tests__/coldReopen.pg.test.ts]=0
+=== src/services/finance/canonical/__tests__/financeCompareService.pg.test.ts (db=gate_final_iso_3) ===
+
+ RUN  v4.1.8 /Users/piotrwisniewski/consultify-wt/fv3-product/server
+
+stdout | src/services/finance/canonical/__tests__/financeCompareService.pg.test.ts > AP-05 financeCompareService — real PostgreSQL
+2026-08-12 23:32:39:3239 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-08-12 23:32:39:3239 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-08-12 23:32:39:3239 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-08-12 23:32:39:3239 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-08-12 23:32:39:3239 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | src/services/finance/canonical/__tests__/financeCompareService.pg.test.ts > AP-05 financeCompareService — real PostgreSQL
+2026-08-12 23:32:40:3240 [32minfo[39m: [32m[Postgres] Initializing connection pool...[39m
+2026-08-12 23:32:40:3240 [32minfo[39m: [32m[DB Config] DATABASE_URL: SET[39m
+2026-08-12 23:32:40:3240 [32minfo[39m: [32m[DB Config] DB_TYPE: postgres[39m
+2026-08-12 23:32:40:3240 [32minfo[39m: [32m[DB Config] Using PostgreSQL[39m
+2026-08-12 23:32:40:3240 [32minfo[39m: [32m[Postgres] Config:[39m {"host":"127.0.0.1","database":"gate_final_iso_3","max":10}
+2026-08-12 23:32:40:3240 [32minfo[39m: [32m[Postgres] Checking/Initializing Schema...[39m
+2026-08-12 23:32:40:3240 [32minfo[39m: [32m[Postgres] Testing connection (attempt 1/3)...[39m
+
+stdout | src/services/finance/canonical/__tests__/financeCompareService.pg.test.ts > AP-05 financeCompareService — real PostgreSQL
+2026-08-12 23:32:40:3240 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | src/services/finance/canonical/__tests__/financeCompareService.pg.test.ts > AP-05 financeCompareService — real PostgreSQL
+2026-08-12 23:32:40:3240 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | src/services/finance/canonical/__tests__/financeCompareService.pg.test.ts > AP-05 financeCompareService — real PostgreSQL
+2026-08-12 23:32:40:3240 [32minfo[39m: [32m[Postgres] Connection test successful (PostgreSQL verified):[39m {"current_time":"2026-08-12T21:32:40.561Z"}
+
+ ✓ src/services/finance/canonical/__tests__/financeCompareService.pg.test.ts > AP-05 financeCompareService — real PostgreSQL > compareVersions — GoldCo FY2024 Statement Pack, ORIGINAL vs RESTATED > diffs exactly the restated lines, matches entity_id-varying rows via entity_code, and surfaces both MISSING flavors as null-diff (never false 0) 228ms
+ ✓ src/services/finance/canonical/__tests__/financeCompareService.pg.test.ts > AP-05 financeCompareService — real PostgreSQL > compareScenarios — Base vs Downside Prediction (real WP-D08 Jan-2026 REVENUE) > Base reads through the real STANDARD_BASE -> finance_baseline_outputs passthrough; direction and magnitude match the published delta 68ms
+
+ Test Files  1 passed (1)
+      Tests  2 passed (2)
+   Start at  23:32:38
+   Duration  2.64s (transform 879ms, setup 0ms, import 82ms, tests 1.44s, environment 0ms)
+
+EXIT[src/services/finance/canonical/__tests__/financeCompareService.pg.test.ts]=0
+=== src/services/finance/canonical/__tests__/idempotentComputeRetry.pg.test.ts (db=gate_final_iso_4) ===
+
+ RUN  v4.1.8 /Users/piotrwisniewski/consultify-wt/fv3-product/server
+
+stdout | src/services/finance/canonical/__tests__/idempotentComputeRetry.pg.test.ts > P1 fix — idempotent compute retry (real PostgreSQL)
+2026-08-12 23:32:50:3250 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-08-12 23:32:50:3250 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-08-12 23:32:50:3250 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-08-12 23:32:50:3250 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-08-12 23:32:50:3250 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | src/services/finance/canonical/__tests__/idempotentComputeRetry.pg.test.ts > P1 fix — idempotent compute retry (real PostgreSQL)
+2026-08-12 23:32:51:3251 [32minfo[39m: [32m[Postgres] Initializing connection pool...[39m
+2026-08-12 23:32:51:3251 [32minfo[39m: [32m[DB Config] DATABASE_URL: SET[39m
+2026-08-12 23:32:51:3251 [32minfo[39m: [32m[DB Config] DB_TYPE: postgres[39m
+2026-08-12 23:32:51:3251 [32minfo[39m: [32m[DB Config] Using PostgreSQL[39m
+2026-08-12 23:32:51:3251 [32minfo[39m: [32m[Postgres] Config:[39m {"host":"127.0.0.1","database":"gate_final_iso_4","max":10}
+2026-08-12 23:32:51:3251 [32minfo[39m: [32m[Postgres] Checking/Initializing Schema...[39m
+2026-08-12 23:32:51:3251 [32minfo[39m: [32m[Postgres] Testing connection (attempt 1/3)...[39m
+
+stdout | src/services/finance/canonical/__tests__/idempotentComputeRetry.pg.test.ts > P1 fix — idempotent compute retry (real PostgreSQL)
+2026-08-12 23:32:51:3251 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | src/services/finance/canonical/__tests__/idempotentComputeRetry.pg.test.ts > P1 fix — idempotent compute retry (real PostgreSQL)
+2026-08-12 23:32:51:3251 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | src/services/finance/canonical/__tests__/idempotentComputeRetry.pg.test.ts > P1 fix — idempotent compute retry (real PostgreSQL)
+2026-08-12 23:32:51:3251 [32minfo[39m: [32m[Postgres] Connection test successful (PostgreSQL verified):[39m {"current_time":"2026-08-12T21:32:51.616Z"}
+
+stdout | src/services/finance/canonical/__tests__/idempotentComputeRetry.pg.test.ts > P1 fix — idempotent compute retry (real PostgreSQL)
+2026-08-12 23:32:51:3251 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | src/services/finance/canonical/__tests__/idempotentComputeRetry.pg.test.ts > P1 fix — idempotent compute retry (real PostgreSQL)
+2026-08-12 23:32:51:3251 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | src/services/finance/canonical/__tests__/idempotentComputeRetry.pg.test.ts > P1 fix — idempotent compute retry (real PostgreSQL)
+2026-08-12 23:32:52:3252 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | src/services/finance/canonical/__tests__/idempotentComputeRetry.pg.test.ts > P1 fix — idempotent compute retry (real PostgreSQL)
+2026-08-12 23:32:52:3252 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | src/services/finance/canonical/__tests__/idempotentComputeRetry.pg.test.ts > P1 fix — idempotent compute retry (real PostgreSQL)
+2026-08-12 23:32:52:3252 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | src/services/finance/canonical/__tests__/idempotentComputeRetry.pg.test.ts > P1 fix — idempotent compute retry (real PostgreSQL)
+2026-08-12 23:32:52:3252 [37mdebug[39m: [37m[Postgres] subscription_plans normalize legacy nulls: column "is_active" does not exist[39m
+
+stdout | src/services/finance/canonical/__tests__/idempotentComputeRetry.pg.test.ts > P1 fix — idempotent compute retry (real PostgreSQL)
+2026-08-12 23:32:52:3252 [32minfo[39m: [32m[Postgres] Verifying/Creating Indexes...[39m
+
+stdout | src/services/finance/canonical/__tests__/idempotentComputeRetry.pg.test.ts > P1 fix — idempotent compute retry (real PostgreSQL)
+2026-08-12 23:32:52:3252 [37mdebug[39m: [37m[Postgres] Skipping created_by index on webhooks: column "created_by" does not exist[39m
+
+stdout | src/services/finance/canonical/__tests__/idempotentComputeRetry.pg.test.ts > P1 fix — idempotent compute retry (real PostgreSQL)
+2026-08-12 23:32:52:3252 [32minfo[39m: [32m[Postgres] Schema Check Complete.[39m
+
+stdout | src/services/finance/canonical/__tests__/idempotentComputeRetry.pg.test.ts > P1 fix — idempotent compute retry (real PostgreSQL)
+2026-08-12 23:32:52:3252 [32minfo[39m: [32m[Postgres] Verified table exists: organizations[39m
+
+stdout | src/services/finance/canonical/__tests__/idempotentComputeRetry.pg.test.ts > P1 fix — idempotent compute retry (real PostgreSQL)
+2026-08-12 23:32:52:3252 [32minfo[39m: [32m[Postgres] Verified table exists: users[39m
+
+stdout | src/services/finance/canonical/__tests__/idempotentComputeRetry.pg.test.ts > P1 fix — idempotent compute retry (real PostgreSQL)
+2026-08-12 23:32:52:3252 [32minfo[39m: [32m[Postgres] Verified table exists: sessions[39m
+
+stdout | src/services/finance/canonical/__tests__/idempotentComputeRetry.pg.test.ts > P1 fix — idempotent compute retry (real PostgreSQL)
+2026-08-12 23:32:52:3252 [32minfo[39m: [32m[Postgres] Verified table exists: projects[39m
+
+stdout | src/services/finance/canonical/__tests__/idempotentComputeRetry.pg.test.ts > P1 fix — idempotent compute retry (real PostgreSQL)
+2026-08-12 23:32:52:3252 [32minfo[39m: [32m[Postgres] Verified table exists: tasks[39m
+
+stdout | src/services/finance/canonical/__tests__/idempotentComputeRetry.pg.test.ts > P1 fix — idempotent compute retry (real PostgreSQL)
+2026-08-12 23:32:52:3252 [32minfo[39m: [32m[Postgres] Verified table exists: teams[39m
+
+stdout | src/services/finance/canonical/__tests__/idempotentComputeRetry.pg.test.ts > P1 fix — idempotent compute retry (real PostgreSQL)
+2026-08-12 23:32:52:3252 [32minfo[39m: [32m[Postgres] Verified table exists: invitations[39m
+
+stdout | src/services/finance/canonical/__tests__/idempotentComputeRetry.pg.test.ts > P1 fix — idempotent compute retry (real PostgreSQL)
+2026-08-12 23:32:52:3252 [32minfo[39m: [32m[Postgres] Verified table exists: notifications[39m
+
+stdout | src/services/finance/canonical/__tests__/idempotentComputeRetry.pg.test.ts > P1 fix — idempotent compute retry (real PostgreSQL)
+2026-08-12 23:32:52:3252 [32minfo[39m: [32m[Postgres] Verified table exists: settings[39m
+
+stdout | src/services/finance/canonical/__tests__/idempotentComputeRetry.pg.test.ts > P1 fix — idempotent compute retry (real PostgreSQL)
+2026-08-12 23:32:52:3252 [32minfo[39m: [32m[Postgres] Schema initialization completed successfully[39m
+
+stdout | src/services/finance/canonical/__tests__/idempotentComputeRetry.pg.test.ts > P1 fix — idempotent compute retry (real PostgreSQL) > baselineComputeService.runBaselineCompute() > repeated call with byte-identical params: no error, same job id, exactly one compute_job_outputs row
+2026-08-12 23:32:52:3252 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+ ✓ src/services/finance/canonical/__tests__/idempotentComputeRetry.pg.test.ts > P1 fix — idempotent compute retry (real PostgreSQL) > baselineComputeService.runBaselineCompute() > repeated call with byte-identical params: no error, same job id, exactly one compute_job_outputs row 525ms
+ ✓ src/services/finance/canonical/__tests__/idempotentComputeRetry.pg.test.ts > P1 fix — idempotent compute retry (real PostgreSQL) > kpiComputeService.computeAnalysisKpis() > repeated call with byte-identical params: no error, same job id, exactly one compute_job_outputs row 58ms
+ ✓ src/services/finance/canonical/__tests__/idempotentComputeRetry.pg.test.ts > P1 fix — idempotent compute retry (real PostgreSQL) > predictionComputeService.runPredictionCompute() — STANDARD_BASE branch (runStandardBase) > repeated call with byte-identical params: no error, same job id, exactly one compute_job_outputs row 39ms
+ ✓ src/services/finance/canonical/__tests__/idempotentComputeRetry.pg.test.ts > P1 fix — idempotent compute retry (real PostgreSQL) > predictionComputeService.runPredictionCompute() — overlay branch (runOverlayCompute) > repeated call with byte-identical params: no error, same job id, exactly one compute_job_outputs row 133ms
+ ✓ src/services/finance/canonical/__tests__/idempotentComputeRetry.pg.test.ts > P1 fix — idempotent compute retry (real PostgreSQL) > valuationComputeService.runDcfFcffValuation() > repeated call with byte-identical params: no error, same job id, exactly one compute_job_outputs row 62ms
+ ✓ src/services/finance/canonical/__tests__/idempotentComputeRetry.pg.test.ts > P1 fix — idempotent compute retry (real PostgreSQL) > a duplicate request while the FIRST attempt is still running (not yet committed) is a hard JOB_NOT_RUNNING error, never silently resumed > baselineComputeService: enqueue() the same idempotency key a second time while the first job is still `running` -> JOB_NOT_RUNNING, no false success, no second compute_job_outputs row 929ms
+
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+   Start at  23:32:49
+   Duration  5.39s (transform 1.36s, setup 0ms, import 256ms, tests 4.43s, environment 0ms)
+
+EXIT[src/services/finance/canonical/__tests__/idempotentComputeRetry.pg.test.ts]=0
+=== src/services/finance/canonical/__tests__/kpiComputeService.pg.test.ts (db=gate_final_iso_5) ===
+
+ RUN  v4.1.8 /Users/piotrwisniewski/consultify-wt/fv3-product/server
+
+stdout | src/services/finance/canonical/__tests__/kpiComputeService.pg.test.ts > WP-D04 kpiComputeService — real PostgreSQL known-answer test
+2026-08-12 23:33:04:334 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-08-12 23:33:04:334 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-08-12 23:33:04:334 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-08-12 23:33:04:334 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-08-12 23:33:04:334 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | src/services/finance/canonical/__tests__/kpiComputeService.pg.test.ts > WP-D04 kpiComputeService — real PostgreSQL known-answer test
+2026-08-12 23:33:04:334 [32minfo[39m: [32m[Postgres] Initializing connection pool...[39m
+2026-08-12 23:33:04:334 [32minfo[39m: [32m[DB Config] DATABASE_URL: SET[39m
+2026-08-12 23:33:04:334 [32minfo[39m: [32m[DB Config] DB_TYPE: postgres[39m
+2026-08-12 23:33:04:334 [32minfo[39m: [32m[DB Config] Using PostgreSQL[39m
+2026-08-12 23:33:04:334 [32minfo[39m: [32m[Postgres] Config:[39m {"host":"127.0.0.1","database":"gate_final_iso_5","max":10}
+2026-08-12 23:33:04:334 [32minfo[39m: [32m[Postgres] Checking/Initializing Schema...[39m
+2026-08-12 23:33:04:334 [32minfo[39m: [32m[Postgres] Testing connection (attempt 1/3)...[39m
+
+stdout | src/services/finance/canonical/__tests__/kpiComputeService.pg.test.ts > WP-D04 kpiComputeService — real PostgreSQL known-answer test
+2026-08-12 23:33:04:334 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | src/services/finance/canonical/__tests__/kpiComputeService.pg.test.ts > WP-D04 kpiComputeService — real PostgreSQL known-answer test
+2026-08-12 23:33:04:334 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | src/services/finance/canonical/__tests__/kpiComputeService.pg.test.ts > WP-D04 kpiComputeService — real PostgreSQL known-answer test
+2026-08-12 23:33:04:334 [32minfo[39m: [32m[Postgres] Connection test successful (PostgreSQL verified):[39m {"current_time":"2026-08-12T21:33:04.712Z"}
+
+stdout | src/services/finance/canonical/__tests__/kpiComputeService.pg.test.ts > WP-D04 kpiComputeService — real PostgreSQL known-answer test > 6 KPI across 6 different categories, GoldCo PARENT standalone FY2025 > CURRENT_RATIO / GROSS_MARGIN_PCT / DEBT_TO_EQUITY / DSO / OPERATING_CASH_FLOW_MARGIN / ROE match hand-computed oracle values
+2026-08-12 23:33:04:334 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | src/services/finance/canonical/__tests__/kpiComputeService.pg.test.ts > WP-D04 kpiComputeService — real PostgreSQL known-answer test > 6 KPI across 6 different categories, GoldCo PARENT standalone FY2025 > CURRENT_RATIO / GROSS_MARGIN_PCT / DEBT_TO_EQUITY / DSO / OPERATING_CASH_FLOW_MARGIN / ROE match hand-computed oracle values
+2026-08-12 23:33:04:334 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | src/services/finance/canonical/__tests__/kpiComputeService.pg.test.ts > WP-D04 kpiComputeService — real PostgreSQL known-answer test > 6 KPI across 6 different categories, GoldCo PARENT standalone FY2025 > CURRENT_RATIO / GROSS_MARGIN_PCT / DEBT_TO_EQUITY / DSO / OPERATING_CASH_FLOW_MARGIN / ROE match hand-computed oracle values
+2026-08-12 23:33:04:334 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | src/services/finance/canonical/__tests__/kpiComputeService.pg.test.ts > WP-D04 kpiComputeService — real PostgreSQL known-answer test > 6 KPI across 6 different categories, GoldCo PARENT standalone FY2025 > CURRENT_RATIO / GROSS_MARGIN_PCT / DEBT_TO_EQUITY / DSO / OPERATING_CASH_FLOW_MARGIN / ROE match hand-computed oracle values
+2026-08-12 23:33:04:334 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | src/services/finance/canonical/__tests__/kpiComputeService.pg.test.ts > WP-D04 kpiComputeService — real PostgreSQL known-answer test > 6 KPI across 6 different categories, GoldCo PARENT standalone FY2025 > CURRENT_RATIO / GROSS_MARGIN_PCT / DEBT_TO_EQUITY / DSO / OPERATING_CASH_FLOW_MARGIN / ROE match hand-computed oracle values
+2026-08-12 23:33:04:334 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+ ✓ src/services/finance/canonical/__tests__/kpiComputeService.pg.test.ts > WP-D04 kpiComputeService — real PostgreSQL known-answer test > 6 KPI across 6 different categories, GoldCo PARENT standalone FY2025 > CURRENT_RATIO / GROSS_MARGIN_PCT / DEBT_TO_EQUITY / DSO / OPERATING_CASH_FLOW_MARGIN / ROE match hand-computed oracle values 276ms
+stdout | src/services/finance/canonical/__tests__/kpiComputeService.pg.test.ts > WP-D04 kpiComputeService — real PostgreSQL known-answer test > W10 — 9 additional P0 KPI (known-answer) + 1 structurally-unavailable (DEBT_TO_EBITDA), GoldCo PARENT FY2025 > QUICK_RATIO / CASH_RATIO / EBITDA_MARGIN_PCT / NET_MARGIN_PCT / INTEREST_COVERAGE / ROA / REVENUE_GROWTH_YOY / FCF_MARGIN / CASH_CONVERSION_CYCLE match hand-computed values
+2026-08-12 23:33:05:335 [37mdebug[39m: [37m[Postgres] subscription_plans normalize legacy nulls: column "is_active" does not exist[39m
+
+stdout | src/services/finance/canonical/__tests__/kpiComputeService.pg.test.ts > WP-D04 kpiComputeService — real PostgreSQL known-answer test > W10 — 9 additional P0 KPI (known-answer) + 1 structurally-unavailable (DEBT_TO_EBITDA), GoldCo PARENT FY2025 > QUICK_RATIO / CASH_RATIO / EBITDA_MARGIN_PCT / NET_MARGIN_PCT / INTEREST_COVERAGE / ROA / REVENUE_GROWTH_YOY / FCF_MARGIN / CASH_CONVERSION_CYCLE match hand-computed values
+2026-08-12 23:33:05:335 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+ ✓ src/services/finance/canonical/__tests__/kpiComputeService.pg.test.ts > WP-D04 kpiComputeService — real PostgreSQL known-answer test > W10 — 9 additional P0 KPI (known-answer) + 1 structurally-unavailable (DEBT_TO_EBITDA), GoldCo PARENT FY2025 > QUICK_RATIO / CASH_RATIO / EBITDA_MARGIN_PCT / NET_MARGIN_PCT / INTEREST_COVERAGE / ROA / REVENUE_GROWTH_YOY / FCF_MARGIN / CASH_CONVERSION_CYCLE match hand-computed values 211ms
+stdout | src/services/finance/canonical/__tests__/kpiComputeService.pg.test.ts > WP-D04 kpiComputeService — real PostgreSQL known-answer test > negative denominator — explicit quality_flag, never a misleading bare number > DEBT_TO_EQUITY (SHOW_WITH_FLAG) with negative equity: keeps the correctly-signed value AND sets quality_flag=NEGATIVE_DENOMINATOR
+2026-08-12 23:33:05:335 [32minfo[39m: [32m[Postgres] Verifying/Creating Indexes...[39m
+
+ ✓ src/services/finance/canonical/__tests__/kpiComputeService.pg.test.ts > WP-D04 kpiComputeService — real PostgreSQL known-answer test > negative denominator — explicit quality_flag, never a misleading bare number > DEBT_TO_EQUITY (SHOW_WITH_FLAG) with negative equity: keeps the correctly-signed value AND sets quality_flag=NEGATIVE_DENOMINATOR 179ms
+ ✓ src/services/finance/canonical/__tests__/kpiComputeService.pg.test.ts > WP-D04 kpiComputeService — real PostgreSQL known-answer test > negative denominator — explicit quality_flag, never a misleading bare number > GROSS_MARGIN_PCT (FORCE_NA) with negative revenue: NOT_APPLICABLE, quality_flag stays NULL (a policy decision, not a computed error) 119ms
+stdout | src/services/finance/canonical/__tests__/kpiComputeService.pg.test.ts > WP-D04 kpiComputeService — real PostgreSQL known-answer test > readiness gate + DRAFT -> READY_FOR_REVIEW after a successful compute > once the source Statement Pack is APPROVED and every selected KPI computed, the Analysis reaches READY_FOR_REVIEW
+2026-08-12 23:33:05:335 [37mdebug[39m: [37m[Postgres] Skipping created_by index on webhooks: column "created_by" does not exist[39m
+
+stdout | src/services/finance/canonical/__tests__/kpiComputeService.pg.test.ts > WP-D04 kpiComputeService — real PostgreSQL known-answer test > readiness gate + DRAFT -> READY_FOR_REVIEW after a successful compute > once the source Statement Pack is APPROVED and every selected KPI computed, the Analysis reaches READY_FOR_REVIEW
+2026-08-12 23:33:05:335 [32minfo[39m: [32m[Postgres] Schema Check Complete.[39m
+
+stdout | src/services/finance/canonical/__tests__/kpiComputeService.pg.test.ts > WP-D04 kpiComputeService — real PostgreSQL known-answer test > readiness gate + DRAFT -> READY_FOR_REVIEW after a successful compute > once the source Statement Pack is APPROVED and every selected KPI computed, the Analysis reaches READY_FOR_REVIEW
+2026-08-12 23:33:05:335 [32minfo[39m: [32m[Postgres] Verified table exists: organizations[39m
+
+stdout | src/services/finance/canonical/__tests__/kpiComputeService.pg.test.ts > WP-D04 kpiComputeService — real PostgreSQL known-answer test > readiness gate + DRAFT -> READY_FOR_REVIEW after a successful compute > once the source Statement Pack is APPROVED and every selected KPI computed, the Analysis reaches READY_FOR_REVIEW
+2026-08-12 23:33:05:335 [32minfo[39m: [32m[Postgres] Verified table exists: users[39m
+
+stdout | src/services/finance/canonical/__tests__/kpiComputeService.pg.test.ts > WP-D04 kpiComputeService — real PostgreSQL known-answer test > readiness gate + DRAFT -> READY_FOR_REVIEW after a successful compute > once the source Statement Pack is APPROVED and every selected KPI computed, the Analysis reaches READY_FOR_REVIEW
+2026-08-12 23:33:05:335 [32minfo[39m: [32m[Postgres] Verified table exists: sessions[39m
+
+stdout | src/services/finance/canonical/__tests__/kpiComputeService.pg.test.ts > WP-D04 kpiComputeService — real PostgreSQL known-answer test > readiness gate + DRAFT -> READY_FOR_REVIEW after a successful compute > once the source Statement Pack is APPROVED and every selected KPI computed, the Analysis reaches READY_FOR_REVIEW
+2026-08-12 23:33:05:335 [32minfo[39m: [32m[Postgres] Verified table exists: projects[39m
+
+stdout | src/services/finance/canonical/__tests__/kpiComputeService.pg.test.ts > WP-D04 kpiComputeService — real PostgreSQL known-answer test > readiness gate + DRAFT -> READY_FOR_REVIEW after a successful compute > once the source Statement Pack is APPROVED and every selected KPI computed, the Analysis reaches READY_FOR_REVIEW
+2026-08-12 23:33:05:335 [32minfo[39m: [32m[Postgres] Verified table exists: tasks[39m
+
+stdout | src/services/finance/canonical/__tests__/kpiComputeService.pg.test.ts > WP-D04 kpiComputeService — real PostgreSQL known-answer test > readiness gate + DRAFT -> READY_FOR_REVIEW after a successful compute > once the source Statement Pack is APPROVED and every selected KPI computed, the Analysis reaches READY_FOR_REVIEW
+2026-08-12 23:33:05:335 [32minfo[39m: [32m[Postgres] Verified table exists: teams[39m
+
+stdout | src/services/finance/canonical/__tests__/kpiComputeService.pg.test.ts > WP-D04 kpiComputeService — real PostgreSQL known-answer test > readiness gate + DRAFT -> READY_FOR_REVIEW after a successful compute > once the source Statement Pack is APPROVED and every selected KPI computed, the Analysis reaches READY_FOR_REVIEW
+2026-08-12 23:33:05:335 [32minfo[39m: [32m[Postgres] Verified table exists: invitations[39m
+
+stdout | src/services/finance/canonical/__tests__/kpiComputeService.pg.test.ts > WP-D04 kpiComputeService — real PostgreSQL known-answer test > readiness gate + DRAFT -> READY_FOR_REVIEW after a successful compute > once the source Statement Pack is APPROVED and every selected KPI computed, the Analysis reaches READY_FOR_REVIEW
+2026-08-12 23:33:05:335 [32minfo[39m: [32m[Postgres] Verified table exists: notifications[39m
+
+stdout | src/services/finance/canonical/__tests__/kpiComputeService.pg.test.ts > WP-D04 kpiComputeService — real PostgreSQL known-answer test > readiness gate + DRAFT -> READY_FOR_REVIEW after a successful compute > once the source Statement Pack is APPROVED and every selected KPI computed, the Analysis reaches READY_FOR_REVIEW
+2026-08-12 23:33:05:335 [32minfo[39m: [32m[Postgres] Verified table exists: settings[39m
+
+stdout | src/services/finance/canonical/__tests__/kpiComputeService.pg.test.ts > WP-D04 kpiComputeService — real PostgreSQL known-answer test > readiness gate + DRAFT -> READY_FOR_REVIEW after a successful compute > once the source Statement Pack is APPROVED and every selected KPI computed, the Analysis reaches READY_FOR_REVIEW
+2026-08-12 23:33:05:335 [32minfo[39m: [32m[Postgres] Schema initialization completed successfully[39m
+
+ ✓ src/services/finance/canonical/__tests__/kpiComputeService.pg.test.ts > WP-D04 kpiComputeService — real PostgreSQL known-answer test > readiness gate + DRAFT -> READY_FOR_REVIEW after a successful compute > once the source Statement Pack is APPROVED and every selected KPI computed, the Analysis reaches READY_FOR_REVIEW 314ms
+ ✓ src/services/finance/canonical/__tests__/kpiComputeService.pg.test.ts > WP-D04 kpiComputeService — real PostgreSQL known-answer test > RC-04 fix — sign_convention=CONTRA is applied on read, so DIO/DPO compute on an as-filed pack > DIO and DPO compute from the real Apator FY2024 pack whose COGS is stored as filed (−913 065, CONTRA) 89ms
+ ✓ src/services/finance/canonical/__tests__/kpiComputeService.pg.test.ts > WP-D04 kpiComputeService — real PostgreSQL known-answer test > RC-04 fix — sign_convention=CONTRA is applied on read, so DIO/DPO compute on an as-filed pack > a NATURAL-signed pack is unaffected: the same Apator figures with a positive COGS give identical DIO/DPO 192ms
+ ✓ src/services/finance/canonical/__tests__/kpiComputeService.pg.test.ts > WP-D04 kpiComputeService — real PostgreSQL known-answer test > P1 fix — NA is reachable end-to-end (missing/zero denominator), distinguishable from a real computed PRESENT_ZERO > CURRENT_LIABILITIES cell absent (MISSING denominator) -> value_status=NA with a DENOMINATOR_MISSING reason code, never MISSING and never a fabricated number 44ms
+ ✓ src/services/finance/canonical/__tests__/kpiComputeService.pg.test.ts > WP-D04 kpiComputeService — real PostgreSQL known-answer test > P1 fix — NA is reachable end-to-end (missing/zero denominator), distinguishable from a real computed PRESENT_ZERO > CURRENT_LIABILITIES=0 (zero denominator) -> value_status=NA with a DIVISION_BY_ZERO reason code, never a silent zero and never NOT_APPLICABLE (the pre-fix behavior) 192ms
+ ✓ src/services/finance/canonical/__tests__/kpiComputeService.pg.test.ts > WP-D04 kpiComputeService — real PostgreSQL known-answer test > P1 fix — NA is reachable end-to-end (missing/zero denominator), distinguishable from a real computed PRESENT_ZERO > a REAL computed zero (CURRENT_ASSETS=0, healthy nonzero CURRENT_LIABILITIES) -> value_status=PRESENT_ZERO, value_decimal=0 — reliably distinguishable from the NA-by-zero-denominator case above 58ms
+
+ Test Files  1 passed (1)
+      Tests  10 passed (10)
+   Start at  23:33:02
+   Duration  3.85s (transform 912ms, setup 0ms, import 297ms, tests 2.84s, environment 0ms)
+
+EXIT[src/services/finance/canonical/__tests__/kpiComputeService.pg.test.ts]=0
+=== src/services/finance/canonical/__tests__/perfSlo.pg.test.ts (db=gate_final_iso_6) ===
+
+ RUN  v4.1.8 /Users/piotrwisniewski/consultify-wt/fv3-product/server
+
+stdout | src/services/finance/canonical/__tests__/perfSlo.pg.test.ts > W9-D — compute performance baseline (real PostgreSQL)
+2026-08-12 23:33:16:3316 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-08-12 23:33:16:3316 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-08-12 23:33:16:3316 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-08-12 23:33:16:3316 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-08-12 23:33:16:3316 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | src/services/finance/canonical/__tests__/perfSlo.pg.test.ts > W9-D — compute performance baseline (real PostgreSQL)
+2026-08-12 23:33:16:3316 [32minfo[39m: [32m[Postgres] Initializing connection pool...[39m
+2026-08-12 23:33:16:3316 [32minfo[39m: [32m[DB Config] DATABASE_URL: SET[39m
+2026-08-12 23:33:16:3316 [32minfo[39m: [32m[DB Config] DB_TYPE: postgres[39m
+2026-08-12 23:33:16:3316 [32minfo[39m: [32m[DB Config] Using PostgreSQL[39m
+2026-08-12 23:33:16:3316 [32minfo[39m: [32m[Postgres] Config:[39m {"host":"127.0.0.1","database":"gate_final_iso_6","max":10}
+2026-08-12 23:33:16:3316 [32minfo[39m: [32m[Postgres] Checking/Initializing Schema...[39m
+2026-08-12 23:33:16:3316 [32minfo[39m: [32m[Postgres] Testing connection (attempt 1/3)...[39m
+
+stdout | src/services/finance/canonical/__tests__/perfSlo.pg.test.ts > W9-D — compute performance baseline (real PostgreSQL)
+2026-08-12 23:33:16:3316 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | src/services/finance/canonical/__tests__/perfSlo.pg.test.ts > W9-D — compute performance baseline (real PostgreSQL)
+2026-08-12 23:33:16:3316 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | src/services/finance/canonical/__tests__/perfSlo.pg.test.ts > W9-D — compute performance baseline (real PostgreSQL)
+2026-08-12 23:33:16:3316 [32minfo[39m: [32m[Postgres] Connection test successful (PostgreSQL verified):[39m {"current_time":"2026-08-12T21:33:16.840Z"}
+
+stdout | src/services/finance/canonical/__tests__/perfSlo.pg.test.ts > W9-D — compute performance baseline (real PostgreSQL) > D1 — Baseline compute (monthly, 12-month GoldCo horizon, real circularity solver)
+2026-08-12 23:33:17:3317 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | src/services/finance/canonical/__tests__/perfSlo.pg.test.ts > W9-D — compute performance baseline (real PostgreSQL) > D1 — Baseline compute (monthly, 12-month GoldCo horizon, real circularity solver)
+2026-08-12 23:33:17:3317 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | src/services/finance/canonical/__tests__/perfSlo.pg.test.ts > W9-D — compute performance baseline (real PostgreSQL) > D1 — Baseline compute (monthly, 12-month GoldCo horizon, real circularity solver)
+2026-08-12 23:33:17:3317 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | src/services/finance/canonical/__tests__/perfSlo.pg.test.ts > W9-D — compute performance baseline (real PostgreSQL) > D1 — Baseline compute (monthly, 12-month GoldCo horizon, real circularity solver)
+2026-08-12 23:33:17:3317 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | src/services/finance/canonical/__tests__/perfSlo.pg.test.ts > W9-D — compute performance baseline (real PostgreSQL) > D1 — Baseline compute (monthly, 12-month GoldCo horizon, real circularity solver)
+2026-08-12 23:33:17:3317 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | src/services/finance/canonical/__tests__/perfSlo.pg.test.ts > W9-D — compute performance baseline (real PostgreSQL) > D1 — Baseline compute (monthly, 12-month GoldCo horizon, real circularity solver)
+2026-08-12 23:33:17:3317 [37mdebug[39m: [37m[Postgres] subscription_plans normalize legacy nulls: column "is_active" does not exist[39m
+
+stdout | src/services/finance/canonical/__tests__/perfSlo.pg.test.ts > W9-D — compute performance baseline (real PostgreSQL) > D1 — Baseline compute (monthly, 12-month GoldCo horizon, real circularity solver)
+2026-08-12 23:33:17:3317 [32minfo[39m: [32m[Postgres] Verifying/Creating Indexes...[39m
+
+stdout | src/services/finance/canonical/__tests__/perfSlo.pg.test.ts > W9-D — compute performance baseline (real PostgreSQL) > D1 — Baseline compute (monthly, 12-month GoldCo horizon, real circularity solver)
+2026-08-12 23:33:17:3317 [37mdebug[39m: [37m[Postgres] Skipping created_by index on webhooks: column "created_by" does not exist[39m
+
+stdout | src/services/finance/canonical/__tests__/perfSlo.pg.test.ts > W9-D — compute performance baseline (real PostgreSQL) > D1 — Baseline compute (monthly, 12-month GoldCo horizon, real circularity solver)
+2026-08-12 23:33:17:3317 [32minfo[39m: [32m[Postgres] Schema Check Complete.[39m
+
+stdout | src/services/finance/canonical/__tests__/perfSlo.pg.test.ts > W9-D — compute performance baseline (real PostgreSQL) > D1 — Baseline compute (monthly, 12-month GoldCo horizon, real circularity solver)
+2026-08-12 23:33:17:3317 [32minfo[39m: [32m[Postgres] Verified table exists: organizations[39m
+
+stdout | src/services/finance/canonical/__tests__/perfSlo.pg.test.ts > W9-D — compute performance baseline (real PostgreSQL) > D1 — Baseline compute (monthly, 12-month GoldCo horizon, real circularity solver)
+2026-08-12 23:33:17:3317 [32minfo[39m: [32m[Postgres] Verified table exists: users[39m
+
+stdout | src/services/finance/canonical/__tests__/perfSlo.pg.test.ts > W9-D — compute performance baseline (real PostgreSQL) > D1 — Baseline compute (monthly, 12-month GoldCo horizon, real circularity solver)
+2026-08-12 23:33:17:3317 [32minfo[39m: [32m[Postgres] Verified table exists: sessions[39m
+
+stdout | src/services/finance/canonical/__tests__/perfSlo.pg.test.ts > W9-D — compute performance baseline (real PostgreSQL) > D1 — Baseline compute (monthly, 12-month GoldCo horizon, real circularity solver)
+2026-08-12 23:33:17:3317 [32minfo[39m: [32m[Postgres] Verified table exists: projects[39m
+
+stdout | src/services/finance/canonical/__tests__/perfSlo.pg.test.ts > W9-D — compute performance baseline (real PostgreSQL) > D1 — Baseline compute (monthly, 12-month GoldCo horizon, real circularity solver)
+2026-08-12 23:33:17:3317 [32minfo[39m: [32m[Postgres] Verified table exists: tasks[39m
+
+stdout | src/services/finance/canonical/__tests__/perfSlo.pg.test.ts > W9-D — compute performance baseline (real PostgreSQL) > D1 — Baseline compute (monthly, 12-month GoldCo horizon, real circularity solver)
+2026-08-12 23:33:17:3317 [32minfo[39m: [32m[Postgres] Verified table exists: teams[39m
+
+stdout | src/services/finance/canonical/__tests__/perfSlo.pg.test.ts > W9-D — compute performance baseline (real PostgreSQL) > D1 — Baseline compute (monthly, 12-month GoldCo horizon, real circularity solver)
+2026-08-12 23:33:17:3317 [32minfo[39m: [32m[Postgres] Verified table exists: invitations[39m
+
+stdout | src/services/finance/canonical/__tests__/perfSlo.pg.test.ts > W9-D — compute performance baseline (real PostgreSQL) > D1 — Baseline compute (monthly, 12-month GoldCo horizon, real circularity solver)
+2026-08-12 23:33:17:3317 [32minfo[39m: [32m[Postgres] Verified table exists: notifications[39m
+
+stdout | src/services/finance/canonical/__tests__/perfSlo.pg.test.ts > W9-D — compute performance baseline (real PostgreSQL) > D1 — Baseline compute (monthly, 12-month GoldCo horizon, real circularity solver)
+2026-08-12 23:33:17:3317 [32minfo[39m: [32m[Postgres] Verified table exists: settings[39m
+
+stdout | src/services/finance/canonical/__tests__/perfSlo.pg.test.ts > W9-D — compute performance baseline (real PostgreSQL) > D1 — Baseline compute (monthly, 12-month GoldCo horizon, real circularity solver)
+2026-08-12 23:33:17:3317 [32minfo[39m: [32m[Postgres] Schema initialization completed successfully[39m
+
+stdout | src/services/finance/canonical/__tests__/perfSlo.pg.test.ts > W9-D — compute performance baseline (real PostgreSQL) > D1 — Baseline compute (monthly, 12-month GoldCo horizon, real circularity solver)
+2026-08-12 23:33:17:3317 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+
+[W9-D MEASURED] D1 Baseline compute — 12 monthly periods, 372 output rows/run, 12 periods
+    n=12  p50=497.72 ms  p95=553.12 ms  min=226.44 ms  max=553.12 ms  spread=65.63% of p50
+    samples(ms, sorted)=[226.44, 282.33, 447.67, 470.98, 485.41, 497.72, 503.11, 508.04, 538.35, 545.27, 548.18, 553.12]
+ ✓ src/services/finance/canonical/__tests__/perfSlo.pg.test.ts > W9-D — compute performance baseline (real PostgreSQL) > D1 — Baseline compute (monthly, 12-month GoldCo horizon, real circularity solver) 6619ms
+
+[W9-D MEASURED] D2 Analysis KPI compute — 18 of 18 catalog KPIs evaluated per run
+    n=12  p50=26.66 ms  p95=136.77 ms  min=19.33 ms  max=136.77 ms  spread=440.55% of p50
+    samples(ms, sorted)=[19.33, 20.69, 24.38, 24.52, 26.2, 26.66, 28.29, 32.61, 42.18, 70.78, 118.35, 136.77]
+ ✓ src/services/finance/canonical/__tests__/perfSlo.pg.test.ts > W9-D — compute performance baseline (real PostgreSQL) > D2 — Analysis KPI compute (full 18-indicator P0 catalog) 1399ms
+
+[W9-D MEASURED] D3a Valuation DCF/FCFF compute — 3 projection years, EV=201589069
+    n=12  p50=55.73 ms  p95=202.12 ms  min=29.76 ms  max=202.12 ms  spread=309.27% of p50
+    samples(ms, sorted)=[29.76, 30.16, 35.86, 39.78, 41.34, 55.73, 56.13, 70.75, 79.89, 87.6, 111.02, 202.12]
+
+[W9-D MEASURED] D3b Sensitivity grid persist — 5x5 = 25 cells
+    n=12  p50=20.46 ms  p95=147.4 ms  min=11.81 ms  max=147.4 ms  spread=662.7% of p50
+    samples(ms, sorted)=[11.81, 14.12, 14.17, 14.45, 17.66, 20.46, 25.16, 34.39, 44.94, 46.23, 64.36, 147.4]
+
+[W9-D MEASURED] D3  Valuation compute WITH the 5x5 sensitivity grid (D3a + D3b)
+    n=12  p50=84.92 ms  p95=247.06 ms  min=47.82 ms  max=247.06 ms  spread=234.62% of p50
+    samples(ms, sorted)=[47.82, 50.22, 51.6, 75.73, 80.9, 84.92, 94.01, 102.05, 120.49, 157.25, 183.26, 247.06]
+ ✓ src/services/finance/canonical/__tests__/perfSlo.pg.test.ts > W9-D — compute performance baseline (real PostgreSQL) > D3 — Valuation DCF/FCFF compute plus a 5x5 sensitivity grid (25 cells) 2306ms
+ ✓ src/services/finance/canonical/__tests__/perfSlo.pg.test.ts > W9-D — compute performance baseline (real PostgreSQL) > W2 (inverted #1-3): CI regression ceilings ARE now declared in code, paired with the schema facts they replace 1ms
+ ✓ src/services/finance/canonical/__tests__/perfSlo.pg.test.ts > W9-D — compute performance baseline (real PostgreSQL) > EVIDENCE_MISSING: a PRODUCTION compute SLO is still not declared in the schema 32ms
+
+ Test Files  1 passed (1)
+      Tests  5 passed (5)
+   Start at  23:33:15
+   Duration  12.05s (transform 664ms, setup 0ms, import 97ms, tests 11.38s, environment 0ms)
+
+EXIT[src/services/finance/canonical/__tests__/perfSlo.pg.test.ts]=0
+=== src/services/finance/canonical/__tests__/statementCoverageAndJumps.pg.test.ts (db=gate_final_iso_7) ===
+
+ RUN  v4.1.8 /Users/piotrwisniewski/consultify-wt/fv3-product/server
+
+stdout | src/services/finance/canonical/__tests__/statementCoverageAndJumps.pg.test.ts > BUGFIX RC-01 / RC-05 — real Apator data, real PostgreSQL
+2026-08-12 23:33:36:3336 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-08-12 23:33:36:3336 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-08-12 23:33:36:3336 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-08-12 23:33:36:3336 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-08-12 23:33:36:3336 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | src/services/finance/canonical/__tests__/statementCoverageAndJumps.pg.test.ts > BUGFIX RC-01 / RC-05 — real Apator data, real PostgreSQL
+2026-08-12 23:33:37:3337 [32minfo[39m: [32m[Postgres] Initializing connection pool...[39m
+2026-08-12 23:33:37:3337 [32minfo[39m: [32m[DB Config] DATABASE_URL: SET[39m
+2026-08-12 23:33:37:3337 [32minfo[39m: [32m[DB Config] DB_TYPE: postgres[39m
+2026-08-12 23:33:37:3337 [32minfo[39m: [32m[DB Config] Using PostgreSQL[39m
+2026-08-12 23:33:37:3337 [32minfo[39m: [32m[Postgres] Config:[39m {"host":"127.0.0.1","database":"gate_final_iso_7","max":10}
+2026-08-12 23:33:37:3337 [32minfo[39m: [32m[Postgres] Checking/Initializing Schema...[39m
+2026-08-12 23:33:37:3337 [32minfo[39m: [32m[Postgres] Testing connection (attempt 1/3)...[39m
+
+stdout | src/services/finance/canonical/__tests__/statementCoverageAndJumps.pg.test.ts > BUGFIX RC-01 / RC-05 — real Apator data, real PostgreSQL
+2026-08-12 23:33:37:3337 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | src/services/finance/canonical/__tests__/statementCoverageAndJumps.pg.test.ts > BUGFIX RC-01 / RC-05 — real Apator data, real PostgreSQL
+2026-08-12 23:33:37:3337 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | src/services/finance/canonical/__tests__/statementCoverageAndJumps.pg.test.ts > BUGFIX RC-01 / RC-05 — real Apator data, real PostgreSQL
+2026-08-12 23:33:37:3337 [32minfo[39m: [32m[Postgres] Connection test successful (PostgreSQL verified):[39m {"current_time":"2026-08-12T21:33:37.067Z"}
+
+stdout | src/services/finance/canonical/__tests__/statementCoverageAndJumps.pg.test.ts > BUGFIX RC-01 / RC-05 — real Apator data, real PostgreSQL > RC-01 — a Statement Pack that lost most of the source statement can never report CLEAN > the real Apator PASS A shape (212 of 280 line-values with no P0 target, routed as EXCLUDE/NO_P0_CANONICAL_TARGET) is PROVISIONAL with a countable coverage exception — not CLEAN
+2026-08-12 23:33:37:3337 [37mdebug[39m: [37m[Postgres] subscription_plans normalize legacy nulls: column "is_active" does not exist[39m
+
+stdout | src/services/finance/canonical/__tests__/statementCoverageAndJumps.pg.test.ts > BUGFIX RC-01 / RC-05 — real Apator data, real PostgreSQL > RC-01 — a Statement Pack that lost most of the source statement can never report CLEAN > the real Apator PASS A shape (212 of 280 line-values with no P0 target, routed as EXCLUDE/NO_P0_CANONICAL_TARGET) is PROVISIONAL with a countable coverage exception — not CLEAN
+2026-08-12 23:33:37:3337 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | src/services/finance/canonical/__tests__/statementCoverageAndJumps.pg.test.ts > BUGFIX RC-01 / RC-05 — real Apator data, real PostgreSQL > RC-01 — a Statement Pack that lost most of the source statement can never report CLEAN > the real Apator PASS A shape (212 of 280 line-values with no P0 target, routed as EXCLUDE/NO_P0_CANONICAL_TARGET) is PROVISIONAL with a countable coverage exception — not CLEAN
+2026-08-12 23:33:38:3338 [32minfo[39m: [32m[Postgres] Verifying/Creating Indexes...[39m
+
+ ✓ src/services/finance/canonical/__tests__/statementCoverageAndJumps.pg.test.ts > BUGFIX RC-01 / RC-05 — real Apator data, real PostgreSQL > RC-01 — a Statement Pack that lost most of the source statement can never report CLEAN > the real Apator PASS A shape (212 of 280 line-values with no P0 target, routed as EXCLUDE/NO_P0_CANONICAL_TARGET) is PROVISIONAL with a countable coverage exception — not CLEAN 1036ms
+stdout | src/services/finance/canonical/__tests__/statementCoverageAndJumps.pg.test.ts > BUGFIX RC-01 / RC-05 — real Apator data, real PostgreSQL > RC-01 — a Statement Pack that lost most of the source statement can never report CLEAN > the same 212 rows arriving as UNMAPPED (no rule at all) are caught identically — the gap is coverage, not the bucket name
+2026-08-12 23:33:38:3338 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | src/services/finance/canonical/__tests__/statementCoverageAndJumps.pg.test.ts > BUGFIX RC-01 / RC-05 — real Apator data, real PostgreSQL > RC-01 — a Statement Pack that lost most of the source statement can never report CLEAN > the same 212 rows arriving as UNMAPPED (no rule at all) are caught identically — the gap is coverage, not the bucket name
+2026-08-12 23:33:38:3338 [37mdebug[39m: [37m[Postgres] Skipping created_by index on webhooks: column "created_by" does not exist[39m
+
+stdout | src/services/finance/canonical/__tests__/statementCoverageAndJumps.pg.test.ts > BUGFIX RC-01 / RC-05 — real Apator data, real PostgreSQL > RC-01 — a Statement Pack that lost most of the source statement can never report CLEAN > the same 212 rows arriving as UNMAPPED (no rule at all) are caught identically — the gap is coverage, not the bucket name
+2026-08-12 23:33:38:3338 [32minfo[39m: [32m[Postgres] Schema Check Complete.[39m
+
+stdout | src/services/finance/canonical/__tests__/statementCoverageAndJumps.pg.test.ts > BUGFIX RC-01 / RC-05 — real Apator data, real PostgreSQL > RC-01 — a Statement Pack that lost most of the source statement can never report CLEAN > the same 212 rows arriving as UNMAPPED (no rule at all) are caught identically — the gap is coverage, not the bucket name
+2026-08-12 23:33:38:3338 [32minfo[39m: [32m[Postgres] Verified table exists: organizations[39m
+
+stdout | src/services/finance/canonical/__tests__/statementCoverageAndJumps.pg.test.ts > BUGFIX RC-01 / RC-05 — real Apator data, real PostgreSQL > RC-01 — a Statement Pack that lost most of the source statement can never report CLEAN > the same 212 rows arriving as UNMAPPED (no rule at all) are caught identically — the gap is coverage, not the bucket name
+2026-08-12 23:33:38:3338 [32minfo[39m: [32m[Postgres] Verified table exists: users[39m
+
+stdout | src/services/finance/canonical/__tests__/statementCoverageAndJumps.pg.test.ts > BUGFIX RC-01 / RC-05 — real Apator data, real PostgreSQL > RC-01 — a Statement Pack that lost most of the source statement can never report CLEAN > the same 212 rows arriving as UNMAPPED (no rule at all) are caught identically — the gap is coverage, not the bucket name
+2026-08-12 23:33:38:3338 [32minfo[39m: [32m[Postgres] Verified table exists: sessions[39m
+
+stdout | src/services/finance/canonical/__tests__/statementCoverageAndJumps.pg.test.ts > BUGFIX RC-01 / RC-05 — real Apator data, real PostgreSQL > RC-01 — a Statement Pack that lost most of the source statement can never report CLEAN > the same 212 rows arriving as UNMAPPED (no rule at all) are caught identically — the gap is coverage, not the bucket name
+2026-08-12 23:33:38:3338 [32minfo[39m: [32m[Postgres] Verified table exists: projects[39m
+
+stdout | src/services/finance/canonical/__tests__/statementCoverageAndJumps.pg.test.ts > BUGFIX RC-01 / RC-05 — real Apator data, real PostgreSQL > RC-01 — a Statement Pack that lost most of the source statement can never report CLEAN > the same 212 rows arriving as UNMAPPED (no rule at all) are caught identically — the gap is coverage, not the bucket name
+2026-08-12 23:33:38:3338 [32minfo[39m: [32m[Postgres] Verified table exists: tasks[39m
+
+stdout | src/services/finance/canonical/__tests__/statementCoverageAndJumps.pg.test.ts > BUGFIX RC-01 / RC-05 — real Apator data, real PostgreSQL > RC-01 — a Statement Pack that lost most of the source statement can never report CLEAN > the same 212 rows arriving as UNMAPPED (no rule at all) are caught identically — the gap is coverage, not the bucket name
+2026-08-12 23:33:38:3338 [32minfo[39m: [32m[Postgres] Verified table exists: teams[39m
+
+stdout | src/services/finance/canonical/__tests__/statementCoverageAndJumps.pg.test.ts > BUGFIX RC-01 / RC-05 — real Apator data, real PostgreSQL > RC-01 — a Statement Pack that lost most of the source statement can never report CLEAN > the same 212 rows arriving as UNMAPPED (no rule at all) are caught identically — the gap is coverage, not the bucket name
+2026-08-12 23:33:38:3338 [32minfo[39m: [32m[Postgres] Verified table exists: invitations[39m
+
+stdout | src/services/finance/canonical/__tests__/statementCoverageAndJumps.pg.test.ts > BUGFIX RC-01 / RC-05 — real Apator data, real PostgreSQL > RC-01 — a Statement Pack that lost most of the source statement can never report CLEAN > the same 212 rows arriving as UNMAPPED (no rule at all) are caught identically — the gap is coverage, not the bucket name
+2026-08-12 23:33:38:3338 [32minfo[39m: [32m[Postgres] Verified table exists: notifications[39m
+
+stdout | src/services/finance/canonical/__tests__/statementCoverageAndJumps.pg.test.ts > BUGFIX RC-01 / RC-05 — real Apator data, real PostgreSQL > RC-01 — a Statement Pack that lost most of the source statement can never report CLEAN > the same 212 rows arriving as UNMAPPED (no rule at all) are caught identically — the gap is coverage, not the bucket name
+2026-08-12 23:33:38:3338 [32minfo[39m: [32m[Postgres] Verified table exists: settings[39m
+
+stdout | src/services/finance/canonical/__tests__/statementCoverageAndJumps.pg.test.ts > BUGFIX RC-01 / RC-05 — real Apator data, real PostgreSQL > RC-01 — a Statement Pack that lost most of the source statement can never report CLEAN > the same 212 rows arriving as UNMAPPED (no rule at all) are caught identically — the gap is coverage, not the bucket name
+2026-08-12 23:33:38:3338 [32minfo[39m: [32m[Postgres] Schema initialization completed successfully[39m
+
+ ✓ src/services/finance/canonical/__tests__/statementCoverageAndJumps.pg.test.ts > BUGFIX RC-01 / RC-05 — real Apator data, real PostgreSQL > RC-01 — a Statement Pack that lost most of the source statement can never report CLEAN > the same 212 rows arriving as UNMAPPED (no rule at all) are caught identically — the gap is coverage, not the bucket name 747ms
+ ✓ src/services/finance/canonical/__tests__/statementCoverageAndJumps.pg.test.ts > BUGFIX RC-01 / RC-05 — real Apator data, real PostgreSQL > RC-01 — a Statement Pack that lost most of the source statement can never report CLEAN > does not over-fire: a fully mapped pack plus a genuine analyst exclusion is still CLEAN 42ms
+ ✓ src/services/finance/canonical/__tests__/statementCoverageAndJumps.pg.test.ts > BUGFIX RC-01 / RC-05 — real Apator data, real PostgreSQL > RC-05 — an implausible year-over-year move on a material balance-sheet line is flagged > Apator trade payables 93 591 -> 722 tys. PLN (-99.2%) raises a WARNING exception and never blocks the import 165ms
+ ✓ src/services/finance/canonical/__tests__/statementCoverageAndJumps.pg.test.ts > BUGFIX RC-01 / RC-05 — real Apator data, real PostgreSQL > RC-05 — an implausible year-over-year move on a material balance-sheet line is flagged > is idempotent — re-running reconciliation on the same version does not duplicate the WARNING 96ms
+
+ Test Files  1 passed (1)
+      Tests  5 passed (5)
+   Start at  23:33:35
+   Duration  3.69s (transform 611ms, setup 0ms, import 135ms, tests 2.93s, environment 0ms)
+
+EXIT[src/services/finance/canonical/__tests__/statementCoverageAndJumps.pg.test.ts]=0
+=== src/services/finance/canonical/__tests__/w2FalseSuccessW9B2.pg.test.ts (db=gate_final_iso_8) ===
+
+ RUN  v4.1.8 /Users/piotrwisniewski/consultify-wt/fv3-product/server
+
+stdout | src/services/finance/canonical/__tests__/w2FalseSuccessW9B2.pg.test.ts > W2 — false success (W9-B-2): completeJobSuccess() NOT_RUNNING must not report success (real PostgreSQL)
+2026-08-12 23:34:06:346 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-08-12 23:34:06:346 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-08-12 23:34:06:346 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-08-12 23:34:06:346 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-08-12 23:34:06:346 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | src/services/finance/canonical/__tests__/w2FalseSuccessW9B2.pg.test.ts > W2 — false success (W9-B-2): completeJobSuccess() NOT_RUNNING must not report success (real PostgreSQL)
+2026-08-12 23:34:07:347 [32minfo[39m: [32m[Postgres] Initializing connection pool...[39m
+2026-08-12 23:34:07:347 [32minfo[39m: [32m[DB Config] DATABASE_URL: SET[39m
+2026-08-12 23:34:07:347 [32minfo[39m: [32m[DB Config] DB_TYPE: postgres[39m
+2026-08-12 23:34:07:347 [32minfo[39m: [32m[DB Config] Using PostgreSQL[39m
+2026-08-12 23:34:07:347 [32minfo[39m: [32m[Postgres] Config:[39m {"host":"127.0.0.1","database":"gate_final_iso_8","max":10}
+2026-08-12 23:34:07:347 [32minfo[39m: [32m[Postgres] Checking/Initializing Schema...[39m
+2026-08-12 23:34:07:347 [32minfo[39m: [32m[Postgres] Testing connection (attempt 1/3)...[39m
+
+stdout | src/services/finance/canonical/__tests__/w2FalseSuccessW9B2.pg.test.ts > W2 — false success (W9-B-2): completeJobSuccess() NOT_RUNNING must not report success (real PostgreSQL)
+2026-08-12 23:34:07:347 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | src/services/finance/canonical/__tests__/w2FalseSuccessW9B2.pg.test.ts > W2 — false success (W9-B-2): completeJobSuccess() NOT_RUNNING must not report success (real PostgreSQL)
+2026-08-12 23:34:07:347 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | src/services/finance/canonical/__tests__/w2FalseSuccessW9B2.pg.test.ts > W2 — false success (W9-B-2): completeJobSuccess() NOT_RUNNING must not report success (real PostgreSQL)
+2026-08-12 23:34:07:347 [32minfo[39m: [32m[Postgres] Connection test successful (PostgreSQL verified):[39m {"current_time":"2026-08-12T21:34:07.769Z"}
+
+stdout | src/services/finance/canonical/__tests__/w2FalseSuccessW9B2.pg.test.ts > W2 — false success (W9-B-2): completeJobSuccess() NOT_RUNNING must not report success (real PostgreSQL)
+2026-08-12 23:34:08:348 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | src/services/finance/canonical/__tests__/w2FalseSuccessW9B2.pg.test.ts > W2 — false success (W9-B-2): completeJobSuccess() NOT_RUNNING must not report success (real PostgreSQL)
+2026-08-12 23:34:08:348 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | src/services/finance/canonical/__tests__/w2FalseSuccessW9B2.pg.test.ts > W2 — false success (W9-B-2): completeJobSuccess() NOT_RUNNING must not report success (real PostgreSQL)
+2026-08-12 23:34:08:348 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | src/services/finance/canonical/__tests__/w2FalseSuccessW9B2.pg.test.ts > W2 — false success (W9-B-2): completeJobSuccess() NOT_RUNNING must not report success (real PostgreSQL)
+2026-08-12 23:34:08:348 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | src/services/finance/canonical/__tests__/w2FalseSuccessW9B2.pg.test.ts > W2 — false success (W9-B-2): completeJobSuccess() NOT_RUNNING must not report success (real PostgreSQL)
+2026-08-12 23:34:08:348 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | src/services/finance/canonical/__tests__/w2FalseSuccessW9B2.pg.test.ts > W2 — false success (W9-B-2): completeJobSuccess() NOT_RUNNING must not report success (real PostgreSQL)
+2026-08-12 23:34:08:348 [37mdebug[39m: [37m[Postgres] subscription_plans normalize legacy nulls: column "is_active" does not exist[39m
+
+stdout | src/services/finance/canonical/__tests__/w2FalseSuccessW9B2.pg.test.ts > W2 — false success (W9-B-2): completeJobSuccess() NOT_RUNNING must not report success (real PostgreSQL)
+2026-08-12 23:34:08:348 [32minfo[39m: [32m[Postgres] Verifying/Creating Indexes...[39m
+
+stdout | src/services/finance/canonical/__tests__/w2FalseSuccessW9B2.pg.test.ts > W2 — false success (W9-B-2): completeJobSuccess() NOT_RUNNING must not report success (real PostgreSQL)
+2026-08-12 23:34:08:348 [37mdebug[39m: [37m[Postgres] Skipping created_by index on webhooks: column "created_by" does not exist[39m
+
+stdout | src/services/finance/canonical/__tests__/w2FalseSuccessW9B2.pg.test.ts > W2 — false success (W9-B-2): completeJobSuccess() NOT_RUNNING must not report success (real PostgreSQL)
+2026-08-12 23:34:08:348 [32minfo[39m: [32m[Postgres] Schema Check Complete.[39m
+
+stdout | src/services/finance/canonical/__tests__/w2FalseSuccessW9B2.pg.test.ts > W2 — false success (W9-B-2): completeJobSuccess() NOT_RUNNING must not report success (real PostgreSQL)
+2026-08-12 23:34:08:348 [32minfo[39m: [32m[Postgres] Verified table exists: organizations[39m
+
+stdout | src/services/finance/canonical/__tests__/w2FalseSuccessW9B2.pg.test.ts > W2 — false success (W9-B-2): completeJobSuccess() NOT_RUNNING must not report success (real PostgreSQL)
+2026-08-12 23:34:08:348 [32minfo[39m: [32m[Postgres] Verified table exists: users[39m
+
+stdout | src/services/finance/canonical/__tests__/w2FalseSuccessW9B2.pg.test.ts > W2 — false success (W9-B-2): completeJobSuccess() NOT_RUNNING must not report success (real PostgreSQL)
+2026-08-12 23:34:08:348 [32minfo[39m: [32m[Postgres] Verified table exists: sessions[39m
+
+stdout | src/services/finance/canonical/__tests__/w2FalseSuccessW9B2.pg.test.ts > W2 — false success (W9-B-2): completeJobSuccess() NOT_RUNNING must not report success (real PostgreSQL)
+2026-08-12 23:34:08:348 [32minfo[39m: [32m[Postgres] Verified table exists: projects[39m
+
+stdout | src/services/finance/canonical/__tests__/w2FalseSuccessW9B2.pg.test.ts > W2 — false success (W9-B-2): completeJobSuccess() NOT_RUNNING must not report success (real PostgreSQL)
+2026-08-12 23:34:08:348 [32minfo[39m: [32m[Postgres] Verified table exists: tasks[39m
+
+stdout | src/services/finance/canonical/__tests__/w2FalseSuccessW9B2.pg.test.ts > W2 — false success (W9-B-2): completeJobSuccess() NOT_RUNNING must not report success (real PostgreSQL)
+2026-08-12 23:34:08:348 [32minfo[39m: [32m[Postgres] Verified table exists: teams[39m
+
+stdout | src/services/finance/canonical/__tests__/w2FalseSuccessW9B2.pg.test.ts > W2 — false success (W9-B-2): completeJobSuccess() NOT_RUNNING must not report success (real PostgreSQL)
+2026-08-12 23:34:08:348 [32minfo[39m: [32m[Postgres] Verified table exists: invitations[39m
+
+stdout | src/services/finance/canonical/__tests__/w2FalseSuccessW9B2.pg.test.ts > W2 — false success (W9-B-2): completeJobSuccess() NOT_RUNNING must not report success (real PostgreSQL)
+2026-08-12 23:34:08:348 [32minfo[39m: [32m[Postgres] Verified table exists: notifications[39m
+
+stdout | src/services/finance/canonical/__tests__/w2FalseSuccessW9B2.pg.test.ts > W2 — false success (W9-B-2): completeJobSuccess() NOT_RUNNING must not report success (real PostgreSQL)
+2026-08-12 23:34:08:348 [32minfo[39m: [32m[Postgres] Verified table exists: settings[39m
+
+stdout | src/services/finance/canonical/__tests__/w2FalseSuccessW9B2.pg.test.ts > W2 — false success (W9-B-2): completeJobSuccess() NOT_RUNNING must not report success (real PostgreSQL)
+2026-08-12 23:34:08:348 [32minfo[39m: [32m[Postgres] Schema initialization completed successfully[39m
+
+stdout | src/services/finance/canonical/__tests__/w2FalseSuccessW9B2.pg.test.ts > W2 — false success (W9-B-2): completeJobSuccess() NOT_RUNNING must not report success (real PostgreSQL) > baselineComputeService.runBaselineCompute() > job cancelled between claim() and commit -> JOB_NOT_RUNNING, NOT ok:true, and no compute_job_outputs row
+2026-08-12 23:34:08:348 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+ ✓ src/services/finance/canonical/__tests__/w2FalseSuccessW9B2.pg.test.ts > W2 — false success (W9-B-2): completeJobSuccess() NOT_RUNNING must not report success (real PostgreSQL) > baselineComputeService.runBaselineCompute() > job cancelled between claim() and commit -> JOB_NOT_RUNNING, NOT ok:true, and no compute_job_outputs row 699ms
+ ✓ src/services/finance/canonical/__tests__/w2FalseSuccessW9B2.pg.test.ts > W2 — false success (W9-B-2): completeJobSuccess() NOT_RUNNING must not report success (real PostgreSQL) > kpiComputeService.computeAnalysisKpis() > job cancelled between claim() and commit -> JOB_NOT_RUNNING, NOT ok:true, and no compute_job_outputs row 56ms
+ ✓ src/services/finance/canonical/__tests__/w2FalseSuccessW9B2.pg.test.ts > W2 — false success (W9-B-2): completeJobSuccess() NOT_RUNNING must not report success (real PostgreSQL) > predictionComputeService.runPredictionCompute() — STANDARD_BASE branch (runStandardBase) > job cancelled between claim() and commit -> JOB_NOT_RUNNING, NOT ok:true, and no compute_job_outputs row 86ms
+ ✓ src/services/finance/canonical/__tests__/w2FalseSuccessW9B2.pg.test.ts > W2 — false success (W9-B-2): completeJobSuccess() NOT_RUNNING must not report success (real PostgreSQL) > valuationComputeService.runDcfFcffValuation() > job cancelled between claim() and commit -> JOB_NOT_RUNNING, NOT ok:true (was: canonical instance — completed.ok checked but ok:true returned anyway), no compute_job_outputs row 84ms
+ ✓ src/services/finance/canonical/__tests__/w2FalseSuccessW9B2.pg.test.ts > W2 — false success (W9-B-2): completeJobSuccess() NOT_RUNNING must not report success (real PostgreSQL) > OUTPUT_ALREADY_COMMITTED is treated as idempotent-safe, NOT as a failure (unlike NOT_RUNNING) > baselineComputeService: a pre-existing compute_job_outputs row for the SAME job_id (job still running) does not fail the call 480ms
+
+ Test Files  1 passed (1)
+      Tests  5 passed (5)
+   Start at  23:34:05
+   Duration  4.28s (transform 991ms, setup 0ms, import 186ms, tests 3.50s, environment 0ms)
+
+EXIT=0

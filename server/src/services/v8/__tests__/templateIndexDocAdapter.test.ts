@@ -181,8 +181,9 @@ describe('originSummary.template identity block', () => {
       orphaned: false,
       scope: 'organization',
       status: 'draft',
-      source: 'canonical',
     });
+    // `source` is derived from `originRuntime` inside the builder — passing it in
+    // was dead input, the assertion below is what actually proves the derivation.
     expect(workbookBuilder.source).toBe('canonical');
     expect(workbookBuilder.legacy).toBe(false);
 

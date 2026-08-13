@@ -1,0 +1,41 @@
+=== batch aa (7 files) ===
+ FAIL  src/routes/v8/finance-v2/__tests__/baseline.routes.pg.test.ts > Finance v2 Pakiet B2 — baseline (real HTTP + real PostgreSQL) > POST /baseline/:id/compute — real happy path (GoldCo fixture, real circularity solve) > converges to a real EV/output row set — {jobId, jobStatus, periodsComputed:12, monthlyResults}; SQL confirms 372 finance_baseline_outputs rows and finance_business_versions state
+ FAIL  src/routes/v8/finance-v2/__tests__/baseline.routes.pg.test.ts > Finance v2 Pakiet B2 — baseline (real HTTP + real PostgreSQL) > POST /baseline/:id/compute — real happy path (GoldCo fixture, real circularity solve) > CROSS-TENANT: org B computing org A's real Baseline Model business_version_id -> 404, zero finance_baseline_outputs rows for org B
+ Test Files  1 failed | 6 passed (7)
+      Tests  2 failed | 92 passed (94)
+EXIT[aa]=1
+=== batch ab (7 files) ===
+ Test Files  7 passed (7)
+      Tests  53 passed (53)
+EXIT[ab]=0
+=== batch ac (7 files) ===
+ Test Files  7 passed (7)
+      Tests  57 passed (57)
+EXIT[ac]=0
+=== batch ad (7 files) ===
+ FAIL  src/services/finance/canonical/__tests__/coldReopen.pg.test.ts > Finance v3 cold reopen — FC-05.8 / FC-07.9 / FC-12.4
+ Test Files  1 failed | 6 passed (7)
+      Tests  81 passed | 4 skipped (85)
+EXIT[ad]=1
+=== batch ae (7 files) ===
+ FAIL  src/services/finance/canonical/__tests__/idempotentComputeRetry.pg.test.ts > P1 fix — idempotent compute retry (real PostgreSQL)
+ FAIL  src/services/finance/canonical/__tests__/financeCompareService.pg.test.ts > AP-05 financeCompareService — real PostgreSQL > compareVersions — GoldCo FY2024 Statement Pack, ORIGINAL vs RESTATED > diffs exactly the restated lines, matches entity_id-varying rows via entity_code, and surfaces both MISSING flavors as null-diff (never false 0)
+ FAIL  src/services/finance/canonical/__tests__/kpiComputeService.pg.test.ts > WP-D04 kpiComputeService — real PostgreSQL known-answer test > 6 KPI across 6 different categories, GoldCo PARENT standalone FY2025 > CURRENT_RATIO / GROSS_MARGIN_PCT / DEBT_TO_EQUITY / DSO / OPERATING_CASH_FLOW_MARGIN / ROE match hand-computed oracle values
+ FAIL  src/services/finance/canonical/__tests__/kpiComputeService.pg.test.ts > WP-D04 kpiComputeService — real PostgreSQL known-answer test > W10 — 9 additional P0 KPI (known-answer) + 1 structurally-unavailable (DEBT_TO_EBITDA), GoldCo PARENT FY2025 > QUICK_RATIO / CASH_RATIO / EBITDA_MARGIN_PCT / NET_MARGIN_PCT / INTEREST_COVERAGE / ROA / REVENUE_GROWTH_YOY / FCF_MARGIN / CASH_CONVERSION_CYCLE match hand-computed values
+ FAIL  src/services/finance/canonical/__tests__/kpiComputeService.pg.test.ts > WP-D04 kpiComputeService — real PostgreSQL known-answer test > negative denominator — explicit quality_flag, never a misleading bare number > DEBT_TO_EQUITY (SHOW_WITH_FLAG) with negative equity: keeps the correctly-signed value AND sets quality_flag=NEGATIVE_DENOMINATOR
+ FAIL  src/services/finance/canonical/__tests__/kpiComputeService.pg.test.ts > WP-D04 kpiComputeService — real PostgreSQL known-answer test > negative denominator — explicit quality_flag, never a misleading bare number > GROSS_MARGIN_PCT (FORCE_NA) with negative revenue: NOT_APPLICABLE, quality_flag stays NULL (a policy decision, not a computed error)
+ Test Files  3 failed | 4 passed (7)
+      Tests  5 failed | 42 passed | 6 skipped (53)
+EXIT[ae]=1
+=== batch af (7 files) ===
+ FAIL  src/services/finance/canonical/__tests__/perfSlo.pg.test.ts > W9-D — compute performance baseline (real PostgreSQL)
+ Test Files  1 failed | 6 passed (7)
+      Tests  56 passed | 5 skipped (61)
+EXIT[af]=1
+=== batch ag (7 files) ===
+ FAIL  src/services/finance/canonical/__tests__/w2FalseSuccessW9B2.pg.test.ts > W2 — false success (W9-B-2): completeJobSuccess() NOT_RUNNING must not report success (real PostgreSQL)
+ FAIL  src/services/finance/canonical/__tests__/statementCoverageAndJumps.pg.test.ts > BUGFIX RC-01 / RC-05 — real Apator data, real PostgreSQL > RC-01 — a Statement Pack that lost most of the source statement can never report CLEAN > the real Apator PASS A shape (212 of 280 line-values with no P0 target, routed as EXCLUDE/NO_P0_CANONICAL_TARGET) is PROVISIONAL with a countable coverage exception — not CLEAN
+ FAIL  src/services/finance/canonical/__tests__/statementCoverageAndJumps.pg.test.ts > BUGFIX RC-01 / RC-05 — real Apator data, real PostgreSQL > RC-01 — a Statement Pack that lost most of the source statement can never report CLEAN > the same 212 rows arriving as UNMAPPED (no rule at all) are caught identically — the gap is coverage, not the bucket name
+ Test Files  2 failed | 5 passed (7)
+      Tests  2 failed | 109 passed | 5 skipped (116)
+EXIT[ag]=1

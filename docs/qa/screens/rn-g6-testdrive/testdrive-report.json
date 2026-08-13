@@ -1,0 +1,2062 @@
+{
+  "checkpoints": [
+    {
+      "n": 1.1,
+      "title": "Logowanie rola BEZ dostepu (contributor/MEMBER) - oczekiwany odbicie na /interview",
+      "screenshot": "docs/qa/screens/rn-g6-testdrive/01a-contributor-bounced.png",
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "apiErrors": [
+        {
+          "url": "http://localhost:3197/api/v8/admin/flags",
+          "status": 404
+        }
+      ],
+      "apiCalls": [
+        {
+          "url": "http://localhost:3197/src/services/api/organizationContextWorker.api.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/settings.api.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/assessment.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/my-work.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/types/api/requests.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/types/api/responses.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/baseClient.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/client.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/index.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/admin.ts",
+          "status": 304
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/ai-core.ts",
+          "status": 304
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/chat.ts",
+          "status": 304
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/execution-control.ts",
+          "status": 304
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/finance.ts",
+          "status": 304
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/interview.ts",
+          "status": 304
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/kb.ts",
+          "status": 304
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/multiplayer.ts",
+          "status": 304
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/partner.ts",
+          "status": 304
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/planning.ts",
+          "status": 304
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/prompt-os.ts",
+          "status": 304
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/results.ts",
+          "status": 304
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/retrieval.ts",
+          "status": 304
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/sync.ts",
+          "status": 304
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/workCanvas.ts",
+          "status": 304
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/tablePlatform.api.ts",
+          "status": 304
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/artifactRuns.ts",
+          "status": 304
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8Execution.ts",
+          "status": 304
+        },
+        {
+          "url": "http://localhost:3197/api/settings/preferences/accessibility",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/v10/teresa/voice-event",
+          "status": 202
+        },
+        {
+          "url": "http://localhost:3197/api/v8/admin/flags",
+          "status": 404
+        },
+        {
+          "url": "http://localhost:3197/api/organizations/current",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/auth/me",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/feature-flags/runtime",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/v10/teresa/voice-event",
+          "status": 202
+        },
+        {
+          "url": "http://localhost:3197/api/v10/teresa/voice-config",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/feature-flags/runtime",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/organization-context",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/v10/teresa/voice-config",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/organization-context",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/health",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/v10/teresa/voice-event",
+          "status": 202
+        },
+        {
+          "url": "http://localhost:3197/api/llm/providers/health?timeoutMs=4000",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/health",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/preferences",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/organizations/current",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/my-work/personal-tasks",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/organizations/current",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/demo/status",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/my-work/personal-tasks",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/notifications?limit=20",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/notifications/unread-count",
+          "status": 200
+        }
+      ],
+      "notes": "landed on: http://localhost:3197/interview"
+    },
+    {
+      "n": 1.2,
+      "title": "Logowanie rola Z dostepem (admin) - dociera do /results/kpi",
+      "screenshot": "docs/qa/screens/rn-g6-testdrive/01b-admin-access.png",
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "apiErrors": [
+        {
+          "url": "http://localhost:3197/api/v8/admin/flags",
+          "status": 404
+        }
+      ],
+      "apiCalls": [
+        {
+          "url": "http://localhost:3197/src/services/api/organizationContextWorker.api.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/settings.api.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/assessment.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/my-work.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/types/api/requests.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/types/api/responses.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/baseClient.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/client.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/index.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/admin.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/ai-core.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/chat.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/execution-control.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/finance.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/interview.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/kb.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/multiplayer.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/partner.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/planning.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/prompt-os.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/retrieval.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/results.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/sync.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/workCanvas.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/tablePlatform.api.ts",
+          "status": 304
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/artifactRuns.ts",
+          "status": 304
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8Execution.ts",
+          "status": 304
+        },
+        {
+          "url": "http://localhost:3197/api/settings/preferences/accessibility",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/v8/admin/flags",
+          "status": 404
+        },
+        {
+          "url": "http://localhost:3197/api/v10/teresa/voice-event",
+          "status": 202
+        },
+        {
+          "url": "http://localhost:3197/api/organizations/current",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/auth/me",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/feature-flags/runtime",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/v10/teresa/voice-config",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/feature-flags/runtime",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/v10/teresa/voice-event",
+          "status": 202
+        },
+        {
+          "url": "http://localhost:3197/api/organization-context",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/v10/teresa/voice-config",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/organization-context",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/health",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/v10/teresa/voice-event",
+          "status": 202
+        },
+        {
+          "url": "http://localhost:3197/api/llm/providers/health?timeoutMs=4000",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/health",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/partners/connection",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/my-work/personal-tasks",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/organizations/current",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/vnext/results/kpi?limit=200&offset=0",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/demo/status",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/my-work/personal-tasks",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/organizations/current",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/notifications/unread-count",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/notifications?limit=20",
+          "status": 200
+        }
+      ],
+      "notes": "landed on: http://localhost:3197/results/kpi?ff_resultsVNextKpi=1"
+    },
+    {
+      "n": 2,
+      "title": "/results/kpi - lista z danymi",
+      "screenshot": "docs/qa/screens/rn-g6-testdrive/02-kpi-registry-list.png",
+      "consoleErrors": [],
+      "apiErrors": [],
+      "apiCalls": [],
+      "notes": ""
+    },
+    {
+      "n": 3,
+      "title": "Otwarcie podgladu wiersza (single click) - StandardPreview",
+      "screenshot": "docs/qa/screens/rn-g6-testdrive/03-row-preview-open.png",
+      "consoleErrors": [],
+      "apiErrors": [],
+      "apiCalls": [
+        {
+          "url": "http://localhost:3197/api/vnext/results/kpi/4d5db4f3-454e-4813-8813-4d5db4454ebd/version",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/vnext/results/kpi/4d5db4f3-454e-4813-8813-4d5db4454ebd/measurements?limit=1",
+          "status": 200
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "n": 4,
+      "title": "Otwarcie pelnego narzedzia KPI (Open z preview)",
+      "screenshot": "docs/qa/screens/rn-g6-testdrive/04-kpi-full-tool.png",
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "apiErrors": [
+        {
+          "url": "http://localhost:3197/api/v8/admin/flags",
+          "status": 404
+        }
+      ],
+      "apiCalls": [
+        {
+          "url": "http://localhost:3197/src/types/api/requests.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/types/api/responses.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/organizationContextWorker.api.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/settings.api.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/assessment.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/my-work.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/baseClient.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/client.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/index.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/admin.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/ai-core.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/chat.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/interview.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/execution-control.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/finance.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/kb.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/multiplayer.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/partner.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/planning.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/prompt-os.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/sync.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/retrieval.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/results.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/workCanvas.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/tablePlatform.api.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/artifactRuns.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8Execution.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/settings/preferences/accessibility",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/v10/teresa/voice-event",
+          "status": 202
+        },
+        {
+          "url": "http://localhost:3197/api/v8/admin/flags",
+          "status": 404
+        },
+        {
+          "url": "http://localhost:3197/api/v10/teresa/voice-config",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/feature-flags/runtime",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/v10/teresa/voice-event",
+          "status": 202
+        },
+        {
+          "url": "http://localhost:3197/api/auth/me",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/organizations/current",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/feature-flags/runtime",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/v10/teresa/voice-config",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/health",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/v10/teresa/voice-event",
+          "status": 202
+        },
+        {
+          "url": "http://localhost:3197/api/health",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/llm/providers/health?timeoutMs=4000",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/partners/connection",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/my-work/personal-tasks",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/vnext/results/kpi/4d5db4f3-454e-4813-8813-4d5db4454ebd",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/demo/status",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/vnext/results/kpi/deviation-cases?kpiId=4d5db4f3-454e-4813-8813-4d5db4454ebd&limit=100&offset=0",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/organizations/current",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/vnext/results/kpi/4d5db4f3-454e-4813-8813-4d5db4454ebd/initiative-impacts?limit=100&offset=0",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/my-work/personal-tasks",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/vnext/results/kpi/4d5db4f3-454e-4813-8813-4d5db4454ebd/measurements?limit=1",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/organizations/current",
+          "status": 200
+        }
+      ],
+      "notes": "kpiId=4d5db4f3-454e-4813-8813-4d5db4454ebd, url after in-app Open click=http://localhost:3197/results/kpi/4d5db4f3-454e-4813-8813-4d5db4454ebd | flag was dropped by in-app nav (known defect) — re-navigated with flag: http://localhost:3197/results/kpi/4d5db4f3-454e-4813-8813-4d5db4454ebd?ff_resultsVNextKpi=1"
+    },
+    {
+      "n": 5,
+      "title": "REALNY ZAPIS - rejestracja pomiaru KPI (dowod naprawy P0 correlation-id, BEZ obejscia)",
+      "screenshot": "docs/qa/screens/rn-g6-testdrive/05-measurement-recorded.png",
+      "consoleErrors": [],
+      "apiErrors": [],
+      "apiCalls": [
+        {
+          "url": "http://localhost:3197/api/notifications?limit=20",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/notifications/unread-count",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/vnext/results/kpi/4d5db4f3-454e-4813-8813-4d5db4454ebd/measurements?limit=200",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/vnext/results/kpi/4d5db4f3-454e-4813-8813-4d5db4454ebd/measurements",
+          "status": 201
+        },
+        {
+          "url": "http://localhost:3197/api/vnext/results/kpi/4d5db4f3-454e-4813-8813-4d5db4454ebd/measurements?limit=200",
+          "status": 200
+        }
+      ],
+      "notes": "source marker used for DB verification: rn-g6-testdrive-1786557097986"
+    },
+    {
+      "n": 6,
+      "title": "/results/roi - lista",
+      "screenshot": "docs/qa/screens/rn-g6-testdrive/06-roi-registry-list.png",
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "apiErrors": [
+        {
+          "url": "http://localhost:3197/api/v8/admin/flags",
+          "status": 404
+        }
+      ],
+      "apiCalls": [
+        {
+          "url": "http://localhost:3197/src/types/api/requests.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/types/api/responses.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/organizationContextWorker.api.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/assessment.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/settings.api.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/my-work.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/index.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/baseClient.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/client.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/admin.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/ai-core.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/chat.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/execution-control.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/finance.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/interview.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/kb.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/multiplayer.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/partner.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/planning.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/prompt-os.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/retrieval.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/sync.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/results.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/workCanvas.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/tablePlatform.api.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8Execution.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/artifactRuns.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/settings/preferences/accessibility",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/v10/teresa/voice-event",
+          "status": 202
+        },
+        {
+          "url": "http://localhost:3197/api/v8/admin/flags",
+          "status": 404
+        },
+        {
+          "url": "http://localhost:3197/api/v10/teresa/voice-config",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/auth/me",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/v10/teresa/voice-event",
+          "status": 202
+        },
+        {
+          "url": "http://localhost:3197/api/feature-flags/runtime",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/organizations/current",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/v10/teresa/voice-config",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/feature-flags/runtime",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/health",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/v10/teresa/voice-event",
+          "status": 202
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/initiatives.api.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/health",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/llm/providers/health?timeoutMs=4000",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/partners/connection",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/my-work/personal-tasks",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/demo/status",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/organizations/current",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/organizations/current",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/my-work/personal-tasks",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/vnext/results/roi/cases?limit=200",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/vnext/results/roi/cases?limit=200",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/notifications?limit=20",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/notifications/unread-count",
+          "status": 200
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "n": 7,
+      "title": "/results/okr - lista",
+      "screenshot": "docs/qa/screens/rn-g6-testdrive/07-okr-registry-list.png",
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "apiErrors": [
+        {
+          "url": "http://localhost:3197/api/v8/admin/flags",
+          "status": 404
+        }
+      ],
+      "apiCalls": [
+        {
+          "url": "http://localhost:3197/src/services/api/settings.api.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/organizationContextWorker.api.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/assessment.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/my-work.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/types/api/requests.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/types/api/responses.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/baseClient.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/client.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/index.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/admin.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/ai-core.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/chat.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/execution-control.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/finance.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/interview.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/kb.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/multiplayer.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/partner.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/planning.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/prompt-os.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/retrieval.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/sync.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/results.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/workCanvas.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/tablePlatform.api.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/artifactRuns.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8Execution.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/settings/preferences/accessibility",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/v10/teresa/voice-event",
+          "status": 202
+        },
+        {
+          "url": "http://localhost:3197/api/v8/admin/flags",
+          "status": 404
+        },
+        {
+          "url": "http://localhost:3197/api/v10/teresa/voice-config",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/feature-flags/runtime",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/auth/me",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/organizations/current",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/v10/teresa/voice-event",
+          "status": 202
+        },
+        {
+          "url": "http://localhost:3197/api/feature-flags/runtime",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/v10/teresa/voice-config",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/health",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/v10/teresa/voice-event",
+          "status": 202
+        },
+        {
+          "url": "http://localhost:3197/api/llm/providers/health?timeoutMs=4000",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/health",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/partners/connection",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/demo/status",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/organizations/current",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/organizations/current",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/my-work/personal-tasks",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/vnext/results/okr/sets?limit=200",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/vnext/results/okr/sets?limit=200",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/my-work/personal-tasks",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/notifications/unread-count",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/notifications?limit=20",
+          "status": 200
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "n": 8.1,
+      "title": "/results/attention (realna trasa, oba flagi)",
+      "screenshot": "docs/qa/screens/rn-g6-testdrive/08a-results-attention.png",
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "apiErrors": [
+        {
+          "url": "http://localhost:3197/api/v8/admin/flags",
+          "status": 404
+        }
+      ],
+      "apiCalls": [
+        {
+          "url": "http://localhost:3197/src/services/api/organizationContextWorker.api.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/assessment.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/settings.api.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/my-work.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/types/api/requests.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/types/api/responses.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/baseClient.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/client.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/index.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/admin.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/ai-core.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/kb.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/chat.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/execution-control.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/finance.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/interview.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/partner.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/planning.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/prompt-os.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/multiplayer.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/sync.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/retrieval.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/results.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/workCanvas.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/tablePlatform.api.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8Execution.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/artifactRuns.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/v10/teresa/voice-event",
+          "status": 202
+        },
+        {
+          "url": "http://localhost:3197/api/v8/admin/flags",
+          "status": 404
+        },
+        {
+          "url": "http://localhost:3197/api/settings/preferences/accessibility",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/v10/teresa/voice-config",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/v10/teresa/voice-event",
+          "status": 202
+        },
+        {
+          "url": "http://localhost:3197/api/auth/me",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/feature-flags/runtime",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/v10/teresa/voice-config",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/feature-flags/runtime",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/organizations/current",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/health",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/v10/teresa/voice-event",
+          "status": 202
+        },
+        {
+          "url": "http://localhost:3197/api/llm/providers/health?timeoutMs=4000",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/health",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/my-work/personal-tasks",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/partners/connection",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/organizations/current",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/my-work/personal-tasks",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/organizations/current",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/demo/status",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/vnext/results/kpi/attention",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/notifications?limit=20",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/notifications/unread-count",
+          "status": 200
+        }
+      ],
+      "notes": "url=http://localhost:3197/results/attention?ff_resultsVNextKpi=1&ff_resultsVNextOkr=1"
+    },
+    {
+      "n": 8.2,
+      "title": "/attention (literalne, znane jako martwe -> spada na /chat)",
+      "screenshot": "docs/qa/screens/rn-g6-testdrive/08b-bare-attention-dead.png",
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "apiErrors": [
+        {
+          "url": "http://localhost:3197/api/v8/admin/flags",
+          "status": 404
+        }
+      ],
+      "apiCalls": [
+        {
+          "url": "http://localhost:3197/src/services/api/organizationContextWorker.api.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/settings.api.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/assessment.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/my-work.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/types/api/responses.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/types/api/requests.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/baseClient.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/client.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/index.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/admin.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/ai-core.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/chat.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/execution-control.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/kb.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/interview.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/finance.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/multiplayer.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/partner.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/planning.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/prompt-os.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/results.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/retrieval.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/sync.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/workCanvas.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/tablePlatform.api.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8Execution.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/artifactRuns.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/v10/teresa/voice-event",
+          "status": 202
+        },
+        {
+          "url": "http://localhost:3197/api/v8/admin/flags",
+          "status": 404
+        },
+        {
+          "url": "http://localhost:3197/api/v10/teresa/voice-config",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/settings/preferences/accessibility",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/v10/teresa/voice-event",
+          "status": 202
+        },
+        {
+          "url": "http://localhost:3197/api/organizations/current",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/feature-flags/runtime",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/auth/me",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/v10/teresa/voice-config",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/feature-flags/runtime",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/health",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/v10/teresa/voice-event",
+          "status": 202
+        },
+        {
+          "url": "http://localhost:3197/api/llm/providers/health?timeoutMs=4000",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/health",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/my-work/personal-tasks",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/organizations/current",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/cloud/providers",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/conversations?",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/partners/connection",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/demo/status",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/ai/agent-audit/agents",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/chat-projects",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/ai/agent-audit/agents",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/my-work/personal-tasks",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/organizations/current",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/cloud/providers",
+          "status": 200
+        }
+      ],
+      "notes": "landed on: http://localhost:3197/chat"
+    },
+    {
+      "n": 9,
+      "title": "Przeladowanie strony (F5) na ekranie rekordu - rekord zostaje",
+      "screenshot": "docs/qa/screens/rn-g6-testdrive/09-reload-record-persists.png",
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "apiErrors": [
+        {
+          "url": "http://localhost:3197/api/v8/admin/flags",
+          "status": 404
+        },
+        {
+          "url": "http://localhost:3197/api/v8/admin/flags",
+          "status": 404
+        }
+      ],
+      "apiCalls": [
+        {
+          "url": "http://localhost:3197/src/types/api/requests.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/types/api/responses.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/organizationContextWorker.api.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/settings.api.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/assessment.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/my-work.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/index.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/baseClient.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/client.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/admin.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/ai-core.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/chat.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/execution-control.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/finance.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/interview.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/multiplayer.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/kb.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/partner.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/planning.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/prompt-os.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/results.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/retrieval.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/sync.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/workCanvas.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/tablePlatform.api.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/artifactRuns.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8Execution.ts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/v8/admin/flags",
+          "status": 404
+        },
+        {
+          "url": "http://localhost:3197/api/v10/teresa/voice-event",
+          "status": 202
+        },
+        {
+          "url": "http://localhost:3197/api/settings/preferences/accessibility",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/organizations/current",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/v10/teresa/voice-config",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/feature-flags/runtime",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/v10/teresa/voice-event",
+          "status": 202
+        },
+        {
+          "url": "http://localhost:3197/api/auth/me",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/v10/teresa/voice-config",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/feature-flags/runtime",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/health",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/v10/teresa/voice-event",
+          "status": 202
+        },
+        {
+          "url": "http://localhost:3197/api/health",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/llm/providers/health?timeoutMs=4000",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/partners/connection",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/my-work/personal-tasks",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/vnext/results/kpi/4d5db4f3-454e-4813-8813-4d5db4454ebd",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/demo/status",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/vnext/results/kpi/4d5db4f3-454e-4813-8813-4d5db4454ebd/measurements?limit=1",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/vnext/results/kpi/4d5db4f3-454e-4813-8813-4d5db4454ebd/initiative-impacts?limit=100&offset=0",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/organizations/current",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/vnext/results/kpi/deviation-cases?kpiId=4d5db4f3-454e-4813-8813-4d5db4454ebd&limit=100&offset=0",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/my-work/personal-tasks",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/organizations/current",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/organizationContextWorker.api.ts",
+          "status": 304
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/settings.api.ts",
+          "status": 304
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/assessment.ts",
+          "status": 304
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/my-work.ts",
+          "status": 304
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/baseClient.ts",
+          "status": 304
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/client.ts",
+          "status": 304
+        },
+        {
+          "url": "http://localhost:3197/src/types/api/requests.ts",
+          "status": 304
+        },
+        {
+          "url": "http://localhost:3197/src/types/api/responses.ts",
+          "status": 304
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/index.ts",
+          "status": 304
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/chat.ts",
+          "status": 304
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/admin.ts",
+          "status": 304
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/ai-core.ts",
+          "status": 304
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/finance.ts",
+          "status": 304
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/interview.ts",
+          "status": 304
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/kb.ts",
+          "status": 304
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/execution-control.ts",
+          "status": 304
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/planning.ts",
+          "status": 304
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/multiplayer.ts",
+          "status": 304
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/partner.ts",
+          "status": 304
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/prompt-os.ts",
+          "status": 304
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/results.ts",
+          "status": 304
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/retrieval.ts",
+          "status": 304
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8/sync.ts",
+          "status": 304
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/workCanvas.ts",
+          "status": 304
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/tablePlatform.api.ts",
+          "status": 304
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/artifactRuns.ts",
+          "status": 304
+        },
+        {
+          "url": "http://localhost:3197/src/services/api/v8Execution.ts",
+          "status": 304
+        },
+        {
+          "url": "http://localhost:3197/api/settings/preferences/accessibility",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/v10/teresa/voice-event",
+          "status": 202
+        },
+        {
+          "url": "http://localhost:3197/api/v8/admin/flags",
+          "status": 404
+        },
+        {
+          "url": "http://localhost:3197/api/v10/teresa/voice-config",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/feature-flags/runtime",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/organizations/current",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/v10/teresa/voice-event",
+          "status": 202
+        },
+        {
+          "url": "http://localhost:3197/api/auth/me",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/v10/teresa/voice-config",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/feature-flags/runtime",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/health",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/v10/teresa/voice-event",
+          "status": 202
+        },
+        {
+          "url": "http://localhost:3197/api/llm/providers/health?timeoutMs=4000",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/health",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/partners/connection",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/demo/status",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/vnext/results/kpi/4d5db4f3-454e-4813-8813-4d5db4454ebd",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/organizations/current",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/my-work/personal-tasks",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/vnext/results/kpi/4d5db4f3-454e-4813-8813-4d5db4454ebd/measurements?limit=1",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/vnext/results/kpi/4d5db4f3-454e-4813-8813-4d5db4454ebd/initiative-impacts?limit=100&offset=0",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/organizations/current",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/my-work/personal-tasks",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/vnext/results/kpi/deviation-cases?kpiId=4d5db4f3-454e-4813-8813-4d5db4454ebd&limit=100&offset=0",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/notifications/unread-count",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3197/api/notifications?limit=20",
+          "status": 200
+        }
+      ],
+      "notes": "url after reload=http://localhost:3197/results/kpi/4d5db4f3-454e-4813-8813-4d5db4454ebd?ff_resultsVNextKpi=1"
+    }
+  ],
+  "ids": {
+    "kpiId": "4d5db4f3-454e-4813-8813-4d5db4454ebd",
+    "measurementSource": "rn-g6-testdrive-1786557097986"
+  }
+}

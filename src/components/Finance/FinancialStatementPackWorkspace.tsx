@@ -1358,7 +1358,11 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
                                     </span>
                                     <span className="inline-flex items-center gap-1">
                                       <span className={`h-1.5 w-1.5 rounded-full ${statusColor}`} />
-                                      {file.status}
+                                      {file.status === 'ready'
+                                        ? t('finance.pack.statusReady', 'Ready')
+                                        : file.status === 'recoverable'
+                                          ? t('finance.pack.statusRecovery', 'Recovery')
+                                          : t('finance.pack.statusDraft', 'Draft')}
                                     </span>
                                     {file.total > 0 && (
                                       <span className="tabular-nums">

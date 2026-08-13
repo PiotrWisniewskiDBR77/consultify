@@ -1,0 +1,189 @@
+{
+  "id": "analysis",
+  "url": "http://localhost:58023/?screen=finance-analysis-workspace&scene=draft-with-kpis",
+  "violations": [
+    {
+      "id": "aria-prohibited-attr",
+      "impact": "serious",
+      "description": "Ensure ARIA attributes are not prohibited for an element's role",
+      "help": "Elements must only use permitted ARIA attributes",
+      "helpUrl": "https://dequeuniversity.com/rules/axe/4.13/aria-prohibited-attr?application=axeAPI",
+      "nodeCount": 10,
+      "nodes": [
+        {
+          "target": [
+            "th:nth-child(1) > .-right-1\\.5.w-3.cursor-col-resize"
+          ],
+          "html": "<div class=\"\n        absolute -right-1.5 top-0 h-full w-3 cursor-col-resize\n        touch-none select-none\n        group/resizer\n        z-10\n      \" title=\"Resize column\" aria-label=\"Resize column\">",
+          "failureSummary": "Fix all of the following:\n  aria-label attribute cannot be used on a div with no valid role attribute."
+        },
+        {
+          "target": [
+            "th:nth-child(2) > .-right-1\\.5.w-3.cursor-col-resize"
+          ],
+          "html": "<div class=\"\n        absolute -right-1.5 top-0 h-full w-3 cursor-col-resize\n        touch-none select-none\n        group/resizer\n        z-10\n      \" title=\"Resize column\" aria-label=\"Resize column\">",
+          "failureSummary": "Fix all of the following:\n  aria-label attribute cannot be used on a div with no valid role attribute."
+        },
+        {
+          "target": [
+            "th:nth-child(3) > .-right-1\\.5.w-3.cursor-col-resize"
+          ],
+          "html": "<div class=\"\n        absolute -right-1.5 top-0 h-full w-3 cursor-col-resize\n        touch-none select-none\n        group/resizer\n        z-10\n      \" title=\"Resize column\" aria-label=\"Resize column\">",
+          "failureSummary": "Fix all of the following:\n  aria-label attribute cannot be used on a div with no valid role attribute."
+        },
+        {
+          "target": [
+            "th:nth-child(4) > .-right-1\\.5.w-3.cursor-col-resize"
+          ],
+          "html": "<div class=\"\n        absolute -right-1.5 top-0 h-full w-3 cursor-col-resize\n        touch-none select-none\n        group/resizer\n        z-10\n      \" title=\"Resize column\" aria-label=\"Resize column\">",
+          "failureSummary": "Fix all of the following:\n  aria-label attribute cannot be used on a div with no valid role attribute."
+        },
+        {
+          "target": [
+            "th:nth-child(5) > .-right-1\\.5.w-3.cursor-col-resize"
+          ],
+          "html": "<div class=\"\n        absolute -right-1.5 top-0 h-full w-3 cursor-col-resize\n        touch-none select-none\n        group/resizer\n        z-10\n      \" title=\"Resize column\" aria-label=\"Resize column\">",
+          "failureSummary": "Fix all of the following:\n  aria-label attribute cannot be used on a div with no valid role attribute."
+        },
+        {
+          "target": [
+            "th:nth-child(6) > .-right-1\\.5.w-3.cursor-col-resize"
+          ],
+          "html": "<div class=\"\n        absolute -right-1.5 top-0 h-full w-3 cursor-col-resize\n        touch-none select-none\n        group/resizer\n        z-10\n      \" title=\"Resize column\" aria-label=\"Resize column\">",
+          "failureSummary": "Fix all of the following:\n  aria-label attribute cannot be used on a div with no valid role attribute."
+        },
+        {
+          "target": [
+            "th:nth-child(7) > .-right-1\\.5.w-3.cursor-col-resize"
+          ],
+          "html": "<div class=\"\n        absolute -right-1.5 top-0 h-full w-3 cursor-col-resize\n        touch-none select-none\n        group/resizer\n        z-10\n      \" title=\"Resize column\" aria-label=\"Resize column\">",
+          "failureSummary": "Fix all of the following:\n  aria-label attribute cannot be used on a div with no valid role attribute."
+        },
+        {
+          "target": [
+            "th:nth-child(8) > .-right-1\\.5.w-3.cursor-col-resize"
+          ],
+          "html": "<div class=\"\n        absolute -right-1.5 top-0 h-full w-3 cursor-col-resize\n        touch-none select-none\n        group/resizer\n        z-10\n      \" title=\"Resize column\" aria-label=\"Resize column\">",
+          "failureSummary": "Fix all of the following:\n  aria-label attribute cannot be used on a div with no valid role attribute."
+        }
+      ]
+    },
+    {
+      "id": "landmark-one-main",
+      "impact": "moderate",
+      "description": "Ensure the document has a main landmark",
+      "help": "Document should have one main landmark",
+      "helpUrl": "https://dequeuniversity.com/rules/axe/4.13/landmark-one-main?application=axeAPI",
+      "nodeCount": 1,
+      "nodes": [
+        {
+          "target": [
+            "html"
+          ],
+          "html": "<html lang=\"pl\" dir=\"ltr\">",
+          "failureSummary": "Fix all of the following:\n  Document does not have a main landmark"
+        }
+      ]
+    },
+    {
+      "id": "page-has-heading-one",
+      "impact": "moderate",
+      "description": "Ensure that the page, or at least one of its frames contains a level-one heading",
+      "help": "Page should contain a level-one heading",
+      "helpUrl": "https://dequeuniversity.com/rules/axe/4.13/page-has-heading-one?application=axeAPI",
+      "nodeCount": 1,
+      "nodes": [
+        {
+          "target": [
+            "html"
+          ],
+          "html": "<html lang=\"pl\" dir=\"ltr\">",
+          "failureSummary": "Fix all of the following:\n  Page must have a level-one heading"
+        }
+      ]
+    },
+    {
+      "id": "region",
+      "impact": "moderate",
+      "description": "Ensure all page content is contained by landmarks",
+      "help": "All page content should be contained by landmarks",
+      "helpUrl": "https://dequeuniversity.com/rules/axe/4.13/region?application=axeAPI",
+      "nodeCount": 46,
+      "nodes": [
+        {
+          "target": [
+            ".tabular-nums"
+          ],
+          "html": "<span class=\"tabular-nums\">v1</span>",
+          "failureSummary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        },
+        {
+          "target": [
+            ".px-2 > span:nth-child(3)"
+          ],
+          "html": "<span>Wersja robocza</span>",
+          "failureSummary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        },
+        {
+          "target": [
+            ".px-2 > .text-c-text-muted"
+          ],
+          "html": "<span class=\"text-c-text-muted\">· robocza</span>",
+          "failureSummary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        },
+        {
+          "target": [
+            ".p-1"
+          ],
+          "html": "<div class=\"hidden shrink-0 items-center gap-1 rounded-lg bg-c-surface-raised p-1 md:flex\" role=\"tablist\">",
+          "failureSummary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        },
+        {
+          "target": [
+            "th:nth-child(1) > .-right-1\\.5.w-3.cursor-col-resize"
+          ],
+          "html": "<div class=\"\n        absolute -right-1.5 top-0 h-full w-3 cursor-col-resize\n        touch-none select-none\n        group/resizer\n        z-10\n      \" title=\"Resize column\" aria-label=\"Resize column\">",
+          "failureSummary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        },
+        {
+          "target": [
+            "th:nth-child(2) > .-right-1\\.5.w-3.cursor-col-resize"
+          ],
+          "html": "<div class=\"\n        absolute -right-1.5 top-0 h-full w-3 cursor-col-resize\n        touch-none select-none\n        group/resizer\n        z-10\n      \" title=\"Resize column\" aria-label=\"Resize column\">",
+          "failureSummary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        },
+        {
+          "target": [
+            "th:nth-child(3)"
+          ],
+          "html": "<th class=\"h-14 px-4 py-3 relative text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider\" style=\"width: 140px; min-width: 90px; max-width: 320px;\">",
+          "failureSummary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        },
+        {
+          "target": [
+            "th:nth-child(4)"
+          ],
+          "html": "<th class=\"h-14 px-4 py-3 relative text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider\" style=\"width: 140px; min-width: 90px; max-width: 320px;\">",
+          "failureSummary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        }
+      ]
+    }
+  ],
+  "incomplete": [
+    {
+      "id": "bypass",
+      "impact": "serious",
+      "description": "Ensure each page has at least one mechanism for a user to bypass navigation and jump straight to the content",
+      "nodeCount": 1,
+      "nodes": [
+        {
+          "target": [
+            "html"
+          ],
+          "html": "<html lang=\"pl\" dir=\"ltr\">",
+          "failureSummary": "Fix any of the following:\n  No valid skip link found\n  Page does not have a heading\n  Page does not have a landmark region"
+        }
+      ]
+    }
+  ]
+}

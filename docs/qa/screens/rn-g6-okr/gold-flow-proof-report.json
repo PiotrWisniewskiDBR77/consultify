@@ -1,0 +1,174 @@
+{
+  "checkpoints": [
+    {
+      "name": "01-registry",
+      "path": "/results/okr?ff_resultsVNextOkr=1",
+      "tab": null,
+      "finalUrl": "http://localhost:3298/results/okr?ff_resultsVNextOkr=1",
+      "screenshot": "/Users/piotrwisniewski/rn-g2-lanes/g6-okr/docs/qa/screens/rn-g6-okr/01-registry.png",
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "apiErrorCount": 1,
+      "apiErrors": [
+        {
+          "url": "http://localhost:3298/api/v8/admin/flags",
+          "status": 404
+        }
+      ]
+    },
+    {
+      "name": "02-set-a-overview-closed",
+      "path": "/results/okr/sets/644a4ebd-828e-486f-8a24-c0e6c0319913?ff_resultsVNextOkr=1",
+      "tab": null,
+      "finalUrl": "http://localhost:3298/results/okr/sets/644a4ebd-828e-486f-8a24-c0e6c0319913?ff_resultsVNextOkr=1",
+      "screenshot": "/Users/piotrwisniewski/rn-g2-lanes/g6-okr/docs/qa/screens/rn-g6-okr/02-set-a-overview-closed.png",
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "apiErrorCount": 1,
+      "apiErrors": [
+        {
+          "url": "http://localhost:3298/api/v8/admin/flags",
+          "status": 404
+        }
+      ]
+    },
+    {
+      "name": "03-set-a-objectives-key-results",
+      "path": "/results/okr/sets/644a4ebd-828e-486f-8a24-c0e6c0319913?ff_resultsVNextOkr=1",
+      "tab": "Objectives & Key Results",
+      "finalUrl": "http://localhost:3298/results/okr/sets/644a4ebd-828e-486f-8a24-c0e6c0319913?ff_resultsVNextOkr=1",
+      "screenshot": "/Users/piotrwisniewski/rn-g2-lanes/g6-okr/docs/qa/screens/rn-g6-okr/03-set-a-objectives-key-results.png",
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "apiErrorCount": 1,
+      "apiErrors": [
+        {
+          "url": "http://localhost:3298/api/v8/admin/flags",
+          "status": 404
+        }
+      ]
+    },
+    {
+      "name": "04-set-a-alignment",
+      "path": "/results/okr/sets/644a4ebd-828e-486f-8a24-c0e6c0319913?ff_resultsVNextOkr=1",
+      "tab": "Alignment",
+      "finalUrl": "http://localhost:3298/results/okr/sets/644a4ebd-828e-486f-8a24-c0e6c0319913?ff_resultsVNextOkr=1",
+      "screenshot": "/Users/piotrwisniewski/rn-g2-lanes/g6-okr/docs/qa/screens/rn-g6-okr/04-set-a-alignment.png",
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "apiErrorCount": 1,
+      "apiErrors": [
+        {
+          "url": "http://localhost:3298/api/v8/admin/flags",
+          "status": 404
+        }
+      ]
+    },
+    {
+      "name": "05-set-a-conversations-support",
+      "path": "/results/okr/sets/644a4ebd-828e-486f-8a24-c0e6c0319913?ff_resultsVNextOkr=1",
+      "tab": "Conversations & Support",
+      "finalUrl": "http://localhost:3298/results/okr/sets/644a4ebd-828e-486f-8a24-c0e6c0319913?ff_resultsVNextOkr=1",
+      "screenshot": "/Users/piotrwisniewski/rn-g2-lanes/g6-okr/docs/qa/screens/rn-g6-okr/05-set-a-conversations-support.png",
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "apiErrorCount": 1,
+      "apiErrors": [
+        {
+          "url": "http://localhost:3298/api/v8/admin/flags",
+          "status": 404
+        }
+      ]
+    },
+    {
+      "name": "06-set-a-review-reflection",
+      "path": "/results/okr/sets/644a4ebd-828e-486f-8a24-c0e6c0319913?ff_resultsVNextOkr=1",
+      "tab": "Review & Reflection",
+      "finalUrl": "http://localhost:3298/results/okr/sets/644a4ebd-828e-486f-8a24-c0e6c0319913?ff_resultsVNextOkr=1",
+      "screenshot": "/Users/piotrwisniewski/rn-g2-lanes/g6-okr/docs/qa/screens/rn-g6-okr/06-set-a-review-reflection.png",
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "apiErrorCount": 1,
+      "apiErrors": [
+        {
+          "url": "http://localhost:3298/api/v8/admin/flags",
+          "status": 404
+        }
+      ]
+    },
+    {
+      "name": "07-set-a-history",
+      "path": "/results/okr/sets/644a4ebd-828e-486f-8a24-c0e6c0319913?ff_resultsVNextOkr=1",
+      "tab": "History",
+      "finalUrl": "http://localhost:3298/results/okr/sets/644a4ebd-828e-486f-8a24-c0e6c0319913?ff_resultsVNextOkr=1",
+      "screenshot": "/Users/piotrwisniewski/rn-g2-lanes/g6-okr/docs/qa/screens/rn-g6-okr/07-set-a-history.png",
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "apiErrorCount": 1,
+      "apiErrors": [
+        {
+          "url": "http://localhost:3298/api/v8/admin/flags",
+          "status": 404
+        }
+      ]
+    },
+    {
+      "name": "08-set-b-not-calculable-objective",
+      "path": "/results/okr/sets/87e7cc9e-4ace-4b11-bc31-75e63e792712?ff_resultsVNextOkr=1",
+      "tab": "Objectives & Key Results",
+      "finalUrl": "http://localhost:3298/results/okr/sets/87e7cc9e-4ace-4b11-bc31-75e63e792712?ff_resultsVNextOkr=1",
+      "screenshot": "/Users/piotrwisniewski/rn-g2-lanes/g6-okr/docs/qa/screens/rn-g6-okr/08-set-b-not-calculable-objective.png",
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "apiErrorCount": 1,
+      "apiErrors": [
+        {
+          "url": "http://localhost:3298/api/v8/admin/flags",
+          "status": 404
+        }
+      ]
+    },
+    {
+      "name": "09-programs-flag-preserved",
+      "path": "/results/okr/programs?ff_resultsVNextOkr=1",
+      "tab": null,
+      "finalUrl": "http://localhost:3298/results/okr/programs?ff_resultsVNextOkr=1",
+      "screenshot": "/Users/piotrwisniewski/rn-g2-lanes/g6-okr/docs/qa/screens/rn-g6-okr/09-programs-flag-preserved.png",
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "apiErrorCount": 1,
+      "apiErrors": [
+        {
+          "url": "http://localhost:3298/api/v8/admin/flags",
+          "status": 404
+        }
+      ]
+    },
+    {
+      "name": "10-cycles-flag-preserved",
+      "path": "/results/okr/cycles?ff_resultsVNextOkr=1",
+      "tab": null,
+      "finalUrl": "http://localhost:3298/results/okr/cycles?ff_resultsVNextOkr=1",
+      "screenshot": "/Users/piotrwisniewski/rn-g2-lanes/g6-okr/docs/qa/screens/rn-g6-okr/10-cycles-flag-preserved.png",
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "apiErrorCount": 1,
+      "apiErrors": [
+        {
+          "url": "http://localhost:3298/api/v8/admin/flags",
+          "status": 404
+        }
+      ]
+    }
+  ]
+}

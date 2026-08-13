@@ -1,0 +1,62 @@
+{
+  "id": "valuation",
+  "url": "http://localhost:58023/?screen=finance-valuation-workspace&step=source",
+  "violations": [
+    {
+      "id": "page-has-heading-one",
+      "impact": "moderate",
+      "description": "Ensure that the page, or at least one of its frames contains a level-one heading",
+      "help": "Page should contain a level-one heading",
+      "helpUrl": "https://dequeuniversity.com/rules/axe/4.13/page-has-heading-one?application=axeAPI",
+      "nodeCount": 1,
+      "nodes": [
+        {
+          "target": [
+            "html"
+          ],
+          "html": "<html lang=\"pl\" dir=\"ltr\">",
+          "failureSummary": "Fix all of the following:\n  Page must have a level-one heading"
+        }
+      ]
+    },
+    {
+      "id": "region",
+      "impact": "moderate",
+      "description": "Ensure all page content is contained by landmarks",
+      "help": "All page content should be contained by landmarks",
+      "helpUrl": "https://dequeuniversity.com/rules/axe/4.13/region?application=axeAPI",
+      "nodeCount": 4,
+      "nodes": [
+        {
+          "target": [
+            ".tabular-nums"
+          ],
+          "html": "<span class=\"tabular-nums\">v2</span>",
+          "failureSummary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        },
+        {
+          "target": [
+            ".hidden > span:nth-child(3)"
+          ],
+          "html": "<span>W przeglądzie</span>",
+          "failureSummary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        },
+        {
+          "target": [
+            ".border-t"
+          ],
+          "html": "<div class=\"flex w-full items-center gap-1 overflow-x-auto border-t border-c-border-subtle bg-c-surface-raised/40 px-4 py-1.5\" role=\"tablist\">",
+          "failureSummary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        },
+        {
+          "target": [
+            "a"
+          ],
+          "html": "<a href=\"/odbior.html\" title=\"Wróć do listy obiekt...\" style=\"padding: 10px 15px; ...\">",
+          "failureSummary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        }
+      ]
+    }
+  ],
+  "incomplete": []
+}

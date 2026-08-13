@@ -20,8 +20,11 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-const persistTemplateMock = vi.fn(async () => ({ ok: true }));
-const persistAuditEntryMock = vi.fn(async () => ({ ok: true }));
+// The DAO stubs are invoked through the `vi.mock` factory below with the real
+// DAO arguments; declare the rest signature so `mock.calls[n][0]` is typed as a
+// captured argument rather than as an element of an empty tuple.
+const persistTemplateMock = vi.fn(async (..._args: unknown[]) => ({ ok: true }));
+const persistAuditEntryMock = vi.fn(async (..._args: unknown[]) => ({ ok: true }));
 const loadTemplatesForOrgMock = vi.fn(async (_orgId: string) => [] as never[]);
 const loadAuditForTemplateMock = vi.fn(async (_t: string, _o: string) => [] as never[]);
 

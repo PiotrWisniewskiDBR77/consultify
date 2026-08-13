@@ -1516,6 +1516,9 @@
     "periodEnd": "Period end",
     "noOrganizations": "No organizations found",
     "retry": "Try again",
+    "pin": "Pin",
+    "unpin": "Unpin",
+    "pinForComparison": "Pin for comparison",
     "saved": "Saved",
     "optional": "optional",
     "analysis": "Analysis",
@@ -1539,6 +1542,7 @@
     "reason": "Reason",
     "reply": "Reply",
     "selectAll": "Select all",
+    "selectedCount": "{{count}} selected",
     "selectRow": "Select row",
     "statusLabel": "Status",
     "you": "You",
@@ -1568,6 +1572,7 @@
     "decision": "Decision",
     "currency": "Currency",
     "noRelations": "No relations",
+    "artifactDetailsPanel": "Artifact details",
     "archive": "Archive",
     "convertTo": "Convert to",
     "openPreview": "Open preview",
@@ -35276,6 +35281,10 @@
       "description": "Load the latest version before saving again.",
       "byAt": "Last change: {{who}}{{when}}",
       "someoneElse": "another user"
+    },
+    "teresa": {
+      "unavailableTitle": "Teresa is unavailable",
+      "unavailableDescription": "AI suggestions are paused. You can keep working manually."
     }
   },
   "initiativeStatus": {

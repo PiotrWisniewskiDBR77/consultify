@@ -1,0 +1,113 @@
+
+ RUN  v4.1.8 /Users/piotrwisniewski/consultify-wt/fv3-product
+
+stdout | tests/resultsVnext/roi/roiFinanceLink.realdb.test.ts > ROI-E007 Finance Link commands (real Postgres)
+2026-08-12 23:43:56:4356 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-08-12 23:43:56:4356 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-08-12 23:43:56:4356 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-08-12 23:43:56:4356 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-08-12 23:43:56:4356 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | tests/resultsVnext/roi/roiFinanceReconciliation.realdb.test.ts > ROI-E007 Finance Reconciliation commands (real Postgres)
+2026-08-12 23:43:56:4356 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-08-12 23:43:56:4356 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-08-12 23:43:56:4356 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-08-12 23:43:56:4356 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-08-12 23:43:56:4356 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | tests/resultsVnext/roi/roiFinanceReconciliation.realdb.test.ts > ROI-E007 Finance Reconciliation commands (real Postgres) > AC-03: openRoiFinanceReconciliation creates a durable record with status=open
+2026-08-12 23:43:57:4357 [32minfo[39m: [32m[Postgres] Initializing connection pool...[39m
+2026-08-12 23:43:57:4357 [32minfo[39m: [32m[DB Config] DATABASE_URL: SET[39m
+2026-08-12 23:43:57:4357 [32minfo[39m: [32m[DB Config] DB_TYPE: sqlite[39m
+2026-08-12 23:43:57:4357 [32minfo[39m: [32m[DB Config] Using PostgreSQL[39m
+2026-08-12 23:43:57:4357 [32minfo[39m: [32m[Postgres] Config:[39m {"host":"127.0.0.1","database":"gate_final_contract2","max":10}
+2026-08-12 23:43:57:4357 [33mwarn[39m: [33m[Postgres] Skipping initDb() in test mode (POSTGRES_SKIP_INIT_IN_TEST=1)[39m
+
+stdout | tests/resultsVnext/roi/roiFinanceLink.realdb.test.ts > ROI-E007 Finance Link commands (real Postgres) > AC-01: createRoiFinanceLink returns the full pinned envelope
+2026-08-12 23:43:57:4357 [32minfo[39m: [32m[Postgres] Initializing connection pool...[39m
+2026-08-12 23:43:57:4357 [32minfo[39m: [32m[DB Config] DATABASE_URL: SET[39m
+2026-08-12 23:43:57:4357 [32minfo[39m: [32m[DB Config] DB_TYPE: sqlite[39m
+2026-08-12 23:43:57:4357 [32minfo[39m: [32m[DB Config] Using PostgreSQL[39m
+2026-08-12 23:43:57:4357 [32minfo[39m: [32m[Postgres] Config:[39m {"host":"127.0.0.1","database":"gate_final_contract2","max":10}
+2026-08-12 23:43:57:4357 [33mwarn[39m: [33m[Postgres] Skipping initDb() in test mode (POSTGRES_SKIP_INIT_IN_TEST=1)[39m
+
+stdout | tests/resultsVnext/roi/roiFinanceLink.realdb.test.ts > ROI-E007 Finance Link commands (real Postgres) > AC-01: createRoiFinanceLink returns the full pinned envelope
+2026-08-12 23:43:57:4357 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/resultsVnext/roi/roiFinanceReconciliation.realdb.test.ts > ROI-E007 Finance Reconciliation commands (real Postgres) > AC-03: openRoiFinanceReconciliation creates a durable record with status=open
+2026-08-12 23:43:57:4357 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+ ✓ tests/resultsVnext/roi/roiFinanceReconciliation.realdb.test.ts > ROI-E007 Finance Reconciliation commands (real Postgres) > AC-03: openRoiFinanceReconciliation creates a durable record with status=open 161ms
+ ✓ tests/resultsVnext/roi/roiFinanceReconciliation.realdb.test.ts > ROI-E007 Finance Reconciliation commands (real Postgres) > openRoiFinanceReconciliation validates financeLinkId belongs to the case 24ms
+ ✓ tests/resultsVnext/roi/roiFinanceReconciliation.realdb.test.ts > ROI-E007 Finance Reconciliation commands (real Postgres) > listRoiFinanceReconciliations: `::text` visibility join executes against real rows 24ms
+ ✓ tests/resultsVnext/roi/roiFinanceReconciliation.realdb.test.ts > ROI-E007 Finance Reconciliation commands (real Postgres) > updateRoiFinanceReconciliationStatus: CAS on the reconciliation's OWN row_version; stale expectedVersion rejected 20ms
+ ✓ tests/resultsVnext/roi/roiFinanceReconciliation.realdb.test.ts > ROI-E007 Finance Reconciliation commands (real Postgres) > Decision D1: transitioning to a TERMINAL status sets resolvedBy/resolvedAt 17ms
+ ✓ tests/resultsVnext/roi/roiFinanceReconciliation.realdb.test.ts > ROI-E007 Finance Reconciliation commands (real Postgres) > Decision D1 — event fan-out DIFFERS by terminal vs. non-terminal transition: 'investigating' fans ONLY to mywork_projection; 'resolved' ALSO fans to finance_projection 21ms
+ ✓ tests/resultsVnext/roi/roiFinanceLink.realdb.test.ts > ROI-E007 Finance Link commands (real Postgres) > AC-01: createRoiFinanceLink returns the full pinned envelope 161ms
+ ✓ tests/resultsVnext/roi/roiFinanceLink.realdb.test.ts > ROI-E007 Finance Link commands (real Postgres) > Decision D4: a link to a completely fabricated Finance artifact id/type/version is accepted without error 21ms
+ ✓ tests/resultsVnext/roi/roiFinanceLink.realdb.test.ts > ROI-E007 Finance Link commands (real Postgres) > listRoiFinanceLinks: `::text` visibility join executes against real rows 22ms
+ ✓ tests/resultsVnext/roi/roiFinanceLink.realdb.test.ts > ROI-E007 Finance Link commands (real Postgres) > removeRoiFinanceLink: hard delete by id; listRoiFinanceLinks no longer returns it 21ms
+ ✓ tests/resultsVnext/roi/roiFinanceLink.realdb.test.ts > ROI-E007 Finance Link commands (real Postgres) > createRoiFinanceLink/removeRoiFinanceLink are gated by the SAME NON_EDITABLE_STATUSES guard 12ms
+ × tests/integration/routes/economics.missing-table-honesty.postgres.integration.test.ts > M08 — brak tabeli nie może dawać fałszywego sukcesu (real Postgres) > M08-H03 — lista analiz DEGRADUJE się zamiast udawać pustą organizację 55ms (retry x1)
+   → expected 0 to be greater than 0
+   → expected 0 to be greater than 0
+ × tests/integration/routes/economics.missing-table-honesty.postgres.integration.test.ts > M08 — brak tabeli nie może dawać fałszywego sukcesu (real Postgres) > M08-H01 — zapis scenariuszy NIE melduje sukcesu (fail closed 503) 18ms (retry x1)
+   → expected 404 to be greater than or equal to 500
+   → expected 404 to be greater than or equal to 500
+ × tests/integration/routes/economics.missing-table-honesty.postgres.integration.test.ts > M08 — brak tabeli nie może dawać fałszywego sukcesu (real Postgres) > M08-H02 — zapis benefitów NIE melduje sukcesu (fail closed 503) 10ms (retry x1)
+   → expected 400 to be 503 // Object.is equality
+   → expected 400 to be 503 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/integration/routes/economics.missing-table-honesty.postgres.integration.test.ts > M08 — brak tabeli nie może dawać fałszywego sukcesu (real Postgres) > M08-H03 — lista analiz DEGRADUJE się zamiast udawać pustą organizację
+ FAIL  tests/integration/routes/economics.missing-table-honesty.postgres.integration.test.ts > M08 — brak tabeli nie może dawać fałszywego sukcesu (real Postgres) > M08-H03 — lista analiz DEGRADUJE się zamiast udawać pustą organizację
+AssertionError: expected 0 to be greater than 0
+ ❯ tests/integration/routes/economics.missing-table-honesty.postgres.integration.test.ts:70:38
+     68|     // Regresja, którą zamykamy: przed pakietem było `analyses: []`.
+     69|     expect(Array.isArray(res.body.analyses)).toBe(true);
+     70|     expect(res.body.analyses.length).toBeGreaterThan(0);
+       |                                      ^
+     71|     // ...i klient dowiaduje się, że wzbogacenie finansowe zostało odc…
+     72|     expect(res.body.financialsDegraded).toBe(true);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  tests/integration/routes/economics.missing-table-honesty.postgres.integration.test.ts > M08 — brak tabeli nie może dawać fałszywego sukcesu (real Postgres) > M08-H01 — zapis scenariuszy NIE melduje sukcesu (fail closed 503)
+ FAIL  tests/integration/routes/economics.missing-table-honesty.postgres.integration.test.ts > M08 — brak tabeli nie może dawać fałszywego sukcesu (real Postgres) > M08-H01 — zapis scenariuszy NIE melduje sukcesu (fail closed 503)
+AssertionError: expected 404 to be greater than or equal to 500
+ ❯ tests/integration/routes/economics.missing-table-honesty.postgres.integration.test.ts:87:24
+     85|
+     86|     expect(res.body.success).not.toBe(true);
+     87|     expect(res.status).toBeGreaterThanOrEqual(500);
+       |                        ^
+     88|     if (res.status === 503) {
+     89|       expect(res.body.error).toBe('FINANCE_STORAGE_UNAVAILABLE');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  tests/integration/routes/economics.missing-table-honesty.postgres.integration.test.ts > M08 — brak tabeli nie może dawać fałszywego sukcesu (real Postgres) > M08-H02 — zapis benefitów NIE melduje sukcesu (fail closed 503)
+ FAIL  tests/integration/routes/economics.missing-table-honesty.postgres.integration.test.ts > M08 — brak tabeli nie może dawać fałszywego sukcesu (real Postgres) > M08-H02 — zapis benefitów NIE melduje sukcesu (fail closed 503)
+AssertionError: expected 400 to be 503 // Object.is equality
+
+- Expected
++ Received
+
+- 503
++ 400
+
+ ❯ tests/integration/routes/economics.missing-table-honesty.postgres.integration.test.ts:101:24
+     99|
+    100|     expect(res.body.success).not.toBe(true);
+    101|     expect(res.status).toBe(503);
+       |                        ^
+    102|     expect(res.body.error).toBe('FINANCE_STORAGE_UNAVAILABLE');
+    103|     expect(res.body.table).toBe('benefit_tracking');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+
+ Test Files  1 failed | 2 passed (3)
+      Tests  3 failed | 11 passed (14)
+   Start at  23:43:54
+   Duration  3.00s (transform 3.17s, setup 604ms, import 371ms, tests 5.00s, environment 1.99s)

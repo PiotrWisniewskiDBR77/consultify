@@ -1,0 +1,111 @@
+
+ RUN  v4.1.8 /Users/piotrwisniewski/consultify-wt/fv3-product/server
+
+stdout | src/services/finance/canonical/__tests__/canonicalServices.pg.test.ts > Finance v3 canonical services — real PostgreSQL
+2026-08-12 21:55:32:5532 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-08-12 21:55:32:5532 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-08-12 21:55:32:5532 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-08-12 21:55:32:5532 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-08-12 21:55:32:5532 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | src/services/finance/canonical/__tests__/canonicalServices.pg.test.ts > Finance v3 canonical services — real PostgreSQL
+2026-08-12 21:55:33:5533 [32minfo[39m: [32m[Postgres] Initializing connection pool...[39m
+2026-08-12 21:55:33:5533 [32minfo[39m: [32m[DB Config] DATABASE_URL: SET[39m
+2026-08-12 21:55:33:5533 [32minfo[39m: [32m[DB Config] DB_TYPE: postgres[39m
+2026-08-12 21:55:33:5533 [32minfo[39m: [32m[DB Config] Using PostgreSQL[39m
+2026-08-12 21:55:33:5533 [32minfo[39m: [32m[Postgres] Config:[39m {"host":"127.0.0.1","database":"checkpoint_verify","max":10}
+2026-08-12 21:55:33:5533 [32minfo[39m: [32m[Postgres] Checking/Initializing Schema...[39m
+2026-08-12 21:55:33:5533 [32minfo[39m: [32m[Postgres] Testing connection (attempt 1/3)...[39m
+
+stdout | src/services/finance/canonical/__tests__/canonicalServices.pg.test.ts > Finance v3 canonical services — real PostgreSQL
+2026-08-12 21:55:33:5533 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | src/services/finance/canonical/__tests__/canonicalServices.pg.test.ts > Finance v3 canonical services — real PostgreSQL
+2026-08-12 21:55:33:5533 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | src/services/finance/canonical/__tests__/canonicalServices.pg.test.ts > Finance v3 canonical services — real PostgreSQL
+2026-08-12 21:55:33:5533 [32minfo[39m: [32m[Postgres] Connection test successful (PostgreSQL verified):[39m {"current_time":"2026-08-12T19:55:33.228Z"}
+
+ ✓ src/services/finance/canonical/__tests__/canonicalServices.pg.test.ts > Finance v3 canonical services — real PostgreSQL > artifactVersionService — create, transition, atomic approve > createArtifact makes an artifact + v1 DRAFT business version + v1 working revision 65ms
+ ✓ src/services/finance/canonical/__tests__/canonicalServices.pg.test.ts > Finance v3 canonical services — real PostgreSQL > artifactVersionService — create, transition, atomic approve > the full T2->T4 transition chain then approveVersion succeeds and freezes a compute snapshot 135ms
+ ✓ src/services/finance/canonical/__tests__/canonicalServices.pg.test.ts > Finance v3 canonical services — real PostgreSQL > artifactVersionService — create, transition, atomic approve > approve rejects with VERSION_CONFLICT on a stale expectedVersion (CAS) 24ms
+ ✓ src/services/finance/canonical/__tests__/canonicalServices.pg.test.ts > Finance v3 canonical services — real PostgreSQL > artifactVersionService — create, transition, atomic approve > MATERIAL/HIGH_RISK artifacts reject self-approval (approver === submitted_by) 25ms
+ ✓ src/services/finance/canonical/__tests__/canonicalServices.pg.test.ts > Finance v3 canonical services — real PostgreSQL > artifactVersionService.createComputeSnapshot — IF-19 fix (Advisor pre-approval sequencing) > creates a pre-approval snapshot while DRAFT, and a real Advisor row can be written against it before approval 30ms
+ ✓ src/services/finance/canonical/__tests__/canonicalServices.pg.test.ts > Finance v3 canonical services — real PostgreSQL > artifactVersionService.createComputeSnapshot — IF-19 fix (Advisor pre-approval sequencing) > a second call for the SAME current working revision reuses the existing snapshot (no duplicate row) 11ms
+ ✓ src/services/finance/canonical/__tests__/canonicalServices.pg.test.ts > Finance v3 canonical services — real PostgreSQL > artifactVersionService.createComputeSnapshot — IF-19 fix (Advisor pre-approval sequencing) > is rejected once the business_version is APPROVED (mirrors the DB trigger it exists to satisfy) 79ms
+ ✓ src/services/finance/canonical/__tests__/canonicalServices.pg.test.ts > Finance v3 canonical services — real PostgreSQL > artifactVersionService.createComputeSnapshot — IF-19 fix (Advisor pre-approval sequencing) > approveVersion() reuses a pre-approval snapshot for the SAME working revision instead of creating a second one 103ms
+stdout | src/services/finance/canonical/__tests__/canonicalServices.pg.test.ts > Finance v3 canonical services — real PostgreSQL > artifactVersionService.createComputeSnapshot — IF-19 fix (Advisor pre-approval sequencing) > approveVersion() still creates its OWN fresh snapshot when no pre-approval snapshot exists (STATEMENT_PACK-style callers, unchanged fallback)
+2026-08-12 21:55:33:5533 [37mdebug[39m: [37m[Postgres] subscription_plans normalize legacy nulls: column "is_active" does not exist[39m
+
+stdout | src/services/finance/canonical/__tests__/canonicalServices.pg.test.ts > Finance v3 canonical services — real PostgreSQL > artifactVersionService.createComputeSnapshot — IF-19 fix (Advisor pre-approval sequencing) > approveVersion() still creates its OWN fresh snapshot when no pre-approval snapshot exists (STATEMENT_PACK-style callers, unchanged fallback)
+2026-08-12 21:55:33:5533 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+ ✓ src/services/finance/canonical/__tests__/canonicalServices.pg.test.ts > Finance v3 canonical services — real PostgreSQL > artifactVersionService.createComputeSnapshot — IF-19 fix (Advisor pre-approval sequencing) > approveVersion() still creates its OWN fresh snapshot when no pre-approval snapshot exists (STATEMENT_PACK-style callers, unchanged fallback) 115ms
+stdout | src/services/finance/canonical/__tests__/canonicalServices.pg.test.ts > Finance v3 canonical services — real PostgreSQL > artifactVersionService.reopenVersion — WP-B02 §6, non-mutating > a second reopen of the same vN (with an existing open child) is rejected DRAFT_ALREADY_EXISTS
+2026-08-12 21:55:34:5534 [32minfo[39m: [32m[Postgres] Verifying/Creating Indexes...[39m
+
+ ✓ src/services/finance/canonical/__tests__/canonicalServices.pg.test.ts > Finance v3 canonical services — real PostgreSQL > artifactVersionService.reopenVersion — WP-B02 §6, non-mutating > reopen creates a new DRAFT vN+1 and leaves vN byte-for-byte unchanged 111ms
+stdout | src/services/finance/canonical/__tests__/canonicalServices.pg.test.ts > Finance v3 canonical services — real PostgreSQL > artifactVersionService.reopenVersion — WP-B02 §6, non-mutating > reopen requires a non-empty reason and an allowed role
+2026-08-12 21:55:34:5534 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | src/services/finance/canonical/__tests__/canonicalServices.pg.test.ts > Finance v3 canonical services — real PostgreSQL > artifactVersionService.reopenVersion — WP-B02 §6, non-mutating > idempotency-key replay returns the SAME child version_id, not a second one
+2026-08-12 21:55:34:5534 [37mdebug[39m: [37m[Postgres] Skipping created_by index on webhooks: column "created_by" does not exist[39m
+
+stdout | src/services/finance/canonical/__tests__/canonicalServices.pg.test.ts > Finance v3 canonical services — real PostgreSQL > artifactVersionService.reopenVersion — WP-B02 §6, non-mutating > idempotency-key replay returns the SAME child version_id, not a second one
+2026-08-12 21:55:34:5534 [32minfo[39m: [32m[Postgres] Schema Check Complete.[39m
+
+stdout | src/services/finance/canonical/__tests__/canonicalServices.pg.test.ts > Finance v3 canonical services — real PostgreSQL > artifactVersionService.reopenVersion — WP-B02 §6, non-mutating > idempotency-key replay returns the SAME child version_id, not a second one
+2026-08-12 21:55:34:5534 [32minfo[39m: [32m[Postgres] Verified table exists: organizations[39m
+
+stdout | src/services/finance/canonical/__tests__/canonicalServices.pg.test.ts > Finance v3 canonical services — real PostgreSQL > artifactVersionService.reopenVersion — WP-B02 §6, non-mutating > idempotency-key replay returns the SAME child version_id, not a second one
+2026-08-12 21:55:34:5534 [32minfo[39m: [32m[Postgres] Verified table exists: users[39m
+
+stdout | src/services/finance/canonical/__tests__/canonicalServices.pg.test.ts > Finance v3 canonical services — real PostgreSQL > artifactVersionService.reopenVersion — WP-B02 §6, non-mutating > idempotency-key replay returns the SAME child version_id, not a second one
+2026-08-12 21:55:34:5534 [32minfo[39m: [32m[Postgres] Verified table exists: sessions[39m
+
+stdout | src/services/finance/canonical/__tests__/canonicalServices.pg.test.ts > Finance v3 canonical services — real PostgreSQL > artifactVersionService.reopenVersion — WP-B02 §6, non-mutating > idempotency-key replay returns the SAME child version_id, not a second one
+2026-08-12 21:55:34:5534 [32minfo[39m: [32m[Postgres] Verified table exists: projects[39m
+
+stdout | src/services/finance/canonical/__tests__/canonicalServices.pg.test.ts > Finance v3 canonical services — real PostgreSQL > artifactVersionService.reopenVersion — WP-B02 §6, non-mutating > idempotency-key replay returns the SAME child version_id, not a second one
+2026-08-12 21:55:34:5534 [32minfo[39m: [32m[Postgres] Verified table exists: tasks[39m
+
+stdout | src/services/finance/canonical/__tests__/canonicalServices.pg.test.ts > Finance v3 canonical services — real PostgreSQL > artifactVersionService.reopenVersion — WP-B02 §6, non-mutating > idempotency-key replay returns the SAME child version_id, not a second one
+2026-08-12 21:55:34:5534 [32minfo[39m: [32m[Postgres] Verified table exists: teams[39m
+
+stdout | src/services/finance/canonical/__tests__/canonicalServices.pg.test.ts > Finance v3 canonical services — real PostgreSQL > artifactVersionService.reopenVersion — WP-B02 §6, non-mutating > idempotency-key replay returns the SAME child version_id, not a second one
+2026-08-12 21:55:34:5534 [32minfo[39m: [32m[Postgres] Verified table exists: invitations[39m
+
+stdout | src/services/finance/canonical/__tests__/canonicalServices.pg.test.ts > Finance v3 canonical services — real PostgreSQL > artifactVersionService.reopenVersion — WP-B02 §6, non-mutating > idempotency-key replay returns the SAME child version_id, not a second one
+2026-08-12 21:55:34:5534 [32minfo[39m: [32m[Postgres] Verified table exists: notifications[39m
+
+stdout | src/services/finance/canonical/__tests__/canonicalServices.pg.test.ts > Finance v3 canonical services — real PostgreSQL > artifactVersionService.reopenVersion — WP-B02 §6, non-mutating > idempotency-key replay returns the SAME child version_id, not a second one
+2026-08-12 21:55:34:5534 [32minfo[39m: [32m[Postgres] Verified table exists: settings[39m
+
+stdout | src/services/finance/canonical/__tests__/canonicalServices.pg.test.ts > Finance v3 canonical services — real PostgreSQL > artifactVersionService.reopenVersion — WP-B02 §6, non-mutating > idempotency-key replay returns the SAME child version_id, not a second one
+2026-08-12 21:55:34:5534 [32minfo[39m: [32m[Postgres] Schema initialization completed successfully[39m
+
+ ✓ src/services/finance/canonical/__tests__/canonicalServices.pg.test.ts > Finance v3 canonical services — real PostgreSQL > artifactVersionService.reopenVersion — WP-B02 §6, non-mutating > a second reopen of the same vN (with an existing open child) is rejected DRAFT_ALREADY_EXISTS 109ms
+ ✓ src/services/finance/canonical/__tests__/canonicalServices.pg.test.ts > Finance v3 canonical services — real PostgreSQL > artifactVersionService.reopenVersion — WP-B02 §6, non-mutating > reopen requires a non-empty reason and an allowed role 20ms
+ ✓ src/services/finance/canonical/__tests__/canonicalServices.pg.test.ts > Finance v3 canonical services — real PostgreSQL > artifactVersionService.reopenVersion — WP-B02 §6, non-mutating > idempotency-key replay returns the SAME child version_id, not a second one 58ms
+ ✓ src/services/finance/canonical/__tests__/canonicalServices.pg.test.ts > Finance v3 canonical services — real PostgreSQL > artifactVersionService.reopenVersion — WP-B02 §6, non-mutating > approving a reopened vN+1 reaches APPROVED and supersedes vN (BUG-GOLDCO-03) 75ms
+ ✓ src/services/finance/canonical/__tests__/canonicalServices.pg.test.ts > Finance v3 canonical services — real PostgreSQL > artifactVersionService.reopenVersion — WP-B02 §6, non-mutating > reopen with versionKind=RESTATED persists version_kind/restatement_reason/restatement_class (BUG-GOLDCO-01) 84ms
+stdout | src/services/finance/canonical/__tests__/canonicalServices.pg.test.ts > Finance v3 canonical services — real PostgreSQL > computeJobService — enqueue + FOR UPDATE SKIP LOCKED claim > two concurrent claim() calls never claim the same job twice (SKIP LOCKED)
+2026-08-12 21:55:34:5534 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | src/services/finance/canonical/__tests__/canonicalServices.pg.test.ts > Finance v3 canonical services — real PostgreSQL > computeJobService — enqueue + FOR UPDATE SKIP LOCKED claim > two concurrent claim() calls never claim the same job twice (SKIP LOCKED)
+2026-08-12 21:55:34:5534 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+ ✓ src/services/finance/canonical/__tests__/canonicalServices.pg.test.ts > Finance v3 canonical services — real PostgreSQL > lineageService — real DB insert + cycle rejection via the DB trigger > insertEdge succeeds for a valid forward edge and getDescendants/getAncestors find it 21ms
+ ✓ src/services/finance/canonical/__tests__/canonicalServices.pg.test.ts > Finance v3 canonical services — real PostgreSQL > lineageService — real DB insert + cycle rejection via the DB trigger > the DB trigger rejects a backward edge even if a caller bypassed the app-level pre-check 21ms
+ ✓ src/services/finance/canonical/__tests__/canonicalServices.pg.test.ts > Finance v3 canonical services — real PostgreSQL > computeJobService — enqueue + FOR UPDATE SKIP LOCKED claim > enqueue is idempotent on (organization_id, job_type, idempotency_key) 11ms
+ ✓ src/services/finance/canonical/__tests__/canonicalServices.pg.test.ts > Finance v3 canonical services — real PostgreSQL > computeJobService — enqueue + FOR UPDATE SKIP LOCKED claim > two concurrent claim() calls never claim the same job twice (SKIP LOCKED) 31ms
+ ✓ src/services/finance/canonical/__tests__/canonicalServices.pg.test.ts > Finance v3 canonical services — real PostgreSQL > computeJobService — enqueue + FOR UPDATE SKIP LOCKED claim > completeJobSuccess commits an output and marks the job succeeded 16ms
+ ✓ src/services/finance/canonical/__tests__/canonicalServices.pg.test.ts > Finance v3 canonical services — real PostgreSQL > exceptionLedgerService — raise / accept / waive > raise + accept moves finance_exceptions_current.state OPEN -> ACCEPTED 12ms
+ ✓ src/services/finance/canonical/__tests__/canonicalServices.pg.test.ts > Finance v3 canonical services — real PostgreSQL > exceptionLedgerService — raise / accept / waive > SECURITY severity without blockingCategory is rejected before hitting the DB 12ms
+ ✓ src/services/finance/canonical/__tests__/canonicalServices.pg.test.ts > Finance v3 canonical services — real PostgreSQL > exceptionLedgerService — raise / accept / waive > waive on a MATERIAL exception without expiry is rejected (chk_finance_exceptions_expiry_required) 11ms
+ ✓ src/services/finance/canonical/__tests__/canonicalServices.pg.test.ts > Finance v3 canonical services — real PostgreSQL > exceptionLedgerService — raise / accept / waive > a blocking OPEN SECURITY exception blocks approveVersion (WP-B02 §5.1 point (a)(ii)) 20ms
+
+ Test Files  1 passed (1)
+      Tests  24 passed (24)
+   Start at  21:55:31
+   Duration  2.49s (transform 512ms, setup 0ms, import 105ms, tests 1.93s, environment 0ms)

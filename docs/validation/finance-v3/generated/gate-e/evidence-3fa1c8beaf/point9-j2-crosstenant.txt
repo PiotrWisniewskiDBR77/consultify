@@ -1,0 +1,57 @@
+2026-08-12 23:38:28:3828 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-08-12 23:38:28:3828 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-08-12 23:38:28:3828 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-08-12 23:38:28:3828 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-08-12 23:38:28:3828 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+2026-08-12 23:38:30:3830 [32minfo[39m: [32m[Postgres] Initializing connection pool...[39m
+2026-08-12 23:38:30:3830 [32minfo[39m: [32m[DB Config] DATABASE_URL: SET[39m
+2026-08-12 23:38:30:3830 [32minfo[39m: [32m[DB Config] DB_TYPE: postgres[39m
+2026-08-12 23:38:30:3830 [32minfo[39m: [32m[DB Config] Using PostgreSQL[39m
+2026-08-12 23:38:30:3830 [32minfo[39m: [32m[Postgres] Config:[39m {"host":"127.0.0.1","database":"gate_final_j2","max":10}
+2026-08-12 23:38:30:3830 [32minfo[39m: [32m[Postgres] Checking/Initializing Schema...[39m
+2026-08-12 23:38:30:3830 [32minfo[39m: [32m[Postgres] Testing connection (attempt 1/3)...[39m
+2026-08-12 23:38:30:3830 [37mdebug[39m: [37m[Postgres] Client connected[39m
+2026-08-12 23:38:30:3830 [37mdebug[39m: [37m[Postgres] Client connected[39m
+2026-08-12 23:38:30:3830 [32minfo[39m: [32m[Postgres] Connection test successful (PostgreSQL verified):[39m {"current_time":"2026-08-12T21:38:30.587Z"}
+[PASS] models :: approve (source(artifactId)) -> HTTP 404 | sql: finance_business_versions.status/approved_by unchanged (before=IN_REVIEW, after=IN_REVIEW) | mutated=false
+[ERR ] models :: approve (legit control, same org, different approver) (source(artifactId)) -> HTTP 422 APPROVAL_BLOCKED | sql: n/a — control | mutated=false
+[PASS] models :: approve-adjacent(reopen) (source(artifactId)) -> HTTP 404 | sql: status unchanged (before=READY_FOR_REVIEW, after=READY_FOR_REVIEW); zero org-B rows for this artifact (0) | mutated=false
+[PASS] versions :: read (version) -> HTTP 404 NOT_FOUND | sql: n/a (pure read, no mutation possible) | mutated=false
+2026-08-12 23:38:30:3830 [37mdebug[39m: [37m[Postgres] Client connected[39m
+[PASS] crosscutting :: read (edge) -> HTTP 200 | sql: response ancestors/descendants arrays must be empty for a foreign version id | mutated=false
+[PASS] crosscutting :: read (edge) -> HTTP 200 | sql: response data array must be empty | mutated=false
+[PASS] crosscutting :: read (exception) -> HTTP 200 | sql: org-A exception row (id=c7c37137-1122-4b68-9144-ff5fa982dac5) present in DB; response for org B must not include it | mutated=false
+2026-08-12 23:38:30:3830 [37mdebug[39m: [37m[Postgres] Client connected[39m
+2026-08-12 23:38:30:3830 [37mdebug[39m: [37m[Postgres] Client connected[39m
+2026-08-12 23:38:30:3830 [37mdebug[39m: [37m[Postgres] Client connected[39m
+2026-08-12 23:38:30:3830 [37mdebug[39m: [37m[Postgres] Client connected[39m
+2026-08-12 23:38:30:3830 [37mdebug[39m: [37m[Postgres] Client connected[39m
+[PASS] crosscutting :: read (exception) -> HTTP 200 | sql: response body must not reference org-A exception id | mutated=false
+[PASS] compare :: read/compute (source+target(businessVersionId via artifactRef)) -> HTTP 404 ARTIFACT_NOT_FOUND | sql: no SQL side effect possible (read-only compare); checked HTTP+body only | mutated=false
+[PASS] compare :: read/compute (source+target(businessVersionId)) -> HTTP 404 ARTIFACT_NOT_FOUND | sql: read-only; body must not contain org-A cell values | mutated=false
+[PASS] compare :: read/compute (source(businessVersionId via artifactRef)) -> HTTP 404 ARTIFACT_NOT_FOUND | sql: read-only | mutated=false
+[PASS] compare :: read/compute (source+target(businessVersionId)) -> HTTP 404 ARTIFACT_NOT_FOUND | sql: read-only | mutated=false
+[PASS] compare :: read/compute (source(businessVersionId)) -> HTTP 404 ARTIFACT_NOT_FOUND | sql: read-only | mutated=false
+[PASS] compare :: read/compute (source+target(businessVersionId via artifactRef)) -> HTTP 404 ENTITY_CODE_NOT_FOUND | sql: read-only | mutated=false
+[PASS] comments :: create (comment (indirect: anchored on org-A cell)) -> HTTP 404 NOT_FOUND | sql: zero finance_comments rows for org B (found 0) | mutated=false
+[PASS] comments :: approve-adjacent(resolve) (comment) -> HTTP 404 NOT_FOUND | sql: resolved_by unchanged (before=null, after=null) | mutated=false
+[PASS] comments :: read (comment) -> HTTP 404 | sql: n/a (read) | mutated=false
+[PASS] saved-views :: create (target (indirect: view referencing org-A artifact)) -> HTTP 404 ARTIFACT_NOT_FOUND | sql: zero finance_saved_views rows for org B (found 0) | mutated=false
+[PASS] saved-views :: delete (target) -> HTTP 404 | sql: row still exists after cross-tenant delete attempt: true | mutated=false
+[PASS] lineage-navigator :: create (edge (indirect: source=org-A artifact)) -> HTTP 404 NOT_FOUND | sql: org-B edge count before=0 after=0 | mutated=false
+[PASS] lineage-navigator :: read (version) -> HTTP 404 | sql: n/a (read) | mutated=false
+[PASS] export-import :: export (export (indirect: exporting org-A artifact)) -> HTTP 404 NOT_FOUND | sql: n/a (file stream read; verified via response status/body only) | mutated=false
+[PASS] export-import :: preview (indirect: manifest targets org-A version) (export) -> HTTP 404 NOT_FOUND | sql: n/a (read-only diff) | mutated=false
+[PASS] baseline :: create (version) -> HTTP 404 NOT_FOUND | sql: assumption row count before=0 after=0 | mutated=false
+[PASS] compute :: delete-adjacent(cancel) (job) -> HTTP 404 NOT_FOUND | sql: status unchanged (before=queued, after=queued) | mutated=false
+[PASS] compute :: read (output) -> HTTP 404 | sql: n/a (read) | mutated=false
+2026-08-12 23:38:31:3831 [37mdebug[39m: [37m[Postgres] subscription_plans normalize legacy nulls: column "is_active" does not exist[39m
+[PASS] statements :: read (revision (reconciliationRunId, not URL-scoped by businessVersionId)) -> HTTP 404 NOT_FOUND | sql: org-A reconciliation run row exists in DB; response for org B must be 404, not the row | mutated=false
+[PASS] valuation :: read (source(methodId)) -> HTTP 404 NOT_FOUND | sql: n/a (read) | mutated=false
+[PASS] artifacts :: update (source(artifactId)) -> HTTP 404 NOT_FOUND | sql: natural_key='null' (must not be 'j2 hijacked name') | mutated=false
+[PASS] analysis :: compute (version) -> HTTP 404 NO_SOURCE_STATEMENT_PACK_EDGE | sql: org-B compute_jobs count=0 (must be 0) | mutated=false
+[PASS] prediction :: compute (version) -> HTTP 404 NOT_FOUND | sql: n/a (spot check, full coverage in pkg-b2-cross-tenant.routes.pg.test.ts) | mutated=false
+
+=== SUMMARY: 31 probes, 0 LEAKS, 1 ERRORS ===
+
+Results written to /tmp/j2-crosstenant-results.json

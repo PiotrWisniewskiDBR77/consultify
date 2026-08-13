@@ -24,6 +24,7 @@ import chatRoutes from './chat.routes.js';
 import executionRoutes from './execution.routes.js';
 import executionControlRoutes from './execution-control.routes.js';
 import financeRoutes from './finance.routes.js';
+import financeV2Routes from './finance-v2/index.js';
 import financeIntelligenceRoutes from './finance-intelligence.routes.js';
 import financePlanningRoutes from './finance-planning.routes.js';
 import financeValuationRoutes from './finance-valuation.routes.js';
@@ -104,6 +105,9 @@ v8Router.use('/finance/value', financeValueRoutes);
 // Fala 4 (2026-07-15): wiring 27 osieroconych silników M16 — 4 klastry endpointów.
 // Specyficzne prefiksy PRZED catch-all '/finance'.
 v8Router.use('/finance/value-tracking', financeValueTrackingRoutes);
+// Finance v3 (Gate C, WP-C02) — canonical-storage adapter surface, own
+// `/finance-v2` prefix, does not shadow or get shadowed by `/finance` below.
+v8Router.use('/finance-v2', financeV2Routes);
 v8Router.use('/finance', financeRoutes);
 v8Router.use('/finance-value', financeValueRoutes);
 v8Router.use('/finance-valuation', financeValuationRoutes);

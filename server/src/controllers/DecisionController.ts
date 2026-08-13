@@ -1169,6 +1169,12 @@ export class DecisionController {
         decisionType,
         type,
         impacts,
+        // OKR-E006 (IO-6 additive cross-module seam,
+        // docs/product/results-vnext/OKR_E006_DESIGN.md §10.2): optional —
+        // undefined for every pre-existing caller, so the rest of this
+        // handler's behavior is unchanged when they are absent.
+        sourceType,
+        sourceId,
       } = req.body;
 
       if (!title) {
@@ -1199,7 +1205,12 @@ export class DecisionController {
       const taskIdValue = relatedObjectType === 'task' ? relatedObjectId : taskId || null;
       const projectIdValue = relatedObjectType === 'project' ? relatedObjectId : projectId || null;
 
-      if (!projectIdValue && !initiativeIdValue && !taskIdValue) {
+      // OKR-E006 (IO-6 additive cross-module seam, design §10.2): a caller
+      // that supplies BOTH sourceType and sourceId is accepted as a fourth,
+      // generic decision-context shape alongside project/initiative/task —
+      // widens what is accepted, rejects nothing that was accepted before.
+      const hasSourceContext = Boolean(sourceType && sourceId);
+      if (!projectIdValue && !initiativeIdValue && !taskIdValue && !hasSourceContext) {
         res.status(400).json({ error: 'Missing decision context' });
         return;
       }
@@ -1260,13 +1271,21 @@ export class DecisionController {
         normalizedDueDate &&
         new Date(new Date(normalizedDueDate).getTime() + 7 * 24 * 60 * 60 * 1000).toISOString();
 
+      // OKR-E006 (IO-6 additive cross-module seam, design §10.2):
+      // source_type/source_id already existed as nullable columns on this
+      // table (server/migrations/20260311_origin_tracking.sql) but were
+      // never populated by createDecision before this change. Every
+      // pre-existing caller passes neither field, so both bind to NULL here
+      // — the exact same value the column held implicitly before this
+      // change (byte-for-byte unchanged behavior for existing callers).
       const sql = `INSERT INTO decisions (
             id, organization_id, project_id, initiative_id, task_id,
             title, description, type, decision_maker_id,
             deadline, escalation_deadline, status, created_by,
             priority, impact, escalation_level, pmo_domain, required,
+            source_type, source_id,
             created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`;
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`;
 
       const relatedObjectTypeValue =
         relatedObjectType ||
@@ -1343,13 +1362,16 @@ export class DecisionController {
             'none',
             pmoDomain || null,
             shouldRequireDecision ? 1 : 0,
+            sourceType || null,
+            sourceId || null,
           ]);
         } catch (error) {
           const legacySql = `INSERT INTO decisions (
                 id, organization_id, project_id, title, description, pmo_domain,
                 decision_owner_id, related_object_type, related_object_id, due_date,
-                priority, status, required, audit_trail, impact, escalation_level, created_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`;
+                priority, status, required, audit_trail, impact, escalation_level,
+                source_type, source_id, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`;
           await client.query(legacySql, [
             id,
             orgId,
@@ -1367,6 +1389,8 @@ export class DecisionController {
             JSON.stringify({ decisionType: normalizedType, createdBy: userId }),
             normalizedImpact,
             'none',
+            sourceType || null,
+            sourceId || null,
           ]);
         }
 

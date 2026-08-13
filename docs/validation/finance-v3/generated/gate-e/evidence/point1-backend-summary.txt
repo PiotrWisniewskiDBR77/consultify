@@ -1,0 +1,68 @@
+=== Backend (server vitest) non-DB Finance scope: 36 files, run as 2x18-file batches (vitest CLI flaked on the combined 36-file invocation — 'No test files found' despite all files existing; each half independently succeeded, retried and reproduced) ===
+--- half1 (18 files) ---
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed | 17 passed (18)
+      Tests  3 failed | 392 passed (395)
+--- half2 (18 files) ---
+ Test Files  18 passed (18)
+      Tests  457 passed (457)
+
+=== half1 failed tests (3, all in finance.routes.test.ts) ===
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/routes/v8/__tests__/finance.routes.test.ts > V8 finance read-only routes > POST /api/v8/finance/statements/:id/extract returns envelope and delegates to statement extract flow
+AssertionError: expected 500 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 500
+
+ ❯ src/routes/v8/__tests__/finance.routes.test.ts:1385:24
+    1383|     const res = await request(app).post('/api/v8/finance/statements/st…
+    1384|
+    1385|     expect(res.status).toBe(200);
+       |                        ^
+    1386|     expect(res.body.meta?.contract).toBe(V8_FINANCE_READ_CONTRACT);
+    1387|     expect(res.body.data?.statementId).toBe('statement-1');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  src/routes/v8/__tests__/finance.routes.test.ts > V8 finance read-only routes > POST /api/v8/finance/statements/:id/map returns envelope and delegates to statement map flow
+AssertionError: expected 500 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 500
+
+ ❯ src/routes/v8/__tests__/finance.routes.test.ts:1442:24
+    1440|       });
+    1441|
+    1442|     expect(res.status).toBe(200);
+       |                        ^
+    1443|     expect(res.body.meta?.contract).toBe(V8_FINANCE_READ_CONTRACT);
+    1444|     expect(res.body.data?.statementId).toBe('statement-1');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  src/routes/v8/__tests__/finance.routes.test.ts > V8 finance read-only routes > POST /api/v8/finance/analyses/:id/initiatives creates initiatives from accepted proposals
+AssertionError: expected 410 to be 201 // Object.is equality
+
+- Expected
++ Received
+
+- 201
++ 410
+
+ ❯ src/routes/v8/__tests__/finance.routes.test.ts:1787:24
+    1785|       .send({ acceptedProposalIds: ['proposal-1'] });
+    1786|
+    1787|     expect(res.status).toBe(201);
+       |                        ^
+    1788|     expect(res.body.meta?.contract).toBe(V8_FINANCE_READ_CONTRACT);
+    1789|     expect(res.body.data?.success).toBe(true);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯

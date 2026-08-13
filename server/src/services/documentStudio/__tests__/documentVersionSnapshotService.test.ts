@@ -18,6 +18,7 @@
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { Mock } from 'vitest';
 
 import type { DocumentAuditEntry, DocumentSchema, DocumentStatus } from '../documentStudioTypes.js';
 import {
@@ -43,8 +44,11 @@ function fakeSchema(overrides: Partial<DocumentSchema> = {}): DocumentSchema {
     audience: ['Board'],
     goal: 'decide',
     communicationRegister: 'executive',
-    density: 'medium',
-    languageStyle: 'consulting_neutral',
+    // 'medium' / 'consulting_neutral' are not members of DocumentDensity /
+    // DocumentLanguageStyle; neither field is read by the snapshot service or by
+    // any assertion in this suite, so the nearest valid members are used.
+    density: 'standard',
+    languageStyle: 'consulting',
     confidentiality: 'internal',
     formattingSchema: {
       fonts: { body: 'Aptos 11', heading: 'Aptos Display' },
@@ -68,7 +72,7 @@ function fakeSchema(overrides: Partial<DocumentSchema> = {}): DocumentSchema {
   };
 }
 
-let auditPumpSpy: ReturnType<typeof vi.fn>;
+let auditPumpSpy: Mock<(entry: DocumentAuditEntry) => void>;
 
 beforeEach(() => {
   __resetDocumentVersionSnapshotsForTests();

@@ -85,6 +85,12 @@ export async function v8Delete<T>(path: string): Promise<T> {
     method: 'DELETE',
     headers: getHeaders(),
   });
-  const json = await handleResponse<{ data: T }>(res, `V8 DELETE ${path}`);
-  return json.data;
+  // `handleResponse` returns `null` (not `{ data }`) for a genuine 204 No Content — a legal,
+  // empty-body DELETE response, not an error. Reading `.data` off `null` unconditionally used to
+  // throw "Cannot read properties of null (reading 'data')" on any endpoint that really answers
+  // 204 (e.g. `saved-views.routes.ts`'s `DELETE /saved-views/:id`, `res.status(204).send()`, no
+  // body at all). `json` is `null` only on 204 — `handleResponse` throws for any non-ok status
+  // before returning, so by the time we get here it's either `null` (204) or the real envelope.
+  const json = await handleResponse<{ data: T } | null>(res, `V8 DELETE ${path}`);
+  return (json === null ? null : json.data) as T;
 }

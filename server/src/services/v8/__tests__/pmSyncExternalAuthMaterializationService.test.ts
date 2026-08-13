@@ -34,6 +34,22 @@ import {
   materializeGovernedExternalAuthCallback,
   shouldMaterializeCallbackDrivenAuth,
 } from '../pmSyncExternalAuthMaterializationService.js';
+import type { Request } from 'express';
+
+/**
+ * `Request['get']` is overloaded (`'set-cookie'` resolves to `string[]`), so an
+ * arrow returning `string | undefined` does not satisfy it. Provide a real
+ * overloaded double with the same behaviour the suite relied on.
+ */
+function makeHostGetter(host: string): Request['get'] {
+  function get(name: 'set-cookie'): string[] | undefined;
+  function get(name: string): string | undefined;
+  function get(name: string): string[] | string | undefined {
+    return name === 'host' ? host : undefined;
+  }
+  return get;
+}
+
 
 describe('pmSyncExternalAuthMaterializationService', () => {
   beforeEach(() => {
@@ -58,10 +74,7 @@ describe('pmSyncExternalAuthMaterializationService', () => {
     const session = buildGovernedExternalAuthSession(
       {
         protocol: 'https',
-        get: (header: string) => {
-          if (header === 'host') return 'consultify.test';
-          return undefined;
-        },
+        get: makeHostGetter('consultify.test'),
       },
       {
         integrationId: 'int-1',
@@ -106,10 +119,7 @@ describe('pmSyncExternalAuthMaterializationService', () => {
     const result = await materializeGovernedExternalAuthCallback({
       req: {
         protocol: 'https',
-        get: (header: string) => {
-          if (header === 'host') return 'consultify.test';
-          return undefined;
-        },
+        get: makeHostGetter('consultify.test'),
       },
       session: {
         state: 'state-1',
@@ -171,10 +181,7 @@ describe('pmSyncExternalAuthMaterializationService', () => {
     const session = buildGovernedExternalAuthSession(
       {
         protocol: 'https',
-        get: (header: string) => {
-          if (header === 'host') return 'consultify.test';
-          return undefined;
-        },
+        get: makeHostGetter('consultify.test'),
       },
       {
         integrationId: 'int-asana-1',
@@ -222,10 +229,7 @@ describe('pmSyncExternalAuthMaterializationService', () => {
     const result = await materializeGovernedExternalAuthCallback({
       req: {
         protocol: 'https',
-        get: (header: string) => {
-          if (header === 'host') return 'consultify.test';
-          return undefined;
-        },
+        get: makeHostGetter('consultify.test'),
       },
       session: {
         state: 'state-1',
@@ -282,10 +286,7 @@ describe('pmSyncExternalAuthMaterializationService', () => {
     const session = buildGovernedExternalAuthSession(
       {
         protocol: 'https',
-        get: (header: string) => {
-          if (header === 'host') return 'consultify.test';
-          return undefined;
-        },
+        get: makeHostGetter('consultify.test'),
       },
       {
         integrationId: 'int-2',
@@ -335,10 +336,7 @@ describe('pmSyncExternalAuthMaterializationService', () => {
     const result = await materializeGovernedExternalAuthCallback({
       req: {
         protocol: 'https',
-        get: (header: string) => {
-          if (header === 'host') return 'consultify.test';
-          return undefined;
-        },
+        get: makeHostGetter('consultify.test'),
       },
       session: {
         state: 'state-1',
@@ -395,10 +393,7 @@ describe('pmSyncExternalAuthMaterializationService', () => {
     const session = buildGovernedExternalAuthSession(
       {
         protocol: 'https',
-        get: (header: string) => {
-          if (header === 'host') return 'consultify.test';
-          return undefined;
-        },
+        get: makeHostGetter('consultify.test'),
       },
       {
         integrationId: 'int-3',
@@ -438,10 +433,7 @@ describe('pmSyncExternalAuthMaterializationService', () => {
     const result = await materializeGovernedExternalAuthCallback({
       req: {
         protocol: 'https',
-        get: (header: string) => {
-          if (header === 'host') return 'consultify.test';
-          return undefined;
-        },
+        get: makeHostGetter('consultify.test'),
       },
       session: {
         state: 'state-1',
