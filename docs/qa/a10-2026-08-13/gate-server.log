@@ -1,0 +1,550 @@
+
+> consultinity@0.0.1 test:method-core:server
+> NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false vitest run server/src/method-core --no-file-parallelism
+
+
+ RUN  v4.1.8 /Users/piotrwisniewski/.codex/worktrees/mac-s7-a10-audit
+
+
+ RUN  v4.1.8 /Users/piotrwisniewski/.codex/worktrees/mac-s7-a10-audit
+
+stdout | server/src/method-core/__tests__/MethodSessionRoleService.http.integration.test.ts > Method Kernel roles/approval HTTP surface — real PostgreSQL
+2026-08-13 16:55:03:553 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-08-13 16:55:03:553 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-08-13 16:55:03:553 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-08-13 16:55:03:553 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-08-13 16:55:03:553 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | server/src/method-core/__tests__/MethodSessionRoleService.http.integration.test.ts > Method Kernel roles/approval HTTP surface — real PostgreSQL
+2026-08-13 16:55:03:553 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-08-13 16:55:03:553 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-08-13 16:55:03:553 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-08-13 16:55:03:553 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-08-13 16:55:03:553 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | server/src/method-core/__tests__/MethodSessionRoleService.http.integration.test.ts > Method Kernel roles/approval HTTP surface — real PostgreSQL
+2026-08-13 16:55:04:554 [32minfo[39m: [32m[DB Config] DATABASE_URL: SET[39m
+2026-08-13 16:55:04:554 [32minfo[39m: [32m[DB Config] DB_TYPE: postgres[39m
+2026-08-13 16:55:04:554 [32minfo[39m: [32m[DB Config] Using PostgreSQL[39m
+2026-08-13 16:55:04:554 [32minfo[39m: [32m[Postgres] Initializing connection pool...[39m
+2026-08-13 16:55:04:554 [32minfo[39m: [32m[Postgres] Config:[39m {"host":"localhost","database":"t_test","max":10}
+2026-08-13 16:55:04:554 [33mwarn[39m: [33m[Postgres] Skipping initDb() in test mode (POSTGRES_SKIP_INIT_IN_TEST=1)[39m
+
+stdout | server/src/method-core/__tests__/MethodSessionRoleService.http.integration.test.ts > Method Kernel roles/approval HTTP surface — real PostgreSQL
+2026-08-13 16:55:04:554 [32minfo[39m: [32m[DB Config] DATABASE_URL: SET[39m
+2026-08-13 16:55:04:554 [32minfo[39m: [32m[DB Config] DB_TYPE: postgres[39m
+2026-08-13 16:55:04:554 [32minfo[39m: [32m[DB Config] Using PostgreSQL[39m
+2026-08-13 16:55:04:554 [32minfo[39m: [32m[Postgres] Initializing connection pool...[39m
+2026-08-13 16:55:04:554 [32minfo[39m: [32m[Postgres] Config:[39m {"host":"localhost","database":"t_test","max":10}
+2026-08-13 16:55:04:554 [33mwarn[39m: [33m[Postgres] Skipping initDb() in test mode (POSTGRES_SKIP_INIT_IN_TEST=1)[39m
+
+stdout | server/src/method-core/__tests__/MethodSessionRoleService.http.integration.test.ts > Method Kernel roles/approval HTTP surface — real PostgreSQL
+2026-08-13 16:55:04:554 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | server/src/method-core/__tests__/MethodSessionRoleService.http.integration.test.ts > Method Kernel roles/approval HTTP surface — real PostgreSQL
+2026-08-13 16:55:04:554 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | server/src/method-core/__tests__/MethodSessionRoleService.http.integration.test.ts > Method Kernel roles/approval HTTP surface — real PostgreSQL
+2026-08-13 16:55:09:559 [32minfo[39m: [32m[FinancialStatementService] Loaded[39m
+
+stdout | server/src/method-core/__tests__/MethodSessionRoleService.http.integration.test.ts > Method Kernel roles/approval HTTP surface — real PostgreSQL
+2026-08-13 16:55:09:559 [32minfo[39m: [32m[FinancialStatementService] Loaded[39m
+
+stdout | server/src/method-core/__tests__/MethodSessionRoleService.http.integration.test.ts > Method Kernel roles/approval HTTP surface — real PostgreSQL
+2026-08-13 16:55:09:559 [32minfo[39m: [32m[FinancialModelingService] Loaded[39m
+
+stdout | server/src/method-core/__tests__/MethodSessionRoleService.http.integration.test.ts > Method Kernel roles/approval HTTP surface — real PostgreSQL
+2026-08-13 16:55:09:559 [32minfo[39m: [32m[FinancialModelingService] Loaded[39m
+
+stdout | server/src/method-core/__tests__/MethodSessionRoleService.http.integration.test.ts > Method Kernel roles/approval HTTP surface — real PostgreSQL > 1. a user cannot grant themselves the approver role
+2026-08-13 16:55:10:5510 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | server/src/method-core/__tests__/MethodSessionRoleService.http.integration.test.ts > Method Kernel roles/approval HTTP surface — real PostgreSQL > 1. a user cannot grant themselves the approver role
+2026-08-13 16:55:10:5510 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+ ✓ server/src/method-core/__tests__/MethodSessionRoleService.http.integration.test.ts > Method Kernel roles/approval HTTP surface — real PostgreSQL > 1. a user cannot grant themselves the approver role 140ms
+ ✓ server/src/method-core/__tests__/MethodSessionRoleService.http.integration.test.ts > Method Kernel roles/approval HTTP surface — real PostgreSQL > 1b. granting approver to a DIFFERENT user succeeds 136ms
+ ✓ server/src/method-core/__tests__/MethodSessionRoleService.http.integration.test.ts > Method Kernel roles/approval HTTP surface — real PostgreSQL > 2. an actor without the approver role is refused a freeze (403 missing_permission) 528ms
+stdout | server/src/method-core/__tests__/MethodSessionRoleService.http.integration.test.ts > Method Kernel roles/approval HTTP surface — real PostgreSQL > 3. send-back without a comment is refused with 400; with a comment it succeeds
+2026-08-13 16:55:11:5511 [32minfo[39m: [32m[2026-08-13T14:55:11.018Z] [INFO] [AI:CircuitBreaker] LLM circuit breakers initialized[39m
+
+stdout | server/src/method-core/__tests__/MethodSessionRoleService.http.integration.test.ts > Method Kernel roles/approval HTTP surface — real PostgreSQL > 3. send-back without a comment is refused with 400; with a comment it succeeds
+2026-08-13 16:55:11:5511 [32minfo[39m: [32m[2026-08-13T14:55:11.018Z] [INFO] [AI:CircuitBreaker] LLM circuit breakers initialized[39m
+
+stdout | server/src/method-core/__tests__/MethodSessionRoleService.http.integration.test.ts > Method Kernel roles/approval HTTP surface — real PostgreSQL > 3. send-back without a comment is refused with 400; with a comment it succeeds
+2026-08-13 16:55:11:5511 [32minfo[39m: [32m[2026-08-13T14:55:11.018Z] [INFO] [AI:CircuitBreaker] Health check function set for [openai][39m
+2026-08-13 16:55:11:5511 [32minfo[39m: [32m[2026-08-13T14:55:11.018Z] [INFO] [AI:CircuitBreaker] Health check registered for [openai][39m
+2026-08-13 16:55:11:5511 [32minfo[39m: [32m[2026-08-13T14:55:11.018Z] [INFO] [AI:CircuitBreaker] Health check function set for [google][39m
+2026-08-13 16:55:11:5511 [32minfo[39m: [32m[2026-08-13T14:55:11.018Z] [INFO] [AI:CircuitBreaker] Health check registered for [google][39m
+
+stdout | server/src/method-core/__tests__/MethodSessionRoleService.http.integration.test.ts > Method Kernel roles/approval HTTP surface — real PostgreSQL > 3. send-back without a comment is refused with 400; with a comment it succeeds
+2026-08-13 16:55:11:5511 [32minfo[39m: [32m[2026-08-13T14:55:11.018Z] [INFO] [AI:CircuitBreaker] Health check function set for [openai][39m
+2026-08-13 16:55:11:5511 [32minfo[39m: [32m[2026-08-13T14:55:11.018Z] [INFO] [AI:CircuitBreaker] Health check registered for [openai][39m
+2026-08-13 16:55:11:5511 [32minfo[39m: [32m[2026-08-13T14:55:11.018Z] [INFO] [AI:CircuitBreaker] Health check function set for [google][39m
+2026-08-13 16:55:11:5511 [32minfo[39m: [32m[2026-08-13T14:55:11.018Z] [INFO] [AI:CircuitBreaker] Health check registered for [google][39m
+
+ ✓ server/src/method-core/__tests__/MethodSessionRoleService.http.integration.test.ts > Method Kernel roles/approval HTTP surface — real PostgreSQL > 3. send-back without a comment is refused with 400; with a comment it succeeds 316ms
+ ✓ server/src/method-core/__tests__/MethodSessionRoleService.http.integration.test.ts > Method Kernel roles/approval HTTP surface — real PostgreSQL > 4. approval trail is scoped to the exact revision; a reopen starts a fresh trail 992ms
+ ✓ server/src/method-core/__tests__/MethodSessionRoleService.http.integration.test.ts > Method Kernel roles/approval HTTP surface — real PostgreSQL > 5. revoking a role leaves the granted history entry intact 197ms
+ ✓ server/src/method-core/__tests__/MethodSessionRoleService.http.integration.test.ts > Method Kernel roles/approval HTTP surface — real PostgreSQL > 6. a different organization cannot assign or read roles on this session (403/404) 117ms
+ ✓ server/src/method-core/__tests__/MethodSessionRoleService.http.integration.test.ts > Method Kernel roles/approval HTTP surface — real PostgreSQL > 7. granting the same role twice does not create a second row 251ms
+stdout | server/src/method-core/__tests__/MethodSessionRoleService.http.integration.test.ts > Method Kernel roles/approval HTTP surface — real PostgreSQL > 8. the role list is deterministic across repeated reads
+2026-08-13 16:55:12:5512 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | server/src/method-core/__tests__/MethodSessionRoleService.http.integration.test.ts > Method Kernel roles/approval HTTP surface — real PostgreSQL > 8. the role list is deterministic across repeated reads
+2026-08-13 16:55:12:5512 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+ ✓ server/src/method-core/__tests__/MethodSessionRoleService.http.integration.test.ts > Method Kernel roles/approval HTTP surface — real PostgreSQL > 8. the role list is deterministic across repeated reads 296ms
+ ✓ server/src/method-core/__tests__/MethodSessionRoleService.http.integration.test.ts > Method Kernel roles/approval HTTP surface — real PostgreSQL > 9. no Authorization header -> 401 50ms
+ ✓ server/src/method-core/__tests__/MethodSessionRoleService.http.integration.test.ts > Method Kernel roles/approval HTTP surface — real PostgreSQL > 10. assigning a role outside the closed METHOD_PROCESS_ROLES set is refused with 400 50ms
+ ✓ server/src/method-core/__tests__/MethodSessionRoleService.http.integration.test.ts > Method Kernel roles/approval HTTP surface — real PostgreSQL > 11. approval-trail shows who, when, and which revision approved 1075ms
+ ✓ server/src/method-core/__tests__/MethodSessionRoleService.http.integration.test.ts (12 tests) 12258ms
+     ✓ 2. an actor without the approver role is refused a freeze (403 missing_permission)  528ms
+     ✓ 3. send-back without a comment is refused with 400; with a comment it succeeds  316ms
+     ✓ 4. approval trail is scoped to the exact revision; a reopen starts a fresh trail  992ms
+     ✓ 11. approval-trail shows who, when, and which revision approved  1075ms
+stdout | server/src/method-core/__tests__/artifactsRecovery.integration.test.ts > S1 — artifacts recovery surface (real PostgreSQL)
+2026-08-13 16:55:17:5517 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-08-13 16:55:17:5517 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-08-13 16:55:17:5517 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-08-13 16:55:17:5517 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-08-13 16:55:17:5517 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | server/src/method-core/__tests__/artifactsRecovery.integration.test.ts > S1 — artifacts recovery surface (real PostgreSQL)
+2026-08-13 16:55:17:5517 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-08-13 16:55:17:5517 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-08-13 16:55:17:5517 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-08-13 16:55:17:5517 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-08-13 16:55:17:5517 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | server/src/method-core/__tests__/artifactsRecovery.integration.test.ts > S1 — artifacts recovery surface (real PostgreSQL)
+2026-08-13 16:55:18:5518 [32minfo[39m: [32m[DB Config] DATABASE_URL: SET[39m
+2026-08-13 16:55:18:5518 [32minfo[39m: [32m[DB Config] DB_TYPE: postgres[39m
+2026-08-13 16:55:18:5518 [32minfo[39m: [32m[DB Config] Using PostgreSQL[39m
+2026-08-13 16:55:18:5518 [32minfo[39m: [32m[Postgres] Initializing connection pool...[39m
+2026-08-13 16:55:18:5518 [32minfo[39m: [32m[Postgres] Config:[39m {"host":"localhost","database":"t_test","max":10}
+2026-08-13 16:55:18:5518 [33mwarn[39m: [33m[Postgres] Skipping initDb() in test mode (POSTGRES_SKIP_INIT_IN_TEST=1)[39m
+
+stdout | server/src/method-core/__tests__/artifactsRecovery.integration.test.ts > S1 — artifacts recovery surface (real PostgreSQL)
+2026-08-13 16:55:18:5518 [32minfo[39m: [32m[DB Config] DATABASE_URL: SET[39m
+2026-08-13 16:55:18:5518 [32minfo[39m: [32m[DB Config] DB_TYPE: postgres[39m
+2026-08-13 16:55:18:5518 [32minfo[39m: [32m[DB Config] Using PostgreSQL[39m
+2026-08-13 16:55:18:5518 [32minfo[39m: [32m[Postgres] Initializing connection pool...[39m
+2026-08-13 16:55:18:5518 [32minfo[39m: [32m[Postgres] Config:[39m {"host":"localhost","database":"t_test","max":10}
+2026-08-13 16:55:18:5518 [33mwarn[39m: [33m[Postgres] Skipping initDb() in test mode (POSTGRES_SKIP_INIT_IN_TEST=1)[39m
+
+stdout | server/src/method-core/__tests__/artifactsRecovery.integration.test.ts > S1 — artifacts recovery surface (real PostgreSQL)
+2026-08-13 16:55:18:5518 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | server/src/method-core/__tests__/artifactsRecovery.integration.test.ts > S1 — artifacts recovery surface (real PostgreSQL)
+2026-08-13 16:55:18:5518 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | server/src/method-core/__tests__/artifactsRecovery.integration.test.ts > S1 — artifacts recovery surface (real PostgreSQL)
+2026-08-13 16:55:19:5519 [32minfo[39m: [32m[FinancialStatementService] Loaded[39m
+
+stdout | server/src/method-core/__tests__/artifactsRecovery.integration.test.ts > S1 — artifacts recovery surface (real PostgreSQL)
+2026-08-13 16:55:19:5519 [32minfo[39m: [32m[FinancialStatementService] Loaded[39m
+
+stdout | server/src/method-core/__tests__/artifactsRecovery.integration.test.ts > S1 — artifacts recovery surface (real PostgreSQL)
+2026-08-13 16:55:19:5519 [32minfo[39m: [32m[FinancialModelingService] Loaded[39m
+
+stdout | server/src/method-core/__tests__/artifactsRecovery.integration.test.ts > S1 — artifacts recovery surface (real PostgreSQL)
+2026-08-13 16:55:19:5519 [32minfo[39m: [32m[FinancialModelingService] Loaded[39m
+
+stdout | server/src/method-core/__tests__/artifactsRecovery.integration.test.ts > S1 — artifacts recovery surface (real PostgreSQL) > 1. GET /sessions/:id/outputs returns v1 alone after first freeze, then v1+v2 (current/superseded) after reopen+refreeze
+2026-08-13 16:55:19:5519 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | server/src/method-core/__tests__/artifactsRecovery.integration.test.ts > S1 — artifacts recovery surface (real PostgreSQL) > 1. GET /sessions/:id/outputs returns v1 alone after first freeze, then v1+v2 (current/superseded) after reopen+refreeze
+2026-08-13 16:55:19:5519 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+ ✓ server/src/method-core/__tests__/artifactsRecovery.integration.test.ts > S1 — artifacts recovery surface (real PostgreSQL) > 1. GET /sessions/:id/outputs returns v1 alone after first freeze, then v1+v2 (current/superseded) after reopen+refreeze 939ms
+ ✓ server/src/method-core/__tests__/artifactsRecovery.integration.test.ts > S1 — artifacts recovery surface (real PostgreSQL) > 2. GET /outputs/:id/revisions returns the chain in version order, from either end 795ms
+stdout | server/src/method-core/__tests__/artifactsRecovery.integration.test.ts > S1 — artifacts recovery surface (real PostgreSQL) > 3. every list endpoint is deterministic across repeated calls
+2026-08-13 16:55:22:5522 [32minfo[39m: [32m[2026-08-13T14:55:22.026Z] [INFO] [AI:CircuitBreaker] LLM circuit breakers initialized[39m
+
+stdout | server/src/method-core/__tests__/artifactsRecovery.integration.test.ts > S1 — artifacts recovery surface (real PostgreSQL) > 3. every list endpoint is deterministic across repeated calls
+2026-08-13 16:55:22:5522 [32minfo[39m: [32m[2026-08-13T14:55:22.026Z] [INFO] [AI:CircuitBreaker] LLM circuit breakers initialized[39m
+
+stdout | server/src/method-core/__tests__/artifactsRecovery.integration.test.ts > S1 — artifacts recovery surface (real PostgreSQL) > 3. every list endpoint is deterministic across repeated calls
+2026-08-13 16:55:22:5522 [32minfo[39m: [32m[2026-08-13T14:55:22.027Z] [INFO] [AI:CircuitBreaker] Health check function set for [openai][39m
+2026-08-13 16:55:22:5522 [32minfo[39m: [32m[2026-08-13T14:55:22.027Z] [INFO] [AI:CircuitBreaker] Health check registered for [openai][39m
+2026-08-13 16:55:22:5522 [32minfo[39m: [32m[2026-08-13T14:55:22.027Z] [INFO] [AI:CircuitBreaker] Health check function set for [google][39m
+2026-08-13 16:55:22:5522 [32minfo[39m: [32m[2026-08-13T14:55:22.027Z] [INFO] [AI:CircuitBreaker] Health check registered for [google][39m
+
+stdout | server/src/method-core/__tests__/artifactsRecovery.integration.test.ts > S1 — artifacts recovery surface (real PostgreSQL) > 3. every list endpoint is deterministic across repeated calls
+2026-08-13 16:55:22:5522 [32minfo[39m: [32m[2026-08-13T14:55:22.027Z] [INFO] [AI:CircuitBreaker] Health check function set for [openai][39m
+2026-08-13 16:55:22:5522 [32minfo[39m: [32m[2026-08-13T14:55:22.027Z] [INFO] [AI:CircuitBreaker] Health check registered for [openai][39m
+2026-08-13 16:55:22:5522 [32minfo[39m: [32m[2026-08-13T14:55:22.027Z] [INFO] [AI:CircuitBreaker] Health check function set for [google][39m
+2026-08-13 16:55:22:5522 [32minfo[39m: [32m[2026-08-13T14:55:22.027Z] [INFO] [AI:CircuitBreaker] Health check registered for [google][39m
+
+ ✓ server/src/method-core/__tests__/artifactsRecovery.integration.test.ts > S1 — artifacts recovery surface (real PostgreSQL) > 3. every list endpoint is deterministic across repeated calls 1234ms
+ ✓ server/src/method-core/__tests__/artifactsRecovery.integration.test.ts > S1 — artifacts recovery surface (real PostgreSQL) > 4. pagination: limit=1&offset=1 returns the second element and the correct total 684ms
+ ✓ server/src/method-core/__tests__/artifactsRecovery.integration.test.ts > S1 — artifacts recovery surface (real PostgreSQL) > 5. cross-org access reads as 404 on every S1 endpoint 715ms
+ ✓ server/src/method-core/__tests__/artifactsRecovery.integration.test.ts > S1 — artifacts recovery surface (real PostgreSQL) > 6. missing Authorization header is refused 401 on every S1 endpoint 968ms
+ ✓ server/src/method-core/__tests__/artifactsRecovery.integration.test.ts > S1 — artifacts recovery surface (real PostgreSQL) > 7. GET /sessions/:id/lineage contains both sessions, both Outputs (with status) and downstream artefacts 1286ms
+ ✓ server/src/method-core/__tests__/artifactsRecovery.integration.test.ts > S1 — artifacts recovery surface (real PostgreSQL) > 8. GET /reports/:id, /presentations/:id, /initiative-drafts/:id return the exact record, and reject the wrong kind 1170ms
+ ✓ server/src/method-core/__tests__/artifactsRecovery.integration.test.ts > S1 — artifacts recovery surface (real PostgreSQL) > 9. GET /sessions/:id/reports|presentations|initiative-drafts show BOTH versions with correct status, from either session id 1516ms
+ ✓ server/src/method-core/__tests__/artifactsRecovery.integration.test.ts > S1 — artifacts recovery surface (real PostgreSQL) > 10. a well-formed but non-existent session id 404s cleanly on the session-scoped endpoints 59ms
+ ✓ server/src/method-core/__tests__/artifactsRecovery.integration.test.ts (10 tests) 11443ms
+     ✓ 1. GET /sessions/:id/outputs returns v1 alone after first freeze, then v1+v2 (current/superseded) after reopen+refreeze  939ms
+     ✓ 2. GET /outputs/:id/revisions returns the chain in version order, from either end  795ms
+     ✓ 3. every list endpoint is deterministic across repeated calls  1234ms
+     ✓ 4. pagination: limit=1&offset=1 returns the second element and the correct total  684ms
+     ✓ 5. cross-org access reads as 404 on every S1 endpoint  715ms
+     ✓ 6. missing Authorization header is refused 401 on every S1 endpoint  968ms
+     ✓ 7. GET /sessions/:id/lineage contains both sessions, both Outputs (with status) and downstream artefacts  1286ms
+     ✓ 8. GET /reports/:id, /presentations/:id, /initiative-drafts/:id return the exact record, and reject the wrong kind  1170ms
+     ✓ 9. GET /sessions/:id/reports|presentations|initiative-drafts show BOTH versions with correct status, from either session id  1516ms
+stdout | server/src/method-core/__tests__/http.integration.test.ts > Method Kernel HTTP surface — real PostgreSQL
+2026-08-13 16:55:31:5531 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-08-13 16:55:31:5531 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-08-13 16:55:31:5531 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-08-13 16:55:31:5531 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-08-13 16:55:31:5531 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | server/src/method-core/__tests__/http.integration.test.ts > Method Kernel HTTP surface — real PostgreSQL
+2026-08-13 16:55:31:5531 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-08-13 16:55:31:5531 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-08-13 16:55:31:5531 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-08-13 16:55:31:5531 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-08-13 16:55:31:5531 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | server/src/method-core/__tests__/http.integration.test.ts > Method Kernel HTTP surface — real PostgreSQL
+2026-08-13 16:55:32:5532 [32minfo[39m: [32m[DB Config] DATABASE_URL: SET[39m
+2026-08-13 16:55:32:5532 [32minfo[39m: [32m[DB Config] DB_TYPE: postgres[39m
+2026-08-13 16:55:32:5532 [32minfo[39m: [32m[DB Config] Using PostgreSQL[39m
+2026-08-13 16:55:32:5532 [32minfo[39m: [32m[Postgres] Initializing connection pool...[39m
+2026-08-13 16:55:32:5532 [32minfo[39m: [32m[Postgres] Config:[39m {"host":"localhost","database":"t_test","max":10}
+2026-08-13 16:55:32:5532 [33mwarn[39m: [33m[Postgres] Skipping initDb() in test mode (POSTGRES_SKIP_INIT_IN_TEST=1)[39m
+
+stdout | server/src/method-core/__tests__/http.integration.test.ts > Method Kernel HTTP surface — real PostgreSQL
+2026-08-13 16:55:32:5532 [32minfo[39m: [32m[DB Config] DATABASE_URL: SET[39m
+2026-08-13 16:55:32:5532 [32minfo[39m: [32m[DB Config] DB_TYPE: postgres[39m
+2026-08-13 16:55:32:5532 [32minfo[39m: [32m[DB Config] Using PostgreSQL[39m
+2026-08-13 16:55:32:5532 [32minfo[39m: [32m[Postgres] Initializing connection pool...[39m
+2026-08-13 16:55:32:5532 [32minfo[39m: [32m[Postgres] Config:[39m {"host":"localhost","database":"t_test","max":10}
+2026-08-13 16:55:32:5532 [33mwarn[39m: [33m[Postgres] Skipping initDb() in test mode (POSTGRES_SKIP_INIT_IN_TEST=1)[39m
+
+stdout | server/src/method-core/__tests__/http.integration.test.ts > Method Kernel HTTP surface — real PostgreSQL
+2026-08-13 16:55:32:5532 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | server/src/method-core/__tests__/http.integration.test.ts > Method Kernel HTTP surface — real PostgreSQL
+2026-08-13 16:55:32:5532 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | server/src/method-core/__tests__/http.integration.test.ts > Method Kernel HTTP surface — real PostgreSQL
+2026-08-13 16:55:33:5533 [32minfo[39m: [32m[FinancialStatementService] Loaded[39m
+
+stdout | server/src/method-core/__tests__/http.integration.test.ts > Method Kernel HTTP surface — real PostgreSQL
+2026-08-13 16:55:33:5533 [32minfo[39m: [32m[FinancialStatementService] Loaded[39m
+
+stdout | server/src/method-core/__tests__/http.integration.test.ts > Method Kernel HTTP surface — real PostgreSQL
+2026-08-13 16:55:33:5533 [32minfo[39m: [32m[FinancialModelingService] Loaded[39m
+
+stdout | server/src/method-core/__tests__/http.integration.test.ts > Method Kernel HTTP surface — real PostgreSQL
+2026-08-13 16:55:33:5533 [32minfo[39m: [32m[FinancialModelingService] Loaded[39m
+
+stdout | server/src/method-core/__tests__/http.integration.test.ts > Method Kernel HTTP surface — real PostgreSQL > 1. create -> resume: the resumed session is read back from the database
+2026-08-13 16:55:33:5533 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | server/src/method-core/__tests__/http.integration.test.ts > Method Kernel HTTP surface — real PostgreSQL > 1. create -> resume: the resumed session is read back from the database
+2026-08-13 16:55:33:5533 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | server/src/method-core/__tests__/http.integration.test.ts > Method Kernel HTTP surface — real PostgreSQL > 2. appending the same event twice with the same Idempotency-Key produces exactly ONE row
+2026-08-13 16:55:33:5533 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | server/src/method-core/__tests__/http.integration.test.ts > Method Kernel HTTP surface — real PostgreSQL > 2. appending the same event twice with the same Idempotency-Key produces exactly ONE row
+2026-08-13 16:55:33:5533 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+ ✓ server/src/method-core/__tests__/http.integration.test.ts > Method Kernel HTTP surface — real PostgreSQL > 1. create -> resume: the resumed session is read back from the database 227ms
+ ✓ server/src/method-core/__tests__/http.integration.test.ts > Method Kernel HTTP surface — real PostgreSQL > 2. appending the same event twice with the same Idempotency-Key produces exactly ONE row 133ms
+ ✓ server/src/method-core/__tests__/http.integration.test.ts > Method Kernel HTTP surface — real PostgreSQL > 3. a transition with a stale expectedVersion is refused with 409 and writes nothing 135ms
+ ✓ server/src/method-core/__tests__/http.integration.test.ts > Method Kernel HTTP surface — real PostgreSQL > 4. freeze creates an Output; retrying freeze with the same key returns the SAME Output 327ms
+ ✓ server/src/method-core/__tests__/http.integration.test.ts > Method Kernel HTTP surface — real PostgreSQL > 5. an actor without the approver role is refused a freeze (403) 205ms
+ ✓ server/src/method-core/__tests__/http.integration.test.ts > Method Kernel HTTP surface — real PostgreSQL > 6. a different organization cannot read this session (403), no data leaked 64ms
+ ✓ server/src/method-core/__tests__/http.integration.test.ts > Method Kernel HTTP surface — real PostgreSQL > 7. a request with no Authorization header is refused with 401 5ms
+ ✓ server/src/method-core/__tests__/http.integration.test.ts > Method Kernel HTTP surface — real PostgreSQL > 8. the Output resource has no mutating route at all (PUT/PATCH/DELETE all 404) 455ms
+ ✓ server/src/method-core/__tests__/http.integration.test.ts > Method Kernel HTTP surface — real PostgreSQL > 9. a Report Snapshot is built from the real frozen Output, with a server-computed hash 428ms
+ ✓ server/src/method-core/__tests__/http.integration.test.ts > Method Kernel HTTP surface — real PostgreSQL > 10. an Initiative Proposal Draft has structurally no path to a Registered Initiative 436ms
+stdout | server/src/method-core/__tests__/http.integration.test.ts > Method Kernel HTTP surface — real PostgreSQL > 11. an interruption between freeze and Output self-heals on retry without creating a duplicate Output
+2026-08-13 16:55:36:5536 [32minfo[39m: [32m[2026-08-13T14:55:36.123Z] [INFO] [AI:CircuitBreaker] LLM circuit breakers initialized[39m
+
+stdout | server/src/method-core/__tests__/http.integration.test.ts > Method Kernel HTTP surface — real PostgreSQL > 11. an interruption between freeze and Output self-heals on retry without creating a duplicate Output
+2026-08-13 16:55:36:5536 [32minfo[39m: [32m[2026-08-13T14:55:36.123Z] [INFO] [AI:CircuitBreaker] LLM circuit breakers initialized[39m
+
+stdout | server/src/method-core/__tests__/http.integration.test.ts > Method Kernel HTTP surface — real PostgreSQL > 11. an interruption between freeze and Output self-heals on retry without creating a duplicate Output
+2026-08-13 16:55:36:5536 [32minfo[39m: [32m[2026-08-13T14:55:36.126Z] [INFO] [AI:CircuitBreaker] Health check function set for [openai][39m
+2026-08-13 16:55:36:5536 [32minfo[39m: [32m[2026-08-13T14:55:36.126Z] [INFO] [AI:CircuitBreaker] Health check registered for [openai][39m
+2026-08-13 16:55:36:5536 [32minfo[39m: [32m[2026-08-13T14:55:36.126Z] [INFO] [AI:CircuitBreaker] Health check function set for [google][39m
+2026-08-13 16:55:36:5536 [32minfo[39m: [32m[2026-08-13T14:55:36.126Z] [INFO] [AI:CircuitBreaker] Health check registered for [google][39m
+
+stdout | server/src/method-core/__tests__/http.integration.test.ts > Method Kernel HTTP surface — real PostgreSQL > 11. an interruption between freeze and Output self-heals on retry without creating a duplicate Output
+2026-08-13 16:55:36:5536 [32minfo[39m: [32m[2026-08-13T14:55:36.126Z] [INFO] [AI:CircuitBreaker] Health check function set for [openai][39m
+2026-08-13 16:55:36:5536 [32minfo[39m: [32m[2026-08-13T14:55:36.126Z] [INFO] [AI:CircuitBreaker] Health check registered for [openai][39m
+2026-08-13 16:55:36:5536 [32minfo[39m: [32m[2026-08-13T14:55:36.126Z] [INFO] [AI:CircuitBreaker] Health check function set for [google][39m
+2026-08-13 16:55:36:5536 [32minfo[39m: [32m[2026-08-13T14:55:36.126Z] [INFO] [AI:CircuitBreaker] Health check registered for [google][39m
+
+ ✓ server/src/method-core/__tests__/http.integration.test.ts > Method Kernel HTTP surface — real PostgreSQL > 11. an interruption between freeze and Output self-heals on retry without creating a duplicate Output 534ms
+ ✓ server/src/method-core/__tests__/http.integration.test.ts > Method Kernel HTTP surface — real PostgreSQL > 12a. isDemoBypassAllowed refuses unconditionally when NODE_ENV=production, regardless of the operator flag or the request 1ms
+ ✓ server/src/method-core/__tests__/http.integration.test.ts > Method Kernel HTTP surface — real PostgreSQL > 12b. HTTP: without bypass, creating a session against a methodology_review pack is refused (422) and the pack readiness is never touched 18ms
+ ✓ server/src/method-core/__tests__/http.integration.test.ts > Method Kernel HTTP surface — real PostgreSQL > 12c. HTTP: WITH the operator flag explicitly on (this non-prod test env) and an explicit client request, bypass creates a session — and still never rewrites pack readiness 39ms
+ ✓ server/src/method-core/__tests__/http.integration.test.ts (14 tests) 6193ms
+     ✓ 4. freeze creates an Output; retrying freeze with the same key returns the SAME Output  327ms
+     ✓ 8. the Output resource has no mutating route at all (PUT/PATCH/DELETE all 404)  455ms
+     ✓ 9. a Report Snapshot is built from the real frozen Output, with a server-computed hash  428ms
+     ✓ 10. an Initiative Proposal Draft has structurally no path to a Registered Initiative  436ms
+     ✓ 11. an interruption between freeze and Output self-heals on retry without creating a duplicate Output  534ms
+stdout | server/src/method-core/__tests__/freezeOutputFlow.integration.test.ts > P0B — freeze -> Output -> approval -> Report -> Initiative (real PostgreSQL)
+2026-08-13 16:55:39:5539 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-08-13 16:55:39:5539 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-08-13 16:55:39:5539 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-08-13 16:55:39:5539 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-08-13 16:55:39:5539 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | server/src/method-core/__tests__/freezeOutputFlow.integration.test.ts > P0B — freeze -> Output -> approval -> Report -> Initiative (real PostgreSQL)
+2026-08-13 16:55:39:5539 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-08-13 16:55:39:5539 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-08-13 16:55:39:5539 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-08-13 16:55:39:5539 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-08-13 16:55:39:5539 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | server/src/method-core/__tests__/freezeOutputFlow.integration.test.ts > P0B — freeze -> Output -> approval -> Report -> Initiative (real PostgreSQL)
+2026-08-13 16:55:39:5539 [32minfo[39m: [32m[DB Config] DATABASE_URL: SET[39m
+2026-08-13 16:55:39:5539 [32minfo[39m: [32m[DB Config] DB_TYPE: postgres[39m
+2026-08-13 16:55:39:5539 [32minfo[39m: [32m[DB Config] Using PostgreSQL[39m
+2026-08-13 16:55:39:5539 [32minfo[39m: [32m[Postgres] Initializing connection pool...[39m
+2026-08-13 16:55:39:5539 [32minfo[39m: [32m[Postgres] Config:[39m {"host":"localhost","database":"t_test","max":10}
+2026-08-13 16:55:39:5539 [33mwarn[39m: [33m[Postgres] Skipping initDb() in test mode (POSTGRES_SKIP_INIT_IN_TEST=1)[39m
+
+stdout | server/src/method-core/__tests__/freezeOutputFlow.integration.test.ts > P0B — freeze -> Output -> approval -> Report -> Initiative (real PostgreSQL)
+2026-08-13 16:55:39:5539 [32minfo[39m: [32m[DB Config] DATABASE_URL: SET[39m
+2026-08-13 16:55:39:5539 [32minfo[39m: [32m[DB Config] DB_TYPE: postgres[39m
+2026-08-13 16:55:39:5539 [32minfo[39m: [32m[DB Config] Using PostgreSQL[39m
+2026-08-13 16:55:39:5539 [32minfo[39m: [32m[Postgres] Initializing connection pool...[39m
+2026-08-13 16:55:39:5539 [32minfo[39m: [32m[Postgres] Config:[39m {"host":"localhost","database":"t_test","max":10}
+2026-08-13 16:55:39:5539 [33mwarn[39m: [33m[Postgres] Skipping initDb() in test mode (POSTGRES_SKIP_INIT_IN_TEST=1)[39m
+
+stdout | server/src/method-core/__tests__/freezeOutputFlow.integration.test.ts > P0B — freeze -> Output -> approval -> Report -> Initiative (real PostgreSQL)
+2026-08-13 16:55:39:5539 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | server/src/method-core/__tests__/freezeOutputFlow.integration.test.ts > P0B — freeze -> Output -> approval -> Report -> Initiative (real PostgreSQL)
+2026-08-13 16:55:39:5539 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | server/src/method-core/__tests__/freezeOutputFlow.integration.test.ts > P0B — freeze -> Output -> approval -> Report -> Initiative (real PostgreSQL)
+2026-08-13 16:55:40:5540 [32minfo[39m: [32m[FinancialStatementService] Loaded[39m
+
+stdout | server/src/method-core/__tests__/freezeOutputFlow.integration.test.ts > P0B — freeze -> Output -> approval -> Report -> Initiative (real PostgreSQL)
+2026-08-13 16:55:40:5540 [32minfo[39m: [32m[FinancialStatementService] Loaded[39m
+
+stdout | server/src/method-core/__tests__/freezeOutputFlow.integration.test.ts > P0B — freeze -> Output -> approval -> Report -> Initiative (real PostgreSQL)
+2026-08-13 16:55:40:5540 [32minfo[39m: [32m[FinancialModelingService] Loaded[39m
+
+stdout | server/src/method-core/__tests__/freezeOutputFlow.integration.test.ts > P0B — freeze -> Output -> approval -> Report -> Initiative (real PostgreSQL)
+2026-08-13 16:55:40:5540 [32minfo[39m: [32m[FinancialModelingService] Loaded[39m
+
+stdout | server/src/method-core/__tests__/freezeOutputFlow.integration.test.ts > P0B — freeze -> Output -> approval -> Report -> Initiative (real PostgreSQL) > 1. freezing with a stale expectedVersion is refused 409, and no snapshot/Output is written
+2026-08-13 16:55:41:5541 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | server/src/method-core/__tests__/freezeOutputFlow.integration.test.ts > P0B — freeze -> Output -> approval -> Report -> Initiative (real PostgreSQL) > 1. freezing with a stale expectedVersion is refused 409, and no snapshot/Output is written
+2026-08-13 16:55:41:5541 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+ ✓ server/src/method-core/__tests__/freezeOutputFlow.integration.test.ts > P0B — freeze -> Output -> approval -> Report -> Initiative (real PostgreSQL) > 1. freezing with a stale expectedVersion is refused 409, and no snapshot/Output is written 815ms
+ ✓ server/src/method-core/__tests__/freezeOutputFlow.integration.test.ts > P0B — freeze -> Output -> approval -> Report -> Initiative (real PostgreSQL) > 2. retrying freeze with the SAME Idempotency-Key returns the identical session+Output, no second write 568ms
+ ✓ server/src/method-core/__tests__/freezeOutputFlow.integration.test.ts > P0B — freeze -> Output -> approval -> Report -> Initiative (real PostgreSQL) > 3. freeze creates exactly one immutable method_outputs row, readable via GET, no PUT/PATCH/DELETE route exists 957ms
+stdout | server/src/method-core/__tests__/freezeOutputFlow.integration.test.ts > P0B — freeze -> Output -> approval -> Report -> Initiative (real PostgreSQL) > 4. retrying freeze after the Output already exists still returns 200 with the SAME Output id, never a duplicate
+2026-08-13 16:55:43:5543 [32minfo[39m: [32m[2026-08-13T14:55:43.658Z] [INFO] [AI:CircuitBreaker] LLM circuit breakers initialized[39m
+
+stdout | server/src/method-core/__tests__/freezeOutputFlow.integration.test.ts > P0B — freeze -> Output -> approval -> Report -> Initiative (real PostgreSQL) > 4. retrying freeze after the Output already exists still returns 200 with the SAME Output id, never a duplicate
+2026-08-13 16:55:43:5543 [32minfo[39m: [32m[2026-08-13T14:55:43.658Z] [INFO] [AI:CircuitBreaker] LLM circuit breakers initialized[39m
+
+stdout | server/src/method-core/__tests__/freezeOutputFlow.integration.test.ts > P0B — freeze -> Output -> approval -> Report -> Initiative (real PostgreSQL) > 4. retrying freeze after the Output already exists still returns 200 with the SAME Output id, never a duplicate
+2026-08-13 16:55:43:5543 [32minfo[39m: [32m[2026-08-13T14:55:43.658Z] [INFO] [AI:CircuitBreaker] Health check function set for [openai][39m
+2026-08-13 16:55:43:5543 [32minfo[39m: [32m[2026-08-13T14:55:43.659Z] [INFO] [AI:CircuitBreaker] Health check registered for [openai][39m
+2026-08-13 16:55:43:5543 [32minfo[39m: [32m[2026-08-13T14:55:43.659Z] [INFO] [AI:CircuitBreaker] Health check function set for [google][39m
+2026-08-13 16:55:43:5543 [32minfo[39m: [32m[2026-08-13T14:55:43.659Z] [INFO] [AI:CircuitBreaker] Health check registered for [google][39m
+
+stdout | server/src/method-core/__tests__/freezeOutputFlow.integration.test.ts > P0B — freeze -> Output -> approval -> Report -> Initiative (real PostgreSQL) > 4. retrying freeze after the Output already exists still returns 200 with the SAME Output id, never a duplicate
+2026-08-13 16:55:43:5543 [32minfo[39m: [32m[2026-08-13T14:55:43.658Z] [INFO] [AI:CircuitBreaker] Health check function set for [openai][39m
+2026-08-13 16:55:43:5543 [32minfo[39m: [32m[2026-08-13T14:55:43.659Z] [INFO] [AI:CircuitBreaker] Health check registered for [openai][39m
+2026-08-13 16:55:43:5543 [32minfo[39m: [32m[2026-08-13T14:55:43.659Z] [INFO] [AI:CircuitBreaker] Health check function set for [google][39m
+2026-08-13 16:55:43:5543 [32minfo[39m: [32m[2026-08-13T14:55:43.659Z] [INFO] [AI:CircuitBreaker] Health check registered for [google][39m
+
+stdout | server/src/method-core/__tests__/freezeOutputFlow.integration.test.ts > P0B — freeze -> Output -> approval -> Report -> Initiative (real PostgreSQL) > 4. retrying freeze after the Output already exists still returns 200 with the SAME Output id, never a duplicate
+2026-08-13 16:55:43:5543 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | server/src/method-core/__tests__/freezeOutputFlow.integration.test.ts > P0B — freeze -> Output -> approval -> Report -> Initiative (real PostgreSQL) > 4. retrying freeze after the Output already exists still returns 200 with the SAME Output id, never a duplicate
+2026-08-13 16:55:43:5543 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+ ✓ server/src/method-core/__tests__/freezeOutputFlow.integration.test.ts > P0B — freeze -> Output -> approval -> Report -> Initiative (real PostgreSQL) > 4. retrying freeze after the Output already exists still returns 200 with the SAME Output id, never a duplicate 957ms
+ ✓ server/src/method-core/__tests__/freezeOutputFlow.integration.test.ts > P0B — freeze -> Output -> approval -> Report -> Initiative (real PostgreSQL) > 5. the Output traces back to the exact session revision and frozen snapshot that produced it 1256ms
+ ✓ server/src/method-core/__tests__/freezeOutputFlow.integration.test.ts > P0B — freeze -> Output -> approval -> Report -> Initiative (real PostgreSQL) > 6. appending a new event to the (now frozen) session leaves the Output content_hash byte-identical 1048ms
+ ✓ server/src/method-core/__tests__/freezeOutputFlow.integration.test.ts > P0B — freeze -> Output -> approval -> Report -> Initiative (real PostgreSQL) > 7. sending an in-review session back to active keeps the SAME session id — not a revision 375ms
+ ✓ server/src/method-core/__tests__/freezeOutputFlow.integration.test.ts > P0B — freeze -> Output -> approval -> Report -> Initiative (real PostgreSQL) > 8. reopening a frozen session (frozen -> active) creates a NEW session revision; the old session and its Output are untouched 1084ms
+ ✓ server/src/method-core/__tests__/freezeOutputFlow.integration.test.ts > P0B — freeze -> Output -> approval -> Report -> Initiative (real PostgreSQL) > 9. freezing the corrected revision requires the approver role again; a non-approver is refused 403; the approver produces a LINKED Output revision 870ms
+ ✓ server/src/method-core/__tests__/freezeOutputFlow.integration.test.ts > P0B — freeze -> Output -> approval -> Report -> Initiative (real PostgreSQL) > 10. a Report Snapshot is built from the approver-frozen Output, with a server-computed hash 286ms
+ ✓ server/src/method-core/__tests__/freezeOutputFlow.integration.test.ts > P0B — freeze -> Output -> approval -> Report -> Initiative (real PostgreSQL) > 11. a Presentation renders from the SAME Output as the Report — same artefact, structured content, never an image 504ms
+ ✓ server/src/method-core/__tests__/freezeOutputFlow.integration.test.ts > P0B — freeze -> Output -> approval -> Report -> Initiative (real PostgreSQL) > 12. an Initiative Proposal Draft is created from the approved Output, structurally unable to become a Registered Initiative 380ms
+ ✓ server/src/method-core/__tests__/freezeOutputFlow.integration.test.ts > P0B — freeze -> Output -> approval -> Report -> Initiative (real PostgreSQL) > 13. reopening + re-freezing supersedes the OLD Report/Presentation/Initiative Draft across the whole lineage, not just the newest session 1284ms
+ ✓ server/src/method-core/__tests__/freezeOutputFlow.integration.test.ts > P0B — freeze -> Output -> approval -> Report -> Initiative (real PostgreSQL) > 14. cross-org and unauthorized rejection > 14a. freeze: no Authorization header -> 401; wrong org -> 403, session untouched 148ms
+ ✓ server/src/method-core/__tests__/freezeOutputFlow.integration.test.ts > P0B — freeze -> Output -> approval -> Report -> Initiative (real PostgreSQL) > 14. cross-org and unauthorized rejection > 14b. Output read: no Authorization -> 401; wrong org -> 404 (never leaks existence) 461ms
+ ✓ server/src/method-core/__tests__/freezeOutputFlow.integration.test.ts > P0B — freeze -> Output -> approval -> Report -> Initiative (real PostgreSQL) > 14. cross-org and unauthorized rejection > 14c. Report/Presentation/Initiative-draft creation: wrong org -> 404 (Output invisible), no Authorization -> 401 763ms
+ ✓ server/src/method-core/__tests__/freezeOutputFlow.integration.test.ts > P0B — freeze -> Output -> approval -> Report -> Initiative (real PostgreSQL) > 14. cross-org and unauthorized rejection > 14d. reopen (frozen -> active) transition: wrong org -> 403, no revision row created 434ms
+ ✓ server/src/method-core/__tests__/freezeOutputFlow.integration.test.ts > P0B — freeze -> Output -> approval -> Report -> Initiative (real PostgreSQL) > 15. an interruption between freeze (snapshot durable) and Output (never written) self-heals on the next freeze call 398ms
+ ✓ server/src/method-core/__tests__/freezeOutputFlow.integration.test.ts > P0B — freeze -> Output -> approval -> Report -> Initiative (real PostgreSQL) > 16. retrying freeze again after the self-heal is safe: still one Output, same id 380ms
+ ✓ server/src/method-core/__tests__/freezeOutputFlow.integration.test.ts > P0B — freeze -> Output -> approval -> Report -> Initiative (real PostgreSQL) > ★ demo bypass discipline (methodology_review pack) > production always refuses session start against methodology_review — no HTTP path bypasses this 1ms
+ ✓ server/src/method-core/__tests__/freezeOutputFlow.integration.test.ts > P0B — freeze -> Output -> approval -> Report -> Initiative (real PostgreSQL) > ★ demo bypass discipline (methodology_review pack) > demo bypass does NOT change method_packs.readiness, before or after the whole freeze->Output->Report flow 510ms
+ ✓ server/src/method-core/__tests__/freezeOutputFlow.integration.test.ts > P0B — freeze -> Output -> approval -> Report -> Initiative (real PostgreSQL) > ★ demo bypass discipline (methodology_review pack) > a demo-bypassed Output and its Report carry an explicit, visible demonstration marker — never indistinguishable from production 640ms
+ ✓ server/src/method-core/__tests__/freezeOutputFlow.integration.test.ts > P0B — freeze -> Output -> approval -> Report -> Initiative (real PostgreSQL) > ★ demo bypass discipline (methodology_review pack) > a PRODUCTION Output (no demo bypass) carries demoBypassActive: false — the marker is never "on" by default 282ms
+ ✓ server/src/method-core/__tests__/freezeOutputFlow.integration.test.ts > P0B — freeze -> Output -> approval -> Report -> Initiative (real PostgreSQL) > ★ demo bypass discipline (methodology_review pack) > demo bypass never produces a released/pilot pack: no HTTP path exists to flip method_packs.readiness at all 27ms
+ ✓ server/src/method-core/__tests__/freezeOutputFlow.integration.test.ts (24 tests) 16878ms
+     ✓ 1. freezing with a stale expectedVersion is refused 409, and no snapshot/Output is written  815ms
+     ✓ 2. retrying freeze with the SAME Idempotency-Key returns the identical session+Output, no second write  568ms
+     ✓ 3. freeze creates exactly one immutable method_outputs row, readable via GET, no PUT/PATCH/DELETE route exists  957ms
+     ✓ 4. retrying freeze after the Output already exists still returns 200 with the SAME Output id, never a duplicate  957ms
+     ✓ 5. the Output traces back to the exact session revision and frozen snapshot that produced it  1256ms
+     ✓ 6. appending a new event to the (now frozen) session leaves the Output content_hash byte-identical  1048ms
+     ✓ 7. sending an in-review session back to active keeps the SAME session id — not a revision  375ms
+     ✓ 8. reopening a frozen session (frozen -> active) creates a NEW session revision; the old session and its Output are untouched  1084ms
+     ✓ 9. freezing the corrected revision requires the approver role again; a non-approver is refused 403; the approver produces a LINKED Output revision  870ms
+     ✓ 11. a Presentation renders from the SAME Output as the Report — same artefact, structured content, never an image  504ms
+     ✓ 12. an Initiative Proposal Draft is created from the approved Output, structurally unable to become a Registered Initiative  380ms
+     ✓ 13. reopening + re-freezing supersedes the OLD Report/Presentation/Initiative Draft across the whole lineage, not just the newest session  1284ms
+       ✓ 14b. Output read: no Authorization -> 401; wrong org -> 404 (never leaks existence)  461ms
+       ✓ 14c. Report/Presentation/Initiative-draft creation: wrong org -> 404 (Output invisible), no Authorization -> 401  763ms
+       ✓ 14d. reopen (frozen -> active) transition: wrong org -> 403, no revision row created  434ms
+     ✓ 15. an interruption between freeze (snapshot durable) and Output (never written) self-heals on the next freeze call  398ms
+     ✓ 16. retrying freeze again after the self-heal is safe: still one Output, same id  380ms
+       ✓ demo bypass does NOT change method_packs.readiness, before or after the whole freeze->Output->Report flow  510ms
+       ✓ a demo-bypassed Output and its Report carry an explicit, visible demonstration marker — never indistinguishable from production  640ms
+ ✓ server/src/method-core/outputs/__tests__/supersession.test.ts > Supersession on new freeze (test 8) > marks a previously current ReportSnapshot as superseded, content columns untouched 310ms
+ ✓ server/src/method-core/outputs/__tests__/supersession.test.ts > Supersession on new freeze (test 8) > marks a previously current InitiativeProposalDraft as superseded, content columns untouched 16ms
+ ✓ server/src/method-core/outputs/__tests__/supersession.test.ts > Supersession on new freeze (test 8) > a draft/report belonging to the NEW output itself is not marked superseded by its own freeze 21ms
+ ✓ server/src/method-core/outputs/__tests__/supersession.test.ts > Supersession on new freeze (test 8) > the underlying method_outputs row for v1 is never UPDATEd by supersession of its deliverables 3ms
+ ✓ server/src/method-core/outputs/__tests__/supersession.test.ts (4 tests) 358ms
+     ✓ marks a previously current ReportSnapshot as superseded, content columns untouched  310ms
+ ✓ server/src/method-core/outputs/__tests__/EventDerivedOutputBridge.test.ts > deriveFindingsFromEvents (pure) > builds a finding only for units that have >=1 EVIDENCE_ATTACHED event 500ms
+ ✓ server/src/method-core/outputs/__tests__/EventDerivedOutputBridge.test.ts > deriveFindingsFromEvents (pure) > later ANSWER_CONFIRMED for the same unit overwrites the level (last-write-wins, chronological) 5ms
+ ✓ server/src/method-core/outputs/__tests__/EventDerivedOutputBridge.test.ts > EventDerivedOutputBridge (wired into MethodSessionService.transition) > requirement 5: freeze with the bridge wired creates a real AssessmentOutput (method_outputs row + findings) 54ms
+ ✓ server/src/method-core/outputs/__tests__/EventDerivedOutputBridge.test.ts > EventDerivedOutputBridge (wired into MethodSessionService.transition) > freeze without a bridge wired keeps pre-A6 behaviour: snapshot only, no Output created 2ms
+ ✓ server/src/method-core/outputs/__tests__/EventDerivedOutputBridge.test.ts > EventDerivedOutputBridge (wired into MethodSessionService.transition) > a bridge that throws fails the whole freeze — no half-frozen state silently accepted 7ms
+ ✓ server/src/method-core/outputs/__tests__/EventDerivedOutputBridge.test.ts (5 tests) 572ms
+     ✓ builds a finding only for units that have >=1 EVIDENCE_ATTACHED event  500ms
+ ✓ server/src/method-core/outputs/__tests__/MethodOutputService.test.ts > MethodOutputService.freezeOutput > validation gate (test 4) > rejects an Output with no limitations and writes NOTHING 310ms
+ ✓ server/src/method-core/outputs/__tests__/MethodOutputService.test.ts > MethodOutputService.freezeOutput > validation gate (test 4) > rejects an Output with no methodology version and writes NOTHING 1ms
+ ✓ server/src/method-core/outputs/__tests__/MethodOutputService.test.ts > MethodOutputService.freezeOutput > validation gate (test 4) > rejects a finding with no supporting evidence 0ms
+ ✓ server/src/method-core/outputs/__tests__/MethodOutputService.test.ts > MethodOutputService.freezeOutput > validation gate (test 4) > accepts a well-formed Output and writes exactly one output row + one finding row 42ms
+ ✓ server/src/method-core/outputs/__tests__/MethodOutputService.test.ts > MethodOutputService.freezeOutput > revision via revisionOfOutputId (test 2) > a second freeze with revisionOfOutputId creates a NEW row; the original row is never UPDATEd 2ms
+ ✓ server/src/method-core/outputs/__tests__/MethodOutputService.test.ts > MethodOutputService.freezeOutput > revision via revisionOfOutputId (test 2) > isSuperseded resolves the successor by reading, not by a stored pointer on the old row 1ms
+ ✓ server/src/method-core/outputs/__tests__/MethodOutputService.test.ts > MethodOutputService.freezeOutput > deterministic content_hash (test 3) > produces the SAME hash across 10 freezes of equivalent input 1ms
+ ✓ server/src/method-core/outputs/__tests__/MethodOutputService.test.ts > MethodOutputService.freezeOutput > deterministic content_hash (test 3) > produces the SAME hash regardless of findings/evidence ARRAY ORDER in the input 1ms
+ ✓ server/src/method-core/outputs/__tests__/MethodOutputService.test.ts > MethodOutputService.freezeOutput > deterministic content_hash (test 3) > REGRESSION: hashing findings read back via an UNORDERED SELECT (listFindings) is stable regardless of physical row insertion order — the exact shape of the documented "UPDATE bez ORDER BY -> 6-7 different hashes in 10 runs" defect 1ms
+ ✓ server/src/method-core/outputs/__tests__/MethodOutputService.test.ts (9 tests) 364ms
+       ✓ rejects an Output with no limitations and writes NOTHING  310ms
+ ✓ server/src/method-core/__tests__/MethodEventStore.test.ts > MethodEventStore > appends a plain event with no idempotency key 348ms
+ ✓ server/src/method-core/__tests__/MethodEventStore.test.ts > MethodEventStore > same idempotencyKey appended twice resolves to ONE row 2ms
+ ✓ server/src/method-core/__tests__/MethodEventStore.test.ts > MethodEventStore > the same idempotencyKey is independent per session 1ms
+ ✓ server/src/method-core/__tests__/MethodEventStore.test.ts > MethodEventStore > a correcting event with `supersedes` does not delete its predecessor 25ms
+ ✓ server/src/method-core/__tests__/MethodEventStore.test.ts > MethodEventStore > listBySession returns events in chronological order and only for that session 1ms
+ ✓ server/src/method-core/__tests__/MethodEventStore.test.ts (5 tests) 378ms
+     ✓ appends a plain event with no idempotency key  348ms
+ ✓ server/src/method-core/outputs/__tests__/MethodInitiativeDraftService.test.ts > MethodInitiativeDraftService (test 7) > links to the output (and, through it, the frozen snapshot) and to grouped finding ids 420ms
+ ✓ server/src/method-core/outputs/__tests__/MethodInitiativeDraftService.test.ts > MethodInitiativeDraftService (test 7) > rejects a draft with zero linked findings 2ms
+ ✓ server/src/method-core/outputs/__tests__/MethodInitiativeDraftService.test.ts > MethodInitiativeDraftService (test 7) > MethodInitiativeDraftService exposes no register/registerInitiative method 0ms
+ ✓ server/src/method-core/outputs/__tests__/MethodInitiativeDraftService.test.ts > MethodInitiativeDraftService (test 7) > this module exports no way to create a Registered Initiative 0ms
+ ✓ server/src/method-core/outputs/__tests__/MethodInitiativeDraftService.test.ts > MethodInitiativeDraftService (test 7) > the persisted row has no initiative_id / registered_initiative_id column value 1ms
+ ✓ server/src/method-core/outputs/__tests__/MethodInitiativeDraftService.test.ts (5 tests) 426ms
+     ✓ links to the output (and, through it, the frozen snapshot) and to grouped finding ids  420ms
+ ✓ server/src/method-core/__tests__/MethodSessionService.test.ts > MethodSessionService > createSession pack-readiness gate > refuses when the pack is not released/pilot (e.g. draft readiness) 415ms
+ ✓ server/src/method-core/__tests__/MethodSessionService.test.ts > MethodSessionService > createSession pack-readiness gate > refuses when the pack does not exist at all 0ms
+ ✓ server/src/method-core/__tests__/MethodSessionService.test.ts > MethodSessionService > createSession pack-readiness gate > allows creation when the pack is released/pilot 1ms
+ ✓ server/src/method-core/__tests__/MethodSessionService.test.ts > MethodSessionService > transition matrix (exhaustive over METHOD_SESSION_STATES x METHOD_SESSION_STATES) > 'draft' -> 'draft' (legal=false) 1ms
+ ✓ server/src/method-core/__tests__/MethodSessionService.test.ts > MethodSessionService > transition matrix (exhaustive over METHOD_SESSION_STATES x METHOD_SESSION_STATES) > 'draft' -> 'prepared' (legal=true) 1ms
+ ✓ server/src/method-core/__tests__/MethodSessionService.test.ts > MethodSessionService > transition matrix (exhaustive over METHOD_SESSION_STATES x METHOD_SESSION_STATES) > 'draft' -> 'active' (legal=false) 0ms
+ ✓ server/src/method-core/__tests__/MethodSessionService.test.ts > MethodSessionService > transition matrix (exhaustive over METHOD_SESSION_STATES x METHOD_SESSION_STATES) > 'draft' -> 'in_review' (legal=false) 0ms
+ ✓ server/src/method-core/__tests__/MethodSessionService.test.ts > MethodSessionService > transition matrix (exhaustive over METHOD_SESSION_STATES x METHOD_SESSION_STATES) > 'draft' -> 'frozen' (legal=false) 0ms
+ ✓ server/src/method-core/__tests__/MethodSessionService.test.ts > MethodSessionService > transition matrix (exhaustive over METHOD_SESSION_STATES x METHOD_SESSION_STATES) > 'draft' -> 'closed' (legal=false) 0ms
+ ✓ server/src/method-core/__tests__/MethodSessionService.test.ts > MethodSessionService > transition matrix (exhaustive over METHOD_SESSION_STATES x METHOD_SESSION_STATES) > 'draft' -> 'archived' (legal=true) 1ms
+ ✓ server/src/method-core/__tests__/MethodSessionService.test.ts > MethodSessionService > transition matrix (exhaustive over METHOD_SESSION_STATES x METHOD_SESSION_STATES) > 'prepared' -> 'draft' (legal=true) 0ms
+ ✓ server/src/method-core/__tests__/MethodSessionService.test.ts > MethodSessionService > transition matrix (exhaustive over METHOD_SESSION_STATES x METHOD_SESSION_STATES) > 'prepared' -> 'prepared' (legal=false) 0ms
+ ✓ server/src/method-core/__tests__/MethodSessionService.test.ts > MethodSessionService > transition matrix (exhaustive over METHOD_SESSION_STATES x METHOD_SESSION_STATES) > 'prepared' -> 'active' (legal=true) 0ms
+ ✓ server/src/method-core/__tests__/MethodSessionService.test.ts > MethodSessionService > transition matrix (exhaustive over METHOD_SESSION_STATES x METHOD_SESSION_STATES) > 'prepared' -> 'in_review' (legal=false) 0ms
+ ✓ server/src/method-core/__tests__/MethodSessionService.test.ts > MethodSessionService > transition matrix (exhaustive over METHOD_SESSION_STATES x METHOD_SESSION_STATES) > 'prepared' -> 'frozen' (legal=false) 0ms
+ ✓ server/src/method-core/__tests__/MethodSessionService.test.ts > MethodSessionService > transition matrix (exhaustive over METHOD_SESSION_STATES x METHOD_SESSION_STATES) > 'prepared' -> 'closed' (legal=false) 0ms
+ ✓ server/src/method-core/__tests__/MethodSessionService.test.ts > MethodSessionService > transition matrix (exhaustive over METHOD_SESSION_STATES x METHOD_SESSION_STATES) > 'prepared' -> 'archived' (legal=true) 0ms
+ ✓ server/src/method-core/__tests__/MethodSessionService.test.ts > MethodSessionService > transition matrix (exhaustive over METHOD_SESSION_STATES x METHOD_SESSION_STATES) > 'active' -> 'draft' (legal=false) 0ms
+ ✓ server/src/method-core/__tests__/MethodSessionService.test.ts > MethodSessionService > transition matrix (exhaustive over METHOD_SESSION_STATES x METHOD_SESSION_STATES) > 'active' -> 'prepared' (legal=true) 0ms
+ ✓ server/src/method-core/__tests__/MethodSessionService.test.ts > MethodSessionService > transition matrix (exhaustive over METHOD_SESSION_STATES x METHOD_SESSION_STATES) > 'active' -> 'active' (legal=false) 0ms
+ ✓ server/src/method-core/__tests__/MethodSessionService.test.ts > MethodSessionService > transition matrix (exhaustive over METHOD_SESSION_STATES x METHOD_SESSION_STATES) > 'active' -> 'in_review' (legal=true) 0ms
+ ✓ server/src/method-core/__tests__/MethodSessionService.test.ts > MethodSessionService > transition matrix (exhaustive over METHOD_SESSION_STATES x METHOD_SESSION_STATES) > 'active' -> 'frozen' (legal=false) 0ms
+ ✓ server/src/method-core/__tests__/MethodSessionService.test.ts > MethodSessionService > transition matrix (exhaustive over METHOD_SESSION_STATES x METHOD_SESSION_STATES) > 'active' -> 'closed' (legal=false) 0ms
+ ✓ server/src/method-core/__tests__/MethodSessionService.test.ts > MethodSessionService > transition matrix (exhaustive over METHOD_SESSION_STATES x METHOD_SESSION_STATES) > 'active' -> 'archived' (legal=true) 0ms
+ ✓ server/src/method-core/__tests__/MethodSessionService.test.ts > MethodSessionService > transition matrix (exhaustive over METHOD_SESSION_STATES x METHOD_SESSION_STATES) > 'in_review' -> 'draft' (legal=false) 0ms
+ ✓ server/src/method-core/__tests__/MethodSessionService.test.ts > MethodSessionService > transition matrix (exhaustive over METHOD_SESSION_STATES x METHOD_SESSION_STATES) > 'in_review' -> 'prepared' (legal=false) 0ms
+ ✓ server/src/method-core/__tests__/MethodSessionService.test.ts > MethodSessionService > transition matrix (exhaustive over METHOD_SESSION_STATES x METHOD_SESSION_STATES) > 'in_review' -> 'active' (legal=true) 0ms
+ ✓ server/src/method-core/__tests__/MethodSessionService.test.ts > MethodSessionService > transition matrix (exhaustive over METHOD_SESSION_STATES x METHOD_SESSION_STATES) > 'in_review' -> 'in_review' (legal=false) 0ms
+ ✓ server/src/method-core/__tests__/MethodSessionService.test.ts > MethodSessionService > transition matrix (exhaustive over METHOD_SESSION_STATES x METHOD_SESSION_STATES) > 'in_review' -> 'frozen' (legal=true) 1ms
+ ✓ server/src/method-core/__tests__/MethodSessionService.test.ts > MethodSessionService > transition matrix (exhaustive over METHOD_SESSION_STATES x METHOD_SESSION_STATES) > 'in_review' -> 'closed' (legal=false) 0ms
+ ✓ server/src/method-core/__tests__/MethodSessionService.test.ts > MethodSessionService > transition matrix (exhaustive over METHOD_SESSION_STATES x METHOD_SESSION_STATES) > 'in_review' -> 'archived' (legal=true) 0ms
+ ✓ server/src/method-core/__tests__/MethodSessionService.test.ts > MethodSessionService > transition matrix (exhaustive over METHOD_SESSION_STATES x METHOD_SESSION_STATES) > 'frozen' -> 'draft' (legal=false) 0ms
+ ✓ server/src/method-core/__tests__/MethodSessionService.test.ts > MethodSessionService > transition matrix (exhaustive over METHOD_SESSION_STATES x METHOD_SESSION_STATES) > 'frozen' -> 'prepared' (legal=false) 0ms
+ ✓ server/src/method-core/__tests__/MethodSessionService.test.ts > MethodSessionService > transition matrix (exhaustive over METHOD_SESSION_STATES x METHOD_SESSION_STATES) > 'frozen' -> 'active' (legal=true) 0ms
+ ✓ server/src/method-core/__tests__/MethodSessionService.test.ts > MethodSessionService > transition matrix (exhaustive over METHOD_SESSION_STATES x METHOD_SESSION_STATES) > 'frozen' -> 'in_review' (legal=false) 0ms
+ ✓ server/src/method-core/__tests__/MethodSessionService.test.ts > MethodSessionService > transition matrix (exhaustive over METHOD_SESSION_STATES x METHOD_SESSION_STATES) > 'frozen' -> 'frozen' (legal=false) 0ms
+ ✓ server/src/method-core/__tests__/MethodSessionService.test.ts > MethodSessionService > transition matrix (exhaustive over METHOD_SESSION_STATES x METHOD_SESSION_STATES) > 'frozen' -> 'closed' (legal=true) 0ms
+ ✓ server/src/method-core/__tests__/MethodSessionService.test.ts > MethodSessionService > transition matrix (exhaustive over METHOD_SESSION_STATES x METHOD_SESSION_STATES) > 'frozen' -> 'archived' (legal=true) 0ms
+ ✓ server/src/method-core/__tests__/MethodSessionService.test.ts > MethodSessionService > transition matrix (exhaustive over METHOD_SESSION_STATES x METHOD_SESSION_STATES) > 'closed' -> 'draft' (legal=false) 0ms
+ ✓ server/src/method-core/__tests__/MethodSessionService.test.ts > MethodSessionService > transition matrix (exhaustive over METHOD_SESSION_STATES x METHOD_SESSION_STATES) > 'closed' -> 'prepared' (legal=false) 0ms
+ ✓ server/src/method-core/__tests__/MethodSessionService.test.ts > MethodSessionService > transition matrix (exhaustive over METHOD_SESSION_STATES x METHOD_SESSION_STATES) > 'closed' -> 'active' (legal=true) 0ms
+ ✓ server/src/method-core/__tests__/MethodSessionService.test.ts > MethodSessionService > transition matrix (exhaustive over METHOD_SESSION_STATES x METHOD_SESSION_STATES) > 'closed' -> 'in_review' (legal=false) 0ms
+ ✓ server/src/method-core/__tests__/MethodSessionService.test.ts > MethodSessionService > transition matrix (exhaustive over METHOD_SESSION_STATES x METHOD_SESSION_STATES) > 'closed' -> 'frozen' (legal=false) 0ms
+ ✓ server/src/method-core/__tests__/MethodSessionService.test.ts > MethodSessionService > transition matrix (exhaustive over METHOD_SESSION_STATES x METHOD_SESSION_STATES) > 'closed' -> 'closed' (legal=false) 0ms
+ ✓ server/src/method-core/__tests__/MethodSessionService.test.ts > MethodSessionService > transition matrix (exhaustive over METHOD_SESSION_STATES x METHOD_SESSION_STATES) > 'closed' -> 'archived' (legal=true) 0ms
+ ✓ server/src/method-core/__tests__/MethodSessionService.test.ts > MethodSessionService > transition matrix (exhaustive over METHOD_SESSION_STATES x METHOD_SESSION_STATES) > 'archived' -> 'draft' (legal=false) 0ms
+ ✓ server/src/method-core/__tests__/MethodSessionService.test.ts > MethodSessionService > transition matrix (exhaustive over METHOD_SESSION_STATES x METHOD_SESSION_STATES) > 'archived' -> 'prepared' (legal=false) 0ms
+ ✓ server/src/method-core/__tests__/MethodSessionService.test.ts > MethodSessionService > transition matrix (exhaustive over METHOD_SESSION_STATES x METHOD_SESSION_STATES) > 'archived' -> 'active' (legal=false) 0ms
+ ✓ server/src/method-core/__tests__/MethodSessionService.test.ts > MethodSessionService > transition matrix (exhaustive over METHOD_SESSION_STATES x METHOD_SESSION_STATES) > 'archived' -> 'in_review' (legal=false) 0ms
+ ✓ server/src/method-core/__tests__/MethodSessionService.test.ts > MethodSessionService > transition matrix (exhaustive over METHOD_SESSION_STATES x METHOD_SESSION_STATES) > 'archived' -> 'frozen' (legal=false) 0ms
+ ✓ server/src/method-core/__tests__/MethodSessionService.test.ts > MethodSessionService > transition matrix (exhaustive over METHOD_SESSION_STATES x METHOD_SESSION_STATES) > 'archived' -> 'closed' (legal=false) 0ms
+ ✓ server/src/method-core/__tests__/MethodSessionService.test.ts > MethodSessionService > transition matrix (exhaustive over METHOD_SESSION_STATES x METHOD_SESSION_STATES) > 'archived' -> 'archived' (legal=false) 0ms
+ ✓ server/src/method-core/__tests__/MethodSessionService.test.ts > MethodSessionService > freeze (in_review -> frozen) without an `approver` role is refused with missing_permission 0ms
+ ✓ server/src/method-core/__tests__/MethodSessionService.test.ts > MethodSessionService > freeze succeeds once the actor holds `approver` and writes an immutable snapshot 0ms
+ ✓ server/src/method-core/__tests__/MethodSessionService.test.ts > MethodSessionService > frozen -> active creates a new revision and never mutates the frozen row/snapshot 1ms
+ ✓ server/src/method-core/__tests__/MethodSessionService.test.ts (55 tests) 431ms
+       ✓ refuses when the pack is not released/pilot (e.g. draft readiness)  415ms
+ ✓ server/src/method-core/__tests__/TeresaProposalService.test.ts > TeresaProposalService > createPreview persists a preview and returns the contract shape 322ms
+ ✓ server/src/method-core/__tests__/TeresaProposalService.test.ts > TeresaProposalService > requirement 5: commit without an existing preview is refused (preview_not_found) 1ms
+ ✓ server/src/method-core/__tests__/TeresaProposalService.test.ts > TeresaProposalService > requirement 6: commit of an expired preview is refused (preview_expired) 1ms
+ ✓ server/src/method-core/__tests__/TeresaProposalService.test.ts > TeresaProposalService > requirement 7: committing the same preview twice refuses the second call (preview_already_consumed) 1ms
+ ✓ server/src/method-core/__tests__/TeresaProposalService.test.ts > TeresaProposalService > requirement 8: commit of a preview with quality verdict `invalid` is refused (quality_invalid) 0ms
+ ✓ server/src/method-core/__tests__/TeresaProposalService.test.ts > TeresaProposalService > bonus: commit against a frozen session is refused (session_frozen) 0ms
+ ✓ server/src/method-core/__tests__/TeresaProposalService.test.ts (6 tests) 328ms
+     ✓ createPreview persists a preview and returns the contract shape  322ms
+ ✓ server/src/method-core/__tests__/MethodPackRegistry.test.ts > MethodPackRegistry > registers a pack and reads it back by (organizationId, packId, version) 430ms
+ ✓ server/src/method-core/__tests__/MethodPackRegistry.test.ts > MethodPackRegistry > distinguishes versions of the same pack 1ms
+ ✓ server/src/method-core/__tests__/MethodPackRegistry.test.ts > MethodPackRegistry > canStartSession is true only for released/pilot 140ms
+ ✓ server/src/method-core/__tests__/MethodPackRegistry.test.ts > MethodPackRegistry > getReadiness reflects canStartSession for a draft pack (requirement 9) 9ms
+ ✓ server/src/method-core/__tests__/MethodPackRegistry.test.ts > MethodPackRegistry > getReadiness returns null for an unregistered pack 7ms
+ ✓ server/src/method-core/__tests__/MethodPackRegistry.test.ts (5 tests) 606ms
+     ✓ registers a pack and reads it back by (organizationId, packId, version)  430ms
+ ✓ server/src/method-core/__tests__/contractMirrorDrift.test.ts > kontrakt kernela — strażnik rozjazdu kopii serwerowej > oba komplety plików istnieją 548ms
+ ✓ server/src/method-core/__tests__/contractMirrorDrift.test.ts > kontrakt kernela — strażnik rozjazdu kopii serwerowej > kopia serwerowa events.ts zawiera DOKŁADNĄ treść oryginału (tylko nagłówek może się różnić) 1ms
+ ✓ server/src/method-core/__tests__/contractMirrorDrift.test.ts > kontrakt kernela — strażnik rozjazdu kopii serwerowej > kopia serwerowa session.ts zawiera DOKŁADNĄ treść oryginału (tylko nagłówek może się różnić) 0ms
+ ✓ server/src/method-core/__tests__/contractMirrorDrift.test.ts > kontrakt kernela — strażnik rozjazdu kopii serwerowej > kopia serwerowa methodPack.ts zawiera DOKŁADNĄ treść oryginału (tylko nagłówek może się różnić) 0ms
+ ✓ server/src/method-core/__tests__/contractMirrorDrift.test.ts > kontrakt kernela — strażnik rozjazdu kopii serwerowej > kopia serwerowa teresa.ts zawiera DOKŁADNĄ treść oryginału (tylko nagłówek może się różnić) 0ms
+ ✓ server/src/method-core/__tests__/contractMirrorDrift.test.ts > kontrakt kernela — strażnik rozjazdu kopii serwerowej > kopia serwerowa index.ts zawiera DOKŁADNĄ treść oryginału (tylko nagłówek może się różnić) 0ms
+ ✓ server/src/method-core/__tests__/contractMirrorDrift.test.ts > kontrakt kernela — strażnik rozjazdu kopii serwerowej > kopia nie dokłada niczego poza nagłówkiem (żadnego kodu przed treścią) 40ms
+ ✓ server/src/method-core/__tests__/contractMirrorDrift.test.ts (7 tests) 598ms
+     ✓ oba komplety plików istnieją  548ms
+
+ Test Files  13 passed (13)
+      Tests  161 passed (161)
+   Start at  16:54:59
+   Duration  102.94s (transform 5.91s, setup 7.54s, import 4.41s, tests 50.83s, environment 32.71s)
+
+
+ Test Files  13 passed (13)
+      Tests  161 passed (161)
+   Start at  16:54:59
+   Duration  102.94s (transform 5.91s, setup 7.54s, import 4.41s, tests 50.83s, environment 32.71s)
+
+JSON report written to /Users/piotrwisniewski/.codex/worktrees/mac-s7-a10-audit/junit.xml
+JUNIT report written to /Users/piotrwisniewski/.codex/worktrees/mac-s7-a10-audit/junit.xml
