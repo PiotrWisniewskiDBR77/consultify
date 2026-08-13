@@ -428,3 +428,41 @@ zadania, tylko pomiar):**
 Praca wyłącznie pomiarowa — zero zmian w kodzie produkcyjnym. Worktree baseline
 (`/Users/piotrwisniewski/consultify-wt/t6-baseline`) zostanie usunięty na końcu sesji poleceniem
 `git worktree remove`.
+
+---
+
+## Sprostowanie integratora — czym naprawdę jest te 9 `introduced`
+
+Pomiar jest poprawny, ale jego interpretacja wymaga jednego zastrzeżenia, bez
+którego wniosek byłby fałszywy.
+
+**Baseline (`e45904dc79`, `origin/demo`) jest 47 commitów PRZED punktem
+startowym kandydata (`0f4a1a53a6`).** Kandydat nie jest więc „demo plus nasza
+praca" — jest odgałęzieniem od starszego stanu. Różnica obejmuje wszystko, co
+weszło do demo po odgałęzieniu, niezależnie od tego, co robiły fale S i T.
+
+Sprawdzenie pochodzenia każdej z dziewięciu pozycji (`git log 0f4a1a53a6..HEAD
+--name-only`): **żadna nie dotyczy pliku, którego dotykała ta praca.**
+
+| Pozycja | Obszar | Dotykana przez fale S/T |
+| --- | --- | --- |
+| `AdminCollaborationControlsPanel` | Admin | nie |
+| `artifactContractParity` | rejestr artefaktów | nie |
+| `kebabBezAtrap` | menu kontekstowe | nie |
+| `dp5HeuristicAiGating` (3×) | mapa myśli | nie |
+| `routeConfig` (2×) | trasy Wnioski / affiliate | nie |
+| `PromptRegistryTab` | rejestr promptów | nie |
+
+Wniosek: te dziewięć pozycji to **różnica między gałęziami**, a nie regresja
+wprowadzona przez tę pracę. Właściwe rozstrzygnięcie nastąpi dopiero przy
+przebazowaniu kandydata na aktualne `origin/demo` — dopiero wtedy porównanie
+mierzy to, co ma mierzyć.
+
+Nie zmieniam klasyfikacji w tabeli powyżej: z punktu widzenia przyjętej metody
+(candidate vs baseline) są to poprawnie wykryte `introduced`. Zmieniam wyłącznie
+wniosek, jaki wolno z nich wyciągnąć.
+
+**Kategoria `fixed` pozostaje `NOT_VERIFIED`** — pełny sekwencyjny przebieg
+baseline nie został wykonany; zmierzono wyłącznie 90 plików, w których kandydat
+ma choć jeden failujący test. To wystarcza dla kompletności `introduced`, nie
+wystarcza dla `fixed`.
