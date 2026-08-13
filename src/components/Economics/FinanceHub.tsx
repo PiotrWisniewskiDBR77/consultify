@@ -66,6 +66,7 @@ import { usePolicySnapshot } from '@/contexts/AccessPolicyContext';
 import { useFinanceAnalysisWorkspaceFlag } from '@/hooks/useFinanceAnalysisWorkspaceFlag';
 import { useFinanceBaselineWorkspaceFlag } from '@/hooks/useFinanceBaselineWorkspaceFlag';
 import { useFinancePredictionWorkspaceFlag } from '@/hooks/useFinancePredictionWorkspaceFlag';
+import { useFinanceStatementPackWorkspaceV2Flag } from '@/hooks/useFinanceStatementPackWorkspaceV2Flag';
 import { useFinanceValuationWorkspaceFlag } from '@/hooks/useFinanceValuationWorkspaceFlag';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { useV8FeatureFlag } from '@/hooks/useV8FeatureFlag';
@@ -188,6 +189,39 @@ const FinanceV3AnalysisWorkspace = lazy(() =>
 const FinanceV3ValuationWorkspace = lazy(() =>
   import('../Finance/Valuation/ValuationWorkspace').then((m) => ({ default: m.ValuationWorkspace }))
 );
+const FinanceV3StatementPackWorkspace = lazy(() =>
+  import('../Finance/statementPackWorkspaceV2/StatementPackWorkspaceV2').then((m) => ({
+    default: m.StatementPackWorkspaceV2,
+  }))
+);
+const FinanceWorkspaceUtilities = lazy(() =>
+  import('../Finance/shared/FinanceWorkspaceUtilities').then((m) => ({
+    default: m.FinanceWorkspaceUtilities,
+  }))
+);
+
+function CanonicalFinanceWorkspaceMount({
+  artifactId,
+  businessVersionId,
+  artifactType,
+  children,
+}: {
+  artifactId: string;
+  businessVersionId: string;
+  artifactType: import('@/services/api/financeV2.types').FinanceArtifactType;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex h-full min-h-0 flex-col">
+      <div className="min-h-0 flex-1 overflow-auto">{children}</div>
+      <FinanceWorkspaceUtilities
+        artifactId={artifactId}
+        businessVersionId={businessVersionId}
+        artifactType={artifactType}
+      />
+    </div>
+  );
+}
 const CreateAnalysisModal = lazy(() =>
   import('./modals/CreateAnalysisModal').then((m) => ({ default: m.CreateAnalysisModal }))
 );
@@ -384,6 +418,7 @@ export const FinanceHub: React.FC = () => {
   const financeV3BaselineFlag = useFinanceBaselineWorkspaceFlag();
   const financeV3AnalysisFlag = useFinanceAnalysisWorkspaceFlag();
   const financeV3ValuationFlag = useFinanceValuationWorkspaceFlag();
+  const financeV3StatementPackFlag = useFinanceStatementPackWorkspaceV2Flag();
 
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
   const [exportTarget, setExportTarget] = useState<{
@@ -2864,6 +2899,33 @@ export const FinanceHub: React.FC = () => {
                   hideSidebar
                   onBudgetChanged={handleBudgetChanged}
                 />
+              ) : openStatement && financeV3StatementPackFlag.enabled ? (
+                <FinanceLegacyBridgeGate
+                  legacyTable="financial_statement_packs"
+                  legacyId={activeDocument.id}
+                  onBackToList={handleShowList}
+                >
+                  {(resolved) => (
+                    <CanonicalFinanceWorkspaceMount
+                      artifactId={resolved.artifactId}
+                      businessVersionId={resolved.businessVersionId ?? ''}
+                      artifactType="STATEMENT_PACK"
+                    >
+                      <FinanceV3StatementPackWorkspace
+                        businessVersionId={resolved.businessVersionId ?? ''}
+                        resolveLineLabel={(rowKey, canonicalLineId, lineCode) =>
+                          lineCode ?? canonicalLineId ?? rowKey
+                        }
+                        onOpenArtifact={() => toast('Otwórz powiązany artefakt z listy Finance.')}
+                        onCreateNew={() =>
+                          toast('Utwórz nowy artefakt z odpowiedniej zakładki Finance.')
+                        }
+                        onOpenReportResult={() => navigate('/outputs')}
+                        onNavigateBack={handleShowList}
+                      />
+                    </CanonicalFinanceWorkspaceMount>
+                  )}
+                </FinanceLegacyBridgeGate>
               ) : openStatement ? (
                 <FinancialStatementPackWorkspace
                   statementPackId={activeDocument.id}
@@ -2888,21 +2950,27 @@ export const FinanceHub: React.FC = () => {
                   onBackToList={handleShowList}
                 >
                   {(resolved) => (
-                    <FinanceV3BaselineWorkspace
+                    <CanonicalFinanceWorkspaceMount
                       artifactId={resolved.artifactId}
                       businessVersionId={resolved.businessVersionId ?? ''}
-                      entityId=""
-                      name={activeDocument.title}
-                      status={mapLegacyFinanceStatusToV3(activeDocument.status)}
-                      freshness="NEVER_COMPUTED"
-                      version={1}
-                      role="preparer"
-                      forecastPeriods={[]}
-                      openingBalanceSheetPeriodId=""
-                      assumptionRowOrder={[]}
-                      contextValues={{ type: 'Model bazowy (Baseline)' }}
-                      onNavigateBack={handleShowList}
-                    />
+                      artifactType="BASELINE_MODEL"
+                    >
+                      <FinanceV3BaselineWorkspace
+                        artifactId={resolved.artifactId}
+                        businessVersionId={resolved.businessVersionId ?? ''}
+                        entityId=""
+                        name={activeDocument.title}
+                        status={mapLegacyFinanceStatusToV3(activeDocument.status)}
+                        freshness="NEVER_COMPUTED"
+                        version={1}
+                        role="preparer"
+                        forecastPeriods={[]}
+                        openingBalanceSheetPeriodId=""
+                        assumptionRowOrder={[]}
+                        contextValues={{ type: 'Model bazowy (Baseline)' }}
+                        onNavigateBack={handleShowList}
+                      />
+                    </CanonicalFinanceWorkspaceMount>
                   )}
                 </FinanceLegacyBridgeGate>
               ) : openV3Prediction ? (
@@ -2918,11 +2986,17 @@ export const FinanceHub: React.FC = () => {
                   onBackToList={handleShowList}
                 >
                   {(resolved) => (
-                    <FinanceV3PredictionWorkspace
+                    <CanonicalFinanceWorkspaceMount
                       artifactId={resolved.artifactId}
-                      businessVersionId={resolved.businessVersionId}
-                      onNavigateBack={handleShowList}
-                    />
+                      businessVersionId={resolved.businessVersionId ?? ''}
+                      artifactType="PREDICTION_SCENARIO"
+                    >
+                      <FinanceV3PredictionWorkspace
+                        artifactId={resolved.artifactId}
+                        businessVersionId={resolved.businessVersionId}
+                        onNavigateBack={handleShowList}
+                      />
+                    </CanonicalFinanceWorkspaceMount>
                   )}
                 </FinanceLegacyBridgeGate>
               ) : isModelWorkspace ? (
@@ -2948,12 +3022,18 @@ export const FinanceHub: React.FC = () => {
                   onBackToList={handleShowList}
                 >
                   {(resolved) => (
-                    <FinanceV3AnalysisWorkspace
+                    <CanonicalFinanceWorkspaceMount
                       artifactId={resolved.artifactId}
                       businessVersionId={resolved.businessVersionId ?? ''}
-                      role="preparer"
-                      onNavigateBack={handleShowList}
-                    />
+                      artifactType="HISTORICAL_ANALYSIS"
+                    >
+                      <FinanceV3AnalysisWorkspace
+                        artifactId={resolved.artifactId}
+                        businessVersionId={resolved.businessVersionId ?? ''}
+                        role="preparer"
+                        onNavigateBack={handleShowList}
+                      />
+                    </CanonicalFinanceWorkspaceMount>
                   )}
                 </FinanceLegacyBridgeGate>
               ) : openAnalysis ? (
@@ -2972,11 +3052,17 @@ export const FinanceHub: React.FC = () => {
                   onBackToList={handleShowList}
                 >
                   {(resolved) => (
-                    <FinanceV3ValuationWorkspace
+                    <CanonicalFinanceWorkspaceMount
+                      artifactId={resolved.artifactId}
                       businessVersionId={resolved.businessVersionId ?? ''}
-                      role="preparer"
-                      onNavigateBack={handleShowList}
-                    />
+                      artifactType="VALUATION_CASE"
+                    >
+                      <FinanceV3ValuationWorkspace
+                        businessVersionId={resolved.businessVersionId ?? ''}
+                        role="preparer"
+                        onNavigateBack={handleShowList}
+                      />
+                    </CanonicalFinanceWorkspaceMount>
                   )}
                 </FinanceLegacyBridgeGate>
               ) : openValuation ? (
@@ -3030,6 +3116,7 @@ export const FinanceHub: React.FC = () => {
     financeV3PredictionFlag.enabled,
     financeV3AnalysisFlag.enabled,
     financeV3ValuationFlag.enabled,
+    financeV3StatementPackFlag.enabled,
   ]);
 
   const handleImportWizardComplete = useCallback(
