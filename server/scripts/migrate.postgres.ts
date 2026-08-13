@@ -33,6 +33,7 @@ import {
   resolveReachableDatabaseUrl,
 } from '../src/config/databaseTargetResolver.js';
 import { classifySqlChainChecksum } from '../src/services/releaseGate/sqlChainChecksumPolicy.js';
+import { isExecutableMigration } from '../src/services/releaseGate/migrationExecutionPolicy.js';
 import {
   ATTESTED_VARIANT_LABEL,
   attestPartnerUsersUuidVariant,
@@ -714,7 +715,7 @@ async function main() {
         // PROMOTED_LEGACY_PRODUCERS overrides the blanket <500 exclusion for
         // specific, verified-safe producer files (see comment above).
         .filter((m) =>
-          only.size ? true : PROMOTED_LEGACY_SET.has(m.filename) || !isSqliteOnlyMigration(m)
+          only.size ? true : isExecutableMigration(m.filename)
         )
     );
 

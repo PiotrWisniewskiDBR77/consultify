@@ -9,6 +9,7 @@
     "restartPolicyMaxRetries": 10,
     "healthcheckPath": "/ping",
     "healthcheckTimeout": 30,
-    "sleepApplication": false
+    "sleepApplication": false,
+    "preDeployCommand": "node dist/scripts/release-migration-gate.js"
   }
 }
