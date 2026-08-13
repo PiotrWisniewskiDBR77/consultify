@@ -6,21 +6,17 @@
 
 import { AnimatePresence, motion } from 'framer-motion';
 import {
-  AlertCircle,
   Briefcase,
   Check,
   CheckCircle2,
-  ChevronDown,
   ClipboardList,
   Crown,
   Edit3,
   Eye,
   Loader2,
   Mail,
-  MoreHorizontal,
   Plus,
   Search,
-  Settings,
   Shield,
   ShieldCheck,
   Trash2,
@@ -34,7 +30,7 @@ import { ElementType, FC, useCallback, useEffect, useMemo, useState } from 'reac
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
-import { Api } from '@/services/api';
+import { StandardTable, type TableColumn as StandardTableColumn } from '@/components/standard';
 
 // ============================================
 // Types
@@ -669,21 +665,47 @@ const AddMemberModal: FC<{
 };
 
 // ============================================
-// Team Member Row Component
+// Team Member cells — Triada standard (kanon §1, migracja bespoke tabeli —
+// MPQ odbiór 2026-08-13): osadzony realny StandardTable zamiast własnego
+// surowego prymitywu tabeli. 1:1 z dawnymi komórkami wiersza — każda kolumna
+// to `column.render`, dokładnie jak w InitiativesTable/ReportsTable (wzór
+// poprawny tej migracji). Jedna świadoma zmiana kształtu (nie ukryta): dawny
+// Actions-column "Edit role" (ołówek) przenosi się DO komórki Role (obok
+// odznaki), bo StandardTable renderuje każdą kolumnę niezależnie — nie ma
+// naturalnego miejsca na dzielony stan `isEditing` między dwiema oddzielnymi
+// kolumnami bez podnoszenia go do rejestru per-wiersz w rodzicu. Ołówek przy
+// polu, które edytuje, to nie utrata funkcji — Actions zostaje z jedną akcją
+// (Remove), tak jak działa to w assignee-picker (ten sam plik/wzorzec).
 // ============================================
 
-const TeamMemberRow: FC<{
+const FOCUS_RING = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus';
+
+const MemberInfoCell: FC<{ member: TeamMember }> = ({ member }) => (
+  <div className="flex items-center gap-3 min-w-0">
+    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-sm font-semibold text-white shrink-0">
+      {(member.userName || member.userEmail || '?').charAt(0).toUpperCase()}
+    </div>
+    <div className="min-w-0">
+      <div className="text-sm font-medium text-slate-900 dark:text-white truncate">
+        {member.userName || member.userEmail || 'Unknown'}
+      </div>
+      <div className="text-xs text-slate-500 dark:text-slate-400 truncate flex items-center gap-1">
+        <Mail size={10} />
+        {member.userEmail || '—'}
+      </div>
+    </div>
+  </div>
+);
+
+const RoleCell: FC<{
   member: TeamMember;
   canManageTeam: boolean;
+  isInitiative: boolean;
   onUpdateRole: (userId: string, role: TeamRole) => Promise<void>;
-  onRemove: (userId: string) => Promise<void>;
-  isInitiative?: boolean;
-}> = ({ member, canManageTeam, onUpdateRole, onRemove, isInitiative = false }) => {
-  const { t } = useTranslation();
+}> = ({ member, canManageTeam, isInitiative, onUpdateRole }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [selectedRole, setSelectedRole] = useState<TeamRole>(member.role);
   const [busy, setBusy] = useState(false);
-  const [showActions, setShowActions] = useState(false);
 
   const roleKey: TeamRole = Object.prototype.hasOwnProperty.call(ROLE_CONFIG, member.role)
     ? (member.role as TeamRole)
@@ -710,6 +732,162 @@ const TeamMemberRow: FC<{
     }
   };
 
+  if (isEditing) {
+    return (
+      <div className="flex items-center gap-2">
+        <select
+          value={selectedRole}
+          onChange={(e) => setSelectedRole(e.target.value as TeamRole)}
+          className={`h-9 px-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 text-sm text-slate-900 dark:text-white ${FOCUS_RING}`}
+        >
+          {(isInitiative ? INITIATIVE_ROLE_ORDER : ASSESSMENT_ROLE_ORDER).map((r) => (
+            <option key={r} value={r}>
+              {ROLE_CONFIG[r]?.label || String(r)}
+            </option>
+          ))}
+        </select>
+        <button
+          type="button"
+          onClick={handleSaveRole}
+          disabled={busy}
+          className={`p-2 rounded-lg bg-emerald-500 text-white hover:bg-emerald-600 disabled:bg-emerald-300 transition-colors ${FOCUS_RING}`}
+        >
+          {busy ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            setSelectedRole(member.role);
+            setIsEditing(false);
+          }}
+          className={`p-2 rounded-lg bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-navy-600 transition-colors ${FOCUS_RING}`}
+        >
+          <X size={14} />
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-1.5">
+      <div
+        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold ${roleConfig.bgColor} ${roleConfig.color} ${roleConfig.borderColor} border`}
+      >
+        <RoleIcon size={12} />
+        {roleConfig.label}
+      </div>
+      {canManageTeam && (
+        <button
+          type="button"
+          onClick={() => setIsEditing(true)}
+          title="Edit role"
+          className={`p-1.5 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors ${FOCUS_RING}`}
+        >
+          <Edit3 size={13} />
+        </button>
+      )}
+    </div>
+  );
+};
+
+const PermissionsCell: FC<{ member: TeamMember }> = ({ member }) => {
+  const activePermissions = useMemo(() => {
+    const perms: string[] = [];
+    if (member.canEdit) perms.push('Edit');
+    if (member.canApprove) perms.push('Approve');
+    if (member.canManageTeam) perms.push('Manage');
+    if (member.canChangeStatus) perms.push('Status');
+    if (member.canGenerateReport) perms.push('Report');
+    if (member.canGenerateInitiatives) perms.push('Initiatives');
+    return perms;
+  }, [member]);
+
+  return (
+    <div className="flex flex-wrap gap-1">
+      {activePermissions.length > 0 ? (
+        activePermissions.slice(0, 4).map((perm) => (
+          <span
+            key={perm}
+            className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300"
+          >
+            {perm}
+          </span>
+        ))
+      ) : (
+        <span className="text-xs text-slate-600 dark:text-slate-500">View only</span>
+      )}
+      {activePermissions.length > 4 && (
+        <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 dark:bg-slate-500/20 text-slate-600 dark:text-slate-400">
+          +{activePermissions.length - 4}
+        </span>
+      )}
+    </div>
+  );
+};
+
+const AreaOrgCell: FC<{ member: TeamMember; isInitiative: boolean }> = ({
+  member,
+  isInitiative,
+}) => {
+  const { t } = useTranslation();
+
+  if (isInitiative) {
+    return member.isExternal ? (
+      <div className="flex flex-col gap-1">
+        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-100 dark:bg-amber-500/20 text-amber-800 dark:text-amber-200 w-fit">
+          {t('assessment.team.outsideOrg', 'Outside org')}
+        </span>
+        {(member.externalOrgName || member.externalType) && (
+          <span className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+            {member.externalOrgName ||
+              (member.externalType === 'PARTNER'
+                ? t('assessment.team.partner', 'Partner')
+                : t('assessment.team.consultant', 'Consultant'))}
+          </span>
+        )}
+      </div>
+    ) : (
+      <div className="flex flex-col gap-1">
+        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 w-fit">
+          {t('assessment.team.inOrg', 'In org')}
+        </span>
+        <span className="text-[11px] text-slate-600 dark:text-slate-500 truncate">
+          {member.userEmail ? String(member.userEmail).split('@')[1] || '' : '—'}
+        </span>
+      </div>
+    );
+  }
+
+  return member.assignedAreas && member.assignedAreas.length > 0 ? (
+    <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300 w-fit">
+      {member.assignedAreas.length} areas
+    </span>
+  ) : (
+    <span className="text-xs text-slate-600 dark:text-slate-500">All areas</span>
+  );
+};
+
+const AddedCell: FC<{ member: TeamMember }> = ({ member }) => (
+  <span className="text-xs text-slate-500 dark:text-slate-400">
+    {member.assignedAt
+      ? new Date(member.assignedAt).toLocaleDateString('pl-PL', {
+          day: 'numeric',
+          month: 'short',
+          year: 'numeric',
+        })
+      : '—'}
+  </span>
+);
+
+const MemberActionsCell: FC<{
+  member: TeamMember;
+  canManageTeam: boolean;
+  onRemove: (userId: string) => Promise<void>;
+}> = ({ member, canManageTeam, onRemove }) => {
+  const [busy, setBusy] = useState(false);
+
+  if (!canManageTeam) return null;
+
   const handleRemove = async () => {
     if (!confirm(`Remove ${member.userName || member.userEmail} from the team?`)) return;
     setBusy(true);
@@ -723,182 +901,18 @@ const TeamMemberRow: FC<{
     }
   };
 
-  // Get active permissions
-  const activePermissions = useMemo(() => {
-    const perms: string[] = [];
-    if (member.canEdit) perms.push('Edit');
-    if (member.canApprove) perms.push('Approve');
-    if (member.canManageTeam) perms.push('Manage');
-    if (member.canChangeStatus) perms.push('Status');
-    if (member.canGenerateReport) perms.push('Report');
-    if (member.canGenerateInitiatives) perms.push('Initiatives');
-    return perms;
-  }, [member]);
-
   return (
-    <motion.tr
-      initial={{ opacity: 0, y: 4 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="group border-b border-slate-200 dark:border-navy-700/50 hover:bg-slate-50/50 dark:hover:bg-navy-800/30 transition-colors"
-    >
-      {/* User Info */}
-      <td className="px-4 py-3">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-sm font-semibold text-white flex-shrink-0">
-            {(member.userName || member.userEmail || '?').charAt(0).toUpperCase()}
-          </div>
-          <div className="min-w-0">
-            <div className="text-sm font-medium text-slate-900 dark:text-white truncate">
-              {member.userName || member.userEmail || 'Unknown'}
-            </div>
-            <div className="text-xs text-slate-500 dark:text-slate-400 truncate flex items-center gap-1">
-              <Mail size={10} />
-              {member.userEmail || '—'}
-            </div>
-          </div>
-        </div>
-      </td>
-
-      {/* Role */}
-      <td className="px-4 py-3">
-        {isEditing ? (
-          <div className="flex items-center gap-2">
-            <select
-              value={selectedRole}
-              onChange={(e) => setSelectedRole(e.target.value as TeamRole)}
-              className="h-9 px-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 text-sm text-slate-900 dark:text-white"
-            >
-              {(isInitiative ? INITIATIVE_ROLE_ORDER : ASSESSMENT_ROLE_ORDER).map((r) => (
-                <option key={r} value={r}>
-                  {ROLE_CONFIG[r]?.label || String(r)}
-                </option>
-              ))}
-            </select>
-            <button
-              onClick={handleSaveRole}
-              disabled={busy}
-              className="p-2 rounded-lg bg-emerald-500 text-white hover:bg-emerald-600 disabled:bg-emerald-300 transition-colors"
-            >
-              {busy ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
-            </button>
-            <button
-              onClick={() => {
-                setSelectedRole(member.role);
-                setIsEditing(false);
-              }}
-              className="p-2 rounded-lg bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-navy-600 transition-colors"
-            >
-              <X size={14} />
-            </button>
-          </div>
-        ) : (
-          <div
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold ${roleConfig.bgColor} ${roleConfig.color} ${roleConfig.borderColor} border`}
-          >
-            <RoleIcon size={12} />
-            {roleConfig.label}
-          </div>
-        )}
-      </td>
-
-      {/* Permissions */}
-      <td className="px-4 py-3">
-        <div className="flex flex-wrap gap-1">
-          {activePermissions.length > 0 ? (
-            activePermissions.slice(0, 4).map((perm) => (
-              <span
-                key={perm}
-                className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300"
-              >
-                {perm}
-              </span>
-            ))
-          ) : (
-            <span className="text-xs text-slate-600 dark:text-slate-500">View only</span>
-          )}
-          {activePermissions.length > 4 && (
-            <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 dark:bg-slate-500/20 text-slate-600 dark:text-slate-400">
-              +{activePermissions.length - 4}
-            </span>
-          )}
-        </div>
-      </td>
-
-      {/* Assigned Areas / Organization */}
-      <td className="px-4 py-3">
-        {isInitiative ? (
-          member.isExternal ? (
-            <div className="flex flex-col gap-1">
-              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-100 dark:bg-amber-500/20 text-amber-800 dark:text-amber-200">
-                {t('assessment.team.outsideOrg', 'Outside org')}
-              </span>
-              {(member.externalOrgName || member.externalType) && (
-                <span className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
-                  {member.externalOrgName ||
-                    (member.externalType === 'PARTNER'
-                      ? t('assessment.team.partner', 'Partner')
-                      : t('assessment.team.consultant', 'Consultant'))}
-                </span>
-              )}
-            </div>
-          ) : (
-            <div className="flex flex-col gap-1">
-              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300">
-                {t('assessment.team.inOrg', 'In org')}
-              </span>
-              <span className="text-[11px] text-slate-600 dark:text-slate-500 truncate">
-                {member.userEmail ? String(member.userEmail).split('@')[1] || '' : '—'}
-              </span>
-            </div>
-          )
-        ) : member.assignedAreas && member.assignedAreas.length > 0 ? (
-          <div className="flex items-center gap-1">
-            <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300">
-              {member.assignedAreas.length} areas
-            </span>
-          </div>
-        ) : (
-          <span className="text-xs text-slate-600 dark:text-slate-500">All areas</span>
-        )}
-      </td>
-
-      {/* Added Date */}
-      <td className="px-4 py-3">
-        <span className="text-xs text-slate-500 dark:text-slate-400">
-          {member.assignedAt
-            ? new Date(member.assignedAt).toLocaleDateString('pl-PL', {
-                day: 'numeric',
-                month: 'short',
-                year: 'numeric',
-              })
-            : '—'}
-        </span>
-      </td>
-
-      {/* Actions */}
-      <td className="px-4 py-3">
-        {canManageTeam && (
-          <div className="relative flex items-center justify-end gap-1">
-            <button
-              onClick={() => setIsEditing(true)}
-              disabled={isEditing || busy}
-              className="p-2 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors disabled:opacity-50"
-              title="Edit role"
-            >
-              <Edit3 size={14} />
-            </button>
-            <button
-              onClick={handleRemove}
-              disabled={busy}
-              className="p-2 rounded-lg text-slate-500 hover:text-danger-600 hover:bg-danger-50 dark:hover:bg-danger-500/10 transition-colors disabled:opacity-50"
-              title="Remove member"
-            >
-              <Trash2 size={14} />
-            </button>
-          </div>
-        )}
-      </td>
-    </motion.tr>
+    <div className="flex items-center justify-end">
+      <button
+        type="button"
+        onClick={handleRemove}
+        disabled={busy}
+        className={`p-2 rounded-lg text-slate-500 hover:text-danger-600 hover:bg-danger-50 dark:hover:bg-danger-500/10 transition-colors disabled:opacity-50 ${FOCUS_RING}`}
+        title="Remove member"
+      >
+        {busy ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+      </button>
+    </div>
   );
 };
 
@@ -962,6 +976,69 @@ export const TeamManagementPanel: FC<TeamManagementPanelProps> = ({
     });
     return stats;
   }, [isInitiative, members]);
+
+  // Triada standard (kanon §1, migracja bespoke tabeli — MPQ odbiór
+  // 2026-08-13): kolumny deklaratywne StandardTable, 1:1 z dawnymi <td>
+  // z TeamMemberRow (patrz komórki zdefiniowane nad tym komponentem).
+  const memberColumns: StandardTableColumn[] = useMemo(
+    () => [
+      {
+        id: 'member',
+        label: 'Member',
+        width: '220px',
+        render: (row) => <MemberInfoCell member={row as unknown as TeamMember} />,
+      },
+      {
+        id: 'role',
+        label: 'Role',
+        width: '160px',
+        render: (row) => (
+          <RoleCell
+            member={row as unknown as TeamMember}
+            canManageTeam={canManageTeam}
+            isInitiative={isInitiative}
+            onUpdateRole={onUpdateMember}
+          />
+        ),
+      },
+      {
+        id: 'permissions',
+        label: 'Permissions',
+        width: '190px',
+        render: (row) => <PermissionsCell member={row as unknown as TeamMember} />,
+      },
+      {
+        id: 'area',
+        label: isInitiative ? t('assessment.team.organizationColumn', 'Organization') : 'Areas',
+        width: '120px',
+        render: (row) => (
+          <AreaOrgCell member={row as unknown as TeamMember} isInitiative={isInitiative} />
+        ),
+      },
+      {
+        id: 'added',
+        label: 'Added',
+        width: '100px',
+        sortable: true,
+        sortAccessor: (row) => (row as unknown as TeamMember).assignedAt,
+        render: (row) => <AddedCell member={row as unknown as TeamMember} />,
+      },
+      {
+        id: 'memberActions',
+        label: 'Actions',
+        width: '80px',
+        align: 'right',
+        render: (row) => (
+          <MemberActionsCell
+            member={row as unknown as TeamMember}
+            canManageTeam={canManageTeam}
+            onRemove={onRemoveMember}
+          />
+        ),
+      },
+    ],
+    [canManageTeam, isInitiative, onUpdateMember, onRemoveMember, t]
+  );
 
   return (
     <div className="space-y-4">
@@ -1066,82 +1143,24 @@ export const TeamManagementPanel: FC<TeamManagementPanelProps> = ({
           </div>
         </div>
 
-        {/* Members Table */}
+        {/* Members Table — Triada standard: realny StandardTable, patrz
+            uwaga migracji nad komórkami wyżej. */}
         {activeTab === 'members' && (
-          <div className="overflow-x-auto">
-            <table
-              /* §27-exempt: panel konfiguracyjny/billingowy, mala tabela ustawien poza zakresem listowym */ className="w-full"
-              style={{ minWidth: 700 }}
-            >
-              <thead>
-                <tr className="border-b border-slate-200 dark:border-navy-700/50 bg-slate-50 dark:bg-navy-900/50">
-                  <th className="px-4 py-2.5 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider min-w-[200px]">
-                    Member
-                  </th>
-                  <th className="px-4 py-2.5 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider min-w-[120px]">
-                    Role
-                  </th>
-                  <th className="px-4 py-2.5 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider min-w-[180px]">
-                    Permissions
-                  </th>
-                  <th className="px-4 py-2.5 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider min-w-[100px]">
-                    {isInitiative
-                      ? t('assessment.team.organizationColumn', 'Organization')
-                      : 'Areas'}
-                  </th>
-                  <th className="px-4 py-2.5 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider min-w-[100px]">
-                    Added
-                  </th>
-                  <th className="px-4 py-2.5 text-right text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider w-[100px]">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                <AnimatePresence>
-                  {members.length === 0 ? (
-                    <tr>
-                      <td colSpan={6} className="px-4 py-12 text-center">
-                        <div className="flex flex-col items-center gap-3">
-                          <div className="p-4 rounded-full bg-slate-100 dark:bg-navy-800">
-                            <Users size={24} className="text-slate-500 dark:text-slate-400" />
-                          </div>
-                          <div>
-                            <p className="text-sm font-medium text-slate-900 dark:text-white">
-                              No team members yet
-                            </p>
-                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                              Add members to start collaborating on this assessment
-                            </p>
-                          </div>
-                          {canManageTeam && (
-                            <button
-                              onClick={() => setShowAddModal(true)}
-                              className="mt-2 flex items-center gap-2 px-4 py-2 rounded-lg bg-navy-900 dark:bg-[#F4F7FB] hover:bg-navy-800 dark:hover:bg-[#DDE5EF] text-white dark:text-navy-950 text-sm font-semibold transition-colors"
-                            >
-                              <Plus size={16} />
-                              Add First Member
-                            </button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ) : (
-                    members.map((member) => (
-                      <TeamMemberRow
-                        key={member.id}
-                        member={member}
-                        canManageTeam={canManageTeam}
-                        onUpdateRole={onUpdateMember}
-                        onRemove={onRemoveMember}
-                        isInitiative={isInitiative}
-                      />
-                    ))
-                  )}
-                </AnimatePresence>
-              </tbody>
-            </table>
-          </div>
+          <StandardTable
+            columns={memberColumns}
+            data={members as unknown as Array<Record<string, unknown> & { id: string }>}
+            persistKey="assessment.team-management-panel.members"
+            density="compact"
+            canvasClassName="p-0"
+            minTableWidth="auto"
+            empty={{
+              title: 'No team members yet',
+              description: 'Add members to start collaborating on this assessment',
+              icon: Users,
+              actionLabel: canManageTeam ? 'Add First Member' : undefined,
+              onAction: canManageTeam ? () => setShowAddModal(true) : undefined,
+            }}
+          />
         )}
 
         {/* Assignments Tab (DRD only) */}

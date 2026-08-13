@@ -755,8 +755,8 @@ export const EditableSpreadsheetGrid = React.forwardRef<EditableSpreadsheetGridH
           onKeyDown={handleContainerKeyDown}
           tabIndex={0}
         >
-          <table
-            /* §27-exempt: macierz/komorki kalkulacyjne, osobny spec matrix-editor */ className="w-full text-xs"
+          <table /* §27-exempt: macierz/komorki kalkulacyjne, osobny spec matrix-editor */
+            className="w-full text-xs"
           >
             <thead className="sticky top-0 z-10">
               <tr className="bg-c-surface-raised">
