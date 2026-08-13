@@ -198,9 +198,24 @@ reopen ani lineage"), a stała jest realnie konsumowana w `ToolDocumentView`,
 `outputsScaffolding`, `discoveryToolManifestMapper`, `defaultToolConfigs` i
 promptach AI — to żywy kontrakt, nie martwy kod.
 
-**Skutek dla zakresu:** wymagania „Reports: raport opisowy + executive
-presentation" oraz „Output → Report" **nie mają dziś żadnej implementacji**.
-To nie jest polerowanie — to budowa od zera.
+**KOREKTA (2026-08-13, weryfikacja backendu).** Pierwotnie zapisałem tu, że
+Reports „nie mają żadnej implementacji — budowa od zera". **To było za mocne
+i jest nieprawdziwe wobec backendu.** Sprawdzenie realnego kodu serwera:
+
+- `ToolController.promoteToOutput` (linia 2072) przyjmuje **cztery** typy:
+  `initiative | report | presentation | idea`;
+- ma izolację organizacji, bramkę statusu (`APPROVED/GENERATED/FINALIZED`),
+  blokery promocji oraz **idempotencję** przez `tool_initiative_links.batch_id`
+  (istniejąca promocja jest zwracana zamiast tworzyć duplikat);
+- `ReportBuilderService.ts` to realna usługa o rozmiarze ~114 KB, obsługująca
+  `source_type = 'TOOL'` przy zbieraniu referencji.
+
+**Rzeczywisty zakres luki jest węższy, niż napisałem:** zawężenie do
+`['initiative']` dotyczy **stałej frontendowej** sterującej CTA w
+`ToolDocumentView`, a nie możliwości serwera. Praca to **podłączenie i
+weryfikacja end-to-end**, nie budowa od zera. Nadal brakuje jednak
+pierwszorzędnej trwałości Outputu jako niezmiennego snapshotu (L3) —
+to zostaje w mocy.
 
 ## 3c. L9 — Kontrakt konkluzji W2 jest wiążący
 
