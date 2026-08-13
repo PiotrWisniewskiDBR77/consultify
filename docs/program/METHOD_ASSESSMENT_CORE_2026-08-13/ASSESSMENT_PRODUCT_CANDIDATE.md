@@ -36,7 +36,15 @@ npm run test:method-core:front    # --exclude 'server/**'
 ★ **Stabilność bramki serwera dowiedziona co do zakresu**, nie zaklepana:
 **14 plików testowych na dysku = 14 raportowanych, 0 pominiętych** (G14, przeliczone po S8).
 Migotanie (`socket hang up` przy 13 równoległych plikach dzielących pulę PG)
-rozwiązane **ograniczeniem współbieżności, nie retry**.
+rozwiązane **ograniczeniem współbieżności, nie retry** — w konfiguracji nie ma
+ani jednego `retry`.
+
+★ **Powtarzalność zmierzona, nie założona**: trzy kolejne przebiegi bramki dały
+**identyczny wynik `170/170`, `14/14`, exit 0** — bez pojedynczego migotnięcia.
+
+★ **Bramka jest fail-closed i to widać**: jeden przebieg z **błędnym hasłem** do bazy
+skończył się `28P01 FATAL` i `101 passed | 60 skipped` — czyli **głośną porażką**,
+a nie cichym podstawieniem atrapy. Dokładnie tego wymaga CEL 10.
 
 ### Pełna regresja frontu — zmierzona, nie zadeklarowana
 
