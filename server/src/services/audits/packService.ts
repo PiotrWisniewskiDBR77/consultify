@@ -39,6 +39,8 @@ import { assertPublishable, validatePack } from './packValidator.js';
 import type { PackValidationResult } from './packValidator.js';
 import { PACK_CLASSIFICATIONS, PUBLICATION_STATUSES } from './types.js';
 import type {
+  AuditSourceType,
+  AuditVerificationState,
   AuditActor,
   AuditNormSource,
   AuditPack,
@@ -57,6 +59,9 @@ import type {
 // ---------------------------------------------------------------------------
 
 interface PackRow {
+  /** Kolumny dodane migracją rozdzielenia osi; stare wiersze ich nie mają. */
+  source_type?: string | null;
+  verification_state?: string | null;
   id: string;
   organization_id: string | null;
   pack_key: string;
@@ -132,6 +137,12 @@ function mapPackRow(row: PackRow): AuditPack {
     purpose: row.purpose,
     sourceId: row.source_id,
     sourceVersion: row.source_version,
+    // Dwie niezależne osie. Fallback dla wierszy sprzed rozdzielenia jest
+    // zachowawczy: nic nie awansuje na normę, bo stara kolumna nie niosła
+    // informacji o tym, czym dokument JEST — tylko o tym, czy mu ufano.
+    sourceType: (row.source_type as AuditSourceType) ?? 'INTERNAL_PROCEDURE',
+    verificationStatus:
+      (row.verification_state as AuditVerificationState) ?? 'EVIDENCE_MISSING',
     classification: row.classification as PackClassification,
     publicationStatus: row.publication_status as PublicationStatus,
     scope: row.scope,
@@ -321,7 +332,9 @@ async function getSourceForPack(sourceId: string | null): Promise<AuditNormSourc
     materialVersion: (row.material_version as string) ?? null,
     effectiveFrom: (row.effective_from as string) ?? null,
     effectiveTo: (row.effective_to as string) ?? null,
-    verificationStatus: row.verification_status as PackClassification,
+    sourceType: (row.source_type as AuditSourceType) ?? 'INTERNAL_PROCEDURE',
+    verificationStatus: (row.verification_state as AuditVerificationState) ?? 'EVIDENCE_MISSING',
+    legacyClassification: (row.verification_status as PackClassification) ?? null,
     verifiedBy: (row.verified_by as string) ?? null,
     verifiedAt: toIso(row.verified_at),
     verificationNote: (row.verification_note as string) ?? null,

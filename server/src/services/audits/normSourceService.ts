@@ -24,10 +24,26 @@ import {
   recordAuditEvent,
   toIso,
 } from './auditsDb.js';
-import { PACK_CLASSIFICATIONS, RIGHTS_STATUSES, SOURCE_KINDS } from './types.js';
-import type { AuditActor, AuditNormSource, PackClassification, RightsStatus, SourceKind } from './types.js';
+import {
+  AUDIT_SOURCE_TYPES,
+  AUDIT_VERIFICATION_STATES,
+  PACK_CLASSIFICATIONS,
+  RIGHTS_STATUSES,
+  SOURCE_KINDS,
+} from './types.js';
+import type {
+  AuditActor,
+  AuditNormSource,
+  AuditSourceType,
+  AuditVerificationState,
+  PackClassification,
+  RightsStatus,
+  SourceKind,
+} from './types.js';
 
 interface NormSourceRow {
+  source_type?: string | null;
+  verification_state?: string | null;
   id: string;
   organization_id: string | null;
   source_key: string;
@@ -69,7 +85,9 @@ function mapRow(row: NormSourceRow): AuditNormSource {
     materialVersion: row.material_version,
     effectiveFrom: row.effective_from,
     effectiveTo: row.effective_to,
-    verificationStatus: row.verification_status as PackClassification,
+    sourceType: (row.source_type as AuditSourceType) ?? 'INTERNAL_PROCEDURE',
+    verificationStatus: (row.verification_state as AuditVerificationState) ?? 'EVIDENCE_MISSING',
+    legacyClassification: (row.verification_status as PackClassification) ?? null,
     verifiedBy: row.verified_by,
     verifiedAt: toIso(row.verified_at),
     verificationNote: row.verification_note,
@@ -89,6 +107,7 @@ function isNonEmpty(value: unknown): value is string {
 
 function assertValidEnums(input: {
   sourceKind?: string | null;
+  sourceType?: string | null;
   rightsStatus?: string | null;
   verificationStatus?: string | null;
 }): void {
@@ -111,12 +130,23 @@ function assertValidEnums(input: {
     );
   }
   if (
-    input.verificationStatus !== undefined &&
-    input.verificationStatus !== null &&
-    !PACK_CLASSIFICATIONS.includes(input.verificationStatus as PackClassification)
+    input.sourceType !== undefined &&
+    input.sourceType !== null &&
+    !AUDIT_SOURCE_TYPES.includes(input.sourceType as AuditSourceType)
   ) {
     throw new AuditDomainError(
-      `Nieznany status weryfikacji: „${input.verificationStatus}". Dozwolone: ${PACK_CLASSIFICATIONS.join(', ')}`,
+      `Nieznany typ źródła: „${input.sourceType}". Dozwolone: ${AUDIT_SOURCE_TYPES.join(', ')}`,
+      400,
+      'AUDIT_SOURCE_TYPE_INVALID',
+    );
+  }
+  if (
+    input.verificationStatus !== undefined &&
+    input.verificationStatus !== null &&
+    !AUDIT_VERIFICATION_STATES.includes(input.verificationStatus as AuditVerificationState)
+  ) {
+    throw new AuditDomainError(
+      `Nieznany status weryfikacji: „${input.verificationStatus}". Dozwolone: ${AUDIT_VERIFICATION_STATES.join(', ')}`,
       400,
       'AUDIT_VERIFICATION_STATUS_INVALID',
     );
@@ -164,6 +194,7 @@ function assertCanMarkVerifiedNormative(candidate: {
 export interface ListSourcesParams {
   search?: string;
   sourceKind?: string;
+  sourceType?: string;
   verificationStatus?: string;
   limit?: number;
   offset?: number;
@@ -184,9 +215,15 @@ export async function listSources(
     values.push(params.sourceKind);
     conditions.push(`source_kind = $${values.length}`);
   }
+  // Filtrowanie po OBU osiach niezależnie — koordynator wymaga, żeby dały się
+  // łączyć, a nie wykluczać.
+  if (isNonEmpty(params.sourceType)) {
+    values.push(params.sourceType);
+    conditions.push(`source_type = $${values.length}`);
+  }
   if (isNonEmpty(params.verificationStatus)) {
     values.push(params.verificationStatus);
-    conditions.push(`verification_status = $${values.length}`);
+    conditions.push(`verification_state = $${values.length}`);
   }
 
   const where = conditions.join(' AND ');
@@ -227,6 +264,7 @@ export interface CreateSourceInput {
   publisher?: string | null;
   sourceVersion?: string | null;
   sourceKind?: SourceKind;
+  sourceType?: AuditSourceType;
   rightsStatus?: RightsStatus;
   rightsNote?: string | null;
   licenseReference?: string | null;
@@ -257,8 +295,9 @@ export async function createSource(
     `INSERT INTO audit_norm_sources
        (id, organization_id, source_key, title, publisher, source_version, source_kind,
         rights_status, rights_note, license_reference, source_uri, material_id,
-        material_version, effective_from, effective_to, verification_status, created_by)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,'EVIDENCE_MISSING',$16)`,
+        material_version, effective_from, effective_to, verification_status,
+        source_type, verification_state, created_by)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,'EVIDENCE_MISSING',$16,$17,$18)`,
     [
       id,
       actor.organizationId,
@@ -275,6 +314,10 @@ export async function createSource(
       input.materialVersion ?? null,
       input.effectiveFrom ?? null,
       input.effectiveTo ?? null,
+      // Nowe źródło startuje jako niezweryfikowane. Typ podaje autor — to
+      // decyzja o naturze dokumentu, nie o zaufaniu do niego.
+      input.sourceType ?? 'INTERNAL_PROCEDURE',
+      'UNVERIFIED',
       actor.userId,
     ],
   );
@@ -296,6 +339,7 @@ export interface UpdateSourceInput {
   publisher?: string | null;
   sourceVersion?: string | null;
   sourceKind?: SourceKind;
+  sourceType?: AuditSourceType;
   rightsStatus?: RightsStatus;
   rightsNote?: string | null;
   licenseReference?: string | null;
@@ -329,8 +373,9 @@ export async function updateSource(
        title = $1, publisher = $2, source_version = $3, source_kind = $4,
        rights_status = $5, rights_note = $6, license_reference = $7, source_uri = $8,
        material_id = $9, material_version = $10, effective_from = $11, effective_to = $12,
+       source_type = $13,
        updated_at = NOW()
-     WHERE id = $13 AND (organization_id = $14 OR organization_id IS NULL)`,
+     WHERE id = $14 AND (organization_id = $15 OR organization_id IS NULL)`,
     [
       input.title !== undefined ? input.title.trim() : existing.title,
       input.publisher !== undefined ? input.publisher : existing.publisher,
@@ -344,6 +389,9 @@ export async function updateSource(
       input.materialVersion !== undefined ? input.materialVersion : existing.materialVersion,
       input.effectiveFrom !== undefined ? input.effectiveFrom : existing.effectiveFrom,
       input.effectiveTo !== undefined ? input.effectiveTo : existing.effectiveTo,
+      // Typ źródła zmienia się TYLKO jawnie. `verifySource` go nie dotyka —
+      // zmiana zaufania nie może przepisać natury dokumentu.
+      input.sourceType !== undefined ? input.sourceType : existing.sourceType,
       id,
       actor.organizationId,
     ],
@@ -362,7 +410,7 @@ export async function updateSource(
 }
 
 export interface VerifySourceInput {
-  verificationStatus: PackClassification;
+  verificationStatus: AuditVerificationState;
   verificationNote?: string | null;
 }
 
@@ -374,7 +422,7 @@ export async function verifySource(
   const existing = await getSource(actor.organizationId, id);
   assertValidEnums({ verificationStatus: input.verificationStatus });
 
-  if (input.verificationStatus === 'VERIFIED_NORMATIVE') {
+  if (input.verificationStatus === 'VERIFIED') {
     assertCanMarkVerifiedNormative({
       sourceVersion: existing.sourceVersion,
       rightsStatus: existing.rightsStatus,
@@ -384,7 +432,7 @@ export async function verifySource(
 
   await auditRun(
     `UPDATE audit_norm_sources SET
-       verification_status = $1, verified_by = $2, verified_at = NOW(), verification_note = $3,
+       verification_state = $1, verified_by = $2, verified_at = NOW(), verification_note = $3,
        updated_at = NOW()
      WHERE id = $4 AND (organization_id = $5 OR organization_id IS NULL)`,
     [input.verificationStatus, actor.userId, input.verificationNote ?? null, id, actor.organizationId],

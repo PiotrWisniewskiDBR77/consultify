@@ -13,6 +13,7 @@
  * ekspert faktycznie zatwierdził mapowanie.
  */
 
+import { isNormativeSourceType } from './types.js';
 import type {
   AuditNormSource,
   AuditPack,
@@ -312,21 +313,25 @@ function validateSourceForNormative(
     );
   }
 
-  if (source.sourceKind !== 'normative_standard' && source.sourceKind !== 'regulation') {
+  // OŚ 1 — CZYM jest źródło. Żaden stan weryfikacji tego nie zmienia:
+  // dokładnie sprawdzona procedura klienta pozostaje procedurą klienta.
+  if (!isNormativeSourceType(source.sourceType)) {
     issues.push(
       err(
-        'SOURCE_KIND_NOT_NORMATIVE',
-        `Źródło typu „${source.sourceKind}" nie może uzasadniać klasyfikacji VERIFIED_NORMATIVE`,
-        'source.sourceKind',
+        'SOURCE_TYPE_NOT_NORMATIVE',
+        `Źródło typu „${source.sourceType}" nie jest normą ani regulacją, więc pakiet nie może być przedstawiony jako audyt zgodności z normą. To nie jest kwestia jakości weryfikacji — to kwestia natury dokumentu.`,
+        'source.sourceType',
       ),
     );
   }
 
-  if (source.verificationStatus !== 'VERIFIED_NORMATIVE') {
+  // OŚ 2 — CZY sprawdzone. Norma z mapowaniem czekającym na przegląd
+  // pozostaje normą, ale nie wolno na niej oprzeć audytu zgodności.
+  if (source.verificationStatus !== 'VERIFIED') {
     issues.push(
       err(
         'SOURCE_NOT_VERIFIED',
-        'Źródło nie ma potwierdzonego statusu VERIFIED_NORMATIVE',
+        `Weryfikacja źródła ma stan „${source.verificationStatus}", a audyt zgodności wymaga „VERIFIED"`,
         'source.verificationStatus',
       ),
     );
@@ -352,7 +357,11 @@ function validateSourceForNormative(
 export function validatePack(input: ValidatePackInput): PackValidationResult {
   const { pack, criteria, source } = input;
   const target = input.targetPublicationStatus ?? 'draft';
-  const wantsNormative = pack.classification === 'VERIFIED_NORMATIVE';
+  // Pakiet „normatywny" to taki, który chce być przedstawiony jako audyt
+  // zgodności z normą — czyli ma normatywny TYP źródła. Sam status weryfikacji
+  // nigdy nie czyni pakietu normatywnym.
+  const wantsNormative =
+    isNormativeSourceType(pack.sourceType) || pack.classification === 'VERIFIED_NORMATIVE';
   const strict = target === 'published' && wantsNormative;
 
   const issues: ValidationIssue[] = [];
@@ -406,10 +415,22 @@ export function validatePack(input: ValidatePackInput): PackValidationResult {
     }
   }
 
+  // Spójność obu osi pakietu ze źródłem. Pakiet nie może deklarować innej
+  // natury niż jego źródło — inaczej etykieta w Library kłamie.
+  if (source && pack.sourceType && pack.sourceType !== source.sourceType) {
+    issues.push(
+      err(
+        'PACK_SOURCE_TYPE_MISMATCH',
+        `Pakiet deklaruje typ źródła „${pack.sourceType}", a wskazane źródło jest typu „${source.sourceType}"`,
+        'sourceType',
+      ),
+    );
+  }
+
   // Normatywność
   if (wantsNormative) {
     issues.push(...validateSourceForNormative(pack, source));
-  } else if (source?.verificationStatus === 'VERIFIED_NORMATIVE' && pack.classification === 'DEMONSTRATION') {
+  } else if (source?.verificationStatus === 'VERIFIED' && pack.sourceType === 'DEMONSTRATION') {
     issues.push(
       warn(
         'PACK_UNDERCLAIMS',
@@ -421,7 +442,7 @@ export function validatePack(input: ValidatePackInput): PackValidationResult {
 
   // Pakiet demonstracyjny nie może udawać zgodności z normą w tytule
   if (
-    pack.classification !== 'VERIFIED_NORMATIVE' &&
+    !isNormativeSourceType(pack.sourceType) &&
     /\b(ISO|IATF|VDA|SOC\s?2|HIPAA)\b/i.test(String(pack.title || '')) &&
     !/(demo|demonstrac|wzorc|szkolen)/i.test(String(pack.title || ''))
   ) {
@@ -458,7 +479,8 @@ function computeEligibleClassifications(
   const normativeOk =
     structuralOk &&
     !!source &&
-    source.verificationStatus === 'VERIFIED_NORMATIVE' &&
+    isNormativeSourceType(source.sourceType) &&
+    source.verificationStatus === 'VERIFIED' &&
     (source.rightsStatus === 'licensed' ||
       source.rightsStatus === 'owned_internal' ||
       source.rightsStatus === 'public_reference') &&
