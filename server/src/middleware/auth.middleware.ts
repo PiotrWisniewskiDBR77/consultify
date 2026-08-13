@@ -800,7 +800,7 @@ const attachUser = async (
   // false for everything reading `req.organizationId`, and my own test missed it by
   // probing `/api/demo/organization`, which reads the session row directly and
   // never consults `req.organizationId`.
-  if (!isDemoHeader && !orgContextConfirmed && !publicDemo.isPublicDemoPrincipal) {
+  if (!orgContextConfirmed && !publicDemo.isPublicDemoPrincipal) {
     try {
       const resolvedMembership = resolvedOrganizationId
         ? await dbGet<{ status?: string }>(
