@@ -99,6 +99,64 @@ interface MethodSessionRoleRow {
   created_at: string;
 }
 
+interface MethodSessionRoleEventRow {
+  id: string;
+  organization_id: string;
+  session_id: string;
+  user_id: string;
+  role: string;
+  action: 'assigned' | 'revoked';
+  actor_user_id: string;
+  occurred_at: string;
+}
+
+/** One `method_session_role_events` row — see `server/migrations/
+ * 20260813c_method_core_roles_and_approvals.sql` for why this is
+ * append-only (revoke never rewrites the 'assigned' row that preceded it). */
+export interface MethodSessionRoleEvent {
+  readonly id: string;
+  readonly sessionId: string;
+  readonly userId: string;
+  readonly role: MethodProcessRole;
+  readonly action: 'assigned' | 'revoked';
+  readonly actorUserId: string;
+  readonly occurredAt: string;
+}
+
+/** Current role holder — one row per (session, user, role) still in force. */
+export interface MethodSessionRoleAssignment {
+  readonly userId: string;
+  readonly role: MethodProcessRole;
+  readonly createdAt: string;
+}
+
+interface MethodApprovalRow {
+  id: string;
+  organization_id: string;
+  session_id: string;
+  revision: number;
+  decision: 'approved' | 'sent_back';
+  comment: string | null;
+  actor_user_id: string;
+  created_at: string;
+}
+
+/** One `method_approvals` row — tied to the EXACT revision (`sessionId` +
+ * `revision` = `MethodSession.version` at decision time). A reopened
+ * session freezes under a brand-new `sessionId` (see `transition()`'s
+ * `frozen -> active` branch below), so a query scoped to a session id can
+ * never surface another revision's approvals — no extra staleness check
+ * needed at the call site. */
+export interface MethodApproval {
+  readonly id: string;
+  readonly sessionId: string;
+  readonly revision: number;
+  readonly decision: 'approved' | 'sent_back';
+  readonly comment: string | null;
+  readonly actorUserId: string;
+  readonly createdAt: string;
+}
+
 export interface CreateSessionInput {
   readonly organizationId: string;
   readonly projectId: string | null;
@@ -281,18 +339,84 @@ export class MethodSessionService {
       .map((row) => row.id);
   }
 
+  /**
+   * Grants `role` to `userId` on `sessionId`. `assignedBy` defaults to
+   * `userId` when omitted — the ONLY caller that relies on that default is
+   * this file's own `createSession` (the session creator becomes 'owner'
+   * automatically; that is a system bootstrap step, never the self-elevation
+   * the HTTP `POST /sessions/:id/roles` route guards against — that guard
+   * lives at the HTTP boundary per this file's header comment on
+   * tenancy/auth being an HTTP concern, not a kernel rule).
+   *
+   * Idempotent: a duplicate (session, user, role) triple is a no-op (`ON
+   * CONFLICT ... DO NOTHING`) — `inserted: false` on the row that already
+   * existed, and — just as important — NO second `method_session_role_events`
+   * row either, so replaying the same assignment never inflates history.
+   */
   async assignRole(
     organizationId: string,
     sessionId: string,
     userId: string,
-    role: MethodProcessRole
-  ): Promise<void> {
-    await runOrThrow(
+    role: MethodProcessRole,
+    assignedBy: string = userId
+  ): Promise<{ inserted: boolean }> {
+    const result = await DbPromise.run(
       `INSERT INTO method_session_roles (id, organization_id, session_id, user_id, role, created_at)
        VALUES (?, ?, ?, ?, ?, ?)
        ON CONFLICT (session_id, user_id, role) DO NOTHING`,
-      [genId(), organizationId, sessionId, userId, role, nowIso()]
+      [genId(), organizationId, sessionId, userId, role, nowIso()],
+      { fallback: false }
     );
+    if (!result.success) {
+      throw new Error(`method-core: assignRole INSERT failed: ${result.error ?? 'unknown error'}`);
+    }
+    const inserted = (result.changes ?? 0) > 0;
+    if (inserted) {
+      await runOrThrow(
+        `INSERT INTO method_session_role_events
+           (id, organization_id, session_id, user_id, role, action, actor_user_id, occurred_at)
+         VALUES (?, ?, ?, ?, ?, 'assigned', ?, ?)`,
+        [genId(), organizationId, sessionId, userId, role, assignedBy, nowIso()]
+      );
+    }
+    return { inserted };
+  }
+
+  /**
+   * Removes `role` from `userId` on `sessionId`. Never touches
+   * `method_session_role_events` rows already written — the 'assigned' entry
+   * that granted this role stays exactly as it was; this only APPENDS a
+   * 'revoked' entry (hard rule: revoke must not rewrite history). Returns
+   * `revoked: false` (no-op, nothing thrown) when the role was not currently
+   * held — there is nothing to revoke, and no history event is fabricated
+   * for an assignment that never happened.
+   */
+  async revokeRole(
+    organizationId: string,
+    sessionId: string,
+    userId: string,
+    role: MethodProcessRole,
+    revokedBy: string
+  ): Promise<{ revoked: boolean }> {
+    const result = await DbPromise.run(
+      `DELETE FROM method_session_roles
+        WHERE organization_id = ? AND session_id = ? AND user_id = ? AND role = ?`,
+      [organizationId, sessionId, userId, role],
+      { fallback: false }
+    );
+    if (!result.success) {
+      throw new Error(`method-core: revokeRole DELETE failed: ${result.error ?? 'unknown error'}`);
+    }
+    const revoked = (result.changes ?? 0) > 0;
+    if (revoked) {
+      await runOrThrow(
+        `INSERT INTO method_session_role_events
+           (id, organization_id, session_id, user_id, role, action, actor_user_id, occurred_at)
+         VALUES (?, ?, ?, ?, ?, 'revoked', ?, ?)`,
+        [genId(), organizationId, sessionId, userId, role, revokedBy, nowIso()]
+      );
+    }
+    return { revoked };
   }
 
   async getRoles(organizationId: string, sessionId: string, userId: string): Promise<MethodProcessRole[]> {
@@ -303,6 +427,113 @@ export class MethodSessionService {
     return rows
       .filter((row) => row.session_id === sessionId)
       .map((row) => row.role as MethodProcessRole);
+  }
+
+  /** Every CURRENT role holder on `sessionId` (all users) — the roster
+   * behind `GET /sessions/:id/roles`. */
+  async listRoles(organizationId: string, sessionId: string): Promise<MethodSessionRoleAssignment[]> {
+    const rows = await DbPromise.all<MethodSessionRoleRow>(
+      `SELECT * FROM method_session_roles WHERE organization_id = ? AND session_id = ?`,
+      [organizationId, sessionId]
+    );
+    return rows.map((row) => ({
+      userId: row.user_id,
+      role: row.role as MethodProcessRole,
+      createdAt: row.created_at,
+    }));
+  }
+
+  /** Full assign/revoke log for `sessionId`, oldest first — "kto, kiedy,
+   * przez kogo" directly off the columns; pairing an 'assigned' row with the
+   * next 'revoked' row for the same (user, role) gives "do kiedy" (still
+   * active = no matching 'revoked' row yet). Never filtered or truncated —
+   * this is the append-only history rule #5 exists to protect. */
+  async getRoleHistory(organizationId: string, sessionId: string): Promise<MethodSessionRoleEvent[]> {
+    const rows = await DbPromise.all<MethodSessionRoleEventRow>(
+      `SELECT * FROM method_session_role_events WHERE organization_id = ? AND session_id = ?`,
+      [organizationId, sessionId]
+    );
+    return rows
+      .map((row) => ({
+        id: row.id,
+        sessionId: row.session_id,
+        userId: row.user_id,
+        role: row.role as MethodProcessRole,
+        action: row.action,
+        actorUserId: row.actor_user_id,
+        occurredAt: row.occurred_at,
+      }))
+      .sort((a, b) => (a.occurredAt < b.occurredAt ? -1 : a.occurredAt > b.occurredAt ? 1 : 0));
+  }
+
+  /**
+   * Records one approval-trail entry for `sessionId`, stamped with its
+   * CURRENT `version` as the `revision` under review. Does NOT drive the
+   * kernel transition itself (`in_review -> frozen` for 'approved',
+   * `in_review -> active` for 'sent_back') — the HTTP route calls
+   * `transition()` first (so `TRANSITION_AUTHORITY` — 'approver' only for
+   * frozen — is enforced exactly once, by the same code path `/transition`
+   * uses) and only appends this trail row once that succeeds. Kept as a
+   * plain insert (not wrapped with the transition in one method) so a
+   * 'sent_back' trail entry with its mandatory comment reads as a first-
+   * class decision record, independent of which kernel state names happen
+   * to implement it.
+   */
+  async recordApproval(input: {
+    readonly organizationId: string;
+    readonly sessionId: string;
+    readonly revision: number;
+    readonly decision: 'approved' | 'sent_back';
+    readonly comment: string | null;
+    readonly actorUserId: string;
+  }): Promise<MethodApproval> {
+    const row: MethodApprovalRow = {
+      id: genId(),
+      organization_id: input.organizationId,
+      session_id: input.sessionId,
+      revision: input.revision,
+      decision: input.decision,
+      comment: input.comment,
+      actor_user_id: input.actorUserId,
+      created_at: nowIso(),
+    };
+    await runOrThrow(
+      `INSERT INTO method_approvals
+         (id, organization_id, session_id, revision, decision, comment, actor_user_id, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [row.id, row.organization_id, row.session_id, row.revision, row.decision, row.comment, row.actor_user_id, row.created_at]
+    );
+    return {
+      id: row.id,
+      sessionId: row.session_id,
+      revision: row.revision,
+      decision: row.decision,
+      comment: row.comment,
+      actorUserId: row.actor_user_id,
+      createdAt: row.created_at,
+    };
+  }
+
+  /** The approval trail for `sessionId` ONLY — a reopened session freezes
+   * under a new `sessionId` (see `transition()` below), so this never needs
+   * to filter out a stale revision's approvals: they live under a different
+   * id entirely (hard rule #4). Oldest first. */
+  async getApprovals(organizationId: string, sessionId: string): Promise<MethodApproval[]> {
+    const rows = await DbPromise.all<MethodApprovalRow>(
+      `SELECT * FROM method_approvals WHERE organization_id = ? AND session_id = ?`,
+      [organizationId, sessionId]
+    );
+    return rows
+      .map((row) => ({
+        id: row.id,
+        sessionId: row.session_id,
+        revision: row.revision,
+        decision: row.decision,
+        comment: row.comment,
+        actorUserId: row.actor_user_id,
+        createdAt: row.created_at,
+      }))
+      .sort((a, b) => (a.createdAt < b.createdAt ? -1 : a.createdAt > b.createdAt ? 1 : 0));
   }
 
   async transition(request: MethodTransitionRequest): Promise<TransitionResult> {

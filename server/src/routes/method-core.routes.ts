@@ -52,6 +52,7 @@ import {
   METHOD_EVENT_TYPES,
   METHOD_PROCESS_ROLES,
   TERESA_CAPABILITIES,
+  TRANSITION_AUTHORITY,
   type MethodActorKind,
   type MethodEventType,
   type MethodProcessRole,
@@ -252,6 +253,44 @@ async function collectSessionLineage(
 }
 
 /**
+ * Roles that hold `TRANSITION_AUTHORITY` over the 'frozen' target — i.e.
+ * roles that can commit/finalize the session's own work (today, per the
+ * frozen contract, exactly `['approver']`). Derived from the kernel's own
+ * table rather than hand-listed, so a future contract change is
+ * automatically reflected — no second list to drift out of sync with
+ * `src/method-core/contracts/session.ts`.
+ *
+ * Deliberately narrower than "every `TRANSITION_AUTHORITY` role": the
+ * kernel's own design comment (`MethodSessionService`, on `TRANSITION_AUTHORITY`)
+ * says a solo operator holding several WORKING roles at once (owner +
+ * lead_assessor + assessor, to move draft -> ... -> in_review alone) is
+ * explicitly legal — self-granting those is normal single-person-project
+ * operation, not privilege escalation. What must never be self-granted is
+ * the FINAL, independent sign-off — 'approver' freezing one's own session
+ * would erase the one segregation-of-duties control the state machine has
+ * (S2 hard rule #1: "nie nadaje sobie sam roli approvera / żadnej roli
+ * podnoszącej jego własne uprawnienia" — read here as "any role with
+ * freeze/approval authority", which is what 'approver' IS).
+ */
+const POWER_ROLES: ReadonlySet<MethodProcessRole> = new Set(TRANSITION_AUTHORITY.frozen ?? []);
+
+/**
+ * Tenant lookup for the ROLE TARGET (hard rule S2#6: cross-org assignment
+ * refused). Deliberately reads the `users` table directly — the kernel
+ * itself never builds a people directory (see MethodSessionService's own
+ * header comment), and this file already owns every other tenant-isolation
+ * check (see the header comment's "auth + tenant isolation" bullet), so
+ * this one more belongs here rather than growing a new kernel dependency.
+ */
+async function getUserOrganizationId(userId: string): Promise<string | null> {
+  const row = await DbPromise.get<{ organization_id: string | null }>(
+    `SELECT organization_id FROM users WHERE id = ?`,
+    [userId]
+  );
+  return row?.organization_id ?? null;
+}
+
+/**
  * Loads a session and enforces tenant isolation. Returns null and has
  * already written the response on: not found (404) or found-but-other-org
  * (403 — chosen over a second 404 so a genuine cross-tenant attempt is
@@ -410,7 +449,7 @@ router.post(
     // Session creator is the process owner — the FIRST transition
     // (draft -> prepared) requires the 'owner' role and nothing upstream
     // assigns it automatically otherwise.
-    await sessionService.assignRole(organizationId, result.session.id, actorUserId, 'owner');
+    await sessionService.assignRole(organizationId, result.session.id, actorUserId, 'owner', actorUserId);
 
     const idemInsert = await DbPromise.run(
       `INSERT INTO method_session_create_idempotency (organization_id, idempotency_key, session_id, created_at)
@@ -445,6 +484,170 @@ router.get(
     if (!session) return;
     const roles = await sessionService.getRoles(organizationId, session.id, actorUserId);
     res.status(200).json({ session, roles });
+  })
+);
+
+// ---------------------------------------------------------------------------
+// GET /api/method/sessions/:id/roles — current role holders (S2)
+// ---------------------------------------------------------------------------
+
+router.get(
+  '/sessions/:id/roles',
+  asyncHandler(async (req: AuthedRequest, res: Response) => {
+    const organizationId = requireOrg(req, res);
+    if (!organizationId) return;
+    const session = await loadOwnedSession(req, res, req.params.id);
+    if (!session) return;
+    const roles = await sessionService.listRoles(organizationId, session.id);
+    res.status(200).json({ roles });
+  })
+);
+
+// ---------------------------------------------------------------------------
+// GET /api/method/sessions/:id/roles/history — assign/revoke audit log (S2)
+// ---------------------------------------------------------------------------
+
+router.get(
+  '/sessions/:id/roles/history',
+  asyncHandler(async (req: AuthedRequest, res: Response) => {
+    const organizationId = requireOrg(req, res);
+    if (!organizationId) return;
+    const session = await loadOwnedSession(req, res, req.params.id);
+    if (!session) return;
+    const events = await sessionService.getRoleHistory(organizationId, session.id);
+    res.status(200).json({ events });
+  })
+);
+
+// ---------------------------------------------------------------------------
+// POST /api/method/sessions/:id/roles — assign a process role (S2)
+//
+// Replaces the "nadaj role ręcznym SQL-em" gap this endpoint family exists
+// to close (see http.integration.test.ts's `driveToInReview` helper, which
+// pre-dates this route and INSERTs into method_session_roles directly — a
+// real deployment has no such backdoor).
+// ---------------------------------------------------------------------------
+
+router.post(
+  '/sessions/:id/roles',
+  asyncHandler(async (req: AuthedRequest, res: Response) => {
+    const organizationId = requireOrg(req, res);
+    if (!organizationId) return;
+    const actorUserId = requireActor(req, res);
+    if (!actorUserId) return;
+    const session = await loadOwnedSession(req, res, req.params.id);
+    if (!session) return;
+
+    const body = (req.body ?? {}) as Record<string, unknown>;
+    const targetUserId = body.userId;
+    const role = body.role;
+
+    if (!isNonEmptyString(targetUserId)) {
+      res.status(400).json({ error: 'userId is required' });
+      return;
+    }
+    if (typeof role !== 'string' || !(METHOD_PROCESS_ROLES as readonly string[]).includes(role)) {
+      res.status(400).json({ error: 'role must be one of the closed METHOD_PROCESS_ROLES set', allowed: METHOD_PROCESS_ROLES });
+      return;
+    }
+    const typedRole = role as MethodProcessRole;
+
+    // --- S2 hard rule #1: no self-elevation, including "on behalf of" ------
+    // `actorUserId` is ALWAYS `req.userId` from the verified token (see
+    // `requireActor` above) — nothing in `body` can ever override who the
+    // actor is, so a client cannot disguise a self-assignment as coming
+    // from someone else by sending e.g. `assignedBy`/`onBehalfOf` fields;
+    // those are simply never read.
+    if (targetUserId === actorUserId && POWER_ROLES.has(typedRole)) {
+      res.status(403).json({
+        error: 'self_elevation_forbidden',
+        message: 'A user cannot grant themselves a role that carries transition authority.',
+        role: typedRole,
+      });
+      return;
+    }
+
+    // --- Kto w ogóle może zarządzać składem zespołu -------------------------
+    // Zakaz samo-awansu nie wystarcza. Bez tej bramki DOWOLNY uwierzytelniony
+    // członek organizacji mógł nadać komukolwiek dowolną nie-power rolę w
+    // cudzej sesji — czyli wejść do zespołu oceniającego bez wiedzy jego
+    // właściciela. Dla modułu, którego wynikiem jest formalna ocena
+    // dojrzałości, to nie jest drobiazg.
+    //
+    // Bramka jest wąska celowo: zarządzać składem może właściciel sesji albo
+    // prowadzący ocenę. To NIE jest budowanie własnego katalogu uprawnień
+    // (czego kernel zabrania) — to użycie ról procesu, które kernel już zna,
+    // do jedynej decyzji, która ich dotyczy.
+    const actorRoles = await sessionService.getRoles(organizationId, sessionId);
+    const actorMayManageRoles = actorRoles.some(
+      (entry) =>
+        entry.userId === actorUserId &&
+        (entry.role === 'owner' || entry.role === 'lead_assessor')
+    );
+    if (!actorMayManageRoles) {
+      res.status(403).json({
+        error: 'role_management_forbidden',
+        message:
+          'Składem zespołu zarządza właściciel sesji albo prowadzący ocenę.',
+      });
+      return;
+    }
+
+    // --- S2 hard rule #6: cross-org assignment refused ----------------------
+    const targetOrgId = await getUserOrganizationId(targetUserId);
+    if (targetOrgId === null || targetOrgId !== organizationId) {
+      res.status(403).json({ error: 'cross_org_assignment_forbidden' });
+      return;
+    }
+
+    // --- S2 hard rule #7: duplicate assignment is idempotent ---------------
+    // `assignRole` itself is `ON CONFLICT ... DO NOTHING` — `inserted: false`
+    // on a replay, and no second row anywhere (roster or history).
+    const { inserted } = await sessionService.assignRole(organizationId, session.id, targetUserId, typedRole, actorUserId);
+
+    res.status(inserted ? 201 : 200).json({
+      role: { userId: targetUserId, role: typedRole },
+      inserted,
+    });
+  })
+);
+
+// ---------------------------------------------------------------------------
+// DELETE /api/method/sessions/:id/roles/:userId/:role — revoke (S2)
+// ---------------------------------------------------------------------------
+
+router.delete(
+  '/sessions/:id/roles/:userId/:role',
+  asyncHandler(async (req: AuthedRequest, res: Response) => {
+    const organizationId = requireOrg(req, res);
+    if (!organizationId) return;
+    const actorUserId = requireActor(req, res);
+    if (!actorUserId) return;
+    const session = await loadOwnedSession(req, res, req.params.id);
+    if (!session) return;
+
+    const { userId: targetUserId, role } = req.params;
+    if (!(METHOD_PROCESS_ROLES as readonly string[]).includes(role)) {
+      res.status(400).json({ error: 'role must be one of the closed METHOD_PROCESS_ROLES set', allowed: METHOD_PROCESS_ROLES });
+      return;
+    }
+
+    // S2 hard rule #5: revoke never rewrites history — `revokeRole` only
+    // mutates the current-roster table and APPENDS a 'revoked' event; every
+    // prior 'assigned'/'revoked' row for this (session, user, role) stays.
+    const { revoked } = await sessionService.revokeRole(
+      organizationId,
+      session.id,
+      targetUserId,
+      role as MethodProcessRole,
+      actorUserId
+    );
+
+    if (!revoked) {
+      res.status(404).json({ error: 'role_not_assigned' });
+      return;
+    }
+    res.status(200).json({ revoked: true });
   })
 );
 
@@ -585,6 +788,112 @@ router.post(
 
     const updated = await sessionService.getSession(session.id);
     res.status(200).json({ session: updated });
+  })
+);
+
+// ---------------------------------------------------------------------------
+// POST /api/method/sessions/:id/approvals — review decision (S2)
+//
+// Wraps `sessionService.transition()` — the SAME call `/transition` makes —
+// so `TRANSITION_AUTHORITY` is enforced exactly once, by one code path:
+//   'approved'   -> transition to 'frozen' (S2 hard rule #2: only 'approver'
+//                   authority for the 'frozen' target lets this succeed;
+//                   the kernel refuses with `missing_permission` otherwise,
+//                   mapped to 403 below exactly like `/transition` does).
+//   'sent_back'  -> transition to 'active' (kernel: `TRANSITION_AUTHORITY.active`
+//                   = owner|lead_assessor — the contract's authority table
+//                   for this target, used as-is, not a second list).
+// The approval-trail row is written ONLY after the transition succeeds —
+// never on a refused decision — so `GET .../approvals` never shows a
+// decision that didn't actually happen.
+// ---------------------------------------------------------------------------
+
+router.post(
+  '/sessions/:id/approvals',
+  asyncHandler(async (req: AuthedRequest, res: Response) => {
+    const organizationId = requireOrg(req, res);
+    if (!organizationId) return;
+    const actorUserId = requireActor(req, res);
+    if (!actorUserId) return;
+    const idempotencyKey = requireIdempotencyKey(req, res);
+    if (!idempotencyKey) return;
+    const session = await loadOwnedSession(req, res, req.params.id);
+    if (!session) return;
+
+    const body = (req.body ?? {}) as Record<string, unknown>;
+    const decision = body.decision;
+    if (decision !== 'approved' && decision !== 'sent_back') {
+      res.status(400).json({ error: 'decision must be approved|sent_back' });
+      return;
+    }
+    const comment = isNonEmptyString(body.comment) ? body.comment : null;
+
+    // --- S2 hard rule #3: send back requires a comment ----------------------
+    if (decision === 'sent_back' && !comment) {
+      res.status(400).json({ error: 'comment_required_for_send_back' });
+      return;
+    }
+
+    const revisionUnderReview = session.version; // stamped BEFORE the write
+    const to: MethodSessionState = decision === 'approved' ? 'frozen' : 'active';
+
+    const result = await sessionService.transition({
+      sessionId: session.id,
+      to,
+      actorKind: 'human',
+      actorUserId,
+      rationale: comment ?? undefined,
+      idempotencyKey,
+    });
+
+    if (!result.ok) {
+      const refusal = result.refusal;
+      if (refusal.kind === 'missing_permission') {
+        res.status(403).json({ error: refusal.kind, requiredRole: refusal.requiredRole });
+        return;
+      }
+      if (refusal.kind === 'illegal_transition') {
+        res.status(409).json({ error: refusal.kind, from: refusal.from, to: refusal.to });
+        return;
+      }
+      res.status(422).json({ error: refusal.kind, refusal });
+      return;
+    }
+
+    // S2 hard rule #4: tied to the EXACT revision under review — `sessionId`
+    // (a reopen always produces a NEW sessionId, see MethodSessionService's
+    // `frozen -> active` branch) plus `revisionUnderReview` (the session's
+    // `version` at the moment this decision was made, captured before the
+    // transition's own version bump).
+    const approval = await sessionService.recordApproval({
+      organizationId,
+      sessionId: session.id,
+      revision: revisionUnderReview,
+      decision,
+      comment,
+      actorUserId,
+    });
+
+    const updated = await sessionService.getSession(session.id);
+    res.status(201).json({ approval, session: updated });
+  })
+);
+
+// ---------------------------------------------------------------------------
+// GET /api/method/sessions/:id/approvals — approval trail for THIS revision
+// (S2 hard rule #4 — see recordApproval/getApprovals doc comments: scoping
+// by sessionId already excludes every other revision's approvals).
+// ---------------------------------------------------------------------------
+
+router.get(
+  '/sessions/:id/approvals',
+  asyncHandler(async (req: AuthedRequest, res: Response) => {
+    const organizationId = requireOrg(req, res);
+    if (!organizationId) return;
+    const session = await loadOwnedSession(req, res, req.params.id);
+    if (!session) return;
+    const approvals = await sessionService.getApprovals(organizationId, session.id);
+    res.status(200).json({ approvals });
   })
 );
 
