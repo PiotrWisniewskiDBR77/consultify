@@ -8,6 +8,10 @@
  */
 
 import { isPublicProductionHost } from '@/utils/publicProduction';
+import {
+  isDemoAcceptanceProfileEnabled,
+  type DemoAcceptanceProfileSource,
+} from '@/utils/demoAcceptanceProfile';
 
 type FlagKeys = { query: string; localStorage: string; env: string };
 
@@ -94,7 +98,11 @@ function readEnv(key: string): boolean {
 }
 
 /** True when the given execution cockpit feature is enabled (default OFF). */
-export function isExecutionFlagEnabled(flag: ExecutionFlag): boolean {
+export function isExecutionFlagEnabled(
+  flag: ExecutionFlag,
+  profileSource?: DemoAcceptanceProfileSource
+): boolean {
+  if (flag === 'changeSignals' && isDemoAcceptanceProfileEnabled(profileSource)) return true;
   const keys = FLAGS[flag];
   const fromQuery = readQuery(keys.query);
   if (fromQuery !== null) return fromQuery;

@@ -18,6 +18,11 @@
  * calculation engine is a sibling workstream and is not implemented here.
  */
 
+import {
+  isDemoAcceptanceProfileEnabled,
+  type DemoAcceptanceProfileSource,
+} from './demoAcceptanceProfile';
+
 const LS_KEY = 'ff.idea_financial_case';
 const QUERY_KEY = 'ff_ideaFinancialCase';
 const ENV_KEY = 'VITE_IDEA_FINANCIAL_CASE';
@@ -58,7 +63,8 @@ function readLocalStorage(): boolean | null {
   }
 }
 
-export function isIdeaFinancialCaseEnabled(): boolean {
+export function isIdeaFinancialCaseEnabled(profileSource?: DemoAcceptanceProfileSource): boolean {
+  if (isDemoAcceptanceProfileEnabled(profileSource)) return true;
   const fromQuery = readQueryOverride();
   if (fromQuery !== null) return fromQuery;
   const fromLs = readLocalStorage();

@@ -79,4 +79,23 @@ describe('Artifact Studio rollout flags', () => {
       laneSource: 'default',
     });
   });
+
+  it('enables every lane from the central demo acceptance profile', () => {
+    const source = {
+      env: { VITE_DEMO_ACCEPTANCE: 'true' },
+      hostname: 'demo.consultify.ai',
+    };
+    expect(isArtifactStudioLaneEnabled('document', source)).toBe(true);
+    expect(isArtifactStudioLaneEnabled('presentation', source)).toBe(true);
+    expect(isArtifactStudioLaneEnabled('spreadsheet', source)).toBe(true);
+  });
+
+  it('never enables the acceptance profile on public production', () => {
+    expect(
+      isArtifactStudioLaneEnabled('document', {
+        env: { VITE_DEMO_ACCEPTANCE: 'true' },
+        hostname: 'consultify.ai',
+      })
+    ).toBe(false);
+  });
 });

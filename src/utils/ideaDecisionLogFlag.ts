@@ -21,6 +21,11 @@
  * shipped surface this program does not touch.
  */
 
+import {
+  isDemoAcceptanceProfileEnabled,
+  type DemoAcceptanceProfileSource,
+} from './demoAcceptanceProfile';
+
 const LS_KEY = 'ff.idea_decision_log';
 const QUERY_KEY = 'ff_ideaDecisionLog';
 const ENV_KEY = 'VITE_IDEA_DECISION_LOG';
@@ -61,7 +66,8 @@ function readLocalStorage(): boolean | null {
   }
 }
 
-export function isIdeaDecisionLogEnabled(): boolean {
+export function isIdeaDecisionLogEnabled(profileSource?: DemoAcceptanceProfileSource): boolean {
+  if (isDemoAcceptanceProfileEnabled(profileSource)) return true;
   const fromQuery = readQueryOverride();
   if (fromQuery !== null) return fromQuery;
   const fromLs = readLocalStorage();

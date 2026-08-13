@@ -22,6 +22,10 @@
  */
 
 import { isPublicProductionHost } from '@/utils/publicProduction';
+import {
+  isDemoAcceptanceProfileEnabled,
+  type DemoAcceptanceProfileSource,
+} from '@/utils/demoAcceptanceProfile';
 
 type FlagKeys = { query: string; localStorage: string; env: string };
 
@@ -107,7 +111,11 @@ function writeLocalStorage(key: string, value: boolean): void {
 }
 
 /** True when the given Results Next registry is enabled (default OFF everywhere). */
-export function isResultsVNextFlagEnabled(flag: ResultsVNextFlag): boolean {
+export function isResultsVNextFlagEnabled(
+  flag: ResultsVNextFlag,
+  profileSource?: DemoAcceptanceProfileSource
+): boolean {
+  if (isDemoAcceptanceProfileEnabled(profileSource)) return true;
   const keys = FLAGS[flag];
   const fromQuery = readQuery(keys.query);
   if (fromQuery !== null) {

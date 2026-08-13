@@ -36,6 +36,11 @@
  *      (CLAUDE.md #7: Piotr nigdy nie jest pierwszym testerem wizualnym).
  */
 
+import {
+  isDemoAcceptanceProfileEnabled,
+  type DemoAcceptanceProfileSource,
+} from './demoAcceptanceProfile';
+
 const LS_KEY = 'ff.idea_details_in_panel';
 const QUERY_KEY = 'ff_ideaDetailsInPanel';
 const ENV_KEY = 'VITE_IDEA_DETAILS_IN_PANEL';
@@ -78,7 +83,8 @@ function readLocalStorage(): boolean | null {
 
 let cached: boolean | null = null;
 
-export function isIdeaDetailsInPanelEnabled(): boolean {
+export function isIdeaDetailsInPanelEnabled(profileSource?: DemoAcceptanceProfileSource): boolean {
+  if (isDemoAcceptanceProfileEnabled(profileSource)) return true;
   if (cached === null) {
     const fromQuery = readQueryOverride();
     const fromLs = fromQuery === null ? readLocalStorage() : null;
