@@ -2718,7 +2718,7 @@ const createInitialToolsetFlowData = (inputSectionIds: string[]): ToolsetFlowDat
   };
 };
 
-const TOOL_STEP_DEFINITIONS: Record<ToolType, StepDefinition[]> = {
+export const TOOL_STEP_DEFINITIONS: Record<ToolType, StepDefinition[]> = {
   'dynamic-swot': SWOT_STEPS,
   'market-forces': PORTER_STEPS,
   'growth-paths': GROWTH_PATHS_STEPS,

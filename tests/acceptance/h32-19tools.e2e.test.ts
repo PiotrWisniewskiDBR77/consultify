@@ -144,7 +144,9 @@ describe.each(BUILT_TOOL_IDS.map((toolType) => ({ toolType })))(
         expect(createRes.body?.status).toBe('DRAFT');
         createdToolSessionIds.push(sessionId);
         row.create = '✅';
-        evidence(`[h32] [${toolType}] created tool_sessions.id=${sessionId}`);
+        evidence(
+          `[h32] [${toolType}] created tool_sessions.id=${sessionId} version=${createRes.body?.version}`
+        );
       } catch (err) {
         row.error = `create: ${(err as Error).message}`;
         throw err;
@@ -154,6 +156,13 @@ describe.each(BUILT_TOOL_IDS.map((toolType) => ({ toolType })))(
       //    finishing block (summary.verdict/executiveSummary — the shape the
       //    tool-agnostic bridge reads, per toolConclusionBridge.ts). Text is
       //    inline (no LLM), non-numeric, and avoids the validator filler list.
+      //
+      //    G4 fix (2026-08-13): `expectedVersion` is now REQUIRED by
+      //    ToolController.updateToolSession's CAS gate (Sprint S1, optimistic
+      //    concurrency added after this test was authored — missing field is
+      //    428 Precondition Required, not a business-logic failure). A real
+      //    client always round-trips the `version` returned by create/GET, so
+      //    this test does the same rather than special-casing the harness.
       const verdict = `Sesja narzędzia ${toolType} wskazuje jeden zaakceptowany element wymagający dalszej walidacji przed przejściem do realizacji.`;
       const executiveSummary = `Analiza w narzędziu ${toolType} zidentyfikowała priorytetowy obszar interwencji potwierdzony przez zaakceptowany dowód sesji.`;
       try {
@@ -164,6 +173,7 @@ describe.each(BUILT_TOOL_IDS.map((toolType) => ({ toolType })))(
             status: 'IN_PROGRESS',
             completionPercent: 80,
             confidenceAvg: 4,
+            expectedVersion: 1,
             answers: {
               items: [
                 {
