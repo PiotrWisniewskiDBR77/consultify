@@ -19,6 +19,15 @@ import { genId, nowIso, parseJson, runOrThrow } from '../db.js';
 
 export type ReportSupersedenceStatus = 'current' | 'superseded' | 'source_updated';
 
+/**
+ * Which structured artefact this snapshot renders. A Presentation is built
+ * from the SAME immutable Output/content discipline as a Report — same
+ * table, same screenshot ban, same supersession rules — it is not a second,
+ * looser kind of record. `report` is the default so every pre-existing row
+ * keeps its meaning unchanged (see the additive migration's comment).
+ */
+export type MethodArtefactKind = 'report' | 'presentation';
+
 export interface CreateReportSnapshotInput {
   readonly organizationId: string;
   readonly outputId: string;
@@ -27,6 +36,9 @@ export interface CreateReportSnapshotInput {
   /** Structured content — see class doc comment on the screenshot ban. */
   readonly content: unknown;
   readonly contentHash: string;
+  readonly kind?: MethodArtefactKind;
+  /** See MethodOutputRecord.demoBypassActive — inherited from the Output. */
+  readonly demoBypassActive?: boolean;
 }
 
 export interface MethodReportSnapshotRecord {
@@ -41,6 +53,8 @@ export interface MethodReportSnapshotRecord {
   readonly supersededByOutputId: string | null;
   readonly supersededAt: string | null;
   readonly createdAt: string;
+  readonly kind: MethodArtefactKind;
+  readonly demoBypassActive: boolean;
 }
 
 interface MethodReportSnapshotRow {
@@ -55,6 +69,8 @@ interface MethodReportSnapshotRow {
   superseded_by_output_id: string | null;
   superseded_at: string | null;
   created_at: string;
+  kind: string;
+  demo_bypass_active: boolean;
 }
 
 function toRecord(row: MethodReportSnapshotRow): MethodReportSnapshotRecord {
@@ -70,6 +86,8 @@ function toRecord(row: MethodReportSnapshotRow): MethodReportSnapshotRecord {
     supersededByOutputId: row.superseded_by_output_id,
     supersededAt: row.superseded_at,
     createdAt: row.created_at,
+    kind: (row.kind as MethodArtefactKind) ?? 'report',
+    demoBypassActive: row.demo_bypass_active === true,
   };
 }
 
@@ -77,11 +95,12 @@ export class MethodReportSnapshotService {
   async create(input: CreateReportSnapshotInput): Promise<MethodReportSnapshotRecord> {
     const id = genId();
     const now = nowIso();
+    const kind: MethodArtefactKind = input.kind ?? 'report';
     await runOrThrow(
       `INSERT INTO method_report_snapshots
          (id, organization_id, output_id, session_id, title, content_json, content_hash,
-          status, superseded_by_output_id, superseded_at, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          status, superseded_by_output_id, superseded_at, created_at, kind, demo_bypass_active)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id,
         input.organizationId,
@@ -94,6 +113,8 @@ export class MethodReportSnapshotService {
         null,
         null,
         now,
+        kind,
+        input.demoBypassActive === true,
       ]
     );
     return {
@@ -108,6 +129,8 @@ export class MethodReportSnapshotService {
       supersededByOutputId: null,
       supersededAt: null,
       createdAt: now,
+      kind,
+      demoBypassActive: input.demoBypassActive === true,
     };
   }
 

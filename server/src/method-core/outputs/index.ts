@@ -22,6 +22,7 @@ export {
   MethodReportSnapshotService,
   methodReportSnapshotService,
   type CreateReportSnapshotInput,
+  type MethodArtefactKind,
   type MethodReportSnapshotRecord,
   type ReportSupersedenceStatus,
 } from './MethodReportSnapshotService.js';
