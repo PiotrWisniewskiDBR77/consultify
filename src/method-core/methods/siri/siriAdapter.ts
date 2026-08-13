@@ -30,9 +30,14 @@ import {
   buildDefaultInputs,
   DEFAULT_SIRI_PM_WEIGHTS,
   rankByImpactValue,
+  rankByImpactValueV2,
+  SIRI_PM_WEIGHT_PRESETS,
+  type SiriPmCalculationVersion,
+  type SiriPmPlanningHorizon,
   type SIRIPrioritisationInput,
   type SIRIPrioritisationWeights,
 } from '@/services/siriPrioritisation';
+import { isSiriPmV2Enabled } from '@/utils/siriPmV2Flag';
 import {
   compileSiriPackOnly,
   DEFAULT_MINIMUM_EVIDENCE_STRENGTH,
@@ -252,15 +257,16 @@ function aggregate(input: AggregationInput): AggregationResult {
  * Horizon" — verbatim table. NOT the same as the engine's
  * `DEFAULT_SIRI_PM_WEIGHTS` (0.3/0.3/0.4), which matches none of these three
  * presets — see `SIRI_PM_ENGINE_VERIFICATION.defaultWeightsMatchAnyPlanningHorizonPreset`.
+ *
+ * COORD-08: the canonical values now live in
+ * `SIRI_PM_WEIGHT_PRESETS` (src/services/siriPrioritisation.ts) — this is
+ * kept as a re-exported alias so the existing import path
+ * (`SIRI_PM_PLANNING_HORIZON_WEIGHTS` from this module) keeps working.
  */
 export const SIRI_PM_PLANNING_HORIZON_WEIGHTS: Record<
-  'strategic' | 'tactical' | 'operational',
+  SiriPmPlanningHorizon,
   SIRIPrioritisationWeights
-> = {
-  strategic: { cost: 0.3, kpi: 0.4, proximity: 0.3 },
-  tactical: { cost: 0.45, kpi: 0.3, proximity: 0.25 },
-  operational: { cost: 0.6, kpi: 0.2, proximity: 0.2 },
-};
+> = SIRI_PM_WEIGHT_PRESETS;
 
 /**
  * Findings from reading knowledge/SIRI/SIRI-PM Whitepaper.pdf in full
@@ -274,15 +280,26 @@ export const SIRI_PM_ENGINE_VERIFICATION = {
   /**
    * Whitepaper p.36 Step 6 requires normalising each of the three factors
    * (dividing by that factor's column Total across all 16 dimensions)
-   * BEFORE applying weights in Step 7. `calculateImpactValue()` in
-   * siriPrioritisation.ts applies weights directly to the raw
-   * DOR*value terms — the normalisation step is not implemented.
+   * BEFORE applying weights in Step 7. `calculateImpactValue()` /
+   * `rankByImpactValue()` (the `legacy_v1` / DEFAULT path in
+   * siriPrioritisation.ts) apply weights directly to the raw DOR*value
+   * terms — the normalisation step is not implemented THERE.
+   *
+   * COORD-08: this is now fixed in `rankByImpactValueV2()`
+   * (`siriPrioritisation.ts`), reachable only via the explicit
+   * `siri_pm_v2` calculation version or the `SIRI_PM_V2` flag
+   * (`src/utils/siriPmV2Flag.ts`) — default remains `legacy_v1`, so this
+   * flag stays `false` describing the DEFAULT path on purpose.
    */
   normalisationStepImplemented: false,
   /**
    * `DEFAULT_SIRI_PM_WEIGHTS` = {cost:0.3, kpi:0.3, proximity:0.4} matches
    * none of the three canonical planning-horizon presets (Whitepaper p.29,
    * Figure 12: strategic 30/40/30, tactical 45/30/25, operational 60/20/20).
+   *
+   * COORD-08: `siri_pm_v2` uses `SIRI_PM_WEIGHT_PRESETS` exclusively (no
+   * arbitrary weights) — this flag still describes the `legacy_v1`
+   * DEFAULT_SIRI_PM_WEIGHTS, which is unchanged on purpose.
    */
   defaultWeightsMatchAnyPlanningHorizonPreset: false,
   /**
@@ -305,6 +322,25 @@ interface SiriPrioritisationParameters {
   readonly defaultBIC?: unknown;
   readonly industryBenchmark?: Readonly<Record<string, number>>;
   readonly areaInputs?: Readonly<Record<string, Partial<SIRIPrioritisationInput>>>;
+  /**
+   * COORD-08: explicit override for `legacy_v1` vs `siri_pm_v2`. When
+   * omitted, falls back to the `SIRI_PM_V2` flag (`src/utils/siriPmV2Flag.ts`)
+   * — and to `legacy_v1` when the flag is off. An explicit value here
+   * always wins over the flag (ZAKAZ CICHEJ ZMIANY: the flag alone can
+   * only change behaviour for callers that don't ask for a version).
+   */
+  readonly calculationVersion?: unknown;
+}
+
+/**
+ * Resolves which formula `prioritise()` uses. Priority:
+ *   1. `parameters.calculationVersion`, if it is a valid version literal.
+ *   2. `SIRI_PM_V2` feature flag (`isSiriPmV2Enabled()`).
+ *   3. `legacy_v1` — the DEFAULT, never changed silently (COORD-08).
+ */
+function resolveCalculationVersion(explicit: unknown): SiriPmCalculationVersion {
+  if (explicit === 'legacy_v1' || explicit === 'siri_pm_v2') return explicit;
+  return isSiriPmV2Enabled() ? 'siri_pm_v2' : 'legacy_v1';
 }
 
 function prioritise(input: PrioritisationInput): PrioritisationResult {
@@ -338,6 +374,7 @@ function prioritise(input: PrioritisationInput): PrioritisationResult {
     );
   }
   const weights = SIRI_PM_PLANNING_HORIZON_WEIGHTS[planningHorizon];
+  const calculationVersion = resolveCalculationVersion(params.calculationVersion);
 
   const scores: Record<string, number> = {};
   for (const [unitId, level] of Object.entries(input.frozenUnitLevels)) {
@@ -360,7 +397,12 @@ function prioritise(input: PrioritisationInput): PrioritisationResult {
   });
 
   // Thin call into the EXISTING engine — formula lives in siriPrioritisation.ts.
-  const ranked = rankByImpactValue(inputs, weights);
+  // `legacy_v1` and `siri_pm_v2` are two exported functions there; this
+  // adapter does not duplicate either formula, only picks which to call.
+  const ranked =
+    calculationVersion === 'siri_pm_v2'
+      ? rankByImpactValueV2(inputs, planningHorizon)
+      : rankByImpactValue(inputs, weights);
 
   // Whitepaper p.17 & p.37 Step 8: "the Prioritisation Matrix will recommend
   // at least one SIRI Dimension — the one with the highest Impact Value —
@@ -402,7 +444,8 @@ function prioritise(input: PrioritisationInput): PrioritisationResult {
   return {
     rankedUnitIds: ranked.map((r) => r.areaId),
     rationaleByUnitId,
-    parametersVersion: `siri-pm-v1:${planningHorizon}`,
+    parametersVersion: `siri-pm-${calculationVersion === 'siri_pm_v2' ? 'v2' : 'v1'}:${planningHorizon}`,
+    calculationVersion,
   };
 }
 

@@ -68,6 +68,25 @@ export interface SIRIPrioritisationInput {
 }
 
 /**
+ * COORD-08 — jawna wersja obliczenia Impact Value.
+ *
+ *   'legacy_v1'  — DOKŁADNIE obecne (przed COORD-08) zachowanie silnika,
+ *                  bit w bit. Wagi mnożą surowe termy, ujemny proximity
+ *                  NIE jest obcinany, domyślne wagi nie są żadnym z
+ *                  oficjalnych presetów. Służy wyłącznie do odtworzenia
+ *                  istniejących wyników — NIE poprawiaj tej ścieżki.
+ *   'siri_pm_v2' — poprawiona logika wg whitepapera (str. 35-37):
+ *                  Step 6 normalizuje trzy czynniki przez ich Total PRZED
+ *                  wagami, Step 4 obcina ujemny proximity do 0, wagi
+ *                  pochodzą wyłącznie z oficjalnych presetów wg horyzontu
+ *                  planowania (str. 29, Figure 12).
+ */
+export type SiriPmCalculationVersion = 'legacy_v1' | 'siri_pm_v2';
+
+/** Horyzont planowania — jedyna oś, po której whitepaper różnicuje wagi. */
+export type SiriPmPlanningHorizon = 'strategic' | 'tactical' | 'operational';
+
+/**
  * Wynik rankingu dla pojedynczego obszaru.
  */
 export interface SIRIPrioritisationResult {
@@ -80,6 +99,15 @@ export interface SIRIPrioritisationResult {
   rank: number;
   /** Luka do benchmarku = BIC − AMS */
   gapToBIC: number;
+  /** Traceability (COORD-08): która formuła wyprodukowała ten wynik. */
+  calculationVersion: SiriPmCalculationVersion;
+  /**
+   * Horyzont planowania użyty do doboru presetu wag. `null` dla
+   * `legacy_v1`, gdy wywołujący nie przekazał wag pochodzących z presetu
+   * (legacy przyjmuje dowolne `SIRIPrioritisationWeights`, nie tylko
+   * presety horyzontu).
+   */
+  planningHorizon: SiriPmPlanningHorizon | null;
 }
 
 // ============================================
@@ -87,14 +115,34 @@ export interface SIRIPrioritisationResult {
 // ============================================
 
 /**
- * Domyślne wagi formuły Impact Value.
+ * Domyślne wagi formuły Impact Value (ścieżka `legacy_v1`).
  * cost=0.3, kpi=0.3, proximity=0.4 — suma = 1.
+ *
+ * ★ ZAKAZ CICHEJ ZMIANY (COORD-08): to NIE jest żaden z oficjalnych
+ * presetów horyzontu planowania (Figure 12: strategic 30/40/30,
+ * tactical 45/30/25, operational 60/20/20) — patrz
+ * `SIRI_PM_ENGINE_VERIFICATION.defaultWeightsMatchAnyPlanningHorizonPreset`
+ * w `siriAdapter.ts`. Zostaje jako domyślna ścieżka legacy_v1 świadomie —
+ * poprawa wchodzi wyłącznie przez `siri_pm_v2` za jawnym parametrem/flagą.
  */
 export const DEFAULT_SIRI_PM_WEIGHTS: SIRIPrioritisationWeights = {
   cost: 0.3,
   kpi: 0.3,
   proximity: 0.4,
 };
+
+/**
+ * Oficjalne presety wag wg horyzontu planowania.
+ * Źródło: `knowledge/SIRI/SIRI-PM Whitepaper.pdf`, str. 29, Figure 12
+ * "Weightage Distribution according to Planning Horizon" — wartości
+ * przepisane wprost z tabeli, nie wymyślone. Dane, nie magiczne liczby:
+ * używane wyłącznie przez ścieżkę `siri_pm_v2`.
+ */
+export const SIRI_PM_WEIGHT_PRESETS: Record<SiriPmPlanningHorizon, SIRIPrioritisationWeights> = {
+  strategic: { cost: 0.3, kpi: 0.4, proximity: 0.3 },
+  tactical: { cost: 0.45, kpi: 0.3, proximity: 0.25 },
+  operational: { cost: 0.6, kpi: 0.2, proximity: 0.2 },
+} as const;
 
 const EPSILON = 1e-9;
 
@@ -125,8 +173,15 @@ export function calculateImpactValue(
 }
 
 /**
- * Ranking obszarów wg Impact Value (malejąco).
- * Nadaje rank 1..n oraz dołącza name z SIRI_PRIORITISATION_AREAS.
+ * Ranking obszarów wg Impact Value (malejąco) — ścieżka `legacy_v1`.
+ *
+ * ★ BIT W BIT: numeryka tej funkcji (impactValue/rank/gapToBIC) jest
+ * DOKŁADNIE tym, co silnik liczył przed COORD-08 — nie została zmieniona.
+ * Jedyny dodatek to pola traceability (`calculationVersion`,
+ * `planningHorizon: null`), które nie wpływają na wynik liczbowy.
+ * Nie "poprawiaj" tej funkcji — poprawiona logika żyje w
+ * `rankByImpactValueV2()`.
+ *
  * Dla obszarów o równym Impact Value zachowuje stabilną kolejność wejścia.
  */
 export function rankByImpactValue(
@@ -157,6 +212,85 @@ export function rankByImpactValue(
     impactValue: s.impactValue,
     rank: idx + 1,
     gapToBIC: s.gapToBIC,
+    calculationVersion: 'legacy_v1',
+    planningHorizon: null,
+  }));
+}
+
+// ============================================
+// SIRI_PM_V2 — poprawiona logika (COORD-08)
+// ============================================
+
+/**
+ * Ranking obszarów wg Impact Value (malejąco) — ścieżka `siri_pm_v2`.
+ *
+ * Whitepaper str. 35-37:
+ *   Step 4 — "If the difference has a negative value, indicate »0« into
+ *            the Proximity Factor row." → proximity surowy = max(BIC−AMS, 0).
+ *   Step 6 — "Normalise the values for all 3 factors [...]" → każdy z
+ *            trzech surowych termów (cost/kpi/proximity) dzielony przez
+ *            sumę (`Total`) tego termu po WSZYSTKICH przekazanych
+ *            obszarach, PRZED przyłożeniem wag.
+ *   Step 7 — IV = Wcost·CostFactorN + Wkpi·KpiFactorN + Wproximity·ProximityFactorN
+ *            na znormalizowanych czynnikach.
+ *
+ * Wagi pochodzą WYŁĄCZNIE z `SIRI_PM_WEIGHT_PRESETS[planningHorizon]`
+ * (str. 29, Figure 12) — ta ścieżka nie przyjmuje dowolnych wag.
+ *
+ * Nie mutuje `inputs`. Deterministyczna: ten sam input → ten sam wynik.
+ * Gdy `Total` danego czynnika wynosi 0 (wszystkie surowe termy zerowe),
+ * znormalizowany czynnik dla każdego obszaru w tej kolumnie wynosi 0
+ * (whitepaper nie definiuje dzielenia przez zero — 0/0 traktowane jako
+ * brak wkładu tego czynnika, nie NaN).
+ */
+export function rankByImpactValueV2(
+  inputs: SIRIPrioritisationInput[],
+  planningHorizon: SiriPmPlanningHorizon
+): SIRIPrioritisationResult[] {
+  const weights = SIRI_PM_WEIGHT_PRESETS[planningHorizon];
+  assertWeightsSumToOne(weights);
+
+  const rawCost = inputs.map((input) => input.costRelevance * input.costProfile);
+  const rawKpi = inputs.map((input) => input.kpiRelevance * input.kpiImportance);
+  const rawProximity = inputs.map((input) => Math.max(input.bic - input.ams, 0));
+
+  const totalCost = rawCost.reduce((sum, v) => sum + v, 0);
+  const totalKpi = rawKpi.reduce((sum, v) => sum + v, 0);
+  const totalProximity = rawProximity.reduce((sum, v) => sum + v, 0);
+
+  const scored = inputs.map((input, originalIndex) => {
+    const area = SIRI_PRIORITISATION_AREAS.find((a) => a.id === input.areaId);
+
+    const costFactorN = totalCost > EPSILON ? rawCost[originalIndex] / totalCost : 0;
+    const kpiFactorN = totalKpi > EPSILON ? rawKpi[originalIndex] / totalKpi : 0;
+    const proximityFactorN =
+      totalProximity > EPSILON ? rawProximity[originalIndex] / totalProximity : 0;
+
+    const impactValue =
+      weights.cost * costFactorN + weights.kpi * kpiFactorN + weights.proximity * proximityFactorN;
+
+    return {
+      areaId: input.areaId,
+      name: area?.name ?? input.areaId,
+      impactValue: Math.round(impactValue * 100) / 100,
+      gapToBIC: Math.round((input.bic - input.ams) * 100) / 100,
+      originalIndex,
+    };
+  });
+
+  scored.sort((a, b) => {
+    if (b.impactValue !== a.impactValue) return b.impactValue - a.impactValue;
+    return a.originalIndex - b.originalIndex; // stabilny tie-break
+  });
+
+  return scored.map((s, idx) => ({
+    areaId: s.areaId,
+    name: s.name,
+    impactValue: s.impactValue,
+    rank: idx + 1,
+    gapToBIC: s.gapToBIC,
+    calculationVersion: 'siri_pm_v2',
+    planningHorizon,
   }));
 }
 
@@ -216,7 +350,9 @@ function assertWeightsSumToOne(weights: SIRIPrioritisationWeights): void {
 
 export default {
   DEFAULT_SIRI_PM_WEIGHTS,
+  SIRI_PM_WEIGHT_PRESETS,
   calculateImpactValue,
   rankByImpactValue,
+  rankByImpactValueV2,
   buildDefaultInputs,
 };

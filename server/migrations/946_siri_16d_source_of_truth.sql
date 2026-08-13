@@ -104,6 +104,19 @@ CREATE TABLE IF NOT EXISTS siri_prioritisation_snapshots (
   rationale_by_unit_id JSONB NOT NULL,
   parameters_version TEXT NOT NULL,
 
+  -- COORD-08 (agent A11, codex/mac-a11-siri-pm-20260813): which Impact Value
+  -- formula produced this snapshot — see src/services/siriPrioritisation.ts
+  -- SiriPmCalculationVersion. Added directly into the CREATE TABLE (this
+  -- table has never been applied to any database — see file header STATUS —
+  -- so there is no existing row to backfill and no need for a separate
+  -- ALTER TABLE step). Defaults to 'legacy_v1' to match the engine's own
+  -- default calculation path (ZAKAZ CICHEJ ZMIANY — see
+  -- SIRI_PM_V2_BACKFILL_PLAN.md). Do NOT widen this CHECK without updating
+  -- SiriPmCalculationVersion in lockstep.
+  calculation_version TEXT NOT NULL DEFAULT 'legacy_v1' CHECK (
+    calculation_version IN ('legacy_v1', 'siri_pm_v2')
+  ),
+
   -- Selected focus dimensions (>=1 per Building Block, plus the Step-8b
   -- bonus) — denormalised for fast read, derivable from rationale_by_unit_id.
   focus_unit_ids JSONB NOT NULL DEFAULT '[]'::jsonb,
