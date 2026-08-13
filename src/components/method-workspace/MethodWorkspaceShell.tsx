@@ -432,10 +432,20 @@ export const MethodWorkspaceShell: React.FC<MethodWorkspaceShellProps> = ({
             Evidence: {readiness.totalUnits - readiness.unitsMissingEvidence}/{readiness.totalUnits}
           </span>
           <span>{readiness.openDiscrepancies} do przeglądu</span>
+          {/* ★ A10/D4: „Gotowe do zamrożenia" świeciło na zielono przy 1/39
+              odpowiedzianych jednostek, bo sprawdzało WYŁĄCZNIE brak blokerów.
+              Technicznie prawda — zamrozić się dało — ale komunikat czytał się
+              jako „ocena skończona". Kanon: pewność nie zastępuje kompletności
+              (ASSESSMENT_EVIDENCE_AND_SCORING_CONTRACT §6). Zielone tylko przy
+              pełnym pokryciu; inaczej neutralne i z jawną liczbą. */}
           {readiness.freezeBlockers.length > 0 ? (
             <span className="flex items-center gap-1 text-c-warning">
               <AlertTriangle size={11} />
               {readiness.freezeBlockers.length} blokerów freeze
+            </span>
+          ) : readiness.answeredUnits < readiness.totalUnits ? (
+            <span className="text-c-text-secondary">
+              Brak blokerów — ocena niekompletna ({readiness.answeredUnits}/{readiness.totalUnits})
             </span>
           ) : (
             <span className="text-c-success">Gotowe do zamrożenia</span>

@@ -22,7 +22,13 @@ import {
   makeSession,
 } from './fixtures';
 
-function Harness({ initialViewMode }: { initialViewMode: 'interview' | 'split' | 'matrix' }) {
+function Harness({
+  initialViewMode,
+  readiness = makeReadiness(),
+}: {
+  initialViewMode: 'interview' | 'split' | 'matrix';
+  readiness?: ReturnType<typeof makeReadiness>;
+}) {
   const [selection, setSelection] = useState<MatrixSelection | null>(null);
   const [viewMode, setViewMode] = useState(initialViewMode);
   const row = makeMatrixRow();
@@ -32,7 +38,7 @@ function Harness({ initialViewMode }: { initialViewMode: 'interview' | 'split' |
       session={makeSession()}
       methodName="DRD"
       packVersionLabel="2.3.0"
-      readiness={makeReadiness()}
+      readiness={readiness}
       mode="guided_manual"
       onModeChange={vi.fn()}
       onExit={vi.fn()}
@@ -122,5 +128,28 @@ describe('MethodWorkspaceShell — view modes share one state', () => {
     render(<Harness initialViewMode="split" />);
     expect(screen.getByTestId('interview-focus-panel')).toBeInTheDocument();
     expect(screen.getByTestId('live-matrix')).toBeInTheDocument();
+  });
+
+  // ★ A10/D4. Fixture domyślny to 12/39 odpowiedzianych i ZERO blokerów —
+  // czyli dokładnie scenariusz defektu. Do 2026-08-13 pasek stanu mówił przy
+  // nim „Gotowe do zamrożenia" na zielono. Żaden test nie asercjonował tego
+  // paska, więc komunikat mógł kłamać bez konsekwencji.
+  describe('pasek stanu — pewność nie zastępuje kompletności', () => {
+    it('brak blokerów przy niepełnym pokryciu NIE jest ogłaszany jako gotowość', () => {
+      render(<Harness initialViewMode="interview" readiness={makeReadiness({ answeredUnits: 1, totalUnits: 39, freezeBlockers: [] })} />);
+      expect(screen.queryByText('Gotowe do zamrożenia')).not.toBeInTheDocument();
+      expect(screen.getByText(/ocena niekompletna \(1\/39\)/)).toBeInTheDocument();
+    });
+
+    it('pełne pokrycie bez blokerów ogłasza gotowość', () => {
+      render(<Harness initialViewMode="interview" readiness={makeReadiness({ answeredUnits: 39, totalUnits: 39, freezeBlockers: [] })} />);
+      expect(screen.getByText('Gotowe do zamrożenia')).toBeInTheDocument();
+    });
+
+    it('bloker ma pierwszeństwo nad informacją o pokryciu', () => {
+      render(<Harness initialViewMode="interview" readiness={makeReadiness({ answeredUnits: 39, totalUnits: 39, freezeBlockers: ['x'] })} />);
+      expect(screen.queryByText('Gotowe do zamrożenia')).not.toBeInTheDocument();
+      expect(screen.getByText(/blokerów freeze/)).toBeInTheDocument();
+    });
   });
 });
