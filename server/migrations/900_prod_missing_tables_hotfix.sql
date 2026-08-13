@@ -828,6 +828,11 @@ CREATE TABLE IF NOT EXISTS security_incidents (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Historical demo schemas can already contain this table without the tenant column.
+-- CREATE TABLE IF NOT EXISTS does not reconcile an existing table, so establish the
+-- indexed column explicitly before creating the index.
+ALTER TABLE security_incidents ADD COLUMN IF NOT EXISTS organization_id TEXT;
+
 CREATE INDEX IF NOT EXISTS idx_security_incidents_org ON security_incidents(organization_id);
 CREATE INDEX IF NOT EXISTS idx_security_incidents_status ON security_incidents(status);
 CREATE INDEX IF NOT EXISTS idx_security_incidents_severity ON security_incidents(severity);
@@ -919,6 +924,10 @@ CREATE TABLE IF NOT EXISTS ai_conversations (
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- The legacy pgvector bootstrap created ai_conversations without project_id on some
+-- installations. Keep the hotfix convergent before the project index is evaluated.
+ALTER TABLE ai_conversations ADD COLUMN IF NOT EXISTS project_id VARCHAR(255);
 
 CREATE INDEX IF NOT EXISTS idx_ai_conversations_user ON ai_conversations(user_id);
 CREATE INDEX IF NOT EXISTS idx_ai_conversations_project ON ai_conversations(project_id);
