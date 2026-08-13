@@ -122,20 +122,10 @@ import {
   resolveTablePlatformWorkspaceIdForTable,
 } from '@/utils/sheetArtifactOpen';
 
-import { AIAnalysisProposalReviewQueue } from './AIAnalysisProposalReviewQueue';
-import { AnalysisDecisionQueue } from './AnalysisDecisionQueue';
 import { CalendarView } from './Calendar/CalendarView';
 import { useObjectEditBarSlotHasContent } from './canvas/objectEditBarDock';
-import { ClosureDecisionQueue } from './ClosureDecisionQueue';
 import { type DecisionsBulkBarPayload, DecisionsPanelContent } from './DecisionsPanelContent';
-import { DefinitionDecisionQueue } from './DefinitionDecisionQueue';
-import { DefinitionRemediationQueue } from './DefinitionRemediationQueue';
-import { DeliveryResultsAcceptanceQueue } from './DeliveryResultsAcceptanceQueue';
-import { EffectivenessClosureQueue } from './EffectivenessClosureQueue';
-import { ExecutionCanonicalWorkQueue } from './ExecutionCanonicalWorkQueue';
 import type { FocusFilter, FocusItem, FocusSort } from './Focus/FocusView';
-import { GateSignoffQueue } from './GateSignoffQueue';
-import { HandoffAcceptanceQueue } from './HandoffAcceptanceQueue';
 import type { HomeScreenAction } from './Home/homeV2Types';
 import {
   composeIdeaBodyFromSeedIntent,
@@ -155,15 +145,12 @@ import {
 } from './ideaWorkspaceState';
 import { getIdeaWorkspaceToolLabel } from './IdeaWorkspaceToolbar';
 import { type InboxBulkBarPayload, InboxContent, type InboxCounts } from './InboxContent';
-import { MaterialChangeQueue } from './MaterialChangeQueue';
 import { MyIdeasListContent } from './MyIdeasListContent';
 import type { IdeasBulkBarPayload, IdeasHomeShellPayload, IdeaStage, MyIdea } from './myIdeasTypes';
 import { MyTasksListContent } from './MyTasksListContent';
 import { NotebookContent } from './NotebookContent';
 import { NotebookLibraryContent } from './NotebookLibraryContent';
 import { resolveOpenItemRoute } from './openItemRouting';
-import { PortfolioDecisionQueue } from './PortfolioDecisionQueue';
-import { ScheduleDecisionQueue } from './ScheduleDecisionQueue';
 import { IdeaStartupTemplates } from './table/IdeaStartupTemplates';
 
 // Heavy sub-views (TipTap, DnD, calendars, detailed editors) are lazy-loaded.
@@ -4032,30 +4019,15 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
           );
         }
         return (
-          <>
-            <DefinitionRemediationQueue />
-            <GateSignoffQueue />
-            <DefinitionDecisionQueue />
-            <AnalysisDecisionQueue />
-            <PortfolioDecisionQueue />
-            <AIAnalysisProposalReviewQueue />
-            <ScheduleDecisionQueue />
-            <HandoffAcceptanceQueue />
-            <DeliveryResultsAcceptanceQueue />
-            <EffectivenessClosureQueue />
-            <ClosureDecisionQueue />
-            <MaterialChangeQueue />
-            <ExecutionCanonicalWorkQueue />
-            <DecisionsPanelContent
-              viewMode={decisionFilter}
-              priorityFilter={decisionPriorityFilter}
-              searchQuery={searchQuery}
-              onDecisionClick={handleDecisionClick}
-              onCountsChange={handleDecisionCountsChange}
-              onBulkBarChange={handleDecisionsBulkBarChange}
-              refreshTrigger={refreshTrigger}
-            />
-          </>
+          <DecisionsPanelContent
+            viewMode={decisionFilter}
+            priorityFilter={decisionPriorityFilter}
+            searchQuery={searchQuery}
+            onDecisionClick={handleDecisionClick}
+            onCountsChange={handleDecisionCountsChange}
+            onBulkBarChange={handleDecisionsBulkBarChange}
+            refreshTrigger={refreshTrigger}
+          />
         );
       case 'vault':
         // VLT-004 (relokacja Client Vault z menu głównego). ClientDocumentsVault
