@@ -628,16 +628,47 @@ router.post(
       return;
     }
 
-    // ZNANA LUKA (nienaprawiona, świadomie): dowolny uwierzytelniony członek
-    // organizacji może nadać komukolwiek rolę nie-nadzorczą w cudzej sesji.
-    // Zakaz samo-awansu (wyżej) tego nie łapie, bo dotyczy tylko ról z
-    // uprawnieniem do przejść stanu i tylko przypisań do siebie.
+    // --- S2 hard rule #8: roster management is owner/lead_assessor only,
+    // EXCEPT self-declaring into a non-power role ---------------------------
     //
-    // Próba zamknięcia tego bramką „składem zarządza owner albo lead_assessor"
-    // wywracała 12 testów kernela na 500 i nie zdążyłem ustalić przyczyny w
-    // tej sesji, więc bramka została cofnięta zamiast zostawić czerwoną suitę.
-    // Naprawa jest niewielka, ale wymaga diagnozy tego 500 — opisane w
-    // raporcie końcowym jako pozycja otwarta.
+    // Was previously left as a documented, un-enforced gap ("ZNANA LUKA") —
+    // any authenticated org member could grant anyone a non-power role on a
+    // session that wasn't theirs. A first attempt at closing it threw 12
+    // kernel tests to HTTP 500; root cause (confirmed by direct repro, not
+    // guessed): the gate referenced a bare `sessionId` identifier that does
+    // not exist in this handler's scope (only `session.id`, bound above from
+    // `loadOwnedSession`, does). vitest transpiles this file with esbuild,
+    // which does NOT type-check — a plain compile would have caught
+    // "Cannot find name 'sessionId'" instantly, but esbuild let it through
+    // and it only surfaced as a runtime `ReferenceError` on the first request
+    // that reached this line. This test file's minimal Express app has no
+    // custom error middleware, so `asyncHandler`'s `.catch(next)` fell
+    // through to Express's default error handler, which is why every one of
+    // those 12 failures showed a bare `500 {}` instead of a thrown-error
+    // stack trace anywhere in the test output.
+    //
+    // Fixed by using `session.id` (already in scope). The gate itself is
+    // otherwise exactly the rule the task describes: the roster is managed
+    // by the session's `owner`/`lead_assessor`, EXCEPT a caller declaring
+    // themselves into a NON-power role (respondent/evidence_owner/observer)
+    // — that is participation, not a change of who controls the session, and
+    // the kernel's own solo-operator flow depends on it staying unguarded
+    // (see `driveToInReviewViaHttp` above: a fresh session's only role
+    // holder is its owner, who must be able to self-declare further working
+    // roles before anyone else exists to grant them). Self-promotion into a
+    // POWER_ROLES role (currently just 'approver') is still caught by the
+    // self-elevation check above regardless of this gate.
+    const actorRoles = await sessionService.listRoles(organizationId, session.id);
+    const actorMayManageRoles = actorRoles.some(
+      (entry) => entry.userId === actorUserId &&
+        (entry.role === 'owner' || entry.role === 'lead_assessor')
+    );
+    const isSelfDeclaredNonPowerRole = targetUserId === actorUserId && !POWER_ROLES.has(typedRole);
+    if (!actorMayManageRoles && !isSelfDeclaredNonPowerRole) {
+      res.status(403).json({ error: 'role_management_forbidden' });
+      return;
+    }
+
     // --- S2 hard rule #6: cross-org assignment refused ----------------------
     const targetOrgId = await getUserOrganizationId(targetUserId);
     if (targetOrgId === null || targetOrgId !== organizationId) {
