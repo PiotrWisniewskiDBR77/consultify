@@ -18,6 +18,7 @@
 import fs from 'fs';
 
 import {
+  POSTCONDITION_ATTESTATIONS,
   attestPartnerUsersUuidVariant,
   type AttestationQueryable,
   type AttestationResult,
@@ -47,6 +48,8 @@ export interface SqlChainEvaluation {
   unexplainedDrift: string[];
   /** accepted via the exact per-file allowlist */
   approvedVariants: string[];
+  /** approved files that ALSO had to re-prove their live schema shape */
+  postconditionVerified: string[];
   /** accepted only after live schema postconditions were re-proven */
   attestedLegacyVariants: string[];
   /** applied rows with no stored checksum at all (legacy rows; reported, never fatal) */
@@ -81,6 +84,7 @@ function summarize(e: Omit<SqlChainEvaluation, 'detail' | 'state'>): { state: Sq
     detail:
       `chain complete` +
       (e.approvedVariants.length ? `; ${e.approvedVariants.length} approved historical variant(s)` : '') +
+      (e.postconditionVerified.length ? `; ${e.postconditionVerified.length} postcondition-verified` : '') +
       (e.attestedLegacyVariants.length ? `; ${e.attestedLegacyVariants.length} schema-attested legacy variant(s)` : '') +
       (e.unverifiable.length ? `; ${e.unverifiable.length} legacy row(s) without a stored checksum` : ''),
   };
@@ -99,6 +103,7 @@ export async function evaluateSqlChain(deps: SqlChainEvaluatorDeps): Promise<Sql
     pending: [] as string[],
     unexplainedDrift: [] as string[],
     approvedVariants: [] as string[],
+    postconditionVerified: [] as string[],
     attestedLegacyVariants: [] as string[],
     unverifiable: [] as string[],
   };
@@ -153,6 +158,21 @@ export async function evaluateSqlChain(deps: SqlChainEvaluatorDeps): Promise<Sql
       const verdict = classifySqlChainChecksum(filename, row.checksum, current);
       if (verdict === 'MATCH') continue;
       if (verdict === 'APPROVED_HISTORICAL_VARIANT') {
+        // A reviewed checksum pair proves WHICH bytes ran, not that the resulting schema is
+        // acceptable. For files whose historical version produced a shape different from a fresh
+        // install, re-prove the live shape too — every evaluation, never cached.
+        const postcondition = POSTCONDITION_ATTESTATIONS[filename];
+        if (postcondition) {
+          const result = await postcondition(deps.db);
+          if (!result.attested) {
+            const failed = result.checks.filter((c) => !c.ok).map((c) => c.name).join(', ');
+            acc.unexplainedDrift.push(
+              `${filename} (approved checksum but postcondition FAILED: ${result.failureReason}${failed ? `; failed: ${failed}` : ''})`
+            );
+            continue;
+          }
+          acc.postconditionVerified.push(filename);
+        }
         acc.approvedVariants.push(filename);
         continue;
       }
