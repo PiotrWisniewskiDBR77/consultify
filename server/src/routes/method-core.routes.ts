@@ -143,23 +143,26 @@ function isNonEmptyString(value: unknown): value is string {
 }
 
 /**
- * Roles that gate a `TRANSITION_AUTHORITY` entry (i.e. holding one lets you
- * drive the session's state machine — `owner`/`lead_assessor`/`assessor`
- * can advance it, `approver` can freeze it). Derived from the kernel's own
- * table rather than hand-listed, so a future contract change to
- * `TRANSITION_AUTHORITY` is automatically reflected here — no second list
- * to drift out of sync with `src/method-core/contracts/session.ts`.
+ * Roles that hold `TRANSITION_AUTHORITY` over the 'frozen' target — i.e.
+ * roles that can commit/finalize the session's own work (today, per the
+ * frozen contract, exactly `['approver']`). Derived from the kernel's own
+ * table rather than hand-listed, so a future contract change is
+ * automatically reflected — no second list to drift out of sync with
+ * `src/method-core/contracts/session.ts`.
  *
- * Used ONLY to block self-elevation on `POST /sessions/:id/roles` (hard
- * rule S2#1: nobody grants themselves a power role, 'approver' included).
- * Non-power roles (`respondent`, `evidence_owner`, `observer`, and
- * `reviewer` — NOT wired into `TRANSITION_AUTHORITY` by the contract as of
- * 2026-08-13) are unrestricted for self-assignment; they carry no kernel
- * authority to elevate.
+ * Deliberately narrower than "every `TRANSITION_AUTHORITY` role": the
+ * kernel's own design comment (`MethodSessionService`, on `TRANSITION_AUTHORITY`)
+ * says a solo operator holding several WORKING roles at once (owner +
+ * lead_assessor + assessor, to move draft -> ... -> in_review alone) is
+ * explicitly legal — self-granting those is normal single-person-project
+ * operation, not privilege escalation. What must never be self-granted is
+ * the FINAL, independent sign-off — 'approver' freezing one's own session
+ * would erase the one segregation-of-duties control the state machine has
+ * (S2 hard rule #1: "nie nadaje sobie sam roli approvera / żadnej roli
+ * podnoszącej jego własne uprawnienia" — read here as "any role with
+ * freeze/approval authority", which is what 'approver' IS).
  */
-const POWER_ROLES: ReadonlySet<MethodProcessRole> = new Set(
-  Object.values(TRANSITION_AUTHORITY).flatMap((roles) => roles ?? [])
-);
+const POWER_ROLES: ReadonlySet<MethodProcessRole> = new Set(TRANSITION_AUTHORITY.frozen ?? []);
 
 /**
  * Tenant lookup for the ROLE TARGET (hard rule S2#6: cross-org assignment
