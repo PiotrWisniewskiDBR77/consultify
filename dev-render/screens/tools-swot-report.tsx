@@ -10,11 +10,16 @@
  *
  * Istnieje po to, żeby zrzut powstał ZANIM właściciel zobaczy ekran (CLAUDE.md #7).
  *
- * URL: ?screen=tools-swot-report&theme=light|dark&kind=report|presentation
+ * URL: ?screen=tools-swot-report&theme=light|dark&kind=report|presentation&mode=document|slides
+ *
+ * `mode=slides` (STREAM H2, 2026-08-13) renderuje `SlideDeckView` zamiast
+ * `ToolReportView` — REALNY Slide Mode, na tym samym `doc` z tego samego
+ * łańcucha (zero osobnego stanu, zero nowego fetchu).
  */
 
 import React from 'react';
 
+import SlideDeckView from '@/components/DiscoveryTools/report/SlideDeckView';
 import ToolReportView from '@/components/DiscoveryTools/report/ToolReportView';
 import { buildSwotOutput } from '@/toolOutputs/buildSwotOutput';
 import { approve, submitForReview } from '@/toolOutputs/outputLifecycle';
@@ -162,7 +167,24 @@ function buildDoc(kind: 'report' | 'presentation') {
 export default function ToolsSwotReportScreen() {
   const params = new URLSearchParams(window.location.search);
   const kind = params.get('kind') === 'presentation' ? 'presentation' : 'report';
+  const mode = params.get('mode') === 'slides' ? 'slides' : 'document';
+  // `chrome` lets evidence-gathering force the header/counter/nav bar on even
+  // for a Presentation doc (default behaviour hides it — see SlideDeckView's
+  // `presentationMode`). Real app default stays doc.kind === 'presentation'.
+  const chromeParam = params.get('chrome');
+  const presentationModeUI =
+    chromeParam === 'full' ? false : chromeParam === 'hidden' ? true : kind === 'presentation';
   const doc = React.useMemo(() => buildDoc(kind), [kind]);
+
+  if (mode === 'slides') {
+    // Fixed viewport height so the 16:9 stage has room to compute its size —
+    // matches how SlideDeckView is embedded in ToolOutputsPanel (h-[70vh]).
+    return (
+      <div className="h-screen w-screen bg-c-bg" data-testid="slide-mode-harness">
+        <SlideDeckView doc={doc} presentationMode={presentationModeUI} />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-c-bg">
