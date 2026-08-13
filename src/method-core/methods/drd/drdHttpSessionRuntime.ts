@@ -364,8 +364,26 @@ export class DrdHttpSessionRuntime {
 
   /** Always re-asks the server. This is the ONLY method that resolves
    * status 'loading' -> 'ready' | 'error' | 'offline'. */
-  async refresh(): Promise<void> {
-    this.setState({ status: 'loading', error: null });
+  /**
+   * @param options.preserveStatus zamiast `loading`/`ready` utrzymaj podany
+   *   status przez cały przebieg odświeżenia.
+   *
+   * ★ Bez tego stan `recovered` był NIEOSIĄGALNY w realnym runtime.
+   * `retryPending()` ustawiał `status:'recovered'`, a następna linia —
+   * `await this.refresh()` — nadpisywała go `'loading'` synchronicznie, w tym
+   * samym ticku JS, zanim React zdążył cokolwiek wyrenderować; potem sukces
+   * ustawiał `'ready'`. Użytkownik NIGDY nie widział potwierdzenia, że jego
+   * zaległe zmiany zostały pogodzone z serwerem — dokładnie w momencie, w
+   * którym potrzebuje tego najbardziej.
+   *
+   * Znalezione przez sondę `MutationObserver` w realnym teście offline
+   * (S1b, 2026-08-13): zero wystąpień badge'a RECOVERED w ponad 5 przebiegach.
+   * Osiem stanów offline było policzone jako dowiezione na podstawie zrzutów
+   * z `debugForceState` — a wymuszony stan nie dowodzi osiągalności.
+   */
+  async refresh(options: { readonly preserveStatus?: DrdHttpRuntimeStatus } = {}): Promise<void> {
+    const held = options.preserveStatus;
+    this.setState({ status: held ?? 'loading', error: null });
     try {
       const [{ session, roles }, events] = await Promise.all([
         getSession(this.sessionId),
@@ -390,7 +408,7 @@ export class DrdHttpSessionRuntime {
         // the current one.
         output = null;
       }
-      this.setState({ status: 'ready', session, roles, events, error: null, serverVersion: null, conflictDetail: null, output });
+      this.setState({ status: held ?? 'ready', session, roles, events, error: null, serverVersion: null, conflictDetail: null, output });
     } catch (err) {
       this.handleFailure(err);
     }
@@ -793,7 +811,9 @@ export class DrdHttpSessionRuntime {
 
     writePending(this.storage, this.sessionId, []);
     this.setState({ status: 'recovered', pendingWriteCount: 0, staleDraftNotices, conflictDetail: null, error: null });
-    await this.refresh();
+    // Utrzymaj `recovered` przez całe odświeżenie — inaczej potwierdzenie
+    // rekoncyliacji ginie, zanim ktokolwiek je zobaczy (patrz `refresh`).
+    await this.refresh({ preserveStatus: 'recovered' });
     return { succeeded, stillPending: 0 };
   }
 

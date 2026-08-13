@@ -248,7 +248,9 @@ describe('offline write queue (requirement 4) and reconnect reconciliation (requ
     const result = await runtime.retryPending();
     expect(result).toEqual({ succeeded: 1, stillPending: 0 });
     expect(runtime.getState().pendingWriteCount).toBe(0);
-    expect(runtime.getState().status).toBe('ready');
+    // Po udanej rekoncyliacji runtime zatrzymuje się na `recovered` (baner
+    // potwierdzenia) — do `ready` schodzi dopiero `acknowledgeRecovered()`.
+    expect(runtime.getState().status).toBe('recovered');
   });
 
   it('discardPendingAndReloadServer() is the explicit "server wins" choice — drops the queue without attempting it', async () => {
@@ -443,7 +445,47 @@ describe('CEL 4 scenario 3 — reconnect: RECONNECTING → explicit reconciliati
     hoisted.appendEvent.mockResolvedValue({ id: 'evt-1', type: 'ANSWER_CONFIRMED' });
     const result = await runtime.retryPending();
     expect(result).toEqual({ succeeded: 1, stillPending: 0 });
+
+    // ★ Do 2026-08-13 ta asercja brzmiała `toBe('ready')` — czyli test o
+    // nazwie „…→ RECOVERED" ZATWIERDZAŁ brak stanu RECOVERED. Był zielony,
+    // więc CEL 4 wyglądał na dowieziony w komplecie. `retryPending()`
+    // ustawiał `recovered`, a następna linia `await this.refresh()`
+    // nadpisywała to `loading`→`ready` w tym samym ticku JS, zanim React
+    // cokolwiek wyrenderował. Użytkownik nigdy nie zobaczył potwierdzenia,
+    // że jego zaległe zmiany zostały pogodzone z serwerem.
+    expect(runtime.getState().status).toBe('recovered');
+    // ...a stan MUSI przeżyć całe odświeżenie, nie tylko moment przypisania.
+    expect(runtime.getState().session).not.toBeNull();
+    expect(runtime.getState().pendingWriteCount).toBe(0);
+
+    // Dopiero jawne potwierdzenie przez człowieka gasi baner.
+    runtime.acknowledgeRecovered();
     expect(runtime.getState().status).toBe('ready');
+  });
+
+  it('★ RECOVERED przeżywa odświeżenie — regresja na nadpisanie statusu przez refresh()', async () => {
+    const storage = makeMemoryStorage();
+    hoisted.getSession.mockResolvedValue({ session: makeSession(), roles: ['owner'] });
+    hoisted.listEvents.mockResolvedValue([]);
+    hoisted.appendEvent.mockRejectedValue(networkError());
+
+    const runtime = new DrdHttpSessionRuntime('sess-1', storage);
+    await runtime.refresh();
+    await runtime.recordAnswer({ unitId: 'unit-1', level: 1, questionId: 'q1', answerState: 'confirmed', text: 'x' });
+
+    // Odświeżenie w trakcie rekoncyliacji jest WOLNE — gdyby refresh()
+    // nadpisywał status, zobaczylibyśmy tu 'loading', a nie 'recovered'.
+    let resolveGet: (v: unknown) => void = () => {};
+    hoisted.appendEvent.mockResolvedValue({ id: 'evt-1', type: 'ANSWER_CONFIRMED' });
+    hoisted.getSession.mockReturnValue(new Promise((resolve) => (resolveGet = resolve)));
+
+    const retry = runtime.retryPending();
+    await Promise.resolve();
+    expect(runtime.getState().status).toBe('recovered');
+
+    resolveGet({ session: makeSession(), roles: ['owner'] });
+    await retry;
+    expect(runtime.getState().status).toBe('recovered');
   });
 });
 
