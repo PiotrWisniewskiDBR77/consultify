@@ -169,6 +169,52 @@ export async function getSession(
   return handle(fetchWithRetry(`${BASE}/sessions/${sessionId}`, { method: 'GET', headers: getHeaders() }));
 }
 
+/** One row of `GET /api/method/sessions` — a `MethodSession` plus the one
+ * field the list route enriches per-page (`hasFrozenOutput`, cheaper than a
+ * second round-trip per row from the caller's side — see the route's doc
+ * comment on why it's computed there instead of here). */
+export interface MethodSessionListItem extends MethodSession {
+  readonly hasFrozenOutput: boolean;
+}
+
+export interface ListSessionsParams {
+  readonly methodPackId?: string;
+  readonly projectId?: string;
+  readonly ownerUserId?: string;
+  readonly state?: MethodSessionState;
+  readonly limit?: number;
+  readonly offset?: number;
+}
+
+export interface ListSessionsResult {
+  readonly sessions: readonly MethodSessionListItem[];
+  readonly total: number | null;
+}
+
+/** `GET /api/method/sessions?methodPackId=&projectId=&ownerUserId=&state=&limit=&offset=`
+ * — "pokaż moje sesje": every session in the org (or scoped), read straight
+ * from `method_sessions`, never reconstructed from event replay (see
+ * MethodSessionService.listForOrganization's doc comment). Rows come back
+ * raw (no envelope, same camelCase shape as `getSession`'s `session`) —
+ * mirrors `getSession`/`listEvents`'s minimal-parsing discipline rather than
+ * `listOutputs`'s per-field defensive normalizer, since this is the SAME
+ * session shape those two already trust unparsed. */
+export async function listSessions(params: ListSessionsParams = {}): Promise<ListSessionsResult> {
+  const qs = new URLSearchParams();
+  if (params.methodPackId) qs.set('methodPackId', params.methodPackId);
+  if (params.projectId) qs.set('projectId', params.projectId);
+  if (params.ownerUserId) qs.set('ownerUserId', params.ownerUserId);
+  if (params.state) qs.set('state', params.state);
+  if (params.limit != null) qs.set('limit', String(params.limit));
+  if (params.offset != null) qs.set('offset', String(params.offset));
+  const suffix = qs.toString() ? `?${qs.toString()}` : '';
+  const body = await handle<{ sessions?: unknown; total?: unknown }>(
+    fetchWithRetry(`${BASE}/sessions${suffix}`, { method: 'GET', headers: getHeaders() })
+  );
+  const sessions = Array.isArray(body.sessions) ? (body.sessions as MethodSessionListItem[]) : [];
+  return { sessions, total: typeof body.total === 'number' ? body.total : null };
+}
+
 export async function listEvents(sessionId: string): Promise<MethodEvent[]> {
   const res = await handle<{ events: MethodEvent[] }>(
     fetchWithRetry(`${BASE}/sessions/${sessionId}/events`, { method: 'GET', headers: getHeaders() })
@@ -494,6 +540,21 @@ function normalizeOutputListItem(row: unknown): MethodOutputListItem | null {
   if (!id) return null;
   const findings = Array.isArray(r.findings) ? r.findings.length : null;
   const limitations = Array.isArray(r.limitations) ? r.limitations.length : null;
+  // ★ CONTRACT FIX (2026-08-13, T2): the REAL `GET /api/method/outputs` row
+  // (MethodOutputService.listForOrganization / MethodOutputListItem, server
+  // side) carries per-row supersession as `status: 'current' | 'superseded'`
+  // — it never sends a literal `isSuperseded` boolean. Reading only
+  // `r.isSuperseded` left this field ALWAYS `null`, which silently degraded
+  // AssessmentOutputsTab to its page-scoped `revisionOfOutputId` fallback
+  // heuristic (correct only within one fetched page — see that file's
+  // `isRowSuperseded` doc comment) instead of the server's authoritative,
+  // org-wide answer. Prefer a real `status` string when present; accept a
+  // literal `isSuperseded` boolean too (defensive, in case a future/other
+  // server build sends that shape instead) — never fabricate a value when
+  // neither is present.
+  const statusRaw = toNullableStr(r.status);
+  const isSupersededFromStatus =
+    statusRaw === 'superseded' ? true : statusRaw === 'current' ? false : null;
   return {
     id,
     organizationId: toNullableStr(r.organizationId),
@@ -510,7 +571,7 @@ function normalizeOutputListItem(row: unknown): MethodOutputListItem | null {
     frozenAt: toNullableStr(r.frozenAt),
     createdAt: toNullableStr(r.createdAt),
     demoBypassActive: r.demoBypassActive === true,
-    isSuperseded: typeof r.isSuperseded === 'boolean' ? r.isSuperseded : null,
+    isSuperseded: typeof r.isSuperseded === 'boolean' ? r.isSuperseded : isSupersededFromStatus,
     supersededByOutputId: toNullableStr(r.supersededByOutputId),
   };
 }
@@ -518,6 +579,10 @@ function normalizeOutputListItem(row: unknown): MethodOutputListItem | null {
 export interface ListOutputsParams {
   readonly sessionId?: string;
   readonly projectId?: string;
+  /** Server-side supersession filter (`GET /outputs` accepts
+   * `?status=current|superseded` — see method-core.routes.ts). Omitted by
+   * default (returns both). */
+  readonly status?: 'current' | 'superseded';
   readonly limit?: number;
   readonly offset?: number;
 }
@@ -527,15 +592,16 @@ export interface ListOutputsResult {
   readonly total: number | null;
 }
 
-/** `GET /api/method/outputs?sessionId=&projectId=&limit=&offset=` — the
- * org-wide (or scoped) Outputs list. This is the ONLY correct data source
- * for an "Outputs" list screen — never `/api/artifacts` (a different,
- * unrelated registry) and never a client-side reconstruction from a live
- * session's in-memory state. */
+/** `GET /api/method/outputs?sessionId=&projectId=&status=&limit=&offset=` —
+ * the org-wide (or scoped) Outputs list. This is the ONLY correct data
+ * source for an "Outputs" list screen — never `/api/artifacts` (a
+ * different, unrelated registry) and never a client-side reconstruction
+ * from a live session's in-memory state. */
 export async function listOutputs(params: ListOutputsParams = {}): Promise<ListOutputsResult> {
   const qs = new URLSearchParams();
   if (params.sessionId) qs.set('sessionId', params.sessionId);
   if (params.projectId) qs.set('projectId', params.projectId);
+  if (params.status) qs.set('status', params.status);
   if (params.limit != null) qs.set('limit', String(params.limit));
   if (params.offset != null) qs.set('offset', String(params.offset));
   const suffix = qs.toString() ? `?${qs.toString()}` : '';
@@ -649,6 +715,12 @@ function normalizeArtefactSnapshot(row: unknown): MethodArtefactSnapshotSummary 
 export interface ListArtefactSnapshotsParams {
   readonly outputId?: string;
   readonly sessionId?: string;
+  /** Server-side supersession filter — `GET /reports`, `GET /presentations`
+   * and `GET /initiative-drafts` all accept
+   * `?status=current|superseded|source_updated` (see method-core.routes.ts'
+   * shared `listArtefactSnapshots` handler and the initiative-drafts route).
+   * Omitted by default (returns every status). */
+  readonly status?: MethodArtefactStatus;
 }
 
 function buildQuery(params: Record<string, string | undefined>): string {
@@ -660,7 +732,7 @@ function buildQuery(params: Record<string, string | undefined>): string {
   return s ? `?${s}` : '';
 }
 
-/** `GET /api/method/reports?outputId=&sessionId=` — Report snapshots
+/** `GET /api/method/reports?outputId=&sessionId=&status=` — Report snapshots
  * (`kind === 'report'`). Org-wide when no filter is given. */
 export async function listReports(
   params: ListArtefactSnapshotsParams = {}
@@ -692,7 +764,7 @@ export async function getReportSnapshot(id: string): Promise<MethodArtefactSnaps
   return { ...summary, content: content ?? null };
 }
 
-/** `GET /api/method/presentations?outputId=` — same table/discipline as
+/** `GET /api/method/presentations?outputId=&status=` — same table/discipline as
  * Reports, filtered to `kind === 'presentation'` server-side. */
 export async function listPresentations(
   params: ListArtefactSnapshotsParams = {}
@@ -781,7 +853,7 @@ function normalizeInitiativeDraft(row: unknown): MethodInitiativeDraftSummary | 
   };
 }
 
-/** `GET /api/method/initiative-drafts?outputId=` — Initiative Proposal
+/** `GET /api/method/initiative-drafts?outputId=&status=` — Initiative Proposal
  * Drafts. Org-wide when no filter is given. */
 export async function listInitiativeDrafts(
   params: ListArtefactSnapshotsParams = {}
