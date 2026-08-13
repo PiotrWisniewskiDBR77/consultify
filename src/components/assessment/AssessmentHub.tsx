@@ -36,7 +36,6 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
-import { LoadingState as SharedLoadingState } from '@/components/shared/states';
 import {
   StandardPreview,
   type StandardPreviewActions,
@@ -546,12 +545,42 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
     }
 
     setAssessments([]);
-    return Number(lastErr?.status) === 429
-      ? t(
-          'assessment.hub.warnings.rateLimitedEmpty',
-          'Assessment data is temporarily rate limited. Retry in a moment or create a new assessment while staging recovers.'
-        )
-      : lastErr?.message || t('assessment.hub.errors.load', 'Failed to load assessments');
+    if (Number(lastErr?.status) === 429) {
+      return t(
+        'assessment.hub.warnings.rateLimitedEmpty',
+        'Assessment data is temporarily rate limited. Retry in a moment or create a new assessment while staging recovers.'
+      );
+    }
+
+    // MPQ audit #2: this used to fall back to `lastErr?.message`, leaking raw
+    // exception text (e.g. "MPQ audit: simulated network failure") straight
+    // into the UI banner/ErrorState. The user gets a friendly, translated
+    // message keyed off what we actually know (HTTP status / network
+    // failure); the real error still goes to the console for diagnosis.
+    console.error('[AssessmentHub] loadAssessmentListCore failed:', lastErr);
+    const status = Number(lastErr?.status);
+    const rawMsg = String(lastErr?.message || '').toLowerCase();
+    const isNetworkError =
+      !status ||
+      rawMsg.includes('failed to fetch') ||
+      rawMsg.includes('networkerror') ||
+      rawMsg.includes('load failed');
+    if (status === 403) {
+      return t('assessment.hub.errors.forbidden', "You don't have access to this assessment data.");
+    }
+    if (status === 404) {
+      return t('assessment.hub.errors.notFound', 'Assessment data could not be found.');
+    }
+    if (status >= 500) {
+      return t(
+        'assessment.hub.errors.server',
+        'The server had a problem loading assessments. Please try again.'
+      );
+    }
+    if (isNetworkError) {
+      return t('assessment.hub.errors.connectionError', 'Connection error');
+    }
+    return t('assessment.hub.errors.load', 'Failed to load assessments');
   }, [t]);
 
   const loadSupplementaryData = useCallback(async () => {
@@ -1590,12 +1619,28 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
       </div>
     ) : null;
 
+  /**
+   * MPQ audit #1 (main cause of Library's 26/30 FAIL): this used to render
+   * unconditionally for every tab. `hubMenu3Chips`/`hubMenu3Actions` are both
+   * derived from `currentData`/`statusCounts`, and neither has a 'library' (or
+   * 'outputs') case — `currentData` stays `[]` and `statusCounts` stays all
+   * zeros for those tabs (see the switches above), so the bar rendered 7
+   * status chips reading "0" on Library, a catalog with no status dimension
+   * at all. `filterControls`/`onNewItem` already skip library/outputs below
+   * (existing condition) — this mirrors that condition so the whole Menu 3
+   * command row is omitted (not just its chips) rather than showing a
+   * half-populated bar. `ModuleNavBar` renders nothing for a `null`
+   * `commandRowContent` (no right content, no active filters), so the row
+   * disappears cleanly instead of leaving empty space.
+   */
   const hubCommandRowContent = useMemo(
     () =>
-      bulkCommandRowContent ?? (
-        <AssessmentMenu3ActionBar chips={hubMenu3Chips} actions={hubMenu3Actions} />
-      ),
-    [bulkCommandRowContent, hubMenu3Actions, hubMenu3Chips]
+      activeTab === 'library' || activeTab === 'outputs'
+        ? null
+        : (bulkCommandRowContent ?? (
+            <AssessmentMenu3ActionBar chips={hubMenu3Chips} actions={hubMenu3Actions} />
+          )),
+    [activeTab, bulkCommandRowContent, hubMenu3Actions, hubMenu3Chips]
   );
 
   // NOTE: right-side actions are rendered by AssessmentMenu3ActionBar (inside hubCommandRowContent)
@@ -2006,6 +2051,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
             <StandardTable
               columns={tableColumns}
               data={currentData}
+              loading={isLoading}
               selectedRowId={selectedAssessmentId}
               onRowClick={(row) => setSelectedAssessmentId(String((row as any).id))}
               onRowDoubleClick={(row) => handleOpenDocument(row as any)}
@@ -2507,14 +2553,33 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
     return 'New Assessment';
   };
 
-  // Loading state
-  if (isLoading) {
-    return (
-      <div className="p-6">
-        <SharedLoadingState template="list" rows={6} />
-      </div>
-    );
-  }
+  /**
+   * MPQ audit #3 ("loading state is a small card instead of column-matched
+   * placeholders", both screens): this used to swap the ENTIRE screen —
+   * `StandardModuleBar` (tabs, chrome) included — for a bare, generic
+   * `LoadingState` block on every initial load, regardless of tab. Two
+   * problems: (a) it hid the module bar/tabs, so the loading placeholder had
+   * none of the real screen's structure — no header, no columns, nothing to
+   * match; (b) it ran even for tabs (Library, Outputs) whose content doesn't
+   * depend on this hub's core assessment fetch at all, so switching straight
+   * to Library still showed an unrelated generic skeleton instead of
+   * Library's own table.
+   *
+   * Fix: mount `StandardModuleBar` + the tab content unconditionally, same
+   * as the loaded state. For 'list'/'processes' (Sessions), `loading={isLoading}`
+   * is now forwarded to `StandardTable` below, which (R04-2C) keeps the real
+   * header/column geometry and renders row-shaped skeleton bars in the body
+   * instead of blanking the whole screen. Library/Outputs mount immediately
+   * and manage their own (already column-matched) loading via their own
+   * `StandardTable` instances — see `AssessmentLibraryTab`. `assessments`/
+   * `reports`/`initiatives` all start as `[]` (safe to render pre-fetch).
+   *
+   * A full rebuild into a true PER-COLUMN skeleton (bars sized to each
+   * column's actual width, not a generic 3-bar row) would require editing
+   * `src/components/standard/StandardTable.tsx`'s shared `LoadingState`
+   * plumbing, which is out of this agent's file scope (shared across
+   * modules, other agents working on it concurrently) — not attempted here.
+   */
 
   return (
     <>
