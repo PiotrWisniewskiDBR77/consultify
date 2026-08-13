@@ -25,6 +25,8 @@ import jwt from 'jsonwebtoken';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
+import { assertRealDatabase, fromPgPool } from '../../testing/assertRealDatabase.js';
+
 const CONNECTION_STRING = process.env.DATABASE_URL ?? '';
 const REAL_DB =
   process.env.RUN_DB_TESTS === '1' &&
@@ -59,6 +61,12 @@ describe.skipIf(!REAL_DB)('Method Kernel HTTP surface — real PostgreSQL', () =
 
     const { Pool } = await import('pg');
     pool = new Pool({ connectionString: CONNECTION_STRING });
+
+    // CEL B fail-closed proof: RUN_DB_TESTS/MOCK_DB env vars alone say what
+    // this suite INTENDS, not what actually happened. This additionally runs
+    // a real round-trip query and throws if it doesn't come back — a suite
+    // that cannot prove it is real must never reach its test bodies.
+    await assertRealDatabase(fromPgPool(pool));
 
     await pool.query(`INSERT INTO organizations (id, name) VALUES ($1, $2) ON CONFLICT (id) DO NOTHING`, [
       ORG,
