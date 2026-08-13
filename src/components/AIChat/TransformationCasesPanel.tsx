@@ -289,6 +289,13 @@ interface TransformationCaseRow extends TableRow {
   transformationCase: TransformationCaseDto;
 }
 
+export function deriveTransformationCaseTitle(item: TransformationCaseDto): string {
+  const outcome = item.desiredOutcomes.find((value) => value.trim().length > 0)?.trim();
+  const source = outcome || item.mandate.trim();
+  const firstSentence = source.split(/(?<=[.!?])\s+/u)[0]?.trim() || source;
+  return firstSentence.length > 120 ? `${firstSentence.slice(0, 117).trimEnd()}…` : firstSentence;
+}
+
 function capabilityTone(status: TransformationPlanStepDto['capabilityStatus']) {
   if (status === 'REAL') return 'success' as const;
   if (status === 'PARTIAL' || status === 'PROPOSAL_ONLY') return 'warning' as const;
@@ -689,7 +696,7 @@ export const TransformationCasesPanel: React.FC<{
     () =>
       (cases ?? []).map((transformationCase) => ({
         id: transformationCase.transformationCaseId,
-        title: transformationCase.mandate,
+        title: deriveTransformationCaseTitle(transformationCase),
         transformationCase,
       })),
     [cases]

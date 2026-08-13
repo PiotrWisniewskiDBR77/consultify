@@ -140,7 +140,11 @@ vi.mock('@/components/shared/PreviewPane', () => ({
   PreviewMetaCard: () => <div data-testid="preview-meta" />,
 }));
 
-import { deriveMobilizationDates, TransformationCasesPanel } from '../TransformationCasesPanel';
+import {
+  deriveMobilizationDates,
+  deriveTransformationCaseTitle,
+  TransformationCasesPanel,
+} from '../TransformationCasesPanel';
 
 function makeCase(): TransformationCaseDto {
   return {
@@ -190,6 +194,15 @@ function makeCase(): TransformationCaseDto {
 }
 
 describe('TransformationCasesPanel', () => {
+  it('uses a concise business outcome instead of exposing the full mandate in the registry', () => {
+    const item = makeCase();
+    item.desiredOutcomes = ['Skrócić czas od decyzji do mierzalnego rezultatu.'];
+    item.mandate = 'Bardzo długi mandat z pełnym zakresem technicznym i operacyjnym.';
+    expect(deriveTransformationCaseTitle(item)).toBe(
+      'Skrócić czas od decyzji do mierzalnego rezultatu.'
+    );
+  });
+
   it('derives future mobilization dates deterministically from the current clock', () => {
     vi.useFakeTimers();
     try {
