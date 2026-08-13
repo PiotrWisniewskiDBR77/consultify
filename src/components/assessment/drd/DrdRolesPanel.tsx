@@ -320,7 +320,10 @@ export const DrdRolesPanel: React.FC<DrdRolesPanelProps> = ({ sessionId, current
         <h2 className="mb-3 text-sm font-semibold text-c-text">Historia ról (append-only)</h2>
         <StandardTable
           columns={HISTORY_COLUMNS}
-          data={history.map((h) => ({ id: h.id, ...h }))}
+          // `h` już niesie `id`; wcześniejsze `{ id: h.id, ...h }` dawało TS2783
+          // („id jest nadpisywane przez spread") i blokowało realny build —
+          // vitest/esbuild tego nie łapią, bo nie sprawdzają typów.
+          data={history}
           loading={isLoading}
           error={status === 'error' ? error : null}
           onRetry={load}
