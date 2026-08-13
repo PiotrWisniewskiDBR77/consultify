@@ -35,7 +35,10 @@ async function capture(page: Page) {
     }
   });
   page.on('requestfailed', (request) => {
-    if (!ignoredFailure.test(request.url())) failedRequests.push({ url: request.url(), error: request.failure()?.errorText || 'unknown' });
+    const error = request.failure()?.errorText || 'unknown';
+    if (error !== 'cancelled' && !ignoredFailure.test(request.url())) {
+      failedRequests.push({ url: request.url(), error });
+    }
   });
   page.on('response', (response) => {
     if (response.status() >= 400 && response.url().includes('/api/') && !ignoredFailure.test(response.url())) {

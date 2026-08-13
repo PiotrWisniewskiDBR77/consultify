@@ -803,6 +803,7 @@ app.use(
               'https://*.stripe.com',
               'https://www.gravatar.com',
               'https://*.googleusercontent.com',
+              'https://www.googletagmanager.com',
             ],
             connectSrc: [
               "'self'",
