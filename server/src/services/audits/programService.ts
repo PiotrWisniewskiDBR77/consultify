@@ -894,8 +894,14 @@ async function computeLifecycleFacts(
   );
 
   const actionRow = await auditGet<Record<string, unknown>>(
+    // Skuteczność mierzy się WYŁĄCZNIE dla działań usuwających przyczynę.
+    // Korekcja i containment naprawiają konkretny skutek — dla nich dowodem
+    // jest wdrożenie, a nie skuteczność systemowa. Liczenie ich tutaj
+    // blokowałoby zamknięcie audytu za to, że ktoś rzetelnie odnotował doraźną
+    // korektę obok działania systemowego.
     `SELECT COUNT(*) FILTER (
         WHERE a.status = 'implemented'
+          AND a.action_kind IN ('corrective_action', 'preventive_action')
           AND NOT EXISTS (
             SELECT 1 FROM audit_verifications v
              WHERE v.corrective_action_id = a.id AND v.verification_kind = 'effectiveness'
