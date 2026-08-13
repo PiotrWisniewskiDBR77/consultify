@@ -180,9 +180,9 @@ const ROLE_CONFIG: Record<
   manager: {
     label: 'Manager',
     icon: ShieldCheck,
-    color: 'text-primary-600 dark:text-primary-400',
-    bgColor: 'bg-primary-50 dark:bg-primary-500/10',
-    borderColor: 'border-primary-200 dark:border-primary-500/30',
+    color: 'text-violet-600 dark:text-violet-400',
+    bgColor: 'bg-violet-50 dark:bg-violet-500/10',
+    borderColor: 'border-violet-200 dark:border-violet-500/30',
     description: 'Can manage team and approve',
     permissions: ['Edit', 'Approve', 'Manage Team', 'Change Status'],
   },
@@ -244,18 +244,18 @@ const ROLE_CONFIG: Record<
   PMO: {
     label: 'PMO',
     icon: Shield,
-    color: 'text-primary-600 dark:text-primary-400',
-    bgColor: 'bg-primary-50 dark:bg-primary-500/10',
-    borderColor: 'border-primary-200 dark:border-primary-500/30',
+    color: 'text-violet-600 dark:text-violet-400',
+    bgColor: 'bg-violet-50 dark:bg-violet-500/10',
+    borderColor: 'border-violet-200 dark:border-violet-500/30',
     description: 'Governance and standards control',
     permissions: ['Manage', 'Approve'],
   },
   PORTFOLIO_OWNER: {
     label: 'Portfolio Owner',
     icon: ShieldCheck,
-    color: 'text-primary-600 dark:text-primary-400',
-    bgColor: 'bg-primary-50 dark:bg-primary-500/10',
-    borderColor: 'border-primary-200 dark:border-primary-500/30',
+    color: 'text-violet-600 dark:text-violet-400',
+    bgColor: 'bg-violet-50 dark:bg-violet-500/10',
+    borderColor: 'border-violet-200 dark:border-violet-500/30',
     description: 'Investment-level decisions across projects',
     permissions: ['Approve', 'Manage'],
   },
@@ -290,9 +290,9 @@ const ROLE_CONFIG: Record<
   PMO_LEAD: {
     label: 'PMO Lead',
     icon: Shield,
-    color: 'text-primary-600 dark:text-primary-400',
-    bgColor: 'bg-primary-50 dark:bg-primary-500/10',
-    borderColor: 'border-primary-200 dark:border-primary-500/30',
+    color: 'text-violet-600 dark:text-violet-400',
+    bgColor: 'bg-violet-50 dark:bg-violet-500/10',
+    borderColor: 'border-violet-200 dark:border-violet-500/30',
     description: 'Coordinates execution and governance',
     permissions: ['Manage', 'Edit'],
   },
@@ -462,7 +462,7 @@ const AddMemberModal: FC<{
         className="relative w-full max-w-lg mx-4 bg-white dark:bg-navy-900 rounded-2xl shadow-2xl overflow-hidden"
       >
         {/* Header */}
-        <div className="px-6 py-4 border-b border-slate-200 dark:border-navy-700 bg-gradient-to-r from-primary-500/10 to-blue-500/10">
+        <div className="px-6 py-4 border-b border-slate-200 dark:border-navy-700 bg-gradient-to-r from-slate-500/10 to-blue-500/10">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-navy-900 text-white rounded-lg">
@@ -512,7 +512,7 @@ const AddMemberModal: FC<{
                 spellCheck={false}
                 data-lpignore="true"
                 data-form-type="other"
-                className="w-full h-11 pl-10 pr-4 rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-colors"
+                className="w-full h-11 pl-10 pr-4 rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-c-focus/30 focus:border-c-focus transition-colors"
               />
               {searching && (
                 <Loader2
@@ -530,10 +530,10 @@ const AddMemberModal: FC<{
                     key={user.id}
                     onClick={() => setSelectedUser(user)}
                     className={`w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 dark:hover:bg-navy-700 transition-colors ${
-                      selectedUser?.id === user.id ? 'bg-primary-50 dark:bg-primary-500/10' : ''
+                      selectedUser?.id === user.id ? 'bg-slate-100 dark:bg-white/10' : ''
                     }`}
                   >
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-blue-600 flex items-center justify-center text-sm font-semibold text-white">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-sm font-semibold text-white">
                       {(user.name || user.email).charAt(0).toUpperCase()}
                     </div>
                     <div className="flex-1 text-left">
@@ -543,7 +543,7 @@ const AddMemberModal: FC<{
                       <div className="text-xs text-slate-500 dark:text-slate-400">{user.email}</div>
                     </div>
                     {selectedUser?.id === user.id && (
-                      <CheckCircle2 size={18} className="text-primary-500" />
+                      <CheckCircle2 size={18} className="text-emerald-500" />
                     )}
                   </button>
                 ))}
@@ -572,10 +572,10 @@ const AddMemberModal: FC<{
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="p-4 rounded-xl border-2 border-primary-200 dark:border-primary-500/30 bg-primary-50/50 dark:bg-primary-500/5"
+              className="p-4 rounded-xl border-2 border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5"
             >
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary-500 to-blue-600 flex items-center justify-center text-lg font-semibold text-white">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-lg font-semibold text-white">
                   {(selectedUser.name || selectedUser.email).charAt(0).toUpperCase()}
                 </div>
                 <div className="flex-1">
@@ -588,9 +588,9 @@ const AddMemberModal: FC<{
                 </div>
                 <button
                   onClick={() => setSelectedUser(null)}
-                  className="p-1.5 rounded-lg hover:bg-primary-100 dark:hover:bg-primary-500/20 transition-colors"
+                  className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
                 >
-                  <X size={16} className="text-primary-600 dark:text-primary-400" />
+                  <X size={16} className="text-slate-600 dark:text-slate-400" />
                 </button>
               </div>
             </motion.div>
@@ -744,7 +744,7 @@ const TeamMemberRow: FC<{
       {/* User Info */}
       <td className="px-4 py-3">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-blue-600 flex items-center justify-center text-sm font-semibold text-white flex-shrink-0">
+          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-sm font-semibold text-white flex-shrink-0">
             {(member.userName || member.userEmail || '?').charAt(0).toUpperCase()}
           </div>
           <div className="min-w-0">
@@ -970,7 +970,7 @@ export const TeamManagementPanel: FC<TeamManagementPanelProps> = ({
         <div className="px-4 py-3 border-b border-slate-200 dark:border-navy-800 bg-slate-50/50 dark:bg-navy-900/50">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-gradient-to-br from-primary-500 to-blue-600 text-white rounded-lg">
+              <div className="p-2 bg-gradient-to-br from-blue-500 to-indigo-600 text-white rounded-lg">
                 <Users size={18} />
               </div>
               <div>
@@ -1039,7 +1039,7 @@ export const TeamManagementPanel: FC<TeamManagementPanelProps> = ({
               onClick={() => setActiveTab('members')}
               className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors ${
                 activeTab === 'members'
-                  ? 'bg-white dark:bg-navy-800 text-primary-600 dark:text-primary-400 border-t border-x border-slate-200 dark:border-navy-700 -mb-px'
+                  ? 'bg-white dark:bg-navy-800 text-slate-900 dark:text-white border-t border-x border-slate-200 dark:border-navy-700 -mb-px'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
@@ -1053,7 +1053,7 @@ export const TeamManagementPanel: FC<TeamManagementPanelProps> = ({
                 onClick={() => setActiveTab('assignments')}
                 className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors ${
                   activeTab === 'assignments'
-                    ? 'bg-white dark:bg-navy-800 text-primary-600 dark:text-primary-400 border-t border-x border-slate-200 dark:border-navy-700 -mb-px'
+                    ? 'bg-white dark:bg-navy-800 text-slate-900 dark:text-white border-t border-x border-slate-200 dark:border-navy-700 -mb-px'
                     : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
@@ -1227,7 +1227,7 @@ export const TeamManagementPanel: FC<TeamManagementPanelProps> = ({
               <span>Admin - Full access</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <ShieldCheck size={12} className="text-primary-500" />
+              <ShieldCheck size={12} className="text-violet-500" />
               <span>Manager - Team & approvals</span>
             </div>
             <div className="flex items-center gap-1.5">

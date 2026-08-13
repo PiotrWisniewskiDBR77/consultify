@@ -102,6 +102,7 @@ const AssessmentInitiativesTableScreen = React.lazy(
   () => import('./screens/assessment-initiatives-table')
 );
 const AssessmentFiveSurfacesScreen = React.lazy(() => import('./screens/assessment-five-surfaces'));
+const AssessmentManagePanelScreen = React.lazy(() => import('./screens/assessment-manage-panel'));
 const AssessmentListScreen = React.lazy(() => import('./screens/assessment-list'));
 const StandardModuleBarChildrenScreen = React.lazy(
   () => import('./screens/standard-module-bar-children')
@@ -431,6 +432,7 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'RN-G3 tor PLATFORMY §1 — DEMONSTRACJA przepisu powłoki klasy L (archetyp Rekord): ArtifactBreadcrumb + NModeShell + ArtifactRightPanel/ArtifactPropertiesTable, zero nowego standardu. &save=idle|saving|saved|error|conflict &teresa=1',
     render: () => <RnG3ClassLRecordShellScreen />,
+  },
   'idea-financial-case-persistence': {
     label:
       'E09 RISK-12 — REALNY <FinancialCaseDialog> z REALNYM zapisem: ?state=empty|loading|dirty|saving|saved|error|conflict|reopened (stanowy mock transportu)',
@@ -812,6 +814,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'assessment-five-surfaces': {
     label: 'T22 final closeout — real AssessmentHub with five surfaces forced ON',
     render: () => <AssessmentFiveSurfacesScreen />,
+  },
+  'assessment-manage-panel': {
+    label:
+      'ASM-ID TRIADA — real <AssessmentManagePanel> (Workflow/Team/Reports/Initiatives tabs, crimson sweep verification) — &tab=workflow|team|reports|initiatives|logs',
+    render: () => <AssessmentManagePanelScreen />,
   },
   'standard-module-bar-children': {
     label:

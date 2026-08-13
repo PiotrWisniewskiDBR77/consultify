@@ -213,9 +213,9 @@ const GATE_CONFIG: Record<
   },
   APPROVE_REPORT: {
     icon: FileCheck,
-    color: 'text-primary-600 dark:text-primary-400',
-    bgColor: 'bg-primary-50 dark:bg-primary-500/10',
-    borderColor: 'border-primary-200 dark:border-primary-500/30',
+    color: 'text-violet-600 dark:text-violet-400',
+    bgColor: 'bg-violet-50 dark:bg-violet-500/10',
+    borderColor: 'border-violet-200 dark:border-violet-500/30',
     actionLabel: 'Approve Report',
   },
   APPROVE_ASSESSMENT: {
@@ -428,7 +428,7 @@ const WorkflowStageRow: FC<{
                 <span
                   className={`text-sm font-medium ${
                     stage.isCurrent
-                      ? 'text-primary-700 dark:text-primary-300'
+                      ? 'text-slate-900 dark:text-white'
                       : stage.isCompleted
                         ? 'text-emerald-700 dark:text-emerald-300'
                         : 'text-slate-900 dark:text-white'
@@ -528,7 +528,7 @@ const WorkflowStageRow: FC<{
               >
                 {gateDecision?.assigneeId ? (
                   <>
-                    <div className="w-6 h-6 rounded-full bg-gradient-to-br from-primary-500 to-blue-600 flex items-center justify-center text-[10px] font-medium text-white">
+                    <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-[10px] font-medium text-white">
                       {(gateDecision.assigneeName || '?').charAt(0).toUpperCase()}
                     </div>
                     <div className="text-left">
@@ -580,7 +580,7 @@ const WorkflowStageRow: FC<{
                             onClick={() => handleAssign(user.userId)}
                             className="w-full flex items-center gap-2 px-3 py-2 hover:bg-slate-50 dark:hover:bg-navy-700 transition-colors"
                           >
-                            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-primary-500 to-blue-600 flex items-center justify-center text-xs font-medium text-white">
+                            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-xs font-medium text-white">
                               {(user.userName || user.userEmail || '?').charAt(0).toUpperCase()}
                             </div>
                             <div className="text-left flex-1 min-w-0">
@@ -927,7 +927,7 @@ export const WorkflowStagesTable: FC<WorkflowStagesTableProps> = ({
       <div className="px-4 py-3 border-b border-slate-200 dark:border-navy-800 bg-slate-50/50 dark:bg-navy-900/50">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-gradient-to-br from-primary-500 to-blue-600 text-white rounded-lg">
+            <div className="p-2 bg-gradient-to-br from-blue-500 to-indigo-600 text-white rounded-lg">
               <Zap size={18} />
             </div>
             <div>
