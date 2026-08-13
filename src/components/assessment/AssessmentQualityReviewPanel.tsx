@@ -81,7 +81,11 @@ export const AssessmentQualityReviewPanel: React.FC<AssessmentQualityReviewPanel
           row.hasEvidence ? (
             <span className="text-emerald-600 dark:text-emerald-400">{row.evidenceCount}</span>
           ) : (
-            <span className="text-danger-600 dark:text-danger-400">brak</span>
+            // MPQ odbiór 2026-08-13: brak dowodu to normalny, oczekiwany stan
+            // oceny dojrzałości (jeszcze nie udokumentowane) — NIE błąd/awaria.
+            // Crimson/danger w tym repo jest zarezerwowany dla semantyki
+            // krytycznej; tu ostrzegawczy amber (do uzupełnienia, nie alarm).
+            <span className="text-amber-600 dark:text-amber-400">brak</span>
           ),
       },
     ],

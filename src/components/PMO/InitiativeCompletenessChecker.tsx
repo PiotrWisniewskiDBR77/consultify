@@ -47,6 +47,20 @@ interface InitiativeCompletenessCheckerProps {
     deliverables?: string[];
     successCriteria?: string[];
     keyRisks?: string[];
+    /**
+     * Backend-computed charter completeness (0-100), e.g. Assessment →
+     * Initiatives table. When present it is AUTHORITATIVE and used verbatim
+     * for the bar/%/color instead of the field-by-field recompute below.
+     *
+     * Bug fixed 2026-08-13 (MPQ odbiór): the recompute walks a fixed set of
+     * ~15 charter fields (problemStatement/hypothesis/businessValue weigh 35
+     * of 110 points). Callers that only pass the summary fields already
+     * visible in a list row (no full charter form data) always landed under
+     * the 40% threshold, so the bar rendered `bg-danger-500` for EVERY row
+     * regardless of the real completeness — the color logic itself was
+     * already correct, but the completeness number feeding it was wrong.
+     */
+    charterCompleteness?: number;
   };
   showDetails?: boolean;
   compact?: boolean;
@@ -195,7 +209,13 @@ export const InitiativeCompletenessChecker: React.FC<InitiativeCompletenessCheck
   className = '',
 }) => {
   const fields = calculateFieldStatuses(initiative);
-  const completeness = calculateCompleteness(fields);
+  // Prefer the authoritative backend value when the caller has it (see prop
+  // doc above) — the field recompute stays for `showDetails`, where it lists
+  // WHICH fields are missing, but must not drive the headline % / color.
+  const completeness =
+    typeof initiative.charterCompleteness === 'number' && !Number.isNaN(initiative.charterCompleteness)
+      ? Math.max(0, Math.min(100, Math.round(initiative.charterCompleteness)))
+      : calculateCompleteness(fields);
   const missingRequired = fields.filter((f) => f.isRequired && !f.isFilled);
   const missingOptional = fields.filter((f) => !f.isRequired && !f.isFilled);
 
