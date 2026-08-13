@@ -39,6 +39,15 @@ if (REAL_DB) process.env.DB_TYPE = 'postgres';
 
 describe.skipIf(!REAL_DB)('P0B — freeze -> Output -> approval -> Report -> Initiative (real PostgreSQL)', () => {
   let app: Express;
+  /**
+   * ★ JEDEN nasłuchujący serwer na plik, zamiast nowego listenera na KAŻDE
+   * żądanie supertest. `request(httpServer)` podnosi efemeryczny listener za każdym
+   * razem — przy 145 wywołaniach w bramce i obciążonej maszynie kończyło się to
+   * `ECONNRESET`, `socket hang up` i `Parse Error: Expected HTTP/`, czyli
+   * migotaniem bramki (2 z 5 przebiegów). To usuwa MECHANIZM, nie objaw —
+   * żadnego retry, żadnego wyciszania.
+   */
+  let httpServer: import('node:http').Server;
   let pool: import('pg').Pool;
 
   const SUFFIX = randomUUID().slice(0, 8);
@@ -119,9 +128,12 @@ describe.skipIf(!REAL_DB)('P0B — freeze -> Output -> approval -> Report -> Ini
     app = express();
     app.use(express.json());
     app.use('/api/method', methodCoreRoutes);
+    httpServer = app.listen(0);
   });
 
   afterAll(async () => {
+
+    await new Promise<void>((r) => httpServer.close(() => r()));
     await pool.query(`DELETE FROM users WHERE id = ANY($1)`, [[OWNER, APPROVER, OTHER_ORG_USER]]);
     await pool.query(`DELETE FROM organizations WHERE id = ANY($1)`, [[ORG, OTHER_ORG]]);
     await pool.end();
@@ -133,7 +145,7 @@ describe.skipIf(!REAL_DB)('P0B — freeze -> Output -> approval -> Report -> Ini
     token: string,
     overrides: Record<string, unknown> = {}
   ): Promise<{ status: number; body: any }> {
-    const res = await request(app)
+    const res = await request(httpServer)
       .post('/api/method/sessions')
       .set('Authorization', `Bearer ${token}`)
       .set('Idempotency-Key', `create:${randomUUID()}`)
@@ -158,7 +170,7 @@ describe.skipIf(!REAL_DB)('P0B — freeze -> Output -> approval -> Report -> Ini
   }
 
   async function transitionTo(sessionId: string, to: string, token: string, extra: Record<string, unknown> = {}) {
-    return request(app)
+    return request(httpServer)
       .post(`/api/method/sessions/${sessionId}/transition`)
       .set('Authorization', `Bearer ${token}`)
       .set('Idempotency-Key', `transition:${to}:${randomUUID()}`)
@@ -177,7 +189,7 @@ describe.skipIf(!REAL_DB)('P0B — freeze -> Output -> approval -> Report -> Ini
   }
 
   async function addEvidenceAndAnswer(sessionId: string, unitId = '1A'): Promise<void> {
-    const evidence = await request(app)
+    const evidence = await request(httpServer)
       .post(`/api/method/sessions/${sessionId}/events`)
       .set('Authorization', `Bearer ${ownerToken}`)
       .set('Idempotency-Key', `evidence:${randomUUID()}`)
@@ -189,7 +201,7 @@ describe.skipIf(!REAL_DB)('P0B — freeze -> Output -> approval -> Report -> Ini
     if (evidence.status !== 201) {
       throw new Error(`addEvidenceAndAnswer: EVIDENCE_ATTACHED failed: ${evidence.status} ${JSON.stringify(evidence.body)}`);
     }
-    const answer = await request(app)
+    const answer = await request(httpServer)
       .post(`/api/method/sessions/${sessionId}/events`)
       .set('Authorization', `Bearer ${ownerToken}`)
       .set('Idempotency-Key', `answer:${randomUUID()}`)
@@ -211,7 +223,7 @@ describe.skipIf(!REAL_DB)('P0B — freeze -> Output -> approval -> Report -> Ini
     await driveToInReview(sessionId);
     await grantRole(sessionId, APPROVER, 'approver');
     await addEvidenceAndAnswer(sessionId);
-    const freeze = await request(app)
+    const freeze = await request(httpServer)
       .post(`/api/method/sessions/${sessionId}/freeze`)
       .set('Authorization', `Bearer ${approverToken}`)
       .set('Idempotency-Key', `freeze:${randomUUID()}`)
@@ -236,7 +248,7 @@ describe.skipIf(!REAL_DB)('P0B — freeze -> Output -> approval -> Report -> Ini
     ]);
     expect(before.rows[0].state).toBe('in_review');
 
-    const res = await request(app)
+    const res = await request(httpServer)
       .post(`/api/method/sessions/${sessionId}/freeze`)
       .set('Authorization', `Bearer ${approverToken}`)
       .set('Idempotency-Key', `freeze:${randomUUID()}`)
@@ -265,14 +277,14 @@ describe.skipIf(!REAL_DB)('P0B — freeze -> Output -> approval -> Report -> Ini
     await addEvidenceAndAnswer(sessionId);
 
     const freezeKey = `freeze:${randomUUID()}`;
-    const first = await request(app)
+    const first = await request(httpServer)
       .post(`/api/method/sessions/${sessionId}/freeze`)
       .set('Authorization', `Bearer ${approverToken}`)
       .set('Idempotency-Key', freezeKey)
       .send({});
     expect(first.status).toBe(200);
 
-    const second = await request(app)
+    const second = await request(httpServer)
       .post(`/api/method/sessions/${sessionId}/freeze`)
       .set('Authorization', `Bearer ${approverToken}`)
       .set('Idempotency-Key', freezeKey)
@@ -296,18 +308,18 @@ describe.skipIf(!REAL_DB)('P0B — freeze -> Output -> approval -> Report -> Ini
     expect(rows.rows[0].id).toBe(output.id);
     expect(rows.rows[0].output_version).toBe(1);
 
-    const getRes = await request(app)
+    const getRes = await request(httpServer)
       .get(`/api/method/outputs/${output.id}`)
       .set('Authorization', `Bearer ${ownerToken}`);
     expect(getRes.status).toBe(200);
     expect(getRes.body.output.sessionId).toBe(sessionId);
 
-    const put = await request(app)
+    const put = await request(httpServer)
       .put(`/api/method/outputs/${output.id}`)
       .set('Authorization', `Bearer ${ownerToken}`)
       .send({ scope: 'MUTATED' });
     expect(put.status).toBe(404);
-    const del = await request(app).delete(`/api/method/outputs/${output.id}`).set('Authorization', `Bearer ${ownerToken}`);
+    const del = await request(httpServer).delete(`/api/method/outputs/${output.id}`).set('Authorization', `Bearer ${ownerToken}`);
     expect(del.status).toBe(404);
   });
 
@@ -320,7 +332,7 @@ describe.skipIf(!REAL_DB)('P0B — freeze -> Output -> approval -> Report -> Ini
     // A second, DIFFERENT Idempotency-Key freeze call on an already-frozen
     // session must not illegally-transition (session.state !== 'frozen'
     // check in the route) NOR mint a second Output.
-    const retry = await request(app)
+    const retry = await request(httpServer)
       .post(`/api/method/sessions/${sessionId}/freeze`)
       .set('Authorization', `Bearer ${approverToken}`)
       .set('Idempotency-Key', `freeze-retry:${randomUUID()}`)
@@ -338,7 +350,7 @@ describe.skipIf(!REAL_DB)('P0B — freeze -> Output -> approval -> Report -> Ini
   it('5. the Output traces back to the exact session revision and frozen snapshot that produced it', async () => {
     const { sessionId, output } = await createFrozenSessionWithOutput();
 
-    const sessionRes = await request(app)
+    const sessionRes = await request(httpServer)
       .get(`/api/method/sessions/${sessionId}`)
       .set('Authorization', `Bearer ${ownerToken}`);
     expect(sessionRes.status).toBe(200);
@@ -360,7 +372,7 @@ describe.skipIf(!REAL_DB)('P0B — freeze -> Output -> approval -> Report -> Ini
   it('6. appending a new event to the (now frozen) session leaves the Output content_hash byte-identical', async () => {
     const { sessionId, output } = await createFrozenSessionWithOutput();
 
-    const before = await request(app)
+    const before = await request(httpServer)
       .get(`/api/method/outputs/${output.id}`)
       .set('Authorization', `Bearer ${ownerToken}`);
     expect(before.status).toBe(200);
@@ -371,7 +383,7 @@ describe.skipIf(!REAL_DB)('P0B — freeze -> Output -> approval -> Report -> Ini
     // The event log itself stays append-only even after freeze (it is not
     // gated on session.state) — this is exactly the "later session change"
     // this step must prove does NOT reach back into the immutable Output.
-    const append = await request(app)
+    const append = await request(httpServer)
       .post(`/api/method/sessions/${sessionId}/events`)
       .set('Authorization', `Bearer ${ownerToken}`)
       .set('Idempotency-Key', `post-freeze-event:${randomUUID()}`)
@@ -382,7 +394,7 @@ describe.skipIf(!REAL_DB)('P0B — freeze -> Output -> approval -> Report -> Ini
       });
     expect(append.status).toBe(201);
 
-    const after = await request(app)
+    const after = await request(httpServer)
       .get(`/api/method/outputs/${output.id}`)
       .set('Authorization', `Bearer ${ownerToken}`);
     expect(after.status).toBe(200);
@@ -488,7 +500,7 @@ describe.skipIf(!REAL_DB)('P0B — freeze -> Output -> approval -> Report -> Ini
     }
 
     // OWNER holds owner+lead_assessor on the revision, deliberately NOT approver.
-    const deniedFreeze = await request(app)
+    const deniedFreeze = await request(httpServer)
       .post(`/api/method/sessions/${revisionSessionId}/freeze`)
       .set('Authorization', `Bearer ${ownerToken}`)
       .set('Idempotency-Key', `freeze:${randomUUID()}`)
@@ -500,7 +512,7 @@ describe.skipIf(!REAL_DB)('P0B — freeze -> Output -> approval -> Report -> Ini
     expect(stillInReview.rows[0].state).toBe('in_review');
 
     await grantRole(revisionSessionId, APPROVER, 'approver');
-    const approvedFreeze = await request(app)
+    const approvedFreeze = await request(httpServer)
       .post(`/api/method/sessions/${revisionSessionId}/freeze`)
       .set('Authorization', `Bearer ${approverToken}`)
       .set('Idempotency-Key', `freeze:${randomUUID()}`)
@@ -517,7 +529,7 @@ describe.skipIf(!REAL_DB)('P0B — freeze -> Output -> approval -> Report -> Ini
     expect(revisedOutput.outputVersion).toBe(originalOutput.outputVersion + 1);
     expect(revisedOutput.sourceRevisionOfSessionId).toBe(originalSessionId);
 
-    const isSuperseded = await request(app)
+    const isSuperseded = await request(httpServer)
       .get(`/api/method/outputs/${originalOutput.id}`)
       .set('Authorization', `Bearer ${ownerToken}`);
     expect(isSuperseded.body.superseded).toBe(true);
@@ -540,7 +552,7 @@ describe.skipIf(!REAL_DB)('P0B — freeze -> Output -> approval -> Report -> Ini
     const { computeContentHash } = await import('../db.js');
     const expectedHash = computeContentHash(content);
 
-    const reportRes = await request(app)
+    const reportRes = await request(httpServer)
       .post(`/api/method/outputs/${output.id}/report`)
       .set('Authorization', `Bearer ${ownerToken}`)
       .send({ title: 'P0B report', content });
@@ -559,7 +571,7 @@ describe.skipIf(!REAL_DB)('P0B — freeze -> Output -> approval -> Report -> Ini
     const { output } = await createFrozenSessionWithOutput();
 
     const reportContent = { executiveSummary: 'Report view', findings: output.findings.map((f: any) => f.unitId) };
-    const reportRes = await request(app)
+    const reportRes = await request(httpServer)
       .post(`/api/method/outputs/${output.id}/report`)
       .set('Authorization', `Bearer ${ownerToken}`)
       .send({ title: 'P0B report (for presentation pairing)', content: reportContent });
@@ -571,7 +583,7 @@ describe.skipIf(!REAL_DB)('P0B — freeze -> Output -> approval -> Report -> Ini
         ...output.findings.map((f: any) => ({ title: f.unitId, body: f.businessMeaning })),
       ],
     };
-    const presentationRes = await request(app)
+    const presentationRes = await request(httpServer)
       .post(`/api/method/outputs/${output.id}/presentation`)
       .set('Authorization', `Bearer ${ownerToken}`)
       .send({ title: 'P0B presentation', content: presentationContent });
@@ -597,7 +609,7 @@ describe.skipIf(!REAL_DB)('P0B — freeze -> Output -> approval -> Report -> Ini
     const { output } = await createFrozenSessionWithOutput();
     const findingId = output.findings[0].id;
 
-    const draftRes = await request(app)
+    const draftRes = await request(httpServer)
       .post(`/api/method/outputs/${output.id}/initiative-drafts`)
       .set('Authorization', `Bearer ${ownerToken}`)
       .send({
@@ -613,7 +625,7 @@ describe.skipIf(!REAL_DB)('P0B — freeze -> Output -> approval -> Report -> Ini
     expect(draftRes.body.draft).not.toHaveProperty('initiativeId');
     expect(draftRes.body.draft).not.toHaveProperty('registeredInitiativeId');
 
-    const registerAttempt = await request(app)
+    const registerAttempt = await request(httpServer)
       .post(`/api/method/outputs/${output.id}/initiative-drafts/${draftRes.body.draft.id}/register`)
       .set('Authorization', `Bearer ${ownerToken}`)
       .send({});
@@ -626,13 +638,13 @@ describe.skipIf(!REAL_DB)('P0B — freeze -> Output -> approval -> Report -> Ini
   it('13. reopening + re-freezing supersedes the OLD Report/Presentation/Initiative Draft across the whole lineage, not just the newest session', async () => {
     const { sessionId: originalSessionId, output: outputA } = await createFrozenSessionWithOutput();
 
-    const reportA = await request(app)
+    const reportA = await request(httpServer)
       .post(`/api/method/outputs/${outputA.id}/report`)
       .set('Authorization', `Bearer ${ownerToken}`)
       .send({ title: 'Report on A', content: { v: 'A' } });
     expect(reportA.status).toBe(201);
 
-    const draftA = await request(app)
+    const draftA = await request(httpServer)
       .post(`/api/method/outputs/${outputA.id}/initiative-drafts`)
       .set('Authorization', `Bearer ${ownerToken}`)
       .send({
@@ -655,7 +667,7 @@ describe.skipIf(!REAL_DB)('P0B — freeze -> Output -> approval -> Report -> Ini
     await grantRole(revisionSessionId, OWNER, 'lead_assessor');
     await grantRole(revisionSessionId, APPROVER, 'approver');
     await transitionTo(revisionSessionId, 'in_review', ownerToken);
-    const freezeB = await request(app)
+    const freezeB = await request(httpServer)
       .post(`/api/method/sessions/${revisionSessionId}/freeze`)
       .set('Authorization', `Bearer ${approverToken}`)
       .set('Idempotency-Key', `freeze:${randomUUID()}`)
@@ -666,7 +678,7 @@ describe.skipIf(!REAL_DB)('P0B — freeze -> Output -> approval -> Report -> Ini
 
     // A fresh Report against B must supersede A's report/draft, EVEN THOUGH
     // reportA/draftA belong to `originalSessionId`, not `revisionSessionId`.
-    const reportB = await request(app)
+    const reportB = await request(httpServer)
       .post(`/api/method/outputs/${outputB.id}/report`)
       .set('Authorization', `Bearer ${ownerToken}`)
       .send({ title: 'Report on B (corrected)', content: { v: 'B' } });
@@ -703,13 +715,13 @@ describe.skipIf(!REAL_DB)('P0B — freeze -> Output -> approval -> Report -> Ini
       await driveToInReview(sessionId);
       await grantRole(sessionId, APPROVER, 'approver');
 
-      const noAuth = await request(app)
+      const noAuth = await request(httpServer)
         .post(`/api/method/sessions/${sessionId}/freeze`)
         .set('Idempotency-Key', `freeze:${randomUUID()}`)
         .send({});
       expect(noAuth.status).toBe(401);
 
-      const crossOrg = await request(app)
+      const crossOrg = await request(httpServer)
         .post(`/api/method/sessions/${sessionId}/freeze`)
         .set('Authorization', `Bearer ${otherOrgToken}`)
         .set('Idempotency-Key', `freeze:${randomUUID()}`)
@@ -723,10 +735,10 @@ describe.skipIf(!REAL_DB)('P0B — freeze -> Output -> approval -> Report -> Ini
     it('14b. Output read: no Authorization -> 401; wrong org -> 404 (never leaks existence)', async () => {
       const { output } = await createFrozenSessionWithOutput();
 
-      const noAuth = await request(app).get(`/api/method/outputs/${output.id}`);
+      const noAuth = await request(httpServer).get(`/api/method/outputs/${output.id}`);
       expect(noAuth.status).toBe(401);
 
-      const crossOrg = await request(app)
+      const crossOrg = await request(httpServer)
         .get(`/api/method/outputs/${output.id}`)
         .set('Authorization', `Bearer ${otherOrgToken}`);
       expect(crossOrg.status).toBe(404);
@@ -737,19 +749,19 @@ describe.skipIf(!REAL_DB)('P0B — freeze -> Output -> approval -> Report -> Ini
       const { output } = await createFrozenSessionWithOutput();
 
       for (const path of ['report', 'presentation'] as const) {
-        const noAuth = await request(app)
+        const noAuth = await request(httpServer)
           .post(`/api/method/outputs/${output.id}/${path}`)
           .send({ title: 't', content: {} });
         expect(noAuth.status).toBe(401);
 
-        const crossOrg = await request(app)
+        const crossOrg = await request(httpServer)
           .post(`/api/method/outputs/${output.id}/${path}`)
           .set('Authorization', `Bearer ${otherOrgToken}`)
           .send({ title: 't', content: {} });
         expect(crossOrg.status).toBe(404);
       }
 
-      const crossOrgDraft = await request(app)
+      const crossOrgDraft = await request(httpServer)
         .post(`/api/method/outputs/${output.id}/initiative-drafts`)
         .set('Authorization', `Bearer ${otherOrgToken}`)
         .send({
@@ -768,7 +780,7 @@ describe.skipIf(!REAL_DB)('P0B — freeze -> Output -> approval -> Report -> Ini
     it('14d. reopen (frozen -> active) transition: wrong org -> 403, no revision row created', async () => {
       const { sessionId } = await createFrozenSessionWithOutput();
 
-      const crossOrg = await request(app)
+      const crossOrg = await request(httpServer)
         .post(`/api/method/sessions/${sessionId}/transition`)
         .set('Authorization', `Bearer ${otherOrgToken}`)
         .set('Idempotency-Key', `transition:${randomUUID()}`)
@@ -810,7 +822,7 @@ describe.skipIf(!REAL_DB)('P0B — freeze -> Output -> approval -> Report -> Ini
     const preOutputs = await pool.query(`SELECT id FROM method_outputs WHERE session_id = $1`, [sessionId]);
     expect(preOutputs.rows).toHaveLength(0); // confirms the interruption is real
 
-    const heal = await request(app)
+    const heal = await request(httpServer)
       .post(`/api/method/sessions/${sessionId}/freeze`)
       .set('Authorization', `Bearer ${approverToken}`)
       .set('Idempotency-Key', `freeze-heal:${randomUUID()}`)
@@ -844,7 +856,7 @@ describe.skipIf(!REAL_DB)('P0B — freeze -> Output -> approval -> Report -> Ini
       [snapshotId, sessionId]
     );
 
-    const heal = await request(app)
+    const heal = await request(httpServer)
       .post(`/api/method/sessions/${sessionId}/freeze`)
       .set('Authorization', `Bearer ${approverToken}`)
       .set('Idempotency-Key', `freeze-heal:${randomUUID()}`)
@@ -853,7 +865,7 @@ describe.skipIf(!REAL_DB)('P0B — freeze -> Output -> approval -> Report -> Ini
     const healedOutputId = heal.body.output.id;
 
     for (let i = 0; i < 3; i++) {
-      const retry = await request(app)
+      const retry = await request(httpServer)
         .post(`/api/method/sessions/${sessionId}/freeze`)
         .set('Authorization', `Bearer ${approverToken}`)
         .set('Idempotency-Key', `freeze-heal-retry-${i}:${randomUUID()}`)
@@ -896,7 +908,7 @@ describe.skipIf(!REAL_DB)('P0B — freeze -> Output -> approval -> Report -> Ini
         await driveToInReview(sessionId);
         await grantRole(sessionId, APPROVER, 'approver');
         await addEvidenceAndAnswer(sessionId);
-        const freeze = await request(app)
+        const freeze = await request(httpServer)
           .post(`/api/method/sessions/${sessionId}/freeze`)
           .set('Authorization', `Bearer ${approverToken}`)
           .set('Idempotency-Key', `freeze:${randomUUID()}`)
@@ -904,7 +916,7 @@ describe.skipIf(!REAL_DB)('P0B — freeze -> Output -> approval -> Report -> Ini
         expect(freeze.status).toBe(200);
         const output = freeze.body.output;
 
-        const reportRes = await request(app)
+        const reportRes = await request(httpServer)
           .post(`/api/method/outputs/${output.id}/report`)
           .set('Authorization', `Bearer ${ownerToken}`)
           .send({ title: 'demo report', content: { demo: true } });
@@ -930,7 +942,7 @@ describe.skipIf(!REAL_DB)('P0B — freeze -> Output -> approval -> Report -> Ini
         await driveToInReview(sessionId);
         await grantRole(sessionId, APPROVER, 'approver');
         await addEvidenceAndAnswer(sessionId);
-        const freeze = await request(app)
+        const freeze = await request(httpServer)
           .post(`/api/method/sessions/${sessionId}/freeze`)
           .set('Authorization', `Bearer ${approverToken}`)
           .set('Idempotency-Key', `freeze:${randomUUID()}`)
@@ -947,12 +959,12 @@ describe.skipIf(!REAL_DB)('P0B — freeze -> Output -> approval -> Report -> Ini
         expect(output.limitations.some((l: string) => l.includes('demo bypass'))).toBe(true);
 
         // Re-reading the Output over HTTP (not just the freeze response) still shows it.
-        const getOutput = await request(app)
+        const getOutput = await request(httpServer)
           .get(`/api/method/outputs/${output.id}`)
           .set('Authorization', `Bearer ${ownerToken}`);
         expect(getOutput.body.output.demoBypassActive).toBe(true);
 
-        const reportRes = await request(app)
+        const reportRes = await request(httpServer)
           .post(`/api/method/outputs/${output.id}/report`)
           .set('Authorization', `Bearer ${ownerToken}`)
           .send({ title: 'demo report', content: { demo: true } });
@@ -982,12 +994,12 @@ describe.skipIf(!REAL_DB)('P0B — freeze -> Output -> approval -> Report -> Ini
       // plausible "approve/release pack" endpoint simply does not exist on
       // this router — grep-level proof that no code path here issues an
       // UPDATE method_packs ... SET readiness, demo or not.
-      const attempt1 = await request(app)
+      const attempt1 = await request(httpServer)
         .post(`/api/method/packs/${REVIEW_PACK_ID}/release`)
         .set('Authorization', `Bearer ${approverToken}`)
         .send({});
       expect(attempt1.status).toBe(404);
-      const attempt2 = await request(app)
+      const attempt2 = await request(httpServer)
         .post(`/api/method/packs/${REVIEW_PACK_ID}/approve`)
         .set('Authorization', `Bearer ${approverToken}`)
         .send({});

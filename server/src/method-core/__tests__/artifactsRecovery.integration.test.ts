@@ -47,6 +47,15 @@ if (REAL_DB) process.env.DB_TYPE = 'postgres';
 
 describe.skipIf(!REAL_DB)('S1 — artifacts recovery surface (real PostgreSQL)', () => {
   let app: Express;
+  /**
+   * ★ JEDEN nasłuchujący serwer na plik, zamiast nowego listenera na KAŻDE
+   * żądanie supertest. `request(httpServer)` podnosi efemeryczny listener za każdym
+   * razem — przy 145 wywołaniach w bramce i obciążonej maszynie kończyło się to
+   * `ECONNRESET`, `socket hang up` i `Parse Error: Expected HTTP/`, czyli
+   * migotaniem bramki (2 z 5 przebiegów). To usuwa MECHANIZM, nie objaw —
+   * żadnego retry, żadnego wyciszania.
+   */
+  let httpServer: import('node:http').Server;
   let pool: import('pg').Pool;
 
   const SUFFIX = randomUUID().slice(0, 8);
@@ -119,9 +128,12 @@ describe.skipIf(!REAL_DB)('S1 — artifacts recovery surface (real PostgreSQL)',
     app = express();
     app.use(express.json());
     app.use('/api/method', methodCoreRoutes);
+    httpServer = app.listen(0);
   });
 
   afterAll(async () => {
+
+    await new Promise<void>((r) => httpServer.close(() => r()));
     await pool.query(`DELETE FROM users WHERE id = ANY($1)`, [[OWNER, APPROVER, OTHER_ORG_USER]]);
     await pool.query(`DELETE FROM organizations WHERE id = ANY($1)`, [[ORG, OTHER_ORG]]);
     await pool.end();
@@ -130,7 +142,7 @@ describe.skipIf(!REAL_DB)('S1 — artifacts recovery surface (real PostgreSQL)',
   // -- helpers ----------------------------------------------------------------
 
   async function createSession(token: string): Promise<{ status: number; body: any }> {
-    const res = await request(app)
+    const res = await request(httpServer)
       .post('/api/method/sessions')
       .set('Authorization', `Bearer ${token}`)
       .set('Idempotency-Key', `create:${randomUUID()}`)
@@ -154,7 +166,7 @@ describe.skipIf(!REAL_DB)('S1 — artifacts recovery surface (real PostgreSQL)',
   }
 
   async function transitionTo(sessionId: string, to: string, token: string) {
-    return request(app)
+    return request(httpServer)
       .post(`/api/method/sessions/${sessionId}/transition`)
       .set('Authorization', `Bearer ${token}`)
       .set('Idempotency-Key', `transition:${to}:${randomUUID()}`)
@@ -172,7 +184,7 @@ describe.skipIf(!REAL_DB)('S1 — artifacts recovery surface (real PostgreSQL)',
   }
 
   async function addEvidenceAndAnswer(sessionId: string, unitId = '1A'): Promise<void> {
-    const evidence = await request(app)
+    const evidence = await request(httpServer)
       .post(`/api/method/sessions/${sessionId}/events`)
       .set('Authorization', `Bearer ${ownerToken}`)
       .set('Idempotency-Key', `evidence:${randomUUID()}`)
@@ -184,7 +196,7 @@ describe.skipIf(!REAL_DB)('S1 — artifacts recovery surface (real PostgreSQL)',
     if (evidence.status !== 201) {
       throw new Error(`addEvidenceAndAnswer: EVIDENCE_ATTACHED failed: ${evidence.status} ${JSON.stringify(evidence.body)}`);
     }
-    const answer = await request(app)
+    const answer = await request(httpServer)
       .post(`/api/method/sessions/${sessionId}/events`)
       .set('Authorization', `Bearer ${ownerToken}`)
       .set('Idempotency-Key', `answer:${randomUUID()}`)
@@ -200,7 +212,7 @@ describe.skipIf(!REAL_DB)('S1 — artifacts recovery surface (real PostgreSQL)',
   }
 
   async function freezeSession(sessionId: string, token: string): Promise<any> {
-    const res = await request(app)
+    const res = await request(httpServer)
       .post(`/api/method/sessions/${sessionId}/freeze`)
       .set('Authorization', `Bearer ${token}`)
       .set('Idempotency-Key', `freeze:${randomUUID()}`)
@@ -224,19 +236,19 @@ describe.skipIf(!REAL_DB)('S1 — artifacts recovery surface (real PostgreSQL)',
     const freezeA = await freezeSession(sessionA, approverToken);
     const outputA = freezeA.output;
 
-    const reportA = await request(app)
+    const reportA = await request(httpServer)
       .post(`/api/method/outputs/${outputA.id}/report`)
       .set('Authorization', `Bearer ${ownerToken}`)
       .send({ title: 'Report on A', content: { v: 'A' } });
     expect(reportA.status).toBe(201);
 
-    const presentationA = await request(app)
+    const presentationA = await request(httpServer)
       .post(`/api/method/outputs/${outputA.id}/presentation`)
       .set('Authorization', `Bearer ${ownerToken}`)
       .send({ title: 'Presentation on A', content: { slides: [{ title: 'A' }] } });
     expect(presentationA.status).toBe(201);
 
-    const draftA = await request(app)
+    const draftA = await request(httpServer)
       .post(`/api/method/outputs/${outputA.id}/initiative-drafts`)
       .set('Authorization', `Bearer ${ownerToken}`)
       .send({
@@ -262,19 +274,19 @@ describe.skipIf(!REAL_DB)('S1 — artifacts recovery surface (real PostgreSQL)',
     const outputB = freezeB.output;
     expect(outputB.revisionOfOutputId).toBe(outputA.id);
 
-    const reportB = await request(app)
+    const reportB = await request(httpServer)
       .post(`/api/method/outputs/${outputB.id}/report`)
       .set('Authorization', `Bearer ${ownerToken}`)
       .send({ title: 'Report on B (corrected)', content: { v: 'B' } });
     expect(reportB.status).toBe(201);
 
-    const presentationB = await request(app)
+    const presentationB = await request(httpServer)
       .post(`/api/method/outputs/${outputB.id}/presentation`)
       .set('Authorization', `Bearer ${ownerToken}`)
       .send({ title: 'Presentation on B (corrected)', content: { slides: [{ title: 'B' }] } });
     expect(presentationB.status).toBe(201);
 
-    const draftB = await request(app)
+    const draftB = await request(httpServer)
       .post(`/api/method/outputs/${outputB.id}/initiative-drafts`)
       .set('Authorization', `Bearer ${ownerToken}`)
       .send({
@@ -313,7 +325,7 @@ describe.skipIf(!REAL_DB)('S1 — artifacts recovery surface (real PostgreSQL)',
     const freezeA = await freezeSession(sessionA, approverToken);
     const outputA = freezeA.output;
 
-    const afterFirstFreeze = await request(app)
+    const afterFirstFreeze = await request(httpServer)
       .get(`/api/method/sessions/${sessionA}/outputs`)
       .set('Authorization', `Bearer ${ownerToken}`);
     expect(afterFirstFreeze.status).toBe(200);
@@ -338,7 +350,7 @@ describe.skipIf(!REAL_DB)('S1 — artifacts recovery surface (real PostgreSQL)',
     const outputB = freezeB.output;
 
     for (const queryFrom of [sessionA, sessionB]) {
-      const afterReopen = await request(app)
+      const afterReopen = await request(httpServer)
         .get(`/api/method/sessions/${queryFrom}/outputs`)
         .set('Authorization', `Bearer ${ownerToken}`);
       expect(afterReopen.status).toBe(200);
@@ -362,7 +374,7 @@ describe.skipIf(!REAL_DB)('S1 — artifacts recovery surface (real PostgreSQL)',
     const { outputA, outputB } = await buildTwoVersionLineage();
 
     for (const fromId of [outputA.id, outputB.id]) {
-      const res = await request(app)
+      const res = await request(httpServer)
         .get(`/api/method/outputs/${fromId}/revisions`)
         .set('Authorization', `Bearer ${ownerToken}`);
       expect(res.status).toBe(200);
@@ -388,8 +400,8 @@ describe.skipIf(!REAL_DB)('S1 — artifacts recovery surface (real PostgreSQL)',
     ];
 
     for (const path of endpoints) {
-      const first = await request(app).get(path).set('Authorization', `Bearer ${ownerToken}`);
-      const second = await request(app).get(path).set('Authorization', `Bearer ${ownerToken}`);
+      const first = await request(httpServer).get(path).set('Authorization', `Bearer ${ownerToken}`);
+      const second = await request(httpServer).get(path).set('Authorization', `Bearer ${ownerToken}`);
       expect(first.status).toBe(200);
       expect(second.status).toBe(200);
       expect(second.body).toEqual(first.body);
@@ -402,13 +414,13 @@ describe.skipIf(!REAL_DB)('S1 — artifacts recovery surface (real PostgreSQL)',
   it('4. pagination: limit=1&offset=1 returns the second element and the correct total', async () => {
     const lineage = await buildTwoVersionLineage();
 
-    const full = await request(app)
+    const full = await request(httpServer)
       .get(`/api/method/sessions/${lineage.sessionA}/outputs`)
       .set('Authorization', `Bearer ${ownerToken}`);
     expect(full.body.total).toBe(2);
     const secondFromFull = full.body.outputs[1];
 
-    const paged = await request(app)
+    const paged = await request(httpServer)
       .get(`/api/method/sessions/${lineage.sessionA}/outputs?limit=1&offset=1`)
       .set('Authorization', `Bearer ${ownerToken}`);
     expect(paged.status).toBe(200);
@@ -438,7 +450,7 @@ describe.skipIf(!REAL_DB)('S1 — artifacts recovery surface (real PostgreSQL)',
     ];
 
     for (const path of getPaths) {
-      const res = await request(app).get(path).set('Authorization', `Bearer ${otherOrgToken}`);
+      const res = await request(httpServer).get(path).set('Authorization', `Bearer ${otherOrgToken}`);
       expect(res.status, `expected 404 for ${path}`).toBe(404);
     }
   });
@@ -462,7 +474,7 @@ describe.skipIf(!REAL_DB)('S1 — artifacts recovery surface (real PostgreSQL)',
     ];
 
     for (const path of getPaths) {
-      const res = await request(app).get(path);
+      const res = await request(httpServer).get(path);
       expect(res.status, `expected 401 for ${path}`).toBe(401);
     }
   });
@@ -473,7 +485,7 @@ describe.skipIf(!REAL_DB)('S1 — artifacts recovery surface (real PostgreSQL)',
   it('7. GET /sessions/:id/lineage contains both sessions, both Outputs (with status) and downstream artefacts', async () => {
     const lineage = await buildTwoVersionLineage();
 
-    const res = await request(app)
+    const res = await request(httpServer)
       .get(`/api/method/sessions/${lineage.sessionA}/lineage`)
       .set('Authorization', `Bearer ${ownerToken}`);
     expect(res.status).toBe(200);
@@ -509,7 +521,7 @@ describe.skipIf(!REAL_DB)('S1 — artifacts recovery surface (real PostgreSQL)',
   it('8. GET /reports/:id, /presentations/:id, /initiative-drafts/:id return the exact record, and reject the wrong kind', async () => {
     const lineage = await buildTwoVersionLineage();
 
-    const reportRes = await request(app)
+    const reportRes = await request(httpServer)
       .get(`/api/method/reports/${lineage.reportA.id}`)
       .set('Authorization', `Bearer ${ownerToken}`);
     expect(reportRes.status).toBe(200);
@@ -517,18 +529,18 @@ describe.skipIf(!REAL_DB)('S1 — artifacts recovery surface (real PostgreSQL)',
     expect(reportRes.body.report.kind).toBe('report');
 
     // A presentation id fetched via the /reports/:id route must 404 (kind guard).
-    const wrongKind = await request(app)
+    const wrongKind = await request(httpServer)
       .get(`/api/method/reports/${lineage.presentationA.id}`)
       .set('Authorization', `Bearer ${ownerToken}`);
     expect(wrongKind.status).toBe(404);
 
-    const presentationRes = await request(app)
+    const presentationRes = await request(httpServer)
       .get(`/api/method/presentations/${lineage.presentationA.id}`)
       .set('Authorization', `Bearer ${ownerToken}`);
     expect(presentationRes.status).toBe(200);
     expect(presentationRes.body.presentation.kind).toBe('presentation');
 
-    const draftRes = await request(app)
+    const draftRes = await request(httpServer)
       .get(`/api/method/initiative-drafts/${lineage.draftA.id}`)
       .set('Authorization', `Bearer ${ownerToken}`);
     expect(draftRes.status).toBe(200);
@@ -544,7 +556,7 @@ describe.skipIf(!REAL_DB)('S1 — artifacts recovery surface (real PostgreSQL)',
     const lineage = await buildTwoVersionLineage();
 
     for (const queryFrom of [lineage.sessionA, lineage.sessionB]) {
-      const reports = await request(app)
+      const reports = await request(httpServer)
         .get(`/api/method/sessions/${queryFrom}/reports`)
         .set('Authorization', `Bearer ${ownerToken}`);
       expect(reports.body.total).toBe(2);
@@ -554,12 +566,12 @@ describe.skipIf(!REAL_DB)('S1 — artifacts recovery surface (real PostgreSQL)',
       expect(reportById[lineage.reportA.id].status).toBe('superseded');
       expect(reportById[lineage.reportB.id].status).toBe('current');
 
-      const presentations = await request(app)
+      const presentations = await request(httpServer)
         .get(`/api/method/sessions/${queryFrom}/presentations`)
         .set('Authorization', `Bearer ${ownerToken}`);
       expect(presentations.body.total).toBe(2);
 
-      const drafts = await request(app)
+      const drafts = await request(httpServer)
         .get(`/api/method/sessions/${queryFrom}/initiative-drafts`)
         .set('Authorization', `Bearer ${ownerToken}`);
       expect(drafts.body.total).toBe(2);
@@ -581,7 +593,7 @@ describe.skipIf(!REAL_DB)('S1 — artifacts recovery surface (real PostgreSQL)',
       `/api/method/sessions/${fakeId}/initiative-drafts`,
       `/api/method/sessions/${fakeId}/lineage`,
     ]) {
-      const res = await request(app).get(path).set('Authorization', `Bearer ${ownerToken}`);
+      const res = await request(httpServer).get(path).set('Authorization', `Bearer ${ownerToken}`);
       expect(res.status, `expected 404 for ${path}`).toBe(404);
     }
   });

@@ -37,6 +37,15 @@ if (REAL_DB) process.env.DB_TYPE = 'postgres';
 
 describe.skipIf(!REAL_DB)('POST /api/method/sessions/:id/reopen — real PostgreSQL', () => {
   let app: Express;
+  /**
+   * ★ JEDEN nasłuchujący serwer na plik, zamiast nowego listenera na KAŻDE
+   * żądanie supertest. `request(httpServer)` podnosi efemeryczny listener za każdym
+   * razem — przy 145 wywołaniach w bramce i obciążonej maszynie kończyło się to
+   * `ECONNRESET`, `socket hang up` i `Parse Error: Expected HTTP/`, czyli
+   * migotaniem bramki (2 z 5 przebiegów). To usuwa MECHANIZM, nie objaw —
+   * żadnego retry, żadnego wyciszania.
+   */
+  let httpServer: import('node:http').Server;
   let pool: import('pg').Pool;
 
   const SUFFIX = randomUUID().slice(0, 8);
@@ -116,9 +125,12 @@ describe.skipIf(!REAL_DB)('POST /api/method/sessions/:id/reopen — real Postgre
     app = express();
     app.use(express.json());
     app.use('/api/method', methodCoreRoutes);
+    httpServer = app.listen(0);
   });
 
   afterAll(async () => {
+
+    await new Promise<void>((r) => httpServer.close(() => r()));
     // Additive-only cleanup. method_session_reopen_idempotency FKs to
     // method_sessions (ON DELETE CASCADE) which FKs to organizations (ON
     // DELETE CASCADE too) — deleting organizations is enough for those, but
@@ -131,7 +143,7 @@ describe.skipIf(!REAL_DB)('POST /api/method/sessions/:id/reopen — real Postgre
   // -- helpers ----------------------------------------------------------------
 
   async function createSession(token: string): Promise<string> {
-    const res = await request(app)
+    const res = await request(httpServer)
       .post('/api/method/sessions')
       .set('Authorization', `Bearer ${token}`)
       .set('Idempotency-Key', `create:${randomUUID()}`)
@@ -160,7 +172,7 @@ describe.skipIf(!REAL_DB)('POST /api/method/sessions/:id/reopen — real Postgre
   async function driveToInReview(sessionId: string): Promise<void> {
     await grantRole(sessionId, OWNER, 'lead_assessor');
     for (const to of ['prepared', 'active', 'in_review']) {
-      const res = await request(app)
+      const res = await request(httpServer)
         .post(`/api/method/sessions/${sessionId}/transition`)
         .set('Authorization', `Bearer ${ownerToken}`)
         .set('Idempotency-Key', `transition:${to}:${randomUUID()}`)
@@ -177,7 +189,7 @@ describe.skipIf(!REAL_DB)('POST /api/method/sessions/:id/reopen — real Postgre
     await driveToInReview(sessionId);
     await grantRole(sessionId, APPROVER, 'approver');
 
-    await request(app)
+    await request(httpServer)
       .post(`/api/method/sessions/${sessionId}/events`)
       .set('Authorization', `Bearer ${ownerToken}`)
       .set('Idempotency-Key', `evidence:${randomUUID()}`)
@@ -186,7 +198,7 @@ describe.skipIf(!REAL_DB)('POST /api/method/sessions/:id/reopen — real Postgre
         unitId: '1A',
         payload: { evidenceId: `ev-${randomUUID()}`, evidenceType: 'document', strength: 'E2' },
       });
-    await request(app)
+    await request(httpServer)
       .post(`/api/method/sessions/${sessionId}/events`)
       .set('Authorization', `Bearer ${ownerToken}`)
       .set('Idempotency-Key', `answer:${randomUUID()}`)
@@ -197,7 +209,7 @@ describe.skipIf(!REAL_DB)('POST /api/method/sessions/:id/reopen — real Postgre
         payload: { questionId: 'q1', answerState: 'confirmed' },
       });
 
-    const freeze = await request(app)
+    const freeze = await request(httpServer)
       .post(`/api/method/sessions/${sessionId}/freeze`)
       .set('Authorization', `Bearer ${approverToken}`)
       .set('Idempotency-Key', `freeze:${randomUUID()}`)
@@ -218,7 +230,7 @@ describe.skipIf(!REAL_DB)('POST /api/method/sessions/:id/reopen — real Postgre
     expect(before.rows).toHaveLength(1);
     expect(before.rows[0].state).toBe('frozen');
 
-    const res = await request(app)
+    const res = await request(httpServer)
       .post(`/api/method/sessions/${sessionId}/reopen`)
       .set('Authorization', `Bearer ${ownerToken}`)
       .set('Idempotency-Key', `reopen:${randomUUID()}`)
@@ -239,7 +251,7 @@ describe.skipIf(!REAL_DB)('POST /api/method/sessions/:id/reopen — real Postgre
 
     // ★ The old Output's content_hash is bit-for-bit unchanged too — a
     // reopen never touches method_outputs of the session it reopened.
-    const outputAfter = await request(app)
+    const outputAfter = await request(httpServer)
       .get(`/api/method/outputs/${outputId}`)
       .set('Authorization', `Bearer ${ownerToken}`);
     expect(outputAfter.status).toBe(200);
@@ -261,7 +273,7 @@ describe.skipIf(!REAL_DB)('POST /api/method/sessions/:id/reopen — real Postgre
     const { sessionId } = await createFrozenSession();
     const idemKey = `reopen:${randomUUID()}`;
 
-    const first = await request(app)
+    const first = await request(httpServer)
       .post(`/api/method/sessions/${sessionId}/reopen`)
       .set('Authorization', `Bearer ${ownerToken}`)
       .set('Idempotency-Key', idemKey)
@@ -270,7 +282,7 @@ describe.skipIf(!REAL_DB)('POST /api/method/sessions/:id/reopen — real Postgre
     expect(first.body.idempotentReplay).toBe(false);
     const revisionId = first.body.session.id;
 
-    const second = await request(app)
+    const second = await request(httpServer)
       .post(`/api/method/sessions/${sessionId}/reopen`)
       .set('Authorization', `Bearer ${ownerToken}`)
       .set('Idempotency-Key', idemKey)
@@ -290,7 +302,7 @@ describe.skipIf(!REAL_DB)('POST /api/method/sessions/:id/reopen — real Postgre
     // A DIFFERENT idempotency key on the SAME frozen session is a genuinely
     // new request — it mints ANOTHER, distinct revision (idempotency is
     // per-key, not "only one reopen ever").
-    const third = await request(app)
+    const third = await request(httpServer)
       .post(`/api/method/sessions/${sessionId}/reopen`)
       .set('Authorization', `Bearer ${ownerToken}`)
       .set('Idempotency-Key', `reopen:${randomUUID()}`)
@@ -309,7 +321,7 @@ describe.skipIf(!REAL_DB)('POST /api/method/sessions/:id/reopen — real Postgre
     // OBSERVER holds no role at all on this session.
     await grantRole(sessionId, OBSERVER, 'observer');
 
-    const res = await request(app)
+    const res = await request(httpServer)
       .post(`/api/method/sessions/${sessionId}/reopen`)
       .set('Authorization', `Bearer ${observerToken}`)
       .set('Idempotency-Key', `reopen:${randomUUID()}`)
@@ -330,7 +342,7 @@ describe.skipIf(!REAL_DB)('POST /api/method/sessions/:id/reopen — real Postgre
     const { sessionId } = await createFrozenSession();
     await grantRole(sessionId, LEAD, 'lead_assessor');
 
-    const res = await request(app)
+    const res = await request(httpServer)
       .post(`/api/method/sessions/${sessionId}/reopen`)
       .set('Authorization', `Bearer ${leadToken}`)
       .set('Idempotency-Key', `reopen:${randomUUID()}`)
@@ -345,7 +357,7 @@ describe.skipIf(!REAL_DB)('POST /api/method/sessions/:id/reopen — real Postgre
   it('4. reopening a session that is not frozen (e.g. draft) is refused with 409 illegal_transition', async () => {
     const sessionId = await createSession(ownerToken);
 
-    const res = await request(app)
+    const res = await request(httpServer)
       .post(`/api/method/sessions/${sessionId}/reopen`)
       .set('Authorization', `Bearer ${ownerToken}`)
       .set('Idempotency-Key', `reopen:${randomUUID()}`)
@@ -361,7 +373,7 @@ describe.skipIf(!REAL_DB)('POST /api/method/sessions/:id/reopen — real Postgre
   // ---------------------------------------------------------------------------
   it('5. reopen without an Idempotency-Key header is refused with 400', async () => {
     const { sessionId } = await createFrozenSession();
-    const res = await request(app)
+    const res = await request(httpServer)
       .post(`/api/method/sessions/${sessionId}/reopen`)
       .set('Authorization', `Bearer ${ownerToken}`)
       .send({});
@@ -374,7 +386,7 @@ describe.skipIf(!REAL_DB)('POST /api/method/sessions/:id/reopen — real Postgre
   it('6. a different organization gets 403/404 and creates no revision', async () => {
     const { sessionId } = await createFrozenSession();
 
-    const res = await request(app)
+    const res = await request(httpServer)
       .post(`/api/method/sessions/${sessionId}/reopen`)
       .set('Authorization', `Bearer ${otherOrgToken}`)
       .set('Idempotency-Key', `reopen:${randomUUID()}`)
@@ -389,7 +401,7 @@ describe.skipIf(!REAL_DB)('POST /api/method/sessions/:id/reopen — real Postgre
   });
 
   it('6b. reopening a non-existent session id is refused with 404', async () => {
-    const res = await request(app)
+    const res = await request(httpServer)
       .post(`/api/method/sessions/${randomUUID()}/reopen`)
       .set('Authorization', `Bearer ${ownerToken}`)
       .set('Idempotency-Key', `reopen:${randomUUID()}`)
@@ -402,7 +414,7 @@ describe.skipIf(!REAL_DB)('POST /api/method/sessions/:id/reopen — real Postgre
   // ---------------------------------------------------------------------------
   it('7. no Authorization header -> 401', async () => {
     const { sessionId } = await createFrozenSession();
-    const res = await request(app)
+    const res = await request(httpServer)
       .post(`/api/method/sessions/${sessionId}/reopen`)
       .set('Idempotency-Key', `reopen:${randomUUID()}`)
       .send({});

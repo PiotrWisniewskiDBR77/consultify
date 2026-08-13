@@ -45,6 +45,15 @@ if (REAL_DB) process.env.DB_TYPE = 'postgres';
 
 describe.skipIf(!REAL_DB)('Method Kernel roles/approval HTTP surface — real PostgreSQL', () => {
   let app: Express;
+  /**
+   * ★ JEDEN nasłuchujący serwer na plik, zamiast nowego listenera na KAŻDE
+   * żądanie supertest. `request(httpServer)` podnosi efemeryczny listener za każdym
+   * razem — przy 145 wywołaniach w bramce i obciążonej maszynie kończyło się to
+   * `ECONNRESET`, `socket hang up` i `Parse Error: Expected HTTP/`, czyli
+   * migotaniem bramki (2 z 5 przebiegów). To usuwa MECHANIZM, nie objaw —
+   * żadnego retry, żadnego wyciszania.
+   */
+  let httpServer: import('node:http').Server;
   let pool: import('pg').Pool;
 
   const SUFFIX = randomUUID().slice(0, 8);
@@ -117,10 +126,13 @@ describe.skipIf(!REAL_DB)('Method Kernel roles/approval HTTP surface — real Po
     app = express();
     app.use(express.json());
     app.use('/api/method', methodCoreRoutes);
+    httpServer = app.listen(0);
     app.use('/api/method', methodCoreRolesRoutes);
   });
 
   afterAll(async () => {
+
+    await new Promise<void>((r) => httpServer.close(() => r()));
     await pool.query(`DELETE FROM users WHERE id = ANY($1)`, [[OWNER, LEAD, APPROVER, OTHER_ORG_USER]]);
     await pool.query(`DELETE FROM organizations WHERE id = ANY($1)`, [[ORG, OTHER_ORG]]);
     await pool.end();
@@ -129,7 +141,7 @@ describe.skipIf(!REAL_DB)('Method Kernel roles/approval HTTP surface — real Po
   // -- helpers ----------------------------------------------------------------
 
   async function createSession(token: string): Promise<string> {
-    const res = await request(app)
+    const res = await request(httpServer)
       .post('/api/method/sessions')
       .set('Authorization', `Bearer ${token}`)
       .set('Idempotency-Key', `create:${randomUUID()}`)
@@ -147,7 +159,7 @@ describe.skipIf(!REAL_DB)('Method Kernel roles/approval HTTP surface — real Po
   }
 
   async function grantRole(actorToken: string, sessionId: string, userId: string, role: string) {
-    return request(app)
+    return request(httpServer)
       .post(`/api/method/sessions/${sessionId}/roles`)
       .set('Authorization', `Bearer ${actorToken}`)
       .send({ userId, role });
@@ -163,7 +175,7 @@ describe.skipIf(!REAL_DB)('Method Kernel roles/approval HTTP surface — real Po
       throw new Error(`driveToInReview: granting lead_assessor failed: ${grant.status} ${JSON.stringify(grant.body)}`);
     }
     for (const to of ['prepared', 'active', 'in_review']) {
-      const res = await request(app)
+      const res = await request(httpServer)
         .post(`/api/method/sessions/${sessionId}/transition`)
         .set('Authorization', `Bearer ${ownerToken}`)
         .set('Idempotency-Key', `transition:${to}:${randomUUID()}`)
@@ -175,7 +187,7 @@ describe.skipIf(!REAL_DB)('Method Kernel roles/approval HTTP surface — real Po
   }
 
   async function freezeSession(sessionId: string, actorToken: string) {
-    await request(app)
+    await request(httpServer)
       .post(`/api/method/sessions/${sessionId}/events`)
       .set('Authorization', `Bearer ${ownerToken}`)
       .set('Idempotency-Key', `evidence:${randomUUID()}`)
@@ -184,7 +196,7 @@ describe.skipIf(!REAL_DB)('Method Kernel roles/approval HTTP surface — real Po
         unitId: '1A',
         payload: { evidenceId: `ev-${randomUUID()}`, evidenceType: 'document', strength: 'E2' },
       });
-    await request(app)
+    await request(httpServer)
       .post(`/api/method/sessions/${sessionId}/events`)
       .set('Authorization', `Bearer ${ownerToken}`)
       .set('Idempotency-Key', `answer:${randomUUID()}`)
@@ -194,7 +206,7 @@ describe.skipIf(!REAL_DB)('Method Kernel roles/approval HTTP surface — real Po
         level: 3,
         payload: { questionId: 'q1', answerState: 'confirmed' },
       });
-    return request(app)
+    return request(httpServer)
       .post(`/api/method/sessions/${sessionId}/freeze`)
       .set('Authorization', `Bearer ${actorToken}`)
       .set('Idempotency-Key', `freeze:${randomUUID()}`)
@@ -246,13 +258,13 @@ describe.skipIf(!REAL_DB)('Method Kernel roles/approval HTTP surface — real Po
     const sessionId = await createSession(ownerToken);
     await driveToInReview(sessionId);
 
-    const noComment = await request(app)
+    const noComment = await request(httpServer)
       .post(`/api/method/sessions/${sessionId}/send-back`)
       .set('Authorization', `Bearer ${ownerToken}`)
       .send({});
     expect(noComment.status).toBe(400);
 
-    const withComment = await request(app)
+    const withComment = await request(httpServer)
       .post(`/api/method/sessions/${sessionId}/send-back`)
       .set('Authorization', `Bearer ${ownerToken}`)
       .send({ comment: 'Brakuje dowodu na 1A poziom 3 — proszę uzupełnić.' });
@@ -283,7 +295,7 @@ describe.skipIf(!REAL_DB)('Method Kernel roles/approval HTTP surface — real Po
     // Record the approval decision itself — the generic events endpoint
     // (S1's, pre-existing) is the documented way a caller ties a
     // DECISION_APPROVED event to the revision it approves.
-    const approveEvent = await request(app)
+    const approveEvent = await request(httpServer)
       .post(`/api/method/sessions/${sessionId}/events`)
       .set('Authorization', `Bearer ${approverToken}`)
       .set('Idempotency-Key', `approve:${randomUUID()}`)
@@ -299,7 +311,7 @@ describe.skipIf(!REAL_DB)('Method Kernel roles/approval HTTP surface — real Po
       });
     expect(approveEvent.status).toBe(201);
 
-    const trailBeforeSendBack = await request(app)
+    const trailBeforeSendBack = await request(httpServer)
       .get(`/api/method/sessions/${sessionId}/approval-trail`)
       .set('Authorization', `Bearer ${approverToken}`);
     expect(trailBeforeSendBack.status).toBe(200);
@@ -309,7 +321,7 @@ describe.skipIf(!REAL_DB)('Method Kernel roles/approval HTTP surface — real Po
     expect(trailBeforeSendBack.body.trail[0].sessionId).toBe(sessionId);
 
     // Send back the FROZEN session — reopens into a new revision.
-    const sendBack = await request(app)
+    const sendBack = await request(httpServer)
       .post(`/api/method/sessions/${sessionId}/send-back`)
       .set('Authorization', `Bearer ${approverToken}`)
       .send({ comment: 'Po dalszej analizie: proszę o dodatkowy dowód przed ponownym zamrożeniem.' });
@@ -321,7 +333,7 @@ describe.skipIf(!REAL_DB)('Method Kernel roles/approval HTTP surface — real Po
     expect(sendBack.body.newRevision.revisionOfSessionId).toBe(sessionId);
 
     // OLD revision's trail now has approval + send-back, both scoped to it.
-    const oldTrail = await request(app)
+    const oldTrail = await request(httpServer)
       .get(`/api/method/sessions/${sessionId}/approval-trail`)
       .set('Authorization', `Bearer ${approverToken}`);
     expect(oldTrail.body.trail.map((e: { type: string }) => e.type).sort()).toEqual(
@@ -332,7 +344,7 @@ describe.skipIf(!REAL_DB)('Method Kernel roles/approval HTTP surface — real Po
     expect(sentBackEntry.sessionId).toBe(sessionId);
 
     // NEW revision's trail is EMPTY — it never inherited the old decisions.
-    const newTrail = await request(app)
+    const newTrail = await request(httpServer)
       .get(`/api/method/sessions/${newRevisionId}/approval-trail`)
       .set('Authorization', `Bearer ${approverToken}`);
     expect(newTrail.status).toBe(200);
@@ -346,14 +358,14 @@ describe.skipIf(!REAL_DB)('Method Kernel roles/approval HTTP surface — real Po
     const sessionId = await createSession(ownerToken);
     await grantRole(ownerToken, sessionId, LEAD, 'reviewer');
 
-    const revoke = await request(app)
+    const revoke = await request(httpServer)
       .delete(`/api/method/sessions/${sessionId}/roles/${LEAD}/reviewer`)
       .set('Authorization', `Bearer ${ownerToken}`);
     expect(revoke.status).toBe(200);
     expect(revoke.body.revoked).toBe(true);
 
     // Current-state list no longer shows it.
-    const current = await request(app)
+    const current = await request(httpServer)
       .get(`/api/method/sessions/${sessionId}/roles`)
       .set('Authorization', `Bearer ${ownerToken}`);
     expect(current.body.roles.some((r: { userId: string; role: string }) => r.userId === LEAD && r.role === 'reviewer')).toBe(
@@ -361,7 +373,7 @@ describe.skipIf(!REAL_DB)('Method Kernel roles/approval HTTP surface — real Po
     );
 
     // History still shows BOTH the grant and the revoke.
-    const history = await request(app)
+    const history = await request(httpServer)
       .get(`/api/method/sessions/${sessionId}/roles/history`)
       .set('Authorization', `Bearer ${ownerToken}`);
     expect(history.status).toBe(200);
@@ -378,7 +390,7 @@ describe.skipIf(!REAL_DB)('Method Kernel roles/approval HTTP surface — real Po
     const assign = await grantRole(otherOrgToken, sessionId, OTHER_ORG_USER, 'observer');
     expect([403, 404]).toContain(assign.status);
 
-    const read = await request(app)
+    const read = await request(httpServer)
       .get(`/api/method/sessions/${sessionId}/roles`)
       .set('Authorization', `Bearer ${otherOrgToken}`);
     expect([403, 404]).toContain(read.status);
@@ -412,7 +424,7 @@ describe.skipIf(!REAL_DB)('Method Kernel roles/approval HTTP surface — real Po
     expect(rows.rows).toHaveLength(1);
 
     // History also gets exactly ONE 'granted' entry, not two.
-    const history = await request(app)
+    const history = await request(httpServer)
       .get(`/api/method/sessions/${sessionId}/roles/history`)
       .set('Authorization', `Bearer ${ownerToken}`);
     const grants = history.body.history.filter(
@@ -430,10 +442,10 @@ describe.skipIf(!REAL_DB)('Method Kernel roles/approval HTTP surface — real Po
     await grantRole(ownerToken, sessionId, APPROVER, 'reviewer');
     await grantRole(ownerToken, sessionId, LEAD, 'assessor');
 
-    const first = await request(app)
+    const first = await request(httpServer)
       .get(`/api/method/sessions/${sessionId}/roles`)
       .set('Authorization', `Bearer ${ownerToken}`);
-    const second = await request(app)
+    const second = await request(httpServer)
       .get(`/api/method/sessions/${sessionId}/roles`)
       .set('Authorization', `Bearer ${ownerToken}`);
     expect(first.body.roles).toEqual(second.body.roles);
@@ -441,7 +453,7 @@ describe.skipIf(!REAL_DB)('Method Kernel roles/approval HTTP surface — real Po
 
   it('9. no Authorization header -> 401', async () => {
     const sessionId = await createSession(ownerToken);
-    const res = await request(app).get(`/api/method/sessions/${sessionId}/roles`);
+    const res = await request(httpServer).get(`/api/method/sessions/${sessionId}/roles`);
     expect(res.status).toBe(401);
   });
 
@@ -459,7 +471,7 @@ describe.skipIf(!REAL_DB)('Method Kernel roles/approval HTTP surface — real Po
     expect(freezeRes.status).toBe(200);
     const versionAtFreeze = freezeRes.body.session.version;
 
-    await request(app)
+    await request(httpServer)
       .post(`/api/method/sessions/${sessionId}/events`)
       .set('Authorization', `Bearer ${approverToken}`)
       .set('Idempotency-Key', `approve:${randomUUID()}`)
@@ -469,7 +481,7 @@ describe.skipIf(!REAL_DB)('Method Kernel roles/approval HTTP surface — real Po
         payload: { decisionId: randomUUID(), subject: 'freeze', rationale: 'Zatwierdzam.', version: versionAtFreeze },
       });
 
-    const trail = await request(app)
+    const trail = await request(httpServer)
       .get(`/api/method/sessions/${sessionId}/approval-trail`)
       .set('Authorization', `Bearer ${ownerToken}`);
     expect(trail.status).toBe(200);

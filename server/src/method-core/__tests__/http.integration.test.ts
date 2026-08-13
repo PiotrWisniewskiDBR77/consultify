@@ -35,6 +35,15 @@ if (REAL_DB) process.env.DB_TYPE = 'postgres';
 
 describe.skipIf(!REAL_DB)('Method Kernel HTTP surface — real PostgreSQL', () => {
   let app: Express;
+  /**
+   * ★ JEDEN nasłuchujący serwer na plik, zamiast nowego listenera na KAŻDE
+   * żądanie supertest. `request(httpServer)` podnosi efemeryczny listener za każdym
+   * razem — przy 145 wywołaniach w bramce i obciążonej maszynie kończyło się to
+   * `ECONNRESET`, `socket hang up` i `Parse Error: Expected HTTP/`, czyli
+   * migotaniem bramki (2 z 5 przebiegów). To usuwa MECHANIZM, nie objaw —
+   * żadnego retry, żadnego wyciszania.
+   */
+  let httpServer: import('node:http').Server;
   let pool: import('pg').Pool;
 
   const SUFFIX = randomUUID().slice(0, 8);
@@ -115,9 +124,12 @@ describe.skipIf(!REAL_DB)('Method Kernel HTTP surface — real PostgreSQL', () =
     app = express();
     app.use(express.json());
     app.use('/api/method', methodCoreRoutes);
+    httpServer = app.listen(0);
   });
 
   afterAll(async () => {
+
+    await new Promise<void>((r) => httpServer.close(() => r()));
     // Additive-only cleanup, cascading from organizations (every method_* FK
     // is ON DELETE CASCADE — see server/migrations/20260813_method_core_kernel.sql
     // and .../20260813_method_outputs.sql). users.organization_id has NO
@@ -131,7 +143,7 @@ describe.skipIf(!REAL_DB)('Method Kernel HTTP surface — real PostgreSQL', () =
 
   async function createSession(token: string, overrides: Record<string, unknown> = {}) {
     const idemKey = `create:${randomUUID()}`;
-    const res = await request(app)
+    const res = await request(httpServer)
       .post('/api/method/sessions')
       .set('Authorization', `Bearer ${token}`)
       .set('Idempotency-Key', idemKey)
@@ -158,7 +170,7 @@ describe.skipIf(!REAL_DB)('Method Kernel HTTP surface — real PostgreSQL', () =
       [randomUUID(), ORG, sessionId, OWNER]
     );
     for (const to of ['prepared', 'active', 'in_review']) {
-      const res = await request(app)
+      const res = await request(httpServer)
         .post(`/api/method/sessions/${sessionId}/transition`)
         .set('Authorization', `Bearer ${ownerToken}`)
         .set('Idempotency-Key', `transition:${to}:${randomUUID()}`)
@@ -182,7 +194,7 @@ describe.skipIf(!REAL_DB)('Method Kernel HTTP surface — real PostgreSQL', () =
     expect(row.rows[0].organization_id).toBe(ORG);
     expect(row.rows[0].state).toBe('draft');
 
-    const resumeRes = await request(app)
+    const resumeRes = await request(httpServer)
       .get(`/api/method/sessions/${sessionId}`)
       .set('Authorization', `Bearer ${ownerToken}`);
     expect(resumeRes.status).toBe(200);
@@ -199,7 +211,7 @@ describe.skipIf(!REAL_DB)('Method Kernel HTTP surface — real PostgreSQL', () =
     const sessionId = createRes.body.session.id;
     const idemKey = `append:${randomUUID()}`;
 
-    const first = await request(app)
+    const first = await request(httpServer)
       .post(`/api/method/sessions/${sessionId}/events`)
       .set('Authorization', `Bearer ${ownerToken}`)
       .set('Idempotency-Key', idemKey)
@@ -211,7 +223,7 @@ describe.skipIf(!REAL_DB)('Method Kernel HTTP surface — real PostgreSQL', () =
       });
     expect(first.status).toBe(201);
 
-    const second = await request(app)
+    const second = await request(httpServer)
       .post(`/api/method/sessions/${sessionId}/events`)
       .set('Authorization', `Bearer ${ownerToken}`)
       .set('Idempotency-Key', idemKey)
@@ -243,7 +255,7 @@ describe.skipIf(!REAL_DB)('Method Kernel HTTP surface — real PostgreSQL', () =
       sessionId,
     ]);
 
-    const res = await request(app)
+    const res = await request(httpServer)
       .post(`/api/method/sessions/${sessionId}/transition`)
       .set('Authorization', `Bearer ${ownerToken}`)
       .set('Idempotency-Key', `transition:${randomUUID()}`)
@@ -275,7 +287,7 @@ describe.skipIf(!REAL_DB)('Method Kernel HTTP surface — real PostgreSQL', () =
     );
     // Give the finding a supporting-evidence event so the derived Output has
     // >= 1 finding (MethodOutputService.validateFreezeInput requirement).
-    await request(app)
+    await request(httpServer)
       .post(`/api/method/sessions/${sessionId}/events`)
       .set('Authorization', `Bearer ${ownerToken}`)
       .set('Idempotency-Key', `evidence:${randomUUID()}`)
@@ -284,7 +296,7 @@ describe.skipIf(!REAL_DB)('Method Kernel HTTP surface — real PostgreSQL', () =
         unitId: '1A',
         payload: { evidenceId: `ev-${randomUUID()}`, evidenceType: 'document', strength: 'E2' },
       });
-    await request(app)
+    await request(httpServer)
       .post(`/api/method/sessions/${sessionId}/events`)
       .set('Authorization', `Bearer ${ownerToken}`)
       .set('Idempotency-Key', `answer:${randomUUID()}`)
@@ -296,7 +308,7 @@ describe.skipIf(!REAL_DB)('Method Kernel HTTP surface — real PostgreSQL', () =
       });
 
     const freezeKey = `freeze:${randomUUID()}`;
-    const first = await request(app)
+    const first = await request(httpServer)
       .post(`/api/method/sessions/${sessionId}/freeze`)
       .set('Authorization', `Bearer ${approverToken}`)
       .set('Idempotency-Key', freezeKey)
@@ -305,7 +317,7 @@ describe.skipIf(!REAL_DB)('Method Kernel HTTP surface — real PostgreSQL', () =
     expect(first.body.output).toBeTruthy();
     const outputId = first.body.output.id;
 
-    const second = await request(app)
+    const second = await request(httpServer)
       .post(`/api/method/sessions/${sessionId}/freeze`)
       .set('Authorization', `Bearer ${approverToken}`)
       .set('Idempotency-Key', freezeKey)
@@ -326,7 +338,7 @@ describe.skipIf(!REAL_DB)('Method Kernel HTTP surface — real PostgreSQL', () =
     await driveToInReview(sessionId);
     // OWNER holds owner + lead_assessor, deliberately NOT approver.
 
-    const res = await request(app)
+    const res = await request(httpServer)
       .post(`/api/method/sessions/${sessionId}/freeze`)
       .set('Authorization', `Bearer ${ownerToken}`)
       .set('Idempotency-Key', `freeze:${randomUUID()}`)
@@ -347,14 +359,14 @@ describe.skipIf(!REAL_DB)('Method Kernel HTTP surface — real PostgreSQL', () =
     const createRes = await createSession(ownerToken);
     const sessionId = createRes.body.session.id;
 
-    const res = await request(app)
+    const res = await request(httpServer)
       .get(`/api/method/sessions/${sessionId}`)
       .set('Authorization', `Bearer ${otherOrgToken}`);
 
     expect(res.status).toBe(403);
     expect(res.body.session).toBeUndefined();
 
-    const eventsRes = await request(app)
+    const eventsRes = await request(httpServer)
       .get(`/api/method/sessions/${sessionId}/events`)
       .set('Authorization', `Bearer ${otherOrgToken}`);
     expect(eventsRes.status).toBe(403);
@@ -364,7 +376,7 @@ describe.skipIf(!REAL_DB)('Method Kernel HTTP surface — real PostgreSQL', () =
   // 7. no auth -> 401
   // ---------------------------------------------------------------------------
   it('7. a request with no Authorization header is refused with 401', async () => {
-    const res = await request(app).get('/api/method/packs');
+    const res = await request(httpServer).get('/api/method/packs');
     expect(res.status).toBe(401);
   });
 
@@ -380,27 +392,27 @@ describe.skipIf(!REAL_DB)('Method Kernel HTTP surface — real PostgreSQL', () =
        VALUES ($1, $2, $3, $4, 'approver', now()) ON CONFLICT (session_id, user_id, role) DO NOTHING`,
       [randomUUID(), ORG, sessionId, APPROVER]
     );
-    await request(app)
+    await request(httpServer)
       .post(`/api/method/sessions/${sessionId}/events`)
       .set('Authorization', `Bearer ${ownerToken}`)
       .set('Idempotency-Key', `evidence:${randomUUID()}`)
       .send({ type: 'EVIDENCE_ATTACHED', unitId: '1A', payload: { evidenceId: `ev-${randomUUID()}`, evidenceType: 'document', strength: 'E2' } });
-    const freeze = await request(app)
+    const freeze = await request(httpServer)
       .post(`/api/method/sessions/${sessionId}/freeze`)
       .set('Authorization', `Bearer ${approverToken}`)
       .set('Idempotency-Key', `freeze:${randomUUID()}`)
       .send({});
     const outputId = freeze.body.output.id;
 
-    const put = await request(app)
+    const put = await request(httpServer)
       .put(`/api/method/outputs/${outputId}`)
       .set('Authorization', `Bearer ${ownerToken}`)
       .send({ scope: 'MUTATED' });
-    const patch = await request(app)
+    const patch = await request(httpServer)
       .patch(`/api/method/outputs/${outputId}`)
       .set('Authorization', `Bearer ${ownerToken}`)
       .send({ scope: 'MUTATED' });
-    const del = await request(app).delete(`/api/method/outputs/${outputId}`).set('Authorization', `Bearer ${ownerToken}`);
+    const del = await request(httpServer).delete(`/api/method/outputs/${outputId}`).set('Authorization', `Bearer ${ownerToken}`);
 
     expect(put.status).toBe(404);
     expect(patch.status).toBe(404);
@@ -422,19 +434,19 @@ describe.skipIf(!REAL_DB)('Method Kernel HTTP surface — real PostgreSQL', () =
        VALUES ($1, $2, $3, $4, 'approver', now()) ON CONFLICT (session_id, user_id, role) DO NOTHING`,
       [randomUUID(), ORG, sessionId, APPROVER]
     );
-    await request(app)
+    await request(httpServer)
       .post(`/api/method/sessions/${sessionId}/events`)
       .set('Authorization', `Bearer ${ownerToken}`)
       .set('Idempotency-Key', `evidence:${randomUUID()}`)
       .send({ type: 'EVIDENCE_ATTACHED', unitId: '1A', payload: { evidenceId: `ev-${randomUUID()}`, evidenceType: 'document', strength: 'E2' } });
-    const freeze = await request(app)
+    const freeze = await request(httpServer)
       .post(`/api/method/sessions/${sessionId}/freeze`)
       .set('Authorization', `Bearer ${approverToken}`)
       .set('Idempotency-Key', `freeze:${randomUUID()}`)
       .send({});
     const output = freeze.body.output;
 
-    const outputRes = await request(app)
+    const outputRes = await request(httpServer)
       .get(`/api/method/outputs/${output.id}`)
       .set('Authorization', `Bearer ${ownerToken}`);
     expect(outputRes.status).toBe(200);
@@ -450,7 +462,7 @@ describe.skipIf(!REAL_DB)('Method Kernel HTTP surface — real PostgreSQL', () =
     const { computeContentHash } = await import('../db.js');
     const expectedHash = computeContentHash(content);
 
-    const reportRes = await request(app)
+    const reportRes = await request(httpServer)
       .post(`/api/method/outputs/${output.id}/report`)
       .set('Authorization', `Bearer ${ownerToken}`)
       .send({ title: 'P0 test report', content });
@@ -473,12 +485,12 @@ describe.skipIf(!REAL_DB)('Method Kernel HTTP surface — real PostgreSQL', () =
        VALUES ($1, $2, $3, $4, 'approver', now()) ON CONFLICT (session_id, user_id, role) DO NOTHING`,
       [randomUUID(), ORG, sessionId, APPROVER]
     );
-    await request(app)
+    await request(httpServer)
       .post(`/api/method/sessions/${sessionId}/events`)
       .set('Authorization', `Bearer ${ownerToken}`)
       .set('Idempotency-Key', `evidence:${randomUUID()}`)
       .send({ type: 'EVIDENCE_ATTACHED', unitId: '1A', payload: { evidenceId: `ev-${randomUUID()}`, evidenceType: 'document', strength: 'E2' } });
-    const freeze = await request(app)
+    const freeze = await request(httpServer)
       .post(`/api/method/sessions/${sessionId}/freeze`)
       .set('Authorization', `Bearer ${approverToken}`)
       .set('Idempotency-Key', `freeze:${randomUUID()}`)
@@ -486,7 +498,7 @@ describe.skipIf(!REAL_DB)('Method Kernel HTTP surface — real PostgreSQL', () =
     const output = freeze.body.output;
     const findingId = output.findings[0].id;
 
-    const draftRes = await request(app)
+    const draftRes = await request(httpServer)
       .post(`/api/method/outputs/${output.id}/initiative-drafts`)
       .set('Authorization', `Bearer ${ownerToken}`)
       .send({
@@ -509,7 +521,7 @@ describe.skipIf(!REAL_DB)('Method Kernel HTTP surface — real PostgreSQL', () =
     expect(columnNames).not.toContain('registered_initiative_id');
 
     // No such route exists at all — a plausible "register" endpoint 404s.
-    const registerAttempt = await request(app)
+    const registerAttempt = await request(httpServer)
       .post(`/api/method/outputs/${output.id}/initiative-drafts/${draftRes.body.draft.id}/register`)
       .set('Authorization', `Bearer ${ownerToken}`)
       .send({});
@@ -528,7 +540,7 @@ describe.skipIf(!REAL_DB)('Method Kernel HTTP surface — real PostgreSQL', () =
        VALUES ($1, $2, $3, $4, 'approver', now()) ON CONFLICT (session_id, user_id, role) DO NOTHING`,
       [randomUUID(), ORG, sessionId, APPROVER]
     );
-    await request(app)
+    await request(httpServer)
       .post(`/api/method/sessions/${sessionId}/events`)
       .set('Authorization', `Bearer ${ownerToken}`)
       .set('Idempotency-Key', `evidence:${randomUUID()}`)
@@ -554,7 +566,7 @@ describe.skipIf(!REAL_DB)('Method Kernel HTTP surface — real PostgreSQL', () =
     const preOutputs = await pool.query(`SELECT id FROM method_outputs WHERE session_id = $1`, [sessionId]);
     expect(preOutputs.rows).toHaveLength(0); // confirms the interruption is real: no Output yet
 
-    const first = await request(app)
+    const first = await request(httpServer)
       .post(`/api/method/sessions/${sessionId}/freeze`)
       .set('Authorization', `Bearer ${approverToken}`)
       .set('Idempotency-Key', `freeze-heal:${randomUUID()}`)
@@ -564,7 +576,7 @@ describe.skipIf(!REAL_DB)('Method Kernel HTTP surface — real PostgreSQL', () =
     expect(first.body.output).toBeTruthy();
     const healedOutputId = first.body.output.id;
 
-    const second = await request(app)
+    const second = await request(httpServer)
       .post(`/api/method/sessions/${sessionId}/freeze`)
       .set('Authorization', `Bearer ${approverToken}`)
       .set('Idempotency-Key', `freeze-heal-retry:${randomUUID()}`)
