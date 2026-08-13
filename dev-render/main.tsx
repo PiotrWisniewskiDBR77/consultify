@@ -56,7 +56,13 @@ const DocumentStudioSaveAsTemplateScreen = React.lazy(
   () => import('./screens/document-studio-save-as-template')
 );
 const MenuCanonSidebarCheckScreen = React.lazy(() => import('./screens/menu-canon-sidebar-check'));
-const ToolsSesjaWyjscieScreen = React.lazy(() => import('./screens/tools-sesja-wyjscie'));
+// (2026-08-13, T5) `./screens/tools-sesja-wyjscie.tsx` does not exist in this
+// worktree (dangling import — same class of defect as commit 8b379a0eb9
+// fixed elsewhere) and Vite's import-analysis plugin fails HARD on it at
+// transform time, breaking every dev-render screen, not just this one —
+// removed the registration to unblock the harness. Not part of T5's scope
+// (Assessment); flag for whoever owns the NARZĘDZIA tools-sesja-wyjscie
+// screen to re-add the real file.
 const AssessmentQualityReviewPanelScreen = React.lazy(
   () => import('./screens/assessment-quality-review-panel')
 );
@@ -248,8 +254,22 @@ const Mw007CalendarNarrowViewportScreen = React.lazy(
   () => import('./screens/mw-007-calendar-narrow-viewport')
 );
 const MethodWorkspaceScreen = React.lazy(() => import('./screens/method-workspace'));
+const DrdHttpWorkspaceScreen = React.lazy(() => import('./screens/drd-http-workspace'));
+const AssessmentArtifactsRestartScreen = React.lazy(
+  () => import('./screens/assessment-artifacts-restart')
+);
 
 const SCREENS: Record<string, { label: string; render: () => React.ReactElement }> = {
+  'drd-http-workspace': {
+    label:
+      'T5 — REALNY <DrdHttpMethodWorkspaceScreen> (P0C, HTTP source-of-truth, ff drdHttpSourceOfTruthV1 not-yet-wired) — &stage=fresh|inprogress|blocked|frozen &state=loading|error|offline|conflict &view=interview|split|matrix',
+    render: () => <DrdHttpWorkspaceScreen />,
+  },
+  'assessment-artifacts-restart': {
+    label:
+      'T5 — REALNY <AssessmentHub initialTab="outputs"> (AssessmentOutputsTab P0D kernel rewrite, 2026-08-13) — &tab=outputs|reports|initiatives &select=1 &lineage=1',
+    render: () => <AssessmentArtifactsRestartScreen />,
+  },
   'method-workspace': {
     label:
       'A5 — Method Workspace shell (interview/split/matrix), ff methodWorkspaceShellV1. &view=interview|split|matrix &state=default|resolution|savefailed|teresaRich',
@@ -332,11 +352,6 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'AUDYTY — zakładka „Raporty DRD" (ff_drd_report) + DRDAuditReportView. ?variant=list|report',
     render: () => <AudytyDrdReportScreen />,
-  },
-  'tools-sesja-wyjscie': {
-    label:
-      'NARZĘDZIA — otwarta sesja narzędzia: wyjście z sesji (Menu 3 „List" + chip z ×, akcje cyklu życia, Menu 2 wyprowadza z karty)',
-    render: () => <ToolsSesjaWyjscieScreen />,
   },
   'assessment-quality-review-panel': {
     label:
