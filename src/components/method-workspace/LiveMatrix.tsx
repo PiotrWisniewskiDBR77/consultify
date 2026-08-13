@@ -229,8 +229,18 @@ export const LiveMatrix: React.FC<LiveMatrixProps> = ({
                     <span className="text-[11px] text-c-text-muted">Nieocenione</span>
                   ) : (
                     <span className="inline-flex items-baseline gap-1 text-[11px]">
-                      <span className="font-semibold text-c-text">
-                        {readout.current != null ? `L${readout.current}` : '—'}
+                      {/* ★ Bylo tu golo „—", ktore czyta sie jak brakujaca
+                          dana, a nie jak „oceniono, ale zaden poziom nie jest
+                          jeszcze osiagniety". To dwie rozne rzeczy — ta sama
+                          klasa bledu co mylenie nieocenionego z luka dowodowa. */}
+                      <span
+                        className={
+                          readout.current != null
+                            ? 'font-semibold text-c-text'
+                            : 'font-medium text-c-text-secondary'
+                        }
+                      >
+                        {readout.current != null ? `L${readout.current}` : 'poniżej L1'}
                       </span>
                       <span className="text-c-text-muted">→</span>
                       <span className="text-c-text-secondary">
