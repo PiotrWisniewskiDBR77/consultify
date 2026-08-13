@@ -22,6 +22,12 @@ export type PackContentStatus =
   | 'PACK_COMPLETE'
   /** Część sekcji wypełniona, reszta jawnie oznaczona jako brakująca. */
   | 'PACK_PARTIAL'
+  /**
+   * Merytoryka ISTNIEJE i jest zweryfikowana (np. silnik w `src/config/<tool>/`),
+   * ale Pack nie został jeszcze spisany. To NIE jest brak dowodów — mylenie tych
+   * dwóch stanów zaniżałoby realny stan 18 narzędzi z działającymi silnikami.
+   */
+  | 'PACK_NOT_AUTHORED'
   /** Brak potwierdzonej merytoryki w repo — NIE zgadujemy. */
   | 'EVIDENCE_MISSING';
 
