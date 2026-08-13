@@ -12,8 +12,8 @@
 | Baseline | `f3e7df565e` (== `origin/demo`) |
 | Contract SHA (kernel zamrożony) | `e3b8be6cd7` |
 | Poprzedni checkpoint (A9) | `0f4a1a53a6` |
-| **Candidate SHA** | `b46fb18602` |
-| Commitów od baseline | **111** |
+| **Candidate SHA** | `<uzupełniane na końcu>` |
+| Commitów od baseline | **125** |
 | `git status --porcelain` | 0 |
 | Gałęzi zdalnych z HEAD | **0** — zero push |
 
@@ -26,13 +26,15 @@ npm run test:method-core:front    # --exclude 'server/**'
 
 | Bramka | Exit | Wynik |
 | --- | ---: | --- |
-| serwer (realny PostgreSQL) | **0** | **161 / 161** (13 plików) |
-| front | **0** | **305 / 313** (8 skipped = testy live za flagą `RUN_TERESA_LIVE_TESTS`) |
+| serwer (realny PostgreSQL) | **0** | **170 / 170** (14 plików) |
+| front | **0** | **323 / 331** (8 skipped = testy live za flagą `RUN_TERESA_LIVE_TESTS`) |
+| obszary dotknięte (szerzej niż bramka) | **0** | **526 / 534** |
+| instalacja od zera (świeży kontener) | **0** | 6 migracji `method_core` w kolejności, **14 tabel `method_*` potwierdzonych w `information_schema`** — nie kodem wyjścia |
 | SIRI | **0** | **61 / 61** |
 | Teresa live (żywy serwer, przebieg Opusa) | **0** | **8 / 8** |
 
 ★ **Stabilność bramki serwera dowiedziona co do zakresu**, nie zaklepana:
-13 plików testowych na dysku = 13 raportowanych, **0 pominiętych** (G14).
+**14 plików testowych na dysku = 14 raportowanych, 0 pominiętych** (G14, przeliczone po S8).
 Migotanie (`socket hang up` przy 13 równoległych plikach dzielących pulę PG)
 rozwiązane **ograniczeniem współbieżności, nie retry**.
 
@@ -74,6 +76,7 @@ tym łatwiej było go przyjąć — powtórzone na właściwej parze logów.
 | **CEL 6** — voice | **CZĘŚCIOWO** | ścieżka transcript→draft→preview→commit działa, ten sam callback co ręczne pisanie, provenance `{source:'voice'}`. **Realne audio: NOT VERIFIED** (headless, brak mikrofonu) |
 | **CEL 9** — SIRI | **DOWIEZIONE technicznie** | 16D×Bands 0–5, no-leapfrog z komunikatem, **80:20 jawnie widoczne** z cytatem `Module 5 §3.7`, rationale wymagane, assessor proponuje / uczestnik zatwierdza, TIER na osobnym ekranie. **0/16 wymiarów ma treść** — `EVIDENCE_MISSING`, licencja nietknięta |
 | **CEL 10** — migracje i regresja | **DOWIEZIONE** | fail-closed (`RUN_DB_TESTS`, `MOCK_DB`, realny PG, `current_database()`, `current_schema()`); kontrola negatywna **z plikiem kontrolnym** dowodzącym, że detektor nie jest tautologią; pre-existing dowiedzione przebiegiem na `origin/demo` (`diff` = 0) |
+| **CEL 1** — DRD jako produkt | **DOWIEZIONE** | pełny E2E **19/19 PASS** z **dwoma restartami API+FE** (#1 9022 ms, #2 9024 ms), **bez ani jednego ręcznego SQL**. `POST /sessions/:id/reopen` przez HTTP; lineage potwierdzony SQL-em: sesja root `frozen` + dwie rewizje wskazujące na nią, Output v2 z `revision_of_output_id` → v1, `contentHash` zamrożonego Output **identyczny przed i po reopen** |
 | **A10** | **WYKONANY** | pierwszy odbiór przez Sonnet (reguła #7), **109 zrzutów**, rejestr: 0×P0, 2×P1, 3×P2, 14 PASS, 6 NOT VERIFIED |
 | **CEL 8** — MPQ | **CZĘŚCIOWO** | Report Light/Dark **30/30 PASS**, Presentation Light/Dark **30/30 PASS**, **Work View 22/30 FAIL** (próg 27) |
 
@@ -166,6 +169,31 @@ i wypalał uwagę na ostrzeżenia, które coś znaczą.
 | **Methodology** | **ZABLOKOWANE** | DRD `methodology_review`, SIRI `draft`; `canStartSession()` = **false** dla obu — kod **egzekwuje**, nie obiecuje |
 | **Legal / licensing** | **ZABLOKOWANE dla SIRI** | treść per wymiar objęta klauzulą zakazu reprodukcji; **zero** wygenerowanej treści licencjonowanej |
 | **Runtime** | **warunkowe** | wszystko za flagami domyślnie **OFF**: `methodWorkspaceShellV1`, `drdMethodWorkspaceSliceV1`, `drdHttpSourceOfTruthV1`, `SIRI_PM_V2`, `drdScoringV2` |
+
+---
+
+## 5b. ★ BLOKER PRZED PROMOCJĄ — 192 MB w historii gałęzi
+
+**To jedyna rzecz, którą trzeba załatwić zanim ta gałąź gdziekolwiek pojedzie.**
+
+S8 zacommitował `docs/qa/e2e-full-2026-08-13/network.masked.har` — **192 MB**.
+Maskowanie było **poprawne** (327 redakcji; sprawdziłem: zero `Bearer`, zero JWT —
+trafienia `eyJ` to base64 **sourcemapy**, nie tokeny). Problem nie jest w treści,
+tylko w rozmiarze.
+
+- Plik **wypięty** z indeksu, dowód **zostaje na dysku** obok zrzutów.
+- `*.har` dodane do `.gitignore`, żeby następny agent nie rozstrzygał tego od nowa.
+- **Precedens**: S1b w tej samej fali świadomie nie commitował swoich HAR-ów (~19 MB
+  każdy) z dokładnie tego powodu. Dwóch agentów, dwie decyzje — przyjąłem S1b.
+
+★ **Blob nadal jest w historii tej gałęzi.** Usunięcie pliku nie usuwa obiektu.
+Przed jakimkolwiek `push` trzeba albo oczyścić historię (`git filter-repo`), albo
+odtworzyć gałąź bez tego commita. Inaczej **każdy przyszły klon repo** ciągnie 192 MB
+za jeden plik dowodowy z jednego dnia. `origin/demo` jest celem deployu — to nie
+jest miejsce na taki balast.
+
+Zgłaszam to jako **decyzję koordynatora**, nie robię czyszczenia historii sam:
+przepisanie 122 commitów dotyka gałęzi, na których stoją worktree innych agentów.
 
 ---
 
