@@ -165,13 +165,38 @@ function QuadrantCard({
                 <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-600">
                   {t('discoveryToolsTools.dynamicSwot.buildPhase.swotPoint')}
                 </div>
-                <button
-                  type="button"
-                  onClick={() => removeSWOTItem(item.id)}
-                  className="rounded-lg p-1.5 text-slate-600 transition hover:bg-danger-50 hover:text-danger-600 dark:hover:bg-danger-900/30"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
+                <div className="flex items-center gap-1">
+                  <label className="sr-only" htmlFor={`impact-${item.id}`}>
+                    {t('discoveryToolsTools.dynamicSwot.quadrantStep.highImpact')}
+                  </label>
+                  <select
+                    id={`impact-${item.id}`}
+                    value={item.impact}
+                    onChange={(e) =>
+                      updateSWOTItem(item.id, {
+                        impact: e.target.value as 'high' | 'medium' | 'low',
+                      })
+                    }
+                    className="h-7 rounded-lg border border-slate-200 bg-white px-1.5 text-[11px] text-slate-700 focus:outline-none focus:ring-1 focus:ring-c-focus dark:border-navy-700 dark:bg-navy-900 dark:text-slate-200"
+                  >
+                    <option value="high">
+                      {t('discoveryToolsTools.dynamicSwot.quadrantStep.highImpact')}
+                    </option>
+                    <option value="medium">
+                      {t('discoveryToolsTools.dynamicSwot.quadrantStep.mediumImpact')}
+                    </option>
+                    <option value="low">
+                      {t('discoveryToolsTools.dynamicSwot.quadrantStep.lowImpact')}
+                    </option>
+                  </select>
+                  <button
+                    type="button"
+                    onClick={() => removeSWOTItem(item.id)}
+                    className="rounded-lg p-1.5 text-slate-600 transition hover:bg-danger-50 hover:text-danger-600 dark:hover:bg-danger-900/30"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
               </div>
               <textarea
                 value={item.text}
