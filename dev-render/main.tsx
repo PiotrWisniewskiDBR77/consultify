@@ -69,6 +69,7 @@ const MenuCanonSidebarCheckScreen = React.lazy(() => import('./screens/menu-cano
 const AssessmentQualityReviewPanelScreen = React.lazy(
   () => import('./screens/assessment-quality-review-panel')
 );
+const AssessmentPresentationViewScreen = React.lazy(() => import('./screens/assessment-presentation-view'));
 
 // TEST-ONLY: must import before `../src/i18n` — see file header. Opt-in via
 // `?slowLocale=<ms>`; no effect otherwise.
@@ -431,6 +432,7 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'RN-G3 tor PLATFORMY §1 — DEMONSTRACJA przepisu powłoki klasy L (archetyp Rekord): ArtifactBreadcrumb + NModeShell + ArtifactRightPanel/ArtifactPropertiesTable, zero nowego standardu. &save=idle|saving|saved|error|conflict &teresa=1',
     render: () => <RnG3ClassLRecordShellScreen />,
+  },
   'idea-financial-case-persistence': {
     label:
       'E09 RISK-12 — REALNY <FinancialCaseDialog> z REALNYM zapisem: ?state=empty|loading|dirty|saving|saved|error|conflict|reopened (stanowy mock transportu)',
@@ -518,6 +520,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'ASSESSMENT — ASM-005/006/007: Outputs → evidence/scoring + accept/return + niezmienny output. ?variant=mixed|accepted|empty',
     render: () => <AssessmentQualityReviewPanelScreen />,
+  },
+  'assessment-presentation-view': {
+    label:
+      'ASSESSMENT — Widok prezentacji (9 slajdów z zamrożonego Outputu, tryb pełnoekranowy, zero recompute). ?variant=full|risksOnly|allMet|unknowns|empty|noOutput|notFound|forbidden|offline|badShape &narrative=1',
+    render: () => <AssessmentPresentationViewScreen />,
   },
   'menu-canon-sidebar-check': {
     label:
