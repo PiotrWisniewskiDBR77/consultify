@@ -162,10 +162,10 @@ export const securityHeaders = (req: Request, res: Response, next: NextFunction)
     "base-uri 'self'; " +
     "manifest-src 'self'; " +
     "form-action 'self'; " +
-    "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com; " +
+    "script-src 'self' 'unsafe-inline'; " +
     "style-src 'self' 'unsafe-inline'; " +
     "img-src 'self' data: https://www.transparenttextures.com; " +
-    "connect-src 'self' https://www.google-analytics.com https://region1.google-analytics.com https://www.googletagmanager.com; " +
+    "connect-src 'self'; " +
     "font-src 'self' data:; " +
     "worker-src 'self'; " +
     "object-src 'none'; " +

@@ -788,7 +788,12 @@ app.use(
       ? {
           directives: {
             defaultSrc: ["'self'"],
-            scriptSrc: ["'self'", "'unsafe-inline'", 'https://js.stripe.com'],
+            scriptSrc: [
+              "'self'",
+              "'unsafe-inline'",
+              'https://js.stripe.com',
+              'https://www.googletagmanager.com',
+            ],
             styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
             imgSrc: [
               "'self'",
@@ -810,6 +815,9 @@ app.use(
               'https://*.sentry.io',
               'https://fonts.googleapis.com',
               'https://fonts.gstatic.com',
+              'https://www.google-analytics.com',
+              'https://region1.google-analytics.com',
+              'https://www.googletagmanager.com',
             ],
             fontSrc: ["'self'", 'data:', 'https://fonts.gstatic.com'],
             objectSrc: ["'none'"],

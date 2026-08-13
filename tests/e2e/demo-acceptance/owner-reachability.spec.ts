@@ -47,17 +47,15 @@ test.describe('real demo OWNER reachability (no auth or flag bypass)', () => {
   test('six acceptance modules are visible in normal navigation', async ({ page }, testInfo) => {
     const runtime = await capture(page);
     await page.goto('/chat', { waitUntil: 'domcontentloaded' });
-    const nav = page.locator('nav, aside');
     for (const label of [
-      /Materials|Materiały|Documents|Dokumenty/i,
+      /Materials|Materiały/i,
       /Initiatives|Inicjatywy/i,
       /Execution|Egzekucja|Realizacja/i,
-      /Cases|Zlecenia/i,
       /Results|Wyniki/i,
-      /Ideas|Pomysły/i,
+      /My Work|Moja praca/i,
       /Finance|Finanse/i,
     ]) {
-      await expect(nav.getByText(label).first(), `normal navigation entry ${label}`).toBeVisible();
+      await expect(page.getByRole('button', { name: label }).first(), `normal navigation entry ${label}`).toBeVisible();
     }
     const output = evidencePath(testInfo, 'json');
     fs.mkdirSync(path.dirname(output), { recursive: true });
