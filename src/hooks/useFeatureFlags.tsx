@@ -201,6 +201,20 @@ export const DEFAULT_FLAGS: FeatureFlag[] = [
     allowLocalOverride: true,
   },
   {
+    id: 'methodWorkspaceShellV1',
+    name: 'Method Workspace — shared shell (A5)',
+    description:
+      'A5: common Method Workspace UI shell (MethodWorkspaceShell + Interview Focus + Live ' +
+      'Matrix + Teresa panel + save-state machine) under src/components/method-workspace/, ' +
+      'shared by DRD (A6) and SIRI (A7) vertical slices. Presentational only — reads/writes ' +
+      'MethodSession/MethodReadiness/Teresa contracts from src/method-core/contracts, no ' +
+      'DRD/SIRI-specific rule inside. OFF by default until owner acceptance on the ' +
+      'dev-render screenshots (CLAUDE.md #7); A6/A7 mount it behind this same flag.',
+    defaultValue: false,
+    category: 'experimental',
+    allowLocalOverride: true,
+  },
+  {
     id: 'mindmapHeuristicAiOverlays',
     name: 'Mind Map: Heuristic AI Overlays (DP-5)',
     description:
