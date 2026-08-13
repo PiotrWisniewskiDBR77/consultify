@@ -1,0 +1,10 @@
+{
+  "note": "Reconstructed from server-1.log / server-2.log (docs/qa/e2e-drd-2026-08-13/logs/) after the automated run that reached step 9 was interrupted by this agent's own inter-attempt cleanup (an insufficiently-scoped `pkill` run between test attempts) rather than by the test's own logic or timeout. See step-verdicts.json step 9 and the final report for the full account.",
+  "restart1_stop_signal_received": "2026-08-13T14:33:20.000Z",
+  "restart1_stop_uptime_seconds": 137,
+  "restart1_stop_graceful": true,
+  "restart2_process_spawned": "2026-08-13T14:33:25.000Z",
+  "restart2_last_log_line_before_interruption": "2026-08-13T14:34:06.000Z — still loading routes (RatioAnalysisService), had not reached /api/ready",
+  "restart2_reached_ready": false,
+  "restart2_interrupted_by": "external pkill between test attempts (this agent), not the test's own 90s readiness timeout — see report"
+}

@@ -1,0 +1,27 @@
+2026-08-13 16:33:25:3325 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-08-13 16:33:25:3325 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-08-13 16:33:25:3325 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-08-13 16:33:25:3325 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-08-13 16:33:25:3325 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+2026-08-13 16:33:33:3333 [32minfo[39m: [32m[Redis] Initializing client...[39m
+2026-08-13 16:33:33:3333 [32minfo[39m: [32m[Redis] Connecting to: redis://localhost:6379[39m
+2026-08-13 16:33:35:3335 [32minfo[39m: [32m[FinancialStatementService] Loaded[39m
+2026-08-13 16:33:35:3335 [32minfo[39m: [32m[FinancialModelingService] Loaded[39m
+2026-08-13 16:33:35:3335 [32minfo[39m: [32m[Sentry] Disabled (no SENTRY_DSN or not in production/staging)[39m
+2026-08-13 16:33:35:3335 [32minfo[39m: [32m[Server] Starting HTTP listener eagerly (routes may still be warming up)...[39m
+2026-08-13 16:33:35:3335 [32minfo[39m: [32m[Server] Initializing database...[39m
+2026-08-13 16:33:35:3335 [32minfo[39m: [32m[RateLimit] startup posture: posture=single-replica (inferred, not declared) store=local (default) failMode=closed (default) disableRateLimit=false allowProdDisable=false redisUrl=absent mockRedis=false[39m
+2026-08-13 16:33:36:3336 [32minfo[39m: [32m[DB Config] DATABASE_URL: SET[39m
+2026-08-13 16:33:36:3336 [32minfo[39m: [32m[DB Config] DB_TYPE: postgres[39m
+2026-08-13 16:33:36:3336 [32minfo[39m: [32m[DB Config] Using PostgreSQL[39m
+2026-08-13 16:33:36:3336 [32minfo[39m: [32m[Server] Database instance created:[39m
+2026-08-13 16:34:02:342 [32minfo[39m: [32m[DatabaseInitializer] Starting database initialization...[39m
+2026-08-13 16:34:02:342 [32minfo[39m: [32m[DatabaseInitializer] Database type: postgres[39m
+2026-08-13 16:34:04:344 [32minfo[39m: [32m[AuthRoutes] login handler is type:[39m
+2026-08-13 16:34:06:346 [32minfo[39m: [32m[Economics Routes] Module loaded - TypeScript version[39m
+2026-08-13 16:34:06:346 [32minfo[39m: [32m[Economics Routes] Router type:[39m
+2026-08-13 16:34:06:346 [32minfo[39m: [32m[Economics Routes] Router created. Stack length:[39m
+2026-08-13 16:34:06:346 [32minfo[39m: [32m[Economics Routes] After /analyses route. Stack length:[39m
+2026-08-13 16:34:06:346 [32minfo[39m: [32m[RatioAnalysisService] Loaded[39m
+2026-08-13 16:34:06:346 [33mwarn[39m: [33m[Encryption] No ENCRYPTION_KEY set. Using development fallback key.[39m
+2026-08-13 16:34:06:346 [33mwarn[39m: [33m[Encryption] SET ENCRYPTION_KEY in production![39m

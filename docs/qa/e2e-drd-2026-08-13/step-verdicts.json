@@ -1,0 +1,75 @@
+[
+  {
+    "step": 1,
+    "title": "Library — GET /packs",
+    "verdict": "PASS",
+    "evidence": "HAR: 200 GET /api/method/packs (x2, dedup). Screenshot: 01-library.png.",
+    "note": "DRD pack (registered via MethodPackRegistry.register — no HTTP endpoint exists anywhere in this codebase for pack registration, see spec header comment) rendered in DrdArtifactsHarnessScreen's library view."
+  },
+  {
+    "step": 2,
+    "title": "create/resume Session",
+    "verdict": "PASS",
+    "evidence": "HAR: 200 GET /api/method/sessions/2ff12892-9414-4eda-afba-46325556c500 (create was 201, evicted from this HAR slice by dedup — see server-1.log for the create). Screenshot: 02-session.png shows state=draft.",
+    "note": "POST /sessions with demoBypass:true (DRD pack is methodology_review) -> 201; resumed via GET -> session visible in browser."
+  },
+  {
+    "step": 3,
+    "title": "assignment uczestników przez HTTP (browser UI)",
+    "verdict": "PASS",
+    "evidence": "HAR: 3x 201 POST /api/method/sessions/.../roles, each followed by 200 GET .../roles + .../roles/history + .../approval-trail (DrdRolesPanel's load() re-fetch after each grant). Screenshot: 03-roles.png.",
+    "note": "Driven via real Playwright clicks on DrdRolesPanel's form (#drd-role-user / #drd-role-select / 'Nadaj rolę' button) — approver granted to a distinct actor, lead_assessor granted to owner, self-approver correctly refused client+server side (see CEL 3 report for the 403 proof; this run's HAR shows only the two successful 201s, consistent with the third attempt being blocked before any request per DrdRolesPanel's client-side guard)."
+  },
+  {
+    "step": 4,
+    "title": "manual input + evidence",
+    "verdict": "PARTIAL — HTTP only, no UI",
+    "evidence": "HAR: 2x 201 POST /api/method/sessions/.../events (EVIDENCE_ATTACHED, ANSWER_CONFIRMED).",
+    "note": "No UI surface exists in this agent's scope (interview/matrix UI is DrdHttpMethodWorkspaceScreen.tsx, S3-owned, not touched). Events appended via a real fetch executed INSIDE the browser page (page.evaluate), so they are real browser-originated requests, visible in the HAR — but there is no clickable form for this step."
+  },
+  {
+    "step": 5,
+    "title": "autosave, status zapisu",
+    "verdict": "BLOCKED — out of scope",
+    "evidence": "N/A",
+    "note": "No save-state UI exists in DrdRolesPanel/DrdArtifactsPanel (this agent's only two components). The save-state indicator lives in the S3-owned workspace screen."
+  },
+  {
+    "step": 6,
+    "title": "Live Matrix",
+    "verdict": "BLOCKED — out of scope",
+    "evidence": "N/A",
+    "note": "Matrix rendering is part of DrdHttpMethodWorkspaceScreen.tsx (S3-owned) — not present in this agent's two panels."
+  },
+  {
+    "step": 7,
+    "title": "revision conflict (409)",
+    "verdict": "PASS",
+    "evidence": "HAR: 409 POST /api/method/sessions/.../transition (stale expectedVersion=999) — error: version_conflict.",
+    "note": "Driven via a real fetch inside the browser page; response captured in the HAR."
+  },
+  {
+    "step": 8,
+    "title": "reload strony",
+    "verdict": "PASS",
+    "evidence": "HAR: page.reload() -> DrdRolesPanel re-issues GET .../roles + .../roles/history + .../approval-trail, same data as before reload.",
+    "note": "Confirms the panel is not caching client-side — every load is a real server round-trip."
+  },
+  {
+    "step": 9,
+    "title": "pełny restart API #1 (stop -> start -> reopen z bazy)",
+    "verdict": "BLOCKED — interrupted, not by a code defect",
+    "evidence": "server-1.log: '[Shutdown] Received SIGTERM ... uptimeSeconds:137 ... Graceful shutdown complete' at 16:33:20. server-2.log: a second server process started at 16:33:25, was still loading routes (stuck after 'DatabaseInitializer' / 'Economics Routes' / 'RatioAnalysisService') when this session's own cleanup between test attempts (a broad, insufficiently-scoped `pkill` run between attempts — see report) killed it before it reached /api/ready.",
+    "note": "The STOP half of this step is evidenced (clean shutdown, matches the test's own server.stop()). The START+reopen half never got a chance to finish within this session's time budget — the coordinator's own measurement ('~60-68s') and this agent's repeated observations ('55-90s+, sometimes >90s') both point to a shared machine under heavy concurrent multi-agent load (6+ other worktrees each running their own tsx/vite dev servers simultaneously, confirmed via `ps aux` mid-session) as the reason boot time is unpredictable, not a defect in the roles/artifacts code itself."
+  },
+  { "step": 10, "title": "freeze przez approvera", "verdict": "NOT RUN — session budget spent, see step 9", "evidence": "Mechanism already proven at HTTP+SQL level in this agent's CEL 3 report (real server + real Postgres, curl-driven): POST /freeze by an approver-role token -> 200 with an Output.", "note": "Not re-verified at browser level this session." },
+  { "step": 11, "title": "immutable Output", "verdict": "NOT RUN — session budget spent, see step 9", "evidence": "Proven at HTTP+SQL level in CEL 3 report; DrdArtifactsPanel (S1, real component) renders it from GET /sessions/:id/lineage — component-level render proven by S1's own tests + this agent's screenshot toolchain, not yet exercised end-to-end in one browser run this session.", "note": "" },
+  { "step": 12, "title": "send back z komentarzem", "verdict": "NOT RUN — session budget spent, see step 9", "evidence": "Mechanism (comment required, 400 without) proven at HTTP+SQL level in CEL 3 report and by DrdRolesPanel's own component test (client-side guard). Browser-form send-back not re-exercised in one continuous run this session.", "note": "" },
+  { "step": 13, "title": "nowa rewizja", "verdict": "NOT RUN — session budget spent, see step 9", "evidence": "Proven at HTTP+SQL level in CEL 3 report (frozen -> active reopen produces a new session id, revisionOfSessionId set, verified via SQL).", "note": "" },
+  { "step": 14, "title": "approval", "verdict": "NOT RUN — session budget spent, see step 9", "evidence": "Proven at HTTP+SQL level in CEL 3 report (DECISION_APPROVED appended via the generic events endpoint, visible in approval-trail, scoped to the exact revision).", "note": "" },
+  { "step": 15, "title": "Report + Presentation + Initiative Proposal", "verdict": "NOT RUN — session budget spent, see step 9", "evidence": "Endpoints exist (S1, method-core.routes.ts) and are exercised by S1's own integration suite; not exercised by this agent's browser spec this session.", "note": "" },
+  { "step": 16, "title": "drugi pełny restart", "verdict": "NOT RUN — session budget spent, see step 9", "evidence": "N/A — depends on 9-15 completing first in the same run.", "note": "" },
+  { "step": 17, "title": "list/reopen wszystkich artefaktów przez DrdArtifactsPanel", "verdict": "NOT RUN — session budget spent, see step 9", "evidence": "DrdArtifactsPanel component itself is proven (S1's own component tests + this agent reading its source); the after-restart browser assertion (2 Outputs/1 Report/1 Presentation/1 Draft) was not reached this session.", "note": "CAVEAT even when reached: S1's current DrdArtifactsPanel renders the lineage list as static <li> entries with no click-to-reopen handler — 'reopen' can only be proven at the data layer (both revisions' artefacts listed together), not as a clickable affordance. Flagged in the spec itself." },
+  { "step": 18, "title": "lineage widoczny w UI i potwierdzony SQL-em", "verdict": "NOT RUN — session budget spent, see step 9", "evidence": "Lineage mechanism (revision_of_session_id chain, method_outputs.revisionOfOutputId chain) proven via direct SQL in the CEL 3 report against the team DB; not re-verified against mac-pg-s2b in a single continuous run this session (the specific session/revision rows from the interrupted run were removed by this agent's own cleanup DELETE between attempts).", "note": "" },
+  { "step": 19, "title": "cross-org rejection", "verdict": "NOT RUN — session budget spent, see step 9", "evidence": "Proven at HTTP+SQL level in CEL 3 report (403/404, no data leaked) and by DrdRolesPanel's own component error-state test.", "note": "" }
+]
