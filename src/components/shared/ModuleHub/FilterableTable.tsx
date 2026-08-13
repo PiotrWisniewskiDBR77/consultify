@@ -952,6 +952,12 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                     }
                     className={[
                       'group cursor-pointer transition-colors',
+                      // Wiersz jest fokusowalny (tabIndex wyżej), więc musi mieć
+                      // WŁASNY, widoczny wskaźnik fokusa w kolorze kanonu.
+                      // Bez tego przeglądarka rysuje swój domyślny bursztynowy
+                      // outline — zmierzony rgb(229,151,0) — co łamie regułę
+                      // „fokus zawsze niebieski c-focus, nigdy inny kolor".
+                      'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-c-focus',
                       row.id === selectedRowId ? 'bg-state-selected' : 'hover:bg-state-hover',
                       typeof rowClassName === 'function' ? rowClassName(row) : rowClassName,
                     ]
