@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>A5 Method Workspace — Isolated Harness</title>
+  </head>
+  <body>
+    <!--
+      A5 ISOLATED TEST HARNESS — separate entry point from the shared
+      `dev-render/index.html` → `main.tsx` registry on purpose.
+
+      `main.tsx` statically imports EVERY registered screen (React.lazy still
+      resolves the import path at Vite transform time), including
+      `./screens/tools-sesja-wyjscie`, which does not exist at this
+      worktree's base commit (`codex/mac-a5-workspace-20260813` @ 3faac01e98)
+      — a pre-existing, unrelated gap (same one documented in
+      `mw010-vault.html`). Fixing it is out of scope for A5; this entry mounts
+      ONLY `method-workspace` directly (`method-workspace-main.tsx`),
+      bypassing the shared registry entirely — no stub, no dependency on
+      unrelated screens.
+    -->
+    <div id="dev-render-root" style="height: 100vh; width: 100vw"></div>
+    <script type="module" src="/method-workspace-main.tsx"></script>
+  </body>
+</html>

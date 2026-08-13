@@ -247,8 +247,14 @@ const Exe002004UiAuditScreen = React.lazy(() => import('./screens/exe-002-004-ui
 const Mw007CalendarNarrowViewportScreen = React.lazy(
   () => import('./screens/mw-007-calendar-narrow-viewport')
 );
+const MethodWorkspaceScreen = React.lazy(() => import('./screens/method-workspace'));
 
 const SCREENS: Record<string, { label: string; render: () => React.ReactElement }> = {
+  'method-workspace': {
+    label:
+      'A5 — Method Workspace shell (interview/split/matrix), ff methodWorkspaceShellV1. &view=interview|split|matrix &state=default|resolution|savefailed|teresaRich',
+    render: () => <MethodWorkspaceScreen />,
+  },
   'mw-007-calendar-narrow-viewport': {
     label:
       'MW-07 Codex FINAL UX FIX_REQUIRED — REALNY <CalendarView>: sidebar nie nachodzi na grid poniżej breakpointu mobile (useIsMobile + Drawer)',
