@@ -409,7 +409,7 @@ export async function createPack(actor: AuditActor, input: CreatePackInput): Pro
         required_competencies, workflow, finding_taxonomy, severity_rules, decision_rules,
         sampling_guidance, output_schema, report_schema, corrective_action_schema, verification_schema,
         estimated_duration_days, recurrence_default, effective_from, effective_to, provenance, created_by)
-     VALUES ($1,$2,$3,1,$4,$5,$6,$7,$8,$9,'draft',$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28)`,
+     VALUES ($1,$2,$3,1,$4,$5,$6,$7,$8,$9,'draft',$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29)`,
     [
       id,
       actor.organizationId,
@@ -795,7 +795,7 @@ export async function createNewVersion(actor: AuditActor, packKey: string): Prom
         sampling_guidance, output_schema, report_schema, corrective_action_schema, verification_schema,
         estimated_duration_days, recurrence_default, effective_from, effective_to, provenance,
         supersedes_pack_id, created_by)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'draft',$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30)`,
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'draft',$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31)`,
     [
       newPackId,
       actor.organizationId,
