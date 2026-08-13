@@ -1,0 +1,21 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "skipLibCheck": true,
+    "jsx": "react-jsx"
+  },
+  "include": [
+    "src/method-core/methods/siri/**/*.ts",
+    "src/method-core/contracts/**/*.ts",
+    "src/components/method-workspace/**/*.ts",
+    "src/components/method-workspace/**/*.tsx",
+    "src/services/siriStructure.ts",
+    "src/services/siriPrioritisation.ts",
+    "src/utils/siriPmV2Flag.ts",
+    "dev-render/screens/siri-workspace.tsx",
+    "dev-render/screens/siri-tier.tsx",
+    "dev-render/siri-workspace-main.tsx",
+    "dev-render/siri-tier-main.tsx"
+  ]
+}
