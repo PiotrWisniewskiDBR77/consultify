@@ -1637,21 +1637,6 @@ export const AgentHubShell: React.FC = () => {
           {isPolish ? 'Bieżący obszar Agent Hub' : 'Current Agent Hub area'}:{' '}
           {agentHubTabLabel(tab, isPolish)}.
         </p>
-        <dl className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-c-text-muted">
-          <div>
-            <dt className="inline font-semibold">{isPolish ? 'Sprawa' : 'Case'}: </dt>
-            <dd className="inline break-all">
-              {searchParams.get('transformationCaseId') ||
-                (isPolish ? 'nie wybrano' : 'not selected')}
-            </dd>
-          </div>
-          <div>
-            <dt className="inline font-semibold">{isPolish ? 'Przebieg' : 'Run'}: </dt>
-            <dd className="inline break-all">
-              {searchParams.get('canonicalRunId') || (isPolish ? 'nie wybrano' : 'not selected')}
-            </dd>
-          </div>
-        </dl>
       </section>
       {!activeItemId ? (
         <nav
