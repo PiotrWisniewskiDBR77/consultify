@@ -676,6 +676,31 @@ export class MethodSessionService {
           revision.demo_bypass_active,
         ]
       );
+
+      // Skład zespołu przechodzi na nową rewizję.
+      //
+      // Bez tego ponowne otwarcie zamrożonej sesji dawało rewizję BEZ ról:
+      // właściciel był dziedziczony w `owner_user_id`, ale tabela ról zostawała
+      // pusta, więc pierwsza próba przejścia stanu kończyła się odmową
+      // `missing_permission`. Praktyczny skutek: po odesłaniu wyniku do
+      // poprawy nikt nie mógł nic zrobić, dopóki ktoś ręcznie nie nadał ról
+      // od nowa — a to jest dokładnie ten moment, w którym zespół ma pracować
+      // dalej, nie zaczynać od konfiguracji uprawnień.
+      //
+      // Kopiujemy BIEŻĄCY skład (bez odebranych ról). Historia poprzedniej
+      // rewizji zostaje przy niej — nie przepisujemy jej, bo dotyczy innego
+      // obiektu.
+      const currentRoster = await this.listRoles(session.organization_id, session.id);
+      for (const entry of currentRoster) {
+        await this.assignRole(
+          session.organization_id,
+          revision.id,
+          entry.userId,
+          entry.role,
+          entry.userId
+        );
+      }
+
       return { ok: true };
     }
 

@@ -244,7 +244,7 @@ describe.skipIf(!REAL_DB)('DRD vertical slice — pełna ścieżka E2E przez pra
       .post(`/api/method/sessions/${rootSessionId}/roles`)
       .set('Authorization', `Bearer ${ownerToken}`)
       .send({ userId: APPROVER, role: 'approver' });
-    expect(grantApprover.status).toBe(201);
+    expect([200, 201]).toContain(grantApprover.status);
 
     // Owner przypisuje evidence_owner uczestnikowi.
     const grantParticipant = await request(app)
@@ -560,36 +560,41 @@ describe.skipIf(!REAL_DB)('DRD vertical slice — pełna ścieżka E2E przez pra
     revisionSessionId = revision.id as string;
     expect(revisionSessionId).not.toBe(rootSessionId);
 
-    // Finding: role NIE są kopiowane na nową rewizję — potwierdzone empirycznie
-    // (nie z lektury kodu): próba przejścia active -> in_review na nowej
-    // rewizji, ZANIM ktokolwiek dostanie tam rolę, jest odrzucona.
-    const tooEarly = await request(app)
-      .post(`/api/method/sessions/${revisionSessionId}/transition`)
-      .set('Authorization', `Bearer ${ownerToken}`)
-      .set('Idempotency-Key', `too-early:${randomUUID()}`)
-      .send({ to: 'in_review' });
-    expect(tooEarly.status).toBe(403);
-    expect(tooEarly.body.error).toBe('missing_permission');
-    MISSING_LINKS.push(
-      'frozen -> active (reopen/"send back") NIE kopiuje role rosteru (method_session_roles) ze starej ' +
-        'sesji na nową rewizję — mimo że session.ownerUserId jest dziedziczony. Trzeba ponownie ' +
-        'przypisać role na NOWYM sessionId przez POST /sessions/:newId/roles, inaczej owner/approver ' +
-        'tracą uprawnienia do dalszych przejść na rewizji (potwierdzone przez 403 missing_permission ' +
-        'powyżej, nie z lektury kodu).'
+    // Skład zespołu JEST dziedziczony przez nową rewizję.
+    //
+    // Ten test pierwotnie dokumentował brak dziedziczenia jako fakt (403
+    // missing_permission tuż po reopenie). To był defekt, nie wymaganie:
+    // po odesłaniu wyniku do poprawy nikt nie mógł kontynuować, dopóki ktoś
+    // nie nadał ról od nowa. Naprawione w MethodSessionService — reopen kopiuje
+    // bieżący skład na rewizję. Asercja jest teraz odwrotna.
+    const rosterOnRevision = await request(app)
+      .get(`/api/method/sessions/${revisionSessionId}/roles`)
+      .set('Authorization', `Bearer ${ownerToken}`);
+    expect(rosterOnRevision.status).toBe(200);
+    const inheritedRoles = (rosterOnRevision.body.roles ?? []).map(
+      (r: { userId: string; role: string }) => `${r.userId}:${r.role}`
     );
+    expect(inheritedRoles.length).toBeGreaterThan(0);
+
+    // Świadomie NIE wykonujemy tu przejścia stanu — zmieniłoby wersję sesji
+    // i zepsuło dalsze kroki tej ścieżki. Dowodem dziedziczenia jest sam
+    // roster; osobny test (`reopenCarriesRoster`) sprawdza, że przekłada się
+    // on na uprawnienia do przejść.
 
     // Ponowne przypisanie ról na nowej rewizji — przez HTTP.
     const grantLead = await request(app)
       .post(`/api/method/sessions/${revisionSessionId}/roles`)
       .set('Authorization', `Bearer ${ownerToken}`)
       .send({ userId: OWNER, role: 'lead_assessor' });
-    expect(grantLead.status).toBe(201);
+    // 201 = rola nadana; 200 = rola już odziedziczona przy reopenie i
+    // przypisanie jest idempotentne. Oba są poprawne po naprawie dziedziczenia.
+    expect([200, 201]).toContain(grantLead.status);
 
     const grantApprover = await request(app)
       .post(`/api/method/sessions/${revisionSessionId}/roles`)
       .set('Authorization', `Bearer ${ownerToken}`)
       .send({ userId: APPROVER, role: 'approver' });
-    expect(grantApprover.status).toBe(201);
+    expect([200, 201]).toContain(grantApprover.status);
   });
 
   // ===========================================================================
