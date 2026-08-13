@@ -143,6 +143,7 @@ fixture kodował scenariusz defektu i nikt na niego nie patrzył. Sprawdziłem, 
 | **treść metodyczna DRD** | **BLOCKED** | `misScoringTraps` 0/233, pola pomocy pytania 0/699 — **brak źródła w repo**; uzupełnia właściciel metodyki, nie AI (COORD-07) |
 | **treść metodyczna SIRI** | **BLOCKED licencyjnie** | Module 2 str. 32–69 — „no part may be reproduced"; 0/16 wymiarów, `readiness` = `draft` |
 | **prawdziwy ekran Library** | NOT VERIFIED | istniejący `screen=library` to jawny harness zrzutowy, nie produkcyjny ekran |
+| **reopen z listy artefaktów** | **NIE DOWIEZIONE** | S8 zapisał to jako „przycisk wciąż nieklikalny" — **sprostowanie**: `DrdArtifactsPanel` nie ma **ani jednego** `<button>` ani `onClick`, jest w całości tylko do odczytu. Reopen działa przez HTTP i z ekranu warsztatu (E2E krok 11), ale **z listy artefaktów nie da się go wywołać**. Dla następnego: to nie jest podpięcie handlera, to nowa funkcja (kontekst sesji + potwierdzenie + nawigacja) |
 | **akcje `assign_question` / `request_evidence`** | **NIE DOWIEZIONE — jawnie** | wymagają przepływów, których nie ma. **Nie wymyślam ich.** Przyciski nie są renderowane, zamiast być renderowane i nic nie robić |
 | **D2 z A10** | otwarte (P2) | ostrzeżenie hydratacji `LiveMatrix` |
 
