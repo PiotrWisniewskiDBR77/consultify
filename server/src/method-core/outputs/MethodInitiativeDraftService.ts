@@ -182,6 +182,19 @@ export class MethodInitiativeDraftService {
     };
   }
 
+  /**
+   * Single draft by id, tenant-checked — same "missing and cross-org both
+   * read as null" discipline as MethodReportSnapshotService.getById.
+   */
+  async getById(organizationId: string, id: string): Promise<MethodInitiativeDraftRecord | null> {
+    const row = await DbPromise.get<MethodInitiativeDraftRow>(
+      `SELECT * FROM method_initiative_drafts WHERE id = ?`,
+      [id]
+    );
+    if (!row || row.organization_id !== organizationId) return null;
+    return toRecord(row);
+  }
+
   async listBySession(
     organizationId: string,
     sessionId: string

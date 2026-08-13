@@ -55,6 +55,7 @@ import {
   type MethodActorKind,
   type MethodEventType,
   type MethodProcessRole,
+  type MethodSession,
   type MethodSessionState,
   type TeresaCapabilityId,
   type TeresaCommitRequest,
@@ -70,7 +71,9 @@ import {
   DEMO_BYPASS_NOTICE,
   isDemoBypassAllowed,
 } from '../method-core/demoBypass.js';
-import type { MethodArtefactKind } from '../method-core/outputs/MethodReportSnapshotService.js';
+import type { MethodArtefactKind, MethodReportSnapshotRecord } from '../method-core/outputs/MethodReportSnapshotService.js';
+import type { MethodInitiativeDraftRecord } from '../method-core/outputs/MethodInitiativeDraftService.js';
+import type { MethodOutputRecord } from '../method-core/outputs/MethodOutputService.js';
 import {
   EventDerivedOutputBridge,
   methodInitiativeDraftService,
@@ -211,6 +214,195 @@ async function supersedeLineageResultsFor(organizationId: string, output: Method
 }
 
 type MethodOutputRecordLike = { readonly id: string; readonly sessionId: string; readonly revisionOfOutputId: string | null };
+
+// ---------------------------------------------------------------------------
+// S1 — recovery/lineage read surface (CEL 2, 2026-08-13).
+//
+// After a browser restart the user must be able to find every artefact they
+// already produced — not reconstruct one from whatever the CURRENT session
+// state happens to be. These handlers are read-only, tenant-scoped, and walk
+// the FULL reopen lineage of a session (not just the one session id the
+// caller happened to pass): a `frozen -> active` reopen mints a brand new
+// `method_sessions` row (`MethodSessionService`'s own header comment), so a
+// "list artefacts for session X" that only ever looked at session X would go
+// blind the moment X gets reopened. `collectSessionLineage` below is the walk
+// that fixes that; every list/detail handler in this section is built on it.
+// ---------------------------------------------------------------------------
+
+/**
+ * Sort comparator for `created_at ASC, id ASC` — deterministic per the S1
+ * requirement, but deliberately NOT `a.createdAt.localeCompare(b.createdAt)`
+ * (that is what `MethodReportSnapshotService`/`MethodInitiativeDraftService`
+ * avoid too, sorting by `id` alone instead): this repo's Postgres pool has
+ * no `pg.types.setTypeParser` override (`grep setTypeParser server/src` ->
+ * no match — see server/src/services/financePeriodFormat.ts's own comment on
+ * the same fact), so a `timestamp`/`timestamptz` column comes back as a
+ * native `Date` object, not a string, even though `MethodSessionRow.created_at`
+ * etc. are typed `string` at the TS boundary. Calling `.localeCompare` on a
+ * `Date` throws at runtime (`a.createdAt.localeCompare is not a function`) —
+ * caught by this package's own integration tests before this comment was
+ * written. `Date.parse`/`new Date(...).getTime()` accepts EITHER a `Date`
+ * instance or an ISO string, so this comparator is safe regardless of which
+ * one the driver actually handed back.
+ */
+function compareByCreatedAt(a: { readonly createdAt: unknown; readonly id: string }, b: { readonly createdAt: unknown; readonly id: string }): number {
+  const aTime = new Date(a.createdAt as string | Date).getTime();
+  const bTime = new Date(b.createdAt as string | Date).getTime();
+  if (aTime !== bTime) return aTime - bTime;
+  return a.id.localeCompare(b.id);
+}
+
+/** Deterministic pagination — `?limit=&offset=`, sensible bounded defaults.
+ * Never trusts an out-of-range/garbage query value silently: falls back to
+ * the default instead of NaN/negative slicing. */
+function parsePagination(req: Request): { limit: number; offset: number } {
+  const DEFAULT_LIMIT = 50;
+  const MAX_LIMIT = 200;
+  const limitRaw = Number(req.query.limit);
+  const offsetRaw = Number(req.query.offset);
+  const limit =
+    Number.isFinite(limitRaw) && limitRaw > 0 ? Math.min(Math.floor(limitRaw), MAX_LIMIT) : DEFAULT_LIMIT;
+  const offset = Number.isFinite(offsetRaw) && offsetRaw >= 0 ? Math.floor(offsetRaw) : 0;
+  return { limit, offset };
+}
+
+/**
+ * Loads a session and enforces tenant isolation with 404 on EITHER "does not
+ * exist" OR "belongs to another org" — deliberately NOT `loadOwnedSession`'s
+ * 404/403 split (that split is this router's existing convention for the
+ * session CRUD surface; the S1 recovery/lineage read endpoints below use a
+ * single "cross-org reads as not found" rule end to end, matching how
+ * `MethodOutputService.getOutput` already treats a wrong-org Output).
+ */
+async function loadSessionForArtifactsOr404(
+  req: AuthedRequest,
+  res: Response,
+  sessionId: string
+): Promise<MethodSession | null> {
+  const organizationId = req.organizationId;
+  const session = await sessionService.getSession(sessionId);
+  if (!session || !organizationId || session.organizationId !== organizationId) {
+    res.status(404).json({ error: 'Session not found' });
+    return null;
+  }
+  return session;
+}
+
+/**
+ * Walks the FULL reopen lineage of a session — backward via
+ * `session.revisionOfSessionId` (this session is a correction OF an older
+ * one) and forward via `sessionService.listRevisions` (this session was
+ * itself reopened into a newer one). Bounded BFS (50 hops — generous vs. the
+ * 25-hop bound `collectLineageSessionIds` uses for output chains above,
+ * since this walks session AND revision edges) so a corrupt/cyclical chain
+ * refuses to hang a request rather than looping forever. Returns every
+ * session in the family, deterministically sorted (createdAt asc, id asc as
+ * tiebreak) — never relies on Set/Map iteration order reaching the response.
+ */
+async function collectSessionLineage(organizationId: string, rootSessionId: string): Promise<MethodSession[]> {
+  const visited = new Map<string, MethodSession>();
+  const queue: string[] = [rootSessionId];
+  let hops = 0;
+  while (queue.length > 0 && hops < 50) {
+    hops += 1;
+    const id = queue.shift();
+    if (!id || visited.has(id)) continue;
+    const session = await sessionService.getSession(id);
+    if (!session || session.organizationId !== organizationId) continue;
+    visited.set(session.id, session);
+    if (session.revisionOfSessionId && !visited.has(session.revisionOfSessionId)) {
+      queue.push(session.revisionOfSessionId);
+    }
+    const children = await sessionService.listRevisions(organizationId, session.id);
+    for (const child of children) {
+      if (!visited.has(child.id)) queue.push(child.id);
+    }
+  }
+  return [...visited.values()].sort((a, b) =>
+    compareByCreatedAt(a, b)
+  );
+}
+
+type OutputWithStatus = MethodOutputRecord & {
+  readonly status: 'current' | 'superseded';
+  readonly supersededByOutputId: string | null;
+};
+
+/**
+ * All Outputs across every session in `sessions` (one lineage family), each
+ * tagged with an explicit `status`/`supersededByOutputId` computed by
+ * checking, WITHIN this same collected set, whether another Output's
+ * `revisionOfOutputId` points back at it — the same "a newer row pointing
+ * back is the only supersession signal" rule `MethodOutputService.isSuperseded`
+ * uses against the whole table, just scoped to the lineage we already walked
+ * (avoids N extra DB round-trips and stays consistent with it, because every
+ * successor Output's session is, by construction, already in `sessions`).
+ * Sorted deterministically by `outputVersion` ascending (id as tiebreak) —
+ * version numbers are only meaningful within one chain, which is exactly
+ * what one lineage family is.
+ */
+async function collectLineageOutputs(
+  organizationId: string,
+  sessions: readonly MethodSession[]
+): Promise<OutputWithStatus[]> {
+  const all: MethodOutputRecord[] = [];
+  for (const session of sessions) {
+    const outputs = await methodOutputService.listOutputsBySession(organizationId, session.id);
+    all.push(...outputs);
+  }
+  const byId = new Map(all.map((o) => [o.id, o] as const));
+  const successorOf = new Map<string, string>();
+  for (const output of all) {
+    if (output.revisionOfOutputId && byId.has(output.revisionOfOutputId)) {
+      successorOf.set(output.revisionOfOutputId, output.id);
+    }
+  }
+  const withStatus: OutputWithStatus[] = all.map((output) => {
+    const supersededByOutputId = successorOf.get(output.id) ?? null;
+    return {
+      ...output,
+      status: supersededByOutputId ? 'superseded' : 'current',
+      supersededByOutputId,
+    };
+  });
+  return withStatus.sort((a, b) =>
+    a.outputVersion === b.outputVersion ? a.id.localeCompare(b.id) : a.outputVersion - b.outputVersion
+  );
+}
+
+/** Report OR Presentation snapshots (discriminated by `kind`) across every
+ * session in a lineage family. Sorted deterministically (createdAt asc, id
+ * asc tiebreak). */
+async function collectLineageArtefacts(
+  organizationId: string,
+  sessions: readonly MethodSession[],
+  kind: MethodArtefactKind
+): Promise<MethodReportSnapshotRecord[]> {
+  const all: MethodReportSnapshotRecord[] = [];
+  for (const session of sessions) {
+    const rows = await methodReportSnapshotService.listBySession(organizationId, session.id);
+    all.push(...rows.filter((r) => r.kind === kind));
+  }
+  return all.sort((a, b) =>
+    compareByCreatedAt(a, b)
+  );
+}
+
+/** Initiative Proposal Drafts across every session in a lineage family.
+ * Sorted deterministically (createdAt asc, id asc tiebreak). */
+async function collectLineageDrafts(
+  organizationId: string,
+  sessions: readonly MethodSession[]
+): Promise<MethodInitiativeDraftRecord[]> {
+  const all: MethodInitiativeDraftRecord[] = [];
+  for (const session of sessions) {
+    const rows = await methodInitiativeDraftService.listBySession(organizationId, session.id);
+    all.push(...rows);
+  }
+  return all.sort((a, b) =>
+    compareByCreatedAt(a, b)
+  );
+}
 
 // ---------------------------------------------------------------------------
 // GET /api/method/packs — Library
@@ -884,6 +1076,199 @@ router.post(
     });
 
     res.status(201).json({ draft });
+  })
+);
+
+// ---------------------------------------------------------------------------
+// GET /api/method/sessions/:id/outputs — Outputs across the WHOLE lineage
+// ---------------------------------------------------------------------------
+
+router.get(
+  '/sessions/:id/outputs',
+  asyncHandler(async (req: AuthedRequest, res: Response) => {
+    const organizationId = requireOrg(req, res);
+    if (!organizationId) return;
+    const session = await loadSessionForArtifactsOr404(req, res, req.params.id);
+    if (!session) return;
+
+    const lineage = await collectSessionLineage(organizationId, session.id);
+    const outputs = await collectLineageOutputs(organizationId, lineage);
+    const { limit, offset } = parsePagination(req);
+    res.status(200).json({ outputs: outputs.slice(offset, offset + limit), total: outputs.length, limit, offset });
+  })
+);
+
+// ---------------------------------------------------------------------------
+// GET /api/method/outputs/:id/revisions — the revision chain one Output sits in
+// ---------------------------------------------------------------------------
+
+router.get(
+  '/outputs/:id/revisions',
+  asyncHandler(async (req: AuthedRequest, res: Response) => {
+    const organizationId = requireOrg(req, res);
+    if (!organizationId) return;
+    const output = await methodOutputService.getOutput(organizationId, req.params.id);
+    if (!output) {
+      res.status(404).json({ error: 'Output not found' });
+      return;
+    }
+    const lineage = await collectSessionLineage(organizationId, output.sessionId);
+    const revisions = await collectLineageOutputs(organizationId, lineage);
+    const { limit, offset } = parsePagination(req);
+    res
+      .status(200)
+      .json({ revisions: revisions.slice(offset, offset + limit), total: revisions.length, limit, offset });
+  })
+);
+
+// ---------------------------------------------------------------------------
+// GET /api/method/sessions/:id/reports — Report snapshots across the lineage
+// ---------------------------------------------------------------------------
+
+router.get(
+  '/sessions/:id/reports',
+  asyncHandler(async (req: AuthedRequest, res: Response) => {
+    const organizationId = requireOrg(req, res);
+    if (!organizationId) return;
+    const session = await loadSessionForArtifactsOr404(req, res, req.params.id);
+    if (!session) return;
+
+    const lineage = await collectSessionLineage(organizationId, session.id);
+    const reports = await collectLineageArtefacts(organizationId, lineage, 'report');
+    const { limit, offset } = parsePagination(req);
+    res.status(200).json({ reports: reports.slice(offset, offset + limit), total: reports.length, limit, offset });
+  })
+);
+
+// ---------------------------------------------------------------------------
+// GET /api/method/sessions/:id/presentations — Presentations across the lineage
+// ---------------------------------------------------------------------------
+
+router.get(
+  '/sessions/:id/presentations',
+  asyncHandler(async (req: AuthedRequest, res: Response) => {
+    const organizationId = requireOrg(req, res);
+    if (!organizationId) return;
+    const session = await loadSessionForArtifactsOr404(req, res, req.params.id);
+    if (!session) return;
+
+    const lineage = await collectSessionLineage(organizationId, session.id);
+    const presentations = await collectLineageArtefacts(organizationId, lineage, 'presentation');
+    const { limit, offset } = parsePagination(req);
+    res.status(200).json({
+      presentations: presentations.slice(offset, offset + limit),
+      total: presentations.length,
+      limit,
+      offset,
+    });
+  })
+);
+
+// ---------------------------------------------------------------------------
+// GET /api/method/sessions/:id/initiative-drafts — Drafts across the lineage
+// ---------------------------------------------------------------------------
+
+router.get(
+  '/sessions/:id/initiative-drafts',
+  asyncHandler(async (req: AuthedRequest, res: Response) => {
+    const organizationId = requireOrg(req, res);
+    if (!organizationId) return;
+    const session = await loadSessionForArtifactsOr404(req, res, req.params.id);
+    if (!session) return;
+
+    const lineage = await collectSessionLineage(organizationId, session.id);
+    const drafts = await collectLineageDrafts(organizationId, lineage);
+    const { limit, offset } = parsePagination(req);
+    res.status(200).json({ drafts: drafts.slice(offset, offset + limit), total: drafts.length, limit, offset });
+  })
+);
+
+// ---------------------------------------------------------------------------
+// GET /api/method/reports/:id — single Report snapshot
+// ---------------------------------------------------------------------------
+
+router.get(
+  '/reports/:id',
+  asyncHandler(async (req: AuthedRequest, res: Response) => {
+    const organizationId = requireOrg(req, res);
+    if (!organizationId) return;
+    const record = await methodReportSnapshotService.getById(organizationId, req.params.id);
+    if (!record || record.kind !== 'report') {
+      res.status(404).json({ error: 'Report not found' });
+      return;
+    }
+    res.status(200).json({ report: record });
+  })
+);
+
+// ---------------------------------------------------------------------------
+// GET /api/method/presentations/:id — single Presentation snapshot
+// ---------------------------------------------------------------------------
+
+router.get(
+  '/presentations/:id',
+  asyncHandler(async (req: AuthedRequest, res: Response) => {
+    const organizationId = requireOrg(req, res);
+    if (!organizationId) return;
+    const record = await methodReportSnapshotService.getById(organizationId, req.params.id);
+    if (!record || record.kind !== 'presentation') {
+      res.status(404).json({ error: 'Presentation not found' });
+      return;
+    }
+    res.status(200).json({ presentation: record });
+  })
+);
+
+// ---------------------------------------------------------------------------
+// GET /api/method/initiative-drafts/:id — single Initiative Proposal Draft
+// ---------------------------------------------------------------------------
+
+router.get(
+  '/initiative-drafts/:id',
+  asyncHandler(async (req: AuthedRequest, res: Response) => {
+    const organizationId = requireOrg(req, res);
+    if (!organizationId) return;
+    const record = await methodInitiativeDraftService.getById(organizationId, req.params.id);
+    if (!record) {
+      res.status(404).json({ error: 'Initiative draft not found' });
+      return;
+    }
+    res.status(200).json({ draft: record });
+  })
+);
+
+// ---------------------------------------------------------------------------
+// GET /api/method/sessions/:id/lineage — full lineage tree: sessions +
+// Outputs (with status) + downstream Reports/Presentations/Initiative Drafts.
+// Not paginated (a bounded tree meant to be viewed whole — see
+// `collectSessionLineage`'s 50-hop bound), unlike the flat list endpoints
+// above.
+// ---------------------------------------------------------------------------
+
+router.get(
+  '/sessions/:id/lineage',
+  asyncHandler(async (req: AuthedRequest, res: Response) => {
+    const organizationId = requireOrg(req, res);
+    if (!organizationId) return;
+    const session = await loadSessionForArtifactsOr404(req, res, req.params.id);
+    if (!session) return;
+
+    const sessions = await collectSessionLineage(organizationId, session.id);
+    const outputs = await collectLineageOutputs(organizationId, sessions);
+    const reports = await collectLineageArtefacts(organizationId, sessions, 'report');
+    const presentations = await collectLineageArtefacts(organizationId, sessions, 'presentation');
+    const initiativeDrafts = await collectLineageDrafts(organizationId, sessions);
+
+    res.status(200).json({
+      lineage: {
+        rootSessionId: session.id,
+        sessions,
+        outputs,
+        reports,
+        presentations,
+        initiativeDrafts,
+      },
+    });
   })
 );
 

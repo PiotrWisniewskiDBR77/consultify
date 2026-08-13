@@ -134,6 +134,21 @@ export class MethodReportSnapshotService {
     };
   }
 
+  /**
+   * Single snapshot by id, tenant-checked. Returns null on a missing row OR
+   * a cross-org id (never distinguishes the two to the caller — same
+   * "exists but not yours reads as not found" discipline as
+   * `MethodOutputService.getOutput`).
+   */
+  async getById(organizationId: string, id: string): Promise<MethodReportSnapshotRecord | null> {
+    const row = await DbPromise.get<MethodReportSnapshotRow>(
+      `SELECT * FROM method_report_snapshots WHERE id = ?`,
+      [id]
+    );
+    if (!row || row.organization_id !== organizationId) return null;
+    return toRecord(row);
+  }
+
   async listBySession(
     organizationId: string,
     sessionId: string
