@@ -72,6 +72,7 @@ import { teresaProposalService } from '../method-core/TeresaProposalService.js';
 import {
   DEMO_BYPASS_NOTICE,
   isDemoBypassAllowed,
+  type DemoBypassEnv,
 } from '../method-core/demoBypass.js';
 import type { MethodArtefactKind } from '../method-core/outputs/MethodReportSnapshotService.js';
 import {
@@ -310,6 +311,21 @@ function firstParam(value: string | string[] | undefined): string {
   return value ?? '';
 }
 
+// `NodeJS.ProcessEnv` is a "weak type" for TS's assignability check (every
+// declared member optional, and its own members besides `TZ` only exist via
+// its index signature) — passing `process.env` straight into a function
+// typed `(env: DemoBypassEnv) => ...` trips TS2559 ("no properties in
+// common") even though both fields below genuinely are `string | undefined`
+// at runtime. An explicit object literal (named properties, no index
+// signature) sidesteps the weak-type check without casting away real type
+// safety.
+function readDemoBypassEnv(): DemoBypassEnv {
+  return {
+    NODE_ENV: process.env.NODE_ENV,
+    METHOD_CORE_DEMO_BYPASS_PACK_READINESS: process.env.METHOD_CORE_DEMO_BYPASS_PACK_READINESS,
+  };
+}
+
 async function loadOwnedSession(
   req: AuthedRequest,
   res: Response,
@@ -439,7 +455,7 @@ router.post(
       // ON DELETE CASCADE removes both together). Fall through to create.
     }
 
-    const bypassActive = isDemoBypassAllowed(process.env, requestedBypass);
+    const bypassActive = isDemoBypassAllowed(readDemoBypassEnv(), requestedBypass);
     const service = bypassActive
       ? new MethodSessionService(alwaysStartablePacks, methodEventStore, outputBridge)
       : sessionService;
@@ -1216,7 +1232,21 @@ router.post(
         // zamrożona — te dwa pola muszą pochodzić z sesji, nie z domyślnych
         // wartości, inaczej odtworzony Output różniłby się od pierwotnego
         // w tym, czy powstał w trybie demo i której rewizji dotyczy.
-        demoBypassActive: Boolean(session.demoBypassActive),
+        // ★ KNOWN GAP (found fixing TS2339 here 2026-08-13, not introduced by
+        // that fix): `demoBypassActive` is deliberately NOT part of the
+        // public `MethodSession` contract (see contracts/session.ts's header
+        // on `MethodSessionRow` staying internal) — `session` here is the
+        // contract type, so `session.demoBypassActive` does not exist and
+        // was previously only "compiling" because a broken relative import
+        // in contracts/index.ts (missing `.js` extension under NodeNext)
+        // collapsed the whole contract surface to `any`. At runtime this was
+        // ALWAYS `undefined`/`false` regardless of the session's true demo
+        // bypass state — i.e. this self-heal path has never actually
+        // restored the demo marker the comment above insists on. Fixing that
+        // needs a session-row-level accessor (`MethodSessionService` only
+        // exposes the public contract via `getSession`), which is out of
+        // this pass's scope (type errors only). Flagged for follow-up.
+        demoBypassActive: false,
         revisionOfSessionId: session.revisionOfSessionId ?? null,
       });
       outputs = await methodOutputService.listOutputsBySession(organizationId, session.id);

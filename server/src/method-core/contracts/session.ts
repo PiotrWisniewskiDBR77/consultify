@@ -32,7 +32,7 @@
  *        ASSESSMENT_SESSION_LIFECYCLE_ROLES_AND_INTEGRATIONS.md §1.
  */
 
-import type { MethodActorKind } from './events';
+import type { MethodActorKind } from './events.js';
 
 /**
  * Kernel session states. Closed set.

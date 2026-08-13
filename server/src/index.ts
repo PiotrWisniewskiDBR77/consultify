@@ -46,6 +46,7 @@ import {
   shouldInitializeTestDatabase,
   shouldMountTestGatewayRoutes,
   shouldUseMockDatabase,
+  type TestModeGateEnv,
 } from './startup/testModeGates.js';
 import { withTimeout } from './startup/withTimeout.js';
 import {
@@ -279,6 +280,25 @@ if (String(process.env.DB_READONLY || '').trim()) {
 // Bind the port before heavy async startup completes so the frontend proxy does not see ECONNREFUSED.
 startHttpListener();
 
+// `NodeJS.ProcessEnv` is a "weak type" for TS's assignability check (every
+// declared member optional, and its own members besides `TZ` only exist via
+// its index signature) — passing `process.env` straight into a function
+// typed `(env: TestModeGateEnv) => ...` trips TS2559 ("no properties in
+// common") even though every field below genuinely is `string | undefined`
+// at runtime. Building an explicit object literal (named properties, no
+// index signature) sidesteps the weak-type check without casting away real
+// type safety.
+function readTestModeGateEnv(): TestModeGateEnv {
+  return {
+    NODE_ENV: process.env.NODE_ENV,
+    VITEST: process.env.VITEST,
+    E2E_MODE: process.env.E2E_MODE,
+    ENABLE_TEST_GATEWAY: process.env.ENABLE_TEST_GATEWAY,
+    RUN_DB_TESTS: process.env.RUN_DB_TESTS,
+    MOCK_DB: process.env.MOCK_DB,
+  };
+}
+
 // A14 fix (2026-08-13): see server/src/startup/testModeGates.ts for the full
 // story. Short version — this gate used to check ONLY
 // `!isTest || E2E_MODE || ENABLE_TEST_GATEWAY`. Under
@@ -289,11 +309,11 @@ startHttpListener();
 // `false` forever with `dbInitError` staying `null`: not a slow/stuck
 // migration, but the readiness sequence never being started in the first
 // place.
-const databaseInitPromise: Promise<void> = shouldInitializeTestDatabase(process.env)
+const databaseInitPromise: Promise<void> = shouldInitializeTestDatabase(readTestModeGateEnv())
   ? (async () => {
         try {
           logger.info('[Server] Initializing database...');
-          const mockDbEnabled = shouldUseMockDatabase(process.env);
+          const mockDbEnabled = shouldUseMockDatabase(readTestModeGateEnv());
 
           const db = await getDatabaseAsync();
           logger.info('[Server] Database instance created:', db ? 'OK' : 'MOCK');
@@ -1270,7 +1290,7 @@ app.use('/api/workspaces', workspacesRoutes as any);
 // — not "starting", but genuinely unregistered — because this branch fell
 // into the lightweight `managementReportsRoutes`-only path instead of
 // `apiGateway.initializeRoutes(app)`. See testModeGates.ts.
-if (!shouldMountTestGatewayRoutes(process.env)) {
+if (!shouldMountTestGatewayRoutes(readTestModeGateEnv())) {
   const managementReportsRoutes = await import('./routes/managementReports.routes.js').then(
     (m) => m.default || m
   );

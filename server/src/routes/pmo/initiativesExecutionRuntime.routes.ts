@@ -1085,6 +1085,14 @@ function asyncHandler(handler: (req: Request, res: Response, next: NextFunction)
   };
 }
 
+// Express 5 types req.params/req.query values as `string | string[]` (repeated query/param keys
+// produce an array). Route params in this file are single path segments, so take the first
+// occurrence deterministically instead of casting past the possibility of an array.
+function firstParam(value: string | string[] | undefined): string {
+  if (Array.isArray(value)) return value[0] ?? '';
+  return value ?? '';
+}
+
 export function createInitiativesExecutionRuntimeRouter(
   deps: InitiativesExecutionRuntimeDependencies
 ): Router {
@@ -1420,7 +1428,7 @@ export function createInitiativesExecutionRuntimeRouter(
         organizationId: actor.organizationId,
         actorId: actor.userId,
         aggregateType: 'source_proposal',
-        aggregateId: req.params.proposalId,
+        aggregateId: firstParam(req.params.proposalId),
         expectedVersion,
         clientRequestId,
         correlationId: clientRequestId,
@@ -1443,7 +1451,7 @@ export function createInitiativesExecutionRuntimeRouter(
       }
       const proposal = await deps.reader.findSourceProposal(
         actor.organizationId,
-        req.params.proposalId
+        firstParam(req.params.proposalId)
       );
       if (
         !proposal?.projectId ||
@@ -1533,7 +1541,7 @@ export function createInitiativesExecutionRuntimeRouter(
       }
       const proposal = await deps.reader.findSourceProposal(
         actor.organizationId,
-        req.params.proposalId
+        firstParam(req.params.proposalId)
       );
       if (!proposal?.projectId) {
         res.status(404).json({ error: { code: 'NOT_FOUND' } });
@@ -1616,7 +1624,7 @@ export function createInitiativesExecutionRuntimeRouter(
         res.status(401).json({ error: { code: 'AUTH_REQUIRED' } });
         return;
       }
-      const found = await deps.reader.findById(actor.organizationId, req.params.initiativeId);
+      const found = await deps.reader.findById(actor.organizationId, firstParam(req.params.initiativeId));
       if (!found) {
         res.status(404).json({ error: { code: 'NOT_FOUND' } });
         return;
@@ -1637,14 +1645,14 @@ export function createInitiativesExecutionRuntimeRouter(
         res.status(401).json({ error: { code: 'AUTH_REQUIRED' } });
         return;
       }
-      const found = await deps.reader.findById(actor.organizationId, req.params.initiativeId);
+      const found = await deps.reader.findById(actor.organizationId, firstParam(req.params.initiativeId));
       if (!found || !(await deps.authorize(actor, found.initiative.projectId, 'initiative.view'))) {
         res.status(404).json({ error: { code: 'NOT_FOUND' } });
         return;
       }
       const cards = await deps.reader.listLatestInitiativeCards(
         actor.organizationId,
-        req.params.initiativeId
+        firstParam(req.params.initiativeId)
       );
       res.json({ initiativeVersion: found.version, cards });
     })
@@ -1658,14 +1666,14 @@ export function createInitiativesExecutionRuntimeRouter(
         res.status(401).json({ error: { code: 'AUTH_REQUIRED' } });
         return;
       }
-      const found = await deps.reader.findById(actor.organizationId, req.params.initiativeId);
+      const found = await deps.reader.findById(actor.organizationId, firstParam(req.params.initiativeId));
       if (!found || !(await deps.authorize(actor, found.initiative.projectId, 'initiative.view'))) {
         res.status(404).json({ error: { code: 'NOT_FOUND' } });
         return;
       }
       const cards = await deps.reader.listInitiativeCardSelection(
         actor.organizationId,
-        req.params.initiativeId
+        firstParam(req.params.initiativeId)
       );
       res.json({ initiativeVersion: found.version, registryVersion: 1, cards });
     })
@@ -1684,7 +1692,7 @@ export function createInitiativesExecutionRuntimeRouter(
         res.status(400).json({ error: { code: 'VALIDATION_FAILED', issues: parsed.error.issues } });
         return;
       }
-      const found = await deps.reader.findById(actor.organizationId, req.params.initiativeId);
+      const found = await deps.reader.findById(actor.organizationId, firstParam(req.params.initiativeId));
       if (
         !found ||
         !(await deps.authorize(actor, found.initiative.projectId, 'initiative.update'))
@@ -1695,13 +1703,13 @@ export function createInitiativesExecutionRuntimeRouter(
       const policy = await deps.resolvePolicy(
         actor.organizationId,
         found.initiative.projectId,
-        req.params.initiativeId
+        firstParam(req.params.initiativeId)
       );
       const result = await configureInitiativeCards(deps.unitOfWork, {
         organizationId: actor.organizationId,
         actorId: actor.userId,
         aggregateType: 'initiative',
-        aggregateId: req.params.initiativeId,
+        aggregateId: firstParam(req.params.initiativeId),
         expectedVersion: parsed.data.expectedVersion,
         clientRequestId: parsed.data.clientRequestId,
         correlationId:
@@ -1736,7 +1744,7 @@ export function createInitiativesExecutionRuntimeRouter(
         res.status(400).json({ error: { code: 'VALIDATION_FAILED', issues: parsed.error.issues } });
         return;
       }
-      const found = await deps.reader.findById(actor.organizationId, req.params.initiativeId);
+      const found = await deps.reader.findById(actor.organizationId, firstParam(req.params.initiativeId));
       if (
         !found ||
         !(await deps.authorize(actor, found.initiative.projectId, 'initiative.update'))
@@ -1747,13 +1755,13 @@ export function createInitiativesExecutionRuntimeRouter(
       const policy = await deps.resolvePolicy(
         actor.organizationId,
         found.initiative.projectId,
-        req.params.initiativeId
+        firstParam(req.params.initiativeId)
       );
       const result = await createDefinitionRemediationWork(deps.unitOfWork, {
         organizationId: actor.organizationId,
         actorId: actor.userId,
         aggregateType: 'initiative',
-        aggregateId: req.params.initiativeId,
+        aggregateId: firstParam(req.params.initiativeId),
         expectedVersion: parsed.data.expectedVersion,
         clientRequestId: parsed.data.clientRequestId,
         correlationId:
@@ -1777,7 +1785,7 @@ export function createInitiativesExecutionRuntimeRouter(
         res.status(401).json({ error: { code: 'AUTH_REQUIRED' } });
         return;
       }
-      const found = await deps.reader.findById(actor.organizationId, req.params.initiativeId);
+      const found = await deps.reader.findById(actor.organizationId, firstParam(req.params.initiativeId));
       if (!found || !(await deps.authorize(actor, found.initiative.projectId, 'initiative.view'))) {
         res.status(404).json({ error: { code: 'NOT_FOUND' } });
         return;
@@ -1789,7 +1797,7 @@ export function createInitiativesExecutionRuntimeRouter(
       const policy = await deps.resolvePolicy(
         actor.organizationId,
         found.initiative.projectId,
-        req.params.initiativeId
+        firstParam(req.params.initiativeId)
       );
       res.json({
         actorId: actor.userId,
@@ -1809,14 +1817,14 @@ export function createInitiativesExecutionRuntimeRouter(
         res.status(401).json({ error: { code: 'AUTH_REQUIRED' } });
         return;
       }
-      const found = await deps.reader.findById(actor.organizationId, req.params.initiativeId);
+      const found = await deps.reader.findById(actor.organizationId, firstParam(req.params.initiativeId));
       if (!found || !(await deps.authorize(actor, found.initiative.projectId, 'initiative.view'))) {
         res.status(404).json({ error: { code: 'NOT_FOUND' } });
         return;
       }
       const cards = await deps.reader.listLatestInitiativeCards(
         actor.organizationId,
-        req.params.initiativeId
+        firstParam(req.params.initiativeId)
       );
       const source = found.initiative.source;
       const proposal = source?.proposalId
@@ -1867,7 +1875,7 @@ export function createInitiativesExecutionRuntimeRouter(
         res.status(400).json({ error: { code: 'VALIDATION_FAILED', issues: parsed.error.issues } });
         return;
       }
-      const found = await deps.reader.findById(actor.organizationId, req.params.initiativeId);
+      const found = await deps.reader.findById(actor.organizationId, firstParam(req.params.initiativeId));
       if (
         !found ||
         !(await deps.authorize(actor, found.initiative.projectId, 'initiative.update'))
@@ -1878,13 +1886,13 @@ export function createInitiativesExecutionRuntimeRouter(
       const policy = await deps.resolvePolicy(
         actor.organizationId,
         found.initiative.projectId,
-        req.params.initiativeId
+        firstParam(req.params.initiativeId)
       );
       const result = await refreshInitiativeSource(deps.unitOfWork, {
         organizationId: actor.organizationId,
         actorId: actor.userId,
         aggregateType: 'initiative',
-        aggregateId: req.params.initiativeId,
+        aggregateId: firstParam(req.params.initiativeId),
         expectedVersion: parsed.data.expectedVersion,
         clientRequestId: parsed.data.clientRequestId,
         correlationId:
@@ -1916,7 +1924,7 @@ export function createInitiativesExecutionRuntimeRouter(
         res.status(400).json({ error: { code: 'VALIDATION_FAILED', issues: parsed.error.issues } });
         return;
       }
-      const found = await deps.reader.findById(actor.organizationId, req.params.initiativeId);
+      const found = await deps.reader.findById(actor.organizationId, firstParam(req.params.initiativeId));
       if (
         !found ||
         !(await deps.authorize(actor, found.initiative.projectId, 'initiative.update'))
@@ -1927,13 +1935,13 @@ export function createInitiativesExecutionRuntimeRouter(
       const policy = await deps.resolvePolicy(
         actor.organizationId,
         found.initiative.projectId,
-        req.params.initiativeId
+        firstParam(req.params.initiativeId)
       );
       const result = await publishInitiativeCard(deps.unitOfWork, {
         organizationId: actor.organizationId,
         actorId: actor.userId,
         aggregateType: 'initiative',
-        aggregateId: req.params.initiativeId,
+        aggregateId: firstParam(req.params.initiativeId),
         expectedVersion: parsed.data.expectedVersion,
         clientRequestId: parsed.data.clientRequestId,
         correlationId:
@@ -1944,7 +1952,7 @@ export function createInitiativesExecutionRuntimeRouter(
         policyVersion: policy.version,
         commandType: 'initiative.card.publish',
         payload: {
-          cardKey: req.params.cardKey,
+          cardKey: firstParam(req.params.cardKey),
           expectedCardVersion: parsed.data.expectedCardVersion,
           applicability: parsed.data.applicability,
           completion: parsed.data.completion,
@@ -1973,7 +1981,7 @@ export function createInitiativesExecutionRuntimeRouter(
         res.status(400).json({ error: { code: 'VALIDATION_FAILED', issues: parsed.error.issues } });
         return;
       }
-      const found = await deps.reader.findById(actor.organizationId, req.params.initiativeId);
+      const found = await deps.reader.findById(actor.organizationId, firstParam(req.params.initiativeId));
       if (
         !found ||
         !(await deps.authorize(actor, found.initiative.projectId, 'initiative.review'))
@@ -1984,13 +1992,13 @@ export function createInitiativesExecutionRuntimeRouter(
       const policy = await deps.resolvePolicy(
         actor.organizationId,
         found.initiative.projectId,
-        req.params.initiativeId
+        firstParam(req.params.initiativeId)
       );
       const result = await reviewInitiativeCard(deps.unitOfWork, {
         organizationId: actor.organizationId,
         actorId: actor.userId,
         aggregateType: 'initiative',
-        aggregateId: req.params.initiativeId,
+        aggregateId: firstParam(req.params.initiativeId),
         expectedVersion: parsed.data.expectedVersion,
         clientRequestId: parsed.data.clientRequestId,
         correlationId:
@@ -2001,7 +2009,7 @@ export function createInitiativesExecutionRuntimeRouter(
         policyVersion: policy.version,
         commandType: 'initiative.card.review',
         payload: {
-          cardKey: req.params.cardKey,
+          cardKey: firstParam(req.params.cardKey),
           expectedCardVersion: parsed.data.expectedCardVersion,
           outcome: parsed.data.outcome,
           rationale: parsed.data.rationale,
@@ -2025,7 +2033,7 @@ export function createInitiativesExecutionRuntimeRouter(
         res.status(400).json({ error: { code: 'VALIDATION_FAILED', issues: parsed.error.issues } });
         return;
       }
-      const found = await deps.reader.findById(actor.organizationId, req.params.initiativeId);
+      const found = await deps.reader.findById(actor.organizationId, firstParam(req.params.initiativeId));
       if (
         !found ||
         !(await deps.authorize(actor, found.initiative.projectId, 'initiative.update'))
@@ -2036,13 +2044,13 @@ export function createInitiativesExecutionRuntimeRouter(
       const policy = await deps.resolvePolicy(
         actor.organizationId,
         found.initiative.projectId,
-        req.params.initiativeId
+        firstParam(req.params.initiativeId)
       );
       const result = await requestDefinitionDecision(deps.unitOfWork, {
         organizationId: actor.organizationId,
         actorId: actor.userId,
         aggregateType: 'initiative',
-        aggregateId: req.params.initiativeId,
+        aggregateId: firstParam(req.params.initiativeId),
         expectedVersion: parsed.data.expectedVersion,
         clientRequestId: parsed.data.clientRequestId,
         correlationId: `definition-request-${parsed.data.clientRequestId}`,
@@ -2073,7 +2081,7 @@ export function createInitiativesExecutionRuntimeRouter(
         res.status(400).json({ error: { code: 'VALIDATION_FAILED', issues: parsed.error.issues } });
         return;
       }
-      const found = await deps.reader.findById(actor.organizationId, req.params.initiativeId);
+      const found = await deps.reader.findById(actor.organizationId, firstParam(req.params.initiativeId));
       if (
         !found ||
         !(await deps.authorize(actor, found.initiative.projectId, 'initiative.review'))
@@ -2084,13 +2092,13 @@ export function createInitiativesExecutionRuntimeRouter(
       const policy = await deps.resolvePolicy(
         actor.organizationId,
         found.initiative.projectId,
-        req.params.initiativeId
+        firstParam(req.params.initiativeId)
       );
       const result = await decideDefinition(deps.unitOfWork, {
         organizationId: actor.organizationId,
         actorId: actor.userId,
         aggregateType: 'initiative',
-        aggregateId: req.params.initiativeId,
+        aggregateId: firstParam(req.params.initiativeId),
         expectedVersion: parsed.data.expectedVersion,
         clientRequestId: parsed.data.clientRequestId,
         correlationId: `definition-decision-${parsed.data.clientRequestId}`,
@@ -2172,7 +2180,7 @@ export function createInitiativesExecutionRuntimeRouter(
       const work = await deps.reader.findDefinitionRemediationById(
         actor.organizationId,
         req.params.aggregateType,
-        req.params.aggregateId
+        firstParam(req.params.aggregateId)
       );
       const initiativeId = String(work?.payload.parentId ?? '');
       const initiative = initiativeId
@@ -2192,7 +2200,7 @@ export function createInitiativesExecutionRuntimeRouter(
         organizationId: actor.organizationId,
         actorId: actor.userId,
         aggregateType: req.params.aggregateType,
-        aggregateId: req.params.aggregateId,
+        aggregateId: firstParam(req.params.aggregateId),
         expectedVersion,
         clientRequestId,
         correlationId:
@@ -2216,14 +2224,14 @@ export function createInitiativesExecutionRuntimeRouter(
         res.status(401).json({ error: { code: 'AUTH_REQUIRED' } });
         return;
       }
-      const found = await deps.reader.findById(actor.organizationId, req.params.initiativeId);
+      const found = await deps.reader.findById(actor.organizationId, firstParam(req.params.initiativeId));
       if (!found || !(await deps.authorize(actor, found.initiative.projectId, 'initiative.view'))) {
         res.status(404).json({ error: { code: 'NOT_FOUND' } });
         return;
       }
       const cards = await deps.reader.listLatestInitiativeCards(
         actor.organizationId,
-        req.params.initiativeId
+        firstParam(req.params.initiativeId)
       );
       res.json({
         initiativeId: req.params.initiativeId,
@@ -2247,7 +2255,7 @@ export function createInitiativesExecutionRuntimeRouter(
         res.status(400).json({ error: { code: 'VALIDATION_FAILED', issues: parsed.error.issues } });
         return;
       }
-      const found = await deps.reader.findById(actor.organizationId, req.params.initiativeId);
+      const found = await deps.reader.findById(actor.organizationId, firstParam(req.params.initiativeId));
       if (
         !found ||
         !(await deps.authorize(actor, found.initiative.projectId, 'initiative.update'))
@@ -2258,13 +2266,13 @@ export function createInitiativesExecutionRuntimeRouter(
       const policy = await deps.resolvePolicy(
         actor.organizationId,
         found.initiative.projectId,
-        req.params.initiativeId
+        firstParam(req.params.initiativeId)
       );
       const result = await startAnalysis(deps.unitOfWork, {
         organizationId: actor.organizationId,
         actorId: actor.userId,
         aggregateType: 'initiative',
-        aggregateId: req.params.initiativeId,
+        aggregateId: firstParam(req.params.initiativeId),
         expectedVersion: parsed.data.expectedVersion,
         clientRequestId: parsed.data.clientRequestId,
         correlationId: `analysis-start-${parsed.data.clientRequestId}`,
@@ -2290,7 +2298,7 @@ export function createInitiativesExecutionRuntimeRouter(
         res.status(400).json({ error: { code: 'VALIDATION_FAILED', issues: parsed.error.issues } });
         return;
       }
-      const found = await deps.reader.findById(actor.organizationId, req.params.initiativeId);
+      const found = await deps.reader.findById(actor.organizationId, firstParam(req.params.initiativeId));
       if (
         !found ||
         !(await deps.authorize(actor, found.initiative.projectId, 'initiative.update'))
@@ -2301,13 +2309,13 @@ export function createInitiativesExecutionRuntimeRouter(
       const policy = await deps.resolvePolicy(
         actor.organizationId,
         found.initiative.projectId,
-        req.params.initiativeId
+        firstParam(req.params.initiativeId)
       );
       const result = await requestAnalysisDecision(deps.unitOfWork, {
         organizationId: actor.organizationId,
         actorId: actor.userId,
         aggregateType: 'initiative',
-        aggregateId: req.params.initiativeId,
+        aggregateId: firstParam(req.params.initiativeId),
         expectedVersion: parsed.data.expectedVersion,
         clientRequestId: parsed.data.clientRequestId,
         correlationId: `analysis-request-${parsed.data.clientRequestId}`,
@@ -2338,7 +2346,7 @@ export function createInitiativesExecutionRuntimeRouter(
         res.status(400).json({ error: { code: 'VALIDATION_FAILED', issues: parsed.error.issues } });
         return;
       }
-      const found = await deps.reader.findById(actor.organizationId, req.params.initiativeId);
+      const found = await deps.reader.findById(actor.organizationId, firstParam(req.params.initiativeId));
       if (
         !found ||
         !(await deps.authorize(actor, found.initiative.projectId, 'initiative.review'))
@@ -2349,13 +2357,13 @@ export function createInitiativesExecutionRuntimeRouter(
       const policy = await deps.resolvePolicy(
         actor.organizationId,
         found.initiative.projectId,
-        req.params.initiativeId
+        firstParam(req.params.initiativeId)
       );
       const result = await decideAnalysis(deps.unitOfWork, {
         organizationId: actor.organizationId,
         actorId: actor.userId,
         aggregateType: 'initiative',
-        aggregateId: req.params.initiativeId,
+        aggregateId: firstParam(req.params.initiativeId),
         expectedVersion: parsed.data.expectedVersion,
         clientRequestId: parsed.data.clientRequestId,
         correlationId: `analysis-decision-${parsed.data.clientRequestId}`,
@@ -2457,7 +2465,7 @@ export function createInitiativesExecutionRuntimeRouter(
       }
       const found = await deps.reader.findPortfolioScenario(
         actor.organizationId,
-        req.params.scenarioId
+        firstParam(req.params.scenarioId)
       );
       if (
         !found ||
@@ -2480,7 +2488,7 @@ export function createInitiativesExecutionRuntimeRouter(
       }
       const found = await deps.reader.findPortfolioScenario(
         actor.organizationId,
-        req.params.scenarioId
+        firstParam(req.params.scenarioId)
       );
       if (
         !found ||
@@ -2492,7 +2500,7 @@ export function createInitiativesExecutionRuntimeRouter(
       res.json({
         versions: await deps.reader.listPortfolioScenarioHistory(
           actor.organizationId,
-          req.params.scenarioId
+          firstParam(req.params.scenarioId)
         ),
       });
     })
@@ -2508,7 +2516,7 @@ export function createInitiativesExecutionRuntimeRouter(
       }
       const found = await deps.reader.findPortfolioScenario(
         actor.organizationId,
-        req.params.scenarioId
+        firstParam(req.params.scenarioId)
       );
       if (
         !found ||
@@ -2519,7 +2527,7 @@ export function createInitiativesExecutionRuntimeRouter(
       }
       const versions = await deps.reader.listPortfolioScenarioHistory(
         actor.organizationId,
-        req.params.scenarioId
+        firstParam(req.params.scenarioId)
       );
       const from = versions.find((v) => v.scenarioVersion === Number(req.query.from));
       const to = versions.find((v) => v.scenarioVersion === Number(req.query.to));
@@ -2549,7 +2557,7 @@ export function createInitiativesExecutionRuntimeRouter(
         res.status(400).json({ error: { code: 'VALIDATION_FAILED' } });
         return;
       }
-      const found = await deps.reader.findById(actor.organizationId, req.params.initiativeId);
+      const found = await deps.reader.findById(actor.organizationId, firstParam(req.params.initiativeId));
       if (
         !found ||
         !(await deps.authorize(actor, found.initiative.projectId, 'initiative.update'))
@@ -2560,13 +2568,13 @@ export function createInitiativesExecutionRuntimeRouter(
       const policy = await deps.resolvePolicy(
         actor.organizationId,
         found.initiative.projectId,
-        req.params.initiativeId
+        firstParam(req.params.initiativeId)
       );
       const result = await requestPortfolioDecision(deps.unitOfWork, {
         organizationId: actor.organizationId,
         actorId: actor.userId,
         aggregateType: 'initiative',
-        aggregateId: req.params.initiativeId,
+        aggregateId: firstParam(req.params.initiativeId),
         expectedVersion: parsed.data.expectedVersion,
         clientRequestId: parsed.data.clientRequestId,
         correlationId: `portfolio-request-${parsed.data.clientRequestId}`,
@@ -2599,7 +2607,7 @@ export function createInitiativesExecutionRuntimeRouter(
         res.status(400).json({ error: { code: 'VALIDATION_FAILED' } });
         return;
       }
-      const found = await deps.reader.findById(actor.organizationId, req.params.initiativeId);
+      const found = await deps.reader.findById(actor.organizationId, firstParam(req.params.initiativeId));
       if (
         !found ||
         !(await deps.authorize(actor, found.initiative.projectId, 'initiative.review'))
@@ -2610,13 +2618,13 @@ export function createInitiativesExecutionRuntimeRouter(
       const policy = await deps.resolvePolicy(
         actor.organizationId,
         found.initiative.projectId,
-        req.params.initiativeId
+        firstParam(req.params.initiativeId)
       );
       const result = await decidePortfolio(deps.unitOfWork, {
         organizationId: actor.organizationId,
         actorId: actor.userId,
         aggregateType: 'initiative',
-        aggregateId: req.params.initiativeId,
+        aggregateId: firstParam(req.params.initiativeId),
         expectedVersion: parsed.data.expectedVersion,
         clientRequestId: parsed.data.clientRequestId,
         correlationId: `portfolio-decision-${parsed.data.clientRequestId}`,
@@ -2745,7 +2753,7 @@ export function createInitiativesExecutionRuntimeRouter(
         res.status(401).json({ error: { code: 'AUTH_REQUIRED' } });
         return;
       }
-      const found = await deps.reader.findPlanScenario(actor.organizationId, req.params.scenarioId);
+      const found = await deps.reader.findPlanScenario(actor.organizationId, firstParam(req.params.scenarioId));
       const portfolio = found
         ? await deps.reader.findPortfolioScenario(
             actor.organizationId,
@@ -2771,7 +2779,7 @@ export function createInitiativesExecutionRuntimeRouter(
         res.status(401).json({ error: { code: 'AUTH_REQUIRED' } });
         return;
       }
-      const found = await deps.reader.findPlanScenario(actor.organizationId, req.params.scenarioId);
+      const found = await deps.reader.findPlanScenario(actor.organizationId, firstParam(req.params.scenarioId));
       const portfolio = found
         ? await deps.reader.findPortfolioScenario(
             actor.organizationId,
@@ -2789,7 +2797,7 @@ export function createInitiativesExecutionRuntimeRouter(
       res.json({
         versions: await deps.reader.listPlanScenarioHistory(
           actor.organizationId,
-          req.params.scenarioId
+          firstParam(req.params.scenarioId)
         ),
       });
     })
@@ -2802,7 +2810,7 @@ export function createInitiativesExecutionRuntimeRouter(
         res.status(401).json({ error: { code: 'AUTH_REQUIRED' } });
         return;
       }
-      const found = await deps.reader.findPlanScenario(actor.organizationId, req.params.scenarioId);
+      const found = await deps.reader.findPlanScenario(actor.organizationId, firstParam(req.params.scenarioId));
       const portfolio = found
         ? await deps.reader.findPortfolioScenario(
             actor.organizationId,
@@ -2819,7 +2827,7 @@ export function createInitiativesExecutionRuntimeRouter(
       }
       const versions = await deps.reader.listPlanScenarioHistory(
         actor.organizationId,
-        req.params.scenarioId
+        firstParam(req.params.scenarioId)
       );
       const from = versions.find((v) => v.scenarioVersion === Number(req.query.from));
       const to = versions.find((v) => v.scenarioVersion === Number(req.query.to));
@@ -2953,7 +2961,7 @@ export function createInitiativesExecutionRuntimeRouter(
       }
       const found = await deps.reader.findCapacityScenario(
         actor.organizationId,
-        req.params.scenarioId
+        firstParam(req.params.scenarioId)
       );
       if (!found) {
         res.status(404).json({ error: { code: 'NOT_FOUND' } });
@@ -2973,7 +2981,7 @@ export function createInitiativesExecutionRuntimeRouter(
       res.json({
         versions: await deps.reader.listCapacityScenarioHistory(
           actor.organizationId,
-          req.params.scenarioId
+          firstParam(req.params.scenarioId)
         ),
       });
     })
@@ -2995,7 +3003,7 @@ export function createInitiativesExecutionRuntimeRouter(
         organizationId: actor.organizationId,
         actorId: actor.userId,
         aggregateType: 'resource_commitment',
-        aggregateId: req.params.commitmentId,
+        aggregateId: firstParam(req.params.commitmentId),
         expectedVersion: 0,
         clientRequestId: parsed.data.clientRequestId,
         correlationId: `commitment-${parsed.data.clientRequestId}`,
@@ -3033,7 +3041,7 @@ export function createInitiativesExecutionRuntimeRouter(
         organizationId: actor.organizationId,
         actorId: actor.userId,
         aggregateType: 'resource_commitment',
-        aggregateId: req.params.commitmentId,
+        aggregateId: firstParam(req.params.commitmentId),
         expectedVersion: parsed.data.expectedVersion,
         clientRequestId: parsed.data.clientRequestId,
         correlationId: `commitment-accept-${parsed.data.clientRequestId}`,
@@ -3062,7 +3070,7 @@ export function createInitiativesExecutionRuntimeRouter(
         organizationId: actor.organizationId,
         actorId: actor.userId,
         aggregateType: 'resource_commitment',
-        aggregateId: req.params.commitmentId,
+        aggregateId: firstParam(req.params.commitmentId),
         expectedVersion: parsed.data.expectedVersion,
         clientRequestId: parsed.data.clientRequestId,
         correlationId: `commitment-decision-${parsed.data.clientRequestId}`,
@@ -3088,7 +3096,7 @@ export function createInitiativesExecutionRuntimeRouter(
         res.status(400).json({ error: { code: 'VALIDATION_FAILED' } });
         return;
       }
-      const found = await deps.reader.findById(actor.organizationId, req.params.initiativeId);
+      const found = await deps.reader.findById(actor.organizationId, firstParam(req.params.initiativeId));
       if (
         !found ||
         !(await deps.authorize(actor, found.initiative.projectId, 'initiative.update'))
@@ -3099,13 +3107,13 @@ export function createInitiativesExecutionRuntimeRouter(
       const policy = await deps.resolvePolicy(
         actor.organizationId,
         found.initiative.projectId,
-        req.params.initiativeId
+        firstParam(req.params.initiativeId)
       );
       const result = await requestScheduleDecision(deps.unitOfWork, {
         organizationId: actor.organizationId,
         actorId: actor.userId,
         aggregateType: 'initiative',
-        aggregateId: req.params.initiativeId,
+        aggregateId: firstParam(req.params.initiativeId),
         expectedVersion: parsed.data.expectedVersion,
         clientRequestId: parsed.data.clientRequestId,
         correlationId: `schedule-request-${parsed.data.clientRequestId}`,
@@ -3130,7 +3138,7 @@ export function createInitiativesExecutionRuntimeRouter(
         res.status(400).json({ error: { code: 'VALIDATION_FAILED' } });
         return;
       }
-      const found = await deps.reader.findById(actor.organizationId, req.params.initiativeId);
+      const found = await deps.reader.findById(actor.organizationId, firstParam(req.params.initiativeId));
       if (
         !found ||
         !(await deps.authorize(actor, found.initiative.projectId, 'initiative.review'))
@@ -3141,13 +3149,13 @@ export function createInitiativesExecutionRuntimeRouter(
       const policy = await deps.resolvePolicy(
         actor.organizationId,
         found.initiative.projectId,
-        req.params.initiativeId
+        firstParam(req.params.initiativeId)
       );
       const result = await decideSchedule(deps.unitOfWork, {
         organizationId: actor.organizationId,
         actorId: actor.userId,
         aggregateType: 'initiative',
-        aggregateId: req.params.initiativeId,
+        aggregateId: firstParam(req.params.initiativeId),
         expectedVersion: parsed.data.expectedVersion,
         clientRequestId: parsed.data.clientRequestId,
         correlationId: `schedule-decision-${parsed.data.clientRequestId}`,
@@ -3193,7 +3201,7 @@ export function createInitiativesExecutionRuntimeRouter(
       }
       const pack = await deps.reader.findHandoffPackage(
         actor.organizationId,
-        req.params.handoffPackageId
+        firstParam(req.params.handoffPackageId)
       );
       const initiativeId = String(
         (pack as (Record<string, unknown> & { version: number }) | null)?.initiativeId ?? ''
@@ -3253,7 +3261,7 @@ export function createInitiativesExecutionRuntimeRouter(
         res.status(400).json({ error: { code: 'VALIDATION_FAILED' } });
         return;
       }
-      const found = await deps.reader.findById(actor.organizationId, req.params.initiativeId);
+      const found = await deps.reader.findById(actor.organizationId, firstParam(req.params.initiativeId));
       if (
         !found ||
         !(await deps.authorize(actor, found.initiative.projectId, 'initiative.update'))
@@ -3264,13 +3272,13 @@ export function createInitiativesExecutionRuntimeRouter(
       const policy = await deps.resolvePolicy(
         actor.organizationId,
         found.initiative.projectId,
-        req.params.initiativeId
+        firstParam(req.params.initiativeId)
       );
       const result = await requestHandoffAcceptance(deps.unitOfWork, {
         organizationId: actor.organizationId,
         actorId: actor.userId,
         aggregateType: 'initiative',
-        aggregateId: req.params.initiativeId,
+        aggregateId: firstParam(req.params.initiativeId),
         expectedVersion: parsed.data.expectedVersion,
         clientRequestId: parsed.data.clientRequestId,
         correlationId: `handoff-request-${parsed.data.clientRequestId}`,
@@ -3295,7 +3303,7 @@ export function createInitiativesExecutionRuntimeRouter(
         res.status(400).json({ error: { code: 'VALIDATION_FAILED' } });
         return;
       }
-      const found = await deps.reader.findById(actor.organizationId, req.params.initiativeId);
+      const found = await deps.reader.findById(actor.organizationId, firstParam(req.params.initiativeId));
       if (
         !found ||
         !(await deps.authorize(actor, found.initiative.projectId, 'initiative.review'))
@@ -3306,13 +3314,13 @@ export function createInitiativesExecutionRuntimeRouter(
       const policy = await deps.resolvePolicy(
         actor.organizationId,
         found.initiative.projectId,
-        req.params.initiativeId
+        firstParam(req.params.initiativeId)
       );
       const result = await decideHandoffAcceptance(deps.unitOfWork, {
         organizationId: actor.organizationId,
         actorId: actor.userId,
         aggregateType: 'initiative',
-        aggregateId: req.params.initiativeId,
+        aggregateId: firstParam(req.params.initiativeId),
         expectedVersion: parsed.data.expectedVersion,
         clientRequestId: parsed.data.clientRequestId,
         correlationId: `handoff-decision-${parsed.data.clientRequestId}`,
@@ -3374,7 +3382,7 @@ export function createInitiativesExecutionRuntimeRouter(
       }
       const item = await deps.reader.findExecutionCase(
         actor.organizationId,
-        req.params.executionCaseId
+        firstParam(req.params.executionCaseId)
       );
       const initiativeId = String(
         (item?.detail as Record<string, unknown> | undefined)?.initiativeId ?? ''
@@ -3401,7 +3409,7 @@ export function createInitiativesExecutionRuntimeRouter(
         res.status(401).json({ error: { code: 'AUTH_REQUIRED' } });
         return;
       }
-      const initiative = await deps.reader.findById(actor.organizationId, req.params.initiativeId);
+      const initiative = await deps.reader.findById(actor.organizationId, firstParam(req.params.initiativeId));
       if (
         !initiative ||
         !(await deps.authorize(actor, initiative.initiative.projectId, 'initiative.view'))
@@ -3411,7 +3419,7 @@ export function createInitiativesExecutionRuntimeRouter(
       }
       const item = await deps.reader.findExecutionCaseByInitiative(
         actor.organizationId,
-        req.params.initiativeId
+        firstParam(req.params.initiativeId)
       );
       if (!item) {
         res.status(404).json({ error: { code: 'NOT_FOUND' } });
@@ -3447,7 +3455,7 @@ export function createInitiativesExecutionRuntimeRouter(
         organizationId: actor.organizationId,
         actorId: actor.userId,
         aggregateType: 'execution_milestone',
-        aggregateId: req.params.milestoneId,
+        aggregateId: firstParam(req.params.milestoneId),
         expectedVersion,
         clientRequestId,
         correlationId: `milestone-${clientRequestId}`,
@@ -3474,7 +3482,7 @@ export function createInitiativesExecutionRuntimeRouter(
       }
       const executionCase = await deps.reader.findExecutionCase(
         actor.organizationId,
-        req.params.executionCaseId
+        firstParam(req.params.executionCaseId)
       );
       const initiativeId = String(
         (executionCase?.detail as Record<string, unknown> | undefined)?.initiativeId ?? ''
@@ -3493,7 +3501,7 @@ export function createInitiativesExecutionRuntimeRouter(
       res.json({
         items: await deps.reader.listExecutionMilestones(
           actor.organizationId,
-          req.params.executionCaseId
+          firstParam(req.params.executionCaseId)
         ),
       });
     })
@@ -3524,7 +3532,7 @@ export function createInitiativesExecutionRuntimeRouter(
         organizationId: actor.organizationId,
         actorId: actor.userId,
         aggregateType: 'execution_task',
-        aggregateId: req.params.taskId,
+        aggregateId: firstParam(req.params.taskId),
         expectedVersion,
         clientRequestId,
         correlationId: `task-${clientRequestId}`,
@@ -3555,7 +3563,7 @@ export function createInitiativesExecutionRuntimeRouter(
         organizationId: actor.organizationId,
         actorId: actor.userId,
         aggregateType: 'execution_task',
-        aggregateId: req.params.taskId,
+        aggregateId: firstParam(req.params.taskId),
         expectedVersion,
         clientRequestId,
         correlationId: `task-update-${clientRequestId}`,
@@ -3585,7 +3593,7 @@ export function createInitiativesExecutionRuntimeRouter(
         organizationId: actor.organizationId,
         actorId: actor.userId,
         aggregateType: 'execution_task',
-        aggregateId: req.params.taskId,
+        aggregateId: firstParam(req.params.taskId),
         expectedVersion,
         clientRequestId,
         correlationId: `task-complete-${clientRequestId}`,
@@ -3615,7 +3623,7 @@ export function createInitiativesExecutionRuntimeRouter(
         organizationId: actor.organizationId,
         actorId: actor.userId,
         aggregateType: 'execution_decision',
-        aggregateId: req.params.decisionId,
+        aggregateId: firstParam(req.params.decisionId),
         expectedVersion,
         clientRequestId,
         correlationId: `decision-${clientRequestId}`,
@@ -3645,7 +3653,7 @@ export function createInitiativesExecutionRuntimeRouter(
         organizationId: actor.organizationId,
         actorId: actor.userId,
         aggregateType: 'execution_decision',
-        aggregateId: req.params.decisionId,
+        aggregateId: firstParam(req.params.decisionId),
         expectedVersion: parsed.data.expectedVersion,
         clientRequestId: parsed.data.clientRequestId,
         correlationId: `decision-request-${parsed.data.clientRequestId}`,
@@ -3675,7 +3683,7 @@ export function createInitiativesExecutionRuntimeRouter(
         organizationId: actor.organizationId,
         actorId: actor.userId,
         aggregateType: 'execution_decision',
-        aggregateId: req.params.decisionId,
+        aggregateId: firstParam(req.params.decisionId),
         expectedVersion,
         clientRequestId,
         correlationId: `decision-decide-${clientRequestId}`,
@@ -3702,11 +3710,11 @@ export function createInitiativesExecutionRuntimeRouter(
       res.json({
         tasks: await deps.reader.listExecutionTasks(
           actor.organizationId,
-          req.params.executionCaseId
+          firstParam(req.params.executionCaseId)
         ),
         decisions: await deps.reader.listExecutionDecisions(
           actor.organizationId,
-          req.params.executionCaseId
+          firstParam(req.params.executionCaseId)
         ),
       });
     })
@@ -3730,7 +3738,7 @@ export function createInitiativesExecutionRuntimeRouter(
           organizationId: actor.organizationId,
           actorId: actor.userId,
           aggregateType: 'execution_task',
-          aggregateId: req.params.taskId,
+          aggregateId: firstParam(req.params.taskId),
           expectedVersion,
           clientRequestId,
           correlationId: clientRequestId,
@@ -3761,7 +3769,7 @@ export function createInitiativesExecutionRuntimeRouter(
           organizationId: actor.organizationId,
           actorId: actor.userId,
           aggregateType: 'execution_decision',
-          aggregateId: req.params.decisionId,
+          aggregateId: firstParam(req.params.decisionId),
           expectedVersion,
           clientRequestId,
           correlationId: clientRequestId,
@@ -3807,7 +3815,7 @@ export function createInitiativesExecutionRuntimeRouter(
         organizationId: actor.organizationId,
         actorId: actor.userId,
         aggregateType: 'operational_allocation',
-        aggregateId: req.params.allocationId,
+        aggregateId: firstParam(req.params.allocationId),
         expectedVersion,
         clientRequestId,
         correlationId: `allocation-${clientRequestId}`,
@@ -3912,7 +3920,7 @@ export function createInitiativesExecutionRuntimeRouter(
         organizationId: actor.organizationId,
         actorId: actor.userId,
         aggregateType: 'operational_allocation',
-        aggregateId: req.params.allocationId,
+        aggregateId: firstParam(req.params.allocationId),
         expectedVersion,
         clientRequestId,
         correlationId: `allocation-transition-${clientRequestId}`,
@@ -3939,7 +3947,7 @@ export function createInitiativesExecutionRuntimeRouter(
       res.json({
         items: await deps.reader.listOperationalAllocations(
           actor.organizationId,
-          req.params.executionCaseId
+          firstParam(req.params.executionCaseId)
         ),
       });
     })
@@ -3967,7 +3975,7 @@ export function createInitiativesExecutionRuntimeRouter(
         return;
       }
       const readBack = await deps.unitOfWork.transaction(async (tx) => {
-        const receipt = await tx.findReceipt<any>(actor.organizationId, req.params.clientRequestId);
+        const receipt = await tx.findReceipt<any>(actor.organizationId, firstParam(req.params.clientRequestId));
         if (!receipt) return null;
         const allowed = await canViewAggregate(actor, receipt.aggregateType, receipt.aggregateId);
         if (!allowed) return null;
@@ -4049,7 +4057,7 @@ export function createInitiativesExecutionRuntimeRouter(
         organizationId: actor.organizationId,
         actorId: actor.userId,
         aggregateType: 'intervention_case',
-        aggregateId: req.params.interventionId,
+        aggregateId: firstParam(req.params.interventionId),
         expectedVersion,
         clientRequestId,
         correlationId: `intervention-${clientRequestId}`,
@@ -4081,7 +4089,7 @@ export function createInitiativesExecutionRuntimeRouter(
           organizationId: actor.organizationId,
           actorId: actor.userId,
           aggregateType: 'intervention_case',
-          aggregateId: req.params.interventionId,
+          aggregateId: firstParam(req.params.interventionId),
           expectedVersion,
           clientRequestId,
           correlationId: `intervention-transition-${clientRequestId}`,
@@ -4149,7 +4157,7 @@ export function createInitiativesExecutionRuntimeRouter(
         organizationId: actor.organizationId,
         actorId: actor.userId,
         aggregateType: 'report_definition',
-        aggregateId: req.params.definitionId,
+        aggregateId: firstParam(req.params.definitionId),
         expectedVersion,
         clientRequestId,
         correlationId: `report-definition-${clientRequestId}`,
@@ -4189,7 +4197,7 @@ export function createInitiativesExecutionRuntimeRouter(
           organizationId: actor.organizationId,
           actorId: actor.userId,
           aggregateType: 'report_definition',
-          aggregateId: req.params.definitionId,
+          aggregateId: firstParam(req.params.definitionId),
           expectedVersion,
           clientRequestId,
           correlationId: `report-definition-transition-${clientRequestId}`,
@@ -4238,7 +4246,7 @@ export function createInitiativesExecutionRuntimeRouter(
         organizationId: actor.organizationId,
         actorId: actor.userId,
         aggregateType: 'report_run',
-        aggregateId: req.params.reportRunId,
+        aggregateId: firstParam(req.params.reportRunId),
         expectedVersion,
         clientRequestId,
         correlationId: `report-${clientRequestId}`,
@@ -4280,7 +4288,7 @@ export function createInitiativesExecutionRuntimeRouter(
           organizationId: actor.organizationId,
           actorId: actor.userId,
           aggregateType: 'report_run',
-          aggregateId: req.params.reportRunId,
+          aggregateId: firstParam(req.params.reportRunId),
           expectedVersion,
           clientRequestId,
           correlationId: `report-transition-${clientRequestId}`,
@@ -4302,7 +4310,7 @@ export function createInitiativesExecutionRuntimeRouter(
       }
       const found = await deps.reader.findReportDefinition(
         actor.organizationId,
-        req.params.definitionId
+        firstParam(req.params.definitionId)
       );
       if (!found) {
         res.status(404).json({ error: { code: 'NOT_FOUND' } });
@@ -4353,7 +4361,7 @@ export function createInitiativesExecutionRuntimeRouter(
           organizationId: actor.organizationId,
           actorId: actor.userId,
           aggregateType: 'delivery_acceptance',
-          aggregateId: req.params.id,
+          aggregateId: firstParam(req.params.id),
           expectedVersion,
           clientRequestId,
           correlationId: clientRequestId,
@@ -4385,7 +4393,7 @@ export function createInitiativesExecutionRuntimeRouter(
           organizationId: actor.organizationId,
           actorId: actor.userId,
           aggregateType: 'delivery_acceptance',
-          aggregateId: req.params.id,
+          aggregateId: firstParam(req.params.id),
           expectedVersion,
           clientRequestId,
           correlationId: clientRequestId,
@@ -4416,7 +4424,7 @@ export function createInitiativesExecutionRuntimeRouter(
           organizationId: actor.organizationId,
           actorId: actor.userId,
           aggregateType: 'results_acceptance',
-          aggregateId: req.params.id,
+          aggregateId: firstParam(req.params.id),
           expectedVersion,
           clientRequestId,
           correlationId: clientRequestId,
@@ -4448,7 +4456,7 @@ export function createInitiativesExecutionRuntimeRouter(
           organizationId: actor.organizationId,
           actorId: actor.userId,
           aggregateType: 'results_acceptance',
-          aggregateId: req.params.id,
+          aggregateId: firstParam(req.params.id),
           expectedVersion,
           clientRequestId,
           correlationId: clientRequestId,
@@ -4506,7 +4514,7 @@ export function createInitiativesExecutionRuntimeRouter(
         res.status(401).json({ error: { code: 'AUTH_REQUIRED' } });
         return;
       }
-      const found = await deps.reader.findBenefitsHandoffPack(actor.organizationId, req.params.id);
+      const found = await deps.reader.findBenefitsHandoffPack(actor.organizationId, firstParam(req.params.id));
       if (!found) {
         res.status(404).json({ error: { code: 'NOT_FOUND' } });
         return;
@@ -4544,7 +4552,7 @@ export function createInitiativesExecutionRuntimeRouter(
           organizationId: actor.organizationId,
           actorId: actor.userId,
           aggregateType: 'finance_reconciliation',
-          aggregateId: req.params.id,
+          aggregateId: firstParam(req.params.id),
           expectedVersion,
           clientRequestId,
           correlationId: clientRequestId,
@@ -4576,7 +4584,7 @@ export function createInitiativesExecutionRuntimeRouter(
           organizationId: actor.organizationId,
           actorId: actor.userId,
           aggregateType: 'results_kpi_observation',
-          aggregateId: req.params.id,
+          aggregateId: firstParam(req.params.id),
           expectedVersion,
           clientRequestId,
           correlationId: clientRequestId,
@@ -4597,7 +4605,7 @@ export function createInitiativesExecutionRuntimeRouter(
         res.status(401).json({ error: { code: 'AUTH_REQUIRED' } });
         return;
       }
-      const item = await deps.reader.findFinanceReconciliation(actor.organizationId, req.params.id);
+      const item = await deps.reader.findFinanceReconciliation(actor.organizationId, firstParam(req.params.id));
       if (!item || !(await canViewAggregate(actor, 'finance_reconciliation', req.params.id))) {
         res.status(404).json({ error: { code: 'NOT_FOUND' } });
         return;
@@ -4635,7 +4643,7 @@ export function createInitiativesExecutionRuntimeRouter(
         res.status(401).json({ error: { code: 'AUTH_REQUIRED' } });
         return;
       }
-      const item = await deps.reader.findResultsKpiObservation(actor.organizationId, req.params.id);
+      const item = await deps.reader.findResultsKpiObservation(actor.organizationId, firstParam(req.params.id));
       if (!item || !(await canViewAggregate(actor, 'results_kpi_observation', req.params.id))) {
         res.status(404).json({ error: { code: 'NOT_FOUND' } });
         return;
@@ -4662,7 +4670,7 @@ export function createInitiativesExecutionRuntimeRouter(
           organizationId: actor.organizationId,
           actorId: actor.userId,
           aggregateType: 'effectiveness_case',
-          aggregateId: req.params.id,
+          aggregateId: firstParam(req.params.id),
           expectedVersion,
           clientRequestId,
           correlationId: clientRequestId,
@@ -4694,7 +4702,7 @@ export function createInitiativesExecutionRuntimeRouter(
           organizationId: actor.organizationId,
           actorId: actor.userId,
           aggregateType: 'effectiveness_case',
-          aggregateId: req.params.id,
+          aggregateId: firstParam(req.params.id),
           expectedVersion,
           clientRequestId,
           correlationId: clientRequestId,
@@ -4725,7 +4733,7 @@ export function createInitiativesExecutionRuntimeRouter(
           organizationId: actor.organizationId,
           actorId: actor.userId,
           aggregateType: 'effectiveness_case',
-          aggregateId: req.params.id,
+          aggregateId: firstParam(req.params.id),
           expectedVersion,
           clientRequestId,
           correlationId: clientRequestId,
@@ -4772,7 +4780,7 @@ export function createInitiativesExecutionRuntimeRouter(
           organizationId: actor.organizationId,
           actorId: actor.userId,
           aggregateType: 'closure_case',
-          aggregateId: req.params.id,
+          aggregateId: firstParam(req.params.id),
           expectedVersion,
           clientRequestId,
           correlationId: clientRequestId,
@@ -4798,7 +4806,7 @@ export function createInitiativesExecutionRuntimeRouter(
         res.status(400).json({ error: { code: 'VALIDATION_FAILED' } });
         return;
       }
-      const closure = await deps.reader.findClosureCase(actor.organizationId, req.params.id);
+      const closure = await deps.reader.findClosureCase(actor.organizationId, firstParam(req.params.id));
       const initiativeId = String((closure as any)?.initiativeId ?? '');
       const initiative = initiativeId
         ? await deps.reader.findById(actor.organizationId, initiativeId)
@@ -4822,7 +4830,7 @@ export function createInitiativesExecutionRuntimeRouter(
           organizationId: actor.organizationId,
           actorId: actor.userId,
           aggregateType: 'closure_case',
-          aggregateId: req.params.id,
+          aggregateId: firstParam(req.params.id),
           expectedVersion,
           clientRequestId,
           correlationId: clientRequestId,
@@ -4864,7 +4872,7 @@ export function createInitiativesExecutionRuntimeRouter(
         res.status(401).json({ error: { code: 'AUTH_REQUIRED' } });
         return;
       }
-      const item = await deps.reader.findEffectivenessSnapshot(actor.organizationId, req.params.id);
+      const item = await deps.reader.findEffectivenessSnapshot(actor.organizationId, firstParam(req.params.id));
       if (!item || !(await canViewAggregate(actor, 'effectiveness_snapshot', req.params.id))) {
         res.status(404).json({ error: { code: 'NOT_FOUND' } });
         return;
@@ -4891,7 +4899,7 @@ export function createInitiativesExecutionRuntimeRouter(
           organizationId: actor.organizationId,
           actorId: actor.userId,
           aggregateType: 'archive_manifest',
-          aggregateId: req.params.id,
+          aggregateId: firstParam(req.params.id),
           expectedVersion,
           clientRequestId,
           correlationId: clientRequestId,
@@ -4931,7 +4939,7 @@ export function createInitiativesExecutionRuntimeRouter(
         res.status(401).json({ error: { code: 'AUTH_REQUIRED' } });
         return;
       }
-      const x = await deps.reader.findClosureSnapshot(actor.organizationId, req.params.id);
+      const x = await deps.reader.findClosureSnapshot(actor.organizationId, firstParam(req.params.id));
       if (!x || !(await canViewAggregate(actor, 'closure_snapshot', req.params.id))) {
         res.status(404).json({ error: { code: 'NOT_FOUND' } });
         return;
@@ -4990,7 +4998,7 @@ export function createInitiativesExecutionRuntimeRouter(
           organizationId: actor.organizationId,
           actorId: actor.userId,
           aggregateType: 'material_change',
-          aggregateId: req.params.id,
+          aggregateId: firstParam(req.params.id),
           expectedVersion,
           clientRequestId,
           correlationId: clientRequestId,
@@ -5022,7 +5030,7 @@ export function createInitiativesExecutionRuntimeRouter(
           organizationId: actor.organizationId,
           actorId: actor.userId,
           aggregateType: 'material_change',
-          aggregateId: req.params.id,
+          aggregateId: firstParam(req.params.id),
           expectedVersion,
           clientRequestId,
           correlationId: clientRequestId,
@@ -5091,7 +5099,7 @@ export function createInitiativesExecutionRuntimeRouter(
           organizationId: actor.organizationId,
           actorId: actor.userId,
           aggregateType: 'ai_analysis_proposal',
-          aggregateId: req.params.id,
+          aggregateId: firstParam(req.params.id),
           expectedVersion,
           clientRequestId,
           correlationId: clientRequestId,
@@ -5123,7 +5131,7 @@ export function createInitiativesExecutionRuntimeRouter(
           organizationId: actor.organizationId,
           actorId: actor.userId,
           aggregateType: 'ai_analysis_proposal',
-          aggregateId: req.params.id,
+          aggregateId: firstParam(req.params.id),
           expectedVersion,
           clientRequestId,
           correlationId: clientRequestId,
@@ -5178,7 +5186,7 @@ export function createInitiativesExecutionRuntimeRouter(
           organizationId: actor.organizationId,
           actorId: actor.userId,
           aggregateType: 'capacity_options',
-          aggregateId: req.params.id,
+          aggregateId: firstParam(req.params.id),
           expectedVersion,
           clientRequestId,
           correlationId: clientRequestId,
@@ -5210,7 +5218,7 @@ export function createInitiativesExecutionRuntimeRouter(
           organizationId: actor.organizationId,
           actorId: actor.userId,
           aggregateType: 'capacity_options',
-          aggregateId: req.params.id,
+          aggregateId: firstParam(req.params.id),
           expectedVersion,
           clientRequestId,
           correlationId: clientRequestId,
@@ -5246,7 +5254,7 @@ export function createInitiativesExecutionRuntimeRouter(
         res.status(400).json({ error: { code: 'VALIDATION_FAILED' } });
         return;
       }
-      const found = await deps.reader.findById(actor.organizationId, req.params.initiativeId);
+      const found = await deps.reader.findById(actor.organizationId, firstParam(req.params.initiativeId));
       if (!found) {
         res.status(404).json({ error: { code: 'NOT_FOUND' } });
         return;
@@ -5254,7 +5262,7 @@ export function createInitiativesExecutionRuntimeRouter(
       const policy = await deps.resolvePolicy(
           actor.organizationId,
           found.initiative.projectId,
-          req.params.initiativeId
+          firstParam(req.params.initiativeId)
         ),
         { expectedVersion, clientRequestId, ...data } = p.data,
         aggregateId = gateSignoffId(data.gate, data.decisionId, actor.userId, data.roleKey);
@@ -5273,7 +5281,7 @@ export function createInitiativesExecutionRuntimeRouter(
           createIfMissing: true,
           payload: {
             ...data,
-            initiativeId: req.params.initiativeId,
+            initiativeId: firstParam(req.params.initiativeId),
             delegationProof: data.delegationProof ?? null,
             policy,
           },
