@@ -1,4 +1,38 @@
 /**
+ * ═══════════════════════════════════════════════════════════════════════
+ * STATUS (DRD path only): INCOMPATIBLE_LEGACY_MODEL / NOT_MAPPED
+ * (A12 · COORD-06 · 2026-08-13)
+ * ═══════════════════════════════════════════════════════════════════════
+ * This flag applies ONLY to the DRD branch of this service
+ * (`getDrdPathwayRecommendation()` below / `maturityPathwayDrdData.ts`), NOT
+ * to the SIRI or ADMA branches, which derive their pathway from each
+ * framework's own live `*_DIMENSIONS` / `*_MATURITY_LEVELS` structures and
+ * are not affected by this issue.
+ *
+ * Full analysis: `docs/program/METHOD_ASSESSMENT_CORE_2026-08-13/
+ * DRD_PATHWAY_MAPPING_TASK.md`. Coordinator decision: COORD-06 in
+ * `docs/program/METHOD_ASSESSMENT_CORE_2026-08-13/COORDINATION.md`.
+ *
+ * The DRD model this service consumes for `framework: 'drd'`
+ * (`maturityPathwayDrdData.ts`) — 8 dimensions `D1`..`D8`, one uniform
+ * 1..5 (I..V) scale, 32 transition steps — does NOT line up 1:1 with the
+ * canonical DRD measurement model: 7 axes / 39 areas with MIXED native
+ * scales per axis (5/5/5/7/7/6/6/5 for D1..D8 once aggregated via Canon
+ * §3.2 "MAP-1.0"), implemented in `src/services/drdStructure.ts` →
+ * `DRD_STRUCTURE`. See `maturityPathwayDrdData.ts` for the full measured
+ * breakdown of both models.
+ *
+ * Consequence: `getMaturityPathway({ framework: 'drd', ... })` is NOT fed
+ * by any real assessment result today — `src/method-core/methods/drd/
+ * compileDrdPack.ts` deliberately does not wire it into the DRD Method
+ * Pack, exactly because of this mismatch (see its `discrepancies` report
+ * entry). Do not connect it to real 39-area assessment scores, and do not
+ * build a heuristic/name-matching/AI-inferred mapping between the 39 areas
+ * and `D1`..`D8` as a shortcut — any such mapping requires an explicit
+ * decision from the DRD methodology owner plus full traceability (each
+ * `D_x` level ⇄ source area(s) ⇄ approver), per the mapping task doc above.
+ * ═══════════════════════════════════════════════════════════════════════
+ *
  * Maturity Pathway Service — "co KONKRETNIE zrobić, by przejść z poziomu N na N+1"
  *
  * OXFORD Round 4 #4 (O1). Turns an assessment result from a DESCRIPTION ("you are
