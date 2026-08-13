@@ -306,6 +306,19 @@ export const ExceleView: React.FC = () => {
   const effectivePreview = pipeline.preview || reopenPreview;
   const effectiveCompleted = pipeline.isCompleted || (!!reopenPreview && !pipeline.currentRun);
 
+  // Reopened library workbooks are loaded outside the generation pipeline, so
+  // `pipeline.preview` is intentionally null. Calling the pipeline download
+  // handler in that state used to return silently and made the prominent XLSX
+  // export button a no-op. Route persisted workbooks directly to their real
+  // download endpoint; generated workbooks keep the existing pipeline path.
+  const handleWorkbookDownload = useCallback(() => {
+    if (reopenWorkbookId) {
+      Api.downloadWorkbook(reopenWorkbookId);
+      return;
+    }
+    void pipeline.handleDownload();
+  }, [pipeline.handleDownload, reopenWorkbookId]);
+
   const handlePreviewFile = useCallback(() => {
     const workbookId = (pipeline.preview as any)?.workbookId || reopenWorkbookId;
     if (workbookId) {
@@ -500,7 +513,7 @@ export const ExceleView: React.FC = () => {
       <SpreadsheetArtifactStudio
         preview={effectivePreview}
         workbookId={effectiveWorkbookId}
-        onDownload={pipeline.handleDownload}
+        onDownload={handleWorkbookDownload}
         onCopyLink={() => {
           const href = buildArtifactPermalink('sheet', effectiveWorkbookId);
           void navigator.clipboard.writeText(href);
@@ -523,7 +536,7 @@ export const ExceleView: React.FC = () => {
       preview={effectivePreview}
       onReplay={pipeline.handleReplay}
       onRemix={pipeline.handleRemix}
-      onDownload={pipeline.handleDownload}
+      onDownload={handleWorkbookDownload}
       onPreviewFile={handlePreviewFile}
       onAllFiles={handleAllFiles}
       onStartGeneration={pipeline.startGeneration}
@@ -541,7 +554,7 @@ export const ExceleView: React.FC = () => {
             isGenerating={pipeline.isGenerating}
             isFailed={pipeline.isFailed}
             failureReason={pipeline.failureReason}
-            onDownload={pipeline.handleDownload}
+            onDownload={handleWorkbookDownload}
             onPreviewFile={handlePreviewFile}
             onAllFiles={handleAllFiles}
           />
@@ -553,7 +566,7 @@ export const ExceleView: React.FC = () => {
             isGenerating={pipeline.isGenerating}
             isFailed={pipeline.isFailed}
             failureReason={pipeline.failureReason}
-            onDownload={pipeline.handleDownload}
+            onDownload={handleWorkbookDownload}
             onPreviewFile={handlePreviewFile}
             onAllFiles={handleAllFiles}
           />

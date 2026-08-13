@@ -1314,7 +1314,7 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
     }
 
     toast.error('No artifact available for download yet');
-  }, [currentRun, lane]);
+  }, [currentRun, lane, preview]);
 
   const failureReason = isFailed
     ? (startupError ??
