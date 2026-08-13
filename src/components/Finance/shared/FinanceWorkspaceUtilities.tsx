@@ -42,7 +42,7 @@ export function FinanceWorkspaceUtilities({
       .then(([versions, current]) => {
         if (cancelled) return;
         setVersionIds(versions.map((version) => version.businessVersionId));
-        setWorkingRevisionId(current.workingRevisionId);
+        setWorkingRevisionId(current.sourceWorkingRevisionId ?? null);
       })
       .catch(() => {
         if (!cancelled) {

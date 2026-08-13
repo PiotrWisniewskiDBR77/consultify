@@ -93,6 +93,7 @@ router.get(
         computeSnapshotId: version.compute_snapshot_id,
         computeRunId: version.compute_run_id,
         contentSemanticHash: version.content_semantic_hash,
+        sourceWorkingRevisionId: version.source_working_revision_id,
         submittedBy: version.submitted_by,
         submittedAt: version.submitted_at,
         approvedBy: version.approved_by,

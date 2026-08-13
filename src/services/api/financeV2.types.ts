@@ -568,6 +568,7 @@ export interface FinanceBusinessVersionDetailDto {
   computeSnapshotId: string | null;
   computeRunId: string | null;
   contentSemanticHash: string | null;
+  sourceWorkingRevisionId?: string | null;
   submittedBy: string | null;
   submittedAt: string | null;
   approvedBy: string | null;
