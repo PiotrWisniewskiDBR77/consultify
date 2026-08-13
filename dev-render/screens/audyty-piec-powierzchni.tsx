@@ -80,14 +80,21 @@ const STATE = new URLSearchParams(window.location.search).get('state') || 'defau
 
 const MOCK_PACKS: AuditPackSummary[] = [
   {
-    id: 'pack-iso9001',
-    packKey: 'ISO9001-QMS-2015',
+    id: 'pack-qms-elmax',
+    packKey: 'QMS-ELMAX-2026',
     version: 3,
-    title: 'Audyt Systemu Zarządzania Jakością — ISO 9001:2015',
-    summary: 'Pełny zestaw kryteriów zgodności z normą ISO 9001:2015 dla produkcji przemysłowej.',
-    sourceId: 'src-iso9001',
-    sourceTitle: 'ISO 9001:2015',
-    sourceVersion: '2015',
+    // Pakiet zweryfikowany opiera się na WŁASNEJ procedurze organizacji, a nie
+    // na treści normy zewnętrznej. To najczęstszy realny przypadek w
+    // konsultingu i jednocześnie jedyny, w którym prawa do źródła są bezsporne.
+    // Pokazywanie tu pakietu nazwanego „ISO 9001:2015" sugerowałoby, że
+    // Consultify dysponuje licencjonowanym pakietem normy — a nie dysponuje.
+    // Norma pozostaje wskazana jako ODNIESIENIE metodyczne w opisie.
+    title: 'Audyt systemu zarządzania jakością — procedura QMS Elmax',
+    summary:
+      'Kryteria zbudowane z procedury QMS klienta, mapowane na strukturę systemu zarządzania jakością.',
+    sourceId: 'src-qms-elmax',
+    sourceTitle: 'Procedura QMS Elmax Industries, wyd. 4',
+    sourceVersion: 'wyd. 4 (2026)',
     classification: 'VERIFIED_NORMATIVE',
     publicationStatus: 'published',
     requiredRoles: ['lead_auditor', 'qms_specialist'],
@@ -160,13 +167,13 @@ const MOCK_PACKS: AuditPackSummary[] = [
 ];
 
 const MOCK_PACK_DETAILS: Record<string, AuditPackDetail> = {
-  'pack-iso9001': {
+  'pack-qms-elmax': {
     ...MOCK_PACKS[0],
-    purpose: 'Potwierdzić zgodność systemu zarządzania jakością klienta z normą ISO 9001:2015 przed certyfikacją lub recertyfikacją.',
+    purpose: 'Potwierdzić zgodność systemu zarządzania jakością klienta z jego własną procedurą QMS przed przeglądem zarządzania. Odniesienie metodyczne: struktura systemu zarządzania jakością.',
     scope: 'Wszystkie procesy objęte certyfikatem: projektowanie, produkcja, kontrola jakości, zarządzanie dostawcami.',
     objectives: 'Zidentyfikować niezgodności, ocenić dojrzałość procesów, potwierdzić gotowość do audytu jednostki certyfikującej.',
     auditType: 'Audyt zgodności normatywnej',
-    requiredCompetencies: ['Audytor wiodący ISO 9001', 'Znajomość branży produkcyjnej'],
+    requiredCompetencies: ['Audytor wiodący systemów zarządzania', 'Znajomość branży produkcyjnej'],
     findingTaxonomy: [
       { key: 'major', label: 'Niezgodność poważna', nonConforming: true },
       { key: 'minor', label: 'Niezgodność drobna', nonConforming: true },
@@ -174,12 +181,7 @@ const MOCK_PACK_DETAILS: Record<string, AuditPackDetail> = {
     ],
     rightsStatus: 'Licencja zakupiona (ISO)',
     rightsNote: null,
-    criteria: [
-      { id: 'crit-9001-4', parentId: null, ordinal: 1, refCode: '4', nodeKind: 'section', title: 'Kontekst organizacji', mandatory: true },
-      { id: 'crit-9001-4.1', parentId: 'crit-9001-4', ordinal: 1, refCode: '4.1', nodeKind: 'criterion', title: 'Zrozumienie organizacji i jej kontekstu', mandatory: true },
-      { id: 'crit-9001-8', parentId: null, ordinal: 2, refCode: '8', nodeKind: 'section', title: 'Działania operacyjne', mandatory: true },
-      { id: 'crit-9001-8.5', parentId: 'crit-9001-8', ordinal: 1, refCode: '8.5', nodeKind: 'criterion', title: 'Produkcja i dostarczanie usługi', mandatory: true },
-    ],
+    criteria: [],
   },
   'pack-it-vendor': {
     ...MOCK_PACKS[1],
@@ -195,12 +197,7 @@ const MOCK_PACK_DETAILS: Record<string, AuditPackDetail> = {
     ],
     rightsStatus: 'Własność DBR77',
     rightsNote: null,
-    criteria: [
-      { id: 'crit-itv-1', parentId: null, ordinal: 1, refCode: '1', nodeKind: 'section', title: 'Ocena wstępna dostawcy', mandatory: true },
-      { id: 'crit-itv-1.1', parentId: 'crit-itv-1', ordinal: 1, refCode: '1.1', nodeKind: 'criterion', title: 'Weryfikacja certyfikatów bezpieczeństwa', mandatory: true },
-      { id: 'crit-itv-2', parentId: null, ordinal: 2, refCode: '2', nodeKind: 'section', title: 'Nadzór bieżący', mandatory: false },
-      { id: 'crit-itv-2.1', parentId: 'crit-itv-2', ordinal: 1, refCode: '2.1', nodeKind: 'criterion', title: 'Kwartalny przegląd SLA', mandatory: false },
-    ],
+    criteria: [],
   },
   'pack-nis2-demo': {
     ...MOCK_PACKS[2],
@@ -212,10 +209,7 @@ const MOCK_PACK_DETAILS: Record<string, AuditPackDetail> = {
     findingTaxonomy: [{ key: 'draft_note', label: 'Notatka robocza', nonConforming: false }],
     rightsStatus: 'Nie dotyczy (materiał roboczy)',
     rightsNote: 'Wersja robocza do testów wewnętrznych — nie używać u klienta.',
-    criteria: [
-      { id: 'crit-nis2-1', parentId: null, ordinal: 1, refCode: 'A', nodeKind: 'section', title: 'Zarządzanie ryzykiem cyberbezpieczeństwa', mandatory: false },
-      { id: 'crit-nis2-1.1', parentId: 'crit-nis2-1', ordinal: 1, refCode: 'A.1', nodeKind: 'criterion', title: 'Polityka zarządzania ryzykiem (szkic)', mandatory: false },
-    ],
+    criteria: [],
   },
   'pack-dataquality-2019': {
     ...MOCK_PACKS[3],
@@ -227,10 +221,7 @@ const MOCK_PACK_DETAILS: Record<string, AuditPackDetail> = {
     findingTaxonomy: [{ key: 'gap', label: 'Luka danych', nonConforming: true }],
     rightsStatus: 'Nie zweryfikowano',
     rightsNote: 'Metodyka wycofana z aktywnego użycia w 2023 — zachowana wyłącznie do wglądu historycznego.',
-    criteria: [
-      { id: 'crit-dq-1', parentId: null, ordinal: 1, refCode: 'DQ-1', nodeKind: 'section', title: 'Kompletność danych referencyjnych', mandatory: true },
-      { id: 'crit-dq-1.1', parentId: 'crit-dq-1', ordinal: 1, refCode: 'DQ-1.1', nodeKind: 'criterion', title: 'Brakujące wartości w polach kluczowych', mandatory: true },
-    ],
+    criteria: [],
   },
   'pack-rodo-client': {
     ...MOCK_PACKS[4],
@@ -242,10 +233,7 @@ const MOCK_PACK_DETAILS: Record<string, AuditPackDetail> = {
     findingTaxonomy: [],
     rightsStatus: 'Nie zweryfikowano',
     rightsNote: 'Klient nie potwierdził pochodzenia listy kontrolnej — brak dowodu praw źródła.',
-    criteria: [
-      { id: 'crit-rodo-1', parentId: null, ordinal: 1, refCode: 'R1', nodeKind: 'section', title: 'Podstawy prawne przetwarzania', mandatory: true },
-      { id: 'crit-rodo-1.1', parentId: 'crit-rodo-1', ordinal: 1, refCode: 'R1.1', nodeKind: 'criterion', title: 'Rejestr czynności przetwarzania', mandatory: true },
-    ],
+    criteria: [],
   },
 };
 
@@ -258,7 +246,7 @@ const MOCK_PROGRAMS: AuditProgramSummary[] = [
   {
     id: 'prog-elmax-iso',
     name: 'Elmax Industries — Audyt QMS Q3 2026',
-    packId: 'pack-iso9001',
+    packId: 'pack-qms-elmax',
     packTitle: MOCK_PACKS[0].title,
     packVersion: 3,
     lifecycleState: 'planning',
@@ -274,7 +262,7 @@ const MOCK_PROGRAMS: AuditProgramSummary[] = [
   {
     id: 'prog-vantico-iso',
     name: 'Vantico Logistics — Audyt QMS (Magazyn Poznań)',
-    packId: 'pack-iso9001',
+    packId: 'pack-qms-elmax',
     packTitle: MOCK_PACKS[0].title,
     packVersion: 3,
     lifecycleState: 'fieldwork',
@@ -322,7 +310,7 @@ const MOCK_PROGRAMS: AuditProgramSummary[] = [
   {
     id: 'prog-vantico-verification',
     name: 'Vantico Logistics — Weryfikacja skuteczności działań naprawczych',
-    packId: 'pack-iso9001',
+    packId: 'pack-qms-elmax',
     packTitle: MOCK_PACKS[0].title,
     packVersion: 3,
     lifecycleState: 'effectiveness_verification',
@@ -338,7 +326,7 @@ const MOCK_PROGRAMS: AuditProgramSummary[] = [
   {
     id: 'prog-metalplast-closed',
     name: 'Grupa Metalplast — Audyt QMS 2025 (zamknięty)',
-    packId: 'pack-iso9001',
+    packId: 'pack-qms-elmax',
     packTitle: MOCK_PACKS[0].title,
     packVersion: 3,
     lifecycleState: 'closed',
@@ -356,7 +344,7 @@ const MOCK_PROGRAMS: AuditProgramSummary[] = [
 const MOCK_PROGRAM_DETAILS: Record<string, AuditProgramDetail> = {
   'prog-elmax-iso': {
     ...MOCK_PROGRAMS[0],
-    objective: 'Potwierdzić zgodność systemu zarządzania jakością Elmax Industries z ISO 9001:2015 przed recertyfikacją.',
+    objective: 'Potwierdzić zgodność systemu zarządzania jakością Elmax Industries z własną procedurą QMS przed przeglądem zarządzania.',
     scopeText: 'Zakład produkcyjny w Tarnowie — procesy produkcyjne, kontrola jakości, zarządzanie dostawcami.',
     projectId: 'proj-elmax-2026',
     members: [
@@ -366,7 +354,7 @@ const MOCK_PROGRAM_DETAILS: Record<string, AuditProgramDetail> = {
   },
   'prog-vantico-iso': {
     ...MOCK_PROGRAMS[1],
-    objective: 'Ocena zgodności magazynu centralnego w Poznaniu z wymaganiami ISO 9001:2015.',
+    objective: 'Ocena zgodności magazynu centralnego w Poznaniu z wymaganiami procedury QMS.',
     scopeText: 'Magazyn centralny Poznań — przyjęcie towaru, kompletacja, wysyłka, reklamacje.',
     projectId: 'proj-vantico-2026',
     members: [
