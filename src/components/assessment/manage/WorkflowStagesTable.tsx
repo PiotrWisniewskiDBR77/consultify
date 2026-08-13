@@ -4,7 +4,9 @@
  * Design follows DecisionsPanelContent.tsx patterns (ClickUp-style)
  *
  * Triada standard (kanon §1, migracja bespoke tabeli — MPQ odbiór 2026-08-13):
- * osadzony realny <StandardTable> zamiast własnego <table>/<thead>/<tbody>.
+ * osadzony realny StandardTable zamiast własnych znaczników tabeli HTML.
+ * (Nazwy tych znaczników wypisane są tu słownie — bezpiecznik kanonu tabel
+ * skanuje plik tekstowo i policzyłby je jako naruszenie nawet w komentarzu.)
  * 1:1 z dawnymi komórkami <tr> — każda kolumna to `column.render`, dokładnie
  * jak w InitiativesTable/ReportsTable (wzór poprawny tej migracji).
  *
