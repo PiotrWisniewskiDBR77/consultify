@@ -309,3 +309,84 @@ Czyli defekt jest **dziedziczony z `origin/demo`**, obszar Artifact Studio, poza
 | --- | --- | ---: | --- |
 | metodyki + workspace (front) | `npx vitest run src/method-core src/components/method-workspace --config vitest.config.ts` | **0** | **254/254** |
 | runtime kernela (serwer) | `npx vitest run server/src/method-core` | **0** | **96/96** |
+
+---
+
+## G9 — ★ Disposable PostgreSQL: migracje od zera i dowody bazodanowe
+
+Pierwszy w tym programie dowód **na realnej bazie**, nie na mocku.
+
+### Środowisko
+
+| Pole | Wartość |
+| --- | --- |
+| Obraz | `pgvector/pgvector:pg15` (PostgreSQL **15.18**, pgvector **0.8.6**) |
+| Kontener | `mac-pg-disposable`, port **55440** (55433 był zajęty przez tunel ssh) |
+| Połączenie | `postgresql://mac:mac@localhost:55440/mac_test` |
+| Charakter | **disposable** — zero związku z demo/staging/prod |
+
+### G9.A — Migracje od zera
+
+| # | Krok | Polecenie | Exit | Wynik |
+| --- | --- | --- | ---: | --- |
+| G9.1 | próba z `postgres:15-alpine` | `npx tsx server/scripts/migrate.postgres.ts` | **1** | `✗ 20260719_baseline_gap.sql: extension "vector" is not available` — obraz bez pgvector |
+| G9.2 | **migracje na `pgvector/pgvector:pg15`** | `NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false DB_TYPE=postgres DATABASE_URL=... npx tsx server/scripts/migrate.postgres.ts` | **0** | **`✅ Postgres migrations complete`** |
+| G9.3 | liczba tabel po migracji | `information_schema.tables` | — | **1366** tabel |
+
+**Bezpiecznik `localhost`:** `server/src/config/databaseTargetResolver.ts` blokuje
+lokalną bazę poza testami. Furtka jest **sankcjonowana, nie obchodzona**:
+`allowLocalDatabaseForTests()` przepuszcza przy `NODE_ENV=test`. Użyto jej zgodnie
+z przeznaczeniem.
+
+### G9.B — Tabele kernela istnieją w realnej bazie
+
+Obie moje migracje (`20260813_method_core_kernel.sql`,
+`20260813_method_outputs.sql`) zastosowały się w normalnym przebiegu.
+Utworzone **11 tabel**: `method_events`, `method_evidence`, `method_findings`,
+`method_initiative_drafts`, `method_outputs`, `method_packs`,
+`method_report_snapshots`, `method_session_roles`, `method_sessions`,
+`method_snapshots`, `method_teresa_previews`.
+
+### G9.C — ★ Idempotencja dowiedziona na realnym Postgresie
+
+Pozycja, którą A2 zostawił jako **NOT VERIFIED** („partial unique index,
+`ON CONFLICT`, realny wyścig — tylko logicznie, zero uruchomień na bazie").
+
+Indeks faktycznie istnieje:
+```
+ux_method_events_session_idempotency
+  UNIQUE INDEX ON public.method_events USING btree (session_id, idempotency_key)
+  WHERE (idempotency_key IS NOT NULL)
+```
+
+Próba na żywej bazie:
+
+| Test | Oczekiwane | Zmierzone | Werdykt |
+| --- | ---: | ---: | --- |
+| ten sam `idempotency_key` wstawiony **2×** | 1 wiersz | **1** | **PASS** |
+| dwa eventy **bez** klucza (`NULL`) | 2 wiersze | **2** | **PASS** |
+
+Drugi `INSERT` zwrócił `INSERT 0 0` — `ON CONFLICT DO NOTHING` pochłonął duplikat
+dokładnie zgodnie z projektem. Partial index poprawnie **nie obejmuje** `NULL`,
+więc zdarzenia bez klucza nie są ze sobą mylone.
+
+### G9.D — Integralność referencyjna działa (znalezione przy próbie)
+
+Baza odrzuciła kolejno:
+- `method_events_organization_id_fkey` → `organizations(id)`,
+- `method_events_session_id_fkey` → `method_sessions(id)`.
+
+Czyli **izolacja tenantów jest egzekwowana na poziomie schematu**, nie tylko
+w kodzie aplikacji. `method_sessions_organization_id_fkey` ma
+`ON DELETE CASCADE`, a `revision_of_session_id` → `ON DELETE SET NULL`
+(rewizja nie kasuje przodka).
+
+### G9.E — Co to zamyka i czego **nadal** nie dowodzi
+
+**Zamknięte:** schemat wstaje od zera · moje migracje są addytywne i stosują się ·
+partial unique index działa · FK i kaskady działają · idempotencja działa.
+
+**Nadal NOT VERIFIED:** ścieżka **HTTP** UI → serwer · odczyt po restarcie
+przeglądarki **z bazy** · realny wyścig współbieżny (dwa równoległe `append`) ·
+`409`/version conflict · retry bez podwójnego Outputu · role i cross-org przez API.
+To jest zakres A9, nieuruchomiony w tym kroku.
