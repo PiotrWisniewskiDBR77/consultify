@@ -355,6 +355,8 @@ export interface CreatePackInput {
   purpose?: string | null;
   sourceId?: string | null;
   sourceVersion?: string | null;
+  /** CZYM jest źródło pakietu. Domyślnie dziedziczone ze wskazanego źródła. */
+  sourceType?: AuditSourceType;
   classification?: PackClassification;
   scope?: string | null;
   objectives?: string | null;
@@ -415,14 +417,29 @@ export async function createPack(actor: AuditActor, input: CreatePackInput): Pro
   }
 
   const id = newId('apk');
+
+  // Gdy pakiet wskazuje źródło, jego typ jest domyślną naturą pakietu — pakiet
+  // nie może mieć innej natury niż dokument, na którym stoi. Autor może podać
+  // typ jawnie, ale walidator sprawdzi zgodność ze źródłem przy publikacji.
+  let inheritedSourceType: AuditSourceType | null = null;
+  if (isNonEmpty(input.sourceId)) {
+    const srcRow = await auditGet<{ source_type: string | null }>(
+      `SELECT source_type FROM audit_norm_sources
+        WHERE id = $1 AND (organization_id = $2 OR organization_id IS NULL)`,
+      [input.sourceId, actor.organizationId],
+    );
+    inheritedSourceType = (srcRow?.source_type as AuditSourceType) ?? null;
+  }
+
   await auditRun(
     `INSERT INTO audit_packs
        (id, organization_id, pack_key, version, title, summary, purpose, source_id, source_version,
         classification, publication_status, scope, objectives, audit_type, required_roles,
         required_competencies, workflow, finding_taxonomy, severity_rules, decision_rules,
         sampling_guidance, output_schema, report_schema, corrective_action_schema, verification_schema,
-        estimated_duration_days, recurrence_default, effective_from, effective_to, provenance, created_by)
-     VALUES ($1,$2,$3,1,$4,$5,$6,$7,$8,$9,'draft',$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29)`,
+        estimated_duration_days, recurrence_default, effective_from, effective_to, provenance,
+        source_type, verification_state, created_by)
+     VALUES ($1,$2,$3,1,$4,$5,$6,$7,$8,$9,'draft',$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31)`,
     [
       id,
       actor.organizationId,
@@ -452,6 +469,10 @@ export async function createPack(actor: AuditActor, input: CreatePackInput): Pro
       input.effectiveFrom ?? null,
       input.effectiveTo ?? null,
       JSON.stringify(input.provenance ?? {}),
+      // Typ dziedziczony ze wskazanego źródła, gdy autor go nie podał —
+      // pakiet nie może mieć innej natury niż dokument, na którym stoi.
+      input.sourceType ?? inheritedSourceType ?? 'INTERNAL_PROCEDURE',
+      'UNVERIFIED',
       actor.userId,
     ],
   );

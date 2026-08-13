@@ -50,7 +50,7 @@ describe('normSourceService', () => {
     cleanupSourceIds.push(created.id);
 
     expect(created.organizationId).toBe(ORG_A);
-    expect(created.verificationStatus).toBe('EVIDENCE_MISSING');
+    expect(created.verificationStatus).toBe('UNVERIFIED');
 
     const fetched = await getSource(actorA.organizationId, created.id);
     expect(fetched.title).toBe('Źródło testowe');
@@ -80,7 +80,7 @@ describe('normSourceService', () => {
     expect(listForA.items.some((s) => s.id === created.id)).toBe(true);
   });
 
-  it('verifySource blokuje VERIFIED_NORMATIVE bez wersji/praw/wydawcy i przechodzi, gdy komplet jest spełniony', async () => {
+  it('verifySource blokuje VERIFIED bez wersji/praw/wydawcy i przechodzi, gdy komplet jest spełniony', async () => {
     const created = await createSource(actorA, {
       sourceKey: `verify-${newId('k')}`,
       title: 'Źródło do weryfikacji',
@@ -91,7 +91,7 @@ describe('normSourceService', () => {
 
     // Brak source_version, publisher i rights_status nieuprawniający — blokada.
     await expect(
-      verifySource(actorA, created.id, { verificationStatus: 'VERIFIED_NORMATIVE' }),
+      verifySource(actorA, created.id, { verificationStatus: 'VERIFIED' }),
     ).rejects.toThrow(/AUDIT_SOURCE_NOT_VERIFIABLE|nie można oznaczyć/i);
 
     // Uzupełniamy brakujące pola.
@@ -102,10 +102,10 @@ describe('normSourceService', () => {
     });
 
     const verified = await verifySource(actorA, created.id, {
-      verificationStatus: 'VERIFIED_NORMATIVE',
+      verificationStatus: 'VERIFIED',
       verificationNote: 'Sprawdzone w teście',
     });
-    expect(verified.verificationStatus).toBe('VERIFIED_NORMATIVE');
+    expect(verified.verificationStatus).toBe('VERIFIED');
     expect(verified.verifiedBy).toBe(actorA.userId);
     expect(verified.verifiedAt).not.toBeNull();
   });
