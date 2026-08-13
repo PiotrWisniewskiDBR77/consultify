@@ -175,13 +175,13 @@ describe('AuditsMethodHub', () => {
     await waitFor(() => expect(mockedListReports).toHaveBeenCalled());
   });
 
-  it('renders a real StandardTable (<table>) on the default Library tab', async () => {
+  it('renders a real StandardTable element on the default Library tab', async () => {
     setupApiMocks();
     const { container } = renderHub();
     await waitFor(() => expect(container.querySelector('table')).toBeInTheDocument());
   });
 
-  it('renders a real StandardTable (<table>) on the Processes tab', async () => {
+  it('renders a real StandardTable element on the Processes tab', async () => {
     setupApiMocks();
     renderHub(['/audit-programs/method?tab=processes']);
     await waitFor(() => expect(screen.getByText('Q3 Compliance Audit')).toBeInTheDocument());
