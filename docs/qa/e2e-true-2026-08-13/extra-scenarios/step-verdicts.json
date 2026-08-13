@@ -1,0 +1,44 @@
+[
+  {
+    "scenario": "A",
+    "title": "SIRI gate",
+    "verdict": "PASS",
+    "note": "POST /sessions (methodPackId=siri, NO demoBypass) -> HTTP 422, refusal.kind=\"pack_not_released\" — the fail-closed gate is enforced exactly as designed for a 'draft' pack. No SIRI session was created (correct, per task brief)."
+  },
+  {
+    "scenario": "B",
+    "title": "Teresa Intent->Preview->Commit",
+    "verdict": "PASS",
+    "note": "Real UI: \"Nie wiem / potrzebuję pomocy\" -> ResolutionCard -> \"Zapytaj Teresę\" -> POST /teresa/preview (201, previewId=283a7075-a8a0-4cd1-bf80-aa02488c202c) -> teresa-proposal-card rendered -> \"Zaakceptuj\" -> POST /teresa/commit (200, ok=true) -> GET /events confirms 2 TERESA_* event(s) recorded (TERESA_PROPOSAL_CREATED + TERESA_PROPOSAL_ACCEPTED)."
+  },
+  {
+    "scenario": "C",
+    "title": "Voice transcript, same API as manual typing",
+    "verdict": "PASS",
+    "note": "Real MediaRecorder against a Chromium fake mic stream (--use-fake-device-for-media-stream) drove the real voice-channel-toggle/draft-preview/confirm UI; only the external STT backend (POST /api/voice/stt) was mocked to a fixed transcript (disclosed). The REQUEST BODY of the real \"Potwierdzone\" click's POST http://localhost:42802/api/method/sessions/071b990d-1d4c-4e58-a72b-d035478bb4c3/events carried the voice transcript verbatim (payload.text=\"E2E voice: proces ma udokumentowaną procedurę operacyjną.\"), confirming the voice draft's confirm action fed into the SAME draftAnswerText/handleAnswerStateChange -> POST /events path (event=9fcdaec6-1cc9-4d64-a9ad-6e38c281e2dc, type=ANSWER_CONFIRMED) that tests/e2e/drd-full-chain-true.spec.ts step 4 used for manual typing — same endpoint, same request shape, proven from the wire, not just read from source."
+  },
+  {
+    "scenario": "D",
+    "title": "Duplicate submit / idempotency",
+    "verdict": "PASS",
+    "note": "Two POST /sessions with the IDENTICAL Idempotency-Key \"dup-submit-1786649258520\": first -> 201 id=f4820862-7c20-4c67-8ae7-6aaa98de40ff; second -> HTTP 200, idempotentReplay=true, SAME session.id=f4820862-7c20-4c67-8ae7-6aaa98de40ff. SQL confirms exactly 1 row for that id (no phantom duplicate)."
+  },
+  {
+    "scenario": "E",
+    "title": "Unauthorized self-grant",
+    "verdict": "PASS",
+    "note": "POST /sessions/584d4e4a-e9c6-4732-8285-f692bbeeddb1/roles {userId:<self owner>, role:'approver'} -> HTTP 403, body={\"error\":\"cannot_self_assign_approver\"} — real SERVER-side refusal (server/src/routes/method-core-roles.routes.ts:174), not merely the client-side UI block already shown in drd-full-chain-true.spec.ts step 3."
+  },
+  {
+    "scenario": "F",
+    "title": "Supersession",
+    "verdict": "PASS",
+    "note": "v1 Report(2fc5c707-4836-4a54-bc7b-715d3894d8a8)/Presentation(c3623739-b435-4304-b172-5bee0d295b27)/Draft(7ee29c73-8c7f-4081-ae2b-6aa418b80513) all now status='superseded', superseded_by_output_id=0f8de639-f62a-41c0-b1e3-8fc141fd9ff0 (v2), confirmed by direct SQL (/Users/piotrwisniewski/.codex/worktrees/mac-e2e-true/docs/qa/e2e-true-2026-08-13/extra-scenarios/sql-evidence.txt) after: real send-back -> re-freeze produced v2 -> creating a NEW real Report against v2 (the actual trigger — supersedeLineageResultsFor runs inside createArtefactSnapshot/initiative-drafts, NOT automatically at freeze time; server/src/routes/method-core.routes.ts:1088)."
+  },
+  {
+    "scenario": "G",
+    "title": "Report generation error + retry",
+    "verdict": "FAIL",
+    "note": "Real defect, root cause disclosed: forcing HTTP 500 on the first POST .../report leaves NO visible error affordance anywhere on screen (no drd-http-error-view, no inline banner near \"Generuj raport z Outputu\", no busy/disabled state) — DrdHttpMethodWorkspaceScreen.tsx:805-814 wires onGenerateReport={() => runtime?.generateReport(...)} with no .catch()/.then(), and drdHttpSessionRuntime.ts:654-661 generateReport() just re-throws on failure into an unhandled promise rejection (page.on('pageerror') saw 1 uncaught error(s): [\"MethodCoreApiError: E2E-true forced transient failure\"]). The UI silently does nothing — the user has no way to know the click failed except that no report appears. RETRY itself DOES work: a plain re-click of the SAME still-enabled button (the only \"retry\" mechanism available) succeeded for real on the second attempt -> HTTP 201. So: retry = PASS (once you know to re-click), honest error surfacing = FAIL."
+  }
+]

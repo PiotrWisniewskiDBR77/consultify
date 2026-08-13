@@ -1,0 +1,10 @@
+{
+  "server1_start_requested": 1786647028059,
+  "server1_ready": 1786647129462,
+  "restart1_stop_requested": 1786647170041,
+  "restart1_stopped_at": 1786647170154,
+  "restart1_ready_at": 1786647213775,
+  "restart2_stop_requested": 1786647227392,
+  "restart2_stopped_at": 1786647227509,
+  "restart2_ready_at": 1786647278678
+}

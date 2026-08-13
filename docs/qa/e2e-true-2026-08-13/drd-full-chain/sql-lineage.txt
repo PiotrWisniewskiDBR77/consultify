@@ -1,0 +1,34 @@
+sessions (root=f87f0923-f76f-49f9-b8e9-c56ae4244d77, send-back sibling=2105ce12-df71-4e81-8e9a-f5ef71a9c579, bonus-reopen sibling=e857a69f-574f-4204-905c-74199a452d09):
+[
+  {
+    "id": "f87f0923-f76f-49f9-b8e9-c56ae4244d77",
+    "state": "frozen",
+    "revision_of_session_id": null
+  },
+  {
+    "id": "e857a69f-574f-4204-905c-74199a452d09",
+    "state": "active",
+    "revision_of_session_id": "f87f0923-f76f-49f9-b8e9-c56ae4244d77"
+  },
+  {
+    "id": "2105ce12-df71-4e81-8e9a-f5ef71a9c579",
+    "state": "frozen",
+    "revision_of_session_id": "f87f0923-f76f-49f9-b8e9-c56ae4244d77"
+  }
+]
+
+outputs:
+[
+  {
+    "id": "989b058c-fd97-4bc3-a39e-4b6e059bcbe0",
+    "session_id": "f87f0923-f76f-49f9-b8e9-c56ae4244d77",
+    "output_version": 1,
+    "revision_of_output_id": null
+  },
+  {
+    "id": "4b6bb882-adda-40cf-97ee-93e9ae7dd290",
+    "session_id": "2105ce12-df71-4e81-8e9a-f5ef71a9c579",
+    "output_version": 2,
+    "revision_of_output_id": "989b058c-fd97-4bc3-a39e-4b6e059bcbe0"
+  }
+]

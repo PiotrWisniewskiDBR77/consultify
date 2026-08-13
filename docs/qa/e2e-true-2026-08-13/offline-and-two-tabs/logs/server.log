@@ -1,0 +1,297 @@
+2026-08-13 21:28:18:2818 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-08-13 21:28:18:2818 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-08-13 21:28:18:2818 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-08-13 21:28:18:2818 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-08-13 21:28:18:2818 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+2026-08-13 21:28:19:2819 [32minfo[39m: [32m[Redis] Initializing client...[39m
+2026-08-13 21:28:19:2819 [32minfo[39m: [32m[Redis] Connecting to: redis://localhost:6379[39m
+2026-08-13 21:28:19:2819 [32minfo[39m: [32m[FinancialStatementService] Loaded[39m
+2026-08-13 21:28:19:2819 [32minfo[39m: [32m[FinancialModelingService] Loaded[39m
+2026-08-13 21:28:19:2819 [32minfo[39m: [32m[Sentry] Disabled (no SENTRY_DSN or not in production/staging)[39m
+2026-08-13 21:28:19:2819 [32minfo[39m: [32m[Server] Starting HTTP listener eagerly (routes may still be warming up)...[39m
+2026-08-13 21:28:19:2819 [32minfo[39m: [32m[Server] Initializing database...[39m
+2026-08-13 21:28:19:2819 [32minfo[39m: [32m[RateLimit] startup posture: posture=single-replica (inferred, not declared) store=local (default) failMode=closed (default) disableRateLimit=false allowProdDisable=false redisUrl=absent mockRedis=false[39m
+2026-08-13 21:28:19:2819 [32minfo[39m: [32m[DB Config] DATABASE_URL: SET[39m
+2026-08-13 21:28:19:2819 [32minfo[39m: [32m[DB Config] DB_TYPE: postgres[39m
+2026-08-13 21:28:19:2819 [32minfo[39m: [32m[DB Config] Using PostgreSQL[39m
+2026-08-13 21:28:19:2819 [32minfo[39m: [32m[Server] Database instance created:[39m
+2026-08-13 21:28:23:2823 [32minfo[39m: [32m[DatabaseInitializer] Starting database initialization...[39m
+2026-08-13 21:28:23:2823 [32minfo[39m: [32m[DatabaseInitializer] Database type: postgres[39m
+2026-08-13 21:28:24:2824 [32minfo[39m: [32m[AuthRoutes] login handler is type:[39m
+2026-08-13 21:28:24:2824 [32minfo[39m: [32m[Economics Routes] Module loaded - TypeScript version[39m
+2026-08-13 21:28:24:2824 [32minfo[39m: [32m[Economics Routes] Router type:[39m
+2026-08-13 21:28:24:2824 [32minfo[39m: [32m[Economics Routes] Router created. Stack length:[39m
+2026-08-13 21:28:24:2824 [32minfo[39m: [32m[Economics Routes] After /analyses route. Stack length:[39m
+2026-08-13 21:28:24:2824 [32minfo[39m: [32m[RatioAnalysisService] Loaded[39m
+2026-08-13 21:28:24:2824 [33mwarn[39m: [33m[Encryption] No ENCRYPTION_KEY set. Using development fallback key.[39m
+2026-08-13 21:28:24:2824 [33mwarn[39m: [33m[Encryption] SET ENCRYPTION_KEY in production![39m
+2026-08-13 21:28:25:2825 [32minfo[39m: [32m[SuperAdminRoutes] SuperAdminController keys:[39m {"0":"setDependencies","1":"getOrganizations","2":"getActivities","3":"getDashboardStats","4":"updateOrganization","5":"deleteOrganization","6":"getOrgBilling","7":"getUsers","8":"updateUser","9":"createUser","10":"deleteUser","11":"inviteUser","12":"resetUserPassword","13":"getAccessRequests","14":"approveAccessRequest","15":"rejectAccessRequest","16":"getAccessCodes","17":"createAccessCode","18":"deactivateAccessCode","19":"impersonateUser","20":"getDatabaseTables","21":"getDatabaseRows","22":"getStorageUsage","23":"getStorageFiles","24":"deleteStorageFile","25":"getAllLegalDocs","26":"publishLegalDoc","27":"toggleLegalDocActive","28":"getLegalDocById","29":"getLegalEvents","30":"getLegalEventStats","31":"getOrgAttribution","32":"exportAttribution","33":"getPartnerSummary","34":"getUsageByOrganization","35":"getInvoices","36":"getInvoiceStats","37":"getSystemHealth","38":"getSystemAnalytics","39":"remindInvoice","40":"markInvoicePaid","41":"getInvoicePdf","42":"uploadBrandingLogo","43":"getApiKeys","44":"createApiKey","45":"deleteApiKey","46":"getApiKeyUsage","47":"getComplianceFrameworks","48":"getComplianceStatus","49":"getComplianceSummary","50":"getDsarRequests","51":"getComplianceAudits","52":"updateComplianceControl","53":"createDsarRequest","54":"getDsarRequestById","55":"createComplianceAudit","56":"createProcessingRecord","57":"getProcessingRecords","58":"exportComplianceReport","59":"refreshToken","60":"getOrganizationMetadata","61":"updateOrganizationMetadata","62":"getOrganizationTags","63":"addOrganizationTag","64":"removeOrganizationTag","65":"getOrganizationHealth","66":"getOrganizationRelationships","67":"getOrganizationAnalytics","68":"getUserProfileExtended","69":"updateUserProfileExtended","70":"getUserActivity","71":"getUserSessions","72":"revokeUserSession","73":"getUserGroups","74":"getUserOnboardingProgress","75":"updateUserOnboardingProgress","76":"getUserLicense","77":"assignUserLicense","78":"getIPWhitelist","79":"addIPWhitelist","80":"removeIPWhitelist","81":"getUserDevices","82":"blockDevice","83":"getMFAMethods","84":"setupTOTP","85":"verifyTOTP","86":"getPasswordPolicy","87":"updatePasswordPolicy","88":"getSecurityEvents","89":"getSecurityEventStats","90":"resolveSecurityEvent","91":"getIPAccessRules","92":"updateIPRule","93":"getSecurityPolicies","94":"updateSecurityPolicy","95":"getSupportTickets","96":"createSupportTicket","97":"updateSupportTicket","98":"getTicketComments","99":"addTicketComment","100":"getCustomerSuccessNotes","101":"createCustomerSuccessNote","102":"getCustomerHealthCheck","103":"getFeedbackItems","104":"createFeedbackItem","105":"voteFeedback","106":"addFeedbackComment","107":"getFeatureRoadmap","108":"updateFeatureRoadmap","109":"getUserAdoptionMetrics","110":"getChurnPrediction","111":"getDataRetentionPolicies","112":"createDataRetentionPolicy","113":"getGDPRRequests","114":"createGDPRRequest","115":"getUserConsents","116":"updateUserConsent","117":"getAutomationRules","118":"createAutomationRule","119":"updateAutomationRule","120":"getWebhookSubscriptions","121":"createWebhookSubscription","122":"getEmailTemplates","123":"createEmailTemplate","124":"getEmailCampaigns","125":"createEmailCampaign","126":"getNotificationPreferences","127":"updateNotificationPreferences","128":"getAdminSessions","129":"createAdminSession","130":"revokeAdminSession","131":"revokeAllAdminSessions","132":"getAdminSessionStats","133":"getAdminAuditLogs","134":"getAdminAuditStats","135":"resolveAdminAuditLog","136":"exportAuditLogs","137":"getRecentHighRiskActions","138":"getAdminPermissions","139":"createAdminPermission","140":"updateAdminPermission","141":"deleteAdminPermission","142":"getPermissionsMatrix","143":"updateRolePermissions","144":"toggleRolePermission","145":"copyRolePermissions","146":"compareRoles","147":"getPermissionsStats","148":"getApprovalWorkflows","149":"createApprovalWorkflow","150":"updateApprovalWorkflow","151":"deleteApprovalWorkflow","152":"getApprovalRequests","153":"approveRequest","154":"rejectRequest","155":"getAnalyticsDashboards","156":"createAnalyticsDashboard","157":"updateAnalyticsDashboard","158":"deleteAnalyticsDashboard","159":"getAnalyticsDashboardData","160":"shareAnalyticsDashboard","161":"getAnalyticsReports","162":"createAnalyticsReport","163":"updateAnalyticsReport","164":"deleteAnalyticsReport","165":"executeAnalyticsReport","166":"scheduleAnalyticsReport","167":"getReportExecutions","168":"getBusinessMetrics","169":"createBusinessMetric","170":"updateBusinessMetric","171":"deleteBusinessMetric","172":"calculateBusinessMetric","173":"getMetricHistory","174":"getMetricsStats","175":"getPredictiveModels","176":"createPredictiveModel","177":"updatePredictiveModel","178":"deletePredictiveModel","179":"trainPredictiveModel","180":"makePrediction","181":"getModelPredictions","182":"evaluatePredictiveModel","183":"createSecurityIncident","184":"deleteSecurityIncident","185":"getSecurityIncidentById","186":"getSecurityIncidentStats","187":"getSecurityIncidents","188":"resolveSecurityIncident","189":"updateSecurityIncident","190":"addThreat","191":"blockThreat","192":"bulkImportThreats","193":"checkDomainReputation","194":"checkIPReputation","195":"createDLPPolicy","196":"deleteDLPPolicy","197":"deleteThreat","198":"getBlockedDomains","199":"getBlockedIPs","200":"getDLPPolicies","201":"getDLPPolicyById","202":"getDLPStats","203":"getDLPViolationById","204":"getDLPViolations","205":"getThreatById","206":"getThreatStats","207":"getThreats","208":"resolveDLPViolation","209":"scanResourceDLP","210":"toggleDLPPolicy","211":"unblockThreat","212":"updateDLPPolicy","213":"updateThreat","214":"connectIntegration","215":"createWebhook","216":"deleteWebhook","217":"disconnectIntegration","218":"getIntegrations","219":"getWebhookDeliveries","220":"getWebhooks","221":"refreshIntegration","222":"testIntegration","223":"testWebhook","224":"updateIntegrationConfig","225":"updateWebhook","226":"addDashboardWidget","227":"cloneDashboard","228":"createDashboard","229":"deleteDashboard","230":"getDashboardBuilderStats","231":"getDashboardById","232":"getDashboardWidgetData","233":"getDashboards","234":"removeDashboardWidget","235":"reorderDashboardWidgets","236":"toggleDashboardShare","237":"updateDashboard","238":"updateDashboardWidget","239":"addPaymentMethod","240":"addPlanFeature","241":"approveSubscriptionChange","242":"calculateProration","243":"comparePricingPlans","244":"createPricingPlan","245":"createRevenueForecast","246":"createRevenueRecognition","247":"createSubscriptionChange","248":"deletePaymentMethod","249":"deletePricingPlan","250":"deleteRevenueForecast","251":"generateRevenueForecast","252":"getPaymentFailureStats","253":"getPaymentFailures","254":"getPaymentMethods","255":"getPlanFeatures","256":"getPricingPlans","257":"getRecognitionSchedule","258":"getRevenueForecastStats","259":"getRevenueForecasts","260":"getRevenueRecognitionStats","261":"getRevenueRecognitions","262":"getSubscriptionChangeStats","263":"getSubscriptionChanges","264":"recognizeRevenue","265":"rejectSubscriptionChange","266":"removePlanFeature","267":"retryPayment","268":"updatePaymentMethod","269":"updatePricingPlan","270":"updateRevenueForecast","271":"updateRevenueRecognition","272":"createContractAmendment","273":"createCustomerContract","274":"createLifecycleStage","275":"createSuccessPlaybook","276":"deleteCustomerContract","277":"deleteLifecycleStage","278":"deleteSuccessPlaybook","279":"executeSuccessPlaybook","280":"getContractAmendments","281":"getContractStats","282":"getCustomerContracts","283":"getLifecycleStages","284":"getLifecycleStats","285":"getLifecycleTransitions","286":"getPlaybookStats","287":"getSuccessActions","288":"getSuccessPlaybooks","289":"getUpcomingRenewals","290":"transitionOrganization","291":"updateCustomerContract","292":"updateLifecycleStage","293":"updateSuccessPlaybook"}
+2026-08-13 21:28:25:2825 [32minfo[39m: [32m[AI Settings Routes] AISettingsService loaded successfully[39m
+2026-08-13 21:28:25:2825 [32minfo[39m: [32m[AI Settings Routes] AIProactivityEngine loaded successfully[39m
+2026-08-13 21:28:25:2825 [32minfo[39m: [32m[ApiGateway] Initializing gateway routes...[39m
+2026-08-13 21:28:25:2825 [32minfo[39m: [32m[ApiGateway] Mounting /api/auth[39m
+2026-08-13 21:28:25:2825 [32minfo[39m: [32m[ApiGateway] Mounting /api/billing[39m
+2026-08-13 21:28:25:2825 [32minfo[39m: [32m[ApiGateway] Mounting /api/ai[39m
+2026-08-13 21:28:25:2825 [32minfo[39m: [32m[ApiGateway] Mounting /api/tools[39m
+2026-08-13 21:28:25:2825 [32minfo[39m: [32m[ApiGateway] Mounting /api/workbook[39m
+2026-08-13 21:28:25:2825 [32minfo[39m: [32m[ApiGateway] Mounting /api/artifact-lineage[39m
+2026-08-13 21:28:25:2825 [32minfo[39m: [32m[ApiGateway] Mounting /api/known-tools[39m
+2026-08-13 21:28:25:2825 [32minfo[39m: [32m[ApiGateway] Mounting /api/tool-assets[39m
+2026-08-13 21:28:25:2825 [32minfo[39m: [32m[ApiGateway] Mounting /api/assessment-evidence[39m
+2026-08-13 21:28:25:2825 [32minfo[39m: [32m[ApiGateway] Mounting /api/consulting-templates[39m
+2026-08-13 21:28:25:2825 [32minfo[39m: [32m[ApiGateway] Mounting /api/portfolio-optimization[39m
+2026-08-13 21:28:25:2825 [32minfo[39m: [32m[ApiGateway] Mounting /api/assessment-workflow[39m
+2026-08-13 21:28:25:2825 [32minfo[39m: [32m[ApiGateway] Mounting /api/assessment-workflow-v2[39m
+2026-08-13 21:28:25:2825 [32minfo[39m: [32m[ApiGateway] Mounting /api/admin-data[39m
+2026-08-13 21:28:25:2825 [32minfo[39m: [32m[ApiGateway] Mounting /api/users[39m
+2026-08-13 21:28:25:2825 [32minfo[39m: [32m[ApiGateway] Mounting /api/revenue[39m
+2026-08-13 21:28:25:2825 [32minfo[39m: [32m[ApiGateway] Mounting /api/superadmin/analytics[39m
+2026-08-13 21:28:25:2825 [32minfo[39m: [32m[ApiGateway] Mounting /api/admin/prompts[39m
+2026-08-13 21:28:25:2825 [32minfo[39m: [32m[Gateway] economicsRoutes type:[39m
+2026-08-13 21:28:25:2825 [32minfo[39m: [32m[PresentationStudio] Layout-capacity persistence: no_persisted_file (path=/Users/piotrwisniewski/.codex/worktrees/mac-e2e-true/server/.runtime-config/presentation-studio-layout-capacity-overrides.json)[39m
+2026-08-13 21:28:25:2825 [32minfo[39m: [32m[ApiGateway] Mounting /api/v8[39m
+2026-08-13 21:28:25:2825 [32minfo[39m: [32m[ApiGateway] Mounting /api/v10/teresa[39m
+2026-08-13 21:28:25:2825 [32minfo[39m: [32m[Server] ==========================================[39m
+2026-08-13 21:28:25:2825 [32minfo[39m: [32m[Server] Setting up frontend static file serving...[39m
+2026-08-13 21:28:25:2825 [32minfo[39m: [32m[Server] NODE_ENV: test[39m
+2026-08-13 21:28:25:2825 [32minfo[39m: [32m[Server] __dirname: /Users/piotrwisniewski/.codex/worktrees/mac-e2e-true/server/src[39m
+2026-08-13 21:28:25:2825 [32minfo[39m: [32m[Server] Frontend dist path (dev): /Users/piotrwisniewski/.codex/worktrees/mac-e2e-true/dist[39m
+2026-08-13 21:28:25:2825 [31merror[39m: [31m[Server] Frontend index.html not found at: /Users/piotrwisniewski/.codex/worktrees/mac-e2e-true/dist/index.html[39m
+2026-08-13 21:28:25:2825 [32minfo[39m: [32m[Server] ✓ Stored frontend dist path globally: /Users/piotrwisniewski/.codex/worktrees/mac-e2e-true/dist[39m
+2026-08-13 21:28:25:2825 [32minfo[39m: [32m[Server] Final frontend dist path: /Users/piotrwisniewski/.codex/worktrees/mac-e2e-true/dist[39m
+2026-08-13 21:28:25:2825 [32minfo[39m: [32m[Server] Final frontend dist path: /Users/piotrwisniewski/.codex/worktrees/mac-e2e-true/dist[39m
+2026-08-13 21:28:25:2825 [32minfo[39m: [32m[Server] Registering root route handler with frontendDistPath: /Users/piotrwisniewski/.codex/worktrees/mac-e2e-true/dist[39m
+2026-08-13 21:28:25:2825 [32minfo[39m: [32m[Server] Starting HTTP server after route registration...[39m
+2026-08-13 21:28:25:2825 [32minfo[39m: [32m[Server] Feedback artifact pruner started (retention: 30 days).[39m
+2026-08-13 21:28:25:2825 [32minfo[39m: [32m[IdeaCollabWs] Native WebSocket /ws/collab/:ideaId attached (auth+session)[39m
+2026-08-13 21:28:25:2825 [32minfo[39m: [32m[Server] Idea collab WebSocket /ws/collab/:ideaId initialized[39m
+2026-08-13 21:28:25:2825 [32minfo[39m: [32m[PresentationCollabWs] Native WebSocket /ws/presentations/:deckId attached[39m
+2026-08-13 21:28:25:2825 [32minfo[39m: [32m[Server] Presentation collab WebSocket /ws/presentations/:deckId initialized[39m
+2026-08-13 21:28:25:2825 [32minfo[39m: [32m[NotebookCollabWs] Native WebSocket /ws/notebook/:noteId attached[39m
+2026-08-13 21:28:25:2825 [32minfo[39m: [32m[Server] Notebook collab WebSocket /ws/notebook/:noteId initialized[39m
+2026-08-13 21:28:25:2825 [32minfo[39m: [32m[TablePlatformRealtime] Initialized on /table-platform namespace[39m
+2026-08-13 21:28:25:2825 [32minfo[39m: [32m[Server] Table Platform Realtime (Socket.IO /table-platform) initialized[39m
+2026-08-13 21:28:25:2825 [32minfo[39m: [32m[OrgContextRealtime] Initialized on /org-context namespace[39m
+2026-08-13 21:28:25:2825 [32minfo[39m: [32m[Server] Org Context Realtime (Socket.IO /org-context) initialized[39m
+2026-08-13 21:28:25:2825 [32minfo[39m: [32m[ChatProjectsRealtime] Initialized on /chat-projects namespace[39m
+2026-08-13 21:28:25:2825 [32minfo[39m: [32m[Server] Chat Projects Realtime (Socket.IO /chat-projects) initialized[39m
+2026-08-13 21:28:25:2825 [32minfo[39m: [32m[FacilitationRealtime] Initialized on /facilitation namespace[39m
+2026-08-13 21:28:25:2825 [32minfo[39m: [32m[Server] Facilitation Realtime (Socket.IO /facilitation) initialized[39m
+2026-08-13 21:28:25:2825 [32minfo[39m: [32m[Server] Frontend will be served from: /Users/piotrwisniewski/.codex/worktrees/mac-e2e-true/dist[39m
+2026-08-13 21:28:25:2825 [32minfo[39m: [32m[PurgeScheduler] Starting — grace=30d, interval=3600000ms, batch=100[39m
+2026-08-13 21:28:25:2825 [32minfo[39m: [32m✅ Server running on http://0.0.0.0:42801[39m
+2026-08-13 21:28:25:2825 [32minfo[39m: [32m✅ WebSocket available at ws://0.0.0.0:42801/ws[39m
+2026-08-13 21:28:25:2825 [32minfo[39m: [32m[Server] ✅ Server started on port 42801[39m
+2026-08-13 21:28:25:2825 [32minfo[39m: [32m[Postgres] Initializing connection pool...[39m
+2026-08-13 21:28:25:2825 [32minfo[39m: [32m[Postgres] Config:[39m {"host":"127.0.0.1","database":"t_test","max":10}
+2026-08-13 21:28:25:2825 [32minfo[39m: [32m[Postgres] Checking/Initializing Schema...[39m
+2026-08-13 21:28:25:2825 [32minfo[39m: [32m[Postgres] Testing connection (attempt 1/3)...[39m
+2026-08-13 21:28:25:2825 [32minfo[39m: [32m[Redis] Connecting...[39m
+2026-08-13 21:28:25:2825 [32minfo[39m: [32m[Redis] Connected and ready[39m
+2026-08-13 21:28:25:2825 [32minfo[39m: [32m[Redis] Successfully connected[39m
+2026-08-13 21:28:25:2825 [37mdebug[39m: [37m[Postgres] Client connected[39m
+2026-08-13 21:28:25:2825 [32minfo[39m: [32m[Postgres] Connection test successful (PostgreSQL verified):[39m {"current_time":"2026-08-13T19:28:25.504Z"}
+2026-08-13 21:28:25:2825 [32minfo[39m: [32m[Postgres] Verifying/Creating Indexes...[39m
+2026-08-13 21:28:25:2825 [37mdebug[39m: [37m[Postgres] Client connected[39m
+2026-08-13 21:28:25:2825 [37mdebug[39m: [37m[Postgres] Skipping created_by index on webhooks: column "created_by" does not exist[39m
+2026-08-13 21:28:25:2825 [32minfo[39m: [32m[Postgres] Schema Check Complete.[39m
+2026-08-13 21:28:25:2825 [32minfo[39m: [32m[Postgres] Verified table exists: organizations[39m
+2026-08-13 21:28:25:2825 [32minfo[39m: [32m[Postgres] Verified table exists: users[39m
+2026-08-13 21:28:25:2825 [32minfo[39m: [32m[Postgres] Verified table exists: sessions[39m
+2026-08-13 21:28:25:2825 [32minfo[39m: [32m[Postgres] Verified table exists: projects[39m
+2026-08-13 21:28:25:2825 [32minfo[39m: [32m[Postgres] Verified table exists: tasks[39m
+2026-08-13 21:28:25:2825 [32minfo[39m: [32m[Postgres] Verified table exists: teams[39m
+2026-08-13 21:28:25:2825 [32minfo[39m: [32m[Postgres] Verified table exists: invitations[39m
+2026-08-13 21:28:25:2825 [32minfo[39m: [32m[Postgres] Verified table exists: notifications[39m
+2026-08-13 21:28:25:2825 [32minfo[39m: [32m[Postgres] Verified table exists: settings[39m
+2026-08-13 21:28:25:2825 [32minfo[39m: [32m[Postgres] Schema initialization completed successfully[39m
+2026-08-13 21:28:25:2825 [32minfo[39m: [32m[2026-08-13T19:28:25.655Z] [INFO] [AI:CircuitBreaker] LLM circuit breakers initialized[39m
+2026-08-13 21:28:25:2825 [37mdebug[39m: [37m[Postgres] Client connected[39m
+2026-08-13 21:28:26:2826 [32minfo[39m: [32m[TP-Migrations] Found 451 table platform migration files[39m
+2026-08-13 21:28:26:2826 [32minfo[39m: [32m[TP-Migrations] All 451 migrations already applied[39m
+2026-08-13 21:28:26:2826 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-init-reg","template_id":"ecbf5411-835f-422a-b94e-6268b59b0dd1"}
+2026-08-13 21:28:26:2826 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-risk-reg-ops","template_id":"53fdb5d2-ebad-42f9-b3e0-23c5f3b103bb"}
+2026-08-13 21:28:26:2826 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-action-plan","template_id":"9aecc12c-79d6-4b93-aeda-05e256fd7b16"}
+2026-08-13 21:28:26:2826 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-stake-map","template_id":"79c293db-35bc-47c0-abe8-b111a0a860db"}
+2026-08-13 21:28:26:2826 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-decision-log","template_id":"9d54f647-9bdf-48f1-b82d-a873c77c69fb"}
+2026-08-13 21:28:26:2826 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-issue-log","template_id":"f14a184f-0bff-481e-925b-69c6f4d31f51"}
+2026-08-13 21:28:26:2826 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-meddpicc","template_id":"e6771ddc-8c71-4f88-8601-b4862d240315"}
+2026-08-13 21:28:26:2826 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-icp-fit","template_id":"1fccf523-4cb9-4199-8908-679221d12bf7"}
+2026-08-13 21:28:26:2826 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-map","template_id":"56933291-d414-472d-b06a-6d1ca3641ce9"}
+2026-08-13 21:28:26:2826 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-sales-pipe","template_id":"6063e53d-d854-409b-906d-16b855ea4f5f"}
+2026-08-13 21:28:26:2826 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-kpi-matrix","template_id":"8d449dc0-814d-426e-96bf-e7b7d2f2b9c6"}
+2026-08-13 21:28:26:2826 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-impl-tracker","template_id":"332e8e1a-e1b7-461c-ad51-3d5b307f6e55"}
+2026-08-13 21:28:26:2826 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-proj-backlog","template_id":"790dfa18-ca3b-4679-a222-d9a35aebb276"}
+2026-08-13 21:28:26:2826 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-interview-tracker","template_id":"bb95182c-2360-44bb-ba02-d0a358ddcde4"}
+2026-08-13 21:28:26:2826 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-workshop-output","template_id":"bb6f2950-005e-4edd-b823-f58989f4ccdd"}
+2026-08-13 21:28:26:2826 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-dt-roadmap","template_id":"cdb42ee0-fd68-4b47-a9b5-d4445cc2ce38"}
+2026-08-13 21:28:26:2826 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-ai-uc-reg","template_id":"124b7479-e16f-440a-bda9-0bb02df5055c"}
+2026-08-13 21:28:26:2826 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-auto-opp-reg","template_id":"3593d502-5112-4aa8-a095-32ebc62a494b"}
+2026-08-13 21:28:26:2826 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-bizcase","template_id":"a79a84ff-17ea-4794-b22d-5e6b7463666a"}
+2026-08-13 21:28:26:2826 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-vendor-comp","template_id":"498f1fc8-0e51-4daa-aa52-00e1af92d0df"}
+2026-08-13 21:28:26:2826 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-research-source","template_id":"92ae055f-fc89-47e7-8f18-d91708d6a9be"}
+2026-08-13 21:28:26:2826 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-sop-reg","template_id":"b159ea5f-aabb-48e1-a88d-dc465ece87b9"}
+2026-08-13 21:28:26:2826 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-change-tracker","template_id":"b49fd401-4109-43ea-9293-b28971fa6ddb"}
+2026-08-13 21:28:26:2826 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-train-plan","template_id":"05a1809e-2da9-4ee1-98a6-be72ff465c60"}
+2026-08-13 21:28:26:2826 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-gov-reg","template_id":"faac3880-f10e-4d56-868c-f2c4750f3b5c"}
+2026-08-13 21:28:26:2826 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-audit-find","template_id":"b906d71b-baab-43b5-8c2e-d0979179b9c1"}
+2026-08-13 21:28:26:2826 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-req-table","template_id":"63e92214-7451-4eea-945f-525cf1bcf1ea"}
+2026-08-13 21:28:26:2826 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-feat-prio","template_id":"5f77ff40-7ce7-42f3-8f0e-e2b77e4a3fb8"}
+2026-08-13 21:28:26:2826 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-roi-calc","template_id":"8b0058b8-1b30-4be1-93ff-898af4644ad7"}
+2026-08-13 21:28:26:2826 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-client-disc","template_id":"4ee53719-b2c1-4426-b623-08c54115ccd9"}
+2026-08-13 21:28:26:2826 [32minfo[39m: [32m[TabeleSeeder] seed complete[39m {"inserted":0,"updated":30,"skipped":0,"total":30}
+2026-08-13 21:28:26:2826 [32minfo[39m: [32m[DatabaseInitializer] Database schema verified successfully[39m
+2026-08-13 21:28:26:2826 [32minfo[39m: [32m[Server] Database schema initialized: Database initialized and verified successfully[39m
+2026-08-13 21:28:26:2826 [32minfo[39m: [32m[Server] Connection pooling disabled (DISABLE_CONNECTION_POOL=true)[39m
+2026-08-13 21:28:26:2826 [32minfo[39m: [32m[Readiness] Schema initialized: verified above[39m
+2026-08-13 21:28:26:2826 [32minfo[39m: [32m[TP Migrations] Found 464 migration files in /Users/piotrwisniewski/.codex/worktrees/mac-e2e-true/server/migrations[39m
+2026-08-13 21:28:26:2826 [33mwarn[39m: [33m[TP Migrations] 451 applied migration(s) have no recorded checksum and could not be verified[39m
+2026-08-13 21:28:26:2826 [32minfo[39m: [32m[TP Migrations] Complete: 0 applied, 464 already up to date (464 total)[39m
+2026-08-13 21:28:26:2826 [32minfo[39m: [32m[Readiness] Table Platform migrations: 0 applied, 464 already up to date[39m
+2026-08-13 21:28:26:2826 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-init-reg","template_id":"ecbf5411-835f-422a-b94e-6268b59b0dd1"}
+2026-08-13 21:28:26:2826 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-risk-reg-ops","template_id":"53fdb5d2-ebad-42f9-b3e0-23c5f3b103bb"}
+2026-08-13 21:28:26:2826 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-action-plan","template_id":"9aecc12c-79d6-4b93-aeda-05e256fd7b16"}
+2026-08-13 21:28:26:2826 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-stake-map","template_id":"79c293db-35bc-47c0-abe8-b111a0a860db"}
+2026-08-13 21:28:26:2826 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-decision-log","template_id":"9d54f647-9bdf-48f1-b82d-a873c77c69fb"}
+2026-08-13 21:28:26:2826 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-issue-log","template_id":"f14a184f-0bff-481e-925b-69c6f4d31f51"}
+2026-08-13 21:28:26:2826 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-meddpicc","template_id":"e6771ddc-8c71-4f88-8601-b4862d240315"}
+2026-08-13 21:28:26:2826 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-icp-fit","template_id":"1fccf523-4cb9-4199-8908-679221d12bf7"}
+2026-08-13 21:28:26:2826 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-map","template_id":"56933291-d414-472d-b06a-6d1ca3641ce9"}
+2026-08-13 21:28:26:2826 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-sales-pipe","template_id":"6063e53d-d854-409b-906d-16b855ea4f5f"}
+2026-08-13 21:28:26:2826 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-kpi-matrix","template_id":"8d449dc0-814d-426e-96bf-e7b7d2f2b9c6"}
+2026-08-13 21:28:26:2826 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-impl-tracker","template_id":"332e8e1a-e1b7-461c-ad51-3d5b307f6e55"}
+2026-08-13 21:28:26:2826 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-proj-backlog","template_id":"790dfa18-ca3b-4679-a222-d9a35aebb276"}
+2026-08-13 21:28:26:2826 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-interview-tracker","template_id":"bb95182c-2360-44bb-ba02-d0a358ddcde4"}
+2026-08-13 21:28:26:2826 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-workshop-output","template_id":"bb6f2950-005e-4edd-b823-f58989f4ccdd"}
+2026-08-13 21:28:26:2826 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-dt-roadmap","template_id":"cdb42ee0-fd68-4b47-a9b5-d4445cc2ce38"}
+2026-08-13 21:28:26:2826 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-ai-uc-reg","template_id":"124b7479-e16f-440a-bda9-0bb02df5055c"}
+2026-08-13 21:28:26:2826 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-auto-opp-reg","template_id":"3593d502-5112-4aa8-a095-32ebc62a494b"}
+2026-08-13 21:28:26:2826 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-bizcase","template_id":"a79a84ff-17ea-4794-b22d-5e6b7463666a"}
+2026-08-13 21:28:26:2826 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-vendor-comp","template_id":"498f1fc8-0e51-4daa-aa52-00e1af92d0df"}
+2026-08-13 21:28:26:2826 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-research-source","template_id":"92ae055f-fc89-47e7-8f18-d91708d6a9be"}
+2026-08-13 21:28:26:2826 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-sop-reg","template_id":"b159ea5f-aabb-48e1-a88d-dc465ece87b9"}
+2026-08-13 21:28:26:2826 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-change-tracker","template_id":"b49fd401-4109-43ea-9293-b28971fa6ddb"}
+2026-08-13 21:28:26:2826 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-train-plan","template_id":"05a1809e-2da9-4ee1-98a6-be72ff465c60"}
+2026-08-13 21:28:26:2826 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-gov-reg","template_id":"faac3880-f10e-4d56-868c-f2c4750f3b5c"}
+2026-08-13 21:28:26:2826 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-audit-find","template_id":"b906d71b-baab-43b5-8c2e-d0979179b9c1"}
+2026-08-13 21:28:26:2826 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-req-table","template_id":"63e92214-7451-4eea-945f-525cf1bcf1ea"}
+2026-08-13 21:28:26:2826 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-feat-prio","template_id":"5f77ff40-7ce7-42f3-8f0e-e2b77e4a3fb8"}
+2026-08-13 21:28:26:2826 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-roi-calc","template_id":"8b0058b8-1b30-4be1-93ff-898af4644ad7"}
+2026-08-13 21:28:26:2826 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-client-disc","template_id":"4ee53719-b2c1-4426-b623-08c54115ccd9"}
+2026-08-13 21:28:26:2826 [32minfo[39m: [32m[TabeleSeeder] seed complete[39m {"inserted":0,"updated":30,"skipped":0,"total":30}
+2026-08-13 21:28:26:2826 [32minfo[39m: [32m[Server] ✅ Database ready — serving traffic[39m
+2026-08-13 21:28:40:2840 [35mhttp[39m: [35mPOST /api/method/sessions[39m
+2026-08-13 21:28:40:2840 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/method/sessions[39m
+2026-08-13 21:28:40:2840 [35mhttp[39m: [35mPOST /api/method/sessions/c7833679-9036-4022-8794-2abc60ce60bc/transition[39m
+2026-08-13 21:28:40:2840 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/method/sessions/c7833679-9036-4022-8794-2abc60ce60bc/transition[39m
+2026-08-13 21:28:40:2840 [35mhttp[39m: [35mGET /api/method/sessions/c7833679-9036-4022-8794-2abc60ce60bc[39m
+2026-08-13 21:28:40:2840 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/method/sessions/c7833679-9036-4022-8794-2abc60ce60bc[39m
+2026-08-13 21:28:40:2840 [35mhttp[39m: [35mGET /api/method/sessions/c7833679-9036-4022-8794-2abc60ce60bc/events[39m
+2026-08-13 21:28:40:2840 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/method/sessions/c7833679-9036-4022-8794-2abc60ce60bc/events[39m
+2026-08-13 21:28:41:2841 [35mhttp[39m: [35mPOST /api/method/sessions/c7833679-9036-4022-8794-2abc60ce60bc/transition[39m
+2026-08-13 21:28:41:2841 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/method/sessions/c7833679-9036-4022-8794-2abc60ce60bc/transition[39m
+2026-08-13 21:28:41:2841 [35mhttp[39m: [35mGET /api/method/sessions/c7833679-9036-4022-8794-2abc60ce60bc[39m
+2026-08-13 21:28:41:2841 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/method/sessions/c7833679-9036-4022-8794-2abc60ce60bc[39m
+2026-08-13 21:28:41:2841 [35mhttp[39m: [35mGET /api/method/sessions/c7833679-9036-4022-8794-2abc60ce60bc/events[39m
+2026-08-13 21:28:41:2841 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/method/sessions/c7833679-9036-4022-8794-2abc60ce60bc/events[39m
+2026-08-13 21:28:41:2841 [35mhttp[39m: [35mPOST /api/method/sessions/c7833679-9036-4022-8794-2abc60ce60bc/events[39m
+2026-08-13 21:28:41:2841 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/method/sessions/c7833679-9036-4022-8794-2abc60ce60bc/events[39m
+2026-08-13 21:28:41:2841 [35mhttp[39m: [35mGET /api/method/sessions/c7833679-9036-4022-8794-2abc60ce60bc/events[39m
+2026-08-13 21:28:41:2841 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/method/sessions/c7833679-9036-4022-8794-2abc60ce60bc/events[39m
+2026-08-13 21:28:41:2841 [35mhttp[39m: [35mGET /api/method/sessions/c7833679-9036-4022-8794-2abc60ce60bc[39m
+2026-08-13 21:28:41:2841 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/method/sessions/c7833679-9036-4022-8794-2abc60ce60bc[39m
+2026-08-13 21:28:41:2841 [35mhttp[39m: [35mPOST /api/method/sessions/c7833679-9036-4022-8794-2abc60ce60bc/events[39m
+2026-08-13 21:28:41:2841 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/method/sessions/c7833679-9036-4022-8794-2abc60ce60bc/events[39m
+2026-08-13 21:28:41:2841 [35mhttp[39m: [35mGET /api/method/sessions/c7833679-9036-4022-8794-2abc60ce60bc/events[39m
+2026-08-13 21:28:41:2841 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/method/sessions/c7833679-9036-4022-8794-2abc60ce60bc/events[39m
+2026-08-13 21:28:41:2841 [35mhttp[39m: [35mGET /api/method/sessions/c7833679-9036-4022-8794-2abc60ce60bc[39m
+2026-08-13 21:28:41:2841 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/method/sessions/c7833679-9036-4022-8794-2abc60ce60bc[39m
+2026-08-13 21:28:41:2841 [35mhttp[39m: [35mPOST /api/method/sessions/c7833679-9036-4022-8794-2abc60ce60bc/events[39m
+2026-08-13 21:28:41:2841 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/method/sessions/c7833679-9036-4022-8794-2abc60ce60bc/events[39m
+2026-08-13 21:28:41:2841 [35mhttp[39m: [35mGET /api/method/sessions/c7833679-9036-4022-8794-2abc60ce60bc/events[39m
+2026-08-13 21:28:41:2841 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/method/sessions/c7833679-9036-4022-8794-2abc60ce60bc/events[39m
+2026-08-13 21:28:41:2841 [35mhttp[39m: [35mGET /api/method/sessions/c7833679-9036-4022-8794-2abc60ce60bc[39m
+2026-08-13 21:28:41:2841 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/method/sessions/c7833679-9036-4022-8794-2abc60ce60bc[39m
+2026-08-13 21:28:41:2841 [35mhttp[39m: [35mPOST /api/method/sessions/c7833679-9036-4022-8794-2abc60ce60bc/events[39m
+2026-08-13 21:28:41:2841 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/method/sessions/c7833679-9036-4022-8794-2abc60ce60bc/events[39m
+2026-08-13 21:28:41:2841 [35mhttp[39m: [35mGET /api/method/sessions/c7833679-9036-4022-8794-2abc60ce60bc/events[39m
+2026-08-13 21:28:41:2841 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/method/sessions/c7833679-9036-4022-8794-2abc60ce60bc/events[39m
+2026-08-13 21:28:41:2841 [35mhttp[39m: [35mGET /api/method/sessions/c7833679-9036-4022-8794-2abc60ce60bc[39m
+2026-08-13 21:28:41:2841 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/method/sessions/c7833679-9036-4022-8794-2abc60ce60bc[39m
+2026-08-13 21:28:41:2841 [35mhttp[39m: [35mPOST /api/method/sessions/c7833679-9036-4022-8794-2abc60ce60bc/events[39m
+2026-08-13 21:28:41:2841 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/method/sessions/c7833679-9036-4022-8794-2abc60ce60bc/events[39m
+2026-08-13 21:28:41:2841 [35mhttp[39m: [35mGET /api/method/sessions/c7833679-9036-4022-8794-2abc60ce60bc/events[39m
+2026-08-13 21:28:41:2841 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/method/sessions/c7833679-9036-4022-8794-2abc60ce60bc/events[39m
+2026-08-13 21:28:41:2841 [35mhttp[39m: [35mGET /api/method/sessions/c7833679-9036-4022-8794-2abc60ce60bc[39m
+2026-08-13 21:28:41:2841 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/method/sessions/c7833679-9036-4022-8794-2abc60ce60bc[39m
+2026-08-13 21:28:48:2848 [35mhttp[39m: [35mGET /api/method/sessions/c7833679-9036-4022-8794-2abc60ce60bc[39m
+2026-08-13 21:28:48:2848 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/method/sessions/c7833679-9036-4022-8794-2abc60ce60bc[39m
+2026-08-13 21:28:48:2848 [35mhttp[39m: [35mPOST /api/method/sessions/c7833679-9036-4022-8794-2abc60ce60bc/events[39m
+2026-08-13 21:28:48:2848 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/method/sessions/c7833679-9036-4022-8794-2abc60ce60bc/events[39m
+2026-08-13 21:28:48:2848 [35mhttp[39m: [35mGET /api/method/sessions/c7833679-9036-4022-8794-2abc60ce60bc/events[39m
+2026-08-13 21:28:48:2848 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/method/sessions/c7833679-9036-4022-8794-2abc60ce60bc/events[39m
+2026-08-13 21:28:49:2849 [35mhttp[39m: [35mGET /api/method/sessions/c7833679-9036-4022-8794-2abc60ce60bc[39m
+2026-08-13 21:28:49:2849 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/method/sessions/c7833679-9036-4022-8794-2abc60ce60bc[39m
+2026-08-13 21:28:51:2851 [35mhttp[39m: [35mPOST /api/method/sessions[39m
+2026-08-13 21:28:51:2851 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/method/sessions[39m
+2026-08-13 21:28:51:2851 [35mhttp[39m: [35mPOST /api/method/sessions/2c618909-b8b6-4cb0-b66e-34fee21ef660/transition[39m
+2026-08-13 21:28:51:2851 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/method/sessions/2c618909-b8b6-4cb0-b66e-34fee21ef660/transition[39m
+2026-08-13 21:28:51:2851 [35mhttp[39m: [35mGET /api/method/sessions/2c618909-b8b6-4cb0-b66e-34fee21ef660[39m
+2026-08-13 21:28:51:2851 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/method/sessions/2c618909-b8b6-4cb0-b66e-34fee21ef660[39m
+2026-08-13 21:28:51:2851 [35mhttp[39m: [35mGET /api/method/sessions/2c618909-b8b6-4cb0-b66e-34fee21ef660/events[39m
+2026-08-13 21:28:51:2851 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/method/sessions/2c618909-b8b6-4cb0-b66e-34fee21ef660/events[39m
+2026-08-13 21:28:52:2852 [35mhttp[39m: [35mPOST /api/method/sessions/2c618909-b8b6-4cb0-b66e-34fee21ef660/transition[39m
+2026-08-13 21:28:52:2852 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/method/sessions/2c618909-b8b6-4cb0-b66e-34fee21ef660/transition[39m
+2026-08-13 21:28:52:2852 [35mhttp[39m: [35mGET /api/method/sessions/2c618909-b8b6-4cb0-b66e-34fee21ef660/events[39m
+2026-08-13 21:28:52:2852 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/method/sessions/2c618909-b8b6-4cb0-b66e-34fee21ef660/events[39m
+2026-08-13 21:28:52:2852 [35mhttp[39m: [35mGET /api/method/sessions/2c618909-b8b6-4cb0-b66e-34fee21ef660[39m
+2026-08-13 21:28:52:2852 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/method/sessions/2c618909-b8b6-4cb0-b66e-34fee21ef660[39m
+2026-08-13 21:28:52:2852 [35mhttp[39m: [35mPOST /api/method/sessions/2c618909-b8b6-4cb0-b66e-34fee21ef660/events[39m
+2026-08-13 21:28:52:2852 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/method/sessions/2c618909-b8b6-4cb0-b66e-34fee21ef660/events[39m
+2026-08-13 21:28:52:2852 [35mhttp[39m: [35mGET /api/method/sessions/2c618909-b8b6-4cb0-b66e-34fee21ef660/events[39m
+2026-08-13 21:28:52:2852 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/method/sessions/2c618909-b8b6-4cb0-b66e-34fee21ef660/events[39m
+2026-08-13 21:28:52:2852 [35mhttp[39m: [35mGET /api/method/sessions/2c618909-b8b6-4cb0-b66e-34fee21ef660[39m
+2026-08-13 21:28:52:2852 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/method/sessions/2c618909-b8b6-4cb0-b66e-34fee21ef660[39m
+2026-08-13 21:28:52:2852 [35mhttp[39m: [35mPOST /api/method/sessions/2c618909-b8b6-4cb0-b66e-34fee21ef660/events[39m
+2026-08-13 21:28:52:2852 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/method/sessions/2c618909-b8b6-4cb0-b66e-34fee21ef660/events[39m
+2026-08-13 21:28:52:2852 [35mhttp[39m: [35mGET /api/method/sessions/2c618909-b8b6-4cb0-b66e-34fee21ef660/events[39m
+2026-08-13 21:28:52:2852 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/method/sessions/2c618909-b8b6-4cb0-b66e-34fee21ef660/events[39m
+2026-08-13 21:28:52:2852 [35mhttp[39m: [35mGET /api/method/sessions/2c618909-b8b6-4cb0-b66e-34fee21ef660[39m
+2026-08-13 21:28:52:2852 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/method/sessions/2c618909-b8b6-4cb0-b66e-34fee21ef660[39m
+2026-08-13 21:28:52:2852 [35mhttp[39m: [35mPOST /api/method/sessions/2c618909-b8b6-4cb0-b66e-34fee21ef660/events[39m
+2026-08-13 21:28:52:2852 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/method/sessions/2c618909-b8b6-4cb0-b66e-34fee21ef660/events[39m
+2026-08-13 21:28:52:2852 [35mhttp[39m: [35mGET /api/method/sessions/2c618909-b8b6-4cb0-b66e-34fee21ef660/events[39m
+2026-08-13 21:28:52:2852 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/method/sessions/2c618909-b8b6-4cb0-b66e-34fee21ef660/events[39m
+2026-08-13 21:28:52:2852 [35mhttp[39m: [35mGET /api/method/sessions/2c618909-b8b6-4cb0-b66e-34fee21ef660[39m
+2026-08-13 21:28:52:2852 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/method/sessions/2c618909-b8b6-4cb0-b66e-34fee21ef660[39m
+2026-08-13 21:28:52:2852 [35mhttp[39m: [35mPOST /api/method/sessions/2c618909-b8b6-4cb0-b66e-34fee21ef660/events[39m
+2026-08-13 21:28:52:2852 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/method/sessions/2c618909-b8b6-4cb0-b66e-34fee21ef660/events[39m
+2026-08-13 21:28:52:2852 [35mhttp[39m: [35mGET /api/method/sessions/2c618909-b8b6-4cb0-b66e-34fee21ef660/events[39m
+2026-08-13 21:28:52:2852 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/method/sessions/2c618909-b8b6-4cb0-b66e-34fee21ef660/events[39m
+2026-08-13 21:28:52:2852 [35mhttp[39m: [35mGET /api/method/sessions/2c618909-b8b6-4cb0-b66e-34fee21ef660[39m
+2026-08-13 21:28:52:2852 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/method/sessions/2c618909-b8b6-4cb0-b66e-34fee21ef660[39m
+2026-08-13 21:28:52:2852 [35mhttp[39m: [35mPOST /api/method/sessions/2c618909-b8b6-4cb0-b66e-34fee21ef660/events[39m
+2026-08-13 21:28:52:2852 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/method/sessions/2c618909-b8b6-4cb0-b66e-34fee21ef660/events[39m
+2026-08-13 21:28:52:2852 [35mhttp[39m: [35mGET /api/method/sessions/2c618909-b8b6-4cb0-b66e-34fee21ef660/events[39m
+2026-08-13 21:28:52:2852 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/method/sessions/2c618909-b8b6-4cb0-b66e-34fee21ef660/events[39m
+2026-08-13 21:28:52:2852 [35mhttp[39m: [35mGET /api/method/sessions/2c618909-b8b6-4cb0-b66e-34fee21ef660[39m
+2026-08-13 21:28:52:2852 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/method/sessions/2c618909-b8b6-4cb0-b66e-34fee21ef660[39m
+2026-08-13 21:28:52:2852 [35mhttp[39m: [35mPOST /api/method/sessions/2c618909-b8b6-4cb0-b66e-34fee21ef660/roles[39m
+2026-08-13 21:28:52:2852 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/method/sessions/2c618909-b8b6-4cb0-b66e-34fee21ef660/roles[39m
+2026-08-13 21:28:53:2853 [35mhttp[39m: [35mGET /api/method/sessions/2c618909-b8b6-4cb0-b66e-34fee21ef660[39m
+2026-08-13 21:28:53:2853 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/method/sessions/2c618909-b8b6-4cb0-b66e-34fee21ef660[39m
+2026-08-13 21:28:53:2853 [35mhttp[39m: [35mGET /api/method/sessions/2c618909-b8b6-4cb0-b66e-34fee21ef660/events[39m
+2026-08-13 21:28:53:2853 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/method/sessions/2c618909-b8b6-4cb0-b66e-34fee21ef660/events[39m
+2026-08-13 21:28:53:2853 [35mhttp[39m: [35mPOST /api/method/sessions/2c618909-b8b6-4cb0-b66e-34fee21ef660/transition[39m
+2026-08-13 21:28:53:2853 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/method/sessions/2c618909-b8b6-4cb0-b66e-34fee21ef660/transition[39m
+2026-08-13 21:28:53:2853 [35mhttp[39m: [35mGET /api/method/sessions/2c618909-b8b6-4cb0-b66e-34fee21ef660/events[39m
+2026-08-13 21:28:53:2853 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/method/sessions/2c618909-b8b6-4cb0-b66e-34fee21ef660/events[39m
+2026-08-13 21:28:53:2853 [35mhttp[39m: [35mGET /api/method/sessions/2c618909-b8b6-4cb0-b66e-34fee21ef660[39m
+2026-08-13 21:28:53:2853 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/method/sessions/2c618909-b8b6-4cb0-b66e-34fee21ef660[39m
+2026-08-13 21:28:53:2853 [35mhttp[39m: [35mPOST /api/method/sessions/2c618909-b8b6-4cb0-b66e-34fee21ef660/transition[39m
+2026-08-13 21:28:53:2853 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/method/sessions/2c618909-b8b6-4cb0-b66e-34fee21ef660/transition[39m
+2026-08-13 21:28:53:2853 [33mwarn[39m: [33mPerformance metric[39m {"method":"POST","path":"/api/method/sessions/2c618909-b8b6-4cb0-b66e-34fee21ef660/transition","statusCode":409,"responseTime":2,"dbQueryCount":2,"dbQueryTime":2,"memoryDelta":{"heapUsed":125848,"external":8955,"rss":0},"userId":"test-user-id","organizationId":"test-org-id","route":"/api/method/sessions/:id/transition","isSlow":false,"isError":true}
+2026-08-13 21:28:53:2853 [35mhttp[39m: [35mGET /api/method/sessions/2c618909-b8b6-4cb0-b66e-34fee21ef660/events[39m
+2026-08-13 21:28:53:2853 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/method/sessions/2c618909-b8b6-4cb0-b66e-34fee21ef660/events[39m
+2026-08-13 21:28:53:2853 [35mhttp[39m: [35mGET /api/method/sessions/2c618909-b8b6-4cb0-b66e-34fee21ef660[39m
+2026-08-13 21:28:53:2853 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/method/sessions/2c618909-b8b6-4cb0-b66e-34fee21ef660[39m

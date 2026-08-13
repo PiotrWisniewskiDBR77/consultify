@@ -1,0 +1,26 @@
+report/presentation (v1, after v2 freeze):
+[
+  {
+    "id": "c3623739-b435-4304-b172-5bee0d295b27",
+    "kind": "presentation",
+    "status": "superseded",
+    "superseded_by_output_id": "0f8de639-f62a-41c0-b1e3-8fc141fd9ff0"
+  },
+  {
+    "id": "2fc5c707-4836-4a54-bc7b-715d3894d8a8",
+    "kind": "report",
+    "status": "superseded",
+    "superseded_by_output_id": "0f8de639-f62a-41c0-b1e3-8fc141fd9ff0"
+  }
+]
+
+draft (v1, after v2 freeze):
+[
+  {
+    "id": "7ee29c73-8c7f-4081-ae2b-6aa418b80513",
+    "status": "superseded",
+    "superseded_by_output_id": "0f8de639-f62a-41c0-b1e3-8fc141fd9ff0"
+  }
+]
+
+outputIdV1=dafcd2f1-e5eb-4ed0-9d4c-b22df12338cc outputIdV2=0f8de639-f62a-41c0-b1e3-8fc141fd9ff0
