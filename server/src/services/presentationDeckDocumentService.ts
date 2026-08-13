@@ -23,6 +23,9 @@ export interface DeckSourceRef {
   freshness_days?: number | null;
   captured_at?: string | null;
   lineage?: Record<string, unknown> | null;
+  source_version?: string | null;
+  source_snapshot_id?: string | null;
+  source_excerpt?: string | null;
 }
 
 export interface DeckCardBlock {
@@ -183,6 +186,18 @@ function sourceRefsFromUnknown(input: unknown): DeckSourceRef[] {
           ref?.lineage && typeof ref.lineage === 'object'
             ? (ref.lineage as Record<string, unknown>)
             : null,
+        source_version:
+          ref?.source_version || ref?.sourceVersion
+            ? String(ref.source_version || ref.sourceVersion)
+            : null,
+        source_snapshot_id:
+          ref?.source_snapshot_id || ref?.sourceSnapshotId
+            ? String(ref.source_snapshot_id || ref.sourceSnapshotId)
+            : null,
+        source_excerpt:
+          ref?.source_excerpt || ref?.sourceExcerpt
+            ? String(ref.source_excerpt || ref.sourceExcerpt)
+            : null,
       } as DeckSourceRef;
     })
     .filter((ref) => ref.artifact_id || ref.artifact_name);
@@ -253,7 +268,14 @@ function sourceNotes(refs: DeckSourceRef[]): string {
   return `[Sources]\n${refs
     .map(
       (ref) =>
-        `- ${ref.artifact_name} (${ref.artifact_type}${ref.artifact_id ? `; ${ref.artifact_id}` : ''})`
+        `- ${ref.artifact_name} (${[
+          ref.artifact_type,
+          ref.artifact_id,
+          ref.source_version ? `version ${ref.source_version}` : '',
+          ref.source_snapshot_id ? `snapshot ${ref.source_snapshot_id}` : '',
+        ]
+          .filter(Boolean)
+          .join('; ')})${ref.source_excerpt ? ` — ${ref.source_excerpt}` : ''}`
     )
     .join('\n')}\n[/Sources]`;
 }
@@ -731,7 +753,7 @@ function normalizeStructuredBlock(
   if (
     declaredType === 'paragraph' &&
     typeof canonicalContent.text === 'string' &&
-    /^\s*[\[{]/.test(canonicalContent.text)
+    /^\s*(?:\[|\{)/.test(canonicalContent.text)
   ) {
     try {
       const parsed = JSON.parse(canonicalContent.text);
@@ -1070,7 +1092,10 @@ function messageTitleFromBlock(block: DeckCardBlock, index: number): string {
     const words = firstClause.split(/\s+/).filter(Boolean);
     const wordLimited = words.length > 7 ? `${words.slice(0, 7).join(' ')}…` : firstClause;
     if (wordLimited.length <= 64) return wordLimited;
-    const withinWidth = wordLimited.slice(0, 63).replace(/\s+\S*$/, '').trimEnd();
+    const withinWidth = wordLimited
+      .slice(0, 63)
+      .replace(/\s+\S*$/, '')
+      .trimEnd();
     return `${withinWidth || wordLimited.slice(0, 63).trimEnd()}…`;
   }
 
@@ -1086,6 +1111,56 @@ function messageTitleFromBlock(block: DeckCardBlock, index: number): string {
     image: 'Supporting visual',
   };
   return semanticFallbacks[block.type] || `Key point ${index + 1}`;
+}
+
+function messagesFromBlock(
+  block: DeckCardBlock,
+  blockIndex: number
+): Array<{ title: string; description: string }> {
+  const content = (block.content || {}) as Record<string, unknown>;
+  if (
+    (block.type === 'bullet_list' || block.type === 'numbered_list') &&
+    Array.isArray(content.items)
+  ) {
+    const messages = content.items
+      .map((item, itemIndex) => {
+        if (item && typeof item === 'object' && !Array.isArray(item)) {
+          const record = item as Record<string, unknown>;
+          const description = String(
+            record.description || record.text || record.value || record.title || ''
+          ).trim();
+          const title = String(record.title || record.label || '').trim();
+          if (!description && !title) return null;
+          return {
+            title:
+              title ||
+              messageTitleFromBlock(
+                { ...block, content: { text: description } },
+                blockIndex + itemIndex
+              ),
+            description: description || title,
+          };
+        }
+        const description = String(item ?? '').trim();
+        if (!description) return null;
+        return {
+          title: messageTitleFromBlock(
+            { ...block, type: 'paragraph', content: { text: description } },
+            blockIndex + itemIndex
+          ),
+          description,
+        };
+      })
+      .filter((message): message is { title: string; description: string } => Boolean(message));
+    if (messages.length > 0) return messages;
+  }
+
+  return [
+    {
+      title: messageTitleFromBlock(block, blockIndex),
+      description: textFromBlock(block),
+    },
+  ];
 }
 
 function flattenCardToUnifiedSlide(card: DeckDocumentCard, meta: UnifiedReportMeta): UnifiedSlide {
@@ -1123,10 +1198,7 @@ function flattenCardToUnifiedSlide(card: DeckDocumentCard, meta: UnifiedReportMe
           ? { title: displayTitle, body: firstText }
           : {
               messages: bodyBlocks.length
-                ? bodyBlocks.map((block, index) => ({
-                    title: messageTitleFromBlock(block, index),
-                    description: textFromBlock(block),
-                  }))
+                ? bodyBlocks.flatMap((block, index) => messagesFromBlock(block, index))
                 : [{ title: displayTitle, description: firstText }],
             }),
     } as any,
@@ -1134,13 +1206,29 @@ function flattenCardToUnifiedSlide(card: DeckDocumentCard, meta: UnifiedReportMe
   (slide as any).slide_id = card.card_id;
   (slide as any).source_intent = card.intent;
   (slide as any).source_refs = sourceRefs;
-  if (card.speaker_notes) (slide as any).speaker_notes = card.speaker_notes;
+  const provenanceNotes = sourceNotes(sourceRefs);
+  if (card.speaker_notes || provenanceNotes) {
+    (slide as any).speaker_notes = [card.speaker_notes, provenanceNotes]
+      .filter(Boolean)
+      .join('\n\n');
+  }
   return slide;
 }
 
 export function deckDocumentToUnifiedJson(deck: DeckDocument): UnifiedReportJSON {
+  const audience = String(deck.meta?.audience || '').trim();
+  const audienceFacingClient =
+    !audience || /^(organization|organisation|client)$/i.test(audience)
+      ? 'Internal decision team'
+      : audience;
   const meta: UnifiedReportMeta = {
-    client: String(deck.meta?.audience || deck.organization_id || 'Organization'),
+    // organization_id is an internal database identifier, not audience-facing
+    // copy. Falling back to it leaked UUIDs into every PPTX Footnote.
+    // `client` is rendered in audience-facing footers. A generic
+    // "Organization" placeholder looks unfinished in an exported deck and
+    // can be mistaken for missing client data. Use a bounded internal label
+    // when the deck does not carry an explicit audience.
+    client: audienceFacingClient,
     project: deck.title,
     date: new Date().toISOString().slice(0, 10),
     author: 'Consultify',
@@ -1339,7 +1427,18 @@ function mergeCardOntoBaseSlide(card: DeckDocumentCard, base: UnifiedSlide): Uni
     content,
   };
   (slide as any).slide_id = card.card_id;
-  if (card.speaker_notes) (slide as any).speaker_notes = card.speaker_notes;
+  const sourceRefs = uniqueSourceRefs([
+    ...sourceRefsFromUnknown(card.source_refs),
+    ...sourceRefsFromUnknown((card.blocks || []).map((block) => block.source_ref).filter(Boolean)),
+  ]);
+  const provenanceNotes = sourceNotes(sourceRefs);
+  const baseNotes = String((base as any).speaker_notes || '').trim();
+  const notes = [card.speaker_notes, baseNotes, provenanceNotes]
+    .filter(Boolean)
+    .filter((entry, index, all) => all.indexOf(entry) === index)
+    .join('\n\n');
+  if (notes) (slide as any).speaker_notes = notes;
+  (slide as any).source_refs = sourceRefs;
   return slide;
 }
 

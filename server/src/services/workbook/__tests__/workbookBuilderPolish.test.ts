@@ -100,10 +100,42 @@ async function workbookXml(buf: Buffer): Promise<string> {
   const zip = await JSZip.loadAsync(buf);
   return zip.file('xl/workbook.xml')!.async('string');
 }
-/** Raw XML of the first worksheet (xl/worksheets/sheet1.xml). */
+
+describe('printed evidence-table density', () => {
+  it('grows wrapped evidence rows and limits print area to meaningful rows', async () => {
+    const schema: WorkbookSchema = {
+      title: 'Evidence register',
+      sheets: [
+        {
+          name: 'Sources',
+          columns: [
+            { key: 'claim', header: 'Claim', width: 20 },
+            { key: 'excerpt', header: 'Evidence excerpt', width: 40, style: { wrapText: true } },
+          ],
+          rows: [
+            {
+              cells: {
+                claim: { value: 'Decision mandate' },
+                excerpt: {
+                  value:
+                    'Version v1, snapshot snap-1. Validate the baseline, investment amount and payback before the decision gate.',
+                },
+              },
+            },
+          ],
+        },
+      ],
+    };
+    const wb = await load(await buildWorkbookBuffer(schema, { applyConsultantStyling: true }));
+    const ws = wb.getWorksheet('Sources')!;
+    expect(ws.pageSetup.printArea).toBe('A1:B2');
+    expect(ws.getRow(2).height).toBeGreaterThan(24);
+  });
+});
+/** Raw XML of the first data worksheet (Info is the leading navigation sheet). */
 async function firstSheetXml(buf: Buffer): Promise<string> {
   const zip = await JSZip.loadAsync(buf);
-  return zip.file('xl/worksheets/sheet1.xml')!.async('string');
+  return zip.file('xl/worksheets/sheet2.xml')!.async('string');
 }
 
 // ---------------------------------------------------------------------------
@@ -370,6 +402,40 @@ describe('polish/4 — data validation on Assumptions inputs', () => {
 // `<f>=…</f>`); GREEN after sanitizeFormula().
 // ---------------------------------------------------------------------------
 describe('hardening — formula sanitizer strips leading "=" before ExcelJS', () => {
+  it('decodes HTML-encoded quoted currency formats and keeps values numeric', async () => {
+    const schema: WorkbookSchema = {
+      title: 'Encoded formats',
+      author: 'tests',
+      sheets: [
+        {
+          name: 'Decision Summary',
+          columns: [
+            { key: 'metric', header: 'Metric', type: 'text' },
+            {
+              key: 'value',
+              header: 'Value',
+              type: 'number',
+              numberFormat: '#,##0.0&amp;quot; PLN m&amp;quot;',
+            },
+          ],
+          rows: [
+            { cells: { metric: { value: 'Target' }, value: { value: 12 } } },
+            { cells: { metric: { value: 'Forecast' }, value: { value: 10.8 } } },
+            { cells: { metric: { value: 'Gap' }, value: { value: 1.2 } } },
+          ],
+        },
+      ],
+    };
+    const buf = await buildWorkbookBuffer(schema, { applyConsultantStyling: true });
+    const wb = new ExcelJS.Workbook();
+    await wb.xlsx.load(buf);
+    const ws = wb.getWorksheet('Decision Summary')!;
+    for (const address of ['B2', 'B3', 'B4']) {
+      expect(typeof ws.getCell(address).value).toBe('number');
+      expect(ws.getCell(address).numFmt).toBe('#,##0.0" PLN m"');
+    }
+  });
+
   const SEED: WorkbookSchema = {
     title: 'Sanitize',
     sheets: [
@@ -431,5 +497,72 @@ describe('hardening — formula sanitizer strips leading "=" before ExcelJS', ()
     const formulas = [...xml.matchAll(/<f[^>]*>([^<]*)<\/f>/g)].map((m) => m[1]);
     expect(formulas.every((f) => !f.startsWith('='))).toBe(true);
     expect(formulas.some((f) => f.replace(/\s/g, '') === 'A1*2')).toBe(true);
+  });
+
+  it('decodes sanitizer entities in quoted cross-sheet references exactly once', async () => {
+    const schema: WorkbookSchema = {
+      title: 'Cross-sheet sanitizer',
+      sheets: [
+        {
+          name: 'Decision Summary',
+          columns: [{ key: 'value', header: 'Value', type: 'number' }],
+          rows: [{ cells: { value: { value: 12 } } }],
+        },
+        {
+          name: 'Checks',
+          columns: [{ key: 'result', header: 'Result', type: 'number' }],
+          rows: [
+            {
+              cells: {
+                result: {
+                  formula: '&amp;#x27;Decision Summary&amp;#x27;!A2-1',
+                },
+              },
+            },
+          ],
+        },
+      ],
+    };
+    const buf = await buildWorkbookBuffer(schema);
+    const wb = await load(buf);
+    const value = wb.getWorksheet('Checks')!.getCell('A2').value as { formula?: string };
+    expect(value.formula).toBe("'Decision Summary'!A2-1");
+    const zip = await JSZip.loadAsync(buf);
+    const xml = await zip.file('xl/worksheets/sheet3.xml')!.async('string');
+    expect(xml).toContain('&apos;Decision Summary&apos;!A2-1');
+    expect(xml).not.toContain('&amp;#x27;');
+  });
+
+  it('keeps an entity-encoded UNKNOWN guard neutral instead of green', async () => {
+    const schema: WorkbookSchema = {
+      title: 'Evidence state',
+      sheets: [
+        {
+          name: 'Decision Summary',
+          columns: [{ key: 'value', header: 'Value', type: 'text' }],
+          rows: [{ cells: { value: { value: 'UNKNOWN' } } }],
+        },
+        {
+          name: 'Checks',
+          columns: [{ key: 'result', header: 'Status', type: 'text' }],
+          rows: [
+            {
+              cells: {
+                result: {
+                  formula:
+                    'IF(&amp;#x27;Decision Summary&amp;#x27;!A2=&amp;quot;UNKNOWN&amp;quot;,&amp;quot;UNKNOWN&amp;quot;,&amp;quot;REVIEW&amp;quot;)',
+                },
+              },
+            },
+          ],
+        },
+      ],
+    };
+
+    const wb = await load(await buildWorkbookBuffer(schema));
+    const result = wb.getWorksheet('Checks')!.getCell('A2');
+    expect((result.value as { formula?: string }).formula).toContain('"UNKNOWN"');
+    expect(result.font.color?.argb).toBe('FF64748B');
+    expect(result.font.color?.argb).not.toBe('FF008000');
   });
 });

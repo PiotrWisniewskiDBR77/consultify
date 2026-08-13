@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "program": "Artifact Studio DOC/PPT/XLSX release evidence",
   "candidate": {
-    "baseSha": "9c23e3d80ecec9b8e77f8cfdeb65e6838e61d611",
-    "implementationSha": "2fb925160bd357477c937ab142bb4ff97424cefe",
-    "evidenceSha": "2fb925160bd357477c937ab142bb4ff97424cefe",
-    "branch": "codex/sync-demo-20260729"
+    "baseSha": "9d17cac11484a82f729a51044e30453e39fbcb02",
+    "implementationSha": "fb1f12bfe414d8d34a3e3efe90cf15e445c695a3",
+    "evidenceSha": "fb1f12bfe414d8d34a3e3efe90cf15e445c695a3",
+    "branch": "codex/artifact-studio-program-final"
   },
   "checks": {
     "crossFormatTransfer": {

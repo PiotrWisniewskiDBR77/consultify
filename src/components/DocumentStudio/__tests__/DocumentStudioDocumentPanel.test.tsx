@@ -335,16 +335,17 @@ describe('DocumentStudioDocumentPanel', () => {
     expect(screen.queryByText('Manifest gate')).not.toBeInTheDocument();
     expect(screen.queryByText('Document preview')).not.toBeInTheDocument();
 
-    const sourcesButton = screen.getByRole('button', { name: 'Źródła' });
+    const sourcesButton = screen.getByRole('tab', { name: 'Źródła' });
     fireEvent.click(sourcesButton);
-    expect(sourcesButton).toHaveAttribute('aria-pressed', 'true');
+    expect(sourcesButton).toHaveAttribute('role', 'tab');
+    expect(sourcesButton).toHaveAttribute('aria-selected', 'true');
     expect(screen.getByTestId('mels-left-rail')).toHaveTextContent('Benefits table');
     expect(screen.queryByRole('dialog', { name: 'Narzędzia dokumentu' })).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Struktura' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'Struktura' }));
     expect(screen.getByTestId('mels-left-rail')).toHaveTextContent('Executive summary');
 
-    fireEvent.click(screen.getByRole('button', { name: 'QA i przegląd' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'QA i przegląd' }));
     expect(screen.getByTestId('document-review-panel')).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: 'QA' })).toHaveAttribute('aria-selected', 'true');
     fireEvent.click(screen.getByRole('tab', { name: 'Zatwierdzenie' }));

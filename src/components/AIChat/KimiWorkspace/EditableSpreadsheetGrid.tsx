@@ -114,13 +114,15 @@ interface Props {
     value?: string | number | boolean | null;
     formula?: string;
   }) => Promise<void>;
-  persistCells?: (payloads: Array<{
-    sheetIndex: number;
-    rowIndex: number;
-    columnKey: string;
-    value?: string | number | boolean | null;
-    formula?: string;
-  }>) => Promise<void>;
+  persistCells?: (
+    payloads: Array<{
+      sheetIndex: number;
+      rowIndex: number;
+      columnKey: string;
+      value?: string | number | boolean | null;
+      formula?: string;
+    }>
+  ) => Promise<void>;
 }
 
 function cloneSheets(sheets: FormulaSheet[]): FormulaSheet[] {
@@ -198,28 +200,33 @@ export const EditableSpreadsheetGrid = React.forwardRef<EditableSpreadsheetGridH
     const activeRaw = localSheets[activeSheetIndex];
     const activeComputed = computedSheets[activeSheetIndex];
 
-    const describeSelection = useCallback((candidate: Selection): SpreadsheetCellSelection | null => {
-      if (!activeRaw?.columns?.length) return null;
-      const column = activeRaw.columns[candidate.colIndex];
-      const endRowIndex = candidate.endRowIndex ?? candidate.rowIndex;
-      const endColIndex = candidate.endColIndex ?? candidate.colIndex;
-      const startRef = `${colIndexToLetter(candidate.colIndex)}${excelRowForDataRowIndex(candidate.rowIndex)}`;
-      const endRef = `${colIndexToLetter(endColIndex)}${excelRowForDataRowIndex(endRowIndex)}`;
-      const isRange = startRef !== endRef;
-      const address = candidate.kind === 'row'
-        ? `${activeRaw.name || ''}!${excelRowForDataRowIndex(candidate.rowIndex)}:${excelRowForDataRowIndex(endRowIndex)}`
-        : candidate.kind === 'column'
-          ? `${activeRaw.name || ''}!${colIndexToLetter(candidate.colIndex)}:${colIndexToLetter(endColIndex)}`
-          : `${activeRaw.name || ''}!${startRef}${isRange ? `:${endRef}` : ''}`;
-      return {
-        ...candidate,
-        kind: candidate.kind ?? (isRange ? 'range' : 'cell'),
-        address,
-        rawValue: isRange || candidate.kind === 'row' || candidate.kind === 'column'
-          ? ''
-          : rawCellToEditText(activeRaw.rows?.[candidate.rowIndex]?.cells?.[column?.key ?? '']),
-      };
-    }, [activeRaw]);
+    const describeSelection = useCallback(
+      (candidate: Selection): SpreadsheetCellSelection | null => {
+        if (!activeRaw?.columns?.length) return null;
+        const column = activeRaw.columns[candidate.colIndex];
+        const endRowIndex = candidate.endRowIndex ?? candidate.rowIndex;
+        const endColIndex = candidate.endColIndex ?? candidate.colIndex;
+        const startRef = `${colIndexToLetter(candidate.colIndex)}${excelRowForDataRowIndex(candidate.rowIndex)}`;
+        const endRef = `${colIndexToLetter(endColIndex)}${excelRowForDataRowIndex(endRowIndex)}`;
+        const isRange = startRef !== endRef;
+        const address =
+          candidate.kind === 'row'
+            ? `${activeRaw.name || ''}!${excelRowForDataRowIndex(candidate.rowIndex)}:${excelRowForDataRowIndex(endRowIndex)}`
+            : candidate.kind === 'column'
+              ? `${activeRaw.name || ''}!${colIndexToLetter(candidate.colIndex)}:${colIndexToLetter(endColIndex)}`
+              : `${activeRaw.name || ''}!${startRef}${isRange ? `:${endRef}` : ''}`;
+        return {
+          ...candidate,
+          kind: candidate.kind ?? (isRange ? 'range' : 'cell'),
+          address,
+          rawValue:
+            isRange || candidate.kind === 'row' || candidate.kind === 'column'
+              ? ''
+              : rawCellToEditText(activeRaw.rows?.[candidate.rowIndex]?.cells?.[column?.key ?? '']),
+        };
+      },
+      [activeRaw]
+    );
 
     useEffect(() => {
       if (editingValue !== null) inputRef.current?.focus();
@@ -238,15 +245,14 @@ export const EditableSpreadsheetGrid = React.forwardRef<EditableSpreadsheetGridH
       if (described) onSelectionChange?.(described);
     }, [activeRaw, describeSelection, onSelectionChange, selected]);
 
-    // Naprawa odkryta w render-verify (2026-07-28): po Escape/zatwierdzeniu
-    // edycji React odmontowuje `<input>` komórki, ale fokus NIE wraca sam do
-    // kontenera siatki — kolejne strzałki/Enter/Delete lądowały donikąd (klawiatura
-    // "martwa" po pierwszym Escape). Kontener musi przejąć fokus z powrotem,
-    // żeby nawigacja klawiaturą działała przez całą sesję edycji, nie tylko do
-    // pierwszego anulowania.
+    // Po Escape/zatwierdzeniu edycji przywracamy fokus do aktywnej komórki.
+    // Dzięki temu siatka ma jeden spójny kontrakt roving-focus: kliknięcie,
+    // klawiatura i menu kontekstowe mają ten sam element wywołujący.
     useEffect(() => {
       if (editingValue === null && selected) {
-        containerRef.current?.focus();
+        containerRef.current
+          ?.querySelector<HTMLElement>('[role="gridcell"][tabindex="0"]')
+          ?.focus();
       }
     }, [editingValue, selected]);
 
@@ -256,12 +262,14 @@ export const EditableSpreadsheetGrid = React.forwardRef<EditableSpreadsheetGridH
         const payloads = changes.flatMap((change) => {
           const col = localSheets[activeSheetIndex]?.columns?.[change.colIndex];
           if (!col) return [];
-          return [{
-            sheetIndex: activeSheetIndex,
-            rowIndex: change.rowIndex,
-            columnKey: col.key,
-            ...parseCellInput(change[direction]),
-          }];
+          return [
+            {
+              sheetIndex: activeSheetIndex,
+              rowIndex: change.rowIndex,
+              columnKey: col.key,
+              ...parseCellInput(change[direction]),
+            },
+          ];
         });
         if (payloads.length === 0) return;
         setLocalSheets((prev) => {
@@ -295,9 +303,7 @@ export const EditableSpreadsheetGrid = React.forwardRef<EditableSpreadsheetGridH
                   : Api.updateWorkbookCell(workbookId, payload).then(() => undefined)
               )
             ).then(() => undefined);
-        persistence
-          .then(() => setSaveState('saved'))
-          .catch(() => setSaveState('error'));
+        persistence.then(() => setSaveState('saved')).catch(() => setSaveState('error'));
       },
       [activeSheetIndex, localSheets, onSheetsChange, persistCell, persistCells, workbookId]
     );
@@ -309,7 +315,12 @@ export const EditableSpreadsheetGrid = React.forwardRef<EditableSpreadsheetGridH
         if (!col) return;
         const before = rawCellToEditText(activeRaw.rows?.[selected.rowIndex]?.cells?.[col.key]);
         if (before !== nextRaw) {
-          const change = { rowIndex: selected.rowIndex, colIndex: selected.colIndex, before, after: nextRaw };
+          const change = {
+            rowIndex: selected.rowIndex,
+            colIndex: selected.colIndex,
+            before,
+            after: nextRaw,
+          };
           undoStackRef.current.push([change]);
           redoStackRef.current = [];
           applyRawChanges([change], 'after');
@@ -413,7 +424,10 @@ export const EditableSpreadsheetGrid = React.forwardRef<EditableSpreadsheetGridH
       const text = await navigator.clipboard.readText();
       if (!text) return;
       const columns = activeRaw.columns;
-      const matrix = text.replace(/\r\n/g, '\n').split('\n').map((row) => row.split('\t'));
+      const matrix = text
+        .replace(/\r\n/g, '\n')
+        .split('\n')
+        .map((row) => row.split('\t'));
       const changes: CellChange[] = [];
       matrix.forEach((row, rowOffset) => {
         row.forEach((after, colOffset) => {
@@ -453,7 +467,17 @@ export const EditableSpreadsheetGrid = React.forwardRef<EditableSpreadsheetGridH
           containerRef.current?.focus();
         },
       }),
-      [activeRaw, clearSelection, copySelection, cutSelection, pasteSelection, redo, selected, startEditing, undo]
+      [
+        activeRaw,
+        clearSelection,
+        copySelection,
+        cutSelection,
+        pasteSelection,
+        redo,
+        selected,
+        startEditing,
+        undo,
+      ]
     );
 
     const moveSelection = useCallback(
@@ -527,11 +551,42 @@ export const EditableSpreadsheetGrid = React.forwardRef<EditableSpreadsheetGridH
             return false;
         }
       },
-      [editingValue, selected, moveSelection, startEditing, clearSelection, copySelection, cutSelection, pasteSelection, redo, undo]
+      [
+        editingValue,
+        selected,
+        moveSelection,
+        startEditing,
+        clearSelection,
+        copySelection,
+        cutSelection,
+        pasteSelection,
+        redo,
+        undo,
+      ]
     );
 
     const handleContainerKeyDown = useCallback(
       (e: React.KeyboardEvent<HTMLDivElement>) => {
+        if (
+          selected &&
+          onSelectionContextMenu &&
+          (e.key === 'ContextMenu' || (e.key === 'F10' && e.shiftKey))
+        ) {
+          const described = describeSelection(selected);
+          if (described) {
+            e.preventDefault();
+            const selectedCell = containerRef.current?.querySelector<HTMLElement>(
+              '[role="gridcell"][tabindex="0"]'
+            );
+            const rect = selectedCell?.getBoundingClientRect();
+            onSelectionContextMenu({
+              x: rect ? rect.left + Math.min(rect.width, 24) : 24,
+              y: rect ? rect.top + Math.min(rect.height, 24) : 24,
+              selection: described,
+            });
+            return;
+          }
+        }
         const handled = handleNavigationKey(e.key, {
           ctrlKey: e.ctrlKey,
           metaKey: e.metaKey,
@@ -540,7 +595,7 @@ export const EditableSpreadsheetGrid = React.forwardRef<EditableSpreadsheetGridH
         });
         if (handled) e.preventDefault();
       },
-      [handleNavigationKey]
+      [describeSelection, handleNavigationKey, onSelectionContextMenu, selected]
     );
 
     // Zabezpieczenie skupienia (odkryte w render-verify 2026-07-28): klik na
@@ -667,7 +722,7 @@ export const EditableSpreadsheetGrid = React.forwardRef<EditableSpreadsheetGridH
               'kimi.excele.formulaBarEmpty',
               'Zaznacz komórkę, aby zobaczyć jej treść'
             )}
-              className="flex-1 min-w-0 bg-transparent text-xs font-mono text-c-text focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+            className="flex-1 min-w-0 bg-transparent text-xs font-mono text-c-text focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
           />
           <span
             className="shrink-0 flex items-center gap-1 text-[11px] text-c-text-secondary"
@@ -700,7 +755,9 @@ export const EditableSpreadsheetGrid = React.forwardRef<EditableSpreadsheetGridH
           onKeyDown={handleContainerKeyDown}
           tabIndex={0}
         >
-          <table /* §27-exempt: macierz/komorki kalkulacyjne, osobny spec matrix-editor */ className="w-full text-xs">
+          <table
+            /* §27-exempt: macierz/komorki kalkulacyjne, osobny spec matrix-editor */ className="w-full text-xs"
+          >
             <thead className="sticky top-0 z-10">
               <tr className="bg-c-surface-raised">
                 <th
@@ -731,7 +788,12 @@ export const EditableSpreadsheetGrid = React.forwardRef<EditableSpreadsheetGridH
                       };
                       setSelected(candidate);
                       const described = describeSelection(candidate);
-                      if (described) onSelectionContextMenu?.({ x: event.clientX, y: event.clientY, selection: described });
+                      if (described)
+                        onSelectionContextMenu?.({
+                          x: event.clientX,
+                          y: event.clientY,
+                          selection: described,
+                        });
                     }}
                     className="px-3 py-2 text-left font-medium text-c-text-secondary border-b border-c-border-subtle whitespace-nowrap"
                   >
@@ -766,7 +828,12 @@ export const EditableSpreadsheetGrid = React.forwardRef<EditableSpreadsheetGridH
                       };
                       setSelected(candidate);
                       const described = describeSelection(candidate);
-                      if (described) onSelectionContextMenu?.({ x: event.clientX, y: event.clientY, selection: described });
+                      if (described)
+                        onSelectionContextMenu?.({
+                          x: event.clientX,
+                          y: event.clientY,
+                          selection: described,
+                        });
                     }}
                     className="sticky left-0 z-[5] w-10 cursor-pointer border-r border-c-border-subtle bg-c-surface-raised px-2 py-1.5 text-center font-mono text-[10px] font-normal text-c-text-secondary"
                   >
@@ -774,24 +841,38 @@ export const EditableSpreadsheetGrid = React.forwardRef<EditableSpreadsheetGridH
                   </th>
                   {columns.map((col, ci) => {
                     const cell: ComputedCell | undefined = row.cells[col.key];
-                    const rawStyle = activeRaw.rows?.[ri]?.cells?.[col.key]?.style as {
-                      bold?: boolean;
-                      italic?: boolean;
-                      fontColor?: string;
-                      bgColor?: string;
-                      alignment?: 'left' | 'center' | 'right';
-                      wrapText?: boolean;
-                      border?: string;
-                      numberFormat?: string;
-                    } | undefined;
-                    const normalizedColor = (value?: string) => value
-                      ? `#${value.replace(/^#/, '').slice(-6)}`
-                      : undefined;
-                    const rowStart = Math.min(selected?.rowIndex ?? -1, selected?.endRowIndex ?? selected?.rowIndex ?? -1);
-                    const rowEnd = Math.max(selected?.rowIndex ?? -1, selected?.endRowIndex ?? selected?.rowIndex ?? -1);
-                    const colStart = Math.min(selected?.colIndex ?? -1, selected?.endColIndex ?? selected?.colIndex ?? -1);
-                    const colEnd = Math.max(selected?.colIndex ?? -1, selected?.endColIndex ?? selected?.colIndex ?? -1);
-                    const isSelected = ri >= rowStart && ri <= rowEnd && ci >= colStart && ci <= colEnd;
+                    const rawStyle = activeRaw.rows?.[ri]?.cells?.[col.key]?.style as
+                      | {
+                          bold?: boolean;
+                          italic?: boolean;
+                          fontColor?: string;
+                          bgColor?: string;
+                          alignment?: 'left' | 'center' | 'right';
+                          wrapText?: boolean;
+                          border?: string;
+                          numberFormat?: string;
+                        }
+                      | undefined;
+                    const normalizedColor = (value?: string) =>
+                      value ? `#${value.replace(/^#/, '').slice(-6)}` : undefined;
+                    const rowStart = Math.min(
+                      selected?.rowIndex ?? -1,
+                      selected?.endRowIndex ?? selected?.rowIndex ?? -1
+                    );
+                    const rowEnd = Math.max(
+                      selected?.rowIndex ?? -1,
+                      selected?.endRowIndex ?? selected?.rowIndex ?? -1
+                    );
+                    const colStart = Math.min(
+                      selected?.colIndex ?? -1,
+                      selected?.endColIndex ?? selected?.colIndex ?? -1
+                    );
+                    const colEnd = Math.max(
+                      selected?.colIndex ?? -1,
+                      selected?.endColIndex ?? selected?.colIndex ?? -1
+                    );
+                    const isSelected =
+                      ri >= rowStart && ri <= rowEnd && ci >= colStart && ci <= colEnd;
                     const isEditingThis =
                       selected?.rowIndex === ri &&
                       selected?.colIndex === ci &&
@@ -807,19 +888,23 @@ export const EditableSpreadsheetGrid = React.forwardRef<EditableSpreadsheetGridH
                               ? { ...current, endRowIndex: ri, endColIndex: ci }
                               : { rowIndex: ri, colIndex: ci }
                           );
-                          // Fokus SYNCHRONICZNIE w momencie kliknięcia (nie
-                          // czekając na useEffect po renderze) — <td> nie jest
-                          // fokusowalny, więc bez tego strzałka/Enter naciśnięte
-                          // od razu po kliknięciu mogą trafić w domyślny fokus
-                          // przeglądarki (body) zamiast w kontener siatki.
-                          containerRef.current?.focus();
+                          // Fokus pozostaje na konkretnej komórce. Zdarzenia
+                          // nawigacyjne bąbelkują do kontenera siatki, natomiast
+                          // Escape z menu kontekstowego może wrócić dokładnie do
+                          // elementu, który je otworzył.
+                          event.currentTarget.focus();
                         }}
                         onContextMenu={(event) => {
                           event.preventDefault();
                           const candidate: Selection = { rowIndex: ri, colIndex: ci };
                           setSelected(candidate);
                           const described = describeSelection(candidate);
-                          if (described) onSelectionContextMenu?.({ x: event.clientX, y: event.clientY, selection: described });
+                          if (described)
+                            onSelectionContextMenu?.({
+                              x: event.clientX,
+                              y: event.clientY,
+                              selection: described,
+                            });
                         }}
                         onKeyDown={(event) => {
                           if (event.key !== 'Enter' && event.key !== ' ') return;
@@ -844,9 +929,10 @@ export const EditableSpreadsheetGrid = React.forwardRef<EditableSpreadsheetGridH
                           backgroundColor: normalizedColor(rawStyle?.bgColor),
                           textAlign: rawStyle?.alignment,
                           whiteSpace: rawStyle?.wrapText ? 'normal' : undefined,
-                          border: rawStyle?.border && rawStyle.border !== 'none'
-                            ? `${rawStyle.border === 'thick' ? 3 : rawStyle.border === 'medium' ? 2 : 1}px solid var(--c-border)`
-                            : undefined,
+                          border:
+                            rawStyle?.border && rawStyle.border !== 'none'
+                              ? `${rawStyle.border === 'thick' ? 3 : rawStyle.border === 'medium' ? 2 : 1}px solid var(--c-border)`
+                              : undefined,
                         }}
                       >
                         {isEditingThis ? (

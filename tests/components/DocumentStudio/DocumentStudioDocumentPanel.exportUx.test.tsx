@@ -231,7 +231,8 @@ describe('DocumentStudioDocumentPanel — export UX (B4)', () => {
     }));
     renderPanel(onSchemaUpdated);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Duplicate section Existing section' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Section actions Existing section' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Duplicate section Existing section' }));
 
     await waitFor(() => expect(saveContentMock).toHaveBeenCalledTimes(1));
     const [, input] = saveContentMock.mock.calls[0];
@@ -243,12 +244,14 @@ describe('DocumentStudioDocumentPanel — export UX (B4)', () => {
 
   it('exposes an accessible local collapse toggle for each section', () => {
     renderPanel();
-    const toggle = screen.getByRole('button', { name: 'Collapse section Existing section' });
+    fireEvent.click(screen.getByRole('button', { name: 'Section actions Existing section' }));
+    const toggle = screen.getByRole('menuitem', { name: 'Collapse section Existing section' });
     expect(toggle.getAttribute('aria-expanded')).toBe('true');
     fireEvent.click(toggle);
+    fireEvent.click(screen.getByRole('button', { name: 'Section actions Existing section' }));
     expect(
       screen
-        .getByRole('button', { name: 'Expand section Existing section' })
+        .getByRole('menuitem', { name: 'Expand section Existing section' })
         .getAttribute('aria-expanded')
     ).toBe('false');
   });

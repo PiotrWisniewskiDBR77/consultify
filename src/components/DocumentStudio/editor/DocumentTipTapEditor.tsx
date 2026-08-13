@@ -198,6 +198,9 @@ export const DocumentTipTapEditor: React.FC<DocumentTipTapEditorProps> = ({
       editable,
       content: initialDoc as unknown as Record<string, unknown>,
       editorProps: {
+        attributes: {
+          'aria-label': 'Treść dokumentu',
+        },
         handleDOMEvents: {
           beforeinput: () => {
             userEditArmedRef.current = true;
@@ -390,9 +393,7 @@ export const DocumentTipTapEditor: React.FC<DocumentTipTapEditorProps> = ({
                 kind: 'bar',
                 title: title.trim(),
                 categories: points.map(([category]) => category),
-                series: [
-                  { label: 'Wartość', values: points.map(([, value]) => Number(value)) },
-                ],
+                series: [{ label: 'Wartość', values: points.map(([, value]) => Number(value)) }],
               }),
             },
           })
