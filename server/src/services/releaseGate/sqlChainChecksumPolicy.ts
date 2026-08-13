@@ -22,11 +22,13 @@
  *
  * DELIBERATELY EXCLUDED (do not add without a new forensic pass + CTO decision):
  *   730_partner_users_uuid_columns.sql        -> SCHEMA_ATTESTED_LEGACY_VARIANT (see below)
- *   520_ai_enterprise_tables.sql              -> repair migration (suggested_instruction/confidence_score)
- *   700_table_platform_foundation.sql         -> repair migration (tp_schema_proposals.level)
- *   20260628_initiative_core_section_prompts  -> DML gap, separate decision
- *   000_z_core_baseline.sql                   -> repair migrations (29 missing columns)
- *   542_..., 548_..., 573_...                 -> manual review (semantic changes)
+ *   20260628_initiative_core_section_prompts  -> DML gap; NO_REPAIR_NEEDED (the app ships
+ *                                                CORE_FALLBACK_PROMPTS.raid, which engages
+ *                                                automatically), so nothing to approve.
+ *
+ * 520, 700 and 000_z_core_baseline ARE listed below, but ONLY because their confirmed schema
+ * gaps are now closed by the 20260813_repair_* forward migrations. Approving a drifted file
+ * before its repair exists would permanently strand the columns its newer version adds.
  */
 
 export type ChecksumVerdict =
@@ -146,6 +148,52 @@ export const APPROVED_SQL_CHAIN_VARIANTS: Readonly<Record<string, ApprovedVarian
   '914_okr_management.sql': {
     stored: 'd38760252fd78adf2e42ea493674103b6a40aa91eff31bdeacd6b69067968ba5',
     current: '2363ff101ca6d7e6b73f41735dd6b30ca60cf1be4d94c2aa1b3f6acb5a333622',
+  },
+  // MANUAL REVIEW CLOSED 2026-08-13. Semantic difference: the current file declares
+  // created_at/updated_at as TIMESTAMPTZ while demo has TEXT (verified read-only). That
+  // divergence sits inside CREATE TABLE IF NOT EXISTS, so the newer version could never
+  // convert an existing table — approving loses nothing. The TEXT/TIMESTAMPTZ divergence is
+  // pre-existing and NOT closable by this migration; converting it needs its own approved
+  // migration. Additive tables (workstreams, project_members) verified present on demo.
+  '542_project_members_consultant_overlay_and_steering_board.sql': {
+    stored: 'ac3f23b321115b0ed1a8aaccbf02fb9519651542ea0342751907e6dd57a664e2',
+    current: '0ff1cd5abfcf04fac1d54550923e46bcf89967098596067662c040dc80879df9',
+  },
+  // MANUAL REVIEW CLOSED 2026-08-13. The current file compares COALESCE(is_active, TRUE) =
+  // FALSE, but demo's api_keys.is_active is INTEGER (verified read-only), so the current
+  // logic would ERROR if replayed there. Approving is the SAFE outcome precisely because an
+  // approved file is never re-run. DO NOT 'fix drift by re-running' this migration.
+  '548_audit_log_api_keys_compatibility.sql': {
+    stored: '52c82dd3dc139ab1f174e54277f0473ce9b00e9f31995d9e4d180e56f69af30a',
+    current: '0b0482d63f986052fd6c26e75119080492b5d9a18f3e215df879830f3a7d7a86',
+  },
+  // MANUAL REVIEW CLOSED 2026-08-13. The historical version demo ran declares
+  // communication_plans.id UUID (demo has uuid — matches). The current version deliberately
+  // declares TEXT so a FRESH replay's FK does not fail; on demo that CREATE is a no-op. The
+  // change only affects fresh installs, which is exactly where it runs. No gap on demo.
+  '573_people_change_comms_t043_t044_t045.sql': {
+    stored: '1975869857dcb91a41651fff219e0ed6839c2d3b8c9f554206ece15b9f22e6ef',
+    current: '7ccf7c15df4195f29f5b4303d7e7ea7741c3428c496fd4146a230b551c56b5eb',
+  },
+  // MANUAL REVIEW CLOSED 2026-08-13 — approved ONLY because the gap is now repaired.
+  // 29 columns the newer version adds were confirmed missing on demo. They are delivered by
+  // forward repairs 20260813_repair_c1/c2/c3, so approving this checksum no longer hides
+  // anything. Never approve a drifted baseline before its repair migrations exist.
+  '000_z_core_baseline.sql': {
+    stored: '593c19c74f986e8f07e2153de665a72ef8f7fdbec1c862238e473be8ac1f78bf',
+    current: '48fcc5700598125b0623af9a544dca78743100d88d2e3f61bcac54ebfad62e72',
+  },
+  // Approved ONLY because 20260813_repair_a_ai_instruction_suggestions.sql now delivers the
+  // suggested_instruction/confidence_score columns the newer version adds.
+  '520_ai_enterprise_tables.sql': {
+    stored: 'db5f219588a4a95b5f276568d23a91e538650ff60d05b45b6444a98609beacd0',
+    current: 'e59d960ed53e626cbb97669ead5e9a100aaba1af4438338947bc349622cbb2e0',
+  },
+  // Approved ONLY because 20260813_repair_b_tp_schema_proposals_level.sql now delivers the
+  // level column, its CHECK and its index.
+  '700_table_platform_foundation.sql': {
+    stored: 'b7bfc315bb2658a1eba1fb625efb131f7e0901637a934e568f8df617ff3c155e',
+    current: '052bd8e8ce6fb0431446ccb32f82a90e387b2f562563c4b6d20e605c7925a556',
   },
 });
 
