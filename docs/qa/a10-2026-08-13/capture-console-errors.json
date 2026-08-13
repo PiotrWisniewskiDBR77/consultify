@@ -1,0 +1,98 @@
+{
+  "03-matrix-light-1600x1000.png": [
+    "In HTML, whitespace text nodes cannot be a child of <%s>. Make sure you don't have any extra whitespace between tags on each line of your source code.\nThis will cause a hydration error.%s table \n\n  <Suspense fallback={<div>}>\n    <Root>\n      <DrdMethodWorkspaceScreen seedTo=\"matrix\" initialViewMode=\"matrix\" initialActorUserId={undefined}>\n        <DrdMethodWorkspaceScreenLegacy seedTo=\"matrix\" initialViewMode=\"matrix\" initialActorUserId={undefined}>\n          <div className=\"flex h-ful...\">\n            <div>\n            <div>\n            <div className=\"min-h-0 fl...\">\n              <MethodWorkspaceShell session={{id:\"3f2072...\", ...}} methodName=\"DRD — Digi...\" ...>\n                <div data-testid=\"method-wor...\" className={\"flex h-f...\"}>\n                  <header>\n                  <div>\n                  <div className=\"flex min-h...\">\n                    <div className=\"flex-1 ove...\">\n                      <LiveMatrix rows={[...]} levels={[...]} selection={null} onSelect={function onSelect} ...>\n                        <div data-testid=\"live-matrix\" className=\"flex flex-...\">\n                          <div>\n                          <div className=\"overflow-x...\">\n>                           <table className=\"border-separate border-spacing-1\">\n>                             {\" \"}\n                              ...\n                    ...\n            ...\n  ...\n"
+  ],
+  "04-split-light-1600x1000.png": [
+    "In HTML, whitespace text nodes cannot be a child of <%s>. Make sure you don't have any extra whitespace between tags on each line of your source code.\nThis will cause a hydration error.%s table \n\n  <Suspense fallback={<div>}>\n    <Screen>\n      <div style={{height:\"100vh\"}}>\n        <MethodWorkspaceShell session={{id:\"sessio...\", ...}} methodName=\"Diagnostyk...\" packVersionLabel=\"2.3.0\" ...>\n          <div data-testid=\"method-wor...\" className={\"flex h-f...\"}>\n            <header>\n            <div>\n            <div className=\"flex min-h...\">\n              <div className=\"flex min-h...\">\n                <div>\n                <div className=\"min-w-0 fl...\">\n                  <InterviewFocusPanel>\n                  <div className=\"mt-4 round...\">\n                    <LiveMatrix rows={[...]} levels={[...]} selection={null} onSelect={function bound dispatchSetState} ...>\n                      <div data-testid=\"live-matrix\" className={\"flex fle...\"}>\n                        <div>\n                        <div className=\"overflow-x...\">\n>                         <table className=\"border-separate border-spacing-1\">\n>                           {\" \"}\n                            ...\n                ...\n              ...\n  ...\n"
+  ],
+  "03b-mw-matrix-light-1600x1000.png": [
+    "In HTML, whitespace text nodes cannot be a child of <%s>. Make sure you don't have any extra whitespace between tags on each line of your source code.\nThis will cause a hydration error.%s table \n\n  <Suspense fallback={<div>}>\n    <Screen>\n      <div style={{height:\"100vh\"}}>\n        <MethodWorkspaceShell session={{id:\"sessio...\", ...}} methodName=\"Diagnostyk...\" packVersionLabel=\"2.3.0\" ...>\n          <div data-testid=\"method-wor...\" className={\"flex h-f...\"}>\n            <header>\n            <div>\n            <div className=\"flex min-h...\">\n              <div className=\"flex-1 ove...\">\n                <LiveMatrix rows={[...]} levels={[...]} selection={{unitId:\"un...\", ...}} ...>\n                  <div data-testid=\"live-matrix\" className=\"flex flex-...\">\n                    <div>\n                    <div className=\"overflow-x...\">\n>                     <table className=\"border-separate border-spacing-1\">\n>                       {\" \"}\n                        ...\n                    ...\n              ...\n  ...\n"
+  ],
+  "03-matrix-dark-1600x1000.png": [
+    "In HTML, whitespace text nodes cannot be a child of <%s>. Make sure you don't have any extra whitespace between tags on each line of your source code.\nThis will cause a hydration error.%s table \n\n  <Suspense fallback={<div>}>\n    <Root>\n      <DrdMethodWorkspaceScreen seedTo=\"matrix\" initialViewMode=\"matrix\" initialActorUserId={undefined}>\n        <DrdMethodWorkspaceScreenLegacy seedTo=\"matrix\" initialViewMode=\"matrix\" initialActorUserId={undefined}>\n          <div className=\"flex h-ful...\">\n            <div>\n            <div>\n            <div className=\"min-h-0 fl...\">\n              <MethodWorkspaceShell session={{id:\"769b11...\", ...}} methodName=\"DRD — Digi...\" ...>\n                <div data-testid=\"method-wor...\" className={\"flex h-f...\"}>\n                  <header>\n                  <div>\n                  <div className=\"flex min-h...\">\n                    <div className=\"flex-1 ove...\">\n                      <LiveMatrix rows={[...]} levels={[...]} selection={null} onSelect={function onSelect} ...>\n                        <div data-testid=\"live-matrix\" className=\"flex flex-...\">\n                          <div>\n                          <div className=\"overflow-x...\">\n>                           <table className=\"border-separate border-spacing-1\">\n>                             {\" \"}\n                              ...\n                    ...\n            ...\n  ...\n"
+  ],
+  "04-split-dark-1600x1000.png": [
+    "In HTML, whitespace text nodes cannot be a child of <%s>. Make sure you don't have any extra whitespace between tags on each line of your source code.\nThis will cause a hydration error.%s table \n\n  <Suspense fallback={<div>}>\n    <Screen>\n      <div style={{height:\"100vh\"}}>\n        <MethodWorkspaceShell session={{id:\"sessio...\", ...}} methodName=\"Diagnostyk...\" packVersionLabel=\"2.3.0\" ...>\n          <div data-testid=\"method-wor...\" className={\"flex h-f...\"}>\n            <header>\n            <div>\n            <div className=\"flex min-h...\">\n              <div className=\"flex min-h...\">\n                <div>\n                <div className=\"min-w-0 fl...\">\n                  <InterviewFocusPanel>\n                  <div className=\"mt-4 round...\">\n                    <LiveMatrix rows={[...]} levels={[...]} selection={null} onSelect={function bound dispatchSetState} ...>\n                      <div data-testid=\"live-matrix\" className={\"flex fle...\"}>\n                        <div>\n                        <div className=\"overflow-x...\">\n>                         <table className=\"border-separate border-spacing-1\">\n>                           {\" \"}\n                            ...\n                ...\n              ...\n  ...\n"
+  ],
+  "03b-mw-matrix-dark-1600x1000.png": [
+    "In HTML, whitespace text nodes cannot be a child of <%s>. Make sure you don't have any extra whitespace between tags on each line of your source code.\nThis will cause a hydration error.%s table \n\n  <Suspense fallback={<div>}>\n    <Screen>\n      <div style={{height:\"100vh\"}}>\n        <MethodWorkspaceShell session={{id:\"sessio...\", ...}} methodName=\"Diagnostyk...\" packVersionLabel=\"2.3.0\" ...>\n          <div data-testid=\"method-wor...\" className={\"flex h-f...\"}>\n            <header>\n            <div>\n            <div className=\"flex min-h...\">\n              <div className=\"flex-1 ove...\">\n                <LiveMatrix rows={[...]} levels={[...]} selection={{unitId:\"un...\", ...}} ...>\n                  <div data-testid=\"live-matrix\" className=\"flex flex-...\">\n                    <div>\n                    <div className=\"overflow-x...\">\n>                     <table className=\"border-separate border-spacing-1\">\n>                       {\" \"}\n                        ...\n                    ...\n              ...\n  ...\n"
+  ],
+  "03-matrix-light-1280x800.png": [
+    "In HTML, whitespace text nodes cannot be a child of <%s>. Make sure you don't have any extra whitespace between tags on each line of your source code.\nThis will cause a hydration error.%s table \n\n  <Suspense fallback={<div>}>\n    <Root>\n      <DrdMethodWorkspaceScreen seedTo=\"matrix\" initialViewMode=\"matrix\" initialActorUserId={undefined}>\n        <DrdMethodWorkspaceScreenLegacy seedTo=\"matrix\" initialViewMode=\"matrix\" initialActorUserId={undefined}>\n          <div className=\"flex h-ful...\">\n            <div>\n            <div>\n            <div className=\"min-h-0 fl...\">\n              <MethodWorkspaceShell session={{id:\"18fa91...\", ...}} methodName=\"DRD — Digi...\" ...>\n                <div data-testid=\"method-wor...\" className={\"flex h-f...\"}>\n                  <header>\n                  <div>\n                  <div className=\"flex min-h...\">\n                    <div className=\"flex-1 ove...\">\n                      <LiveMatrix rows={[...]} levels={[...]} selection={null} onSelect={function onSelect} ...>\n                        <div data-testid=\"live-matrix\" className=\"flex flex-...\">\n                          <div>\n                          <div className=\"overflow-x...\">\n>                           <table className=\"border-separate border-spacing-1\">\n>                             {\" \"}\n                              ...\n                    ...\n            ...\n  ...\n"
+  ],
+  "04-split-light-1280x800.png": [
+    "In HTML, whitespace text nodes cannot be a child of <%s>. Make sure you don't have any extra whitespace between tags on each line of your source code.\nThis will cause a hydration error.%s table \n\n  <Suspense fallback={<div>}>\n    <Screen>\n      <div style={{height:\"100vh\"}}>\n        <MethodWorkspaceShell session={{id:\"sessio...\", ...}} methodName=\"Diagnostyk...\" packVersionLabel=\"2.3.0\" ...>\n          <div data-testid=\"method-wor...\" className={\"flex h-f...\"}>\n            <header>\n            <div>\n            <div className=\"flex min-h...\">\n              <div className=\"flex min-h...\">\n                <div>\n                <div className=\"min-w-0 fl...\">\n                  <InterviewFocusPanel>\n                  <div className=\"mt-4 round...\">\n                    <LiveMatrix rows={[...]} levels={[...]} selection={null} onSelect={function bound dispatchSetState} ...>\n                      <div data-testid=\"live-matrix\" className={\"flex fle...\"}>\n                        <div>\n                        <div className=\"overflow-x...\">\n>                         <table className=\"border-separate border-spacing-1\">\n>                           {\" \"}\n                            ...\n                ...\n              ...\n  ...\n"
+  ],
+  "03b-mw-matrix-light-1280x800.png": [
+    "In HTML, whitespace text nodes cannot be a child of <%s>. Make sure you don't have any extra whitespace between tags on each line of your source code.\nThis will cause a hydration error.%s table \n\n  <Suspense fallback={<div>}>\n    <Screen>\n      <div style={{height:\"100vh\"}}>\n        <MethodWorkspaceShell session={{id:\"sessio...\", ...}} methodName=\"Diagnostyk...\" packVersionLabel=\"2.3.0\" ...>\n          <div data-testid=\"method-wor...\" className={\"flex h-f...\"}>\n            <header>\n            <div>\n            <div className=\"flex min-h...\">\n              <div className=\"flex-1 ove...\">\n                <LiveMatrix rows={[...]} levels={[...]} selection={{unitId:\"un...\", ...}} ...>\n                  <div data-testid=\"live-matrix\" className=\"flex flex-...\">\n                    <div>\n                    <div className=\"overflow-x...\">\n>                     <table className=\"border-separate border-spacing-1\">\n>                       {\" \"}\n                        ...\n                    ...\n              ...\n  ...\n"
+  ],
+  "03-matrix-dark-1280x800.png": [
+    "In HTML, whitespace text nodes cannot be a child of <%s>. Make sure you don't have any extra whitespace between tags on each line of your source code.\nThis will cause a hydration error.%s table \n\n  <Suspense fallback={<div>}>\n    <Root>\n      <DrdMethodWorkspaceScreen seedTo=\"matrix\" initialViewMode=\"matrix\" initialActorUserId={undefined}>\n        <DrdMethodWorkspaceScreenLegacy seedTo=\"matrix\" initialViewMode=\"matrix\" initialActorUserId={undefined}>\n          <div className=\"flex h-ful...\">\n            <div>\n            <div>\n            <div className=\"min-h-0 fl...\">\n              <MethodWorkspaceShell session={{id:\"d1cf21...\", ...}} methodName=\"DRD — Digi...\" ...>\n                <div data-testid=\"method-wor...\" className={\"flex h-f...\"}>\n                  <header>\n                  <div>\n                  <div className=\"flex min-h...\">\n                    <div className=\"flex-1 ove...\">\n                      <LiveMatrix rows={[...]} levels={[...]} selection={null} onSelect={function onSelect} ...>\n                        <div data-testid=\"live-matrix\" className=\"flex flex-...\">\n                          <div>\n                          <div className=\"overflow-x...\">\n>                           <table className=\"border-separate border-spacing-1\">\n>                             {\" \"}\n                              ...\n                    ...\n            ...\n  ...\n"
+  ],
+  "04-split-dark-1280x800.png": [
+    "In HTML, whitespace text nodes cannot be a child of <%s>. Make sure you don't have any extra whitespace between tags on each line of your source code.\nThis will cause a hydration error.%s table \n\n  <Suspense fallback={<div>}>\n    <Screen>\n      <div style={{height:\"100vh\"}}>\n        <MethodWorkspaceShell session={{id:\"sessio...\", ...}} methodName=\"Diagnostyk...\" packVersionLabel=\"2.3.0\" ...>\n          <div data-testid=\"method-wor...\" className={\"flex h-f...\"}>\n            <header>\n            <div>\n            <div className=\"flex min-h...\">\n              <div className=\"flex min-h...\">\n                <div>\n                <div className=\"min-w-0 fl...\">\n                  <InterviewFocusPanel>\n                  <div className=\"mt-4 round...\">\n                    <LiveMatrix rows={[...]} levels={[...]} selection={null} onSelect={function bound dispatchSetState} ...>\n                      <div data-testid=\"live-matrix\" className={\"flex fle...\"}>\n                        <div>\n                        <div className=\"overflow-x...\">\n>                         <table className=\"border-separate border-spacing-1\">\n>                           {\" \"}\n                            ...\n                ...\n              ...\n  ...\n"
+  ],
+  "03b-mw-matrix-dark-1280x800.png": [
+    "In HTML, whitespace text nodes cannot be a child of <%s>. Make sure you don't have any extra whitespace between tags on each line of your source code.\nThis will cause a hydration error.%s table \n\n  <Suspense fallback={<div>}>\n    <Screen>\n      <div style={{height:\"100vh\"}}>\n        <MethodWorkspaceShell session={{id:\"sessio...\", ...}} methodName=\"Diagnostyk...\" packVersionLabel=\"2.3.0\" ...>\n          <div data-testid=\"method-wor...\" className={\"flex h-f...\"}>\n            <header>\n            <div>\n            <div className=\"flex min-h...\">\n              <div className=\"flex-1 ove...\">\n                <LiveMatrix rows={[...]} levels={[...]} selection={{unitId:\"un...\", ...}} ...>\n                  <div data-testid=\"live-matrix\" className=\"flex flex-...\">\n                    <div>\n                    <div className=\"overflow-x...\">\n>                     <table className=\"border-separate border-spacing-1\">\n>                       {\" \"}\n                        ...\n                    ...\n              ...\n  ...\n"
+  ],
+  "11-http-server-light-1600x1000.png": [
+    "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+  ],
+  "11-http-saving-light-1600x1000.png": [
+    "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+  ],
+  "11-http-saved-light-1600x1000.png": [
+    "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+  ],
+  "11-http-offline-light-1600x1000.png": [
+    "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+  ],
+  "11-http-recovery-draft-light-1600x1000.png": [
+    "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+  ],
+  "11-http-conflict-light-1600x1000.png": [
+    "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+  ],
+  "11-http-reconnecting-light-1600x1000.png": [
+    "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+  ],
+  "11-http-recovered-light-1600x1000.png": [
+    "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+  ],
+  "11-http-server-dark-1600x1000.png": [
+    "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+  ],
+  "11-http-saving-dark-1600x1000.png": [
+    "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+  ],
+  "11-http-saved-dark-1600x1000.png": [
+    "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+  ],
+  "11-http-offline-dark-1600x1000.png": [
+    "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+  ],
+  "11-http-recovery-draft-dark-1600x1000.png": [
+    "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+  ],
+  "11-http-conflict-dark-1600x1000.png": [
+    "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+  ],
+  "11-http-reconnecting-dark-1600x1000.png": [
+    "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+  ],
+  "11-http-recovered-dark-1600x1000.png": [
+    "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+  ],
+  "11-http-server-light-1280x800.png": [
+    "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+  ],
+  "11-http-saving-light-1280x800.png": [
+    "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+  ],
+  "11-http-saved-light-1280x800.png": [
+    "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+  ],
+  "11-http-offline-light-1280x800.png": [
+    "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+  ]
+}

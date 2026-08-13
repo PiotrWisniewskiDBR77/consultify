@@ -1,0 +1,24 @@
+freeze button disabled attr as APPROVER: null
+freeze button disabled attr as OWNER: null isDisabled(): false
+answer-state radio count: 18
+clicked option 0: "Potwierdzone"
+clicked option 1: "Częściowo"
+clicked option 2: "Nie"
+clicked option 3: "Nie wiem / potrzebuję pomocy"
+clicked option 4: "Nie mam dowodu"
+clicked option 5: "Nie dotyczy"
+clicked option 6: "Potwierdzone"
+clicked option 7: "Częściowo"
+clicked option 8: "Nie"
+clicked option 9: "Nie wiem / potrzebuję pomocy"
+clicked option 10: "Nie mam dowodu"
+clicked option 11: "Nie dotyczy"
+clicked option 12: "Potwierdzone"
+clicked option 13: "Częściowo"
+clicked option 14: "Nie"
+clicked option 15: "Nie wiem / potrzebuję pomocy"
+clicked option 16: "Nie mam dowodu"
+clicked option 17: "Nie dotyczy"
+matrix rows: 9
+clickable elements in matrix: 63
+INTERACTIONS DONE

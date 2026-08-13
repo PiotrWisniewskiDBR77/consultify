@@ -1,0 +1,551 @@
+
+> consultinity@0.0.1 test:method-core:front
+> vitest run --config vitest.config.ts --exclude 'server/**' src/method-core src/components/method-workspace src/components/assessment
+
+
+ RUN  v4.1.8 /Users/piotrwisniewski/.codex/worktrees/mac-s7-a10-audit
+
+
+ RUN  v4.1.8 /Users/piotrwisniewski/.codex/worktrees/mac-s7-a10-audit
+
+stdout | src/method-core/methods/siri/__tests__/zz-opus-probe.test.ts > OPUS PROBE — SIRI > 16 wymiarow jako jednostki oceny, Bands 0-5, mapowanie na 8 filarow i 3 bloki
+PROBE pillars = automation,connectivity,intelligence,operations,product_lifecycle,structure_management,supply_chain,talent_readiness
+
+stdout | src/method-core/methods/siri/__tests__/zz-opus-probe.test.ts > OPUS PROBE — SIRI > 16 wymiarow jako jednostki oceny, Bands 0-5, mapowanie na 8 filarow i 3 bloki
+PROBE pillars = automation,connectivity,intelligence,operations,product_lifecycle,structure_management,supply_chain,talent_readiness
+
+stdout | src/method-core/methods/siri/__tests__/zz-opus-probe.test.ts > OPUS PROBE — SIRI > readiness uczciwy — pack NIE startuje sesji
+PROBE readiness = draft
+
+stdout | src/method-core/methods/siri/__tests__/zz-opus-probe.test.ts > OPUS PROBE — SIRI > readiness uczciwy — pack NIE startuje sesji
+PROBE readiness = draft
+
+stdout | src/method-core/methods/siri/__tests__/zz-opus-probe.test.ts > OPUS PROBE — SIRI > no-leapfrog: Band 4 bez Bandu 2 jest zablokowany
+PROBE no-leapfrog = {"currentLevel":1,"blockedAtLevel":2,"openLevels":[0,1,2],"aboveGapLevels":[4]}
+
+stdout | src/method-core/methods/siri/__tests__/zz-opus-probe.test.ts > OPUS PROBE — SIRI > no-leapfrog: Band 4 bez Bandu 2 jest zablokowany
+PROBE no-leapfrog = {"currentLevel":1,"blockedAtLevel":2,"openLevels":[0,1,2],"aboveGapLevels":[4]}
+
+stdout | src/method-core/methods/siri/__tests__/zz-opus-probe.test.ts > OPUS PROBE — SIRI > ★ DEFEKT ISTNIEJACEGO SILNIKA: brak normalizacji (Step 6 whitepaper)
+PROBE IV(costProfile=1) = 1.8 | IV(costProfile=100) = 31.5
+
+stdout | src/method-core/methods/siri/__tests__/zz-opus-probe.test.ts > OPUS PROBE — SIRI > ★ DEFEKT ISTNIEJACEGO SILNIKA: brak normalizacji (Step 6 whitepaper)
+PROBE IV(costProfile=1) = 1.8 | IV(costProfile=100) = 31.5
+
+stdout | src/method-core/methods/siri/__tests__/zz-opus-probe.test.ts > OPUS PROBE — SIRI > ★ DEFEKT ISTNIEJACEGO SILNIKA: ujemny proximity NIE jest obcinany do 0 (Step 4)
+PROBE IV przy BIC-AMS = -4 : -1.6
+
+stdout | src/method-core/methods/siri/__tests__/zz-opus-probe.test.ts > OPUS PROBE — SIRI > ★ DEFEKT ISTNIEJACEGO SILNIKA: ujemny proximity NIE jest obcinany do 0 (Step 4)
+PROBE IV przy BIC-AMS = -4 : -1.6
+
+ ✓ src/method-core/methods/siri/__tests__/zz-opus-probe.test.ts > OPUS PROBE — SIRI > 16 wymiarow jako jednostki oceny, Bands 0-5, mapowanie na 8 filarow i 3 bloki 382ms
+ ✓ src/method-core/methods/siri/__tests__/zz-opus-probe.test.ts > OPUS PROBE — SIRI > readiness uczciwy — pack NIE startuje sesji 1ms
+ ✓ src/method-core/methods/siri/__tests__/zz-opus-probe.test.ts > OPUS PROBE — SIRI > no-leapfrog: Band 4 bez Bandu 2 jest zablokowany 1ms
+ ✓ src/method-core/methods/siri/__tests__/zz-opus-probe.test.ts > OPUS PROBE — SIRI > ★ DEFEKT ISTNIEJACEGO SILNIKA: brak normalizacji (Step 6 whitepaper) 0ms
+ ✓ src/method-core/methods/siri/__tests__/zz-opus-probe.test.ts > OPUS PROBE — SIRI > ★ DEFEKT ISTNIEJACEGO SILNIKA: ujemny proximity NIE jest obcinany do 0 (Step 4) 0ms
+ ✓ src/method-core/methods/siri/__tests__/zz-opus-probe.test.ts (5 tests) 387ms
+     ✓ 16 wymiarow jako jednostki oceny, Bands 0-5, mapowanie na 8 filarow i 3 bloki  382ms
+ ✓ src/components/assessment/panels/__tests__/odbior--o8c--GlossaryPanel.test.tsx > O8.3 — GlossaryPanel renders real glossary content > is closed (renders nothing) when isOpen=false 76ms
+ ✓ src/components/assessment/panels/__tests__/odbior--o8c--GlossaryPanel.test.tsx > O8.3 — GlossaryPanel renders real glossary content > renders a dialog with every curated term when open 724ms
+ ✓ src/components/assessment/panels/__tests__/odbior--o8c--GlossaryPanel.test.tsx > O8.3 — GlossaryPanel renders real glossary content > search box filters the real term list live 80ms
+ ✓ src/components/method-workspace/__tests__/TeresaPreviewPanel.test.tsx > TeresaPreviewPanel > answers the six mandated questions 44ms
+ ✓ src/components/assessment/panels/__tests__/odbior--o8c--GlossaryPanel.test.tsx > O8.3 — GlossaryPanel renders real glossary content > close button invokes onClose 79ms
+ ✓ src/components/assessment/panels/__tests__/odbior--o8c--GlossaryPanel.test.tsx (4 tests) 962ms
+     ✓ renders a dialog with every curated term when open  724ms
+stdout | src/method-core/methods/drd/__tests__/zz-opus-aggregate-norm.test.ts > OPUS — aggregate: byGroup natywne, byGroupNorm porownywalne > ★ ta sama LICZBA na osi 1 (1-7) i osi 2 (1-5) daje ROZNE wartosci znormalizowane
+PROBE byGroup     = {"axis-1":5,"axis-2":5,"axis-3":null,"axis-4":null,"axis-5":null,"axis-6":null,"axis-7":null}
+PROBE byGroupNorm = {"axis-1":0.6667,"axis-2":1,"axis-3":null,"axis-4":null,"axis-5":null,"axis-6":null,"axis-7":null}
+
+stdout | src/method-core/methods/drd/__tests__/zz-opus-aggregate-norm.test.ts > OPUS — aggregate: byGroup natywne, byGroupNorm porownywalne > ★ ta sama LICZBA na osi 1 (1-7) i osi 2 (1-5) daje ROZNE wartosci znormalizowane
+PROBE byGroup     = {"axis-1":5,"axis-2":5,"axis-3":null,"axis-4":null,"axis-5":null,"axis-6":null,"axis-7":null}
+PROBE byGroupNorm = {"axis-1":0.6667,"axis-2":1,"axis-3":null,"axis-4":null,"axis-5":null,"axis-6":null,"axis-7":null}
+
+ ✓ src/components/method-workspace/__tests__/TeresaPreviewPanel.test.tsx > TeresaPreviewPanel > every onCommit call carries the previewId of the card it came from — commit without preview is unrepresentable 464ms
+ ✓ src/components/method-workspace/__tests__/TeresaPreviewPanel.test.tsx > TeresaPreviewPanel > reject does not remove or mutate the proposal locally — the panel is a pure renderer of proposalQueue 374ms
+ ✓ src/components/method-workspace/__tests__/TeresaPreviewPanel.test.tsx > TeresaPreviewPanel > shows the before/after diff before any decision can be made 72ms
+ ✓ src/components/method-workspace/__tests__/TeresaPreviewPanel.test.tsx (4 tests) 975ms
+     ✓ every onCommit call carries the previewId of the card it came from — commit without preview is unrepresentable  464ms
+     ✓ reject does not remove or mutate the proposal locally — the panel is a pure renderer of proposalQueue  374ms
+ ✓ src/method-core/methods/drd/__tests__/drdAdapter.aggregate.test.ts > drdAdapter.aggregate — explicit, versioned area→axis rule > averages non-null unit levels within an axis and rounds to 1 decimal 669ms
+ ✓ src/method-core/methods/drd/__tests__/drdAdapter.aggregate.test.ts > drdAdapter.aggregate — explicit, versioned area→axis rule > a single N/A (null) unit level is EXCLUDED from the axis mean, not imputed as zero 1ms
+ ✓ src/method-core/methods/drd/__tests__/drdAdapter.aggregate.test.ts > drdAdapter.aggregate — explicit, versioned area→axis rule > an axis with zero non-null unit levels reported yields null (excluded), not zero 0ms
+ ✓ src/method-core/methods/drd/__tests__/drdAdapter.aggregate.test.ts > drdAdapter.aggregate — explicit, versioned area→axis rule > an unknown unit id is excluded with a reason instead of silently dropped or averaged in 1ms
+ ✓ src/method-core/methods/drd/__tests__/drdAdapter.aggregate.test.ts > drdAdapter.aggregate — explicit, versioned area→axis rule > rejects an unsupported mappingVersion instead of silently applying the wrong rule 1ms
+ ✓ src/method-core/methods/drd/__tests__/drdAdapter.aggregate.test.ts > drdAdapter.aggregate — explicit, versioned area→axis rule > is deterministic — same input aggregated twice yields identical output 1ms
+ ✓ src/method-core/methods/drd/__tests__/drdAdapter.aggregate.test.ts (6 tests) 677ms
+     ✓ averages non-null unit levels within an axis and rounds to 1 decimal  669ms
+stdout | src/method-core/methods/drd/__tests__/zz-opus-probe.test.ts > OPUS PROBE — DRD > readiness jest uczciwy — pack NIE startuje sesji
+PROBE readiness = methodology_review
+
+stdout | src/method-core/methods/drd/__tests__/zz-opus-probe.test.ts > OPUS PROBE — DRD > readiness jest uczciwy — pack NIE startuje sesji
+PROBE readiness = methodology_review
+
+ ✓ src/method-core/methods/drd/__tests__/drdAdapter.progression.test.ts > drdAdapter.resolveOpenLevels — DRD ramp mechanic > levels 1,2 satisfied, 3 not, 4 satisfied out of order → currentLevel=2, blockedAtLevel=3, aboveGapLevels=[4] 707ms
+ ✓ src/method-core/methods/drd/__tests__/drdAdapter.progression.test.ts > drdAdapter.resolveOpenLevels — DRD ramp mechanic > aboveGap NEVER raises currentLevel, however high the confirmed above-gap level is 0ms
+ ✓ src/method-core/methods/drd/__tests__/drdAdapter.progression.test.ts > drdAdapter.resolveOpenLevels — DRD ramp mechanic > aboveGap does not raise currentLevel even when several above-gap levels are confirmed 35ms
+ ✓ src/method-core/methods/drd/__tests__/drdAdapter.progression.test.ts > drdAdapter.resolveOpenLevels — DRD ramp mechanic > confirming everything in order reaches the top of the unit-specific scale, nothing blocked 42ms
+ ✓ src/method-core/methods/drd/__tests__/drdAdapter.progression.test.ts > drdAdapter.resolveOpenLevels — DRD ramp mechanic > confirming nothing blocks at level 1, currentLevel stays null 1ms
+ ✓ src/method-core/methods/drd/__tests__/drdAdapter.progression.test.ts > drdAdapter.resolveOpenLevels — DRD ramp mechanic > prerequisite skipped (only level 3 confirmed, 1 & 2 never) is rejected — currentLevel stays null 0ms
+ ✓ src/method-core/methods/drd/__tests__/drdAdapter.progression.test.ts > drdAdapter.resolveOpenLevels — DRD ramp mechanic > unknown unit id degrades safely instead of throwing 4ms
+ ✓ src/method-core/methods/drd/__tests__/drdAdapter.progression.test.ts > drdAdapter.resolveOpenLevels — DRD ramp mechanic > is deterministic — same input twice yields identical output 0ms
+ ✓ src/method-core/methods/drd/__tests__/drdAdapter.progression.test.ts (8 tests) 791ms
+     ✓ levels 1,2 satisfied, 3 not, 4 satisfied out of order → currentLevel=2, blockedAtLevel=3, aboveGapLevels=[4]  707ms
+ ✓ src/method-core/methods/drd/__tests__/drdAdapter.scoring.test.ts > drdAdapter.computeScore — deterministic, zero LLM > no answers at all → needs_evidence, NEVER an automatic zero/null-as-score 827ms
+ ✓ src/method-core/methods/drd/__tests__/drdAdapter.scoring.test.ts > drdAdapter.computeScore — deterministic, zero LLM > level 1 fully confirmed with sufficient evidence, level 2 unanswered → proposedLevel=1, verdict needs_evidence (not silently scored higher, not silently zero) 1ms
+ ✓ src/method-core/methods/drd/__tests__/drdAdapter.scoring.test.ts > drdAdapter.computeScore — deterministic, zero LLM > prerequisite skipped: only level 3 answered (level 1 & 2 untouched) → rejected, never jumps to 3 0ms
+ ✓ src/method-core/methods/drd/__tests__/drdAdapter.scoring.test.ts > drdAdapter.computeScore — deterministic, zero LLM > evidence below the level minimum blocks the level (needs_evidence, not a lower score) 1ms
+ ✓ src/method-core/methods/drd/__tests__/drdAdapter.scoring.test.ts > drdAdapter.computeScore — deterministic, zero LLM > an explicit "no" answer is a definite, evidenced non-satisfaction — not needs_evidence 0ms
+ ✓ src/method-core/methods/drd/__tests__/drdAdapter.scoring.test.ts > drdAdapter.computeScore — deterministic, zero LLM > not_applicable without justification is flagged as a contradiction, not a silent pass 0ms
+ ✓ src/method-core/methods/drd/__tests__/drdAdapter.scoring.test.ts > drdAdapter.computeScore — deterministic, zero LLM > not_applicable WITH justification for every question at a level yields verdict not_applicable 0ms
+ ✓ src/method-core/methods/drd/__tests__/drdAdapter.scoring.test.ts > drdAdapter.computeScore — deterministic, zero LLM > unknown unit id yields verdict unknown, never a fabricated score 0ms
+ ✓ src/method-core/methods/drd/__tests__/drdAdapter.scoring.test.ts > drdAdapter.computeScore — deterministic, zero LLM > is deterministic — same input scored twice yields identical output (no LLM variance) 0ms
+ ✓ src/method-core/methods/drd/__tests__/drdAdapter.scoring.test.ts (9 tests) 833ms
+     ✓ no answers at all → needs_evidence, NEVER an automatic zero/null-as-score  827ms
+ ✓ src/method-core/methods/drd/__tests__/zz-opus-aggregate-norm.test.ts > OPUS — aggregate: byGroup natywne, byGroupNorm porownywalne > ★ ta sama LICZBA na osi 1 (1-7) i osi 2 (1-5) daje ROZNE wartosci znormalizowane 823ms
+ ✓ src/method-core/methods/drd/__tests__/zz-opus-aggregate-norm.test.ts > OPUS — aggregate: byGroup natywne, byGroupNorm porownywalne > byGroup NIE zmienil sie — zero cichej zmiany istniejacych Outputow 0ms
+ ✓ src/method-core/methods/drd/__tests__/zz-opus-aggregate-norm.test.ts > OPUS — aggregate: byGroup natywne, byGroupNorm porownywalne > brak danych -> null w obu, nie zero 0ms
+ ✓ src/method-core/methods/drd/__tests__/zz-opus-aggregate-norm.test.ts (3 tests) 827ms
+     ✓ ★ ta sama LICZBA na osi 1 (1-7) i osi 2 (1-5) daje ROZNE wartosci znormalizowane  823ms
+ ✓ src/method-core/methods/drd/__tests__/compileDrdPack.test.ts > compileDrdPack — structure coverage > covers all 39 areas with a unit and the correct level scale for its own axis 748ms
+ ✓ src/method-core/methods/drd/__tests__/compileDrdPack.test.ts > compileDrdPack — structure coverage > axis 1 has 9 areas of scale 1-7; axis 7 has 5 areas of scale 1-5 1ms
+ ✓ src/method-core/methods/drd/__tests__/compileDrdPack.test.ts > compileDrdPack — structure coverage > axis 2/3 use scale 1-5, axis 4 uses 1-7, axis 5/6 use 1-6 (per-axis, not global) 0ms
+ ✓ src/method-core/methods/drd/__tests__/compileDrdPack.test.ts > compileDrdPack — structure coverage > has exactly one MethodLevel per area#level pair (233 total) and 3 questions each (699 total) 0ms
+ ✓ src/method-core/methods/drd/__tests__/compileDrdPack.test.ts > compileDrdPack — structure coverage > reports 100% override coverage (measured, not assumed) for all 233 area#level pairs 0ms
+ ✓ src/method-core/methods/drd/__tests__/compileDrdPack.test.ts > compileDrdPack — structure coverage > honestly reports empty canon-required fields instead of inventing content 1ms
+ ✓ src/method-core/methods/drd/__tests__/compileDrdPack.test.ts > compileDrdPack — structure coverage > sets an honest, non-releasable readiness given the field gaps 1ms
+ ✓ src/method-core/methods/drd/__tests__/compileDrdPack.test.ts > compileDrdPack — structure coverage > every MethodLevel has non-empty canonical fields sourced from drdStructure.ts 10ms
+ ✓ src/method-core/methods/drd/__tests__/compileDrdPack.test.ts > compileDrdPack — structure coverage > carries at least one scoring fixture of each kind 0ms
+ ✓ src/method-core/methods/drd/__tests__/compileDrdPack.test.ts > compileDrdPack — structure coverage > is deterministic — compiling twice yields identical output 4ms
+ ✓ src/method-core/methods/drd/__tests__/compileDrdPack.test.ts (10 tests) 772ms
+     ✓ covers all 39 areas with a unit and the correct level scale for its own axis  748ms
+stdout | src/method-core/methods/drd/__tests__/zz-opus-probe.test.ts > OPUS PROBE — DRD > DETERMINIZM z pominieciem cache modulu (prawdziwy test)
+PROBE dlugosci: 802744 802744 | rowne: true
+
+stdout | src/method-core/methods/drd/__tests__/zz-opus-probe.test.ts > OPUS PROBE — DRD > DETERMINIZM z pominieciem cache modulu (prawdziwy test)
+PROBE dlugosci: 802744 802744 | rowne: true
+
+ ✓ src/method-core/methods/drd/__tests__/zz-opus-probe.test.ts > OPUS PROBE — DRD > aboveGap NIE podnosi currentLevel 648ms
+ ✓ src/method-core/methods/drd/__tests__/zz-opus-probe.test.ts > OPUS PROBE — DRD > skala jest PER OS 1ms
+ ✓ src/method-core/methods/drd/__tests__/zz-opus-probe.test.ts > OPUS PROBE — DRD > readiness jest uczciwy — pack NIE startuje sesji 1ms
+ ✓ src/method-core/methods/drd/__tests__/zz-opus-probe.test.ts > OPUS PROBE — DRD > DETERMINIZM z pominieciem cache modulu (prawdziwy test) 119ms
+ ✓ src/method-core/methods/drd/__tests__/zz-opus-probe.test.ts (4 tests) 773ms
+     ✓ aboveGap NIE podnosi currentLevel  648ms
+ ✓ src/method-core/methods/drd/__tests__/drdSessionRuntime.test.ts > DrdSessionRuntime — event store + reload restores state (requirement 2) > recordAnswer/recordEvidence append real kernel-shaped events; a FRESH runtime instance over the SAME storage sees the exact same state (reload simulation) 827ms
+ ✓ src/method-core/methods/drd/__tests__/drdSessionRuntime.test.ts > DrdSessionRuntime — event store + reload restores state (requirement 2) > idempotency: appendEvent with the same idempotencyKey twice resolves to the SAME stored event (never a duplicate) 2ms
+ ✓ src/method-core/methods/drd/__tests__/drdSessionRuntime.test.ts > DrdSessionRuntime — Teresa Intent -> Preview -> Commit (requirement 3) > commit without an existing preview is refused (preview_not_found) — a commit request is unrepresentable without previewId at the type level, this is the runtime half 1ms
+ ✓ src/method-core/methods/drd/__tests__/drdSessionRuntime.test.ts > DrdSessionRuntime — Teresa Intent -> Preview -> Commit (requirement 3) > commit of an already-consumed preview is refused on the second call (preview_already_consumed) 1ms
+ ✓ src/method-core/methods/drd/__tests__/drdSessionRuntime.test.ts > DrdSessionRuntime — Teresa Intent -> Preview -> Commit (requirement 3) > commit of a quality-invalid preview is refused (quality_invalid) 0ms
+ ✓ src/method-core/methods/drd/__tests__/drdSessionRuntime.test.ts > DrdSessionRuntime — freeze authority + Output bridge (requirements 4, 5) > requirement 4: freeze without the approver role is refused with missing_permission 1ms
+ ✓ src/method-core/methods/drd/__tests__/drdSessionRuntime.test.ts > DrdSessionRuntime — freeze authority + Output bridge (requirements 4, 5) > requirement 5: freeze by an actor holding `approver` creates a real, immutable AssessmentOutput 14ms
+ ✓ src/method-core/methods/drd/__tests__/drdSessionRuntime.test.ts > DrdSessionRuntime — Output immutability (requirement 6) > the frozen AssessmentOutput cannot be mutated — assigning to a field throws (deepFreeze, strict mode) 15ms
+ ✓ src/method-core/methods/drd/__tests__/drdSessionRuntime.test.ts > DrdSessionRuntime — reopen produces a new revision (requirement 7) > frozen -> active (reopen) creates a NEW session; the original session row is a separate storage entry, never mutated by the revision 2ms
+ ✓ src/method-core/methods/drd/__tests__/drdSessionRuntime.test.ts > DrdSessionRuntime — reopen produces a new revision (requirement 7) > within ONE session, a second freeze (simulated by two in-place freezeToOutput calls via reopen+re-freeze on the SAME runtime storage key) marks the prior Output superseded, content untouched 1ms
+ ✓ src/method-core/methods/drd/__tests__/drdSessionRuntime.test.ts > DrdSessionRuntime — Report renders from snapshot, not live session (requirement 8) > a ReportSnapshot built right after freeze is unaffected by directly tampering with the stored session afterwards 1ms
+ ✓ src/method-core/methods/drd/__tests__/drdSessionRuntime.test.ts > DrdSessionRuntime — Initiative Proposal Draft lineage, no path to Registered (requirement 9) > a generated draft links back to the Output id/version and to real finding ids from that Output 1ms
+ ✓ src/method-core/methods/drd/__tests__/drdSessionRuntime.test.ts > DrdSessionRuntime — Initiative Proposal Draft lineage, no path to Registered (requirement 9) > the initiativeDraft module exposes no register/registerInitiative export and no InitiativeProposalDraft has an initiativeId field 1ms
+ ✓ src/method-core/methods/drd/__tests__/drdSessionRuntime.test.ts > DrdSessionRuntime — demo pack-readiness bypass is disclosed, not silent > DRD_DEMO_SESSION_NOTICE is a non-empty, explicit string (the UI is required to show it, never omit it) 31ms
+ ✓ src/method-core/methods/drd/__tests__/drdSessionRuntime.test.ts > DrdSessionRuntime — demo pack-readiness bypass is disclosed, not silent > does not touch the compiled pack manifest readiness itself (still methodology_review, canStartSession still false) 11ms
+ ✓ src/method-core/methods/drd/__tests__/drdSessionRuntime.test.ts (15 tests) 929ms
+     ✓ recordAnswer/recordEvidence append real kernel-shaped events; a FRESH runtime instance over the SAME storage sees the exact same state (reload simulation)  827ms
+ ✓ src/method-core/__tests__/compilerShapeContract.test.ts > COORD-09 — jednolity kształt wyniku kompilatora > 'drd' zwraca { pack, report } 781ms
+ ✓ src/method-core/__tests__/compilerShapeContract.test.ts > COORD-09 — jednolity kształt wyniku kompilatora > 'siri' zwraca { pack, report } 1ms
+ ✓ src/method-core/__tests__/compilerShapeContract.test.ts > COORD-09 — jednolity kształt wyniku kompilatora > 'drd' — pack ma komplet wymaganych sekcji 1ms
+ ✓ src/method-core/__tests__/compilerShapeContract.test.ts > COORD-09 — jednolity kształt wyniku kompilatora > 'siri' — pack ma komplet wymaganych sekcji 0ms
+ ✓ src/method-core/__tests__/compilerShapeContract.test.ts > COORD-09 — jednolity kształt wyniku kompilatora > 'drd' — report uzasadnia readiness i wymienia rozbieżności 0ms
+ ✓ src/method-core/__tests__/compilerShapeContract.test.ts > COORD-09 — jednolity kształt wyniku kompilatora > 'siri' — report uzasadnia readiness i wymienia rozbieżności 0ms
+ ✓ src/method-core/__tests__/compilerShapeContract.test.ts > COORD-09 — jednolity kształt wyniku kompilatora > 'drd' — każda jednostka ma niepustą skalę poziomów i stabilne id 1ms
+ ✓ src/method-core/__tests__/compilerShapeContract.test.ts > COORD-09 — jednolity kształt wyniku kompilatora > 'siri' — każda jednostka ma niepustą skalę poziomów i stabilne id 1ms
+ ✓ src/method-core/__tests__/compilerShapeContract.test.ts > COORD-09 — jednolity kształt wyniku kompilatora > każda metoda wymagająca kompilatora ma go zarejestrowany 5ms
+ ✓ src/method-core/__tests__/compilerShapeContract.test.ts (9 tests) 825ms
+     ✓ 'drd' zwraca { pack, report }  781ms
+ ✓ src/components/assessment/drd/__tests__/DrdArtifactsPanel.test.tsx > DrdArtifactsPanel > 1. shows an explicit loading state before the server responds 491ms
+ ✓ src/components/assessment/drd/__tests__/DrdRolesPanel.test.tsx > DrdRolesPanel > renders fetched roles, history and approval trail once loaded 812ms
+ ✓ src/components/assessment/drd/__tests__/DrdArtifactsPanel.test.tsx > DrdArtifactsPanel > 2. renders exactly the server payload — Outputs/Reports/Presentations/Drafts + lineage sessions 207ms
+ ✓ src/components/assessment/drd/__tests__/DrdRolesPanel.test.tsx > DrdRolesPanel > shows the empty state when there are no roles yet 461ms
+ ✓ src/components/assessment/drd/__tests__/DrdArtifactsPanel.test.tsx > DrdArtifactsPanel > 3. shows an explicit error state with a working retry 938ms
+ ✓ src/components/assessment/drd/__tests__/DrdArtifactsPanel.test.tsx > DrdArtifactsPanel > 4. shows an explicit empty state, never a blank panel, when the lineage has zero artefacts 75ms
+ ✓ src/components/assessment/drd/__tests__/DrdRolesPanel.test.tsx > DrdRolesPanel > shows an error state instead of a blank table when a fetch fails 248ms
+ ✓ src/components/assessment/drd/__tests__/DrdArtifactsPanel.test.tsx > DrdArtifactsPanel > 5a. never reads localStorage — every value on screen comes only from the mocked server response, even when a conflicting local draft exists 273ms
+ ✓ src/components/assessment/drd/__tests__/DrdArtifactsPanel.test.tsx > DrdArtifactsPanel > 5b. a fresh remount (simulating an app restart) re-derives everything from a NEW server call, not from anything held client-side 348ms
+ ✓ src/components/assessment/drd/__tests__/DrdArtifactsPanel.test.tsx > DrdArtifactsPanel > 5c. the component accepts ONLY a sessionId (no prop exists to inject a live session snapshot to render instead) 13ms
+ ✓ src/components/assessment/drd/__tests__/DrdArtifactsPanel.test.tsx > DrdArtifactsPanel > 6. every rendered record carries the SERVER badge — RECOVERY_DRAFT never appears in this panel 25ms
+ ✓ src/components/assessment/drd/__tests__/DrdArtifactsPanel.test.tsx (8 tests) 2374ms
+     ✓ 1. shows an explicit loading state before the server responds  491ms
+     ✓ 3. shows an explicit error state with a working retry  938ms
+     ✓ 5b. a fresh remount (simulating an app restart) re-derives everything from a NEW server call, not from anything held client-side  348ms
+ ✓ src/components/assessment/drd/__tests__/DrdRolesPanel.test.tsx > DrdRolesPanel > refuses (client-side) to grant approver to yourself, without calling the API 617ms
+ ✓ src/components/assessment/drd/__tests__/DrdRolesPanel.test.tsx > DrdRolesPanel > refuses (client-side) to send back without a comment, without calling the API 333ms
+ ✓ src/components/assessment/drd/__tests__/DrdRolesPanel.test.tsx (5 tests) 2475ms
+     ✓ renders fetched roles, history and approval trail once loaded  812ms
+     ✓ shows the empty state when there are no roles yet  461ms
+     ✓ refuses (client-side) to grant approver to yourself, without calling the API  617ms
+     ✓ refuses (client-side) to send back without a comment, without calling the API  333ms
+stderr | src/components/assessment/drd/__tests__/DrdMethodWorkspaceScreen.matrix.test.tsx > DrdMethodWorkspaceScreen — Matrix: per-axis scale, not a global one > axis 1 renders 7 level columns (L1..L7); switching to axis 7 renders 5 (L1..L5)
+In HTML, whitespace text nodes cannot be a child of <table>. Make sure you don't have any extra whitespace between tags on each line of your source code.
+This will cause a hydration error.
+
+  <DrdMethodWorkspaceScreen storage={{...}} seedTo="matrix" initialViewMode="matrix">
+    <DrdMethodWorkspaceScreenLegacy storage={{...}} seedTo="matrix" initialViewMode="matrix">
+      <div className="flex h-ful...">
+        <div>
+        <div>
+        <div className="min-h-0 fl...">
+          <MethodWorkspaceShell session={{id:"049d73...", ...}} methodName="DRD — Digi..." ...>
+            <div data-testid="method-wor..." className={"flex h-f..."}>
+              <header>
+              <div>
+              <div className="flex min-h...">
+                <div className="flex-1 ove...">
+                  <LiveMatrix rows={[...]} levels={[...]} selection={null} onSelect={function onSelect} ...>
+                    <div data-testid="live-matrix" className="flex flex-...">
+                      <div>
+                      <div className="overflow-x...">
+>                       <table className="border-separate border-spacing-1">
+>                         {" "}
+                          ...
+                ...
+        ...
+
+
+stderr | src/components/assessment/drd/__tests__/DrdMethodWorkspaceScreen.matrix.test.tsx > DrdMethodWorkspaceScreen — Matrix: per-axis scale, not a global one > axis 1 renders 7 level columns (L1..L7); switching to axis 7 renders 5 (L1..L5)
+In HTML, whitespace text nodes cannot be a child of <table>. Make sure you don't have any extra whitespace between tags on each line of your source code.
+This will cause a hydration error.
+
+  <DrdMethodWorkspaceScreen storage={{...}} seedTo="matrix" initialViewMode="matrix">
+    <DrdMethodWorkspaceScreenLegacy storage={{...}} seedTo="matrix" initialViewMode="matrix">
+      <div className="flex h-ful...">
+        <div>
+        <div>
+        <div className="min-h-0 fl...">
+          <MethodWorkspaceShell session={{id:"049d73...", ...}} methodName="DRD — Digi..." ...>
+            <div data-testid="method-wor..." className={"flex h-f..."}>
+              <header>
+              <div>
+              <div className="flex min-h...">
+                <div className="flex-1 ove...">
+                  <LiveMatrix rows={[...]} levels={[...]} selection={null} onSelect={function onSelect} ...>
+                    <div data-testid="live-matrix" className="flex flex-...">
+                      <div>
+                      <div className="overflow-x...">
+>                       <table className="border-separate border-spacing-1">
+>                         {" "}
+                          ...
+                ...
+        ...
+
+
+ ✓ src/components/assessment/drd/__tests__/DrdMethodWorkspaceScreen.matrix.test.tsx > DRD structure — per-axis level scale is genuinely non-uniform (precondition for the UI test) > axis 1 (area 1A) runs 1..7, axis 7 (area 7A) runs 1..5 2ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.test.tsx > requirement 1 — flag OFF: legacy runtime, zero HTTP calls > mounts without forceHttpSourceOfTruth and never touches methodCoreApi 770ms
+ ✓ src/components/assessment/drd/__tests__/DrdMethodWorkspaceScreen.matrix.test.tsx > DrdMethodWorkspaceScreen — Matrix: per-axis scale, not a global one > axis 1 renders 7 level columns (L1..L7); switching to axis 7 renders 5 (L1..L5) 787ms
+ ✓ src/components/assessment/drd/__tests__/DrdMethodWorkspaceScreen.matrix.test.tsx > DrdMethodWorkspaceScreen — Matrix: per-axis scale, not a global one > selecting a matrix cell, switching to Interview, then back to Matrix preserves the selected cell (no forked/reset state) 727ms
+ ✓ src/components/assessment/drd/__tests__/DrdMethodWorkspaceScreen.matrix.test.tsx (3 tests) 1520ms
+     ✓ axis 1 renders 7 level columns (L1..L7); switching to axis 7 renders 5 (L1..L5)  787ms
+     ✓ selecting a matrix cell, switching to Interview, then back to Matrix preserves the selected cell (no forked/reset state)  727ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.test.tsx > requirement 2 — flag ON: DrdHttpSessionRuntime, indicator shows SERVER > creates a session over HTTP and renders the SERVER indicator once ready 340ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.test.tsx > requirement 7 — loading and error each have their own visible state > shows a non-blank bootstrap loading state before create() resolves 269ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.test.tsx > requirement 7 — loading and error each have their own visible state > shows a non-blank error+retry state when session creation fails 17ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.test.tsx > requirement 3 — a 409 on write shows an explicit conflict screen, never a silent overwrite > forceState="conflict" renders the conflict view with the server version and an explicit reload action 403ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.test.tsx > requirement 5 — recovery queue requires an explicit choice, never auto-resolves > forceState="recovery" shows apply/discard actions and does nothing until one is clicked 174ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.test.tsx > sanity — MethodCoreApiError is the real class (mock did not replace error semantics) > constructs with status/body/isNetworkError intact 0ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.test.tsx > CEL 4 — OFFLINE vs RECOVERY_DRAFT are visibly distinct, never conflated > forceState="offline" (nothing queued) shows the OFFLINE badge and banner, workspace stays usable 452ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.test.tsx > CEL 4 — OFFLINE vs RECOVERY_DRAFT are visibly distinct, never conflated > forceState="recovery_draft" (offline WITH a queued write) shows the RECOVERY_DRAFT badge, distinct from plain OFFLINE 266ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.test.tsx > CEL 4 — RECONNECTING is its own visible, non-blocking-forever state > forceState="reconnecting" shows a dedicated transient view with the RECONNECTING badge 86ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.test.tsx > CEL 4 — RECOVERED is a dismissible confirmation, not a silent auto-clear > forceState="recovered" shows the success banner + badge, and dismissing it settles on SERVER 543ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.test.tsx > CEL 4 — SAVING / SAVED render as in-workspace badges, never a blocking screen > forceState="saving" keeps the workspace visible with a SAVING badge 250ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.test.tsx > CEL 4 — SAVING / SAVED render as in-workspace badges, never a blocking screen > forceState="saved" keeps the workspace visible with a SAVED badge 190ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.test.tsx > CEL 4 — ★ hard rule regression guard: a frozen session with no local Output pointer is SERVER, never RECOVERY_DRAFT > resuming a frozen session (demoSessionId) with an uncached Output pointer shows SERVER, not RECOVERY_DRAFT 29ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.test.tsx (14 tests) 3800ms
+     ✓ mounts without forceHttpSourceOfTruth and never touches methodCoreApi  770ms
+     ✓ creates a session over HTTP and renders the SERVER indicator once ready  340ms
+     ✓ forceState="conflict" renders the conflict view with the server version and an explicit reload action  403ms
+     ✓ forceState="offline" (nothing queued) shows the OFFLINE badge and banner, workspace stays usable  452ms
+     ✓ forceState="recovered" shows the success banner + badge, and dismissing it settles on SERVER  543ms
+ ✓ src/method-core/methods/siri/__tests__/siriTierView.test.ts > SIRI TIER — unavailable before freeze (test 6) > is unavailable for every non-frozen session state, with an explicit reason 733ms
+ ✓ src/method-core/methods/siri/__tests__/siriTierView.test.ts > SIRI TIER — unavailable before freeze (test 6) > is available once the session is frozen 0ms
+ ✓ src/method-core/methods/siri/__tests__/siriTierView.test.ts > SIRI TIER — default calculation version is legacy_v1 (test 7) > siriTierActiveCalculationVersionFromFlag() reads OFF as legacy_v1 when the flag is untouched 0ms
+ ✓ src/method-core/methods/siri/__tests__/siriTierView.test.ts > SIRI TIER — default calculation version is legacy_v1 (test 7) > runSiriTier() without an explicit calculationVersion also resolves to legacy_v1 (flag off) 1ms
+ ✓ src/method-core/methods/siri/__tests__/siriTierView.test.ts > SIRI TIER — flag ON + explicit planningHorizon -> siri_pm_v2, focus per block (test 8) > the SIRI_PM_V2 localStorage flag flips the "current" resolution to siri_pm_v2 0ms
+ ✓ src/method-core/methods/siri/__tests__/siriTierView.test.ts > SIRI TIER — flag ON + explicit planningHorizon -> siri_pm_v2, focus per block (test 8) > runSiriTier() with calculationVersion=siri_pm_v2 and a planningHorizon selects >=1 focus per building block plus the Step-8b bonus 1ms
+ ✓ src/method-core/methods/siri/__tests__/siriTierView.test.ts > SIRI TIER — flag ON + explicit planningHorizon -> siri_pm_v2, focus per block (test 8) > every planning horizon preset weight sums to 1 and is shown explicitly alongside the version 1ms
+ ✓ src/method-core/methods/siri/__tests__/siriTierView.test.ts (7 tests) 740ms
+     ✓ is unavailable for every non-frozen session state, with an explicit reason  733ms
+ ✓ src/method-core/methods/siri/__tests__/siriMethodPack.test.ts > SIRI Method Pack — 16 Dimensions as source of truth > 1) compiles exactly 16 units, each with levelScale [0,1,2,3,4,5] 675ms
+ ✓ src/method-core/methods/siri/__tests__/siriMethodPack.test.ts > SIRI Method Pack — 16 Dimensions as source of truth > 2) every unit maps to one of the 8 pillars, every pillar to one of the 3 building blocks 1ms
+ ✓ src/method-core/methods/siri/__tests__/siriMethodPack.test.ts > SIRI Method Pack — 16 Dimensions as source of truth > 3) no-leapfrog: confirming Band 4 without Band 2 leaves the unit blocked at Band 1 1ms
+ ✓ src/method-core/methods/siri/__tests__/siriMethodPack.test.ts > SIRI Method Pack — 16 Dimensions as source of truth > 4) a unit with no evidence of its own scores as needs_evidence/null — never a parent/sibling value 0ms
+ ✓ src/method-core/methods/siri/__tests__/siriMethodPack.test.ts > SIRI Method Pack — 16 Dimensions as source of truth > 5) aggregate() returns an explicit versioned rule and excludes unknown units 1ms
+ ✓ src/method-core/methods/siri/__tests__/siriMethodPack.test.ts > SIRI Method Pack — 16 Dimensions as source of truth > 6) prioritise() throws when the input is not an explicitly frozen snapshot 27ms
+ ✓ src/method-core/methods/siri/__tests__/siriMethodPack.test.ts > SIRI Method Pack — 16 Dimensions as source of truth > 7) prioritise() selects at least one focus dimension per building block (>=3 total) 41ms
+ ✓ src/method-core/methods/siri/__tests__/siriMethodPack.test.ts > SIRI Method Pack — 16 Dimensions as source of truth > 8) prioritise() is deterministic — identical input twice gives an identical result 1ms
+ ✓ src/method-core/methods/siri/__tests__/siriMethodPack.test.ts > SIRI Method Pack — 16 Dimensions as source of truth > measured evidence (DoD facts) > QBank v1 has zero per-dimension question coverage (0/16) 1ms
+ ✓ src/method-core/methods/siri/__tests__/siriMethodPack.test.ts > SIRI Method Pack — 16 Dimensions as source of truth > measured evidence (DoD facts) > the Impact Value formula structurally matches the whitepaper, but two implementation gaps are confirmed 0ms
+ ✓ src/method-core/methods/siri/__tests__/siriMethodPack.test.ts > SIRI Method Pack — 16 Dimensions as source of truth > measured evidence (DoD facts) > the compiled pack readiness is honestly "draft" (cannot start a production session) 0ms
+ ✓ src/method-core/methods/siri/__tests__/siriMethodPack.test.ts (11 tests) 751ms
+     ✓ 1) compiles exactly 16 units, each with levelScale [0,1,2,3,4,5]  675ms
+stdout | src/method-core/methods/siri/__tests__/zz-opus-v2-probe.test.ts > OPUS PROBE — COORD-08 zero cichej zmiany > ★ BEZ FLAGI domyslna sciezka to legacy_v1
+PROBE domyslna wersja = legacy_v1
+
+stdout | src/method-core/methods/siri/__tests__/zz-opus-v2-probe.test.ts > OPUS PROBE — COORD-08 zero cichej zmiany > ★ BEZ FLAGI domyslna sciezka to legacy_v1
+PROBE domyslna wersja = legacy_v1
+
+ ✓ src/method-core/methods/siri/__tests__/siriWorkspaceView.test.ts > SIRI Workspace View — navigator (test 1) > builds a strict 3 building blocks -> 8 pillars -> 16 dimensions tree, no orphan node 1353ms
+ ✓ src/method-core/methods/siri/__tests__/siriWorkspaceView.test.ts > SIRI Workspace View — matrix (test 2) > produces exactly 16 rows, each with Bands 0..5 1ms
+ ✓ src/method-core/methods/siri/__tests__/siriWorkspaceView.test.ts > SIRI Workspace View — no-leapfrog (test 3) > Band 4 without Band 2 is blocked with a visible, explicit message 1ms
+ ✓ src/method-core/methods/siri/__tests__/siriWorkspaceView.test.ts > SIRI Workspace View — rationale required (test 4) > a Band cannot be proposed without a rationale 0ms
+ ✓ src/method-core/methods/siri/__tests__/siriWorkspaceView.test.ts > SIRI Workspace View — rationale required (test 4) > a Band cannot be proposed with a whitespace-only rationale 0ms
+ ✓ src/method-core/methods/siri/__tests__/siriWorkspaceView.test.ts > SIRI Workspace View — rationale required (test 4) > a Band CAN be proposed with a rationale and an open level 0ms
+ ✓ src/method-core/methods/siri/__tests__/siriWorkspaceView.test.ts > SIRI Workspace View — rationale required (test 4) > rationale requirement also blocks confirmation 0ms
+ ✓ src/method-core/methods/siri/__tests__/siriWorkspaceView.test.ts > SIRI Workspace View — factory observation as a distinct Evidence Item type (test 5) > lists `factory_observation` among the SIRI evidence item types 0ms
+ ✓ src/method-core/methods/siri/__tests__/siriWorkspaceView.test.ts > SIRI Workspace View — factory observation as a distinct Evidence Item type (test 5) > isSiriFactoryObservation distinguishes it from every other evidence type 0ms
+ ✓ src/method-core/methods/siri/__tests__/siriWorkspaceView.test.ts > SIRI Workspace View — evidence-missing honesty (test 9) > every one of the 16 dimensions gets an honestly-empty question (triggers "Help content unavailable") 1ms
+ ✓ src/method-core/methods/siri/__tests__/siriWorkspaceView.test.ts > SIRI Workspace View — evidence-missing honesty (test 9) > reports the measured (not estimated) EVIDENCE_MISSING coverage from the compiled pack 1ms
+ ✓ src/method-core/methods/siri/__tests__/siriWorkspaceView.test.ts > SIRI Workspace View — Teresa never confirms a Band (test 10) > the confirming-actor guard accepts only participant/approver, never teresa 0ms
+ ✓ src/method-core/methods/siri/__tests__/siriWorkspaceView.test.ts > SIRI Workspace View — Teresa never confirms a Band (test 10) > the kernel itself forbids Teresa from approving a score (structural corroboration) 0ms
+ ✓ src/method-core/methods/siri/__tests__/siriWorkspaceView.test.ts > SIRI Workspace View — Teresa never confirms a Band (test 10) > confirmSiriBand succeeds for a human participant with rationale and an open level 0ms
+ ✓ src/method-core/methods/siri/__tests__/siriWorkspaceView.test.ts (14 tests) 1363ms
+     ✓ builds a strict 3 building blocks -> 8 pillars -> 16 dimensions tree, no orphan node  1353ms
+stdout | src/method-core/methods/siri/__tests__/zz-opus-v2-probe.test.ts > OPUS PROBE — COORD-08 zero cichej zmiany > v2 wchodzi TYLKO przez jawny parametr
+PROBE jawna wersja = siri_pm_v2
+
+stdout | src/method-core/methods/siri/__tests__/zz-opus-v2-probe.test.ts > OPUS PROBE — COORD-08 zero cichej zmiany > v2 wchodzi TYLKO przez jawny parametr
+PROBE jawna wersja = siri_pm_v2
+
+stdout | src/method-core/methods/siri/__tests__/zz-opus-v2-probe.test.ts > OPUS PROBE — COORD-08 zero cichej zmiany > ★ v2 obcina ujemny Proximity do zera (defekt 2 naprawiony)
+PROBE v2 przy BIC-AMS=-4 : 0
+PROBE legacy przy BIC-AMS=-4 : -1.6
+
+stdout | src/method-core/methods/siri/__tests__/zz-opus-v2-probe.test.ts > OPUS PROBE — COORD-08 zero cichej zmiany > ★ v2 obcina ujemny Proximity do zera (defekt 2 naprawiony)
+PROBE v2 przy BIC-AMS=-4 : 0
+PROBE legacy przy BIC-AMS=-4 : -1.6
+
+ ✓ src/method-core/methods/siri/__tests__/zz-opus-v2-probe.test.ts > OPUS PROBE — COORD-08 zero cichej zmiany > ★ BEZ FLAGI domyslna sciezka to legacy_v1 728ms
+ ✓ src/method-core/methods/siri/__tests__/zz-opus-v2-probe.test.ts > OPUS PROBE — COORD-08 zero cichej zmiany > v2 wchodzi TYLKO przez jawny parametr 1ms
+ ✓ src/method-core/methods/siri/__tests__/zz-opus-v2-probe.test.ts > OPUS PROBE — COORD-08 zero cichej zmiany > ★ prioritise() ODRZUCA dane niezamrozone 1ms
+ ✓ src/method-core/methods/siri/__tests__/zz-opus-v2-probe.test.ts > OPUS PROBE — COORD-08 zero cichej zmiany > trzy presety sumuja sie do 1 i sa te z Figure 12 1ms
+ ✓ src/method-core/methods/siri/__tests__/zz-opus-v2-probe.test.ts > OPUS PROBE — COORD-08 zero cichej zmiany > ★ v2 obcina ujemny Proximity do zera (defekt 2 naprawiony) 1ms
+ ✓ src/method-core/methods/siri/__tests__/zz-opus-v2-probe.test.ts (5 tests) 734ms
+     ✓ ★ BEZ FLAGI domyslna sciezka to legacy_v1  728ms
+ ✓ src/method-core/outputs/__tests__/presentation.test.ts > Presentation View — approved-only by default (test 5) > excludes findings whose evidence is needs_evidence (E0) from acceptedFindings 1047ms
+ ✓ src/method-core/outputs/__tests__/presentation.test.ts > Presentation View — approved-only by default (test 5) > surfaces draft content only when explicitly requested, and always tagged isDraft: true 1ms
+ ✓ src/method-core/outputs/__tests__/presentation.test.ts > Presentation View — approved-only by default (test 5) > the presentation view object itself is frozen (no working-layer state can be attached later) 1ms
+ ✓ src/method-core/outputs/__tests__/presentation.test.ts > PresentationSourceBlock — traceability (test 6) > carries sourceOutputId and sourceVersion from the Output it was built from 0ms
+ ✓ src/method-core/outputs/__tests__/presentation.test.ts > PresentationSourceBlock — traceability (test 6) > refuses to build a block from draft (needs-evidence) content by default 0ms
+ ✓ src/method-core/outputs/__tests__/presentation.test.ts > PresentationSourceBlock — traceability (test 6) > allows draft content only when explicitly opted in, and marks provenance.isDraft 0ms
+ ✓ src/method-core/outputs/__tests__/presentation.test.ts > PresentationSourceBlock — traceability (test 6) > a block built from an accepted finding is marked isDraft: false 0ms
+ ✓ src/method-core/outputs/__tests__/presentation.test.ts (7 tests) 1053ms
+     ✓ excludes findings whose evidence is needs_evidence (E0) from acceptedFindings  1047ms
+ ✓ src/method-core/outputs/__tests__/supersession.test.ts > Supersession — content untouched, only status changes (test 8, pure half) > wrapAsCurrent starts a record as current with no supersession pointer 805ms
+ ✓ src/method-core/outputs/__tests__/supersession.test.ts > Supersession — content untouched, only status changes (test 8, pure half) > markRecordSuperseded returns a NEW wrapper but the SAME content reference (identity, not just equality) 91ms
+ ✓ src/method-core/outputs/__tests__/supersession.test.ts > Supersession — content untouched, only status changes (test 8, pure half) > supports the "source updated" reason distinctly from "superseded" 0ms
+ ✓ src/method-core/outputs/__tests__/reportSnapshot.test.ts > ReportSnapshot — renders from snapshot, not live session (test 10) > buildReportSnapshot signature only accepts an AssessmentOutput — no session/live-state parameter exists 874ms
+ ✓ src/method-core/outputs/__tests__/supersession.test.ts (3 tests) 914ms
+     ✓ wrapAsCurrent starts a record as current with no supersession pointer  805ms
+ ✓ src/method-core/outputs/__tests__/reportSnapshot.test.ts > ReportSnapshot — renders from snapshot, not live session (test 10) > a report built from one Output version is unaffected by a later, different Output version 141ms
+ ✓ src/method-core/outputs/__tests__/reportSnapshot.test.ts > ReportSnapshot — renders from snapshot, not live session (test 10) > the report content is frozen once built 1ms
+ ✓ src/method-core/outputs/__tests__/reportSnapshot.test.ts > ReportSnapshot — renders from snapshot, not live session (test 10) > carries methodology/version and limitations from the Output verbatim (10_ASSESSMENT_REVIEW.md §15) 1ms
+ ✓ src/method-core/outputs/__tests__/reportSnapshot.test.ts (4 tests) 1076ms
+     ✓ buildReportSnapshot signature only accepts an AssessmentOutput — no session/live-state parameter exists  874ms
+ ✓ src/method-core/outputs/__tests__/initiativeDraft.test.ts > Initiative Proposal Draft — lineage to findings and snapshot (test 7) > links to the findings it was built from, sorted deterministically 855ms
+ ✓ src/method-core/outputs/__tests__/initiativeDraft.test.ts > Initiative Proposal Draft — lineage to findings and snapshot (test 7) > requires at least one linked finding — a draft cannot be built from zero 1ms
+ ✓ src/method-core/outputs/__tests__/initiativeDraft.test.ts > Initiative Proposal Draft — lineage to findings and snapshot (test 7) > rejects a title that is a verbatim copy of a finding recommendation (antywzorzec) 0ms
+ ✓ src/method-core/outputs/__tests__/initiativeDraft.test.ts > Initiative Proposal Draft — lineage to findings and snapshot (test 7) > this package exports NO way to create a Registered Initiative 0ms
+ ✓ src/method-core/outputs/__tests__/initiativeDraft.test.ts > Initiative Draft grouping — not one-per-gap (antywzorzec §10) > groups multiple findings from the same axis into ONE draft candidate, not N 1ms
+ ✓ src/method-core/outputs/__tests__/initiativeDraft.test.ts > Initiative Draft grouping — not one-per-gap (antywzorzec §10) > produces separate groups for findings from genuinely different axes 0ms
+ ✓ src/method-core/outputs/__tests__/initiativeDraft.test.ts > Initiative Draft grouping — not one-per-gap (antywzorzec §10) > excludes findings with no gap (nothing to act on) from the default grouping 0ms
+ ✓ src/method-core/outputs/__tests__/initiativeDraft.test.ts > Initiative Draft grouping — not one-per-gap (antywzorzec §10) > grouping output does not depend on input array order 0ms
+ ✓ src/method-core/outputs/__tests__/initiativeDraft.test.ts (8 tests) 863ms
+     ✓ links to the findings it was built from, sorted deterministically  855ms
+stderr | src/components/method-workspace/__tests__/LiveMatrix.test.tsx > LiveMatrix > every cell exposes a textual accessible name (method, unit, level, state, evidence) — not color alone
+In HTML, whitespace text nodes cannot be a child of <table>. Make sure you don't have any extra whitespace between tags on each line of your source code.
+This will cause a hydration error.
+
+  <LiveMatrix rows={[...]} levels={[...]} selection={null} onSelect={function Mock} onCloseSideSheet={function Mock} ...>
+    <div data-testid="live-matrix" className={"flex fle..."}>
+      <div>
+      <div className="overflow-x...">
+>       <table className="border-separate border-spacing-1">
+>         {" "}
+          ...
+
+
+stderr | src/components/method-workspace/__tests__/LiveMatrix.test.tsx > LiveMatrix > every cell exposes a textual accessible name (method, unit, level, state, evidence) — not color alone
+In HTML, whitespace text nodes cannot be a child of <table>. Make sure you don't have any extra whitespace between tags on each line of your source code.
+This will cause a hydration error.
+
+  <LiveMatrix rows={[...]} levels={[...]} selection={null} onSelect={function Mock} onCloseSideSheet={function Mock} ...>
+    <div data-testid="live-matrix" className={"flex fle..."}>
+      <div>
+      <div className="overflow-x...">
+>       <table className="border-separate border-spacing-1">
+>         {" "}
+          ...
+
+
+ ✓ src/components/method-workspace/__tests__/LiveMatrix.test.tsx > LiveMatrix > every cell exposes a textual accessible name (method, unit, level, state, evidence) — not color alone 205ms
+ ✓ src/components/method-workspace/__tests__/LiveMatrix.test.tsx > LiveMatrix > clicking a cell opens the side sheet scoped to that cell 109ms
+ ✓ src/components/method-workspace/__tests__/LiveMatrix.test.tsx > LiveMatrix > closing and reopening from the same controlled state returns to the identical position/selection 38ms
+ ✓ src/components/method-workspace/__tests__/LiveMatrix.test.tsx (3 tests) 355ms
+stderr | src/components/method-workspace/__tests__/MethodWorkspaceShell.test.tsx > MethodWorkspaceShell — view modes share one state > switching to "matrix" mode shows the same unit/level data as the Graphic Mirror would
+In HTML, whitespace text nodes cannot be a child of <table>. Make sure you don't have any extra whitespace between tags on each line of your source code.
+This will cause a hydration error.
+
+  <Harness initialViewMode="interview">
+    <MethodWorkspaceShell session={{id:"sessio...", ...}} methodName="DRD" packVersionLabel="2.3.0" readiness={{...}} ...>
+      <div data-testid="method-wor..." className={"flex h-f..."}>
+        <header>
+        <div>
+        <div className="flex min-h...">
+          <div className="flex-1 ove...">
+            <LiveMatrix rows={[...]} levels={[...]} selection={null} onSelect={function bound dispatchSetState} ...>
+              <div data-testid="live-matrix" className="flex flex-...">
+                <div>
+                <div className="overflow-x...">
+>                 <table className="border-separate border-spacing-1">
+>                   {" "}
+                    ...
+          ...
+
+
+stderr | src/components/method-workspace/__tests__/MethodWorkspaceShell.test.tsx > MethodWorkspaceShell — view modes share one state > switching to "matrix" mode shows the same unit/level data as the Graphic Mirror would
+In HTML, whitespace text nodes cannot be a child of <table>. Make sure you don't have any extra whitespace between tags on each line of your source code.
+This will cause a hydration error.
+
+  <Harness initialViewMode="interview">
+    <MethodWorkspaceShell session={{id:"sessio...", ...}} methodName="DRD" packVersionLabel="2.3.0" readiness={{...}} ...>
+      <div data-testid="method-wor..." className={"flex h-f..."}>
+        <header>
+        <div>
+        <div className="flex min-h...">
+          <div className="flex-1 ove...">
+            <LiveMatrix rows={[...]} levels={[...]} selection={null} onSelect={function bound dispatchSetState} ...>
+              <div data-testid="live-matrix" className="flex flex-...">
+                <div>
+                <div className="overflow-x...">
+>                 <table className="border-separate border-spacing-1">
+>                   {" "}
+                    ...
+          ...
+
+
+ ✓ src/components/method-workspace/__tests__/MethodWorkspaceShell.test.tsx > MethodWorkspaceShell — view modes share one state > renders Interview Focus in "interview" mode 381ms
+ ✓ src/components/method-workspace/__tests__/MethodWorkspaceShell.test.tsx > MethodWorkspaceShell — view modes share one state > switching to "matrix" mode shows the same unit/level data as the Graphic Mirror would 249ms
+ ✓ src/components/method-workspace/__tests__/MethodWorkspaceShell.test.tsx > MethodWorkspaceShell — view modes share one state > a selection made in Matrix mode survives switching to Split and back to Matrix 154ms
+ ✓ src/components/method-workspace/__tests__/MethodWorkspaceShell.test.tsx > MethodWorkspaceShell — view modes share one state > Split mode shows both the Interview Focus panel and a compact matrix mirror of the same rows 68ms
+ ✓ src/components/method-workspace/__tests__/MethodWorkspaceShell.test.tsx (4 tests) 855ms
+     ✓ renders Interview Focus in "interview" mode  381ms
+stdout | src/method-core/__tests__/zz-opus-drd-agg-probe.test.ts > OPUS PROBE — agregacja DRD vs kanon §6 > DEFEKT 1: brak normalizacji min-max — poziom 5/5 traktowany jak 5/7
+PROBE 2A(5/5, maksimum osi) = {"actual":5,"target":5,"gap":0}
+PROBE 1A(5/7, 66,7% osi)   = {"actual":5,"target":5,"gap":0}
+
+stdout | src/method-core/__tests__/zz-opus-drd-agg-probe.test.ts > OPUS PROBE — agregacja DRD vs kanon §6 > DEFEKT 1: brak normalizacji min-max — poziom 5/5 traktowany jak 5/7
+PROBE 2A(5/5, maksimum osi) = {"actual":5,"target":5,"gap":0}
+PROBE 1A(5/7, 66,7% osi)   = {"actual":5,"target":5,"gap":0}
+
+stdout | src/method-core/__tests__/zz-opus-drd-agg-probe.test.ts > OPUS PROBE — agregacja DRD vs kanon §6 > DEFEKT 2: nieocenione obszary (0) WCHODZA do sredniej — kanon tego ZAKAZUJE
+PROBE dwa ocenione        = {"actual":4,"target":5,"gap":1}
+PROBE + jeden nieoceniony = {"actual":2.7,"target":3.3,"gap":0.6}
+
+stdout | src/method-core/__tests__/zz-opus-drd-agg-probe.test.ts > OPUS PROBE — agregacja DRD vs kanon §6 > DEFEKT 2: nieocenione obszary (0) WCHODZA do sredniej — kanon tego ZAKAZUJE
+PROBE dwa ocenione        = {"actual":4,"target":5,"gap":1}
+PROBE + jeden nieoceniony = {"actual":2.7,"target":3.3,"gap":0.6}
+
+ ✓ src/method-core/__tests__/zz-opus-drd-agg-probe.test.ts > OPUS PROBE — agregacja DRD vs kanon §6 > DEFEKT 1: brak normalizacji min-max — poziom 5/5 traktowany jak 5/7 499ms
+ ✓ src/method-core/__tests__/zz-opus-drd-agg-probe.test.ts > OPUS PROBE — agregacja DRD vs kanon §6 > DEFEKT 2: nieocenione obszary (0) WCHODZA do sredniej — kanon tego ZAKAZUJE 1ms
+ ✓ src/method-core/__tests__/zz-opus-drd-agg-probe.test.ts (2 tests) 512ms
+     ✓ DEFEKT 1: brak normalizacji min-max — poziom 5/5 traktowany jak 5/7  499ms
+ ✓ src/method-core/outputs/__tests__/assessmentOutput.test.ts > AssessmentOutput — immutability (test 1) > rejects a top-level property mutation with a thrown error 595ms
+ ✓ src/method-core/outputs/__tests__/assessmentOutput.test.ts (19 tests) 694ms
+     ✓ rejects a top-level property mutation with a thrown error  595ms
+ ✓ src/method-core/outputs/__tests__/assessmentOutput.test.ts > AssessmentOutput — immutability (test 1) > rejects mutating a nested array (limitations) 1ms
+ ✓ src/method-core/outputs/__tests__/assessmentOutput.test.ts > AssessmentOutput — immutability (test 1) > rejects mutating a nested finding object 0ms
+ ✓ src/method-core/outputs/__tests__/assessmentOutput.test.ts > AssessmentOutput — immutability (test 1) > rejects mutating deeply nested evidence inside a finding 0ms
+ ✓ src/method-core/outputs/__tests__/assessmentOutput.test.ts > AssessmentOutput — immutability (test 1) > exposes no update/patch function anywhere in the package 83ms
+ ✓ src/method-core/outputs/__tests__/assessmentOutput.test.ts > AssessmentOutput — immutability (test 1) > a revision is a brand new Output object, never the old one changed 1ms
+ ✓ src/method-core/outputs/__tests__/assessmentOutput.test.ts > AssessmentOutput — deterministic content hash (test 3) > produces the SAME hash across 10 runs with identical input 2ms
+ ✓ src/method-core/outputs/__tests__/assessmentOutput.test.ts > AssessmentOutput — deterministic content hash (test 3) > produces the SAME hash across 10 runs even when the findings array order is shuffled 3ms
+ ✓ src/method-core/outputs/__tests__/assessmentOutput.test.ts > AssessmentOutput — deterministic content hash (test 3) > produces the SAME hash even when per-finding evidence array order is shuffled 2ms
+ ✓ src/method-core/outputs/__tests__/assessmentOutput.test.ts > AssessmentOutput — deterministic content hash (test 3) > recomputing the hash from the constructed Output reproduces the stored hash 1ms
+ ✓ src/method-core/outputs/__tests__/assessmentOutput.test.ts > AssessmentOutput — deterministic content hash (test 3) > a genuinely different Output produces a different hash 0ms
+ ✓ src/method-core/outputs/__tests__/assessmentOutput.test.ts > AssessmentOutput — validation gate (test 4) > rejects an Output with no limitations 0ms
+ ✓ src/method-core/outputs/__tests__/assessmentOutput.test.ts > AssessmentOutput — validation gate (test 4) > rejects an Output with no methodology version 0ms
+ ✓ src/method-core/outputs/__tests__/assessmentOutput.test.ts > AssessmentOutput — validation gate (test 4) > rejects an Output missing both limitations and methodology version, listing both reasons 0ms
+ ✓ src/method-core/outputs/__tests__/assessmentOutput.test.ts > AssessmentOutput — validation gate (test 4) > accepts an Output with limitations and a methodology version present 1ms
+ ✓ src/method-core/outputs/__tests__/assessmentOutput.test.ts > Finding — supporting vs contradicting evidence rule (test 9) > allows a finding with supporting evidence and NO contradicting evidence 0ms
+ ✓ src/method-core/outputs/__tests__/assessmentOutput.test.ts > Finding — supporting vs contradicting evidence rule (test 9) > rejects a finding with NO supporting evidence, even if contradicting evidence exists 0ms
+ ✓ src/method-core/outputs/__tests__/assessmentOutput.test.ts > Finding — supporting vs contradicting evidence rule (test 9) > rejects a finding with no evidence at all 0ms
+ ✓ src/method-core/outputs/__tests__/assessmentOutput.test.ts > Finding — supporting vs contradicting evidence rule (test 9) > an Output containing an invalid finding is rejected end to end 0ms
+ ✓ src/components/method-workspace/__tests__/AnswerStateControl.test.tsx > AnswerStateControl > renders all six honest answer states 217ms
+ ✓ src/components/method-workspace/__tests__/AnswerStateControl.test.tsx > AnswerStateControl > "Nie wiem" opens the ResolutionCard and reports dont_know, never a score 51ms
+ ✓ src/components/method-workspace/__tests__/AnswerStateControl.test.tsx > AnswerStateControl > renders the ResolutionCard once value is dont_know, with no auto-zero side effect 98ms
+ ✓ src/components/method-workspace/__tests__/AnswerStateControl.test.tsx > AnswerStateControl > "Nie dotyczy" requires a justification before confirming 47ms
+ ✓ src/components/method-workspace/__tests__/AnswerStateControl.test.tsx > AnswerStateControl > ResolutionCard actions forward to onResolutionAction 9ms
+ ✓ src/components/method-workspace/__tests__/AnswerStateControl.test.tsx (5 tests) 427ms
+ ✓ src/components/method-workspace/__tests__/useMethodWorkspaceSave.test.ts > useMethodWorkspaceSave > starts CLEAN and markDirty transitions to DIRTY immediately 50ms
+ ✓ src/components/method-workspace/__tests__/useMethodWorkspaceSave.test.ts > useMethodWorkspaceSave > SAVED renders only after the save promise resolves ok — not optimistically 32ms
+ ✓ src/components/method-workspace/__tests__/useMethodWorkspaceSave.test.ts > useMethodWorkspaceSave > a failed save moves to SAVE_FAILED and attemptLeave refuses a silent exit 84ms
+ ✓ src/components/method-workspace/__tests__/useMethodWorkspaceSave.test.ts > useMethodWorkspaceSave > saveNow bypasses the debounce and saves immediately 3ms
+ ✓ src/components/method-workspace/__tests__/useMethodWorkspaceSave.test.ts > useMethodWorkspaceSave > offline edits queue as OFFLINE_PENDING instead of erroring 6ms
+ ✓ src/components/method-workspace/__tests__/useMethodWorkspaceSave.test.ts > useMethodWorkspaceSave > attemptLeave on CLEAN/SAVED allows a silent exit 4ms
+ ✓ src/components/method-workspace/__tests__/useMethodWorkspaceSave.test.ts (6 tests) 183ms
+ ✓ src/method-core/methods/drd/__tests__/drdHttpSessionRuntime.test.ts > requirement 6 — an OLDER cached revision never survives refresh() > server v5 replaces a locally-cached v2 once refresh() resolves 626ms
+ ✓ src/method-core/methods/drd/__tests__/drdHttpSessionRuntime.test.ts > requirement 8 — frozen Output only ever comes from a server response > a frozen session with NO cached output pointer never fabricates Output content 1ms
+ ✓ src/method-core/methods/drd/__tests__/drdHttpSessionRuntime.test.ts > requirement 8 — frozen Output only ever comes from a server response > freeze() populates Output ONLY from its own response, and caches just the id (a pointer) 2ms
+ ✓ src/method-core/methods/drd/__tests__/drdHttpSessionRuntime.test.ts > requirement 8 — frozen Output only ever comes from a server response > resuming a frozen session with a cached output-id pointer re-fetches content from getOutput(), never from storage 1ms
+ ✓ src/method-core/methods/drd/__tests__/drdHttpSessionRuntime.test.ts > offline write queue (requirement 4) and reconnect reconciliation (requirement 5) > a network failure on recordAnswer queues the write and flips status to recovery — never silently dropped 1ms
+ ✓ src/method-core/methods/drd/__tests__/drdHttpSessionRuntime.test.ts > offline write queue (requirement 4) and reconnect reconciliation (requirement 5) > reconnecting never auto-flushes the queue — retryPending() must be called explicitly 1ms
+ ✓ src/method-core/methods/drd/__tests__/drdHttpSessionRuntime.test.ts > offline write queue (requirement 4) and reconnect reconciliation (requirement 5) > discardPendingAndReloadServer() is the explicit "server wins" choice — drops the queue without attempting it 1ms
+ ✓ src/method-core/methods/drd/__tests__/drdHttpSessionRuntime.test.ts > 409 conflict — never silently overwritten > a version_conflict on transition() flips status to conflict with the server version, and the caller must refresh() explicitly 37ms
+ ✓ src/method-core/methods/drd/__tests__/drdHttpSessionRuntime.test.ts > CEL 4 — deriveDrdSourceKind: the eight visible states > SERVER — ready, confirmed, nothing queued 0ms
+ ✓ src/method-core/methods/drd/__tests__/drdHttpSessionRuntime.test.ts > CEL 4 — deriveDrdSourceKind: the eight visible states > SAVING — a write is in flight 0ms
+ ✓ src/method-core/methods/drd/__tests__/drdHttpSessionRuntime.test.ts > CEL 4 — deriveDrdSourceKind: the eight visible states > SAVED — a write was just confirmed 12ms
+ ✓ src/method-core/methods/drd/__tests__/drdHttpSessionRuntime.test.ts > CEL 4 — deriveDrdSourceKind: the eight visible states > OFFLINE — disconnected, nothing queued yet 1ms
+ ✓ src/method-core/methods/drd/__tests__/drdHttpSessionRuntime.test.ts > CEL 4 — deriveDrdSourceKind: the eight visible states > RECOVERY_DRAFT — a local write exists that the server has not confirmed 0ms
+ ✓ src/method-core/methods/drd/__tests__/drdHttpSessionRuntime.test.ts > CEL 4 — deriveDrdSourceKind: the eight visible states > CONFLICT — a version conflict is open 1ms
+ ✓ src/method-core/methods/drd/__tests__/drdHttpSessionRuntime.test.ts > CEL 4 — deriveDrdSourceKind: the eight visible states > RECONNECTING — connectivity just returned, checking the server 0ms
+ ✓ src/method-core/methods/drd/__tests__/drdHttpSessionRuntime.test.ts > CEL 4 — deriveDrdSourceKind: the eight visible states > RECOVERED — explicit reconciliation just completed 0ms
+ ✓ src/method-core/methods/drd/__tests__/drdHttpSessionRuntime.test.ts > CEL 4 — deriveDrdSourceKind: the eight visible states > ★ hard rule: RECOVERY_DRAFT is NEVER shown once the server is known to have the data — a frozen session with a merely-uncached local Output pointer is SERVER, not RECOVERY_DRAFT (the exact pre-S3 bug in FrozenOutputHttpView) 0ms
+ ✓ src/method-core/methods/drd/__tests__/drdHttpSessionRuntime.test.ts > CEL 4 — deriveDrdSourceKind: the eight visible states > ★ hard rule: a queued write outlives a bare successful refresh() — status flips to ready but the badge still says RECOVERY_DRAFT while the queue is non-empty 0ms
+ ✓ src/method-core/methods/drd/__tests__/drdHttpSessionRuntime.test.ts > CEL 4 scenario 1 — losing the API mid-work: OFFLINE, write lands in the queue > a GET failure with nothing queued yet is OFFLINE, not RECOVERY_DRAFT 0ms
+ ✓ src/method-core/methods/drd/__tests__/drdHttpSessionRuntime.test.ts > CEL 4 scenario 2 — a local edit made offline becomes RECOVERY_DRAFT > recordAnswer failing offline queues the write and the badge is RECOVERY_DRAFT 0ms
+ ✓ src/method-core/methods/drd/__tests__/drdHttpSessionRuntime.test.ts > CEL 4 scenario 3 — reconnect: RECONNECTING → explicit reconciliation → RECOVERED > reconnect() shows RECONNECTING while checking the server, then hands off to the explicit reconciliation state — never auto-applies 1ms
+ ✓ src/method-core/methods/drd/__tests__/drdHttpSessionRuntime.test.ts > CEL 4 scenario 7 — retry kolejki: SAVING → SAVED > a single online write is SAVING while in flight, then settles on SAVED (never a bare, un-refreshed guess) 0ms
+ ✓ src/method-core/methods/drd/__tests__/drdHttpSessionRuntime.test.ts > CEL 4 scenarios 4/5/6 — version conflicts during reconciliation never silently overwrite > scenario 4 — an older local DRAFT loses to a newer server revision: dropped, user informed, reconciliation continues 1ms
+ ✓ src/method-core/methods/drd/__tests__/drdHttpSessionRuntime.test.ts > CEL 4 scenarios 4/5/6 — version conflicts during reconciliation never silently overwrite > scenario 5 — a CONFIRMED write conflicts with a newer server revision: CONFLICT, diff, stopped for a human decision, nothing lost 0ms
+ ✓ src/method-core/methods/drd/__tests__/drdHttpSessionRuntime.test.ts > CEL 4 scenarios 4/5/6 — version conflicts during reconciliation never silently overwrite > scenario 6 — a 409 straight from the server (not via the queue) is CONFLICT, never a silent overwrite 0ms
+ ✓ src/method-core/methods/drd/__tests__/drdHttpSessionRuntime.test.ts > CEL 4 scenario 8 — reopen after a restart: SERVER, data from the database > a brand new runtime instance, on refresh(), reports SERVER with no pending writes 0ms
+ ✓ src/method-core/methods/drd/__tests__/drdHttpSessionRuntime.test.ts > CEL 4 extra — the queue never loses a write > three distinct offline writes all remain accounted for (queued, never vanished) across a partial retry 1ms
+ ✓ src/method-core/methods/drd/__tests__/drdHttpSessionRuntime.test.ts > CEL 4 extra — the queue never loses a write > a full successful reconciliation drains the queue to zero and every item is accounted for as succeeded 0ms
+ ✓ src/method-core/methods/drd/__tests__/drdHttpSessionRuntime.test.ts > CEL 4 extra — parallel identical writes never duplicate the event (idempotency key) > two concurrent recordAnswer() calls for the SAME logical answer collapse into one appendEvent call 0ms
+ ✓ src/method-core/methods/drd/__tests__/drdHttpSessionRuntime.test.ts > CEL 4 extra — parallel identical writes never duplicate the event (idempotency key) > two concurrent recordEvidence() calls for the SAME evidenceId collapse into one appendEvent call 0ms
+ ✓ src/method-core/methods/drd/__tests__/drdHttpSessionRuntime.test.ts > CEL 4 extra — parallel identical writes never duplicate the event (idempotency key) > two DIFFERENT logical writes are NOT deduped — both reach the server 0ms
+ ✓ src/method-core/methods/drd/__tests__/drdHttpSessionRuntime.test.ts (31 tests) 694ms
+     ✓ server v5 replaces a locally-cached v2 once refresh() resolves  626ms
+ ✓ src/components/method-workspace/__tests__/QuestionHelpDisclosure.test.tsx > QuestionHelpDisclosure > renders inline help when the pack provides content 90ms
+ ✓ src/components/method-workspace/__tests__/QuestionHelpDisclosure.test.tsx > QuestionHelpDisclosure > shows the explicit "Help content unavailable" state when the pack has no help copy 4ms
+ ✓ src/components/method-workspace/__tests__/QuestionHelpDisclosure.test.tsx > QuestionHelpDisclosure > expands the examples drawer progressively (level 2 help) 54ms
+ ✓ src/components/method-workspace/__tests__/QuestionHelpDisclosure.test.tsx > QuestionHelpDisclosure > routes "Zapytaj Teresę" to the caller instead of duplicating the Teresa panel 18ms
+ ✓ src/components/method-workspace/__tests__/QuestionHelpDisclosure.test.tsx (4 tests) 168ms
+ ✓ src/components/method-workspace/__tests__/VoiceAnswerChannel.test.tsx > VoiceAnswerChannel > shows an explicit degradation message when speech APIs are unsupported 49ms
+ ✓ src/components/method-workspace/__tests__/VoiceAnswerChannel.test.tsx (1 test) 52ms
+ ✓ src/components/assessment/drd/__tests__/drdMethodWorkspaceGating.test.tsx > shouldMountDrdMethodWorkspace — the exact gate the view branches on > true only for framework === "drd" AND the flag enabled 2ms
+ ✓ src/components/assessment/drd/__tests__/drdMethodWorkspaceGating.test.tsx > shouldMountDrdMethodWorkspace — the exact gate the view branches on > false when the flag is OFF, even for drd — legacy editor stays reachable 0ms
+ ✓ src/components/assessment/drd/__tests__/drdMethodWorkspaceGating.test.tsx > shouldMountDrdMethodWorkspace — the exact gate the view branches on > false for every other framework, flag ON or OFF — this slice is DRD-only 0ms
+ ✓ src/components/assessment/drd/__tests__/drdMethodWorkspaceGating.test.tsx > DrdMethodWorkspaceScreen (the ON-path render target) mounts the REAL MethodWorkspaceShell > renders data-testid="method-workspace-shell" — not a stand-in, the actual A5 component 394ms
+ ✓ src/components/assessment/drd/__tests__/drdMethodWorkspaceGating.test.tsx > DrdMethodWorkspaceScreen (the ON-path render target) mounts the REAL MethodWorkspaceShell > shows the explicit demo-bypass banner (never a silent override of pack readiness) 488ms
+ ✓ src/components/assessment/drd/__tests__/drdMethodWorkspaceGating.test.tsx (5 tests) 887ms
+     ✓ renders data-testid="method-workspace-shell" — not a stand-in, the actual A5 component  394ms
+     ✓ shows the explicit demo-bypass banner (never a silent override of pack readiness)  488ms
+
+ Test Files  33 passed (33)
+      Tests  246 passed (246)
+   Start at  16:54:11
+   Duration  37.82s (transform 34.98s, setup 37.58s, import 72.12s, tests 31.24s, environment 271.94s)
+
+
+ Test Files  33 passed (33)
+      Tests  246 passed (246)
+   Start at  16:54:11
+   Duration  37.82s (transform 34.98s, setup 37.58s, import 72.12s, tests 31.24s, environment 271.94s)
+
+JSON report written to /Users/piotrwisniewski/.codex/worktrees/mac-s7-a10-audit/junit.xml
+JUNIT report written to /Users/piotrwisniewski/.codex/worktrees/mac-s7-a10-audit/junit.xml
