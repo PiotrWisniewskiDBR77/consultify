@@ -1,0 +1,462 @@
+=== batch: targeted-discovery-components (candidate) ===
+=== started: 2026-08-13T17:50:09Z ===
+
+ RUN  v4.1.8 /Users/piotrwisniewski/.codex/worktrees/g3-regress
+
+stdout | tests/components/Discovery/DiscoveryToolsHub.inactiveTools.test.tsx
+2026-08-13 19:50:15:5015 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-08-13 19:50:15:5015 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-08-13 19:50:15:5015 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-08-13 19:50:15:5015 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-08-13 19:50:15:5015 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stderr | tests/components/discovery-tools/ToolDocumentView.golden-flow.test.tsx > ToolDocumentView golden-flow (TLS-02 create-guard, TLS-03 section-nav + unmount autosave flush) > TLS-02: calls Api.createToolSession exactly once under a StrictMode double-invoke race
+An update to ToolDocumentView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | tests/components/discovery-tools/ToolDocumentView.golden-flow.test.tsx > ToolDocumentView golden-flow (TLS-02 create-guard, TLS-03 section-nav + unmount autosave flush) > TLS-02: calls Api.createToolSession exactly once under a StrictMode double-invoke race
+An update to ToolDocumentView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ToolDocumentView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ToolDocumentView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ToolDocumentView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ToolDocumentView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ToolDocumentView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ToolDocumentView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ToolDocumentView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ToolDocumentView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | tests/components/discovery-tools/ToolDocumentView.golden-flow.test.tsx > ToolDocumentView golden-flow (TLS-02 create-guard, TLS-03 section-nav + unmount autosave flush) > TLS-02: calls Api.createToolSession exactly once under a StrictMode double-invoke race
+An update to ToolDocumentView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ToolDocumentView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | tests/components/discovery-tools/ToolDocumentView.golden-flow.test.tsx > ToolDocumentView golden-flow (TLS-02 create-guard, TLS-03 section-nav + unmount autosave flush) > TLS-02: calls Api.createToolSession exactly once under a StrictMode double-invoke race
+An update to ToolDocumentView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | tests/components/discovery-tools/ToolDocumentView.golden-flow.test.tsx > ToolDocumentView golden-flow (TLS-02 create-guard, TLS-03 section-nav + unmount autosave flush) > TLS-02: calls Api.createToolSession exactly once under a StrictMode double-invoke race
+An update to ToolDocumentView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | tests/components/discovery-tools/ToolDocumentView.golden-flow.test.tsx > ToolDocumentView golden-flow (TLS-02 create-guard, TLS-03 section-nav + unmount autosave flush) > TLS-02: calls Api.createToolSession exactly once under a StrictMode double-invoke race
+An update to ToolDocumentView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | tests/components/discovery-tools/ToolDocumentView.golden-flow.test.tsx > ToolDocumentView golden-flow (TLS-02 create-guard, TLS-03 section-nav + unmount autosave flush) > TLS-02: calls Api.createToolSession exactly once under a StrictMode double-invoke race
+An update to ToolDocumentView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | tests/components/discovery-tools/ToolDocumentView.golden-flow.test.tsx > ToolDocumentView golden-flow (TLS-02 create-guard, TLS-03 section-nav + unmount autosave flush) > TLS-02: calls Api.createToolSession exactly once under a StrictMode double-invoke race
+An update to ToolDocumentView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ContextStep inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ToolDocumentView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+··stderr | tests/components/discovery-tools/ToolDocumentView.golden-flow.test.tsx > ToolDocumentView golden-flow (TLS-02 create-guard, TLS-03 section-nav + unmount autosave flush) > TLS-03: an edit made in the SWOT Build phase survives switching sections away and back
+An update to ToolDocumentView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to QuadrantCard inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to QuadrantCard inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to QuadrantCard inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to QuadrantCard inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to SWOTBuildPhase inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ToolDocumentView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ToolDocumentView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+···········stderr | tests/components/discovery-tools/ToolDocumentView.approveReadiness.test.tsx > ToolDocumentView — RB-024 Approve readiness invariant > disables Approve and never calls Api.approveTool while review gaps remain unresolved
+An update to ToolDocumentView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ContextStep inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ToolDocumentView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ToolDocumentView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+·stderr | tests/components/discovery-tools/ToolDocumentView.approveReadiness.test.tsx > ToolDocumentView — RB-024 Approve readiness invariant > Request review is disabled by the exact same gaps (same completionReady invariant as Approve)
+An update to ToolDocumentView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ContextStep inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ToolDocumentView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ToolDocumentView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+·stderr | tests/components/discovery-tools/ToolDocumentView.approveReadiness.test.tsx > ToolDocumentView — RB-024 Approve readiness invariant > Approve is enabled and calls Api.approveTool once completion gaps are resolved
+An update to ToolDocumentView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | tests/components/discovery-tools/ToolDocumentView.approveReadiness.test.tsx > ToolDocumentView — RB-024 Approve readiness invariant > Approve is enabled and calls Api.approveTool once completion gaps are resolved
+An update to ContextStep inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ToolDocumentView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ToolDocumentView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ToolDocumentView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+··········································Browserslist: browsers data (caniuse-lite) is 8 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+····························stdout | tests/components/Discovery/DiscoveryConsultantView.test.tsx > DiscoveryConsultantView > renders without crashing
+[DiscoveryConsultantView] Initialized session: new-session-id
+
+stdout | tests/components/Discovery/DiscoveryConsultantView.test.tsx > DiscoveryConsultantView > creates a new session if none exists
+[DiscoveryConsultantView] Initialized session: new-session-id
+
+·stdout | tests/components/Discovery/DiscoveryConsultantView.test.tsx > DiscoveryConsultantView > displays the canvas area
+[DiscoveryConsultantView] Initialized session: new-session-id
+
+stdout | tests/components/Discovery/DiscoveryConsultantView.test.tsx > DiscoveryConsultantView > renders controls
+[DiscoveryConsultantView] Initialized session: new-session-id
+
+···········
+
+ Test Files  11 passed (11)
+      Tests  97 passed (97)
+   Start at  19:50:11
+   Duration  41.96s (transform 30.40s, setup 3.26s, import 45.08s, tests 11.17s, environment 18.18s)
+
+EXIT_CODE=0
+=== finished: 2026-08-13T17:50:53Z ===
