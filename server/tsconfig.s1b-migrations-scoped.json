@@ -1,0 +1,8 @@
+{
+  "extends": "./tsconfig.json",
+  "include": [
+    "src/__tests__/migrations/**/*",
+    "src/test-utils/**/*",
+    "src/method-core/__tests__/**/*"
+  ]
+}
