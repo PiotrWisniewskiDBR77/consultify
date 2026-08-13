@@ -19,13 +19,18 @@ interface ProposalCardProps {
   compact?: boolean;
 }
 
+// CANON FIX (stream G5, 2026-08-13, TRIADA_KANON.md): 'ai-proposed' used
+// `primary-*` (= crimson #85182F) as a routine AI-draft accent — CLAUDE.md
+// pułapka nr 1 forbids crimson as data/state, reserved for genuine blockers
+// only. AI accent is `c-info` per consultify-artefakty skill. Also swapped
+// raw `navy-*`/`slate-*` for `c-*` tokens (accepted/rejected rows).
 const STATUS_STYLES: Record<ProposalStatus, string> = {
   'ai-proposed':
-    'border-l-4 border-l-primary-400 border border-dashed border-primary-200/60 bg-primary-50/20 dark:border-l-primary-500 dark:border-primary-800/40 dark:bg-primary-950/10',
+    'border-l-4 border-l-c-info border border-dashed border-c-info/30 bg-c-info/5 dark:border-l-c-info dark:border-c-info/40',
   accepted:
-    'border-l-4 border-l-emerald-400 border border-emerald-200/60 bg-white dark:border-l-emerald-500 dark:border-emerald-800/40 dark:bg-navy-900/40',
+    'border-l-4 border-l-emerald-400 border border-emerald-200/60 bg-c-surface dark:border-l-emerald-500 dark:border-emerald-800/40 dark:bg-c-surface-raised',
   rejected:
-    'border-l-4 border-l-slate-300 border border-slate-200/40 bg-slate-50/50 opacity-50 dark:border-l-slate-600 dark:border-slate-700/40 dark:bg-navy-950/20',
+    'border-l-4 border-l-c-border border border-c-border-subtle bg-c-surface-raised opacity-50 dark:border-l-c-border dark:bg-c-surface',
   rethinking:
     'border-l-4 border-l-amber-400 border border-amber-200/60 bg-amber-50/20 animate-pulse dark:border-l-amber-500 dark:border-amber-800/40 dark:bg-amber-950/10',
 };
@@ -126,12 +131,12 @@ export const ProposalCard: React.FC<ProposalCardProps> = ({
             onChange={(e) => setComment(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleRethink()}
             placeholder={t('discoveryToolsSteps.proposalCard.feedbackPlaceholder')}
-            className="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:border-navy-700 dark:bg-navy-800 dark:text-white"
+            className="flex-1 rounded-lg border border-c-border bg-c-surface px-3 py-1.5 text-sm text-c-text placeholder-c-text-muted focus:outline-none focus:ring-2 focus:ring-c-focus"
             autoFocus
           />
           <button
             onClick={handleRethink}
-            className="rounded-lg bg-navy-900 dark:bg-[#F4F7FB] px-3 py-1.5 text-xs font-medium text-white dark:text-navy-950 transition-colors hover:bg-navy-800 dark:hover:bg-[#DDE5EF]"
+            className="rounded-lg bg-c-text px-3 py-1.5 text-xs font-medium text-c-surface transition-colors hover:opacity-90"
           >
             {t('discoveryToolsSteps.proposalCard.rethinkShort')}
           </button>
