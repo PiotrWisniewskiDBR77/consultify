@@ -1,0 +1,93 @@
+=== sub: tests/backend tests/security tests/performance ===
+
+ RUN  v4.1.8 /Users/piotrwisniewski/.codex/worktrees/f6-disco
+
+stdout | tests/performance/databasePerformance.test.js
+2026-08-13 19:14:21:1421 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-08-13 19:14:21:1421 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-08-13 19:14:21:1421 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-08-13 19:14:21:1421 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-08-13 19:14:21:1421 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+----------·········································································stdout | tests/backend/trial_limits.test.js
+2026-08-13 19:14:24:1424 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-08-13 19:14:24:1424 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-08-13 19:14:24:1424 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-08-13 19:14:24:1424 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-08-13 19:14:24:1424 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | tests/performance/scalability.test.js
+2026-08-13 19:14:24:1424 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-08-13 19:14:24:1424 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-08-13 19:14:24:1424 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-08-13 19:14:24:1424 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-08-13 19:14:24:1424 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | tests/performance/throughput.test.js
+2026-08-13 19:14:24:1424 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-08-13 19:14:24:1424 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-08-13 19:14:24:1424 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-08-13 19:14:24:1424 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-08-13 19:14:24:1424 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | tests/performance/memory-leak.test.ts > Memory Leak Detection > should monitor memory usage over extended period
+Starting memory leak test for 60 minutes...
+Initial memory: 60.03 MB
+
+stdout | tests/backend/onboarding.test.js
+2026-08-13 19:14:24:1424 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-08-13 19:14:24:1424 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-08-13 19:14:24:1424 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-08-13 19:14:24:1424 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-08-13 19:14:24:1424 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | tests/backend/onboarding_to_initiatives_link.test.js
+2026-08-13 19:14:24:1424 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-08-13 19:14:24:1424 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-08-13 19:14:24:1424 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-08-13 19:14:24:1424 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-08-13 19:14:24:1424 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+---------stdout | tests/security/rate-limiting-real.test.ts > Real Rate Limiting (P0) > injects headers and blocks after max is exceeded (aiMemory limiter in prod)
+2026-08-13 19:14:24:1424 [33mwarn[39m: [33m[RateLimit] requests refused over quota[39m {"limiter":"ai-mem","reason":"rejected","events":1,"distinctSources":1,"distinctSourcesTruncated":false,"totalSinceReset":1,"summaryWindowMs":60000}
+
+··stdout | tests/backend/contentService.test.ts
+2026-08-13 19:14:24:1424 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-08-13 19:14:24:1424 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-08-13 19:14:24:1424 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-08-13 19:14:24:1424 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-08-13 19:14:24:1424 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+·····x·······················-································································stdout | tests/security/encryption-real.test.ts > Real Encryption Security (P0) > Core Encryption (AES-256-GCM) > should throw error for tampered ciphertext (GCM Auth Tag validation)
+2026-08-13 19:14:28:1428 [31merror[39m: [31m[Encryption] Decryption failed: Unsupported state or unable to authenticate data[39m {"stack":"Error: Unsupported state or unable to authenticate data\n    at Decipheriv.final (node:internal/crypto/cipher:170:29)\n    at Object.decrypt (/Users/piotrwisniewski/.codex/worktrees/f6-disco/server/src/services/encryption/EncryptionService.ts:247:27)\n    at /Users/piotrwisniewski/.codex/worktrees/f6-disco/tests/security/encryption-real.test.ts:56:38\n    at Proxy.assertThrows (file:///Users/piotrwisniewski/Library/Mobile%20Documents/com%7Eapple%7ECloudDocs/Documents/Antygracity/DRD/consultify/node_modules/chai/index.js:2798:5)\n    at Proxy.methodWrapper (file:///Users/piotrwisniewski/Library/Mobile%20Documents/com%7Eapple%7ECloudDocs/Documents/Antygracity/DRD/consultify/node_modules/chai/index.js:1700:25)\n    at Proxy.<anonymous> (file:///Users/piotrwisniewski/Library/Mobile%20Documents/com%7Eapple%7ECloudDocs/Documents/Antygracity/DRD/consultify/node_modules/@vitest/expect/dist/index.js:1216:12)\n    at Proxy.overwritingMethodWrapper (file:///Users/piotrwisniewski/Library/Mobile%20Documents/com%7Eapple%7ECloudDocs/Documents/Antygracity/DRD/consultify/node_modules/chai/index.js:1750:33)\n    at Proxy.<anonymous> (file:///Users/piotrwisniewski/Library/Mobile%20Documents/com%7Eapple%7ECloudDocs/Documents/Antygracity/DRD/consultify/node_modules/@vitest/expect/dist/index.js:1552:16)\n    at Proxy.<anonymous> (file:///Users/piotrwisniewski/Library/Mobile%20Documents/com%7Eapple%7ECloudDocs/Documents/Antygracity/DRD/consultify/node_modules/@vitest/expect/dist/index.js:1156:15)\n    at Proxy.methodWrapper (file:///Users/piotrwisniewski/Library/Mobile%20Documents/com%7Eapple%7ECloudDocs/Documents/Antygracity/DRD/consultify/node_modules/chai/index.js:1700:25)"}
+
+··································································································································stdout | tests/backend/ai/aiPipeline-artifacts.test.ts
+2026-08-13 19:14:29:1429 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-08-13 19:14:29:1429 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-08-13 19:14:29:1429 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-08-13 19:14:29:1429 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-08-13 19:14:29:1429 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+·················································------------------------------stdout | tests/performance/db-performance-real.test.ts
+2026-08-13 19:14:30:1430 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-08-13 19:14:30:1430 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-08-13 19:14:30:1430 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-08-13 19:14:30:1430 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-08-13 19:14:30:1430 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+····-stdout | tests/backend/ai/aiPipeline-thinking.test.ts
+2026-08-13 19:14:30:1430 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-08-13 19:14:30:1430 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-08-13 19:14:30:1430 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-08-13 19:14:30:1430 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-08-13 19:14:30:1430 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+·········stdout | tests/performance/memory-leak.test.ts > Memory Leak Detection > should monitor memory usage over extended period
+[1m] Memory: 38.33 MB (-36.15%)
+
+stdout | tests/performance/memory-leak.test.ts > Memory Leak Detection > should monitor memory usage over extended period
+[1m] Memory: 38.38 MB (-36.07%)
+
+stdout | tests/performance/memory-leak.test.ts > Memory Leak Detection > should monitor memory usage over extended period
+[2m] Memory: 38.43 MB (-35.99%)
+
