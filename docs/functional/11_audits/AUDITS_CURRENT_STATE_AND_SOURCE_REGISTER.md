@@ -29,7 +29,7 @@ w sekcji COORDINATION_REQUIRED na końcu.
 | Założenie | Stan faktyczny | Dowód |
 | --- | --- | --- |
 | „Istniejące tabele pięciu funkcji są kanonem, nie projektuj ich od nowa" | **Pięć powierzchni nie istnieje.** Moduł ma jedną listę programów + jedną flagowaną zakładkę raportów DRD (należących merytorycznie do Assessment) | `src/components/Audit/AuditsHub.tsx:621-644` |
-| Nazwy powierzchni: Library → Sessions → Outputs → Reports → Initiatives | Kanon repo (zaakceptowany przez właściciela) mówi: **Library → Processes → Outputs → Deliverables → Initiatives** | `AGREEMENTS/METHOD_MODULE_FIVE_SURFACES_STANDARD.md:14-28`, `AGREEMENTS/04_AUDITS_REVIEW.md:660-663` |
+| Nazwy powierzchni: Library → Sessions → Outputs → Reports → Initiatives | Rozjazd na dwóch pozycjach. Dokumentacja mówi `Processes` i `Deliverables`; **żywy kod siostrzanego Assessment** (flaga `assessmentFiveSurfacesV1`, domyślnie WŁĄCZONA od 2026-08-01 po odbiorze zrzutami) używa `library / processes / outputs / reports / initiatives` | `AGREEMENTS/METHOD_MODULE_FIVE_SURFACES_STANDARD.md:14-28` vs `src/components/assessment/AssessmentHub.tsx:311-329`, `src/hooks/useFeatureFlags.tsx:177-196` |
 | „Po otrzymaniu SHARED_CONTRACT_MANIFEST…" | **Plik nie istnieje w repo** (grep całego drzewa: zero trafień). Nie ma też udokumentowanej wspólnej szyny zdarzeń dla Tools/Assessment/Audits | brak pliku |
 
 Dodatkowo dwa pojęcia z zlecenia nie mają definicji w repo: **MPQ (skala 30 pkt)**
@@ -222,20 +222,28 @@ Decyzje modelu warte odnotowania:
 
 ## COORDINATION_REQUIRED
 
-**problem:** Zlecenie zakłada nazwy powierzchni `Library → Sessions → Outputs →
-Reports → Initiatives` oraz istnienie ich tabel. Kanon repo — zaakceptowany przez
-właściciela 2026-07-31 i **wspólny dla Tools, Assessment i Audits** — mówi
-`Library → Processes → Outputs → Deliverables → Initiatives`, a w kodzie nie
-istnieje żadna z tych powierzchni.
+**problem:** Trzy źródła podają trzy różne zestawy nazw powierzchni. Zlecenie:
+`Library → Sessions → Outputs → Reports → Initiatives`. Dokumentacja programu:
+`Library → Processes → Outputs → Deliverables → Initiatives`. **Żywy kod
+siostrzanego Assessment** (flaga domyślnie włączona, przeszła odbiór zrzutami
+2026-08-01): `library / processes / outputs / reports / initiatives`.
 
-**rekomendowana zmiana:** implementuję nazwy kanonu repo (Processes, Deliverables)
-z mapowaniem `Sessions ≡ Processes`, `Reports ≡ Deliverables`. Powód: te same
-etykiety muszą zobaczyć równoległe zespoły Tools i Assessment; rozjazd nazw
-złamałby kryterium odbioru „użytkownik uczący się jednego modułu rozumie dwa
-pozostałe" (`METHOD_MODULE_FIVE_SURFACES_STANDARD.md` §11).
+**rekomendowana zmiana:** implementuję zestaw z **żywego kodu Assessment** —
+`Library · Processes · Outputs · Reports · Initiatives`. Powód: rozstrzygający
+jest runtime, nie dokument. Użytkownik przełączający się między Assessment a
+Audits zobaczy identyczne etykiety, co jest wprost kryterium odbioru
+(`METHOD_MODULE_FIVE_SURFACES_STANDARD.md` §11). Ten wybór pokrywa się ze
+zleceniem w 4 z 5 pozycji — różni się tylko drugą (`Processes` zamiast
+`Sessions`). Jeżeli koordynator woli `Sessions`, zmiana to jedna edycja słownika
+i18n, bez dotykania modelu; wtedy jednak trzeba przemianować także Assessment,
+inaczej dwa moduły metodyczne rozjadą się nazwami.
 
 **wpływ na audit lifecycle:** żaden — zmiana dotyczy wyłącznie etykiet nawigacji.
 Lifecycle Planning→…→Closure realizowany jest wewnątrz powierzchni Processes.
+
+**dodatkowo:** dokumentacja programu (`Deliverables`) rozjeżdża się z żywym
+kodem (`Reports`) także dla Assessment. To dług istniejący przed tą pracą;
+zgłaszam go, nie naprawiam jednostronnie.
 
 **eventy/typy:** `AuditProgram` (Process), `AuditOutput`, `AuditReport`
 (Deliverable), `AuditInitiativeProposal`. Brak wspólnej szyny zdarzeń w repo —
