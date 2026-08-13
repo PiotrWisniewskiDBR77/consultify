@@ -40,7 +40,11 @@ import { rateLimitUserIdMiddleware } from './middleware/rateLimitUserId.middlewa
 import { v8FeatureGate } from './middleware/v8FeatureGate.middleware.js';
 import { publicKnowledgeBaseRoutes as publicV8KnowledgeBaseRoutes } from './routes/v8/knowledge-base.routes.js';
 import { sendSystemAlert } from './services/systemAlertNotifier.js';
-import { shouldMountFullGateway, shouldRunDatabaseInit } from './startup/testModeGates.js';
+import {
+  shouldInitializeTestDatabase,
+  shouldMountTestGatewayRoutes,
+  shouldUseMockDatabase,
+} from './startup/testModeGates.js';
 import { withTimeout } from './startup/withTimeout.js';
 import {
   sendApiGatewayRateLimitedResponse,
@@ -262,15 +266,11 @@ startHttpListener();
 // `false` forever with `dbInitError` staying `null`: not a slow/stuck
 // migration, but the readiness sequence never being started in the first
 // place.
-const databaseInitPromise: Promise<void> = shouldRunDatabaseInit(process.env)
+const databaseInitPromise: Promise<void> = shouldInitializeTestDatabase(process.env)
   ? (async () => {
         try {
           logger.info('[Server] Initializing database...');
-          const mockDbEnabled =
-            process.env.MOCK_DB === 'true' ||
-            (process.env.NODE_ENV === 'test' &&
-              process.env.RUN_DB_TESTS !== '1' &&
-              process.env.MOCK_DB !== 'false');
+          const mockDbEnabled = shouldUseMockDatabase(process.env);
 
           const db = await getDatabaseAsync();
           logger.info('[Server] Database instance created:', db ? 'OK' : 'MOCK');
@@ -295,6 +295,16 @@ const databaseInitPromise: Promise<void> = shouldRunDatabaseInit(process.env)
             logger.error(`[Server] Database initialization failed: ${initResult.message}`);
             dbReady = false;
             dbInitError = initResult.message || 'Database initialization failed';
+            // P0A (2026-08-13): schema init failed before migrations were even
+            // attempted. Leaving `tpMigrationStatus` at its initial 'pending'
+            // here is the same class of bug this whole story is about — a
+            // stuck-forever 'pending' is indistinguishable from "still
+            // starting" on /api/health/migrations. Record it as blocked/failed
+            // explicitly instead.
+            tpMigrationStatus = {
+              state: 'failed',
+              detail: `Blocked before migrations ran: ${dbInitError}`,
+            };
             if (isProduction) {
               logger.error(
                 '[Server] CRITICAL: Database schema incomplete. Refusing to serve traffic. Exiting...'
@@ -450,6 +460,26 @@ const databaseInitPromise: Promise<void> = shouldRunDatabaseInit(process.env)
           });
           dbReady = false;
           dbInitError = error.message || 'Database initialization failed';
+          // P0A (2026-08-13): this branch also catches `withTimeout` rejecting
+          // the readiness sequence (see startup/withTimeout.ts). Before this
+          // fix, `outcome.migrations` (line ~385, `tpMigrationStatus =
+          // outcome.migrations`) never ran on that path — because the
+          // `await withTimeout(...)` above threw instead of resolving — so
+          // `tpMigrationStatus` stayed at its module-init default
+          // `{ state: 'pending', detail: null }` FOREVER, even though
+          // `dbInitError` correctly showed the timeout message. That is the
+          // exact "pending forever, indistinguishable from starting up"
+          // failure mode this whole file exists to prevent, just for
+          // `/api/health/migrations` instead of `/api/ready`. `withTimeout`
+          // does NOT cancel the underlying `establishDatabaseReadiness()` call
+          // on timeout (see withTimeout.ts docstring) — it may still be
+          // running migrations/seeding against the database in the
+          // background — but its eventual result is never read here, so it
+          // can never retroactively flip this back to 'ok'/'ready'.
+          tpMigrationStatus = {
+            state: 'failed',
+            detail: dbInitError,
+          };
           if (isProduction) {
             logger.error('[Server] CRITICAL: Cannot proceed without database. Exiting...');
             process.exit(1);
@@ -1188,7 +1218,7 @@ app.use('/api/workspaces', workspacesRoutes as any);
 // — not "starting", but genuinely unregistered — because this branch fell
 // into the lightweight `managementReportsRoutes`-only path instead of
 // `apiGateway.initializeRoutes(app)`. See testModeGates.ts.
-if (!shouldMountFullGateway(process.env)) {
+if (!shouldMountTestGatewayRoutes(process.env)) {
   const managementReportsRoutes = await import('./routes/managementReports.routes.js').then(
     (m) => m.default || m
   );
