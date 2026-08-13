@@ -50,9 +50,9 @@ z linii `FAIL` w logu) kategoria:
 
 | Strona | Plików zmierzonych | Plików razem | % |
 |---|---|---|---|
-| candidate | 1260 | 1574 | 80% |
+| candidate | 1380 | 1574 | 88% |
 | baseline (pełny sekwencyjny) | 0 | 1661 | 0% |
-| baseline (celowany — pliki failujące na candidate) | 60 | — | — |
+| baseline (celowany — pliki failujące na candidate) | 65 | — | — |
 
 **Uwaga**: pełny sekwencyjny przebieg baseline jeszcze nie uruchomiony — strategia w tej sesji: (1)
 zmierz candidate sekwencyjnie, (2) dla KAŻDEGO pliku z failem na candidate odpal ten sam plik na
@@ -109,6 +109,10 @@ zakończone czysto (`Tests N failed | M passed` obecne).
 | 36 | 1171-1200 | 30 | t6-cand-36.log | 1 failed / 284 |
 | 37 | 1201-1230 | 30 | t6-cand-37.log | 23 failed / 227 |
 | 38 | 1231-1260 | 30 | t6-cand-38.log | 2 failed / 252 |
+| 39 | 1261-1290 | 30 | t6-cand-39.log | 0 failed / 309 |
+| 40 | 1291-1320 | 30 | t6-cand-40.log | 3 failed / 425 |
+| 41 | 1321-1350 | 30 | t6-cand-41.log | 6 failed / 161 |
+| 42 | 1351-1380 | 30 | t6-cand-42.log | 10 failed / 213 |
 
 ### Partie zmierzone — baseline
 
@@ -143,6 +147,10 @@ czekać na pełny sekwencyjny przebieg baseline. Dwa przebiegi:
    `dp5HeuristicAiGating.test.tsx` (`NodeContextMenu comingSoonIds gating`). Zweryfikowane niezależnie
    (`verify-cand-4tests.log` / `verify-base-4tests.log`), spójny powtarzalny wynik. Szczegóły w sekcji
    `introduced` niżej.
+7. `t6-base-targeted-7.log` — 5 plików failujących na candidate w liniach 1261-1380,
+   `--testTimeout=15000 --retry=0`: `Tests 17 failed | 20 passed (37)`. Diff ujawnił **2 kolejne testy w
+   `routeConfig.test.ts`, które na baseline PRZECHODZĄ, a na candidate PADAJĄ**. Zweryfikowane osobno
+   (`verify-cand-routeconfig.log` / `verify-base-routeconfig.log`). Szczegóły w sekcji `introduced` niżej.
 
 Brak jeszcze pełnego sekwencyjnego przebiegu baseline poza tym — to osobny, szerszy krok (patrz
 NOT_VERIFIED niżej).
@@ -231,12 +239,23 @@ Wszystkie 4 potwierdzone niezależnie: uruchomienie kombinacji obu plików razem
 (`verify-cand-4tests.log`) i na baseline (`verify-base-4tests.log`) dało spójny, powtarzalny wynik —
 te same testy failują/przechodzą, nie ma śladu flaky/kolejności.
 
-Reszta zmierzonego zakresu (patrz "Postęp pomiaru"): wszystkie pozostałe 117 unikalnych testów
-failujących na candidate w liniach 1-1260 (93 z 1-1110 + 24 nowych solidnych z 1111-1260, wykluczając
-4 introduced opisane wyżej) zostały sprawdzone na baseline po pełnej nazwie (`plik > describe >
-test`) i failują też na baseline — `identical_pre_existing`. To dotyczy tylko zmierzonego zakresu —
-reszta plików (candidate 1261-1574, cała reszta baseline poza pomiarem celowanym) jest `NOT_VERIFIED`
-i może jeszcze ujawnić kolejne `introduced`.
+### `tests/unit/routes/routeConfig.test.ts` (2 testy)
+
+- **candidate**: FAIL `does not expose the removed Wnioski route` —
+  `expect('CONCLUSIONS' in ROUTES).toBe(false)` dostaje `true`: trasa "Wnioski"/`CONCLUSIONS`, która
+  miała być usunięta, na candidate WCIĄŻ jest zarejestrowana w `ROUTES`.
+- **candidate**: FAIL `maps pack-02 guarded nested module routes to stable AppViews` —
+  `getAppViewFromPath('/affiliate/overview')` zwraca `null` zamiast oczekiwanego `AppView.AFFILIATE_*`
+  — mapowanie trasy `/affiliate/overview` jest zepsute na candidate.
+- **baseline**: PASS na obu (`Tests 16 passed (16)`).
+- Zweryfikowane niezależnie na obu stronach (`verify-cand-routeconfig.log` / `verify-base-routeconfig.log`).
+
+Reszta zmierzonego zakresu (patrz "Postęp pomiaru"): wszystkie pozostałe 134 unikalne testy failujące
+na candidate w liniach 1-1380 (117 z 1-1260 + 17 nowych solidnych z 1261-1380, wykluczając 2 introduced
+opisane wyżej) zostały sprawdzone na baseline po pełnej nazwie (`plik > describe > test`) i failują też
+na baseline — `identical_pre_existing`. To dotyczy tylko zmierzonego zakresu — reszta plików (candidate
+1381-1574, cała reszta baseline poza pomiarem celowanym) jest `NOT_VERIFIED` i może jeszcze ujawnić
+kolejne `introduced`.
 
 ## Lista `fixed`
 
@@ -289,11 +308,11 @@ tests/unit/backend/services/systemAlertNotifier.test.ts > systemAlertNotifier > 
 
 ## NOT_VERIFIED
 
-- **candidate linie 1261-1574** (314 plików, ~20% strony candidate) — partie jeszcze nieuruchomione w
+- **candidate linie 1381-1574** (194 plików, ~12% strony candidate) — partie jeszcze nieuruchomione w
   tej sesji. Powód: praca w toku, kontynuacja w kolejnych krokach tej samej sesji.
-- **baseline pełny sekwencyjny przebieg** (1661 plików minus 60 już zmierzonych celowanie = ~1601
+- **baseline pełny sekwencyjny przebieg** (1661 plików minus 65 już zmierzonych celowanie = ~1596
   plików) — jeszcze nie rozpoczęty. Powód: priorytet poszedł na celowane sprawdzenie plików już
-  failujących na candidate (zrobione dla linii 1-1260, znaleziono 6 `introduced` + 1 flaky para);
+  failujących na candidate (zrobione dla linii 1-1380, znaleziono 8 `introduced` + 1 flaky para);
   pełny sekwencyjny
   przebieg baseline to osobny, szerszy krok, potrzebny żeby wykryć `introduced`/`fixed` w plikach
   które na candidate jeszcze PRZECHODZĄ (bo test może przechodzić na candidate, a mieć inny wynik na
@@ -304,12 +323,12 @@ tests/unit/backend/services/systemAlertNotifier.test.ts > systemAlertNotifier > 
 
 | Kategoria | Liczba |
 |---|---|
-| identical_pre_existing | 117 testów (celowany pomiar candidate-fails w liniach 1-1260 × baseline) + 2 flaky (order-dependent, nie regresja) |
+| identical_pre_existing | 134 testów (celowany pomiar candidate-fails w liniach 1-1380 × baseline) + 2 flaky (order-dependent, nie regresja) |
 | fixed | 0 |
-| introduced | **6** — patrz pełna lista niżej |
-| NOT_VERIFIED | 314 plików candidate (linie 1261-1574) + ~1601 plików baseline (poza celowanym pomiarem) |
+| introduced | **8** — patrz pełna lista niżej |
+| NOT_VERIFIED | 194 plików candidate (linie 1381-1574) + ~1596 plików baseline (poza celowanym pomiarem) |
 
-### Pełna lista `introduced` (6, wszystkie zweryfikowane niezależnie po obu stronach)
+### Pełna lista `introduced` (8, wszystkie zweryfikowane niezależnie po obu stronach)
 
 1. `tests/unit/components/Admin/AdminCollaborationControlsPanel.test.tsx > AdminCollaborationControlsPanel > loads controls and merges omitted values with defaults`
 2. `tests/unit/contracts/artifactContractParity.test.ts > Artifact client/server contract parity > keeps origin runtime literals aligned`
@@ -317,6 +336,8 @@ tests/unit/backend/services/systemAlertNotifier.test.ts > systemAlertNotifier > 
 4. `tests/unit/mindmap/dp5HeuristicAiGating.test.tsx > DP-5: NodeContextMenu comingSoonIds gating > does not gate real-LLM context actions (What if, Competitors)`
 5. `tests/unit/mindmap/dp5HeuristicAiGating.test.tsx > DP-5: NodeContextMenu comingSoonIds gating > leaves ctx_dependencies clickable when comingSoonIds is empty`
 6. `tests/unit/mindmap/dp5HeuristicAiGating.test.tsx > DP-5: NodeContextMenu comingSoonIds gating > renders ctx_dependencies disabled with "Coming soon" badge when listed`
+7. `tests/unit/routes/routeConfig.test.ts > routeConfig helpers > does not expose the removed Wnioski route`
+8. `tests/unit/routes/routeConfig.test.ts > routeConfig helpers > maps pack-02 guarded nested module routes to stable AppViews`
 
 ## Higiena
 
