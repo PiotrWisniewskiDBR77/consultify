@@ -16,9 +16,9 @@ export function buildGoldenChildPlan(c:FixtureContext):FixtureStatement[]{
   const kpiPolicy=stableUuid(c,'visibility-policy-kpi'), roiPolicy=stableUuid(c,'visibility-policy-roi'), okrPolicy=stableUuid(c,'visibility-policy-okr');
   const workbookSchema={title:'Model realizacji korzyści',description:'Plan, wykonanie i dowody korzyści w jednym modelu zarządczym.',sheets:[
     {name:'Podsumowanie',purpose:'Jednokartkowy przegląd wartości i realizacji.',columns:[{key:'metric',header:'Wskaźnik',type:'text',width:34},{key:'actual',header:'Wynik',type:'number',width:18},{key:'target',header:'Cel',type:'number',width:18},{key:'status',header:'Status',type:'text',width:20}],rows:[
-      {cells:{metric:{value:'Zweryfikowana realizacja korzyści'},actual:{value:76,style:{numberFormat:'0"%"'}},target:{value:90,style:{numberFormat:'0"%"'}},status:{value:'Wymaga uwagi'}}},
+      {cells:{metric:{value:'Zweryfikowana realizacja korzyści'},actual:{value:0.76,style:{numberFormat:'0%'}},target:{value:0.90,style:{numberFormat:'0%'}},status:{value:'Wymaga uwagi'}}},
       {cells:{metric:{value:'NPV programu (PLN)'},actual:{value:612000,style:{numberFormat:'#,##0 "PLN"'}},target:{value:500000,style:{numberFormat:'#,##0 "PLN"'}},status:{value:'Powyżej celu'}}},
-      {cells:{metric:{value:'IRR'},actual:{value:31.4,style:{numberFormat:'0.0"%"'}},target:{value:20,style:{numberFormat:'0.0"%"'}},status:{value:'Powyżej celu'}}},
+      {cells:{metric:{value:'IRR'},actual:{value:0.314,style:{numberFormat:'0.0%'}},target:{value:0.20,style:{numberFormat:'0.0%'}},status:{value:'Powyżej celu'}}},
       {cells:{metric:{value:'Okres zwrotu (miesiące)'},actual:{value:7.8},target:{value:9},status:{value:'W normie'}}}
     ],freezeRow:1,autoFilter:true,showGridLines:true},
     {name:'Dowody',purpose:'Źródła potwierdzające wartości i decyzje.',columns:[{key:'evidence',header:'Dowód',type:'text',width:38},{key:'source',header:'Źródło',type:'text',width:28},{key:'status',header:'Weryfikacja',type:'text',width:18},{key:'owner',header:'Właściciel',type:'text',width:24}],rows:[

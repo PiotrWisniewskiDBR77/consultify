@@ -47,6 +47,13 @@ describe('demo acceptance fixtures safety contract',()=>{
     expect(unified.slides.every((slide:any)=>slide.source_refs?.length>0)).toBe(true);
     expect(presentation!.sql).toContain('deck_json=NULL');
   });
+  it('stores workbook percentages as fractions so 76% never renders as 7600%',()=>{
+    const workbook=buildGoldenChildPlan(ctx).find(item=>item.domain==='artifact-workbook');
+    const schema=JSON.parse(String(workbook!.params[3]));
+    const rows=schema.sheets[0].rows;
+    expect(rows[0].cells.actual).toMatchObject({value:0.76,style:{numberFormat:'0%'}});
+    expect(rows[2].cells.actual).toMatchObject({value:0.314,style:{numberFormat:'0.0%'}});
+  });
   it('seeds a non-zero integrated Finance baseline for full-workspace rehearsal',()=>{
     const finance=buildFixturePlan(ctx).find(item=>item.domain==='finance');
     const assumptions=JSON.parse(String(finance!.params[5]));
